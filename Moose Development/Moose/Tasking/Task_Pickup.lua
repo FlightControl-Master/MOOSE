@@ -41,11 +41,6 @@ do -- TASK_PICKUP
     local self = BASE:Inherit( self, TASK:New( Mission, AssignedSetGroup, TaskName, TaskType, "PICKUP" ) )
     self:F()
   
-    _EVENTDISPATCHER:OnPlayerLeaveUnit( self._EventPlayerLeaveUnit, self )
-    _EVENTDISPATCHER:OnDead( self._EventDead, self )
-    _EVENTDISPATCHER:OnCrash( self._EventDead, self )
-    _EVENTDISPATCHER:OnPilotDead( self._EventDead, self )
-
     return self
   end
   

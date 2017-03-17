@@ -1,5 +1,7 @@
 --- **Core** - ZONE classes define **zones** within your mission of **various forms**, with **various capabilities**.
 -- 
+-- ![Banner Image](..\Presentations\ZONE\Dia1.JPG)
+-- 
 -- ===
 -- 
 -- There are essentially two core functions that zones accomodate:
@@ -247,6 +249,58 @@ function ZONE_BASE:GetVec2()
   return nil 
 end
 
+--- Returns a @{Point#POINT_VEC2} of the zone.
+-- @param #ZONE_BASE self
+-- @param Dcs.DCSTypes#Distance Height The height to add to the land height where the center of the zone is located.
+-- @return Core.Point#POINT_VEC2 The PointVec2 of the zone.
+function ZONE_BASE:GetPointVec2()
+  self:F2( self.ZoneName )
+  
+  local Vec2 = self:GetVec2()
+
+  local PointVec2 = POINT_VEC2:NewFromVec2( Vec2 )
+
+  self:T2( { PointVec2 } )
+  
+  return PointVec2  
+end
+
+
+--- Returns the @{DCSTypes#Vec3} of the zone.
+-- @param #ZONE_BASE self
+-- @param Dcs.DCSTypes#Distance Height The height to add to the land height where the center of the zone is located.
+-- @return Dcs.DCSTypes#Vec3 The Vec3 of the zone.
+function ZONE_BASE:GetVec3( Height )
+  self:F2( self.ZoneName )
+  
+  Height = Height or 0
+  
+  local Vec2 = self:GetVec2()
+
+  local Vec3 = { x = Vec2.x, y = land.getHeight( self:GetVec2() ) + Height, z = Vec2.y }
+
+  self:T2( { Vec3 } )
+  
+  return Vec3  
+end
+
+--- Returns a @{Point#POINT_VEC3} of the zone.
+-- @param #ZONE_BASE self
+-- @param Dcs.DCSTypes#Distance Height The height to add to the land height where the center of the zone is located.
+-- @return Core.Point#POINT_VEC3 The PointVec3 of the zone.
+function ZONE_BASE:GetPointVec3( Height )
+  self:F2( self.ZoneName )
+  
+  local Vec3 = self:GetVec3( Height )
+
+  local PointVec3 = POINT_VEC3:NewFromVec3( Vec3 )
+
+  self:T2( { PointVec3 } )
+  
+  return PointVec3  
+end
+
+
 --- Define a random @{DCSTypes#Vec2} within the zone.
 -- @param #ZONE_BASE self
 -- @return Dcs.DCSTypes#Vec2 The Vec2 coordinates.
@@ -258,6 +312,13 @@ end
 -- @param #ZONE_BASE self
 -- @return Core.Point#POINT_VEC2 The PointVec2 coordinates.
 function ZONE_BASE:GetRandomPointVec2()
+  return nil
+end
+
+--- Define a random @{Point#POINT_VEC3} within the zone.
+-- @param #ZONE_BASE self
+-- @return Core.Point#POINT_VEC3 The PointVec3 coordinates.
+function ZONE_BASE:GetRandomPointVec3()
   return nil
 end
 
@@ -347,8 +408,9 @@ end
 --- Bounds the zone with tires.
 -- @param #ZONE_RADIUS self
 -- @param #number Points (optional) The amount of points in the circle.
+-- @param #boolean UnBound If true the tyres will be destroyed.
 -- @return #ZONE_RADIUS self
-function ZONE_RADIUS:BoundZone( Points )
+function ZONE_RADIUS:BoundZone( Points, CountryID, UnBound )
 
   local Point = {}
   local Vec2 = self:GetVec2()
@@ -364,8 +426,10 @@ function ZONE_RADIUS:BoundZone( Points )
     Point.x = Vec2.x + math.cos( Radial ) * self:GetRadius()
     Point.y = Vec2.y + math.sin( Radial ) * self:GetRadius()
     
+    local CountryName = _DATABASE.COUNTRY_NAME[CountryID]
+    
     local Tire = {
-        ["country"] = "USA", 
+        ["country"] = CountryName, 
         ["category"] = "Fortifications",
         ["canCargo"] = false,
         ["shape_name"] = "H-tyre_B_WF",
@@ -377,7 +441,10 @@ function ZONE_RADIUS:BoundZone( Points )
         ["heading"] = 0,
     } -- end of ["group"]
 
-    coalition.addStaticObject( country.id.USA, Tire )
+    local Group = coalition.addStaticObject( CountryID, Tire )
+    if UnBound and UnBound == true then
+      Group:destroy()
+    end
   end
 
   return self
@@ -810,8 +877,9 @@ end
 
 --- Smokes the zone boundaries in a color.
 -- @param #ZONE_POLYGON_BASE self
+-- @param #boolean UnBound If true, the tyres will be destroyed.
 -- @return #ZONE_POLYGON_BASE self
-function ZONE_POLYGON_BASE:BoundZone( )
+function ZONE_POLYGON_BASE:BoundZone( UnBound )
 
   local i 
   local j 
@@ -840,8 +908,11 @@ function ZONE_POLYGON_BASE:BoundZone( )
           ["name"] = string.format( "%s-Tire #%0d", self:GetName(), ((i - 1) * Segments) + Segment ),
           ["heading"] = 0,
       } -- end of ["group"]
-  
-      coalition.addStaticObject( country.id.USA, Tire )
+      
+      local Group = coalition.addStaticObject( country.id.USA, Tire )
+      if UnBound and UnBound == true then
+        Group:destroy()
+      end
       
     end
     j = i

@@ -39,11 +39,11 @@
 					<li><a href="Fsm.html">Fsm</a></li>
 					<li><a href="Group.html">Group</a></li>
 					<li><a href="Identifiable.html">Identifiable</a></li>
-					<li><a href="MOVEMENT.html">MOVEMENT</a></li>
 					<li><a href="Menu.html">Menu</a></li>
 					<li><a href="Message.html">Message</a></li>
 					<li><a href="MissileTrainer.html">MissileTrainer</a></li>
 					<li><a href="Mission.html">Mission</a></li>
+					<li><a href="Movement.html">Movement</a></li>
 					<li><a href="Object.html">Object</a></li>
 					<li><a href="Point.html">Point</a></li>
 					<li><a href="Positionable.html">Positionable</a></li>
@@ -61,8 +61,8 @@
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="Task.html">Task</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
+					<li><a href="Task_A2G_Dispatcher.html">Task_A2G_Dispatcher</a></li>
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
-					<li><a href="Task_SEAD.html">Task_SEAD</a></li>
 					<li><a href="Unit.html">Unit</a></li>
 					<li><a href="Utils.html">Utils</a></li>
 					<li><a href="Zone.html">Zone</a></li>
@@ -167,6 +167,12 @@ Upon arrival at the zone, a confirmation of arrival is sent, and the process wil
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="#ACT_ROUTE_POINT">ACT_ROUTE_POINT</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="#ACT_ROUTE_ZONE">ACT_ROUTE_ZONE</a></td>
 		<td class="summary">
 
@@ -206,7 +212,7 @@ Upon arrival at the zone, a confirmation of arrival is sent, and the process wil
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ACT_ROUTE).TargetZone">ACT_ROUTE.TargetZone</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ROUTE).Zone">ACT_ROUTE.Zone</a></td>
 		<td class="summary">
 
 </td>
@@ -227,6 +233,106 @@ Upon arrival at the zone, a confirmation of arrival is sent, and the process wil
 		<td class="name" nowrap="nowrap"><a href="##(ACT_ROUTE).onfuncHasArrived">ACT_ROUTE:onfuncHasArrived(ProcessUnit)</a></td>
 		<td class="summary">
 <p>Check if the controllable has arrived.</p>
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(ACT_ROUTE_POINT)">Type <code>ACT_ROUTE_POINT</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ROUTE_POINT).ClassName">ACT_ROUTE_POINT.ClassName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ROUTE_POINT).DisplayCount">ACT_ROUTE_POINT.DisplayCount</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ROUTE_POINT).DisplayInterval">ACT_ROUTE_POINT.DisplayInterval</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ROUTE_POINT).DisplayMessage">ACT_ROUTE_POINT.DisplayMessage</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ROUTE_POINT).DisplayTime">ACT_ROUTE_POINT.DisplayTime</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ROUTE_POINT).GetPointVec2">ACT_ROUTE_POINT:GetPointVec2()</a></td>
+		<td class="summary">
+<p>Get PointVec2</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ROUTE_POINT).GetRange">ACT_ROUTE_POINT:GetRange()</a></td>
+		<td class="summary">
+<p>Get Range around PointVec2</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ROUTE_POINT).Init">ACT_ROUTE_POINT:Init(FsmRoute)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ROUTE_POINT).New">ACT_ROUTE_POINT:New(The, Range, Zone, PointVec2)</a></td>
+		<td class="summary">
+<p>Creates a new routing state machine.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ROUTE_POINT).PointVec2">ACT_ROUTE_POINT.PointVec2</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ROUTE_POINT).Range">ACT_ROUTE_POINT.Range</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ROUTE_POINT).SetPointVec2">ACT_ROUTE_POINT:SetPointVec2(PointVec2)</a></td>
+		<td class="summary">
+<p>Set PointVec2</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ROUTE_POINT).SetRange">ACT_ROUTE_POINT:SetRange(Range)</a></td>
+		<td class="summary">
+<p>Set Range around PointVec2</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ROUTE_POINT).TASK">ACT_ROUTE_POINT.TASK</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ROUTE_POINT).onenterReporting">ACT_ROUTE_POINT:onenterReporting(ProcessUnit, Event, From, To)</a></td>
+		<td class="summary">
+<p>StateMachine callback function</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ROUTE_POINT).onfuncHasArrived">ACT_ROUTE_POINT:onfuncHasArrived(ProcessUnit)</a></td>
+		<td class="summary">
+<p>Method override to check if the controllable has arrived.</p>
 </td>
 		</tr>
 	</table>
@@ -264,13 +370,19 @@ Upon arrival at the zone, a confirmation of arrival is sent, and the process wil
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ROUTE_ZONE).GetZone">ACT_ROUTE_ZONE:GetZone()</a></td>
+		<td class="summary">
+<p>Get Zone</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(ACT_ROUTE_ZONE).Init">ACT_ROUTE_ZONE:Init(FsmRoute)</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ACT_ROUTE_ZONE).New">ACT_ROUTE_ZONE:New(TargetZone)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ROUTE_ZONE).New">ACT_ROUTE_ZONE:New(Zone)</a></td>
 		<td class="summary">
 <p>Creates a new routing state machine.</p>
 </td>
@@ -282,13 +394,19 @@ Upon arrival at the zone, a confirmation of arrival is sent, and the process wil
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ROUTE_ZONE).SetZone">ACT_ROUTE_ZONE:SetZone(Zone)</a></td>
+		<td class="summary">
+<p>Set Zone</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(ACT_ROUTE_ZONE).TASK">ACT_ROUTE_ZONE.TASK</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ACT_ROUTE_ZONE).TargetZone">ACT_ROUTE_ZONE.TargetZone</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ROUTE_ZONE).Zone">ACT_ROUTE_ZONE.Zone</a></td>
 		<td class="summary">
 
 </td>
@@ -314,6 +432,20 @@ Upon arrival at the zone, a confirmation of arrival is sent, and the process wil
 		<em><a href="##(ACT_ROUTE)">#ACT_ROUTE</a></em>
 <a id="ACT_ROUTE" >
 <strong>ACT_ROUTE</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(ACT_ROUTE_POINT)">#ACT_ROUTE_POINT</a></em>
+<a id="ACT_ROUTE_POINT" >
+<strong>ACT_ROUTE_POINT</strong>
 </a>
 </dt>
 <dd>
@@ -424,8 +556,8 @@ self</p>
 <dt>
 
 		<em><a href="Core.Zone.html##(ZONE_BASE)">Core.Zone#ZONE_BASE</a></em>
-<a id="#(ACT_ROUTE).TargetZone" >
-<strong>ACT_ROUTE.TargetZone</strong>
+<a id="#(ACT_ROUTE).Zone" >
+<strong>ACT_ROUTE.Zone</strong>
 </a>
 </dt>
 <dd>
@@ -533,6 +665,330 @@ self</p>
 </dd>
 </dl>
 
+			<h2><a id="#(ACT_ROUTE_POINT)" >Type <code>ACT_ROUTE_POINT</code></a></h2>
+				
+<p>ACT<em>ROUTE</em>POINT class</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(ACT_ROUTE_POINT).ClassName" >
+<strong>ACT_ROUTE_POINT.ClassName</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#number</em>
+<a id="#(ACT_ROUTE_POINT).DisplayCount" >
+<strong>ACT_ROUTE_POINT.DisplayCount</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#number</em>
+<a id="#(ACT_ROUTE_POINT).DisplayInterval" >
+<strong>ACT_ROUTE_POINT.DisplayInterval</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#boolean</em>
+<a id="#(ACT_ROUTE_POINT).DisplayMessage" >
+<strong>ACT_ROUTE_POINT.DisplayMessage</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#number</em>
+<a id="#(ACT_ROUTE_POINT).DisplayTime" >
+<strong>ACT_ROUTE_POINT.DisplayTime</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+	
+<p> 10 seconds is the default</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ACT_ROUTE_POINT).GetPointVec2" >
+<strong>ACT_ROUTE_POINT:GetPointVec2()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Get PointVec2</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="Core.Point.html##(POINT_VEC2)">Core.Point#POINT_VEC2</a>:</em>
+PointVec2 The PointVec2 to route to.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ACT_ROUTE_POINT).GetRange" >
+<strong>ACT_ROUTE_POINT:GetRange()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Get Range around PointVec2</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#number:</em>
+The Range to consider the arrival. Default is 10000 meters.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ACT_ROUTE_POINT).Init" >
+<strong>ACT_ROUTE_POINT:Init(FsmRoute)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> FsmRoute </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ACT_ROUTE_POINT).New" >
+<strong>ACT_ROUTE_POINT:New(The, Range, Zone, PointVec2)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Creates a new routing state machine.</p>
+
+	
+<p>The task will route a controllable to a PointVec2 until the controllable is within the Range.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Point.html##(POINT_VEC2)">Core.Point#POINT_VEC2</a> The </em></code>: 
+PointVec2 to Target.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Range </em></code>: 
+The Distance to Target.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Core.Zone.html##(ZONE_BASE)">Core.Zone#ZONE_BASE</a> Zone </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> PointVec2 </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(ACT_ROUTE_POINT).PointVec2" >
+<strong>ACT_ROUTE_POINT.PointVec2</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ACT_ROUTE_POINT).Range" >
+<strong>ACT_ROUTE_POINT.Range</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ACT_ROUTE_POINT).SetPointVec2" >
+<strong>ACT_ROUTE_POINT:SetPointVec2(PointVec2)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set PointVec2</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Point.html##(POINT_VEC2)">Core.Point#POINT_VEC2</a> PointVec2 </em></code>: 
+The PointVec2 to route to.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ACT_ROUTE_POINT).SetRange" >
+<strong>ACT_ROUTE_POINT:SetRange(Range)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set Range around PointVec2</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number Range </em></code>: 
+The Range to consider the arrival. Default is 10000 meters.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="Tasking.Task.html##(TASK)">Tasking.Task#TASK</a></em>
+<a id="#(ACT_ROUTE_POINT).TASK" >
+<strong>ACT_ROUTE_POINT.TASK</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ACT_ROUTE_POINT).onenterReporting" >
+<strong>ACT_ROUTE_POINT:onenterReporting(ProcessUnit, Event, From, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>StateMachine callback function</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> ProcessUnit </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ACT_ROUTE_POINT).onfuncHasArrived" >
+<strong>ACT_ROUTE_POINT:onfuncHasArrived(ProcessUnit)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Method override to check if the controllable has arrived.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> ProcessUnit </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em></p>
+
+
+</dd>
+</dl>
+
 			<h2><a id="#(ACT_ROUTE_ZONE)" >Type <code>ACT_ROUTE_ZONE</code></a></h2>
 				
 <p>ACT<em>ROUTE</em>ZONE class</p>
@@ -614,6 +1070,24 @@ self</p>
 		<dl class="function">
 <dt>
 
+<a id="#(ACT_ROUTE_ZONE).GetZone" >
+<strong>ACT_ROUTE_ZONE:GetZone()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Get Zone</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="Core.Zone.html##(ZONE_BASE)">Core.Zone#ZONE_BASE</a>:</em>
+Zone The Zone object where to route to.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(ACT_ROUTE_ZONE).Init" >
 <strong>ACT_ROUTE_ZONE:Init(FsmRoute)</strong>
 </a>
@@ -636,7 +1110,7 @@ self</p>
 <dt>
 
 <a id="#(ACT_ROUTE_ZONE).New" >
-<strong>ACT_ROUTE_ZONE:New(TargetZone)</strong>
+<strong>ACT_ROUTE_ZONE:New(Zone)</strong>
 </a>
 </dt>
 <dd>
@@ -650,7 +1124,7 @@ self</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Core.Zone.html##(ZONE_BASE)">Core.Zone#ZONE_BASE</a> TargetZone </em></code>: </p>
+<p><code><em><a href="Core.Zone.html##(ZONE_BASE)">Core.Zone#ZONE_BASE</a> Zone </em></code>: </p>
 
 				</li>
 		</ul>
@@ -673,6 +1147,28 @@ self</p>
 		<dl class="function">
 <dt>
 
+<a id="#(ACT_ROUTE_ZONE).SetZone" >
+<strong>ACT_ROUTE_ZONE:SetZone(Zone)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set Zone</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Zone.html##(ZONE_BASE)">Core.Zone#ZONE_BASE</a> Zone </em></code>: 
+The Zone object where to route to.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 		<em><a href="Tasking.Task.html##(TASK)">Tasking.Task#TASK</a></em>
 <a id="#(ACT_ROUTE_ZONE).TASK" >
 <strong>ACT_ROUTE_ZONE.TASK</strong>
@@ -688,8 +1184,8 @@ self</p>
 <dt>
 
 		<em><a href="Core.Zone.html##(ZONE_BASE)">Core.Zone#ZONE_BASE</a></em>
-<a id="#(ACT_ROUTE_ZONE).TargetZone" >
-<strong>ACT_ROUTE_ZONE.TargetZone</strong>
+<a id="#(ACT_ROUTE_ZONE).Zone" >
+<strong>ACT_ROUTE_ZONE.Zone</strong>
 </a>
 </dt>
 <dd>

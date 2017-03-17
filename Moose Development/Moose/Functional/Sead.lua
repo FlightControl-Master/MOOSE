@@ -36,25 +36,28 @@ function SEAD:New( SEADGroupPrefixes )
 	else
 		self.SEADGroupNames[SEADGroupPrefixes] = SEADGroupPrefixes
 	end
-	_EVENTDISPATCHER:OnShot( self.EventShot, self )
+	
+	self:HandleEvent( EVENTS.Shot )
 	
 	return self
 end
 
 --- Detects if an SA site was shot with an anti radiation missile. In this case, take evasive actions based on the skill level set within the ME.
 -- @see SEAD
-function SEAD:EventShot( Event )
-	self:F( { Event } )
+-- @param #SEAD
+-- @param Core.Event#EVENTDATA EventData
+function SEAD:OnEventShot( EventData )
+	self:F( { EventData } )
 
-	local SEADUnit = Event.IniDCSUnit
-	local SEADUnitName = Event.IniDCSUnitName
-	local SEADWeapon = Event.Weapon -- Identify the weapon fired						
-	local SEADWeaponName = Event.WeaponName	-- return weapon type
+	local SEADUnit = EventData.IniDCSUnit
+	local SEADUnitName = EventData.IniDCSUnitName
+	local SEADWeapon = EventData.Weapon -- Identify the weapon fired						
+	local SEADWeaponName = EventData.WeaponName	-- return weapon type
 	-- Start of the 2nd loop
 	self:T( "Missile Launched = " .. SEADWeaponName )
 	if SEADWeaponName == "KH-58" or SEADWeaponName == "KH-25MPU" or SEADWeaponName == "AGM-88" or SEADWeaponName == "KH-31A" or SEADWeaponName == "KH-31P" then -- Check if the missile is a SEAD
 		local _evade = math.random (1,100) -- random number for chance of evading action
-		local _targetMim = Event.Weapon:getTarget() -- Identify target
+		local _targetMim = EventData.Weapon:getTarget() -- Identify target
 		local _targetMimname = Unit.getName(_targetMim)
 		local _targetMimgroup = Unit.getGroup(Weapon.getTarget(SEADWeapon))
 		local _targetMimgroupName = _targetMimgroup:getName()

@@ -1022,9 +1022,10 @@ function SCORING:_EventOnDeadOrCrash( Event )
                 :ToAllIf( self:IfMessagesDestroy() and self:IfMessagesToAll() )
                 :ToCoalitionIf( InitCoalition, self:IfMessagesDestroy() and self:IfMessagesToCoalition() )
             end
+
             self:ScoreCSV( PlayerName, TargetPlayerName, "DESTROY_PENALTY", 1, ThreatPenalty, InitUnitName, InitUnitCoalition, InitUnitCategory, InitUnitType, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType )
           else
-  
+
             local ThreatLevelTarget, ThreatTypeTarget = TargetUnit:GetThreatLevel()
             local ThreatLevelPlayer = Player.UNIT:GetThreatLevel() / 10 + 1
             local ThreatScore = math.ceil( ( ThreatLevelTarget / ThreatLevelPlayer )  * self.ScaleDestroyScore / 10 )

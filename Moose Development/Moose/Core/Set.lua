@@ -240,6 +240,7 @@ SET_BASE = {
   Filter = {},
   Set = {},
   List = {},
+  Index = {},
 }
 
 --- Creates a new SET_BASE object, building a set of units belonging to a coalitions, categories, countries, types or with defined prefix names.
@@ -258,9 +259,13 @@ function SET_BASE:New( Database )
   self.YieldInterval = 10
   self.TimeInterval = 0.001
 
+  self.Set = {}
+
   self.List = {}
   self.List.__index = self.List
   self.List = setmetatable( { Count = 0 }, self.List )
+  
+  self.Index = {}
   
   self.CallScheduler = SCHEDULER:New( self )
 
@@ -313,6 +318,8 @@ function SET_BASE:Add( ObjectName, Object )
   
   self.Set[ObjectName] = t._
   
+  table.insert( self.Index, ObjectName )
+  
 end
 
 --- Adds a @{Base#BASE} object in the @{Set#SET_BASE}, using the Object Name as the index.
@@ -364,7 +371,15 @@ function SET_BASE:Remove( ObjectName )
     t._prev = nil
     self.List.Count = self.List.Count - 1
     
+    for Index, Key in ipairs( self.Index ) do
+      if Key == ObjectName then
+        table.remove( self.Index, Index )
+        break
+      end
+    end
+    
     self.Set[ObjectName] = nil
+    
   end
   
 end
@@ -384,12 +399,50 @@ function SET_BASE:Get( ObjectName )
   
 end
 
+--- Gets the first object from the @{Set#SET_BASE} and derived classes.
+-- @param #SET_BASE self
+-- @return Core.Base#BASE
+function SET_BASE:GetFirst()
+  self:F()
+
+  local ObjectName = self.Index[1]
+  local FirstObject = self.Set[ObjectName]
+  self:T3( { FirstObject } )
+  return FirstObject 
+end
+
+--- Gets the last object from the @{Set#SET_BASE} and derived classes.
+-- @param #SET_BASE self
+-- @return Core.Base#BASE
+function SET_BASE:GetLast()
+  self:F()
+
+  local ObjectName = self.Index[#self.Index]
+  local LastObject = self.Set[ObjectName]
+  self:T3( { LastObject } )
+  return LastObject 
+end
+
+--- Gets a random object from the @{Set#SET_BASE} and derived classes.
+-- @param #SET_BASE self
+-- @return Core.Base#BASE
+function SET_BASE:GetRandom()
+  self:F()
+
+  local RandomItem = self.Set[self.Index[math.random(#self.Index)]]
+
+  self:T3( { RandomItem } )
+
+  return RandomItem
+end
+
+
 --- Retrieves the amount of objects in the @{Set#SET_BASE} and derived classes.
 -- @param #SET_BASE self
 -- @return #number Count
 function SET_BASE:Count()
 
-  return self.List.Count
+  return #self.Index
 end
 
 
@@ -652,7 +705,8 @@ function SET_BASE:ForEach( IteratorFunction, arg, Set, Function, FunctionArgumen
     return false
   end
 
-  self.CallScheduler:Schedule( self, Schedule, {}, self.TimeInterval, self.TimeInterval, 0 )
+  --self.CallScheduler:Schedule( self, Schedule, {}, self.TimeInterval, self.TimeInterval, 0 )
+  Schedule()
   
   return self
 end
@@ -725,7 +779,7 @@ end
 
 --- SET_GROUP class
 -- @type SET_GROUP
--- @extends #SET_BASE
+-- @extends Core.Set#SET_BASE
 SET_GROUP = {
   ClassName = "SET_GROUP",
   Filter = {

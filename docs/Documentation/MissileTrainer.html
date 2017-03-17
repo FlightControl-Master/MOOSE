@@ -39,11 +39,11 @@
 					<li><a href="Fsm.html">Fsm</a></li>
 					<li><a href="Group.html">Group</a></li>
 					<li><a href="Identifiable.html">Identifiable</a></li>
-					<li><a href="MOVEMENT.html">MOVEMENT</a></li>
 					<li><a href="Menu.html">Menu</a></li>
 					<li><a href="Message.html">Message</a></li>
 					<li>MissileTrainer</li>
 					<li><a href="Mission.html">Mission</a></li>
+					<li><a href="Movement.html">Movement</a></li>
 					<li><a href="Object.html">Object</a></li>
 					<li><a href="Point.html">Point</a></li>
 					<li><a href="Positionable.html">Positionable</a></li>
@@ -61,8 +61,8 @@
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="Task.html">Task</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
+					<li><a href="Task_A2G_Dispatcher.html">Task_A2G_Dispatcher</a></li>
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
-					<li><a href="Task_SEAD.html">Task_SEAD</a></li>
 					<li><a href="Unit.html">Unit</a></li>
 					<li><a href="Utils.html">Utils</a></li>
 					<li><a href="Zone.html">Zone</a></li>
@@ -300,6 +300,12 @@ Together with the <strong>476 virtual team</strong>, we tested the MISSILETRAINE
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MISSILETRAINER).OnEventShot">MISSILETRAINER:OnEventShot(EventData, EVentData)</a></td>
+		<td class="summary">
+<p>Detects if an SA site was shot with an anti radiation missile.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(MISSILETRAINER).TrackingFrequency">MISSILETRAINER.TrackingFrequency</a></td>
 		<td class="summary">
 
@@ -339,12 +345,6 @@ Together with the <strong>476 virtual team</strong>, we tested the MISSILETRAINE
 		<td class="name" nowrap="nowrap"><a href="##(MISSILETRAINER)._Alive">MISSILETRAINER._Alive(Client, self)</a></td>
 		<td class="summary">
 
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MISSILETRAINER)._EventShot">MISSILETRAINER:_EventShot(Event)</a></td>
-		<td class="summary">
-<p>Detects if an SA site was shot with an anti radiation missile.</p>
 </td>
 		</tr>
 		<tr>
@@ -821,6 +821,35 @@ The distance in meters when a tracked missile needs to be destroyed when close t
 		<dl class="function">
 <dt>
 
+<a id="#(MISSILETRAINER).OnEventShot" >
+<strong>MISSILETRAINER:OnEventShot(EventData, EVentData)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Detects if an SA site was shot with an anti radiation missile.</p>
+
+	
+<p>In this case, take evasive actions based on the skill level set within the ME.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Event.html##(EVENTDATA)">Core.Event#EVENTDATA</a> EventData </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> EVentData </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(MISSILETRAINER).TrackingFrequency" >
 <strong>MISSILETRAINER.TrackingFrequency</strong>
 </a>
@@ -946,30 +975,6 @@ The distance in meters when a tracked missile needs to be destroyed when close t
 				<li>
 				
 <p><code><em> self </em></code>: </p>
-
-				</li>
-		</ul>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(MISSILETRAINER)._EventShot" >
-<strong>MISSILETRAINER:_EventShot(Event)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Detects if an SA site was shot with an anti radiation missile.</p>
-
-	
-<p>In this case, take evasive actions based on the skill level set within the ME.</p>
-
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="Core.Event.html##(EVENTDATA)">Core.Event#EVENTDATA</a> Event </em></code>: </p>
 
 				</li>
 		</ul>

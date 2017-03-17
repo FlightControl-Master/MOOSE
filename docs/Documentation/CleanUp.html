@@ -39,11 +39,11 @@
 					<li><a href="Fsm.html">Fsm</a></li>
 					<li><a href="Group.html">Group</a></li>
 					<li><a href="Identifiable.html">Identifiable</a></li>
-					<li><a href="MOVEMENT.html">MOVEMENT</a></li>
 					<li><a href="Menu.html">Menu</a></li>
 					<li><a href="Message.html">Message</a></li>
 					<li><a href="MissileTrainer.html">MissileTrainer</a></li>
 					<li><a href="Mission.html">Mission</a></li>
+					<li><a href="Movement.html">Movement</a></li>
 					<li><a href="Object.html">Object</a></li>
 					<li><a href="Point.html">Point</a></li>
 					<li><a href="Positionable.html">Positionable</a></li>
@@ -61,8 +61,8 @@
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="Task.html">Task</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
+					<li><a href="Task_A2G_Dispatcher.html">Task_A2G_Dispatcher</a></li>
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
-					<li><a href="Task_SEAD.html">Task_SEAD</a></li>
 					<li><a href="Unit.html">Unit</a></li>
 					<li><a href="Utils.html">Utils</a></li>
 					<li><a href="Zone.html">Zone</a></li>
@@ -101,9 +101,15 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CLEANUP).New">CLEANUP:New(ZoneNames, TimeInterval)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(CLEANUP).CleanUpScheduler">CLEANUP.CleanUpScheduler</a></td>
 		<td class="summary">
 
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CLEANUP).New">CLEANUP:New(ZoneNames, TimeInterval)</a></td>
+		<td class="summary">
+<p>Creates the main object which is handling the cleaning of the debris within the given Zone Names.</p>
 </td>
 		</tr>
 		<tr>
@@ -173,7 +179,7 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CLEANUP)._OnEventBirth">CLEANUP:_OnEventBirth(Event)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(CLEANUP)._OnEventBirth">CLEANUP:_OnEventBirth(EventData)</a></td>
 		<td class="summary">
 
 </td>
@@ -233,33 +239,61 @@
 		<dl class="function">
 <dt>
 
-<a id="#(CLEANUP).New" >
-<strong>CLEANUP:New(ZoneNames, TimeInterval)</strong>
+		<em></em>
+<a id="#(CLEANUP).CleanUpScheduler" >
+<strong>CLEANUP.CleanUpScheduler</strong>
 </a>
 </dt>
 <dd>
 	
 
 
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em> ZoneNames </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em> TimeInterval </em></code>: </p>
-
-				</li>
-		</ul>
 </dd>
 </dl>
 		<dl class="function">
 <dt>
 
-		<em>#number</em>
+<a id="#(CLEANUP).New" >
+<strong>CLEANUP:New(ZoneNames, TimeInterval)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Creates the main object which is handling the cleaning of the debris within the given Zone Names.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#table ZoneNames </em></code>: 
+Is a table of zone names where the debris should be cleaned. Also a single string can be passed with one zone name.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number TimeInterval </em></code>: 
+The interval in seconds when the clean activity takes place. The default is 300 seconds, thus every 5 minutes.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(CLEANUP)">#CLEANUP</a>:</em></p>
+
+
+			<h3>Usage:</h3>
+		<pre class="example"><code> -- Clean these Zones.
+CleanUpAirports = CLEANUP:New( { 'CLEAN Tbilisi', 'CLEAN Kutaisi' }, 150 )
+or
+CleanUpTbilisi = CLEANUP:New( 'CLEAN Tbilisi', 150 )
+CleanUpKutaisi = CLEANUP:New( 'CLEAN Kutaisi', 600 )</code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
 <a id="#(CLEANUP).TimeInterval" >
 <strong>CLEANUP.TimeInterval</strong>
 </a>
@@ -526,7 +560,7 @@ The Unit name ...</p>
 <dt>
 
 <a id="#(CLEANUP)._OnEventBirth" >
-<strong>CLEANUP:_OnEventBirth(Event)</strong>
+<strong>CLEANUP:_OnEventBirth(EventData)</strong>
 </a>
 </dt>
 <dd>
@@ -537,7 +571,7 @@ The Unit name ...</p>
 		<ul>
 				<li>
 				
-<p><code><em> Event </em></code>: </p>
+<p><code><em><a href="Core.Event.html##(EVENTDATA)">Core.Event#EVENTDATA</a> EventData </em></code>: </p>
 
 				</li>
 		</ul>

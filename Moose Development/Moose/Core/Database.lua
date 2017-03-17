@@ -54,6 +54,8 @@ DATABASE = {
   PLAYERSJOINED = {},
   CLIENTS = {},
   AIRBASES = {},
+  COUNTRY_ID = {},
+  COUNTRY_NAME = {},
   NavPoints = {},
 }
 
@@ -760,6 +762,9 @@ function DATABASE:_RegisterTemplates()
 
           local CountryName = string.upper(cntry_data.name)
           local CountryID = cntry_data.id
+          
+          self.COUNTRY_ID[CountryName] = CountryID
+          self.COUNTRY_NAME[CountryID] = CountryName
           
           --self.Units[coa_name][countryName] = {}
           --self.Units[coa_name][countryName]["countryId"] = cntry_data.id

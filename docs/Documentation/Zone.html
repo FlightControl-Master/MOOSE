@@ -39,11 +39,11 @@
 					<li><a href="Fsm.html">Fsm</a></li>
 					<li><a href="Group.html">Group</a></li>
 					<li><a href="Identifiable.html">Identifiable</a></li>
-					<li><a href="MOVEMENT.html">MOVEMENT</a></li>
 					<li><a href="Menu.html">Menu</a></li>
 					<li><a href="Message.html">Message</a></li>
 					<li><a href="MissileTrainer.html">MissileTrainer</a></li>
 					<li><a href="Mission.html">Mission</a></li>
+					<li><a href="Movement.html">Movement</a></li>
 					<li><a href="Object.html">Object</a></li>
 					<li><a href="Point.html">Point</a></li>
 					<li><a href="Positionable.html">Positionable</a></li>
@@ -61,8 +61,8 @@
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="Task.html">Task</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
+					<li><a href="Task_A2G_Dispatcher.html">Task_A2G_Dispatcher</a></li>
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
-					<li><a href="Task_SEAD.html">Task_SEAD</a></li>
 					<li><a href="Unit.html">Unit</a></li>
 					<li><a href="Utils.html">Utils</a></li>
 					<li>Zone</li>
@@ -75,6 +75,8 @@
 <p><strong>Core</strong> - ZONE classes define <strong>zones</strong> within your mission of <strong>various forms</strong>, with <strong>various capabilities</strong>.</p>
 
    
+
+<p><img src="..\Presentations\ZONE\Dia1.JPG" alt="Banner Image"/></p>
 
 <hr/>
 
@@ -366,9 +368,27 @@ This class implements the inherited functions from <a href="Zone.html##(ZONE_RAD
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_BASE).GetPointVec2">ZONE_BASE:GetPointVec2(Height)</a></td>
+		<td class="summary">
+<p>Returns a <a href="Point.html##(POINT_VEC2)">Point#POINT_VEC2</a> of the zone.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_BASE).GetPointVec3">ZONE_BASE:GetPointVec3(Height)</a></td>
+		<td class="summary">
+<p>Returns a <a href="Point.html##(POINT_VEC3)">Point#POINT_VEC3</a> of the zone.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(ZONE_BASE).GetRandomPointVec2">ZONE_BASE:GetRandomPointVec2()</a></td>
 		<td class="summary">
 <p>Define a random <a href="Point.html##(POINT_VEC2)">Point#POINT_VEC2</a> within the zone.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_BASE).GetRandomPointVec3">ZONE_BASE:GetRandomPointVec3()</a></td>
+		<td class="summary">
+<p>Define a random <a href="Point.html##(POINT_VEC3)">Point#POINT_VEC3</a> within the zone.</p>
 </td>
 		</tr>
 		<tr>
@@ -381,6 +401,12 @@ This class implements the inherited functions from <a href="Zone.html##(ZONE_RAD
 		<td class="name" nowrap="nowrap"><a href="##(ZONE_BASE).GetVec2">ZONE_BASE:GetVec2()</a></td>
 		<td class="summary">
 <p>Returns the <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> coordinate of the zone.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_BASE).GetVec3">ZONE_BASE:GetVec3(Height)</a></td>
+		<td class="summary">
+<p>Returns the <a href="DCSTypes.html##(Vec3)">DCSTypes#Vec3</a> of the zone.</p>
 </td>
 		</tr>
 		<tr>
@@ -520,7 +546,7 @@ This class implements the inherited functions from <a href="Zone.html##(ZONE_RAD
 			<h2><a id="#(ZONE_POLYGON_BASE)">Type <code>ZONE_POLYGON_BASE</code></a></h2>
 				<table class="function_list">
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ZONE_POLYGON_BASE).BoundZone">ZONE_POLYGON_BASE:BoundZone()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_POLYGON_BASE).BoundZone">ZONE_POLYGON_BASE:BoundZone(UnBound)</a></td>
 		<td class="summary">
 <p>Smokes the zone boundaries in a color.</p>
 </td>
@@ -590,7 +616,7 @@ This class implements the inherited functions from <a href="Zone.html##(ZONE_RAD
 			<h2><a id="#(ZONE_RADIUS)">Type <code>ZONE_RADIUS</code></a></h2>
 				<table class="function_list">
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).BoundZone">ZONE_RADIUS:BoundZone(Points)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).BoundZone">ZONE_RADIUS:BoundZone(Points, UnBound, CountryID)</a></td>
 		<td class="summary">
 <p>Bounds the zone with tires.</p>
 </td>
@@ -961,6 +987,60 @@ The name of the zone.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(ZONE_BASE).GetPointVec2" >
+<strong>ZONE_BASE:GetPointVec2(Height)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns a <a href="Point.html##(POINT_VEC2)">Point#POINT_VEC2</a> of the zone.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a> Height </em></code>: 
+The height to add to the land height where the center of the zone is located.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="Core.Point.html##(POINT_VEC2)">Core.Point#POINT_VEC2</a>:</em>
+The PointVec2 of the zone.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_BASE).GetPointVec3" >
+<strong>ZONE_BASE:GetPointVec3(Height)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns a <a href="Point.html##(POINT_VEC3)">Point#POINT_VEC3</a> of the zone.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a> Height </em></code>: 
+The height to add to the land height where the center of the zone is located.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="Core.Point.html##(POINT_VEC3)">Core.Point#POINT_VEC3</a>:</em>
+The PointVec3 of the zone.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(ZONE_BASE).GetRandomPointVec2" >
 <strong>ZONE_BASE:GetRandomPointVec2()</strong>
 </a>
@@ -973,6 +1053,24 @@ The name of the zone.</p>
 				
 <p><em><a href="Core.Point.html##(POINT_VEC2)">Core.Point#POINT_VEC2</a>:</em>
 The PointVec2 coordinates.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_BASE).GetRandomPointVec3" >
+<strong>ZONE_BASE:GetRandomPointVec3()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Define a random <a href="Point.html##(POINT_VEC3)">Point#POINT_VEC3</a> within the zone.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="Core.Point.html##(POINT_VEC3)">Core.Point#POINT_VEC3</a>:</em>
+The PointVec3 coordinates.</p>
 
 </dd>
 </dl>
@@ -1009,6 +1107,33 @@ The Vec2 coordinates.</p>
 				
 <p><em>#nil:</em></p>
 
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_BASE).GetVec3" >
+<strong>ZONE_BASE:GetVec3(Height)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the <a href="DCSTypes.html##(Vec3)">DCSTypes#Vec3</a> of the zone.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a> Height </em></code>: 
+The height to add to the land height where the center of the zone is located.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="Dcs.DCSTypes.html##(Vec3)">Dcs.DCSTypes#Vec3</a>:</em>
+The Vec3 of the zone.</p>
 
 </dd>
 </dl>
@@ -1448,13 +1573,22 @@ self</p>
 <dt>
 
 <a id="#(ZONE_POLYGON_BASE).BoundZone" >
-<strong>ZONE_POLYGON_BASE:BoundZone()</strong>
+<strong>ZONE_POLYGON_BASE:BoundZone(UnBound)</strong>
 </a>
 </dt>
 <dd>
 	
 <p>Smokes the zone boundaries in a color.</p>
 
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#boolean UnBound </em></code>: 
+If true, the tyres will be destroyed.</p>
+
+				</li>
+		</ul>
 		<h3>Return value</h3>
 				
 <p><em><a href="##(ZONE_POLYGON_BASE)">#ZONE<em>POLYGON</em>BASE</a>:</em>
@@ -1690,19 +1824,30 @@ self</p>
 <dt>
 
 <a id="#(ZONE_RADIUS).BoundZone" >
-<strong>ZONE_RADIUS:BoundZone(Points)</strong>
+<strong>ZONE_RADIUS:BoundZone(Points, UnBound, CountryID)</strong>
 </a>
 </dt>
 <dd>
 	
 <p>Bounds the zone with tires.</p>
 
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
 <p><code><em>#number Points </em></code>: 
 (optional) The amount of points in the circle.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#boolean UnBound </em></code>: 
+If true the tyres will be destroyed.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> CountryID </em></code>: </p>
 
 				</li>
 		</ul>

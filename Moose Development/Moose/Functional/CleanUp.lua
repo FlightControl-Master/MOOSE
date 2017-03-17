@@ -29,7 +29,9 @@ CLEANUP = {
 -- or
 -- CleanUpTbilisi = CLEANUP:New( 'CLEAN Tbilisi', 150 )
 -- CleanUpKutaisi = CLEANUP:New( 'CLEAN Kutaisi', 600 )
-function CLEANUP:New( ZoneNames, TimeInterval )	local self = BASE:Inherit( self, BASE:New() )
+function CLEANUP:New( ZoneNames, TimeInterval )	
+
+  local self = BASE:Inherit( self, BASE:New() ) -- #CLEANUP
 	self:F( { ZoneNames, TimeInterval } )
 	
 	if type( ZoneNames ) == 'table' then
@@ -41,7 +43,7 @@ function CLEANUP:New( ZoneNames, TimeInterval )	local self = BASE:Inherit( self,
 		self.TimeInterval = TimeInterval
 	end
 	
-	_EVENTDISPATCHER:OnBirth( self._OnEventBirth, self )
+	self:HandleEvent( EVENTS.Birth )
 	
   self.CleanUpScheduler = SCHEDULER:New( self, self._CleanUpScheduler, {}, 1, TimeInterval )
 	
@@ -102,32 +104,24 @@ function CLEANUP:_DestroyMissile( MissileObject )
 	end
 end
 
-function CLEANUP:_OnEventBirth( Event )
-  self:F( { Event } )
+--- @param #CLEANUP self
+-- @param Core.Event#EVENTDATA EventData
+function CLEANUP:_OnEventBirth( EventData )
+  self:F( { EventData } )
   
-  self.CleanUpList[Event.IniDCSUnitName] = {}
-  self.CleanUpList[Event.IniDCSUnitName].CleanUpUnit = Event.IniDCSUnit
-  self.CleanUpList[Event.IniDCSUnitName].CleanUpGroup = Event.IniDCSGroup
-  self.CleanUpList[Event.IniDCSUnitName].CleanUpGroupName = Event.IniDCSGroupName
-  self.CleanUpList[Event.IniDCSUnitName].CleanUpUnitName = Event.IniDCSUnitName
+  self.CleanUpList[EventData.IniDCSUnitName] = {}
+  self.CleanUpList[EventData.IniDCSUnitName].CleanUpUnit = EventData.IniDCSUnit
+  self.CleanUpList[EventData.IniDCSUnitName].CleanUpGroup = EventData.IniDCSGroup
+  self.CleanUpList[EventData.IniDCSUnitName].CleanUpGroupName = EventData.IniDCSGroupName
+  self.CleanUpList[EventData.IniDCSUnitName].CleanUpUnitName = EventData.IniDCSUnitName
 
-  _EVENTDISPATCHER:OnEngineShutDownForUnit( Event.IniDCSUnitName, self._EventAddForCleanUp, self )
-  _EVENTDISPATCHER:OnEngineStartUpForUnit( Event.IniDCSUnitName, self._EventAddForCleanUp, self )
-  _EVENTDISPATCHER:OnHitForUnit( Event.IniDCSUnitName, self._EventAddForCleanUp, self )
-  _EVENTDISPATCHER:OnPilotDeadForUnit( Event.IniDCSUnitName, self._EventCrash, self )
-  _EVENTDISPATCHER:OnDeadForUnit( Event.IniDCSUnitName, self._EventCrash,  self )
-  _EVENTDISPATCHER:OnCrashForUnit( Event.IniDCSUnitName, self._EventCrash,  self )
-  _EVENTDISPATCHER:OnShotForUnit( Event.IniDCSUnitName, self._EventShot, self )
-
-  --self:AddEvent( world.event.S_EVENT_ENGINE_SHUTDOWN, self._EventAddForCleanUp )
-  --self:AddEvent( world.event.S_EVENT_ENGINE_STARTUP, self._EventAddForCleanUp )
---  self:AddEvent( world.event.S_EVENT_HIT, self._EventAddForCleanUp ) -- , self._EventHitCleanUp )
---  self:AddEvent( world.event.S_EVENT_CRASH, self._EventCrash ) -- , self._EventHitCleanUp )
---  --self:AddEvent( world.event.S_EVENT_DEAD, self._EventCrash )
---  self:AddEvent( world.event.S_EVENT_SHOT, self._EventShot )
---  
---  self:EnableEvents()
-
+  EventData.IniUnit:HandleEvent( EVENTS.EngineShutdown , self._EventAddForCleanUp )
+  EventData.IniUnit:HandleEvent( EVENTS.EngineStartup, self._EventAddForCleanUp )
+  EventData.IniUnit:HandleEvent( EVENTS.Hit, self._EventAddForCleanUp )
+  EventData.IniUnit:HandleEvent( EVENTS.PilotDead, self._EventCrash )
+  EventData.IniUnit:HandleEvent( EVENTS.Dead, self._EventCrash )
+  EventData.IniUnit:HandleEvent( EVENTS.Crash, self._EventCrash )
+  EventData.IniUnit:HandleEvent( EVENTS.Shot, self._EventShot )
 
 end
 

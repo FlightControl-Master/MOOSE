@@ -192,15 +192,6 @@ do -- ACT_ACCOUNT_DEADS
     self.TaskName = FsmAccount.TaskName
   end
 
-
-  
-  function ACT_ACCOUNT_DEADS:_Destructor()
-    self:E("_Destructor")
-  
-    self:EventRemoveAll()
-  
-  end
-  
   --- Process Events
   
   --- StateMachine callback function
@@ -231,7 +222,6 @@ do -- ACT_ACCOUNT_DEADS
     
     if self.TargetSetUnit:FindUnit( EventData.IniUnitName ) then
       local TaskGroup = ProcessUnit:GetGroup()
-      self.TargetSetUnit:RemoveUnitsByName( EventData.IniUnitName )
       self:Message( "You hit a target. Your group with assigned " .. self.TaskName .. " task has " .. self.TargetSetUnit:Count() .. " targets ( " .. self.TargetSetUnit:GetUnitTypesText() .. " ) left to be destroyed." )
     end
   end
@@ -244,7 +234,7 @@ do -- ACT_ACCOUNT_DEADS
   -- @param #string To
   function ACT_ACCOUNT_DEADS:onafterEvent( ProcessUnit, From, Event, To, EventData )
   
-    if self.TargetSetUnit:Count() > 0 then
+    if self.TargetSetUnit:Count() > 1 then
       self:__More( 1 )
     else
       self:__NoMore( 1 )
@@ -259,7 +249,7 @@ do -- ACT_ACCOUNT_DEADS
     self:T( { "EventDead", EventData } )
 
     if EventData.IniDCSUnit then
-      self:__Event( 1, EventData )
+      self:Event( EventData )
     end
   end
 

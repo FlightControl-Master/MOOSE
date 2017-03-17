@@ -1,9 +1,21 @@
-
-
-
-
-
-
+---
+-- Name: ESC-001 - Escorting Helicopters
+-- Author: FlightControl
+-- Date Created: 10 Mar 2017
+--
+-- # Situation:
+-- 
+-- Your client helicopter is flying in the battle field.
+-- It is escorted by an MI-28N, which you can command...
+-- Use the menu options to:
+-- - Make the escort follow you.
+-- - Report detected targets.
+-- - Attack targets
+-- - Flare
+-- 
+-- # Test cases: 
+-- 
+-- 1. When executing the commands, observe the MI-28N reactions.
 
 do
   local function EventAliveHelicopter( Client )
@@ -20,6 +32,8 @@ do
       :MenuResumeMission()
       :MenuROE()
       :MenuAssistedAttack()
+      
+    EscortHeli1:SetDetection( EscortHeliDetection )
 
     local EscortGroupArtillery = SpawnEscortArtillery:ReSpawn(1)
     local EscortArtillery = ESCORT
@@ -59,16 +73,17 @@ do
   SpawnEscortGround = SPAWN:New( "Escort Ground" )
   SpawnEscortShip = SPAWN:New( "Escort Ship" )
   SpawnEscortArtillery = SPAWN:New( "Ground Attack Assistance" )
+  
+  EscortHeliSetGroup = SET_GROUP:New():FilterPrefixes("Escort Helicopter"):FilterStart()
+  EscortHeliDetection = DETECTION_AREAS:New( EscortHeliSetGroup, 1000, 500 )
+  
+  EscortHeliDetection:BoundDetectedZones()
+  EscortHeliDetection:SetDetectionInterval( 15 )
 
   EscortClientHeli = CLIENT:FindByName( "Lead Helicopter", "Fly around and observe the behaviour of the escort helicopter" ):Alive( EventAliveHelicopter )  
   EscortClientPlane = CLIENT:FindByName( "Lead Plane", "Fly around and observe the behaviour of the escort airplane. Select Navigate->Joun-Up and airplane should follow you. Change speed and directions." )
                                   :Alive( EventAlivePlane )                                    
 
 end
-
--- MISSION SCHEDULER STARTUP
-MISSIONSCHEDULER.Start()
-MISSIONSCHEDULER.ReportMenu()
-MISSIONSCHEDULER.ReportMissionsHide()
 
 env.info( "Test Mission loaded" )
