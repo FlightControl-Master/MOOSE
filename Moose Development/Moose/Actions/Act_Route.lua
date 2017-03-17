@@ -256,12 +256,14 @@ do -- ACT_ROUTE_POINT
   -- @return #boolean
   function ACT_ROUTE_POINT:onfuncHasArrived( ProcessUnit )
 
-    local Distance = self.PointVec2:Get2DDistance( ProcessUnit:GetPointVec2() )
-    
-    if Distance <= self.Range then
-      local RouteText = "You have arrived."
-      self:Message( RouteText )
-      return true
+    if ProcessUnit:IsAlive() then
+      local Distance = self.PointVec2:Get2DDistance( ProcessUnit:GetPointVec2() )
+      
+      if Distance <= self.Range then
+        local RouteText = "You have arrived."
+        self:Message( RouteText )
+        return true
+      end
     end
 
     return false

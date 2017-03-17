@@ -425,11 +425,11 @@ function EVENT:Init( EventID, EventClass )
   -- Each event has a subtable of EventClasses, ordered by EventPriority.
   local EventPriority = EventClass:GetEventPriority()
   if not self.Events[EventID][EventPriority] then
-    self.Events[EventID][EventPriority] = setmetatable( {}, { __mode = "kv" } )
+    self.Events[EventID][EventPriority] = setmetatable( {}, { __mode = "k" } )
   end 
 
   if not self.Events[EventID][EventPriority][EventClass] then
-     self.Events[EventID][EventPriority][EventClass] = {}
+     self.Events[EventID][EventPriority][EventClass] = setmetatable( {}, { __mode = "v" } )
   end
   return self.Events[EventID][EventPriority][EventClass]
 end

@@ -50,28 +50,26 @@ do -- TASK_A2G_DISPATCHER
   -- @field Set#SET_GROUP SetGroup The groups to which the FAC will report to.
   -- @field Functional.Detection#DETECTION_BASE Detection The DETECTION_BASE object that is used to report the detected objects.
   -- @field Tasking.Mission#MISSION Mission
-  -- @field Wrapper.Group#GROUP CommandCenter
   -- @extends Tasking.DetectionManager#DETECTION_MANAGER
   TASK_A2G_DISPATCHER = {
     ClassName = "TASK_A2G_DISPATCHER",
     Mission = nil,
-    CommandCenter = nil,
     Detection = nil,
   }
   
   
   --- TASK_A2G_DISPATCHER constructor.
   -- @param #TASK_A2G_DISPATCHER self
-  -- @param Set#SET_GROUP SetGroup
-  -- @param Functional.Detection#DETECTION_BASE Detection
+  -- @param Tasking.Mission#MISSION The mission for which the task dispatching is done.
+  -- @param Set#SET_GROUP SetGroup The set of groups that can join the tasks within the mission.
+  -- @param Functional.Detection#DETECTION_BASE Detection The detection results that are used to dynamically assign new tasks to human players.
   -- @return #TASK_A2G_DISPATCHER self
-  function TASK_A2G_DISPATCHER:New( Mission, CommandCenter, SetGroup, Detection )
+  function TASK_A2G_DISPATCHER:New( Mission, SetGroup, Detection )
   
     -- Inherits from DETECTION_MANAGER
     local self = BASE:Inherit( self, DETECTION_MANAGER:New( SetGroup, Detection ) ) -- #TASK_A2G_DISPATCHER
     
     self.Detection = Detection
-    self.CommandCenter = CommandCenter
     self.Mission = Mission
     
     self:Schedule( 30 )
@@ -245,7 +243,7 @@ do -- TASK_A2G_DISPATCHER
       local BAITask = Mission:GetTask( string.format( "BAI.%03d", ItemID ) )
       BAITask = self:EvaluateRemoveTask( Mission, BAITask, DetectedItem )
       if not BAITask then
-        local TargetSetUnit = self:EvaluateBAI( DetectedItem, self.CommandCenter:GetCoalition() ) -- Returns a SetUnit if there are targets to be SEADed...
+        local TargetSetUnit = self:EvaluateBAI( DetectedItem, self.Mission:GetCommandCenter():GetPositionable():GetCoalition() ) -- Returns a SetUnit if there are targets to be SEADed...
         if TargetSetUnit then
           local Task = TASK_BAI:New( Mission, self.SetGroup, string.format( "BAI.%03d", ItemID ), TargetSetUnit )
           Task:SetTargetZone( DetectedZone )
@@ -272,12 +270,12 @@ do -- TASK_A2G_DISPATCHER
     
     for TaskGroupID, TaskGroup in pairs( self.SetGroup:GetSet() ) do
       if not TaskGroup:GetState( TaskGroup, "Assigned" ) then
-        self.CommandCenter:MessageToGroup( 
+        Mission:GetCommandCenter():MessageToGroup( 
           string.format( "HQ Reporting - Planned tasks for mission '%s':\n%s\n", 
                          self.Mission:GetName(),
                          string.format( "%s\n%s\n%s\n%s", ReportSEAD:Text(), ReportCAS:Text(), ReportBAI:Text(), ReportChanges:Text()
                        )
-          ), self:GetReportDisplayTime(), TaskGroup  
+          ), TaskGroup  
         )
       end
     end

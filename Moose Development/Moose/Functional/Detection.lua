@@ -1379,10 +1379,10 @@ do -- DETECTION_UNITS
       if DetectedItemUnit then
         self:T(DetectedItemUnit)
   
-        local UnitCategoryName = DetectedItemUnit:GetCategoryName()
-        local UnitCategoryType = DetectedItemUnit:GetTypeName()
+        local UnitCategoryName = DetectedItemUnit:GetCategoryName() or ""
+        local UnitCategoryType = DetectedItemUnit:GetTypeName() or ""
   
-        if DetectedItem.Type then
+        if DetectedItem.Type and UnitCategoryName and UnitCategoryType then
           UnitCategoryText = UnitCategoryName .. " (" .. UnitCategoryType .. ") at "
         else
           UnitCategoryText = "Unknown target at "

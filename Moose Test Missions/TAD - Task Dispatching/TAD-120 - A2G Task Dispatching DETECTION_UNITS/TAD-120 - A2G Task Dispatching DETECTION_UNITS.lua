@@ -1,4 +1,4 @@
- ---
+---
 -- Name: TAD-120 - A2G Task Dispatching DETECTION_UNITS
 -- Author: FlightControl
 -- Date Created: 13 Mar 2017
@@ -31,7 +31,7 @@ local FACAreas = DETECTION_UNITS:New( FACSet )
 
 local AttackGroups = SET_GROUP:New():FilterCoalitions( "red" ):FilterPrefixes( "Attack" ):FilterStart()
 
-local TaskDispatcher = TASK_A2G_DISPATCHER:New( Mission, HQ, AttackGroups, FACAreas )
+local TaskDispatcher = TASK_A2G_DISPATCHER:New( Mission, AttackGroups, FACAreas )
 
 -- Now this is REALLY neat. I set the goal of the mission to be the destruction of Target #004.
 -- This is just an example, but many more examples can follow...
