@@ -194,17 +194,26 @@ function COMMANDCENTER:SetMenu()
 
   self.CommandCenterMenu = self.CommandCenterMenu or MENU_COALITION:New( self.CommandCenterCoalition, "Command Center (" .. self:GetName() .. ")" )
 
+  local MenuTime = timer.getTime()
   for MissionID, Mission in pairs( self:GetMissions() ) do
     local Mission = Mission -- Tasking.Mission#MISSION
-    Mission:RemoveMenu()
+    Mission:SetMenu( MenuTime )
+  end
+
+  for MissionID, Mission in pairs( self:GetMissions() ) do
+    local Mission = Mission -- Tasking.Mission#MISSION
+    Mission:RemoveMenu( MenuTime )
   end
   
-  for MissionID, Mission in pairs( self:GetMissions() ) do
-    local Mission = Mission -- Tasking.Mission#MISSION
-    Mission:SetMenu()
-  end
 end
 
+--- Gets the commandcenter menu structure governed by the HQ command center.
+-- @param #COMMANDCENTER self
+-- @return Core.Menu#MENU_COALITION
+function COMMANDCENTER:GetMenu()
+  self:F()
+  return self.CommandCenterMenu
+end
 
 --- Checks of the COMMANDCENTER has a GROUP.
 -- @param #COMMANDCENTER self

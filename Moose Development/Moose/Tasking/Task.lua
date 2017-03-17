@@ -354,8 +354,13 @@ function TASK:AssignToGroup( TaskGroup )
   
   TaskGroup:SetState( TaskGroup, "Assigned", self )
   
-  self:RemoveMenuForGroup( TaskGroup )
-  self:SetAssignedMenuForGroup( TaskGroup )
+  local Mission = self:GetMission()
+  local CommandCenter = Mission:GetCommandCenter()
+  
+  CommandCenter:SetMenu()
+  
+  --self:RemoveMenuForGroup( TaskGroup )
+  --self:SetAssignedMenuForGroup( TaskGroup )
   
   local TaskUnits = TaskGroup:GetUnits()
   for UnitID, UnitData in pairs( TaskUnits ) do
@@ -527,13 +532,18 @@ end
 
 --- Set the menu options of the @{Task} to all the groups in the SetGroup.
 -- @param #TASK self
-function TASK:SetMenu()
+-- @param #number MenuTime
+-- @return #TASK
+function TASK:SetMenu( MenuTime )
   self:F()
 
   self.SetGroup:Flush()
-  for TaskGroupID, TaskGroup in pairs( self.SetGroup:GetSet() ) do
-    if self:IsStatePlanned() or self:IsStateReplanned() then
-      self:SetMenuForGroup( TaskGroup )
+  for TaskGroupID, TaskGroupData in pairs( self.SetGroup:GetSet() ) do
+    local TaskGroup = TaskGroupData -- Wrapper.Group#GROUP 
+    if TaskGroup:IsAlive() and TaskGroup:GetPlayerNames() then
+      if self:IsStatePlanned() or self:IsStateReplanned() then
+        self:SetMenuForGroup( TaskGroup, MenuTime )
+      end
     end
   end  
 end
@@ -541,17 +551,15 @@ end
 
 --- Remove the menu options of the @{Task} to all the groups in the SetGroup.
 -- @param #TASK self
--- @return #TASK self
-function TASK:RemoveMenu()
-
+-- @param #number MenuTime
+-- @return #TASK
+function TASK:RemoveMenu( MenuTime )
+  self:F()
 
   for TaskGroupID, TaskGroup in pairs( self.SetGroup:GetSet() ) do
     local TaskGroup = TaskGroup -- Wrapper.Group#GROUP 
-    if TaskGroup:IsAlive() then
-      if not TaskGroup:GetState( TaskGroup, "Assigned" ) then
-        self:T( { "Remove Menu for Group:", TaskGroup:GetName() } )
-        self:RemoveMenuForGroup( TaskGroup )
-      end
+    if TaskGroup:IsAlive() and TaskGroup:GetPlayerNames() then
+      self:RemoveMenuForGroup( TaskGroup, MenuTime )
     end
   end
 end
@@ -559,13 +567,15 @@ end
 
 --- Set the Menu for a Group
 -- @param #TASK self
-function TASK:SetMenuForGroup( TaskGroup )
+-- @param #number MenuTime
+-- @return #TASK
+function TASK:SetMenuForGroup( TaskGroup, MenuTime )
 
   if not TaskGroup:GetState( TaskGroup, "Assigned" ) then
-    self:SetPlannedMenuForGroup( TaskGroup, self:GetTaskName() )
+    self:SetPlannedMenuForGroup( TaskGroup, self:GetTaskName(), MenuTime )
   else
     if not self:IsAssignedToGroup( TaskGroup ) then
-      self:SetAssignedMenuForGroup( TaskGroup )
+      self:SetAssignedMenuForGroup( TaskGroup, MenuTime )
     end
   end
 end
@@ -575,16 +585,24 @@ end
 -- @param #TASK self
 -- @param Wrapper.Group#GROUP TaskGroup
 -- @param #string MenuText The menu text.
+-- @param #number MenuTime
 -- @return #TASK self
-function TASK:SetPlannedMenuForGroup( TaskGroup, MenuText )
+function TASK:SetPlannedMenuForGroup( TaskGroup, MenuText, MenuTime )
   self:E( TaskGroup:GetName() )
 
   local Mission = self:GetMission()
-  local MissionMenu = Mission:GetMissionMenu( TaskGroup )
+  local MissionName = Mission:GetName()
+  local CommandCenter = Mission:GetCommandCenter()
+  local CommandCenterMenu = CommandCenter:GetMenu()
+
+  local MissionMenu = MENU_GROUP:New( TaskGroup, MissionName, CommandCenterMenu ):SetTime( MenuTime )
+  
+  
+  local MissionMenu = Mission:GetMenu( TaskGroup )
 
   local TaskType = self:GetType()
-  local TaskTypeMenu = MENU_GROUP:New( TaskGroup, TaskType, MissionMenu )
-  local TaskMenu = MENU_GROUP_COMMAND:New( TaskGroup, MenuText, TaskTypeMenu, self.MenuAssignToGroup, { self = self, TaskGroup = TaskGroup } )
+  local TaskTypeMenu = MENU_GROUP:New( TaskGroup, TaskType, MissionMenu ):SetTime( MenuTime )
+  local TaskMenu = MENU_GROUP_COMMAND:New( TaskGroup, MenuText, TaskTypeMenu, self.MenuAssignToGroup, { self = self, TaskGroup = TaskGroup } ):SetTime( MenuTime )
       
   return self
 end
@@ -592,17 +610,18 @@ end
 --- Set the assigned menu options of the @{Task}.
 -- @param #TASK self
 -- @param Wrapper.Group#GROUP TaskGroup
+-- @param #number MenuTime
 -- @return #TASK self
-function TASK:SetAssignedMenuForGroup( TaskGroup )
+function TASK:SetAssignedMenuForGroup( TaskGroup, MenuTime )
   self:E( TaskGroup:GetName() )
 
   local Mission = self:GetMission()
-  local MissionMenu = Mission:GetMissionMenu( TaskGroup )
+  local MissionMenu = Mission:GetMenu( TaskGroup )
 
   self:E( { MissionMenu = MissionMenu } )
 
-  local TaskTypeMenu = MENU_GROUP_COMMAND:New( TaskGroup, "Task Status", MissionMenu, self.MenuTaskStatus, self, TaskGroup )
-  local TaskMenu = MENU_GROUP_COMMAND:New( TaskGroup, "Abort Task", MissionMenu, self.MenuTaskAbort, self, TaskGroup )
+  local TaskTypeMenu = MENU_GROUP_COMMAND:New( TaskGroup, "Task Status", MissionMenu, self.MenuTaskStatus, self, TaskGroup ):SetTime( MenuTime )
+  local TaskMenu = MENU_GROUP_COMMAND:New( TaskGroup, "Abort Task", MissionMenu, self.MenuTaskAbort, self, TaskGroup ):SetTime( MenuTime )
 
   return self
 end
@@ -610,14 +629,31 @@ end
 --- Remove the menu option of the @{Task} for a @{Group}.
 -- @param #TASK self
 -- @param Wrapper.Group#GROUP TaskGroup
+-- @param #number MenuTime
 -- @return #TASK self
-function TASK:RemoveMenuForGroup( TaskGroup )
+function TASK:RemoveMenuForGroup( TaskGroup, MenuTime )
+  self:F()
 
   local Mission = self:GetMission()
   local MissionName = Mission:GetName()
-
-  local MissionMenu = Mission:GetMissionMenu( TaskGroup )
-  MissionMenu:Remove()
+  
+  local MissionMenu = Mission:GetMenu( TaskGroup )
+  
+  if MissionMenu then
+    local TaskType = self:GetType()
+    local TypeMenu = MissionMenu:GetMenu( TaskType )
+    
+    if TypeMenu then
+      local TaskMenu = TypeMenu:GetMenu( self:GetTaskName() )
+      if TaskMenu then
+        TaskMenu:RemoveTop( MenuTime )
+      end
+      TypeMenu:RemoveTop( MenuTime )
+    end
+    
+    MissionMenu:RemoveTop( MenuTime )
+  end
+  
 end
 
 function TASK.MenuAssignToGroup( MenuParam )
