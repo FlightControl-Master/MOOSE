@@ -20,7 +20,9 @@ function REPORT:New( Title )
   local self = BASE:Inherit( self, BASE:New() )
 
   self.Report = {}
-  self.Report[#self.Report+1] = Title  
+  if Title then
+    self.Report[#self.Report+1] = Title  
+  end
 
   return self
 end
@@ -31,7 +33,7 @@ end
 -- @return #REPORT
 function REPORT:Add( Text )
   self.Report[#self.Report+1] = Text
-  return self.Report[#self.Report+1]
+  return self.Report[#self.Report]
 end
 
 function REPORT:Text()
@@ -249,7 +251,8 @@ end
 -- @param #sring Name (optional) The name of the Group used as a prefix for the message to the Group. If not provided, there will be nothing shown.
 function COMMANDCENTER:MessageToGroup( Message, TaskGroup, Name )
 
-  local Prefix = Name and "@ Group (" .. Name .. "): " or ''
+  local Prefix = "@ Group"
+  Prefix = Prefix .. ( Name and " (" .. Name .. "): " or '' )
   Message = Prefix .. Message 
   self:GetPositionable():MessageToGroup( Message , 20, TaskGroup, self:GetName() )
 

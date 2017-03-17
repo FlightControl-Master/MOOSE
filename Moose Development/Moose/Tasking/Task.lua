@@ -343,7 +343,7 @@ end
 
 
 
---- Assign the @{Task}to a @{Group}.
+--- Assign the @{Task} to a @{Group}.
 -- @param #TASK self
 -- @param Wrapper.Group#GROUP TaskGroup
 -- @return #TASK
@@ -355,12 +355,11 @@ function TASK:AssignToGroup( TaskGroup )
   TaskGroup:SetState( TaskGroup, "Assigned", self )
   
   local Mission = self:GetMission()
-  local CommandCenter = Mission:GetCommandCenter()
-  
-  CommandCenter:SetMenu()
+  local MissionMenu = Mission:GetMenu( TaskGroup )
+  MissionMenu:RemoveSubMenus()
   
   --self:RemoveMenuForGroup( TaskGroup )
-  --self:SetAssignedMenuForGroup( TaskGroup )
+  self:SetAssignedMenuForGroup( TaskGroup )
   
   local TaskUnits = TaskGroup:GetUnits()
   for UnitID, UnitData in pairs( TaskUnits ) do
@@ -474,7 +473,7 @@ function TASK:UnAssignFromGroup( TaskGroup )
   
   TaskGroup:SetState( TaskGroup, "Assigned", nil )
 
-  self:RemoveMenuForGroup( TaskGroup )
+  self:RemoveAssignedMenuForGroup( TaskGroup )
 
   local TaskUnits = TaskGroup:GetUnits()
   for UnitID, UnitData in pairs( TaskUnits ) do
@@ -549,21 +548,6 @@ function TASK:SetMenu( MenuTime )
 end
 
 
---- Remove the menu options of the @{Task} to all the groups in the SetGroup.
--- @param #TASK self
--- @param #number MenuTime
--- @return #TASK
-function TASK:RemoveMenu( MenuTime )
-  self:F()
-
-  for TaskGroupID, TaskGroup in pairs( self.SetGroup:GetSet() ) do
-    local TaskGroup = TaskGroup -- Wrapper.Group#GROUP 
-    if TaskGroup:IsAlive() and TaskGroup:GetPlayerNames() then
-      self:RemoveMenuForGroup( TaskGroup, MenuTime )
-    end
-  end
-end
-
 
 --- Set the Menu for a Group
 -- @param #TASK self
@@ -602,7 +586,7 @@ function TASK:SetPlannedMenuForGroup( TaskGroup, MenuText, MenuTime )
 
   local TaskType = self:GetType()
   local TaskTypeMenu = MENU_GROUP:New( TaskGroup, TaskType, MissionMenu ):SetTime( MenuTime )
-  local TaskMenu = MENU_GROUP_COMMAND:New( TaskGroup, MenuText, TaskTypeMenu, self.MenuAssignToGroup, { self = self, TaskGroup = TaskGroup } ):SetTime( MenuTime )
+  local TaskMenu = MENU_GROUP_COMMAND:New( TaskGroup, MenuText, TaskTypeMenu, self.MenuAssignToGroup, { self = self, TaskGroup = TaskGroup } ):SetTime( MenuTime ):SetRemoveParent( true )
       
   return self
 end
@@ -626,12 +610,30 @@ function TASK:SetAssignedMenuForGroup( TaskGroup, MenuTime )
   return self
 end
 
+--- Remove the menu options of the @{Task} to all the groups in the SetGroup.
+-- @param #TASK self
+-- @param #number MenuTime
+-- @return #TASK
+function TASK:RemoveMenu( MenuTime )
+  self:F()
+
+  for TaskGroupID, TaskGroup in pairs( self.SetGroup:GetSet() ) do
+    local TaskGroup = TaskGroup -- Wrapper.Group#GROUP 
+    if TaskGroup:IsAlive() and TaskGroup:GetPlayerNames() then
+      if not self:IsAssignedToGroup( TaskGroup ) then
+        self:RemovePlannedMenuForGroup( TaskGroup, MenuTime )
+      end
+    end
+  end
+end
+
+
 --- Remove the menu option of the @{Task} for a @{Group}.
 -- @param #TASK self
 -- @param Wrapper.Group#GROUP TaskGroup
 -- @param #number MenuTime
 -- @return #TASK self
-function TASK:RemoveMenuForGroup( TaskGroup, MenuTime )
+function TASK:RemovePlannedMenuForGroup( TaskGroup, MenuTime )
   self:F()
 
   local Mission = self:GetMission()
@@ -646,12 +648,28 @@ function TASK:RemoveMenuForGroup( TaskGroup, MenuTime )
     if TypeMenu then
       local TaskMenu = TypeMenu:GetMenu( self:GetTaskName() )
       if TaskMenu then
-        TaskMenu:RemoveTop( MenuTime )
+        TaskMenu:Remove( MenuTime )
       end
-      TypeMenu:RemoveTop( MenuTime )
     end
-    
-    MissionMenu:RemoveTop( MenuTime )
+  end
+  
+end
+
+--- Remove the assigned menu option of the @{Task} for a @{Group}.
+-- @param #TASK self
+-- @param Wrapper.Group#GROUP TaskGroup
+-- @param #number MenuTime
+-- @return #TASK self
+function TASK:RemoveAssignedMenuForGroup( TaskGroup )
+  self:F()
+
+  local Mission = self:GetMission()
+  local MissionName = Mission:GetName()
+  
+  local MissionMenu = Mission:GetMenu( TaskGroup )
+  
+  if MissionMenu then
+    MissionMenu:RemoveSubMenus()
   end
   
 end
@@ -670,7 +688,10 @@ end
 -- @param #TASK self
 function TASK:MenuTaskStatus( TaskGroup )
 
-  self:ReportDetails()
+  local ReportText = self:ReportDetails()
+  
+  self:T( ReportText )
+  self:GetMission():GetCommandCenter():MessageToGroup( ReportText, TaskGroup )
 
 end
 
@@ -1112,24 +1133,19 @@ function TASK:ReportDetails()
   -- Determine the status of the Task.
   local State = self:GetState()
   
-  
   -- Loop each Unit active in the Task, and find Player Names.
   local PlayerNames = {}
-  for PlayerGroupID, PlayerGroup in pairs( self:GetGroups():GetSet() ) do
-    local Player = PlayerGroup -- Wrapper.Group#GROUP
-    for PlayerUnitID, PlayerUnit in pairs( PlayerGroup:GetUnits() ) do
-      local PlayerUnit = PlayerUnit -- Wrapper.Unit#UNIT
-      if PlayerUnit and PlayerUnit:IsAlive() then
-        local PlayerName = PlayerUnit:GetPlayerName()
-        PlayerNames[#PlayerNames+1] = PlayerName
-      end
+  local PlayerReport = REPORT:New( " - Players:" )
+  for PlayerGroupID, PlayerGroupData in pairs( self:GetGroups():GetSet() ) do
+    local PlayerGroup = PlayerGroupData -- Wrapper.Group#GROUP
+    PlayerNames = PlayerGroup:GetPlayerNames()
+    if PlayerNames then
+      PlayerReport:Add( " -- Group " .. PlayerGroup:GetCallsign() .. ": " .. table.concat( PlayerNames, ", " ) )
     end
-    local PlayerNameText = table.concat( PlayerNames, ", " )
-    Report:Add( "Task " .. Name .. " - State '" .. State .. "' - Players " .. PlayerNameText )
   end
   
   -- Loop each Process in the Task, and find Reporting Details.
-
+  Report:Add( string.format( " - Task %s\n -- State '%s'\n%s", Name, State, PlayerReport:Text() ) )
   return Report:Text()
 end
 
