@@ -940,46 +940,49 @@ do -- DETECTION_BASE
       local DetectedUnit = DetectedSet:GetFirst()
     
       DetectedItem.FriendliesNearBy = false
+
+      if DetectedUnit then
       
-      local SphereSearch = {
-       id = world.VolumeType.SPHERE,
-        params = {
-         point = DetectedUnit:GetVec3(),
-         radius = 6000,
-        }
         
-       }
-       
-       --- @param Dcs.DCSWrapper.Unit#Unit FoundDCSUnit
-       -- @param Wrapper.Group#GROUP ReportGroup
-       -- @param Set#SET_GROUP ReportSetGroup
-       local FindNearByFriendlies = function( FoundDCSUnit, ReportGroupData )
+        local SphereSearch = {
+         id = world.VolumeType.SPHERE,
+          params = {
+           point = DetectedUnit:GetVec3(),
+           radius = 6000,
+          }
           
-          local DetectedItem = ReportGroupData.DetectedItem  -- Functional.Detection#DETECTION_BASE.DetectedItem    
-          local DetectedSet = ReportGroupData.DetectedItem.Set
-          local DetectedUnit = DetectedSet:GetFirst() -- Wrapper.Unit#UNIT
-          local ReportSetGroup = ReportGroupData.ReportSetGroup
-    
-          local EnemyCoalition = DetectedUnit:GetCoalition()
-          
-          local FoundUnitCoalition = FoundDCSUnit:getCoalition()
-          local FoundUnitName = FoundDCSUnit:getName()
-          local FoundUnitGroupName = FoundDCSUnit:getGroup():getName()
-          local EnemyUnitName = DetectedUnit:GetName()
-          local FoundUnitInReportSetGroup = ReportSetGroup:FindGroup( FoundUnitGroupName ) ~= nil
-          
-          self:T3( { "Friendlies search:", FoundUnitName, FoundUnitCoalition, EnemyUnitName, EnemyCoalition, FoundUnitInReportSetGroup } )
-          
-          if FoundUnitCoalition ~= EnemyCoalition and FoundUnitInReportSetGroup == false then
-            DetectedItem.FriendliesNearBy = true
-            return false
-          end
-          
-          return true
-      end
+         }
+         
+         --- @param Dcs.DCSWrapper.Unit#Unit FoundDCSUnit
+         -- @param Wrapper.Group#GROUP ReportGroup
+         -- @param Set#SET_GROUP ReportSetGroup
+         local FindNearByFriendlies = function( FoundDCSUnit, ReportGroupData )
+            
+            local DetectedItem = ReportGroupData.DetectedItem  -- Functional.Detection#DETECTION_BASE.DetectedItem    
+            local DetectedSet = ReportGroupData.DetectedItem.Set
+            local DetectedUnit = DetectedSet:GetFirst() -- Wrapper.Unit#UNIT
+            local ReportSetGroup = ReportGroupData.ReportSetGroup
       
-      world.searchObjects( Object.Category.UNIT, SphereSearch, FindNearByFriendlies, ReportGroupData )
-    
+            local EnemyCoalition = DetectedUnit:GetCoalition()
+            
+            local FoundUnitCoalition = FoundDCSUnit:getCoalition()
+            local FoundUnitName = FoundDCSUnit:getName()
+            local FoundUnitGroupName = FoundDCSUnit:getGroup():getName()
+            local EnemyUnitName = DetectedUnit:GetName()
+            local FoundUnitInReportSetGroup = ReportSetGroup:FindGroup( FoundUnitGroupName ) ~= nil
+            
+            self:T3( { "Friendlies search:", FoundUnitName, FoundUnitCoalition, EnemyUnitName, EnemyCoalition, FoundUnitInReportSetGroup } )
+            
+            if FoundUnitCoalition ~= EnemyCoalition and FoundUnitInReportSetGroup == false then
+              DetectedItem.FriendliesNearBy = true
+              return false
+            end
+            
+            return true
+        end
+        
+        world.searchObjects( Object.Category.UNIT, SphereSearch, FindNearByFriendlies, ReportGroupData )
+      end    
     end
   
   end

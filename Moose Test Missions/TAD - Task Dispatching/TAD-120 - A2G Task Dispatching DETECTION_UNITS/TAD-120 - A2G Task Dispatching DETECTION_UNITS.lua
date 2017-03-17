@@ -18,7 +18,7 @@ local HQ = GROUP:FindByName( "HQ", "Bravo HQ" )
 
 local CommandCenter = COMMANDCENTER:New( HQ, "Lima" )
 
-local Scoring = SCORING:New( "Detect Demo" )
+Scoring = SCORING:New( "Detect Demo" )
 
 local Mission = MISSION
   :New( CommandCenter, "Overlord", "High", "Attack Detect Mission Briefing", coalition.side.RED )
