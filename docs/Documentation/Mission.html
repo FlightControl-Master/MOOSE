@@ -114,12 +114,6 @@ A <a href="CLIENT.html">CLIENT</a> needs to be registered within the <a href="MI
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MISSION).ClearMissionMenu">MISSION:ClearMissionMenu()</a></td>
-		<td class="summary">
-<p>Clears the mission menu for the coalition.</p>
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(MISSION).Complete">MISSION:Complete()</a></td>
 		<td class="summary">
 <p>Synchronous Event Trigger for Event Complete.</p>
@@ -150,7 +144,7 @@ A <a href="CLIENT.html">CLIENT</a> needs to be registered within the <a href="MI
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MISSION).GetMissionMenu">MISSION:GetMissionMenu(TaskGroup)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(MISSION).GetMenu">MISSION:GetMenu(TaskGroup)</a></td>
 		<td class="summary">
 <p>Gets the mission menu for the coalition.</p>
 </td>
@@ -354,7 +348,7 @@ A <a href="CLIENT.html">CLIENT</a> needs to be registered within the <a href="MI
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MISSION).RemoveMenu">MISSION:RemoveMenu()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(MISSION).RemoveMenu">MISSION:RemoveMenu(MenuTime)</a></td>
 		<td class="summary">
 <p>Removes the Planned Task menu.</p>
 </td>
@@ -396,13 +390,7 @@ A <a href="CLIENT.html">CLIENT</a> needs to be registered within the <a href="MI
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MISSION).SetAssignedMenu">MISSION:SetAssignedMenu(Task, MenuText)</a></td>
-		<td class="summary">
-<p>Sets the Assigned Task menu.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MISSION).SetMenu">MISSION:SetMenu()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(MISSION).SetMenu">MISSION:SetMenu(MenuTime)</a></td>
 		<td class="summary">
 <p>Sets the Planned Task menu.</p>
 </td>
@@ -591,24 +579,6 @@ The task added.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(MISSION).ClearMissionMenu" >
-<strong>MISSION:ClearMissionMenu()</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Clears the mission menu for the coalition.</p>
-
-		<h3>Return value</h3>
-				
-<p><em><a href="##(MISSION)">#MISSION</a>:</em>
-self</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
 <a id="#(MISSION).Complete" >
 <strong>MISSION:Complete()</strong>
 </a>
@@ -703,8 +673,8 @@ true if Unit is part of a Task in the Mission.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(MISSION).GetMissionMenu" >
-<strong>MISSION:GetMissionMenu(TaskGroup)</strong>
+<a id="#(MISSION).GetMenu" >
+<strong>MISSION:GetMenu(TaskGroup)</strong>
 </a>
 </dt>
 <dd>
@@ -1722,13 +1692,21 @@ Return false to cancel Transition.</p>
 <dt>
 
 <a id="#(MISSION).RemoveMenu" >
-<strong>MISSION:RemoveMenu()</strong>
+<strong>MISSION:RemoveMenu(MenuTime)</strong>
 </a>
 </dt>
 <dd>
 	
 <p>Removes the Planned Task menu.</p>
 
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number MenuTime </em></code>: </p>
+
+				</li>
+		</ul>
 </dd>
 </dl>
 		<dl class="function">
@@ -1859,46 +1837,22 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(MISSION).SetAssignedMenu" >
-<strong>MISSION:SetAssignedMenu(Task, MenuText)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Sets the Assigned Task menu.</p>
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="Tasking.Task.html##(TASK)">Tasking.Task#TASK</a> Task </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string MenuText </em></code>: 
-The menu text.</p>
-
-				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em><a href="##(MISSION)">#MISSION</a>:</em>
-self</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
 <a id="#(MISSION).SetMenu" >
-<strong>MISSION:SetMenu()</strong>
+<strong>MISSION:SetMenu(MenuTime)</strong>
 </a>
 </dt>
 <dd>
 	
 <p>Sets the Planned Task menu.</p>
 
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number MenuTime </em></code>: </p>
+
+				</li>
+		</ul>
 </dd>
 </dl>
 		<dl class="function">

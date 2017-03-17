@@ -152,7 +152,7 @@ Use the method <a href="##(TASK).AddScore">TASK.AddScore</a>() to add scores whe
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(TASK).AssignToGroup">TASK:AssignToGroup(TaskGroup)</a></td>
 		<td class="summary">
-<p>Assign the <a href="Task.html">Task</a>to a <a href="Group.html">Group</a>.</p>
+<p>Assign the <a href="Task.html">Task</a> to a <a href="Group.html">Group</a>.</p>
 </td>
 		</tr>
 		<tr>
@@ -432,13 +432,19 @@ Use the method <a href="##(TASK).AddScore">TASK.AddScore</a>() to add scores whe
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK).RemoveMenu">TASK:RemoveMenu()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).RemoveAssignedMenuForGroup">TASK:RemoveAssignedMenuForGroup(TaskGroup, MenuTime)</a></td>
+		<td class="summary">
+<p>Remove the assigned menu option of the <a href="Task.html">Task</a> for a <a href="Group.html">Group</a>.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).RemoveMenu">TASK:RemoveMenu(MenuTime)</a></td>
 		<td class="summary">
 <p>Remove the menu options of the <a href="Task.html">Task</a> to all the groups in the SetGroup.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK).RemoveMenuForGroup">TASK:RemoveMenuForGroup(TaskGroup)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).RemovePlannedMenuForGroup">TASK:RemovePlannedMenuForGroup(TaskGroup, MenuTime)</a></td>
 		<td class="summary">
 <p>Remove the menu option of the <a href="Task.html">Task</a> for a <a href="Group.html">Group</a>.</p>
 </td>
@@ -480,7 +486,7 @@ Use the method <a href="##(TASK).AddScore">TASK.AddScore</a>() to add scores whe
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK).SetAssignedMenuForGroup">TASK:SetAssignedMenuForGroup(TaskGroup)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).SetAssignedMenuForGroup">TASK:SetAssignedMenuForGroup(TaskGroup, MenuTime)</a></td>
 		<td class="summary">
 <p>Set the assigned menu options of the <a href="Task.html">Task</a>.</p>
 </td>
@@ -504,13 +510,13 @@ Use the method <a href="##(TASK).AddScore">TASK.AddScore</a>() to add scores whe
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK).SetMenu">TASK:SetMenu()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).SetMenu">TASK:SetMenu(MenuTime)</a></td>
 		<td class="summary">
 <p>Set the menu options of the <a href="Task.html">Task</a> to all the groups in the SetGroup.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK).SetMenuForGroup">TASK:SetMenuForGroup(TaskGroup)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).SetMenuForGroup">TASK:SetMenuForGroup(MenuTime, TaskGroup)</a></td>
 		<td class="summary">
 <p>Set the Menu for a Group</p>
 </td>
@@ -522,7 +528,7 @@ Use the method <a href="##(TASK).AddScore">TASK.AddScore</a>() to add scores whe
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK).SetPlannedMenuForGroup">TASK:SetPlannedMenuForGroup(TaskGroup, MenuText)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).SetPlannedMenuForGroup">TASK:SetPlannedMenuForGroup(TaskGroup, MenuText, MenuTime)</a></td>
 		<td class="summary">
 <p>Set the planned menu option of the <a href="Task.html">Task</a>.</p>
 </td>
@@ -817,7 +823,7 @@ true if Unit is part of the Task.</p>
 </dt>
 <dd>
 	
-<p>Assign the <a href="Task.html">Task</a>to a <a href="Group.html">Group</a>.</p>
+<p>Assign the <a href="Task.html">Task</a> to a <a href="Group.html">Group</a>.</p>
 
 		<h3>Parameter</h3>
 		<ul>
@@ -1755,14 +1761,27 @@ The name of the Player.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK).RemoveMenu" >
-<strong>TASK:RemoveMenu()</strong>
+<a id="#(TASK).RemoveAssignedMenuForGroup" >
+<strong>TASK:RemoveAssignedMenuForGroup(TaskGroup, MenuTime)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Remove the menu options of the <a href="Task.html">Task</a> to all the groups in the SetGroup.</p>
+<p>Remove the assigned menu option of the <a href="Task.html">Task</a> for a <a href="Group.html">Group</a>.</p>
 
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> TaskGroup </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number MenuTime </em></code>: </p>
+
+				</li>
+		</ul>
 		<h3>Return value</h3>
 				
 <p><em><a href="##(TASK)">#TASK</a>:</em>
@@ -1773,19 +1792,50 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK).RemoveMenuForGroup" >
-<strong>TASK:RemoveMenuForGroup(TaskGroup)</strong>
+<a id="#(TASK).RemoveMenu" >
+<strong>TASK:RemoveMenu(MenuTime)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Remove the menu options of the <a href="Task.html">Task</a> to all the groups in the SetGroup.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number MenuTime </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(TASK)">#TASK</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).RemovePlannedMenuForGroup" >
+<strong>TASK:RemovePlannedMenuForGroup(TaskGroup, MenuTime)</strong>
 </a>
 </dt>
 <dd>
 	
 <p>Remove the menu option of the <a href="Task.html">Task</a> for a <a href="Group.html">Group</a>.</p>
 
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
 <p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> TaskGroup </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number MenuTime </em></code>: </p>
 
 				</li>
 		</ul>
@@ -1911,18 +1961,23 @@ self</p>
 <dt>
 
 <a id="#(TASK).SetAssignedMenuForGroup" >
-<strong>TASK:SetAssignedMenuForGroup(TaskGroup)</strong>
+<strong>TASK:SetAssignedMenuForGroup(TaskGroup, MenuTime)</strong>
 </a>
 </dt>
 <dd>
 	
 <p>Set the assigned menu options of the <a href="Task.html">Task</a>.</p>
 
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
 <p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> TaskGroup </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number MenuTime </em></code>: </p>
 
 				</li>
 		</ul>
@@ -1998,12 +2053,25 @@ self</p>
 <dt>
 
 <a id="#(TASK).SetMenu" >
-<strong>TASK:SetMenu()</strong>
+<strong>TASK:SetMenu(MenuTime)</strong>
 </a>
 </dt>
 <dd>
 	
 <p>Set the menu options of the <a href="Task.html">Task</a> to all the groups in the SetGroup.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number MenuTime </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(TASK)">#TASK</a>:</em></p>
+
 
 </dd>
 </dl>
@@ -2011,21 +2079,31 @@ self</p>
 <dt>
 
 <a id="#(TASK).SetMenuForGroup" >
-<strong>TASK:SetMenuForGroup(TaskGroup)</strong>
+<strong>TASK:SetMenuForGroup(MenuTime, TaskGroup)</strong>
 </a>
 </dt>
 <dd>
 	
 <p>Set the Menu for a Group</p>
 
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
+				<li>
+				
+<p><code><em>#number MenuTime </em></code>: </p>
+
+				</li>
 				<li>
 				
 <p><code><em> TaskGroup </em></code>: </p>
 
 				</li>
 		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(TASK)">#TASK</a>:</em></p>
+
+
 </dd>
 </dl>
 		<dl class="function">
@@ -2053,7 +2131,7 @@ self</p>
 <dt>
 
 <a id="#(TASK).SetPlannedMenuForGroup" >
-<strong>TASK:SetPlannedMenuForGroup(TaskGroup, MenuText)</strong>
+<strong>TASK:SetPlannedMenuForGroup(TaskGroup, MenuText, MenuTime)</strong>
 </a>
 </dt>
 <dd>
@@ -2071,6 +2149,11 @@ self</p>
 				
 <p><code><em>#string MenuText </em></code>: 
 The menu text.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number MenuTime </em></code>: </p>
 
 				</li>
 		</ul>

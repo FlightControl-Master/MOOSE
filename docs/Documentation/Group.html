@@ -322,6 +322,12 @@ Use the following Zone validation methods on the group:</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).GetPlayerNames">GROUP:GetPlayerNames()</a></td>
+		<td class="summary">
+<p>Get player names</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(GROUP).GetPositionVec3">GROUP:GetPositionVec3()</a></td>
 		<td class="summary">
 <p>Returns the <a href="DCSTypes.html##(Position3)">DCSTypes#Position3</a> position vectors indicating the point and direction vectors in 3D of the POSITIONABLE within the mission.</p>
@@ -953,6 +959,34 @@ Maximum velocity found.</p>
 <p><em>#number:</em>
 Minimum height found.</p>
 
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).GetPlayerNames" >
+<strong>GROUP:GetPlayerNames()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Get player names</p>
+
+		<h3>Return values</h3>
+			<ol>
+				<li>
+				
+<p><em>#table:</em>
+The group has players, an array of player names is returned.</p>
+
+				</li>
+				<li>
+				
+<p><em>#nil:</em>
+The group has no players</p>
+
+				</li>
+			</ol>
 </dd>
 </dl>
 		<dl class="function">
