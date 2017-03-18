@@ -17,9 +17,9 @@
 -- 2. Observe the smoking of the units detected
 -- 3. Observe the areas being flexibly changed very detection run.
 
-local FACSetGroup = SET_GROUP:New():FilterPrefixes( "FAC" ):FilterStart()
+FACSetGroup = SET_GROUP:New():FilterPrefixes( "FAC" ):FilterStart()
 
-local FACDetection = DETECTION_AREAS:New( FACSetGroup, 2000, 250 ):BoundDetectedZones():SmokeDetectedUnits()
+FACDetection = DETECTION_AREAS:New( FACSetGroup, 2000, 250 ):BoundDetectedZones():SmokeDetectedUnits()
 
 
 FACDetection:__Start( 5 )

@@ -12,10 +12,10 @@
 -- 1. Observe the scoring granted to your flight when you hit and kill other clients.
 
 
-local HQ = GROUP:FindByName( "HQ", "Bravo HQ" )
+HQ = GROUP:FindByName( "HQ", "Bravo HQ" )
 
-local CommandCenter = COMMANDCENTER:New( HQ, "Lima" )
+CommandCenter = COMMANDCENTER:New( HQ, "Lima" )
 
-local Scoring = SCORING:New( "Detect Demo" )
+Scoring = SCORING:New( "Detect Demo" )
 
 

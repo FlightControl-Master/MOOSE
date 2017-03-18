@@ -13,9 +13,9 @@
 -- 2. Observe when the missile hits the target, a dcs.log entry is written in the logging.
 -- 3. Check the contents of the fields of the S_EVENT_HIT entry.
 
-local Plane = UNIT:FindByName( "Plane" )
+Plane = UNIT:FindByName( "Plane" )
 
-local Tank = UNIT:FindByName( "Tank" )
+Tank = UNIT:FindByName( "Tank" )
 
 Plane:HandleEvent( EVENTS.Hit )
 Tank:HandleEvent( EVENTS.Hit )

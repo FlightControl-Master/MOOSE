@@ -15,9 +15,9 @@
 -- 4. Observe the tanks hitting the targets and the messages appear.
 -- 3. Check the contents of the fields of the S_EVENT_HIT entries.
 
-local Plane = UNIT:FindByName( "Plane" )
+Plane = UNIT:FindByName( "Plane" )
 
-local UnitSet = SET_UNIT:New():FilterPrefixes( "Tank" ):FilterStart()
+UnitSet = SET_UNIT:New():FilterPrefixes( "Tank" ):FilterStart()
 
 UnitSet:HandleEvent( EVENTS.Hit )
 

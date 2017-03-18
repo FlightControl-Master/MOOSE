@@ -10,24 +10,24 @@
 -- # Test cases: 
 -- 
 -- 
-local HQ = GROUP:FindByName( "HQ", "Bravo HQ" )
+HQ = GROUP:FindByName( "HQ", "Bravo HQ" )
 
-local CommandCenter = COMMANDCENTER:New( HQ, "Lima" )
+CommandCenter = COMMANDCENTER:New( HQ, "Lima" )
 
 Scoring = SCORING:New( "Detect Demo" )
 
-local Mission = MISSION
+Mission = MISSION
   :New( CommandCenter, "Overlord", "High", "Attack Detect Mission Briefing", coalition.side.RED )
   :AddScoring( Scoring )
 
-local FACSet = SET_GROUP:New():FilterPrefixes( "FAC" ):FilterCoalitions("red"):FilterStart()
+FACSet = SET_GROUP:New():FilterPrefixes( "FAC" ):FilterCoalitions("red"):FilterStart()
 
-local FACAreas = DETECTION_UNITS:New( FACSet )
+FACAreas = DETECTION_UNITS:New( FACSet )
 
 
-local AttackGroups = SET_GROUP:New():FilterCoalitions( "red" ):FilterPrefixes( "Attack" ):FilterStart()
+AttackGroups = SET_GROUP:New():FilterCoalitions( "red" ):FilterPrefixes( "Attack" ):FilterStart()
 
-local TaskDispatcher = TASK_A2G_DISPATCHER:New( Mission, AttackGroups, FACAreas )
+TaskDispatcher = TASK_A2G_DISPATCHER:New( Mission, AttackGroups, FACAreas )
 
 -- Now this is REALLY neat. I set the goal of the mission to be the destruction of Target #004.
 -- This is just an example, but many more examples can follow...

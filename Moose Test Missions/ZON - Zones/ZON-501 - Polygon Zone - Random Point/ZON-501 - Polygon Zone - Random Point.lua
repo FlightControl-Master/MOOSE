@@ -19,9 +19,9 @@
 -- 2. Observe smoking of Orange smoke in Zone 2.
 -- 3. Observe smoking of Red smoke in Zone 3. 
 
-local Zone1 = ZONE_POLYGON:New( "Zone 1", GROUP:FindByName( "Zone 1" ) )
-local Zone2 = ZONE_POLYGON:New( "Zone 2", GROUP:FindByName( "Zone 2" ) )
-local Zone3 = ZONE_POLYGON:New( "Zone 3", GROUP:FindByName( "Zone 3" ) )
+Zone1 = ZONE_POLYGON:New( "Zone 1", GROUP:FindByName( "Zone 1" ) )
+Zone2 = ZONE_POLYGON:New( "Zone 2", GROUP:FindByName( "Zone 2" ) )
+Zone3 = ZONE_POLYGON:New( "Zone 3", GROUP:FindByName( "Zone 3" ) )
 
 Zone1:SmokeZone( SMOKECOLOR.White, 4 )
 Zone2:SmokeZone( SMOKECOLOR.White, 4 )
