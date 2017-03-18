@@ -28,26 +28,26 @@
 -- Create a local variable (in this case called CASEngagementZone) and 
 -- using the ZONE function find the pre-defined zone called "Engagement Zone" 
 -- currently on the map and assign it to this variable
-local CASEngagementZone = ZONE:New( "Engagement Zone" )
+CASEngagementZone = ZONE:New( "Engagement Zone" )
 
 -- Create a local variables (in this case called CASPlane and CASHelicopters) and 
 -- using the GROUP function find the aircraft group called "Plane" and "Helicopter" and assign to these variables
-local CASPlane = GROUP:FindByName( "Plane" )
-local CASHelicopter = GROUP:FindByName( "Helicopter" )
+CASPlane = GROUP:FindByName( "Plane" )
+CASHelicopter = GROUP:FindByName( "Helicopter" )
 
 -- Create two patrol zones, one for the Planes and one for the Helicopters.
-local PatrolZonePlanes = ZONE:New( "Patrol Zone Planes" )
-local PatrolZoneHelicopters = ZONE:New( "Patrol Zone Helicopters" )
+PatrolZonePlanes = ZONE:New( "Patrol Zone Planes" )
+PatrolZoneHelicopters = ZONE:New( "Patrol Zone Helicopters" )
 
 -- Create and object (in this case called AICasZone) and 
 -- using the functions AI_CAS_ZONE assign the parameters that define this object 
 -- (in this case PatrolZone, 500, 1000, 500, 600, CASEngagementZone) 
-local AICasZonePlanes = AI_CAS_ZONE:New( PatrolZonePlanes, 400, 500, 500, 2500, CASEngagementZone )
-local AICasZoneHelicopters = AI_CAS_ZONE:New( PatrolZoneHelicopters, 100, 250, 300, 1000, CASEngagementZone )
+AICasZonePlanes = AI_CAS_ZONE:New( PatrolZonePlanes, 400, 500, 500, 2500, CASEngagementZone )
+AICasZoneHelicopters = AI_CAS_ZONE:New( PatrolZoneHelicopters, 100, 250, 300, 1000, CASEngagementZone )
 
 -- Create an object (in this case called Targets) and 
 -- using the GROUP function find the group labeled "Targets" and assign it to this object
-local Targets = GROUP:FindByName("Targets")
+Targets = GROUP:FindByName("Targets")
 
 
 -- Tell the program to use the object (in this case called CASPlane) as the group to use in the CAS function

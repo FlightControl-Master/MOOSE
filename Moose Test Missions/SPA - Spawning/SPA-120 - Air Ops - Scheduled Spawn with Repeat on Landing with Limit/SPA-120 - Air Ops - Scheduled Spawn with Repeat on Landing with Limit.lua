@@ -21,8 +21,8 @@
 do
 
   -- Declare SPAWN objects
-  local Spawn_KA_50 = SPAWN:New("KA-50"):InitLimit( 1, 10 )
-  local Spawn_A_10C = SPAWN:New("A-10C"):InitLimit( 1, 10 )
+  Spawn_KA_50 = SPAWN:New("KA-50"):InitLimit( 1, 10 )
+  Spawn_A_10C = SPAWN:New("A-10C"):InitLimit( 1, 10 )
   
   -- Choose repeat functionality
   

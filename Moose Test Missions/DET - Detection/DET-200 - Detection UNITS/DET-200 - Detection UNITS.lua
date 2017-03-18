@@ -16,13 +16,13 @@
 -- 1. Observe the detection reporting of both the Recce.
 -- 2. Eventually all units should be detected by both Recce.
 
-local RecceSetGroup = SET_GROUP:New():FilterPrefixes( "Recce" ):FilterStart()
+RecceSetGroup = SET_GROUP:New():FilterPrefixes( "Recce" ):FilterStart()
 
-local HQ = GROUP:FindByName( "HQ" )
+HQ = GROUP:FindByName( "HQ" )
 
-local CC = COMMANDCENTER:New( HQ, "HQ" )
+CC = COMMANDCENTER:New( HQ, "HQ" )
 
-local RecceDetection = DETECTION_UNITS:New( RecceSetGroup )
+RecceDetection = DETECTION_UNITS:New( RecceSetGroup )
 
 RecceDetection:Start()
 

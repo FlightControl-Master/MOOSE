@@ -16,16 +16,16 @@
 -- 1. Observe the reporting of both the first and second JTAC. The second should report slower the detection than the first.
 -- 2. Eventually all units should be detected by both JTAC.
 
-local RecceSetGroup1 = SET_GROUP:New():FilterPrefixes( "Recce 1" ):FilterStart()
-local RecceSetGroup2 = SET_GROUP:New():FilterPrefixes( "Recce 2" ):FilterStart()
+RecceSetGroup1 = SET_GROUP:New():FilterPrefixes( "Recce 1" ):FilterStart()
+RecceSetGroup2 = SET_GROUP:New():FilterPrefixes( "Recce 2" ):FilterStart()
 
-local HQ = GROUP:FindByName( "HQ" )
+HQ = GROUP:FindByName( "HQ" )
 
-local CC = COMMANDCENTER:New( HQ, "HQ" )
+CC = COMMANDCENTER:New( HQ, "HQ" )
 
-local RecceDetection1 = DETECTION_UNITS:New( RecceSetGroup1 )
+RecceDetection1 = DETECTION_UNITS:New( RecceSetGroup1 )
 
-local RecceDetection2 = DETECTION_UNITS:New( RecceSetGroup2 )
+RecceDetection2 = DETECTION_UNITS:New( RecceSetGroup2 )
 RecceDetection2:SetDistanceProbability( 0.2 )  -- Set a 20% probability that a vehicle can be detected at 4km distance.
 
 RecceDetection1:Start()

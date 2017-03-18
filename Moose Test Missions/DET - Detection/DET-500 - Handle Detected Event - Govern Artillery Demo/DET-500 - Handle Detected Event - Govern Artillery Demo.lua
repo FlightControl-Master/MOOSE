@@ -16,14 +16,14 @@
 -- 2. When one Recce group detects a target, it will select an artillery unit and fire a missile.
 -- 3. This will run until all Recces have eliminated the targets.
 
-local RecceSetGroup = SET_GROUP:New():FilterCoalitions( "blue" ):FilterPrefixes( "Recce" ):FilterStart()
-local ArtillerySetGroup = SET_GROUP:New():FilterCoalitions( "blue" ):FilterPrefixes( "Artillery" ):FilterStart()
+RecceSetGroup = SET_GROUP:New():FilterCoalitions( "blue" ):FilterPrefixes( "Recce" ):FilterStart()
+ArtillerySetGroup = SET_GROUP:New():FilterCoalitions( "blue" ):FilterPrefixes( "Artillery" ):FilterStart()
 
-local HQ = GROUP:FindByName( "HQ" )
+HQ = GROUP:FindByName( "HQ" )
 
-local CC = COMMANDCENTER:New( HQ, "HQ" )
+CC = COMMANDCENTER:New( HQ, "HQ" )
 
-local RecceDetection = DETECTION_UNITS:New( RecceSetGroup )
+RecceDetection = DETECTION_UNITS:New( RecceSetGroup )
 RecceDetection:SetDetectionInterval( 5 )
 
 RecceDetection:Start()

@@ -14,21 +14,21 @@
 -- In this way, the Patrol1 and Patrol2 objects are fluctuating the patrol pattern from PatrolZone1 and PatrolZone2 :-)
 
 
-local PatrolZoneGroup1 = GROUP:FindByName( "Patrol Zone 1" )
-local PatrolZone1 = ZONE_POLYGON:New( "Patrol Zone 1", PatrolZoneGroup1 )
+PatrolZoneGroup1 = GROUP:FindByName( "Patrol Zone 1" )
+PatrolZone1 = ZONE_POLYGON:New( "Patrol Zone 1", PatrolZoneGroup1 )
 
-local PatrolZoneGroup2 = GROUP:FindByName( "Patrol Zone 2" )
-local PatrolZone2 = ZONE_POLYGON:New( "Patrol Zone 2", PatrolZoneGroup2 )
+PatrolZoneGroup2 = GROUP:FindByName( "Patrol Zone 2" )
+PatrolZone2 = ZONE_POLYGON:New( "Patrol Zone 2", PatrolZoneGroup2 )
 
-local PatrolSpawn = SPAWN:New( "Patrol Group" )
-local PatrolGroup = PatrolSpawn:Spawn()
+PatrolSpawn = SPAWN:New( "Patrol Group" )
+PatrolGroup = PatrolSpawn:Spawn()
 
-local Patrol1 = AI_PATROL_ZONE:New( PatrolZone1, 3000, 6000, 400, 600 )
+Patrol1 = AI_PATROL_ZONE:New( PatrolZone1, 3000, 6000, 400, 600 )
 Patrol1:ManageFuel( 0.2, 60 )
 Patrol1:SetControllable( PatrolGroup )
 Patrol1:__Start( 5 )
 
-local Patrol2 = AI_PATROL_ZONE:New( PatrolZone2, 600, 1000, 300, 400 )
+Patrol2 = AI_PATROL_ZONE:New( PatrolZone2, 600, 1000, 300, 400 )
 Patrol2:ManageFuel( 0.2, 0 )
 
 --- State transition function for the PROCESS\_PATROLZONE **Patrol1** object

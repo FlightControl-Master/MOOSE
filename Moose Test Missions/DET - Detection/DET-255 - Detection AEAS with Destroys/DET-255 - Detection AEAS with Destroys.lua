@@ -21,9 +21,9 @@
 -- 5. While driving in between the areas, it will have a separate area.
 -- 6. Observe the correct removal or relocation of the ZONEs.
 
-local FACSetGroup = SET_GROUP:New():FilterPrefixes( "FAC Group" ):FilterStart()
+FACSetGroup = SET_GROUP:New():FilterPrefixes( "FAC Group" ):FilterStart()
 
-local FACDetection = DETECTION_AREAS:New( FACSetGroup, 150, 250 ):BoundDetectedZones():SmokeDetectedUnits()
+FACDetection = DETECTION_AREAS:New( FACSetGroup, 150, 250 ):BoundDetectedZones():SmokeDetectedUnits()
 
 FACDetection:__Start( 5 )
 

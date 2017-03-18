@@ -15,11 +15,11 @@
 -- 3. After engage, observe that the Su-27 returns to the PatrolZone.
 -- 4. If you want, you can wait until the Su-27 is out of fuel and will land.
 
-local CapPlane = GROUP:FindByName( "Plane" )
+CapPlane = GROUP:FindByName( "Plane" )
 
-local PatrolZone = ZONE:New( "Patrol Zone" )
+PatrolZone = ZONE:New( "Patrol Zone" )
 
-local AICapZone = AI_CAP_ZONE:New( PatrolZone, 500, 1000, 500, 600 )
+AICapZone = AI_CAP_ZONE:New( PatrolZone, 500, 1000, 500, 600 )
 
 AICapZone:SetControllable( CapPlane )
 AICapZone:SetEngageRange( 20000 ) -- Set the Engage Range to 20.000 meters. The AI won't engage when the enemy is beyond 20.000 meters.

@@ -13,7 +13,7 @@
 -- 2. Observe when the plane shoots the missile, a dcs.log entry is written in the logging.
 -- 3. Check the contents of the fields of the S_EVENT_SHOT entry.
 
-local Plane = UNIT:FindByName( "Plane" )
+Plane = UNIT:FindByName( "Plane" )
 
 Plane:HandleEvent( EVENTS.Shot )
 

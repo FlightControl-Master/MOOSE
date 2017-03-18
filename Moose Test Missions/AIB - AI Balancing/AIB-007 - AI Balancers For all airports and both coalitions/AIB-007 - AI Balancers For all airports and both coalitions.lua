@@ -26,7 +26,7 @@
 -- This zone array will be used in the AI_BALANCER to randomize the patrol
 -- zone that each spawned group will patrol
 
-local RedPatrolZone = {}
+RedPatrolZone = {}
 RedPatrolZone[1] = ZONE:New( "RedPatrolZone1" )
 RedPatrolZone[2] = ZONE:New( "RedPatrolZone2" )
 RedPatrolZone[3] = ZONE:New( "RedPatrolZone3" )
@@ -40,7 +40,7 @@ RedPatrolZone[6] = ZONE:New( "RedPatrolZone6" )
 -- with replacing any CLIENT created aircraft in the mission that a human
 -- player does not take.
 
-local RU_PlanesSpawn = {}
+RU_PlanesSpawn = {}
 RU_PlanesSpawn[1] = SPAWN:New( "RU CAP Anapa AB" ):InitCleanUp( 45 )
 RU_PlanesSpawn[2] = SPAWN:New( "RU CAP Beslan AB" ):InitCleanUp( 45 )
 RU_PlanesSpawn[3] = SPAWN:New( "RU CAP Gelendzhik AB" ):InitCleanUp( 45 )
@@ -62,7 +62,7 @@ RU_PlanesSpawn[11] = SPAWN:New( "RU CAP Novorossiysk AB" ):InitCleanUp( 45 )
 -- The code here does not need to be changed. Only an addition in the mission editor. An example
 -- of this can be found on the USA side at Sochi AB. 
 
-local RU_PlanesClientSet = {}
+RU_PlanesClientSet = {}
 RU_PlanesClientSet[1] = SET_CLIENT:New():FilterPrefixes("RU CLIENT Anapa AB")
 RU_PlanesClientSet[2] = SET_CLIENT:New():FilterPrefixes("RU CLIENT Beslan AB")
 RU_PlanesClientSet[3] = SET_CLIENT:New():FilterPrefixes("RU CLIENT Gelendzhik AB")
@@ -84,7 +84,7 @@ RU_PlanesClientSet[11] = SET_CLIENT:New():FilterPrefixes("RU CLIENT Novorossiysk
 -- of them are included to pick randomly.
 
 
-local RU_AI_Balancer = {}
+RU_AI_Balancer = {}
 for i=1, 11 do
   RU_AI_Balancer[i] = AI_BALANCER:New(RU_PlanesClientSet[i], RU_PlanesSpawn[i])
   
@@ -113,7 +113,7 @@ end
 -- leader. 
 
 -- Create the Blue Patrol Zone Array
-local BluePatrolZone = {}
+BluePatrolZone = {}
 BluePatrolZone[1] = ZONE:New( "BluePatrolZone1")
 BluePatrolZone[2] = ZONE:New( "BluePatrolZone2")
 BluePatrolZone[3] = ZONE:New( "BluePatrolZone3")
@@ -123,7 +123,7 @@ BluePatrolZone[6] = ZONE:New( "BluePatrolZone6")
 
 --United States CAP Aircraft (these are used as templates for AI)
 
-local US_PlanesSpawn = {}
+US_PlanesSpawn = {}
 US_PlanesSpawn[1] = SPAWN:New( "US CAP Batumi AB" ):InitCleanUp( 45 )
 US_PlanesSpawn[2] = SPAWN:New( "US CAP Gudauta AB" ):InitCleanUp( 45 )
 US_PlanesSpawn[3] = SPAWN:New( "US CAP Kobuleti AB" ):InitCleanUp( 45 )
@@ -137,7 +137,7 @@ US_PlanesSpawn[10] = SPAWN:New( "US CAP Tbilisi AB" ):InitCleanUp( 45 )
 
 --United States Client Aircraft (via AI_BALANCER, AI will replace these if no human players are in the slot)
 
-local US_PlanesClientSet = {}
+US_PlanesClientSet = {}
 US_PlanesClientSet[1] = SET_CLIENT:New():FilterPrefixes("US CLIENT Batumi AB")
 US_PlanesClientSet[2] = SET_CLIENT:New():FilterPrefixes("US CLIENT Gudauta AB")
 US_PlanesClientSet[3] = SET_CLIENT:New():FilterPrefixes("US CLIENT Kobuleti AB")
@@ -149,7 +149,7 @@ US_PlanesClientSet[8] = SET_CLIENT:New():FilterPrefixes("US CLIENT Sukhumi AB")
 US_PlanesClientSet[9] = SET_CLIENT:New():FilterPrefixes("US CLIENT Vaziani AB")
 US_PlanesClientSet[10] = SET_CLIENT:New():FilterPrefixes("US CLIENT Tbilisi AB")
 
-local US_AI_Balancer = {}
+US_AI_Balancer = {}
 for i=1, 10 do
   US_AI_Balancer[i] = AI_BALANCER:New( US_PlanesClientSet[i], US_PlanesSpawn[i] )
 

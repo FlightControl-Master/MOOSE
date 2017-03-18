@@ -1,9 +1,9 @@
 
 
-local FACSetGroup = SET_GROUP:New():FilterPrefixes( "FAC Group" ):FilterStart()
+FACSetGroup = SET_GROUP:New():FilterPrefixes( "FAC Group" ):FilterStart()
 
-local FACDetection = DETECTION_AREAS:New( FACSetGroup, 1000, 250 )
-local SeadClientSet = SET_CLIENT:New():FilterCoalitions( "blue" ):FilterStart()
-local DestroyClientSet = SET_CLIENT:New():FilterCoalitions( "blue" ):FilterStart()
+FACDetection = DETECTION_AREAS:New( FACSetGroup, 1000, 250 )
+SeadClientSet = SET_CLIENT:New():FilterCoalitions( "blue" ):FilterStart()
+DestroyClientSet = SET_CLIENT:New():FilterCoalitions( "blue" ):FilterStart()
 
-local FACReporting = FAC_REPORTING:New( FACClientSet, FACDetection )
+FACReporting = FAC_REPORTING:New( FACClientSet, FACDetection )
