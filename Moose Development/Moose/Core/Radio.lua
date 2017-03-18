@@ -1,4 +1,4 @@
---- This module contains the MESSAGE class.
+--- This module contains the RADIO class.
 --
 -- 1) @{Radio#RADIO} class, extends @{Base#BASE}
 -- =================================================
@@ -78,7 +78,7 @@ function RADIO:SetFrequency(frequency)
   if type(frequency) == "number" then
     -- If frequency is in range
     if (frequency >= 30 and frequency < 88) or (frequency >= 108 and frequency < 152) or (frequency >= 225 and frequency < 400) then
-      self.Frequency = frequency * 1000000 -- Coversion in Hz
+      self.Frequency = frequency * 1000000 -- Conversion in Hz
       -- If the RADIO is attached to a UNIT or a GROUP, we need to send the DCS Command "SetFrequency" to change the UNIT or GROUP frequency
       if self.Positionable.ClassName == "UNIT" or self.Positionable.ClassName == "GROUP" then
         self.Positionable:GetDCSObject():getController():setCommand({
@@ -149,7 +149,7 @@ end
 -- @param #number SubtitleDuration in s
 -- @return #self
 -- @usage
--- -- Both parameters are mandatory, since it wouldn't make much sense to change the Subtitle and not it's duration
+-- -- Both parameters are mandatory, since it wouldn't make much sense to change the Subtitle and not its duration
 function RADIO:SetSubtitle(subtitle, subtitleDuration)
   self:F2({subtitle, subtitleDuration})
   if type(subtitle) == "string" then
@@ -169,7 +169,7 @@ function RADIO:SetSubtitle(subtitle, subtitleDuration)
 end
 
 --- Create a new transmission, that is to say, populate the RADIO with relevant data
--- @param self
+-- @param #RADIO self
 -- @param #string Filename
 -- @param #number Frequency in MHz
 -- @param #number Modulation
@@ -192,7 +192,7 @@ end
 
 
 --- Create a new transmission, that is to say, populate the RADIO with relevant data
--- @param self
+-- @param #RADIO self
 -- @param #string Filename
 -- @param #string Subtitle
 -- @param #number SubtitleDuration in s
@@ -218,7 +218,7 @@ function RADIO:NewUnitTransmission(...)
 end
 
 --- Actually Broadcast the transmission
--- @param self
+-- @param #RADIO self
 -- @return self
 -- @usage
 -- -- The Radio has to be populated with the new transmission before broadcasting.
@@ -230,7 +230,7 @@ end
 -- -- If your POSITIONABLE is not a UNIT or a GROUP, the Subtitle, SubtitleDuration and Loop are ignored
 function RADIO:Broadcast()
   self:F()
-  -- If the POSITIONABLE is actually a Unit or a Group, use the more complicated DCS function
+  -- If the POSITIONABLE is actually a Unit or a Group, use the more complicated DCS command system
   if self.Positionable.ClassName == "UNIT" or self.Positionable.ClassName == "GROUP" then
     self:T2("Broadcasting from a UNIT or a GROUP")
     self.Positionable:GetDCSObject():getController():setCommand({
@@ -243,7 +243,7 @@ function RADIO:Broadcast()
       }
     })
   else
-    -- If the POSITIONABLE is anything else, we revert to the general function
+    -- If the POSITIONABLE is anything else, we revert to the general singleton function
     self:T2("Broadcasting from a POSITIONABLE")
     trigger.action.radioTransmission(self.FileName, self.Positionable:GetPositionVec3(), self.Modulation, false, self.Frequency, self.Power)
   end
