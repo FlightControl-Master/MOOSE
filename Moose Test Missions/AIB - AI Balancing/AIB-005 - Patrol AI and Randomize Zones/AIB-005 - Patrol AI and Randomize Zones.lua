@@ -20,26 +20,26 @@
 -- 6. Ensure that you see the AI patrol in one of the two zones ...
 
 -- Define the SET of CLIENTs from the red coalition. This SET is filled during startup.
-local RU_PlanesClientSet = SET_CLIENT:New():FilterCountries( "RUSSIA" ):FilterCategories( "plane" )
+RU_PlanesClientSet = SET_CLIENT:New():FilterCountries( "RUSSIA" ):FilterCategories( "plane" )
 
 -- Define the SPAWN object for the red AI plane template.
 -- We use InitCleanUp to check every 20 seconds, if there are no planes blocked at the airbase, waithing for take-off.
 -- If a blocked plane exists, this red plane will be ReSpawned.
-local RU_PlanesSpawn = SPAWN:New( "AI RU" ):InitCleanUp( 20 )
+RU_PlanesSpawn = SPAWN:New( "AI RU" ):InitCleanUp( 20 )
 
 -- Start the AI_BALANCER, using the SET of red CLIENTs, and the SPAWN object as a parameter.
-local RU_AI_Balancer = AI_BALANCER:New( RU_PlanesClientSet, RU_PlanesSpawn )
+RU_AI_Balancer = AI_BALANCER:New( RU_PlanesClientSet, RU_PlanesSpawn )
 
 -- Create the first polygon zone ...
-local PatrolZoneGroup1 = GROUP:FindByName( "PatrolZone1" )
-local PatrolZone1 = ZONE_POLYGON:New( "PatrolZone1", PatrolZoneGroup1 )
+PatrolZoneGroup1 = GROUP:FindByName( "PatrolZone1" )
+PatrolZone1 = ZONE_POLYGON:New( "PatrolZone1", PatrolZoneGroup1 )
 
 -- Create the second polygon zone ...
-local PatrolZoneGroup2 = GROUP:FindByName( "PatrolZone2" )
-local PatrolZone2 = ZONE_POLYGON:New( "PatrolZone2", PatrolZoneGroup2 )
+PatrolZoneGroup2 = GROUP:FindByName( "PatrolZone2" )
+PatrolZone2 = ZONE_POLYGON:New( "PatrolZone2", PatrolZoneGroup2 )
 
 -- Now, create an array of these zones ...
-local PatrolZoneArray = { PatrolZone1, PatrolZone2 }
+PatrolZoneArray = { PatrolZone1, PatrolZone2 }
 
 function RU_AI_Balancer:OnAfterSpawned( SetGroup, From, Event, To, AIGroup )
 
