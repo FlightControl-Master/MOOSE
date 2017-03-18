@@ -15,7 +15,7 @@
 -- 3. Check the contents of the fields of the S_EVENT_CRASH entry in the dcs.log file.
 
 -- Create a variable PlaneHuman that holds a reference to UNIT object (created by moose at the beginning of the mission) with the name "PlaneHuman".
-local PlaneHuman = UNIT:FindByName( "PlaneHuman" )
+PlaneHuman = UNIT:FindByName( "PlaneHuman" )
 
 -- Subscribe to the event Crash. The Crash event occurs when a plane crashes into the ground (or into something else).
 PlaneHuman:HandleEvent( EVENTS.Crash )

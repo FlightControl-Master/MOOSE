@@ -13,9 +13,9 @@
 -- 2. When the planes take-off, observe the message being sent.
 -- 3. Check the contents of the fields of the S_EVENT_TAKEOFF entry in the dcs.log file.
 
-local PlaneAI = UNIT:FindByName( "PlaneAI" )
+PlaneAI = UNIT:FindByName( "PlaneAI" )
 
-local PlaneHuman = UNIT:FindByName( "PlaneHuman" )
+PlaneHuman = UNIT:FindByName( "PlaneHuman" )
 
 PlaneAI:HandleEvent( EVENTS.Takeoff )
 PlaneHuman:HandleEvent( EVENTS.Takeoff )

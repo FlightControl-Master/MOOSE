@@ -16,7 +16,7 @@ local CapPlane = GROUP:FindByName( "Plane" )
 
 local PatrolZone = ZONE:New( "Patrol Zone" )
 
-local AICapZone = AI_CAP_ZONE:New( PatrolZone, 500, 1000, 500, 600 )
+AICapZone = AI_CAP_ZONE:New( PatrolZone, 500, 1000, 500, 600 )
 
 AICapZone:SetControllable( CapPlane )
 

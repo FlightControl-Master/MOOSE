@@ -6,13 +6,13 @@ local Iterations = 100
 local Iteration = 1
 
 -- The PolygonGroup route defines zone 1
-local ZonePolygonGroup = GROUP:FindByName( "ZonePolygon" )
+ZonePolygonGroup = GROUP:FindByName( "ZonePolygon" )
 
 -- The ZoneUnit defines zone 4.
-local ZoneUnit = UNIT:FindByName( "ZoneUnit" )
+ZoneUnit = UNIT:FindByName( "ZoneUnit" )
 
 -- The ZoneGroup defines zone 5
-local ZoneGroup = GROUP:FindByName( "ZoneGroup" )
+ZoneGroup = GROUP:FindByName( "ZoneGroup" )
 
 -- This is the array that models the different zones types.
 -- The selection of the zones is done by taking into account the probability of the zone.

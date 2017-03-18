@@ -17,18 +17,18 @@
 -- Get the GROUP wrapper objects that were created by MOOSE at mission startup, by using the GROUP:FindByName() method.
 -- The Group name is the parameter to be searched for.
 -- Note that late activated groups are also "alive" and have a corresponding GROUP object in the running mission.
-local PolyZoneGroup1 = GROUP:FindByName("PolyZone1")
-local PolyZoneGroup2 = GROUP:FindByName("PolyZone2")
+PolyZoneGroup1 = GROUP:FindByName("PolyZone1")
+PolyZoneGroup2 = GROUP:FindByName("PolyZone2")
 
 -- Create 2 Polygon objects, using the ZONE_POLYGON:New constructor.
 -- The first parameter gives a name to the zone, the second is the GROUP object that defines the zone form.
-local PolyZone1 = ZONE_POLYGON:New( "PolyZone1", PolyZoneGroup1 )
-local PolyZone2 = ZONE_POLYGON:New( "PolyZone2", PolyZoneGroup2 )
+PolyZone1 = ZONE_POLYGON:New( "PolyZone1", PolyZoneGroup1 )
+PolyZone2 = ZONE_POLYGON:New( "PolyZone2", PolyZoneGroup2 )
 
 -- Create a SET of Moose CLIENT wrapper objects. At mission startup, a SET of Moose client wrapper objects is created.
 -- Note that CLIENT objects don't necessarily need to be alive!!! 
 -- So this set contains EVERY RED coalition client defined within the mission.
-local RedClients = SET_CLIENT:New():FilterCoalitions("red"):FilterStart()
+RedClients = SET_CLIENT:New():FilterCoalitions("red"):FilterStart()
 
 
 

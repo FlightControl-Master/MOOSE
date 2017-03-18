@@ -19,14 +19,14 @@
 -- 2. Observe smoking of Orange smoke in Zone 2.
 -- 3. Observe smoking of Red smoke in Zone 3. 
 
-local Unit1 = UNIT:FindByName( "Zone 1" )
-local Unit2 = UNIT:FindByName( "Zone 2" )
-local Unit3 = UNIT:FindByName( "Zone 3" )
+Unit1 = UNIT:FindByName( "Zone 1" )
+Unit2 = UNIT:FindByName( "Zone 2" )
+Unit3 = UNIT:FindByName( "Zone 3" )
 
 
-local Zone1 = ZONE_RADIUS:New( "Zone 1", Unit1:GetVec2(), 300 )
-local Zone2 = ZONE_RADIUS:New( "Zone 2", Unit2:GetVec2(), 300 )
-local Zone3 = ZONE_RADIUS:New( "Zone 3", Unit3:GetVec2(), 300 )
+Zone1 = ZONE_RADIUS:New( "Zone 1", Unit1:GetVec2(), 300 )
+Zone2 = ZONE_RADIUS:New( "Zone 2", Unit2:GetVec2(), 300 )
+Zone3 = ZONE_RADIUS:New( "Zone 3", Unit3:GetVec2(), 300 )
 
 Zone1:SmokeZone( SMOKECOLOR.White, 18 )
 Zone2:SmokeZone( SMOKECOLOR.White, 18 )

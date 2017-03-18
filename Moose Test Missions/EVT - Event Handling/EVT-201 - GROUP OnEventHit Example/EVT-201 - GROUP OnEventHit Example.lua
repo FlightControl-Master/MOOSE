@@ -15,7 +15,7 @@
 -- 4. The tanks of GROUP "Group Tanks A", should only send a message when they get hit.
 -- 5. The tanks of GROUP "Group Tanks B", should NOT send a message when they get hit.
 
-local TanksGroup = GROUP:FindByName( "Group Tanks A" )
+TanksGroup = GROUP:FindByName( "Group Tanks A" )
 
 TanksGroup:HandleEvent( EVENTS.Hit )
 

@@ -13,13 +13,13 @@
 -- 2. It should return to base when out of fuel.
 -- 
 
-local CapSpawn = SPAWN:New( "Plane" ):InitLimit(1,2):InitRepeatOnLanding()
+CapSpawn = SPAWN:New( "Plane" ):InitLimit(1,2):InitRepeatOnLanding()
 
-local CapGroup = CapSpawn:Spawn()
+CapGroup = CapSpawn:Spawn()
 
-local PatrolZone = ZONE:New( "Patrol Zone" )
+PatrolZone = ZONE:New( "Patrol Zone" )
 
-local AICapZone = AI_CAP_ZONE:New( PatrolZone, 500, 1000, 500, 600 )
+AICapZone = AI_CAP_ZONE:New( PatrolZone, 500, 1000, 500, 600 )
 
 AICapZone:SetControllable( CapGroup )
 
