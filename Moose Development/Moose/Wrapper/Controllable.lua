@@ -563,7 +563,6 @@ function CONTROLLABLE:TaskAttackUnit( AttackUnit, GroupAttack, WeaponExpend, Att
       altitude = Altitude or 30,
       attackQtyLimit = AttackQty and true or false,
       attackQty = AttackQty,
-      weaponType = 1073741822,
     },
   }
 

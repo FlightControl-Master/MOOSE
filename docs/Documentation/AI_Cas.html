@@ -263,7 +263,7 @@ It can be notified to go RTB through the <strong>RTB</strong> event.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).Engage">AI_CAS_ZONE:Engage(EngageSpeed, EngageWeaponExpend, EngageAltitude, EngageAttackQty, EngageDirection)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).Engage">AI_CAS_ZONE:Engage(EngageSpeed, EngageAltitude, EngageWeaponExpend, EngageAttackQty, EngageDirection)</a></td>
 		<td class="summary">
 <p>Synchronous Event Trigger for Event Engage.</p>
 </td>
@@ -425,7 +425,7 @@ It can be notified to go RTB through the <strong>RTB</strong> event.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).__Engage">AI_CAS_ZONE:__Engage(Delay, EngageSpeed, EngageWeaponExpend, EngageAltitude, EngageAttackQty, EngageDirection)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).__Engage">AI_CAS_ZONE:__Engage(Delay, EngageSpeed, EngageAltitude, EngageWeaponExpend, EngageAttackQty, EngageDirection)</a></td>
 		<td class="summary">
 <p>Asynchronous Event Trigger for Event Engage.</p>
 </td>
@@ -608,7 +608,7 @@ It can be notified to go RTB through the <strong>RTB</strong> event.</p>
 <dt>
 
 <a id="#(AI_CAS_ZONE).Engage" >
-<strong>AI_CAS_ZONE:Engage(EngageSpeed, EngageWeaponExpend, EngageAltitude, EngageAttackQty, EngageDirection)</strong>
+<strong>AI_CAS_ZONE:Engage(EngageSpeed, EngageAltitude, EngageWeaponExpend, EngageAttackQty, EngageDirection)</strong>
 </a>
 </dt>
 <dd>
@@ -625,14 +625,16 @@ It can be notified to go RTB through the <strong>RTB</strong> event.</p>
 				</li>
 				<li>
 				
-<p><code><em><a href="Dcs.DCSTypes.html##(AI.Task.WeaponExpend)">Dcs.DCSTypes#AI.Task.WeaponExpend</a> EngageWeaponExpend </em></code>: 
-(optional) Determines how much weapon will be released at each attack. If parameter is not defined the unit / controllable will choose expend on its own discretion.</p>
+<p><code><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a> EngageAltitude </em></code>: 
+(optional) Desired altitude to perform the unit engagement.</p>
 
 				</li>
 				<li>
 				
-<p><code><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a> EngageAltitude </em></code>: 
-(optional) Desired altitude to perform the unit engagement.</p>
+<p><code><em><a href="Dcs.DCSTypes.html##(AI.Task.WeaponExpend)">Dcs.DCSTypes#AI.Task.WeaponExpend</a> EngageWeaponExpend </em></code>: 
+(optional) Determines how much weapon will be released at each attack. 
+If parameter is not defined the unit / controllable will choose expend on its own discretion.
+Use the structure <a href="DCSTypes.html##(AI.Task).WeaponExpend">DCSTypes#AI.Task.WeaponExpend</a> to define the amount of weapons to be release at each attack.</p>
 
 				</li>
 				<li>
@@ -1448,7 +1450,7 @@ The delay in seconds.</p>
 <dt>
 
 <a id="#(AI_CAS_ZONE).__Engage" >
-<strong>AI_CAS_ZONE:__Engage(Delay, EngageSpeed, EngageWeaponExpend, EngageAltitude, EngageAttackQty, EngageDirection)</strong>
+<strong>AI_CAS_ZONE:__Engage(Delay, EngageSpeed, EngageAltitude, EngageWeaponExpend, EngageAttackQty, EngageDirection)</strong>
 </a>
 </dt>
 <dd>
@@ -1471,14 +1473,16 @@ The delay in seconds.</p>
 				</li>
 				<li>
 				
-<p><code><em><a href="Dcs.DCSTypes.html##(AI.Task.WeaponExpend)">Dcs.DCSTypes#AI.Task.WeaponExpend</a> EngageWeaponExpend </em></code>: 
-(optional) Determines how much weapon will be released at each attack. If parameter is not defined the unit / controllable will choose expend on its own discretion.</p>
+<p><code><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a> EngageAltitude </em></code>: 
+(optional) Desired altitude to perform the unit engagement.</p>
 
 				</li>
 				<li>
 				
-<p><code><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a> EngageAltitude </em></code>: 
-(optional) Desired altitude to perform the unit engagement.</p>
+<p><code><em><a href="Dcs.DCSTypes.html##(AI.Task.WeaponExpend)">Dcs.DCSTypes#AI.Task.WeaponExpend</a> EngageWeaponExpend </em></code>: 
+(optional) Determines how much weapon will be released at each attack. 
+If parameter is not defined the unit / controllable will choose expend on its own discretion.
+Use the structure <a href="DCSTypes.html##(AI.Task).WeaponExpend">DCSTypes#AI.Task.WeaponExpend</a> to define the amount of weapons to be release at each attack.</p>
 
 				</li>
 				<li>
