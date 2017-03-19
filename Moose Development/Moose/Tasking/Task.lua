@@ -981,11 +981,16 @@ end
 -- @param #string Event
 -- @param #string From
 -- @param #string To
-function TASK:onenterAssigned( From, Event, To )
+function TASK:onenterAssigned( From, Event, To, PlayerUnit, PlayerName )
 
   self:E("Task Assigned")
   
   self:MessageToGroups( "Task " .. self:GetName() .. " has been assigned to your group." )
+  
+  if self.Dispatcher then
+    self.Dispatcher:Assign( self, PlayerUnit, PlayerName )
+  end
+  
   self:GetMission():__Start( 1 )
 end
 
@@ -1095,6 +1100,18 @@ function TASK:onbeforeTimeOut( From, Event, To )
     return true
   end
   return false
+end
+
+do -- Dispatcher
+
+  --- Set dispatcher of a task
+  -- @param #TASK self
+  -- @param Tasking.DetectionManager#DETECTION_MANAGER Dispatcher
+  -- @return #TASK
+  function TASK:SetDispatcher( Dispatcher )
+    self.Dispatcher = Dispatcher
+  end
+
 end
 
 do -- Reporting

@@ -1,4 +1,7 @@
---- This module contains the TASK_A2G classes.
+--- **Tasking** - The TASK_A2G models tasks for players in Air to Ground engagements.
+-- 
+-- ![Banner Image](..\Presentations\TASK_A2G\Dia1.JPG)
+-- 
 -- 
 -- # 1) @{Task_A2G#TASK_A2G} class, extends @{Task#TASK}
 -- 
@@ -12,9 +15,29 @@
 --   * **Success**: The A2G task is successfully completed.
 --   * **Failed**: The A2G task has failed. This will happen if the player exists the task early, without communicating a possible cancellation to HQ.
 -- 
--- # 1) @{Task_A2G#TASK_SEAD} class, extends @{Task_A2G#TASK_A2G}
+-- # 1.1) Set the scoring of achievements in an A2G attack.
+-- 
+-- Scoring or penalties can be given in the following circumstances:
+-- 
+--   * @{#TASK_A2G.SetScoreOnDestroy}(): Set a score when a target in scope of the A2G attack, has been destroyed.
+--   * @{#TASK_A2G.SetScoreOnSuccess}(): Set a score when all the targets in scope of the A2G attack, have been destroyed.
+--   * @{#TASK_A2G.SetPenaltyOnFailed}(): Set a penalty when the A2G attack has failed.
+-- 
+-- # 2) @{Task_A2G#TASK_SEAD} class, extends @{Task_A2G#TASK_A2G}
 -- 
 -- The @{#TASK_SEAD} class defines a SEAD task for a @{Set} of Target Units.
+-- 
+-- ===
+-- 
+-- # 3) @{Task_A2G#TASK_CAS} class, extends @{Task_A2G#TASK_A2G}
+-- 
+-- The @{#TASK_CAS} class defines a CAS task for a @{Set} of Target Units.
+-- 
+-- ===
+-- 
+-- # 4) @{Task_A2G#TASK_BAI} class, extends @{Task_A2G#TASK_A2G}
+-- 
+-- The @{#TASK_BAI} class defines a BAI task for a @{Set} of Target Units.
 -- 
 -- ====
 --
@@ -277,6 +300,52 @@ do -- TASK_A2G
     local ActRouteTarget = ProcessUnit:GetProcess( "Engaging", "RouteToTargetZone" ) -- Actions.Act_Route#ACT_ROUTE_ZONE
     return ActRouteTarget:GetZone()
   end
+
+  --- Set a score when a target in scope of the A2G attack, has been destroyed .
+  -- @param #TASK_A2G self
+  -- @param #string Text The text to display to the player, when the target has been destroyed.
+  -- @param #number Score The score in points.
+  -- @param Wrapper.Unit#UNIT TaskUnit
+  -- @return #TASK_A2G
+  function TASK_A2G:SetScoreOnDestroy( Text, Score, TaskUnit )
+
+    local ProcessUnit = self:GetUnitProcess( TaskUnit )
+
+    ProcessUnit:AddScoreProcess( "Engaging", "Account", "Account", Text, Score )
+    
+    return self
+  end
+
+  --- Set a score when all the targets in scope of the A2G attack, have been destroyed.
+  -- @param #TASK_A2G self
+  -- @param #string Text The text to display to the player, when all targets hav been destroyed.
+  -- @param #number Score The score in points.
+  -- @param Wrapper.Unit#UNIT TaskUnit
+  -- @return #TASK_A2G
+  function TASK_A2G:SetScoreOnSuccess( Text, Score, TaskUnit )
+
+    local ProcessUnit = self:GetUnitProcess( TaskUnit )
+
+    ProcessUnit:AddScore( "Success", Text, Score )
+    
+    return self
+  end
+
+  --- Set a penalty when the A2G attack has failed.
+  -- @param #TASK_A2G self
+  -- @param #string Text The text to display to the player, when the A2G attack has failed.
+  -- @param #number Penalty The penalty in points.
+  -- @param Wrapper.Unit#UNIT TaskUnit
+  -- @return #TASK_A2G
+  function TASK_A2G:SetPenaltyOnFailed( Text, Penalty, TaskUnit )
+
+    local ProcessUnit = self:GetUnitProcess( TaskUnit )
+
+    ProcessUnit:AddScore( "Failed", Text, Penalty )
+    
+    return self
+  end
+
   
 end 
 

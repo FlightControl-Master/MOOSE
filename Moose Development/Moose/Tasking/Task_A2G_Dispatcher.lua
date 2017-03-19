@@ -72,7 +72,20 @@ do -- TASK_A2G_DISPATCHER
     self.Detection = Detection
     self.Mission = Mission
     
-    self:Schedule( 30 )
+    self:AddTransition( "Started", "Assign", "Started" )
+    
+    --- OnAfter Transition Handler for Event Assign.
+    -- @function [parent=#TASK_A2G_DISPATCHER] OnAfterAssign
+    -- @param #TASK_A2G_DISPATCHER self
+    -- @param #string From The From State string.
+    -- @param #string Event The Event string.
+    -- @param #string To The To State string.
+    -- @param Tasking.Task_A2G#TASK_A2G Task
+    -- @param Wrapper.Unit#UNIT TaskUnit
+    -- @param #string PlayerName
+    
+    self:__Start( 5 )
+    
     return self
   end
   
@@ -186,7 +199,7 @@ do -- TASK_A2G_DISPATCHER
   -- @param Functional.Detection#DETECTION_BASE Detection The detection created by the @{Detection#DETECTION_BASE} derived object.
   -- @return #boolean Return true if you want the task assigning to continue... false will cancel the loop.
   function TASK_A2G_DISPATCHER:ProcessDetected( Detection )
-    self:F2()
+    self:E()
   
     local AreaMsg = {}
     local TaskMsg = {}
@@ -217,6 +230,7 @@ do -- TASK_A2G_DISPATCHER
         if TargetSetUnit then
           local Task = TASK_SEAD:New( Mission, self.SetGroup, string.format( "SEAD.%03d", ItemID ), TargetSetUnit )
           Task:SetTargetZone( DetectedZone )
+          Task:SetDispatcher( self )
           SEADTask = Mission:AddTask( Task )
         end
       end        
@@ -232,6 +246,7 @@ do -- TASK_A2G_DISPATCHER
         if TargetSetUnit then
           local Task = TASK_CAS:New( Mission, self.SetGroup, string.format( "CAS.%03d", ItemID ), TargetSetUnit )
           --Task:SetTargetZone( DetectedZone )
+          Task:SetDispatcher( self )
           CASTask = Mission:AddTask( Task )
         end
       end        
@@ -247,6 +262,7 @@ do -- TASK_A2G_DISPATCHER
         if TargetSetUnit then
           local Task = TASK_BAI:New( Mission, self.SetGroup, string.format( "BAI.%03d", ItemID ), TargetSetUnit )
           Task:SetTargetZone( DetectedZone )
+          Task:SetDispatcher( self )
           BAITask = Mission:AddTask( Task )
         end
       end        

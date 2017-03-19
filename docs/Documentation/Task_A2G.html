@@ -72,9 +72,12 @@
 	<div id="content">
    <h1>Module <code>Task_A2G</code></h1>
    
-<p>This module contains the TASK_A2G classes.</p>
+<p><strong>Tasking</strong> - The TASK_A2G models tasks for players in Air to Ground engagements.</p>
 
    
+
+<p><img src="..\Presentations\TASK_A2G\Dia1.JPG" alt="Banner Image"/></p>
+
 
 <h1>1) <a href="Task_A2G.html##(TASK_A2G)">Task<em>A2G#TASK</em>A2G</a> class, extends <a href="Task.html##(TASK)">Task#TASK</a></h1>
 
@@ -90,9 +93,31 @@ The TASK_A2G is implemented using a <a href="Statemachine.html##(FSM_TASK)">Stat
     <li><strong>Failed</strong>: The A2G task has failed. This will happen if the player exists the task early, without communicating a possible cancellation to HQ.</li>
 </ul>
 
-<h1>1) <a href="Task_A2G.html##(TASK_SEAD)">Task<em>A2G#TASK</em>SEAD</a> class, extends <a href="Task_A2G.html##(TASK_A2G)">Task<em>A2G#TASK</em>A2G</a></h1>
+<h1>1.1) Set the scoring of achievements in an A2G attack.</h1>
+
+<p>Scoring or penalties can be given in the following circumstances:</p>
+
+<ul>
+    <li><a href="##(TASK_A2G).SetScoreOnDestroy">TASK_A2G.SetScoreOnDestroy</a>(): Set a score when a target in scope of the A2G attack, has been destroyed.</li>
+    <li><a href="##(TASK_A2G).SetScoreOnSuccess">TASK_A2G.SetScoreOnSuccess</a>(): Set a score when all the targets in scope of the A2G attack, have been destroyed.</li>
+    <li><a href="##(TASK_A2G).SetPenaltyOnFailed">TASK_A2G.SetPenaltyOnFailed</a>(): Set a penalty when the A2G attack has failed.</li>
+</ul>
+
+<h1>2) <a href="Task_A2G.html##(TASK_SEAD)">Task<em>A2G#TASK</em>SEAD</a> class, extends <a href="Task_A2G.html##(TASK_A2G)">Task<em>A2G#TASK</em>A2G</a></h1>
 
 <p>The <a href="##(TASK_SEAD)">#TASK_SEAD</a> class defines a SEAD task for a <a href="Set.html">Set</a> of Target Units.</p>
+
+<hr/>
+
+<h1>3) <a href="Task_A2G.html##(TASK_CAS)">Task<em>A2G#TASK</em>CAS</a> class, extends <a href="Task_A2G.html##(TASK_A2G)">Task<em>A2G#TASK</em>A2G</a></h1>
+
+<p>The <a href="##(TASK_CAS)">#TASK_CAS</a> class defines a CAS task for a <a href="Set.html">Set</a> of Target Units.</p>
+
+<hr/>
+
+<h1>4) <a href="Task_A2G.html##(TASK_BAI)">Task<em>A2G#TASK</em>BAI</a> class, extends <a href="Task_A2G.html##(TASK_A2G)">Task<em>A2G#TASK</em>A2G</a></h1>
+
+<p>The <a href="##(TASK_BAI)">#TASK_BAI</a> class defines a BAI task for a <a href="Set.html">Set</a> of Target Units.</p>
 
 <hr/>
 
@@ -198,6 +223,12 @@ The TASK_A2G is implemented using a <a href="Statemachine.html##(FSM_TASK)">Stat
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G).SetPenaltyOnFailed">TASK_A2G:SetPenaltyOnFailed(Text, Penalty, TaskUnit)</a></td>
+		<td class="summary">
+<p>Set a penalty when the A2G attack has failed.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G).SetRendezVousPointVec2">TASK_A2G:SetRendezVousPointVec2(RendezVousPointVec2, RendezVousRange, TaskUnit)</a></td>
 		<td class="summary">
 
@@ -207,6 +238,18 @@ The TASK_A2G is implemented using a <a href="Statemachine.html##(FSM_TASK)">Stat
 		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G).SetRendezVousZone">TASK_A2G:SetRendezVousZone(RendezVousZone, TaskUnit)</a></td>
 		<td class="summary">
 
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G).SetScoreOnDestroy">TASK_A2G:SetScoreOnDestroy(Text, Score, TaskUnit)</a></td>
+		<td class="summary">
+<p>Set a score when a target in scope of the A2G attack, has been destroyed .</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G).SetScoreOnSuccess">TASK_A2G:SetScoreOnSuccess(Text, Score, TaskUnit)</a></td>
+		<td class="summary">
+<p>Set a score when all the targets in scope of the A2G attack, have been destroyed.</p>
 </td>
 		</tr>
 		<tr>
@@ -571,6 +614,44 @@ self</p>
 		<dl class="function">
 <dt>
 
+<a id="#(TASK_A2G).SetPenaltyOnFailed" >
+<strong>TASK_A2G:SetPenaltyOnFailed(Text, Penalty, TaskUnit)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set a penalty when the A2G attack has failed.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Text </em></code>: 
+The text to display to the player, when the A2G attack has failed.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Penalty </em></code>: 
+The penalty in points.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> TaskUnit </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(TASK_A2G)">#TASK_A2G</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(TASK_A2G).SetRendezVousPointVec2" >
 <strong>TASK_A2G:SetRendezVousPointVec2(RendezVousPointVec2, RendezVousRange, TaskUnit)</strong>
 </a>
@@ -626,6 +707,82 @@ The Zone object where the RendezVous is located on the map.</p>
 
 				</li>
 		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_A2G).SetScoreOnDestroy" >
+<strong>TASK_A2G:SetScoreOnDestroy(Text, Score, TaskUnit)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set a score when a target in scope of the A2G attack, has been destroyed .</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Text </em></code>: 
+The text to display to the player, when the target has been destroyed.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Score </em></code>: 
+The score in points.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> TaskUnit </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(TASK_A2G)">#TASK_A2G</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_A2G).SetScoreOnSuccess" >
+<strong>TASK_A2G:SetScoreOnSuccess(Text, Score, TaskUnit)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set a score when all the targets in scope of the A2G attack, have been destroyed.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Text </em></code>: 
+The text to display to the player, when all targets hav been destroyed.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Score </em></code>: 
+The score in points.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> TaskUnit </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(TASK_A2G)">#TASK_A2G</a>:</em></p>
+
+
 </dd>
 </dl>
 		<dl class="function">
