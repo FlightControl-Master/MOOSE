@@ -1,4 +1,4 @@
---- Single-Player:**Yes** / Multi-Player:**Yes** / AI:**Yes** / Human:**No** / Types:**Air** -- **Execute Combat Air Patrol (CAP).**
+--- **AI** - **Execute Combat Air Patrol (CAP).**
 --
 -- ![Banner Image](..\Presentations\AI_CAP\Dia1.JPG)
 -- 

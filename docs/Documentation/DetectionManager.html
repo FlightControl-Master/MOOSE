@@ -78,7 +78,7 @@
 
 <hr/>
 
-<h1>1) <a href="DetectionManager.html##(DETECTION_MANAGER)">DetectionManager#DETECTION_MANAGER</a> class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
+<h1>1) <a href="DetectionManager.html##(DETECTION_MANAGER)">DetectionManager#DETECTION_MANAGER</a> class, extends <a href="Fsm.html##(FSM)">Fsm#FSM</a></h1>
 <p>The <a href="DetectionManager.html##(DETECTION_MANAGER)">DetectionManager#DETECTION_MANAGER</a> class defines the core functions to report detected objects to groups.
 Reportings can be done in several manners, and it is up to the derived classes if DETECTION_MANAGER to model the reporting behaviour.</p>
 
@@ -142,12 +142,6 @@ If an ad-hoc report is requested, use the method <a href="DetectionManager.html#
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_MANAGER).FacScheduler">DETECTION_MANAGER.FacScheduler</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DETECTION_MANAGER).GetReportDisplayTime">DETECTION_MANAGER:GetReportDisplayTime()</a></td>
 		<td class="summary">
 <p>Get the reporting message display time.</p>
@@ -160,15 +154,9 @@ If an ad-hoc report is requested, use the method <a href="DetectionManager.html#
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_MANAGER).ReportDetected">DETECTION_MANAGER:ReportDetected(Detection)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_MANAGER).ProcessDetected">DETECTION_MANAGER:ProcessDetected(Detection)</a></td>
 		<td class="summary">
 <p>Reports the detected items to the <a href="Set.html##(SET_GROUP)">Set#SET_GROUP</a>.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_MANAGER).Schedule">DETECTION_MANAGER:Schedule(DelayTime, ReportInterval)</a></td>
-		<td class="summary">
-<p>Schedule the FAC reporting.</p>
 </td>
 		</tr>
 		<tr>
@@ -190,12 +178,6 @@ If an ad-hoc report is requested, use the method <a href="DetectionManager.html#
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_MANAGER)._FacScheduler">DETECTION_MANAGER:_FacScheduler(SchedulerName)</a></td>
-		<td class="summary">
-<p>Report the detected <a href="Unit.html##(UNIT)">Unit#UNIT</a>s detected within the <a href="Detection.html##(DETECTION_BASE)">Detection#DETECTION_BASE</a> object to the <a href="Set.html##(SET_GROUP)">Set#SET_GROUP</a>s.</p>
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DETECTION_MANAGER)._ReportDisplayTime">DETECTION_MANAGER._ReportDisplayTime</a></td>
 		<td class="summary">
 
@@ -208,7 +190,13 @@ If an ad-hoc report is requested, use the method <a href="DetectionManager.html#
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_MANAGER)._ScheduleDelayTime">DETECTION_MANAGER._ScheduleDelayTime</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_MANAGER).onafterReport">DETECTION_MANAGER:onafterReport(From, Event, To)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_MANAGER).onafterStart">DETECTION_MANAGER:onafterStart(From, Event, To)</a></td>
 		<td class="summary">
 
 </td>
@@ -322,20 +310,6 @@ If an ad-hoc report is requested, use the method <a href="DetectionManager.html#
 		<dl class="function">
 <dt>
 
-		<em></em>
-<a id="#(DETECTION_MANAGER).FacScheduler" >
-<strong>DETECTION_MANAGER.FacScheduler</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
 <a id="#(DETECTION_MANAGER).GetReportDisplayTime" >
 <strong>DETECTION_MANAGER:GetReportDisplayTime()</strong>
 </a>
@@ -385,8 +359,8 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(DETECTION_MANAGER).ReportDetected" >
-<strong>DETECTION_MANAGER:ReportDetected(Detection)</strong>
+<a id="#(DETECTION_MANAGER).ProcessDetected" >
+<strong>DETECTION_MANAGER:ProcessDetected(Detection)</strong>
 </a>
 </dt>
 <dd>
@@ -398,39 +372,6 @@ self</p>
 				<li>
 				
 <p><code><em><a href="Functional.Detection.html##(DETECTION_BASE)">Functional.Detection#DETECTION_BASE</a> Detection </em></code>: </p>
-
-				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em><a href="##(DETECTION_MANAGER)">#DETECTION_MANAGER</a>:</em>
-self</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(DETECTION_MANAGER).Schedule" >
-<strong>DETECTION_MANAGER:Schedule(DelayTime, ReportInterval)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Schedule the FAC reporting.</p>
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em>#number DelayTime </em></code>: 
-The delay in seconds to wait the reporting.</p>
-
-				</li>
-				<li>
-				
-<p><code><em>#number ReportInterval </em></code>: 
-The repeat interval in seconds for the reporting to happen repeatedly.</p>
 
 				</li>
 		</ul>
@@ -512,27 +453,6 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(DETECTION_MANAGER)._FacScheduler" >
-<strong>DETECTION_MANAGER:_FacScheduler(SchedulerName)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Report the detected <a href="Unit.html##(UNIT)">Unit#UNIT</a>s detected within the <a href="Detection.html##(DETECTION_BASE)">Detection#DETECTION_BASE</a> object to the <a href="Set.html##(SET_GROUP)">Set#SET_GROUP</a>s.</p>
-
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em> SchedulerName </em></code>: </p>
-
-				</li>
-		</ul>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
 		<em></em>
 <a id="#(DETECTION_MANAGER)._ReportDisplayTime" >
 <strong>DETECTION_MANAGER._ReportDisplayTime</strong>
@@ -561,15 +481,63 @@ self</p>
 		<dl class="function">
 <dt>
 
-		<em></em>
-<a id="#(DETECTION_MANAGER)._ScheduleDelayTime" >
-<strong>DETECTION_MANAGER._ScheduleDelayTime</strong>
+<a id="#(DETECTION_MANAGER).onafterReport" >
+<strong>DETECTION_MANAGER:onafterReport(From, Event, To)</strong>
 </a>
 </dt>
 <dd>
 	
 
 
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> To </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_MANAGER).onafterStart" >
+<strong>DETECTION_MANAGER:onafterStart(From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> To </em></code>: </p>
+
+				</li>
+		</ul>
 </dd>
 </dl>
 

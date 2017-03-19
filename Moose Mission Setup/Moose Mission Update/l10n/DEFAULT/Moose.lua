@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20170319_0757' ) 
+env.info( 'Moose Generation Timestamp: 20170319_1459' ) 
 local base = _G
 
 Include = {}
@@ -25499,241 +25499,9 @@ end
      
 
 
-     --- This module contains the DETECTION classes.
+     --- **Functional** - DETECTION_ classes model the detection of enemy units by FACs or RECCEs and group them according various methods.
 -- 
--- ===
--- 
--- # 1) @{#DETECTION_BASE} class, extends @{Fsm#FSM}
--- 
--- The @{#DETECTION_BASE} class defines the core functions to administer detected objects.
--- The @{#DETECTION_BASE} class will detect objects within the battle zone for a list of @{Group}s detecting targets following (a) detection method(s).
--- 
--- ## 1.1) DETECTION_BASE constructor
--- 
--- Construct a new DETECTION_BASE instance using the @{#DETECTION_BASE.New}() method.
--- 
--- ## 1.2) DETECTION_BASE initialization
--- 
--- By default, detection will return detected objects with all the detection sensors available.
--- However, you can ask how the objects were found with specific detection methods. 
--- If you use one of the below methods, the detection will work with the detection method specified.
--- You can specify to apply multiple detection methods.
--- 
--- Use the following functions to report the objects it detected using the methods Visual, Optical, Radar, IRST, RWR, DLINK:
--- 
---   * @{#DETECTION_BASE.InitDetectVisual}(): Detected using Visual.
---   * @{#DETECTION_BASE.InitDetectOptical}(): Detected using Optical.
---   * @{#DETECTION_BASE.InitDetectRadar}(): Detected using Radar.
---   * @{#DETECTION_BASE.InitDetectIRST}(): Detected using IRST.
---   * @{#DETECTION_BASE.InitDetectRWR}(): Detected using RWR.
---   * @{#DETECTION_BASE.InitDetectDLINK}(): Detected using DLINK.
--- 
--- ## 1.3) DETECTION_BASE derived classes group the detected units into a DetectedItems[] list
--- 
--- DETECTION_BASE derived classes build a list called DetectedItems[], which is essentially a first later 
--- of grouping of detected units. Each DetectedItem within the DetectedItems[] list contains
--- a SET_UNIT object that contains the  detected units that belong to that group.
--- 
--- Derived classes will apply different methods to group the detected units. 
--- Examples are per area, per quadrant, per distance, per type.
--- See further the derived DETECTION classes on which grouping methods are currently supported. 
--- 
--- Various methods exist how to retrieve the grouped items from a DETECTION_BASE derived class:
--- 
---   * The method @{Detection#DETECTION_BASE.GetDetectedItems}() retrieves the DetectedItems[] list.
---   * A DetectedItem from the DetectedItems[] list can be retrieved using the method @{Detection#DETECTION_BASE.GetDetectedItem}( DetectedItemIndex ).
---     Note that this method returns a DetectedItem element from the list, that contains a Set variable and further information
---     about the DetectedItem that is set by the DETECTION_BASE derived classes, used to group the DetectedItem.
---   * A DetectedSet from the DetectedItems[] list can be retrieved using the method @{Detection#DETECTION_BASE.GetDetectedSet}( DetectedItemIndex ).
---     This method retrieves the Set from a DetectedItem element from the DetectedItem list (DetectedItems[ DetectedItemIndex ].Set ).
--- 
--- ## 1.4) Apply additional Filters to fine-tune the detected objects
--- 
--- By default, DCS World will return any object that is in LOS and within "visual reach", or detectable through one of the electronic detection means.
--- That being said, the DCS World detection algorithm can sometimes be unrealistic.
--- Especially for a visual detection, DCS World is able to report within 1 second a detailed detection of a group of 20 units (including types of the units) that are 10 kilometers away, using only visual capabilities.
--- Additionally, trees and other obstacles are not accounted during the DCS World detection.
--- 
--- Therefore, an additional (optional) filtering has been built into the DETECTION_BASE class, that can be set for visual detected units.
--- For electronic detection, this filtering is not applied, only for visually detected targets.
--- 
--- The following additional filtering can be applied for visual filtering:
--- 
---   * A probability factor per kilometer distance.
---   * A probability factor based on the alpha angle between the detected object and the unit detecting.
---     A detection from a higher altitude allows for better detection than when on the ground.
---   * Define a probability factor for "cloudy zones", which are zones where forests or villages are located. In these zones, detection will be much more difficult.
---     The mission designer needs to define these cloudy zones within the mission, and needs to register these zones in the DETECTION_ objects additing a probability factor per zone.
--- 
--- I advise however, that, when you first use the DETECTION derived classes, that you don't use these filters.
--- Only when you experience unrealistic behaviour in your missions, these filters could be applied.
--- 
--- ### 1.4.1 ) Distance visual detection probability
--- 
--- Upon a **visual** detection, the further away a detected object is, the less likely it is to be detected properly.
--- Also, the speed of accurate detection plays a role.
--- 
--- A distance probability factor between 0 and 1 can be given, that will model a linear extrapolated probability over 10 km distance.
--- 
--- For example, if a probability factor of 0.6 (60%) is given, the extrapolated probabilities over 15 kilometers would like like:
--- 1 km: 96%, 2 km: 92%, 3 km: 88%, 4 km: 84%, 5 km: 80%, 6 km: 76%, 7 km: 72%, 8 km: 68%, 9 km: 64%, 10 km: 60%, 11 km: 56%, 12 km: 52%, 13 km: 48%, 14 km: 44%, 15 km: 40%.
--- 
--- Note that based on this probability factor, not only the detection but also the **type** of the unit will be applied!
--- 
--- Use the method @{Detection#DETECTION_BASE.SetDistanceProbability}() to set the probability factor upon a 10 km distance.
--- 
--- ### 1.4.2 ) Alpha Angle visual detection probability
--- 
--- Upon a **visual** detection, the higher the unit is during the detecting process, the more likely the detected unit is to be detected properly.
--- A detection at a 90% alpha angle is the most optimal, a detection at 10% is less and a detection at 0% is less likely to be correct.
--- 
--- A probability factor between 0 and 1 can be given, that will model a progressive extrapolated probability if the target would be detected at a 0° angle.
--- 
--- For example, if a alpha angle probability factor of 0.7 is given, the extrapolated probabilities of the different angles would look like:
--- 0°: 70%, 10°: 75,21%, 20°: 80,26%, 30°: 85%, 40°: 89,28%, 50°: 92,98%, 60°: 95,98%, 70°: 98,19%, 80°: 99,54%, 90°: 100%
--- 
--- Use the method @{Detection#DETECTION_BASE.SetAlphaAngleProbability}() to set the probability factor if 0°.
--- 
--- ### 1.4.3 ) Cloudy Zones detection probability
--- 
--- Upon a **visual** detection, the more a detected unit is within a cloudy zone, the less likely the detected unit is to be detected successfully.
--- The Cloudy Zones work with the ZONE_BASE derived classes. The mission designer can define within the mission
--- zones that reflect cloudy areas where detected units may not be so easily visually detected.
--- 
--- Use the method @{Detection#DETECTION_BASE.SetZoneProbability}() to set for a defined number of zones, the probability factors.
--- 
--- Note however, that the more zones are defined to be "cloudy" within a detection, the more performance it will take
--- from the DETECTION_BASE to calculate the presence of the detected unit within each zone.
--- Expecially for ZONE_POLYGON, try to limit the amount of nodes of the polygon!
--- 
--- Typically, this kind of filter would be applied for very specific areas were a detection needs to be very realisting for
--- AI not to detect so easily targets within a forrest or village rich area.
--- 
--- ## 1.5 ) Accept / Reject detected units
--- 
--- DETECTION_BASE can accept or reject successful detections based on the location of the detected object, 
--- if it is located in range or located inside or outside of specific zones.
--- 
--- ### 1.5.1 ) Detection acceptance of within range limit
--- 
--- A range can be set that will limit a successful detection for a unit.
--- Use the method @{Detection#DETECTION_BASE.SetAcceptRange}() to apply a range in meters till where detected units will be accepted.
--- 
---      local SetGroup = SET_GROUP:New():FilterPrefixes( "FAC" ):FilterStart() -- Build a SetGroup of Forward Air Controllers.
--- 
---      -- Build a detect object.
---      local Detection = DETECTION_BASE:New( SetGroup )
---      
---      -- This will accept detected units if the range is below 5000 meters.
---      Detection:SetAcceptRange( 5000 ) 
---      
---      -- Start the Detection.
---      Detection:Start()
--- 
--- 
--- ### 1.5.2 ) Detection acceptance if within zone(s).
--- 
--- Specific ZONE_BASE object(s) can be given as a parameter, which will only accept a detection if the unit is within the specified ZONE_BASE object(s).
--- Use the method @{Detection#DETECTION_BASE.SetAcceptZones}() will accept detected units if they are within the specified zones.
--- 
---      local SetGroup = SET_GROUP:New():FilterPrefixes( "FAC" ):FilterStart() -- Build a SetGroup of Forward Air Controllers.
--- 
---      -- Search fo the zones where units are to be accepted.
---      local ZoneAccept1 = ZONE:New( "AcceptZone1" )
---      local ZoneAccept2 = ZONE:New( "AcceptZone2" )
---      
---      -- Build a detect object.
---      local Detection = DETECTION_BASE:New( SetGroup )
---      
---      -- This will accept detected units by Detection when the unit is within ZoneAccept1 OR ZoneAccept2.
---      Detection:SetAcceptZones( { ZoneAccept1, ZoneAccept2 } ) 
---      
---      -- Start the Detection.
---      Detection:Start()
--- 
--- ### 1.5.3 ) Detection rejectance if within zone(s).
--- 
--- Specific ZONE_BASE object(s) can be given as a parameter, which will reject detection if the unit is within the specified ZONE_BASE object(s).
--- Use the method @{Detection#DETECTION_BASE.SetRejectZones}() will reject detected units if they are within the specified zones.
--- An example of how to use the method is shown below.
--- 
---      local SetGroup = SET_GROUP:New():FilterPrefixes( "FAC" ):FilterStart() -- Build a SetGroup of Forward Air Controllers.
--- 
---      -- Search fo the zones where units are to be rejected.
---      local ZoneReject1 = ZONE:New( "RejectZone1" )
---      local ZoneReject2 = ZONE:New( "RejectZone2" )
---      
---      -- Build a detect object.
---      local Detection = DETECTION_BASE:New( SetGroup )
---      
---      -- This will reject detected units by Detection when the unit is within ZoneReject1 OR ZoneReject2.
---      Detection:SetRejectZones( { ZoneReject1, ZoneReject2 } ) 
---      
---      -- Start the Detection.
---      Detection:Start()
--- 
--- ## 1.6) DETECTION_BASE is a Finite State Machine
---
--- Various Events and State Transitions can be tailored using DETECTION_BASE.
--- 
--- ### 1.6.1) DETECTION_BASE States
--- 
---   * **Detecting**: The detection is running.
---   * **Stopped**: The detection is stopped.
--- 
--- ### 1.6.2) DETECTION_BASE Events
--- 
---   * **Start**: Start the detection process.
---   * **Detect**: Detect new units.
---   * **Detected**: New units have been detected.
---   * **Stop**: Stop the detection process.
--- 
--- ===
--- 
--- # 2) @{Detection#DETECTION_UNITS} class, extends @{Detection#DETECTION_BASE}
--- 
--- The @{Detection#DETECTION_UNITS} class will detect units within the battle zone.
--- It will build a DetectedItems list filled with DetectedItems. Each DetectedItem will contain a field Set, which contains a @{Set#SET_UNIT} containing ONE @{UNIT} object reference.
--- Beware that when the amount of units detected is large, the DetectedItems list will be large also. 
--- 
--- # 3) @{Detection#DETECTION_TYPES} class, extends @{Detection#DETECTION_BASE}
--- 
--- The @{Detection#DETECTION_TYPES} class will detect units within the battle zone.
--- It will build a DetectedItems[] list filled with DetectedItems, grouped by the type of units detected. 
--- Each DetectedItem will contain a field Set, which contains a @{Set#SET_UNIT} containing ONE @{UNIT} object reference.
--- Beware that when the amount of different types detected is large, the DetectedItems[] list will be large also. 
--- 
--- # 4) @{Detection#DETECTION_AREAS} class, extends @{Detection#DETECTION_BASE}
--- 
--- The @{Detection#DETECTION_AREAS} class will detect units within the battle zone for a list of @{Group}s detecting targets following (a) detection method(s), 
--- and will build a list (table) of @{Set#SET_UNIT}s containing the @{Unit#UNIT}s detected.
--- The class is group the detected units within zones given a DetectedZoneRange parameter.
--- A set with multiple detected zones will be created as there are groups of units detected.
--- 
--- ## 4.1) Retrieve the Detected Unit Sets and Detected Zones
--- 
--- The methods to manage the DetectedItems[].Set(s) are implemented in @{Detection#DECTECTION_BASE} and 
--- the methods to manage the DetectedItems[].Zone(s) is implemented in @{Detection#DETECTION_AREAS}.
--- 
--- Retrieve the DetectedItems[].Set with the method @{Detection#DETECTION_BASE.GetDetectedSet}(). A @{Set#SET_UNIT} object will be returned.
--- 
--- Retrieve the formed @{Zone@ZONE_UNIT}s as a result of the grouping the detected units within the DetectionZoneRange, use the method @{Detection#DETECTION_BASE.GetDetectionZones}().
--- To understand the amount of zones created, use the method @{Detection#DETECTION_BASE.GetDetectionZoneCount}(). 
--- If you want to obtain a specific zone from the DetectedZones, use the method @{Detection#DETECTION_BASE.GetDetectionZone}() with a given index.
--- 
--- ## 4.4) Flare or Smoke detected units
--- 
--- Use the methods @{Detection#DETECTION_AREAS.FlareDetectedUnits}() or @{Detection#DETECTION_AREAS.SmokeDetectedUnits}() to flare or smoke the detected units when a new detection has taken place.
--- 
--- ## 4.5) Flare or Smoke or Bound detected zones
--- 
--- Use the methods:
--- 
---   * @{Detection#DETECTION_AREAS.FlareDetectedZones}() to flare in a color 
---   * @{Detection#DETECTION_AREAS.SmokeDetectedZones}() to smoke in a color
---   * @{Detection#DETECTION_AREAS.SmokeDetectedZones}() to bound with a tire with a white flag
---   
--- the detected zones when a new detection has taken place.
+-- ![Banner Image](..\Presentations\DETECTION\Dia1.JPG)
 -- 
 -- ===
 -- 
@@ -25750,7 +25518,191 @@ end
 
 do -- DETECTION_BASE
 
-  --- DETECTION_BASE class
+  --- # 1) DETECTION_BASE class, extends @{Fsm#FSM}
+  -- 
+  -- The DETECTION_BASE class defines the core functions to administer detected objects.
+  -- The DETECTION_BASE class will detect objects within the battle zone for a list of @{Group}s detecting targets following (a) detection method(s).
+  -- 
+  -- ## 1.1) DETECTION_BASE constructor
+  -- 
+  -- Construct a new DETECTION_BASE instance using the @{#DETECTION_BASE.New}() method.
+  -- 
+  -- ## 1.2) DETECTION_BASE initialization
+  -- 
+  -- By default, detection will return detected objects with all the detection sensors available.
+  -- However, you can ask how the objects were found with specific detection methods. 
+  -- If you use one of the below methods, the detection will work with the detection method specified.
+  -- You can specify to apply multiple detection methods.
+  -- 
+  -- Use the following functions to report the objects it detected using the methods Visual, Optical, Radar, IRST, RWR, DLINK:
+  -- 
+  --   * @{#DETECTION_BASE.InitDetectVisual}(): Detected using Visual.
+  --   * @{#DETECTION_BASE.InitDetectOptical}(): Detected using Optical.
+  --   * @{#DETECTION_BASE.InitDetectRadar}(): Detected using Radar.
+  --   * @{#DETECTION_BASE.InitDetectIRST}(): Detected using IRST.
+  --   * @{#DETECTION_BASE.InitDetectRWR}(): Detected using RWR.
+  --   * @{#DETECTION_BASE.InitDetectDLINK}(): Detected using DLINK.
+  -- 
+  -- ## 1.3) DETECTION_BASE derived classes group the detected units into a DetectedItems[] list
+  -- 
+  -- DETECTION_BASE derived classes build a list called DetectedItems[], which is essentially a first later 
+  -- of grouping of detected units. Each DetectedItem within the DetectedItems[] list contains
+  -- a SET_UNIT object that contains the  detected units that belong to that group.
+  -- 
+  -- Derived classes will apply different methods to group the detected units. 
+  -- Examples are per area, per quadrant, per distance, per type.
+  -- See further the derived DETECTION classes on which grouping methods are currently supported. 
+  -- 
+  -- Various methods exist how to retrieve the grouped items from a DETECTION_BASE derived class:
+  -- 
+  --   * The method @{Detection#DETECTION_BASE.GetDetectedItems}() retrieves the DetectedItems[] list.
+  --   * A DetectedItem from the DetectedItems[] list can be retrieved using the method @{Detection#DETECTION_BASE.GetDetectedItem}( DetectedItemIndex ).
+  --     Note that this method returns a DetectedItem element from the list, that contains a Set variable and further information
+  --     about the DetectedItem that is set by the DETECTION_BASE derived classes, used to group the DetectedItem.
+  --   * A DetectedSet from the DetectedItems[] list can be retrieved using the method @{Detection#DETECTION_BASE.GetDetectedSet}( DetectedItemIndex ).
+  --     This method retrieves the Set from a DetectedItem element from the DetectedItem list (DetectedItems[ DetectedItemIndex ].Set ).
+  -- 
+  -- ## 1.4) Apply additional Filters to fine-tune the detected objects
+  -- 
+  -- By default, DCS World will return any object that is in LOS and within "visual reach", or detectable through one of the electronic detection means.
+  -- That being said, the DCS World detection algorithm can sometimes be unrealistic.
+  -- Especially for a visual detection, DCS World is able to report within 1 second a detailed detection of a group of 20 units (including types of the units) that are 10 kilometers away, using only visual capabilities.
+  -- Additionally, trees and other obstacles are not accounted during the DCS World detection.
+  -- 
+  -- Therefore, an additional (optional) filtering has been built into the DETECTION_BASE class, that can be set for visual detected units.
+  -- For electronic detection, this filtering is not applied, only for visually detected targets.
+  -- 
+  -- The following additional filtering can be applied for visual filtering:
+  -- 
+  --   * A probability factor per kilometer distance.
+  --   * A probability factor based on the alpha angle between the detected object and the unit detecting.
+  --     A detection from a higher altitude allows for better detection than when on the ground.
+  --   * Define a probability factor for "cloudy zones", which are zones where forests or villages are located. In these zones, detection will be much more difficult.
+  --     The mission designer needs to define these cloudy zones within the mission, and needs to register these zones in the DETECTION_ objects additing a probability factor per zone.
+  -- 
+  -- I advise however, that, when you first use the DETECTION derived classes, that you don't use these filters.
+  -- Only when you experience unrealistic behaviour in your missions, these filters could be applied.
+  -- 
+  -- ### 1.4.1 ) Distance visual detection probability
+  -- 
+  -- Upon a **visual** detection, the further away a detected object is, the less likely it is to be detected properly.
+  -- Also, the speed of accurate detection plays a role.
+  -- 
+  -- A distance probability factor between 0 and 1 can be given, that will model a linear extrapolated probability over 10 km distance.
+  -- 
+  -- For example, if a probability factor of 0.6 (60%) is given, the extrapolated probabilities over 15 kilometers would like like:
+  -- 1 km: 96%, 2 km: 92%, 3 km: 88%, 4 km: 84%, 5 km: 80%, 6 km: 76%, 7 km: 72%, 8 km: 68%, 9 km: 64%, 10 km: 60%, 11 km: 56%, 12 km: 52%, 13 km: 48%, 14 km: 44%, 15 km: 40%.
+  -- 
+  -- Note that based on this probability factor, not only the detection but also the **type** of the unit will be applied!
+  -- 
+  -- Use the method @{Detection#DETECTION_BASE.SetDistanceProbability}() to set the probability factor upon a 10 km distance.
+  -- 
+  -- ### 1.4.2 ) Alpha Angle visual detection probability
+  -- 
+  -- Upon a **visual** detection, the higher the unit is during the detecting process, the more likely the detected unit is to be detected properly.
+  -- A detection at a 90% alpha angle is the most optimal, a detection at 10% is less and a detection at 0% is less likely to be correct.
+  -- 
+  -- A probability factor between 0 and 1 can be given, that will model a progressive extrapolated probability if the target would be detected at a 0° angle.
+  -- 
+  -- For example, if a alpha angle probability factor of 0.7 is given, the extrapolated probabilities of the different angles would look like:
+  -- 0°: 70%, 10°: 75,21%, 20°: 80,26%, 30°: 85%, 40°: 89,28%, 50°: 92,98%, 60°: 95,98%, 70°: 98,19%, 80°: 99,54%, 90°: 100%
+  -- 
+  -- Use the method @{Detection#DETECTION_BASE.SetAlphaAngleProbability}() to set the probability factor if 0°.
+  -- 
+  -- ### 1.4.3 ) Cloudy Zones detection probability
+  -- 
+  -- Upon a **visual** detection, the more a detected unit is within a cloudy zone, the less likely the detected unit is to be detected successfully.
+  -- The Cloudy Zones work with the ZONE_BASE derived classes. The mission designer can define within the mission
+  -- zones that reflect cloudy areas where detected units may not be so easily visually detected.
+  -- 
+  -- Use the method @{Detection#DETECTION_BASE.SetZoneProbability}() to set for a defined number of zones, the probability factors.
+  -- 
+  -- Note however, that the more zones are defined to be "cloudy" within a detection, the more performance it will take
+  -- from the DETECTION_BASE to calculate the presence of the detected unit within each zone.
+  -- Expecially for ZONE_POLYGON, try to limit the amount of nodes of the polygon!
+  -- 
+  -- Typically, this kind of filter would be applied for very specific areas were a detection needs to be very realisting for
+  -- AI not to detect so easily targets within a forrest or village rich area.
+  -- 
+  -- ## 1.5 ) Accept / Reject detected units
+  -- 
+  -- DETECTION_BASE can accept or reject successful detections based on the location of the detected object, 
+  -- if it is located in range or located inside or outside of specific zones.
+  -- 
+  -- ### 1.5.1 ) Detection acceptance of within range limit
+  -- 
+  -- A range can be set that will limit a successful detection for a unit.
+  -- Use the method @{Detection#DETECTION_BASE.SetAcceptRange}() to apply a range in meters till where detected units will be accepted.
+  -- 
+  --      local SetGroup = SET_GROUP:New():FilterPrefixes( "FAC" ):FilterStart() -- Build a SetGroup of Forward Air Controllers.
+  -- 
+  --      -- Build a detect object.
+  --      local Detection = DETECTION_BASE:New( SetGroup )
+  --      
+  --      -- This will accept detected units if the range is below 5000 meters.
+  --      Detection:SetAcceptRange( 5000 ) 
+  --      
+  --      -- Start the Detection.
+  --      Detection:Start()
+  -- 
+  -- 
+  -- ### 1.5.2 ) Detection acceptance if within zone(s).
+  -- 
+  -- Specific ZONE_BASE object(s) can be given as a parameter, which will only accept a detection if the unit is within the specified ZONE_BASE object(s).
+  -- Use the method @{Detection#DETECTION_BASE.SetAcceptZones}() will accept detected units if they are within the specified zones.
+  -- 
+  --      local SetGroup = SET_GROUP:New():FilterPrefixes( "FAC" ):FilterStart() -- Build a SetGroup of Forward Air Controllers.
+  -- 
+  --      -- Search fo the zones where units are to be accepted.
+  --      local ZoneAccept1 = ZONE:New( "AcceptZone1" )
+  --      local ZoneAccept2 = ZONE:New( "AcceptZone2" )
+  --      
+  --      -- Build a detect object.
+  --      local Detection = DETECTION_BASE:New( SetGroup )
+  --      
+  --      -- This will accept detected units by Detection when the unit is within ZoneAccept1 OR ZoneAccept2.
+  --      Detection:SetAcceptZones( { ZoneAccept1, ZoneAccept2 } ) 
+  --      
+  --      -- Start the Detection.
+  --      Detection:Start()
+  -- 
+  -- ### 1.5.3 ) Detection rejectance if within zone(s).
+  -- 
+  -- Specific ZONE_BASE object(s) can be given as a parameter, which will reject detection if the unit is within the specified ZONE_BASE object(s).
+  -- Use the method @{Detection#DETECTION_BASE.SetRejectZones}() will reject detected units if they are within the specified zones.
+  -- An example of how to use the method is shown below.
+  -- 
+  --      local SetGroup = SET_GROUP:New():FilterPrefixes( "FAC" ):FilterStart() -- Build a SetGroup of Forward Air Controllers.
+  -- 
+  --      -- Search fo the zones where units are to be rejected.
+  --      local ZoneReject1 = ZONE:New( "RejectZone1" )
+  --      local ZoneReject2 = ZONE:New( "RejectZone2" )
+  --      
+  --      -- Build a detect object.
+  --      local Detection = DETECTION_BASE:New( SetGroup )
+  --      
+  --      -- This will reject detected units by Detection when the unit is within ZoneReject1 OR ZoneReject2.
+  --      Detection:SetRejectZones( { ZoneReject1, ZoneReject2 } ) 
+  --      
+  --      -- Start the Detection.
+  --      Detection:Start()
+  -- 
+  -- ## 1.6) DETECTION_BASE is a Finite State Machine
+  --
+  -- Various Events and State Transitions can be tailored using DETECTION_BASE.
+  -- 
+  -- ### 1.6.1) DETECTION_BASE States
+  -- 
+  --   * **Detecting**: The detection is running.
+  --   * **Stopped**: The detection is stopped.
+  -- 
+  -- ### 1.6.2) DETECTION_BASE Events
+  -- 
+  --   * **Start**: Start the detection process.
+  --   * **Detect**: Detect new units.
+  --   * **Detected**: New units have been detected.
+  --   * **Stop**: Stop the detection process.
+  -- 
   -- @type DETECTION_BASE
   -- @field Core.Set#SET_GROUP DetectionSetGroup The @{Set} of GROUPs in the Forward Air Controller role.
   -- @field Dcs.DCSTypes#Distance DetectionRange The range till which targets are accepted to be detected.
@@ -26723,7 +26675,12 @@ end
 
 do -- DETECTION_UNITS
 
-  --- DETECTION_UNITS class
+  --- # 2) DETECTION_UNITS class, extends @{Detection#DETECTION_BASE}
+  -- 
+  -- The DETECTION_UNITS class will detect units within the battle zone.
+  -- It will build a DetectedItems list filled with DetectedItems. Each DetectedItem will contain a field Set, which contains a @{Set#SET_UNIT} containing ONE @{UNIT} object reference.
+  -- Beware that when the amount of units detected is large, the DetectedItems list will be large also. 
+  -- 
   -- @type DETECTION_UNITS
   -- @field Dcs.DCSTypes#Distance DetectionRange The range till which targets are detected.
   -- @extends #DETECTION_BASE
@@ -26933,7 +26890,13 @@ end
 
 do -- DETECTION_TYPES
 
-  --- DETECTION_TYPES class
+  --- # 3) DETECTION_TYPES class, extends @{Detection#DETECTION_BASE}
+  -- 
+  -- The DETECTION_TYPES class will detect units within the battle zone.
+  -- It will build a DetectedItems[] list filled with DetectedItems, grouped by the type of units detected. 
+  -- Each DetectedItem will contain a field Set, which contains a @{Set#SET_UNIT} containing ONE @{UNIT} object reference.
+  -- Beware that when the amount of different types detected is large, the DetectedItems[] list will be large also. 
+  -- 
   -- @type DETECTION_TYPES
   -- @extends #DETECTION_BASE
   DETECTION_TYPES = {
@@ -27116,7 +27079,38 @@ end
 
 do -- DETECTION_AREAS
 
-  --- DETECTION_AREAS class
+  --- # 4) DETECTION_AREAS class, extends @{Detection#DETECTION_BASE}
+  -- 
+  -- The DETECTION_AREAS class will detect units within the battle zone for a list of @{Group}s detecting targets following (a) detection method(s), 
+  -- and will build a list (table) of @{Set#SET_UNIT}s containing the @{Unit#UNIT}s detected.
+  -- The class is group the detected units within zones given a DetectedZoneRange parameter.
+  -- A set with multiple detected zones will be created as there are groups of units detected.
+  -- 
+  -- ## 4.1) Retrieve the Detected Unit Sets and Detected Zones
+  -- 
+  -- The methods to manage the DetectedItems[].Set(s) are implemented in @{Detection#DECTECTION_BASE} and 
+  -- the methods to manage the DetectedItems[].Zone(s) is implemented in @{Detection#DETECTION_AREAS}.
+  -- 
+  -- Retrieve the DetectedItems[].Set with the method @{Detection#DETECTION_BASE.GetDetectedSet}(). A @{Set#SET_UNIT} object will be returned.
+  -- 
+  -- Retrieve the formed @{Zone@ZONE_UNIT}s as a result of the grouping the detected units within the DetectionZoneRange, use the method @{Detection#DETECTION_BASE.GetDetectionZones}().
+  -- To understand the amount of zones created, use the method @{Detection#DETECTION_BASE.GetDetectionZoneCount}(). 
+  -- If you want to obtain a specific zone from the DetectedZones, use the method @{Detection#DETECTION_BASE.GetDetectionZone}() with a given index.
+  -- 
+  -- ## 4.4) Flare or Smoke detected units
+  -- 
+  -- Use the methods @{Detection#DETECTION_AREAS.FlareDetectedUnits}() or @{Detection#DETECTION_AREAS.SmokeDetectedUnits}() to flare or smoke the detected units when a new detection has taken place.
+  -- 
+  -- ## 4.5) Flare or Smoke or Bound detected zones
+  -- 
+  -- Use the methods:
+  -- 
+  --   * @{Detection#DETECTION_AREAS.FlareDetectedZones}() to flare in a color 
+  --   * @{Detection#DETECTION_AREAS.SmokeDetectedZones}() to smoke in a color
+  --   * @{Detection#DETECTION_AREAS.SmokeDetectedZones}() to bound with a tire with a white flag
+  --   
+  -- the detected zones when a new detection has taken place.
+  -- 
   -- @type DETECTION_AREAS
   -- @field Dcs.DCSTypes#Distance DetectionZoneRange The range till which targets are grouped upon the first detected target.
   -- @field #DETECTION_BASE.DetectedItems DetectedItems A list of areas containing the set of @{Unit}s, @{Zone}s, the center @{Unit} within the zone, and ID of each area that was detected within a DetectionZoneRange.
@@ -27861,8 +27855,7 @@ end
 
 
 
---- Single-Player:**Yes** / Multi-Player:**Yes** / AI:**Yes** / Human:**No** / Types:**Air** -- 
--- **Air Patrolling or Staging.**
+--- **AI** -- **Air Patrolling or Staging.**
 -- 
 -- ![Banner Image](..\Presentations\AI_PATROL\Dia1.JPG)
 -- 
@@ -28800,8 +28793,7 @@ function AI_PATROL_ZONE:OnPilotDead( EventData )
     self:__PilotDead( 1, EventData )
   end
 end
---- Single-Player:**Yes** / Multi-Player:**Yes** / AI:**Yes** / Human:**No** / Types:**Air** -- 
--- **Provide Close Air Support to friendly ground troops.**
+--- **AI** -- **Provide Close Air Support to friendly ground troops.**
 --
 -- ![Banner Image](..\Presentations\AI_CAS\Dia1.JPG)
 -- 
@@ -29375,7 +29367,7 @@ function AI_CAS_ZONE:OnEventDead( EventData )
 end
 
 
---- Single-Player:**Yes** / Multi-Player:**Yes** / AI:**Yes** / Human:**No** / Types:**Air** -- **Execute Combat Air Patrol (CAP).**
+--- **AI** - **Execute Combat Air Patrol (CAP).**
 --
 -- ![Banner Image](..\Presentations\AI_CAP\Dia1.JPG)
 -- 
@@ -31625,74 +31617,9 @@ do -- ACT_ROUTE_ZONE
   end
 
 end -- ACT_ROUTE_ZONE
---- (SP) (MP) (FSM) Account for (Detect, count and report) DCS events occuring on DCS objects (units).
+--- **Actions** - ACT_ACCOUNT_ classes **account for** (detect, count & report) various DCS events occuring on @{Unit}s.
 -- 
--- ===
--- 
--- # @{#ACT_ACCOUNT} FSM class, extends @{Fsm#FSM_PROCESS}
--- 
--- ## ACT_ACCOUNT state machine:
--- 
--- This class is a state machine: it manages a process that is triggered by events causing state transitions to occur.
--- All derived classes from this class will start with the class name, followed by a \_. See the relevant derived class descriptions below.
--- Each derived class follows exactly the same process, using the same events and following the same state transitions, 
--- but will have **different implementation behaviour** upon each event or state transition.
--- 
--- ### ACT_ACCOUNT **Events**:
--- 
--- These are the events defined in this class:
--- 
---   * **Start**:  The process is started. The process will go into the Report state.
---   * **Event**:  A relevant event has occured that needs to be accounted for. The process will go into the Account state.
---   * **Report**: The process is reporting to the player the accounting status of the DCS events.
---   * **More**:  There are more DCS events that need to be accounted for. The process will go back into the Report state.
---   * **NoMore**:  There are no more DCS events that need to be accounted for. The process will go into the Success state.
--- 
--- ### ACT_ACCOUNT **Event methods**:
--- 
--- Event methods are available (dynamically allocated by the state machine), that accomodate for state transitions occurring in the process.
--- There are two types of event methods, which you can use to influence the normal mechanisms in the state machine:
--- 
---   * **Immediate**: The event method has exactly the name of the event.
---   * **Delayed**: The event method starts with a __ + the name of the event. The first parameter of the event method is a number value, expressing the delay in seconds when the event will be executed. 
--- 
--- ### ACT_ACCOUNT **States**:
--- 
---   * **Assigned**: The player is assigned to the task. This is the initialization state for the process.
---   * **Waiting**: the process is waiting for a DCS event to occur within the simulator. This state is set automatically.
---   * **Report**: The process is Reporting to the players in the group of the unit. This state is set automatically every 30 seconds.
---   * **Account**: The relevant DCS event has occurred, and is accounted for.
---   * **Success (*)**: All DCS events were accounted for. 
---   * **Failed (*)**: The process has failed.
---   
--- (*) End states of the process.
---   
--- ### ACT_ACCOUNT state transition methods:
--- 
--- State transition functions can be set **by the mission designer** customizing or improving the behaviour of the state.
--- There are 2 moments when state transition methods will be called by the state machine:
--- 
---   * **Before** the state transition. 
---     The state transition method needs to start with the name **OnBefore + the name of the state**. 
---     If the state transition method returns false, then the processing of the state transition will not be done!
---     If you want to change the behaviour of the AIControllable at this event, return false, 
---     but then you'll need to specify your own logic using the AIControllable!
---   
---   * **After** the state transition. 
---     The state transition method needs to start with the name **OnAfter + the name of the state**. 
---     These state transition methods need to provide a return value, which is specified at the function description.
---
--- # 1) @{#ACT_ACCOUNT_DEADS} FSM class, extends @{Fsm.Account#ACT_ACCOUNT}
--- 
--- The ACT_ACCOUNT_DEADS class accounts (detects, counts and reports) successful kills of DCS units.
--- The process is given a @{Set} of units that will be tracked upon successful destruction.
--- The process will end after each target has been successfully destroyed.
--- Each successful dead will trigger an Account state transition that can be scored, modified or administered.
--- 
--- 
--- ## ACT_ACCOUNT_DEADS constructor:
--- 
---   * @{#ACT_ACCOUNT_DEADS.New}(): Creates a new ACT_ACCOUNT_DEADS object.
+-- ![Banner Image](..\Presentations\ACT_ACCOUNT\Dia1.JPG)
 -- 
 -- === 
 -- 
@@ -31701,7 +31628,51 @@ end -- ACT_ROUTE_ZONE
 
 do -- ACT_ACCOUNT
   
-  --- ACT_ACCOUNT class
+  --- # @{#ACT_ACCOUNT} FSM class, extends @{Fsm#FSM_PROCESS}
+  -- 
+  -- ## ACT_ACCOUNT state machine:  
+  -- 
+  -- This class is a state machine: it manages a process that is triggered by events causing state transitions to occur.
+  -- All derived classes from this class will start with the class name, followed by a \_. See the relevant derived class descriptions below.
+  -- Each derived class follows exactly the same process, using the same events and following the same state transitions, 
+  -- but will have **different implementation behaviour** upon each event or state transition.
+  -- 
+  -- ### ACT_ACCOUNT States  
+  -- 
+  --   * **Asigned**: The player is assigned.
+  --   * **Waiting**: Waiting for an event.
+  --   * **Report**: Reporting.
+  --   * **Account**: Account for an event.
+  --   * **Accounted**: All events have been accounted for, end of the process.
+  --   * **Failed**: Failed the process.
+  -- 
+  -- ### ACT_ACCOUNT Events  
+  -- 
+  --   * **Start**: Start the process.
+  --   * **Wait**: Wait for an event.
+  --   * **Report**: Report the status of the accounting.
+  --   * **Event**: An event happened, process the event.
+  --   * **More**: More targets.
+  --   * **NoMore (*)**: No more targets.
+  --   * **Fail (*)**: The action process has failed.
+  --   
+  -- (*) End states of the process.
+  --   
+  -- ### ACT_ACCOUNT state transition methods:
+  -- 
+  -- State transition functions can be set **by the mission designer** customizing or improving the behaviour of the state.
+  -- There are 2 moments when state transition methods will be called by the state machine:
+  -- 
+  --   * **Before** the state transition. 
+  --     The state transition method needs to start with the name **OnBefore + the name of the state**. 
+  --     If the state transition method returns false, then the processing of the state transition will not be done!
+  --     If you want to change the behaviour of the AIControllable at this event, return false, 
+  --     but then you'll need to specify your own logic using the AIControllable!
+  --   
+  --   * **After** the state transition. 
+  --     The state transition method needs to start with the name **OnAfter + the name of the state**. 
+  --     These state transition methods need to provide a return value, which is specified at the function description.
+  --     
   -- @type ACT_ACCOUNT
   -- @field Set#SET_UNIT TargetSetUnit
   -- @extends Core.Fsm#FSM_PROCESS
@@ -31783,7 +31754,18 @@ end -- ACT_ACCOUNT
 
 do -- ACT_ACCOUNT_DEADS
 
-  --- ACT_ACCOUNT_DEADS class
+  --- # @{#ACT_ACCOUNT_DEADS} FSM class, extends @{Fsm.Account#ACT_ACCOUNT}
+  -- 
+  -- The ACT_ACCOUNT_DEADS class accounts (detects, counts and reports) successful kills of DCS units.
+  -- The process is given a @{Set} of units that will be tracked upon successful destruction.
+  -- The process will end after each target has been successfully destroyed.
+  -- Each successful dead will trigger an Account state transition that can be scored, modified or administered.
+  -- 
+  -- 
+  -- ## ACT_ACCOUNT_DEADS constructor:
+  -- 
+  --   * @{#ACT_ACCOUNT_DEADS.New}(): Creates a new ACT_ACCOUNT_DEADS object.
+  --   
   -- @type ACT_ACCOUNT_DEADS
   -- @field Set#SET_UNIT TargetSetUnit
   -- @extends #ACT_ACCOUNT
@@ -31827,7 +31809,7 @@ do -- ACT_ACCOUNT_DEADS
   -- @param #string Event
   -- @param #string From
   -- @param #string To
-  function ACT_ACCOUNT_DEADS:onenterReport( ProcessUnit, From, Event, To )
+  function ACT_ACCOUNT_DEADS:onenterReport( ProcessUnit, Task, From, Event, To )
     self:E( { ProcessUnit, From, Event, To } )
   
     self:Message( "Your group with assigned " .. self.TaskName .. " task has " .. self.TargetSetUnit:GetUnitTypesText() .. " targets left to be destroyed." )
@@ -31840,17 +31822,21 @@ do -- ACT_ACCOUNT_DEADS
   -- @param #string Event
   -- @param #string From
   -- @param #string To
-  function ACT_ACCOUNT_DEADS:onenterAccount( ProcessUnit, From, Event, To, EventData  )
+  function ACT_ACCOUNT_DEADS:onenterAccount( ProcessUnit, Task, From, Event, To, EventData  )
     self:T( { ProcessUnit, EventData, From, Event, To } )
     
     self:T({self.Controllable})
   
     self.TargetSetUnit:Flush()
     
+    self:T( { "Before sending Message", EventData.IniUnitName, self.TargetSetUnit:FindUnit( EventData.IniUnitName ) } )
     if self.TargetSetUnit:FindUnit( EventData.IniUnitName ) then
+      self:T( "Sending Message" )
       local TaskGroup = ProcessUnit:GetGroup()
+      self.TargetSetUnit:Remove( EventData.IniUnitName )
       self:Message( "You hit a target. Your group with assigned " .. self.TaskName .. " task has " .. self.TargetSetUnit:Count() .. " targets ( " .. self.TargetSetUnit:GetUnitTypesText() .. " ) left to be destroyed." )
     end
+    self:T( { "After sending Message" } )
   end
   
   --- StateMachine callback function
@@ -31859,9 +31845,9 @@ do -- ACT_ACCOUNT_DEADS
   -- @param #string Event
   -- @param #string From
   -- @param #string To
-  function ACT_ACCOUNT_DEADS:onafterEvent( ProcessUnit, From, Event, To, EventData )
+  function ACT_ACCOUNT_DEADS:onafterEvent( ProcessUnit, Task, From, Event, To )
   
-    if self.TargetSetUnit:Count() > 1 then
+    if self.TargetSetUnit:Count() > 0 then
       self:__More( 1 )
     else
       self:__NoMore( 1 )
@@ -34671,7 +34657,7 @@ do -- TASK_A2G_DISPATCHER
         local TargetSetUnit = self:EvaluateCAS( DetectedItem ) -- Returns a SetUnit if there are targets to be SEADed...
         if TargetSetUnit then
           local Task = TASK_CAS:New( Mission, self.SetGroup, string.format( "CAS.%03d", ItemID ), TargetSetUnit )
-          --Task:SetTargetZone( DetectedZone )
+          Task:SetTargetZone( DetectedZone )
           Task:SetDispatcher( self )
           CASTask = Mission:AddTask( Task )
         end

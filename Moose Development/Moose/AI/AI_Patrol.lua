@@ -1,5 +1,4 @@
---- Single-Player:**Yes** / Multi-Player:**Yes** / AI:**Yes** / Human:**No** / Types:**Air** -- 
--- **Air Patrolling or Staging.**
+--- **AI** -- **Air Patrolling or Staging.**
 -- 
 -- ![Banner Image](..\Presentations\AI_PATROL\Dia1.JPG)
 -- 

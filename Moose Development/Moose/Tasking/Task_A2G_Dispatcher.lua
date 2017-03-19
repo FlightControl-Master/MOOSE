@@ -245,7 +245,7 @@ do -- TASK_A2G_DISPATCHER
         local TargetSetUnit = self:EvaluateCAS( DetectedItem ) -- Returns a SetUnit if there are targets to be SEADed...
         if TargetSetUnit then
           local Task = TASK_CAS:New( Mission, self.SetGroup, string.format( "CAS.%03d", ItemID ), TargetSetUnit )
-          --Task:SetTargetZone( DetectedZone )
+          Task:SetTargetZone( DetectedZone )
           Task:SetDispatcher( self )
           CASTask = Mission:AddTask( Task )
         end

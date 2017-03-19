@@ -72,272 +72,26 @@
 	<div id="content">
    <h1>Module <code>Detection</code></h1>
    
-<p> This module contains the DETECTION classes.</p>
+<p><strong>Functional</strong> - DETECTION_ classes model the detection of enemy units by FACs or RECCEs and group them according various methods.</p>
 
    
-<h1> </h1>
 
-<p> # 1) <a href="##(DETECTION_BASE)">#DETECTION_BASE</a> class, extends <a href="Fsm.html##(FSM)">Fsm#FSM</a></p>
-
-<p> The <a href="##(DETECTION_BASE)">#DETECTION_BASE</a> class defines the core functions to administer detected objects.
- The <a href="##(DETECTION_BASE)">#DETECTION_BASE</a> class will detect objects within the battle zone for a list of <a href="Group.html">Group</a>s detecting targets following (a) detection method(s).</p>
-
-<p> ## 1.1) DETECTION_BASE constructor</p>
-
-<p> Construct a new DETECTION_BASE instance using the <a href="##(DETECTION_BASE).New">DETECTION_BASE.New</a>() method.</p>
-
-<p> ## 1.2) DETECTION_BASE initialization</p>
-
-<p> By default, detection will return detected objects with all the detection sensors available.
- However, you can ask how the objects were found with specific detection methods. 
- If you use one of the below methods, the detection will work with the detection method specified.
- You can specify to apply multiple detection methods.</p>
-
-<p> Use the following functions to report the objects it detected using the methods Visual, Optical, Radar, IRST, RWR, DLINK:</p>
-
-<ul>
-    <li><a href="##(DETECTION_BASE).InitDetectVisual">DETECTION_BASE.InitDetectVisual</a>(): Detected using Visual.</li>
-    <li><a href="##(DETECTION_BASE).InitDetectOptical">DETECTION_BASE.InitDetectOptical</a>(): Detected using Optical.</li>
-    <li><a href="##(DETECTION_BASE).InitDetectRadar">DETECTION_BASE.InitDetectRadar</a>(): Detected using Radar.</li>
-    <li><a href="##(DETECTION_BASE).InitDetectIRST">DETECTION_BASE.InitDetectIRST</a>(): Detected using IRST.</li>
-    <li><a href="##(DETECTION_BASE).InitDetectRWR">DETECTION_BASE.InitDetectRWR</a>(): Detected using RWR.</li>
-    <li><a href="##(DETECTION_BASE).InitDetectDLINK">DETECTION_BASE.InitDetectDLINK</a>(): Detected using DLINK.</li>
-</ul>
-
-<p> ## 1.3) DETECTION_BASE derived classes group the detected units into a DetectedItems[] list</p>
-
-<p> DETECTION<em>BASE derived classes build a list called DetectedItems[], which is essentially a first later 
- of grouping of detected units. Each DetectedItem within the DetectedItems[] list contains
- a SET</em>UNIT object that contains the  detected units that belong to that group.</p>
-
-<p> Derived classes will apply different methods to group the detected units. 
- Examples are per area, per quadrant, per distance, per type.
- See further the derived DETECTION classes on which grouping methods are currently supported. </p>
-
-<p> Various methods exist how to retrieve the grouped items from a DETECTION_BASE derived class:</p>
-
-<ul>
-    <li>The method <a href="Detection.html##(DETECTION_BASE).GetDetectedItems">Detection#DETECTION_BASE.GetDetectedItems</a>() retrieves the DetectedItems[] list.</li>
-    <li>A DetectedItem from the DetectedItems[] list can be retrieved using the method <a href="Detection.html##(DETECTION_BASE).GetDetectedItem">Detection#DETECTION_BASE.GetDetectedItem</a>( DetectedItemIndex ).
-     Note that this method returns a DetectedItem element from the list, that contains a Set variable and further information
-     about the DetectedItem that is set by the DETECTION_BASE derived classes, used to group the DetectedItem.</li>
-    <li>A DetectedSet from the DetectedItems[] list can be retrieved using the method <a href="Detection.html##(DETECTION_BASE).GetDetectedSet">Detection#DETECTION_BASE.GetDetectedSet</a>( DetectedItemIndex ).
-     This method retrieves the Set from a DetectedItem element from the DetectedItem list (DetectedItems[ DetectedItemIndex ].Set ).</li>
-</ul>
-
-<p> ## 1.4) Apply additional Filters to fine-tune the detected objects</p>
-
-<p> By default, DCS World will return any object that is in LOS and within "visual reach", or detectable through one of the electronic detection means.
- That being said, the DCS World detection algorithm can sometimes be unrealistic.
- Especially for a visual detection, DCS World is able to report within 1 second a detailed detection of a group of 20 units (including types of the units) that are 10 kilometers away, using only visual capabilities.
- Additionally, trees and other obstacles are not accounted during the DCS World detection.</p>
-
-<p> Therefore, an additional (optional) filtering has been built into the DETECTION_BASE class, that can be set for visual detected units.
- For electronic detection, this filtering is not applied, only for visually detected targets.</p>
-
-<p> The following additional filtering can be applied for visual filtering:</p>
-
-<ul>
-    <li>A probability factor per kilometer distance.</li>
-    <li>A probability factor based on the alpha angle between the detected object and the unit detecting.
-     A detection from a higher altitude allows for better detection than when on the ground.</li>
-    <li>Define a probability factor for "cloudy zones", which are zones where forests or villages are located. In these zones, detection will be much more difficult.
-     The mission designer needs to define these cloudy zones within the mission, and needs to register these zones in the DETECTION_ objects additing a probability factor per zone.</li>
-</ul>
-
-<p> I advise however, that, when you first use the DETECTION derived classes, that you don't use these filters.
- Only when you experience unrealistic behaviour in your missions, these filters could be applied.</p>
-
-<p> ### 1.4.1 ) Distance visual detection probability</p>
-
-<p> Upon a <strong>visual</strong> detection, the further away a detected object is, the less likely it is to be detected properly.
- Also, the speed of accurate detection plays a role.</p>
-
-<p> A distance probability factor between 0 and 1 can be given, that will model a linear extrapolated probability over 10 km distance.</p>
-
-<p> For example, if a probability factor of 0.6 (60%) is given, the extrapolated probabilities over 15 kilometers would like like:
- 1 km: 96%, 2 km: 92%, 3 km: 88%, 4 km: 84%, 5 km: 80%, 6 km: 76%, 7 km: 72%, 8 km: 68%, 9 km: 64%, 10 km: 60%, 11 km: 56%, 12 km: 52%, 13 km: 48%, 14 km: 44%, 15 km: 40%.</p>
-
-<p> Note that based on this probability factor, not only the detection but also the <strong>type</strong> of the unit will be applied!</p>
-
-<p> Use the method <a href="Detection.html##(DETECTION_BASE).SetDistanceProbability">Detection#DETECTION_BASE.SetDistanceProbability</a>() to set the probability factor upon a 10 km distance.</p>
-
-<p> ### 1.4.2 ) Alpha Angle visual detection probability</p>
-
-<p> Upon a <strong>visual</strong> detection, the higher the unit is during the detecting process, the more likely the detected unit is to be detected properly.
- A detection at a 90% alpha angle is the most optimal, a detection at 10% is less and a detection at 0% is less likely to be correct.</p>
-
-<p> A probability factor between 0 and 1 can be given, that will model a progressive extrapolated probability if the target would be detected at a 0° angle.</p>
-
-<p> For example, if a alpha angle probability factor of 0.7 is given, the extrapolated probabilities of the different angles would look like:
- 0°: 70%, 10°: 75,21%, 20°: 80,26%, 30°: 85%, 40°: 89,28%, 50°: 92,98%, 60°: 95,98%, 70°: 98,19%, 80°: 99,54%, 90°: 100%</p>
-
-<p> Use the method <a href="Detection.html##(DETECTION_BASE).SetAlphaAngleProbability">Detection#DETECTION_BASE.SetAlphaAngleProbability</a>() to set the probability factor if 0°.</p>
-
-<p> ### 1.4.3 ) Cloudy Zones detection probability</p>
-
-<p> Upon a <strong>visual</strong> detection, the more a detected unit is within a cloudy zone, the less likely the detected unit is to be detected successfully.
- The Cloudy Zones work with the ZONE_BASE derived classes. The mission designer can define within the mission
- zones that reflect cloudy areas where detected units may not be so easily visually detected.</p>
-
-<p> Use the method <a href="Detection.html##(DETECTION_BASE).SetZoneProbability">Detection#DETECTION_BASE.SetZoneProbability</a>() to set for a defined number of zones, the probability factors.</p>
-
-<p> Note however, that the more zones are defined to be "cloudy" within a detection, the more performance it will take
- from the DETECTION<em>BASE to calculate the presence of the detected unit within each zone.
- Expecially for ZONE</em>POLYGON, try to limit the amount of nodes of the polygon!</p>
-
-<p> Typically, this kind of filter would be applied for very specific areas were a detection needs to be very realisting for
- AI not to detect so easily targets within a forrest or village rich area.</p>
-
-<p> ## 1.5 ) Accept / Reject detected units</p>
-
-<p> DETECTION_BASE can accept or reject successful detections based on the location of the detected object, 
- if it is located in range or located inside or outside of specific zones.</p>
-
-<p> ### 1.5.1 ) Detection acceptance of within range limit</p>
-
-<p> A range can be set that will limit a successful detection for a unit.
- Use the method <a href="Detection.html##(DETECTION_BASE).SetAcceptRange">Detection#DETECTION_BASE.SetAcceptRange</a>() to apply a range in meters till where detected units will be accepted.</p>
-
-<pre><code>  local SetGroup = SET_GROUP:New():FilterPrefixes( "FAC" ):FilterStart() -- Build a SetGroup of Forward Air Controllers.
-
-  -- Build a detect object.
-  local Detection = DETECTION_BASE:New( SetGroup )
-
-  -- This will accept detected units if the range is below 5000 meters.
-  Detection:SetAcceptRange( 5000 ) 
-
-  -- Start the Detection.
-  Detection:Start()
-</code></pre>
-
-
-<p> ### 1.5.2 ) Detection acceptance if within zone(s).</p>
-
-<p> Specific ZONE<em>BASE object(s) can be given as a parameter, which will only accept a detection if the unit is within the specified ZONE</em>BASE object(s).
- Use the method <a href="Detection.html##(DETECTION_BASE).SetAcceptZones">Detection#DETECTION_BASE.SetAcceptZones</a>() will accept detected units if they are within the specified zones.</p>
-
-<pre><code>  local SetGroup = SET_GROUP:New():FilterPrefixes( "FAC" ):FilterStart() -- Build a SetGroup of Forward Air Controllers.
-
-  -- Search fo the zones where units are to be accepted.
-  local ZoneAccept1 = ZONE:New( "AcceptZone1" )
-  local ZoneAccept2 = ZONE:New( "AcceptZone2" )
-
-  -- Build a detect object.
-  local Detection = DETECTION_BASE:New( SetGroup )
-
-  -- This will accept detected units by Detection when the unit is within ZoneAccept1 OR ZoneAccept2.
-  Detection:SetAcceptZones( { ZoneAccept1, ZoneAccept2 } ) 
-
-  -- Start the Detection.
-  Detection:Start()
-</code></pre>
-
-<p> ### 1.5.3 ) Detection rejectance if within zone(s).</p>
-
-<p> Specific ZONE<em>BASE object(s) can be given as a parameter, which will reject detection if the unit is within the specified ZONE</em>BASE object(s).
- Use the method <a href="Detection.html##(DETECTION_BASE).SetRejectZones">Detection#DETECTION_BASE.SetRejectZones</a>() will reject detected units if they are within the specified zones.
- An example of how to use the method is shown below.</p>
-
-<pre><code>  local SetGroup = SET_GROUP:New():FilterPrefixes( "FAC" ):FilterStart() -- Build a SetGroup of Forward Air Controllers.
-
-  -- Search fo the zones where units are to be rejected.
-  local ZoneReject1 = ZONE:New( "RejectZone1" )
-  local ZoneReject2 = ZONE:New( "RejectZone2" )
-
-  -- Build a detect object.
-  local Detection = DETECTION_BASE:New( SetGroup )
-
-  -- This will reject detected units by Detection when the unit is within ZoneReject1 OR ZoneReject2.
-  Detection:SetRejectZones( { ZoneReject1, ZoneReject2 } ) 
-
-  -- Start the Detection.
-  Detection:Start()
-</code></pre>
-
-<p> ## 1.6) DETECTION_BASE is a Finite State Machine</p>
-
-<p> Various Events and State Transitions can be tailored using DETECTION_BASE.</p>
-
-<p> ### 1.6.1) DETECTION_BASE States</p>
-
-<ul>
-    <li><strong>Detecting</strong>: The detection is running.</li>
-    <li><strong>Stopped</strong>: The detection is stopped.</li>
-</ul>
-
-<p> ### 1.6.2) DETECTION_BASE Events</p>
-
-<ul>
-    <li><strong>Start</strong>: Start the detection process.</li>
-    <li><strong>Detect</strong>: Detect new units.</li>
-    <li><strong>Detected</strong>: New units have been detected.</li>
-    <li><strong>Stop</strong>: Stop the detection process.</li>
-</ul>
+<p><img src="..\Presentations\DETECTION\Dia1.JPG" alt="Banner Image"/></p>
 
 <hr/>
 
-<p> # 2) <a href="Detection.html##(DETECTION_UNITS)">Detection#DETECTION_UNITS</a> class, extends <a href="Detection.html##(DETECTION_BASE)">Detection#DETECTION_BASE</a></p>
-
-<p> The <a href="Detection.html##(DETECTION_UNITS)">Detection#DETECTION_UNITS</a> class will detect units within the battle zone.
- It will build a DetectedItems list filled with DetectedItems. Each DetectedItem will contain a field Set, which contains a <a href="Set.html##(SET_UNIT)">Set#SET_UNIT</a> containing ONE <a href="UNIT.html">UNIT</a> object reference.
- Beware that when the amount of units detected is large, the DetectedItems list will be large also. </p>
-
-<p> # 3) <a href="Detection.html##(DETECTION_TYPES)">Detection#DETECTION_TYPES</a> class, extends <a href="Detection.html##(DETECTION_BASE)">Detection#DETECTION_BASE</a></p>
-
-<p> The <a href="Detection.html##(DETECTION_TYPES)">Detection#DETECTION_TYPES</a> class will detect units within the battle zone.
- It will build a DetectedItems[] list filled with DetectedItems, grouped by the type of units detected. 
- Each DetectedItem will contain a field Set, which contains a <a href="Set.html##(SET_UNIT)">Set#SET_UNIT</a> containing ONE <a href="UNIT.html">UNIT</a> object reference.
- Beware that when the amount of different types detected is large, the DetectedItems[] list will be large also. </p>
-
-<p> # 4) <a href="Detection.html##(DETECTION_AREAS)">Detection#DETECTION_AREAS</a> class, extends <a href="Detection.html##(DETECTION_BASE)">Detection#DETECTION_BASE</a></p>
-
-<p> The <a href="Detection.html##(DETECTION_AREAS)">Detection#DETECTION_AREAS</a> class will detect units within the battle zone for a list of <a href="Group.html">Group</a>s detecting targets following (a) detection method(s), 
- and will build a list (table) of <a href="Set.html##(SET_UNIT)">Set#SET_UNIT</a>s containing the <a href="Unit.html##(UNIT)">Unit#UNIT</a>s detected.
- The class is group the detected units within zones given a DetectedZoneRange parameter.
- A set with multiple detected zones will be created as there are groups of units detected.</p>
-
-<p> ## 4.1) Retrieve the Detected Unit Sets and Detected Zones</p>
-
-<p> The methods to manage the DetectedItems[].Set(s) are implemented in <a href="Detection.html##(DECTECTION_BASE)">Detection#DECTECTION_BASE</a> and 
- the methods to manage the DetectedItems[].Zone(s) is implemented in <a href="Detection.html##(DETECTION_AREAS)">Detection#DETECTION_AREAS</a>.</p>
-
-<p> Retrieve the DetectedItems[].Set with the method <a href="Detection.html##(DETECTION_BASE).GetDetectedSet">Detection#DETECTION_BASE.GetDetectedSet</a>(). A <a href="Set.html##(SET_UNIT)">Set#SET_UNIT</a> object will be returned.</p>
-
-<p> Retrieve the formed <a href="Zone.html">Zone</a>s as a result of the grouping the detected units within the DetectionZoneRange, use the method <a href="Detection.html##(DETECTION_BASE).GetDetectionZones">Detection#DETECTION_BASE.GetDetectionZones</a>().
- To understand the amount of zones created, use the method <a href="Detection.html##(DETECTION_BASE).GetDetectionZoneCount">Detection#DETECTION_BASE.GetDetectionZoneCount</a>(). 
- If you want to obtain a specific zone from the DetectedZones, use the method <a href="Detection.html##(DETECTION_BASE).GetDetectionZone">Detection#DETECTION_BASE.GetDetectionZone</a>() with a given index.</p>
-
-<p> ## 4.4) Flare or Smoke detected units</p>
-
-<p> Use the methods <a href="Detection.html##(DETECTION_AREAS).FlareDetectedUnits">Detection#DETECTION_AREAS.FlareDetectedUnits</a>() or <a href="Detection.html##(DETECTION_AREAS).SmokeDetectedUnits">Detection#DETECTION_AREAS.SmokeDetectedUnits</a>() to flare or smoke the detected units when a new detection has taken place.</p>
-
-<p> ## 4.5) Flare or Smoke or Bound detected zones</p>
-
-<p> Use the methods:</p>
-
-<ul>
-    <li><a href="Detection.html##(DETECTION_AREAS).FlareDetectedZones">Detection#DETECTION_AREAS.FlareDetectedZones</a>() to flare in a color </li>
-    <li><a href="Detection.html##(DETECTION_AREAS).SmokeDetectedZones">Detection#DETECTION_AREAS.SmokeDetectedZones</a>() to smoke in a color</li>
-    <li><a href="Detection.html##(DETECTION_AREAS).SmokeDetectedZones">Detection#DETECTION_AREAS.SmokeDetectedZones</a>() to bound with a tire with a white flag</li>
-</ul>
-
-<p> the detected zones when a new detection has taken place.</p>
-
-<hr/>
-
-<p> ### Contributions: </p>
+<h3>Contributions:</h3>
 
 <ul>
     <li>Mechanist : Early concept of DETECTION_AREAS.</li>
 </ul>
 
-<p> ### Authors: </p>
+<h3>Authors:</h3>
 
 <ul>
-    <li>FlightControl : Analysis, Design, Programming, Testing
-    </li>
+    <li>FlightControl : Analysis, Design, Programming, Testing</li>
 </ul>
+
 
 	<h2>Global(s)</h2>
 	<table class="function_list">
@@ -1321,7 +1075,42 @@
 	
 			<h2><a id="#(DETECTION_AREAS)" >Type <code>DETECTION_AREAS</code></a></h2>
 				
-<p>DETECTION_AREAS class</p>
+<p> # 4) DETECTION_AREAS class, extends <a href="Detection.html##(DETECTION_BASE)">Detection#DETECTION_BASE</a></p>
+
+<p> The DETECTION_AREAS class will detect units within the battle zone for a list of <a href="Group.html">Group</a>s detecting targets following (a) detection method(s), 
+ and will build a list (table) of <a href="Set.html##(SET_UNIT)">Set#SET_UNIT</a>s containing the <a href="Unit.html##(UNIT)">Unit#UNIT</a>s detected.</p>
+
+	
+<p> The class is group the detected units within zones given a DetectedZoneRange parameter.
+ A set with multiple detected zones will be created as there are groups of units detected.</p>
+
+<p> ## 4.1) Retrieve the Detected Unit Sets and Detected Zones</p>
+
+<p> The methods to manage the DetectedItems[].Set(s) are implemented in <a href="Detection.html##(DECTECTION_BASE)">Detection#DECTECTION_BASE</a> and 
+ the methods to manage the DetectedItems[].Zone(s) is implemented in <a href="Detection.html##(DETECTION_AREAS)">Detection#DETECTION_AREAS</a>.</p>
+
+<p> Retrieve the DetectedItems[].Set with the method <a href="Detection.html##(DETECTION_BASE).GetDetectedSet">Detection#DETECTION_BASE.GetDetectedSet</a>(). A <a href="Set.html##(SET_UNIT)">Set#SET_UNIT</a> object will be returned.</p>
+
+<p> Retrieve the formed <a href="Zone.html">Zone</a>s as a result of the grouping the detected units within the DetectionZoneRange, use the method <a href="Detection.html##(DETECTION_BASE).GetDetectionZones">Detection#DETECTION_BASE.GetDetectionZones</a>().
+ To understand the amount of zones created, use the method <a href="Detection.html##(DETECTION_BASE).GetDetectionZoneCount">Detection#DETECTION_BASE.GetDetectionZoneCount</a>(). 
+ If you want to obtain a specific zone from the DetectedZones, use the method <a href="Detection.html##(DETECTION_BASE).GetDetectionZone">Detection#DETECTION_BASE.GetDetectionZone</a>() with a given index.</p>
+
+<p> ## 4.4) Flare or Smoke detected units</p>
+
+<p> Use the methods <a href="Detection.html##(DETECTION_AREAS).FlareDetectedUnits">Detection#DETECTION_AREAS.FlareDetectedUnits</a>() or <a href="Detection.html##(DETECTION_AREAS).SmokeDetectedUnits">Detection#DETECTION_AREAS.SmokeDetectedUnits</a>() to flare or smoke the detected units when a new detection has taken place.</p>
+
+<p> ## 4.5) Flare or Smoke or Bound detected zones</p>
+
+<p> Use the methods:</p>
+
+<ul>
+    <li><a href="Detection.html##(DETECTION_AREAS).FlareDetectedZones">Detection#DETECTION_AREAS.FlareDetectedZones</a>() to flare in a color </li>
+    <li><a href="Detection.html##(DETECTION_AREAS).SmokeDetectedZones">Detection#DETECTION_AREAS.SmokeDetectedZones</a>() to smoke in a color</li>
+    <li><a href="Detection.html##(DETECTION_AREAS).SmokeDetectedZones">Detection#DETECTION_AREAS.SmokeDetectedZones</a>() to bound with a tire with a white flag</li>
+</ul>
+
+<p> the detected zones when a new detection has taken place.
+ </p>
 
 	<h3>Field(s)</h3>
 		<dl class="function">
@@ -1734,7 +1523,206 @@ self</p>
 
 			<h2><a id="#(DETECTION_BASE)" >Type <code>DETECTION_BASE</code></a></h2>
 				
-<p>DETECTION_BASE class</p>
+<h1>1) DETECTION_BASE class, extends <a href="Fsm.html##(FSM)">Fsm#FSM</a></h1>
+
+<p>The DETECTION_BASE class defines the core functions to administer detected objects.</p>
+
+	
+<p>The DETECTION_BASE class will detect objects within the battle zone for a list of <a href="Group.html">Group</a>s detecting targets following (a) detection method(s).</p>
+
+<h2>1.1) DETECTION_BASE constructor</h2>
+
+<p>Construct a new DETECTION_BASE instance using the <a href="##(DETECTION_BASE).New">DETECTION_BASE.New</a>() method.</p>
+
+<h2>1.2) DETECTION_BASE initialization</h2>
+
+<p>By default, detection will return detected objects with all the detection sensors available.
+However, you can ask how the objects were found with specific detection methods. 
+If you use one of the below methods, the detection will work with the detection method specified.
+You can specify to apply multiple detection methods.</p>
+
+<p>Use the following functions to report the objects it detected using the methods Visual, Optical, Radar, IRST, RWR, DLINK:</p>
+
+<ul>
+    <li><a href="##(DETECTION_BASE).InitDetectVisual">DETECTION_BASE.InitDetectVisual</a>(): Detected using Visual.</li>
+    <li><a href="##(DETECTION_BASE).InitDetectOptical">DETECTION_BASE.InitDetectOptical</a>(): Detected using Optical.</li>
+    <li><a href="##(DETECTION_BASE).InitDetectRadar">DETECTION_BASE.InitDetectRadar</a>(): Detected using Radar.</li>
+    <li><a href="##(DETECTION_BASE).InitDetectIRST">DETECTION_BASE.InitDetectIRST</a>(): Detected using IRST.</li>
+    <li><a href="##(DETECTION_BASE).InitDetectRWR">DETECTION_BASE.InitDetectRWR</a>(): Detected using RWR.</li>
+    <li><a href="##(DETECTION_BASE).InitDetectDLINK">DETECTION_BASE.InitDetectDLINK</a>(): Detected using DLINK.</li>
+</ul>
+
+<h2>1.3) DETECTION_BASE derived classes group the detected units into a DetectedItems[] list</h2>
+
+<p>DETECTION<em>BASE derived classes build a list called DetectedItems[], which is essentially a first later 
+of grouping of detected units. Each DetectedItem within the DetectedItems[] list contains
+a SET</em>UNIT object that contains the  detected units that belong to that group.</p>
+
+<p>Derived classes will apply different methods to group the detected units. 
+Examples are per area, per quadrant, per distance, per type.
+See further the derived DETECTION classes on which grouping methods are currently supported. </p>
+
+<p>Various methods exist how to retrieve the grouped items from a DETECTION_BASE derived class:</p>
+
+<ul>
+    <li>The method <a href="Detection.html##(DETECTION_BASE).GetDetectedItems">Detection#DETECTION_BASE.GetDetectedItems</a>() retrieves the DetectedItems[] list.</li>
+    <li>A DetectedItem from the DetectedItems[] list can be retrieved using the method <a href="Detection.html##(DETECTION_BASE).GetDetectedItem">Detection#DETECTION_BASE.GetDetectedItem</a>( DetectedItemIndex ).
+    Note that this method returns a DetectedItem element from the list, that contains a Set variable and further information
+    about the DetectedItem that is set by the DETECTION_BASE derived classes, used to group the DetectedItem.</li>
+    <li>A DetectedSet from the DetectedItems[] list can be retrieved using the method <a href="Detection.html##(DETECTION_BASE).GetDetectedSet">Detection#DETECTION_BASE.GetDetectedSet</a>( DetectedItemIndex ).
+    This method retrieves the Set from a DetectedItem element from the DetectedItem list (DetectedItems[ DetectedItemIndex ].Set ).</li>
+</ul>
+
+<h2>1.4) Apply additional Filters to fine-tune the detected objects</h2>
+
+<p>By default, DCS World will return any object that is in LOS and within "visual reach", or detectable through one of the electronic detection means.
+That being said, the DCS World detection algorithm can sometimes be unrealistic.
+Especially for a visual detection, DCS World is able to report within 1 second a detailed detection of a group of 20 units (including types of the units) that are 10 kilometers away, using only visual capabilities.
+Additionally, trees and other obstacles are not accounted during the DCS World detection.</p>
+
+<p>Therefore, an additional (optional) filtering has been built into the DETECTION_BASE class, that can be set for visual detected units.
+For electronic detection, this filtering is not applied, only for visually detected targets.</p>
+
+<p>The following additional filtering can be applied for visual filtering:</p>
+
+<ul>
+    <li>A probability factor per kilometer distance.</li>
+    <li>A probability factor based on the alpha angle between the detected object and the unit detecting.
+    A detection from a higher altitude allows for better detection than when on the ground.</li>
+    <li>Define a probability factor for "cloudy zones", which are zones where forests or villages are located. In these zones, detection will be much more difficult.
+    The mission designer needs to define these cloudy zones within the mission, and needs to register these zones in the DETECTION_ objects additing a probability factor per zone.</li>
+</ul>
+
+<p>I advise however, that, when you first use the DETECTION derived classes, that you don't use these filters.
+Only when you experience unrealistic behaviour in your missions, these filters could be applied.</p>
+
+<h3>1.4.1 ) Distance visual detection probability</h3>
+
+<p>Upon a <strong>visual</strong> detection, the further away a detected object is, the less likely it is to be detected properly.
+Also, the speed of accurate detection plays a role.</p>
+
+<p>A distance probability factor between 0 and 1 can be given, that will model a linear extrapolated probability over 10 km distance.</p>
+
+<p>For example, if a probability factor of 0.6 (60%) is given, the extrapolated probabilities over 15 kilometers would like like:
+1 km: 96%, 2 km: 92%, 3 km: 88%, 4 km: 84%, 5 km: 80%, 6 km: 76%, 7 km: 72%, 8 km: 68%, 9 km: 64%, 10 km: 60%, 11 km: 56%, 12 km: 52%, 13 km: 48%, 14 km: 44%, 15 km: 40%.</p>
+
+<p>Note that based on this probability factor, not only the detection but also the <strong>type</strong> of the unit will be applied!</p>
+
+<p>Use the method <a href="Detection.html##(DETECTION_BASE).SetDistanceProbability">Detection#DETECTION_BASE.SetDistanceProbability</a>() to set the probability factor upon a 10 km distance.</p>
+
+<h3>1.4.2 ) Alpha Angle visual detection probability</h3>
+
+<p>Upon a <strong>visual</strong> detection, the higher the unit is during the detecting process, the more likely the detected unit is to be detected properly.
+A detection at a 90% alpha angle is the most optimal, a detection at 10% is less and a detection at 0% is less likely to be correct.</p>
+
+<p>A probability factor between 0 and 1 can be given, that will model a progressive extrapolated probability if the target would be detected at a 0° angle.</p>
+
+<p>For example, if a alpha angle probability factor of 0.7 is given, the extrapolated probabilities of the different angles would look like:
+0°: 70%, 10°: 75,21%, 20°: 80,26%, 30°: 85%, 40°: 89,28%, 50°: 92,98%, 60°: 95,98%, 70°: 98,19%, 80°: 99,54%, 90°: 100%</p>
+
+<p>Use the method <a href="Detection.html##(DETECTION_BASE).SetAlphaAngleProbability">Detection#DETECTION_BASE.SetAlphaAngleProbability</a>() to set the probability factor if 0°.</p>
+
+<h3>1.4.3 ) Cloudy Zones detection probability</h3>
+
+<p>Upon a <strong>visual</strong> detection, the more a detected unit is within a cloudy zone, the less likely the detected unit is to be detected successfully.
+The Cloudy Zones work with the ZONE_BASE derived classes. The mission designer can define within the mission
+zones that reflect cloudy areas where detected units may not be so easily visually detected.</p>
+
+<p>Use the method <a href="Detection.html##(DETECTION_BASE).SetZoneProbability">Detection#DETECTION_BASE.SetZoneProbability</a>() to set for a defined number of zones, the probability factors.</p>
+
+<p>Note however, that the more zones are defined to be "cloudy" within a detection, the more performance it will take
+from the DETECTION<em>BASE to calculate the presence of the detected unit within each zone.
+Expecially for ZONE</em>POLYGON, try to limit the amount of nodes of the polygon!</p>
+
+<p>Typically, this kind of filter would be applied for very specific areas were a detection needs to be very realisting for
+AI not to detect so easily targets within a forrest or village rich area.</p>
+
+<h2>1.5 ) Accept / Reject detected units</h2>
+
+<p>DETECTION_BASE can accept or reject successful detections based on the location of the detected object, 
+if it is located in range or located inside or outside of specific zones.</p>
+
+<h3>1.5.1 ) Detection acceptance of within range limit</h3>
+
+<p>A range can be set that will limit a successful detection for a unit.
+Use the method <a href="Detection.html##(DETECTION_BASE).SetAcceptRange">Detection#DETECTION_BASE.SetAcceptRange</a>() to apply a range in meters till where detected units will be accepted.</p>
+
+<pre><code> local SetGroup = SET_GROUP:New():FilterPrefixes( "FAC" ):FilterStart() -- Build a SetGroup of Forward Air Controllers.
+
+ -- Build a detect object.
+ local Detection = DETECTION_BASE:New( SetGroup )
+
+ -- This will accept detected units if the range is below 5000 meters.
+ Detection:SetAcceptRange( 5000 ) 
+
+ -- Start the Detection.
+ Detection:Start()
+</code></pre>
+
+
+<h3>1.5.2 ) Detection acceptance if within zone(s).</h3>
+
+<p>Specific ZONE<em>BASE object(s) can be given as a parameter, which will only accept a detection if the unit is within the specified ZONE</em>BASE object(s).
+Use the method <a href="Detection.html##(DETECTION_BASE).SetAcceptZones">Detection#DETECTION_BASE.SetAcceptZones</a>() will accept detected units if they are within the specified zones.</p>
+
+<pre><code> local SetGroup = SET_GROUP:New():FilterPrefixes( "FAC" ):FilterStart() -- Build a SetGroup of Forward Air Controllers.
+
+ -- Search fo the zones where units are to be accepted.
+ local ZoneAccept1 = ZONE:New( "AcceptZone1" )
+ local ZoneAccept2 = ZONE:New( "AcceptZone2" )
+
+ -- Build a detect object.
+ local Detection = DETECTION_BASE:New( SetGroup )
+
+ -- This will accept detected units by Detection when the unit is within ZoneAccept1 OR ZoneAccept2.
+ Detection:SetAcceptZones( { ZoneAccept1, ZoneAccept2 } ) 
+
+ -- Start the Detection.
+ Detection:Start()
+</code></pre>
+
+<h3>1.5.3 ) Detection rejectance if within zone(s).</h3>
+
+<p>Specific ZONE<em>BASE object(s) can be given as a parameter, which will reject detection if the unit is within the specified ZONE</em>BASE object(s).
+Use the method <a href="Detection.html##(DETECTION_BASE).SetRejectZones">Detection#DETECTION_BASE.SetRejectZones</a>() will reject detected units if they are within the specified zones.
+An example of how to use the method is shown below.</p>
+
+<pre><code> local SetGroup = SET_GROUP:New():FilterPrefixes( "FAC" ):FilterStart() -- Build a SetGroup of Forward Air Controllers.
+
+ -- Search fo the zones where units are to be rejected.
+ local ZoneReject1 = ZONE:New( "RejectZone1" )
+ local ZoneReject2 = ZONE:New( "RejectZone2" )
+
+ -- Build a detect object.
+ local Detection = DETECTION_BASE:New( SetGroup )
+
+ -- This will reject detected units by Detection when the unit is within ZoneReject1 OR ZoneReject2.
+ Detection:SetRejectZones( { ZoneReject1, ZoneReject2 } ) 
+
+ -- Start the Detection.
+ Detection:Start()
+</code></pre>
+
+<h2>1.6) DETECTION_BASE is a Finite State Machine</h2>
+
+<p>Various Events and State Transitions can be tailored using DETECTION_BASE.</p>
+
+<h3>1.6.1) DETECTION_BASE States</h3>
+
+<ul>
+    <li><strong>Detecting</strong>: The detection is running.</li>
+    <li><strong>Stopped</strong>: The detection is stopped.</li>
+</ul>
+
+<h3>1.6.2) DETECTION_BASE Events</h3>
+
+<ul>
+    <li><strong>Start</strong>: Start the detection process.</li>
+    <li><strong>Detect</strong>: Detect new units.</li>
+    <li><strong>Detected</strong>: New units have been detected.</li>
+    <li><strong>Stop</strong>: Stop the detection process.</li>
+</ul>
+
 
 	<h3>Field(s)</h3>
 		<dl class="function">
@@ -2243,7 +2231,7 @@ self</p>
 		<dl class="function">
 <dt>
 
-		<em></em>
+		<em>#number</em>
 <a id="#(DETECTION_BASE).DetectionInterval" >
 <strong>DETECTION_BASE.DetectionInterval</strong>
 </a>
@@ -3969,7 +3957,15 @@ The To State string.</p>
 			
 			<h2><a id="#(DETECTION_TYPES)" >Type <code>DETECTION_TYPES</code></a></h2>
 				
-<p>DETECTION_TYPES class</p>
+<h1>3) DETECTION_TYPES class, extends <a href="Detection.html##(DETECTION_BASE)">Detection#DETECTION_BASE</a></h1>
+
+<p>The DETECTION_TYPES class will detect units within the battle zone.</p>
+
+	
+<p>It will build a DetectedItems[] list filled with DetectedItems, grouped by the type of units detected. 
+Each DetectedItem will contain a field Set, which contains a <a href="Set.html##(SET_UNIT)">Set#SET_UNIT</a> containing ONE <a href="UNIT.html">UNIT</a> object reference.
+Beware that when the amount of different types detected is large, the DetectedItems[] list will be large also. </p>
+
 
 	<h3>Field(s)</h3>
 		<dl class="function">
@@ -4197,7 +4193,14 @@ self</p>
 			
 			<h2><a id="#(DETECTION_UNITS)" >Type <code>DETECTION_UNITS</code></a></h2>
 				
-<p>DETECTION_UNITS class</p>
+<h1>2) DETECTION_UNITS class, extends <a href="Detection.html##(DETECTION_BASE)">Detection#DETECTION_BASE</a></h1>
+
+<p>The DETECTION_UNITS class will detect units within the battle zone.</p>
+
+	
+<p>It will build a DetectedItems list filled with DetectedItems. Each DetectedItem will contain a field Set, which contains a <a href="Set.html##(SET_UNIT)">Set#SET_UNIT</a> containing ONE <a href="UNIT.html">UNIT</a> object reference.
+Beware that when the amount of units detected is large, the DetectedItems list will be large also. </p>
+
 
 	<h3>Field(s)</h3>
 		<dl class="function">

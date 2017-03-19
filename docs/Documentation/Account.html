@@ -72,85 +72,11 @@
 	<div id="content">
    <h1>Module <code>Account</code></h1>
    
-<p>(SP) (MP) (FSM) Account for (Detect, count and report) DCS events occuring on DCS objects (units).</p>
+<p><strong>Actions</strong> - ACT<em>ACCOUNT</em> classes <strong>account for</strong> (detect, count &amp; report) various DCS events occuring on <a href="Unit.html">Unit</a>s.</p>
 
    
 
-<hr/>
-
-<h1><a href="##(ACT_ACCOUNT)">#ACT_ACCOUNT</a> FSM class, extends <a href="Fsm.html##(FSM_PROCESS)">Fsm#FSM_PROCESS</a></h1>
-
-<h2>ACT_ACCOUNT state machine:</h2>
-
-<p>This class is a state machine: it manages a process that is triggered by events causing state transitions to occur.
-All derived classes from this class will start with the class name, followed by a _. See the relevant derived class descriptions below.
-Each derived class follows exactly the same process, using the same events and following the same state transitions, 
-but will have <strong>different implementation behaviour</strong> upon each event or state transition.</p>
-
-<h3>ACT_ACCOUNT <strong>Events</strong>:</h3>
-
-<p>These are the events defined in this class:</p>
-
-<ul>
-    <li><strong>Start</strong>:  The process is started. The process will go into the Report state.</li>
-    <li><strong>Event</strong>:  A relevant event has occured that needs to be accounted for. The process will go into the Account state.</li>
-    <li><strong>Report</strong>: The process is reporting to the player the accounting status of the DCS events.</li>
-    <li><strong>More</strong>:  There are more DCS events that need to be accounted for. The process will go back into the Report state.</li>
-    <li><strong>NoMore</strong>:  There are no more DCS events that need to be accounted for. The process will go into the Success state.</li>
-</ul>
-
-<h3>ACT_ACCOUNT <strong>Event methods</strong>:</h3>
-
-<p>Event methods are available (dynamically allocated by the state machine), that accomodate for state transitions occurring in the process.
-There are two types of event methods, which you can use to influence the normal mechanisms in the state machine:</p>
-
-<ul>
-    <li><strong>Immediate</strong>: The event method has exactly the name of the event.</li>
-    <li><strong>Delayed</strong>: The event method starts with a __ + the name of the event. The first parameter of the event method is a number value, expressing the delay in seconds when the event will be executed. </li>
-</ul>
-
-<h3>ACT_ACCOUNT <strong>States</strong>:</h3>
-
-<ul>
-    <li><strong>Assigned</strong>: The player is assigned to the task. This is the initialization state for the process.</li>
-    <li><strong>Waiting</strong>: the process is waiting for a DCS event to occur within the simulator. This state is set automatically.</li>
-    <li><strong>Report</strong>: The process is Reporting to the players in the group of the unit. This state is set automatically every 30 seconds.</li>
-    <li><strong>Account</strong>: The relevant DCS event has occurred, and is accounted for.</li>
-    <li><strong>Success (*)</strong>: All DCS events were accounted for. </li>
-    <li><strong>Failed (*)</strong>: The process has failed.</li>
-</ul>
-
-<p>(*) End states of the process.</p>
-
-<h3>ACT_ACCOUNT state transition methods:</h3>
-
-<p>State transition functions can be set <strong>by the mission designer</strong> customizing or improving the behaviour of the state.
-There are 2 moments when state transition methods will be called by the state machine:</p>
-
-<ul>
-    <li><p><strong>Before</strong> the state transition. 
-    The state transition method needs to start with the name <strong>OnBefore + the name of the state</strong>. 
-    If the state transition method returns false, then the processing of the state transition will not be done!
-    If you want to change the behaviour of the AIControllable at this event, return false, 
-    but then you'll need to specify your own logic using the AIControllable!</p></li>
-    <li><p><strong>After</strong> the state transition. 
-    The state transition method needs to start with the name <strong>OnAfter + the name of the state</strong>. 
-    These state transition methods need to provide a return value, which is specified at the function description.</p></li>
-</ul>
-
-<h1>1) <a href="##(ACT_ACCOUNT_DEADS)">#ACT<em>ACCOUNT</em>DEADS</a> FSM class, extends <a href="Fsm.Account.html##(ACT_ACCOUNT)">Fsm.Account#ACT_ACCOUNT</a></h1>
-
-<p>The ACT<em>ACCOUNT</em>DEADS class accounts (detects, counts and reports) successful kills of DCS units.
-The process is given a <a href="Set.html">Set</a> of units that will be tracked upon successful destruction.
-The process will end after each target has been successfully destroyed.
-Each successful dead will trigger an Account state transition that can be scored, modified or administered.</p>
-
-
-<h2>ACT<em>ACCOUNT</em>DEADS constructor:</h2>
-
-<ul>
-    <li><a href="##(ACT_ACCOUNT_DEADS).New">ACT<em>ACCOUNT</em>DEADS.New</a>(): Creates a new ACT<em>ACCOUNT</em>DEADS object.</li>
-</ul>
+<p><img src="..\Presentations\ACT_ACCOUNT\Dia1.JPG" alt="Banner Image"/></p>
 
 <hr/>
 
@@ -279,19 +205,19 @@ Each successful dead will trigger an Account state transition that can be scored
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ACT_ACCOUNT_DEADS).onafterEvent">ACT_ACCOUNT_DEADS:onafterEvent(ProcessUnit, Event, From, To, EventData)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ACCOUNT_DEADS).onafterEvent">ACT_ACCOUNT_DEADS:onafterEvent(ProcessUnit, Event, From, To, Task)</a></td>
 		<td class="summary">
 <p>StateMachine callback function</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ACT_ACCOUNT_DEADS).onenterAccount">ACT_ACCOUNT_DEADS:onenterAccount(ProcessUnit, Event, From, To, EventData)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ACCOUNT_DEADS).onenterAccount">ACT_ACCOUNT_DEADS:onenterAccount(ProcessUnit, Event, From, To, Task, EventData)</a></td>
 		<td class="summary">
 <p>StateMachine callback function</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ACT_ACCOUNT_DEADS).onenterReport">ACT_ACCOUNT_DEADS:onenterReport(ProcessUnit, Event, From, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ACCOUNT_DEADS).onenterReport">ACT_ACCOUNT_DEADS:onenterReport(ProcessUnit, Event, From, To, Task)</a></td>
 		<td class="summary">
 <p>StateMachine callback function</p>
 </td>
@@ -337,7 +263,58 @@ Each successful dead will trigger an Account state transition that can be scored
 	
 			<h2><a id="#(ACT_ACCOUNT)" >Type <code>ACT_ACCOUNT</code></a></h2>
 				
-<p>ACT_ACCOUNT class</p>
+<h1><a href="##(ACT_ACCOUNT)">#ACT_ACCOUNT</a> FSM class, extends <a href="Fsm.html##(FSM_PROCESS)">Fsm#FSM_PROCESS</a></h1>
+
+<h2>ACT_ACCOUNT state machine:</h2>
+
+<p>This class is a state machine: it manages a process that is triggered by events causing state transitions to occur.</p>
+
+	
+<p>All derived classes from this class will start with the class name, followed by a _. See the relevant derived class descriptions below.
+Each derived class follows exactly the same process, using the same events and following the same state transitions, 
+but will have <strong>different implementation behaviour</strong> upon each event or state transition.</p>
+
+<h3>ACT_ACCOUNT States</h3>
+
+<ul>
+    <li><strong>Asigned</strong>: The player is assigned.</li>
+    <li><strong>Waiting</strong>: Waiting for an event.</li>
+    <li><strong>Report</strong>: Reporting.</li>
+    <li><strong>Account</strong>: Account for an event.</li>
+    <li><strong>Accounted</strong>: All events have been accounted for, end of the process.</li>
+    <li><strong>Failed</strong>: Failed the process.</li>
+</ul>
+
+<h3>ACT_ACCOUNT Events</h3>
+
+<ul>
+    <li><strong>Start</strong>: Start the process.</li>
+    <li><strong>Wait</strong>: Wait for an event.</li>
+    <li><strong>Report</strong>: Report the status of the accounting.</li>
+    <li><strong>Event</strong>: An event happened, process the event.</li>
+    <li><strong>More</strong>: More targets.</li>
+    <li><strong>NoMore (*)</strong>: No more targets.</li>
+    <li><strong>Fail (*)</strong>: The action process has failed.</li>
+</ul>
+
+<p>(*) End states of the process.</p>
+
+<h3>ACT_ACCOUNT state transition methods:</h3>
+
+<p>State transition functions can be set <strong>by the mission designer</strong> customizing or improving the behaviour of the state.
+There are 2 moments when state transition methods will be called by the state machine:</p>
+
+<ul>
+    <li><p><strong>Before</strong> the state transition. 
+    The state transition method needs to start with the name <strong>OnBefore + the name of the state</strong>. 
+    If the state transition method returns false, then the processing of the state transition will not be done!
+    If you want to change the behaviour of the AIControllable at this event, return false, 
+    but then you'll need to specify your own logic using the AIControllable!</p></li>
+    <li><p><strong>After</strong> the state transition. 
+    The state transition method needs to start with the name <strong>OnAfter + the name of the state</strong>. 
+    These state transition methods need to provide a return value, which is specified at the function description.</p>
+    </li>
+</ul>
 
 	<h3>Field(s)</h3>
 		<dl class="function">
@@ -511,7 +488,22 @@ Each successful dead will trigger an Account state transition that can be scored
 
 			<h2><a id="#(ACT_ACCOUNT_DEADS)" >Type <code>ACT_ACCOUNT_DEADS</code></a></h2>
 				
-<p>ACT<em>ACCOUNT</em>DEADS class</p>
+<h1><a href="##(ACT_ACCOUNT_DEADS)">#ACT<em>ACCOUNT</em>DEADS</a> FSM class, extends <a href="Fsm.Account.html##(ACT_ACCOUNT)">Fsm.Account#ACT_ACCOUNT</a></h1>
+
+<p>The ACT<em>ACCOUNT</em>DEADS class accounts (detects, counts and reports) successful kills of DCS units.</p>
+
+	
+<p>The process is given a <a href="Set.html">Set</a> of units that will be tracked upon successful destruction.
+The process will end after each target has been successfully destroyed.
+Each successful dead will trigger an Account state transition that can be scored, modified or administered.</p>
+
+
+<h2>ACT<em>ACCOUNT</em>DEADS constructor:</h2>
+
+<ul>
+    <li><a href="##(ACT_ACCOUNT_DEADS).New">ACT<em>ACCOUNT</em>DEADS.New</a>(): Creates a new ACT<em>ACCOUNT</em>DEADS object.
+    </li>
+</ul>
 
 	<h3>Field(s)</h3>
 		<dl class="function">
@@ -683,7 +675,7 @@ Each successful dead will trigger an Account state transition that can be scored
 <dt>
 
 <a id="#(ACT_ACCOUNT_DEADS).onafterEvent" >
-<strong>ACT_ACCOUNT_DEADS:onafterEvent(ProcessUnit, Event, From, To, EventData)</strong>
+<strong>ACT_ACCOUNT_DEADS:onafterEvent(ProcessUnit, Event, From, To, Task)</strong>
 </a>
 </dt>
 <dd>
@@ -714,7 +706,7 @@ Each successful dead will trigger an Account state transition that can be scored
 				</li>
 				<li>
 				
-<p><code><em> EventData </em></code>: </p>
+<p><code><em> Task </em></code>: </p>
 
 				</li>
 		</ul>
@@ -724,7 +716,7 @@ Each successful dead will trigger an Account state transition that can be scored
 <dt>
 
 <a id="#(ACT_ACCOUNT_DEADS).onenterAccount" >
-<strong>ACT_ACCOUNT_DEADS:onenterAccount(ProcessUnit, Event, From, To, EventData)</strong>
+<strong>ACT_ACCOUNT_DEADS:onenterAccount(ProcessUnit, Event, From, To, Task, EventData)</strong>
 </a>
 </dt>
 <dd>
@@ -751,6 +743,11 @@ Each successful dead will trigger an Account state transition that can be scored
 				<li>
 				
 <p><code><em>#string To </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> Task </em></code>: </p>
 
 				</li>
 				<li>
@@ -765,7 +762,7 @@ Each successful dead will trigger an Account state transition that can be scored
 <dt>
 
 <a id="#(ACT_ACCOUNT_DEADS).onenterReport" >
-<strong>ACT_ACCOUNT_DEADS:onenterReport(ProcessUnit, Event, From, To)</strong>
+<strong>ACT_ACCOUNT_DEADS:onenterReport(ProcessUnit, Event, From, To, Task)</strong>
 </a>
 </dt>
 <dd>
@@ -792,6 +789,11 @@ Each successful dead will trigger an Account state transition that can be scored
 				<li>
 				
 <p><code><em>#string To </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> Task </em></code>: </p>
 
 				</li>
 		</ul>
