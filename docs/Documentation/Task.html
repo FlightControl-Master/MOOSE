@@ -186,6 +186,12 @@ Use the method <a href="##(TASK).AddScore">TASK.AddScore</a>() to add scores whe
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).Dispatcher">TASK.Dispatcher</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(TASK).Fail">TASK:Fail()</a></td>
 		<td class="summary">
 <p>FSM Fail synchronous event function for TASK.</p>
@@ -498,6 +504,12 @@ Use the method <a href="##(TASK).AddScore">TASK.AddScore</a>() to add scores whe
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).SetDispatcher">TASK:SetDispatcher(Dispatcher)</a></td>
+		<td class="summary">
+<p>Set dispatcher of a task</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(TASK).SetGroup">TASK.SetGroup</a></td>
 		<td class="summary">
 <p>The Set of Groups assigned to the Task</p>
@@ -714,7 +726,7 @@ Use the method <a href="##(TASK).AddScore">TASK.AddScore</a>() to add scores whe
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK).onenterAssigned">TASK:onenterAssigned(Event, From, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).onenterAssigned">TASK:onenterAssigned(Event, From, To, PlayerUnit, PlayerName)</a></td>
 		<td class="summary">
 <p>FSM function for a TASK</p>
 </td>
@@ -939,6 +951,20 @@ The CLIENT or UNIT of the Player aborting the Task.</p>
 				
 <p><em>#boolean:</em>
 true if Unit is part of the Task.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(TASK).Dispatcher" >
+<strong>TASK.Dispatcher</strong>
+</a>
+</dt>
+<dd>
+	
+
 
 </dd>
 </dl>
@@ -2017,6 +2043,32 @@ self</p>
 		<dl class="function">
 <dt>
 
+<a id="#(TASK).SetDispatcher" >
+<strong>TASK:SetDispatcher(Dispatcher)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set dispatcher of a task</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Tasking.DetectionManager.html##(DETECTION_MANAGER)">Tasking.DetectionManager#DETECTION_MANAGER</a> Dispatcher </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(TASK)">#TASK</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 		<em><a href="Core.Set.html##(SET_GROUP)">Core.Set#SET_GROUP</a></em>
 <a id="#(TASK).SetGroup" >
 <strong>TASK.SetGroup</strong>
@@ -2714,7 +2766,7 @@ self</p>
 <dt>
 
 <a id="#(TASK).onenterAssigned" >
-<strong>TASK:onenterAssigned(Event, From, To)</strong>
+<strong>TASK:onenterAssigned(Event, From, To, PlayerUnit, PlayerName)</strong>
 </a>
 </dt>
 <dd>
@@ -2736,6 +2788,16 @@ self</p>
 				<li>
 				
 <p><code><em>#string To </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> PlayerUnit </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> PlayerName </em></code>: </p>
 
 				</li>
 		</ul>

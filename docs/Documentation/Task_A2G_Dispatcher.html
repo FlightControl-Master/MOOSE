@@ -183,6 +183,12 @@ Find a summary below describing for which situation a task type is created:</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G_DISPATCHER).OnAfterAssign">TASK_A2G_DISPATCHER:OnAfterAssign(From, Event, To, Task, TaskUnit, PlayerName)</a></td>
+		<td class="summary">
+<p>OnAfter Transition Handler for Event Assign.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G_DISPATCHER).ProcessDetected">TASK_A2G_DISPATCHER:ProcessDetected(Detection)</a></td>
 		<td class="summary">
 <p>Assigns tasks in relation to the detected items to the <a href="Set.html##(SET_GROUP)">Set#SET_GROUP</a>.</p>
@@ -434,6 +440,55 @@ The detection results that are used to dynamically assign new tasks to human pla
 <p><em><a href="##(TASK_A2G_DISPATCHER)">#TASK<em>A2G</em>DISPATCHER</a>:</em>
 self</p>
 
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_A2G_DISPATCHER).OnAfterAssign" >
+<strong>TASK_A2G_DISPATCHER:OnAfterAssign(From, Event, To, Task, TaskUnit, PlayerName)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>OnAfter Transition Handler for Event Assign.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string From </em></code>: 
+The From State string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: 
+The Event string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: 
+The To State string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Tasking.Task_A2G.html##(TASK_A2G)">Tasking.Task<em>A2G#TASK</em>A2G</a> Task </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> TaskUnit </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string PlayerName </em></code>: </p>
+
+				</li>
+		</ul>
 </dd>
 </dl>
 		<dl class="function">
