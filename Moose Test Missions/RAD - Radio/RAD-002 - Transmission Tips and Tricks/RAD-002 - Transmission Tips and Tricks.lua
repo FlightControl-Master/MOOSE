@@ -1,8 +1,13 @@
 -- This test mission demonstrates the RADIO class in a practical scenario.
 -- It also focuses on how to create transmissions faster and more efficiently
 -- Please Read both RAD-000 and RAD-001, as well as SCH-000 code first.
+
+-- Note that if you are not using an ASM aircraft (a clickable cockpit aircraft), then the frequency and the modulation is not important.
+-- If you want to test the mission fully, replance the SU25T by an ASM aircraft you own and tune to the right frequency (115AM here)
+
 -- The Player is in a Su25T parked on Batumi, and a Russian command center named "Batumi Tower" placed near Batumi will act as Batumi's Radio Tower.
 -- This mission also features the "Viktor" flight, a Russian Su25, who is inbound for landing on Batumi.
+-- The goal of this script is to manage the dialog between Viktor and Batumi Tower.
 
 -- The (short) conversation between Viktor and Batumi Tower will happen on 115 AM
 -- Time 0 :   Batumi Tower  "Viktor flight, this is Batumi Tower, enter left base runway one two five, report 5 kilometers final. Over."
@@ -11,7 +16,7 @@
 -- Time 154 : Batumi Tower  "Viktor flight, you are claer to land, runway one two five. Check gear down."
 -- Time 160 : Viktor        "Clear to land, One two five, Viktor"
 -- Time 210 : Viktor        "Viktor, touchdown"
--- Time 215 : Batumi Tower  "Viktor, confirmed touchdown, taxi to parking area"
+-- Time 215 : Batumi Tower  "Viktor, confirmed touchdown, taxi to parking area, Batumi Tower out."
 
 
 BatumiRadio = STATIC:FindByName("Batumi Tower"):GetRadio()

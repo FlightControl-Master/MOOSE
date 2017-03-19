@@ -51,7 +51,7 @@ end
 --- Check validity of the filename passed and sets RADIO.FileName
 -- @param #RADIO self
 -- @param #string fileName of the sound
--- @return self
+-- @return #RADIO self
 -- @usage
 function RADIO:SetFileName(filename)
   self:F2(filename)
@@ -71,7 +71,7 @@ end
 --- Check validity of the frequency passed and sets RADIO.Frequency
 -- @param #RADIO self
 -- @param #number frequency in MHz
--- @return self
+-- @return #RADIO self
 -- @usage
 function RADIO:SetFrequency(frequency)
   self:F2(frequency)
@@ -99,7 +99,7 @@ end
 --- Check validity of the frequency passed and sets RADIO.Modulation
 -- @param #RADIO self
 -- @param #number modulation
--- @return #self
+-- @return #RADIO self
 -- @usage
 function RADIO:SetModulation(modulation)
   self:F2(modulation)
@@ -116,7 +116,7 @@ end
 --- Check validity of the power passed and sets RADIO.Power
 -- @param #RADIO self
 -- @param #number Power
--- @return #self
+-- @return #RADIO self
 -- @usage
 function RADIO:SetPower(power)
   self:F2(power)
@@ -131,7 +131,7 @@ end
 --- Check validity of the loop passed and sets RADIO.Loop
 -- @param #RADIO self
 -- @param #bool Loop
--- @return #self
+-- @return #RADIO self
 -- @usage
 function RADIO:SetLoop(loop)
   self:F2(loop)
@@ -147,7 +147,7 @@ end
 -- @param #RADIO self
 -- @param #string Subtitle
 -- @param #number SubtitleDuration in s
--- @return #self
+-- @return #RADIO self
 -- @usage
 -- -- Both parameters are mandatory, since it wouldn't make much sense to change the Subtitle and not its duration
 function RADIO:SetSubtitle(subtitle, subtitleDuration)
@@ -174,7 +174,7 @@ end
 -- @param #number Frequency in MHz
 -- @param #number Modulation
 -- @param #number Power in W
--- @return self
+-- @return #RADIO self
 -- @usage
 -- -- In this function the data is especially relevant if the broadcaster is anything but a UNIT or a GROUP,
 -- but it will work with a UNIT or a GROUP anyway
@@ -199,7 +199,7 @@ end
 -- @param #number Frequency in MHz
 -- @param #number Modulation
 -- @param #bool Loop
--- @return self
+-- @return #RADIO self
 -- @usage
 -- -- In this function the data is especially relevant if the broadcaster is a UNIT or a GROUP,
 -- but it will work for any POSITIONABLE
@@ -219,7 +219,7 @@ end
 
 --- Actually Broadcast the transmission
 -- @param #RADIO self
--- @return self
+-- @return #RADIO self
 -- @usage
 -- -- The Radio has to be populated with the new transmission before broadcasting.
 -- Please use RADIO setters or either @{Radio#RADIO.NewGenericTransmission} or @{Radio#RADIO.NewUnitTransmission}
