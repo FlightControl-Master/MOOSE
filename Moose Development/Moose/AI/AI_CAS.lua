@@ -452,7 +452,6 @@ function AI_CAS_ZONE:onafterEngage( Controllable, From, Event, To,
   self.EngageDirection = EngageDirection
 
   if Controllable:IsAlive() then
-  
 
     local EngageRoute = {}
 
@@ -472,55 +471,6 @@ function AI_CAS_ZONE:onafterEngage( Controllable, From, Event, To,
       )
     
     EngageRoute[#EngageRoute+1] = CurrentRoutePoint
-
-  
---    if self.Controllable:IsNotInZone( self.EngageZone ) then
---
---      -- Find a random 2D point in EngageZone.
---      local ToEngageZoneVec2 = self.EngageZone:GetRandomVec2()
---      self:T2( ToEngageZoneVec2 )
---      
---      -- Obtain a 3D @{Point} from the 2D point + altitude.
---      local ToEngageZonePointVec3 = POINT_VEC3:New( ToEngageZoneVec2.x, self.EngageAltitude, ToEngageZoneVec2.y )
---      
---      -- Create a route point of type air.
---      local ToEngageZoneRoutePoint = ToEngageZonePointVec3:RoutePointAir( 
---        self.PatrolAltType, 
---        POINT_VEC3.RoutePointType.TurningPoint, 
---        POINT_VEC3.RoutePointAction.TurningPoint, 
---        self.EngageSpeed, 
---        true 
---      )
---
---      EngageRoute[#EngageRoute+1] = ToEngageZoneRoutePoint
---
---    end
---    
-    --- Define a random point in the @{Zone}. The AI will fly to that point within the zone.
-    
-      --- Find a random 2D point in EngageZone.
-    local ToTargetVec2 = self.EngageZone:GetRandomVec2()
-    self:T2( ToTargetVec2 )
-
-    --- Obtain a 3D @{Point} from the 2D point + altitude.
-    local ToTargetPointVec3 = POINT_VEC3:New( ToTargetVec2.x, self.EngageAltitude, ToTargetVec2.y )
-    
-    --- Create a route point of type air.
-    local ToTargetRoutePoint = ToTargetPointVec3:RoutePointAir( 
-      self.PatrolAltType, 
-      POINT_VEC3.RoutePointType.TurningPoint, 
-      POINT_VEC3.RoutePointAction.TurningPoint, 
-      self.EngageSpeed, 
-      true 
-    )
-    
-    --ToTargetPointVec3:SmokeBlue()
-
-    EngageRoute[#EngageRoute+1] = ToTargetRoutePoint
-    
-
-    Controllable:OptionROEOpenFire()
-    Controllable:OptionROTVertical()
 
     local AttackTasks = {}
 
@@ -544,16 +494,39 @@ function AI_CAS_ZONE:onafterEngage( Controllable, From, Event, To,
 
     EngageRoute[1].task = Controllable:TaskCombo( AttackTasks )
 
+    --- Define a random point in the @{Zone}. The AI will fly to that point within the zone.
+    
+      --- Find a random 2D point in EngageZone.
+    local ToTargetVec2 = self.EngageZone:GetRandomVec2()
+    self:T2( ToTargetVec2 )
+
+    --- Obtain a 3D @{Point} from the 2D point + altitude.
+    local ToTargetPointVec3 = POINT_VEC3:New( ToTargetVec2.x, self.EngageAltitude, ToTargetVec2.y )
+    
+    --- Create a route point of type air.
+    local ToTargetRoutePoint = ToTargetPointVec3:RoutePointAir( 
+      self.PatrolAltType, 
+      POINT_VEC3.RoutePointType.TurningPoint, 
+      POINT_VEC3.RoutePointAction.TurningPoint, 
+      self.EngageSpeed, 
+      true 
+    )
+    
+    EngageRoute[#EngageRoute+1] = ToTargetRoutePoint
+
     --- Now we're going to do something special, we're going to call a function from a waypoint action at the AIControllable...
-    self.Controllable:WayPointInitialize( EngageRoute )
+    Controllable:WayPointInitialize( EngageRoute )
     
     --- Do a trick, link the NewEngageRoute function of the object to the AIControllable in a temporary variable ...
-    self.Controllable:SetState( self.Controllable, "EngageZone", self )
+    Controllable:SetState( Controllable, "EngageZone", self )
 
-    self.Controllable:WayPointFunction( #EngageRoute, 1, "_NewEngageRoute" )
+    Controllable:WayPointFunction( #EngageRoute, 1, "_NewEngageRoute" )
 
     --- NOW ROUTE THE GROUP!
-    self.Controllable:WayPointExecute( 1 )
+    Controllable:WayPointExecute( 1 )
+
+    Controllable:OptionROEOpenFire()
+    Controllable:OptionROTVertical()
     
     self:SetDetectionInterval( 2 )
     self:SetDetectionActivated()
