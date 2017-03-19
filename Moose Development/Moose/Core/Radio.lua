@@ -184,7 +184,7 @@ function RADIO:NewGenericTransmission(...)
   
   self:SetFileName(arg[1])
   if arg[2] then self:SetFrequency(arg[2]) end
-  if arg[3] then self:SetModualtion(arg[3]) end
+  if arg[3] then self:SetModulation(arg[3]) end
   if arg[4] then self:SetPower(arg[4]) end
   
   return self
@@ -211,7 +211,7 @@ function RADIO:NewUnitTransmission(...)
   if arg[2] then self:SetSubtitle(arg[2]) end
   if arg[3] then self:SetSubtitleDuration(arg[3]) end
   if arg[4] then self:SetFrequency(arg[4]) end
-  if arg[5] then self:SetModualtion(arg[5]) end
+  if arg[5] then self:SetModulation(arg[5]) end
   if arg[6] then self:SetLoop(arg[6]) end
   
   return self
