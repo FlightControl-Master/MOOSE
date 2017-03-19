@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20170319_0550' ) 
+env.info( 'Moose Generation Timestamp: 20170319_0757' ) 
 local base = _G
 
 Include = {}
@@ -31134,7 +31134,7 @@ do -- ACT_ASSIGN_ACCEPT
 
     self:Message( "You are assigned to the task " .. self.Task:GetName() )  
 
-    self.Task:Assign( ProcessUnit, self.Task )
+    self.Task:Assign( ProcessUnit, ProcessUnit:GetPlayerName() )
   end
   
 end -- ACT_ASSIGN_ACCEPT
@@ -34019,11 +34019,16 @@ end
 -- @param #string Event
 -- @param #string From
 -- @param #string To
-function TASK:onenterAssigned( From, Event, To )
+function TASK:onenterAssigned( From, Event, To, PlayerUnit, PlayerName )
 
   self:E("Task Assigned")
   
   self:MessageToGroups( "Task " .. self:GetName() .. " has been assigned to your group." )
+  
+  if self.Dispatcher then
+    self.Dispatcher:Assign( self, PlayerUnit, PlayerName )
+  end
+  
   self:GetMission():__Start( 1 )
 end
 
@@ -34135,6 +34140,18 @@ function TASK:onbeforeTimeOut( From, Event, To )
   return false
 end
 
+do -- Dispatcher
+
+  --- Set dispatcher of a task
+  -- @param #TASK self
+  -- @param Tasking.DetectionManager#DETECTION_MANAGER Dispatcher
+  -- @return #TASK
+  function TASK:SetDispatcher( Dispatcher )
+    self.Dispatcher = Dispatcher
+  end
+
+end
+
 do -- Reporting
 
 --- Create a summary report of the Task.
@@ -34193,7 +34210,7 @@ end -- Reporting
 -- 
 -- ===
 -- 
--- 1) @{DetectionManager#DETECTION_MANAGER} class, extends @{Base#BASE}
+-- 1) @{DetectionManager#DETECTION_MANAGER} class, extends @{Fsm#FSM}
 -- ====================================================================
 -- The @{DetectionManager#DETECTION_MANAGER} class defines the core functions to report detected objects to groups.
 -- Reportings can be done in several manners, and it is up to the derived classes if DETECTION_MANAGER to model the reporting behaviour.
@@ -34239,7 +34256,7 @@ do -- DETECTION MANAGER
   -- @type DETECTION_MANAGER
   -- @field Set#SET_GROUP SetGroup The groups to which the FAC will report to.
   -- @field Functional.Detection#DETECTION_BASE Detection The DETECTION_BASE object that is used to report the detected objects.
-  -- @extends Base#BASE
+  -- @extends Core.Fsm#FSM
   DETECTION_MANAGER = {
     ClassName = "DETECTION_MANAGER",
     SetGroup = nil,
@@ -34254,17 +34271,35 @@ do -- DETECTION MANAGER
   function DETECTION_MANAGER:New( SetGroup, Detection )
   
     -- Inherits from BASE
-    local self = BASE:Inherit( self, BASE:New() ) -- Functional.Detection#DETECTION_MANAGER
+    local self = BASE:Inherit( self, FSM:New() ) -- #DETECTION_MANAGER
     
     self.SetGroup = SetGroup
     self.Detection = Detection
     
+    self:SetStartState( "Stopped" )
+    self:AddTransition( "Stopped", "Start", "Started" )
+    self:AddTransition( "Started", "Stop", "Stopped" )
+    self:AddTransition( "Started", "Report", "Started" )
+    
     self:SetReportInterval( 30 )
     self:SetReportDisplayTime( 25 )
-    
-    Detection:__Start( 5 )
-    
+  
+    Detection:__Start( 1 )
+
     return self
+  end
+  
+  function DETECTION_MANAGER:onafterStart( From, Event, To )
+    self:Report()
+  end
+  
+  function DETECTION_MANAGER:onafterReport( From, Event, To )
+
+    self:E( "onafterReport" )
+
+    self:__Report( -self._ReportInterval )
+    
+    self:ProcessDetected( self.Detection )
   end
   
   --- Set the reporting time interval.
@@ -34297,50 +34332,13 @@ do -- DETECTION MANAGER
     return self._ReportDisplayTime
   end
   
-  
-  
   --- Reports the detected items to the @{Set#SET_GROUP}.
   -- @param #DETECTION_MANAGER self
   -- @param Functional.Detection#DETECTION_BASE Detection
   -- @return #DETECTION_MANAGER self
-  function DETECTION_MANAGER:ReportDetected( Detection )
-  	self:F2()
+  function DETECTION_MANAGER:ProcessDetected( Detection )
+  	self:E()
   
-  end
-  
-  --- Schedule the FAC reporting.
-  -- @param #DETECTION_MANAGER self
-  -- @param #number DelayTime The delay in seconds to wait the reporting.
-  -- @param #number ReportInterval The repeat interval in seconds for the reporting to happen repeatedly.
-  -- @return #DETECTION_MANAGER self
-  function DETECTION_MANAGER:Schedule( DelayTime, ReportInterval )
-  	self:F2()
-  
-    self._ScheduleDelayTime = DelayTime
-    
-    self:SetReportInterval( ReportInterval )
-    
-    self.FacScheduler = SCHEDULER:New(self, self._FacScheduler, { self, "DetectionManager" }, self._ScheduleDelayTime, self._ReportInterval )
-    return self
-  end
-  
-  --- Report the detected @{Unit#UNIT}s detected within the @{Detection#DETECTION_BASE} object to the @{Set#SET_GROUP}s.
-  -- @param #DETECTION_MANAGER self
-  function DETECTION_MANAGER:_FacScheduler( SchedulerName )
-    self:F2( { SchedulerName } )
-    
-    return self:ProcessDetected( self.Detection )
-    
---    self.SetGroup:ForEachGroup(
---      --- @param Wrapper.Group#GROUP Group
---      function( Group )
---        if Group:IsAlive() then
---          return self:ProcessDetected( self.Detection )
---        end
---      end
---    )
-    
---    return true
   end
 
 end
@@ -34500,7 +34498,20 @@ do -- TASK_A2G_DISPATCHER
     self.Detection = Detection
     self.Mission = Mission
     
-    self:Schedule( 30 )
+    self:AddTransition( "Started", "Assign", "Started" )
+    
+    --- OnAfter Transition Handler for Event Assign.
+    -- @function [parent=#TASK_A2G_DISPATCHER] OnAfterAssign
+    -- @param #TASK_A2G_DISPATCHER self
+    -- @param #string From The From State string.
+    -- @param #string Event The Event string.
+    -- @param #string To The To State string.
+    -- @param Tasking.Task_A2G#TASK_A2G Task
+    -- @param Wrapper.Unit#UNIT TaskUnit
+    -- @param #string PlayerName
+    
+    self:__Start( 5 )
+    
     return self
   end
   
@@ -34614,7 +34625,7 @@ do -- TASK_A2G_DISPATCHER
   -- @param Functional.Detection#DETECTION_BASE Detection The detection created by the @{Detection#DETECTION_BASE} derived object.
   -- @return #boolean Return true if you want the task assigning to continue... false will cancel the loop.
   function TASK_A2G_DISPATCHER:ProcessDetected( Detection )
-    self:F2()
+    self:E()
   
     local AreaMsg = {}
     local TaskMsg = {}
@@ -34645,6 +34656,7 @@ do -- TASK_A2G_DISPATCHER
         if TargetSetUnit then
           local Task = TASK_SEAD:New( Mission, self.SetGroup, string.format( "SEAD.%03d", ItemID ), TargetSetUnit )
           Task:SetTargetZone( DetectedZone )
+          Task:SetDispatcher( self )
           SEADTask = Mission:AddTask( Task )
         end
       end        
@@ -34660,6 +34672,7 @@ do -- TASK_A2G_DISPATCHER
         if TargetSetUnit then
           local Task = TASK_CAS:New( Mission, self.SetGroup, string.format( "CAS.%03d", ItemID ), TargetSetUnit )
           --Task:SetTargetZone( DetectedZone )
+          Task:SetDispatcher( self )
           CASTask = Mission:AddTask( Task )
         end
       end        
@@ -34675,6 +34688,7 @@ do -- TASK_A2G_DISPATCHER
         if TargetSetUnit then
           local Task = TASK_BAI:New( Mission, self.SetGroup, string.format( "BAI.%03d", ItemID ), TargetSetUnit )
           Task:SetTargetZone( DetectedZone )
+          Task:SetDispatcher( self )
           BAITask = Mission:AddTask( Task )
         end
       end        
@@ -34711,7 +34725,10 @@ do -- TASK_A2G_DISPATCHER
     return true
   end
 
-end--- This module contains the TASK_A2G classes.
+end--- **Tasking** - The TASK_A2G models tasks for players in Air to Ground engagements.
+-- 
+-- ![Banner Image](..\Presentations\TASK_A2G\Dia1.JPG)
+-- 
 -- 
 -- # 1) @{Task_A2G#TASK_A2G} class, extends @{Task#TASK}
 -- 
@@ -34725,9 +34742,29 @@ end--- This module contains the TASK_A2G classes.
 --   * **Success**: The A2G task is successfully completed.
 --   * **Failed**: The A2G task has failed. This will happen if the player exists the task early, without communicating a possible cancellation to HQ.
 -- 
--- # 1) @{Task_A2G#TASK_SEAD} class, extends @{Task_A2G#TASK_A2G}
+-- # 1.1) Set the scoring of achievements in an A2G attack.
+-- 
+-- Scoring or penalties can be given in the following circumstances:
+-- 
+--   * @{#TASK_A2G.SetScoreOnDestroy}(): Set a score when a target in scope of the A2G attack, has been destroyed.
+--   * @{#TASK_A2G.SetScoreOnSuccess}(): Set a score when all the targets in scope of the A2G attack, have been destroyed.
+--   * @{#TASK_A2G.SetPenaltyOnFailed}(): Set a penalty when the A2G attack has failed.
+-- 
+-- # 2) @{Task_A2G#TASK_SEAD} class, extends @{Task_A2G#TASK_A2G}
 -- 
 -- The @{#TASK_SEAD} class defines a SEAD task for a @{Set} of Target Units.
+-- 
+-- ===
+-- 
+-- # 3) @{Task_A2G#TASK_CAS} class, extends @{Task_A2G#TASK_A2G}
+-- 
+-- The @{#TASK_CAS} class defines a CAS task for a @{Set} of Target Units.
+-- 
+-- ===
+-- 
+-- # 4) @{Task_A2G#TASK_BAI} class, extends @{Task_A2G#TASK_A2G}
+-- 
+-- The @{#TASK_BAI} class defines a BAI task for a @{Set} of Target Units.
 -- 
 -- ====
 --
@@ -34990,6 +35027,52 @@ do -- TASK_A2G
     local ActRouteTarget = ProcessUnit:GetProcess( "Engaging", "RouteToTargetZone" ) -- Actions.Act_Route#ACT_ROUTE_ZONE
     return ActRouteTarget:GetZone()
   end
+
+  --- Set a score when a target in scope of the A2G attack, has been destroyed .
+  -- @param #TASK_A2G self
+  -- @param #string Text The text to display to the player, when the target has been destroyed.
+  -- @param #number Score The score in points.
+  -- @param Wrapper.Unit#UNIT TaskUnit
+  -- @return #TASK_A2G
+  function TASK_A2G:SetScoreOnDestroy( Text, Score, TaskUnit )
+
+    local ProcessUnit = self:GetUnitProcess( TaskUnit )
+
+    ProcessUnit:AddScoreProcess( "Engaging", "Account", "Account", Text, Score )
+    
+    return self
+  end
+
+  --- Set a score when all the targets in scope of the A2G attack, have been destroyed.
+  -- @param #TASK_A2G self
+  -- @param #string Text The text to display to the player, when all targets hav been destroyed.
+  -- @param #number Score The score in points.
+  -- @param Wrapper.Unit#UNIT TaskUnit
+  -- @return #TASK_A2G
+  function TASK_A2G:SetScoreOnSuccess( Text, Score, TaskUnit )
+
+    local ProcessUnit = self:GetUnitProcess( TaskUnit )
+
+    ProcessUnit:AddScore( "Success", Text, Score )
+    
+    return self
+  end
+
+  --- Set a penalty when the A2G attack has failed.
+  -- @param #TASK_A2G self
+  -- @param #string Text The text to display to the player, when the A2G attack has failed.
+  -- @param #number Penalty The penalty in points.
+  -- @param Wrapper.Unit#UNIT TaskUnit
+  -- @return #TASK_A2G
+  function TASK_A2G:SetPenaltyOnFailed( Text, Penalty, TaskUnit )
+
+    local ProcessUnit = self:GetUnitProcess( TaskUnit )
+
+    ProcessUnit:AddScore( "Failed", Text, Penalty )
+    
+    return self
+  end
+
   
 end 
 

@@ -2,7 +2,7 @@
 -- 
 -- ===
 -- 
--- 1) @{DetectionManager#DETECTION_MANAGER} class, extends @{Base#BASE}
+-- 1) @{DetectionManager#DETECTION_MANAGER} class, extends @{Fsm#FSM}
 -- ====================================================================
 -- The @{DetectionManager#DETECTION_MANAGER} class defines the core functions to report detected objects to groups.
 -- Reportings can be done in several manners, and it is up to the derived classes if DETECTION_MANAGER to model the reporting behaviour.
@@ -48,7 +48,7 @@ do -- DETECTION MANAGER
   -- @type DETECTION_MANAGER
   -- @field Set#SET_GROUP SetGroup The groups to which the FAC will report to.
   -- @field Functional.Detection#DETECTION_BASE Detection The DETECTION_BASE object that is used to report the detected objects.
-  -- @extends Base#BASE
+  -- @extends Core.Fsm#FSM
   DETECTION_MANAGER = {
     ClassName = "DETECTION_MANAGER",
     SetGroup = nil,
@@ -63,17 +63,35 @@ do -- DETECTION MANAGER
   function DETECTION_MANAGER:New( SetGroup, Detection )
   
     -- Inherits from BASE
-    local self = BASE:Inherit( self, BASE:New() ) -- Functional.Detection#DETECTION_MANAGER
+    local self = BASE:Inherit( self, FSM:New() ) -- #DETECTION_MANAGER
     
     self.SetGroup = SetGroup
     self.Detection = Detection
     
+    self:SetStartState( "Stopped" )
+    self:AddTransition( "Stopped", "Start", "Started" )
+    self:AddTransition( "Started", "Stop", "Stopped" )
+    self:AddTransition( "Started", "Report", "Started" )
+    
     self:SetReportInterval( 30 )
     self:SetReportDisplayTime( 25 )
-    
-    Detection:__Start( 5 )
-    
+  
+    Detection:__Start( 1 )
+
     return self
+  end
+  
+  function DETECTION_MANAGER:onafterStart( From, Event, To )
+    self:Report()
+  end
+  
+  function DETECTION_MANAGER:onafterReport( From, Event, To )
+
+    self:E( "onafterReport" )
+
+    self:__Report( -self._ReportInterval )
+    
+    self:ProcessDetected( self.Detection )
   end
   
   --- Set the reporting time interval.
@@ -106,50 +124,13 @@ do -- DETECTION MANAGER
     return self._ReportDisplayTime
   end
   
-  
-  
   --- Reports the detected items to the @{Set#SET_GROUP}.
   -- @param #DETECTION_MANAGER self
   -- @param Functional.Detection#DETECTION_BASE Detection
   -- @return #DETECTION_MANAGER self
-  function DETECTION_MANAGER:ReportDetected( Detection )
-  	self:F2()
+  function DETECTION_MANAGER:ProcessDetected( Detection )
+  	self:E()
   
-  end
-  
-  --- Schedule the FAC reporting.
-  -- @param #DETECTION_MANAGER self
-  -- @param #number DelayTime The delay in seconds to wait the reporting.
-  -- @param #number ReportInterval The repeat interval in seconds for the reporting to happen repeatedly.
-  -- @return #DETECTION_MANAGER self
-  function DETECTION_MANAGER:Schedule( DelayTime, ReportInterval )
-  	self:F2()
-  
-    self._ScheduleDelayTime = DelayTime
-    
-    self:SetReportInterval( ReportInterval )
-    
-    self.FacScheduler = SCHEDULER:New(self, self._FacScheduler, { self, "DetectionManager" }, self._ScheduleDelayTime, self._ReportInterval )
-    return self
-  end
-  
-  --- Report the detected @{Unit#UNIT}s detected within the @{Detection#DETECTION_BASE} object to the @{Set#SET_GROUP}s.
-  -- @param #DETECTION_MANAGER self
-  function DETECTION_MANAGER:_FacScheduler( SchedulerName )
-    self:F2( { SchedulerName } )
-    
-    return self:ProcessDetected( self.Detection )
-    
---    self.SetGroup:ForEachGroup(
---      --- @param Wrapper.Group#GROUP Group
---      function( Group )
---        if Group:IsAlive() then
---          return self:ProcessDetected( self.Detection )
---        end
---      end
---    )
-    
---    return true
   end
 
 end
