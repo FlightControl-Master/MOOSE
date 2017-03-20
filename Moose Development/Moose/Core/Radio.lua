@@ -1,22 +1,82 @@
---- This module contains the RADIO class.
+--- This module contains the **Core - RADIO** class. The RADIO class is responsible for **transmitting radio communications**.
 --
 -- 1) @{Radio#RADIO} class, extends @{Base#BASE}
 -- =================================================
--- Radio system to manage radio communications
--- Radio transmissions consist of sound files that are broadcasted on a specific channel and modulation
--- If sent by a UNIT or a GROUP, Radio communications can be subtitled for a specific amount of time
+-- 
+-- 1.1) General radio transmssion setup
+-- ------------------------------------
 --
--- 1.1) RADIO construction methods
--- -------------------------------
--- RADIO is created with @{Radio#RADIO.New}. This doesn't broadcast a transmission, but only create a RADIO object
--- It should only be used internally. To create a RADIO object, please use @{Positionable#POSITIONABLE.GetRadio}
--- To actually broadcast your transmission, you need to use @{Radio#RADIO.Broadcast}
+-- What are radio communications in DCS ?
+-- 
+--   * Radio transmissions consist of **sound files** that are broadcasted on a specific **frequency** (e.g. 115MHz) and **modulation** (e.g. AM),
+--   * They can be **subtitled** for a specific **duration**, the **power** in Watts of the transmiter's antenna can be set, and the transmission can be **looped**.
+-- 
+-- How to supply DCS my own Sound Files ?
+--   
+--   * Your sound files need to be encoded in **.ogg** or .wav,
+--   * Your sound files should be **as tiny as possible**. It is suggested you encode in .ogg with low bitrate and sampling settings,
+--   * They need to be added in .\l10n\DEFAULT\ in you .miz file (wich can be decompressed like a .zip file),
+--   * For simplicty sake, you can **let DCS' Mission Editor add the file** itself, by creating a new Trigger with the action "Sound to Country", and choosing your sound file and a country you don't use in your mission.
+--   
+-- Due to weird DCS quirks, **radio communications behave differently** if sent by a @{Unit#UNIT} or a @{Group#GROUP} or by any other @{Positionable#POSITIONABLE}
+-- 
+--   * If the transmitter is a @{Unit#UNIT} or a @{Group#GROUP}, DCS will set the power of the transmission  automatically,
+--   * If the transmitter is any other @{Positionable#POSITIONABLE}, the transmisison can't be subtitled or looped.
+--   
+-- Note that obviously, the **frequency** and the **modulation** of the transmission are important only if the players are piloting an **Advanced System Modelling** enabled aircraft,
+-- like the A10C or the Mirage 2000C. They will **hear the transmission** if they are tuned on the **right frequency and modulation** (and if they are close enough - more on that below).
+-- If a FC3 airacraft is used, it will **hear every communication, whatever the frequency and the modulation** is set to.
+--
+-- 1.2) @{Radio#RADIO} usage
+-- -------------------------
+-- 
+-- There are 3 steps to a successful radio transmission
+-- 
+--   * First, you need to **"add" a @{#RADIO} object** to your @{Positionable#POSITIONABLE}. This is done using the @{Positionable#POSITIONABLE.GetRadio}() function,
+--   * Then, you will **set the relevant parameters** to the transmission (see below),
+--   * When done, you can actually **broadcast the transmission** (i.e. play the sound) with the @{Positionable#POSITIONABLE.Broadcast}() function.
+--   
+-- Methods to set relevant parameters for both a @{Unit#UNIT} or a @{Group#GROUP} or any other @{Positionable#POSITIONABLE}
+-- 
+--   * @{#RADIO.SetFileName}() : Sets the file name of your sound file (e.g. "Noise.ogg"),
+--   * @{#RADIO.SetFrequency}() : Sets the frequency of your transmission,
+--   * @{#RADIO.SetModulation}() : Sets the modulation of your transmission.
+-- 
+-- Additional Methods to set relevant parameters if the transmiter is a @{Unit#UNIT} or a @{Group#GROUP}
+-- 
+--   * @{#RADIO.SetLoop}() : Choose if you want the transmission to be looped,
+--   * @{#RADIO.SetSubtitle}() : Set both the subtitle and its duration,
+--   * @{#RADIO.NewUnitTransmission}() : Shortcut to set all the relevant parameters in one method call
+-- 
+-- Additional Methods to set relevant parameters if the transmiter is any other @{Wrapper.Positionable#POSITIONABLE}
+-- 
+--   * @{#RADIO.SetPower}() : Sets the power of the antenna in Watts
+--   * @{#RADIO.NewGenericTransmission}() : Shortcut to set all the relevant parameters in one method call
+-- 
+-- What is this power thing ?
+-- 
+--   * If your transmission is sent by a @{Positionable#POSITIONABLE} other than a @{Unit#UNIT} or a @{Group#GROUP}, you can set the power of the antenna,
+--   * Otherwise, DCS sets it automatically, depending on what's available on your Unit,
+--   * If the player gets **too far** from the transmiter, or if the antenna is **too weak**, the transmission will **fade** and **become noisyer**,
+--   * This an automated DCS calculation you have no say on,
+--   * For reference, a standard VOR station has a 100W antenna, a standard AA TACAN has a 120W antenna, and civilian ATC's antenna usually range between 300 and 500W,
+--   * Note that if the transmission has a subtitle, it will be readable, regardless of the quality of the transmission. 
+--
+--### Authors: Hugues "Grey_Echo" Bousquet
 --
 -- @module Radio
 -- @author Grey-Echo
 
 --- The RADIO class
 -- @type RADIO
+-- @field Wrapper.Positionable#POSITIONABLE Positionable The transmiter
+-- @field #string FileName Name of the sound file
+-- @field #number Frequency Frequency of the transmission in Hz
+-- @field #number Modulation Modulation of the transmission (either radio.modulation.AM or radio.modulation.FM)
+-- @field #string Subtitle Subtitle of the transmission
+-- @field #number SubtitleDuration Duration of the Subtitle in seconds
+-- @field #number Power Power of the antenna is Watts
+-- @field #boolean Loop 
 -- @extends Core.Base#BASE
 RADIO = {
   ClassName = "RADIO",
@@ -35,7 +95,7 @@ RADIO = {
 -- @return #RADIO Radio
 -- @return #nil If Positionable is invalid
 -- @usage
--- -- If you want to create a RADIO, you probably should use @{Wrapper.Positionable#POSITIONABLE.GetRadio} instead
+-- -- If you want to create a RADIO, you probably should use @{Positionable#POSITIONABLE.GetRadio}() instead
 function RADIO:New(positionable)
   local self = BASE:Inherit( self, BASE:New() )
   self:F(positionable)
@@ -50,9 +110,8 @@ end
 
 --- Check validity of the filename passed and sets RADIO.FileName
 -- @param #RADIO self
--- @param #string fileName of the sound
+-- @param #string fileName File name of the sound file (i.e. "Noise.ogg")
 -- @return #RADIO self
--- @usage
 function RADIO:SetFileName(filename)
   self:F2(filename)
   if type(filename) == "string" then
@@ -70,9 +129,8 @@ end
 
 --- Check validity of the frequency passed and sets RADIO.Frequency
 -- @param #RADIO self
--- @param #number frequency in MHz
+-- @param #number frequency in MHz (Ranges allowed for radio transmissions in DCS : 30-88 / 108-152 / 225-400MHz)
 -- @return #RADIO self
--- @usage
 function RADIO:SetFrequency(frequency)
   self:F2(frequency)
   if type(frequency) == "number" then
@@ -98,9 +156,8 @@ end
 
 --- Check validity of the frequency passed and sets RADIO.Modulation
 -- @param #RADIO self
--- @param #number modulation
+-- @param #number modulation either radio.modulation.AM or radio.modulation.FM
 -- @return #RADIO self
--- @usage
 function RADIO:SetModulation(modulation)
   self:F2(modulation)
   if type(modulation) == "number" then
@@ -115,9 +172,8 @@ end
 
 --- Check validity of the power passed and sets RADIO.Power
 -- @param #RADIO self
--- @param #number Power
+-- @param #number Power in W
 -- @return #RADIO self
--- @usage
 function RADIO:SetPower(power)
   self:F2(power)
   if type(power) == "number" then
@@ -130,7 +186,7 @@ end
 
 --- Check validity of the loop passed and sets RADIO.Loop
 -- @param #RADIO self
--- @param #bool Loop
+-- @param #boolean Loop
 -- @return #RADIO self
 -- @usage
 function RADIO:SetLoop(loop)
@@ -172,7 +228,7 @@ end
 -- @param #RADIO self
 -- @param #string Filename
 -- @param #number Frequency in MHz
--- @param #number Modulation
+-- @param #number Modulation either radio.modulation.AM or radio.modulation.FM
 -- @param #number Power in W
 -- @return #RADIO self
 -- @usage
@@ -197,8 +253,8 @@ end
 -- @param #string Subtitle
 -- @param #number SubtitleDuration in s
 -- @param #number Frequency in MHz
--- @param #number Modulation
--- @param #bool Loop
+-- @param #number Modulation either radio.modulation.AM or radio.modulation.FM
+-- @param #boolean Loop
 -- @return #RADIO self
 -- @usage
 -- -- In this function the data is especially relevant if the broadcaster is a UNIT or a GROUP,
@@ -222,7 +278,7 @@ end
 -- @return #RADIO self
 -- @usage
 -- -- The Radio has to be populated with the new transmission before broadcasting.
--- Please use RADIO setters or either @{Radio#RADIO.NewGenericTransmission} or @{Radio#RADIO.NewUnitTransmission}
+-- -- Please use RADIO setters or either @{Radio#RADIO.NewGenericTransmission} or @{Radio#RADIO.NewUnitTransmission}
 -- -- This class is in fact pretty smart, it determines the right DCS function to use depending on the type of POSITIONABLE
 -- -- If the POSITIONABLE is not a UNIT or a GROUP, we use the generic (but limited) trigger.action.radioTransmission()
 -- -- If the POSITIONABLE is a UNIT or a GROUP, we use the "TransmitMessage" Command
