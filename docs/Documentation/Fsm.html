@@ -877,7 +877,7 @@ YYYY-MM-DD: CLASS:<strong>NewFunction( Params )</strong> added</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(FSM_PROCESS).onstatechange">FSM_PROCESS:onstatechange(ProcessUnit, Event, From, To, Dummy)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(FSM_PROCESS).onstatechange">FSM_PROCESS:onstatechange(ProcessUnit, Event, From, To, Task, Dummy)</a></td>
 		<td class="summary">
 <p>StateMachine callback function for a FSM_PROCESS</p>
 </td>
@@ -1554,7 +1554,7 @@ A string defining the start state.</p>
 		<dl class="function">
 <dt>
 
-		<em>#string</em>
+		<em></em>
 <a id="#(FSM)._StartState" >
 <strong>FSM._StartState</strong>
 </a>
@@ -1853,6 +1853,7 @@ A string defining the start state.</p>
 		<dl class="function">
 <dt>
 
+		<em></em>
 <a id="#(FSM).current" >
 <strong>FSM.current</strong>
 </a>
@@ -2637,7 +2638,7 @@ self</p>
 <dt>
 
 <a id="#(FSM_PROCESS).onstatechange" >
-<strong>FSM_PROCESS:onstatechange(ProcessUnit, Event, From, To, Dummy)</strong>
+<strong>FSM_PROCESS:onstatechange(ProcessUnit, Event, From, To, Task, Dummy)</strong>
 </a>
 </dt>
 <dd>
@@ -2664,6 +2665,11 @@ self</p>
 				<li>
 				
 <p><code><em>#string To </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> Task </em></code>: </p>
 
 				</li>
 				<li>

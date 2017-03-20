@@ -308,6 +308,7 @@ do -- TASK_A2G
   -- @param Wrapper.Unit#UNIT TaskUnit
   -- @return #TASK_A2G
   function TASK_A2G:SetScoreOnDestroy( Text, Score, TaskUnit )
+    self:F( { Text, Score, TaskUnit } )
 
     local ProcessUnit = self:GetUnitProcess( TaskUnit )
 
@@ -323,6 +324,7 @@ do -- TASK_A2G
   -- @param Wrapper.Unit#UNIT TaskUnit
   -- @return #TASK_A2G
   function TASK_A2G:SetScoreOnSuccess( Text, Score, TaskUnit )
+    self:F( { Text, Score, TaskUnit } )
 
     local ProcessUnit = self:GetUnitProcess( TaskUnit )
 
@@ -338,6 +340,7 @@ do -- TASK_A2G
   -- @param Wrapper.Unit#UNIT TaskUnit
   -- @return #TASK_A2G
   function TASK_A2G:SetPenaltyOnFailed( Text, Penalty, TaskUnit )
+    self:F( { Text, Score, TaskUnit } )
 
     local ProcessUnit = self:GetUnitProcess( TaskUnit )
 

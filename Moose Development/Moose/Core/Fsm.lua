@@ -420,7 +420,6 @@ do -- FSM
   
     for ProcessID, Process in pairs( self:GetProcesses() ) do
       if Process.From == From and Process.Event == Event then
-        self:T( Process )
         return Process.fsm
       end
     end
@@ -449,7 +448,7 @@ do -- FSM
   -- @param #number Score is a number providing the score of the status.
   -- @return #FSM self
   function FSM:AddScore( State, ScoreText, Score )
-    self:F2( { State, ScoreText, Score } )
+    self:F( { State, ScoreText, Score } )
   
     self._Scores[State] = self._Scores[State] or {}
     self._Scores[State].ScoreText = ScoreText
@@ -467,14 +466,15 @@ do -- FSM
   -- @param #number Score is a number providing the score of the status.
   -- @return #FSM self
   function FSM:AddScoreProcess( From, Event, State, ScoreText, Score )
-    self:F2( { Event, State, ScoreText, Score } )
+    self:F( { From, Event, State, ScoreText, Score } )
   
     local Process = self:GetProcess( From, Event )
     
-    self:T( { Process = Process._Name, Scores = Process._Scores, State = State, ScoreText = ScoreText, Score = Score } )
     Process._Scores[State] = Process._Scores[State] or {}
     Process._Scores[State].ScoreText = ScoreText
     Process._Scores[State].Score = Score
+    
+    self:T( Process._Scores )
   
     return Process
   end
@@ -1047,14 +1047,14 @@ end
   -- @param #string Event
   -- @param #string From
   -- @param #string To
-  function FSM_PROCESS:onstatechange( ProcessUnit, From, Event, To, Dummy )
+  function FSM_PROCESS:onstatechange( ProcessUnit, Task, From, Event, To, Dummy )
     self:T( { ProcessUnit, From, Event, To, Dummy, self:IsTrace() } )
   
     if self:IsTrace() then
       MESSAGE:New( "@ Process " .. self:GetClassNameAndID() .. " : " .. Event .. " changed to state " .. To, 2 ):ToAll()
     end
   
-    self:T( self._Scores[To] )
+    self:T( { Scores = self._Scores, To = To } )
     -- TODO: This needs to be reworked with a callback functions allocated within Task, and set within the mission script from the Task Objects...
     if self._Scores[To] then
     

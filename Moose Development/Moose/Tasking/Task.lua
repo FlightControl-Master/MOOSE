@@ -983,11 +983,12 @@ end
 -- @param #string To
 function TASK:onenterAssigned( From, Event, To, PlayerUnit, PlayerName )
 
-  self:E("Task Assigned")
+  self:E( { "Task Assigned", self.Dispatcher } )
   
   self:MessageToGroups( "Task " .. self:GetName() .. " has been assigned to your group." )
   
   if self.Dispatcher then
+    self:E( "Firing Assign event " )
     self.Dispatcher:Assign( self, PlayerUnit, PlayerName )
   end
   

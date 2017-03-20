@@ -1073,7 +1073,7 @@ do -- DETECTION_BASE
   --- Get a detected item using a given numeric index.
   -- @param #DETECTION_BASE self
   -- @param #number Index
-  -- @return DETECTION_BASE.DetectedItem
+  -- @return #DETECTION_BASE.DetectedItem
   function DETECTION_BASE:GetDetectedItem( Index )
   
     local DetectedItem = self.DetectedItems[Index]
@@ -1336,7 +1336,7 @@ do -- DETECTION_UNITS
   
       local DetectedItemUnit = DetectedSet:GetFirst() -- Wrapper.Unit#UNIT
       
-      if DetectedItemUnit then
+      if DetectedItemUnit and DetectedItemUnit:IsAlive() then
         self:T(DetectedItemUnit)
   
         local UnitCategoryName = DetectedItemUnit:GetCategoryName() or ""
@@ -1354,8 +1354,16 @@ do -- DETECTION_UNITS
           UnitDistanceText = string.format( "%.2f", DetectedItem.Distance ) .. " km, visual contact"
         end
         
+        local DetectedItemPointVec3 = DetectedItemUnit:GetPointVec3()
+        local DetectedItemPointLL = DetectedItemPointVec3:ToStringLL( 3, true )
+ 
+        local ThreatLevelA2G = DetectedItemUnit:GetThreatLevel( DetectedItem )
+        
         ReportSummary = string.format( 
-          "%s%s", 
+          "%s - Threat [%s] (%2d) - %s%s",
+          DetectedItemPointLL,
+          string.rep(  "■", ThreatLevelA2G ),
+          ThreatLevelA2G,
           UnitCategoryText,
           UnitDistanceText
         )
@@ -1470,10 +1478,10 @@ do -- DETECTION_TYPES
     
     for DetectedItemID, DetectedItem in pairs( self.DetectedItems ) do
     
-      local DetectedItemSet = DetectedItem:GetSet() -- Core.Set#SET_UNIT
+      local DetectedItemSet = DetectedItem.Set -- Core.Set#SET_UNIT
       local DetectedTypeName = DetectedItem.Type
       
-      for DetectedUnitName, DetectedUnitData in pairs( DetectedItemSet ) do
+      for DetectedUnitName, DetectedUnitData in pairs( DetectedItemSet:GetSet() ) do
         local DetectedUnit = DetectedUnitData -- Wrapper.Unit#UNIT
 
         local DetectedObject = nil
@@ -1541,13 +1549,16 @@ do -- DETECTION_TYPES
     self:T( DetectedItem )
     if DetectedItem then
 
-      local ThreatLevelA2G = DetectedSet:CalculateThreatLevelA2G() 
+      local ThreatLevelA2G = DetectedSet:CalculateThreatLevelA2G()
+      local DetectedItemsCount = DetectedSet:Count()
+      local DetectedItemType = DetectedItem.Type
 
       local ReportSummary = string.format( 
-        "Type #%s - Threat Level [%s] (%2d)", 
-        DetectedItem.Type,
+        "Threat [%s] (%2d) - %2d of %s", 
         string.rep(  "■", ThreatLevelA2G ),
-        ThreatLevelA2G
+        ThreatLevelA2G,
+        DetectedItemsCount,
+        DetectedItemType
       )
       self:T( ReportSummary )
     
@@ -1651,17 +1662,23 @@ do -- DETECTION_AREAS
     local DetectedItem = self:GetDetectedItem( Index )
     if DetectedItem then
       local DetectedSet = self:GetDetectedSet( Index )
-      local ThreatLevelA2G = self:GetTreatLevelA2G( DetectedItem )
       local ReportSummaryItem
       
       local DetectedZone = self:GetDetectedZone( Index )
       local DetectedItemPointVec3 = DetectedZone:GetPointVec3()
       local DetectedItemPointLL = DetectedItemPointVec3:ToStringLL( 3, true )
+
+      local ThreatLevelA2G = self:GetTreatLevelA2G( DetectedItem )
+      local DetectedItemsCount = DetectedSet:Count()
+      local DetectedItemsTypes = DetectedSet:GetTypeNames()
+
       local ReportSummary = string.format( 
-        "%s - Threat Level [%s] (%2d)", 
+        "%s - Threat [%s] (%2d) - %2d of %s", 
         DetectedItemPointLL,
         string.rep(  "■", ThreatLevelA2G ),
-        ThreatLevelA2G
+        ThreatLevelA2G,
+        DetectedItemsCount,
+        DetectedItemsTypes
       )
       
       return ReportSummary

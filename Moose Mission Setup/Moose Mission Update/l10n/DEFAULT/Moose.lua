@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20170319_1459' ) 
+env.info( 'Moose Generation Timestamp: 20170320_1252' ) 
 local base = _G
 
 Include = {}
@@ -7971,225 +7971,30 @@ end
 
 
 
---- **Core** - SET classes define **collections** of objects to perform **bulk actions** and logically **group** objects.
+--- **Core** - SET_ classes define **collections** of objects to perform **bulk actions** and logically **group** objects.
+-- 
+-- ![Banner Image](..\Presentations\SET\Dia1.JPG)
 -- 
 -- ===
 -- 
--- 1) @{Set#SET_BASE} class, extends @{Base#BASE}
--- ==============================================
--- The @{Set#SET_BASE} class defines the core functions that define a collection of objects.
--- A SET provides iterators to iterate the SET, but will **temporarily** yield the ForEach interator loop at defined **"intervals"** to the mail simulator loop.
--- In this way, large loops can be done while not blocking the simulator main processing loop.
--- The default **"yield interval"** is after 10 objects processed.
--- The default **"time interval"** is after 0.001 seconds.
+-- SET_ classes group objects of the same type into a collection, which is either:
 -- 
--- 1.1) Add or remove objects from the SET
--- ---------------------------------------
--- Some key core functions are @{Set#SET_BASE.Add} and @{Set#SET_BASE.Remove} to add or remove objects from the SET in your logic.
--- 
--- 1.2) Define the SET iterator **"yield interval"** and the **"time interval"**
--- -----------------------------------------------------------------------------
--- Modify the iterator intervals with the @{Set#SET_BASE.SetInteratorIntervals} method.
--- You can set the **"yield interval"**, and the **"time interval"**. (See above).
--- 
--- ===
--- 
--- 2) @{Set#SET_GROUP} class, extends @{Set#SET_BASE}
--- ==================================================
--- Mission designers can use the @{Set#SET_GROUP} class to build sets of groups belonging to certain:
--- 
---  * Coalitions
---  * Categories
---  * Countries
---  * Starting with certain prefix strings.
---  
--- 2.1) SET_GROUP construction method:
--- -----------------------------------
--- Create a new SET_GROUP object with the @{#SET_GROUP.New} method:
--- 
---    * @{#SET_GROUP.New}: Creates a new SET_GROUP object.
--- 
--- 2.2) Add or Remove GROUP(s) from SET_GROUP: 
--- -------------------------------------------
--- GROUPS can be added and removed using the @{Set#SET_GROUP.AddGroupsByName} and @{Set#SET_GROUP.RemoveGroupsByName} respectively. 
--- These methods take a single GROUP name or an array of GROUP names to be added or removed from SET_GROUP.
--- 
--- 2.3) SET_GROUP filter criteria: 
--- -------------------------------
--- You can set filter criteria to define the set of groups within the SET_GROUP.
--- Filter criteria are defined by:
--- 
---    * @{#SET_GROUP.FilterCoalitions}: Builds the SET_GROUP with the groups belonging to the coalition(s).
---    * @{#SET_GROUP.FilterCategories}: Builds the SET_GROUP with the groups belonging to the category(ies).
---    * @{#SET_GROUP.FilterCountries}: Builds the SET_GROUP with the gruops belonging to the country(ies).
---    * @{#SET_GROUP.FilterPrefixes}: Builds the SET_GROUP with the groups starting with the same prefix string(s).
+--   * Manually managed using the **:Add...()** or **:Remove...()** methods. The initial SET can be filtered with the **@{#SET_BASE.FilterOnce}()** method
+--   * Dynamically updated when new objects are created or objects are destroyed using the **@{#SET_BASE.FilterStart}()** method.
 --   
--- Once the filter criteria have been set for the SET_GROUP, you can start filtering using:
+-- Various types of SET_ classes are available:
 -- 
---    * @{#SET_GROUP.FilterStart}: Starts the filtering of the groups within the SET_GROUP and add or remove GROUP objects **dynamically**.
+--   * @{#SET_UNIT}: Defines a colleciton of @{Unit}s filtered by filter criteria.
+--   * @{#SET_GROUP}: Defines a collection of @{Group}s filtered by filter criteria.
+--   * @{#SET_CLIENT}: Defines a collection of @{Client}s filterd by filter criteria.
+--   * @{#SET_AIRBASE}: Defines a collection of @{Airbase}s filtered by filter criteria.
 -- 
--- Planned filter criteria within development are (so these are not yet available):
+-- These classes are derived from @{#SET_BASE}, which contains the main methods to manage SETs.
 -- 
---    * @{#SET_GROUP.FilterZones}: Builds the SET_GROUP with the groups within a @{Zone#ZONE}.
+-- A multitude of other methods are available in SET_ classes that allow to:
 -- 
--- 2.4) SET_GROUP iterators:
--- -------------------------
--- Once the filters have been defined and the SET_GROUP has been built, you can iterate the SET_GROUP with the available iterator methods.
--- The iterator methods will walk the SET_GROUP set, and call for each element within the set a function that you provide.
--- The following iterator methods are currently available within the SET_GROUP:
--- 
---   * @{#SET_GROUP.ForEachGroup}: Calls a function for each alive group it finds within the SET_GROUP.
---   * @{#SET_GROUP.ForEachGroupCompletelyInZone}: Iterate the SET_GROUP and call an iterator function for each **alive** GROUP presence completely in a @{Zone}, providing the GROUP and optional parameters to the called function.
---   * @{#SET_GROUP.ForEachGroupPartlyInZone}: Iterate the SET_GROUP and call an iterator function for each **alive** GROUP presence partly in a @{Zone}, providing the GROUP and optional parameters to the called function.
---   * @{#SET_GROUP.ForEachGroupNotInZone}: Iterate the SET_GROUP and call an iterator function for each **alive** GROUP presence not in a @{Zone}, providing the GROUP and optional parameters to the called function.
--- 
--- ====
--- 
--- 3) @{Set#SET_UNIT} class, extends @{Set#SET_BASE}
--- ===================================================
--- Mission designers can use the @{Set#SET_UNIT} class to build sets of units belonging to certain:
--- 
---  * Coalitions
---  * Categories
---  * Countries
---  * Unit types
---  * Starting with certain prefix strings.
---  
--- 3.1) SET_UNIT construction method:
--- ----------------------------------
--- Create a new SET_UNIT object with the @{#SET_UNIT.New} method:
--- 
---    * @{#SET_UNIT.New}: Creates a new SET_UNIT object.
---   
--- 3.2) Add or Remove UNIT(s) from SET_UNIT: 
--- -----------------------------------------
--- UNITs can be added and removed using the @{Set#SET_UNIT.AddUnitsByName} and @{Set#SET_UNIT.RemoveUnitsByName} respectively. 
--- These methods take a single UNIT name or an array of UNIT names to be added or removed from SET_UNIT.
--- 
--- 3.3) SET_UNIT filter criteria: 
--- ------------------------------
--- You can set filter criteria to define the set of units within the SET_UNIT.
--- Filter criteria are defined by:
--- 
---    * @{#SET_UNIT.FilterCoalitions}: Builds the SET_UNIT with the units belonging to the coalition(s).
---    * @{#SET_UNIT.FilterCategories}: Builds the SET_UNIT with the units belonging to the category(ies).
---    * @{#SET_UNIT.FilterTypes}: Builds the SET_UNIT with the units belonging to the unit type(s).
---    * @{#SET_UNIT.FilterCountries}: Builds the SET_UNIT with the units belonging to the country(ies).
---    * @{#SET_UNIT.FilterPrefixes}: Builds the SET_UNIT with the units starting with the same prefix string(s).
---   
--- Once the filter criteria have been set for the SET_UNIT, you can start filtering using:
--- 
---   * @{#SET_UNIT.FilterStart}: Starts the filtering of the units within the SET_UNIT.
--- 
--- Planned filter criteria within development are (so these are not yet available):
--- 
---    * @{#SET_UNIT.FilterZones}: Builds the SET_UNIT with the units within a @{Zone#ZONE}.
--- 
--- 3.4) SET_UNIT iterators:
--- ------------------------
--- Once the filters have been defined and the SET_UNIT has been built, you can iterate the SET_UNIT with the available iterator methods.
--- The iterator methods will walk the SET_UNIT set, and call for each element within the set a function that you provide.
--- The following iterator methods are currently available within the SET_UNIT:
--- 
---   * @{#SET_UNIT.ForEachUnit}: Calls a function for each alive unit it finds within the SET_UNIT.
---   * @{#SET_GROUP.ForEachGroupCompletelyInZone}: Iterate the SET_GROUP and call an iterator function for each **alive** GROUP presence completely in a @{Zone}, providing the GROUP and optional parameters to the called function.
---   * @{#SET_GROUP.ForEachGroupNotInZone}: Iterate the SET_GROUP and call an iterator function for each **alive** GROUP presence not in a @{Zone}, providing the GROUP and optional parameters to the called function.
---   
--- Planned iterators methods in development are (so these are not yet available):
--- 
---   * @{#SET_UNIT.ForEachUnitInUnit}: Calls a function for each unit contained within the SET_UNIT.
---   * @{#SET_UNIT.ForEachUnitCompletelyInZone}: Iterate and call an iterator function for each **alive** UNIT presence completely in a @{Zone}, providing the UNIT and optional parameters to the called function.
---   * @{#SET_UNIT.ForEachUnitNotInZone}: Iterate and call an iterator function for each **alive** UNIT presence not in a @{Zone}, providing the UNIT and optional parameters to the called function.
--- 
--- ===
--- 
--- 4) @{Set#SET_CLIENT} class, extends @{Set#SET_BASE}
--- ===================================================
--- Mission designers can use the @{Set#SET_CLIENT} class to build sets of units belonging to certain:
--- 
---  * Coalitions
---  * Categories
---  * Countries
---  * Client types
---  * Starting with certain prefix strings.
---  
--- 4.1) SET_CLIENT construction method:
--- ----------------------------------
--- Create a new SET_CLIENT object with the @{#SET_CLIENT.New} method:
--- 
---    * @{#SET_CLIENT.New}: Creates a new SET_CLIENT object.
---   
--- 4.2) Add or Remove CLIENT(s) from SET_CLIENT: 
--- -----------------------------------------
--- CLIENTs can be added and removed using the @{Set#SET_CLIENT.AddClientsByName} and @{Set#SET_CLIENT.RemoveClientsByName} respectively. 
--- These methods take a single CLIENT name or an array of CLIENT names to be added or removed from SET_CLIENT.
--- 
--- 4.3) SET_CLIENT filter criteria: 
--- ------------------------------
--- You can set filter criteria to define the set of clients within the SET_CLIENT.
--- Filter criteria are defined by:
--- 
---    * @{#SET_CLIENT.FilterCoalitions}: Builds the SET_CLIENT with the clients belonging to the coalition(s).
---    * @{#SET_CLIENT.FilterCategories}: Builds the SET_CLIENT with the clients belonging to the category(ies).
---    * @{#SET_CLIENT.FilterTypes}: Builds the SET_CLIENT with the clients belonging to the client type(s).
---    * @{#SET_CLIENT.FilterCountries}: Builds the SET_CLIENT with the clients belonging to the country(ies).
---    * @{#SET_CLIENT.FilterPrefixes}: Builds the SET_CLIENT with the clients starting with the same prefix string(s).
---   
--- Once the filter criteria have been set for the SET_CLIENT, you can start filtering using:
--- 
---   * @{#SET_CLIENT.FilterStart}: Starts the filtering of the clients within the SET_CLIENT.
--- 
--- Planned filter criteria within development are (so these are not yet available):
--- 
---    * @{#SET_CLIENT.FilterZones}: Builds the SET_CLIENT with the clients within a @{Zone#ZONE}.
--- 
--- 4.4) SET_CLIENT iterators:
--- ------------------------
--- Once the filters have been defined and the SET_CLIENT has been built, you can iterate the SET_CLIENT with the available iterator methods.
--- The iterator methods will walk the SET_CLIENT set, and call for each element within the set a function that you provide.
--- The following iterator methods are currently available within the SET_CLIENT:
--- 
---   * @{#SET_CLIENT.ForEachClient}: Calls a function for each alive client it finds within the SET_CLIENT.
--- 
--- ====
--- 
--- 5) @{Set#SET_AIRBASE} class, extends @{Set#SET_BASE}
--- ====================================================
--- Mission designers can use the @{Set#SET_AIRBASE} class to build sets of airbases optionally belonging to certain:
--- 
---  * Coalitions
---  
--- 5.1) SET_AIRBASE construction
--- -----------------------------
--- Create a new SET_AIRBASE object with the @{#SET_AIRBASE.New} method:
--- 
---    * @{#SET_AIRBASE.New}: Creates a new SET_AIRBASE object.
---   
--- 5.2) Add or Remove AIRBASEs from SET_AIRBASE 
--- --------------------------------------------
--- AIRBASEs can be added and removed using the @{Set#SET_AIRBASE.AddAirbasesByName} and @{Set#SET_AIRBASE.RemoveAirbasesByName} respectively. 
--- These methods take a single AIRBASE name or an array of AIRBASE names to be added or removed from SET_AIRBASE.
--- 
--- 5.3) SET_AIRBASE filter criteria 
--- --------------------------------
--- You can set filter criteria to define the set of clients within the SET_AIRBASE.
--- Filter criteria are defined by:
--- 
---    * @{#SET_AIRBASE.FilterCoalitions}: Builds the SET_AIRBASE with the airbases belonging to the coalition(s).
---   
--- Once the filter criteria have been set for the SET_AIRBASE, you can start filtering using:
--- 
---   * @{#SET_AIRBASE.FilterStart}: Starts the filtering of the airbases within the SET_AIRBASE.
--- 
--- 5.4) SET_AIRBASE iterators:
--- ---------------------------
--- Once the filters have been defined and the SET_AIRBASE has been built, you can iterate the SET_AIRBASE with the available iterator methods.
--- The iterator methods will walk the SET_AIRBASE set, and call for each airbase within the set a function that you provide.
--- The following iterator methods are currently available within the SET_AIRBASE:
--- 
---   * @{#SET_AIRBASE.ForEachAirbase}: Calls a function for each airbase it finds within the SET_AIRBASE.
--- 
--- ====
+--   * Validate the presence of objects in the SET.
+--   * Trigger events when objects in the SET change a zone presence.
 -- 
 -- ### Authors: 
 -- 
@@ -8201,7 +8006,22 @@ end
 -- @module Set
 
 
---- SET_BASE class
+--- # 1) SET_BASE class, extends @{Base#BASE}
+-- The @{Set#SET_BASE} class defines the core functions that define a collection of objects.
+-- A SET provides iterators to iterate the SET, but will **temporarily** yield the ForEach interator loop at defined **"intervals"** to the mail simulator loop.
+-- In this way, large loops can be done while not blocking the simulator main processing loop.
+-- The default **"yield interval"** is after 10 objects processed.
+-- The default **"time interval"** is after 0.001 seconds.
+-- 
+-- ## 1.1) Add or remove objects from the SET
+-- 
+-- Some key core functions are @{Set#SET_BASE.Add} and @{Set#SET_BASE.Remove} to add or remove objects from the SET in your logic.
+-- 
+-- ## 1.2) Define the SET iterator **"yield interval"** and the **"time interval"**
+-- 
+-- Modify the iterator intervals with the @{Set#SET_BASE.SetInteratorIntervals} method.
+-- You can set the **"yield interval"**, and the **"time interval"**. (See above).
+-- 
 -- @type SET_BASE
 -- @field #table Filter
 -- @field #table Set
@@ -8415,7 +8235,7 @@ end
 -- @return #number Count
 function SET_BASE:Count()
 
-  return #self.Index
+  return #self.Index or 0
 end
 
 
@@ -8750,7 +8570,55 @@ end
 
 -- SET_GROUP
 
---- SET_GROUP class
+--- # 2) SET_GROUP class, extends @{Set#SET_BASE}
+-- 
+-- Mission designers can use the @{Set#SET_GROUP} class to build sets of groups belonging to certain:
+-- 
+--  * Coalitions
+--  * Categories
+--  * Countries
+--  * Starting with certain prefix strings.
+--  
+-- ## 2.1) SET_GROUP constructor
+-- 
+-- Create a new SET_GROUP object with the @{#SET_GROUP.New} method:
+-- 
+--    * @{#SET_GROUP.New}: Creates a new SET_GROUP object.
+-- 
+-- ## 2.2) Add or Remove GROUP(s) from SET_GROUP
+-- 
+-- GROUPS can be added and removed using the @{Set#SET_GROUP.AddGroupsByName} and @{Set#SET_GROUP.RemoveGroupsByName} respectively. 
+-- These methods take a single GROUP name or an array of GROUP names to be added or removed from SET_GROUP.
+-- 
+-- ## 2.3) SET_GROUP filter criteria
+-- 
+-- You can set filter criteria to define the set of groups within the SET_GROUP.
+-- Filter criteria are defined by:
+-- 
+--    * @{#SET_GROUP.FilterCoalitions}: Builds the SET_GROUP with the groups belonging to the coalition(s).
+--    * @{#SET_GROUP.FilterCategories}: Builds the SET_GROUP with the groups belonging to the category(ies).
+--    * @{#SET_GROUP.FilterCountries}: Builds the SET_GROUP with the gruops belonging to the country(ies).
+--    * @{#SET_GROUP.FilterPrefixes}: Builds the SET_GROUP with the groups starting with the same prefix string(s).
+--   
+-- Once the filter criteria have been set for the SET_GROUP, you can start filtering using:
+-- 
+--    * @{#SET_GROUP.FilterStart}: Starts the filtering of the groups within the SET_GROUP and add or remove GROUP objects **dynamically**.
+-- 
+-- Planned filter criteria within development are (so these are not yet available):
+-- 
+--    * @{#SET_GROUP.FilterZones}: Builds the SET_GROUP with the groups within a @{Zone#ZONE}.
+-- 
+-- ## 2.4) SET_GROUP iterators
+-- 
+-- Once the filters have been defined and the SET_GROUP has been built, you can iterate the SET_GROUP with the available iterator methods.
+-- The iterator methods will walk the SET_GROUP set, and call for each element within the set a function that you provide.
+-- The following iterator methods are currently available within the SET_GROUP:
+-- 
+--   * @{#SET_GROUP.ForEachGroup}: Calls a function for each alive group it finds within the SET_GROUP.
+--   * @{#SET_GROUP.ForEachGroupCompletelyInZone}: Iterate the SET_GROUP and call an iterator function for each **alive** GROUP presence completely in a @{Zone}, providing the GROUP and optional parameters to the called function.
+--   * @{#SET_GROUP.ForEachGroupPartlyInZone}: Iterate the SET_GROUP and call an iterator function for each **alive** GROUP presence partly in a @{Zone}, providing the GROUP and optional parameters to the called function.
+--   * @{#SET_GROUP.ForEachGroupNotInZone}: Iterate the SET_GROUP and call an iterator function for each **alive** GROUP presence not in a @{Zone}, providing the GROUP and optional parameters to the called function.
+-- 
 -- @type SET_GROUP
 -- @extends Core.Set#SET_BASE
 SET_GROUP = {
@@ -9118,7 +8986,69 @@ function SET_GROUP:IsIncludeObject( MooseGroup )
   return MooseGroupInclude
 end
 
---- SET_UNIT class
+--- # 3) SET_UNIT class, extends @{Set#SET_BASE}
+-- 
+-- Mission designers can use the SET_UNIT class to build sets of units belonging to certain:
+-- 
+--  * Coalitions
+--  * Categories
+--  * Countries
+--  * Unit types
+--  * Starting with certain prefix strings.
+--  
+-- ## 3.1) SET_UNIT constructor
+--
+-- Create a new SET_UNIT object with the @{#SET_UNIT.New} method:
+-- 
+--    * @{#SET_UNIT.New}: Creates a new SET_UNIT object.
+--   
+-- ## 3.2) Add or Remove UNIT(s) from SET_UNIT
+--
+-- UNITs can be added and removed using the @{Set#SET_UNIT.AddUnitsByName} and @{Set#SET_UNIT.RemoveUnitsByName} respectively. 
+-- These methods take a single UNIT name or an array of UNIT names to be added or removed from SET_UNIT.
+-- 
+-- ## 3.3) SET_UNIT filter criteria
+-- 
+-- You can set filter criteria to define the set of units within the SET_UNIT.
+-- Filter criteria are defined by:
+-- 
+--    * @{#SET_UNIT.FilterCoalitions}: Builds the SET_UNIT with the units belonging to the coalition(s).
+--    * @{#SET_UNIT.FilterCategories}: Builds the SET_UNIT with the units belonging to the category(ies).
+--    * @{#SET_UNIT.FilterTypes}: Builds the SET_UNIT with the units belonging to the unit type(s).
+--    * @{#SET_UNIT.FilterCountries}: Builds the SET_UNIT with the units belonging to the country(ies).
+--    * @{#SET_UNIT.FilterPrefixes}: Builds the SET_UNIT with the units starting with the same prefix string(s).
+--   
+-- Once the filter criteria have been set for the SET_UNIT, you can start filtering using:
+-- 
+--   * @{#SET_UNIT.FilterStart}: Starts the filtering of the units within the SET_UNIT.
+-- 
+-- Planned filter criteria within development are (so these are not yet available):
+-- 
+--    * @{#SET_UNIT.FilterZones}: Builds the SET_UNIT with the units within a @{Zone#ZONE}.
+-- 
+-- ## 3.4) SET_UNIT iterators
+-- 
+-- Once the filters have been defined and the SET_UNIT has been built, you can iterate the SET_UNIT with the available iterator methods.
+-- The iterator methods will walk the SET_UNIT set, and call for each element within the set a function that you provide.
+-- The following iterator methods are currently available within the SET_UNIT:
+-- 
+--   * @{#SET_UNIT.ForEachUnit}: Calls a function for each alive unit it finds within the SET_UNIT.
+--   * @{#SET_GROUP.ForEachGroupCompletelyInZone}: Iterate the SET_GROUP and call an iterator function for each **alive** GROUP presence completely in a @{Zone}, providing the GROUP and optional parameters to the called function.
+--   * @{#SET_GROUP.ForEachGroupNotInZone}: Iterate the SET_GROUP and call an iterator function for each **alive** GROUP presence not in a @{Zone}, providing the GROUP and optional parameters to the called function.
+--   
+-- Planned iterators methods in development are (so these are not yet available):
+-- 
+--   * @{#SET_UNIT.ForEachUnitInUnit}: Calls a function for each unit contained within the SET_UNIT.
+--   * @{#SET_UNIT.ForEachUnitCompletelyInZone}: Iterate and call an iterator function for each **alive** UNIT presence completely in a @{Zone}, providing the UNIT and optional parameters to the called function.
+--   * @{#SET_UNIT.ForEachUnitNotInZone}: Iterate and call an iterator function for each **alive** UNIT presence not in a @{Zone}, providing the UNIT and optional parameters to the called function.
+-- 
+-- ## 3.5 ) SET_UNIT atomic methods
+-- 
+-- Various methods exist for a SET_UNIT to perform actions or calculations and retrieve results from the SET_UNIT:
+-- 
+--   * @{#SET_UNIT.GetTypeNames}(): Retrieve the type names of the @{Unit}s in the SET, delimited by a comma.
+-- 
+-- 
 -- @type SET_UNIT
 -- @extends Core.Set#SET_BASE
 SET_UNIT = {
@@ -9732,9 +9662,81 @@ function SET_UNIT:IsIncludeObject( MUnit )
 end
 
 
+--- Retrieve the type names of the @{Unit}s in the SET, delimited by an optional delimiter.
+-- @param #SET_UNIT self
+-- @param #string Delimiter (optional) The delimiter, which is default a comma.
+-- @return #string The types of the @{Unit}s delimited.
+function SET_UNIT:GetTypeNames( Delimiter )
+
+  Delimiter = Delimiter or ", "
+  local TypeReport = REPORT:New()
+  local Types = {}
+  
+  for UnitName, UnitData in pairs( self:GetSet() ) do
+  
+    local Unit = UnitData -- Wrapper.Unit#UNIT
+    local UnitTypeName = Unit:GetTypeName()
+    
+    if not Types[UnitTypeName] then
+      Types[UnitTypeName] = UnitTypeName
+      TypeReport:Add( UnitTypeName )
+    end
+  end
+  
+  return TypeReport:Text( Delimiter )
+end
+
+
 --- SET_CLIENT
 
---- SET_CLIENT class
+--- # 4) SET_CLIENT class, extends @{Set#SET_BASE}
+-- 
+-- Mission designers can use the @{Set#SET_CLIENT} class to build sets of units belonging to certain:
+-- 
+--  * Coalitions
+--  * Categories
+--  * Countries
+--  * Client types
+--  * Starting with certain prefix strings.
+--  
+-- ## 4.1) SET_CLIENT constructor
+-- 
+-- Create a new SET_CLIENT object with the @{#SET_CLIENT.New} method:
+-- 
+--    * @{#SET_CLIENT.New}: Creates a new SET_CLIENT object.
+--   
+-- ## 4.2) Add or Remove CLIENT(s) from SET_CLIENT 
+-- 
+-- CLIENTs can be added and removed using the @{Set#SET_CLIENT.AddClientsByName} and @{Set#SET_CLIENT.RemoveClientsByName} respectively. 
+-- These methods take a single CLIENT name or an array of CLIENT names to be added or removed from SET_CLIENT.
+-- 
+-- ## 4.3) SET_CLIENT filter criteria
+-- 
+-- You can set filter criteria to define the set of clients within the SET_CLIENT.
+-- Filter criteria are defined by:
+-- 
+--    * @{#SET_CLIENT.FilterCoalitions}: Builds the SET_CLIENT with the clients belonging to the coalition(s).
+--    * @{#SET_CLIENT.FilterCategories}: Builds the SET_CLIENT with the clients belonging to the category(ies).
+--    * @{#SET_CLIENT.FilterTypes}: Builds the SET_CLIENT with the clients belonging to the client type(s).
+--    * @{#SET_CLIENT.FilterCountries}: Builds the SET_CLIENT with the clients belonging to the country(ies).
+--    * @{#SET_CLIENT.FilterPrefixes}: Builds the SET_CLIENT with the clients starting with the same prefix string(s).
+--   
+-- Once the filter criteria have been set for the SET_CLIENT, you can start filtering using:
+-- 
+--   * @{#SET_CLIENT.FilterStart}: Starts the filtering of the clients within the SET_CLIENT.
+-- 
+-- Planned filter criteria within development are (so these are not yet available):
+-- 
+--    * @{#SET_CLIENT.FilterZones}: Builds the SET_CLIENT with the clients within a @{Zone#ZONE}.
+-- 
+-- ## 4.4) SET_CLIENT iterators
+-- 
+-- Once the filters have been defined and the SET_CLIENT has been built, you can iterate the SET_CLIENT with the available iterator methods.
+-- The iterator methods will walk the SET_CLIENT set, and call for each element within the set a function that you provide.
+-- The following iterator methods are currently available within the SET_CLIENT:
+-- 
+--   * @{#SET_CLIENT.ForEachClient}: Calls a function for each alive client it finds within the SET_CLIENT.
+-- 
 -- @type SET_CLIENT
 -- @extends Core.Set#SET_BASE
 SET_CLIENT = {
@@ -10091,7 +10093,42 @@ end
 
 --- SET_AIRBASE
 
---- SET_AIRBASE class
+--- # 5) SET_AIRBASE class, extends @{Set#SET_BASE}
+-- 
+-- Mission designers can use the @{Set#SET_AIRBASE} class to build sets of airbases optionally belonging to certain:
+-- 
+--  * Coalitions
+--  
+-- ## 5.1) SET_AIRBASE constructor
+-- 
+-- Create a new SET_AIRBASE object with the @{#SET_AIRBASE.New} method:
+-- 
+--    * @{#SET_AIRBASE.New}: Creates a new SET_AIRBASE object.
+--   
+-- ## 5.2) Add or Remove AIRBASEs from SET_AIRBASE 
+-- 
+-- AIRBASEs can be added and removed using the @{Set#SET_AIRBASE.AddAirbasesByName} and @{Set#SET_AIRBASE.RemoveAirbasesByName} respectively. 
+-- These methods take a single AIRBASE name or an array of AIRBASE names to be added or removed from SET_AIRBASE.
+-- 
+-- ## 5.3) SET_AIRBASE filter criteria 
+-- 
+-- You can set filter criteria to define the set of clients within the SET_AIRBASE.
+-- Filter criteria are defined by:
+-- 
+--    * @{#SET_AIRBASE.FilterCoalitions}: Builds the SET_AIRBASE with the airbases belonging to the coalition(s).
+--   
+-- Once the filter criteria have been set for the SET_AIRBASE, you can start filtering using:
+-- 
+--   * @{#SET_AIRBASE.FilterStart}: Starts the filtering of the airbases within the SET_AIRBASE.
+-- 
+-- ## 5.4) SET_AIRBASE iterators
+-- 
+-- Once the filters have been defined and the SET_AIRBASE has been built, you can iterate the SET_AIRBASE with the available iterator methods.
+-- The iterator methods will walk the SET_AIRBASE set, and call for each airbase within the set a function that you provide.
+-- The following iterator methods are currently available within the SET_AIRBASE:
+-- 
+--   * @{#SET_AIRBASE.ForEachAirbase}: Calls a function for each airbase it finds within the SET_AIRBASE.
+-- 
 -- @type SET_AIRBASE
 -- @extends Core.Set#SET_BASE
 SET_AIRBASE = {
@@ -11901,7 +11938,6 @@ do -- FSM
   
     for ProcessID, Process in pairs( self:GetProcesses() ) do
       if Process.From == From and Process.Event == Event then
-        self:T( Process )
         return Process.fsm
       end
     end
@@ -11930,7 +11966,7 @@ do -- FSM
   -- @param #number Score is a number providing the score of the status.
   -- @return #FSM self
   function FSM:AddScore( State, ScoreText, Score )
-    self:F2( { State, ScoreText, Score } )
+    self:F( { State, ScoreText, Score } )
   
     self._Scores[State] = self._Scores[State] or {}
     self._Scores[State].ScoreText = ScoreText
@@ -11948,14 +11984,15 @@ do -- FSM
   -- @param #number Score is a number providing the score of the status.
   -- @return #FSM self
   function FSM:AddScoreProcess( From, Event, State, ScoreText, Score )
-    self:F2( { Event, State, ScoreText, Score } )
+    self:F( { From, Event, State, ScoreText, Score } )
   
     local Process = self:GetProcess( From, Event )
     
-    self:T( { Process = Process._Name, Scores = Process._Scores, State = State, ScoreText = ScoreText, Score = Score } )
     Process._Scores[State] = Process._Scores[State] or {}
     Process._Scores[State].ScoreText = ScoreText
     Process._Scores[State].Score = Score
+    
+    self:T( Process._Scores )
   
     return Process
   end
@@ -12528,14 +12565,14 @@ end
   -- @param #string Event
   -- @param #string From
   -- @param #string To
-  function FSM_PROCESS:onstatechange( ProcessUnit, From, Event, To, Dummy )
+  function FSM_PROCESS:onstatechange( ProcessUnit, Task, From, Event, To, Dummy )
     self:T( { ProcessUnit, From, Event, To, Dummy, self:IsTrace() } )
   
     if self:IsTrace() then
       MESSAGE:New( "@ Process " .. self:GetClassNameAndID() .. " : " .. Event .. " changed to state " .. To, 2 ):ToAll()
     end
   
-    self:T( self._Scores[To] )
+    self:T( { Scores = self._Scores, To = To } )
     -- TODO: This needs to be reworked with a callback functions allocated within Task, and set within the mission script from the Task Objects...
     if self._Scores[To] then
     
@@ -26574,7 +26611,7 @@ do -- DETECTION_BASE
   --- Get a detected item using a given numeric index.
   -- @param #DETECTION_BASE self
   -- @param #number Index
-  -- @return DETECTION_BASE.DetectedItem
+  -- @return #DETECTION_BASE.DetectedItem
   function DETECTION_BASE:GetDetectedItem( Index )
   
     local DetectedItem = self.DetectedItems[Index]
@@ -26837,7 +26874,7 @@ do -- DETECTION_UNITS
   
       local DetectedItemUnit = DetectedSet:GetFirst() -- Wrapper.Unit#UNIT
       
-      if DetectedItemUnit then
+      if DetectedItemUnit and DetectedItemUnit:IsAlive() then
         self:T(DetectedItemUnit)
   
         local UnitCategoryName = DetectedItemUnit:GetCategoryName() or ""
@@ -26855,8 +26892,16 @@ do -- DETECTION_UNITS
           UnitDistanceText = string.format( "%.2f", DetectedItem.Distance ) .. " km, visual contact"
         end
         
+        local DetectedItemPointVec3 = DetectedItemUnit:GetPointVec3()
+        local DetectedItemPointLL = DetectedItemPointVec3:ToStringLL( 3, true )
+ 
+        local ThreatLevelA2G = DetectedItemUnit:GetThreatLevel( DetectedItem )
+        
         ReportSummary = string.format( 
-          "%s%s", 
+          "%s - Threat [%s] (%2d) - %s%s",
+          DetectedItemPointLL,
+          string.rep(  "■", ThreatLevelA2G ),
+          ThreatLevelA2G,
           UnitCategoryText,
           UnitDistanceText
         )
@@ -26971,10 +27016,10 @@ do -- DETECTION_TYPES
     
     for DetectedItemID, DetectedItem in pairs( self.DetectedItems ) do
     
-      local DetectedItemSet = DetectedItem:GetSet() -- Core.Set#SET_UNIT
+      local DetectedItemSet = DetectedItem.Set -- Core.Set#SET_UNIT
       local DetectedTypeName = DetectedItem.Type
       
-      for DetectedUnitName, DetectedUnitData in pairs( DetectedItemSet ) do
+      for DetectedUnitName, DetectedUnitData in pairs( DetectedItemSet:GetSet() ) do
         local DetectedUnit = DetectedUnitData -- Wrapper.Unit#UNIT
 
         local DetectedObject = nil
@@ -27042,13 +27087,16 @@ do -- DETECTION_TYPES
     self:T( DetectedItem )
     if DetectedItem then
 
-      local ThreatLevelA2G = DetectedSet:CalculateThreatLevelA2G() 
+      local ThreatLevelA2G = DetectedSet:CalculateThreatLevelA2G()
+      local DetectedItemsCount = DetectedSet:Count()
+      local DetectedItemType = DetectedItem.Type
 
       local ReportSummary = string.format( 
-        "Type #%s - Threat Level [%s] (%2d)", 
-        DetectedItem.Type,
+        "Threat [%s] (%2d) - %2d of %s", 
         string.rep(  "■", ThreatLevelA2G ),
-        ThreatLevelA2G
+        ThreatLevelA2G,
+        DetectedItemsCount,
+        DetectedItemType
       )
       self:T( ReportSummary )
     
@@ -27152,17 +27200,23 @@ do -- DETECTION_AREAS
     local DetectedItem = self:GetDetectedItem( Index )
     if DetectedItem then
       local DetectedSet = self:GetDetectedSet( Index )
-      local ThreatLevelA2G = self:GetTreatLevelA2G( DetectedItem )
       local ReportSummaryItem
       
       local DetectedZone = self:GetDetectedZone( Index )
       local DetectedItemPointVec3 = DetectedZone:GetPointVec3()
       local DetectedItemPointLL = DetectedItemPointVec3:ToStringLL( 3, true )
+
+      local ThreatLevelA2G = self:GetTreatLevelA2G( DetectedItem )
+      local DetectedItemsCount = DetectedSet:Count()
+      local DetectedItemsTypes = DetectedSet:GetTypeNames()
+
       local ReportSummary = string.format( 
-        "%s - Threat Level [%s] (%2d)", 
+        "%s - Threat [%s] (%2d) - %2d of %s", 
         DetectedItemPointLL,
         string.rep(  "■", ThreatLevelA2G ),
-        ThreatLevelA2G
+        ThreatLevelA2G,
+        DetectedItemsCount,
+        DetectedItemsTypes
       )
       
       return ReportSummary
@@ -32121,8 +32175,14 @@ function REPORT:Add( Text )
   return self.Report[#self.Report]
 end
 
-function REPORT:Text()
-  return table.concat( self.Report, "\n" ) 
+--- Produces the text of the report, taking into account an optional delimeter, which is \n by default.
+-- @param #REPORT self
+-- @param #string Delimiter (optional) A delimiter text.
+-- @return #string The report text.
+function REPORT:Text( Delimiter )
+  Delimiter = Delimiter or "\n"
+  local ReportText = table.concat( self.Report, Delimiter ) or ""
+  return ReportText
 end
 
 --- The COMMANDCENTER class
@@ -34007,11 +34067,12 @@ end
 -- @param #string To
 function TASK:onenterAssigned( From, Event, To, PlayerUnit, PlayerName )
 
-  self:E("Task Assigned")
+  self:E( { "Task Assigned", self.Dispatcher } )
   
   self:MessageToGroups( "Task " .. self:GetName() .. " has been assigned to your group." )
   
   if self.Dispatcher then
+    self:E( "Firing Assign event " )
     self.Dispatcher:Assign( self, PlayerUnit, PlayerName )
   end
   
@@ -34618,9 +34679,9 @@ do -- TASK_A2G_DISPATCHER
     local ChangeMsg = {}
     
     local Mission = self.Mission
-    local ReportSEAD = REPORT:New( " - SEAD Tasks:")
-    local ReportCAS = REPORT:New( " - CAS Tasks:")
-    local ReportBAI = REPORT:New( " - BAI Tasks:")
+    local ReportSEAD = REPORT:New( "- SEAD Tasks:")
+    local ReportCAS = REPORT:New( "- CAS Tasks:")
+    local ReportBAI = REPORT:New( "- BAI Tasks:")
     local ReportChanges = REPORT:New( " - Changes:" )
 
     --- First we need to  the detected targets.
@@ -34701,7 +34762,7 @@ do -- TASK_A2G_DISPATCHER
         Mission:GetCommandCenter():MessageToGroup( 
           string.format( "HQ Reporting - Planned tasks for mission '%s':\n%s\n", 
                          self.Mission:GetName(),
-                         string.format( "%s\n%s\n%s\n%s", ReportSEAD:Text(), ReportCAS:Text(), ReportBAI:Text(), ReportChanges:Text()
+                         string.format( "%s\n\n%s\n\n%s\n\n%s", ReportSEAD:Text(), ReportCAS:Text(), ReportBAI:Text(), ReportChanges:Text()
                        )
           ), TaskGroup  
         )
@@ -35021,6 +35082,7 @@ do -- TASK_A2G
   -- @param Wrapper.Unit#UNIT TaskUnit
   -- @return #TASK_A2G
   function TASK_A2G:SetScoreOnDestroy( Text, Score, TaskUnit )
+    self:F( { Text, Score, TaskUnit } )
 
     local ProcessUnit = self:GetUnitProcess( TaskUnit )
 
@@ -35036,6 +35098,7 @@ do -- TASK_A2G
   -- @param Wrapper.Unit#UNIT TaskUnit
   -- @return #TASK_A2G
   function TASK_A2G:SetScoreOnSuccess( Text, Score, TaskUnit )
+    self:F( { Text, Score, TaskUnit } )
 
     local ProcessUnit = self:GetUnitProcess( TaskUnit )
 
@@ -35051,6 +35114,7 @@ do -- TASK_A2G
   -- @param Wrapper.Unit#UNIT TaskUnit
   -- @return #TASK_A2G
   function TASK_A2G:SetPenaltyOnFailed( Text, Penalty, TaskUnit )
+    self:F( { Text, Score, TaskUnit } )
 
     local ProcessUnit = self:GetUnitProcess( TaskUnit )
 
