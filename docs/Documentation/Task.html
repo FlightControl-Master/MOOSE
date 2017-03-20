@@ -39,11 +39,11 @@
 					<li><a href="Fsm.html">Fsm</a></li>
 					<li><a href="Group.html">Group</a></li>
 					<li><a href="Identifiable.html">Identifiable</a></li>
-					<li><a href="MOVEMENT.html">MOVEMENT</a></li>
 					<li><a href="Menu.html">Menu</a></li>
 					<li><a href="Message.html">Message</a></li>
 					<li><a href="MissileTrainer.html">MissileTrainer</a></li>
 					<li><a href="Mission.html">Mission</a></li>
+					<li><a href="Movement.html">Movement</a></li>
 					<li><a href="Object.html">Object</a></li>
 					<li><a href="Point.html">Point</a></li>
 					<li><a href="Positionable.html">Positionable</a></li>
@@ -62,8 +62,8 @@
 					<li><a href="Static.html">Static</a></li>
 					<li>Task</li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
+					<li><a href="Task_A2G_Dispatcher.html">Task_A2G_Dispatcher</a></li>
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
-					<li><a href="Task_SEAD.html">Task_SEAD</a></li>
 					<li><a href="Unit.html">Unit</a></li>
 					<li><a href="Utils.html">Utils</a></li>
 					<li><a href="Zone.html">Zone</a></li>
@@ -153,7 +153,7 @@ Use the method <a href="##(TASK).AddScore">TASK.AddScore</a>() to add scores whe
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(TASK).AssignToGroup">TASK:AssignToGroup(TaskGroup)</a></td>
 		<td class="summary">
-<p>Assign the <a href="Task.html">Task</a>to a <a href="Group.html">Group</a>.</p>
+<p>Assign the <a href="Task.html">Task</a> to a <a href="Group.html">Group</a>.</p>
 </td>
 		</tr>
 		<tr>
@@ -241,6 +241,12 @@ Use the method <a href="##(TASK).AddScore">TASK.AddScore</a>() to add scores whe
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).GetStateMachine">TASK:GetStateMachine(TaskUnit)</a></td>
+		<td class="summary">
+<p>Gets the FiniteStateMachine of <a href="Task.html">Task</a> with key Task<a href="Unit.html">Unit</a></p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(TASK).GetStateString">TASK:GetStateString()</a></td>
 		<td class="summary">
 <p>Gets the <a href="Task.html">Task</a> status.</p>
@@ -265,7 +271,7 @@ Use the method <a href="##(TASK).AddScore">TASK.AddScore</a>() to add scores whe
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK).GetUnitProcess">TASK:GetUnitProcess()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).GetUnitProcess">TASK:GetUnitProcess(TaskUnit)</a></td>
 		<td class="summary">
 <p>Get the Task FSM Process Template</p>
 </td>
@@ -295,9 +301,21 @@ Use the method <a href="##(TASK).AddScore">TASK.AddScore</a>() to add scores whe
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).IsStateAborted">TASK:IsStateAborted()</a></td>
+		<td class="summary">
+<p>Is the <a href="Task.html">Task</a> status <strong>Aborted</strong>.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(TASK).IsStateAssigned">TASK:IsStateAssigned()</a></td>
 		<td class="summary">
 <p>Is the <a href="Task.html">Task</a> status <strong>Assigned</strong>.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).IsStateCancelled">TASK:IsStateCancelled()</a></td>
+		<td class="summary">
+<p>Is the <a href="Task.html">Task</a> status <strong>Cancelled</strong>.</p>
 </td>
 		</tr>
 		<tr>
@@ -349,15 +367,15 @@ Use the method <a href="##(TASK).AddScore">TASK.AddScore</a>() to add scores whe
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK).MenuTaskAbort">TASK.MenuTaskAbort(MenuParam)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).MenuTaskAbort">TASK:MenuTaskAbort(TaskGroup)</a></td>
 		<td class="summary">
-
+<p>Report the task status.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK).MenuTaskStatus">TASK.MenuTaskStatus(MenuParam)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).MenuTaskStatus">TASK:MenuTaskStatus(TaskGroup)</a></td>
 		<td class="summary">
-
+<p>Report the task status.</p>
 </td>
 		</tr>
 		<tr>
@@ -415,13 +433,19 @@ Use the method <a href="##(TASK).AddScore">TASK.AddScore</a>() to add scores whe
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK).RemoveMenu">TASK:RemoveMenu()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).RemoveAssignedMenuForGroup">TASK:RemoveAssignedMenuForGroup(TaskGroup, MenuTime)</a></td>
+		<td class="summary">
+<p>Remove the assigned menu option of the <a href="Task.html">Task</a> for a <a href="Group.html">Group</a>.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).RemoveMenu">TASK:RemoveMenu(MenuTime)</a></td>
 		<td class="summary">
 <p>Remove the menu options of the <a href="Task.html">Task</a> to all the groups in the SetGroup.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK).RemoveMenuForGroup">TASK:RemoveMenuForGroup(TaskGroup)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).RemovePlannedMenuForGroup">TASK:RemovePlannedMenuForGroup(TaskGroup, MenuTime)</a></td>
 		<td class="summary">
 <p>Remove the menu option of the <a href="Task.html">Task</a> for a <a href="Group.html">Group</a>.</p>
 </td>
@@ -463,7 +487,7 @@ Use the method <a href="##(TASK).AddScore">TASK.AddScore</a>() to add scores whe
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK).SetAssignedMenuForGroup">TASK:SetAssignedMenuForGroup(TaskGroup)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).SetAssignedMenuForGroup">TASK:SetAssignedMenuForGroup(TaskGroup, MenuTime)</a></td>
 		<td class="summary">
 <p>Set the assigned menu options of the <a href="Task.html">Task</a>.</p>
 </td>
@@ -487,13 +511,13 @@ Use the method <a href="##(TASK).AddScore">TASK.AddScore</a>() to add scores whe
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK).SetMenu">TASK:SetMenu()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).SetMenu">TASK:SetMenu(MenuTime)</a></td>
 		<td class="summary">
 <p>Set the menu options of the <a href="Task.html">Task</a> to all the groups in the SetGroup.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK).SetMenuForGroup">TASK:SetMenuForGroup(TaskGroup)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).SetMenuForGroup">TASK:SetMenuForGroup(MenuTime, TaskGroup)</a></td>
 		<td class="summary">
 <p>Set the Menu for a Group</p>
 </td>
@@ -505,7 +529,7 @@ Use the method <a href="##(TASK).AddScore">TASK.AddScore</a>() to add scores whe
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK).SetPlannedMenuForGroup">TASK:SetPlannedMenuForGroup(TaskGroup, MenuText)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).SetPlannedMenuForGroup">TASK:SetPlannedMenuForGroup(TaskGroup, MenuText, MenuTime)</a></td>
 		<td class="summary">
 <p>Set the planned menu option of the <a href="Task.html">Task</a>.</p>
 </td>
@@ -535,9 +559,21 @@ Use the method <a href="##(TASK).AddScore">TASK.AddScore</a>() to add scores whe
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).StateAborted">TASK:StateAborted()</a></td>
+		<td class="summary">
+<p>Sets a <a href="Task.html">Task</a> to status <strong>Aborted</strong>.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(TASK).StateAssigned">TASK:StateAssigned()</a></td>
 		<td class="summary">
 <p>Sets a <a href="Task.html">Task</a> to status <strong>Assigned</strong>.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).StateCancelled">TASK:StateCancelled()</a></td>
+		<td class="summary">
+<p>Sets a <a href="Task.html">Task</a> to status <strong>Cancelled</strong>.</p>
 </td>
 		</tr>
 		<tr>
@@ -613,9 +649,15 @@ Use the method <a href="##(TASK).AddScore">TASK.AddScore</a>() to add scores whe
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).UnAssignFromGroup">TASK:UnAssignFromGroup(TaskGroup)</a></td>
+		<td class="summary">
+<p>UnAssign the <a href="Task.html">Task</a> from a <a href="Group.html">Group</a>.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(TASK).UnAssignFromGroups">TASK:UnAssignFromGroups()</a></td>
 		<td class="summary">
-<p>Assign the <a href="Task.html">Task</a> from the <a href="Group.html">Group</a>s.</p>
+<p>UnAssign the <a href="Task.html">Task</a> from the <a href="Group.html">Group</a>s.</p>
 </td>
 		</tr>
 		<tr>
@@ -782,7 +824,7 @@ true if Unit is part of the Task.</p>
 </dt>
 <dd>
 	
-<p>Assign the <a href="Task.html">Task</a>to a <a href="Group.html">Group</a>.</p>
+<p>Assign the <a href="Task.html">Task</a> to a <a href="Group.html">Group</a>.</p>
 
 		<h3>Parameter</h3>
 		<ul>
@@ -1078,6 +1120,32 @@ Scoring</p>
 		<dl class="function">
 <dt>
 
+<a id="#(TASK).GetStateMachine" >
+<strong>TASK:GetStateMachine(TaskUnit)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Gets the FiniteStateMachine of <a href="Task.html">Task</a> with key Task<a href="Unit.html">Unit</a></p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> TaskUnit </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="Core.Fsm.html##(FSM_PROCESS)">Core.Fsm#FSM_PROCESS</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(TASK).GetStateString" >
 <strong>TASK:GetStateString()</strong>
 </a>
@@ -1146,13 +1214,21 @@ TaskType</p>
 <dt>
 
 <a id="#(TASK).GetUnitProcess" >
-<strong>TASK:GetUnitProcess()</strong>
+<strong>TASK:GetUnitProcess(TaskUnit)</strong>
 </a>
 </dt>
 <dd>
 	
 <p>Get the Task FSM Process Template</p>
 
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> TaskUnit </em></code>: </p>
+
+				</li>
+		</ul>
 		<h3>Return value</h3>
 				
 <p><em><a href="Core.Fsm.html##(FSM_PROCESS)">Core.Fsm#FSM_PROCESS</a>:</em></p>
@@ -1259,6 +1335,19 @@ self</p>
 		<dl class="function">
 <dt>
 
+<a id="#(TASK).IsStateAborted" >
+<strong>TASK:IsStateAborted()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Is the <a href="Task.html">Task</a> status <strong>Aborted</strong>.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(TASK).IsStateAssigned" >
 <strong>TASK:IsStateAssigned()</strong>
 </a>
@@ -1266,6 +1355,19 @@ self</p>
 <dd>
 	
 <p>Is the <a href="Task.html">Task</a> status <strong>Assigned</strong>.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).IsStateCancelled" >
+<strong>TASK:IsStateCancelled()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Is the <a href="Task.html">Task</a> status <strong>Cancelled</strong>.</p>
 
 </dd>
 </dl>
@@ -1411,18 +1513,18 @@ true if Unit is part of the Task.</p>
 <dt>
 
 <a id="#(TASK).MenuTaskAbort" >
-<strong>TASK.MenuTaskAbort(MenuParam)</strong>
+<strong>TASK:MenuTaskAbort(TaskGroup)</strong>
 </a>
 </dt>
 <dd>
 	
-
+<p>Report the task status.</p>
 
 		<h3>Parameter</h3>
 		<ul>
 				<li>
 				
-<p><code><em> MenuParam </em></code>: </p>
+<p><code><em> TaskGroup </em></code>: </p>
 
 				</li>
 		</ul>
@@ -1432,18 +1534,18 @@ true if Unit is part of the Task.</p>
 <dt>
 
 <a id="#(TASK).MenuTaskStatus" >
-<strong>TASK.MenuTaskStatus(MenuParam)</strong>
+<strong>TASK:MenuTaskStatus(TaskGroup)</strong>
 </a>
 </dt>
 <dd>
 	
-
+<p>Report the task status.</p>
 
 		<h3>Parameter</h3>
 		<ul>
 				<li>
 				
-<p><code><em> MenuParam </em></code>: </p>
+<p><code><em> TaskGroup </em></code>: </p>
 
 				</li>
 		</ul>
@@ -1660,14 +1762,27 @@ The name of the Player.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK).RemoveMenu" >
-<strong>TASK:RemoveMenu()</strong>
+<a id="#(TASK).RemoveAssignedMenuForGroup" >
+<strong>TASK:RemoveAssignedMenuForGroup(TaskGroup, MenuTime)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Remove the menu options of the <a href="Task.html">Task</a> to all the groups in the SetGroup.</p>
+<p>Remove the assigned menu option of the <a href="Task.html">Task</a> for a <a href="Group.html">Group</a>.</p>
 
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> TaskGroup </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number MenuTime </em></code>: </p>
+
+				</li>
+		</ul>
 		<h3>Return value</h3>
 				
 <p><em><a href="##(TASK)">#TASK</a>:</em>
@@ -1678,19 +1793,50 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK).RemoveMenuForGroup" >
-<strong>TASK:RemoveMenuForGroup(TaskGroup)</strong>
+<a id="#(TASK).RemoveMenu" >
+<strong>TASK:RemoveMenu(MenuTime)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Remove the menu options of the <a href="Task.html">Task</a> to all the groups in the SetGroup.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number MenuTime </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(TASK)">#TASK</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).RemovePlannedMenuForGroup" >
+<strong>TASK:RemovePlannedMenuForGroup(TaskGroup, MenuTime)</strong>
 </a>
 </dt>
 <dd>
 	
 <p>Remove the menu option of the <a href="Task.html">Task</a> for a <a href="Group.html">Group</a>.</p>
 
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
 <p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> TaskGroup </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number MenuTime </em></code>: </p>
 
 				</li>
 		</ul>
@@ -1816,18 +1962,23 @@ self</p>
 <dt>
 
 <a id="#(TASK).SetAssignedMenuForGroup" >
-<strong>TASK:SetAssignedMenuForGroup(TaskGroup)</strong>
+<strong>TASK:SetAssignedMenuForGroup(TaskGroup, MenuTime)</strong>
 </a>
 </dt>
 <dd>
 	
 <p>Set the assigned menu options of the <a href="Task.html">Task</a>.</p>
 
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
 <p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> TaskGroup </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number MenuTime </em></code>: </p>
 
 				</li>
 		</ul>
@@ -1903,12 +2054,25 @@ self</p>
 <dt>
 
 <a id="#(TASK).SetMenu" >
-<strong>TASK:SetMenu()</strong>
+<strong>TASK:SetMenu(MenuTime)</strong>
 </a>
 </dt>
 <dd>
 	
 <p>Set the menu options of the <a href="Task.html">Task</a> to all the groups in the SetGroup.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number MenuTime </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(TASK)">#TASK</a>:</em></p>
+
 
 </dd>
 </dl>
@@ -1916,21 +2080,31 @@ self</p>
 <dt>
 
 <a id="#(TASK).SetMenuForGroup" >
-<strong>TASK:SetMenuForGroup(TaskGroup)</strong>
+<strong>TASK:SetMenuForGroup(MenuTime, TaskGroup)</strong>
 </a>
 </dt>
 <dd>
 	
 <p>Set the Menu for a Group</p>
 
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
+				<li>
+				
+<p><code><em>#number MenuTime </em></code>: </p>
+
+				</li>
 				<li>
 				
 <p><code><em> TaskGroup </em></code>: </p>
 
 				</li>
 		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(TASK)">#TASK</a>:</em></p>
+
+
 </dd>
 </dl>
 		<dl class="function">
@@ -1958,7 +2132,7 @@ self</p>
 <dt>
 
 <a id="#(TASK).SetPlannedMenuForGroup" >
-<strong>TASK:SetPlannedMenuForGroup(TaskGroup, MenuText)</strong>
+<strong>TASK:SetPlannedMenuForGroup(TaskGroup, MenuText, MenuTime)</strong>
 </a>
 </dt>
 <dd>
@@ -1976,6 +2150,11 @@ self</p>
 				
 <p><code><em>#string MenuText </em></code>: 
 The menu text.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number MenuTime </em></code>: </p>
 
 				</li>
 		</ul>
@@ -2006,7 +2185,7 @@ self</p>
 				</li>
 				<li>
 				
-<p><code><em> Fsm </em></code>: </p>
+<p><code><em><a href="Core.Fsm.html##(FSM_PROCESS)">Core.Fsm#FSM_PROCESS</a> Fsm </em></code>: </p>
 
 				</li>
 		</ul>
@@ -2098,6 +2277,19 @@ Fsm#FSM_PROCESS</p>
 		<dl class="function">
 <dt>
 
+<a id="#(TASK).StateAborted" >
+<strong>TASK:StateAborted()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Sets a <a href="Task.html">Task</a> to status <strong>Aborted</strong>.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(TASK).StateAssigned" >
 <strong>TASK:StateAssigned()</strong>
 </a>
@@ -2105,6 +2297,19 @@ Fsm#FSM_PROCESS</p>
 <dd>
 	
 <p>Sets a <a href="Task.html">Task</a> to status <strong>Assigned</strong>.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).StateCancelled" >
+<strong>TASK:StateCancelled()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Sets a <a href="Task.html">Task</a> to status <strong>Cancelled</strong>.</p>
 
 </dd>
 </dl>
@@ -2276,13 +2481,34 @@ Fsm#FSM_PROCESS</p>
 		<dl class="function">
 <dt>
 
+<a id="#(TASK).UnAssignFromGroup" >
+<strong>TASK:UnAssignFromGroup(TaskGroup)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>UnAssign the <a href="Task.html">Task</a> from a <a href="Group.html">Group</a>.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> TaskGroup </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(TASK).UnAssignFromGroups" >
 <strong>TASK:UnAssignFromGroups()</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Assign the <a href="Task.html">Task</a> from the <a href="Group.html">Group</a>s.</p>
+<p>UnAssign the <a href="Task.html">Task</a> from the <a href="Group.html">Group</a>s.</p>
 
 </dd>
 </dl>

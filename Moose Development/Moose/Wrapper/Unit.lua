@@ -522,6 +522,31 @@ function UNIT:GetLife0()
   return nil
 end
 
+--- Returns the category name of the #UNIT.
+-- @param #UNIT self
+-- @return #string Category name = Helicopter, Airplane, Ground Unit, Ship
+function UNIT:GetCategoryName()
+  self:F3( self.UnitName )
+
+  local DCSUnit = self:GetDCSObject()
+  if DCSUnit then
+    local CategoryNames = {
+      [Unit.Category.AIRPLANE] = "Airplane",
+      [Unit.Category.HELICOPTER] = "Helicopter",
+      [Unit.Category.GROUND_UNIT] = "Ground Unit",
+      [Unit.Category.SHIP] = "Ship",
+      [Unit.Category.STRUCTURE] = "Structure",
+    }
+    local UnitCategory = DCSUnit:getDesc().category
+    self:T3( UnitCategory )
+
+    return CategoryNames[UnitCategory]
+  end
+
+  return nil
+end
+
+
 --- Returns the Unit's A2G threat level on a scale from 1 to 10 ...
 -- The following threat levels are foreseen:
 -- 
@@ -540,14 +565,14 @@ end
 function UNIT:GetThreatLevel()
 
   local Attributes = self:GetDesc().attributes
-  self:E( Attributes )
+  self:T( Attributes )
 
   local ThreatLevel = 0
   local ThreatText = ""
 
   if self:IsGround() then
   
-    self:E( "Ground" )
+    self:T( "Ground" )
   
     local ThreatLevels = {
       "Unarmed", 
@@ -585,7 +610,7 @@ function UNIT:GetThreatLevel()
   
   if self:IsAir() then
   
-    self:E( "Air" )
+    self:T( "Air" )
 
     local ThreatLevels = {
       "Unarmed", 
@@ -619,7 +644,7 @@ function UNIT:GetThreatLevel()
   
   if self:IsShip() then
 
-    self:E( "Ship" )
+    self:T( "Ship" )
 
 --["Aircraft Carriers"] = {"Heavy armed ships",},
 --["Cruisers"] = {"Heavy armed ships",},

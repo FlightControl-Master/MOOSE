@@ -113,7 +113,7 @@ GROUP = {
 -- @param Dcs.DCSWrapper.Group#Group GroupName The DCS Group name
 -- @return #GROUP self
 function GROUP:Register( GroupName )
-  local self = BASE:Inherit( self, CONTROLLABLE:New( GroupName ) )
+  self = BASE:Inherit( self, CONTROLLABLE:New( GroupName ) )
   self:F2( GroupName )
   self.GroupName = GroupName
   
@@ -231,7 +231,7 @@ function GROUP:GetCategory()
   return nil
 end
 
---- Returns the category name of the DCS Group.
+--- Returns the category name of the #GROUP.
 -- @param #GROUP self
 -- @return #string Category name = Helicopter, Airplane, Ground Unit, Ship
 function GROUP:GetCategoryName()
@@ -925,4 +925,30 @@ do -- Event Handling
     return self
   end
 
+end
+
+do -- Players
+
+  --- Get player names
+  -- @param #GROUP self
+  -- @return #table The group has players, an array of player names is returned.
+  -- @return #nil The group has no players
+  function GROUP:GetPlayerNames()
+  
+    local PlayerNames = nil
+    
+    local Units = self:GetUnits()
+    for UnitID, UnitData in pairs( Units ) do
+      local Unit = UnitData -- Wrapper.Unit#UNIT
+      local PlayerName = Unit:GetPlayerName()
+      if PlayerName and PlayerName ~= "" then
+        PlayerNames = PlayerNames or {}
+        table.insert( PlayerNames, PlayerName )
+      end   
+    end
+    
+    self:F( PlayerNames )
+    return PlayerNames
+  end
+  
 end

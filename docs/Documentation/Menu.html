@@ -39,11 +39,11 @@
 					<li><a href="Fsm.html">Fsm</a></li>
 					<li><a href="Group.html">Group</a></li>
 					<li><a href="Identifiable.html">Identifiable</a></li>
-					<li><a href="MOVEMENT.html">MOVEMENT</a></li>
 					<li>Menu</li>
 					<li><a href="Message.html">Message</a></li>
 					<li><a href="MissileTrainer.html">MissileTrainer</a></li>
 					<li><a href="Mission.html">Mission</a></li>
+					<li><a href="Movement.html">Movement</a></li>
 					<li><a href="Object.html">Object</a></li>
 					<li><a href="Point.html">Point</a></li>
 					<li><a href="Positionable.html">Positionable</a></li>
@@ -62,8 +62,8 @@
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="Task.html">Task</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
+					<li><a href="Task_A2G_Dispatcher.html">Task_A2G_Dispatcher</a></li>
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
-					<li><a href="Task_SEAD.html">Task_SEAD</a></li>
 					<li><a href="Unit.html">Unit</a></li>
 					<li><a href="Utils.html">Utils</a></li>
 					<li><a href="Zone.html">Zone</a></li>
@@ -261,6 +261,12 @@ Using this object reference, you can then remove ALL the menus and submenus unde
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MENU_BASE).GetMenu">MENU_BASE:GetMenu(MenuText)</a></td>
+		<td class="summary">
+<p>Gets a <a href="Menu.html">Menu</a> from a parent <a href="Menu.html">Menu</a></p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(MENU_BASE).MenuParentPath">MENU_BASE.MenuParentPath</a></td>
 		<td class="summary">
 
@@ -273,15 +279,39 @@ Using this object reference, you can then remove ALL the menus and submenus unde
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MENU_BASE).MenuRemoveParent">MENU_BASE.MenuRemoveParent</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(MENU_BASE).MenuText">MENU_BASE.MenuText</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MENU_BASE).New">MENU_BASE:New(MenuText, ParentMenu)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(MENU_BASE).MenuTime">MENU_BASE.MenuTime</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MENU_BASE).New">MENU_BASE.New(#, self, MenuText, ParentMenu)</a></td>
 		<td class="summary">
 <p>Consructor</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MENU_BASE).SetRemoveParent">MENU_BASE:SetRemoveParent(RemoveParent)</a></td>
+		<td class="summary">
+<p>Sets a <a href="Menu.html">Menu</a> to remove automatically the parent menu when the menu removed is the last child menu of that parent <a href="Menu.html">Menu</a>.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MENU_BASE).SetTime">MENU_BASE:SetTime(MenuTime)</a></td>
+		<td class="summary">
+<p>Sets a time stamp for later prevention of menu removal.</p>
 </td>
 		</tr>
 	</table>
@@ -413,7 +443,7 @@ Using this object reference, you can then remove ALL the menus and submenus unde
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MENU_COMMAND_BASE).New">MENU_COMMAND_BASE:New(MenuText, ParentMenu, CommandMenuFunction, CommandMenuArguments)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(MENU_COMMAND_BASE).New">MENU_COMMAND_BASE.New(#, self, MenuText, ParentMenu, CommandMenuFunction, CommandMenuArguments)</a></td>
 		<td class="summary">
 <p>Constructor</p>
 </td>
@@ -453,12 +483,6 @@ Using this object reference, you can then remove ALL the menus and submenus unde
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MENU_GROUP).Menus">MENU_GROUP.Menus</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(MENU_GROUP).New">MENU_GROUP:New(MenuGroup, MenuText, ParentMenu)</a></td>
 		<td class="summary">
 <p>MENU_GROUP constructor.</p>
@@ -477,13 +501,13 @@ Using this object reference, you can then remove ALL the menus and submenus unde
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MENU_GROUP).Remove">MENU_GROUP:Remove()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(MENU_GROUP).Remove">MENU_GROUP:Remove(MenuTime)</a></td>
 		<td class="summary">
 <p>Removes the main menu and sub menus recursively of this MENU_GROUP.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MENU_GROUP).RemoveSubMenus">MENU_GROUP:RemoveSubMenus()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(MENU_GROUP).RemoveSubMenus">MENU_GROUP:RemoveSubMenus(MenuTime)</a></td>
 		<td class="summary">
 <p>Removes the sub menus recursively of this MENU_GROUP.</p>
 </td>
@@ -541,7 +565,7 @@ Using this object reference, you can then remove ALL the menus and submenus unde
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MENU_GROUP_COMMAND).Remove">MENU_GROUP_COMMAND:Remove()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(MENU_GROUP_COMMAND).Remove">MENU_GROUP_COMMAND:Remove(MenuTime)</a></td>
 		<td class="summary">
 <p>Removes a menu structure for a group.</p>
 </td>
@@ -763,6 +787,33 @@ Using this object reference, you can then remove ALL the menus and submenus unde
 		<dl class="function">
 <dt>
 
+<a id="#(MENU_BASE).GetMenu" >
+<strong>MENU_BASE:GetMenu(MenuText)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Gets a <a href="Menu.html">Menu</a> from a parent <a href="Menu.html">Menu</a></p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string MenuText </em></code>: 
+The text of the child menu.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(MENU_BASE)">#MENU_BASE</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(MENU_BASE).MenuParentPath" >
 <strong>MENU_BASE.MenuParentPath</strong>
 </a>
@@ -789,6 +840,20 @@ Using this object reference, you can then remove ALL the menus and submenus unde
 		<dl class="function">
 <dt>
 
+		<em></em>
+<a id="#(MENU_BASE).MenuRemoveParent" >
+<strong>MENU_BASE.MenuRemoveParent</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 		<em>#string</em>
 <a id="#(MENU_BASE).MenuText" >
 <strong>MENU_BASE.MenuText</strong>
@@ -803,8 +868,22 @@ Using this object reference, you can then remove ALL the menus and submenus unde
 		<dl class="function">
 <dt>
 
+		<em></em>
+<a id="#(MENU_BASE).MenuTime" >
+<strong>MENU_BASE.MenuTime</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(MENU_BASE).New" >
-<strong>MENU_BASE:New(MenuText, ParentMenu)</strong>
+<strong>MENU_BASE.New(#, self, MenuText, ParentMenu)</strong>
 </a>
 </dt>
 <dd>
@@ -813,6 +892,17 @@ Using this object reference, you can then remove ALL the menus and submenus unde
 
 		<h3>Parameters</h3>
 		<ul>
+				<li>
+				
+<p><code><em> # </em></code>: 
+ENU_BASE</p>
+
+				</li>
+				<li>
+				
+<p><code><em> self </em></code>: </p>
+
+				</li>
 				<li>
 				
 <p><code><em> MenuText </em></code>: </p>
@@ -824,6 +914,64 @@ Using this object reference, you can then remove ALL the menus and submenus unde
 
 				</li>
 		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(MENU_BASE)">#MENU_BASE</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(MENU_BASE).SetRemoveParent" >
+<strong>MENU_BASE:SetRemoveParent(RemoveParent)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Sets a <a href="Menu.html">Menu</a> to remove automatically the parent menu when the menu removed is the last child menu of that parent <a href="Menu.html">Menu</a>.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#boolean RemoveParent </em></code>: 
+If true, the parent menu is automatically removed when this menu is the last child menu of that parent <a href="Menu.html">Menu</a>.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(MENU_BASE)">#MENU_BASE</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(MENU_BASE).SetTime" >
+<strong>MENU_BASE:SetTime(MenuTime)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Sets a time stamp for later prevention of menu removal.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> MenuTime </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(MENU_BASE)">#MENU_BASE</a>:</em></p>
+
+
 </dd>
 </dl>
 
@@ -1201,8 +1349,8 @@ self</p>
 
 		<h3>Return value</h3>
 				
-<p><em><a href="##(MENU_COALITION)">#MENU_COALITION</a>:</em>
-self</p>
+<p><em><a href="##(MENU_COALITION)">#MENU_COALITION</a>:</em></p>
+
 
 </dd>
 </dl>
@@ -1280,8 +1428,8 @@ An argument for the function. There can only be ONE argument given. So multiple 
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="##(MENU_COALITION_COMMAND)">#MENU<em>COALITION</em>COMMAND</a>:</em>
-self</p>
+<p><em><a href="##(MENU_COALITION_COMMAND)">#MENU<em>COALITION</em>COMMAND</a>:</em></p>
+
 
 </dd>
 </dl>
@@ -1367,7 +1515,7 @@ self</p>
 <dt>
 
 <a id="#(MENU_COMMAND_BASE).New" >
-<strong>MENU_COMMAND_BASE:New(MenuText, ParentMenu, CommandMenuFunction, CommandMenuArguments)</strong>
+<strong>MENU_COMMAND_BASE.New(#, self, MenuText, ParentMenu, CommandMenuFunction, CommandMenuArguments)</strong>
 </a>
 </dt>
 <dd>
@@ -1376,6 +1524,17 @@ self</p>
 
 		<h3>Parameters</h3>
 		<ul>
+				<li>
+				
+<p><code><em> # </em></code>: 
+ENU<em>COMMAND</em>BASE</p>
+
+				</li>
+				<li>
+				
+<p><code><em> self </em></code>: </p>
+
+				</li>
 				<li>
 				
 <p><code><em> MenuText </em></code>: </p>
@@ -1397,6 +1556,11 @@ self</p>
 
 				</li>
 		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(MENU_COMMAND_BASE)">#MENU<em>COMMAND</em>BASE</a>:</em></p>
+
+
 </dd>
 </dl>
 
@@ -1529,20 +1693,6 @@ self</p>
 		<dl class="function">
 <dt>
 
-		<em></em>
-<a id="#(MENU_GROUP).Menus" >
-<strong>MENU_GROUP.Menus</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
 <a id="#(MENU_GROUP).New" >
 <strong>MENU_GROUP:New(MenuGroup, MenuText, ParentMenu)</strong>
 </a>
@@ -1614,13 +1764,21 @@ self</p>
 <dt>
 
 <a id="#(MENU_GROUP).Remove" >
-<strong>MENU_GROUP:Remove()</strong>
+<strong>MENU_GROUP:Remove(MenuTime)</strong>
 </a>
 </dt>
 <dd>
 	
 <p>Removes the main menu and sub menus recursively of this MENU_GROUP.</p>
 
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> MenuTime </em></code>: </p>
+
+				</li>
+		</ul>
 		<h3>Return value</h3>
 				
 <p><em>#nil:</em></p>
@@ -1632,13 +1790,21 @@ self</p>
 <dt>
 
 <a id="#(MENU_GROUP).RemoveSubMenus" >
-<strong>MENU_GROUP:RemoveSubMenus()</strong>
+<strong>MENU_GROUP:RemoveSubMenus(MenuTime)</strong>
 </a>
 </dt>
 <dd>
 	
 <p>Removes the sub menus recursively of this MENU_GROUP.</p>
 
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> MenuTime </em></code>: </p>
+
+				</li>
+		</ul>
 		<h3>Return value</h3>
 				
 <p><em><a href="##(MENU_GROUP)">#MENU_GROUP</a>:</em>
@@ -1773,8 +1939,8 @@ An argument for the function.</p>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="Menu.html##(MENU_GROUP_COMMAND)">Menu#MENU<em>GROUP</em>COMMAND</a>:</em>
-self</p>
+<p><em><a href="##(MENU_GROUP_COMMAND)">#MENU<em>GROUP</em>COMMAND</a>:</em></p>
+
 
 </dd>
 </dl>
@@ -1810,13 +1976,21 @@ self</p>
 <dt>
 
 <a id="#(MENU_GROUP_COMMAND).Remove" >
-<strong>MENU_GROUP_COMMAND:Remove()</strong>
+<strong>MENU_GROUP_COMMAND:Remove(MenuTime)</strong>
 </a>
 </dt>
 <dd>
 	
 <p>Removes a menu structure for a group.</p>
 
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> MenuTime </em></code>: </p>
+
+				</li>
+		</ul>
 		<h3>Return value</h3>
 				
 <p><em>#nil:</em></p>
@@ -1875,8 +2049,8 @@ The parent menu. This parameter can be ignored if you want the menu to be locate
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="##(MENU_MISSION)">#MENU_MISSION</a>:</em>
-self</p>
+<p><em><a href="##(MENU_MISSION)">#MENU_MISSION</a>:</em></p>
+
 
 </dd>
 </dl>
@@ -1914,8 +2088,8 @@ self</p>
 
 		<h3>Return value</h3>
 				
-<p><em><a href="##(MENU_MISSION)">#MENU_MISSION</a>:</em>
-self</p>
+<p><em><a href="##(MENU_MISSION)">#MENU_MISSION</a>:</em></p>
+
 
 </dd>
 </dl>

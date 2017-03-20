@@ -54,12 +54,15 @@
 -- 
 -- ### 1.2.2) AI_CAP_ZONE Events
 -- 
---   * **Start** ( Group ): Start the process.
---   * **Route** ( Group ): Route the AI to a new random 3D point within the Patrol Zone.
---   * **Engage** ( Group ): Let the AI engage the bogeys.
---   * **RTB** ( Group ): Route the AI to the home base.
---   * **Detect** ( Group ): The AI is detecting targets.
---   * **Detected** ( Group ): The AI has detected new targets.
+--   * **@{AI_Patrol#AI_PATROL_ZONE.Start}**: Start the process.
+--   * **@{AI_Patrol#AI_PATROL_ZONE.Route}**: Route the AI to a new random 3D point within the Patrol Zone.
+--   * **@{#AI_CAP_ZONE.Engage}**: Let the AI engage the bogeys.
+--   * **@{#AI_CAP_ZONE.Abort}**: Aborts the engagement and return patrolling in the patrol zone.
+--   * **@{AI_Patrol#AI_PATROL_ZONE.RTB}**: Route the AI to the home base.
+--   * **@{AI_Patrol#AI_PATROL_ZONE.Detect}**: The AI is detecting targets.
+--   * **@{AI_Patrol#AI_PATROL_ZONE.Detected}**: The AI has detected new targets.
+--   * **@{#AI_CAP_ZONE.Destroy}**: The AI has destroyed a bogey @{Unit}.
+--   * **@{#AI_CAP_ZONE.Destroyed}**: The AI has destroyed all bogeys @{Unit}s assigned in the CAS task.
 --   * **Status** ( Group ): The AI is checking status (fuel and damage). When the tresholds have been reached, the AI will RTB.
 --
 -- ## 1.3) Set the Range of Engagement
@@ -340,8 +343,11 @@ function AI_CAP_ZONE:onafterStart( Controllable, From, Event, To )
 
   -- Call the parent Start event handler
   self:GetParent(self).onafterStart( self, Controllable, From, Event, To )
+  self:HandleEvent( EVENTS.Dead )
 
 end
+
+-- todo: need to fix this global function
 
 --- @param Wrapper.Controllable#CONTROLLABLE AIControllable
 function _NewEngageCapRoute( AIControllable )
@@ -390,6 +396,18 @@ function AI_CAP_ZONE:onafterDetected( Controllable, From, Event, To )
     end
   end
 end
+
+
+--- @param #AI_CAP_ZONE self
+-- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+-- @param #string From The From State string.
+-- @param #string Event The Event string.
+-- @param #string To The To State string.
+function AI_CAP_ZONE:onafterAbort( Controllable, From, Event, To )
+  Controllable:ClearTasks()
+  self:__Route( 1 )
+end
+
 
 
 
@@ -505,14 +523,9 @@ end
 -- @param #string From The From State string.
 -- @param #string Event The Event string.
 -- @param #string To The To State string.
--- @param Core.Event#EVENTDATA EventData
-function AI_CAP_ZONE:onafterDestroy( Controllable, From, Event, To, EventData )
-
-  if EventData.IniUnit then
-    self.DetectedUnits[EventData.IniUnit] = nil
-  end
-  
-  Controllable:MessageToAll( "Destroyed a target", 15 , "Destroyed!" )
+function AI_CAP_ZONE:onafterAccomplish( Controllable, From, Event, To )
+  self.Accomplished = true
+  self:SetDetectionOff()
 end
 
 --- @param #AI_CAP_ZONE self
@@ -520,9 +533,22 @@ end
 -- @param #string From The From State string.
 -- @param #string Event The Event string.
 -- @param #string To The To State string.
-function AI_CAP_ZONE:onafterAccomplish( Controllable, From, Event, To )
-  self.Accomplished = true
-  self:SetDetectionOff()
+-- @param Core.Event#EVENTDATA EventData
+function AI_CAP_ZONE:onafterDestroy( Controllable, From, Event, To, EventData )
+
+  if EventData.IniUnit then
+    self.DetectedUnits[EventData.IniUnit] = nil
+  end
 end
 
+--- @param #AI_CAP_ZONE self
+-- @param Core.Event#EVENTDATA EventData
+function AI_CAP_ZONE:OnEventDead( EventData )
+  self:F( { "EventDead", EventData } )
 
+  if EventData.IniDCSUnit then
+    if self.DetectedUnits and self.DetectedUnits[EventData.IniUnit] then
+      self:__Destroy( 1, EventData )
+    end
+  end
+end

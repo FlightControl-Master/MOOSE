@@ -81,7 +81,7 @@ do -- ACT_ROUTE
   -- @type ACT_ROUTE
   -- @field Tasking.Task#TASK TASK
   -- @field Wrapper.Unit#UNIT ProcessUnit
-  -- @field Core.Zone#ZONE_BASE TargetZone
+  -- @field Core.Zone#ZONE_BASE Zone
   -- @extends Core.Fsm#FSM_PROCESS
   ACT_ROUTE = { 
     ClassName = "ACT_ROUTE",
@@ -177,6 +177,115 @@ do -- ACT_ROUTE
 end -- ACT_ROUTE
 
 
+do -- ACT_ROUTE_POINT
+
+  --- ACT_ROUTE_POINT class
+  -- @type ACT_ROUTE_POINT
+  -- @field Tasking.Task#TASK TASK
+  -- @extends #ACT_ROUTE
+  ACT_ROUTE_POINT = { 
+    ClassName = "ACT_ROUTE_POINT",
+  }
+
+
+  --- Creates a new routing state machine. 
+  -- The task will route a controllable to a PointVec2 until the controllable is within the Range.
+  -- @param #ACT_ROUTE_POINT self
+  -- @param Core.Point#POINT_VEC2 The PointVec2 to Target.
+  -- @param #number Range The Distance to Target.
+  -- @param Core.Zone#ZONE_BASE Zone
+  function ACT_ROUTE_POINT:New( PointVec2, Range )
+    local self = BASE:Inherit( self, ACT_ROUTE:New() ) -- #ACT_ROUTE_POINT
+
+    self.PointVec2 = PointVec2
+    self.Range = Range or 0
+    
+    self.DisplayInterval = 30
+    self.DisplayCount = 30
+    self.DisplayMessage = true
+    self.DisplayTime = 10 -- 10 seconds is the default
+    
+    return self
+  end
+  
+  function ACT_ROUTE_POINT:Init( FsmRoute )
+  
+    self.PointVec2 = FsmRoute.PointVec2
+    self.Range = FsmRoute.Range or 0
+    
+    self.DisplayInterval = 30
+    self.DisplayCount = 30
+    self.DisplayMessage = true
+    self.DisplayTime = 10 -- 10 seconds is the default
+  end  
+
+  --- Set PointVec2
+  -- @param #ACT_ROUTE_POINT self
+  -- @param Core.Point#POINT_VEC2 PointVec2 The PointVec2 to route to.
+  function ACT_ROUTE_POINT:SetPointVec2( PointVec2 )
+    self:F2( { PointVec2 } )
+    self.PointVec2 = PointVec2
+  end  
+
+  --- Get PointVec2
+  -- @param #ACT_ROUTE_POINT self
+  -- @return Core.Point#POINT_VEC2 PointVec2 The PointVec2 to route to.
+  function ACT_ROUTE_POINT:GetPointVec2()
+    self:F2( { self.PointVec2 } )
+    return self.PointVec2
+  end  
+
+  --- Set Range around PointVec2
+  -- @param #ACT_ROUTE_POINT self
+  -- @param #number Range The Range to consider the arrival. Default is 10000 meters.
+  function ACT_ROUTE_POINT:SetRange( Range )
+    self:F2( { self.Range } )
+    self.Range = Range or 10000
+  end  
+  
+  --- Get Range around PointVec2
+  -- @param #ACT_ROUTE_POINT self
+  -- @return #number The Range to consider the arrival. Default is 10000 meters.
+  function ACT_ROUTE_POINT:GetRange()
+    return self.Range
+  end  
+  
+  --- Method override to check if the controllable has arrived.
+  -- @param #ACT_ROUTE_POINT self
+  -- @param Wrapper.Controllable#CONTROLLABLE ProcessUnit
+  -- @return #boolean
+  function ACT_ROUTE_POINT:onfuncHasArrived( ProcessUnit )
+
+    if ProcessUnit:IsAlive() then
+      local Distance = self.PointVec2:Get2DDistance( ProcessUnit:GetPointVec2() )
+      
+      if Distance <= self.Range then
+        local RouteText = "You have arrived."
+        self:Message( RouteText )
+        return true
+      end
+    end
+
+    return false
+  end
+  
+  --- Task Events
+  
+  --- StateMachine callback function
+  -- @param #ACT_ROUTE_POINT self
+  -- @param Wrapper.Controllable#CONTROLLABLE ProcessUnit
+  -- @param #string Event
+  -- @param #string From
+  -- @param #string To
+  function ACT_ROUTE_POINT:onenterReporting( ProcessUnit, From, Event, To )
+  
+    local TaskUnitPointVec2 = ProcessUnit:GetPointVec2()
+    local RouteText = "Route to " .. TaskUnitPointVec2:GetBRText( self.PointVec2 ) .. " km."
+    self:Message( RouteText )
+  end
+
+end -- ACT_ROUTE_POINT
+
 
 do -- ACT_ROUTE_ZONE
 
@@ -184,7 +293,7 @@ do -- ACT_ROUTE_ZONE
   -- @type ACT_ROUTE_ZONE
   -- @field Tasking.Task#TASK TASK
   -- @field Wrapper.Unit#UNIT ProcessUnit
-  -- @field Core.Zone#ZONE_BASE TargetZone
+  -- @field Core.Zone#ZONE_BASE Zone
   -- @extends #ACT_ROUTE
   ACT_ROUTE_ZONE = { 
     ClassName = "ACT_ROUTE_ZONE",
@@ -193,11 +302,11 @@ do -- ACT_ROUTE_ZONE
 
   --- Creates a new routing state machine. The task will route a controllable to a ZONE until the controllable is within that ZONE.
   -- @param #ACT_ROUTE_ZONE self
-  -- @param Core.Zone#ZONE_BASE TargetZone
-  function ACT_ROUTE_ZONE:New( TargetZone )
+  -- @param Core.Zone#ZONE_BASE Zone
+  function ACT_ROUTE_ZONE:New( Zone )
     local self = BASE:Inherit( self, ACT_ROUTE:New() ) -- #ACT_ROUTE_ZONE
 
-    self.TargetZone = TargetZone
+    self.Zone = Zone
     
     self.DisplayInterval = 30
     self.DisplayCount = 30
@@ -209,7 +318,7 @@ do -- ACT_ROUTE_ZONE
   
   function ACT_ROUTE_ZONE:Init( FsmRoute )
   
-    self.TargetZone = FsmRoute.TargetZone
+    self.Zone = FsmRoute.Zone
     
     self.DisplayInterval = 30
     self.DisplayCount = 30
@@ -217,18 +326,32 @@ do -- ACT_ROUTE_ZONE
     self.DisplayTime = 10 -- 10 seconds is the default
   end  
   
+  --- Set Zone
+  -- @param #ACT_ROUTE_ZONE self
+  -- @param Core.Zone#ZONE_BASE Zone The Zone object where to route to.
+  function ACT_ROUTE_ZONE:SetZone( Zone )
+    self.Zone = Zone
+  end  
+
+  --- Get Zone
+  -- @param #ACT_ROUTE_ZONE self
+  -- @return Core.Zone#ZONE_BASE Zone The Zone object where to route to.
+  function ACT_ROUTE_ZONE:GetZone()
+    return self.Zone 
+  end  
+
   --- Method override to check if the controllable has arrived.
   -- @param #ACT_ROUTE self
   -- @param Wrapper.Controllable#CONTROLLABLE ProcessUnit
   -- @return #boolean
   function ACT_ROUTE_ZONE:onfuncHasArrived( ProcessUnit )
 
-    if ProcessUnit:IsInZone( self.TargetZone ) then
+    if ProcessUnit:IsInZone( self.Zone ) then
       local RouteText = "You have arrived within the zone."
       self:Message( RouteText )
     end
 
-    return ProcessUnit:IsInZone( self.TargetZone )
+    return ProcessUnit:IsInZone( self.Zone )
   end
   
   --- Task Events
@@ -241,11 +364,11 @@ do -- ACT_ROUTE_ZONE
   -- @param #string To
   function ACT_ROUTE_ZONE:onenterReporting( ProcessUnit, From, Event, To )
   
-    local ZoneVec2 = self.TargetZone:GetVec2()
+    local ZoneVec2 = self.Zone:GetVec2()
     local ZonePointVec2 = POINT_VEC2:New( ZoneVec2.x, ZoneVec2.y )
     local TaskUnitVec2 = ProcessUnit:GetVec2()
     local TaskUnitPointVec2 = POINT_VEC2:New( TaskUnitVec2.x, TaskUnitVec2.y )
-    local RouteText = "Route to " .. TaskUnitPointVec2:GetBRText( ZonePointVec2 ) .. " km to target."
+    local RouteText = "Route to " .. TaskUnitPointVec2:GetBRText( ZonePointVec2 ) .. " km."
     self:Message( RouteText )
   end
 

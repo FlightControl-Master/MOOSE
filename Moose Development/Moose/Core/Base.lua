@@ -20,7 +20,7 @@
 -- 
 -- ## 1.1) BASE constructor
 -- 
--- Any class derived from BASE, must use the @{Base#BASE.New) constructor within the @{Base#BASE.Inherit) method. 
+-- Any class derived from BASE, will use the @{Base#BASE.New} constructor embedded in the @{Base#BASE.Inherit} method. 
 -- See an example at the @{Base#BASE.New} method how this is done.
 -- 
 -- ## 1.2) Trace information for debugging
@@ -227,7 +227,17 @@ FORMATION = {
 
 
 
--- @todo need to investigate if the deepCopy is really needed... Don't think so.
+--- BASE constructor.  
+-- 
+-- This is an example how to use the BASE:New() constructor in a new class definition when inheriting from BASE.
+--  
+--     function EVENT:New()
+--       local self = BASE:Inherit( self, BASE:New() ) -- #EVENT
+--       return self
+--     end
+--       
+-- @param #BASE self
+-- @return #BASE
 function BASE:New()
   local self = routines.utils.deepCopy( self ) -- Create a new self instance
 	local MetaTable = {}
@@ -246,12 +256,14 @@ function BASE:_Destructor()
   --self:EventRemoveAll()
 end
 
+
+-- THIS IS WHY WE NEED LUA 5.2 ...
 function BASE:_SetDestructor()
 
   -- TODO: Okay, this is really technical...
   -- When you set a proxy to a table to catch __gc, weak tables don't behave like weak...
   -- Therefore, I am parking this logic until I've properly discussed all this with the community.
-  --[[
+
   local proxy = newproxy(true)
   local proxyMeta = getmetatable(proxy)
 
@@ -266,7 +278,7 @@ function BASE:_SetDestructor()
   -- table is about to be garbage-collected - then the __gc hook
   -- will be invoked and the destructor called
   rawset( self, '__proxy', proxy )
-  --]]
+  
 end
 
 --- This is the worker method to inherit from a parent class.
@@ -282,13 +294,18 @@ function BASE:Inherit( Child, Parent )
 		setmetatable( Child, Parent )
 		Child.__index = Child
 		
-		Child:_SetDestructor()
+		--Child:_SetDestructor()
 	end
 	--self:T( 'Inherited from ' .. Parent.ClassName ) 
 	return Child
 end
 
---- This is the worker method to retrieve the Parent class.
+--- This is the worker method to retrieve the Parent class.  
+-- Note that the Parent class must be passed to call the parent class method.
+-- 
+--     self:GetParent(self):ParentMethod()
+--     
+--     
 -- @param #BASE self
 -- @param #BASE Child is the Child class from which the Parent class needs to be retrieved.
 -- @return #BASE

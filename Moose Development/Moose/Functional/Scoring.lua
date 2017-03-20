@@ -1022,9 +1022,10 @@ function SCORING:_EventOnDeadOrCrash( Event )
                 :ToAllIf( self:IfMessagesDestroy() and self:IfMessagesToAll() )
                 :ToCoalitionIf( InitCoalition, self:IfMessagesDestroy() and self:IfMessagesToCoalition() )
             end
+
             self:ScoreCSV( PlayerName, TargetPlayerName, "DESTROY_PENALTY", 1, ThreatPenalty, InitUnitName, InitUnitCoalition, InitUnitCategory, InitUnitType, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType )
           else
-  
+
             local ThreatLevelTarget, ThreatTypeTarget = TargetUnit:GetThreatLevel()
             local ThreatLevelPlayer = Player.UNIT:GetThreatLevel() / 10 + 1
             local ThreatScore = math.ceil( ( ThreatLevelTarget / ThreatLevelPlayer )  * self.ScaleDestroyScore / 10 )
@@ -1529,7 +1530,7 @@ function SCORING:OpenCSV( ScoringCSV )
         error( "Error: Cannot open CSV file in " .. lfs.writedir() )
       end
 
-      self.CSVFile:write( '"GameName","RunTime","Time","PlayerName","ScoreType","PlayerUnitCoaltion","PlayerUnitCategory","PlayerUnitType","PlayerUnitName","TargetUnitCoalition","TargetUnitCategory","TargetUnitType","TargetUnitName","Times","Score"\n' )
+      self.CSVFile:write( '"GameName","RunTime","Time","PlayerName","TargetPlayerName","ScoreType","PlayerUnitCoaltion","PlayerUnitCategory","PlayerUnitType","PlayerUnitName","TargetUnitCoalition","TargetUnitCategory","TargetUnitType","TargetUnitName","Times","Score"\n' )
   
       self.RunTime = os.date("%y-%m-%d_%H-%M-%S")
     else

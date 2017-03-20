@@ -530,10 +530,20 @@ do -- FSM
   
   
   function FSM:_call_handler( handler, params, EventName )
+
+    local ErrorHandler = function( errmsg )
+  
+      env.info( "Error in SCHEDULER function:" .. errmsg )
+      if debug ~= nil then
+        env.info( debug.traceback() )
+      end
+      
+      return errmsg
+    end
     if self[handler] then
       self:T( "Calling " .. handler )
       self._EventSchedules[EventName] = nil
-      local Value = self[handler]( self, unpack(params) )
+      local Result, Value = xpcall( function() return self[handler]( self, unpack( params ) ) end, ErrorHandler )
       return Value
     end
   end
@@ -732,7 +742,65 @@ do -- FSM_CONTROLLABLE
       self:SetControllable( Controllable )
     end
   
+    self:AddTransition( "*", "Stop", "Stopped" )
+  
+    --- OnBefore Transition Handler for Event Stop.
+    -- @function [parent=#FSM_CONTROLLABLE] OnBeforeStop
+    -- @param #FSM_CONTROLLABLE self
+    -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+    -- @param #string From The From State string.
+    -- @param #string Event The Event string.
+    -- @param #string To The To State string.
+    -- @return #boolean Return false to cancel Transition.
+    
+    --- OnAfter Transition Handler for Event Stop.
+    -- @function [parent=#FSM_CONTROLLABLE] OnAfterStop
+    -- @param #FSM_CONTROLLABLE self
+    -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+    -- @param #string From The From State string.
+    -- @param #string Event The Event string.
+    -- @param #string To The To State string.
+    	
+    --- Synchronous Event Trigger for Event Stop.
+    -- @function [parent=#FSM_CONTROLLABLE] Stop
+    -- @param #FSM_CONTROLLABLE self
+    
+    --- Asynchronous Event Trigger for Event Stop.
+    -- @function [parent=#FSM_CONTROLLABLE] __Stop
+    -- @param #FSM_CONTROLLABLE self
+    -- @param #number Delay The delay in seconds.  
+      
+    --- OnLeave Transition Handler for State Stopped.
+    -- @function [parent=#FSM_CONTROLLABLE] OnLeaveStopped
+    -- @param #FSM_CONTROLLABLE self
+    -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+    -- @param #string From The From State string.
+    -- @param #string Event The Event string.
+    -- @param #string To The To State string.
+    -- @return #boolean Return false to cancel Transition.
+    
+    --- OnEnter Transition Handler for State Stopped.
+    -- @function [parent=#FSM_CONTROLLABLE] OnEnterStopped
+    -- @param #FSM_CONTROLLABLE self
+    -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+    -- @param #string From The From State string.
+    -- @param #string Event The Event string.
+    -- @param #string To The To State string.
+
     return self
+  end
+
+  --- OnAfter Transition Handler for Event Stop.
+  -- @function [parent=#FSM_CONTROLLABLE] OnAfterStop
+  -- @param #FSM_CONTROLLABLE self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param #string From The From State string.
+  -- @param #string Event The Event string.
+  -- @param #string To The To State string.
+  function FSM_CONTROLLABLE:OnAfterStop(Controllable,From,Event,To)  
+    
+    -- Clear all pending schedules
+    self.CallScheduler:Clear()
   end
   
   --- Sets the CONTROLLABLE object that the FSM_CONTROLLABLE governs.
@@ -801,12 +869,34 @@ do -- FSM_PROCESS
   function FSM_PROCESS:Init( FsmProcess )
     self:T( "No Initialisation" )
   end  
+
+  function FSM_PROCESS:_call_handler( handler, params, EventName )
+  
+    local ErrorHandler = function( errmsg )
+  
+      env.info( "Error in FSM_PROCESS call handler:" .. errmsg )
+      if debug ~= nil then
+        env.info( debug.traceback() )
+      end
+      
+      return errmsg
+    end
+  
+    if self[handler] then
+      self:F3( "Calling " .. handler )
+      self._EventSchedules[EventName] = nil
+      local Result, Value = xpcall( function() return self[handler]( self, self.Controllable, self.Task, unpack( params ) ) end, ErrorHandler )
+      return Value
+      --return self[handler]( self, self.Controllable, unpack( params ) )
+    end
+  end
   
   --- Creates a new FSM_PROCESS object based on this FSM_PROCESS.
   -- @param #FSM_PROCESS self
   -- @return #FSM_PROCESS
   function FSM_PROCESS:Copy( Controllable, Task )
     self:T( { self:GetClassNameAndID() } )
+
   
     local NewFsm = self:New( Controllable, Task ) -- Core.Fsm#FSM_PROCESS
   
@@ -825,7 +915,7 @@ do -- FSM_PROCESS
   
     -- Copy Processes
     for ProcessID, Process in pairs( self:GetProcesses() ) do
-      self:T( { Process} )
+      self:E( { Process} )
       local FsmProcess = NewFsm:AddProcess( Process.From, Process.Event, Process.fsm:Copy( Controllable, Task ), Process.ReturnEvents )
     end
   
@@ -842,6 +932,22 @@ do -- FSM_PROCESS
     end
   
     return NewFsm
+  end
+
+  --- Removes an FSM_PROCESS object.
+  -- @param #FSM_PROCESS self
+  -- @return #FSM_PROCESS
+  function FSM_PROCESS:Remove()
+    self:T( { self:GetClassNameAndID() } )
+  
+    -- Copy Processes
+    for ProcessID, Process in pairs( self:GetProcesses() ) do
+      self:E( { Process} )
+      Process.fsm:Remove()
+      Process.fsm = nil
+    end
+  
+    return self
   end
   
   --- Sets the task of the process.

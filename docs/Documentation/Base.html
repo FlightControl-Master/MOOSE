@@ -39,17 +39,16 @@
 					<li><a href="Fsm.html">Fsm</a></li>
 					<li><a href="Group.html">Group</a></li>
 					<li><a href="Identifiable.html">Identifiable</a></li>
-					<li><a href="MOVEMENT.html">MOVEMENT</a></li>
 					<li><a href="Menu.html">Menu</a></li>
 					<li><a href="Message.html">Message</a></li>
 					<li><a href="MissileTrainer.html">MissileTrainer</a></li>
 					<li><a href="Mission.html">Mission</a></li>
+					<li><a href="Movement.html">Movement</a></li>
 					<li><a href="Object.html">Object</a></li>
 					<li><a href="Point.html">Point</a></li>
 					<li><a href="Positionable.html">Positionable</a></li>
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
 					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
-					<li><a href="Radio.html">Radio</a></li>
 					<li><a href="Route.html">Route</a></li>
 					<li><a href="Scenery.html">Scenery</a></li>
 					<li><a href="ScheduleDispatcher.html">ScheduleDispatcher</a></li>
@@ -62,8 +61,8 @@
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="Task.html">Task</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
+					<li><a href="Task_A2G_Dispatcher.html">Task_A2G_Dispatcher</a></li>
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
-					<li><a href="Task_SEAD.html">Task_SEAD</a></li>
 					<li><a href="Unit.html">Unit</a></li>
 					<li><a href="Utils.html">Utils</a></li>
 					<li><a href="Zone.html">Zone</a></li>
@@ -100,7 +99,8 @@
 
 <h2>1.1) BASE constructor</h2>
 
-<p>Any class derived from BASE, must use the <a href="Base.html##(BASE).New">Base#BASE.New</a> method how this is done.</p>
+<p>Any class derived from BASE, will use the <a href="Base.html##(BASE).New">Base#BASE.New</a> constructor embedded in the <a href="Base.html##(BASE).Inherit">Base#BASE.Inherit</a> method. 
+See an example at the <a href="Base.html##(BASE).New">Base#BASE.New</a> method how this is done.</p>
 
 <h2>1.2) Trace information for debugging</h2>
 
@@ -448,7 +448,7 @@ YYYY-MM-DD: CLASS:<strong>NewFunction( Params )</strong> added</p>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(BASE).New">BASE:New()</a></td>
 		<td class="summary">
-
+<p>BASE constructor.</p>
 </td>
 		</tr>
 		<tr>
@@ -1115,6 +1115,14 @@ The <a href="Event.html">Event</a> processing Priority.</p>
 	
 <p>This is the worker method to retrieve the Parent class.</p>
 
+	
+<p>Note that the Parent class must be passed to call the parent class method.</p>
+
+<pre><code>self:GetParent(self):ParentMethod()
+
+
+</code></pre>
+
 		<h3>Parameter</h3>
 		<ul>
 				<li>
@@ -1265,10 +1273,23 @@ Child</p>
 </dt>
 <dd>
 	
-
+<p>BASE constructor.</p>
 
 	
-<p> @todo need to investigate if the deepCopy is really needed... Don't think so.</p>
+
+<p>This is an example how to use the BASE:New() constructor in a new class definition when inheriting from BASE.</p>
+
+<pre><code>function EVENT:New()
+  local self = BASE:Inherit( self, BASE:New() ) -- #EVENT
+  return self
+end
+  
+</code></pre>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(BASE)">#BASE</a>:</em></p>
+
 
 </dd>
 </dl>
@@ -2194,6 +2215,9 @@ A #table or any field.</p>
 <dd>
 	
 
+
+	
+<p> THIS IS WHY WE NEED LUA 5.2 ...</p>
 
 </dd>
 </dl>
