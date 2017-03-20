@@ -206,9 +206,9 @@ do -- TASK_A2G_DISPATCHER
     local ChangeMsg = {}
     
     local Mission = self.Mission
-    local ReportSEAD = REPORT:New( " - SEAD Tasks:")
-    local ReportCAS = REPORT:New( " - CAS Tasks:")
-    local ReportBAI = REPORT:New( " - BAI Tasks:")
+    local ReportSEAD = REPORT:New( "- SEAD Tasks:")
+    local ReportCAS = REPORT:New( "- CAS Tasks:")
+    local ReportBAI = REPORT:New( "- BAI Tasks:")
     local ReportChanges = REPORT:New( " - Changes:" )
 
     --- First we need to  the detected targets.
@@ -289,7 +289,7 @@ do -- TASK_A2G_DISPATCHER
         Mission:GetCommandCenter():MessageToGroup( 
           string.format( "HQ Reporting - Planned tasks for mission '%s':\n%s\n", 
                          self.Mission:GetName(),
-                         string.format( "%s\n%s\n%s\n%s", ReportSEAD:Text(), ReportCAS:Text(), ReportBAI:Text(), ReportChanges:Text()
+                         string.format( "%s\n\n%s\n\n%s\n\n%s", ReportSEAD:Text(), ReportCAS:Text(), ReportBAI:Text(), ReportChanges:Text()
                        )
           ), TaskGroup  
         )

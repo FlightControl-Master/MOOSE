@@ -36,8 +36,14 @@ function REPORT:Add( Text )
   return self.Report[#self.Report]
 end
 
-function REPORT:Text()
-  return table.concat( self.Report, "\n" ) 
+--- Produces the text of the report, taking into account an optional delimeter, which is \n by default.
+-- @param #REPORT self
+-- @param #string Delimiter (optional) A delimiter text.
+-- @return #string The report text.
+function REPORT:Text( Delimiter )
+  Delimiter = Delimiter or "\n"
+  local ReportText = table.concat( self.Report, Delimiter ) or ""
+  return ReportText
 end
 
 --- The COMMANDCENTER class

@@ -72,252 +72,38 @@
 	<div id="content">
    <h1>Module <code>Set</code></h1>
    
-<p><strong>Core</strong> - SET classes define <strong>collections</strong> of objects to perform <strong>bulk actions</strong> and logically <strong>group</strong> objects.</p>
+<p><strong>Core</strong> - SET_ classes define <strong>collections</strong> of objects to perform <strong>bulk actions</strong> and logically <strong>group</strong> objects.</p>
 
    
 
-<hr/>
-
-<h1>1) <a href="Set.html##(SET_BASE)">Set#SET_BASE</a> class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
-<p>The <a href="Set.html##(SET_BASE)">Set#SET_BASE</a> class defines the core functions that define a collection of objects.
-A SET provides iterators to iterate the SET, but will <strong>temporarily</strong> yield the ForEach interator loop at defined <strong>"intervals"</strong> to the mail simulator loop.
-In this way, large loops can be done while not blocking the simulator main processing loop.
-The default <strong>"yield interval"</strong> is after 10 objects processed.
-The default <strong>"time interval"</strong> is after 0.001 seconds.</p>
-
-<h2>1.1) Add or remove objects from the SET</h2>
-<p>Some key core functions are <a href="Set.html##(SET_BASE).Add">Set#SET_BASE.Add</a> and <a href="Set.html##(SET_BASE).Remove">Set#SET_BASE.Remove</a> to add or remove objects from the SET in your logic.</p>
-
-<h2>1.2) Define the SET iterator <strong>"yield interval"</strong> and the <strong>"time interval"</strong></h2>
-<p>Modify the iterator intervals with the <a href="Set.html##(SET_BASE).SetInteratorIntervals">Set#SET_BASE.SetInteratorIntervals</a> method.
-You can set the <strong>"yield interval"</strong>, and the <strong>"time interval"</strong>. (See above).</p>
+<p><img src="..\Presentations\SET\Dia1.JPG" alt="Banner Image"/></p>
 
 <hr/>
 
-<h1>2) <a href="Set.html##(SET_GROUP)">Set#SET_GROUP</a> class, extends <a href="Set.html##(SET_BASE)">Set#SET_BASE</a></h1>
-<p>Mission designers can use the <a href="Set.html##(SET_GROUP)">Set#SET_GROUP</a> class to build sets of groups belonging to certain:</p>
+<p>SET_ classes group objects of the same type into a collection, which is either:</p>
 
 <ul>
-    <li>Coalitions</li>
-    <li>Categories</li>
-    <li>Countries</li>
-    <li>Starting with certain prefix strings.</li>
+    <li>Manually managed using the <strong>:Add...()</strong> or <strong>:Remove...()</strong> methods. The initial SET can be filtered with the **<a href="##(SET_BASE).FilterOnce">SET_BASE.FilterOnce</a>()** method</li>
+    <li>Dynamically updated when new objects are created or objects are destroyed using the **<a href="##(SET_BASE).FilterStart">SET_BASE.FilterStart</a>()** method.</li>
 </ul>
 
-<h2>2.1) SET_GROUP construction method:</h2>
-<p>Create a new SET_GROUP object with the <a href="##(SET_GROUP).New">SET_GROUP.New</a> method:</p>
+<p>Various types of SET_ classes are available:</p>
 
 <ul>
-    <li><a href="##(SET_GROUP).New">SET_GROUP.New</a>: Creates a new SET_GROUP object.</li>
+    <li><a href="##(SET_UNIT)">#SET_UNIT</a>: Defines a colleciton of <a href="Unit.html">Unit</a>s filtered by filter criteria.</li>
+    <li><a href="##(SET_GROUP)">#SET_GROUP</a>: Defines a collection of <a href="Group.html">Group</a>s filtered by filter criteria.</li>
+    <li><a href="##(SET_CLIENT)">#SET_CLIENT</a>: Defines a collection of <a href="Client.html">Client</a>s filterd by filter criteria.</li>
+    <li><a href="##(SET_AIRBASE)">#SET_AIRBASE</a>: Defines a collection of <a href="Airbase.html">Airbase</a>s filtered by filter criteria.</li>
 </ul>
 
-<h2>2.2) Add or Remove GROUP(s) from SET_GROUP: </h2>
-<p>GROUPS can be added and removed using the <a href="Set.html##(SET_GROUP).AddGroupsByName">Set#SET_GROUP.AddGroupsByName</a> and <a href="Set.html##(SET_GROUP).RemoveGroupsByName">Set#SET_GROUP.RemoveGroupsByName</a> respectively. 
-These methods take a single GROUP name or an array of GROUP names to be added or removed from SET_GROUP.</p>
+<p>These classes are derived from <a href="##(SET_BASE)">#SET_BASE</a>, which contains the main methods to manage SETs.</p>
 
-<h2>2.3) SET_GROUP filter criteria: </h2>
-<p>You can set filter criteria to define the set of groups within the SET_GROUP.
-Filter criteria are defined by:</p>
+<p>A multitude of other methods are available in SET_ classes that allow to:</p>
 
 <ul>
-    <li><a href="##(SET_GROUP).FilterCoalitions">SET_GROUP.FilterCoalitions</a>: Builds the SET_GROUP with the groups belonging to the coalition(s).</li>
-    <li><a href="##(SET_GROUP).FilterCategories">SET_GROUP.FilterCategories</a>: Builds the SET_GROUP with the groups belonging to the category(ies).</li>
-    <li><a href="##(SET_GROUP).FilterCountries">SET_GROUP.FilterCountries</a>: Builds the SET_GROUP with the gruops belonging to the country(ies).</li>
-    <li><a href="##(SET_GROUP).FilterPrefixes">SET_GROUP.FilterPrefixes</a>: Builds the SET_GROUP with the groups starting with the same prefix string(s).</li>
+    <li>Validate the presence of objects in the SET.</li>
+    <li>Trigger events when objects in the SET change a zone presence.</li>
 </ul>
-
-<p>Once the filter criteria have been set for the SET_GROUP, you can start filtering using:</p>
-
-<ul>
-    <li><a href="##(SET_GROUP).FilterStart">SET_GROUP.FilterStart</a>: Starts the filtering of the groups within the SET_GROUP and add or remove GROUP objects <strong>dynamically</strong>.</li>
-</ul>
-
-<p>Planned filter criteria within development are (so these are not yet available):</p>
-
-<ul>
-    <li><a href="##(SET_GROUP).FilterZones">SET_GROUP.FilterZones</a>: Builds the SET_GROUP with the groups within a <a href="Zone.html##(ZONE)">Zone#ZONE</a>.</li>
-</ul>
-
-<h2>2.4) SET_GROUP iterators:</h2>
-<p>Once the filters have been defined and the SET<em>GROUP has been built, you can iterate the SET</em>GROUP with the available iterator methods.
-The iterator methods will walk the SET<em>GROUP set, and call for each element within the set a function that you provide.
-The following iterator methods are currently available within the SET</em>GROUP:</p>
-
-<ul>
-    <li><a href="##(SET_GROUP).ForEachGroup">SET_GROUP.ForEachGroup</a>: Calls a function for each alive group it finds within the SET_GROUP.</li>
-    <li><a href="##(SET_GROUP).ForEachGroupCompletelyInZone">SET_GROUP.ForEachGroupCompletelyInZone</a>: Iterate the SET_GROUP and call an iterator function for each <strong>alive</strong> GROUP presence completely in a <a href="Zone.html">Zone</a>, providing the GROUP and optional parameters to the called function.</li>
-    <li><a href="##(SET_GROUP).ForEachGroupPartlyInZone">SET_GROUP.ForEachGroupPartlyInZone</a>: Iterate the SET_GROUP and call an iterator function for each <strong>alive</strong> GROUP presence partly in a <a href="Zone.html">Zone</a>, providing the GROUP and optional parameters to the called function.</li>
-    <li><a href="##(SET_GROUP).ForEachGroupNotInZone">SET_GROUP.ForEachGroupNotInZone</a>: Iterate the SET_GROUP and call an iterator function for each <strong>alive</strong> GROUP presence not in a <a href="Zone.html">Zone</a>, providing the GROUP and optional parameters to the called function.</li>
-</ul>
-
-<hr/>
-
-<h1>3) <a href="Set.html##(SET_UNIT)">Set#SET_UNIT</a> class, extends <a href="Set.html##(SET_BASE)">Set#SET_BASE</a></h1>
-<p>Mission designers can use the <a href="Set.html##(SET_UNIT)">Set#SET_UNIT</a> class to build sets of units belonging to certain:</p>
-
-<ul>
-    <li>Coalitions</li>
-    <li>Categories</li>
-    <li>Countries</li>
-    <li>Unit types</li>
-    <li>Starting with certain prefix strings.</li>
-</ul>
-
-<h2>3.1) SET_UNIT construction method:</h2>
-<p>Create a new SET_UNIT object with the <a href="##(SET_UNIT).New">SET_UNIT.New</a> method:</p>
-
-<ul>
-    <li><a href="##(SET_UNIT).New">SET_UNIT.New</a>: Creates a new SET_UNIT object.</li>
-</ul>
-
-<h2>3.2) Add or Remove UNIT(s) from SET_UNIT: </h2>
-<p>UNITs can be added and removed using the <a href="Set.html##(SET_UNIT).AddUnitsByName">Set#SET_UNIT.AddUnitsByName</a> and <a href="Set.html##(SET_UNIT).RemoveUnitsByName">Set#SET_UNIT.RemoveUnitsByName</a> respectively. 
-These methods take a single UNIT name or an array of UNIT names to be added or removed from SET_UNIT.</p>
-
-<h2>3.3) SET_UNIT filter criteria: </h2>
-<p>You can set filter criteria to define the set of units within the SET_UNIT.
-Filter criteria are defined by:</p>
-
-<ul>
-    <li><a href="##(SET_UNIT).FilterCoalitions">SET_UNIT.FilterCoalitions</a>: Builds the SET_UNIT with the units belonging to the coalition(s).</li>
-    <li><a href="##(SET_UNIT).FilterCategories">SET_UNIT.FilterCategories</a>: Builds the SET_UNIT with the units belonging to the category(ies).</li>
-    <li><a href="##(SET_UNIT).FilterTypes">SET_UNIT.FilterTypes</a>: Builds the SET_UNIT with the units belonging to the unit type(s).</li>
-    <li><a href="##(SET_UNIT).FilterCountries">SET_UNIT.FilterCountries</a>: Builds the SET_UNIT with the units belonging to the country(ies).</li>
-    <li><a href="##(SET_UNIT).FilterPrefixes">SET_UNIT.FilterPrefixes</a>: Builds the SET_UNIT with the units starting with the same prefix string(s).</li>
-</ul>
-
-<p>Once the filter criteria have been set for the SET_UNIT, you can start filtering using:</p>
-
-<ul>
-    <li><a href="##(SET_UNIT).FilterStart">SET_UNIT.FilterStart</a>: Starts the filtering of the units within the SET_UNIT.</li>
-</ul>
-
-<p>Planned filter criteria within development are (so these are not yet available):</p>
-
-<ul>
-    <li><a href="##(SET_UNIT).FilterZones">SET_UNIT.FilterZones</a>: Builds the SET_UNIT with the units within a <a href="Zone.html##(ZONE)">Zone#ZONE</a>.</li>
-</ul>
-
-<h2>3.4) SET_UNIT iterators:</h2>
-<p>Once the filters have been defined and the SET<em>UNIT has been built, you can iterate the SET</em>UNIT with the available iterator methods.
-The iterator methods will walk the SET<em>UNIT set, and call for each element within the set a function that you provide.
-The following iterator methods are currently available within the SET</em>UNIT:</p>
-
-<ul>
-    <li><a href="##(SET_UNIT).ForEachUnit">SET_UNIT.ForEachUnit</a>: Calls a function for each alive unit it finds within the SET_UNIT.</li>
-    <li><a href="##(SET_GROUP).ForEachGroupCompletelyInZone">SET_GROUP.ForEachGroupCompletelyInZone</a>: Iterate the SET_GROUP and call an iterator function for each <strong>alive</strong> GROUP presence completely in a <a href="Zone.html">Zone</a>, providing the GROUP and optional parameters to the called function.</li>
-    <li><a href="##(SET_GROUP).ForEachGroupNotInZone">SET_GROUP.ForEachGroupNotInZone</a>: Iterate the SET_GROUP and call an iterator function for each <strong>alive</strong> GROUP presence not in a <a href="Zone.html">Zone</a>, providing the GROUP and optional parameters to the called function.</li>
-</ul>
-
-<p>Planned iterators methods in development are (so these are not yet available):</p>
-
-<ul>
-    <li><a href="##(SET_UNIT).ForEachUnitInUnit">SET_UNIT.ForEachUnitInUnit</a>: Calls a function for each unit contained within the SET_UNIT.</li>
-    <li><a href="##(SET_UNIT).ForEachUnitCompletelyInZone">SET_UNIT.ForEachUnitCompletelyInZone</a>: Iterate and call an iterator function for each <strong>alive</strong> UNIT presence completely in a <a href="Zone.html">Zone</a>, providing the UNIT and optional parameters to the called function.</li>
-    <li><a href="##(SET_UNIT).ForEachUnitNotInZone">SET_UNIT.ForEachUnitNotInZone</a>: Iterate and call an iterator function for each <strong>alive</strong> UNIT presence not in a <a href="Zone.html">Zone</a>, providing the UNIT and optional parameters to the called function.</li>
-</ul>
-
-<hr/>
-
-<h1>4) <a href="Set.html##(SET_CLIENT)">Set#SET_CLIENT</a> class, extends <a href="Set.html##(SET_BASE)">Set#SET_BASE</a></h1>
-<p>Mission designers can use the <a href="Set.html##(SET_CLIENT)">Set#SET_CLIENT</a> class to build sets of units belonging to certain:</p>
-
-<ul>
-    <li>Coalitions</li>
-    <li>Categories</li>
-    <li>Countries</li>
-    <li>Client types</li>
-    <li>Starting with certain prefix strings.</li>
-</ul>
-
-<h2>4.1) SET_CLIENT construction method:</h2>
-<p>Create a new SET_CLIENT object with the <a href="##(SET_CLIENT).New">SET_CLIENT.New</a> method:</p>
-
-<ul>
-    <li><a href="##(SET_CLIENT).New">SET_CLIENT.New</a>: Creates a new SET_CLIENT object.</li>
-</ul>
-
-<h2>4.2) Add or Remove CLIENT(s) from SET_CLIENT: </h2>
-<p>CLIENTs can be added and removed using the <a href="Set.html##(SET_CLIENT).AddClientsByName">Set#SET_CLIENT.AddClientsByName</a> and <a href="Set.html##(SET_CLIENT).RemoveClientsByName">Set#SET_CLIENT.RemoveClientsByName</a> respectively. 
-These methods take a single CLIENT name or an array of CLIENT names to be added or removed from SET_CLIENT.</p>
-
-<h2>4.3) SET_CLIENT filter criteria: </h2>
-<p>You can set filter criteria to define the set of clients within the SET_CLIENT.
-Filter criteria are defined by:</p>
-
-<ul>
-    <li><a href="##(SET_CLIENT).FilterCoalitions">SET_CLIENT.FilterCoalitions</a>: Builds the SET_CLIENT with the clients belonging to the coalition(s).</li>
-    <li><a href="##(SET_CLIENT).FilterCategories">SET_CLIENT.FilterCategories</a>: Builds the SET_CLIENT with the clients belonging to the category(ies).</li>
-    <li><a href="##(SET_CLIENT).FilterTypes">SET_CLIENT.FilterTypes</a>: Builds the SET_CLIENT with the clients belonging to the client type(s).</li>
-    <li><a href="##(SET_CLIENT).FilterCountries">SET_CLIENT.FilterCountries</a>: Builds the SET_CLIENT with the clients belonging to the country(ies).</li>
-    <li><a href="##(SET_CLIENT).FilterPrefixes">SET_CLIENT.FilterPrefixes</a>: Builds the SET_CLIENT with the clients starting with the same prefix string(s).</li>
-</ul>
-
-<p>Once the filter criteria have been set for the SET_CLIENT, you can start filtering using:</p>
-
-<ul>
-    <li><a href="##(SET_CLIENT).FilterStart">SET_CLIENT.FilterStart</a>: Starts the filtering of the clients within the SET_CLIENT.</li>
-</ul>
-
-<p>Planned filter criteria within development are (so these are not yet available):</p>
-
-<ul>
-    <li><a href="##(SET_CLIENT).FilterZones">SET_CLIENT.FilterZones</a>: Builds the SET_CLIENT with the clients within a <a href="Zone.html##(ZONE)">Zone#ZONE</a>.</li>
-</ul>
-
-<h2>4.4) SET_CLIENT iterators:</h2>
-<p>Once the filters have been defined and the SET<em>CLIENT has been built, you can iterate the SET</em>CLIENT with the available iterator methods.
-The iterator methods will walk the SET<em>CLIENT set, and call for each element within the set a function that you provide.
-The following iterator methods are currently available within the SET</em>CLIENT:</p>
-
-<ul>
-    <li><a href="##(SET_CLIENT).ForEachClient">SET_CLIENT.ForEachClient</a>: Calls a function for each alive client it finds within the SET_CLIENT.</li>
-</ul>
-
-<hr/>
-
-<h1>5) <a href="Set.html##(SET_AIRBASE)">Set#SET_AIRBASE</a> class, extends <a href="Set.html##(SET_BASE)">Set#SET_BASE</a></h1>
-<p>Mission designers can use the <a href="Set.html##(SET_AIRBASE)">Set#SET_AIRBASE</a> class to build sets of airbases optionally belonging to certain:</p>
-
-<ul>
-    <li>Coalitions</li>
-</ul>
-
-<h2>5.1) SET_AIRBASE construction</h2>
-<p>Create a new SET_AIRBASE object with the <a href="##(SET_AIRBASE).New">SET_AIRBASE.New</a> method:</p>
-
-<ul>
-    <li><a href="##(SET_AIRBASE).New">SET_AIRBASE.New</a>: Creates a new SET_AIRBASE object.</li>
-</ul>
-
-<h2>5.2) Add or Remove AIRBASEs from SET_AIRBASE </h2>
-<p>AIRBASEs can be added and removed using the <a href="Set.html##(SET_AIRBASE).AddAirbasesByName">Set#SET_AIRBASE.AddAirbasesByName</a> and <a href="Set.html##(SET_AIRBASE).RemoveAirbasesByName">Set#SET_AIRBASE.RemoveAirbasesByName</a> respectively. 
-These methods take a single AIRBASE name or an array of AIRBASE names to be added or removed from SET_AIRBASE.</p>
-
-<h2>5.3) SET_AIRBASE filter criteria </h2>
-<p>You can set filter criteria to define the set of clients within the SET_AIRBASE.
-Filter criteria are defined by:</p>
-
-<ul>
-    <li><a href="##(SET_AIRBASE).FilterCoalitions">SET_AIRBASE.FilterCoalitions</a>: Builds the SET_AIRBASE with the airbases belonging to the coalition(s).</li>
-</ul>
-
-<p>Once the filter criteria have been set for the SET_AIRBASE, you can start filtering using:</p>
-
-<ul>
-    <li><a href="##(SET_AIRBASE).FilterStart">SET_AIRBASE.FilterStart</a>: Starts the filtering of the airbases within the SET_AIRBASE.</li>
-</ul>
-
-<h2>5.4) SET_AIRBASE iterators:</h2>
-<p>Once the filters have been defined and the SET<em>AIRBASE has been built, you can iterate the SET</em>AIRBASE with the available iterator methods.
-The iterator methods will walk the SET<em>AIRBASE set, and call for each airbase within the set a function that you provide.
-The following iterator methods are currently available within the SET</em>AIRBASE:</p>
-
-<ul>
-    <li><a href="##(SET_AIRBASE).ForEachAirbase">SET_AIRBASE.ForEachAirbase</a>: Calls a function for each airbase it finds within the SET_AIRBASE.</li>
-</ul>
-
-<hr/>
 
 <h3>Authors:</h3>
 
@@ -1029,6 +815,12 @@ The following iterator methods are currently available within the SET</em>AIRBAS
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_UNIT).GetTypeNames">SET_UNIT:GetTypeNames(Delimiter)</a></td>
+		<td class="summary">
+<p>Retrieve the type names of the <a href="Unit.html">Unit</a>s in the SET, delimited by an optional delimiter.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SET_UNIT).GetUnitThreatLevels">SET_UNIT:GetUnitThreatLevels()</a></td>
 		<td class="summary">
 <p>Returns map of unit threat levels.</p>
@@ -1171,7 +963,54 @@ The following iterator methods are currently available within the SET</em>AIRBAS
 	
 			<h2><a id="#(SET_AIRBASE)" >Type <code>SET_AIRBASE</code></a></h2>
 				
-<p>SET_AIRBASE class</p>
+<h1>5) SET_AIRBASE class, extends <a href="Set.html##(SET_BASE)">Set#SET_BASE</a></h1>
+
+<p>Mission designers can use the <a href="Set.html##(SET_AIRBASE)">Set#SET_AIRBASE</a> class to build sets of airbases optionally belonging to certain:</p>
+
+<ul>
+    <li>Coalitions</li>
+</ul>
+
+<h2>5.1) SET_AIRBASE constructor</h2>
+
+<p>Create a new SET_AIRBASE object with the <a href="##(SET_AIRBASE).New">SET_AIRBASE.New</a> method:</p>
+
+<ul>
+    <li><a href="##(SET_AIRBASE).New">SET_AIRBASE.New</a>: Creates a new SET_AIRBASE object.</li>
+</ul>
+
+	
+<p>  </p>
+<h2>5.2) Add or Remove AIRBASEs from SET_AIRBASE</h2>
+
+<p>AIRBASEs can be added and removed using the <a href="Set.html##(SET_AIRBASE).AddAirbasesByName">Set#SET_AIRBASE.AddAirbasesByName</a> and <a href="Set.html##(SET_AIRBASE).RemoveAirbasesByName">Set#SET_AIRBASE.RemoveAirbasesByName</a> respectively. 
+These methods take a single AIRBASE name or an array of AIRBASE names to be added or removed from SET_AIRBASE.</p>
+
+<h2>5.3) SET_AIRBASE filter criteria</h2>
+
+<p>You can set filter criteria to define the set of clients within the SET_AIRBASE.
+Filter criteria are defined by:</p>
+
+<ul>
+    <li><a href="##(SET_AIRBASE).FilterCoalitions">SET_AIRBASE.FilterCoalitions</a>: Builds the SET_AIRBASE with the airbases belonging to the coalition(s).</li>
+</ul>
+
+<p>Once the filter criteria have been set for the SET_AIRBASE, you can start filtering using:</p>
+
+<ul>
+    <li><a href="##(SET_AIRBASE).FilterStart">SET_AIRBASE.FilterStart</a>: Starts the filtering of the airbases within the SET_AIRBASE.</li>
+</ul>
+
+<h2>5.4) SET_AIRBASE iterators</h2>
+
+<p>Once the filters have been defined and the SET<em>AIRBASE has been built, you can iterate the SET</em>AIRBASE with the available iterator methods.
+The iterator methods will walk the SET<em>AIRBASE set, and call for each airbase within the set a function that you provide.
+The following iterator methods are currently available within the SET</em>AIRBASE:</p>
+
+<ul>
+    <li><a href="##(SET_AIRBASE).ForEachAirbase">SET_AIRBASE.ForEachAirbase</a>: Calls a function for each airbase it finds within the SET_AIRBASE.</li>
+</ul>
+
 
 	<h3>Field(s)</h3>
 		<dl class="function">
@@ -1576,7 +1415,24 @@ A single name or an array of AIRBASE names.</p>
 
 			<h2><a id="#(SET_BASE)" >Type <code>SET_BASE</code></a></h2>
 				
-<p>SET_BASE class</p>
+<h1>1) SET_BASE class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
+<p>The <a href="Set.html##(SET_BASE)">Set#SET_BASE</a> class defines the core functions that define a collection of objects.</p>
+
+	
+<p>A SET provides iterators to iterate the SET, but will <strong>temporarily</strong> yield the ForEach interator loop at defined <strong>"intervals"</strong> to the mail simulator loop.
+In this way, large loops can be done while not blocking the simulator main processing loop.
+The default <strong>"yield interval"</strong> is after 10 objects processed.
+The default <strong>"time interval"</strong> is after 0.001 seconds.</p>
+
+<h2>1.1) Add or remove objects from the SET</h2>
+
+<p>Some key core functions are <a href="Set.html##(SET_BASE).Add">Set#SET_BASE.Add</a> and <a href="Set.html##(SET_BASE).Remove">Set#SET_BASE.Remove</a> to add or remove objects from the SET in your logic.</p>
+
+<h2>1.2) Define the SET iterator <strong>"yield interval"</strong> and the <strong>"time interval"</strong></h2>
+
+<p>Modify the iterator intervals with the <a href="Set.html##(SET_BASE).SetInteratorIntervals">Set#SET_BASE.SetInteratorIntervals</a> method.
+You can set the <strong>"yield interval"</strong>, and the <strong>"time interval"</strong>. (See above).</p>
+
 
 	<h3>Field(s)</h3>
 		<dl class="function">
@@ -2279,7 +2135,68 @@ The Object found.</p>
 
 			<h2><a id="#(SET_CLIENT)" >Type <code>SET_CLIENT</code></a></h2>
 				
-<p>SET_CLIENT class</p>
+<h1>4) SET_CLIENT class, extends <a href="Set.html##(SET_BASE)">Set#SET_BASE</a></h1>
+
+<p>Mission designers can use the <a href="Set.html##(SET_CLIENT)">Set#SET_CLIENT</a> class to build sets of units belonging to certain:</p>
+
+<ul>
+    <li>Coalitions</li>
+    <li>Categories</li>
+    <li>Countries</li>
+    <li>Client types</li>
+    <li>Starting with certain prefix strings.</li>
+</ul>
+
+	
+<p> </p>
+<h2>4.1) SET_CLIENT constructor</h2>
+
+<p>Create a new SET_CLIENT object with the <a href="##(SET_CLIENT).New">SET_CLIENT.New</a> method:</p>
+
+<ul>
+    <li><a href="##(SET_CLIENT).New">SET_CLIENT.New</a>: Creates a new SET_CLIENT object.</li>
+</ul>
+
+<h2>4.2) Add or Remove CLIENT(s) from SET_CLIENT</h2>
+
+<p>CLIENTs can be added and removed using the <a href="Set.html##(SET_CLIENT).AddClientsByName">Set#SET_CLIENT.AddClientsByName</a> and <a href="Set.html##(SET_CLIENT).RemoveClientsByName">Set#SET_CLIENT.RemoveClientsByName</a> respectively. 
+These methods take a single CLIENT name or an array of CLIENT names to be added or removed from SET_CLIENT.</p>
+
+<h2>4.3) SET_CLIENT filter criteria</h2>
+
+<p>You can set filter criteria to define the set of clients within the SET_CLIENT.
+Filter criteria are defined by:</p>
+
+<ul>
+    <li><a href="##(SET_CLIENT).FilterCoalitions">SET_CLIENT.FilterCoalitions</a>: Builds the SET_CLIENT with the clients belonging to the coalition(s).</li>
+    <li><a href="##(SET_CLIENT).FilterCategories">SET_CLIENT.FilterCategories</a>: Builds the SET_CLIENT with the clients belonging to the category(ies).</li>
+    <li><a href="##(SET_CLIENT).FilterTypes">SET_CLIENT.FilterTypes</a>: Builds the SET_CLIENT with the clients belonging to the client type(s).</li>
+    <li><a href="##(SET_CLIENT).FilterCountries">SET_CLIENT.FilterCountries</a>: Builds the SET_CLIENT with the clients belonging to the country(ies).</li>
+    <li><a href="##(SET_CLIENT).FilterPrefixes">SET_CLIENT.FilterPrefixes</a>: Builds the SET_CLIENT with the clients starting with the same prefix string(s).</li>
+</ul>
+
+<p>Once the filter criteria have been set for the SET_CLIENT, you can start filtering using:</p>
+
+<ul>
+    <li><a href="##(SET_CLIENT).FilterStart">SET_CLIENT.FilterStart</a>: Starts the filtering of the clients within the SET_CLIENT.</li>
+</ul>
+
+<p>Planned filter criteria within development are (so these are not yet available):</p>
+
+<ul>
+    <li><a href="##(SET_CLIENT).FilterZones">SET_CLIENT.FilterZones</a>: Builds the SET_CLIENT with the clients within a <a href="Zone.html##(ZONE)">Zone#ZONE</a>.</li>
+</ul>
+
+<h2>4.4) SET_CLIENT iterators</h2>
+
+<p>Once the filters have been defined and the SET<em>CLIENT has been built, you can iterate the SET</em>CLIENT with the available iterator methods.
+The iterator methods will walk the SET<em>CLIENT set, and call for each element within the set a function that you provide.
+The following iterator methods are currently available within the SET</em>CLIENT:</p>
+
+<ul>
+    <li><a href="##(SET_CLIENT).ForEachClient">SET_CLIENT.ForEachClient</a>: Calls a function for each alive client it finds within the SET_CLIENT.</li>
+</ul>
+
 
 	<h3>Field(s)</h3>
 		<dl class="function">
@@ -2823,7 +2740,69 @@ A single name or an array of CLIENT names.</p>
 
 			<h2><a id="#(SET_GROUP)" >Type <code>SET_GROUP</code></a></h2>
 				
-<p>SET_GROUP class</p>
+<h1>2) SET_GROUP class, extends <a href="Set.html##(SET_BASE)">Set#SET_BASE</a></h1>
+
+<p>Mission designers can use the <a href="Set.html##(SET_GROUP)">Set#SET_GROUP</a> class to build sets of groups belonging to certain:</p>
+
+<ul>
+    <li>Coalitions</li>
+    <li>Categories</li>
+    <li>Countries</li>
+    <li>Starting with certain prefix strings.</li>
+</ul>
+
+	
+<p> </p>
+<h2>2.1) SET_GROUP constructor</h2>
+
+<p>Create a new SET_GROUP object with the <a href="##(SET_GROUP).New">SET_GROUP.New</a> method:</p>
+
+<ul>
+    <li><a href="##(SET_GROUP).New">SET_GROUP.New</a>: Creates a new SET_GROUP object.</li>
+</ul>
+
+<h2>2.2) Add or Remove GROUP(s) from SET_GROUP</h2>
+
+<p>GROUPS can be added and removed using the <a href="Set.html##(SET_GROUP).AddGroupsByName">Set#SET_GROUP.AddGroupsByName</a> and <a href="Set.html##(SET_GROUP).RemoveGroupsByName">Set#SET_GROUP.RemoveGroupsByName</a> respectively. 
+These methods take a single GROUP name or an array of GROUP names to be added or removed from SET_GROUP.</p>
+
+<h2>2.3) SET_GROUP filter criteria</h2>
+
+<p>You can set filter criteria to define the set of groups within the SET_GROUP.
+Filter criteria are defined by:</p>
+
+<ul>
+    <li><a href="##(SET_GROUP).FilterCoalitions">SET_GROUP.FilterCoalitions</a>: Builds the SET_GROUP with the groups belonging to the coalition(s).</li>
+    <li><a href="##(SET_GROUP).FilterCategories">SET_GROUP.FilterCategories</a>: Builds the SET_GROUP with the groups belonging to the category(ies).</li>
+    <li><a href="##(SET_GROUP).FilterCountries">SET_GROUP.FilterCountries</a>: Builds the SET_GROUP with the gruops belonging to the country(ies).</li>
+    <li><a href="##(SET_GROUP).FilterPrefixes">SET_GROUP.FilterPrefixes</a>: Builds the SET_GROUP with the groups starting with the same prefix string(s).</li>
+</ul>
+
+<p>Once the filter criteria have been set for the SET_GROUP, you can start filtering using:</p>
+
+<ul>
+    <li><a href="##(SET_GROUP).FilterStart">SET_GROUP.FilterStart</a>: Starts the filtering of the groups within the SET_GROUP and add or remove GROUP objects <strong>dynamically</strong>.</li>
+</ul>
+
+<p>Planned filter criteria within development are (so these are not yet available):</p>
+
+<ul>
+    <li><a href="##(SET_GROUP).FilterZones">SET_GROUP.FilterZones</a>: Builds the SET_GROUP with the groups within a <a href="Zone.html##(ZONE)">Zone#ZONE</a>.</li>
+</ul>
+
+<h2>2.4) SET_GROUP iterators</h2>
+
+<p>Once the filters have been defined and the SET<em>GROUP has been built, you can iterate the SET</em>GROUP with the available iterator methods.
+The iterator methods will walk the SET<em>GROUP set, and call for each element within the set a function that you provide.
+The following iterator methods are currently available within the SET</em>GROUP:</p>
+
+<ul>
+    <li><a href="##(SET_GROUP).ForEachGroup">SET_GROUP.ForEachGroup</a>: Calls a function for each alive group it finds within the SET_GROUP.</li>
+    <li><a href="##(SET_GROUP).ForEachGroupCompletelyInZone">SET_GROUP.ForEachGroupCompletelyInZone</a>: Iterate the SET_GROUP and call an iterator function for each <strong>alive</strong> GROUP presence completely in a <a href="Zone.html">Zone</a>, providing the GROUP and optional parameters to the called function.</li>
+    <li><a href="##(SET_GROUP).ForEachGroupPartlyInZone">SET_GROUP.ForEachGroupPartlyInZone</a>: Iterate the SET_GROUP and call an iterator function for each <strong>alive</strong> GROUP presence partly in a <a href="Zone.html">Zone</a>, providing the GROUP and optional parameters to the called function.</li>
+    <li><a href="##(SET_GROUP).ForEachGroupNotInZone">SET_GROUP.ForEachGroupNotInZone</a>: Iterate the SET_GROUP and call an iterator function for each <strong>alive</strong> GROUP presence not in a <a href="Zone.html">Zone</a>, providing the GROUP and optional parameters to the called function.</li>
+</ul>
+
 
 	<h3>Field(s)</h3>
 		<dl class="function">
@@ -3361,7 +3340,87 @@ A single name or an array of GROUP names.</p>
 
 			<h2><a id="#(SET_UNIT)" >Type <code>SET_UNIT</code></a></h2>
 				
-<p>SET_UNIT class</p>
+<h1>3) SET_UNIT class, extends <a href="Set.html##(SET_BASE)">Set#SET_BASE</a></h1>
+
+<p>Mission designers can use the SET_UNIT class to build sets of units belonging to certain:</p>
+
+<ul>
+    <li>Coalitions</li>
+    <li>Categories</li>
+    <li>Countries</li>
+    <li>Unit types</li>
+    <li>Starting with certain prefix strings.</li>
+</ul>
+
+	
+<p> </p>
+<h2>3.1) SET_UNIT constructor</h2>
+
+<p>Create a new SET_UNIT object with the <a href="##(SET_UNIT).New">SET_UNIT.New</a> method:</p>
+
+<ul>
+    <li><a href="##(SET_UNIT).New">SET_UNIT.New</a>: Creates a new SET_UNIT object.</li>
+</ul>
+
+<h2>3.2) Add or Remove UNIT(s) from SET_UNIT</h2>
+
+<p>UNITs can be added and removed using the <a href="Set.html##(SET_UNIT).AddUnitsByName">Set#SET_UNIT.AddUnitsByName</a> and <a href="Set.html##(SET_UNIT).RemoveUnitsByName">Set#SET_UNIT.RemoveUnitsByName</a> respectively. 
+These methods take a single UNIT name or an array of UNIT names to be added or removed from SET_UNIT.</p>
+
+<h2>3.3) SET_UNIT filter criteria</h2>
+
+<p>You can set filter criteria to define the set of units within the SET_UNIT.
+Filter criteria are defined by:</p>
+
+<ul>
+    <li><a href="##(SET_UNIT).FilterCoalitions">SET_UNIT.FilterCoalitions</a>: Builds the SET_UNIT with the units belonging to the coalition(s).</li>
+    <li><a href="##(SET_UNIT).FilterCategories">SET_UNIT.FilterCategories</a>: Builds the SET_UNIT with the units belonging to the category(ies).</li>
+    <li><a href="##(SET_UNIT).FilterTypes">SET_UNIT.FilterTypes</a>: Builds the SET_UNIT with the units belonging to the unit type(s).</li>
+    <li><a href="##(SET_UNIT).FilterCountries">SET_UNIT.FilterCountries</a>: Builds the SET_UNIT with the units belonging to the country(ies).</li>
+    <li><a href="##(SET_UNIT).FilterPrefixes">SET_UNIT.FilterPrefixes</a>: Builds the SET_UNIT with the units starting with the same prefix string(s).</li>
+</ul>
+
+<p>Once the filter criteria have been set for the SET_UNIT, you can start filtering using:</p>
+
+<ul>
+    <li><a href="##(SET_UNIT).FilterStart">SET_UNIT.FilterStart</a>: Starts the filtering of the units within the SET_UNIT.</li>
+</ul>
+
+<p>Planned filter criteria within development are (so these are not yet available):</p>
+
+<ul>
+    <li><a href="##(SET_UNIT).FilterZones">SET_UNIT.FilterZones</a>: Builds the SET_UNIT with the units within a <a href="Zone.html##(ZONE)">Zone#ZONE</a>.</li>
+</ul>
+
+<h2>3.4) SET_UNIT iterators</h2>
+
+<p>Once the filters have been defined and the SET<em>UNIT has been built, you can iterate the SET</em>UNIT with the available iterator methods.
+The iterator methods will walk the SET<em>UNIT set, and call for each element within the set a function that you provide.
+The following iterator methods are currently available within the SET</em>UNIT:</p>
+
+<ul>
+    <li><a href="##(SET_UNIT).ForEachUnit">SET_UNIT.ForEachUnit</a>: Calls a function for each alive unit it finds within the SET_UNIT.</li>
+    <li><a href="##(SET_GROUP).ForEachGroupCompletelyInZone">SET_GROUP.ForEachGroupCompletelyInZone</a>: Iterate the SET_GROUP and call an iterator function for each <strong>alive</strong> GROUP presence completely in a <a href="Zone.html">Zone</a>, providing the GROUP and optional parameters to the called function.</li>
+    <li><a href="##(SET_GROUP).ForEachGroupNotInZone">SET_GROUP.ForEachGroupNotInZone</a>: Iterate the SET_GROUP and call an iterator function for each <strong>alive</strong> GROUP presence not in a <a href="Zone.html">Zone</a>, providing the GROUP and optional parameters to the called function.</li>
+</ul>
+
+<p>Planned iterators methods in development are (so these are not yet available):</p>
+
+<ul>
+    <li><a href="##(SET_UNIT).ForEachUnitInUnit">SET_UNIT.ForEachUnitInUnit</a>: Calls a function for each unit contained within the SET_UNIT.</li>
+    <li><a href="##(SET_UNIT).ForEachUnitCompletelyInZone">SET_UNIT.ForEachUnitCompletelyInZone</a>: Iterate and call an iterator function for each <strong>alive</strong> UNIT presence completely in a <a href="Zone.html">Zone</a>, providing the UNIT and optional parameters to the called function.</li>
+    <li><a href="##(SET_UNIT).ForEachUnitNotInZone">SET_UNIT.ForEachUnitNotInZone</a>: Iterate and call an iterator function for each <strong>alive</strong> UNIT presence not in a <a href="Zone.html">Zone</a>, providing the UNIT and optional parameters to the called function.</li>
+</ul>
+
+<h2>3.5 ) SET_UNIT atomic methods</h2>
+
+<p>Various methods exist for a SET<em>UNIT to perform actions or calculations and retrieve results from the SET</em>UNIT:</p>
+
+<ul>
+    <li><a href="##(SET_UNIT).GetTypeNames">SET_UNIT.GetTypeNames</a>(): Retrieve the type names of the <a href="Unit.html">Unit</a>s in the SET, delimited by a comma.</li>
+</ul>
+
+
 
 	<h3>Field(s)</h3>
 		<dl class="function">
@@ -3898,6 +3957,33 @@ The function that will be called when there is an alive UNIT in the SET_UNIT. Th
 				
 <p><em><a href="##(SET_UNIT)">#SET_UNIT</a>:</em>
 self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_UNIT).GetTypeNames" >
+<strong>SET_UNIT:GetTypeNames(Delimiter)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Retrieve the type names of the <a href="Unit.html">Unit</a>s in the SET, delimited by an optional delimiter.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Delimiter </em></code>: 
+(optional) The delimiter, which is default a comma.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#string:</em>
+The types of the <a href="Unit.html">Unit</a>s delimited.</p>
 
 </dd>
 </dl>
