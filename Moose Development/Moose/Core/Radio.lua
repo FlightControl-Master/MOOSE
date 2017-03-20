@@ -1,10 +1,8 @@
---- This module contains the **Core - RADIO** class. The RADIO class is responsible for **transmitting radio communications**.
+--- **Core** - The RADIO class is responsible for **transmitting radio communications**.
 --
--- 1) @{Radio#RADIO} class, extends @{Base#BASE}
--- =================================================
+-- --- bitmap
 -- 
--- 1.1) General radio transmssion setup
--- ------------------------------------
+-- ===
 --
 -- What are radio communications in DCS ?
 -- 
@@ -27,10 +25,17 @@
 -- like the A10C or the Mirage 2000C. They will **hear the transmission** if they are tuned on the **right frequency and modulation** (and if they are close enough - more on that below).
 -- If a FC3 airacraft is used, it will **hear every communication, whatever the frequency and the modulation** is set to.
 --
--- 1.2) @{Radio#RADIO} usage
--- -------------------------
+-- ===
+--
+-- ### Authors: Hugues "Grey_Echo" Bousquet
+--
+-- @module Radio
+
+--- # 1) RADIO class, extends @{Base#BASE}
 -- 
--- There are 3 steps to a successful radio transmission
+-- ## 1.1) RADIO usage
+-- 
+-- There are 3 steps to a successful radio transmission.
 -- 
 --   * First, you need to **"add" a @{#RADIO} object** to your @{Positionable#POSITIONABLE}. This is done using the @{Positionable#POSITIONABLE.GetRadio}() function,
 --   * Then, you will **set the relevant parameters** to the transmission (see below),
@@ -61,13 +66,7 @@
 --   * This an automated DCS calculation you have no say on,
 --   * For reference, a standard VOR station has a 100W antenna, a standard AA TACAN has a 120W antenna, and civilian ATC's antenna usually range between 300 and 500W,
 --   * Note that if the transmission has a subtitle, it will be readable, regardless of the quality of the transmission. 
---
---### Authors: Hugues "Grey_Echo" Bousquet
---
--- @module Radio
--- @author Grey-Echo
-
---- The RADIO class
+--   
 -- @type RADIO
 -- @field Wrapper.Positionable#POSITIONABLE Positionable The transmiter
 -- @field #string FileName Name of the sound file
@@ -91,52 +90,57 @@ RADIO = {
 }
 
 --- Create a new RADIO Object. This doesn't broadcast a transmission, though, use @{#RADIO.Broadcast} to actually broadcast
--- @param Wrapper.Positionable#POSITIONABLE Positionable
+-- @param #RADIO self
+-- @param Wrapper.Positionable#POSITIONABLE Positionable The @{Positionable} that will receive radio capabilities.
 -- @return #RADIO Radio
 -- @return #nil If Positionable is invalid
 -- @usage
 -- -- If you want to create a RADIO, you probably should use @{Positionable#POSITIONABLE.GetRadio}() instead
-function RADIO:New(positionable)
-  local self = BASE:Inherit( self, BASE:New() )
-  self:F(positionable)
-  if positionable:GetPointVec2() ~= nil then -- It's stupid, but the only way I found to make sure positionable is valid
-    self.Positionable = positionable
+function RADIO:New(Positionable)
+  local self = BASE:Inherit( self, BASE:New() ) -- Core.Radio#RADIO
+  
+  self:F(Positionable)
+  
+  if Positionable:GetPointVec2() ~= nil then -- It's stupid, but the only way I found to make sure positionable is valid
+    self.Positionable = Positionable
     return self
-  else
-    self:E({"The passed positionable is invalid, no RADIO created", positionable})
-    return nil
   end
+  
+  self:E({"The passed positionable is invalid, no RADIO created", Positionable})
+  return nil
 end
 
 --- Check validity of the filename passed and sets RADIO.FileName
 -- @param #RADIO self
--- @param #string fileName File name of the sound file (i.e. "Noise.ogg")
+-- @param #string FileName File name of the sound file (i.e. "Noise.ogg")
 -- @return #RADIO self
-function RADIO:SetFileName(filename)
-  self:F2(filename)
-  if type(filename) == "string" then
-    if filename:find(".ogg") ~= nil or filename:find(".wav") ~= nil then
-      if filename:find("l10n/DEFAULT/") == nil then
-        filename = "l10n/DEFAULT/" .. filename
+function RADIO:SetFileName(FileName)
+  self:F2(FileName)
+  
+  if type(FileName) == "string" then
+    if FileName:find(".ogg") ~= nil or FileName:find(".wav") ~= nil then
+      if FileName:find("l10n/DEFAULT/") == nil then
+        FileName = "l10n/DEFAULT/" .. FileName
       end
-      self.FileName = filename
+      self.FileName = FileName
       return self
     end
   end
+  
   self:E({"File name invalid. Maybe something wrong with the extension ?", self.FileName})
   return self
 end
 
 --- Check validity of the frequency passed and sets RADIO.Frequency
 -- @param #RADIO self
--- @param #number frequency in MHz (Ranges allowed for radio transmissions in DCS : 30-88 / 108-152 / 225-400MHz)
+-- @param #number Frequency in MHz (Ranges allowed for radio transmissions in DCS : 30-88 / 108-152 / 225-400MHz)
 -- @return #RADIO self
-function RADIO:SetFrequency(frequency)
-  self:F2(frequency)
-  if type(frequency) == "number" then
+function RADIO:SetFrequency(Frequency)
+  self:F2(Frequency)
+  if type(Frequency) == "number" then
     -- If frequency is in range
-    if (frequency >= 30 and frequency < 88) or (frequency >= 108 and frequency < 152) or (frequency >= 225 and frequency < 400) then
-      self.Frequency = frequency * 1000000 -- Conversion in Hz
+    if (Frequency >= 30 and Frequency < 88) or (Frequency >= 108 and Frequency < 152) or (Frequency >= 225 and Frequency < 400) then
+      self.Frequency = Frequency * 1000000 -- Conversion in Hz
       -- If the RADIO is attached to a UNIT or a GROUP, we need to send the DCS Command "SetFrequency" to change the UNIT or GROUP frequency
       if self.Positionable.ClassName == "UNIT" or self.Positionable.ClassName == "GROUP" then
         self.Positionable:GetDCSObject():getController():setCommand({
@@ -156,13 +160,13 @@ end
 
 --- Check validity of the frequency passed and sets RADIO.Modulation
 -- @param #RADIO self
--- @param #number modulation either radio.modulation.AM or radio.modulation.FM
+-- @param #number Modulation either radio.modulation.AM or radio.modulation.FM
 -- @return #RADIO self
-function RADIO:SetModulation(modulation)
-  self:F2(modulation)
-  if type(modulation) == "number" then
-    if modulation == radio.modulation.AM or modulation == radio.modulation.FM then --TODO Maybe make this future proof if ED decides to add an other modulation ?
-      self.Modulation = modulation
+function RADIO:SetModulation(Modulation)
+  self:F2(Modulation)
+  if type(Modulation) == "number" then
+    if Modulation == radio.modulation.AM or Modulation == radio.modulation.FM then --TODO Maybe make this future proof if ED decides to add an other modulation ?
+      self.Modulation = Modulation
       return self
     end
   end
@@ -174,10 +178,10 @@ end
 -- @param #RADIO self
 -- @param #number Power in W
 -- @return #RADIO self
-function RADIO:SetPower(power)
-  self:F2(power)
-  if type(power) == "number" then
-    self.Power = math.floor(math.abs(power)) --TODO Find what is the maximum power allowed by DCS and limit power to that
+function RADIO:SetPower(Power)
+  self:F2(Power)
+  if type(Power) == "number" then
+    self.Power = math.floor(math.abs(Power)) --TODO Find what is the maximum power allowed by DCS and limit power to that
     return self
   end
   self:E({"Power is invalid. Power unchanged.", self.Power})
@@ -189,10 +193,10 @@ end
 -- @param #boolean Loop
 -- @return #RADIO self
 -- @usage
-function RADIO:SetLoop(loop)
-  self:F2(loop)
-  if type(loop) == "boolean" then
-    self.Loop = loop
+function RADIO:SetLoop(Loop)
+  self:F2(Loop)
+  if type(Loop) == "boolean" then
+    self.Loop = Loop
     return self
   end
   self:E({"Loop is invalid. Loop unchanged.", self.Loop})
@@ -201,22 +205,22 @@ end
 
 --- Check validity of the subtitle and the subtitleDuration  passed and sets RADIO.subtitle and RADIO.subtitleDuration
 -- @param #RADIO self
--- @param #string Subtitle
--- @param #number SubtitleDuration in s
+-- @param #string SubTitle
+-- @param #number SubTitleDuration in s
 -- @return #RADIO self
 -- @usage
 -- -- Both parameters are mandatory, since it wouldn't make much sense to change the Subtitle and not its duration
-function RADIO:SetSubtitle(subtitle, subtitleDuration)
-  self:F2({subtitle, subtitleDuration})
-  if type(subtitle) == "string" then
-    self.Subtitle = subtitle
+function RADIO:SetSubtitle(SubTitle, SubTitleDuration)
+  self:F2({SubTitle, SubTitleDuration})
+  if type(SubTitle) == "string" then
+    self.Subtitle = SubTitle
   else
     self.Subtitle = ""
     self:E({"Subtitle is invalid. Subtitle reset.", self.Subtitle})
   end
-  if type(subtitleDuration) == "number" then
-    if math.floor(math.abs(subtitleDuration)) == subtitleDuration then
-      self.SubtitleDuration = subtitleDuration
+  if type(SubTitleDuration) == "number" then
+    if math.floor(math.abs(SubTitleDuration)) == SubTitleDuration then
+      self.SubtitleDuration = SubTitleDuration
       return self
     end
   end
@@ -305,3 +309,4 @@ function RADIO:Broadcast()
   end
   return self
 end
+
