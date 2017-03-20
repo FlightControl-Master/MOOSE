@@ -79,7 +79,6 @@
 -- @extends Core.Base#BASE
 RADIO = {
   ClassName = "RADIO",
-  Positionable,
   FileName = "",
   Frequency = 0,
   Modulation = radio.modulation.AM,
@@ -205,22 +204,22 @@ end
 
 --- Check validity of the subtitle and the subtitleDuration  passed and sets RADIO.subtitle and RADIO.subtitleDuration
 -- @param #RADIO self
--- @param #string SubTitle
--- @param #number SubTitleDuration in s
+-- @param #string Subtitle
+-- @param #number SubtitleDuration in s
 -- @return #RADIO self
 -- @usage
 -- -- Both parameters are mandatory, since it wouldn't make much sense to change the Subtitle and not its duration
-function RADIO:SetSubtitle(SubTitle, SubTitleDuration)
-  self:F2({SubTitle, SubTitleDuration})
-  if type(SubTitle) == "string" then
-    self.Subtitle = SubTitle
+function RADIO:SetSubtitle(Subtitle, SubtitleDuration)
+  self:F2({Subtitle, SubtitleDuration})
+  if type(Subtitle) == "string" then
+    self.Subtitle = Subtitle
   else
     self.Subtitle = ""
     self:E({"Subtitle is invalid. Subtitle reset.", self.Subtitle})
   end
-  if type(SubTitleDuration) == "number" then
-    if math.floor(math.abs(SubTitleDuration)) == SubTitleDuration then
-      self.SubtitleDuration = SubTitleDuration
+  if type(SubtitleDuration) == "number" then
+    if math.floor(math.abs(SubtitleDuration)) == SubtitleDuration then
+      self.SubtitleDuration = SubtitleDuration
       return self
     end
   end
@@ -230,7 +229,7 @@ end
 
 --- Create a new transmission, that is to say, populate the RADIO with relevant data
 -- @param #RADIO self
--- @param #string Filename
+-- @param #string FileName
 -- @param #number Frequency in MHz
 -- @param #number Modulation either radio.modulation.AM or radio.modulation.FM
 -- @param #number Power in W
@@ -239,13 +238,13 @@ end
 -- -- In this function the data is especially relevant if the broadcaster is anything but a UNIT or a GROUP,
 -- but it will work with a UNIT or a GROUP anyway
 -- -- Only the RADIO and the Filename are mandatory
-function RADIO:NewGenericTransmission(...)
-  self:F(arg)
+function RADIO:NewGenericTransmission(FileName, Frequency, Modulation, Power)
+  self:F({FileName, Frequency, Modulation, Power})
   
-  self:SetFileName(arg[1])
-  if arg[2] then self:SetFrequency(arg[2]) end
-  if arg[3] then self:SetModulation(arg[3]) end
-  if arg[4] then self:SetPower(arg[4]) end
+  self:SetFileName(FileName)
+  if Frequency then self:SetFrequency(Frequency) end
+  if Modulation then self:SetModulation(Modulation) end
+  if Power then self:SetPower(Power) end
   
   return self
 end
@@ -253,7 +252,7 @@ end
 
 --- Create a new transmission, that is to say, populate the RADIO with relevant data
 -- @param #RADIO self
--- @param #string Filename
+-- @param #string FileName
 -- @param #string Subtitle
 -- @param #number SubtitleDuration in s
 -- @param #number Frequency in MHz
@@ -264,15 +263,15 @@ end
 -- -- In this function the data is especially relevant if the broadcaster is a UNIT or a GROUP,
 -- but it will work for any POSITIONABLE
 -- -- Only the RADIO and the Filename are mandatory
-function RADIO:NewUnitTransmission(...)
-  self:F(arg)
+function RADIO:NewUnitTransmission(FileName, Subtitle, SubtitleDuration, Frequency, Modulation, Loop)
+  self:F({FileName, Subtitle, SubtitleDuration, Frequency, Modulation, Loop})
 
-  self:SetFileName(arg[1])
-  if arg[2] then self:SetSubtitle(arg[2]) end
-  if arg[3] then self:SetSubtitleDuration(arg[3]) end
-  if arg[4] then self:SetFrequency(arg[4]) end
-  if arg[5] then self:SetModulation(arg[5]) end
-  if arg[6] then self:SetLoop(arg[6]) end
+  self:SetFileName(FileName)
+  if Subtitle then self:SetSubtitle(Subtitle) end
+  if SubtitleDuration then self:SetSubtitleDuration(SubtitleDuration) end
+  if Frequency then self:SetFrequency(Frequency) end
+  if Modulation then self:SetModulation(Modulation) end
+  if Loop then self:SetLoop(Loop) end
   
   return self
 end
