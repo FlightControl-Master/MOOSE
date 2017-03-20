@@ -4,6 +4,12 @@
 -- 
 -- ===
 -- 
+-- DETECTION classes facilitate the detection of enemy units within the battle zone executed by FACs (Forward Air Controllers) or RECCEs (Reconnassance Units).
+-- DETECTION uses the in-built detection capabilities of DCS World, but adds new functionalities.
+-- 
+-- Please watch this [youtube video](https://youtu.be/C7p81dUwP-E) that explains the detection concepts.
+-- 
+-- 
 -- ### Contributions: 
 -- 
 --   * Mechanist : Early concept of DETECTION_AREAS.
