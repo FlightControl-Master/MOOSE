@@ -992,7 +992,7 @@ function SCORING:_EventOnHit( Event )
             end
           else -- A scenery object was hit.
             MESSAGE
-              :New( "Player '" .. InitPlayerName .. "' hit a scenery object.",
+              :New( "Player '" .. Event.WeaponPlayerName .. "' hit a scenery object.",
                     2
                   )
               :ToAllIf( self:IfMessagesHit() and self:IfMessagesToAll() )
