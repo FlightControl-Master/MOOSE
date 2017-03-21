@@ -544,7 +544,7 @@ function SCORING:_AddPlayerFromUnit( UnitData )
     local UnitCategory = UnitDesc.category
     local UnitCoalition = UnitData:GetCoalition()
     local UnitTypeName = UnitData:GetTypeName()
-    local ThreatLevel = UnitData:GetThreatLevel()
+    local UnitThreatLevel = UnitData:GetThreatLevel()
 
     self:T( { PlayerName, UnitName, UnitCategory, UnitCoalition, UnitTypeName } )
 
@@ -585,6 +585,7 @@ function SCORING:_AddPlayerFromUnit( UnitData )
     self.Players[PlayerName].UnitCategory = UnitCategory
     self.Players[PlayerName].UnitType = UnitTypeName
     self.Players[PlayerName].UNIT = UnitData 
+    self.Players[PlayerName].ThreatLevel = UnitThreatLevel
 
     if self.Players[PlayerName].Penalty > self.Fratricide * 0.50 then
       if self.Players[PlayerName].PenaltyWarning < 1 then
