@@ -544,7 +544,7 @@ function SCORING:_AddPlayerFromUnit( UnitData )
     local UnitCategory = UnitDesc.category
     local UnitCoalition = UnitData:GetCoalition()
     local UnitTypeName = UnitData:GetTypeName()
-    local UnitThreatLevel = UnitData:GetThreatLevel()
+    local UnitThreatLevel, UnitThreatType = UnitData:GetThreatLevel()
 
     self:T( { PlayerName, UnitName, UnitCategory, UnitCoalition, UnitTypeName } )
 
@@ -586,6 +586,7 @@ function SCORING:_AddPlayerFromUnit( UnitData )
     self.Players[PlayerName].UnitType = UnitTypeName
     self.Players[PlayerName].UNIT = UnitData 
     self.Players[PlayerName].ThreatLevel = UnitThreatLevel
+    self.Players[PlayerName].ThreatType = UnitThreatType
 
     if self.Players[PlayerName].Penalty > self.Fratricide * 0.50 then
       if self.Players[PlayerName].PenaltyWarning < 1 then
@@ -844,7 +845,7 @@ function SCORING:_EventOnHit( Event )
         PlayerHit.PenaltyHit = PlayerHit.PenaltyHit or 0
         PlayerHit.TimeStamp = PlayerHit.TimeStamp or 0
         PlayerHit.UNIT = PlayerHit.UNIT or TargetUNIT
-        PlayerHit.ThreatLevel = PlayerHit.UNIT:GetThreatLevel()
+        PlayerHit.ThreatLevel, PlayerHit.ThreatType = PlayerHit.UNIT:GetThreatLevel()
 
         -- Only grant hit scores if there was more than one second between the last hit.        
         if timer.getTime() - PlayerHit.TimeStamp > 1 then
@@ -956,7 +957,7 @@ function SCORING:_EventOnHit( Event )
         PlayerHit.PenaltyHit = PlayerHit.PenaltyHit or 0
         PlayerHit.TimeStamp = PlayerHit.TimeStamp or 0
         PlayerHit.UNIT = PlayerHit.UNIT or TargetUNIT
-        PlayerHit.ThreatLevel = PlayerHit.UNIT:GetThreatLevel()
+        PlayerHit.ThreatLevel, PlayerHit.ThreatType = PlayerHit.UNIT:GetThreatLevel()
 
         -- Only grant hit scores if there was more than one second between the last hit.        
         if timer.getTime() - PlayerHit.TimeStamp > 1 then
@@ -1068,7 +1069,8 @@ function SCORING:_EventOnDeadOrCrash( Event )
       -- What is the player destroying?
       if Player and Player.Hit and Player.Hit[TargetCategory] and Player.Hit[TargetCategory][TargetUnitName] and Player.Hit[TargetCategory][TargetUnitName].TimeStamp ~= 0 then -- Was there a hit for this unit for this player before registered???
         
-        local TargetTreatLevel = Player.Hit[TargetCategory][TargetUnitName].ThreatLevel
+        local TargetThreatLevel = Player.Hit[TargetCategory][TargetUnitName].ThreatLevel
+        local TargetThreatType = Player.Hit[TargetCategory][TargetUnitName].ThreatType
         
         Player.Destroy[TargetCategory] = Player.Destroy[TargetCategory] or {}
         Player.Destroy[TargetCategory][TargetType] = Player.Destroy[TargetCategory][TargetType] or {}
@@ -1082,7 +1084,8 @@ function SCORING:_EventOnDeadOrCrash( Event )
 
         if TargetCoalition then
           if InitCoalition == TargetCoalition then
-            local ThreatLevelTarget, ThreatTypeTarget = TargetTreatLevel
+            local ThreatLevelTarget = TargetThreatLevel
+            local ThreatTypeTarget = TargetThreatType
             local ThreatLevelPlayer = Player.ThreatLevel / 10 + 1
             local ThreatPenalty = math.ceil( ( ThreatLevelTarget / ThreatLevelPlayer ) * self.ScaleDestroyPenalty / 10 )
             self:E( { ThreatLevel = ThreatPenalty, ThreatLevelTarget = ThreatLevelTarget, ThreatTypeTarget = ThreatTypeTarget, ThreatLevelPlayer = ThreatLevelPlayer  } )
@@ -1115,7 +1118,8 @@ function SCORING:_EventOnDeadOrCrash( Event )
             self:ScoreCSV( PlayerName, TargetPlayerName, "DESTROY_PENALTY", 1, ThreatPenalty, InitUnitName, InitUnitCoalition, InitUnitCategory, InitUnitType, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType )
           else
 
-            local ThreatLevelTarget, ThreatTypeTarget = TargetTreatLevel
+            local ThreatLevelTarget = TargetThreatLevel
+            local ThreatTypeTarget = TargetThreatType
             local ThreatLevelPlayer = Player.ThreatLevel / 10 + 1
             local ThreatScore = math.ceil( ( ThreatLevelTarget / ThreatLevelPlayer )  * self.ScaleDestroyScore / 10 )
             
