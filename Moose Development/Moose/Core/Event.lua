@@ -785,6 +785,11 @@ function EVENT:onEvent( Event )
     if Event.weapon then
       Event.Weapon = Event.weapon
       Event.WeaponName = Event.Weapon:getTypeName()
+      Event.WeaponUNIT = CLIENT:Find( Event.Weapon, '', true ) -- Sometimes, the weapon is a player unit!
+      Event.WeaponPlayerName = Event.WeaponUNIT and Event.Weapon:getPlayerName()
+      Event.WeaponCoalition = Event.WeaponUNIT and Event.Weapon:getCoalition()
+      Event.WeaponCategory = Event.WeaponUNIT and Event.Weapon:getDesc().category
+      Event.WeaponTypeName = Event.WeaponUNIT and Event.Weapon:getTypeName()
       --Event.WeaponTgtDCSUnit = Event.Weapon:getTarget()
     end
     
@@ -949,7 +954,7 @@ function EVENT:onEvent( Event )
           
               -- If the EventData is not bound to a specific unit, then call the EventClass EventFunction.
               -- Note that here the EventFunction will need to implement and determine the logic for the relevant source- or target unit, or weapon.
-              if Event.IniDCSUnit and not EventData.EventUnit then
+              if (Event.IniDCSUnit or Event.WeaponUNIT) and not EventData.EventUnit then
               
                 if EventClass == EventData.EventClass then
                   
