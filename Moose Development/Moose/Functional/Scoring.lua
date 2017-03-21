@@ -5,8 +5,6 @@
 --  
 -- ===
 -- 
--- # 1) @{Scoring#SCORING} class, extends @{Base#BASE}
--- 
 -- The @{#SCORING} class administers the scoring of player achievements, 
 -- and creates a CSV file logging the scoring events and results for use at team or squadron websites.
 -- 
@@ -57,6 +55,8 @@
 -- Use the radio menu F10 to consult the scores while running the mission. 
 -- Scores can be reported for your user, or an overall score can be reported of all players currently active in the mission.
 -- 
+-- # 1) @{Scoring#SCORING} class, extends @{Base#BASE}
+-- 
 -- ## 1.1) Set the destroy score or penalty scale
 -- 
 -- Score scales can be set for scores granted when enemies or friendlies are destroyed.
@@ -86,8 +86,6 @@
 -- For example, this can be done as follows:
 -- 
 --      Scoring:RemoveUnitScore( UNIT:FindByName( "Unit #001" ) )
---      
---      
 -- 
 -- ## 1.3) Define destruction zones that will give extra scores.
 -- 
@@ -922,6 +920,88 @@ function SCORING:_EventOnHit( Event )
     end
   elseif InitPlayerName == nil then -- It is an AI hitting a player???
 
+  end
+  
+  -- It is a weapon initiated by a player, that is hitting something
+  -- This seems to occur only with scenery and static objects.
+  if Event.WeaponPlayerName ~= nil then 
+    self:_AddPlayerFromUnit( Event.WeaponUNIT )
+    if self.Players[Event.WeaponPlayerName] then -- This should normally not happen, but i'll test it anyway.
+      if TargetPlayerName ~= nil then -- It is a player hitting another player ...
+        self:_AddPlayerFromUnit( TargetUNIT )
+      end
+
+      self:T( "Hitting Scenery" )
+    
+      -- What is he hitting?
+      if TargetCategory then
+  
+        -- A scenery or static got hit, score it.
+        -- Player contains the score data from self.Players[WeaponPlayerName]
+        local Player = self.Players[Event.WeaponPlayerName]
+        
+        -- Ensure there is a hit table per TargetCategory and TargetUnitName.
+        Player.Hit[TargetCategory] = Player.Hit[TargetCategory] or {}
+        Player.Hit[TargetCategory][TargetUnitName] = Player.Hit[TargetCategory][TargetUnitName] or {}
+        
+        -- PlayerHit contains the score counters and data per unit that was hit.
+        local PlayerHit = Player.Hit[TargetCategory][TargetUnitName]
+         
+        PlayerHit.Score = PlayerHit.Score or 0
+        PlayerHit.Penalty = PlayerHit.Penalty or 0
+        PlayerHit.ScoreHit = PlayerHit.ScoreHit or 0
+        PlayerHit.PenaltyHit = PlayerHit.PenaltyHit or 0
+        PlayerHit.TimeStamp = PlayerHit.TimeStamp or 0
+        PlayerHit.UNIT = PlayerHit.UNIT or TargetUNIT
+
+        -- Only grant hit scores if there was more than one second between the last hit.        
+        if timer.getTime() - PlayerHit.TimeStamp > 1 then
+          PlayerHit.TimeStamp = timer.getTime()
+          
+          local Score = 0
+          
+          if InitCoalition then -- A coalition object was hit, probably a static.
+            if InitCoalition == TargetCoalition then
+              -- TODO: Penalty according scale
+              Player.Penalty = Player.Penalty + 10
+              PlayerHit.Penalty = PlayerHit.Penalty + 10
+              PlayerHit.PenaltyHit = PlayerHit.PenaltyHit + 1
+      
+              MESSAGE
+                :New( "Player '" .. Event.WeaponPlayerName .. "' hit a friendly target " .. 
+                      TargetUnitCategory .. " ( " .. TargetType .. " ) " .. PlayerHit.PenaltyHit .. " times. " .. 
+                      "Penalty: -" .. PlayerHit.Penalty .. ".  Score Total:" .. Player.Score - Player.Penalty,
+                      2
+                    )
+                :ToAllIf( self:IfMessagesHit() and self:IfMessagesToAll() )
+                :ToCoalitionIf( Event.WeaponCoalition, self:IfMessagesHit() and self:IfMessagesToCoalition() )
+              self:ScoreCSV( Event.WeaponPlayerName, TargetPlayerName, "HIT_PENALTY", 1, -10, Event.WeaponName, Event.WeaponCoalition, Event.WeaponCategory, Event.WeaponTypeName, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType )
+            else
+              Player.Score = Player.Score + 1
+              PlayerHit.Score = PlayerHit.Score + 1
+              PlayerHit.ScoreHit = PlayerHit.ScoreHit + 1
+              MESSAGE
+                :New( "Player '" .. Event.WeaponPlayerName .. "' hit an enemy target " .. 
+                      TargetUnitCategory .. " ( " .. TargetType .. " ) " .. PlayerHit.ScoreHit .. " times. " .. 
+                      "Score: " .. PlayerHit.Score .. ".  Score Total:" .. Player.Score - Player.Penalty,
+                      2
+                    )
+                :ToAllIf( self:IfMessagesHit() and self:IfMessagesToAll() )
+                :ToCoalitionIf( Event.WeaponCoalition, self:IfMessagesHit() and self:IfMessagesToCoalition() )
+              self:ScoreCSV( Event.WeaponPlayerName, TargetPlayerName, "HIT_SCORE", 1, 1, Event.WeaponName, Event.WeaponCoalition, Event.WeaponCategory, Event.WeaponTypeName, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType )
+            end
+          else -- A scenery object was hit.
+            MESSAGE
+              :New( "Player '" .. InitPlayerName .. "' hit a scenery object.",
+                    2
+                  )
+              :ToAllIf( self:IfMessagesHit() and self:IfMessagesToAll() )
+              :ToCoalitionIf( InitCoalition, self:IfMessagesHit() and self:IfMessagesToCoalition() )
+            self:ScoreCSV( Event.WeaponPlayerName, "", "HIT_SCORE", 1, 1, Event.WeaponName, Event.WeaponCoalition, Event.WeaponCategory, Event.WeaponTypeName, TargetUnitName, "", "Scenery", TargetUnitType )
+          end
+        end
+      end
+    end
   end
 end
 
