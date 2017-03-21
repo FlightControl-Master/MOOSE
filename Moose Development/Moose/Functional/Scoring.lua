@@ -1200,7 +1200,9 @@ function SCORING:_EventOnDeadOrCrash( Event )
           end
         end
         
-        -- Delete now the hit cache if the target was destroyed
+        -- Delete now the hit cache if the target was destroyed.
+        -- Otherwise points will be granted every time a target gets killed by the players that hit that target.
+        -- This is only relevant for player to player destroys.
         if Destroyed then
           Player.Hit[TargetCategory][TargetUnitName].TimeStamp = 0
         end
