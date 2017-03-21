@@ -49,6 +49,7 @@
 					<li>Positionable</li>
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
 					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
+					<li><a href="Radio.html">Radio</a></li>
 					<li><a href="Route.html">Route</a></li>
 					<li><a href="Scenery.html">Scenery</a></li>
 					<li><a href="ScheduleDispatcher.html">ScheduleDispatcher</a></li>
@@ -164,6 +165,12 @@
 		<td class="name" nowrap="nowrap"><a href="##(POSITIONABLE).GetPositionVec3">POSITIONABLE:GetPositionVec3()</a></td>
 		<td class="summary">
 <p>Returns the <a href="DCSTypes.html##(Position3)">DCSTypes#Position3</a> position vectors indicating the point and direction vectors in 3D of the POSITIONABLE within the mission.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POSITIONABLE).GetRadio">POSITIONABLE:GetRadio()</a></td>
+		<td class="summary">
+<p>Create a <a href="Radio.html##(RADIO)">Radio#RADIO</a>, to allow radio transmission for this POSITIONABLE.</p>
 </td>
 		</tr>
 		<tr>
@@ -486,6 +493,27 @@ The POSITIONABLE is not existing or alive.  </p>
 
 				</li>
 			</ol>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(POSITIONABLE).GetRadio" >
+<strong>POSITIONABLE:GetRadio()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Create a <a href="Radio.html##(RADIO)">Radio#RADIO</a>, to allow radio transmission for this POSITIONABLE.</p>
+
+	
+<p>Set parameters with the methods provided, then use RADIO:Broadcast() to actually broadcast the message</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(RADIO)">#RADIO</a>:</em>
+Radio</p>
+
 </dd>
 </dl>
 		<dl class="function">
@@ -1014,6 +1042,8 @@ self</p>
 </dd>
 </dl>
 
+			<h2><a id="#(RADIO)" >Type <code>RADIO</code></a></h2>
+			
 </div>
 
 </div>
