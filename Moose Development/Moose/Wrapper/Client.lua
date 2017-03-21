@@ -73,7 +73,7 @@ CLIENT = {
 --  Mission:AddClient( CLIENT:FindByName( 'RU MI-8MTV2*RAMP-Deploy Troops 3' ):Transport() )
 --  Mission:AddClient( CLIENT:FindByName( 'RU MI-8MTV2*HOT-Deploy Troops 2' ):Transport() )
 --  Mission:AddClient( CLIENT:FindByName( 'RU MI-8MTV2*RAMP-Deploy Troops 4' ):Transport() )
-function CLIENT:Find( DCSUnit )
+function CLIENT:Find( DCSUnit, Error )
   local ClientName = DCSUnit:getName()
   local ClientFound = _DATABASE:FindClient( ClientName )
   
@@ -82,7 +82,9 @@ function CLIENT:Find( DCSUnit )
     return ClientFound
   end
   
-  error( "CLIENT not found for: " .. ClientName )
+  if not Error then
+    error( "CLIENT not found for: " .. ClientName )
+  end
 end
 
 

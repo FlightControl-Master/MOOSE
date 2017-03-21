@@ -785,11 +785,11 @@ function EVENT:onEvent( Event )
     if Event.weapon then
       Event.Weapon = Event.weapon
       Event.WeaponName = Event.Weapon:getTypeName()
-      Event.WeaponPlayerName = Event.Weapon:getPlayerName()
-      Event.WeaponUNIT = Event.WeaponPlayerName and CLIENT:FindByName( Event.WeaponName, '', true ) -- Sometimes, the weapon is a player unit!
-      Event.WeaponCoalition = Event.WeaponPlayerName and Event.Weapon:getCoalition()
-      Event.WeaponCategory = Event.WeaponPlayerName and Event.Weapon:getDesc().category
-      Event.WeaponTypeName = Event.WeaponPlayerName and Event.Weapon:getTypeName()
+      Event.WeaponUNIT = CLIENT:Find( Event.Weapon, '', true ) -- Sometimes, the weapon is a player unit!
+      Event.WeaponPlayerName = Event.WeaponUNIT and Event.Weapon:getPlayerName()
+      Event.WeaponCoalition = Event.WeaponUNIT and Event.Weapon:getCoalition()
+      Event.WeaponCategory = Event.WeaponUNIT and Event.Weapon:getDesc().category
+      Event.WeaponTypeName = Event.WeaponUNIT and Event.Weapon:getTypeName()
       --Event.WeaponTgtDCSUnit = Event.Weapon:getTarget()
     end
     
