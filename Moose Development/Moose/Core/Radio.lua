@@ -100,7 +100,7 @@ function RADIO:New(Positionable)
   
   self:F(Positionable)
   
-  if Positionable:GetPointVec2() ~= nil then -- It's stupid, but the only way I found to make sure positionable is valid
+  if Positionable:GetPointVec2() then -- It's stupid, but the only way I found to make sure positionable is valid
     self.Positionable = Positionable
     return self
   end
@@ -117,8 +117,8 @@ function RADIO:SetFileName(FileName)
   self:F2(FileName)
   
   if type(FileName) == "string" then
-    if FileName:find(".ogg") ~= nil or FileName:find(".wav") ~= nil then
-      if FileName:find("l10n/DEFAULT/") == nil then
+    if FileName:find(".ogg") or FileName:find(".wav") then
+      if not FileName:find("l10n/DEFAULT/") then
         FileName = "l10n/DEFAULT/" .. FileName
       end
       self.FileName = FileName
