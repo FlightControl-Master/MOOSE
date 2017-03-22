@@ -60,7 +60,7 @@ do -- TASK_A2G_DISPATCHER
   
   --- TASK_A2G_DISPATCHER constructor.
   -- @param #TASK_A2G_DISPATCHER self
-  -- @param Tasking.Mission#MISSION The mission for which the task dispatching is done.
+  -- @param Tasking.Mission#MISSION Mission The mission for which the task dispatching is done.
   -- @param Set#SET_GROUP SetGroup The set of groups that can join the tasks within the mission.
   -- @param Functional.Detection#DETECTION_BASE Detection The detection results that are used to dynamically assign new tasks to human players.
   -- @return #TASK_A2G_DISPATCHER self

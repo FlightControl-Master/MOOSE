@@ -726,14 +726,6 @@ function SPAWN:SpawnWithIndex( SpawnIndex )
       _EVENTDISPATCHER:OnCrashForTemplate( SpawnTemplate, self._OnDeadOrCrash, self )
       _EVENTDISPATCHER:OnDeadForTemplate( SpawnTemplate, self._OnDeadOrCrash, self )
 
-      if self.Repeat then
-        _EVENTDISPATCHER:OnTakeOffForTemplate( SpawnTemplate, self._OnTakeOff, self )
-        _EVENTDISPATCHER:OnLandForTemplate( SpawnTemplate, self._OnLand, self )
-      end
-      if self.RepeatOnEngineShutDown then
-        _EVENTDISPATCHER:OnEngineShutDownForTemplate( SpawnTemplate, self._OnEngineShutDown, self )
-      end
-      self:T3( SpawnTemplate.name )
 
 			self.SpawnGroups[self.SpawnIndex].Group = _DATABASE:Spawn( SpawnTemplate )
 			
@@ -744,6 +736,19 @@ function SPAWN:SpawnWithIndex( SpawnIndex )
       
 			  SpawnGroup:SetAIOnOff( self.AIOnOff )
 			end
+
+      if self.Repeat then
+        SpawnGroup:HandleEvent( EVENTS.Takeoff, self._OnTakeOff )
+        SpawnGroup:HandleEvent( EVENTS.Land, self._OnLand )
+        --_EVENTDISPATCHER:OnTakeOffForTemplate( SpawnTemplate, self._OnTakeOff, self )
+        --_EVENTDISPATCHER:OnLandForTemplate( SpawnTemplate, self._OnLand, self )
+      end
+      if self.RepeatOnEngineShutDown then
+        SpawnGroup:HandleEvent( EVENTS.EngineShutdown, self._OnEngineShutDown )
+        
+        --_EVENTDISPATCHER:OnEngineShutDownForTemplate( SpawnTemplate, self._OnEngineShutDown, self )
+      end
+      self:T3( SpawnTemplate.name )
 			
 			-- If there is a SpawnFunction hook defined, call it.
 			if self.SpawnFunctionHook then
@@ -1165,7 +1170,7 @@ end
 -- @param Dcs.DCSWrapper.Unit#Unit DCSUnit The @{DCSUnit} to be searched.
 -- @return Wrapper.Group#GROUP The Group
 -- @return #nil Nothing found
-function SPAWN:_GetGroupFromDCSUnit( DCSUnit )
+function SPAWN:_GetGroupFromUnit( DCSUnit )
 	self:F3( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix, DCSUnit } )
 	
 	local SpawnPrefix = self:_GetPrefixFromDCSUnit( DCSUnit )
@@ -1184,9 +1189,9 @@ end
 --- Get the index from a given group.
 -- The function will search the name of the group for a #, and will return the number behind the #-mark.
 function SPAWN:GetSpawnIndexFromGroup( SpawnGroup )
-	self:F3( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix, SpawnGroup } )
+	self:F( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix, SpawnGroup } )
 	
-	local IndexString = string.match( SpawnGroup:GetName(), "#.*$" ):sub( 2 )
+	local IndexString = string.match( SpawnGroup:GetName(), "#(%d*)$" ):sub( 2 )
 	local Index = tonumber( IndexString )
 	
 	self:T3( IndexString, Index )
@@ -1552,7 +1557,7 @@ function SPAWN:_OnTakeOff( event )
   self:F( self.SpawnTemplatePrefix,  event )
 
 	if event.initiator and event.initiator:getName() then
-		local SpawnGroup = self:_GetGroupFromDCSUnit( event.initiator )
+		local SpawnGroup = self:_GetGroupFromUnit( event.initiator )
 		if SpawnGroup then
 			self:T( { "TakeOff event: " .. event.initiator:getName(), event } )
 			self:T( "self.Landed = false" )
@@ -1563,17 +1568,19 @@ end
 
 --- Will detect AIR Units landing... When the event takes place, the spawned Group is registered as landed.
 -- This is needed to ensure that Re-SPAWNing is only done for landed AIR Groups.
+-- @param #SPAWN self
+-- @param Core.Event#EVENTDATA EventData
 -- @todo Need to test for AIR Groups only...
-function SPAWN:_OnLand( event )
-  self:F( self.SpawnTemplatePrefix,  event )
+function SPAWN:_OnLand( EventData )
+  self:F( self.SpawnTemplatePrefix )
 
-  local SpawnUnit = event.initiator
-	if SpawnUnit and SpawnUnit:isExist() and Object.getCategory(SpawnUnit) == Object.Category.UNIT then
-		local SpawnGroup = self:_GetGroupFromDCSUnit( SpawnUnit )
+  local SpawnUnit = EventData.IniUnit
+	if SpawnUnit and SpawnUnit:IsAlive() and SpawnUnit:GetCategory() == Object.Category.UNIT then
+		local SpawnGroup = self:_GetGroupFromUnit( SpawnUnit )
 		if SpawnGroup then
-			self:T( { "Landed event:" .. SpawnUnit:getName(), event } )
+			self:T( { "Landed event:" .. SpawnUnit:GetName() } )
 			self.Landed = true
-			self:T( "self.Landed = true" )
+	    -- TODO: Check if this is the last unit of the group that lands.
 			if self.Landed and self.RepeatOnLanding then
 				local SpawnGroupIndex = self:GetSpawnIndexFromGroup( SpawnGroup )
 				self:T( { "Landed:", "ReSpawn:", SpawnGroup:GetName(), SpawnGroupIndex } )
@@ -1595,7 +1602,7 @@ function SPAWN:_OnEngineShutDown( event )
 
   local SpawnUnit = event.initiator
   if SpawnUnit and SpawnUnit:isExist() and Object.getCategory(SpawnUnit) == Object.Category.UNIT then
-		local SpawnGroup = self:_GetGroupFromDCSUnit( SpawnUnit )
+		local SpawnGroup = self:_GetGroupFromUnit( SpawnUnit )
 		if SpawnGroup then
 			self:T( { "EngineShutDown event: " .. SpawnUnit:getName(), event } )
 			if self.Landed and self.RepeatOnEngineShutDown then
