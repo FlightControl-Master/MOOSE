@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20170321_1213' ) 
+env.info( 'Moose Generation Timestamp: 20170322_2138' ) 
 local base = _G
 
 Include = {}
@@ -13424,10 +13424,14 @@ function POSITIONABLE:Message( Message, Duration, Name )
   return nil
 end
 
-
-
-
-
+--- Create a @{Radio#RADIO}, to allow radio transmission for this POSITIONABLE. 
+-- Set parameters with the methods provided, then use RADIO:Broadcast() to actually broadcast the message
+-- @param #POSITIONABLE self
+-- @return #RADIO Radio
+function POSITIONABLE:GetRadio()
+  self:F2(self)
+  return RADIO:New(self) 
+end
 --- This module contains the CONTROLLABLE class.
 -- 
 -- 1) @{Controllable#CONTROLLABLE} class, extends @{Positionable#POSITIONABLE}
@@ -35349,6 +35353,7 @@ Include.File( "Core/Set" )
 Include.File( "Core/Point" )
 Include.File( "Core/Message" )
 Include.File( "Core/Fsm" )
+Include.File( "Core/Radio" )
 
 --- Wrapper Classes
 Include.File( "Wrapper/Object" )
