@@ -50,7 +50,7 @@ BatumiRadio:Broadcast()
 
 -- Now, if Viktor answered imedately, the two radio broadcasts would overlap. We need to delay Viktor's answer. 
 ------------------------------------------------------------------------------------------------------------------------------------------------------
-SCHEDULER:New( nil,
+CommunitcationScheduler = SCHEDULER:New( nil,
   function()
     ViktorRadio:SetFileName("Viktor - Enter left base ack.ogg"):SetFrequency(115):SetModulation(radio.modulation.AM):Broadcast() -- We don't specify a subtitle since we don't want one
   end, {}, 10 -- 10s delay
@@ -58,7 +58,7 @@ SCHEDULER:New( nil,
   
 -- Viktor takes 145s to be 5km final, and need to contact Batumi Tower. 
 ------------------------------------------------------------------------------------------------------------------------------------------------------ 
-SCHEDULER:New( nil,
+CommunitcationScheduler:Schedule( nil,
   function()
     ViktorRadio:SetFileName("Viktor - Request landing clearance.ogg"):Broadcast() --We only specify the new file name, since frequency and modulation didn't change
   end, {}, 145
@@ -66,25 +66,25 @@ SCHEDULER:New( nil,
   
 -- Now that you understand everything about the RADIO class, the rest is pretty trivial
 -------------------------------------------------------------------------------------------------------------------------------------------------------
-SCHEDULER:New( nil,
+CommunitcationScheduler:Schedule( nil,
   function()
     BatumiRadio:SetFileName("Batumi Tower - Clear to land.ogg"):Broadcast()
   end, {}, 154
   )
   
-SCHEDULER:New( nil,
+CommunitcationScheduler:Schedule( nil,
   function()
     ViktorRadio:SetFileName("Viktor - Clear to land ack.ogg"):Broadcast()
   end, {}, 160
   )
   
-SCHEDULER:New( nil,
+CommunitcationScheduler:Schedule( nil,
   function()
     ViktorRadio:SetFileName("Viktor - Touchdown.ogg"):Broadcast()
   end, {}, 210
   )
   
-SCHEDULER:New( nil,
+CommunitcationScheduler:Schedule( nil,
   function()
     BatumiRadio:SetFileName("Batumi Tower - Taxi to parking.ogg"):Broadcast()
   end, {}, 215
