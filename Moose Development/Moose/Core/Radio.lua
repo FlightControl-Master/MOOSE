@@ -142,7 +142,7 @@ function RADIO:SetFrequency(Frequency)
       self.Frequency = Frequency * 1000000 -- Conversion in Hz
       -- If the RADIO is attached to a UNIT or a GROUP, we need to send the DCS Command "SetFrequency" to change the UNIT or GROUP frequency
       if self.Positionable.ClassName == "UNIT" or self.Positionable.ClassName == "GROUP" then
-        self.Positionable:GetDCSObject():getController():setCommand({
+        self.Positionable:SetCommand({
           id = "SetFrequency",
           params = {
             frequency = self.Frequency,
@@ -292,7 +292,7 @@ function RADIO:Broadcast()
   -- If the POSITIONABLE is actually a UNIT or a GROUP, use the more complicated DCS command system
   if self.Positionable.ClassName == "UNIT" or self.Positionable.ClassName == "GROUP" then
     self:T2("Broadcasting from a UNIT or a GROUP")
-    self.Positionable:GetDCSObject():getController():setCommand({
+    self.Positionable:SetCommand({
       id = "TransmitMessage",
       params = {
         file = self.FileName,
@@ -319,7 +319,7 @@ function RADIO:StopBroadcast()
   self:F()
   -- If the POSITIONABLE is a UNIT or a GROUP, stop the transmission with the DCS "StopTransmission" command 
   if self.Positionable.ClassName == "UNIT" or self.Positionable.ClassName == "GROUP" then
-    self.Positionable:GetDCSObject():getController():setCommand({
+    self.Positionable:SetCommand({
       id = "StopTransmission",
       params = {}
     })
