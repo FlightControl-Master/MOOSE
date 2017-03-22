@@ -142,7 +142,7 @@ function RADIO:SetFrequency(Frequency)
       self.Frequency = Frequency * 1000000 -- Conversion in Hz
       -- If the RADIO is attached to a UNIT or a GROUP, we need to send the DCS Command "SetFrequency" to change the UNIT or GROUP frequency
       if self.Positionable.ClassName == "UNIT" or self.Positionable.ClassName == "GROUP" then
-        self.Positionable:GetDCSObject():getController():setCommand({
+        self.Positionable:SetCommand({
           id = "SetFrequency",
           params = {
             frequency = self.Frequency,
@@ -289,10 +289,10 @@ end
 -- -- If your POSITIONABLE is not a UNIT or a GROUP, the Subtitle, SubtitleDuration and Loop are ignored
 function RADIO:Broadcast()
   self:F()
-  -- If the POSITIONABLE is actually a Unit or a Group, use the more complicated DCS command system
+  -- If the POSITIONABLE is actually a UNIT or a GROUP, use the more complicated DCS command system
   if self.Positionable.ClassName == "UNIT" or self.Positionable.ClassName == "GROUP" then
     self:T2("Broadcasting from a UNIT or a GROUP")
-    self.Positionable:GetDCSObject():getController():setCommand({
+    self.Positionable:SetCommand({
       id = "TransmitMessage",
       params = {
         file = self.FileName,
@@ -309,3 +309,22 @@ function RADIO:Broadcast()
   return self
 end
 
+--- Stops a transmission
+-- @param #RADIO self
+-- @return #RADIO self
+-- @usage
+-- -- Especially usefull to stop the broadcast of looped transmissions
+-- -- Only works with broadcasts from UNIT or GROUP
+function RADIO:StopBroadcast()
+  self:F()
+  -- If the POSITIONABLE is a UNIT or a GROUP, stop the transmission with the DCS "StopTransmission" command 
+  if self.Positionable.ClassName == "UNIT" or self.Positionable.ClassName == "GROUP" then
+    self.Positionable:SetCommand({
+      id = "StopTransmission",
+      params = {}
+    })
+  else
+    self:E("This broadcast can't be stopped. It's not looped either, so please wait for the end of the sound file playback")
+  end
+  return self
+end

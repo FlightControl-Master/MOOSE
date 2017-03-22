@@ -210,7 +210,7 @@ If the DCS Unit object does not exist or is nil, the CLIENT methods will return 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CLIENT).Find">CLIENT:Find(ClientName, ClientBriefing, DCSUnit)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(CLIENT).Find">CLIENT:Find(ClientName, ClientBriefing, DCSUnit, Error)</a></td>
 		<td class="summary">
 <p>Finds a CLIENT from the _DATABASE using the relevant DCS Unit.</p>
 </td>
@@ -594,7 +594,7 @@ Create a function that will be called when a player joins the slot.</p>
 <dt>
 
 <a id="#(CLIENT).Find" >
-<strong>CLIENT:Find(ClientName, ClientBriefing, DCSUnit)</strong>
+<strong>CLIENT:Find(ClientName, ClientBriefing, DCSUnit, Error)</strong>
 </a>
 </dt>
 <dd>
@@ -618,6 +618,11 @@ Text that describes the briefing of the mission when a Player logs into the Clie
 				<li>
 				
 <p><code><em> DCSUnit </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> Error </em></code>: </p>
 
 				</li>
 		</ul>
