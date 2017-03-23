@@ -39,11 +39,11 @@
 					<li><a href="Fsm.html">Fsm</a></li>
 					<li><a href="Group.html">Group</a></li>
 					<li><a href="Identifiable.html">Identifiable</a></li>
-					<li><a href="MOVEMENT.html">MOVEMENT</a></li>
 					<li><a href="Menu.html">Menu</a></li>
 					<li><a href="Message.html">Message</a></li>
 					<li><a href="MissileTrainer.html">MissileTrainer</a></li>
 					<li><a href="Mission.html">Mission</a></li>
+					<li><a href="Movement.html">Movement</a></li>
 					<li><a href="Object.html">Object</a></li>
 					<li><a href="Point.html">Point</a></li>
 					<li><a href="Positionable.html">Positionable</a></li>
@@ -62,8 +62,8 @@
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="Task.html">Task</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
+					<li><a href="Task_A2G_Dispatcher.html">Task_A2G_Dispatcher</a></li>
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
-					<li><a href="Task_SEAD.html">Task_SEAD</a></li>
 					<li><a href="Unit.html">Unit</a></li>
 					<li><a href="Utils.html">Utils</a></li>
 					<li><a href="Zone.html">Zone</a></li>
@@ -167,13 +167,13 @@ If a FC3 airacraft is used, it will <strong>hear every communication, whatever t
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(RADIO).NewGenericTransmission">RADIO:NewGenericTransmission(Filename, Frequency, Modulation, Power, ...)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(RADIO).NewGenericTransmission">RADIO:NewGenericTransmission(FileName, Frequency, Modulation, Power)</a></td>
 		<td class="summary">
 <p>Create a new transmission, that is to say, populate the RADIO with relevant data</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(RADIO).NewUnitTransmission">RADIO:NewUnitTransmission(Filename, Subtitle, SubtitleDuration, Frequency, Modulation, Loop, ...)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(RADIO).NewUnitTransmission">RADIO:NewUnitTransmission(FileName, Subtitle, SubtitleDuration, Frequency, Modulation, Loop)</a></td>
 		<td class="summary">
 <p>Create a new transmission, that is to say, populate the RADIO with relevant data</p>
 </td>
@@ -221,9 +221,15 @@ If a FC3 airacraft is used, it will <strong>hear every communication, whatever t
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(RADIO).SetSubtitle">RADIO:SetSubtitle(SubTitle, SubTitleDuration)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(RADIO).SetSubtitle">RADIO:SetSubtitle(Subtitle, SubtitleDuration)</a></td>
 		<td class="summary">
 <p>Check validity of the subtitle and the subtitleDuration  passed and sets RADIO.subtitle and RADIO.subtitleDuration</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RADIO).StopBroadcast">RADIO:StopBroadcast()</a></td>
+		<td class="summary">
+<p>Stops a transmission</p>
 </td>
 		</tr>
 		<tr>
@@ -453,7 +459,7 @@ If Positionable is invalid</p>
 <dt>
 
 <a id="#(RADIO).NewGenericTransmission" >
-<strong>RADIO:NewGenericTransmission(Filename, Frequency, Modulation, Power, ...)</strong>
+<strong>RADIO:NewGenericTransmission(FileName, Frequency, Modulation, Power)</strong>
 </a>
 </dt>
 <dd>
@@ -464,7 +470,7 @@ If Positionable is invalid</p>
 		<ul>
 				<li>
 				
-<p><code><em>#string Filename </em></code>: </p>
+<p><code><em>#string FileName </em></code>: </p>
 
 				</li>
 				<li>
@@ -485,11 +491,6 @@ either radio.modulation.AM or radio.modulation.FM</p>
 in W</p>
 
 				</li>
-				<li>
-				
-<p><code><em> ... </em></code>: </p>
-
-				</li>
 		</ul>
 		<h3>Return value</h3>
 				
@@ -507,7 +508,7 @@ but it will work with a UNIT or a GROUP anyway
 <dt>
 
 <a id="#(RADIO).NewUnitTransmission" >
-<strong>RADIO:NewUnitTransmission(Filename, Subtitle, SubtitleDuration, Frequency, Modulation, Loop, ...)</strong>
+<strong>RADIO:NewUnitTransmission(FileName, Subtitle, SubtitleDuration, Frequency, Modulation, Loop)</strong>
 </a>
 </dt>
 <dd>
@@ -518,7 +519,7 @@ but it will work with a UNIT or a GROUP anyway
 		<ul>
 				<li>
 				
-<p><code><em>#string Filename </em></code>: </p>
+<p><code><em>#string FileName </em></code>: </p>
 
 				</li>
 				<li>
@@ -547,11 +548,6 @@ either radio.modulation.AM or radio.modulation.FM</p>
 				<li>
 				
 <p><code><em>#boolean Loop </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em> ... </em></code>: </p>
 
 				</li>
 		</ul>
@@ -736,7 +732,7 @@ self</p>
 <dt>
 
 <a id="#(RADIO).SetSubtitle" >
-<strong>RADIO:SetSubtitle(SubTitle, SubTitleDuration)</strong>
+<strong>RADIO:SetSubtitle(Subtitle, SubtitleDuration)</strong>
 </a>
 </dt>
 <dd>
@@ -747,12 +743,12 @@ self</p>
 		<ul>
 				<li>
 				
-<p><code><em>#string SubTitle </em></code>: </p>
+<p><code><em>#string Subtitle </em></code>: </p>
 
 				</li>
 				<li>
 				
-<p><code><em>#number SubTitleDuration </em></code>: 
+<p><code><em>#number SubtitleDuration </em></code>: 
 in s</p>
 
 				</li>
@@ -764,6 +760,28 @@ self</p>
 
 			<h3>Usage:</h3>
 		<pre class="example"><code>-- Both parameters are mandatory, since it wouldn't make much sense to change the Subtitle and not its duration</code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(RADIO).StopBroadcast" >
+<strong>RADIO:StopBroadcast()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Stops a transmission</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(RADIO)">#RADIO</a>:</em>
+self</p>
+
+			<h3>Usage:</h3>
+		<pre class="example"><code>-- Especially usefull to stop the broadcast of looped transmissions
+-- Only works with broadcasts from UNIT or GROUP</code></pre>
 
 </dd>
 </dl>

@@ -54,6 +54,7 @@ COPY /b Moose.lua + %1\Core\Set.lua                   	Moose.lua
 COPY /b Moose.lua + %1\Core\Point.lua                 	Moose.lua
 COPY /b Moose.lua + %1\Core\Message.lua               	Moose.lua
 COPY /b Moose.lua + %1\Core\Fsm.lua       	  		    Moose.lua
+COPY /b Moose.lua + %1\Core\Radio.lua       	  		Moose.lua
 
 rem Wrapper Classes
 COPY /b Moose.lua + %1\Wrapper\Object.lua               Moose.lua
