@@ -233,6 +233,8 @@ function SPAWN:New( SpawnTemplatePrefix )
 		error( "SPAWN:New: There is no group declared in the mission editor with SpawnTemplatePrefix = '" .. SpawnTemplatePrefix .. "'" )
 	end
 
+  self:SetEventPriority( 5 )
+
 	return self
 end
 
@@ -273,6 +275,8 @@ function SPAWN:NewWithAlias( SpawnTemplatePrefix, SpawnAliasPrefix )
 	else
 		error( "SPAWN:New: There is no group declared in the mission editor with SpawnTemplatePrefix = '" .. SpawnTemplatePrefix .. "'" )
 	end
+	
+  self:SetEventPriority( 5 )
 	
 	return self
 end
@@ -722,9 +726,10 @@ function SPAWN:SpawnWithIndex( SpawnIndex )
         end
       end
 		  
-      _EVENTDISPATCHER:OnBirthForTemplate( SpawnTemplate, self._OnBirth, self )
-      _EVENTDISPATCHER:OnCrashForTemplate( SpawnTemplate, self._OnDeadOrCrash, self )
-      _EVENTDISPATCHER:OnDeadForTemplate( SpawnTemplate, self._OnDeadOrCrash, self )
+      self:HandleEvent( EVENTS.Birth, self._OnBirth )
+      --_EVENTDISPATCHER:OnBirthForTemplate( SpawnTemplate, self._OnBirth, self )
+      self:HandleEvent( EVENTS.Dead, self._OnDeadOrCrash )
+      self:HandleEvent( EVENTS.Crash, self._OnDeadOrCrash )
 
 
 			self.SpawnGroups[self.SpawnIndex].Group = _DATABASE:Spawn( SpawnTemplate )
@@ -738,13 +743,13 @@ function SPAWN:SpawnWithIndex( SpawnIndex )
 			end
 
       if self.Repeat then
-        SpawnGroup:HandleEvent( EVENTS.Takeoff, self._OnTakeOff )
-        SpawnGroup:HandleEvent( EVENTS.Land, self._OnLand )
+        self:HandleEvent( EVENTS.Takeoff, self._OnTakeOff )
+        self:HandleEvent( EVENTS.Land, self._OnLand )
         --_EVENTDISPATCHER:OnTakeOffForTemplate( SpawnTemplate, self._OnTakeOff, self )
         --_EVENTDISPATCHER:OnLandForTemplate( SpawnTemplate, self._OnLand, self )
       end
       if self.RepeatOnEngineShutDown then
-        SpawnGroup:HandleEvent( EVENTS.EngineShutdown, self._OnEngineShutDown )
+        self:HandleEvent( EVENTS.EngineShutdown, self._OnEngineShutDown )
         
         --_EVENTDISPATCHER:OnEngineShutDownForTemplate( SpawnTemplate, self._OnEngineShutDown, self )
       end
@@ -1142,6 +1147,29 @@ function SPAWN:_GetGroupIndexFromDCSUnit( DCSUnit )
 	return nil
 end
 
+--- Get the group index from a DCSUnit.
+-- The method will search for a #-mark, and will return the index behind the #-mark of the DCSUnit.
+-- It will return nil of no prefix was found.
+-- @param #SPAWN self
+-- @param Dcs.DCSWrapper.Unit#Unit DCSUnit The @{DCSUnit} to be searched.
+-- @return #string The prefix
+-- @return #nil Nothing found
+function SPAWN:_GetGroupIndexFromUnit( DCSUnit )
+  self:F3( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix, DCSUnit } )
+
+  local SpawnUnitName = ( DCSUnit and DCSUnit:GetName() ) or nil
+  if SpawnUnitName then
+    local IndexString = string.match( SpawnUnitName, "#.*-" ):sub( 2, -2 )
+    if IndexString then
+      local Index = tonumber( IndexString )
+      return Index
+    end
+  end
+  
+  return nil
+end
+
+
 --- Return the prefix of a SpawnUnit.
 -- The method will search for a #-mark, and will return the text before the #-mark.
 -- It will return nil of no prefix was found.
@@ -1165,6 +1193,51 @@ function SPAWN:_GetPrefixFromDCSUnit( DCSUnit )
 	return nil
 end
 
+--- Return the prefix of a SpawnUnit.
+-- The method will search for a #-mark, and will return the text before the #-mark.
+-- It will return nil of no prefix was found.
+-- @param #SPAWN self
+-- @param Dcs.DCSWrapper.Unit#UNIT DCSUnit The @{DCSUnit} to be searched.
+-- @return #string The prefix
+-- @return #nil Nothing found
+function SPAWN:_GetPrefixFromUnit( DCSUnit )
+  self:F3( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix, DCSUnit } )
+
+  local DCSGroup = DCSUnit:GetGroup()
+  local DCSUnitName = ( DCSGroup and DCSGroup:GetName() ) or nil
+  if DCSUnitName then
+    local SpawnPrefix = string.match( DCSUnitName, ".*#" )
+    if SpawnPrefix then
+      SpawnPrefix = SpawnPrefix:sub( 1, -2 )
+    end
+    return SpawnPrefix
+  end
+  
+  return nil
+end
+
+--- Return the prefix of a SpawnUnit.
+-- The method will search for a #-mark, and will return the text before the #-mark.
+-- It will return nil of no prefix was found.
+-- @param #SPAWN self
+-- @param Dcs.DCSWrapper.Unit#UNIT DCSUnit The @{DCSUnit} to be searched.
+-- @return #string The prefix
+-- @return #nil Nothing found
+function SPAWN:_GetPrefixFromGroup( SpawnGroup )
+  self:F3( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix, SpawnGroup } )
+
+  local GroupName = SpawnGroup:GetName()
+  if GroupName then
+    local SpawnPrefix = string.match( GroupName, ".*#" )
+    if SpawnPrefix then
+      SpawnPrefix = SpawnPrefix:sub( 1, -2 )
+    end
+    return SpawnPrefix
+  end
+  
+  return nil
+end
+
 --- Return the group within the SpawnGroups collection with input a DCSUnit.
 -- @param #SPAWN self
 -- @param Dcs.DCSWrapper.Unit#Unit DCSUnit The @{DCSUnit} to be searched.
@@ -1173,10 +1246,10 @@ end
 function SPAWN:_GetGroupFromUnit( DCSUnit )
 	self:F3( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix, DCSUnit } )
 	
-	local SpawnPrefix = self:_GetPrefixFromDCSUnit( DCSUnit )
+	local SpawnPrefix = self:_GetPrefixFromUnit( DCSUnit )
 	
 	if self.SpawnTemplatePrefix == SpawnPrefix or ( self.SpawnAliasPrefix and self.SpawnAliasPrefix == SpawnPrefix ) then
-		local SpawnGroupIndex = self:_GetGroupIndexFromDCSUnit( DCSUnit )
+		local SpawnGroupIndex = self:_GetGroupIndexFromUnit( DCSUnit )
 		local SpawnGroup = self.SpawnGroups[SpawnGroupIndex].Group
 		self:T( SpawnGroup )
 		return SpawnGroup
@@ -1516,17 +1589,18 @@ end
 -- TODO Need to delete this... _DATABASE does this now ...
 
 --- @param #SPAWN self 
--- @param Core.Event#EVENTDATA Event
-function SPAWN:_OnBirth( Event )
+-- @param Core.Event#EVENTDATA EventData
+function SPAWN:_OnBirth( EventData )
+  self:F( self.SpawnTemplatePrefix )
 
-	if timer.getTime0() < timer.getAbsTime() then
-		if Event.IniDCSUnit then
-			local EventPrefix = self:_GetPrefixFromDCSUnit( Event.IniDCSUnit )
-			self:T( { "Birth Event:", EventPrefix, self.SpawnTemplatePrefix } )
-			if EventPrefix == self.SpawnTemplatePrefix or ( self.SpawnAliasPrefix and EventPrefix == self.SpawnAliasPrefix ) then
-				self.AliveUnits = self.AliveUnits + 1
-				self:T( "Alive Units: " .. self.AliveUnits )
-			end
+  local SpawnGroup = EventData.IniGroup
+  
+  if SpawnGroup then
+    local EventPrefix = self:_GetPrefixFromGroup( SpawnGroup )
+		self:T( { "Birth Event:", EventPrefix, self.SpawnTemplatePrefix } )
+		if EventPrefix == self.SpawnTemplatePrefix or ( self.SpawnAliasPrefix and EventPrefix == self.SpawnAliasPrefix ) then
+			self.AliveUnits = self.AliveUnits + 1
+			self:T( "Alive Units: " .. self.AliveUnits )
 		end
 	end
 
@@ -1536,13 +1610,15 @@ end
 -- @todo Need to delete this... _DATABASE does this now ...
 
 --- @param #SPAWN self 
--- @param Core.Event#EVENTDATA Event
-function SPAWN:_OnDeadOrCrash( Event )
-  self:F( self.SpawnTemplatePrefix,  Event )
+-- @param Core.Event#EVENTDATA EventData
+function SPAWN:_OnDeadOrCrash( EventData )
+  self:F( self.SpawnTemplatePrefix )
 
-	if Event.IniDCSUnit then
-		local EventPrefix = self:_GetPrefixFromDCSUnit( Event.IniDCSUnit )
-    self:T( { "Dead event: " .. EventPrefix, self.SpawnTemplatePrefix } )
+  local SpawnGroup = EventData.IniGroup
+  
+	if SpawnGroup then
+		local EventPrefix = self:_GetPrefixFromGroup( SpawnGroup )
+    self:T( { "Dead event: " .. EventPrefix } )
 		if EventPrefix == self.SpawnTemplatePrefix or ( self.SpawnAliasPrefix and EventPrefix == self.SpawnAliasPrefix ) then
 			self.AliveUnits = self.AliveUnits - 1
 			self:T( "Alive Units: " .. self.AliveUnits )
@@ -1552,17 +1628,19 @@ end
 
 --- Will detect AIR Units taking off... When the event takes place, the spawned Group is registered as airborne...
 -- This is needed to ensure that Re-SPAWNing only is done for landed AIR Groups.
--- @todo Need to test for AIR Groups only...
-function SPAWN:_OnTakeOff( event )
-  self:F( self.SpawnTemplatePrefix,  event )
+-- @param #SPAWN self
+-- @param Core.Event#EVENTDATA EventData
+function SPAWN:_OnTakeOff( EventData )
+  self:F( self.SpawnTemplatePrefix )
 
-	if event.initiator and event.initiator:getName() then
-		local SpawnGroup = self:_GetGroupFromUnit( event.initiator )
-		if SpawnGroup then
-			self:T( { "TakeOff event: " .. event.initiator:getName(), event } )
-			self:T( "self.Landed = false" )
-			self.Landed = false
-		end
+  local SpawnGroup = EventData.IniGroup
+  if SpawnGroup then
+    local EventPrefix = self:_GetPrefixFromGroup( SpawnGroup )
+    self:T( { "TakeOff event: " .. EventPrefix } )
+    if EventPrefix == self.SpawnTemplatePrefix or ( self.SpawnAliasPrefix and EventPrefix == self.SpawnAliasPrefix ) then
+  		self:T( "self.Landed = false" )
+  		SpawnGroup:SetState( SpawnGroup, "Spawn_Landed", false )
+    end
 	end
 end
 
@@ -1570,18 +1648,17 @@ end
 -- This is needed to ensure that Re-SPAWNing is only done for landed AIR Groups.
 -- @param #SPAWN self
 -- @param Core.Event#EVENTDATA EventData
--- @todo Need to test for AIR Groups only...
 function SPAWN:_OnLand( EventData )
   self:F( self.SpawnTemplatePrefix )
 
-  local SpawnUnit = EventData.IniUnit
-	if SpawnUnit and SpawnUnit:IsAlive() and SpawnUnit:GetCategory() == Object.Category.UNIT then
-		local SpawnGroup = self:_GetGroupFromUnit( SpawnUnit )
-		if SpawnGroup then
-			self:T( { "Landed event:" .. SpawnUnit:GetName() } )
-			self.Landed = true
+  local SpawnGroup = EventData.IniGroup
+  if SpawnGroup then
+    local EventPrefix = self:_GetPrefixFromGroup( SpawnGroup )
+    self:T( { "Land event: " .. EventPrefix } )
+    if EventPrefix == self.SpawnTemplatePrefix or ( self.SpawnAliasPrefix and EventPrefix == self.SpawnAliasPrefix ) then
 	    -- TODO: Check if this is the last unit of the group that lands.
-			if self.Landed and self.RepeatOnLanding then
+	    SpawnGroup:SetState( SpawnGroup, "Spawn_Landed", true )
+			if self.RepeatOnLanding then
 				local SpawnGroupIndex = self:GetSpawnIndexFromGroup( SpawnGroup )
 				self:T( { "Landed:", "ReSpawn:", SpawnGroup:GetName(), SpawnGroupIndex } )
 				self:ReSpawn( SpawnGroupIndex )
@@ -1594,18 +1671,18 @@ end
 -- When the event takes place, and the method @{RepeatOnEngineShutDown} was called, the spawned Group will Re-SPAWN.
 -- But only when the Unit was registered to have landed.
 -- @param #SPAWN self
--- @see _OnTakeOff
--- @see _OnLand
--- @todo Need to test for AIR Groups only...
-function SPAWN:_OnEngineShutDown( event )
-  self:F( self.SpawnTemplatePrefix,  event )
+-- @param Core.Event#EVENTDATA EventData
+function SPAWN:_OnEngineShutDown( EventData )
+  self:F( self.SpawnTemplatePrefix )
 
-  local SpawnUnit = event.initiator
-  if SpawnUnit and SpawnUnit:isExist() and Object.getCategory(SpawnUnit) == Object.Category.UNIT then
-		local SpawnGroup = self:_GetGroupFromUnit( SpawnUnit )
-		if SpawnGroup then
-			self:T( { "EngineShutDown event: " .. SpawnUnit:getName(), event } )
-			if self.Landed and self.RepeatOnEngineShutDown then
+  local SpawnGroup = EventData.IniGroup
+  if SpawnGroup then
+    local EventPrefix = self:_GetPrefixFromGroup( SpawnGroup )
+    self:T( { "EngineShutdown event: " .. EventPrefix } )
+    if EventPrefix == self.SpawnTemplatePrefix or ( self.SpawnAliasPrefix and EventPrefix == self.SpawnAliasPrefix ) then
+			-- todo: test if on the runway
+			local Landed = SpawnGroup:GetState( SpawnGroup, "Spawn_Landed" )
+			if Landed and self.RepeatOnEngineShutDown then
 				local SpawnGroupIndex = self:GetSpawnIndexFromGroup( SpawnGroup )
 				self:T( { "EngineShutDown: ", "ReSpawn:", SpawnGroup:GetName(), SpawnGroupIndex } )
 				self:ReSpawn( SpawnGroupIndex )

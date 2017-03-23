@@ -37,10 +37,10 @@ do
   Spawn_A_10C:InitRepeatOnEngineShutDown()
   
   -- Now SPAWN the GROUPs
-  Spawn_KA_50:SpawnScheduled(30,0)
-  Spawn_C_101EB:SpawnScheduled(30,0)
-  Spawn_MI_8MTV2:SpawnScheduled(30,0)
-  Spawn_A_10C:SpawnScheduled(30,0)
+  Spawn_KA_50:SpawnScheduled(180,0)
+  Spawn_C_101EB:SpawnScheduled(180,0)
+  Spawn_MI_8MTV2:SpawnScheduled(180,0)
+  Spawn_A_10C:SpawnScheduled(180,0)
   
   -- Now run the mission and observe the behaviour.
 
