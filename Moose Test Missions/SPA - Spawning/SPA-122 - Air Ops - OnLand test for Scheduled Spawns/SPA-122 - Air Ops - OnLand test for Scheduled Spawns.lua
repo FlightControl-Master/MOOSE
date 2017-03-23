@@ -1,13 +1,13 @@
 ---
--- Name: SPA-121 - Air Ops - Scheduled Spawns with Repeat on Landing with Limit
+-- Name: SPA-122 - Air Ops - OnLand test for Scheduled Spawns
 -- Author: FlightControl
--- Date Created: 05 Feb 2017
+-- Date Created: 21 Mar 2017
 --
 -- # Situation:
 --
--- Multiple airplanes will be spawned at a scheduled interval.
+-- An airplane is spawned at a scheduled interval.
 -- There is a limit on how many airplanes can be alive at the same time.
--- Upon landing, the airplanes will respawn at Kutaisi.
+-- Upon landing, the airplane will respawn in the air.
 -- 
 -- # Test cases:
 -- 
@@ -21,10 +21,10 @@
 do
 
   -- Declare SPAWN objects
-  Spawn_KA_50 = SPAWN:New("KA-50"):InitLimit( 2, 10 )
-  Spawn_MI_8MTV2 = SPAWN:New("MI-8MTV2"):InitLimit( 2, 10 )
-  Spawn_C_101EB = SPAWN:New("C-101EB"):InitLimit( 2, 10 )
-  Spawn_A_10C = SPAWN:New("A-10C"):InitLimit( 2, 10 )
+  Spawn_KA_50 = SPAWN:New("KA-50"):InitLimit( 1, 0 )
+  Spawn_MI_8MTV2 = SPAWN:New("MI-8MTV2"):InitLimit( 1, 0 )
+  Spawn_C_101EB = SPAWN:New("C-101EB"):InitLimit( 1, 0 )
+  Spawn_A_10C = SPAWN:New("A-10C"):InitLimit( 1, 0 )
   
   -- Choose repeat functionality
   
@@ -37,10 +37,10 @@ do
   Spawn_A_10C:InitRepeatOnEngineShutDown()
   
   -- Now SPAWN the GROUPs
-  Spawn_KA_50:SpawnScheduled(180,0)
-  Spawn_C_101EB:SpawnScheduled(180,0)
-  Spawn_MI_8MTV2:SpawnScheduled(180,0)
-  Spawn_A_10C:SpawnScheduled(180,0)
+  Spawn_KA_50:SpawnScheduled(30,0)
+  Spawn_C_101EB:SpawnScheduled(30,0)
+  Spawn_MI_8MTV2:SpawnScheduled(30,0)
+  Spawn_A_10C:SpawnScheduled(30,0)
   
   -- Now run the mission and observe the behaviour.
 
