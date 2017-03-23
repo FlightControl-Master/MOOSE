@@ -577,16 +577,15 @@ function SPAWN:InitArray( SpawnAngle, SpawnWidth, SpawnDeltaX, SpawnDeltaY )
 		
 		self.SpawnGroups[SpawnGroupID].Visible = true
 
-    _EVENTDISPATCHER:OnBirthForTemplate( self.SpawnGroups[SpawnGroupID].SpawnTemplate, self._OnBirth, self )
-    _EVENTDISPATCHER:OnCrashForTemplate( self.SpawnGroups[SpawnGroupID].SpawnTemplate, self._OnDeadOrCrash, self )
-    _EVENTDISPATCHER:OnDeadForTemplate( self.SpawnGroups[SpawnGroupID].SpawnTemplate, self._OnDeadOrCrash, self )
-
+    self:HandleEvent( EVENTS.Birth, self._OnBirth )
+    self:HandleEvent( EVENTS.Dead, self._OnDeadOrCrash )
+    self:HandleEvent( EVENTS.Crash, self._OnDeadOrCrash )
     if self.Repeat then
-      _EVENTDISPATCHER:OnTakeOffForTemplate( self.SpawnGroups[SpawnGroupID].SpawnTemplate, self._OnTakeOff, self )
-      _EVENTDISPATCHER:OnLandForTemplate( self.SpawnGroups[SpawnGroupID].SpawnTemplate, self._OnLand, self )
+      self:HandleEvent( EVENTS.Takeoff, self._OnTakeOff )
+      self:HandleEvent( EVENTS.Land, self._OnLand )
     end
     if self.RepeatOnEngineShutDown then
-      _EVENTDISPATCHER:OnEngineShutDownForTemplate( self.SpawnGroups[SpawnGroupID].SpawnTemplate, self._OnEngineShutDown, self )
+      self:HandleEvent( EVENTS.EngineShutdown, self._OnEngineShutDown )
     end
 		
 		self.SpawnGroups[SpawnGroupID].Group = _DATABASE:Spawn( self.SpawnGroups[SpawnGroupID].SpawnTemplate )
@@ -727,10 +726,15 @@ function SPAWN:SpawnWithIndex( SpawnIndex )
       end
 		  
       self:HandleEvent( EVENTS.Birth, self._OnBirth )
-      --_EVENTDISPATCHER:OnBirthForTemplate( SpawnTemplate, self._OnBirth, self )
       self:HandleEvent( EVENTS.Dead, self._OnDeadOrCrash )
       self:HandleEvent( EVENTS.Crash, self._OnDeadOrCrash )
-
+      if self.Repeat then
+        self:HandleEvent( EVENTS.Takeoff, self._OnTakeOff )
+        self:HandleEvent( EVENTS.Land, self._OnLand )
+      end
+      if self.RepeatOnEngineShutDown then
+        self:HandleEvent( EVENTS.EngineShutdown, self._OnEngineShutDown )
+      end
 
 			self.SpawnGroups[self.SpawnIndex].Group = _DATABASE:Spawn( SpawnTemplate )
 			
@@ -742,17 +746,6 @@ function SPAWN:SpawnWithIndex( SpawnIndex )
 			  SpawnGroup:SetAIOnOff( self.AIOnOff )
 			end
 
-      if self.Repeat then
-        self:HandleEvent( EVENTS.Takeoff, self._OnTakeOff )
-        self:HandleEvent( EVENTS.Land, self._OnLand )
-        --_EVENTDISPATCHER:OnTakeOffForTemplate( SpawnTemplate, self._OnTakeOff, self )
-        --_EVENTDISPATCHER:OnLandForTemplate( SpawnTemplate, self._OnLand, self )
-      end
-      if self.RepeatOnEngineShutDown then
-        self:HandleEvent( EVENTS.EngineShutdown, self._OnEngineShutDown )
-        
-        --_EVENTDISPATCHER:OnEngineShutDownForTemplate( SpawnTemplate, self._OnEngineShutDown, self )
-      end
       self:T3( SpawnTemplate.name )
 			
 			-- If there is a SpawnFunction hook defined, call it.
@@ -1125,96 +1118,6 @@ function SPAWN:GetGroupFromIndex( SpawnIndex )
 	end
 end
 
---- Get the group index from a DCSUnit.
--- The method will search for a #-mark, and will return the index behind the #-mark of the DCSUnit.
--- It will return nil of no prefix was found.
--- @param #SPAWN self
--- @param Dcs.DCSWrapper.Unit#Unit DCSUnit The @{DCSUnit} to be searched.
--- @return #string The prefix
--- @return #nil Nothing found
-function SPAWN:_GetGroupIndexFromDCSUnit( DCSUnit )
-	self:F3( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix, DCSUnit } )
-
-  local SpawnUnitName = ( DCSUnit and DCSUnit:getName() ) or nil
-	if SpawnUnitName then
-		local IndexString = string.match( SpawnUnitName, "#.*-" ):sub( 2, -2 )
-		if IndexString then
-			local Index = tonumber( IndexString )
-			return Index
-		end
-	end
-	
-	return nil
-end
-
---- Get the group index from a DCSUnit.
--- The method will search for a #-mark, and will return the index behind the #-mark of the DCSUnit.
--- It will return nil of no prefix was found.
--- @param #SPAWN self
--- @param Dcs.DCSWrapper.Unit#Unit DCSUnit The @{DCSUnit} to be searched.
--- @return #string The prefix
--- @return #nil Nothing found
-function SPAWN:_GetGroupIndexFromUnit( DCSUnit )
-  self:F3( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix, DCSUnit } )
-
-  local SpawnUnitName = ( DCSUnit and DCSUnit:GetName() ) or nil
-  if SpawnUnitName then
-    local IndexString = string.match( SpawnUnitName, "#.*-" ):sub( 2, -2 )
-    if IndexString then
-      local Index = tonumber( IndexString )
-      return Index
-    end
-  end
-  
-  return nil
-end
-
-
---- Return the prefix of a SpawnUnit.
--- The method will search for a #-mark, and will return the text before the #-mark.
--- It will return nil of no prefix was found.
--- @param #SPAWN self
--- @param Dcs.DCSWrapper.Unit#UNIT DCSUnit The @{DCSUnit} to be searched.
--- @return #string The prefix
--- @return #nil Nothing found
-function SPAWN:_GetPrefixFromDCSUnit( DCSUnit )
-	self:F3( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix, DCSUnit } )
-
-  local DCSGroup = DCSUnit:getGroup()
-  local DCSUnitName = ( DCSGroup and DCSGroup:getName() ) or nil
-	if DCSUnitName then
-		local SpawnPrefix = string.match( DCSUnitName, ".*#" )
-		if SpawnPrefix then
-			SpawnPrefix = SpawnPrefix:sub( 1, -2 )
-		end
-		return SpawnPrefix
-	end
-	
-	return nil
-end
-
---- Return the prefix of a SpawnUnit.
--- The method will search for a #-mark, and will return the text before the #-mark.
--- It will return nil of no prefix was found.
--- @param #SPAWN self
--- @param Dcs.DCSWrapper.Unit#UNIT DCSUnit The @{DCSUnit} to be searched.
--- @return #string The prefix
--- @return #nil Nothing found
-function SPAWN:_GetPrefixFromUnit( DCSUnit )
-  self:F3( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix, DCSUnit } )
-
-  local DCSGroup = DCSUnit:GetGroup()
-  local DCSUnitName = ( DCSGroup and DCSGroup:GetName() ) or nil
-  if DCSUnitName then
-    local SpawnPrefix = string.match( DCSUnitName, ".*#" )
-    if SpawnPrefix then
-      SpawnPrefix = SpawnPrefix:sub( 1, -2 )
-    end
-    return SpawnPrefix
-  end
-  
-  return nil
-end
 
 --- Return the prefix of a SpawnUnit.
 -- The method will search for a #-mark, and will return the text before the #-mark.
@@ -1236,26 +1139,6 @@ function SPAWN:_GetPrefixFromGroup( SpawnGroup )
   end
   
   return nil
-end
-
---- Return the group within the SpawnGroups collection with input a DCSUnit.
--- @param #SPAWN self
--- @param Dcs.DCSWrapper.Unit#Unit DCSUnit The @{DCSUnit} to be searched.
--- @return Wrapper.Group#GROUP The Group
--- @return #nil Nothing found
-function SPAWN:_GetGroupFromUnit( DCSUnit )
-	self:F3( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix, DCSUnit } )
-	
-	local SpawnPrefix = self:_GetPrefixFromUnit( DCSUnit )
-	
-	if self.SpawnTemplatePrefix == SpawnPrefix or ( self.SpawnAliasPrefix and self.SpawnAliasPrefix == SpawnPrefix ) then
-		local SpawnGroupIndex = self:_GetGroupIndexFromUnit( DCSUnit )
-		local SpawnGroup = self.SpawnGroups[SpawnGroupIndex].Group
-		self:T( SpawnGroup )
-		return SpawnGroup
-	end
-
-	return nil
 end
 
 
