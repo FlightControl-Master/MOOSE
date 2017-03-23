@@ -529,7 +529,7 @@ A speed can be given in km/h.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).TaskAttackUnit">CONTROLLABLE:TaskAttackUnit(AttackUnit, GroupAttack, WeaponExpend, AttackQty, Direction, AttackQtyLimit, ControllableAttack, Altitude, Visible)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).TaskAttackUnit">CONTROLLABLE:TaskAttackUnit(AttackUnit, GroupAttack, WeaponExpend, AttackQty, Direction, Altitude, Visible, WeaponType)</a></td>
 		<td class="summary">
 <p>(AIR) Attack the Unit.</p>
 </td>
@@ -2135,7 +2135,7 @@ The DCS task structure.</p>
 <dt>
 
 <a id="#(CONTROLLABLE).TaskAttackUnit" >
-<strong>CONTROLLABLE:TaskAttackUnit(AttackUnit, GroupAttack, WeaponExpend, AttackQty, Direction, AttackQtyLimit, ControllableAttack, Altitude, Visible)</strong>
+<strong>CONTROLLABLE:TaskAttackUnit(AttackUnit, GroupAttack, WeaponExpend, AttackQty, Direction, Altitude, Visible, WeaponType)</strong>
 </a>
 </dt>
 <dd>
@@ -2176,24 +2176,20 @@ The UNIT.</p>
 				</li>
 				<li>
 				
-<p><code><em>#boolean AttackQtyLimit </em></code>: 
-(optional) The flag determines how to interpret attackQty parameter. If the flag is true then attackQty is a limit on maximal attack quantity for "AttackGroup" and "AttackUnit" tasks. If the flag is false then attackQty is a desired attack quantity for "Bombing" and "BombingRunway" tasks.</p>
+<p><code><em>#number Altitude </em></code>: 
+(optional) The altitude from where to attack.</p>
 
 				</li>
 				<li>
 				
-<p><code><em>#boolean ControllableAttack </em></code>: 
-(optional) Flag indicates that the target must be engaged by all aircrafts of the controllable. Has effect only if the task is assigned to a controllable, not to a single aircraft.</p>
+<p><code><em>#boolean Visible </em></code>: 
+(optional) not a clue.</p>
 
 				</li>
 				<li>
 				
-<p><code><em> Altitude </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em> Visible </em></code>: </p>
+<p><code><em>#number WeaponType </em></code>: 
+(optional) The WeaponType.</p>
 
 				</li>
 		</ul>

@@ -543,11 +543,12 @@ end
 -- @param Dcs.DCSTypes#AI.Task.WeaponExpend WeaponExpend (optional) Determines how much weapon will be released at each attack. If parameter is not defined the unit / controllable will choose expend on its own discretion.
 -- @param #number AttackQty (optional) This parameter limits maximal quantity of attack. The aicraft/controllable will not make more attack than allowed even if the target controllable not destroyed and the aicraft/controllable still have ammo. If not defined the aircraft/controllable will attack target until it will be destroyed or until the aircraft/controllable will run out of ammo.
 -- @param Dcs.DCSTypes#Azimuth Direction (optional) Desired ingress direction from the target to the attacking aircraft. Controllable/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain controllable/aircraft will choose another direction.
--- @param #boolean AttackQtyLimit (optional) The flag determines how to interpret attackQty parameter. If the flag is true then attackQty is a limit on maximal attack quantity for "AttackGroup" and "AttackUnit" tasks. If the flag is false then attackQty is a desired attack quantity for "Bombing" and "BombingRunway" tasks.
--- @param #boolean ControllableAttack (optional) Flag indicates that the target must be engaged by all aircrafts of the controllable. Has effect only if the task is assigned to a controllable, not to a single aircraft.
+-- @param #number Altitude (optional) The altitude from where to attack.
+-- @param #boolean Visible (optional) not a clue.
+-- @param #number WeaponType (optional) The WeaponType.
 -- @return Dcs.DCSTasking.Task#Task The DCS task structure.
-function CONTROLLABLE:TaskAttackUnit( AttackUnit, GroupAttack, WeaponExpend, AttackQty, Direction, Altitude, Visible, ControllableAttack )
-  self:F2( { self.ControllableName,          AttackUnit, GroupAttack, WeaponExpend, AttackQty, Direction, Altitude, Visible, ControllableAttack } )
+function CONTROLLABLE:TaskAttackUnit( AttackUnit, GroupAttack, WeaponExpend, AttackQty, Direction, Altitude, Visible, WeaponType )
+  self:F2( { self.ControllableName,          AttackUnit, GroupAttack, WeaponExpend, AttackQty, Direction, Altitude, Visible, WeaponType } )
 
   local DCSTask
   DCSTask = { 
@@ -563,7 +564,8 @@ function CONTROLLABLE:TaskAttackUnit( AttackUnit, GroupAttack, WeaponExpend, Att
       altitude = Altitude or 30,
       attackQtyLimit = AttackQty and true or false,
       attackQty = AttackQty,
-    },
+      weaponType = WeaponType
+    }
   }
 
   self:E( DCSTask )
