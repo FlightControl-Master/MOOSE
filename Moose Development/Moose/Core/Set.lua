@@ -33,6 +33,14 @@
 -- @module Set
 
 
+--- @type SET_BASE
+-- @field #table Filter
+-- @field #table Set
+-- @field #table List
+-- @field Core.Scheduler#SCHEDULER CallScheduler
+-- @extends Core.Base#BASE
+
+
 --- # 1) SET_BASE class, extends @{Base#BASE}
 -- The @{Set#SET_BASE} class defines the core functions that define a collection of objects.
 -- A SET provides iterators to iterate the SET, but will **temporarily** yield the ForEach interator loop at defined **"intervals"** to the mail simulator loop.
@@ -49,12 +57,7 @@
 -- Modify the iterator intervals with the @{Set#SET_BASE.SetInteratorIntervals} method.
 -- You can set the **"yield interval"**, and the **"time interval"**. (See above).
 -- 
--- @type SET_BASE
--- @field #table Filter
--- @field #table Set
--- @field #table List
--- @field Core.Scheduler#SCHEDULER CallScheduler
--- @extends Core.Base#BASE
+-- @field #SET_BASE SET_BASE 
 SET_BASE = {
   ClassName = "SET_BASE",
   Filter = {},
@@ -62,6 +65,7 @@ SET_BASE = {
   List = {},
   Index = {},
 }
+
 
 --- Creates a new SET_BASE object, building a set of units belonging to a coalitions, categories, countries, types or with defined prefix names.
 -- @param #SET_BASE self
@@ -595,7 +599,9 @@ function SET_BASE:Flush()
   return ObjectNames
 end
 
--- SET_GROUP
+
+--- @type SET_GROUP
+-- @extends Core.Set#SET_BASE
 
 --- # 2) SET_GROUP class, extends @{Set#SET_BASE}
 -- 
@@ -645,9 +651,9 @@ end
 --   * @{#SET_GROUP.ForEachGroupCompletelyInZone}: Iterate the SET_GROUP and call an iterator function for each **alive** GROUP presence completely in a @{Zone}, providing the GROUP and optional parameters to the called function.
 --   * @{#SET_GROUP.ForEachGroupPartlyInZone}: Iterate the SET_GROUP and call an iterator function for each **alive** GROUP presence partly in a @{Zone}, providing the GROUP and optional parameters to the called function.
 --   * @{#SET_GROUP.ForEachGroupNotInZone}: Iterate the SET_GROUP and call an iterator function for each **alive** GROUP presence not in a @{Zone}, providing the GROUP and optional parameters to the called function.
--- 
--- @type SET_GROUP
--- @extends Core.Set#SET_BASE
+--
+-- ===
+-- @field #SET_GROUP SET_GROUP 
 SET_GROUP = {
   ClassName = "SET_GROUP",
   Filter = {
@@ -1013,6 +1019,9 @@ function SET_GROUP:IsIncludeObject( MooseGroup )
   return MooseGroupInclude
 end
 
+--- @type SET_UNIT
+-- @extends Core.Set#SET_BASE
+
 --- # 3) SET_UNIT class, extends @{Set#SET_BASE}
 -- 
 -- Mission designers can use the SET_UNIT class to build sets of units belonging to certain:
@@ -1075,9 +1084,8 @@ end
 -- 
 --   * @{#SET_UNIT.GetTypeNames}(): Retrieve the type names of the @{Unit}s in the SET, delimited by a comma.
 -- 
--- 
--- @type SET_UNIT
--- @extends Core.Set#SET_BASE
+-- ===
+-- @field #SET_UNIT SET_UNIT
 SET_UNIT = {
   ClassName = "SET_UNIT",
   Units = {},
@@ -1716,6 +1724,12 @@ end
 
 --- SET_CLIENT
 
+
+--- @type SET_CLIENT
+-- @extends Core.Set#SET_BASE
+
+
+
 --- # 4) SET_CLIENT class, extends @{Set#SET_BASE}
 -- 
 -- Mission designers can use the @{Set#SET_CLIENT} class to build sets of units belonging to certain:
@@ -1764,8 +1778,8 @@ end
 -- 
 --   * @{#SET_CLIENT.ForEachClient}: Calls a function for each alive client it finds within the SET_CLIENT.
 -- 
--- @type SET_CLIENT
--- @extends Core.Set#SET_BASE
+-- ===
+-- @field #SET_CLIENT SET_CLIENT 
 SET_CLIENT = {
   ClassName = "SET_CLIENT",
   Clients = {},
@@ -2118,7 +2132,8 @@ function SET_CLIENT:IsIncludeObject( MClient )
   return MClientInclude
 end
 
---- SET_AIRBASE
+--- @type SET_AIRBASE
+-- @extends Core.Set#SET_BASE
 
 --- # 5) SET_AIRBASE class, extends @{Set#SET_BASE}
 -- 
@@ -2156,8 +2171,8 @@ end
 -- 
 --   * @{#SET_AIRBASE.ForEachAirbase}: Calls a function for each airbase it finds within the SET_AIRBASE.
 -- 
--- @type SET_AIRBASE
--- @extends Core.Set#SET_BASE
+-- ===
+-- @field #SET_AIRBASE SET_AIRBASE
 SET_AIRBASE = {
   ClassName = "SET_AIRBASE",
   Airbases = {},

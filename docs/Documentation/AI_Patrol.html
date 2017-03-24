@@ -79,120 +79,15 @@
 
 <hr/>
 
-<h1>1) <a href="##(AI_PATROL_ZONE)">#AI<em>PATROL</em>ZONE</a> class, extends <a href="Fsm.html##(FSM_CONTROLLABLE)">Fsm#FSM_CONTROLLABLE</a></h1>
-
-<p>The <a href="##(AI_PATROL_ZONE)">#AI<em>PATROL</em>ZONE</a> class implements the core functions to patrol a <a href="Zone.html">Zone</a> by an AI <a href="Controllable.html">Controllable</a> or <a href="Group.html">Group</a>.</p>
+<p>AI PATROL classes makes AI Controllables execute an Patrol.</p>
 
    
 
-<p><img src="..\Presentations\AI_PATROL\Dia3.JPG" alt="Process"/></p>
-
-<p>The AI<em>PATROL</em>ZONE is assigned a <a href="Group.html">Group</a> and this must be done before the AI<em>PATROL</em>ZONE process can be started using the <strong>Start</strong> event.</p>
-
-<p><img src="..\Presentations\AI_PATROL\Dia4.JPG" alt="Process"/></p>
-
-<p>The AI will fly towards the random 3D point within the patrol zone, using a random speed within the given altitude and speed limits.
-Upon arrival at the 3D point, a new random 3D point will be selected within the patrol zone using the given limits.</p>
-
-<p><img src="..\Presentations\AI_PATROL\Dia5.JPG" alt="Process"/></p>
-
-<p>This cycle will continue.</p>
-
-<p><img src="..\Presentations\AI_PATROL\Dia6.JPG" alt="Process"/></p>
-
-<p>During the patrol, the AI will detect enemy targets, which are reported through the <strong>Detected</strong> event.</p>
-
-<p><img src="..\Presentations\AI_PATROL\Dia9.JPG" alt="Process"/></p>
-
-<p>-- Note that the enemy is not engaged! To model enemy engagement, either tailor the <strong>Detected</strong> event, or
-use derived AI_ classes to model AI offensive or defensive behaviour.</p>
-
-<p><img src="..\Presentations\AI_PATROL\Dia10.JPG" alt="Process"/></p>
-
-<p>Until a fuel or damage treshold has been reached by the AI, or when the AI is commanded to RTB.
-When the fuel treshold has been reached, the airplane will fly towards the nearest friendly airbase and will land.</p>
-
-<p><img src="..\Presentations\AI_PATROL\Dia11.JPG" alt="Process"/></p>
-
-<h2>1.1) AI<em>PATROL</em>ZONE constructor</h2>
+<p>There are the following types of PATROL classes defined:</p>
 
 <ul>
-    <li><a href="##(AI_PATROL_ZONE).New">AI<em>PATROL</em>ZONE.New</a>(): Creates a new AI<em>PATROL</em>ZONE object.</li>
+    <li><a href="##(AI_PATROL_ZONE)">#AI<em>PATROL</em>ZONE</a>: Perform a PATROL in a zone.</li>
 </ul>
-
-<h2>1.2) AI<em>PATROL</em>ZONE is a FSM</h2>
-
-<p><img src="..\Presentations\AI_PATROL\Dia2.JPG" alt="Process"/></p>
-
-<h3>1.2.1) AI<em>PATROL</em>ZONE States</h3>
-
-<ul>
-    <li><strong>None</strong> ( Group ): The process is not started yet.</li>
-    <li><strong>Patrolling</strong> ( Group ): The AI is patrolling the Patrol Zone.</li>
-    <li><strong>Returning</strong> ( Group ): The AI is returning to Base.</li>
-    <li><strong>Stopped</strong> ( Group ): The process is stopped.</li>
-    <li><strong>Crashed</strong> ( Group ): The AI has crashed or is dead.</li>
-</ul>
-
-<h3>1.2.2) AI<em>PATROL</em>ZONE Events</h3>
-
-<ul>
-    <li><strong>Start</strong> ( Group ): Start the process.</li>
-    <li><strong>Stop</strong> ( Group ): Stop the process.</li>
-    <li><strong>Route</strong> ( Group ): Route the AI to a new random 3D point within the Patrol Zone.</li>
-    <li><strong>RTB</strong> ( Group ): Route the AI to the home base.</li>
-    <li><strong>Detect</strong> ( Group ): The AI is detecting targets.</li>
-    <li><strong>Detected</strong> ( Group ): The AI has detected new targets.</li>
-    <li><strong>Status</strong> ( Group ): The AI is checking status (fuel and damage). When the tresholds have been reached, the AI will RTB.</li>
-</ul>
-
-<h2>1.3) Set or Get the AI controllable</h2>
-
-<ul>
-    <li><a href="##(AI_PATROL_ZONE).SetControllable">AI<em>PATROL</em>ZONE.SetControllable</a>(): Set the AIControllable.</li>
-    <li><a href="##(AI_PATROL_ZONE).GetControllable">AI<em>PATROL</em>ZONE.GetControllable</a>(): Get the AIControllable.</li>
-</ul>
-
-<h2>1.4) Set the Speed and Altitude boundaries of the AI controllable</h2>
-
-<ul>
-    <li><a href="##(AI_PATROL_ZONE).SetSpeed">AI<em>PATROL</em>ZONE.SetSpeed</a>(): Set the patrol speed boundaries of the AI, for the next patrol.</li>
-    <li><a href="##(AI_PATROL_ZONE).SetAltitude">AI<em>PATROL</em>ZONE.SetAltitude</a>(): Set altitude boundaries of the AI, for the next patrol.</li>
-</ul>
-
-<h2>1.5) Manage the detection process of the AI controllable</h2>
-
-<p>The detection process of the AI controllable can be manipulated.
-Detection requires an amount of CPU power, which has an impact on your mission performance.
-Only put detection on when absolutely necessary, and the frequency of the detection can also be set.</p>
-
-<ul>
-    <li><a href="##(AI_PATROL_ZONE).SetDetectionOn">AI<em>PATROL</em>ZONE.SetDetectionOn</a>(): Set the detection on. The AI will detect for targets.</li>
-    <li><a href="##(AI_PATROL_ZONE).SetDetectionOff">AI<em>PATROL</em>ZONE.SetDetectionOff</a>(): Set the detection off, the AI will not detect for targets. The existing target list will NOT be erased.</li>
-</ul>
-
-<p>The detection frequency can be set with <a href="##(AI_PATROL_ZONE).SetDetectionInterval">AI<em>PATROL</em>ZONE.SetDetectionInterval</a>( seconds ), where the amount of seconds specify how much seconds will be waited before the next detection.
-Use the method <a href="##(AI_PATROL_ZONE).GetDetectedUnits">AI<em>PATROL</em>ZONE.GetDetectedUnits</a>() to obtain a list of the <a href="Unit.html">Unit</a>s detected by the AI.</p>
-
-<p>The detection can be filtered to potential targets in a specific zone.
-Use the method <a href="##(AI_PATROL_ZONE).SetDetectionZone">AI<em>PATROL</em>ZONE.SetDetectionZone</a>() to set the zone where targets need to be detected.
-Note that when the zone is too far away, or the AI is not heading towards the zone, or the AI is too high, no targets may be detected
-according the weather conditions.</p>
-
-<h2>1.6) Manage the "out of fuel" in the AI<em>PATROL</em>ZONE</h2>
-
-<p>When the AI is out of fuel, it is required that a new AI is started, before the old AI can return to the home base.
-Therefore, with a parameter and a calculation of the distance to the home base, the fuel treshold is calculated.
-When the fuel treshold is reached, the AI will continue for a given time its patrol task in orbit, 
-while a new AI is targetted to the AI<em>PATROL</em>ZONE.
-Once the time is finished, the old AI will return to the base.
-Use the method <a href="##(AI_PATROL_ZONE).ManageFuel">AI<em>PATROL</em>ZONE.ManageFuel</a>() to have this proces in place.</p>
-
-<h2>1.7) Manage "damage" behaviour of the AI in the AI<em>PATROL</em>ZONE</h2>
-
-<p>When the AI is damaged, it is required that a new AIControllable is started. However, damage cannon be foreseen early on. 
-Therefore, when the damage treshold is reached, the AI will return immediately to the home base (RTB).
-Use the method <a href="##(AI_PATROL_ZONE).ManageDamage">AI<em>PATROL</em>ZONE.ManageDamage</a>() to have this proces in place.</p>
 
 <hr/>
 
@@ -247,7 +142,9 @@ Use the method <a href="##(AI_PATROL_ZONE).ManageDamage">AI<em>PATROL</em>ZONE.M
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="#AI_PATROL_ZONE">AI_PATROL_ZONE</a></td>
 		<td class="summary">
+<h1>1) <a href="##(AI_PATROL_ZONE)">#AI<em>PATROL</em>ZONE</a> class, extends <a href="Fsm.html##(FSM_CONTROLLABLE)">Fsm#FSM_CONTROLLABLE</a></h1>
 
+<p>The <a href="##(AI_PATROL_ZONE)">#AI<em>PATROL</em>ZONE</a> class implements the core functions to patrol a <a href="Zone.html">Zone</a> by an AI <a href="Controllable.html">Controllable</a> or <a href="Group.html">Group</a>.</p>
 </td>
 		</tr>
 	</table>
@@ -261,12 +158,6 @@ Use the method <a href="##(AI_PATROL_ZONE).ManageDamage">AI<em>PATROL</em>ZONE.M
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).CheckStatus">AI_PATROL_ZONE.CheckStatus</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).ClassName">AI_PATROL_ZONE.ClassName</a></td>
 		<td class="summary">
 
 </td>
@@ -746,6 +637,122 @@ Use the method <a href="##(AI_PATROL_ZONE).ManageDamage">AI<em>PATROL</em>ZONE.M
 </dt>
 <dd>
 	
+<h1>1) <a href="##(AI_PATROL_ZONE)">#AI<em>PATROL</em>ZONE</a> class, extends <a href="Fsm.html##(FSM_CONTROLLABLE)">Fsm#FSM_CONTROLLABLE</a></h1>
+
+<p>The <a href="##(AI_PATROL_ZONE)">#AI<em>PATROL</em>ZONE</a> class implements the core functions to patrol a <a href="Zone.html">Zone</a> by an AI <a href="Controllable.html">Controllable</a> or <a href="Group.html">Group</a>.</p>
+
+	
+
+<p><img src="..\Presentations\AI_PATROL\Dia3.JPG" alt="Process"/></p>
+
+<p>The AI<em>PATROL</em>ZONE is assigned a <a href="Group.html">Group</a> and this must be done before the AI<em>PATROL</em>ZONE process can be started using the <strong>Start</strong> event.</p>
+
+<p><img src="..\Presentations\AI_PATROL\Dia4.JPG" alt="Process"/></p>
+
+<p>The AI will fly towards the random 3D point within the patrol zone, using a random speed within the given altitude and speed limits.
+Upon arrival at the 3D point, a new random 3D point will be selected within the patrol zone using the given limits.</p>
+
+<p><img src="..\Presentations\AI_PATROL\Dia5.JPG" alt="Process"/></p>
+
+<p>This cycle will continue.</p>
+
+<p><img src="..\Presentations\AI_PATROL\Dia6.JPG" alt="Process"/></p>
+
+<p>During the patrol, the AI will detect enemy targets, which are reported through the <strong>Detected</strong> event.</p>
+
+<p><img src="..\Presentations\AI_PATROL\Dia9.JPG" alt="Process"/></p>
+
+<p>-- Note that the enemy is not engaged! To model enemy engagement, either tailor the <strong>Detected</strong> event, or
+use derived AI_ classes to model AI offensive or defensive behaviour.</p>
+
+<p><img src="..\Presentations\AI_PATROL\Dia10.JPG" alt="Process"/></p>
+
+<p>Until a fuel or damage treshold has been reached by the AI, or when the AI is commanded to RTB.
+When the fuel treshold has been reached, the airplane will fly towards the nearest friendly airbase and will land.</p>
+
+<p><img src="..\Presentations\AI_PATROL\Dia11.JPG" alt="Process"/></p>
+
+<h2>1.1) AI<em>PATROL</em>ZONE constructor</h2>
+
+<ul>
+    <li><a href="##(AI_PATROL_ZONE).New">AI<em>PATROL</em>ZONE.New</a>(): Creates a new AI<em>PATROL</em>ZONE object.</li>
+</ul>
+
+<h2>1.2) AI<em>PATROL</em>ZONE is a FSM</h2>
+
+<p><img src="..\Presentations\AI_PATROL\Dia2.JPG" alt="Process"/></p>
+
+<h3>1.2.1) AI<em>PATROL</em>ZONE States</h3>
+
+<ul>
+    <li><strong>None</strong> ( Group ): The process is not started yet.</li>
+    <li><strong>Patrolling</strong> ( Group ): The AI is patrolling the Patrol Zone.</li>
+    <li><strong>Returning</strong> ( Group ): The AI is returning to Base.</li>
+    <li><strong>Stopped</strong> ( Group ): The process is stopped.</li>
+    <li><strong>Crashed</strong> ( Group ): The AI has crashed or is dead.</li>
+</ul>
+
+<h3>1.2.2) AI<em>PATROL</em>ZONE Events</h3>
+
+<ul>
+    <li><strong>Start</strong> ( Group ): Start the process.</li>
+    <li><strong>Stop</strong> ( Group ): Stop the process.</li>
+    <li><strong>Route</strong> ( Group ): Route the AI to a new random 3D point within the Patrol Zone.</li>
+    <li><strong>RTB</strong> ( Group ): Route the AI to the home base.</li>
+    <li><strong>Detect</strong> ( Group ): The AI is detecting targets.</li>
+    <li><strong>Detected</strong> ( Group ): The AI has detected new targets.</li>
+    <li><strong>Status</strong> ( Group ): The AI is checking status (fuel and damage). When the tresholds have been reached, the AI will RTB.</li>
+</ul>
+
+<h2>1.3) Set or Get the AI controllable</h2>
+
+<ul>
+    <li><a href="##(AI_PATROL_ZONE).SetControllable">AI<em>PATROL</em>ZONE.SetControllable</a>(): Set the AIControllable.</li>
+    <li><a href="##(AI_PATROL_ZONE).GetControllable">AI<em>PATROL</em>ZONE.GetControllable</a>(): Get the AIControllable.</li>
+</ul>
+
+<h2>1.4) Set the Speed and Altitude boundaries of the AI controllable</h2>
+
+<ul>
+    <li><a href="##(AI_PATROL_ZONE).SetSpeed">AI<em>PATROL</em>ZONE.SetSpeed</a>(): Set the patrol speed boundaries of the AI, for the next patrol.</li>
+    <li><a href="##(AI_PATROL_ZONE).SetAltitude">AI<em>PATROL</em>ZONE.SetAltitude</a>(): Set altitude boundaries of the AI, for the next patrol.</li>
+</ul>
+
+<h2>1.5) Manage the detection process of the AI controllable</h2>
+
+<p>The detection process of the AI controllable can be manipulated.
+Detection requires an amount of CPU power, which has an impact on your mission performance.
+Only put detection on when absolutely necessary, and the frequency of the detection can also be set.</p>
+
+<ul>
+    <li><a href="##(AI_PATROL_ZONE).SetDetectionOn">AI<em>PATROL</em>ZONE.SetDetectionOn</a>(): Set the detection on. The AI will detect for targets.</li>
+    <li><a href="##(AI_PATROL_ZONE).SetDetectionOff">AI<em>PATROL</em>ZONE.SetDetectionOff</a>(): Set the detection off, the AI will not detect for targets. The existing target list will NOT be erased.</li>
+</ul>
+
+<p>The detection frequency can be set with <a href="##(AI_PATROL_ZONE).SetDetectionInterval">AI<em>PATROL</em>ZONE.SetDetectionInterval</a>( seconds ), where the amount of seconds specify how much seconds will be waited before the next detection.
+Use the method <a href="##(AI_PATROL_ZONE).GetDetectedUnits">AI<em>PATROL</em>ZONE.GetDetectedUnits</a>() to obtain a list of the <a href="Unit.html">Unit</a>s detected by the AI.</p>
+
+<p>The detection can be filtered to potential targets in a specific zone.
+Use the method <a href="##(AI_PATROL_ZONE).SetDetectionZone">AI<em>PATROL</em>ZONE.SetDetectionZone</a>() to set the zone where targets need to be detected.
+Note that when the zone is too far away, or the AI is not heading towards the zone, or the AI is too high, no targets may be detected
+according the weather conditions.</p>
+
+<h2>1.6) Manage the "out of fuel" in the AI<em>PATROL</em>ZONE</h2>
+
+<p>When the AI is out of fuel, it is required that a new AI is started, before the old AI can return to the home base.
+Therefore, with a parameter and a calculation of the distance to the home base, the fuel treshold is calculated.
+When the fuel treshold is reached, the AI will continue for a given time its patrol task in orbit, 
+while a new AI is targetted to the AI<em>PATROL</em>ZONE.
+Once the time is finished, the old AI will return to the base.
+Use the method <a href="##(AI_PATROL_ZONE).ManageFuel">AI<em>PATROL</em>ZONE.ManageFuel</a>() to have this proces in place.</p>
+
+<h2>1.7) Manage "damage" behaviour of the AI in the AI<em>PATROL</em>ZONE</h2>
+
+<p>When the AI is damaged, it is required that a new AIControllable is started. However, damage cannon be foreseen early on. 
+Therefore, when the damage treshold is reached, the AI will return immediately to the home base (RTB).
+Use the method <a href="##(AI_PATROL_ZONE).ManageDamage">AI<em>PATROL</em>ZONE.ManageDamage</a>() to have this proces in place.</p>
+
+<hr/>
 
 
 </dd>
@@ -777,20 +784,6 @@ Use the method <a href="##(AI_PATROL_ZONE).ManageDamage">AI<em>PATROL</em>ZONE.M
 		<em>#boolean</em>
 <a id="#(AI_PATROL_ZONE).CheckStatus" >
 <strong>AI_PATROL_ZONE.CheckStatus</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em>#string</em>
-<a id="#(AI_PATROL_ZONE).ClassName" >
-<strong>AI_PATROL_ZONE.ClassName</strong>
 </a>
 </dt>
 <dd>
