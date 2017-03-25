@@ -1661,85 +1661,50 @@ end
 -- A speed can be given in km/h.
 -- A given formation can be given.
 -- @param #CONTROLLABLE self
--- @param Wrapper.Airbase#AIRBASE ReturnAirbase The @{Airbase#AIRBASE} to return to.
+-- @param Wrapper.Airbase#AIRBASE ReturnAirbase (optional) The @{Airbase#AIRBASE} to return to. If blank, the controllable will return to the nearest friendly airbase.
 -- @param #number Speed (optional) The speed.
--- @return #string The route
+-- @return #CONTROLLABLE
 function CONTROLLABLE:RouteReturnToAirbase( ReturnAirbase, Speed )
   self:F2( { ReturnAirbase, Speed } )
-
--- Example
---   [4] = 
---    {
---        ["alt"] = 45,
---        ["type"] = "Land",
---        ["action"] = "Landing",
---        ["alt_type"] = "BARO",
---        ["formation_template"] = "",
---        ["properties"] = 
---        {
---            ["vnav"] = 1,
---            ["scale"] = 0,
---            ["angle"] = 0,
---            ["vangle"] = 0,
---            ["steer"] = 2,
---        }, -- end of ["properties"]
---        ["ETA"] = 527.81058817743,
---        ["airdromeId"] = 12,
---        ["y"] = 243127.2973737,
---        ["x"] = -5406.2803440839,
---        ["name"] = "DictKey_WptName_53",
---        ["speed"] = 138.88888888889,
---        ["ETA_locked"] = false,
---        ["task"] = 
---        {
---            ["id"] = "ComboTask",
---            ["params"] = 
---            {
---                ["tasks"] = 
---                {
---                }, -- end of ["tasks"]
---            }, -- end of ["params"]
---        }, -- end of ["task"]
---        ["speed_locked"] = true,
---    }, -- end of [4]
- 
 
   local DCSControllable = self:GetDCSObject()
 
   if DCSControllable then
 
-    local ControllablePoint = self:GetVec2()
-    local ControllableVelocity = self:GetMaxVelocity()
-
-    local PointFrom = {}
-    PointFrom.x = ControllablePoint.x
-    PointFrom.y = ControllablePoint.y
-    PointFrom.type = "Turning Point"
-    PointFrom.action = "Turning Point"
-    PointFrom.speed = ControllableVelocity
-
-
-    local PointTo = {}
-    local AirbasePoint = ReturnAirbase:GetVec2()
-
-    PointTo.x = AirbasePoint.x
-    PointTo.y = AirbasePoint.y
-    PointTo.type = "Land"
-    PointTo.action = "Landing"
-    PointTo.airdromeId = ReturnAirbase:GetID()-- Airdrome ID
-    self:T(PointTo.airdromeId)
-    --PointTo.alt = 0
-
-    local Points = { PointFrom, PointTo }
-
-    self:T3( Points )
-
-    local Route = { points = Points, }
-
-    return Route
+    if ReturnAirbase then
+      local ControllablePoint = self:GetVec2()
+      local ControllableVelocity = self:GetMaxVelocity()
+  
+      local PointFrom = {}
+      PointFrom.x = ControllablePoint.x
+      PointFrom.y = ControllablePoint.y
+      PointFrom.type = "Turning Point"
+      PointFrom.action = "Turning Point"
+      PointFrom.speed = ControllableVelocity
+  
+  
+      local PointTo = {}
+      local AirbasePointVec2 = ReturnAirbase:GetPointVec2()
+      local AirbaseAirPoint = AirbasePointVec2:RoutePointAir(
+        POINT_VEC3.RoutePointAltType.BARO,
+        POINT_VEC3.RoutePointType.TurningPoint,
+        POINT_VEC3.RoutePointAction.TurningPoint, 
+        Speed or 600
+      )
+  
+      self:E(AirbaseAirPoint )
+  
+      local Points = { PointFrom, AirbaseAirPoint }
+  
+      self:T3( Points )
+  
+      self:Route( Points )
+    else
+      self:ClearTasks()
+    end
   end
 
-  return nil
+  return self
 end
 
 -- Commands
