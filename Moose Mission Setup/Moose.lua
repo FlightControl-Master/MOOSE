@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20170323_2103' ) 
+env.info( 'Moose Generation Timestamp: 20170325_0623' ) 
 local base = _G
 
 Include = {}
@@ -2796,9 +2796,54 @@ end
 -- 
 -- ===
 -- 
--- # 1) @{#BASE} class
+-- The @{#BASE} class is the core root class from where every other class in moose is derived.
 -- 
--- All classes within the MOOSE framework are derived from the @{#BASE} class. 
+-- ===
+-- 
+-- # **API CHANGE HISTORY**
+-- 
+-- The underlying change log documents the API changes. Please read this carefully. The following notation is used:
+-- 
+--   * **Added** parts are expressed in bold type face.
+--   * _Removed_ parts are expressed in italic type face.
+-- 
+-- YYYY-MM-DD: CLASS:**NewFunction**( Params ) replaces CLASS:_OldFunction_( Params )
+-- YYYY-MM-DD: CLASS:**NewFunction( Params )** added
+-- 
+-- Hereby the change log:
+-- 
+-- ===
+-- 
+-- # **AUTHORS and CONTRIBUTIONS**
+-- 
+-- ### Contributions: 
+-- 
+--   * None.
+-- 
+-- ### Authors: 
+-- 
+--   * **FlightControl**: Design & Programming
+-- 
+-- @module Base
+
+
+
+local _TraceOnOff = true
+local _TraceLevel = 1
+local _TraceAll = false
+local _TraceClass = {}
+local _TraceClassMethod = {}
+
+local _ClassID = 0
+
+--- @type BASE
+-- @field ClassName The name of the class.
+-- @field ClassID The ID number of the class.
+-- @field ClassNameAndID The name of the class concatenated with the ID number of the class.
+
+--- # 1) #BASE class
+-- 
+-- All classes within the MOOSE framework are derived from the BASE class. 
 --  
 -- BASE provides facilities for :
 -- 
@@ -2958,50 +3003,11 @@ end
 -- 
 --   * @{#BASE.Inherit}: Inherits from a class.
 --   * @{#BASE.GetParent}: Returns the parent object from the object it is handling, or nil if there is no parent object.
---   
--- ====
--- 
--- # **API CHANGE HISTORY**
--- 
--- The underlying change log documents the API changes. Please read this carefully. The following notation is used:
--- 
---   * **Added** parts are expressed in bold type face.
---   * _Removed_ parts are expressed in italic type face.
--- 
--- YYYY-MM-DD: CLASS:**NewFunction**( Params ) replaces CLASS:_OldFunction_( Params )
--- YYYY-MM-DD: CLASS:**NewFunction( Params )** added
--- 
--- Hereby the change log:
 -- 
 -- ===
 -- 
--- # **AUTHORS and CONTRIBUTIONS**
+-- @field #BASE BASE
 -- 
--- ### Contributions: 
--- 
---   * None.
--- 
--- ### Authors: 
--- 
---   * **FlightControl**: Design & Programming
--- 
--- @module Base
-
-
-
-local _TraceOnOff = true
-local _TraceLevel = 1
-local _TraceAll = false
-local _TraceClass = {}
-local _TraceClassMethod = {}
-
-local _ClassID = 0
-
---- The BASE Class
--- @type BASE
--- @field ClassName The name of the class.
--- @field ClassID The ID number of the class.
--- @field ClassNameAndID The name of the class concatenated with the ID number of the class.
 BASE = {
   ClassName = "BASE",
   ClassID = 0,
@@ -4788,7 +4794,7 @@ function EVENT:onEvent( Event )
     return errmsg
   end
 
-  self:E( Event )
+  self:E( _EVENTMETA[Event.id].Text, Event )
   
   if self and self.Events and self.Events[Event.id] then
   
@@ -6097,127 +6103,16 @@ end
 -- 
 -- Each of these ZONE classes have a zone name, and specific parameters defining the zone type:
 --   
---   * @{Zone#ZONE_BASE}: The ZONE_BASE class defining the base for all other zone classes.
---   * @{Zone#ZONE_RADIUS}: The ZONE_RADIUS class defined by a zone name, a location and a radius.
---   * @{Zone#ZONE}: The ZONE class, defined by the zone name as defined within the Mission Editor.
---   * @{Zone#ZONE_UNIT}: The ZONE_UNIT class defines by a zone around a @{Unit#UNIT} with a radius.
---   * @{Zone#ZONE_GROUP}: The ZONE_GROUP class defines by a zone around a @{Group#GROUP} with a radius.
---   * @{Zone#ZONE_POLYGON}: The ZONE_POLYGON class defines by a sequence of @{Group#GROUP} waypoints within the Mission Editor, forming a polygon.
+--   * @{#ZONE_BASE}: The ZONE_BASE class defining the base for all other zone classes.
+--   * @{#ZONE_RADIUS}: The ZONE_RADIUS class defined by a zone name, a location and a radius.
+--   * @{#ZONE}: The ZONE class, defined by the zone name as defined within the Mission Editor.
+--   * @{#ZONE_UNIT}: The ZONE_UNIT class defines by a zone around a @{Unit#UNIT} with a radius.
+--   * @{#ZONE_GROUP}: The ZONE_GROUP class defines by a zone around a @{Group#GROUP} with a radius.
+--   * @{#ZONE_POLYGON}: The ZONE_POLYGON class defines by a sequence of @{Group#GROUP} waypoints within the Mission Editor, forming a polygon.
+--
+-- === 
 -- 
--- ===
--- 
--- # 1) @{Zone#ZONE_BASE} class, extends @{Base#BASE}
--- 
--- This class is an abstract BASE class for derived classes, and is not meant to be instantiated.
--- 
--- ## 1.1) Each zone has a name:
--- 
---   * @{#ZONE_BASE.GetName}(): Returns the name of the zone.
--- 
--- ## 1.2) Each zone implements two polymorphic functions defined in @{Zone#ZONE_BASE}:
--- 
---   * @{#ZONE_BASE.IsVec2InZone}(): Returns if a Vec2 is within the zone.
---   * @{#ZONE_BASE.IsVec3InZone}(): Returns if a Vec3 is within the zone.
---   
--- ## 1.3) A zone has a probability factor that can be set to randomize a selection between zones:
--- 
---   * @{#ZONE_BASE.SetRandomizeProbability}(): Set the randomization probability of a zone to be selected, taking a value between 0 and 1 ( 0 = 0%, 1 = 100% )
---   * @{#ZONE_BASE.GetRandomizeProbability}(): Get the randomization probability of a zone to be selected, passing a value between 0 and 1 ( 0 = 0%, 1 = 100% )
---   * @{#ZONE_BASE.GetZoneMaybe}(): Get the zone taking into account the randomization probability. nil is returned if this zone is not a candidate.
--- 
--- ## 1.4) A zone manages Vectors:
--- 
---   * @{#ZONE_BASE.GetVec2}(): Returns the @{DCSTypes#Vec2} coordinate of the zone.
---   * @{#ZONE_BASE.GetRandomVec2}(): Define a random @{DCSTypes#Vec2} within the zone.
--- 
--- ## 1.5) A zone has a bounding square:
--- 
---   * @{#ZONE_BASE.GetBoundingSquare}(): Get the outer most bounding square of the zone.
--- 
--- ## 1.6) A zone can be marked: 
--- 
---   * @{#ZONE_BASE.SmokeZone}(): Smokes the zone boundaries in a color.
---   * @{#ZONE_BASE.FlareZone}(): Flares the zone boundaries in a color.
--- 
--- ===
--- 
--- # 2) @{Zone#ZONE_RADIUS} class, extends @{Zone#ZONE_BASE}
--- 
--- The ZONE_RADIUS class defined by a zone name, a location and a radius.
--- This class implements the inherited functions from Core.Zone#ZONE_BASE taking into account the own zone format and properties.
--- 
--- ## 2.1) @{Zone#ZONE_RADIUS} constructor
--- 
---   * @{#ZONE_RADIUS.New}(): Constructor.
---   
--- ## 2.2) Manage the radius of the zone
--- 
---   * @{#ZONE_RADIUS.SetRadius}(): Sets the radius of the zone.
---   * @{#ZONE_RADIUS.GetRadius}(): Returns the radius of the zone.
--- 
--- ## 2.3) Manage the location of the zone
--- 
---   * @{#ZONE_RADIUS.SetVec2}(): Sets the @{DCSTypes#Vec2} of the zone.
---   * @{#ZONE_RADIUS.GetVec2}(): Returns the @{DCSTypes#Vec2} of the zone.
---   * @{#ZONE_RADIUS.GetVec3}(): Returns the @{DCSTypes#Vec3} of the zone, taking an additional height parameter.
--- 
--- ## 2.4) Zone point randomization
--- 
--- Various functions exist to find random points within the zone.
--- 
---   * @{#ZONE_RADIUS.GetRandomVec2}(): Gets a random 2D point in the zone.
---   * @{#ZONE_RADIUS.GetRandomPointVec2}(): Gets a @{Point#POINT_VEC2} object representing a random 2D point in the zone.
---   * @{#ZONE_RADIUS.GetRandomPointVec3}(): Gets a @{Point#POINT_VEC3} object representing a random 3D point in the zone. Note that the height of the point is at landheight.
--- 
--- ===
--- 
--- # 3) @{Zone#ZONE} class, extends @{Zone#ZONE_RADIUS}
--- 
--- The ZONE class, defined by the zone name as defined within the Mission Editor.
--- This class implements the inherited functions from {Core.Zone#ZONE_RADIUS} taking into account the own zone format and properties.
--- 
--- ===
--- 
--- # 4) @{Zone#ZONE_UNIT} class, extends @{Zone#ZONE_RADIUS}
--- 
--- The ZONE_UNIT class defined by a zone around a @{Unit#UNIT} with a radius.
--- This class implements the inherited functions from @{Zone#ZONE_RADIUS} taking into account the own zone format and properties.
--- 
--- ===
--- 
--- # 5) @{Zone#ZONE_GROUP} class, extends @{Zone#ZONE_RADIUS}
--- 
--- The ZONE_GROUP class defines by a zone around a @{Group#GROUP} with a radius. The current leader of the group defines the center of the zone.
--- This class implements the inherited functions from @{Zone#ZONE_RADIUS} taking into account the own zone format and properties.
--- 
--- ===
--- 
--- # 6) @{Zone#ZONE_POLYGON_BASE} class, extends @{Zone#ZONE_BASE}
--- 
--- The ZONE_POLYGON_BASE class defined by a sequence of @{Group#GROUP} waypoints within the Mission Editor, forming a polygon.
--- This class implements the inherited functions from @{Zone#ZONE_RADIUS} taking into account the own zone format and properties.
--- This class is an abstract BASE class for derived classes, and is not meant to be instantiated.
--- 
--- ## 6.1) Zone point randomization
--- 
--- Various functions exist to find random points within the zone.
--- 
---   * @{#ZONE_POLYGON_BASE.GetRandomVec2}(): Gets a random 2D point in the zone.
---   * @{#ZONE_POLYGON_BASE.GetRandomPointVec2}(): Return a @{Point#POINT_VEC2} object representing a random 2D point within the zone.
---   * @{#ZONE_POLYGON_BASE.GetRandomPointVec3}(): Return a @{Point#POINT_VEC3} object representing a random 3D point at landheight within the zone.
--- 
--- 
--- ===
--- 
--- # 7) @{Zone#ZONE_POLYGON} class, extends @{Zone#ZONE_POLYGON_BASE}
--- 
--- The ZONE_POLYGON class defined by a sequence of @{Group#GROUP} waypoints within the Mission Editor, forming a polygon.
--- This class implements the inherited functions from @{Zone#ZONE_RADIUS} taking into account the own zone format and properties.
--- 
--- ====
--- 
--- **API CHANGE HISTORY**
--- ======================
+-- # **API CHANGE HISTORY**
 -- 
 -- The underlying change log documents the API changes. Please read this carefully. The following notation is used:
 -- 
@@ -6259,6 +6154,43 @@ end
 -- @field #string ZoneName Name of the zone.
 -- @field #number ZoneProbability A value between 0 and 1. 0 = 0% and 1 = 100% probability.
 -- @extends Core.Base#BASE
+
+
+--- # 1) ZONE_BASE class, extends @{Base#BASE}
+-- 
+-- This class is an abstract BASE class for derived classes, and is not meant to be instantiated.
+-- 
+-- ## 1.1) Each zone has a name:
+-- 
+--   * @{#ZONE_BASE.GetName}(): Returns the name of the zone.
+-- 
+-- ## 1.2) Each zone implements two polymorphic functions defined in @{Zone#ZONE_BASE}:
+-- 
+--   * @{#ZONE_BASE.IsVec2InZone}(): Returns if a Vec2 is within the zone.
+--   * @{#ZONE_BASE.IsVec3InZone}(): Returns if a Vec3 is within the zone.
+--   
+-- ## 1.3) A zone has a probability factor that can be set to randomize a selection between zones:
+-- 
+--   * @{#ZONE_BASE.SetRandomizeProbability}(): Set the randomization probability of a zone to be selected, taking a value between 0 and 1 ( 0 = 0%, 1 = 100% )
+--   * @{#ZONE_BASE.GetRandomizeProbability}(): Get the randomization probability of a zone to be selected, passing a value between 0 and 1 ( 0 = 0%, 1 = 100% )
+--   * @{#ZONE_BASE.GetZoneMaybe}(): Get the zone taking into account the randomization probability. nil is returned if this zone is not a candidate.
+-- 
+-- ## 1.4) A zone manages Vectors:
+-- 
+--   * @{#ZONE_BASE.GetVec2}(): Returns the @{DCSTypes#Vec2} coordinate of the zone.
+--   * @{#ZONE_BASE.GetRandomVec2}(): Define a random @{DCSTypes#Vec2} within the zone.
+-- 
+-- ## 1.5) A zone has a bounding square:
+-- 
+--   * @{#ZONE_BASE.GetBoundingSquare}(): Get the outer most bounding square of the zone.
+-- 
+-- ## 1.6) A zone can be marked: 
+-- 
+--   * @{#ZONE_BASE.SmokeZone}(): Smokes the zone boundaries in a color.
+--   * @{#ZONE_BASE.FlareZone}(): Flares the zone boundaries in a color.
+-- 
+-- ===
+-- @field #ZONE_BASE ZONE_BASE
 ZONE_BASE = {
   ClassName = "ZONE_BASE",
   ZoneName = "",
@@ -6462,6 +6394,39 @@ end
 -- @field Dcs.DCSTypes#Vec2 Vec2 The current location of the zone.
 -- @field Dcs.DCSTypes#Distance Radius The radius of the zone.
 -- @extends Core.Zone#ZONE_BASE
+
+--- # 2) @{Zone#ZONE_RADIUS} class, extends @{Zone#ZONE_BASE}
+-- 
+-- The ZONE_RADIUS class defined by a zone name, a location and a radius.
+-- This class implements the inherited functions from Core.Zone#ZONE_BASE taking into account the own zone format and properties.
+-- 
+-- ## 2.1) @{Zone#ZONE_RADIUS} constructor
+-- 
+--   * @{#ZONE_RADIUS.New}(): Constructor.
+--   
+-- ## 2.2) Manage the radius of the zone
+-- 
+--   * @{#ZONE_RADIUS.SetRadius}(): Sets the radius of the zone.
+--   * @{#ZONE_RADIUS.GetRadius}(): Returns the radius of the zone.
+-- 
+-- ## 2.3) Manage the location of the zone
+-- 
+--   * @{#ZONE_RADIUS.SetVec2}(): Sets the @{DCSTypes#Vec2} of the zone.
+--   * @{#ZONE_RADIUS.GetVec2}(): Returns the @{DCSTypes#Vec2} of the zone.
+--   * @{#ZONE_RADIUS.GetVec3}(): Returns the @{DCSTypes#Vec3} of the zone, taking an additional height parameter.
+-- 
+-- ## 2.4) Zone point randomization
+-- 
+-- Various functions exist to find random points within the zone.
+-- 
+--   * @{#ZONE_RADIUS.GetRandomVec2}(): Gets a random 2D point in the zone.
+--   * @{#ZONE_RADIUS.GetRandomPointVec2}(): Gets a @{Point#POINT_VEC2} object representing a random 2D point in the zone.
+--   * @{#ZONE_RADIUS.GetRandomPointVec3}(): Gets a @{Point#POINT_VEC3} object representing a random 3D point in the zone. Note that the height of the point is at landheight.
+-- 
+-- ===
+-- 
+-- @field #ZONE_RADIUS ZONE_RADIUS
+-- 
 ZONE_RADIUS = {
 	ClassName="ZONE_RADIUS",
 	}
@@ -6733,9 +6698,19 @@ end
 
 
 
---- The ZONE class, defined by the zone name as defined within the Mission Editor. The location and the radius are automatically collected from the mission settings.
 -- @type ZONE
 -- @extends Core.Zone#ZONE_RADIUS
+
+
+--- # 3) ZONE class, extends @{Zone#ZONE_RADIUS}
+-- 
+-- The ZONE class, defined by the zone name as defined within the Mission Editor.
+-- This class implements the inherited functions from @{#ZONE_RADIUS} taking into account the own zone format and properties.
+-- 
+-- ===
+-- 
+-- @field #ZONE ZONE
+-- 
 ZONE = {
   ClassName="ZONE",
   }
@@ -6767,6 +6742,16 @@ end
 -- @type ZONE_UNIT
 -- @field Wrapper.Unit#UNIT ZoneUNIT
 -- @extends Core.Zone#ZONE_RADIUS
+
+--- # 4) #ZONE_UNIT class, extends @{Zone#ZONE_RADIUS}
+-- 
+-- The ZONE_UNIT class defined by a zone around a @{Unit#UNIT} with a radius.
+-- This class implements the inherited functions from @{#ZONE_RADIUS} taking into account the own zone format and properties.
+-- 
+-- ===
+-- 
+-- @field #ZONE_UNIT ZONE_UNIT
+--
 ZONE_UNIT = {
   ClassName="ZONE_UNIT",
   }
@@ -6847,10 +6832,20 @@ function ZONE_UNIT:GetVec3( Height )
   return Vec3  
 end
 
---- The ZONE_GROUP class defined by a zone around a @{Group}, taking the average center point of all the units within the Group, with a radius.
--- @type ZONE_GROUP
+--- @type ZONE_GROUP
 -- @field Wrapper.Group#GROUP ZoneGROUP
 -- @extends Core.Zone#ZONE_RADIUS
+
+
+--- # 5) #ZONE_GROUP class, extends @{Zone#ZONE_RADIUS}
+-- 
+-- The ZONE_GROUP class defines by a zone around a @{Group#GROUP} with a radius. The current leader of the group defines the center of the zone.
+-- This class implements the inherited functions from @{Zone#ZONE_RADIUS} taking into account the own zone format and properties.
+-- 
+-- ===
+-- 
+-- @field #ZONE_GROUP ZONE_GROUP
+-- 
 ZONE_GROUP = {
   ClassName="ZONE_GROUP",
   }
@@ -6904,12 +6899,29 @@ end
 
 
 
--- Polygons
-
---- The ZONE_POLYGON_BASE class defined by an array of @{DCSTypes#Vec2}, forming a polygon.
--- @type ZONE_POLYGON_BASE
+--- @type ZONE_POLYGON_BASE
 -- @field #ZONE_POLYGON_BASE.ListVec2 Polygon The polygon defined by an array of @{DCSTypes#Vec2}.
 -- @extends Core.Zone#ZONE_BASE
+
+
+--- # 6) ZONE_POLYGON_BASE class, extends @{Zone#ZONE_BASE}
+-- 
+-- The ZONE_POLYGON_BASE class defined by a sequence of @{Group#GROUP} waypoints within the Mission Editor, forming a polygon.
+-- This class implements the inherited functions from @{Zone#ZONE_RADIUS} taking into account the own zone format and properties.
+-- This class is an abstract BASE class for derived classes, and is not meant to be instantiated.
+-- 
+-- ## 6.1) Zone point randomization
+-- 
+-- Various functions exist to find random points within the zone.
+-- 
+--   * @{#ZONE_POLYGON_BASE.GetRandomVec2}(): Gets a random 2D point in the zone.
+--   * @{#ZONE_POLYGON_BASE.GetRandomPointVec2}(): Return a @{Point#POINT_VEC2} object representing a random 2D point within the zone.
+--   * @{#ZONE_POLYGON_BASE.GetRandomPointVec3}(): Return a @{Point#POINT_VEC3} object representing a random 3D point at landheight within the zone.
+-- 
+-- ===
+-- 
+-- @field #ZONE_POLYGON_BASE ZONE_POLYGON_BASE
+-- 
 ZONE_POLYGON_BASE = {
   ClassName="ZONE_POLYGON_BASE",
   }
@@ -7143,12 +7155,19 @@ function ZONE_POLYGON_BASE:GetBoundingSquare()
 end
 
 
-
-
-
---- The ZONE_POLYGON class defined by a sequence of @{Group#GROUP} waypoints within the Mission Editor, forming a polygon.
--- @type ZONE_POLYGON
+--- @type ZONE_POLYGON
 -- @extends Core.Zone#ZONE_POLYGON_BASE
+
+
+--- # 7) ZONE_POLYGON class, extends @{Zone#ZONE_POLYGON_BASE}
+-- 
+-- The ZONE_POLYGON class defined by a sequence of @{Group#GROUP} waypoints within the Mission Editor, forming a polygon.
+-- This class implements the inherited functions from @{Zone#ZONE_RADIUS} taking into account the own zone format and properties.
+-- 
+-- ===
+-- 
+-- @field #ZONE_POLYGON ZONE_POLYGON
+-- 
 ZONE_POLYGON = {
   ClassName="ZONE_POLYGON",
   }
@@ -8013,6 +8032,14 @@ end
 -- @module Set
 
 
+--- @type SET_BASE
+-- @field #table Filter
+-- @field #table Set
+-- @field #table List
+-- @field Core.Scheduler#SCHEDULER CallScheduler
+-- @extends Core.Base#BASE
+
+
 --- # 1) SET_BASE class, extends @{Base#BASE}
 -- The @{Set#SET_BASE} class defines the core functions that define a collection of objects.
 -- A SET provides iterators to iterate the SET, but will **temporarily** yield the ForEach interator loop at defined **"intervals"** to the mail simulator loop.
@@ -8029,12 +8056,7 @@ end
 -- Modify the iterator intervals with the @{Set#SET_BASE.SetInteratorIntervals} method.
 -- You can set the **"yield interval"**, and the **"time interval"**. (See above).
 -- 
--- @type SET_BASE
--- @field #table Filter
--- @field #table Set
--- @field #table List
--- @field Core.Scheduler#SCHEDULER CallScheduler
--- @extends Core.Base#BASE
+-- @field #SET_BASE SET_BASE 
 SET_BASE = {
   ClassName = "SET_BASE",
   Filter = {},
@@ -8042,6 +8064,7 @@ SET_BASE = {
   List = {},
   Index = {},
 }
+
 
 --- Creates a new SET_BASE object, building a set of units belonging to a coalitions, categories, countries, types or with defined prefix names.
 -- @param #SET_BASE self
@@ -8575,7 +8598,9 @@ function SET_BASE:Flush()
   return ObjectNames
 end
 
--- SET_GROUP
+
+--- @type SET_GROUP
+-- @extends Core.Set#SET_BASE
 
 --- # 2) SET_GROUP class, extends @{Set#SET_BASE}
 -- 
@@ -8625,9 +8650,9 @@ end
 --   * @{#SET_GROUP.ForEachGroupCompletelyInZone}: Iterate the SET_GROUP and call an iterator function for each **alive** GROUP presence completely in a @{Zone}, providing the GROUP and optional parameters to the called function.
 --   * @{#SET_GROUP.ForEachGroupPartlyInZone}: Iterate the SET_GROUP and call an iterator function for each **alive** GROUP presence partly in a @{Zone}, providing the GROUP and optional parameters to the called function.
 --   * @{#SET_GROUP.ForEachGroupNotInZone}: Iterate the SET_GROUP and call an iterator function for each **alive** GROUP presence not in a @{Zone}, providing the GROUP and optional parameters to the called function.
--- 
--- @type SET_GROUP
--- @extends Core.Set#SET_BASE
+--
+-- ===
+-- @field #SET_GROUP SET_GROUP 
 SET_GROUP = {
   ClassName = "SET_GROUP",
   Filter = {
@@ -8993,6 +9018,9 @@ function SET_GROUP:IsIncludeObject( MooseGroup )
   return MooseGroupInclude
 end
 
+--- @type SET_UNIT
+-- @extends Core.Set#SET_BASE
+
 --- # 3) SET_UNIT class, extends @{Set#SET_BASE}
 -- 
 -- Mission designers can use the SET_UNIT class to build sets of units belonging to certain:
@@ -9055,9 +9083,8 @@ end
 -- 
 --   * @{#SET_UNIT.GetTypeNames}(): Retrieve the type names of the @{Unit}s in the SET, delimited by a comma.
 -- 
--- 
--- @type SET_UNIT
--- @extends Core.Set#SET_BASE
+-- ===
+-- @field #SET_UNIT SET_UNIT
 SET_UNIT = {
   ClassName = "SET_UNIT",
   Units = {},
@@ -9696,6 +9723,12 @@ end
 
 --- SET_CLIENT
 
+
+--- @type SET_CLIENT
+-- @extends Core.Set#SET_BASE
+
+
+
 --- # 4) SET_CLIENT class, extends @{Set#SET_BASE}
 -- 
 -- Mission designers can use the @{Set#SET_CLIENT} class to build sets of units belonging to certain:
@@ -9744,8 +9777,8 @@ end
 -- 
 --   * @{#SET_CLIENT.ForEachClient}: Calls a function for each alive client it finds within the SET_CLIENT.
 -- 
--- @type SET_CLIENT
--- @extends Core.Set#SET_BASE
+-- ===
+-- @field #SET_CLIENT SET_CLIENT 
 SET_CLIENT = {
   ClassName = "SET_CLIENT",
   Clients = {},
@@ -10098,7 +10131,8 @@ function SET_CLIENT:IsIncludeObject( MClient )
   return MClientInclude
 end
 
---- SET_AIRBASE
+--- @type SET_AIRBASE
+-- @extends Core.Set#SET_BASE
 
 --- # 5) SET_AIRBASE class, extends @{Set#SET_BASE}
 -- 
@@ -10136,8 +10170,8 @@ end
 -- 
 --   * @{#SET_AIRBASE.ForEachAirbase}: Calls a function for each airbase it finds within the SET_AIRBASE.
 -- 
--- @type SET_AIRBASE
--- @extends Core.Set#SET_BASE
+-- ===
+-- @field #SET_AIRBASE SET_AIRBASE
 SET_AIRBASE = {
   ClassName = "SET_AIRBASE",
   Airbases = {},
@@ -11571,227 +11605,14 @@ end
 -- I've reworked this development (taken the concept), and created a **hierarchical state machine** out of it, embedded within the DCS simulator.
 -- Additionally, I've added extendability and created an API that allows seamless FSM implementation.
 -- 
--- ===
---
--- # 1) @{#FSM} class, extends @{Base#BASE}
---
--- ![Transition Rules and Transition Handlers and Event Triggers](..\Presentations\FSM\Dia3.JPG)
+-- The following derived classes are available in the MOOSE framework, that implement a specialised form of a FSM:
 -- 
--- The FSM class is the base class of all FSM\_ derived classes. It implements the main functionality to define and execute Finite State Machines.
--- The derived FSM\_ classes extend the Finite State Machine functionality to run a workflow process for a specific purpose or component.
+--   * @{#FSM_TASK}: Models Finite State Machines for @{Task}s.
+--   * @{#FSM_PROCESS}: Models Finite State Machines for @{Task} actions, which control @{Client}s.
+--   * @{#FSM_CONTROLLABLE}: Models Finite State Machines for @{Controllable}s, which are @{Group}s, @{Unit}s, @{Client}s.
+--   * @{#FSM_SET}: Models Finite State Machines for @{Set}s. Note that these FSMs control multiple objects!!! So State concerns here
+--     for multiple objects or the position of the state machine in the process.
 -- 
--- Finite State Machines have **Transition Rules**, **Transition Handlers** and **Event Triggers**.
--- 
--- The **Transition Rules** define the "Process Flow Boundaries", that is, 
--- the path that can be followed hopping from state to state upon triggered events.
--- If an event is triggered, and there is no valid path found for that event, 
--- an error will be raised and the FSM will stop functioning.
--- 
--- The **Transition Handlers** are special methods that can be defined by the mission designer, following a defined syntax.
--- If the FSM object finds a method of such a handler, then the method will be called by the FSM, passing specific parameters.
--- The method can then define its own custom logic to implement the FSM workflow, and to conduct other actions.
--- 
--- The **Event Triggers** are methods that are defined by the FSM, which the mission designer can use to implement the workflow.
--- Most of the time, these Event Triggers are used within the Transition Handler methods, so that a workflow is created running through the state machine.
--- 
--- As explained above, a FSM supports **Linear State Transitions** and **Hierarchical State Transitions**, and both can be mixed to make a comprehensive FSM implementation.
--- The below documentation has a seperate chapter explaining both transition modes, taking into account the **Transition Rules**, **Transition Handlers** and **Event Triggers**.
--- 
--- ## 1.1) FSM Linear Transitions
--- 
--- Linear Transitions are Transition Rules allowing an FSM to transition from one or multiple possible **From** state(s) towards a **To** state upon a Triggered **Event**.
--- The Lineair transition rule evaluation will always be done from the **current state** of the FSM.
--- If no valid Transition Rule can be found in the FSM, the FSM will log an error and stop.
--- 
--- ### 1.1.1) FSM Transition Rules
--- 
--- The FSM has transition rules that it follows and validates, as it walks the process. 
--- These rules define when an FSM can transition from a specific state towards an other specific state upon a triggered event.
--- 
--- The method @{#FSM.AddTransition}() specifies a new possible Transition Rule for the FSM. 
--- 
--- The initial state can be defined using the method @{#FSM.SetStartState}(). The default start state of an FSM is "None".
--- 
--- Find below an example of a Linear Transition Rule definition for an FSM.
--- 
---      local Fsm3Switch = FSM:New() -- #FsmDemo
---      FsmSwitch:SetStartState( "Off" )
---      FsmSwitch:AddTransition( "Off", "SwitchOn", "On" )
---      FsmSwitch:AddTransition( "Off", "SwitchMiddle", "Middle" )
---      FsmSwitch:AddTransition( "On", "SwitchOff", "Off" )
---      FsmSwitch:AddTransition( "Middle", "SwitchOff", "Off" )
--- 
--- The above code snippet models a 3-way switch Linear Transition:
--- 
---    * It can be switched **On** by triggering event **SwitchOn**.
---    * It can be switched to the **Middle** position, by triggering event **SwitchMiddle**.
---    * It can be switched **Off** by triggering event **SwitchOff**.
---    * Note that once the Switch is **On** or **Middle**, it can only be switched **Off**.
--- 
--- ### Some additional comments:
--- 
--- Note that Linear Transition Rules **can be declared in a few variations**:
--- 
---    * The From states can be **a table of strings**, indicating that the transition rule will be valid **if the current state** of the FSM will be **one of the given From states**.
---    * The From state can be a **"*"**, indicating that **the transition rule will always be valid**, regardless of the current state of the FSM.
---   
--- The below code snippet shows how the two last lines can be rewritten and consensed.
--- 
---      FsmSwitch:AddTransition( { "On",  "Middle" }, "SwitchOff", "Off" )
--- 
--- ### 1.1.2) Transition Handling
--- 
--- ![Transition Handlers](..\Presentations\FSM\Dia4.JPG)
--- 
--- An FSM transitions in **4 moments** when an Event is being triggered and processed.  
--- The mission designer can define for each moment specific logic within methods implementations following a defined API syntax.  
--- These methods define the flow of the FSM process; because in those methods the FSM Internal Events will be triggered.
---
---    * To handle **State** transition moments, create methods starting with OnLeave or OnEnter concatenated with the State name.
---    * To handle **Event** transition moments, create methods starting with OnBefore or OnAfter concatenated with the Event name.
--- 
--- **The OnLeave and OnBefore transition methods may return false, which will cancel the transition!**
--- 
--- Transition Handler methods need to follow the above specified naming convention, but are also passed parameters from the FSM.
--- These parameters are on the correct order: From, Event, To:
--- 
---    * From = A string containing the From state.
---    * Event = A string containing the Event name that was triggered.
---    * To = A string containing the To state.
--- 
--- On top, each of these methods can have a variable amount of parameters passed. See the example in section [1.1.3](#1.1.3\)-event-triggers).
--- 
--- ### 1.1.3) Event Triggers
--- 
--- ![Event Triggers](..\Presentations\FSM\Dia5.JPG)
--- 
--- The FSM creates for each Event two **Event Trigger methods**.  
--- There are two modes how Events can be triggered, which is **synchronous** and **asynchronous**:
--- 
---    * The method **FSM:Event()** triggers an Event that will be processed **synchronously** or **immediately**.
---    * The method **FSM:__Event( __seconds__ )** triggers an Event that will be processed **asynchronously** over time, waiting __x seconds__.
--- 
--- The destinction between these 2 Event Trigger methods are important to understand. An asynchronous call will "log" the Event Trigger to be executed at a later time.
--- Processing will just continue. Synchronous Event Trigger methods are useful to change states of the FSM immediately, but may have a larger processing impact.
--- 
--- The following example provides a little demonstration on the difference between synchronous and asynchronous Event Triggering.
--- 
---       function FSM:OnAfterEvent( From, Event, To, Amount )
---         self:T( { Amount = Amount } ) 
---       end
---       
---       local Amount = 1
---       FSM:__Event( 5, Amount ) 
---       
---       Amount = Amount + 1
---       FSM:Event( Text, Amount )
---       
--- In this example, the **:OnAfterEvent**() Transition Handler implementation will get called when **Event** is being triggered.
--- Before we go into more detail, let's look at the last 4 lines of the example. 
--- The last line triggers synchronously the **Event**, and passes Amount as a parameter.
--- The 3rd last line of the example triggers asynchronously **Event**. 
--- Event will be processed after 5 seconds, and Amount is given as a parameter.
--- 
--- The output of this little code fragment will be:
--- 
---    * Amount = 2
---    * Amount = 2
--- 
--- Because ... When Event was asynchronously processed after 5 seconds, Amount was set to 2. So be careful when processing and passing values and objects in asynchronous processing!
--- 
--- ### 1.1.4) Linear Transition Example
--- 
--- This example is fully implemented in the MOOSE test mission on GITHUB: [FSM-100 - Transition Explanation](https://github.com/FlightControl-Master/MOOSE/blob/master/Moose%20Test%20Missions/FSM%20-%20Finite%20State%20Machine/FSM-100%20-%20Transition%20Explanation/FSM-100%20-%20Transition%20Explanation.lua)
--- 
--- It models a unit standing still near Batumi, and flaring every 5 seconds while switching between a Green flare and a Red flare.
--- The purpose of this example is not to show how exciting flaring is, but it demonstrates how a Linear Transition FSM can be build.
--- Have a look at the source code. The source code is also further explained below in this section.
--- 
--- The example creates a new FsmDemo object from class FSM.
--- It will set the start state of FsmDemo to state **Green**.
--- Two Linear Transition Rules are created, where upon the event **Switch**,
--- the FsmDemo will transition from state **Green** to **Red** and from **Red** back to **Green**.
--- 
--- ![Transition Example](..\Presentations\FSM\Dia6.JPG)
--- 
---      local FsmDemo = FSM:New() -- #FsmDemo
---      FsmDemo:SetStartState( "Green" )
---      FsmDemo:AddTransition( "Green", "Switch", "Red" )
---      FsmDemo:AddTransition( "Red", "Switch", "Green" )
--- 
--- In the above example, the FsmDemo could flare every 5 seconds a Green or a Red flare into the air.
--- The next code implements this through the event handling method **OnAfterSwitch**.
--- 
--- ![Transition Flow](..\Presentations\FSM\Dia7.JPG)
--- 
---      function FsmDemo:OnAfterSwitch( From, Event, To, FsmUnit )
---        self:T( { From, Event, To, FsmUnit } )
---        
---        if From == "Green" then
---          FsmUnit:Flare(FLARECOLOR.Green)
---        else
---          if From == "Red" then
---            FsmUnit:Flare(FLARECOLOR.Red)
---          end
---        end
---        self:__Switch( 5, FsmUnit ) -- Trigger the next Switch event to happen in 5 seconds.
---      end
---      
---      FsmDemo:__Switch( 5, FsmUnit ) -- Trigger the first Switch event to happen in 5 seconds.
--- 
--- The OnAfterSwitch implements a loop. The last line of the code fragment triggers the Switch Event within 5 seconds.
--- Upon the event execution (after 5 seconds), the OnAfterSwitch method is called of FsmDemo (cfr. the double point notation!!! ":").
--- The OnAfterSwitch method receives from the FSM the 3 transition parameter details ( From, Event, To ), 
--- and one additional parameter that was given when the event was triggered, which is in this case the Unit that is used within OnSwitchAfter.
--- 
---      function FsmDemo:OnAfterSwitch( From, Event, To, FsmUnit )
--- 
--- For debugging reasons the received parameters are traced within the DCS.log.
--- 
---         self:T( { From, Event, To, FsmUnit } )
--- 
--- The method will check if the From state received is either "Green" or "Red" and will flare the respective color from the FsmUnit.
--- 
---        if From == "Green" then
---          FsmUnit:Flare(FLARECOLOR.Green)
---        else
---          if From == "Red" then
---            FsmUnit:Flare(FLARECOLOR.Red)
---          end
---        end
--- 
--- It is important that the Switch event is again triggered, otherwise, the FsmDemo would stop working after having the first Event being handled.
--- 
---        FsmDemo:__Switch( 5, FsmUnit ) -- Trigger the next Switch event to happen in 5 seconds.
--- 
--- The below code fragment extends the FsmDemo, demonstrating multiple **From states declared as a table**, adding a **Linear Transition Rule**.
--- The new event **Stop** will cancel the Switching process.
--- The transition for event Stop can be executed if the current state of the FSM is either "Red" or "Green".
--- 
---      local FsmDemo = FSM:New() -- #FsmDemo
---      FsmDemo:SetStartState( "Green" )
---      FsmDemo:AddTransition( "Green", "Switch", "Red" )
---      FsmDemo:AddTransition( "Red", "Switch", "Green" )
---      FsmDemo:AddTransition( { "Red", "Green" }, "Stop", "Stopped" )
--- 
--- The transition for event Stop can also be simplified, as any current state of the FSM is valid.
--- 
---      FsmDemo:AddTransition( "*", "Stop", "Stopped" )
---      
--- So... When FsmDemo:Stop() is being triggered, the state of FsmDemo will transition from Red or Green to Stopped.
--- And there is no transition handling method defined for that transition, thus, no new event is being triggered causing the FsmDemo process flow to halt.
--- 
--- ## 1.5) FSM Hierarchical Transitions
--- 
--- Hierarchical Transitions allow to re-use readily available and implemented FSMs.
--- This becomes in very useful for mission building, where mission designers build complex processes and workflows, 
--- combining smaller FSMs to one single FSM.
--- 
--- The FSM can embed **Sub-FSMs** that will execute and return **multiple possible Return (End) States**.  
--- Depending upon **which state is returned**, the main FSM can continue the flow **triggering specific events**.
--- 
--- The method @{#FSM.AddProcess}() adds a new Sub-FSM to the FSM.  
---
 -- ====
 -- 
 -- # **API CHANGE HISTORY**
@@ -11825,8 +11646,233 @@ end
 do -- FSM
 
   --- FSM class
-  -- @type FSM
+  --- @type FSM
   -- @extends Core.Base#BASE
+  
+  
+  --- # 1) FSM class, extends @{Base#BASE}
+  --
+  -- ![Transition Rules and Transition Handlers and Event Triggers](..\Presentations\FSM\Dia3.JPG)
+  -- 
+  -- The FSM class is the base class of all FSM\_ derived classes. It implements the main functionality to define and execute Finite State Machines.
+  -- The derived FSM\_ classes extend the Finite State Machine functionality to run a workflow process for a specific purpose or component.
+  -- 
+  -- Finite State Machines have **Transition Rules**, **Transition Handlers** and **Event Triggers**.
+  -- 
+  -- The **Transition Rules** define the "Process Flow Boundaries", that is, 
+  -- the path that can be followed hopping from state to state upon triggered events.
+  -- If an event is triggered, and there is no valid path found for that event, 
+  -- an error will be raised and the FSM will stop functioning.
+  -- 
+  -- The **Transition Handlers** are special methods that can be defined by the mission designer, following a defined syntax.
+  -- If the FSM object finds a method of such a handler, then the method will be called by the FSM, passing specific parameters.
+  -- The method can then define its own custom logic to implement the FSM workflow, and to conduct other actions.
+  -- 
+  -- The **Event Triggers** are methods that are defined by the FSM, which the mission designer can use to implement the workflow.
+  -- Most of the time, these Event Triggers are used within the Transition Handler methods, so that a workflow is created running through the state machine.
+  -- 
+  -- As explained above, a FSM supports **Linear State Transitions** and **Hierarchical State Transitions**, and both can be mixed to make a comprehensive FSM implementation.
+  -- The below documentation has a seperate chapter explaining both transition modes, taking into account the **Transition Rules**, **Transition Handlers** and **Event Triggers**.
+  -- 
+  -- ## 1.1) FSM Linear Transitions
+  -- 
+  -- Linear Transitions are Transition Rules allowing an FSM to transition from one or multiple possible **From** state(s) towards a **To** state upon a Triggered **Event**.
+  -- The Lineair transition rule evaluation will always be done from the **current state** of the FSM.
+  -- If no valid Transition Rule can be found in the FSM, the FSM will log an error and stop.
+  -- 
+  -- ### 1.1.1) FSM Transition Rules
+  -- 
+  -- The FSM has transition rules that it follows and validates, as it walks the process. 
+  -- These rules define when an FSM can transition from a specific state towards an other specific state upon a triggered event.
+  -- 
+  -- The method @{#FSM.AddTransition}() specifies a new possible Transition Rule for the FSM. 
+  -- 
+  -- The initial state can be defined using the method @{#FSM.SetStartState}(). The default start state of an FSM is "None".
+  -- 
+  -- Find below an example of a Linear Transition Rule definition for an FSM.
+  -- 
+  --      local Fsm3Switch = FSM:New() -- #FsmDemo
+  --      FsmSwitch:SetStartState( "Off" )
+  --      FsmSwitch:AddTransition( "Off", "SwitchOn", "On" )
+  --      FsmSwitch:AddTransition( "Off", "SwitchMiddle", "Middle" )
+  --      FsmSwitch:AddTransition( "On", "SwitchOff", "Off" )
+  --      FsmSwitch:AddTransition( "Middle", "SwitchOff", "Off" )
+  -- 
+  -- The above code snippet models a 3-way switch Linear Transition:
+  -- 
+  --    * It can be switched **On** by triggering event **SwitchOn**.
+  --    * It can be switched to the **Middle** position, by triggering event **SwitchMiddle**.
+  --    * It can be switched **Off** by triggering event **SwitchOff**.
+  --    * Note that once the Switch is **On** or **Middle**, it can only be switched **Off**.
+  -- 
+  -- ### Some additional comments:
+  -- 
+  -- Note that Linear Transition Rules **can be declared in a few variations**:
+  -- 
+  --    * The From states can be **a table of strings**, indicating that the transition rule will be valid **if the current state** of the FSM will be **one of the given From states**.
+  --    * The From state can be a **"*"**, indicating that **the transition rule will always be valid**, regardless of the current state of the FSM.
+  --   
+  -- The below code snippet shows how the two last lines can be rewritten and consensed.
+  -- 
+  --      FsmSwitch:AddTransition( { "On",  "Middle" }, "SwitchOff", "Off" )
+  -- 
+  -- ### 1.1.2) Transition Handling
+  -- 
+  -- ![Transition Handlers](..\Presentations\FSM\Dia4.JPG)
+  -- 
+  -- An FSM transitions in **4 moments** when an Event is being triggered and processed.  
+  -- The mission designer can define for each moment specific logic within methods implementations following a defined API syntax.  
+  -- These methods define the flow of the FSM process; because in those methods the FSM Internal Events will be triggered.
+  --
+  --    * To handle **State** transition moments, create methods starting with OnLeave or OnEnter concatenated with the State name.
+  --    * To handle **Event** transition moments, create methods starting with OnBefore or OnAfter concatenated with the Event name.
+  -- 
+  -- **The OnLeave and OnBefore transition methods may return false, which will cancel the transition!**
+  -- 
+  -- Transition Handler methods need to follow the above specified naming convention, but are also passed parameters from the FSM.
+  -- These parameters are on the correct order: From, Event, To:
+  -- 
+  --    * From = A string containing the From state.
+  --    * Event = A string containing the Event name that was triggered.
+  --    * To = A string containing the To state.
+  -- 
+  -- On top, each of these methods can have a variable amount of parameters passed. See the example in section [1.1.3](#1.1.3\)-event-triggers).
+  -- 
+  -- ### 1.1.3) Event Triggers
+  -- 
+  -- ![Event Triggers](..\Presentations\FSM\Dia5.JPG)
+  -- 
+  -- The FSM creates for each Event two **Event Trigger methods**.  
+  -- There are two modes how Events can be triggered, which is **synchronous** and **asynchronous**:
+  -- 
+  --    * The method **FSM:Event()** triggers an Event that will be processed **synchronously** or **immediately**.
+  --    * The method **FSM:__Event( __seconds__ )** triggers an Event that will be processed **asynchronously** over time, waiting __x seconds__.
+  -- 
+  -- The destinction between these 2 Event Trigger methods are important to understand. An asynchronous call will "log" the Event Trigger to be executed at a later time.
+  -- Processing will just continue. Synchronous Event Trigger methods are useful to change states of the FSM immediately, but may have a larger processing impact.
+  -- 
+  -- The following example provides a little demonstration on the difference between synchronous and asynchronous Event Triggering.
+  -- 
+  --       function FSM:OnAfterEvent( From, Event, To, Amount )
+  --         self:T( { Amount = Amount } ) 
+  --       end
+  --       
+  --       local Amount = 1
+  --       FSM:__Event( 5, Amount ) 
+  --       
+  --       Amount = Amount + 1
+  --       FSM:Event( Text, Amount )
+  --       
+  -- In this example, the **:OnAfterEvent**() Transition Handler implementation will get called when **Event** is being triggered.
+  -- Before we go into more detail, let's look at the last 4 lines of the example. 
+  -- The last line triggers synchronously the **Event**, and passes Amount as a parameter.
+  -- The 3rd last line of the example triggers asynchronously **Event**. 
+  -- Event will be processed after 5 seconds, and Amount is given as a parameter.
+  -- 
+  -- The output of this little code fragment will be:
+  -- 
+  --    * Amount = 2
+  --    * Amount = 2
+  -- 
+  -- Because ... When Event was asynchronously processed after 5 seconds, Amount was set to 2. So be careful when processing and passing values and objects in asynchronous processing!
+  -- 
+  -- ### 1.1.4) Linear Transition Example
+  -- 
+  -- This example is fully implemented in the MOOSE test mission on GITHUB: [FSM-100 - Transition Explanation](https://github.com/FlightControl-Master/MOOSE/blob/master/Moose%20Test%20Missions/FSM%20-%20Finite%20State%20Machine/FSM-100%20-%20Transition%20Explanation/FSM-100%20-%20Transition%20Explanation.lua)
+  -- 
+  -- It models a unit standing still near Batumi, and flaring every 5 seconds while switching between a Green flare and a Red flare.
+  -- The purpose of this example is not to show how exciting flaring is, but it demonstrates how a Linear Transition FSM can be build.
+  -- Have a look at the source code. The source code is also further explained below in this section.
+  -- 
+  -- The example creates a new FsmDemo object from class FSM.
+  -- It will set the start state of FsmDemo to state **Green**.
+  -- Two Linear Transition Rules are created, where upon the event **Switch**,
+  -- the FsmDemo will transition from state **Green** to **Red** and from **Red** back to **Green**.
+  -- 
+  -- ![Transition Example](..\Presentations\FSM\Dia6.JPG)
+  -- 
+  --      local FsmDemo = FSM:New() -- #FsmDemo
+  --      FsmDemo:SetStartState( "Green" )
+  --      FsmDemo:AddTransition( "Green", "Switch", "Red" )
+  --      FsmDemo:AddTransition( "Red", "Switch", "Green" )
+  -- 
+  -- In the above example, the FsmDemo could flare every 5 seconds a Green or a Red flare into the air.
+  -- The next code implements this through the event handling method **OnAfterSwitch**.
+  -- 
+  -- ![Transition Flow](..\Presentations\FSM\Dia7.JPG)
+  -- 
+  --      function FsmDemo:OnAfterSwitch( From, Event, To, FsmUnit )
+  --        self:T( { From, Event, To, FsmUnit } )
+  --        
+  --        if From == "Green" then
+  --          FsmUnit:Flare(FLARECOLOR.Green)
+  --        else
+  --          if From == "Red" then
+  --            FsmUnit:Flare(FLARECOLOR.Red)
+  --          end
+  --        end
+  --        self:__Switch( 5, FsmUnit ) -- Trigger the next Switch event to happen in 5 seconds.
+  --      end
+  --      
+  --      FsmDemo:__Switch( 5, FsmUnit ) -- Trigger the first Switch event to happen in 5 seconds.
+  -- 
+  -- The OnAfterSwitch implements a loop. The last line of the code fragment triggers the Switch Event within 5 seconds.
+  -- Upon the event execution (after 5 seconds), the OnAfterSwitch method is called of FsmDemo (cfr. the double point notation!!! ":").
+  -- The OnAfterSwitch method receives from the FSM the 3 transition parameter details ( From, Event, To ), 
+  -- and one additional parameter that was given when the event was triggered, which is in this case the Unit that is used within OnSwitchAfter.
+  -- 
+  --      function FsmDemo:OnAfterSwitch( From, Event, To, FsmUnit )
+  -- 
+  -- For debugging reasons the received parameters are traced within the DCS.log.
+  -- 
+  --         self:T( { From, Event, To, FsmUnit } )
+  -- 
+  -- The method will check if the From state received is either "Green" or "Red" and will flare the respective color from the FsmUnit.
+  -- 
+  --        if From == "Green" then
+  --          FsmUnit:Flare(FLARECOLOR.Green)
+  --        else
+  --          if From == "Red" then
+  --            FsmUnit:Flare(FLARECOLOR.Red)
+  --          end
+  --        end
+  -- 
+  -- It is important that the Switch event is again triggered, otherwise, the FsmDemo would stop working after having the first Event being handled.
+  -- 
+  --        FsmDemo:__Switch( 5, FsmUnit ) -- Trigger the next Switch event to happen in 5 seconds.
+  -- 
+  -- The below code fragment extends the FsmDemo, demonstrating multiple **From states declared as a table**, adding a **Linear Transition Rule**.
+  -- The new event **Stop** will cancel the Switching process.
+  -- The transition for event Stop can be executed if the current state of the FSM is either "Red" or "Green".
+  -- 
+  --      local FsmDemo = FSM:New() -- #FsmDemo
+  --      FsmDemo:SetStartState( "Green" )
+  --      FsmDemo:AddTransition( "Green", "Switch", "Red" )
+  --      FsmDemo:AddTransition( "Red", "Switch", "Green" )
+  --      FsmDemo:AddTransition( { "Red", "Green" }, "Stop", "Stopped" )
+  -- 
+  -- The transition for event Stop can also be simplified, as any current state of the FSM is valid.
+  -- 
+  --      FsmDemo:AddTransition( "*", "Stop", "Stopped" )
+  --      
+  -- So... When FsmDemo:Stop() is being triggered, the state of FsmDemo will transition from Red or Green to Stopped.
+  -- And there is no transition handling method defined for that transition, thus, no new event is being triggered causing the FsmDemo process flow to halt.
+  -- 
+  -- ## 1.5) FSM Hierarchical Transitions
+  -- 
+  -- Hierarchical Transitions allow to re-use readily available and implemented FSMs.
+  -- This becomes in very useful for mission building, where mission designers build complex processes and workflows, 
+  -- combining smaller FSMs to one single FSM.
+  -- 
+  -- The FSM can embed **Sub-FSMs** that will execute and return **multiple possible Return (End) States**.  
+  -- Depending upon **which state is returned**, the main FSM can continue the flow **triggering specific events**.
+  -- 
+  -- The method @{#FSM.AddProcess}() adds a new Sub-FSM to the FSM.  
+  --
+  -- ===
+  -- 
+  -- @field #FSM FSM
+  -- 
   FSM = {
     ClassName = "FSM",
   }
@@ -12245,10 +12291,18 @@ end
 
 do -- FSM_CONTROLLABLE
 
-  --- FSM_CONTROLLABLE class
-  -- @type FSM_CONTROLLABLE
+  --- @type FSM_CONTROLLABLE
   -- @field Wrapper.Controllable#CONTROLLABLE Controllable
   -- @extends Core.Fsm#FSM
+  
+  --- # FSM_CONTROLLABLE, extends @{#FSM}
+  --
+  -- FSM_CONTROLLABLE class models Finite State Machines for @{Controllable}s, which are @{Group}s, @{Unit}s, @{Client}s.
+  -- 
+  -- ===
+  -- 
+  -- @field #FSM_CONTROLLABLE FSM_CONTROLLABLE
+  -- 
   FSM_CONTROLLABLE = {
     ClassName = "FSM_CONTROLLABLE",
   }
@@ -12369,10 +12423,19 @@ end
 
 do -- FSM_PROCESS
 
-  --- FSM_PROCESS class
-  -- @type FSM_PROCESS
+  --- @type FSM_PROCESS
   -- @field Tasking.Task#TASK Task
   -- @extends Core.Fsm#FSM_CONTROLLABLE
+  
+  
+  --- # FSM_PROCESS, extends @{#FSM}
+  --
+  -- FSM_PROCESS class models Finite State Machines for @{Task} actions, which control @{Client}s.
+  -- 
+  -- ===
+  -- 
+  -- @field #FSM_PROCESS FSM_PROCESS
+  -- 
   FSM_PROCESS = {
     ClassName = "FSM_PROCESS",
   }
@@ -12599,6 +12662,15 @@ do -- FSM_TASK
   -- @type FSM_TASK
   -- @field Tasking.Task#TASK Task
   -- @extends Core.Fsm#FSM
+   
+  --- # FSM_TASK, extends @{#FSM}
+  --
+  -- FSM_TASK class models Finite State Machines for @{Task}s.
+  -- 
+  -- ===
+  -- 
+  -- @field #FSM_TASK FSM_TASK
+  --   
   FSM_TASK = {
     ClassName = "FSM_TASK",
   }
@@ -12634,6 +12706,17 @@ do -- FSM_SET
   -- @type FSM_SET
   -- @field Core.Set#SET_BASE Set
   -- @extends Core.Fsm#FSM
+
+
+  --- # FSM_SET, extends @{#FSM}
+  --
+  -- FSM_SET class models Finite State Machines for @{Set}s. Note that these FSMs control multiple objects!!! So State concerns here
+  -- for multiple objects or the position of the state machine in the process.
+  -- 
+  -- ===
+  -- 
+  -- @field #FSM_SET FSM_SET
+  -- 
   FSM_SET = {
     ClassName = "FSM_SET",
   }
@@ -27785,7 +27868,7 @@ do -- DETECTION_AREAS
       end
       
       if ChangeCode == "AAU" then
-        MT[#MT+1] = "Changed area " .. ChangeData.ItemID .. ". The new center target is a " .. ChangeData.ItemUnitType "."
+        MT[#MT+1] = "Changed area " .. ChangeData.ItemID .. ". The new center target is a " .. ChangeData.ItemUnitType .. "."
       end
       
       if ChangeCode == "RA" then
@@ -28336,7 +28419,67 @@ end
 -- 
 -- ===
 -- 
--- # 1) @{#AI_PATROL_ZONE} class, extends @{Fsm#FSM_CONTROLLABLE}
+-- AI PATROL classes makes AI Controllables execute an Patrol.
+-- 
+-- There are the following types of PATROL classes defined:
+-- 
+--   * @{#AI_PATROL_ZONE}: Perform a PATROL in a zone.
+--   
+-- ====
+-- 
+-- # **OPEN ISSUES**
+-- 
+-- 2017-01-17: When Spawned AI is located at an airbase, it will be routed first back to the airbase after take-off.
+-- 
+-- 2016-01-17: 
+--   -- Fixed problem with AI returning to base too early and unexpected.
+--   -- ReSpawning of AI will reset the AI_PATROL and derived classes.
+--   -- Checked the correct workings of SCHEDULER, and it DOES work correctly.
+-- 
+-- ====
+-- 
+-- # **API CHANGE HISTORY**
+-- 
+-- The underlying change log documents the API changes. Please read this carefully. The following notation is used:
+-- 
+--   * **Added** parts are expressed in bold type face.
+--   * _Removed_ parts are expressed in italic type face.
+-- 
+-- Hereby the change log:
+-- 
+-- 2017-01-17: Rename of class: **AI\_PATROL\_ZONE** is the new name for the old _AI\_PATROLZONE_.
+-- 
+-- 2017-01-15: Complete revision. AI_PATROL_ZONE is the base class for other AI_PATROL like classes.
+-- 
+-- 2016-09-01: Initial class and API.
+-- 
+-- ===
+-- 
+-- # **AUTHORS and CONTRIBUTIONS**
+-- 
+-- ### Contributions: 
+-- 
+--   * **[Dutch_Baron](https://forums.eagle.ru/member.php?u=112075)**: Working together with James has resulted in the creation of the AI_BALANCER class. James has shared his ideas on balancing AI with air units, and together we made a first design which you can use now :-)
+--   * **[Pikey](https://forums.eagle.ru/member.php?u=62835)**: Testing and API concept review.
+-- 
+-- ### Authors: 
+-- 
+--   * **FlightControl**: Design & Programming.
+-- 
+-- @module AI_Patrol
+
+--- AI_PATROL_ZONE class
+-- @type AI_PATROL_ZONE
+-- @field Wrapper.Controllable#CONTROLLABLE AIControllable The @{Controllable} patrolling.
+-- @field Core.Zone#ZONE_BASE PatrolZone The @{Zone} where the patrol needs to be executed.
+-- @field Dcs.DCSTypes#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
+-- @field Dcs.DCSTypes#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
+-- @field Dcs.DCSTypes#Speed  PatrolMinSpeed The minimum speed of the @{Controllable} in km/h.
+-- @field Dcs.DCSTypes#Speed  PatrolMaxSpeed The maximum speed of the @{Controllable} in km/h.
+-- @field Functional.Spawn#SPAWN CoordTest
+-- @extends Core.Fsm#FSM_CONTROLLABLE
+
+--- # 1) @{#AI_PATROL_ZONE} class, extends @{Fsm#FSM_CONTROLLABLE}
 -- 
 -- The @{#AI_PATROL_ZONE} class implements the core functions to patrol a @{Zone} by an AI @{Controllable} or @{Group}.
 -- 
@@ -28437,59 +28580,10 @@ end
 -- Therefore, when the damage treshold is reached, the AI will return immediately to the home base (RTB).
 -- Use the method @{#AI_PATROL_ZONE.ManageDamage}() to have this proces in place.
 -- 
--- ====
--- 
--- # **OPEN ISSUES**
--- 
--- 2017-01-17: When Spawned AI is located at an airbase, it will be routed first back to the airbase after take-off.
--- 
--- 2016-01-17: 
---   -- Fixed problem with AI returning to base too early and unexpected.
---   -- ReSpawning of AI will reset the AI_PATROL and derived classes.
---   -- Checked the correct workings of SCHEDULER, and it DOES work correctly.
--- 
--- ====
--- 
--- # **API CHANGE HISTORY**
--- 
--- The underlying change log documents the API changes. Please read this carefully. The following notation is used:
--- 
---   * **Added** parts are expressed in bold type face.
---   * _Removed_ parts are expressed in italic type face.
--- 
--- Hereby the change log:
--- 
--- 2017-01-17: Rename of class: **AI\_PATROL\_ZONE** is the new name for the old _AI\_PATROLZONE_.
--- 
--- 2017-01-15: Complete revision. AI_PATROL_ZONE is the base class for other AI_PATROL like classes.
--- 
--- 2016-09-01: Initial class and API.
--- 
 -- ===
 -- 
--- # **AUTHORS and CONTRIBUTIONS**
+-- @field #AI_PATROL_ZONE AI_PATROL_ZONE
 -- 
--- ### Contributions: 
--- 
---   * **[Dutch_Baron](https://forums.eagle.ru/member.php?u=112075)**: Working together with James has resulted in the creation of the AI_BALANCER class. James has shared his ideas on balancing AI with air units, and together we made a first design which you can use now :-)
---   * **[Pikey](https://forums.eagle.ru/member.php?u=62835)**: Testing and API concept review.
--- 
--- ### Authors: 
--- 
---   * **FlightControl**: Design & Programming.
--- 
--- @module AI_Patrol
-
---- AI_PATROL_ZONE class
--- @type AI_PATROL_ZONE
--- @field Wrapper.Controllable#CONTROLLABLE AIControllable The @{Controllable} patrolling.
--- @field Core.Zone#ZONE_BASE PatrolZone The @{Zone} where the patrol needs to be executed.
--- @field Dcs.DCSTypes#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
--- @field Dcs.DCSTypes#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
--- @field Dcs.DCSTypes#Speed  PatrolMinSpeed The minimum speed of the @{Controllable} in km/h.
--- @field Dcs.DCSTypes#Speed  PatrolMaxSpeed The maximum speed of the @{Controllable} in km/h.
--- @field Functional.Spawn#SPAWN CoordTest
--- @extends Core.Fsm#FSM_CONTROLLABLE
 AI_PATROL_ZONE = {
   ClassName = "AI_PATROL_ZONE",
 }
@@ -29273,8 +29367,50 @@ end
 -- ![Banner Image](..\Presentations\AI_CAS\Dia1.JPG)
 -- 
 -- ===
+-- 
+-- AI CAS classes makes AI Controllables execute a Close Air Support.
+-- 
+-- There are the following types of CAS classes defined:
+-- 
+--   * @{#AI_CAS_ZONE}: Perform a CAS in a zone.
+--   
+-- ===
 --
--- # 1) @{#AI_CAS_ZONE} class, extends @{AI_Patrol#AI_PATROL_ZONE}
+-- # **API CHANGE HISTORY**
+--
+-- The underlying change log documents the API changes. Please read this carefully. The following notation is used:
+--
+--   * **Added** parts are expressed in bold type face.
+--   * _Removed_ parts are expressed in italic type face.
+--
+-- Hereby the change log:
+--
+-- 2017-01-15: Initial class and API.
+--
+-- ===
+--
+-- # **AUTHORS and CONTRIBUTIONS**
+--
+-- ### Contributions:
+--
+--   * **[Quax](https://forums.eagle.ru/member.php?u=90530)**: Concept, Advice & Testing.
+--   * **[Pikey](https://forums.eagle.ru/member.php?u=62835)**: Concept, Advice & Testing.
+--   * **[Gunterlund](http://forums.eagle.ru:8080/member.php?u=75036)**: Test case revision.
+--
+-- ### Authors:
+--
+--   * **FlightControl**: Concept, Design & Programming.
+--
+-- @module AI_Cas
+
+
+--- AI_CAS_ZONE class
+-- @type AI_CAS_ZONE
+-- @field Wrapper.Controllable#CONTROLLABLE AIControllable The @{Controllable} patrolling.
+-- @field Core.Zone#ZONE_BASE TargetZone The @{Zone} where the patrol needs to be executed.
+-- @extends AI.AI_Patrol#AI_PATROL_ZONE
+
+--- # 1) @{#AI_CAS_ZONE} class, extends @{AI_Patrol#AI_PATROL_ZONE}
 -- 
 -- @{#AI_CAS_ZONE} derives from the @{AI_Patrol#AI_PATROL_ZONE}, inheriting its methods and behaviour.
 --  
@@ -29359,42 +29495,11 @@ end
 --   * **@{#AI_CAS_ZONE.Destroy}**: The AI has destroyed a target @{Unit}.
 --   * **@{#AI_CAS_ZONE.Destroyed}**: The AI has destroyed all target @{Unit}s assigned in the CAS task.
 --   * **Status**: The AI is checking status (fuel and damage). When the tresholds have been reached, the AI will RTB.
---    
--- ====
---
--- # **API CHANGE HISTORY**
---
--- The underlying change log documents the API changes. Please read this carefully. The following notation is used:
---
---   * **Added** parts are expressed in bold type face.
---   * _Removed_ parts are expressed in italic type face.
---
--- Hereby the change log:
---
--- 2017-01-15: Initial class and API.
---
+-- 
 -- ===
---
--- # **AUTHORS and CONTRIBUTIONS**
---
--- ### Contributions:
---
---   * **[Quax](https://forums.eagle.ru/member.php?u=90530)**: Concept, Advice & Testing.
---   * **[Pikey](https://forums.eagle.ru/member.php?u=62835)**: Concept, Advice & Testing.
---   * **[Gunterlund](http://forums.eagle.ru:8080/member.php?u=75036)**: Test case revision.
---
--- ### Authors:
---
---   * **FlightControl**: Concept, Design & Programming.
---
--- @module AI_Cas
-
-
---- AI_CAS_ZONE class
--- @type AI_CAS_ZONE
--- @field Wrapper.Controllable#CONTROLLABLE AIControllable The @{Controllable} patrolling.
--- @field Core.Zone#ZONE_BASE TargetZone The @{Zone} where the patrol needs to be executed.
--- @extends AI.AI_Patrol#AI_PATROL_ZONE
+-- 
+-- @field #AI_CAS_ZONE AI_CAS_ZONE   
+-- 
 AI_CAS_ZONE = {
   ClassName = "AI_CAS_ZONE",
 }
@@ -29847,8 +29952,52 @@ end
 -- ![Banner Image](..\Presentations\AI_CAP\Dia1.JPG)
 -- 
 -- ===
+-- 
+-- AI CAP classes makes AI Controllables execute a Combat Air Patrol.
+-- 
+-- There are the following types of CAP classes defined:
+-- 
+--   * @{#AI_CAP_ZONE}: Perform a CAP in a zone.
+--   
+-- ====
 --
--- # 1) @{#AI_CAP_ZONE} class, extends @{AI_CAP#AI_PATROL_ZONE}
+-- # **API CHANGE HISTORY**
+--
+-- The underlying change log documents the API changes. Please read this carefully. The following notation is used:
+--
+--   * **Added** parts are expressed in bold type face.
+--   * _Removed_ parts are expressed in italic type face.
+--
+-- Hereby the change log:
+--
+-- 2017-01-15: Initial class and API.
+--
+-- ===
+--
+-- # **AUTHORS and CONTRIBUTIONS**
+--
+-- ### Contributions:
+--
+--   * **[Quax](https://forums.eagle.ru/member.php?u=90530)**: Concept, Advice & Testing.
+--   * **[Pikey](https://forums.eagle.ru/member.php?u=62835)**: Concept, Advice & Testing.
+--   * **[Gunterlund](http://forums.eagle.ru:8080/member.php?u=75036)**: Test case revision.
+--   * **[Whisper](http://forums.eagle.ru/member.php?u=3829): Testing.
+--   * **[Delta99](https://forums.eagle.ru/member.php?u=125166): Testing. 
+--        
+-- ### Authors:
+--
+--   * **FlightControl**: Concept, Design & Programming.
+--
+-- @module AI_Cap
+
+
+--- @type AI_CAP_ZONE
+-- @field Wrapper.Controllable#CONTROLLABLE AIControllable The @{Controllable} patrolling.
+-- @field Core.Zone#ZONE_BASE TargetZone The @{Zone} where the patrol needs to be executed.
+-- @extends AI.AI_Patrol#AI_PATROL_ZONE
+
+
+--- # 1) @{#AI_CAP_ZONE} class, extends @{AI_CAP#AI_PATROL_ZONE}
 -- 
 -- The @{#AI_CAP_ZONE} class implements the core functions to patrol a @{Zone} by an AI @{Controllable} or @{Group} 
 -- and automatically engage any airborne enemies that are within a certain range or within a certain zone.
@@ -29926,44 +30075,11 @@ end
 -- An optional @{Zone} can be set, 
 -- that will define when the AI will engage with the detected airborne enemy targets.
 -- Use the method @{AI_Cap#AI_CAP_ZONE.SetEngageZone}() to define that Zone.
---
--- ====
---
--- # **API CHANGE HISTORY**
---
--- The underlying change log documents the API changes. Please read this carefully. The following notation is used:
---
---   * **Added** parts are expressed in bold type face.
---   * _Removed_ parts are expressed in italic type face.
---
--- Hereby the change log:
---
--- 2017-01-15: Initial class and API.
---
+--  
 -- ===
---
--- # **AUTHORS and CONTRIBUTIONS**
---
--- ### Contributions:
---
---   * **[Quax](https://forums.eagle.ru/member.php?u=90530)**: Concept, Advice & Testing.
---   * **[Pikey](https://forums.eagle.ru/member.php?u=62835)**: Concept, Advice & Testing.
---   * **[Gunterlund](http://forums.eagle.ru:8080/member.php?u=75036)**: Test case revision.
---   * **[Whisper](http://forums.eagle.ru/member.php?u=3829): Testing.
---   * **[Delta99](https://forums.eagle.ru/member.php?u=125166): Testing. 
---        
--- ### Authors:
---
---   * **FlightControl**: Concept, Design & Programming.
---
--- @module AI_Cap
-
-
---- AI_CAP_ZONE class
--- @type AI_CAP_ZONE
--- @field Wrapper.Controllable#CONTROLLABLE AIControllable The @{Controllable} patrolling.
--- @field Core.Zone#ZONE_BASE TargetZone The @{Zone} where the patrol needs to be executed.
--- @extends AI.AI_Patrol#AI_PATROL_ZONE
+-- 
+-- @field #AI_CAP_ZONE AI_CAP_ZONE
+-- 
 AI_CAP_ZONE = {
   ClassName = "AI_CAP_ZONE",
 }

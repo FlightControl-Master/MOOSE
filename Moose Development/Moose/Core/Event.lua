@@ -687,7 +687,7 @@ function EVENT:onEvent( Event )
     return errmsg
   end
 
-  self:E( Event )
+  self:E( _EVENTMETA[Event.id].Text, Event )
   
   if self and self.Events and self.Events[Event.id] then
   
