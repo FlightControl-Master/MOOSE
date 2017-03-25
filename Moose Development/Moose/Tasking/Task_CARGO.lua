@@ -29,12 +29,11 @@
 --
 --   * **FlightControl**: Concept, Design & Programming.
 --   
--- @module Task_A2G
+-- @module Task_CARGO
 
 do -- TASK_CARGO
 
   --- @type TASK_CARGO
-  -- @field Set#SET_UNIT TargetSetUnit
   -- @extends Tasking.Task#TASK
 
   ---
@@ -71,8 +70,8 @@ do -- TASK_CARGO
   -- @param #string TaskType The type of Cargo task.
   -- @return #TASK_CARGO self
   function TASK_CARGO:New( Mission, SetGroup, TaskName, Cargo, TaskType )
-    local self = BASE:Inherit( self, TASK:New( Mission, SetGroup, TaskName, TaskType ) ) -- Tasking.Task#TASK_CARGO
-    self:F()
+    local self = BASE:Inherit( self, TASK:New( Mission, SetGroup, TaskName, TaskType ) ) -- #TASK_CARGO
+    self:F( {Mission, SetGroup, TaskName, Cargo, TaskType})
   
     self.Cargo = Cargo
     self.TaskType = TaskType
@@ -92,6 +91,7 @@ do -- TASK_CARGO
     Fsm:AddTransition( { "ArrivedAtCargo", "LandAtCargo" }, "Land", "Landing" )
     Fsm:AddTransition( "Landing", "Landed", "Landed" )
     Fsm:AddTransition( "OnGround", "PrepareBoarding", "AwaitBoarding" )
+    
     Fsm:AddTransition( "AwaitBoarding", "Board", "Boarding" )
     Fsm:AddTransition( "Boarding", "Boarded", "Boarded" )
     
@@ -120,7 +120,31 @@ do -- TASK_CARGO
     function Fsm:OnAfterArriveAtCargo( TaskUnit, Task )
       self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
       
-      self:__Land( 0.1 )      
+      if Task.Cargo:IsInRadius( TaskUnit:GetPointVec2() ) then
+        self:__Land( -0.1 )
+      else
+        self:__ArriveAtCargo( -10 )      
+      end
+    end
+
+    --- 
+    -- @param #FSM_PROCESS self
+    -- @param Wrapper.Unit#UNIT TaskUnit
+    -- @param Tasking.Task_CARGO#TASK_CARGO Task
+    function Fsm:OnAfterLand( TaskUnit, Task )
+      self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
+      
+      if Task.Cargo:IsInRadius( TaskUnit:GetPointVec2() ) then
+        if TaskUnit:InAir() then
+          Task:GetMission():GetCommandCenter():MessageToGroup( "Land", TaskUnit:GetGroup(), "Land" )
+          self:__Land( -10 )
+        else
+          Task:GetMission():GetCommandCenter():MessageToGroup( "Landed ...", TaskUnit:GetGroup(), "Land" )
+          self:__Landed( -0.1 )
+        end
+      else
+        self:__ArriveAtCargo( -0.1 )
+      end
     end
     
     return self
@@ -138,6 +162,7 @@ do -- TASK_CARGO
   -- @return #TASK_CARGO
   function TASK_CARGO:SetCargoPickup( Cargo, TaskUnit  )
   
+    self:F({Cargo, TaskUnit})
     local ProcessUnit = self:GetUnitProcess( TaskUnit )
   
     local ActRouteCargo = ProcessUnit:GetProcess( "RoutingToCargo", "RouteToCargoPickup" ) -- Actions.Act_Route#ACT_ROUTE_POINT
