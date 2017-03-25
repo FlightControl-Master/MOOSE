@@ -457,12 +457,20 @@ function CONTROLLABLE:CommandSwitchWayPoint( FromWayPoint, ToWayPoint )
   return CommandSwitchWayPoint
 end
 
---- Perform stop route command
+--- Create a stop route command, which returns a string containing the command.
+-- Use the result in the method @{#CONTROLLABLE.SetCommand}().
+-- A value of true will make the ground group stop, a value of false will make it continue.
+-- Note that this can only work on GROUP level, although individual UNITs can be commanded, the whole GROUP will react.
+-- 
+-- Example missions:  
+-- 
+--   * GRP-310
+--   
 -- @param #CONTROLLABLE self
--- @param #boolean StopRoute
+-- @param #boolean StopRoute true if the ground unit needs to stop, false if it needs to continue to move.
 -- @return Dcs.DCSTasking.Task#Task
-function CONTROLLABLE:CommandStopRoute( StopRoute, Index )
-  self:F2( { StopRoute, Index } )
+function CONTROLLABLE:CommandStopRoute( StopRoute )
+  self:F2( { StopRoute } )
 
   local CommandStopRoute = {
     id = 'StopRoute',
