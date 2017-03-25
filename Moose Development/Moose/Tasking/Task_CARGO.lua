@@ -90,10 +90,10 @@ do -- TASK_CARGO
     Fsm:AddTransition( { "Arrived", "RoutingToCargo" }, "ArriveAtCargo", "ArrivedAtCargo" )
     
     Fsm:AddTransition( { "ArrivedAtCargo", "LandAtCargo" }, "Land", "Landing" )
-    Fsm:AddTransition( { "Landing", "Landed", "Landed" } )
-    Fsm:AddTransition( { "OnGround", "PrepareBoarding", "AwaitBoarding" } )
-    Fsm:AddTransition( { "AwaitBoarding", "Board", "Boarding" } )
-    Fsm:AddTransition( { "Boarding", "Boarded", "Boarded" } )
+    Fsm:AddTransition( "Landing", "Landed", "Landed" )
+    Fsm:AddTransition( "OnGround", "PrepareBoarding", "AwaitBoarding" )
+    Fsm:AddTransition( "AwaitBoarding", "Board", "Boarding" )
+    Fsm:AddTransition( "Boarding", "Boarded", "Boarded" )
     
     Fsm:AddTransition( "Accounted", "DestroyedAll", "Accounted" )
     Fsm:AddTransition( "Accounted", "Success", "Success" )

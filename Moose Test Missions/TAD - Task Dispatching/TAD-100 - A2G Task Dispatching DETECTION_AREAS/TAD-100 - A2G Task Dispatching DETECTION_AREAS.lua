@@ -1,4 +1,4 @@
- ---
+---
 -- Name: TAD-100 - A2G Task Dispatching DETECTION_AREAS
 -- Author: FlightControl
 -- Date Created: 06 Mar 2017

@@ -62,6 +62,7 @@ Include.File( "Tasking/Task" )
 Include.File( "Tasking/DetectionManager" )
 Include.File( "Tasking/Task_A2G_Dispatcher")
 Include.File( "Tasking/Task_A2G" )
+Include.File( "Tasking/Task_CARGO" )
 
 
 -- The order of the declarations is important here. Don't touch it.
