@@ -246,9 +246,9 @@ This is different from the EnRoute tasks, where the targets of the task need to 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).CommandStopRoute">CONTROLLABLE:CommandStopRoute(StopRoute, Index)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).CommandStopRoute">CONTROLLABLE:CommandStopRoute(StopRoute)</a></td>
 		<td class="summary">
-<p>Perform stop route command</p>
+<p>Create a stop route command, which returns a string containing the command.</p>
 </td>
 		</tr>
 		<tr>
@@ -794,23 +794,31 @@ A speed can be given in km/h.</p>
 <dt>
 
 <a id="#(CONTROLLABLE).CommandStopRoute" >
-<strong>CONTROLLABLE:CommandStopRoute(StopRoute, Index)</strong>
+<strong>CONTROLLABLE:CommandStopRoute(StopRoute)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Perform stop route command</p>
+<p>Create a stop route command, which returns a string containing the command.</p>
 
-		<h3>Parameters</h3>
+	
+<p>Use the result in the method <a href="##(CONTROLLABLE).SetCommand">CONTROLLABLE.SetCommand</a>().
+A value of true will make the ground group stop, a value of false will make it continue.
+Note that this can only work on GROUP level, although individual UNITs can be commanded, the whole GROUP will react.</p>
+
+<p>Example missions:  </p>
+
+<ul>
+    <li>GRP-310
+    </li>
+</ul>
+
+		<h3>Parameter</h3>
 		<ul>
 				<li>
 				
-<p><code><em>#boolean StopRoute </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em> Index </em></code>: </p>
+<p><code><em>#boolean StopRoute </em></code>: 
+true if the ground unit needs to stop, false if it needs to continue to move.</p>
 
 				</li>
 		</ul>
