@@ -244,8 +244,8 @@ function AI_CARGO:New( Type, Name, Weight, ReportRadius, NearRadius )
   self.Type = Type
   self.Name = Name
   self.Weight = Weight
-  self.ReportRadius = ReportRadius
-  self.NearRadius = NearRadius
+  self.ReportRadius = ReportRadius or 1000
+  self.NearRadius = NearRadius or 200
   self.CargoObject = nil
   self.CargoCarrier = nil
   self.Representable = false
@@ -286,6 +286,20 @@ function AI_CARGO:IsNear( PointVec2 )
   else
     return false
   end
+end
+
+--- Get the current PointVec2 of the cargo.
+-- @param #AI_CARGO self
+-- @return Core.Point#POINT_VEC2
+function AI_CARGO:GetPointVec2()
+  return self.CargoObject:GetPointVec2()
+end
+
+--- Get the range till cargo will board.
+-- @param #AI_CARGO self
+-- @return #number The range till cargo will board.
+function AI_CARGO:GetBoardingRange()
+  return self.NearRadius
 end
 
 end
