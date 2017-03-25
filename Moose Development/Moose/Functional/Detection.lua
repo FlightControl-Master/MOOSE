@@ -1832,7 +1832,7 @@ do -- DETECTION_AREAS
       end
       
       if ChangeCode == "AAU" then
-        MT[#MT+1] = "Changed area " .. ChangeData.ItemID .. ". The new center target is a " .. ChangeData.ItemUnitType "."
+        MT[#MT+1] = "Changed area " .. ChangeData.ItemID .. ". The new center target is a " .. ChangeData.ItemUnitType .. "."
       end
       
       if ChangeCode == "RA" then
