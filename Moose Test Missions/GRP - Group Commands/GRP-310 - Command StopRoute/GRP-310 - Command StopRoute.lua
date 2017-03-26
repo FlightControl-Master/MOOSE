@@ -1,4 +1,5 @@
----GRP-310 - Command StopRouteCAP-001 - Combat Air Patrol
+--- 
+-- Name: GRP-310 - Command StopRoute
 -- Author: FlightControl
 -- Date Created: 25 Mar 2017
 --
@@ -12,7 +13,6 @@
 -- 
 
 --- @param Wrapper.Group#GROUP GroundGroup
--- 
 function StopMove( GroundGroup )
   
   BASE:E("Stop")
@@ -21,6 +21,7 @@ function StopMove( GroundGroup )
 
 end
 
+--- @param Wrapper.Group#GROUP GroundGroup
 function StartMove( GroundGroup )
   
   BASE:E("Start")

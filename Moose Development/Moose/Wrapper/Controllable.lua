@@ -1657,90 +1657,6 @@ function CONTROLLABLE:TaskRouteToZone( Zone, Randomize, Speed, Formation )
   return nil
 end
 
---- (AIR) Return the Controllable to an @{Airbase#AIRBASE}
--- A speed can be given in km/h.
--- A given formation can be given.
--- @param #CONTROLLABLE self
--- @param Wrapper.Airbase#AIRBASE ReturnAirbase The @{Airbase#AIRBASE} to return to.
--- @param #number Speed (optional) The speed.
--- @return #string The route
-function CONTROLLABLE:RouteReturnToAirbase( ReturnAirbase, Speed )
-  self:F2( { ReturnAirbase, Speed } )
-
--- Example
---   [4] = 
---    {
---        ["alt"] = 45,
---        ["type"] = "Land",
---        ["action"] = "Landing",
---        ["alt_type"] = "BARO",
---        ["formation_template"] = "",
---        ["properties"] = 
---        {
---            ["vnav"] = 1,
---            ["scale"] = 0,
---            ["angle"] = 0,
---            ["vangle"] = 0,
---            ["steer"] = 2,
---        }, -- end of ["properties"]
---        ["ETA"] = 527.81058817743,
---        ["airdromeId"] = 12,
---        ["y"] = 243127.2973737,
---        ["x"] = -5406.2803440839,
---        ["name"] = "DictKey_WptName_53",
---        ["speed"] = 138.88888888889,
---        ["ETA_locked"] = false,
---        ["task"] = 
---        {
---            ["id"] = "ComboTask",
---            ["params"] = 
---            {
---                ["tasks"] = 
---                {
---                }, -- end of ["tasks"]
---            }, -- end of ["params"]
---        }, -- end of ["task"]
---        ["speed_locked"] = true,
---    }, -- end of [4]
- 
-
-  local DCSControllable = self:GetDCSObject()
-
-  if DCSControllable then
-
-    local ControllablePoint = self:GetVec2()
-    local ControllableVelocity = self:GetMaxVelocity()
-
-    local PointFrom = {}
-    PointFrom.x = ControllablePoint.x
-    PointFrom.y = ControllablePoint.y
-    PointFrom.type = "Turning Point"
-    PointFrom.action = "Turning Point"
-    PointFrom.speed = ControllableVelocity
-
-
-    local PointTo = {}
-    local AirbasePoint = ReturnAirbase:GetVec2()
-
-    PointTo.x = AirbasePoint.x
-    PointTo.y = AirbasePoint.y
-    PointTo.type = "Land"
-    PointTo.action = "Landing"
-    PointTo.airdromeId = ReturnAirbase:GetID()-- Airdrome ID
-    self:T(PointTo.airdromeId)
-    --PointTo.alt = 0
-
-    local Points = { PointFrom, PointTo }
-
-    self:T3( Points )
-
-    local Route = { points = Points, }
-
-    return Route
-  end
-
-  return nil
-end
 
 -- Commands
 
@@ -1780,6 +1696,8 @@ function CONTROLLABLE:GetTaskRoute()
 
   return routines.utils.deepCopy( _DATABASE.Templates.Controllables[self.ControllableName].Template.route.points )
 end
+
+
 
 --- Return the route of a controllable by using the @{Database#DATABASE} class.
 -- @param #CONTROLLABLE self
