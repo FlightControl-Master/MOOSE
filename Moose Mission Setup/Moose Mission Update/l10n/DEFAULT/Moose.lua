@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20170326_0846' ) 
+env.info( 'Moose Generation Timestamp: 20170326_0853' ) 
 local base = _G
 
 Include = {}
@@ -16093,6 +16093,8 @@ end
 --   * _Removed_ parts are expressed in italic type face.
 -- 
 -- Hereby the change log:
+-- 
+-- 2017-03-26: GROUP:**RouteRTB( RTBAirbase, Speed )** added.  
 -- 
 -- 2017-03-07: GROUP:**HandleEvent( Event, EventFunction )** added.  
 -- 2017-03-07: GROUP:**UnHandleEvent( Event )** added.
