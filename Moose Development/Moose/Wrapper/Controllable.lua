@@ -1657,55 +1657,6 @@ function CONTROLLABLE:TaskRouteToZone( Zone, Randomize, Speed, Formation )
   return nil
 end
 
---- (AIR) Return the Controllable to an @{Airbase#AIRBASE}
--- A speed can be given in km/h.
--- A given formation can be given.
--- @param #CONTROLLABLE self
--- @param Wrapper.Airbase#AIRBASE ReturnAirbase (optional) The @{Airbase#AIRBASE} to return to. If blank, the controllable will return to the nearest friendly airbase.
--- @param #number Speed (optional) The speed.
--- @return #CONTROLLABLE
-function CONTROLLABLE:RouteReturnToAirbase( ReturnAirbase, Speed )
-  self:F2( { ReturnAirbase, Speed } )
-
-  local DCSControllable = self:GetDCSObject()
-
-  if DCSControllable then
-
-    if ReturnAirbase then
-      local ControllablePoint = self:GetVec2()
-      local ControllableVelocity = self:GetMaxVelocity()
-  
-      local PointFrom = {}
-      PointFrom.x = ControllablePoint.x
-      PointFrom.y = ControllablePoint.y
-      PointFrom.type = "Turning Point"
-      PointFrom.action = "Turning Point"
-      PointFrom.speed = ControllableVelocity
-  
-  
-      local PointTo = {}
-      local AirbasePointVec2 = ReturnAirbase:GetPointVec2()
-      local AirbaseAirPoint = AirbasePointVec2:RoutePointAir(
-        POINT_VEC3.RoutePointAltType.BARO,
-        POINT_VEC3.RoutePointType.TurningPoint,
-        POINT_VEC3.RoutePointAction.TurningPoint, 
-        Speed or 600
-      )
-  
-      self:E(AirbaseAirPoint )
-  
-      local Points = { PointFrom, AirbaseAirPoint }
-  
-      self:T3( Points )
-  
-      self:Route( Points )
-    else
-      self:ClearTasks()
-    end
-  end
-
-  return self
-end
 
 -- Commands
 
@@ -1745,6 +1696,8 @@ function CONTROLLABLE:GetTaskRoute()
 
   return routines.utils.deepCopy( _DATABASE.Templates.Controllables[self.ControllableName].Template.route.points )
 end
+
+
 
 --- Return the route of a controllable by using the @{Database#DATABASE} class.
 -- @param #CONTROLLABLE self

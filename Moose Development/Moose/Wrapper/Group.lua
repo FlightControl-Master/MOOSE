@@ -1,8 +1,6 @@
 --- This module contains the GROUP class.
 -- 
--- 1) @{Group#GROUP} class, extends @{Controllable#CONTROLLABLE}
--- =============================================================
--- The @{Group#GROUP} class is a wrapper class to handle the DCS Group objects:
+-- The @{#GROUP} class is a wrapper class to handle the DCS Group objects:
 --
 --  * Support all DCS Group APIs.
 --  * Enhance with Group specific APIs not in the DCS Group API set.
@@ -11,60 +9,8 @@
 --
 -- **IMPORTANT: ONE SHOULD NEVER SANATIZE these GROUP OBJECT REFERENCES! (make the GROUP object references nil).**
 --
--- 1.1) GROUP reference methods
--- -----------------------
--- For each DCS Group object alive within a running mission, a GROUP wrapper object (instance) will be created within the _@{DATABASE} object.
--- This is done at the beginning of the mission (when the mission starts), and dynamically when new DCS Group objects are spawned (using the @{SPAWN} class).
---
--- The GROUP class does not contain a :New() method, rather it provides :Find() methods to retrieve the object reference
--- using the DCS Group or the DCS GroupName.
---
--- Another thing to know is that GROUP objects do not "contain" the DCS Group object.
--- The GROUP methods will reference the DCS Group object by name when it is needed during API execution.
--- If the DCS Group object does not exist or is nil, the GROUP methods will return nil and log an exception in the DCS.log file.
---
--- The GROUP class provides the following functions to retrieve quickly the relevant GROUP instance:
---
---  * @{#GROUP.Find}(): Find a GROUP instance from the _DATABASE object using a DCS Group object.
---  * @{#GROUP.FindByName}(): Find a GROUP instance from the _DATABASE object using a DCS Group name.
---
--- ## 1.2) GROUP task methods
---
--- A GROUP is a @{Controllable}. See the @{Controllable} task methods section for a description of the task methods.
---
--- ### 1.2.4) Obtain the mission from group templates
+-- See the detailed documentation on the GROUP class.
 -- 
--- Group templates contain complete mission descriptions. Sometimes you want to copy a complete mission from a group and assign it to another:
--- 
---   * @{Controllable#CONTROLLABLE.TaskMission}: (AIR + GROUND) Return a mission task from a mission template.
---
--- ## 1.3) GROUP Command methods
---
--- A GROUP is a @{Controllable}. See the @{Controllable} command methods section for a description of the command methods.
--- 
--- ## 1.4) GROUP option methods
---
--- A GROUP is a @{Controllable}. See the @{Controllable} option methods section for a description of the option methods.
--- 
--- ## 1.5) GROUP Zone validation methods
--- 
--- The group can be validated whether it is completely, partly or not within a @{Zone}.
--- Use the following Zone validation methods on the group:
--- 
---   * @{#GROUP.IsCompletelyInZone}: Returns true if all units of the group are within a @{Zone}.
---   * @{#GROUP.IsPartlyInZone}: Returns true if some units of the group are within a @{Zone}.
---   * @{#GROUP.IsNotInZone}: Returns true if none of the group units of the group are within a @{Zone}.
---   
--- The zone can be of any @{Zone} class derived from @{Zone#ZONE_BASE}. So, these methods are polymorphic to the zones tested on.
--- 
--- ## 1.6) GROUP AI methods
--- 
--- A GROUP has AI methods to control the AI activation.
--- 
---   * @{#GROUP.SetAIOnOff}(): Turns the GROUP AI On or Off.
---   * @{#GROUP.SetAIOn}(): Turns the GROUP AI On.
---   * @{#GROUP.SetAIOff}(): Turns the GROUP AI Off.
---   
 -- ====
 -- 
 -- # **API CHANGE HISTORY**
@@ -100,10 +46,68 @@
 -- @module Group
 -- @author FlightControl
 
---- The GROUP class
--- @type GROUP
+--- @type GROUP
 -- @extends Wrapper.Controllable#CONTROLLABLE
 -- @field #string GroupName The name of the group.
+
+--- 
+-- # GROUP class, extends @{Controllable#CONTROLLABLE}
+-- 
+-- ## GROUP reference methods
+-- 
+-- For each DCS Group object alive within a running mission, a GROUP wrapper object (instance) will be created within the _@{DATABASE} object.
+-- This is done at the beginning of the mission (when the mission starts), and dynamically when new DCS Group objects are spawned (using the @{SPAWN} class).
+--
+-- The GROUP class does not contain a :New() method, rather it provides :Find() methods to retrieve the object reference
+-- using the DCS Group or the DCS GroupName.
+--
+-- Another thing to know is that GROUP objects do not "contain" the DCS Group object.
+-- The GROUP methods will reference the DCS Group object by name when it is needed during API execution.
+-- If the DCS Group object does not exist or is nil, the GROUP methods will return nil and log an exception in the DCS.log file.
+--
+-- The GROUP class provides the following functions to retrieve quickly the relevant GROUP instance:
+--
+--  * @{#GROUP.Find}(): Find a GROUP instance from the _DATABASE object using a DCS Group object.
+--  * @{#GROUP.FindByName}(): Find a GROUP instance from the _DATABASE object using a DCS Group name.
+--
+-- ## GROUP task methods
+--
+-- A GROUP is a @{Controllable}. See the @{Controllable} task methods section for a description of the task methods.
+--
+-- ### Obtain the mission from group templates
+-- 
+-- Group templates contain complete mission descriptions. Sometimes you want to copy a complete mission from a group and assign it to another:
+-- 
+--   * @{Controllable#CONTROLLABLE.TaskMission}: (AIR + GROUND) Return a mission task from a mission template.
+--
+-- ## GROUP Command methods
+--
+-- A GROUP is a @{Controllable}. See the @{Controllable} command methods section for a description of the command methods.
+-- 
+-- ## GROUP option methods
+--
+-- A GROUP is a @{Controllable}. See the @{Controllable} option methods section for a description of the option methods.
+-- 
+-- ## GROUP Zone validation methods
+-- 
+-- The group can be validated whether it is completely, partly or not within a @{Zone}.
+-- Use the following Zone validation methods on the group:
+-- 
+--   * @{#GROUP.IsCompletelyInZone}: Returns true if all units of the group are within a @{Zone}.
+--   * @{#GROUP.IsPartlyInZone}: Returns true if some units of the group are within a @{Zone}.
+--   * @{#GROUP.IsNotInZone}: Returns true if none of the group units of the group are within a @{Zone}.
+--   
+-- The zone can be of any @{Zone} class derived from @{Zone#ZONE_BASE}. So, these methods are polymorphic to the zones tested on.
+-- 
+-- ## GROUP AI methods
+-- 
+-- A GROUP has AI methods to control the AI activation.
+-- 
+--   * @{#GROUP.SetAIOnOff}(): Turns the GROUP AI On or Off.
+--   * @{#GROUP.SetAIOn}(): Turns the GROUP AI On.
+--   * @{#GROUP.SetAIOff}(): Turns the GROUP AI Off.
+-- 
+-- @field #GROUP GROUP
 GROUP = {
   ClassName = "GROUP",
 }
@@ -893,6 +897,76 @@ function GROUP:InAir()
   end
   
   return nil
+end
+
+do -- Route methods
+
+  --- (AIR) Return the Group to an @{Airbase#AIRBASE}.  
+  -- The following things are to be taken into account:
+  -- 
+  --   * The group is respawned to achieve the RTB, there may be side artefacts as a result of this. (Like weapons suddenly come back).
+  --   * A group consisting out of more than one unit, may rejoin formation when respawned.
+  --   * A speed can be given in km/h. If no speed is specified, the maximum speed of the first unit will be taken to return to base.
+  --   * When there is no @{Airbase} object specified, the group will return to the home base if the route of the group is pinned at take-off or at landing to a base.
+  --   * When there is no @{Airbase} object specified and the group route is not pinned to any airbase, it will return to the nearest airbase.
+  -- 
+  -- @param #GROUP self
+  -- @param Wrapper.Airbase#AIRBASE RTBAirbase (optional) The @{Airbase} to return to. If blank, the controllable will return to the nearest friendly airbase.
+  -- @param #number Speed (optional) The Speed, if no Speed is given, the maximum Speed of the first unit is selected. 
+  -- @return #GROUP
+  function GROUP:RouteRTB( RTBAirbase, Speed )
+    self:F2( { RTBAirbase, Speed } )
+  
+    local DCSGroup = self:GetDCSObject()
+  
+    if DCSGroup then
+  
+      if RTBAirbase then
+      
+        local GroupPoint = self:GetVec2()
+        local GroupVelocity = self:GetUnit(1):GetDesc().speedMax
+    
+        local PointFrom = {}
+        PointFrom.x = GroupPoint.x
+        PointFrom.y = GroupPoint.y
+        PointFrom.type = "Turning Point"
+        PointFrom.action = "Turning Point"
+        PointFrom.speed = GroupVelocity
+
+    
+        local PointTo = {}
+        local AirbasePointVec2 = RTBAirbase:GetPointVec2()
+        local AirbaseAirPoint = AirbasePointVec2:RoutePointAir(
+          POINT_VEC3.RoutePointAltType.BARO,
+          "Land",
+          "Landing", 
+          Speed or self:GetUnit(1):GetDesc().speedMax
+        )
+        
+        AirbaseAirPoint["airdromeId"] = RTBAirbase:GetID()
+        AirbaseAirPoint["speed_locked"] = true,
+    
+        self:E(AirbaseAirPoint )
+    
+        local Points = { PointFrom, AirbaseAirPoint }
+    
+        self:T3( Points )
+
+        local Template = self:GetTemplate()
+        Template.route.points = Points
+        self:Respawn( Template )
+    
+        self:Route( Points )
+
+        self:Respawn(Template)
+      else
+        self:ClearTasks()
+      end
+    end
+  
+    return self
+  end
+
 end
 
 function GROUP:OnReSpawn( ReSpawnFunction )

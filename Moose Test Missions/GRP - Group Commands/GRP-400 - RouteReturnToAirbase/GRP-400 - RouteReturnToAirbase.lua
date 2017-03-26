@@ -5,31 +5,30 @@
 --
 -- # Situation:
 -- Three air units are flying and are commanded to return a specific airbase.
--- The return commands are given after 10 seconds.
 -- 
 -- # Test cases:
 -- 
--- 1. Observe the Air1 group return to Batumi.
--- 2. Observe the Air2 group returning to Sochi.
--- 3. Observe the Air3 group returning to the nearest airbase after 120 seconds.
+-- 1. Observe the Air1 group return to Batumi after 10 seconds.
+-- 2. Observe the Air2 group returning to Kobuleti after 300 seconds. (It was planned to land at Kutaisi).
+-- 3. Observe the Air3 group returning to the home (landing) airbase after 300 seconds. (It was planned to land at Kutaisi).
 -- 
 
 --- @param Wrapper.Group#GROUP AirGroup
 function ReturnToBatumi( AirGroup )
   BASE:E("ReturnToBatumi")
-  AirGroup:RouteReturnToAirbase( AIRBASE:FindByName("Batumi") )
+  AirGroup:RouteRTB( AIRBASE:FindByName("Batumi") )
 end
 
 --- @param Wrapper.Group#GROUP AirGroup
-function ReturnToSochi( AirGroup )
-  BASE:E("ReturnToSochi")
-  AirGroup:RouteReturnToAirbase( AIRBASE:FindByName("Sochi-Adler") )
+function ReturnToKobuleti( AirGroup )
+  BASE:E("ReturnToKobuleti")
+  AirGroup:RouteRTB( AIRBASE:FindByName("Kobuleti") )
 end
 
 --- @param Wrapper.Group#GROUP AirGroup
-function ReturnToNearest( AirGroup )
-  BASE:E("ReturnToHomeBase")
-  AirGroup:RouteReturnToAirbase()
+function ReturnToHome( AirGroup )
+  BASE:E("ReturnToHome")
+  AirGroup:RouteRTB()
 end
 
 Air1Group = GROUP:FindByName( "Air1" )
@@ -38,8 +37,8 @@ Air3Group = GROUP:FindByName( "Air3" )
 
 Scheduler = SCHEDULER:New( nil )
 ScheduleIDAir1 = Scheduler:Schedule(nil, ReturnToBatumi, { Air1Group }, 10 )
-ScheduleIDAir2 = Scheduler:Schedule(nil, ReturnToSochi, { Air2Group }, 120 )
-ScheduleIDAir3 = Scheduler:Schedule(nil, ReturnToNearest, { Air3Group }, 120 )
+ScheduleIDAir2 = Scheduler:Schedule(nil, ReturnToKobuleti, { Air2Group }, 300 )
+ScheduleIDAir3 = Scheduler:Schedule(nil, ReturnToHome, { Air3Group }, 300 )
 
 
 
