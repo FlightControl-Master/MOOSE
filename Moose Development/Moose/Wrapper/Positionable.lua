@@ -135,8 +135,11 @@ end
 
 --- Returns a random @{DCSTypes#Vec3} vector within a range, indicating the point in 3D of the POSITIONABLE within the mission.
 -- @param Wrapper.Positionable#POSITIONABLE self
+-- @param #number Radius
 -- @return Dcs.DCSTypes#Vec3 The 3D point vector of the POSITIONABLE.
 -- @return #nil The POSITIONABLE is not existing or alive.  
+-- @usage 
+-- -- If Radius is ignored, returns the Dcs.DCSTypes#Vec3 of first UNIT of the GROUP
 function POSITIONABLE:GetRandomVec3( Radius )
   self:F2( self.PositionableName )
 
@@ -144,14 +147,20 @@ function POSITIONABLE:GetRandomVec3( Radius )
   
   if DCSPositionable then
     local PositionablePointVec3 = DCSPositionable:getPosition().p
-    local PositionableRandomVec3 = {}
-    local angle = math.random() * math.pi*2;
-    PositionableRandomVec3.x = PositionablePointVec3.x + math.cos( angle ) * math.random() * Radius;
-    PositionableRandomVec3.y = PositionablePointVec3.y
-    PositionableRandomVec3.z = PositionablePointVec3.z + math.sin( angle ) * math.random() * Radius;
     
-    self:T3( PositionableRandomVec3 )
-    return PositionableRandomVec3
+    if Radius then
+      local PositionableRandomVec3 = {}
+      local angle = math.random() * math.pi*2;
+      PositionableRandomVec3.x = PositionablePointVec3.x + math.cos( angle ) * math.random() * Radius;
+      PositionableRandomVec3.y = PositionablePointVec3.y
+      PositionableRandomVec3.z = PositionablePointVec3.z + math.sin( angle ) * math.random() * Radius;
+    
+      self:T3( PositionableRandomVec3 )
+      return PositionableRandomVec3
+    else 
+      self:E("Radius is nil, returning the PointVec3 of the POSITIONABLE", PositionablePointVec3)
+      return PositionablePointVec3
+    end
   end
   
   return nil
@@ -219,6 +228,7 @@ end
 --- Returns the POSITIONABLE heading in degrees.
 -- @param Wrapper.Positionable#POSITIONABLE self
 -- @return #number The POSTIONABLE heading
+-- @return #nil The POSITIONABLE is not existing or alive.
 function POSITIONABLE:GetHeading()
   local DCSPositionable = self:GetDCSObject()
 
