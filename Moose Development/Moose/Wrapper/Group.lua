@@ -442,6 +442,7 @@ function GROUP:GetVec2()
 end
 
 --- Returns the current Vec3 vector of the first DCS Unit in the GROUP.
+-- @param #GROUP self
 -- @return Dcs.DCSTypes#Vec3 Current Vec3 of the first DCS Unit of the GROUP.
 function GROUP:GetVec3()
   self:F2( self.GroupName )
@@ -451,7 +452,63 @@ function GROUP:GetVec3()
   return GroupVec3
 end
 
+--- Returns a POINT_VEC2 object indicating the point in 2D of the first UNIT of the GROUP within the mission.
+-- @param #GROUP self
+-- @return Core.Point#POINT_VEC2 The 2D point vector of the first DCS Unit of the GROUP.
+-- @return #nil The first UNIT is not existing or alive.  
+function GROUP:GetPointVec2()
+  self:F2(self.GroupName)
 
+  local FirstUnit = self:GetUnit(1)
+  
+  if FirstUnit then
+    local FirstUnitPointVec2 = FirstUnit:GetPointVec2()
+    self:T3(FirstUnitPointVec2)
+    return FirstUnitPointVec2
+  end
+  
+  return nil
+end
+
+--- Returns a random @{DCSTypes#Vec3} vector (point in 3D of the UNIT within the mission) within a range around the first UNIT of the GROUP.
+-- @param #GROUP self
+-- @param #number Radius
+-- @return Dcs.DCSTypes#Vec3 The random 3D point vector around the first UNIT of the GROUP.
+-- @return #nil The GROUP is invalid or empty  
+function GROUP:GetRandomVec3(Radius)
+  self:F2(self.GroupName)
+
+  local FirstUnit = self:GetUnit(1)
+  
+  if FirstUnit then
+    local FirstUnitRandomPointVec3 = FirstUnit:GetRandomVec3(Radius)
+    self:T3(FirstUnitRandomPointVec3)
+    return FirstUnitRandomPointVec3
+  end
+  
+  return nil
+end
+
+--- Returns the mean heading of every UNIT in the GROUP in degrees
+-- @param #GROUP self
+-- @return #number mean heading of the GROUP
+-- @return #nil The first UNIT is not existing or alive.
+function GROUP:GetHeading()
+  self:F2(self.GroupName)
+
+  local GroupSize = self:GetSize()
+  local HeadingAccumulator = 0
+  
+  if GroupSize then
+    for i = 1, GroupSize do
+      HeadingAccumulator = HeadingAccumulator + self:GetUnit(i):GetHeading()
+    end
+    return math.floor(HeadingAccumulator / GroupSize)
+  end
+  
+  return nil
+  
+end
 
 do -- Is Zone methods
 

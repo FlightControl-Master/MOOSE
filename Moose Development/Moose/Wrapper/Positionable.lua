@@ -135,6 +135,7 @@ end
 
 --- Returns a random @{DCSTypes#Vec3} vector within a range, indicating the point in 3D of the POSITIONABLE within the mission.
 -- @param Wrapper.Positionable#POSITIONABLE self
+-- @param #number Radius
 -- @return Dcs.DCSTypes#Vec3 The 3D point vector of the POSITIONABLE.
 -- @return #nil The POSITIONABLE is not existing or alive.  
 function POSITIONABLE:GetRandomVec3( Radius )
@@ -219,6 +220,7 @@ end
 --- Returns the POSITIONABLE heading in degrees.
 -- @param Wrapper.Positionable#POSITIONABLE self
 -- @return #number The POSTIONABLE heading
+-- @return #nil The POSITIONABLE is not existing or alive.
 function POSITIONABLE:GetHeading()
   local DCSPositionable = self:GetDCSObject()
 
