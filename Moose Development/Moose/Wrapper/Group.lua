@@ -474,10 +474,12 @@ end
 -- @param #GROUP self
 -- @param #number Radius
 -- @return Dcs.DCSTypes#Vec3 The random 3D point vector around the first UNIT of the GROUP.
--- @return #nil The GROUP is invalid or empty  
+-- @return #nil The GROUP is invalid or empty
+-- @usage 
+-- -- If Radius is ignored, returns the Dcs.DCSTypes#Vec3 of first UNIT of the GROUP
 function GROUP:GetRandomVec3(Radius)
   self:F2(self.GroupName)
-
+  
   local FirstUnit = self:GetUnit(1)
   
   if FirstUnit then
