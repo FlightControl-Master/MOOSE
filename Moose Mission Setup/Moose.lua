@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20170327_1159' ) 
+env.info( 'Moose Generation Timestamp: 20170327_1206' ) 
 local base = _G
 
 Include = {}
@@ -13564,7 +13564,7 @@ function POSITIONABLE:GetRandomVec3( Radius )
       self:T3( PositionableRandomVec3 )
       return PositionableRandomVec3
     else 
-      self:E("Radius is nil, returning the Vec3 of the POSITIONABLE", PositionablePointVec3)
+      self:E("Radius is nil, returning the PointVec3 of the POSITIONABLE", PositionablePointVec3)
       return PositionablePointVec3
     end
   end
