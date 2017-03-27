@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20170326_0853' ) 
+env.info( 'Moose Generation Timestamp: 20170327_1033' ) 
 local base = _G
 
 Include = {}
@@ -13241,17 +13241,19 @@ function IDENTIFIABLE:New( IdentifiableName )
   return self
 end
 
---- Returns if the Identifiable is alive.
+--- Returns if the Identifiable is alive.  
+-- If the Identifiable is not alive, nil is returned.  
+-- If the Identifiable is alive, true is returned.  
 -- @param #IDENTIFIABLE self
 -- @return #boolean true if Identifiable is alive.
--- @return #nil The DCS Identifiable is not existing or alive.  
+-- @return #nil if the Identifiable is not existing or is not alive.  
 function IDENTIFIABLE:IsAlive()
   self:F3( self.IdentifiableName )
 
-  local DCSIdentifiable = self:GetDCSObject()
+  local DCSIdentifiable = self:GetDCSObject() -- Dcs.DCSObject#Object
   
   if DCSIdentifiable then
-    local IdentifiableIsAlive = DCSIdentifiable:isExist()
+    local IdentifiableIsAlive  = DCSIdentifiable:isExist()
     return IdentifiableIsAlive
   end 
   
@@ -16070,7 +16072,9 @@ function CONTROLLABLE:WayPointExecute( WayPoint, WaitTime )
   return self
 end
 
--- Message APIs--- This module contains the GROUP class.
+-- Message APIs--- **Wrapper** -- GROUP is a wrapper class for the DCS Class Group.
+-- 
+-- ===
 -- 
 -- The @{#GROUP} class is a wrapper class to handle the DCS Group objects:
 --
@@ -16126,8 +16130,6 @@ end
 
 --- 
 -- # GROUP class, extends @{Controllable#CONTROLLABLE}
--- 
--- ## GROUP reference methods
 -- 
 -- For each DCS Group object alive within a running mission, a GROUP wrapper object (instance) will be created within the _@{DATABASE} object.
 -- This is done at the beginning of the mission (when the mission starts), and dynamically when new DCS Group objects are spawned (using the @{SPAWN} class).
@@ -16255,19 +16257,33 @@ function GROUP:GetPositionVec3() -- Overridden from POSITIONABLE:GetPositionVec3
   return nil
 end
 
---- Returns if the DCS Group is alive.
--- When the group exists at run-time, this method will return true, otherwise false.
+--- Returns if the Group is alive.
+-- The Group must:
+-- 
+--   * Exist at run-time.
+--   * Has at least one unit.
+-- 
+-- When the first @{Unit} of the Group is active, it will return true.
+-- If the first @{Unit} of the Group is inactive, it will return false.
+-- 
 -- @param #GROUP self
--- @return #boolean true if the DCS Group is alive.
+-- @return #boolean true if the Group is alive and active.
+-- @return #boolean false if the Group is alive but inactive.
+-- @return #nil if the group does not exist anymore.
 function GROUP:IsAlive()
   self:F2( self.GroupName )
 
-  local DCSGroup = self:GetDCSObject()
+  local DCSGroup = self:GetDCSObject() -- Dcs.DCSGroup#Group
 
   if DCSGroup then
-    local GroupIsAlive = DCSGroup:isExist() and DCSGroup:getUnit(1) ~= nil
-    self:T3( GroupIsAlive )
-    return GroupIsAlive
+    if DCSGroup:isExist() then
+      local DCSUnit = DCSGroup:getUnit(1) -- Dcs.DCSUnit#Unit
+      if DCSUnit then
+        local GroupIsAlive = DCSUnit:isActive()
+        self:T3( GroupIsAlive )
+        return GroupIsAlive
+      end
+    end
   end
 
   return nil
@@ -17099,10 +17115,10 @@ do -- Players
     return PlayerNames
   end
   
-end--- This module contains the UNIT class.
+end--- **Wrapper** - UNIT is a wrapper class for the DCS Class Unit.
 -- 
--- 1) @{#UNIT} class, extends @{Controllable#CONTROLLABLE}
--- ===========================================================
+-- ===
+-- 
 -- The @{#UNIT} class is a wrapper class to handle the DCS Unit objects:
 -- 
 --  * Support all DCS Unit APIs.
@@ -17110,9 +17126,14 @@ end--- This module contains the UNIT class.
 --  * Handle local Unit Controller.
 --  * Manage the "state" of the DCS Unit.
 --  
---  
--- 1.1) UNIT reference methods
--- ----------------------
+-- @module Unit
+
+--- @type UNIT
+-- @extends Wrapper.Controllable#CONTROLLABLE
+
+--- 
+-- # UNIT class, extends @{Controllable#CONTROLLABLE}
+-- 
 -- For each DCS Unit object alive within a running mission, a UNIT wrapper object (instance) will be created within the _@{DATABASE} object.
 -- This is done at the beginning of the mission (when the mission starts), and dynamically when new DCS Unit objects are spawned (using the @{SPAWN} class).
 --  
@@ -17130,15 +17151,15 @@ end--- This module contains the UNIT class.
 --  
 -- IMPORTANT: ONE SHOULD NEVER SANATIZE these UNIT OBJECT REFERENCES! (make the UNIT object references nil).
 -- 
--- 1.2) DCS UNIT APIs
--- ------------------
+-- ## DCS UNIT APIs
+-- 
 -- The DCS Unit APIs are used extensively within MOOSE. The UNIT class has for each DCS Unit API a corresponding method.
 -- To be able to distinguish easily in your code the difference between a UNIT API call and a DCS Unit API call,
 -- the first letter of the method is also capitalized. So, by example, the DCS Unit method @{DCSWrapper.Unit#Unit.getName}()
 -- is implemented in the UNIT class as @{#UNIT.GetName}().
 -- 
--- 1.3) Smoke, Flare Units
--- -----------------------
+-- ## Smoke, Flare Units
+-- 
 -- The UNIT class provides methods to smoke or flare units easily. 
 -- The @{#UNIT.SmokeBlue}(), @{#UNIT.SmokeGreen}(),@{#UNIT.SmokeOrange}(), @{#UNIT.SmokeRed}(), @{#UNIT.SmokeRed}() methods
 -- will smoke the unit in the corresponding color. Note that smoking a unit is done at the current position of the DCS Unit. 
@@ -17146,36 +17167,29 @@ end--- This module contains the UNIT class.
 -- The @{#UNIT.FlareGreen}(), @{#UNIT.FlareRed}(), @{#UNIT.FlareWhite}(), @{#UNIT.FlareYellow}() 
 -- methods will fire off a flare in the air with the corresponding color. Note that a flare is a one-off shot and its effect is of very short duration.
 -- 
--- 1.4) Location Position, Point
--- -----------------------------
+-- ## Location Position, Point
+-- 
 -- The UNIT class provides methods to obtain the current point or position of the DCS Unit.
 -- The @{#UNIT.GetPointVec2}(), @{#UNIT.GetVec3}() will obtain the current **location** of the DCS Unit in a Vec2 (2D) or a **point** in a Vec3 (3D) vector respectively.
 -- If you want to obtain the complete **3D position** including ori�ntation and direction vectors, consult the @{#UNIT.GetPositionVec3}() method respectively.
 -- 
--- 1.5) Test if alive
--- ------------------
+-- ## Test if alive
+-- 
 -- The @{#UNIT.IsAlive}(), @{#UNIT.IsActive}() methods determines if the DCS Unit is alive, meaning, it is existing and active.
 -- 
--- 1.6) Test for proximity
--- -----------------------
+-- ## Test for proximity
+-- 
 -- The UNIT class contains methods to test the location or proximity against zones or other objects.
 -- 
--- ### 1.6.1) Zones
+-- ### Zones
+-- 
 -- To test whether the Unit is within a **zone**, use the @{#UNIT.IsInZone}() or the @{#UNIT.IsNotInZone}() methods. Any zone can be tested on, but the zone must be derived from @{Zone#ZONE_BASE}. 
 -- 
--- ### 1.6.2) Units
+-- ### Units
+-- 
 -- Test if another DCS Unit is within a given radius of the current DCS Unit, use the @{#UNIT.OtherUnitInRadius}() method.
 -- 
--- @module Unit
--- @author FlightControl
-
-
-
-
-
---- The UNIT class
--- @type UNIT
--- @extends Wrapper.Controllable#CONTROLLABLE
+-- @field #UNIT UNIT
 UNIT = {
 	ClassName="UNIT",
 }
@@ -17317,7 +17331,7 @@ function UNIT:ReSpawn( SpawnVec3, Heading )
   end
 
   -- Remove obscolete units from the group structure
-  i = 1
+  local i = 1
   while i <= #SpawnGroupTemplate.units do
 
     local UnitTemplateData = SpawnGroupTemplate.units[i]
@@ -17350,6 +17364,27 @@ function UNIT:IsActive()
     return UnitIsActive 
   end
 
+  return nil
+end
+
+--- Returns if the Unit is alive.  
+-- If the Unit is not alive, nil is returned.  
+-- If the Unit is alive and active, true is returned.    
+-- If the Unit is alive but not active, false is returned.  
+-- @param #UNIT self
+-- @return #boolean true if Unit is alive and active.
+-- @return #boolean false if Unit is alive but not active.
+-- @return #nil if the Unit is not existing or is not alive.  
+function UNIT:IsAlive()
+  self:F3( self.UnitName )
+
+  local DCSUnit = self:GetDCSObject() -- Dcs.DCSUnit#Unit
+  
+  if DCSUnit then
+    local UnitIsAlive  = DCSUnit:isExist() and DCSUnit:isActive()
+    return UnitIsAlive
+  end 
+  
   return nil
 end
 

@@ -1,4 +1,6 @@
---- This module contains the GROUP class.
+--- **Wrapper** -- GROUP is a wrapper class for the DCS Class Group.
+-- 
+-- ===
 -- 
 -- The @{#GROUP} class is a wrapper class to handle the DCS Group objects:
 --
@@ -54,8 +56,6 @@
 
 --- 
 -- # GROUP class, extends @{Controllable#CONTROLLABLE}
--- 
--- ## GROUP reference methods
 -- 
 -- For each DCS Group object alive within a running mission, a GROUP wrapper object (instance) will be created within the _@{DATABASE} object.
 -- This is done at the beginning of the mission (when the mission starts), and dynamically when new DCS Group objects are spawned (using the @{SPAWN} class).
@@ -183,19 +183,33 @@ function GROUP:GetPositionVec3() -- Overridden from POSITIONABLE:GetPositionVec3
   return nil
 end
 
---- Returns if the DCS Group is alive.
--- When the group exists at run-time, this method will return true, otherwise false.
+--- Returns if the Group is alive.
+-- The Group must:
+-- 
+--   * Exist at run-time.
+--   * Has at least one unit.
+-- 
+-- When the first @{Unit} of the Group is active, it will return true.
+-- If the first @{Unit} of the Group is inactive, it will return false.
+-- 
 -- @param #GROUP self
--- @return #boolean true if the DCS Group is alive.
+-- @return #boolean true if the Group is alive and active.
+-- @return #boolean false if the Group is alive but inactive.
+-- @return #nil if the group does not exist anymore.
 function GROUP:IsAlive()
   self:F2( self.GroupName )
 
-  local DCSGroup = self:GetDCSObject()
+  local DCSGroup = self:GetDCSObject() -- Dcs.DCSGroup#Group
 
   if DCSGroup then
-    local GroupIsAlive = DCSGroup:isExist() and DCSGroup:getUnit(1) ~= nil
-    self:T3( GroupIsAlive )
-    return GroupIsAlive
+    if DCSGroup:isExist() then
+      local DCSUnit = DCSGroup:getUnit(1) -- Dcs.DCSUnit#Unit
+      if DCSUnit then
+        local GroupIsAlive = DCSUnit:isActive()
+        self:T3( GroupIsAlive )
+        return GroupIsAlive
+      end
+    end
   end
 
   return nil

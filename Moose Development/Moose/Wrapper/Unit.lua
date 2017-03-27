@@ -1,7 +1,7 @@
---- This module contains the UNIT class.
+--- **Wrapper** - UNIT is a wrapper class for the DCS Class Unit.
 -- 
--- 1) @{#UNIT} class, extends @{Controllable#CONTROLLABLE}
--- ===========================================================
+-- ===
+-- 
 -- The @{#UNIT} class is a wrapper class to handle the DCS Unit objects:
 -- 
 --  * Support all DCS Unit APIs.
@@ -9,9 +9,14 @@
 --  * Handle local Unit Controller.
 --  * Manage the "state" of the DCS Unit.
 --  
---  
--- 1.1) UNIT reference methods
--- ----------------------
+-- @module Unit
+
+--- @type UNIT
+-- @extends Wrapper.Controllable#CONTROLLABLE
+
+--- 
+-- # UNIT class, extends @{Controllable#CONTROLLABLE}
+-- 
 -- For each DCS Unit object alive within a running mission, a UNIT wrapper object (instance) will be created within the _@{DATABASE} object.
 -- This is done at the beginning of the mission (when the mission starts), and dynamically when new DCS Unit objects are spawned (using the @{SPAWN} class).
 --  
@@ -29,15 +34,15 @@
 --  
 -- IMPORTANT: ONE SHOULD NEVER SANATIZE these UNIT OBJECT REFERENCES! (make the UNIT object references nil).
 -- 
--- 1.2) DCS UNIT APIs
--- ------------------
+-- ## DCS UNIT APIs
+-- 
 -- The DCS Unit APIs are used extensively within MOOSE. The UNIT class has for each DCS Unit API a corresponding method.
 -- To be able to distinguish easily in your code the difference between a UNIT API call and a DCS Unit API call,
 -- the first letter of the method is also capitalized. So, by example, the DCS Unit method @{DCSWrapper.Unit#Unit.getName}()
 -- is implemented in the UNIT class as @{#UNIT.GetName}().
 -- 
--- 1.3) Smoke, Flare Units
--- -----------------------
+-- ## Smoke, Flare Units
+-- 
 -- The UNIT class provides methods to smoke or flare units easily. 
 -- The @{#UNIT.SmokeBlue}(), @{#UNIT.SmokeGreen}(),@{#UNIT.SmokeOrange}(), @{#UNIT.SmokeRed}(), @{#UNIT.SmokeRed}() methods
 -- will smoke the unit in the corresponding color. Note that smoking a unit is done at the current position of the DCS Unit. 
@@ -45,36 +50,29 @@
 -- The @{#UNIT.FlareGreen}(), @{#UNIT.FlareRed}(), @{#UNIT.FlareWhite}(), @{#UNIT.FlareYellow}() 
 -- methods will fire off a flare in the air with the corresponding color. Note that a flare is a one-off shot and its effect is of very short duration.
 -- 
--- 1.4) Location Position, Point
--- -----------------------------
+-- ## Location Position, Point
+-- 
 -- The UNIT class provides methods to obtain the current point or position of the DCS Unit.
 -- The @{#UNIT.GetPointVec2}(), @{#UNIT.GetVec3}() will obtain the current **location** of the DCS Unit in a Vec2 (2D) or a **point** in a Vec3 (3D) vector respectively.
 -- If you want to obtain the complete **3D position** including ori�ntation and direction vectors, consult the @{#UNIT.GetPositionVec3}() method respectively.
 -- 
--- 1.5) Test if alive
--- ------------------
+-- ## Test if alive
+-- 
 -- The @{#UNIT.IsAlive}(), @{#UNIT.IsActive}() methods determines if the DCS Unit is alive, meaning, it is existing and active.
 -- 
--- 1.6) Test for proximity
--- -----------------------
+-- ## Test for proximity
+-- 
 -- The UNIT class contains methods to test the location or proximity against zones or other objects.
 -- 
--- ### 1.6.1) Zones
+-- ### Zones
+-- 
 -- To test whether the Unit is within a **zone**, use the @{#UNIT.IsInZone}() or the @{#UNIT.IsNotInZone}() methods. Any zone can be tested on, but the zone must be derived from @{Zone#ZONE_BASE}. 
 -- 
--- ### 1.6.2) Units
+-- ### Units
+-- 
 -- Test if another DCS Unit is within a given radius of the current DCS Unit, use the @{#UNIT.OtherUnitInRadius}() method.
 -- 
--- @module Unit
--- @author FlightControl
-
-
-
-
-
---- The UNIT class
--- @type UNIT
--- @extends Wrapper.Controllable#CONTROLLABLE
+-- @field #UNIT UNIT
 UNIT = {
 	ClassName="UNIT",
 }
@@ -216,7 +214,7 @@ function UNIT:ReSpawn( SpawnVec3, Heading )
   end
 
   -- Remove obscolete units from the group structure
-  i = 1
+  local i = 1
   while i <= #SpawnGroupTemplate.units do
 
     local UnitTemplateData = SpawnGroupTemplate.units[i]
@@ -249,6 +247,27 @@ function UNIT:IsActive()
     return UnitIsActive 
   end
 
+  return nil
+end
+
+--- Returns if the Unit is alive.  
+-- If the Unit is not alive, nil is returned.  
+-- If the Unit is alive and active, true is returned.    
+-- If the Unit is alive but not active, false is returned.  
+-- @param #UNIT self
+-- @return #boolean true if Unit is alive and active.
+-- @return #boolean false if Unit is alive but not active.
+-- @return #nil if the Unit is not existing or is not alive.  
+function UNIT:IsAlive()
+  self:F3( self.UnitName )
+
+  local DCSUnit = self:GetDCSObject() -- Dcs.DCSUnit#Unit
+  
+  if DCSUnit then
+    local UnitIsAlive  = DCSUnit:isExist() and DCSUnit:isActive()
+    return UnitIsAlive
+  end 
+  
   return nil
 end
 
