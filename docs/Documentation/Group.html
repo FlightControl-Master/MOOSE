@@ -73,9 +73,11 @@
 	<div id="content">
    <h1>Module <code>Group</code></h1>
    
-<p>This module contains the GROUP class.</p>
+<p><strong>Wrapper</strong> -- GROUP is a wrapper class for the DCS Class Group.</p>
 
    
+
+<hr/>
 
 <p>The <a href="##(GROUP)">#GROUP</a> class is a wrapper class to handle the DCS Group objects:</p>
 
@@ -137,8 +139,6 @@
 		<td class="name" nowrap="nowrap"><a href="#GROUP">GROUP</a></td>
 		<td class="summary">
 <h1>GROUP class, extends <a href="Controllable.html##(CONTROLLABLE)">Controllable#CONTROLLABLE</a></h1>
-
-<h2>GROUP reference methods</h2>
 
 <p>For each DCS Group object alive within a running mission, a GROUP wrapper object (instance) will be created within the _<a href="DATABASE.html">DATABASE</a> object.</p>
 </td>
@@ -355,7 +355,7 @@
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(GROUP).IsAlive">GROUP:IsAlive()</a></td>
 		<td class="summary">
-<p>Returns if the DCS Group is alive.</p>
+<p>Returns if the Group is alive.</p>
 </td>
 		</tr>
 		<tr>
@@ -474,8 +474,6 @@
 <dd>
 	
 <h1>GROUP class, extends <a href="Controllable.html##(CONTROLLABLE)">Controllable#CONTROLLABLE</a></h1>
-
-<h2>GROUP reference methods</h2>
 
 <p>For each DCS Group object alive within a running mission, a GROUP wrapper object (instance) will be created within the _<a href="DATABASE.html">DATABASE</a> object.</p>
 
@@ -1293,16 +1291,41 @@ true if DCS Group contains AirPlanes.</p>
 </dt>
 <dd>
 	
-<p>Returns if the DCS Group is alive.</p>
+<p>Returns if the Group is alive.</p>
 
 	
-<p>When the group exists at run-time, this method will return true, otherwise false.</p>
+<p>The Group must:</p>
 
-		<h3>Return value</h3>
+<ul>
+    <li>Exist at run-time.</li>
+    <li>Has at least one unit.</li>
+</ul>
+
+<p>When the first <a href="Unit.html">Unit</a> of the Group is active, it will return true.
+If the first <a href="Unit.html">Unit</a> of the Group is inactive, it will return false.</p>
+
+
+		<h3>Return values</h3>
+			<ol>
+				<li>
 				
 <p><em>#boolean:</em>
-true if the DCS Group is alive.</p>
+true if the Group is alive and active.</p>
 
+				</li>
+				<li>
+				
+<p><em>#boolean:</em>
+false if the Group is alive but inactive.</p>
+
+				</li>
+				<li>
+				
+<p><em>#nil:</em>
+if the group does not exist anymore.</p>
+
+				</li>
+			</ol>
 </dd>
 </dl>
 		<dl class="function">

@@ -58,17 +58,19 @@ function IDENTIFIABLE:New( IdentifiableName )
   return self
 end
 
---- Returns if the Identifiable is alive.
+--- Returns if the Identifiable is alive.  
+-- If the Identifiable is not alive, nil is returned.  
+-- If the Identifiable is alive, true is returned.  
 -- @param #IDENTIFIABLE self
 -- @return #boolean true if Identifiable is alive.
--- @return #nil The DCS Identifiable is not existing or alive.  
+-- @return #nil if the Identifiable is not existing or is not alive.  
 function IDENTIFIABLE:IsAlive()
   self:F3( self.IdentifiableName )
 
-  local DCSIdentifiable = self:GetDCSObject()
+  local DCSIdentifiable = self:GetDCSObject() -- Dcs.DCSObject#Object
   
   if DCSIdentifiable then
-    local IdentifiableIsAlive = DCSIdentifiable:isExist()
+    local IdentifiableIsAlive  = DCSIdentifiable:isExist()
     return IdentifiableIsAlive
   end 
   
