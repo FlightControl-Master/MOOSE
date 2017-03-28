@@ -1,4 +1,6 @@
---- This module contains the GROUP class.
+--- **Wrapper** -- GROUP is a wrapper class for the DCS Class Group.
+-- 
+-- ===
 -- 
 -- The @{#GROUP} class is a wrapper class to handle the DCS Group objects:
 --
@@ -54,8 +56,6 @@
 
 --- 
 -- # GROUP class, extends @{Controllable#CONTROLLABLE}
--- 
--- ## GROUP reference methods
 -- 
 -- For each DCS Group object alive within a running mission, a GROUP wrapper object (instance) will be created within the _@{DATABASE} object.
 -- This is done at the beginning of the mission (when the mission starts), and dynamically when new DCS Group objects are spawned (using the @{SPAWN} class).
@@ -183,19 +183,33 @@ function GROUP:GetPositionVec3() -- Overridden from POSITIONABLE:GetPositionVec3
   return nil
 end
 
---- Returns if the DCS Group is alive.
--- When the group exists at run-time, this method will return true, otherwise false.
+--- Returns if the Group is alive.
+-- The Group must:
+-- 
+--   * Exist at run-time.
+--   * Has at least one unit.
+-- 
+-- When the first @{Unit} of the Group is active, it will return true.
+-- If the first @{Unit} of the Group is inactive, it will return false.
+-- 
 -- @param #GROUP self
--- @return #boolean true if the DCS Group is alive.
+-- @return #boolean true if the Group is alive and active.
+-- @return #boolean false if the Group is alive but inactive.
+-- @return #nil if the group does not exist anymore.
 function GROUP:IsAlive()
   self:F2( self.GroupName )
 
-  local DCSGroup = self:GetDCSObject()
+  local DCSGroup = self:GetDCSObject() -- Dcs.DCSGroup#Group
 
   if DCSGroup then
-    local GroupIsAlive = DCSGroup:isExist() and DCSGroup:getUnit(1) ~= nil
-    self:T3( GroupIsAlive )
-    return GroupIsAlive
+    if DCSGroup:isExist() then
+      local DCSUnit = DCSGroup:getUnit(1) -- Dcs.DCSUnit#Unit
+      if DCSUnit then
+        local GroupIsAlive = DCSUnit:isActive()
+        self:T3( GroupIsAlive )
+        return GroupIsAlive
+      end
+    end
   end
 
   return nil
@@ -442,6 +456,7 @@ function GROUP:GetVec2()
 end
 
 --- Returns the current Vec3 vector of the first DCS Unit in the GROUP.
+-- @param #GROUP self
 -- @return Dcs.DCSTypes#Vec3 Current Vec3 of the first DCS Unit of the GROUP.
 function GROUP:GetVec3()
   self:F2( self.GroupName )
@@ -451,7 +466,65 @@ function GROUP:GetVec3()
   return GroupVec3
 end
 
+--- Returns a POINT_VEC2 object indicating the point in 2D of the first UNIT of the GROUP within the mission.
+-- @param #GROUP self
+-- @return Core.Point#POINT_VEC2 The 2D point vector of the first DCS Unit of the GROUP.
+-- @return #nil The first UNIT is not existing or alive.  
+function GROUP:GetPointVec2()
+  self:F2(self.GroupName)
 
+  local FirstUnit = self:GetUnit(1)
+  
+  if FirstUnit then
+    local FirstUnitPointVec2 = FirstUnit:GetPointVec2()
+    self:T3(FirstUnitPointVec2)
+    return FirstUnitPointVec2
+  end
+  
+  return nil
+end
+
+--- Returns a random @{DCSTypes#Vec3} vector (point in 3D of the UNIT within the mission) within a range around the first UNIT of the GROUP.
+-- @param #GROUP self
+-- @param #number Radius
+-- @return Dcs.DCSTypes#Vec3 The random 3D point vector around the first UNIT of the GROUP.
+-- @return #nil The GROUP is invalid or empty
+-- @usage 
+-- -- If Radius is ignored, returns the Dcs.DCSTypes#Vec3 of first UNIT of the GROUP
+function GROUP:GetRandomVec3(Radius)
+  self:F2(self.GroupName)
+  
+  local FirstUnit = self:GetUnit(1)
+  
+  if FirstUnit then
+    local FirstUnitRandomPointVec3 = FirstUnit:GetRandomVec3(Radius)
+    self:T3(FirstUnitRandomPointVec3)
+    return FirstUnitRandomPointVec3
+  end
+  
+  return nil
+end
+
+--- Returns the mean heading of every UNIT in the GROUP in degrees
+-- @param #GROUP self
+-- @return #number mean heading of the GROUP
+-- @return #nil The first UNIT is not existing or alive.
+function GROUP:GetHeading()
+  self:F2(self.GroupName)
+
+  local GroupSize = self:GetSize()
+  local HeadingAccumulator = 0
+  
+  if GroupSize then
+    for i = 1, GroupSize do
+      HeadingAccumulator = HeadingAccumulator + self:GetUnit(i):GetHeading()
+    end
+    return math.floor(HeadingAccumulator / GroupSize)
+  end
+  
+  return nil
+  
+end
 
 do -- Is Zone methods
 
