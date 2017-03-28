@@ -33,6 +33,8 @@ RecceDetection:Start()
 -- @param #string To The To State string.
 function RecceDetection:OnAfterDetect(From,Event,To)
 
+  self:E("Detect")
+
   local DetectionReport = RecceDetection:DetectedReportDetailed()
 
   CC:MessageToAll( DetectionReport, 15, "" )

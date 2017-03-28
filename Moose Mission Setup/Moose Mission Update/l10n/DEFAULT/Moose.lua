@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20170327_1219' ) 
+env.info( 'Moose Generation Timestamp: 20170328_1316' ) 
 local base = _G
 
 Include = {}
@@ -27530,7 +27530,7 @@ do -- DETECTION_UNITS
     self:F()
     
     local Report = REPORT:New( "Detected units:" )
-    for DetectedItemID, DetectedItem in ipairs( self.DetectedItems ) do
+    for DetectedItemID, DetectedItem in pairs( self.DetectedItems ) do
       local DetectedItem = DetectedItem -- #DETECTION_BASE.DetectedItem
       local ReportSummary = self:DetectedItemReportSummary( DetectedItemID )
       Report:Add( ReportSummary )
