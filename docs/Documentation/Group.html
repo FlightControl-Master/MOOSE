@@ -73,12 +73,13 @@
 	<div id="content">
    <h1>Module <code>Group</code></h1>
    
-<p>This module contains the GROUP class.</p>
+<p><strong>Wrapper</strong> -- GROUP is a wrapper class for the DCS Class Group.</p>
 
    
 
-<h1>1) <a href="Group.html##(GROUP)">Group#GROUP</a> class, extends <a href="Controllable.html##(CONTROLLABLE)">Controllable#CONTROLLABLE</a></h1>
-<p>The <a href="Group.html##(GROUP)">Group#GROUP</a> class is a wrapper class to handle the DCS Group objects:</p>
+<hr/>
+
+<p>The <a href="##(GROUP)">#GROUP</a> class is a wrapper class to handle the DCS Group objects:</p>
 
 <ul>
     <li>Support all DCS Group APIs.</li>
@@ -89,66 +90,7 @@
 
 <p><strong>IMPORTANT: ONE SHOULD NEVER SANATIZE these GROUP OBJECT REFERENCES! (make the GROUP object references nil).</strong></p>
 
-<h2>1.1) GROUP reference methods</h2>
-<p>For each DCS Group object alive within a running mission, a GROUP wrapper object (instance) will be created within the _<a href="DATABASE.html">DATABASE</a> object.
-This is done at the beginning of the mission (when the mission starts), and dynamically when new DCS Group objects are spawned (using the <a href="SPAWN.html">SPAWN</a> class).</p>
-
-<p>The GROUP class does not contain a :New() method, rather it provides :Find() methods to retrieve the object reference
-using the DCS Group or the DCS GroupName.</p>
-
-<p>Another thing to know is that GROUP objects do not "contain" the DCS Group object.
-The GROUP methods will reference the DCS Group object by name when it is needed during API execution.
-If the DCS Group object does not exist or is nil, the GROUP methods will return nil and log an exception in the DCS.log file.</p>
-
-<p>The GROUP class provides the following functions to retrieve quickly the relevant GROUP instance:</p>
-
-<ul>
-    <li><a href="##(GROUP).Find">GROUP.Find</a>(): Find a GROUP instance from the _DATABASE object using a DCS Group object.</li>
-    <li><a href="##(GROUP).FindByName">GROUP.FindByName</a>(): Find a GROUP instance from the _DATABASE object using a DCS Group name.</li>
-</ul>
-
-<h2>1.2) GROUP task methods</h2>
-
-<p>A GROUP is a <a href="Controllable.html">Controllable</a>. See the <a href="Controllable.html">Controllable</a> task methods section for a description of the task methods.</p>
-
-<h3>1.2.4) Obtain the mission from group templates</h3>
-
-<p>Group templates contain complete mission descriptions. Sometimes you want to copy a complete mission from a group and assign it to another:</p>
-
-<ul>
-    <li><a href="Controllable.html##(CONTROLLABLE).TaskMission">Controllable#CONTROLLABLE.TaskMission</a>: (AIR + GROUND) Return a mission task from a mission template.</li>
-</ul>
-
-<h2>1.3) GROUP Command methods</h2>
-
-<p>A GROUP is a <a href="Controllable.html">Controllable</a>. See the <a href="Controllable.html">Controllable</a> command methods section for a description of the command methods.</p>
-
-<h2>1.4) GROUP option methods</h2>
-
-<p>A GROUP is a <a href="Controllable.html">Controllable</a>. See the <a href="Controllable.html">Controllable</a> option methods section for a description of the option methods.</p>
-
-<h2>1.5) GROUP Zone validation methods</h2>
-
-<p>The group can be validated whether it is completely, partly or not within a <a href="Zone.html">Zone</a>.
-Use the following Zone validation methods on the group:</p>
-
-<ul>
-    <li><a href="##(GROUP).IsCompletelyInZone">GROUP.IsCompletelyInZone</a>: Returns true if all units of the group are within a <a href="Zone.html">Zone</a>.</li>
-    <li><a href="##(GROUP).IsPartlyInZone">GROUP.IsPartlyInZone</a>: Returns true if some units of the group are within a <a href="Zone.html">Zone</a>.</li>
-    <li><a href="##(GROUP).IsNotInZone">GROUP.IsNotInZone</a>: Returns true if none of the group units of the group are within a <a href="Zone.html">Zone</a>.</li>
-</ul>
-
-<p>The zone can be of any <a href="Zone.html">Zone</a> class derived from <a href="Zone.html##(ZONE_BASE)">Zone#ZONE_BASE</a>. So, these methods are polymorphic to the zones tested on.</p>
-
-<h2>1.6) GROUP AI methods</h2>
-
-<p>A GROUP has AI methods to control the AI activation.</p>
-
-<ul>
-    <li><a href="##(GROUP).SetAIOnOff">GROUP.SetAIOnOff</a>(): Turns the GROUP AI On or Off.</li>
-    <li><a href="##(GROUP).SetAIOn">GROUP.SetAIOn</a>(): Turns the GROUP AI On.</li>
-    <li><a href="##(GROUP).SetAIOff">GROUP.SetAIOff</a>(): Turns the GROUP AI Off.</li>
-</ul>
+<p>See the detailed documentation on the GROUP class.</p>
 
 <hr/>
 
@@ -162,6 +104,8 @@ Use the following Zone validation methods on the group:</p>
 </ul>
 
 <p>Hereby the change log:</p>
+
+<p>2017-03-26: GROUP:<strong>RouteRTB( RTBAirbase, Speed )</strong> added.  </p>
 
 <p>2017-03-07: GROUP:<strong>HandleEvent( Event, EventFunction )</strong> added. <br/>
 2017-03-07: GROUP:<strong>UnHandleEvent( Event )</strong> added.</p>
@@ -194,7 +138,9 @@ Use the following Zone validation methods on the group:</p>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="#GROUP">GROUP</a></td>
 		<td class="summary">
+<h1>GROUP class, extends <a href="Controllable.html##(CONTROLLABLE)">Controllable#CONTROLLABLE</a></h1>
 
+<p>For each DCS Group object alive within a running mission, a GROUP wrapper object (instance) will be created within the _<a href="DATABASE.html">DATABASE</a> object.</p>
 </td>
 		</tr>
 	</table>
@@ -216,12 +162,6 @@ Use the following Zone validation methods on the group:</p>
 		<td class="name" nowrap="nowrap"><a href="##(GROUP).CalculateThreatLevelA2G">GROUP:CalculateThreatLevelA2G()</a></td>
 		<td class="summary">
 <p>Calculate the maxium A2G threat level of the Group.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(GROUP).ClassName">GROUP.ClassName</a></td>
-		<td class="summary">
-
 </td>
 		</tr>
 		<tr>
@@ -415,7 +355,7 @@ Use the following Zone validation methods on the group:</p>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(GROUP).IsAlive">GROUP:IsAlive()</a></td>
 		<td class="summary">
-<p>Returns if the DCS Group is alive.</p>
+<p>Returns if the Group is alive.</p>
 </td>
 		</tr>
 		<tr>
@@ -473,6 +413,12 @@ Use the following Zone validation methods on the group:</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).RouteRTB">GROUP:RouteRTB(RTBAirbase, Speed)</a></td>
+		<td class="summary">
+<p>(AIR) Return the Group to an <a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a>.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(GROUP).SetAIOff">GROUP:SetAIOff()</a></td>
 		<td class="summary">
 <p>Turns the AI Off for the GROUP.</p>
@@ -527,6 +473,69 @@ Use the following Zone validation methods on the group:</p>
 </dt>
 <dd>
 	
+<h1>GROUP class, extends <a href="Controllable.html##(CONTROLLABLE)">Controllable#CONTROLLABLE</a></h1>
+
+<p>For each DCS Group object alive within a running mission, a GROUP wrapper object (instance) will be created within the _<a href="DATABASE.html">DATABASE</a> object.</p>
+
+	
+<p>This is done at the beginning of the mission (when the mission starts), and dynamically when new DCS Group objects are spawned (using the <a href="SPAWN.html">SPAWN</a> class).</p>
+
+<p>The GROUP class does not contain a :New() method, rather it provides :Find() methods to retrieve the object reference
+using the DCS Group or the DCS GroupName.</p>
+
+<p>Another thing to know is that GROUP objects do not "contain" the DCS Group object.
+The GROUP methods will reference the DCS Group object by name when it is needed during API execution.
+If the DCS Group object does not exist or is nil, the GROUP methods will return nil and log an exception in the DCS.log file.</p>
+
+<p>The GROUP class provides the following functions to retrieve quickly the relevant GROUP instance:</p>
+
+<ul>
+    <li><a href="##(GROUP).Find">GROUP.Find</a>(): Find a GROUP instance from the _DATABASE object using a DCS Group object.</li>
+    <li><a href="##(GROUP).FindByName">GROUP.FindByName</a>(): Find a GROUP instance from the _DATABASE object using a DCS Group name.</li>
+</ul>
+
+<h2>GROUP task methods</h2>
+
+<p>A GROUP is a <a href="Controllable.html">Controllable</a>. See the <a href="Controllable.html">Controllable</a> task methods section for a description of the task methods.</p>
+
+<h3>Obtain the mission from group templates</h3>
+
+<p>Group templates contain complete mission descriptions. Sometimes you want to copy a complete mission from a group and assign it to another:</p>
+
+<ul>
+    <li><a href="Controllable.html##(CONTROLLABLE).TaskMission">Controllable#CONTROLLABLE.TaskMission</a>: (AIR + GROUND) Return a mission task from a mission template.</li>
+</ul>
+
+<h2>GROUP Command methods</h2>
+
+<p>A GROUP is a <a href="Controllable.html">Controllable</a>. See the <a href="Controllable.html">Controllable</a> command methods section for a description of the command methods.</p>
+
+<h2>GROUP option methods</h2>
+
+<p>A GROUP is a <a href="Controllable.html">Controllable</a>. See the <a href="Controllable.html">Controllable</a> option methods section for a description of the option methods.</p>
+
+<h2>GROUP Zone validation methods</h2>
+
+<p>The group can be validated whether it is completely, partly or not within a <a href="Zone.html">Zone</a>.
+Use the following Zone validation methods on the group:</p>
+
+<ul>
+    <li><a href="##(GROUP).IsCompletelyInZone">GROUP.IsCompletelyInZone</a>: Returns true if all units of the group are within a <a href="Zone.html">Zone</a>.</li>
+    <li><a href="##(GROUP).IsPartlyInZone">GROUP.IsPartlyInZone</a>: Returns true if some units of the group are within a <a href="Zone.html">Zone</a>.</li>
+    <li><a href="##(GROUP).IsNotInZone">GROUP.IsNotInZone</a>: Returns true if none of the group units of the group are within a <a href="Zone.html">Zone</a>.</li>
+</ul>
+
+<p>The zone can be of any <a href="Zone.html">Zone</a> class derived from <a href="Zone.html##(ZONE_BASE)">Zone#ZONE_BASE</a>. So, these methods are polymorphic to the zones tested on.</p>
+
+<h2>GROUP AI methods</h2>
+
+<p>A GROUP has AI methods to control the AI activation.</p>
+
+<ul>
+    <li><a href="##(GROUP).SetAIOnOff">GROUP.SetAIOnOff</a>(): Turns the GROUP AI On or Off.</li>
+    <li><a href="##(GROUP).SetAIOn">GROUP.SetAIOn</a>(): Turns the GROUP AI On.</li>
+    <li><a href="##(GROUP).SetAIOff">GROUP.SetAIOff</a>(): Turns the GROUP AI Off.</li>
+</ul>
 
 
 </dd>
@@ -534,10 +543,7 @@ Use the following Zone validation methods on the group:</p>
 	<h2><a id="#(Group)" >Type <code>Group</code></a></h2>
 	
 			<h2><a id="#(GROUP)" >Type <code>GROUP</code></a></h2>
-				
-<p>The GROUP class</p>
-
-	<h3>Field(s)</h3>
+				<h3>Field(s)</h3>
 		<dl class="function">
 <dt>
 
@@ -582,20 +588,6 @@ All units on the ground result.</p>
 <dd>
 	
 <p>Calculate the maxium A2G threat level of the Group.</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em>#string</em>
-<a id="#(GROUP).ClassName" >
-<strong>GROUP.ClassName</strong>
-</a>
-</dt>
-<dd>
-	
-
 
 </dd>
 </dl>
@@ -1299,16 +1291,41 @@ true if DCS Group contains AirPlanes.</p>
 </dt>
 <dd>
 	
-<p>Returns if the DCS Group is alive.</p>
+<p>Returns if the Group is alive.</p>
 
 	
-<p>When the group exists at run-time, this method will return true, otherwise false.</p>
+<p>The Group must:</p>
 
-		<h3>Return value</h3>
+<ul>
+    <li>Exist at run-time.</li>
+    <li>Has at least one unit.</li>
+</ul>
+
+<p>When the first <a href="Unit.html">Unit</a> of the Group is active, it will return true.
+If the first <a href="Unit.html">Unit</a> of the Group is inactive, it will return false.</p>
+
+
+		<h3>Return values</h3>
+			<ol>
+				<li>
 				
 <p><em>#boolean:</em>
-true if the DCS Group is alive.</p>
+true if the Group is alive and active.</p>
 
+				</li>
+				<li>
+				
+<p><em>#boolean:</em>
+false if the Group is alive but inactive.</p>
+
+				</li>
+				<li>
+				
+<p><em>#nil:</em>
+if the group does not exist anymore.</p>
+
+				</li>
+			</ol>
 </dd>
 </dl>
 		<dl class="function">
@@ -1536,6 +1553,51 @@ The template of the Group retrieved with GROUP:GetTemplate()</p>
 
 				</li>
 		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).RouteRTB" >
+<strong>GROUP:RouteRTB(RTBAirbase, Speed)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>(AIR) Return the Group to an <a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a>.</p>
+
+	
+<p>The following things are to be taken into account:</p>
+
+<ul>
+    <li>The group is respawned to achieve the RTB, there may be side artefacts as a result of this. (Like weapons suddenly come back).</li>
+    <li>A group consisting out of more than one unit, may rejoin formation when respawned.</li>
+    <li>A speed can be given in km/h. If no speed is specified, the maximum speed of the first unit will be taken to return to base.</li>
+    <li>When there is no <a href="Airbase.html">Airbase</a> object specified, the group will return to the home base if the route of the group is pinned at take-off or at landing to a base.</li>
+    <li>When there is no <a href="Airbase.html">Airbase</a> object specified and the group route is not pinned to any airbase, it will return to the nearest airbase.</li>
+</ul>
+
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Airbase.html##(AIRBASE)">Wrapper.Airbase#AIRBASE</a> RTBAirbase </em></code>: 
+(optional) The <a href="Airbase.html">Airbase</a> to return to. If blank, the controllable will return to the nearest friendly airbase.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Speed </em></code>: 
+(optional) The Speed, if no Speed is given, the maximum Speed of the first unit is selected. </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(GROUP)">#GROUP</a>:</em></p>
+
+
 </dd>
 </dl>
 		<dl class="function">

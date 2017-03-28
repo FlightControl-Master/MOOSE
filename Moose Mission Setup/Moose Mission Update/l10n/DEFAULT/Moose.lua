@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' ) 
-env.info( 'Moose Generation Timestamp: 20170325_0623' ) 
+env.info( 'Moose Generation Timestamp: 20170327_1219' ) 
 local base = _G
 
 Include = {}
@@ -13241,17 +13241,19 @@ function IDENTIFIABLE:New( IdentifiableName )
   return self
 end
 
---- Returns if the Identifiable is alive.
+--- Returns if the Identifiable is alive.  
+-- If the Identifiable is not alive, nil is returned.  
+-- If the Identifiable is alive, true is returned.  
 -- @param #IDENTIFIABLE self
 -- @return #boolean true if Identifiable is alive.
--- @return #nil The DCS Identifiable is not existing or alive.  
+-- @return #nil if the Identifiable is not existing or is not alive.  
 function IDENTIFIABLE:IsAlive()
   self:F3( self.IdentifiableName )
 
-  local DCSIdentifiable = self:GetDCSObject()
+  local DCSIdentifiable = self:GetDCSObject() -- Dcs.DCSObject#Object
   
   if DCSIdentifiable then
-    local IdentifiableIsAlive = DCSIdentifiable:isExist()
+    local IdentifiableIsAlive  = DCSIdentifiable:isExist()
     return IdentifiableIsAlive
   end 
   
@@ -13541,8 +13543,11 @@ end
 
 --- Returns a random @{DCSTypes#Vec3} vector within a range, indicating the point in 3D of the POSITIONABLE within the mission.
 -- @param Wrapper.Positionable#POSITIONABLE self
+-- @param #number Radius
 -- @return Dcs.DCSTypes#Vec3 The 3D point vector of the POSITIONABLE.
 -- @return #nil The POSITIONABLE is not existing or alive.  
+-- @usage 
+-- -- If Radius is ignored, returns the Dcs.DCSTypes#Vec3 of first UNIT of the GROUP
 function POSITIONABLE:GetRandomVec3( Radius )
   self:F2( self.PositionableName )
 
@@ -13550,14 +13555,20 @@ function POSITIONABLE:GetRandomVec3( Radius )
   
   if DCSPositionable then
     local PositionablePointVec3 = DCSPositionable:getPosition().p
-    local PositionableRandomVec3 = {}
-    local angle = math.random() * math.pi*2;
-    PositionableRandomVec3.x = PositionablePointVec3.x + math.cos( angle ) * math.random() * Radius;
-    PositionableRandomVec3.y = PositionablePointVec3.y
-    PositionableRandomVec3.z = PositionablePointVec3.z + math.sin( angle ) * math.random() * Radius;
     
-    self:T3( PositionableRandomVec3 )
-    return PositionableRandomVec3
+    if Radius then
+      local PositionableRandomVec3 = {}
+      local angle = math.random() * math.pi*2;
+      PositionableRandomVec3.x = PositionablePointVec3.x + math.cos( angle ) * math.random() * Radius;
+      PositionableRandomVec3.y = PositionablePointVec3.y
+      PositionableRandomVec3.z = PositionablePointVec3.z + math.sin( angle ) * math.random() * Radius;
+    
+      self:T3( PositionableRandomVec3 )
+      return PositionableRandomVec3
+    else 
+      self:E("Radius is nil, returning the PointVec3 of the POSITIONABLE", PositionablePointVec3)
+      return PositionablePointVec3
+    end
   end
   
   return nil
@@ -13625,6 +13636,7 @@ end
 --- Returns the POSITIONABLE heading in degrees.
 -- @param Wrapper.Positionable#POSITIONABLE self
 -- @return #number The POSTIONABLE heading
+-- @return #nil The POSITIONABLE is not existing or alive.
 function POSITIONABLE:GetHeading()
   local DCSPositionable = self:GetDCSObject()
 
@@ -14305,12 +14317,20 @@ function CONTROLLABLE:CommandSwitchWayPoint( FromWayPoint, ToWayPoint )
   return CommandSwitchWayPoint
 end
 
---- Perform stop route command
+--- Create a stop route command, which returns a string containing the command.
+-- Use the result in the method @{#CONTROLLABLE.SetCommand}().
+-- A value of true will make the ground group stop, a value of false will make it continue.
+-- Note that this can only work on GROUP level, although individual UNITs can be commanded, the whole GROUP will react.
+-- 
+-- Example missions:  
+-- 
+--   * GRP-310
+--   
 -- @param #CONTROLLABLE self
--- @param #boolean StopRoute
+-- @param #boolean StopRoute true if the ground unit needs to stop, false if it needs to continue to move.
 -- @return Dcs.DCSTasking.Task#Task
-function CONTROLLABLE:CommandStopRoute( StopRoute, Index )
-  self:F2( { StopRoute, Index } )
+function CONTROLLABLE:CommandStopRoute( StopRoute )
+  self:F2( { StopRoute } )
 
   local CommandStopRoute = {
     id = 'StopRoute',
@@ -15497,90 +15517,6 @@ function CONTROLLABLE:TaskRouteToZone( Zone, Randomize, Speed, Formation )
   return nil
 end
 
---- (AIR) Return the Controllable to an @{Airbase#AIRBASE}
--- A speed can be given in km/h.
--- A given formation can be given.
--- @param #CONTROLLABLE self
--- @param Wrapper.Airbase#AIRBASE ReturnAirbase The @{Airbase#AIRBASE} to return to.
--- @param #number Speed (optional) The speed.
--- @return #string The route
-function CONTROLLABLE:RouteReturnToAirbase( ReturnAirbase, Speed )
-  self:F2( { ReturnAirbase, Speed } )
-
--- Example
---   [4] = 
---    {
---        ["alt"] = 45,
---        ["type"] = "Land",
---        ["action"] = "Landing",
---        ["alt_type"] = "BARO",
---        ["formation_template"] = "",
---        ["properties"] = 
---        {
---            ["vnav"] = 1,
---            ["scale"] = 0,
---            ["angle"] = 0,
---            ["vangle"] = 0,
---            ["steer"] = 2,
---        }, -- end of ["properties"]
---        ["ETA"] = 527.81058817743,
---        ["airdromeId"] = 12,
---        ["y"] = 243127.2973737,
---        ["x"] = -5406.2803440839,
---        ["name"] = "DictKey_WptName_53",
---        ["speed"] = 138.88888888889,
---        ["ETA_locked"] = false,
---        ["task"] = 
---        {
---            ["id"] = "ComboTask",
---            ["params"] = 
---            {
---                ["tasks"] = 
---                {
---                }, -- end of ["tasks"]
---            }, -- end of ["params"]
---        }, -- end of ["task"]
---        ["speed_locked"] = true,
---    }, -- end of [4]
- 
-
-  local DCSControllable = self:GetDCSObject()
-
-  if DCSControllable then
-
-    local ControllablePoint = self:GetVec2()
-    local ControllableVelocity = self:GetMaxVelocity()
-
-    local PointFrom = {}
-    PointFrom.x = ControllablePoint.x
-    PointFrom.y = ControllablePoint.y
-    PointFrom.type = "Turning Point"
-    PointFrom.action = "Turning Point"
-    PointFrom.speed = ControllableVelocity
-
-
-    local PointTo = {}
-    local AirbasePoint = ReturnAirbase:GetVec2()
-
-    PointTo.x = AirbasePoint.x
-    PointTo.y = AirbasePoint.y
-    PointTo.type = "Land"
-    PointTo.action = "Landing"
-    PointTo.airdromeId = ReturnAirbase:GetID()-- Airdrome ID
-    self:T(PointTo.airdromeId)
-    --PointTo.alt = 0
-
-    local Points = { PointFrom, PointTo }
-
-    self:T3( Points )
-
-    local Route = { points = Points, }
-
-    return Route
-  end
-
-  return nil
-end
 
 -- Commands
 
@@ -15620,6 +15556,8 @@ function CONTROLLABLE:GetTaskRoute()
 
   return routines.utils.deepCopy( _DATABASE.Templates.Controllables[self.ControllableName].Template.route.points )
 end
+
+
 
 --- Return the route of a controllable by using the @{Database#DATABASE} class.
 -- @param #CONTROLLABLE self
@@ -16144,11 +16082,11 @@ function CONTROLLABLE:WayPointExecute( WayPoint, WaitTime )
   return self
 end
 
--- Message APIs--- This module contains the GROUP class.
+-- Message APIs--- **Wrapper** -- GROUP is a wrapper class for the DCS Class Group.
 -- 
--- 1) @{Group#GROUP} class, extends @{Controllable#CONTROLLABLE}
--- =============================================================
--- The @{Group#GROUP} class is a wrapper class to handle the DCS Group objects:
+-- ===
+-- 
+-- The @{#GROUP} class is a wrapper class to handle the DCS Group objects:
 --
 --  * Support all DCS Group APIs.
 --  * Enhance with Group specific APIs not in the DCS Group API set.
@@ -16157,60 +16095,8 @@ end
 --
 -- **IMPORTANT: ONE SHOULD NEVER SANATIZE these GROUP OBJECT REFERENCES! (make the GROUP object references nil).**
 --
--- 1.1) GROUP reference methods
--- -----------------------
--- For each DCS Group object alive within a running mission, a GROUP wrapper object (instance) will be created within the _@{DATABASE} object.
--- This is done at the beginning of the mission (when the mission starts), and dynamically when new DCS Group objects are spawned (using the @{SPAWN} class).
---
--- The GROUP class does not contain a :New() method, rather it provides :Find() methods to retrieve the object reference
--- using the DCS Group or the DCS GroupName.
---
--- Another thing to know is that GROUP objects do not "contain" the DCS Group object.
--- The GROUP methods will reference the DCS Group object by name when it is needed during API execution.
--- If the DCS Group object does not exist or is nil, the GROUP methods will return nil and log an exception in the DCS.log file.
---
--- The GROUP class provides the following functions to retrieve quickly the relevant GROUP instance:
---
---  * @{#GROUP.Find}(): Find a GROUP instance from the _DATABASE object using a DCS Group object.
---  * @{#GROUP.FindByName}(): Find a GROUP instance from the _DATABASE object using a DCS Group name.
---
--- ## 1.2) GROUP task methods
---
--- A GROUP is a @{Controllable}. See the @{Controllable} task methods section for a description of the task methods.
---
--- ### 1.2.4) Obtain the mission from group templates
+-- See the detailed documentation on the GROUP class.
 -- 
--- Group templates contain complete mission descriptions. Sometimes you want to copy a complete mission from a group and assign it to another:
--- 
---   * @{Controllable#CONTROLLABLE.TaskMission}: (AIR + GROUND) Return a mission task from a mission template.
---
--- ## 1.3) GROUP Command methods
---
--- A GROUP is a @{Controllable}. See the @{Controllable} command methods section for a description of the command methods.
--- 
--- ## 1.4) GROUP option methods
---
--- A GROUP is a @{Controllable}. See the @{Controllable} option methods section for a description of the option methods.
--- 
--- ## 1.5) GROUP Zone validation methods
--- 
--- The group can be validated whether it is completely, partly or not within a @{Zone}.
--- Use the following Zone validation methods on the group:
--- 
---   * @{#GROUP.IsCompletelyInZone}: Returns true if all units of the group are within a @{Zone}.
---   * @{#GROUP.IsPartlyInZone}: Returns true if some units of the group are within a @{Zone}.
---   * @{#GROUP.IsNotInZone}: Returns true if none of the group units of the group are within a @{Zone}.
---   
--- The zone can be of any @{Zone} class derived from @{Zone#ZONE_BASE}. So, these methods are polymorphic to the zones tested on.
--- 
--- ## 1.6) GROUP AI methods
--- 
--- A GROUP has AI methods to control the AI activation.
--- 
---   * @{#GROUP.SetAIOnOff}(): Turns the GROUP AI On or Off.
---   * @{#GROUP.SetAIOn}(): Turns the GROUP AI On.
---   * @{#GROUP.SetAIOff}(): Turns the GROUP AI Off.
---   
 -- ====
 -- 
 -- # **API CHANGE HISTORY**
@@ -16221,6 +16107,8 @@ end
 --   * _Removed_ parts are expressed in italic type face.
 -- 
 -- Hereby the change log:
+-- 
+-- 2017-03-26: GROUP:**RouteRTB( RTBAirbase, Speed )** added.  
 -- 
 -- 2017-03-07: GROUP:**HandleEvent( Event, EventFunction )** added.  
 -- 2017-03-07: GROUP:**UnHandleEvent( Event )** added.
@@ -16246,10 +16134,66 @@ end
 -- @module Group
 -- @author FlightControl
 
---- The GROUP class
--- @type GROUP
+--- @type GROUP
 -- @extends Wrapper.Controllable#CONTROLLABLE
 -- @field #string GroupName The name of the group.
+
+--- 
+-- # GROUP class, extends @{Controllable#CONTROLLABLE}
+-- 
+-- For each DCS Group object alive within a running mission, a GROUP wrapper object (instance) will be created within the _@{DATABASE} object.
+-- This is done at the beginning of the mission (when the mission starts), and dynamically when new DCS Group objects are spawned (using the @{SPAWN} class).
+--
+-- The GROUP class does not contain a :New() method, rather it provides :Find() methods to retrieve the object reference
+-- using the DCS Group or the DCS GroupName.
+--
+-- Another thing to know is that GROUP objects do not "contain" the DCS Group object.
+-- The GROUP methods will reference the DCS Group object by name when it is needed during API execution.
+-- If the DCS Group object does not exist or is nil, the GROUP methods will return nil and log an exception in the DCS.log file.
+--
+-- The GROUP class provides the following functions to retrieve quickly the relevant GROUP instance:
+--
+--  * @{#GROUP.Find}(): Find a GROUP instance from the _DATABASE object using a DCS Group object.
+--  * @{#GROUP.FindByName}(): Find a GROUP instance from the _DATABASE object using a DCS Group name.
+--
+-- ## GROUP task methods
+--
+-- A GROUP is a @{Controllable}. See the @{Controllable} task methods section for a description of the task methods.
+--
+-- ### Obtain the mission from group templates
+-- 
+-- Group templates contain complete mission descriptions. Sometimes you want to copy a complete mission from a group and assign it to another:
+-- 
+--   * @{Controllable#CONTROLLABLE.TaskMission}: (AIR + GROUND) Return a mission task from a mission template.
+--
+-- ## GROUP Command methods
+--
+-- A GROUP is a @{Controllable}. See the @{Controllable} command methods section for a description of the command methods.
+-- 
+-- ## GROUP option methods
+--
+-- A GROUP is a @{Controllable}. See the @{Controllable} option methods section for a description of the option methods.
+-- 
+-- ## GROUP Zone validation methods
+-- 
+-- The group can be validated whether it is completely, partly or not within a @{Zone}.
+-- Use the following Zone validation methods on the group:
+-- 
+--   * @{#GROUP.IsCompletelyInZone}: Returns true if all units of the group are within a @{Zone}.
+--   * @{#GROUP.IsPartlyInZone}: Returns true if some units of the group are within a @{Zone}.
+--   * @{#GROUP.IsNotInZone}: Returns true if none of the group units of the group are within a @{Zone}.
+--   
+-- The zone can be of any @{Zone} class derived from @{Zone#ZONE_BASE}. So, these methods are polymorphic to the zones tested on.
+-- 
+-- ## GROUP AI methods
+-- 
+-- A GROUP has AI methods to control the AI activation.
+-- 
+--   * @{#GROUP.SetAIOnOff}(): Turns the GROUP AI On or Off.
+--   * @{#GROUP.SetAIOn}(): Turns the GROUP AI On.
+--   * @{#GROUP.SetAIOff}(): Turns the GROUP AI Off.
+-- 
+-- @field #GROUP GROUP
 GROUP = {
   ClassName = "GROUP",
 }
@@ -16323,19 +16267,33 @@ function GROUP:GetPositionVec3() -- Overridden from POSITIONABLE:GetPositionVec3
   return nil
 end
 
---- Returns if the DCS Group is alive.
--- When the group exists at run-time, this method will return true, otherwise false.
+--- Returns if the Group is alive.
+-- The Group must:
+-- 
+--   * Exist at run-time.
+--   * Has at least one unit.
+-- 
+-- When the first @{Unit} of the Group is active, it will return true.
+-- If the first @{Unit} of the Group is inactive, it will return false.
+-- 
 -- @param #GROUP self
--- @return #boolean true if the DCS Group is alive.
+-- @return #boolean true if the Group is alive and active.
+-- @return #boolean false if the Group is alive but inactive.
+-- @return #nil if the group does not exist anymore.
 function GROUP:IsAlive()
   self:F2( self.GroupName )
 
-  local DCSGroup = self:GetDCSObject()
+  local DCSGroup = self:GetDCSObject() -- Dcs.DCSGroup#Group
 
   if DCSGroup then
-    local GroupIsAlive = DCSGroup:isExist() and DCSGroup:getUnit(1) ~= nil
-    self:T3( GroupIsAlive )
-    return GroupIsAlive
+    if DCSGroup:isExist() then
+      local DCSUnit = DCSGroup:getUnit(1) -- Dcs.DCSUnit#Unit
+      if DCSUnit then
+        local GroupIsAlive = DCSUnit:isActive()
+        self:T3( GroupIsAlive )
+        return GroupIsAlive
+      end
+    end
   end
 
   return nil
@@ -16582,6 +16540,7 @@ function GROUP:GetVec2()
 end
 
 --- Returns the current Vec3 vector of the first DCS Unit in the GROUP.
+-- @param #GROUP self
 -- @return Dcs.DCSTypes#Vec3 Current Vec3 of the first DCS Unit of the GROUP.
 function GROUP:GetVec3()
   self:F2( self.GroupName )
@@ -16591,7 +16550,65 @@ function GROUP:GetVec3()
   return GroupVec3
 end
 
+--- Returns a POINT_VEC2 object indicating the point in 2D of the first UNIT of the GROUP within the mission.
+-- @param #GROUP self
+-- @return Core.Point#POINT_VEC2 The 2D point vector of the first DCS Unit of the GROUP.
+-- @return #nil The first UNIT is not existing or alive.  
+function GROUP:GetPointVec2()
+  self:F2(self.GroupName)
 
+  local FirstUnit = self:GetUnit(1)
+  
+  if FirstUnit then
+    local FirstUnitPointVec2 = FirstUnit:GetPointVec2()
+    self:T3(FirstUnitPointVec2)
+    return FirstUnitPointVec2
+  end
+  
+  return nil
+end
+
+--- Returns a random @{DCSTypes#Vec3} vector (point in 3D of the UNIT within the mission) within a range around the first UNIT of the GROUP.
+-- @param #GROUP self
+-- @param #number Radius
+-- @return Dcs.DCSTypes#Vec3 The random 3D point vector around the first UNIT of the GROUP.
+-- @return #nil The GROUP is invalid or empty
+-- @usage 
+-- -- If Radius is ignored, returns the Dcs.DCSTypes#Vec3 of first UNIT of the GROUP
+function GROUP:GetRandomVec3(Radius)
+  self:F2(self.GroupName)
+  
+  local FirstUnit = self:GetUnit(1)
+  
+  if FirstUnit then
+    local FirstUnitRandomPointVec3 = FirstUnit:GetRandomVec3(Radius)
+    self:T3(FirstUnitRandomPointVec3)
+    return FirstUnitRandomPointVec3
+  end
+  
+  return nil
+end
+
+--- Returns the mean heading of every UNIT in the GROUP in degrees
+-- @param #GROUP self
+-- @return #number mean heading of the GROUP
+-- @return #nil The first UNIT is not existing or alive.
+function GROUP:GetHeading()
+  self:F2(self.GroupName)
+
+  local GroupSize = self:GetSize()
+  local HeadingAccumulator = 0
+  
+  if GroupSize then
+    for i = 1, GroupSize do
+      HeadingAccumulator = HeadingAccumulator + self:GetUnit(i):GetHeading()
+    end
+    return math.floor(HeadingAccumulator / GroupSize)
+  end
+  
+  return nil
+  
+end
 
 do -- Is Zone methods
 
@@ -17041,6 +17058,76 @@ function GROUP:InAir()
   return nil
 end
 
+do -- Route methods
+
+  --- (AIR) Return the Group to an @{Airbase#AIRBASE}.  
+  -- The following things are to be taken into account:
+  -- 
+  --   * The group is respawned to achieve the RTB, there may be side artefacts as a result of this. (Like weapons suddenly come back).
+  --   * A group consisting out of more than one unit, may rejoin formation when respawned.
+  --   * A speed can be given in km/h. If no speed is specified, the maximum speed of the first unit will be taken to return to base.
+  --   * When there is no @{Airbase} object specified, the group will return to the home base if the route of the group is pinned at take-off or at landing to a base.
+  --   * When there is no @{Airbase} object specified and the group route is not pinned to any airbase, it will return to the nearest airbase.
+  -- 
+  -- @param #GROUP self
+  -- @param Wrapper.Airbase#AIRBASE RTBAirbase (optional) The @{Airbase} to return to. If blank, the controllable will return to the nearest friendly airbase.
+  -- @param #number Speed (optional) The Speed, if no Speed is given, the maximum Speed of the first unit is selected. 
+  -- @return #GROUP
+  function GROUP:RouteRTB( RTBAirbase, Speed )
+    self:F2( { RTBAirbase, Speed } )
+  
+    local DCSGroup = self:GetDCSObject()
+  
+    if DCSGroup then
+  
+      if RTBAirbase then
+      
+        local GroupPoint = self:GetVec2()
+        local GroupVelocity = self:GetUnit(1):GetDesc().speedMax
+    
+        local PointFrom = {}
+        PointFrom.x = GroupPoint.x
+        PointFrom.y = GroupPoint.y
+        PointFrom.type = "Turning Point"
+        PointFrom.action = "Turning Point"
+        PointFrom.speed = GroupVelocity
+
+    
+        local PointTo = {}
+        local AirbasePointVec2 = RTBAirbase:GetPointVec2()
+        local AirbaseAirPoint = AirbasePointVec2:RoutePointAir(
+          POINT_VEC3.RoutePointAltType.BARO,
+          "Land",
+          "Landing", 
+          Speed or self:GetUnit(1):GetDesc().speedMax
+        )
+        
+        AirbaseAirPoint["airdromeId"] = RTBAirbase:GetID()
+        AirbaseAirPoint["speed_locked"] = true,
+    
+        self:E(AirbaseAirPoint )
+    
+        local Points = { PointFrom, AirbaseAirPoint }
+    
+        self:T3( Points )
+
+        local Template = self:GetTemplate()
+        Template.route.points = Points
+        self:Respawn( Template )
+    
+        self:Route( Points )
+
+        self:Respawn(Template)
+      else
+        self:ClearTasks()
+      end
+    end
+  
+    return self
+  end
+
+end
+
 function GROUP:OnReSpawn( ReSpawnFunction )
 
   self.ReSpawnFunction = ReSpawnFunction
@@ -17097,10 +17184,10 @@ do -- Players
     return PlayerNames
   end
   
-end--- This module contains the UNIT class.
+end--- **Wrapper** - UNIT is a wrapper class for the DCS Class Unit.
 -- 
--- 1) @{#UNIT} class, extends @{Controllable#CONTROLLABLE}
--- ===========================================================
+-- ===
+-- 
 -- The @{#UNIT} class is a wrapper class to handle the DCS Unit objects:
 -- 
 --  * Support all DCS Unit APIs.
@@ -17108,9 +17195,14 @@ end--- This module contains the UNIT class.
 --  * Handle local Unit Controller.
 --  * Manage the "state" of the DCS Unit.
 --  
---  
--- 1.1) UNIT reference methods
--- ----------------------
+-- @module Unit
+
+--- @type UNIT
+-- @extends Wrapper.Controllable#CONTROLLABLE
+
+--- 
+-- # UNIT class, extends @{Controllable#CONTROLLABLE}
+-- 
 -- For each DCS Unit object alive within a running mission, a UNIT wrapper object (instance) will be created within the _@{DATABASE} object.
 -- This is done at the beginning of the mission (when the mission starts), and dynamically when new DCS Unit objects are spawned (using the @{SPAWN} class).
 --  
@@ -17128,15 +17220,15 @@ end--- This module contains the UNIT class.
 --  
 -- IMPORTANT: ONE SHOULD NEVER SANATIZE these UNIT OBJECT REFERENCES! (make the UNIT object references nil).
 -- 
--- 1.2) DCS UNIT APIs
--- ------------------
+-- ## DCS UNIT APIs
+-- 
 -- The DCS Unit APIs are used extensively within MOOSE. The UNIT class has for each DCS Unit API a corresponding method.
 -- To be able to distinguish easily in your code the difference between a UNIT API call and a DCS Unit API call,
 -- the first letter of the method is also capitalized. So, by example, the DCS Unit method @{DCSWrapper.Unit#Unit.getName}()
 -- is implemented in the UNIT class as @{#UNIT.GetName}().
 -- 
--- 1.3) Smoke, Flare Units
--- -----------------------
+-- ## Smoke, Flare Units
+-- 
 -- The UNIT class provides methods to smoke or flare units easily. 
 -- The @{#UNIT.SmokeBlue}(), @{#UNIT.SmokeGreen}(),@{#UNIT.SmokeOrange}(), @{#UNIT.SmokeRed}(), @{#UNIT.SmokeRed}() methods
 -- will smoke the unit in the corresponding color. Note that smoking a unit is done at the current position of the DCS Unit. 
@@ -17144,36 +17236,29 @@ end--- This module contains the UNIT class.
 -- The @{#UNIT.FlareGreen}(), @{#UNIT.FlareRed}(), @{#UNIT.FlareWhite}(), @{#UNIT.FlareYellow}() 
 -- methods will fire off a flare in the air with the corresponding color. Note that a flare is a one-off shot and its effect is of very short duration.
 -- 
--- 1.4) Location Position, Point
--- -----------------------------
+-- ## Location Position, Point
+-- 
 -- The UNIT class provides methods to obtain the current point or position of the DCS Unit.
 -- The @{#UNIT.GetPointVec2}(), @{#UNIT.GetVec3}() will obtain the current **location** of the DCS Unit in a Vec2 (2D) or a **point** in a Vec3 (3D) vector respectively.
 -- If you want to obtain the complete **3D position** including ori�ntation and direction vectors, consult the @{#UNIT.GetPositionVec3}() method respectively.
 -- 
--- 1.5) Test if alive
--- ------------------
+-- ## Test if alive
+-- 
 -- The @{#UNIT.IsAlive}(), @{#UNIT.IsActive}() methods determines if the DCS Unit is alive, meaning, it is existing and active.
 -- 
--- 1.6) Test for proximity
--- -----------------------
+-- ## Test for proximity
+-- 
 -- The UNIT class contains methods to test the location or proximity against zones or other objects.
 -- 
--- ### 1.6.1) Zones
+-- ### Zones
+-- 
 -- To test whether the Unit is within a **zone**, use the @{#UNIT.IsInZone}() or the @{#UNIT.IsNotInZone}() methods. Any zone can be tested on, but the zone must be derived from @{Zone#ZONE_BASE}. 
 -- 
--- ### 1.6.2) Units
+-- ### Units
+-- 
 -- Test if another DCS Unit is within a given radius of the current DCS Unit, use the @{#UNIT.OtherUnitInRadius}() method.
 -- 
--- @module Unit
--- @author FlightControl
-
-
-
-
-
---- The UNIT class
--- @type UNIT
--- @extends Wrapper.Controllable#CONTROLLABLE
+-- @field #UNIT UNIT
 UNIT = {
 	ClassName="UNIT",
 }
@@ -17315,7 +17400,7 @@ function UNIT:ReSpawn( SpawnVec3, Heading )
   end
 
   -- Remove obscolete units from the group structure
-  i = 1
+  local i = 1
   while i <= #SpawnGroupTemplate.units do
 
     local UnitTemplateData = SpawnGroupTemplate.units[i]
@@ -17348,6 +17433,27 @@ function UNIT:IsActive()
     return UnitIsActive 
   end
 
+  return nil
+end
+
+--- Returns if the Unit is alive.  
+-- If the Unit is not alive, nil is returned.  
+-- If the Unit is alive and active, true is returned.    
+-- If the Unit is alive but not active, false is returned.  
+-- @param #UNIT self
+-- @return #boolean true if Unit is alive and active.
+-- @return #boolean false if Unit is alive but not active.
+-- @return #nil if the Unit is not existing or is not alive.  
+function UNIT:IsAlive()
+  self:F3( self.UnitName )
+
+  local DCSUnit = self:GetDCSObject() -- Dcs.DCSUnit#Unit
+  
+  if DCSUnit then
+    local UnitIsAlive  = DCSUnit:isExist() and DCSUnit:isActive()
+    return UnitIsAlive
+  end 
+  
   return nil
 end
 

@@ -73,96 +73,35 @@
 	<div id="content">
    <h1>Module <code>Unit</code></h1>
    
-<p>This module contains the UNIT class.</p>
+<p><strong>Wrapper</strong> - UNIT is a wrapper class for the DCS Class Unit.</p>
 
    
 
-<h1>1) <a href="##(UNIT)">#UNIT</a> class, extends <a href="Controllable.html##(CONTROLLABLE)">Controllable#CONTROLLABLE</a></h1>
+<hr/>
+
 <p>The <a href="##(UNIT)">#UNIT</a> class is a wrapper class to handle the DCS Unit objects:</p>
 
 <ul>
     <li>Support all DCS Unit APIs.</li>
     <li>Enhance with Unit specific APIs not in the DCS Unit API set.</li>
     <li>Handle local Unit Controller.</li>
-    <li>Manage the "state" of the DCS Unit.</li>
+    <li>Manage the "state" of the DCS Unit.
+    </li>
 </ul>
-
-
-<h2>1.1) UNIT reference methods</h2>
-<p>For each DCS Unit object alive within a running mission, a UNIT wrapper object (instance) will be created within the _<a href="DATABASE.html">DATABASE</a> object.
-This is done at the beginning of the mission (when the mission starts), and dynamically when new DCS Unit objects are spawned (using the <a href="SPAWN.html">SPAWN</a> class).</p>
-
-<p>The UNIT class <strong>does not contain a :New()</strong> method, rather it provides <strong>:Find()</strong> methods to retrieve the object reference
-using the DCS Unit or the DCS UnitName.</p>
-
-<p>Another thing to know is that UNIT objects do not "contain" the DCS Unit object. 
-The UNIT methods will reference the DCS Unit object by name when it is needed during API execution.
-If the DCS Unit object does not exist or is nil, the UNIT methods will return nil and log an exception in the DCS.log file.</p>
-
-<p>The UNIT class provides the following functions to retrieve quickly the relevant UNIT instance:</p>
-
-<ul>
-    <li><a href="##(UNIT).Find">UNIT.Find</a>(): Find a UNIT instance from the _DATABASE object using a DCS Unit object.</li>
-    <li><a href="##(UNIT).FindByName">UNIT.FindByName</a>(): Find a UNIT instance from the _DATABASE object using a DCS Unit name.</li>
-</ul>
-
-<p>IMPORTANT: ONE SHOULD NEVER SANATIZE these UNIT OBJECT REFERENCES! (make the UNIT object references nil).</p>
-
-<h2>1.2) DCS UNIT APIs</h2>
-<p>The DCS Unit APIs are used extensively within MOOSE. The UNIT class has for each DCS Unit API a corresponding method.
-To be able to distinguish easily in your code the difference between a UNIT API call and a DCS Unit API call,
-the first letter of the method is also capitalized. So, by example, the DCS Unit method <a href="DCSWrapper.Unit.html##(Unit).getName">DCSWrapper.Unit#Unit.getName</a>()
-is implemented in the UNIT class as <a href="##(UNIT).GetName">UNIT.GetName</a>().</p>
-
-<h2>1.3) Smoke, Flare Units</h2>
-<p>The UNIT class provides methods to smoke or flare units easily. 
-The <a href="##(UNIT).SmokeBlue">UNIT.SmokeBlue</a>(), <a href="##(UNIT).SmokeGreen">UNIT.SmokeGreen</a>(),<a href="##(UNIT).SmokeOrange">UNIT.SmokeOrange</a>(), <a href="##(UNIT).SmokeRed">UNIT.SmokeRed</a>(), <a href="##(UNIT).SmokeRed">UNIT.SmokeRed</a>() methods
-will smoke the unit in the corresponding color. Note that smoking a unit is done at the current position of the DCS Unit. 
-When the DCS Unit moves for whatever reason, the smoking will still continue!
-The <a href="##(UNIT).FlareGreen">UNIT.FlareGreen</a>(), <a href="##(UNIT).FlareRed">UNIT.FlareRed</a>(), <a href="##(UNIT).FlareWhite">UNIT.FlareWhite</a>(), <a href="##(UNIT).FlareYellow">UNIT.FlareYellow</a>() 
-methods will fire off a flare in the air with the corresponding color. Note that a flare is a one-off shot and its effect is of very short duration.</p>
-
-<h2>1.4) Location Position, Point</h2>
-<p>The UNIT class provides methods to obtain the current point or position of the DCS Unit.
-The <a href="##(UNIT).GetPointVec2">UNIT.GetPointVec2</a>(), <a href="##(UNIT).GetVec3">UNIT.GetVec3</a>() will obtain the current <strong>location</strong> of the DCS Unit in a Vec2 (2D) or a <strong>point</strong> in a Vec3 (3D) vector respectively.
-If you want to obtain the complete <strong>3D position</strong> including ori�ntation and direction vectors, consult the <a href="##(UNIT).GetPositionVec3">UNIT.GetPositionVec3</a>() method respectively.</p>
-
-<h2>1.5) Test if alive</h2>
-<p>The <a href="##(UNIT).IsAlive">UNIT.IsAlive</a>(), <a href="##(UNIT).IsActive">UNIT.IsActive</a>() methods determines if the DCS Unit is alive, meaning, it is existing and active.</p>
-
-<h2>1.6) Test for proximity</h2>
-<p>The UNIT class contains methods to test the location or proximity against zones or other objects.</p>
-
-<h3>1.6.1) Zones</h3>
-<p>To test whether the Unit is within a <strong>zone</strong>, use the <a href="##(UNIT).IsInZone">UNIT.IsInZone</a>() or the <a href="##(UNIT).IsNotInZone">UNIT.IsNotInZone</a>() methods. Any zone can be tested on, but the zone must be derived from <a href="Zone.html##(ZONE_BASE)">Zone#ZONE_BASE</a>. </p>
-
-<h3>1.6.2) Units</h3>
-<p>Test if another DCS Unit is within a given radius of the current DCS Unit, use the <a href="##(UNIT).OtherUnitInRadius">UNIT.OtherUnitInRadius</a>() method.</p>
-
 
 	<h2>Global(s)</h2>
 	<table class="function_list">
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="#UNIT">UNIT</a></td>
 		<td class="summary">
+<h1>UNIT class, extends <a href="Controllable.html##(CONTROLLABLE)">Controllable#CONTROLLABLE</a></h1>
 
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="#i">i</a></td>
-		<td class="summary">
-
+<p>For each DCS Unit object alive within a running mission, a UNIT wrapper object (instance) will be created within the _<a href="DATABASE.html">DATABASE</a> object.</p>
 </td>
 		</tr>
 	</table>
 			<h2><a id="#(UNIT)">Type <code>UNIT</code></a></h2>
 				<table class="function_list">
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(UNIT).ClassName">UNIT.ClassName</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(UNIT).Find">UNIT:Find(DCSUnit)</a></td>
 		<td class="summary">
@@ -336,6 +275,12 @@ If you want to obtain the complete <strong>3D position</strong> including ori�
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(UNIT).IsAlive">UNIT:IsAlive()</a></td>
+		<td class="summary">
+<p>Returns if the Unit is alive.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(UNIT).IsFriendly">UNIT:IsFriendly(FriendlyCoalition)</a></td>
 		<td class="summary">
 <p>Returns if the unit is a friendly unit.</p>
@@ -472,48 +417,74 @@ If you want to obtain the complete <strong>3D position</strong> including ori�
 </dt>
 <dd>
 	
+<h1>UNIT class, extends <a href="Controllable.html##(CONTROLLABLE)">Controllable#CONTROLLABLE</a></h1>
 
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em>#number</em>
-<a id="i" >
-<strong>i</strong>
-</a>
-</dt>
-<dd>
-	
-
+<p>For each DCS Unit object alive within a running mission, a UNIT wrapper object (instance) will be created within the _<a href="DATABASE.html">DATABASE</a> object.</p>
 
 	
-<p> Remove obscolete units from the group structure</p>
+<p>This is done at the beginning of the mission (when the mission starts), and dynamically when new DCS Unit objects are spawned (using the <a href="SPAWN.html">SPAWN</a> class).</p>
+
+<p>The UNIT class <strong>does not contain a :New()</strong> method, rather it provides <strong>:Find()</strong> methods to retrieve the object reference
+using the DCS Unit or the DCS UnitName.</p>
+
+<p>Another thing to know is that UNIT objects do not "contain" the DCS Unit object. 
+The UNIT methods will reference the DCS Unit object by name when it is needed during API execution.
+If the DCS Unit object does not exist or is nil, the UNIT methods will return nil and log an exception in the DCS.log file.</p>
+
+<p>The UNIT class provides the following functions to retrieve quickly the relevant UNIT instance:</p>
+
+<ul>
+    <li><a href="##(UNIT).Find">UNIT.Find</a>(): Find a UNIT instance from the _DATABASE object using a DCS Unit object.</li>
+    <li><a href="##(UNIT).FindByName">UNIT.FindByName</a>(): Find a UNIT instance from the _DATABASE object using a DCS Unit name.</li>
+</ul>
+
+<p>IMPORTANT: ONE SHOULD NEVER SANATIZE these UNIT OBJECT REFERENCES! (make the UNIT object references nil).</p>
+
+<h2>DCS UNIT APIs</h2>
+
+<p>The DCS Unit APIs are used extensively within MOOSE. The UNIT class has for each DCS Unit API a corresponding method.
+To be able to distinguish easily in your code the difference between a UNIT API call and a DCS Unit API call,
+the first letter of the method is also capitalized. So, by example, the DCS Unit method <a href="DCSWrapper.Unit.html##(Unit).getName">DCSWrapper.Unit#Unit.getName</a>()
+is implemented in the UNIT class as <a href="##(UNIT).GetName">UNIT.GetName</a>().</p>
+
+<h2>Smoke, Flare Units</h2>
+
+<p>The UNIT class provides methods to smoke or flare units easily. 
+The <a href="##(UNIT).SmokeBlue">UNIT.SmokeBlue</a>(), <a href="##(UNIT).SmokeGreen">UNIT.SmokeGreen</a>(),<a href="##(UNIT).SmokeOrange">UNIT.SmokeOrange</a>(), <a href="##(UNIT).SmokeRed">UNIT.SmokeRed</a>(), <a href="##(UNIT).SmokeRed">UNIT.SmokeRed</a>() methods
+will smoke the unit in the corresponding color. Note that smoking a unit is done at the current position of the DCS Unit. 
+When the DCS Unit moves for whatever reason, the smoking will still continue!
+The <a href="##(UNIT).FlareGreen">UNIT.FlareGreen</a>(), <a href="##(UNIT).FlareRed">UNIT.FlareRed</a>(), <a href="##(UNIT).FlareWhite">UNIT.FlareWhite</a>(), <a href="##(UNIT).FlareYellow">UNIT.FlareYellow</a>() 
+methods will fire off a flare in the air with the corresponding color. Note that a flare is a one-off shot and its effect is of very short duration.</p>
+
+<h2>Location Position, Point</h2>
+
+<p>The UNIT class provides methods to obtain the current point or position of the DCS Unit.
+The <a href="##(UNIT).GetPointVec2">UNIT.GetPointVec2</a>(), <a href="##(UNIT).GetVec3">UNIT.GetVec3</a>() will obtain the current <strong>location</strong> of the DCS Unit in a Vec2 (2D) or a <strong>point</strong> in a Vec3 (3D) vector respectively.
+If you want to obtain the complete <strong>3D position</strong> including ori�ntation and direction vectors, consult the <a href="##(UNIT).GetPositionVec3">UNIT.GetPositionVec3</a>() method respectively.</p>
+
+<h2>Test if alive</h2>
+
+<p>The <a href="##(UNIT).IsAlive">UNIT.IsAlive</a>(), <a href="##(UNIT).IsActive">UNIT.IsActive</a>() methods determines if the DCS Unit is alive, meaning, it is existing and active.</p>
+
+<h2>Test for proximity</h2>
+
+<p>The UNIT class contains methods to test the location or proximity against zones or other objects.</p>
+
+<h3>Zones</h3>
+
+<p>To test whether the Unit is within a <strong>zone</strong>, use the <a href="##(UNIT).IsInZone">UNIT.IsInZone</a>() or the <a href="##(UNIT).IsNotInZone">UNIT.IsNotInZone</a>() methods. Any zone can be tested on, but the zone must be derived from <a href="Zone.html##(ZONE_BASE)">Zone#ZONE_BASE</a>. </p>
+
+<h3>Units</h3>
+
+<p>Test if another DCS Unit is within a given radius of the current DCS Unit, use the <a href="##(UNIT).OtherUnitInRadius">UNIT.OtherUnitInRadius</a>() method.</p>
+
 
 </dd>
 </dl>
 	<h2><a id="#(Unit)" >Type <code>Unit</code></a></h2>
 	
 			<h2><a id="#(UNIT)" >Type <code>UNIT</code></a></h2>
-				
-<p>The UNIT class</p>
-
-	<h3>Field(s)</h3>
-		<dl class="function">
-<dt>
-
-		<em>#string</em>
-<a id="#(UNIT).ClassName" >
-<strong>UNIT.ClassName</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
+				<h3>Field(s)</h3>
 		<dl class="function">
 <dt>
 
@@ -1235,6 +1206,45 @@ The DCS Unit is not existing or alive.  </p>
 <p><em>#boolean:</em>
 Air category evaluation result.</p>
 
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(UNIT).IsAlive" >
+<strong>UNIT:IsAlive()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns if the Unit is alive.</p>
+
+	
+<p>If the Unit is not alive, nil is returned. <br/>
+If the Unit is alive and active, true is returned. <br/>
+If the Unit is alive but not active, false is returned.  </p>
+
+		<h3>Return values</h3>
+			<ol>
+				<li>
+				
+<p><em>#boolean:</em>
+true if Unit is alive and active.</p>
+
+				</li>
+				<li>
+				
+<p><em>#boolean:</em>
+false if Unit is alive but not active.</p>
+
+				</li>
+				<li>
+				
+<p><em>#nil:</em>
+if the Unit is not existing or is not alive.  </p>
+
+				</li>
+			</ol>
 </dd>
 </dl>
 		<dl class="function">

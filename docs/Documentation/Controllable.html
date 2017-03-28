@@ -246,9 +246,9 @@ This is different from the EnRoute tasks, where the targets of the task need to 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).CommandStopRoute">CONTROLLABLE:CommandStopRoute(StopRoute, Index)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).CommandStopRoute">CONTROLLABLE:CommandStopRoute(StopRoute)</a></td>
 		<td class="summary">
-<p>Perform stop route command</p>
+<p>Create a stop route command, which returns a string containing the command.</p>
 </td>
 		</tr>
 		<tr>
@@ -483,13 +483,6 @@ This is different from the EnRoute tasks, where the targets of the task need to 
 		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).Route">CONTROLLABLE:Route(GoPoints)</a></td>
 		<td class="summary">
 <p>Make the controllable to follow a given route.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).RouteReturnToAirbase">CONTROLLABLE:RouteReturnToAirbase(ReturnAirbase, Speed)</a></td>
-		<td class="summary">
-<p>(AIR) Return the Controllable to an <a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a>
-A speed can be given in km/h.</p>
 </td>
 		</tr>
 		<tr>
@@ -794,23 +787,31 @@ A speed can be given in km/h.</p>
 <dt>
 
 <a id="#(CONTROLLABLE).CommandStopRoute" >
-<strong>CONTROLLABLE:CommandStopRoute(StopRoute, Index)</strong>
+<strong>CONTROLLABLE:CommandStopRoute(StopRoute)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Perform stop route command</p>
+<p>Create a stop route command, which returns a string containing the command.</p>
 
-		<h3>Parameters</h3>
+	
+<p>Use the result in the method <a href="##(CONTROLLABLE).SetCommand">CONTROLLABLE.SetCommand</a>().
+A value of true will make the ground group stop, a value of false will make it continue.
+Note that this can only work on GROUP level, although individual UNITs can be commanded, the whole GROUP will react.</p>
+
+<p>Example missions:  </p>
+
+<ul>
+    <li>GRP-310
+    </li>
+</ul>
+
+		<h3>Parameter</h3>
 		<ul>
 				<li>
 				
-<p><code><em>#boolean StopRoute </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em> Index </em></code>: </p>
+<p><code><em>#boolean StopRoute </em></code>: 
+true if the ground unit needs to stop, false if it needs to continue to move.</p>
 
 				</li>
 		</ul>
@@ -1848,43 +1849,6 @@ A table of Route Points.</p>
 				
 <p><em><a href="##(CONTROLLABLE)">#CONTROLLABLE</a>:</em>
 self</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(CONTROLLABLE).RouteReturnToAirbase" >
-<strong>CONTROLLABLE:RouteReturnToAirbase(ReturnAirbase, Speed)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>(AIR) Return the Controllable to an <a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a>
-A speed can be given in km/h.</p>
-
-	
-<p>A given formation can be given.</p>
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="Wrapper.Airbase.html##(AIRBASE)">Wrapper.Airbase#AIRBASE</a> ReturnAirbase </em></code>: 
-The <a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a> to return to.</p>
-
-				</li>
-				<li>
-				
-<p><code><em>#number Speed </em></code>: 
-(optional) The speed.</p>
-
-				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em>#string:</em>
-The route</p>
 
 </dd>
 </dl>
