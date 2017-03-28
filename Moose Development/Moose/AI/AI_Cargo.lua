@@ -253,7 +253,37 @@ function AI_CARGO:New( Type, Name, Weight, ReportRadius, NearRadius )
 
   CARGOS[self.Name] = self
 
+  self:SetEventPriority( 5 )
+
   return self
+end
+
+--- Get the name of the Cargo.
+-- @param #AI_CARGO self
+-- @return #string The name of the Cargo.
+function AI_CARGO:GetName()
+  return self.Name
+end
+
+--- Get the type of the Cargo.
+-- @param #AI_CARGO self
+-- @return #string The type of the Cargo.
+function AI_CARGO:GetType()
+  return self.Type
+end
+
+--- Check if cargo is loaded.
+-- @param #AI_CARGO self
+-- @return #boolean true if loaded
+function AI_CARGO:IsLoaded()
+  return self:Is( "Loaded" )
+end
+
+--- Check if cargo is unloaded.
+-- @param #AI_CARGO self
+-- @return #boolean true if unloaded
+function AI_CARGO:IsUnLoaded()
+  return self:Is( "UnLoaded" )
 end
 
 
@@ -398,6 +428,20 @@ function AI_CARGO_UNIT:New( CargoUnit, Type, Name, Weight, ReportRadius, NearRad
 
   self:T( self.ClassName )
 
+  -- Cargo objects are added to the _DATABASE and SET_CARGO objects.
+  _EVENTDISPATCHER:CreateEventNewCargo( self )
+
+  return self
+end
+
+--- AI_CARGO_UNIT Destructor.
+-- @param #AI_CARGO_UNIT self
+-- @return #AI_CARGO_UNIT
+function AI_CARGO_UNIT:Destroy()
+
+  -- Cargo objects are deleted from the _DATABASE and SET_CARGO objects.
+  _EVENTDISPATCHER:CreateEventDeleteCargo( self )
+
   return self
 end
 
@@ -539,7 +583,7 @@ end
 -- @param #string From
 -- @param #string To
 -- @param Wrapper.Unit#UNIT CargoCarrier
-function AI_CARGO_UNIT:onenterBoarding( From, Event, To, CargoCarrier )
+function AI_CARGO_UNIT:onenterBoarding( From, Event, To, CargoCarrier, ... )
   self:F( { CargoCarrier.UnitName, From, Event, To } )
   
   local Speed = 10
@@ -571,14 +615,14 @@ end
 -- @param #string From
 -- @param #string To
 -- @param Wrapper.Unit#UNIT CargoCarrier
-function AI_CARGO_UNIT:onleaveBoarding( From, Event, To, CargoCarrier )
+function AI_CARGO_UNIT:onleaveBoarding( From, Event, To, CargoCarrier, ... )
   self:F( { CargoCarrier.UnitName, From, Event, To } )
 
   if self:IsNear( CargoCarrier:GetPointVec2() ) then
-    self:__Load( 1, CargoCarrier )
+    self:__Load( 1, CargoCarrier, ... )
     return true
   else
-    self:__Boarding( 1, CargoCarrier )
+    self:__Boarding( 1, CargoCarrier, ... )
   end
   return false
 end
@@ -607,7 +651,7 @@ end
 -- @param #string Event
 -- @param #string From
 -- @param #string To
-function AI_CARGO_UNIT:onafterBoard( From, Event, To, CargoCarrier )
+function AI_CARGO_UNIT:onafterBoard( From, Event, To, CargoCarrier, ... )
   self:F()
 
   self.CargoInAir = self.CargoObject:InAir()
@@ -617,7 +661,7 @@ function AI_CARGO_UNIT:onafterBoard( From, Event, To, CargoCarrier )
   -- Only move the group to the carrier when the cargo is not in the air
   -- (eg. cargo can be on a oil derrick, moving the cargo on the oil derrick will drop the cargo on the sea).
   if not self.CargoInAir then
-    self:Load( CargoCarrier )
+    self:Load( CargoCarrier, ... )
   end
 
 end

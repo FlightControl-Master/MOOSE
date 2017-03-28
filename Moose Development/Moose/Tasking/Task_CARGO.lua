@@ -66,14 +66,14 @@ do -- TASK_CARGO
   -- @param Tasking.Mission#MISSION Mission
   -- @param Set#SET_GROUP SetGroup The set of groups for which the Task can be assigned.
   -- @param #string TaskName The name of the Task.
-  -- @param AI.AI_Cargo#AI_CARGO Cargo The cargo.
+  -- @param Core.Set#SET_CARGO SetCargo The scope of the cargo to be transported.
   -- @param #string TaskType The type of Cargo task.
   -- @return #TASK_CARGO self
-  function TASK_CARGO:New( Mission, SetGroup, TaskName, Cargo, TaskType )
+  function TASK_CARGO:New( Mission, SetGroup, TaskName, SetCargo, TaskType )
     local self = BASE:Inherit( self, TASK:New( Mission, SetGroup, TaskName, TaskType ) ) -- #TASK_CARGO
-    self:F( {Mission, SetGroup, TaskName, Cargo, TaskType})
+    self:F( {Mission, SetGroup, TaskName, SetCargo, TaskType})
   
-    self.Cargo = Cargo
+    self.SetCargo = SetCargo
     self.TaskType = TaskType
 
     Mission:AddTask( self )
@@ -81,46 +81,125 @@ do -- TASK_CARGO
     local Fsm = self:GetUnitProcess()
     
 
-    Fsm:AddProcess   ( "Planned", "Accept", ACT_ASSIGN_ACCEPT:New( self.TaskBriefing ), { Assigned = "RouteToCargo", Rejected = "Reject" }  )
+    Fsm:AddProcess   ( "Planned", "Accept", ACT_ASSIGN_ACCEPT:New( self.TaskBriefing ), { Assigned = "SelectAction", Rejected = "Reject" }  )
     
-    Fsm:AddTransition( "Assigned", "RouteToCargo", "RoutingToCargo" )
-    Fsm:AddProcess   ( "RoutingToCargo", "RouteToCargoPickup", ACT_ROUTE_POINT:New(), { Arrived = "ArriveAtCargo" } )
+    Fsm:AddTransition( { "Assigned", "Landed", "Boarded", "Deployed" } , "SelectAction", "WaitingForCommand" )
+
+    Fsm:AddTransition( "WaitingForCommand", "RouteToPickup", "RoutingToPickup" )
+    Fsm:AddProcess   ( "RoutingToPickup", "RouteToPickupPoint", ACT_ROUTE_POINT:New(), { Arrived = "ArriveAtPickup" } )
+    Fsm:AddTransition( "Arrived", "ArriveAtPickup", "ArrivedAtPickup" )
+
+    Fsm:AddTransition( "WaitingForCommand", "RouteToDeploy", "RoutingToDeploy" )
+    Fsm:AddProcess   ( "RoutingToDeploy", "RouteToDeployPoint", ACT_ROUTE_POINT:New(), { Arrived = "ArriveAtDeploy" } )
+    Fsm:AddTransition( "ArrivedAtDeploy", "ArriveAtDeploy", "ArrivedAtDeploy" )
     
-    Fsm:AddTransition( { "Arrived", "RoutingToCargo" }, "ArriveAtCargo", "ArrivedAtCargo" )
-    
-    Fsm:AddTransition( { "ArrivedAtCargo", "LandAtCargo" }, "Land", "Landing" )
+    Fsm:AddTransition( { "ArrivedAtPickup", "ArrivedAtDeploy" }, "Land", "Landing" )
     Fsm:AddTransition( "Landing", "Landed", "Landed" )
-    Fsm:AddTransition( "OnGround", "PrepareBoarding", "AwaitBoarding" )
     
+    Fsm:AddTransition( "WaitingForCommand", "PrepareBoarding", "AwaitBoarding" )
     Fsm:AddTransition( "AwaitBoarding", "Board", "Boarding" )
     Fsm:AddTransition( "Boarding", "Boarded", "Boarded" )
+
+    Fsm:AddTransition( "WaitingForCommand", "PrepareUnBoarding", "AwaitUnBoarding" )
+    Fsm:AddTransition( "AwaitUnBoarding", "UnBoard", "UnBoarding" )
+    Fsm:AddTransition( "UnBoarding", "UnBoarded", "UnBoarded" )
     
-    Fsm:AddTransition( "Accounted", "DestroyedAll", "Accounted" )
-    Fsm:AddTransition( "Accounted", "Success", "Success" )
+    
+    Fsm:AddTransition( "Deployed", "Success", "Success" )
     Fsm:AddTransition( "Rejected", "Reject", "Aborted" )
     Fsm:AddTransition( "Failed", "Fail", "Failed" )
     
-    
-    --- Route to Cargo
-    -- @param #FSM_PROCESS self
-    -- @param Wrapper.Unit#UNIT TaskUnit
-    -- @param Tasking.Task_CARGO#TASK_CARGO Task
-    function Fsm:onafterRouteToCargo( TaskUnit, Task )
-      self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
-
-      
-      Task:SetCargoPickup( Task.Cargo, TaskUnit )
-      self:__RouteToCargoPickup( 0.1 )
-    end
 
     --- 
     -- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
     -- @param Tasking.Task_CARGO#TASK_CARGO Task
-    function Fsm:OnAfterArriveAtCargo( TaskUnit, Task )
+    function Fsm:OnEnterWaitingForCommand( TaskUnit, Task )
       self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
       
-      if Task.Cargo:IsInRadius( TaskUnit:GetPointVec2() ) then
+      TaskUnit.Menu = MENU_GROUP:New( TaskUnit:GetGroup(), Task:GetName() .. " @ " .. TaskUnit:GetName() )
+      
+      Task.SetCargo:ForEachCargo(
+        
+        --- @param AI.AI_Cargo#AI_CARGO Cargo
+        function( Cargo ) 
+          if Cargo:IsUnLoaded() then
+            if Cargo:IsInRadius( TaskUnit:GetPointVec2() ) then
+              MENU_GROUP_COMMAND:New(
+                TaskUnit:GetGroup(),
+                "Pickup cargo " .. Cargo.Name,
+                TaskUnit.Menu,
+                self.MenuBoardCargo,
+                self,
+                Cargo
+              )
+            else
+              MENU_GROUP_COMMAND:New(
+                TaskUnit:GetGroup(),
+                "Route to cargo " .. Cargo.Name,
+                TaskUnit.Menu,
+                self.MenuRouteToPickup,
+                self,
+                Cargo
+              )
+            end
+          end
+          
+          if Cargo:IsLoaded() then
+            MENU_GROUP_COMMAND:New(
+              TaskUnit:GetGroup(),
+              "Deploy cargo " .. Cargo.Name,
+              TaskUnit.Menu,
+              self.MenuBoardCargo,
+              self,
+              Cargo
+            )
+          end
+        
+        end
+      )
+    end
+    
+    --- 
+    -- @param #FSM_PROCESS self
+    -- @param Wrapper.Unit#UNIT TaskUnit
+    -- @param Tasking.Task_CARGO#TASK_CARGO Task
+    function Fsm:OnLeaveWaitingForCommand( TaskUnit, Task )
+      self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
+      
+      TaskUnit.Menu:Remove()
+    end
+    
+    function Fsm:MenuBoardCargo( Cargo )
+      self:__PrepareBoarding( 1.0, Cargo )
+    end
+    
+    function Fsm:MenuRouteToPickup( Cargo )
+      self:__RouteToPickup( 1.0, Cargo )
+    end
+    
+    --- Route to Cargo
+    -- @param #FSM_PROCESS self
+    -- @param Wrapper.Unit#UNIT TaskUnit
+    -- @param Tasking.Task_CARGO#TASK_CARGO Task
+    function Fsm:onafterRouteToPickup( TaskUnit, Task, From, Event, To, Cargo )
+      self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
+
+      
+      self.Cargo = Cargo
+      Task:SetCargoPickup( self.Cargo, TaskUnit )
+      self:__RouteToPickupPoint( 0.1 )
+    end
+
+
+    --- 
+    -- @param #FSM_PROCESS self
+    -- @param Wrapper.Unit#UNIT TaskUnit
+    -- @param Tasking.Task_CARGO#TASK_CARGO Task
+    function Fsm:OnAfterArriveAtPickup( TaskUnit, Task )
+      self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
+      
+      if self.Cargo:IsInRadius( TaskUnit:GetPointVec2() ) then
         self:__Land( -0.1 )
       else
         self:__ArriveAtCargo( -10 )      
@@ -131,10 +210,10 @@ do -- TASK_CARGO
     -- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
     -- @param Tasking.Task_CARGO#TASK_CARGO Task
-    function Fsm:OnAfterLand( TaskUnit, Task )
+    function Fsm:OnAfterLand( TaskUnit, Task, From, Event, To )
       self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
       
-      if Task.Cargo:IsInRadius( TaskUnit:GetPointVec2() ) then
+      if self.Cargo:IsInRadius( TaskUnit:GetPointVec2() ) then
         if TaskUnit:InAir() then
           Task:GetMission():GetCommandCenter():MessageToGroup( "Land", TaskUnit:GetGroup(), "Land" )
           self:__Land( -10 )
@@ -145,6 +224,82 @@ do -- TASK_CARGO
       else
         self:__ArriveAtCargo( -0.1 )
       end
+    end
+
+    --- 
+    -- @param #FSM_PROCESS self
+    -- @param Wrapper.Unit#UNIT TaskUnit
+    -- @param Tasking.Task_CARGO#TASK_CARGO Task
+    function Fsm:OnAfterLanded( TaskUnit, Task )
+      self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
+      
+      if self.Cargo:IsInRadius( TaskUnit:GetPointVec2() ) then
+        if TaskUnit:InAir() then
+          self:__Land( -0.1 )
+        else
+          Task:GetMission():GetCommandCenter():MessageToGroup( "Preparing to board in 10 seconds ...", TaskUnit:GetGroup(), "Boarding" )
+          self:__PrepareBoarding( -10 )
+        end
+      else
+        self:__ArriveAtCargo( -0.1 )
+      end
+    end
+    
+    --- 
+    -- @param #FSM_PROCESS self
+    -- @param Wrapper.Unit#UNIT TaskUnit
+    -- @param Tasking.Task_CARGO#TASK_CARGO Task
+    function Fsm:OnAfterPrepareBoarding( TaskUnit, Task, From, Event, To, Cargo )
+      self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
+      
+      self.Cargo = Cargo
+      if self.Cargo:IsInRadius( TaskUnit:GetPointVec2() ) then
+        if TaskUnit:InAir() then
+          self:__Land( -0.1 )
+        else
+          self:__Board( -0.1 )
+        end
+      else
+        self:__ArriveAtCargo( -0.1 )
+      end
+    end
+    
+    --- 
+    -- @param #FSM_PROCESS self
+    -- @param Wrapper.Unit#UNIT TaskUnit
+    -- @param Tasking.Task_CARGO#TASK_CARGO Task
+    function Fsm:OnAfterBoard( TaskUnit, Task )
+      self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
+
+      function self.Cargo:OnEnterLoaded( From, Event, To, TaskUnit, TaskProcess )
+      
+        self:E({From, Event, To, TaskUnit, TaskProcess })
+        
+        TaskProcess:__Boarded( 0.1 )
+      
+      end
+
+      
+      if self.Cargo:IsInRadius( TaskUnit:GetPointVec2() ) then
+        if TaskUnit:InAir() then
+          self:__Land( -0.1 )
+        else
+          Task:GetMission():GetCommandCenter():MessageToGroup( "Boarding ...", TaskUnit:GetGroup(), "Boarding" )
+          self.Cargo:Board( TaskUnit, self )
+        end
+      else
+        self:__ArriveAtCargo( -0.1 )
+      end
+    end
+    
+    --- 
+    -- @param #FSM_PROCESS self
+    -- @param Wrapper.Unit#UNIT TaskUnit
+    -- @param Tasking.Task_CARGO#TASK_CARGO Task
+    function Fsm:OnAfterBoarded( TaskUnit, Task )
+      self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
+      
+      Task:GetMission():GetCommandCenter():MessageToGroup( "Boarded ...", TaskUnit:GetGroup(), "Boarding" )
     end
     
     return self
@@ -165,7 +320,7 @@ do -- TASK_CARGO
     self:F({Cargo, TaskUnit})
     local ProcessUnit = self:GetUnitProcess( TaskUnit )
   
-    local ActRouteCargo = ProcessUnit:GetProcess( "RoutingToCargo", "RouteToCargoPickup" ) -- Actions.Act_Route#ACT_ROUTE_POINT
+    local ActRouteCargo = ProcessUnit:GetProcess( "RoutingToPickup", "RouteToPickupPoint" ) -- Actions.Act_Route#ACT_ROUTE_POINT
     ActRouteCargo:SetPointVec2( Cargo:GetPointVec2() )
     ActRouteCargo:SetRange( Cargo:GetBoardingRange() )
     return self
@@ -284,10 +439,10 @@ do -- TASK_CARGO_TRANSPORT
   -- @param Tasking.Mission#MISSION Mission
   -- @param Set#SET_GROUP SetGroup The set of groups for which the Task can be assigned.
   -- @param #string TaskName The name of the Task.
-  -- @param AI_Cargo#AI_CARGO Cargo The cargo.
+  -- @param Core.Set#SET_CARGO SetCargo The scope of the cargo to be transported.
   -- @return #TASK_CARGO_TRANSPORT self
-  function TASK_CARGO_TRANSPORT:New( Mission, SetGroup, TaskName, Cargo )
-    local self = BASE:Inherit( self, TASK_CARGO:New( Mission, SetGroup, TaskName, Cargo, "TRANSPORT" ) ) -- #TASK_CARGO_TRANSPORT
+  function TASK_CARGO_TRANSPORT:New( Mission, SetGroup, TaskName, SetCargo )
+    local self = BASE:Inherit( self, TASK_CARGO:New( Mission, SetGroup, TaskName, SetCargo, "Transport" ) ) -- #TASK_CARGO_TRANSPORT
     self:F()
     
     return self

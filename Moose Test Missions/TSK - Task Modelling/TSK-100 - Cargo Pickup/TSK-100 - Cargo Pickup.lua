@@ -26,8 +26,10 @@ do
 
   CargoEngineer = UNIT:FindByName( "Engineer" )
   InfantryCargo = AI_CARGO_UNIT:New( CargoEngineer, "Engineer", "Engineer Sven", "81", 500, 25 )
+  
+  SetCargo = SET_CARGO:New():FilterTypes( "Engineer" ):FilterStart()
 
-  Task_Cargo_Pickup = TASK_CARGO_TRANSPORT:New( Mission, TransportHelicopters, "Transport.001", InfantryCargo )
+  Task_Cargo_Pickup = TASK_CARGO_TRANSPORT:New( Mission, TransportHelicopters, "Transport.001", SetCargo )
 
 end	
 					

@@ -197,6 +197,9 @@ EVENT = {
   ClassID = 0,
 }
 
+world.event.S_EVENT_NEW_CARGO = world.event.S_EVENT_MAX + 1000
+world.event.S_EVENT_DELETE_CARGO = world.event.S_EVENT_MAX + 1001
+
 --- The different types of events supported by MOOSE.
 -- Use this structure to subscribe to events using the @{Base#BASE.HandleEvent}() method.
 -- @type EVENTS
@@ -224,6 +227,8 @@ EVENTS = {
   PlayerComment =     world.event.S_EVENT_PLAYER_COMMENT,
   ShootingStart =     world.event.S_EVENT_SHOOTING_START,
   ShootingEnd =       world.event.S_EVENT_SHOOTING_END,
+  NewCargo =          world.event.S_EVENT_NEW_CARGO,
+  DeleteCargo =       world.event.S_EVENT_DELETE_CARGO,
 }
 
 --- The Event structure
@@ -269,6 +274,7 @@ EVENTS = {
 -- @field Weapon
 -- @field WeaponName
 -- @field WeaponTgtDCSUnit
+
 
 
 local _EVENTMETA = {
@@ -386,6 +392,16 @@ local _EVENTMETA = {
      Order = 1,
      Event = "OnEventShootingEnd",
      Text = "S_EVENT_SHOOTING_END" 
+   },
+   [EVENTS.NewCargo] = {
+     Order = 1,
+     Event = "OnEventNewCargo",
+     Text = "S_EVENT_NEW_CARGO" 
+   },
+   [EVENTS.DeleteCargo] = {
+     Order = 1,
+     Event = "OnEventDeleteCargo",
+     Text = "S_EVENT_DELETE_CARGO" 
    },
 }
 
@@ -672,6 +688,39 @@ do -- OnEngineShutDown
   
 end
 
+do -- Event Creation
+
+  --- Creation of a New Cargo Event.
+  -- @param #EVENT self
+  -- @param AI.AI_Cargo#AI_CARGO Cargo The Cargo created.
+  function EVENT:CreateEventNewCargo( Cargo )
+    self:F( { Cargo } )
+  
+    local Event = {
+      id = EVENTS.NewCargo,
+      time = timer.getTime(),
+      cargo = Cargo,
+      }
+  
+    world.onEvent( Event )
+  end
+
+  --- Creation of a Cargo Deletion Event.
+  -- @param #EVENT self
+  -- @param AI.AI_Cargo#AI_CARGO Cargo The Cargo created.
+  function EVENT:CreateEventDeleteCargo( Cargo )
+    self:F( { Cargo } )
+  
+    local Event = {
+      id = EVENTS.DeleteCargo,
+      time = timer.getTime(),
+      cargo = Cargo,
+      }
+  
+    world.onEvent( Event )
+  end
+
+end
 
 --- @param #EVENT self
 -- @param #EVENTDATA Event
@@ -793,6 +842,11 @@ function EVENT:onEvent( Event )
       Event.WeaponCategory = Event.WeaponUNIT and Event.Weapon:getDesc().category
       Event.WeaponTypeName = Event.WeaponUNIT and Event.Weapon:getTypeName()
       --Event.WeaponTgtDCSUnit = Event.Weapon:getTarget()
+    end
+    
+    if Event.cargo then
+      Event.Cargo = Event.cargo
+      Event.CargoName = Event.cargo.Name
     end
     
     local PriorityOrder = _EVENTMETA[Event.id].Order
@@ -956,7 +1010,8 @@ function EVENT:onEvent( Event )
           
               -- If the EventData is not bound to a specific unit, then call the EventClass EventFunction.
               -- Note that here the EventFunction will need to implement and determine the logic for the relevant source- or target unit, or weapon.
-              if (Event.IniDCSUnit or Event.WeaponUNIT) and not EventData.EventUnit then
+              if ( ( Event.IniDCSUnit or Event.WeaponUNIT) and not EventData.EventUnit ) or 
+                 Event.Cargo then
               
                 if EventClass == EventData.EventClass then
                   
