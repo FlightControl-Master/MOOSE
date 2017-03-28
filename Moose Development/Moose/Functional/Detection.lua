@@ -1388,7 +1388,7 @@ do -- DETECTION_UNITS
     self:F()
     
     local Report = REPORT:New( "Detected units:" )
-    for DetectedItemID, DetectedItem in ipairs( self.DetectedItems ) do
+    for DetectedItemID, DetectedItem in pairs( self.DetectedItems ) do
       local DetectedItem = DetectedItem -- #DETECTION_BASE.DetectedItem
       local ReportSummary = self:DetectedItemReportSummary( DetectedItemID )
       Report:Add( ReportSummary )
