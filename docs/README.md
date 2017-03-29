@@ -31,91 +31,43 @@ MOOSE is NOT meant to be a one-man show, it is meant to evolve within a growing 
 Within the community, key users will start supporting, documenting, explaining and even creating new classes for the framework.
 It is the ambition to grow this framework as a de-facto standard for mission designers to use.
 
-## 1.2) MOOSE framework at GITHUB
 
-You can find the source of [MOOSE framework on GITHUB](https://github.com/FlightControl-Master/MOOSE/). 
-It is free for download and usage, but it is under license of the GNU 3.0 open source license policy.
-The MOOSE development uses the GITHUB service to enforce and control a structured development within a growing community.
-GITHUB enforces a structured approval process, release and change management, and a communicative distribution and deployment.
-The MOOSE framework development is considered an open source project, where contributors are welcome to contribute on the development.
-Some key users have already started with this process. Contact me if you're interested to contribute.
+# 2) MOOSE usage
 
-## 1.3) Eclipse LDT
+The delivery of MOOSE follows a structured release process. Over time, new features are added that can be used in your mission.
 
-MOOSE utilizes the Eclipse Lua Development Tools. As a result, the MOOSE framework is documented using the luadocumentor standard.
-Every class, method and variable is documented within the source, and mission designers can write mission script lua code that is **intellisense**(-ed) ...
-What that means is that while you are coding your mission, your object and variables (derived from MOOSE classes) will list the methods and properties of that class interactively while coding ...
+### The latest release of MOOSE can be downloaded **[here](https://github.com/FlightControl-Master/MOOSE/releases)**.  
 
-![Intellisense](Usage/Intellisense.JPG)
+There are 3 different ways how you can use MOOSE, each with a different engagement and complexity level:
 
-## 1.4) LUA training
+## 2.1) Use MOOSE as a normal user
 
-In order to efficiently use the MOOSE framework, it is highly recommended that you learn a couple of basic principles of lua.
-I recommend you learn the basic lua principles following this [lua tutorial](https://www.tutorialspoint.com/lua).
-We're not asking you to become an expert in lua, leave that to the experts, but, you'll need to have some basic lua coding 
-knowledge to "understand" the code, and also, to understand the syntax.  
+### Refer to the detailed [Usage Guide](Usage_Guide.html) for more information.
 
-**Therefore, I suggest you walk through this [lua quick guide](https://www.tutorialspoint.com/lua/lua_quick_guide.htm)**.  
-Ignore the lua environment setup. DCS comes with a pre-defined lua environment.
+## 2.2) Beta test MOOSE
 
-# 2) Installation
+Beta testers of MOOSE are requested to install additional software. 
 
-There is a complete installation guide as part of this documentation.  
+As a return or as a reward, missions designers get:
+ 
+  * New developed features for the next MOOSE release can be tested and incorporated in your missions.
+  * You can evaluate and contribute on the stability of the next release.
+  * Your mission design becomes very flexible. New features are dynamically added once delivered into your missions.
 
-[Click here for the installation guide of the MOOSE framework](Installation.html).
+### Please read the detailed [Beta Test Guide](Beta_Test_Guide.html) for more information.
 
-# 3) Support Channels
+## 2.3) Contribute on the MOOSE development
 
-MOOSE is broadcasted, documented and supported through various social media channels.  
+Those people who have experience in lua development or are excited to contribute to the MOOSE project are welcome.
 
-[Click here for the communities guide of the MOOSE framework](Communities.html).
+### Please consult the [Contribution Guide](Contribution_Guide.html) for more information.
 
-# 4) Demonstration Missions
-
-The framework comes with [Test Missions](https://github.com/FlightControl-Master/MOOSE/tree/master/Moose%20Test%20Missions), 
-that you can try out and helps you to code. These test missions provide examples of defined use cases how the MOOSE
-framework can be utilized. Each test mission is located in a separate directory, which contains at least one .lua file and .miz file.
-The .lua file contains the mission script file that shows how the use case was implemented.
-You can copy/paste code the code snippets from this .lua file into your missions, as it will accellerate your mission developments.
-You will learn, see, and understand how the different MOOSE classes need to be applied, and how you can create
-more complex mission scenarios by combining these MOOSE classes into a complex but powerful mission engine.
-
-These exact test missions are also demonstrated at the demo videos in the YouTube channel.
-
-# 5) MOOSE Directory Structure
-
-The MOOSE framework is devided into a couple of directories:
-
-* Moose Development: Contains the collection of lua files that define the MOOSE classes. You can use this directory to build the dynamic luadoc documentation intellisense in your eclipse development environment.
-* Moose Mission Setup: Contains the Moose.lua file to be included in your scripts when using MOOSE classes (see below the point Mission Design with Moose).
-* Moose Test Missions: Contains a directory structure with Moose Test Missions and examples. In each directory, you will find a miz file and a lua file containing the main mission script.
-* Moose Training: Contains the documentation of Moose generated with luadoc from the Moose source code. The presentations used during the videos in my [youtube channel](https://www.youtube.com/channel/UCjrA9j5LQoWsG4SpS8i79Qg), are also to be found here.
-
-# 6) Mission Design with MOOSE
-
-In order to create or design a mission using MOOSE, you'll have to include a file named **Moose.lua**:
-
-1. Create a new mission in the DCS World Mission Editor.
-2. In the mission editor, create a new trigger.
-3. Name the trigger Moose Load and let it execute only at MISSION START.
-4. Add an action DO SCRIPT FILE (without a condition, so the middle column must be empty).
-5. In the action, browse to the **[Moose.lua](https://github.com/FlightControl-Master/MOOSE/tree/master/Moose%20Mission%20Setup)** file in the **Moose Mission Setup** directory, and include this file within your mission.
-6. Make sure that the "Moose Load" trigger is completely at the top of your mission.
-
-Voila, MOOSE is now included in your mission. During the execution of this mission, all MOOSE classes will be loaded, and all MOOSE initializations will be exectuted before any other mission action is executed.
-
-IMPORTANT NOTE: When a new version of MOOSE is released, you'll have to UPDATE the Moose.lua file in EACH OF YOUR MISSION.
-This can be a tedious task, and for this purpose, a tool has been developed that will update the Moose.lua files automatically within your missions.
-Refer to the tool at [Moose Mission Setup\Moose Mission Update](https://github.com/FlightControl-Master/MOOSE/tree/master/Moose%20Mission%20Setup/Moose%20Mission%20Update) directory for further information included in the [READ.ME]() file.
-
-# 7) MOOSE Framework
+# 3) MOOSE Framework
 
 The following classes are currently embedded within MOOSE framework and can be included within your mission scripts:
 
-![MOOSE framework](Presentations\MOOSE\Dia2.JPG)
-
 MOOSE is an Object Oriented framework and defines **Classes**, which are components that combine **Methods** and **Variables**/**Properties** as one encapsulated structure (table).
-Mission Designers can what we call **instantiate objects** from these MOOSE classes.
+Mission Designers can what we call **Instantiate Objects** from these MOOSE classes.
 
 An example of what this means is shortly explained using the SPAWN class of MOOSE, which you can use to spawn new groups into your running mission.
 The SPAWN class simplifies the process of spawning, and it has many methods that you can use to create variations how you want your spawn object to spawn new groups.
@@ -133,7 +85,9 @@ So is also the SPAWN class derived from the BASE class. The BASE class provides 
 As a normal MOOSE user, you won't implement any code using inheritance but just know that the inheritance structure is omni present in the intellisense and documentation.
 You'll need to browse to the right MOOSE Class within the inheritance tree structure to identify which methods are properties are defined for which class.
 
-## 7.1) MOOSE Core Classes
+![MOOSE framework](Presentations\MOOSE\Dia2.JPG)
+
+## 3.1) MOOSE Core Classes
 
 These classes define the base building blocks of the MOOSE framework. These classes are heavily used within the MOOSE framework.
 
@@ -143,11 +97,13 @@ These classes define the base building blocks of the MOOSE framework. These clas
 
 * [EVENT](Documentation/Event.html): Provides the Event Dispatcher base class to handle DCS Events, being fired upon registered events within the DCS simulator. Note that EVENT is used by BASE, exposing OnEvent() methods to catch these DCS events.
 
+* [SCHEDULER](Documentation/Scheduler.html): This class implements a timer scheduler that will call at optional specified intervals repeatedly or just one time a scheduled function.
+
 * [FSM](Documentation/Fsm.html):  The main FSM class can be used to build a Finite State Machine. The derived FSM_ classes provide Finite State Machine building capability for CONTROLLABLEs, ACT_ (Task Actions) classes, TASKs and SETs.
 
 * [MENU](Documentation/Menu.html): Set Menu options (F10) for All Players, Coalitions, Groups, Clients. MENU also manages the recursive removal of menus, which is a big asset!
 
-* [SETS](Documentation/Set.html): Create SETs of MOOSE objects.  SETs can be created for GROUPs, UNITs, AIRBASEs, ...  
+* [SET](Documentation/Set.html): Create SETs of MOOSE objects.  SETs can be created for GROUPs, UNITs, AIRBASEs, ...  
 The SET can be filtered with defined filter criteria.  
 Iterators are available that iterate through the GROUPSET, calling a function for each object within the SET.
 
@@ -158,10 +114,8 @@ The POINT_VEC3 class manages the 3D simulation space, while the POINT_VEC2 class
 
 * [ZONES](Documentation/Zone.html): A set of zone classes that provide the functionality to validate the presence of GROUPS, UNITS, CLIENTS, STATICS within a certain ZONE. The zones can take various forms and can be movable.
 
-* [SCHEDULER](Documentation/Scheduler.html): This class implements a timer scheduler that will call at optional specified intervals repeatedly or just one time a scheduled function.
 
-
-## 7.2) MOOSE Wrapper Classes
+## 3.2) MOOSE Wrapper Classes
 
 MOOSE Wrapper Classes provide an object oriented hierarchical mechanism to manage the DCS objects within the simulator.
 Wrapper classes provide another easier mechanism to control Groups, Units, Statics, Airbases and other objects.
@@ -193,7 +147,7 @@ The CLIENT class derives from the UNIT class, thus contains the complete UNIT AP
 The STATIC class derives from the POSITIONABLE class, thus contains also the position API set.
 
 
-## 7.3) MOOSE Functional Classes
+## 3.3) MOOSE Functional Classes
 
 MOOSE Functional Classes provide various functions that are useful in mission design.
 
@@ -207,14 +161,14 @@ MOOSE Functional Classes provide various functions that are useful in mission de
 
 * [SCORING](Documentation/Scoring.html): Administer the scoring of player achievements, and create a CSV file logging the scoring events for use at team or squadron websites.
 
-## 7.4) MOOSE AI Controlling Classes
+## 3.4) MOOSE AI Controlling Classes
 
 MOOSE AI Controlling Classes provide mechanisms to control AI over long lasting processes.  
 These AI Controlling Classes are based on FSM (Finite State Machine) Classes, and provided an encapsulated way to make AI behave or execute an activity.
 
 * [AI_BALANCER](Documentation/AI_Balancer.html): Compensate in a multi player mission the abscence of players with dynamically spawned AI air units. When players join CLIENTS, the AI will either be destroyed, or will fly back to the home or nearest friendly airbase.
 
-* [AI_PATROLZONE](Documentation/AI_PatrolZone.html): Make an alive AI Group patrol a zone derived from the ZONE_BASE class. Manage out-of-fuel events and set altitude and speed ranges for the patrol.
+* [AI_PATROL_ZONE](Documentation/AI_Patrol_Zone.html): Make an alive AI Group patrol a zone derived from the ZONE_BASE class. Manage out-of-fuel events and set altitude and speed ranges for the patrol.
 
 * [AI_CAP](Documentation/AI_Cap.html): Make an alive AI Group perform Combat Air Patrol in a dynamic process.
 
@@ -222,7 +176,7 @@ These AI Controlling Classes are based on FSM (Finite State Machine) Classes, an
 
 * [AI_CARGO](Documentation/AI_Cargo.html): Make AI behave as cargo. Various CARGO types exist.
 
-## 7.5) MOOSE Human Tasking Classes
+## 3.5) MOOSE Human Tasking Classes
 
 MOOSE Tasking Classes provide a comprehensive Mission Orchestration System.
 Through COMMANDCENTERs, multiple logical MISSIONs can be orchestrated for coalitions.
@@ -237,9 +191,11 @@ Each TASK has a TASK ACTION flow, which is the flow that a player (hosted by a U
 
 * [TASK_SEAD](Documentation/Task_SEAD.html): Models a SEAD Task, where a Player is routed towards an attack zone, and various SEADing targets need to be eliminated.
 
-* [TASK_A2G](Documentation/Task_A2G.html): Models a A2G Task, where a Player is routed towards an attack zone, and various A2G targets need to be eliminated.
+* [TASK_BAI](Documentation/Task_A2G.html): Models a CAP Task, where a Player is routed towards an attack zone without enemies nearby, and various ground targets need to be eliminated.
 
-## 7.6) MOOSE Action Classes
+* [TASK_CAS](Documentation/Task_A2G.html): Models a CAS Task, where a Player is routed towards an attack zone with enemies nearby, and various ground targets need to be eliminated.
+
+## 3.6) MOOSE Action Classes
 
 MOOSE Action Classes are task action sub-flows, that can be used and combined, to quickly define a comprehensive end-to-end task action flow.
 For example, for the SEAD Task, the task action flow combines the actions ASSIGN, ROUTE, ACCOUNT and ASSIST task action sub-flows.
@@ -253,7 +209,7 @@ For example, for the SEAD Task, the task action flow combines the actions ASSIGN
 * [ACT_ASSIST](Documentation/Assist.html): Mechanisms to assist players executing a task. For example, acquire targets through smoking them.
 
 
-# 8) Credits
+# 4) Credits
 
 Note that most of the framework is based on code i've written myself, 
 but some code of it is also based on code that i've seen as great scripting code and ideas, 
@@ -263,12 +219,10 @@ Therefore a list of credits to all who have or are contributing (this list will 
 
 You'll notice that within this framework, there are functions used from mist. I've taken the liberty to copy those atomic mist functions that are very nice and useful, and used those. 
 
-**Grimes**
-Without the effort of Grimes with MIST and his continuous documentation of the DCS API, the development of MOOSE would not have been possible.  
-MOOSE is complementary to [MIST](https://github.com/mrSkortch/MissionScriptingTools/releases), so if you use MIST in parallel with MOOSE objects, this should work.  
-The documentation of the [DCS API] is the work of Grimes. Please consult his documentation in case of any question concerning the DCS API level.
 
-
+**Greyecho**
+Contributed the devevelopment of the new release system, and the development of the RADIO and BEACON functionalities.
+We'll see more appearing from him.
 
 **Prof_hilactic**
 SEAD Defenses. I've taken the script, and reworded it to fit within MOOSE. The script within MOOSE is hardly recognizable anymore from the original. Find here the posts: http://forums.eagle.ru/showpost.php?...59&postcount=1
@@ -287,6 +241,11 @@ Worked together with Gabor to create the concept of the DETECTION and FAC classe
 
 **Shadoh**
 Interacted on the eagle dynamics forum to build the FOLLOW class to build large WWII airplane formations.
+
+**Grimes**
+Without the effort of Grimes with MIST and his continuous documentation of the DCS API, the development of MOOSE would not have been possible.  
+MOOSE is complementary to [MIST](https://github.com/mrSkortch/MissionScriptingTools/releases), so if you use MIST in parallel with MOOSE objects, this should work.  
+The documentation of the [DCS API] is the work of Grimes. Please consult his documentation in case of any question concerning the DCS API level.
 
 For the rest I also would like to thank the numerous feedback and help and assistance of the moose community at SLACK.COM.
 Note that there is a vast amount of other scripts out there. 
