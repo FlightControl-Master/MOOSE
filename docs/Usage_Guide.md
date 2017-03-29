@@ -44,21 +44,22 @@ The delivery of MOOSE follows a structured release process. Over time, new featu
 ## 2.2.2) Download and install the Eclipse Lua Development Tools (LDT), which is an advanced lua editor.
 
 1. If you don't have JAVA yet, you may have to install [java](https://www.java.com/en/download) first. 
+2. Download and Install [Eclipse LDT](https://eclipse.org/ldt) on your Windows 64 bit system.
 
-2. Download and Install [Eclipse LDT](https://eclipse.org/ldt) on your Windows 64 bit system.  This is a free lua editor based on the Eclipse ecosystem. 
-The advantage of LDT is that it greatly enhances your lua development environment with intellisense, better search capabilities etc. 
-
+Now you should have a working LDT on your system.
 
 ## 2.2.3) Configure your LDT for the usage of MOOSE.
 
-The section explains how to configure your Eclipse LDT environment, link it with the MOOSE respository.
-This will enable you to **start developing mission scripts** in lua, 
-which will be **fully intellisense enabled**!!!
+You need to configure your Eclipse LDT environment and link it with the MOOSE respository.
+This will enable you to **start developing mission scripts** in lua, which will be **fully intellisense enabled**!!!  
+
+Please follow the steps outlined!
 
 ### 2.2.3.1) Create a new **Workspace** in LDT.
 
-The LDT editor has a concept of "workspaces", this contains all your settings of your editing environment, 
-like views, menu options etc.
+The LDT editor has a concept of **Workspaces**, which contains all your settings of your editing environment, 
+like views, menu options etc, and your code... Nothing to pay attention to really, but you need to set it up!
+When you open EclipseLDT for the first time, it will ask you where to put your *workspace area*...
 
 1. Open Eclipse LDT.
 2. Select the default workspace that LDT suggests.
