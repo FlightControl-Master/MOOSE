@@ -6,7 +6,7 @@ MOOSE works with DCS world 1.5. and 2.0.
 
 ![MOOSE Banner](Presentations\MOOSE\Dia1.JPG)
 
-## 1.1) MOOSE framework goal
+## MOOSE framework goal
 
 The goal of MOOSE is to allow mission designers to enhance their scripting with mission orchestration objects, which can be instantiated from defined classes within the framework. This will allow to write mission scripts with minimal code embedded. Of course, the richness of the framework will determine the richness of the misson scenarios. 
 The MOOSE is a service that is produced while being consumed ... , it will evolve further as more classes are developed for the framework, and as more users are using it.  
@@ -175,6 +175,7 @@ These AI Controlling Classes are based on FSM (Finite State Machine) Classes, an
 
 * [AI_CARGO](Documentation/AI_Cargo.html): Make AI behave as cargo. Various CARGO types exist.
 
+
 ## 3.6) MOOSE Human Tasking Classes
 
 MOOSE Tasking Classes provide a comprehensive Mission Orchestration System.
@@ -194,6 +195,7 @@ Each TASK has a TASK ACTION flow, which is the flow that a player (hosted by a U
 
 * [TASK_CAS](Documentation/Task_A2G.html): Models a CAS Task, where a Player is routed towards an attack zone with enemies nearby, and various ground targets need to be eliminated.
 
+
 ## 3.7) MOOSE Action Classes
 
 MOOSE Action Classes are task action sub-flows, that can be used and combined, to quickly define a comprehensive end-to-end task action flow.
@@ -206,6 +208,7 @@ For example, for the SEAD Task, the task action flow combines the actions ASSIGN
 * [ACT_ACCOUNT](Documentation/Account.html): Mechanisms to account various events within the simulator. For example, account the dead events, accounting dead units within a Target SET within a ZONE.
 
 * [ACT_ASSIST](Documentation/Assist.html): Mechanisms to assist players executing a task. For example, acquire targets through smoking them.
+
 
 
 # 4) Credits

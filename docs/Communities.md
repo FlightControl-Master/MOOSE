@@ -1,8 +1,8 @@
-# 3) MOOSE framework support channels
+# 1) MOOSE framework support channels
 
 MOOSE is broadcasted, documented and supported through various social media channels.
 
-## 3.1) MOOSE broadcast channels on YouTube
+## 1.1) MOOSE broadcast channels on YouTube
 
 MOOSE has a [broadcast channel](https://www.youtube.com/channel/UCjrA9j5LQoWsG4SpS8i79Qg/playlists) on youtube. 
 These videos are grouped into playlists, which explain specific MOOSE capabilities, 
@@ -18,19 +18,19 @@ Some mandatory videos to watch are:
   * [MOOSE Tasking](https://www.youtube.com/playlist?list=PL7ZUrU4zZUl3CgxN2iAViiGLTPpQ-Ajdg)
   * [MOOSE Task Dispatching](https://www.youtube.com/playlist?list=PL7ZUrU4zZUl3I6ieFM-cjey-rncF1ktNI)
 
-## 3.2) MOOSE on Eagle Dynamics forums
+## 1.2) MOOSE on Eagle Dynamics forums
 
 This is a default thread at the Eagle Dynamics forums where the MOOSE framework can be discussed and supported.
 The thread is called [MOOSE - Mission Object Oriented Scripting Framework](https://forums.eagle.ru/showthread.php?t=138043).
 
-## 3.3) MOOSE on GITHUB.
+## 1.3) MOOSE on GITHUB.
 
 I encourage that you create also a user at GITHUB.
 On the MOOSE framework GITHUB site, you can register issues, feedback and comments in the issues section of the site.
 This allows to track this feedback and issues, in order to provide a structured support and create a milestone plan.
 In other words, treat this development as a project.
 
-## 3.4) MOOSE on slack.com
+## 1.4) MOOSE on slack.com
 
 Slack is a team community site. It is a great environment to discuss online the framework.
 Various channels are allocated in the environment to discuss specific topics. 
