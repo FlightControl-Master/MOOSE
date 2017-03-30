@@ -40,13 +40,6 @@ MooseLoader:close()
 
 MooseFile:write( MooseLoaderText )
 
-if MooseDynamicStatic == "D" then
-  MooseFile:write( "BASE:TraceOnOff( true )\n" )
-end
-if MooseDynamicStatic == "S" then
-  MooseFile:write( "BASE:TraceOnOff( false )\n" )
-end
-
 
 local MooseSourcesFile = io.open( MooseSourcesFilePath, "r" )
 local MooseSource = MooseSourcesFile:read("*l")
@@ -54,7 +47,7 @@ local MooseSource = MooseSourcesFile:read("*l")
 while( MooseSource ) do
   
   if MooseSource ~= "" then
-    local MooseFilePath = MooseDevelopmentPath .. "\\" .. MooseSource .. ".lua"
+    local MooseFilePath = MooseDevelopmentPath .. "/" .. MooseSource
     if MooseDynamicStatic == "D" then
       print( "Load dynamic: " .. MooseSource )
       MooseFile:write( "__Moose.Include( '" .. MooseSource .. "' )\n" )
@@ -70,6 +63,13 @@ while( MooseSource ) do
   end
   
   MooseSource = MooseSourcesFile:read("*l")
+end
+
+if MooseDynamicStatic == "D" then
+  MooseFile:write( "BASE:TraceOnOff( true )\n" )
+end
+if MooseDynamicStatic == "S" then
+  MooseFile:write( "BASE:TraceOnOff( false )\n" )
 end
 
 MooseFile:write( "env.info( '*** MOOSE INCLUDE END *** ' )\n" )
