@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' )
-env.info( 'Moose Generation Timestamp: 20170330_0743' )
+env.info( 'Moose Generation Timestamp: 20170330_0753' )
 
 --- Various routines
 -- @module routines
