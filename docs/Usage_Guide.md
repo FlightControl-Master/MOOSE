@@ -159,9 +159,9 @@ MOOSE is broadcasted, documented and supported through various social media chan
 
 # 2.5) Demonstration Missions
 
-The framework comes with [Test Missions](https://github.com/FlightControl-Master/MOOSE/tree/master/Moose%20Test%20Missions), 
-that you can try out and helps you to code. These test missions provide examples of defined use cases how the MOOSE
-framework can be utilized. Each test mission is located in a separate directory, which contains at least one .lua file and .miz file.
+The framework comes with [demonstration missions](https://github.com/FlightControl-Master/MOOSE_MISSIONS), 
+that you can try out and helps you to code.  
+These missions provide examples of defined use cases how the MOOSE framework can be utilized. Each test mission is located in a separate directory, which contains at least one .lua file and .miz file.
 The .lua file contains the mission script file that shows how the use case was implemented.
 You can copy/paste code the code snippets from this .lua file into your missions, as it will accellerate your mission developments.
 You will learn, see, and understand how the different MOOSE classes need to be applied, and how you can create
