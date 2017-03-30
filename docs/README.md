@@ -6,21 +6,6 @@ MOOSE works with DCS world 1.5. and 2.0.
 
 ![MOOSE Banner](Presentations\MOOSE\Dia1.JPG)
 
-MOOSE is an Object Oriented framework and defines **Classes**, which are components that combine **Methods** and **Variables**/**Properties** as one encapsulated structure (table).
-Mission Designers can **instantiate objects** from these MOOSE classes, which declares a variable that contains a reference to the instantiated object from the MOOSE Class.
-So, you can use that variable to use its methods and properties to build your logic. Note that in OO lua, a methods are addressed using the ":" notation, 
-because a "self" variable is passed that contains the object reference to that function! 
-
-An example of what this means is shortly explained using the SPAWN class of MOOSE, which you can use to spawn new groups into your running mission.
-The SPAWN class simplifies the process of spawning, and it has many methods that you can use to create variations how you want your spawn object to spawn new groups.
-
-```lua
-local SpawnObject = SPAWN:New( "GroupName" ) -- This creates a new SpawnObject from the SPAWN class, using the :New method constructor to instantiate a new SPAWN object searching for the GroupName as the late activated group defined within your Mission Editor.  
--- Nothing is spawned yet..., so let's use now the SpawnObject to spawn a new GROUP.
-
-local SpawnGroup = SpawnObject:Spawn() -- Here we use the :Spawn() method of the SPAWN class. This method creates a new group from the GroupName template as defined within the Mission Editor.
-```
-
 ## 1.1) MOOSE framework goal
 
 The goal of MOOSE is to allow mission designers to enhance their scripting with mission orchestration objects, which can be instantiated from defined classes within the framework. This will allow to write mission scripts with minimal code embedded. Of course, the richness of the framework will determine the richness of the misson scenarios. 
