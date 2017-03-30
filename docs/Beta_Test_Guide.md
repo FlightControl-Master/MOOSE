@@ -39,9 +39,10 @@ Install [7-Zip](http://www.7-zip.org/) if you don't already have it. It is a fre
 ### 1.3) Run the Install script
 
 Because DCS is going to load Moose dynamically (more on that later), we need to do some (slightly) advanced stuff to finish the setup of your own development enviroment. Thankfully we wrote a program to do all of it automatically for you !
+![](Installation/MDES_Splash_Screen.JPG)
 Browse to your local MOOSE repository and run `Moose Development Environment Setup\MooseDevelopmentEnvironmentSetup.exe` **as an administrator** (Select the file > Right Click > Run as administrator). 
 
-* The Splash screen opens, click ok
+* The splash screen opens, click ok
 * Enter (or browse for) the 3 paths asked and click ok. Don't worry about the trailing backslashs.
 * Let the program do it's magic ! 
 * When the program finishes, it will inform you that you need to restart your computer to use the tools related to .miz files.
