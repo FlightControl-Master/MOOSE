@@ -15,13 +15,33 @@ In this document, we will review
 
 # 1) GitHub/Git organisation
 
+You are supposed to be familar with at least the basics of GitHub (branches, commits, pull requests...). If it is not the case, please at least read [this tutorial](https://guides.github.com/introduction/flow/). If something isn't clear still, ask us, we'll be glad to explain !
+
 ## 1.1) The Repositories
+
+Moose is in fact located on three repositories :
+
+* [MOOSE](https://github.com/FlightControl-Master/MOOSE) contains the Moose's code, the documentation and the file necessary to the setup
+* [MOOSE_MISSIONS](https://github.com/FlightControl-Master/MOOSE_MISSIONS) contains the test missions. Be aware that the [master-release branch](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master-release) contains the statically loaded test missions, while the [master branch](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master) contains their dynamically loaded counterparts. will want to create a local repository for this one and to sync it.
+* [MOOSE_PRESENTATIONS](https://github.com/FlightControl-Master/MOOSE_PRESENTATIONS) contains bits and bob related to Moose, like Moose's logos and PowerPoint files to present a specific feature of Moose.
 
 ## 1.2) Branches
 
+On the [MOOSE](https://github.com/FlightControl-Master/MOOSE) repository, three branches are protected, which means that you cannot merge or commit directly to them, you need to create a pull request;
+
+* [master](https://github.com/FlightControl-Master/MOOSE/tree/master) stores Moose's current latest semi-stable code.
+* master-release stores Mosse's last release code. There is no reason you would want to modify this branch.
+* [master-backup](https://github.com/FlightControl-Master/MOOSE/tree/master-backup). We sometime backup the master into master-backup, in case the worst happen. There is no reason you would want to modify this branch.
+
+You are encourgaed to create your own branch, named after you pseudonyme, to test stuff and bugfix little problems. When you want to work on bigger features, you should create a new branch named after the feature you are working on. Dn't forget to delete it when the feature is merged with master !
+
 ## 1.3) Commits
 
+The usual [Git commit](https://chris.beams.io/posts/git-commit/) guideline applies. Don't overthink it though, time is better spent coding or managing the Issue Tracker than writing long form commit descriptions.
+
 ## 1.4) Merge/Pull Requests
+
+When the code you are working on is finished, you will want to resolve the merge conflicts between your branch and master, and then create a pull request. Explain clearly what your code does (with a link to the relevant issue). It will be approved ASAP by FlightControl, if it meets the requirements below. 
 
 # 2) Contribution guidelines
 
@@ -31,7 +51,7 @@ We try to follow a contribution process, to make sure we work efficiently togeth
 2. Discuss your idea with the community on Slack. Maybe there is a way to do it you didn't even think about, or maybe you could team up with someone who is already working on it!
 3. Create a high level design document. It doesn't need to be thorough, but you need to have an idea of which class do you want to write, which class they should inherit from, which methods are needed in each class...
 4. Write an issue on GitHub with your high level design document, apply the label "enhancement", and assign it to yourself.
-5. Create a new branch to work on.
+5. Create a new branch on MOOSE's repository to work on (you will be given contributor access).
 6. Write your code in your branch following the Coding Standards, sync fairly regularly this branch with master, so that you don't have tons of merge conflicts at the end.
 7. When done, write a/some test mission(s) to showcase how to use your feature to the community.
 8. Generate the Luadoc
@@ -45,15 +65,15 @@ To ensure a good degree of consistency in Moose's code, we follow the following 
 * The code need to be intellisense/Luadoc compatible. See below for more information
 * The code needs to be commented. Remember : _“Programs must be written for people to read, and only incidentally for machines to execute.”_ - Hal Abelson
 * Indentation must be 2 spaces (default in LDT)
-* Class names must be in capital letters (e.g. SPAWN)
-* Class should all inherit from BASE
-* Methods should start by a capital letter (e.g. GetName())
-* If your method is intended for private use only, its name should start with an underscore (e.g. _GetLastIndex())
-* Variables should start with a capital leter (e.g. IndexString)
-* Provide a trace for the mission designer at the start of every method, and when it is appropriate. Trace functions are inherited from BASE :
-  * F(), F2() and F3() for function calls,
-  * T(), T2() and T3() for function logic, 
-  * And E() for errors. 
+* Class names must be in capital letters (e.g. `SPAWN`)
+* Class should all inherit from `Core.Base#BASE`
+* Methods should start by a capital letter (e.g. `GetName()`)
+* If your method is intended for private use only, its name should start with an underscore (e.g. `_GetLastIndex()`)
+* Variables should start with a capital leter (e.g. `IndexString`)
+* Provide a trace for the mission designer at the start of every method, and when it is appropriate. Trace functions are inherited from `BASE` :
+  * `F()`, `F2()` and `F3()` for function calls,
+  * `T()`, `T2()` and `T3()` for function logic, 
+  * And `E()` for errors. 
 
 # 4) The Luadoc
 
@@ -64,16 +84,16 @@ Keep in mind the following informations :
 * Every Luadoc block needs to start with three minus signs (`---`).
 * The generated html file will use Markdown. If you are not familar with it, use this [reference](https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet).
 * You can create hyperlinks by writing
-  * @{Module#CLASS.Method} for a method
-  * @{Module#CLASS} for a class
-  * Module can be ommited if the hyperlink points to the same module (e.g. @{#CLASS} is valid if CLASS is in the Module the link is in)
+  * `@{Module#CLASS.Method}` for a method
+  * `@{Module#CLASS}` for a class
+  * Module can be ommited if the hyperlink points to the same module (e.g. `@{#CLASS`} is valid if CLASS is in the Module the link is in)
 * Luadoc types the variables. the following types are available
-  * Folder.Module#CLASS (a Moose class)
-  * Dcs.DCSTypes#Class (a DCS class)
-  * \#string
-  * \#number (integer or floating point)
-  * \#boolean
-  * \#nil
+  * `Folder.Module#CLASS` (a Moose class)
+  * `Dcs.DCSTypes#Class` (a DCS class)
+  * `#string`
+  * `#number` (integer or floating point)
+  * `#boolean`
+  * `#nil`
 
 ## 4.1) Modules
 
@@ -137,4 +157,35 @@ The key takeways are:
 
 ## 6.1) Milestones
 
-## 6.2) Label
+You can see Milestone as the GitHub way to say Release. Moose repository has three active [Milestone](https://github.com/FlightControl-Master/MOOSE/milestones) at any time :
+
+* The next milestone (e.g. Moose-2.0)
+* The milestone after the next one (e.g. Moose-2.1)
+* The "future" milestone (Moose-Future)
+
+Every bug is assigned to the next milestone, and should be fixed before the release. Features are assigned to any milestone depending on the importance of it and how hard it is to implement. Typically, a feature that is currently worked on is assigned to the next milestone, an very long-term feature is assigned to Moose-Future, and any other feature is assigned to the milestone after the next one, the goal being to have a nice todo list for the contributor to pick and choose from at the end of feature freeze. If you come accross a issue that isn't assigned to a milestone, feel free to add it to the correct one !
+
+## 6.2) Labels
+
+We heavily use GitHub's label system on the Issue Tracker to categorize each issue. Each issue is assigned the relevant tag at the beging by a contributor, and tags are then updated to reflect the current state of the issue. If you come accross an untagged issue, feel free label it ! You can consult the [full list](https://github.com/FlightControl-Master/MOOSE/labels), but please asks the community before adding or removing a label to the list:
+
+* Bugs
+  * question : not even a bug report
+  * possible bug : might be a bug, but hasn't been reproduced yet
+  * bug : the bug has been confirmed / reproduced
+  * fixed : We think the bug is fixed. but there is a good reson why we are not closing the issue just yet. Usually used in conjunction with ready for testing
+* Feature requests
+  * enhancement : this issue is a feature request
+  * implemented : we implemented this enhancement, but there is a good reson why we are not closing the issue just yet. Usually used in conjunction with ready for testing
+* Documentation work
+  * documentation
+* Urgency 
+  * urgent (fix in a few days) : This is used primarly for bugs found in the latest Release.
+  * not urgent (can wait)
+* Work load (this is merely to help contributer choose issues conpatible with the free time they have)
+  * hard work
+  * trivial
+* Will not fix
+  * wontfix
+  * duplicate : this issue already exists somewhere else
+  * invalid
