@@ -31,7 +31,7 @@ There are 3 different ways how you can use MOOSE, each with a different engageme
 
 ## 2.1) Use MOOSE as a normal user
 
-### Refer to the detailed [Usage Guide](Usage_Guide.html) for more information.
+Refer to the detailed **[Usage Guide](Usage_Guide.html)** for more information.
 
 
 
@@ -45,27 +45,25 @@ As a return or as a reward, missions designers get:
   * You can evaluate and contribute on the stability of the next release.
   * Your mission design becomes very flexible. New features are dynamically added once delivered into your missions.
 
-### Please read the detailed [Beta Test Guide](Beta_Test_Guide.html) for more information.
-
-
-
+Please read the detailed **[Beta Test Guide](Beta_Test_Guide.html)** for more information.
+  
+  
+  
 ## 2.3) Contribute on the MOOSE development
 
 Those people who have experience in lua development or are excited to contribute to the MOOSE project are welcome.
 
-### Please consult the [Contribution Guide](Contribution_Guide.html) for more information.
-
-
-
-
+Please consult the **[Contribution Guide](Contribution_Guide.html)** for more information.
+  
+  
+  
 # 3) MOOSE Support Channels
 
 MOOSE is broadcasted, documented and supported through various social media channels.  
 
-[Click here for the communities guide of the MOOSE framework](Communities.html).
-
-
-
+Click here for the **[communities guide](Communities.html)** of the MOOSE framework.
+  
+  
 
 # 4) MOOSE Framework
 
