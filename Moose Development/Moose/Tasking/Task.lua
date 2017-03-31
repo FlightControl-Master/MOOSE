@@ -1,9 +1,28 @@
---- This module contains the TASK class.
+--- **Tasking** -- This module contains the TASK class.
 -- 
--- 1) @{#TASK} class, extends @{Base#BASE}
--- ============================================
--- 1.1) The @{#TASK} class implements the methods for task orchestration within MOOSE. 
--- ----------------------------------------------------------------------------------------
+-- ===
+-- 
+-- 
+-- ===
+-- 
+-- ### Authors: FlightControl - Design and Programming
+-- 
+-- @module Task
+
+--- @type TASK
+-- @field Core.Scheduler#SCHEDULER TaskScheduler
+-- @field Tasking.Mission#MISSION Mission
+-- @field Core.Set#SET_GROUP SetGroup The Set of Groups assigned to the Task
+-- @field Core.Fsm#FSM_PROCESS FsmTemplate
+-- @field Tasking.Mission#MISSION Mission
+-- @field Tasking.CommandCenter#COMMANDCENTER CommandCenter
+-- @extends Core.Fsm#FSM_TASK
+
+--- 
+-- # TASK class, extends @{Base#BASE}
+-- 
+-- ## The TASK class implements the methods for task orchestration within MOOSE. 
+-- 
 -- The class provides a couple of methods to:
 -- 
 --   * @{#TASK.AssignToGroup}():Assign a task to a group (of players).
@@ -16,8 +35,8 @@
 --   * @{#TASK.UnAssignFromUnit}(): Unassign the task from a unit.
 --   * @{#TASK.SetTimeOut}(): Set timer in seconds before task gets cancelled if not assigned.
 --   
--- 1.2) Set and enquire task status (beyond the task state machine processing).
--- ----------------------------------------------------------------------------
+-- ## 1.2) Set and enquire task status (beyond the task state machine processing).
+-- 
 -- A task needs to implement as a minimum the following task states:
 -- 
 --   * **Success**: Expresses the successful execution and finalization of the task.
@@ -35,30 +54,17 @@
 -- The status of tasks can be set by the methods **State** followed by the task status. An example is `StateAssigned()`.
 -- The status of tasks can be enquired by the methods **IsState** followed by the task status name. An example is `if IsStateAssigned() then`.
 -- 
--- 1.3) Add scoring when reaching a certain task status:
--- -----------------------------------------------------
+-- ## 1.3) Add scoring when reaching a certain task status:
+-- 
 -- Upon reaching a certain task status in a task, additional scoring can be given. If the Mission has a scoring system attached, the scores will be added to the mission scoring.
 -- Use the method @{#TASK.AddScore}() to add scores when a status is reached.
 -- 
--- 1.4) Task briefing:
--- -------------------
+-- ## 1.4) Task briefing:
+-- 
 -- A task briefing can be given that is shown to the player when he is assigned to the task.
 -- 
--- ===
+-- @field #TASK TASK
 -- 
--- ### Authors: FlightControl - Design and Programming
--- 
--- @module Task
-
---- The TASK class
--- @type TASK
--- @field Core.Scheduler#SCHEDULER TaskScheduler
--- @field Tasking.Mission#MISSION Mission
--- @field Core.Set#SET_GROUP SetGroup The Set of Groups assigned to the Task
--- @field Core.Fsm#FSM_PROCESS FsmTemplate
--- @field Tasking.Mission#MISSION Mission
--- @field Tasking.CommandCenter#COMMANDCENTER CommandCenter
--- @extends Core.Fsm#FSM_TASK
 TASK = {
   ClassName = "TASK",
   TaskScheduler = nil,
