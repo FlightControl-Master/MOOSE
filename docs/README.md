@@ -29,7 +29,7 @@ There are 3 different ways how you can use MOOSE, each with a different engageme
 
 
 
-## 2.1) Use MOOSE as a normal user
+## 2.1) Use MOOSE as a Mission Designer
 
 Refer to the detailed **[Usage Guide](Usage_Guide.html)** for more information.
 
@@ -39,11 +39,11 @@ Refer to the detailed **[Usage Guide](Usage_Guide.html)** for more information.
 
 Beta testers of MOOSE are requested to install additional software. 
 
-As a return or as a reward, missions designers get:
+As a return or as a reward, testers get:
  
-  * New developed features for the next MOOSE release can be tested and incorporated in your missions.
-  * You can evaluate and contribute on the stability of the next release.
-  * Your mission design becomes very flexible. New features are dynamically added once delivered into your missions.
+  * Newly developed features planned for the next MOOSE release can be tested and incorporated in your missions early.
+  * You can evaluate and contribute to the stability of the next release.
+  * Your mission creation workflow becomes very flexible. New features are dynamically added to you missions.
 
 Please read the detailed **[Beta Test Guide](Beta_Test_Guide.html)** for more information.
   
@@ -94,15 +94,14 @@ You'll need to browse to the right MOOSE Class within the inheritance tree struc
 
 ## 4.1) MOOSE Demonstration Missions
 
-The framework comes with [demonstration missions](https://github.com/FlightControl-Master/MOOSE_MISSIONS), 
-that you can try out and helps you to code.  
+The framework comes with demonstration missions which can be downloaded [here](https://github.com/FlightControl-Master/MOOSE_PRESENTATIONS/releases), that you can try out and helps you to code.  
 These missions provide examples of defined use cases how the MOOSE framework can be utilized. Each test mission is located in a separate directory, which contains at least one .lua file and .miz file.
 The .lua file contains the mission script file that shows how the use case was implemented.
 You can copy/paste code the code snippets from this .lua file into your missions, as it will accellerate your mission developments.
 You will learn, see, and understand how the different MOOSE classes need to be applied, and how you can create
 more complex mission scenarios by combining these MOOSE classes into a complex but powerful mission engine.
 
-These exact test missions are also demonstrated at the demo videos in the YouTube channel.
+Some of these exact test missions are also demonstrated in a video format on the [YouTube channel](https://www.youtube.com/channel/UCjrA9j5LQoWsG4SpS8i79Qg).
 
 
 
