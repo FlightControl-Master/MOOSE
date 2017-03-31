@@ -47,7 +47,13 @@ Those people who have experience in lua development or are excited to contribute
 
 ### Please consult the [Contribution Guide](Contribution_Guide.html) for more information.
 
-# 3) MOOSE Framework
+# 3) MOOSE Support Channels
+
+MOOSE is broadcasted, documented and supported through various social media channels.  
+
+[Click here for the communities guide of the MOOSE framework](Communities.html).
+
+# 4) MOOSE Framework
 
 The following classes are currently embedded within MOOSE framework and can be included within your mission scripts:
 
@@ -73,7 +79,7 @@ You'll need to browse to the right MOOSE Class within the inheritance tree struc
 ![MOOSE framework](Presentations\MOOSE\Dia2.JPG)
 
 
-## 3.1) MOOSE Demonstration Missions
+## 4.1) MOOSE Demonstration Missions
 
 The framework comes with [demonstration missions](https://github.com/FlightControl-Master/MOOSE_MISSIONS), 
 that you can try out and helps you to code.  
@@ -86,7 +92,7 @@ more complex mission scenarios by combining these MOOSE classes into a complex b
 These exact test missions are also demonstrated at the demo videos in the YouTube channel.
 
 
-## 3.2) MOOSE Core Classes
+## 4.2) MOOSE Core Classes
 
 These classes define the base building blocks of the MOOSE framework. These classes are heavily used within the MOOSE framework.
 
@@ -114,7 +120,7 @@ The POINT_VEC3 class manages the 3D simulation space, while the POINT_VEC2 class
 * [ZONES](Documentation/Zone.html): A set of zone classes that provide the functionality to validate the presence of GROUPS, UNITS, CLIENTS, STATICS within a certain ZONE. The zones can take various forms and can be movable.
 
 
-## 3.3) MOOSE Wrapper Classes
+## 4.3) MOOSE Wrapper Classes
 
 MOOSE Wrapper Classes provide an object oriented hierarchical mechanism to manage the DCS objects within the simulator.
 Wrapper classes provide another easier mechanism to control Groups, Units, Statics, Airbases and other objects.
@@ -146,7 +152,7 @@ The CLIENT class derives from the UNIT class, thus contains the complete UNIT AP
 The STATIC class derives from the POSITIONABLE class, thus contains also the position API set.
 
 
-## 3.4) MOOSE Functional Classes
+## 4.4) MOOSE Functional Classes
 
 MOOSE Functional Classes provide various functions that are useful in mission design.
 
@@ -160,7 +166,7 @@ MOOSE Functional Classes provide various functions that are useful in mission de
 
 * [SCORING](Documentation/Scoring.html): Administer the scoring of player achievements, and create a CSV file logging the scoring events for use at team or squadron websites.
 
-## 3.5) MOOSE AI Controlling Classes
+## 4.5) MOOSE AI Controlling Classes
 
 MOOSE AI Controlling Classes provide mechanisms to control AI over long lasting processes.  
 These AI Controlling Classes are based on FSM (Finite State Machine) Classes, and provided an encapsulated way to make AI behave or execute an activity.
@@ -176,7 +182,7 @@ These AI Controlling Classes are based on FSM (Finite State Machine) Classes, an
 * [AI_CARGO](Documentation/AI_Cargo.html): Make AI behave as cargo. Various CARGO types exist.
 
 
-## 3.6) MOOSE Human Tasking Classes
+## 4.6) MOOSE Human Tasking Classes
 
 MOOSE Tasking Classes provide a comprehensive Mission Orchestration System.
 Through COMMANDCENTERs, multiple logical MISSIONs can be orchestrated for coalitions.
@@ -196,7 +202,7 @@ Each TASK has a TASK ACTION flow, which is the flow that a player (hosted by a U
 * [TASK_CAS](Documentation/Task_A2G.html): Models a CAS Task, where a Player is routed towards an attack zone with enemies nearby, and various ground targets need to be eliminated.
 
 
-## 3.7) MOOSE Action Classes
+## 4.7) MOOSE Action Classes
 
 MOOSE Action Classes are task action sub-flows, that can be used and combined, to quickly define a comprehensive end-to-end task action flow.
 For example, for the SEAD Task, the task action flow combines the actions ASSIGN, ROUTE, ACCOUNT and ASSIST task action sub-flows.

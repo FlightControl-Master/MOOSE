@@ -120,15 +120,66 @@ Therefore, **the recommendation is that your create for each mission a separate 
 The MOOSE test mission folder structure is a good example how this could be organized.
 The LDT has been customized and provides a tool to **automatically** maintain your existing .miz files.
 
-1. Select from the Menu: **File** -> **New** -> **Lua Project**.
+### 2.4.1.1. Select from the Menu: **File** -> **New** -> **Lua Project**.
 
 ![LDT_New_Project](Installation/LDT_New_Project.JPG)
 
-2. A **New Project** dialog box is shown.
+### 2.4.1.2. A **New Project** dialog box is shown.
 
 ![LDT_Project](Installation/LDT_Project.JPG)
 
-3. Type the Project Name: **My Missions**.
+### 2.4.1.3. Type your Project Name: (In my example it is **DCS_Caucasus_Missions**.
+
+
+Note the indicated options in yellow:
+
+  * Note that you can select the option **No execution environment**.
+  * Deselect the option **Create default project template ready to run**.
+
+![LDT_Project](Installation/LDT_Project_My_Missions.JPG)
+
+### 2.4.1.4. Press **Next >**
+
+### 2.4.1.5. Click the **Projects** tab at the top of the window.
+
+![LDT_Project](Installation/LDT_New_Project_Projects.JPG)
+
+### 2.4.1.6. Press the **Add...** button.
+
+### 2.4.1.7. A new windows will be displayed: **Required Project Selection**.
+
+This is an important step. This will _link_ your project to the Moose_Framework project and will activate **intellisense**.
+
+![LDT_Project](Installation/LDT_Select_Moose_Framework.JPG)
+
+### 2.4.1.8. After the selection, press the **OK** button.
+
+### 2.4.1.9. Watch your newly created project in the Script Explorer of LDT.
+
+You can delete the possibly created SRC directory. You won't need it at all.
+
+![LDT_Project](Installation/LDT_Delete_Src.JPG)
+
+### 2.4.1.10. Within your newly created Missions Project, right click and select **New -> Folder**.
+
+As explained above, each of your missions will be stored in a separate folder. Please follow the explanation how to do that.
+
+![LDT_Project](Installation/LDT_Add_Folder.JPG)
+
+### 2.4.1.11. Type the **Folder Name**.
+
+This can be any descriptive text explaining the title of your mission.
+
+![LDT_Project](Installation/LDT_Mission_Folder_Name.JPG)
+
+### 2.4.1.12. In your newly created **Mission Folder**, right click and select **New -> Lua File**.
+
+This will create your **mission script file**, 
+the file that contains all the lua code using the Moose framework using your mission.
+
+### 2.4.1.13. Type the **Lua Mission Script Name**.
+
+![LDT_Project](Installation/LDT_Mission_Lua_File_Name.JPG)
 
 
 ## 2.4.2) Create your first Mission file
@@ -146,16 +197,85 @@ you'll have to include this **Moose.lua** file into your missions:
 
 Voila, MOOSE is now included in your mission. During the execution of this mission, all MOOSE classes will be loaded, and all MOOSE initializations will be exectuted before any other mission action is executed.
 
+Find below a detailed explanation of the actions to follow:
+
+### 2.4.2.1. Open the Mission Editor in DCS, select an empty mission, and click the triggers button.
+
+![LDT_Project](Installation/DCS_Triggers_Empty.JPG)
+
+### 2.4.2.2. Add a new trigger, that will load the Moose.lua file.
+
+Check the cyan colored circles:
+
+  * This trigger is loaded at MISSION START.
+  * It is the first trigger in your mission.
+  * It contains a DO SCRIPT FILE action.
+  * No additional conditions!
+
+![LDT_Project](Installation/DCS_Triggers_Load_Moose_Add.JPG)
+
+### 2.4.2.3. Select the Moose.lua loader from the **Moose Mission Setup** folder in the Moose_Framework pack.
+
+Additional notes:
+
+  * If you've setup a folder link into Saved Games/DCS/Missions/Moose Mission Setup, then you can directly select this folder from **My Missions**.
+  * See point ...
+
+Press the **OK** button.
+
+![LDT_Project](Installation/DCS_Triggers_Load_Moose_Select_File.JPG)
+
+### 2.4.2.4. Check that the Moose.lua file has been correctly added to your Mission.
+
+![LDT_Project](Installation/DCS_Triggers_Load_Moose_File_Added.JPG)
+
+### 2.4.2.5. Add a new trigger, that will load your mission .lua file.
+
+Check the cyan colored circles:
+
+  * This trigger is loaded at MISSION START.
+  * It is the second trigger in your mission.
+  * It contains a DO SCRIPT FILE action.
+  * No additional conditions!
+
+![LDT_Project](Installation/DCS_Triggers_Load_Mission_Add.JPG)
+
+### 2.4.2.6. Select the mission .lua file from your **missions** folder you just created or already have.
+
+Additional notes:
+
+  * If you've setup a folder link into Saved Games/DCS/Missions/Moose Mission Setup, then you can directly select this folder from **My Missions**.
+  * See point ...
+
+Press the **OK** button.
+
+![LDT_Project](Installation/DCS_Triggers_Load_Mission_File_Select.JPG)
+
+### 2.4.2.7. Check that your mission .lua script file has been correctly added to your mission.
+
+![LDT_Project](Installation/DCS_Triggers_Load_Mission_File_Added.JPG)
+
+
 ## 2.4.3) Maintain your .miz files
 
 IMPORTANT NOTE: When a new version of MOOSE is released, you'll have to UPDATE the Moose.lua file in EACH OF YOUR MISSION.
 This can be a tedious task, and for this purpose, a tool has been developed that will update the Moose.lua files automatically within your missions.
 
-# 3) Support Channels
+### 2.4.3.1. Select the **Update SELECTED Mission** from the External Tools in LDT.
 
-MOOSE is broadcasted, documented and supported through various social media channels.  
+This will activate a script that will automatically re-insert your mission .lua file into your mission.
 
-[Click here for the communities guide of the MOOSE framework](Communities.html).
+![LDT_Project](Installation/DCS_Triggers_Load_Mission_File_Added.JPG)
+
+## 2.4.4) Create folder links into your "My Missions" folder in Saved Games/DCS/Missions. 
+
+This trick will save you a lot of time. You need to install the tool ... to create easily new links.
+
+Select from the following possible links that can be created to save you time while browing through the different folders to include script files:
+
+### 2.4.4.1. Create a link to your **Moose Mission Setup** folder ...
+
+### 2.4.4.2. Create a link to your **missions** folder ...
 
 # 4) Demonstration Missions
 
