@@ -6,11 +6,9 @@ and use MOOSE within your missions.
 ## 1.1) MOOSE framework at GitHub
 
 You can find the source of [MOOSE framework on GITHUB](https://github.com/FlightControl-Master/MOOSE/). 
-It is free for download and usage, but it is under license of the GNU 3.0 open source license policy.
-The MOOSE development uses the GITHUB service to enforce and control a structured development within a growing community.
-GITHUB enforces a structured approval process, release and change management, and a communicative distribution and deployment.
-The MOOSE framework development is considered an open source project, where contributors are welcome to contribute on the development.
-Some key users have already started with this process. Contact me if you're interested to contribute.
+It is free for download and usage, since it is released under the GNU 3.0 open source license policy.
+Although the MOOSE contributors and tester are using the GitHub service to enforces a structured approval process, release and change management, and a communicative distribution and deployment, you, as a mission designer, don't need to mess with it. Still, if you are interrested intesting the latest features of MOOSE of in adding your own, you can read the [relevant](http://flightcontrol-master.github.io/MOOSE/Beta_Test_Guide.html) [guides](http://flightcontrol-master.github.io/MOOSE/Contribution_Guide.html) and/or contact FlightControl 
+The MOOSE framework development is an open source project, and as such, contributors are welcome and encouraged to contribute on the development.Some key users have already started with this process.
 
 ## 1.2) Eclipse LDT
 
@@ -46,7 +44,8 @@ The delivery of MOOSE follows a structured release process. Over time, new featu
 1. If you don't have JAVA yet, you may have to install [java](https://www.java.com/en/download) first. 
 2. Download and Install [Eclipse LDT](https://eclipse.org/ldt) on your Windows 64 bit system.
 
-Now you should have a working LDT on your system.
+TNow you should have a working LDT on your system.
+Don't skip this step, LDT is a game-changer. Don't believe us ? Well we challenge you to test and tell us what you think ! Once you tried coding with intellisense, you won't go back !
 
 ## 2.3) Configure your LDT for the usage of MOOSE.
 
@@ -66,7 +65,7 @@ When you open EclipseLDT for the first time, it will ask you where to put your *
 
 ### 2.3.2) Create a new **Project** in LDT.
 
-Here we will create a **New Project** called **Moose_Framework** in your LDT environment.
+Here, we will create a **New Project** called **Moose_Framework** in your LDT environment.
 The project details are already defined within the MOOSE framework repository, 
 which is unzipped on your local MOOSE directory on your PC.
 We will link into that directory and automatically load the Project properties.
@@ -184,7 +183,7 @@ the file that contains all the lua code using the Moose framework using your mis
 
 ## 2.4.2) Create your first Mission file
 
-In the MOOSE package, a file named **Moose.lua** can be found. 
+In the root of the MOOSE package, a file named **Moose.lua** can be found. 
 In order to create or design a mission using the MOOSE framework, 
 you'll have to include this **Moose.lua** file into your missions:
 
@@ -269,6 +268,8 @@ This will activate a script that will automatically re-insert your mission .lua 
 
 ## 2.4.4) Create folder links into your "My Missions" folder in Saved Games/DCS/Missions. 
 
+***TODO : Detail how hard links work, explain how they help the wworkflow***
+
 This trick will save you a lot of time. You need to install the tool ... to create easily new links.
 
 Select from the following possible links that can be created to save you time while browing through the different folders to include script files:
@@ -279,13 +280,7 @@ Select from the following possible links that can be created to save you time wh
 
 # 4) Demonstration Missions
 
-The framework comes with [demonstration missions](https://github.com/FlightControl-Master/MOOSE_MISSIONS), 
-that you can try out and helps you to code.  
-These missions provide examples of defined use cases how the MOOSE framework can be utilized. Each test mission is located in a separate directory, which contains at least one .lua file and .miz file.
-The .lua file contains the mission script file that shows how the use case was implemented.
-You can copy/paste code the code snippets from this .lua file into your missions, as it will accellerate your mission developments.
-You will learn, see, and understand how the different MOOSE classes need to be applied, and how you can create
-more complex mission scenarios by combining these MOOSE classes into a complex but powerful mission engine.
-
-These exact demonstration missions are also explained at the demo videos in the YouTube channel.
+The framework comes with demonstration missions which can be downloaded [here](https://github.com/FlightControl-Master/MOOSE_PRESENTATIONS/releases), that you can try out and helps you to code.   
+These missions provide examples of defined use cases how the MOOSE framework can be utilized. Each test mission is located in a separate directory, which contains at least one .lua file and .miz file. The .lua file contains the mission script file that shows how the use case was implemented. You can copy/paste code the code snippets from this .lua file into your missions, as it will accellerate your mission developments. You will learn, see, and understand how the different MOOSE classes need to be applied, and how you can create more complex mission scenarios by combining these MOOSE classes into a complex but powerful mission engine.
+Some of these exact test missions are also demonstrated in a video format on the [YouTube channel](https://www.youtube.com/channel/UCjrA9j5LQoWsG4SpS8i79Qg).
 
