@@ -17,6 +17,8 @@ Within the community, key users will start supporting, documenting, explaining a
 It is the ambition to grow this framework as a de-facto standard for mission designers to use.
 
 
+
+
 # 2) MOOSE usage
 
 The delivery of MOOSE follows a structured release process. Over time, new features are added that can be used in your mission.
@@ -25,9 +27,13 @@ The delivery of MOOSE follows a structured release process. Over time, new featu
 
 There are 3 different ways how you can use MOOSE, each with a different engagement and complexity level:
 
+
+
 ## 2.1) Use MOOSE as a normal user
 
 ### Refer to the detailed [Usage Guide](Usage_Guide.html) for more information.
+
+
 
 ## 2.2) Beta test MOOSE
 
@@ -41,17 +47,25 @@ As a return or as a reward, missions designers get:
 
 ### Please read the detailed [Beta Test Guide](Beta_Test_Guide.html) for more information.
 
+
+
 ## 2.3) Contribute on the MOOSE development
 
 Those people who have experience in lua development or are excited to contribute to the MOOSE project are welcome.
 
 ### Please consult the [Contribution Guide](Contribution_Guide.html) for more information.
 
+
+
+
 # 3) MOOSE Support Channels
 
 MOOSE is broadcasted, documented and supported through various social media channels.  
 
 [Click here for the communities guide of the MOOSE framework](Communities.html).
+
+
+
 
 # 4) MOOSE Framework
 
@@ -79,6 +93,7 @@ You'll need to browse to the right MOOSE Class within the inheritance tree struc
 ![MOOSE framework](Presentations\MOOSE\Dia2.JPG)
 
 
+
 ## 4.1) MOOSE Demonstration Missions
 
 The framework comes with [demonstration missions](https://github.com/FlightControl-Master/MOOSE_MISSIONS), 
@@ -90,6 +105,7 @@ You will learn, see, and understand how the different MOOSE classes need to be a
 more complex mission scenarios by combining these MOOSE classes into a complex but powerful mission engine.
 
 These exact test missions are also demonstrated at the demo videos in the YouTube channel.
+
 
 
 ## 4.2) MOOSE Core Classes
@@ -118,6 +134,7 @@ Iterators are available that iterate through the GROUPSET, calling a function fo
 The POINT_VEC3 class manages the 3D simulation space, while the POINT_VEC2 class manages the 2D simulation space.
 
 * [ZONES](Documentation/Zone.html): A set of zone classes that provide the functionality to validate the presence of GROUPS, UNITS, CLIENTS, STATICS within a certain ZONE. The zones can take various forms and can be movable.
+
 
 
 ## 4.3) MOOSE Wrapper Classes
@@ -152,6 +169,7 @@ The CLIENT class derives from the UNIT class, thus contains the complete UNIT AP
 The STATIC class derives from the POSITIONABLE class, thus contains also the position API set.
 
 
+
 ## 4.4) MOOSE Functional Classes
 
 MOOSE Functional Classes provide various functions that are useful in mission design.
@@ -165,6 +183,8 @@ MOOSE Functional Classes provide various functions that are useful in mission de
 * [DETECTION](Documentation/Detection.html): Detect other units using the available sensors of the detection unit. The DETECTION_BASE derived classes will provide different methods how the sets of detected objects are built.
 
 * [SCORING](Documentation/Scoring.html): Administer the scoring of player achievements, and create a CSV file logging the scoring events for use at team or squadron websites.
+
+
 
 ## 4.5) MOOSE AI Controlling Classes
 
@@ -180,6 +200,7 @@ These AI Controlling Classes are based on FSM (Finite State Machine) Classes, an
 * [AI_CAS](Documentation/AI_Cas.html): Make an alive AI Group perform Close Air Support in a dynamic process.
 
 * [AI_CARGO](Documentation/AI_Cargo.html): Make AI behave as cargo. Various CARGO types exist.
+
 
 
 ## 4.6) MOOSE Human Tasking Classes
@@ -202,6 +223,7 @@ Each TASK has a TASK ACTION flow, which is the flow that a player (hosted by a U
 * [TASK_CAS](Documentation/Task_A2G.html): Models a CAS Task, where a Player is routed towards an attack zone with enemies nearby, and various ground targets need to be eliminated.
 
 
+
 ## 4.7) MOOSE Action Classes
 
 MOOSE Action Classes are task action sub-flows, that can be used and combined, to quickly define a comprehensive end-to-end task action flow.
@@ -217,7 +239,9 @@ For example, for the SEAD Task, the task action flow combines the actions ASSIGN
 
 
 
-# 4) Credits
+
+
+# 5) Credits
 
 Note that most of the framework is based on code i've written myself, 
 but some code of it is also based on code that i've seen as great scripting code and ideas, 
