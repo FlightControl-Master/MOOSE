@@ -729,7 +729,8 @@ function SCORING:OnEventPlayerLeaveUnit( Event )
   if Event.IniUnit then
     local Menu = self:GetState( Event.IniUnit, "ScoringMenu" ) -- Core.Menu#MENU_GROUP
     if Menu then
-      Menu:Remove()
+      -- TODO: Check if this fixes #281.
+      --Menu:Remove()
     end
   end
 end
