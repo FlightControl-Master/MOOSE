@@ -328,3 +328,99 @@ function RADIO:StopBroadcast()
   end
   return self
 end
+
+
+
+-- @type BEACON
+-- @field Wrapper.Positionable#POSITIONABLE Positionable The beacon emitter
+-- @field #string FileName Name of the sound file
+-- @field #number Frequency Frequency of the transmission in Hz
+-- @field #number Modulation Modulation of the transmission (either radio.modulation.AM or radio.modulation.FM)
+-- @field #number Power Power of the antenna is Watts
+-- @field #string TACANMode
+-- @field #number TACANChannel
+-- @field #number TACANFrequency
+-- @field #number BeaconDuration in s
+-- @field #string _TransmissionID
+-- @extends Core.Base#BASE
+BEACON = {
+  ClassName = "BEACON",
+  FileName = "",
+  Frequency = 0,
+  Modulation = radio.modulation.AM,
+  Power = 100,
+  TACANMode = "X"
+  TACANChannel = 0
+  TACANFrequency = 0
+  BeaconDuration = 0
+  _TransmissionID = 0
+}
+
+--- Create a new BEACON Object. This doesn't activate the beacon, though, use @{#BEACON.AATACAN} or @{#BEACON.Generic}
+-- @param #BEACON self
+-- @param Wrapper.Positionable#POSITIONABLE Positionable The @{Positionable} that will receive radio capabilities.
+-- @return #BEACON Beacon
+-- @return #nil If Positionable is invalid
+-- @usage
+-- -- If you want to create a BEACON, you probably should use @{Positionable#POSITIONABLE.GetBeacon}() instead
+function BEACON:New(Positionable, BeaconDuration)
+  local self = BASE:Inherit( self, BASE:New() )
+  
+  self:F(Positionable)
+  
+  if type(BeaconDuration) == "number" then
+    self.BeaconDuration = math.abs(math.floor(BeaconDuration))
+  end
+  
+  if Positionable:GetPointVec2() then -- It's stupid, but the only way I found to make sure positionable is valid
+    self.Positionable = Positionable
+    return self
+  end
+  
+  self:E({"The passed positionable is invalid, no BEACON created", Positionable})
+  return nil
+end
+
+
+--- Transforms a TACAN Channel/Mode couple into a frequency in Hz
+-- @param #BEACON self
+-- @param #number TACANChannel
+-- @param #string TACANMode
+-- @return #number Frequecy
+-- @return #nil if parameters are invalid
+function BEACON:_TACANToFrequency(TACANChannel, TACANMode)
+
+  if type(TACANChannel) ~= "number" or type(TACANMode) ~= "string" then
+    return nil -- error in arguments
+  end
+  
+-- This code is largely based on ED's code, in DCS World\Scripts\World\Radio\BeaconTypes.lua, line 137.
+-- I have no idea what it does but it seems to work
+  local A = 1151 -- 'X', channel >= 64
+  local B = 64   -- channel >= 64
+  
+  if TACANChannel < 64 then
+    B = 1
+  end
+  
+  if TACANMode == 'Y' then
+    A = 1025
+    if TACANChannel < 64 then
+      A = 1088
+    end
+  else -- 'X'
+    if TACANChannel < 64 then
+      A = 962
+    end
+  end
+  
+  return (A + TACANChannel - B) * 1000000
+end
+
+--- Activates a AATACAN BEACON
+-- @param #BEACON self
+-- @param #number TACANChannel (the "10" part in "10X")
+-- @param #string TACANMode (the "X" part in "10X")
+-- @param #boolean Tanker
+-- @return #BEACON self
+function AATACAN()
