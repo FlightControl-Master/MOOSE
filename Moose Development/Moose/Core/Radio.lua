@@ -444,7 +444,7 @@ function BEACON:AATACAN(TACANChannel, TACANMode, Bearing, Tanker)
     IsValid = 0
   end
   
-  -- The values type and system params in the ActivateBeacon command aren't pulled from my butt, 
+  -- Contrary to appearances, the values for the type and system params in the ActivateBeacon command aren't pulled from my butt, 
   -- they are found in DCS World\Scripts\World\Radio\BeaconTypes.lua and DCS World\Scripts\World\Radio\BeaconSites.lua
   if IsValid then
     if Tanker then
