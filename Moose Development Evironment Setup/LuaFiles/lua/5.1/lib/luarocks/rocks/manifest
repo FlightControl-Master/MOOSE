@@ -1,0 +1,599 @@
+commands = {
+   luadocumentor = {
+      "luadocumentor/0.1.5-1"
+   }
+}
+dependencies = {
+   checks = {
+      ["1.0-1"] = {
+         {
+            constraints = {
+               {
+                  op = ">=",
+                  version = {
+                     5, 1, string = "5.1"
+                  }
+               }
+            },
+            name = "lua"
+         }
+      }
+   },
+   luadocumentor = {
+      ["0.1.5-1"] = {
+         {
+            constraints = {
+               {
+                  op = "~>",
+                  version = {
+                     5, 1, string = "5.1"
+                  }
+               }
+            },
+            name = "lua"
+         }, {
+            constraints = {
+               {
+                  op = "~>",
+                  version = {
+                     1, 6, string = "1.6"
+                  }
+               }
+            },
+            name = "luafilesystem"
+         }, {
+            constraints = {
+               {
+                  op = "~>",
+                  version = {
+                     0, 32, string = "0.32"
+                  }
+               }
+            },
+            name = "markdown"
+         }, {
+            constraints = {
+               {
+                  op = "~>",
+                  version = {
+                     0, 7, string = "0.7"
+                  }
+               }
+            },
+            name = "metalua-compiler"
+         }, {
+            constraints = {
+               {
+                  op = "~>",
+                  version = {
+                     0, 9, string = "0.9"
+                  }
+               }
+            },
+            name = "penlight"
+         }
+      }
+   },
+   luafilesystem = {
+      ["1.6.3-2"] = {
+         {
+            constraints = {
+               {
+                  op = ">=",
+                  version = {
+                     5, 1, string = "5.1"
+                  }
+               }
+            },
+            name = "lua"
+         }
+      }
+   },
+   markdown = {
+      ["0.32-2"] = {
+         {
+            constraints = {
+               {
+                  op = ">=",
+                  version = {
+                     5, 1, string = "5.1"
+                  }
+               }
+            },
+            name = "lua"
+         }
+      }
+   },
+   ["metalua-compiler"] = {
+      ["0.7.3-1"] = {
+         {
+            constraints = {
+               {
+                  op = "~>",
+                  version = {
+                     5, 1, string = "5.1"
+                  }
+               }
+            },
+            name = "lua"
+         }, {
+            constraints = {
+               {
+                  op = "~>",
+                  version = {
+                     1, 6, string = "1.6"
+                  }
+               }
+            },
+            name = "luafilesystem"
+         }, {
+            constraints = {
+               {
+                  op = ">=",
+                  version = {
+                     0, 7, 3, string = "0.7.3"
+                  }
+               }
+            },
+            name = "metalua-parser"
+         }
+      }
+   },
+   ["metalua-parser"] = {
+      ["0.7.3-2"] = {
+         {
+            constraints = {
+               {
+                  op = ">=",
+                  version = {
+                     5, 1, string = "5.1"
+                  }
+               }
+            },
+            name = "lua"
+         }
+      }
+   },
+   penlight = {
+      ["0.9.8-1"] = {
+         {
+            constraints = {},
+            name = "luafilesystem"
+         }
+      }
+   }
+}
+modules = {
+   checks = {
+      "checks/1.0-1"
+   },
+   defaultcss = {
+      "luadocumentor/0.1.5-1"
+   },
+   docgenerator = {
+      "luadocumentor/0.1.5-1"
+   },
+   extractors = {
+      "luadocumentor/0.1.5-1"
+   },
+   ["fs.lfs"] = {
+      "luadocumentor/0.1.5-1"
+   },
+   lddextractor = {
+      "luadocumentor/0.1.5-1"
+   },
+   lfs = {
+      "luafilesystem/1.6.3-2"
+   },
+   markdown = {
+      "markdown/0.32-2"
+   },
+   ["metalua.compiler"] = {
+      "metalua-parser/0.7.3-2"
+   },
+   ["metalua.compiler.bytecode"] = {
+      "metalua-compiler/0.7.3-1"
+   },
+   ["metalua.compiler.bytecode.compile"] = {
+      "metalua-compiler/0.7.3-1"
+   },
+   ["metalua.compiler.bytecode.lcode"] = {
+      "metalua-compiler/0.7.3-1"
+   },
+   ["metalua.compiler.bytecode.ldump"] = {
+      "metalua-compiler/0.7.3-1"
+   },
+   ["metalua.compiler.bytecode.lopcodes"] = {
+      "metalua-compiler/0.7.3-1"
+   },
+   ["metalua.compiler.globals"] = {
+      "metalua-compiler/0.7.3-1"
+   },
+   ["metalua.compiler.parser"] = {
+      "metalua-parser/0.7.3-2"
+   },
+   ["metalua.compiler.parser.annot.generator"] = {
+      "metalua-parser/0.7.3-2"
+   },
+   ["metalua.compiler.parser.annot.grammar"] = {
+      "metalua-parser/0.7.3-2"
+   },
+   ["metalua.compiler.parser.expr"] = {
+      "metalua-parser/0.7.3-2"
+   },
+   ["metalua.compiler.parser.ext"] = {
+      "metalua-parser/0.7.3-2"
+   },
+   ["metalua.compiler.parser.lexer"] = {
+      "metalua-parser/0.7.3-2"
+   },
+   ["metalua.compiler.parser.meta"] = {
+      "metalua-parser/0.7.3-2"
+   },
+   ["metalua.compiler.parser.misc"] = {
+      "metalua-parser/0.7.3-2"
+   },
+   ["metalua.compiler.parser.stat"] = {
+      "metalua-parser/0.7.3-2"
+   },
+   ["metalua.compiler.parser.table"] = {
+      "metalua-parser/0.7.3-2"
+   },
+   ["metalua.grammar.generator"] = {
+      "metalua-parser/0.7.3-2"
+   },
+   ["metalua.grammar.lexer"] = {
+      "metalua-parser/0.7.3-2"
+   },
+   ["metalua.loader"] = {
+      "metalua-compiler/0.7.3-1"
+   },
+   ["metalua.pprint"] = {
+      "metalua-parser/0.7.3-2"
+   },
+   ["metalua/compiler/ast_to_src.mlua"] = {
+      "metalua-compiler/0.7.3-1"
+   },
+   ["metalua/extension/comprehension.mlua"] = {
+      "metalua-compiler/0.7.3-1"
+   },
+   ["metalua/extension/match.mlua"] = {
+      "metalua-compiler/0.7.3-1"
+   },
+   ["metalua/repl.mlua"] = {
+      "metalua-compiler/0.7.3-1"
+   },
+   ["metalua/treequery.mlua"] = {
+      "metalua-compiler/0.7.3-1"
+   },
+   ["metalua/treequery/walk.mlua"] = {
+      "metalua-compiler/0.7.3-1"
+   },
+   ["models.apimodel"] = {
+      "luadocumentor/0.1.5-1"
+   },
+   ["models.apimodelbuilder"] = {
+      "luadocumentor/0.1.5-1"
+   },
+   ["models.internalmodel"] = {
+      "luadocumentor/0.1.5-1"
+   },
+   ["models.ldparser"] = {
+      "luadocumentor/0.1.5-1"
+   },
+   ["models/internalmodelbuilder.mlua"] = {
+      "luadocumentor/0.1.5-1"
+   },
+   pl = {
+      "penlight/0.9.8-1"
+   },
+   ["pl.Date"] = {
+      "penlight/0.9.8-1"
+   },
+   ["pl.List"] = {
+      "penlight/0.9.8-1"
+   },
+   ["pl.Map"] = {
+      "penlight/0.9.8-1"
+   },
+   ["pl.MultiMap"] = {
+      "penlight/0.9.8-1"
+   },
+   ["pl.OrderedMap"] = {
+      "penlight/0.9.8-1"
+   },
+   ["pl.Set"] = {
+      "penlight/0.9.8-1"
+   },
+   ["pl.app"] = {
+      "penlight/0.9.8-1"
+   },
+   ["pl.array2d"] = {
+      "penlight/0.9.8-1"
+   },
+   ["pl.class"] = {
+      "penlight/0.9.8-1"
+   },
+   ["pl.comprehension"] = {
+      "penlight/0.9.8-1"
+   },
+   ["pl.config"] = {
+      "penlight/0.9.8-1"
+   },
+   ["pl.data"] = {
+      "penlight/0.9.8-1"
+   },
+   ["pl.dir"] = {
+      "penlight/0.9.8-1"
+   },
+   ["pl.file"] = {
+      "penlight/0.9.8-1"
+   },
+   ["pl.func"] = {
+      "penlight/0.9.8-1"
+   },
+   ["pl.input"] = {
+      "penlight/0.9.8-1"
+   },
+   ["pl.lapp"] = {
+      "penlight/0.9.8-1"
+   },
+   ["pl.lexer"] = {
+      "penlight/0.9.8-1"
+   },
+   ["pl.luabalanced"] = {
+      "penlight/0.9.8-1"
+   },
+   ["pl.operator"] = {
+      "penlight/0.9.8-1"
+   },
+   ["pl.path"] = {
+      "penlight/0.9.8-1"
+   },
+   ["pl.permute"] = {
+      "penlight/0.9.8-1"
+   },
+   ["pl.platf.luajava"] = {
+      "penlight/0.9.8-1"
+   },
+   ["pl.pretty"] = {
+      "penlight/0.9.8-1"
+   },
+   ["pl.seq"] = {
+      "penlight/0.9.8-1"
+   },
+   ["pl.sip"] = {
+      "penlight/0.9.8-1"
+   },
+   ["pl.strict"] = {
+      "penlight/0.9.8-1"
+   },
+   ["pl.stringio"] = {
+      "penlight/0.9.8-1"
+   },
+   ["pl.stringx"] = {
+      "penlight/0.9.8-1"
+   },
+   ["pl.tablex"] = {
+      "penlight/0.9.8-1"
+   },
+   ["pl.template"] = {
+      "penlight/0.9.8-1"
+   },
+   ["pl.test"] = {
+      "penlight/0.9.8-1"
+   },
+   ["pl.text"] = {
+      "penlight/0.9.8-1"
+   },
+   ["pl.utils"] = {
+      "penlight/0.9.8-1"
+   },
+   ["pl.xml"] = {
+      "penlight/0.9.8-1"
+   },
+   ["template.file"] = {
+      "luadocumentor/0.1.5-1"
+   },
+   ["template.index"] = {
+      "luadocumentor/0.1.5-1"
+   },
+   ["template.index.recordtypedef"] = {
+      "luadocumentor/0.1.5-1"
+   },
+   ["template.item"] = {
+      "luadocumentor/0.1.5-1"
+   },
+   ["template.page"] = {
+      "luadocumentor/0.1.5-1"
+   },
+   ["template.recordtypedef"] = {
+      "luadocumentor/0.1.5-1"
+   },
+   ["template.usage"] = {
+      "luadocumentor/0.1.5-1"
+   },
+   ["template.utils"] = {
+      "luadocumentor/0.1.5-1"
+   },
+   templateengine = {
+      "luadocumentor/0.1.5-1"
+   }
+}
+repository = {
+   checks = {
+      ["1.0-1"] = {
+         {
+            arch = "installed",
+            commands = {},
+            dependencies = {},
+            modules = {
+               checks = "checks.dll"
+            }
+         }
+      }
+   },
+   luadocumentor = {
+      ["0.1.5-1"] = {
+         {
+            arch = "installed",
+            commands = {
+               luadocumentor = "luadocumentor"
+            },
+            dependencies = {
+               luafilesystem = "1.6.3-2",
+               markdown = "0.32-2",
+               ["metalua-compiler"] = "0.7.3-1",
+               ["metalua-parser"] = "0.7.3-2",
+               penlight = "0.9.8-1"
+            },
+            modules = {
+               defaultcss = "defaultcss.lua",
+               docgenerator = "docgenerator.lua",
+               extractors = "extractors.lua",
+               ["fs.lfs"] = "fs/lfs.lua",
+               lddextractor = "lddextractor.lua",
+               ["models.apimodel"] = "models/apimodel.lua",
+               ["models.apimodelbuilder"] = "models/apimodelbuilder.lua",
+               ["models.internalmodel"] = "models/internalmodel.lua",
+               ["models.ldparser"] = "models/ldparser.lua",
+               ["models/internalmodelbuilder.mlua"] = "models/internalmodelbuilder.mlua",
+               ["template.file"] = "template/file.lua",
+               ["template.index"] = "template/index.lua",
+               ["template.index.recordtypedef"] = "template/index/recordtypedef.lua",
+               ["template.item"] = "template/item.lua",
+               ["template.page"] = "template/page.lua",
+               ["template.recordtypedef"] = "template/recordtypedef.lua",
+               ["template.usage"] = "template/usage.lua",
+               ["template.utils"] = "template/utils.lua",
+               templateengine = "templateengine.lua"
+            }
+         }
+      }
+   },
+   luafilesystem = {
+      ["1.6.3-2"] = {
+         {
+            arch = "installed",
+            commands = {},
+            dependencies = {},
+            modules = {
+               lfs = "lfs.dll"
+            }
+         }
+      }
+   },
+   markdown = {
+      ["0.32-2"] = {
+         {
+            arch = "installed",
+            commands = {},
+            dependencies = {},
+            modules = {
+               markdown = "markdown.lua"
+            }
+         }
+      }
+   },
+   ["metalua-compiler"] = {
+      ["0.7.3-1"] = {
+         {
+            arch = "installed",
+            commands = {},
+            dependencies = {
+               luafilesystem = "1.6.3-2",
+               ["metalua-parser"] = "0.7.3-2"
+            },
+            modules = {
+               ["metalua.compiler.bytecode"] = "metalua/compiler/bytecode.lua",
+               ["metalua.compiler.bytecode.compile"] = "metalua/compiler/bytecode/compile.lua",
+               ["metalua.compiler.bytecode.lcode"] = "metalua/compiler/bytecode/lcode.lua",
+               ["metalua.compiler.bytecode.ldump"] = "metalua/compiler/bytecode/ldump.lua",
+               ["metalua.compiler.bytecode.lopcodes"] = "metalua/compiler/bytecode/lopcodes.lua",
+               ["metalua.compiler.globals"] = "metalua/compiler/globals.lua",
+               ["metalua.loader"] = "metalua/loader.lua",
+               ["metalua/compiler/ast_to_src.mlua"] = "metalua/compiler/ast_to_src.mlua",
+               ["metalua/extension/comprehension.mlua"] = "metalua/extension/comprehension.mlua",
+               ["metalua/extension/match.mlua"] = "metalua/extension/match.mlua",
+               ["metalua/repl.mlua"] = "metalua/repl.mlua",
+               ["metalua/treequery.mlua"] = "metalua/treequery.mlua",
+               ["metalua/treequery/walk.mlua"] = "metalua/treequery/walk.mlua"
+            }
+         }
+      }
+   },
+   ["metalua-parser"] = {
+      ["0.7.3-2"] = {
+         {
+            arch = "installed",
+            commands = {},
+            dependencies = {},
+            modules = {
+               ["metalua.compiler"] = "metalua/compiler.lua",
+               ["metalua.compiler.parser"] = "metalua/compiler/parser.lua",
+               ["metalua.compiler.parser.annot.generator"] = "metalua/compiler/parser/annot/generator.lua",
+               ["metalua.compiler.parser.annot.grammar"] = "metalua/compiler/parser/annot/grammar.lua",
+               ["metalua.compiler.parser.expr"] = "metalua/compiler/parser/expr.lua",
+               ["metalua.compiler.parser.ext"] = "metalua/compiler/parser/ext.lua",
+               ["metalua.compiler.parser.lexer"] = "metalua/compiler/parser/lexer.lua",
+               ["metalua.compiler.parser.meta"] = "metalua/compiler/parser/meta.lua",
+               ["metalua.compiler.parser.misc"] = "metalua/compiler/parser/misc.lua",
+               ["metalua.compiler.parser.stat"] = "metalua/compiler/parser/stat.lua",
+               ["metalua.compiler.parser.table"] = "metalua/compiler/parser/table.lua",
+               ["metalua.grammar.generator"] = "metalua/grammar/generator.lua",
+               ["metalua.grammar.lexer"] = "metalua/grammar/lexer.lua",
+               ["metalua.pprint"] = "metalua/pprint.lua"
+            }
+         }
+      }
+   },
+   penlight = {
+      ["0.9.8-1"] = {
+         {
+            arch = "installed",
+            commands = {},
+            dependencies = {
+               luafilesystem = "1.6.3-2"
+            },
+            modules = {
+               pl = "pl/init.lua",
+               ["pl.Date"] = "pl/Date.lua",
+               ["pl.List"] = "pl/List.lua",
+               ["pl.Map"] = "pl/Map.lua",
+               ["pl.MultiMap"] = "pl/MultiMap.lua",
+               ["pl.OrderedMap"] = "pl/OrderedMap.lua",
+               ["pl.Set"] = "pl/Set.lua",
+               ["pl.app"] = "pl/app.lua",
+               ["pl.array2d"] = "pl/array2d.lua",
+               ["pl.class"] = "pl/class.lua",
+               ["pl.comprehension"] = "pl/comprehension.lua",
+               ["pl.config"] = "pl/config.lua",
+               ["pl.data"] = "pl/data.lua",
+               ["pl.dir"] = "pl/dir.lua",
+               ["pl.file"] = "pl/file.lua",
+               ["pl.func"] = "pl/func.lua",
+               ["pl.input"] = "pl/input.lua",
+               ["pl.lapp"] = "pl/lapp.lua",
+               ["pl.lexer"] = "pl/lexer.lua",
+               ["pl.luabalanced"] = "pl/luabalanced.lua",
+               ["pl.operator"] = "pl/operator.lua",
+               ["pl.path"] = "pl/path.lua",
+               ["pl.permute"] = "pl/permute.lua",
+               ["pl.platf.luajava"] = "pl/platf/luajava.lua",
+               ["pl.pretty"] = "pl/pretty.lua",
+               ["pl.seq"] = "pl/seq.lua",
+               ["pl.sip"] = "pl/sip.lua",
+               ["pl.strict"] = "pl/strict.lua",
+               ["pl.stringio"] = "pl/stringio.lua",
+               ["pl.stringx"] = "pl/stringx.lua",
+               ["pl.tablex"] = "pl/tablex.lua",
+               ["pl.template"] = "pl/template.lua",
+               ["pl.test"] = "pl/test.lua",
+               ["pl.text"] = "pl/text.lua",
+               ["pl.utils"] = "pl/utils.lua",
+               ["pl.xml"] = "pl/xml.lua"
+            }
+         }
+      }
+   }
+}

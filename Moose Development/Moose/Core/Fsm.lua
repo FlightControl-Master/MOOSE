@@ -86,7 +86,6 @@
 
 do -- FSM
 
-  --- FSM class
   --- @type FSM
   -- @extends Core.Base#BASE
   
@@ -1102,7 +1101,7 @@ do -- FSM_TASK
   --- FSM_TASK class
   -- @type FSM_TASK
   -- @field Tasking.Task#TASK Task
-  -- @extends Core.Fsm#FSM
+  -- @extends #FSM
    
   --- # FSM_TASK, extends @{#FSM}
   --

@@ -368,10 +368,7 @@ do -- TASK_SEAD
   -- @param Tasking.Mission#MISSION Mission
   -- @param Set#SET_GROUP SetGroup The set of groups for which the Task can be assigned.
   -- @param #string TaskName The name of the Task.
-  -- @param Set#SET_UNIT UnitSetTargets
-  -- @param #number TargetDistance The distance to Target when the Player is considered to have "arrived" at the engagement range.
-  -- @param Core.Zone#ZONE_BASE TargetZone The target zone, if known.
-  -- If the TargetZone parameter is specified, the player will be routed to the center of the zone where all the targets are assumed to be.
+  -- @param Set#SET_UNIT TargetSetUnit 
   -- @return #TASK_SEAD self
   function TASK_SEAD:New( Mission, SetGroup, TaskName, TargetSetUnit )
     local self = BASE:Inherit( self, TASK_A2G:New( Mission, SetGroup, TaskName, TargetSetUnit, "SEAD" ) ) -- #TASK_SEAD
