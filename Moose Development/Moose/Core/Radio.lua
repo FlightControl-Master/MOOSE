@@ -349,10 +349,10 @@ BEACON = {
   Frequency = 0,
   Modulation = radio.modulation.AM,
   Power = 100,
-  TACANMode = "X"
-  TACANChannel = 0
-  TACANFrequency = 0
-  BeaconDuration = 0
+  TACANMode = "X",
+  TACANChannel = 0,
+  TACANFrequency = 0,
+  BeaconDuration = 0,
   _TransmissionID = 0
 }
 
@@ -389,9 +389,12 @@ end
 -- @return #number Frequecy
 -- @return #nil if parameters are invalid
 function BEACON:_TACANToFrequency(TACANChannel, TACANMode)
+  self:F3({TACANChannel, TACANMode})
 
-  if type(TACANChannel) ~= "number" or type(TACANMode) ~= "string" then
-    return nil -- error in arguments
+  if type(TACANChannel) ~= "number" then
+      if TACANMode ~= "X" and TACANMode ~= "Y" then
+        return nil -- error in arguments
+      end
   end
   
 -- This code is largely based on ED's code, in DCS World\Scripts\World\Radio\BeaconTypes.lua, line 137.
@@ -421,6 +424,42 @@ end
 -- @param #BEACON self
 -- @param #number TACANChannel (the "10" part in "10X")
 -- @param #string TACANMode (the "X" part in "10X")
+-- @param #boolean Bearing
 -- @param #boolean Tanker
 -- @return #BEACON self
-function AATACAN()
+function BEACON:AATACAN(TACANChannel, TACANMode, Bearing, Tanker)
+  self:F({TACANChannel, TACANMode, Tanker})
+  
+  local IsValid = 1
+  
+  if not self.Positionable:IsAir() then
+    self:E({"The POSITIONABLE you want to attach the AA Tacan Beacon is not an aircraft ! The BEACON is not emitting", self.Positionable})
+    IsValid = 0
+  end
+    
+  
+  local Frequency = self:_TACANToFrequency(TACANChannel, TACANMode)
+  if not Frequency then 
+    self:E({"The passed TACAN channel is invalid, the BEACON is not emitting"})
+    IsValid = 0
+  end
+  
+  -- The values type and system params in the ActivateBeacon command aren't pulled from my butt, 
+  -- they are found in DCS World\Scripts\World\Radio\BeaconTypes.lua and DCS World\Scripts\World\Radio\BeaconSites.lua
+  if IsValid then
+    if Tanker then
+      if TACANMode == "X" then
+        self.Positionable:SetCommand({
+        id = "ActivateBeacon",
+        params = {
+          type = 4,
+          system = ,
+          callsign = callsign,
+          frequency = getTACANFrequency(channelNum, channelMode),
+          bearing = 
+          }
+        })
+      end
+    end
+  end
+end
