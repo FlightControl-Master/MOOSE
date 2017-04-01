@@ -237,6 +237,12 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).GetHeading">GROUP:GetHeading()</a></td>
+		<td class="summary">
+<p>Returns the mean heading of every UNIT in the GROUP in degrees</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(GROUP).GetInitialSize">GROUP:GetInitialSize()</a></td>
 		<td class="summary">
 <ul>
@@ -269,9 +275,21 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).GetPointVec2">GROUP:GetPointVec2()</a></td>
+		<td class="summary">
+<p>Returns a POINT_VEC2 object indicating the point in 2D of the first UNIT of the GROUP within the mission.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(GROUP).GetPositionVec3">GROUP:GetPositionVec3()</a></td>
 		<td class="summary">
 <p>Returns the <a href="DCSTypes.html##(Position3)">DCSTypes#Position3</a> position vectors indicating the point and direction vectors in 3D of the POSITIONABLE within the mission.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).GetRandomVec3">GROUP:GetRandomVec3(Radius)</a></td>
+		<td class="summary">
+<p>Returns a random <a href="DCSTypes.html##(Vec3)">DCSTypes#Vec3</a> vector (point in 3D of the UNIT within the mission) within a range around the first UNIT of the GROUP.</p>
 </td>
 		</tr>
 		<tr>
@@ -871,6 +889,34 @@ The DCS Units.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(GROUP).GetHeading" >
+<strong>GROUP:GetHeading()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the mean heading of every UNIT in the GROUP in degrees</p>
+
+		<h3>Return values</h3>
+			<ol>
+				<li>
+				
+<p><em>#number:</em>
+mean heading of the GROUP</p>
+
+				</li>
+				<li>
+				
+<p><em>#nil:</em>
+The first UNIT is not existing or alive.</p>
+
+				</li>
+			</ol>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(GROUP).GetInitialSize" >
 <strong>GROUP:GetInitialSize()</strong>
 </a>
@@ -985,6 +1031,34 @@ The group has no players</p>
 		<dl class="function">
 <dt>
 
+<a id="#(GROUP).GetPointVec2" >
+<strong>GROUP:GetPointVec2()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns a POINT_VEC2 object indicating the point in 2D of the first UNIT of the GROUP within the mission.</p>
+
+		<h3>Return values</h3>
+			<ol>
+				<li>
+				
+<p><em><a href="Core.Point.html##(POINT_VEC2)">Core.Point#POINT_VEC2</a>:</em>
+The 2D point vector of the first DCS Unit of the GROUP.</p>
+
+				</li>
+				<li>
+				
+<p><em>#nil:</em>
+The first UNIT is not existing or alive.  </p>
+
+				</li>
+			</ol>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(GROUP).GetPositionVec3" >
 <strong>GROUP:GetPositionVec3()</strong>
 </a>
@@ -1008,6 +1082,46 @@ The POSITIONABLE is not existing or alive.  </p>
 
 				</li>
 			</ol>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).GetRandomVec3" >
+<strong>GROUP:GetRandomVec3(Radius)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns a random <a href="DCSTypes.html##(Vec3)">DCSTypes#Vec3</a> vector (point in 3D of the UNIT within the mission) within a range around the first UNIT of the GROUP.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number Radius </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return values</h3>
+			<ol>
+				<li>
+				
+<p><em><a href="Dcs.DCSTypes.html##(Vec3)">Dcs.DCSTypes#Vec3</a>:</em>
+The random 3D point vector around the first UNIT of the GROUP.</p>
+
+				</li>
+				<li>
+				
+<p><em>#nil:</em>
+The GROUP is invalid or empty</p>
+
+				</li>
+			</ol>
+			<h3>Usage:</h3>
+		<pre class="example"><code>
+-- If Radius is ignored, returns the Dcs.DCSTypes#Vec3 of first UNIT of the GROUP</code></pre>
+
 </dd>
 </dl>
 		<dl class="function">

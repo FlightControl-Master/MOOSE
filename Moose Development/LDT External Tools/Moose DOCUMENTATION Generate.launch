@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<launchConfiguration type="org.eclipse.ui.externaltools.ProgramLaunchConfigurationType">
+<listAttribute key="org.eclipse.debug.ui.favoriteGroups">
+<listEntry value="org.eclipse.ui.externaltools.launchGroup"/>
+</listAttribute>
+<stringAttribute key="org.eclipse.ui.externaltools.ATTR_LOCATION" value="${system_path:luadocumentor.bat}"/>
+<stringAttribute key="org.eclipse.ui.externaltools.ATTR_TOOL_ARGUMENTS" value="&quot;Moose\Core\*.lua&quot; &#13;&#10;&quot;Moose\Wrapper\*.lua&quot; &#13;&#10;&quot;Moose\Actions\*.lua&quot; &#13;&#10;&quot;Moose\Functional\*.lua&quot; &#13;&#10;&quot;Moose\Tasking\*.lua&quot; &#13;&#10;&quot;Moose\Utilities\*.lua&quot; &#13;&#10;&quot;Moose\AI\*.lua&quot; &#13;&#10;--dir &quot;${workspace_loc:/Moose_Framework/docs/Documentation}&#13;&#10;--style ${workspace_loc:/Moose_Framework/docs/Stylesheet/stylesheet.css}"/>
+<stringAttribute key="org.eclipse.ui.externaltools.ATTR_WORKING_DIRECTORY" value="${workspace_loc:/Moose_Framework/Moose Development}"/>
+</launchConfiguration>

@@ -365,11 +365,21 @@ The POSITIONABLE is not existing or alive.  </p>
 	
 <p>Returns the POSITIONABLE heading in degrees.</p>
 
-		<h3>Return value</h3>
+		<h3>Return values</h3>
+			<ol>
+				<li>
 				
 <p><em>#number:</em>
 The POSTIONABLE heading</p>
 
+				</li>
+				<li>
+				
+<p><em>#nil:</em>
+The POSITIONABLE is not existing or alive.</p>
+
+				</li>
+			</ol>
 </dd>
 </dl>
 		<dl class="function">
@@ -531,7 +541,7 @@ Radio</p>
 		<ul>
 				<li>
 				
-<p><code><em> Radius </em></code>: </p>
+<p><code><em>#number Radius </em></code>: </p>
 
 				</li>
 		</ul>
@@ -550,6 +560,10 @@ The POSITIONABLE is not existing or alive.  </p>
 
 				</li>
 			</ol>
+			<h3>Usage:</h3>
+		<pre class="example"><code>
+-- If Radius is ignored, returns the Dcs.DCSTypes#Vec3 of first UNIT of the GROUP</code></pre>
+
 </dd>
 </dl>
 		<dl class="function">

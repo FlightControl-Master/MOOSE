@@ -549,14 +549,22 @@ end
 --- Returns true if some units of the group are within a @{Zone}.
 -- @param #GROUP self
 -- @param Core.Zone#ZONE_BASE Zone The zone to test.
--- @return #boolean Returns true if the Group is completely within the @{Zone#ZONE_BASE}
+-- @return #boolean Returns true if the Group is partially within the @{Zone#ZONE_BASE}
 function GROUP:IsPartlyInZone( Zone )
   self:F2( { self.GroupName, Zone } )
+  
+  local PartlyInZone = false
   
   for UnitID, UnitData in pairs( self:GetUnits() ) do
     local Unit = UnitData -- Wrapper.Unit#UNIT
     if Zone:IsVec3InZone( Unit:GetVec3() ) then
-      return true
+      PartlyInZone = true
+    else
+      -- So, if there were groups in the zone found, and suddenly one NOT in the zone, 
+      -- then the group is partialy in the zone :-)
+      if PartlyInZone == true then
+        return true
+      end
     end
   end
   
@@ -566,7 +574,7 @@ end
 --- Returns true if none of the group units of the group are within a @{Zone}.
 -- @param #GROUP self
 -- @param Core.Zone#ZONE_BASE Zone The zone to test.
--- @return #boolean Returns true if the Group is completely within the @{Zone#ZONE_BASE}
+-- @return #boolean Returns true if the Group is not within the @{Zone#ZONE_BASE}
 function GROUP:IsNotInZone( Zone )
   self:F2( { self.GroupName, Zone } )
   
