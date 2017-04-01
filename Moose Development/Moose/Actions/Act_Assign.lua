@@ -175,7 +175,7 @@ do -- ACT_ASSIGN_ACCEPT
 
     self:Message( "You are assigned to the task " .. self.Task:GetName() )  
 
-    self.Task:Assign()
+    self.Task:Assign( ProcessUnit, ProcessUnit:GetPlayerName() )
   end
   
 end -- ACT_ASSIGN_ACCEPT

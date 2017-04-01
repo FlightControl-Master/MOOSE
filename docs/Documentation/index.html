@@ -39,16 +39,17 @@
 					<li><a href="Fsm.html">Fsm</a></li>
 					<li><a href="Group.html">Group</a></li>
 					<li><a href="Identifiable.html">Identifiable</a></li>
-					<li><a href="MOVEMENT.html">MOVEMENT</a></li>
 					<li><a href="Menu.html">Menu</a></li>
 					<li><a href="Message.html">Message</a></li>
 					<li><a href="MissileTrainer.html">MissileTrainer</a></li>
 					<li><a href="Mission.html">Mission</a></li>
+					<li><a href="Movement.html">Movement</a></li>
 					<li><a href="Object.html">Object</a></li>
 					<li><a href="Point.html">Point</a></li>
 					<li><a href="Positionable.html">Positionable</a></li>
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
 					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
+					<li><a href="Radio.html">Radio</a></li>
 					<li><a href="Route.html">Route</a></li>
 					<li><a href="Scenery.html">Scenery</a></li>
 					<li><a href="ScheduleDispatcher.html">ScheduleDispatcher</a></li>
@@ -61,8 +62,8 @@
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="Task.html">Task</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
+					<li><a href="Task_A2G_Dispatcher.html">Task_A2G_Dispatcher</a></li>
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
-					<li><a href="Task_SEAD.html">Task_SEAD</a></li>
 					<li><a href="Unit.html">Unit</a></li>
 					<li><a href="Utils.html">Utils</a></li>
 					<li><a href="Zone.html">Zone</a></li>
@@ -92,52 +93,43 @@ CLIENTS in a SET_CLIENT collection, which are not occupied by human players.</p>
 			<tr>
 			<td class="name" nowrap="nowrap"><a href="AI_Cap.html">AI_Cap</a></td>
 			<td class="summary">
-<p>Single-Player:<strong>Yes</strong> / Multi-Player:<strong>Yes</strong> / AI:<strong>Yes</strong> / Human:<strong>No</strong> / Types:<strong>Air</strong> -- <strong>Execute Combat Air Patrol (CAP).</strong></p>
+<p><strong>AI</strong> - <strong>Execute Combat Air Patrol (CAP).</strong></p>
 
 <p><img src="..\Presentations\AI_CAP\Dia1.JPG" alt="Banner Image"/></p>
 
 <hr/>
 
-<h1>1) <a href="##(AI_CAP_ZONE)">#AI<em>CAP</em>ZONE</a> class, extends <a href="AI_CAP.html##(AI_PATROL_ZONE)">AI<em>CAP#AI</em>PATROL_ZONE</a></h1>
-
-<p>The <a href="##(AI_CAP_ZONE)">#AI<em>CAP</em>ZONE</a> class implements the core functions to patrol a <a href="Zone.html">Zone</a> by an AI <a href="Controllable.html">Controllable</a> or <a href="Group.html">Group</a> 
-and automatically engage any airborne enemies that are within a certain range or within a certain zone.</p>
+<p>AI CAP classes makes AI Controllables execute a Combat Air Patrol.</p>
 </td>
 			</tr>
 			<tr>
 			<td class="name" nowrap="nowrap"><a href="AI_Cas.html">AI_Cas</a></td>
 			<td class="summary">
-<p>Single-Player:<strong>Yes</strong> / Multi-Player:<strong>Yes</strong> / AI:<strong>Yes</strong> / Human:<strong>No</strong> / Types:<strong>Air</strong> -- 
-<strong>Provide Close Air Support to friendly ground troops.</strong></p>
+<p><strong>AI</strong> -- <strong>Provide Close Air Support to friendly ground troops.</strong></p>
 
 <p><img src="..\Presentations\AI_CAS\Dia1.JPG" alt="Banner Image"/></p>
 
 <hr/>
 
-<h1>1) <a href="##(AI_CAS_ZONE)">#AI<em>CAS</em>ZONE</a> class, extends <a href="AI_Patrol.html##(AI_PATROL_ZONE)">AI<em>Patrol#AI</em>PATROL_ZONE</a></h1>
-
-<p><a href="##(AI_CAS_ZONE)">#AI<em>CAS</em>ZONE</a> derives from the <a href="AI_Patrol.html##(AI_PATROL_ZONE)">AI<em>Patrol#AI</em>PATROL_ZONE</a>, inheriting its methods and behaviour.</p>
+<p>AI CAS classes makes AI Controllables execute a Close Air Support.</p>
 </td>
 			</tr>
 			<tr>
 			<td class="name" nowrap="nowrap"><a href="AI_Patrol.html">AI_Patrol</a></td>
 			<td class="summary">
-<p>Single-Player:<strong>Yes</strong> / Multi-Player:<strong>Yes</strong> / AI:<strong>Yes</strong> / Human:<strong>No</strong> / Types:<strong>Air</strong> -- 
-<strong>Air Patrolling or Staging.</strong></p>
+<p><strong>AI</strong> -- <strong>Air Patrolling or Staging.</strong></p>
 
 <p><img src="..\Presentations\AI_PATROL\Dia1.JPG" alt="Banner Image"/></p>
 
 <hr/>
 
-<h1>1) <a href="##(AI_PATROL_ZONE)">#AI<em>PATROL</em>ZONE</a> class, extends <a href="Fsm.html##(FSM_CONTROLLABLE)">Fsm#FSM_CONTROLLABLE</a></h1>
-
-<p>The <a href="##(AI_PATROL_ZONE)">#AI<em>PATROL</em>ZONE</a> class implements the core functions to patrol a <a href="Zone.html">Zone</a> by an AI <a href="Controllable.html">Controllable</a> or <a href="Group.html">Group</a>.</p>
+<p>AI PATROL classes makes AI Controllables execute an Patrol.</p>
 </td>
 			</tr>
 			<tr>
 			<td class="name" nowrap="nowrap"><a href="Account.html">Account</a></td>
 			<td class="summary">
-<p>(SP) (MP) (FSM) Account for (Detect, count and report) DCS events occuring on DCS objects (units).</p>
+<p><strong>Actions</strong> - ACT<em>ACCOUNT</em> classes <strong>account for</strong> (detect, count &amp; report) various DCS events occuring on <a href="Unit.html">Unit</a>s.</p>
 </td>
 			</tr>
 			<tr>
@@ -214,7 +206,7 @@ and automatically engage any airborne enemies that are within a certain range or
 			<tr>
 			<td class="name" nowrap="nowrap"><a href="Detection.html">Detection</a></td>
 			<td class="summary">
-<p> This module contains the DETECTION classes.</p>
+<p><strong>Functional</strong> - DETECTION_ classes model the detection of enemy units by FACs or RECCEs and group them according various methods.</p>
 </td>
 			</tr>
 			<tr>
@@ -245,19 +237,13 @@ are design patterns allowing efficient (long-lasting) processes and workflows.</
 			<tr>
 			<td class="name" nowrap="nowrap"><a href="Group.html">Group</a></td>
 			<td class="summary">
-<p>This module contains the GROUP class.</p>
+<p><strong>Wrapper</strong> -- GROUP is a wrapper class for the DCS Class Group.</p>
 </td>
 			</tr>
 			<tr>
 			<td class="name" nowrap="nowrap"><a href="Identifiable.html">Identifiable</a></td>
 			<td class="summary">
 <p>This module contains the IDENTIFIABLE class.</p>
-</td>
-			</tr>
-			<tr>
-			<td class="name" nowrap="nowrap"><a href="MOVEMENT.html">MOVEMENT</a></td>
-			<td class="summary">
-<p>Limit the simultaneous movement of Groups within a running Mission.</p>
 </td>
 			</tr>
 			<tr>
@@ -282,6 +268,12 @@ are design patterns allowing efficient (long-lasting) processes and workflows.</
 			<td class="name" nowrap="nowrap"><a href="Mission.html">Mission</a></td>
 			<td class="summary">
 <p>A MISSION is the main owner of a Mission orchestration within MOOSE .</p>
+</td>
+			</tr>
+			<tr>
+			<td class="name" nowrap="nowrap"><a href="Movement.html">Movement</a></td>
+			<td class="summary">
+<p>Limit the simultaneous movement of Groups within a running Mission.</p>
 </td>
 			</tr>
 			<tr>
@@ -315,6 +307,12 @@ are design patterns allowing efficient (long-lasting) processes and workflows.</
 </td>
 			</tr>
 			<tr>
+			<td class="name" nowrap="nowrap"><a href="Radio.html">Radio</a></td>
+			<td class="summary">
+<p><strong>Core</strong> - The RADIO class is responsible for <strong>transmitting radio communications</strong>.</p>
+</td>
+			</tr>
+			<tr>
 			<td class="name" nowrap="nowrap"><a href="Route.html">Route</a></td>
 			<td class="summary">
 <p>(SP) (MP) (FSM) Route AI or players through waypoints or to zones.</p>
@@ -335,7 +333,7 @@ are design patterns allowing efficient (long-lasting) processes and workflows.</
 			<tr>
 			<td class="name" nowrap="nowrap"><a href="Scheduler.html">Scheduler</a></td>
 			<td class="summary">
-<p>This module contains the SCHEDULER class.</p>
+<p><strong>Core</strong> - SCHEDULER prepares and handles the <strong>execution of functions over scheduled time (intervals)</strong>.</p>
 </td>
 			</tr>
 			<tr>
@@ -347,8 +345,6 @@ and create a CSV file logging the scoring events for use at team or squadron web
 <p><img src="..\Presentations\SCORING\Dia1.JPG" alt="Banner Image"/></p>
 
 <hr/>
-
-<h1>1) <a href="Scoring.html##(SCORING)">Scoring#SCORING</a> class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
 
 <p>The <a href="##(SCORING)">#SCORING</a> class administers the scoring of player achievements, 
 and creates a CSV file logging the scoring events and results for use at team or squadron websites.</p>
@@ -363,7 +359,7 @@ and creates a CSV file logging the scoring events and results for use at team or
 			<tr>
 			<td class="name" nowrap="nowrap"><a href="Set.html">Set</a></td>
 			<td class="summary">
-<p><strong>Core</strong> - SET classes define <strong>collections</strong> of objects to perform <strong>bulk actions</strong> and logically <strong>group</strong> objects.</p>
+<p><strong>Core</strong> - SET_ classes define <strong>collections</strong> of objects to perform <strong>bulk actions</strong> and logically <strong>group</strong> objects.</p>
 </td>
 			</tr>
 			<tr>
@@ -402,7 +398,13 @@ and creates a CSV file logging the scoring events and results for use at team or
 			<tr>
 			<td class="name" nowrap="nowrap"><a href="Task_A2G.html">Task_A2G</a></td>
 			<td class="summary">
-<p>(AI) (SP) (MP) Tasking for Air to Ground Processes.</p>
+<p><strong>Tasking</strong> - The TASK_A2G models tasks for players in Air to Ground engagements.</p>
+</td>
+			</tr>
+			<tr>
+			<td class="name" nowrap="nowrap"><a href="Task_A2G_Dispatcher.html">Task_A2G_Dispatcher</a></td>
+			<td class="summary">
+<p><strong>Tasking</strong> - The TASK<em>A2G</em>DISPATCHER creates and manages player TASK_A2G tasks based on detected targets.</p>
 </td>
 			</tr>
 			<tr>
@@ -412,15 +414,9 @@ and creates a CSV file logging the scoring events and results for use at team or
 </td>
 			</tr>
 			<tr>
-			<td class="name" nowrap="nowrap"><a href="Task_SEAD.html">Task_SEAD</a></td>
-			<td class="summary">
-<p>This module contains the TASK_SEAD classes.</p>
-</td>
-			</tr>
-			<tr>
 			<td class="name" nowrap="nowrap"><a href="Unit.html">Unit</a></td>
 			<td class="summary">
-<p>This module contains the UNIT class.</p>
+<p><strong>Wrapper</strong> - UNIT is a wrapper class for the DCS Class Unit.</p>
 </td>
 			</tr>
 			<tr>

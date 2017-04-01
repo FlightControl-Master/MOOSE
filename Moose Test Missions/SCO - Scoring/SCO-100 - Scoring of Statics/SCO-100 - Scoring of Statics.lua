@@ -12,11 +12,11 @@
 -- 1. Observe the scoring granted to your flight when you hit and kill targets.
 
 
-local HQ = GROUP:FindByName( "HQ", "Bravo HQ" )
+HQ = GROUP:FindByName( "HQ", "Bravo HQ" )
 
-local CommandCenter = COMMANDCENTER:New( HQ, "Bravo" )
+CommandCenter = COMMANDCENTER:New( HQ, "Bravo" )
 
-local Scoring = SCORING:New( "Shooting Range 1" )
+Scoring = SCORING:New( "Shooting Range 1" )
 
 Scoring:SetScaleDestroyScore( 10 )
 
@@ -27,12 +27,12 @@ Scoring:AddUnitScore( UNIT:FindByName( "Unit #001" ), 200 )
 -- Test for zone scores.
 
 -- This one is to test scoring on normal units.
-local ShootingRangeZone = ZONE:New( "ScoringZone1" )
+ShootingRangeZone = ZONE:New( "ScoringZone1" )
 Scoring:AddZoneScore( ShootingRangeZone, 200 )
 
 -- This one is to test scoring on scenery.
 -- Note that you can only destroy scenery with heavy weapons.
-local SceneryZone = ZONE:New( "ScoringZone2" )
+SceneryZone = ZONE:New( "ScoringZone2" )
 Scoring:AddZoneScore( SceneryZone, 200 )
 
 Scoring:AddStaticScore(STATIC:FindByName( "Shooting Range #010" ), 100 )

@@ -1,5 +1,0 @@
-mapResource = 
-{
-    ["ResKey_Action_323"] = "Moose.lua",
-    ["ResKey_Action_6"] = "AIB-005 - Patrol AI and Randomize Zones.lua",
-} -- end of mapResource

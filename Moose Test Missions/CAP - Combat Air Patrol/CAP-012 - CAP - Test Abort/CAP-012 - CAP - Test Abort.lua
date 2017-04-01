@@ -17,15 +17,15 @@
 -- 4. When it engages, it will abort the engagement after 1 minute.
  
 
-local CapPlane = GROUP:FindByName( "Plane" )
+CapPlane = GROUP:FindByName( "Plane" )
 
-local PatrolZone = ZONE:New( "Patrol Zone" )
+PatrolZone = ZONE:New( "Patrol Zone" )
 
-local AICapZone = AI_CAP_ZONE:New( PatrolZone, 500, 1000, 500, 600 )
+AICapZone = AI_CAP_ZONE:New( PatrolZone, 500, 1000, 500, 600 )
 
-local EngageZoneGroup = GROUP:FindByName( "Engage Zone" )
+EngageZoneGroup = GROUP:FindByName( "Engage Zone" )
 
-local CapEngageZone = ZONE_POLYGON:New( "Engage Zone", EngageZoneGroup )
+CapEngageZone = ZONE_POLYGON:New( "Engage Zone", EngageZoneGroup )
 
 AICapZone:SetControllable( CapPlane )
 AICapZone:SetEngageZone( CapEngageZone ) -- Set the Engage Zone. The AI will only engage when the bogeys are within the CapEngageZone.
@@ -40,3 +40,4 @@ function AICapZone:OnAfterAbort(Controllable,From,Event,To)
   BASE:E("MISSION ABORTED! Returning to Patrol Zone!")
   MESSAGE:New("MISSION ABORTED! Returning to Patrol Zone!",30,"ALERT!")
 end
+

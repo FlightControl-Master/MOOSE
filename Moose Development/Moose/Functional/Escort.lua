@@ -84,7 +84,7 @@
 --
 -- ESCORT initialization methods.
 -- ==============================
--- The following menus are created within the RADIO MENU of an active unit hosted by a player:
+-- The following menus are created within the RADIO MENU (F10) of an active unit hosted by a player:
 --
 -- * @{#ESCORT.MenuFollowAt}: Creates a menu to make the escort follow the client.
 -- * @{#ESCORT.MenuHoldAtEscortPosition}: Creates a menu to hold the escort at its current position.
@@ -128,6 +128,7 @@
 -- @Field Dcs.DCSTypes#AI.Option.Air.val.ROE OptionROE Which ROE is set to the EscortGroup.
 -- @field Dcs.DCSTypes#AI.Option.Air.val.REACTION_ON_THREAT OptionReactionOnThreat Which REACTION_ON_THREAT is set to the EscortGroup.
 -- @field Core.Menu#MENU_CLIENT EscortMenuResumeMission
+-- @field Functional.Detection#DETECTION_BASE Detection
 ESCORT = {
   ClassName = "ESCORT",
   EscortName = nil, -- The Escort Name
@@ -176,14 +177,22 @@ ESCORT = {
 -- -- Now use these 2 objects to construct the new EscortPlanes object.
 -- EscortPlanes = ESCORT:New( EscortClient, EscortGroup, "Desert", "Welcome to the mission. You are escorted by a plane with code name 'Desert', which can be instructed through the F10 radio menu." )
 function ESCORT:New( EscortClient, EscortGroup, EscortName, EscortBriefing )
-  local self = BASE:Inherit( self, BASE:New() )
+  
+  local self = BASE:Inherit( self, BASE:New() ) -- #ESCORT
   self:F( { EscortClient, EscortGroup, EscortName } )
 
   self.EscortClient = EscortClient -- Wrapper.Client#CLIENT
   self.EscortGroup = EscortGroup -- Wrapper.Group#GROUP
   self.EscortName = EscortName
   self.EscortBriefing = EscortBriefing
-
+ 
+  self.EscortSetGroup = SET_GROUP:New()
+  self.EscortSetGroup:AddObject( self.EscortGroup )
+  self.EscortSetGroup:Flush()
+  self.Detection = DETECTION_UNITS:New( self.EscortSetGroup, 15000 )
+  
+  self.EscortGroup.Detection = self.Detection
+  
   -- Set EscortGroup known at EscortClient.
   if not self.EscortClient._EscortGroups then
     self.EscortClient._EscortGroups = {}
@@ -193,7 +202,7 @@ function ESCORT:New( EscortClient, EscortGroup, EscortName, EscortBriefing )
     self.EscortClient._EscortGroups[EscortGroup:GetName()] = {}
     self.EscortClient._EscortGroups[EscortGroup:GetName()].EscortGroup = self.EscortGroup
     self.EscortClient._EscortGroups[EscortGroup:GetName()].EscortName = self.EscortName
-    self.EscortClient._EscortGroups[EscortGroup:GetName()].Targets = {}
+    self.EscortClient._EscortGroups[EscortGroup:GetName()].Detection = self.EscortGroup.Detection
   end
 
   self.EscortMenu = MENU_CLIENT:New( self.EscortClient, self.EscortName )
@@ -218,11 +227,28 @@ function ESCORT:New( EscortClient, EscortGroup, EscortName, EscortBriefing )
   self.FollowDistance = 100
   self.CT1 = 0
   self.GT1 = 0
-  self.FollowScheduler = SCHEDULER:New( self, self._FollowScheduler, {}, 1, .5, .01 )
-  self.EscortMode = ESCORT.MODE.MISSION
-  self.FollowScheduler:Stop()
 
+  self.FollowScheduler, self.FollowSchedule = SCHEDULER:New( self, self._FollowScheduler, {}, 1, .5, .01 )
+  self.FollowScheduler:Stop( self.FollowSchedule )
+
+  self.EscortMode = ESCORT.MODE.MISSION
+  
+ 
   return self
+end
+
+--- Set a Detection method for the EscortClient to be reported upon.
+-- Detection methods are based on the derived classes from DETECTION_BASE.
+-- @param #ESCORT self
+-- @param Function.Detection#DETECTION_BASE Detection
+function ESCORT:SetDetection( Detection )
+
+  self.Detection = Detection
+  self.EscortGroup.Detection = self.Detection
+  self.EscortClient._EscortGroups[self.EscortGroup:GetName()].Detection = self.EscortGroup.Detection
+  
+  Detection:__Start( 1 )
+  
 end
 
 --- This function is for test, it will put on the frequency of the FollowScheduler a red smoke at the direction vector calculated for the escort to fly to.
@@ -282,7 +308,7 @@ function ESCORT:MenuFollowAt( Distance )
       self.EscortMenuJoinUpAndFollow = {}
     end
 
-    self.EscortMenuJoinUpAndFollow[#self.EscortMenuJoinUpAndFollow+1] = MENU_CLIENT_COMMAND:New( self.EscortClient, "Join-Up and Follow at " .. Distance, self.EscortMenuReportNavigation, ESCORT._JoinUpAndFollow, { ParamSelf = self, ParamDistance = Distance } )
+    self.EscortMenuJoinUpAndFollow[#self.EscortMenuJoinUpAndFollow+1] = MENU_CLIENT_COMMAND:New( self.EscortClient, "Join-Up and Follow at " .. Distance, self.EscortMenuReportNavigation, ESCORT._JoinUpAndFollow, self, Distance )
 
     self.EscortMode = ESCORT.MODE.FOLLOW
   end
@@ -340,11 +366,10 @@ function ESCORT:MenuHoldAtEscortPosition( Height, Seconds, MenuTextFormat )
         MenuText,
         self.EscortMenuHold,
         ESCORT._HoldPosition,
-        { ParamSelf = self,
-          ParamOrbitGroup = self.EscortGroup,
-          ParamHeight = Height,
-          ParamSeconds = Seconds
-        }
+        self,
+        self.EscortGroup,
+        Height,
+        Seconds
       )
   end
 
@@ -461,9 +486,8 @@ function ESCORT:MenuScanForTargets( Height, Seconds, MenuTextFormat )
         MenuText,
         self.EscortMenuScan,
         ESCORT._ScanTargets,
-        { ParamSelf = self,
-          ParamScanDuration = 30
-        }
+        self,
+        30
       )
   end
 
@@ -493,11 +517,11 @@ function ESCORT:MenuFlare( MenuTextFormat )
   end
 
   if not self.EscortMenuFlare then
-    self.EscortMenuFlare = MENU_CLIENT:New( self.EscortClient, MenuText, self.EscortMenuReportNavigation, ESCORT._Flare, { ParamSelf = self } )
-    self.EscortMenuFlareGreen  = MENU_CLIENT_COMMAND:New( self.EscortClient, "Release green flare",  self.EscortMenuFlare, ESCORT._Flare, { ParamSelf = self, ParamColor = FLARECOLOR.Green,  ParamMessage = "Released a green flare!"   } )
-    self.EscortMenuFlareRed    = MENU_CLIENT_COMMAND:New( self.EscortClient, "Release red flare",    self.EscortMenuFlare, ESCORT._Flare, { ParamSelf = self, ParamColor = FLARECOLOR.Red,    ParamMessage = "Released a red flare!"     } )
-    self.EscortMenuFlareWhite  = MENU_CLIENT_COMMAND:New( self.EscortClient, "Release white flare",  self.EscortMenuFlare, ESCORT._Flare, { ParamSelf = self, ParamColor = FLARECOLOR.White,  ParamMessage = "Released a white flare!"   } )
-    self.EscortMenuFlareYellow = MENU_CLIENT_COMMAND:New( self.EscortClient, "Release yellow flare", self.EscortMenuFlare, ESCORT._Flare, { ParamSelf = self, ParamColor = FLARECOLOR.Yellow, ParamMessage = "Released a yellow flare!"  } )
+    self.EscortMenuFlare = MENU_CLIENT:New( self.EscortClient, MenuText, self.EscortMenuReportNavigation, ESCORT._Flare, self )
+    self.EscortMenuFlareGreen  = MENU_CLIENT_COMMAND:New( self.EscortClient, "Release green flare",  self.EscortMenuFlare, ESCORT._Flare, self, FLARECOLOR.Green,  "Released a green flare!"   )
+    self.EscortMenuFlareRed    = MENU_CLIENT_COMMAND:New( self.EscortClient, "Release red flare",    self.EscortMenuFlare, ESCORT._Flare, self, FLARECOLOR.Red,    "Released a red flare!"     )
+    self.EscortMenuFlareWhite  = MENU_CLIENT_COMMAND:New( self.EscortClient, "Release white flare",  self.EscortMenuFlare, ESCORT._Flare, self, FLARECOLOR.White,  "Released a white flare!"   )
+    self.EscortMenuFlareYellow = MENU_CLIENT_COMMAND:New( self.EscortClient, "Release yellow flare", self.EscortMenuFlare, ESCORT._Flare, self, FLARECOLOR.Yellow, "Released a yellow flare!"  )
   end
 
   return self
@@ -526,12 +550,12 @@ function ESCORT:MenuSmoke( MenuTextFormat )
     end
 
     if not self.EscortMenuSmoke then
-      self.EscortMenuSmoke = MENU_CLIENT:New( self.EscortClient, "Smoke", self.EscortMenuReportNavigation, ESCORT._Smoke, { ParamSelf = self } )
-      self.EscortMenuSmokeGreen  = MENU_CLIENT_COMMAND:New( self.EscortClient, "Release green smoke",  self.EscortMenuSmoke, ESCORT._Smoke, { ParamSelf = self, ParamColor = UNIT.SmokeColor.Green,  ParamMessage = "Releasing green smoke!"   } )
-      self.EscortMenuSmokeRed    = MENU_CLIENT_COMMAND:New( self.EscortClient, "Release red smoke",    self.EscortMenuSmoke, ESCORT._Smoke, { ParamSelf = self, ParamColor = UNIT.SmokeColor.Red,    ParamMessage = "Releasing red smoke!"     } )
-      self.EscortMenuSmokeWhite  = MENU_CLIENT_COMMAND:New( self.EscortClient, "Release white smoke",  self.EscortMenuSmoke, ESCORT._Smoke, { ParamSelf = self, ParamColor = UNIT.SmokeColor.White,  ParamMessage = "Releasing white smoke!"   } )
-      self.EscortMenuSmokeOrange = MENU_CLIENT_COMMAND:New( self.EscortClient, "Release orange smoke", self.EscortMenuSmoke, ESCORT._Smoke, { ParamSelf = self, ParamColor = UNIT.SmokeColor.Orange, ParamMessage = "Releasing orange smoke!"  } )
-      self.EscortMenuSmokeBlue   = MENU_CLIENT_COMMAND:New( self.EscortClient, "Release blue smoke",   self.EscortMenuSmoke, ESCORT._Smoke, { ParamSelf = self, ParamColor = UNIT.SmokeColor.Blue,   ParamMessage = "Releasing blue smoke!"   } )
+      self.EscortMenuSmoke = MENU_CLIENT:New( self.EscortClient, "Smoke", self.EscortMenuReportNavigation, ESCORT._Smoke, self )
+      self.EscortMenuSmokeGreen  = MENU_CLIENT_COMMAND:New( self.EscortClient, "Release green smoke",  self.EscortMenuSmoke, ESCORT._Smoke, self, SMOKECOLOR.Green,  "Releasing green smoke!"   )
+      self.EscortMenuSmokeRed    = MENU_CLIENT_COMMAND:New( self.EscortClient, "Release red smoke",    self.EscortMenuSmoke, ESCORT._Smoke, self, SMOKECOLOR.Red,    "Releasing red smoke!"     )
+      self.EscortMenuSmokeWhite  = MENU_CLIENT_COMMAND:New( self.EscortClient, "Release white smoke",  self.EscortMenuSmoke, ESCORT._Smoke, self, SMOKECOLOR.White,  "Releasing white smoke!"   )
+      self.EscortMenuSmokeOrange = MENU_CLIENT_COMMAND:New( self.EscortClient, "Release orange smoke", self.EscortMenuSmoke, ESCORT._Smoke, self, SMOKECOLOR.Orange, "Releasing orange smoke!"  )
+      self.EscortMenuSmokeBlue   = MENU_CLIENT_COMMAND:New( self.EscortClient, "Release blue smoke",   self.EscortMenuSmoke, ESCORT._Smoke, self, SMOKECOLOR.Blue,   "Releasing blue smoke!"    )
     end
   end
 
@@ -556,9 +580,9 @@ function ESCORT:MenuReportTargets( Seconds )
   end
 
   -- Report Targets
-  self.EscortMenuReportNearbyTargetsNow = MENU_CLIENT_COMMAND:New( self.EscortClient, "Report targets now!", self.EscortMenuReportNearbyTargets, ESCORT._ReportNearbyTargetsNow, { ParamSelf = self } )
-  self.EscortMenuReportNearbyTargetsOn = MENU_CLIENT_COMMAND:New( self.EscortClient, "Report targets on", self.EscortMenuReportNearbyTargets, ESCORT._SwitchReportNearbyTargets, { ParamSelf = self, ParamReportTargets = true } )
-  self.EscortMenuReportNearbyTargetsOff = MENU_CLIENT_COMMAND:New( self.EscortClient, "Report targets off", self.EscortMenuReportNearbyTargets, ESCORT._SwitchReportNearbyTargets, { ParamSelf = self, ParamReportTargets = false, } )
+  self.EscortMenuReportNearbyTargetsNow = MENU_CLIENT_COMMAND:New( self.EscortClient, "Report targets now!", self.EscortMenuReportNearbyTargets, ESCORT._ReportNearbyTargetsNow, self )
+  self.EscortMenuReportNearbyTargetsOn = MENU_CLIENT_COMMAND:New( self.EscortClient, "Report targets on", self.EscortMenuReportNearbyTargets, ESCORT._SwitchReportNearbyTargets, self, true )
+  self.EscortMenuReportNearbyTargetsOff = MENU_CLIENT_COMMAND:New( self.EscortClient, "Report targets off", self.EscortMenuReportNearbyTargets, ESCORT._SwitchReportNearbyTargets, self, false )
 
   -- Attack Targets
   self.EscortMenuAttackNearbyTargets = MENU_CLIENT:New( self.EscortClient, "Attack targets", self.EscortMenu )
@@ -595,16 +619,16 @@ function ESCORT:MenuROE( MenuTextFormat )
     -- Rules of Engagement
     self.EscortMenuROE = MENU_CLIENT:New( self.EscortClient, "ROE", self.EscortMenu )
     if self.EscortGroup:OptionROEHoldFirePossible() then
-      self.EscortMenuROEHoldFire = MENU_CLIENT_COMMAND:New( self.EscortClient, "Hold Fire", self.EscortMenuROE, ESCORT._ROE, { ParamSelf = self, ParamFunction = self.EscortGroup:OptionROEHoldFire(), ParamMessage = "Holding weapons!" } )
+      self.EscortMenuROEHoldFire = MENU_CLIENT_COMMAND:New( self.EscortClient, "Hold Fire", self.EscortMenuROE, ESCORT._ROE, self, self.EscortGroup:OptionROEHoldFire(), "Holding weapons!" )
     end
     if self.EscortGroup:OptionROEReturnFirePossible() then
-      self.EscortMenuROEReturnFire = MENU_CLIENT_COMMAND:New( self.EscortClient, "Return Fire", self.EscortMenuROE, ESCORT._ROE, { ParamSelf = self, ParamFunction = self.EscortGroup:OptionROEReturnFire(), ParamMessage = "Returning fire!" } )
+      self.EscortMenuROEReturnFire = MENU_CLIENT_COMMAND:New( self.EscortClient, "Return Fire", self.EscortMenuROE, ESCORT._ROE, self, self.EscortGroup:OptionROEReturnFire(), "Returning fire!" )
     end
     if self.EscortGroup:OptionROEOpenFirePossible() then
-      self.EscortMenuROEOpenFire = MENU_CLIENT_COMMAND:New( self.EscortClient, "Open Fire", self.EscortMenuROE, ESCORT._ROE, { ParamSelf = self, ParamFunction = self.EscortGroup:OptionROEOpenFire(), ParamMessage = "Opening fire on designated targets!!" } )
+      self.EscortMenuROEOpenFire = MENU_CLIENT_COMMAND:New( self.EscortClient, "Open Fire", self.EscortMenuROE, ESCORT._ROE, self, self.EscortGroup:OptionROEOpenFire(), "Opening fire on designated targets!!" )
     end
     if self.EscortGroup:OptionROEWeaponFreePossible() then
-      self.EscortMenuROEWeaponFree = MENU_CLIENT_COMMAND:New( self.EscortClient, "Weapon Free", self.EscortMenuROE, ESCORT._ROE, { ParamSelf = self, ParamFunction = self.EscortGroup:OptionROEWeaponFree(), ParamMessage = "Opening fire on targets of opportunity!" } )
+      self.EscortMenuROEWeaponFree = MENU_CLIENT_COMMAND:New( self.EscortClient, "Weapon Free", self.EscortMenuROE, ESCORT._ROE, self, self.EscortGroup:OptionROEWeaponFree(), "Opening fire on targets of opportunity!" )
     end
   end
 
@@ -624,16 +648,16 @@ function ESCORT:MenuEvasion( MenuTextFormat )
       -- Reaction to Threats
       self.EscortMenuEvasion = MENU_CLIENT:New( self.EscortClient, "Evasion", self.EscortMenu )
       if self.EscortGroup:OptionROTNoReactionPossible() then
-        self.EscortMenuEvasionNoReaction = MENU_CLIENT_COMMAND:New( self.EscortClient, "Fight until death", self.EscortMenuEvasion, ESCORT._ROT, { ParamSelf = self, ParamFunction = self.EscortGroup:OptionROTNoReaction(), ParamMessage = "Fighting until death!" } )
+        self.EscortMenuEvasionNoReaction = MENU_CLIENT_COMMAND:New( self.EscortClient, "Fight until death", self.EscortMenuEvasion, ESCORT._ROT, self, self.EscortGroup:OptionROTNoReaction(), "Fighting until death!" )
       end
       if self.EscortGroup:OptionROTPassiveDefensePossible() then
-        self.EscortMenuEvasionPassiveDefense = MENU_CLIENT_COMMAND:New( self.EscortClient, "Use flares, chaff and jammers", self.EscortMenuEvasion, ESCORT._ROT, { ParamSelf = self, ParamFunction = self.EscortGroup:OptionROTPassiveDefense(), ParamMessage = "Defending using jammers, chaff and flares!" } )
+        self.EscortMenuEvasionPassiveDefense = MENU_CLIENT_COMMAND:New( self.EscortClient, "Use flares, chaff and jammers", self.EscortMenuEvasion, ESCORT._ROT, self, self.EscortGroup:OptionROTPassiveDefense(), "Defending using jammers, chaff and flares!" )
       end
       if self.EscortGroup:OptionROTEvadeFirePossible() then
-        self.EscortMenuEvasionEvadeFire = MENU_CLIENT_COMMAND:New( self.EscortClient, "Evade enemy fire", self.EscortMenuEvasion, ESCORT._ROT, { ParamSelf = self, ParamFunction = self.EscortGroup:OptionROTEvadeFire(), ParamMessage = "Evading on enemy fire!" } )
+        self.EscortMenuEvasionEvadeFire = MENU_CLIENT_COMMAND:New( self.EscortClient, "Evade enemy fire", self.EscortMenuEvasion, ESCORT._ROT, self, self.EscortGroup:OptionROTEvadeFire(), "Evading on enemy fire!" )
       end
       if self.EscortGroup:OptionROTVerticalPossible() then
-        self.EscortMenuOptionEvasionVertical = MENU_CLIENT_COMMAND:New( self.EscortClient, "Go below radar and evade fire", self.EscortMenuEvasion, ESCORT._ROT, { ParamSelf = self, ParamFunction = self.EscortGroup:OptionROTVertical(), ParamMessage = "Evading on enemy fire with vertical manoeuvres!" } )
+        self.EscortMenuOptionEvasionVertical = MENU_CLIENT_COMMAND:New( self.EscortClient, "Go below radar and evade fire", self.EscortMenuEvasion, ESCORT._ROT, self, self.EscortGroup:OptionROTVertical(), "Evading on enemy fire with vertical manoeuvres!" )
       end
     end
   end
@@ -658,18 +682,14 @@ end
 
 
 --- @param #MENUPARAM MenuParam
-function ESCORT._HoldPosition( MenuParam )
+function ESCORT:_HoldPosition( OrbitGroup, OrbitHeight, OrbitSeconds )
 
-  local self = MenuParam.ParamSelf
   local EscortGroup = self.EscortGroup
   local EscortClient = self.EscortClient
 
-  local OrbitGroup = MenuParam.ParamOrbitGroup -- Wrapper.Group#GROUP
   local OrbitUnit = OrbitGroup:GetUnit(1) -- Wrapper.Unit#UNIT
-  local OrbitHeight = MenuParam.ParamHeight
-  local OrbitSeconds = MenuParam.ParamSeconds -- Not implemented yet
 
-  self.FollowScheduler:Stop()
+  self.FollowScheduler:Stop( self.FollowSchedule )
 
   local PointFrom = {}
   local GroupVec3 = EscortGroup:GetUnit(1):GetVec3()
@@ -702,13 +722,12 @@ function ESCORT._HoldPosition( MenuParam )
 end
 
 --- @param #MENUPARAM MenuParam
-function ESCORT._JoinUpAndFollow( MenuParam )
+function ESCORT:_JoinUpAndFollow( Distance )
 
-  local self = MenuParam.ParamSelf
   local EscortGroup = self.EscortGroup
   local EscortClient = self.EscortClient
 
-  self.Distance = MenuParam.ParamDistance
+  self.Distance = Distance
 
   self:JoinUpAndFollow( EscortGroup, EscortClient, self.Distance )
 end
@@ -721,7 +740,7 @@ end
 function ESCORT:JoinUpAndFollow( EscortGroup, EscortClient, Distance )
   self:F( { EscortGroup, EscortClient, Distance } )
 
-  self.FollowScheduler:Stop()
+  self.FollowScheduler:Stop( self.FollowSchedule )
 
   EscortGroup:OptionROEHoldFire()
   EscortGroup:OptionROTPassiveDefense()
@@ -730,34 +749,26 @@ function ESCORT:JoinUpAndFollow( EscortGroup, EscortClient, Distance )
 
   self.CT1 = 0
   self.GT1 = 0
-  self.FollowScheduler:Start()
+  self.FollowScheduler:Start( self.FollowSchedule )
 
   EscortGroup:MessageToClient( "Rejoining and Following at " .. Distance .. "!", 30, EscortClient )
 end
 
 --- @param #MENUPARAM MenuParam
-function ESCORT._Flare( MenuParam )
+function ESCORT:_Flare( Color, Message )
 
-  local self = MenuParam.ParamSelf
   local EscortGroup = self.EscortGroup
   local EscortClient = self.EscortClient
-
-  local Color = MenuParam.ParamColor
-  local Message = MenuParam.ParamMessage
 
   EscortGroup:GetUnit(1):Flare( Color )
   EscortGroup:MessageToClient( Message, 10, EscortClient )
 end
 
 --- @param #MENUPARAM MenuParam
-function ESCORT._Smoke( MenuParam )
+function ESCORT:_Smoke( Color, Message )
 
-  local self = MenuParam.ParamSelf
   local EscortGroup = self.EscortGroup
   local EscortClient = self.EscortClient
-
-  local Color = MenuParam.ParamColor
-  local Message = MenuParam.ParamMessage
 
   EscortGroup:GetUnit(1):Smoke( Color )
   EscortGroup:MessageToClient( Message, 10, EscortClient )
@@ -765,9 +776,8 @@ end
 
 
 --- @param #MENUPARAM MenuParam
-function ESCORT._ReportNearbyTargetsNow( MenuParam )
+function ESCORT:_ReportNearbyTargetsNow()
 
-  local self = MenuParam.ParamSelf
   local EscortGroup = self.EscortGroup
   local EscortClient = self.EscortClient
 
@@ -775,17 +785,16 @@ function ESCORT._ReportNearbyTargetsNow( MenuParam )
 
 end
 
-function ESCORT._SwitchReportNearbyTargets( MenuParam )
+function ESCORT:_SwitchReportNearbyTargets( ReportTargets )
 
-  local self = MenuParam.ParamSelf
   local EscortGroup = self.EscortGroup
   local EscortClient = self.EscortClient
 
-  self.ReportTargets = MenuParam.ParamReportTargets
+  self.ReportTargets = ReportTargets
 
   if self.ReportTargets then
     if not self.ReportTargetsScheduler then
-      self.ReportTargetsScheduler = SCHEDULER:New( self, self._ReportTargetsScheduler, {}, 1, 30 )
+      self.ReportTargetsScheduler:Schedule( self, self._ReportTargetsScheduler, {}, 1, 30 )
     end
   else
     routines.removeFunction( self.ReportTargetsScheduler )
@@ -794,40 +803,31 @@ function ESCORT._SwitchReportNearbyTargets( MenuParam )
 end
 
 --- @param #MENUPARAM MenuParam
-function ESCORT._ScanTargets( MenuParam )
+function ESCORT:_ScanTargets( ScanDuration )
 
-  local self = MenuParam.ParamSelf
-  local EscortGroup = self.EscortGroup
+  local EscortGroup = self.EscortGroup -- Wrapper.Group#GROUP
   local EscortClient = self.EscortClient
 
-  local ScanDuration = MenuParam.ParamScanDuration
-
-  self.FollowScheduler:Stop()
+  self.FollowScheduler:Stop( self.FollowSchedule )
 
   if EscortGroup:IsHelicopter() then
-    SCHEDULER:New( EscortGroup, EscortGroup.PushTask,
-      { EscortGroup:TaskControlled(
-          EscortGroup:TaskOrbitCircle( 200, 20 ),
-          EscortGroup:TaskCondition( nil, nil, nil, nil, ScanDuration, nil )
-        )
-      },
-      1
-    )
+    EscortGroup:PushTask(
+      EscortGroup:TaskControlled(
+        EscortGroup:TaskOrbitCircle( 200, 20 ),
+        EscortGroup:TaskCondition( nil, nil, nil, nil, ScanDuration, nil )
+      ), 1 )
   elseif EscortGroup:IsAirPlane() then
-    SCHEDULER:New( EscortGroup, EscortGroup.PushTask,
-      { EscortGroup:TaskControlled(
-          EscortGroup:TaskOrbitCircle( 1000, 500 ),
-          EscortGroup:TaskCondition( nil, nil, nil, nil, ScanDuration, nil )
-        )
-      },
-      1
-    )
+    EscortGroup:PushTask(
+      EscortGroup:TaskControlled(
+        EscortGroup:TaskOrbitCircle( 1000, 500 ),
+        EscortGroup:TaskCondition( nil, nil, nil, nil, ScanDuration, nil )
+      ), 1 )
   end
 
   EscortGroup:MessageToClient( "Scanning targets for " .. ScanDuration .. " seconds.", ScanDuration, EscortClient )
 
   if self.EscortMode == ESCORT.MODE.FOLLOW then
-    self.FollowScheduler:Start()
+    self.FollowScheduler:Start( self.FollowSchedule )
   end
 
 end
@@ -844,124 +844,157 @@ function _Resume( EscortGroup )
 
 end
 
---- @param #MENUPARAM MenuParam
-function ESCORT._AttackTarget( MenuParam )
+--- @param #ESCORT self
+-- @param #number DetectedItemID
+function ESCORT:_AttackTarget( DetectedItemID )
 
-  local self = MenuParam.ParamSelf
-  local EscortGroup = self.EscortGroup
+  local EscortGroup = self.EscortGroup -- Wrapper.Group#GROUP
+  self:E( EscortGroup )
   
   local EscortClient = self.EscortClient
-  local AttackUnit = MenuParam.ParamUnit -- Wrapper.Unit#UNIT
 
-  self.FollowScheduler:Stop()
-
-  self:T( AttackUnit )
+  self.FollowScheduler:Stop( self.FollowSchedule )
 
   if EscortGroup:IsAir() then
     EscortGroup:OptionROEOpenFire()
     EscortGroup:OptionROTPassiveDefense()
     EscortGroup:SetState( EscortGroup, "Escort", self )
-    SCHEDULER:New( EscortGroup,
-      EscortGroup.PushTask,
-      { EscortGroup:TaskCombo(
-          { EscortGroup:TaskAttackUnit( AttackUnit ),
-            EscortGroup:TaskFunction( 1, 2, "_Resume", { "''" } )
-          }
-        )
-      }, 10
+
+    local DetectedSet = self.Detection:GetDetectedSet( DetectedItemID )
+    
+    local Tasks = {}
+
+    DetectedSet:ForEachUnit(
+      --- @param Wrapper.Unit#UNIT DetectedUnit
+      function( DetectedUnit, Tasks )
+        if DetectedUnit:IsAlive() then
+          Tasks[#Tasks+1] = EscortGroup:TaskAttackUnit( DetectedUnit )
+        end
+      end, Tasks
+    )    
+
+    Tasks[#Tasks+1] = EscortGroup:TaskFunction( 1, 2, "_Resume", { "''" } )
+    
+    EscortGroup:SetTask( 
+      EscortGroup:TaskCombo(
+        Tasks
+      ), 1
     )
+    
   else
-    SCHEDULER:New( EscortGroup,
-      EscortGroup.PushTask,
-      { EscortGroup:TaskCombo(
-          { EscortGroup:TaskFireAtPoint( AttackUnit:GetVec2(), 50 )
-          }
-        )
-      }, 10
+  
+    local DetectedSet = self.Detection:GetDetectedSet( DetectedItemID )
+    
+    local Tasks = {}
+
+    DetectedSet:ForEachUnit(
+      --- @param Wrapper.Unit#UNIT DetectedUnit
+      function( DetectedUnit, Tasks )
+        if DetectedUnit:IsAlive() then
+          Tasks[#Tasks+1] = EscortGroup:TaskFireAtPoint( DetectedUnit:GetVec2(), 50 )
+        end
+      end, Tasks
+    )    
+
+    EscortGroup:SetTask( 
+      EscortGroup:TaskCombo(
+        Tasks
+      ), 1
     )
+
   end
   
   EscortGroup:MessageToClient( "Engaging Designated Unit!", 10, EscortClient )
 
 end
 
---- @param #MENUPARAM MenuParam
-function ESCORT._AssistTarget( MenuParam )
+--- 
+-- @param #number DetectedItemID
+function ESCORT:_AssistTarget( EscortGroupAttack, DetectedItemID )
 
-  local self = MenuParam.ParamSelf
   local EscortGroup = self.EscortGroup
   local EscortClient = self.EscortClient
-  local EscortGroupAttack = MenuParam.ParamEscortGroup
-  local AttackUnit = MenuParam.ParamUnit -- Wrapper.Unit#UNIT
 
-  self.FollowScheduler:Stop()
-
-  self:T( AttackUnit )
+  self.FollowScheduler:Stop( self.FollowSchedule )
 
   if EscortGroupAttack:IsAir() then
     EscortGroupAttack:OptionROEOpenFire()
     EscortGroupAttack:OptionROTVertical()
-    SCHDULER:New( EscortGroupAttack,
-      EscortGroupAttack.PushTask,
-      { EscortGroupAttack:TaskCombo(
-          { EscortGroupAttack:TaskAttackUnit( AttackUnit ),
-            EscortGroupAttack:TaskOrbitCircle( 500, 350 )
-          }
-        )
-      }, 10
+    
+    local DetectedSet = self.Detection:GetDetectedSet( DetectedItemID )
+    
+    local Tasks = {}
+
+    DetectedSet:ForEachUnit(
+      --- @param Wrapper.Unit#UNIT DetectedUnit
+      function( DetectedUnit, Tasks )
+        if DetectedUnit:IsAlive() then
+          Tasks[#Tasks+1] = EscortGroupAttack:TaskAttackUnit( DetectedUnit )
+        end
+      end, Tasks
+    )    
+
+    Tasks[#Tasks+1] = EscortGroupAttack:TaskOrbitCircle( 500, 350 )
+    
+    EscortGroupAttack:SetTask( 
+      EscortGroupAttack:TaskCombo(
+        Tasks
+      ), 1
     )
+
   else
-    SCHEDULER:New( EscortGroupAttack,
-      EscortGroupAttack.PushTask,
-      { EscortGroupAttack:TaskCombo(
-          { EscortGroupAttack:TaskFireAtPoint( AttackUnit:GetVec2(), 50 )
-          }
-        )
-      }, 10
+    local DetectedSet = self.Detection:GetDetectedSet( DetectedItemID )
+    
+    local Tasks = {}
+
+    DetectedSet:ForEachUnit(
+      --- @param Wrapper.Unit#UNIT DetectedUnit
+      function( DetectedUnit, Tasks )
+        if DetectedUnit:IsAlive() then
+          Tasks[#Tasks+1] = EscortGroupAttack:TaskFireAtPoint( DetectedUnit:GetVec2(), 50 )
+        end
+      end, Tasks
+    )    
+
+    EscortGroupAttack:SetTask( 
+      EscortGroupAttack:TaskCombo(
+        Tasks
+      ), 1
     )
+
   end
+
   EscortGroupAttack:MessageToClient( "Assisting with the destroying the enemy unit!", 10, EscortClient )
 
 end
 
 --- @param #MENUPARAM MenuParam
-function ESCORT._ROE( MenuParam )
+function ESCORT:_ROE( EscortROEFunction, EscortROEMessage )
 
-  local self = MenuParam.ParamSelf
   local EscortGroup = self.EscortGroup
   local EscortClient = self.EscortClient
-
-  local EscortROEFunction = MenuParam.ParamFunction
-  local EscortROEMessage = MenuParam.ParamMessage
 
   pcall( function() EscortROEFunction() end )
   EscortGroup:MessageToClient( EscortROEMessage, 10, EscortClient )
 end
 
 --- @param #MENUPARAM MenuParam
-function ESCORT._ROT( MenuParam )
+function ESCORT:_ROT( EscortROTFunction, EscortROTMessage )
 
-  local self = MenuParam.ParamSelf
   local EscortGroup = self.EscortGroup
   local EscortClient = self.EscortClient
-
-  local EscortROTFunction = MenuParam.ParamFunction
-  local EscortROTMessage = MenuParam.ParamMessage
 
   pcall( function() EscortROTFunction() end )
   EscortGroup:MessageToClient( EscortROTMessage, 10, EscortClient )
 end
 
 --- @param #MENUPARAM MenuParam
-function ESCORT._ResumeMission( MenuParam )
+function ESCORT:_ResumeMission( WayPoint )
 
-  local self = MenuParam.ParamSelf
   local EscortGroup = self.EscortGroup
   local EscortClient = self.EscortClient
 
-  local WayPoint = MenuParam.ParamWayPoint
-
-  self.FollowScheduler:Stop()
+  self.FollowScheduler:Stop( self.FollowSchedule )
 
   local WayPoints = EscortGroup:GetTaskRoute()
   self:T( WayPoint, WayPoints )
@@ -1105,176 +1138,244 @@ function ESCORT:_ReportTargetsScheduler()
   self:F( self.EscortGroup:GetName() )
 
   if self.EscortGroup:IsAlive() and self.EscortClient:IsAlive() then
-    local EscortGroupName = self.EscortGroup:GetName()
-    local EscortTargets = self.EscortGroup:GetDetectedTargets()
 
-    local ClientEscortTargets = self.EscortClient._EscortGroups[EscortGroupName].Targets
+    if true then
 
-    local EscortTargetMessages = ""
-    for EscortTargetID, EscortTarget in pairs( EscortTargets ) do
-      local EscortObject = EscortTarget.object
-      self:T( EscortObject )
-      if EscortObject and EscortObject:isExist() and EscortObject.id_ < 50000000 then
+      local EscortGroupName = self.EscortGroup:GetName() 
+    
+      self.EscortMenuAttackNearbyTargets:RemoveSubMenus()
 
-        local EscortTargetUnit = UNIT:Find( EscortObject )
-        local EscortTargetUnitName = EscortTargetUnit:GetName()
-
-
-
-        --          local EscortTargetIsDetected,
-        --                EscortTargetIsVisible,
-        --                EscortTargetLastTime,
-        --                EscortTargetKnowType,
-        --                EscortTargetKnowDistance,
-        --                EscortTargetLastPos,
-        --                EscortTargetLastVelocity
-        --                = self.EscortGroup:IsTargetDetected( EscortObject )
-        --
-        --          self:T( { EscortTargetIsDetected,
-        --                EscortTargetIsVisible,
-        --                EscortTargetLastTime,
-        --                EscortTargetKnowType,
-        --                EscortTargetKnowDistance,
-        --                EscortTargetLastPos,
-        --                EscortTargetLastVelocity } )
-
-
-        local EscortTargetUnitVec3 = EscortTargetUnit:GetVec3()
-        local EscortVec3 = self.EscortGroup:GetVec3()
-        local Distance = ( ( EscortTargetUnitVec3.x - EscortVec3.x )^2 +
-          ( EscortTargetUnitVec3.y - EscortVec3.y )^2 +
-          ( EscortTargetUnitVec3.z - EscortVec3.z )^2
-          ) ^ 0.5 / 1000
-
-        self:T( { self.EscortGroup:GetName(), EscortTargetUnit:GetName(), Distance, EscortTarget } )
-
-        if Distance <= 15 then
-
-          if not ClientEscortTargets[EscortTargetUnitName] then
-            ClientEscortTargets[EscortTargetUnitName] = {}
-          end
-          ClientEscortTargets[EscortTargetUnitName].AttackUnit = EscortTargetUnit
-          ClientEscortTargets[EscortTargetUnitName].visible = EscortTarget.visible
-          ClientEscortTargets[EscortTargetUnitName].type = EscortTarget.type
-          ClientEscortTargets[EscortTargetUnitName].distance = EscortTarget.distance
-        else
-          if ClientEscortTargets[EscortTargetUnitName] then
-            ClientEscortTargets[EscortTargetUnitName] = nil
-          end
-        end
+      if self.EscortMenuTargetAssistance then
+        self.EscortMenuTargetAssistance:RemoveSubMenus()
       end
-    end
 
-    self:T( { "Sorting Targets Table:", ClientEscortTargets } )
-    table.sort( ClientEscortTargets, function( a, b ) return a.Distance < b.Distance end )
-    self:T( { "Sorted Targets Table:", ClientEscortTargets } )
+      local DetectedItems = self.Detection:GetDetectedItems()
+      self:E( DetectedItems )
 
-    -- Remove the sub menus of the Attack menu of the Escort for the EscortGroup.
-    self.EscortMenuAttackNearbyTargets:RemoveSubMenus()
+      local DetectedTargets = false
+  
+      local DetectedMsgs = {}
+      
+      for ClientEscortGroupName, EscortGroupData in pairs( self.EscortClient._EscortGroups ) do
 
-    if self.EscortMenuTargetAssistance then
-      self.EscortMenuTargetAssistance:RemoveSubMenus()
-    end
+        local ClientEscortTargets = EscortGroupData.Detection
 
-    --for MenuIndex = 1, #self.EscortMenuAttackTargets do
-    --  self:T( { "Remove Menu:", self.EscortMenuAttackTargets[MenuIndex] } )
-    --  self.EscortMenuAttackTargets[MenuIndex] = self.EscortMenuAttackTargets[MenuIndex]:Remove()
-    --end
+        for DetectedItemID, DetectedItem in ipairs( DetectedItems ) do
+          self:E( { DetectedItemID, DetectedItem } )
+          -- Remove the sub menus of the Attack menu of the Escort for the EscortGroup.
+  
+          local DetectedItemReportSummary = self.Detection:DetectedItemReportSummary( DetectedItemID )
 
-
-    if ClientEscortTargets then
-      for ClientEscortTargetUnitName, ClientEscortTargetData in pairs( ClientEscortTargets ) do
-
-        for ClientEscortGroupName, EscortGroupData in pairs( self.EscortClient._EscortGroups ) do
-
-          if ClientEscortTargetData and ClientEscortTargetData.AttackUnit:IsAlive() then
-
-            local EscortTargetMessage = ""
-            local EscortTargetCategoryName = ClientEscortTargetData.AttackUnit:GetCategoryName()
-            local EscortTargetCategoryType = ClientEscortTargetData.AttackUnit:GetTypeName()
-            if ClientEscortTargetData.type then
-              EscortTargetMessage = EscortTargetMessage .. EscortTargetCategoryName .. " (" .. EscortTargetCategoryType .. ") at "
-            else
-              EscortTargetMessage = EscortTargetMessage .. "Unknown target at "
-            end
-
-            local EscortTargetUnitVec3 = ClientEscortTargetData.AttackUnit:GetVec3()
-            local EscortVec3 = self.EscortGroup:GetVec3()
-            local Distance = ( ( EscortTargetUnitVec3.x - EscortVec3.x )^2 +
-              ( EscortTargetUnitVec3.y - EscortVec3.y )^2 +
-              ( EscortTargetUnitVec3.z - EscortVec3.z )^2
-              ) ^ 0.5 / 1000
-
-            self:T( { self.EscortGroup:GetName(), ClientEscortTargetData.AttackUnit:GetName(), Distance, ClientEscortTargetData.AttackUnit } )
-            if ClientEscortTargetData.visible == false then
-              EscortTargetMessage = EscortTargetMessage .. string.format( "%.2f", Distance ) .. " estimated km"
-            else
-              EscortTargetMessage = EscortTargetMessage .. string.format( "%.2f", Distance ) .. " km"
-            end
-
-            if ClientEscortTargetData.visible then
-              EscortTargetMessage = EscortTargetMessage .. ", visual"
-            end
-
-            if ClientEscortGroupName == EscortGroupName then
-
-              MENU_CLIENT_COMMAND:New( self.EscortClient,
-                EscortTargetMessage,
-                self.EscortMenuAttackNearbyTargets,
-                ESCORT._AttackTarget,
-                { ParamSelf = self,
-                  ParamUnit = ClientEscortTargetData.AttackUnit
-                }
-              )
-              EscortTargetMessages = EscortTargetMessages .. "\n - " .. EscortTargetMessage
-            else
-              if self.EscortMenuTargetAssistance then
-                local MenuTargetAssistance = MENU_CLIENT:New( self.EscortClient, EscortGroupData.EscortName, self.EscortMenuTargetAssistance )
-                MENU_CLIENT_COMMAND:New( self.EscortClient,
-                  EscortTargetMessage,
-                  MenuTargetAssistance,
-                  ESCORT._AssistTarget,
-                  { ParamSelf = self,
-                    ParamEscortGroup = EscortGroupData.EscortGroup,
-                    ParamUnit = ClientEscortTargetData.AttackUnit
-                  }
-                )
-              end
-            end
+          if ClientEscortGroupName == EscortGroupName then
+          
+            DetectedMsgs[#DetectedMsgs+1] = DetectedItemReportSummary
+  
+            MENU_CLIENT_COMMAND:New( self.EscortClient,
+              DetectedItemReportSummary,
+              self.EscortMenuAttackNearbyTargets,
+              ESCORT._AttackTarget,
+              self,
+              DetectedItemID
+            )
           else
-            ClientEscortTargetData = nil
+            if self.EscortMenuTargetAssistance then
+            
+              self:T( DetectedItemReportSummary )
+              local MenuTargetAssistance = MENU_CLIENT:New( self.EscortClient, EscortGroupData.EscortName, self.EscortMenuTargetAssistance )
+              MENU_CLIENT_COMMAND:New( self.EscortClient,
+                DetectedItemReportSummary,
+                MenuTargetAssistance,
+                ESCORT._AssistTarget,
+                self,
+                EscortGroupData.EscortGroup,
+                DetectedItemID
+              )
+            end
           end
+          
+          DetectedTargets = true
+                  
         end
       end
-
-      if EscortTargetMessages ~= "" and self.ReportTargets == true then
-        self.EscortGroup:MessageToClient( "Detected targets within 15 km range:" .. EscortTargetMessages:gsub("\n$",""), 20, self.EscortClient )
+      self:E( DetectedMsgs )
+      if DetectedTargets then
+        self.EscortGroup:MessageToClient( "Detected targets:\n" .. table.concat( DetectedMsgs, "\n" ), 20, self.EscortClient )
       else
-        self.EscortGroup:MessageToClient( "No targets detected!", 20, self.EscortClient )
+        self.EscortGroup:MessageToClient( "No targets detected.", 10, self.EscortClient )
       end
+      
+      return true
+    else
+--      local EscortGroupName = self.EscortGroup:GetName()
+--      local EscortTargets = self.EscortGroup:GetDetectedTargets()
+--  
+--      local ClientEscortTargets = self.EscortClient._EscortGroups[EscortGroupName].Targets
+--  
+--      local EscortTargetMessages = ""
+--      for EscortTargetID, EscortTarget in pairs( EscortTargets ) do
+--        local EscortObject = EscortTarget.object
+--        self:T( EscortObject )
+--        if EscortObject and EscortObject:isExist() and EscortObject.id_ < 50000000 then
+--  
+--          local EscortTargetUnit = UNIT:Find( EscortObject )
+--          local EscortTargetUnitName = EscortTargetUnit:GetName()
+--  
+--  
+--  
+--          --          local EscortTargetIsDetected,
+--          --                EscortTargetIsVisible,
+--          --                EscortTargetLastTime,
+--          --                EscortTargetKnowType,
+--          --                EscortTargetKnowDistance,
+--          --                EscortTargetLastPos,
+--          --                EscortTargetLastVelocity
+--          --                = self.EscortGroup:IsTargetDetected( EscortObject )
+--          --
+--          --          self:T( { EscortTargetIsDetected,
+--          --                EscortTargetIsVisible,
+--          --                EscortTargetLastTime,
+--          --                EscortTargetKnowType,
+--          --                EscortTargetKnowDistance,
+--          --                EscortTargetLastPos,
+--          --                EscortTargetLastVelocity } )
+--  
+--  
+--          local EscortTargetUnitVec3 = EscortTargetUnit:GetVec3()
+--          local EscortVec3 = self.EscortGroup:GetVec3()
+--          local Distance = ( ( EscortTargetUnitVec3.x - EscortVec3.x )^2 +
+--            ( EscortTargetUnitVec3.y - EscortVec3.y )^2 +
+--            ( EscortTargetUnitVec3.z - EscortVec3.z )^2
+--            ) ^ 0.5 / 1000
+--  
+--          self:T( { self.EscortGroup:GetName(), EscortTargetUnit:GetName(), Distance, EscortTarget } )
+--  
+--          if Distance <= 15 then
+--  
+--            if not ClientEscortTargets[EscortTargetUnitName] then
+--              ClientEscortTargets[EscortTargetUnitName] = {}
+--            end
+--            ClientEscortTargets[EscortTargetUnitName].AttackUnit = EscortTargetUnit
+--            ClientEscortTargets[EscortTargetUnitName].visible = EscortTarget.visible
+--            ClientEscortTargets[EscortTargetUnitName].type = EscortTarget.type
+--            ClientEscortTargets[EscortTargetUnitName].distance = EscortTarget.distance
+--          else
+--            if ClientEscortTargets[EscortTargetUnitName] then
+--              ClientEscortTargets[EscortTargetUnitName] = nil
+--            end
+--          end
+--        end
+--      end
+--  
+--      self:T( { "Sorting Targets Table:", ClientEscortTargets } )
+--      table.sort( ClientEscortTargets, function( a, b ) return a.Distance < b.Distance end )
+--      self:T( { "Sorted Targets Table:", ClientEscortTargets } )
+--  
+--      -- Remove the sub menus of the Attack menu of the Escort for the EscortGroup.
+--      self.EscortMenuAttackNearbyTargets:RemoveSubMenus()
+--  
+--      if self.EscortMenuTargetAssistance then
+--        self.EscortMenuTargetAssistance:RemoveSubMenus()
+--      end
+--  
+--      --for MenuIndex = 1, #self.EscortMenuAttackTargets do
+--      --  self:T( { "Remove Menu:", self.EscortMenuAttackTargets[MenuIndex] } )
+--      --  self.EscortMenuAttackTargets[MenuIndex] = self.EscortMenuAttackTargets[MenuIndex]:Remove()
+--      --end
+--  
+--  
+--      if ClientEscortTargets then
+--        for ClientEscortTargetUnitName, ClientEscortTargetData in pairs( ClientEscortTargets ) do
+--  
+--          for ClientEscortGroupName, EscortGroupData in pairs( self.EscortClient._EscortGroups ) do
+--  
+--            if ClientEscortTargetData and ClientEscortTargetData.AttackUnit:IsAlive() then
+--  
+--              local EscortTargetMessage = ""
+--              local EscortTargetCategoryName = ClientEscortTargetData.AttackUnit:GetCategoryName()
+--              local EscortTargetCategoryType = ClientEscortTargetData.AttackUnit:GetTypeName()
+--              if ClientEscortTargetData.type then
+--                EscortTargetMessage = EscortTargetMessage .. EscortTargetCategoryName .. " (" .. EscortTargetCategoryType .. ") at "
+--              else
+--                EscortTargetMessage = EscortTargetMessage .. "Unknown target at "
+--              end
+--  
+--              local EscortTargetUnitVec3 = ClientEscortTargetData.AttackUnit:GetVec3()
+--              local EscortVec3 = self.EscortGroup:GetVec3()
+--              local Distance = ( ( EscortTargetUnitVec3.x - EscortVec3.x )^2 +
+--                ( EscortTargetUnitVec3.y - EscortVec3.y )^2 +
+--                ( EscortTargetUnitVec3.z - EscortVec3.z )^2
+--                ) ^ 0.5 / 1000
+--  
+--              self:T( { self.EscortGroup:GetName(), ClientEscortTargetData.AttackUnit:GetName(), Distance, ClientEscortTargetData.AttackUnit } )
+--              if ClientEscortTargetData.visible == false then
+--                EscortTargetMessage = EscortTargetMessage .. string.format( "%.2f", Distance ) .. " estimated km"
+--              else
+--                EscortTargetMessage = EscortTargetMessage .. string.format( "%.2f", Distance ) .. " km"
+--              end
+--  
+--              if ClientEscortTargetData.visible then
+--                EscortTargetMessage = EscortTargetMessage .. ", visual"
+--              end
+--  
+--              if ClientEscortGroupName == EscortGroupName then
+--  
+--                MENU_CLIENT_COMMAND:New( self.EscortClient,
+--                  EscortTargetMessage,
+--                  self.EscortMenuAttackNearbyTargets,
+--                  ESCORT._AttackTarget,
+--                  { ParamSelf = self,
+--                    ParamUnit = ClientEscortTargetData.AttackUnit
+--                  }
+--                )
+--                EscortTargetMessages = EscortTargetMessages .. "\n - " .. EscortTargetMessage
+--              else
+--                if self.EscortMenuTargetAssistance then
+--                  local MenuTargetAssistance = MENU_CLIENT:New( self.EscortClient, EscortGroupData.EscortName, self.EscortMenuTargetAssistance )
+--                  MENU_CLIENT_COMMAND:New( self.EscortClient,
+--                    EscortTargetMessage,
+--                    MenuTargetAssistance,
+--                    ESCORT._AssistTarget,
+--                    self,
+--                    EscortGroupData.EscortGroup,
+--                    ClientEscortTargetData.AttackUnit
+--                  )
+--                end
+--              end
+--            else
+--              ClientEscortTargetData = nil
+--            end
+--          end
+--        end
+--  
+--        if EscortTargetMessages ~= "" and self.ReportTargets == true then
+--          self.EscortGroup:MessageToClient( "Detected targets within 15 km range:" .. EscortTargetMessages:gsub("\n$",""), 20, self.EscortClient )
+--        else
+--          self.EscortGroup:MessageToClient( "No targets detected!", 20, self.EscortClient )
+--        end
+--      end
+--  
+--      if self.EscortMenuResumeMission then
+--        self.EscortMenuResumeMission:RemoveSubMenus()
+--  
+--        --    if self.EscortMenuResumeWayPoints then
+--        --      for MenuIndex = 1, #self.EscortMenuResumeWayPoints do
+--        --        self:T( { "Remove Menu:", self.EscortMenuResumeWayPoints[MenuIndex] } )
+--        --        self.EscortMenuResumeWayPoints[MenuIndex] = self.EscortMenuResumeWayPoints[MenuIndex]:Remove()
+--        --      end
+--        --    end
+--  
+--        local TaskPoints = self:RegisterRoute()
+--        for WayPointID, WayPoint in pairs( TaskPoints ) do
+--          local EscortVec3 = self.EscortGroup:GetVec3()
+--          local Distance = ( ( WayPoint.x - EscortVec3.x )^2 +
+--            ( WayPoint.y - EscortVec3.z )^2
+--            ) ^ 0.5 / 1000
+--          MENU_CLIENT_COMMAND:New( self.EscortClient, "Waypoint " .. WayPointID .. " at " .. string.format( "%.2f", Distance ).. "km", self.EscortMenuResumeMission, ESCORT._ResumeMission, { ParamSelf = self, ParamWayPoint = WayPointID } )
+--        end
+--      end
+--  
+--      return true
     end
-
-    if self.EscortMenuResumeMission then
-      self.EscortMenuResumeMission:RemoveSubMenus()
-
-      --    if self.EscortMenuResumeWayPoints then
-      --      for MenuIndex = 1, #self.EscortMenuResumeWayPoints do
-      --        self:T( { "Remove Menu:", self.EscortMenuResumeWayPoints[MenuIndex] } )
-      --        self.EscortMenuResumeWayPoints[MenuIndex] = self.EscortMenuResumeWayPoints[MenuIndex]:Remove()
-      --      end
-      --    end
-
-      local TaskPoints = self:RegisterRoute()
-      for WayPointID, WayPoint in pairs( TaskPoints ) do
-        local EscortVec3 = self.EscortGroup:GetVec3()
-        local Distance = ( ( WayPoint.x - EscortVec3.x )^2 +
-          ( WayPoint.y - EscortVec3.z )^2
-          ) ^ 0.5 / 1000
-        MENU_CLIENT_COMMAND:New( self.EscortClient, "Waypoint " .. WayPointID .. " at " .. string.format( "%.2f", Distance ).. "km", self.EscortMenuResumeMission, ESCORT._ResumeMission, { ParamSelf = self, ParamWayPoint = WayPointID } )
-      end
-    end
-
-    return true
   end
   
   return false

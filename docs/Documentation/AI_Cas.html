@@ -39,16 +39,17 @@
 					<li><a href="Fsm.html">Fsm</a></li>
 					<li><a href="Group.html">Group</a></li>
 					<li><a href="Identifiable.html">Identifiable</a></li>
-					<li><a href="MOVEMENT.html">MOVEMENT</a></li>
 					<li><a href="Menu.html">Menu</a></li>
 					<li><a href="Message.html">Message</a></li>
 					<li><a href="MissileTrainer.html">MissileTrainer</a></li>
 					<li><a href="Mission.html">Mission</a></li>
+					<li><a href="Movement.html">Movement</a></li>
 					<li><a href="Object.html">Object</a></li>
 					<li><a href="Point.html">Point</a></li>
 					<li><a href="Positionable.html">Positionable</a></li>
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
 					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
+					<li><a href="Radio.html">Radio</a></li>
 					<li><a href="Route.html">Route</a></li>
 					<li><a href="Scenery.html">Scenery</a></li>
 					<li><a href="ScheduleDispatcher.html">ScheduleDispatcher</a></li>
@@ -61,8 +62,8 @@
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="Task.html">Task</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
+					<li><a href="Task_A2G_Dispatcher.html">Task_A2G_Dispatcher</a></li>
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
-					<li><a href="Task_SEAD.html">Task_SEAD</a></li>
 					<li><a href="Unit.html">Unit</a></li>
 					<li><a href="Utils.html">Utils</a></li>
 					<li><a href="Zone.html">Zone</a></li>
@@ -72,18 +73,339 @@
 	<div id="content">
    <h1>Module <code>AI_Cas</code></h1>
    
-<p>Single-Player:<strong>Yes</strong> / Multi-Player:<strong>Yes</strong> / AI:<strong>Yes</strong> / Human:<strong>No</strong> / Types:<strong>Air</strong> -- 
-<strong>Provide Close Air Support to friendly ground troops.</strong></p>
+<p><strong>AI</strong> -- <strong>Provide Close Air Support to friendly ground troops.</strong></p>
 
 <p><img src="..\Presentations\AI_CAS\Dia1.JPG" alt="Banner Image"/></p>
 
 <hr/>
 
+<p>AI CAS classes makes AI Controllables execute a Close Air Support.</p>
+
+   
+
+<p>There are the following types of CAS classes defined:</p>
+
+<ul>
+    <li><a href="##(AI_CAS_ZONE)">#AI<em>CAS</em>ZONE</a>: Perform a CAS in a zone.</li>
+</ul>
+
+<hr/>
+
+<h1><strong>API CHANGE HISTORY</strong></h1>
+
+<p>The underlying change log documents the API changes. Please read this carefully. The following notation is used:</p>
+
+<ul>
+    <li><strong>Added</strong> parts are expressed in bold type face.</li>
+    <li><em>Removed</em> parts are expressed in italic type face.</li>
+</ul>
+
+<p>Hereby the change log:</p>
+
+<p>2017-01-15: Initial class and API.</p>
+
+<hr/>
+
+<h1><strong>AUTHORS and CONTRIBUTIONS</strong></h1>
+
+<h3>Contributions:</h3>
+
+<ul>
+    <li><strong><a href="https://forums.eagle.ru/member.php?u=90530">Quax</a></strong>: Concept, Advice &amp; Testing.</li>
+    <li><strong><a href="https://forums.eagle.ru/member.php?u=62835">Pikey</a></strong>: Concept, Advice &amp; Testing.</li>
+    <li><strong><a href="http://forums.eagle.ru:8080/member.php?u=75036">Gunterlund</a></strong>: Test case revision.</li>
+</ul>
+
+<h3>Authors:</h3>
+
+<ul>
+    <li><strong>FlightControl</strong>: Concept, Design &amp; Programming.</li>
+</ul>
+
+
+	<h2>Global(s)</h2>
+	<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#AI_CAS_ZONE">AI_CAS_ZONE</a></td>
+		<td class="summary">
+<h1>1) <a href="##(AI_CAS_ZONE)">#AI<em>CAS</em>ZONE</a> class, extends <a href="AI_Patrol.html##(AI_PATROL_ZONE)">AI<em>Patrol#AI</em>PATROL_ZONE</a></h1>
+
+<p><a href="##(AI_CAS_ZONE)">#AI<em>CAS</em>ZONE</a> derives from the <a href="AI_Patrol.html##(AI_PATROL_ZONE)">AI<em>Patrol#AI</em>PATROL_ZONE</a>, inheriting its methods and behaviour.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#_NewEngageRoute">_NewEngageRoute(AIControllable)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+			<h2><a id="#(AI_CAS_ZONE)">Type <code>AI_CAS_ZONE</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).AIControllable">AI_CAS_ZONE.AIControllable</a></td>
+		<td class="summary">
+<p>The <a href="Controllable.html">Controllable</a> patrolling.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).Abort">AI_CAS_ZONE:Abort()</a></td>
+		<td class="summary">
+<p>Synchronous Event Trigger for Event Abort.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).Accomplish">AI_CAS_ZONE:Accomplish()</a></td>
+		<td class="summary">
+<p>Synchronous Event Trigger for Event Accomplish.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).Accomplished">AI_CAS_ZONE.Accomplished</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).Destroy">AI_CAS_ZONE:Destroy()</a></td>
+		<td class="summary">
+<p>Synchronous Event Trigger for Event Destroy.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).Engage">AI_CAS_ZONE:Engage(EngageSpeed, EngageAltitude, EngageWeaponExpend, EngageAttackQty, EngageDirection)</a></td>
+		<td class="summary">
+<p>Synchronous Event Trigger for Event Engage.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).EngageAltitude">AI_CAS_ZONE.EngageAltitude</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).EngageAttackQty">AI_CAS_ZONE.EngageAttackQty</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).EngageDirection">AI_CAS_ZONE.EngageDirection</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).EngageSpeed">AI_CAS_ZONE.EngageSpeed</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).EngageWeaponExpend">AI_CAS_ZONE.EngageWeaponExpend</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).EngageZone">AI_CAS_ZONE.EngageZone</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).Fired">AI_CAS_ZONE:Fired()</a></td>
+		<td class="summary">
+<p>Synchronous Event Trigger for Event Fired.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).New">AI_CAS_ZONE:New(PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, EngageZone, PatrolAltType)</a></td>
+		<td class="summary">
+<p>Creates a new AI<em>CAS</em>ZONE object</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).OnAfterAbort">AI_CAS_ZONE:OnAfterAbort(Controllable, From, Event, To)</a></td>
+		<td class="summary">
+<p>OnAfter Transition Handler for Event Abort.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).OnAfterAccomplish">AI_CAS_ZONE:OnAfterAccomplish(Controllable, From, Event, To)</a></td>
+		<td class="summary">
+<p>OnAfter Transition Handler for Event Accomplish.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).OnAfterDestroy">AI_CAS_ZONE:OnAfterDestroy(Controllable, From, Event, To)</a></td>
+		<td class="summary">
+<p>OnAfter Transition Handler for Event Destroy.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).OnAfterEngage">AI_CAS_ZONE:OnAfterEngage(Controllable, From, Event, To)</a></td>
+		<td class="summary">
+<p>OnAfter Transition Handler for Event Engage.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).OnAfterFired">AI_CAS_ZONE:OnAfterFired(Controllable, From, Event, To)</a></td>
+		<td class="summary">
+<p>OnAfter Transition Handler for Event Fired.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).OnBeforeAbort">AI_CAS_ZONE:OnBeforeAbort(Controllable, From, Event, To)</a></td>
+		<td class="summary">
+<p>OnBefore Transition Handler for Event Abort.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).OnBeforeAccomplish">AI_CAS_ZONE:OnBeforeAccomplish(Controllable, From, Event, To)</a></td>
+		<td class="summary">
+<p>OnBefore Transition Handler for Event Accomplish.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).OnBeforeDestroy">AI_CAS_ZONE:OnBeforeDestroy(Controllable, From, Event, To)</a></td>
+		<td class="summary">
+<p>OnBefore Transition Handler for Event Destroy.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).OnBeforeEngage">AI_CAS_ZONE:OnBeforeEngage(Controllable, From, Event, To)</a></td>
+		<td class="summary">
+<p>OnBefore Transition Handler for Event Engage.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).OnBeforeFired">AI_CAS_ZONE:OnBeforeFired(Controllable, From, Event, To)</a></td>
+		<td class="summary">
+<p>OnBefore Transition Handler for Event Fired.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).OnEnterEngaging">AI_CAS_ZONE:OnEnterEngaging(Controllable, From, Event, To)</a></td>
+		<td class="summary">
+<p>OnEnter Transition Handler for State Engaging.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).OnEventDead">AI_CAS_ZONE:OnEventDead(EventData)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).OnLeaveEngaging">AI_CAS_ZONE:OnLeaveEngaging(Controllable, From, Event, To)</a></td>
+		<td class="summary">
+<p>OnLeave Transition Handler for State Engaging.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).SetEngageZone">AI_CAS_ZONE:SetEngageZone(EngageZone)</a></td>
+		<td class="summary">
+<p>Set the Engage Zone where the AI is performing CAS.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).TargetZone">AI_CAS_ZONE.TargetZone</a></td>
+		<td class="summary">
+<p>The <a href="Zone.html">Zone</a> where the patrol needs to be executed.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).__Abort">AI_CAS_ZONE:__Abort(Delay)</a></td>
+		<td class="summary">
+<p>Asynchronous Event Trigger for Event Abort.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).__Accomplish">AI_CAS_ZONE:__Accomplish(Delay)</a></td>
+		<td class="summary">
+<p>Asynchronous Event Trigger for Event Accomplish.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).__Destroy">AI_CAS_ZONE:__Destroy(Delay)</a></td>
+		<td class="summary">
+<p>Asynchronous Event Trigger for Event Destroy.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).__Engage">AI_CAS_ZONE:__Engage(Delay, EngageSpeed, EngageAltitude, EngageWeaponExpend, EngageAttackQty, EngageDirection)</a></td>
+		<td class="summary">
+<p>Asynchronous Event Trigger for Event Engage.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).__Fired">AI_CAS_ZONE:__Fired(Delay)</a></td>
+		<td class="summary">
+<p>Asynchronous Event Trigger for Event Fired.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).onafterAbort">AI_CAS_ZONE:onafterAbort(Controllable, From, Event, To)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).onafterAccomplish">AI_CAS_ZONE:onafterAccomplish(Controllable, From, Event, To)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).onafterDestroy">AI_CAS_ZONE:onafterDestroy(Controllable, From, Event, To, EventData)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).onafterEngage">AI_CAS_ZONE:onafterEngage(Controllable, From, Event, To, EngageSpeed, EngageAltitude, EngageWeaponExpend, EngageAttackQty, EngageDirection)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).onafterStart">AI_CAS_ZONE:onafterStart(Controllable, From, Event, To)</a></td>
+		<td class="summary">
+<p>onafter State Transition for Event Start.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).onafterTarget">AI_CAS_ZONE:onafterTarget(Controllable, From, Event, To)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).onbeforeEngage">AI_CAS_ZONE:onbeforeEngage(Controllable, From, Event, To)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+
+	<h2>Global(s)</h2>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(AI_CAS_ZONE)">#AI_CAS_ZONE</a></em>
+<a id="AI_CAS_ZONE" >
+<strong>AI_CAS_ZONE</strong>
+</a>
+</dt>
+<dd>
+	
 <h1>1) <a href="##(AI_CAS_ZONE)">#AI<em>CAS</em>ZONE</a> class, extends <a href="AI_Patrol.html##(AI_PATROL_ZONE)">AI<em>Patrol#AI</em>PATROL_ZONE</a></h1>
 
 <p><a href="##(AI_CAS_ZONE)">#AI<em>CAS</em>ZONE</a> derives from the <a href="AI_Patrol.html##(AI_PATROL_ZONE)">AI<em>Patrol#AI</em>PATROL_ZONE</a>, inheriting its methods and behaviour.</p>
 
-   
+	
 <p> 
 The <a href="##(AI_CAS_ZONE)">#AI<em>CAS</em>ZONE</a> class implements the core functions to provide Close Air Support in an Engage <a href="Zone.html">Zone</a> by an AIR <a href="Controllable.html">Controllable</a> or <a href="Group.html">Group</a>.
 The AI<em>CAS</em>ZONE runs a process. It holds an AI in a Patrol Zone and when the AI is commanded to engage, it will fly to an Engage Zone.</p>
@@ -177,321 +499,6 @@ It can be notified to go RTB through the <strong>RTB</strong> event.</p>
 
 <hr/>
 
-<h1><strong>API CHANGE HISTORY</strong></h1>
-
-<p>The underlying change log documents the API changes. Please read this carefully. The following notation is used:</p>
-
-<ul>
-    <li><strong>Added</strong> parts are expressed in bold type face.</li>
-    <li><em>Removed</em> parts are expressed in italic type face.</li>
-</ul>
-
-<p>Hereby the change log:</p>
-
-<p>2017-01-15: Initial class and API.</p>
-
-<hr/>
-
-<h1><strong>AUTHORS and CONTRIBUTIONS</strong></h1>
-
-<h3>Contributions:</h3>
-
-<ul>
-    <li><strong><a href="https://forums.eagle.ru/member.php?u=90530">Quax</a></strong>: Concept, Advice &amp; Testing.</li>
-    <li><strong><a href="https://forums.eagle.ru/member.php?u=62835">Pikey</a></strong>: Concept, Advice &amp; Testing.</li>
-    <li><strong><a href="http://forums.eagle.ru:8080/member.php?u=75036">Gunterlund</a></strong>: Test case revision.</li>
-</ul>
-
-<h3>Authors:</h3>
-
-<ul>
-    <li><strong>FlightControl</strong>: Concept, Design &amp; Programming.</li>
-</ul>
-
-
-	<h2>Global(s)</h2>
-	<table class="function_list">
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="#AI_CAS_ZONE">AI_CAS_ZONE</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="#_NewEngageRoute">_NewEngageRoute(AIControllable)</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-	</table>
-			<h2><a id="#(AI_CAS_ZONE)">Type <code>AI_CAS_ZONE</code></a></h2>
-				<table class="function_list">
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).AIControllable">AI_CAS_ZONE.AIControllable</a></td>
-		<td class="summary">
-<p>The <a href="Controllable.html">Controllable</a> patrolling.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).Abort">AI_CAS_ZONE:Abort()</a></td>
-		<td class="summary">
-<p>Synchronous Event Trigger for Event Abort.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).Accomplish">AI_CAS_ZONE:Accomplish()</a></td>
-		<td class="summary">
-<p>Synchronous Event Trigger for Event Accomplish.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).Accomplished">AI_CAS_ZONE.Accomplished</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).ClassName">AI_CAS_ZONE.ClassName</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).Destroy">AI_CAS_ZONE:Destroy()</a></td>
-		<td class="summary">
-<p>Synchronous Event Trigger for Event Destroy.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).Engage">AI_CAS_ZONE:Engage(EngageSpeed, EngageWeaponExpend, EngageAltitude, EngageAttackQty, EngageDirection)</a></td>
-		<td class="summary">
-<p>Synchronous Event Trigger for Event Engage.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).EngageAltitude">AI_CAS_ZONE.EngageAltitude</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).EngageAttackQty">AI_CAS_ZONE.EngageAttackQty</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).EngageDirection">AI_CAS_ZONE.EngageDirection</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).EngageSpeed">AI_CAS_ZONE.EngageSpeed</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).EngageWeaponExpend">AI_CAS_ZONE.EngageWeaponExpend</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).EngageZone">AI_CAS_ZONE.EngageZone</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).Fired">AI_CAS_ZONE:Fired()</a></td>
-		<td class="summary">
-<p>Synchronous Event Trigger for Event Fired.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).New">AI_CAS_ZONE:New(PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, EngageZone, PatrolAltType)</a></td>
-		<td class="summary">
-<p>Creates a new AI<em>CAS</em>ZONE object</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).OnAfterAbort">AI_CAS_ZONE:OnAfterAbort(Controllable, From, Event, To)</a></td>
-		<td class="summary">
-<p>OnAfter Transition Handler for Event Abort.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).OnAfterAccomplish">AI_CAS_ZONE:OnAfterAccomplish(Controllable, From, Event, To)</a></td>
-		<td class="summary">
-<p>OnAfter Transition Handler for Event Accomplish.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).OnAfterDestroy">AI_CAS_ZONE:OnAfterDestroy(Controllable, From, Event, To)</a></td>
-		<td class="summary">
-<p>OnAfter Transition Handler for Event Destroy.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).OnAfterEngage">AI_CAS_ZONE:OnAfterEngage(Controllable, From, Event, To, EngageSpeed, EngageWeaponExpend, EngageAltitude, EngageAttackQty, EngageDirection)</a></td>
-		<td class="summary">
-<p>OnAfter Transition Handler for Event Engage.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).OnAfterFired">AI_CAS_ZONE:OnAfterFired(Controllable, From, Event, To)</a></td>
-		<td class="summary">
-<p>OnAfter Transition Handler for Event Fired.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).OnBeforeAbort">AI_CAS_ZONE:OnBeforeAbort(Controllable, From, Event, To)</a></td>
-		<td class="summary">
-<p>OnBefore Transition Handler for Event Abort.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).OnBeforeAccomplish">AI_CAS_ZONE:OnBeforeAccomplish(Controllable, From, Event, To)</a></td>
-		<td class="summary">
-<p>OnBefore Transition Handler for Event Accomplish.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).OnBeforeDestroy">AI_CAS_ZONE:OnBeforeDestroy(Controllable, From, Event, To)</a></td>
-		<td class="summary">
-<p>OnBefore Transition Handler for Event Destroy.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).OnBeforeEngage">AI_CAS_ZONE:OnBeforeEngage(Controllable, From, Event, To, EngageSpeed, EngageWeaponExpend, EngageAltitude, EngageAttackQty, EngageDirection)</a></td>
-		<td class="summary">
-<p>OnBefore Transition Handler for Event Engage.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).OnBeforeFired">AI_CAS_ZONE:OnBeforeFired(Controllable, From, Event, To)</a></td>
-		<td class="summary">
-<p>OnBefore Transition Handler for Event Fired.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).OnEnterEngaging">AI_CAS_ZONE:OnEnterEngaging(Controllable, From, Event, To)</a></td>
-		<td class="summary">
-<p>OnEnter Transition Handler for State Engaging.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).OnEventDead">AI_CAS_ZONE:OnEventDead(EventData)</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).OnLeaveEngaging">AI_CAS_ZONE:OnLeaveEngaging(Controllable, From, Event, To)</a></td>
-		<td class="summary">
-<p>OnLeave Transition Handler for State Engaging.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).SetEngageZone">AI_CAS_ZONE:SetEngageZone(EngageZone)</a></td>
-		<td class="summary">
-<p>Set the Engage Zone where the AI is performing CAS.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).TargetZone">AI_CAS_ZONE.TargetZone</a></td>
-		<td class="summary">
-<p>The <a href="Zone.html">Zone</a> where the patrol needs to be executed.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).__Abort">AI_CAS_ZONE:__Abort(Delay)</a></td>
-		<td class="summary">
-<p>Asynchronous Event Trigger for Event Abort.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).__Accomplish">AI_CAS_ZONE:__Accomplish(Delay)</a></td>
-		<td class="summary">
-<p>Asynchronous Event Trigger for Event Accomplish.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).__Destroy">AI_CAS_ZONE:__Destroy(Delay)</a></td>
-		<td class="summary">
-<p>Asynchronous Event Trigger for Event Destroy.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).__Engage">AI_CAS_ZONE:__Engage(Delay, EngageSpeed, EngageWeaponExpend, EngageAltitude, EngageAttackQty, EngageDirection)</a></td>
-		<td class="summary">
-<p>Asynchronous Event Trigger for Event Engage.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).__Fired">AI_CAS_ZONE:__Fired(Delay)</a></td>
-		<td class="summary">
-<p>Asynchronous Event Trigger for Event Fired.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).onafterAbort">AI_CAS_ZONE:onafterAbort(Controllable, From, Event, To)</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).onafterAccomplish">AI_CAS_ZONE:onafterAccomplish(Controllable, From, Event, To)</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).onafterDestroy">AI_CAS_ZONE:onafterDestroy(Controllable, From, Event, To, EventData)</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).onafterEngage">AI_CAS_ZONE:onafterEngage(Controllable, From, Event, To, EngageSpeed, EngageWeaponExpend, EngageAltitude, EngageAttackQty, EngageDirection)</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).onafterStart">AI_CAS_ZONE:onafterStart(Controllable, From, Event, To)</a></td>
-		<td class="summary">
-<p>onafter State Transition for Event Start.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).onafterTarget">AI_CAS_ZONE:onafterTarget(Controllable, From, Event, To)</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).onbeforeEngage">AI_CAS_ZONE:onbeforeEngage(Controllable, From, Event, To)</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-	</table>
-
-	<h2>Global(s)</h2>
-		<dl class="function">
-<dt>
-
-		<em><a href="##(AI_CAS_ZONE)">#AI_CAS_ZONE</a></em>
-<a id="AI_CAS_ZONE" >
-<strong>AI_CAS_ZONE</strong>
-</a>
-</dt>
-<dd>
-	
-
 
 </dd>
 </dl>
@@ -580,20 +587,6 @@ It can be notified to go RTB through the <strong>RTB</strong> event.</p>
 		<dl class="function">
 <dt>
 
-		<em>#string</em>
-<a id="#(AI_CAS_ZONE).ClassName" >
-<strong>AI_CAS_ZONE.ClassName</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
 <a id="#(AI_CAS_ZONE).Destroy" >
 <strong>AI_CAS_ZONE:Destroy()</strong>
 </a>
@@ -608,7 +601,7 @@ It can be notified to go RTB through the <strong>RTB</strong> event.</p>
 <dt>
 
 <a id="#(AI_CAS_ZONE).Engage" >
-<strong>AI_CAS_ZONE:Engage(EngageSpeed, EngageWeaponExpend, EngageAltitude, EngageAttackQty, EngageDirection)</strong>
+<strong>AI_CAS_ZONE:Engage(EngageSpeed, EngageAltitude, EngageWeaponExpend, EngageAttackQty, EngageDirection)</strong>
 </a>
 </dt>
 <dd>
@@ -625,14 +618,16 @@ It can be notified to go RTB through the <strong>RTB</strong> event.</p>
 				</li>
 				<li>
 				
-<p><code><em><a href="Dcs.DCSTypes.html##(AI.Task.WeaponExpend)">Dcs.DCSTypes#AI.Task.WeaponExpend</a> EngageWeaponExpend </em></code>: 
-(optional) Determines how much weapon will be released at each attack. If parameter is not defined the unit / controllable will choose expend on its own discretion.</p>
+<p><code><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a> EngageAltitude </em></code>: 
+(optional) Desired altitude to perform the unit engagement.</p>
 
 				</li>
 				<li>
 				
-<p><code><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a> EngageAltitude </em></code>: 
-(optional) Desired altitude to perform the unit engagement.</p>
+<p><code><em><a href="Dcs.DCSTypes.html##(AI.Task.WeaponExpend)">Dcs.DCSTypes#AI.Task.WeaponExpend</a> EngageWeaponExpend </em></code>: 
+(optional) Determines how much weapon will be released at each attack. 
+If parameter is not defined the unit / controllable will choose expend on its own discretion.
+Use the structure <a href="DCSTypes.html##(AI.Task).WeaponExpend">DCSTypes#AI.Task.WeaponExpend</a> to define the amount of weapons to be release at each attack.</p>
 
 				</li>
 				<li>
@@ -932,7 +927,7 @@ The To State string.</p>
 <dt>
 
 <a id="#(AI_CAS_ZONE).OnAfterEngage" >
-<strong>AI_CAS_ZONE:OnAfterEngage(Controllable, From, Event, To, EngageSpeed, EngageWeaponExpend, EngageAltitude, EngageAttackQty, EngageDirection)</strong>
+<strong>AI_CAS_ZONE:OnAfterEngage(Controllable, From, Event, To)</strong>
 </a>
 </dt>
 <dd>
@@ -963,36 +958,6 @@ The Event string.</p>
 				
 <p><code><em>#string To </em></code>: 
 The To State string.</p>
-
-				</li>
-				<li>
-				
-<p><code><em>#number EngageSpeed </em></code>: 
-(optional) The speed the Group will hold when engaging to the target zone.</p>
-
-				</li>
-				<li>
-				
-<p><code><em><a href="Dcs.DCSTypes.html##(AI.Task.WeaponExpend)">Dcs.DCSTypes#AI.Task.WeaponExpend</a> EngageWeaponExpend </em></code>: 
-(optional) Determines how much weapon will be released at each attack. If parameter is not defined the unit / controllable will choose expend on its own discretion.</p>
-
-				</li>
-				<li>
-				
-<p><code><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a> EngageAltitude </em></code>: 
-(optional) Desired altitude to perform the unit engagement.</p>
-
-				</li>
-				<li>
-				
-<p><code><em>#number EngageAttackQty </em></code>: 
-(optional) This parameter limits maximal quantity of attack. The aicraft/controllable will not make more attack than allowed even if the target controllable not destroyed and the aicraft/controllable still have ammo. If not defined the aircraft/controllable will attack target until it will be destroyed or until the aircraft/controllable will run out of ammo.</p>
-
-				</li>
-				<li>
-				
-<p><code><em><a href="Dcs.DCSTypes.html##(Azimuth)">Dcs.DCSTypes#Azimuth</a> EngageDirection </em></code>: 
-(optional) Desired ingress direction from the target to the attacking aircraft. Controllable/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain controllable/aircraft will choose another direction.</p>
 
 				</li>
 		</ul>
@@ -1177,7 +1142,7 @@ Return false to cancel Transition.</p>
 <dt>
 
 <a id="#(AI_CAS_ZONE).OnBeforeEngage" >
-<strong>AI_CAS_ZONE:OnBeforeEngage(Controllable, From, Event, To, EngageSpeed, EngageWeaponExpend, EngageAltitude, EngageAttackQty, EngageDirection)</strong>
+<strong>AI_CAS_ZONE:OnBeforeEngage(Controllable, From, Event, To)</strong>
 </a>
 </dt>
 <dd>
@@ -1208,36 +1173,6 @@ The Event string.</p>
 				
 <p><code><em>#string To </em></code>: 
 The To State string.</p>
-
-				</li>
-				<li>
-				
-<p><code><em>#number EngageSpeed </em></code>: 
-(optional) The speed the Group will hold when engaging to the target zone.</p>
-
-				</li>
-				<li>
-				
-<p><code><em><a href="Dcs.DCSTypes.html##(AI.Task.WeaponExpend)">Dcs.DCSTypes#AI.Task.WeaponExpend</a> EngageWeaponExpend </em></code>: 
-(optional) Determines how much weapon will be released at each attack. If parameter is not defined the unit / controllable will choose expend on its own discretion.</p>
-
-				</li>
-				<li>
-				
-<p><code><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a> EngageAltitude </em></code>: 
-(optional) Desired altitude to perform the unit engagement.</p>
-
-				</li>
-				<li>
-				
-<p><code><em>#number EngageAttackQty </em></code>: 
-(optional) This parameter limits maximal quantity of attack. The aicraft/controllable will not make more attack than allowed even if the target controllable not destroyed and the aicraft/controllable still have ammo. If not defined the aircraft/controllable will attack target until it will be destroyed or until the aircraft/controllable will run out of ammo.</p>
-
-				</li>
-				<li>
-				
-<p><code><em><a href="Dcs.DCSTypes.html##(Azimuth)">Dcs.DCSTypes#Azimuth</a> EngageDirection </em></code>: 
-(optional) Desired ingress direction from the target to the attacking aircraft. Controllable/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain controllable/aircraft will choose another direction.</p>
 
 				</li>
 		</ul>
@@ -1508,7 +1443,7 @@ The delay in seconds.</p>
 <dt>
 
 <a id="#(AI_CAS_ZONE).__Engage" >
-<strong>AI_CAS_ZONE:__Engage(Delay, EngageSpeed, EngageWeaponExpend, EngageAltitude, EngageAttackQty, EngageDirection)</strong>
+<strong>AI_CAS_ZONE:__Engage(Delay, EngageSpeed, EngageAltitude, EngageWeaponExpend, EngageAttackQty, EngageDirection)</strong>
 </a>
 </dt>
 <dd>
@@ -1531,14 +1466,16 @@ The delay in seconds.</p>
 				</li>
 				<li>
 				
-<p><code><em><a href="Dcs.DCSTypes.html##(AI.Task.WeaponExpend)">Dcs.DCSTypes#AI.Task.WeaponExpend</a> EngageWeaponExpend </em></code>: 
-(optional) Determines how much weapon will be released at each attack. If parameter is not defined the unit / controllable will choose expend on its own discretion.</p>
+<p><code><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a> EngageAltitude </em></code>: 
+(optional) Desired altitude to perform the unit engagement.</p>
 
 				</li>
 				<li>
 				
-<p><code><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a> EngageAltitude </em></code>: 
-(optional) Desired altitude to perform the unit engagement.</p>
+<p><code><em><a href="Dcs.DCSTypes.html##(AI.Task.WeaponExpend)">Dcs.DCSTypes#AI.Task.WeaponExpend</a> EngageWeaponExpend </em></code>: 
+(optional) Determines how much weapon will be released at each attack. 
+If parameter is not defined the unit / controllable will choose expend on its own discretion.
+Use the structure <a href="DCSTypes.html##(AI.Task).WeaponExpend">DCSTypes#AI.Task.WeaponExpend</a> to define the amount of weapons to be release at each attack.</p>
 
 				</li>
 				<li>
@@ -1707,7 +1644,7 @@ The To State string.</p>
 <dt>
 
 <a id="#(AI_CAS_ZONE).onafterEngage" >
-<strong>AI_CAS_ZONE:onafterEngage(Controllable, From, Event, To, EngageSpeed, EngageWeaponExpend, EngageAltitude, EngageAttackQty, EngageDirection)</strong>
+<strong>AI_CAS_ZONE:onafterEngage(Controllable, From, Event, To, EngageSpeed, EngageAltitude, EngageWeaponExpend, EngageAttackQty, EngageDirection)</strong>
 </a>
 </dt>
 <dd>
@@ -1748,14 +1685,14 @@ The To State string.</p>
 				</li>
 				<li>
 				
-<p><code><em><a href="Dcs.DCSTypes.html##(AI.Task.WeaponExpend)">Dcs.DCSTypes#AI.Task.WeaponExpend</a> EngageWeaponExpend </em></code>: 
-(optional) Determines how much weapon will be released at each attack. If parameter is not defined the unit / controllable will choose expend on its own discretion.</p>
+<p><code><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a> EngageAltitude </em></code>: 
+(optional) Desired altitude to perform the unit engagement.</p>
 
 				</li>
 				<li>
 				
-<p><code><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a> EngageAltitude </em></code>: 
-(optional) Desired altitude to perform the unit engagement.</p>
+<p><code><em><a href="Dcs.DCSTypes.html##(AI.Task.WeaponExpend)">Dcs.DCSTypes#AI.Task.WeaponExpend</a> EngageWeaponExpend </em></code>: 
+(optional) Determines how much weapon will be released at each attack. If parameter is not defined the unit / controllable will choose expend on its own discretion.</p>
 
 				</li>
 				<li>

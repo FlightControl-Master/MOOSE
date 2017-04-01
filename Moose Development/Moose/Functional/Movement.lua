@@ -3,10 +3,11 @@
 -- Performance: If in a DCSRTE there are a lot of moving GROUND units, then in a multi player mission, this WILL create lag if
 -- the main DCS execution core of your CPU is fully utilized. So, this class will limit the amount of simultaneous moving GROUND units
 -- on defined intervals (currently every minute).
--- @module MOVEMENT
+-- @module Movement
 
 --- the MOVEMENT class
--- @type
+-- @type MOVEMENT
+-- @extends Core.Base#BASE
 MOVEMENT = {
 	ClassName = "MOVEMENT",
 }
@@ -20,7 +21,7 @@ MOVEMENT = {
 -- Movement_US_Platoons = MOVEMENT:New( { 'US Tank Platoon Left', 'US Tank Platoon Middle', 'US Tank Platoon Right', 'US CH-47D Troops' }, 15 )
 
 function MOVEMENT:New( MovePrefixes, MoveMaximum )
-	local self = BASE:Inherit( self, BASE:New() )
+	local self = BASE:Inherit( self, BASE:New() ) -- #MOVEMENT
 	self:F( { MovePrefixes, MoveMaximum } )
   
 	if type( MovePrefixes ) == 'table' then
@@ -33,7 +34,7 @@ function MOVEMENT:New( MovePrefixes, MoveMaximum )
 	self.AliveUnits = 0														-- Contains the counter how many units are currently alive
 	self.MoveUnits = {}														-- Reflects if the Moving for this MovePrefixes is going to be scheduled or not.
 	
-	_EVENTDISPATCHER:OnBirth( self.OnBirth, self )
+	self:HandleEvent( EVENTS.Birth )
 	
 --	self:AddEvent( world.event.S_EVENT_BIRTH, self.OnBirth )
 --	
@@ -60,24 +61,26 @@ end
 
 --- Captures the birth events when new Units were spawned.
 -- @todo This method should become obsolete. The new @{DATABASE} class will handle the collection administration.
-function MOVEMENT:OnBirth( Event )
-	self:F( { Event } )
+-- @param #MOVEMENT self
+-- @param Core.Event#EVENTDATA self
+function MOVEMENT:OnEventBirth( EventData )
+	self:F( { EventData } )
 
 	if timer.getTime0() < timer.getAbsTime() then -- dont need to add units spawned in at the start of the mission if mist is loaded in init line
-		if Event.IniDCSUnit then
-			self:T( "Birth object : " .. Event.IniDCSUnitName )
-			if Event.IniDCSGroup and Event.IniDCSGroup:isExist() then
+		if EventData.IniDCSUnit then
+			self:T( "Birth object : " .. EventData.IniDCSUnitName )
+			if EventData.IniDCSGroup and EventData.IniDCSGroup:isExist() then
 				for MovePrefixID, MovePrefix in pairs( self.MovePrefixes ) do
-					if string.find( Event.IniDCSUnitName, MovePrefix, 1, true ) then
+					if string.find( EventData.IniDCSUnitName, MovePrefix, 1, true ) then
 						self.AliveUnits = self.AliveUnits + 1
-						self.MoveUnits[Event.IniDCSUnitName] = Event.IniDCSGroupName
+						self.MoveUnits[EventData.IniDCSUnitName] = EventData.IniDCSGroupName
 						self:T( self.AliveUnits )
 					end
 				end
 			end
 		end
-		_EVENTDISPATCHER:OnCrashForUnit( Event.IniDCSUnitName, self.OnDeadOrCrash, self )
-    _EVENTDISPATCHER:OnDeadForUnit( Event.IniDCSUnitName, self.OnDeadOrCrash, self )
+		
+		EventData.IniUnit:HandleEvent( EVENTS.DEAD, self.OnDeadOrCrash )
 	end
 
 end

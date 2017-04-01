@@ -1,71 +1,6 @@
---- (SP) (MP) (FSM) Account for (Detect, count and report) DCS events occuring on DCS objects (units).
+--- **Actions** - ACT_ACCOUNT_ classes **account for** (detect, count & report) various DCS events occuring on @{Unit}s.
 -- 
--- ===
--- 
--- # @{#ACT_ACCOUNT} FSM class, extends @{Fsm#FSM_PROCESS}
--- 
--- ## ACT_ACCOUNT state machine:
--- 
--- This class is a state machine: it manages a process that is triggered by events causing state transitions to occur.
--- All derived classes from this class will start with the class name, followed by a \_. See the relevant derived class descriptions below.
--- Each derived class follows exactly the same process, using the same events and following the same state transitions, 
--- but will have **different implementation behaviour** upon each event or state transition.
--- 
--- ### ACT_ACCOUNT **Events**:
--- 
--- These are the events defined in this class:
--- 
---   * **Start**:  The process is started. The process will go into the Report state.
---   * **Event**:  A relevant event has occured that needs to be accounted for. The process will go into the Account state.
---   * **Report**: The process is reporting to the player the accounting status of the DCS events.
---   * **More**:  There are more DCS events that need to be accounted for. The process will go back into the Report state.
---   * **NoMore**:  There are no more DCS events that need to be accounted for. The process will go into the Success state.
--- 
--- ### ACT_ACCOUNT **Event methods**:
--- 
--- Event methods are available (dynamically allocated by the state machine), that accomodate for state transitions occurring in the process.
--- There are two types of event methods, which you can use to influence the normal mechanisms in the state machine:
--- 
---   * **Immediate**: The event method has exactly the name of the event.
---   * **Delayed**: The event method starts with a __ + the name of the event. The first parameter of the event method is a number value, expressing the delay in seconds when the event will be executed. 
--- 
--- ### ACT_ACCOUNT **States**:
--- 
---   * **Assigned**: The player is assigned to the task. This is the initialization state for the process.
---   * **Waiting**: the process is waiting for a DCS event to occur within the simulator. This state is set automatically.
---   * **Report**: The process is Reporting to the players in the group of the unit. This state is set automatically every 30 seconds.
---   * **Account**: The relevant DCS event has occurred, and is accounted for.
---   * **Success (*)**: All DCS events were accounted for. 
---   * **Failed (*)**: The process has failed.
---   
--- (*) End states of the process.
---   
--- ### ACT_ACCOUNT state transition methods:
--- 
--- State transition functions can be set **by the mission designer** customizing or improving the behaviour of the state.
--- There are 2 moments when state transition methods will be called by the state machine:
--- 
---   * **Before** the state transition. 
---     The state transition method needs to start with the name **OnBefore + the name of the state**. 
---     If the state transition method returns false, then the processing of the state transition will not be done!
---     If you want to change the behaviour of the AIControllable at this event, return false, 
---     but then you'll need to specify your own logic using the AIControllable!
---   
---   * **After** the state transition. 
---     The state transition method needs to start with the name **OnAfter + the name of the state**. 
---     These state transition methods need to provide a return value, which is specified at the function description.
---
--- # 1) @{#ACT_ACCOUNT_DEADS} FSM class, extends @{Fsm.Account#ACT_ACCOUNT}
--- 
--- The ACT_ACCOUNT_DEADS class accounts (detects, counts and reports) successful kills of DCS units.
--- The process is given a @{Set} of units that will be tracked upon successful destruction.
--- The process will end after each target has been successfully destroyed.
--- Each successful dead will trigger an Account state transition that can be scored, modified or administered.
--- 
--- 
--- ## ACT_ACCOUNT_DEADS constructor:
--- 
---   * @{#ACT_ACCOUNT_DEADS.New}(): Creates a new ACT_ACCOUNT_DEADS object.
+-- ![Banner Image](..\Presentations\ACT_ACCOUNT\Dia1.JPG)
 -- 
 -- === 
 -- 
@@ -74,7 +9,51 @@
 
 do -- ACT_ACCOUNT
   
-  --- ACT_ACCOUNT class
+  --- # @{#ACT_ACCOUNT} FSM class, extends @{Fsm#FSM_PROCESS}
+  -- 
+  -- ## ACT_ACCOUNT state machine:  
+  -- 
+  -- This class is a state machine: it manages a process that is triggered by events causing state transitions to occur.
+  -- All derived classes from this class will start with the class name, followed by a \_. See the relevant derived class descriptions below.
+  -- Each derived class follows exactly the same process, using the same events and following the same state transitions, 
+  -- but will have **different implementation behaviour** upon each event or state transition.
+  -- 
+  -- ### ACT_ACCOUNT States  
+  -- 
+  --   * **Asigned**: The player is assigned.
+  --   * **Waiting**: Waiting for an event.
+  --   * **Report**: Reporting.
+  --   * **Account**: Account for an event.
+  --   * **Accounted**: All events have been accounted for, end of the process.
+  --   * **Failed**: Failed the process.
+  -- 
+  -- ### ACT_ACCOUNT Events  
+  -- 
+  --   * **Start**: Start the process.
+  --   * **Wait**: Wait for an event.
+  --   * **Report**: Report the status of the accounting.
+  --   * **Event**: An event happened, process the event.
+  --   * **More**: More targets.
+  --   * **NoMore (*)**: No more targets.
+  --   * **Fail (*)**: The action process has failed.
+  --   
+  -- (*) End states of the process.
+  --   
+  -- ### ACT_ACCOUNT state transition methods:
+  -- 
+  -- State transition functions can be set **by the mission designer** customizing or improving the behaviour of the state.
+  -- There are 2 moments when state transition methods will be called by the state machine:
+  -- 
+  --   * **Before** the state transition. 
+  --     The state transition method needs to start with the name **OnBefore + the name of the state**. 
+  --     If the state transition method returns false, then the processing of the state transition will not be done!
+  --     If you want to change the behaviour of the AIControllable at this event, return false, 
+  --     but then you'll need to specify your own logic using the AIControllable!
+  --   
+  --   * **After** the state transition. 
+  --     The state transition method needs to start with the name **OnAfter + the name of the state**. 
+  --     These state transition methods need to provide a return value, which is specified at the function description.
+  --     
   -- @type ACT_ACCOUNT
   -- @field Set#SET_UNIT TargetSetUnit
   -- @extends Core.Fsm#FSM_PROCESS
@@ -156,7 +135,18 @@ end -- ACT_ACCOUNT
 
 do -- ACT_ACCOUNT_DEADS
 
-  --- ACT_ACCOUNT_DEADS class
+  --- # @{#ACT_ACCOUNT_DEADS} FSM class, extends @{Fsm.Account#ACT_ACCOUNT}
+  -- 
+  -- The ACT_ACCOUNT_DEADS class accounts (detects, counts and reports) successful kills of DCS units.
+  -- The process is given a @{Set} of units that will be tracked upon successful destruction.
+  -- The process will end after each target has been successfully destroyed.
+  -- Each successful dead will trigger an Account state transition that can be scored, modified or administered.
+  -- 
+  -- 
+  -- ## ACT_ACCOUNT_DEADS constructor:
+  -- 
+  --   * @{#ACT_ACCOUNT_DEADS.New}(): Creates a new ACT_ACCOUNT_DEADS object.
+  --   
   -- @type ACT_ACCOUNT_DEADS
   -- @field Set#SET_UNIT TargetSetUnit
   -- @extends #ACT_ACCOUNT
@@ -192,15 +182,6 @@ do -- ACT_ACCOUNT_DEADS
     self.TaskName = FsmAccount.TaskName
   end
 
-
-  
-  function ACT_ACCOUNT_DEADS:_Destructor()
-    self:E("_Destructor")
-  
-    self:EventRemoveAll()
-  
-  end
-  
   --- Process Events
   
   --- StateMachine callback function
@@ -209,7 +190,7 @@ do -- ACT_ACCOUNT_DEADS
   -- @param #string Event
   -- @param #string From
   -- @param #string To
-  function ACT_ACCOUNT_DEADS:onenterReport( ProcessUnit, From, Event, To )
+  function ACT_ACCOUNT_DEADS:onenterReport( ProcessUnit, Task, From, Event, To )
     self:E( { ProcessUnit, From, Event, To } )
   
     self:Message( "Your group with assigned " .. self.TaskName .. " task has " .. self.TargetSetUnit:GetUnitTypesText() .. " targets left to be destroyed." )
@@ -222,18 +203,21 @@ do -- ACT_ACCOUNT_DEADS
   -- @param #string Event
   -- @param #string From
   -- @param #string To
-  function ACT_ACCOUNT_DEADS:onenterAccount( ProcessUnit, From, Event, To, EventData  )
+  function ACT_ACCOUNT_DEADS:onenterAccount( ProcessUnit, Task, From, Event, To, EventData  )
     self:T( { ProcessUnit, EventData, From, Event, To } )
     
     self:T({self.Controllable})
   
     self.TargetSetUnit:Flush()
     
+    self:T( { "Before sending Message", EventData.IniUnitName, self.TargetSetUnit:FindUnit( EventData.IniUnitName ) } )
     if self.TargetSetUnit:FindUnit( EventData.IniUnitName ) then
+      self:T( "Sending Message" )
       local TaskGroup = ProcessUnit:GetGroup()
-      self.TargetSetUnit:RemoveUnitsByName( EventData.IniUnitName )
+      self.TargetSetUnit:Remove( EventData.IniUnitName )
       self:Message( "You hit a target. Your group with assigned " .. self.TaskName .. " task has " .. self.TargetSetUnit:Count() .. " targets ( " .. self.TargetSetUnit:GetUnitTypesText() .. " ) left to be destroyed." )
     end
+    self:T( { "After sending Message" } )
   end
   
   --- StateMachine callback function
@@ -242,7 +226,7 @@ do -- ACT_ACCOUNT_DEADS
   -- @param #string Event
   -- @param #string From
   -- @param #string To
-  function ACT_ACCOUNT_DEADS:onafterEvent( ProcessUnit, From, Event, To, EventData )
+  function ACT_ACCOUNT_DEADS:onafterEvent( ProcessUnit, Task, From, Event, To )
   
     if self.TargetSetUnit:Count() > 0 then
       self:__More( 1 )
@@ -259,7 +243,7 @@ do -- ACT_ACCOUNT_DEADS
     self:T( { "EventDead", EventData } )
 
     if EventData.IniDCSUnit then
-      self:__Event( 1, EventData )
+      self:Event( EventData )
     end
   end
 

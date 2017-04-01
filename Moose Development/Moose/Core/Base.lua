@@ -4,9 +4,54 @@
 -- 
 -- ===
 -- 
--- # 1) @{#BASE} class
+-- The @{#BASE} class is the core root class from where every other class in moose is derived.
 -- 
--- All classes within the MOOSE framework are derived from the @{#BASE} class. 
+-- ===
+-- 
+-- # **API CHANGE HISTORY**
+-- 
+-- The underlying change log documents the API changes. Please read this carefully. The following notation is used:
+-- 
+--   * **Added** parts are expressed in bold type face.
+--   * _Removed_ parts are expressed in italic type face.
+-- 
+-- YYYY-MM-DD: CLASS:**NewFunction**( Params ) replaces CLASS:_OldFunction_( Params )
+-- YYYY-MM-DD: CLASS:**NewFunction( Params )** added
+-- 
+-- Hereby the change log:
+-- 
+-- ===
+-- 
+-- # **AUTHORS and CONTRIBUTIONS**
+-- 
+-- ### Contributions: 
+-- 
+--   * None.
+-- 
+-- ### Authors: 
+-- 
+--   * **FlightControl**: Design & Programming
+-- 
+-- @module Base
+
+
+
+local _TraceOnOff = true
+local _TraceLevel = 1
+local _TraceAll = false
+local _TraceClass = {}
+local _TraceClassMethod = {}
+
+local _ClassID = 0
+
+--- @type BASE
+-- @field ClassName The name of the class.
+-- @field ClassID The ID number of the class.
+-- @field ClassNameAndID The name of the class concatenated with the ID number of the class.
+
+--- # 1) #BASE class
+-- 
+-- All classes within the MOOSE framework are derived from the BASE class. 
 --  
 -- BASE provides facilities for :
 -- 
@@ -166,50 +211,11 @@
 -- 
 --   * @{#BASE.Inherit}: Inherits from a class.
 --   * @{#BASE.GetParent}: Returns the parent object from the object it is handling, or nil if there is no parent object.
---   
--- ====
--- 
--- # **API CHANGE HISTORY**
--- 
--- The underlying change log documents the API changes. Please read this carefully. The following notation is used:
--- 
---   * **Added** parts are expressed in bold type face.
---   * _Removed_ parts are expressed in italic type face.
--- 
--- YYYY-MM-DD: CLASS:**NewFunction**( Params ) replaces CLASS:_OldFunction_( Params )
--- YYYY-MM-DD: CLASS:**NewFunction( Params )** added
--- 
--- Hereby the change log:
 -- 
 -- ===
 -- 
--- # **AUTHORS and CONTRIBUTIONS**
+-- @field #BASE BASE
 -- 
--- ### Contributions: 
--- 
---   * None.
--- 
--- ### Authors: 
--- 
---   * **FlightControl**: Design & Programming
--- 
--- @module Base
-
-
-
-local _TraceOnOff = true
-local _TraceLevel = 1
-local _TraceAll = false
-local _TraceClass = {}
-local _TraceClassMethod = {}
-
-local _ClassID = 0
-
---- The BASE Class
--- @type BASE
--- @field ClassName The name of the class.
--- @field ClassID The ID number of the class.
--- @field ClassNameAndID The name of the class concatenated with the ID number of the class.
 BASE = {
   ClassName = "BASE",
   ClassID = 0,
@@ -256,12 +262,14 @@ function BASE:_Destructor()
   --self:EventRemoveAll()
 end
 
+
+-- THIS IS WHY WE NEED LUA 5.2 ...
 function BASE:_SetDestructor()
 
   -- TODO: Okay, this is really technical...
   -- When you set a proxy to a table to catch __gc, weak tables don't behave like weak...
   -- Therefore, I am parking this logic until I've properly discussed all this with the community.
-  --[[
+
   local proxy = newproxy(true)
   local proxyMeta = getmetatable(proxy)
 
@@ -276,7 +284,7 @@ function BASE:_SetDestructor()
   -- table is about to be garbage-collected - then the __gc hook
   -- will be invoked and the destructor called
   rawset( self, '__proxy', proxy )
-  --]]
+  
 end
 
 --- This is the worker method to inherit from a parent class.
@@ -292,7 +300,7 @@ function BASE:Inherit( Child, Parent )
 		setmetatable( Child, Parent )
 		Child.__index = Child
 		
-		Child:_SetDestructor()
+		--Child:_SetDestructor()
 	end
 	--self:T( 'Inherited from ' .. Parent.ClassName ) 
 	return Child

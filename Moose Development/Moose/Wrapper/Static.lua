@@ -56,7 +56,7 @@ function STATIC:FindByName( StaticName, RaiseError )
   self.StaticName = StaticName
   
   if StaticFound then
-    StaticFound:F( { StaticName } )
+    StaticFound:F3( { StaticName } )
 
   	return StaticFound
   end

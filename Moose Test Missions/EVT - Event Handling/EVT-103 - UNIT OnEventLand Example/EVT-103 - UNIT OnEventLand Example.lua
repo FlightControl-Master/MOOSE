@@ -15,10 +15,10 @@
 -- 3. Check the contents of the fields of the S_EVENT_LAND entry in the dcs.log file.
 
 -- Create a variable PlaneAI that holds a reference to UNIT object (created by moose at the beginning of the mission) with the name "PlaneAI".
-local PlaneAI = UNIT:FindByName( "PlaneAI" )
+PlaneAI = UNIT:FindByName( "PlaneAI" )
 
 -- Create a SPAWN object to spawn a new plane once the hold one lands.
-local SpawnPlane = SPAWN:New( "SpawnPlaneAI" )
+SpawnPlane = SPAWN:New( "SpawnPlaneAI" )
 
 -- Declare a new variable that will hold the new spawned SpawnPlaneAI
 local NewPlane

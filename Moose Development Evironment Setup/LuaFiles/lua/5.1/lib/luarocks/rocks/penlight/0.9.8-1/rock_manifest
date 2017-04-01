@@ -1,0 +1,45 @@
+rock_manifest = {
+   lua = {
+      pl = {
+         ["Date.lua"] = "d2131d59151ce978c4db6a648fcd275a",
+         ["List.lua"] = "1236c5eb08956619daacd25a462a9682",
+         ["Map.lua"] = "0297a536ac0595ac59e8828f8c867f53",
+         ["MultiMap.lua"] = "e5f898fe2443e51c38825e9bc3d1aee5",
+         ["OrderedMap.lua"] = "bd8e39c59e22c582a33e2f025d3ae914",
+         ["Set.lua"] = "346ff7392fd4aeda418fb832e8da7a7f",
+         ["app.lua"] = "23ffb79e69a3fd679013cf82d95ed792",
+         ["array2d.lua"] = "77618ec2e2de4d6d237484dfd742cd73",
+         ["class.lua"] = "6f58bf39e7f90711b6840ad6955d258e",
+         ["comprehension.lua"] = "f8600ba945dde5d959194500a687c69f",
+         ["config.lua"] = "9ea3ce0ac3cdf2ce0e17f1353f32abb6",
+         ["data.lua"] = "be446ff813b5bcf30b4063601165df6a",
+         ["dir.lua"] = "3d60d4c1caeaabe199fe361e4e9b14a4",
+         ["file.lua"] = "f5c9527ea14b511d2cb9af80b219c562",
+         ["func.lua"] = "cc50d73512b6d0518f6587b82844de8c",
+         ["init.lua"] = "9232be7d8790d4f907972a00dec7949d",
+         ["input.lua"] = "bab7c64ca9a740df5e9fb9909610bbc4",
+         ["lapp.lua"] = "1cc81f048bc3fcd775c40cd9a2d601a7",
+         ["lexer.lua"] = "da0db5e323a2d37545ccb02592d0d3c8",
+         ["luabalanced.lua"] = "00b94a997a9ea4d73f54c10893f3b35f",
+         ["operator.lua"] = "e606629c738966cf497bb938457adebd",
+         ["path.lua"] = "b0714bc337c068b7252f64250fe59604",
+         ["permute.lua"] = "b0ed9ba2787119ef99468329a54ea16a",
+         platf = {
+            ["luajava.lua"] = "9c2898667281ad9501cc05a8e31a6f53"
+         },
+         ["pretty.lua"] = "3ece64317ce05916eaba91fa96d9e7c0",
+         ["seq.lua"] = "e99e420345ab11120a7b741d8184920a",
+         ["sip.lua"] = "bde74f65e7246017d3ef034d178100ea",
+         ["strict.lua"] = "720e939931dbbe42fad8fd4e7736435e",
+         ["stringio.lua"] = "a8f4c786ea1b62f16ed05e6b09840044",
+         ["stringx.lua"] = "43f57755969c6b4001316226506a3744",
+         ["tablex.lua"] = "dec027cc3a3901766bd933c5fc0f3e93",
+         ["template.lua"] = "f358175bbb84c401c6213c953ce295a4",
+         ["test.lua"] = "1c45f7b1c438673f1eb668e2ca592f1c",
+         ["text.lua"] = "c30f90cab2d00186a6432e408ba1fe14",
+         ["utils.lua"] = "68cd38638a29b4ab5f1cc0eae38dce77",
+         ["xml.lua"] = "e13ed468c450fccb9a8e858a0f787eef"
+      }
+   },
+   ["penlight-0.9.8-1.rockspec"] = "96edac3ff1d0ac57cb45d6551a56a775"
+}

@@ -21,10 +21,10 @@
 do
 
   -- Declare SPAWN objects
-  local Spawn_KA_50 = SPAWN:New("KA-50"):InitLimit( 2, 10 )
-  local Spawn_MI_8MTV2 = SPAWN:New("MI-8MTV2"):InitLimit( 2, 10 )
-  local Spawn_C_101EB = SPAWN:New("C-101EB"):InitLimit( 2, 10 )
-  local Spawn_A_10C = SPAWN:New("A-10C"):InitLimit( 2, 10 )
+  Spawn_KA_50 = SPAWN:New("KA-50"):InitLimit( 2, 10 )
+  Spawn_MI_8MTV2 = SPAWN:New("MI-8MTV2"):InitLimit( 2, 10 )
+  Spawn_C_101EB = SPAWN:New("C-101EB"):InitLimit( 2, 10 )
+  Spawn_A_10C = SPAWN:New("A-10C"):InitLimit( 2, 10 )
   
   -- Choose repeat functionality
   
@@ -37,10 +37,10 @@ do
   Spawn_A_10C:InitRepeatOnEngineShutDown()
   
   -- Now SPAWN the GROUPs
-  Spawn_KA_50:SpawnScheduled(30,0)
-  Spawn_C_101EB:SpawnScheduled(30,0)
-  Spawn_MI_8MTV2:SpawnScheduled(30,0)
-  Spawn_A_10C:SpawnScheduled(30,0)
+  Spawn_KA_50:SpawnScheduled(180,0)
+  Spawn_C_101EB:SpawnScheduled(180,0)
+  Spawn_MI_8MTV2:SpawnScheduled(180,0)
+  Spawn_A_10C:SpawnScheduled(180,0)
   
   -- Now run the mission and observe the behaviour.
 

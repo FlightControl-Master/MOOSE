@@ -15,22 +15,22 @@
 
 
 -- Create the SPAWN object looking for the group (template) "Plane".
-local SpawnPlane = SPAWN:New( "Plane" )
+SpawnPlane = SPAWN:New( "Plane" )
 
 -- Set the spawn mode to UnControlled.
 SpawnPlane:InitUnControlled( true )
 
 -- Spawn the UnControlled Group
-local UnControlledPlane = SpawnPlane:Spawn()
+UnControlledPlane = SpawnPlane:Spawn()
 
 -- Set the spawn mode back to Controlled.
 SpawnPlane:InitUnControlled( false )
 
-local ControlledPlane = SpawnPlane:Spawn()
+ControlledPlane = SpawnPlane:Spawn()
 
 -- Now, let's create a menu option at a player slot plane...
 -- We can only create the menu option if the player has joined the slot ...
-local PlayerPlane = CLIENT:FindByName( "PlayerPlane", "Select Menu item to activate UnControlled plane" )
+PlayerPlane = CLIENT:FindByName( "PlayerPlane", "Select Menu item to activate UnControlled plane" )
 
 PlayerPlane:Alive(
   function( Client, SpawnPlane )

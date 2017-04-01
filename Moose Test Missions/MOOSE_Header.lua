@@ -1,0 +1,14 @@
+---
+-- Name: <PRJ-nnn - Mission Name>
+-- Author: <Author>
+-- Date Created: <Date>
+--
+-- # Situation:
+-- 
+-- <Text explaining the situation of the test mission and what happens>.
+-- 
+-- # Test cases: 
+-- 
+-- 1. <Test Case 1 explanation: Use words like "Observe", "Try out", "Jump into"...>
+-- 2. <Test Case 1 explanation: Use words like "Observe", "Try out", "Jump into"...>
+-- 

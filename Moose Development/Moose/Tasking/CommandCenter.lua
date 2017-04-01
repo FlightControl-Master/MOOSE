@@ -20,7 +20,9 @@ function REPORT:New( Title )
   local self = BASE:Inherit( self, BASE:New() )
 
   self.Report = {}
-  self.Report[#self.Report+1] = Title  
+  if Title then
+    self.Report[#self.Report+1] = Title  
+  end
 
   return self
 end
@@ -31,11 +33,17 @@ end
 -- @return #REPORT
 function REPORT:Add( Text )
   self.Report[#self.Report+1] = Text
-  return self.Report[#self.Report+1]
+  return self.Report[#self.Report]
 end
 
-function REPORT:Text()
-  return table.concat( self.Report, "\n" ) 
+--- Produces the text of the report, taking into account an optional delimeter, which is \n by default.
+-- @param #REPORT self
+-- @param #string Delimiter (optional) A delimiter text.
+-- @return #string The report text.
+function REPORT:Text( Delimiter )
+  Delimiter = Delimiter or "\n"
+  local ReportText = table.concat( self.Report, Delimiter ) or ""
+  return ReportText
 end
 
 --- The COMMANDCENTER class
@@ -68,22 +76,23 @@ function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
 
   self:HandleEvent( EVENTS.Birth,
     --- @param #COMMANDCENTER self
-    --- @param Core.Event#EVENTDATA EventData
+    -- @param Core.Event#EVENTDATA EventData
     function( self, EventData )
-      self:E( { EventData } )
-      local EventGroup = GROUP:Find( EventData.IniDCSGroup )
-      if EventGroup and self:HasGroup( EventGroup ) then
-        local MenuReporting = MENU_GROUP:New( EventGroup, "Reporting", self.CommandCenterMenu )
-        local MenuMissionsSummary = MENU_GROUP_COMMAND:New( EventGroup, "Missions Summary Report", MenuReporting, self.ReportSummary, self, EventGroup )
-        local MenuMissionsDetails = MENU_GROUP_COMMAND:New( EventGroup, "Missions Details Report", MenuReporting, self.ReportDetails, self, EventGroup )
-        self:ReportSummary( EventGroup )
-      end
-      local PlayerUnit = EventData.IniUnit
-      for MissionID, Mission in pairs( self:GetMissions() ) do
-        local Mission = Mission -- Tasking.Mission#MISSION
-        local PlayerGroup = EventData.IniGroup -- The GROUP object should be filled!
-        Mission:JoinUnit( PlayerUnit, PlayerGroup )
-        Mission:ReportDetails()
+      if EventData.IniObjectCategory == 1 then
+        local EventGroup = GROUP:Find( EventData.IniDCSGroup )
+        if EventGroup and self:HasGroup( EventGroup ) then
+          local MenuReporting = MENU_GROUP:New( EventGroup, "Reporting", self.CommandCenterMenu )
+          local MenuMissionsSummary = MENU_GROUP_COMMAND:New( EventGroup, "Missions Summary Report", MenuReporting, self.ReportSummary, self, EventGroup )
+          local MenuMissionsDetails = MENU_GROUP_COMMAND:New( EventGroup, "Missions Details Report", MenuReporting, self.ReportDetails, self, EventGroup )
+          self:ReportSummary( EventGroup )
+        end
+        local PlayerUnit = EventData.IniUnit
+        for MissionID, Mission in pairs( self:GetMissions() ) do
+          local Mission = Mission -- Tasking.Mission#MISSION
+          local PlayerGroup = EventData.IniGroup -- The GROUP object should be filled!
+          Mission:JoinUnit( PlayerUnit, PlayerGroup )
+          Mission:ReportDetails()
+        end
       end
       
     end
@@ -193,17 +202,26 @@ function COMMANDCENTER:SetMenu()
 
   self.CommandCenterMenu = self.CommandCenterMenu or MENU_COALITION:New( self.CommandCenterCoalition, "Command Center (" .. self:GetName() .. ")" )
 
+  local MenuTime = timer.getTime()
   for MissionID, Mission in pairs( self:GetMissions() ) do
     local Mission = Mission -- Tasking.Mission#MISSION
-    Mission:RemoveMenu()
+    Mission:SetMenu( MenuTime )
+  end
+
+  for MissionID, Mission in pairs( self:GetMissions() ) do
+    local Mission = Mission -- Tasking.Mission#MISSION
+    Mission:RemoveMenu( MenuTime )
   end
   
-  for MissionID, Mission in pairs( self:GetMissions() ) do
-    local Mission = Mission -- Tasking.Mission#MISSION
-    Mission:SetMenu()
-  end
 end
 
+--- Gets the commandcenter menu structure governed by the HQ command center.
+-- @param #COMMANDCENTER self
+-- @return Core.Menu#MENU_COALITION
+function COMMANDCENTER:GetMenu()
+  self:F()
+  return self.CommandCenterMenu
+end
 
 --- Checks of the COMMANDCENTER has a GROUP.
 -- @param #COMMANDCENTER self
@@ -224,6 +242,14 @@ function COMMANDCENTER:HasGroup( MissionGroup )
   return Has
 end
 
+--- Send a CC message to the coalition of the CC.
+-- @param #COMMANDCENTER self
+function COMMANDCENTER:MessageToAll( Message )
+
+    self:GetPositionable():MessageToAll( Message, 20, self:GetName() )
+
+end
+
 --- Send a CC message to a GROUP.
 -- @param #COMMANDCENTER self
 -- @param #string Message
@@ -231,7 +257,8 @@ end
 -- @param #sring Name (optional) The name of the Group used as a prefix for the message to the Group. If not provided, there will be nothing shown.
 function COMMANDCENTER:MessageToGroup( Message, TaskGroup, Name )
 
-  local Prefix = Name and "@ Group (" .. Name .. "): " or ''
+  local Prefix = "@ Group"
+  Prefix = Prefix .. ( Name and " (" .. Name .. "): " or '' )
   Message = Prefix .. Message 
   self:GetPositionable():MessageToGroup( Message , 20, TaskGroup, self:GetName() )
 
@@ -246,6 +273,7 @@ function COMMANDCENTER:MessageToCoalition( Message )
     self:GetPositionable():MessageToCoalition( Message, 20, CCCoalition, self:GetName() )
 
 end
+
 
 --- Report the status of all MISSIONs to a GROUP.
 -- Each Mission is listed, with an indication how many Tasks are still to be completed.

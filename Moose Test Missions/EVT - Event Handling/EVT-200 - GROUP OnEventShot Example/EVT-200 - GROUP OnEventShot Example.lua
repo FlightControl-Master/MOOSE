@@ -15,7 +15,7 @@
 -- 4. The planes of GROUP "Group Plane A", should only send a message when they shoot a missile.
 -- 5. The planes of GROUP "Group Plane B", should NOT send a message when they shoot a missile.
 
-local PlaneGroup = GROUP:FindByName( "Group Plane A" )
+PlaneGroup = GROUP:FindByName( "Group Plane A" )
 
 PlaneGroup:HandleEvent( EVENTS.Shot )
 

@@ -64,7 +64,7 @@ function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleAr
 
   -- Initialize the ObjectSchedulers array, which is a weakly coupled table.
   -- If the object used as the key is nil, then the garbage collector will remove the item from the Functions array.
-  self.ObjectSchedulers = self.ObjectSchedulers or {} -- setmetatable( {}, { __mode = "v" } )
+  self.ObjectSchedulers = self.ObjectSchedulers or setmetatable( {}, { __mode = "v" } ) -- or {}
   
   if Scheduler.MasterObject then
     self.ObjectSchedulers[self.CallID] = Scheduler
@@ -181,11 +181,15 @@ function SCHEDULEDISPATCHER:Start( Scheduler, CallID )
 
   if CallID then
     local Schedule = self.Schedule[Scheduler]
-    Schedule[CallID].ScheduleID = timer.scheduleFunction( 
-      Schedule[CallID].CallHandler, 
-      CallID, 
-      timer.getTime() + Schedule[CallID].Start
-    )
+    -- Only start when there is no ScheduleID defined!
+    -- This prevents to "Start" the scheduler twice with the same CallID...
+    if not Schedule[CallID].ScheduleID then
+      Schedule[CallID].ScheduleID = timer.scheduleFunction( 
+        Schedule[CallID].CallHandler, 
+        CallID, 
+        timer.getTime() + Schedule[CallID].Start
+      )
+    end
   else
     for CallID, Schedule in pairs( self.Schedule[Scheduler] ) do
       self:Start( Scheduler, CallID ) -- Recursive
@@ -198,11 +202,24 @@ function SCHEDULEDISPATCHER:Stop( Scheduler, CallID )
 
   if CallID then
     local Schedule = self.Schedule[Scheduler]
-    timer.removeFunction( Schedule[CallID].ScheduleID )
+    -- Only stop when there is a ScheduleID defined for the CallID.
+    -- So, when the scheduler was stopped before, do nothing.
+    if Schedule[CallID].ScheduleID then
+      timer.removeFunction( Schedule[CallID].ScheduleID )
+      Schedule[CallID].ScheduleID = nil
+    end
   else
     for CallID, Schedule in pairs( self.Schedule[Scheduler] ) do
       self:Stop( Scheduler, CallID ) -- Recursive
     end
+  end
+end
+
+function SCHEDULEDISPATCHER:Clear( Scheduler )
+  self:F2( { Scheduler = Scheduler } )
+
+  for CallID, Schedule in pairs( self.Schedule[Scheduler] ) do
+    self:Stop( Scheduler, CallID ) -- Recursive
   end
 end
 

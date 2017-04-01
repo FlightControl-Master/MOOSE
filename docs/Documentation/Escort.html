@@ -39,16 +39,17 @@
 					<li><a href="Fsm.html">Fsm</a></li>
 					<li><a href="Group.html">Group</a></li>
 					<li><a href="Identifiable.html">Identifiable</a></li>
-					<li><a href="MOVEMENT.html">MOVEMENT</a></li>
 					<li><a href="Menu.html">Menu</a></li>
 					<li><a href="Message.html">Message</a></li>
 					<li><a href="MissileTrainer.html">MissileTrainer</a></li>
 					<li><a href="Mission.html">Mission</a></li>
+					<li><a href="Movement.html">Movement</a></li>
 					<li><a href="Object.html">Object</a></li>
 					<li><a href="Point.html">Point</a></li>
 					<li><a href="Positionable.html">Positionable</a></li>
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
 					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
+					<li><a href="Radio.html">Radio</a></li>
 					<li><a href="Route.html">Route</a></li>
 					<li><a href="Scenery.html">Scenery</a></li>
 					<li><a href="ScheduleDispatcher.html">ScheduleDispatcher</a></li>
@@ -61,8 +62,8 @@
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="Task.html">Task</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
+					<li><a href="Task_A2G_Dispatcher.html">Task_A2G_Dispatcher</a></li>
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
-					<li><a href="Task_SEAD.html">Task_SEAD</a></li>
 					<li><a href="Unit.html">Unit</a></li>
 					<li><a href="Utils.html">Utils</a></li>
 					<li><a href="Zone.html">Zone</a></li>
@@ -161,7 +162,7 @@ Note that this is really fantastic, as you now have the dynamic of taking contro
 </ul>
 
 <h1>ESCORT initialization methods.</h1>
-<p>The following menus are created within the RADIO MENU of an active unit hosted by a player:</p>
+<p>The following menus are created within the RADIO MENU (F10) of an active unit hosted by a player:</p>
 
 <ul>
     <li><a href="##(ESCORT).MenuFollowAt">ESCORT.MenuFollowAt</a>: Creates a menu to make the escort follow the client.</li>
@@ -208,7 +209,25 @@ EscortPlanes = ESCORT:New( EscortClient, EscortGroup, "Desert", "Welcome to the 
 			<h2><a id="#(ESCORT)">Type <code>ESCORT</code></a></h2>
 				<table class="function_list">
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ESCORT).CT1">ESCORT.CT1</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(ESCORT).ClassName">ESCORT.ClassName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ESCORT).Detection">ESCORT.Detection</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ESCORT).EscortBriefing">ESCORT.EscortBriefing</a></td>
 		<td class="summary">
 
 </td>
@@ -221,6 +240,12 @@ EscortPlanes = ESCORT:New( EscortClient, EscortGroup, "Desert", "Welcome to the 
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(ESCORT).EscortGroup">ESCORT.EscortGroup</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ESCORT).EscortMenu">ESCORT.EscortMenu</a></td>
 		<td class="summary">
 
 </td>
@@ -448,6 +473,12 @@ EscortPlanes = ESCORT:New( EscortClient, EscortGroup, "Desert", "Welcome to the 
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ESCORT).EscortSetGroup">ESCORT.EscortSetGroup</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(ESCORT).FollowDistance">ESCORT.FollowDistance</a></td>
 		<td class="summary">
 <p>The current follow distance.</p>
@@ -457,6 +488,12 @@ EscortPlanes = ESCORT:New( EscortClient, EscortGroup, "Desert", "Welcome to the 
 		<td class="name" nowrap="nowrap"><a href="##(ESCORT).FollowScheduler">ESCORT.FollowScheduler</a></td>
 		<td class="summary">
 <p>The instance of the SCHEDULER class.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ESCORT).GT1">ESCORT.GT1</a></td>
+		<td class="summary">
+
 </td>
 		</tr>
 		<tr>
@@ -580,6 +617,12 @@ EscortPlanes = ESCORT:New( EscortClient, EscortGroup, "Desert", "Welcome to the 
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ESCORT).SetDetection">ESCORT:SetDetection(Detection)</a></td>
+		<td class="summary">
+<p>Set a Detection method for the EscortClient to be reported upon.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(ESCORT).SmokeDirectionVector">ESCORT.SmokeDirectionVector</a></td>
 		<td class="summary">
 
@@ -604,19 +647,19 @@ EscortPlanes = ESCORT:New( EscortClient, EscortGroup, "Desert", "Welcome to the 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ESCORT)._AssistTarget">ESCORT._AssistTarget(MenuParam)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(ESCORT)._AssistTarget">ESCORT._AssistTarget(DetectedItemID, self, EscortGroupAttack)</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ESCORT)._AttackTarget">ESCORT._AttackTarget(MenuParam)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(ESCORT)._AttackTarget">ESCORT:_AttackTarget(DetectedItemID)</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ESCORT)._Flare">ESCORT._Flare(MenuParam)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(ESCORT)._Flare">ESCORT._Flare(MenuParam, self, Color, Message)</a></td>
 		<td class="summary">
 
 </td>
@@ -628,31 +671,31 @@ EscortPlanes = ESCORT:New( EscortClient, EscortGroup, "Desert", "Welcome to the 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ESCORT)._HoldPosition">ESCORT._HoldPosition(MenuParam)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(ESCORT)._HoldPosition">ESCORT._HoldPosition(MenuParam, self, OrbitGroup, OrbitHeight, OrbitSeconds)</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ESCORT)._JoinUpAndFollow">ESCORT._JoinUpAndFollow(MenuParam)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(ESCORT)._JoinUpAndFollow">ESCORT._JoinUpAndFollow(MenuParam, self, Distance)</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ESCORT)._ROE">ESCORT._ROE(MenuParam)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(ESCORT)._ROE">ESCORT._ROE(MenuParam, self, EscortROEFunction, EscortROEMessage)</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ESCORT)._ROT">ESCORT._ROT(MenuParam)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(ESCORT)._ROT">ESCORT._ROT(MenuParam, self, EscortROTFunction, EscortROTMessage)</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ESCORT)._ReportNearbyTargetsNow">ESCORT._ReportNearbyTargetsNow(MenuParam)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(ESCORT)._ReportNearbyTargetsNow">ESCORT._ReportNearbyTargetsNow(MenuParam, self)</a></td>
 		<td class="summary">
 
 </td>
@@ -664,25 +707,25 @@ EscortPlanes = ESCORT:New( EscortClient, EscortGroup, "Desert", "Welcome to the 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ESCORT)._ResumeMission">ESCORT._ResumeMission(MenuParam)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(ESCORT)._ResumeMission">ESCORT._ResumeMission(MenuParam, self, WayPoint)</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ESCORT)._ScanTargets">ESCORT._ScanTargets(MenuParam)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(ESCORT)._ScanTargets">ESCORT._ScanTargets(MenuParam, self, ScanDuration)</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ESCORT)._Smoke">ESCORT._Smoke(MenuParam)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(ESCORT)._Smoke">ESCORT._Smoke(MenuParam, self, Color, Message)</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ESCORT)._SwitchReportNearbyTargets">ESCORT._SwitchReportNearbyTargets(MenuParam)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(ESCORT)._SwitchReportNearbyTargets">ESCORT:_SwitchReportNearbyTargets(ReportTargets)</a></td>
 		<td class="summary">
 
 </td>
@@ -707,6 +750,12 @@ EscortPlanes = ESCORT:New( EscortClient, EscortGroup, "Desert", "Welcome to the 
 
 			<h2><a id="#(MENUPARAM)">Type <code>MENUPARAM</code></a></h2>
 				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MENUPARAM).Distance">MENUPARAM.Distance</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(MENUPARAM).ParamDistance">MENUPARAM.ParamDistance</a></td>
 		<td class="summary">
@@ -781,9 +830,51 @@ EscortPlanes = ESCORT:New( EscortClient, EscortGroup, "Desert", "Welcome to the 
 		<dl class="function">
 <dt>
 
+		<em>#number</em>
+<a id="#(ESCORT).CT1" >
+<strong>ESCORT.CT1</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 		<em>#string</em>
 <a id="#(ESCORT).ClassName" >
 <strong>ESCORT.ClassName</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="Functional.Detection.html##(DETECTION_BASE)">Functional.Detection#DETECTION_BASE</a></em>
+<a id="#(ESCORT).Detection" >
+<strong>ESCORT.Detection</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(ESCORT).EscortBriefing" >
+<strong>ESCORT.EscortBriefing</strong>
 </a>
 </dt>
 <dd>
@@ -812,6 +903,20 @@ EscortPlanes = ESCORT:New( EscortClient, EscortGroup, "Desert", "Welcome to the 
 		<em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a></em>
 <a id="#(ESCORT).EscortGroup" >
 <strong>ESCORT.EscortGroup</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(ESCORT).EscortMenu" >
+<strong>ESCORT.EscortMenu</strong>
 </a>
 </dt>
 <dd>
@@ -1357,6 +1462,20 @@ EscortPlanes = ESCORT:New( EscortClient, EscortGroup, "Desert", "Welcome to the 
 		<dl class="function">
 <dt>
 
+		<em></em>
+<a id="#(ESCORT).EscortSetGroup" >
+<strong>ESCORT.EscortSetGroup</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 		<em>#number</em>
 <a id="#(ESCORT).FollowDistance" >
 <strong>ESCORT.FollowDistance</strong>
@@ -1379,6 +1498,20 @@ EscortPlanes = ESCORT:New( EscortClient, EscortGroup, "Desert", "Welcome to the 
 <dd>
 	
 <p>The instance of the SCHEDULER class.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#number</em>
+<a id="#(ESCORT).GT1" >
+<strong>ESCORT.GT1</strong>
+</a>
+</dt>
+<dd>
+	
+
 
 </dd>
 </dl>
@@ -1928,6 +2061,30 @@ EscortPlanes = ESCORT:New( EscortClient, EscortGroup, "Desert", "Welcome to the 
 		<dl class="function">
 <dt>
 
+<a id="#(ESCORT).SetDetection" >
+<strong>ESCORT:SetDetection(Detection)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set a Detection method for the EscortClient to be reported upon.</p>
+
+	
+<p>Detection methods are based on the derived classes from DETECTION_BASE.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Function.Detection.html##(DETECTION_BASE)">Function.Detection#DETECTION_BASE</a> Detection </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(ESCORT).SmokeDirectionVector" >
 <strong>ESCORT.SmokeDirectionVector</strong>
 </a>
@@ -1995,18 +2152,28 @@ If true, then the direction vector will be smoked.</p>
 <dt>
 
 <a id="#(ESCORT)._AssistTarget" >
-<strong>ESCORT._AssistTarget(MenuParam)</strong>
+<strong>ESCORT._AssistTarget(DetectedItemID, self, EscortGroupAttack)</strong>
 </a>
 </dt>
 <dd>
 	
 
 
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
-<p><code><em><a href="##(MENUPARAM)">#MENUPARAM</a> MenuParam </em></code>: </p>
+<p><code><em>#number DetectedItemID </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> self </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> EscortGroupAttack </em></code>: </p>
 
 				</li>
 		</ul>
@@ -2016,7 +2183,7 @@ If true, then the direction vector will be smoked.</p>
 <dt>
 
 <a id="#(ESCORT)._AttackTarget" >
-<strong>ESCORT._AttackTarget(MenuParam)</strong>
+<strong>ESCORT:_AttackTarget(DetectedItemID)</strong>
 </a>
 </dt>
 <dd>
@@ -2027,7 +2194,7 @@ If true, then the direction vector will be smoked.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="##(MENUPARAM)">#MENUPARAM</a> MenuParam </em></code>: </p>
+<p><code><em>#number DetectedItemID </em></code>: </p>
 
 				</li>
 		</ul>
@@ -2037,18 +2204,33 @@ If true, then the direction vector will be smoked.</p>
 <dt>
 
 <a id="#(ESCORT)._Flare" >
-<strong>ESCORT._Flare(MenuParam)</strong>
+<strong>ESCORT._Flare(MenuParam, self, Color, Message)</strong>
 </a>
 </dt>
 <dd>
 	
 
 
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
 <p><code><em><a href="##(MENUPARAM)">#MENUPARAM</a> MenuParam </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> self </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> Color </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> Message </em></code>: </p>
 
 				</li>
 		</ul>
@@ -2071,18 +2253,38 @@ If true, then the direction vector will be smoked.</p>
 <dt>
 
 <a id="#(ESCORT)._HoldPosition" >
-<strong>ESCORT._HoldPosition(MenuParam)</strong>
+<strong>ESCORT._HoldPosition(MenuParam, self, OrbitGroup, OrbitHeight, OrbitSeconds)</strong>
 </a>
 </dt>
 <dd>
 	
 
 
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
 <p><code><em><a href="##(MENUPARAM)">#MENUPARAM</a> MenuParam </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> self </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> OrbitGroup </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> OrbitHeight </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> OrbitSeconds </em></code>: </p>
 
 				</li>
 		</ul>
@@ -2092,18 +2294,28 @@ If true, then the direction vector will be smoked.</p>
 <dt>
 
 <a id="#(ESCORT)._JoinUpAndFollow" >
-<strong>ESCORT._JoinUpAndFollow(MenuParam)</strong>
+<strong>ESCORT._JoinUpAndFollow(MenuParam, self, Distance)</strong>
 </a>
 </dt>
 <dd>
 	
 
 
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
 <p><code><em><a href="##(MENUPARAM)">#MENUPARAM</a> MenuParam </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> self </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> Distance </em></code>: </p>
 
 				</li>
 		</ul>
@@ -2113,18 +2325,33 @@ If true, then the direction vector will be smoked.</p>
 <dt>
 
 <a id="#(ESCORT)._ROE" >
-<strong>ESCORT._ROE(MenuParam)</strong>
+<strong>ESCORT._ROE(MenuParam, self, EscortROEFunction, EscortROEMessage)</strong>
 </a>
 </dt>
 <dd>
 	
 
 
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
 <p><code><em><a href="##(MENUPARAM)">#MENUPARAM</a> MenuParam </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> self </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> EscortROEFunction </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> EscortROEMessage </em></code>: </p>
 
 				</li>
 		</ul>
@@ -2134,18 +2361,33 @@ If true, then the direction vector will be smoked.</p>
 <dt>
 
 <a id="#(ESCORT)._ROT" >
-<strong>ESCORT._ROT(MenuParam)</strong>
+<strong>ESCORT._ROT(MenuParam, self, EscortROTFunction, EscortROTMessage)</strong>
 </a>
 </dt>
 <dd>
 	
 
 
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
 <p><code><em><a href="##(MENUPARAM)">#MENUPARAM</a> MenuParam </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> self </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> EscortROTFunction </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> EscortROTMessage </em></code>: </p>
 
 				</li>
 		</ul>
@@ -2155,18 +2397,23 @@ If true, then the direction vector will be smoked.</p>
 <dt>
 
 <a id="#(ESCORT)._ReportNearbyTargetsNow" >
-<strong>ESCORT._ReportNearbyTargetsNow(MenuParam)</strong>
+<strong>ESCORT._ReportNearbyTargetsNow(MenuParam, self)</strong>
 </a>
 </dt>
 <dd>
 	
 
 
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
 <p><code><em><a href="##(MENUPARAM)">#MENUPARAM</a> MenuParam </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> self </em></code>: </p>
 
 				</li>
 		</ul>
@@ -2189,18 +2436,28 @@ If true, then the direction vector will be smoked.</p>
 <dt>
 
 <a id="#(ESCORT)._ResumeMission" >
-<strong>ESCORT._ResumeMission(MenuParam)</strong>
+<strong>ESCORT._ResumeMission(MenuParam, self, WayPoint)</strong>
 </a>
 </dt>
 <dd>
 	
 
 
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
 <p><code><em><a href="##(MENUPARAM)">#MENUPARAM</a> MenuParam </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> self </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> WayPoint </em></code>: </p>
 
 				</li>
 		</ul>
@@ -2210,18 +2467,28 @@ If true, then the direction vector will be smoked.</p>
 <dt>
 
 <a id="#(ESCORT)._ScanTargets" >
-<strong>ESCORT._ScanTargets(MenuParam)</strong>
+<strong>ESCORT._ScanTargets(MenuParam, self, ScanDuration)</strong>
 </a>
 </dt>
 <dd>
 	
 
 
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
 <p><code><em><a href="##(MENUPARAM)">#MENUPARAM</a> MenuParam </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> self </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> ScanDuration </em></code>: </p>
 
 				</li>
 		</ul>
@@ -2231,18 +2498,33 @@ If true, then the direction vector will be smoked.</p>
 <dt>
 
 <a id="#(ESCORT)._Smoke" >
-<strong>ESCORT._Smoke(MenuParam)</strong>
+<strong>ESCORT._Smoke(MenuParam, self, Color, Message)</strong>
 </a>
 </dt>
 <dd>
 	
 
 
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
 <p><code><em><a href="##(MENUPARAM)">#MENUPARAM</a> MenuParam </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> self </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> Color </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> Message </em></code>: </p>
 
 				</li>
 		</ul>
@@ -2252,7 +2534,7 @@ If true, then the direction vector will be smoked.</p>
 <dt>
 
 <a id="#(ESCORT)._SwitchReportNearbyTargets" >
-<strong>ESCORT._SwitchReportNearbyTargets(MenuParam)</strong>
+<strong>ESCORT:_SwitchReportNearbyTargets(ReportTargets)</strong>
 </a>
 </dt>
 <dd>
@@ -2263,7 +2545,7 @@ If true, then the direction vector will be smoked.</p>
 		<ul>
 				<li>
 				
-<p><code><em> MenuParam </em></code>: </p>
+<p><code><em> ReportTargets </em></code>: </p>
 
 				</li>
 		</ul>
@@ -2309,6 +2591,20 @@ If true, then the direction vector will be smoked.</p>
 <p>MENUPARAM type</p>
 
 	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(MENUPARAM).Distance" >
+<strong>MENUPARAM.Distance</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
 		<dl class="function">
 <dt>
 

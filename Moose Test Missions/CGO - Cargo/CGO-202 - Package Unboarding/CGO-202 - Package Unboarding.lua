@@ -1,8 +1,8 @@
 
-local CargoEngineer = UNIT:FindByName( "Engineer" )
-local InfantryCargo = AI_CARGO_UNIT:New( CargoEngineer, "Engineer", "Engineer Sven", "81", 2000, 25 )
+CargoEngineer = UNIT:FindByName( "Engineer" )
+InfantryCargo = AI_CARGO_UNIT:New( CargoEngineer, "Engineer", "Engineer Sven", "81", 2000, 25 )
 
-local CargoCarrier = UNIT:FindByName( "Carrier" )
+CargoCarrier = UNIT:FindByName( "Carrier" )
 
 -- This will Load the Cargo into the Carrier, regardless where the Cargo is.
 InfantryCargo:Load( CargoCarrier )

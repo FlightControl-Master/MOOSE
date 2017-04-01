@@ -39,16 +39,17 @@
 					<li><a href="Fsm.html">Fsm</a></li>
 					<li><a href="Group.html">Group</a></li>
 					<li><a href="Identifiable.html">Identifiable</a></li>
-					<li><a href="MOVEMENT.html">MOVEMENT</a></li>
 					<li><a href="Menu.html">Menu</a></li>
 					<li><a href="Message.html">Message</a></li>
 					<li><a href="MissileTrainer.html">MissileTrainer</a></li>
 					<li><a href="Mission.html">Mission</a></li>
+					<li><a href="Movement.html">Movement</a></li>
 					<li><a href="Object.html">Object</a></li>
 					<li><a href="Point.html">Point</a></li>
 					<li><a href="Positionable.html">Positionable</a></li>
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
 					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
+					<li><a href="Radio.html">Radio</a></li>
 					<li><a href="Route.html">Route</a></li>
 					<li><a href="Scenery.html">Scenery</a></li>
 					<li><a href="ScheduleDispatcher.html">ScheduleDispatcher</a></li>
@@ -61,8 +62,8 @@
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="Task.html">Task</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
+					<li><a href="Task_A2G_Dispatcher.html">Task_A2G_Dispatcher</a></li>
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
-					<li><a href="Task_SEAD.html">Task_SEAD</a></li>
 					<li><a href="Unit.html">Unit</a></li>
 					<li><a href="Utils.html">Utils</a></li>
 					<li><a href="Zone.html">Zone</a></li>
@@ -92,15 +93,15 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SEAD).EventShot">SEAD:EventShot(Event)</a></td>
-		<td class="summary">
-<p>Detects if an SA site was shot with an anti radiation missile.</p>
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SEAD).New">SEAD.New(table, self, SEADGroupPrefixes)</a></td>
 		<td class="summary">
 <p>Creates the main object which is handling defensive actions for SA sites or moving SA vehicles.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SEAD).OnEventShot">SEAD.OnEventShot(#, EventData, self)</a></td>
+		<td class="summary">
+<p>Detects if an SA site was shot with an anti radiation missile.</p>
 </td>
 		</tr>
 		<tr>
@@ -156,30 +157,6 @@
 		<dl class="function">
 <dt>
 
-<a id="#(SEAD).EventShot" >
-<strong>SEAD:EventShot(Event)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Detects if an SA site was shot with an anti radiation missile.</p>
-
-	
-<p>In this case, take evasive actions based on the skill level set within the ME.</p>
-
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em> Event </em></code>: </p>
-
-				</li>
-		</ul>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
 <a id="#(SEAD).New" >
 <strong>SEAD.New(table, self, SEADGroupPrefixes)</strong>
 </a>
@@ -221,6 +198,41 @@ string,...}|string SEADGroupPrefixes which is a table of Prefixes of the SA Grou
 -- Defends the Russian SA installations from SEAD attacks.
 SEAD_RU_SAM_Defenses = SEAD:New( { 'RU SA-6 Kub', 'RU SA-6 Defenses', 'RU MI-26 Troops', 'RU Attack Gori' } )</code></pre>
 
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SEAD).OnEventShot" >
+<strong>SEAD.OnEventShot(#, EventData, self)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Detects if an SA site was shot with an anti radiation missile.</p>
+
+	
+<p>In this case, take evasive actions based on the skill level set within the ME.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> # </em></code>: 
+EAD</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Core.Event.html##(EVENTDATA)">Core.Event#EVENTDATA</a> EventData </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> self </em></code>: </p>
+
+				</li>
+		</ul>
 </dd>
 </dl>
 		<dl class="function">

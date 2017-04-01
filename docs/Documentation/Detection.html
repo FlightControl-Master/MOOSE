@@ -39,16 +39,17 @@
 					<li><a href="Fsm.html">Fsm</a></li>
 					<li><a href="Group.html">Group</a></li>
 					<li><a href="Identifiable.html">Identifiable</a></li>
-					<li><a href="MOVEMENT.html">MOVEMENT</a></li>
 					<li><a href="Menu.html">Menu</a></li>
 					<li><a href="Message.html">Message</a></li>
 					<li><a href="MissileTrainer.html">MissileTrainer</a></li>
 					<li><a href="Mission.html">Mission</a></li>
+					<li><a href="Movement.html">Movement</a></li>
 					<li><a href="Object.html">Object</a></li>
 					<li><a href="Point.html">Point</a></li>
 					<li><a href="Positionable.html">Positionable</a></li>
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
 					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
+					<li><a href="Radio.html">Radio</a></li>
 					<li><a href="Route.html">Route</a></li>
 					<li><a href="Scenery.html">Scenery</a></li>
 					<li><a href="ScheduleDispatcher.html">ScheduleDispatcher</a></li>
@@ -61,8 +62,8 @@
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="Task.html">Task</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
+					<li><a href="Task_A2G_Dispatcher.html">Task_A2G_Dispatcher</a></li>
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
-					<li><a href="Task_SEAD.html">Task_SEAD</a></li>
 					<li><a href="Unit.html">Unit</a></li>
 					<li><a href="Utils.html">Utils</a></li>
 					<li><a href="Zone.html">Zone</a></li>
@@ -72,78 +73,32 @@
 	<div id="content">
    <h1>Module <code>Detection</code></h1>
    
-<p> This module contains the DETECTION classes.</p>
+<p><strong>Functional</strong> - DETECTION_ classes model the detection of enemy units by FACs or RECCEs and group them according various methods.</p>
 
    
-<h1> </h1>
 
-<h1> 1) <a href="Detection.html##(DETECTION_BASE)">Detection#DETECTION_BASE</a> class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
-<p> The <a href="Detection.html##(DETECTION_BASE)">Detection#DETECTION_BASE</a> class defines the core functions to administer detected objects.
- The <a href="Detection.html##(DETECTION_BASE)">Detection#DETECTION_BASE</a> class will detect objects within the battle zone for a list of <a href="Group.html">Group</a>s detecting targets following (a) detection method(s).</p>
-
-<h2> 1.1) DETECTION_BASE constructor</h2>
-<p> Construct a new DETECTION_BASE instance using the <a href="Detection.html##(DETECTION_BASE).New">Detection#DETECTION_BASE.New</a>() method.</p>
-
-<h2> 1.2) DETECTION_BASE initialization</h2>
-<p> By default, detection will return detected objects with all the detection sensors available.
- However, you can ask how the objects were found with specific detection methods. 
- If you use one of the below methods, the detection will work with the detection method specified.
- You can specify to apply multiple detection methods.</p>
-
-<p> Use the following functions to report the objects it detected using the methods Visual, Optical, Radar, IRST, RWR, DLINK:</p>
-
-<ul>
-    <li><a href="Detection.html##(DETECTION_BASE).InitDetectVisual">Detection#DETECTION_BASE.InitDetectVisual</a>(): Detected using Visual.</li>
-    <li><a href="Detection.html##(DETECTION_BASE).InitDetectOptical">Detection#DETECTION_BASE.InitDetectOptical</a>(): Detected using Optical.</li>
-    <li><a href="Detection.html##(DETECTION_BASE).InitDetectRadar">Detection#DETECTION_BASE.InitDetectRadar</a>(): Detected using Radar.</li>
-    <li><a href="Detection.html##(DETECTION_BASE).InitDetectIRST">Detection#DETECTION_BASE.InitDetectIRST</a>(): Detected using IRST.</li>
-    <li><a href="Detection.html##(DETECTION_BASE).InitDetectRWR">Detection#DETECTION_BASE.InitDetectRWR</a>(): Detected using RWR.</li>
-    <li><a href="Detection.html##(DETECTION_BASE).InitDetectDLINK">Detection#DETECTION_BASE.InitDetectDLINK</a>(): Detected using DLINK.</li>
-</ul>
-
-<h2> 1.3) Obtain objects detected by DETECTION_BASE</h2>
-<p> DETECTION_BASE builds <a href="Set.html">Set</a>s of objects detected. These <a href="Set.html##(SET_BASE)">Set#SET_BASE</a>s can be retrieved using the method <a href="Detection.html##(DETECTION_BASE).GetDetectedSets">Detection#DETECTION_BASE.GetDetectedSets</a>().
- The method will return a list (table) of <a href="Set.html##(SET_BASE)">Set#SET_BASE</a> objects.</p>
+<p><img src="..\Presentations\DETECTION\Dia1.JPG" alt="Banner Image"/></p>
 
 <hr/>
 
-<h1> 2) <a href="Detection.html##(DETECTION_AREAS)">Detection#DETECTION_AREAS</a> class, extends <a href="Detection.html##(DETECTION_BASE)">Detection#DETECTION_BASE</a></h1>
-<p> The <a href="Detection.html##(DETECTION_AREAS)">Detection#DETECTION_AREAS</a> class will detect units within the battle zone for a list of <a href="Group.html">Group</a>s detecting targets following (a) detection method(s), 
- and will build a list (table) of <a href="Set.html##(SET_UNIT)">Set#SET_UNIT</a>s containing the <a href="Unit.html##(UNIT)">Unit#UNIT</a>s detected.
- The class is group the detected units within zones given a DetectedZoneRange parameter.
- A set with multiple detected zones will be created as there are groups of units detected.</p>
+<p>DETECTION classes facilitate the detection of enemy units within the battle zone executed by FACs (Forward Air Controllers) or RECCEs (Reconnassance Units).
+DETECTION uses the in-built detection capabilities of DCS World, but adds new functionalities.</p>
 
-<h2> 2.1) Retrieve the Detected Unit sets and Detected Zones</h2>
-<p> The DetectedUnitSets methods are implemented in <a href="Detection.html##(DECTECTION_BASE)">Detection#DECTECTION_BASE</a> and the DetectedZones methods is implemented in <a href="Detection.html##(DETECTION_AREAS)">Detection#DETECTION_AREAS</a>.</p>
+<p>Please watch this <a href="https://youtu.be/C7p81dUwP-E">youtube video</a> that explains the detection concepts.</p>
 
-<p> Retrieve the DetectedUnitSets with the method <a href="Detection.html##(DETECTION_BASE).GetDetectedSets">Detection#DETECTION_BASE.GetDetectedSets</a>(). A table will be return of <a href="Set.html##(SET_UNIT)">Set#SET_UNIT</a>s.
- To understand the amount of sets created, use the method <a href="Detection.html##(DETECTION_BASE).GetDetectedSetCount">Detection#DETECTION_BASE.GetDetectedSetCount</a>(). 
- If you want to obtain a specific set from the DetectedSets, use the method <a href="Detection.html##(DETECTION_BASE).GetDetectedSet">Detection#DETECTION_BASE.GetDetectedSet</a>() with a given index.</p>
 
-<p> Retrieve the formed <a href="Zone.html">Zone</a>s as a result of the grouping the detected units within the DetectionZoneRange, use the method <a href="Detection.html##(DETECTION_BASE).GetDetectionZones">Detection#DETECTION_BASE.GetDetectionZones</a>().
- To understand the amount of zones created, use the method <a href="Detection.html##(DETECTION_BASE).GetDetectionZoneCount">Detection#DETECTION_BASE.GetDetectionZoneCount</a>(). 
- If you want to obtain a specific zone from the DetectedZones, use the method <a href="Detection.html##(DETECTION_BASE).GetDetectionZone">Detection#DETECTION_BASE.GetDetectionZone</a>() with a given index.</p>
-
-<h2> 1.4) Flare or Smoke detected units</h2>
-<p> Use the methods <a href="Detection.html##(DETECTION_AREAS).FlareDetectedUnits">Detection#DETECTION_AREAS.FlareDetectedUnits</a>() or <a href="Detection.html##(DETECTION_AREAS).SmokeDetectedUnits">Detection#DETECTION_AREAS.SmokeDetectedUnits</a>() to flare or smoke the detected units when a new detection has taken place.</p>
-
-<h2> 1.5) Flare or Smoke detected zones</h2>
-<p> Use the methods <a href="Detection.html##(DETECTION_AREAS).FlareDetectedZones">Detection#DETECTION_AREAS.FlareDetectedZones</a>() or <a href="Detection.html##(DETECTION_AREAS).SmokeDetectedZones">Detection#DETECTION_AREAS.SmokeDetectedZones</a>() to flare or smoke the detected zones when a new detection has taken place.</p>
-
-<hr/>
-
-<p> ### Contributions: </p>
+<h3>Contributions:</h3>
 
 <ul>
-    <li>Mechanist : Concept &amp; Testing</li>
+    <li>Mechanist : Early concept of DETECTION_AREAS.</li>
 </ul>
 
-<p> ### Authors: </p>
+<h3>Authors:</h3>
 
 <ul>
-    <li>FlightControl : Design &amp; Programming
-    </li>
+    <li>FlightControl : Analysis, Design, Programming, Testing</li>
 </ul>
+
 
 	<h2>Global(s)</h2>
 	<table class="function_list">
@@ -159,37 +114,31 @@
 
 </td>
 		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#DETECTION_TYPES">DETECTION_TYPES</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#DETECTION_UNITS">DETECTION_UNITS</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
 	</table>
 			<h2><a id="#(DETECTION_AREAS)">Type <code>DETECTION_AREAS</code></a></h2>
 				<table class="function_list">
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS).AcceptChanges">DETECTION_AREAS:AcceptChanges(DetectedArea)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS).BoundDetectedZones">DETECTION_AREAS:BoundDetectedZones()</a></td>
 		<td class="summary">
-<p>Accepts changes from the detected zone.</p>
+<p>Bound the detected zones</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS).AddChangeArea">DETECTION_AREAS:AddChangeArea(DetectedArea, ChangeCode, AreaUnitType)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS).CalculateThreatLevelA2G">DETECTION_AREAS:CalculateThreatLevelA2G(DetectedItem)</a></td>
 		<td class="summary">
-<p>Add a change to the detected zone.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS).AddChangeUnit">DETECTION_AREAS:AddChangeUnit(DetectedArea, ChangeCode, ChangeUnitType)</a></td>
-		<td class="summary">
-<p>Add a change to the detected zone.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS).AddDetectedArea">DETECTION_AREAS.AddDetectedArea(Set, Zone, self)</a></td>
-		<td class="summary">
-<p>Add a detected <a href="##(DETECTION_AREAS).DetectedArea">DETECTION_AREAS.DetectedArea</a>.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS).CalculateThreatLevelA2G">DETECTION_AREAS:CalculateThreatLevelA2G(DetectedArea)</a></td>
-		<td class="summary">
-<p>Calculate the maxium A2G threat level of the DetectedArea.</p>
+<p>Calculate the maxium A2G threat level of the DetectedItem.</p>
 </td>
 		</tr>
 		<tr>
@@ -205,7 +154,13 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS).DetectedAreas">DETECTION_AREAS.DetectedAreas</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS).DetectedItemReportSummary">DETECTION_AREAS:DetectedItemReportSummary(Index)</a></td>
+		<td class="summary">
+<p>Report summary of a detected item using a given numeric index.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS).DetectedItems">DETECTION_AREAS.DetectedItems</a></td>
 		<td class="summary">
 <p>A list of areas containing the set of <a href="Unit.html">Unit</a>s, <a href="Zone.html">Zone</a>s, the center <a href="Unit.html">Unit</a> within the zone, and ID of each area that was detected within a DetectionZoneRange.</p>
 </td>
@@ -229,69 +184,33 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS).GetChangeText">DETECTION_AREAS:GetChangeText(DetectedArea)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS).GetChangeText">DETECTION_AREAS:GetChangeText(DetectedItem)</a></td>
 		<td class="summary">
 <p>Make text documenting the changes of the detected zone.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS).GetDetectedAreaCount">DETECTION_AREAS:GetDetectedAreaCount()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS).GetTreatLevelA2G">DETECTION_AREAS:GetTreatLevelA2G(DetectedItem)</a></td>
 		<td class="summary">
-<p>Get the amount of <a href="##(DETECTION_AREAS).DetectedAreas">DETECTION_AREAS.DetectedAreas</a>.</p>
+<p>Returns the A2G threat level of the units in the DetectedItem</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS).GetDetectedAreas">DETECTION_AREAS:GetDetectedAreas()</a></td>
-		<td class="summary">
-<p>Get the detected <a href="##(DETECTION_AREAS).DetectedAreas">DETECTION_AREAS.DetectedAreas</a>.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS).GetDetectedSet">DETECTION_AREAS:GetDetectedSet(Index)</a></td>
-		<td class="summary">
-<p>Get the <a href="Set.html##(SET_UNIT)">Set#SET_UNIT</a> of a detecttion area using a given numeric index.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS).GetDetectedZone">DETECTION_AREAS:GetDetectedZone(Index)</a></td>
-		<td class="summary">
-<p>Get the <a href="Zone.html##(ZONE_UNIT)">Zone#ZONE_UNIT</a> of a detection area using a given numeric index.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS).GetTreatLevelA2G">DETECTION_AREAS:GetTreatLevelA2G(DetectedArea)</a></td>
-		<td class="summary">
-<p>Returns the A2G threat level of the units in the DetectedArea</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS).IsFriendliesNearBy">DETECTION_AREAS:IsFriendliesNearBy(DetectedArea)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS).IsFriendliesNearBy">DETECTION_AREAS:IsFriendliesNearBy(DetectedItem)</a></td>
 		<td class="summary">
 <p>Returns if there are friendlies nearby the FAC units ...</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS).NearestFAC">DETECTION_AREAS:NearestFAC(DetectedArea)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS).NearestFAC">DETECTION_AREAS:NearestFAC(DetectedItem)</a></td>
 		<td class="summary">
-<p>Find the nearest FAC of the DetectedArea.</p>
+<p>Find the nearest FAC of the DetectedItem.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS).New">DETECTION_AREAS:New(DetectionSetGroup, DetectionRange, DetectionZoneRange)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS).New">DETECTION_AREAS:New(DetectionSetGroup, DetectionZoneRange)</a></td>
 		<td class="summary">
 <p>DETECTION_AREAS constructor.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS).RemoveDetectedArea">DETECTION_AREAS:RemoveDetectedArea(Index)</a></td>
-		<td class="summary">
-<p>Remove a detected <a href="##(DETECTION_AREAS).DetectedArea">DETECTION_AREAS.DetectedArea</a> with a given Index.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS).ReportFriendliesNearBy">DETECTION_AREAS:ReportFriendliesNearBy(ReportUnit, ReportGroupData)</a></td>
-		<td class="summary">
-<p>Background worker function to determine if there are friendlies nearby ...</p>
 </td>
 		</tr>
 		<tr>
@@ -304,6 +223,12 @@
 		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS).SmokeDetectedZones">DETECTION_AREAS:SmokeDetectedZones()</a></td>
 		<td class="summary">
 <p>Smoke the detected zones</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS)._BoundDetectedZones">DETECTION_AREAS._BoundDetectedZones</a></td>
+		<td class="summary">
+
 </td>
 		</tr>
 		<tr>
@@ -332,62 +257,64 @@
 		</tr>
 	</table>
 
-			<h2><a id="#(DETECTION_AREAS.DetectedArea)">Type <code>DETECTION_AREAS.DetectedArea</code></a></h2>
-				<table class="function_list">
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS.DetectedArea).AreaID">DETECTION_AREAS.DetectedArea.AreaID</a></td>
-		<td class="summary">
-<p>-- The identifier of the detected area.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS.DetectedArea).Changed">DETECTION_AREAS.DetectedArea.Changed</a></td>
-		<td class="summary">
-<p>Documents if the detected area has changes.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS.DetectedArea).Changes">DETECTION_AREAS.DetectedArea.Changes</a></td>
-		<td class="summary">
-<p>A list of the changes reported on the detected area. (It is up to the user of the detected area to consume those changes).</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS.DetectedArea).FriendliesNearBy">DETECTION_AREAS.DetectedArea.FriendliesNearBy</a></td>
-		<td class="summary">
-<p>Indicates if there are friendlies within the detected area.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS.DetectedArea).MaxThreatLevelA2G">DETECTION_AREAS.DetectedArea.MaxThreatLevelA2G</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS.DetectedArea).NearestFAC">DETECTION_AREAS.DetectedArea.NearestFAC</a></td>
-		<td class="summary">
-<p>The nearest FAC near the Area.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS.DetectedArea).Set">DETECTION_AREAS.DetectedArea.Set</a></td>
-		<td class="summary">
-<p>-- The Set of Units in the detected area.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS.DetectedArea).Zone">DETECTION_AREAS.DetectedArea.Zone</a></td>
-		<td class="summary">
-<p>-- The Zone of the detected area.</p>
-</td>
-		</tr>
-	</table>
-
 			<h2><a id="#(DETECTION_BASE)">Type <code>DETECTION_BASE</code></a></h2>
 				<table class="function_list">
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).AcceptChanges">DETECTION_BASE:AcceptChanges(DetectedItem)</a></td>
+		<td class="summary">
+<p>Accepts changes from the detected item.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).AcceptRange">DETECTION_BASE.AcceptRange</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).AcceptZones">DETECTION_BASE.AcceptZones</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).AddChangeItem">DETECTION_BASE:AddChangeItem(DetectedItem, ChangeCode, ItemUnitType)</a></td>
+		<td class="summary">
+<p>Add a change to the detected zone.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).AddChangeUnit">DETECTION_BASE:AddChangeUnit(DetectedItem, ChangeCode, ChangeUnitType)</a></td>
+		<td class="summary">
+<p>Add a change to the detected zone.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).AddDetectedItem">DETECTION_BASE:AddDetectedItem(DetectedItemIndex, Set)</a></td>
+		<td class="summary">
+<p>Adds a new DetectedItem to the DetectedItems list.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).AddDetectedItemZone">DETECTION_BASE:AddDetectedItemZone(DetectedItemIndex, Set, Zone)</a></td>
+		<td class="summary">
+<p>Adds a new DetectedItem to the DetectedItems list.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).AlphaAngleProbability">DETECTION_BASE.AlphaAngleProbability</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).ClassName">DETECTION_BASE.ClassName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).CountryID">DETECTION_BASE.CountryID</a></td>
 		<td class="summary">
 
 </td>
@@ -396,6 +323,12 @@
 		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).CreateDetectionSets">DETECTION_BASE:CreateDetectionSets()</a></td>
 		<td class="summary">
 <p>Make a DetectionSet table.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).Detect">DETECTION_BASE:Detect()</a></td>
+		<td class="summary">
+<p>Synchronous Event Trigger for Event Detect.</p>
 </td>
 		</tr>
 		<tr>
@@ -435,6 +368,36 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).Detected">DETECTION_BASE:Detected()</a></td>
+		<td class="summary">
+<p>Synchronous Event Trigger for Event Detected.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).DetectedItemCount">DETECTION_BASE.DetectedItemCount</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).DetectedItemMax">DETECTION_BASE.DetectedItemMax</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).DetectedItemReportSummary">DETECTION_BASE:DetectedItemReportSummary(Index)</a></td>
+		<td class="summary">
+<p>Report summary of a detected item using a given numeric index.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).DetectedItems">DETECTION_BASE.DetectedItems</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).DetectedObjects">DETECTION_BASE.DetectedObjects</a></td>
 		<td class="summary">
 <p>The list of detected objects.</p>
@@ -444,6 +407,24 @@
 		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).DetectedObjectsIdentified">DETECTION_BASE.DetectedObjectsIdentified</a></td>
 		<td class="summary">
 <p>Map of the DetectedObjects identified.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).DetectedReportDetailed">DETECTION_BASE:DetectedReportDetailed()</a></td>
+		<td class="summary">
+<p>Report detailed of a detectedion result.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).DetectionCount">DETECTION_BASE.DetectionCount</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).DetectionInterval">DETECTION_BASE.DetectionInterval</a></td>
+		<td class="summary">
+
 </td>
 		</tr>
 		<tr>
@@ -471,6 +452,30 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).DistanceProbability">DETECTION_BASE.DistanceProbability</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).GetDetectedItem">DETECTION_BASE:GetDetectedItem(Index)</a></td>
+		<td class="summary">
+<p>Get a detected item using a given numeric index.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).GetDetectedItems">DETECTION_BASE:GetDetectedItems()</a></td>
+		<td class="summary">
+<p>Get the detected <a href="Set.html##(SET_BASE)">Set#SET_BASE</a>s.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).GetDetectedItemsCount">DETECTION_BASE:GetDetectedItemsCount()</a></td>
+		<td class="summary">
+<p>Get the amount of SETs with detected objects.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).GetDetectedObject">DETECTION_BASE:GetDetectedObject(ObjectName)</a></td>
 		<td class="summary">
 <p>Gets a detected object with a given name.</p>
@@ -479,19 +484,13 @@
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).GetDetectedSet">DETECTION_BASE:GetDetectedSet(Index)</a></td>
 		<td class="summary">
-<p>Get a SET of detected objects using a given numeric index.</p>
+<p>Get the <a href="Set.html##(SET_UNIT)">Set#SET_UNIT</a> of a detecttion area using a given numeric index.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).GetDetectedSetCount">DETECTION_BASE:GetDetectedSetCount()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).GetDetectedZone">DETECTION_BASE:GetDetectedZone(Index)</a></td>
 		<td class="summary">
-<p>Get the amount of SETs with detected objects.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).GetDetectedSets">DETECTION_BASE:GetDetectedSets()</a></td>
-		<td class="summary">
-<p>Get the detected <a href="Set.html##(SET_BASE)">Set#SET_BASE</a>s.</p>
+<p>Get the <a href="Zone.html##(ZONE_UNIT)">Zone#ZONE_UNIT</a> of a detection area using a given numeric index.</p>
 </td>
 		</tr>
 		<tr>
@@ -549,9 +548,105 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).New">DETECTION_BASE:New(DetectionSetGroup, DetectionRange)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).IsFriendliesNearBy">DETECTION_BASE:IsFriendliesNearBy(DetectedItem)</a></td>
+		<td class="summary">
+<p>Returns if there are friendlies nearby the FAC units ...</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).New">DETECTION_BASE:New(DetectionSetGroup)</a></td>
 		<td class="summary">
 <p>DETECTION constructor.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).OnAfterDetect">DETECTION_BASE:OnAfterDetect(From, Event, To)</a></td>
+		<td class="summary">
+<p>OnAfter Transition Handler for Event Detect.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).OnAfterDetected">DETECTION_BASE:OnAfterDetected(From, Event, To)</a></td>
+		<td class="summary">
+<p>OnAfter Transition Handler for Event Detected.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).OnAfterStart">DETECTION_BASE:OnAfterStart(From, Event, To)</a></td>
+		<td class="summary">
+<p>OnAfter Transition Handler for Event Start.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).OnAfterStop">DETECTION_BASE:OnAfterStop(From, Event, To)</a></td>
+		<td class="summary">
+<p>OnAfter Transition Handler for Event Stop.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).OnBeforeDetect">DETECTION_BASE:OnBeforeDetect(From, Event, To)</a></td>
+		<td class="summary">
+<p>OnBefore Transition Handler for Event Detect.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).OnBeforeDetected">DETECTION_BASE:OnBeforeDetected(From, Event, To)</a></td>
+		<td class="summary">
+<p>OnBefore Transition Handler for Event Detected.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).OnBeforeStart">DETECTION_BASE:OnBeforeStart(From, Event, To)</a></td>
+		<td class="summary">
+<p>OnBefore Transition Handler for Event Start.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).OnBeforeStop">DETECTION_BASE:OnBeforeStop(From, Event, To)</a></td>
+		<td class="summary">
+<p>OnBefore Transition Handler for Event Stop.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).OnEnterDetecting">DETECTION_BASE:OnEnterDetecting(From, Event, To)</a></td>
+		<td class="summary">
+<p>OnEnter Transition Handler for State Detecting.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).OnEnterStopped">DETECTION_BASE:OnEnterStopped(From, Event, To)</a></td>
+		<td class="summary">
+<p>OnEnter Transition Handler for State Stopped.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).OnLeaveDetecting">DETECTION_BASE:OnLeaveDetecting(From, Event, To)</a></td>
+		<td class="summary">
+<p>OnLeave Transition Handler for State Detecting.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).OnLeaveStopped">DETECTION_BASE:OnLeaveStopped(From, Event, To)</a></td>
+		<td class="summary">
+<p>OnLeave Transition Handler for State Stopped.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).RejectZones">DETECTION_BASE.RejectZones</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).RemoveDetectedItem">DETECTION_BASE:RemoveDetectedItem(DetectedItemIndex)</a></td>
+		<td class="summary">
+<p>Removes an existing DetectedItem from the DetectedItems list.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).ReportFriendliesNearBy">DETECTION_BASE:ReportFriendliesNearBy(ReportGroupData)</a></td>
+		<td class="summary">
+<p>Background worker function to determine if there are friendlies nearby ...</p>
 </td>
 		</tr>
 		<tr>
@@ -573,6 +668,60 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).SetAcceptRange">DETECTION_BASE:SetAcceptRange(AcceptRange)</a></td>
+		<td class="summary">
+<p>Accept detections if within a range in meters.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).SetAcceptZones">DETECTION_BASE:SetAcceptZones(AcceptZones)</a></td>
+		<td class="summary">
+<p>Accept detections if within the specified zone(s).</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).SetAlphaAngleProbability">DETECTION_BASE:SetAlphaAngleProbability(AlphaAngleProbability)</a></td>
+		<td class="summary">
+<p>Upon a <strong>visual</strong> detection, the higher the unit is during the detecting process, the more likely the detected unit is to be detected properly.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).SetDetectionInterval">DETECTION_BASE:SetDetectionInterval(DetectionInterval)</a></td>
+		<td class="summary">
+<p>Set the detection interval time in seconds.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).SetDistanceProbability">DETECTION_BASE:SetDistanceProbability(DistanceProbability)</a></td>
+		<td class="summary">
+<p>Upon a <strong>visual</strong> detection, the further away a detected object is, the less likely it is to be detected properly.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).SetRejectZones">DETECTION_BASE:SetRejectZones(RejectZones)</a></td>
+		<td class="summary">
+<p>Reject detections if within the specified zone(s).</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).SetZoneProbability">DETECTION_BASE:SetZoneProbability(ZoneArray)</a></td>
+		<td class="summary">
+<p>Upon a <strong>visual</strong> detection, the more a detected unit is within a cloudy zone, the less likely the detected unit is to be detected successfully.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).Start">DETECTION_BASE:Start()</a></td>
+		<td class="summary">
+<p>Synchronous Event Trigger for Event Start.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).Stop">DETECTION_BASE:Stop()</a></td>
+		<td class="summary">
+<p>Synchronous Event Trigger for Event Stop.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).UnIdentifyAllDetectedObjects">DETECTION_BASE:UnIdentifyAllDetectedObjects()</a></td>
 		<td class="summary">
 <p>UnIdentify all detected objects during detection processing.</p>
@@ -585,9 +734,103 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE)._DetectionScheduler">DETECTION_BASE:_DetectionScheduler(SchedulerName)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).ZoneProbability">DETECTION_BASE.ZoneProbability</a></td>
 		<td class="summary">
-<p>Form <a href="Set.html">Set</a>s of detected <a href="Unit.html##(UNIT)">Unit#UNIT</a>s in an array of <a href="Set.html##(SET_BASE)">Set#SET_BASE</a>s.</p>
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).__Detect">DETECTION_BASE:__Detect(Delay)</a></td>
+		<td class="summary">
+<p>Asynchronous Event Trigger for Event Detect.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).__Detected">DETECTION_BASE:__Detected(Delay)</a></td>
+		<td class="summary">
+<p>Asynchronous Event Trigger for Event Detected.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).__Start">DETECTION_BASE:__Start(Delay)</a></td>
+		<td class="summary">
+<p>Asynchronous Event Trigger for Event Start.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).__Stop">DETECTION_BASE:__Stop(Delay)</a></td>
+		<td class="summary">
+<p>Asynchronous Event Trigger for Event Stop.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).onafterDetect">DETECTION_BASE:onafterDetect(From, Event, To)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).onafterDetectionGroup">DETECTION_BASE:onafterDetectionGroup(From, Event, To, DetectionGroup)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).onafterStart">DETECTION_BASE:onafterStart(From, Event, To)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(DETECTION_BASE.DetectedItem)">Type <code>DETECTION_BASE.DetectedItem</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE.DetectedItem).Changed">DETECTION_BASE.DetectedItem.Changed</a></td>
+		<td class="summary">
+<p>Documents if the detected area has changes.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE.DetectedItem).Changes">DETECTION_BASE.DetectedItem.Changes</a></td>
+		<td class="summary">
+<p>A list of the changes reported on the detected area. (It is up to the user of the detected area to consume those changes).</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE.DetectedItem).FriendliesNearBy">DETECTION_BASE.DetectedItem.FriendliesNearBy</a></td>
+		<td class="summary">
+<p>Indicates if there are friendlies within the detected area.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE.DetectedItem).ItemID">DETECTION_BASE.DetectedItem.ItemID</a></td>
+		<td class="summary">
+<p>-- The identifier of the detected area.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE.DetectedItem).MaxThreatLevelA2G">DETECTION_BASE.DetectedItem.MaxThreatLevelA2G</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE.DetectedItem).NearestFAC">DETECTION_BASE.DetectedItem.NearestFAC</a></td>
+		<td class="summary">
+<p>The nearest FAC near the Area.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE.DetectedItem).Set">DETECTION_BASE.DetectedItem.Set</a></td>
+		<td class="summary">
+<p>-- The Set of Units in the detected area.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE.DetectedItem).Zone">DETECTION_BASE.DetectedItem.Zone</a></td>
+		<td class="summary">
+<p>-- The Zone of the detected area.</p>
 </td>
 		</tr>
 	</table>
@@ -626,6 +869,158 @@
 		</tr>
 	</table>
 
+			<h2><a id="#(DETECTION_TYPES)">Type <code>DETECTION_TYPES</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_TYPES).ClassName">DETECTION_TYPES.ClassName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_TYPES).CreateDetectionSets">DETECTION_TYPES:CreateDetectionSets()</a></td>
+		<td class="summary">
+<p>Create the DetectedItems list from the DetectedObjects table.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_TYPES).DetectedItemReportSummary">DETECTION_TYPES:DetectedItemReportSummary(Index, DetectedTypeName)</a></td>
+		<td class="summary">
+<p>Report summary of a DetectedItem using a given numeric index.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_TYPES).DetectedReportDetailed">DETECTION_TYPES:DetectedReportDetailed()</a></td>
+		<td class="summary">
+<p>Report detailed of a detection result.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_TYPES).DetectionRange">DETECTION_TYPES.DetectionRange</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_TYPES).GetChangeText">DETECTION_TYPES:GetChangeText(DetectedItem)</a></td>
+		<td class="summary">
+<p>Make text documenting the changes of the detected zone.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_TYPES).New">DETECTION_TYPES:New(DetectionSetGroup)</a></td>
+		<td class="summary">
+<p>DETECTION_TYPES constructor.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_TYPES)._BoundDetectedZones">DETECTION_TYPES._BoundDetectedZones</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_TYPES)._FlareDetectedUnits">DETECTION_TYPES._FlareDetectedUnits</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_TYPES)._FlareDetectedZones">DETECTION_TYPES._FlareDetectedZones</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_TYPES)._SmokeDetectedUnits">DETECTION_TYPES._SmokeDetectedUnits</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_TYPES)._SmokeDetectedZones">DETECTION_TYPES._SmokeDetectedZones</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(DETECTION_UNITS)">Type <code>DETECTION_UNITS</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_UNITS).ClassName">DETECTION_UNITS.ClassName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_UNITS).CreateDetectionSets">DETECTION_UNITS:CreateDetectionSets()</a></td>
+		<td class="summary">
+<p>Create the DetectedItems list from the DetectedObjects table.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_UNITS).DetectedItemReportSummary">DETECTION_UNITS:DetectedItemReportSummary(Index)</a></td>
+		<td class="summary">
+<p>Report summary of a DetectedItem using a given numeric index.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_UNITS).DetectedReportDetailed">DETECTION_UNITS:DetectedReportDetailed()</a></td>
+		<td class="summary">
+<p>Report detailed of a detection result.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_UNITS).DetectionRange">DETECTION_UNITS.DetectionRange</a></td>
+		<td class="summary">
+<p>The range till which targets are detected.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_UNITS).GetChangeText">DETECTION_UNITS:GetChangeText(DetectedItem)</a></td>
+		<td class="summary">
+<p>Make text documenting the changes of the detected zone.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_UNITS).New">DETECTION_UNITS:New(DetectionSetGroup)</a></td>
+		<td class="summary">
+<p>DETECTION_UNITS constructor.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_UNITS)._BoundDetectedZones">DETECTION_UNITS._BoundDetectedZones</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_UNITS)._FlareDetectedUnits">DETECTION_UNITS._FlareDetectedUnits</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_UNITS)._FlareDetectedZones">DETECTION_UNITS._FlareDetectedZones</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_UNITS)._SmokeDetectedUnits">DETECTION_UNITS._SmokeDetectedUnits</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_UNITS)._SmokeDetectedZones">DETECTION_UNITS._SmokeDetectedZones</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+
 	<h2>Global(s)</h2>
 		<dl class="function">
 <dt>
@@ -655,146 +1050,91 @@
 
 </dd>
 </dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(DETECTION_TYPES)">#DETECTION_TYPES</a></em>
+<a id="DETECTION_TYPES" >
+<strong>DETECTION_TYPES</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(DETECTION_UNITS)">#DETECTION_UNITS</a></em>
+<a id="DETECTION_UNITS" >
+<strong>DETECTION_UNITS</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
 	<h2><a id="#(Detection)" >Type <code>Detection</code></a></h2>
 	
 			<h2><a id="#(DETECTION_AREAS)" >Type <code>DETECTION_AREAS</code></a></h2>
 				
-<p>DETECTION_AREAS class</p>
+<p> # 4) DETECTION_AREAS class, extends <a href="Detection.html##(DETECTION_BASE)">Detection#DETECTION_BASE</a></p>
+
+<p> The DETECTION_AREAS class will detect units within the battle zone for a list of <a href="Group.html">Group</a>s detecting targets following (a) detection method(s), 
+ and will build a list (table) of <a href="Set.html##(SET_UNIT)">Set#SET_UNIT</a>s containing the <a href="Unit.html##(UNIT)">Unit#UNIT</a>s detected.</p>
+
+	
+<p> The class is group the detected units within zones given a DetectedZoneRange parameter.
+ A set with multiple detected zones will be created as there are groups of units detected.</p>
+
+<p> ## 4.1) Retrieve the Detected Unit Sets and Detected Zones</p>
+
+<p> The methods to manage the DetectedItems[].Set(s) are implemented in <a href="Detection.html##(DECTECTION_BASE)">Detection#DECTECTION_BASE</a> and 
+ the methods to manage the DetectedItems[].Zone(s) is implemented in <a href="Detection.html##(DETECTION_AREAS)">Detection#DETECTION_AREAS</a>.</p>
+
+<p> Retrieve the DetectedItems[].Set with the method <a href="Detection.html##(DETECTION_BASE).GetDetectedSet">Detection#DETECTION_BASE.GetDetectedSet</a>(). A <a href="Set.html##(SET_UNIT)">Set#SET_UNIT</a> object will be returned.</p>
+
+<p> Retrieve the formed <a href="Zone.html">Zone</a>s as a result of the grouping the detected units within the DetectionZoneRange, use the method <a href="Detection.html##(DETECTION_BASE).GetDetectionZones">Detection#DETECTION_BASE.GetDetectionZones</a>().
+ To understand the amount of zones created, use the method <a href="Detection.html##(DETECTION_BASE).GetDetectionZoneCount">Detection#DETECTION_BASE.GetDetectionZoneCount</a>(). 
+ If you want to obtain a specific zone from the DetectedZones, use the method <a href="Detection.html##(DETECTION_BASE).GetDetectionZone">Detection#DETECTION_BASE.GetDetectionZone</a>() with a given index.</p>
+
+<p> ## 4.4) Flare or Smoke detected units</p>
+
+<p> Use the methods <a href="Detection.html##(DETECTION_AREAS).FlareDetectedUnits">Detection#DETECTION_AREAS.FlareDetectedUnits</a>() or <a href="Detection.html##(DETECTION_AREAS).SmokeDetectedUnits">Detection#DETECTION_AREAS.SmokeDetectedUnits</a>() to flare or smoke the detected units when a new detection has taken place.</p>
+
+<p> ## 4.5) Flare or Smoke or Bound detected zones</p>
+
+<p> Use the methods:</p>
+
+<ul>
+    <li><a href="Detection.html##(DETECTION_AREAS).FlareDetectedZones">Detection#DETECTION_AREAS.FlareDetectedZones</a>() to flare in a color </li>
+    <li><a href="Detection.html##(DETECTION_AREAS).SmokeDetectedZones">Detection#DETECTION_AREAS.SmokeDetectedZones</a>() to smoke in a color</li>
+    <li><a href="Detection.html##(DETECTION_AREAS).SmokeDetectedZones">Detection#DETECTION_AREAS.SmokeDetectedZones</a>() to bound with a tire with a white flag</li>
+</ul>
+
+<p> the detected zones when a new detection has taken place.
+ </p>
 
 	<h3>Field(s)</h3>
 		<dl class="function">
 <dt>
 
-<a id="#(DETECTION_AREAS).AcceptChanges" >
-<strong>DETECTION_AREAS:AcceptChanges(DetectedArea)</strong>
+<a id="#(DETECTION_AREAS).BoundDetectedZones" >
+<strong>DETECTION_AREAS:BoundDetectedZones()</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Accepts changes from the detected zone.</p>
+<p>Bound the detected zones</p>
 
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="##(DETECTION_AREAS.DetectedArea)">#DETECTION_AREAS.DetectedArea</a> DetectedArea </em></code>: </p>
-
-				</li>
-		</ul>
 		<h3>Return value</h3>
 				
 <p><em><a href="##(DETECTION_AREAS)">#DETECTION_AREAS</a>:</em>
 self</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(DETECTION_AREAS).AddChangeArea" >
-<strong>DETECTION_AREAS:AddChangeArea(DetectedArea, ChangeCode, AreaUnitType)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Add a change to the detected zone.</p>
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="##(DETECTION_AREAS.DetectedArea)">#DETECTION_AREAS.DetectedArea</a> DetectedArea </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string ChangeCode </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em> AreaUnitType </em></code>: </p>
-
-				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em><a href="##(DETECTION_AREAS)">#DETECTION_AREAS</a>:</em>
-self</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(DETECTION_AREAS).AddChangeUnit" >
-<strong>DETECTION_AREAS:AddChangeUnit(DetectedArea, ChangeCode, ChangeUnitType)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Add a change to the detected zone.</p>
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="##(DETECTION_AREAS.DetectedArea)">#DETECTION_AREAS.DetectedArea</a> DetectedArea </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string ChangeCode </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string ChangeUnitType </em></code>: </p>
-
-				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em><a href="##(DETECTION_AREAS)">#DETECTION_AREAS</a>:</em>
-self</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(DETECTION_AREAS).AddDetectedArea" >
-<strong>DETECTION_AREAS.AddDetectedArea(Set, Zone, self)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Add a detected <a href="##(DETECTION_AREAS).DetectedArea">DETECTION_AREAS.DetectedArea</a>.</p>
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="Core.Set.html##(SET_UNIT)">Core.Set#SET_UNIT</a> Set </em></code>: 
--- The Set of Units in the detected area.</p>
-
-				</li>
-				<li>
-				
-<p><code><em><a href="Core.Zone.html##(ZONE_UNIT)">Core.Zone#ZONE_UNIT</a> Zone </em></code>: 
--- The Zone of the detected area.</p>
-
-				</li>
-				<li>
-				
-<p><code><em> self </em></code>: </p>
-
-				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em><a href="##(DETECTION_AREAS.DetectedArea)">#DETECTION_AREAS.DetectedArea</a>:</em>
-DetectedArea</p>
 
 </dd>
 </dl>
@@ -802,18 +1142,18 @@ DetectedArea</p>
 <dt>
 
 <a id="#(DETECTION_AREAS).CalculateThreatLevelA2G" >
-<strong>DETECTION_AREAS:CalculateThreatLevelA2G(DetectedArea)</strong>
+<strong>DETECTION_AREAS:CalculateThreatLevelA2G(DetectedItem)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Calculate the maxium A2G threat level of the DetectedArea.</p>
+<p>Calculate the maxium A2G threat level of the DetectedItem.</p>
 
 		<h3>Parameter</h3>
 		<ul>
 				<li>
 				
-<p><code><em><a href="##(DETECTION_AREAS.DetectedArea)">#DETECTION_AREAS.DetectedArea</a> DetectedArea </em></code>: </p>
+<p><code><em><a href="##(DETECTION_BASE.DetectedItem)">#DETECTION_BASE.DetectedItem</a> DetectedItem </em></code>: </p>
 
 				</li>
 		</ul>
@@ -857,9 +1197,35 @@ self</p>
 		<dl class="function">
 <dt>
 
-		<em><a href="##(DETECTION_AREAS.DetectedAreas)">#DETECTION_AREAS.DetectedAreas</a></em>
-<a id="#(DETECTION_AREAS).DetectedAreas" >
-<strong>DETECTION_AREAS.DetectedAreas</strong>
+<a id="#(DETECTION_AREAS).DetectedItemReportSummary" >
+<strong>DETECTION_AREAS:DetectedItemReportSummary(Index)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Report summary of a detected item using a given numeric index.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> Index </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#string:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(DETECTION_BASE.DetectedItems)">#DETECTION_BASE.DetectedItems</a></em>
+<a id="#(DETECTION_AREAS).DetectedItems" >
+<strong>DETECTION_AREAS.DetectedItems</strong>
 </a>
 </dt>
 <dd>
@@ -922,7 +1288,7 @@ self</p>
 <dt>
 
 <a id="#(DETECTION_AREAS).GetChangeText" >
-<strong>DETECTION_AREAS:GetChangeText(DetectedArea)</strong>
+<strong>DETECTION_AREAS:GetChangeText(DetectedItem)</strong>
 </a>
 </dt>
 <dd>
@@ -933,7 +1299,7 @@ self</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="##(DETECTION_AREAS.DetectedArea)">#DETECTION_AREAS.DetectedArea</a> DetectedArea </em></code>: </p>
+<p><code><em><a href="##(DETECTION_BASE.DetectedItem)">#DETECTION_BASE.DetectedItem</a> DetectedItem </em></code>: </p>
 
 				</li>
 		</ul>
@@ -947,107 +1313,19 @@ The Changes text</p>
 		<dl class="function">
 <dt>
 
-<a id="#(DETECTION_AREAS).GetDetectedAreaCount" >
-<strong>DETECTION_AREAS:GetDetectedAreaCount()</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Get the amount of <a href="##(DETECTION_AREAS).DetectedAreas">DETECTION_AREAS.DetectedAreas</a>.</p>
-
-		<h3>Return value</h3>
-				
-<p><em>#number:</em>
-DetectedAreaCount</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(DETECTION_AREAS).GetDetectedAreas" >
-<strong>DETECTION_AREAS:GetDetectedAreas()</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Get the detected <a href="##(DETECTION_AREAS).DetectedAreas">DETECTION_AREAS.DetectedAreas</a>.</p>
-
-		<h3>Return value</h3>
-				
-<p><em><a href="##(DETECTION_AREAS.DetectedAreas)">#DETECTION_AREAS.DetectedAreas</a>:</em>
-DetectedAreas</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(DETECTION_AREAS).GetDetectedSet" >
-<strong>DETECTION_AREAS:GetDetectedSet(Index)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Get the <a href="Set.html##(SET_UNIT)">Set#SET_UNIT</a> of a detecttion area using a given numeric index.</p>
-
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em>#number Index </em></code>: </p>
-
-				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em><a href="Core.Set.html##(SET_UNIT)">Core.Set#SET_UNIT</a>:</em>
-DetectedSet</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(DETECTION_AREAS).GetDetectedZone" >
-<strong>DETECTION_AREAS:GetDetectedZone(Index)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Get the <a href="Zone.html##(ZONE_UNIT)">Zone#ZONE_UNIT</a> of a detection area using a given numeric index.</p>
-
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em>#number Index </em></code>: </p>
-
-				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em><a href="Core.Zone.html##(ZONE_UNIT)">Core.Zone#ZONE_UNIT</a>:</em>
-DetectedZone</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
 <a id="#(DETECTION_AREAS).GetTreatLevelA2G" >
-<strong>DETECTION_AREAS:GetTreatLevelA2G(DetectedArea)</strong>
+<strong>DETECTION_AREAS:GetTreatLevelA2G(DetectedItem)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Returns the A2G threat level of the units in the DetectedArea</p>
+<p>Returns the A2G threat level of the units in the DetectedItem</p>
 
 		<h3>Parameter</h3>
 		<ul>
 				<li>
 				
-<p><code><em><a href="##(DETECTION_AREAS.DetectedArea)">#DETECTION_AREAS.DetectedArea</a> DetectedArea </em></code>: </p>
+<p><code><em><a href="##(DETECTION_BASE.DetectedItem)">#DETECTION_BASE.DetectedItem</a> DetectedItem </em></code>: </p>
 
 				</li>
 		</ul>
@@ -1062,7 +1340,7 @@ a scale from 0 to 10. </p>
 <dt>
 
 <a id="#(DETECTION_AREAS).IsFriendliesNearBy" >
-<strong>DETECTION_AREAS:IsFriendliesNearBy(DetectedArea)</strong>
+<strong>DETECTION_AREAS:IsFriendliesNearBy(DetectedItem)</strong>
 </a>
 </dt>
 <dd>
@@ -1073,7 +1351,7 @@ a scale from 0 to 10. </p>
 		<ul>
 				<li>
 				
-<p><code><em> DetectedArea </em></code>: </p>
+<p><code><em> DetectedItem </em></code>: </p>
 
 				</li>
 		</ul>
@@ -1088,18 +1366,18 @@ trhe if there are friendlies nearby </p>
 <dt>
 
 <a id="#(DETECTION_AREAS).NearestFAC" >
-<strong>DETECTION_AREAS:NearestFAC(DetectedArea)</strong>
+<strong>DETECTION_AREAS:NearestFAC(DetectedItem)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Find the nearest FAC of the DetectedArea.</p>
+<p>Find the nearest FAC of the DetectedItem.</p>
 
 		<h3>Parameter</h3>
 		<ul>
 				<li>
 				
-<p><code><em><a href="##(DETECTION_AREAS.DetectedArea)">#DETECTION_AREAS.DetectedArea</a> DetectedArea </em></code>: </p>
+<p><code><em><a href="##(DETECTION_BASE.DetectedItem)">#DETECTION_BASE.DetectedItem</a> DetectedItem </em></code>: </p>
 
 				</li>
 		</ul>
@@ -1114,7 +1392,7 @@ The nearest FAC unit</p>
 <dt>
 
 <a id="#(DETECTION_AREAS).New" >
-<strong>DETECTION_AREAS:New(DetectionSetGroup, DetectionRange, DetectionZoneRange)</strong>
+<strong>DETECTION_AREAS:New(DetectionSetGroup, DetectionZoneRange)</strong>
 </a>
 </dt>
 <dd>
@@ -1131,12 +1409,6 @@ The <a href="Set.html">Set</a> of GROUPs in the Forward Air Controller role.</p>
 				</li>
 				<li>
 				
-<p><code><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a> DetectionRange </em></code>: 
-The range till which targets are accepted to be detected.</p>
-
-				</li>
-				<li>
-				
 <p><code><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a> DetectionZoneRange </em></code>: 
 The range till which targets are grouped upon the first detected target.</p>
 
@@ -1144,62 +1416,9 @@ The range till which targets are grouped upon the first detected target.</p>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="Functional.Detection.html##(DETECTION_AREAS)">Functional.Detection#DETECTION_AREAS</a>:</em>
-self</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(DETECTION_AREAS).RemoveDetectedArea" >
-<strong>DETECTION_AREAS:RemoveDetectedArea(Index)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Remove a detected <a href="##(DETECTION_AREAS).DetectedArea">DETECTION_AREAS.DetectedArea</a> with a given Index.</p>
-
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em>#number Index </em></code>: 
-The Index of the detection are to be removed.</p>
-
-				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em>#nil:</em></p>
+<p><em><a href="##(DETECTION_AREAS)">#DETECTION_AREAS</a>:</em></p>
 
 
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(DETECTION_AREAS).ReportFriendliesNearBy" >
-<strong>DETECTION_AREAS:ReportFriendliesNearBy(ReportUnit, ReportGroupData)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Background worker function to determine if there are friendlies nearby ...</p>
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> ReportUnit </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em> ReportGroupData </em></code>: </p>
-
-				</li>
-		</ul>
 </dd>
 </dl>
 		<dl class="function">
@@ -1235,6 +1454,20 @@ self</p>
 				
 <p><em><a href="##(DETECTION_AREAS)">#DETECTION_AREAS</a>:</em>
 self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#boolean</em>
+<a id="#(DETECTION_AREAS)._BoundDetectedZones" >
+<strong>DETECTION_AREAS._BoundDetectedZones</strong>
+</a>
+</dt>
+<dd>
+	
+
 
 </dd>
 </dl>
@@ -1295,61 +1528,233 @@ self</p>
 </dd>
 </dl>
 
-			<h2><a id="#(DETECTION_AREAS.DetectedArea)" >Type <code>DETECTION_AREAS.DetectedArea</code></a></h2>
-				<h3>Field(s)</h3>
+			<h2><a id="#(DETECTION_BASE)" >Type <code>DETECTION_BASE</code></a></h2>
+				
+<h1>1) DETECTION_BASE class, extends <a href="Fsm.html##(FSM)">Fsm#FSM</a></h1>
+
+<p>The DETECTION_BASE class defines the core functions to administer detected objects.</p>
+
+	
+<p>The DETECTION_BASE class will detect objects within the battle zone for a list of <a href="Group.html">Group</a>s detecting targets following (a) detection method(s).</p>
+
+<h2>1.1) DETECTION_BASE constructor</h2>
+
+<p>Construct a new DETECTION_BASE instance using the <a href="##(DETECTION_BASE).New">DETECTION_BASE.New</a>() method.</p>
+
+<h2>1.2) DETECTION_BASE initialization</h2>
+
+<p>By default, detection will return detected objects with all the detection sensors available.
+However, you can ask how the objects were found with specific detection methods. 
+If you use one of the below methods, the detection will work with the detection method specified.
+You can specify to apply multiple detection methods.</p>
+
+<p>Use the following functions to report the objects it detected using the methods Visual, Optical, Radar, IRST, RWR, DLINK:</p>
+
+<ul>
+    <li><a href="##(DETECTION_BASE).InitDetectVisual">DETECTION_BASE.InitDetectVisual</a>(): Detected using Visual.</li>
+    <li><a href="##(DETECTION_BASE).InitDetectOptical">DETECTION_BASE.InitDetectOptical</a>(): Detected using Optical.</li>
+    <li><a href="##(DETECTION_BASE).InitDetectRadar">DETECTION_BASE.InitDetectRadar</a>(): Detected using Radar.</li>
+    <li><a href="##(DETECTION_BASE).InitDetectIRST">DETECTION_BASE.InitDetectIRST</a>(): Detected using IRST.</li>
+    <li><a href="##(DETECTION_BASE).InitDetectRWR">DETECTION_BASE.InitDetectRWR</a>(): Detected using RWR.</li>
+    <li><a href="##(DETECTION_BASE).InitDetectDLINK">DETECTION_BASE.InitDetectDLINK</a>(): Detected using DLINK.</li>
+</ul>
+
+<h2>1.3) DETECTION_BASE derived classes group the detected units into a DetectedItems[] list</h2>
+
+<p>DETECTION<em>BASE derived classes build a list called DetectedItems[], which is essentially a first later 
+of grouping of detected units. Each DetectedItem within the DetectedItems[] list contains
+a SET</em>UNIT object that contains the  detected units that belong to that group.</p>
+
+<p>Derived classes will apply different methods to group the detected units. 
+Examples are per area, per quadrant, per distance, per type.
+See further the derived DETECTION classes on which grouping methods are currently supported. </p>
+
+<p>Various methods exist how to retrieve the grouped items from a DETECTION_BASE derived class:</p>
+
+<ul>
+    <li>The method <a href="Detection.html##(DETECTION_BASE).GetDetectedItems">Detection#DETECTION_BASE.GetDetectedItems</a>() retrieves the DetectedItems[] list.</li>
+    <li>A DetectedItem from the DetectedItems[] list can be retrieved using the method <a href="Detection.html##(DETECTION_BASE).GetDetectedItem">Detection#DETECTION_BASE.GetDetectedItem</a>( DetectedItemIndex ).
+    Note that this method returns a DetectedItem element from the list, that contains a Set variable and further information
+    about the DetectedItem that is set by the DETECTION_BASE derived classes, used to group the DetectedItem.</li>
+    <li>A DetectedSet from the DetectedItems[] list can be retrieved using the method <a href="Detection.html##(DETECTION_BASE).GetDetectedSet">Detection#DETECTION_BASE.GetDetectedSet</a>( DetectedItemIndex ).
+    This method retrieves the Set from a DetectedItem element from the DetectedItem list (DetectedItems[ DetectedItemIndex ].Set ).</li>
+</ul>
+
+<h2>1.4) Apply additional Filters to fine-tune the detected objects</h2>
+
+<p>By default, DCS World will return any object that is in LOS and within "visual reach", or detectable through one of the electronic detection means.
+That being said, the DCS World detection algorithm can sometimes be unrealistic.
+Especially for a visual detection, DCS World is able to report within 1 second a detailed detection of a group of 20 units (including types of the units) that are 10 kilometers away, using only visual capabilities.
+Additionally, trees and other obstacles are not accounted during the DCS World detection.</p>
+
+<p>Therefore, an additional (optional) filtering has been built into the DETECTION_BASE class, that can be set for visual detected units.
+For electronic detection, this filtering is not applied, only for visually detected targets.</p>
+
+<p>The following additional filtering can be applied for visual filtering:</p>
+
+<ul>
+    <li>A probability factor per kilometer distance.</li>
+    <li>A probability factor based on the alpha angle between the detected object and the unit detecting.
+    A detection from a higher altitude allows for better detection than when on the ground.</li>
+    <li>Define a probability factor for "cloudy zones", which are zones where forests or villages are located. In these zones, detection will be much more difficult.
+    The mission designer needs to define these cloudy zones within the mission, and needs to register these zones in the DETECTION_ objects additing a probability factor per zone.</li>
+</ul>
+
+<p>I advise however, that, when you first use the DETECTION derived classes, that you don't use these filters.
+Only when you experience unrealistic behaviour in your missions, these filters could be applied.</p>
+
+<h3>1.4.1 ) Distance visual detection probability</h3>
+
+<p>Upon a <strong>visual</strong> detection, the further away a detected object is, the less likely it is to be detected properly.
+Also, the speed of accurate detection plays a role.</p>
+
+<p>A distance probability factor between 0 and 1 can be given, that will model a linear extrapolated probability over 10 km distance.</p>
+
+<p>For example, if a probability factor of 0.6 (60%) is given, the extrapolated probabilities over 15 kilometers would like like:
+1 km: 96%, 2 km: 92%, 3 km: 88%, 4 km: 84%, 5 km: 80%, 6 km: 76%, 7 km: 72%, 8 km: 68%, 9 km: 64%, 10 km: 60%, 11 km: 56%, 12 km: 52%, 13 km: 48%, 14 km: 44%, 15 km: 40%.</p>
+
+<p>Note that based on this probability factor, not only the detection but also the <strong>type</strong> of the unit will be applied!</p>
+
+<p>Use the method <a href="Detection.html##(DETECTION_BASE).SetDistanceProbability">Detection#DETECTION_BASE.SetDistanceProbability</a>() to set the probability factor upon a 10 km distance.</p>
+
+<h3>1.4.2 ) Alpha Angle visual detection probability</h3>
+
+<p>Upon a <strong>visual</strong> detection, the higher the unit is during the detecting process, the more likely the detected unit is to be detected properly.
+A detection at a 90% alpha angle is the most optimal, a detection at 10% is less and a detection at 0% is less likely to be correct.</p>
+
+<p>A probability factor between 0 and 1 can be given, that will model a progressive extrapolated probability if the target would be detected at a 0° angle.</p>
+
+<p>For example, if a alpha angle probability factor of 0.7 is given, the extrapolated probabilities of the different angles would look like:
+0°: 70%, 10°: 75,21%, 20°: 80,26%, 30°: 85%, 40°: 89,28%, 50°: 92,98%, 60°: 95,98%, 70°: 98,19%, 80°: 99,54%, 90°: 100%</p>
+
+<p>Use the method <a href="Detection.html##(DETECTION_BASE).SetAlphaAngleProbability">Detection#DETECTION_BASE.SetAlphaAngleProbability</a>() to set the probability factor if 0°.</p>
+
+<h3>1.4.3 ) Cloudy Zones detection probability</h3>
+
+<p>Upon a <strong>visual</strong> detection, the more a detected unit is within a cloudy zone, the less likely the detected unit is to be detected successfully.
+The Cloudy Zones work with the ZONE_BASE derived classes. The mission designer can define within the mission
+zones that reflect cloudy areas where detected units may not be so easily visually detected.</p>
+
+<p>Use the method <a href="Detection.html##(DETECTION_BASE).SetZoneProbability">Detection#DETECTION_BASE.SetZoneProbability</a>() to set for a defined number of zones, the probability factors.</p>
+
+<p>Note however, that the more zones are defined to be "cloudy" within a detection, the more performance it will take
+from the DETECTION<em>BASE to calculate the presence of the detected unit within each zone.
+Expecially for ZONE</em>POLYGON, try to limit the amount of nodes of the polygon!</p>
+
+<p>Typically, this kind of filter would be applied for very specific areas were a detection needs to be very realisting for
+AI not to detect so easily targets within a forrest or village rich area.</p>
+
+<h2>1.5 ) Accept / Reject detected units</h2>
+
+<p>DETECTION_BASE can accept or reject successful detections based on the location of the detected object, 
+if it is located in range or located inside or outside of specific zones.</p>
+
+<h3>1.5.1 ) Detection acceptance of within range limit</h3>
+
+<p>A range can be set that will limit a successful detection for a unit.
+Use the method <a href="Detection.html##(DETECTION_BASE).SetAcceptRange">Detection#DETECTION_BASE.SetAcceptRange</a>() to apply a range in meters till where detected units will be accepted.</p>
+
+<pre><code> local SetGroup = SET_GROUP:New():FilterPrefixes( "FAC" ):FilterStart() -- Build a SetGroup of Forward Air Controllers.
+
+ -- Build a detect object.
+ local Detection = DETECTION_BASE:New( SetGroup )
+
+ -- This will accept detected units if the range is below 5000 meters.
+ Detection:SetAcceptRange( 5000 ) 
+
+ -- Start the Detection.
+ Detection:Start()
+</code></pre>
+
+
+<h3>1.5.2 ) Detection acceptance if within zone(s).</h3>
+
+<p>Specific ZONE<em>BASE object(s) can be given as a parameter, which will only accept a detection if the unit is within the specified ZONE</em>BASE object(s).
+Use the method <a href="Detection.html##(DETECTION_BASE).SetAcceptZones">Detection#DETECTION_BASE.SetAcceptZones</a>() will accept detected units if they are within the specified zones.</p>
+
+<pre><code> local SetGroup = SET_GROUP:New():FilterPrefixes( "FAC" ):FilterStart() -- Build a SetGroup of Forward Air Controllers.
+
+ -- Search fo the zones where units are to be accepted.
+ local ZoneAccept1 = ZONE:New( "AcceptZone1" )
+ local ZoneAccept2 = ZONE:New( "AcceptZone2" )
+
+ -- Build a detect object.
+ local Detection = DETECTION_BASE:New( SetGroup )
+
+ -- This will accept detected units by Detection when the unit is within ZoneAccept1 OR ZoneAccept2.
+ Detection:SetAcceptZones( { ZoneAccept1, ZoneAccept2 } ) 
+
+ -- Start the Detection.
+ Detection:Start()
+</code></pre>
+
+<h3>1.5.3 ) Detection rejectance if within zone(s).</h3>
+
+<p>Specific ZONE<em>BASE object(s) can be given as a parameter, which will reject detection if the unit is within the specified ZONE</em>BASE object(s).
+Use the method <a href="Detection.html##(DETECTION_BASE).SetRejectZones">Detection#DETECTION_BASE.SetRejectZones</a>() will reject detected units if they are within the specified zones.
+An example of how to use the method is shown below.</p>
+
+<pre><code> local SetGroup = SET_GROUP:New():FilterPrefixes( "FAC" ):FilterStart() -- Build a SetGroup of Forward Air Controllers.
+
+ -- Search fo the zones where units are to be rejected.
+ local ZoneReject1 = ZONE:New( "RejectZone1" )
+ local ZoneReject2 = ZONE:New( "RejectZone2" )
+
+ -- Build a detect object.
+ local Detection = DETECTION_BASE:New( SetGroup )
+
+ -- This will reject detected units by Detection when the unit is within ZoneReject1 OR ZoneReject2.
+ Detection:SetRejectZones( { ZoneReject1, ZoneReject2 } ) 
+
+ -- Start the Detection.
+ Detection:Start()
+</code></pre>
+
+<h2>1.6) DETECTION_BASE is a Finite State Machine</h2>
+
+<p>Various Events and State Transitions can be tailored using DETECTION_BASE.</p>
+
+<h3>1.6.1) DETECTION_BASE States</h3>
+
+<ul>
+    <li><strong>Detecting</strong>: The detection is running.</li>
+    <li><strong>Stopped</strong>: The detection is stopped.</li>
+</ul>
+
+<h3>1.6.2) DETECTION_BASE Events</h3>
+
+<ul>
+    <li><strong>Start</strong>: Start the detection process.</li>
+    <li><strong>Detect</strong>: Detect new units.</li>
+    <li><strong>Detected</strong>: New units have been detected.</li>
+    <li><strong>Stop</strong>: Stop the detection process.</li>
+</ul>
+
+
+	<h3>Field(s)</h3>
 		<dl class="function">
 <dt>
 
-		<em>#number</em>
-<a id="#(DETECTION_AREAS.DetectedArea).AreaID" >
-<strong>DETECTION_AREAS.DetectedArea.AreaID</strong>
+<a id="#(DETECTION_BASE).AcceptChanges" >
+<strong>DETECTION_BASE:AcceptChanges(DetectedItem)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>-- The identifier of the detected area.</p>
+<p>Accepts changes from the detected item.</p>
 
-</dd>
-</dl>
-		<dl class="function">
-<dt>
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="##(DETECTION_BASE.DetectedItem)">#DETECTION_BASE.DetectedItem</a> DetectedItem </em></code>: </p>
 
-		<em>#boolean</em>
-<a id="#(DETECTION_AREAS.DetectedArea).Changed" >
-<strong>DETECTION_AREAS.DetectedArea.Changed</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Documents if the detected area has changes.</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em>#table</em>
-<a id="#(DETECTION_AREAS.DetectedArea).Changes" >
-<strong>DETECTION_AREAS.DetectedArea.Changes</strong>
-</a>
-</dt>
-<dd>
-	
-<p>A list of the changes reported on the detected area. (It is up to the user of the detected area to consume those changes).</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em>#boolean</em>
-<a id="#(DETECTION_AREAS.DetectedArea).FriendliesNearBy" >
-<strong>DETECTION_AREAS.DetectedArea.FriendliesNearBy</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Indicates if there are friendlies within the detected area.</p>
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(DETECTION_BASE)">#DETECTION_BASE</a>:</em>
+self</p>
 
 </dd>
 </dl>
@@ -1357,8 +1762,8 @@ self</p>
 <dt>
 
 		<em></em>
-<a id="#(DETECTION_AREAS.DetectedArea).MaxThreatLevelA2G" >
-<strong>DETECTION_AREAS.DetectedArea.MaxThreatLevelA2G</strong>
+<a id="#(DETECTION_BASE).AcceptRange" >
+<strong>DETECTION_BASE.AcceptRange</strong>
 </a>
 </dt>
 <dd>
@@ -1370,59 +1775,201 @@ self</p>
 		<dl class="function">
 <dt>
 
-		<em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a></em>
-<a id="#(DETECTION_AREAS.DetectedArea).NearestFAC" >
-<strong>DETECTION_AREAS.DetectedArea.NearestFAC</strong>
+		<em></em>
+<a id="#(DETECTION_BASE).AcceptZones" >
+<strong>DETECTION_BASE.AcceptZones</strong>
 </a>
 </dt>
 <dd>
 	
-<p>The nearest FAC near the Area.</p>
+
 
 </dd>
 </dl>
 		<dl class="function">
 <dt>
 
-		<em><a href="Core.Set.html##(SET_UNIT)">Core.Set#SET_UNIT</a></em>
-<a id="#(DETECTION_AREAS.DetectedArea).Set" >
-<strong>DETECTION_AREAS.DetectedArea.Set</strong>
+<a id="#(DETECTION_BASE).AddChangeItem" >
+<strong>DETECTION_BASE:AddChangeItem(DetectedItem, ChangeCode, ItemUnitType)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>-- The Set of Units in the detected area.</p>
+<p>Add a change to the detected zone.</p>
 
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em><a href="Core.Zone.html##(ZONE_UNIT)">Core.Zone#ZONE_UNIT</a></em>
-<a id="#(DETECTION_AREAS.DetectedArea).Zone" >
-<strong>DETECTION_AREAS.DetectedArea.Zone</strong>
-</a>
-</dt>
-<dd>
-	
-<p>-- The Zone of the detected area.</p>
-
-</dd>
-</dl>
-
-			<h2><a id="#(DETECTION_AREAS.DetectedAreas)" >Type <code>DETECTION_AREAS.DetectedAreas</code></a></h2>
-			
-			<h2><a id="#(DETECTION_BASE)" >Type <code>DETECTION_BASE</code></a></h2>
+		<h3>Parameters</h3>
+		<ul>
+				<li>
 				
-<p>DETECTION_BASE class</p>
+<p><code><em><a href="##(DETECTION_BASE.DetectedItem)">#DETECTION_BASE.DetectedItem</a> DetectedItem </em></code>: </p>
 
-	<h3>Field(s)</h3>
+				</li>
+				<li>
+				
+<p><code><em>#string ChangeCode </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> ItemUnitType </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(DETECTION_BASE)">#DETECTION_BASE</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_BASE).AddChangeUnit" >
+<strong>DETECTION_BASE:AddChangeUnit(DetectedItem, ChangeCode, ChangeUnitType)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Add a change to the detected zone.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="##(DETECTION_BASE.DetectedItem)">#DETECTION_BASE.DetectedItem</a> DetectedItem </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string ChangeCode </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string ChangeUnitType </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(DETECTION_BASE)">#DETECTION_BASE</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_BASE).AddDetectedItem" >
+<strong>DETECTION_BASE:AddDetectedItem(DetectedItemIndex, Set)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Adds a new DetectedItem to the DetectedItems list.</p>
+
+	
+<p>The DetectedItem is a table and contains a SET_UNIT in the field Set.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string DetectedItemIndex </em></code>: 
+The index of the DetectedItem.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Core.Set.html##(SET_UNIT)">Core.Set#SET_UNIT</a> Set </em></code>: 
+(optional) The Set of Units to be added.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(DETECTION_BASE.DetectedItem)">#DETECTION_BASE.DetectedItem</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_BASE).AddDetectedItemZone" >
+<strong>DETECTION_BASE:AddDetectedItemZone(DetectedItemIndex, Set, Zone)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Adds a new DetectedItem to the DetectedItems list.</p>
+
+	
+<p>The DetectedItem is a table and contains a SET_UNIT in the field Set.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string DetectedItemIndex </em></code>: 
+The index of the DetectedItem.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Core.Set.html##(SET_UNIT)">Core.Set#SET_UNIT</a> Set </em></code>: 
+(optional) The Set of Units to be added.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Core.Zone.html##(ZONE_UNIT)">Core.Zone#ZONE_UNIT</a> Zone </em></code>: 
+(optional) The Zone to be added where the Units are located.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(DETECTION_BASE.DetectedItem)">#DETECTION_BASE.DetectedItem</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(DETECTION_BASE).AlphaAngleProbability" >
+<strong>DETECTION_BASE.AlphaAngleProbability</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
 		<dl class="function">
 <dt>
 
 		<em>#string</em>
 <a id="#(DETECTION_BASE).ClassName" >
 <strong>DETECTION_BASE.ClassName</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(DETECTION_BASE).CountryID" >
+<strong>DETECTION_BASE.CountryID</strong>
 </a>
 </dt>
 <dd>
@@ -1449,6 +1996,19 @@ self</p>
 				
 <p><em><a href="##(DETECTION_BASE)">#DETECTION_BASE</a>:</em>
 self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_BASE).Detect" >
+<strong>DETECTION_BASE:Detect()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Synchronous Event Trigger for Event Detect.</p>
 
 </dd>
 </dl>
@@ -1539,6 +2099,87 @@ self</p>
 		<dl class="function">
 <dt>
 
+<a id="#(DETECTION_BASE).Detected" >
+<strong>DETECTION_BASE:Detected()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Synchronous Event Trigger for Event Detected.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#number</em>
+<a id="#(DETECTION_BASE).DetectedItemCount" >
+<strong>DETECTION_BASE.DetectedItemCount</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#number</em>
+<a id="#(DETECTION_BASE).DetectedItemMax" >
+<strong>DETECTION_BASE.DetectedItemMax</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_BASE).DetectedItemReportSummary" >
+<strong>DETECTION_BASE:DetectedItemReportSummary(Index)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Report summary of a detected item using a given numeric index.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> Index </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#string:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(DETECTION_BASE).DetectedItems" >
+<strong>DETECTION_BASE.DetectedItems</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 		<em><a href="##(DETECTION_BASE.DetectedObjects)">#DETECTION_BASE.DetectedObjects</a></em>
 <a id="#(DETECTION_BASE).DetectedObjects" >
 <strong>DETECTION_BASE.DetectedObjects</strong>
@@ -1561,6 +2202,52 @@ self</p>
 <dd>
 	
 <p>Map of the DetectedObjects identified.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_BASE).DetectedReportDetailed" >
+<strong>DETECTION_BASE:DetectedReportDetailed()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Report detailed of a detectedion result.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#string:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#number</em>
+<a id="#(DETECTION_BASE).DetectionCount" >
+<strong>DETECTION_BASE.DetectionCount</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#number</em>
+<a id="#(DETECTION_BASE).DetectionInterval" >
+<strong>DETECTION_BASE.DetectionInterval</strong>
+</a>
+</dt>
+<dd>
+	
+
 
 </dd>
 </dl>
@@ -1623,6 +2310,82 @@ self</p>
 		<dl class="function">
 <dt>
 
+		<em></em>
+<a id="#(DETECTION_BASE).DistanceProbability" >
+<strong>DETECTION_BASE.DistanceProbability</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_BASE).GetDetectedItem" >
+<strong>DETECTION_BASE:GetDetectedItem(Index)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Get a detected item using a given numeric index.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number Index </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(DETECTION_BASE.DetectedItem)">#DETECTION_BASE.DetectedItem</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_BASE).GetDetectedItems" >
+<strong>DETECTION_BASE:GetDetectedItems()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Get the detected <a href="Set.html##(SET_BASE)">Set#SET_BASE</a>s.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(DETECTION_BASE.DetectedItems)">#DETECTION_BASE.DetectedItems</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_BASE).GetDetectedItemsCount" >
+<strong>DETECTION_BASE:GetDetectedItemsCount()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Get the amount of SETs with detected objects.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#number:</em>
+Count</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(DETECTION_BASE).GetDetectedObject" >
 <strong>DETECTION_BASE:GetDetectedObject(ObjectName)</strong>
 </a>
@@ -1655,7 +2418,7 @@ self</p>
 </dt>
 <dd>
 	
-<p>Get a SET of detected objects using a given numeric index.</p>
+<p>Get the <a href="Set.html##(SET_UNIT)">Set#SET_UNIT</a> of a detecttion area using a given numeric index.</p>
 
 		<h3>Parameter</h3>
 		<ul>
@@ -1667,44 +2430,34 @@ self</p>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="Core.Set.html##(SET_BASE)">Core.Set#SET_BASE</a>:</em></p>
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(DETECTION_BASE).GetDetectedSetCount" >
-<strong>DETECTION_BASE:GetDetectedSetCount()</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Get the amount of SETs with detected objects.</p>
-
-		<h3>Return value</h3>
-				
-<p><em>#number:</em>
-Count</p>
+<p><em><a href="Core.Set.html##(SET_UNIT)">Core.Set#SET_UNIT</a>:</em>
+DetectedSet</p>
 
 </dd>
 </dl>
 		<dl class="function">
 <dt>
 
-<a id="#(DETECTION_BASE).GetDetectedSets" >
-<strong>DETECTION_BASE:GetDetectedSets()</strong>
+<a id="#(DETECTION_BASE).GetDetectedZone" >
+<strong>DETECTION_BASE:GetDetectedZone(Index)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Get the detected <a href="Set.html##(SET_BASE)">Set#SET_BASE</a>s.</p>
+<p>Get the <a href="Zone.html##(ZONE_UNIT)">Zone#ZONE_UNIT</a> of a detection area using a given numeric index.</p>
 
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number Index </em></code>: </p>
+
+				</li>
+		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="##(DETECTION_BASE.DetectedSets)">#DETECTION_BASE.DetectedSets</a>:</em>
-DetectedSets</p>
+<p><em><a href="Core.Zone.html##(ZONE_UNIT)">Core.Zone#ZONE_UNIT</a>:</em>
+DetectedZone</p>
 
 </dd>
 </dl>
@@ -1932,26 +2685,46 @@ true if already identified.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(DETECTION_BASE).IsFriendliesNearBy" >
+<strong>DETECTION_BASE:IsFriendliesNearBy(DetectedItem)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns if there are friendlies nearby the FAC units ...</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> DetectedItem </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+trhe if there are friendlies nearby </p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(DETECTION_BASE).New" >
-<strong>DETECTION_BASE:New(DetectionSetGroup, DetectionRange)</strong>
+<strong>DETECTION_BASE:New(DetectionSetGroup)</strong>
 </a>
 </dt>
 <dd>
 	
 <p>DETECTION constructor.</p>
 
-		<h3>Parameters</h3>
+		<h3>Parameter</h3>
 		<ul>
 				<li>
 				
 <p><code><em><a href="Core.Set.html##(SET_GROUP)">Core.Set#SET_GROUP</a> DetectionSetGroup </em></code>: 
 The <a href="Set.html">Set</a> of GROUPs in the Forward Air Controller role.</p>
-
-				</li>
-				<li>
-				
-<p><code><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a> DetectionRange </em></code>: 
-The range till which targets are accepted to be detected.</p>
 
 				</li>
 		</ul>
@@ -1960,6 +2733,504 @@ The range till which targets are accepted to be detected.</p>
 <p><em><a href="##(DETECTION_BASE)">#DETECTION_BASE</a>:</em>
 self</p>
 
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_BASE).OnAfterDetect" >
+<strong>DETECTION_BASE:OnAfterDetect(From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>OnAfter Transition Handler for Event Detect.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string From </em></code>: 
+The From State string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: 
+The Event string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: 
+The To State string.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_BASE).OnAfterDetected" >
+<strong>DETECTION_BASE:OnAfterDetected(From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>OnAfter Transition Handler for Event Detected.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string From </em></code>: 
+The From State string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: 
+The Event string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: 
+The To State string.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_BASE).OnAfterStart" >
+<strong>DETECTION_BASE:OnAfterStart(From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>OnAfter Transition Handler for Event Start.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string From </em></code>: 
+The From State string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: 
+The Event string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: 
+The To State string.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_BASE).OnAfterStop" >
+<strong>DETECTION_BASE:OnAfterStop(From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>OnAfter Transition Handler for Event Stop.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string From </em></code>: 
+The From State string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: 
+The Event string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: 
+The To State string.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_BASE).OnBeforeDetect" >
+<strong>DETECTION_BASE:OnBeforeDetect(From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>OnBefore Transition Handler for Event Detect.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string From </em></code>: 
+The From State string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: 
+The Event string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: 
+The To State string.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+Return false to cancel Transition.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_BASE).OnBeforeDetected" >
+<strong>DETECTION_BASE:OnBeforeDetected(From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>OnBefore Transition Handler for Event Detected.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string From </em></code>: 
+The From State string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: 
+The Event string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: 
+The To State string.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+Return false to cancel Transition.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_BASE).OnBeforeStart" >
+<strong>DETECTION_BASE:OnBeforeStart(From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>OnBefore Transition Handler for Event Start.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string From </em></code>: 
+The From State string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: 
+The Event string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: 
+The To State string.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+Return false to cancel Transition.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_BASE).OnBeforeStop" >
+<strong>DETECTION_BASE:OnBeforeStop(From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>OnBefore Transition Handler for Event Stop.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string From </em></code>: 
+The From State string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: 
+The Event string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: 
+The To State string.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+Return false to cancel Transition.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_BASE).OnEnterDetecting" >
+<strong>DETECTION_BASE:OnEnterDetecting(From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>OnEnter Transition Handler for State Detecting.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string From </em></code>: 
+The From State string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: 
+The Event string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: 
+The To State string.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_BASE).OnEnterStopped" >
+<strong>DETECTION_BASE:OnEnterStopped(From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>OnEnter Transition Handler for State Stopped.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string From </em></code>: 
+The From State string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: 
+The Event string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: 
+The To State string.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_BASE).OnLeaveDetecting" >
+<strong>DETECTION_BASE:OnLeaveDetecting(From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>OnLeave Transition Handler for State Detecting.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string From </em></code>: 
+The From State string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: 
+The Event string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: 
+The To State string.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+Return false to cancel Transition.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_BASE).OnLeaveStopped" >
+<strong>DETECTION_BASE:OnLeaveStopped(From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>OnLeave Transition Handler for State Stopped.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string From </em></code>: 
+The From State string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: 
+The Event string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: 
+The To State string.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+Return false to cancel Transition.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(DETECTION_BASE).RejectZones" >
+<strong>DETECTION_BASE.RejectZones</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_BASE).RemoveDetectedItem" >
+<strong>DETECTION_BASE:RemoveDetectedItem(DetectedItemIndex)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Removes an existing DetectedItem from the DetectedItems list.</p>
+
+	
+<p>The DetectedItem is a table and contains a SET_UNIT in the field Set.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number DetectedItemIndex </em></code>: 
+The index or position in the DetectedItems list where the item needs to be removed.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_BASE).ReportFriendliesNearBy" >
+<strong>DETECTION_BASE:ReportFriendliesNearBy(ReportGroupData)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Background worker function to determine if there are friendlies nearby ...</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> ReportGroupData </em></code>: </p>
+
+				</li>
+		</ul>
 </dd>
 </dl>
 		<dl class="function">
@@ -2026,6 +3297,239 @@ self</p>
 		<dl class="function">
 <dt>
 
+<a id="#(DETECTION_BASE).SetAcceptRange" >
+<strong>DETECTION_BASE:SetAcceptRange(AcceptRange)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Accept detections if within a range in meters.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number AcceptRange </em></code>: 
+Accept a detection if the unit is within the AcceptRange in meters.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(DETECTION_BASE)">#DETECTION_BASE</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_BASE).SetAcceptZones" >
+<strong>DETECTION_BASE:SetAcceptZones(AcceptZones)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Accept detections if within the specified zone(s).</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> AcceptZones </em></code>: 
+Can be a list or ZONE<em>BASE objects, or a single ZONE</em>BASE object.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(DETECTION_BASE)">#DETECTION_BASE</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_BASE).SetAlphaAngleProbability" >
+<strong>DETECTION_BASE:SetAlphaAngleProbability(AlphaAngleProbability)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Upon a <strong>visual</strong> detection, the higher the unit is during the detecting process, the more likely the detected unit is to be detected properly.</p>
+
+	
+<p>A detection at a 90% alpha angle is the most optimal, a detection at 10% is less and a detection at 0% is less likely to be correct.</p>
+
+<p>A probability factor between 0 and 1 can be given, that will model a progressive extrapolated probability if the target would be detected at a 0° angle.</p>
+
+<p>For example, if a alpha angle probability factor of 0.7 is given, the extrapolated probabilities of the different angles would look like:
+0°: 70%, 10°: 75,21%, 20°: 80,26%, 30°: 85%, 40°: 89,28%, 50°: 92,98%, 60°: 95,98%, 70°: 98,19%, 80°: 99,54%, 90°: 100%</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> AlphaAngleProbability </em></code>: 
+The probability factor.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(DETECTION_BASE)">#DETECTION_BASE</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_BASE).SetDetectionInterval" >
+<strong>DETECTION_BASE:SetDetectionInterval(DetectionInterval)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set the detection interval time in seconds.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number DetectionInterval </em></code>: 
+Interval in seconds.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(DETECTION_BASE)">#DETECTION_BASE</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_BASE).SetDistanceProbability" >
+<strong>DETECTION_BASE:SetDistanceProbability(DistanceProbability)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Upon a <strong>visual</strong> detection, the further away a detected object is, the less likely it is to be detected properly.</p>
+
+	
+<p>Also, the speed of accurate detection plays a role.
+A distance probability factor between 0 and 1 can be given, that will model a linear extrapolated probability over 10 km distance.
+For example, if a probability factor of 0.6 (60%) is given, the extrapolated probabilities over 15 kilometers would like like:
+1 km: 96%, 2 km: 92%, 3 km: 88%, 4 km: 84%, 5 km: 80%, 6 km: 76%, 7 km: 72%, 8 km: 68%, 9 km: 64%, 10 km: 60%, 11 km: 56%, 12 km: 52%, 13 km: 48%, 14 km: 44%, 15 km: 40%.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> DistanceProbability </em></code>: 
+The probability factor.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(DETECTION_BASE)">#DETECTION_BASE</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_BASE).SetRejectZones" >
+<strong>DETECTION_BASE:SetRejectZones(RejectZones)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Reject detections if within the specified zone(s).</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> RejectZones </em></code>: 
+Can be a list or ZONE<em>BASE objects, or a single ZONE</em>BASE object.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(DETECTION_BASE)">#DETECTION_BASE</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_BASE).SetZoneProbability" >
+<strong>DETECTION_BASE:SetZoneProbability(ZoneArray)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Upon a <strong>visual</strong> detection, the more a detected unit is within a cloudy zone, the less likely the detected unit is to be detected successfully.</p>
+
+	
+<p>The Cloudy Zones work with the ZONE_BASE derived classes. The mission designer can define within the mission
+zones that reflect cloudy areas where detected units may not be so easily visually detected.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> ZoneArray </em></code>: 
+Aray of a The ZONE_BASE object and a ZoneProbability pair..</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(DETECTION_BASE)">#DETECTION_BASE</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_BASE).Start" >
+<strong>DETECTION_BASE:Start()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Synchronous Event Trigger for Event Start.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_BASE).Stop" >
+<strong>DETECTION_BASE:Stop()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Synchronous Event Trigger for Event Stop.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(DETECTION_BASE).UnIdentifyAllDetectedObjects" >
 <strong>DETECTION_BASE:UnIdentifyAllDetectedObjects()</strong>
 </a>
@@ -2060,25 +3564,331 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(DETECTION_BASE)._DetectionScheduler" >
-<strong>DETECTION_BASE:_DetectionScheduler(SchedulerName)</strong>
+		<em></em>
+<a id="#(DETECTION_BASE).ZoneProbability" >
+<strong>DETECTION_BASE.ZoneProbability</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Form <a href="Set.html">Set</a>s of detected <a href="Unit.html##(UNIT)">Unit#UNIT</a>s in an array of <a href="Set.html##(SET_BASE)">Set#SET_BASE</a>s.</p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_BASE).__Detect" >
+<strong>DETECTION_BASE:__Detect(Delay)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Asynchronous Event Trigger for Event Detect.</p>
 
 		<h3>Parameter</h3>
 		<ul>
 				<li>
 				
-<p><code><em> SchedulerName </em></code>: </p>
+<p><code><em>#number Delay </em></code>: 
+The delay in seconds.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_BASE).__Detected" >
+<strong>DETECTION_BASE:__Detected(Delay)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Asynchronous Event Trigger for Event Detected.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number Delay </em></code>: 
+The delay in seconds.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_BASE).__Start" >
+<strong>DETECTION_BASE:__Start(Delay)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Asynchronous Event Trigger for Event Start.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number Delay </em></code>: 
+The delay in seconds.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_BASE).__Stop" >
+<strong>DETECTION_BASE:__Stop(Delay)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Asynchronous Event Trigger for Event Stop.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number Delay </em></code>: 
+The delay in seconds.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_BASE).onafterDetect" >
+<strong>DETECTION_BASE:onafterDetect(From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string From </em></code>: 
+The From State string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: 
+The Event string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: 
+The To State string.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_BASE).onafterDetectionGroup" >
+<strong>DETECTION_BASE:onafterDetectionGroup(From, Event, To, DetectionGroup)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string From </em></code>: 
+The From State string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: 
+The Event string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: 
+The To State string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> DetectionGroup </em></code>: 
+The Group detecting.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_BASE).onafterStart" >
+<strong>DETECTION_BASE:onafterStart(From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string From </em></code>: 
+The From State string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: 
+The Event string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: 
+The To State string.</p>
 
 				</li>
 		</ul>
 </dd>
 </dl>
 
+			<h2><a id="#(DETECTION_BASE.DetectedItem)" >Type <code>DETECTION_BASE.DetectedItem</code></a></h2>
+				<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em>#boolean</em>
+<a id="#(DETECTION_BASE.DetectedItem).Changed" >
+<strong>DETECTION_BASE.DetectedItem.Changed</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Documents if the detected area has changes.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#table</em>
+<a id="#(DETECTION_BASE.DetectedItem).Changes" >
+<strong>DETECTION_BASE.DetectedItem.Changes</strong>
+</a>
+</dt>
+<dd>
+	
+<p>A list of the changes reported on the detected area. (It is up to the user of the detected area to consume those changes).</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#boolean</em>
+<a id="#(DETECTION_BASE.DetectedItem).FriendliesNearBy" >
+<strong>DETECTION_BASE.DetectedItem.FriendliesNearBy</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Indicates if there are friendlies within the detected area.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#number</em>
+<a id="#(DETECTION_BASE.DetectedItem).ItemID" >
+<strong>DETECTION_BASE.DetectedItem.ItemID</strong>
+</a>
+</dt>
+<dd>
+	
+<p>-- The identifier of the detected area.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(DETECTION_BASE.DetectedItem).MaxThreatLevelA2G" >
+<strong>DETECTION_BASE.DetectedItem.MaxThreatLevelA2G</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a></em>
+<a id="#(DETECTION_BASE.DetectedItem).NearestFAC" >
+<strong>DETECTION_BASE.DetectedItem.NearestFAC</strong>
+</a>
+</dt>
+<dd>
+	
+<p>The nearest FAC near the Area.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="Core.Set.html##(SET_UNIT)">Core.Set#SET_UNIT</a></em>
+<a id="#(DETECTION_BASE.DetectedItem).Set" >
+<strong>DETECTION_BASE.DetectedItem.Set</strong>
+</a>
+</dt>
+<dd>
+	
+<p>-- The Set of Units in the detected area.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="Core.Zone.html##(ZONE_UNIT)">Core.Zone#ZONE_UNIT</a></em>
+<a id="#(DETECTION_BASE.DetectedItem).Zone" >
+<strong>DETECTION_BASE.DetectedItem.Zone</strong>
+</a>
+</dt>
+<dd>
+	
+<p>-- The Zone of the detected area.</p>
+
+</dd>
+</dl>
+
+			<h2><a id="#(DETECTION_BASE.DetectedItems)" >Type <code>DETECTION_BASE.DetectedItems</code></a></h2>
+			
 			<h2><a id="#(DETECTION_BASE.DetectedObject)" >Type <code>DETECTION_BASE.DetectedObject</code></a></h2>
 				<h3>Field(s)</h3>
 		<dl class="function">
@@ -2154,7 +3964,472 @@ self</p>
 
 			<h2><a id="#(DETECTION_BASE.DetectedObjects)" >Type <code>DETECTION_BASE.DetectedObjects</code></a></h2>
 			
-			<h2><a id="#(DETECTION_BASE.DetectedSets)" >Type <code>DETECTION_BASE.DetectedSets</code></a></h2>
+			<h2><a id="#(DETECTION_TYPES)" >Type <code>DETECTION_TYPES</code></a></h2>
+				
+<h1>3) DETECTION_TYPES class, extends <a href="Detection.html##(DETECTION_BASE)">Detection#DETECTION_BASE</a></h1>
+
+<p>The DETECTION_TYPES class will detect units within the battle zone.</p>
+
+	
+<p>It will build a DetectedItems[] list filled with DetectedItems, grouped by the type of units detected. 
+Each DetectedItem will contain a field Set, which contains a <a href="Set.html##(SET_UNIT)">Set#SET_UNIT</a> containing ONE <a href="UNIT.html">UNIT</a> object reference.
+Beware that when the amount of different types detected is large, the DetectedItems[] list will be large also. </p>
+
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(DETECTION_TYPES).ClassName" >
+<strong>DETECTION_TYPES.ClassName</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_TYPES).CreateDetectionSets" >
+<strong>DETECTION_TYPES:CreateDetectionSets()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Create the DetectedItems list from the DetectedObjects table.</p>
+
+	
+<p>For each DetectedItem, a one field array is created containing the Unit detected.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(DETECTION_TYPES)">#DETECTION_TYPES</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_TYPES).DetectedItemReportSummary" >
+<strong>DETECTION_TYPES:DetectedItemReportSummary(Index, DetectedTypeName)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Report summary of a DetectedItem using a given numeric index.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> Index </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> DetectedTypeName </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#string:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_TYPES).DetectedReportDetailed" >
+<strong>DETECTION_TYPES:DetectedReportDetailed()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Report detailed of a detection result.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#string:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_TYPES).DetectionRange" >
+<strong>DETECTION_TYPES.DetectionRange</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_TYPES).GetChangeText" >
+<strong>DETECTION_TYPES:GetChangeText(DetectedItem)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Make text documenting the changes of the detected zone.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="##(DETECTION_TYPES.DetectedItem)">#DETECTION_TYPES.DetectedItem</a> DetectedItem </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#string:</em>
+The Changes text</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_TYPES).New" >
+<strong>DETECTION_TYPES:New(DetectionSetGroup)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>DETECTION_TYPES constructor.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Set.html##(SET_GROUP)">Core.Set#SET_GROUP</a> DetectionSetGroup </em></code>: 
+The <a href="Set.html">Set</a> of GROUPs in the Recce role.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="Functional.Detection.html##(DETECTION_TYPES)">Functional.Detection#DETECTION_TYPES</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#boolean</em>
+<a id="#(DETECTION_TYPES)._BoundDetectedZones" >
+<strong>DETECTION_TYPES._BoundDetectedZones</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#boolean</em>
+<a id="#(DETECTION_TYPES)._FlareDetectedUnits" >
+<strong>DETECTION_TYPES._FlareDetectedUnits</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#boolean</em>
+<a id="#(DETECTION_TYPES)._FlareDetectedZones" >
+<strong>DETECTION_TYPES._FlareDetectedZones</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#boolean</em>
+<a id="#(DETECTION_TYPES)._SmokeDetectedUnits" >
+<strong>DETECTION_TYPES._SmokeDetectedUnits</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#boolean</em>
+<a id="#(DETECTION_TYPES)._SmokeDetectedZones" >
+<strong>DETECTION_TYPES._SmokeDetectedZones</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+
+			<h2><a id="#(DETECTION_TYPES.DetectedItem)" >Type <code>DETECTION_TYPES.DetectedItem</code></a></h2>
+			
+			<h2><a id="#(DETECTION_UNITS)" >Type <code>DETECTION_UNITS</code></a></h2>
+				
+<h1>2) DETECTION_UNITS class, extends <a href="Detection.html##(DETECTION_BASE)">Detection#DETECTION_BASE</a></h1>
+
+<p>The DETECTION_UNITS class will detect units within the battle zone.</p>
+
+	
+<p>It will build a DetectedItems list filled with DetectedItems. Each DetectedItem will contain a field Set, which contains a <a href="Set.html##(SET_UNIT)">Set#SET_UNIT</a> containing ONE <a href="UNIT.html">UNIT</a> object reference.
+Beware that when the amount of units detected is large, the DetectedItems list will be large also. </p>
+
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(DETECTION_UNITS).ClassName" >
+<strong>DETECTION_UNITS.ClassName</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_UNITS).CreateDetectionSets" >
+<strong>DETECTION_UNITS:CreateDetectionSets()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Create the DetectedItems list from the DetectedObjects table.</p>
+
+	
+<p>For each DetectedItem, a one field array is created containing the Unit detected.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(DETECTION_UNITS)">#DETECTION_UNITS</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_UNITS).DetectedItemReportSummary" >
+<strong>DETECTION_UNITS:DetectedItemReportSummary(Index)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Report summary of a DetectedItem using a given numeric index.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> Index </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#string:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_UNITS).DetectedReportDetailed" >
+<strong>DETECTION_UNITS:DetectedReportDetailed()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Report detailed of a detection result.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#string:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a></em>
+<a id="#(DETECTION_UNITS).DetectionRange" >
+<strong>DETECTION_UNITS.DetectionRange</strong>
+</a>
+</dt>
+<dd>
+	
+<p>The range till which targets are detected.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_UNITS).GetChangeText" >
+<strong>DETECTION_UNITS:GetChangeText(DetectedItem)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Make text documenting the changes of the detected zone.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="##(DETECTION_UNITS.DetectedItem)">#DETECTION_UNITS.DetectedItem</a> DetectedItem </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#string:</em>
+The Changes text</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_UNITS).New" >
+<strong>DETECTION_UNITS:New(DetectionSetGroup)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>DETECTION_UNITS constructor.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Set.html##(SET_GROUP)">Core.Set#SET_GROUP</a> DetectionSetGroup </em></code>: 
+The <a href="Set.html">Set</a> of GROUPs in the Forward Air Controller role.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="Functional.Detection.html##(DETECTION_UNITS)">Functional.Detection#DETECTION_UNITS</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#boolean</em>
+<a id="#(DETECTION_UNITS)._BoundDetectedZones" >
+<strong>DETECTION_UNITS._BoundDetectedZones</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#boolean</em>
+<a id="#(DETECTION_UNITS)._FlareDetectedUnits" >
+<strong>DETECTION_UNITS._FlareDetectedUnits</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#boolean</em>
+<a id="#(DETECTION_UNITS)._FlareDetectedZones" >
+<strong>DETECTION_UNITS._FlareDetectedZones</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#boolean</em>
+<a id="#(DETECTION_UNITS)._SmokeDetectedUnits" >
+<strong>DETECTION_UNITS._SmokeDetectedUnits</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#boolean</em>
+<a id="#(DETECTION_UNITS)._SmokeDetectedZones" >
+<strong>DETECTION_UNITS._SmokeDetectedZones</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+
+			<h2><a id="#(DETECTION_UNITS.DetectedItem)" >Type <code>DETECTION_UNITS.DetectedItem</code></a></h2>
 			
 </div>
 

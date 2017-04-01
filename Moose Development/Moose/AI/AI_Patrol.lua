@@ -1,11 +1,70 @@
---- Single-Player:**Yes** / Multi-Player:**Yes** / AI:**Yes** / Human:**No** / Types:**Air** -- 
--- **Air Patrolling or Staging.**
+--- **AI** -- **Air Patrolling or Staging.**
 -- 
 -- ![Banner Image](..\Presentations\AI_PATROL\Dia1.JPG)
 -- 
 -- ===
 -- 
--- # 1) @{#AI_PATROL_ZONE} class, extends @{Fsm#FSM_CONTROLLABLE}
+-- AI PATROL classes makes AI Controllables execute an Patrol.
+-- 
+-- There are the following types of PATROL classes defined:
+-- 
+--   * @{#AI_PATROL_ZONE}: Perform a PATROL in a zone.
+--   
+-- ====
+-- 
+-- # **OPEN ISSUES**
+-- 
+-- 2017-01-17: When Spawned AI is located at an airbase, it will be routed first back to the airbase after take-off.
+-- 
+-- 2016-01-17: 
+--   -- Fixed problem with AI returning to base too early and unexpected.
+--   -- ReSpawning of AI will reset the AI_PATROL and derived classes.
+--   -- Checked the correct workings of SCHEDULER, and it DOES work correctly.
+-- 
+-- ====
+-- 
+-- # **API CHANGE HISTORY**
+-- 
+-- The underlying change log documents the API changes. Please read this carefully. The following notation is used:
+-- 
+--   * **Added** parts are expressed in bold type face.
+--   * _Removed_ parts are expressed in italic type face.
+-- 
+-- Hereby the change log:
+-- 
+-- 2017-01-17: Rename of class: **AI\_PATROL\_ZONE** is the new name for the old _AI\_PATROLZONE_.
+-- 
+-- 2017-01-15: Complete revision. AI_PATROL_ZONE is the base class for other AI_PATROL like classes.
+-- 
+-- 2016-09-01: Initial class and API.
+-- 
+-- ===
+-- 
+-- # **AUTHORS and CONTRIBUTIONS**
+-- 
+-- ### Contributions: 
+-- 
+--   * **[Dutch_Baron](https://forums.eagle.ru/member.php?u=112075)**: Working together with James has resulted in the creation of the AI_BALANCER class. James has shared his ideas on balancing AI with air units, and together we made a first design which you can use now :-)
+--   * **[Pikey](https://forums.eagle.ru/member.php?u=62835)**: Testing and API concept review.
+-- 
+-- ### Authors: 
+-- 
+--   * **FlightControl**: Design & Programming.
+-- 
+-- @module AI_Patrol
+
+--- AI_PATROL_ZONE class
+-- @type AI_PATROL_ZONE
+-- @field Wrapper.Controllable#CONTROLLABLE AIControllable The @{Controllable} patrolling.
+-- @field Core.Zone#ZONE_BASE PatrolZone The @{Zone} where the patrol needs to be executed.
+-- @field Dcs.DCSTypes#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
+-- @field Dcs.DCSTypes#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
+-- @field Dcs.DCSTypes#Speed  PatrolMinSpeed The minimum speed of the @{Controllable} in km/h.
+-- @field Dcs.DCSTypes#Speed  PatrolMaxSpeed The maximum speed of the @{Controllable} in km/h.
+-- @field Functional.Spawn#SPAWN CoordTest
+-- @extends Core.Fsm#FSM_CONTROLLABLE
+
+--- # 1) @{#AI_PATROL_ZONE} class, extends @{Fsm#FSM_CONTROLLABLE}
 -- 
 -- The @{#AI_PATROL_ZONE} class implements the core functions to patrol a @{Zone} by an AI @{Controllable} or @{Group}.
 -- 
@@ -106,59 +165,10 @@
 -- Therefore, when the damage treshold is reached, the AI will return immediately to the home base (RTB).
 -- Use the method @{#AI_PATROL_ZONE.ManageDamage}() to have this proces in place.
 -- 
--- ====
--- 
--- # **OPEN ISSUES**
--- 
--- 2017-01-17: When Spawned AI is located at an airbase, it will be routed first back to the airbase after take-off.
--- 
--- 2016-01-17: 
---   -- Fixed problem with AI returning to base too early and unexpected.
---   -- ReSpawning of AI will reset the AI_PATROL and derived classes.
---   -- Checked the correct workings of SCHEDULER, and it DOES work correctly.
--- 
--- ====
--- 
--- # **API CHANGE HISTORY**
--- 
--- The underlying change log documents the API changes. Please read this carefully. The following notation is used:
--- 
---   * **Added** parts are expressed in bold type face.
---   * _Removed_ parts are expressed in italic type face.
--- 
--- Hereby the change log:
--- 
--- 2017-01-17: Rename of class: **AI\_PATROL\_ZONE** is the new name for the old _AI\_PATROLZONE_.
--- 
--- 2017-01-15: Complete revision. AI_PATROL_ZONE is the base class for other AI_PATROL like classes.
--- 
--- 2016-09-01: Initial class and API.
--- 
 -- ===
 -- 
--- # **AUTHORS and CONTRIBUTIONS**
+-- @field #AI_PATROL_ZONE AI_PATROL_ZONE
 -- 
--- ### Contributions: 
--- 
---   * **[Dutch_Baron](https://forums.eagle.ru/member.php?u=112075)**: Working together with James has resulted in the creation of the AI_BALANCER class. James has shared his ideas on balancing AI with air units, and together we made a first design which you can use now :-)
---   * **[Pikey](https://forums.eagle.ru/member.php?u=62835)**: Testing and API concept review.
--- 
--- ### Authors: 
--- 
---   * **FlightControl**: Design & Programming.
--- 
--- @module AI_Patrol
-
---- AI_PATROL_ZONE class
--- @type AI_PATROL_ZONE
--- @field Wrapper.Controllable#CONTROLLABLE AIControllable The @{Controllable} patrolling.
--- @field Core.Zone#ZONE_BASE PatrolZone The @{Zone} where the patrol needs to be executed.
--- @field Dcs.DCSTypes#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
--- @field Dcs.DCSTypes#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
--- @field Dcs.DCSTypes#Speed  PatrolMinSpeed The minimum speed of the @{Controllable} in km/h.
--- @field Dcs.DCSTypes#Speed  PatrolMaxSpeed The maximum speed of the @{Controllable} in km/h.
--- @field Functional.Spawn#SPAWN CoordTest
--- @extends Core.Fsm#FSM_CONTROLLABLE
 AI_PATROL_ZONE = {
   ClassName = "AI_PATROL_ZONE",
 }

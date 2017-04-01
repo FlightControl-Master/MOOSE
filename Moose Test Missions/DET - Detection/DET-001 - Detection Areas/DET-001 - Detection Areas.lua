@@ -17,7 +17,8 @@
 -- 4. The truck driving from the one group to the other, will leave the first area, and will join the second.
 -- 5. While driving in between the areas, it will have a separate area.
 
-local FACSetGroup = SET_GROUP:New():FilterPrefixes( "FAC Group" ):FilterStart()
+FACSetGroup = SET_GROUP:New():FilterPrefixes( "FAC Group" ):FilterStart()
 
-local FACDetection = DETECTION_AREAS:New( FACSetGroup, 1000, 250 ):FlareDetectedZones():SmokeDetectedUnits()
+FACDetection = DETECTION_AREAS:New( FACSetGroup, 150, 250 ):BoundDetectedZones():SmokeDetectedUnits()
 
+FACDetection:__Start( 5 )

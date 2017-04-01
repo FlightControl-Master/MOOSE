@@ -39,16 +39,17 @@
 					<li><a href="Fsm.html">Fsm</a></li>
 					<li><a href="Group.html">Group</a></li>
 					<li><a href="Identifiable.html">Identifiable</a></li>
-					<li><a href="MOVEMENT.html">MOVEMENT</a></li>
 					<li><a href="Menu.html">Menu</a></li>
 					<li><a href="Message.html">Message</a></li>
 					<li><a href="MissileTrainer.html">MissileTrainer</a></li>
 					<li><a href="Mission.html">Mission</a></li>
+					<li><a href="Movement.html">Movement</a></li>
 					<li><a href="Object.html">Object</a></li>
 					<li><a href="Point.html">Point</a></li>
 					<li><a href="Positionable.html">Positionable</a></li>
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
 					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
+					<li><a href="Radio.html">Radio</a></li>
 					<li><a href="Route.html">Route</a></li>
 					<li><a href="Scenery.html">Scenery</a></li>
 					<li><a href="ScheduleDispatcher.html">ScheduleDispatcher</a></li>
@@ -61,8 +62,8 @@
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="Task.html">Task</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
+					<li><a href="Task_A2G_Dispatcher.html">Task_A2G_Dispatcher</a></li>
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
-					<li><a href="Task_SEAD.html">Task_SEAD</a></li>
 					<li><a href="Unit.html">Unit</a></li>
 					<li><a href="Utils.html">Utils</a></li>
 					<li><a href="Zone.html">Zone</a></li>
@@ -78,8 +79,6 @@ and create a CSV file logging the scoring events for use at team or squadron web
 <p><img src="..\Presentations\SCORING\Dia1.JPG" alt="Banner Image"/></p>
 
 <hr/>
-
-<h1>1) <a href="Scoring.html##(SCORING)">Scoring#SCORING</a> class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
 
 <p>The <a href="##(SCORING)">#SCORING</a> class administers the scoring of player achievements, 
 and creates a CSV file logging the scoring events and results for use at team or squadron websites.</p>
@@ -135,6 +134,8 @@ These CSV files can be used to:</p>
 Use the radio menu F10 to consult the scores while running the mission. 
 Scores can be reported for your user, or an overall score can be reported of all players currently active in the mission.</p>
 
+<h1>1) <a href="Scoring.html##(SCORING)">Scoring#SCORING</a> class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
+
 <h2>1.1) Set the destroy score or penalty scale</h2>
 
 <p>Score scales can be set for scores granted when enemies or friendlies are destroyed.
@@ -167,8 +168,6 @@ For example, this can be done as follows:</p>
 
 <pre><code> Scoring:RemoveUnitScore( UNIT:FindByName( "Unit #001" ) )
 </code></pre>
-
-
 
 <h2>1.3) Define destruction zones that will give extra scores.</h2>
 

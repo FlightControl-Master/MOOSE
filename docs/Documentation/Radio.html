@@ -1,0 +1,821 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+	<head>
+		<link rel="stylesheet" href="stylesheet.css" type="text/css"/>
+	</head>
+<body>
+<div id="container">
+<div id="product">
+	<div id="product_logo"></div>
+	<div id="product_name"><big><b></b></big></div>
+	<div id="product_description"></div>
+</div>
+<div id="main">
+	<div id="navigation">
+		<h2>Modules</h2>
+			<ul><li>
+				<a href="index.html">index</a>
+			</li></ul>
+		<ul>
+					<li><a href="AI_Balancer.html">AI_Balancer</a></li>
+					<li><a href="AI_Cap.html">AI_Cap</a></li>
+					<li><a href="AI_Cas.html">AI_Cas</a></li>
+					<li><a href="AI_Patrol.html">AI_Patrol</a></li>
+					<li><a href="Account.html">Account</a></li>
+					<li><a href="Airbase.html">Airbase</a></li>
+					<li><a href="AirbasePolice.html">AirbasePolice</a></li>
+					<li><a href="Assign.html">Assign</a></li>
+					<li><a href="Base.html">Base</a></li>
+					<li><a href="Cargo.html">Cargo</a></li>
+					<li><a href="CleanUp.html">CleanUp</a></li>
+					<li><a href="Client.html">Client</a></li>
+					<li><a href="CommandCenter.html">CommandCenter</a></li>
+					<li><a href="Controllable.html">Controllable</a></li>
+					<li><a href="Database.html">Database</a></li>
+					<li><a href="Detection.html">Detection</a></li>
+					<li><a href="DetectionManager.html">DetectionManager</a></li>
+					<li><a href="Escort.html">Escort</a></li>
+					<li><a href="Event.html">Event</a></li>
+					<li><a href="Fsm.html">Fsm</a></li>
+					<li><a href="Group.html">Group</a></li>
+					<li><a href="Identifiable.html">Identifiable</a></li>
+					<li><a href="Menu.html">Menu</a></li>
+					<li><a href="Message.html">Message</a></li>
+					<li><a href="MissileTrainer.html">MissileTrainer</a></li>
+					<li><a href="Mission.html">Mission</a></li>
+					<li><a href="Movement.html">Movement</a></li>
+					<li><a href="Object.html">Object</a></li>
+					<li><a href="Point.html">Point</a></li>
+					<li><a href="Positionable.html">Positionable</a></li>
+					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
+					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
+					<li>Radio</li>
+					<li><a href="Route.html">Route</a></li>
+					<li><a href="Scenery.html">Scenery</a></li>
+					<li><a href="ScheduleDispatcher.html">ScheduleDispatcher</a></li>
+					<li><a href="Scheduler.html">Scheduler</a></li>
+					<li><a href="Scoring.html">Scoring</a></li>
+					<li><a href="Sead.html">Sead</a></li>
+					<li><a href="Set.html">Set</a></li>
+					<li><a href="Smoke.html">Smoke</a></li>
+					<li><a href="Spawn.html">Spawn</a></li>
+					<li><a href="Static.html">Static</a></li>
+					<li><a href="Task.html">Task</a></li>
+					<li><a href="Task_A2G.html">Task_A2G</a></li>
+					<li><a href="Task_A2G_Dispatcher.html">Task_A2G_Dispatcher</a></li>
+					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
+					<li><a href="Unit.html">Unit</a></li>
+					<li><a href="Utils.html">Utils</a></li>
+					<li><a href="Zone.html">Zone</a></li>
+					<li><a href="routines.html">routines</a></li>
+		</ul>
+	</div>
+	<div id="content">
+   <h1>Module <code>Radio</code></h1>
+   
+<p><strong>Core</strong> - The RADIO class is responsible for <strong>transmitting radio communications</strong>.</p>
+
+   
+
+<p>--- bitmap</p>
+
+<hr/>
+
+<p>What are radio communications in DCS ?</p>
+
+<ul>
+    <li>Radio transmissions consist of <strong>sound files</strong> that are broadcasted on a specific <strong>frequency</strong> (e.g. 115MHz) and <strong>modulation</strong> (e.g. AM),</li>
+    <li>They can be <strong>subtitled</strong> for a specific <strong>duration</strong>, the <strong>power</strong> in Watts of the transmiter's antenna can be set, and the transmission can be <strong>looped</strong>.</li>
+</ul>
+
+<p>How to supply DCS my own Sound Files ?</p>
+
+<ul>
+    <li>Your sound files need to be encoded in <strong>.ogg</strong> or .wav,</li>
+    <li>Your sound files should be <strong>as tiny as possible</strong>. It is suggested you encode in .ogg with low bitrate and sampling settings,</li>
+    <li>They need to be added in .\l10n\DEFAULT\ in you .miz file (wich can be decompressed like a .zip file),</li>
+    <li>For simplicty sake, you can <strong>let DCS' Mission Editor add the file</strong> itself, by creating a new Trigger with the action "Sound to Country", and choosing your sound file and a country you don't use in your mission.</li>
+</ul>
+
+<p>Due to weird DCS quirks, <strong>radio communications behave differently</strong> if sent by a <a href="Unit.html##(UNIT)">Unit#UNIT</a> or a <a href="Group.html##(GROUP)">Group#GROUP</a> or by any other <a href="Positionable.html##(POSITIONABLE)">Positionable#POSITIONABLE</a></p>
+
+<ul>
+    <li>If the transmitter is a <a href="Unit.html##(UNIT)">Unit#UNIT</a> or a <a href="Group.html##(GROUP)">Group#GROUP</a>, DCS will set the power of the transmission  automatically,</li>
+    <li>If the transmitter is any other <a href="Positionable.html##(POSITIONABLE)">Positionable#POSITIONABLE</a>, the transmisison can't be subtitled or looped.</li>
+</ul>
+
+<p>Note that obviously, the <strong>frequency</strong> and the <strong>modulation</strong> of the transmission are important only if the players are piloting an <strong>Advanced System Modelling</strong> enabled aircraft,
+like the A10C or the Mirage 2000C. They will <strong>hear the transmission</strong> if they are tuned on the <strong>right frequency and modulation</strong> (and if they are close enough - more on that below).
+If a FC3 airacraft is used, it will <strong>hear every communication, whatever the frequency and the modulation</strong> is set to.</p>
+
+<hr/>
+
+<h3>Authors: Hugues "Grey_Echo" Bousquet</h3>
+
+
+	<h2>Global(s)</h2>
+	<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#RADIO">RADIO</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+			<h2><a id="#(RADIO)">Type <code>RADIO</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RADIO).Broadcast">RADIO:Broadcast()</a></td>
+		<td class="summary">
+<p>Actually Broadcast the transmission</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RADIO).ClassName">RADIO.ClassName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RADIO).FileName">RADIO.FileName</a></td>
+		<td class="summary">
+<p>Name of the sound file</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RADIO).Frequency">RADIO.Frequency</a></td>
+		<td class="summary">
+<p>Frequency of the transmission in Hz</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RADIO).Loop">RADIO.Loop</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RADIO).Modulation">RADIO.Modulation</a></td>
+		<td class="summary">
+<p>Modulation of the transmission (either radio.modulation.AM or radio.modulation.FM)</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RADIO).New">RADIO:New(Positionable)</a></td>
+		<td class="summary">
+<p>Create a new RADIO Object.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RADIO).NewGenericTransmission">RADIO:NewGenericTransmission(FileName, Frequency, Modulation, Power)</a></td>
+		<td class="summary">
+<p>Create a new transmission, that is to say, populate the RADIO with relevant data</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RADIO).NewUnitTransmission">RADIO:NewUnitTransmission(FileName, Subtitle, SubtitleDuration, Frequency, Modulation, Loop)</a></td>
+		<td class="summary">
+<p>Create a new transmission, that is to say, populate the RADIO with relevant data</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RADIO).Positionable">RADIO.Positionable</a></td>
+		<td class="summary">
+<p>The transmiter</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RADIO).Power">RADIO.Power</a></td>
+		<td class="summary">
+<p>Power of the antenna is Watts</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RADIO).SetFileName">RADIO:SetFileName(FileName)</a></td>
+		<td class="summary">
+<p>Check validity of the filename passed and sets RADIO.FileName</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RADIO).SetFrequency">RADIO:SetFrequency(Frequency)</a></td>
+		<td class="summary">
+<p>Check validity of the frequency passed and sets RADIO.Frequency</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RADIO).SetLoop">RADIO:SetLoop(Loop)</a></td>
+		<td class="summary">
+<p>Check validity of the loop passed and sets RADIO.Loop</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RADIO).SetModulation">RADIO:SetModulation(Modulation)</a></td>
+		<td class="summary">
+<p>Check validity of the frequency passed and sets RADIO.Modulation</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RADIO).SetPower">RADIO:SetPower(Power)</a></td>
+		<td class="summary">
+<p>Check validity of the power passed and sets RADIO.Power</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RADIO).SetSubtitle">RADIO:SetSubtitle(Subtitle, SubtitleDuration)</a></td>
+		<td class="summary">
+<p>Check validity of the subtitle and the subtitleDuration  passed and sets RADIO.subtitle and RADIO.subtitleDuration</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RADIO).StopBroadcast">RADIO:StopBroadcast()</a></td>
+		<td class="summary">
+<p>Stops a transmission</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RADIO).Subtitle">RADIO.Subtitle</a></td>
+		<td class="summary">
+<p>Subtitle of the transmission</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RADIO).SubtitleDuration">RADIO.SubtitleDuration</a></td>
+		<td class="summary">
+<p>Duration of the Subtitle in seconds</p>
+</td>
+		</tr>
+	</table>
+
+	<h2>Global(s)</h2>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(RADIO)">#RADIO</a></em>
+<a id="RADIO" >
+<strong>RADIO</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+	<h2><a id="#(Radio)" >Type <code>Radio</code></a></h2>
+	
+			<h2><a id="#(RADIO)" >Type <code>RADIO</code></a></h2>
+				
+<h1>1) RADIO class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
+
+<h2>1.1) RADIO usage</h2>
+
+<p>There are 3 steps to a successful radio transmission.</p>
+
+	
+
+<ul>
+    <li>First, you need to **"add" a <a href="##(RADIO)">#RADIO</a> object** to your <a href="Positionable.html##(POSITIONABLE)">Positionable#POSITIONABLE</a>. This is done using the <a href="Positionable.html##(POSITIONABLE).GetRadio">Positionable#POSITIONABLE.GetRadio</a>() function,</li>
+    <li>Then, you will <strong>set the relevant parameters</strong> to the transmission (see below),</li>
+    <li>When done, you can actually <strong>broadcast the transmission</strong> (i.e. play the sound) with the <a href="Positionable.html##(POSITIONABLE).Broadcast">Positionable#POSITIONABLE.Broadcast</a>() function.</li>
+</ul>
+
+<p>Methods to set relevant parameters for both a <a href="Unit.html##(UNIT)">Unit#UNIT</a> or a <a href="Group.html##(GROUP)">Group#GROUP</a> or any other <a href="Positionable.html##(POSITIONABLE)">Positionable#POSITIONABLE</a></p>
+
+<ul>
+    <li><a href="##(RADIO).SetFileName">RADIO.SetFileName</a>() : Sets the file name of your sound file (e.g. "Noise.ogg"),</li>
+    <li><a href="##(RADIO).SetFrequency">RADIO.SetFrequency</a>() : Sets the frequency of your transmission,</li>
+    <li><a href="##(RADIO).SetModulation">RADIO.SetModulation</a>() : Sets the modulation of your transmission.</li>
+</ul>
+
+<p>Additional Methods to set relevant parameters if the transmiter is a <a href="Unit.html##(UNIT)">Unit#UNIT</a> or a <a href="Group.html##(GROUP)">Group#GROUP</a></p>
+
+<ul>
+    <li><a href="##(RADIO).SetLoop">RADIO.SetLoop</a>() : Choose if you want the transmission to be looped,</li>
+    <li><a href="##(RADIO).SetSubtitle">RADIO.SetSubtitle</a>() : Set both the subtitle and its duration,</li>
+    <li><a href="##(RADIO).NewUnitTransmission">RADIO.NewUnitTransmission</a>() : Shortcut to set all the relevant parameters in one method call</li>
+</ul>
+
+<p>Additional Methods to set relevant parameters if the transmiter is any other <a href="Wrapper.Positionable.html##(POSITIONABLE)">Wrapper.Positionable#POSITIONABLE</a></p>
+
+<ul>
+    <li><a href="##(RADIO).SetPower">RADIO.SetPower</a>() : Sets the power of the antenna in Watts</li>
+    <li><a href="##(RADIO).NewGenericTransmission">RADIO.NewGenericTransmission</a>() : Shortcut to set all the relevant parameters in one method call</li>
+</ul>
+
+<p>What is this power thing ?</p>
+
+<ul>
+    <li>If your transmission is sent by a <a href="Positionable.html##(POSITIONABLE)">Positionable#POSITIONABLE</a> other than a <a href="Unit.html##(UNIT)">Unit#UNIT</a> or a <a href="Group.html##(GROUP)">Group#GROUP</a>, you can set the power of the antenna,</li>
+    <li>Otherwise, DCS sets it automatically, depending on what's available on your Unit,</li>
+    <li>If the player gets <strong>too far</strong> from the transmiter, or if the antenna is <strong>too weak</strong>, the transmission will <strong>fade</strong> and <strong>become noisyer</strong>,</li>
+    <li>This an automated DCS calculation you have no say on,</li>
+    <li>For reference, a standard VOR station has a 100W antenna, a standard AA TACAN has a 120W antenna, and civilian ATC's antenna usually range between 300 and 500W,</li>
+    <li>Note that if the transmission has a subtitle, it will be readable, regardless of the quality of the transmission. 
+    </li>
+</ul>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+<a id="#(RADIO).Broadcast" >
+<strong>RADIO:Broadcast()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Actually Broadcast the transmission</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(RADIO)">#RADIO</a>:</em>
+self</p>
+
+			<h3>Usage:</h3>
+		<pre class="example"><code>-- The Radio has to be populated with the new transmission before broadcasting.
+-- Please use RADIO setters or either @{Radio#RADIO.NewGenericTransmission} or @{Radio#RADIO.NewUnitTransmission}
+-- This class is in fact pretty smart, it determines the right DCS function to use depending on the type of POSITIONABLE
+-- If the POSITIONABLE is not a UNIT or a GROUP, we use the generic (but limited) trigger.action.radioTransmission()
+-- If the POSITIONABLE is a UNIT or a GROUP, we use the "TransmitMessage" Command
+-- If your POSITIONABLE is a UNIT or a GROUP, the Power is ignored.
+-- If your POSITIONABLE is not a UNIT or a GROUP, the Subtitle, SubtitleDuration and Loop are ignored</code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(RADIO).ClassName" >
+<strong>RADIO.ClassName</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(RADIO).FileName" >
+<strong>RADIO.FileName</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Name of the sound file</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#number</em>
+<a id="#(RADIO).Frequency" >
+<strong>RADIO.Frequency</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Frequency of the transmission in Hz</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#boolean</em>
+<a id="#(RADIO).Loop" >
+<strong>RADIO.Loop</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#number</em>
+<a id="#(RADIO).Modulation" >
+<strong>RADIO.Modulation</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Modulation of the transmission (either radio.modulation.AM or radio.modulation.FM)</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(RADIO).New" >
+<strong>RADIO:New(Positionable)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Create a new RADIO Object.</p>
+
+	
+<p>This doesn't broadcast a transmission, though, use <a href="##(RADIO).Broadcast">RADIO.Broadcast</a> to actually broadcast</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Positionable.html##(POSITIONABLE)">Wrapper.Positionable#POSITIONABLE</a> Positionable </em></code>: 
+The <a href="Positionable.html">Positionable</a> that will receive radio capabilities.</p>
+
+				</li>
+		</ul>
+		<h3>Return values</h3>
+			<ol>
+				<li>
+				
+<p><em><a href="##(RADIO)">#RADIO</a>:</em>
+Radio</p>
+
+				</li>
+				<li>
+				
+<p><em>#nil:</em>
+If Positionable is invalid</p>
+
+				</li>
+			</ol>
+			<h3>Usage:</h3>
+		<pre class="example"><code>-- If you want to create a RADIO, you probably should use @{Positionable#POSITIONABLE.GetRadio}() instead</code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(RADIO).NewGenericTransmission" >
+<strong>RADIO:NewGenericTransmission(FileName, Frequency, Modulation, Power)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Create a new transmission, that is to say, populate the RADIO with relevant data</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string FileName </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Frequency </em></code>: 
+in MHz</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Modulation </em></code>: 
+either radio.modulation.AM or radio.modulation.FM</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Power </em></code>: 
+in W</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(RADIO)">#RADIO</a>:</em>
+self</p>
+
+			<h3>Usage:</h3>
+		<pre class="example"><code>-- In this function the data is especially relevant if the broadcaster is anything but a UNIT or a GROUP,
+but it will work with a UNIT or a GROUP anyway
+-- Only the RADIO and the Filename are mandatory</code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(RADIO).NewUnitTransmission" >
+<strong>RADIO:NewUnitTransmission(FileName, Subtitle, SubtitleDuration, Frequency, Modulation, Loop)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Create a new transmission, that is to say, populate the RADIO with relevant data</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string FileName </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Subtitle </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number SubtitleDuration </em></code>: 
+in s</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Frequency </em></code>: 
+in MHz</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Modulation </em></code>: 
+either radio.modulation.AM or radio.modulation.FM</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#boolean Loop </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(RADIO)">#RADIO</a>:</em>
+self</p>
+
+			<h3>Usage:</h3>
+		<pre class="example"><code>-- In this function the data is especially relevant if the broadcaster is a UNIT or a GROUP,
+but it will work for any POSITIONABLE
+-- Only the RADIO and the Filename are mandatory</code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="Wrapper.Positionable.html##(POSITIONABLE)">Wrapper.Positionable#POSITIONABLE</a></em>
+<a id="#(RADIO).Positionable" >
+<strong>RADIO.Positionable</strong>
+</a>
+</dt>
+<dd>
+	
+<p>The transmiter</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#number</em>
+<a id="#(RADIO).Power" >
+<strong>RADIO.Power</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Power of the antenna is Watts</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(RADIO).SetFileName" >
+<strong>RADIO:SetFileName(FileName)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Check validity of the filename passed and sets RADIO.FileName</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string FileName </em></code>: 
+File name of the sound file (i.e. "Noise.ogg")</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(RADIO)">#RADIO</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(RADIO).SetFrequency" >
+<strong>RADIO:SetFrequency(Frequency)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Check validity of the frequency passed and sets RADIO.Frequency</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number Frequency </em></code>: 
+in MHz (Ranges allowed for radio transmissions in DCS : 30-88 / 108-152 / 225-400MHz)</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(RADIO)">#RADIO</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(RADIO).SetLoop" >
+<strong>RADIO:SetLoop(Loop)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Check validity of the loop passed and sets RADIO.Loop</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#boolean Loop </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(RADIO)">#RADIO</a>:</em>
+self</p>
+
+			<h3>Usage:</h3>
+		<pre class="example"><code></code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(RADIO).SetModulation" >
+<strong>RADIO:SetModulation(Modulation)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Check validity of the frequency passed and sets RADIO.Modulation</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number Modulation </em></code>: 
+either radio.modulation.AM or radio.modulation.FM</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(RADIO)">#RADIO</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(RADIO).SetPower" >
+<strong>RADIO:SetPower(Power)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Check validity of the power passed and sets RADIO.Power</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number Power </em></code>: 
+in W</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(RADIO)">#RADIO</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(RADIO).SetSubtitle" >
+<strong>RADIO:SetSubtitle(Subtitle, SubtitleDuration)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Check validity of the subtitle and the subtitleDuration  passed and sets RADIO.subtitle and RADIO.subtitleDuration</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Subtitle </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number SubtitleDuration </em></code>: 
+in s</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(RADIO)">#RADIO</a>:</em>
+self</p>
+
+			<h3>Usage:</h3>
+		<pre class="example"><code>-- Both parameters are mandatory, since it wouldn't make much sense to change the Subtitle and not its duration</code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(RADIO).StopBroadcast" >
+<strong>RADIO:StopBroadcast()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Stops a transmission</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(RADIO)">#RADIO</a>:</em>
+self</p>
+
+			<h3>Usage:</h3>
+		<pre class="example"><code>-- Especially usefull to stop the broadcast of looped transmissions
+-- Only works with broadcasts from UNIT or GROUP</code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(RADIO).Subtitle" >
+<strong>RADIO.Subtitle</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Subtitle of the transmission</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#number</em>
+<a id="#(RADIO).SubtitleDuration" >
+<strong>RADIO.SubtitleDuration</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Duration of the Subtitle in seconds</p>
+
+</dd>
+</dl>
+
+</div>
+
+</div>
+</body>
+</html>

@@ -1,8 +1,8 @@
 
-local DeliveryUnit = UNIT:FindByName( "Delivery" )
-local Letter = AI_CARGO_PACKAGE:New( DeliveryUnit, "Letter", "Secret Orders", "0.3", 2000, 25 )
+DeliveryUnit = UNIT:FindByName( "Delivery" )
+Letter = AI_CARGO_PACKAGE:New( DeliveryUnit, "Letter", "Secret Orders", "0.3", 2000, 25 )
 
-local CargoCarrier = UNIT:FindByName( "Carrier" )
+CargoCarrier = UNIT:FindByName( "Carrier" )
 
 -- This call will make the Cargo run to the CargoCarrier.
 -- Upon arrival at the CargoCarrier, the Cargo will be Loaded into the Carrier.

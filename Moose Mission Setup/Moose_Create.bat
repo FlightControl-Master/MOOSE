@@ -54,6 +54,7 @@ COPY /b Moose.lua + %1\Core\Set.lua                   	Moose.lua
 COPY /b Moose.lua + %1\Core\Point.lua                 	Moose.lua
 COPY /b Moose.lua + %1\Core\Message.lua               	Moose.lua
 COPY /b Moose.lua + %1\Core\Fsm.lua       	  		    Moose.lua
+COPY /b Moose.lua + %1\Core\Radio.lua       	  		Moose.lua
 
 rem Wrapper Classes
 COPY /b Moose.lua + %1\Wrapper\Object.lua               Moose.lua
@@ -97,7 +98,7 @@ COPY /b Moose.lua + %1\Tasking\CommandCenter.lua 		Moose.lua
 COPY /b Moose.lua + %1\Tasking\Mission.lua              Moose.lua
 COPY /b Moose.lua + %1\Tasking\Task.lua    	         	Moose.lua
 COPY /b Moose.lua + %1\Tasking\DetectionManager.lua     Moose.lua
-COPY /b Moose.lua + %1\Tasking\Task_SEAD.lua         	Moose.lua
+COPY /b Moose.lua + %1\Tasking\Task_A2G_Dispatcher.lua 	Moose.lua
 COPY /b Moose.lua + %1\Tasking\Task_A2G.lua         	Moose.lua
 
 COPY /b Moose.lua + %1\Moose.lua                 		Moose.lua

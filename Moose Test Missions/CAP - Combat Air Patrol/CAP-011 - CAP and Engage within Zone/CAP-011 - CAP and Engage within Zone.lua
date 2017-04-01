@@ -16,15 +16,15 @@
 -- 4. If you want, you can wait until the Su-27 is out of fuel and will land.
  
 
-local CapPlane = GROUP:FindByName( "Plane" )
+CapPlane = GROUP:FindByName( "Plane" )
 
-local PatrolZone = ZONE:New( "Patrol Zone" )
+PatrolZone = ZONE:New( "Patrol Zone" )
 
-local AICapZone = AI_CAP_ZONE:New( PatrolZone, 500, 1000, 500, 600 )
+AICapZone = AI_CAP_ZONE:New( PatrolZone, 500, 1000, 500, 600 )
 
-local EngageZoneGroup = GROUP:FindByName( "Engage Zone" )
+EngageZoneGroup = GROUP:FindByName( "Engage Zone" )
 
-local CapEngageZone = ZONE_POLYGON:New( "Engage Zone", EngageZoneGroup )
+CapEngageZone = ZONE_POLYGON:New( "Engage Zone", EngageZoneGroup )
 
 AICapZone:SetControllable( CapPlane )
 AICapZone:SetEngageZone( CapEngageZone ) -- Set the Engage Zone. The AI will only engage when the bogeys are within the CapEngageZone.

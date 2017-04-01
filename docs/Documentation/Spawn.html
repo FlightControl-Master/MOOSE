@@ -39,16 +39,17 @@
 					<li><a href="Fsm.html">Fsm</a></li>
 					<li><a href="Group.html">Group</a></li>
 					<li><a href="Identifiable.html">Identifiable</a></li>
-					<li><a href="MOVEMENT.html">MOVEMENT</a></li>
 					<li><a href="Menu.html">Menu</a></li>
 					<li><a href="Message.html">Message</a></li>
 					<li><a href="MissileTrainer.html">MissileTrainer</a></li>
 					<li><a href="Mission.html">Mission</a></li>
+					<li><a href="Movement.html">Movement</a></li>
 					<li><a href="Object.html">Object</a></li>
 					<li><a href="Point.html">Point</a></li>
 					<li><a href="Positionable.html">Positionable</a></li>
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
 					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
+					<li><a href="Radio.html">Radio</a></li>
 					<li><a href="Route.html">Route</a></li>
 					<li><a href="Scenery.html">Scenery</a></li>
 					<li><a href="ScheduleDispatcher.html">ScheduleDispatcher</a></li>
@@ -61,8 +62,8 @@
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="Task.html">Task</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
+					<li><a href="Task_A2G_Dispatcher.html">Task_A2G_Dispatcher</a></li>
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
-					<li><a href="Task_SEAD.html">Task_SEAD</a></li>
 					<li><a href="Unit.html">Unit</a></li>
 					<li><a href="Utils.html">Utils</a></li>
 					<li><a href="Zone.html">Zone</a></li>
@@ -772,25 +773,13 @@ and any spaces before and after the resulting name are removed.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SPAWN)._GetGroupFromDCSUnit">SPAWN:_GetGroupFromDCSUnit(DCSUnit)</a></td>
-		<td class="summary">
-<p>Return the group within the SpawnGroups collection with input a DCSUnit.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SPAWN)._GetGroupIndexFromDCSUnit">SPAWN:_GetGroupIndexFromDCSUnit(DCSUnit)</a></td>
-		<td class="summary">
-<p>Get the group index from a DCSUnit.</p>
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SPAWN)._GetLastIndex">SPAWN:_GetLastIndex()</a></td>
 		<td class="summary">
 <p>Return the last maximum index that can be used.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SPAWN)._GetPrefixFromDCSUnit">SPAWN:_GetPrefixFromDCSUnit(DCSUnit)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN)._GetPrefixFromGroup">SPAWN:_GetPrefixFromGroup(DCSUnit, SpawnGroup)</a></td>
 		<td class="summary">
 <p>Return the prefix of a SpawnUnit.</p>
 </td>
@@ -814,31 +803,31 @@ and any spaces before and after the resulting name are removed.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SPAWN)._OnBirth">SPAWN:_OnBirth(Event)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN)._OnBirth">SPAWN:_OnBirth(EventData)</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SPAWN)._OnDeadOrCrash">SPAWN:_OnDeadOrCrash(Event)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN)._OnDeadOrCrash">SPAWN:_OnDeadOrCrash(EventData)</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SPAWN)._OnEngineShutDown">SPAWN:_OnEngineShutDown(event)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN)._OnEngineShutDown">SPAWN:_OnEngineShutDown(EventData)</a></td>
 		<td class="summary">
 <p>Will detect AIR Units shutting down their engines ...</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SPAWN)._OnLand">SPAWN:_OnLand(event)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN)._OnLand">SPAWN:_OnLand(EventData)</a></td>
 		<td class="summary">
 <p>Will detect AIR Units landing...</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SPAWN)._OnTakeOff">SPAWN:_OnTakeOff(event)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN)._OnTakeOff">SPAWN:_OnTakeOff(EventData)</a></td>
 		<td class="summary">
 <p>Will detect AIR Units taking off...</p>
 </td>
@@ -2337,9 +2326,6 @@ when nothing was spawned.</p>
 	
 
 
-	
-<p> By default, no InitLimit</p>
-
 </dd>
 </dl>
 		<dl class="function">
@@ -2375,7 +2361,7 @@ when nothing was spawned.</p>
 		<dl class="function">
 <dt>
 
-		<em>#number</em>
+		<em></em>
 <a id="#(SPAWN).SpawnMaxGroups" >
 <strong>SPAWN.SpawnMaxGroups</strong>
 </a>
@@ -2392,7 +2378,7 @@ when nothing was spawned.</p>
 		<dl class="function">
 <dt>
 
-		<em>#number</em>
+		<em></em>
 <a id="#(SPAWN).SpawnMaxUnitsAlive" >
 <strong>SPAWN.SpawnMaxUnitsAlive</strong>
 </a>
@@ -2865,84 +2851,6 @@ The group that was spawned. You can use this group for further actions.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(SPAWN)._GetGroupFromDCSUnit" >
-<strong>SPAWN:_GetGroupFromDCSUnit(DCSUnit)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Return the group within the SpawnGroups collection with input a DCSUnit.</p>
-
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="Dcs.DCSWrapper.Unit.html##(Unit)">Dcs.DCSWrapper.Unit#Unit</a> DCSUnit </em></code>: 
-The <a href="DCSUnit.html">DCSUnit</a> to be searched.</p>
-
-				</li>
-		</ul>
-		<h3>Return values</h3>
-			<ol>
-				<li>
-				
-<p><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a>:</em>
-The Group</p>
-
-				</li>
-				<li>
-				
-<p><em>#nil:</em>
-Nothing found</p>
-
-				</li>
-			</ol>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(SPAWN)._GetGroupIndexFromDCSUnit" >
-<strong>SPAWN:_GetGroupIndexFromDCSUnit(DCSUnit)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Get the group index from a DCSUnit.</p>
-
-	
-<p>The method will search for a #-mark, and will return the index behind the #-mark of the DCSUnit.
-It will return nil of no prefix was found.</p>
-
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="Dcs.DCSWrapper.Unit.html##(Unit)">Dcs.DCSWrapper.Unit#Unit</a> DCSUnit </em></code>: 
-The <a href="DCSUnit.html">DCSUnit</a> to be searched.</p>
-
-				</li>
-		</ul>
-		<h3>Return values</h3>
-			<ol>
-				<li>
-				
-<p><em>#string:</em>
-The prefix</p>
-
-				</li>
-				<li>
-				
-<p><em>#nil:</em>
-Nothing found</p>
-
-				</li>
-			</ol>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
 <a id="#(SPAWN)._GetLastIndex" >
 <strong>SPAWN:_GetLastIndex()</strong>
 </a>
@@ -2956,8 +2864,8 @@ Nothing found</p>
 		<dl class="function">
 <dt>
 
-<a id="#(SPAWN)._GetPrefixFromDCSUnit" >
-<strong>SPAWN:_GetPrefixFromDCSUnit(DCSUnit)</strong>
+<a id="#(SPAWN)._GetPrefixFromGroup" >
+<strong>SPAWN:_GetPrefixFromGroup(DCSUnit, SpawnGroup)</strong>
 </a>
 </dt>
 <dd>
@@ -2968,12 +2876,17 @@ Nothing found</p>
 <p>The method will search for a #-mark, and will return the text before the #-mark.
 It will return nil of no prefix was found.</p>
 
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
 <p><code><em><a href="Dcs.DCSWrapper.Unit.html##(UNIT)">Dcs.DCSWrapper.Unit#UNIT</a> DCSUnit </em></code>: 
 The <a href="DCSUnit.html">DCSUnit</a> to be searched.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> SpawnGroup </em></code>: </p>
 
 				</li>
 		</ul>
@@ -3072,7 +2985,7 @@ Nothing found</p>
 <dt>
 
 <a id="#(SPAWN)._OnBirth" >
-<strong>SPAWN:_OnBirth(Event)</strong>
+<strong>SPAWN:_OnBirth(EventData)</strong>
 </a>
 </dt>
 <dd>
@@ -3083,7 +2996,7 @@ Nothing found</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Core.Event.html##(EVENTDATA)">Core.Event#EVENTDATA</a> Event </em></code>: </p>
+<p><code><em><a href="Core.Event.html##(EVENTDATA)">Core.Event#EVENTDATA</a> EventData </em></code>: </p>
 
 				</li>
 		</ul>
@@ -3093,7 +3006,7 @@ Nothing found</p>
 <dt>
 
 <a id="#(SPAWN)._OnDeadOrCrash" >
-<strong>SPAWN:_OnDeadOrCrash(Event)</strong>
+<strong>SPAWN:_OnDeadOrCrash(EventData)</strong>
 </a>
 </dt>
 <dd>
@@ -3104,7 +3017,7 @@ Nothing found</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Core.Event.html##(EVENTDATA)">Core.Event#EVENTDATA</a> Event </em></code>: </p>
+<p><code><em><a href="Core.Event.html##(EVENTDATA)">Core.Event#EVENTDATA</a> EventData </em></code>: </p>
 
 				</li>
 		</ul>
@@ -3114,7 +3027,7 @@ Nothing found</p>
 <dt>
 
 <a id="#(SPAWN)._OnEngineShutDown" >
-<strong>SPAWN:_OnEngineShutDown(event)</strong>
+<strong>SPAWN:_OnEngineShutDown(EventData)</strong>
 </a>
 </dt>
 <dd>
@@ -3129,7 +3042,7 @@ But only when the Unit was registered to have landed.</p>
 		<ul>
 				<li>
 				
-<p><code><em> event </em></code>: </p>
+<p><code><em><a href="Core.Event.html##(EVENTDATA)">Core.Event#EVENTDATA</a> EventData </em></code>: </p>
 
 				</li>
 		</ul>
@@ -3139,7 +3052,7 @@ But only when the Unit was registered to have landed.</p>
 <dt>
 
 <a id="#(SPAWN)._OnLand" >
-<strong>SPAWN:_OnLand(event)</strong>
+<strong>SPAWN:_OnLand(EventData)</strong>
 </a>
 </dt>
 <dd>
@@ -3154,7 +3067,7 @@ This is needed to ensure that Re-SPAWNing is only done for landed AIR Groups.</p
 		<ul>
 				<li>
 				
-<p><code><em> event </em></code>: </p>
+<p><code><em><a href="Core.Event.html##(EVENTDATA)">Core.Event#EVENTDATA</a> EventData </em></code>: </p>
 
 				</li>
 		</ul>
@@ -3164,7 +3077,7 @@ This is needed to ensure that Re-SPAWNing is only done for landed AIR Groups.</p
 <dt>
 
 <a id="#(SPAWN)._OnTakeOff" >
-<strong>SPAWN:_OnTakeOff(event)</strong>
+<strong>SPAWN:_OnTakeOff(EventData)</strong>
 </a>
 </dt>
 <dd>
@@ -3179,7 +3092,7 @@ This is needed to ensure that Re-SPAWNing only is done for landed AIR Groups.</p
 		<ul>
 				<li>
 				
-<p><code><em> event </em></code>: </p>
+<p><code><em><a href="Core.Event.html##(EVENTDATA)">Core.Event#EVENTDATA</a> EventData </em></code>: </p>
 
 				</li>
 		</ul>

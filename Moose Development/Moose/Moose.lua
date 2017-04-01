@@ -17,6 +17,7 @@ Include.File( "Core/Set" )
 Include.File( "Core/Point" )
 Include.File( "Core/Message" )
 Include.File( "Core/Fsm" )
+Include.File( "Core/Radio" )
 
 --- Wrapper Classes
 Include.File( "Wrapper/Object" )
@@ -59,7 +60,7 @@ Include.File( "Tasking/CommandCenter" )
 Include.File( "Tasking/Mission" )
 Include.File( "Tasking/Task" )
 Include.File( "Tasking/DetectionManager" )
-Include.File( "Tasking/Task_SEAD" )
+Include.File( "Tasking/Task_A2G_Dispatcher")
 Include.File( "Tasking/Task_A2G" )
 
 

@@ -2,7 +2,7 @@
 -- 
 -- ===
 -- 
--- 1) @{DetectionManager#DETECTION_MANAGER} class, extends @{Base#BASE}
+-- 1) @{DetectionManager#DETECTION_MANAGER} class, extends @{Fsm#FSM}
 -- ====================================================================
 -- The @{DetectionManager#DETECTION_MANAGER} class defines the core functions to report detected objects to groups.
 -- Reportings can be done in several manners, and it is up to the derived classes if DETECTION_MANAGER to model the reporting behaviour.
@@ -34,23 +34,6 @@
 -- -------------------------------
 -- The @{DetectionManager#DETECTION_REPORTING.New}() method creates a new DETECTION_REPORTING instance.
 --    
--- ===
--- 
--- 3) @{#DETECTION_DISPATCHER} class, extends @{#DETECTION_MANAGER}
--- ================================================================
--- The @{#DETECTION_DISPATCHER} class implements the dynamic dispatching of tasks upon groups of detected units determined a @{Set} of FAC (groups).
--- The FAC will detect units, will group them, and will dispatch @{Task}s to groups. Depending on the type of target detected, different tasks will be dispatched.
--- Find a summary below describing for which situation a task type is created:
--- 
---   * **CAS Task**: Is created when there are enemy ground units within range of the FAC, while there are friendly units in the FAC perimeter.
---   * **BAI Task**: Is created when there are enemy ground units within range of the FAC, while there are NO other friendly units within the FAC perimeter.
---   * **SEAD Task**: Is created when there are enemy ground units wihtin range of the FAC, with air search radars.
---   
--- Other task types will follow...
--- 
--- 3.1) DETECTION_DISPATCHER constructor:
--- --------------------------------------
--- The @{#DETECTION_DISPATCHER.New}() method creates a new DETECTION_DISPATCHER instance.
 --    
 -- ===
 -- 
@@ -65,7 +48,7 @@ do -- DETECTION MANAGER
   -- @type DETECTION_MANAGER
   -- @field Set#SET_GROUP SetGroup The groups to which the FAC will report to.
   -- @field Functional.Detection#DETECTION_BASE Detection The DETECTION_BASE object that is used to report the detected objects.
-  -- @extends Base#BASE
+  -- @extends Core.Fsm#FSM
   DETECTION_MANAGER = {
     ClassName = "DETECTION_MANAGER",
     SetGroup = nil,
@@ -80,15 +63,35 @@ do -- DETECTION MANAGER
   function DETECTION_MANAGER:New( SetGroup, Detection )
   
     -- Inherits from BASE
-    local self = BASE:Inherit( self, BASE:New() ) -- Functional.Detection#DETECTION_MANAGER
+    local self = BASE:Inherit( self, FSM:New() ) -- #DETECTION_MANAGER
     
     self.SetGroup = SetGroup
     self.Detection = Detection
     
+    self:SetStartState( "Stopped" )
+    self:AddTransition( "Stopped", "Start", "Started" )
+    self:AddTransition( "Started", "Stop", "Stopped" )
+    self:AddTransition( "Started", "Report", "Started" )
+    
     self:SetReportInterval( 30 )
     self:SetReportDisplayTime( 25 )
-    
+  
+    Detection:__Start( 1 )
+
     return self
+  end
+  
+  function DETECTION_MANAGER:onafterStart( From, Event, To )
+    self:Report()
+  end
+  
+  function DETECTION_MANAGER:onafterReport( From, Event, To )
+
+    self:E( "onafterReport" )
+
+    self:__Report( -self._ReportInterval )
+    
+    self:ProcessDetected( self.Detection )
   end
   
   --- Set the reporting time interval.
@@ -121,50 +124,13 @@ do -- DETECTION MANAGER
     return self._ReportDisplayTime
   end
   
-  
-  
   --- Reports the detected items to the @{Set#SET_GROUP}.
   -- @param #DETECTION_MANAGER self
   -- @param Functional.Detection#DETECTION_BASE Detection
   -- @return #DETECTION_MANAGER self
-  function DETECTION_MANAGER:ReportDetected( Detection )
-  	self:F2()
+  function DETECTION_MANAGER:ProcessDetected( Detection )
+  	self:E()
   
-  end
-  
-  --- Schedule the FAC reporting.
-  -- @param #DETECTION_MANAGER self
-  -- @param #number DelayTime The delay in seconds to wait the reporting.
-  -- @param #number ReportInterval The repeat interval in seconds for the reporting to happen repeatedly.
-  -- @return #DETECTION_MANAGER self
-  function DETECTION_MANAGER:Schedule( DelayTime, ReportInterval )
-  	self:F2()
-  
-    self._ScheduleDelayTime = DelayTime
-    
-    self:SetReportInterval( ReportInterval )
-    
-    self.FacScheduler = SCHEDULER:New(self, self._FacScheduler, { self, "DetectionManager" }, self._ScheduleDelayTime, self._ReportInterval )
-    return self
-  end
-  
-  --- Report the detected @{Unit#UNIT}s detected within the @{Detection#DETECTION_BASE} object to the @{Set#SET_GROUP}s.
-  -- @param #DETECTION_MANAGER self
-  function DETECTION_MANAGER:_FacScheduler( SchedulerName )
-    self:F2( { SchedulerName } )
-    
-    return self:ProcessDetected( self.Detection )
-    
---    self.SetGroup:ForEachGroup(
---      --- @param Wrapper.Group#GROUP Group
---      function( Group )
---        if Group:IsAlive() then
---          return self:ProcessDetected( self.Detection )
---        end
---      end
---    )
-    
---    return true
   end
 
 end
@@ -250,259 +216,3 @@ do -- DETECTION_REPORTING
 
 end
 
-do -- DETECTION_DISPATCHER
-
-  --- DETECTION_DISPATCHER class.
-  -- @type DETECTION_DISPATCHER
-  -- @field Set#SET_GROUP SetGroup The groups to which the FAC will report to.
-  -- @field Functional.Detection#DETECTION_BASE Detection The DETECTION_BASE object that is used to report the detected objects.
-  -- @field Tasking.Mission#MISSION Mission
-  -- @field Wrapper.Group#GROUP CommandCenter
-  -- @extends Tasking.DetectionManager#DETECTION_MANAGER
-  DETECTION_DISPATCHER = {
-    ClassName = "DETECTION_DISPATCHER",
-    Mission = nil,
-    CommandCenter = nil,
-    Detection = nil,
-  }
-  
-  
-  --- DETECTION_DISPATCHER constructor.
-  -- @param #DETECTION_DISPATCHER self
-  -- @param Set#SET_GROUP SetGroup
-  -- @param Functional.Detection#DETECTION_BASE Detection
-  -- @return #DETECTION_DISPATCHER self
-  function DETECTION_DISPATCHER:New( Mission, CommandCenter, SetGroup, Detection )
-  
-    -- Inherits from DETECTION_MANAGER
-    local self = BASE:Inherit( self, DETECTION_MANAGER:New( SetGroup, Detection ) ) -- #DETECTION_DISPATCHER
-    
-    self.Detection = Detection
-    self.CommandCenter = CommandCenter
-    self.Mission = Mission
-    
-    self:Schedule( 30 )
-    return self
-  end
-  
-  
-  --- Creates a SEAD task when there are targets for it.
-  -- @param #DETECTION_DISPATCHER self
-  -- @param Functional.Detection#DETECTION_AREAS.DetectedArea DetectedArea
-  -- @return Set#SET_UNIT TargetSetUnit: The target set of units.
-  -- @return #nil If there are no targets to be set.
-  function DETECTION_DISPATCHER:EvaluateSEAD( DetectedArea )
-    self:F( { DetectedArea.AreaID } )
-  
-    local DetectedSet = DetectedArea.Set
-    local DetectedZone = DetectedArea.Zone
-
-    -- Determine if the set has radar targets. If it does, construct a SEAD task.
-    local RadarCount = DetectedSet:HasSEAD()
-
-    if RadarCount > 0 then
-
-      -- Here we're doing something advanced... We're copying the DetectedSet, but making a new Set only with SEADable Radar units in it.
-      local TargetSetUnit = SET_UNIT:New()
-      TargetSetUnit:SetDatabase( DetectedSet )
-      TargetSetUnit:FilterHasSEAD()
-      TargetSetUnit:FilterOnce() -- Filter but don't do any events!!! Elements are added manually upon each detection.
-    
-      return TargetSetUnit
-    end
-    
-    return nil
-  end
-
-  --- Creates a CAS task when there are targets for it.
-  -- @param #DETECTION_DISPATCHER self
-  -- @param Functional.Detection#DETECTION_AREAS.DetectedArea DetectedArea
-  -- @return Tasking.Task#TASK
-  function DETECTION_DISPATCHER:EvaluateCAS( DetectedArea )
-    self:F( { DetectedArea.AreaID } )
-  
-    local DetectedSet = DetectedArea.Set
-    local DetectedZone = DetectedArea.Zone
-
-
-    -- Determine if the set has radar targets. If it does, construct a SEAD task.
-    local GroundUnitCount = DetectedSet:HasGroundUnits()
-    local FriendliesNearBy = self.Detection:IsFriendliesNearBy( DetectedArea )
-
-    if GroundUnitCount > 0 and FriendliesNearBy == true then
-
-      -- Copy the Set
-      local TargetSetUnit = SET_UNIT:New()
-      TargetSetUnit:SetDatabase( DetectedSet )
-      TargetSetUnit:FilterOnce() -- Filter but don't do any events!!! Elements are added manually upon each detection.
-      
-      return TargetSetUnit
-    end
-  
-    return nil
-  end
-  
-  --- Creates a BAI task when there are targets for it.
-  -- @param #DETECTION_DISPATCHER self
-  -- @param Functional.Detection#DETECTION_AREAS.DetectedArea DetectedArea
-  -- @return Tasking.Task#TASK
-  function DETECTION_DISPATCHER:EvaluateBAI( DetectedArea, FriendlyCoalition )
-    self:F( { DetectedArea.AreaID } )
-  
-    local DetectedSet = DetectedArea.Set
-    local DetectedZone = DetectedArea.Zone
-
-
-    -- Determine if the set has radar targets. If it does, construct a SEAD task.
-    local GroundUnitCount = DetectedSet:HasGroundUnits()
-    local FriendliesNearBy = self.Detection:IsFriendliesNearBy( DetectedArea )
-
-    if GroundUnitCount > 0 and FriendliesNearBy == false then
-
-      -- Copy the Set
-      local TargetSetUnit = SET_UNIT:New()
-      TargetSetUnit:SetDatabase( DetectedSet )
-      TargetSetUnit:FilterOnce() -- Filter but don't do any events!!! Elements are added manually upon each detection.
-      
-      return TargetSetUnit
-    end
-  
-    return nil
-  end
-  
-  --- Evaluates the removal of the Task from the Mission.
-  -- Can only occur when the DetectedArea is Changed AND the state of the Task is "Planned".
-  -- @param #DETECTION_DISPATCHER self
-  -- @param Tasking.Mission#MISSION Mission
-  -- @param Tasking.Task#TASK Task
-  -- @param Functional.Detection#DETECTION_AREAS.DetectedArea DetectedArea
-  -- @return Tasking.Task#TASK
-  function DETECTION_DISPATCHER:EvaluateRemoveTask( Mission, Task, DetectedArea )
-    
-    if Task then
-      if Task:IsStatePlanned() and DetectedArea.Changed == true then
-        self:E( "Removing Tasking: " .. Task:GetTaskName() )
-        Task = Mission:RemoveTask( Task )
-      end
-    end
-    
-    return Task
-  end
-  
-
-  --- Assigns tasks in relation to the detected items to the @{Set#SET_GROUP}.
-  -- @param #DETECTION_DISPATCHER self
-  -- @param Functional.Detection#DETECTION_AREAS Detection The detection created by the @{Detection#DETECTION_AREAS} object.
-  -- @return #boolean Return true if you want the task assigning to continue... false will cancel the loop.
-  function DETECTION_DISPATCHER:ProcessDetected( Detection )
-    self:F2()
-  
-    local AreaMsg = {}
-    local TaskMsg = {}
-    local ChangeMsg = {}
-    
-    local Mission = self.Mission
-
-    --- First we need to  the detected targets.
-    for DetectedAreaID, DetectedAreaData in ipairs( Detection:GetDetectedAreas() ) do
-    
-      local DetectedArea = DetectedAreaData -- Functional.Detection#DETECTION_AREAS.DetectedArea
-      local DetectedSet = DetectedArea.Set
-      local DetectedZone = DetectedArea.Zone
-      self:E( { "Targets in DetectedArea", DetectedArea.AreaID, DetectedSet:Count(), tostring( DetectedArea ) } )
-      DetectedSet:Flush()
-      
-      local AreaID = DetectedArea.AreaID
-      
-      -- Evaluate SEAD Tasking
-      local SEADTask = Mission:GetTask( "SEAD." .. AreaID )
-      SEADTask = self:EvaluateRemoveTask( Mission, SEADTask, DetectedArea )
-      if not SEADTask then
-        local TargetSetUnit = self:EvaluateSEAD( DetectedArea ) -- Returns a SetUnit if there are targets to be SEADed...
-        if TargetSetUnit then
-          SEADTask = Mission:AddTask( TASK_SEAD:New( Mission, self.SetGroup, "SEAD." .. AreaID, TargetSetUnit , DetectedZone ) )
-        end
-      end        
-      if SEADTask and SEADTask:IsStatePlanned() then
-        self:E( "Planned" )
-        --SEADTask:SetPlannedMenu()
-        TaskMsg[#TaskMsg+1] = "  - " .. SEADTask:GetStateString() .. " SEAD " .. AreaID .. " - " .. SEADTask.TargetSetUnit:GetUnitTypesText()
-      end
-
-      -- Evaluate CAS Tasking
-      local CASTask = Mission:GetTask( "CAS." .. AreaID )
-      CASTask = self:EvaluateRemoveTask( Mission, CASTask, DetectedArea )
-      if not CASTask then
-        local TargetSetUnit = self:EvaluateCAS( DetectedArea ) -- Returns a SetUnit if there are targets to be SEADed...
-        if TargetSetUnit then
-          CASTask = Mission:AddTask( TASK_A2G:New( Mission, self.SetGroup, "CAS." .. AreaID, "CAS", TargetSetUnit , DetectedZone, DetectedArea.NearestFAC ) )
-        end
-      end        
-      if CASTask and CASTask:IsStatePlanned() then
-        --CASTask:SetPlannedMenu()
-        TaskMsg[#TaskMsg+1] = "  - " .. CASTask:GetStateString() .. " CAS " .. AreaID .. " - " .. CASTask.TargetSetUnit:GetUnitTypesText()
-      end
-
-      -- Evaluate BAI Tasking
-      local BAITask = Mission:GetTask( "BAI." .. AreaID )
-      BAITask = self:EvaluateRemoveTask( Mission, BAITask, DetectedArea )
-      if not BAITask then
-        local TargetSetUnit = self:EvaluateBAI( DetectedArea, self.CommandCenter:GetCoalition() ) -- Returns a SetUnit if there are targets to be SEADed...
-        if TargetSetUnit then
-          BAITask = Mission:AddTask( TASK_A2G:New( Mission, self.SetGroup, "BAI." .. AreaID, "BAI", TargetSetUnit , DetectedZone, DetectedArea.NearestFAC ) )
-        end
-      end        
-      if BAITask and BAITask:IsStatePlanned() then
-        --BAITask:SetPlannedMenu()
-        TaskMsg[#TaskMsg+1] = "  - " .. BAITask:GetStateString() .. " BAI "  .. AreaID .. " - " .. BAITask.TargetSetUnit:GetUnitTypesText()
-      end
-
-      if #TaskMsg > 0 then
-    
-        local ThreatLevel = Detection:GetTreatLevelA2G( DetectedArea )
-
-        local DetectedAreaVec3 = DetectedZone:GetVec3()
-        local DetectedAreaPointVec3 = POINT_VEC3:New( DetectedAreaVec3.x, DetectedAreaVec3.y, DetectedAreaVec3.z )
-        local DetectedAreaPointLL = DetectedAreaPointVec3:ToStringLL( 3, true )
-        AreaMsg[#AreaMsg+1] = string.format( "  - Area #%d - %s - Threat Level [%s] (%2d)", 
-                                                     DetectedAreaID,
-                                                     DetectedAreaPointLL,
-                                                     string.rep(  "■", ThreatLevel ),
-                                                     ThreatLevel
-                                      )
-        
-        -- Loop through the changes ...
-        local ChangeText = Detection:GetChangeText( DetectedArea )
-        
-        if ChangeText ~= "" then
-          ChangeMsg[#ChangeMsg+1] = string.gsub( string.gsub( ChangeText, "\n", "%1  - " ), "^.", "  - %1" )
-        end
-      end
-      
-      -- OK, so the tasking has been done, now delete the changes reported for the area.
-      Detection:AcceptChanges( DetectedArea )
-      
-    end
-    
-    -- TODO set menus using the HQ coordinator
-    Mission:GetCommandCenter():SetMenu()
-    
-    if #AreaMsg > 0 then
-      for TaskGroupID, TaskGroup in pairs( self.SetGroup:GetSet() ) do
-        if not TaskGroup:GetState( TaskGroup, "Assigned" ) then
-          self.CommandCenter:MessageToGroup( 
-            string.format( "HQ Reporting - Target areas for mission '%s':\nAreas:\n%s\n\nTasks:\n%s\n\nChanges:\n%s ", 
-                           self.Mission:GetName(),
-                           table.concat( AreaMsg, "\n" ),
-                           table.concat( TaskMsg, "\n" ),
-                           table.concat( ChangeMsg, "\n" )
-            ), self:GetReportDisplayTime(), TaskGroup  
-          )
-        end
-      end
-    end
-    
-    return true
-  end
-
-end

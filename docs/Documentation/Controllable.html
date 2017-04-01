@@ -39,16 +39,17 @@
 					<li><a href="Fsm.html">Fsm</a></li>
 					<li><a href="Group.html">Group</a></li>
 					<li><a href="Identifiable.html">Identifiable</a></li>
-					<li><a href="MOVEMENT.html">MOVEMENT</a></li>
 					<li><a href="Menu.html">Menu</a></li>
 					<li><a href="Message.html">Message</a></li>
 					<li><a href="MissileTrainer.html">MissileTrainer</a></li>
 					<li><a href="Mission.html">Mission</a></li>
+					<li><a href="Movement.html">Movement</a></li>
 					<li><a href="Object.html">Object</a></li>
 					<li><a href="Point.html">Point</a></li>
 					<li><a href="Positionable.html">Positionable</a></li>
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
 					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
+					<li><a href="Radio.html">Radio</a></li>
 					<li><a href="Route.html">Route</a></li>
 					<li><a href="Scenery.html">Scenery</a></li>
 					<li><a href="ScheduleDispatcher.html">ScheduleDispatcher</a></li>
@@ -61,8 +62,8 @@
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="Task.html">Task</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
+					<li><a href="Task_A2G_Dispatcher.html">Task_A2G_Dispatcher</a></li>
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
-					<li><a href="Task_SEAD.html">Task_SEAD</a></li>
 					<li><a href="Unit.html">Unit</a></li>
 					<li><a href="Utils.html">Utils</a></li>
 					<li><a href="Zone.html">Zone</a></li>
@@ -245,9 +246,9 @@ This is different from the EnRoute tasks, where the targets of the task need to 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).CommandStopRoute">CONTROLLABLE:CommandStopRoute(StopRoute, Index)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).CommandStopRoute">CONTROLLABLE:CommandStopRoute(StopRoute)</a></td>
 		<td class="summary">
-<p>Perform stop route command</p>
+<p>Create a stop route command, which returns a string containing the command.</p>
 </td>
 		</tr>
 		<tr>
@@ -301,7 +302,7 @@ This is different from the EnRoute tasks, where the targets of the task need to 
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).EnRouteTaskEngageUnit">CONTROLLABLE:EnRouteTaskEngageUnit(EngageUnit, Priority, GroupAttack, WeaponExpend, AttackQty, Direction, Altitude, Visible, ControllableAttack)</a></td>
 		<td class="summary">
-<p>(AIR) Attack the Unit.</p>
+<p>(AIR) Search and attack the Unit.</p>
 </td>
 		</tr>
 		<tr>
@@ -485,13 +486,6 @@ This is different from the EnRoute tasks, where the targets of the task need to 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).RouteReturnToAirbase">CONTROLLABLE:RouteReturnToAirbase(ReturnAirbase, Speed)</a></td>
-		<td class="summary">
-<p>(AIR) Return the Controllable to an <a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a>
-A speed can be given in km/h.</p>
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).RouteToVec2">CONTROLLABLE:RouteToVec2(Point, Speed)</a></td>
 		<td class="summary">
 <p>(AIR + GROUND) Make the Controllable move to fly to a given point.</p>
@@ -528,7 +522,7 @@ A speed can be given in km/h.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).TaskAttackUnit">CONTROLLABLE:TaskAttackUnit(AttackUnit, WeaponType, WeaponExpend, AttackQty, Direction, AttackQtyLimit, ControllableAttack)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).TaskAttackUnit">CONTROLLABLE:TaskAttackUnit(AttackUnit, GroupAttack, WeaponExpend, AttackQty, Direction, Altitude, Visible, WeaponType)</a></td>
 		<td class="summary">
 <p>(AIR) Attack the Unit.</p>
 </td>
@@ -793,23 +787,31 @@ A speed can be given in km/h.</p>
 <dt>
 
 <a id="#(CONTROLLABLE).CommandStopRoute" >
-<strong>CONTROLLABLE:CommandStopRoute(StopRoute, Index)</strong>
+<strong>CONTROLLABLE:CommandStopRoute(StopRoute)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Perform stop route command</p>
+<p>Create a stop route command, which returns a string containing the command.</p>
 
-		<h3>Parameters</h3>
+	
+<p>Use the result in the method <a href="##(CONTROLLABLE).SetCommand">CONTROLLABLE.SetCommand</a>().
+A value of true will make the ground group stop, a value of false will make it continue.
+Note that this can only work on GROUP level, although individual UNITs can be commanded, the whole GROUP will react.</p>
+
+<p>Example missions:  </p>
+
+<ul>
+    <li>GRP-310
+    </li>
+</ul>
+
+		<h3>Parameter</h3>
 		<ul>
 				<li>
 				
-<p><code><em>#boolean StopRoute </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em> Index </em></code>: </p>
+<p><code><em>#boolean StopRoute </em></code>: 
+true if the ground unit needs to stop, false if it needs to continue to move.</p>
 
 				</li>
 		</ul>
@@ -1094,7 +1096,7 @@ The DCS task structure.</p>
 </dt>
 <dd>
 	
-<p>(AIR) Attack the Unit.</p>
+<p>(AIR) Search and attack the Unit.</p>
 
 		<h3>Parameters</h3>
 		<ul>
@@ -1853,43 +1855,6 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(CONTROLLABLE).RouteReturnToAirbase" >
-<strong>CONTROLLABLE:RouteReturnToAirbase(ReturnAirbase, Speed)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>(AIR) Return the Controllable to an <a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a>
-A speed can be given in km/h.</p>
-
-	
-<p>A given formation can be given.</p>
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="Wrapper.Airbase.html##(AIRBASE)">Wrapper.Airbase#AIRBASE</a> ReturnAirbase </em></code>: 
-The <a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a> to return to.</p>
-
-				</li>
-				<li>
-				
-<p><code><em>#number Speed </em></code>: 
-(optional) The speed.</p>
-
-				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em>#string:</em>
-The route</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
 <a id="#(CONTROLLABLE).RouteToVec2" >
 <strong>CONTROLLABLE:RouteToVec2(Point, Speed)</strong>
 </a>
@@ -2134,7 +2099,7 @@ The DCS task structure.</p>
 <dt>
 
 <a id="#(CONTROLLABLE).TaskAttackUnit" >
-<strong>CONTROLLABLE:TaskAttackUnit(AttackUnit, WeaponType, WeaponExpend, AttackQty, Direction, AttackQtyLimit, ControllableAttack)</strong>
+<strong>CONTROLLABLE:TaskAttackUnit(AttackUnit, GroupAttack, WeaponExpend, AttackQty, Direction, Altitude, Visible, WeaponType)</strong>
 </a>
 </dt>
 <dd>
@@ -2146,13 +2111,13 @@ The DCS task structure.</p>
 				<li>
 				
 <p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> AttackUnit </em></code>: 
-The unit.</p>
+The UNIT.</p>
 
 				</li>
 				<li>
 				
-<p><code><em>#number WeaponType </em></code>: 
-(optional) Bitmask of weapon types those allowed to use. If parameter is not defined that means no limits on weapon usage.</p>
+<p><code><em>#boolean GroupAttack </em></code>: 
+(optional) If true, all units in the group will attack the Unit when found.</p>
 
 				</li>
 				<li>
@@ -2175,14 +2140,20 @@ The unit.</p>
 				</li>
 				<li>
 				
-<p><code><em>#boolean AttackQtyLimit </em></code>: 
-(optional) The flag determines how to interpret attackQty parameter. If the flag is true then attackQty is a limit on maximal attack quantity for "AttackGroup" and "AttackUnit" tasks. If the flag is false then attackQty is a desired attack quantity for "Bombing" and "BombingRunway" tasks.</p>
+<p><code><em>#number Altitude </em></code>: 
+(optional) The altitude from where to attack.</p>
 
 				</li>
 				<li>
 				
-<p><code><em>#boolean ControllableAttack </em></code>: 
-(optional) Flag indicates that the target must be engaged by all aircrafts of the controllable. Has effect only if the task is assigned to a controllable, not to a single aircraft.</p>
+<p><code><em>#boolean Visible </em></code>: 
+(optional) not a clue.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number WeaponType </em></code>: 
+(optional) The WeaponType.</p>
 
 				</li>
 		</ul>

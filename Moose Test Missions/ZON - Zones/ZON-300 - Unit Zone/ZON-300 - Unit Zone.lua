@@ -14,11 +14,11 @@
 -- 1. Observe the zone perimeter smoke.
 -- 2. Observe the vehicle smoking a red smoke when driving through the zone.
 
-local GroupInside = GROUP:FindByName( "Test Inside Polygon" )
-local GroupOutside = GROUP:FindByName( "Test Outside Polygon" )
+GroupInside = GROUP:FindByName( "Test Inside Polygon" )
+GroupOutside = GROUP:FindByName( "Test Outside Polygon" )
 
-local Tank = UNIT:FindByName( "Tank" )
-local ZoneA = ZONE_UNIT:New( "Zone A", Tank, 100 )
+Tank = UNIT:FindByName( "Tank" )
+ZoneA = ZONE_UNIT:New( "Zone A", Tank, 100 )
 
 Messager = SCHEDULER:New( nil,
   function()

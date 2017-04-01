@@ -284,7 +284,7 @@ local _EVENTMETA = {
    },
    [world.event.S_EVENT_TAKEOFF] = {
      Order = 1,
-     Event = "OnEventTakeOff",
+     Event = "OnEventTakeoff",
      Text = "S_EVENT_TAKEOFF" 
    },
    [world.event.S_EVENT_LAND] = {
@@ -425,11 +425,11 @@ function EVENT:Init( EventID, EventClass )
   -- Each event has a subtable of EventClasses, ordered by EventPriority.
   local EventPriority = EventClass:GetEventPriority()
   if not self.Events[EventID][EventPriority] then
-    self.Events[EventID][EventPriority] = {}
+    self.Events[EventID][EventPriority] = setmetatable( {}, { __mode = "k" } )
   end 
 
   if not self.Events[EventID][EventPriority][EventClass] then
-     self.Events[EventID][EventPriority][EventClass] = setmetatable( {}, { __mode = "k" } )
+     self.Events[EventID][EventPriority][EventClass] = setmetatable( {}, { __mode = "v" } )
   end
   return self.Events[EventID][EventPriority][EventClass]
 end
@@ -499,11 +499,11 @@ end
 -- @param EventClass The instance of the class for which the event is.
 -- @param #function OnEventFunction
 -- @return #EVENT
-function EVENT:OnEventForTemplate( EventTemplate, EventFunction, EventClass, OnEventFunction )
+function EVENT:OnEventForTemplate( EventTemplate, EventFunction, EventClass, EventID )
   self:F2( EventTemplate.name )
 
   for EventUnitID, EventUnit in pairs( EventTemplate.units ) do
-    OnEventFunction( self, EventUnit.name, EventFunction, EventClass )
+    self:OnEventForUnit( EventUnit.name, EventFunction, EventClass, EventID )
   end
   return self
 end
@@ -517,9 +517,9 @@ end
 function EVENT:OnEventGeneric( EventFunction, EventClass, EventID )
   self:F2( { EventID } )
 
-  local Event = self:Init( EventID, EventClass )
-  Event.EventFunction = EventFunction
-  Event.EventClass = EventClass
+  local EventData = self:Init( EventID, EventClass )
+  EventData.EventFunction = EventFunction
+  EventData.EventClass = EventClass
   
   return self
 end
@@ -535,13 +535,13 @@ end
 function EVENT:OnEventForUnit( UnitName, EventFunction, EventClass, EventID )
   self:F2( UnitName )
 
-  local Event = self:Init( EventID, EventClass )
-  if not Event.EventUnit then
-    Event.EventUnit = {}
+  local EventData = self:Init( EventID, EventClass )
+  if not EventData.EventUnit then
+    EventData.EventUnit = {}
   end
-  Event.EventUnit[UnitName] = {}
-  Event.EventUnit[UnitName].EventFunction = EventFunction
-  Event.EventUnit[UnitName].EventClass = EventClass
+  EventData.EventUnit[UnitName] = {}
+  EventData.EventUnit[UnitName].EventFunction = EventFunction
+  EventData.EventUnit[UnitName].EventClass = EventClass
   return self
 end
 
@@ -576,51 +576,11 @@ do -- OnBirth
   function EVENT:OnBirthForTemplate( EventTemplate, EventFunction, EventClass )
     self:F2( EventTemplate.name )
   
-    self:OnEventForTemplate( EventTemplate, EventFunction, EventClass, self.OnBirthForUnit )
+    self:OnEventForTemplate( EventTemplate, EventFunction, EventClass, EVENTS.Birth )
     
     return self
   end
   
-  --- Set a new listener for an S_EVENT_BIRTH event, and registers the unit born.
-  -- @param #EVENT self
-  -- @param #function EventFunction The function to be called when the event occurs for the unit.
-  -- @param Base#BASE EventClass
-  -- @return #EVENT
-  function EVENT:OnBirth( EventFunction, EventClass )
-    self:F2()
-    
-    self:OnEventGeneric( EventFunction, EventClass, world.event.S_EVENT_BIRTH )
-    
-    return self
-  end
-  
-  --- Set a new listener for an S_EVENT_BIRTH event.
-  -- @param #EVENT self
-  -- @param #string EventDCSUnitName The id of the unit for the event to be handled.
-  -- @param #function EventFunction The function to be called when the event occurs for the unit.
-  -- @param Base#BASE EventClass
-  -- @return #EVENT
-  function EVENT:OnBirthForUnit( EventDCSUnitName, EventFunction, EventClass )
-    self:F2( EventDCSUnitName )
-    
-    self:OnEventForUnit( EventDCSUnitName, EventFunction, EventClass, world.event.S_EVENT_BIRTH )
-    
-    return self
-  end
-
-  --- Stop listening to S_EVENT_BIRTH event.
-  -- @param #EVENT self
-  -- @param Base#BASE EventClass
-  -- @return #EVENT
-  function EVENT:OnBirthRemove( EventClass )
-    self:F2()
-    
-    self:Remove( EventClass, world.event.S_EVENT_BIRTH )
-    
-    return self
-  end
-  
-
 end
 
 do -- OnCrash
@@ -634,47 +594,8 @@ do -- OnCrash
   function EVENT:OnCrashForTemplate( EventTemplate, EventFunction, EventClass )
     self:F2( EventTemplate.name )
   
-    self:OnEventForTemplate( EventTemplate, EventFunction, EventClass, self.OnCrashForUnit )
+    self:OnEventForTemplate( EventTemplate, EventFunction, EventClass, EVENTS.Crash )
   
-    return self
-  end
-  
-  --- Set a new listener for an S_EVENT_CRASH event.
-  -- @param #EVENT self
-  -- @param #function EventFunction The function to be called when the event occurs for the unit.
-  -- @param Base#BASE EventClass
-  -- @return #EVENT
-  function EVENT:OnCrash( EventFunction, EventClass )
-    self:F2()
-    
-    self:OnEventGeneric( EventFunction, EventClass, world.event.S_EVENT_CRASH )
-    
-    return self 
-  end
-  
-  --- Set a new listener for an S_EVENT_CRASH event.
-  -- @param #EVENT self
-  -- @param #string EventDCSUnitName
-  -- @param #function EventFunction The function to be called when the event occurs for the unit.
-  -- @param Base#BASE EventClass The self instance of the class for which the event is.
-  -- @return #EVENT
-  function EVENT:OnCrashForUnit( EventDCSUnitName, EventFunction, EventClass )
-    self:F2( EventDCSUnitName )
-    
-    self:OnEventForUnit( EventDCSUnitName, EventFunction, EventClass, world.event.S_EVENT_CRASH )
-  
-    return self
-  end
-
-  --- Stop listening to S_EVENT_CRASH event.
-  -- @param #EVENT self
-  -- @param Base#BASE EventClass
-  -- @return #EVENT
-  function EVENT:OnCrashRemove( EventClass )
-    self:F2()
-    
-    self:Remove( EventClass, world.event.S_EVENT_CRASH )
-    
     return self
   end
 
@@ -691,96 +612,13 @@ do -- OnDead
   function EVENT:OnDeadForTemplate( EventTemplate, EventFunction, EventClass )
     self:F2( EventTemplate.name )
     
-    self:OnEventForTemplate( EventTemplate, EventFunction, EventClass, self.OnDeadForUnit )
+    self:OnEventForTemplate( EventTemplate, EventFunction, EventClass, EVENTS.Dead )
   
     return self
   end
   
-  --- Set a new listener for an S_EVENT_DEAD event.
-  -- @param #EVENT self
-  -- @param #function EventFunction The function to be called when the event occurs for the unit.
-  -- @param Base#BASE EventClass
-  -- @return #EVENT
-  function EVENT:OnDead( EventFunction, EventClass )
-    self:F2()
-    
-    self:OnEventGeneric( EventFunction, EventClass, world.event.S_EVENT_DEAD )
-    
-    return self
-  end
-  
-  
-  --- Set a new listener for an S_EVENT_DEAD event.
-  -- @param #EVENT self
-  -- @param #string EventDCSUnitName
-  -- @param #function EventFunction The function to be called when the event occurs for the unit.
-  -- @param Base#BASE EventClass The self instance of the class for which the event is.
-  -- @return #EVENT
-  function EVENT:OnDeadForUnit( EventDCSUnitName, EventFunction, EventClass )
-    self:F2( EventDCSUnitName )
-  
-    self:OnEventForUnit( EventDCSUnitName, EventFunction, EventClass, world.event.S_EVENT_DEAD )
-    
-    return self
-  end
-  
-  --- Stop listening to S_EVENT_DEAD event.
-  -- @param #EVENT self
-  -- @param Base#BASE EventClass
-  -- @return #EVENT
-  function EVENT:OnDeadRemove( EventClass )
-    self:F2()
-    
-    self:Remove( EventClass, world.event.S_EVENT_DEAD )
-    
-    return self
-  end
-  
-
 end
 
-do -- OnPilotDead
-
-  --- Set a new listener for an S_EVENT_PILOT_DEAD event.
-  -- @param #EVENT self
-  -- @param #function EventFunction The function to be called when the event occurs for the unit.
-  -- @param Base#BASE EventClass
-  -- @return #EVENT
-  function EVENT:OnPilotDead( EventFunction, EventClass )
-    self:F2()
-    
-    self:OnEventGeneric( EventFunction, EventClass, world.event.S_EVENT_PILOT_DEAD )
-    
-    return self
-  end
-  
-  --- Set a new listener for an S_EVENT_PILOT_DEAD event.
-  -- @param #EVENT self
-  -- @param #string EventDCSUnitName
-  -- @param #function EventFunction The function to be called when the event occurs for the unit.
-  -- @param Base#BASE EventClass The self instance of the class for which the event is.
-  -- @return #EVENT
-  function EVENT:OnPilotDeadForUnit( EventDCSUnitName, EventFunction, EventClass )
-    self:F2( EventDCSUnitName )
-  
-    self:OnEventForUnit( EventDCSUnitName, EventFunction, EventClass, world.event.S_EVENT_PILOT_DEAD )
-  
-    return self
-  end
-
-  --- Stop listening to S_EVENT_PILOT_DEAD event.
-  -- @param #EVENT self
-  -- @param Base#BASE EventClass
-  -- @return #EVENT
-  function EVENT:OnPilotDeadRemove( EventClass )
-    self:F2()
-    
-    self:Remove( EventClass, world.event.S_EVENT_PILOT_DEAD )
-    
-    return self
-  end
-
-end
 
 do -- OnLand
   --- Create an OnLand event handler for a group
@@ -792,38 +630,11 @@ do -- OnLand
   function EVENT:OnLandForTemplate( EventTemplate, EventFunction, EventClass )
     self:F2( EventTemplate.name )
   
-    self:OnEventForTemplate( EventTemplate, EventFunction, EventClass, self.OnLandForUnit )
+    self:OnEventForTemplate( EventTemplate, EventFunction, EventClass, EVENTS.Land )
     
     return self
   end
   
-  --- Set a new listener for an S_EVENT_LAND event.
-  -- @param #EVENT self
-  -- @param #string EventDCSUnitName
-  -- @param #function EventFunction The function to be called when the event occurs for the unit.
-  -- @param Base#BASE EventClass The self instance of the class for which the event is.
-  -- @return #EVENT
-  function EVENT:OnLandForUnit( EventDCSUnitName, EventFunction, EventClass )
-    self:F2( EventDCSUnitName )
-  
-    self:OnEventForUnit( EventDCSUnitName, EventFunction, EventClass, world.event.S_EVENT_LAND )
-  
-    return self
-  end
-
-  --- Stop listening to S_EVENT_LAND event.
-  -- @param #EVENT self
-  -- @param Base#BASE EventClass
-  -- @return #EVENT
-  function EVENT:OnLandRemove( EventClass )
-    self:F2()
-    
-    self:Remove( EventClass, world.event.S_EVENT_LAND )
-    
-    return self
-  end
-
-
 end
 
 do -- OnTakeOff
@@ -836,38 +647,11 @@ do -- OnTakeOff
   function EVENT:OnTakeOffForTemplate( EventTemplate, EventFunction, EventClass )
     self:F2( EventTemplate.name )
   
-    self:OnEventForTemplate( EventTemplate, EventFunction, EventClass, self.OnTakeOffForUnit )
+    self:OnEventForTemplate( EventTemplate, EventFunction, EventClass, EVENTS.Takeoff )
   
     return self
   end
   
-  --- Set a new listener for an S_EVENT_TAKEOFF event.
-  -- @param #EVENT self
-  -- @param #string EventDCSUnitName
-  -- @param #function EventFunction The function to be called when the event occurs for the unit.
-  -- @param Base#BASE EventClass The self instance of the class for which the event is.
-  -- @return #EVENT
-  function EVENT:OnTakeOffForUnit( EventDCSUnitName, EventFunction, EventClass )
-    self:F2( EventDCSUnitName )
-  
-    self:OnEventForUnit( EventDCSUnitName, EventFunction, EventClass, world.event.S_EVENT_TAKEOFF )
-  
-    return self
-  end
-
-  --- Stop listening to S_EVENT_TAKEOFF event.
-  -- @param #EVENT self
-  -- @param Base#BASE EventClass
-  -- @return #EVENT
-  function EVENT:OnTakeOffRemove( EventClass )
-    self:F2()
-    
-    self:Remove( EventClass, world.event.S_EVENT_TAKEOFF )
-    
-    return self
-  end
-
-
 end
 
 do -- OnEngineShutDown
@@ -881,210 +665,11 @@ do -- OnEngineShutDown
   function EVENT:OnEngineShutDownForTemplate( EventTemplate, EventFunction, EventClass )
     self:F2( EventTemplate.name )
   
-    self:OnEventForTemplate( EventTemplate, EventFunction, EventClass, self.OnEngineShutDownForUnit )
+    self:OnEventForTemplate( EventTemplate, EventFunction, EventClass, EVENTS.EngineShutdown )
     
     return self
   end
   
-  --- Set a new listener for an S_EVENT_ENGINE_SHUTDOWN event.
-  -- @param #EVENT self
-  -- @param #string EventDCSUnitName
-  -- @param #function EventFunction The function to be called when the event occurs for the unit.
-  -- @param Base#BASE EventClass The self instance of the class for which the event is.
-  -- @return #EVENT
-  function EVENT:OnEngineShutDownForUnit( EventDCSUnitName, EventFunction, EventClass )
-    self:F2( EventDCSUnitName )
-  
-    self:OnEventForUnit( EventDCSUnitName, EventFunction, EventClass, world.event.S_EVENT_ENGINE_SHUTDOWN )
-    
-    return self
-  end
-
-  --- Stop listening to S_EVENT_ENGINE_SHUTDOWN event.
-  -- @param #EVENT self
-  -- @param Base#BASE EventClass
-  -- @return #EVENT
-  function EVENT:OnEngineShutDownRemove( EventClass )
-    self:F2()
-    
-    self:Remove( EventClass, world.event.S_EVENT_ENGINE_SHUTDOWN )
-    
-    return self
-  end
-
-end
-
-do -- OnEngineStartUp
-
-  --- Set a new listener for an S_EVENT_ENGINE_STARTUP event.
-  -- @param #EVENT self
-  -- @param #string EventDCSUnitName
-  -- @param #function EventFunction The function to be called when the event occurs for the unit.
-  -- @param Base#BASE EventClass The self instance of the class for which the event is.
-  -- @return #EVENT
-  function EVENT:OnEngineStartUpForUnit( EventDCSUnitName, EventFunction, EventClass )
-    self:F2( EventDCSUnitName )
-  
-    self:OnEventForUnit( EventDCSUnitName, EventFunction, EventClass, world.event.S_EVENT_ENGINE_STARTUP )
-    
-    return self
-  end
-
-  --- Stop listening to S_EVENT_ENGINE_STARTUP event.
-  -- @param #EVENT self
-  -- @param Base#BASE EventClass
-  -- @return #EVENT
-  function EVENT:OnEngineStartUpRemove( EventClass )
-    self:F2()
-    
-    self:Remove( EventClass, world.event.S_EVENT_ENGINE_STARTUP )
-    
-    return self
-  end
-
-end
-
-do -- OnShot
-  --- Set a new listener for an S_EVENT_SHOT event.
-  -- @param #EVENT self
-  -- @param #function EventFunction The function to be called when the event occurs for the unit.
-  -- @param Base#BASE EventClass The self instance of the class for which the event is.
-  -- @return #EVENT
-  function EVENT:OnShot( EventFunction, EventClass )
-    self:F2()
-  
-    self:OnEventGeneric( EventFunction, EventClass, world.event.S_EVENT_SHOT )
-    
-    return self
-  end
-  
-  --- Set a new listener for an S_EVENT_SHOT event for a unit.
-  -- @param #EVENT self
-  -- @param #string EventDCSUnitName
-  -- @param #function EventFunction The function to be called when the event occurs for the unit.
-  -- @param Base#BASE EventClass The self instance of the class for which the event is.
-  -- @return #EVENT
-  function EVENT:OnShotForUnit( EventDCSUnitName, EventFunction, EventClass )
-    self:F2( EventDCSUnitName )
-  
-    self:OnEventForUnit( EventDCSUnitName, EventFunction, EventClass, world.event.S_EVENT_SHOT )
-    
-    return self
-  end
-  
-  --- Stop listening to S_EVENT_SHOT event.
-  -- @param #EVENT self
-  -- @param Base#BASE EventClass
-  -- @return #EVENT
-  function EVENT:OnShotRemove( EventClass )
-    self:F2()
-    
-    self:Remove( EventClass, world.event.S_EVENT_SHOT )
-    
-    return self
-  end
-  
-
-end
-
-do -- OnHit
-
-  --- Set a new listener for an S_EVENT_HIT event.
-  -- @param #EVENT self
-  -- @param #function EventFunction The function to be called when the event occurs for the unit.
-  -- @param Base#BASE EventClass The self instance of the class for which the event is.
-  -- @return #EVENT
-  function EVENT:OnHit( EventFunction, EventClass )
-    self:F2()
-  
-    self:OnEventGeneric( EventFunction, EventClass, world.event.S_EVENT_HIT )
-    
-    return self
-  end
-  
-  --- Set a new listener for an S_EVENT_HIT event.
-  -- @param #EVENT self
-  -- @param #string EventDCSUnitName
-  -- @param #function EventFunction The function to be called when the event occurs for the unit.
-  -- @param Base#BASE EventClass The self instance of the class for which the event is.
-  -- @return #EVENT
-  function EVENT:OnHitForUnit( EventDCSUnitName, EventFunction, EventClass )
-    self:F2( EventDCSUnitName )
-  
-    self:OnEventForUnit( EventDCSUnitName, EventFunction, EventClass, world.event.S_EVENT_HIT )
-    
-    return self
-  end
-
-  --- Stop listening to S_EVENT_HIT event.
-  -- @param #EVENT self
-  -- @param Base#BASE EventClass
-  -- @return #EVENT
-  function EVENT:OnHitRemove( EventClass )
-    self:F2()
-    
-    self:Remove( EventClass, world.event.S_EVENT_HIT )
-    
-    return self
-  end 
-
-end
-
-do -- OnPlayerEnterUnit
-
-  --- Set a new listener for an S_EVENT_PLAYER_ENTER_UNIT event.
-  -- @param #EVENT self
-  -- @param #function EventFunction The function to be called when the event occurs for the unit.
-  -- @param Base#BASE EventClass The self instance of the class for which the event is.
-  -- @return #EVENT
-  function EVENT:OnPlayerEnterUnit( EventFunction, EventClass )
-    self:F2()
-  
-    self:OnEventGeneric( EventFunction, EventClass, world.event.S_EVENT_PLAYER_ENTER_UNIT )
-    
-    return self
-  end
-
-  --- Stop listening to S_EVENT_PLAYER_ENTER_UNIT event.
-  -- @param #EVENT self
-  -- @param Base#BASE EventClass
-  -- @return #EVENT
-  function EVENT:OnPlayerEnterRemove( EventClass )
-    self:F2()
-    
-    self:Remove( EventClass, world.event.S_EVENT_PLAYER_ENTER_UNIT )
-    
-    return self
-  end
-
-end
-
-do -- OnPlayerLeaveUnit
-  --- Set a new listener for an S_EVENT_PLAYER_LEAVE_UNIT event.
-  -- @param #EVENT self
-  -- @param #function EventFunction The function to be called when the event occurs for the unit.
-  -- @param Base#BASE EventClass The self instance of the class for which the event is.
-  -- @return #EVENT
-  function EVENT:OnPlayerLeaveUnit( EventFunction, EventClass )
-    self:F2()
-  
-    self:OnEventGeneric( EventFunction, EventClass, world.event.S_EVENT_PLAYER_LEAVE_UNIT )
-    
-    return self
-  end
-
-  --- Stop listening to S_EVENT_PLAYER_LEAVE_UNIT event.
-  -- @param #EVENT self
-  -- @param Base#BASE EventClass
-  -- @return #EVENT
-  function EVENT:OnPlayerLeaveRemove( EventClass )
-    self:F2()
-    
-    self:Remove( EventClass, world.event.S_EVENT_PLAYER_LEAVE_UNIT )
-    
-    return self
-  end
-
 end
 
 
@@ -1102,6 +687,8 @@ function EVENT:onEvent( Event )
     return errmsg
   end
 
+  self:E( _EVENTMETA[Event.id].Text, Event )
+  
   if self and self.Events and self.Events[Event.id] then
   
 
@@ -1200,6 +787,11 @@ function EVENT:onEvent( Event )
     if Event.weapon then
       Event.Weapon = Event.weapon
       Event.WeaponName = Event.Weapon:getTypeName()
+      Event.WeaponUNIT = CLIENT:Find( Event.Weapon, '', true ) -- Sometimes, the weapon is a player unit!
+      Event.WeaponPlayerName = Event.WeaponUNIT and Event.Weapon:getPlayerName()
+      Event.WeaponCoalition = Event.WeaponUNIT and Event.Weapon:getCoalition()
+      Event.WeaponCategory = Event.WeaponUNIT and Event.Weapon:getDesc().category
+      Event.WeaponTypeName = Event.WeaponUNIT and Event.Weapon:getTypeName()
       --Event.WeaponTgtDCSUnit = Event.Weapon:getTarget()
     end
     
@@ -1207,7 +799,9 @@ function EVENT:onEvent( Event )
     local PriorityBegin = PriorityOrder == -1 and 5 or 1
     local PriorityEnd = PriorityOrder == -1 and 1 or 5
 
-    self:E( { _EVENTMETA[Event.id].Text, Event, Event.IniDCSUnitName, Event.TgtDCSUnitName, PriorityOrder } )
+    if Event.IniObjectCategory ~= 3 then
+      self:E( { _EVENTMETA[Event.id].Text, Event, Event.IniDCSUnitName, Event.TgtDCSUnitName, PriorityOrder } )
+    end
     
     for EventPriority = PriorityBegin, PriorityEnd, PriorityOrder do
     
@@ -1228,8 +822,10 @@ function EVENT:onEvent( Event )
               -- First test if a EventFunction is Set, otherwise search for the default function
               if EventData.EventUnit[Event.IniDCSUnitName].EventFunction then
             
-                self:E( { "Calling EventFunction for UNIT ", EventClass:GetClassNameAndID(), ", Unit ", Event.IniUnitName, EventPriority } )
-                
+                if Event.IniObjectCategory ~= 3 then
+                  self:E( { "Calling EventFunction for UNIT ", EventClass:GetClassNameAndID(), ", Unit ", Event.IniUnitName, EventPriority } )
+                end
+                                
                 local Result, Value = xpcall( 
                   function() 
                     return EventData.EventUnit[Event.IniDCSUnitName].EventFunction( EventClass, Event ) 
@@ -1242,8 +838,10 @@ function EVENT:onEvent( Event )
                 if EventFunction and type( EventFunction ) == "function" then
                   
                   -- Now call the default event function.
-                  self:E( { "Calling " .. _EVENTMETA[Event.id].Event .. " for Class ", EventClass:GetClassNameAndID(), EventPriority } )
-                  
+                  if Event.IniObjectCategory ~= 3 then
+                    self:E( { "Calling " .. _EVENTMETA[Event.id].Event .. " for Class ", EventClass:GetClassNameAndID(), EventPriority } )
+                  end
+                                
                   local Result, Value = xpcall( 
                     function() 
                       return EventFunction( EventClass, Event ) 
@@ -1257,7 +855,9 @@ function EVENT:onEvent( Event )
               -- First test if a EventFunction is Set, otherwise search for the default function
               if EventData.EventUnit[Event.TgtDCSUnitName].EventFunction then
             
-                self:E( { "Calling EventFunction for UNIT ", EventClass:GetClassNameAndID(), ", Unit ", Event.TgtUnitName, EventPriority } )
+                if Event.IniObjectCategory ~= 3 then
+                  self:E( { "Calling EventFunction for UNIT ", EventClass:GetClassNameAndID(), ", Unit ", Event.TgtUnitName, EventPriority } )
+                end
                 
                 local Result, Value = xpcall( 
                   function() 
@@ -1271,8 +871,10 @@ function EVENT:onEvent( Event )
                 if EventFunction and type( EventFunction ) == "function" then
                   
                   -- Now call the default event function.
-                  self:E( { "Calling " .. _EVENTMETA[Event.id].Event .. " for Class ", EventClass:GetClassNameAndID(), EventPriority } )
-                  
+                  if Event.IniObjectCategory ~= 3 then
+                    self:E( { "Calling " .. _EVENTMETA[Event.id].Event .. " for Class ", EventClass:GetClassNameAndID(), EventPriority } )
+                  end
+                                
                   local Result, Value = xpcall( 
                     function() 
                       return EventFunction( EventClass, Event ) 
@@ -1290,9 +892,11 @@ function EVENT:onEvent( Event )
               if EventData.EventGroup[Event.IniGroupName] then  
                 -- First test if a EventFunction is Set, otherwise search for the default function
                 if EventData.EventGroup[Event.IniGroupName].EventFunction then
-              
-                  self:E( { "Calling EventFunction for GROUP ", EventClass:GetClassNameAndID(), ", Unit ", Event.IniUnitName, EventPriority } )
-                  
+
+                  if Event.IniObjectCategory ~= 3 then
+                    self:E( { "Calling EventFunction for GROUP ", EventClass:GetClassNameAndID(), ", Unit ", Event.IniUnitName, EventPriority } )
+                  end
+                                    
                   local Result, Value = xpcall( 
                     function() 
                       return EventData.EventGroup[Event.IniGroupName].EventFunction( EventClass, Event ) 
@@ -1305,8 +909,10 @@ function EVENT:onEvent( Event )
                   if EventFunction and type( EventFunction ) == "function" then
                     
                     -- Now call the default event function.
-                    self:E( { "Calling " .. _EVENTMETA[Event.id].Event .. " for GROUP ", EventClass:GetClassNameAndID(), EventPriority } )
-                    
+                    if Event.IniObjectCategory ~= 3 then
+                      self:E( { "Calling " .. _EVENTMETA[Event.id].Event .. " for GROUP ", EventClass:GetClassNameAndID(), EventPriority } )
+                    end
+                                        
                     local Result, Value = xpcall( 
                       function() 
                         return EventFunction( EventClass, Event ) 
@@ -1318,8 +924,10 @@ function EVENT:onEvent( Event )
               if EventData.EventGroup[Event.TgtGroupName] then  
                 if EventData.EventGroup[Event.TgtGroupName].EventFunction then
               
-                  self:E( { "Calling EventFunction for GROUP ", EventClass:GetClassNameAndID(), ", Unit ", Event.TgtUnitName, EventPriority } )
-                  
+                  if Event.IniObjectCategory ~= 3 then
+                    self:E( { "Calling EventFunction for GROUP ", EventClass:GetClassNameAndID(), ", Unit ", Event.TgtUnitName, EventPriority } )
+                  end
+                                
                   local Result, Value = xpcall( 
                     function() 
                       return EventData.EventGroup[Event.TgtGroupName].EventFunction( EventClass, Event ) 
@@ -1332,7 +940,9 @@ function EVENT:onEvent( Event )
                   if EventFunction and type( EventFunction ) == "function" then
                     
                     -- Now call the default event function.
-                    self:E( { "Calling " .. _EVENTMETA[Event.id].Event .. " for GROUP ", EventClass:GetClassNameAndID(), EventPriority } )
+                    if Event.IniObjectCategory ~= 3 then
+                      self:E( { "Calling " .. _EVENTMETA[Event.id].Event .. " for GROUP ", EventClass:GetClassNameAndID(), EventPriority } )
+                    end
                     
                     local Result, Value = xpcall( 
                       function() 
@@ -1346,7 +956,7 @@ function EVENT:onEvent( Event )
           
               -- If the EventData is not bound to a specific unit, then call the EventClass EventFunction.
               -- Note that here the EventFunction will need to implement and determine the logic for the relevant source- or target unit, or weapon.
-              if Event.IniDCSUnit and not EventData.EventUnit then
+              if (Event.IniDCSUnit or Event.WeaponUNIT) and not EventData.EventUnit then
               
                 if EventClass == EventData.EventClass then
                   
@@ -1354,8 +964,9 @@ function EVENT:onEvent( Event )
                   if EventData.EventFunction then
                     
                     -- There is an EventFunction defined, so call the EventFunction.
-                    self:E( { "Calling EventFunction for Class ", EventClass:GetClassNameAndID(), EventPriority } )
-                
+                    if Event.IniObjectCategory ~= 3 then
+                      self:E( { "Calling EventFunction for Class ", EventClass:GetClassNameAndID(), EventPriority } )
+                    end                
                     local Result, Value = xpcall( 
                       function() 
                         return EventData.EventFunction( EventClass, Event ) 
@@ -1367,11 +978,14 @@ function EVENT:onEvent( Event )
                     if EventFunction and type( EventFunction ) == "function" then
                       
                       -- Now call the default event function.
-                      self:E( { "Calling " .. _EVENTMETA[Event.id].Event .. " for Class ", EventClass:GetClassNameAndID(), EventPriority } )
-                      
+                      if Event.IniObjectCategory ~= 3 then
+                        self:E( { "Calling " .. _EVENTMETA[Event.id].Event .. " for Class ", EventClass:GetClassNameAndID(), EventPriority } )
+                      end
+                                    
                       local Result, Value = xpcall( 
                         function() 
-                          return EventFunction( EventClass, Event ) 
+                          local Result, Value = EventFunction( EventClass, Event )
+                          return Result, Value 
                         end, ErrorHandler )
                     end
                   end
@@ -1385,6 +999,8 @@ function EVENT:onEvent( Event )
   else
     self:E( { _EVENTMETA[Event.id].Text, Event } )    
   end
+  
+  Event = nil
 end
 
 --- The EVENTHANDLER structure

@@ -5,8 +5,6 @@
 --  
 -- ===
 -- 
--- # 1) @{Scoring#SCORING} class, extends @{Base#BASE}
--- 
 -- The @{#SCORING} class administers the scoring of player achievements, 
 -- and creates a CSV file logging the scoring events and results for use at team or squadron websites.
 -- 
@@ -57,6 +55,8 @@
 -- Use the radio menu F10 to consult the scores while running the mission. 
 -- Scores can be reported for your user, or an overall score can be reported of all players currently active in the mission.
 -- 
+-- # 1) @{Scoring#SCORING} class, extends @{Base#BASE}
+-- 
 -- ## 1.1) Set the destroy score or penalty scale
 -- 
 -- Score scales can be set for scores granted when enemies or friendlies are destroyed.
@@ -86,8 +86,6 @@
 -- For example, this can be done as follows:
 -- 
 --      Scoring:RemoveUnitScore( UNIT:FindByName( "Unit #001" ) )
---      
---      
 -- 
 -- ## 1.3) Define destruction zones that will give extra scores.
 -- 
@@ -546,6 +544,7 @@ function SCORING:_AddPlayerFromUnit( UnitData )
     local UnitCategory = UnitDesc.category
     local UnitCoalition = UnitData:GetCoalition()
     local UnitTypeName = UnitData:GetTypeName()
+    local UnitThreatLevel, UnitThreatType = UnitData:GetThreatLevel()
 
     self:T( { PlayerName, UnitName, UnitCategory, UnitCoalition, UnitTypeName } )
 
@@ -586,6 +585,8 @@ function SCORING:_AddPlayerFromUnit( UnitData )
     self.Players[PlayerName].UnitCategory = UnitCategory
     self.Players[PlayerName].UnitType = UnitTypeName
     self.Players[PlayerName].UNIT = UnitData 
+    self.Players[PlayerName].ThreatLevel = UnitThreatLevel
+    self.Players[PlayerName].ThreatType = UnitThreatType
 
     if self.Players[PlayerName].Penalty > self.Fratricide * 0.50 then
       if self.Players[PlayerName].PenaltyWarning < 1 then
@@ -844,6 +845,7 @@ function SCORING:_EventOnHit( Event )
         PlayerHit.PenaltyHit = PlayerHit.PenaltyHit or 0
         PlayerHit.TimeStamp = PlayerHit.TimeStamp or 0
         PlayerHit.UNIT = PlayerHit.UNIT or TargetUNIT
+        PlayerHit.ThreatLevel, PlayerHit.ThreatType = PlayerHit.UNIT:GetThreatLevel()
 
         -- Only grant hit scores if there was more than one second between the last hit.        
         if timer.getTime() - PlayerHit.TimeStamp > 1 then
@@ -882,7 +884,7 @@ function SCORING:_EventOnHit( Event )
                   :ToAllIf( self:IfMessagesHit() and self:IfMessagesToAll() )
                   :ToCoalitionIf( InitCoalition, self:IfMessagesHit() and self:IfMessagesToCoalition() )
               end
-              self:ScoreCSV( InitPlayerName, TargetPlayerName, "HIT_PENALTY", 1, -25, InitUnitName, InitUnitCoalition, InitUnitCategory, InitUnitType, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType )
+              self:ScoreCSV( InitPlayerName, TargetPlayerName, "HIT_PENALTY", 1, -10, InitUnitName, InitUnitCoalition, InitUnitCategory, InitUnitType, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType )
             else
               Player.Score = Player.Score + 1
               PlayerHit.Score = PlayerHit.Score + 1
@@ -915,13 +917,96 @@ function SCORING:_EventOnHit( Event )
                   )
               :ToAllIf( self:IfMessagesHit() and self:IfMessagesToAll() )
               :ToCoalitionIf( InitCoalition, self:IfMessagesHit() and self:IfMessagesToCoalition() )
-            self:ScoreCSV( InitPlayerName, "", "HIT_SCORE", 1, 1, InitUnitName, InitUnitCoalition, InitUnitCategory, InitUnitType, TargetUnitName, "", "Scenery", TargetUnitType )
+            self:ScoreCSV( InitPlayerName, "", "HIT_SCORE", 1, 0, InitUnitName, InitUnitCoalition, InitUnitCategory, InitUnitType, TargetUnitName, "", "Scenery", TargetUnitType )
           end
         end
       end
     end
   elseif InitPlayerName == nil then -- It is an AI hitting a player???
 
+  end
+  
+  -- It is a weapon initiated by a player, that is hitting something
+  -- This seems to occur only with scenery and static objects.
+  if Event.WeaponPlayerName ~= nil then 
+    self:_AddPlayerFromUnit( Event.WeaponUNIT )
+    if self.Players[Event.WeaponPlayerName] then -- This should normally not happen, but i'll test it anyway.
+      if TargetPlayerName ~= nil then -- It is a player hitting another player ...
+        self:_AddPlayerFromUnit( TargetUNIT )
+      end
+
+      self:T( "Hitting Scenery" )
+    
+      -- What is he hitting?
+      if TargetCategory then
+  
+        -- A scenery or static got hit, score it.
+        -- Player contains the score data from self.Players[WeaponPlayerName]
+        local Player = self.Players[Event.WeaponPlayerName]
+        
+        -- Ensure there is a hit table per TargetCategory and TargetUnitName.
+        Player.Hit[TargetCategory] = Player.Hit[TargetCategory] or {}
+        Player.Hit[TargetCategory][TargetUnitName] = Player.Hit[TargetCategory][TargetUnitName] or {}
+        
+        -- PlayerHit contains the score counters and data per unit that was hit.
+        local PlayerHit = Player.Hit[TargetCategory][TargetUnitName]
+         
+        PlayerHit.Score = PlayerHit.Score or 0
+        PlayerHit.Penalty = PlayerHit.Penalty or 0
+        PlayerHit.ScoreHit = PlayerHit.ScoreHit or 0
+        PlayerHit.PenaltyHit = PlayerHit.PenaltyHit or 0
+        PlayerHit.TimeStamp = PlayerHit.TimeStamp or 0
+        PlayerHit.UNIT = PlayerHit.UNIT or TargetUNIT
+        PlayerHit.ThreatLevel, PlayerHit.ThreatType = PlayerHit.UNIT:GetThreatLevel()
+
+        -- Only grant hit scores if there was more than one second between the last hit.        
+        if timer.getTime() - PlayerHit.TimeStamp > 1 then
+          PlayerHit.TimeStamp = timer.getTime()
+          
+          local Score = 0
+          
+          if InitCoalition then -- A coalition object was hit, probably a static.
+            if InitCoalition == TargetCoalition then
+              -- TODO: Penalty according scale
+              Player.Penalty = Player.Penalty + 10
+              PlayerHit.Penalty = PlayerHit.Penalty + 10
+              PlayerHit.PenaltyHit = PlayerHit.PenaltyHit + 1
+      
+              MESSAGE
+                :New( "Player '" .. Event.WeaponPlayerName .. "' hit a friendly target " .. 
+                      TargetUnitCategory .. " ( " .. TargetType .. " ) " .. PlayerHit.PenaltyHit .. " times. " .. 
+                      "Penalty: -" .. PlayerHit.Penalty .. ".  Score Total:" .. Player.Score - Player.Penalty,
+                      2
+                    )
+                :ToAllIf( self:IfMessagesHit() and self:IfMessagesToAll() )
+                :ToCoalitionIf( Event.WeaponCoalition, self:IfMessagesHit() and self:IfMessagesToCoalition() )
+              self:ScoreCSV( Event.WeaponPlayerName, TargetPlayerName, "HIT_PENALTY", 1, -10, Event.WeaponName, Event.WeaponCoalition, Event.WeaponCategory, Event.WeaponTypeName, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType )
+            else
+              Player.Score = Player.Score + 1
+              PlayerHit.Score = PlayerHit.Score + 1
+              PlayerHit.ScoreHit = PlayerHit.ScoreHit + 1
+              MESSAGE
+                :New( "Player '" .. Event.WeaponPlayerName .. "' hit an enemy target " .. 
+                      TargetUnitCategory .. " ( " .. TargetType .. " ) " .. PlayerHit.ScoreHit .. " times. " .. 
+                      "Score: " .. PlayerHit.Score .. ".  Score Total:" .. Player.Score - Player.Penalty,
+                      2
+                    )
+                :ToAllIf( self:IfMessagesHit() and self:IfMessagesToAll() )
+                :ToCoalitionIf( Event.WeaponCoalition, self:IfMessagesHit() and self:IfMessagesToCoalition() )
+              self:ScoreCSV( Event.WeaponPlayerName, TargetPlayerName, "HIT_SCORE", 1, 1, Event.WeaponName, Event.WeaponCoalition, Event.WeaponCategory, Event.WeaponTypeName, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType )
+            end
+          else -- A scenery object was hit.
+            MESSAGE
+              :New( "Player '" .. Event.WeaponPlayerName .. "' hit a scenery object.",
+                    2
+                  )
+              :ToAllIf( self:IfMessagesHit() and self:IfMessagesToAll() )
+              :ToCoalitionIf( InitCoalition, self:IfMessagesHit() and self:IfMessagesToCoalition() )
+            self:ScoreCSV( Event.WeaponPlayerName, "", "HIT_SCORE", 1, 0, Event.WeaponName, Event.WeaponCoalition, Event.WeaponCategory, Event.WeaponTypeName, TargetUnitName, "", "Scenery", TargetUnitType )
+          end
+        end
+      end
+    end
   end
 end
 
@@ -979,8 +1064,13 @@ function SCORING:_EventOnDeadOrCrash( Event )
 
       self:T( { InitUnitName, InitUnitType, InitUnitCoalition, InitCoalition, InitUnitCategory, InitCategory } )
 
+      local Destroyed = false
+
       -- What is the player destroying?
-      if Player and Player.Hit and Player.Hit[TargetCategory] and Player.Hit[TargetCategory][TargetUnitName] then -- Was there a hit for this unit for this player before registered???
+      if Player and Player.Hit and Player.Hit[TargetCategory] and Player.Hit[TargetCategory][TargetUnitName] and Player.Hit[TargetCategory][TargetUnitName].TimeStamp ~= 0 then -- Was there a hit for this unit for this player before registered???
+        
+        local TargetThreatLevel = Player.Hit[TargetCategory][TargetUnitName].ThreatLevel
+        local TargetThreatType = Player.Hit[TargetCategory][TargetUnitName].ThreatType
         
         Player.Destroy[TargetCategory] = Player.Destroy[TargetCategory] or {}
         Player.Destroy[TargetCategory][TargetType] = Player.Destroy[TargetCategory][TargetType] or {}
@@ -994,8 +1084,9 @@ function SCORING:_EventOnDeadOrCrash( Event )
 
         if TargetCoalition then
           if InitCoalition == TargetCoalition then
-            local ThreatLevelTarget, ThreatTypeTarget = TargetUnit:GetThreatLevel()
-            local ThreatLevelPlayer = Player.UNIT:GetThreatLevel() / 10 + 1
+            local ThreatLevelTarget = TargetThreatLevel
+            local ThreatTypeTarget = TargetThreatType
+            local ThreatLevelPlayer = Player.ThreatLevel / 10 + 1
             local ThreatPenalty = math.ceil( ( ThreatLevelTarget / ThreatLevelPlayer ) * self.ScaleDestroyPenalty / 10 )
             self:E( { ThreatLevel = ThreatPenalty, ThreatLevelTarget = ThreatLevelTarget, ThreatTypeTarget = ThreatTypeTarget, ThreatLevelPlayer = ThreatLevelPlayer  } )
             
@@ -1022,11 +1113,14 @@ function SCORING:_EventOnDeadOrCrash( Event )
                 :ToAllIf( self:IfMessagesDestroy() and self:IfMessagesToAll() )
                 :ToCoalitionIf( InitCoalition, self:IfMessagesDestroy() and self:IfMessagesToCoalition() )
             end
+
+            Destroyed = true
             self:ScoreCSV( PlayerName, TargetPlayerName, "DESTROY_PENALTY", 1, ThreatPenalty, InitUnitName, InitUnitCoalition, InitUnitCategory, InitUnitType, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType )
           else
-  
-            local ThreatLevelTarget, ThreatTypeTarget = TargetUnit:GetThreatLevel()
-            local ThreatLevelPlayer = Player.UNIT:GetThreatLevel() / 10 + 1
+
+            local ThreatLevelTarget = TargetThreatLevel
+            local ThreatTypeTarget = TargetThreatType
+            local ThreatLevelPlayer = Player.ThreatLevel / 10 + 1
             local ThreatScore = math.ceil( ( ThreatLevelTarget / ThreatLevelPlayer )  * self.ScaleDestroyScore / 10 )
             
             self:E( { ThreatLevel = ThreatScore, ThreatLevelTarget = ThreatLevelTarget, ThreatTypeTarget = ThreatTypeTarget, ThreatLevelPlayer = ThreatLevelPlayer  } )
@@ -1053,6 +1147,7 @@ function SCORING:_EventOnDeadOrCrash( Event )
                 :ToAllIf( self:IfMessagesDestroy() and self:IfMessagesToAll() )
                 :ToCoalitionIf( InitCoalition, self:IfMessagesDestroy() and self:IfMessagesToCoalition() )
             end
+            Destroyed = true
             self:ScoreCSV( PlayerName, TargetPlayerName, "DESTROY_SCORE", 1, ThreatScore, InitUnitName, InitUnitCoalition, InitUnitCategory, InitUnitType, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType )
             
             local UnitName = TargetUnit:GetName()
@@ -1068,6 +1163,7 @@ function SCORING:_EventOnDeadOrCrash( Event )
                 :ToAllIf( self:IfMessagesScore() and self:IfMessagesToAll() )
                 :ToCoalitionIf( InitCoalition, self:IfMessagesScore() and self:IfMessagesToCoalition() )
               self:ScoreCSV( PlayerName, TargetPlayerName, "DESTROY_SCORE", 1, Score, InitUnitName, InitUnitCoalition, InitUnitCategory, InitUnitType, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType )
+              Destroyed = true
             end
             
             -- Check if there are Zones where the destruction happened.
@@ -1086,6 +1182,7 @@ function SCORING:_EventOnDeadOrCrash( Event )
                   :ToAllIf( self:IfMessagesZone() and self:IfMessagesToAll() )
                   :ToCoalitionIf( InitCoalition, self:IfMessagesZone() and self:IfMessagesToCoalition() )
                 self:ScoreCSV( PlayerName, TargetPlayerName, "DESTROY_SCORE", 1, Score, InitUnitName, InitUnitCoalition, InitUnitCategory, InitUnitType, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType )
+                Destroyed = true
               end
             end
                           
@@ -1107,9 +1204,17 @@ function SCORING:_EventOnDeadOrCrash( Event )
                     )
                 :ToAllIf( self:IfMessagesZone() and self:IfMessagesToAll() )
                 :ToCoalitionIf( InitCoalition, self:IfMessagesZone() and self:IfMessagesToCoalition() )
+              Destroyed = true
               self:ScoreCSV( PlayerName, "", "DESTROY_SCORE", 1, Score, InitUnitName, InitUnitCoalition, InitUnitCategory, InitUnitType, TargetUnitName, "", "Scenery", TargetUnitType )
             end
           end
+        end
+        
+        -- Delete now the hit cache if the target was destroyed.
+        -- Otherwise points will be granted every time a target gets killed by the players that hit that target.
+        -- This is only relevant for player to player destroys.
+        if Destroyed then
+          Player.Hit[TargetCategory][TargetUnitName].TimeStamp = 0
         end
       end
     end

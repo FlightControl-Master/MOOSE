@@ -1,0 +1,536 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+	<head>
+		<link rel="stylesheet" href="stylesheet.css" type="text/css"/>
+	</head>
+<body>
+<div id="container">
+<div id="product">
+	<div id="product_logo"></div>
+	<div id="product_name"><big><b></b></big></div>
+	<div id="product_description"></div>
+</div>
+<div id="main">
+	<div id="navigation">
+		<h2>Modules</h2>
+			<ul><li>
+				<a href="index.html">index</a>
+			</li></ul>
+		<ul>
+					<li><a href="AI_Balancer.html">AI_Balancer</a></li>
+					<li><a href="AI_Cap.html">AI_Cap</a></li>
+					<li><a href="AI_Cas.html">AI_Cas</a></li>
+					<li><a href="AI_Patrol.html">AI_Patrol</a></li>
+					<li><a href="Account.html">Account</a></li>
+					<li><a href="Airbase.html">Airbase</a></li>
+					<li><a href="AirbasePolice.html">AirbasePolice</a></li>
+					<li><a href="Assign.html">Assign</a></li>
+					<li><a href="Base.html">Base</a></li>
+					<li><a href="Cargo.html">Cargo</a></li>
+					<li><a href="CleanUp.html">CleanUp</a></li>
+					<li><a href="Client.html">Client</a></li>
+					<li><a href="CommandCenter.html">CommandCenter</a></li>
+					<li><a href="Controllable.html">Controllable</a></li>
+					<li><a href="Database.html">Database</a></li>
+					<li><a href="Detection.html">Detection</a></li>
+					<li><a href="DetectionManager.html">DetectionManager</a></li>
+					<li><a href="Escort.html">Escort</a></li>
+					<li><a href="Event.html">Event</a></li>
+					<li><a href="Fsm.html">Fsm</a></li>
+					<li><a href="Group.html">Group</a></li>
+					<li><a href="Identifiable.html">Identifiable</a></li>
+					<li><a href="Menu.html">Menu</a></li>
+					<li><a href="Message.html">Message</a></li>
+					<li><a href="MissileTrainer.html">MissileTrainer</a></li>
+					<li><a href="Mission.html">Mission</a></li>
+					<li><a href="Movement.html">Movement</a></li>
+					<li><a href="Object.html">Object</a></li>
+					<li><a href="Point.html">Point</a></li>
+					<li><a href="Positionable.html">Positionable</a></li>
+					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
+					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
+					<li><a href="Radio.html">Radio</a></li>
+					<li><a href="Route.html">Route</a></li>
+					<li><a href="Scenery.html">Scenery</a></li>
+					<li><a href="ScheduleDispatcher.html">ScheduleDispatcher</a></li>
+					<li><a href="Scheduler.html">Scheduler</a></li>
+					<li><a href="Scoring.html">Scoring</a></li>
+					<li><a href="Sead.html">Sead</a></li>
+					<li><a href="Set.html">Set</a></li>
+					<li><a href="Smoke.html">Smoke</a></li>
+					<li><a href="Spawn.html">Spawn</a></li>
+					<li><a href="Static.html">Static</a></li>
+					<li><a href="Task.html">Task</a></li>
+					<li><a href="Task_A2G.html">Task_A2G</a></li>
+					<li>Task_A2G_Dispatcher</li>
+					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
+					<li><a href="Unit.html">Unit</a></li>
+					<li><a href="Utils.html">Utils</a></li>
+					<li><a href="Zone.html">Zone</a></li>
+					<li><a href="routines.html">routines</a></li>
+		</ul>
+	</div>
+	<div id="content">
+   <h1>Module <code>Task_A2G_Dispatcher</code></h1>
+   
+<p><strong>Tasking</strong> - The TASK<em>A2G</em>DISPATCHER creates and manages player TASK_A2G tasks based on detected targets.</p>
+
+   
+
+<hr/>
+
+<h1>1) <a href="##(TASK_A2G_DISPATCHER)">#TASK<em>A2G</em>DISPATCHER</a> class, extends <a href="##(DETECTION_MANAGER)">#DETECTION_MANAGER</a></h1>
+
+<p>The <a href="##(TASK_A2G_DISPATCHER)">#TASK<em>A2G</em>DISPATCHER</a> class implements the dynamic dispatching of tasks upon groups of detected units determined a <a href="Set.html">Set</a> of FAC (groups).
+The FAC will detect units, will group them, and will dispatch <a href="Task.html">Task</a>s to groups. Depending on the type of target detected, different tasks will be dispatched.
+Find a summary below describing for which situation a task type is created:</p>
+
+<ul>
+    <li><strong>CAS Task</strong>: Is created when there are enemy ground units within range of the FAC, while there are friendly units in the FAC perimeter.</li>
+    <li><strong>BAI Task</strong>: Is created when there are enemy ground units within range of the FAC, while there are NO other friendly units within the FAC perimeter.</li>
+    <li><strong>SEAD Task</strong>: Is created when there are enemy ground units wihtin range of the FAC, with air search radars.</li>
+</ul>
+
+<p>Other task types will follow...</p>
+
+<h2>3.1) TASK<em>A2G</em>DISPATCHER constructor:</h2>
+<p>The <a href="##(TASK_A2G_DISPATCHER).New">TASK<em>A2G</em>DISPATCHER.New</a>() method creates a new TASK<em>A2G</em>DISPATCHER instance.</p>
+
+<hr/>
+
+<h1><strong>API CHANGE HISTORY</strong></h1>
+
+<p>The underlying change log documents the API changes. Please read this carefully. The following notation is used:</p>
+
+<ul>
+    <li><strong>Added</strong> parts are expressed in bold type face.</li>
+    <li><em>Removed</em> parts are expressed in italic type face.</li>
+</ul>
+
+<p>Hereby the change log:</p>
+
+<p>2017-03-09: Initial class and API.</p>
+
+<hr/>
+
+<h1><strong>AUTHORS and CONTRIBUTIONS</strong></h1>
+
+<h3>Contributions:</h3>
+
+<h3>Authors:</h3>
+
+<ul>
+    <li><strong>FlightControl</strong>: Concept, Design &amp; Programming.</li>
+</ul>
+
+
+	<h2>Global(s)</h2>
+	<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#TASK_A2G_DISPATCHER">TASK_A2G_DISPATCHER</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+			<h2><a id="#(TASK_A2G_DISPATCHER)">Type <code>TASK_A2G_DISPATCHER</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G_DISPATCHER).ClassName">TASK_A2G_DISPATCHER.ClassName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G_DISPATCHER).Detection">TASK_A2G_DISPATCHER.Detection</a></td>
+		<td class="summary">
+<p>The DETECTION_BASE object that is used to report the detected objects.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G_DISPATCHER).EvaluateBAI">TASK_A2G_DISPATCHER:EvaluateBAI(DetectedItem, FriendlyCoalition)</a></td>
+		<td class="summary">
+<p>Creates a BAI task when there are targets for it.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G_DISPATCHER).EvaluateCAS">TASK_A2G_DISPATCHER:EvaluateCAS(DetectedItem)</a></td>
+		<td class="summary">
+<p>Creates a CAS task when there are targets for it.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G_DISPATCHER).EvaluateRemoveTask">TASK_A2G_DISPATCHER:EvaluateRemoveTask(Mission, Task, DetectedItem)</a></td>
+		<td class="summary">
+<p>Evaluates the removal of the Task from the Mission.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G_DISPATCHER).EvaluateSEAD">TASK_A2G_DISPATCHER:EvaluateSEAD(DetectedItem)</a></td>
+		<td class="summary">
+<p>Creates a SEAD task when there are targets for it.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G_DISPATCHER).Mission">TASK_A2G_DISPATCHER.Mission</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G_DISPATCHER).New">TASK_A2G_DISPATCHER:New(Mission, SetGroup, Detection)</a></td>
+		<td class="summary">
+<p>TASK<em>A2G</em>DISPATCHER constructor.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G_DISPATCHER).OnAfterAssign">TASK_A2G_DISPATCHER:OnAfterAssign(From, Event, To, Task, TaskUnit, PlayerName)</a></td>
+		<td class="summary">
+<p>OnAfter Transition Handler for Event Assign.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G_DISPATCHER).ProcessDetected">TASK_A2G_DISPATCHER:ProcessDetected(Detection)</a></td>
+		<td class="summary">
+<p>Assigns tasks in relation to the detected items to the <a href="Set.html##(SET_GROUP)">Set#SET_GROUP</a>.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G_DISPATCHER).SetGroup">TASK_A2G_DISPATCHER.SetGroup</a></td>
+		<td class="summary">
+<p>The groups to which the FAC will report to.</p>
+</td>
+		</tr>
+	</table>
+
+	<h2>Global(s)</h2>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(TASK_A2G_DISPATCHER)">#TASK_A2G_DISPATCHER</a></em>
+<a id="TASK_A2G_DISPATCHER" >
+<strong>TASK_A2G_DISPATCHER</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+	<h2><a id="#(Task_A2G_Dispatcher)" >Type <code>Task_A2G_Dispatcher</code></a></h2>
+	
+			<h2><a id="#(TASK_A2G_DISPATCHER)" >Type <code>TASK_A2G_DISPATCHER</code></a></h2>
+				
+<p>TASK<em>A2G</em>DISPATCHER class.</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(TASK_A2G_DISPATCHER).ClassName" >
+<strong>TASK_A2G_DISPATCHER.ClassName</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="Functional.Detection.html##(DETECTION_BASE)">Functional.Detection#DETECTION_BASE</a></em>
+<a id="#(TASK_A2G_DISPATCHER).Detection" >
+<strong>TASK_A2G_DISPATCHER.Detection</strong>
+</a>
+</dt>
+<dd>
+	
+<p>The DETECTION_BASE object that is used to report the detected objects.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_A2G_DISPATCHER).EvaluateBAI" >
+<strong>TASK_A2G_DISPATCHER:EvaluateBAI(DetectedItem, FriendlyCoalition)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Creates a BAI task when there are targets for it.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Functional.Detection.html##(DETECTION_AREAS.DetectedItem)">Functional.Detection#DETECTION_AREAS.DetectedItem</a> DetectedItem </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> FriendlyCoalition </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="Tasking.Task.html##(TASK)">Tasking.Task#TASK</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_A2G_DISPATCHER).EvaluateCAS" >
+<strong>TASK_A2G_DISPATCHER:EvaluateCAS(DetectedItem)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Creates a CAS task when there are targets for it.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Functional.Detection.html##(DETECTION_AREAS.DetectedItem)">Functional.Detection#DETECTION_AREAS.DetectedItem</a> DetectedItem </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="Tasking.Task.html##(TASK)">Tasking.Task#TASK</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_A2G_DISPATCHER).EvaluateRemoveTask" >
+<strong>TASK_A2G_DISPATCHER:EvaluateRemoveTask(Mission, Task, DetectedItem)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Evaluates the removal of the Task from the Mission.</p>
+
+	
+<p>Can only occur when the DetectedItem is Changed AND the state of the Task is "Planned".</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Tasking.Mission.html##(MISSION)">Tasking.Mission#MISSION</a> Mission </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Tasking.Task.html##(TASK)">Tasking.Task#TASK</a> Task </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Functional.Detection.html##(DETECTION_AREAS.DetectedItem)">Functional.Detection#DETECTION_AREAS.DetectedItem</a> DetectedItem </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="Tasking.Task.html##(TASK)">Tasking.Task#TASK</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_A2G_DISPATCHER).EvaluateSEAD" >
+<strong>TASK_A2G_DISPATCHER:EvaluateSEAD(DetectedItem)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Creates a SEAD task when there are targets for it.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Functional.Detection.html##(DETECTION_AREAS.DetectedItem)">Functional.Detection#DETECTION_AREAS.DetectedItem</a> DetectedItem </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return values</h3>
+			<ol>
+				<li>
+				
+<p><em><a href="Set.html##(SET_UNIT)">Set#SET_UNIT</a>:</em>
+TargetSetUnit: The target set of units.</p>
+
+				</li>
+				<li>
+				
+<p><em>#nil:</em>
+If there are no targets to be set.</p>
+
+				</li>
+			</ol>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="Tasking.Mission.html##(MISSION)">Tasking.Mission#MISSION</a></em>
+<a id="#(TASK_A2G_DISPATCHER).Mission" >
+<strong>TASK_A2G_DISPATCHER.Mission</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_A2G_DISPATCHER).New" >
+<strong>TASK_A2G_DISPATCHER:New(Mission, SetGroup, Detection)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>TASK<em>A2G</em>DISPATCHER constructor.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Tasking.Mission.html##(MISSION)">Tasking.Mission#MISSION</a> Mission </em></code>: 
+The mission for which the task dispatching is done.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Set.html##(SET_GROUP)">Set#SET_GROUP</a> SetGroup </em></code>: 
+The set of groups that can join the tasks within the mission.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Functional.Detection.html##(DETECTION_BASE)">Functional.Detection#DETECTION_BASE</a> Detection </em></code>: 
+The detection results that are used to dynamically assign new tasks to human players.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(TASK_A2G_DISPATCHER)">#TASK<em>A2G</em>DISPATCHER</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_A2G_DISPATCHER).OnAfterAssign" >
+<strong>TASK_A2G_DISPATCHER:OnAfterAssign(From, Event, To, Task, TaskUnit, PlayerName)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>OnAfter Transition Handler for Event Assign.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string From </em></code>: 
+The From State string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: 
+The Event string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: 
+The To State string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Tasking.Task_A2G.html##(TASK_A2G)">Tasking.Task<em>A2G#TASK</em>A2G</a> Task </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> TaskUnit </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string PlayerName </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_A2G_DISPATCHER).ProcessDetected" >
+<strong>TASK_A2G_DISPATCHER:ProcessDetected(Detection)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Assigns tasks in relation to the detected items to the <a href="Set.html##(SET_GROUP)">Set#SET_GROUP</a>.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Functional.Detection.html##(DETECTION_BASE)">Functional.Detection#DETECTION_BASE</a> Detection </em></code>: 
+The detection created by the <a href="Detection.html##(DETECTION_BASE)">Detection#DETECTION_BASE</a> derived object.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+Return true if you want the task assigning to continue... false will cancel the loop.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="Set.html##(SET_GROUP)">Set#SET_GROUP</a></em>
+<a id="#(TASK_A2G_DISPATCHER).SetGroup" >
+<strong>TASK_A2G_DISPATCHER.SetGroup</strong>
+</a>
+</dt>
+<dd>
+	
+<p>The groups to which the FAC will report to.</p>
+
+</dd>
+</dl>
+
+</div>
+
+</div>
+</body>
+</html>

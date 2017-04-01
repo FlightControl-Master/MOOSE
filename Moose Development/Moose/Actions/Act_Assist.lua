@@ -108,7 +108,7 @@ do -- ACT_ASSIST
   function ACT_ASSIST:onafterStart( ProcessUnit, From, Event, To )
   
     local ProcessGroup = ProcessUnit:GetGroup()
-    local MissionMenu = self:GetMission():GetMissionMenu( ProcessGroup )
+    local MissionMenu = self:GetMission():GetMenu( ProcessGroup )
      
     local function MenuSmoke( MenuParam )
       self:E( MenuParam )
@@ -124,6 +124,17 @@ do -- ACT_ASSIST
     self.MenuSmokeOrange = MENU_GROUP_COMMAND:New( ProcessGroup, "Drop Orange smoke on targets", self.Menu, MenuSmoke, { self = self, SmokeColor = SMOKECOLOR.Orange } )
     self.MenuSmokeRed    = MENU_GROUP_COMMAND:New( ProcessGroup, "Drop Red smoke on targets", self.Menu, MenuSmoke, { self = self, SmokeColor = SMOKECOLOR.Red } )
     self.MenuSmokeWhite  = MENU_GROUP_COMMAND:New( ProcessGroup, "Drop White smoke on targets", self.Menu, MenuSmoke, { self = self, SmokeColor = SMOKECOLOR.White } )
+  end
+
+  --- StateMachine callback function
+  -- @param #ACT_ASSIST self
+  -- @param Wrapper.Controllable#CONTROLLABLE ProcessUnit
+  -- @param #string Event
+  -- @param #string From
+  -- @param #string To
+  function ACT_ASSIST:onafterStop( ProcessUnit, From, Event, To )
+     
+    self.Menu:Remove() -- When stopped, remove the menus
   end
   
 end
