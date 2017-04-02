@@ -75,6 +75,8 @@ do -- TASK_CARGO
   
     self.SetCargo = SetCargo
     self.TaskType = TaskType
+    
+    self.DeployZones = {} -- setmetatable( {}, { __mode = "v" } ) -- weak table on value
 
     Mission:AddTask( self )
     
@@ -83,14 +85,14 @@ do -- TASK_CARGO
 
     Fsm:AddProcess   ( "Planned", "Accept", ACT_ASSIGN_ACCEPT:New( self.TaskBriefing ), { Assigned = "SelectAction", Rejected = "Reject" }  )
     
-    Fsm:AddTransition( { "Assigned", "Landed", "Boarded", "Deployed" } , "SelectAction", "WaitingForCommand" )
+    Fsm:AddTransition( "*", "SelectAction", "WaitingForCommand" )
 
     Fsm:AddTransition( "WaitingForCommand", "RouteToPickup", "RoutingToPickup" )
     Fsm:AddProcess   ( "RoutingToPickup", "RouteToPickupPoint", ACT_ROUTE_POINT:New(), { Arrived = "ArriveAtPickup" } )
     Fsm:AddTransition( "Arrived", "ArriveAtPickup", "ArrivedAtPickup" )
 
     Fsm:AddTransition( "WaitingForCommand", "RouteToDeploy", "RoutingToDeploy" )
-    Fsm:AddProcess   ( "RoutingToDeploy", "RouteToDeployPoint", ACT_ROUTE_POINT:New(), { Arrived = "ArriveAtDeploy" } )
+    Fsm:AddProcess   ( "RoutingToDeploy", "RouteToDeployZone", ACT_ROUTE_ZONE:New(), { Arrived = "ArriveAtDeploy" } )
     Fsm:AddTransition( "ArrivedAtDeploy", "ArriveAtDeploy", "ArrivedAtDeploy" )
     
     Fsm:AddTransition( { "ArrivedAtPickup", "ArrivedAtDeploy" }, "Land", "Landing" )
@@ -146,14 +148,27 @@ do -- TASK_CARGO
           end
           
           if Cargo:IsLoaded() then
-            MENU_GROUP_COMMAND:New(
-              TaskUnit:GetGroup(),
-              "Deploy cargo " .. Cargo.Name,
-              TaskUnit.Menu,
-              self.MenuBoardCargo,
-              self,
-              Cargo
-            )
+            for DeployZoneName, DeployZone in pairs( Task.DeployZones ) do
+              if Cargo:IsInZone( DeployZone ) then
+                MENU_GROUP_COMMAND:New(
+                  TaskUnit:GetGroup(),
+                  "Deploy cargo " .. Cargo.Name,
+                  TaskUnit.Menu,
+                  self.MenuUnBoardCargo,
+                  self,
+                  Cargo
+                )
+              else
+                MENU_GROUP_COMMAND:New(
+                  TaskUnit:GetGroup(),
+                  "Route to deploy zone " .. DeployZoneName,
+                  TaskUnit.Menu,
+                  self.MenuRouteToDeploy,
+                  self,
+                  DeployZone
+                )
+              end
+            end
           end
         
         end
@@ -174,8 +189,16 @@ do -- TASK_CARGO
       self:__PrepareBoarding( 1.0, Cargo )
     end
     
+    function Fsm:MenuUnBoardCargo( Cargo )
+      self:__PrepareUnBoarding( 1.0, Cargo )
+    end
+    
     function Fsm:MenuRouteToPickup( Cargo )
       self:__RouteToPickup( 1.0, Cargo )
+    end
+    
+    function Fsm:MenuRouteToDeploy( DeployZone )
+      self:__RouteToDeploy( 1.0, DeployZone )
     end
     
     --- Route to Cargo
@@ -196,15 +219,53 @@ do -- TASK_CARGO
     -- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
     -- @param Tasking.Task_CARGO#TASK_CARGO Task
-    function Fsm:OnAfterArriveAtPickup( TaskUnit, Task )
+    function Fsm:onafterArriveAtPickup( TaskUnit, Task )
       self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
       
       if self.Cargo:IsInRadius( TaskUnit:GetPointVec2() ) then
-        self:__Land( -0.1 )
+        if TaskUnit:IsAir() then
+          self:__Land( -0.1 )
+        else
+          self:__SelectAction( -0.1 )
+        end
       else
-        self:__ArriveAtCargo( -10 )      
+        self:__ArriveAtPickup( -10 )      
       end
     end
+
+
+    --- Route to DeployZone
+    -- @param #FSM_PROCESS self
+    -- @param Wrapper.Unit#UNIT TaskUnit
+    function Fsm:onafterRouteToDeploy( TaskUnit, Task, From, Event, To, DeployZone )
+      self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
+
+      
+      self.DeployZone = DeployZone
+      Task:SetDeployZone( self.DeployZone, TaskUnit )
+      self:__RouteToDeployZone( 0.1 )
+    end
+
+
+    --- 
+    -- @param #FSM_PROCESS self
+    -- @param Wrapper.Unit#UNIT TaskUnit
+    -- @param Tasking.Task_CARGO#TASK_CARGO Task
+    function Fsm:onafterArriveAtDeploy( TaskUnit, Task )
+      self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
+      
+      if TaskUnit:IsInZone( self.DeployZone ) then
+        if TaskUnit:IsAir() then
+          self:__Land( -0.1 )
+        else
+          self:__SelectAction( -0.1 )
+        end
+      else
+        self:__ArriveAtDeploy( -10 )      
+      end
+    end
+
+
 
     --- 
     -- @param #FSM_PROCESS self
@@ -291,7 +352,8 @@ do -- TASK_CARGO
         self:__ArriveAtCargo( -0.1 )
       end
     end
-    
+
+
     --- 
     -- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
@@ -300,7 +362,52 @@ do -- TASK_CARGO
       self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
       
       Task:GetMission():GetCommandCenter():MessageToGroup( "Boarded ...", TaskUnit:GetGroup(), "Boarding" )
+      self:__SelectAction( 1 )
     end
+    
+
+    --- 
+    -- @param #FSM_PROCESS self
+    -- @param Wrapper.Unit#UNIT TaskUnit
+    -- @param Tasking.Task_CARGO#TASK_CARGO Task
+    function Fsm:OnAfterPrepareUnBoarding( TaskUnit, Task, From, Event, To, Cargo, DeployZone )
+      self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
+
+      self.DeployZone = DeployZone      
+      self.Cargo:__UnBoard( -0.1, DeployZone )
+    end
+    
+    --- 
+    -- @param #FSM_PROCESS self
+    -- @param Wrapper.Unit#UNIT TaskUnit
+    -- @param Tasking.Task_CARGO#TASK_CARGO Task
+    function Fsm:OnAfterUnBoard( TaskUnit, Task )
+      self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
+
+      function self.Cargo:OnEnterUnLoaded( From, Event, To, TaskUnit, TaskProcess )
+      
+        self:E({From, Event, To, TaskUnit, TaskProcess })
+        
+        TaskProcess:__UnBoarded( 0.1 )
+      
+      end
+
+      Task:GetMission():GetCommandCenter():MessageToGroup( "UnBoarding ...", TaskUnit:GetGroup(), "UnBoarding" )
+      self.Cargo:__UnBoard( -0.1, self.DeployZone )
+    end
+
+
+    --- 
+    -- @param #FSM_PROCESS self
+    -- @param Wrapper.Unit#UNIT TaskUnit
+    -- @param Tasking.Task_CARGO#TASK_CARGO Task
+    function Fsm:OnAfterUnBoarded( TaskUnit, Task )
+      self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
+      
+      Task:GetMission():GetCommandCenter():MessageToGroup( "UnBoarded ...", TaskUnit:GetGroup(), "UnBoarding" )
+      self:__SelectAction( 1 )
+    end
+
     
     return self
  
@@ -310,6 +417,7 @@ do -- TASK_CARGO
   function TASK_CARGO:GetPlannedMenuText()
     return self:GetStateString() .. " - " .. self:GetTaskName() .. " ( " .. self.TargetSetUnit:GetUnitTypesText() .. " )"
   end
+
 
   --- @param #TASK_CARGO self
   -- @param AI.AI_Cargo#AI_CARGO Cargo The cargo.
@@ -326,41 +434,57 @@ do -- TASK_CARGO
     return self
   end
   
+
   --- @param #TASK_CARGO self
-  -- @param Core.Point#POINT_VEC2 TargetPointVec2 The PointVec2 object where the Target is located on the map.
+  -- @param Core.Zone#ZONE DeployZone
   -- @param Wrapper.Unit#UNIT TaskUnit
-  function TASK_CARGO:SetTargetPointVec2( TargetPointVec2, TaskUnit )
+  -- @return #TASK_CARGO
+  function TASK_CARGO:SetDeployZone( DeployZone, TaskUnit )
   
     local ProcessUnit = self:GetUnitProcess( TaskUnit )
 
-    local ActRouteTarget = ProcessUnit:GetProcess( "Engaging", "RouteToTargetPoint" ) -- Actions.Act_Route#ACT_ROUTE_POINT
-    ActRouteTarget:SetPointVec2( TargetPointVec2 )
+    local ActRouteDeployZone = ProcessUnit:GetProcess( "RoutingToDeploy", "RouteToDeployZone" ) -- Actions.Act_Route#ACT_ROUTE_ZONE
+    ActRouteDeployZone:SetZone( DeployZone )
+    return self
   end
    
-
-  --- @param #TASK_CARGO self
-  -- @param Wrapper.Unit#UNIT TaskUnit
-  -- @return Core.Point#POINT_VEC2 The PointVec2 object where the Target is located on the map.
-  function TASK_CARGO:GetTargetPointVec2( TaskUnit )
-
-    local ProcessUnit = self:GetUnitProcess( TaskUnit )
-
-    local ActRouteTarget = ProcessUnit:GetProcess( "Engaging", "RouteToTargetPoint" ) -- Actions.Act_Route#ACT_ROUTE_POINT
-    return ActRouteTarget:GetPointVec2()
-  end
-
-
-  --- @param #TASK_CARGO self
-  -- @param Core.Zone#ZONE_BASE TargetZone The Zone object where the Target is located on the map.
-  -- @param Wrapper.Unit#UNIT TaskUnit
-  function TASK_CARGO:SetTargetZone( TargetZone, TaskUnit )
   
-    local ProcessUnit = self:GetUnitProcess( TaskUnit )
+  --- @param #TASK_CARGO self
+  -- @param Core.Zone#ZONE DeployZone
+  -- @param Wrapper.Unit#UNIT TaskUnit
+  -- @return #TASK_CARGO
+  function TASK_CARGO:AddDeployZone( DeployZone, TaskUnit )
+  
+    self.DeployZones[DeployZone:GetName()] = DeployZone
 
-    local ActRouteTarget = ProcessUnit:GetProcess( "Engaging", "RouteToTargetZone" ) -- Actions.Act_Route#ACT_ROUTE_ZONE
-    ActRouteTarget:SetZone( TargetZone )
+    return self
   end
-   
+  
+  --- @param #TASK_CARGO self
+  -- @param Core.Zone#ZONE DeployZone
+  -- @param Wrapper.Unit#UNIT TaskUnit
+  -- @return #TASK_CARGO
+  function TASK_CARGO:RemoveDeployZone( DeployZone, TaskUnit )
+  
+    self.DeployZones[DeployZone:GetName()] = nil
+
+    return self
+  end
+  
+  --- @param #TASK_CARGO self
+  -- @param @list<Core.Zone#ZONE> DeployZones
+  -- @param Wrapper.Unit#UNIT TaskUnit
+  -- @return #TASK_CARGO
+  function TASK_CARGO:SetDeployZones( DeployZones, TaskUnit )
+  
+    for DeployZoneID, DeployZone in pairs( DeployZones ) do
+      self.DeployZones[DeployZone:GetName()] = DeployZone
+    end
+
+    return self
+  end
+  
+  
 
   --- @param #TASK_CARGO self
   -- @param Wrapper.Unit#UNIT TaskUnit

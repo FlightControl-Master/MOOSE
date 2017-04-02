@@ -302,7 +302,12 @@ end
 function AI_CARGO:IsInRadius( PointVec2 )
   self:F( { PointVec2 } )
 
-  local Distance = PointVec2:DistanceFromPointVec2( self.CargoObject:GetPointVec2() )
+  local Distance = 0
+  if self:IsLoaded() then
+    Distance = PointVec2:DistanceFromPointVec2( self.CargoCarrier:GetPointVec2() )
+  else
+    Distance = PointVec2:DistanceFromPointVec2( self.CargoObject:GetPointVec2() )
+  end
   self:T( Distance )
   
   if Distance <= self.ReportRadius then
@@ -310,6 +315,24 @@ function AI_CARGO:IsInRadius( PointVec2 )
   else
     return false
   end
+end
+
+
+--- Check if Cargo is the given @{Zone}.
+-- @param #AI_CARGO self
+-- @param Core.Zone#ZONE_BASE Zone
+-- @return #boolean **true** if cargo is in the Zone, **false** if cargo is not in the Zone.
+function AI_CARGO:IsInZone( Zone )
+  self:F( { Zone } )
+
+  if self:IsLoaded() then
+    return Zone:IsPointVec2InZone( self.CargoCarrier:GetPointVec2() )
+  else
+    return Zone:IsPointVec2InZone( self.CargoObject:GetPointVec2() )
+  end  
+  
+  return nil
+
 end
 
 
