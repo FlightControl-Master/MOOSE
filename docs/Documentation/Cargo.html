@@ -63,6 +63,7 @@
 					<li><a href="Task.html">Task</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
 					<li><a href="Task_A2G_Dispatcher.html">Task_A2G_Dispatcher</a></li>
+					<li><a href="Task_CARGO.html">Task_CARGO</a></li>
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
 					<li><a href="Unit.html">Unit</a></li>
 					<li><a href="Utils.html">Utils</a></li>
@@ -97,60 +98,7 @@
     <li>AI<em>CARGO</em>GROUPED, represented by a Group of CARGO_UNITs.</li>
 </ul>
 
-<h1>1) <a href="##(AI_CARGO)">#AI_CARGO</a> class, extends <a href="Fsm.html##(FSM_PROCESS)">Fsm#FSM_PROCESS</a></h1>
 
-<p>The <a href="##(AI_CARGO)">#AI_CARGO</a> class defines the core functions that defines a cargo object within MOOSE.
-A cargo is a logical object defined that is available for transport, and has a life status within a simulation.</p>
-
-<p>The AI<em>CARGO is a state machine: it manages the different events and states of the cargo.
-All derived classes from AI</em>CARGO follow the same state machine, expose the same cargo event functions, and provide the same cargo states.</p>
-
-<h2>1.2.1) AI_CARGO Events:</h2>
-
-<ul>
-    <li><a href="##(AI_CARGO).Board">AI_CARGO.Board</a>( ToCarrier ):  Boards the cargo to a carrier.</li>
-    <li><a href="##(AI_CARGO).Load">AI_CARGO.Load</a>( ToCarrier ): Loads the cargo into a carrier, regardless of its position.</li>
-    <li><a href="##(AI_CARGO).UnBoard">AI_CARGO.UnBoard</a>( ToPointVec2 ): UnBoard the cargo from a carrier. This will trigger a movement of the cargo to the option ToPointVec2.</li>
-    <li><a href="##(AI_CARGO).UnLoad">AI_CARGO.UnLoad</a>( ToPointVec2 ): UnLoads the cargo from a carrier.</li>
-    <li><a href="##(AI_CARGO).Dead">AI_CARGO.Dead</a>( Controllable ): The cargo is dead. The cargo process will be ended.</li>
-</ul>
-
-<h2>1.2.2) AI_CARGO States:</h2>
-
-<ul>
-    <li><strong>UnLoaded</strong>: The cargo is unloaded from a carrier.</li>
-    <li><strong>Boarding</strong>: The cargo is currently boarding (= running) into a carrier.</li>
-    <li><strong>Loaded</strong>: The cargo is loaded into a carrier.</li>
-    <li><strong>UnBoarding</strong>: The cargo is currently unboarding (=running) from a carrier.</li>
-    <li><strong>Dead</strong>: The cargo is dead ...</li>
-    <li><strong>End</strong>: The process has come to an end.</li>
-</ul>
-
-<h2>1.2.3) AI_CARGO state transition methods:</h2>
-
-<p>State transition functions can be set <strong>by the mission designer</strong> customizing or improving the behaviour of the state.
-There are 2 moments when state transition methods will be called by the state machine:</p>
-
-<ul>
-    <li><p><strong>Leaving</strong> the state. 
-    The state transition method needs to start with the name <strong>OnLeave + the name of the state</strong>. 
-    If the state transition method returns false, then the processing of the state transition will not be done!
-    If you want to change the behaviour of the AIControllable at this event, return false, 
-    but then you'll need to specify your own logic using the AIControllable!</p></li>
-    <li><p><strong>Entering</strong> the state. 
-    The state transition method needs to start with the name <strong>OnEnter + the name of the state</strong>. 
-    These state transition methods need to provide a return value, which is specified at the function description.</p></li>
-</ul>
-
-<h1>2) #AI<em>CARGO</em>UNIT class</h1>
-
-<p>The AI<em>CARGO</em>UNIT class defines a cargo that is represented by a UNIT object within the simulator, and can be transported by a carrier.
-Use the event functions as described above to Load, UnLoad, Board, UnBoard the AI<em>CARGO</em>UNIT objects to and from carriers.</p>
-
-<h1>5) #AI<em>CARGO</em>GROUPED class</h1>
-
-<p>The AI<em>CARGO</em>GROUPED class defines a cargo that is represented by a group of UNIT objects within the simulator, and can be transported by a carrier.
-Use the event functions as described above to Load, UnLoad, Board, UnBoard the AI<em>CARGO</em>UNIT objects to and from carriers.</p>
 
 <p>This module is still under construction, but is described above works already, and will keep working ...</p>
 
@@ -160,19 +108,25 @@ Use the event functions as described above to Load, UnLoad, Board, UnBoard the A
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="#AI_CARGO">AI_CARGO</a></td>
 		<td class="summary">
+<h1>AI_CARGO class, extends <a href="Fsm.html##(FSM_PROCESS)">Fsm#FSM_PROCESS</a></h1>
 
+<p>The AI_CARGO class defines the core functions that defines a cargo object within MOOSE.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="#AI_CARGO_GROUP">AI_CARGO_GROUP</a></td>
 		<td class="summary">
+<h1>AI_CARGO_GROUP class</h1>
 
+<p>The AI_CARGO_GROUP class defines a cargo that is represented by a group of <a href="Unit.html">Unit</a> objects within the simulator, and can be transported by a carrier.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="#AI_CARGO_GROUPED">AI_CARGO_GROUPED</a></td>
 		<td class="summary">
+<h1>AI_CARGO_GROUPED class</h1>
 
+<p>The AI_CARGO_GROUPED class defines a cargo that is represented by a group of UNIT objects within the simulator, and can be transported by a carrier.</p>
 </td>
 		</tr>
 		<tr>
@@ -190,7 +144,9 @@ Use the event functions as described above to Load, UnLoad, Board, UnBoard the A
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="#AI_CARGO_UNIT">AI_CARGO_UNIT</a></td>
 		<td class="summary">
+<h1>AI_CARGO_UNIT class, extends <a href="##(AI_CARGO_REPRESENTABLE)">#AI<em>CARGO</em>REPRESENTABLE</a></h1>
 
+<p>The AI_CARGO_UNIT class defines a cargo that is represented by a UNIT object within the simulator, and can be transported by a carrier.</p>
 </td>
 		</tr>
 		<tr>
@@ -221,21 +177,63 @@ Use the event functions as described above to Load, UnLoad, Board, UnBoard the A
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CARGO).ClassName">AI_CARGO.ClassName</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(AI_CARGO).Containable">AI_CARGO.Containable</a></td>
 		<td class="summary">
 <p>This flag defines if the cargo can be contained within a DCS Unit.</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CARGO).GetBoardingRange">AI_CARGO:GetBoardingRange()</a></td>
+		<td class="summary">
+<p>Get the range till cargo will board.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CARGO).GetName">AI_CARGO:GetName()</a></td>
+		<td class="summary">
+<p>Get the name of the Cargo.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CARGO).GetPointVec2">AI_CARGO:GetPointVec2()</a></td>
+		<td class="summary">
+<p>Get the current PointVec2 of the cargo.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CARGO).GetType">AI_CARGO:GetType()</a></td>
+		<td class="summary">
+<p>Get the type of the Cargo.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CARGO).IsInRadius">AI_CARGO:IsInRadius(PointVec2)</a></td>
+		<td class="summary">
+<p>Check if CargoCarrier is in the radius for the Cargo to be Loaded.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CARGO).IsInZone">AI_CARGO:IsInZone(Zone)</a></td>
+		<td class="summary">
+<p>Check if Cargo is the given <a href="Zone.html">Zone</a>.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CARGO).IsLoaded">AI_CARGO:IsLoaded()</a></td>
+		<td class="summary">
+<p>Check if cargo is loaded.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(AI_CARGO).IsNear">AI_CARGO:IsNear(PointVec2)</a></td>
 		<td class="summary">
 <p>Check if CargoCarrier is near the Cargo to be Loaded.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CARGO).IsUnLoaded">AI_CARGO:IsUnLoaded()</a></td>
+		<td class="summary">
+<p>Check if cargo is unloaded.</p>
 </td>
 		</tr>
 		<tr>
@@ -399,12 +397,6 @@ Use the event functions as described above to Load, UnLoad, Board, UnBoard the A
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CARGO_GROUP).ClassName">AI_CARGO_GROUP.ClassName</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(AI_CARGO_GROUP).Name">AI_CARGO_GROUP.Name</a></td>
 		<td class="summary">
 <p>A string defining the name of the cargo group. The name is the unique identifier of the cargo.</p>
@@ -420,12 +412,6 @@ Use the event functions as described above to Load, UnLoad, Board, UnBoard the A
 
 			<h2><a id="#(AI_CARGO_GROUPED)">Type <code>AI_CARGO_GROUPED</code></a></h2>
 				<table class="function_list">
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CARGO_GROUPED).ClassName">AI_CARGO_GROUPED.ClassName</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(AI_CARGO_GROUPED).New">AI_CARGO_GROUPED:New(CargoSet, Type, Name, Weight, ReportRadius, NearRadius)</a></td>
 		<td class="summary">
@@ -589,9 +575,9 @@ Use the event functions as described above to Load, UnLoad, Board, UnBoard the A
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CARGO_UNIT).ClassName">AI_CARGO_UNIT.ClassName</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CARGO_UNIT).Destroy">AI_CARGO_UNIT:Destroy()</a></td>
 		<td class="summary">
-
+<p>AI<em>CARGO</em>UNIT Destructor.</p>
 </td>
 		</tr>
 		<tr>
@@ -607,7 +593,7 @@ Use the event functions as described above to Load, UnLoad, Board, UnBoard the A
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CARGO_UNIT).onafterBoard">AI_CARGO_UNIT:onafterBoard(Event, From, To, CargoCarrier)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CARGO_UNIT).onafterBoard">AI_CARGO_UNIT:onafterBoard(Event, From, To, CargoCarrier, ...)</a></td>
 		<td class="summary">
 <p>Board Event.</p>
 </td>
@@ -619,7 +605,7 @@ Use the event functions as described above to Load, UnLoad, Board, UnBoard the A
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CARGO_UNIT).onenterBoarding">AI_CARGO_UNIT:onenterBoarding(Event, From, To, CargoCarrier)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CARGO_UNIT).onenterBoarding">AI_CARGO_UNIT:onenterBoarding(Event, From, To, CargoCarrier, ...)</a></td>
 		<td class="summary">
 <p>Enter Boarding State.</p>
 </td>
@@ -643,7 +629,7 @@ Use the event functions as described above to Load, UnLoad, Board, UnBoard the A
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CARGO_UNIT).onleaveBoarding">AI_CARGO_UNIT:onleaveBoarding(Event, From, To, CargoCarrier)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CARGO_UNIT).onleaveBoarding">AI_CARGO_UNIT:onleaveBoarding(Event, From, To, CargoCarrier, ...)</a></td>
 		<td class="summary">
 <p>Leave Boarding State.</p>
 </td>
@@ -667,6 +653,52 @@ Use the event functions as described above to Load, UnLoad, Board, UnBoard the A
 </dt>
 <dd>
 	
+<h1>AI_CARGO class, extends <a href="Fsm.html##(FSM_PROCESS)">Fsm#FSM_PROCESS</a></h1>
+
+<p>The AI_CARGO class defines the core functions that defines a cargo object within MOOSE.</p>
+
+	
+<p>A cargo is a logical object defined that is available for transport, and has a life status within a simulation.</p>
+
+<p>The AI_CARGO is a state machine: it manages the different events and states of the cargo.
+All derived classes from AI_CARGO follow the same state machine, expose the same cargo event functions, and provide the same cargo states.</p>
+
+<h2>AI_CARGO Events:</h2>
+
+<ul>
+    <li><a href="##(AI)">#AI</a>( ToCarrier ):  Boards the cargo to a carrier.</li>
+    <li><a href="##(AI)">#AI</a>( ToCarrier ): Loads the cargo into a carrier, regardless of its position.</li>
+    <li><a href="##(AI)">#AI</a>( ToPointVec2 ): UnBoard the cargo from a carrier. This will trigger a movement of the cargo to the option ToPointVec2.</li>
+    <li><a href="##(AI)">#AI</a>( ToPointVec2 ): UnLoads the cargo from a carrier.</li>
+    <li><a href="##(AI)">#AI</a>( Controllable ): The cargo is dead. The cargo process will be ended.</li>
+</ul>
+
+<h2>AI_CARGO States:</h2>
+
+<ul>
+    <li><strong>UnLoaded</strong>: The cargo is unloaded from a carrier.</li>
+    <li><strong>Boarding</strong>: The cargo is currently boarding (= running) into a carrier.</li>
+    <li><strong>Loaded</strong>: The cargo is loaded into a carrier.</li>
+    <li><strong>UnBoarding</strong>: The cargo is currently unboarding (=running) from a carrier.</li>
+    <li><strong>Dead</strong>: The cargo is dead ...</li>
+    <li><strong>End</strong>: The process has come to an end.</li>
+</ul>
+
+<h2>AI_CARGO state transition methods:</h2>
+
+<p>State transition functions can be set <strong>by the mission designer</strong> customizing or improving the behaviour of the state.
+There are 2 moments when state transition methods will be called by the state machine:</p>
+
+<ul>
+    <li><p><strong>Leaving</strong> the state. 
+    The state transition method needs to start with the name <strong>OnLeave + the name of the state</strong>. 
+    If the state transition method returns false, then the processing of the state transition will not be done!
+    If you want to change the behaviour of the AIControllable at this event, return false, 
+    but then you'll need to specify your own logic using the AIControllable!</p></li>
+    <li><p><strong>Entering</strong> the state. 
+    The state transition method needs to start with the name <strong>OnEnter + the name of the state</strong>. 
+    These state transition methods need to provide a return value, which is specified at the function description.</p></li>
+</ul>
 
 
 </dd>
@@ -681,6 +713,12 @@ Use the event functions as described above to Load, UnLoad, Board, UnBoard the A
 </dt>
 <dd>
 	
+<h1>AI_CARGO_GROUP class</h1>
+
+<p>The AI_CARGO_GROUP class defines a cargo that is represented by a group of <a href="Unit.html">Unit</a> objects within the simulator, and can be transported by a carrier.</p>
+
+	
+<p>Use the event functions as described above to Load, UnLoad, Board, UnBoard the AI_CARGO_GROUP to and from carrier.</p>
 
 
 </dd>
@@ -695,6 +733,12 @@ Use the event functions as described above to Load, UnLoad, Board, UnBoard the A
 </dt>
 <dd>
 	
+<h1>AI_CARGO_GROUPED class</h1>
+
+<p>The AI_CARGO_GROUPED class defines a cargo that is represented by a group of UNIT objects within the simulator, and can be transported by a carrier.</p>
+
+	
+<p>Use the event functions as described above to Load, UnLoad, Board, UnBoard the AI_CARGO_UNIT objects to and from carriers.</p>
 
 
 </dd>
@@ -737,6 +781,14 @@ Use the event functions as described above to Load, UnLoad, Board, UnBoard the A
 </dt>
 <dd>
 	
+<h1>AI_CARGO_UNIT class, extends <a href="##(AI_CARGO_REPRESENTABLE)">#AI<em>CARGO</em>REPRESENTABLE</a></h1>
+
+<p>The AI_CARGO_UNIT class defines a cargo that is represented by a UNIT object within the simulator, and can be transported by a carrier.</p>
+
+	
+<p>Use the event functions as described above to Load, UnLoad, Board, UnBoard the AI_CARGO_UNIT objects to and from carriers.</p>
+
+<hr/>
 
 
 </dd>
@@ -816,20 +868,6 @@ The Carrier that will hold the cargo.</p>
 		<dl class="function">
 <dt>
 
-		<em>#string</em>
-<a id="#(AI_CARGO).ClassName" >
-<strong>AI_CARGO.ClassName</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
 		<em>#boolean</em>
 <a id="#(AI_CARGO).Containable" >
 <strong>AI_CARGO.Containable</strong>
@@ -838,6 +876,148 @@ The Carrier that will hold the cargo.</p>
 <dd>
 	
 <p>This flag defines if the cargo can be contained within a DCS Unit.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_CARGO).GetBoardingRange" >
+<strong>AI_CARGO:GetBoardingRange()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Get the range till cargo will board.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#number:</em>
+The range till cargo will board.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_CARGO).GetName" >
+<strong>AI_CARGO:GetName()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Get the name of the Cargo.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#string:</em>
+The name of the Cargo.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_CARGO).GetPointVec2" >
+<strong>AI_CARGO:GetPointVec2()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Get the current PointVec2 of the cargo.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="Core.Point.html##(POINT_VEC2)">Core.Point#POINT_VEC2</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_CARGO).GetType" >
+<strong>AI_CARGO:GetType()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Get the type of the Cargo.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#string:</em>
+The type of the Cargo.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_CARGO).IsInRadius" >
+<strong>AI_CARGO:IsInRadius(PointVec2)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Check if CargoCarrier is in the radius for the Cargo to be Loaded.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Point.html##(POINT_VEC2)">Core.Point#POINT_VEC2</a> PointVec2 </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_CARGO).IsInZone" >
+<strong>AI_CARGO:IsInZone(Zone)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Check if Cargo is the given <a href="Zone.html">Zone</a>.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Zone.html##(ZONE_BASE)">Core.Zone#ZONE_BASE</a> Zone </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+<strong>true</strong> if cargo is in the Zone, <strong>false</strong> if cargo is not in the Zone.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_CARGO).IsLoaded" >
+<strong>AI_CARGO:IsLoaded()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Check if cargo is loaded.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+true if loaded</p>
 
 </dd>
 </dl>
@@ -864,6 +1044,24 @@ The Carrier that will hold the cargo.</p>
 				
 <p><em>#boolean:</em></p>
 
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_CARGO).IsUnLoaded" >
+<strong>AI_CARGO:IsUnLoaded()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Check if cargo is unloaded.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+true if unloaded</p>
 
 </dd>
 </dl>
@@ -1473,20 +1671,6 @@ The amount of seconds to delay the action.</p>
 <dt>
 
 		<em>#string</em>
-<a id="#(AI_CARGO_GROUP).ClassName" >
-<strong>AI_CARGO_GROUP.ClassName</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em>#string</em>
 <a id="#(AI_CARGO_GROUP).Name" >
 <strong>AI_CARGO_GROUP.Name</strong>
 </a>
@@ -1553,20 +1737,6 @@ The amount of seconds to delay the action.</p>
 
 			<h2><a id="#(AI_CARGO_GROUPED)" >Type <code>AI_CARGO_GROUPED</code></a></h2>
 				<h3>Field(s)</h3>
-		<dl class="function">
-<dt>
-
-		<em>#string</em>
-<a id="#(AI_CARGO_GROUPED).ClassName" >
-<strong>AI_CARGO_GROUPED.ClassName</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
 		<dl class="function">
 <dt>
 
@@ -2426,6 +2596,7 @@ The UNIT carrying the package.</p>
 		<dl class="function">
 <dt>
 
+		<em></em>
 <a id="#(AI_CARGO_UNIT).CargoCarrier" >
 <strong>AI_CARGO_UNIT.CargoCarrier</strong>
 </a>
@@ -2467,13 +2638,17 @@ The UNIT carrying the package.</p>
 		<dl class="function">
 <dt>
 
-		<em>#string</em>
-<a id="#(AI_CARGO_UNIT).ClassName" >
-<strong>AI_CARGO_UNIT.ClassName</strong>
+<a id="#(AI_CARGO_UNIT).Destroy" >
+<strong>AI_CARGO_UNIT:Destroy()</strong>
 </a>
 </dt>
 <dd>
 	
+<p>AI<em>CARGO</em>UNIT Destructor.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(AI_CARGO_UNIT)">#AI<em>CARGO</em>UNIT</a>:</em></p>
 
 
 </dd>
@@ -2548,7 +2723,7 @@ The UNIT carrying the package.</p>
 <dt>
 
 <a id="#(AI_CARGO_UNIT).onafterBoard" >
-<strong>AI_CARGO_UNIT:onafterBoard(Event, From, To, CargoCarrier)</strong>
+<strong>AI_CARGO_UNIT:onafterBoard(Event, From, To, CargoCarrier, ...)</strong>
 </a>
 </dt>
 <dd>
@@ -2575,6 +2750,11 @@ The UNIT carrying the package.</p>
 				<li>
 				
 <p><code><em> CargoCarrier </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> ... </em></code>: </p>
 
 				</li>
 		</ul>
@@ -2620,7 +2800,7 @@ The UNIT carrying the package.</p>
 <dt>
 
 <a id="#(AI_CARGO_UNIT).onenterBoarding" >
-<strong>AI_CARGO_UNIT:onenterBoarding(Event, From, To, CargoCarrier)</strong>
+<strong>AI_CARGO_UNIT:onenterBoarding(Event, From, To, CargoCarrier, ...)</strong>
 </a>
 </dt>
 <dd>
@@ -2647,6 +2827,11 @@ The UNIT carrying the package.</p>
 				<li>
 				
 <p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> CargoCarrier </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> ... </em></code>: </p>
 
 				</li>
 		</ul>
@@ -2770,7 +2955,7 @@ Point#POINT_VEC2</p>
 <dt>
 
 <a id="#(AI_CARGO_UNIT).onleaveBoarding" >
-<strong>AI_CARGO_UNIT:onleaveBoarding(Event, From, To, CargoCarrier)</strong>
+<strong>AI_CARGO_UNIT:onleaveBoarding(Event, From, To, CargoCarrier, ...)</strong>
 </a>
 </dt>
 <dd>
@@ -2797,6 +2982,11 @@ Point#POINT_VEC2</p>
 				<li>
 				
 <p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> CargoCarrier </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> ... </em></code>: </p>
 
 				</li>
 		</ul>
