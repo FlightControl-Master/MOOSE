@@ -462,3 +462,11 @@ function BEACON:AATACAN(TACANChannel, TACANMode, Message, Bearing, Tanker, Beaco
   
   return self
 end
+
+--- Stops the BEACON
+-- @param #BEACON self
+-- @return #BEACON self
+function BEACON:StopAATACAN()
+  if not self.Positionable then
+  end
+end
