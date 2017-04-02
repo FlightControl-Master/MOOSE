@@ -332,28 +332,9 @@ end
 
 
 -- @type BEACON
--- @field Wrapper.Positionable#POSITIONABLE Positionable The beacon emitter
--- @field #string FileName Name of the sound file
--- @field #number Frequency Frequency of the transmission in Hz
--- @field #number Modulation Modulation of the transmission (either radio.modulation.AM or radio.modulation.FM)
--- @field #number Power Power of the antenna is Watts
--- @field #string TACANMode
--- @field #number TACANChannel
--- @field #number TACANFrequency
--- @field #number BeaconDuration in s
--- @field #string _TransmissionID
 -- @extends Core.Base#BASE
 BEACON = {
   ClassName = "BEACON",
-  FileName = "",
-  Frequency = 0,
-  Modulation = radio.modulation.AM,
-  Power = 100,
-  TACANMode = "X",
-  TACANChannel = 0,
-  TACANFrequency = 0,
-  BeaconDuration = 0,
-  _TransmissionID = 0
 }
 
 --- Create a new BEACON Object. This doesn't activate the beacon, though, use @{#BEACON.AATACAN} or @{#BEACON.Generic}
@@ -363,14 +344,10 @@ BEACON = {
 -- @return #nil If Positionable is invalid
 -- @usage
 -- -- If you want to create a BEACON, you probably should use @{Positionable#POSITIONABLE.GetBeacon}() instead
-function BEACON:New(Positionable, BeaconDuration)
-  local self = BASE:Inherit( self, BASE:New() )
+function BEACON:New(Positionable)
+  local self = BASE:Inherit(self, BASE:New())
   
   self:F(Positionable)
-  
-  if type(BeaconDuration) == "number" then
-    self.BeaconDuration = math.abs(math.floor(BeaconDuration))
-  end
   
   if Positionable:GetPointVec2() then -- It's stupid, but the only way I found to make sure positionable is valid
     self.Positionable = Positionable
@@ -382,7 +359,7 @@ function BEACON:New(Positionable, BeaconDuration)
 end
 
 
---- Transforms a TACAN Channel/Mode couple into a frequency in Hz
+--- Converts a TACAN Channel/Mode couple into a frequency in Hz
 -- @param #BEACON self
 -- @param #number TACANChannel
 -- @param #string TACANMode
@@ -424,10 +401,12 @@ end
 -- @param #BEACON self
 -- @param #number TACANChannel (the "10" part in "10X")
 -- @param #string TACANMode (the "X" part in "10X")
--- @param #boolean Bearing
+-- @param #string Message The Message that is going to be coded in Morse and broadcasted by the beacon
+-- @param #boolean Bearing Is the beacon can be homed on ?
 -- @param #boolean Tanker
+-- @param #number BeaconDuration
 -- @return #BEACON self
-function BEACON:AATACAN(TACANChannel, TACANMode, Bearing, Tanker)
+function BEACON:AATACAN(TACANChannel, TACANMode, Message, Bearing, Tanker, BeaconDuration)
   self:F({TACANChannel, TACANMode, Tanker})
   
   local IsValid = 1
@@ -437,7 +416,6 @@ function BEACON:AATACAN(TACANChannel, TACANMode, Bearing, Tanker)
     IsValid = 0
   end
     
-  
   local Frequency = self:_TACANToFrequency(TACANChannel, TACANMode)
   if not Frequency then 
     self:E({"The passed TACAN channel is invalid, the BEACON is not emitting"})
@@ -446,20 +424,41 @@ function BEACON:AATACAN(TACANChannel, TACANMode, Bearing, Tanker)
   
   -- Contrary to appearances, the values for the type and system params in the ActivateBeacon command aren't pulled from my butt, 
   -- they are found in DCS World\Scripts\World\Radio\BeaconTypes.lua and DCS World\Scripts\World\Radio\BeaconSites.lua
-  if IsValid then
-    if Tanker then
-      if TACANMode == "X" then
-        self.Positionable:SetCommand({
-        id = "ActivateBeacon",
-        params = {
-          type = 4,
-          system = ,
-          callsign = callsign,
-          frequency = getTACANFrequency(channelNum, channelMode),
-          bearing = 
-          }
-        })
-      end
+  local System
+  if Tanker then
+    if TACANMode == "X" then 
+      System = 4
+    else
+      System = 5
+    end
+  else -- Not a Tanker
+    if TACANMode == "X" then 
+      System = 13
+    else
+      System = 14
     end
   end
+  
+  if IsValid then -- Starts the BEACON
+    self:T2({"AA TACAN BEACON started, type is ", System})
+    self.Positionable:SetCommand({
+      id = "ActivateBeacon",
+      params = {
+        type = 4,
+        system = System,
+        callsign = Message,
+        frequency = Frequency,
+        bearing = Bearing
+        }
+      })
+      
+    if BeaconDuration then -- Schedule the stop of the BEACON if asked by the MD
+      SCHEDULER:New( nil, 
+      function()
+        self:StopAATACAN()
+      end, {}, BeaconDuration)
+    end
+  end
+  
+  return self
 end
