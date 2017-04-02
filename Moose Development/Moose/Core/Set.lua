@@ -465,7 +465,7 @@ function SET_BASE:_EventOnPlayerLeaveUnit( Event )
       local PlayerCount = 0
       for _, DCSUnit in pairs( GroupUnits ) do
         if DCSUnit ~= Event.IniDCSUnit then
-          if DCSUnit:getPlayer() ~= nil then
+          if DCSUnit:getPlayerName() ~= nil then
             PlayerCount = PlayerCount + 1
           end
         end
