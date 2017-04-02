@@ -1,11 +1,20 @@
---- **Tasking** - The TASK_CARGO models tasks for players to transport @{Cargo}.
+--- **Tasking (Release 2.1)** -- The TASK_CARGO models tasks for players to transport @{Cargo}.
 -- 
--- ![Banner Image]()
--- 
--- 
+-- ![Banner Image](..\Presentations\TASK_CARGO\Dia1.JPG)
 -- 
 -- ====
 --
+-- Cargo are units or cargo objects within DCS world that allow to be transported or sling loaded by other units.
+-- The CARGO class, as part of the moose core, is able to Board, Load, UnBoard and UnLoad from Carrier units.
+-- This collection of classes in this module define tasks for human players to handle cargo objects.
+-- Cargo can be transported, picked-up, deployed and sling-loaded from and to other places.
+-- 
+-- The following classes are important to consider:
+-- 
+--   * @{#TASK_CARGO_TRANSPORT}: Defines a task for a human player to transport a set of cargo between various zones.
+--
+-- ==
+-- 
 -- # **API CHANGE HISTORY**
 --
 -- The underlying change log documents the API changes. Please read this carefully. The following notation is used:
@@ -23,8 +32,6 @@
 --
 -- ### Contributions:
 --
---   * **[WingThor]**: Concept, Advice & Testing.
---        
 -- ### Authors:
 --
 --   * **FlightControl**: Concept, Design & Programming.
