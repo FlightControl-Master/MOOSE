@@ -93,7 +93,7 @@ do -- TASK_CARGO
 
     Fsm:AddTransition( "WaitingForCommand", "RouteToDeploy", "RoutingToDeploy" )
     Fsm:AddProcess   ( "RoutingToDeploy", "RouteToDeployZone", ACT_ROUTE_ZONE:New(), { Arrived = "ArriveAtDeploy" } )
-    Fsm:AddTransition( "ArrivedAtDeploy", "ArriveAtDeploy", "ArrivedAtDeploy" )
+    Fsm:AddTransition( "Arrived", "ArriveAtDeploy", "ArrivedAtDeploy" )
     
     Fsm:AddTransition( { "ArrivedAtPickup", "ArrivedAtDeploy" }, "Land", "Landing" )
     Fsm:AddTransition( "Landing", "Landed", "Landed" )
@@ -222,14 +222,10 @@ do -- TASK_CARGO
     function Fsm:onafterArriveAtPickup( TaskUnit, Task )
       self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
       
-      if self.Cargo:IsInRadius( TaskUnit:GetPointVec2() ) then
-        if TaskUnit:IsAir() then
-          self:__Land( -0.1 )
-        else
-          self:__SelectAction( -0.1 )
-        end
+      if TaskUnit:IsAir() then
+        self:__Land( -0.1 )
       else
-        self:__ArriveAtPickup( -10 )      
+        self:__SelectAction( -0.1 )
       end
     end
 
@@ -254,14 +250,10 @@ do -- TASK_CARGO
     function Fsm:onafterArriveAtDeploy( TaskUnit, Task )
       self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
       
-      if TaskUnit:IsInZone( self.DeployZone ) then
-        if TaskUnit:IsAir() then
-          self:__Land( -0.1 )
-        else
-          self:__SelectAction( -0.1 )
-        end
+      if TaskUnit:IsAir() then
+        self:__Land( -0.1 )
       else
-        self:__ArriveAtDeploy( -10 )      
+        self:__SelectAction( -0.1 )
       end
     end
 
