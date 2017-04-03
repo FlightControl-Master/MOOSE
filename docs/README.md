@@ -94,7 +94,7 @@ You'll need to browse to the right MOOSE Class within the inheritance tree struc
 
 ## 4.1) MOOSE Demonstration Missions
 
-The framework comes with demonstration missions which can be downloaded [here](https://github.com/FlightControl-Master/MOOSE_PRESENTATIONS/releases), that you can try out and helps you to code.  
+The framework comes with demonstration missions which can be downloaded [here](https://github.com/FlightControl-Master/MOOSE_MISSIONS/releases), that you can try out and helps you to code.  
 These missions provide examples of defined use cases how the MOOSE framework can be utilized. Each test mission is located in a separate directory, which contains at least one .lua file and .miz file.
 The .lua file contains the mission script file that shows how the use case was implemented.
 You can copy/paste code the code snippets from this .lua file into your missions, as it will accellerate your mission developments.
