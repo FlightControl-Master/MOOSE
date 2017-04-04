@@ -66,13 +66,6 @@
 -- @module Zone
 
 
---- The ZONE_BASE class
--- @type ZONE_BASE
--- @field #string ZoneName Name of the zone.
--- @field #number ZoneProbability A value between 0 and 1. 0 = 0% and 1 = 100% probability.
--- @extends Core.Base#BASE
-
-
 --- # 1) ZONE_BASE class, extends @{Base#BASE}
 -- 
 -- This class is an abstract BASE class for derived classes, and is not meant to be instantiated.
@@ -107,7 +100,11 @@
 --   * @{#ZONE_BASE.FlareZone}(): Flares the zone boundaries in a color.
 -- 
 -- ===
--- @field #ZONE_BASE ZONE_BASE
+-- 
+-- @type ZONE_BASE
+-- @field #string ZoneName Name of the zone.
+-- @field #number ZoneProbability A value between 0 and 1. 0 = 0% and 1 = 100% probability.
+-- @extends Core.Base#BASE
 ZONE_BASE = {
   ClassName = "ZONE_BASE",
   ZoneName = "",
@@ -306,12 +303,6 @@ function ZONE_BASE:GetZoneMaybe()
 end
 
 
---- The ZONE_RADIUS class, defined by a zone name, a location and a radius.
--- @type ZONE_RADIUS
--- @field Dcs.DCSTypes#Vec2 Vec2 The current location of the zone.
--- @field Dcs.DCSTypes#Distance Radius The radius of the zone.
--- @extends Core.Zone#ZONE_BASE
-
 --- # 2) @{Zone#ZONE_RADIUS} class, extends @{Zone#ZONE_BASE}
 -- 
 -- The ZONE_RADIUS class defined by a zone name, a location and a radius.
@@ -342,8 +333,11 @@ end
 -- 
 -- ===
 -- 
--- @field #ZONE_RADIUS ZONE_RADIUS
--- 
+-- The ZONE_RADIUS class, defined by a zone name, a location and a radius.
+-- @type ZONE_RADIUS
+-- @field Dcs.DCSTypes#Vec2 Vec2 The current location of the zone.
+-- @field Dcs.DCSTypes#Distance Radius The radius of the zone.
+-- @extends Core.Zone#ZONE_BASE
 ZONE_RADIUS = {
 	ClassName="ZONE_RADIUS",
 	}
@@ -379,7 +373,6 @@ function ZONE_RADIUS:BoundZone( Points, CountryID, UnBound )
   local Angle
   local RadialBase = math.pi*2
   
-  --
   for Angle = 0, 360, (360 / Points ) do
     local Radial = Angle * RadialBase / 360
     Point.x = Vec2.x + math.cos( Radial ) * self:GetRadius()
