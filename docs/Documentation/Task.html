@@ -31,6 +31,21 @@
 					<li><a href="Client.html">Client</a></li>
 					<li><a href="CommandCenter.html">CommandCenter</a></li>
 					<li><a href="Controllable.html">Controllable</a></li>
+					<li><a href="DCSAirbase.html">DCSAirbase</a></li>
+					<li><a href="DCSCoalitionObject.html">DCSCoalitionObject</a></li>
+					<li><a href="DCSCommand.html">DCSCommand</a></li>
+					<li><a href="DCSController.html">DCSController</a></li>
+					<li><a href="DCSGroup.html">DCSGroup</a></li>
+					<li><a href="DCSObject.html">DCSObject</a></li>
+					<li><a href="DCSTask.html">DCSTask</a></li>
+					<li><a href="DCSTypes.html">DCSTypes</a></li>
+					<li><a href="DCSUnit.html">DCSUnit</a></li>
+					<li><a href="DCSVec3.html">DCSVec3</a></li>
+					<li><a href="DCSWorld.html">DCSWorld</a></li>
+					<li><a href="DCSZone.html">DCSZone</a></li>
+					<li><a href="DCScountry.html">DCScountry</a></li>
+					<li><a href="DCStimer.html">DCStimer</a></li>
+					<li><a href="DCStrigger.html">DCStrigger</a></li>
 					<li><a href="Database.html">Database</a></li>
 					<li><a href="Detection.html">Detection</a></li>
 					<li><a href="DetectionManager.html">DetectionManager</a></li>
@@ -60,6 +75,7 @@
 					<li><a href="Smoke.html">Smoke</a></li>
 					<li><a href="Spawn.html">Spawn</a></li>
 					<li><a href="Static.html">Static</a></li>
+					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li>Task</li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
 					<li><a href="Task_A2G_Dispatcher.html">Task_A2G_Dispatcher</a></li>
@@ -67,60 +83,20 @@
 					<li><a href="Unit.html">Unit</a></li>
 					<li><a href="Utils.html">Utils</a></li>
 					<li><a href="Zone.html">Zone</a></li>
+					<li><a href="env.html">env</a></li>
+					<li><a href="land.html">land</a></li>
 					<li><a href="routines.html">routines</a></li>
 		</ul>
 	</div>
 	<div id="content">
    <h1>Module <code>Task</code></h1>
    
-<p>This module contains the TASK class.</p>
+<p><strong>Tasking</strong> -- This module contains the TASK class.</p>
 
    
 
-<h1>1) <a href="##(TASK)">#TASK</a> class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
-<h2>1.1) The <a href="##(TASK)">#TASK</a> class implements the methods for task orchestration within MOOSE. </h2>
-<p>The class provides a couple of methods to:</p>
+<hr/>
 
-<ul>
-    <li><a href="##(TASK).AssignToGroup">TASK.AssignToGroup</a>():Assign a task to a group (of players).</li>
-    <li><a href="##(TASK).AddProcess">TASK.AddProcess</a>():Add a <a href="Process.html">Process</a> to a task.</li>
-    <li><a href="##(TASK).RemoveProcesses">TASK.RemoveProcesses</a>():Remove a running <a href="Process.html">Process</a> from a running task.</li>
-    <li><a href="##(TASK).SetStateMachine">TASK.SetStateMachine</a>():Set a <a href="Fsm.html">Fsm</a> to a task.</li>
-    <li><a href="##(TASK).RemoveStateMachine">TASK.RemoveStateMachine</a>():Remove <a href="Fsm.html">Fsm</a> from a task.</li>
-    <li><a href="##(TASK).HasStateMachine">TASK.HasStateMachine</a>():Enquire if the task has a <a href="Fsm.html">Fsm</a></li>
-    <li><a href="##(TASK).AssignToUnit">TASK.AssignToUnit</a>(): Assign a task to a unit. (Needs to be implemented in the derived classes from <a href="##(TASK)">#TASK</a>.</li>
-    <li><a href="##(TASK).UnAssignFromUnit">TASK.UnAssignFromUnit</a>(): Unassign the task from a unit.</li>
-    <li><a href="##(TASK).SetTimeOut">TASK.SetTimeOut</a>(): Set timer in seconds before task gets cancelled if not assigned.</li>
-</ul>
-
-<h2>1.2) Set and enquire task status (beyond the task state machine processing).</h2>
-<p>A task needs to implement as a minimum the following task states:</p>
-
-<ul>
-    <li><strong>Success</strong>: Expresses the successful execution and finalization of the task.</li>
-    <li><strong>Failed</strong>: Expresses the failure of a task.</li>
-    <li><strong>Planned</strong>: Expresses that the task is created, but not yet in execution and is not assigned yet.</li>
-    <li><strong>Assigned</strong>: Expresses that the task is assigned to a Group of players, and that the task is in execution mode.</li>
-</ul>
-
-<p>A task may also implement the following task states:</p>
-
-<ul>
-    <li><strong>Rejected</strong>: Expresses that the task is rejected by a player, who was requested to accept the task.</li>
-    <li><strong>Cancelled</strong>: Expresses that the task is cancelled by HQ or through a logical situation where a cancellation of the task is required.</li>
-</ul>
-
-<p>A task can implement more statusses than the ones outlined above. Please consult the documentation of the specific tasks to understand the different status modelled.</p>
-
-<p>The status of tasks can be set by the methods <strong>State</strong> followed by the task status. An example is <code>StateAssigned()</code>.
-The status of tasks can be enquired by the methods <strong>IsState</strong> followed by the task status name. An example is <code>if IsStateAssigned() then</code>.</p>
-
-<h2>1.3) Add scoring when reaching a certain task status:</h2>
-<p>Upon reaching a certain task status in a task, additional scoring can be given. If the Mission has a scoring system attached, the scores will be added to the mission scoring.
-Use the method <a href="##(TASK).AddScore">TASK.AddScore</a>() to add scores when a status is reached.</p>
-
-<h2>1.4) Task briefing:</h2>
-<p>A task briefing can be given that is shown to the player when he is assigned to the task.</p>
 
 <hr/>
 
@@ -132,7 +108,9 @@ Use the method <a href="##(TASK).AddScore">TASK.AddScore</a>() to add scores whe
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="#TASK">TASK</a></td>
 		<td class="summary">
+<h1>TASK class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
 
+<h2>The TASK class implements the methods for task orchestration within MOOSE.</h2>
 </td>
 		</tr>
 	</table>
@@ -166,12 +144,6 @@ Use the method <a href="##(TASK).AddScore">TASK.AddScore</a>() to add scores whe
 		<td class="name" nowrap="nowrap"><a href="##(TASK).Cancel">TASK:Cancel()</a></td>
 		<td class="summary">
 <p>FSM Cancel synchronous event function for TASK.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK).ClassName">TASK.ClassName</a></td>
-		<td class="summary">
-
 </td>
 		</tr>
 		<tr>
@@ -361,12 +333,6 @@ Use the method <a href="##(TASK).AddScore">TASK.AddScore</a>() to add scores whe
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK).Menu">TASK.Menu</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(TASK).MenuAssignToGroup">TASK.MenuAssignToGroup(MenuParam)</a></td>
 		<td class="summary">
 
@@ -421,24 +387,6 @@ Use the method <a href="##(TASK).AddScore">TASK.AddScore</a>() to add scores whe
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK).Players">TASK.Players</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK).ProcessClasses">TASK.ProcessClasses</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK).Processes">TASK.Processes</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(TASK).RemoveAssignedMenuForGroup">TASK:RemoveAssignedMenuForGroup(TaskGroup, MenuTime)</a></td>
 		<td class="summary">
 <p>Remove the assigned menu option of the <a href="Task.html">Task</a> for a <a href="Group.html">Group</a>.</p>
@@ -478,12 +426,6 @@ Use the method <a href="##(TASK).AddScore">TASK.AddScore</a>() to add scores whe
 		<td class="name" nowrap="nowrap"><a href="##(TASK).ReportSummary">TASK:ReportSummary()</a></td>
 		<td class="summary">
 <p>Create a summary report of the Task.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK).Scores">TASK.Scores</a></td>
-		<td class="summary">
-
 </td>
 		</tr>
 		<tr>
@@ -769,6 +711,57 @@ Use the method <a href="##(TASK).AddScore">TASK.AddScore</a>() to add scores whe
 </dt>
 <dd>
 	
+<h1>TASK class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
+
+<h2>The TASK class implements the methods for task orchestration within MOOSE.</h2>
+
+	
+
+<p>The class provides a couple of methods to:</p>
+
+<ul>
+    <li><a href="##(TASK).AssignToGroup">TASK.AssignToGroup</a>():Assign a task to a group (of players).</li>
+    <li><a href="##(TASK).AddProcess">TASK.AddProcess</a>():Add a <a href="Process.html">Process</a> to a task.</li>
+    <li><a href="##(TASK).RemoveProcesses">TASK.RemoveProcesses</a>():Remove a running <a href="Process.html">Process</a> from a running task.</li>
+    <li><a href="##(TASK).SetStateMachine">TASK.SetStateMachine</a>():Set a <a href="Fsm.html">Fsm</a> to a task.</li>
+    <li><a href="##(TASK).RemoveStateMachine">TASK.RemoveStateMachine</a>():Remove <a href="Fsm.html">Fsm</a> from a task.</li>
+    <li><a href="##(TASK).HasStateMachine">TASK.HasStateMachine</a>():Enquire if the task has a <a href="Fsm.html">Fsm</a></li>
+    <li><a href="##(TASK).AssignToUnit">TASK.AssignToUnit</a>(): Assign a task to a unit. (Needs to be implemented in the derived classes from <a href="##(TASK)">#TASK</a>.</li>
+    <li><a href="##(TASK).UnAssignFromUnit">TASK.UnAssignFromUnit</a>(): Unassign the task from a unit.</li>
+    <li><a href="##(TASK).SetTimeOut">TASK.SetTimeOut</a>(): Set timer in seconds before task gets cancelled if not assigned.</li>
+</ul>
+
+<h2>1.2) Set and enquire task status (beyond the task state machine processing).</h2>
+
+<p>A task needs to implement as a minimum the following task states:</p>
+
+<ul>
+    <li><strong>Success</strong>: Expresses the successful execution and finalization of the task.</li>
+    <li><strong>Failed</strong>: Expresses the failure of a task.</li>
+    <li><strong>Planned</strong>: Expresses that the task is created, but not yet in execution and is not assigned yet.</li>
+    <li><strong>Assigned</strong>: Expresses that the task is assigned to a Group of players, and that the task is in execution mode.</li>
+</ul>
+
+<p>A task may also implement the following task states:</p>
+
+<ul>
+    <li><strong>Rejected</strong>: Expresses that the task is rejected by a player, who was requested to accept the task.</li>
+    <li><strong>Cancelled</strong>: Expresses that the task is cancelled by HQ or through a logical situation where a cancellation of the task is required.</li>
+</ul>
+
+<p>A task can implement more statusses than the ones outlined above. Please consult the documentation of the specific tasks to understand the different status modelled.</p>
+
+<p>The status of tasks can be set by the methods <strong>State</strong> followed by the task status. An example is <code>StateAssigned()</code>.
+The status of tasks can be enquired by the methods <strong>IsState</strong> followed by the task status name. An example is <code>if IsStateAssigned() then</code>.</p>
+
+<h2>1.3) Add scoring when reaching a certain task status:</h2>
+
+<p>Upon reaching a certain task status in a task, additional scoring can be given. If the Mission has a scoring system attached, the scores will be added to the mission scoring.
+Use the method <a href="##(TASK).AddScore">TASK.AddScore</a>() to add scores when a status is reached.</p>
+
+<h2>1.4) Task briefing:</h2>
+
+<p>A task briefing can be given that is shown to the player when he is assigned to the task.</p>
 
 
 </dd>
@@ -776,10 +769,7 @@ Use the method <a href="##(TASK).AddScore">TASK.AddScore</a>() to add scores whe
 	<h2><a id="#(Task)" >Type <code>Task</code></a></h2>
 	
 			<h2><a id="#(TASK)" >Type <code>TASK</code></a></h2>
-				
-<p>The TASK class</p>
-
-	<h3>Field(s)</h3>
+				<h3>Field(s)</h3>
 		<dl class="function">
 <dt>
 
@@ -892,20 +882,6 @@ self</p>
 
 	
 <p>Use this event to Cancel the Task.</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em>#string</em>
-<a id="#(TASK).ClassName" >
-<strong>TASK.ClassName</strong>
-</a>
-</dt>
-<dd>
-	
-
 
 </dd>
 </dl>
@@ -1503,20 +1479,6 @@ true if Unit is part of the Task.</p>
 		<dl class="function">
 <dt>
 
-		<em></em>
-<a id="#(TASK).Menu" >
-<strong>TASK.Menu</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
 <a id="#(TASK).MenuAssignToGroup" >
 <strong>TASK.MenuAssignToGroup(MenuParam)</strong>
 </a>
@@ -1747,47 +1709,6 @@ The name of the Player.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK).Players" >
-<strong>TASK.Players</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em></em>
-<a id="#(TASK).ProcessClasses" >
-<strong>TASK.ProcessClasses</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em></em>
-<a id="#(TASK).Processes" >
-<strong>TASK.Processes</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
 <a id="#(TASK).RemoveAssignedMenuForGroup" >
 <strong>TASK:RemoveAssignedMenuForGroup(TaskGroup, MenuTime)</strong>
 </a>
@@ -1953,20 +1874,6 @@ self</p>
 		<h3>Return value</h3>
 				
 <p><em>#string:</em></p>
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em></em>
-<a id="#(TASK).Scores" >
-<strong>TASK.Scores</strong>
-</a>
-</dt>
-<dd>
-	
 
 
 </dd>
