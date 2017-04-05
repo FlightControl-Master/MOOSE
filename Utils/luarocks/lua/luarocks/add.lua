@@ -1,0 +1,122 @@
+
+--- Module implementing the luarocks-admin "add" command.
+-- Adds a rock or rockspec to a rocks server.
+local add = {}
+package.loaded["luarocks.add"] = add
+
+local cfg = require("luarocks.cfg")
+local util = require("luarocks.util")
+local dir = require("luarocks.dir")
+local manif = require("luarocks.manif")
+local index = require("luarocks.index")
+local fs = require("luarocks.fs")
+local cache = require("luarocks.cache")
+
+util.add_run_function(add)
+add.help_summary = "Add a rock or rockspec to a rocks server."
+add.help_arguments = "[--server=<server>] [--no-refresh] {<rockspec>|<rock>...}"
+add.help = [[
+Arguments are local files, which may be rockspecs or rocks.
+The flag --server indicates which server to use.
+If not given, the default server set in the upload_server variable
+from the configuration file is used instead.
+The flag --no-refresh indicates the local cache should not be refreshed
+prior to generation of the updated manifest.
+]]
+
+local function add_files_to_server(refresh, rockfiles, server, upload_server)
+   assert(type(refresh) == "boolean" or not refresh)
+   assert(type(rockfiles) == "table")
+   assert(type(server) == "string")
+   assert(type(upload_server) == "table" or not upload_server)
+   
+   local download_url, login_url = cache.get_server_urls(server, upload_server)
+   local at = fs.current_dir()
+   local refresh_fn = refresh and cache.refresh_local_cache or cache.split_server_url
+   
+   local local_cache, protocol, server_path, user, password = refresh_fn(server, download_url, cfg.upload_user, cfg.upload_password)
+   if not local_cache then
+      return nil, protocol
+   end
+   if protocol == "file" then
+      return nil, "Server "..server.." is not recognized, check your configuration."
+   end
+   
+   if not login_url then
+      login_url = protocol.."://"..server_path
+   end
+   
+   local ok, err = fs.change_dir(at)
+   if not ok then return nil, err end
+   
+   local files = {}
+   for _, rockfile in ipairs(rockfiles) do
+      if fs.exists(rockfile) then
+         util.printout("Copying file "..rockfile.." to "..local_cache.."...")
+         local absolute = fs.absolute_name(rockfile)
+         fs.copy(absolute, local_cache, cfg.perm_read)
+         table.insert(files, dir.base_name(absolute))
+      else
+         util.printerr("File "..rockfile.." not found")
+      end
+   end
+   if #files == 0 then
+      return nil, "No files found"
+   end
+
+   local ok, err = fs.change_dir(local_cache)
+   if not ok then return nil, err end
+
+   util.printout("Updating manifest...")
+   manif.make_manifest(local_cache, "one", true)
+   
+   manif.zip_manifests()
+   
+   util.printout("Updating index.html...")
+   index.make_index(local_cache)
+
+   local login_info = ""
+   if user then login_info = " -u "..user end
+   if password then login_info = login_info..":"..password end
+   if not login_url:match("/$") then
+      login_url = login_url .. "/"
+   end
+
+   table.insert(files, "index.html")
+   table.insert(files, "manifest")
+   for ver in util.lua_versions() do
+      table.insert(files, "manifest-"..ver)
+      table.insert(files, "manifest-"..ver..".zip")
+   end
+
+   -- TODO abstract away explicit 'curl' call
+
+   local cmd
+   if protocol == "rsync" then
+      local srv, path = server_path:match("([^/]+)(/.+)")
+      cmd = cfg.variables.RSYNC.." "..cfg.variables.RSYNCFLAGS.." -e ssh "..local_cache.."/ "..user.."@"..srv..":"..path.."/"
+   elseif upload_server and upload_server.sftp then
+      local part1, part2 = upload_server.sftp:match("^([^/]*)/(.*)$")
+      cmd = cfg.variables.SCP.." "..table.concat(files, " ").." "..user.."@"..part1..":/"..part2
+   else
+      cmd = cfg.variables.CURL.." "..login_info.." -T '{"..table.concat(files, ",").."}' "..login_url
+   end
+
+   util.printout(cmd)
+   fs.execute(cmd)
+
+   return true
+end
+
+function add.command(flags, ...)
+   local files = {...}
+   if #files < 1 then
+      return nil, "Argument missing. "..util.see_help("add", "luarocks-admin")
+   end
+   local server, server_table = cache.get_upload_server(flags["server"])
+   if not server then return nil, server_table end
+   return add_files_to_server(not flags["no-refresh"], files, server, server_table)
+end
+
+
+return add

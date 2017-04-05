@@ -31,6 +31,21 @@
 					<li><a href="Client.html">Client</a></li>
 					<li><a href="CommandCenter.html">CommandCenter</a></li>
 					<li><a href="Controllable.html">Controllable</a></li>
+					<li><a href="DCSAirbase.html">DCSAirbase</a></li>
+					<li><a href="DCSCoalitionObject.html">DCSCoalitionObject</a></li>
+					<li><a href="DCSCommand.html">DCSCommand</a></li>
+					<li><a href="DCSController.html">DCSController</a></li>
+					<li><a href="DCSGroup.html">DCSGroup</a></li>
+					<li><a href="DCSObject.html">DCSObject</a></li>
+					<li><a href="DCSTask.html">DCSTask</a></li>
+					<li><a href="DCSTypes.html">DCSTypes</a></li>
+					<li><a href="DCSUnit.html">DCSUnit</a></li>
+					<li><a href="DCSVec3.html">DCSVec3</a></li>
+					<li><a href="DCSWorld.html">DCSWorld</a></li>
+					<li><a href="DCSZone.html">DCSZone</a></li>
+					<li><a href="DCScountry.html">DCScountry</a></li>
+					<li><a href="DCStimer.html">DCStimer</a></li>
+					<li><a href="DCStrigger.html">DCStrigger</a></li>
 					<li><a href="Database.html">Database</a></li>
 					<li><a href="Detection.html">Detection</a></li>
 					<li><a href="DetectionManager.html">DetectionManager</a></li>
@@ -60,6 +75,7 @@
 					<li><a href="Smoke.html">Smoke</a></li>
 					<li><a href="Spawn.html">Spawn</a></li>
 					<li><a href="Static.html">Static</a></li>
+					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="Task.html">Task</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
 					<li><a href="Task_A2G_Dispatcher.html">Task_A2G_Dispatcher</a></li>
@@ -67,6 +83,8 @@
 					<li><a href="Unit.html">Unit</a></li>
 					<li><a href="Utils.html">Utils</a></li>
 					<li><a href="Zone.html">Zone</a></li>
+					<li><a href="env.html">env</a></li>
+					<li><a href="land.html">land</a></li>
 					<li><a href="routines.html">routines</a></li>
 		</ul>
 	</div>
@@ -77,7 +95,7 @@
 
    
 
-<p>--- bitmap</p>
+<p><img src="..\Presentations\RADIO\Dia1.JPG" alt="Banner Image"/></p>
 
 <hr/>
 
@@ -110,7 +128,7 @@ If a FC3 airacraft is used, it will <strong>hear every communication, whatever t
 
 <hr/>
 
-<h3>Authors: Hugues "Grey_Echo" Bousquet</h3>
+<h3>Author: Hugues "Grey_Echo" Bousquet</h3>
 
 
 	<h2>Global(s)</h2>
@@ -274,9 +292,9 @@ If a FC3 airacraft is used, it will <strong>hear every communication, whatever t
 	
 
 <ul>
-    <li>First, you need to **"add" a <a href="##(RADIO)">#RADIO</a> object** to your <a href="Positionable.html##(POSITIONABLE)">Positionable#POSITIONABLE</a>. This is done using the <a href="Positionable.html##(POSITIONABLE).GetRadio">Positionable#POSITIONABLE.GetRadio</a>() function,</li>
+    <li>First, you need to **"add a <a href="##(RADIO)">#RADIO</a> object** to your <a href="Positionable.html##(POSITIONABLE)">Positionable#POSITIONABLE</a>. This is done using the <a href="Positionable.html##(POSITIONABLE).GetRadio">Positionable#POSITIONABLE.GetRadio</a>() function,</li>
     <li>Then, you will <strong>set the relevant parameters</strong> to the transmission (see below),</li>
-    <li>When done, you can actually <strong>broadcast the transmission</strong> (i.e. play the sound) with the <a href="Positionable.html##(POSITIONABLE).Broadcast">Positionable#POSITIONABLE.Broadcast</a>() function.</li>
+    <li>When done, you can actually <strong>broadcast the transmission</strong> (i.e. play the sound) with the <a href="RADIO.Broadcast.html">RADIO.Broadcast</a>() function.</li>
 </ul>
 
 <p>Methods to set relevant parameters for both a <a href="Unit.html##(UNIT)">Unit#UNIT</a> or a <a href="Group.html##(GROUP)">Group#GROUP</a> or any other <a href="Positionable.html##(POSITIONABLE)">Positionable#POSITIONABLE</a></p>
@@ -295,7 +313,7 @@ If a FC3 airacraft is used, it will <strong>hear every communication, whatever t
     <li><a href="##(RADIO).NewUnitTransmission">RADIO.NewUnitTransmission</a>() : Shortcut to set all the relevant parameters in one method call</li>
 </ul>
 
-<p>Additional Methods to set relevant parameters if the transmiter is any other <a href="Wrapper.Positionable.html##(POSITIONABLE)">Wrapper.Positionable#POSITIONABLE</a></p>
+<p>Additional Methods to set relevant parameters if the transmiter is any other <a href="Positionable.html##(POSITIONABLE)">Positionable#POSITIONABLE</a></p>
 
 <ul>
     <li><a href="##(RADIO).SetPower">RADIO.SetPower</a>() : Sets the power of the antenna in Watts</li>
@@ -566,7 +584,7 @@ but it will work for any POSITIONABLE
 		<dl class="function">
 <dt>
 
-		<em><a href="Wrapper.Positionable.html##(POSITIONABLE)">Wrapper.Positionable#POSITIONABLE</a></em>
+		<em><a href="Positionable.html##(POSITIONABLE)">Positionable#POSITIONABLE</a></em>
 <a id="#(RADIO).Positionable" >
 <strong>RADIO.Positionable</strong>
 </a>
