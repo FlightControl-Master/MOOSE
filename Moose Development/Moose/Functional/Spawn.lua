@@ -1,112 +1,22 @@
---- Single-Player:**Yes** / Multi-Player:**Yes** / AI:**Yes** / Human:**No** / Types:**All** --  
--- **Spawn groups of units dynamically in your missions.**
+--- **Functional** -- Spawn dynamically new @{Group}s in your missions.
 --  
 -- ![Banner Image](..\Presentations\SPAWN\SPAWN.JPG)
 -- 
--- ===
+-- ====
 -- 
--- # 1) @{#SPAWN} class, extends @{Base#BASE}
+-- # Demo Missions
 -- 
--- The @{#SPAWN} class allows to spawn dynamically new groups, based on pre-defined initialization settings, modifying the behaviour when groups are spawned.
--- For each group to be spawned, within the mission editor, a group has to be created with the "late activation flag" set. We call this group the *"Spawn Template"* of the SPAWN object.
--- A reference to this Spawn Template needs to be provided when constructing the SPAWN object, by indicating the name of the group within the mission editor in the constructor methods.
+-- ### [SPAWN Demo Missions source code](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master-release/SPA%20-%20Spawning)
 -- 
--- Within the SPAWN object, there is an internal index that keeps track of which group from the internal group list was spawned. 
--- When new groups get spawned by using the SPAWN methods (see below), it will be validated whether the Limits (@{#SPAWN.Limit}) of the SPAWN object are not reached.
--- When all is valid, a new group will be created by the spawning methods, and the internal index will be increased with 1.
--- 
--- Regarding the name of new spawned groups, a _SpawnPrefix_ will be assigned for each new group created. 
--- If you want to have the Spawn Template name to be used as the _SpawnPrefix_ name, use the @{#SPAWN.New} constructor.
--- However, when the @{#SPAWN.NewWithAlias} constructor was used, the Alias name will define the _SpawnPrefix_ name.
--- Groups will follow the following naming structure when spawned at run-time:
--- 
---   1. Spawned groups will have the name _SpawnPrefix_#ggg, where ggg is a counter from 0 to 999.
---   2. Spawned units will have the name _SpawnPrefix_#ggg-uu, where uu is a counter from 0 to 99 for each new spawned unit belonging to the group.
--- 
--- Some additional notes that need to be remembered:
--- 
---   * Templates are actually groups defined within the mission editor, with the flag "Late Activation" set. As such, these groups are never used within the mission, but are used by the @{#SPAWN} module.
---   * It is important to defined BEFORE you spawn new groups, a proper initialization of the SPAWN instance is done with the options you want to use.
---   * When designing a mission, NEVER name groups using a "#" within the name of the group Spawn Template(s), or the SPAWN module logic won't work anymore.
---   
--- ## 1.1) SPAWN construction methods
--- 
--- Create a new SPAWN object with the @{#SPAWN.New}() or the @{#SPAWN.NewWithAlias}() methods:
--- 
---   * @{#SPAWN.New}(): Creates a new SPAWN object taking the name of the group that represents the GROUP Template (definition).
---   * @{#SPAWN.NewWithAlias}(): Creates a new SPAWN object taking the name of the group that represents the GROUP Template (definition), and gives each spawned @{Group} an different name.
+-- ### [SPAWN Demo Missions, only for beta testers](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/SPA%20-%20Spawning)
 --
--- It is important to understand how the SPAWN class works internally. The SPAWN object created will contain internally a list of groups that will be spawned and that are already spawned.
--- The initialization methods will modify this list of groups so that when a group gets spawned, ALL information is already prepared when spawning. This is done for performance reasons.
--- So in principle, the group list will contain all parameters and configurations after initialization, and when groups get actually spawned, this spawning can be done quickly and efficient.
---
--- ## 1.2) SPAWN initialization methods
+-- ### [ALL Demo Missions pack of the last release](https://github.com/FlightControl-Master/MOOSE_MISSIONS/releases)
 -- 
--- A spawn object will behave differently based on the usage of **initialization** methods, which all start with the **Init** prefix:  
+-- ====
 -- 
---   * @{#SPAWN.InitKeepUnitNames}(): Keeps the unit names as defined within the mission editor, but note that anything after a # mark is ignored, and any spaces before and after the resulting name are removed. IMPORTANT! This method MUST be the first used after :New !!!
---   * @{#SPAWN.InitLimit}(): Limits the amount of groups that can be alive at the same time and that can be dynamically spawned.
---   * @{#SPAWN.InitRandomizeRoute}(): Randomize the routes of spawned groups, and for air groups also optionally the height.
---   * @{#SPAWN.InitRandomizeTemplate}(): Randomize the group templates so that when a new group is spawned, a random group template is selected from one of the templates defined. 
---   * @{#SPAWN.InitUnControlled}(): Spawn plane groups uncontrolled.
---   * @{#SPAWN.InitArray}(): Make groups visible before they are actually activated, and order these groups like a batallion in an array.
---   * @{#SPAWN.InitRepeat}(): Re-spawn groups when they land at the home base. Similar methods are @{#SPAWN.InitRepeatOnLanding} and @{#SPAWN.InitRepeatOnEngineShutDown}.
---   * @{#SPAWN.InitRandomizePosition}(): Randomizes the position of @{Group}s that are spawned within a **radius band**, given an Outer and Inner radius, from the point that the spawn happens.
---   * @{#SPAWN.InitRandomizeUnits}(): Randomizes the @{Unit}s in the @{Group} that is spawned within a **radius band**, given an Outer and Inner radius.
---   * @{#SPAWN.InitRandomizeZones}(): Randomizes the spawning between a predefined list of @{Zone}s that are declared using this function. Each zone can be given a probability factor.
---   * @{#SPAWN.InitAIOn}(): Turns the AI On when spawning the new @{Group} object.
---   * @{#SPAWN.InitAIOff}(): Turns the AI Off when spawning the new @{Group} object.
---   * @{#SPAWN.InitAIOnOff}(): Turns the AI On or Off when spawning the new @{Group} object.
+-- # YouTube Channel
 -- 
--- ## 1.3) SPAWN spawning methods
--- 
--- Groups can be spawned at different times and methods:
--- 
---   * @{#SPAWN.Spawn}(): Spawn one new group based on the last spawned index.
---   * @{#SPAWN.ReSpawn}(): Re-spawn a group based on a given index.
---   * @{#SPAWN.SpawnScheduled}(): Spawn groups at scheduled but randomized intervals. You can use @{#SPAWN.SpawnScheduleStart}() and @{#SPAWN.SpawnScheduleStop}() to start and stop the schedule respectively.
---   * @{#SPAWN.SpawnFromVec3}(): Spawn a new group from a Vec3 coordinate. (The group will can be spawned at a point in the air).
---   * @{#SPAWN.SpawnFromVec2}(): Spawn a new group from a Vec2 coordinate. (The group will be spawned at land height ).
---   * @{#SPAWN.SpawnFromStatic}(): Spawn a new group from a structure, taking the position of a @{Static}.
---   * @{#SPAWN.SpawnFromUnit}(): Spawn a new group taking the position of a @{Unit}.
---   * @{#SPAWN.SpawnInZone}(): Spawn a new group in a @{Zone}.
--- 
--- Note that @{#SPAWN.Spawn} and @{#SPAWN.ReSpawn} return a @{GROUP#GROUP.New} object, that contains a reference to the DCSGroup object. 
--- You can use the @{GROUP} object to do further actions with the DCSGroup.
---  
--- ## 1.4) Retrieve alive GROUPs spawned by the SPAWN object
--- 
--- The SPAWN class administers which GROUPS it has reserved (in stock) or has created during mission execution.
--- Every time a SPAWN object spawns a new GROUP object, a reference to the GROUP object is added to an internal table of GROUPS.
--- SPAWN provides methods to iterate through that internal GROUP object reference table:
--- 
---   * @{#SPAWN.GetFirstAliveGroup}(): Will find the first alive GROUP it has spawned, and return the alive GROUP object and the first Index where the first alive GROUP object has been found.
---   * @{#SPAWN.GetNextAliveGroup}(): Will find the next alive GROUP object from a given Index, and return a reference to the alive GROUP object and the next Index where the alive GROUP has been found.
---   * @{#SPAWN.GetLastAliveGroup}(): Will find the last alive GROUP object, and will return a reference to the last live GROUP object and the last Index where the last alive GROUP object has been found.
--- 
--- You can use the methods @{#SPAWN.GetFirstAliveGroup}() and sequently @{#SPAWN.GetNextAliveGroup}() to iterate through the alive GROUPS within the SPAWN object, and to actions... See the respective methods for an example.
--- The method @{#SPAWN.GetGroupFromIndex}() will return the GROUP object reference from the given Index, dead or alive...
--- 
--- ## 1.5) SPAWN object cleaning
--- 
--- Sometimes, it will occur during a mission run-time, that ground or especially air objects get damaged, and will while being damged stop their activities, while remaining alive.
--- In such cases, the SPAWN object will just sit there and wait until that group gets destroyed, but most of the time it won't, 
--- and it may occur that no new groups are or can be spawned as limits are reached.
--- To prevent this, a @{#SPAWN.InitCleanUp}() initialization method has been defined that will silently monitor the status of each spawned group.
--- Once a group has a velocity = 0, and has been waiting for a defined interval, that group will be cleaned or removed from run-time. 
--- There is a catch however :-) If a damaged group has returned to an airbase within the coalition, that group will not be considered as "lost"... 
--- In such a case, when the inactive group is cleaned, a new group will Re-spawned automatically. 
--- This models AI that has succesfully returned to their airbase, to restart their combat activities.
--- Check the @{#SPAWN.InitCleanUp}() for further info.
--- 
--- ## 1.6) Catch the @{Group} spawn event in a callback function!
--- 
--- When using the SpawnScheduled method, new @{Group}s are created following the schedule timing parameters.
--- When a new @{Group} is spawned, you maybe want to execute actions with that group spawned at the spawn event.
--- To SPAWN class supports this functionality through the @{#SPAWN.OnSpawnGroup}( **function( SpawnedGroup ) end ** ) method, which takes a function as a parameter that you can define locally. 
--- Whenever a new @{Group} is spawned, the given function is called, and the @{Group} that was just spawned, is given as a parameter.
--- As a result, your spawn event handling function requires one parameter to be declared, which will contain the spawned @{Group} object. 
--- A coding example is provided at the description of the @{#SPAWN.OnSpawnGroup}( **function( SpawnedGroup ) end ** ) method.
+-- ### [SPAWN YouTube Channel](https://www.youtube.com/playlist?list=PL7ZUrU4zZUl1jirWIo4t4YxqN-HxjqRkL)
 -- 
 -- ====
 -- 
@@ -119,44 +29,34 @@
 -- 
 -- Hereby the change log:
 -- 
+-- 2017-04-08: SPAWN:**InitDelayOnOff( DelayOnOff )** added.  
+-- 2017-04-08: SPAWN:**InitDelayOn()** added.  
+-- 2017-04-08: SPAWN:**InitDelayOff()** added.  
+-- 
 -- 2017-03-14: SPAWN:**InitKeepUnitNames()** added.  
--- 2017-03-14: SPAWN:**InitRandomizePosition( RandomizePosition, OuterRadious, InnerRadius )** added.
+-- 2017-03-14: SPAWN:**InitRandomizePosition( RandomizePosition, OuterRadious, InnerRadius )** added.  
 -- 
--- 2017-02-04: SPAWN:InitUnControlled( **UnControlled** ) replaces SPAWN:InitUnControlled().
+-- 2017-02-04: SPAWN:InitUnControlled( **UnControlled** ) replaces SPAWN:InitUnControlled().  
 -- 
--- 2017-01-24: SPAWN:**InitAIOnOff( AIOnOff )** added.
+-- 2017-01-24: SPAWN:**InitAIOnOff( AIOnOff )** added.  
+-- 2017-01-24: SPAWN:**InitAIOn()** added.  
+-- 2017-01-24: SPAWN:**InitAIOff()** added.  
 -- 
--- 2017-01-24: SPAWN:**InitAIOn()** added.
--- 
--- 2017-01-24: SPAWN:**InitAIOff()** added.
--- 
--- 2016-08-15: SPAWN:**InitCleanUp**( SpawnCleanUpInterval ) replaces SPAWN:_CleanUp_( SpawnCleanUpInterval ).
--- 
+-- 2016-08-15: SPAWN:**InitCleanUp**( SpawnCleanUpInterval ) replaces SPAWN:_CleanUp_( SpawnCleanUpInterval ).  
 -- 2016-08-15: SPAWN:**InitRandomizeZones( SpawnZones )** added.
 -- 
--- 2016-08-14: SPAWN:**OnSpawnGroup**( SpawnCallBackFunction, ... ) replaces SPAWN:_SpawnFunction_( SpawnCallBackFunction, ... ).
--- 
--- 2016-08-14: SPAWN.SpawnInZone( Zone, __RandomizeGroup__, SpawnIndex ) replaces SpawnInZone( Zone, _RandomizeUnits, OuterRadius, InnerRadius,_ SpawnIndex ).
--- 
--- 2016-08-14: SPAWN.SpawnFromVec3( Vec3, SpawnIndex ) replaces SpawnFromVec3( Vec3, _RandomizeUnits, OuterRadius, InnerRadius,_ SpawnIndex ):
--- 
--- 2016-08-14: SPAWN.SpawnFromVec2( Vec2, SpawnIndex ) replaces SpawnFromVec2( Vec2, _RandomizeUnits, OuterRadius, InnerRadius,_ SpawnIndex ):
--- 
--- 2016-08-14: SPAWN.SpawnFromUnit( SpawnUnit, SpawnIndex ) replaces SpawnFromUnit( SpawnUnit, _RandomizeUnits, OuterRadius, InnerRadius,_ SpawnIndex ):
--- 
--- 2016-08-14: SPAWN.SpawnFromUnit( SpawnUnit, SpawnIndex ) replaces SpawnFromStatic( SpawnStatic, _RandomizeUnits, OuterRadius, InnerRadius,_ SpawnIndex ): 
--- 
--- 2016-08-14: SPAWN.**InitRandomizeUnits( RandomizeUnits, OuterRadius, InnerRadius )** added:
--- 
--- 2016-08-14: SPAWN.**Init**Limit( SpawnMaxUnitsAlive, SpawnMaxGroups ) replaces SPAWN._Limit_( SpawnMaxUnitsAlive, SpawnMaxGroups ):
--- 
--- 2016-08-14: SPAWN.**Init**Array( SpawnAngle, SpawnWidth, SpawnDeltaX, SpawnDeltaY ) replaces SPAWN._Array_( SpawnAngle, SpawnWidth, SpawnDeltaX, SpawnDeltaY ).
--- 
--- 2016-08-14: SPAWN.**Init**RandomizeRoute( SpawnStartPoint, SpawnEndPoint, SpawnRadius, SpawnHeight ) replaces SPAWN._RandomizeRoute_( SpawnStartPoint, SpawnEndPoint, SpawnRadius, SpawnHeight ).
--- 
--- 2016-08-14: SPAWN.**Init**RandomizeTemplate( SpawnTemplatePrefixTable ) replaces SPAWN._RandomizeTemplate_( SpawnTemplatePrefixTable ).
--- 
--- 2016-08-14: SPAWN.**Init**UnControlled() replaces SPAWN._UnControlled_().
+-- 2016-08-14: SPAWN:**OnSpawnGroup**( SpawnCallBackFunction, ... ) replaces SPAWN:_SpawnFunction_( SpawnCallBackFunction, ... ).  
+-- 2016-08-14: SPAWN.SpawnInZone( Zone, __RandomizeGroup__, SpawnIndex ) replaces SpawnInZone( Zone, _RandomizeUnits, OuterRadius, InnerRadius,_ SpawnIndex ).  
+-- 2016-08-14: SPAWN.SpawnFromVec3( Vec3, SpawnIndex ) replaces SpawnFromVec3( Vec3, _RandomizeUnits, OuterRadius, InnerRadius,_ SpawnIndex ).  
+-- 2016-08-14: SPAWN.SpawnFromVec2( Vec2, SpawnIndex ) replaces SpawnFromVec2( Vec2, _RandomizeUnits, OuterRadius, InnerRadius,_ SpawnIndex ).  
+-- 2016-08-14: SPAWN.SpawnFromUnit( SpawnUnit, SpawnIndex ) replaces SpawnFromUnit( SpawnUnit, _RandomizeUnits, OuterRadius, InnerRadius,_ SpawnIndex ).  
+-- 2016-08-14: SPAWN.SpawnFromUnit( SpawnUnit, SpawnIndex ) replaces SpawnFromStatic( SpawnStatic, _RandomizeUnits, OuterRadius, InnerRadius,_ SpawnIndex ).   
+-- 2016-08-14: SPAWN.**InitRandomizeUnits( RandomizeUnits, OuterRadius, InnerRadius )** added.  
+-- 2016-08-14: SPAWN.**Init**Limit( SpawnMaxUnitsAlive, SpawnMaxGroups ) replaces SPAWN._Limit_( SpawnMaxUnitsAlive, SpawnMaxGroups ).  
+-- 2016-08-14: SPAWN.**Init**Array( SpawnAngle, SpawnWidth, SpawnDeltaX, SpawnDeltaY ) replaces SPAWN._Array_( SpawnAngle, SpawnWidth, SpawnDeltaX, SpawnDeltaY ).  
+-- 2016-08-14: SPAWN.**Init**RandomizeRoute( SpawnStartPoint, SpawnEndPoint, SpawnRadius, SpawnHeight ) replaces SPAWN._RandomizeRoute_( SpawnStartPoint, SpawnEndPoint, SpawnRadius, SpawnHeight ).  
+-- 2016-08-14: SPAWN.**Init**RandomizeTemplate( SpawnTemplatePrefixTable ) replaces SPAWN._RandomizeTemplate_( SpawnTemplatePrefixTable ).  
+-- 2016-08-14: SPAWN.**Init**UnControlled() replaces SPAWN._UnControlled_().  
 -- 
 -- ===
 -- 
@@ -177,7 +77,6 @@
 
 --- SPAWN Class
 -- @type SPAWN
--- @extends Core.Base#BASE
 -- @field ClassName
 -- @field #string SpawnTemplatePrefix
 -- @field #string SpawnAliasPrefix
@@ -186,6 +85,165 @@
 -- @field #number SpawnIndex
 -- @field #number MaxAliveGroups
 -- @field #SPAWN.SpawnZoneTable SpawnZoneTable
+-- @extends Core.Base#BASE
+
+
+--- # SPAWN class, extends @{Base#BASE}
+-- 
+-- The SPAWN class allows to spawn dynamically new groups.  
+-- Each SPAWN object needs to be have a related **template group** setup in the Mission Editor (ME),
+-- which is a normal group with the **Late Activation** flag set. 
+-- This template group will never be activated in your mission.  
+-- SPAWN uses that **template group** to reference to all the characteristics 
+-- (air, ground, livery, unit composition, formation, skill level etc) of each new group to be spawned.  
+-- 
+-- Therefore, when creating a SPAWN object, the @{#SPAWN.New} and @{#SPAWN.NewWithAlias} require
+-- **the name of the template group** to be given as a string to those constructor methods.  
+--  
+-- Initialization settings can be applied on the SPAWN object, 
+-- which modify the behaviour or the way groups are spawned.
+-- These initialization methods have the prefix **Init**.
+-- There are also spawn methods with the prefix **Spawn** and will spawn new groups in various ways.
+-- 
+-- ### IMPORTANT! The methods with prefix **Init** must be used before any methods with prefix **Spawn** method are used, or unexpected results may appear!!!  
+-- 
+-- Because SPAWN can spawn multiple groups of a template group, 
+-- SPAWN has an **internal index** that keeps track 
+-- which was the latest group that was spawned.  
+-- 
+-- **Limits** can be set on how many groups can be spawn in each SPAWN object, 
+-- using the method @{#SPAWN.InitLimit}. SPAWN has 2 kind of limits:
+-- 
+--   * The maximum amount of @{Unit}s that can be **alive** at the same time... 
+--   * The maximum amount of @{Group}s that can be **spawned**... This is more of a **resource**-type of limit.
+--   
+-- When new groups get spawned using the **Spawn** methods, 
+-- it will be evaluated whether any limits have been reached.
+-- When no spawn limit is reached, a new group will be created by the spawning methods, 
+-- and the internal index will be increased with 1.  
+-- 
+-- These limits ensure that your mission does not accidentally get flooded with spawned groups.  
+-- Additionally, it also guarantees that independent of the group composition, 
+-- at any time, the most optimal amount of groups are alive in your mission.
+-- For example, if your template group has a group composition of 10 units, and you specify a limit of 100 units alive at the same time,
+-- with unlimited resources = :InitLimit( 100, 0 ) and 10 groups are alive, but two groups have only one unit alive in the group,
+-- then a sequent Spawn(Scheduled) will allow a new group to be spawned!!!
+-- 
+-- ### IMPORTANT!! If a limit has been reached, it is possible that a **Spawn** method returns **nil**, meaning, no @{Group} had been spawned!!!  
+-- 
+-- Spawned groups get **the same name** as the name of the template group.  
+-- Spawned units in those groups keep _by default_ **the same name** as the name of the template group.  
+-- However, because multiple groups and units are created from the template group, 
+-- a suffix is added to each spawned group and unit.
+-- 
+-- Newly spawned groups will get the following naming structure at run-time:
+-- 
+--   1. Spawned groups will have the name _GroupName_#_nnn_, where _GroupName_ is the name of the **template group**, 
+--   and _nnn_ is a **counter from 0 to 999**.
+--   2. Spawned units will have the name _GroupName_#_nnn_-_uu_, 
+--   where _uu_ is a **counter from 0 to 99** for each new spawned unit belonging to the group.
+-- 
+-- That being said, there is a way to keep the same unit names!  
+-- The method @{#SPAWN.InitKeepUnitNames}() will keep the same unit names as defined within the template group, thus:
+-- 
+--   3. Spawned units will have the name _UnitName_#_nnn_-_uu_, 
+--   where _UnitName_ is the **unit name as defined in the template group*, 
+--   and _uu_ is a **counter from 0 to 99** for each new spawned unit belonging to the group.
+-- 
+-- Some **additional notes that need to be considered!!**:
+-- 
+--   * templates are actually groups defined within the mission editor, with the flag "Late Activation" set. 
+--   As such, these groups are never used within the mission, but are used by the @{#SPAWN} module.
+--   * It is important to defined BEFORE you spawn new groups, 
+--   a proper initialization of the SPAWN instance is done with the options you want to use.
+--   * When designing a mission, NEVER name groups using a "#" within the name of the group Spawn template(s), 
+--   or the SPAWN module logic won't work anymore.
+--   
+-- ## SPAWN construction methods
+-- 
+-- Create a new SPAWN object with the @{#SPAWN.New}() or the @{#SPAWN.NewWithAlias}() methods:
+-- 
+--   * @{#SPAWN.New}(): Creates a new SPAWN object taking the name of the group that represents the GROUP template (definition).
+--   * @{#SPAWN.NewWithAlias}(): Creates a new SPAWN object taking the name of the group that represents the GROUP template (definition), and gives each spawned @{Group} an different name.
+--
+-- It is important to understand how the SPAWN class works internally. The SPAWN object created will contain internally a list of groups that will be spawned and that are already spawned.
+-- The initialization methods will modify this list of groups so that when a group gets spawned, ALL information is already prepared when spawning. This is done for performance reasons.
+-- So in principle, the group list will contain all parameters and configurations after initialization, and when groups get actually spawned, this spawning can be done quickly and efficient.
+--
+-- ## SPAWN **Init**ialization methods
+-- 
+-- A spawn object will behave differently based on the usage of **initialization** methods, which all start with the **Init** prefix:  
+-- 
+--   * @{#SPAWN.InitKeepUnitNames}(): Keeps the unit names as defined within the mission editor, but note that anything after a # mark is ignored, and any spaces before and after the resulting name are removed. IMPORTANT! This method MUST be the first used after :New !!!
+--   * @{#SPAWN.InitLimit}(): Limits the amount of groups that can be alive at the same time and that can be dynamically spawned.
+--   * @{#SPAWN.InitRandomizeRoute}(): Randomize the routes of spawned groups, and for air groups also optionally the height.
+--   * @{#SPAWN.InitRandomizeTemplate}(): Randomize the group templates so that when a new group is spawned, a random group template is selected from one of the templates defined. 
+--   * @{#SPAWN.InitUnControlled}(): Spawn plane groups uncontrolled.
+--   * @{#SPAWN.InitArray}(): Make groups visible before they are actually activated, and order these groups like a batallion in an array.
+--   * @{#SPAWN.InitRepeat}(): Re-spawn groups when they land at the home base. Similar methods are @{#SPAWN.InitRepeatOnLanding} and @{#SPAWN.InitRepeatOnEngineShutDown}.
+--   * @{#SPAWN.InitRandomizePosition}(): Randomizes the position of @{Group}s that are spawned within a **radius band**, given an Outer and Inner radius, from the point that the spawn happens.
+--   * @{#SPAWN.InitRandomizeUnits}(): Randomizes the @{Unit}s in the @{Group} that is spawned within a **radius band**, given an Outer and Inner radius.
+--   * @{#SPAWN.InitRandomizeZones}(): Randomizes the spawning between a predefined list of @{Zone}s that are declared using this function. Each zone can be given a probability factor.
+--   * @{#SPAWN.InitAIOn}(): Turns the AI On when spawning the new @{Group} object.
+--   * @{#SPAWN.InitAIOff}(): Turns the AI Off when spawning the new @{Group} object.
+--   * @{#SPAWN.InitAIOnOff}(): Turns the AI On or Off when spawning the new @{Group} object.
+--   * @{#SPAWN.InitDelayOnOff}(): Turns the inital delay On/Off when spawning the first @{Group} object.
+--   * @{#SPAWN.InitDelayOn}(): Turns the inital delay On when spawning the first @{Group} object.
+--   * @{#SPAWN.InitDelayOff}(): Turns the inital delay On when spawning the first @{Group} object.
+-- 
+-- ## SPAWN **Spawn** methods
+-- 
+-- Groups can be spawned at different times and methods:
+-- 
+--   * @{#SPAWN.Spawn}(): Spawn one new group based on the last spawned index.
+--   * @{#SPAWN.ReSpawn}(): Re-spawn a group based on a given index.
+--   * @{#SPAWN.SpawnScheduled}(): Spawn groups at scheduled but randomized intervals. You can use @{#SPAWN.SpawnScheduleStart}() and @{#SPAWN.SpawnScheduleStop}() to start and stop the schedule respectively.
+--   * @{#SPAWN.SpawnFromVec3}(): Spawn a new group from a Vec3 coordinate. (The group will can be spawned at a point in the air).
+--   * @{#SPAWN.SpawnFromVec2}(): Spawn a new group from a Vec2 coordinate. (The group will be spawned at land height ).
+--   * @{#SPAWN.SpawnFromStatic}(): Spawn a new group from a structure, taking the position of a @{Static}.
+--   * @{#SPAWN.SpawnFromUnit}(): Spawn a new group taking the position of a @{Unit}.
+--   * @{#SPAWN.SpawnInZone}(): Spawn a new group in a @{Zone}.
+-- 
+-- Note that @{#SPAWN.Spawn} and @{#SPAWN.ReSpawn} return a @{GROUP#GROUP.New} object, that contains a reference to the DCSGroup object. 
+-- You can use the @{GROUP} object to do further actions with the DCSGroup.
+--  
+-- ## Retrieve alive GROUPs spawned by the SPAWN object
+-- 
+-- The SPAWN class administers which GROUPS it has reserved (in stock) or has created during mission execution.
+-- Every time a SPAWN object spawns a new GROUP object, a reference to the GROUP object is added to an internal table of GROUPS.
+-- SPAWN provides methods to iterate through that internal GROUP object reference table:
+-- 
+--   * @{#SPAWN.GetFirstAliveGroup}(): Will find the first alive GROUP it has spawned, and return the alive GROUP object and the first Index where the first alive GROUP object has been found.
+--   * @{#SPAWN.GetNextAliveGroup}(): Will find the next alive GROUP object from a given Index, and return a reference to the alive GROUP object and the next Index where the alive GROUP has been found.
+--   * @{#SPAWN.GetLastAliveGroup}(): Will find the last alive GROUP object, and will return a reference to the last live GROUP object and the last Index where the last alive GROUP object has been found.
+-- 
+-- You can use the methods @{#SPAWN.GetFirstAliveGroup}() and sequently @{#SPAWN.GetNextAliveGroup}() to iterate through the alive GROUPS within the SPAWN object, and to actions... See the respective methods for an example.
+-- The method @{#SPAWN.GetGroupFromIndex}() will return the GROUP object reference from the given Index, dead or alive...
+-- 
+-- ## Spawned cleaning of inactive groups
+-- 
+-- Sometimes, it will occur during a mission run-time, that ground or especially air objects get damaged, and will while being damged stop their activities, while remaining alive.
+-- In such cases, the SPAWN object will just sit there and wait until that group gets destroyed, but most of the time it won't, 
+-- and it may occur that no new groups are or can be spawned as limits are reached.
+-- To prevent this, a @{#SPAWN.InitCleanUp}() initialization method has been defined that will silently monitor the status of each spawned group.
+-- Once a group has a velocity = 0, and has been waiting for a defined interval, that group will be cleaned or removed from run-time. 
+-- There is a catch however :-) If a damaged group has returned to an airbase within the coalition, that group will not be considered as "lost"... 
+-- In such a case, when the inactive group is cleaned, a new group will Re-spawned automatically. 
+-- This models AI that has succesfully returned to their airbase, to restart their combat activities.
+-- Check the @{#SPAWN.InitCleanUp}() for further info.
+-- 
+-- ## Catch the @{Group} Spawn Event in a callback function!
+-- 
+-- When using the @{#SPAWN.SpawnScheduled)() method, new @{Group}s are created following the spawn time interval parameters.
+-- When a new @{Group} is spawned, you maybe want to execute actions with that group spawned at the spawn event.
+-- The SPAWN class supports this functionality through the method @{#SPAWN.OnSpawnGroup}( **function( SpawnedGroup ) end ** ), 
+-- which takes a function as a parameter that you can define locally. 
+-- Whenever a new @{Group} is spawned, the given function is called, and the @{Group} that was just spawned, is given as a parameter.
+-- As a result, your spawn event handling function requires one parameter to be declared, which will contain the spawned @{Group} object. 
+-- A coding example is provided at the description of the @{#SPAWN.OnSpawnGroup}( **function( SpawnedGroup ) end ** ) method.
+-- 
+-- @field #SPAWN SPAWN
+-- 
 SPAWN = {
   ClassName = "SPAWN",
   SpawnTemplatePrefix = nil,
@@ -227,6 +285,7 @@ function SPAWN:New( SpawnTemplatePrefix )
 		self.AIOnOff = true                               -- The AI is on by default when spawning a group.
     self.SpawnUnControlled = false
     self.SpawnInitKeepUnitNames = false               -- Overwrite unit names by default with group name.
+    self.DelayOnOff = true                            -- An intial delay when spawning the first group.
 
 		self.SpawnGroups = {}														-- Array containing the descriptions of each Group to be Spawned.
 	else
@@ -270,6 +329,7 @@ function SPAWN:NewWithAlias( SpawnTemplatePrefix, SpawnAliasPrefix )
     self.AIOnOff = true                               -- The AI is on by default when spawning a group.
     self.SpawnUnControlled = false
     self.SpawnInitKeepUnitNames = false               -- Overwrite unit names by default with group name.
+    self.DelayOnOff = true                            -- An intial delay when spawning the first group.
 
 		self.SpawnGroups = {}														-- Array containing the descriptions of each Group to be Spawned.
 	else
@@ -626,6 +686,36 @@ do -- AI methods
 
 end -- AI methods
 
+do -- Delay methods
+  --- Turns the Delay On or Off for the first @{Group} scheduled spawning.
+  -- The default value is that for scheduled spawning, there is an initial delay when spawning the first @{Group}.
+  -- @param #SPAWN self
+  -- @param #boolean DelayOnOff A value of true sets the Delay On, a value of false sets the Delay Off.
+  -- @return #SPAWN The SPAWN object
+  function SPAWN:InitDelayOnOff( DelayOnOff )
+  
+    self.DelayOnOff = DelayOnOff
+    return self
+  end
+  
+  --- Turns the Delay On for the @{Group} when spawning.
+  -- @param #SPAWN self
+  -- @return #SPAWN The SPAWN object
+  function SPAWN:InitDelayOn()
+  
+    return self:InitDelayOnOff( true )
+  end
+  
+  --- Turns the Delay Off for the @{Group} when spawning.
+  -- @param #SPAWN self
+  -- @return #SPAWN The SPAWN object
+  function SPAWN:InitDelayOff()
+  
+    return self:InitDelayOnOff( false )
+  end
+
+end -- Delay methods
+
 --- Will spawn a group based on the internal index.
 -- Note: Uses @{DATABASE} module defined in MOOSE.
 -- @param #SPAWN self
@@ -787,7 +877,11 @@ function SPAWN:SpawnScheduled( SpawnTime, SpawnTimeVariation )
 	self:F( { SpawnTime, SpawnTimeVariation } )
 
 	if SpawnTime ~= nil and SpawnTimeVariation ~= nil then
-    self.SpawnScheduler = SCHEDULER:New( self, self._Scheduler, {}, 1, SpawnTime, SpawnTimeVariation )
+	  local InitialDelay = 0
+	  if self.DelayOnOff == true then
+	    InitialDelay = math.random( SpawnTime - SpawnTime * SpawnTimeVariation, SpawnTime + SpawnTime * SpawnTimeVariation )
+	  end
+    self.SpawnScheduler = SCHEDULER:New( self, self._Scheduler, {}, InitialDelay, SpawnTime, SpawnTimeVariation )
 	end
 
 	return self
