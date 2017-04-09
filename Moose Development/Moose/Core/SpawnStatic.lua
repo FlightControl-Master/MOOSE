@@ -43,8 +43,7 @@
 
 
 
---- SPAWNSTATIC Class
--- @type SPAWNSTATIC
+--- @type SPAWNSTATIC
 -- @extends Core.Base#BASE
 
 
@@ -72,13 +71,6 @@
 --   * @{#SPAWNSTATIC.NewFromStatic}(): Creates a new SPAWNSTATIC object given a name that is used as the base of the naming of each spawned Static.
 --   * @{#SPAWNSTATIC.NewFromType}(): Creates a new SPAWNSTATIC object given a type name and a name to be given when spawned.
 --
--- ## SPAWNSTATIC **Init**ialization methods
--- 
--- A spawn object will behave differently based on the usage of **initialization** methods, which all start with the **Init** prefix:  
--- 
---   * @{#SPAWNSTATIC.InitRandomizePosition}(): Randomizes the position of @{Static}s that are spawned within a **radius band**, given an Outer and Inner radius, from the point that the spawn happens.
---   * @{#SPAWNSTATIC.InitRandomizeZones}(): Randomizes the spawning between a predefined list of @{Zone}s that are declared using this function. Each zone can be given a probability factor.
--- 
 -- ## SPAWNSTATIC **Spawn** methods
 -- 
 -- Groups can be spawned at different times and methods:
@@ -142,31 +134,45 @@ end
 
 --- Creates a new @{Static} from a POINT_VEC2.
 -- @param #SPAWNSTATIC self
--- @param #string SpawnTypeName is the name of the type.
+-- @param Core.Point#POINT_VEC2 PointVec2 The 2D coordinate where to spawn the static.
+-- @param #number Heading The heading of the static, which is a number in degrees from 0 to 360.
+-- @param #string (optional) The name of the new static.
 -- @return #SPAWNSTATIC
-function SPAWNSTATIC:SpawnFromPointVec2( PointVec2, BaseName )
-  self:F( { PointVec2, BaseName  } )
+function SPAWNSTATIC:SpawnFromPointVec2( PointVec2, Heading, NewName )
+  self:F( { PointVec2, Heading, NewName  } )
   
   local CountryName = _DATABASE.COUNTRY_NAME[self.CountryID]
   
-  local StaticTemplate
+  local StaticTemplate = _DATABASE:GetStaticUnitTemplate( self.SpawnTemplatePrefix )
   
-  local Tire = {
-      ["country"] = CountryName, 
-      ["category"] = "Fortifications",
-      ["canCargo"] = false,
-      ["shape_name"] = "H-tyre_B_WF",
-      ["type"] = "Black_Tyre_WF",
-      --["unitId"] = Angle + 10000,
-      ["y"] = Point.y,
-      ["x"] = Point.x,
-      ["name"] = string.format( "%s-Tire #%0d", self:GetName(), Angle ),
-      ["heading"] = 0,
-  } -- end of ["group"]
+  StaticTemplate.x = PointVec2:GetLat()
+  StaticTemplate.y = PointVec2:GetLon()
+  
+  StaticTemplate.name = NewName or string.format("%s#%05d", self.SpawnTemplatePrefix, self.SpawnIndex )
+  StaticTemplate.heading = ( Heading / 180 ) * math.pi
+  
+  StaticTemplate.CountryID = nil
+  StaticTemplate.CoalitionID = nil
+  StaticTemplate.CategoryID = nil
+  
+  local Static = coalition.addStaticObject( self.CountryID, StaticTemplate )
+  
+  self.SpawnIndex = self.SpawnIndex + 1
 
-  local Group = coalition.addStaticObject( CountryID, Tire )
-
-  return self
+  return Static
 end
 
+--- Creates a new @{Static} from a @{Zone}.
+-- @param #SPAWNSTATIC self
+-- @param Core.Zone#ZONE_BASE Zone The Zone where to spawn the static.
+-- @param #number Heading The heading of the static, which is a number in degrees from 0 to 360.
+-- @param #string (optional) The name of the new static.
+-- @return #SPAWNSTATIC
+function SPAWNSTATIC:SpawnFromZone( Zone, Heading, NewName )
+  self:F( { Zone, Heading, NewName  } )
+
+  local Static = self:SpawnFromPointVec2( Zone:GetPointVec2(), Heading, NewName )
+  
+  return Static
+end
 

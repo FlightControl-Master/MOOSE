@@ -13,6 +13,7 @@ Core/Point.lua
 Core/Message.lua
 Core/Fsm.lua
 Core/Radio.lua
+Core/SpawnStatic.lua
 
 Wrapper/Object.lua
 Wrapper/Identifiable.lua
