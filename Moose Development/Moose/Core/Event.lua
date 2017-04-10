@@ -457,8 +457,7 @@ function EVENT:RemoveForUnit( EventClass, EventID  )
 
   local EventClass = EventClass
   local EventPriority = EventClass:GetEventPriority()
-  local Event = self.Events[EventID][EventPriority][EventClass]
-  Event.EventUnit = nil
+  self.Events[EventID][EventPriority][EventClass] = nil
 end
 
 --- Removes an Events entry for a GROUP.
@@ -471,8 +470,7 @@ function EVENT:RemoveForGroup( EventClass, EventID  )
 
   local EventClass = EventClass
   local EventPriority = EventClass:GetEventPriority()
-  local Event = self.Events[EventID][EventPriority][EventClass]
-  Event.EventGroup = nil
+  self.Events[EventID][EventPriority][EventClass] = nil
 end
 
 --- Clears all event subscriptions for a @{Base#BASE} derived object.
@@ -850,8 +848,8 @@ function EVENT:onEvent( Event )
             if ( Event.IniDCSUnitName and Event.IniDCSGroupName and Event.IniGroupName and EventData.EventGroup ) or
                ( Event.TgtDCSUnitName and Event.TgtDCSGroupName and Event.TgtGroupName and EventData.EventGroup ) then 
 
-              local GroupName = EventClass:GetName()
-              if GroupName then
+              if EventClass:IsAlive() then
+                local GroupName = EventClass:GetName()
                 if GroupName == Event.IniDCSGroupName or GroupName == Event.TgtDCSGroupName then
                   -- First test if a EventFunction is Set, otherwise search for the default function
                   if EventData.EventFunction then
