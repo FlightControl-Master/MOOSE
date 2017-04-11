@@ -274,116 +274,139 @@ EVENTS = {
 local _EVENTMETA = {
    [world.event.S_EVENT_SHOT] = {
      Order = 1,
+     Side = "I",
      Event = "OnEventShot",
      Text = "S_EVENT_SHOT" 
    },
    [world.event.S_EVENT_HIT] = {
      Order = 1,
+     Side = "T",
      Event = "OnEventHit",
      Text = "S_EVENT_HIT" 
    },
    [world.event.S_EVENT_TAKEOFF] = {
      Order = 1,
+     Side = "I",
      Event = "OnEventTakeoff",
      Text = "S_EVENT_TAKEOFF" 
    },
    [world.event.S_EVENT_LAND] = {
      Order = 1,
+     Side = "I",
      Event = "OnEventLand",
      Text = "S_EVENT_LAND" 
    },
    [world.event.S_EVENT_CRASH] = {
      Order = -1,
+     Side = "I",
      Event = "OnEventCrash",
      Text = "S_EVENT_CRASH" 
    },
    [world.event.S_EVENT_EJECTION] = {
      Order = 1,
+     Side = "I",
      Event = "OnEventEjection",
      Text = "S_EVENT_EJECTION" 
    },
    [world.event.S_EVENT_REFUELING] = {
      Order = 1,
+     Side = "I",
      Event = "OnEventRefueling",
      Text = "S_EVENT_REFUELING" 
    },
    [world.event.S_EVENT_DEAD] = {
      Order = -1,
+     Side = "I",
      Event = "OnEventDead",
      Text = "S_EVENT_DEAD" 
    },
    [world.event.S_EVENT_PILOT_DEAD] = {
      Order = 1,
+     Side = "I",
      Event = "OnEventPilotDead",
      Text = "S_EVENT_PILOT_DEAD" 
    },
    [world.event.S_EVENT_BASE_CAPTURED] = {
      Order = 1,
+     Side = "I",
      Event = "OnEventBaseCaptured",
      Text = "S_EVENT_BASE_CAPTURED" 
    },
    [world.event.S_EVENT_MISSION_START] = {
      Order = 1,
+     Side = "N",
      Event = "OnEventMissionStart",
      Text = "S_EVENT_MISSION_START" 
    },
    [world.event.S_EVENT_MISSION_END] = {
      Order = 1,
+     Side = "N",
      Event = "OnEventMissionEnd",
      Text = "S_EVENT_MISSION_END" 
    },
    [world.event.S_EVENT_TOOK_CONTROL] = {
      Order = 1,
+     Side = "N",
      Event = "OnEventTookControl",
      Text = "S_EVENT_TOOK_CONTROL" 
    },
    [world.event.S_EVENT_REFUELING_STOP] = {
      Order = 1,
+     Side = "I",
      Event = "OnEventRefuelingStop",
      Text = "S_EVENT_REFUELING_STOP" 
    },
    [world.event.S_EVENT_BIRTH] = {
      Order = 1,
+     Side = "I",
      Event = "OnEventBirth",
      Text = "S_EVENT_BIRTH" 
    },
    [world.event.S_EVENT_HUMAN_FAILURE] = {
      Order = 1,
+     Side = "I",
      Event = "OnEventHumanFailure",
      Text = "S_EVENT_HUMAN_FAILURE" 
    },
    [world.event.S_EVENT_ENGINE_STARTUP] = {
      Order = 1,
+     Side = "I",
      Event = "OnEventEngineStartup",
      Text = "S_EVENT_ENGINE_STARTUP" 
    },
    [world.event.S_EVENT_ENGINE_SHUTDOWN] = {
      Order = 1,
+     Side = "I",
      Event = "OnEventEngineShutdown",
      Text = "S_EVENT_ENGINE_SHUTDOWN" 
    },
    [world.event.S_EVENT_PLAYER_ENTER_UNIT] = {
      Order = 1,
+     Side = "I",
      Event = "OnEventPlayerEnterUnit",
      Text = "S_EVENT_PLAYER_ENTER_UNIT" 
    },
    [world.event.S_EVENT_PLAYER_LEAVE_UNIT] = {
      Order = -1,
+     Side = "I",
      Event = "OnEventPlayerLeaveUnit",
      Text = "S_EVENT_PLAYER_LEAVE_UNIT" 
    },
    [world.event.S_EVENT_PLAYER_COMMENT] = {
      Order = 1,
+     Side = "I",
      Event = "OnEventPlayerComment",
      Text = "S_EVENT_PLAYER_COMMENT" 
    },
    [world.event.S_EVENT_SHOOTING_START] = {
      Order = 1,
+     Side = "I",
      Event = "OnEventShootingStart",
      Text = "S_EVENT_SHOOTING_START" 
    },
    [world.event.S_EVENT_SHOOTING_END] = {
      Order = 1,
+     Side = "I",
      Event = "OnEventShootingEnd",
      Text = "S_EVENT_SHOOTING_END" 
    },
@@ -674,10 +697,11 @@ function EVENT:onEvent( Event )
     return errmsg
   end
 
-  self:E( _EVENTMETA[Event.id].Text, Event )
+
+  local EventMeta = _EVENTMETA[Event.id]
+  self:E( EventMeta.Text, Event )
   
   if self and self.Events and self.Events[Event.id] then
-  
 
     if Event.initiator then    
 
@@ -782,12 +806,11 @@ function EVENT:onEvent( Event )
       --Event.WeaponTgtDCSUnit = Event.Weapon:getTarget()
     end
     
-    local PriorityOrder = _EVENTMETA[Event.id].Order
     local PriorityBegin = PriorityOrder == -1 and 5 or 1
     local PriorityEnd = PriorityOrder == -1 and 1 or 5
 
     if Event.IniObjectCategory ~= 3 then
-      self:E( { _EVENTMETA[Event.id].Text, Event, Event.IniDCSUnitName, Event.TgtDCSUnitName, PriorityOrder } )
+      self:E( { EventMeta.Text, Event, Event.IniDCSUnitName, Event.TgtDCSUnitName, PriorityOrder } )
     end
     
     for EventPriority = PriorityBegin, PriorityEnd, PriorityOrder do
@@ -803,12 +826,16 @@ function EVENT:onEvent( Event )
           Event.TgtGroup = GROUP:FindByName( Event.TgtDCSGroupName )
         
           -- If the EventData is for a UNIT, the call directly the EventClass EventFunction for that UNIT.
-          if ( Event.IniDCSUnitName and EventData.EventUnit ) or
-             ( Event.TgtDCSUnitName and EventData.EventUnit ) then 
+          if EventData.EventUnit then
 
-            local UnitName = EventClass:GetName()
-            if UnitName then
-              if UnitName == Event.IniDCSUnitName or UnitName == Event.TgtDCSUnitName then
+            -- So now the EventClass must be a UNIT class!!! We check if it is still "Alive".
+            if EventClass:IsAlive() then
+            
+              local UnitName = EventClass:GetName()
+
+              if ( EventMeta.Side == "I" and UnitName == Event.IniDCSUnitName ) or 
+                 ( EventMeta.Side == "T" and UnitName == Event.TgtDCSUnitName ) then
+                 
                 -- First test if a EventFunction is Set, otherwise search for the default function
                 if EventData.EventFunction then
               
@@ -824,12 +851,12 @@ function EVENT:onEvent( Event )
                 else
     
                   -- There is no EventFunction defined, so try to find if a default OnEvent function is defined on the object.
-                  local EventFunction = EventClass[ _EVENTMETA[Event.id].Event ]
+                  local EventFunction = EventClass[ EventMeta.Event ]
                   if EventFunction and type( EventFunction ) == "function" then
                     
                     -- Now call the default event function.
                     if Event.IniObjectCategory ~= 3 then
-                      self:E( { "Calling " .. _EVENTMETA[Event.id].Event .. " for Class ", EventClass:GetClassNameAndID(), EventPriority } )
+                      self:E( { "Calling " .. EventMeta.Event .. " for Class ", EventClass:GetClassNameAndID(), EventPriority } )
                     end
                                   
                     local Result, Value = xpcall( 
@@ -840,17 +867,23 @@ function EVENT:onEvent( Event )
                 end
               end
             else
+              -- The EventClass is not alive anymore, we remove it from the EventHandlers...
               self:RemoveForUnit( EventClass, Event.id )
             end                      
           else
 
             -- If the EventData is for a GROUP, the call directly the EventClass EventFunction for the UNIT in that GROUP.
-            if ( Event.IniDCSUnitName and Event.IniDCSGroupName and Event.IniGroupName and EventData.EventGroup ) or
-               ( Event.TgtDCSUnitName and Event.TgtDCSGroupName and Event.TgtGroupName and EventData.EventGroup ) then 
+            if EventData.EventGroup then
 
+              -- So now the EventClass must be a GROUP class!!! We check if it is still "Alive".
               if EventClass:IsAlive() then
+
+                -- We can get the name of the EventClass, which is now always a GROUP object.
                 local GroupName = EventClass:GetName()
-                if GroupName == Event.IniDCSGroupName or GroupName == Event.TgtDCSGroupName then
+  
+                if ( EventMeta.Side == "I" and GroupName == Event.IniDCSGroupName ) or 
+                   ( EventMeta.Side == "T" and GroupName == Event.TgtDCSGroupName ) then
+
                   -- First test if a EventFunction is Set, otherwise search for the default function
                   if EventData.EventFunction then
     
@@ -866,12 +899,12 @@ function EVENT:onEvent( Event )
                   else
       
                     -- There is no EventFunction defined, so try to find if a default OnEvent function is defined on the object.
-                    local EventFunction = EventClass[ _EVENTMETA[Event.id].Event ]
+                    local EventFunction = EventClass[ EventMeta.Event ]
                     if EventFunction and type( EventFunction ) == "function" then
                       
                       -- Now call the default event function.
                       if Event.IniObjectCategory ~= 3 then
-                        self:E( { "Calling " .. _EVENTMETA[Event.id].Event .. " for GROUP ", EventClass:GetClassNameAndID(), EventPriority } )
+                        self:E( { "Calling " .. EventMeta.Event .. " for GROUP ", EventClass:GetClassNameAndID(), EventPriority } )
                       end
                                           
                       local Result, Value = xpcall( 
@@ -882,6 +915,7 @@ function EVENT:onEvent( Event )
                   end
                 end
               else
+                -- The EventClass is not alive anymore, we remove it from the EventHandlers...
                 self:RemoveForGroup( EventClass, Event.id )  
               end
             else
@@ -904,12 +938,12 @@ function EVENT:onEvent( Event )
                 else
                   
                   -- There is no EventFunction defined, so try to find if a default OnEvent function is defined on the object.
-                  local EventFunction = EventClass[ _EVENTMETA[Event.id].Event ]
+                  local EventFunction = EventClass[ EventMeta.Event ]
                   if EventFunction and type( EventFunction ) == "function" then
                     
                     -- Now call the default event function.
                     if Event.IniObjectCategory ~= 3 then
-                      self:E( { "Calling " .. _EVENTMETA[Event.id].Event .. " for Class ", EventClass:GetClassNameAndID(), EventPriority } )
+                      self:E( { "Calling " .. EventMeta.Event .. " for Class ", EventClass:GetClassNameAndID(), EventPriority } )
                     end
                                   
                     local Result, Value = xpcall( 
@@ -927,7 +961,7 @@ function EVENT:onEvent( Event )
       end
     end
   else
-    self:E( { _EVENTMETA[Event.id].Text, Event } )    
+    self:E( { EventMeta.Text, Event } )    
   end
   
   Event = nil
