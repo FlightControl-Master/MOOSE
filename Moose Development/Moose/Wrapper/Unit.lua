@@ -990,5 +990,16 @@ do -- Event Handling
     
     return self
   end
+  
+  --- Reset the subscriptions.
+  -- @param #UNIT self
+  -- @return #UNIT
+  function UNIT:ResetEvents( Event )
+  
+    self:EventDispatcher():Reset( self )
+    
+    return self
+  end
+  
 
 end

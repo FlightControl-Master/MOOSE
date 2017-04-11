@@ -424,13 +424,6 @@ function EVENT:New()
   return self
 end
 
-function EVENT:EventText( EventID )
-
-  local EventText = _EVENTMETA[EventID].Text
-  
-  return EventText
-end
-
 
 --- Initializes the Events structure for the event
 -- @param #EVENT self
@@ -442,7 +435,7 @@ function EVENT:Init( EventID, EventClass )
 
   if not self.Events[EventID] then 
     -- Create a WEAK table to ensure that the garbage collector is cleaning the event links when the object usage is cleaned.
-    self.Events[EventID] = setmetatable( {}, { __mode = "k" } )
+    self.Events[EventID] = {}
   end
   
   -- Each event has a subtable of EventClasses, ordered by EventPriority.
@@ -457,44 +450,51 @@ function EVENT:Init( EventID, EventClass )
   return self.Events[EventID][EventPriority][EventClass]
 end
 
---- Removes an Events entry
+--- Removes a subscription
 -- @param #EVENT self
 -- @param Core.Base#BASE EventClass The self instance of the class for which the event is.
 -- @param Dcs.DCSWorld#world.event EventID
 -- @return #EVENT.Events
 function EVENT:Remove( EventClass, EventID  )
-  self:F3( { EventClass, _EVENTMETA[EventID].Text } )
 
-  local EventClass = EventClass
+  self:E( { "Removing subscription for class: ", EventClass:GetClassNameAndID() } )
+
   local EventPriority = EventClass:GetEventPriority()
+
+  self.EventsDead = self.EventsDead or {}
+  self.EventsDead[EventID] = self.EventsDead[EventID] or {}
+  self.EventsDead[EventID][EventPriority] = self.EventsDead[EventID][EventPriority] or {}  
+  self.EventsDead[EventID][EventPriority][EventClass] = self.Events[EventID][EventPriority][EventClass]
+    
   self.Events[EventID][EventPriority][EventClass] = nil
+  
 end
 
---- Removes an Events entry for a UNIT.
+--- Resets subscriptions
 -- @param #EVENT self
 -- @param Core.Base#BASE EventClass The self instance of the class for which the event is.
 -- @param Dcs.DCSWorld#world.event EventID
 -- @return #EVENT.Events
-function EVENT:RemoveForUnit( EventClass, EventID  )
-  self:F3( { EventClass, _EVENTMETA[EventID].Text } )
+function EVENT:Reset( EventObject )
 
-  local EventClass = EventClass
-  local EventPriority = EventClass:GetEventPriority()
-  self.Events[EventID][EventPriority][EventClass] = nil
+  self:E( { "Resetting subscriptions for class: ", EventObject:GetClassNameAndID() } )
+
+  local EventPriority = EventObject:GetEventPriority()
+  for EventID, EventData in pairs( self.Events ) do
+    if self.EventsDead then
+      if self.EventsDead[EventID] then
+        if self.EventsDead[EventID][EventPriority] then
+          if self.EventsDead[EventID][EventPriority][EventObject] then
+            self.Events[EventID][EventPriority][EventObject] = self.EventsDead[EventID][EventPriority][EventObject]
+          end
+        end
+      end
+    end
+  end
 end
 
---- Removes an Events entry for a GROUP.
--- @param #EVENT self
--- @param Core.Base#BASE EventClass The self instance of the class for which the event is.
--- @param Dcs.DCSWorld#world.event EventID
--- @return #EVENT.Events
-function EVENT:RemoveForGroup( EventClass, EventID  )
-  self:F3( { EventClass, _EVENTMETA[EventID].Text } )
 
-  local EventClass = EventClass
-  local EventPriority = EventClass:GetEventPriority()
-  self.Events[EventID][EventPriority][EventClass] = nil
-end
+
 
 --- Clears all event subscriptions for a @{Base#BASE} derived object.
 -- @param #EVENT self
@@ -869,7 +869,7 @@ function EVENT:onEvent( Event )
               end
             else
               -- The EventClass is not alive anymore, we remove it from the EventHandlers...
-              self:RemoveForUnit( EventClass, Event.id )
+              self:Remove( EventClass, Event.id )
             end                      
           else
 
@@ -917,7 +917,7 @@ function EVENT:onEvent( Event )
                 end
               else
                 -- The EventClass is not alive anymore, we remove it from the EventHandlers...
-                self:RemoveForGroup( EventClass, Event.id )  
+                self:Remove( EventClass, Event.id )  
               end
             else
           

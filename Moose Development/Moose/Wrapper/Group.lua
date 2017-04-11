@@ -1077,7 +1077,21 @@ do -- Event Handling
   -- @return #GROUP
   function GROUP:UnHandleEvent( Event )
   
-    self:EventDispatcher():RemoveForGroup( self:GetName(), self, Event )
+    self:EventDispatcher():Remove( self, Event )
+    
+    return self
+  end
+
+  --- Reset the subscriptions.
+  -- @param #GROUP self
+  -- @return #GROUP
+  function GROUP:ResetEvents( Event )
+  
+    self:EventDispatcher():Reset( self )
+    
+    for UnitID, UnitData in pairs( self:GetUnits() ) do
+      UnitData:ResetEvents()
+    end
     
     return self
   end

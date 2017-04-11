@@ -759,6 +759,8 @@ function SPAWN:ReSpawn( SpawnIndex )
 	  SpawnGroup:ReSpawnFunction()
 	end
 	
+	SpawnGroup:ResetEvents()
+	
 	return SpawnGroup
 end
 
