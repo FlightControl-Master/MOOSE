@@ -834,6 +834,9 @@ function GROUP:Respawn( Template )
   
   self:Destroy()
   _DATABASE:Spawn( Template )
+  
+  self:ResetEvents()
+  
 end
 
 --- Returns the group template from the @{DATABASE} (_DATABASE object).
@@ -1085,7 +1088,7 @@ do -- Event Handling
   --- Reset the subscriptions.
   -- @param #GROUP self
   -- @return #GROUP
-  function GROUP:ResetEvents( Event )
+  function GROUP:ResetEvents()
   
     self:EventDispatcher():Reset( self )
     
