@@ -699,7 +699,6 @@ function EVENT:onEvent( Event )
 
 
   local EventMeta = _EVENTMETA[Event.id]
-  self:E( EventMeta.Text, Event )
   
   if self and self.Events and self.Events[Event.id] then
 
