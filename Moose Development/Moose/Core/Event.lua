@@ -830,7 +830,9 @@ function EVENT:onEvent( Event )
           if EventData.EventUnit then
 
             -- So now the EventClass must be a UNIT class!!! We check if it is still "Alive".
-            if EventClass:IsAlive() then
+            if EventClass:IsAlive() or
+               Event.id == EVENTS.Crash or 
+               Event.id == EVENTS.Dead then
             
               local UnitName = EventClass:GetName()
 
@@ -877,7 +879,9 @@ function EVENT:onEvent( Event )
             if EventData.EventGroup then
 
               -- So now the EventClass must be a GROUP class!!! We check if it is still "Alive".
-              if EventClass:IsAlive() then
+              if EventClass:IsAlive() or
+                 Event.id == EVENTS.Crash or
+                 Event.id == EVENTS.Dead then
 
                 -- We can get the name of the EventClass, which is now always a GROUP object.
                 local GroupName = EventClass:GetName()
