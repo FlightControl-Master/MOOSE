@@ -806,6 +806,7 @@ function EVENT:onEvent( Event )
       --Event.WeaponTgtDCSUnit = Event.Weapon:getTarget()
     end
     
+    local PriorityOrder = EventMeta.Order
     local PriorityBegin = PriorityOrder == -1 and 5 or 1
     local PriorityEnd = PriorityOrder == -1 and 1 or 5
 
