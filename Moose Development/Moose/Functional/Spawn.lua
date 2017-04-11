@@ -4,6 +4,10 @@
 -- 
 -- ====
 -- 
+-- The documentation of the SPAWN class can be found further in this document.
+-- 
+-- ====
+-- 
 -- # Demo Missions
 -- 
 -- ### [SPAWN Demo Missions source code](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master-release/SPA%20-%20Spawning)
@@ -174,30 +178,62 @@
 -- 
 -- A spawn object will behave differently based on the usage of **initialization** methods, which all start with the **Init** prefix:  
 -- 
+-- ### Unit Names
+-- 
 --   * @{#SPAWN.InitKeepUnitNames}(): Keeps the unit names as defined within the mission editor, but note that anything after a # mark is ignored, and any spaces before and after the resulting name are removed. IMPORTANT! This method MUST be the first used after :New !!!
---   * @{#SPAWN.InitLimit}(): Limits the amount of groups that can be alive at the same time and that can be dynamically spawned.
+-- 
+-- ### Route randomization
+-- 
 --   * @{#SPAWN.InitRandomizeRoute}(): Randomize the routes of spawned groups, and for air groups also optionally the height.
+--   
+-- ### Group composition randomization  
+--   
 --   * @{#SPAWN.InitRandomizeTemplate}(): Randomize the group templates so that when a new group is spawned, a random group template is selected from one of the templates defined. 
+-- 
+-- ### Uncontrolled
+-- 
 --   * @{#SPAWN.InitUnControlled}(): Spawn plane groups uncontrolled.
+-- 
+-- ### Array formation
+--   
 --   * @{#SPAWN.InitArray}(): Make groups visible before they are actually activated, and order these groups like a batallion in an array.
---   * @{#SPAWN.InitRepeat}(): Re-spawn groups when they land at the home base. Similar methods are @{#SPAWN.InitRepeatOnLanding} and @{#SPAWN.InitRepeatOnEngineShutDown}.
+-- 
+-- ### Position randomization
+-- 
 --   * @{#SPAWN.InitRandomizePosition}(): Randomizes the position of @{Group}s that are spawned within a **radius band**, given an Outer and Inner radius, from the point that the spawn happens.
 --   * @{#SPAWN.InitRandomizeUnits}(): Randomizes the @{Unit}s in the @{Group} that is spawned within a **radius band**, given an Outer and Inner radius.
 --   * @{#SPAWN.InitRandomizeZones}(): Randomizes the spawning between a predefined list of @{Zone}s that are declared using this function. Each zone can be given a probability factor.
+--   
+-- ### Enable / Disable AI when spawning a new @{Group}
+--   
 --   * @{#SPAWN.InitAIOn}(): Turns the AI On when spawning the new @{Group} object.
 --   * @{#SPAWN.InitAIOff}(): Turns the AI Off when spawning the new @{Group} object.
 --   * @{#SPAWN.InitAIOnOff}(): Turns the AI On or Off when spawning the new @{Group} object.
---   * @{#SPAWN.InitDelayOnOff}(): Turns the inital delay On/Off when spawning the first @{Group} object.
---   * @{#SPAWN.InitDelayOn}(): Turns the inital delay On when spawning the first @{Group} object.
---   * @{#SPAWN.InitDelayOff}(): Turns the inital delay On when spawning the first @{Group} object.
+-- 
+-- ### Limit scheduled spawning  
+--   
+--   * @{#SPAWN.InitLimit}(): Limits the amount of groups that can be alive at the same time and that can be dynamically spawned.
+--   
+-- ### Delay initial scheduled spawn
+-- 
+--   * @{#SPAWN.InitDelayOnOff}(): Turns the inital delay On/Off when scheduled spawning the first @{Group} object.
+--   * @{#SPAWN.InitDelayOn}(): Turns the inital delay On when scheduled spawning the first @{Group} object.
+--   * @{#SPAWN.InitDelayOff}(): Turns the inital delay Off when scheduled spawning the first @{Group} object.
+-- 
+-- ### Repeat spawned @{Group}s upon landing
+-- 
+--   * @{#SPAWN.InitRepeat}() or @{#SPAWN.InitRepeatOnLanding}(): This method is used to re-spawn automatically the same group after it has landed.
+--   * @{#SPAWN.InitRepeatOnEngineShutDown}(): This method is used to re-spawn automatically the same group after it has landed and it shuts down the engines at the ramp.
+-- 
 -- 
 -- ## SPAWN **Spawn** methods
 -- 
 -- Groups can be spawned at different times and methods:
 -- 
+-- ### **Single** spawning methods
+-- 
 --   * @{#SPAWN.Spawn}(): Spawn one new group based on the last spawned index.
 --   * @{#SPAWN.ReSpawn}(): Re-spawn a group based on a given index.
---   * @{#SPAWN.SpawnScheduled}(): Spawn groups at scheduled but randomized intervals. You can use @{#SPAWN.SpawnScheduleStart}() and @{#SPAWN.SpawnScheduleStop}() to start and stop the schedule respectively.
 --   * @{#SPAWN.SpawnFromVec3}(): Spawn a new group from a Vec3 coordinate. (The group will can be spawned at a point in the air).
 --   * @{#SPAWN.SpawnFromVec2}(): Spawn a new group from a Vec2 coordinate. (The group will be spawned at land height ).
 --   * @{#SPAWN.SpawnFromStatic}(): Spawn a new group from a structure, taking the position of a @{Static}.
@@ -206,6 +242,14 @@
 -- 
 -- Note that @{#SPAWN.Spawn} and @{#SPAWN.ReSpawn} return a @{GROUP#GROUP.New} object, that contains a reference to the DCSGroup object. 
 -- You can use the @{GROUP} object to do further actions with the DCSGroup.
+-- 
+-- ### **Scheduled** spawning methods
+-- 
+--   * @{#SPAWN.SpawnScheduled}(): Spawn groups at scheduled but randomized intervals. 
+--   * @{#SPAWN.SpawnScheduledStart}(): Start or continue to spawn groups at scheduled time intervals. 
+--   * @{#SPAWN.SpawnScheduledStop}(): Stop the spawning of groups at scheduled time intervals. 
+-- 
+-- 
 --  
 -- ## Retrieve alive GROUPs spawned by the SPAWN object
 -- 
@@ -241,6 +285,15 @@
 -- Whenever a new @{Group} is spawned, the given function is called, and the @{Group} that was just spawned, is given as a parameter.
 -- As a result, your spawn event handling function requires one parameter to be declared, which will contain the spawned @{Group} object. 
 -- A coding example is provided at the description of the @{#SPAWN.OnSpawnGroup}( **function( SpawnedGroup ) end ** ) method.
+-- 
+-- ## Delay the initial spawning
+-- 
+-- When using the @{#SPAWN.SpawnScheduled)() method, the default behaviour of this method will be that it will spawn the initial (first) @{Group}
+-- immediately when :SpawnScheduled() is initiated. The methods @{#SPAWN.InitDelayOnOff}() and @{#SPAWN.InitDelayOn}() can be used to
+-- activate a delay before the first @{Group} is spawned. For completeness, a method @{#SPAWN.InitDelayOff}() is also available, that
+-- can be used to switch off the initial delay. Because there is no delay by default, this method would only be used when a 
+-- @{#SPAWN.SpawnScheduledStop}() ; @{#SPAWN.SpawnScheduledStart}() sequence would have been used.
+-- 
 -- 
 -- @field #SPAWN SPAWN
 -- 
@@ -285,7 +338,7 @@ function SPAWN:New( SpawnTemplatePrefix )
 		self.AIOnOff = true                               -- The AI is on by default when spawning a group.
     self.SpawnUnControlled = false
     self.SpawnInitKeepUnitNames = false               -- Overwrite unit names by default with group name.
-    self.DelayOnOff = true                            -- An intial delay when spawning the first group.
+    self.DelayOnOff = false                           -- No intial delay when spawning the first group.
 
 		self.SpawnGroups = {}														-- Array containing the descriptions of each Group to be Spawned.
 	else
@@ -329,7 +382,7 @@ function SPAWN:NewWithAlias( SpawnTemplatePrefix, SpawnAliasPrefix )
     self.AIOnOff = true                               -- The AI is on by default when spawning a group.
     self.SpawnUnControlled = false
     self.SpawnInitKeepUnitNames = false               -- Overwrite unit names by default with group name.
-    self.DelayOnOff = true                            -- An intial delay when spawning the first group.
+    self.DelayOnOff = false                           -- No intial delay when spawning the first group.
 
 		self.SpawnGroups = {}														-- Array containing the descriptions of each Group to be Spawned.
 	else
