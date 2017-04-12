@@ -1374,7 +1374,7 @@ function SET_UNIT:ForEachUnitCompletelyInZone( ZoneObject, IteratorFunction, ...
     --- @param Core.Zone#ZONE_BASE ZoneObject
     -- @param Wrapper.Unit#UNIT UnitObject
     function( ZoneObject, UnitObject )
-      if UnitObject:IsCompletelyInZone( ZoneObject ) then
+      if UnitObject:IsInZone( ZoneObject ) then
         return true
       else
         return false
