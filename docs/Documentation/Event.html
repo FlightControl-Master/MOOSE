@@ -331,13 +331,13 @@ YYYY-MM-DD: CLASS:<strong>NewFunction( Params )</strong> added</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(EVENT).EventText">EVENT:EventText(EventID)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(EVENT).Events">EVENT.Events</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(EVENT).Events">EVENT.Events</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(EVENT).EventsDead">EVENT.EventsDead</a></td>
 		<td class="summary">
 
 </td>
@@ -417,7 +417,7 @@ YYYY-MM-DD: CLASS:<strong>NewFunction( Params )</strong> added</p>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(EVENT).Remove">EVENT:Remove(EventClass, EventID)</a></td>
 		<td class="summary">
-<p>Removes an Events entry</p>
+<p>Removes a subscription</p>
 </td>
 		</tr>
 		<tr>
@@ -427,15 +427,9 @@ YYYY-MM-DD: CLASS:<strong>NewFunction( Params )</strong> added</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(EVENT).RemoveForGroup">EVENT:RemoveForGroup(GroupName, EventClass, EventID)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(EVENT).Reset">EVENT:Reset(EventClass, EventID, EventObject)</a></td>
 		<td class="summary">
-<p>Removes an Events entry for a GROUP.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(EVENT).RemoveForUnit">EVENT:RemoveForUnit(UnitName, EventClass, EventID)</a></td>
-		<td class="summary">
-<p>Removes an Events entry for a UNIT.</p>
+<p>Resets subscriptions</p>
 </td>
 		</tr>
 		<tr>
@@ -936,30 +930,22 @@ YYYY-MM-DD: CLASS:<strong>NewFunction( Params )</strong> added</p>
 		<dl class="function">
 <dt>
 
-<a id="#(EVENT).EventText" >
-<strong>EVENT:EventText(EventID)</strong>
+		<em><a href="##(EVENT.Events)">#EVENT.Events</a></em>
+<a id="#(EVENT).Events" >
+<strong>EVENT.Events</strong>
 </a>
 </dt>
 <dd>
 	
 
 
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em> EventID </em></code>: </p>
-
-				</li>
-		</ul>
 </dd>
 </dl>
 		<dl class="function">
 <dt>
 
-		<em><a href="##(EVENT.Events)">#EVENT.Events</a></em>
-<a id="#(EVENT).Events" >
-<strong>EVENT.Events</strong>
+<a id="#(EVENT).EventsDead" >
+<strong>EVENT.EventsDead</strong>
 </a>
 </dt>
 <dd>
@@ -1424,7 +1410,7 @@ The self instance of the class for which the event is captured. When the event h
 </dt>
 <dd>
 	
-<p>Removes an Events entry</p>
+<p>Removes a subscription</p>
 
 		<h3>Parameters</h3>
 		<ul>
@@ -1471,22 +1457,16 @@ The self instance of the class for which the event is.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(EVENT).RemoveForGroup" >
-<strong>EVENT:RemoveForGroup(GroupName, EventClass, EventID)</strong>
+<a id="#(EVENT).Reset" >
+<strong>EVENT:Reset(EventClass, EventID, EventObject)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Removes an Events entry for a GROUP.</p>
+<p>Resets subscriptions</p>
 
 		<h3>Parameters</h3>
 		<ul>
-				<li>
-				
-<p><code><em>#string GroupName </em></code>: 
-The name of the GROUP.</p>
-
-				</li>
 				<li>
 				
 <p><code><em><a href="Core.Base.html##(BASE)">Core.Base#BASE</a> EventClass </em></code>: 
@@ -1498,42 +1478,9 @@ The self instance of the class for which the event is.</p>
 <p><code><em><a href="Dcs.DCSWorld.html##(world.event)">Dcs.DCSWorld#world.event</a> EventID </em></code>: </p>
 
 				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em><a href="##(EVENT.Events)">#EVENT.Events</a>:</em></p>
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(EVENT).RemoveForUnit" >
-<strong>EVENT:RemoveForUnit(UnitName, EventClass, EventID)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Removes an Events entry for a UNIT.</p>
-
-		<h3>Parameters</h3>
-		<ul>
 				<li>
 				
-<p><code><em>#string UnitName </em></code>: 
-The name of the UNIT.</p>
-
-				</li>
-				<li>
-				
-<p><code><em><a href="Core.Base.html##(BASE)">Core.Base#BASE</a> EventClass </em></code>: 
-The self instance of the class for which the event is.</p>
-
-				</li>
-				<li>
-				
-<p><code><em><a href="Dcs.DCSWorld.html##(world.event)">Dcs.DCSWorld#world.event</a> EventID </em></code>: </p>
+<p><code><em> EventObject </em></code>: </p>
 
 				</li>
 		</ul>

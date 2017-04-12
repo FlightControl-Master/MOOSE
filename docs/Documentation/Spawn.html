@@ -2566,6 +2566,9 @@ when nothing was spawned.</p>
 	
 
 
+	
+<p> Overwrite unit names by default with group name.</p>
+
 </dd>
 </dl>
 		<dl class="function">
@@ -2829,6 +2832,11 @@ when nothing was spawned.</p>
 	
 <p>Note: This method is only required to be called when the schedule was stopped.</p>
 
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SPAWN)">#SPAWN</a>:</em></p>
+
+
 </dd>
 </dl>
 		<dl class="function">
@@ -2841,6 +2849,11 @@ when nothing was spawned.</p>
 <dd>
 	
 <p>Will stop the scheduled spawning scheduler.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SPAWN)">#SPAWN</a>:</em></p>
+
 
 </dd>
 </dl>
@@ -2953,7 +2966,7 @@ Spawn_BE_KA50 = SPAWN:New( 'BE KA-50@RAMP-Ground Defense' ):Schedule( 600, 0.5 )
 		<dl class="function">
 <dt>
 
-		<em></em>
+		<em>#boolean</em>
 <a id="#(SPAWN).SpawnUnControlled" >
 <strong>SPAWN.SpawnUnControlled</strong>
 </a>
@@ -2977,7 +2990,7 @@ Spawn_BE_KA50 = SPAWN:New( 'BE KA-50@RAMP-Ground Defense' ):Schedule( 600, 0.5 )
 
 
 	
-<p> When the first Spawn executes, all the Groups need to be made visible before start.</p>
+<p> Flag that indicates if all the Groups of the SpawnGroup need to be visible when Spawned.</p>
 
 </dd>
 </dl>
