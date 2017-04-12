@@ -219,9 +219,9 @@ local _ClassID = 0
 BASE = {
   ClassName = "BASE",
   ClassID = 0,
-  _Private = {},
   Events = {},
-  States = {}
+  States = {},
+  _ = {},
 }
 
 --- The Formation Class
@@ -360,7 +360,7 @@ do -- Event Handling
   -- @param #BASE self
   -- @return #number The @{Event} processing Priority.
   function BASE:GetEventPriority()
-    return self._Private.EventPriority or 5
+    return self._.EventPriority or 5
   end
   
   --- Set the Class @{Event} processing Priority.
@@ -370,7 +370,7 @@ do -- Event Handling
   -- @param #number EventPriority The @{Event} processing Priority.
   -- @return self
   function BASE:SetEventPriority( EventPriority )
-    self._Private.EventPriority = EventPriority
+    self._.EventPriority = EventPriority
   end
   
   --- Remove all subscribed events
