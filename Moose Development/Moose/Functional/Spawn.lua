@@ -944,17 +944,23 @@ end
 
 --- Will re-start the spawning scheduler.
 -- Note: This method is only required to be called when the schedule was stopped.
+-- @param #SPAWN self
+-- @return #SPAWN
 function SPAWN:SpawnScheduleStart()
   self:F( { self.SpawnTemplatePrefix } )
 
   self.SpawnScheduler:Start()
+  return self
 end
 
 --- Will stop the scheduled spawning scheduler.
+-- @param #SPAWN self
+-- @return #SPAWN
 function SPAWN:SpawnScheduleStop()
   self:F( { self.SpawnTemplatePrefix } )
   
   self.SpawnScheduler:Stop()
+  return self
 end
 
 
