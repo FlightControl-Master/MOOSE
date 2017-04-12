@@ -6,12 +6,14 @@
 -- ===================================================
 -- Mission designers can use the DATABASE class to refer to:
 -- 
+--  * STATICS
 --  * UNITS
 --  * GROUPS
 --  * CLIENTS
---  * AIRPORTS
+--  * AIRBASES
 --  * PLAYERSJOINED
 --  * PLAYERS
+--  * CARGOS
 --  
 -- On top, for internal MOOSE administration purposes, the DATBASE administers the Unit and Group TEMPLATES as defined within the Mission Editor.
 -- 
@@ -54,6 +56,7 @@ DATABASE = {
   PLAYERS = {},
   PLAYERSJOINED = {},
   CLIENTS = {},
+  CARGOS = {},
   AIRBASES = {},
   COUNTRY_ID = {},
   COUNTRY_NAME = {},
@@ -85,13 +88,15 @@ local _DATABASECategory =
 function DATABASE:New()
 
   -- Inherits from BASE
-  local self = BASE:Inherit( self, BASE:New() )
+  local self = BASE:Inherit( self, BASE:New() ) -- #DATABASE
 
   self:SetEventPriority( 1 )
   
   self:HandleEvent( EVENTS.Birth, self._EventOnBirth )
   self:HandleEvent( EVENTS.Dead, self._EventOnDeadOrCrash )
   self:HandleEvent( EVENTS.Crash, self._EventOnDeadOrCrash )
+  self:HandleEvent( EVENTS.NewCargo )
+  self:HandleEvent( EVENTS.DeleteCargo )
   
   -- Follow alive players and clients
   self:HandleEvent( EVENTS.PlayerEnterUnit, self._EventOnPlayerEnterUnit )
@@ -167,22 +172,24 @@ end
 
 --- Adds a Airbase based on the Airbase Name in the DATABASE.
 -- @param #DATABASE self
-function DATABASE:AddAirbase( DCSAirbaseName )
+-- @param #string AirbaseName The name of the airbase
+function DATABASE:AddAirbase( AirbaseName )
 
-  if not self.AIRBASES[DCSAirbaseName] then
-    self.AIRBASES[DCSAirbaseName] = AIRBASE:Register( DCSAirbaseName )
+  if not self.AIRBASES[AirbaseName] then
+    self.AIRBASES[AirbaseName] = AIRBASE:Register( AirbaseName )
   end
 end
 
 
 --- Deletes a Airbase from the DATABASE based on the Airbase Name.
 -- @param #DATABASE self
-function DATABASE:DeleteAirbase( DCSAirbaseName )
+-- @param #string AirbaseName The name of the airbase
+function DATABASE:DeleteAirbase( AirbaseName )
 
-  --self.AIRBASES[DCSAirbaseName] = nil 
+  self.AIRBASES[AirbaseName] = nil 
 end
 
---- Finds a AIRBASE based on the AirbaseName.
+--- Finds an AIRBASE based on the AirbaseName.
 -- @param #DATABASE self
 -- @param #string AirbaseName
 -- @return Wrapper.Airbase#AIRBASE The found AIRBASE.
@@ -190,6 +197,35 @@ function DATABASE:FindAirbase( AirbaseName )
 
   local AirbaseFound = self.AIRBASES[AirbaseName]
   return AirbaseFound
+end
+
+--- Adds a Cargo based on the Cargo Name in the DATABASE.
+-- @param #DATABASE self
+-- @param #string CargoName The name of the airbase
+function DATABASE:AddCargo( Cargo )
+
+  if not self.CARGOS[Cargo.Name] then
+    self.CARGOS[Cargo.Name] = Cargo
+  end
+end
+
+
+--- Deletes a Cargo from the DATABASE based on the Cargo Name.
+-- @param #DATABASE self
+-- @param #string CargoName The name of the airbase
+function DATABASE:DeleteCargo( CargoName )
+
+  self.CARGOS[CargoName] = nil 
+end
+
+--- Finds an CARGO based on the CargoName.
+-- @param #DATABASE self
+-- @param #string CargoName
+-- @return Wrapper.Cargo#CARGO The found CARGO.
+function DATABASE:FindCargo( CargoName )
+
+  local CargoFound = self.CARGOS[CargoName]
+  return CargoFound
 end
 
 
@@ -714,7 +750,7 @@ end
 
 --- Iterate the DATABASE and call an iterator function for each **alive** UNIT, providing the UNIT and optional parameters.
 -- @param #DATABASE self
--- @param #function IteratorFunction The function that will be called when there is an alive UNIT in the database. The function needs to accept a UNIT parameter.
+-- @param #function IteratorFunction The function that will be called for each object in the database. The function needs to accept a UNIT parameter.
 -- @return #DATABASE self
 function DATABASE:ForEachUnit( IteratorFunction, FinalizeFunction, ... )
   self:F2( arg )
@@ -726,7 +762,7 @@ end
 
 --- Iterate the DATABASE and call an iterator function for each **alive** GROUP, providing the GROUP and optional parameters.
 -- @param #DATABASE self
--- @param #function IteratorFunction The function that will be called when there is an alive GROUP in the database. The function needs to accept a GROUP parameter.
+-- @param #function IteratorFunction The function that will be called for each object in the database. The function needs to accept a GROUP parameter.
 -- @return #DATABASE self
 function DATABASE:ForEachGroup( IteratorFunction, ... )
   self:F2( arg )
@@ -739,7 +775,7 @@ end
 
 --- Iterate the DATABASE and call an iterator function for each **ALIVE** player, providing the player name and optional parameters.
 -- @param #DATABASE self
--- @param #function IteratorFunction The function that will be called when there is an player in the database. The function needs to accept the player name.
+-- @param #function IteratorFunction The function that will be called for each object in the database. The function needs to accept the player name.
 -- @return #DATABASE self
 function DATABASE:ForEachPlayer( IteratorFunction, ... )
   self:F2( arg )
@@ -752,7 +788,7 @@ end
 
 --- Iterate the DATABASE and call an iterator function for each player who has joined the mission, providing the Unit of the player and optional parameters.
 -- @param #DATABASE self
--- @param #function IteratorFunction The function that will be called when there is was a player in the database. The function needs to accept a UNIT parameter.
+-- @param #function IteratorFunction The function that will be called for each object in the database. The function needs to accept a UNIT parameter.
 -- @return #DATABASE self
 function DATABASE:ForEachPlayerJoined( IteratorFunction, ... )
   self:F2( arg )
@@ -764,7 +800,7 @@ end
 
 --- Iterate the DATABASE and call an iterator function for each CLIENT, providing the CLIENT to the function and optional parameters.
 -- @param #DATABASE self
--- @param #function IteratorFunction The function that will be called when there is an alive player in the database. The function needs to accept a CLIENT parameter.
+-- @param #function IteratorFunction The function that will be called object in the database. The function needs to accept a CLIENT parameter.
 -- @return #DATABASE self
 function DATABASE:ForEachClient( IteratorFunction, ... )
   self:F2( arg )
@@ -773,6 +809,43 @@ function DATABASE:ForEachClient( IteratorFunction, ... )
 
   return self
 end
+
+--- Iterate the DATABASE and call an iterator function for each CARGO, providing the CARGO object to the function and optional parameters.
+-- @param #DATABASE self
+-- @param #function IteratorFunction The function that will be called for each object in the database. The function needs to accept a CLIENT parameter.
+-- @return #DATABASE self
+function DATABASE:ForEachCargo( IteratorFunction, ... )
+  self:F2( arg )
+  
+  self:ForEach( IteratorFunction, arg, self.CARGOS )
+
+  return self
+end
+
+
+--- Handles the OnEventNewCargo event.
+-- @param #DATABASE self
+-- @param Core.Event#EVENTDATA EventData
+function DATABASE:OnEventNewCargo( EventData )
+  self:F2( { EventData } )
+
+  if EventData.Cargo then
+    self:AddCargo( EventData.Cargo )
+  end
+end
+
+
+--- Handles the OnEventDeleteCargo.
+-- @param #DATABASE self
+-- @param Core.Event#EVENTDATA EventData
+function DATABASE:OnEventDeleteCargo( EventData )
+  self:F2( { EventData } )
+
+  if EventData.Cargo then
+    self:DeleteCargo( EventData.Cargo.Name )
+  end
+end
+
 
 --- @param #DATABASE self
 function DATABASE:_RegisterTemplates()

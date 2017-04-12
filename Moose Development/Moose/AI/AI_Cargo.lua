@@ -15,55 +15,7 @@
 --   
 --   * AI_CARGO_GROUPED, represented by a Group of CARGO_UNITs.
 -- 
--- # 1) @{#AI_CARGO} class, extends @{Fsm#FSM_PROCESS}
 -- 
--- The @{#AI_CARGO} class defines the core functions that defines a cargo object within MOOSE.
--- A cargo is a logical object defined that is available for transport, and has a life status within a simulation.
---
--- The AI_CARGO is a state machine: it manages the different events and states of the cargo.
--- All derived classes from AI_CARGO follow the same state machine, expose the same cargo event functions, and provide the same cargo states.
--- 
--- ## 1.2.1) AI_CARGO Events:
--- 
---   * @{#AI_CARGO.Board}( ToCarrier ):  Boards the cargo to a carrier.
---   * @{#AI_CARGO.Load}( ToCarrier ): Loads the cargo into a carrier, regardless of its position.
---   * @{#AI_CARGO.UnBoard}( ToPointVec2 ): UnBoard the cargo from a carrier. This will trigger a movement of the cargo to the option ToPointVec2.
---   * @{#AI_CARGO.UnLoad}( ToPointVec2 ): UnLoads the cargo from a carrier.
---   * @{#AI_CARGO.Dead}( Controllable ): The cargo is dead. The cargo process will be ended.
--- 
--- ## 1.2.2) AI_CARGO States:
--- 
---   * **UnLoaded**: The cargo is unloaded from a carrier.
---   * **Boarding**: The cargo is currently boarding (= running) into a carrier.
---   * **Loaded**: The cargo is loaded into a carrier.
---   * **UnBoarding**: The cargo is currently unboarding (=running) from a carrier.
---   * **Dead**: The cargo is dead ...
---   * **End**: The process has come to an end.
---   
--- ## 1.2.3) AI_CARGO state transition methods:
--- 
--- State transition functions can be set **by the mission designer** customizing or improving the behaviour of the state.
--- There are 2 moments when state transition methods will be called by the state machine:
--- 
---   * **Leaving** the state. 
---     The state transition method needs to start with the name **OnLeave + the name of the state**. 
---     If the state transition method returns false, then the processing of the state transition will not be done!
---     If you want to change the behaviour of the AIControllable at this event, return false, 
---     but then you'll need to specify your own logic using the AIControllable!
---   
---   * **Entering** the state. 
---     The state transition method needs to start with the name **OnEnter + the name of the state**. 
---     These state transition methods need to provide a return value, which is specified at the function description.
--- 
--- # 2) #AI_CARGO_UNIT class
--- 
--- The AI_CARGO_UNIT class defines a cargo that is represented by a UNIT object within the simulator, and can be transported by a carrier.
--- Use the event functions as described above to Load, UnLoad, Board, UnBoard the AI_CARGO_UNIT objects to and from carriers.
--- 
--- # 5) #AI_CARGO_GROUPED class
---
--- The AI_CARGO_GROUPED class defines a cargo that is represented by a group of UNIT objects within the simulator, and can be transported by a carrier.
--- Use the event functions as described above to Load, UnLoad, Board, UnBoard the AI_CARGO_UNIT objects to and from carriers.
 -- 
 -- This module is still under construction, but is described above works already, and will keep working ...
 -- 
@@ -200,6 +152,49 @@ do -- AI_CARGO
   -- @field #boolean Moveable This flag defines if the cargo is moveable.
   -- @field #boolean Representable This flag defines if the cargo can be represented by a DCS Unit.
   -- @field #boolean Containable This flag defines if the cargo can be contained within a DCS Unit.
+  
+  --- # AI\_CARGO class, extends @{Fsm#FSM_PROCESS}
+  -- 
+  -- The AI\_CARGO class defines the core functions that defines a cargo object within MOOSE.
+  -- A cargo is a logical object defined that is available for transport, and has a life status within a simulation.
+  --
+  -- The AI\_CARGO is a state machine: it manages the different events and states of the cargo.
+  -- All derived classes from AI\_CARGO follow the same state machine, expose the same cargo event functions, and provide the same cargo states.
+  -- 
+  -- ## AI\_CARGO Events:
+  -- 
+  --   * @{#AI\_CARGO.Board}( ToCarrier ):  Boards the cargo to a carrier.
+  --   * @{#AI\_CARGO.Load}( ToCarrier ): Loads the cargo into a carrier, regardless of its position.
+  --   * @{#AI\_CARGO.UnBoard}( ToPointVec2 ): UnBoard the cargo from a carrier. This will trigger a movement of the cargo to the option ToPointVec2.
+  --   * @{#AI\_CARGO.UnLoad}( ToPointVec2 ): UnLoads the cargo from a carrier.
+  --   * @{#AI\_CARGO.Dead}( Controllable ): The cargo is dead. The cargo process will be ended.
+  -- 
+  -- ## AI\_CARGO States:
+  -- 
+  --   * **UnLoaded**: The cargo is unloaded from a carrier.
+  --   * **Boarding**: The cargo is currently boarding (= running) into a carrier.
+  --   * **Loaded**: The cargo is loaded into a carrier.
+  --   * **UnBoarding**: The cargo is currently unboarding (=running) from a carrier.
+  --   * **Dead**: The cargo is dead ...
+  --   * **End**: The process has come to an end.
+  --   
+  -- ## AI\_CARGO state transition methods:
+  -- 
+  -- State transition functions can be set **by the mission designer** customizing or improving the behaviour of the state.
+  -- There are 2 moments when state transition methods will be called by the state machine:
+  -- 
+  --   * **Leaving** the state. 
+  --     The state transition method needs to start with the name **OnLeave + the name of the state**. 
+  --     If the state transition method returns false, then the processing of the state transition will not be done!
+  --     If you want to change the behaviour of the AIControllable at this event, return false, 
+  --     but then you'll need to specify your own logic using the AIControllable!
+  --   
+  --   * **Entering** the state. 
+  --     The state transition method needs to start with the name **OnEnter + the name of the state**. 
+  --     These state transition methods need to provide a return value, which is specified at the function description.
+  --
+  -- @field #AI_CARGO AI_CARGO
+  --
   AI_CARGO = {
     ClassName = "AI_CARGO",
     Type = nil,
@@ -244,8 +239,8 @@ function AI_CARGO:New( Type, Name, Weight, ReportRadius, NearRadius )
   self.Type = Type
   self.Name = Name
   self.Weight = Weight
-  self.ReportRadius = ReportRadius
-  self.NearRadius = NearRadius
+  self.ReportRadius = ReportRadius or 1000
+  self.NearRadius = NearRadius or 200
   self.CargoObject = nil
   self.CargoCarrier = nil
   self.Representable = false
@@ -258,7 +253,37 @@ function AI_CARGO:New( Type, Name, Weight, ReportRadius, NearRadius )
 
   CARGOS[self.Name] = self
 
+  self:SetEventPriority( 5 )
+
   return self
+end
+
+--- Get the name of the Cargo.
+-- @param #AI_CARGO self
+-- @return #string The name of the Cargo.
+function AI_CARGO:GetName()
+  return self.Name
+end
+
+--- Get the type of the Cargo.
+-- @param #AI_CARGO self
+-- @return #string The type of the Cargo.
+function AI_CARGO:GetType()
+  return self.Type
+end
+
+--- Check if cargo is loaded.
+-- @param #AI_CARGO self
+-- @return #boolean true if loaded
+function AI_CARGO:IsLoaded()
+  return self:Is( "Loaded" )
+end
+
+--- Check if cargo is unloaded.
+-- @param #AI_CARGO self
+-- @return #boolean true if unloaded
+function AI_CARGO:IsUnLoaded()
+  return self:Is( "UnLoaded" )
 end
 
 
@@ -267,6 +292,46 @@ end
 -- @return #AI_CARGO
 function AI_CARGO:Spawn( PointVec2 )
   self:F()
+
+end
+
+--- Check if CargoCarrier is in the radius for the Cargo to be Loaded.
+-- @param #AI_CARGO self
+-- @param Core.Point#POINT_VEC2 PointVec2
+-- @return #boolean
+function AI_CARGO:IsInRadius( PointVec2 )
+  self:F( { PointVec2 } )
+
+  local Distance = 0
+  if self:IsLoaded() then
+    Distance = PointVec2:DistanceFromPointVec2( self.CargoCarrier:GetPointVec2() )
+  else
+    Distance = PointVec2:DistanceFromPointVec2( self.CargoObject:GetPointVec2() )
+  end
+  self:T( Distance )
+  
+  if Distance <= self.ReportRadius then
+    return true
+  else
+    return false
+  end
+end
+
+
+--- Check if Cargo is the given @{Zone}.
+-- @param #AI_CARGO self
+-- @param Core.Zone#ZONE_BASE Zone
+-- @return #boolean **true** if cargo is in the Zone, **false** if cargo is not in the Zone.
+function AI_CARGO:IsInZone( Zone )
+  self:F( { Zone } )
+
+  if self:IsLoaded() then
+    return Zone:IsPointVec2InZone( self.CargoCarrier:GetPointVec2() )
+  else
+    return Zone:IsPointVec2InZone( self.CargoObject:GetPointVec2() )
+  end  
+  
+  return nil
 
 end
 
@@ -286,6 +351,20 @@ function AI_CARGO:IsNear( PointVec2 )
   else
     return false
   end
+end
+
+--- Get the current PointVec2 of the cargo.
+-- @param #AI_CARGO self
+-- @return Core.Point#POINT_VEC2
+function AI_CARGO:GetPointVec2()
+  return self.CargoObject:GetPointVec2()
+end
+
+--- Get the range till cargo will board.
+-- @param #AI_CARGO self
+-- @return #number The range till cargo will board.
+function AI_CARGO:GetBoardingRange()
+  return self.ReportRadius
 end
 
 end
@@ -340,6 +419,16 @@ do -- AI_CARGO_UNIT
 
   --- @type AI_CARGO_UNIT
   -- @extends #AI_CARGO_REPRESENTABLE
+  
+  --- # AI\_CARGO\_UNIT class, extends @{#AI_CARGO_REPRESENTABLE}
+  -- 
+  -- The AI\_CARGO\_UNIT class defines a cargo that is represented by a UNIT object within the simulator, and can be transported by a carrier.
+  -- Use the event functions as described above to Load, UnLoad, Board, UnBoard the AI\_CARGO\_UNIT objects to and from carriers.
+  -- 
+  -- ===
+  -- 
+  -- @field #AI_CARGO_UNIT AI_CARGO_UNIT
+  --
   AI_CARGO_UNIT = {
     ClassName = "AI_CARGO_UNIT"
   }
@@ -361,6 +450,20 @@ function AI_CARGO_UNIT:New( CargoUnit, Type, Name, Weight, ReportRadius, NearRad
   self.CargoObject = CargoUnit
 
   self:T( self.ClassName )
+
+  -- Cargo objects are added to the _DATABASE and SET_CARGO objects.
+  _EVENTDISPATCHER:CreateEventNewCargo( self )
+
+  return self
+end
+
+--- AI_CARGO_UNIT Destructor.
+-- @param #AI_CARGO_UNIT self
+-- @return #AI_CARGO_UNIT
+function AI_CARGO_UNIT:Destroy()
+
+  -- Cargo objects are deleted from the _DATABASE and SET_CARGO objects.
+  _EVENTDISPATCHER:CreateEventDeleteCargo( self )
 
   return self
 end
@@ -503,7 +606,7 @@ end
 -- @param #string From
 -- @param #string To
 -- @param Wrapper.Unit#UNIT CargoCarrier
-function AI_CARGO_UNIT:onenterBoarding( From, Event, To, CargoCarrier )
+function AI_CARGO_UNIT:onenterBoarding( From, Event, To, CargoCarrier, ... )
   self:F( { CargoCarrier.UnitName, From, Event, To } )
   
   local Speed = 10
@@ -535,14 +638,14 @@ end
 -- @param #string From
 -- @param #string To
 -- @param Wrapper.Unit#UNIT CargoCarrier
-function AI_CARGO_UNIT:onleaveBoarding( From, Event, To, CargoCarrier )
+function AI_CARGO_UNIT:onleaveBoarding( From, Event, To, CargoCarrier, ... )
   self:F( { CargoCarrier.UnitName, From, Event, To } )
 
   if self:IsNear( CargoCarrier:GetPointVec2() ) then
-    self:__Load( 1, CargoCarrier )
+    self:__Load( 1, CargoCarrier, ... )
     return true
   else
-    self:__Boarding( 1, CargoCarrier )
+    self:__Boarding( 1, CargoCarrier, ... )
   end
   return false
 end
@@ -571,7 +674,7 @@ end
 -- @param #string Event
 -- @param #string From
 -- @param #string To
-function AI_CARGO_UNIT:onafterBoard( From, Event, To, CargoCarrier )
+function AI_CARGO_UNIT:onafterBoard( From, Event, To, CargoCarrier, ... )
   self:F()
 
   self.CargoInAir = self.CargoObject:InAir()
@@ -581,7 +684,7 @@ function AI_CARGO_UNIT:onafterBoard( From, Event, To, CargoCarrier )
   -- Only move the group to the carrier when the cargo is not in the air
   -- (eg. cargo can be on a oil derrick, moving the cargo on the oil derrick will drop the cargo on the sea).
   if not self.CargoInAir then
-    self:Load( CargoCarrier )
+    self:Load( CargoCarrier, ... )
   end
 
 end
@@ -809,6 +912,14 @@ do -- AI_CARGO_GROUP
   -- @extends AI.AI_Cargo#AI_CARGO
   -- @field Set#SET_BASE CargoSet A set of cargo objects.
   -- @field #string Name A string defining the name of the cargo group. The name is the unique identifier of the cargo.
+  
+  --- # AI\_CARGO\_GROUP class
+  --
+  -- The AI\_CARGO\_GROUP class defines a cargo that is represented by a group of @{Unit} objects within the simulator, and can be transported by a carrier.
+  -- Use the event functions as described above to Load, UnLoad, Board, UnBoard the AI\_CARGO\_GROUP to and from carrier.
+  --
+  -- @field #AI_CARGO_GROUP AI_CARGO_GROUP
+  -- 
   AI_CARGO_GROUP = {
     ClassName = "AI_CARGO_GROUP",
   }
@@ -838,6 +949,14 @@ do -- AI_CARGO_GROUPED
 
   --- @type AI_CARGO_GROUPED
   -- @extends AI.AI_Cargo#AI_CARGO_GROUP
+  
+  --- # AI\_CARGO\_GROUPED class
+  --
+  -- The AI\_CARGO\_GROUPED class defines a cargo that is represented by a group of UNIT objects within the simulator, and can be transported by a carrier.
+  -- Use the event functions as described above to Load, UnLoad, Board, UnBoard the AI\_CARGO\_UNIT objects to and from carriers.
+  --
+  -- @field #AI_CARGO_GROUPED AI_CARGO_GROUPED
+  -- 
   AI_CARGO_GROUPED = {
     ClassName = "AI_CARGO_GROUPED",
   }
