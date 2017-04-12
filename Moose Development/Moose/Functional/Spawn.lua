@@ -1073,7 +1073,7 @@ end
 function SPAWN:SpawnFromUnit( HostUnit, SpawnIndex )
 	self:F( { self.SpawnTemplatePrefix, HostUnit, SpawnIndex } )
 
-  if HostUnit and HostUnit:IsAlive() then -- and HostUnit:getUnit(1):inAir() == false then
+  if HostUnit and HostUnit:IsAlive() ~= nil then -- and HostUnit:getUnit(1):inAir() == false then
     return self:SpawnFromVec3( HostUnit:GetVec3(), SpawnIndex )
   end
   
