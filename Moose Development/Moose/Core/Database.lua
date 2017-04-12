@@ -46,6 +46,7 @@ DATABASE = {
   Templates = {
     Units = {},
     Groups = {},
+    Statics = {},
     ClientsByName = {},
     ClientsByID = {},
   },
@@ -318,7 +319,7 @@ function DATABASE:Spawn( SpawnTemplate )
   SpawnTemplate.CountryID = nil
   SpawnTemplate.CategoryID = nil
 
-  self:_RegisterTemplate( SpawnTemplate, SpawnCoalitionID, SpawnCategoryID, SpawnCountryID  )
+  self:_RegisterGroupTemplate( SpawnTemplate, SpawnCoalitionID, SpawnCategoryID, SpawnCountryID  )
 
   self:T3( SpawnTemplate )
   coalition.addGroup( SpawnCountryID, SpawnCategoryID, SpawnTemplate )
@@ -354,7 +355,7 @@ end
 -- @param #DATABASE self
 -- @param #table GroupTemplate
 -- @return #DATABASE self
-function DATABASE:_RegisterTemplate( GroupTemplate, CoalitionID, CategoryID, CountryID )
+function DATABASE:_RegisterGroupTemplate( GroupTemplate, CoalitionID, CategoryID, CountryID )
 
   local GroupTemplateName = env.getValueDictByKey(GroupTemplate.name)
   
@@ -431,6 +432,54 @@ function DATABASE:GetGroupTemplate( GroupName )
   GroupTemplate.SpawnCountryID = self.Templates.Groups[GroupName].CountryID
   return GroupTemplate
 end
+
+--- Private method that registers new Static Templates within the DATABASE Object.
+-- @param #DATABASE self
+-- @param #table GroupTemplate
+-- @return #DATABASE self
+function DATABASE:_RegisterStaticTemplate( StaticTemplate, CoalitionID, CategoryID, CountryID )
+
+  local TraceTable = {}
+
+  local StaticTemplateName = env.getValueDictByKey(StaticTemplate.name)
+  
+  self.Templates.Statics[StaticTemplateName] = self.Templates.Statics[StaticTemplateName] or {}
+  
+  StaticTemplate.CategoryID = CategoryID
+  StaticTemplate.CoalitionID = CoalitionID
+  StaticTemplate.CountryID = CountryID
+  
+  self.Templates.Statics[StaticTemplateName].StaticName = StaticTemplateName
+  self.Templates.Statics[StaticTemplateName].GroupTemplate = StaticTemplate
+  self.Templates.Statics[StaticTemplateName].UnitTemplate = StaticTemplate.units[1]
+  self.Templates.Statics[StaticTemplateName].CategoryID = CategoryID
+  self.Templates.Statics[StaticTemplateName].CoalitionID = CoalitionID
+  self.Templates.Statics[StaticTemplateName].CountryID = CountryID
+
+  
+  TraceTable[#TraceTable+1] = "Static"
+  TraceTable[#TraceTable+1] = self.Templates.Statics[StaticTemplateName].GroupName
+
+  TraceTable[#TraceTable+1] = "Coalition"
+  TraceTable[#TraceTable+1] = self.Templates.Statics[StaticTemplateName].CoalitionID
+  TraceTable[#TraceTable+1] = "Category"
+  TraceTable[#TraceTable+1] = self.Templates.Statics[StaticTemplateName].CategoryID
+  TraceTable[#TraceTable+1] = "Country"
+  TraceTable[#TraceTable+1] = self.Templates.Statics[StaticTemplateName].CountryID
+
+  self:E( TraceTable )
+end
+
+
+--- @param #DATABASE self
+function DATABASE:GetStaticUnitTemplate( StaticName )
+  local StaticTemplate = self.Templates.Statics[StaticName].UnitTemplate
+  StaticTemplate.SpawnCoalitionID = self.Templates.Statics[StaticName].CoalitionID
+  StaticTemplate.SpawnCategoryID = self.Templates.Statics[StaticName].CategoryID
+  StaticTemplate.SpawnCountryID = self.Templates.Statics[StaticName].CountryID
+  return StaticTemplate
+end
+
 
 function DATABASE:GetGroupNameFromUnitName( UnitName )
   return self.Templates.Units[UnitName].GroupName
@@ -798,6 +847,7 @@ function DATABASE:OnEventDeleteCargo( EventData )
 end
 
 
+--- @param #DATABASE self
 function DATABASE:_RegisterTemplates()
   self:F2()
 
@@ -853,11 +903,18 @@ function DATABASE:_RegisterTemplates()
 
                   --self.Units[coa_name][countryName][category] = {}
 
-                  for group_num, GroupTemplate in pairs(obj_type_data.group) do
+                  for group_num, Template in pairs(obj_type_data.group) do
 
-                    if GroupTemplate and GroupTemplate.units and type(GroupTemplate.units) == 'table' then  --making sure again- this is a valid group
-                      self:_RegisterTemplate( 
-                        GroupTemplate, 
+                    if obj_type_name ~= "static" and Template and Template.units and type(Template.units) == 'table' then  --making sure again- this is a valid group
+                      self:_RegisterGroupTemplate( 
+                        Template, 
+                        CoalitionSide, 
+                        _DATABASECategory[string.lower(CategoryName)], 
+                        CountryID 
+                      )
+                    else
+                      self:_RegisterStaticTemplate( 
+                        Template, 
                         CoalitionSide, 
                         _DATABASECategory[string.lower(CategoryName)], 
                         CountryID 

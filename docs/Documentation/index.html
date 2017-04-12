@@ -31,6 +31,21 @@
 					<li><a href="Client.html">Client</a></li>
 					<li><a href="CommandCenter.html">CommandCenter</a></li>
 					<li><a href="Controllable.html">Controllable</a></li>
+					<li><a href="DCSAirbase.html">DCSAirbase</a></li>
+					<li><a href="DCSCoalitionObject.html">DCSCoalitionObject</a></li>
+					<li><a href="DCSCommand.html">DCSCommand</a></li>
+					<li><a href="DCSController.html">DCSController</a></li>
+					<li><a href="DCSGroup.html">DCSGroup</a></li>
+					<li><a href="DCSObject.html">DCSObject</a></li>
+					<li><a href="DCSTask.html">DCSTask</a></li>
+					<li><a href="DCSTypes.html">DCSTypes</a></li>
+					<li><a href="DCSUnit.html">DCSUnit</a></li>
+					<li><a href="DCSVec3.html">DCSVec3</a></li>
+					<li><a href="DCSWorld.html">DCSWorld</a></li>
+					<li><a href="DCSZone.html">DCSZone</a></li>
+					<li><a href="DCScountry.html">DCScountry</a></li>
+					<li><a href="DCStimer.html">DCStimer</a></li>
+					<li><a href="DCStrigger.html">DCStrigger</a></li>
 					<li><a href="Database.html">Database</a></li>
 					<li><a href="Detection.html">Detection</a></li>
 					<li><a href="DetectionManager.html">DetectionManager</a></li>
@@ -59,7 +74,9 @@
 					<li><a href="Set.html">Set</a></li>
 					<li><a href="Smoke.html">Smoke</a></li>
 					<li><a href="Spawn.html">Spawn</a></li>
+					<li><a href="SpawnStatic.html">SpawnStatic</a></li>
 					<li><a href="Static.html">Static</a></li>
+					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="Task.html">Task</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
 					<li><a href="Task_A2G_Dispatcher.html">Task_A2G_Dispatcher</a></li>
@@ -68,6 +85,8 @@
 					<li><a href="Unit.html">Unit</a></li>
 					<li><a href="Utils.html">Utils</a></li>
 					<li><a href="Zone.html">Zone</a></li>
+					<li><a href="env.html">env</a></li>
+					<li><a href="land.html">land</a></li>
 					<li><a href="routines.html">routines</a></li>
 		</ul>
 	</div>
@@ -196,6 +215,96 @@ CLIENTS in a SET_CLIENT collection, which are not occupied by human players.</p>
 			<td class="name" nowrap="nowrap"><a href="Controllable.html">Controllable</a></td>
 			<td class="summary">
 <p>This module contains the CONTROLLABLE class.</p>
+</td>
+			</tr>
+			<tr>
+			<td class="name" nowrap="nowrap"><a href="DCSAirbase.html">DCSAirbase</a></td>
+			<td class="summary">
+
+</td>
+			</tr>
+			<tr>
+			<td class="name" nowrap="nowrap"><a href="DCSCoalitionObject.html">DCSCoalitionObject</a></td>
+			<td class="summary">
+
+</td>
+			</tr>
+			<tr>
+			<td class="name" nowrap="nowrap"><a href="DCSCommand.html">DCSCommand</a></td>
+			<td class="summary">
+
+</td>
+			</tr>
+			<tr>
+			<td class="name" nowrap="nowrap"><a href="DCSController.html">DCSController</a></td>
+			<td class="summary">
+
+</td>
+			</tr>
+			<tr>
+			<td class="name" nowrap="nowrap"><a href="DCSGroup.html">DCSGroup</a></td>
+			<td class="summary">
+
+</td>
+			</tr>
+			<tr>
+			<td class="name" nowrap="nowrap"><a href="DCSObject.html">DCSObject</a></td>
+			<td class="summary">
+
+</td>
+			</tr>
+			<tr>
+			<td class="name" nowrap="nowrap"><a href="DCSTask.html">DCSTask</a></td>
+			<td class="summary">
+
+</td>
+			</tr>
+			<tr>
+			<td class="name" nowrap="nowrap"><a href="DCSTypes.html">DCSTypes</a></td>
+			<td class="summary">
+
+</td>
+			</tr>
+			<tr>
+			<td class="name" nowrap="nowrap"><a href="DCSUnit.html">DCSUnit</a></td>
+			<td class="summary">
+
+</td>
+			</tr>
+			<tr>
+			<td class="name" nowrap="nowrap"><a href="DCSVec3.html">DCSVec3</a></td>
+			<td class="summary">
+
+</td>
+			</tr>
+			<tr>
+			<td class="name" nowrap="nowrap"><a href="DCSWorld.html">DCSWorld</a></td>
+			<td class="summary">
+
+</td>
+			</tr>
+			<tr>
+			<td class="name" nowrap="nowrap"><a href="DCSZone.html">DCSZone</a></td>
+			<td class="summary">
+
+</td>
+			</tr>
+			<tr>
+			<td class="name" nowrap="nowrap"><a href="DCScountry.html">DCScountry</a></td>
+			<td class="summary">
+
+</td>
+			</tr>
+			<tr>
+			<td class="name" nowrap="nowrap"><a href="DCStimer.html">DCStimer</a></td>
+			<td class="summary">
+
+</td>
+			</tr>
+			<tr>
+			<td class="name" nowrap="nowrap"><a href="DCStrigger.html">DCStrigger</a></td>
+			<td class="summary">
+
 </td>
 			</tr>
 			<tr>
@@ -372,22 +481,25 @@ and creates a CSV file logging the scoring events and results for use at team or
 			<tr>
 			<td class="name" nowrap="nowrap"><a href="Spawn.html">Spawn</a></td>
 			<td class="summary">
-<p>Single-Player:<strong>Yes</strong> / Multi-Player:<strong>Yes</strong> / AI:<strong>Yes</strong> / Human:<strong>No</strong> / Types:<strong>All</strong> -- <br/>
-<strong>Spawn groups of units dynamically in your missions.</strong></p>
-
-<p><img src="..\Presentations\SPAWN\SPAWN.JPG" alt="Banner Image"/></p>
-
-<hr/>
-
-<h1>1) <a href="##(SPAWN)">#SPAWN</a> class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
-
-<p>The <a href="##(SPAWN)">#SPAWN</a> class allows to spawn dynamically new groups, based on pre-defined initialization settings, modifying the behaviour when groups are spawned.</p>
+<p><strong>Functional</strong> -- Spawn dynamically new GROUPs in your missions.</p>
+</td>
+			</tr>
+			<tr>
+			<td class="name" nowrap="nowrap"><a href="SpawnStatic.html">SpawnStatic</a></td>
+			<td class="summary">
+<p><strong>Core</strong> -- Spawn dynamically new STATICs in your missions.</p>
 </td>
 			</tr>
 			<tr>
 			<td class="name" nowrap="nowrap"><a href="Static.html">Static</a></td>
 			<td class="summary">
 <p>This module contains the STATIC class.</p>
+</td>
+			</tr>
+			<tr>
+			<td class="name" nowrap="nowrap"><a href="StaticObject.html">StaticObject</a></td>
+			<td class="summary">
+
 </td>
 			</tr>
 			<tr>
@@ -437,6 +549,18 @@ which are excellent tools to be reused in an OO environment!.</p>
 			<td class="name" nowrap="nowrap"><a href="Zone.html">Zone</a></td>
 			<td class="summary">
 <p><strong>Core</strong> - ZONE classes define <strong>zones</strong> within your mission of <strong>various forms</strong>, with <strong>various capabilities</strong>.</p>
+</td>
+			</tr>
+			<tr>
+			<td class="name" nowrap="nowrap"><a href="env.html">env</a></td>
+			<td class="summary">
+
+</td>
+			</tr>
+			<tr>
+			<td class="name" nowrap="nowrap"><a href="land.html">land</a></td>
+			<td class="summary">
+
 </td>
 			</tr>
 			<tr>

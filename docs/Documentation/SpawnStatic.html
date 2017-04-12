@@ -1,0 +1,490 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+	<head>
+		<link rel="stylesheet" href="stylesheet.css" type="text/css"/>
+	</head>
+<body>
+<div id="container">
+<div id="product">
+	<div id="product_logo"></div>
+	<div id="product_name"><big><b></b></big></div>
+	<div id="product_description"></div>
+</div>
+<div id="main">
+	<div id="navigation">
+		<h2>Modules</h2>
+			<ul><li>
+				<a href="index.html">index</a>
+			</li></ul>
+		<ul>
+					<li><a href="AI_Balancer.html">AI_Balancer</a></li>
+					<li><a href="AI_Cap.html">AI_Cap</a></li>
+					<li><a href="AI_Cas.html">AI_Cas</a></li>
+					<li><a href="AI_Patrol.html">AI_Patrol</a></li>
+					<li><a href="Account.html">Account</a></li>
+					<li><a href="Airbase.html">Airbase</a></li>
+					<li><a href="AirbasePolice.html">AirbasePolice</a></li>
+					<li><a href="Assign.html">Assign</a></li>
+					<li><a href="Base.html">Base</a></li>
+					<li><a href="Cargo.html">Cargo</a></li>
+					<li><a href="CleanUp.html">CleanUp</a></li>
+					<li><a href="Client.html">Client</a></li>
+					<li><a href="CommandCenter.html">CommandCenter</a></li>
+					<li><a href="Controllable.html">Controllable</a></li>
+					<li><a href="DCSAirbase.html">DCSAirbase</a></li>
+					<li><a href="DCSCoalitionObject.html">DCSCoalitionObject</a></li>
+					<li><a href="DCSCommand.html">DCSCommand</a></li>
+					<li><a href="DCSController.html">DCSController</a></li>
+					<li><a href="DCSGroup.html">DCSGroup</a></li>
+					<li><a href="DCSObject.html">DCSObject</a></li>
+					<li><a href="DCSTask.html">DCSTask</a></li>
+					<li><a href="DCSTypes.html">DCSTypes</a></li>
+					<li><a href="DCSUnit.html">DCSUnit</a></li>
+					<li><a href="DCSVec3.html">DCSVec3</a></li>
+					<li><a href="DCSWorld.html">DCSWorld</a></li>
+					<li><a href="DCSZone.html">DCSZone</a></li>
+					<li><a href="DCScountry.html">DCScountry</a></li>
+					<li><a href="DCStimer.html">DCStimer</a></li>
+					<li><a href="DCStrigger.html">DCStrigger</a></li>
+					<li><a href="Database.html">Database</a></li>
+					<li><a href="Detection.html">Detection</a></li>
+					<li><a href="DetectionManager.html">DetectionManager</a></li>
+					<li><a href="Escort.html">Escort</a></li>
+					<li><a href="Event.html">Event</a></li>
+					<li><a href="Fsm.html">Fsm</a></li>
+					<li><a href="Group.html">Group</a></li>
+					<li><a href="Identifiable.html">Identifiable</a></li>
+					<li><a href="Menu.html">Menu</a></li>
+					<li><a href="Message.html">Message</a></li>
+					<li><a href="MissileTrainer.html">MissileTrainer</a></li>
+					<li><a href="Mission.html">Mission</a></li>
+					<li><a href="Movement.html">Movement</a></li>
+					<li><a href="Object.html">Object</a></li>
+					<li><a href="Point.html">Point</a></li>
+					<li><a href="Positionable.html">Positionable</a></li>
+					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
+					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
+					<li><a href="Radio.html">Radio</a></li>
+					<li><a href="Route.html">Route</a></li>
+					<li><a href="Scenery.html">Scenery</a></li>
+					<li><a href="ScheduleDispatcher.html">ScheduleDispatcher</a></li>
+					<li><a href="Scheduler.html">Scheduler</a></li>
+					<li><a href="Scoring.html">Scoring</a></li>
+					<li><a href="Sead.html">Sead</a></li>
+					<li><a href="Set.html">Set</a></li>
+					<li><a href="Smoke.html">Smoke</a></li>
+					<li><a href="Spawn.html">Spawn</a></li>
+					<li>SpawnStatic</li>
+					<li><a href="Static.html">Static</a></li>
+					<li><a href="StaticObject.html">StaticObject</a></li>
+					<li><a href="Task.html">Task</a></li>
+					<li><a href="Task_A2G.html">Task_A2G</a></li>
+					<li><a href="Task_A2G_Dispatcher.html">Task_A2G_Dispatcher</a></li>
+					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
+					<li><a href="Unit.html">Unit</a></li>
+					<li><a href="Utils.html">Utils</a></li>
+					<li><a href="Zone.html">Zone</a></li>
+					<li><a href="env.html">env</a></li>
+					<li><a href="land.html">land</a></li>
+					<li><a href="routines.html">routines</a></li>
+		</ul>
+	</div>
+	<div id="content">
+   <h1>Module <code>SpawnStatic</code></h1>
+   
+<p><strong>Core</strong> -- Spawn dynamically new STATICs in your missions.</p>
+
+   
+<p> 
+<img src="..\Presentations\SPAWNSTATIC\Dia1.JPG" alt="Banner Image"/></p>
+
+<hr/>
+
+<p>SPAWNSTATIC spawns static structures in your missions dynamically. See below the SPAWNSTATIC class documentation.</p>
+
+<hr/>
+
+<h1>Demo Missions</h1>
+
+<h3><a href="https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master-release/SPS - Spawning Statics">SPAWNSTATIC Demo Missions source code</a></h3>
+
+<h3><a href="https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/SPS%20-%20Spawning%20Statics">SPAWNSTATIC Demo Missions, only for beta testers</a></h3>
+
+<h3><a href="https://github.com/FlightControl-Master/MOOSE_MISSIONS/releases">ALL Demo Missions pack of the last release</a></h3>
+
+<hr/>
+
+<h1>YouTube Channel</h1>
+
+<h3><a href="">SPAWNSTATIC YouTube Channel</a></h3>
+
+<hr/>
+
+<h1><strong>API CHANGE HISTORY</strong></h1>
+
+<p>The underlying change log documents the API changes. Please read this carefully. The following notation is used:</p>
+
+<ul>
+    <li><strong>Added</strong> parts are expressed in bold type face.</li>
+    <li><em>Removed</em> parts are expressed in italic type face.</li>
+</ul>
+
+<p>Hereby the change log:</p>
+
+<hr/>
+
+<h1><strong>AUTHORS and CONTRIBUTIONS</strong></h1>
+
+<h3>Contributions:</h3>
+
+<h3>Authors:</h3>
+
+<ul>
+    <li><strong>FlightControl</strong>: Design &amp; Programming</li>
+</ul>
+
+
+	<h2>Global(s)</h2>
+	<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#SPAWNSTATIC">SPAWNSTATIC</a></td>
+		<td class="summary">
+<h1>SPAWNSTATIC class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
+
+<p>The SPAWNSTATIC class allows to spawn dynamically new <a href="Static.html">Static</a>s.</p>
+</td>
+		</tr>
+	</table>
+			<h2><a id="#(SPAWNSTATIC)">Type <code>SPAWNSTATIC</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWNSTATIC).CountryID">SPAWNSTATIC.CountryID</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWNSTATIC).NewFromStatic">SPAWNSTATIC:NewFromStatic(SpawnTemplatePrefix, CountryID)</a></td>
+		<td class="summary">
+<p>Creates the main object to spawn a <a href="Static.html">Static</a> defined in the ME.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWNSTATIC).NewFromType">SPAWNSTATIC:NewFromType(SpawnTypeName, SpawnShapeName, SpawnCategory, CountryID)</a></td>
+		<td class="summary">
+<p>Creates the main object to spawn a <a href="Static.html">Static</a> based on a type name.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWNSTATIC).SpawnFromPointVec2">SPAWNSTATIC:SpawnFromPointVec2(PointVec2, Heading, (, NewName)</a></td>
+		<td class="summary">
+<p>Creates a new <a href="Static.html">Static</a> from a POINT_VEC2.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWNSTATIC).SpawnFromZone">SPAWNSTATIC:SpawnFromZone(Zone, Heading, (, NewName)</a></td>
+		<td class="summary">
+<p>Creates a new <a href="Static.html">Static</a> from a <a href="Zone.html">Zone</a>.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWNSTATIC).SpawnIndex">SPAWNSTATIC.SpawnIndex</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWNSTATIC).SpawnTemplatePrefix">SPAWNSTATIC.SpawnTemplatePrefix</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWNSTATIC).SpawnTypeName">SPAWNSTATIC.SpawnTypeName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+
+	<h2>Global(s)</h2>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(SPAWNSTATIC)">#SPAWNSTATIC</a></em>
+<a id="SPAWNSTATIC" >
+<strong>SPAWNSTATIC</strong>
+</a>
+</dt>
+<dd>
+	
+<h1>SPAWNSTATIC class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
+
+<p>The SPAWNSTATIC class allows to spawn dynamically new <a href="Static.html">Static</a>s.</p>
+
+	
+<p>Through creating a copy of an existing static object template as defined in the Mission Editor (ME),
+SPAWNSTATIC can retireve the properties of the defined static object template (like type, category etc), and "copy"
+these properties to create a new static object and place it at the desired coordinate.</p>
+
+<p>New spawned <a href="Static.html">Static</a>s get <strong>the same name</strong> as the name of the template Static, 
+or gets the given name when a new name is provided at the Spawn method. <br/>
+By default, spawned <a href="Static.html">Static</a>s will follow a naming convention at run-time:</p>
+
+<ul>
+    <li>Spawned <a href="Static.html">Static</a>s will have the name _StaticName<em>#</em>nnn_, where <em>StaticName</em> is the name of the <strong>Template Static</strong>, 
+    and <em>nnn</em> is a <strong>counter from 0 to 99999</strong>.</li>
+</ul>
+
+
+<h2>SPAWNSTATIC construction methods</h2>
+
+<p>Create a new SPAWNSTATIC object with the <a href="##(SPAWNSTATIC).NewFromStatic">SPAWNSTATIC.NewFromStatic</a>():</p>
+
+<ul>
+    <li><a href="##(SPAWNSTATIC).NewFromStatic">SPAWNSTATIC.NewFromStatic</a>(): Creates a new SPAWNSTATIC object given a name that is used as the base of the naming of each spawned Static.</li>
+</ul>
+
+<h2><strong>Spawn</strong> methods</h2>
+
+<p>Groups can be spawned at different times and methods:</p>
+
+<ul>
+    <li><a href="##(SPAWNSTATIC).SpawnFromPointVec2">SPAWNSTATIC.SpawnFromPointVec2</a>(): Spawn a new group from a POINT_VEC2 coordinate. 
+    (The group will be spawned at land height ).</li>
+    <li><a href="##(SPAWNSTATIC).SpawnFromZone">SPAWNSTATIC.SpawnFromZone</a>(): Spawn a new group in a <a href="Zone.html">Zone</a>.
+    </li>
+</ul>
+
+</dd>
+</dl>
+	<h2><a id="#(SpawnStatic)" >Type <code>SpawnStatic</code></a></h2>
+	
+			<h2><a id="#(SPAWNSTATIC)" >Type <code>SPAWNSTATIC</code></a></h2>
+				<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(SPAWNSTATIC).CountryID" >
+<strong>SPAWNSTATIC.CountryID</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SPAWNSTATIC).NewFromStatic" >
+<strong>SPAWNSTATIC:NewFromStatic(SpawnTemplatePrefix, CountryID)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Creates the main object to spawn a <a href="Static.html">Static</a> defined in the ME.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string SpawnTemplatePrefix </em></code>: 
+is the name of the Group in the ME that defines the Template.  Each new group will have the name starting with SpawnTemplatePrefix.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> CountryID </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SPAWNSTATIC)">#SPAWNSTATIC</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SPAWNSTATIC).NewFromType" >
+<strong>SPAWNSTATIC:NewFromType(SpawnTypeName, SpawnShapeName, SpawnCategory, CountryID)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Creates the main object to spawn a <a href="Static.html">Static</a> based on a type name.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string SpawnTypeName </em></code>: 
+is the name of the type.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> SpawnShapeName </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> SpawnCategory </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> CountryID </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SPAWNSTATIC)">#SPAWNSTATIC</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SPAWNSTATIC).SpawnFromPointVec2" >
+<strong>SPAWNSTATIC:SpawnFromPointVec2(PointVec2, Heading, (, NewName)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Creates a new <a href="Static.html">Static</a> from a POINT_VEC2.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Point.html##(POINT_VEC2)">Core.Point#POINT_VEC2</a> PointVec2 </em></code>: 
+The 2D coordinate where to spawn the static.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Heading </em></code>: 
+The heading of the static, which is a number in degrees from 0 to 360.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string ( </em></code>: 
+ptional) The name of the new static.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> NewName </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SPAWNSTATIC)">#SPAWNSTATIC</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SPAWNSTATIC).SpawnFromZone" >
+<strong>SPAWNSTATIC:SpawnFromZone(Zone, Heading, (, NewName)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Creates a new <a href="Static.html">Static</a> from a <a href="Zone.html">Zone</a>.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Zone.html##(ZONE_BASE)">Core.Zone#ZONE_BASE</a> Zone </em></code>: 
+The Zone where to spawn the static.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Heading </em></code>: 
+The heading of the static, which is a number in degrees from 0 to 360.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string ( </em></code>: 
+ptional) The name of the new static.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> NewName </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SPAWNSTATIC)">#SPAWNSTATIC</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#number</em>
+<a id="#(SPAWNSTATIC).SpawnIndex" >
+<strong>SPAWNSTATIC.SpawnIndex</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(SPAWNSTATIC).SpawnTemplatePrefix" >
+<strong>SPAWNSTATIC.SpawnTemplatePrefix</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(SPAWNSTATIC).SpawnTypeName" >
+<strong>SPAWNSTATIC.SpawnTypeName</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+
+			<h2><a id="#(SPAWNSTATIC.SpawnZoneTable)" >Type <code>SPAWNSTATIC.SpawnZoneTable</code></a></h2>
+			
+</div>
+
+</div>
+</body>
+</html>
