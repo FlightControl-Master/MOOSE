@@ -1,5 +1,5 @@
 env.info( '*** MOOSE DYNAMIC INCLUDE START *** ' )
-env.info( 'Moose Generation Timestamp: 20170411_0812' )
+env.info( 'Moose Generation Timestamp: 20170412_0926' )
 
 local base = _G
 
@@ -35,6 +35,7 @@ __Moose.Include( 'Core/Point.lua' )
 __Moose.Include( 'Core/Message.lua' )
 __Moose.Include( 'Core/Fsm.lua' )
 __Moose.Include( 'Core/Radio.lua' )
+__Moose.Include( 'Core/SpawnStatic.lua' )
 __Moose.Include( 'Wrapper/Object.lua' )
 __Moose.Include( 'Wrapper/Identifiable.lua' )
 __Moose.Include( 'Wrapper/Positionable.lua' )
