@@ -1124,28 +1124,6 @@ You can specify to apply multiple detection methods.</p>
     <li><a href="##(DETECTION_BASE).InitDetectDLINK">DETECTION_BASE.InitDetectDLINK</a>(): Detected using DLINK.</li>
 </ul>
 
-
-<h2><strong>DETECTION_ derived classes</strong> group the detected units into a <strong>DetectedItems[]</strong> list</h2>
-
-<p>DETECTION<em>BASE derived classes build a list called DetectedItems[], which is essentially a first later 
-of grouping of detected units. Each DetectedItem within the DetectedItems[] list contains
-a SET</em>UNIT object that contains the  detected units that belong to that group.</p>
-
-<p>Derived classes will apply different methods to group the detected units. 
-Examples are per area, per quadrant, per distance, per type.
-See further the derived DETECTION classes on which grouping methods are currently supported. </p>
-
-<p>Various methods exist how to retrieve the grouped items from a DETECTION_BASE derived class:</p>
-
-<ul>
-    <li>The method <a href="Detection.html##(DETECTION_BASE).GetDetectedItems">Detection#DETECTION_BASE.GetDetectedItems</a>() retrieves the DetectedItems[] list.</li>
-    <li>A DetectedItem from the DetectedItems[] list can be retrieved using the method <a href="Detection.html##(DETECTION_BASE).GetDetectedItem">Detection#DETECTION_BASE.GetDetectedItem</a>( DetectedItemIndex ).
-    Note that this method returns a DetectedItem element from the list, that contains a Set variable and further information
-    about the DetectedItem that is set by the DETECTION_BASE derived classes, used to group the DetectedItem.</li>
-    <li>A DetectedSet from the DetectedItems[] list can be retrieved using the method <a href="Detection.html##(DETECTION_BASE).GetDetectedSet">Detection#DETECTION_BASE.GetDetectedSet</a>( DetectedItemIndex ).
-    This method retrieves the Set from a DetectedItem element from the DetectedItem list (DetectedItems[ DetectedItemIndex ].Set ).</li>
-</ul>
-
 <h2><strong>Filter</strong> detected units based on <strong>category of the unit</strong></h2>
 
 <p>Filter the detected units based on Unit.Category using the method <a href="##(DETECTION_BASE).FilterCategories">DETECTION_BASE.FilterCategories</a>(). <br/>
@@ -1170,6 +1148,28 @@ The different values of Unit.Category can be:</p>
 
 <pre><code>DetectionObject:FilterCategories( { Unit.Category.AIRPLANE, Unit.Category.HELICOPTER } )
 </code></pre>
+
+
+<h2><strong>DETECTION_ derived classes</strong> group the detected units into a <strong>DetectedItems[]</strong> list</h2>
+
+<p>DETECTION<em>BASE derived classes build a list called DetectedItems[], which is essentially a first later 
+of grouping of detected units. Each DetectedItem within the DetectedItems[] list contains
+a SET</em>UNIT object that contains the  detected units that belong to that group.</p>
+
+<p>Derived classes will apply different methods to group the detected units. 
+Examples are per area, per quadrant, per distance, per type.
+See further the derived DETECTION classes on which grouping methods are currently supported. </p>
+
+<p>Various methods exist how to retrieve the grouped items from a DETECTION_BASE derived class:</p>
+
+<ul>
+    <li>The method <a href="Detection.html##(DETECTION_BASE).GetDetectedItems">Detection#DETECTION_BASE.GetDetectedItems</a>() retrieves the DetectedItems[] list.</li>
+    <li>A DetectedItem from the DetectedItems[] list can be retrieved using the method <a href="Detection.html##(DETECTION_BASE).GetDetectedItem">Detection#DETECTION_BASE.GetDetectedItem</a>( DetectedItemIndex ).
+    Note that this method returns a DetectedItem element from the list, that contains a Set variable and further information
+    about the DetectedItem that is set by the DETECTION_BASE derived classes, used to group the DetectedItem.</li>
+    <li>A DetectedSet from the DetectedItems[] list can be retrieved using the method <a href="Detection.html##(DETECTION_BASE).GetDetectedSet">Detection#DETECTION_BASE.GetDetectedSet</a>( DetectedItemIndex ).
+    This method retrieves the Set from a DetectedItem element from the DetectedItem list (DetectedItems[ DetectedItemIndex ].Set ).</li>
+</ul>
 
 <h2><strong>Visual filters</strong> to fine-tune the probability of the detected objects</h2>
 
@@ -2297,7 +2297,7 @@ self</p>
 		<dl class="function">
 <dt>
 
-		<em></em>
+		<em>#number</em>
 <a id="#(DETECTION_BASE).DetectionInterval" >
 <strong>DETECTION_BASE.DetectionInterval</strong>
 </a>

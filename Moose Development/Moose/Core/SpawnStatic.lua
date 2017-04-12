@@ -1,14 +1,18 @@
---- **Functional** -- Spawn dynamically new @{Static}s in your missions.
+--- **Core** -- Spawn dynamically new STATICs in your missions.
 --  
--- ![Banner Image](..\Presentations\SPAWNSTATIC\SPAWNSTATIC.JPG)
+-- ![Banner Image](..\Presentations\SPAWNSTATIC\Dia1.JPG)
+-- 
+-- ====
+-- 
+-- SPAWNSTATIC spawns static structures in your missions dynamically. See below the SPAWNSTATIC class documentation.
 -- 
 -- ====
 -- 
 -- # Demo Missions
 -- 
--- ### [SPAWNSTATIC Demo Missions source code]()
+-- ### [SPAWNSTATIC Demo Missions source code](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master-release/SPS - Spawning Statics)
 -- 
--- ### [SPAWNSTATIC Demo Missions, only for beta testers]()
+-- ### [SPAWNSTATIC Demo Missions, only for beta testers](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/SPS%20-%20Spawning%20Statics)
 --
 -- ### [ALL Demo Missions pack of the last release](https://github.com/FlightControl-Master/MOOSE_MISSIONS/releases)
 -- 
@@ -50,15 +54,13 @@
 --- # SPAWNSTATIC class, extends @{Base#BASE}
 -- 
 -- The SPAWNSTATIC class allows to spawn dynamically new @{Static}s.
+-- Through creating a copy of an existing static object template as defined in the Mission Editor (ME),
+-- SPAWNSTATIC can retireve the properties of the defined static object template (like type, category etc), and "copy"
+-- these properties to create a new static object and place it at the desired coordinate.
 -- 
--- There are two modes how SPAWNSTATIC can spawn:
--- 
---   * Through creating a copy of an existing Template @{Static} as defined in the Mission Editor (ME).
---   * Through the provision of the type name of the Static.  
--- 
--- Spawned @{Static}s get **the same name** as the name of the Template Static, 
--- or gets the given name when a Static Type is used.  
--- Newly spawned @{Static}s will get the following naming structure at run-time:
+-- New spawned @{Static}s get **the same name** as the name of the template Static, 
+-- or gets the given name when a new name is provided at the Spawn method.  
+-- By default, spawned @{Static}s will follow a naming convention at run-time:
 -- 
 --   * Spawned @{Static}s will have the name _StaticName_#_nnn_, where _StaticName_ is the name of the **Template Static**, 
 --   and _nnn_ is a **counter from 0 to 99999**.
@@ -66,20 +68,17 @@
 --   
 -- ## SPAWNSTATIC construction methods
 -- 
--- Create a new SPAWNSTATIC object with the @{#SPAWNSTATIC.NewFromStatic}() or the @{#SPAWNSTATIC.NewFromType}() methods:
+-- Create a new SPAWNSTATIC object with the @{#SPAWNSTATIC.NewFromStatic}():
 -- 
 --   * @{#SPAWNSTATIC.NewFromStatic}(): Creates a new SPAWNSTATIC object given a name that is used as the base of the naming of each spawned Static.
---   * @{#SPAWNSTATIC.NewFromType}(): Creates a new SPAWNSTATIC object given a type name and a name to be given when spawned.
 --
--- ## SPAWNSTATIC **Spawn** methods
+-- ## **Spawn** methods
 -- 
 -- Groups can be spawned at different times and methods:
 -- 
---   * @{#SPAWNSTATIC.SpawnInZone}(): Spawn a new group in a @{Zone}.
---   * @{#SPAWNSTATIC.SpawnFromVec3}(): Spawn a new group from a Vec3 coordinate. (The group will can be spawned at a point in the air).
---   * @{#SPAWNSTATIC.SpawnFromVec2}(): Spawn a new group from a Vec2 coordinate. (The group will be spawned at land height ).
---   * @{#SPAWNSTATIC.SpawnFromStatic}(): Spawn a new group from a structure, taking the position of a @{Static}.
---   * @{#SPAWNSTATIC.SpawnFromUnit}(): Spawn a new group taking the position of a @{Unit}.
+--   * @{#SPAWNSTATIC.SpawnFromPointVec2}(): Spawn a new group from a POINT_VEC2 coordinate. 
+--   (The group will be spawned at land height ).
+--   * @{#SPAWNSTATIC.SpawnFromZone}(): Spawn a new group in a @{Zone}.
 --  
 -- @field #SPAWNSTATIC SPAWNSTATIC
 -- 

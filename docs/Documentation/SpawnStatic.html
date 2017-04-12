@@ -92,19 +92,23 @@
 	<div id="content">
    <h1>Module <code>SpawnStatic</code></h1>
    
-<p><strong>Functional</strong> -- Spawn dynamically new <a href="Static.html">Static</a>s in your missions.</p>
+<p><strong>Core</strong> -- Spawn dynamically new STATICs in your missions.</p>
 
    
 <p> 
-<img src="..\Presentations\SPAWNSTATIC\SPAWNSTATIC.JPG" alt="Banner Image"/></p>
+<img src="..\Presentations\SPAWNSTATIC\Dia1.JPG" alt="Banner Image"/></p>
+
+<hr/>
+
+<p>SPAWNSTATIC spawns static structures in your missions dynamically. See below the SPAWNSTATIC class documentation.</p>
 
 <hr/>
 
 <h1>Demo Missions</h1>
 
-<h3><a href="">SPAWNSTATIC Demo Missions source code</a></h3>
+<h3><a href="https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master-release/SPS - Spawning Statics">SPAWNSTATIC Demo Missions source code</a></h3>
 
-<h3><a href="">SPAWNSTATIC Demo Missions, only for beta testers</a></h3>
+<h3><a href="https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/SPS%20-%20Spawning%20Statics">SPAWNSTATIC Demo Missions, only for beta testers</a></h3>
 
 <h3><a href="https://github.com/FlightControl-Master/MOOSE_MISSIONS/releases">ALL Demo Missions pack of the last release</a></h3>
 
@@ -219,17 +223,13 @@
 <p>The SPAWNSTATIC class allows to spawn dynamically new <a href="Static.html">Static</a>s.</p>
 
 	
+<p>Through creating a copy of an existing static object template as defined in the Mission Editor (ME),
+SPAWNSTATIC can retireve the properties of the defined static object template (like type, category etc), and "copy"
+these properties to create a new static object and place it at the desired coordinate.</p>
 
-<p>There are two modes how SPAWNSTATIC can spawn:</p>
-
-<ul>
-    <li>Through creating a copy of an existing Template <a href="Static.html">Static</a> as defined in the Mission Editor (ME).</li>
-    <li>Through the provision of the type name of the Static.  </li>
-</ul>
-
-<p>Spawned <a href="Static.html">Static</a>s get <strong>the same name</strong> as the name of the Template Static, 
-or gets the given name when a Static Type is used. <br/>
-Newly spawned <a href="Static.html">Static</a>s will get the following naming structure at run-time:</p>
+<p>New spawned <a href="Static.html">Static</a>s get <strong>the same name</strong> as the name of the template Static, 
+or gets the given name when a new name is provided at the Spawn method. <br/>
+By default, spawned <a href="Static.html">Static</a>s will follow a naming convention at run-time:</p>
 
 <ul>
     <li>Spawned <a href="Static.html">Static</a>s will have the name _StaticName<em>#</em>nnn_, where <em>StaticName</em> is the name of the <strong>Template Static</strong>, 
@@ -239,23 +239,20 @@ Newly spawned <a href="Static.html">Static</a>s will get the following naming st
 
 <h2>SPAWNSTATIC construction methods</h2>
 
-<p>Create a new SPAWNSTATIC object with the <a href="##(SPAWNSTATIC).NewFromStatic">SPAWNSTATIC.NewFromStatic</a>() or the <a href="##(SPAWNSTATIC).NewFromType">SPAWNSTATIC.NewFromType</a>() methods:</p>
+<p>Create a new SPAWNSTATIC object with the <a href="##(SPAWNSTATIC).NewFromStatic">SPAWNSTATIC.NewFromStatic</a>():</p>
 
 <ul>
     <li><a href="##(SPAWNSTATIC).NewFromStatic">SPAWNSTATIC.NewFromStatic</a>(): Creates a new SPAWNSTATIC object given a name that is used as the base of the naming of each spawned Static.</li>
-    <li><a href="##(SPAWNSTATIC).NewFromType">SPAWNSTATIC.NewFromType</a>(): Creates a new SPAWNSTATIC object given a type name and a name to be given when spawned.</li>
 </ul>
 
-<h2>SPAWNSTATIC <strong>Spawn</strong> methods</h2>
+<h2><strong>Spawn</strong> methods</h2>
 
 <p>Groups can be spawned at different times and methods:</p>
 
 <ul>
-    <li><a href="##(SPAWNSTATIC).SpawnInZone">SPAWNSTATIC.SpawnInZone</a>(): Spawn a new group in a <a href="Zone.html">Zone</a>.</li>
-    <li><a href="##(SPAWNSTATIC).SpawnFromVec3">SPAWNSTATIC.SpawnFromVec3</a>(): Spawn a new group from a Vec3 coordinate. (The group will can be spawned at a point in the air).</li>
-    <li><a href="##(SPAWNSTATIC).SpawnFromVec2">SPAWNSTATIC.SpawnFromVec2</a>(): Spawn a new group from a Vec2 coordinate. (The group will be spawned at land height ).</li>
-    <li><a href="##(SPAWNSTATIC).SpawnFromStatic">SPAWNSTATIC.SpawnFromStatic</a>(): Spawn a new group from a structure, taking the position of a <a href="Static.html">Static</a>.</li>
-    <li><a href="##(SPAWNSTATIC).SpawnFromUnit">SPAWNSTATIC.SpawnFromUnit</a>(): Spawn a new group taking the position of a <a href="Unit.html">Unit</a>.
+    <li><a href="##(SPAWNSTATIC).SpawnFromPointVec2">SPAWNSTATIC.SpawnFromPointVec2</a>(): Spawn a new group from a POINT_VEC2 coordinate. 
+    (The group will be spawned at land height ).</li>
+    <li><a href="##(SPAWNSTATIC).SpawnFromZone">SPAWNSTATIC.SpawnFromZone</a>(): Spawn a new group in a <a href="Zone.html">Zone</a>.
     </li>
 </ul>
 

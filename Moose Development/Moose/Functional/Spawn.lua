@@ -1,4 +1,4 @@
---- **Functional** -- Spawn dynamically new @{Group}s in your missions.
+--- **Functional** -- Spawn dynamically new GROUPs in your missions.
 --  
 -- ![Banner Image](..\Presentations\SPAWN\SPAWN.JPG)
 -- 
