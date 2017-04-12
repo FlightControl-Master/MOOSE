@@ -926,7 +926,7 @@ function EVENT:onEvent( Event )
           
               -- If the EventData is not bound to a specific unit, then call the EventClass EventFunction.
               -- Note that here the EventFunction will need to implement and determine the logic for the relevant source- or target unit, or weapon.
-              if (Event.IniDCSUnit or Event.WeaponUNIT) and not EventData.EventUnit then
+              if not EventData.EventUnit then
               
                 -- First test if a EventFunction is Set, otherwise search for the default function
                 if EventData.EventFunction then
