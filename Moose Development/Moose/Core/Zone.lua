@@ -615,7 +615,7 @@ end
 
 
 
--- @type ZONE
+--- @type ZONE
 -- @extends Core.Zone#ZONE_RADIUS
 
 

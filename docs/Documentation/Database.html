@@ -74,6 +74,7 @@
 					<li><a href="Set.html">Set</a></li>
 					<li><a href="Smoke.html">Smoke</a></li>
 					<li><a href="Spawn.html">Spawn</a></li>
+					<li><a href="SpawnStatic.html">SpawnStatic</a></li>
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="Task.html">Task</a></li>
@@ -353,6 +354,12 @@ The following iterator methods are currently available within the DATABASE:</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).GetStaticUnitTemplate">DATABASE:GetStaticUnitTemplate(StaticName)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DATABASE).GetStatusGroup">DATABASE:GetStatusGroup(GroupName)</a></td>
 		<td class="summary">
 <p>Get a status to a Group within the Database, this to check crossing events for example.</p>
@@ -360,6 +367,12 @@ The following iterator methods are currently available within the DATABASE:</p>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DATABASE).NavPoints">DATABASE.NavPoints</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).Navpoints">DATABASE.Navpoints</a></td>
 		<td class="summary">
 
 </td>
@@ -449,6 +462,12 @@ The following iterator methods are currently available within the DATABASE:</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE)._RegisterGroupTemplate">DATABASE:_RegisterGroupTemplate(GroupTemplate, CoalitionID, CategoryID, CountryID)</a></td>
+		<td class="summary">
+<p>Private method that registers new Group Templates within the DATABASE Object.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DATABASE)._RegisterGroupsAndUnits">DATABASE:_RegisterGroupsAndUnits()</a></td>
 		<td class="summary">
 <p>Private method that registers all Groups and Units within in the mission.</p>
@@ -461,15 +480,15 @@ The following iterator methods are currently available within the DATABASE:</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DATABASE)._RegisterStatics">DATABASE:_RegisterStatics()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE)._RegisterStaticTemplate">DATABASE:_RegisterStaticTemplate(GroupTemplate, StaticTemplate, CoalitionID, CategoryID, CountryID)</a></td>
 		<td class="summary">
-
+<p>Private method that registers new Static Templates within the DATABASE Object.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DATABASE)._RegisterTemplate">DATABASE:_RegisterTemplate(GroupTemplate, CoalitionID, CategoryID, CountryID)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE)._RegisterStatics">DATABASE:_RegisterStatics()</a></td>
 		<td class="summary">
-<p>Private method that registers new Group Templates within the DATABASE Object.</p>
+
 </td>
 		</tr>
 		<tr>
@@ -1309,6 +1328,27 @@ self</p>
 		<dl class="function">
 <dt>
 
+<a id="#(DATABASE).GetStaticUnitTemplate" >
+<strong>DATABASE:GetStaticUnitTemplate(StaticName)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> StaticName </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(DATABASE).GetStatusGroup" >
 <strong>DATABASE:GetStatusGroup(GroupName)</strong>
 </a>
@@ -1333,6 +1373,20 @@ self</p>
 		<em></em>
 <a id="#(DATABASE).NavPoints" >
 <strong>DATABASE.NavPoints</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(DATABASE).Navpoints" >
+<strong>DATABASE.Navpoints</strong>
 </a>
 </dt>
 <dd>
@@ -1608,6 +1662,47 @@ self</p>
 		<dl class="function">
 <dt>
 
+<a id="#(DATABASE)._RegisterGroupTemplate" >
+<strong>DATABASE:_RegisterGroupTemplate(GroupTemplate, CoalitionID, CategoryID, CountryID)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Private method that registers new Group Templates within the DATABASE Object.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#table GroupTemplate </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> CoalitionID </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> CategoryID </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> CountryID </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(DATABASE)">#DATABASE</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(DATABASE)._RegisterGroupsAndUnits" >
 <strong>DATABASE:_RegisterGroupsAndUnits()</strong>
 </a>
@@ -1644,32 +1739,24 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(DATABASE)._RegisterStatics" >
-<strong>DATABASE:_RegisterStatics()</strong>
+<a id="#(DATABASE)._RegisterStaticTemplate" >
+<strong>DATABASE:_RegisterStaticTemplate(GroupTemplate, StaticTemplate, CoalitionID, CategoryID, CountryID)</strong>
 </a>
 </dt>
 <dd>
 	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(DATABASE)._RegisterTemplate" >
-<strong>DATABASE:_RegisterTemplate(GroupTemplate, CoalitionID, CategoryID, CountryID)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Private method that registers new Group Templates within the DATABASE Object.</p>
+<p>Private method that registers new Static Templates within the DATABASE Object.</p>
 
 		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
 <p><code><em>#table GroupTemplate </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> StaticTemplate </em></code>: </p>
 
 				</li>
 				<li>
@@ -1692,6 +1779,19 @@ self</p>
 				
 <p><em><a href="##(DATABASE)">#DATABASE</a>:</em>
 self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DATABASE)._RegisterStatics" >
+<strong>DATABASE:_RegisterStatics()</strong>
+</a>
+</dt>
+<dd>
+	
+
 
 </dd>
 </dl>
