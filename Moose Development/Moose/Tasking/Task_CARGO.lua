@@ -128,6 +128,8 @@ do -- TASK_CARGO
       
       TaskUnit.Menu = MENU_GROUP:New( TaskUnit:GetGroup(), Task:GetName() .. " @ " .. TaskUnit:GetName() )
       
+      Task.SetCargo:Flush()
+      
       Task.SetCargo:ForEachCargo(
         
         --- @param Core.Cargo#CARGO Cargo
