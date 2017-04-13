@@ -1,5 +1,5 @@
 env.info( '*** MOOSE DYNAMIC INCLUDE START *** ' )
-env.info( 'Moose Generation Timestamp: 20170413_0842' )
+env.info( 'Moose Generation Timestamp: 20170413_0920' )
 
 local base = _G
 
@@ -70,6 +70,7 @@ __Moose.Include( 'Tasking/Task.lua' )
 __Moose.Include( 'Tasking/DetectionManager.lua' )
 __Moose.Include( 'Tasking/Task_A2G_Dispatcher.lua' )
 __Moose.Include( 'Tasking/Task_A2G.lua' )
+__Moose.Include( 'Tasking/Task_Cargo.lua' )
 __Moose.Include( 'Moose.lua' )
 BASE:TraceOnOff( true )
 env.info( '*** MOOSE INCLUDE END *** ' )

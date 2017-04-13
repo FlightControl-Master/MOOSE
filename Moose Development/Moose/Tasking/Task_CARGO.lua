@@ -130,7 +130,7 @@ do -- TASK_CARGO
       
       Task.SetCargo:ForEachCargo(
         
-        --- @param AI.AI_Cargo#AI_CARGO Cargo
+        --- @param Core.Cargo#CARGO Cargo
         function( Cargo ) 
           if Cargo:IsUnLoaded() then
             if Cargo:IsInRadius( TaskUnit:GetPointVec2() ) then

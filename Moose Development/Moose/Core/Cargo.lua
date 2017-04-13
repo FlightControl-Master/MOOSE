@@ -27,6 +27,7 @@
 -- @function [parent=#CARGO] Board
 -- @param #CARGO self
 -- @param Wrapper.Controllable#CONTROLLABLE ToCarrier The Carrier that will hold the cargo.
+-- @param #number NearRadius The radius when the cargo will board the Carrier (to avoid collision).
 
 --- Boards the cargo to a Carrier. The event will create a movement (= running or driving) of the cargo to the Carrier.
 -- The cargo must be in the **UnLoaded** state.
@@ -34,6 +35,7 @@
 -- @param #CARGO self
 -- @param #number DelaySeconds The amount of seconds to delay the action.
 -- @param Wrapper.Controllable#CONTROLLABLE ToCarrier The Carrier that will hold the cargo.
+-- @param #number NearRadius The radius when the cargo will board the Carrier (to avoid collision).
 
 
 -- UnBoard
@@ -117,6 +119,7 @@
 --- @function [parent=#CARGO] OnEnterBoarding
 -- @param #CARGO self
 -- @param Wrapper.Controllable#CONTROLLABLE Controllable
+-- @param #number NearRadius The radius when the cargo will board the Carrier (to avoid collision).
 
 -- UnBoarding
 
@@ -215,10 +218,10 @@ do -- CARGO
 -- @param #number Weight
 -- @param #number NearRadius (optional)
 -- @return #CARGO
-function CARGO:New( Type, Name, Weight, NearRadius )
+function CARGO:New( Type, Name, Weight )
 
   local self = BASE:Inherit( self, FSM:New() ) -- Core.Fsm#FSM
-  self:F( { Type, Name, Weight, NearRadius } )
+  self:F( { Type, Name, Weight } )
   
   self:SetStartState( "UnLoaded" )
   self:AddTransition( "UnLoaded", "Board", "Boarding" )
@@ -234,7 +237,6 @@ function CARGO:New( Type, Name, Weight, NearRadius )
   self.Type = Type
   self.Name = Name
   self.Weight = Weight
-  self.NearRadius = NearRadius or 200
   self.CargoObject = nil
   self.CargoCarrier = nil
   self.Representable = false
@@ -311,14 +313,15 @@ end
 --- Check if CargoCarrier is near the Cargo to be Loaded.
 -- @param #CARGO self
 -- @param Core.Point#POINT_VEC2 PointVec2
+-- @param #number NearRadius The radius when the cargo will board the Carrier (to avoid collision).
 -- @return #boolean
-function CARGO:IsNear( PointVec2 )
+function CARGO:IsNear( PointVec2, NearRadius )
   self:F( { PointVec2 } )
 
   local Distance = PointVec2:DistanceFromPointVec2( self.CargoObject:GetPointVec2() )
   self:T( Distance )
   
-  if Distance <= self.NearRadius then
+  if Distance <= NearRadius then
     return true
   else
     return false
@@ -407,11 +410,12 @@ do -- CARGO_REPORTABLE
 -- @param #number ReportRadius (optional)
 -- @param #number NearRadius (optional)
 -- @return #CARGO_REPORTABLE
-function CARGO_REPORTABLE:New( Type, Name, Weight, ReportRadius, NearRadius )
-  local self = BASE:Inherit( self, CARGO:New( Type, Name, Weight, NearRadius ) ) -- #CARGO_REPORTABLE
-  self:F( { Type, Name, Weight, ReportRadius, NearRadius } )
+function CARGO_REPORTABLE:New( CargoObject, Type, Name, Weight, ReportRadius )
+  local self = BASE:Inherit( self, CARGO:New( Type, Name, Weight ) ) -- #CARGO_REPORTABLE
+  self:F( { Type, Name, Weight, ReportRadius } )
 
   self.ReportRadius = ReportRadius or 1000
+  self.CargoObject = CargoObject
 
   return self
 end
@@ -483,8 +487,6 @@ function CARGO_UNIT:New( CargoUnit, Type, Name, Weight, NearRadius )
 
   self:T( self.ClassName )
 
-  -- Cargo objects are added to the _DATABASE and SET_CARGO objects.
-  _EVENTDISPATCHER:CreateEventNewCargo( self )
 
   return self
 end
@@ -638,12 +640,14 @@ end
 -- @param #string From
 -- @param #string To
 -- @param Wrapper.Unit#UNIT CargoCarrier
-function CARGO_UNIT:onenterBoarding( From, Event, To, CargoCarrier, ... )
-  self:F( { CargoCarrier.UnitName, From, Event, To } )
+function CARGO_UNIT:onenterBoarding( From, Event, To, CargoCarrier, NearRadius, ... )
+  self:F( { From, Event, To, CargoCarrier.UnitName, NearRadius } )
   
   local Speed = 10
   local Angle = 180
   local Distance = 5
+  
+  NearRadius = NearRadius or 25
 
   if From == "UnLoaded" then
     local CargoCarrierPointVec2 = CargoCarrier:GetPointVec2()
@@ -670,10 +674,12 @@ end
 -- @param #string From
 -- @param #string To
 -- @param Wrapper.Unit#UNIT CargoCarrier
-function CARGO_UNIT:onleaveBoarding( From, Event, To, CargoCarrier, ... )
-  self:F( { CargoCarrier.UnitName, From, Event, To } )
+function CARGO_UNIT:onleaveBoarding( From, Event, To, CargoCarrier, NearRadius, ... )
+  self:F( { From, Event, To, CargoCarrier.UnitName, NearRadius } )
 
-  if self:IsNear( CargoCarrier:GetPointVec2() ) then
+  NearRadius = NearRadius or 25
+
+  if self:IsNear( CargoCarrier:GetPointVec2(), NearRadius ) then
     self:__Load( 1, CargoCarrier, ... )
     return true
   else
@@ -706,9 +712,11 @@ end
 -- @param #string Event
 -- @param #string From
 -- @param #string To
-function CARGO_UNIT:onafterBoard( From, Event, To, CargoCarrier, ... )
+function CARGO_UNIT:onafterBoard( From, Event, To, CargoCarrier, NearRadius, ... )
   self:F()
 
+  NearRadius = NearRadius or 25
+  
   self.CargoInAir = self.CargoObject:InAir()
 
   self:T( self.CargoInAir )
@@ -963,7 +971,7 @@ do -- CARGO_GROUP
 -- @param #number NearRadius (optional)
 -- @return #CARGO_GROUP
 function CARGO_GROUP:New( CargoGroup, Type, Name, ReportRadius, NearRadius )
-  local self = BASE:Inherit( self, CARGO_REPORTABLE:New( Type, Name, 0, ReportRadius, NearRadius ) ) -- #CARGO_GROUP
+  local self = BASE:Inherit( self, CARGO_REPORTABLE:New( CargoGroup, Type, Name, 0, ReportRadius, NearRadius ) ) -- #CARGO_GROUP
   self:F( { Type, Name, ReportRadius, NearRadius } )
 
   self.CargoSet = SET_CARGO:New()
@@ -981,6 +989,9 @@ function CARGO_GROUP:New( CargoGroup, Type, Name, ReportRadius, NearRadius )
   self:SetWeight( WeightGroup )
   
   self:T( { "Weight Cargo", WeightGroup } )
+
+  -- Cargo objects are added to the _DATABASE and SET_CARGO objects.
+  _EVENTDISPATCHER:CreateEventNewCargo( self )
   
   return self
 end
