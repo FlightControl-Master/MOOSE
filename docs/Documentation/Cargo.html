@@ -1,0 +1,3271 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+	<head>
+		<link rel="stylesheet" href="stylesheet.css" type="text/css"/>
+	</head>
+<body>
+<div id="container">
+<div id="product">
+	<div id="product_logo"></div>
+	<div id="product_name"><big><b></b></big></div>
+	<div id="product_description"></div>
+</div>
+<div id="main">
+	<div id="navigation">
+		<h2>Modules</h2>
+			<ul><li>
+				<a href="index.html">index</a>
+			</li></ul>
+		<ul>
+					<li><a href="AI_Balancer.html">AI_Balancer</a></li>
+					<li><a href="AI_Cap.html">AI_Cap</a></li>
+					<li><a href="AI_Cas.html">AI_Cas</a></li>
+					<li><a href="AI_Patrol.html">AI_Patrol</a></li>
+					<li><a href="Account.html">Account</a></li>
+					<li><a href="Airbase.html">Airbase</a></li>
+					<li><a href="AirbasePolice.html">AirbasePolice</a></li>
+					<li><a href="Assign.html">Assign</a></li>
+					<li><a href="Base.html">Base</a></li>
+					<li>Cargo</li>
+					<li><a href="CleanUp.html">CleanUp</a></li>
+					<li><a href="Client.html">Client</a></li>
+					<li><a href="CommandCenter.html">CommandCenter</a></li>
+					<li><a href="Controllable.html">Controllable</a></li>
+					<li><a href="DCSAirbase.html">DCSAirbase</a></li>
+					<li><a href="DCSCoalitionObject.html">DCSCoalitionObject</a></li>
+					<li><a href="DCSCommand.html">DCSCommand</a></li>
+					<li><a href="DCSController.html">DCSController</a></li>
+					<li><a href="DCSGroup.html">DCSGroup</a></li>
+					<li><a href="DCSObject.html">DCSObject</a></li>
+					<li><a href="DCSTask.html">DCSTask</a></li>
+					<li><a href="DCSTypes.html">DCSTypes</a></li>
+					<li><a href="DCSUnit.html">DCSUnit</a></li>
+					<li><a href="DCSVec3.html">DCSVec3</a></li>
+					<li><a href="DCSWorld.html">DCSWorld</a></li>
+					<li><a href="DCSZone.html">DCSZone</a></li>
+					<li><a href="DCScountry.html">DCScountry</a></li>
+					<li><a href="DCStimer.html">DCStimer</a></li>
+					<li><a href="DCStrigger.html">DCStrigger</a></li>
+					<li><a href="Database.html">Database</a></li>
+					<li><a href="Detection.html">Detection</a></li>
+					<li><a href="DetectionManager.html">DetectionManager</a></li>
+					<li><a href="Escort.html">Escort</a></li>
+					<li><a href="Event.html">Event</a></li>
+					<li><a href="Fsm.html">Fsm</a></li>
+					<li><a href="Group.html">Group</a></li>
+					<li><a href="Identifiable.html">Identifiable</a></li>
+					<li><a href="Menu.html">Menu</a></li>
+					<li><a href="Message.html">Message</a></li>
+					<li><a href="MissileTrainer.html">MissileTrainer</a></li>
+					<li><a href="Mission.html">Mission</a></li>
+					<li><a href="Movement.html">Movement</a></li>
+					<li><a href="Object.html">Object</a></li>
+					<li><a href="Point.html">Point</a></li>
+					<li><a href="Positionable.html">Positionable</a></li>
+					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
+					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
+					<li><a href="Radio.html">Radio</a></li>
+					<li><a href="Route.html">Route</a></li>
+					<li><a href="Scenery.html">Scenery</a></li>
+					<li><a href="ScheduleDispatcher.html">ScheduleDispatcher</a></li>
+					<li><a href="Scheduler.html">Scheduler</a></li>
+					<li><a href="Scoring.html">Scoring</a></li>
+					<li><a href="Sead.html">Sead</a></li>
+					<li><a href="Set.html">Set</a></li>
+					<li><a href="Smoke.html">Smoke</a></li>
+					<li><a href="Spawn.html">Spawn</a></li>
+					<li><a href="SpawnStatic.html">SpawnStatic</a></li>
+					<li><a href="Static.html">Static</a></li>
+					<li><a href="StaticObject.html">StaticObject</a></li>
+					<li><a href="Task.html">Task</a></li>
+					<li><a href="Task_A2G.html">Task_A2G</a></li>
+					<li><a href="Task_A2G_Dispatcher.html">Task_A2G_Dispatcher</a></li>
+					<li><a href="Task_Cargo.html">Task_Cargo</a></li>
+					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
+					<li><a href="Unit.html">Unit</a></li>
+					<li><a href="Utils.html">Utils</a></li>
+					<li><a href="Zone.html">Zone</a></li>
+					<li><a href="env.html">env</a></li>
+					<li><a href="land.html">land</a></li>
+					<li><a href="routines.html">routines</a></li>
+		</ul>
+	</div>
+	<div id="content">
+   <h1>Module <code>Cargo</code></h1>
+   
+<p><strong>Core</strong> -- Management of CARGO logistics, that can be transported from and to transportation carriers.</p>
+
+   
+
+<p><img src="..\Presentations\CARGO\Dia1.JPG" alt="Banner Image"/></p>
+
+<hr/>
+
+<p>Cargo can be of various forms, always are composed out of ONE object ( one unit or one static or one slingload crate ):</p>
+
+<ul>
+    <li>CARGO_UNIT, represented by a <a href="Unit.html">Unit</a> in a singleton <a href="Group.html">Group</a>: Cargo can be represented by a Unit in a Group. a CARGO_UNIT is representable...</li>
+    <li>CARGO_GROUP, represented by a <a href="Group.html">Group</a>. A CARGO_GROUP is reportable...</li>
+</ul>
+
+<hr/>
+
+<h1>Demo Missions</h1>
+
+<h3><a href="">CARGO Demo Missions source code</a></h3>
+
+<h3><a href="">CARGO Demo Missions, only for beta testers</a></h3>
+
+<h3><a href="https://github.com/FlightControl-Master/MOOSE_MISSIONS/releases">ALL Demo Missions pack of the last release</a></h3>
+
+<hr/>
+
+<h1>YouTube Channel</h1>
+
+<h3><a href="">SPAWNSTATIC YouTube Channel</a></h3>
+
+<hr/>
+
+<p>This module is still under construction, but is described above works already, and will keep working ...</p>
+
+
+	<h2>Global(s)</h2>
+	<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#CARGO">CARGO</a></td>
+		<td class="summary">
+<h1>CARGO class, extends <a href="Fsm.html##(FSM_PROCESS)">Fsm#FSM_PROCESS</a></h1>
+
+<p>The CARGO class defines the core functions that defines a cargo object within MOOSE.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#CARGOS">CARGOS</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#CARGO_GROUP">CARGO_GROUP</a></td>
+		<td class="summary">
+<h1>CARGO_GROUP class</h1>
+
+<p>The CARGO_GROUP class defines a cargo that is represented by a <a href="Group.html">Group</a> object within the simulator, and can be transported by a carrier.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#CARGO_PACKAGE">CARGO_PACKAGE</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#CARGO_REPORTABLE">CARGO_REPORTABLE</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#CARGO_REPRESENTABLE">CARGO_REPRESENTABLE</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#CARGO_UNIT">CARGO_UNIT</a></td>
+		<td class="summary">
+<h1>CARGO_UNIT class, extends <a href="##(CARGO_REPRESENTABLE)">#CARGO_REPRESENTABLE</a></h1>
+
+<p>The CARGO_UNIT class defines a cargo that is represented by a UNIT object within the simulator, and can be transported by a carrier.</p>
+</td>
+		</tr>
+	</table>
+			<h2><a id="#(CARGO)">Type <code>CARGO</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO).Board">CARGO:Board(ToCarrier, NearRadius)</a></td>
+		<td class="summary">
+<p>Boards the cargo to a Carrier.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO).CargoCarrier">CARGO.CargoCarrier</a></td>
+		<td class="summary">
+<p>The alive DCS object carrying the cargo. This value can be nil, meaning, that the cargo is not contained anywhere...</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO).CargoObject">CARGO.CargoObject</a></td>
+		<td class="summary">
+<p>The alive DCS object representing the cargo. This value can be nil, meaning, that the cargo is not represented anywhere...</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO).Containable">CARGO.Containable</a></td>
+		<td class="summary">
+<p>This flag defines if the cargo can be contained within a DCS Unit.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO).GetName">CARGO:GetName()</a></td>
+		<td class="summary">
+<p>Get the name of the Cargo.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO).GetPointVec2">CARGO:GetPointVec2()</a></td>
+		<td class="summary">
+<p>Get the current PointVec2 of the cargo.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO).GetType">CARGO:GetType()</a></td>
+		<td class="summary">
+<p>Get the type of the Cargo.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO).IsInZone">CARGO:IsInZone(Zone)</a></td>
+		<td class="summary">
+<p>Check if Cargo is the given <a href="Zone.html">Zone</a>.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO).IsLoaded">CARGO:IsLoaded()</a></td>
+		<td class="summary">
+<p>Check if cargo is loaded.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO).IsNear">CARGO:IsNear(PointVec2, NearRadius)</a></td>
+		<td class="summary">
+<p>Check if CargoCarrier is near the Cargo to be Loaded.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO).IsUnLoaded">CARGO:IsUnLoaded()</a></td>
+		<td class="summary">
+<p>Check if cargo is unloaded.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO).Load">CARGO:Load(ToCarrier)</a></td>
+		<td class="summary">
+<p>Loads the cargo to a Carrier.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO).Moveable">CARGO.Moveable</a></td>
+		<td class="summary">
+<p>This flag defines if the cargo is moveable.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO).Name">CARGO.Name</a></td>
+		<td class="summary">
+<p>A string defining the name of the cargo. The name is the unique identifier of the cargo.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO).NearRadius">CARGO.NearRadius</a></td>
+		<td class="summary">
+<p>(optional) A number defining the radius in meters when the cargo is near to a Carrier, so that it can be loaded.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO).New">CARGO:New(Type, Name, Weight, NearRadius)</a></td>
+		<td class="summary">
+<p>CARGO Constructor.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO).OnEnterBoarding">CARGO:OnEnterBoarding(Controllable, NearRadius)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO).OnEnterLoaded">CARGO:OnEnterLoaded(Controllable)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO).OnEnterUnBoarding">CARGO:OnEnterUnBoarding(Controllable)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO).OnEnterUnLoaded">CARGO:OnEnterUnLoaded(Controllable)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO).OnLeaveBoarding">CARGO:OnLeaveBoarding(Controllable)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO).OnLeaveLoaded">CARGO:OnLeaveLoaded(Controllable)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO).OnLeaveUnBoarding">CARGO:OnLeaveUnBoarding(Controllable)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO).OnLeaveUnLoaded">CARGO:OnLeaveUnLoaded(Controllable)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO).Representable">CARGO.Representable</a></td>
+		<td class="summary">
+<p>This flag defines if the cargo can be represented by a DCS Unit.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO).SetWeight">CARGO:SetWeight(Weight)</a></td>
+		<td class="summary">
+<p>Set the weight of the cargo.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO).Slingloadable">CARGO.Slingloadable</a></td>
+		<td class="summary">
+<p>This flag defines if the cargo can be slingloaded.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO).Spawn">CARGO:Spawn(PointVec2)</a></td>
+		<td class="summary">
+<p>Template method to spawn a new representation of the CARGO in the simulator.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO).Type">CARGO.Type</a></td>
+		<td class="summary">
+<p>A string defining the type of the cargo. eg. Engineers, Equipment, Screwdrivers.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO).UnBoard">CARGO:UnBoard(ToPointVec2)</a></td>
+		<td class="summary">
+<p>UnBoards the cargo to a Carrier.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO).UnLoad">CARGO:UnLoad(ToPointVec2)</a></td>
+		<td class="summary">
+<p>UnLoads the cargo to a Carrier.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO).Weight">CARGO.Weight</a></td>
+		<td class="summary">
+<p>A number defining the weight of the cargo. The weight is expressed in kg.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO).__Board">CARGO:__Board(DelaySeconds, ToCarrier, NearRadius)</a></td>
+		<td class="summary">
+<p>Boards the cargo to a Carrier.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO).__Load">CARGO:__Load(DelaySeconds, ToCarrier)</a></td>
+		<td class="summary">
+<p>Loads the cargo to a Carrier.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO).__UnBoard">CARGO:__UnBoard(DelaySeconds, ToPointVec2)</a></td>
+		<td class="summary">
+<p>UnBoards the cargo to a Carrier.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO).__UnLoad">CARGO:__UnLoad(DelaySeconds, ToPointVec2)</a></td>
+		<td class="summary">
+<p>UnLoads the cargo to a Carrier.</p>
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(CARGO_GROUP)">Type <code>CARGO_GROUP</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_GROUP).CargoCarrier">CARGO_GROUP.CargoCarrier</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_GROUP).CargoSet">CARGO_GROUP.CargoSet</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_GROUP).New">CARGO_GROUP:New(CargoGroup, Type, Name, ReportRadius, NearRadius)</a></td>
+		<td class="summary">
+<p>CARGO_GROUP constructor.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_GROUP).onafterUnBoarding">CARGO_GROUP:onafterUnBoarding(ToPointVec2, Event, From, To, NearRadius, ...)</a></td>
+		<td class="summary">
+<p>UnBoard Event.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_GROUP).onenterBoarding">CARGO_GROUP:onenterBoarding(CargoCarrier, Event, From, To, NearRadius, ...)</a></td>
+		<td class="summary">
+<p>Enter Boarding State.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_GROUP).onenterLoaded">CARGO_GROUP:onenterLoaded(CargoCarrier, Event, From, To, ...)</a></td>
+		<td class="summary">
+<p>Enter Loaded State.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_GROUP).onenterUnBoarding">CARGO_GROUP:onenterUnBoarding(ToPointVec2, Event, From, To, NearRadius, ...)</a></td>
+		<td class="summary">
+<p>Enter UnBoarding State.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_GROUP).onenterUnLoaded">CARGO_GROUP:onenterUnLoaded(Core, Event, From, To, ToPointVec2, ...)</a></td>
+		<td class="summary">
+<p>Enter UnLoaded State.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_GROUP).onleaveBoarding">CARGO_GROUP:onleaveBoarding(CargoCarrier, Event, From, To, NearRadius, ...)</a></td>
+		<td class="summary">
+<p>Leave Boarding State.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_GROUP).onleaveUnBoarding">CARGO_GROUP:onleaveUnBoarding(ToPointVec2, Event, From, To, NearRadius, ...)</a></td>
+		<td class="summary">
+<p>Leave UnBoarding State.</p>
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(CARGO_PACKAGE)">Type <code>CARGO_PACKAGE</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_PACKAGE).CargoCarrier">CARGO_PACKAGE.CargoCarrier</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_PACKAGE).CargoInAir">CARGO_PACKAGE.CargoInAir</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_PACKAGE).ClassName">CARGO_PACKAGE.ClassName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_PACKAGE).IsNear">CARGO_PACKAGE:IsNear(CargoCarrier)</a></td>
+		<td class="summary">
+<p>Check if CargoCarrier is near the Cargo to be Loaded.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_PACKAGE).New">CARGO_PACKAGE:New(CargoCarrier, Type, Name, Weight, ReportRadius, NearRadius)</a></td>
+		<td class="summary">
+<p>CARGO_PACKAGE Constructor.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_PACKAGE).onafterLoad">CARGO_PACKAGE:onafterLoad(Event, From, To, CargoCarrier, Speed, LoadDistance, Angle)</a></td>
+		<td class="summary">
+<p>Load Event.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_PACKAGE).onafterOnBoard">CARGO_PACKAGE:onafterOnBoard(Event, From, To, CargoCarrier, Speed, BoardDistance, Angle, LoadDistance)</a></td>
+		<td class="summary">
+<p>Board Event.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_PACKAGE).onafterOnBoarded">CARGO_PACKAGE:onafterOnBoarded(Event, From, To, CargoCarrier, Speed, BoardDistance, LoadDistance, Angle)</a></td>
+		<td class="summary">
+<p>Boarded Event.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_PACKAGE).onafterUnBoard">CARGO_PACKAGE:onafterUnBoard(Event, From, To, Speed, UnLoadDistance, UnBoardDistance, Radius, Angle, CargoCarrier)</a></td>
+		<td class="summary">
+<p>UnBoard Event.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_PACKAGE).onafterUnBoarded">CARGO_PACKAGE:onafterUnBoarded(Event, From, To, CargoCarrier, Speed)</a></td>
+		<td class="summary">
+<p>UnBoarded Event.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_PACKAGE).onafterUnLoad">CARGO_PACKAGE:onafterUnLoad(Event, From, To, Distance, Angle, CargoCarrier, Speed)</a></td>
+		<td class="summary">
+<p>UnLoad Event.</p>
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(CARGO_REPORTABLE)">Type <code>CARGO_REPORTABLE</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_REPORTABLE).CargoObject">CARGO_REPORTABLE.CargoObject</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_REPORTABLE).ClassName">CARGO_REPORTABLE.ClassName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_REPORTABLE).GetBoardingRange">CARGO_REPORTABLE:GetBoardingRange()</a></td>
+		<td class="summary">
+<p>Get the range till cargo will board.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_REPORTABLE).IsInRadius">CARGO_REPORTABLE:IsInRadius(PointVec2)</a></td>
+		<td class="summary">
+<p>Check if CargoCarrier is in the ReportRadius for the Cargo to be Loaded.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_REPORTABLE).MessageToGroup">CARGO_REPORTABLE:MessageToGroup(Message, TaskGroup, Name)</a></td>
+		<td class="summary">
+<p>Send a CC message to a GROUP.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_REPORTABLE).New">CARGO_REPORTABLE:New(CargoObject, Type, Name, Weight, ReportRadius, NearRadius)</a></td>
+		<td class="summary">
+<p>CARGO_REPORTABLE Constructor.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_REPORTABLE).ReportRadius">CARGO_REPORTABLE.ReportRadius</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(CARGO_REPRESENTABLE)">Type <code>CARGO_REPRESENTABLE</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_REPRESENTABLE).ClassName">CARGO_REPRESENTABLE.ClassName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_REPRESENTABLE).New">CARGO_REPRESENTABLE:New(CargoObject, Type, Name, Weight, ReportRadius, NearRadius)</a></td>
+		<td class="summary">
+<p>CARGO_REPRESENTABLE Constructor.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_REPRESENTABLE).RouteTo">CARGO_REPRESENTABLE:RouteTo(ToPointVec2, Speed)</a></td>
+		<td class="summary">
+<p>Route a cargo unit to a PointVec2.</p>
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(CARGO_UNIT)">Type <code>CARGO_UNIT</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_UNIT).CargoCarrier">CARGO_UNIT.CargoCarrier</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_UNIT).CargoInAir">CARGO_UNIT.CargoInAir</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_UNIT).CargoObject">CARGO_UNIT.CargoObject</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_UNIT).Destroy">CARGO_UNIT:Destroy()</a></td>
+		<td class="summary">
+<p>CARGO_UNIT Destructor.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_UNIT).New">CARGO_UNIT:New(CargoUnit, Type, Name, Weight, ReportRadius, NearRadius)</a></td>
+		<td class="summary">
+<p>CARGO_UNIT Constructor.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_UNIT).OnUnLoadedCallBack">CARGO_UNIT.OnUnLoadedCallBack</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_UNIT).onafterBoard">CARGO_UNIT:onafterBoard(Event, From, To, CargoCarrier, NearRadius, ...)</a></td>
+		<td class="summary">
+<p>Board Event.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_UNIT).onafterUnBoarding">CARGO_UNIT:onafterUnBoarding(Event, From, To, ToPointVec2, NearRadius)</a></td>
+		<td class="summary">
+<p>UnBoard Event.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_UNIT).onenterBoarding">CARGO_UNIT:onenterBoarding(Event, From, To, CargoCarrier, NearRadius, ...)</a></td>
+		<td class="summary">
+<p>Enter Boarding State.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_UNIT).onenterLoaded">CARGO_UNIT:onenterLoaded(Event, From, To, CargoCarrier)</a></td>
+		<td class="summary">
+<p>Loaded State.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_UNIT).onenterUnBoarding">CARGO_UNIT:onenterUnBoarding(Event, From, To, ToPointVec2, NearRadius)</a></td>
+		<td class="summary">
+<p>Enter UnBoarding State.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_UNIT).onenterUnLoaded">CARGO_UNIT:onenterUnLoaded(Event, From, To, Core, ToPointVec2)</a></td>
+		<td class="summary">
+<p>Enter UnLoaded State.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_UNIT).onleaveBoarding">CARGO_UNIT:onleaveBoarding(Event, From, To, CargoCarrier, NearRadius, ...)</a></td>
+		<td class="summary">
+<p>Leave Boarding State.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_UNIT).onleaveUnBoarding">CARGO_UNIT:onleaveUnBoarding(Event, From, To, ToPointVec2, NearRadius)</a></td>
+		<td class="summary">
+<p>Leave UnBoarding State.</p>
+</td>
+		</tr>
+	</table>
+
+	<h2>Global(s)</h2>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(CARGO)">#CARGO</a></em>
+<a id="CARGO" >
+<strong>CARGO</strong>
+</a>
+</dt>
+<dd>
+	
+<h1>CARGO class, extends <a href="Fsm.html##(FSM_PROCESS)">Fsm#FSM_PROCESS</a></h1>
+
+<p>The CARGO class defines the core functions that defines a cargo object within MOOSE.</p>
+
+	
+<p>A cargo is a logical object defined that is available for transport, and has a life status within a simulation.</p>
+
+<p>The CARGO is a state machine: it manages the different events and states of the cargo.
+All derived classes from CARGO follow the same state machine, expose the same cargo event functions, and provide the same cargo states.</p>
+
+<h2>CARGO Events:</h2>
+
+<ul>
+    <li><a href="##(CARGO).Board">CARGO.Board</a>( ToCarrier ):  Boards the cargo to a carrier.</li>
+    <li><a href="##(CARGO).Load">CARGO.Load</a>( ToCarrier ): Loads the cargo into a carrier, regardless of its position.</li>
+    <li><a href="##(CARGO).UnBoard">CARGO.UnBoard</a>( ToPointVec2 ): UnBoard the cargo from a carrier. This will trigger a movement of the cargo to the option ToPointVec2.</li>
+    <li><a href="##(CARGO).UnLoad">CARGO.UnLoad</a>( ToPointVec2 ): UnLoads the cargo from a carrier.</li>
+    <li><a href="##(CARGO).Dead">CARGO.Dead</a>( Controllable ): The cargo is dead. The cargo process will be ended.</li>
+</ul>
+
+<h2>CARGO States:</h2>
+
+<ul>
+    <li><strong>UnLoaded</strong>: The cargo is unloaded from a carrier.</li>
+    <li><strong>Boarding</strong>: The cargo is currently boarding (= running) into a carrier.</li>
+    <li><strong>Loaded</strong>: The cargo is loaded into a carrier.</li>
+    <li><strong>UnBoarding</strong>: The cargo is currently unboarding (=running) from a carrier.</li>
+    <li><strong>Dead</strong>: The cargo is dead ...</li>
+    <li><strong>End</strong>: The process has come to an end.</li>
+</ul>
+
+<h2>CARGO state transition methods:</h2>
+
+<p>State transition functions can be set <strong>by the mission designer</strong> customizing or improving the behaviour of the state.
+There are 2 moments when state transition methods will be called by the state machine:</p>
+
+<ul>
+    <li><p><strong>Leaving</strong> the state. 
+    The state transition method needs to start with the name <strong>OnLeave + the name of the state</strong>. 
+    If the state transition method returns false, then the processing of the state transition will not be done!
+    If you want to change the behaviour of the AIControllable at this event, return false, 
+    but then you'll need to specify your own logic using the AIControllable!</p></li>
+    <li><p><strong>Entering</strong> the state. 
+    The state transition method needs to start with the name <strong>OnEnter + the name of the state</strong>. 
+    These state transition methods need to provide a return value, which is specified at the function description.</p></li>
+</ul>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="CARGOS" >
+<strong>CARGOS</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(CARGO_GROUP)">#CARGO_GROUP</a></em>
+<a id="CARGO_GROUP" >
+<strong>CARGO_GROUP</strong>
+</a>
+</dt>
+<dd>
+	
+<h1>CARGO_GROUP class</h1>
+
+<p>The CARGO_GROUP class defines a cargo that is represented by a <a href="Group.html">Group</a> object within the simulator, and can be transported by a carrier.</p>
+
+	
+<p>Use the event functions as described above to Load, UnLoad, Board, UnBoard the CARGO_GROUP to and from carrier.</p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(CARGO_PACKAGE)">#CARGO_PACKAGE</a></em>
+<a id="CARGO_PACKAGE" >
+<strong>CARGO_PACKAGE</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(CARGO_REPORTABLE)">#CARGO_REPORTABLE</a></em>
+<a id="CARGO_REPORTABLE" >
+<strong>CARGO_REPORTABLE</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(CARGO_REPRESENTABLE)">#CARGO_REPRESENTABLE</a></em>
+<a id="CARGO_REPRESENTABLE" >
+<strong>CARGO_REPRESENTABLE</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(CARGO_UNIT)">#CARGO_UNIT</a></em>
+<a id="CARGO_UNIT" >
+<strong>CARGO_UNIT</strong>
+</a>
+</dt>
+<dd>
+	
+<h1>CARGO_UNIT class, extends <a href="##(CARGO_REPRESENTABLE)">#CARGO_REPRESENTABLE</a></h1>
+
+<p>The CARGO_UNIT class defines a cargo that is represented by a UNIT object within the simulator, and can be transported by a carrier.</p>
+
+	
+<p>Use the event functions as described above to Load, UnLoad, Board, UnBoard the CARGO_UNIT objects to and from carriers.</p>
+
+<hr/>
+
+
+</dd>
+</dl>
+	<h2><a id="#(Cargo)" >Type <code>Cargo</code></a></h2>
+	
+			<h2><a id="#(CARGO)" >Type <code>CARGO</code></a></h2>
+				<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO).Board" >
+<strong>CARGO:Board(ToCarrier, NearRadius)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Boards the cargo to a Carrier.</p>
+
+	
+<p>The event will create a movement (= running or driving) of the cargo to the Carrier.
+The cargo must be in the <strong>UnLoaded</strong> state.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> ToCarrier </em></code>: 
+The Carrier that will hold the cargo.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number NearRadius </em></code>: 
+The radius when the cargo will board the Carrier (to avoid collision).</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a></em>
+<a id="#(CARGO).CargoCarrier" >
+<strong>CARGO.CargoCarrier</strong>
+</a>
+</dt>
+<dd>
+	
+<p>The alive DCS object carrying the cargo. This value can be nil, meaning, that the cargo is not contained anywhere...</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a></em>
+<a id="#(CARGO).CargoObject" >
+<strong>CARGO.CargoObject</strong>
+</a>
+</dt>
+<dd>
+	
+<p>The alive DCS object representing the cargo. This value can be nil, meaning, that the cargo is not represented anywhere...</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#boolean</em>
+<a id="#(CARGO).Containable" >
+<strong>CARGO.Containable</strong>
+</a>
+</dt>
+<dd>
+	
+<p>This flag defines if the cargo can be contained within a DCS Unit.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO).GetName" >
+<strong>CARGO:GetName()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Get the name of the Cargo.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#string:</em>
+The name of the Cargo.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO).GetPointVec2" >
+<strong>CARGO:GetPointVec2()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Get the current PointVec2 of the cargo.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="Core.Point.html##(POINT_VEC2)">Core.Point#POINT_VEC2</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO).GetType" >
+<strong>CARGO:GetType()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Get the type of the Cargo.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#string:</em>
+The type of the Cargo.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO).IsInZone" >
+<strong>CARGO:IsInZone(Zone)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Check if Cargo is the given <a href="Zone.html">Zone</a>.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Zone.html##(ZONE_BASE)">Core.Zone#ZONE_BASE</a> Zone </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+<strong>true</strong> if cargo is in the Zone, <strong>false</strong> if cargo is not in the Zone.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO).IsLoaded" >
+<strong>CARGO:IsLoaded()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Check if cargo is loaded.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+true if loaded</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO).IsNear" >
+<strong>CARGO:IsNear(PointVec2, NearRadius)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Check if CargoCarrier is near the Cargo to be Loaded.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Point.html##(POINT_VEC2)">Core.Point#POINT_VEC2</a> PointVec2 </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number NearRadius </em></code>: 
+The radius when the cargo will board the Carrier (to avoid collision).</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO).IsUnLoaded" >
+<strong>CARGO:IsUnLoaded()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Check if cargo is unloaded.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+true if unloaded</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO).Load" >
+<strong>CARGO:Load(ToCarrier)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Loads the cargo to a Carrier.</p>
+
+	
+<p>The event will load the cargo into the Carrier regardless of its position. There will be no movement simulated of the cargo loading.
+The cargo must be in the <strong>UnLoaded</strong> state.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> ToCarrier </em></code>: 
+The Carrier that will hold the cargo.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#boolean</em>
+<a id="#(CARGO).Moveable" >
+<strong>CARGO.Moveable</strong>
+</a>
+</dt>
+<dd>
+	
+<p>This flag defines if the cargo is moveable.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(CARGO).Name" >
+<strong>CARGO.Name</strong>
+</a>
+</dt>
+<dd>
+	
+<p>A string defining the name of the cargo. The name is the unique identifier of the cargo.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#number</em>
+<a id="#(CARGO).NearRadius" >
+<strong>CARGO.NearRadius</strong>
+</a>
+</dt>
+<dd>
+	
+<p>(optional) A number defining the radius in meters when the cargo is near to a Carrier, so that it can be loaded.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO).New" >
+<strong>CARGO:New(Type, Name, Weight, NearRadius)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>CARGO Constructor.</p>
+
+	
+<p>This class is an abstract class and should not be instantiated.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Type </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Name </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Weight </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number NearRadius </em></code>: 
+(optional)</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(CARGO)">#CARGO</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO).OnEnterBoarding" >
+<strong>CARGO:OnEnterBoarding(Controllable, NearRadius)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> Controllable </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number NearRadius </em></code>: 
+The radius when the cargo will board the Carrier (to avoid collision).</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO).OnEnterLoaded" >
+<strong>CARGO:OnEnterLoaded(Controllable)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> Controllable </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO).OnEnterUnBoarding" >
+<strong>CARGO:OnEnterUnBoarding(Controllable)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> Controllable </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO).OnEnterUnLoaded" >
+<strong>CARGO:OnEnterUnLoaded(Controllable)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> Controllable </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO).OnLeaveBoarding" >
+<strong>CARGO:OnLeaveBoarding(Controllable)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> Controllable </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO).OnLeaveLoaded" >
+<strong>CARGO:OnLeaveLoaded(Controllable)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> Controllable </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO).OnLeaveUnBoarding" >
+<strong>CARGO:OnLeaveUnBoarding(Controllable)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> Controllable </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO).OnLeaveUnLoaded" >
+<strong>CARGO:OnLeaveUnLoaded(Controllable)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> Controllable </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#boolean</em>
+<a id="#(CARGO).Representable" >
+<strong>CARGO.Representable</strong>
+</a>
+</dt>
+<dd>
+	
+<p>This flag defines if the cargo can be represented by a DCS Unit.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO).SetWeight" >
+<strong>CARGO:SetWeight(Weight)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set the weight of the cargo.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number Weight </em></code>: 
+The weight in kg.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(CARGO)">#CARGO</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#boolean</em>
+<a id="#(CARGO).Slingloadable" >
+<strong>CARGO.Slingloadable</strong>
+</a>
+</dt>
+<dd>
+	
+<p>This flag defines if the cargo can be slingloaded.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO).Spawn" >
+<strong>CARGO:Spawn(PointVec2)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Template method to spawn a new representation of the CARGO in the simulator.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> PointVec2 </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(CARGO)">#CARGO</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(CARGO).Type" >
+<strong>CARGO.Type</strong>
+</a>
+</dt>
+<dd>
+	
+<p>A string defining the type of the cargo. eg. Engineers, Equipment, Screwdrivers.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO).UnBoard" >
+<strong>CARGO:UnBoard(ToPointVec2)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>UnBoards the cargo to a Carrier.</p>
+
+	
+<p>The event will create a movement (= running or driving) of the cargo from the Carrier.
+The cargo must be in the <strong>Loaded</strong> state.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Point.html##(POINT_VEC2)">Core.Point#POINT_VEC2</a> ToPointVec2 </em></code>: 
+(optional) @{Point#POINT_VEC2) to where the cargo should run after onboarding. If not provided, the cargo will run to 60 meters behind the Carrier location.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO).UnLoad" >
+<strong>CARGO:UnLoad(ToPointVec2)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>UnLoads the cargo to a Carrier.</p>
+
+	
+<p>The event will unload the cargo from the Carrier. There will be no movement simulated of the cargo loading.
+The cargo must be in the <strong>Loaded</strong> state.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Point.html##(POINT_VEC2)">Core.Point#POINT_VEC2</a> ToPointVec2 </em></code>: 
+(optional) @{Point#POINT_VEC2) to where the cargo will be placed after unloading. If not provided, the cargo will be placed 60 meters behind the Carrier location.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#number</em>
+<a id="#(CARGO).Weight" >
+<strong>CARGO.Weight</strong>
+</a>
+</dt>
+<dd>
+	
+<p>A number defining the weight of the cargo. The weight is expressed in kg.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO).__Board" >
+<strong>CARGO:__Board(DelaySeconds, ToCarrier, NearRadius)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Boards the cargo to a Carrier.</p>
+
+	
+<p>The event will create a movement (= running or driving) of the cargo to the Carrier.
+The cargo must be in the <strong>UnLoaded</strong> state.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number DelaySeconds </em></code>: 
+The amount of seconds to delay the action.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> ToCarrier </em></code>: 
+The Carrier that will hold the cargo.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number NearRadius </em></code>: 
+The radius when the cargo will board the Carrier (to avoid collision).</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO).__Load" >
+<strong>CARGO:__Load(DelaySeconds, ToCarrier)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Loads the cargo to a Carrier.</p>
+
+	
+<p>The event will load the cargo into the Carrier regardless of its position. There will be no movement simulated of the cargo loading.
+The cargo must be in the <strong>UnLoaded</strong> state.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number DelaySeconds </em></code>: 
+The amount of seconds to delay the action.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> ToCarrier </em></code>: 
+The Carrier that will hold the cargo.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO).__UnBoard" >
+<strong>CARGO:__UnBoard(DelaySeconds, ToPointVec2)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>UnBoards the cargo to a Carrier.</p>
+
+	
+<p>The event will create a movement (= running or driving) of the cargo from the Carrier.
+The cargo must be in the <strong>Loaded</strong> state.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number DelaySeconds </em></code>: 
+The amount of seconds to delay the action.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Core.Point.html##(POINT_VEC2)">Core.Point#POINT_VEC2</a> ToPointVec2 </em></code>: 
+(optional) @{Point#POINT_VEC2) to where the cargo should run after onboarding. If not provided, the cargo will run to 60 meters behind the Carrier location.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO).__UnLoad" >
+<strong>CARGO:__UnLoad(DelaySeconds, ToPointVec2)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>UnLoads the cargo to a Carrier.</p>
+
+	
+<p>The event will unload the cargo from the Carrier. There will be no movement simulated of the cargo loading.
+The cargo must be in the <strong>Loaded</strong> state.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number DelaySeconds </em></code>: 
+The amount of seconds to delay the action.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Core.Point.html##(POINT_VEC2)">Core.Point#POINT_VEC2</a> ToPointVec2 </em></code>: 
+(optional) @{Point#POINT_VEC2) to where the cargo will be placed after unloading. If not provided, the cargo will be placed 60 meters behind the Carrier location.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+
+			<h2><a id="#(CARGO.CargoObjects)" >Type <code>CARGO.CargoObjects</code></a></h2>
+			
+			<h2><a id="#(CARGO_GROUP)" >Type <code>CARGO_GROUP</code></a></h2>
+				<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(CARGO_GROUP).CargoCarrier" >
+<strong>CARGO_GROUP.CargoCarrier</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(CARGO_GROUP).CargoSet" >
+<strong>CARGO_GROUP.CargoSet</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO_GROUP).New" >
+<strong>CARGO_GROUP:New(CargoGroup, Type, Name, ReportRadius, NearRadius)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>CARGO_GROUP constructor.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> CargoGroup </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Type </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Name </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number ReportRadius </em></code>: 
+(optional)</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number NearRadius </em></code>: 
+(optional)</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(CARGO_GROUP)">#CARGO_GROUP</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO_GROUP).onafterUnBoarding" >
+<strong>CARGO_GROUP:onafterUnBoarding(ToPointVec2, Event, From, To, NearRadius, ...)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>UnBoard Event.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Point.html##(POINT_VEC2)">Core.Point#POINT_VEC2</a> ToPointVec2 </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> NearRadius </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> ... </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO_GROUP).onenterBoarding" >
+<strong>CARGO_GROUP:onenterBoarding(CargoCarrier, Event, From, To, NearRadius, ...)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Enter Boarding State.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> CargoCarrier </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> NearRadius </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> ... </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO_GROUP).onenterLoaded" >
+<strong>CARGO_GROUP:onenterLoaded(CargoCarrier, Event, From, To, ...)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Enter Loaded State.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> CargoCarrier </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> ... </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO_GROUP).onenterUnBoarding" >
+<strong>CARGO_GROUP:onenterUnBoarding(ToPointVec2, Event, From, To, NearRadius, ...)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Enter UnBoarding State.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Point.html##(POINT_VEC2)">Core.Point#POINT_VEC2</a> ToPointVec2 </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> NearRadius </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> ... </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO_GROUP).onenterUnLoaded" >
+<strong>CARGO_GROUP:onenterUnLoaded(Core, Event, From, To, ToPointVec2, ...)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Enter UnLoaded State.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> Core </em></code>: 
+Point#POINT_VEC2</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> ToPointVec2 </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> ... </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO_GROUP).onleaveBoarding" >
+<strong>CARGO_GROUP:onleaveBoarding(CargoCarrier, Event, From, To, NearRadius, ...)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Leave Boarding State.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> CargoCarrier </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> NearRadius </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> ... </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO_GROUP).onleaveUnBoarding" >
+<strong>CARGO_GROUP:onleaveUnBoarding(ToPointVec2, Event, From, To, NearRadius, ...)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Leave UnBoarding State.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Point.html##(POINT_VEC2)">Core.Point#POINT_VEC2</a> ToPointVec2 </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> NearRadius </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> ... </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+
+			<h2><a id="#(CARGO_PACKAGE)" >Type <code>CARGO_PACKAGE</code></a></h2>
+				<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(CARGO_PACKAGE).CargoCarrier" >
+<strong>CARGO_PACKAGE.CargoCarrier</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(CARGO_PACKAGE).CargoInAir" >
+<strong>CARGO_PACKAGE.CargoInAir</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(CARGO_PACKAGE).ClassName" >
+<strong>CARGO_PACKAGE.ClassName</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO_PACKAGE).IsNear" >
+<strong>CARGO_PACKAGE:IsNear(CargoCarrier)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Check if CargoCarrier is near the Cargo to be Loaded.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> CargoCarrier </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO_PACKAGE).New" >
+<strong>CARGO_PACKAGE:New(CargoCarrier, Type, Name, Weight, ReportRadius, NearRadius)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>CARGO_PACKAGE Constructor.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> CargoCarrier </em></code>: 
+The UNIT carrying the package.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Type </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Name </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Weight </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number ReportRadius </em></code>: 
+(optional)</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number NearRadius </em></code>: 
+(optional)</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(CARGO_PACKAGE)">#CARGO_PACKAGE</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO_PACKAGE).onafterLoad" >
+<strong>CARGO_PACKAGE:onafterLoad(Event, From, To, CargoCarrier, Speed, LoadDistance, Angle)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Load Event.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> CargoCarrier </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Speed </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number LoadDistance </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Angle </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO_PACKAGE).onafterOnBoard" >
+<strong>CARGO_PACKAGE:onafterOnBoard(Event, From, To, CargoCarrier, Speed, BoardDistance, Angle, LoadDistance)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Board Event.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> CargoCarrier </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Speed </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number BoardDistance </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Angle </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> LoadDistance </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO_PACKAGE).onafterOnBoarded" >
+<strong>CARGO_PACKAGE:onafterOnBoarded(Event, From, To, CargoCarrier, Speed, BoardDistance, LoadDistance, Angle)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Boarded Event.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> CargoCarrier </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> Speed </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> BoardDistance </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> LoadDistance </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> Angle </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO_PACKAGE).onafterUnBoard" >
+<strong>CARGO_PACKAGE:onafterUnBoard(Event, From, To, Speed, UnLoadDistance, UnBoardDistance, Radius, Angle, CargoCarrier)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>UnBoard Event.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Speed </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number UnLoadDistance </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number UnBoardDistance </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Radius </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Angle </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> CargoCarrier </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO_PACKAGE).onafterUnBoarded" >
+<strong>CARGO_PACKAGE:onafterUnBoarded(Event, From, To, CargoCarrier, Speed)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>UnBoarded Event.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> CargoCarrier </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> Speed </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO_PACKAGE).onafterUnLoad" >
+<strong>CARGO_PACKAGE:onafterUnLoad(Event, From, To, Distance, Angle, CargoCarrier, Speed)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>UnLoad Event.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Distance </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Angle </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> CargoCarrier </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> Speed </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+
+			<h2><a id="#(CARGO_REPORTABLE)" >Type <code>CARGO_REPORTABLE</code></a></h2>
+				<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(CARGO_REPORTABLE).CargoObject" >
+<strong>CARGO_REPORTABLE.CargoObject</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(CARGO_REPORTABLE).ClassName" >
+<strong>CARGO_REPORTABLE.ClassName</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO_REPORTABLE).GetBoardingRange" >
+<strong>CARGO_REPORTABLE:GetBoardingRange()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Get the range till cargo will board.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#number:</em>
+The range till cargo will board.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO_REPORTABLE).IsInRadius" >
+<strong>CARGO_REPORTABLE:IsInRadius(PointVec2)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Check if CargoCarrier is in the ReportRadius for the Cargo to be Loaded.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Point.html##(POINT_VEC2)">Core.Point#POINT_VEC2</a> PointVec2 </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO_REPORTABLE).MessageToGroup" >
+<strong>CARGO_REPORTABLE:MessageToGroup(Message, TaskGroup, Name)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Send a CC message to a GROUP.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Message </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> TaskGroup </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="##(sring)">#sring</a> Name </em></code>: 
+(optional) The name of the Group used as a prefix for the message to the Group. If not provided, there will be nothing shown.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO_REPORTABLE).New" >
+<strong>CARGO_REPORTABLE:New(CargoObject, Type, Name, Weight, ReportRadius, NearRadius)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>CARGO_REPORTABLE Constructor.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Controllable.html##(Controllable)">Wrapper.Controllable#Controllable</a> CargoObject </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Type </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Name </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Weight </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number ReportRadius </em></code>: 
+(optional)</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number NearRadius </em></code>: 
+(optional)</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(CARGO_REPORTABLE)">#CARGO_REPORTABLE</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO_REPORTABLE).ReportRadius" >
+<strong>CARGO_REPORTABLE.ReportRadius</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+
+			<h2><a id="#(CARGO_REPRESENTABLE)" >Type <code>CARGO_REPRESENTABLE</code></a></h2>
+				<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(CARGO_REPRESENTABLE).ClassName" >
+<strong>CARGO_REPRESENTABLE.ClassName</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO_REPRESENTABLE).New" >
+<strong>CARGO_REPRESENTABLE:New(CargoObject, Type, Name, Weight, ReportRadius, NearRadius)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>CARGO_REPRESENTABLE Constructor.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Controllable.html##(Controllable)">Wrapper.Controllable#Controllable</a> CargoObject </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Type </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Name </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Weight </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number ReportRadius </em></code>: 
+(optional)</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number NearRadius </em></code>: 
+(optional)</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(CARGO_REPRESENTABLE)">#CARGO_REPRESENTABLE</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO_REPRESENTABLE).RouteTo" >
+<strong>CARGO_REPRESENTABLE:RouteTo(ToPointVec2, Speed)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Route a cargo unit to a PointVec2.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Point.html##(POINT_VEC2)">Core.Point#POINT_VEC2</a> ToPointVec2 </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Speed </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(CARGO_REPRESENTABLE)">#CARGO_REPRESENTABLE</a>:</em></p>
+
+
+</dd>
+</dl>
+
+			<h2><a id="#(CARGO_UNIT)" >Type <code>CARGO_UNIT</code></a></h2>
+				<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(CARGO_UNIT).CargoCarrier" >
+<strong>CARGO_UNIT.CargoCarrier</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(CARGO_UNIT).CargoInAir" >
+<strong>CARGO_UNIT.CargoInAir</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(CARGO_UNIT).CargoObject" >
+<strong>CARGO_UNIT.CargoObject</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO_UNIT).Destroy" >
+<strong>CARGO_UNIT:Destroy()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>CARGO_UNIT Destructor.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(CARGO_UNIT)">#CARGO_UNIT</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO_UNIT).New" >
+<strong>CARGO_UNIT:New(CargoUnit, Type, Name, Weight, ReportRadius, NearRadius)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>CARGO_UNIT Constructor.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> CargoUnit </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Type </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Name </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Weight </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number ReportRadius </em></code>: 
+(optional)</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number NearRadius </em></code>: 
+(optional)</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(CARGO_UNIT)">#CARGO_UNIT</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO_UNIT).OnUnLoadedCallBack" >
+<strong>CARGO_UNIT.OnUnLoadedCallBack</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO_UNIT).onafterBoard" >
+<strong>CARGO_UNIT:onafterBoard(Event, From, To, CargoCarrier, NearRadius, ...)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Board Event.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> CargoCarrier </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> NearRadius </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> ... </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO_UNIT).onafterUnBoarding" >
+<strong>CARGO_UNIT:onafterUnBoarding(Event, From, To, ToPointVec2, NearRadius)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>UnBoard Event.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Core.Point.html##(POINT_VEC2)">Core.Point#POINT_VEC2</a> ToPointVec2 </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> NearRadius </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO_UNIT).onenterBoarding" >
+<strong>CARGO_UNIT:onenterBoarding(Event, From, To, CargoCarrier, NearRadius, ...)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Enter Boarding State.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> CargoCarrier </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> NearRadius </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> ... </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO_UNIT).onenterLoaded" >
+<strong>CARGO_UNIT:onenterLoaded(Event, From, To, CargoCarrier)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Loaded State.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> CargoCarrier </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO_UNIT).onenterUnBoarding" >
+<strong>CARGO_UNIT:onenterUnBoarding(Event, From, To, ToPointVec2, NearRadius)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Enter UnBoarding State.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Core.Point.html##(POINT_VEC2)">Core.Point#POINT_VEC2</a> ToPointVec2 </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> NearRadius </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO_UNIT).onenterUnLoaded" >
+<strong>CARGO_UNIT:onenterUnLoaded(Event, From, To, Core, ToPointVec2)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Enter UnLoaded State.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> Core </em></code>: 
+Point#POINT_VEC2</p>
+
+				</li>
+				<li>
+				
+<p><code><em> ToPointVec2 </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO_UNIT).onleaveBoarding" >
+<strong>CARGO_UNIT:onleaveBoarding(Event, From, To, CargoCarrier, NearRadius, ...)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Leave Boarding State.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> CargoCarrier </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> NearRadius </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> ... </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO_UNIT).onleaveUnBoarding" >
+<strong>CARGO_UNIT:onleaveUnBoarding(Event, From, To, ToPointVec2, NearRadius)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Leave UnBoarding State.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Core.Point.html##(POINT_VEC2)">Core.Point#POINT_VEC2</a> ToPointVec2 </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> NearRadius </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+
+			<h2><a id="#(COMMANDCENTER)" >Type <code>COMMANDCENTER</code></a></h2>
+			
+			<h2><a id="#(sring)" >Type <code>sring</code></a></h2>
+			
+</div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,1045 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+	<head>
+		<link rel="stylesheet" href="stylesheet.css" type="text/css"/>
+	</head>
+<body>
+<div id="container">
+<div id="product">
+	<div id="product_logo"></div>
+	<div id="product_name"><big><b></b></big></div>
+	<div id="product_description"></div>
+</div>
+<div id="main">
+	<div id="navigation">
+		<h2>Modules</h2>
+			<ul><li>
+				<a href="index.html">index</a>
+			</li></ul>
+		<ul>
+					<li><a href="AI_Balancer.html">AI_Balancer</a></li>
+					<li><a href="AI_Cap.html">AI_Cap</a></li>
+					<li><a href="AI_Cas.html">AI_Cas</a></li>
+					<li><a href="AI_Patrol.html">AI_Patrol</a></li>
+					<li><a href="Account.html">Account</a></li>
+					<li><a href="Airbase.html">Airbase</a></li>
+					<li><a href="AirbasePolice.html">AirbasePolice</a></li>
+					<li>Assign</li>
+					<li><a href="Base.html">Base</a></li>
+					<li><a href="Cargo.html">Cargo</a></li>
+					<li><a href="CleanUp.html">CleanUp</a></li>
+					<li><a href="Client.html">Client</a></li>
+					<li><a href="CommandCenter.html">CommandCenter</a></li>
+					<li><a href="Controllable.html">Controllable</a></li>
+					<li><a href="DCSAirbase.html">DCSAirbase</a></li>
+					<li><a href="DCSCoalitionObject.html">DCSCoalitionObject</a></li>
+					<li><a href="DCSCommand.html">DCSCommand</a></li>
+					<li><a href="DCSController.html">DCSController</a></li>
+					<li><a href="DCSGroup.html">DCSGroup</a></li>
+					<li><a href="DCSObject.html">DCSObject</a></li>
+					<li><a href="DCSTask.html">DCSTask</a></li>
+					<li><a href="DCSTypes.html">DCSTypes</a></li>
+					<li><a href="DCSUnit.html">DCSUnit</a></li>
+					<li><a href="DCSVec3.html">DCSVec3</a></li>
+					<li><a href="DCSWorld.html">DCSWorld</a></li>
+					<li><a href="DCSZone.html">DCSZone</a></li>
+					<li><a href="DCScountry.html">DCScountry</a></li>
+					<li><a href="DCStimer.html">DCStimer</a></li>
+					<li><a href="DCStrigger.html">DCStrigger</a></li>
+					<li><a href="Database.html">Database</a></li>
+					<li><a href="Detection.html">Detection</a></li>
+					<li><a href="DetectionManager.html">DetectionManager</a></li>
+					<li><a href="Escort.html">Escort</a></li>
+					<li><a href="Event.html">Event</a></li>
+					<li><a href="Fsm.html">Fsm</a></li>
+					<li><a href="Group.html">Group</a></li>
+					<li><a href="Identifiable.html">Identifiable</a></li>
+					<li><a href="Menu.html">Menu</a></li>
+					<li><a href="Message.html">Message</a></li>
+					<li><a href="MissileTrainer.html">MissileTrainer</a></li>
+					<li><a href="Mission.html">Mission</a></li>
+					<li><a href="Movement.html">Movement</a></li>
+					<li><a href="Object.html">Object</a></li>
+					<li><a href="Point.html">Point</a></li>
+					<li><a href="Positionable.html">Positionable</a></li>
+					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
+					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
+					<li><a href="Radio.html">Radio</a></li>
+					<li><a href="Route.html">Route</a></li>
+					<li><a href="Scenery.html">Scenery</a></li>
+					<li><a href="ScheduleDispatcher.html">ScheduleDispatcher</a></li>
+					<li><a href="Scheduler.html">Scheduler</a></li>
+					<li><a href="Scoring.html">Scoring</a></li>
+					<li><a href="Sead.html">Sead</a></li>
+					<li><a href="Set.html">Set</a></li>
+					<li><a href="Smoke.html">Smoke</a></li>
+					<li><a href="Spawn.html">Spawn</a></li>
+					<li><a href="SpawnStatic.html">SpawnStatic</a></li>
+					<li><a href="Static.html">Static</a></li>
+					<li><a href="StaticObject.html">StaticObject</a></li>
+					<li><a href="Task.html">Task</a></li>
+					<li><a href="Task_A2G.html">Task_A2G</a></li>
+					<li><a href="Task_A2G_Dispatcher.html">Task_A2G_Dispatcher</a></li>
+					<li><a href="Task_Cargo.html">Task_Cargo</a></li>
+					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
+					<li><a href="Unit.html">Unit</a></li>
+					<li><a href="Utils.html">Utils</a></li>
+					<li><a href="Zone.html">Zone</a></li>
+					<li><a href="env.html">env</a></li>
+					<li><a href="land.html">land</a></li>
+					<li><a href="routines.html">routines</a></li>
+		</ul>
+	</div>
+	<div id="content">
+   <h1>Module <code>Assign</code></h1>
+   
+<p>(SP) (MP) (FSM) Accept or reject process for player (task) assignments.</p>
+
+   
+
+<hr/>
+
+<h1><a href="##(ACT_ASSIGN)">#ACT_ASSIGN</a> FSM template class, extends <a href="Fsm.html##(FSM_PROCESS)">Fsm#FSM_PROCESS</a></h1>
+
+<h2>ACT_ASSIGN state machine:</h2>
+
+<p>This class is a state machine: it manages a process that is triggered by events causing state transitions to occur.
+All derived classes from this class will start with the class name, followed by a _. See the relevant derived class descriptions below.
+Each derived class follows exactly the same process, using the same events and following the same state transitions, 
+but will have <strong>different implementation behaviour</strong> upon each event or state transition.</p>
+
+<h3>ACT_ASSIGN <strong>Events</strong>:</h3>
+
+<p>These are the events defined in this class:</p>
+
+<ul>
+    <li><strong>Start</strong>:  Start the tasking acceptance process.</li>
+    <li><strong>Assign</strong>:  Assign the task.</li>
+    <li><strong>Reject</strong>:  Reject the task..</li>
+</ul>
+
+<h3>ACT_ASSIGN <strong>Event methods</strong>:</h3>
+
+<p>Event methods are available (dynamically allocated by the state machine), that accomodate for state transitions occurring in the process.
+There are two types of event methods, which you can use to influence the normal mechanisms in the state machine:</p>
+
+<ul>
+    <li><strong>Immediate</strong>: The event method has exactly the name of the event.</li>
+    <li><strong>Delayed</strong>: The event method starts with a __ + the name of the event. The first parameter of the event method is a number value, expressing the delay in seconds when the event will be executed. </li>
+</ul>
+
+<h3>ACT_ASSIGN <strong>States</strong>:</h3>
+
+<ul>
+    <li><strong>UnAssigned</strong>: The player has not accepted the task.</li>
+    <li><strong>Assigned (*)</strong>: The player has accepted the task.</li>
+    <li><strong>Rejected (*)</strong>: The player has not accepted the task.</li>
+    <li><strong>Waiting</strong>: The process is awaiting player feedback.</li>
+    <li><strong>Failed (*)</strong>: The process has failed.</li>
+</ul>
+
+<p>(*) End states of the process.</p>
+
+<h3>ACT_ASSIGN state transition methods:</h3>
+
+<p>State transition functions can be set <strong>by the mission designer</strong> customizing or improving the behaviour of the state.
+There are 2 moments when state transition methods will be called by the state machine:</p>
+
+<ul>
+    <li><p><strong>Before</strong> the state transition. 
+    The state transition method needs to start with the name <strong>OnBefore + the name of the state</strong>. 
+    If the state transition method returns false, then the processing of the state transition will not be done!
+    If you want to change the behaviour of the AIControllable at this event, return false, 
+    but then you'll need to specify your own logic using the AIControllable!</p></li>
+    <li><p><strong>After</strong> the state transition. 
+    The state transition method needs to start with the name <strong>OnAfter + the name of the state</strong>. 
+    These state transition methods need to provide a return value, which is specified at the function description.</p></li>
+</ul>
+
+<hr/>
+
+<h1>1) <a href="##(ACT_ASSIGN_ACCEPT)">#ACT<em>ASSIGN</em>ACCEPT</a> class, extends <a href="Fsm.Assign.html##(ACT_ASSIGN)">Fsm.Assign#ACT_ASSIGN</a></h1>
+
+<p>The ACT<em>ASSIGN</em>ACCEPT class accepts by default a task for a player. No player intervention is allowed to reject the task.</p>
+
+<h2>1.1) ACT<em>ASSIGN</em>ACCEPT constructor:</h2>
+
+<ul>
+    <li><a href="##(ACT_ASSIGN_ACCEPT).New">ACT<em>ASSIGN</em>ACCEPT.New</a>(): Creates a new ACT<em>ASSIGN</em>ACCEPT object.</li>
+</ul>
+
+<hr/>
+
+<h1>2) <a href="##(ACT_ASSIGN_MENU_ACCEPT)">#ACT<em>ASSIGN</em>MENU_ACCEPT</a> class, extends <a href="Fsm.Assign.html##(ACT_ASSIGN)">Fsm.Assign#ACT_ASSIGN</a></h1>
+
+<p>The ACT<em>ASSIGN</em>MENU_ACCEPT class accepts a task when the player accepts the task through an added menu option.
+This assignment type is useful to conditionally allow the player to choose whether or not he would accept the task.
+The assignment type also allows to reject the task.</p>
+
+<h2>2.1) ACT<em>ASSIGN</em>MENU_ACCEPT constructor:</h2>
+<hr/>
+
+<ul>
+    <li><a href="##(ACT_ASSIGN_MENU_ACCEPT).New">ACT<em>ASSIGN</em>MENU_ACCEPT.New</a>(): Creates a new ACT<em>ASSIGN</em>MENU_ACCEPT object.</li>
+</ul>
+
+<hr/>
+
+
+	<h2>Global(s)</h2>
+	<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#ACT_ASSIGN">ACT_ASSIGN</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#ACT_ASSIGN_ACCEPT">ACT_ASSIGN_ACCEPT</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#ACT_ASSIGN_MENU_ACCEPT">ACT_ASSIGN_MENU_ACCEPT</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+			<h2><a id="#(ACT_ASSIGN)">Type <code>ACT_ASSIGN</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ASSIGN).ClassName">ACT_ASSIGN.ClassName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ASSIGN).New">ACT_ASSIGN:New()</a></td>
+		<td class="summary">
+<p>Creates a new task assignment state machine.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ASSIGN).ProcessUnit">ACT_ASSIGN.ProcessUnit</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ASSIGN).TargetZone">ACT_ASSIGN.TargetZone</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ASSIGN).Task">ACT_ASSIGN.Task</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(ACT_ASSIGN_ACCEPT)">Type <code>ACT_ASSIGN_ACCEPT</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ASSIGN_ACCEPT).ClassName">ACT_ASSIGN_ACCEPT.ClassName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ASSIGN_ACCEPT).Init">ACT_ASSIGN_ACCEPT:Init(FsmAssign)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ASSIGN_ACCEPT).New">ACT_ASSIGN_ACCEPT:New(TaskBriefing)</a></td>
+		<td class="summary">
+<p>Creates a new task assignment state machine.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ASSIGN_ACCEPT).ProcessUnit">ACT_ASSIGN_ACCEPT.ProcessUnit</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ASSIGN_ACCEPT).TargetZone">ACT_ASSIGN_ACCEPT.TargetZone</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ASSIGN_ACCEPT).Task">ACT_ASSIGN_ACCEPT.Task</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ASSIGN_ACCEPT).TaskBriefing">ACT_ASSIGN_ACCEPT.TaskBriefing</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ASSIGN_ACCEPT).onafterStart">ACT_ASSIGN_ACCEPT:onafterStart(ProcessUnit, Event, From, To)</a></td>
+		<td class="summary">
+<p>StateMachine callback function</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ASSIGN_ACCEPT).onenterAssigned">ACT_ASSIGN_ACCEPT:onenterAssigned(ProcessUnit, Event, From, To)</a></td>
+		<td class="summary">
+<p>StateMachine callback function</p>
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(ACT_ASSIGN_MENU_ACCEPT)">Type <code>ACT_ASSIGN_MENU_ACCEPT</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ASSIGN_MENU_ACCEPT).ClassName">ACT_ASSIGN_MENU_ACCEPT.ClassName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ASSIGN_MENU_ACCEPT).Init">ACT_ASSIGN_MENU_ACCEPT:Init(FsmAssign)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ASSIGN_MENU_ACCEPT).Menu">ACT_ASSIGN_MENU_ACCEPT.Menu</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ASSIGN_MENU_ACCEPT).MenuAcceptTask">ACT_ASSIGN_MENU_ACCEPT.MenuAcceptTask</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ASSIGN_MENU_ACCEPT).MenuAssign">ACT_ASSIGN_MENU_ACCEPT:MenuAssign()</a></td>
+		<td class="summary">
+<p>Menu function.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ASSIGN_MENU_ACCEPT).MenuReject">ACT_ASSIGN_MENU_ACCEPT:MenuReject()</a></td>
+		<td class="summary">
+<p>Menu function.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ASSIGN_MENU_ACCEPT).MenuRejectTask">ACT_ASSIGN_MENU_ACCEPT.MenuRejectTask</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ASSIGN_MENU_ACCEPT).New">ACT_ASSIGN_MENU_ACCEPT:New(TaskName, TaskBriefing)</a></td>
+		<td class="summary">
+<p>Init.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ASSIGN_MENU_ACCEPT).ProcessUnit">ACT_ASSIGN_MENU_ACCEPT.ProcessUnit</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ASSIGN_MENU_ACCEPT).TargetZone">ACT_ASSIGN_MENU_ACCEPT.TargetZone</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ASSIGN_MENU_ACCEPT).Task">ACT_ASSIGN_MENU_ACCEPT.Task</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ASSIGN_MENU_ACCEPT).TaskBriefing">ACT_ASSIGN_MENU_ACCEPT.TaskBriefing</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ASSIGN_MENU_ACCEPT).TaskName">ACT_ASSIGN_MENU_ACCEPT.TaskName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ASSIGN_MENU_ACCEPT).onafterAssign">ACT_ASSIGN_MENU_ACCEPT:onafterAssign(ProcessUnit, Event, From, To)</a></td>
+		<td class="summary">
+<p>StateMachine callback function</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ASSIGN_MENU_ACCEPT).onafterReject">ACT_ASSIGN_MENU_ACCEPT:onafterReject(ProcessUnit, Event, From, To)</a></td>
+		<td class="summary">
+<p>StateMachine callback function</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ASSIGN_MENU_ACCEPT).onafterStart">ACT_ASSIGN_MENU_ACCEPT:onafterStart(ProcessUnit, Event, From, To)</a></td>
+		<td class="summary">
+<p>StateMachine callback function</p>
+</td>
+		</tr>
+	</table>
+
+	<h2>Global(s)</h2>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(ACT_ASSIGN)">#ACT_ASSIGN</a></em>
+<a id="ACT_ASSIGN" >
+<strong>ACT_ASSIGN</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(ACT_ASSIGN_ACCEPT)">#ACT_ASSIGN_ACCEPT</a></em>
+<a id="ACT_ASSIGN_ACCEPT" >
+<strong>ACT_ASSIGN_ACCEPT</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(ACT_ASSIGN_MENU_ACCEPT)">#ACT_ASSIGN_MENU_ACCEPT</a></em>
+<a id="ACT_ASSIGN_MENU_ACCEPT" >
+<strong>ACT_ASSIGN_MENU_ACCEPT</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+	<h2><a id="#(Assign)" >Type <code>Assign</code></a></h2>
+	
+			<h2><a id="#(ACT_ASSIGN)" >Type <code>ACT_ASSIGN</code></a></h2>
+				
+<p>ACT_ASSIGN class</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(ACT_ASSIGN).ClassName" >
+<strong>ACT_ASSIGN.ClassName</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ACT_ASSIGN).New" >
+<strong>ACT_ASSIGN:New()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Creates a new task assignment state machine.</p>
+
+	
+<p>The process will accept the task by default, no player intervention accepted.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(ACT_ASSIGN)">#ACT_ASSIGN</a>:</em>
+The task acceptance process.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a></em>
+<a id="#(ACT_ASSIGN).ProcessUnit" >
+<strong>ACT_ASSIGN.ProcessUnit</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="Core.Zone.html##(ZONE_BASE)">Core.Zone#ZONE_BASE</a></em>
+<a id="#(ACT_ASSIGN).TargetZone" >
+<strong>ACT_ASSIGN.TargetZone</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="Tasking.Task.html##(TASK)">Tasking.Task#TASK</a></em>
+<a id="#(ACT_ASSIGN).Task" >
+<strong>ACT_ASSIGN.Task</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+
+			<h2><a id="#(ACT_ASSIGN_ACCEPT)" >Type <code>ACT_ASSIGN_ACCEPT</code></a></h2>
+				
+<p>ACT<em>ASSIGN</em>ACCEPT class</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(ACT_ASSIGN_ACCEPT).ClassName" >
+<strong>ACT_ASSIGN_ACCEPT.ClassName</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ACT_ASSIGN_ACCEPT).Init" >
+<strong>ACT_ASSIGN_ACCEPT:Init(FsmAssign)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> FsmAssign </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ACT_ASSIGN_ACCEPT).New" >
+<strong>ACT_ASSIGN_ACCEPT:New(TaskBriefing)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Creates a new task assignment state machine.</p>
+
+	
+<p>The process will accept the task by default, no player intervention accepted.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string TaskBriefing </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a></em>
+<a id="#(ACT_ASSIGN_ACCEPT).ProcessUnit" >
+<strong>ACT_ASSIGN_ACCEPT.ProcessUnit</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="Core.Zone.html##(ZONE_BASE)">Core.Zone#ZONE_BASE</a></em>
+<a id="#(ACT_ASSIGN_ACCEPT).TargetZone" >
+<strong>ACT_ASSIGN_ACCEPT.TargetZone</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="Tasking.Task.html##(TASK)">Tasking.Task#TASK</a></em>
+<a id="#(ACT_ASSIGN_ACCEPT).Task" >
+<strong>ACT_ASSIGN_ACCEPT.Task</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(ACT_ASSIGN_ACCEPT).TaskBriefing" >
+<strong>ACT_ASSIGN_ACCEPT.TaskBriefing</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ACT_ASSIGN_ACCEPT).onafterStart" >
+<strong>ACT_ASSIGN_ACCEPT:onafterStart(ProcessUnit, Event, From, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>StateMachine callback function</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> ProcessUnit </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ACT_ASSIGN_ACCEPT).onenterAssigned" >
+<strong>ACT_ASSIGN_ACCEPT:onenterAssigned(ProcessUnit, Event, From, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>StateMachine callback function</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> ProcessUnit </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+
+			<h2><a id="#(ACT_ASSIGN_MENU_ACCEPT)" >Type <code>ACT_ASSIGN_MENU_ACCEPT</code></a></h2>
+				
+<p>ACT<em>ASSIGN</em>MENU_ACCEPT class</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(ACT_ASSIGN_MENU_ACCEPT).ClassName" >
+<strong>ACT_ASSIGN_MENU_ACCEPT.ClassName</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ACT_ASSIGN_MENU_ACCEPT).Init" >
+<strong>ACT_ASSIGN_MENU_ACCEPT:Init(FsmAssign)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> FsmAssign </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(ACT_ASSIGN_MENU_ACCEPT).Menu" >
+<strong>ACT_ASSIGN_MENU_ACCEPT.Menu</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(ACT_ASSIGN_MENU_ACCEPT).MenuAcceptTask" >
+<strong>ACT_ASSIGN_MENU_ACCEPT.MenuAcceptTask</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ACT_ASSIGN_MENU_ACCEPT).MenuAssign" >
+<strong>ACT_ASSIGN_MENU_ACCEPT:MenuAssign()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Menu function.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ACT_ASSIGN_MENU_ACCEPT).MenuReject" >
+<strong>ACT_ASSIGN_MENU_ACCEPT:MenuReject()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Menu function.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(ACT_ASSIGN_MENU_ACCEPT).MenuRejectTask" >
+<strong>ACT_ASSIGN_MENU_ACCEPT.MenuRejectTask</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ACT_ASSIGN_MENU_ACCEPT).New" >
+<strong>ACT_ASSIGN_MENU_ACCEPT:New(TaskName, TaskBriefing)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Init.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string TaskName </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string TaskBriefing </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(ACT_ASSIGN_MENU_ACCEPT)">#ACT<em>ASSIGN</em>MENU_ACCEPT</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a></em>
+<a id="#(ACT_ASSIGN_MENU_ACCEPT).ProcessUnit" >
+<strong>ACT_ASSIGN_MENU_ACCEPT.ProcessUnit</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="Core.Zone.html##(ZONE_BASE)">Core.Zone#ZONE_BASE</a></em>
+<a id="#(ACT_ASSIGN_MENU_ACCEPT).TargetZone" >
+<strong>ACT_ASSIGN_MENU_ACCEPT.TargetZone</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="Tasking.Task.html##(TASK)">Tasking.Task#TASK</a></em>
+<a id="#(ACT_ASSIGN_MENU_ACCEPT).Task" >
+<strong>ACT_ASSIGN_MENU_ACCEPT.Task</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(ACT_ASSIGN_MENU_ACCEPT).TaskBriefing" >
+<strong>ACT_ASSIGN_MENU_ACCEPT.TaskBriefing</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(ACT_ASSIGN_MENU_ACCEPT).TaskName" >
+<strong>ACT_ASSIGN_MENU_ACCEPT.TaskName</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ACT_ASSIGN_MENU_ACCEPT).onafterAssign" >
+<strong>ACT_ASSIGN_MENU_ACCEPT:onafterAssign(ProcessUnit, Event, From, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>StateMachine callback function</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> ProcessUnit </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ACT_ASSIGN_MENU_ACCEPT).onafterReject" >
+<strong>ACT_ASSIGN_MENU_ACCEPT:onafterReject(ProcessUnit, Event, From, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>StateMachine callback function</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> ProcessUnit </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ACT_ASSIGN_MENU_ACCEPT).onafterStart" >
+<strong>ACT_ASSIGN_MENU_ACCEPT:onafterStart(ProcessUnit, Event, From, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>StateMachine callback function</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> ProcessUnit </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+
+</div>
+
+</div>
+</body>
+</html>

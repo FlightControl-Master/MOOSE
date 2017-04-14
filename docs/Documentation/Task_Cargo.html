@@ -1,0 +1,943 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+	<head>
+		<link rel="stylesheet" href="stylesheet.css" type="text/css"/>
+	</head>
+<body>
+<div id="container">
+<div id="product">
+	<div id="product_logo"></div>
+	<div id="product_name"><big><b></b></big></div>
+	<div id="product_description"></div>
+</div>
+<div id="main">
+	<div id="navigation">
+		<h2>Modules</h2>
+			<ul><li>
+				<a href="index.html">index</a>
+			</li></ul>
+		<ul>
+					<li><a href="AI_Balancer.html">AI_Balancer</a></li>
+					<li><a href="AI_Cap.html">AI_Cap</a></li>
+					<li><a href="AI_Cas.html">AI_Cas</a></li>
+					<li><a href="AI_Patrol.html">AI_Patrol</a></li>
+					<li><a href="Account.html">Account</a></li>
+					<li><a href="Airbase.html">Airbase</a></li>
+					<li><a href="AirbasePolice.html">AirbasePolice</a></li>
+					<li><a href="Assign.html">Assign</a></li>
+					<li><a href="Base.html">Base</a></li>
+					<li><a href="Cargo.html">Cargo</a></li>
+					<li><a href="CleanUp.html">CleanUp</a></li>
+					<li><a href="Client.html">Client</a></li>
+					<li><a href="CommandCenter.html">CommandCenter</a></li>
+					<li><a href="Controllable.html">Controllable</a></li>
+					<li><a href="DCSAirbase.html">DCSAirbase</a></li>
+					<li><a href="DCSCoalitionObject.html">DCSCoalitionObject</a></li>
+					<li><a href="DCSCommand.html">DCSCommand</a></li>
+					<li><a href="DCSController.html">DCSController</a></li>
+					<li><a href="DCSGroup.html">DCSGroup</a></li>
+					<li><a href="DCSObject.html">DCSObject</a></li>
+					<li><a href="DCSTask.html">DCSTask</a></li>
+					<li><a href="DCSTypes.html">DCSTypes</a></li>
+					<li><a href="DCSUnit.html">DCSUnit</a></li>
+					<li><a href="DCSVec3.html">DCSVec3</a></li>
+					<li><a href="DCSWorld.html">DCSWorld</a></li>
+					<li><a href="DCSZone.html">DCSZone</a></li>
+					<li><a href="DCScountry.html">DCScountry</a></li>
+					<li><a href="DCStimer.html">DCStimer</a></li>
+					<li><a href="DCStrigger.html">DCStrigger</a></li>
+					<li><a href="Database.html">Database</a></li>
+					<li><a href="Detection.html">Detection</a></li>
+					<li><a href="DetectionManager.html">DetectionManager</a></li>
+					<li><a href="Escort.html">Escort</a></li>
+					<li><a href="Event.html">Event</a></li>
+					<li><a href="Fsm.html">Fsm</a></li>
+					<li><a href="Group.html">Group</a></li>
+					<li><a href="Identifiable.html">Identifiable</a></li>
+					<li><a href="Menu.html">Menu</a></li>
+					<li><a href="Message.html">Message</a></li>
+					<li><a href="MissileTrainer.html">MissileTrainer</a></li>
+					<li><a href="Mission.html">Mission</a></li>
+					<li><a href="Movement.html">Movement</a></li>
+					<li><a href="Object.html">Object</a></li>
+					<li><a href="Point.html">Point</a></li>
+					<li><a href="Positionable.html">Positionable</a></li>
+					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
+					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
+					<li><a href="Radio.html">Radio</a></li>
+					<li><a href="Route.html">Route</a></li>
+					<li><a href="Scenery.html">Scenery</a></li>
+					<li><a href="ScheduleDispatcher.html">ScheduleDispatcher</a></li>
+					<li><a href="Scheduler.html">Scheduler</a></li>
+					<li><a href="Scoring.html">Scoring</a></li>
+					<li><a href="Sead.html">Sead</a></li>
+					<li><a href="Set.html">Set</a></li>
+					<li><a href="Smoke.html">Smoke</a></li>
+					<li><a href="Spawn.html">Spawn</a></li>
+					<li><a href="SpawnStatic.html">SpawnStatic</a></li>
+					<li><a href="Static.html">Static</a></li>
+					<li><a href="StaticObject.html">StaticObject</a></li>
+					<li><a href="Task.html">Task</a></li>
+					<li><a href="Task_A2G.html">Task_A2G</a></li>
+					<li><a href="Task_A2G_Dispatcher.html">Task_A2G_Dispatcher</a></li>
+					<li>Task_Cargo</li>
+					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
+					<li><a href="Unit.html">Unit</a></li>
+					<li><a href="Utils.html">Utils</a></li>
+					<li><a href="Zone.html">Zone</a></li>
+					<li><a href="env.html">env</a></li>
+					<li><a href="land.html">land</a></li>
+					<li><a href="routines.html">routines</a></li>
+		</ul>
+	</div>
+	<div id="content">
+   <h1>Module <code>Task_Cargo</code></h1>
+   
+<p><strong>Tasking (Release 2.1)</strong> -- The TASK_CARGO models tasks for players to transport <a href="Cargo.html">Cargo</a>.</p>
+
+   
+
+<p><img src="..\Presentations\TASK_CARGO\Dia1.JPG" alt="Banner Image"/></p>
+
+<hr/>
+
+<p>The Moose framework provides various CARGO classes that allow DCS phisical or logical objects to be transported or sling loaded by Carriers.
+The CARGO_ classes, as part of the moose core, are able to Board, Load, UnBoard and UnLoad cargo between Carrier units.</p>
+
+<p>This collection of classes in this module define tasks for human players to handle these cargo objects.
+Cargo can be transported, picked-up, deployed and sling-loaded from and to other places.</p>
+
+<p>The following classes are important to consider:</p>
+
+<ul>
+    <li><a href="##(TASK_CARGO_TRANSPORT)">#TASK<em>CARGO</em>TRANSPORT</a>: Defines a task for a human player to transport a set of cargo between various zones.</li>
+</ul>
+
+<p>==</p>
+
+<h1><strong>API CHANGE HISTORY</strong></h1>
+
+<p>The underlying change log documents the API changes. Please read this carefully. The following notation is used:</p>
+
+<ul>
+    <li><strong>Added</strong> parts are expressed in bold type face.</li>
+    <li><em>Removed</em> parts are expressed in italic type face.</li>
+</ul>
+
+<p>Hereby the change log:</p>
+
+<p>2017-03-09: Revised version.</p>
+
+<hr/>
+
+<h1><strong>AUTHORS and CONTRIBUTIONS</strong></h1>
+
+<h3>Contributions:</h3>
+
+<h3>Authors:</h3>
+
+<ul>
+    <li><strong>FlightControl</strong>: Concept, Design &amp; Programming.
+    </li>
+</ul>
+
+	<h2>Global(s)</h2>
+	<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#TASK_CARGO">TASK_CARGO</a></td>
+		<td class="summary">
+<h1>TASK_CARGO class, extends <a href="Task.html##(TASK)">Task#TASK</a></h1>
+
+<h2>A flexible tasking system</h2>
+
+<p>The TASK_CARGO classes provide you with a flexible tasking sytem, 
+that allows you to transport cargo of various types between various locations
+and various dedicated deployment zones.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#TASK_CARGO_TRANSPORT">TASK_CARGO_TRANSPORT</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+			<h2><a id="#(FSM_PROCESS)">Type <code>FSM_PROCESS</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(FSM_PROCESS).Cargo">FSM_PROCESS.Cargo</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(FSM_PROCESS).DeployZone">FSM_PROCESS.DeployZone</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(TASK_CARGO)">Type <code>TASK_CARGO</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_CARGO).AddDeployZone">TASK_CARGO:AddDeployZone(DeployZone, TaskUnit)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_CARGO).DeployZones">TASK_CARGO.DeployZones</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_CARGO).GetPlannedMenuText">TASK_CARGO:GetPlannedMenuText()</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_CARGO).GetTargetZone">TASK_CARGO:GetTargetZone(TaskUnit)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_CARGO).New">TASK_CARGO:New(Mission, SetGroup, TaskName, SetCargo, TaskType)</a></td>
+		<td class="summary">
+<p>Instantiates a new TASK_CARGO.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_CARGO).RemoveDeployZone">TASK_CARGO:RemoveDeployZone(DeployZone, TaskUnit)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_CARGO).SetCargo">TASK_CARGO.SetCargo</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_CARGO).SetCargoPickup">TASK_CARGO:SetCargoPickup(Cargo, TaskUnit)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_CARGO).SetDeployZone">TASK_CARGO:SetDeployZone(DeployZone, TaskUnit)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_CARGO).SetDeployZones">TASK_CARGO:SetDeployZones(@, TaskUnit, DeployZones)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_CARGO).SetPenaltyOnFailed">TASK_CARGO:SetPenaltyOnFailed(Text, Penalty, TaskUnit)</a></td>
+		<td class="summary">
+<p>Set a penalty when the A2G attack has failed.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_CARGO).SetScoreOnDestroy">TASK_CARGO:SetScoreOnDestroy(Text, Score, TaskUnit)</a></td>
+		<td class="summary">
+<p>Set a score when a target in scope of the A2G attack, has been destroyed .</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_CARGO).SetScoreOnSuccess">TASK_CARGO:SetScoreOnSuccess(Text, Score, TaskUnit)</a></td>
+		<td class="summary">
+<p>Set a score when all the targets in scope of the A2G attack, have been destroyed.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_CARGO).TaskType">TASK_CARGO.TaskType</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(TASK_CARGO_TRANSPORT)">Type <code>TASK_CARGO_TRANSPORT</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_CARGO_TRANSPORT).ClassName">TASK_CARGO_TRANSPORT.ClassName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_CARGO_TRANSPORT).New">TASK_CARGO_TRANSPORT:New(Mission, SetGroup, TaskName, SetCargo)</a></td>
+		<td class="summary">
+<p>Instantiates a new TASK<em>CARGO</em>TRANSPORT.</p>
+</td>
+		</tr>
+	</table>
+
+	<h2>Global(s)</h2>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(TASK_CARGO)">#TASK_CARGO</a></em>
+<a id="TASK_CARGO" >
+<strong>TASK_CARGO</strong>
+</a>
+</dt>
+<dd>
+	
+<h1>TASK_CARGO class, extends <a href="Task.html##(TASK)">Task#TASK</a></h1>
+
+<h2>A flexible tasking system</h2>
+
+<p>The TASK_CARGO classes provide you with a flexible tasking sytem, 
+that allows you to transport cargo of various types between various locations
+and various dedicated deployment zones.</p>
+
+	
+
+<p>The cargo in scope of the TASK<em>CARGO classes must be explicitly given, and is of type SET</em>CARGO.
+The SET_CARGO contains a collection of CARGO objects that must be handled by the players in the mission.</p>
+
+
+<h2>Task execution experience from the player perspective</h2>
+
+<p>A human player can join the battle field in a client airborne slot or a ground vehicle within the CA module (ALT-J).
+The player needs to accept the task from the task overview list within the mission, using the radio menus.</p>
+
+<p>Once the TASK_CARGO is assigned to the player and accepted by the player, the player will obtain 
+an extra <strong>Cargo Handling Radio Menu</strong> that contains the CARGO objects that need to be transported.</p>
+
+<p>Each CARGO object has a certain state:</p>
+
+<ul>
+    <li><strong>UnLoaded</strong>: The CARGO is located within the battlefield. It may still need to be transported.</li>
+    <li><strong>Loaded</strong>: The CARGO is loaded within a Carrier. This can be your air unit, or another air unit, or even a vehicle.</li>
+    <li><strong>Boarding</strong>: The CARGO is running or moving towards your Carrier for loading.</li>
+    <li><strong>UnBoarding</strong>: The CARGO is driving or jumping out of your Carrier and moves to a location in the Deployment Zone.</li>
+</ul>
+
+<p>Cargo must be transported towards different **Deployment <a href="Zone.html">Zone</a>s**.</p>
+
+<p>The Cargo Handling Radio Menu system allows to execute <strong>various actions</strong> to handle the cargo.
+In the menu, you'll find for each CARGO, that is part of the scope of the task, various actions that can be completed.
+Depending on the location of your Carrier unit, the menu options will vary.</p>
+
+
+<h2>Cargo Pickup and Boarding</h2>
+
+<p>For cargo boarding, a cargo can only execute the boarding actions if it is within the foreseen <strong>Reporting Range</strong>. 
+Therefore, it is important that you steer your Carrier within the Reporting Range, 
+so that boarding actions can be executed on the cargo.
+To Pickup and Board cargo, the following menu items will be shown in your carrier radio menu:</p>
+
+<h3>Board Cargo</h3>
+
+<p>If your Carrier is within the Reporting Range of the cargo, it will allow to pickup the cargo by selecting this menu option.
+Depending on the Cargo type, the cargo will either move to your Carrier or you will receive instructions how to handle the cargo
+pickup. If the cargo moves to your carrier, it will indicate the boarding status.
+Note that multiple units need to board your Carrier, so it is required to await the full boarding process.
+Once the cargo is fully boarded within your Carrier, you will be notified of this.</p>
+
+<p>Note that for airborne Carriers, it is required to land first before the Boarding process can be initiated.
+If during boarding the Carrier gets airborne, the boarding process will be cancelled.</p>
+
+<h2>Pickup Cargo</h2>
+
+<p>If your Carrier is not within the Reporting Range of the cargo, the HQ will guide you to its location. 
+Routing information is shown in flight that directs you to the cargo within Reporting Range.
+Upon arrival, the Cargo will contact you and further instructions will be given.
+When your Carrier is airborne, you will receive instructions to land your Carrier.
+The action will not be completed until you've landed your Carrier.</p>
+
+
+<h2>Cargo Deploy and UnBoarding</h2>
+
+<p>Various Deployment Zones can be foreseen in the scope of the Cargo transportation. Each deployment zone can be of varying <a href="Zone.html">Zone</a> type.
+The Cargo Handling Radio Menu provides with menu options to execute an action to steer your Carrier to a specific Zone.</p>
+
+<h3>UnBoard Cargo</h3>
+
+<p>If your Carrier is already within a Deployment Zone, 
+then the Cargo Handling Radio Menu allows to <strong>UnBoard</strong> a specific cargo that is
+loaded within your Carrier group into the Deployment Zone.
+Note that the Unboarding process takes a while, as the cargo units (infantry or vehicles) must unload from your Carrier.
+Ensure that you stay at the position or stay on the ground while Unboarding.
+If any unforeseen manoeuvre is done by the Carrier, then the Unboarding will be cancelled.</p>
+
+<h3>Deploy Cargo</h3>
+
+<p>If your Carrier is not within a Deployment Zone, you'll need to fly towards one. 
+Fortunately, the Cargo Handling Radio Menu provides you with menu options to select a specific Deployment Zone to fly towards.
+Once a Deployment Zone has been selected, your Carrier will receive routing information from HQ towards the Deployment Zone center.
+Upon arrival, the HQ will provide you with further instructions.
+When your Carrier is airborne, you will receive instructions to land your Carrier.
+The action will not be completed until you've landed your Carrier!</p>
+
+<h2>Handle TASK_CARGO Events ...</h2>
+
+<p>The TASK_CARGO classes define <a href="Cargo.html">Cargo</a> transport tasks, 
+based on the tasking capabilities defined in <a href="Task.html##(TASK)">Task#TASK</a>.</p>
+
+<h3>Specific TASK_CARGO Events</h3>
+
+<p>Specific Cargo Handling event can be captured, that allow to trigger specific actions!</p>
+
+<ul>
+    <li><strong>Boarded</strong>: Triggered when the Cargo has been Boarded into your Carrier.</li>
+    <li><strong>UnBoarded</strong>: Triggered when the cargo has been Unboarded from your Carrier and has arrived at the Deployment Zone.</li>
+</ul>
+
+<h3>Standard TASK_CARGO Events</h3>
+
+<p>The TASK_CARGO is implemented using a <a href="Statemachine.html##(FSM_TASK)">Statemachine#FSM_TASK</a>, and has the following standard statuses:</p>
+
+<ul>
+    <li><strong>None</strong>: Start of the process.</li>
+    <li><strong>Planned</strong>: The cargo task is planned.</li>
+    <li><strong>Assigned</strong>: The cargo task is assigned to a <a href="Group.html##(GROUP)">Group#GROUP</a>.</li>
+    <li><strong>Success</strong>: The cargo task is successfully completed.</li>
+    <li><strong>Failed</strong>: The cargo task has failed. This will happen if the player exists the task early, without communicating a possible cancellation to HQ.</li>
+</ul>
+
+<hr/>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(TASK_CARGO_TRANSPORT)">#TASK_CARGO_TRANSPORT</a></em>
+<a id="TASK_CARGO_TRANSPORT" >
+<strong>TASK_CARGO_TRANSPORT</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+	<h2><a id="#(Task_Cargo)" >Type <code>Task_Cargo</code></a></h2>
+	
+			<h2><a id="#(FSM_PROCESS)" >Type <code>FSM_PROCESS</code></a></h2>
+				<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(FSM_PROCESS).Cargo" >
+<strong>FSM_PROCESS.Cargo</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(FSM_PROCESS).DeployZone" >
+<strong>FSM_PROCESS.DeployZone</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+
+			<h2><a id="#(TASK_CARGO)" >Type <code>TASK_CARGO</code></a></h2>
+				<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_CARGO).AddDeployZone" >
+<strong>TASK_CARGO:AddDeployZone(DeployZone, TaskUnit)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Zone.html##(ZONE)">Core.Zone#ZONE</a> DeployZone </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> TaskUnit </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(TASK_CARGO)">#TASK_CARGO</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(TASK_CARGO).DeployZones" >
+<strong>TASK_CARGO.DeployZones</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+	
+<p> setmetatable( {}, { __mode = "v" } ) -- weak table on value</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_CARGO).GetPlannedMenuText" >
+<strong>TASK_CARGO:GetPlannedMenuText()</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_CARGO).GetTargetZone" >
+<strong>TASK_CARGO:GetTargetZone(TaskUnit)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> TaskUnit </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="Core.Zone.html##(ZONE_BASE)">Core.Zone#ZONE_BASE</a>:</em>
+The Zone object where the Target is located on the map.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_CARGO).New" >
+<strong>TASK_CARGO:New(Mission, SetGroup, TaskName, SetCargo, TaskType)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Instantiates a new TASK_CARGO.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Tasking.Mission.html##(MISSION)">Tasking.Mission#MISSION</a> Mission </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Set.html##(SET_GROUP)">Set#SET_GROUP</a> SetGroup </em></code>: 
+The set of groups for which the Task can be assigned.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string TaskName </em></code>: 
+The name of the Task.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Core.Set.html##(SET_CARGO)">Core.Set#SET_CARGO</a> SetCargo </em></code>: 
+The scope of the cargo to be transported.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string TaskType </em></code>: 
+The type of Cargo task.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(TASK_CARGO)">#TASK_CARGO</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_CARGO).RemoveDeployZone" >
+<strong>TASK_CARGO:RemoveDeployZone(DeployZone, TaskUnit)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Zone.html##(ZONE)">Core.Zone#ZONE</a> DeployZone </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> TaskUnit </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(TASK_CARGO)">#TASK_CARGO</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(TASK_CARGO).SetCargo" >
+<strong>TASK_CARGO.SetCargo</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_CARGO).SetCargoPickup" >
+<strong>TASK_CARGO:SetCargoPickup(Cargo, TaskUnit)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="AI.AI_Cargo.html##(AI_CARGO)">AI.AI<em>Cargo#AI</em>CARGO</a> Cargo </em></code>: 
+The cargo.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> TaskUnit </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(TASK_CARGO)">#TASK_CARGO</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_CARGO).SetDeployZone" >
+<strong>TASK_CARGO:SetDeployZone(DeployZone, TaskUnit)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Zone.html##(ZONE)">Core.Zone#ZONE</a> DeployZone </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> TaskUnit </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(TASK_CARGO)">#TASK_CARGO</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_CARGO).SetDeployZones" >
+<strong>TASK_CARGO:SetDeployZones(@, TaskUnit, DeployZones)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> @ </em></code>: 
+ist<Core.Zone#ZONE> DeployZones</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> TaskUnit </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> DeployZones </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(TASK_CARGO)">#TASK_CARGO</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_CARGO).SetPenaltyOnFailed" >
+<strong>TASK_CARGO:SetPenaltyOnFailed(Text, Penalty, TaskUnit)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set a penalty when the A2G attack has failed.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Text </em></code>: 
+The text to display to the player, when the A2G attack has failed.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Penalty </em></code>: 
+The penalty in points.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> TaskUnit </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(TASK_CARGO)">#TASK_CARGO</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_CARGO).SetScoreOnDestroy" >
+<strong>TASK_CARGO:SetScoreOnDestroy(Text, Score, TaskUnit)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set a score when a target in scope of the A2G attack, has been destroyed .</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Text </em></code>: 
+The text to display to the player, when the target has been destroyed.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Score </em></code>: 
+The score in points.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> TaskUnit </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(TASK_CARGO)">#TASK_CARGO</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_CARGO).SetScoreOnSuccess" >
+<strong>TASK_CARGO:SetScoreOnSuccess(Text, Score, TaskUnit)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set a score when all the targets in scope of the A2G attack, have been destroyed.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Text </em></code>: 
+The text to display to the player, when all targets hav been destroyed.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Score </em></code>: 
+The score in points.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> TaskUnit </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(TASK_CARGO)">#TASK_CARGO</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(TASK_CARGO).TaskType" >
+<strong>TASK_CARGO.TaskType</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+
+			<h2><a id="#(TASK_CARGO_TRANSPORT)" >Type <code>TASK_CARGO_TRANSPORT</code></a></h2>
+				
+<p>The TASK<em>CARGO</em>TRANSPORT class</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(TASK_CARGO_TRANSPORT).ClassName" >
+<strong>TASK_CARGO_TRANSPORT.ClassName</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_CARGO_TRANSPORT).New" >
+<strong>TASK_CARGO_TRANSPORT:New(Mission, SetGroup, TaskName, SetCargo)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Instantiates a new TASK<em>CARGO</em>TRANSPORT.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Tasking.Mission.html##(MISSION)">Tasking.Mission#MISSION</a> Mission </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Set.html##(SET_GROUP)">Set#SET_GROUP</a> SetGroup </em></code>: 
+The set of groups for which the Task can be assigned.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string TaskName </em></code>: 
+The name of the Task.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Core.Set.html##(SET_CARGO)">Core.Set#SET_CARGO</a> SetCargo </em></code>: 
+The scope of the cargo to be transported.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(TASK_CARGO_TRANSPORT)">#TASK<em>CARGO</em>TRANSPORT</a>:</em>
+self</p>
+
+</dd>
+</dl>
+
+</div>
+
+</div>
+</body>
+</html>

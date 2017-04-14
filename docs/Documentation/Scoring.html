@@ -1,0 +1,2226 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+	<head>
+		<link rel="stylesheet" href="stylesheet.css" type="text/css"/>
+	</head>
+<body>
+<div id="container">
+<div id="product">
+	<div id="product_logo"></div>
+	<div id="product_name"><big><b></b></big></div>
+	<div id="product_description"></div>
+</div>
+<div id="main">
+	<div id="navigation">
+		<h2>Modules</h2>
+			<ul><li>
+				<a href="index.html">index</a>
+			</li></ul>
+		<ul>
+					<li><a href="AI_Balancer.html">AI_Balancer</a></li>
+					<li><a href="AI_Cap.html">AI_Cap</a></li>
+					<li><a href="AI_Cas.html">AI_Cas</a></li>
+					<li><a href="AI_Patrol.html">AI_Patrol</a></li>
+					<li><a href="Account.html">Account</a></li>
+					<li><a href="Airbase.html">Airbase</a></li>
+					<li><a href="AirbasePolice.html">AirbasePolice</a></li>
+					<li><a href="Assign.html">Assign</a></li>
+					<li><a href="Base.html">Base</a></li>
+					<li><a href="Cargo.html">Cargo</a></li>
+					<li><a href="CleanUp.html">CleanUp</a></li>
+					<li><a href="Client.html">Client</a></li>
+					<li><a href="CommandCenter.html">CommandCenter</a></li>
+					<li><a href="Controllable.html">Controllable</a></li>
+					<li><a href="DCSAirbase.html">DCSAirbase</a></li>
+					<li><a href="DCSCoalitionObject.html">DCSCoalitionObject</a></li>
+					<li><a href="DCSCommand.html">DCSCommand</a></li>
+					<li><a href="DCSController.html">DCSController</a></li>
+					<li><a href="DCSGroup.html">DCSGroup</a></li>
+					<li><a href="DCSObject.html">DCSObject</a></li>
+					<li><a href="DCSTask.html">DCSTask</a></li>
+					<li><a href="DCSTypes.html">DCSTypes</a></li>
+					<li><a href="DCSUnit.html">DCSUnit</a></li>
+					<li><a href="DCSVec3.html">DCSVec3</a></li>
+					<li><a href="DCSWorld.html">DCSWorld</a></li>
+					<li><a href="DCSZone.html">DCSZone</a></li>
+					<li><a href="DCScountry.html">DCScountry</a></li>
+					<li><a href="DCStimer.html">DCStimer</a></li>
+					<li><a href="DCStrigger.html">DCStrigger</a></li>
+					<li><a href="Database.html">Database</a></li>
+					<li><a href="Detection.html">Detection</a></li>
+					<li><a href="DetectionManager.html">DetectionManager</a></li>
+					<li><a href="Escort.html">Escort</a></li>
+					<li><a href="Event.html">Event</a></li>
+					<li><a href="Fsm.html">Fsm</a></li>
+					<li><a href="Group.html">Group</a></li>
+					<li><a href="Identifiable.html">Identifiable</a></li>
+					<li><a href="Menu.html">Menu</a></li>
+					<li><a href="Message.html">Message</a></li>
+					<li><a href="MissileTrainer.html">MissileTrainer</a></li>
+					<li><a href="Mission.html">Mission</a></li>
+					<li><a href="Movement.html">Movement</a></li>
+					<li><a href="Object.html">Object</a></li>
+					<li><a href="Point.html">Point</a></li>
+					<li><a href="Positionable.html">Positionable</a></li>
+					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
+					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
+					<li><a href="Radio.html">Radio</a></li>
+					<li><a href="Route.html">Route</a></li>
+					<li><a href="Scenery.html">Scenery</a></li>
+					<li><a href="ScheduleDispatcher.html">ScheduleDispatcher</a></li>
+					<li><a href="Scheduler.html">Scheduler</a></li>
+					<li>Scoring</li>
+					<li><a href="Sead.html">Sead</a></li>
+					<li><a href="Set.html">Set</a></li>
+					<li><a href="Smoke.html">Smoke</a></li>
+					<li><a href="Spawn.html">Spawn</a></li>
+					<li><a href="SpawnStatic.html">SpawnStatic</a></li>
+					<li><a href="Static.html">Static</a></li>
+					<li><a href="StaticObject.html">StaticObject</a></li>
+					<li><a href="Task.html">Task</a></li>
+					<li><a href="Task_A2G.html">Task_A2G</a></li>
+					<li><a href="Task_A2G_Dispatcher.html">Task_A2G_Dispatcher</a></li>
+					<li><a href="Task_Cargo.html">Task_Cargo</a></li>
+					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
+					<li><a href="Unit.html">Unit</a></li>
+					<li><a href="Utils.html">Utils</a></li>
+					<li><a href="Zone.html">Zone</a></li>
+					<li><a href="env.html">env</a></li>
+					<li><a href="land.html">land</a></li>
+					<li><a href="routines.html">routines</a></li>
+		</ul>
+	</div>
+	<div id="content">
+   <h1>Module <code>Scoring</code></h1>
+   
+<p>Single-Player:<strong>Yes</strong> / Multi-Player:<strong>Yes</strong> / Core:<strong>Yes</strong> -- <strong>Administer the scoring of player achievements, 
+and create a CSV file logging the scoring events for use at team or squadron websites.</strong></p>
+
+<p><img src="..\Presentations\SCORING\Dia1.JPG" alt="Banner Image"/></p>
+
+<hr/>
+
+<p>The <a href="##(SCORING)">#SCORING</a> class administers the scoring of player achievements, 
+and creates a CSV file logging the scoring events and results for use at team or squadron websites.</p>
+
+   
+
+<p>SCORING automatically calculates the threat level of the objects hit and destroyed by players, 
+which can be <a href="Unit.html">Unit</a>, <a href="Static.html">Static</a> objects.</p>
+
+<p>Positive score points are granted when enemy or neutral targets are destroyed. 
+Negative score points or penalties are given when a friendly target is hit or destroyed. 
+This brings a lot of dynamism in the scoring, where players need to take care to inflict damage on the right target.
+By default, penalties weight heavier in the scoring, to ensure that players don't commit fratricide.
+The total score of the player is calculated by <strong>adding the scores minus the penalties</strong>.</p>
+
+<p><img src="..\Presentations\SCORING\Dia4.JPG" alt="Banner Image"/></p>
+
+<p>The score value is calculated based on the <strong>threat level of the player</strong> and the <strong>threat level of the target</strong>.
+A calculated score takes the threat level of the target divided by a balanced threat level of the player unit. <br/>
+As such, if the threat level of the target is high, and the player threat level is low, a higher score will be given than 
+if the threat level of the player would be high too.</p>
+
+<p><img src="..\Presentations\SCORING\Dia5.JPG" alt="Banner Image"/></p>
+
+<p>When multiple players hit the same target, and finally succeed in destroying the target, then each player who contributed to the target
+destruction, will receive a score. This is important for targets that require significant damage before it can be destroyed, like
+ships or heavy planes.</p>
+
+<p><img src="..\Presentations\SCORING\Dia13.JPG" alt="Banner Image"/></p>
+
+<p>Optionally, the score values can be <strong>scaled</strong> by a <strong>scale</strong>. Specific scales can be set for positive cores or negative penalties.
+The default range of the scores granted is a value between 0 and 10. The default range of penalties given is a value between 0 and 30.</p>
+
+<p><img src="..\Presentations\SCORING\Dia7.JPG" alt="Banner Image"/></p>
+
+<p><strong>Additional scores</strong> can be granted to <strong>specific objects</strong>, when the player(s) destroy these objects.</p>
+
+<p><img src="..\Presentations\SCORING\Dia9.JPG" alt="Banner Image"/></p>
+
+<p>Various <a href="Zone.html">Zone</a>s can be defined for which scores are also granted when objects in that <a href="Zone.html">Zone</a> are destroyed.
+This is <strong>specifically useful</strong> to designate <strong>scenery targets on the map</strong> that will generate points when destroyed.</p>
+
+<p>With a small change in MissionScripting.lua, the scoring results can also be logged in a <strong>CSV file</strong>. <br/>
+These CSV files can be used to:</p>
+
+<ul>
+    <li>Upload scoring to a database or a BI tool to publish the scoring results to the player community.</li>
+    <li>Upload scoring in an (online) Excel like tool, using pivot tables and pivot charts to show mission results.</li>
+    <li>Share scoring amoung players after the mission to discuss mission results.</li>
+</ul>
+
+<p>Scores can be <strong>reported</strong>. <strong>Menu options</strong> are automatically added to <strong>each player group</strong> when a player joins a client slot or a CA unit.
+Use the radio menu F10 to consult the scores while running the mission. 
+Scores can be reported for your user, or an overall score can be reported of all players currently active in the mission.</p>
+
+<h1>1) <a href="Scoring.html##(SCORING)">Scoring#SCORING</a> class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
+
+<h2>1.1) Set the destroy score or penalty scale</h2>
+
+<p>Score scales can be set for scores granted when enemies or friendlies are destroyed.
+Use the method <a href="##(SCORING).SetScaleDestroyScore">SCORING.SetScaleDestroyScore</a>() to set the scale of enemy destroys (positive destroys). 
+Use the method <a href="##(SCORING).SetScaleDestroyPenalty">SCORING.SetScaleDestroyPenalty</a>() to set the scale of friendly destroys (negative destroys).</p>
+
+<pre><code> local Scoring = SCORING:New( "Scoring File" )
+ Scoring:SetScaleDestroyScore( 10 )
+ Scoring:SetScaleDestroyPenalty( 40 )
+</code></pre>
+
+<p>The above sets the scale for valid scores to 10. So scores will be given in a scale from 0 to 10.
+The penalties will be given in a scale from 0 to 40.</p>
+
+<h2>1.2) Define special targets that will give extra scores.</h2>
+
+<p>Special targets can be set that will give extra scores to the players when these are destroyed.
+Use the methods <a href="##(SCORING).AddUnitScore">SCORING.AddUnitScore</a>() and <a href="##(SCORING).RemoveUnitScore">SCORING.RemoveUnitScore</a>() to specify a special additional score for a specific <a href="Unit.html">Unit</a>s. <br/>
+Use the methods <a href="##(SCORING).AddStaticScore">SCORING.AddStaticScore</a>() and <a href="##(SCORING).RemoveStaticScore">SCORING.RemoveStaticScore</a>() to specify a special additional score for a specific <a href="Static.html">Static</a>s. <br/>
+Use the method <a href="##(SCORING).SetGroupGroup">SCORING.SetGroupGroup</a>() to specify a special additional score for a specific <a href="Group.html">Group</a>s.  </p>
+
+<pre><code> local Scoring = SCORING:New( "Scoring File" )
+ Scoring:AddUnitScore( UNIT:FindByName( "Unit #001" ), 200 )
+ Scoring:AddStaticScore( STATIC:FindByName( "Static #1" ), 100 )
+</code></pre>
+
+<p>The above grants an additional score of 200 points for Unit #001 and an additional 100 points of Static #1 if these are destroyed.
+Note that later in the mission, one can remove these scores set, for example, when the a goal achievement time limit is over.
+For example, this can be done as follows:</p>
+
+<pre><code> Scoring:RemoveUnitScore( UNIT:FindByName( "Unit #001" ) )
+</code></pre>
+
+<h2>1.3) Define destruction zones that will give extra scores.</h2>
+
+<p>Define zones of destruction. Any object destroyed within the zone of the given category will give extra points.
+Use the method <a href="##(SCORING).AddZoneScore">SCORING.AddZoneScore</a>() to add a <a href="Zone.html">Zone</a> for additional scoring. <br/>
+Use the method <a href="##(SCORING).RemoveZoneScore">SCORING.RemoveZoneScore</a>() to remove a <a href="Zone.html">Zone</a> for additional scoring. <br/>
+There are interesting variations that can be achieved with this functionality. For example, if the <a href="Zone.html">Zone</a> is a <a href="Zone.html##(ZONE_UNIT)">Zone#ZONE_UNIT</a>, 
+then the zone is a moving zone, and anything destroyed within that <a href="Zone.html">Zone</a> will generate points.
+The other implementation could be to designate a scenery target (a building) in the mission editor surrounded by a <a href="Zone.html">Zone</a>, 
+just large enough around that building.</p>
+
+<h2>1.4) Add extra Goal scores upon an event or a condition.</h2>
+
+<p>A mission has goals and achievements. The scoring system provides an API to set additional scores when a goal or achievement event happens.
+Use the method <a href="##(SCORING).AddGoalScore">SCORING.AddGoalScore</a>() to add a score for a Player at any time in your mission.</p>
+
+<h2>1.5) Configure fratricide level.</h2>
+
+<p>When a player commits too much damage to friendlies, his penalty score will reach a certain level.
+Use the method <a href="##(SCORING).SetFratricide">SCORING.SetFratricide</a>() to define the level when a player gets kicked. <br/>
+By default, the fratricide level is the default penalty mutiplier * 2 for the penalty score.</p>
+
+<h2>1.6) Penalty score when a player changes the coalition.</h2>
+
+<p>When a player changes the coalition, he can receive a penalty score.
+Use the method <a href="##(SCORING).SetCoalitionChangePenalty">SCORING.SetCoalitionChangePenalty</a>() to define the penalty when a player changes coalition.
+By default, the penalty for changing coalition is the default penalty scale.  </p>
+
+<h2>1.8) Define output CSV files.</h2>
+
+<p>The CSV file is given the name of the string given in the <a href="##(SCORING).New">SCORING.New</a>{} constructor, followed by the .csv extension.
+The file is incrementally saved in the **<User>\Saved Games\DCS\Logs** folder, and has a time stamp indicating each mission run.
+See the following example:</p>
+
+<pre><code>local ScoringFirstMission = SCORING:New( "FirstMission" )
+local ScoringSecondMission = SCORING:New( "SecondMission" )
+</code></pre>
+
+<p>The above documents that 2 Scoring objects are created, ScoringFirstMission and ScoringSecondMission. </p>
+
+<h2>1.9) Configure messages.</h2>
+
+<p>When players hit or destroy targets, messages are sent.
+Various methods exist to configure:</p>
+
+<ul>
+    <li>Which messages are sent upon the event.</li>
+    <li>Which audience receives the message.</li>
+</ul>
+
+<h3>1.9.1) Configure the messages sent upon the event.</h3>
+
+<p>Use the following methods to configure when to send messages. By default, all messages are sent.</p>
+
+<ul>
+    <li><a href="##(SCORING).SetMessagesHit">SCORING.SetMessagesHit</a>(): Configure to send messages after a target has been hit.</li>
+    <li><a href="##(SCORING).SetMessagesDestroy">SCORING.SetMessagesDestroy</a>(): Configure to send messages after a target has been destroyed.</li>
+    <li><a href="##(SCORING).SetMessagesAddon">SCORING.SetMessagesAddon</a>(): Configure to send messages for additional score, after a target has been destroyed.</li>
+    <li><a href="##(SCORING).SetMessagesZone">SCORING.SetMessagesZone</a>(): Configure to send messages for additional score, after a target has been destroyed within a given zone.</li>
+</ul>
+
+<h3>1.9.2) Configure the audience of the messages.</h3>
+
+<p>Use the following methods to configure the audience of the messages. By default, the messages are sent to all players in the mission.</p>
+
+<ul>
+    <li><a href="##(SCORING).SetMessagesToAll">SCORING.SetMessagesToAll</a>(): Configure to send messages to all players.</li>
+    <li><a href="##(SCORING).SetMessagesToCoalition">SCORING.SetMessagesToCoalition</a>(): Configure to send messages to only those players within the same coalition as the player.</li>
+</ul>
+
+
+<hr/>
+
+<h1><strong>API CHANGE HISTORY</strong></h1>
+
+<p>The underlying change log documents the API changes. Please read this carefully. The following notation is used:</p>
+
+<ul>
+    <li><strong>Added</strong> parts are expressed in bold type face.</li>
+    <li><em>Removed</em> parts are expressed in italic type face.</li>
+</ul>
+
+<p>Hereby the change log:</p>
+
+<p>2017-02-26: Initial class and API.</p>
+
+<hr/>
+
+<h1><strong>AUTHORS and CONTRIBUTIONS</strong></h1>
+
+<h3>Contributions:</h3>
+
+<ul>
+    <li><strong>Wingthor (TAW)</strong>: Testing &amp; Advice.</li>
+    <li><strong>Dutch-Baron (TAW)</strong>: Testing &amp; Advice.</li>
+    <li>**<a href="http://forums.eagle.ru/member.php?u=3829">Whisper</a>: Testing and Advice.</li>
+</ul>
+
+<h3>Authors:</h3>
+
+<ul>
+    <li><strong>FlightControl</strong>: Concept, Design &amp; Programming.</li>
+</ul>
+
+
+	<h2>Global(s)</h2>
+	<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#SCORING">SCORING</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#nHours">nHours</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#nMins">nMins</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#nSecs">nSecs</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+			<h2><a id="#(SCORING)">Type <code>SCORING</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).AddGoalScore">SCORING:AddGoalScore(PlayerUnit, GoalTag, Text, Score)</a></td>
+		<td class="summary">
+<p>Add a goal score for a player.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).AddScoreGroup">SCORING:AddScoreGroup(ScoreGroup, Score)</a></td>
+		<td class="summary">
+<p>Specify a special additional score for a <a href="Group.html">Group</a>.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).AddStaticScore">SCORING:AddStaticScore(ScoreStatic, Score)</a></td>
+		<td class="summary">
+<p>Add a <a href="Static.html">Static</a> for additional scoring when the <a href="Static.html">Static</a> is destroyed.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).AddUnitScore">SCORING:AddUnitScore(ScoreUnit, Score)</a></td>
+		<td class="summary">
+<p>Add a <a href="Unit.html">Unit</a> for additional scoring when the <a href="Unit.html">Unit</a> is destroyed.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).AddZoneScore">SCORING:AddZoneScore(ScoreZone, Score)</a></td>
+		<td class="summary">
+<p>Add a <a href="Zone.html">Zone</a> to define additional scoring when any object is destroyed in that zone.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).ClassID">SCORING.ClassID</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).ClassName">SCORING.ClassName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).CloseCSV">SCORING:CloseCSV()</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).CoalitionChangePenalty">SCORING.CoalitionChangePenalty</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).Fratricide">SCORING.Fratricide</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).GameName">SCORING.GameName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).IfMessagesDestroy">SCORING:IfMessagesDestroy()</a></td>
+		<td class="summary">
+<p>If to send messages after a target has been destroyed.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).IfMessagesHit">SCORING:IfMessagesHit()</a></td>
+		<td class="summary">
+<p>If to send messages after a target has been hit.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).IfMessagesScore">SCORING:IfMessagesScore()</a></td>
+		<td class="summary">
+<p>If to send messages after a target has been destroyed and receives additional scores.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).IfMessagesToAll">SCORING:IfMessagesToAll()</a></td>
+		<td class="summary">
+<p>If to send messages to all players.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).IfMessagesToCoalition">SCORING:IfMessagesToCoalition()</a></td>
+		<td class="summary">
+<p>If to send messages to only those players within the same coalition as the player.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).IfMessagesZone">SCORING:IfMessagesZone()</a></td>
+		<td class="summary">
+<p>If to send messages after a target has been hit in a zone, and additional score is received.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).MessagesAudience">SCORING.MessagesAudience</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).MessagesDestroy">SCORING.MessagesDestroy</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).MessagesHit">SCORING.MessagesHit</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).MessagesScore">SCORING.MessagesScore</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).MessagesZone">SCORING.MessagesZone</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).New">SCORING:New(GameName)</a></td>
+		<td class="summary">
+<p>Creates a new SCORING object to administer the scoring achieved by players.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).OnEventPlayerEnterUnit">SCORING:OnEventPlayerEnterUnit(Event)</a></td>
+		<td class="summary">
+<p>Handles the OnPlayerEnterUnit event for the scoring.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).OnEventPlayerLeaveUnit">SCORING:OnEventPlayerLeaveUnit(Event)</a></td>
+		<td class="summary">
+<p>Handles the OnPlayerLeaveUnit event for the scoring.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).OpenCSV">SCORING:OpenCSV(ScoringCSV)</a></td>
+		<td class="summary">
+<p>Opens a score CSV file to log the scores.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).Players">SCORING.Players</a></td>
+		<td class="summary">
+<p>A collection of the current players that have joined the game.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).RemoveStaticScore">SCORING:RemoveStaticScore(ScoreStatic)</a></td>
+		<td class="summary">
+<p>Removes a <a href="Static.html">Static</a> for additional scoring when the <a href="Static.html">Static</a> is destroyed.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).RemoveUnitScore">SCORING:RemoveUnitScore(ScoreUnit)</a></td>
+		<td class="summary">
+<p>Removes a <a href="Unit.html">Unit</a> for additional scoring when the <a href="Unit.html">Unit</a> is destroyed.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).RemoveZoneScore">SCORING:RemoveZoneScore(ScoreZone)</a></td>
+		<td class="summary">
+<p>Remove a <a href="Zone.html">Zone</a> for additional scoring.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).ReportDetailedPlayerCoalitionChanges">SCORING:ReportDetailedPlayerCoalitionChanges(PlayerName)</a></td>
+		<td class="summary">
+<p>Produce detailed report of player penalty scores because of changing the coalition.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).ReportDetailedPlayerDestroys">SCORING:ReportDetailedPlayerDestroys(PlayerName)</a></td>
+		<td class="summary">
+<p>Produce detailed report of player destroy scores.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).ReportDetailedPlayerGoals">SCORING:ReportDetailedPlayerGoals(PlayerName)</a></td>
+		<td class="summary">
+<p>Produce detailed report of player goal scores.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).ReportDetailedPlayerHits">SCORING:ReportDetailedPlayerHits(PlayerName)</a></td>
+		<td class="summary">
+<p>Produce detailed report of player hit scores.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).ReportDetailedPlayerMissions">SCORING:ReportDetailedPlayerMissions(PlayerName)</a></td>
+		<td class="summary">
+<p>Produce detailed report of player penalty scores because of changing the coalition.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).ReportScoreAllSummary">SCORING:ReportScoreAllSummary(PlayerGroup)</a></td>
+		<td class="summary">
+<p>Report all players score</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).ReportScoreGroupDetailed">SCORING:ReportScoreGroupDetailed(PlayerGroup)</a></td>
+		<td class="summary">
+<p>Report Group Score Detailed</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).ReportScoreGroupSummary">SCORING:ReportScoreGroupSummary(PlayerGroup)</a></td>
+		<td class="summary">
+<p>Report Group Score Summary</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).RunTime">SCORING.RunTime</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).ScaleDestroyPenalty">SCORING.ScaleDestroyPenalty</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).ScaleDestroyScore">SCORING.ScaleDestroyScore</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).ScoreCSV">SCORING:ScoreCSV(PlayerName, TargetPlayerName, ScoreType, ScoreTimes, ScoreAmount, PlayerUnitName, PlayerUnitCoalition, PlayerUnitCategory, PlayerUnitType, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType)</a></td>
+		<td class="summary">
+<p>Registers a score for a player.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).ScoringCSV">SCORING.ScoringCSV</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).ScoringObjects">SCORING.ScoringObjects</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).ScoringZones">SCORING.ScoringZones</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).SecondsToClock">SCORING:SecondsToClock(sSeconds)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).SetCoalitionChangePenalty">SCORING:SetCoalitionChangePenalty(CoalitionChangePenalty)</a></td>
+		<td class="summary">
+<p>When a player changes the coalition, he can receive a penalty score.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).SetFratricide">SCORING:SetFratricide(Fratricide)</a></td>
+		<td class="summary">
+<p>When a player commits too much damage to friendlies, his penalty score will reach a certain level.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).SetMessagesDestroy">SCORING:SetMessagesDestroy(OnOff)</a></td>
+		<td class="summary">
+<p>Configure to send messages after a target has been destroyed.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).SetMessagesHit">SCORING:SetMessagesHit(OnOff)</a></td>
+		<td class="summary">
+<p>Configure to send messages after a target has been hit.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).SetMessagesScore">SCORING:SetMessagesScore(OnOff)</a></td>
+		<td class="summary">
+<p>Configure to send messages after a target has been destroyed and receives additional scores.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).SetMessagesToAll">SCORING:SetMessagesToAll()</a></td>
+		<td class="summary">
+<p>Configure to send messages to all players.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).SetMessagesToCoalition">SCORING:SetMessagesToCoalition()</a></td>
+		<td class="summary">
+<p>Configure to send messages to only those players within the same coalition as the player.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).SetMessagesZone">SCORING:SetMessagesZone(OnOff)</a></td>
+		<td class="summary">
+<p>Configure to send messages after a target has been hit in a zone, and additional score is received.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).SetScaleDestroyPenalty">SCORING:SetScaleDestroyPenalty(Scale)</a></td>
+		<td class="summary">
+<p>Set the scale for scoring penalty destroys (friendly destroys).</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).SetScaleDestroyScore">SCORING:SetScaleDestroyScore(Scale)</a></td>
+		<td class="summary">
+<p>Set the scale for scoring valid destroys (enemy destroys).</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING)._AddMissionScore">SCORING:_AddMissionScore(Mission, PlayerUnit, Text, Score)</a></td>
+		<td class="summary">
+<p>Registers Mission Scores for possible multiple players that contributed in the Mission.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING)._AddMissionTaskScore">SCORING:_AddMissionTaskScore(Mission, PlayerUnit, Text, Score)</a></td>
+		<td class="summary">
+<p>Registers Scores the players completing a Mission Task.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING)._AddPlayerFromUnit">SCORING:_AddPlayerFromUnit(UnitData)</a></td>
+		<td class="summary">
+<p>Add a new player entering a Unit.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING)._EventOnDeadOrCrash">SCORING:_EventOnDeadOrCrash(Event)</a></td>
+		<td class="summary">
+<p>Track  DEAD or CRASH events for the scoring.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING)._EventOnHit">SCORING:_EventOnHit(Event)</a></td>
+		<td class="summary">
+<p>Handles the OnHit event for the scoring.</p>
+</td>
+		</tr>
+	</table>
+
+	<h2>Global(s)</h2>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(SCORING)">#SCORING</a></em>
+<a id="SCORING" >
+<strong>SCORING</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="nHours" >
+<strong>nHours</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="nMins" >
+<strong>nMins</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="nSecs" >
+<strong>nSecs</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+	<h2><a id="#(Scoring)" >Type <code>Scoring</code></a></h2>
+	
+			<h2><a id="#(SCORING)" >Type <code>SCORING</code></a></h2>
+				
+<p>The Scoring class</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+<a id="#(SCORING).AddGoalScore" >
+<strong>SCORING:AddGoalScore(PlayerUnit, GoalTag, Text, Score)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Add a goal score for a player.</p>
+
+	
+<p>The method takes the PlayerUnit for which the Goal score needs to be set.
+The GoalTag is a string or identifier that is taken into the CSV file scoring log to identify the goal.
+A free text can be given that is shown to the players.
+The Score can be both positive and negative.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> PlayerUnit </em></code>: 
+The <a href="Unit.html">Unit</a> of the Player. Other Properties for the scoring are taken from this PlayerUnit, like coalition, type etc. </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string GoalTag </em></code>: 
+The string or identifier that is used in the CSV file to identify the goal (sort or group later in Excel).</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Text </em></code>: 
+A free text that is shown to the players.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Score </em></code>: 
+The score can be both positive or negative ( Penalty ).</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SCORING).AddScoreGroup" >
+<strong>SCORING:AddScoreGroup(ScoreGroup, Score)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Specify a special additional score for a <a href="Group.html">Group</a>.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> ScoreGroup </em></code>: 
+The <a href="Group.html">Group</a> for which each <a href="Unit.html">Unit</a> a Score is given.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Score </em></code>: 
+The Score value.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SCORING)">#SCORING</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SCORING).AddStaticScore" >
+<strong>SCORING:AddStaticScore(ScoreStatic, Score)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Add a <a href="Static.html">Static</a> for additional scoring when the <a href="Static.html">Static</a> is destroyed.</p>
+
+	
+<p>Note that if there was already a <a href="Static.html">Static</a> declared within the scoring with the same name, 
+then the old <a href="Static.html">Static</a>  will be replaced with the new <a href="Static.html">Static</a>.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Static.html##(UNIT)">Wrapper.Static#UNIT</a> ScoreStatic </em></code>: 
+The <a href="Static.html">Static</a> for which the Score needs to be given.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Score </em></code>: 
+The Score value.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SCORING)">#SCORING</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SCORING).AddUnitScore" >
+<strong>SCORING:AddUnitScore(ScoreUnit, Score)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Add a <a href="Unit.html">Unit</a> for additional scoring when the <a href="Unit.html">Unit</a> is destroyed.</p>
+
+	
+<p>Note that if there was already a <a href="Unit.html">Unit</a> declared within the scoring with the same name, 
+then the old <a href="Unit.html">Unit</a>  will be replaced with the new <a href="Unit.html">Unit</a>.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> ScoreUnit </em></code>: 
+The <a href="Unit.html">Unit</a> for which the Score needs to be given.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Score </em></code>: 
+The Score value.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SCORING)">#SCORING</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SCORING).AddZoneScore" >
+<strong>SCORING:AddZoneScore(ScoreZone, Score)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Add a <a href="Zone.html">Zone</a> to define additional scoring when any object is destroyed in that zone.</p>
+
+	
+<p>Note that if a <a href="Zone.html">Zone</a> with the same name is already within the scoring added, the <a href="Zone.html">Zone</a> (type) and Score will be replaced!
+This allows for a dynamic destruction zone evolution within your mission.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Zone.html##(ZONE_BASE)">Core.Zone#ZONE_BASE</a> ScoreZone </em></code>: 
+The <a href="Zone.html">Zone</a> which defines the destruction score perimeters. 
+Note that a zone can be a polygon or a moving zone.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Score </em></code>: 
+The Score value.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SCORING)">#SCORING</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#number</em>
+<a id="#(SCORING).ClassID" >
+<strong>SCORING.ClassID</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(SCORING).ClassName" >
+<strong>SCORING.ClassName</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SCORING).CloseCSV" >
+<strong>SCORING:CloseCSV()</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(SCORING).CoalitionChangePenalty" >
+<strong>SCORING.CoalitionChangePenalty</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(SCORING).Fratricide" >
+<strong>SCORING.Fratricide</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(SCORING).GameName" >
+<strong>SCORING.GameName</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SCORING).IfMessagesDestroy" >
+<strong>SCORING:IfMessagesDestroy()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>If to send messages after a target has been destroyed.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SCORING).IfMessagesHit" >
+<strong>SCORING:IfMessagesHit()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>If to send messages after a target has been hit.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SCORING).IfMessagesScore" >
+<strong>SCORING:IfMessagesScore()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>If to send messages after a target has been destroyed and receives additional scores.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SCORING).IfMessagesToAll" >
+<strong>SCORING:IfMessagesToAll()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>If to send messages to all players.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SCORING).IfMessagesToCoalition" >
+<strong>SCORING:IfMessagesToCoalition()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>If to send messages to only those players within the same coalition as the player.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SCORING).IfMessagesZone" >
+<strong>SCORING:IfMessagesZone()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>If to send messages after a target has been hit in a zone, and additional score is received.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#number</em>
+<a id="#(SCORING).MessagesAudience" >
+<strong>SCORING.MessagesAudience</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(SCORING).MessagesDestroy" >
+<strong>SCORING.MessagesDestroy</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(SCORING).MessagesHit" >
+<strong>SCORING.MessagesHit</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(SCORING).MessagesScore" >
+<strong>SCORING.MessagesScore</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(SCORING).MessagesZone" >
+<strong>SCORING.MessagesZone</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SCORING).New" >
+<strong>SCORING:New(GameName)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Creates a new SCORING object to administer the scoring achieved by players.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string GameName </em></code>: 
+The name of the game. This name is also logged in the CSV score file.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SCORING)">#SCORING</a>:</em>
+self</p>
+
+			<h3>Usage:</h3>
+		<pre class="example"><code>-- Define a new scoring object for the mission Gori Valley.
+ScoringObject = SCORING:New( "Gori Valley" )</code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SCORING).OnEventPlayerEnterUnit" >
+<strong>SCORING:OnEventPlayerEnterUnit(Event)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Handles the OnPlayerEnterUnit event for the scoring.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Event.html##(EVENTDATA)">Core.Event#EVENTDATA</a> Event </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SCORING).OnEventPlayerLeaveUnit" >
+<strong>SCORING:OnEventPlayerLeaveUnit(Event)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Handles the OnPlayerLeaveUnit event for the scoring.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Event.html##(EVENTDATA)">Core.Event#EVENTDATA</a> Event </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SCORING).OpenCSV" >
+<strong>SCORING:OpenCSV(ScoringCSV)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Opens a score CSV file to log the scores.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string ScoringCSV </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SCORING)">#SCORING</a>:</em>
+self</p>
+
+			<h3>Usage:</h3>
+		<pre class="example"><code>-- Open a new CSV file to log the scores of the game Gori Valley. Let the name of the CSV file begin with "Player Scores".
+ScoringObject = SCORING:New( "Gori Valley" )
+ScoringObject:OpenCSV( "Player Scores" )</code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SCORING).Players" >
+<strong>SCORING.Players</strong>
+</a>
+</dt>
+<dd>
+	
+<p>A collection of the current players that have joined the game.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SCORING).RemoveStaticScore" >
+<strong>SCORING:RemoveStaticScore(ScoreStatic)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Removes a <a href="Static.html">Static</a> for additional scoring when the <a href="Static.html">Static</a> is destroyed.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Static.html##(UNIT)">Wrapper.Static#UNIT</a> ScoreStatic </em></code>: 
+The <a href="Static.html">Static</a> for which the Score needs to be given.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SCORING)">#SCORING</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SCORING).RemoveUnitScore" >
+<strong>SCORING:RemoveUnitScore(ScoreUnit)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Removes a <a href="Unit.html">Unit</a> for additional scoring when the <a href="Unit.html">Unit</a> is destroyed.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> ScoreUnit </em></code>: 
+The <a href="Unit.html">Unit</a> for which the Score needs to be given.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SCORING)">#SCORING</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SCORING).RemoveZoneScore" >
+<strong>SCORING:RemoveZoneScore(ScoreZone)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Remove a <a href="Zone.html">Zone</a> for additional scoring.</p>
+
+	
+<p>The scoring will search if any <a href="Zone.html">Zone</a> is added with the given name, and will remove that zone from the scoring.
+This allows for a dynamic destruction zone evolution within your mission.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Zone.html##(ZONE_BASE)">Core.Zone#ZONE_BASE</a> ScoreZone </em></code>: 
+The <a href="Zone.html">Zone</a> which defines the destruction score perimeters. 
+Note that a zone can be a polygon or a moving zone.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SCORING)">#SCORING</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SCORING).ReportDetailedPlayerCoalitionChanges" >
+<strong>SCORING:ReportDetailedPlayerCoalitionChanges(PlayerName)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Produce detailed report of player penalty scores because of changing the coalition.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string PlayerName </em></code>: 
+The name of the player.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#string:</em>
+The report.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SCORING).ReportDetailedPlayerDestroys" >
+<strong>SCORING:ReportDetailedPlayerDestroys(PlayerName)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Produce detailed report of player destroy scores.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string PlayerName </em></code>: 
+The name of the player.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#string:</em>
+The report.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SCORING).ReportDetailedPlayerGoals" >
+<strong>SCORING:ReportDetailedPlayerGoals(PlayerName)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Produce detailed report of player goal scores.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string PlayerName </em></code>: 
+The name of the player.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#string:</em>
+The report.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SCORING).ReportDetailedPlayerHits" >
+<strong>SCORING:ReportDetailedPlayerHits(PlayerName)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Produce detailed report of player hit scores.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string PlayerName </em></code>: 
+The name of the player.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#string:</em>
+The report.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SCORING).ReportDetailedPlayerMissions" >
+<strong>SCORING:ReportDetailedPlayerMissions(PlayerName)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Produce detailed report of player penalty scores because of changing the coalition.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string PlayerName </em></code>: 
+The name of the player.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#string:</em>
+The report.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SCORING).ReportScoreAllSummary" >
+<strong>SCORING:ReportScoreAllSummary(PlayerGroup)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Report all players score</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> PlayerGroup </em></code>: 
+The player group.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SCORING).ReportScoreGroupDetailed" >
+<strong>SCORING:ReportScoreGroupDetailed(PlayerGroup)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Report Group Score Detailed</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> PlayerGroup </em></code>: 
+The player group.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SCORING).ReportScoreGroupSummary" >
+<strong>SCORING:ReportScoreGroupSummary(PlayerGroup)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Report Group Score Summary</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> PlayerGroup </em></code>: 
+The player group.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(SCORING).RunTime" >
+<strong>SCORING.RunTime</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(SCORING).ScaleDestroyPenalty" >
+<strong>SCORING.ScaleDestroyPenalty</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(SCORING).ScaleDestroyScore" >
+<strong>SCORING.ScaleDestroyScore</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SCORING).ScoreCSV" >
+<strong>SCORING:ScoreCSV(PlayerName, TargetPlayerName, ScoreType, ScoreTimes, ScoreAmount, PlayerUnitName, PlayerUnitCoalition, PlayerUnitCategory, PlayerUnitType, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Registers a score for a player.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string PlayerName </em></code>: 
+The name of the player.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string TargetPlayerName </em></code>: 
+The name of the target player.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string ScoreType </em></code>: 
+The type of the score.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string ScoreTimes </em></code>: 
+The amount of scores achieved.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string ScoreAmount </em></code>: 
+The score given.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string PlayerUnitName </em></code>: 
+The unit name of the player.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string PlayerUnitCoalition </em></code>: 
+The coalition of the player unit.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string PlayerUnitCategory </em></code>: 
+The category of the player unit.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string PlayerUnitType </em></code>: 
+The type of the player unit.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string TargetUnitName </em></code>: 
+The name of the target unit.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string TargetUnitCoalition </em></code>: 
+The coalition of the target unit.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string TargetUnitCategory </em></code>: 
+The category of the target unit.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string TargetUnitType </em></code>: 
+The type of the target unit.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SCORING)">#SCORING</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(SCORING).ScoringCSV" >
+<strong>SCORING.ScoringCSV</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(SCORING).ScoringObjects" >
+<strong>SCORING.ScoringObjects</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+	
+<p> Additional Object scores</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(SCORING).ScoringZones" >
+<strong>SCORING.ScoringZones</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+	
+<p> Additional Zone scores.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SCORING).SecondsToClock" >
+<strong>SCORING:SecondsToClock(sSeconds)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> sSeconds </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SCORING).SetCoalitionChangePenalty" >
+<strong>SCORING:SetCoalitionChangePenalty(CoalitionChangePenalty)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>When a player changes the coalition, he can receive a penalty score.</p>
+
+	
+<p>Use the method <a href="##(SCORING).SetCoalitionChangePenalty">SCORING.SetCoalitionChangePenalty</a>() to define the penalty when a player changes coalition.
+By default, the penalty for changing coalition is the default penalty scale.  </p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number CoalitionChangePenalty </em></code>: 
+The amount of penalty that is given. </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SCORING)">#SCORING</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SCORING).SetFratricide" >
+<strong>SCORING:SetFratricide(Fratricide)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>When a player commits too much damage to friendlies, his penalty score will reach a certain level.</p>
+
+	
+<p>Use this method to define the level when a player gets kicked. <br/>
+By default, the fratricide level is the default penalty mutiplier * 2 for the penalty score.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number Fratricide </em></code>: 
+The amount of maximum penalty that may be inflicted by a friendly player before he gets kicked. </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SCORING)">#SCORING</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SCORING).SetMessagesDestroy" >
+<strong>SCORING:SetMessagesDestroy(OnOff)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Configure to send messages after a target has been destroyed.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#boolean OnOff </em></code>: 
+If true is given, the messages are sent. </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SCORING)">#SCORING</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SCORING).SetMessagesHit" >
+<strong>SCORING:SetMessagesHit(OnOff)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Configure to send messages after a target has been hit.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#boolean OnOff </em></code>: 
+If true is given, the messages are sent. </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SCORING)">#SCORING</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SCORING).SetMessagesScore" >
+<strong>SCORING:SetMessagesScore(OnOff)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Configure to send messages after a target has been destroyed and receives additional scores.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#boolean OnOff </em></code>: 
+If true is given, the messages are sent. </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SCORING)">#SCORING</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SCORING).SetMessagesToAll" >
+<strong>SCORING:SetMessagesToAll()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Configure to send messages to all players.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SCORING)">#SCORING</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SCORING).SetMessagesToCoalition" >
+<strong>SCORING:SetMessagesToCoalition()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Configure to send messages to only those players within the same coalition as the player.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SCORING)">#SCORING</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SCORING).SetMessagesZone" >
+<strong>SCORING:SetMessagesZone(OnOff)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Configure to send messages after a target has been hit in a zone, and additional score is received.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#boolean OnOff </em></code>: 
+If true is given, the messages are sent. </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SCORING)">#SCORING</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SCORING).SetScaleDestroyPenalty" >
+<strong>SCORING:SetScaleDestroyPenalty(Scale)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set the scale for scoring penalty destroys (friendly destroys).</p>
+
+	
+<p>A default calculated penalty is a value between 1 and 10.
+The scale magnifies the scores given to the players.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number Scale </em></code>: 
+The scale of the score given.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SCORING)">#SCORING</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SCORING).SetScaleDestroyScore" >
+<strong>SCORING:SetScaleDestroyScore(Scale)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set the scale for scoring valid destroys (enemy destroys).</p>
+
+	
+<p>A default calculated score is a value between 1 and 10.
+The scale magnifies the scores given to the players.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number Scale </em></code>: 
+The scale of the score given.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SCORING)._AddMissionScore" >
+<strong>SCORING:_AddMissionScore(Mission, PlayerUnit, Text, Score)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Registers Mission Scores for possible multiple players that contributed in the Mission.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Tasking.Mission.html##(MISSION)">Tasking.Mission#MISSION</a> Mission </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> PlayerUnit </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Text </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Score </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SCORING)._AddMissionTaskScore" >
+<strong>SCORING:_AddMissionTaskScore(Mission, PlayerUnit, Text, Score)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Registers Scores the players completing a Mission Task.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Tasking.Mission.html##(MISSION)">Tasking.Mission#MISSION</a> Mission </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> PlayerUnit </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Text </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Score </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SCORING)._AddPlayerFromUnit" >
+<strong>SCORING:_AddPlayerFromUnit(UnitData)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Add a new player entering a Unit.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> UnitData </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SCORING)._EventOnDeadOrCrash" >
+<strong>SCORING:_EventOnDeadOrCrash(Event)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Track  DEAD or CRASH events for the scoring.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Event.html##(EVENTDATA)">Core.Event#EVENTDATA</a> Event </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SCORING)._EventOnHit" >
+<strong>SCORING:_EventOnHit(Event)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Handles the OnHit event for the scoring.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Event.html##(EVENTDATA)">Core.Event#EVENTDATA</a> Event </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+
+</div>
+
+</div>
+</body>
+</html>

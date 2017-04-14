@@ -1,0 +1,750 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+	<head>
+		<link rel="stylesheet" href="stylesheet.css" type="text/css"/>
+	</head>
+<body>
+<div id="container">
+<div id="product">
+	<div id="product_logo"></div>
+	<div id="product_name"><big><b></b></big></div>
+	<div id="product_description"></div>
+</div>
+<div id="main">
+	<div id="navigation">
+		<h2>Modules</h2>
+			<ul><li>
+				<a href="index.html">index</a>
+			</li></ul>
+		<ul>
+					<li><a href="AI_Balancer.html">AI_Balancer</a></li>
+					<li><a href="AI_Cap.html">AI_Cap</a></li>
+					<li><a href="AI_Cas.html">AI_Cas</a></li>
+					<li><a href="AI_Patrol.html">AI_Patrol</a></li>
+					<li><a href="Account.html">Account</a></li>
+					<li><a href="Airbase.html">Airbase</a></li>
+					<li><a href="AirbasePolice.html">AirbasePolice</a></li>
+					<li><a href="Assign.html">Assign</a></li>
+					<li><a href="Base.html">Base</a></li>
+					<li><a href="Cargo.html">Cargo</a></li>
+					<li><a href="CleanUp.html">CleanUp</a></li>
+					<li><a href="Client.html">Client</a></li>
+					<li><a href="CommandCenter.html">CommandCenter</a></li>
+					<li><a href="Controllable.html">Controllable</a></li>
+					<li><a href="DCSAirbase.html">DCSAirbase</a></li>
+					<li><a href="DCSCoalitionObject.html">DCSCoalitionObject</a></li>
+					<li><a href="DCSCommand.html">DCSCommand</a></li>
+					<li>DCSController</li>
+					<li><a href="DCSGroup.html">DCSGroup</a></li>
+					<li><a href="DCSObject.html">DCSObject</a></li>
+					<li><a href="DCSTask.html">DCSTask</a></li>
+					<li><a href="DCSTypes.html">DCSTypes</a></li>
+					<li><a href="DCSUnit.html">DCSUnit</a></li>
+					<li><a href="DCSVec3.html">DCSVec3</a></li>
+					<li><a href="DCSWorld.html">DCSWorld</a></li>
+					<li><a href="DCSZone.html">DCSZone</a></li>
+					<li><a href="DCScountry.html">DCScountry</a></li>
+					<li><a href="DCStimer.html">DCStimer</a></li>
+					<li><a href="DCStrigger.html">DCStrigger</a></li>
+					<li><a href="Database.html">Database</a></li>
+					<li><a href="Detection.html">Detection</a></li>
+					<li><a href="DetectionManager.html">DetectionManager</a></li>
+					<li><a href="Escort.html">Escort</a></li>
+					<li><a href="Event.html">Event</a></li>
+					<li><a href="Fsm.html">Fsm</a></li>
+					<li><a href="Group.html">Group</a></li>
+					<li><a href="Identifiable.html">Identifiable</a></li>
+					<li><a href="Menu.html">Menu</a></li>
+					<li><a href="Message.html">Message</a></li>
+					<li><a href="MissileTrainer.html">MissileTrainer</a></li>
+					<li><a href="Mission.html">Mission</a></li>
+					<li><a href="Movement.html">Movement</a></li>
+					<li><a href="Object.html">Object</a></li>
+					<li><a href="Point.html">Point</a></li>
+					<li><a href="Positionable.html">Positionable</a></li>
+					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
+					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
+					<li><a href="Radio.html">Radio</a></li>
+					<li><a href="Route.html">Route</a></li>
+					<li><a href="Scenery.html">Scenery</a></li>
+					<li><a href="ScheduleDispatcher.html">ScheduleDispatcher</a></li>
+					<li><a href="Scheduler.html">Scheduler</a></li>
+					<li><a href="Scoring.html">Scoring</a></li>
+					<li><a href="Sead.html">Sead</a></li>
+					<li><a href="Set.html">Set</a></li>
+					<li><a href="Smoke.html">Smoke</a></li>
+					<li><a href="Spawn.html">Spawn</a></li>
+					<li><a href="SpawnStatic.html">SpawnStatic</a></li>
+					<li><a href="Static.html">Static</a></li>
+					<li><a href="StaticObject.html">StaticObject</a></li>
+					<li><a href="Task.html">Task</a></li>
+					<li><a href="Task_A2G.html">Task_A2G</a></li>
+					<li><a href="Task_A2G_Dispatcher.html">Task_A2G_Dispatcher</a></li>
+					<li><a href="Task_Cargo.html">Task_Cargo</a></li>
+					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
+					<li><a href="Unit.html">Unit</a></li>
+					<li><a href="Utils.html">Utils</a></li>
+					<li><a href="Zone.html">Zone</a></li>
+					<li><a href="env.html">env</a></li>
+					<li><a href="land.html">land</a></li>
+					<li><a href="routines.html">routines</a></li>
+		</ul>
+	</div>
+	<div id="content">
+   <h1>Module <code>DCSController</code></h1>
+   
+
+
+	<h2>Global(s)</h2>
+	<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#Controller">Controller</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+			<h2><a id="#(Controller)">Type <code>Controller</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Controller).Detection">Controller.Detection</a></td>
+		<td class="summary">
+<p>Enum contains identifiers of surface types. </p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Controller).getDetectedTargets">Controller:getDetectedTargets(detection)</a></td>
+		<td class="summary">
+<p>Returns list of detected targets.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Controller).hasTask">Controller:hasTask()</a></td>
+		<td class="summary">
+<p>Returns true if the controller has a task. </p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Controller).isTargetDetected">Controller:isTargetDetected(target, detection)</a></td>
+		<td class="summary">
+<p>Checks if the target is detected or not.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Controller).knowTarget">Controller:knowTarget(object, type, distance)</a></td>
+		<td class="summary">
+<p>Know a target.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Controller).popTask">Controller:popTask()</a></td>
+		<td class="summary">
+<p>Pops current (front) task from the queue and makes active next task in the queue (if exists).</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Controller).pushTask">Controller:pushTask(task)</a></td>
+		<td class="summary">
+<p>Pushes the task to the front of the queue and makes the task active.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Controller).resetTask">Controller:resetTask()</a></td>
+		<td class="summary">
+<p>Resets current task of the controller.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Controller).setOnOff">Controller:setOnOff(value)</a></td>
+		<td class="summary">
+<p>Enables and disables the controller.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Controller).setOption">Controller:setOption(optionId, optionValue)</a></td>
+		<td class="summary">
+<p>Sets the option to the controller.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Controller).setTask">Controller:setTask(task)</a></td>
+		<td class="summary">
+<p>Resets current task and then sets the task to the controller.</p>
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(Controller.Detection)">Type <code>Controller.Detection</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Controller.Detection).DLINK">Controller.Detection.DLINK</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Controller.Detection).IRST">Controller.Detection.IRST</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Controller.Detection).OPTIC">Controller.Detection.OPTIC</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Controller.Detection).RADAR">Controller.Detection.RADAR</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Controller.Detection).RWR">Controller.Detection.RWR</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Controller.Detection).VISUAL">Controller.Detection.VISUAL</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(DetectedTarget)">Type <code>DetectedTarget</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DetectedTarget).distance">DetectedTarget.distance</a></td>
+		<td class="summary">
+<p>Distance to the target is known</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DetectedTarget).object">DetectedTarget.object</a></td>
+		<td class="summary">
+<p>The target</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DetectedTarget).type">DetectedTarget.type</a></td>
+		<td class="summary">
+<p>The target type is known</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DetectedTarget).visible">DetectedTarget.visible</a></td>
+		<td class="summary">
+<p>The target is visible</p>
+</td>
+		</tr>
+	</table>
+
+	<h2>Global(s)</h2>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(Controller)">#Controller</a></em>
+<a id="Controller" >
+<strong>Controller</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+	<h2><a id="#(DCSController)" >Type <code>DCSController</code></a></h2>
+	
+			<h2><a id="#(Controller)" >Type <code>Controller</code></a></h2>
+				
+<p>Controller is an object that performs A.I.-routines.</p>
+
+	
+<p>Other words controller is an instance of A.I.. Controller stores current main task, active enroute tasks and behavior options. Controller performs commands. Please, read DCS A-10C GUI Manual EN.pdf chapter "Task Planning for Unit Groups", page 91 to understand A.I. system of DCS:A-10C. </p>
+
+<p>This class has 2 types of functions:</p>
+
+<ul>
+    <li>Tasks</li>
+    <li>Commands: Commands are instant actions those required zero time to perform. Commands may be used both for control unit/group behavior and control game mechanics. </li>
+</ul>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(Controller.Detection)">#Controller.Detection</a></em>
+<a id="#(Controller).Detection" >
+<strong>Controller.Detection</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Enum contains identifiers of surface types. </p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(Controller).getDetectedTargets" >
+<strong>Controller:getDetectedTargets(detection)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns list of detected targets.</p>
+
+	
+<p>If one or more detection method is specified the function will return targets which were detected by at least one of these methods. If no detection methods are specified the function will return targets which were detected by any method.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="##(Controller.Detection)">#Controller.Detection</a> detection </em></code>: 
+Controller.Detection detection1, Controller.Detection detection2, ... Controller.Detection detectionN </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(list)">#list</a>:</em></p>
+<h1>DetectedTarget> array of DetectedTarget</h1>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(Controller).hasTask" >
+<strong>Controller:hasTask()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns true if the controller has a task. </p>
+
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(Controller).isTargetDetected" >
+<strong>Controller:isTargetDetected(target, detection)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Checks if the target is detected or not.</p>
+
+	
+<p>If one or more detection method is specified the function will return true if the target is detected by at least one of these methods. If no detection methods are specified the function will return true if the target is detected by any method. </p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Object.html##(Object)">Wrapper.Object#Object</a> target </em></code>: 
+Target to check</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="##(Controller.Detection)">#Controller.Detection</a> detection </em></code>: 
+Controller.Detection detection1, Controller.Detection detection2, ... Controller.Detection detectionN </p>
+
+				</li>
+		</ul>
+		<h3>Return values</h3>
+			<ol>
+				<li>
+				
+<p><em>#boolean:</em>
+detected True if the target is detected. </p>
+
+				</li>
+				<li>
+				
+<p><em>#boolean:</em>
+visible Has effect only if detected is true. True if the target is visible now. </p>
+
+				</li>
+				<li>
+				
+<p><em><a href="##(ModelTime)">#ModelTime</a>:</em>
+lastTime Has effect only if visible is false. Last time when target was seen. </p>
+
+				</li>
+				<li>
+				
+<p><em>#boolean:</em>
+type Has effect only if detected is true. True if the target type is known. </p>
+
+				</li>
+				<li>
+				
+<p><em>#boolean:</em>
+distance Has effect only if detected is true. True if the distance to the target is known. </p>
+
+				</li>
+				<li>
+				
+<p><em><a href="##(Vec3)">#Vec3</a>:</em>
+lastPos Has effect only if visible is false. Last position of the target when it was seen. </p>
+
+				</li>
+				<li>
+				
+<p><em><a href="##(Vec3)">#Vec3</a>:</em>
+lastVel Has effect only if visible is false. Last velocity of the target when it was seen. </p>
+
+				</li>
+			</ol>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(Controller).knowTarget" >
+<strong>Controller:knowTarget(object, type, distance)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Know a target.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Object.html##(Object)">Wrapper.Object#Object</a> object </em></code>: 
+The target.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#boolean type </em></code>: 
+Target type is known.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#boolean distance </em></code>: 
+Distance to target is known.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(Controller).popTask" >
+<strong>Controller:popTask()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Pops current (front) task from the queue and makes active next task in the queue (if exists).</p>
+
+	
+<p>If no more tasks in the queue the function works like function Controller.resetTask() function. Does nothing if the queue is empty.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(Controller).pushTask" >
+<strong>Controller:pushTask(task)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Pushes the task to the front of the queue and makes the task active.</p>
+
+	
+<p>Further call of function Controller.setTask() function will stop current task, clear the queue and set the new task active. If the task queue is empty the function will work like function Controller.setTask() function.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="##(Task)">#Task</a> task </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(Controller).resetTask" >
+<strong>Controller:resetTask()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Resets current task of the controller.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(Controller).setOnOff" >
+<strong>Controller:setOnOff(value)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Enables and disables the controller.</p>
+
+	
+<p>Note: Now it works only for ground / naval groups!</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#boolean value </em></code>: 
+Enable / Disable.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(Controller).setOption" >
+<strong>Controller:setOption(optionId, optionValue)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Sets the option to the controller.</p>
+
+	
+<p>Option is a pair of identifier and value. Behavior options are global parameters those affect controller behavior in all tasks it performs.
+Option identifiers and values are stored in table AI.Option in subtables Air, Ground and Naval.</p>
+
+<p>OptionId = <a href="##(AI.Option.Air).id">AI.Option.Air.id</a> or <a href="##(AI.Option.Ground).id">AI.Option.Ground.id</a> or <a href="##(AI.Option.Naval).id">AI.Option.Naval.id</a>
+OptionValue = AI.Option.Air.val[optionName] or AI.Option.Ground.val[optionName] or AI.Option.Naval.val[optionName]</p>
+
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="##(OptionId)">#OptionId</a> optionId </em></code>: 
+Option identifier. </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="##(OptionValue)">#OptionValue</a> optionValue </em></code>: 
+Value of the option.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(Controller).setTask" >
+<strong>Controller:setTask(task)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Resets current task and then sets the task to the controller.</p>
+
+	
+<p>Task is a table that contains task identifier and task parameters.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="##(Task)">#Task</a> task </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+
+			<h2><a id="#(Controller.Detection)" >Type <code>Controller.Detection</code></a></h2>
+				
+<p>Enum contains identifiers of surface types. </p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+<a id="#(Controller.Detection).DLINK" >
+<strong>Controller.Detection.DLINK</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(Controller.Detection).IRST" >
+<strong>Controller.Detection.IRST</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(Controller.Detection).OPTIC" >
+<strong>Controller.Detection.OPTIC</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(Controller.Detection).RADAR" >
+<strong>Controller.Detection.RADAR</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(Controller.Detection).RWR" >
+<strong>Controller.Detection.RWR</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(Controller.Detection).VISUAL" >
+<strong>Controller.Detection.VISUAL</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+
+			<h2><a id="#(DetectedTarget)" >Type <code>DetectedTarget</code></a></h2>
+				
+<p>Detected target. </p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em>#boolean</em>
+<a id="#(DetectedTarget).distance" >
+<strong>DetectedTarget.distance</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Distance to the target is known</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="Wrapper.Object.html##(Object)">Wrapper.Object#Object</a></em>
+<a id="#(DetectedTarget).object" >
+<strong>DetectedTarget.object</strong>
+</a>
+</dt>
+<dd>
+	
+<p>The target</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#boolean</em>
+<a id="#(DetectedTarget).type" >
+<strong>DetectedTarget.type</strong>
+</a>
+</dt>
+<dd>
+	
+<p>The target type is known</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#boolean</em>
+<a id="#(DetectedTarget).visible" >
+<strong>DetectedTarget.visible</strong>
+</a>
+</dt>
+<dd>
+	
+<p>The target is visible</p>
+
+</dd>
+</dl>
+
+			<h2><a id="#(ModelTime)" >Type <code>ModelTime</code></a></h2>
+			
+			<h2><a id="#(OptionId)" >Type <code>OptionId</code></a></h2>
+			
+			<h2><a id="#(OptionValue)" >Type <code>OptionValue</code></a></h2>
+			
+			<h2><a id="#(Task)" >Type <code>Task</code></a></h2>
+			
+			<h2><a id="#(Vec3)" >Type <code>Vec3</code></a></h2>
+			
+			<h2><a id="#(list)" >Type <code>list</code></a></h2>
+			
+</div>
+
+</div>
+</body>
+</html>

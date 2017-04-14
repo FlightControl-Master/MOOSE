@@ -1,0 +1,2518 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+	<head>
+		<link rel="stylesheet" href="stylesheet.css" type="text/css"/>
+	</head>
+<body>
+<div id="container">
+<div id="product">
+	<div id="product_logo"></div>
+	<div id="product_name"><big><b></b></big></div>
+	<div id="product_description"></div>
+</div>
+<div id="main">
+	<div id="navigation">
+		<h2>Modules</h2>
+			<ul><li>
+				<a href="index.html">index</a>
+			</li></ul>
+		<ul>
+					<li><a href="AI_Balancer.html">AI_Balancer</a></li>
+					<li><a href="AI_Cap.html">AI_Cap</a></li>
+					<li><a href="AI_Cas.html">AI_Cas</a></li>
+					<li><a href="AI_Patrol.html">AI_Patrol</a></li>
+					<li><a href="Account.html">Account</a></li>
+					<li><a href="Airbase.html">Airbase</a></li>
+					<li><a href="AirbasePolice.html">AirbasePolice</a></li>
+					<li><a href="Assign.html">Assign</a></li>
+					<li><a href="Base.html">Base</a></li>
+					<li><a href="Cargo.html">Cargo</a></li>
+					<li><a href="CleanUp.html">CleanUp</a></li>
+					<li><a href="Client.html">Client</a></li>
+					<li><a href="CommandCenter.html">CommandCenter</a></li>
+					<li><a href="Controllable.html">Controllable</a></li>
+					<li><a href="DCSAirbase.html">DCSAirbase</a></li>
+					<li><a href="DCSCoalitionObject.html">DCSCoalitionObject</a></li>
+					<li><a href="DCSCommand.html">DCSCommand</a></li>
+					<li><a href="DCSController.html">DCSController</a></li>
+					<li><a href="DCSGroup.html">DCSGroup</a></li>
+					<li><a href="DCSObject.html">DCSObject</a></li>
+					<li><a href="DCSTask.html">DCSTask</a></li>
+					<li>DCSTypes</li>
+					<li><a href="DCSUnit.html">DCSUnit</a></li>
+					<li><a href="DCSVec3.html">DCSVec3</a></li>
+					<li><a href="DCSWorld.html">DCSWorld</a></li>
+					<li><a href="DCSZone.html">DCSZone</a></li>
+					<li><a href="DCScountry.html">DCScountry</a></li>
+					<li><a href="DCStimer.html">DCStimer</a></li>
+					<li><a href="DCStrigger.html">DCStrigger</a></li>
+					<li><a href="Database.html">Database</a></li>
+					<li><a href="Detection.html">Detection</a></li>
+					<li><a href="DetectionManager.html">DetectionManager</a></li>
+					<li><a href="Escort.html">Escort</a></li>
+					<li><a href="Event.html">Event</a></li>
+					<li><a href="Fsm.html">Fsm</a></li>
+					<li><a href="Group.html">Group</a></li>
+					<li><a href="Identifiable.html">Identifiable</a></li>
+					<li><a href="Menu.html">Menu</a></li>
+					<li><a href="Message.html">Message</a></li>
+					<li><a href="MissileTrainer.html">MissileTrainer</a></li>
+					<li><a href="Mission.html">Mission</a></li>
+					<li><a href="Movement.html">Movement</a></li>
+					<li><a href="Object.html">Object</a></li>
+					<li><a href="Point.html">Point</a></li>
+					<li><a href="Positionable.html">Positionable</a></li>
+					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
+					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
+					<li><a href="Radio.html">Radio</a></li>
+					<li><a href="Route.html">Route</a></li>
+					<li><a href="Scenery.html">Scenery</a></li>
+					<li><a href="ScheduleDispatcher.html">ScheduleDispatcher</a></li>
+					<li><a href="Scheduler.html">Scheduler</a></li>
+					<li><a href="Scoring.html">Scoring</a></li>
+					<li><a href="Sead.html">Sead</a></li>
+					<li><a href="Set.html">Set</a></li>
+					<li><a href="Smoke.html">Smoke</a></li>
+					<li><a href="Spawn.html">Spawn</a></li>
+					<li><a href="SpawnStatic.html">SpawnStatic</a></li>
+					<li><a href="Static.html">Static</a></li>
+					<li><a href="StaticObject.html">StaticObject</a></li>
+					<li><a href="Task.html">Task</a></li>
+					<li><a href="Task_A2G.html">Task_A2G</a></li>
+					<li><a href="Task_A2G_Dispatcher.html">Task_A2G_Dispatcher</a></li>
+					<li><a href="Task_Cargo.html">Task_Cargo</a></li>
+					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
+					<li><a href="Unit.html">Unit</a></li>
+					<li><a href="Utils.html">Utils</a></li>
+					<li><a href="Zone.html">Zone</a></li>
+					<li><a href="env.html">env</a></li>
+					<li><a href="land.html">land</a></li>
+					<li><a href="routines.html">routines</a></li>
+		</ul>
+	</div>
+	<div id="content">
+   <h1>Module <code>DCSTypes</code></h1>
+   
+
+
+	<h2>Global(s)</h2>
+	<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#AI">AI</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+			<h2><a id="#(AI)">Type <code>AI</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI).Option">AI.Option</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI).Skill">AI.Skill</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI).Task">AI.Task</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(AI.Option)">Type <code>AI.Option</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Option).Air">AI.Option.Air</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Option).Ground">AI.Option.Ground</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Option).Naval">AI.Option.Naval</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(AI.Option.Air)">Type <code>AI.Option.Air</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Option.Air).id">AI.Option.Air.id</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Option.Air).val">AI.Option.Air.val</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(AI.Option.Air.val)">Type <code>AI.Option.Air.val</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Option.Air.val).FLARE_USING">AI.Option.Air.val.FLARE_USING</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Option.Air.val).RADAR_USING">AI.Option.Air.val.RADAR_USING</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Option.Air.val).REACTION_ON_THREAT">AI.Option.Air.val.REACTION_ON_THREAT</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Option.Air.val).ROE">AI.Option.Air.val.ROE</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(AI.Option.Air.val.FLARE_USING)">Type <code>AI.Option.Air.val.FLARE_USING</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Option.Air.val.FLARE_USING).AGAINST_FIRED_MISSILE">AI.Option.Air.val.FLARE_USING.AGAINST_FIRED_MISSILE</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Option.Air.val.FLARE_USING).NEVER">AI.Option.Air.val.FLARE_USING.NEVER</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Option.Air.val.FLARE_USING).WHEN_FLYING_IN_SAM_WEZ">AI.Option.Air.val.FLARE_USING.WHEN_FLYING_IN_SAM_WEZ</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Option.Air.val.FLARE_USING).WHEN_FLYING_NEAR_ENEMIES">AI.Option.Air.val.FLARE_USING.WHEN_FLYING_NEAR_ENEMIES</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(AI.Option.Air.val.RADAR_USING)">Type <code>AI.Option.Air.val.RADAR_USING</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Option.Air.val.RADAR_USING).FOR_ATTACK_ONLY">AI.Option.Air.val.RADAR_USING.FOR_ATTACK_ONLY</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Option.Air.val.RADAR_USING).FOR_CONTINUOUS_SEARCH">AI.Option.Air.val.RADAR_USING.FOR_CONTINUOUS_SEARCH</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Option.Air.val.RADAR_USING).FOR_SEARCH_IF_REQUIRED">AI.Option.Air.val.RADAR_USING.FOR_SEARCH_IF_REQUIRED</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Option.Air.val.RADAR_USING).NEVER">AI.Option.Air.val.RADAR_USING.NEVER</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(AI.Option.Air.val.REACTION_ON_THREAT)">Type <code>AI.Option.Air.val.REACTION_ON_THREAT</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Option.Air.val.REACTION_ON_THREAT).ALLOW_ABORT_MISSION">AI.Option.Air.val.REACTION_ON_THREAT.ALLOW_ABORT_MISSION</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Option.Air.val.REACTION_ON_THREAT).BYPASS_AND_ESCAPE">AI.Option.Air.val.REACTION_ON_THREAT.BYPASS_AND_ESCAPE</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Option.Air.val.REACTION_ON_THREAT).EVADE_FIRE">AI.Option.Air.val.REACTION_ON_THREAT.EVADE_FIRE</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Option.Air.val.REACTION_ON_THREAT).NO_REACTION">AI.Option.Air.val.REACTION_ON_THREAT.NO_REACTION</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Option.Air.val.REACTION_ON_THREAT).PASSIVE_DEFENCE">AI.Option.Air.val.REACTION_ON_THREAT.PASSIVE_DEFENCE</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(AI.Option.Air.val.ROE)">Type <code>AI.Option.Air.val.ROE</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Option.Air.val.ROE).OPEN_FIRE">AI.Option.Air.val.ROE.OPEN_FIRE</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Option.Air.val.ROE).OPEN_FIRE_WEAPON_FREE">AI.Option.Air.val.ROE.OPEN_FIRE_WEAPON_FREE</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Option.Air.val.ROE).RETURN_FIRE">AI.Option.Air.val.ROE.RETURN_FIRE</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Option.Air.val.ROE).WEAPON_FREE">AI.Option.Air.val.ROE.WEAPON_FREE</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Option.Air.val.ROE).WEAPON_HOLD">AI.Option.Air.val.ROE.WEAPON_HOLD</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(AI.Option.Ground)">Type <code>AI.Option.Ground</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Option.Ground).id">AI.Option.Ground.id</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Option.Ground).val">AI.Option.Ground.val</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(AI.Option.Ground.id)">Type <code>AI.Option.Ground.id</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Option.Ground.id).ALARM_STATE">AI.Option.Ground.id.ALARM_STATE</a></td>
+		<td class="summary">
+<p><a href="##(AI.Option.Ground.val).ALARM_STATE">AI.Option.Ground.val.ALARM_STATE</a></p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Option.Ground.id).DISPERSE_ON_ATTACK">AI.Option.Ground.id.DISPERSE_ON_ATTACK</a></td>
+		<td class="summary">
+<p>true or false</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Option.Ground.id).NO_OPTION">AI.Option.Ground.id.NO_OPTION</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Option.Ground.id).ROE">AI.Option.Ground.id.ROE</a></td>
+		<td class="summary">
+<p><a href="##(AI.Option.Ground.val).ROE">AI.Option.Ground.val.ROE</a></p>
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(AI.Option.Ground.val)">Type <code>AI.Option.Ground.val</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Option.Ground.val).ALARM_STATE">AI.Option.Ground.val.ALARM_STATE</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Option.Ground.val).ROE">AI.Option.Ground.val.ROE</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(AI.Option.Ground.val.ALARM_STATE)">Type <code>AI.Option.Ground.val.ALARM_STATE</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Option.Ground.val.ALARM_STATE).AUTO">AI.Option.Ground.val.ALARM_STATE.AUTO</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Option.Ground.val.ALARM_STATE).GREEN">AI.Option.Ground.val.ALARM_STATE.GREEN</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Option.Ground.val.ALARM_STATE).RED">AI.Option.Ground.val.ALARM_STATE.RED</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(AI.Option.Ground.val.ROE)">Type <code>AI.Option.Ground.val.ROE</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Option.Ground.val.ROE).OPEN_FIRE">AI.Option.Ground.val.ROE.OPEN_FIRE</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Option.Ground.val.ROE).RETURN_FIRE">AI.Option.Ground.val.ROE.RETURN_FIRE</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Option.Ground.val.ROE).WEAPON_HOLD">AI.Option.Ground.val.ROE.WEAPON_HOLD</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(AI.Option.Naval)">Type <code>AI.Option.Naval</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Option.Naval).id">AI.Option.Naval.id</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Option.Naval).val">AI.Option.Naval.val</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(AI.Option.Naval.id)">Type <code>AI.Option.Naval.id</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Option.Naval.id).NO_OPTION">AI.Option.Naval.id.NO_OPTION</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Option.Naval.id).ROE">AI.Option.Naval.id.ROE</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(AI.Option.Naval.val)">Type <code>AI.Option.Naval.val</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Option.Naval.val).ROE">AI.Option.Naval.val.ROE</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(AI.Option.Naval.val.ROE)">Type <code>AI.Option.Naval.val.ROE</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Option.Naval.val.ROE).OPEN_FIRE">AI.Option.Naval.val.ROE.OPEN_FIRE</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Option.Naval.val.ROE).RETURN_FIRE">AI.Option.Naval.val.ROE.RETURN_FIRE</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Option.Naval.val.ROE).WEAPON_HOLD">AI.Option.Naval.val.ROE.WEAPON_HOLD</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(AI.Skill)">Type <code>AI.Skill</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Skill).AVERAGE">AI.Skill.AVERAGE</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Skill).CLIENT">AI.Skill.CLIENT</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Skill).EXCELLENT">AI.Skill.EXCELLENT</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Skill).GOOD">AI.Skill.GOOD</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Skill).HIGH">AI.Skill.HIGH</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Skill).PLAYER">AI.Skill.PLAYER</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(AI.Task)">Type <code>AI.Task</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Task).AltitudeType">AI.Task.AltitudeType</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Task).Designation">AI.Task.Designation</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Task).OrbitPattern">AI.Task.OrbitPattern</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Task).TurnMethod">AI.Task.TurnMethod</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Task).VehicleFormation">AI.Task.VehicleFormation</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Task).WaypointType">AI.Task.WaypointType</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Task).WeaponExpend">AI.Task.WeaponExpend</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(AI.Task.AltitudeType)">Type <code>AI.Task.AltitudeType</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Task.AltitudeType).BARO">AI.Task.AltitudeType.BARO</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Task.AltitudeType).RADIO">AI.Task.AltitudeType.RADIO</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(AI.Task.Designation)">Type <code>AI.Task.Designation</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Task.Designation).AUTO">AI.Task.Designation.AUTO</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Task.Designation).IR_POINTER">AI.Task.Designation.IR_POINTER</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Task.Designation).LASER">AI.Task.Designation.LASER</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Task.Designation).NO">AI.Task.Designation.NO</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Task.Designation).WP">AI.Task.Designation.WP</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(AI.Task.OrbitPattern)">Type <code>AI.Task.OrbitPattern</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Task.OrbitPattern).CIRCLE">AI.Task.OrbitPattern.CIRCLE</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Task.OrbitPattern).RACE_TRACK">AI.Task.OrbitPattern.RACE_TRACK</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(AI.Task.TurnMethod)">Type <code>AI.Task.TurnMethod</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Task.TurnMethod).FIN_POINT">AI.Task.TurnMethod.FIN_POINT</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Task.TurnMethod).FLY_OVER_POINT">AI.Task.TurnMethod.FLY_OVER_POINT</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(AI.Task.VehicleFormation)">Type <code>AI.Task.VehicleFormation</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Task.VehicleFormation).CONE">AI.Task.VehicleFormation.CONE</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Task.VehicleFormation).DIAMOND">AI.Task.VehicleFormation.DIAMOND</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Task.VehicleFormation).ECHELON_LEFT">AI.Task.VehicleFormation.ECHELON_LEFT</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Task.VehicleFormation).ECHELON_RIGHT">AI.Task.VehicleFormation.ECHELON_RIGHT</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Task.VehicleFormation).OFF_ROAD">AI.Task.VehicleFormation.OFF_ROAD</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Task.VehicleFormation).ON_ROAD">AI.Task.VehicleFormation.ON_ROAD</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Task.VehicleFormation).RANK">AI.Task.VehicleFormation.RANK</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Task.VehicleFormation).VEE">AI.Task.VehicleFormation.VEE</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(AI.Task.WaypointType)">Type <code>AI.Task.WaypointType</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Task.WaypointType).LAND">AI.Task.WaypointType.LAND</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Task.WaypointType).TAKEOFF">AI.Task.WaypointType.TAKEOFF</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Task.WaypointType).TAKEOFF_PARKING">AI.Task.WaypointType.TAKEOFF_PARKING</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Task.WaypointType).TURNING_POINT">AI.Task.WaypointType.TURNING_POINT</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(AI.Task.WeaponExpend)">Type <code>AI.Task.WeaponExpend</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Task.WeaponExpend).ALL">AI.Task.WeaponExpend.ALL</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Task.WeaponExpend).FOUR">AI.Task.WeaponExpend.FOUR</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Task.WeaponExpend).HALF">AI.Task.WeaponExpend.HALF</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Task.WeaponExpend).ONE">AI.Task.WeaponExpend.ONE</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Task.WeaponExpend).QUARTER">AI.Task.WeaponExpend.QUARTER</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI.Task.WeaponExpend).TWO">AI.Task.WeaponExpend.TWO</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(Box3)">Type <code>Box3</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Box3).max">Box3.max</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Box3).min">Box3.min</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(Desc)">Type <code>Desc</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Desc).attributes">Desc.attributes</a></td>
+		<td class="summary">
+<p>object type attributes</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Desc).displayName">Desc.displayName</a></td>
+		<td class="summary">
+<p>localized display name</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Desc).typeName">Desc.typeName</a></td>
+		<td class="summary">
+<p>type name</p>
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(Position3)">Type <code>Position3</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Position3).p">Position3.p</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Position3).x">Position3.x</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Position3).y">Position3.y</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Position3).z">Position3.z</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(Vec2)">Type <code>Vec2</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Vec2).x">Vec2.x</a></td>
+		<td class="summary">
+<p>Vec2.x = Vec3.x</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Vec2).y">Vec2.y</a></td>
+		<td class="summary">
+<p>Vec2.y = Vec3.z</p>
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(Vec3)">Type <code>Vec3</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Vec3).x">Vec3.x</a></td>
+		<td class="summary">
+<p>is directed to the north</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Vec3).y">Vec3.y</a></td>
+		<td class="summary">
+<p>is directed up</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Vec3).z">Vec3.z</a></td>
+		<td class="summary">
+<p>is directed to the east</p>
+</td>
+		</tr>
+	</table>
+
+	<h2>Global(s)</h2>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(AI)">#AI</a></em>
+<a id="AI" >
+<strong>AI</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+	<h2><a id="#(DCSTypes)" >Type <code>DCSTypes</code></a></h2>
+	
+			<h2><a id="#(AI)" >Type <code>AI</code></a></h2>
+				<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(AI.Option)">#AI.Option</a></em>
+<a id="#(AI).Option" >
+<strong>AI.Option</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(AI.Skill)">#AI.Skill</a></em>
+<a id="#(AI).Skill" >
+<strong>AI.Skill</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(AI.Task)">#AI.Task</a></em>
+<a id="#(AI).Task" >
+<strong>AI.Task</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+
+			<h2><a id="#(AI.Option)" >Type <code>AI.Option</code></a></h2>
+				<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(AI.Option.Air)">#AI.Option.Air</a></em>
+<a id="#(AI.Option).Air" >
+<strong>AI.Option.Air</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(AI.Option.Ground)">#AI.Option.Ground</a></em>
+<a id="#(AI.Option).Ground" >
+<strong>AI.Option.Ground</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(AI.Option.Naval)">#AI.Option.Naval</a></em>
+<a id="#(AI.Option).Naval" >
+<strong>AI.Option.Naval</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+
+			<h2><a id="#(AI.Option.Air)" >Type <code>AI.Option.Air</code></a></h2>
+				<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(AI.Option.Air.id)">#AI.Option.Air.id</a></em>
+<a id="#(AI.Option.Air).id" >
+<strong>AI.Option.Air.id</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(AI.Option.Air.val)">#AI.Option.Air.val</a></em>
+<a id="#(AI.Option.Air).val" >
+<strong>AI.Option.Air.val</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+
+			<h2><a id="#(AI.Option.Air.id)" >Type <code>AI.Option.Air.id</code></a></h2>
+			
+			<h2><a id="#(AI.Option.Air.val)" >Type <code>AI.Option.Air.val</code></a></h2>
+				<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(AI.Option.Air.val.FLARE_USING)">#AI.Option.Air.val.FLARE_USING</a></em>
+<a id="#(AI.Option.Air.val).FLARE_USING" >
+<strong>AI.Option.Air.val.FLARE_USING</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(AI.Option.Air.val.RADAR_USING)">#AI.Option.Air.val.RADAR_USING</a></em>
+<a id="#(AI.Option.Air.val).RADAR_USING" >
+<strong>AI.Option.Air.val.RADAR_USING</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(AI.Option.Air.val.REACTION_ON_THREAT)">#AI.Option.Air.val.REACTION_ON_THREAT</a></em>
+<a id="#(AI.Option.Air.val).REACTION_ON_THREAT" >
+<strong>AI.Option.Air.val.REACTION_ON_THREAT</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(AI.Option.Air.val.ROE)">#AI.Option.Air.val.ROE</a></em>
+<a id="#(AI.Option.Air.val).ROE" >
+<strong>AI.Option.Air.val.ROE</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+
+			<h2><a id="#(AI.Option.Air.val.FLARE_USING)" >Type <code>AI.Option.Air.val.FLARE_USING</code></a></h2>
+				<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+<a id="#(AI.Option.Air.val.FLARE_USING).AGAINST_FIRED_MISSILE" >
+<strong>AI.Option.Air.val.FLARE_USING.AGAINST_FIRED_MISSILE</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI.Option.Air.val.FLARE_USING).NEVER" >
+<strong>AI.Option.Air.val.FLARE_USING.NEVER</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI.Option.Air.val.FLARE_USING).WHEN_FLYING_IN_SAM_WEZ" >
+<strong>AI.Option.Air.val.FLARE_USING.WHEN_FLYING_IN_SAM_WEZ</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI.Option.Air.val.FLARE_USING).WHEN_FLYING_NEAR_ENEMIES" >
+<strong>AI.Option.Air.val.FLARE_USING.WHEN_FLYING_NEAR_ENEMIES</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+
+			<h2><a id="#(AI.Option.Air.val.RADAR_USING)" >Type <code>AI.Option.Air.val.RADAR_USING</code></a></h2>
+				<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+<a id="#(AI.Option.Air.val.RADAR_USING).FOR_ATTACK_ONLY" >
+<strong>AI.Option.Air.val.RADAR_USING.FOR_ATTACK_ONLY</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI.Option.Air.val.RADAR_USING).FOR_CONTINUOUS_SEARCH" >
+<strong>AI.Option.Air.val.RADAR_USING.FOR_CONTINUOUS_SEARCH</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI.Option.Air.val.RADAR_USING).FOR_SEARCH_IF_REQUIRED" >
+<strong>AI.Option.Air.val.RADAR_USING.FOR_SEARCH_IF_REQUIRED</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI.Option.Air.val.RADAR_USING).NEVER" >
+<strong>AI.Option.Air.val.RADAR_USING.NEVER</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+
+			<h2><a id="#(AI.Option.Air.val.REACTION_ON_THREAT)" >Type <code>AI.Option.Air.val.REACTION_ON_THREAT</code></a></h2>
+				<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+<a id="#(AI.Option.Air.val.REACTION_ON_THREAT).ALLOW_ABORT_MISSION" >
+<strong>AI.Option.Air.val.REACTION_ON_THREAT.ALLOW_ABORT_MISSION</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI.Option.Air.val.REACTION_ON_THREAT).BYPASS_AND_ESCAPE" >
+<strong>AI.Option.Air.val.REACTION_ON_THREAT.BYPASS_AND_ESCAPE</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI.Option.Air.val.REACTION_ON_THREAT).EVADE_FIRE" >
+<strong>AI.Option.Air.val.REACTION_ON_THREAT.EVADE_FIRE</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI.Option.Air.val.REACTION_ON_THREAT).NO_REACTION" >
+<strong>AI.Option.Air.val.REACTION_ON_THREAT.NO_REACTION</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI.Option.Air.val.REACTION_ON_THREAT).PASSIVE_DEFENCE" >
+<strong>AI.Option.Air.val.REACTION_ON_THREAT.PASSIVE_DEFENCE</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+
+			<h2><a id="#(AI.Option.Air.val.ROE)" >Type <code>AI.Option.Air.val.ROE</code></a></h2>
+				<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+<a id="#(AI.Option.Air.val.ROE).OPEN_FIRE" >
+<strong>AI.Option.Air.val.ROE.OPEN_FIRE</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI.Option.Air.val.ROE).OPEN_FIRE_WEAPON_FREE" >
+<strong>AI.Option.Air.val.ROE.OPEN_FIRE_WEAPON_FREE</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI.Option.Air.val.ROE).RETURN_FIRE" >
+<strong>AI.Option.Air.val.ROE.RETURN_FIRE</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI.Option.Air.val.ROE).WEAPON_FREE" >
+<strong>AI.Option.Air.val.ROE.WEAPON_FREE</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI.Option.Air.val.ROE).WEAPON_HOLD" >
+<strong>AI.Option.Air.val.ROE.WEAPON_HOLD</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+
+			<h2><a id="#(AI.Option.Ground)" >Type <code>AI.Option.Ground</code></a></h2>
+				<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(AI.Option.Ground.id)">#AI.Option.Ground.id</a></em>
+<a id="#(AI.Option.Ground).id" >
+<strong>AI.Option.Ground.id</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(AI.Option.Ground.val)">#AI.Option.Ground.val</a></em>
+<a id="#(AI.Option.Ground).val" >
+<strong>AI.Option.Ground.val</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+
+			<h2><a id="#(AI.Option.Ground.id)" >Type <code>AI.Option.Ground.id</code></a></h2>
+				<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+<a id="#(AI.Option.Ground.id).ALARM_STATE" >
+<strong>AI.Option.Ground.id.ALARM_STATE</strong>
+</a>
+</dt>
+<dd>
+	
+<p><a href="##(AI.Option.Ground.val).ALARM_STATE">AI.Option.Ground.val.ALARM_STATE</a></p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI.Option.Ground.id).DISPERSE_ON_ATTACK" >
+<strong>AI.Option.Ground.id.DISPERSE_ON_ATTACK</strong>
+</a>
+</dt>
+<dd>
+	
+<p>true or false</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI.Option.Ground.id).NO_OPTION" >
+<strong>AI.Option.Ground.id.NO_OPTION</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI.Option.Ground.id).ROE" >
+<strong>AI.Option.Ground.id.ROE</strong>
+</a>
+</dt>
+<dd>
+	
+<p><a href="##(AI.Option.Ground.val).ROE">AI.Option.Ground.val.ROE</a></p>
+
+</dd>
+</dl>
+
+			<h2><a id="#(AI.Option.Ground.val)" >Type <code>AI.Option.Ground.val</code></a></h2>
+				<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(AI.Option.Ground.val.ALARM_STATE)">#AI.Option.Ground.val.ALARM_STATE</a></em>
+<a id="#(AI.Option.Ground.val).ALARM_STATE" >
+<strong>AI.Option.Ground.val.ALARM_STATE</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(AI.Option.Ground.val.ROE)">#AI.Option.Ground.val.ROE</a></em>
+<a id="#(AI.Option.Ground.val).ROE" >
+<strong>AI.Option.Ground.val.ROE</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+
+			<h2><a id="#(AI.Option.Ground.val.ALARM_STATE)" >Type <code>AI.Option.Ground.val.ALARM_STATE</code></a></h2>
+				<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+<a id="#(AI.Option.Ground.val.ALARM_STATE).AUTO" >
+<strong>AI.Option.Ground.val.ALARM_STATE.AUTO</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI.Option.Ground.val.ALARM_STATE).GREEN" >
+<strong>AI.Option.Ground.val.ALARM_STATE.GREEN</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI.Option.Ground.val.ALARM_STATE).RED" >
+<strong>AI.Option.Ground.val.ALARM_STATE.RED</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+
+			<h2><a id="#(AI.Option.Ground.val.ROE)" >Type <code>AI.Option.Ground.val.ROE</code></a></h2>
+				<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+<a id="#(AI.Option.Ground.val.ROE).OPEN_FIRE" >
+<strong>AI.Option.Ground.val.ROE.OPEN_FIRE</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI.Option.Ground.val.ROE).RETURN_FIRE" >
+<strong>AI.Option.Ground.val.ROE.RETURN_FIRE</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI.Option.Ground.val.ROE).WEAPON_HOLD" >
+<strong>AI.Option.Ground.val.ROE.WEAPON_HOLD</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+
+			<h2><a id="#(AI.Option.Naval)" >Type <code>AI.Option.Naval</code></a></h2>
+				<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(AI.Option.Naval.id)">#AI.Option.Naval.id</a></em>
+<a id="#(AI.Option.Naval).id" >
+<strong>AI.Option.Naval.id</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(AI.Option.Naval.val)">#AI.Option.Naval.val</a></em>
+<a id="#(AI.Option.Naval).val" >
+<strong>AI.Option.Naval.val</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+
+			<h2><a id="#(AI.Option.Naval.id)" >Type <code>AI.Option.Naval.id</code></a></h2>
+				<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+<a id="#(AI.Option.Naval.id).NO_OPTION" >
+<strong>AI.Option.Naval.id.NO_OPTION</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI.Option.Naval.id).ROE" >
+<strong>AI.Option.Naval.id.ROE</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+
+			<h2><a id="#(AI.Option.Naval.val)" >Type <code>AI.Option.Naval.val</code></a></h2>
+				<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(AI.Option.Naval.val.ROE)">#AI.Option.Naval.val.ROE</a></em>
+<a id="#(AI.Option.Naval.val).ROE" >
+<strong>AI.Option.Naval.val.ROE</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+
+			<h2><a id="#(AI.Option.Naval.val.ROE)" >Type <code>AI.Option.Naval.val.ROE</code></a></h2>
+				<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+<a id="#(AI.Option.Naval.val.ROE).OPEN_FIRE" >
+<strong>AI.Option.Naval.val.ROE.OPEN_FIRE</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI.Option.Naval.val.ROE).RETURN_FIRE" >
+<strong>AI.Option.Naval.val.ROE.RETURN_FIRE</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI.Option.Naval.val.ROE).WEAPON_HOLD" >
+<strong>AI.Option.Naval.val.ROE.WEAPON_HOLD</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+
+			<h2><a id="#(AI.Skill)" >Type <code>AI.Skill</code></a></h2>
+				<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+<a id="#(AI.Skill).AVERAGE" >
+<strong>AI.Skill.AVERAGE</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI.Skill).CLIENT" >
+<strong>AI.Skill.CLIENT</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI.Skill).EXCELLENT" >
+<strong>AI.Skill.EXCELLENT</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI.Skill).GOOD" >
+<strong>AI.Skill.GOOD</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI.Skill).HIGH" >
+<strong>AI.Skill.HIGH</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI.Skill).PLAYER" >
+<strong>AI.Skill.PLAYER</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+
+			<h2><a id="#(AI.Task)" >Type <code>AI.Task</code></a></h2>
+				<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(AI.Task.AltitudeType)">#AI.Task.AltitudeType</a></em>
+<a id="#(AI.Task).AltitudeType" >
+<strong>AI.Task.AltitudeType</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(AI.Task.Designation)">#AI.Task.Designation</a></em>
+<a id="#(AI.Task).Designation" >
+<strong>AI.Task.Designation</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(AI.Task.OrbitPattern)">#AI.Task.OrbitPattern</a></em>
+<a id="#(AI.Task).OrbitPattern" >
+<strong>AI.Task.OrbitPattern</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(AI.Task.TurnMethod)">#AI.Task.TurnMethod</a></em>
+<a id="#(AI.Task).TurnMethod" >
+<strong>AI.Task.TurnMethod</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(AI.Task.VehicleFormation)">#AI.Task.VehicleFormation</a></em>
+<a id="#(AI.Task).VehicleFormation" >
+<strong>AI.Task.VehicleFormation</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(AI.Task.WaypointType)">#AI.Task.WaypointType</a></em>
+<a id="#(AI.Task).WaypointType" >
+<strong>AI.Task.WaypointType</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(AI.Task.WeaponExpend)">#AI.Task.WeaponExpend</a></em>
+<a id="#(AI.Task).WeaponExpend" >
+<strong>AI.Task.WeaponExpend</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+
+			<h2><a id="#(AI.Task.AltitudeType)" >Type <code>AI.Task.AltitudeType</code></a></h2>
+				<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+<a id="#(AI.Task.AltitudeType).BARO" >
+<strong>AI.Task.AltitudeType.BARO</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI.Task.AltitudeType).RADIO" >
+<strong>AI.Task.AltitudeType.RADIO</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+
+			<h2><a id="#(AI.Task.Designation)" >Type <code>AI.Task.Designation</code></a></h2>
+				<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+<a id="#(AI.Task.Designation).AUTO" >
+<strong>AI.Task.Designation.AUTO</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI.Task.Designation).IR_POINTER" >
+<strong>AI.Task.Designation.IR_POINTER</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI.Task.Designation).LASER" >
+<strong>AI.Task.Designation.LASER</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI.Task.Designation).NO" >
+<strong>AI.Task.Designation.NO</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI.Task.Designation).WP" >
+<strong>AI.Task.Designation.WP</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+
+			<h2><a id="#(AI.Task.OrbitPattern)" >Type <code>AI.Task.OrbitPattern</code></a></h2>
+				<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+<a id="#(AI.Task.OrbitPattern).CIRCLE" >
+<strong>AI.Task.OrbitPattern.CIRCLE</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI.Task.OrbitPattern).RACE_TRACK" >
+<strong>AI.Task.OrbitPattern.RACE_TRACK</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+
+			<h2><a id="#(AI.Task.TurnMethod)" >Type <code>AI.Task.TurnMethod</code></a></h2>
+				<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+<a id="#(AI.Task.TurnMethod).FIN_POINT" >
+<strong>AI.Task.TurnMethod.FIN_POINT</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI.Task.TurnMethod).FLY_OVER_POINT" >
+<strong>AI.Task.TurnMethod.FLY_OVER_POINT</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+
+			<h2><a id="#(AI.Task.VehicleFormation)" >Type <code>AI.Task.VehicleFormation</code></a></h2>
+				<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+<a id="#(AI.Task.VehicleFormation).CONE" >
+<strong>AI.Task.VehicleFormation.CONE</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI.Task.VehicleFormation).DIAMOND" >
+<strong>AI.Task.VehicleFormation.DIAMOND</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI.Task.VehicleFormation).ECHELON_LEFT" >
+<strong>AI.Task.VehicleFormation.ECHELON_LEFT</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI.Task.VehicleFormation).ECHELON_RIGHT" >
+<strong>AI.Task.VehicleFormation.ECHELON_RIGHT</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI.Task.VehicleFormation).OFF_ROAD" >
+<strong>AI.Task.VehicleFormation.OFF_ROAD</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI.Task.VehicleFormation).ON_ROAD" >
+<strong>AI.Task.VehicleFormation.ON_ROAD</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI.Task.VehicleFormation).RANK" >
+<strong>AI.Task.VehicleFormation.RANK</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI.Task.VehicleFormation).VEE" >
+<strong>AI.Task.VehicleFormation.VEE</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+
+			<h2><a id="#(AI.Task.WaypointType)" >Type <code>AI.Task.WaypointType</code></a></h2>
+				<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+<a id="#(AI.Task.WaypointType).LAND" >
+<strong>AI.Task.WaypointType.LAND</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI.Task.WaypointType).TAKEOFF" >
+<strong>AI.Task.WaypointType.TAKEOFF</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI.Task.WaypointType).TAKEOFF_PARKING" >
+<strong>AI.Task.WaypointType.TAKEOFF_PARKING</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI.Task.WaypointType).TURNING_POINT" >
+<strong>AI.Task.WaypointType.TURNING_POINT</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+
+			<h2><a id="#(AI.Task.WeaponExpend)" >Type <code>AI.Task.WeaponExpend</code></a></h2>
+				<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+<a id="#(AI.Task.WeaponExpend).ALL" >
+<strong>AI.Task.WeaponExpend.ALL</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI.Task.WeaponExpend).FOUR" >
+<strong>AI.Task.WeaponExpend.FOUR</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI.Task.WeaponExpend).HALF" >
+<strong>AI.Task.WeaponExpend.HALF</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI.Task.WeaponExpend).ONE" >
+<strong>AI.Task.WeaponExpend.ONE</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI.Task.WeaponExpend).QUARTER" >
+<strong>AI.Task.WeaponExpend.QUARTER</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI.Task.WeaponExpend).TWO" >
+<strong>AI.Task.WeaponExpend.TWO</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+
+			<h2><a id="#(Angle)" >Type <code>Angle</code></a></h2>
+				
+<p>An angle type</p>
+
+
+			<h2><a id="#(AttributeName)" >Type <code>AttributeName</code></a></h2>
+				
+<p>AttributeName = string 
+Each object type may have attributes.</p>
+
+	
+<p>Attributes are enlisted in ./Scripts/Database/db_attributes.Lua.
+To know what attributes the object type has, look for the unit type script in sub-directories planes/, helicopter/s, vehicles, navy/ of ./Scripts/Database/ directory. </p>
+
+
+			<h2><a id="#(AttributeNameArray)" >Type <code>AttributeNameArray</code></a></h2>
+				
+<p>List of <a href="##(AttributeName)">#AttributeName</a></p>
+
+
+			<h2><a id="#(Azimuth)" >Type <code>Azimuth</code></a></h2>
+				
+<p>Azimuth is an angle of rotation around world axis y counter-clockwise.</p>
+
+
+			<h2><a id="#(Box3)" >Type <code>Box3</code></a></h2>
+				
+<p>3-dimensional box.</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(Vec3)">#Vec3</a></em>
+<a id="#(Box3).max" >
+<strong>Box3.max</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(Vec3)">#Vec3</a></em>
+<a id="#(Box3).min" >
+<strong>Box3.min</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+
+			<h2><a id="#(Desc)" >Type <code>Desc</code></a></h2>
+				<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em>#table</em>
+<a id="#(Desc).attributes" >
+<strong>Desc.attributes</strong>
+</a>
+</dt>
+<dd>
+	
+<p>object type attributes</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(Desc).displayName" >
+<strong>Desc.displayName</strong>
+</a>
+</dt>
+<dd>
+	
+<p>localized display name</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(TypeName)">#TypeName</a></em>
+<a id="#(Desc).typeName" >
+<strong>Desc.typeName</strong>
+</a>
+</dt>
+<dd>
+	
+<p>type name</p>
+
+</dd>
+</dl>
+
+			<h2><a id="#(Distance)" >Type <code>Distance</code></a></h2>
+				
+<p>A distance type</p>
+
+
+			<h2><a id="#(Mass)" >Type <code>Mass</code></a></h2>
+				
+<p>Mass is given in kilograms.</p>
+
+
+			<h2><a id="#(MissionTime)" >Type <code>MissionTime</code></a></h2>
+				
+<p>Mission time is a model time plus time of the mission start.</p>
+
+
+			<h2><a id="#(ModelTime)" >Type <code>ModelTime</code></a></h2>
+				
+<p>Model time is the time that drives the simulation.</p>
+
+	
+<p>Model time may be stopped, accelerated and decelerated relative real time. </p>
+
+
+			<h2><a id="#(Position3)" >Type <code>Position3</code></a></h2>
+				
+<p>Position is a composite structure.</p>
+
+	
+<p>It consists of both coordinate vector and orientation matrix. Position3 (also known as "Pos3" for short) is a table that has following format: </p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(Vec3)">#Vec3</a></em>
+<a id="#(Position3).p" >
+<strong>Position3.p</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(Vec3)">#Vec3</a></em>
+<a id="#(Position3).x" >
+<strong>Position3.x</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(Vec3)">#Vec3</a></em>
+<a id="#(Position3).y" >
+<strong>Position3.y</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(Vec3)">#Vec3</a></em>
+<a id="#(Position3).z" >
+<strong>Position3.z</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+
+			<h2><a id="#(Time)" >Type <code>Time</code></a></h2>
+				
+<p>Time is given in seconds.</p>
+
+
+			<h2><a id="#(TypeName)" >Type <code>TypeName</code></a></h2>
+				
+<p>Each object belongs to a type.</p>
+
+	
+<p>Object type is a named couple of properties those independent of mission and common for all units of the same type. Name of unit type is a string. Samples of unit type: "Su-27", "KAMAZ" and "M2 Bradley". </p>
+
+
+			<h2><a id="#(Vec2)" >Type <code>Vec2</code></a></h2>
+				
+<p>Vec2 is a 2D-vector for the ground plane as a reference plane.</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(Distance)">#Distance</a></em>
+<a id="#(Vec2).x" >
+<strong>Vec2.x</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Vec2.x = Vec3.x</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(Distance)">#Distance</a></em>
+<a id="#(Vec2).y" >
+<strong>Vec2.y</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Vec2.y = Vec3.z</p>
+
+</dd>
+</dl>
+
+			<h2><a id="#(Vec3)" >Type <code>Vec3</code></a></h2>
+				
+<p>Vec3 type is a 3D-vector.</p>
+
+	
+<p>DCS world has 3-dimensional coordinate system. DCS ground is an infinite plain.</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(Distance)">#Distance</a></em>
+<a id="#(Vec3).x" >
+<strong>Vec3.x</strong>
+</a>
+</dt>
+<dd>
+	
+<p>is directed to the north</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(Distance)">#Distance</a></em>
+<a id="#(Vec3).y" >
+<strong>Vec3.y</strong>
+</a>
+</dt>
+<dd>
+	
+<p>is directed up</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(Distance)">#Distance</a></em>
+<a id="#(Vec3).z" >
+<strong>Vec3.z</strong>
+</a>
+</dt>
+<dd>
+	
+<p>is directed to the east</p>
+
+</dd>
+</dl>
+
+</div>
+
+</div>
+</body>
+</html>
