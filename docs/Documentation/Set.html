@@ -80,6 +80,7 @@
 					<li><a href="Task.html">Task</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
 					<li><a href="Task_A2G_Dispatcher.html">Task_A2G_Dispatcher</a></li>
+					<li><a href="Task_Cargo.html">Task_Cargo</a></li>
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
 					<li><a href="Unit.html">Unit</a></li>
 					<li><a href="Utils.html">Utils</a></li>
@@ -162,6 +163,28 @@
 		<td class="summary">
 <h1>1) SET_BASE class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
 <p>The <a href="Set.html##(SET_BASE)">Set#SET_BASE</a> class defines the core functions that define a collection of objects.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#SET_CARGO">SET_CARGO</a></td>
+		<td class="summary">
+<h1>SET_CARGO class, extends <a href="Set.html##(SET_BASE)">Set#SET_BASE</a></h1>
+
+<p>Mission designers can use the <a href="Set.html##(SET_CARGO)">Set#SET_CARGO</a> class to build sets of cargos optionally belonging to certain:</p>
+
+<ul>
+    <li>Coalitions</li>
+    <li>Types</li>
+    <li>Name or Prefix</li>
+</ul>
+
+<h2>SET_CARGO constructor</h2>
+
+<p>Create a new SET_CARGO object with the <a href="##(SET_CARGO).New">SET_CARGO.New</a> method:</p>
+
+<ul>
+    <li><a href="##(SET_CARGO).New">SET_CARGO.New</a>: Creates a new SET_CARGO object.</li>
+</ul>
 </td>
 		</tr>
 		<tr>
@@ -474,6 +497,106 @@
 		<td class="name" nowrap="nowrap"><a href="##(SET_BASE)._Find">SET_BASE:_Find(ObjectName)</a></td>
 		<td class="summary">
 <p>Finds an <a href="Base.html##(BASE)">Base#BASE</a> object based on the object Name.</p>
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(SET_CARGO)">Type <code>SET_CARGO</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_CARGO).AddCargosByName">SET_CARGO:AddCargosByName(AddCargoNames)</a></td>
+		<td class="summary">
+<p>Add CARGOs to SET_CARGO.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_CARGO).AddInDatabase">SET_CARGO:AddInDatabase(Event)</a></td>
+		<td class="summary">
+<p>Handles the Database to check on an event (birth) that the Object was added in the Database.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_CARGO).FilterCoalitions">SET_CARGO:FilterCoalitions(Coalitions)</a></td>
+		<td class="summary">
+<p>Builds a set of cargos of coalitions.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_CARGO).FilterCountries">SET_CARGO:FilterCountries(Countries)</a></td>
+		<td class="summary">
+<p>Builds a set of cargos of defined countries.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_CARGO).FilterPrefixes">SET_CARGO:FilterPrefixes(Prefixes)</a></td>
+		<td class="summary">
+<p>Builds a set of cargos of defined cargo prefixes.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_CARGO).FilterStart">SET_CARGO:FilterStart()</a></td>
+		<td class="summary">
+<p>Starts the filtering.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_CARGO).FilterTypes">SET_CARGO:FilterTypes(Types)</a></td>
+		<td class="summary">
+<p>Builds a set of cargos of defined cargo types.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_CARGO).FindCargo">SET_CARGO:FindCargo(CargoName)</a></td>
+		<td class="summary">
+<p>Finds a Cargo based on the Cargo Name.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_CARGO).FindInDatabase">SET_CARGO:FindInDatabase(Event)</a></td>
+		<td class="summary">
+<p>Handles the Database to check on any event that Object exists in the Database.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_CARGO).FindNearestCargoFromPointVec2">SET_CARGO:FindNearestCargoFromPointVec2(PointVec2)</a></td>
+		<td class="summary">
+<p>Iterate the SET_CARGO while identifying the nearest <a href="Cargo.html##(CARGO)">Cargo#CARGO</a> from a <a href="Point.html##(POINT_VEC2)">Point#POINT_VEC2</a>.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_CARGO).ForEachCargo">SET_CARGO:ForEachCargo(IteratorFunction, ...)</a></td>
+		<td class="summary">
+<p>Iterate the SET_CARGO and call an interator function for each CARGO, providing the CARGO and optional parameters.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_CARGO).IsIncludeObject">SET_CARGO:IsIncludeObject(MCargo)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_CARGO).New">SET_CARGO:New()</a></td>
+		<td class="summary">
+<p>Creates a new SET_CARGO object, building a set of cargos belonging to a coalitions and categories.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_CARGO).OnEventDeleteCargo">SET_CARGO:OnEventDeleteCargo(EventData)</a></td>
+		<td class="summary">
+<p>Handles the OnDead or OnCrash event for alive units set.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_CARGO).OnEventNewCargo">SET_CARGO:OnEventNewCargo(EventData)</a></td>
+		<td class="summary">
+<p>Handles the OnEventNewCargo event for the Set.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_CARGO).RemoveCargosByName">SET_CARGO:RemoveCargosByName(RemoveCargoNames)</a></td>
+		<td class="summary">
+<p>Remove CARGOs from SET_CARGO.</p>
 </td>
 		</tr>
 	</table>
@@ -940,6 +1063,72 @@ The default <strong>"time interval"</strong> is after 0.001 seconds.</p>
 
 <p>Modify the iterator intervals with the <a href="Set.html##(SET_BASE).SetInteratorIntervals">Set#SET_BASE.SetInteratorIntervals</a> method.
 You can set the <strong>"yield interval"</strong>, and the <strong>"time interval"</strong>. (See above).</p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(SET_CARGO)">#SET_CARGO</a></em>
+<a id="SET_CARGO" >
+<strong>SET_CARGO</strong>
+</a>
+</dt>
+<dd>
+	
+<h1>SET_CARGO class, extends <a href="Set.html##(SET_BASE)">Set#SET_BASE</a></h1>
+
+<p>Mission designers can use the <a href="Set.html##(SET_CARGO)">Set#SET_CARGO</a> class to build sets of cargos optionally belonging to certain:</p>
+
+<ul>
+    <li>Coalitions</li>
+    <li>Types</li>
+    <li>Name or Prefix</li>
+</ul>
+
+<h2>SET_CARGO constructor</h2>
+
+<p>Create a new SET_CARGO object with the <a href="##(SET_CARGO).New">SET_CARGO.New</a> method:</p>
+
+<ul>
+    <li><a href="##(SET_CARGO).New">SET_CARGO.New</a>: Creates a new SET_CARGO object.</li>
+</ul>
+
+	
+<p>  </p>
+<h2>Add or Remove CARGOs from SET_CARGO</h2>
+
+<p>CARGOs can be added and removed using the <a href="Set.html##(SET_CARGO).AddCargosByName">Set#SET_CARGO.AddCargosByName</a> and <a href="Set.html##(SET_CARGO).RemoveCargosByName">Set#SET_CARGO.RemoveCargosByName</a> respectively. 
+These methods take a single CARGO name or an array of CARGO names to be added or removed from SET_CARGO.</p>
+
+<h2>SET_CARGO filter criteria</h2>
+
+<p>You can set filter criteria to automatically maintain the SET_CARGO contents.
+Filter criteria are defined by:</p>
+
+<ul>
+    <li><a href="##(SET_CARGO).FilterCoalitions">SET_CARGO.FilterCoalitions</a>: Builds the SET_CARGO with the cargos belonging to the coalition(s).</li>
+    <li><a href="##(SET_CARGO).FilterPrefixes">SET_CARGO.FilterPrefixes</a>: Builds the SET_CARGO with the cargos containing the prefix string(s).</li>
+    <li><a href="##(SET_CARGO).FilterTypes">SET_CARGO.FilterTypes</a>: Builds the SET_CARGO with the cargos belonging to the cargo type(s).</li>
+    <li><a href="##(SET_CARGO).FilterCountries">SET_CARGO.FilterCountries</a>: Builds the SET_CARGO with the cargos belonging to the country(ies).</li>
+</ul>
+
+<p>Once the filter criteria have been set for the SET_CARGO, you can start filtering using:</p>
+
+<ul>
+    <li><a href="##(SET_CARGO).FilterStart">SET_CARGO.FilterStart</a>: Starts the filtering of the cargos within the SET_CARGO.</li>
+</ul>
+
+<h2>SET_CARGO iterators</h2>
+
+<p>Once the filters have been defined and the SET<em>CARGO has been built, you can iterate the SET</em>CARGO with the available iterator methods.
+The iterator methods will walk the SET<em>CARGO set, and call for each cargo within the set a function that you provide.
+The following iterator methods are currently available within the SET</em>CARGO:</p>
+
+<ul>
+    <li><a href="##(SET_CARGO).ForEachCargo">SET_CARGO.ForEachCargo</a>: Calls a function for each cargo it finds within the SET_CARGO.</li>
+</ul>
 
 
 </dd>
@@ -2207,6 +2396,454 @@ self</p>
 				
 <p><em><a href="Core.Base.html##(BASE)">Core.Base#BASE</a>:</em>
 The Object found.</p>
+
+</dd>
+</dl>
+
+			<h2><a id="#(SET_CARGO)" >Type <code>SET_CARGO</code></a></h2>
+				<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_CARGO).AddCargosByName" >
+<strong>SET_CARGO:AddCargosByName(AddCargoNames)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Add CARGOs to SET_CARGO.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string AddCargoNames </em></code>: 
+A single name or an array of CARGO names.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+
+<p>self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_CARGO).AddInDatabase" >
+<strong>SET_CARGO:AddInDatabase(Event)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Handles the Database to check on an event (birth) that the Object was added in the Database.</p>
+
+	
+<p>This is required, because sometimes the <em>DATABASE birth event gets called later than the SET</em>BASE birth event!</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Event.html##(EVENTDATA)">Core.Event#EVENTDATA</a> Event </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return values</h3>
+			<ol>
+				<li>
+				
+<p><em>#string:</em>
+The name of the CARGO</p>
+
+				</li>
+				<li>
+				
+<p><em>#table:</em>
+The CARGO</p>
+
+				</li>
+			</ol>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_CARGO).FilterCoalitions" >
+<strong>SET_CARGO:FilterCoalitions(Coalitions)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Builds a set of cargos of coalitions.</p>
+
+	
+<p>Possible current coalitions are red, blue and neutral.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Coalitions </em></code>: 
+Can take the following values: "red", "blue", "neutral".</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET_CARGO)">#SET_CARGO</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_CARGO).FilterCountries" >
+<strong>SET_CARGO:FilterCountries(Countries)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Builds a set of cargos of defined countries.</p>
+
+	
+<p>Possible current countries are those known within DCS world.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Countries </em></code>: 
+Can take those country strings known within DCS world.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET_CARGO)">#SET_CARGO</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_CARGO).FilterPrefixes" >
+<strong>SET_CARGO:FilterPrefixes(Prefixes)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Builds a set of cargos of defined cargo prefixes.</p>
+
+	
+<p>All the cargos starting with the given prefixes will be included within the set.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Prefixes </em></code>: 
+The prefix of which the cargo name starts with.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET_CARGO)">#SET_CARGO</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_CARGO).FilterStart" >
+<strong>SET_CARGO:FilterStart()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Starts the filtering.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET_CARGO)">#SET_CARGO</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_CARGO).FilterTypes" >
+<strong>SET_CARGO:FilterTypes(Types)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Builds a set of cargos of defined cargo types.</p>
+
+	
+<p>Possible current types are those types known within DCS world.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Types </em></code>: 
+Can take those type strings known within DCS world.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET_CARGO)">#SET_CARGO</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_CARGO).FindCargo" >
+<strong>SET_CARGO:FindCargo(CargoName)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Finds a Cargo based on the Cargo Name.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string CargoName </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="Wrapper.Cargo.html##(CARGO)">Wrapper.Cargo#CARGO</a>:</em>
+The found Cargo.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_CARGO).FindInDatabase" >
+<strong>SET_CARGO:FindInDatabase(Event)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Handles the Database to check on any event that Object exists in the Database.</p>
+
+	
+<p>This is required, because sometimes the <em>DATABASE event gets called later than the SET</em>BASE event or vise versa!</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Event.html##(EVENTDATA)">Core.Event#EVENTDATA</a> Event </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return values</h3>
+			<ol>
+				<li>
+				
+<p><em>#string:</em>
+The name of the CARGO</p>
+
+				</li>
+				<li>
+				
+<p><em>#table:</em>
+The CARGO</p>
+
+				</li>
+			</ol>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_CARGO).FindNearestCargoFromPointVec2" >
+<strong>SET_CARGO:FindNearestCargoFromPointVec2(PointVec2)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Iterate the SET_CARGO while identifying the nearest <a href="Cargo.html##(CARGO)">Cargo#CARGO</a> from a <a href="Point.html##(POINT_VEC2)">Point#POINT_VEC2</a>.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Point.html##(POINT_VEC2)">Core.Point#POINT_VEC2</a> PointVec2 </em></code>: 
+A <a href="Point.html##(POINT_VEC2)">Point#POINT_VEC2</a> object from where to evaluate the closest <a href="Cargo.html##(CARGO)">Cargo#CARGO</a>.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="Wrapper.Cargo.html##(CARGO)">Wrapper.Cargo#CARGO</a>:</em>
+The closest <a href="Cargo.html##(CARGO)">Cargo#CARGO</a>.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_CARGO).ForEachCargo" >
+<strong>SET_CARGO:ForEachCargo(IteratorFunction, ...)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Iterate the SET_CARGO and call an interator function for each CARGO, providing the CARGO and optional parameters.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#function IteratorFunction </em></code>: 
+The function that will be called when there is an alive CARGO in the SET_CARGO. The function needs to accept a CARGO parameter.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> ... </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET_CARGO)">#SET_CARGO</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_CARGO).IsIncludeObject" >
+<strong>SET_CARGO:IsIncludeObject(MCargo)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="AI.AI_Cargo.html##(AI_CARGO)">AI.AI<em>Cargo#AI</em>CARGO</a> MCargo </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET_CARGO)">#SET_CARGO</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_CARGO).New" >
+<strong>SET_CARGO:New()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Creates a new SET_CARGO object, building a set of cargos belonging to a coalitions and categories.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET_CARGO)">#SET_CARGO</a>:</em>
+self</p>
+
+			<h3>Usage:</h3>
+		<pre class="example"><code>-- Define a new SET_CARGO Object. The DatabaseSet will contain a reference to all Cargos.
+DatabaseSet = SET_CARGO:New()</code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_CARGO).OnEventDeleteCargo" >
+<strong>SET_CARGO:OnEventDeleteCargo(EventData)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Handles the OnDead or OnCrash event for alive units set.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Event.html##(EVENTDATA)">Core.Event#EVENTDATA</a> EventData </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_CARGO).OnEventNewCargo" >
+<strong>SET_CARGO:OnEventNewCargo(EventData)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Handles the OnEventNewCargo event for the Set.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Event.html##(EVENTDATA)">Core.Event#EVENTDATA</a> EventData </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_CARGO).RemoveCargosByName" >
+<strong>SET_CARGO:RemoveCargosByName(RemoveCargoNames)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Remove CARGOs from SET_CARGO.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Cargo.html##(CARGO)">Wrapper.Cargo#CARGO</a> RemoveCargoNames </em></code>: 
+A single name or an array of CARGO names.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+
+<p>self</p>
 
 </dd>
 </dl>

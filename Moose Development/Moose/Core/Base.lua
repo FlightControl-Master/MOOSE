@@ -228,7 +228,8 @@ BASE = {
 -- @type FORMATION
 -- @field Cone A cone formation.
 FORMATION = {
-  Cone = "Cone" 
+  Cone = "Cone",
+  Vee = "Vee" 
 }
 
 

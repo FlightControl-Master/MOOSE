@@ -120,6 +120,21 @@ function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
   -- Handle when a player leaves a slot and goes back to spectators ... 
   -- The PlayerUnit will be UnAssigned from the Task.
   -- When there is no Unit left running the Task, the Task goes into Abort...
+  self:HandleEvent( EVENTS.MissionEnd,
+    --- @param #TASK self
+    -- @param Core.Event#EVENTDATA EventData
+    function( self, EventData )
+      local PlayerUnit = EventData.IniUnit
+      for MissionID, Mission in pairs( self:GetMissions() ) do
+        local Mission = Mission -- Tasking.Mission#MISSION
+        Mission:Stop()
+      end
+    end
+  )
+
+  -- Handle when a player leaves a slot and goes back to spectators ... 
+  -- The PlayerUnit will be UnAssigned from the Task.
+  -- When there is no Unit left running the Task, the Task goes into Abort...
   self:HandleEvent( EVENTS.PlayerLeaveUnit,
     --- @param #TASK self
     -- @param Core.Event#EVENTDATA EventData
@@ -127,7 +142,9 @@ function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
       local PlayerUnit = EventData.IniUnit
       for MissionID, Mission in pairs( self:GetMissions() ) do
         local Mission = Mission -- Tasking.Mission#MISSION
-        Mission:AbortUnit( PlayerUnit )
+        if Mission:IsOngoing() then
+          Mission:AbortUnit( PlayerUnit )
+        end
       end
     end
   )
@@ -257,8 +274,7 @@ end
 -- @param #sring Name (optional) The name of the Group used as a prefix for the message to the Group. If not provided, there will be nothing shown.
 function COMMANDCENTER:MessageToGroup( Message, TaskGroup, Name )
 
-  local Prefix = "@ Group"
-  Prefix = Prefix .. ( Name and " (" .. Name .. "): " or '' )
+  local Prefix = Name and "@ " .. Name .. ": " or "@ " .. TaskGroup:GetCallsign() .. ": "
   Message = Prefix .. Message 
   self:GetPositionable():MessageToGroup( Message , 20, TaskGroup, self:GetName() )
 

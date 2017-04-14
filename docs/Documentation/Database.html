@@ -80,6 +80,7 @@
 					<li><a href="Task.html">Task</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
 					<li><a href="Task_A2G_Dispatcher.html">Task_A2G_Dispatcher</a></li>
+					<li><a href="Task_Cargo.html">Task_Cargo</a></li>
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
 					<li><a href="Unit.html">Unit</a></li>
 					<li><a href="Utils.html">Utils</a></li>
@@ -102,12 +103,14 @@
 <p>Mission designers can use the DATABASE class to refer to:</p>
 
 <ul>
+    <li>STATICS</li>
     <li>UNITS</li>
     <li>GROUPS</li>
     <li>CLIENTS</li>
-    <li>AIRPORTS</li>
+    <li>AIRBASES</li>
     <li>PLAYERSJOINED</li>
     <li>PLAYERS</li>
+    <li>CARGOS</li>
 </ul>
 
 <p>On top, for internal MOOSE administration purposes, the DATBASE administers the Unit and Group TEMPLATES as defined within the Mission Editor.</p>
@@ -150,9 +153,15 @@ The following iterator methods are currently available within the DATABASE:</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DATABASE).AddAirbase">DATABASE:AddAirbase(DCSAirbaseName)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).AddAirbase">DATABASE:AddAirbase(AirbaseName)</a></td>
 		<td class="summary">
 <p>Adds a Airbase based on the Airbase Name in the DATABASE.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).AddCargo">DATABASE:AddCargo(CargoName, Cargo)</a></td>
+		<td class="summary">
+<p>Adds a Cargo based on the Cargo Name in the DATABASE.</p>
 </td>
 		</tr>
 		<tr>
@@ -186,6 +195,12 @@ The following iterator methods are currently available within the DATABASE:</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).CARGOS">DATABASE.CARGOS</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DATABASE).CLIENTS">DATABASE.CLIENTS</a></td>
 		<td class="summary">
 
@@ -210,9 +225,15 @@ The following iterator methods are currently available within the DATABASE:</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DATABASE).DeleteAirbase">DATABASE:DeleteAirbase(DCSAirbaseName)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).DeleteAirbase">DATABASE:DeleteAirbase(AirbaseName)</a></td>
 		<td class="summary">
 <p>Deletes a Airbase from the DATABASE based on the Airbase Name.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).DeleteCargo">DATABASE:DeleteCargo(CargoName)</a></td>
+		<td class="summary">
+<p>Deletes a Cargo from the DATABASE based on the Cargo Name.</p>
 </td>
 		</tr>
 		<tr>
@@ -236,7 +257,13 @@ The following iterator methods are currently available within the DATABASE:</p>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DATABASE).FindAirbase">DATABASE:FindAirbase(AirbaseName)</a></td>
 		<td class="summary">
-<p>Finds a AIRBASE based on the AirbaseName.</p>
+<p>Finds an AIRBASE based on the AirbaseName.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).FindCargo">DATABASE:FindCargo(CargoName)</a></td>
+		<td class="summary">
+<p>Finds an CARGO based on the CargoName.</p>
 </td>
 		</tr>
 		<tr>
@@ -267,6 +294,12 @@ The following iterator methods are currently available within the DATABASE:</p>
 		<td class="name" nowrap="nowrap"><a href="##(DATABASE).ForEach">DATABASE:ForEach(IteratorFunction, FinalizeFunction, arg, Set)</a></td>
 		<td class="summary">
 <p>Iterate the DATABASE and call an iterator function for the given set, providing the Object for each element within the set and optional parameters.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).ForEachCargo">DATABASE:ForEachCargo(IteratorFunction, ...)</a></td>
+		<td class="summary">
+<p>Iterate the DATABASE and call an iterator function for each CARGO, providing the CARGO object to the function and optional parameters.</p>
 </td>
 		</tr>
 		<tr>
@@ -381,6 +414,18 @@ The following iterator methods are currently available within the DATABASE:</p>
 		<td class="name" nowrap="nowrap"><a href="##(DATABASE).New">DATABASE:New()</a></td>
 		<td class="summary">
 <p>Creates a new DATABASE object, building a set of units belonging to a coalitions, categories, countries, types or with defined prefix names.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).OnEventDeleteCargo">DATABASE:OnEventDeleteCargo(EventData)</a></td>
+		<td class="summary">
+<p>Handles the OnEventDeleteCargo.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).OnEventNewCargo">DATABASE:OnEventNewCargo(EventData)</a></td>
+		<td class="summary">
+<p>Handles the OnEventNewCargo event.</p>
 </td>
 		</tr>
 		<tr>
@@ -539,7 +584,7 @@ The following iterator methods are currently available within the DATABASE:</p>
 <dt>
 
 <a id="#(DATABASE).AddAirbase" >
-<strong>DATABASE:AddAirbase(DCSAirbaseName)</strong>
+<strong>DATABASE:AddAirbase(AirbaseName)</strong>
 </a>
 </dt>
 <dd>
@@ -550,7 +595,35 @@ The following iterator methods are currently available within the DATABASE:</p>
 		<ul>
 				<li>
 				
-<p><code><em> DCSAirbaseName </em></code>: </p>
+<p><code><em>#string AirbaseName </em></code>: 
+The name of the airbase</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DATABASE).AddCargo" >
+<strong>DATABASE:AddCargo(CargoName, Cargo)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Adds a Cargo based on the Cargo Name in the DATABASE.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string CargoName </em></code>: 
+The name of the airbase</p>
+
+				</li>
+				<li>
+				
+<p><code><em> Cargo </em></code>: </p>
 
 				</li>
 		</ul>
@@ -670,6 +743,20 @@ The following iterator methods are currently available within the DATABASE:</p>
 <dt>
 
 		<em></em>
+<a id="#(DATABASE).CARGOS" >
+<strong>DATABASE.CARGOS</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
 <a id="#(DATABASE).CLIENTS" >
 <strong>DATABASE.CLIENTS</strong>
 </a>
@@ -726,7 +813,7 @@ The following iterator methods are currently available within the DATABASE:</p>
 <dt>
 
 <a id="#(DATABASE).DeleteAirbase" >
-<strong>DATABASE:DeleteAirbase(DCSAirbaseName)</strong>
+<strong>DATABASE:DeleteAirbase(AirbaseName)</strong>
 </a>
 </dt>
 <dd>
@@ -737,7 +824,30 @@ The following iterator methods are currently available within the DATABASE:</p>
 		<ul>
 				<li>
 				
-<p><code><em> DCSAirbaseName </em></code>: </p>
+<p><code><em>#string AirbaseName </em></code>: 
+The name of the airbase</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DATABASE).DeleteCargo" >
+<strong>DATABASE:DeleteCargo(CargoName)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Deletes a Cargo from the DATABASE based on the Cargo Name.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string CargoName </em></code>: 
+The name of the airbase</p>
 
 				</li>
 		</ul>
@@ -815,7 +925,7 @@ The following iterator methods are currently available within the DATABASE:</p>
 </dt>
 <dd>
 	
-<p>Finds a AIRBASE based on the AirbaseName.</p>
+<p>Finds an AIRBASE based on the AirbaseName.</p>
 
 		<h3>Parameter</h3>
 		<ul>
@@ -829,6 +939,32 @@ The following iterator methods are currently available within the DATABASE:</p>
 				
 <p><em><a href="Wrapper.Airbase.html##(AIRBASE)">Wrapper.Airbase#AIRBASE</a>:</em>
 The found AIRBASE.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DATABASE).FindCargo" >
+<strong>DATABASE:FindCargo(CargoName)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Finds an CARGO based on the CargoName.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string CargoName </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="Wrapper.Cargo.html##(CARGO)">Wrapper.Cargo#CARGO</a>:</em>
+The found CARGO.</p>
 
 </dd>
 </dl>
@@ -981,6 +1117,38 @@ self</p>
 		<dl class="function">
 <dt>
 
+<a id="#(DATABASE).ForEachCargo" >
+<strong>DATABASE:ForEachCargo(IteratorFunction, ...)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Iterate the DATABASE and call an iterator function for each CARGO, providing the CARGO object to the function and optional parameters.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#function IteratorFunction </em></code>: 
+The function that will be called for each object in the database. The function needs to accept a CLIENT parameter.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> ... </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(DATABASE)">#DATABASE</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(DATABASE).ForEachClient" >
 <strong>DATABASE:ForEachClient(IteratorFunction, ...)</strong>
 </a>
@@ -994,7 +1162,7 @@ self</p>
 				<li>
 				
 <p><code><em>#function IteratorFunction </em></code>: 
-The function that will be called when there is an alive player in the database. The function needs to accept a CLIENT parameter.</p>
+The function that will be called object in the database. The function needs to accept a CLIENT parameter.</p>
 
 				</li>
 				<li>
@@ -1026,7 +1194,7 @@ self</p>
 				<li>
 				
 <p><code><em>#function IteratorFunction </em></code>: 
-The function that will be called when there is an alive GROUP in the database. The function needs to accept a GROUP parameter.</p>
+The function that will be called for each object in the database. The function needs to accept a GROUP parameter.</p>
 
 				</li>
 				<li>
@@ -1058,7 +1226,7 @@ self</p>
 				<li>
 				
 <p><code><em>#function IteratorFunction </em></code>: 
-The function that will be called when there is an player in the database. The function needs to accept the player name.</p>
+The function that will be called for each object in the database. The function needs to accept the player name.</p>
 
 				</li>
 				<li>
@@ -1090,7 +1258,7 @@ self</p>
 				<li>
 				
 <p><code><em>#function IteratorFunction </em></code>: 
-The function that will be called when there is was a player in the database. The function needs to accept a UNIT parameter.</p>
+The function that will be called for each object in the database. The function needs to accept a UNIT parameter.</p>
 
 				</li>
 				<li>
@@ -1122,7 +1290,7 @@ self</p>
 				<li>
 				
 <p><code><em>#function IteratorFunction </em></code>: 
-The function that will be called when there is an alive UNIT in the database. The function needs to accept a UNIT parameter.</p>
+The function that will be called for each object in the database. The function needs to accept a UNIT parameter.</p>
 
 				</li>
 				<li>
@@ -1415,6 +1583,48 @@ self</p>
 		<pre class="example"><code>-- Define a new DATABASE Object. This DBObject will contain a reference to all Group and Unit Templates defined within the ME and the DCSRTE.
 DBObject = DATABASE:New()</code></pre>
 
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DATABASE).OnEventDeleteCargo" >
+<strong>DATABASE:OnEventDeleteCargo(EventData)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Handles the OnEventDeleteCargo.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Event.html##(EVENTDATA)">Core.Event#EVENTDATA</a> EventData </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DATABASE).OnEventNewCargo" >
+<strong>DATABASE:OnEventNewCargo(EventData)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Handles the OnEventNewCargo event.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Event.html##(EVENTDATA)">Core.Event#EVENTDATA</a> EventData </em></code>: </p>
+
+				</li>
+		</ul>
 </dd>
 </dl>
 		<dl class="function">

@@ -124,7 +124,7 @@ end
 -- @param Core.Base#BASE Object
 -- @return Core.Base#BASE The added BASE Object.
 function SET_BASE:Add( ObjectName, Object )
-  self:F2( ObjectName )
+  self:F( ObjectName )
 
   local t = { _ = Object }
 
@@ -2391,3 +2391,346 @@ function SET_AIRBASE:IsIncludeObject( MAirbase )
   self:T2( MAirbaseInclude )
   return MAirbaseInclude
 end
+
+--- @type SET_CARGO
+-- @extends Core.Set#SET_BASE
+
+--- # SET_CARGO class, extends @{Set#SET_BASE}
+-- 
+-- Mission designers can use the @{Set#SET_CARGO} class to build sets of cargos optionally belonging to certain:
+-- 
+--  * Coalitions
+--  * Types
+--  * Name or Prefix
+--  
+-- ## SET_CARGO constructor
+-- 
+-- Create a new SET_CARGO object with the @{#SET_CARGO.New} method:
+-- 
+--    * @{#SET_CARGO.New}: Creates a new SET_CARGO object.
+--   
+-- ## Add or Remove CARGOs from SET_CARGO 
+-- 
+-- CARGOs can be added and removed using the @{Set#SET_CARGO.AddCargosByName} and @{Set#SET_CARGO.RemoveCargosByName} respectively. 
+-- These methods take a single CARGO name or an array of CARGO names to be added or removed from SET_CARGO.
+-- 
+-- ## SET_CARGO filter criteria 
+-- 
+-- You can set filter criteria to automatically maintain the SET_CARGO contents.
+-- Filter criteria are defined by:
+-- 
+--    * @{#SET_CARGO.FilterCoalitions}: Builds the SET_CARGO with the cargos belonging to the coalition(s).
+--    * @{#SET_CARGO.FilterPrefixes}: Builds the SET_CARGO with the cargos containing the prefix string(s).
+--    * @{#SET_CARGO.FilterTypes}: Builds the SET_CARGO with the cargos belonging to the cargo type(s).
+--    * @{#SET_CARGO.FilterCountries}: Builds the SET_CARGO with the cargos belonging to the country(ies).
+--   
+-- Once the filter criteria have been set for the SET_CARGO, you can start filtering using:
+-- 
+--   * @{#SET_CARGO.FilterStart}: Starts the filtering of the cargos within the SET_CARGO.
+-- 
+-- ## SET_CARGO iterators
+-- 
+-- Once the filters have been defined and the SET_CARGO has been built, you can iterate the SET_CARGO with the available iterator methods.
+-- The iterator methods will walk the SET_CARGO set, and call for each cargo within the set a function that you provide.
+-- The following iterator methods are currently available within the SET_CARGO:
+-- 
+--   * @{#SET_CARGO.ForEachCargo}: Calls a function for each cargo it finds within the SET_CARGO.
+-- 
+-- @field #SET_CARGO SET_CARGO
+-- 
+SET_CARGO = {
+  ClassName = "SET_CARGO",
+  Cargos = {},
+  Filter = {
+    Coalitions = nil,
+    Types = nil,
+    Countries = nil,
+    ClientPrefixes = nil,
+  },
+  FilterMeta = {
+    Coalitions = {
+      red = coalition.side.RED,
+      blue = coalition.side.BLUE,
+      neutral = coalition.side.NEUTRAL,
+    },
+  },
+}
+
+
+--- Creates a new SET_CARGO object, building a set of cargos belonging to a coalitions and categories.
+-- @param #SET_CARGO self
+-- @return #SET_CARGO self
+-- @usage
+-- -- Define a new SET_CARGO Object. The DatabaseSet will contain a reference to all Cargos.
+-- DatabaseSet = SET_CARGO:New()
+function SET_CARGO:New()
+  -- Inherits from BASE
+  local self = BASE:Inherit( self, SET_BASE:New( _DATABASE.CARGOS ) )
+
+  return self
+end
+
+--- Add CARGOs to SET_CARGO.
+-- @param Core.Set#SET_CARGO self
+-- @param #string AddCargoNames A single name or an array of CARGO names.
+-- @return self
+function SET_CARGO:AddCargosByName( AddCargoNames )
+
+  local AddCargoNamesArray = ( type( AddCargoNames ) == "table" ) and AddCargoNames or { AddCargoNames }
+  
+  for AddCargoID, AddCargoName in pairs( AddCargoNamesArray ) do
+    self:Add( AddCargoName, CARGO:FindByName( AddCargoName ) )
+  end
+    
+  return self
+end
+
+--- Remove CARGOs from SET_CARGO.
+-- @param Core.Set#SET_CARGO self
+-- @param Wrapper.Cargo#CARGO RemoveCargoNames A single name or an array of CARGO names.
+-- @return self
+function SET_CARGO:RemoveCargosByName( RemoveCargoNames )
+
+  local RemoveCargoNamesArray = ( type( RemoveCargoNames ) == "table" ) and RemoveCargoNames or { RemoveCargoNames }
+  
+  for RemoveCargoID, RemoveCargoName in pairs( RemoveCargoNamesArray ) do
+    self:Remove( RemoveCargoName.CargoName )
+  end
+    
+  return self
+end
+
+
+--- Finds a Cargo based on the Cargo Name.
+-- @param #SET_CARGO self
+-- @param #string CargoName
+-- @return Wrapper.Cargo#CARGO The found Cargo.
+function SET_CARGO:FindCargo( CargoName )
+
+  local CargoFound = self.Set[CargoName]
+  return CargoFound
+end
+
+
+
+--- Builds a set of cargos of coalitions.
+-- Possible current coalitions are red, blue and neutral.
+-- @param #SET_CARGO self
+-- @param #string Coalitions Can take the following values: "red", "blue", "neutral".
+-- @return #SET_CARGO self
+function SET_CARGO:FilterCoalitions( Coalitions )
+  if not self.Filter.Coalitions then
+    self.Filter.Coalitions = {}
+  end
+  if type( Coalitions ) ~= "table" then
+    Coalitions = { Coalitions }
+  end
+  for CoalitionID, Coalition in pairs( Coalitions ) do
+    self.Filter.Coalitions[Coalition] = Coalition
+  end
+  return self
+end
+
+--- Builds a set of cargos of defined cargo types.
+-- Possible current types are those types known within DCS world.
+-- @param #SET_CARGO self
+-- @param #string Types Can take those type strings known within DCS world.
+-- @return #SET_CARGO self
+function SET_CARGO:FilterTypes( Types )
+  if not self.Filter.Types then
+    self.Filter.Types = {}
+  end
+  if type( Types ) ~= "table" then
+    Types = { Types }
+  end
+  for TypeID, Type in pairs( Types ) do
+    self.Filter.Types[Type] = Type
+  end
+  return self
+end
+
+
+--- Builds a set of cargos of defined countries.
+-- Possible current countries are those known within DCS world.
+-- @param #SET_CARGO self
+-- @param #string Countries Can take those country strings known within DCS world.
+-- @return #SET_CARGO self
+function SET_CARGO:FilterCountries( Countries )
+  if not self.Filter.Countries then
+    self.Filter.Countries = {}
+  end
+  if type( Countries ) ~= "table" then
+    Countries = { Countries }
+  end
+  for CountryID, Country in pairs( Countries ) do
+    self.Filter.Countries[Country] = Country
+  end
+  return self
+end
+
+
+--- Builds a set of cargos of defined cargo prefixes.
+-- All the cargos starting with the given prefixes will be included within the set.
+-- @param #SET_CARGO self
+-- @param #string Prefixes The prefix of which the cargo name starts with.
+-- @return #SET_CARGO self
+function SET_CARGO:FilterPrefixes( Prefixes )
+  if not self.Filter.CargoPrefixes then
+    self.Filter.CargoPrefixes = {}
+  end
+  if type( Prefixes ) ~= "table" then
+    Prefixes = { Prefixes }
+  end
+  for PrefixID, Prefix in pairs( Prefixes ) do
+    self.Filter.CargoPrefixes[Prefix] = Prefix
+  end
+  return self
+end
+
+
+
+--- Starts the filtering.
+-- @param #SET_CARGO self
+-- @return #SET_CARGO self
+function SET_CARGO:FilterStart()
+
+  if _DATABASE then
+    self:_FilterStart()
+  end
+
+  self:HandleEvent( EVENTS.NewCargo )
+  self:HandleEvent( EVENTS.DeleteCargo )
+  
+  return self
+end
+
+
+--- Handles the Database to check on an event (birth) that the Object was added in the Database.
+-- This is required, because sometimes the _DATABASE birth event gets called later than the SET_BASE birth event!
+-- @param #SET_CARGO self
+-- @param Core.Event#EVENTDATA Event
+-- @return #string The name of the CARGO
+-- @return #table The CARGO
+function SET_CARGO:AddInDatabase( Event )
+  self:F3( { Event } )
+
+  return Event.IniDCSUnitName, self.Database[Event.IniDCSUnitName]
+end
+
+--- Handles the Database to check on any event that Object exists in the Database.
+-- This is required, because sometimes the _DATABASE event gets called later than the SET_BASE event or vise versa!
+-- @param #SET_CARGO self
+-- @param Core.Event#EVENTDATA Event
+-- @return #string The name of the CARGO
+-- @return #table The CARGO
+function SET_CARGO:FindInDatabase( Event )
+  self:F3( { Event } )
+
+  return Event.IniDCSUnitName, self.Database[Event.IniDCSUnitName]
+end
+
+--- Iterate the SET_CARGO and call an interator function for each CARGO, providing the CARGO and optional parameters.
+-- @param #SET_CARGO self
+-- @param #function IteratorFunction The function that will be called when there is an alive CARGO in the SET_CARGO. The function needs to accept a CARGO parameter.
+-- @return #SET_CARGO self
+function SET_CARGO:ForEachCargo( IteratorFunction, ... )
+  self:F2( arg )
+  
+  self:ForEach( IteratorFunction, arg, self.Set )
+
+  return self
+end
+
+--- Iterate the SET_CARGO while identifying the nearest @{Cargo#CARGO} from a @{Point#POINT_VEC2}.
+-- @param #SET_CARGO self
+-- @param Core.Point#POINT_VEC2 PointVec2 A @{Point#POINT_VEC2} object from where to evaluate the closest @{Cargo#CARGO}.
+-- @return Wrapper.Cargo#CARGO The closest @{Cargo#CARGO}.
+function SET_CARGO:FindNearestCargoFromPointVec2( PointVec2 )
+  self:F2( PointVec2 )
+  
+  local NearestCargo = self:FindNearestObjectFromPointVec2( PointVec2 )
+  return NearestCargo
+end
+
+
+
+---
+-- @param #SET_CARGO self
+-- @param AI.AI_Cargo#AI_CARGO MCargo
+-- @return #SET_CARGO self
+function SET_CARGO:IsIncludeObject( MCargo )
+  self:F2( MCargo )
+
+  local MCargoInclude = true
+
+  if MCargo then
+    local MCargoName = MCargo:GetName()
+  
+    if self.Filter.Coalitions then
+      local MCargoCoalition = false
+      for CoalitionID, CoalitionName in pairs( self.Filter.Coalitions ) do
+        local CargoCoalitionID = MCargo:GetCoalition()
+        self:T3( { "Coalition:", CargoCoalitionID, self.FilterMeta.Coalitions[CoalitionName], CoalitionName } )
+        if self.FilterMeta.Coalitions[CoalitionName] and self.FilterMeta.Coalitions[CoalitionName] == CargoCoalitionID then
+          MCargoCoalition = true
+        end
+      end
+      self:T( { "Evaluated Coalition", MCargoCoalition } )
+      MCargoInclude = MCargoInclude and MCargoCoalition
+    end
+
+    if self.Filter.Types then
+      local MCargoType = false
+      for TypeID, TypeName in pairs( self.Filter.Types ) do
+        self:T3( { "Type:", MCargo:GetType(), TypeName } )
+        if TypeName == MCargo:GetType() then
+          MCargoType = true
+        end
+      end
+      self:T( { "Evaluated Type", MCargoType } )
+      MCargoInclude = MCargoInclude and MCargoType
+    end
+    
+    if self.Filter.CargoPrefixes then
+      local MCargoPrefix = false
+      for CargoPrefixId, CargoPrefix in pairs( self.Filter.CargoPrefixes ) do
+        self:T3( { "Prefix:", string.find( MCargo.Name, CargoPrefix, 1 ), CargoPrefix } )
+        if string.find( MCargo.Name, CargoPrefix, 1 ) then
+          MCargoPrefix = true
+        end
+      end
+      self:T( { "Evaluated Prefix", MCargoPrefix } )
+      MCargoInclude = MCargoInclude and MCargoPrefix
+    end
+  end
+    
+  self:T2( MCargoInclude )
+  return MCargoInclude
+end
+
+--- Handles the OnEventNewCargo event for the Set.
+-- @param #SET_CARGO self
+-- @param Core.Event#EVENTDATA EventData
+function SET_CARGO:OnEventNewCargo( EventData )
+
+  if EventData.Cargo then
+    if EventData.Cargo and self:IsIncludeObject( EventData.Cargo ) then
+      self:Add( EventData.Cargo.Name , EventData.Cargo  )
+    end
+  end
+end
+
+--- Handles the OnDead or OnCrash event for alive units set.
+-- @param #SET_CARGO self
+-- @param Core.Event#EVENTDATA EventData
+function SET_CARGO:OnEventDeleteCargo( EventData )
+  self:F3( { EventData } )
+
+  if EventData.Cargo then
+    local Cargo = _DATABASE:FindCargo( EventData.Cargo.Name )
+    if Cargo and Cargo.Name then
+      self:Remove( Cargo.Name )
+    end
+  end
+end
+

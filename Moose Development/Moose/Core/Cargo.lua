@@ -1,69 +1,31 @@
----Single-Player:**Yes** / Multi-Player:**Yes** / AI:**Yes** / Human:**No** / Types:**Ground** --  
--- **Management of logical cargo objects, that can be transported from and to transportation carriers.**
+--- **Core** -- Management of CARGO logistics, that can be transported from and to transportation carriers.
 --
--- ![Banner Image](..\Presentations\AI_CARGO\CARGO.JPG)
+-- ![Banner Image](..\Presentations\CARGO\Dia1.JPG)
 --
 -- ===
 -- 
 -- Cargo can be of various forms, always are composed out of ONE object ( one unit or one static or one slingload crate ):
 --
---   * AI_CARGO_UNIT, represented by a @{Unit} in a @{Group}: Cargo can be represented by a Unit in a Group. Destruction of the Unit will mean that the cargo is lost.
---   * CARGO_STATIC, represented by a @{Static}: Cargo can be represented by a Static. Destruction of the Static will mean that the cargo is lost.
---   * AI_CARGO_PACKAGE, contained in a @{Unit} of a @{Group}: Cargo can be contained within a Unit of a Group. The cargo can be **delivered** by the @{Unit}. If the Unit is destroyed, the cargo will be destroyed also.
---   * AI_CARGO_PACKAGE, Contained in a @{Static}: Cargo can be contained within a Static. The cargo can be **collected** from the @Static. If the @{Static} is destroyed, the cargo will be destroyed.
---   * CARGO_SLINGLOAD, represented by a @{Cargo} that is transportable: Cargo can be represented by a Cargo object that is transportable. Destruction of the Cargo will mean that the cargo is lost.
+--   * CARGO_UNIT, represented by a @{Unit} in a singleton @{Group}: Cargo can be represented by a Unit in a Group. a CARGO_UNIT is representable...
+--   * CARGO_GROUP, represented by a @{Group}. A CARGO_GROUP is reportable...
 --   
---   * AI_CARGO_GROUPED, represented by a Group of CARGO_UNITs.
+-- ====
 -- 
--- # 1) @{#AI_CARGO} class, extends @{Fsm#FSM_PROCESS}
+-- # Demo Missions
 -- 
--- The @{#AI_CARGO} class defines the core functions that defines a cargo object within MOOSE.
--- A cargo is a logical object defined that is available for transport, and has a life status within a simulation.
+-- ### [CARGO Demo Missions source code]()
+-- 
+-- ### [CARGO Demo Missions, only for beta testers]()
 --
--- The AI_CARGO is a state machine: it manages the different events and states of the cargo.
--- All derived classes from AI_CARGO follow the same state machine, expose the same cargo event functions, and provide the same cargo states.
+-- ### [ALL Demo Missions pack of the last release](https://github.com/FlightControl-Master/MOOSE_MISSIONS/releases)
 -- 
--- ## 1.2.1) AI_CARGO Events:
+-- ====
 -- 
---   * @{#AI_CARGO.Board}( ToCarrier ):  Boards the cargo to a carrier.
---   * @{#AI_CARGO.Load}( ToCarrier ): Loads the cargo into a carrier, regardless of its position.
---   * @{#AI_CARGO.UnBoard}( ToPointVec2 ): UnBoard the cargo from a carrier. This will trigger a movement of the cargo to the option ToPointVec2.
---   * @{#AI_CARGO.UnLoad}( ToPointVec2 ): UnLoads the cargo from a carrier.
---   * @{#AI_CARGO.Dead}( Controllable ): The cargo is dead. The cargo process will be ended.
+-- # YouTube Channel
 -- 
--- ## 1.2.2) AI_CARGO States:
+-- ### [SPAWNSTATIC YouTube Channel]()
 -- 
---   * **UnLoaded**: The cargo is unloaded from a carrier.
---   * **Boarding**: The cargo is currently boarding (= running) into a carrier.
---   * **Loaded**: The cargo is loaded into a carrier.
---   * **UnBoarding**: The cargo is currently unboarding (=running) from a carrier.
---   * **Dead**: The cargo is dead ...
---   * **End**: The process has come to an end.
---   
--- ## 1.2.3) AI_CARGO state transition methods:
--- 
--- State transition functions can be set **by the mission designer** customizing or improving the behaviour of the state.
--- There are 2 moments when state transition methods will be called by the state machine:
--- 
---   * **Leaving** the state. 
---     The state transition method needs to start with the name **OnLeave + the name of the state**. 
---     If the state transition method returns false, then the processing of the state transition will not be done!
---     If you want to change the behaviour of the AIControllable at this event, return false, 
---     but then you'll need to specify your own logic using the AIControllable!
---   
---   * **Entering** the state. 
---     The state transition method needs to start with the name **OnEnter + the name of the state**. 
---     These state transition methods need to provide a return value, which is specified at the function description.
--- 
--- # 2) #AI_CARGO_UNIT class
--- 
--- The AI_CARGO_UNIT class defines a cargo that is represented by a UNIT object within the simulator, and can be transported by a carrier.
--- Use the event functions as described above to Load, UnLoad, Board, UnBoard the AI_CARGO_UNIT objects to and from carriers.
--- 
--- # 5) #AI_CARGO_GROUPED class
---
--- The AI_CARGO_GROUPED class defines a cargo that is represented by a group of UNIT objects within the simulator, and can be transported by a carrier.
--- Use the event functions as described above to Load, UnLoad, Board, UnBoard the AI_CARGO_UNIT objects to and from carriers.
+-- ====
 -- 
 -- This module is still under construction, but is described above works already, and will keep working ...
 -- 
@@ -75,30 +37,32 @@
 
 --- Boards the cargo to a Carrier. The event will create a movement (= running or driving) of the cargo to the Carrier.
 -- The cargo must be in the **UnLoaded** state.
--- @function [parent=#AI_CARGO] Board
--- @param #AI_CARGO self
+-- @function [parent=#CARGO] Board
+-- @param #CARGO self
 -- @param Wrapper.Controllable#CONTROLLABLE ToCarrier The Carrier that will hold the cargo.
+-- @param #number NearRadius The radius when the cargo will board the Carrier (to avoid collision).
 
 --- Boards the cargo to a Carrier. The event will create a movement (= running or driving) of the cargo to the Carrier.
 -- The cargo must be in the **UnLoaded** state.
--- @function [parent=#AI_CARGO] __Board
--- @param #AI_CARGO self
+-- @function [parent=#CARGO] __Board
+-- @param #CARGO self
 -- @param #number DelaySeconds The amount of seconds to delay the action.
 -- @param Wrapper.Controllable#CONTROLLABLE ToCarrier The Carrier that will hold the cargo.
+-- @param #number NearRadius The radius when the cargo will board the Carrier (to avoid collision).
 
 
 -- UnBoard
 
 --- UnBoards the cargo to a Carrier. The event will create a movement (= running or driving) of the cargo from the Carrier.
 -- The cargo must be in the **Loaded** state.
--- @function [parent=#AI_CARGO] UnBoard
--- @param #AI_CARGO self
+-- @function [parent=#CARGO] UnBoard
+-- @param #CARGO self
 -- @param Core.Point#POINT_VEC2 ToPointVec2 (optional) @{Point#POINT_VEC2) to where the cargo should run after onboarding. If not provided, the cargo will run to 60 meters behind the Carrier location.
 
 --- UnBoards the cargo to a Carrier. The event will create a movement (= running or driving) of the cargo from the Carrier.
 -- The cargo must be in the **Loaded** state.
--- @function [parent=#AI_CARGO] __UnBoard
--- @param #AI_CARGO self
+-- @function [parent=#CARGO] __UnBoard
+-- @param #CARGO self
 -- @param #number DelaySeconds The amount of seconds to delay the action.
 -- @param Core.Point#POINT_VEC2 ToPointVec2 (optional) @{Point#POINT_VEC2) to where the cargo should run after onboarding. If not provided, the cargo will run to 60 meters behind the Carrier location.
 
@@ -107,14 +71,14 @@
 
 --- Loads the cargo to a Carrier. The event will load the cargo into the Carrier regardless of its position. There will be no movement simulated of the cargo loading.
 -- The cargo must be in the **UnLoaded** state.
--- @function [parent=#AI_CARGO] Load
--- @param #AI_CARGO self
+-- @function [parent=#CARGO] Load
+-- @param #CARGO self
 -- @param Wrapper.Controllable#CONTROLLABLE ToCarrier The Carrier that will hold the cargo.
 
 --- Loads the cargo to a Carrier. The event will load the cargo into the Carrier regardless of its position. There will be no movement simulated of the cargo loading.
 -- The cargo must be in the **UnLoaded** state.
--- @function [parent=#AI_CARGO] __Load
--- @param #AI_CARGO self
+-- @function [parent=#CARGO] __Load
+-- @param #CARGO self
 -- @param #number DelaySeconds The amount of seconds to delay the action.
 -- @param Wrapper.Controllable#CONTROLLABLE ToCarrier The Carrier that will hold the cargo.
 
@@ -123,14 +87,14 @@
 
 --- UnLoads the cargo to a Carrier. The event will unload the cargo from the Carrier. There will be no movement simulated of the cargo loading.
 -- The cargo must be in the **Loaded** state.
--- @function [parent=#AI_CARGO] UnLoad
--- @param #AI_CARGO self
+-- @function [parent=#CARGO] UnLoad
+-- @param #CARGO self
 -- @param Core.Point#POINT_VEC2 ToPointVec2 (optional) @{Point#POINT_VEC2) to where the cargo will be placed after unloading. If not provided, the cargo will be placed 60 meters behind the Carrier location.
 
 --- UnLoads the cargo to a Carrier. The event will unload the cargo from the Carrier. There will be no movement simulated of the cargo loading.
 -- The cargo must be in the **Loaded** state.
--- @function [parent=#AI_CARGO] __UnLoad
--- @param #AI_CARGO self
+-- @function [parent=#CARGO] __UnLoad
+-- @param #CARGO self
 -- @param #number DelaySeconds The amount of seconds to delay the action.
 -- @param Core.Point#POINT_VEC2 ToPointVec2 (optional) @{Point#POINT_VEC2) to where the cargo will be placed after unloading. If not provided, the cargo will be placed 60 meters behind the Carrier location.
 
@@ -138,46 +102,47 @@
 
 -- UnLoaded
 
---- @function [parent=#AI_CARGO] OnLeaveUnLoaded
--- @param #AI_CARGO self
+--- @function [parent=#CARGO] OnLeaveUnLoaded
+-- @param #CARGO self
 -- @param Wrapper.Controllable#CONTROLLABLE Controllable
 -- @return #boolean
 
---- @function [parent=#AI_CARGO] OnEnterUnLoaded
--- @param #AI_CARGO self
+--- @function [parent=#CARGO] OnEnterUnLoaded
+-- @param #CARGO self
 -- @param Wrapper.Controllable#CONTROLLABLE Controllable
 
 -- Loaded
 
---- @function [parent=#AI_CARGO] OnLeaveLoaded
--- @param #AI_CARGO self
+--- @function [parent=#CARGO] OnLeaveLoaded
+-- @param #CARGO self
 -- @param Wrapper.Controllable#CONTROLLABLE Controllable
 -- @return #boolean
 
---- @function [parent=#AI_CARGO] OnEnterLoaded
--- @param #AI_CARGO self
+--- @function [parent=#CARGO] OnEnterLoaded
+-- @param #CARGO self
 -- @param Wrapper.Controllable#CONTROLLABLE Controllable
 
 -- Boarding
 
---- @function [parent=#AI_CARGO] OnLeaveBoarding
--- @param #AI_CARGO self
+--- @function [parent=#CARGO] OnLeaveBoarding
+-- @param #CARGO self
 -- @param Wrapper.Controllable#CONTROLLABLE Controllable
 -- @return #boolean
 
---- @function [parent=#AI_CARGO] OnEnterBoarding
--- @param #AI_CARGO self
+--- @function [parent=#CARGO] OnEnterBoarding
+-- @param #CARGO self
 -- @param Wrapper.Controllable#CONTROLLABLE Controllable
+-- @param #number NearRadius The radius when the cargo will board the Carrier (to avoid collision).
 
 -- UnBoarding
 
---- @function [parent=#AI_CARGO] OnLeaveUnBoarding
--- @param #AI_CARGO self
+--- @function [parent=#CARGO] OnLeaveUnBoarding
+-- @param #CARGO self
 -- @param Wrapper.Controllable#CONTROLLABLE Controllable
 -- @return #boolean
 
---- @function [parent=#AI_CARGO] OnEnterUnBoarding
--- @param #AI_CARGO self
+--- @function [parent=#CARGO] OnEnterUnBoarding
+-- @param #CARGO self
 -- @param Wrapper.Controllable#CONTROLLABLE Controllable
 
 
@@ -185,14 +150,13 @@
 
 CARGOS = {}
 
-do -- AI_CARGO
+do -- CARGO
 
-  --- @type AI_CARGO
+  --- @type CARGO
   -- @extends Core.Fsm#FSM_PROCESS
   -- @field #string Type A string defining the type of the cargo. eg. Engineers, Equipment, Screwdrivers.
   -- @field #string Name A string defining the name of the cargo. The name is the unique identifier of the cargo.
   -- @field #number Weight A number defining the weight of the cargo. The weight is expressed in kg.
-  -- @field #number ReportRadius (optional) A number defining the radius in meters when the cargo is signalling or reporting to a Carrier.
   -- @field #number NearRadius (optional) A number defining the radius in meters when the cargo is near to a Carrier, so that it can be loaded.
   -- @field Wrapper.Controllable#CONTROLLABLE CargoObject The alive DCS object representing the cargo. This value can be nil, meaning, that the cargo is not represented anywhere...
   -- @field Wrapper.Controllable#CONTROLLABLE CargoCarrier The alive DCS object carrying the cargo. This value can be nil, meaning, that the cargo is not contained anywhere...
@@ -200,8 +164,51 @@ do -- AI_CARGO
   -- @field #boolean Moveable This flag defines if the cargo is moveable.
   -- @field #boolean Representable This flag defines if the cargo can be represented by a DCS Unit.
   -- @field #boolean Containable This flag defines if the cargo can be contained within a DCS Unit.
-  AI_CARGO = {
-    ClassName = "AI_CARGO",
+  
+  --- # CARGO class, extends @{Fsm#FSM_PROCESS}
+  -- 
+  -- The CARGO class defines the core functions that defines a cargo object within MOOSE.
+  -- A cargo is a logical object defined that is available for transport, and has a life status within a simulation.
+  --
+  -- The CARGO is a state machine: it manages the different events and states of the cargo.
+  -- All derived classes from CARGO follow the same state machine, expose the same cargo event functions, and provide the same cargo states.
+  -- 
+  -- ## CARGO Events:
+  -- 
+  --   * @{#CARGO.Board}( ToCarrier ):  Boards the cargo to a carrier.
+  --   * @{#CARGO.Load}( ToCarrier ): Loads the cargo into a carrier, regardless of its position.
+  --   * @{#CARGO.UnBoard}( ToPointVec2 ): UnBoard the cargo from a carrier. This will trigger a movement of the cargo to the option ToPointVec2.
+  --   * @{#CARGO.UnLoad}( ToPointVec2 ): UnLoads the cargo from a carrier.
+  --   * @{#CARGO.Dead}( Controllable ): The cargo is dead. The cargo process will be ended.
+  -- 
+  -- ## CARGO States:
+  -- 
+  --   * **UnLoaded**: The cargo is unloaded from a carrier.
+  --   * **Boarding**: The cargo is currently boarding (= running) into a carrier.
+  --   * **Loaded**: The cargo is loaded into a carrier.
+  --   * **UnBoarding**: The cargo is currently unboarding (=running) from a carrier.
+  --   * **Dead**: The cargo is dead ...
+  --   * **End**: The process has come to an end.
+  --   
+  -- ## CARGO state transition methods:
+  -- 
+  -- State transition functions can be set **by the mission designer** customizing or improving the behaviour of the state.
+  -- There are 2 moments when state transition methods will be called by the state machine:
+  -- 
+  --   * **Leaving** the state. 
+  --     The state transition method needs to start with the name **OnLeave + the name of the state**. 
+  --     If the state transition method returns false, then the processing of the state transition will not be done!
+  --     If you want to change the behaviour of the AIControllable at this event, return false, 
+  --     but then you'll need to specify your own logic using the AIControllable!
+  --   
+  --   * **Entering** the state. 
+  --     The state transition method needs to start with the name **OnEnter + the name of the state**. 
+  --     These state transition methods need to provide a return value, which is specified at the function description.
+  --
+  -- @field #CARGO CARGO
+  --
+  CARGO = {
+    ClassName = "CARGO",
     Type = nil,
     Name = nil,
     Weight = nil,
@@ -213,22 +220,21 @@ do -- AI_CARGO
     Containable = false,
   }
 
---- @type AI_CARGO.CargoObjects
+--- @type CARGO.CargoObjects
 -- @map < #string, Wrapper.Positionable#POSITIONABLE > The alive POSITIONABLE objects representing the the cargo.
 
 
---- AI_CARGO Constructor. This class is an abstract class and should not be instantiated.
--- @param #AI_CARGO self
+--- CARGO Constructor. This class is an abstract class and should not be instantiated.
+-- @param #CARGO self
 -- @param #string Type
 -- @param #string Name
 -- @param #number Weight
--- @param #number ReportRadius (optional)
 -- @param #number NearRadius (optional)
--- @return #AI_CARGO
-function AI_CARGO:New( Type, Name, Weight, ReportRadius, NearRadius )
+-- @return #CARGO
+function CARGO:New( Type, Name, Weight )
 
-  local self = BASE:Inherit( self, FSM:New() ) -- Core.Fsm#FSM_CONTROLLABLE
-  self:F( { Type, Name, Weight, ReportRadius, NearRadius } )
+  local self = BASE:Inherit( self, FSM:New() ) -- Core.Fsm#FSM
+  self:F( { Type, Name, Weight } )
   
   self:SetStartState( "UnLoaded" )
   self:AddTransition( "UnLoaded", "Board", "Boarding" )
@@ -244,8 +250,6 @@ function AI_CARGO:New( Type, Name, Weight, ReportRadius, NearRadius )
   self.Type = Type
   self.Name = Name
   self.Weight = Weight
-  self.ReportRadius = ReportRadius
-  self.NearRadius = NearRadius
   self.CargoObject = nil
   self.CargoCarrier = nil
   self.Representable = false
@@ -253,126 +257,290 @@ function AI_CARGO:New( Type, Name, Weight, ReportRadius, NearRadius )
   self.Moveable = false
   self.Containable = false
 
-
   self.CargoScheduler = SCHEDULER:New()
 
   CARGOS[self.Name] = self
 
+  self:SetEventPriority( 5 )
+
   return self
 end
 
+--- Get the name of the Cargo.
+-- @param #CARGO self
+-- @return #string The name of the Cargo.
+function CARGO:GetName()
+  return self.Name
+end
 
---- Template method to spawn a new representation of the AI_CARGO in the simulator.
--- @param #AI_CARGO self
--- @return #AI_CARGO
-function AI_CARGO:Spawn( PointVec2 )
+--- Get the type of the Cargo.
+-- @param #CARGO self
+-- @return #string The type of the Cargo.
+function CARGO:GetType()
+  return self.Type
+end
+
+--- Check if cargo is loaded.
+-- @param #CARGO self
+-- @return #boolean true if loaded
+function CARGO:IsLoaded()
+  return self:Is( "Loaded" )
+end
+
+--- Check if cargo is unloaded.
+-- @param #CARGO self
+-- @return #boolean true if unloaded
+function CARGO:IsUnLoaded()
+  return self:Is( "UnLoaded" )
+end
+
+
+--- Template method to spawn a new representation of the CARGO in the simulator.
+-- @param #CARGO self
+-- @return #CARGO
+function CARGO:Spawn( PointVec2 )
   self:F()
 
 end
 
 
+
+--- Check if Cargo is the given @{Zone}.
+-- @param #CARGO self
+-- @param Core.Zone#ZONE_BASE Zone
+-- @return #boolean **true** if cargo is in the Zone, **false** if cargo is not in the Zone.
+function CARGO:IsInZone( Zone )
+  self:F( { Zone } )
+
+  if self:IsLoaded() then
+    return Zone:IsPointVec2InZone( self.CargoCarrier:GetPointVec2() )
+  else
+    return Zone:IsPointVec2InZone( self.CargoObject:GetPointVec2() )
+  end  
+  
+  return nil
+
+end
+
+
 --- Check if CargoCarrier is near the Cargo to be Loaded.
--- @param #AI_CARGO self
+-- @param #CARGO self
 -- @param Core.Point#POINT_VEC2 PointVec2
+-- @param #number NearRadius The radius when the cargo will board the Carrier (to avoid collision).
 -- @return #boolean
-function AI_CARGO:IsNear( PointVec2 )
+function CARGO:IsNear( PointVec2, NearRadius )
   self:F( { PointVec2 } )
 
   local Distance = PointVec2:DistanceFromPointVec2( self.CargoObject:GetPointVec2() )
   self:T( Distance )
   
-  if Distance <= self.NearRadius then
+  if Distance <= NearRadius then
     return true
   else
     return false
   end
 end
 
+--- Get the current PointVec2 of the cargo.
+-- @param #CARGO self
+-- @return Core.Point#POINT_VEC2
+function CARGO:GetPointVec2()
+  return self.CargoObject:GetPointVec2()
 end
 
-do -- AI_CARGO_REPRESENTABLE
-
-  --- @type AI_CARGO_REPRESENTABLE
-  -- @extends #AI_CARGO
-  AI_CARGO_REPRESENTABLE = {
-    ClassName = "AI_CARGO_REPRESENTABLE"
-  }
-
---- AI_CARGO_REPRESENTABLE Constructor.
--- @param #AI_CARGO_REPRESENTABLE self
--- @param Wrapper.Controllable#Controllable CargoObject
--- @param #string Type
--- @param #string Name
--- @param #number Weight
--- @param #number ReportRadius (optional)
--- @param #number NearRadius (optional)
--- @return #AI_CARGO_REPRESENTABLE
-function AI_CARGO_REPRESENTABLE:New( CargoObject, Type, Name, Weight, ReportRadius, NearRadius )
-  local self = BASE:Inherit( self, AI_CARGO:New( Type, Name, Weight, ReportRadius, NearRadius ) ) -- #AI_CARGO
-  self:F( { Type, Name, Weight, ReportRadius, NearRadius } )
-
+--- Set the weight of the cargo.
+-- @param #CARGO self
+-- @param #number Weight The weight in kg.
+-- @return #CARGO
+function CARGO:SetWeight( Weight )
+  self.Weight = Weight
   return self
 end
 
---- Route a cargo unit to a PointVec2.
--- @param #AI_CARGO_REPRESENTABLE self
--- @param Core.Point#POINT_VEC2 ToPointVec2
--- @param #number Speed
--- @return #AI_CARGO_REPRESENTABLE
-function AI_CARGO_REPRESENTABLE:RouteTo( ToPointVec2, Speed )
-  self:F2( ToPointVec2 )
-
-  local Points = {}
-
-  local PointStartVec2 = self.CargoObject:GetPointVec2()
-
-  Points[#Points+1] = PointStartVec2:RoutePointGround( Speed )
-  Points[#Points+1] = ToPointVec2:RoutePointGround( Speed )
-
-  local TaskRoute = self.CargoObject:TaskRoute( Points )
-  self.CargoObject:SetTask( TaskRoute, 2 )
-  return self  
 end
 
-end -- AI_CARGO
 
-do -- AI_CARGO_UNIT
+do -- CARGO_REPRESENTABLE
 
-  --- @type AI_CARGO_UNIT
-  -- @extends #AI_CARGO_REPRESENTABLE
-  AI_CARGO_UNIT = {
-    ClassName = "AI_CARGO_UNIT"
+  --- @type CARGO_REPRESENTABLE
+  -- @extends #CARGO
+  CARGO_REPRESENTABLE = {
+    ClassName = "CARGO_REPRESENTABLE"
   }
 
---- AI_CARGO_UNIT Constructor.
--- @param #AI_CARGO_UNIT self
+  --- CARGO_REPRESENTABLE Constructor.
+  -- @param #CARGO_REPRESENTABLE self
+  -- @param Wrapper.Controllable#Controllable CargoObject
+  -- @param #string Type
+  -- @param #string Name
+  -- @param #number Weight
+  -- @param #number ReportRadius (optional)
+  -- @param #number NearRadius (optional)
+  -- @return #CARGO_REPRESENTABLE
+  function CARGO_REPRESENTABLE:New( CargoObject, Type, Name, Weight, ReportRadius, NearRadius )
+    local self = BASE:Inherit( self, CARGO:New( Type, Name, Weight, ReportRadius, NearRadius ) ) -- #CARGO
+    self:F( { Type, Name, Weight, ReportRadius, NearRadius } )
+  
+    return self
+  end
+  
+  --- Route a cargo unit to a PointVec2.
+  -- @param #CARGO_REPRESENTABLE self
+  -- @param Core.Point#POINT_VEC2 ToPointVec2
+  -- @param #number Speed
+  -- @return #CARGO_REPRESENTABLE
+  function CARGO_REPRESENTABLE:RouteTo( ToPointVec2, Speed )
+    self:F2( ToPointVec2 )
+  
+    local Points = {}
+  
+    local PointStartVec2 = self.CargoObject:GetPointVec2()
+  
+    Points[#Points+1] = PointStartVec2:RoutePointGround( Speed )
+    Points[#Points+1] = ToPointVec2:RoutePointGround( Speed )
+  
+    local TaskRoute = self.CargoObject:TaskRoute( Points )
+    self.CargoObject:SetTask( TaskRoute, 2 )
+    return self  
+  end
+  
+  
+end -- CARGO_REPRESENTABLE
+
+  do -- CARGO_REPORTABLE
+  
+    --- @type CARGO_REPORTABLE
+    -- @extends #CARGO
+    CARGO_REPORTABLE = {
+      ClassName = "CARGO_REPORTABLE"
+    }
+  
+  --- CARGO_REPORTABLE Constructor.
+  -- @param #CARGO_REPORTABLE self
+  -- @param Wrapper.Controllable#Controllable CargoObject
+  -- @param #string Type
+  -- @param #string Name
+  -- @param #number Weight
+  -- @param #number ReportRadius (optional)
+  -- @param #number NearRadius (optional)
+  -- @return #CARGO_REPORTABLE
+  function CARGO_REPORTABLE:New( CargoObject, Type, Name, Weight, ReportRadius )
+    local self = BASE:Inherit( self, CARGO:New( Type, Name, Weight ) ) -- #CARGO_REPORTABLE
+    self:F( { Type, Name, Weight, ReportRadius } )
+  
+    self.ReportRadius = ReportRadius or 1000
+    self.CargoObject = CargoObject
+  
+    return self
+  end
+  
+  --- Check if CargoCarrier is in the ReportRadius for the Cargo to be Loaded.
+  -- @param #CARGO_REPORTABLE self
+  -- @param Core.Point#POINT_VEC2 PointVec2
+  -- @return #boolean
+  function CARGO_REPORTABLE:IsInRadius( PointVec2 )
+    self:F( { PointVec2 } )
+  
+    local Distance = 0
+    if self:IsLoaded() then
+      Distance = PointVec2:DistanceFromPointVec2( self.CargoCarrier:GetPointVec2() )
+    else
+      Distance = PointVec2:DistanceFromPointVec2( self.CargoObject:GetPointVec2() )
+    end
+    self:T( Distance )
+    
+    if Distance <= self.ReportRadius then
+      return true
+    else
+      return false
+    end
+  
+  
+  end
+
+  --- Send a CC message to a GROUP.
+  -- @param #COMMANDCENTER self
+  -- @param #string Message
+  -- @param Wrapper.Group#GROUP TaskGroup
+  -- @param #sring Name (optional) The name of the Group used as a prefix for the message to the Group. If not provided, there will be nothing shown.
+  function CARGO_REPORTABLE:MessageToGroup( Message, TaskGroup, Name )
+  
+    local Prefix = Name and "@ " .. Name .. ": " or "@ " .. TaskGroup:GetCallsign() .. ": "
+    Message = Prefix .. Message 
+    MESSAGE:New( Message, 20, "Cargo: " .. self:GetName() ):ToGroup( TaskGroup )
+  
+  end
+
+  --- Get the range till cargo will board.
+  -- @param #CARGO self
+  -- @return #number The range till cargo will board.
+  function CARGO_REPORTABLE:GetBoardingRange()
+    return self.ReportRadius
+  end
+
+end
+
+do -- CARGO_UNIT
+
+  --- @type CARGO_UNIT
+  -- @extends #CARGO_REPRESENTABLE
+  
+  --- # CARGO\_UNIT class, extends @{#CARGO_REPRESENTABLE}
+  -- 
+  -- The CARGO\_UNIT class defines a cargo that is represented by a UNIT object within the simulator, and can be transported by a carrier.
+  -- Use the event functions as described above to Load, UnLoad, Board, UnBoard the CARGO\_UNIT objects to and from carriers.
+  -- 
+  -- ===
+  -- 
+  -- @field #CARGO_UNIT CARGO_UNIT
+  --
+  CARGO_UNIT = {
+    ClassName = "CARGO_UNIT"
+  }
+
+--- CARGO_UNIT Constructor.
+-- @param #CARGO_UNIT self
 -- @param Wrapper.Unit#UNIT CargoUnit
 -- @param #string Type
 -- @param #string Name
 -- @param #number Weight
 -- @param #number ReportRadius (optional)
 -- @param #number NearRadius (optional)
--- @return #AI_CARGO_UNIT
-function AI_CARGO_UNIT:New( CargoUnit, Type, Name, Weight, ReportRadius, NearRadius )
-  local self = BASE:Inherit( self, AI_CARGO_REPRESENTABLE:New( CargoUnit, Type, Name, Weight, ReportRadius, NearRadius ) ) -- #AI_CARGO_UNIT
-  self:F( { Type, Name, Weight, ReportRadius, NearRadius } )
+-- @return #CARGO_UNIT
+function CARGO_UNIT:New( CargoUnit, Type, Name, Weight, NearRadius )
+  local self = BASE:Inherit( self, CARGO_REPRESENTABLE:New( CargoUnit, Type, Name, Weight, NearRadius ) ) -- #CARGO_UNIT
+  self:F( { Type, Name, Weight, NearRadius } )
 
   self:T( CargoUnit )
   self.CargoObject = CargoUnit
 
   self:T( self.ClassName )
 
+
+  return self
+end
+
+--- CARGO_UNIT Destructor.
+-- @param #CARGO_UNIT self
+-- @return #CARGO_UNIT
+function CARGO_UNIT:Destroy()
+
+  -- Cargo objects are deleted from the _DATABASE and SET_CARGO objects.
+  _EVENTDISPATCHER:CreateEventDeleteCargo( self )
+
   return self
 end
 
 --- Enter UnBoarding State.
--- @param #AI_CARGO_UNIT self
+-- @param #CARGO_UNIT self
 -- @param #string Event
 -- @param #string From
 -- @param #string To
 -- @param Core.Point#POINT_VEC2 ToPointVec2
-function AI_CARGO_UNIT:onenterUnBoarding( From, Event, To, ToPointVec2 )
+function CARGO_UNIT:onenterUnBoarding( From, Event, To, ToPointVec2, NearRadius )
   self:F()
+
+  NearRadius = NearRadius or 25
 
   local Angle = 180
   local Speed = 10
@@ -404,30 +572,32 @@ function AI_CARGO_UNIT:onenterUnBoarding( From, Event, To, ToPointVec2 )
       local TaskRoute = self.CargoObject:TaskRoute( Points )
       self.CargoObject:SetTask( TaskRoute, 1 )
 
-      self:__UnBoarding( 1, ToPointVec2 )
+      self:__UnBoarding( -1, ToPointVec2, NearRadius )
     end
   end
 
 end
 
 --- Leave UnBoarding State.
--- @param #AI_CARGO_UNIT self
+-- @param #CARGO_UNIT self
 -- @param #string Event
 -- @param #string From
 -- @param #string To
 -- @param Core.Point#POINT_VEC2 ToPointVec2
-function AI_CARGO_UNIT:onleaveUnBoarding( From, Event, To, ToPointVec2 )
+function CARGO_UNIT:onleaveUnBoarding( From, Event, To, ToPointVec2, NearRadius )
   self:F( { ToPointVec2, From, Event, To } )
+
+  NearRadius = NearRadius or 25
 
   local Angle = 180
   local Speed = 10
   local Distance = 5
 
   if From == "UnBoarding" then
-    if self:IsNear( ToPointVec2 ) then
+    if self:IsNear( ToPointVec2, NearRadius ) then
       return true
     else
-      self:__UnBoarding( 1, ToPointVec2 )
+      self:__UnBoarding( 1, ToPointVec2, NearRadius )
     end
     return false
   end
@@ -435,13 +605,15 @@ function AI_CARGO_UNIT:onleaveUnBoarding( From, Event, To, ToPointVec2 )
 end
 
 --- UnBoard Event.
--- @param #AI_CARGO_UNIT self
+-- @param #CARGO_UNIT self
 -- @param #string Event
 -- @param #string From
 -- @param #string To
 -- @param Core.Point#POINT_VEC2 ToPointVec2
-function AI_CARGO_UNIT:onafterUnBoarding( From, Event, To, ToPointVec2 )
+function CARGO_UNIT:onafterUnBoarding( From, Event, To, ToPointVec2, NearRadius )
   self:F( { ToPointVec2, From, Event, To } )
+
+  NearRadius = NearRadius or 25
 
   self.CargoInAir = self.CargoObject:InAir()
 
@@ -460,12 +632,12 @@ end
 
 
 --- Enter UnLoaded State.
--- @param #AI_CARGO_UNIT self
+-- @param #CARGO_UNIT self
 -- @param #string Event
 -- @param #string From
 -- @param #string To
 -- @param Core.Point#POINT_VEC2
-function AI_CARGO_UNIT:onenterUnLoaded( From, Event, To, ToPointVec2  )
+function CARGO_UNIT:onenterUnLoaded( From, Event, To, ToPointVec2 )
   self:F( { ToPointVec2, From, Event, To } )
 
   local Angle = 180
@@ -498,17 +670,19 @@ end
 
 
 --- Enter Boarding State.
--- @param #AI_CARGO_UNIT self
+-- @param #CARGO_UNIT self
 -- @param #string Event
 -- @param #string From
 -- @param #string To
 -- @param Wrapper.Unit#UNIT CargoCarrier
-function AI_CARGO_UNIT:onenterBoarding( From, Event, To, CargoCarrier )
-  self:F( { CargoCarrier.UnitName, From, Event, To } )
+function CARGO_UNIT:onenterBoarding( From, Event, To, CargoCarrier, NearRadius, ... )
+  self:F( { From, Event, To, CargoCarrier.UnitName, NearRadius } )
   
-  local Speed = 10
+  local Speed = 90
   local Angle = 180
   local Distance = 5
+  
+  NearRadius = NearRadius or 25
 
   if From == "UnLoaded" then
     local CargoCarrierPointVec2 = CargoCarrier:GetPointVec2()
@@ -522,6 +696,25 @@ function AI_CARGO_UNIT:onenterBoarding( From, Event, To, CargoCarrier )
 
     Points[#Points+1] = PointStartVec2:RoutePointGround( Speed )
     Points[#Points+1] = CargoDeployPointVec2:RoutePointGround( Speed )
+    
+    -- I need to do this mess, otherwise the units will stop boarding at a point in time...
+    -- This is a DCS bug that i am handling in this way.
+    do 
+      local CargoBooardPointVec2 = CargoDeployPointVec2:GetRandomPointVec2InRadius(NearRadius,0)
+      Points[#Points+1] = CargoBooardPointVec2:RoutePointGround( Speed )
+    end
+    do
+      local CargoBooardPointVec2 = CargoDeployPointVec2:GetRandomPointVec2InRadius(NearRadius,0)
+      Points[#Points+1] = CargoBooardPointVec2:RoutePointGround( Speed )
+    end
+    do
+      local CargoBooardPointVec2 = CargoDeployPointVec2:GetRandomPointVec2InRadius(NearRadius,0)
+      Points[#Points+1] = CargoBooardPointVec2:RoutePointGround( Speed )
+    end
+    do
+      local CargoBooardPointVec2 = CargoDeployPointVec2:GetRandomPointVec2InRadius(NearRadius,0)
+      Points[#Points+1] = CargoBooardPointVec2:RoutePointGround( Speed )
+    end
 
     local TaskRoute = self.CargoObject:TaskRoute( Points )
     self.CargoObject:SetTask( TaskRoute, 2 )
@@ -530,30 +723,32 @@ function AI_CARGO_UNIT:onenterBoarding( From, Event, To, CargoCarrier )
 end
 
 --- Leave Boarding State.
--- @param #AI_CARGO_UNIT self
+-- @param #CARGO_UNIT self
 -- @param #string Event
 -- @param #string From
 -- @param #string To
 -- @param Wrapper.Unit#UNIT CargoCarrier
-function AI_CARGO_UNIT:onleaveBoarding( From, Event, To, CargoCarrier )
-  self:F( { CargoCarrier.UnitName, From, Event, To } )
+function CARGO_UNIT:onleaveBoarding( From, Event, To, CargoCarrier, NearRadius, ... )
+  self:F( { From, Event, To, CargoCarrier.UnitName, NearRadius } )
 
-  if self:IsNear( CargoCarrier:GetPointVec2() ) then
-    self:__Load( 1, CargoCarrier )
+  NearRadius = NearRadius or 25
+
+  if self:IsNear( CargoCarrier:GetPointVec2(), NearRadius ) then
+    self:__Load( 1, CargoCarrier, ... )
     return true
   else
-    self:__Boarding( 1, CargoCarrier )
+    self:__Boarding( 1, CargoCarrier, ... )
   end
   return false
 end
 
 --- Loaded State.
--- @param #AI_CARGO_UNIT self
+-- @param #CARGO_UNIT self
 -- @param #string Event
 -- @param #string From
 -- @param #string To
 -- @param Wrapper.Unit#UNIT CargoCarrier
-function AI_CARGO_UNIT:onenterLoaded( From, Event, To, CargoCarrier )
+function CARGO_UNIT:onenterLoaded( From, Event, To, CargoCarrier )
   self:F()
 
   self.CargoCarrier = CargoCarrier
@@ -567,13 +762,15 @@ end
 
 
 --- Board Event.
--- @param #AI_CARGO_UNIT self
+-- @param #CARGO_UNIT self
 -- @param #string Event
 -- @param #string From
 -- @param #string To
-function AI_CARGO_UNIT:onafterBoard( From, Event, To, CargoCarrier )
+function CARGO_UNIT:onafterBoard( From, Event, To, CargoCarrier, NearRadius, ... )
   self:F()
 
+  NearRadius = NearRadius or 25
+  
   self.CargoInAir = self.CargoObject:InAir()
 
   self:T( self.CargoInAir )
@@ -581,32 +778,32 @@ function AI_CARGO_UNIT:onafterBoard( From, Event, To, CargoCarrier )
   -- Only move the group to the carrier when the cargo is not in the air
   -- (eg. cargo can be on a oil derrick, moving the cargo on the oil derrick will drop the cargo on the sea).
   if not self.CargoInAir then
-    self:Load( CargoCarrier )
+    self:Load( CargoCarrier, ... )
   end
 
 end
 
 end
 
-do -- AI_CARGO_PACKAGE
+do -- CARGO_PACKAGE
 
-  --- @type AI_CARGO_PACKAGE
-  -- @extends #AI_CARGO_REPRESENTABLE
-  AI_CARGO_PACKAGE = {
-    ClassName = "AI_CARGO_PACKAGE"
+  --- @type CARGO_PACKAGE
+  -- @extends #CARGO_REPRESENTABLE
+  CARGO_PACKAGE = {
+    ClassName = "CARGO_PACKAGE"
   }
 
---- AI_CARGO_PACKAGE Constructor.
--- @param #AI_CARGO_PACKAGE self
+--- CARGO_PACKAGE Constructor.
+-- @param #CARGO_PACKAGE self
 -- @param Wrapper.Unit#UNIT CargoCarrier The UNIT carrying the package.
 -- @param #string Type
 -- @param #string Name
 -- @param #number Weight
 -- @param #number ReportRadius (optional)
 -- @param #number NearRadius (optional)
--- @return #AI_CARGO_PACKAGE
-function AI_CARGO_PACKAGE:New( CargoCarrier, Type, Name, Weight, ReportRadius, NearRadius )
-  local self = BASE:Inherit( self, AI_CARGO_REPRESENTABLE:New( CargoCarrier, Type, Name, Weight, ReportRadius, NearRadius ) ) -- #AI_CARGO_PACKAGE
+-- @return #CARGO_PACKAGE
+function CARGO_PACKAGE:New( CargoCarrier, Type, Name, Weight, ReportRadius, NearRadius )
+  local self = BASE:Inherit( self, CARGO_REPRESENTABLE:New( CargoCarrier, Type, Name, Weight, ReportRadius, NearRadius ) ) -- #CARGO_PACKAGE
   self:F( { Type, Name, Weight, ReportRadius, NearRadius } )
 
   self:T( CargoCarrier )
@@ -616,7 +813,7 @@ function AI_CARGO_PACKAGE:New( CargoCarrier, Type, Name, Weight, ReportRadius, N
 end
 
 --- Board Event.
--- @param #AI_CARGO_PACKAGE self
+-- @param #CARGO_PACKAGE self
 -- @param #string Event
 -- @param #string From
 -- @param #string To
@@ -624,7 +821,7 @@ end
 -- @param #number Speed
 -- @param #number BoardDistance
 -- @param #number Angle
-function AI_CARGO_PACKAGE:onafterOnBoard( From, Event, To, CargoCarrier, Speed, BoardDistance, LoadDistance, Angle )
+function CARGO_PACKAGE:onafterOnBoard( From, Event, To, CargoCarrier, Speed, BoardDistance, LoadDistance, Angle )
   self:F()
 
   self.CargoInAir = self.CargoCarrier:InAir()
@@ -654,10 +851,10 @@ function AI_CARGO_PACKAGE:onafterOnBoard( From, Event, To, CargoCarrier, Speed, 
 end
 
 --- Check if CargoCarrier is near the Cargo to be Loaded.
--- @param #AI_CARGO_PACKAGE self
+-- @param #CARGO_PACKAGE self
 -- @param Wrapper.Unit#UNIT CargoCarrier
 -- @return #boolean
-function AI_CARGO_PACKAGE:IsNear( CargoCarrier )
+function CARGO_PACKAGE:IsNear( CargoCarrier )
   self:F()
 
   local CargoCarrierPoint = CargoCarrier:GetPointVec2()
@@ -673,12 +870,12 @@ function AI_CARGO_PACKAGE:IsNear( CargoCarrier )
 end
 
 --- Boarded Event.
--- @param #AI_CARGO_PACKAGE self
+-- @param #CARGO_PACKAGE self
 -- @param #string Event
 -- @param #string From
 -- @param #string To
 -- @param Wrapper.Unit#UNIT CargoCarrier
-function AI_CARGO_PACKAGE:onafterOnBoarded( From, Event, To, CargoCarrier, Speed, BoardDistance, LoadDistance, Angle )
+function CARGO_PACKAGE:onafterOnBoarded( From, Event, To, CargoCarrier, Speed, BoardDistance, LoadDistance, Angle )
   self:F()
 
   if self:IsNear( CargoCarrier ) then
@@ -689,7 +886,7 @@ function AI_CARGO_PACKAGE:onafterOnBoarded( From, Event, To, CargoCarrier, Speed
 end
 
 --- UnBoard Event.
--- @param #AI_CARGO_PACKAGE self
+-- @param #CARGO_PACKAGE self
 -- @param #string Event
 -- @param #string From
 -- @param #string To
@@ -698,7 +895,7 @@ end
 -- @param #number UnBoardDistance
 -- @param #number Radius
 -- @param #number Angle
-function AI_CARGO_PACKAGE:onafterUnBoard( From, Event, To, CargoCarrier, Speed, UnLoadDistance, UnBoardDistance, Radius, Angle )
+function CARGO_PACKAGE:onafterUnBoard( From, Event, To, CargoCarrier, Speed, UnLoadDistance, UnBoardDistance, Radius, Angle )
   self:F()
 
   self.CargoInAir = self.CargoCarrier:InAir()
@@ -731,12 +928,12 @@ function AI_CARGO_PACKAGE:onafterUnBoard( From, Event, To, CargoCarrier, Speed, 
 end
 
 --- UnBoarded Event.
--- @param #AI_CARGO_PACKAGE self
+-- @param #CARGO_PACKAGE self
 -- @param #string Event
 -- @param #string From
 -- @param #string To
 -- @param Wrapper.Unit#UNIT CargoCarrier
-function AI_CARGO_PACKAGE:onafterUnBoarded( From, Event, To, CargoCarrier, Speed )
+function CARGO_PACKAGE:onafterUnBoarded( From, Event, To, CargoCarrier, Speed )
   self:F()
 
   if self:IsNear( CargoCarrier ) then
@@ -747,7 +944,7 @@ function AI_CARGO_PACKAGE:onafterUnBoarded( From, Event, To, CargoCarrier, Speed
 end
 
 --- Load Event.
--- @param #AI_CARGO_PACKAGE self
+-- @param #CARGO_PACKAGE self
 -- @param #string Event
 -- @param #string From
 -- @param #string To
@@ -755,7 +952,7 @@ end
 -- @param #number Speed
 -- @param #number LoadDistance
 -- @param #number Angle
-function AI_CARGO_PACKAGE:onafterLoad( From, Event, To, CargoCarrier, Speed, LoadDistance, Angle )
+function CARGO_PACKAGE:onafterLoad( From, Event, To, CargoCarrier, Speed, LoadDistance, Angle )
   self:F()
 
   self.CargoCarrier = CargoCarrier
@@ -775,13 +972,13 @@ function AI_CARGO_PACKAGE:onafterLoad( From, Event, To, CargoCarrier, Speed, Loa
 end
 
 --- UnLoad Event.
--- @param #AI_CARGO_PACKAGE self
+-- @param #CARGO_PACKAGE self
 -- @param #string Event
 -- @param #string From
 -- @param #string To
 -- @param #number Distance
 -- @param #number Angle
-function AI_CARGO_PACKAGE:onafterUnLoad( From, Event, To, CargoCarrier, Speed, Distance, Angle )
+function CARGO_PACKAGE:onafterUnLoad( From, Event, To, CargoCarrier, Speed, Distance, Angle )
   self:F()
   
   local StartPointVec2 = self.CargoCarrier:GetPointVec2()
@@ -803,162 +1000,170 @@ end
 
 end
 
-do -- AI_CARGO_GROUP
+do -- CARGO_GROUP
 
-  --- @type AI_CARGO_GROUP
-  -- @extends AI.AI_Cargo#AI_CARGO
-  -- @field Set#SET_BASE CargoSet A set of cargo objects.
-  -- @field #string Name A string defining the name of the cargo group. The name is the unique identifier of the cargo.
-  AI_CARGO_GROUP = {
-    ClassName = "AI_CARGO_GROUP",
+  --- @type CARGO_GROUP
+  -- @extends #CARGO_REPORTABLE
+  
+  --- # CARGO\_GROUP class
+  --
+  -- The CARGO\_GROUP class defines a cargo that is represented by a @{Group} object within the simulator, and can be transported by a carrier.
+  -- Use the event functions as described above to Load, UnLoad, Board, UnBoard the CARGO\_GROUP to and from carrier.
+  --
+  -- @field #CARGO_GROUP CARGO_GROUP
+  -- 
+  CARGO_GROUP = {
+    ClassName = "CARGO_GROUP",
   }
 
---- AI_CARGO_GROUP constructor.
--- @param #AI_CARGO_GROUP self
--- @param Core.Set#Set_BASE CargoSet
+--- CARGO_GROUP constructor.
+-- @param #CARGO_GROUP self
+-- @param Wrapper.Group#GROUP CargoGroup
 -- @param #string Type
 -- @param #string Name
--- @param #number Weight
 -- @param #number ReportRadius (optional)
 -- @param #number NearRadius (optional)
--- @return #AI_CARGO_GROUP
-function AI_CARGO_GROUP:New( CargoSet, Type, Name, ReportRadius, NearRadius )
-  local self = BASE:Inherit( self, AI_CARGO:New( Type, Name, 0, ReportRadius, NearRadius ) ) -- #AI_CARGO_GROUP
-  self:F( { Type, Name, ReportRadius, NearRadius } )
+-- @return #CARGO_GROUP
+function CARGO_GROUP:New( CargoGroup, Type, Name, ReportRadius )
+  local self = BASE:Inherit( self, CARGO_REPORTABLE:New( CargoGroup, Type, Name, 0, ReportRadius ) ) -- #CARGO_GROUP
+  self:F( { Type, Name, ReportRadius } )
 
-  self.CargoSet = CargoSet
+  self.CargoSet = SET_CARGO:New()
+  
+  local WeightGroup = 0
+  
+  for UnitID, UnitData in pairs( CargoGroup:GetUnits() ) do
+    local Unit = UnitData -- Wrapper.Unit#UNIT
+    local WeightUnit = Unit:GetDesc().massEmpty
+    WeightGroup = WeightGroup + WeightUnit
+    local CargoUnit = CARGO_UNIT:New( Unit, Type, Unit:GetName(), WeightUnit )
+    self.CargoSet:Add( CargoUnit:GetName(), CargoUnit )
+  end
 
+  self:SetWeight( WeightGroup )
+  
+  self:T( { "Weight Cargo", WeightGroup } )
 
-  return self
-end
-
-end -- AI_CARGO_GROUP
-
-do -- AI_CARGO_GROUPED
-
-  --- @type AI_CARGO_GROUPED
-  -- @extends AI.AI_Cargo#AI_CARGO_GROUP
-  AI_CARGO_GROUPED = {
-    ClassName = "AI_CARGO_GROUPED",
-  }
-
---- AI_CARGO_GROUPED constructor.
--- @param #AI_CARGO_GROUPED self
--- @param Core.Set#Set_BASE CargoSet
--- @param #string Type
--- @param #string Name
--- @param #number Weight
--- @param #number ReportRadius (optional)
--- @param #number NearRadius (optional)
--- @return #AI_CARGO_GROUPED
-function AI_CARGO_GROUPED:New( CargoSet, Type, Name, ReportRadius, NearRadius )
-  local self = BASE:Inherit( self, AI_CARGO_GROUP:New( CargoSet, Type, Name, ReportRadius, NearRadius ) ) -- #AI_CARGO_GROUPED
-  self:F( { Type, Name, ReportRadius, NearRadius } )
-
+  -- Cargo objects are added to the _DATABASE and SET_CARGO objects.
+  _EVENTDISPATCHER:CreateEventNewCargo( self )
+  
   return self
 end
 
 --- Enter Boarding State.
--- @param #AI_CARGO_GROUPED self
+-- @param #CARGO_GROUP self
 -- @param Wrapper.Unit#UNIT CargoCarrier
 -- @param #string Event
 -- @param #string From
 -- @param #string To
-function AI_CARGO_GROUPED:onenterBoarding( From, Event, To, CargoCarrier )
+function CARGO_GROUP:onenterBoarding( From, Event, To, CargoCarrier, NearRadius, ... )
   self:F( { CargoCarrier.UnitName, From, Event, To } )
+  
+  NearRadius = NearRadius or 25
   
   if From == "UnLoaded" then
 
-    -- For each Cargo object within the AI_CARGO_GROUPED, route each object to the CargoLoadPointVec2
+    -- For each Cargo object within the CARGO_GROUPED, route each object to the CargoLoadPointVec2
     self.CargoSet:ForEach(
       function( Cargo )
-        Cargo:__Board( 1, CargoCarrier )
+        Cargo:__Board( 1, CargoCarrier, NearRadius )
       end
     )
     
-    self:__Boarding( 1, CargoCarrier )
+    self:__Boarding( 1, CargoCarrier, NearRadius, ... )
   end
   
 end
 
 --- Enter Loaded State.
--- @param #AI_CARGO_GROUPED self
+-- @param #CARGO_GROUP self
 -- @param Wrapper.Unit#UNIT CargoCarrier
 -- @param #string Event
 -- @param #string From
 -- @param #string To
-function AI_CARGO_GROUPED:onenterLoaded( From, Event, To, CargoCarrier )
+function CARGO_GROUP:onenterLoaded( From, Event, To, CargoCarrier, ... )
   self:F( { CargoCarrier.UnitName, From, Event, To } )
   
   if From == "UnLoaded" then
-    -- For each Cargo object within the AI_CARGO_GROUPED, load each cargo to the CargoCarrier.
+    -- For each Cargo object within the CARGO_GROUP, load each cargo to the CargoCarrier.
     for CargoID, Cargo in pairs( self.CargoSet:GetSet() ) do
       Cargo:Load( CargoCarrier )
     end
   end
+  
+  self.CargoCarrier = CargoCarrier
+  
 end
 
 --- Leave Boarding State.
--- @param #AI_CARGO_GROUPED self
+-- @param #CARGO_GROUP self
 -- @param Wrapper.Unit#UNIT CargoCarrier
 -- @param #string Event
 -- @param #string From
 -- @param #string To
-function AI_CARGO_GROUPED:onleaveBoarding( From, Event, To, CargoCarrier )
+function CARGO_GROUP:onleaveBoarding( From, Event, To, CargoCarrier, NearRadius, ... )
   self:F( { CargoCarrier.UnitName, From, Event, To } )
+
+  NearRadius = NearRadius or 25
 
   local Boarded = true
 
-  -- For each Cargo object within the AI_CARGO_GROUPED, route each object to the CargoLoadPointVec2
+  self.CargoSet:Flush()
+
+  -- For each Cargo object within the CARGO_GROUP, route each object to the CargoLoadPointVec2
   for CargoID, Cargo in pairs( self.CargoSet:GetSet() ) do
-    self:T( Cargo.current )
+    self:T( { Cargo:GetName(), Cargo.current } )
     if not Cargo:is( "Loaded" ) then
       Boarded = false
     end
   end
 
   if not Boarded then
-    self:__Boarding( 1, CargoCarrier )
+    self:__Boarding( 1, CargoCarrier, NearRadius, ... )
   else
-    self:__Load( 1, CargoCarrier )
+    self:__Load( 1, CargoCarrier, ... )
   end
   return Boarded
 end
 
 --- Enter UnBoarding State.
--- @param #AI_CARGO_GROUPED self
+-- @param #CARGO_GROUP self
 -- @param Core.Point#POINT_VEC2 ToPointVec2
 -- @param #string Event
 -- @param #string From
 -- @param #string To
-function AI_CARGO_GROUPED:onenterUnBoarding( From, Event, To, ToPointVec2 )
-  self:F()
+function CARGO_GROUP:onenterUnBoarding( From, Event, To, ToPointVec2, NearRadius, ... )
+  self:F({From, Event, To, ToPointVec2, NearRadius})
+
+  NearRadius = NearRadius or 25
 
   local Timer = 1
 
   if From == "Loaded" then
 
-    -- For each Cargo object within the AI_CARGO_GROUPED, route each object to the CargoLoadPointVec2
+    -- For each Cargo object within the CARGO_GROUP, route each object to the CargoLoadPointVec2
     self.CargoSet:ForEach(
       function( Cargo )
-        Cargo:__UnBoard( Timer, ToPointVec2 )
+        Cargo:__UnBoard( Timer, ToPointVec2, NearRadius )
         Timer = Timer + 10
       end
     )
     
-    self:__UnBoarding( 1, ToPointVec2 )
+    self:__UnBoarding( 1, ToPointVec2, NearRadius, ... )
   end
 
 end
 
 --- Leave UnBoarding State.
--- @param #AI_CARGO_GROUPED self
+-- @param #CARGO_GROUP self
 -- @param Core.Point#POINT_VEC2 ToPointVec2
 -- @param #string Event
 -- @param #string From
 -- @param #string To
-function AI_CARGO_GROUPED:onleaveUnBoarding( From, Event, To, ToPointVec2 )
-  self:F( { ToPointVec2, From, Event, To } )
+function CARGO_GROUP:onleaveUnBoarding( From, Event, To, ToPointVec2, NearRadius, ... )
+  self:F( { From, Event, To, ToPointVec2, NearRadius } )
+
+  NearRadius = NearRadius or 25
 
   local Angle = 180
   local Speed = 10
@@ -967,7 +1172,7 @@ function AI_CARGO_GROUPED:onleaveUnBoarding( From, Event, To, ToPointVec2 )
   if From == "UnBoarding" then
     local UnBoarded = true
 
-    -- For each Cargo object within the AI_CARGO_GROUPED, route each object to the CargoLoadPointVec2
+    -- For each Cargo object within the CARGO_GROUP, route each object to the CargoLoadPointVec2
     for CargoID, Cargo in pairs( self.CargoSet:GetSet() ) do
       self:T( Cargo.current )
       if not Cargo:is( "UnLoaded" ) then
@@ -978,7 +1183,7 @@ function AI_CARGO_GROUPED:onleaveUnBoarding( From, Event, To, ToPointVec2 )
     if UnBoarded then
       return true
     else
-      self:__UnBoarding( 1, ToPointVec2 )
+      self:__UnBoarding( 1, ToPointVec2, NearRadius, ... )
     end
     
     return false
@@ -987,31 +1192,33 @@ function AI_CARGO_GROUPED:onleaveUnBoarding( From, Event, To, ToPointVec2 )
 end
 
 --- UnBoard Event.
--- @param #AI_CARGO_GROUPED self
+-- @param #CARGO_GROUP self
 -- @param Core.Point#POINT_VEC2 ToPointVec2
 -- @param #string Event
 -- @param #string From
 -- @param #string To
-function AI_CARGO_GROUPED:onafterUnBoarding( From, Event, To, ToPointVec2 )
-  self:F( { ToPointVec2, From, Event, To } )
+function CARGO_GROUP:onafterUnBoarding( From, Event, To, ToPointVec2, NearRadius, ... )
+  self:F( { From, Event, To, ToPointVec2, NearRadius } )
 
-  self:__UnLoad( 1, ToPointVec2 )
+  NearRadius = NearRadius or 25
+
+  self:__UnLoad( 1, ToPointVec2, ... )
 end
 
 
 
 --- Enter UnLoaded State.
--- @param #AI_CARGO_GROUPED self
+-- @param #CARGO_GROUP self
 -- @param Core.Point#POINT_VEC2
 -- @param #string Event
 -- @param #string From
 -- @param #string To
-function AI_CARGO_GROUPED:onenterUnLoaded( From, Event, To, ToPointVec2 )
-  self:F( { ToPointVec2, From, Event, To } )
+function CARGO_GROUP:onenterUnLoaded( From, Event, To, ToPointVec2, ... )
+  self:F( { From, Event, To, ToPointVec2 } )
 
   if From == "Loaded" then
     
-    -- For each Cargo object within the AI_CARGO_GROUPED, route each object to the CargoLoadPointVec2
+    -- For each Cargo object within the CARGO_GROUP, route each object to the CargoLoadPointVec2
     self.CargoSet:ForEach(
       function( Cargo )
         Cargo:UnLoad( ToPointVec2 )
@@ -1022,7 +1229,5 @@ function AI_CARGO_GROUPED:onenterUnLoaded( From, Event, To, ToPointVec2 )
 
 end
 
-end -- AI_CARGO_GROUPED
-
-
+end -- CARGO_GROUP
 

@@ -80,6 +80,7 @@
 					<li><a href="Task.html">Task</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
 					<li><a href="Task_A2G_Dispatcher.html">Task_A2G_Dispatcher</a></li>
+					<li><a href="Task_Cargo.html">Task_Cargo</a></li>
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
 					<li><a href="Unit.html">Unit</a></li>
 					<li><a href="Utils.html">Utils</a></li>
@@ -331,6 +332,18 @@ YYYY-MM-DD: CLASS:<strong>NewFunction( Params )</strong> added</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(EVENT).CreateEventDeleteCargo">EVENT:CreateEventDeleteCargo(Cargo)</a></td>
+		<td class="summary">
+<p>Creation of a Cargo Deletion Event.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(EVENT).CreateEventNewCargo">EVENT:CreateEventNewCargo(Cargo)</a></td>
+		<td class="summary">
+<p>Creation of a New Cargo Event.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(EVENT).Events">EVENT.Events</a></td>
 		<td class="summary">
 
@@ -452,6 +465,18 @@ YYYY-MM-DD: CLASS:<strong>NewFunction( Params )</strong> added</p>
 
 			<h2><a id="#(EVENTDATA)">Type <code>EVENTDATA</code></a></h2>
 				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(EVENTDATA).Cargo">EVENTDATA.Cargo</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(EVENTDATA).CargoName">EVENTDATA.CargoName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(EVENTDATA).IniCategory">EVENTDATA.IniCategory</a></td>
 		<td class="summary">
@@ -734,6 +759,12 @@ YYYY-MM-DD: CLASS:<strong>NewFunction( Params )</strong> added</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(EVENTS).DeleteCargo">EVENTS.DeleteCargo</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(EVENTS).Ejection">EVENTS.Ejection</a></td>
 		<td class="summary">
 
@@ -777,6 +808,12 @@ YYYY-MM-DD: CLASS:<strong>NewFunction( Params )</strong> added</p>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(EVENTS).MissionStart">EVENTS.MissionStart</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(EVENTS).NewCargo">EVENTS.NewCargo</a></td>
 		<td class="summary">
 
 </td>
@@ -925,6 +962,50 @@ YYYY-MM-DD: CLASS:<strong>NewFunction( Params )</strong> added</p>
 	
 
 
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(EVENT).CreateEventDeleteCargo" >
+<strong>EVENT:CreateEventDeleteCargo(Cargo)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Creation of a Cargo Deletion Event.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="AI.AI_Cargo.html##(AI_CARGO)">AI.AI<em>Cargo#AI</em>CARGO</a> Cargo </em></code>: 
+The Cargo created.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(EVENT).CreateEventNewCargo" >
+<strong>EVENT:CreateEventNewCargo(Cargo)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Creation of a New Cargo Event.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="AI.AI_Cargo.html##(AI_CARGO)">AI.AI<em>Cargo#AI</em>CARGO</a> Cargo </em></code>: 
+The Cargo created.</p>
+
+				</li>
+		</ul>
 </dd>
 </dl>
 		<dl class="function">
@@ -1544,11 +1625,39 @@ Note that at the beginning of each field description, there is an indication whi
 
 	
 <ul>
-    <li>A (Object.Category.)STATIC : A STATIC object type is involved in the Event.µ
+    <li>A (Object.Category.)STATIC : A STATIC object type is involved in the Event.Âµ
     </li>
 </ul>
 
 	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(EVENTDATA).Cargo" >
+<strong>EVENTDATA.Cargo</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(EVENTDATA).CargoName" >
+<strong>EVENTDATA.CargoName</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
 		<dl class="function">
 <dt>
 
@@ -2200,6 +2309,20 @@ Note that at the beginning of each field description, there is an indication whi
 <dt>
 
 		<em></em>
+<a id="#(EVENTS).DeleteCargo" >
+<strong>EVENTS.DeleteCargo</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
 <a id="#(EVENTS).Ejection" >
 <strong>EVENTS.Ejection</strong>
 </a>
@@ -2300,6 +2423,20 @@ Note that at the beginning of each field description, there is an indication whi
 		<em></em>
 <a id="#(EVENTS).MissionStart" >
 <strong>EVENTS.MissionStart</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(EVENTS).NewCargo" >
+<strong>EVENTS.NewCargo</strong>
 </a>
 </dt>
 <dd>

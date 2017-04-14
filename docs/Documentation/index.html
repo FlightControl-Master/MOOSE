@@ -80,6 +80,7 @@
 					<li><a href="Task.html">Task</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
 					<li><a href="Task_A2G_Dispatcher.html">Task_A2G_Dispatcher</a></li>
+					<li><a href="Task_Cargo.html">Task_Cargo</a></li>
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
 					<li><a href="Unit.html">Unit</a></li>
 					<li><a href="Utils.html">Utils</a></li>
@@ -178,18 +179,7 @@ CLIENTS in a SET_CLIENT collection, which are not occupied by human players.</p>
 			<tr>
 			<td class="name" nowrap="nowrap"><a href="Cargo.html">Cargo</a></td>
 			<td class="summary">
-<p>Single-Player:<strong>Yes</strong> / Multi-Player:<strong>Yes</strong> / AI:<strong>Yes</strong> / Human:<strong>No</strong> / Types:<strong>Ground</strong> -- <br/>
-<strong>Management of logical cargo objects, that can be transported from and to transportation carriers.</strong></p>
-
-<p><img src="..\Presentations\AI_CARGO\CARGO.JPG" alt="Banner Image"/></p>
-
-<hr/>
-
-<p>Cargo can be of various forms, always are composed out of ONE object ( one unit or one static or one slingload crate ):</p>
-
-<ul>
-    <li>AI<em>CARGO</em>UNIT, represented by a <a href="Unit.html">Unit</a> in a <a href="Group.html">Group</a>: Cargo can be represented by a Unit in a Group.</li>
-</ul>
+<p><strong>Core</strong> -- Management of CARGO logistics, that can be transported from and to transportation carriers.</p>
 </td>
 			</tr>
 			<tr>
@@ -517,6 +507,12 @@ and creates a CSV file logging the scoring events and results for use at team or
 			<td class="name" nowrap="nowrap"><a href="Task_A2G_Dispatcher.html">Task_A2G_Dispatcher</a></td>
 			<td class="summary">
 <p><strong>Tasking</strong> - The TASK<em>A2G</em>DISPATCHER creates and manages player TASK_A2G tasks based on detected targets.</p>
+</td>
+			</tr>
+			<tr>
+			<td class="name" nowrap="nowrap"><a href="Task_Cargo.html">Task_Cargo</a></td>
+			<td class="summary">
+<p><strong>Tasking (Release 2.1)</strong> -- The TASK_CARGO models tasks for players to transport <a href="Cargo.html">Cargo</a>.</p>
 </td>
 			</tr>
 			<tr>
