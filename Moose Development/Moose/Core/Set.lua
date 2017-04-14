@@ -124,7 +124,7 @@ end
 -- @param Core.Base#BASE Object
 -- @return Core.Base#BASE The added BASE Object.
 function SET_BASE:Add( ObjectName, Object )
-  self:F2( ObjectName )
+  self:F( ObjectName )
 
   local t = { _ = Object }
 
@@ -2467,9 +2467,6 @@ function SET_CARGO:New()
   -- Inherits from BASE
   local self = BASE:Inherit( self, SET_BASE:New( _DATABASE.CARGOS ) )
 
-  self:HandleEvent( EVENTS.NewCargo )
-  self:HandleEvent( EVENTS.DeleteCargo )
-
   return self
 end
 
@@ -2600,6 +2597,9 @@ function SET_CARGO:FilterStart()
   if _DATABASE then
     self:_FilterStart()
   end
+
+  self:HandleEvent( EVENTS.NewCargo )
+  self:HandleEvent( EVENTS.DeleteCargo )
   
   return self
 end

@@ -347,7 +347,7 @@ do -- TASK_CARGO
           self:__Land( -0.1 )
         else
           Task:GetMission():GetCommandCenter():MessageToGroup( "Boarding ...", TaskUnit:GetGroup(), "Boarding" )
-          self.Cargo:Board( TaskUnit, self )
+          self.Cargo:Board( TaskUnit, 20, self )
         end
       else
         self:__ArriveAtCargo( -0.1 )
@@ -375,7 +375,7 @@ do -- TASK_CARGO
       self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
 
       self.DeployZone = DeployZone      
-      self.Cargo:__UnBoard( -0.1, DeployZone )
+      self.Cargo:__UnBoard( -0.1, DeployZone, 20 )
     end
     
     --- 
@@ -394,7 +394,7 @@ do -- TASK_CARGO
       end
 
       Task:GetMission():GetCommandCenter():MessageToGroup( "UnBoarding ...", TaskUnit:GetGroup(), "UnBoarding" )
-      self.Cargo:__UnBoard( -0.1, self.DeployZone )
+      self.Cargo:__UnBoard( -0.1, self.DeployZone, 20 )
     end
 
 
