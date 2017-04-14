@@ -4,15 +4,16 @@
 -- 
 -- ====
 --
--- Cargo are units or cargo objects within DCS world that allow to be transported or sling loaded by other units.
--- The CARGO class, as part of the moose core, is able to Board, Load, UnBoard and UnLoad from Carrier units.
--- This collection of classes in this module define tasks for human players to handle cargo objects.
+-- The Moose framework provides various CARGO classes that allow DCS phisical or logical objects to be transported or sling loaded by Carriers.
+-- The CARGO_ classes, as part of the moose core, are able to Board, Load, UnBoard and UnLoad cargo between Carrier units.
+-- 
+-- This collection of classes in this module define tasks for human players to handle these cargo objects.
 -- Cargo can be transported, picked-up, deployed and sling-loaded from and to other places.
 -- 
 -- The following classes are important to consider:
 -- 
 --   * @{#TASK_CARGO_TRANSPORT}: Defines a task for a human player to transport a set of cargo between various zones.
---
+-- 
 -- ==
 -- 
 -- # **API CHANGE HISTORY**
@@ -46,19 +47,109 @@ do -- TASK_CARGO
   ---
   -- # TASK_CARGO class, extends @{Task#TASK}
   -- 
-  -- The TASK_CARGO class defines @{Cargo} transport tasks, 
+  -- ## A flexible tasking system
+  -- 
+  -- The TASK_CARGO classes provide you with a flexible tasking sytem, 
+  -- that allows you to transport cargo of various types between various locations
+  -- and various dedicated deployment zones.
+  -- 
+  -- The cargo in scope of the TASK_CARGO classes must be explicitly given, and is of type SET_CARGO.
+  -- The SET_CARGO contains a collection of CARGO objects that must be handled by the players in the mission.
+  -- 
+  -- 
+  -- ## Task execution experience from the player perspective
+  -- 
+  -- A human player can join the battle field in a client airborne slot or a ground vehicle within the CA module (ALT-J).
+  -- The player needs to accept the task from the task overview list within the mission, using the radio menus.
+  -- 
+  -- Once the TASK_CARGO is assigned to the player and accepted by the player, the player will obtain 
+  -- an extra **Cargo Handling Radio Menu** that contains the CARGO objects that need to be transported.
+  -- 
+  -- Each CARGO object has a certain state:
+  -- 
+  --   * **UnLoaded**: The CARGO is located within the battlefield. It may still need to be transported.
+  --   * **Loaded**: The CARGO is loaded within a Carrier. This can be your air unit, or another air unit, or even a vehicle.
+  --   * **Boarding**: The CARGO is running or moving towards your Carrier for loading.
+  --   * **UnBoarding**: The CARGO is driving or jumping out of your Carrier and moves to a location in the Deployment Zone.
+  -- 
+  -- Cargo must be transported towards different **Deployment @{Zone}s**.
+  -- 
+  -- The Cargo Handling Radio Menu system allows to execute **various actions** to handle the cargo.
+  -- In the menu, you'll find for each CARGO, that is part of the scope of the task, various actions that can be completed.
+  -- Depending on the location of your Carrier unit, the menu options will vary.
+  -- 
+  -- 
+  -- ## Cargo Pickup and Boarding
+  -- 
+  -- For cargo boarding, a cargo can only execute the boarding actions if it is within the foreseen **Reporting Range**. 
+  -- Therefore, it is important that you steer your Carrier within the Reporting Range, 
+  -- so that boarding actions can be executed on the cargo.
+  -- To Pickup and Board cargo, the following menu items will be shown in your carrier radio menu:
+  -- 
+  -- ### Board Cargo
+  -- 
+  -- If your Carrier is within the Reporting Range of the cargo, it will allow to pickup the cargo by selecting this menu option.
+  -- Depending on the Cargo type, the cargo will either move to your Carrier or you will receive instructions how to handle the cargo
+  -- pickup. If the cargo moves to your carrier, it will indicate the boarding status.
+  -- Note that multiple units need to board your Carrier, so it is required to await the full boarding process.
+  -- Once the cargo is fully boarded within your Carrier, you will be notified of this.
+  -- 
+  -- Note that for airborne Carriers, it is required to land first before the Boarding process can be initiated.
+  -- If during boarding the Carrier gets airborne, the boarding process will be cancelled.
+  -- 
+  -- ## Pickup Cargo
+  -- 
+  -- If your Carrier is not within the Reporting Range of the cargo, the HQ will guide you to its location. 
+  -- Routing information is shown in flight that directs you to the cargo within Reporting Range.
+  -- Upon arrival, the Cargo will contact you and further instructions will be given.
+  -- When your Carrier is airborne, you will receive instructions to land your Carrier.
+  -- The action will not be completed until you've landed your Carrier.
+  -- 
+  -- 
+  -- ## Cargo Deploy and UnBoarding
+  -- 
+  -- Various Deployment Zones can be foreseen in the scope of the Cargo transportation. Each deployment zone can be of varying @{Zone} type.
+  -- The Cargo Handling Radio Menu provides with menu options to execute an action to steer your Carrier to a specific Zone.
+  -- 
+  -- ### UnBoard Cargo
+  -- 
+  -- If your Carrier is already within a Deployment Zone, 
+  -- then the Cargo Handling Radio Menu allows to **UnBoard** a specific cargo that is
+  -- loaded within your Carrier group into the Deployment Zone.
+  -- Note that the Unboarding process takes a while, as the cargo units (infantry or vehicles) must unload from your Carrier.
+  -- Ensure that you stay at the position or stay on the ground while Unboarding.
+  -- If any unforeseen manoeuvre is done by the Carrier, then the Unboarding will be cancelled.
+  -- 
+  -- ### Deploy Cargo
+  -- 
+  -- If your Carrier is not within a Deployment Zone, you'll need to fly towards one. 
+  -- Fortunately, the Cargo Handling Radio Menu provides you with menu options to select a specific Deployment Zone to fly towards.
+  -- Once a Deployment Zone has been selected, your Carrier will receive routing information from HQ towards the Deployment Zone center.
+  -- Upon arrival, the HQ will provide you with further instructions.
+  -- When your Carrier is airborne, you will receive instructions to land your Carrier.
+  -- The action will not be completed until you've landed your Carrier!
+  -- 
+  -- ## Handle TASK_CARGO Events ...
+  -- 
+  -- The TASK_CARGO classes define @{Cargo} transport tasks, 
   -- based on the tasking capabilities defined in @{Task#TASK}.
-  -- The TASK_CARGO is implemented using a @{Statemachine#FSM_TASK}, and has the following statuses:
+  -- 
+  -- ### Specific TASK_CARGO Events
+  -- 
+  -- Specific Cargo Handling event can be captured, that allow to trigger specific actions!
+  -- 
+  --   * **Boarded**: Triggered when the Cargo has been Boarded into your Carrier.
+  --   * **UnBoarded**: Triggered when the cargo has been Unboarded from your Carrier and has arrived at the Deployment Zone.
+  -- 
+  -- ### Standard TASK_CARGO Events
+  -- 
+  -- The TASK_CARGO is implemented using a @{Statemachine#FSM_TASK}, and has the following standard statuses:
   -- 
   --   * **None**: Start of the process.
   --   * **Planned**: The cargo task is planned.
   --   * **Assigned**: The cargo task is assigned to a @{Group#GROUP}.
   --   * **Success**: The cargo task is successfully completed.
   --   * **Failed**: The cargo task has failed. This will happen if the player exists the task early, without communicating a possible cancellation to HQ.
-  -- 
-  -- # 1.1) Set the scoring of achievements in a cargo task.
-  -- 
-  -- Scoring or penalties can be given in the following circumstances:
   -- 
   -- ===
   -- 
@@ -273,7 +364,7 @@ do -- TASK_CARGO
     -- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
     -- @param Tasking.Task_Cargo#TASK_CARGO Task
-    function Fsm:OnAfterLand( TaskUnit, Task, From, Event, To, Action )
+    function Fsm:onafterLand( TaskUnit, Task, From, Event, To, Action )
       self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
       
       if self.Cargo:IsInRadius( TaskUnit:GetPointVec2() ) then
@@ -297,7 +388,7 @@ do -- TASK_CARGO
     -- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
     -- @param Tasking.Task_Cargo#TASK_CARGO Task
-    function Fsm:OnAfterLanded( TaskUnit, Task, From, Event, To, Action )
+    function Fsm:onafterLanded( TaskUnit, Task, From, Event, To, Action )
       self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
       
       if self.Cargo:IsInRadius( TaskUnit:GetPointVec2() ) then
@@ -319,7 +410,7 @@ do -- TASK_CARGO
     -- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
     -- @param Tasking.Task_Cargo#TASK_CARGO Task
-    function Fsm:OnAfterPrepareBoarding( TaskUnit, Task, From, Event, To, Cargo )
+    function Fsm:onafterPrepareBoarding( TaskUnit, Task, From, Event, To, Cargo )
       self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
       
       self.Cargo = Cargo -- Core.Cargo#CARGO_GROUP
@@ -330,7 +421,7 @@ do -- TASK_CARGO
     -- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
     -- @param Tasking.Task_Cargo#TASK_CARGO Task
-    function Fsm:OnAfterBoard( TaskUnit, Task )
+    function Fsm:onafterBoard( TaskUnit, Task )
       self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
 
       function self.Cargo:OnEnterLoaded( From, Event, To, TaskUnit, TaskProcess )
@@ -359,7 +450,7 @@ do -- TASK_CARGO
     -- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
     -- @param Tasking.Task_Cargo#TASK_CARGO Task
-    function Fsm:OnAfterBoarded( TaskUnit, Task )
+    function Fsm:onafterBoarded( TaskUnit, Task )
       self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
       
       self.Cargo:MessageToGroup( "Boarded ...", TaskUnit:GetGroup() )
@@ -371,7 +462,7 @@ do -- TASK_CARGO
     -- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
     -- @param Tasking.Task_Cargo#TASK_CARGO Task
-    function Fsm:OnAfterPrepareUnBoarding( TaskUnit, Task, From, Event, To, Cargo, DeployZone )
+    function Fsm:onafterPrepareUnBoarding( TaskUnit, Task, From, Event, To, Cargo, DeployZone )
       self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
 
       self.Cargo = Cargo
@@ -383,7 +474,7 @@ do -- TASK_CARGO
     -- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
     -- @param Tasking.Task_Cargo#TASK_CARGO Task
-    function Fsm:OnAfterUnBoard( TaskUnit, Task )
+    function Fsm:onafterUnBoard( TaskUnit, Task )
       self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
 
       function self.Cargo:OnEnterUnLoaded( From, Event, To, DeployZone, TaskProcess )
@@ -403,7 +494,7 @@ do -- TASK_CARGO
     -- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
     -- @param Tasking.Task_Cargo#TASK_CARGO Task
-    function Fsm:OnAfterUnBoarded( TaskUnit, Task )
+    function Fsm:onafterUnBoarded( TaskUnit, Task )
       self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
       
       self.Cargo:MessageToGroup( "UnBoarded ...", TaskUnit:GetGroup() )

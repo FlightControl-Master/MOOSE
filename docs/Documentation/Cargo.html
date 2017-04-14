@@ -80,7 +80,7 @@
 					<li><a href="Task.html">Task</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
 					<li><a href="Task_A2G_Dispatcher.html">Task_A2G_Dispatcher</a></li>
-					<li><a href="Task_CARGO.html">Task_CARGO</a></li>
+					<li><a href="Task_Cargo.html">Task_Cargo</a></li>
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
 					<li><a href="Unit.html">Unit</a></li>
 					<li><a href="Utils.html">Utils</a></li>
@@ -104,13 +104,27 @@
 <p>Cargo can be of various forms, always are composed out of ONE object ( one unit or one static or one slingload crate ):</p>
 
 <ul>
-    <li><p>CARGO_UNIT, represented by a <a href="Unit.html">Unit</a> in a <a href="Group.html">Group</a>: Cargo can be represented by a Unit in a Group. Destruction of the Unit will mean that the cargo is lost.</p></li>
-    <li><p>CARGO_STATIC, represented by a <a href="Static.html">Static</a>: Cargo can be represented by a Static. Destruction of the Static will mean that the cargo is lost.</p></li>
-    <li><p>CARGO_PACKAGE, contained in a <a href="Unit.html">Unit</a> of a <a href="Group.html">Group</a>: Cargo can be contained within a Unit of a Group. The cargo can be <strong>delivered</strong> by the <a href="Unit.html">Unit</a>. If the Unit is destroyed, the cargo will be destroyed also.</p></li>
-    <li><p>CARGO_PACKAGE, Contained in a <a href="Static.html">Static</a>: Cargo can be contained within a Static. The cargo can be <strong>collected</strong> from the @Static. If the <a href="Static.html">Static</a> is destroyed, the cargo will be destroyed.</p></li>
-    <li><p>CARGO_SLINGLOAD, represented by a <a href="Cargo.html">Cargo</a> that is transportable: Cargo can be represented by a Cargo object that is transportable. Destruction of the Cargo will mean that the cargo is lost.</p></li>
-    <li><p>CARGO<em>GROUP, represented by a Group of CARGO</em>UNITs.</p></li>
+    <li>CARGO_UNIT, represented by a <a href="Unit.html">Unit</a> in a singleton <a href="Group.html">Group</a>: Cargo can be represented by a Unit in a Group. a CARGO_UNIT is representable...</li>
+    <li>CARGO_GROUP, represented by a <a href="Group.html">Group</a>. A CARGO_GROUP is reportable...</li>
 </ul>
+
+<hr/>
+
+<h1>Demo Missions</h1>
+
+<h3><a href="">CARGO Demo Missions source code</a></h3>
+
+<h3><a href="">CARGO Demo Missions, only for beta testers</a></h3>
+
+<h3><a href="https://github.com/FlightControl-Master/MOOSE_MISSIONS/releases">ALL Demo Missions pack of the last release</a></h3>
+
+<hr/>
+
+<h1>YouTube Channel</h1>
+
+<h3><a href="">SPAWNSTATIC YouTube Channel</a></h3>
+
+<hr/>
 
 <p>This module is still under construction, but is described above works already, and will keep working ...</p>
 
@@ -190,12 +204,6 @@
 		<td class="name" nowrap="nowrap"><a href="##(CARGO).Containable">CARGO.Containable</a></td>
 		<td class="summary">
 <p>This flag defines if the cargo can be contained within a DCS Unit.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CARGO).GetBoardingRange">CARGO:GetBoardingRange()</a></td>
-		<td class="summary">
-<p>Get the range till cargo will board.</p>
 </td>
 		</tr>
 		<tr>
@@ -395,6 +403,12 @@
 			<h2><a id="#(CARGO_GROUP)">Type <code>CARGO_GROUP</code></a></h2>
 				<table class="function_list">
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_GROUP).CargoCarrier">CARGO_GROUP.CargoCarrier</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(CARGO_GROUP).CargoSet">CARGO_GROUP.CargoSet</a></td>
 		<td class="summary">
 
@@ -407,43 +421,43 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CARGO_GROUP).onafterUnBoarding">CARGO_GROUP:onafterUnBoarding(ToPointVec2, Event, From, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_GROUP).onafterUnBoarding">CARGO_GROUP:onafterUnBoarding(ToPointVec2, Event, From, To, NearRadius, ...)</a></td>
 		<td class="summary">
 <p>UnBoard Event.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CARGO_GROUP).onenterBoarding">CARGO_GROUP:onenterBoarding(CargoCarrier, Event, From, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_GROUP).onenterBoarding">CARGO_GROUP:onenterBoarding(CargoCarrier, Event, From, To, NearRadius, ...)</a></td>
 		<td class="summary">
 <p>Enter Boarding State.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CARGO_GROUP).onenterLoaded">CARGO_GROUP:onenterLoaded(CargoCarrier, Event, From, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_GROUP).onenterLoaded">CARGO_GROUP:onenterLoaded(CargoCarrier, Event, From, To, ...)</a></td>
 		<td class="summary">
 <p>Enter Loaded State.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CARGO_GROUP).onenterUnBoarding">CARGO_GROUP:onenterUnBoarding(ToPointVec2, Event, From, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_GROUP).onenterUnBoarding">CARGO_GROUP:onenterUnBoarding(ToPointVec2, Event, From, To, NearRadius, ...)</a></td>
 		<td class="summary">
 <p>Enter UnBoarding State.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CARGO_GROUP).onenterUnLoaded">CARGO_GROUP:onenterUnLoaded(Core, Event, From, To, ToPointVec2)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_GROUP).onenterUnLoaded">CARGO_GROUP:onenterUnLoaded(Core, Event, From, To, ToPointVec2, ...)</a></td>
 		<td class="summary">
 <p>Enter UnLoaded State.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CARGO_GROUP).onleaveBoarding">CARGO_GROUP:onleaveBoarding(CargoCarrier, Event, From, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_GROUP).onleaveBoarding">CARGO_GROUP:onleaveBoarding(CargoCarrier, Event, From, To, NearRadius, ...)</a></td>
 		<td class="summary">
 <p>Leave Boarding State.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CARGO_GROUP).onleaveUnBoarding">CARGO_GROUP:onleaveUnBoarding(ToPointVec2, Event, From, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_GROUP).onleaveUnBoarding">CARGO_GROUP:onleaveUnBoarding(ToPointVec2, Event, From, To, NearRadius, ...)</a></td>
 		<td class="summary">
 <p>Leave UnBoarding State.</p>
 </td>
@@ -523,15 +537,33 @@
 			<h2><a id="#(CARGO_REPORTABLE)">Type <code>CARGO_REPORTABLE</code></a></h2>
 				<table class="function_list">
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_REPORTABLE).CargoObject">CARGO_REPORTABLE.CargoObject</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(CARGO_REPORTABLE).ClassName">CARGO_REPORTABLE.ClassName</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_REPORTABLE).GetBoardingRange">CARGO_REPORTABLE:GetBoardingRange()</a></td>
+		<td class="summary">
+<p>Get the range till cargo will board.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(CARGO_REPORTABLE).IsInRadius">CARGO_REPORTABLE:IsInRadius(PointVec2)</a></td>
 		<td class="summary">
 <p>Check if CargoCarrier is in the ReportRadius for the Cargo to be Loaded.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_REPORTABLE).MessageToGroup">CARGO_REPORTABLE:MessageToGroup(Message, TaskGroup, Name)</a></td>
+		<td class="summary">
+<p>Send a CC message to a GROUP.</p>
 </td>
 		</tr>
 		<tr>
@@ -615,7 +647,7 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CARGO_UNIT).onafterUnBoarding">CARGO_UNIT:onafterUnBoarding(Event, From, To, ToPointVec2)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_UNIT).onafterUnBoarding">CARGO_UNIT:onafterUnBoarding(Event, From, To, ToPointVec2, NearRadius)</a></td>
 		<td class="summary">
 <p>UnBoard Event.</p>
 </td>
@@ -633,7 +665,7 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CARGO_UNIT).onenterUnBoarding">CARGO_UNIT:onenterUnBoarding(Event, From, To, ToPointVec2)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_UNIT).onenterUnBoarding">CARGO_UNIT:onenterUnBoarding(Event, From, To, ToPointVec2, NearRadius)</a></td>
 		<td class="summary">
 <p>Enter UnBoarding State.</p>
 </td>
@@ -651,7 +683,7 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CARGO_UNIT).onleaveUnBoarding">CARGO_UNIT:onleaveUnBoarding(Event, From, To, ToPointVec2)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_UNIT).onleaveUnBoarding">CARGO_UNIT:onleaveUnBoarding(Event, From, To, ToPointVec2, NearRadius)</a></td>
 		<td class="summary">
 <p>Leave UnBoarding State.</p>
 </td>
@@ -892,24 +924,6 @@ The radius when the cargo will board the Carrier (to avoid collision).</p>
 <dd>
 	
 <p>This flag defines if the cargo can be contained within a DCS Unit.</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(CARGO).GetBoardingRange" >
-<strong>CARGO:GetBoardingRange()</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Get the range till cargo will board.</p>
-
-		<h3>Return value</h3>
-				
-<p><em>#number:</em>
-The range till cargo will board.</p>
 
 </dd>
 </dl>
@@ -1672,6 +1686,20 @@ The amount of seconds to delay the action.</p>
 <dt>
 
 		<em></em>
+<a id="#(CARGO_GROUP).CargoCarrier" >
+<strong>CARGO_GROUP.CargoCarrier</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
 <a id="#(CARGO_GROUP).CargoSet" >
 <strong>CARGO_GROUP.CargoSet</strong>
 </a>
@@ -1734,7 +1762,7 @@ The amount of seconds to delay the action.</p>
 <dt>
 
 <a id="#(CARGO_GROUP).onafterUnBoarding" >
-<strong>CARGO_GROUP:onafterUnBoarding(ToPointVec2, Event, From, To)</strong>
+<strong>CARGO_GROUP:onafterUnBoarding(ToPointVec2, Event, From, To, NearRadius, ...)</strong>
 </a>
 </dt>
 <dd>
@@ -1763,6 +1791,16 @@ The amount of seconds to delay the action.</p>
 <p><code><em>#string To </em></code>: </p>
 
 				</li>
+				<li>
+				
+<p><code><em> NearRadius </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> ... </em></code>: </p>
+
+				</li>
 		</ul>
 </dd>
 </dl>
@@ -1770,7 +1808,7 @@ The amount of seconds to delay the action.</p>
 <dt>
 
 <a id="#(CARGO_GROUP).onenterBoarding" >
-<strong>CARGO_GROUP:onenterBoarding(CargoCarrier, Event, From, To)</strong>
+<strong>CARGO_GROUP:onenterBoarding(CargoCarrier, Event, From, To, NearRadius, ...)</strong>
 </a>
 </dt>
 <dd>
@@ -1799,6 +1837,16 @@ The amount of seconds to delay the action.</p>
 <p><code><em>#string To </em></code>: </p>
 
 				</li>
+				<li>
+				
+<p><code><em> NearRadius </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> ... </em></code>: </p>
+
+				</li>
 		</ul>
 </dd>
 </dl>
@@ -1806,7 +1854,7 @@ The amount of seconds to delay the action.</p>
 <dt>
 
 <a id="#(CARGO_GROUP).onenterLoaded" >
-<strong>CARGO_GROUP:onenterLoaded(CargoCarrier, Event, From, To)</strong>
+<strong>CARGO_GROUP:onenterLoaded(CargoCarrier, Event, From, To, ...)</strong>
 </a>
 </dt>
 <dd>
@@ -1835,6 +1883,11 @@ The amount of seconds to delay the action.</p>
 <p><code><em>#string To </em></code>: </p>
 
 				</li>
+				<li>
+				
+<p><code><em> ... </em></code>: </p>
+
+				</li>
 		</ul>
 </dd>
 </dl>
@@ -1842,7 +1895,7 @@ The amount of seconds to delay the action.</p>
 <dt>
 
 <a id="#(CARGO_GROUP).onenterUnBoarding" >
-<strong>CARGO_GROUP:onenterUnBoarding(ToPointVec2, Event, From, To)</strong>
+<strong>CARGO_GROUP:onenterUnBoarding(ToPointVec2, Event, From, To, NearRadius, ...)</strong>
 </a>
 </dt>
 <dd>
@@ -1871,6 +1924,16 @@ The amount of seconds to delay the action.</p>
 <p><code><em>#string To </em></code>: </p>
 
 				</li>
+				<li>
+				
+<p><code><em> NearRadius </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> ... </em></code>: </p>
+
+				</li>
 		</ul>
 </dd>
 </dl>
@@ -1878,7 +1941,7 @@ The amount of seconds to delay the action.</p>
 <dt>
 
 <a id="#(CARGO_GROUP).onenterUnLoaded" >
-<strong>CARGO_GROUP:onenterUnLoaded(Core, Event, From, To, ToPointVec2)</strong>
+<strong>CARGO_GROUP:onenterUnLoaded(Core, Event, From, To, ToPointVec2, ...)</strong>
 </a>
 </dt>
 <dd>
@@ -1913,6 +1976,11 @@ Point#POINT_VEC2</p>
 <p><code><em> ToPointVec2 </em></code>: </p>
 
 				</li>
+				<li>
+				
+<p><code><em> ... </em></code>: </p>
+
+				</li>
 		</ul>
 </dd>
 </dl>
@@ -1920,7 +1988,7 @@ Point#POINT_VEC2</p>
 <dt>
 
 <a id="#(CARGO_GROUP).onleaveBoarding" >
-<strong>CARGO_GROUP:onleaveBoarding(CargoCarrier, Event, From, To)</strong>
+<strong>CARGO_GROUP:onleaveBoarding(CargoCarrier, Event, From, To, NearRadius, ...)</strong>
 </a>
 </dt>
 <dd>
@@ -1949,6 +2017,16 @@ Point#POINT_VEC2</p>
 <p><code><em>#string To </em></code>: </p>
 
 				</li>
+				<li>
+				
+<p><code><em> NearRadius </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> ... </em></code>: </p>
+
+				</li>
 		</ul>
 </dd>
 </dl>
@@ -1956,7 +2034,7 @@ Point#POINT_VEC2</p>
 <dt>
 
 <a id="#(CARGO_GROUP).onleaveUnBoarding" >
-<strong>CARGO_GROUP:onleaveUnBoarding(ToPointVec2, Event, From, To)</strong>
+<strong>CARGO_GROUP:onleaveUnBoarding(ToPointVec2, Event, From, To, NearRadius, ...)</strong>
 </a>
 </dt>
 <dd>
@@ -1983,6 +2061,16 @@ Point#POINT_VEC2</p>
 				<li>
 				
 <p><code><em>#string To </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> NearRadius </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> ... </em></code>: </p>
 
 				</li>
 		</ul>
@@ -2435,6 +2523,20 @@ The UNIT carrying the package.</p>
 		<dl class="function">
 <dt>
 
+		<em></em>
+<a id="#(CARGO_REPORTABLE).CargoObject" >
+<strong>CARGO_REPORTABLE.CargoObject</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 		<em>#string</em>
 <a id="#(CARGO_REPORTABLE).ClassName" >
 <strong>CARGO_REPORTABLE.ClassName</strong>
@@ -2443,6 +2545,24 @@ The UNIT carrying the package.</p>
 <dd>
 	
 
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO_REPORTABLE).GetBoardingRange" >
+<strong>CARGO_REPORTABLE:GetBoardingRange()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Get the range till cargo will board.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#number:</em>
+The range till cargo will board.</p>
 
 </dd>
 </dl>
@@ -2470,6 +2590,38 @@ The UNIT carrying the package.</p>
 <p><em>#boolean:</em></p>
 
 
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO_REPORTABLE).MessageToGroup" >
+<strong>CARGO_REPORTABLE:MessageToGroup(Message, TaskGroup, Name)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Send a CC message to a GROUP.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Message </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> TaskGroup </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="##(sring)">#sring</a> Name </em></code>: 
+(optional) The name of the Group used as a prefix for the message to the Group. If not provided, there will be nothing shown.</p>
+
+				</li>
+		</ul>
 </dd>
 </dl>
 		<dl class="function">
@@ -2817,7 +2969,7 @@ The UNIT carrying the package.</p>
 <dt>
 
 <a id="#(CARGO_UNIT).onafterUnBoarding" >
-<strong>CARGO_UNIT:onafterUnBoarding(Event, From, To, ToPointVec2)</strong>
+<strong>CARGO_UNIT:onafterUnBoarding(Event, From, To, ToPointVec2, NearRadius)</strong>
 </a>
 </dt>
 <dd>
@@ -2844,6 +2996,11 @@ The UNIT carrying the package.</p>
 				<li>
 				
 <p><code><em><a href="Core.Point.html##(POINT_VEC2)">Core.Point#POINT_VEC2</a> ToPointVec2 </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> NearRadius </em></code>: </p>
 
 				</li>
 		</ul>
@@ -2935,7 +3092,7 @@ The UNIT carrying the package.</p>
 <dt>
 
 <a id="#(CARGO_UNIT).onenterUnBoarding" >
-<strong>CARGO_UNIT:onenterUnBoarding(Event, From, To, ToPointVec2)</strong>
+<strong>CARGO_UNIT:onenterUnBoarding(Event, From, To, ToPointVec2, NearRadius)</strong>
 </a>
 </dt>
 <dd>
@@ -2962,6 +3119,11 @@ The UNIT carrying the package.</p>
 				<li>
 				
 <p><code><em><a href="Core.Point.html##(POINT_VEC2)">Core.Point#POINT_VEC2</a> ToPointVec2 </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> NearRadius </em></code>: </p>
 
 				</li>
 		</ul>
@@ -3059,7 +3221,7 @@ Point#POINT_VEC2</p>
 <dt>
 
 <a id="#(CARGO_UNIT).onleaveUnBoarding" >
-<strong>CARGO_UNIT:onleaveUnBoarding(Event, From, To, ToPointVec2)</strong>
+<strong>CARGO_UNIT:onleaveUnBoarding(Event, From, To, ToPointVec2, NearRadius)</strong>
 </a>
 </dt>
 <dd>
@@ -3088,10 +3250,19 @@ Point#POINT_VEC2</p>
 <p><code><em><a href="Core.Point.html##(POINT_VEC2)">Core.Point#POINT_VEC2</a> ToPointVec2 </em></code>: </p>
 
 				</li>
+				<li>
+				
+<p><code><em> NearRadius </em></code>: </p>
+
+				</li>
 		</ul>
 </dd>
 </dl>
 
+			<h2><a id="#(COMMANDCENTER)" >Type <code>COMMANDCENTER</code></a></h2>
+			
+			<h2><a id="#(sring)" >Type <code>sring</code></a></h2>
+			
 </div>
 
 </div>

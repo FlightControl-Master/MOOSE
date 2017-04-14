@@ -6,13 +6,26 @@
 -- 
 -- Cargo can be of various forms, always are composed out of ONE object ( one unit or one static or one slingload crate ):
 --
---   * CARGO_UNIT, represented by a @{Unit} in a @{Group}: Cargo can be represented by a Unit in a Group. Destruction of the Unit will mean that the cargo is lost.
---   * CARGO_STATIC, represented by a @{Static}: Cargo can be represented by a Static. Destruction of the Static will mean that the cargo is lost.
---   * CARGO_PACKAGE, contained in a @{Unit} of a @{Group}: Cargo can be contained within a Unit of a Group. The cargo can be **delivered** by the @{Unit}. If the Unit is destroyed, the cargo will be destroyed also.
---   * CARGO_PACKAGE, Contained in a @{Static}: Cargo can be contained within a Static. The cargo can be **collected** from the @Static. If the @{Static} is destroyed, the cargo will be destroyed.
---   * CARGO_SLINGLOAD, represented by a @{Cargo} that is transportable: Cargo can be represented by a Cargo object that is transportable. Destruction of the Cargo will mean that the cargo is lost.
+--   * CARGO_UNIT, represented by a @{Unit} in a singleton @{Group}: Cargo can be represented by a Unit in a Group. a CARGO_UNIT is representable...
+--   * CARGO_GROUP, represented by a @{Group}. A CARGO_GROUP is reportable...
 --   
---   * CARGO_GROUP, represented by a Group of CARGO_UNITs.
+-- ====
+-- 
+-- # Demo Missions
+-- 
+-- ### [CARGO Demo Missions source code]()
+-- 
+-- ### [CARGO Demo Missions, only for beta testers]()
+--
+-- ### [ALL Demo Missions pack of the last release](https://github.com/FlightControl-Master/MOOSE_MISSIONS/releases)
+-- 
+-- ====
+-- 
+-- # YouTube Channel
+-- 
+-- ### [SPAWNSTATIC YouTube Channel]()
+-- 
+-- ====
 -- 
 -- This module is still under construction, but is described above works already, and will keep working ...
 -- 
