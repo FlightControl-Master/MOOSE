@@ -36,7 +36,7 @@
 --
 --   * **FlightControl**: Concept, Design & Programming.
 --   
--- @module Task_CARGO
+-- @module Task_Cargo
 
 do -- TASK_CARGO
 
@@ -102,7 +102,7 @@ do -- TASK_CARGO
     Fsm:AddProcess   ( "RoutingToDeploy", "RouteToDeployZone", ACT_ROUTE_ZONE:New(), { Arrived = "ArriveAtDeploy" } )
     Fsm:AddTransition( "Arrived", "ArriveAtDeploy", "ArrivedAtDeploy" )
     
-    Fsm:AddTransition( { "ArrivedAtPickup", "ArrivedAtDeploy" }, "Land", "Landing" )
+    Fsm:AddTransition( { "ArrivedAtPickup", "ArrivedAtDeploy", "Landing" }, "Land", "Landing" )
     Fsm:AddTransition( "Landing", "Landed", "Landed" )
     
     Fsm:AddTransition( "WaitingForCommand", "PrepareBoarding", "AwaitBoarding" )
@@ -122,7 +122,7 @@ do -- TASK_CARGO
     --- 
     -- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
-    -- @param Tasking.Task_CARGO#TASK_CARGO Task
+    -- @param Tasking.Task_Cargo#TASK_CARGO Task
     function Fsm:OnEnterWaitingForCommand( TaskUnit, Task )
       self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
       
@@ -165,7 +165,8 @@ do -- TASK_CARGO
                   TaskUnit.Menu,
                   self.MenuUnBoardCargo,
                   self,
-                  Cargo
+                  Cargo,
+                  DeployZone
                 )
               else
                 MENU_GROUP_COMMAND:New(
@@ -187,7 +188,7 @@ do -- TASK_CARGO
     --- 
     -- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
-    -- @param Tasking.Task_CARGO#TASK_CARGO Task
+    -- @param Tasking.Task_Cargo#TASK_CARGO Task
     function Fsm:OnLeaveWaitingForCommand( TaskUnit, Task )
       self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
       
@@ -198,8 +199,8 @@ do -- TASK_CARGO
       self:__PrepareBoarding( 1.0, Cargo )
     end
     
-    function Fsm:MenuUnBoardCargo( Cargo )
-      self:__PrepareUnBoarding( 1.0, Cargo )
+    function Fsm:MenuUnBoardCargo( Cargo, DeployZone )
+      self:__PrepareUnBoarding( 1.0, Cargo, DeployZone )
     end
     
     function Fsm:MenuRouteToPickup( Cargo )
@@ -213,26 +214,26 @@ do -- TASK_CARGO
     --- Route to Cargo
     -- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
-    -- @param Tasking.Task_CARGO#TASK_CARGO Task
+    -- @param Tasking.Task_Cargo#TASK_CARGO Task
     function Fsm:onafterRouteToPickup( TaskUnit, Task, From, Event, To, Cargo )
       self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
 
       
       self.Cargo = Cargo
       Task:SetCargoPickup( self.Cargo, TaskUnit )
-      self:__RouteToPickupPoint( 0.1 )
+      self:__RouteToPickupPoint( -0.1 )
     end
 
 
     --- 
     -- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
-    -- @param Tasking.Task_CARGO#TASK_CARGO Task
+    -- @param Tasking.Task_Cargo#TASK_CARGO Task
     function Fsm:onafterArriveAtPickup( TaskUnit, Task )
       self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
       
       if TaskUnit:IsAir() then
-        self:__Land( -0.1 )
+        self:__Land( -0.1, "Pickup" )
       else
         self:__SelectAction( -0.1 )
       end
@@ -248,19 +249,19 @@ do -- TASK_CARGO
       
       self.DeployZone = DeployZone
       Task:SetDeployZone( self.DeployZone, TaskUnit )
-      self:__RouteToDeployZone( 0.1 )
+      self:__RouteToDeployZone( -0.1 )
     end
 
 
     --- 
     -- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
-    -- @param Tasking.Task_CARGO#TASK_CARGO Task
+    -- @param Tasking.Task_Cargo#TASK_CARGO Task
     function Fsm:onafterArriveAtDeploy( TaskUnit, Task )
       self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
       
       if TaskUnit:IsAir() then
-        self:__Land( -0.1 )
+        self:__Land( -0.1, "Deploy" )
       else
         self:__SelectAction( -0.1 )
       end
@@ -271,65 +272,64 @@ do -- TASK_CARGO
     --- 
     -- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
-    -- @param Tasking.Task_CARGO#TASK_CARGO Task
-    function Fsm:OnAfterLand( TaskUnit, Task, From, Event, To )
+    -- @param Tasking.Task_Cargo#TASK_CARGO Task
+    function Fsm:OnAfterLand( TaskUnit, Task, From, Event, To, Action )
       self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
       
       if self.Cargo:IsInRadius( TaskUnit:GetPointVec2() ) then
         if TaskUnit:InAir() then
-          Task:GetMission():GetCommandCenter():MessageToGroup( "Land", TaskUnit:GetGroup(), "Land" )
-          self:__Land( -10 )
+          Task:GetMission():GetCommandCenter():MessageToGroup( "Land", TaskUnit:GetGroup() )
+          self:__Land( -10, Action )
         else
-          Task:GetMission():GetCommandCenter():MessageToGroup( "Landed ...", TaskUnit:GetGroup(), "Land" )
-          self:__Landed( -0.1 )
+          Task:GetMission():GetCommandCenter():MessageToGroup( "Landed ...", TaskUnit:GetGroup() )
+          self:__Landed( -0.1, Action )
         end
       else
-        self:__ArriveAtCargo( -0.1 )
+        if Action == "Pickup" then
+          self:__RouteToPickupZone( -0.1 )
+        else
+          self:__RouteToDeployZone( -0.1 )
+        end
       end
     end
 
     --- 
     -- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
-    -- @param Tasking.Task_CARGO#TASK_CARGO Task
-    function Fsm:OnAfterLanded( TaskUnit, Task )
+    -- @param Tasking.Task_Cargo#TASK_CARGO Task
+    function Fsm:OnAfterLanded( TaskUnit, Task, From, Event, To, Action )
       self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
       
       if self.Cargo:IsInRadius( TaskUnit:GetPointVec2() ) then
         if TaskUnit:InAir() then
-          self:__Land( -0.1 )
+          self:__Land( -0.1, Action )
         else
-          Task:GetMission():GetCommandCenter():MessageToGroup( "Preparing to board in 10 seconds ...", TaskUnit:GetGroup(), "Boarding" )
-          self:__PrepareBoarding( -10 )
+          self:__SelectAction( -0.1 )
         end
       else
-        self:__ArriveAtCargo( -0.1 )
+        if Action == "Pickup" then
+          self:__RouteToPickupZone( -0.1 )
+        else
+          self:__RouteToDeployZone( -0.1 )
+        end
       end
     end
     
     --- 
     -- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
-    -- @param Tasking.Task_CARGO#TASK_CARGO Task
+    -- @param Tasking.Task_Cargo#TASK_CARGO Task
     function Fsm:OnAfterPrepareBoarding( TaskUnit, Task, From, Event, To, Cargo )
       self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
       
-      self.Cargo = Cargo
-      if self.Cargo:IsInRadius( TaskUnit:GetPointVec2() ) then
-        if TaskUnit:InAir() then
-          self:__Land( -0.1 )
-        else
-          self:__Board( -0.1 )
-        end
-      else
-        self:__ArriveAtCargo( -0.1 )
-      end
+      self.Cargo = Cargo -- Core.Cargo#CARGO_GROUP
+      self:__Board( -0.1 )
     end
     
     --- 
     -- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
-    -- @param Tasking.Task_CARGO#TASK_CARGO Task
+    -- @param Tasking.Task_Cargo#TASK_CARGO Task
     function Fsm:OnAfterBoard( TaskUnit, Task )
       self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
 
@@ -344,13 +344,13 @@ do -- TASK_CARGO
       
       if self.Cargo:IsInRadius( TaskUnit:GetPointVec2() ) then
         if TaskUnit:InAir() then
-          self:__Land( -0.1 )
+          --- ABORT the boarding. Split group if any and go back to select action.
         else
-          Task:GetMission():GetCommandCenter():MessageToGroup( "Boarding ...", TaskUnit:GetGroup(), "Boarding" )
+          self.Cargo:MessageToGroup( "Boarding ...", TaskUnit:GetGroup() ) 
           self.Cargo:Board( TaskUnit, 20, self )
         end
       else
-        self:__ArriveAtCargo( -0.1 )
+        --self:__ArriveAtCargo( -0.1 )
       end
     end
 
@@ -358,11 +358,11 @@ do -- TASK_CARGO
     --- 
     -- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
-    -- @param Tasking.Task_CARGO#TASK_CARGO Task
+    -- @param Tasking.Task_Cargo#TASK_CARGO Task
     function Fsm:OnAfterBoarded( TaskUnit, Task )
       self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
       
-      Task:GetMission():GetCommandCenter():MessageToGroup( "Boarded ...", TaskUnit:GetGroup(), "Boarding" )
+      self.Cargo:MessageToGroup( "Boarded ...", TaskUnit:GetGroup() )
       self:__SelectAction( 1 )
     end
     
@@ -370,42 +370,43 @@ do -- TASK_CARGO
     --- 
     -- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
-    -- @param Tasking.Task_CARGO#TASK_CARGO Task
+    -- @param Tasking.Task_Cargo#TASK_CARGO Task
     function Fsm:OnAfterPrepareUnBoarding( TaskUnit, Task, From, Event, To, Cargo, DeployZone )
       self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
 
+      self.Cargo = Cargo
       self.DeployZone = DeployZone      
-      self.Cargo:__UnBoard( -0.1, DeployZone, 20 )
+      self:__UnBoard( -0.1 )
     end
     
     --- 
     -- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
-    -- @param Tasking.Task_CARGO#TASK_CARGO Task
+    -- @param Tasking.Task_Cargo#TASK_CARGO Task
     function Fsm:OnAfterUnBoard( TaskUnit, Task )
       self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
 
-      function self.Cargo:OnEnterUnLoaded( From, Event, To, TaskUnit, TaskProcess )
+      function self.Cargo:OnEnterUnLoaded( From, Event, To, DeployZone, TaskProcess )
       
         self:E({From, Event, To, TaskUnit, TaskProcess })
         
-        TaskProcess:__UnBoarded( 0.1 )
+        TaskProcess:__UnBoarded( -0.1 )
       
       end
 
-      Task:GetMission():GetCommandCenter():MessageToGroup( "UnBoarding ...", TaskUnit:GetGroup(), "UnBoarding" )
-      self.Cargo:__UnBoard( -0.1, self.DeployZone, 20 )
+      self.Cargo:MessageToGroup( "UnBoarding ...", TaskUnit:GetGroup() )
+      self.Cargo:UnBoard( self.DeployZone:GetPointVec2(), 20, self )
     end
 
 
     --- 
     -- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
-    -- @param Tasking.Task_CARGO#TASK_CARGO Task
+    -- @param Tasking.Task_Cargo#TASK_CARGO Task
     function Fsm:OnAfterUnBoarded( TaskUnit, Task )
       self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
       
-      Task:GetMission():GetCommandCenter():MessageToGroup( "UnBoarded ...", TaskUnit:GetGroup(), "UnBoarding" )
+      self.Cargo:MessageToGroup( "UnBoarded ...", TaskUnit:GetGroup() )
       self:__SelectAction( 1 )
     end
 

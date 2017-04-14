@@ -355,99 +355,115 @@ do -- CARGO_REPRESENTABLE
     ClassName = "CARGO_REPRESENTABLE"
   }
 
---- CARGO_REPRESENTABLE Constructor.
--- @param #CARGO_REPRESENTABLE self
--- @param Wrapper.Controllable#Controllable CargoObject
--- @param #string Type
--- @param #string Name
--- @param #number Weight
--- @param #number ReportRadius (optional)
--- @param #number NearRadius (optional)
--- @return #CARGO_REPRESENTABLE
-function CARGO_REPRESENTABLE:New( CargoObject, Type, Name, Weight, ReportRadius, NearRadius )
-  local self = BASE:Inherit( self, CARGO:New( Type, Name, Weight, ReportRadius, NearRadius ) ) -- #CARGO
-  self:F( { Type, Name, Weight, ReportRadius, NearRadius } )
-
-  return self
-end
-
---- Route a cargo unit to a PointVec2.
--- @param #CARGO_REPRESENTABLE self
--- @param Core.Point#POINT_VEC2 ToPointVec2
--- @param #number Speed
--- @return #CARGO_REPRESENTABLE
-function CARGO_REPRESENTABLE:RouteTo( ToPointVec2, Speed )
-  self:F2( ToPointVec2 )
-
-  local Points = {}
-
-  local PointStartVec2 = self.CargoObject:GetPointVec2()
-
-  Points[#Points+1] = PointStartVec2:RoutePointGround( Speed )
-  Points[#Points+1] = ToPointVec2:RoutePointGround( Speed )
-
-  local TaskRoute = self.CargoObject:TaskRoute( Points )
-  self.CargoObject:SetTask( TaskRoute, 2 )
-  return self  
-end
-
+  --- CARGO_REPRESENTABLE Constructor.
+  -- @param #CARGO_REPRESENTABLE self
+  -- @param Wrapper.Controllable#Controllable CargoObject
+  -- @param #string Type
+  -- @param #string Name
+  -- @param #number Weight
+  -- @param #number ReportRadius (optional)
+  -- @param #number NearRadius (optional)
+  -- @return #CARGO_REPRESENTABLE
+  function CARGO_REPRESENTABLE:New( CargoObject, Type, Name, Weight, ReportRadius, NearRadius )
+    local self = BASE:Inherit( self, CARGO:New( Type, Name, Weight, ReportRadius, NearRadius ) ) -- #CARGO
+    self:F( { Type, Name, Weight, ReportRadius, NearRadius } )
+  
+    return self
+  end
+  
+  --- Route a cargo unit to a PointVec2.
+  -- @param #CARGO_REPRESENTABLE self
+  -- @param Core.Point#POINT_VEC2 ToPointVec2
+  -- @param #number Speed
+  -- @return #CARGO_REPRESENTABLE
+  function CARGO_REPRESENTABLE:RouteTo( ToPointVec2, Speed )
+    self:F2( ToPointVec2 )
+  
+    local Points = {}
+  
+    local PointStartVec2 = self.CargoObject:GetPointVec2()
+  
+    Points[#Points+1] = PointStartVec2:RoutePointGround( Speed )
+    Points[#Points+1] = ToPointVec2:RoutePointGround( Speed )
+  
+    local TaskRoute = self.CargoObject:TaskRoute( Points )
+    self.CargoObject:SetTask( TaskRoute, 2 )
+    return self  
+  end
+  
+  
 end -- CARGO_REPRESENTABLE
 
-do -- CARGO_REPORTABLE
-
-  --- @type CARGO_REPORTABLE
-  -- @extends #CARGO
-  CARGO_REPORTABLE = {
-    ClassName = "CARGO_REPORTABLE"
-  }
-
---- CARGO_REPORTABLE Constructor.
--- @param #CARGO_REPORTABLE self
--- @param Wrapper.Controllable#Controllable CargoObject
--- @param #string Type
--- @param #string Name
--- @param #number Weight
--- @param #number ReportRadius (optional)
--- @param #number NearRadius (optional)
--- @return #CARGO_REPORTABLE
-function CARGO_REPORTABLE:New( CargoObject, Type, Name, Weight, ReportRadius )
-  local self = BASE:Inherit( self, CARGO:New( Type, Name, Weight ) ) -- #CARGO_REPORTABLE
-  self:F( { Type, Name, Weight, ReportRadius } )
-
-  self.ReportRadius = ReportRadius or 1000
-  self.CargoObject = CargoObject
-
-  return self
-end
-
---- Check if CargoCarrier is in the ReportRadius for the Cargo to be Loaded.
--- @param #CARGO_REPORTABLE self
--- @param Core.Point#POINT_VEC2 PointVec2
--- @return #boolean
-function CARGO_REPORTABLE:IsInRadius( PointVec2 )
-  self:F( { PointVec2 } )
-
-  local Distance = 0
-  if self:IsLoaded() then
-    Distance = PointVec2:DistanceFromPointVec2( self.CargoCarrier:GetPointVec2() )
-  else
-    Distance = PointVec2:DistanceFromPointVec2( self.CargoObject:GetPointVec2() )
-  end
-  self:T( Distance )
+  do -- CARGO_REPORTABLE
   
-  if Distance <= self.ReportRadius then
-    return true
-  else
-    return false
+    --- @type CARGO_REPORTABLE
+    -- @extends #CARGO
+    CARGO_REPORTABLE = {
+      ClassName = "CARGO_REPORTABLE"
+    }
+  
+  --- CARGO_REPORTABLE Constructor.
+  -- @param #CARGO_REPORTABLE self
+  -- @param Wrapper.Controllable#Controllable CargoObject
+  -- @param #string Type
+  -- @param #string Name
+  -- @param #number Weight
+  -- @param #number ReportRadius (optional)
+  -- @param #number NearRadius (optional)
+  -- @return #CARGO_REPORTABLE
+  function CARGO_REPORTABLE:New( CargoObject, Type, Name, Weight, ReportRadius )
+    local self = BASE:Inherit( self, CARGO:New( Type, Name, Weight ) ) -- #CARGO_REPORTABLE
+    self:F( { Type, Name, Weight, ReportRadius } )
+  
+    self.ReportRadius = ReportRadius or 1000
+    self.CargoObject = CargoObject
+  
+    return self
   end
-end
+  
+  --- Check if CargoCarrier is in the ReportRadius for the Cargo to be Loaded.
+  -- @param #CARGO_REPORTABLE self
+  -- @param Core.Point#POINT_VEC2 PointVec2
+  -- @return #boolean
+  function CARGO_REPORTABLE:IsInRadius( PointVec2 )
+    self:F( { PointVec2 } )
+  
+    local Distance = 0
+    if self:IsLoaded() then
+      Distance = PointVec2:DistanceFromPointVec2( self.CargoCarrier:GetPointVec2() )
+    else
+      Distance = PointVec2:DistanceFromPointVec2( self.CargoObject:GetPointVec2() )
+    end
+    self:T( Distance )
+    
+    if Distance <= self.ReportRadius then
+      return true
+    else
+      return false
+    end
+  
+  
+  end
 
---- Get the range till cargo will board.
--- @param #CARGO self
--- @return #number The range till cargo will board.
-function CARGO:GetBoardingRange()
-  return self.ReportRadius
-end
+  --- Send a CC message to a GROUP.
+  -- @param #COMMANDCENTER self
+  -- @param #string Message
+  -- @param Wrapper.Group#GROUP TaskGroup
+  -- @param #sring Name (optional) The name of the Group used as a prefix for the message to the Group. If not provided, there will be nothing shown.
+  function CARGO_REPORTABLE:MessageToGroup( Message, TaskGroup, Name )
+  
+    local Prefix = Name and "@ " .. Name .. ": " or "@ " .. TaskGroup:GetCallsign() .. ": "
+    Message = Prefix .. Message 
+    MESSAGE:New( Message, 20, "Cargo: " .. self:GetName() ):ToGroup( TaskGroup )
+  
+  end
+
+  --- Get the range till cargo will board.
+  -- @param #CARGO self
+  -- @return #number The range till cargo will board.
+  function CARGO_REPORTABLE:GetBoardingRange()
+    return self.ReportRadius
+  end
 
 end
 
@@ -649,7 +665,7 @@ end
 function CARGO_UNIT:onenterBoarding( From, Event, To, CargoCarrier, NearRadius, ... )
   self:F( { From, Event, To, CargoCarrier.UnitName, NearRadius } )
   
-  local Speed = 10
+  local Speed = 90
   local Angle = 180
   local Distance = 5
   
@@ -1103,8 +1119,8 @@ end
 -- @param #string Event
 -- @param #string From
 -- @param #string To
-function CARGO_GROUP:onenterUnBoarding( From, Event, To, ToPointVec2, NearRadius )
-  self:F()
+function CARGO_GROUP:onenterUnBoarding( From, Event, To, ToPointVec2, NearRadius, ... )
+  self:F({From, Event, To, ToPointVec2, NearRadius})
 
   NearRadius = NearRadius or 25
 
@@ -1120,7 +1136,7 @@ function CARGO_GROUP:onenterUnBoarding( From, Event, To, ToPointVec2, NearRadius
       end
     )
     
-    self:__UnBoarding( 1, ToPointVec2, NearRadius )
+    self:__UnBoarding( 1, ToPointVec2, NearRadius, ... )
   end
 
 end
@@ -1131,8 +1147,8 @@ end
 -- @param #string Event
 -- @param #string From
 -- @param #string To
-function CARGO_GROUP:onleaveUnBoarding( From, Event, To, ToPointVec2, NearRadius )
-  self:F( { ToPointVec2, From, Event, To } )
+function CARGO_GROUP:onleaveUnBoarding( From, Event, To, ToPointVec2, NearRadius, ... )
+  self:F( { From, Event, To, ToPointVec2, NearRadius } )
 
   NearRadius = NearRadius or 25
 
@@ -1154,7 +1170,7 @@ function CARGO_GROUP:onleaveUnBoarding( From, Event, To, ToPointVec2, NearRadius
     if UnBoarded then
       return true
     else
-      self:__UnBoarding( 1, ToPointVec2, NearRadius )
+      self:__UnBoarding( 1, ToPointVec2, NearRadius, ... )
     end
     
     return false
@@ -1168,12 +1184,12 @@ end
 -- @param #string Event
 -- @param #string From
 -- @param #string To
-function CARGO_GROUP:onafterUnBoarding( From, Event, To, ToPointVec2, NearRadius )
-  self:F( { ToPointVec2, From, Event, To } )
+function CARGO_GROUP:onafterUnBoarding( From, Event, To, ToPointVec2, NearRadius, ... )
+  self:F( { From, Event, To, ToPointVec2, NearRadius } )
 
   NearRadius = NearRadius or 25
 
-  self:__UnLoad( 1, ToPointVec2 )
+  self:__UnLoad( 1, ToPointVec2, ... )
 end
 
 
@@ -1184,8 +1200,8 @@ end
 -- @param #string Event
 -- @param #string From
 -- @param #string To
-function CARGO_GROUP:onenterUnLoaded( From, Event, To, ToPointVec2 )
-  self:F( { ToPointVec2, From, Event, To } )
+function CARGO_GROUP:onenterUnLoaded( From, Event, To, ToPointVec2, ... )
+  self:F( { From, Event, To, ToPointVec2 } )
 
   if From == "Loaded" then
     
