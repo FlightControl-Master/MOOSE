@@ -214,10 +214,12 @@ do -- TASK_CARGO
     -- @param Tasking.Task_Cargo#TASK_CARGO Task
     function Fsm:onenterWaitingForCommand( TaskUnit, Task )
       self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
-      
+
+      if TaskUnit.Menu then
+        TaskUnit.Menu:Remove()
+      end
+            
       TaskUnit.Menu = MENU_GROUP:New( TaskUnit:GetGroup(), Task:GetName() .. " @ " .. TaskUnit:GetName() )
-      
-      Task.SetCargo:Flush()
       
       Task.SetCargo:ForEachCargo(
         
@@ -272,6 +274,8 @@ do -- TASK_CARGO
         
         end
       )
+      
+      self:__SelectAction( -15 )
     end
     
     --- 
