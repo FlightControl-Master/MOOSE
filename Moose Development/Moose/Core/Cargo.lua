@@ -562,7 +562,7 @@ function CARGO_UNIT:onenterUnBoarding( From, Event, To, ToPointVec2, NearRadius 
 
     -- Respawn the group...
     if self.CargoObject then
-      self.CargoObject:ReSpawn( CargoDeployPointVec2:GetVec3(), CargoDeployHeading )
+      self.CargoObject:ReSpawn( CargoDeployPointVec2:GetRandomVec3InRadius(10,15), CargoDeployHeading )
       self.CargoCarrier = nil
 
       local Points = {}
