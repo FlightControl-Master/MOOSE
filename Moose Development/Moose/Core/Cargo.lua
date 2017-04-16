@@ -233,7 +233,7 @@ do -- CARGO
 -- @return #CARGO
 function CARGO:New( Type, Name, Weight )
 
-  local self = BASE:Inherit( self, FSM:New() ) -- Core.Fsm#FSM
+  local self = BASE:Inherit( self, FSM:New() ) -- #CARGO
   self:F( { Type, Name, Weight } )
   
   self:SetStartState( "UnLoaded" )
@@ -364,13 +364,16 @@ do -- CARGO_REPRESENTABLE
 
   --- @type CARGO_REPRESENTABLE
   -- @extends #CARGO
+  -- @field test
+
+  ---
+  -- @field #CARGO_REPRESENTABLE CARGO_REPRESENTABLE
   CARGO_REPRESENTABLE = {
     ClassName = "CARGO_REPRESENTABLE"
   }
 
   --- CARGO_REPRESENTABLE Constructor.
   -- @param #CARGO_REPRESENTABLE self
-  -- @param Wrapper.Controllable#Controllable CargoObject
   -- @param #string Type
   -- @param #string Name
   -- @param #number Weight
@@ -378,7 +381,7 @@ do -- CARGO_REPRESENTABLE
   -- @param #number NearRadius (optional)
   -- @return #CARGO_REPRESENTABLE
   function CARGO_REPRESENTABLE:New( CargoObject, Type, Name, Weight, ReportRadius, NearRadius )
-    local self = BASE:Inherit( self, CARGO:New( Type, Name, Weight, ReportRadius, NearRadius ) ) -- #CARGO
+    local self = BASE:Inherit( self, CARGO:New( Type, Name, Weight, ReportRadius, NearRadius ) ) -- #CARGO_REPRESENTABLE
     self:F( { Type, Name, Weight, ReportRadius, NearRadius } )
   
     return self
@@ -482,7 +485,8 @@ end
 
 do -- CARGO_UNIT
 
-  --- @type CARGO_UNIT
+  --- Hello 
+  -- @type CARGO_UNIT
   -- @extends #CARGO_REPRESENTABLE
   
   --- # CARGO\_UNIT class, extends @{#CARGO_REPRESENTABLE}
@@ -543,31 +547,40 @@ function CARGO_UNIT:onenterUnBoarding( From, Event, To, ToPointVec2, NearRadius 
   NearRadius = NearRadius or 25
 
   local Angle = 180
-  local Speed = 10
-  local DeployDistance = 5
+  local Speed = 60
+  local DeployDistance = 9
   local RouteDistance = 60
 
   if From == "Loaded" then
 
-    local CargoCarrierPointVec2 = self.CargoCarrier:GetPointVec2()
+    local CargoCarrier = self.CargoCarrier -- Wrapper.Controllable#CONTROLLABLE
+
+    local CargoCarrierPointVec2 = CargoCarrier:GetPointVec2()
     local CargoCarrierHeading = self.CargoCarrier:GetHeading() -- Get Heading of object in degrees.
     local CargoDeployHeading = ( ( CargoCarrierHeading + Angle ) >= 360 ) and ( CargoCarrierHeading + Angle - 360 ) or ( CargoCarrierHeading + Angle )
-    local CargoDeployPointVec2 = CargoCarrierPointVec2:Translate( DeployDistance, CargoDeployHeading )
-    local CargoRoutePointVec2 = CargoCarrierPointVec2:Translate( RouteDistance, CargoDeployHeading )
 
+
+    local CargoRoutePointVec2 = CargoCarrierPointVec2:Translate( RouteDistance, CargoDeployHeading )
+    
+    
     -- if there is no ToPointVec2 given, then use the CargoRoutePointVec2
     ToPointVec2 = ToPointVec2 or CargoRoutePointVec2
+    local DirectionVec3 = CargoCarrierPointVec2:GetDirectionVec3(ToPointVec2)
+    local Angle = CargoCarrierPointVec2:GetAngleDegrees(DirectionVec3)
+
+    local CargoDeployPointVec2 = CargoCarrierPointVec2:Translate( DeployDistance, Angle )
     
     local FromPointVec2 = CargoCarrierPointVec2
 
     -- Respawn the group...
     if self.CargoObject then
-      self.CargoObject:ReSpawn( CargoDeployPointVec2:GetRandomVec3InRadius(10,15), CargoDeployHeading )
+      self.CargoObject:ReSpawn( CargoDeployPointVec2:GetVec3(), CargoDeployHeading )
       self.CargoCarrier = nil
 
       local Points = {}
-      Points[#Points+1] = FromPointVec2:RoutePointGround( Speed )
-      Points[#Points+1] = ToPointVec2:RoutePointGround( Speed  )
+      Points[#Points+1] = CargoCarrierPointVec2:RoutePointGround( Speed )
+      
+      Points[#Points+1] = ToPointVec2:RoutePointGround( Speed )
   
       local TaskRoute = self.CargoObject:TaskRoute( Points )
       self.CargoObject:SetTask( TaskRoute, 1 )
