@@ -193,6 +193,18 @@ and various dedicated deployment zones.</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_CARGO).GetCargoSet">TASK_CARGO:GetCargoSet()</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_CARGO).GetDeployZones">TASK_CARGO:GetDeployZones()</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(TASK_CARGO).GetPlannedMenuText">TASK_CARGO:GetPlannedMenuText()</a></td>
 		<td class="summary">
 
@@ -270,6 +282,12 @@ and various dedicated deployment zones.</p>
 				<table class="function_list">
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(TASK_CARGO_TRANSPORT).ClassName">TASK_CARGO_TRANSPORT.ClassName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_CARGO_TRANSPORT).IsAllCargoTransported">TASK_CARGO_TRANSPORT:IsAllCargoTransported()</a></td>
 		<td class="summary">
 
 </td>
@@ -506,6 +524,42 @@ based on the tasking capabilities defined in <a href="Task.html##(TASK)">Task#TA
 
 	
 <p> setmetatable( {}, { __mode = "v" } ) -- weak table on value</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_CARGO).GetCargoSet" >
+<strong>TASK_CARGO:GetCargoSet()</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Return value</h3>
+				
+<p><em><a href="Core.Set.html##(SET_CARGO)">Core.Set#SET_CARGO</a>:</em>
+The Cargo Set.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_CARGO).GetDeployZones" >
+<strong>TASK_CARGO:GetDeployZones()</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(list)">#list</a>:</em>
+Core.Zone#ZONE_BASE> The Deployment Zones.</p>
 
 </dd>
 </dl>
@@ -894,6 +948,24 @@ The score in points.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(TASK_CARGO_TRANSPORT).IsAllCargoTransported" >
+<strong>TASK_CARGO_TRANSPORT:IsAllCargoTransported()</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(TASK_CARGO_TRANSPORT).New" >
 <strong>TASK_CARGO_TRANSPORT:New(Mission, SetGroup, TaskName, SetCargo)</strong>
 </a>
@@ -936,6 +1008,8 @@ self</p>
 </dd>
 </dl>
 
+			<h2><a id="#(list)" >Type <code>list</code></a></h2>
+			
 </div>
 
 </div>
