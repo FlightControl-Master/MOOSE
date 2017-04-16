@@ -399,11 +399,11 @@ function POINT_VEC3:GetNorthCorrectionRadians()
 end
 
 
---- Return a direction in radians from the POINT_VEC3 using a direction vector in Vec3 format.
+--- Return an angle in radians from the POINT_VEC3 using a direction vector in Vec3 format.
 -- @param #POINT_VEC3 self
 -- @param Dcs.DCSTypes#Vec3 DirectionVec3 The direction vector in Vec3 format.
--- @return #number DirectionRadians The direction in radians.
-function POINT_VEC3:GetDirectionRadians( DirectionVec3 )
+-- @return #number DirectionRadians The angle in radians.
+function POINT_VEC3:GetAngleRadians( DirectionVec3 )
   local DirectionRadians = math.atan2( DirectionVec3.z, DirectionVec3.x )
   --DirectionRadians = DirectionRadians + self:GetNorthCorrectionRadians()
   if DirectionRadians < 0 then
@@ -411,6 +411,17 @@ function POINT_VEC3:GetDirectionRadians( DirectionVec3 )
   end
   return DirectionRadians
 end
+
+--- Return an angle in degrees from the POINT_VEC3 using a direction vector in Vec3 format.
+-- @param #POINT_VEC3 self
+-- @param Dcs.DCSTypes#Vec3 DirectionVec3 The direction vector in Vec3 format.
+-- @return #number DirectionRadians The angle in degrees.
+function POINT_VEC3:GetAngleDegrees( DirectionVec3 )
+  local AngleRadians = self:GetAngleRadians(DirectionVec3)
+  local Angle = UTILS.ToDegree( AngleRadians )
+  return Angle
+end
+
 
 --- Return the 2D distance in meters between the target POINT_VEC3 and the POINT_VEC3.
 -- @param #POINT_VEC3 self
@@ -482,7 +493,7 @@ end
 -- @return #string The BR text.
 function POINT_VEC3:GetBRText( TargetPointVec3 )
     local DirectionVec3 = self:GetDirectionVec3( TargetPointVec3 )
-    local AngleRadians =  self:GetDirectionRadians( DirectionVec3 )
+    local AngleRadians =  self:GetAngleRadians( DirectionVec3 )
     local Distance = self:Get2DDistance( TargetPointVec3 )
     return self:ToStringBR( AngleRadians, Distance )
 end
