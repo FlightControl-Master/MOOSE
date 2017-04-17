@@ -66,8 +66,7 @@
 -- @module Zone
 
 
---- The ZONE_BASE class
--- @type ZONE_BASE
+--- @type ZONE_BASE
 -- @field #string ZoneName Name of the zone.
 -- @field #number ZoneProbability A value between 0 and 1. 0 = 0% and 1 = 100% probability.
 -- @extends Core.Base#BASE
@@ -83,19 +82,26 @@
 -- 
 -- ## Each zone implements two polymorphic functions defined in @{Zone#ZONE_BASE}:
 -- 
---   * @{#ZONE_BASE.IsVec2InZone}(): Returns if a Vec2 is within the zone.
---   * @{#ZONE_BASE.IsVec3InZone}(): Returns if a Vec3 is within the zone.
+--   * @{#ZONE_BASE.IsVec2InZone}(): Returns if a 2D vector is within the zone.
+--   * @{#ZONE_BASE.IsVec3InZone}(): Returns if a 3D vector is within the zone.
+--   * @{#ZONE_BASE.IsPointVec2InZone}(): Returns if a 2D point vector is within the zone.
+--   * @{#ZONE_BASE.IsPointVec3InZone}(): Returns if a 3D point vector is within the zone.
 --   
 -- ## A zone has a probability factor that can be set to randomize a selection between zones:
 -- 
---   * @{#ZONE_BASE.SetRandomizeProbability}(): Set the randomization probability of a zone to be selected, taking a value between 0 and 1 ( 0 = 0%, 1 = 100% )
---   * @{#ZONE_BASE.GetRandomizeProbability}(): Get the randomization probability of a zone to be selected, passing a value between 0 and 1 ( 0 = 0%, 1 = 100% )
+--   * @{#ZONE_BASE.SetZoneProbability}(): Set the randomization probability of a zone to be selected, taking a value between 0 and 1 ( 0 = 0%, 1 = 100% )
+--   * @{#ZONE_BASE.GetZoneProbability}(): Get the randomization probability of a zone to be selected, passing a value between 0 and 1 ( 0 = 0%, 1 = 100% )
 --   * @{#ZONE_BASE.GetZoneMaybe}(): Get the zone taking into account the randomization probability. nil is returned if this zone is not a candidate.
 -- 
--- ## A zone manages Vectors:
+-- ## A zone manages vectors:
 -- 
---   * @{#ZONE_BASE.GetVec2}(): Returns the @{DCSTypes#Vec2} coordinate of the zone.
---   * @{#ZONE_BASE.GetRandomVec2}(): Define a random @{DCSTypes#Vec2} within the zone.
+--   * @{#ZONE_BASE.GetVec2}(): Returns the 2D vector coordinate of the zone.
+--   * @{#ZONE_BASE.GetVec3}(): Returns the 3D vector coordinate of the zone.
+--   * @{#ZONE_BASE.GetPointVec2}(): Returns the 2D point vector coordinate of the zone.
+--   * @{#ZONE_BASE.GetPointVec3}(): Returns the 3D point vector coordinate of the zone.
+--   * @{#ZONE_BASE.GetRandomVec2}(): Define a random 2D vector within the zone.
+--   * @{#ZONE_BASE.GetRandomPointVec2}(): Define a random 2D point vector within the zone.
+--   * @{#ZONE_BASE.GetRandomPointVec3}(): Define a random 3D point vector within the zone.
 -- 
 -- ## A zone has a bounding square:
 -- 
@@ -106,8 +112,7 @@
 --   * @{#ZONE_BASE.SmokeZone}(): Smokes the zone boundaries in a color.
 --   * @{#ZONE_BASE.FlareZone}(): Flares the zone boundaries in a color.
 -- 
--- @field #ZONE_BASE ZONE_BASE
--- 
+-- @field #ZONE_BASE
 ZONE_BASE = {
   ClassName = "ZONE_BASE",
   ZoneName = "",
@@ -366,8 +371,7 @@ end
 --   * @{#ZONE_RADIUS.GetRandomPointVec2}(): Gets a @{Point#POINT_VEC2} object representing a random 2D point in the zone.
 --   * @{#ZONE_RADIUS.GetRandomPointVec3}(): Gets a @{Point#POINT_VEC3} object representing a random 3D point in the zone. Note that the height of the point is at landheight.
 -- 
--- @field #ZONE_RADIUS ZONE_RADIUS
--- 
+-- @field #ZONE_RADIUS
 ZONE_RADIUS = {
 	ClassName="ZONE_RADIUS",
 	}
@@ -648,8 +652,7 @@ end
 -- The ZONE class, defined by the zone name as defined within the Mission Editor.
 -- This class implements the inherited functions from @{#ZONE_RADIUS} taking into account the own zone format and properties.
 -- 
--- @field #ZONE ZONE
--- 
+-- @field #ZONE 
 ZONE = {
   ClassName="ZONE",
   }
@@ -686,8 +689,7 @@ end
 -- The ZONE_UNIT class defined by a zone around a @{Unit#UNIT} with a radius.
 -- This class implements the inherited functions from @{#ZONE_RADIUS} taking into account the own zone format and properties.
 -- 
--- @field #ZONE_UNIT ZONE_UNIT
---
+-- @field #ZONE_UNIT
 ZONE_UNIT = {
   ClassName="ZONE_UNIT",
   }
@@ -769,7 +771,6 @@ function ZONE_UNIT:GetVec3( Height )
 end
 
 --- @type ZONE_GROUP
--- @field Wrapper.Group#GROUP ZoneGROUP
 -- @extends #ZONE_RADIUS
 
 
@@ -778,8 +779,7 @@ end
 -- The ZONE_GROUP class defines by a zone around a @{Group#GROUP} with a radius. The current leader of the group defines the center of the zone.
 -- This class implements the inherited functions from @{Zone#ZONE_RADIUS} taking into account the own zone format and properties.
 -- 
--- @field #ZONE_GROUP ZONE_GROUP
--- 
+-- @field #ZONE_GROUP
 ZONE_GROUP = {
   ClassName="ZONE_GROUP",
   }
@@ -794,7 +794,7 @@ function ZONE_GROUP:New( ZoneName, ZoneGROUP, Radius )
   local self = BASE:Inherit( self, ZONE_RADIUS:New( ZoneName, ZoneGROUP:GetVec2(), Radius ) )
   self:F( { ZoneName, ZoneGROUP:GetVec2(), Radius } )
 
-  self.ZoneGROUP = ZoneGROUP
+  self._.ZoneGROUP = ZoneGROUP
   
   return self
 end
@@ -806,7 +806,7 @@ end
 function ZONE_GROUP:GetVec2()
   self:F( self.ZoneName )
   
-  local ZoneVec2 = self.ZoneGROUP:GetVec2()
+  local ZoneVec2 = self._.ZoneGROUP:GetVec2()
 
   self:T( { ZoneVec2 } )
   
@@ -820,7 +820,7 @@ function ZONE_GROUP:GetRandomVec2()
   self:F( self.ZoneName )
 
   local Point = {}
-  local Vec2 = self.ZoneGROUP:GetVec2()
+  local Vec2 = self._.ZoneGROUP:GetVec2()
 
   local angle = math.random() * math.pi*2;
   Point.x = Vec2.x + math.cos( angle ) * math.random() * self:GetRadius();
@@ -834,7 +834,7 @@ end
 
 
 --- @type ZONE_POLYGON_BASE
--- @field #ZONE_POLYGON_BASE.ListVec2 Polygon The polygon defined by an array of @{DCSTypes#Vec2}.
+-- --@field #ZONE_POLYGON_BASE.ListVec2 Polygon The polygon defined by an array of @{DCSTypes#Vec2}.
 -- @extends #ZONE_BASE
 
 
@@ -852,8 +852,7 @@ end
 --   * @{#ZONE_POLYGON_BASE.GetRandomPointVec2}(): Return a @{Point#POINT_VEC2} object representing a random 2D point within the zone.
 --   * @{#ZONE_POLYGON_BASE.GetRandomPointVec3}(): Return a @{Point#POINT_VEC3} object representing a random 3D point at landheight within the zone.
 -- 
--- @field #ZONE_POLYGON_BASE ZONE_POLYGON_BASE
--- 
+-- @field #ZONE_POLYGON_BASE
 ZONE_POLYGON_BASE = {
   ClassName="ZONE_POLYGON_BASE",
   }
@@ -874,12 +873,12 @@ function ZONE_POLYGON_BASE:New( ZoneName, PointsArray )
 
   local i = 0
   
-  self.Polygon = {}
+  self._.Polygon = {}
   
   for i = 1, #PointsArray do
-    self.Polygon[i] = {}
-    self.Polygon[i].x = PointsArray[i].x
-    self.Polygon[i].y = PointsArray[i].y
+    self._.Polygon[i] = {}
+    self._.Polygon[i].x = PointsArray[i].x
+    self._.Polygon[i].y = PointsArray[i].y
   end
 
   return self
@@ -902,7 +901,7 @@ end
 function ZONE_POLYGON_BASE:Flush()
   self:F2()
 
-  self:E( { Polygon = self.ZoneName, Coordinates = self.Polygon } )
+  self:E( { Polygon = self.ZoneName, Coordinates = self._.Polygon } )
 
   return self
 end
@@ -918,17 +917,17 @@ function ZONE_POLYGON_BASE:BoundZone( UnBound )
   local Segments = 10
   
   i = 1
-  j = #self.Polygon
+  j = #self._.Polygon
   
-  while i <= #self.Polygon do
-    self:T( { i, j, self.Polygon[i], self.Polygon[j] } )
+  while i <= #self._.Polygon do
+    self:T( { i, j, self._.Polygon[i], self._.Polygon[j] } )
     
-    local DeltaX = self.Polygon[j].x - self.Polygon[i].x
-    local DeltaY = self.Polygon[j].y - self.Polygon[i].y
+    local DeltaX = self._.Polygon[j].x - self._.Polygon[i].x
+    local DeltaY = self._.Polygon[j].y - self._.Polygon[i].y
     
     for Segment = 0, Segments do -- We divide each line in 5 segments and smoke a point on the line.
-      local PointX = self.Polygon[i].x + ( Segment * DeltaX / Segments )
-      local PointY = self.Polygon[i].y + ( Segment * DeltaY / Segments )
+      local PointX = self._.Polygon[i].x + ( Segment * DeltaX / Segments )
+      local PointY = self._.Polygon[i].y + ( Segment * DeltaY / Segments )
       local Tire = {
           ["country"] = "USA", 
           ["category"] = "Fortifications",
@@ -968,17 +967,17 @@ function ZONE_POLYGON_BASE:SmokeZone( SmokeColor )
   local Segments = 10
   
   i = 1
-  j = #self.Polygon
+  j = #self._.Polygon
   
-  while i <= #self.Polygon do
-    self:T( { i, j, self.Polygon[i], self.Polygon[j] } )
+  while i <= #self._.Polygon do
+    self:T( { i, j, self._.Polygon[i], self._.Polygon[j] } )
     
-    local DeltaX = self.Polygon[j].x - self.Polygon[i].x
-    local DeltaY = self.Polygon[j].y - self.Polygon[i].y
+    local DeltaX = self._.Polygon[j].x - self._.Polygon[i].x
+    local DeltaY = self._.Polygon[j].y - self._.Polygon[i].y
     
     for Segment = 0, Segments do -- We divide each line in 5 segments and smoke a point on the line.
-      local PointX = self.Polygon[i].x + ( Segment * DeltaX / Segments )
-      local PointY = self.Polygon[i].y + ( Segment * DeltaY / Segments )
+      local PointX = self._.Polygon[i].x + ( Segment * DeltaX / Segments )
+      local PointY = self._.Polygon[i].y + ( Segment * DeltaY / Segments )
       POINT_VEC2:New( PointX, PointY ):Smoke( SmokeColor )
     end
     j = i
@@ -1004,12 +1003,12 @@ function ZONE_POLYGON_BASE:IsVec2InZone( Vec2 )
   local InPolygon = false
   
   Next = 1
-  Prev = #self.Polygon
+  Prev = #self._.Polygon
   
-  while Next <= #self.Polygon do
-    self:T( { Next, Prev, self.Polygon[Next], self.Polygon[Prev] } )
-    if ( ( ( self.Polygon[Next].y > Vec2.y ) ~= ( self.Polygon[Prev].y > Vec2.y ) ) and
-         ( Vec2.x < ( self.Polygon[Prev].x - self.Polygon[Next].x ) * ( Vec2.y - self.Polygon[Next].y ) / ( self.Polygon[Prev].y - self.Polygon[Next].y ) + self.Polygon[Next].x ) 
+  while Next <= #self._.Polygon do
+    self:T( { Next, Prev, self._.Polygon[Next], self._.Polygon[Prev] } )
+    if ( ( ( self._.Polygon[Next].y > Vec2.y ) ~= ( self._.Polygon[Prev].y > Vec2.y ) ) and
+         ( Vec2.x < ( self._.Polygon[Prev].x - self._.Polygon[Next].x ) * ( Vec2.y - self._.Polygon[Next].y ) / ( self._.Polygon[Prev].y - self._.Polygon[Next].y ) + self._.Polygon[Next].x ) 
        ) then
        InPolygon = not InPolygon
     end
@@ -1080,17 +1079,17 @@ end
 -- @return #ZONE_POLYGON_BASE.BoundingSquare The bounding square.
 function ZONE_POLYGON_BASE:GetBoundingSquare()
 
-  local x1 = self.Polygon[1].x
-  local y1 = self.Polygon[1].y
-  local x2 = self.Polygon[1].x
-  local y2 = self.Polygon[1].y
+  local x1 = self._.Polygon[1].x
+  local y1 = self._.Polygon[1].y
+  local x2 = self._.Polygon[1].x
+  local y2 = self._.Polygon[1].y
   
-  for i = 2, #self.Polygon do
-    self:T2( { self.Polygon[i], x1, y1, x2, y2 } )
-    x1 = ( x1 > self.Polygon[i].x ) and self.Polygon[i].x or x1
-    x2 = ( x2 < self.Polygon[i].x ) and self.Polygon[i].x or x2
-    y1 = ( y1 > self.Polygon[i].y ) and self.Polygon[i].y or y1
-    y2 = ( y2 < self.Polygon[i].y ) and self.Polygon[i].y or y2
+  for i = 2, #self._.Polygon do
+    self:T2( { self._.Polygon[i], x1, y1, x2, y2 } )
+    x1 = ( x1 > self._.Polygon[i].x ) and self._.Polygon[i].x or x1
+    x2 = ( x2 < self._.Polygon[i].x ) and self._.Polygon[i].x or x2
+    y1 = ( y1 > self._.Polygon[i].y ) and self._.Polygon[i].y or y1
+    y2 = ( y2 < self._.Polygon[i].y ) and self._.Polygon[i].y or y2
     
   end
 
@@ -1107,8 +1106,7 @@ end
 -- The ZONE_POLYGON class defined by a sequence of @{Group#GROUP} waypoints within the Mission Editor, forming a polygon.
 -- This class implements the inherited functions from @{Zone#ZONE_RADIUS} taking into account the own zone format and properties.
 -- 
--- @field #ZONE_POLYGON ZONE_POLYGON
--- 
+-- @field #ZONE_POLYGON
 ZONE_POLYGON = {
   ClassName="ZONE_POLYGON",
   }
@@ -1124,7 +1122,7 @@ function ZONE_POLYGON:New( ZoneName, ZoneGroup )
   local GroupPoints = ZoneGroup:GetTaskRoute()
 
   local self = BASE:Inherit( self, ZONE_POLYGON_BASE:New( ZoneName, GroupPoints ) )
-  self:F( { ZoneName, ZoneGroup, self.Polygon } )
+  self:F( { ZoneName, ZoneGroup, self._.Polygon } )
 
   return self
 end

@@ -416,12 +416,6 @@
 <p>Constructor to create a ZONE_GROUP instance, taking the zone name, a zone <a href="Group.html##(GROUP)">Group#GROUP</a> and a radius.</p>
 </td>
 		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ZONE_GROUP).ZoneGROUP">ZONE_GROUP.ZoneGROUP</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
 	</table>
 
 			<h2><a id="#(ZONE_POLYGON)">Type <code>ZONE_POLYGON</code></a></h2>
@@ -488,12 +482,6 @@
 		<td class="name" nowrap="nowrap"><a href="##(ZONE_POLYGON_BASE).New">ZONE_POLYGON_BASE:New(ZoneName, PointsArray)</a></td>
 		<td class="summary">
 <p>Constructor to create a ZONE<em>POLYGON</em>BASE instance, taking the zone name and an array of <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a>, forming a polygon.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ZONE_POLYGON_BASE).Polygon">ZONE_POLYGON_BASE.Polygon</a></td>
-		<td class="summary">
-<p>The polygon defined by an array of <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a>.</p>
 </td>
 		</tr>
 		<tr>
@@ -690,23 +678,30 @@
 <h2>Each zone implements two polymorphic functions defined in <a href="Zone.html##(ZONE_BASE)">Zone#ZONE_BASE</a>:</h2>
 
 <ul>
-    <li><a href="##(ZONE_BASE).IsVec2InZone">ZONE_BASE.IsVec2InZone</a>(): Returns if a Vec2 is within the zone.</li>
-    <li><a href="##(ZONE_BASE).IsVec3InZone">ZONE_BASE.IsVec3InZone</a>(): Returns if a Vec3 is within the zone.</li>
+    <li><a href="##(ZONE_BASE).IsVec2InZone">ZONE_BASE.IsVec2InZone</a>(): Returns if a 2D vector is within the zone.</li>
+    <li><a href="##(ZONE_BASE).IsVec3InZone">ZONE_BASE.IsVec3InZone</a>(): Returns if a 3D vector is within the zone.</li>
+    <li><a href="##(ZONE_BASE).IsPointVec2InZone">ZONE_BASE.IsPointVec2InZone</a>(): Returns if a 2D point vector is within the zone.</li>
+    <li><a href="##(ZONE_BASE).IsPointVec3InZone">ZONE_BASE.IsPointVec3InZone</a>(): Returns if a 3D point vector is within the zone.</li>
 </ul>
 
 <h2>A zone has a probability factor that can be set to randomize a selection between zones:</h2>
 
 <ul>
-    <li><a href="##(ZONE_BASE).SetRandomizeProbability">ZONE_BASE.SetRandomizeProbability</a>(): Set the randomization probability of a zone to be selected, taking a value between 0 and 1 ( 0 = 0%, 1 = 100% )</li>
-    <li><a href="##(ZONE_BASE).GetRandomizeProbability">ZONE_BASE.GetRandomizeProbability</a>(): Get the randomization probability of a zone to be selected, passing a value between 0 and 1 ( 0 = 0%, 1 = 100% )</li>
+    <li><a href="##(ZONE_BASE).SetZoneProbability">ZONE_BASE.SetZoneProbability</a>(): Set the randomization probability of a zone to be selected, taking a value between 0 and 1 ( 0 = 0%, 1 = 100% )</li>
+    <li><a href="##(ZONE_BASE).GetZoneProbability">ZONE_BASE.GetZoneProbability</a>(): Get the randomization probability of a zone to be selected, passing a value between 0 and 1 ( 0 = 0%, 1 = 100% )</li>
     <li><a href="##(ZONE_BASE).GetZoneMaybe">ZONE_BASE.GetZoneMaybe</a>(): Get the zone taking into account the randomization probability. nil is returned if this zone is not a candidate.</li>
 </ul>
 
-<h2>A zone manages Vectors:</h2>
+<h2>A zone manages vectors:</h2>
 
 <ul>
-    <li><a href="##(ZONE_BASE).GetVec2">ZONE_BASE.GetVec2</a>(): Returns the <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> coordinate of the zone.</li>
-    <li><a href="##(ZONE_BASE).GetRandomVec2">ZONE_BASE.GetRandomVec2</a>(): Define a random <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> within the zone.</li>
+    <li><a href="##(ZONE_BASE).GetVec2">ZONE_BASE.GetVec2</a>(): Returns the 2D vector coordinate of the zone.</li>
+    <li><a href="##(ZONE_BASE).GetVec3">ZONE_BASE.GetVec3</a>(): Returns the 3D vector coordinate of the zone.</li>
+    <li><a href="##(ZONE_BASE).GetPointVec2">ZONE_BASE.GetPointVec2</a>(): Returns the 2D point vector coordinate of the zone.</li>
+    <li><a href="##(ZONE_BASE).GetPointVec3">ZONE_BASE.GetPointVec3</a>(): Returns the 3D point vector coordinate of the zone.</li>
+    <li><a href="##(ZONE_BASE).GetRandomVec2">ZONE_BASE.GetRandomVec2</a>(): Define a random 2D vector within the zone.</li>
+    <li><a href="##(ZONE_BASE).GetRandomPointVec2">ZONE_BASE.GetRandomPointVec2</a>(): Define a random 2D point vector within the zone.</li>
+    <li><a href="##(ZONE_BASE).GetRandomPointVec3">ZONE_BASE.GetRandomPointVec3</a>(): Define a random 3D point vector within the zone.</li>
 </ul>
 
 <h2>A zone has a bounding square:</h2>
@@ -901,10 +896,7 @@ The name of the zone as defined within the mission editor.</p>
 </dl>
 
 			<h2><a id="#(ZONE_BASE)" >Type <code>ZONE_BASE</code></a></h2>
-				
-<p>The ZONE_BASE class</p>
-
-	<h3>Field(s)</h3>
+				<h3>Field(s)</h3>
 		<dl class="function">
 <dt>
 
@@ -1500,20 +1492,6 @@ self</p>
 
 </dd>
 </dl>
-		<dl class="function">
-<dt>
-
-		<em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a></em>
-<a id="#(ZONE_GROUP).ZoneGROUP" >
-<strong>ZONE_GROUP.ZoneGROUP</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
 
 			<h2><a id="#(ZONE_POLYGON)" >Type <code>ZONE_POLYGON</code></a></h2>
 				<h3>Field(s)</h3>
@@ -1754,20 +1732,6 @@ An array of <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a>, forming a polygon
 				
 <p><em><a href="##(ZONE_POLYGON_BASE)">#ZONE<em>POLYGON</em>BASE</a>:</em>
 self</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em><a href="##(ZONE_POLYGON_BASE.ListVec2)">#ZONE_POLYGON_BASE.ListVec2</a></em>
-<a id="#(ZONE_POLYGON_BASE).Polygon" >
-<strong>ZONE_POLYGON_BASE.Polygon</strong>
-</a>
-</dt>
-<dd>
-	
-<p>The polygon defined by an array of <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a>.</p>
 
 </dd>
 </dl>
