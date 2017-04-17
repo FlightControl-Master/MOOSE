@@ -697,7 +697,7 @@ function CARGO_UNIT:onenterBoarding( From, Event, To, CargoCarrier, NearRadius, 
   
   NearRadius = NearRadius or 25
 
-  if From == "UnLoaded" then
+  if From == "UnLoaded" or "Boarding" then
     local CargoCarrierPointVec2 = CargoCarrier:GetPointVec2()
     local CargoCarrierHeading = CargoCarrier:GetHeading() -- Get Heading of object in degrees.
     local CargoDeployHeading = ( ( CargoCarrierHeading + Angle ) >= 360 ) and ( CargoCarrierHeading + Angle - 360 ) or ( CargoCarrierHeading + Angle )
@@ -730,7 +730,7 @@ function CARGO_UNIT:onenterBoarding( From, Event, To, CargoCarrier, NearRadius, 
     end
 
     local TaskRoute = self.CargoObject:TaskRoute( Points )
-    self.CargoObject:SetTask( TaskRoute, 2 )
+    self.CargoObject:GetGroup():SetTask( TaskRoute, 2 )
   end
   
 end
