@@ -111,6 +111,22 @@
 
 <hr/>
 
+<h1>Demo Missions</h1>
+
+<h3><a href="https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master-release/CAP%20-%20Combat%20Air%20Patrol">AI_CAP Demo Missions source code</a></h3>
+
+<h3><a href="https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/CAP%20-%20Combat%20Air%20Patrol">AI_CAP Demo Missions, only for beta testers</a></h3>
+
+<h3><a href="https://github.com/FlightControl-Master/MOOSE_MISSIONS/releases">ALL Demo Missions pack of the last release</a></h3>
+
+<hr/>
+
+<h1>YouTube Channel</h1>
+
+<h3><a href="https://www.youtube.com/playlist?list=PL7ZUrU4zZUl1YCyPxJgoZn-CfhwyeW65L">AI_CAP YouTube Channel</a></h3>
+
+<hr/>
+
 <h1><strong>API CHANGE HISTORY</strong></h1>
 
 <p>The underlying change log documents the API changes. Please read this carefully. The following notation is used:</p>
@@ -150,9 +166,9 @@
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="#AI_CAP_ZONE">AI_CAP_ZONE</a></td>
 		<td class="summary">
-<h1>1) <a href="##(AI_CAP_ZONE)">#AI<em>CAP</em>ZONE</a> class, extends <a href="AI_CAP.html##(AI_PATROL_ZONE)">AI<em>CAP#AI</em>PATROL_ZONE</a></h1>
+<h1>AI<em>CAP</em>ZONE class, extends <a href="AI_CAP.html##(AI_PATROL_ZONE)">AI<em>CAP#AI</em>PATROL_ZONE</a></h1>
 
-<p>The <a href="##(AI_CAP_ZONE)">#AI<em>CAP</em>ZONE</a> class implements the core functions to patrol a <a href="Zone.html">Zone</a> by an AI <a href="Controllable.html">Controllable</a> or <a href="Group.html">Group</a> 
+<p>The AI<em>CAP</em>ZONE class implements the core functions to patrol a <a href="Zone.html">Zone</a> by an AI <a href="Controllable.html">Controllable</a> or <a href="Group.html">Group</a> 
 and automatically engage any airborne enemies that are within a certain range or within a certain zone.</p>
 </td>
 		</tr>
@@ -412,9 +428,9 @@ and automatically engage any airborne enemies that are within a certain range or
 </dt>
 <dd>
 	
-<h1>1) <a href="##(AI_CAP_ZONE)">#AI<em>CAP</em>ZONE</a> class, extends <a href="AI_CAP.html##(AI_PATROL_ZONE)">AI<em>CAP#AI</em>PATROL_ZONE</a></h1>
+<h1>AI<em>CAP</em>ZONE class, extends <a href="AI_CAP.html##(AI_PATROL_ZONE)">AI<em>CAP#AI</em>PATROL_ZONE</a></h1>
 
-<p>The <a href="##(AI_CAP_ZONE)">#AI<em>CAP</em>ZONE</a> class implements the core functions to patrol a <a href="Zone.html">Zone</a> by an AI <a href="Controllable.html">Controllable</a> or <a href="Group.html">Group</a> 
+<p>The AI<em>CAP</em>ZONE class implements the core functions to patrol a <a href="Zone.html">Zone</a> by an AI <a href="Controllable.html">Controllable</a> or <a href="Group.html">Group</a> 
 and automatically engage any airborne enemies that are within a certain range or within a certain zone.</p>
 
 	
@@ -447,17 +463,17 @@ When the fuel treshold has been reached, the airplane will fly towards the neare
 
 <p><img src="..\Presentations\AI_CAP\Dia13.JPG" alt="Process"/></p>
 
-<h2>1.1) AI<em>CAP</em>ZONE constructor</h2>
+<h2>1. AI<em>CAP</em>ZONE constructor</h2>
 
 <ul>
     <li><a href="##(AI_CAP_ZONE).New">AI<em>CAP</em>ZONE.New</a>(): Creates a new AI<em>CAP</em>ZONE object.</li>
 </ul>
 
-<h2>1.2) AI<em>CAP</em>ZONE is a FSM</h2>
+<h2>2. AI<em>CAP</em>ZONE is a FSM</h2>
 
 <p><img src="..\Presentations\AI_CAP\Dia2.JPG" alt="Process"/></p>
 
-<h3>1.2.1) AI<em>CAP</em>ZONE States</h3>
+<h3>2.1 AI<em>CAP</em>ZONE States</h3>
 
 <ul>
     <li><strong>None</strong> ( Group ): The process is not started yet.</li>
@@ -466,7 +482,7 @@ When the fuel treshold has been reached, the airplane will fly towards the neare
     <li><strong>Returning</strong> ( Group ): The AI is returning to Base..</li>
 </ul>
 
-<h3>1.2.2) AI<em>CAP</em>ZONE Events</h3>
+<h3>2.2 AI<em>CAP</em>ZONE Events</h3>
 
 <ul>
     <li>**<a href="AI_Patrol.html##(AI_PATROL_ZONE).Start">AI<em>Patrol#AI</em>PATROL_ZONE.Start</a>**: Start the process.</li>
@@ -481,7 +497,7 @@ When the fuel treshold has been reached, the airplane will fly towards the neare
     <li><strong>Status</strong> ( Group ): The AI is checking status (fuel and damage). When the tresholds have been reached, the AI will RTB.</li>
 </ul>
 
-<h2>1.3) Set the Range of Engagement</h2>
+<h2>3. Set the Range of Engagement</h2>
 
 <p><img src="..\Presentations\AI_CAP\Dia11.JPG" alt="Range"/></p>
 
@@ -491,7 +507,7 @@ The range can be beyond or smaller than the range of the Patrol Zone.
 The range is applied at the position of the AI.
 Use the method <a href="AI_CAP.html##(AI_CAP_ZONE).SetEngageRange">AI<em>CAP#AI</em>CAP_ZONE.SetEngageRange</a>() to define that range.</p>
 
-<h2>1.4) Set the Zone of Engagement</h2>
+<h2>4. Set the Zone of Engagement</h2>
 
 <p><img src="..\Presentations\AI_CAP\Dia12.JPG" alt="Zone"/></p>
 

@@ -10,6 +10,22 @@
 -- 
 --   * @{#AI_CAS_ZONE}: Perform a CAS in a zone.
 --   
+-- ====
+-- 
+-- # Demo Missions
+-- 
+-- ### [AI_CAS Demo Missions source code](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master-release/CAS%20-%20Close%20Air%20Support)
+-- 
+-- ### [AI_CAS Demo Missions, only for beta testers](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/CAS%20-%20Close%20Air%20Support)
+--
+-- ### [ALL Demo Missions pack of the last release](https://github.com/FlightControl-Master/MOOSE_MISSIONS/releases)
+-- 
+-- ====
+-- 
+-- # YouTube Channel
+-- 
+-- ### [AI_CAS YouTube Channel](https://www.youtube.com/playlist?list=PL7ZUrU4zZUl3JBO1WDqqpyYRRmIkR2ir2)
+-- 
 -- ===
 --
 -- # **API CHANGE HISTORY**
@@ -46,11 +62,11 @@
 -- @field Core.Zone#ZONE_BASE TargetZone The @{Zone} where the patrol needs to be executed.
 -- @extends AI.AI_Patrol#AI_PATROL_ZONE
 
---- # 1) @{#AI_CAS_ZONE} class, extends @{AI_Patrol#AI_PATROL_ZONE}
+--- # AI_CAS_ZONE class, extends @{AI_Patrol#AI_PATROL_ZONE}
 -- 
--- @{#AI_CAS_ZONE} derives from the @{AI_Patrol#AI_PATROL_ZONE}, inheriting its methods and behaviour.
+-- AI_CAS_ZONE derives from the @{AI_Patrol#AI_PATROL_ZONE}, inheriting its methods and behaviour.
 --  
--- The @{#AI_CAS_ZONE} class implements the core functions to provide Close Air Support in an Engage @{Zone} by an AIR @{Controllable} or @{Group}.
+-- The AI_CAS_ZONE class implements the core functions to provide Close Air Support in an Engage @{Zone} by an AIR @{Controllable} or @{Group}.
 -- The AI_CAS_ZONE runs a process. It holds an AI in a Patrol Zone and when the AI is commanded to engage, it will fly to an Engage Zone.
 -- 
 -- ![HoldAndEngage](..\Presentations\AI_CAS\Dia3.JPG)
@@ -104,22 +120,22 @@
 -- 
 -- ![Engage Event](..\Presentations\AI_CAS\Dia12.JPG)
 --
--- # 1.1) AI_CAS_ZONE constructor
+-- # 1. AI_CAS_ZONE constructor
 --
 --   * @{#AI_CAS_ZONE.New}(): Creates a new AI_CAS_ZONE object.
 --
--- ## 1.2) AI_CAS_ZONE is a FSM
+-- ## 2. AI_CAS_ZONE is a FSM
 -- 
 -- ![Process](..\Presentations\AI_CAS\Dia2.JPG)
 -- 
--- ### 1.2.1) AI_CAS_ZONE States
+-- ### 2.1. AI_CAS_ZONE States
 -- 
 --   * **None** ( Group ): The process is not started yet.
 --   * **Patrolling** ( Group ): The AI is patrolling the Patrol Zone.
 --   * **Engaging** ( Group ): The AI is engaging the targets in the Engage Zone, executing CAS.
 --   * **Returning** ( Group ): The AI is returning to Base..
 -- 
--- ### 1.2.2) AI_CAS_ZONE Events
+-- ### 2.2. AI_CAS_ZONE Events
 -- 
 --   * **@{AI_Patrol#AI_PATROL_ZONE.Start}**: Start the process.
 --   * **@{AI_Patrol#AI_PATROL_ZONE.Route}**: Route the AI to a new random 3D point within the Patrol Zone.
@@ -134,8 +150,7 @@
 -- 
 -- ===
 -- 
--- @field #AI_CAS_ZONE AI_CAS_ZONE   
--- 
+-- @field #AI_CAS_ZONE
 AI_CAS_ZONE = {
   ClassName = "AI_CAS_ZONE",
 }

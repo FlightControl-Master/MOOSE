@@ -111,6 +111,22 @@
 
 <hr/>
 
+<h1>Demo Missions</h1>
+
+<h3><a href="https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master-release/CAS%20-%20Close%20Air%20Support">AI_CAS Demo Missions source code</a></h3>
+
+<h3><a href="https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/CAS%20-%20Close%20Air%20Support">AI_CAS Demo Missions, only for beta testers</a></h3>
+
+<h3><a href="https://github.com/FlightControl-Master/MOOSE_MISSIONS/releases">ALL Demo Missions pack of the last release</a></h3>
+
+<hr/>
+
+<h1>YouTube Channel</h1>
+
+<h3><a href="https://www.youtube.com/playlist?list=PL7ZUrU4zZUl3JBO1WDqqpyYRRmIkR2ir2">AI_CAS YouTube Channel</a></h3>
+
+<hr/>
+
 <h1><strong>API CHANGE HISTORY</strong></h1>
 
 <p>The underlying change log documents the API changes. Please read this carefully. The following notation is used:</p>
@@ -148,9 +164,9 @@
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="#AI_CAS_ZONE">AI_CAS_ZONE</a></td>
 		<td class="summary">
-<h1>1) <a href="##(AI_CAS_ZONE)">#AI<em>CAS</em>ZONE</a> class, extends <a href="AI_Patrol.html##(AI_PATROL_ZONE)">AI<em>Patrol#AI</em>PATROL_ZONE</a></h1>
+<h1>AI<em>CAS</em>ZONE class, extends <a href="AI_Patrol.html##(AI_PATROL_ZONE)">AI<em>Patrol#AI</em>PATROL_ZONE</a></h1>
 
-<p><a href="##(AI_CAS_ZONE)">#AI<em>CAS</em>ZONE</a> derives from the <a href="AI_Patrol.html##(AI_PATROL_ZONE)">AI<em>Patrol#AI</em>PATROL_ZONE</a>, inheriting its methods and behaviour.</p>
+<p>AI<em>CAS</em>ZONE derives from the <a href="AI_Patrol.html##(AI_PATROL_ZONE)">AI<em>Patrol#AI</em>PATROL_ZONE</a>, inheriting its methods and behaviour.</p>
 </td>
 		</tr>
 		<tr>
@@ -421,13 +437,13 @@
 </dt>
 <dd>
 	
-<h1>1) <a href="##(AI_CAS_ZONE)">#AI<em>CAS</em>ZONE</a> class, extends <a href="AI_Patrol.html##(AI_PATROL_ZONE)">AI<em>Patrol#AI</em>PATROL_ZONE</a></h1>
+<h1>AI<em>CAS</em>ZONE class, extends <a href="AI_Patrol.html##(AI_PATROL_ZONE)">AI<em>Patrol#AI</em>PATROL_ZONE</a></h1>
 
-<p><a href="##(AI_CAS_ZONE)">#AI<em>CAS</em>ZONE</a> derives from the <a href="AI_Patrol.html##(AI_PATROL_ZONE)">AI<em>Patrol#AI</em>PATROL_ZONE</a>, inheriting its methods and behaviour.</p>
+<p>AI<em>CAS</em>ZONE derives from the <a href="AI_Patrol.html##(AI_PATROL_ZONE)">AI<em>Patrol#AI</em>PATROL_ZONE</a>, inheriting its methods and behaviour.</p>
 
 	
 <p> 
-The <a href="##(AI_CAS_ZONE)">#AI<em>CAS</em>ZONE</a> class implements the core functions to provide Close Air Support in an Engage <a href="Zone.html">Zone</a> by an AIR <a href="Controllable.html">Controllable</a> or <a href="Group.html">Group</a>.
+The AI<em>CAS</em>ZONE class implements the core functions to provide Close Air Support in an Engage <a href="Zone.html">Zone</a> by an AIR <a href="Controllable.html">Controllable</a> or <a href="Group.html">Group</a>.
 The AI<em>CAS</em>ZONE runs a process. It holds an AI in a Patrol Zone and when the AI is commanded to engage, it will fly to an Engage Zone.</p>
 
 <p><img src="..\Presentations\AI_CAS\Dia3.JPG" alt="HoldAndEngage"/></p>
@@ -483,17 +499,17 @@ It can be notified to go RTB through the <strong>RTB</strong> event.</p>
 
 <p><img src="..\Presentations\AI_CAS\Dia12.JPG" alt="Engage Event"/></p>
 
-<h1>1.1) AI<em>CAS</em>ZONE constructor</h1>
+<h1>1. AI<em>CAS</em>ZONE constructor</h1>
 
 <ul>
     <li><a href="##(AI_CAS_ZONE).New">AI<em>CAS</em>ZONE.New</a>(): Creates a new AI<em>CAS</em>ZONE object.</li>
 </ul>
 
-<h2>1.2) AI<em>CAS</em>ZONE is a FSM</h2>
+<h2>2. AI<em>CAS</em>ZONE is a FSM</h2>
 
 <p><img src="..\Presentations\AI_CAS\Dia2.JPG" alt="Process"/></p>
 
-<h3>1.2.1) AI<em>CAS</em>ZONE States</h3>
+<h3>2.1. AI<em>CAS</em>ZONE States</h3>
 
 <ul>
     <li><strong>None</strong> ( Group ): The process is not started yet.</li>
@@ -502,7 +518,7 @@ It can be notified to go RTB through the <strong>RTB</strong> event.</p>
     <li><strong>Returning</strong> ( Group ): The AI is returning to Base..</li>
 </ul>
 
-<h3>1.2.2) AI<em>CAS</em>ZONE Events</h3>
+<h3>2.2. AI<em>CAS</em>ZONE Events</h3>
 
 <ul>
     <li>**<a href="AI_Patrol.html##(AI_PATROL_ZONE).Start">AI<em>Patrol#AI</em>PATROL_ZONE.Start</a>**: Start the process.</li>
