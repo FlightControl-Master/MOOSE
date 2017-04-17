@@ -1,91 +1,22 @@
 --- **Core** - **POINT\_VEC** classes define an **extensive API** to **manage 3D points** in the simulation space.
--- 
--- 1) @{Point#POINT_VEC3} class, extends @{Base#BASE}
--- ==================================================
--- The @{Point#POINT_VEC3} class defines a 3D point in the simulator.
--- 
--- **Important Note:** Most of the functions in this section were taken from MIST, and reworked to OO concepts.
--- In order to keep the credibility of the the author, I want to emphasize that the of the MIST framework was created by Grimes, who you can find on the Eagle Dynamics Forums.
--- 
--- ## 1.1) POINT_VEC3 constructor
--- 
--- A new POINT_VEC3 instance can be created with:
--- 
---  * @{Point#POINT_VEC3.New}(): a 3D point.
---  * @{Point#POINT_VEC3.NewFromVec3}(): a 3D point created from a @{DCSTypes#Vec3}.
--- 
--- ## 1.2) Manupulate the X, Y, Z coordinates of the point
--- 
--- A POINT_VEC3 class works in 3D space. It contains internally an X, Y, Z coordinate.
--- Methods exist to manupulate these coordinates.
--- 
--- The current X, Y, Z axis can be retrieved with the methods @{#POINT_VEC3.GetX}(), @{#POINT_VEC3.GetY}(), @{#POINT_VEC3.GetZ}() respectively.
--- The methods @{#POINT_VEC3.SetX}(), @{#POINT_VEC3.SetY}(), @{#POINT_VEC3.SetZ}() change the respective axis with a new value.
--- The current axis values can be changed by using the methods @{#POINT_VEC3.AddX}(), @{#POINT_VEC3.AddY}(), @{#POINT_VEC3.AddZ}()
--- to add or substract a value from the current respective axis value.
--- Note that the Set and Add methods return the current POINT_VEC3 object, so these manipulation methods can be chained... For example:
--- 
---      local Vec3 = PointVec3:AddX( 100 ):AddZ( 150 ):GetVec3()
--- 
--- ## 1.3) Create waypoints for routes
--- 
--- A POINT_VEC3 can prepare waypoints for Ground, Air and Naval groups to be embedded into a Route.
--- 
--- 
--- ## 1.5) Smoke, flare, explode, illuminate
--- 
--- At the point a smoke, flare, explosion and illumination bomb can be triggered. Use the following methods:
--- 
--- ### 1.5.1) Smoke
--- 
---   * @{#POINT_VEC3.Smoke}(): To smoke the point in a certain color.
---   * @{#POINT_VEC3.SmokeBlue}(): To smoke the point in blue.
---   * @{#POINT_VEC3.SmokeRed}(): To smoke the point in red.
---   * @{#POINT_VEC3.SmokeOrange}(): To smoke the point in orange.
---   * @{#POINT_VEC3.SmokeWhite}(): To smoke the point in white.
---   * @{#POINT_VEC3.SmokeGreen}(): To smoke the point in green.
---   
--- ### 1.5.2) Flare
--- 
---   * @{#POINT_VEC3.Flare}(): To flare the point in a certain color.
---   * @{#POINT_VEC3.FlareRed}(): To flare the point in red.
---   * @{#POINT_VEC3.FlareYellow}(): To flare the point in yellow.
---   * @{#POINT_VEC3.FlareWhite}(): To flare the point in white.
---   * @{#POINT_VEC3.FlareGreen}(): To flare the point in green.
--- 
--- ### 1.5.3) Explode
--- 
---   * @{#POINT_VEC3.Explosion}(): To explode the point with a certain intensity.
---   
--- ### 1.5.4) Illuminate
--- 
---   * @{#POINT_VEC3.IlluminationBomb}(): To illuminate the point.
--- 
 --
--- 2) @{Point#POINT_VEC2} class, extends @{Point#POINT_VEC3}
--- =========================================================
--- The @{Point#POINT_VEC2} class defines a 2D point in the simulator. The height coordinate (if needed) will be the land height + an optional added height specified.
+-- ![Banner Image](..\Presentations\POINT\Dia1.JPG)
+--
+-- ====
 -- 
--- 2.1) POINT_VEC2 constructor
--- ---------------------------
--- A new POINT_VEC2 instance can be created with:
+-- # Demo Missions
 -- 
---  * @{Point#POINT_VEC2.New}(): a 2D point, taking an additional height parameter.
---  * @{Point#POINT_VEC2.NewFromVec2}(): a 2D point created from a @{DCSTypes#Vec2}.
+-- ### [POINT_VEC Demo Missions source code]()
 -- 
--- ## 1.2) Manupulate the X, Altitude, Y coordinates of the 2D point
+-- ### [POINT_VEC Demo Missions, only for beta testers]()
+--
+-- ### [ALL Demo Missions pack of the last release](https://github.com/FlightControl-Master/MOOSE_MISSIONS/releases)
 -- 
--- A POINT_VEC2 class works in 2D space, with an altitude setting. It contains internally an X, Altitude, Y coordinate.
--- Methods exist to manupulate these coordinates.
+-- ====
 -- 
--- The current X, Altitude, Y axis can be retrieved with the methods @{#POINT_VEC2.GetX}(), @{#POINT_VEC2.GetAlt}(), @{#POINT_VEC2.GetY}() respectively.
--- The methods @{#POINT_VEC2.SetX}(), @{#POINT_VEC2.SetAlt}(), @{#POINT_VEC2.SetY}() change the respective axis with a new value.
--- The current Lat(itude), Alt(itude), Lon(gitude) values can also be retrieved with the methods @{#POINT_VEC2.GetLat}(), @{#POINT_VEC2.GetAlt}(), @{#POINT_VEC2.GetLon}() respectively.
--- The current axis values can be changed by using the methods @{#POINT_VEC2.AddX}(), @{#POINT_VEC2.AddAlt}(), @{#POINT_VEC2.AddY}()
--- to add or substract a value from the current respective axis value.
--- Note that the Set and Add methods return the current POINT_VEC2 object, so these manipulation methods can be chained... For example:
+-- # YouTube Channel
 -- 
---      local Vec2 = PointVec2:AddX( 100 ):AddY( 2000 ):GetVec2()
+-- ### [POINT_VEC YouTube Channel]()
 -- 
 -- ===
 -- 
@@ -133,6 +64,126 @@
 -- @field #POINT_VEC3.RoutePointType RoutePointType
 -- @field #POINT_VEC3.RoutePointAction RoutePointAction
 -- @extends Core.Base#BASE
+
+--- # POINT_VEC3 class, extends @{Base#BASE}
+-- 
+-- POINT_VEC3 defines a 3D point in the simulator and with its methods, you can use or manipulate the point in 3D space.
+-- 
+-- **Important Note:** Most of the functions in this section were taken from MIST, and reworked to OO concepts.
+-- In order to keep the credibility of the the author, 
+-- I want to emphasize that the formulas embedded in the MIST framework were created by Grimes or previous authors, 
+-- who you can find on the Eagle Dynamics Forums.
+-- 
+-- 
+-- ## POINT_VEC3 constructor
+-- 
+-- A new POINT_VEC3 object can be created with:
+-- 
+--  * @{#POINT_VEC3.New}(): a 3D point.
+--  * @{#POINT_VEC3.NewFromVec3}(): a 3D point created from a @{DCSTypes#Vec3}.
+-- 
+-- 
+-- ## Manupulate the X, Y, Z coordinates of the POINT_VEC3
+-- 
+-- A POINT_VEC3 class works in 3D space. It contains internally an X, Y, Z coordinate.
+-- Methods exist to manupulate these coordinates.
+-- 
+-- The current X, Y, Z axis can be retrieved with the methods @{#POINT_VEC3.GetX}(), @{#POINT_VEC3.GetY}(), @{#POINT_VEC3.GetZ}() respectively.
+-- The methods @{#POINT_VEC3.SetX}(), @{#POINT_VEC3.SetY}(), @{#POINT_VEC3.SetZ}() change the respective axis with a new value.
+-- The current axis values can be changed by using the methods @{#POINT_VEC3.AddX}(), @{#POINT_VEC3.AddY}(), @{#POINT_VEC3.AddZ}()
+-- to add or substract a value from the current respective axis value.
+-- Note that the Set and Add methods return the current POINT_VEC3 object, so these manipulation methods can be chained... For example:
+-- 
+--      local Vec3 = PointVec3:AddX( 100 ):AddZ( 150 ):GetVec3()
+-- 
+-- 
+-- ## Create waypoints for routes
+-- 
+-- A POINT_VEC3 can prepare waypoints for Ground and Air groups to be embedded into a Route.
+-- 
+--   * @{#POINT_VEC3.RoutePointAir}(): Build an air route point.
+--   * @{#POINT_VEC3.RoutePointGround}(): Build a ground route point.
+--   
+-- Route points can be used in the Route methods of the @{Group#GROUP} class.
+-- 
+-- 
+-- ## Smoke, flare, explode, illuminate
+-- 
+-- At the point a smoke, flare, explosion and illumination bomb can be triggered. Use the following methods:
+-- 
+-- ### Smoke
+-- 
+--   * @{#POINT_VEC3.Smoke}(): To smoke the point in a certain color.
+--   * @{#POINT_VEC3.SmokeBlue}(): To smoke the point in blue.
+--   * @{#POINT_VEC3.SmokeRed}(): To smoke the point in red.
+--   * @{#POINT_VEC3.SmokeOrange}(): To smoke the point in orange.
+--   * @{#POINT_VEC3.SmokeWhite}(): To smoke the point in white.
+--   * @{#POINT_VEC3.SmokeGreen}(): To smoke the point in green.
+--   
+-- ### Flare
+-- 
+--   * @{#POINT_VEC3.Flare}(): To flare the point in a certain color.
+--   * @{#POINT_VEC3.FlareRed}(): To flare the point in red.
+--   * @{#POINT_VEC3.FlareYellow}(): To flare the point in yellow.
+--   * @{#POINT_VEC3.FlareWhite}(): To flare the point in white.
+--   * @{#POINT_VEC3.FlareGreen}(): To flare the point in green.
+-- 
+-- ### Explode
+-- 
+--   * @{#POINT_VEC3.Explosion}(): To explode the point with a certain intensity.
+--   
+-- ### Illuminate
+-- 
+--   * @{#POINT_VEC3.IlluminationBomb}(): To illuminate the point.
+--   
+-- 
+-- ## 3D calculation methods
+-- 
+-- Various calculation methods exist to use or manipulate 3D space. Find below a short description of each method:
+-- 
+-- ### Distance
+-- 
+--   * @{#POINT_VEC3.Get3DDistance}(): Obtain the distance from the current 3D point to the provided 3D point in 3D space.
+--   * @{#POINT_VEC3.Get2DDistance}(): Obtain the distance from the current 3D point to the provided 3D point in 2D space.
+--   
+-- ### Angle
+-- 
+--   * @{#POINT_VEC3.GetAngleDegrees}(): Obtain the angle in degrees from the current 3D point with the provided 3D direction vector.
+--   * @{#POINT_VEC3.GetAngleRadians}(): Obtain the angle in radians from the current 3D point with the provided 3D direction vector.
+--   * @{#POINT_VEC3.GetDirectionVec3}(): Obtain the 3D direction vector from the current 3D point to the provided 3D point.
+-- 
+-- ### Translation
+-- 
+--   * @{#POINT_VEC3.Translate}(): Translate the current 3D point towards an other 3D point using the given Distance and Angle.
+-- 
+-- ### Get the North correction of the current location
+--   
+--   * @{#POINT_VEC3.GetNorthCorrection}(): Obtains the north correction at the current 3D point.
+-- 
+-- 
+-- ## Point Randomization
+-- 
+-- Various methods exist to calculate random locations around a given 3D point.
+-- 
+--   * @{#POINT_VEC3.GetRandomPointVec2InRadius}(): Provides a random 2D point around the current 3D point, in the given inner to outer band.
+--   * @{#POINT_VEC3.GetRandomPointVec3InRadius}(): Provides a random 3D point around the current 3D point, in the given inner to outer band.
+--   * @{#POINT_VEC3.GetRandomVec2InRadius}(): Provides a random 2D vector around the current 3D point, in the given inner to outer band.
+--   * @{#POINT_VEC3.GetRandomVec3InRadius}(): Provides a random 3D vector around the current 3D point, in the given inner to outer band.
+-- 
+-- 
+-- ## Metric system
+-- 
+--   * @{#POINT_VEC3.IsMetric}(): Returns if the 3D point is Metric or Nautical Miles.
+--   * @{#POINT_VEC3.SetMetric}(): Sets the 3D point to Metric or Nautical Miles.
+-- 
+-- 
+-- ## Coorinate text generation
+-- 
+--   * @{#POINT_VEC3.ToStringBR}(): Generates a Bearing & Range text in the format of DDD for DI where DDD is degrees and DI is distance.
+--   * @{#POINT_VEC3.ToStringLL}(): Generates a Latutude & Longutude text.
+--   
+-- @field #POINT_VEC3 POINT_VEC3
+-- 
 POINT_VEC3 = {
   ClassName = "POINT_VEC3",
   Metric = true,
@@ -149,11 +200,38 @@ POINT_VEC3 = {
   },
 }
 
---- The POINT_VEC2 class
--- @type POINT_VEC2
+--- @type POINT_VEC2
 -- @field Dcs.DCSTypes#Distance x The x coordinate in meters.
 -- @field Dcs.DCSTypes#Distance y the y coordinate in meters.
 -- @extends Core.Point#POINT_VEC3
+
+--- # POINT_VEC2 class, extends @{Point#POINT_VEC3}
+-- 
+-- The @{Point#POINT_VEC2} class defines a 2D point in the simulator. The height coordinate (if needed) will be the land height + an optional added height specified.
+-- 
+-- ## POINT_VEC2 constructor
+-- 
+-- A new POINT_VEC2 instance can be created with:
+-- 
+--  * @{Point#POINT_VEC2.New}(): a 2D point, taking an additional height parameter.
+--  * @{Point#POINT_VEC2.NewFromVec2}(): a 2D point created from a @{DCSTypes#Vec2}.
+-- 
+-- ## Manupulate the X, Altitude, Y coordinates of the 2D point
+-- 
+-- A POINT_VEC2 class works in 2D space, with an altitude setting. It contains internally an X, Altitude, Y coordinate.
+-- Methods exist to manupulate these coordinates.
+-- 
+-- The current X, Altitude, Y axis can be retrieved with the methods @{#POINT_VEC2.GetX}(), @{#POINT_VEC2.GetAlt}(), @{#POINT_VEC2.GetY}() respectively.
+-- The methods @{#POINT_VEC2.SetX}(), @{#POINT_VEC2.SetAlt}(), @{#POINT_VEC2.SetY}() change the respective axis with a new value.
+-- The current Lat(itude), Alt(itude), Lon(gitude) values can also be retrieved with the methods @{#POINT_VEC2.GetLat}(), @{#POINT_VEC2.GetAlt}(), @{#POINT_VEC2.GetLon}() respectively.
+-- The current axis values can be changed by using the methods @{#POINT_VEC2.AddX}(), @{#POINT_VEC2.AddAlt}(), @{#POINT_VEC2.AddY}()
+-- to add or substract a value from the current respective axis value.
+-- Note that the Set and Add methods return the current POINT_VEC2 object, so these manipulation methods can be chained... For example:
+-- 
+--      local Vec2 = PointVec2:AddX( 100 ):AddY( 2000 ):GetVec2()
+--      
+-- @field #POINT_VEC2 POINT_VEC2
+--
 POINT_VEC2 = {
   ClassName = "POINT_VEC2",
 }

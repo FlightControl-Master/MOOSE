@@ -97,103 +97,23 @@
 
    
 
-<h1>1) <a href="Point.html##(POINT_VEC3)">Point#POINT_VEC3</a> class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
-<p>The <a href="Point.html##(POINT_VEC3)">Point#POINT_VEC3</a> class defines a 3D point in the simulator.</p>
+<p><img src="..\Presentations\POINT\Dia1.JPG" alt="Banner Image"/></p>
 
-<p><strong>Important Note:</strong> Most of the functions in this section were taken from MIST, and reworked to OO concepts.
-In order to keep the credibility of the the author, I want to emphasize that the of the MIST framework was created by Grimes, who you can find on the Eagle Dynamics Forums.</p>
+<hr/>
 
-<h2>1.1) POINT_VEC3 constructor</h2>
+<h1>Demo Missions</h1>
 
-<p>A new POINT_VEC3 instance can be created with:</p>
+<h3><a href="">POINT_VEC Demo Missions source code</a></h3>
 
-<ul>
-    <li><a href="Point.html##(POINT_VEC3).New">Point#POINT_VEC3.New</a>(): a 3D point.</li>
-    <li><a href="Point.html##(POINT_VEC3).NewFromVec3">Point#POINT_VEC3.NewFromVec3</a>(): a 3D point created from a <a href="DCSTypes.html##(Vec3)">DCSTypes#Vec3</a>.</li>
-</ul>
+<h3><a href="">POINT_VEC Demo Missions, only for beta testers</a></h3>
 
-<h2>1.2) Manupulate the X, Y, Z coordinates of the point</h2>
+<h3><a href="https://github.com/FlightControl-Master/MOOSE_MISSIONS/releases">ALL Demo Missions pack of the last release</a></h3>
 
-<p>A POINT_VEC3 class works in 3D space. It contains internally an X, Y, Z coordinate.
-Methods exist to manupulate these coordinates.</p>
+<hr/>
 
-<p>The current X, Y, Z axis can be retrieved with the methods <a href="##(POINT_VEC3).GetX">POINT_VEC3.GetX</a>(), <a href="##(POINT_VEC3).GetY">POINT_VEC3.GetY</a>(), <a href="##(POINT_VEC3).GetZ">POINT_VEC3.GetZ</a>() respectively.
-The methods <a href="##(POINT_VEC3).SetX">POINT_VEC3.SetX</a>(), <a href="##(POINT_VEC3).SetY">POINT_VEC3.SetY</a>(), <a href="##(POINT_VEC3).SetZ">POINT_VEC3.SetZ</a>() change the respective axis with a new value.
-The current axis values can be changed by using the methods <a href="##(POINT_VEC3).AddX">POINT_VEC3.AddX</a>(), <a href="##(POINT_VEC3).AddY">POINT_VEC3.AddY</a>(), <a href="##(POINT_VEC3).AddZ">POINT_VEC3.AddZ</a>()
-to add or substract a value from the current respective axis value.
-Note that the Set and Add methods return the current POINT_VEC3 object, so these manipulation methods can be chained... For example:</p>
+<h1>YouTube Channel</h1>
 
-<pre><code> local Vec3 = PointVec3:AddX( 100 ):AddZ( 150 ):GetVec3()
-</code></pre>
-
-<h2>1.3) Create waypoints for routes</h2>
-
-<p>A POINT_VEC3 can prepare waypoints for Ground, Air and Naval groups to be embedded into a Route.</p>
-
-
-<h2>1.5) Smoke, flare, explode, illuminate</h2>
-
-<p>At the point a smoke, flare, explosion and illumination bomb can be triggered. Use the following methods:</p>
-
-<h3>1.5.1) Smoke</h3>
-
-<ul>
-    <li><a href="##(POINT_VEC3).Smoke">POINT_VEC3.Smoke</a>(): To smoke the point in a certain color.</li>
-    <li><a href="##(POINT_VEC3).SmokeBlue">POINT_VEC3.SmokeBlue</a>(): To smoke the point in blue.</li>
-    <li><a href="##(POINT_VEC3).SmokeRed">POINT_VEC3.SmokeRed</a>(): To smoke the point in red.</li>
-    <li><a href="##(POINT_VEC3).SmokeOrange">POINT_VEC3.SmokeOrange</a>(): To smoke the point in orange.</li>
-    <li><a href="##(POINT_VEC3).SmokeWhite">POINT_VEC3.SmokeWhite</a>(): To smoke the point in white.</li>
-    <li><a href="##(POINT_VEC3).SmokeGreen">POINT_VEC3.SmokeGreen</a>(): To smoke the point in green.</li>
-</ul>
-
-<h3>1.5.2) Flare</h3>
-
-<ul>
-    <li><a href="##(POINT_VEC3).Flare">POINT_VEC3.Flare</a>(): To flare the point in a certain color.</li>
-    <li><a href="##(POINT_VEC3).FlareRed">POINT_VEC3.FlareRed</a>(): To flare the point in red.</li>
-    <li><a href="##(POINT_VEC3).FlareYellow">POINT_VEC3.FlareYellow</a>(): To flare the point in yellow.</li>
-    <li><a href="##(POINT_VEC3).FlareWhite">POINT_VEC3.FlareWhite</a>(): To flare the point in white.</li>
-    <li><a href="##(POINT_VEC3).FlareGreen">POINT_VEC3.FlareGreen</a>(): To flare the point in green.</li>
-</ul>
-
-<h3>1.5.3) Explode</h3>
-
-<ul>
-    <li><a href="##(POINT_VEC3).Explosion">POINT_VEC3.Explosion</a>(): To explode the point with a certain intensity.</li>
-</ul>
-
-<h3>1.5.4) Illuminate</h3>
-
-<ul>
-    <li><a href="##(POINT_VEC3).IlluminationBomb">POINT_VEC3.IlluminationBomb</a>(): To illuminate the point.</li>
-</ul>
-
-
-<h1>2) <a href="Point.html##(POINT_VEC2)">Point#POINT_VEC2</a> class, extends <a href="Point.html##(POINT_VEC3)">Point#POINT_VEC3</a></h1>
-<p>The <a href="Point.html##(POINT_VEC2)">Point#POINT_VEC2</a> class defines a 2D point in the simulator. The height coordinate (if needed) will be the land height + an optional added height specified.</p>
-
-<h2>2.1) POINT_VEC2 constructor</h2>
-<p>A new POINT_VEC2 instance can be created with:</p>
-
-<ul>
-    <li><a href="Point.html##(POINT_VEC2).New">Point#POINT_VEC2.New</a>(): a 2D point, taking an additional height parameter.</li>
-    <li><a href="Point.html##(POINT_VEC2).NewFromVec2">Point#POINT_VEC2.NewFromVec2</a>(): a 2D point created from a <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a>.</li>
-</ul>
-
-<h2>1.2) Manupulate the X, Altitude, Y coordinates of the 2D point</h2>
-
-<p>A POINT_VEC2 class works in 2D space, with an altitude setting. It contains internally an X, Altitude, Y coordinate.
-Methods exist to manupulate these coordinates.</p>
-
-<p>The current X, Altitude, Y axis can be retrieved with the methods <a href="##(POINT_VEC2).GetX">POINT_VEC2.GetX</a>(), <a href="##(POINT_VEC2).GetAlt">POINT_VEC2.GetAlt</a>(), <a href="##(POINT_VEC2).GetY">POINT_VEC2.GetY</a>() respectively.
-The methods <a href="##(POINT_VEC2).SetX">POINT_VEC2.SetX</a>(), <a href="##(POINT_VEC2).SetAlt">POINT_VEC2.SetAlt</a>(), <a href="##(POINT_VEC2).SetY">POINT_VEC2.SetY</a>() change the respective axis with a new value.
-The current Lat(itude), Alt(itude), Lon(gitude) values can also be retrieved with the methods <a href="##(POINT_VEC2).GetLat">POINT_VEC2.GetLat</a>(), <a href="##(POINT_VEC2).GetAlt">POINT_VEC2.GetAlt</a>(), <a href="##(POINT_VEC2).GetLon">POINT_VEC2.GetLon</a>() respectively.
-The current axis values can be changed by using the methods <a href="##(POINT_VEC2).AddX">POINT_VEC2.AddX</a>(), <a href="##(POINT_VEC2).AddAlt">POINT_VEC2.AddAlt</a>(), <a href="##(POINT_VEC2).AddY">POINT_VEC2.AddY</a>()
-to add or substract a value from the current respective axis value.
-Note that the Set and Add methods return the current POINT_VEC2 object, so these manipulation methods can be chained... For example:</p>
-
-<pre><code> local Vec2 = PointVec2:AddX( 100 ):AddY( 2000 ):GetVec2()
-</code></pre>
+<h3><a href="">POINT_VEC YouTube Channel</a></h3>
 
 <hr/>
 
@@ -238,13 +158,17 @@ Note that the Set and Add methods return the current POINT_VEC2 object, so these
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="#POINT_VEC2">POINT_VEC2</a></td>
 		<td class="summary">
+<h1>POINT_VEC2 class, extends <a href="Point.html##(POINT_VEC3)">Point#POINT_VEC3</a></h1>
 
+<p>The <a href="Point.html##(POINT_VEC2)">Point#POINT_VEC2</a> class defines a 2D point in the simulator.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="#POINT_VEC3">POINT_VEC3</a></td>
 		<td class="summary">
+<h1>POINT_VEC3 class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
 
+<p>POINT_VEC3 defines a 3D point in the simulator and with its methods, you can use or manipulate the point in 3D space.</p>
 </td>
 		</tr>
 	</table>
@@ -266,12 +190,6 @@ Note that the Set and Add methods return the current POINT_VEC2 object, so these
 		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC2).AddY">POINT_VEC2:AddY(y)</a></td>
 		<td class="summary">
 <p>Add to the y coordinate of the POINT_VEC2.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC2).ClassName">POINT_VEC2.ClassName</a></td>
-		<td class="summary">
-
 </td>
 		</tr>
 		<tr>
@@ -417,12 +335,6 @@ Note that the Set and Add methods return the current POINT_VEC2 object, so these
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).ClassName">POINT_VEC3.ClassName</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).Explosion">POINT_VEC3:Explosion(ExplosionIntensity)</a></td>
 		<td class="summary">
 <p>Creates an explosion at the point of a certain intensity.</p>
@@ -483,15 +395,21 @@ Note that the Set and Add methods return the current POINT_VEC2 object, so these
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).GetBRText">POINT_VEC3:GetBRText(TargetPointVec3)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).GetAngleDegrees">POINT_VEC3:GetAngleDegrees(DirectionVec3)</a></td>
 		<td class="summary">
-<p>Return a BR string from a POINT<em>VEC3 to the POINT</em>VEC3.</p>
+<p>Return an angle in degrees from the POINT_VEC3 using a direction vector in Vec3 format.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).GetDirectionRadians">POINT_VEC3:GetDirectionRadians(DirectionVec3)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).GetAngleRadians">POINT_VEC3:GetAngleRadians(DirectionVec3)</a></td>
 		<td class="summary">
-<p>Return a direction in radians from the POINT_VEC3 using a direction vector in Vec3 format.</p>
+<p>Return an angle in radians from the POINT_VEC3 using a direction vector in Vec3 format.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).GetBRText">POINT_VEC3:GetBRText(TargetPointVec3)</a></td>
+		<td class="summary">
+<p>Return a BR string from a POINT<em>VEC3 to the POINT</em>VEC3.</p>
 </td>
 		</tr>
 		<tr>
@@ -783,7 +701,37 @@ Note that the Set and Add methods return the current POINT_VEC2 object, so these
 </dt>
 <dd>
 	
+<h1>POINT_VEC2 class, extends <a href="Point.html##(POINT_VEC3)">Point#POINT_VEC3</a></h1>
 
+<p>The <a href="Point.html##(POINT_VEC2)">Point#POINT_VEC2</a> class defines a 2D point in the simulator.</p>
+
+	
+<p>The height coordinate (if needed) will be the land height + an optional added height specified.</p>
+
+<h2>POINT_VEC2 constructor</h2>
+
+<p>A new POINT_VEC2 instance can be created with:</p>
+
+<ul>
+    <li><a href="Point.html##(POINT_VEC2).New">Point#POINT_VEC2.New</a>(): a 2D point, taking an additional height parameter.</li>
+    <li><a href="Point.html##(POINT_VEC2).NewFromVec2">Point#POINT_VEC2.NewFromVec2</a>(): a 2D point created from a <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a>.</li>
+</ul>
+
+<h2>Manupulate the X, Altitude, Y coordinates of the 2D point</h2>
+
+<p>A POINT_VEC2 class works in 2D space, with an altitude setting. It contains internally an X, Altitude, Y coordinate.
+Methods exist to manupulate these coordinates.</p>
+
+<p>The current X, Altitude, Y axis can be retrieved with the methods <a href="##(POINT_VEC2).GetX">POINT_VEC2.GetX</a>(), <a href="##(POINT_VEC2).GetAlt">POINT_VEC2.GetAlt</a>(), <a href="##(POINT_VEC2).GetY">POINT_VEC2.GetY</a>() respectively.
+The methods <a href="##(POINT_VEC2).SetX">POINT_VEC2.SetX</a>(), <a href="##(POINT_VEC2).SetAlt">POINT_VEC2.SetAlt</a>(), <a href="##(POINT_VEC2).SetY">POINT_VEC2.SetY</a>() change the respective axis with a new value.
+The current Lat(itude), Alt(itude), Lon(gitude) values can also be retrieved with the methods <a href="##(POINT_VEC2).GetLat">POINT_VEC2.GetLat</a>(), <a href="##(POINT_VEC2).GetAlt">POINT_VEC2.GetAlt</a>(), <a href="##(POINT_VEC2).GetLon">POINT_VEC2.GetLon</a>() respectively.
+The current axis values can be changed by using the methods <a href="##(POINT_VEC2).AddX">POINT_VEC2.AddX</a>(), <a href="##(POINT_VEC2).AddAlt">POINT_VEC2.AddAlt</a>(), <a href="##(POINT_VEC2).AddY">POINT_VEC2.AddY</a>()
+to add or substract a value from the current respective axis value.
+Note that the Set and Add methods return the current POINT_VEC2 object, so these manipulation methods can be chained... For example:</p>
+
+<pre><code> local Vec2 = PointVec2:AddX( 100 ):AddY( 2000 ):GetVec2()
+ 
+</code></pre>
 
 </dd>
 </dl>
@@ -797,17 +745,159 @@ Note that the Set and Add methods return the current POINT_VEC2 object, so these
 </dt>
 <dd>
 	
+<h1>POINT_VEC3 class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
 
+<p>POINT_VEC3 defines a 3D point in the simulator and with its methods, you can use or manipulate the point in 3D space.</p>
+
+	
+
+<p><strong>Important Note:</strong> Most of the functions in this section were taken from MIST, and reworked to OO concepts.
+In order to keep the credibility of the the author, 
+I want to emphasize that the formulas embedded in the MIST framework were created by Grimes or previous authors, 
+who you can find on the Eagle Dynamics Forums.</p>
+
+
+<h2>POINT_VEC3 constructor</h2>
+
+<p>A new POINT_VEC3 object can be created with:</p>
+
+<ul>
+    <li><a href="##(POINT_VEC3).New">POINT_VEC3.New</a>(): a 3D point.</li>
+    <li><a href="##(POINT_VEC3).NewFromVec3">POINT_VEC3.NewFromVec3</a>(): a 3D point created from a <a href="DCSTypes.html##(Vec3)">DCSTypes#Vec3</a>.</li>
+</ul>
+
+
+<h2>Manupulate the X, Y, Z coordinates of the POINT_VEC3</h2>
+
+<p>A POINT_VEC3 class works in 3D space. It contains internally an X, Y, Z coordinate.
+Methods exist to manupulate these coordinates.</p>
+
+<p>The current X, Y, Z axis can be retrieved with the methods <a href="##(POINT_VEC3).GetX">POINT_VEC3.GetX</a>(), <a href="##(POINT_VEC3).GetY">POINT_VEC3.GetY</a>(), <a href="##(POINT_VEC3).GetZ">POINT_VEC3.GetZ</a>() respectively.
+The methods <a href="##(POINT_VEC3).SetX">POINT_VEC3.SetX</a>(), <a href="##(POINT_VEC3).SetY">POINT_VEC3.SetY</a>(), <a href="##(POINT_VEC3).SetZ">POINT_VEC3.SetZ</a>() change the respective axis with a new value.
+The current axis values can be changed by using the methods <a href="##(POINT_VEC3).AddX">POINT_VEC3.AddX</a>(), <a href="##(POINT_VEC3).AddY">POINT_VEC3.AddY</a>(), <a href="##(POINT_VEC3).AddZ">POINT_VEC3.AddZ</a>()
+to add or substract a value from the current respective axis value.
+Note that the Set and Add methods return the current POINT_VEC3 object, so these manipulation methods can be chained... For example:</p>
+
+<pre><code> local Vec3 = PointVec3:AddX( 100 ):AddZ( 150 ):GetVec3()
+</code></pre>
+
+
+<h2>Create waypoints for routes</h2>
+
+<p>A POINT_VEC3 can prepare waypoints for Ground and Air groups to be embedded into a Route.</p>
+
+<ul>
+    <li><a href="##(POINT_VEC3).RoutePointAir">POINT_VEC3.RoutePointAir</a>(): Build an air route point.</li>
+    <li><a href="##(POINT_VEC3).RoutePointGround">POINT_VEC3.RoutePointGround</a>(): Build a ground route point.</li>
+</ul>
+
+<p>Route points can be used in the Route methods of the <a href="Group.html##(GROUP)">Group#GROUP</a> class.</p>
+
+
+<h2>Smoke, flare, explode, illuminate</h2>
+
+<p>At the point a smoke, flare, explosion and illumination bomb can be triggered. Use the following methods:</p>
+
+<h3>Smoke</h3>
+
+<ul>
+    <li><a href="##(POINT_VEC3).Smoke">POINT_VEC3.Smoke</a>(): To smoke the point in a certain color.</li>
+    <li><a href="##(POINT_VEC3).SmokeBlue">POINT_VEC3.SmokeBlue</a>(): To smoke the point in blue.</li>
+    <li><a href="##(POINT_VEC3).SmokeRed">POINT_VEC3.SmokeRed</a>(): To smoke the point in red.</li>
+    <li><a href="##(POINT_VEC3).SmokeOrange">POINT_VEC3.SmokeOrange</a>(): To smoke the point in orange.</li>
+    <li><a href="##(POINT_VEC3).SmokeWhite">POINT_VEC3.SmokeWhite</a>(): To smoke the point in white.</li>
+    <li><a href="##(POINT_VEC3).SmokeGreen">POINT_VEC3.SmokeGreen</a>(): To smoke the point in green.</li>
+</ul>
+
+<h3>Flare</h3>
+
+<ul>
+    <li><a href="##(POINT_VEC3).Flare">POINT_VEC3.Flare</a>(): To flare the point in a certain color.</li>
+    <li><a href="##(POINT_VEC3).FlareRed">POINT_VEC3.FlareRed</a>(): To flare the point in red.</li>
+    <li><a href="##(POINT_VEC3).FlareYellow">POINT_VEC3.FlareYellow</a>(): To flare the point in yellow.</li>
+    <li><a href="##(POINT_VEC3).FlareWhite">POINT_VEC3.FlareWhite</a>(): To flare the point in white.</li>
+    <li><a href="##(POINT_VEC3).FlareGreen">POINT_VEC3.FlareGreen</a>(): To flare the point in green.</li>
+</ul>
+
+<h3>Explode</h3>
+
+<ul>
+    <li><a href="##(POINT_VEC3).Explosion">POINT_VEC3.Explosion</a>(): To explode the point with a certain intensity.</li>
+</ul>
+
+<h3>Illuminate</h3>
+
+<ul>
+    <li><a href="##(POINT_VEC3).IlluminationBomb">POINT_VEC3.IlluminationBomb</a>(): To illuminate the point.</li>
+</ul>
+
+
+<h2>3D calculation methods</h2>
+
+<p>Various calculation methods exist to use or manipulate 3D space. Find below a short description of each method:</p>
+
+<h3>Distance</h3>
+
+<ul>
+    <li><a href="##(POINT_VEC3).Get3DDistance">POINT_VEC3.Get3DDistance</a>(): Obtain the distance from the current 3D point to the provided 3D point in 3D space.</li>
+    <li><a href="##(POINT_VEC3).Get2DDistance">POINT_VEC3.Get2DDistance</a>(): Obtain the distance from the current 3D point to the provided 3D point in 2D space.</li>
+</ul>
+
+<h3>Angle</h3>
+
+<ul>
+    <li><a href="##(POINT_VEC3).GetAngleDegrees">POINT_VEC3.GetAngleDegrees</a>(): Obtain the angle in degrees from the current 3D point with the provided 3D direction vector.</li>
+    <li><a href="##(POINT_VEC3).GetAngleRadians">POINT_VEC3.GetAngleRadians</a>(): Obtain the angle in radians from the current 3D point with the provided 3D direction vector.</li>
+    <li><a href="##(POINT_VEC3).GetDirectionVec3">POINT_VEC3.GetDirectionVec3</a>(): Obtain the 3D direction vector from the current 3D point to the provided 3D point.</li>
+</ul>
+
+<h3>Translation</h3>
+
+<ul>
+    <li><a href="##(POINT_VEC3).Translate">POINT_VEC3.Translate</a>(): Translate the current 3D point towards an other 3D point using the given Distance and Angle.</li>
+</ul>
+
+<h3>Get the North correction of the current location</h3>
+
+<ul>
+    <li><a href="##(POINT_VEC3).GetNorthCorrection">POINT_VEC3.GetNorthCorrection</a>(): Obtains the north correction at the current 3D point.</li>
+</ul>
+
+
+<h2>Point Randomization</h2>
+
+<p>Various methods exist to calculate random locations around a given 3D point.</p>
+
+<ul>
+    <li><a href="##(POINT_VEC3).GetRandomPointVec2InRadius">POINT_VEC3.GetRandomPointVec2InRadius</a>(): Provides a random 2D point around the current 3D point, in the given inner to outer band.</li>
+    <li><a href="##(POINT_VEC3).GetRandomPointVec3InRadius">POINT_VEC3.GetRandomPointVec3InRadius</a>(): Provides a random 3D point around the current 3D point, in the given inner to outer band.</li>
+    <li><a href="##(POINT_VEC3).GetRandomVec2InRadius">POINT_VEC3.GetRandomVec2InRadius</a>(): Provides a random 2D vector around the current 3D point, in the given inner to outer band.</li>
+    <li><a href="##(POINT_VEC3).GetRandomVec3InRadius">POINT_VEC3.GetRandomVec3InRadius</a>(): Provides a random 3D vector around the current 3D point, in the given inner to outer band.</li>
+</ul>
+
+
+<h2>Metric system</h2>
+
+<ul>
+    <li><a href="##(POINT_VEC3).IsMetric">POINT_VEC3.IsMetric</a>(): Returns if the 3D point is Metric or Nautical Miles.</li>
+    <li><a href="##(POINT_VEC3).SetMetric">POINT_VEC3.SetMetric</a>(): Sets the 3D point to Metric or Nautical Miles.</li>
+</ul>
+
+
+<h2>Coorinate text generation</h2>
+
+<ul>
+    <li><a href="##(POINT_VEC3).ToStringBR">POINT_VEC3.ToStringBR</a>(): Generates a Bearing &amp; Range text in the format of DDD for DI where DDD is degrees and DI is distance.</li>
+    <li><a href="##(POINT_VEC3).ToStringLL">POINT_VEC3.ToStringLL</a>(): Generates a Latutude &amp; Longutude text.
+    </li>
+</ul>
 
 </dd>
 </dl>
 	<h2><a id="#(Point)" >Type <code>Point</code></a></h2>
 	
 			<h2><a id="#(POINT_VEC2)" >Type <code>POINT_VEC2</code></a></h2>
-				
-<p>The POINT_VEC2 class</p>
-
-	<h3>Field(s)</h3>
+				<h3>Field(s)</h3>
 		<dl class="function">
 <dt>
 
@@ -885,20 +975,6 @@ The y coordinate.</p>
 		<h3>Return value</h3>
 				
 <p><em><a href="##(POINT_VEC2)">#POINT_VEC2</a>:</em></p>
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em>#string</em>
-<a id="#(POINT_VEC2).ClassName" >
-<strong>POINT_VEC2.ClassName</strong>
-</a>
-</dt>
-<dd>
-	
 
 
 </dd>
@@ -1468,20 +1544,6 @@ The z coordinate value to add to the current z coodinate.</p>
 		<dl class="function">
 <dt>
 
-		<em>#string</em>
-<a id="#(POINT_VEC3).ClassName" >
-<strong>POINT_VEC3.ClassName</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
 <a id="#(POINT_VEC3).Explosion" >
 <strong>POINT_VEC3:Explosion(ExplosionIntensity)</strong>
 </a>
@@ -1723,6 +1785,60 @@ Altitude text.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(POINT_VEC3).GetAngleDegrees" >
+<strong>POINT_VEC3:GetAngleDegrees(DirectionVec3)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Return an angle in degrees from the POINT_VEC3 using a direction vector in Vec3 format.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSTypes.html##(Vec3)">Dcs.DCSTypes#Vec3</a> DirectionVec3 </em></code>: 
+The direction vector in Vec3 format.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#number:</em>
+DirectionRadians The angle in degrees.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(POINT_VEC3).GetAngleRadians" >
+<strong>POINT_VEC3:GetAngleRadians(DirectionVec3)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Return an angle in radians from the POINT_VEC3 using a direction vector in Vec3 format.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSTypes.html##(Vec3)">Dcs.DCSTypes#Vec3</a> DirectionVec3 </em></code>: 
+The direction vector in Vec3 format.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#number:</em>
+DirectionRadians The angle in radians.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(POINT_VEC3).GetBRText" >
 <strong>POINT_VEC3:GetBRText(TargetPointVec3)</strong>
 </a>
@@ -1744,33 +1860,6 @@ The target POINT_VEC3.</p>
 				
 <p><em>#string:</em>
 The BR text.</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(POINT_VEC3).GetDirectionRadians" >
-<strong>POINT_VEC3:GetDirectionRadians(DirectionVec3)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Return a direction in radians from the POINT_VEC3 using a direction vector in Vec3 format.</p>
-
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="Dcs.DCSTypes.html##(Vec3)">Dcs.DCSTypes#Vec3</a> DirectionVec3 </em></code>: 
-The direction vector in Vec3 format.</p>
-
-				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em>#number:</em>
-DirectionRadians The direction in radians.</p>
 
 </dd>
 </dl>
