@@ -72,6 +72,8 @@ do -- TASK_A2G_DISPATCHER
     self.Detection = Detection
     self.Mission = Mission
     
+    self.Detection:FilterCategories( Unit.Category.GROUND_UNIT, Unit.Category.SHIP )
+    
     self:AddTransition( "Started", "Assign", "Started" )
     
     --- OnAfter Transition Handler for Event Assign.
