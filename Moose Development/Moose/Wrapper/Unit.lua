@@ -640,7 +640,7 @@ function UNIT:GetThreatLevel()
       "Bomber",
       "Strategic Bomber",
       "Attack Helicopter",
-      "Interceptor",
+      "Battleplane",
       "Multirole Fighter",
       "Fighter"
     }
