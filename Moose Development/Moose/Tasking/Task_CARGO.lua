@@ -531,7 +531,7 @@ do -- TASK_CARGO
   -- @return Core.Set#SET_CARGO The Cargo Set.
   function TASK_CARGO:GetCargoSet()
   
-    return self.CargoSet
+    return self.SetCargo
   end
   
   --- @param #TASK_CARGO self
@@ -773,38 +773,41 @@ do -- TASK_CARGO_TRANSPORT
 
     local Fsm = self:GetUnitProcess()
 
-    --- 
-    -- @param #TASK_CARGO_TRANSPORT self
-    -- @return #boolean
-    function TASK_CARGO_TRANSPORT:IsAllCargoTransported()
-    
-      local CargoSet = self:GetCargoSet()
-      local Set = CargoSet:GetSet()
-      
-      local DeployZones = self:GetDeployZones()
-      
-      local CargoDeployed = true
-      
-      -- Loop the CargoSet (so evaluate each Cargo in the SET_CARGO ).
-      for CargoID, CargoData in pairs( Set ) do
-        local Cargo = CargoData -- Core.Cargo#CARGO
-        
-        -- Loop the DeployZones set for the TASK_CARGO_TRANSPORT.
-        for DeployZoneID, DeployZone in pairs( DeployZones ) do
-        
-          -- If there is a Cargo not in one of DeployZones, then not all Cargo is deployed.
-          if Cargo:IsInZone( DeployZone ) then
-          else
-            CargoDeployed = false
-          end
-        end
-      end
-      
-      return CargoDeployed
-    end
     
     return self
   end 
+  
+  --- 
+  -- @param #TASK_CARGO_TRANSPORT self
+  -- @return #boolean
+  function TASK_CARGO_TRANSPORT:IsAllCargoTransported()
+  
+    local CargoSet = self:GetCargoSet()
+    local Set = CargoSet:GetSet()
+    
+    local DeployZones = self:GetDeployZones()
+    
+    local CargoDeployed = true
+    
+    -- Loop the CargoSet (so evaluate each Cargo in the SET_CARGO ).
+    for CargoID, CargoData in pairs( Set ) do
+      local Cargo = CargoData -- Core.Cargo#CARGO
+      
+      -- Loop the DeployZones set for the TASK_CARGO_TRANSPORT.
+      for DeployZoneID, DeployZone in pairs( DeployZones ) do
+      
+        -- If there is a Cargo not in one of DeployZones, then not all Cargo is deployed.
+        self:T( { Cargo.CargoObject } )
+        if Cargo:IsInZone( DeployZone ) then
+        else
+          CargoDeployed = false
+        end
+      end
+    end
+    
+    return CargoDeployed
+  end
+  
 
 end
 

@@ -238,7 +238,7 @@ function CARGO:New( Type, Name, Weight )
   
   self:SetStartState( "UnLoaded" )
   self:AddTransition( "UnLoaded", "Board", "Boarding" )
-  self:AddTransition( "Boarding", "Boarding", "Boarding" )
+  self:AddTransition( "Boarding" , "Boarding", "Boarding" )
   self:AddTransition( "Boarding", "Load", "Loaded" )
   self:AddTransition( "UnLoaded", "Load", "Loaded" )
   self:AddTransition( "Loaded", "UnBoard", "UnBoarding" )
@@ -575,6 +575,7 @@ function CARGO_UNIT:onenterUnBoarding( From, Event, To, ToPointVec2, NearRadius 
     -- Respawn the group...
     if self.CargoObject then
       self.CargoObject:ReSpawn( CargoDeployPointVec2:GetVec3(), CargoDeployHeading )
+      self:E( { "CargoUnits:", self.CargoObject:GetGroup():GetName() } )
       self.CargoCarrier = nil
 
       local Points = {}
@@ -680,6 +681,87 @@ function CARGO_UNIT:onenterUnLoaded( From, Event, To, ToPointVec2 )
 
 end
 
+--- Board Event.
+-- @param #CARGO_UNIT self
+-- @param #string Event
+-- @param #string From
+-- @param #string To
+function CARGO_UNIT:onafterBoard( From, Event, To, CargoCarrier, NearRadius, ... )
+  self:F()
+
+  NearRadius = NearRadius or 25
+  
+  self.CargoInAir = self.CargoObject:InAir()
+
+  self:T( self.CargoInAir )
+
+  -- Only move the group to the carrier when the cargo is not in the air
+  -- (eg. cargo can be on a oil derrick, moving the cargo on the oil derrick will drop the cargo on the sea).
+  if not self.CargoInAir then
+    if self:IsNear( CargoCarrier:GetPointVec2(), NearRadius ) then
+      self:Load( CargoCarrier, NearRadius, ... )
+    else
+      self:__Boarding( -1, CargoCarrier, NearRadius )
+    end
+  end
+  
+end
+
+
+--- Leave Boarding State.
+-- @param #CARGO_UNIT self
+-- @param #string Event
+-- @param #string From
+-- @param #string To
+-- @param Wrapper.Unit#UNIT CargoCarrier
+function CARGO_UNIT:onleaveBoarding( From, Event, To, CargoCarrier, NearRadius, ... )
+  self:F( { From, Event, To, CargoCarrier.UnitName, NearRadius } )
+
+  NearRadius = NearRadius or 25
+
+  if self:IsNear( CargoCarrier:GetPointVec2(), NearRadius ) then
+    self:__Load( 1, CargoCarrier, ... )
+    return true
+  end
+  
+  return true
+end
+
+
+--- Boarding Event.
+-- @param #CARGO_UNIT self
+-- @param #string Event
+-- @param #string From
+-- @param #string To
+-- @param Wrapper.Unit#UNIT CargoCarrier
+-- @param #number NearRadius
+function CARGO_UNIT:onafterBoarding( From, Event, To, CargoCarrier, NearRadius, ... )
+  self:F( { From, Event, To, CargoCarrier.UnitName, NearRadius } )
+  
+  local Speed = 90
+  local Angle = 180
+  local Distance = 5
+  
+  NearRadius = NearRadius or 25
+
+  local CargoCarrierPointVec2 = CargoCarrier:GetPointVec2()
+  local CargoCarrierHeading = CargoCarrier:GetHeading() -- Get Heading of object in degrees.
+  local CargoDeployHeading = ( ( CargoCarrierHeading + Angle ) >= 360 ) and ( CargoCarrierHeading + Angle - 360 ) or ( CargoCarrierHeading + Angle )
+  local CargoDeployPointVec2 = CargoCarrierPointVec2:Translate( Distance, CargoDeployHeading )
+
+  local Points = {}
+
+  local PointStartVec2 = self.CargoObject:GetPointVec2()
+
+  Points[#Points+1] = PointStartVec2:RoutePointGround( Speed )
+  Points[#Points+1] = CargoDeployPointVec2:RoutePointGround( Speed )
+
+  local TaskRoute = self.CargoObject:TaskRoute( Points )
+  self.CargoObject:SetTask( TaskRoute, 2 )
+  
+  self:__Boarding( -5, CargoCarrier, NearRadius, ... )
+  
+end
 
 
 --- Enter Boarding State.
@@ -698,42 +780,9 @@ function CARGO_UNIT:onenterBoarding( From, Event, To, CargoCarrier, NearRadius, 
   NearRadius = NearRadius or 25
 
   if From == "UnLoaded" or From == "Boarding" then
-    local CargoCarrierPointVec2 = CargoCarrier:GetPointVec2()
-    local CargoCarrierHeading = CargoCarrier:GetHeading() -- Get Heading of object in degrees.
-    local CargoDeployHeading = ( ( CargoCarrierHeading + Angle ) >= 360 ) and ( CargoCarrierHeading + Angle - 360 ) or ( CargoCarrierHeading + Angle )
-    local CargoDeployPointVec2 = CargoCarrierPointVec2:Translate( Distance, CargoDeployHeading )
-
-    local Points = {}
-
-    local PointStartVec2 = self.CargoObject:GetPointVec2()
-
-    Points[#Points+1] = PointStartVec2:RoutePointGround( Speed )
-    Points[#Points+1] = CargoDeployPointVec2:RoutePointGround( Speed )
-
-    local TaskRoute = self.CargoObject:TaskRoute( Points )
-    self.CargoObject:SetTask( TaskRoute, 2 )
+  
   end
   
-end
-
---- Leave Boarding State.
--- @param #CARGO_UNIT self
--- @param #string Event
--- @param #string From
--- @param #string To
--- @param Wrapper.Unit#UNIT CargoCarrier
-function CARGO_UNIT:onleaveBoarding( From, Event, To, CargoCarrier, NearRadius, ... )
-  self:F( { From, Event, To, CargoCarrier.UnitName, NearRadius } )
-
-  NearRadius = NearRadius or 25
-
-  if self:IsNear( CargoCarrier:GetPointVec2(), NearRadius ) then
-    self:__Load( 1, CargoCarrier, ... )
-    return true
-  else
-    self:__Boarding( 1, CargoCarrier, ... )
-  end
-  return false
 end
 
 --- Loaded State.
@@ -755,27 +804,6 @@ function CARGO_UNIT:onenterLoaded( From, Event, To, CargoCarrier )
 end
 
 
---- Board Event.
--- @param #CARGO_UNIT self
--- @param #string Event
--- @param #string From
--- @param #string To
-function CARGO_UNIT:onafterBoard( From, Event, To, CargoCarrier, NearRadius, ... )
-  self:F()
-
-  NearRadius = NearRadius or 25
-  
-  self.CargoInAir = self.CargoObject:InAir()
-
-  self:T( self.CargoInAir )
-
-  -- Only move the group to the carrier when the cargo is not in the air
-  -- (eg. cargo can be on a oil derrick, moving the cargo on the oil derrick will drop the cargo on the sea).
-  if not self.CargoInAir then
-    self:Load( CargoCarrier, ... )
-  end
-
-end
 
 end
 
@@ -1024,6 +1052,8 @@ function CARGO_GROUP:New( CargoGroup, Type, Name, ReportRadius )
 
   self.CargoSet = SET_CARGO:New()
   
+  self.CargoObject = CargoGroup
+  
   local WeightGroup = 0
   
   for UnitID, UnitData in pairs( CargoGroup:GetUnits() ) do
@@ -1085,6 +1115,7 @@ function CARGO_GROUP:onenterLoaded( From, Event, To, CargoCarrier, ... )
     end
   end
   
+  self.CargoObject:Destroy()
   self.CargoCarrier = CargoCarrier
   
 end
@@ -1220,7 +1251,7 @@ function CARGO_GROUP:onenterUnLoaded( From, Event, To, ToPointVec2, ... )
     )
 
   end
-
+  
 end
 
 end -- CARGO_GROUP
