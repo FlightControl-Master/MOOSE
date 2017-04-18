@@ -156,6 +156,7 @@ end
 -- @param #GROUP self
 -- @return Dcs.DCSWrapper.Group#Group The DCS Group.
 function GROUP:GetDCSObject()
+  self:F(self.GroupName)
   local DCSGroup = Group.getByName( self.GroupName )
 
   if DCSGroup then
@@ -319,6 +320,7 @@ function GROUP:GetUnit( UnitNumber )
   local DCSGroup = self:GetDCSObject()
 
   if DCSGroup then
+    local DCSUnit = DCSGroup:getUnit( UnitNumber )
     local UnitFound = UNIT:Find( DCSGroup:getUnit( UnitNumber ) )
     self:T2( UnitFound )
     return UnitFound
