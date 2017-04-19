@@ -450,3 +450,47 @@ function POSITIONABLE:GetRadio()
   self:F2(self)
   return RADIO:New(self) 
 end
+
+--- Start Lasing a POSITIONABLE
+-- @param #POSITIONABLE self
+-- @param #POSITIONABLE Target
+-- @param #number LaserCode
+-- @param #number Duration
+-- @return Spot
+function POSITIONABLE:LaseUnitOn( Target, LaserCode, Duration )
+  self:F2()
+
+  LaserCode = LaserCode or math.random( 1000, 9999 )
+
+  local TargetUnitName = Target:GetName()
+  
+  self.Spots = self.Spots or {}
+  self.Spots[TargetUnitName] = self.Spots[TargetUnitName] or {}
+
+  local RecceDcsUnit = self:GetDCSObject()
+  local TargetVec3 = Target:GetVec3()
+
+  self:E("bulding spot")
+  self.Spots[TargetUnitName] = SPOT:New( self ):LaseOn( Target:GetPointVec3(), LaserCode, Duration)
+  
+  return self.Spots[TargetUnitName]
+  
+end
+
+--- Stop Lasing a POSITIONABLE
+-- @param #POSITIONABLE self
+-- @param #POSITIONABLE Target
+-- @return #POSITIONABLE
+function POSITIONABLE:LaseUnitOff( Target )
+  self:F2()
+
+  local TargetUnitName = Target:GetName()
+  
+  self.Spots = self.Spots or {}
+  if self.Spots[TargetUnitName] then
+    self.Spots[TargetUnitName]:LaseOff()
+    self.Spots[TargetUnitName] = nil
+  end
+
+  return self
+end

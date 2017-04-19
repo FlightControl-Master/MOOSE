@@ -736,6 +736,31 @@ function SET_GROUP:FindGroup( GroupName )
   return GroupFound
 end
 
+--- Iterate the SET_GROUP while identifying the nearest object from a @{Point#POINT_VEC2}.
+-- @param #SET_GROUP self
+-- @param Core.Point#POINT_VEC2 PointVec2 A @{Point#POINT_VEC2} object from where to evaluate the closest object in the set.
+-- @return Wrapper.Group#GROUP The closest group.
+function SET_GROUP:FindNearestGroupFromPointVec2( PointVec2 )
+  self:F2( PointVec2 )
+  
+  local NearestGroup = nil
+  local ClosestDistance = nil
+  
+  for ObjectID, ObjectData in pairs( self.Set ) do
+    if NearestGroup == nil then
+      NearestGroup = ObjectData
+      ClosestDistance = PointVec2:DistanceFromVec2( ObjectData:GetVec2() )
+    else
+      local Distance = PointVec2:DistanceFromVec2( ObjectData:GetVec2() )
+      if Distance < ClosestDistance then
+        NearestGroup = ObjectData
+        ClosestDistance = Distance
+      end
+    end
+  end
+  
+  return NearestGroup
+end
 
 
 --- Builds a set of groups of coalitions.

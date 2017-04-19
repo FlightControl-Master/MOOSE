@@ -859,6 +859,8 @@ function UNIT:SmokeBlue()
   trigger.action.smoke( self:GetVec3(), trigger.smokeColor.Blue )
 end
 
+
+
 -- Is methods
 
 --- Returns if the unit is of an air category.

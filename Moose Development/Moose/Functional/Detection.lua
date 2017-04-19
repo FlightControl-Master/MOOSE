@@ -1250,7 +1250,7 @@ do -- DETECTION_BASE
   
   --- Get the detection Groups.
   -- @param #DETECTION_BASE self
-  -- @return Wrapper.Group#GROUP
+  -- @return Core.Set#SET_GROUP
   function DETECTION_BASE:GetDetectionSetGroup()
   
     local DetectionSetGroup = self.DetectionSetGroup
