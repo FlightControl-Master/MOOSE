@@ -450,3 +450,11 @@ function POSITIONABLE:GetRadio()
   self:F2(self)
   return RADIO:New(self) 
 end
+
+--- Create a @{Radio#BEACON}, to allow this POSITIONABLE to broadcast beacon signals
+-- @param #POSITIONABLE self
+-- @return #RADIO Radio
+function POSITIONABLE:GetBeacon()
+  self:F2(self)
+  return BEACON:New(self) 
+end
