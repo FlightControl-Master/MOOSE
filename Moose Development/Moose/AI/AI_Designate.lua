@@ -200,8 +200,13 @@ do -- AI_DESIGNATE
         if SmokeUnit:IsAlive() then
           local NearestRecceGroup = self.RecceSet:FindNearestGroupFromPointVec2(SmokeUnit:GetPointVec2())
           if NearestRecceGroup then
-            local NearestRecceUnit = NearestRecceGroup:GetUnit(1)
-            self.Spots[Index] = NearestRecceUnit:LaseUnitOn( SmokeUnit, nil, Duration )
+            for UnitID, UnitData in pairs( NearestRecceGroup:GetUnits() or {} ) do
+              local RecceUnit = UnitData -- Wrapper.Unit#UNIT
+              if RecceUnit:IsLasing() == false then
+                self.Spots[Index] = RecceUnit:LaseUnit( SmokeUnit, nil, Duration )
+                break
+              end
+            end
           end
         end
         --end

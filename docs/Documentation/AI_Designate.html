@@ -1,0 +1,561 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+	<head>
+		<link rel="stylesheet" href="stylesheet.css" type="text/css"/>
+	</head>
+<body>
+<div id="container">
+<div id="product">
+	<div id="product_logo"></div>
+	<div id="product_name"><big><b></b></big></div>
+	<div id="product_description"></div>
+</div>
+<div id="main">
+	<div id="navigation">
+		<h2>Modules</h2>
+			<ul><li>
+				<a href="index.html">index</a>
+			</li></ul>
+		<ul>
+					<li><a href="AI_Balancer.html">AI_Balancer</a></li>
+					<li><a href="AI_Cap.html">AI_Cap</a></li>
+					<li><a href="AI_Cas.html">AI_Cas</a></li>
+					<li>AI_Designate</li>
+					<li><a href="AI_Patrol.html">AI_Patrol</a></li>
+					<li><a href="Account.html">Account</a></li>
+					<li><a href="Airbase.html">Airbase</a></li>
+					<li><a href="AirbasePolice.html">AirbasePolice</a></li>
+					<li><a href="Assign.html">Assign</a></li>
+					<li><a href="Base.html">Base</a></li>
+					<li><a href="Cargo.html">Cargo</a></li>
+					<li><a href="CleanUp.html">CleanUp</a></li>
+					<li><a href="Client.html">Client</a></li>
+					<li><a href="CommandCenter.html">CommandCenter</a></li>
+					<li><a href="Controllable.html">Controllable</a></li>
+					<li><a href="DCSAirbase.html">DCSAirbase</a></li>
+					<li><a href="DCSCoalitionObject.html">DCSCoalitionObject</a></li>
+					<li><a href="DCSCommand.html">DCSCommand</a></li>
+					<li><a href="DCSController.html">DCSController</a></li>
+					<li><a href="DCSGroup.html">DCSGroup</a></li>
+					<li><a href="DCSObject.html">DCSObject</a></li>
+					<li><a href="DCSTask.html">DCSTask</a></li>
+					<li><a href="DCSTypes.html">DCSTypes</a></li>
+					<li><a href="DCSUnit.html">DCSUnit</a></li>
+					<li><a href="DCSVec3.html">DCSVec3</a></li>
+					<li><a href="DCSWorld.html">DCSWorld</a></li>
+					<li><a href="DCSZone.html">DCSZone</a></li>
+					<li><a href="DCScountry.html">DCScountry</a></li>
+					<li><a href="DCStimer.html">DCStimer</a></li>
+					<li><a href="DCStrigger.html">DCStrigger</a></li>
+					<li><a href="Database.html">Database</a></li>
+					<li><a href="Detection.html">Detection</a></li>
+					<li><a href="DetectionManager.html">DetectionManager</a></li>
+					<li><a href="Escort.html">Escort</a></li>
+					<li><a href="Event.html">Event</a></li>
+					<li><a href="Fsm.html">Fsm</a></li>
+					<li><a href="Group.html">Group</a></li>
+					<li><a href="Identifiable.html">Identifiable</a></li>
+					<li><a href="Menu.html">Menu</a></li>
+					<li><a href="Message.html">Message</a></li>
+					<li><a href="MissileTrainer.html">MissileTrainer</a></li>
+					<li><a href="Mission.html">Mission</a></li>
+					<li><a href="Movement.html">Movement</a></li>
+					<li><a href="Object.html">Object</a></li>
+					<li><a href="Point.html">Point</a></li>
+					<li><a href="Positionable.html">Positionable</a></li>
+					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
+					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
+					<li><a href="Radio.html">Radio</a></li>
+					<li><a href="Route.html">Route</a></li>
+					<li><a href="Scenery.html">Scenery</a></li>
+					<li><a href="ScheduleDispatcher.html">ScheduleDispatcher</a></li>
+					<li><a href="Scheduler.html">Scheduler</a></li>
+					<li><a href="Scoring.html">Scoring</a></li>
+					<li><a href="Sead.html">Sead</a></li>
+					<li><a href="Set.html">Set</a></li>
+					<li><a href="Smoke.html">Smoke</a></li>
+					<li><a href="Spawn.html">Spawn</a></li>
+					<li><a href="SpawnStatic.html">SpawnStatic</a></li>
+					<li><a href="Spot.html">Spot</a></li>
+					<li><a href="Static.html">Static</a></li>
+					<li><a href="StaticObject.html">StaticObject</a></li>
+					<li><a href="Task.html">Task</a></li>
+					<li><a href="Task_A2G.html">Task_A2G</a></li>
+					<li><a href="Task_A2G_Dispatcher.html">Task_A2G_Dispatcher</a></li>
+					<li><a href="Task_Cargo.html">Task_Cargo</a></li>
+					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
+					<li><a href="Unit.html">Unit</a></li>
+					<li><a href="Utils.html">Utils</a></li>
+					<li><a href="Zone.html">Zone</a></li>
+					<li><a href="env.html">env</a></li>
+					<li><a href="land.html">land</a></li>
+					<li><a href="routines.html">routines</a></li>
+		</ul>
+	</div>
+	<div id="content">
+   <h1>Module <code>AI_Designate</code></h1>
+   
+<p><strong>AI (Release 2.1)</strong> -- Management of target designation.</p>
+
+   
+
+<p>--<img src="..\Presentations\AI_DESIGNATE\CARGO.JPG" alt="Banner Image"/></p>
+
+<hr/>
+
+
+	<h2>Global(s)</h2>
+	<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#AI_DESIGNATE">AI_DESIGNATE</a></td>
+		<td class="summary">
+<h1>AI_DESIGNATE class, extends <a href="Fsm.html##(FSM)">Fsm#FSM</a></h1>
+
+<p>AI_DESIGNATE is orchestrating the designation of potential targets, and communicate these to a dedicated attacking group 
+of players, so that following a dynamically generated menu system, each detected set of potential targets can be lased or smoked...</p>
+</td>
+		</tr>
+	</table>
+			<h2><a id="#(AI_DESIGNATE)">Type <code>AI_DESIGNATE</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).Detection">AI_DESIGNATE.Detection</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).GroupSet">AI_DESIGNATE.GroupSet</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).MenuLaseOff">AI_DESIGNATE:MenuLaseOff(Index, Duration)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).MenuLaseOn">AI_DESIGNATE:MenuLaseOn(Index, Duration)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).MenuSmoke">AI_DESIGNATE:MenuSmoke(Index)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).New">AI_DESIGNATE:New(Detection, GroupSet)</a></td>
+		<td class="summary">
+<p>AI_DESIGNATE Constructor.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).RecceSet">AI_DESIGNATE.RecceSet</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).Spots">AI_DESIGNATE.Spots</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).onafterDetect">AI_DESIGNATE:onafterDetect()</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).onafterLaseOff">AI_DESIGNATE:onafterLaseOff(From, Event, To, Index)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).onafterLaseOn">AI_DESIGNATE:onafterLaseOn(From, Event, To, Index, Duration)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).onafterSmoke">AI_DESIGNATE:onafterSmoke(From, Event, To, Index)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+
+	<h2>Global(s)</h2>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(AI_DESIGNATE)">#AI_DESIGNATE</a></em>
+<a id="AI_DESIGNATE" >
+<strong>AI_DESIGNATE</strong>
+</a>
+</dt>
+<dd>
+	
+<h1>AI_DESIGNATE class, extends <a href="Fsm.html##(FSM)">Fsm#FSM</a></h1>
+
+<p>AI_DESIGNATE is orchestrating the designation of potential targets, and communicate these to a dedicated attacking group 
+of players, so that following a dynamically generated menu system, each detected set of potential targets can be lased or smoked...</p>
+
+	
+
+<h2>1. AI_DESIGNATE constructor</h2>
+
+<ul>
+    <li><a href="##(AI_DESIGNATE).New">AI_DESIGNATE.New</a>(): Creates a new AI_DESIGNATE object.</li>
+</ul>
+
+<h2>2. AI_DESIGNATE is a FSM</h2>
+
+<p><img src="µ" alt="Process"/></p>
+
+<h3>2.1 AI_DESIGNATE States</h3>
+
+<ul>
+    <li><strong>Designating</strong> ( Group ): The process is not started yet.</li>
+</ul>
+
+<h3>2.2 AI_DESIGNATE Events</h3>
+
+<ul>
+    <li>**<a href="##(AI_DESIGNATE).Detect">AI_DESIGNATE.Detect</a>**: Detect targets.</li>
+    <li>**<a href="##(AI_DESIGNATE).LaseOn">AI_DESIGNATE.LaseOn</a>**: Lase the targets with the specified Index.</li>
+    <li>**<a href="##(AI_DESIGNATE).LaseOff">AI_DESIGNATE.LaseOff</a>**: Stop lasing the targets with the specified Index.</li>
+    <li>**<a href="##(AI_DESIGNATE).Smoke">AI_DESIGNATE.Smoke</a>**: Smoke the targets with the specified Index.</li>
+    <li>**<a href="##(AI_DESIGNATE.)">#AI_DESIGNATE.</a>Status**: Report designation status.</li>
+</ul>
+
+
+</dd>
+</dl>
+	<h2><a id="#(AI_Designate)" >Type <code>AI_Designate</code></a></h2>
+	
+			<h2><a id="#(AI_DESIGNATE)" >Type <code>AI_DESIGNATE</code></a></h2>
+				<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(AI_DESIGNATE).Detection" >
+<strong>AI_DESIGNATE.Detection</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(AI_DESIGNATE).GroupSet" >
+<strong>AI_DESIGNATE.GroupSet</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_DESIGNATE).MenuLaseOff" >
+<strong>AI_DESIGNATE:MenuLaseOff(Index, Duration)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> Index </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> Duration </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_DESIGNATE).MenuLaseOn" >
+<strong>AI_DESIGNATE:MenuLaseOn(Index, Duration)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> Index </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> Duration </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_DESIGNATE).MenuSmoke" >
+<strong>AI_DESIGNATE:MenuSmoke(Index)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> Index </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_DESIGNATE).New" >
+<strong>AI_DESIGNATE:New(Detection, GroupSet)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>AI_DESIGNATE Constructor.</p>
+
+	
+<p>This class is an abstract class and should not be instantiated.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Functional.Detection.html##(DETECTION_BASE)">Functional.Detection#DETECTION_BASE</a> Detection </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Core.Set.html##(SET_GROUP)">Core.Set#SET_GROUP</a> GroupSet </em></code>: 
+The set of groups to designate for.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(AI_DESIGNATE)">#AI_DESIGNATE</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(AI_DESIGNATE).RecceSet" >
+<strong>AI_DESIGNATE.RecceSet</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(AI_DESIGNATE).Spots" >
+<strong>AI_DESIGNATE.Spots</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_DESIGNATE).onafterDetect" >
+<strong>AI_DESIGNATE:onafterDetect()</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(AI_DESIGNATE)">#AI_DESIGNATE</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_DESIGNATE).onafterLaseOff" >
+<strong>AI_DESIGNATE:onafterLaseOff(From, Event, To, Index)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> To </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> Index </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(AI_DESIGNATE)">#AI_DESIGNATE</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_DESIGNATE).onafterLaseOn" >
+<strong>AI_DESIGNATE:onafterLaseOn(From, Event, To, Index, Duration)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> To </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> Index </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> Duration </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(AI_DESIGNATE)">#AI_DESIGNATE</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_DESIGNATE).onafterSmoke" >
+<strong>AI_DESIGNATE:onafterSmoke(From, Event, To, Index)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> To </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> Index </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(AI_DESIGNATE)">#AI_DESIGNATE</a>:</em></p>
+
+
+</dd>
+</dl>
+
+</div>
+
+</div>
+</body>
+</html>

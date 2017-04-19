@@ -20,6 +20,7 @@
 					<li><a href="AI_Balancer.html">AI_Balancer</a></li>
 					<li><a href="AI_Cap.html">AI_Cap</a></li>
 					<li><a href="AI_Cas.html">AI_Cas</a></li>
+					<li><a href="AI_Designate.html">AI_Designate</a></li>
 					<li><a href="AI_Patrol.html">AI_Patrol</a></li>
 					<li><a href="Account.html">Account</a></li>
 					<li><a href="Airbase.html">Airbase</a></li>
@@ -75,6 +76,7 @@
 					<li><a href="Smoke.html">Smoke</a></li>
 					<li><a href="Spawn.html">Spawn</a></li>
 					<li><a href="SpawnStatic.html">SpawnStatic</a></li>
+					<li><a href="Spot.html">Spot</a></li>
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="Task.html">Task</a></li>
@@ -415,6 +417,12 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_GROUP).CargoObject">CARGO_GROUP.CargoObject</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(CARGO_GROUP).CargoSet">CARGO_GROUP.CargoSet</a></td>
 		<td class="summary">
 
@@ -650,6 +658,12 @@
 		<td class="name" nowrap="nowrap"><a href="##(CARGO_UNIT).onafterBoard">CARGO_UNIT:onafterBoard(Event, From, To, CargoCarrier, NearRadius, ...)</a></td>
 		<td class="summary">
 <p>Board Event.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_UNIT).onafterBoarding">CARGO_UNIT:onafterBoarding(Event, From, To, CargoCarrier, NearRadius, ...)</a></td>
+		<td class="summary">
+<p>Boarding Event.</p>
 </td>
 		</tr>
 		<tr>
@@ -1708,6 +1722,20 @@ The amount of seconds to delay the action.</p>
 		<em></em>
 <a id="#(CARGO_GROUP).CargoCarrier" >
 <strong>CARGO_GROUP.CargoCarrier</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(CARGO_GROUP).CargoObject" >
+<strong>CARGO_GROUP.CargoObject</strong>
 </a>
 </dt>
 <dd>
@@ -2819,7 +2847,6 @@ The range till cargo will board.</p>
 		<dl class="function">
 <dt>
 
-		<em></em>
 <a id="#(CARGO_UNIT).CargoCarrier" >
 <strong>CARGO_UNIT.CargoCarrier</strong>
 </a>
@@ -2978,6 +3005,52 @@ The range till cargo will board.</p>
 				<li>
 				
 <p><code><em> NearRadius </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> ... </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO_UNIT).onafterBoarding" >
+<strong>CARGO_UNIT:onafterBoarding(Event, From, To, CargoCarrier, NearRadius, ...)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Boarding Event.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> CargoCarrier </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number NearRadius </em></code>: </p>
 
 				</li>
 				<li>

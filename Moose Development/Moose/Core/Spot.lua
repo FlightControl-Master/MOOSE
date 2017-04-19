@@ -67,6 +67,7 @@ do
   -- @param Core.Point#POINT_VEC3 PointVec3
   -- @param #number LaserCode
   -- @param #number Duration
+  -- @return #SPOT
   function SPOT:onafterLaseOn( From, Event, To, PointVec3, LaserCode, Duration )
 
     local function StopLase( self )
@@ -86,6 +87,7 @@ do
   -- @param From
   -- @param Event
   -- @param To
+  -- @return #SPOT
   function SPOT:onafterLaseOff( From, Event, To )
   
     self.Spot:destroy()
@@ -94,5 +96,23 @@ do
       self.LaseScheduler:Stop(self.ScheduleID)
     end
     self.ScheduleID = nil
+    
+    return self
   end
+  
+  --- Check if the SPOT is lasing
+  -- @param #SPOT self
+  -- @return #boolean true if it is lasing
+  function SPOT:IsLasing()
+    self:F2()
+  
+    local Lasing = false
+    
+    if self.Spot then
+      Lasing = true
+    end
+  
+    return Lasing
+  end
+  
 end

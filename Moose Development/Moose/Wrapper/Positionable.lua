@@ -457,23 +457,19 @@ end
 -- @param #number LaserCode
 -- @param #number Duration
 -- @return Spot
-function POSITIONABLE:LaseUnitOn( Target, LaserCode, Duration )
+function POSITIONABLE:LaseUnit( Target, LaserCode, Duration )
   self:F2()
 
   LaserCode = LaserCode or math.random( 1000, 9999 )
-
-  local TargetUnitName = Target:GetName()
-  
-  self.Spots = self.Spots or {}
-  self.Spots[TargetUnitName] = self.Spots[TargetUnitName] or {}
 
   local RecceDcsUnit = self:GetDCSObject()
   local TargetVec3 = Target:GetVec3()
 
   self:E("bulding spot")
-  self.Spots[TargetUnitName] = SPOT:New( self ):LaseOn( Target:GetPointVec3(), LaserCode, Duration)
+  self.Spot = SPOT:New( self )
+  self.Spot:LaseOn( Target:GetPointVec3(), LaserCode, Duration)
   
-  return self.Spots[TargetUnitName]
+  return self.Spot
   
 end
 
@@ -481,16 +477,30 @@ end
 -- @param #POSITIONABLE self
 -- @param #POSITIONABLE Target
 -- @return #POSITIONABLE
-function POSITIONABLE:LaseUnitOff( Target )
+function POSITIONABLE:LaseOff( Target )
   self:F2()
 
   local TargetUnitName = Target:GetName()
   
-  self.Spots = self.Spots or {}
-  if self.Spots[TargetUnitName] then
-    self.Spots[TargetUnitName]:LaseOff()
-    self.Spots[TargetUnitName] = nil
+  if self.Spot then
+    self.Spot:LaseOff()
+    self.Spot = nil
   end
 
   return self
+end
+
+--- Check if the POSITIONABLE is lasing a target
+-- @param #POSITIONABLE self
+-- @return #boolean true if it is lasing a target
+function POSITIONABLE:IsLasing()
+  self:F2()
+
+  local Lasing = false
+  
+  if self.Spot then
+    Lasing = self.Spot:IsLasing()
+  end
+
+  return Lasing
 end
