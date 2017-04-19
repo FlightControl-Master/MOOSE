@@ -458,7 +458,7 @@ function BEACON:AATACAN(TACANChannel, Message, Bearing, BeaconDuration)
   return self
 end
 
---- Stops the BEACON
+--- Stops the AA TACAN BEACON
 -- @param #BEACON self
 -- @return #BEACON self
 function BEACON:StopAATACAN()
@@ -530,6 +530,22 @@ function BEACON:RadioBeacon(FileName, Frequency, Modulation, Power, BeaconDurati
   
   if IsValid then
     self:T2({"Activating Beacon on ", Frequency, Modulation})
-    trigger.action.radioTransmission(FileName, self.Positionable:GetPositionVec3(), Modulation, true, Frequency, Power)
-  end
+    -- Note that this is looped. I have to give this transmission a unique name, I use the class ID
+    trigger.action.radioTransmission(FileName, self.Positionable:GetPositionVec3(), Modulation, true, Frequency, Power, tostring(self.ID))
+    
+     if BeaconDuration then -- Schedule the stop of the BEACON if asked by the MD
+       SCHEDULER:New( nil, 
+         function()
+           self:StopRadioBeacon()
+         end, {}, BeaconDuration)
+     end
+  end 
+end
+
+--- Stops the AA TACAN BEACON
+-- @param #BEACON self
+-- @return #BEACON self
+function BEACON:StopRadioBeacon()
+  -- The unique name of the transmission is the class ID
+  trigger.action.stopRadioTransmission(tostring(self.ID))
 end
