@@ -450,3 +450,57 @@ function POSITIONABLE:GetRadio()
   self:F2(self)
   return RADIO:New(self) 
 end
+
+--- Start Lasing a POSITIONABLE
+-- @param #POSITIONABLE self
+-- @param #POSITIONABLE Target
+-- @param #number LaserCode
+-- @param #number Duration
+-- @return Spot
+function POSITIONABLE:LaseUnit( Target, LaserCode, Duration )
+  self:F2()
+
+  LaserCode = LaserCode or math.random( 1000, 9999 )
+
+  local RecceDcsUnit = self:GetDCSObject()
+  local TargetVec3 = Target:GetVec3()
+
+  self:E("bulding spot")
+  self.Spot = SPOT:New( self )
+  self.Spot:LaseOn( Target:GetPointVec3(), LaserCode, Duration)
+  
+  return self.Spot
+  
+end
+
+--- Stop Lasing a POSITIONABLE
+-- @param #POSITIONABLE self
+-- @param #POSITIONABLE Target
+-- @return #POSITIONABLE
+function POSITIONABLE:LaseOff( Target )
+  self:F2()
+
+  local TargetUnitName = Target:GetName()
+  
+  if self.Spot then
+    self.Spot:LaseOff()
+    self.Spot = nil
+  end
+
+  return self
+end
+
+--- Check if the POSITIONABLE is lasing a target
+-- @param #POSITIONABLE self
+-- @return #boolean true if it is lasing a target
+function POSITIONABLE:IsLasing()
+  self:F2()
+
+  local Lasing = false
+  
+  if self.Spot then
+    Lasing = self.Spot:IsLasing()
+  end
+
+  return Lasing
+end

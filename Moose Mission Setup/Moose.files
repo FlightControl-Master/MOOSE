@@ -15,6 +15,7 @@ Core/Fsm.lua
 Core/Radio.lua
 Core/SpawnStatic.lua
 Core/Cargo.lua
+Core/Spot.lua
 
 Wrapper/Object.lua
 Wrapper/Identifiable.lua
@@ -41,6 +42,7 @@ AI/AI_Balancer.lua
 AI/AI_Patrol.lua
 AI/AI_Cap.lua
 AI/AI_Cas.lua
+AI/AI_Designate.lua
 
 Actions/Act_Assign.lua
 Actions/Act_Route.lua

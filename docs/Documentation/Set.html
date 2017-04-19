@@ -20,6 +20,7 @@
 					<li><a href="AI_Balancer.html">AI_Balancer</a></li>
 					<li><a href="AI_Cap.html">AI_Cap</a></li>
 					<li><a href="AI_Cas.html">AI_Cas</a></li>
+					<li><a href="AI_Designate.html">AI_Designate</a></li>
 					<li><a href="AI_Patrol.html">AI_Patrol</a></li>
 					<li><a href="Account.html">Account</a></li>
 					<li><a href="Airbase.html">Airbase</a></li>
@@ -75,6 +76,7 @@
 					<li><a href="Smoke.html">Smoke</a></li>
 					<li><a href="Spawn.html">Spawn</a></li>
 					<li><a href="SpawnStatic.html">SpawnStatic</a></li>
+					<li><a href="Spot.html">Spot</a></li>
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="Task.html">Task</a></li>
@@ -755,6 +757,12 @@
 		<td class="name" nowrap="nowrap"><a href="##(SET_GROUP).FindInDatabase">SET_GROUP:FindInDatabase(Event)</a></td>
 		<td class="summary">
 <p>Handles the Database to check on any event that Object exists in the Database.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_GROUP).FindNearestGroupFromPointVec2">SET_GROUP:FindNearestGroupFromPointVec2(PointVec2)</a></td>
+		<td class="summary">
+<p>Iterate the SET_GROUP while identifying the nearest object from a <a href="Point.html##(POINT_VEC2)">Point#POINT_VEC2</a>.</p>
 </td>
 		</tr>
 		<tr>
@@ -3602,6 +3610,33 @@ The GROUP</p>
 
 				</li>
 			</ol>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_GROUP).FindNearestGroupFromPointVec2" >
+<strong>SET_GROUP:FindNearestGroupFromPointVec2(PointVec2)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Iterate the SET_GROUP while identifying the nearest object from a <a href="Point.html##(POINT_VEC2)">Point#POINT_VEC2</a>.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Point.html##(POINT_VEC2)">Core.Point#POINT_VEC2</a> PointVec2 </em></code>: 
+A <a href="Point.html##(POINT_VEC2)">Point#POINT_VEC2</a> object from where to evaluate the closest object in the set.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a>:</em>
+The closest group.</p>
+
 </dd>
 </dl>
 		<dl class="function">

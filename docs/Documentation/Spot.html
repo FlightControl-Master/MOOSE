@@ -71,12 +71,12 @@
 					<li><a href="ScheduleDispatcher.html">ScheduleDispatcher</a></li>
 					<li><a href="Scheduler.html">Scheduler</a></li>
 					<li><a href="Scoring.html">Scoring</a></li>
-					<li>Sead</li>
+					<li><a href="Sead.html">Sead</a></li>
 					<li><a href="Set.html">Set</a></li>
 					<li><a href="Smoke.html">Smoke</a></li>
 					<li><a href="Spawn.html">Spawn</a></li>
 					<li><a href="SpawnStatic.html">SpawnStatic</a></li>
-					<li><a href="Spot.html">Spot</a></li>
+					<li>Spot</li>
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="Task.html">Task</a></li>
@@ -93,47 +93,100 @@
 		</ul>
 	</div>
 	<div id="content">
-   <h1>Module <code>Sead</code></h1>
+   <h1>Module <code>Spot</code></h1>
    
-<p>Provides defensive behaviour to a set of SAM sites within a running Mission.</p>
+<p><strong>Core  (Release 2.1)</strong> -- Management of SPOT logistics, that can be transported from and to transportation carriers.</p>
+
+   
+
+<p><img src="..\Presentations\SPOT\Dia1.JPG" alt="Banner Image"/></p>
+
+<hr/>
+
+<p>Spot lases points endlessly or for a duration.</p>
+
+<hr/>
+
+<h1>Demo Missions</h1>
+
+<h3><a href="">SPOT Demo Missions source code</a></h3>
+
+<h3><a href="">SPOT Demo Missions, only for beta testers</a></h3>
+
+<h3><a href="https://github.com/FlightControl-Master/MOOSE_MISSIONS/releases">ALL Demo Missions pack of the last release</a></h3>
+
+<hr/>
+
+<h1>YouTube Channel</h1>
+
+<h3><a href="">SPOT YouTube Channel</a></h3>
+
+<hr/>
+
+<p>This module is still under construction, but is described above works already, and will keep working ...</p>
+
 
 	<h2>Global(s)</h2>
 	<table class="function_list">
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="#SEAD">SEAD</a></td>
+		<td class="name" nowrap="nowrap"><a href="#SPOT">SPOT</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 	</table>
-			<h2><a id="#(SEAD)">Type <code>SEAD</code></a></h2>
+			<h2><a id="#(SPOT)">Type <code>SPOT</code></a></h2>
 				<table class="function_list">
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SEAD).ClassName">SEAD.ClassName</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SPOT).ClassName">SPOT.ClassName</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SEAD).New">SEAD.New(table, self, SEADGroupPrefixes)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SPOT).IsLasing">SPOT:IsLasing()</a></td>
 		<td class="summary">
-<p>Creates the main object which is handling defensive actions for SA sites or moving SA vehicles.</p>
+<p>Check if the SPOT is lasing</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SEAD).OnEventShot">SEAD.OnEventShot(#, EventData, self)</a></td>
-		<td class="summary">
-<p>Detects if an SA site was shot with an anti radiation missile.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SEAD).SEADGroupPrefixes">SEAD.SEADGroupPrefixes</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SPOT).LaseScheduler">SPOT.LaseScheduler</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SEAD).TargetSkill">SEAD.TargetSkill</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SPOT).New">SPOT:New(Recce, LaserCode, Duration)</a></td>
+		<td class="summary">
+<p>SPOT Constructor.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPOT).Recce">SPOT.Recce</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPOT).ScheduleID">SPOT.ScheduleID</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPOT).Spot">SPOT.Spot</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPOT).onafterLaseOff">SPOT:onafterLaseOff(From, Event, To)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPOT).onafterLaseOn">SPOT:onafterLaseOn(From, Event, To, PointVec3, LaserCode, Duration)</a></td>
 		<td class="summary">
 
 </td>
@@ -144,9 +197,9 @@
 		<dl class="function">
 <dt>
 
-		<em><a href="##(SEAD)">#SEAD</a></em>
-<a id="SEAD" >
-<strong>SEAD</strong>
+		<em><a href="##(SPOT)">#SPOT</a></em>
+<a id="SPOT" >
+<strong>SPOT</strong>
 </a>
 </dt>
 <dd>
@@ -155,19 +208,16 @@
 
 </dd>
 </dl>
-	<h2><a id="#(Sead)" >Type <code>Sead</code></a></h2>
+	<h2><a id="#(Spot)" >Type <code>Spot</code></a></h2>
 	
-			<h2><a id="#(SEAD)" >Type <code>SEAD</code></a></h2>
-				
-<p>The SEAD class</p>
-
-	<h3>Field(s)</h3>
+			<h2><a id="#(SPOT)" >Type <code>SPOT</code></a></h2>
+				<h3>Field(s)</h3>
 		<dl class="function">
 <dt>
 
 		<em>#string</em>
-<a id="#(SEAD).ClassName" >
-<strong>SEAD.ClassName</strong>
+<a id="#(SPOT).ClassName" >
+<strong>SPOT.ClassName</strong>
 </a>
 </dt>
 <dd>
@@ -179,94 +229,143 @@
 		<dl class="function">
 <dt>
 
-<a id="#(SEAD).New" >
-<strong>SEAD.New(table, self, SEADGroupPrefixes)</strong>
+<a id="#(SPOT).IsLasing" >
+<strong>SPOT:IsLasing()</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Creates the main object which is handling defensive actions for SA sites or moving SA vehicles.</p>
+<p>Check if the SPOT is lasing</p>
 
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+true if it is lasing</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(SPOT).LaseScheduler" >
+<strong>SPOT.LaseScheduler</strong>
+</a>
+</dt>
+<dd>
 	
-<p>When an anti radiation missile is fired (KH-58, KH-31P, KH-31A, KH-25MPU, HARM missiles), the SA will shut down their radars and will take evasive actions...
-Chances are big that the missile will miss.</p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SPOT).New" >
+<strong>SPOT:New(Recce, LaserCode, Duration)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>SPOT Constructor.</p>
 
 		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
-<p><code><em> table </em></code>: 
-string,...}|string SEADGroupPrefixes which is a table of Prefixes of the SA Groups in the DCSRTE on which evasive actions need to be taken.</p>
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> Recce </em></code>: </p>
 
 				</li>
 				<li>
 				
-<p><code><em> self </em></code>: </p>
+<p><code><em>#number LaserCode </em></code>: </p>
 
 				</li>
 				<li>
 				
-<p><code><em> SEADGroupPrefixes </em></code>: </p>
+<p><code><em>#number Duration </em></code>: </p>
 
 				</li>
 		</ul>
 		<h3>Return value</h3>
 				
+<p><em><a href="##(SPOT)">#SPOT</a>:</em></p>
 
-<p>SEAD</p>
-
-			<h3>Usage:</h3>
-		<pre class="example"><code>-- CCCP SEAD Defenses
--- Defends the Russian SA installations from SEAD attacks.
-SEAD_RU_SAM_Defenses = SEAD:New( { 'RU SA-6 Kub', 'RU SA-6 Defenses', 'RU MI-26 Troops', 'RU Attack Gori' } )</code></pre>
 
 </dd>
 </dl>
 		<dl class="function">
 <dt>
 
-<a id="#(SEAD).OnEventShot" >
-<strong>SEAD.OnEventShot(#, EventData, self)</strong>
+		<em></em>
+<a id="#(SPOT).Recce" >
+<strong>SPOT.Recce</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Detects if an SA site was shot with an anti radiation missile.</p>
 
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SPOT).ScheduleID" >
+<strong>SPOT.ScheduleID</strong>
+</a>
+</dt>
+<dd>
 	
-<p>In this case, take evasive actions based on the skill level set within the ME.</p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SPOT).Spot" >
+<strong>SPOT.Spot</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SPOT).onafterLaseOff" >
+<strong>SPOT:onafterLaseOff(From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+
 
 		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
-<p><code><em> # </em></code>: 
-EAD</p>
+<p><code><em> From </em></code>: </p>
 
 				</li>
 				<li>
 				
-<p><code><em><a href="Core.Event.html##(EVENTDATA)">Core.Event#EVENTDATA</a> EventData </em></code>: </p>
+<p><code><em> Event </em></code>: </p>
 
 				</li>
 				<li>
 				
-<p><code><em> self </em></code>: </p>
+<p><code><em> To </em></code>: </p>
 
 				</li>
 		</ul>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em></em>
-<a id="#(SEAD).SEADGroupPrefixes" >
-<strong>SEAD.SEADGroupPrefixes</strong>
-</a>
-</dt>
-<dd>
-	
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SPOT)">#SPOT</a>:</em></p>
 
 
 </dd>
@@ -274,13 +373,50 @@ EAD</p>
 		<dl class="function">
 <dt>
 
-		<em></em>
-<a id="#(SEAD).TargetSkill" >
-<strong>SEAD.TargetSkill</strong>
+<a id="#(SPOT).onafterLaseOn" >
+<strong>SPOT:onafterLaseOn(From, Event, To, PointVec3, LaserCode, Duration)</strong>
 </a>
 </dt>
 <dd>
 	
+
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> To </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Core.Point.html##(POINT_VEC3)">Core.Point#POINT_VEC3</a> PointVec3 </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number LaserCode </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Duration </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SPOT)">#SPOT</a>:</em></p>
 
 
 </dd>
