@@ -12,9 +12,32 @@ do -- AI_DESIGNATE
   --- @type AI_DESIGNATE
   -- @extends Core.Fsm#FSM_PROCESS
 
-  ---
+  --- # AI_DESIGNATE class, extends @{Fsm#FSM}
   -- 
-  -- @field #AI_DESIGNATE AI_DESIGNATE
+  -- AI_DESIGNATE is orchestrating the designation of potential targets, and communicate these to a dedicated attacking group 
+  -- of players, so that following a dynamically generated menu system, each detected set of potential targets can be lased or smoked...
+  -- 
+  -- ## 1. AI_DESIGNATE constructor
+  --   
+  --   * @{#AI_DESIGNATE.New}(): Creates a new AI_DESIGNATE object.
+  -- 
+  -- ## 2. AI_DESIGNATE is a FSM
+  -- 
+  -- ![Process](µ)
+  -- 
+  -- ### 2.1 AI_DESIGNATE States
+  -- 
+  --   * **Designating** ( Group ): The process is not started yet.
+  -- 
+  -- ### 2.2 AI_DESIGNATE Events
+  -- 
+  --   * **@{#AI_DESIGNATE.Detect}**: Detect targets.
+  --   * **@{#AI_DESIGNATE.LaseOn}**: Lase the targets with the specified Index.
+  --   * **@{#AI_DESIGNATE.LaseOff}**: Stop lasing the targets with the specified Index.
+  --   * **@{#AI_DESIGNATE.Smoke}**: Smoke the targets with the specified Index.
+  --   * **@{#AI_DESIGNATE.}Status**: Report designation status.
+  -- 
+  -- @field #AI_DESIGNATE
   -- 
   AI_DESIGNATE = {
     ClassName = "AI_DESIGNATE",
@@ -176,9 +199,10 @@ do -- AI_DESIGNATE
         --if math.random( 1, ( 100 * TargetSetUnit:Count() ) / 100 ) <= 100 then
         if SmokeUnit:IsAlive() then
           local NearestRecceGroup = self.RecceSet:FindNearestGroupFromPointVec2(SmokeUnit:GetPointVec2())
-          local NearestRecceUnit = NearestRecceGroup:GetUnit(1)
-          self:E( { NearestRecceUnit = NearestRecceUnit  } )
-          self.Spots[Index] = NearestRecceUnit:LaseUnitOn( SmokeUnit, nil, Duration )
+          if NearestRecceGroup then
+            local NearestRecceUnit = NearestRecceGroup:GetUnit(1)
+            self.Spots[Index] = NearestRecceUnit:LaseUnitOn( SmokeUnit, nil, Duration )
+          end
         end
         --end
       end

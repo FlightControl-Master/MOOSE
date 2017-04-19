@@ -1,4 +1,4 @@
---- **Core** -- Management of SPOT logistics, that can be transported from and to transportation carriers.
+--- **Core  (Release 2.1)** -- Management of SPOT logistics, that can be transported from and to transportation carriers.
 --
 -- ![Banner Image](..\Presentations\SPOT\Dia1.JPG)
 --
@@ -76,7 +76,7 @@ do
     local RecceDcsUnit = self.Recce:GetDCSObject()
     local TargetVec3 = PointVec3:GetVec3()
     self:E("lasing")
-    self.Spot = Spot.createInfraRed( RecceDcsUnit, { x = 0, y = 1, z = 0 }, TargetVec3, LaserCode )
+    self.Spot = Spot.createInfraRed( RecceDcsUnit, { x = 0, y = 2, z = 0 }, TargetVec3, LaserCode )
     if Duration then
       self.ScheduleID = self.LaseScheduler:Schedule( self, StopLase, {self}, Duration )
     end
