@@ -339,12 +339,11 @@ BEACON = {
 }
 
 --- Create a new BEACON Object. This doesn't activate the beacon, though, use @{#BEACON.AATACAN} or @{#BEACON.Generic}
+-- If you want to create a BEACON, you probably should use @{Positionable#POSITIONABLE.GetBeacon}() instead.
 -- @param #BEACON self
 -- @param Wrapper.Positionable#POSITIONABLE Positionable The @{Positionable} that will receive radio capabilities.
 -- @return #BEACON Beacon
 -- @return #nil If Positionable is invalid
--- @usage
--- -- If you want to create a BEACON, you probably should use @{Positionable#POSITIONABLE.GetBeacon}() instead
 function BEACON:New(Positionable)
   local self = BASE:Inherit(self, BASE:New())
   
@@ -398,13 +397,19 @@ function BEACON:_TACANToFrequency(TACANChannel, TACANMode)
   return (A + TACANChannel - B) * 1000000
 end
 
---- Activates a AATACAN BEACON
+
+--- Activates a TACAN BEACON on an Aircraft.
 -- @param #BEACON self
 -- @param #number TACANChannel (the "10" part in "10Y"). Note that AA TACAN are only available on Y Channels
 -- @param #string Message The Message that is going to be coded in Morse and broadcasted by the beacon
 -- @param #boolean Bearing Can the BEACON be homed on ?
--- @param #number BeaconDuration
+-- @param #number BeaconDuration How long will the beacon last in seconds. Omit for forever.
 -- @return #BEACON self
+-- @usage
+-- local myUnit = UNIT:FindByName("MyUnit") 
+-- local myBeacon = myUnit:GetBeacon() -- Creates the beacon
+-- 
+-- myBeacon:AATACAN(20, "TEXACO", true) -- Activate the beacon
 function BEACON:AATACAN(TACANChannel, Message, Bearing, BeaconDuration)
   self:F({TACANChannel, Message, Bearing, BeaconDuration})
   
@@ -467,4 +472,25 @@ function BEACON:StopAATACAN()
       } 
     })
   end
+end
+
+
+--- Activates a general pupose Radio Beacon
+-- This uses the very generic singleton function "trigger.action.radioTransmission()" to broadcast a sound file on a specific frequency.
+-- Although any frequency could be used, only 2 DCS Modules can home on radio beacons at the time of writing : the Huey and the Mi-8. 
+-- They can home in on these specific frequencies : 
+-- * **Mi8**
+-- * R-828 -> 20-60MHz
+-- * ARKUD -> 100-150MHz (canal 1 : 114166, canal 2 : 114333, canal 3 : 114583, canal 4 : 121500, canal 5 : 123100, canal 6 : 124100) AM
+-- * ARK9 -> 150-1300KHz
+-- * **Huey**
+-- * AN/ARC-131 -> 30-76 Mhz FM
+-- @param #BEACON self
+-- @param #string FileName The name of the audio file
+-- @param #number Frequency in MHz
+-- @param #number Modulation either radio.modulation.AM or radio.modulation.FM
+-- @param #number Power in W
+-- @return #BEACON self
+function BEACON:RadioBeacon(FileName, Frequency, Modulation, Power, BeaconDuration)
+  
 end
