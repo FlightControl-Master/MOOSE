@@ -701,7 +701,7 @@ function CARGO_UNIT:onafterBoard( From, Event, To, CargoCarrier, NearRadius, ...
     if self:IsNear( CargoCarrier:GetPointVec2(), NearRadius ) then
       self:Load( CargoCarrier, NearRadius, ... )
     else
-      self:__Boarding( -1, CargoCarrier, NearRadius )
+      self:__Boarding( 1, CargoCarrier, NearRadius )
     end
   end
   
