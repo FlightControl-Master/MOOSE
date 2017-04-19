@@ -476,7 +476,7 @@ end
 
 
 --- Activates a general pupose Radio Beacon
--- This uses the very generic singleton function "trigger.action.radioTransmission()" to broadcast a sound file on a specific frequency.
+-- This uses the very generic singleton function "trigger.action.radioTransmission()" provided by DCS to broadcast a sound file on a specific frequency.
 -- Although any frequency could be used, only 2 DCS Modules can home on radio beacons at the time of writing : the Huey and the Mi-8. 
 -- They can home in on these specific frequencies : 
 -- * **Mi8**
@@ -490,7 +490,46 @@ end
 -- @param #number Frequency in MHz
 -- @param #number Modulation either radio.modulation.AM or radio.modulation.FM
 -- @param #number Power in W
+-- @param #number BeaconDuration How long will the beacon last in seconds. Omit for forever.
 -- @return #BEACON self
 function BEACON:RadioBeacon(FileName, Frequency, Modulation, Power, BeaconDuration)
+  local IsValid = false
   
+  -- Check the filename
+  if type(FileName) == "string" then
+    if FileName:find(".ogg") or FileName:find(".wav") then
+      if not FileName:find("l10n/DEFAULT/") then
+        FileName = "l10n/DEFAULT/" .. FileName
+      end
+      IsValid = true
+      return self
+    end
+  end
+  if not IsValid then
+    self:E({"File name invalid. Maybe something wrong with the extension ? ", FileName})
+  end
+  
+  -- Check the Frequency
+  if type(Frequency) ~= "number" and IsValid then
+    self:E({"Frequency invalid. ", Frequency})
+    IsValid = false
+  end
+  
+  -- Check the modulation
+  if Modulation ~= radio.modulation.AM and Modulation ~= radio.modulation.FM and IsValid then --TODO Maybe make this future proof if ED decides to add an other modulation ?
+    self:E({"Modulation is invalid. Use DCS's enum radio.modulation.", Modulation})
+    IsValid = false
+  end
+  
+  -- Check the Power
+  if type(Power) ~= "number" and IsValid then
+    self:E({"Power is invalid. ", Power})
+    IsValid = false
+  end
+  Power = math.floor(math.abs(Power)) --TODO Find what is the maximum power allowed by DCS and limit power to that
+  
+  if IsValid then
+    self:T2({"Activating Beacon on ", Frequency, Modulation})
+    trigger.action.radioTransmission(FileName, self.Positionable:GetPositionVec3(), Modulation, true, Frequency, Power)
+  end
 end
