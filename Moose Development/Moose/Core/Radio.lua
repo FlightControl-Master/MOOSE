@@ -400,48 +400,38 @@ end
 
 --- Activates a AATACAN BEACON
 -- @param #BEACON self
--- @param #number TACANChannel (the "10" part in "10X")
--- @param #string TACANMode (the "X" part in "10X")
+-- @param #number TACANChannel (the "10" part in "10Y"). Note that AA TACAN are only available on Y Channels
 -- @param #string Message The Message that is going to be coded in Morse and broadcasted by the beacon
--- @param #boolean Bearing Is the beacon can be homed on ?
--- @param #boolean Tanker
+-- @param #boolean Bearing Can the BEACON be homed on ?
 -- @param #number BeaconDuration
 -- @return #BEACON self
-function BEACON:AATACAN(TACANChannel, TACANMode, Message, Bearing, Tanker, BeaconDuration)
-  self:F({TACANChannel, TACANMode, Tanker})
+function BEACON:AATACAN(TACANChannel, Message, Bearing, BeaconDuration)
+  self:F({TACANChannel, Message, Bearing, BeaconDuration})
   
-  local IsValid = 1
+  local IsValid = true
   
   if not self.Positionable:IsAir() then
     self:E({"The POSITIONABLE you want to attach the AA Tacan Beacon is not an aircraft ! The BEACON is not emitting", self.Positionable})
-    IsValid = 0
+    IsValid = false
   end
     
-  local Frequency = self:_TACANToFrequency(TACANChannel, TACANMode)
+  local Frequency = self:_TACANToFrequency(TACANChannel, "Y")
   if not Frequency then 
     self:E({"The passed TACAN channel is invalid, the BEACON is not emitting"})
-    IsValid = 0
+    IsValid = false
   end
   
-  -- Contrary to appearances, the values for the type and system params in the ActivateBeacon command aren't pulled from my butt, 
-  -- they are found in DCS World\Scripts\World\Radio\BeaconTypes.lua and DCS World\Scripts\World\Radio\BeaconSites.lua
+  -- I'm using the beacon type 4 (BEACON_TYPE_TACAN). For System, I'm using 5 (TACAN_TANKER_MODE_Y) if the bearing shows its bearing
+  -- or 14 (TACAN_AA_MODE_Y) if it does not
   local System
-  if Tanker then
-    if TACANMode == "X" then 
-      System = 4
-    else
-      System = 5
-    end
-  else -- Not a Tanker
-    if TACANMode == "X" then 
-      System = 13
-    else
-      System = 14
-    end
+  if Bearing then
+    System = 5
+  else
+    System = 14
   end
   
   if IsValid then -- Starts the BEACON
-    self:T2({"AA TACAN BEACON started, type is ", System})
+    self:T2({"AA TACAN BEACON started !"})
     self.Positionable:SetCommand({
       id = "ActivateBeacon",
       params = {
@@ -449,7 +439,6 @@ function BEACON:AATACAN(TACANChannel, TACANMode, Message, Bearing, Tanker, Beaco
         system = System,
         callsign = Message,
         frequency = Frequency,
-        bearing = Bearing
         }
       })
       
@@ -468,6 +457,7 @@ end
 -- @param #BEACON self
 -- @return #BEACON self
 function BEACON:StopAATACAN()
+  self:F()
   if not self.Positionable then
     self:E({"Start the beacon first before stoping it !"})
   else
