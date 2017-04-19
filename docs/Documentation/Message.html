@@ -31,6 +31,21 @@
 					<li><a href="Client.html">Client</a></li>
 					<li><a href="CommandCenter.html">CommandCenter</a></li>
 					<li><a href="Controllable.html">Controllable</a></li>
+					<li><a href="DCSAirbase.html">DCSAirbase</a></li>
+					<li><a href="DCSCoalitionObject.html">DCSCoalitionObject</a></li>
+					<li><a href="DCSCommand.html">DCSCommand</a></li>
+					<li><a href="DCSController.html">DCSController</a></li>
+					<li><a href="DCSGroup.html">DCSGroup</a></li>
+					<li><a href="DCSObject.html">DCSObject</a></li>
+					<li><a href="DCSTask.html">DCSTask</a></li>
+					<li><a href="DCSTypes.html">DCSTypes</a></li>
+					<li><a href="DCSUnit.html">DCSUnit</a></li>
+					<li><a href="DCSVec3.html">DCSVec3</a></li>
+					<li><a href="DCSWorld.html">DCSWorld</a></li>
+					<li><a href="DCSZone.html">DCSZone</a></li>
+					<li><a href="DCScountry.html">DCScountry</a></li>
+					<li><a href="DCStimer.html">DCStimer</a></li>
+					<li><a href="DCStrigger.html">DCStrigger</a></li>
 					<li><a href="Database.html">Database</a></li>
 					<li><a href="Detection.html">Detection</a></li>
 					<li><a href="DetectionManager.html">DetectionManager</a></li>
@@ -59,14 +74,19 @@
 					<li><a href="Set.html">Set</a></li>
 					<li><a href="Smoke.html">Smoke</a></li>
 					<li><a href="Spawn.html">Spawn</a></li>
+					<li><a href="SpawnStatic.html">SpawnStatic</a></li>
 					<li><a href="Static.html">Static</a></li>
+					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="Task.html">Task</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
 					<li><a href="Task_A2G_Dispatcher.html">Task_A2G_Dispatcher</a></li>
+					<li><a href="Task_Cargo.html">Task_Cargo</a></li>
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
 					<li><a href="Unit.html">Unit</a></li>
 					<li><a href="Utils.html">Utils</a></li>
 					<li><a href="Zone.html">Zone</a></li>
+					<li><a href="env.html">env</a></li>
+					<li><a href="land.html">land</a></li>
 					<li><a href="routines.html">routines</a></li>
 		</ul>
 	</div>
@@ -81,70 +101,20 @@
 
 <hr/>
 
-<h1>1) <a href="Message.html##(MESSAGE)">Message#MESSAGE</a> class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
-
-<p>Message System to display Messages to Clients, Coalitions or All.
-Messages are shown on the display panel for an amount of seconds, and will then disappear.
-Messages can contain a category which is indicating the category of the message.</p>
-
-<h2>1.1) MESSAGE construction</h2>
-
-<p>Messages are created with <a href="Message.html##(MESSAGE).New">Message#MESSAGE.New</a>. Note that when the MESSAGE object is created, no message is sent yet.
-To send messages, you need to use the To functions.</p>
-
-<h2>1.2) Send messages to an audience</h2>
-
-<p>Messages are sent:</p>
-
-<ul>
-    <li>To a <a href="Client.html">Client</a> using <a href="Message.html##(MESSAGE).ToClient">Message#MESSAGE.ToClient</a>().</li>
-    <li>To a <a href="Group.html">Group</a> using <a href="Message.html##(MESSAGE).ToGroup">Message#MESSAGE.ToGroup</a>()</li>
-    <li>To a coalition using <a href="Message.html##(MESSAGE).ToCoalition">Message#MESSAGE.ToCoalition</a>().</li>
-    <li>To the red coalition using <a href="Message.html##(MESSAGE).ToRed">Message#MESSAGE.ToRed</a>().</li>
-    <li>To the blue coalition using <a href="Message.html##(MESSAGE).ToBlue">Message#MESSAGE.ToBlue</a>().</li>
-    <li>To all Players using <a href="Message.html##(MESSAGE).ToAll">Message#MESSAGE.ToAll</a>().</li>
-</ul>
-
-<h2>1.3) Send conditionally to an audience</h2>
-
-<p>Messages can be sent conditionally to an audience (when a condition is true):</p>
-
-<ul>
-    <li>To all players using <a href="Message.html##(MESSAGE).ToAllIf">Message#MESSAGE.ToAllIf</a>().</li>
-    <li>To a coalition using <a href="Message.html##(MESSAGE).ToCoalitionIf">Message#MESSAGE.ToCoalitionIf</a>().</li>
-</ul>
-
-
 
 	<h2>Global(s)</h2>
 	<table class="function_list">
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="#MESSAGE">MESSAGE</a></td>
 		<td class="summary">
+<h1>MESSAGE class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
 
+<p>Message System to display Messages to Clients, Coalitions or All.</p>
 </td>
 		</tr>
 	</table>
 			<h2><a id="#(MESSAGE)">Type <code>MESSAGE</code></a></h2>
 				<table class="function_list">
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MESSAGE).ClassName">MESSAGE.ClassName</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MESSAGE).MessageCategory">MESSAGE.MessageCategory</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MESSAGE).MessageID">MESSAGE.MessageID</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(MESSAGE).New">MESSAGE:New(MessageText, MessageDuration, MessageCategory)</a></td>
 		<td class="summary">
@@ -212,6 +182,40 @@ To send messages, you need to use the To functions.</p>
 </dt>
 <dd>
 	
+<h1>MESSAGE class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
+
+<p>Message System to display Messages to Clients, Coalitions or All.</p>
+
+	
+<p>Messages are shown on the display panel for an amount of seconds, and will then disappear.
+Messages can contain a category which is indicating the category of the message.</p>
+
+<h2>MESSAGE construction</h2>
+
+<p>Messages are created with <a href="Message.html##(MESSAGE).New">Message#MESSAGE.New</a>. Note that when the MESSAGE object is created, no message is sent yet.
+To send messages, you need to use the To functions.</p>
+
+<h2>Send messages to an audience</h2>
+
+<p>Messages are sent:</p>
+
+<ul>
+    <li>To a <a href="Client.html">Client</a> using <a href="Message.html##(MESSAGE).ToClient">Message#MESSAGE.ToClient</a>().</li>
+    <li>To a <a href="Group.html">Group</a> using <a href="Message.html##(MESSAGE).ToGroup">Message#MESSAGE.ToGroup</a>()</li>
+    <li>To a coalition using <a href="Message.html##(MESSAGE).ToCoalition">Message#MESSAGE.ToCoalition</a>().</li>
+    <li>To the red coalition using <a href="Message.html##(MESSAGE).ToRed">Message#MESSAGE.ToRed</a>().</li>
+    <li>To the blue coalition using <a href="Message.html##(MESSAGE).ToBlue">Message#MESSAGE.ToBlue</a>().</li>
+    <li>To all Players using <a href="Message.html##(MESSAGE).ToAll">Message#MESSAGE.ToAll</a>().</li>
+</ul>
+
+<h2>Send conditionally to an audience</h2>
+
+<p>Messages can be sent conditionally to an audience (when a condition is true):</p>
+
+<ul>
+    <li>To all players using <a href="Message.html##(MESSAGE).ToAllIf">Message#MESSAGE.ToAllIf</a>().</li>
+    <li>To a coalition using <a href="Message.html##(MESSAGE).ToCoalitionIf">Message#MESSAGE.ToCoalitionIf</a>().</li>
+</ul>
 
 
 </dd>
@@ -223,48 +227,6 @@ To send messages, you need to use the To functions.</p>
 <p>The MESSAGE class</p>
 
 	<h3>Field(s)</h3>
-		<dl class="function">
-<dt>
-
-		<em>#string</em>
-<a id="#(MESSAGE).ClassName" >
-<strong>MESSAGE.ClassName</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em>#number</em>
-<a id="#(MESSAGE).MessageCategory" >
-<strong>MESSAGE.MessageCategory</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em>#number</em>
-<a id="#(MESSAGE).MessageID" >
-<strong>MESSAGE.MessageID</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
 		<dl class="function">
 <dt>
 

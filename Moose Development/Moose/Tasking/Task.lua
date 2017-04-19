@@ -216,7 +216,7 @@ function TASK:SetUnitProcess( FsmTemplate )
 end
 
 --- Add a PlayerUnit to join the Task.
--- For each Group within the Task, the Unit is check if it can join the Task.
+-- For each Group within the Task, the Unit is checked if it can join the Task.
 -- If the Unit was not part of the Task, false is returned.
 -- If the Unit is part of the Task, true is returned.
 -- @param #TASK self
@@ -275,8 +275,9 @@ function TASK:AbortUnit( PlayerUnit )
       local IsAssignedToGroup = self:IsAssignedToGroup( PlayerGroup )
       self:E( { IsAssignedToGroup = IsAssignedToGroup } )
       if IsAssignedToGroup then
+        local PlayerName = PlayerUnit:GetPlayerName()
         self:UnAssignFromUnit( PlayerUnit )
-        self:MessageToGroups( PlayerUnit:GetPlayerName() .. " aborted Task " .. self:GetName() )
+        self:MessageToGroups( PlayerName .. " aborted Task " .. self:GetName() )
         self:E( { TaskGroup = PlayerGroup:GetName(), GetUnits = PlayerGroup:GetUnits() } )
         if #PlayerGroup:GetUnits() == 1 then
           self:UnAssignFromGroup( PlayerGroup )
@@ -284,6 +285,7 @@ function TASK:AbortUnit( PlayerUnit )
           self:RemoveMenuForGroup( PlayerGroup )
         end
         self:Abort()
+        self:PlayerAborted( PlayerUnit )
       end
     end
   end

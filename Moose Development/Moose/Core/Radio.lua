@@ -1,6 +1,6 @@
 --- **Core** - The RADIO class is responsible for **transmitting radio communications**.
 --
--- --- bitmap
+-- ![Banner Image](..\Presentations\RADIO\Dia1.JPG)
 -- 
 -- ===
 --
@@ -27,9 +27,10 @@
 --
 -- ===
 --
--- ### Authors: Hugues "Grey_Echo" Bousquet
+-- ### Author: Hugues "Grey_Echo" Bousquet
 --
 -- @module Radio
+
 
 --- # 1) RADIO class, extends @{Base#BASE}
 -- 
@@ -37,9 +38,9 @@
 -- 
 -- There are 3 steps to a successful radio transmission.
 -- 
---   * First, you need to **"add" a @{#RADIO} object** to your @{Positionable#POSITIONABLE}. This is done using the @{Positionable#POSITIONABLE.GetRadio}() function,
+--   * First, you need to **"add a @{#RADIO} object** to your @{Positionable#POSITIONABLE}. This is done using the @{Positionable#POSITIONABLE.GetRadio}() function,
 --   * Then, you will **set the relevant parameters** to the transmission (see below),
---   * When done, you can actually **broadcast the transmission** (i.e. play the sound) with the @{Positionable#POSITIONABLE.Broadcast}() function.
+--   * When done, you can actually **broadcast the transmission** (i.e. play the sound) with the @{RADIO.Broadcast}() function.
 --   
 -- Methods to set relevant parameters for both a @{Unit#UNIT} or a @{Group#GROUP} or any other @{Positionable#POSITIONABLE}
 -- 
@@ -53,7 +54,7 @@
 --   * @{#RADIO.SetSubtitle}() : Set both the subtitle and its duration,
 --   * @{#RADIO.NewUnitTransmission}() : Shortcut to set all the relevant parameters in one method call
 -- 
--- Additional Methods to set relevant parameters if the transmiter is any other @{Wrapper.Positionable#POSITIONABLE}
+-- Additional Methods to set relevant parameters if the transmiter is any other @{Positionable#POSITIONABLE}
 -- 
 --   * @{#RADIO.SetPower}() : Sets the power of the antenna in Watts
 --   * @{#RADIO.NewGenericTransmission}() : Shortcut to set all the relevant parameters in one method call
@@ -68,7 +69,7 @@
 --   * Note that if the transmission has a subtitle, it will be readable, regardless of the quality of the transmission. 
 --   
 -- @type RADIO
--- @field Wrapper.Positionable#POSITIONABLE Positionable The transmiter
+-- @field Positionable#POSITIONABLE Positionable The transmiter
 -- @field #string FileName Name of the sound file
 -- @field #number Frequency Frequency of the transmission in Hz
 -- @field #number Modulation Modulation of the transmission (either radio.modulation.AM or radio.modulation.FM)

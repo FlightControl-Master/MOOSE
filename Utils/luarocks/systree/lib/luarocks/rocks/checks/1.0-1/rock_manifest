@@ -1,0 +1,6 @@
+rock_manifest = {
+   ["checks-1.0-1.rockspec"] = "70af2f5dd173774a16b9e7cfdfd12ecd",
+   lib = {
+      ["checks.dll"] = "2f86fd2ab34447e9e211836fd56939ae"
+   }
+}

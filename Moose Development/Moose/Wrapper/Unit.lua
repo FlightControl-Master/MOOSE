@@ -640,7 +640,7 @@ function UNIT:GetThreatLevel()
       "Bomber",
       "Strategic Bomber",
       "Attack Helicopter",
-      "Interceptor",
+      "Battleplane",
       "Multirole Fighter",
       "Fighter"
     }
@@ -990,5 +990,16 @@ do -- Event Handling
     
     return self
   end
+  
+  --- Reset the subscriptions.
+  -- @param #UNIT self
+  -- @return #UNIT
+  function UNIT:ResetEvents()
+  
+    self:EventDispatcher():Reset( self )
+    
+    return self
+  end
+  
 
 end
