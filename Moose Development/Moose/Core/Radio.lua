@@ -469,5 +469,12 @@ end
 -- @return #BEACON self
 function BEACON:StopAATACAN()
   if not self.Positionable then
+    self:E({"Start the beacon first before stoping it !"})
+  else
+    self.Positionable:SetCommand({
+      id = 'DeactivateBeacon', 
+        params = { 
+      } 
+    })
   end
 end
