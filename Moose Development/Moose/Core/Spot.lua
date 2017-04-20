@@ -32,6 +32,7 @@
 do
 
   --- @type SPOT
+  -- @extends BASE
   SPOT = {
     ClassName = "SPOT",
   }
@@ -49,6 +50,7 @@ do
     
     self:SetStartState( "Off" )
     self:AddTransition( "Off", "LaseOn", "On" )
+    self:AddTransition( "On",  "Lasing", "On" )
     self:AddTransition( "On" , "LaseOff", "Off" )
   
     self.Recce = Recce
@@ -64,23 +66,38 @@ do
   -- @param From
   -- @param Event
   -- @param To
-  -- @param Core.Point#POINT_VEC3 PointVec3
+  -- @param Wrapper.Positionable#POSITIONABLE Target
   -- @param #number LaserCode
   -- @param #number Duration
-  -- @return #SPOT
-  function SPOT:onafterLaseOn( From, Event, To, PointVec3, LaserCode, Duration )
+  function SPOT:onafterLaseOn( From, Event, To, Target, LaserCode, Duration )
 
     local function StopLase( self )
       self:LaseOff()
     end
-  
+    
+    self.Target = Target
+    self.LaserCode = LaserCode
+    
     local RecceDcsUnit = self.Recce:GetDCSObject()
-    local TargetVec3 = PointVec3:GetVec3()
-    self:E("lasing")
-    self.Spot = Spot.createInfraRed( RecceDcsUnit, { x = 0, y = 2, z = 0 }, TargetVec3, LaserCode )
+    self.Spot = Spot.createInfraRed( RecceDcsUnit, { x = 0, y = 2, z = 0 }, Target:GetPointVec3():AddY(1):GetVec3(), LaserCode )
+    self.Spot:setCode( LaserCode )
+
     if Duration then
       self.ScheduleID = self.LaseScheduler:Schedule( self, StopLase, {self}, Duration )
     end
+    
+    self:__Lasing( -0.2 )
+  end
+  
+  --- @param #SPOT self
+  -- @param From
+  -- @param Event
+  -- @param To
+  function SPOT:onafterLasing( From, Event, To )
+  
+    self:__Lasing( -0.2 )
+    self.Spot:setPoint( self.Target:GetPointVec3():AddY(1):GetVec3() )
+  
   end
 
   --- @param #SPOT self
@@ -96,6 +113,9 @@ do
       self.LaseScheduler:Stop(self.ScheduleID)
     end
     self.ScheduleID = nil
+    
+    self.Target = nil
+    self.LaserCode = nil
     
     return self
   end
