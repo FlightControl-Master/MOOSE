@@ -568,7 +568,7 @@ do -- DETECTION_BASE
 
             local DetectedUnitCategory = DetectedObject:getDesc().category
     
-            self:T( { "Detected Target:", DetectionGroupName, DetectedObjectName, Distance, DetectedUnitCategory, DetectedCategory } )
+            self:T( { "Detected Target:", DetectionGroupName, DetectedObjectName, Distance, DetectedUnitCategory } )
 
             -- Calculate Acceptance
             

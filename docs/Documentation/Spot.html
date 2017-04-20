@@ -180,13 +180,25 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPOT).Target">SPOT.Target</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SPOT).onafterLaseOff">SPOT:onafterLaseOff(From, Event, To)</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SPOT).onafterLaseOn">SPOT:onafterLaseOn(From, Event, To, PointVec3, LaserCode, Duration)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SPOT).onafterLaseOn">SPOT:onafterLaseOn(From, Event, To, Target, LaserCode, Duration)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPOT).onafterLasing">SPOT:onafterLasing(From, Event, To)</a></td>
 		<td class="summary">
 
 </td>
@@ -337,6 +349,20 @@ true if it is lasing</p>
 		<dl class="function">
 <dt>
 
+		<em></em>
+<a id="#(SPOT).Target" >
+<strong>SPOT.Target</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(SPOT).onafterLaseOff" >
 <strong>SPOT:onafterLaseOff(From, Event, To)</strong>
 </a>
@@ -374,7 +400,7 @@ true if it is lasing</p>
 <dt>
 
 <a id="#(SPOT).onafterLaseOn" >
-<strong>SPOT:onafterLaseOn(From, Event, To, PointVec3, LaserCode, Duration)</strong>
+<strong>SPOT:onafterLaseOn(From, Event, To, Target, LaserCode, Duration)</strong>
 </a>
 </dt>
 <dd>
@@ -400,7 +426,7 @@ true if it is lasing</p>
 				</li>
 				<li>
 				
-<p><code><em><a href="Core.Point.html##(POINT_VEC3)">Core.Point#POINT_VEC3</a> PointVec3 </em></code>: </p>
+<p><code><em><a href="Wrapper.Positionable.html##(POSITIONABLE)">Wrapper.Positionable#POSITIONABLE</a> Target </em></code>: </p>
 
 				</li>
 				<li>
@@ -414,11 +440,37 @@ true if it is lasing</p>
 
 				</li>
 		</ul>
-		<h3>Return value</h3>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SPOT).onafterLasing" >
+<strong>SPOT:onafterLasing(From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
 				
-<p><em><a href="##(SPOT)">#SPOT</a>:</em></p>
+<p><code><em> From </em></code>: </p>
 
+				</li>
+				<li>
+				
+<p><code><em> Event </em></code>: </p>
 
+				</li>
+				<li>
+				
+<p><code><em> To </em></code>: </p>
+
+				</li>
+		</ul>
 </dd>
 </dl>
 

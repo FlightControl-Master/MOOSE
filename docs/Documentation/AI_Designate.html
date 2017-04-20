@@ -99,7 +99,7 @@
 
    
 
-<p>--<img src="..\Presentations\AI_DESIGNATE\CARGO.JPG" alt="Banner Image"/></p>
+<p>--<img src="..\Presentations\DESIGNATE\Dia1.JPG" alt="Banner Image"/></p>
 
 <hr/>
 
@@ -111,8 +111,10 @@
 		<td class="summary">
 <h1>AI_DESIGNATE class, extends <a href="Fsm.html##(FSM)">Fsm#FSM</a></h1>
 
-<p>AI_DESIGNATE is orchestrating the designation of potential targets, and communicate these to a dedicated attacking group 
-of players, so that following a dynamically generated menu system, each detected set of potential targets can be lased or smoked...</p>
+<p>AI_DESIGNATE is orchestrating the designation of potential targets executed by a Recce group, 
+and communicates these to a dedicated attacking group of players, 
+so that following a dynamically generated menu system, 
+each detected set of potential targets can be lased or smoked...</p>
 </td>
 		</tr>
 	</table>
@@ -131,19 +133,25 @@ of players, so that following a dynamically generated menu system, each detected
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).MenuLaseOff">AI_DESIGNATE:MenuLaseOff(Index, Duration)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).LaserCodes">AI_DESIGNATE.LaserCodes</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).MenuLaseOn">AI_DESIGNATE:MenuLaseOn(Index, Duration)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).MenuLaseOff">AI_DESIGNATE:MenuLaseOff(AttackGroup, Index, Duration)</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).MenuSmoke">AI_DESIGNATE:MenuSmoke(Index)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).MenuLaseOn">AI_DESIGNATE:MenuLaseOn(AttackGroup, Index, Duration)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).MenuSmoke">AI_DESIGNATE:MenuSmoke(AttackGroup, Index)</a></td>
 		<td class="summary">
 
 </td>
@@ -161,6 +169,24 @@ of players, so that following a dynamically generated menu system, each detected
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).SendStatus">AI_DESIGNATE:SendStatus()</a></td>
+		<td class="summary">
+<p>Sends the status to the Attack Groups.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).SetDesignateMenu">AI_DESIGNATE:SetDesignateMenu()</a></td>
+		<td class="summary">
+<p>Sets the Designate Menu.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).SetLaserCodes">AI_DESIGNATE:SetLaserCodes(<, LaserCodes)</a></td>
+		<td class="summary">
+<p>Set an array of possible laser codes.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).Spots">AI_DESIGNATE.Spots</a></td>
 		<td class="summary">
 
@@ -173,19 +199,19 @@ of players, so that following a dynamically generated menu system, each detected
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).onafterLaseOff">AI_DESIGNATE:onafterLaseOff(From, Event, To, Index)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).onafterLaseOff">AI_DESIGNATE:onafterLaseOff(From, Event, To, AttackGroup, Index)</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).onafterLaseOn">AI_DESIGNATE:onafterLaseOn(From, Event, To, Index, Duration)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).onafterLaseOn">AI_DESIGNATE:onafterLaseOn(From, Event, To, AttackGroup, Index, Duration)</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).onafterSmoke">AI_DESIGNATE:onafterSmoke(From, Event, To, Index)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).onafterSmoke">AI_DESIGNATE:onafterSmoke(From, Event, To, AttackGroup, Index)</a></td>
 		<td class="summary">
 
 </td>
@@ -205,10 +231,33 @@ of players, so that following a dynamically generated menu system, each detected
 	
 <h1>AI_DESIGNATE class, extends <a href="Fsm.html##(FSM)">Fsm#FSM</a></h1>
 
-<p>AI_DESIGNATE is orchestrating the designation of potential targets, and communicate these to a dedicated attacking group 
-of players, so that following a dynamically generated menu system, each detected set of potential targets can be lased or smoked...</p>
+<p>AI_DESIGNATE is orchestrating the designation of potential targets executed by a Recce group, 
+and communicates these to a dedicated attacking group of players, 
+so that following a dynamically generated menu system, 
+each detected set of potential targets can be lased or smoked...</p>
 
 	
+
+<p>The Recce group is detecting as part of the DETECTION_ class continuously targets.
+Once targets have been detected, they will be reported. The AI_DESIGNATE object will fire the <strong>Detect</strong> event in this case!
+As part of the reporting, the following happens:</p>
+
+<ul>
+    <li>A message is sent to each GROUP of the Attack SET_GROUP, containing the threat level and the target composition.</li>
+    <li>A menu is created and updated for each GROUP of the Attack SET_GROUP, containing the the treat level and the target composition.</li>
+</ul>
+
+<p>One of the players in one of the Attack GROUPs, can then select a Target Set by selecting one of the menu options.
+Each menu option has two modes: </p>
+
+<ul>
+    <li>If the Target Set is not being designated, then the Designate menu for the target Set will provide options to Lase or Smoke the targets.</li>
+    <li>If the Target Set is being designated, then the Designate menu will provide an option to cancel the designation.</li>
+</ul>
+
+<p>In this way, the AI can assist players to designate ground targets for a coordinated attack!</p>
+
+<p>Have FUN!</p>
 
 <h2>1. AI_DESIGNATE constructor</h2>
 
@@ -233,8 +282,30 @@ of players, so that following a dynamically generated menu system, each detected
     <li>**<a href="##(AI_DESIGNATE).LaseOn">AI_DESIGNATE.LaseOn</a>**: Lase the targets with the specified Index.</li>
     <li>**<a href="##(AI_DESIGNATE).LaseOff">AI_DESIGNATE.LaseOff</a>**: Stop lasing the targets with the specified Index.</li>
     <li>**<a href="##(AI_DESIGNATE).Smoke">AI_DESIGNATE.Smoke</a>**: Smoke the targets with the specified Index.</li>
-    <li>**<a href="##(AI_DESIGNATE.)">#AI_DESIGNATE.</a>Status**: Report designation status.</li>
+    <li>**<a href="##(AI_DESIGNATE).Status">AI_DESIGNATE.Status</a>**: Report designation status.</li>
 </ul>
+
+<h2>3. Set laser codes</h2>
+
+<p>An array of laser codes can be provided, that will be used by the AI_DESIGNATE when lasing.
+The laser code is communicated by the Recce when it is lasing a larget.
+Note that the default laser code is 1113.
+Working known laser codes are: 1113,1462,1483,1537,1362,1214,1131,1182,1644,1614,1515,1411,1621,1138,1542,1678,1573,1314,1643,1257,1467,1375,1341,1275,1237</p>
+
+<p>Use the method <a href="##(AI_DESIGNATE).SetLaserCodes">AI_DESIGNATE.SetLaserCodes</a>() to set the possible laser codes to be selected from.
+One laser code can be given or an sequence of laser codes through an table...</p>
+
+<pre><code>AIDesignate:SetLaserCodes( 1214 )
+</code></pre>
+
+<p>The above sets one laser code with the value 1214.</p>
+
+<pre><code>AIDesignate:SetLaserCodes( { 1214, 1131, 1614, 1138 } )
+</code></pre>
+
+<p>The above sets a collection of possible laser codes that can be assigned. <strong>Note the { } notation!</strong></p>
+
+
 
 
 </dd>
@@ -274,8 +345,21 @@ of players, so that following a dynamically generated menu system, each detected
 		<dl class="function">
 <dt>
 
+<a id="#(AI_DESIGNATE).LaserCodes" >
+<strong>AI_DESIGNATE.LaserCodes</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(AI_DESIGNATE).MenuLaseOff" >
-<strong>AI_DESIGNATE:MenuLaseOff(Index, Duration)</strong>
+<strong>AI_DESIGNATE:MenuLaseOff(AttackGroup, Index, Duration)</strong>
 </a>
 </dt>
 <dd>
@@ -284,6 +368,11 @@ of players, so that following a dynamically generated menu system, each detected
 
 		<h3>Parameters</h3>
 		<ul>
+				<li>
+				
+<p><code><em> AttackGroup </em></code>: </p>
+
+				</li>
 				<li>
 				
 <p><code><em> Index </em></code>: </p>
@@ -301,7 +390,7 @@ of players, so that following a dynamically generated menu system, each detected
 <dt>
 
 <a id="#(AI_DESIGNATE).MenuLaseOn" >
-<strong>AI_DESIGNATE:MenuLaseOn(Index, Duration)</strong>
+<strong>AI_DESIGNATE:MenuLaseOn(AttackGroup, Index, Duration)</strong>
 </a>
 </dt>
 <dd>
@@ -310,6 +399,11 @@ of players, so that following a dynamically generated menu system, each detected
 
 		<h3>Parameters</h3>
 		<ul>
+				<li>
+				
+<p><code><em> AttackGroup </em></code>: </p>
+
+				</li>
 				<li>
 				
 <p><code><em> Index </em></code>: </p>
@@ -327,15 +421,20 @@ of players, so that following a dynamically generated menu system, each detected
 <dt>
 
 <a id="#(AI_DESIGNATE).MenuSmoke" >
-<strong>AI_DESIGNATE:MenuSmoke(Index)</strong>
+<strong>AI_DESIGNATE:MenuSmoke(AttackGroup, Index)</strong>
 </a>
 </dt>
 <dd>
 	
 
 
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
+				<li>
+				
+<p><code><em> AttackGroup </em></code>: </p>
+
+				</li>
 				<li>
 				
 <p><code><em> Index </em></code>: </p>
@@ -396,6 +495,77 @@ The set of groups to designate for.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(AI_DESIGNATE).SendStatus" >
+<strong>AI_DESIGNATE:SendStatus()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Sends the status to the Attack Groups.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(AI_DESIGNATE)">#AI_DESIGNATE</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_DESIGNATE).SetDesignateMenu" >
+<strong>AI_DESIGNATE:SetDesignateMenu()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Sets the Designate Menu.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(AI_DESIGNATE)">#AI_DESIGNATE</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_DESIGNATE).SetLaserCodes" >
+<strong>AI_DESIGNATE:SetLaserCodes(<, LaserCodes)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set an array of possible laser codes.</p>
+
+	
+<p>Each new lase will select a code from this table.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="##(list)">#list</a> &lt; </em></code>: 
+number> LaserCodes</p>
+
+				</li>
+				<li>
+				
+<p><code><em> LaserCodes </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(AI_DESIGNATE)">#AI_DESIGNATE</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 		<em></em>
 <a id="#(AI_DESIGNATE).Spots" >
 <strong>AI_DESIGNATE.Spots</strong>
@@ -429,7 +599,7 @@ The set of groups to designate for.</p>
 <dt>
 
 <a id="#(AI_DESIGNATE).onafterLaseOff" >
-<strong>AI_DESIGNATE:onafterLaseOff(From, Event, To, Index)</strong>
+<strong>AI_DESIGNATE:onafterLaseOff(From, Event, To, AttackGroup, Index)</strong>
 </a>
 </dt>
 <dd>
@@ -451,6 +621,11 @@ The set of groups to designate for.</p>
 				<li>
 				
 <p><code><em> To </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> AttackGroup </em></code>: </p>
 
 				</li>
 				<li>
@@ -470,7 +645,7 @@ The set of groups to designate for.</p>
 <dt>
 
 <a id="#(AI_DESIGNATE).onafterLaseOn" >
-<strong>AI_DESIGNATE:onafterLaseOn(From, Event, To, Index, Duration)</strong>
+<strong>AI_DESIGNATE:onafterLaseOn(From, Event, To, AttackGroup, Index, Duration)</strong>
 </a>
 </dt>
 <dd>
@@ -492,6 +667,11 @@ The set of groups to designate for.</p>
 				<li>
 				
 <p><code><em> To </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> AttackGroup </em></code>: </p>
 
 				</li>
 				<li>
@@ -516,7 +696,7 @@ The set of groups to designate for.</p>
 <dt>
 
 <a id="#(AI_DESIGNATE).onafterSmoke" >
-<strong>AI_DESIGNATE:onafterSmoke(From, Event, To, Index)</strong>
+<strong>AI_DESIGNATE:onafterSmoke(From, Event, To, AttackGroup, Index)</strong>
 </a>
 </dt>
 <dd>
@@ -542,6 +722,11 @@ The set of groups to designate for.</p>
 				</li>
 				<li>
 				
+<p><code><em> AttackGroup </em></code>: </p>
+
+				</li>
+				<li>
+				
 <p><code><em> Index </em></code>: </p>
 
 				</li>
@@ -554,6 +739,8 @@ The set of groups to designate for.</p>
 </dd>
 </dl>
 
+			<h2><a id="#(list)" >Type <code>list</code></a></h2>
+			
 </div>
 
 </div>
