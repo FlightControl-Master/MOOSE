@@ -598,7 +598,7 @@ function SCORING:_AddPlayerFromUnit( UnitData )
     end
 
     if self.Players[PlayerName].Penalty > self.Fratricide then
-      UnitData:Destroy()
+      --UnitData:Destroy()
       MESSAGE:New( "Player '" .. PlayerName .. "' committed FRATRICIDE, he will be COURT MARTIALED and is DISMISSED from this mission!",
         10
       ):ToAll()
