@@ -96,8 +96,12 @@ do
   -- @param To
   function SPOT:onafterLasing( From, Event, To )
   
-    self:__Lasing( -0.2 )
-    self.Spot:setPoint( self.Target:GetPointVec3():AddY(1):GetVec3() )
+    if self.Target:IsAlive() then
+      self.Spot:setPoint( self.Target:GetPointVec3():AddY(1):GetVec3() )
+      self:__Lasing( -0.2 )
+    else
+      self:__LaseOff( 0.2 )
+    end
   
   end
 
