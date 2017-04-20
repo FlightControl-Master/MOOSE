@@ -1,9 +1,11 @@
---- **Core** - The RADIO class is responsible for **transmitting radio communications**.
---
+--- **Core** - The RADIO Module is responsible for everything that is related to radio transmission and you can hear in DCS, be it TACAN beacons, Radio transmissions...
+-- 
 -- ![Banner Image](..\Presentations\RADIO\Dia1.JPG)
 -- 
 -- ===
 --
+-- The Radio contains 2 classes : RADIO and BEACON
+--  
 -- What are radio communications in DCS ?
 -- 
 --   * Radio transmissions consist of **sound files** that are broadcasted on a specific **frequency** (e.g. 115MHz) and **modulation** (e.g. AM),
@@ -23,7 +25,8 @@
 --   
 -- Note that obviously, the **frequency** and the **modulation** of the transmission are important only if the players are piloting an **Advanced System Modelling** enabled aircraft,
 -- like the A10C or the Mirage 2000C. They will **hear the transmission** if they are tuned on the **right frequency and modulation** (and if they are close enough - more on that below).
--- If a FC3 airacraft is used, it will **hear every communication, whatever the frequency and the modulation** is set to.
+-- If a FC3 airacraft is used, it will **hear every communication, whatever the frequency and the modulation** is set to. The same is true for TACAN beacons. If your aircaft isn't compatible,
+-- you won't hear/be able to use the TACAN beacon informations.
 --
 -- ===
 --
