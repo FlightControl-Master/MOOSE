@@ -119,7 +119,7 @@ do -- AI_DESIGNATE
     -- @param #AI_DESIGNATE self
     -- @param #number Delay
 
-    self:AddTransition( "*", "LaseOn", "*" )
+    self:AddTransition( "*", "LaseOn", "Lasing" )
     
     --- LaseOn Handler OnBefore for AI_DESIGNATE 
     -- @function [parent=#AI_DESIGNATE ] OnBeforeLaseOn
@@ -145,9 +145,10 @@ do -- AI_DESIGNATE
     -- @param #AI_DESIGNATE  self
     -- @param #number Delay
     
+    self:AddTransition( "Lasing", "Lasing", "Lasing" )
     
     
-    self:AddTransition( "*", "LaseOff", "*" )
+    self:AddTransition( "*", "LaseOff", "Designate" )
     
     --- LaseOff Handler OnBefore for AI_DESIGNATE 
     -- @function [parent=#AI_DESIGNATE ] OnBeforeLaseOff
@@ -413,26 +414,40 @@ do -- AI_DESIGNATE
   -- @return #AI_DESIGNATE
   function AI_DESIGNATE:onafterLaseOn( From, Event, To, AttackGroup, Index, Duration )
   
+    self:__Lasing( -5, AttackGroup, Index, Duration )
+  
+  end
+  
+
+  --- 
+  -- @param #AI_DESIGNATE self
+  -- @return #AI_DESIGNATE
+  function AI_DESIGNATE:onafterLasing( From, Event, To, AttackGroup, Index, Duration )
+  
     local TargetSetUnit = self.Detection:GetDetectedSet( Index )
   
+    local Targets = false
+
     TargetSetUnit:ForEachUnit(
       --- @param Wrapper.Unit#UNIT SmokeUnit
       function( SmokeUnit )
         self:E("In procedure")
         --if math.random( 1, ( 100 * TargetSetUnit:Count() ) / 100 ) <= 100 then
         if SmokeUnit:IsAlive() then
-          local NearestRecceGroup = self.RecceSet:FindNearestGroupFromPointVec2(SmokeUnit:GetPointVec2())
+          local NearestRecceGroup = self.RecceSet:FindNearestGroupFromPointVec2( SmokeUnit:GetPointVec2() )
           if NearestRecceGroup then
             for UnitID, UnitData in pairs( NearestRecceGroup:GetUnits() or {} ) do
               local RecceUnit = UnitData -- Wrapper.Unit#UNIT
+              Targets = true
               if RecceUnit:IsLasing() == false then
                 self.Spots[Index] = self.Spots[Index] or {}
                 local Spots = self.Spots[Index]
                 local LaserCode = self.LaserCodes[math.random(1, #self.LaserCodes)]
                 local Spot = RecceUnit:LaseUnit( SmokeUnit, LaserCode, Duration )
-                Spots[#Spots+1] = Spot
+                Spots[RecceUnit] = Spot
                 RecceUnit:MessageToGroup( "Lasing " .. SmokeUnit:GetTypeName() .. " for " .. Duration .. " seconds. Laser Code: " .. Spot.LaserCode, 15, AttackGroup )
                 break
+              else
               end
             end
           end
@@ -440,10 +455,16 @@ do -- AI_DESIGNATE
         --end
       end
     )
-    
+
+    if Targets == true then
+      self:__Lasing( -30, AttackGroup, Index, Duration )
+    else
+      self:__LaseOff( -0.2, AttackGroup, Index  )
+    end    
+
     self:SetDesignateMenu()
+
   end
-  
     
   --- 
   -- @param #AI_DESIGNATE self
