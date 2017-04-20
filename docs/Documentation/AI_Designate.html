@@ -62,6 +62,7 @@
 					<li><a href="Movement.html">Movement</a></li>
 					<li><a href="Object.html">Object</a></li>
 					<li><a href="Point.html">Point</a></li>
+					<li><a href="Positionable.html">Positionable</a></li>
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
 					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
 					<li><a href="Radio.html">Radio</a></li>
@@ -120,6 +121,12 @@ each detected set of potential targets can be lased or smoked...</p>
 			<h2><a id="#(AI_DESIGNATE)">Type <code>AI_DESIGNATE</code></a></h2>
 				<table class="function_list">
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).Detect">AI_DESIGNATE:Detect()</a></td>
+		<td class="summary">
+<p>Detect Trigger for AI_DESIGNATE</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).Detection">AI_DESIGNATE.Detection</a></td>
 		<td class="summary">
 
@@ -129,6 +136,18 @@ each detected set of potential targets can be lased or smoked...</p>
 		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).GroupSet">AI_DESIGNATE.GroupSet</a></td>
 		<td class="summary">
 
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).LaseOff">AI_DESIGNATE:LaseOff()</a></td>
+		<td class="summary">
+<p>LaseOff Trigger for AI_DESIGNATE </p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).LaseOn">AI_DESIGNATE:LaseOn()</a></td>
+		<td class="summary">
+<p>LaseOn Trigger for AI_DESIGNATE </p>
 </td>
 		</tr>
 		<tr>
@@ -162,6 +181,66 @@ each detected set of potential targets can be lased or smoked...</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).OnAfterDetect">AI_DESIGNATE:OnAfterDetect(From, Event, To)</a></td>
+		<td class="summary">
+<p>Detect Handler OnAfter for AI_DESIGNATE</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).OnAfterLaseOff">AI_DESIGNATE:OnAfterLaseOff(From, Event, To)</a></td>
+		<td class="summary">
+<p>LaseOff Handler OnAfter for AI_DESIGNATE </p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).OnAfterLaseOn">AI_DESIGNATE:OnAfterLaseOn(From, Event, To)</a></td>
+		<td class="summary">
+<p>LaseOn Handler OnAfter for AI_DESIGNATE </p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).OnAfterSmoke">AI_DESIGNATE:OnAfterSmoke(From, Event, To)</a></td>
+		<td class="summary">
+<p>Smoke Handler OnAfter for AI_DESIGNATE </p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).OnAfterStatus">AI_DESIGNATE:OnAfterStatus(From, Event, To)</a></td>
+		<td class="summary">
+<p>Status Handler OnAfter for AI_DESIGNATE </p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).OnBeforeDetect">AI_DESIGNATE:OnBeforeDetect(From, Event, To)</a></td>
+		<td class="summary">
+<p>Detect Handler OnBefore for AI_DESIGNATE</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).OnBeforeLaseOff">AI_DESIGNATE:OnBeforeLaseOff(From, Event, To)</a></td>
+		<td class="summary">
+<p>LaseOff Handler OnBefore for AI_DESIGNATE </p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).OnBeforeLaseOn">AI_DESIGNATE:OnBeforeLaseOn(From, Event, To)</a></td>
+		<td class="summary">
+<p>LaseOn Handler OnBefore for AI_DESIGNATE </p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).OnBeforeSmoke">AI_DESIGNATE:OnBeforeSmoke(From, Event, To)</a></td>
+		<td class="summary">
+<p>Smoke Handler OnBefore for AI_DESIGNATE </p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).OnBeforeStatus">AI_DESIGNATE:OnBeforeStatus(From, Event, To)</a></td>
+		<td class="summary">
+<p>Status Handler OnBefore for AI_DESIGNATE </p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).RecceSet">AI_DESIGNATE.RecceSet</a></td>
 		<td class="summary">
 
@@ -186,9 +265,51 @@ each detected set of potential targets can be lased or smoked...</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).Smoke">AI_DESIGNATE:Smoke()</a></td>
+		<td class="summary">
+<p>Smoke Trigger for AI_DESIGNATE </p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).Spots">AI_DESIGNATE.Spots</a></td>
 		<td class="summary">
 
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).Status">AI_DESIGNATE:Status()</a></td>
+		<td class="summary">
+<p>Status Trigger for AI_DESIGNATE </p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).__Detect">AI_DESIGNATE:__Detect(Delay)</a></td>
+		<td class="summary">
+<p>Detect Asynchronous Trigger for AI_DESIGNATE</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).__LaseOff">AI_DESIGNATE:__LaseOff(Delay)</a></td>
+		<td class="summary">
+<p>LaseOff Asynchronous Trigger for AI_DESIGNATE </p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).__LaseOn">AI_DESIGNATE:__LaseOn(Delay)</a></td>
+		<td class="summary">
+<p>LaseOn Asynchronous Trigger for AI_DESIGNATE </p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).__Smoke">AI_DESIGNATE:__Smoke(Delay)</a></td>
+		<td class="summary">
+<p>Smoke Asynchronous Trigger for AI_DESIGNATE </p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).__Status">AI_DESIGNATE:__Status(Delay)</a></td>
+		<td class="summary">
+<p>Status Asynchronous Trigger for AI_DESIGNATE </p>
 </td>
 		</tr>
 		<tr>
@@ -316,6 +437,19 @@ One laser code can be given or an sequence of laser codes through an table...</p
 		<dl class="function">
 <dt>
 
+<a id="#(AI_DESIGNATE).Detect" >
+<strong>AI_DESIGNATE:Detect()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Detect Trigger for AI_DESIGNATE</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 		<em></em>
 <a id="#(AI_DESIGNATE).Detection" >
 <strong>AI_DESIGNATE.Detection</strong>
@@ -338,6 +472,32 @@ One laser code can be given or an sequence of laser codes through an table...</p
 <dd>
 	
 
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_DESIGNATE).LaseOff" >
+<strong>AI_DESIGNATE:LaseOff()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>LaseOff Trigger for AI_DESIGNATE </p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_DESIGNATE).LaseOn" >
+<strong>AI_DESIGNATE:LaseOn()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>LaseOn Trigger for AI_DESIGNATE </p>
 
 </dd>
 </dl>
@@ -480,6 +640,341 @@ The set of groups to designate for.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(AI_DESIGNATE).OnAfterDetect" >
+<strong>AI_DESIGNATE:OnAfterDetect(From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Detect Handler OnAfter for AI_DESIGNATE</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_DESIGNATE).OnAfterLaseOff" >
+<strong>AI_DESIGNATE:OnAfterLaseOff(From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>LaseOff Handler OnAfter for AI_DESIGNATE </p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_DESIGNATE).OnAfterLaseOn" >
+<strong>AI_DESIGNATE:OnAfterLaseOn(From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>LaseOn Handler OnAfter for AI_DESIGNATE </p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_DESIGNATE).OnAfterSmoke" >
+<strong>AI_DESIGNATE:OnAfterSmoke(From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Smoke Handler OnAfter for AI_DESIGNATE </p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_DESIGNATE).OnAfterStatus" >
+<strong>AI_DESIGNATE:OnAfterStatus(From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Status Handler OnAfter for AI_DESIGNATE </p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_DESIGNATE).OnBeforeDetect" >
+<strong>AI_DESIGNATE:OnBeforeDetect(From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Detect Handler OnBefore for AI_DESIGNATE</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_DESIGNATE).OnBeforeLaseOff" >
+<strong>AI_DESIGNATE:OnBeforeLaseOff(From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>LaseOff Handler OnBefore for AI_DESIGNATE </p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_DESIGNATE).OnBeforeLaseOn" >
+<strong>AI_DESIGNATE:OnBeforeLaseOn(From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>LaseOn Handler OnBefore for AI_DESIGNATE </p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_DESIGNATE).OnBeforeSmoke" >
+<strong>AI_DESIGNATE:OnBeforeSmoke(From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Smoke Handler OnBefore for AI_DESIGNATE </p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_DESIGNATE).OnBeforeStatus" >
+<strong>AI_DESIGNATE:OnBeforeStatus(From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Status Handler OnBefore for AI_DESIGNATE </p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 		<em></em>
 <a id="#(AI_DESIGNATE).RecceSet" >
 <strong>AI_DESIGNATE.RecceSet</strong>
@@ -565,6 +1060,19 @@ number> LaserCodes</p>
 		<dl class="function">
 <dt>
 
+<a id="#(AI_DESIGNATE).Smoke" >
+<strong>AI_DESIGNATE:Smoke()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Smoke Trigger for AI_DESIGNATE </p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 		<em></em>
 <a id="#(AI_DESIGNATE).Spots" >
 <strong>AI_DESIGNATE.Spots</strong>
@@ -574,6 +1082,124 @@ number> LaserCodes</p>
 	
 
 
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_DESIGNATE).Status" >
+<strong>AI_DESIGNATE:Status()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Status Trigger for AI_DESIGNATE </p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_DESIGNATE).__Detect" >
+<strong>AI_DESIGNATE:__Detect(Delay)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Detect Asynchronous Trigger for AI_DESIGNATE</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number Delay </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_DESIGNATE).__LaseOff" >
+<strong>AI_DESIGNATE:__LaseOff(Delay)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>LaseOff Asynchronous Trigger for AI_DESIGNATE </p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number Delay </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_DESIGNATE).__LaseOn" >
+<strong>AI_DESIGNATE:__LaseOn(Delay)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>LaseOn Asynchronous Trigger for AI_DESIGNATE </p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number Delay </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_DESIGNATE).__Smoke" >
+<strong>AI_DESIGNATE:__Smoke(Delay)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Smoke Asynchronous Trigger for AI_DESIGNATE </p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number Delay </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_DESIGNATE).__Status" >
+<strong>AI_DESIGNATE:__Status(Delay)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Status Asynchronous Trigger for AI_DESIGNATE </p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number Delay </em></code>: </p>
+
+				</li>
+		</ul>
 </dd>
 </dl>
 		<dl class="function">
