@@ -458,7 +458,7 @@ end
 function POSITIONABLE:GetBeacon()
   self:F2(self)
   return BEACON:New(self) 
-
+end
 
 --- Start Lasing a POSITIONABLE
 -- @param #POSITIONABLE self
