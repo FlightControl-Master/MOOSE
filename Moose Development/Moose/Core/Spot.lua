@@ -79,8 +79,9 @@ do
     self.LaserCode = LaserCode
     
     local RecceDcsUnit = self.Recce:GetDCSObject()
-    self.Spot = Spot.createInfraRed( RecceDcsUnit, { x = 0, y = 2, z = 0 }, Target:GetPointVec3():AddY(1):GetVec3(), LaserCode )
-    self.Spot:setCode( LaserCode )
+    
+    self.Spot = Spot.createInfraRed( RecceDcsUnit, { x = 0, y = 2, z = 0 }, Target:GetPointVec3():AddY(1):GetVec3() )
+    self.Spot = Spot.createLaser( RecceDcsUnit, { x = 0, y = 2, z = 0 }, Target:GetPointVec3():AddY(1):GetVec3(), LaserCode )
 
     if Duration then
       self.ScheduleID = self.LaseScheduler:Schedule( self, StopLase, {self}, Duration )

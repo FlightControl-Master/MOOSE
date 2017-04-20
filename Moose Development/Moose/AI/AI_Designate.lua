@@ -234,7 +234,7 @@ do -- AI_DESIGNATE
     self.RecceSet = Detection:GetDetectionSetGroup()
     self.Spots = {}
     
-    self:SetLaserCodes( 1113 )
+    self:SetLaserCodes( 1688 )
     
     self.Detection:__Start( 2 )
 
