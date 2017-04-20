@@ -48,12 +48,12 @@
 -- Methods to set relevant parameters for both a @{Unit#UNIT} or a @{Group#GROUP} or any other @{Positionable#POSITIONABLE}
 -- 
 --   * @{#RADIO.SetFileName}() : Sets the file name of your sound file (e.g. "Noise.ogg"),
---   * @{#RADIO.SetFrequency}() : Sets the frequency of your transmission,
+--   * @{#RADIO.SetFrequency}() : Sets the frequency of your transmission.
 --   * @{#RADIO.SetModulation}() : Sets the modulation of your transmission.
+--   * @{#RADIO.SetLoop}() : Choose if you want the transmission to be looped. If you need your transmission to be looped, you might need a @{#BEACON} instead...
 -- 
 -- Additional Methods to set relevant parameters if the transmiter is a @{Unit#UNIT} or a @{Group#GROUP}
 -- 
---   * @{#RADIO.SetLoop}() : Choose if you want the transmission to be looped,
 --   * @{#RADIO.SetSubtitle}() : Set both the subtitle and its duration,
 --   * @{#RADIO.NewUnitTransmission}() : Shortcut to set all the relevant parameters in one method call
 -- 
@@ -242,13 +242,14 @@ end
 -- -- In this function the data is especially relevant if the broadcaster is anything but a UNIT or a GROUP,
 -- but it will work with a UNIT or a GROUP anyway
 -- -- Only the RADIO and the Filename are mandatory
-function RADIO:NewGenericTransmission(FileName, Frequency, Modulation, Power)
+function RADIO:NewGenericTransmission(FileName, Frequency, Modulation, Power, Loop)
   self:F({FileName, Frequency, Modulation, Power})
   
   self:SetFileName(FileName)
   if Frequency then self:SetFrequency(Frequency) end
   if Modulation then self:SetModulation(Modulation) end
   if Power then self:SetPower(Power) end
+  if Loop then self:SetLoop(Loop) end
   
   return self
 end
@@ -290,7 +291,7 @@ end
 -- -- If the POSITIONABLE is not a UNIT or a GROUP, we use the generic (but limited) trigger.action.radioTransmission()
 -- -- If the POSITIONABLE is a UNIT or a GROUP, we use the "TransmitMessage" Command
 -- -- If your POSITIONABLE is a UNIT or a GROUP, the Power is ignored.
--- -- If your POSITIONABLE is not a UNIT or a GROUP, the Subtitle, SubtitleDuration and Loop are ignored
+-- -- If your POSITIONABLE is not a UNIT or a GROUP, the Subtitle, SubtitleDuration are ignored
 function RADIO:Broadcast()
   self:F()
   -- If the POSITIONABLE is actually a UNIT or a GROUP, use the more complicated DCS command system
@@ -307,8 +308,9 @@ function RADIO:Broadcast()
     })
   else
     -- If the POSITIONABLE is anything else, we revert to the general singleton function
+    -- I need to give it a unique name, so that the transmission can be stopped later. I use the class ID
     self:T2("Broadcasting from a POSITIONABLE")
-    trigger.action.radioTransmission(self.FileName, self.Positionable:GetPositionVec3(), self.Modulation, false, self.Frequency, self.Power)
+    trigger.action.radioTransmission(self.FileName, self.Positionable:GetPositionVec3(), self.Modulation, self.Loop, self.Frequency, self.Power, tostring(self.ID))
   end
   return self
 end
@@ -328,7 +330,8 @@ function RADIO:StopBroadcast()
       params = {}
     })
   else
-    self:E("This broadcast can't be stopped. It's not looped either, so please wait for the end of the sound file playback")
+    -- Else, we use the appropriate singleton funciton
+    trigger.action.stopRadioTransmission(tostring(self.ID))
   end
   return self
 end
