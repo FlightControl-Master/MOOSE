@@ -62,7 +62,6 @@
 					<li><a href="Movement.html">Movement</a></li>
 					<li><a href="Object.html">Object</a></li>
 					<li><a href="Point.html">Point</a></li>
-					<li><a href="Positionable.html">Positionable</a></li>
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
 					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
 					<li>Radio</li>
@@ -95,13 +94,15 @@
 	<div id="content">
    <h1>Module <code>Radio</code></h1>
    
-<p><strong>Core</strong> - The RADIO class is responsible for <strong>transmitting radio communications</strong>.</p>
+<p><strong>Core</strong> - The RADIO Module is responsible for everything that is related to radio transmission and you can hear in DCS, be it TACAN beacons, Radio transmissions...</p>
 
    
 
 <p><img src="..\Presentations\RADIO\Dia1.JPG" alt="Banner Image"/></p>
 
 <hr/>
+
+<p>The Radio contains 2 classes : RADIO and BEACON</p>
 
 <p>What are radio communications in DCS ?</p>
 
@@ -128,7 +129,8 @@
 
 <p>Note that obviously, the <strong>frequency</strong> and the <strong>modulation</strong> of the transmission are important only if the players are piloting an <strong>Advanced System Modelling</strong> enabled aircraft,
 like the A10C or the Mirage 2000C. They will <strong>hear the transmission</strong> if they are tuned on the <strong>right frequency and modulation</strong> (and if they are close enough - more on that below).
-If a FC3 airacraft is used, it will <strong>hear every communication, whatever the frequency and the modulation</strong> is set to.</p>
+If a FC3 airacraft is used, it will <strong>hear every communication, whatever the frequency and the modulation</strong> is set to. The same is true for TACAN beacons. If your aircaft isn't compatible,
+you won't hear/be able to use the TACAN beacon informations.</p>
 
 <hr/>
 
@@ -138,18 +140,72 @@ If a FC3 airacraft is used, it will <strong>hear every communication, whatever t
 	<h2>Global(s)</h2>
 	<table class="function_list">
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="#BEACON">BEACON</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="#RADIO">RADIO</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 	</table>
+			<h2><a id="#(BEACON)">Type <code>BEACON</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BEACON).AATACAN">BEACON:AATACAN(TACANChannel, Message, Bearing, BeaconDuration)</a></td>
+		<td class="summary">
+<p>Activates a TACAN BEACON on an Aircraft.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BEACON).ClassName">BEACON.ClassName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BEACON).New">BEACON:New(Positionable)</a></td>
+		<td class="summary">
+<p>Create a new BEACON Object.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BEACON).RadioBeacon">BEACON:RadioBeacon(FileName, Frequency, Modulation, Power, BeaconDuration)</a></td>
+		<td class="summary">
+<p>Activates a general pupose Radio Beacon
+This uses the very generic singleton function "trigger.action.radioTransmission()" provided by DCS to broadcast a sound file on a specific frequency.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BEACON).StopAATACAN">BEACON:StopAATACAN()</a></td>
+		<td class="summary">
+<p>Stops the AA TACAN BEACON</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BEACON).StopRadioBeacon">BEACON:StopRadioBeacon()</a></td>
+		<td class="summary">
+<p>Stops the AA TACAN BEACON</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BEACON)._TACANToFrequency">BEACON:_TACANToFrequency(TACANChannel, TACANMode)</a></td>
+		<td class="summary">
+<p>Converts a TACAN Channel/Mode couple into a frequency in Hz</p>
+</td>
+		</tr>
+	</table>
+
 			<h2><a id="#(RADIO)">Type <code>RADIO</code></a></h2>
 				<table class="function_list">
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(RADIO).Broadcast">RADIO:Broadcast()</a></td>
 		<td class="summary">
-<p>Actually Broadcast the transmission</p>
+<p>Actually Broadcast the transmission
+* The Radio has to be populated with the new transmission before broadcasting.</p>
 </td>
 		</tr>
 		<tr>
@@ -189,15 +245,19 @@ If a FC3 airacraft is used, it will <strong>hear every communication, whatever t
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(RADIO).NewGenericTransmission">RADIO:NewGenericTransmission(FileName, Frequency, Modulation, Power)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(RADIO).NewGenericTransmission">RADIO:NewGenericTransmission(FileName, Frequency, Modulation, Power, Loop)</a></td>
 		<td class="summary">
-<p>Create a new transmission, that is to say, populate the RADIO with relevant data</p>
+<p>Create a new transmission, that is to say, populate the RADIO with relevant data
+In this function the data is especially relevant if the broadcaster is anything but a UNIT or a GROUP,
+but it will work with a UNIT or a GROUP anyway.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(RADIO).NewUnitTransmission">RADIO:NewUnitTransmission(FileName, Subtitle, SubtitleDuration, Frequency, Modulation, Loop)</a></td>
 		<td class="summary">
-<p>Create a new transmission, that is to say, populate the RADIO with relevant data</p>
+<p>Create a new transmission, that is to say, populate the RADIO with relevant data
+In this function the data is especially relevant if the broadcaster is a UNIT or a GROUP,
+but it will work for any <a href="Positionable.html##(POSITIONABLE)">Positionable#POSITIONABLE</a>.</p>
 </td>
 		</tr>
 		<tr>
@@ -245,13 +305,15 @@ If a FC3 airacraft is used, it will <strong>hear every communication, whatever t
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(RADIO).SetSubtitle">RADIO:SetSubtitle(Subtitle, SubtitleDuration)</a></td>
 		<td class="summary">
-<p>Check validity of the subtitle and the subtitleDuration  passed and sets RADIO.subtitle and RADIO.subtitleDuration</p>
+<p>Check validity of the subtitle and the subtitleDuration  passed and sets RADIO.subtitle and RADIO.subtitleDuration
+Both parameters are mandatory, since it wouldn't make much sense to change the Subtitle and not its duration</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(RADIO).StopBroadcast">RADIO:StopBroadcast()</a></td>
 		<td class="summary">
-<p>Stops a transmission</p>
+<p>Stops a transmission
+This function is especially usefull to stop the broadcast of looped transmissions</p>
 </td>
 		</tr>
 		<tr>
@@ -272,6 +334,20 @@ If a FC3 airacraft is used, it will <strong>hear every communication, whatever t
 		<dl class="function">
 <dt>
 
+		<em><a href="##(BEACON)">#BEACON</a></em>
+<a id="BEACON" >
+<strong>BEACON</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 		<em><a href="##(RADIO)">#RADIO</a></em>
 <a id="RADIO" >
 <strong>RADIO</strong>
@@ -285,11 +361,292 @@ If a FC3 airacraft is used, it will <strong>hear every communication, whatever t
 </dl>
 	<h2><a id="#(Radio)" >Type <code>Radio</code></a></h2>
 	
+			<h2><a id="#(BEACON)" >Type <code>BEACON</code></a></h2>
+				
+<h1>BEACON class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
+
+<p>After attaching a <a href="##(BEACON)">#BEACON</a> to your <a href="Positionable.html##(POSITIONABLE)">Positionable#POSITIONABLE</a>, you need to select the right function to activate the kind of beacon you want.</p>
+
+	
+<p>There are two types of BEACONs available : the AA TACAN Beacon and the general purpose Radio Beacon.
+Note that in both case, you can set an optional parameter : the <code>BeaconDuration</code>. This can be very usefull to simulate the battery time if your BEACON is
+attach to a cargo crate, for exemple. </p>
+
+<h2>AA TACAN Beacon usage</h2>
+
+<p>This beacon only works with airborne <a href="Unit.html##(UNIT)">Unit#UNIT</a> or a <a href="Group.html##(GROUP)">Group#GROUP</a>. Use <a href="##(BEACON)">#BEACON</a>() to set the beacon parameters and start the beacon.
+Use @#BEACON:StopAATACAN}() to stop it.</p>
+
+<h2>General Purpose Radio Beacon usage</h2>
+
+<p>This beacon will work with any <a href="Positionable.html##(POSITIONABLE)">Positionable#POSITIONABLE</a>, but **it won't follow the <a href="Positionable.html##(POSITIONABLE)">Positionable#POSITIONABLE</a>** ! This means that you should only use it with
+<a href="Positionable.html##(POSITIONABLE)">Positionable#POSITIONABLE</a> that don't move, or move very slowly. Use <a href="##(BEACON)">#BEACON</a>() to set the beacon parameters and start the beacon.
+Use <a href="##(BEACON)">#BEACON</a>() to stop it.</p>
+
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+<a id="#(BEACON).AATACAN" >
+<strong>BEACON:AATACAN(TACANChannel, Message, Bearing, BeaconDuration)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Activates a TACAN BEACON on an Aircraft.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number TACANChannel </em></code>: 
+(the "10" part in "10Y"). Note that AA TACAN are only available on Y Channels</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Message </em></code>: 
+The Message that is going to be coded in Morse and broadcasted by the beacon</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#boolean Bearing </em></code>: 
+Can the BEACON be homed on ?</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number BeaconDuration </em></code>: 
+How long will the beacon last in seconds. Omit for forever.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(BEACON)">#BEACON</a>:</em>
+self</p>
+
+			<h3>Usage:</h3>
+		<pre class="example"><code>-- Let's create a TACAN Beacon for a tanker
+local myUnit = UNIT:FindByName("MyUnit") 
+local myBeacon = myUnit:GetBeacon() -- Creates the beacon
+
+myBeacon:AATACAN(20, "TEXACO", true) -- Activate the beacon</code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(BEACON).ClassName" >
+<strong>BEACON.ClassName</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(BEACON).New" >
+<strong>BEACON:New(Positionable)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Create a new BEACON Object.</p>
+
+	
+<p>This doesn't activate the beacon, though, use <a href="##(BEACON).AATACAN">BEACON.AATACAN</a> or <a href="##(BEACON).Generic">BEACON.Generic</a>
+If you want to create a BEACON, you probably should use <a href="Positionable.html##(POSITIONABLE).GetBeacon">Positionable#POSITIONABLE.GetBeacon</a>() instead.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Positionable.html##(POSITIONABLE)">Wrapper.Positionable#POSITIONABLE</a> Positionable </em></code>: 
+The <a href="Positionable.html">Positionable</a> that will receive radio capabilities.</p>
+
+				</li>
+		</ul>
+		<h3>Return values</h3>
+			<ol>
+				<li>
+				
+<p><em><a href="##(BEACON)">#BEACON</a>:</em>
+Beacon</p>
+
+				</li>
+				<li>
+				
+<p><em>#nil:</em>
+If Positionable is invalid</p>
+
+				</li>
+			</ol>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(BEACON).RadioBeacon" >
+<strong>BEACON:RadioBeacon(FileName, Frequency, Modulation, Power, BeaconDuration)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Activates a general pupose Radio Beacon
+This uses the very generic singleton function "trigger.action.radioTransmission()" provided by DCS to broadcast a sound file on a specific frequency.</p>
+
+	
+<p>Although any frequency could be used, only 2 DCS Modules can home on radio beacons at the time of writing : the Huey and the Mi-8. 
+They can home in on these specific frequencies : 
+<em> <strong>Mi8</strong>
+</em> R-828 -> 20-60MHz
+* ARKUD -> 100-150MHz (canal 1 : 114166, canal 2 : 114333, canal 3 : 114583, canal 4 : 121500, canal 5 : 123100, canal 6 : 124100) AM
+* ARK9 -> 150-1300KHz
+<em> <strong>Huey</strong>
+</em> AN/ARC-131 -> 30-76 Mhz FM</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string FileName </em></code>: 
+The name of the audio file</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Frequency </em></code>: 
+in MHz</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Modulation </em></code>: 
+either radio.modulation.AM or radio.modulation.FM</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Power </em></code>: 
+in W</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number BeaconDuration </em></code>: 
+How long will the beacon last in seconds. Omit for forever.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(BEACON)">#BEACON</a>:</em>
+self</p>
+
+			<h3>Usage:</h3>
+		<pre class="example"><code>-- Let's create a beacon for a unit in distress.
+-- Frequency will be 40MHz FM (home-able by a Huey's AN/ARC-131)
+-- The beacon they use is battery-powered, and only lasts for 5 min
+local UnitInDistress = UNIT:FindByName("Unit1")
+local UnitBeacon = UnitInDistress:GetBeacon()
+
+-- Set the beacon and start it
+UnitBeacon:RadioBeacon("MySoundFileSOS.ogg", 40, radio.modulation.FM, 20, 5*60)</code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(BEACON).StopAATACAN" >
+<strong>BEACON:StopAATACAN()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Stops the AA TACAN BEACON</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(BEACON)">#BEACON</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(BEACON).StopRadioBeacon" >
+<strong>BEACON:StopRadioBeacon()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Stops the AA TACAN BEACON</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(BEACON)">#BEACON</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(BEACON)._TACANToFrequency" >
+<strong>BEACON:_TACANToFrequency(TACANChannel, TACANMode)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Converts a TACAN Channel/Mode couple into a frequency in Hz</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number TACANChannel </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string TACANMode </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return values</h3>
+			<ol>
+				<li>
+				
+<p><em>#number:</em>
+Frequecy</p>
+
+				</li>
+				<li>
+				
+<p><em>#nil:</em>
+if parameters are invalid</p>
+
+				</li>
+			</ol>
+</dd>
+</dl>
+
 			<h2><a id="#(RADIO)" >Type <code>RADIO</code></a></h2>
 				
-<h1>1) RADIO class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
+<h1>RADIO class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
 
-<h2>1.1) RADIO usage</h2>
+<h2>RADIO usage</h2>
 
 <p>There are 3 steps to a successful radio transmission.</p>
 
@@ -305,14 +662,14 @@ If a FC3 airacraft is used, it will <strong>hear every communication, whatever t
 
 <ul>
     <li><a href="##(RADIO).SetFileName">RADIO.SetFileName</a>() : Sets the file name of your sound file (e.g. "Noise.ogg"),</li>
-    <li><a href="##(RADIO).SetFrequency">RADIO.SetFrequency</a>() : Sets the frequency of your transmission,</li>
+    <li><a href="##(RADIO).SetFrequency">RADIO.SetFrequency</a>() : Sets the frequency of your transmission.</li>
     <li><a href="##(RADIO).SetModulation">RADIO.SetModulation</a>() : Sets the modulation of your transmission.</li>
+    <li><a href="##(RADIO).SetLoop">RADIO.SetLoop</a>() : Choose if you want the transmission to be looped. If you need your transmission to be looped, you might need a <a href="##(BEACON)">#BEACON</a> instead...</li>
 </ul>
 
 <p>Additional Methods to set relevant parameters if the transmiter is a <a href="Unit.html##(UNIT)">Unit#UNIT</a> or a <a href="Group.html##(GROUP)">Group#GROUP</a></p>
 
 <ul>
-    <li><a href="##(RADIO).SetLoop">RADIO.SetLoop</a>() : Choose if you want the transmission to be looped,</li>
     <li><a href="##(RADIO).SetSubtitle">RADIO.SetSubtitle</a>() : Set both the subtitle and its duration,</li>
     <li><a href="##(RADIO).NewUnitTransmission">RADIO.NewUnitTransmission</a>() : Shortcut to set all the relevant parameters in one method call</li>
 </ul>
@@ -346,21 +703,23 @@ If a FC3 airacraft is used, it will <strong>hear every communication, whatever t
 </dt>
 <dd>
 	
-<p>Actually Broadcast the transmission</p>
+<p>Actually Broadcast the transmission
+* The Radio has to be populated with the new transmission before broadcasting.</p>
+
+	
+<ul>
+    <li>Please use RADIO setters or either <a href="Radio.html##(RADIO).NewGenericTransmission">Radio#RADIO.NewGenericTransmission</a> or <a href="Radio.html##(RADIO).NewUnitTransmission">Radio#RADIO.NewUnitTransmission</a></li>
+    <li>This class is in fact pretty smart, it determines the right DCS function to use depending on the type of POSITIONABLE</li>
+    <li>If the POSITIONABLE is not a UNIT or a GROUP, we use the generic (but limited) trigger.action.radioTransmission()</li>
+    <li>If the POSITIONABLE is a UNIT or a GROUP, we use the "TransmitMessage" Command</li>
+    <li>If your POSITIONABLE is a UNIT or a GROUP, the Power is ignored.</li>
+    <li>If your POSITIONABLE is not a UNIT or a GROUP, the Subtitle, SubtitleDuration are ignored</li>
+</ul>
 
 		<h3>Return value</h3>
 				
 <p><em><a href="##(RADIO)">#RADIO</a>:</em>
 self</p>
-
-			<h3>Usage:</h3>
-		<pre class="example"><code>-- The Radio has to be populated with the new transmission before broadcasting.
--- Please use RADIO setters or either @{Radio#RADIO.NewGenericTransmission} or @{Radio#RADIO.NewUnitTransmission}
--- This class is in fact pretty smart, it determines the right DCS function to use depending on the type of POSITIONABLE
--- If the POSITIONABLE is not a UNIT or a GROUP, we use the generic (but limited) trigger.action.radioTransmission()
--- If the POSITIONABLE is a UNIT or a GROUP, we use the "TransmitMessage" Command
--- If your POSITIONABLE is a UNIT or a GROUP, the Power is ignored.
--- If your POSITIONABLE is not a UNIT or a GROUP, the Subtitle, SubtitleDuration and Loop are ignored</code></pre>
 
 </dd>
 </dl>
@@ -446,7 +805,8 @@ self</p>
 <p>Create a new RADIO Object.</p>
 
 	
-<p>This doesn't broadcast a transmission, though, use <a href="##(RADIO).Broadcast">RADIO.Broadcast</a> to actually broadcast</p>
+<p>This doesn't broadcast a transmission, though, use <a href="##(RADIO).Broadcast">RADIO.Broadcast</a> to actually broadcast
+If you want to create a RADIO, you probably should use <a href="Positionable.html##(POSITIONABLE).GetRadio">Positionable#POSITIONABLE.GetRadio</a>() instead</p>
 
 		<h3>Parameter</h3>
 		<ul>
@@ -472,21 +832,23 @@ If Positionable is invalid</p>
 
 				</li>
 			</ol>
-			<h3>Usage:</h3>
-		<pre class="example"><code>-- If you want to create a RADIO, you probably should use @{Positionable#POSITIONABLE.GetRadio}() instead</code></pre>
-
 </dd>
 </dl>
 		<dl class="function">
 <dt>
 
 <a id="#(RADIO).NewGenericTransmission" >
-<strong>RADIO:NewGenericTransmission(FileName, Frequency, Modulation, Power)</strong>
+<strong>RADIO:NewGenericTransmission(FileName, Frequency, Modulation, Power, Loop)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Create a new transmission, that is to say, populate the RADIO with relevant data</p>
+<p>Create a new transmission, that is to say, populate the RADIO with relevant data
+In this function the data is especially relevant if the broadcaster is anything but a UNIT or a GROUP,
+but it will work with a UNIT or a GROUP anyway.</p>
+
+	
+<p>Only the #RADIO and the Filename are mandatory</p>
 
 		<h3>Parameters</h3>
 		<ul>
@@ -513,16 +875,16 @@ either radio.modulation.AM or radio.modulation.FM</p>
 in W</p>
 
 				</li>
+				<li>
+				
+<p><code><em> Loop </em></code>: </p>
+
+				</li>
 		</ul>
 		<h3>Return value</h3>
 				
 <p><em><a href="##(RADIO)">#RADIO</a>:</em>
 self</p>
-
-			<h3>Usage:</h3>
-		<pre class="example"><code>-- In this function the data is especially relevant if the broadcaster is anything but a UNIT or a GROUP,
-but it will work with a UNIT or a GROUP anyway
--- Only the RADIO and the Filename are mandatory</code></pre>
 
 </dd>
 </dl>
@@ -535,7 +897,12 @@ but it will work with a UNIT or a GROUP anyway
 </dt>
 <dd>
 	
-<p>Create a new transmission, that is to say, populate the RADIO with relevant data</p>
+<p>Create a new transmission, that is to say, populate the RADIO with relevant data
+In this function the data is especially relevant if the broadcaster is a UNIT or a GROUP,
+but it will work for any <a href="Positionable.html##(POSITIONABLE)">Positionable#POSITIONABLE</a>.</p>
+
+	
+<p>Only the RADIO and the Filename are mandatory.</p>
 
 		<h3>Parameters</h3>
 		<ul>
@@ -577,11 +944,6 @@ either radio.modulation.AM or radio.modulation.FM</p>
 				
 <p><em><a href="##(RADIO)">#RADIO</a>:</em>
 self</p>
-
-			<h3>Usage:</h3>
-		<pre class="example"><code>-- In this function the data is especially relevant if the broadcaster is a UNIT or a GROUP,
-but it will work for any POSITIONABLE
--- Only the RADIO and the Filename are mandatory</code></pre>
 
 </dd>
 </dl>
@@ -759,7 +1121,8 @@ self</p>
 </dt>
 <dd>
 	
-<p>Check validity of the subtitle and the subtitleDuration  passed and sets RADIO.subtitle and RADIO.subtitleDuration</p>
+<p>Check validity of the subtitle and the subtitleDuration  passed and sets RADIO.subtitle and RADIO.subtitleDuration
+Both parameters are mandatory, since it wouldn't make much sense to change the Subtitle and not its duration</p>
 
 		<h3>Parameters</h3>
 		<ul>
@@ -781,7 +1144,12 @@ in s</p>
 self</p>
 
 			<h3>Usage:</h3>
-		<pre class="example"><code>-- Both parameters are mandatory, since it wouldn't make much sense to change the Subtitle and not its duration</code></pre>
+		<pre class="example"><code>-- create the broadcaster and attaches it a RADIO
+local MyUnit = UNIT:FindByName("MyUnit")
+local MyUnitRadio = MyUnit:GetRadio()
+
+-- add a subtitle for the next transmission, which will be up for 10s
+MyUnitRadio:SetSubtitle("My Subtitle, 10)</code></pre>
 
 </dd>
 </dl>
@@ -794,16 +1162,13 @@ self</p>
 </dt>
 <dd>
 	
-<p>Stops a transmission</p>
+<p>Stops a transmission
+This function is especially usefull to stop the broadcast of looped transmissions</p>
 
 		<h3>Return value</h3>
 				
 <p><em><a href="##(RADIO)">#RADIO</a>:</em>
 self</p>
-
-			<h3>Usage:</h3>
-		<pre class="example"><code>-- Especially usefull to stop the broadcast of looped transmissions
--- Only works with broadcasts from UNIT or GROUP</code></pre>
 
 </dd>
 </dl>
