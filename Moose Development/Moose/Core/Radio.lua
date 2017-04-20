@@ -93,12 +93,11 @@ RADIO = {
 }
 
 --- Create a new RADIO Object. This doesn't broadcast a transmission, though, use @{#RADIO.Broadcast} to actually broadcast
+-- If you want to create a RADIO, you probably should use @{Positionable#POSITIONABLE.GetRadio}() instead
 -- @param #RADIO self
 -- @param Wrapper.Positionable#POSITIONABLE Positionable The @{Positionable} that will receive radio capabilities.
 -- @return #RADIO Radio
 -- @return #nil If Positionable is invalid
--- @usage
--- -- If you want to create a RADIO, you probably should use @{Positionable#POSITIONABLE.GetRadio}() instead
 function RADIO:New(Positionable)
   local self = BASE:Inherit( self, BASE:New() ) -- Core.Radio#RADIO
   
@@ -207,12 +206,18 @@ function RADIO:SetLoop(Loop)
 end
 
 --- Check validity of the subtitle and the subtitleDuration  passed and sets RADIO.subtitle and RADIO.subtitleDuration
+-- Both parameters are mandatory, since it wouldn't make much sense to change the Subtitle and not its duration
 -- @param #RADIO self
 -- @param #string Subtitle
 -- @param #number SubtitleDuration in s
 -- @return #RADIO self
 -- @usage
--- -- Both parameters are mandatory, since it wouldn't make much sense to change the Subtitle and not its duration
+-- -- create the broadcaster and attaches it a RADIO
+-- local MyUnit = UNIT:FindByName("MyUnit")
+-- local MyUnitRadio = MyUnit:GetRadio()
+-- 
+-- -- add a subtitle for the next transmission, which will be up for 10s
+-- MyUnitRadio:SetSubtitle("My Subtitle, 10)
 function RADIO:SetSubtitle(Subtitle, SubtitleDuration)
   self:F2({Subtitle, SubtitleDuration})
   if type(Subtitle) == "string" then
@@ -232,16 +237,15 @@ function RADIO:SetSubtitle(Subtitle, SubtitleDuration)
 end
 
 --- Create a new transmission, that is to say, populate the RADIO with relevant data
+-- In this function the data is especially relevant if the broadcaster is anything but a UNIT or a GROUP,
+-- but it will work with a UNIT or a GROUP anyway. 
+-- Only the #RADIO and the Filename are mandatory
 -- @param #RADIO self
 -- @param #string FileName
 -- @param #number Frequency in MHz
 -- @param #number Modulation either radio.modulation.AM or radio.modulation.FM
 -- @param #number Power in W
 -- @return #RADIO self
--- @usage
--- -- In this function the data is especially relevant if the broadcaster is anything but a UNIT or a GROUP,
--- but it will work with a UNIT or a GROUP anyway
--- -- Only the RADIO and the Filename are mandatory
 function RADIO:NewGenericTransmission(FileName, Frequency, Modulation, Power, Loop)
   self:F({FileName, Frequency, Modulation, Power})
   
@@ -256,6 +260,9 @@ end
 
 
 --- Create a new transmission, that is to say, populate the RADIO with relevant data
+-- In this function the data is especially relevant if the broadcaster is a UNIT or a GROUP,
+-- but it will work for any @{Positionable#POSITIONABLE}. 
+-- Only the RADIO and the Filename are mandatory.
 -- @param #RADIO self
 -- @param #string FileName
 -- @param #string Subtitle
@@ -264,10 +271,6 @@ end
 -- @param #number Modulation either radio.modulation.AM or radio.modulation.FM
 -- @param #boolean Loop
 -- @return #RADIO self
--- @usage
--- -- In this function the data is especially relevant if the broadcaster is a UNIT or a GROUP,
--- but it will work for any POSITIONABLE
--- -- Only the RADIO and the Filename are mandatory
 function RADIO:NewUnitTransmission(FileName, Subtitle, SubtitleDuration, Frequency, Modulation, Loop)
   self:F({FileName, Subtitle, SubtitleDuration, Frequency, Modulation, Loop})
 
@@ -282,16 +285,15 @@ function RADIO:NewUnitTransmission(FileName, Subtitle, SubtitleDuration, Frequen
 end
 
 --- Actually Broadcast the transmission
+-- * The Radio has to be populated with the new transmission before broadcasting.
+-- * Please use RADIO setters or either @{Radio#RADIO.NewGenericTransmission} or @{Radio#RADIO.NewUnitTransmission}
+-- * This class is in fact pretty smart, it determines the right DCS function to use depending on the type of POSITIONABLE
+-- * If the POSITIONABLE is not a UNIT or a GROUP, we use the generic (but limited) trigger.action.radioTransmission()
+-- * If the POSITIONABLE is a UNIT or a GROUP, we use the "TransmitMessage" Command
+-- * If your POSITIONABLE is a UNIT or a GROUP, the Power is ignored.
+-- * If your POSITIONABLE is not a UNIT or a GROUP, the Subtitle, SubtitleDuration are ignored
 -- @param #RADIO self
 -- @return #RADIO self
--- @usage
--- -- The Radio has to be populated with the new transmission before broadcasting.
--- -- Please use RADIO setters or either @{Radio#RADIO.NewGenericTransmission} or @{Radio#RADIO.NewUnitTransmission}
--- -- This class is in fact pretty smart, it determines the right DCS function to use depending on the type of POSITIONABLE
--- -- If the POSITIONABLE is not a UNIT or a GROUP, we use the generic (but limited) trigger.action.radioTransmission()
--- -- If the POSITIONABLE is a UNIT or a GROUP, we use the "TransmitMessage" Command
--- -- If your POSITIONABLE is a UNIT or a GROUP, the Power is ignored.
--- -- If your POSITIONABLE is not a UNIT or a GROUP, the Subtitle, SubtitleDuration are ignored
 function RADIO:Broadcast()
   self:F()
   -- If the POSITIONABLE is actually a UNIT or a GROUP, use the more complicated DCS command system
@@ -316,11 +318,9 @@ function RADIO:Broadcast()
 end
 
 --- Stops a transmission
+-- This function is especially usefull to stop the broadcast of looped transmissions
 -- @param #RADIO self
 -- @return #RADIO self
--- @usage
--- -- Especially usefull to stop the broadcast of looped transmissions
--- -- Only works with broadcasts from UNIT or GROUP
 function RADIO:StopBroadcast()
   self:F()
   -- If the POSITIONABLE is a UNIT or a GROUP, stop the transmission with the DCS "StopTransmission" command 
