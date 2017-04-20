@@ -309,12 +309,12 @@ do -- DETECTION_BASE
     
     self.DetectionInterval = 30
     
-    self:InitDetectVisual( true )
-    self:InitDetectOptical( true )
-    self:InitDetectRadar( true )
-    self:InitDetectRWR( true )
-    self:InitDetectIRST( true )
-    self:InitDetectDLINK( true )
+    self:InitDetectVisual( false )
+    self:InitDetectOptical( false )
+    self:InitDetectRadar( false )
+    self:InitDetectRWR( false )
+    self:InitDetectIRST( false )
+    self:InitDetectDLINK( false )
     
     self:FilterCategories( {
       Unit.Category.AIRPLANE,
@@ -1250,7 +1250,7 @@ do -- DETECTION_BASE
   
   --- Get the detection Groups.
   -- @param #DETECTION_BASE self
-  -- @return Wrapper.Group#GROUP
+  -- @return Core.Set#SET_GROUP
   function DETECTION_BASE:GetDetectionSetGroup()
   
     local DetectionSetGroup = self.DetectionSetGroup
