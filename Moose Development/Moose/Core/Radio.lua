@@ -35,9 +35,9 @@
 -- @module Radio
 
 
---- # 1) RADIO class, extends @{Base#BASE}
+--- # RADIO class, extends @{Base#BASE}
 -- 
--- ## 1.1) RADIO usage
+-- ## RADIO usage
 -- 
 -- There are 3 steps to a successful radio transmission.
 -- 
@@ -337,7 +337,24 @@ function RADIO:StopBroadcast()
 end
 
 
-
+--- # BEACON class, extends @{Base#BASE}
+-- 
+-- After attaching a @{#BEACON} to your @{Positionable#POSITIONABLE}, you need to select the right function to activate the kind of beacon you want. 
+-- There are two types of BEACONs available : the AA TACAN Beacon and the general purpose Radio Beacon.
+-- Note that in both case, you can set an optional parameter : the `BeaconDuration`. This can be very usefull to simulate the battery time if your BEACON is
+-- attach to a cargo crate, for exemple. 
+-- 
+-- ## AA TACAN Beacon usage
+-- 
+-- This beacon only works with airborne @{Unit#UNIT} or a @{Group#GROUP}. Use @{#BEACON:AATACAN}() to set the beacon parameters and start the beacon.
+-- Use @#BEACON:StopAATACAN}() to stop it.
+-- 
+-- ## General Purpose Radio Beacon usage
+-- 
+-- This beacon will work with any @{Positionable#POSITIONABLE}, but **it won't follow the @{Positionable#POSITIONABLE}** ! This means that you should only use it with
+-- @{Positionable#POSITIONABLE} that don't move, or move very slowly. Use @{#BEACON:RadioBeacon}() to set the beacon parameters and start the beacon.
+-- Use @{#BEACON:StopRadioBeacon}() to stop it.
+-- 
 -- @type BEACON
 -- @extends Core.Base#BASE
 BEACON = {
@@ -412,6 +429,7 @@ end
 -- @param #number BeaconDuration How long will the beacon last in seconds. Omit for forever.
 -- @return #BEACON self
 -- @usage
+-- -- Let's create a TACAN Beacon for a tanker
 -- local myUnit = UNIT:FindByName("MyUnit") 
 -- local myBeacon = myUnit:GetBeacon() -- Creates the beacon
 -- 
@@ -498,6 +516,15 @@ end
 -- @param #number Power in W
 -- @param #number BeaconDuration How long will the beacon last in seconds. Omit for forever.
 -- @return #BEACON self
+-- @usage
+-- -- Let's create a beacon for a unit in distress.
+-- -- Frequency will be 40MHz FM (home-able by a Huey's AN/ARC-131)
+-- -- The beacon they use is battery-powered, and only lasts for 5 min
+-- local UnitInDistress = UNIT:FindByName("Unit1")
+-- local UnitBeacon = UnitInDistress:GetBeacon()
+-- 
+-- -- Set the beacon and start it
+-- UnitBeacon:RadioBeacon("MySoundFileSOS.ogg", 40, radio.modulation.FM, 20, 5*60)
 function BEACON:RadioBeacon(FileName, Frequency, Modulation, Power, BeaconDuration)
   self:F({FileName, Frequency, Modulation, Power, BeaconDuration})
   local IsValid = false
