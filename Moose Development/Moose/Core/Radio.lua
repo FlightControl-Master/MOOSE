@@ -493,6 +493,7 @@ end
 -- @param #number BeaconDuration How long will the beacon last in seconds. Omit for forever.
 -- @return #BEACON self
 function BEACON:RadioBeacon(FileName, Frequency, Modulation, Power, BeaconDuration)
+  self:F({FileName, Frequency, Modulation, Power, BeaconDuration})
   local IsValid = false
   
   -- Check the filename
@@ -502,7 +503,6 @@ function BEACON:RadioBeacon(FileName, Frequency, Modulation, Power, BeaconDurati
         FileName = "l10n/DEFAULT/" .. FileName
       end
       IsValid = true
-      return self
     end
   end
   if not IsValid then
@@ -514,6 +514,7 @@ function BEACON:RadioBeacon(FileName, Frequency, Modulation, Power, BeaconDurati
     self:E({"Frequency invalid. ", Frequency})
     IsValid = false
   end
+  Frequency = Frequency * 1000000 -- Conversion to Hz
   
   -- Check the modulation
   if Modulation ~= radio.modulation.AM and Modulation ~= radio.modulation.FM and IsValid then --TODO Maybe make this future proof if ED decides to add an other modulation ?
@@ -546,6 +547,7 @@ end
 -- @param #BEACON self
 -- @return #BEACON self
 function BEACON:StopRadioBeacon()
+  self:F()
   -- The unique name of the transmission is the class ID
   trigger.action.stopRadioTransmission(tostring(self.ID))
 end
