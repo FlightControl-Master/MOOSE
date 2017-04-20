@@ -311,7 +311,8 @@ function POSITIONABLE:GetMessage( Message, Duration, Name )
   local DCSObject = self:GetDCSObject()
   if DCSObject then
     Name = Name or self:GetTypeName()
-    return MESSAGE:New( Message, Duration, self:GetCallsign() .. " (" .. Name .. ")" )
+    local Callsign = self:GetCallsign() ~= "" and self:GetCallsign() or self:GetName()
+    return MESSAGE:New( Message, Duration, Callsign .. " (" .. Name .. ")" )
   end
 
   return nil
@@ -456,7 +457,7 @@ end
 -- @param #POSITIONABLE Target
 -- @param #number LaserCode
 -- @param #number Duration
--- @return Spot
+-- @return Core.Spot#SPOT
 function POSITIONABLE:LaseUnit( Target, LaserCode, Duration )
   self:F2()
 
@@ -467,7 +468,7 @@ function POSITIONABLE:LaseUnit( Target, LaserCode, Duration )
 
   self:E("bulding spot")
   self.Spot = SPOT:New( self )
-  self.Spot:LaseOn( Target:GetPointVec3(), LaserCode, Duration)
+  self.Spot:LaseOn( Target, LaserCode, Duration)
   
   return self.Spot
   
