@@ -1001,16 +1001,15 @@ function SET_GROUP:AnyCompletelyInZone(Zone)
   return false
 end
 
-
 --- Iterate the SET_GROUP and return true if at least one  least one @{#UNIT} of one @{GROUP} of the @{SET_GROUP} is in @{ZONE}
 -- @param #SET_GROUP self
 -- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
--- @return #boolean true if at least one of the @{Wrapper.Group#GROUP} is completly inside the @{Core.Zone#ZONE}, false otherwise.
+-- @return #boolean true if at least one of the @{Wrapper.Group#GROUP} is partly or completly inside the @{Core.Zone#ZONE}, false otherwise.
 function SET_GROUP:AnyPartlyInZone(Zone)
   self:F2(Zone)
   local Set = self:GetSet()
   for GroupID, GroupData in pairs(Set) do -- For each GROUP in SET_GROUP
-    if GroupData:IsPartlyInZone(Zone) then 
+    if GroupData:IsPartlyInZone(Zone) or GroupData:IsCompletelyInZone(Zone) then 
       return true
     end
   end
@@ -1020,7 +1019,7 @@ end
 --- Iterate the SET_GROUP and return true if no  @{GROUP} of the @{SET_GROUP} is in @{ZONE}
 -- @param #SET_GROUP self
 -- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
--- @return #boolean true if at least one of the @{Wrapper.Group#GROUP} is completly inside the @{Core.Zone#ZONE}, false otherwise.
+-- @return #boolean true if no @{Wrapper.Group#GROUP} is inside the @{Core.Zone#ZONE} in any way, false otherwise.
 function SET_GROUP:NoneInZone(Zone)
   self:F2(Zone)
   local Set = self:GetSet()
