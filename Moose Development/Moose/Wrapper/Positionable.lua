@@ -475,7 +475,7 @@ function POSITIONABLE:LaseUnit( Target, LaserCode, Duration )
   local TargetVec3 = Target:GetVec3()
 
   self:E("bulding spot")
-  self.Spot = SPOT:New( self )
+  self.Spot = SPOT:New( self ) -- Core.Spot#SPOT
   self.Spot:LaseOn( Target, LaserCode, Duration)
   
   return self.Spot
