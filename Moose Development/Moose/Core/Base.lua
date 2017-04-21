@@ -454,6 +454,12 @@ do -- Event Handling
   -- @param #BASE self
   -- @param Core.Event#EVENTDATA EventData The EventData structure.
 
+  --- Occurs when an object is dead.
+  -- initiator : The unit that is dead. 
+  -- @function [parent=#BASE] OnEventDead
+  -- @param #BASE self
+  -- @param Core.Event#EVENTDATA EventData The EventData structure.
+
   --- Occurs when an object is completely destroyed.
   -- initiator : The unit that is was destroyed. 
   -- @function [parent=#BASE] OnEvent

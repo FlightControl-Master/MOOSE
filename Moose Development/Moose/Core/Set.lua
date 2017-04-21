@@ -342,6 +342,26 @@ function SET_BASE:_FilterStart()
   return self
 end
 
+--- Starts the filtering of the Dead events for the collection.
+-- @param #SET_BASE self
+-- @return #SET_BASE self
+function SET_BASE:FilterDeads()
+
+  self:HandleEvent( EVENTS.Dead, self._EventOnDeadOrCrash )
+  
+  return self
+end
+
+--- Starts the filtering of the Crash events for the collection.
+-- @param #SET_BASE self
+-- @return #SET_BASE self
+function SET_BASE:FilterCrashes()
+
+  self:HandleEvent( EVENTS.Crash, self._EventOnDeadOrCrash )
+  
+  return self
+end
+
 --- Stops the filtering for the defined collection.
 -- @param #SET_BASE self
 -- @return #SET_BASE self
@@ -430,7 +450,7 @@ function SET_BASE:_EventOnDeadOrCrash( Event )
 
   if Event.IniDCSUnit then
     local ObjectName, Object = self:FindInDatabase( Event )
-    if ObjectName and Object ~= nil then
+    if ObjectName then
       self:Remove( ObjectName )
     end
   end

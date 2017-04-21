@@ -118,6 +118,8 @@ do -- AI_DESIGNATE
     -- @function [parent=#AI_DESIGNATE] __Detect
     -- @param #AI_DESIGNATE self
     -- @param #number Delay
+    
+    
 
     self:AddTransition( "*", "LaseOn", "Lasing" )
     
@@ -237,6 +239,9 @@ do -- AI_DESIGNATE
     
     self:SetLaserCodes( 1688 )
     
+    self.LaserCodesUsed = {}
+    
+    
     self.Detection:__Start( 2 )
 
     
@@ -253,6 +258,8 @@ do -- AI_DESIGNATE
 
     self.LaserCodes = ( type( LaserCodes ) == "table" ) and LaserCodes or { LaserCodes }
     self:E(self.LaserCodes)
+    
+    self.LaserCodesUsed = {}
 
     return self
   end
@@ -303,6 +310,8 @@ do -- AI_DESIGNATE
   -- @return #AI_DESIGNATE
   function AI_DESIGNATE:SetDesignateMenu()
 
+    self.GroupSet:Flush()
+
     self.GroupSet:ForEachGroup(
     
       --- @param Wrapper.Group#GROUP GroupReport
@@ -330,39 +339,35 @@ do -- AI_DESIGNATE
             DesignateMenu
           )
           
-          if self.Spots[Index] then
-          
-            MENU_GROUP_COMMAND:New(
-              AttackGroup, 
-              "Switch laser Off",
-              DetectedMenu,
-              self.MenuLaseOff,
-              self,
-              AttackGroup,
-              Index
-            )
-          else
-            MENU_GROUP_COMMAND:New(
-              AttackGroup, 
-              "Lase target 60 secs",
-              DetectedMenu,
-              self.MenuLaseOn,
-              self,
-              AttackGroup,
-              Index,
-              60
-            )
-            MENU_GROUP_COMMAND:New(
-              AttackGroup, 
-              "Lase target 120 secs",
-              DetectedMenu,
-              self.MenuLaseOn,
-              self,
-              AttackGroup,
-              Index,
-              120
-            )
-          end
+          MENU_GROUP_COMMAND:New(
+            AttackGroup, 
+            "Lase target 60 secs",
+            DetectedMenu,
+            self.MenuLaseOn,
+            self,
+            AttackGroup,
+            Index,
+            60
+          )
+          MENU_GROUP_COMMAND:New(
+            AttackGroup, 
+            "Lase target 120 secs",
+            DetectedMenu,
+            self.MenuLaseOn,
+            self,
+            AttackGroup,
+            Index,
+            120
+          )
+          MENU_GROUP_COMMAND:New(
+            AttackGroup, 
+            "Switch laser Off",
+            DetectedMenu,
+            self.MenuLaseOff,
+            self,
+            AttackGroup,
+            Index
+          )
            
           MENU_GROUP_COMMAND:New(
             AttackGroup, 
@@ -425,43 +430,63 @@ do -- AI_DESIGNATE
   function AI_DESIGNATE:onafterLasing( From, Event, To, AttackGroup, Index, Duration )
   
     local TargetSetUnit = self.Detection:GetDetectedSet( Index )
-  
-    local Targets = false
+    
+    TargetSetUnit:Flush()
+
+    for TargetUnit, SpotData in pairs( self.Spots ) do
+      local Spot = SpotData -- Core.Spot#SPOT
+      if not Spot:IsLasing() then
+        local LaserCode = Spot.LaserCode --(Not deleted when stopping with lasing).
+        self.LaserCodesUsed[LaserCode] = nil
+        self.Spots[TargetUnit] = nil
+      end
+    end
+
+    local MoreTargets = false
 
     TargetSetUnit:ForEachUnit(
       --- @param Wrapper.Unit#UNIT SmokeUnit
-      function( SmokeUnit )
+      function( TargetUnit )
         self:E("In procedure")
         --if math.random( 1, ( 100 * TargetSetUnit:Count() ) / 100 ) <= 100 then
-        if SmokeUnit:IsAlive() then
-          local NearestRecceGroup = self.RecceSet:FindNearestGroupFromPointVec2( SmokeUnit:GetPointVec2() )
-          if NearestRecceGroup then
-            for UnitID, UnitData in pairs( NearestRecceGroup:GetUnits() or {} ) do
-              local RecceUnit = UnitData -- Wrapper.Unit#UNIT
-              Targets = true
-              if RecceUnit:IsLasing() == false then
-                self.Spots[Index] = self.Spots[Index] or {}
-                local Spots = self.Spots[Index]
-                local LaserCode = self.LaserCodes[math.random(1, #self.LaserCodes)]
-                local Spot = RecceUnit:LaseUnit( SmokeUnit, LaserCode, Duration )
-                Spots[RecceUnit] = Spot
-                RecceUnit:MessageToGroup( "Lasing " .. SmokeUnit:GetTypeName() .. " for " .. Duration .. " seconds. Laser Code: " .. Spot.LaserCode, 15, AttackGroup )
-                break
-              else
+        if TargetUnit:IsAlive() then
+          local Spot = self.Spots[TargetUnit]
+          if (not Spot) or ( Spot and Spot:IsLasing() == false ) then
+            local NearestRecceGroup = self.RecceSet:FindNearestGroupFromPointVec2( TargetUnit:GetPointVec2() )
+            if NearestRecceGroup then
+              for UnitID, UnitData in pairs( NearestRecceGroup:GetUnits() or {} ) do
+                local RecceUnit = UnitData -- Wrapper.Unit#UNIT
+                if RecceUnit:IsLasing() == false then
+                  local LaserCodeIndex = math.random(1, #self.LaserCodes)
+                  local LaserCode = self.LaserCodes[LaserCodeIndex]
+                  if not self.LaserCodesUsed[LaserCode] then
+                    MoreTargets = true
+                    self.LaserCodesUsed[LaserCode] = LaserCodeIndex
+                    local Spot = RecceUnit:LaseUnit( TargetUnit, LaserCode, Duration )
+                    self.Spots[TargetUnit] = Spot
+                    RecceUnit:MessageToGroup( "Lasing " .. TargetUnit:GetTypeName() .. " for " .. Duration .. " seconds. Laser Code: " .. Spot.LaserCode, 15, AttackGroup )
+                    break
+                  end
+                end
               end
             end
+          else
+            MoreTargets = true
+            local RecceUnit = Spot.Recce
+            RecceUnit:MessageToGroup( "Lasing " .. TargetUnit:GetTypeName() .. " for " .. Duration .. " seconds. Laser Code: " .. Spot.LaserCode, 15, AttackGroup )
           end
+        else
+          self.Spots[TargetUnit] = nil
         end
         --end
       end
     )
 
-    if Targets == true then
+    if MoreTargets == true then
       self:__Lasing( -30, AttackGroup, Index, Duration )
     else
-      self:__LaseOff( -0.2, AttackGroup, Index  )
-    end    
-
+      self:__LaseOff( 1, AttackGroup, Index ) 
+    end
     self:SetDesignateMenu()
 
   end
@@ -471,9 +496,11 @@ do -- AI_DESIGNATE
   -- @return #AI_DESIGNATE
   function AI_DESIGNATE:onafterLaseOff( From, Event, To, AttackGroup, Index )
   
+    self.RecceSet:GetFirst():MessageToGroup( "Stopped lasing.", 15, AttackGroup )
+    
     local TargetSetUnit = self.Detection:GetDetectedSet( Index )
     
-    local Spots = self.Spots[Index]
+    local Spots = self.Spots
     
     for SpotID, SpotData in pairs( Spots ) do
       local Spot = SpotData -- Core.Spot#SPOT
@@ -482,7 +509,8 @@ do -- AI_DESIGNATE
     end
     
     Spots = nil
-    self.Spots[Index] = nil
+    self.Spots = {}
+    self.LaserCodesUsed = {}
 
     self:SetDesignateMenu()
   end
