@@ -961,6 +961,30 @@ function SET_GROUP:ForEachGroupNotInZone( ZoneObject, IteratorFunction, ... )
   return self
 end
 
+--- Iterate the SET_GROUP and return false if at least one @{Wrapper.Group#GROUP} isn't in the @{Core.Zone#ZONE}
+-- @param #SET_GROUP self
+-- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
+-- @return #boolean false if one of the @{Wrapper.Group#GROUP} is not in the @{Core.Zone#ZONE}, true otherwise. 
+-- @usage
+-- local MyZone = ZONE:New("Zone1")
+-- local MySetGroup = SET_GROUP:New()
+-- MySetGroup:AddGroupsByName({"Group1", "Group2"})
+--
+-- if MySetGroup:HasGroupCompletelyInZone(MyZone) then
+--   MESSAGE:New("All the SET's GROUP are in zone !", 10):ToAll()
+-- else
+--   MESSAGE:New("Some or all SET's GROUP are outside zone !", 10):ToAll()
+-- end
+function SET_GROUP:HasGroupCompletelyInZone(Zone)
+  self:F2(Zone)
+  local Set = self:GetSet()
+  for GroupID, GroupData in pairs(Set) do -- For each GROUP in SET_GROUP
+    if not GroupData:IsCompletelyInZone(Zone) then 
+      return false
+    end
+  end
+  return true
+end
 
 ----- Iterate the SET_GROUP and call an interator function for each **alive** player, providing the Group of the player and optional parameters.
 ---- @param #SET_GROUP self
