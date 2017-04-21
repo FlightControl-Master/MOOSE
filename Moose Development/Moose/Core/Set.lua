@@ -961,7 +961,7 @@ function SET_GROUP:ForEachGroupNotInZone( ZoneObject, IteratorFunction, ... )
   return self
 end
 
---- Iterate the SET_GROUP and return true if all the @{Wrapper.Group#GROUP} are completly in the @{Core.Zone#ZONE}
+--- Iterate the SET_GROUP and return true if all the @{Wrapper.Group#GROUP} are completely in the @{Core.Zone#ZONE}
 -- @param #SET_GROUP self
 -- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
 -- @return #boolean true if all the @{Wrapper.Group#GROUP} are completly in the @{Core.Zone#ZONE}, false otherwise
@@ -975,7 +975,7 @@ end
 -- else
 --   MESSAGE:New("Some or all SET's GROUP are outside zone !", 10):ToAll()
 -- end
-function SET_GROUP:IsCompletelyInZone(Zone)
+function SET_GROUP:AllCompletelyInZone(Zone)
   self:F2(Zone)
   local Set = self:GetSet()
   for GroupID, GroupData in pairs(Set) do -- For each GROUP in SET_GROUP
@@ -986,15 +986,31 @@ function SET_GROUP:IsCompletelyInZone(Zone)
   return true
 end
 
---- Iterate the SET_GROUP and return true if at least one of the @{Wrapper.Group#GROUP} is completly inside the @{Core.Zone#ZONE}
+--- Iterate the SET_GROUP and return true if at least one of the @{Wrapper.Group#GROUP} is completely inside the @{Core.Zone#ZONE}
 -- @param #SET_GROUP self
 -- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
 -- @return #boolean true if at least one of the @{Wrapper.Group#GROUP} is completly inside the @{Core.Zone#ZONE}, false otherwise.
-function SET_GROUP:HasGroupCompletelyInZone(Zone)
+function SET_GROUP:AnyCompletelyInZone(Zone)
   self:F2(Zone)
   local Set = self:GetSet()
   for GroupID, GroupData in pairs(Set) do -- For each GROUP in SET_GROUP
     if GroupData:IsCompletlyInZone(Zone) then 
+      return true
+    end
+  end
+  return false
+end
+
+
+--- Iterate the SET_GROUP and return true if at least one  least one @{#UNIT} of one @{GROUP} of the @{SET_GROUP} is in @{ZONE}
+-- @param #SET_GROUP self
+-- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
+-- @return #boolean true if at least one of the @{Wrapper.Group#GROUP} is completly inside the @{Core.Zone#ZONE}, false otherwise.
+function SET_GROUP:AnyCompletelyInZone(Zone)
+  self:F2(Zone)
+  local Set = self:GetSet()
+  for GroupID, GroupData in pairs(Set) do -- For each GROUP in SET_GROUP
+    if GroupData:IsPartlyInZone(Zone) then 
       return true
     end
   end
