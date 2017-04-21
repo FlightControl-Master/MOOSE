@@ -1006,7 +1006,7 @@ end
 -- @param #SET_GROUP self
 -- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
 -- @return #boolean true if at least one of the @{Wrapper.Group#GROUP} is completly inside the @{Core.Zone#ZONE}, false otherwise.
-function SET_GROUP:AnyCompletelyInZone(Zone)
+function SET_GROUP:AnyPartlyInZone(Zone)
   self:F2(Zone)
   local Set = self:GetSet()
   for GroupID, GroupData in pairs(Set) do -- For each GROUP in SET_GROUP
@@ -1015,6 +1015,21 @@ function SET_GROUP:AnyCompletelyInZone(Zone)
     end
   end
   return false
+end
+
+--- Iterate the SET_GROUP and return true if no  @{GROUP} of the @{SET_GROUP} is in @{ZONE}
+-- @param #SET_GROUP self
+-- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
+-- @return #boolean true if at least one of the @{Wrapper.Group#GROUP} is completly inside the @{Core.Zone#ZONE}, false otherwise.
+function SET_GROUP:NoneInZone(Zone)
+  self:F2(Zone)
+  local Set = self:GetSet()
+  for GroupID, GroupData in pairs(Set) do -- For each GROUP in SET_GROUP
+    if not GroupData:IsNotInZone(Zone) then -- If the GROUP is in Zone in any way
+      return false
+    end
+  end
+  return true
 end
 
 ----- Iterate the SET_GROUP and call an interator function for each **alive** player, providing the Group of the player and optional parameters.
