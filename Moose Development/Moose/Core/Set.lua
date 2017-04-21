@@ -970,7 +970,7 @@ end
 -- local MySetGroup = SET_GROUP:New()
 -- MySetGroup:AddGroupsByName({"Group1", "Group2"})
 --
--- if MySetGroup:HasGroupCompletelyInZone(MyZone) then
+-- if MySetGroup:AllCompletelyInZone(MyZone) then
 --   MESSAGE:New("All the SET's GROUP are in zone !", 10):ToAll()
 -- else
 --   MESSAGE:New("Some or all SET's GROUP are outside zone !", 10):ToAll()
@@ -990,6 +990,16 @@ end
 -- @param #SET_GROUP self
 -- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
 -- @return #boolean true if at least one of the @{Wrapper.Group#GROUP} is completly inside the @{Core.Zone#ZONE}, false otherwise.
+-- @usage
+-- local MyZone = ZONE:New("Zone1")
+-- local MySetGroup = SET_GROUP:New()
+-- MySetGroup:AddGroupsByName({"Group1", "Group2"})
+--
+-- if MySetGroup:AnyCompletelyInZone(MyZone) then
+--   MESSAGE:New("At least one GROUP is completely in zone !", 10):ToAll()
+-- else
+--   MESSAGE:New("No GROUP is completely in zone !", 10):ToAll()
+-- end
 function SET_GROUP:AnyCompletelyInZone(Zone)
   self:F2(Zone)
   local Set = self:GetSet()
@@ -1005,6 +1015,16 @@ end
 -- @param #SET_GROUP self
 -- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
 -- @return #boolean true if at least one of the @{Wrapper.Group#GROUP} is partly or completly inside the @{Core.Zone#ZONE}, false otherwise.
+-- @usage
+-- local MyZone = ZONE:New("Zone1")
+-- local MySetGroup = SET_GROUP:New()
+-- MySetGroup:AddGroupsByName({"Group1", "Group2"})
+--
+-- if MySetGroup:AnyPartlyInZone(MyZone) then
+--   MESSAGE:New("At least one GROUP has at least one UNIT in zone !", 10):ToAll()
+-- else
+--   MESSAGE:New("No GROUP is completely in zone !", 10):ToAll()
+-- end
 function SET_GROUP:AnyPartlyInZone(Zone)
   self:F2(Zone)
   local Set = self:GetSet()
@@ -1016,10 +1036,22 @@ function SET_GROUP:AnyPartlyInZone(Zone)
   return false
 end
 
---- Iterate the SET_GROUP and return true if no  @{GROUP} of the @{SET_GROUP} is in @{ZONE}
+--- Iterate the SET_GROUP and return true if no @{GROUP} of the @{SET_GROUP} is in @{ZONE}
+-- This could also be achieved with `not SET_GROUP:AnyPartlyInZone(Zone)`, but it's easier for the 
+-- mission designer to add a dedicated method
 -- @param #SET_GROUP self
 -- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
 -- @return #boolean true if no @{Wrapper.Group#GROUP} is inside the @{Core.Zone#ZONE} in any way, false otherwise.
+-- @usage
+-- local MyZone = ZONE:New("Zone1")
+-- local MySetGroup = SET_GROUP:New()
+-- MySetGroup:AddGroupsByName({"Group1", "Group2"})
+--
+-- if MySetGroup:NoneInZone(MyZone) then
+--   MESSAGE:New("No GROUP is completely in zone !", 10):ToAll()
+-- else
+--   MESSAGE:New("At least one GROUP has at least one UNIT in zone !", 10):ToAll()
+-- end
 function SET_GROUP:NoneInZone(Zone)
   self:F2(Zone)
   local Set = self:GetSet()
