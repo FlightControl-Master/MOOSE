@@ -443,7 +443,7 @@ function POSITIONABLE:Message( Message, Duration, Name )
   return nil
 end
 
---- Create a @{Radio#RADIO}, to allow radio transmission for this POSITIONABLE. 
+--- (R2.1) Create a @{Radio#RADIO}, to allow radio transmission for this POSITIONABLE. 
 -- Set parameters with the methods provided, then use RADIO:Broadcast() to actually broadcast the message
 -- @param #POSITIONABLE self
 -- @return #RADIO Radio
@@ -452,7 +452,7 @@ function POSITIONABLE:GetRadio()
   return RADIO:New(self) 
 end
 
---- Create a @{Radio#BEACON}, to allow this POSITIONABLE to broadcast beacon signals
+--- (R2.1) Create a @{Radio#BEACON}, to allow this POSITIONABLE to broadcast beacon signals
 -- @param #POSITIONABLE self
 -- @return #RADIO Radio
 function POSITIONABLE:GetBeacon()
@@ -460,7 +460,7 @@ function POSITIONABLE:GetBeacon()
   return BEACON:New(self) 
 end
 
---- Start Lasing a POSITIONABLE
+--- (R2.1) Start Lasing a POSITIONABLE
 -- @param #POSITIONABLE self
 -- @param #POSITIONABLE Target
 -- @param #number LaserCode
@@ -482,15 +482,12 @@ function POSITIONABLE:LaseUnit( Target, LaserCode, Duration )
   
 end
 
---- Stop Lasing a POSITIONABLE
+--- (R2.1) Stop Lasing a POSITIONABLE
 -- @param #POSITIONABLE self
--- @param #POSITIONABLE Target
 -- @return #POSITIONABLE
-function POSITIONABLE:LaseOff( Target )
+function POSITIONABLE:LaseOff()
   self:F2()
 
-  local TargetUnitName = Target:GetName()
-  
   if self.Spot then
     self.Spot:LaseOff()
     self.Spot = nil
@@ -499,7 +496,7 @@ function POSITIONABLE:LaseOff( Target )
   return self
 end
 
---- Check if the POSITIONABLE is lasing a target
+--- (R2.1) Check if the POSITIONABLE is lasing a target
 -- @param #POSITIONABLE self
 -- @return #boolean true if it is lasing a target
 function POSITIONABLE:IsLasing()
