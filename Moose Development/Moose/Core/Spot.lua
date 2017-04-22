@@ -32,7 +32,11 @@
 do
 
   --- @type SPOT
-  -- @extends BASE
+  -- @extends Core.Base#BASE
+
+
+  --- 
+  -- @field #SPOT
   SPOT = {
     ClassName = "SPOT",
   }
@@ -50,8 +54,61 @@ do
     
     self:SetStartState( "Off" )
     self:AddTransition( "Off", "LaseOn", "On" )
+    
+    --- LaseOn Handler OnBefore for SPOT
+    -- @function [parent=#SPOT] OnBeforeLaseOn
+    -- @param #SPOT self
+    -- @param #string From
+    -- @param #string Event
+    -- @param #string To
+    -- @return #boolean
+    
+    --- LaseOn Handler OnAfter for SPOT
+    -- @function [parent=#SPOT] OnAfterLaseOn
+    -- @param #SPOT self
+    -- @param #string From
+    -- @param #string Event
+    -- @param #string To
+    
+    --- LaseOn Trigger for SPOT
+    -- @function [parent=#SPOT] LaseOn
+    -- @param #SPOT self
+    
+    --- LaseOn Asynchronous Trigger for SPOT
+    -- @function [parent=#SPOT] __LaseOn
+    -- @param #SPOT self
+    -- @param #number Delay
+    
+    
+    
     self:AddTransition( "On",  "Lasing", "On" )
     self:AddTransition( "On" , "LaseOff", "Off" )
+    
+    --- LaseOff Handler OnBefore for SPOT
+    -- @function [parent=#SPOT] OnBeforeLaseOff
+    -- @param #SPOT self
+    -- @param #string From
+    -- @param #string Event
+    -- @param #string To
+    -- @return #boolean
+    
+    --- LaseOff Handler OnAfter for SPOT
+    -- @function [parent=#SPOT] OnAfterLaseOff
+    -- @param #SPOT self
+    -- @param #string From
+    -- @param #string Event
+    -- @param #string To
+    
+    --- LaseOff Trigger for SPOT
+    -- @function [parent=#SPOT] LaseOff
+    -- @param #SPOT self
+    
+    --- LaseOff Asynchronous Trigger for SPOT
+    -- @function [parent=#SPOT] __LaseOff
+    -- @param #SPOT self
+    -- @param #number Delay
+    
+    
   
     self.Recce = Recce
   
@@ -87,7 +144,20 @@ do
       self.ScheduleID = self.LaseScheduler:Schedule( self, StopLase, {self}, Duration )
     end
     
+    self:HandleEvent( EVENTS.Dead )
+    
     self:__Lasing( -0.2 )
+  end
+  
+  --- @param #SPOT self
+  -- @param Core.Event#EVENTDATA EventData
+  function SPOT:OnEventDead(EventData)
+    if self.Target then
+      if EventData.IniDCSUnitName == self.Target:GetName() then
+        self:E( {"Target dead ", self.Target:GetName() } )
+        self:__LaseOff( 0.1 )
+      end
+    end
   end
   
   --- @param #SPOT self
@@ -112,6 +182,7 @@ do
   -- @return #SPOT
   function SPOT:onafterLaseOff( From, Event, To )
   
+    self:E( {"Stopped lasing for ", self.Target:GetName() } )
     self.Spot:destroy()
     self.Spot = nil
     if self.ScheduleID then
@@ -120,7 +191,6 @@ do
     self.ScheduleID = nil
     
     self.Target = nil
-    self.LaserCode = nil
     
     return self
   end

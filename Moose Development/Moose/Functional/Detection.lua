@@ -506,8 +506,6 @@ do -- DETECTION_BASE
       self.DetectionRun = 0
       self:UnIdentifyAllDetectedObjects() -- Resets the DetectedObjectsIdentified table
       
-      self.DetectionSetGroup:Flush()
-  
       for DetectionGroupID, DetectionGroupData in pairs( self.DetectionSetGroup:GetSet() ) do
         self:E( {DetectionGroupData})
         self:__DetectionGroup( DetectDelay, DetectionGroupData ) -- Process each detection asynchronously.
@@ -1132,7 +1130,7 @@ do -- DETECTION_BASE
       self.DetectedItems[self.DetectedItemCount] = DetectedItem
     end
     
-    DetectedItem.Set = Set or SET_UNIT:New()
+    DetectedItem.Set = Set or SET_UNIT:New():FilterDeads():FilterCrashes()
     DetectedItem.ItemID = self.DetectedItemMax
     DetectedItem.Removed = false
     
