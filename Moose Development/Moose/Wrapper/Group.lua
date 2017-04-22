@@ -591,6 +591,24 @@ function GROUP:IsNotInZone( Zone )
   return true
 end
 
+--- Returns the number of UNITs that are in the @{Zone}
+-- @param #GROUP self
+-- @param Core.Zone#ZONE_BASE Zone The zone to test.
+-- @return #number The number of UNITs that are in the @{Zone}
+function GROUP:CountInZone( Zone )
+  self:F2( {slef.GroupName, Zone} )
+  local Count = 0
+  
+  for UnitID, UnitData in pairs( self:GetUnits() ) do
+    local Unit = UnitData -- Wrapper.Unit#UNIT
+    if Zone:IsVec3InZone( Unit:GetVec3() ) then
+      Count = Count + 1
+    end
+  end
+  
+  return Count
+end
+
 --- Returns if the group is of an air category.
 -- If the group is a helicopter or a plane, then this method will return true, otherwise false.
 -- @param #GROUP self

@@ -1117,6 +1117,52 @@ function SET_GROUP:NoneInZone(Zone)
   return true
 end
 
+--- Iterate the SET_GROUP and count how many GROUPs are completely in the Zone
+-- That could easily be done with SET_GROUP:ForEachGroupCompletelyInZone(), but this function
+-- provides an easy to use shortcut...
+-- @param #SET_GROUP self
+-- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
+-- @return #number the number of GROUPs completely in the Zone
+-- @usage
+-- local MyZone = ZONE:New("Zone1")
+-- local MySetGroup = SET_GROUP:New()
+-- MySetGroup:AddGroupsByName({"Group1", "Group2"})
+--
+-- MESSAGE:New("There are " .. MySetGroup:CountInZone(MyZone) .. " GROUPs in the Zone !", 10):ToAll()
+function SET_GROUP:CountInZone(Zone)
+  self:F2(Zone)
+  local Count = 0
+  local Set = self:GetSet()
+  for GroupID, GroupData in pairs(Set) do -- For each GROUP in SET_GROUP
+    if GroupData:IsCompletelyInZone(Zone) then 
+      Count = Count + 1
+    end
+  end
+  return Count
+end
+
+--- Iterate the SET_GROUP and count how many UNITs are completely in the Zone
+-- @param #SET_GROUP self
+-- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
+-- @return #number the number of GROUPs completely in the Zone
+-- @usage
+-- local MyZone = ZONE:New("Zone1")
+-- local MySetGroup = SET_GROUP:New()
+-- MySetGroup:AddGroupsByName({"Group1", "Group2"})
+--
+-- MESSAGE:New("There are " .. MySetGroup:CountUnitInZone(MyZone) .. " UNITs in the Zone !", 10):ToAll()
+function SET_GROUP:CountUnitInZone(Zone)
+  self:F2(Zone)
+  local Count = 0
+  local Set = self:GetSet()
+  for GroupID, GroupData in pairs(Set) do -- For each GROUP in SET_GROUP
+    if GroupData:IsCompletelyInZone(Zone) then 
+      Count = Count + 1
+    end
+  end
+  return Count
+end
+
 ----- Iterate the SET_GROUP and call an interator function for each **alive** player, providing the Group of the player and optional parameters.
 ---- @param #SET_GROUP self
 ---- @param #function IteratorFunction The function that will be called when there is an alive player in the SET_GROUP. The function needs to accept a GROUP parameter.
