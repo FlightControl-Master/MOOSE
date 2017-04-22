@@ -1156,9 +1156,7 @@ function SET_GROUP:CountUnitInZone(Zone)
   local Count = 0
   local Set = self:GetSet()
   for GroupID, GroupData in pairs(Set) do -- For each GROUP in SET_GROUP
-    if GroupData:IsCompletelyInZone(Zone) then 
-      Count = Count + 1
-    end
+    Count = Count + GroupData:CountInZone(Zone)
   end
   return Count
 end
