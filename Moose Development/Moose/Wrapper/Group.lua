@@ -596,7 +596,7 @@ end
 -- @param Core.Zone#ZONE_BASE Zone The zone to test.
 -- @return #number The number of UNITs that are in the @{Zone}
 function GROUP:CountInZone( Zone )
-  self:F2( {slef.GroupName, Zone} )
+  self:F2( {self.GroupName, Zone} )
   local Count = 0
   
   for UnitID, UnitData in pairs( self:GetUnits() ) do

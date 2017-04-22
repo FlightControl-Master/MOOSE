@@ -1069,7 +1069,7 @@ end
 -- if MySetGroup:AnyPartlyInZone(MyZone) then
 --   MESSAGE:New("At least one GROUP is partially in the zone, but none are fully in it !", 10):ToAll()
 -- else
---   MESSAGE:New("No GROUP are in zone, or one GROUP is completely in it !", 10):ToAll()
+--   MESSAGE:New("No GROUP are in zone, or one (or more) GROUP is completely in it !", 10):ToAll()
 -- end
 function SET_GROUP:AnyPartlyInZone(Zone)
   self:F2(Zone)
