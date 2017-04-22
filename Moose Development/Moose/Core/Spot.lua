@@ -50,7 +50,7 @@ do
   function SPOT:New( Recce )
   
     local self = BASE:Inherit( self, FSM:New() ) -- #SPOT
-    self:F( { Type, Name, Weight } )
+    self:F( {} )
     
     self:SetStartState( "Off" )
     self:AddTransition( "Off", "LaseOn", "On" )
@@ -82,7 +82,7 @@ do
     
     
     self:AddTransition( "On",  "Lasing", "On" )
-    self:AddTransition( "On" , "LaseOff", "Off" )
+    self:AddTransition( { "On", "Destroyed" } , "LaseOff", "Off" )
     
     --- LaseOff Handler OnBefore for SPOT
     -- @function [parent=#SPOT] OnBeforeLaseOff
@@ -108,6 +108,32 @@ do
     -- @param #SPOT self
     -- @param #number Delay
     
+    self:AddTransition( "*" , "Destroyed", "Destroyed" )
+    
+    --- Destroyed Handler OnBefore for SPOT
+    -- @function [parent=#SPOT] OnBeforeDestroyed
+    -- @param #SPOT self
+    -- @param #string From
+    -- @param #string Event
+    -- @param #string To
+    -- @return #boolean
+    
+    --- Destroyed Handler OnAfter for SPOT
+    -- @function [parent=#SPOT] OnAfterDestroyed
+    -- @param #SPOT self
+    -- @param #string From
+    -- @param #string Event
+    -- @param #string To
+    
+    --- Destroyed Trigger for SPOT
+    -- @function [parent=#SPOT] Destroyed
+    -- @param #SPOT self
+    
+    --- Destroyed Asynchronous Trigger for SPOT
+    -- @function [parent=#SPOT] __Destroyed
+    -- @param #SPOT self
+    -- @param #number Delay
+    
     
   
     self.Recce = Recce
@@ -127,6 +153,7 @@ do
   -- @param #number LaserCode
   -- @param #number Duration
   function SPOT:onafterLaseOn( From, Event, To, Target, LaserCode, Duration )
+    self:E( { "LaseOn", Target, LaserCode, Duration } )
 
     local function StopLase( self )
       self:LaseOff()
@@ -137,8 +164,8 @@ do
     
     local RecceDcsUnit = self.Recce:GetDCSObject()
     
-    self.Spot = Spot.createInfraRed( RecceDcsUnit, { x = 0, y = 2, z = 0 }, Target:GetPointVec3():AddY(1):GetVec3() )
-    self.Spot = Spot.createLaser( RecceDcsUnit, { x = 0, y = 2, z = 0 }, Target:GetPointVec3():AddY(1):GetVec3(), LaserCode )
+    self.SpotIR = Spot.createInfraRed( RecceDcsUnit, { x = 0, y = 2, z = 0 }, Target:GetPointVec3():AddY(1):GetVec3() )
+    self.SpotLaser = Spot.createLaser( RecceDcsUnit, { x = 0, y = 2, z = 0 }, Target:GetPointVec3():AddY(1):GetVec3(), LaserCode )
 
     if Duration then
       self.ScheduleID = self.LaseScheduler:Schedule( self, StopLase, {self}, Duration )
@@ -148,14 +175,16 @@ do
     
     self:__Lasing( -0.2 )
   end
-  
+
   --- @param #SPOT self
   -- @param Core.Event#EVENTDATA EventData
   function SPOT:OnEventDead(EventData)
+    self:E( { Dead = EventData.IniDCSUnitName, Target = self.Target } )
     if self.Target then
       if EventData.IniDCSUnitName == self.Target:GetName() then
         self:E( {"Target dead ", self.Target:GetName() } )
-        self:__LaseOff( 0.1 )
+        self:Destroyed()
+        self:LaseOff( 0.1 )
       end
     end
   end
@@ -167,10 +196,11 @@ do
   function SPOT:onafterLasing( From, Event, To )
   
     if self.Target:IsAlive() then
-      self.Spot:setPoint( self.Target:GetPointVec3():AddY(1):GetVec3() )
+      self.SpotIR:setPoint( self.Target:GetPointVec3():AddY(1):GetVec3() )
+      self.SpotLaser:setPoint( self.Target:GetPointVec3():AddY(1):GetVec3() )
       self:__Lasing( -0.2 )
     else
-      self:__LaseOff( 0.2 )
+      self:E( { "Target is not alive", self.Target:IsAlive() } )
     end
   
   end
@@ -182,9 +212,14 @@ do
   -- @return #SPOT
   function SPOT:onafterLaseOff( From, Event, To )
   
-    self:E( {"Stopped lasing for ", self.Target:GetName() } )
-    self.Spot:destroy()
-    self.Spot = nil
+    self:E( {"Stopped lasing for ", self.Target:GetName() , SpotIR = self.SportIR, SpotLaser = self.SpotLaser } )
+    
+    self.SpotIR:destroy()
+    self.SpotLaser:destroy()
+
+    self.SpotIR = nil
+    self.SpotLaser = nil
+    
     if self.ScheduleID then
       self.LaseScheduler:Stop(self.ScheduleID)
     end
@@ -203,7 +238,7 @@ do
   
     local Lasing = false
     
-    if self.Spot then
+    if self.SpotIR then
       Lasing = true
     end
   

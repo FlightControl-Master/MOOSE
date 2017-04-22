@@ -2440,7 +2440,7 @@ end
 --- @type SET_CARGO
 -- @extends Core.Set#SET_BASE
 
---- # SET_CARGO class, extends @{Set#SET_BASE}
+--- # (R2.1) SET_CARGO class, extends @{Set#SET_BASE}
 -- 
 -- Mission designers can use the @{Set#SET_CARGO} class to build sets of cargos optionally belonging to certain:
 -- 
@@ -2502,7 +2502,7 @@ SET_CARGO = {
 }
 
 
---- Creates a new SET_CARGO object, building a set of cargos belonging to a coalitions and categories.
+--- (R2.1) Creates a new SET_CARGO object, building a set of cargos belonging to a coalitions and categories.
 -- @param #SET_CARGO self
 -- @return #SET_CARGO self
 -- @usage
@@ -2515,7 +2515,7 @@ function SET_CARGO:New()
   return self
 end
 
---- Add CARGOs to SET_CARGO.
+--- (R2.1) Add CARGOs to SET_CARGO.
 -- @param Core.Set#SET_CARGO self
 -- @param #string AddCargoNames A single name or an array of CARGO names.
 -- @return self
@@ -2530,7 +2530,7 @@ function SET_CARGO:AddCargosByName( AddCargoNames )
   return self
 end
 
---- Remove CARGOs from SET_CARGO.
+--- (R2.1) Remove CARGOs from SET_CARGO.
 -- @param Core.Set#SET_CARGO self
 -- @param Wrapper.Cargo#CARGO RemoveCargoNames A single name or an array of CARGO names.
 -- @return self
@@ -2546,7 +2546,7 @@ function SET_CARGO:RemoveCargosByName( RemoveCargoNames )
 end
 
 
---- Finds a Cargo based on the Cargo Name.
+--- (R2.1) Finds a Cargo based on the Cargo Name.
 -- @param #SET_CARGO self
 -- @param #string CargoName
 -- @return Wrapper.Cargo#CARGO The found Cargo.
@@ -2558,7 +2558,7 @@ end
 
 
 
---- Builds a set of cargos of coalitions.
+--- (R2.1) Builds a set of cargos of coalitions.
 -- Possible current coalitions are red, blue and neutral.
 -- @param #SET_CARGO self
 -- @param #string Coalitions Can take the following values: "red", "blue", "neutral".
@@ -2576,7 +2576,7 @@ function SET_CARGO:FilterCoalitions( Coalitions )
   return self
 end
 
---- Builds a set of cargos of defined cargo types.
+--- (R2.1) Builds a set of cargos of defined cargo types.
 -- Possible current types are those types known within DCS world.
 -- @param #SET_CARGO self
 -- @param #string Types Can take those type strings known within DCS world.
@@ -2595,7 +2595,7 @@ function SET_CARGO:FilterTypes( Types )
 end
 
 
---- Builds a set of cargos of defined countries.
+--- (R2.1) Builds a set of cargos of defined countries.
 -- Possible current countries are those known within DCS world.
 -- @param #SET_CARGO self
 -- @param #string Countries Can take those country strings known within DCS world.
@@ -2614,7 +2614,7 @@ function SET_CARGO:FilterCountries( Countries )
 end
 
 
---- Builds a set of cargos of defined cargo prefixes.
+--- (R2.1) Builds a set of cargos of defined cargo prefixes.
 -- All the cargos starting with the given prefixes will be included within the set.
 -- @param #SET_CARGO self
 -- @param #string Prefixes The prefix of which the cargo name starts with.
@@ -2634,7 +2634,7 @@ end
 
 
 
---- Starts the filtering.
+--- (R2.1) Starts the filtering.
 -- @param #SET_CARGO self
 -- @return #SET_CARGO self
 function SET_CARGO:FilterStart()
@@ -2650,7 +2650,7 @@ function SET_CARGO:FilterStart()
 end
 
 
---- Handles the Database to check on an event (birth) that the Object was added in the Database.
+--- (R2.1) Handles the Database to check on an event (birth) that the Object was added in the Database.
 -- This is required, because sometimes the _DATABASE birth event gets called later than the SET_BASE birth event!
 -- @param #SET_CARGO self
 -- @param Core.Event#EVENTDATA Event
@@ -2662,7 +2662,7 @@ function SET_CARGO:AddInDatabase( Event )
   return Event.IniDCSUnitName, self.Database[Event.IniDCSUnitName]
 end
 
---- Handles the Database to check on any event that Object exists in the Database.
+--- (R2.1) Handles the Database to check on any event that Object exists in the Database.
 -- This is required, because sometimes the _DATABASE event gets called later than the SET_BASE event or vise versa!
 -- @param #SET_CARGO self
 -- @param Core.Event#EVENTDATA Event
@@ -2674,7 +2674,7 @@ function SET_CARGO:FindInDatabase( Event )
   return Event.IniDCSUnitName, self.Database[Event.IniDCSUnitName]
 end
 
---- Iterate the SET_CARGO and call an interator function for each CARGO, providing the CARGO and optional parameters.
+--- (R2.1) Iterate the SET_CARGO and call an interator function for each CARGO, providing the CARGO and optional parameters.
 -- @param #SET_CARGO self
 -- @param #function IteratorFunction The function that will be called when there is an alive CARGO in the SET_CARGO. The function needs to accept a CARGO parameter.
 -- @return #SET_CARGO self
@@ -2686,7 +2686,7 @@ function SET_CARGO:ForEachCargo( IteratorFunction, ... )
   return self
 end
 
---- Iterate the SET_CARGO while identifying the nearest @{Cargo#CARGO} from a @{Point#POINT_VEC2}.
+--- (R2.1) Iterate the SET_CARGO while identifying the nearest @{Cargo#CARGO} from a @{Point#POINT_VEC2}.
 -- @param #SET_CARGO self
 -- @param Core.Point#POINT_VEC2 PointVec2 A @{Point#POINT_VEC2} object from where to evaluate the closest @{Cargo#CARGO}.
 -- @return Wrapper.Cargo#CARGO The closest @{Cargo#CARGO}.
@@ -2699,7 +2699,7 @@ end
 
 
 
----
+--- (R2.1) 
 -- @param #SET_CARGO self
 -- @param AI.AI_Cargo#AI_CARGO MCargo
 -- @return #SET_CARGO self
@@ -2753,7 +2753,7 @@ function SET_CARGO:IsIncludeObject( MCargo )
   return MCargoInclude
 end
 
---- Handles the OnEventNewCargo event for the Set.
+--- (R2.1) Handles the OnEventNewCargo event for the Set.
 -- @param #SET_CARGO self
 -- @param Core.Event#EVENTDATA EventData
 function SET_CARGO:OnEventNewCargo( EventData )
@@ -2765,7 +2765,7 @@ function SET_CARGO:OnEventNewCargo( EventData )
   end
 end
 
---- Handles the OnDead or OnCrash event for alive units set.
+--- (R2.1) Handles the OnDead or OnCrash event for alive units set.
 -- @param #SET_CARGO self
 -- @param Core.Event#EVENTDATA EventData
 function SET_CARGO:OnEventDeleteCargo( EventData )

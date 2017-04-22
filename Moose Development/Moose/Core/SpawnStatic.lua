@@ -1,4 +1,4 @@
---- **Core** -- Spawn dynamically new STATICs in your missions.
+--- (R2.1) **Core** -- Spawn dynamically new STATICs in your missions.
 --  
 -- ![Banner Image](..\Presentations\SPAWNSTATIC\Dia1.JPG)
 -- 
@@ -91,7 +91,7 @@ SPAWNSTATIC = {
 -- @list <Core.Zone#ZONE_BASE> SpawnZone
 
 
---- Creates the main object to spawn a @{Static} defined in the ME.
+--- (R2.1) Creates the main object to spawn a @{Static} defined in the ME.
 -- @param #SPAWNSTATIC self
 -- @param #string SpawnTemplatePrefix is the name of the Group in the ME that defines the Template.  Each new group will have the name starting with SpawnTemplatePrefix.
 -- @return #SPAWNSTATIC
@@ -113,7 +113,7 @@ function SPAWNSTATIC:NewFromStatic( SpawnTemplatePrefix, CountryID )
 	return self
 end
 
---- Creates the main object to spawn a @{Static} based on a type name.
+--- (R2.1) Creates the main object to spawn a @{Static} based on a type name.
 -- @param #SPAWNSTATIC self
 -- @param #string SpawnTypeName is the name of the type.
 -- @return #SPAWNSTATIC
@@ -131,7 +131,7 @@ function SPAWNSTATIC:NewFromType( SpawnTypeName, SpawnShapeName, SpawnCategory, 
 end
 
 
---- Creates a new @{Static} from a POINT_VEC2.
+--- (R2.1) Creates a new @{Static} from a POINT_VEC2.
 -- @param #SPAWNSTATIC self
 -- @param Core.Point#POINT_VEC2 PointVec2 The 2D coordinate where to spawn the static.
 -- @param #number Heading The heading of the static, which is a number in degrees from 0 to 360.
@@ -161,7 +161,7 @@ function SPAWNSTATIC:SpawnFromPointVec2( PointVec2, Heading, NewName )
   return Static
 end
 
---- Creates a new @{Static} from a @{Zone}.
+--- (R2.1) Creates a new @{Static} from a @{Zone}.
 -- @param #SPAWNSTATIC self
 -- @param Core.Zone#ZONE_BASE Zone The Zone where to spawn the static.
 -- @param #number Heading The heading of the static, which is a number in degrees from 0 to 360.
