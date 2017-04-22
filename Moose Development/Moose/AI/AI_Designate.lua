@@ -186,7 +186,6 @@ do -- AI_DESIGNATE
     
     self:AddTransition( "Lasing", "Lasing", "Lasing" )
     
-    
     self:AddTransition( "*", "LaseOff", "Designate" )
     
     --- LaseOff Handler OnBefore for AI_DESIGNATE 
@@ -266,8 +265,8 @@ do -- AI_DESIGNATE
     -- @function [parent=#AI_DESIGNATE] __Illuminate
     -- @param #AI_DESIGNATE self
     -- @param #number Delay
-    
-    
+
+    self:AddTransition( "*", "Done", "*" )
     
     self:AddTransition( "*", "Status", "*" )
     
@@ -445,7 +444,8 @@ do -- AI_DESIGNATE
     self:E("Designate through Illumination")
 
     self.Designating[Index] = "Illuminate"
-    self:__Illuminate( 1, AttackGroup, Index )    
+    
+    self:__Illuminate( 1, AttackGroup, Index )
   end
 
   --- 
@@ -590,20 +590,25 @@ do -- AI_DESIGNATE
   
 
     local TargetSetUnit = self.Detection:GetDetectedSet( Index )
+    local TargetSetUnitCount = TargetSetUnit:Count()
   
     TargetSetUnit:ForEachUnit(
       --- @param Wrapper.Unit#UNIT SmokeUnit
       function( SmokeUnit )
         self:E("In procedure")
-        --if math.random( 1, ( 100 * TargetSetUnit:Count() ) / 100 ) <= 100 then
+        if math.random( 1, TargetSetUnitCount ) == math.random( 1, TargetSetUnitCount ) then
+          local RecceGroup = self.RecceSet:FindNearestGroupFromPointVec2(SmokeUnit:GetPointVec2())
+          local RecceUnit = RecceGroup:GetUnit( 1 )
+          RecceUnit:MessageToGroup( "Smoking " .. SmokeUnit:GetTypeName() .. ".", 5, AttackGroup )
           SCHEDULER:New( self,
             function()
               if SmokeUnit:IsAlive() then
                 SmokeUnit:Smoke( Color, 150 )
               end
-            end, {}, math.random( 10, 60 ) 
+            self:Done( Index )
+            end, {}, math.random( 5, 20 ) 
           )
-        --end
+        end
       end
     )
     
@@ -616,24 +621,31 @@ do -- AI_DESIGNATE
   function AI_DESIGNATE:onafterIlluminate( From, Event, To, AttackGroup, Index )
   
     local TargetSetUnit = self.Detection:GetDetectedSet( Index )
-  
-    TargetSetUnit:ForEachUnit(
-      --- @param Wrapper.Unit#UNIT SmokeUnit
-      function( SmokeUnit )
-        self:E("In procedure")
-        --if math.random( 1, ( 100 * TargetSetUnit:Count() ) / 100 ) <= 100 then
-          SCHEDULER:New( self,
-            function()
-              if SmokeUnit:IsAlive() then
-                SmokeUnit:GetPointVec3():AddY(800):IlluminationBomb()
-              end
-            end, {}, math.random( 10, 60 ) 
-          )
-        --end
-      end
-    )
     
+    local TargetUnit = TargetSetUnit:GetFirst()
+  
+    if TargetUnit then
+        local RecceGroup = self.RecceSet:FindNearestGroupFromPointVec2(TargetUnit:GetPointVec2())
+        local RecceUnit = RecceGroup:GetUnit( 1 )
+        RecceUnit:MessageToGroup( "Illuminating " .. TargetUnit:GetTypeName() .. ".", 5, AttackGroup )
+        SCHEDULER:New( self,
+          function()
+            if TargetUnit:IsAlive() then
+              TargetUnit:GetPointVec3():AddY(300):IlluminationBomb()
+            end
+          self:Done( Index )
+          end, {}, math.random( 5, 20 ) 
+        )
+    end
+  end
 
+  --- Done
+  -- @param #AI_DESIGNATE self
+  -- @return #AI_DESIGNATE
+  function AI_DESIGNATE:onafterDone( From, Event, To, Index )
+
+    self.Designating[Index] = nil
+    self:SetDesignateMenu()
   end
 
 end
