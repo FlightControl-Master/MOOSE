@@ -1004,14 +1004,14 @@ function SET_GROUP:AnyCompletelyInZone(Zone)
   self:F2(Zone)
   local Set = self:GetSet()
   for GroupID, GroupData in pairs(Set) do -- For each GROUP in SET_GROUP
-    if GroupData:IsCompletlyInZone(Zone) then 
+    if GroupData:IsCompletelyInZone(Zone) then 
       return true
     end
   end
   return false
 end
 
---- Iterate the SET_GROUP and return true if at least one  least one @{#UNIT} of one @{GROUP} of the @{SET_GROUP} is in @{ZONE}
+--- Iterate the SET_GROUP and return true if at least one  @{#UNIT} of one @{GROUP} of the @{SET_GROUP} is in @{ZONE}
 -- @param #SET_GROUP self
 -- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
 -- @return #boolean true if at least one of the @{Wrapper.Group#GROUP} is partly or completly inside the @{Core.Zone#ZONE}, false otherwise.
@@ -1023,7 +1023,7 @@ end
 -- if MySetGroup:AnyPartlyInZone(MyZone) then
 --   MESSAGE:New("At least one GROUP has at least one UNIT in zone !", 10):ToAll()
 -- else
---   MESSAGE:New("No GROUP is completely in zone !", 10):ToAll()
+--   MESSAGE:New("No UNIT of any GROUP is in zone !", 10):ToAll()
 -- end
 function SET_GROUP:AnyPartlyInZone(Zone)
   self:F2(Zone)
@@ -1050,7 +1050,7 @@ end
 -- if MySetGroup:NoneInZone(MyZone) then
 --   MESSAGE:New("No GROUP is completely in zone !", 10):ToAll()
 -- else
---   MESSAGE:New("At least one GROUP has at least one UNIT in zone !", 10):ToAll()
+--   MESSAGE:New("No UNIT of any GROUP is in zone !", 10):ToAll()
 -- end
 function SET_GROUP:NoneInZone(Zone)
   self:F2(Zone)
