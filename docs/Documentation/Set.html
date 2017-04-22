@@ -730,6 +730,44 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_GROUP).AllCompletelyInZone">SET_GROUP:AllCompletelyInZone(ZoneObject, Zone)</a></td>
+		<td class="summary">
+<p>Iterate the SET_GROUP and return true if all the <a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> are completely in the <a href="Core.Zone.html##(ZONE)">Core.Zone#ZONE</a></p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_GROUP).AnyCompletelyInZone">SET_GROUP:AnyCompletelyInZone(ZoneObject, Zone)</a></td>
+		<td class="summary">
+<p>Iterate the SET_GROUP and return true if at least one of the <a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> is completely inside the <a href="Core.Zone.html##(ZONE)">Core.Zone#ZONE</a></p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_GROUP).AnyInZone">SET_GROUP:AnyInZone(ZoneObject, Zone)</a></td>
+		<td class="summary">
+<p>Iterate the SET_GROUP and return true if at least one <a href="##(UNIT)">#UNIT</a> of one <a href="GROUP.html">GROUP</a> of the <a href="SET_GROUP.html">SET_GROUP</a> is in <a href="ZONE.html">ZONE</a></p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_GROUP).AnyPartlyInZone">SET_GROUP:AnyPartlyInZone(ZoneObject, Zone)</a></td>
+		<td class="summary">
+<p>Iterate the SET_GROUP and return true if at least one <a href="GROUP.html">GROUP</a> of the <a href="SET_GROUP.html">SET_GROUP</a> is partly in <a href="ZONE.html">ZONE</a>.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_GROUP).CountInZone">SET_GROUP:CountInZone(ZoneObject, Zone)</a></td>
+		<td class="summary">
+<p>Iterate the SET<em>GROUP and count how many GROUPs are completely in the Zone
+That could easily be done with SET</em>GROUP:ForEachGroupCompletelyInZone(), but this function
+provides an easy to use shortcut...</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_GROUP).CountUnitInZone">SET_GROUP:CountUnitInZone(ZoneObject, Zone)</a></td>
+		<td class="summary">
+<p>Iterate the SET_GROUP and count how many UNITs are completely in the Zone</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SET_GROUP).FilterCategories">SET_GROUP:FilterCategories(Categories)</a></td>
 		<td class="summary">
 <p>Builds a set of groups out of categories.</p>
@@ -811,6 +849,14 @@
 		<td class="name" nowrap="nowrap"><a href="##(SET_GROUP).New">SET_GROUP:New()</a></td>
 		<td class="summary">
 <p>Creates a new SET_GROUP object, building a set of groups belonging to a coalitions, categories, countries, types or with defined prefix names.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_GROUP).NoneInZone">SET_GROUP:NoneInZone(ZoneObject, Zone)</a></td>
+		<td class="summary">
+<p>Iterate the SET_GROUP and return true if no <a href="GROUP.html">GROUP</a> of the <a href="SET_GROUP.html">SET_GROUP</a> is in <a href="ZONE.html">ZONE</a>
+This could also be achieved with <code>not SET_GROUP:AnyPartlyInZone(Zone)</code>, but it's easier for the 
+mission designer to add a dedicated method</p>
 </td>
 		</tr>
 		<tr>
@@ -3460,6 +3506,261 @@ The GROUP</p>
 		<dl class="function">
 <dt>
 
+<a id="#(SET_GROUP).AllCompletelyInZone" >
+<strong>SET_GROUP:AllCompletelyInZone(ZoneObject, Zone)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Iterate the SET_GROUP and return true if all the <a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> are completely in the <a href="Core.Zone.html##(ZONE)">Core.Zone#ZONE</a></p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Zone.html##(ZONE)">Core.Zone#ZONE</a> ZoneObject </em></code>: 
+The Zone to be tested for.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> Zone </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+true if all the <a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> are completly in the <a href="Core.Zone.html##(ZONE)">Core.Zone#ZONE</a>, false otherwise</p>
+
+			<h3>Usage:</h3>
+		<pre class="example"><code>local MyZone = ZONE:New("Zone1")
+local MySetGroup = SET_GROUP:New()
+MySetGroup:AddGroupsByName({"Group1", "Group2"})
+
+if MySetGroup:AllCompletelyInZone(MyZone) then
+  MESSAGE:New("All the SET's GROUP are in zone !", 10):ToAll()
+else
+  MESSAGE:New("Some or all SET's GROUP are outside zone !", 10):ToAll()
+end</code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_GROUP).AnyCompletelyInZone" >
+<strong>SET_GROUP:AnyCompletelyInZone(ZoneObject, Zone)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Iterate the SET_GROUP and return true if at least one of the <a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> is completely inside the <a href="Core.Zone.html##(ZONE)">Core.Zone#ZONE</a></p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Zone.html##(ZONE)">Core.Zone#ZONE</a> ZoneObject </em></code>: 
+The Zone to be tested for.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> Zone </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+true if at least one of the <a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> is completly inside the <a href="Core.Zone.html##(ZONE)">Core.Zone#ZONE</a>, false otherwise.</p>
+
+			<h3>Usage:</h3>
+		<pre class="example"><code>local MyZone = ZONE:New("Zone1")
+local MySetGroup = SET_GROUP:New()
+MySetGroup:AddGroupsByName({"Group1", "Group2"})
+
+if MySetGroup:AnyCompletelyInZone(MyZone) then
+  MESSAGE:New("At least one GROUP is completely in zone !", 10):ToAll()
+else
+  MESSAGE:New("No GROUP is completely in zone !", 10):ToAll()
+end</code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_GROUP).AnyInZone" >
+<strong>SET_GROUP:AnyInZone(ZoneObject, Zone)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Iterate the SET_GROUP and return true if at least one <a href="##(UNIT)">#UNIT</a> of one <a href="GROUP.html">GROUP</a> of the <a href="SET_GROUP.html">SET_GROUP</a> is in <a href="ZONE.html">ZONE</a></p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Zone.html##(ZONE)">Core.Zone#ZONE</a> ZoneObject </em></code>: 
+The Zone to be tested for.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> Zone </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+true if at least one of the <a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> is partly or completly inside the <a href="Core.Zone.html##(ZONE)">Core.Zone#ZONE</a>, false otherwise.</p>
+
+			<h3>Usage:</h3>
+		<pre class="example"><code>local MyZone = ZONE:New("Zone1")
+local MySetGroup = SET_GROUP:New()
+MySetGroup:AddGroupsByName({"Group1", "Group2"})
+
+if MySetGroup:AnyPartlyInZone(MyZone) then
+  MESSAGE:New("At least one GROUP has at least one UNIT in zone !", 10):ToAll()
+else
+  MESSAGE:New("No UNIT of any GROUP is in zone !", 10):ToAll()
+end</code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_GROUP).AnyPartlyInZone" >
+<strong>SET_GROUP:AnyPartlyInZone(ZoneObject, Zone)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Iterate the SET_GROUP and return true if at least one <a href="GROUP.html">GROUP</a> of the <a href="SET_GROUP.html">SET_GROUP</a> is partly in <a href="ZONE.html">ZONE</a>.</p>
+
+	
+<p>Will return false if a <a href="GROUP.html">GROUP</a> is fully in the <a href="ZONE.html">ZONE</a></p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Zone.html##(ZONE)">Core.Zone#ZONE</a> ZoneObject </em></code>: 
+The Zone to be tested for.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> Zone </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+true if at least one of the <a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> is partly or completly inside the <a href="Core.Zone.html##(ZONE)">Core.Zone#ZONE</a>, false otherwise.</p>
+
+			<h3>Usage:</h3>
+		<pre class="example"><code>local MyZone = ZONE:New("Zone1")
+local MySetGroup = SET_GROUP:New()
+MySetGroup:AddGroupsByName({"Group1", "Group2"})
+
+if MySetGroup:AnyPartlyInZone(MyZone) then
+  MESSAGE:New("At least one GROUP is partially in the zone, but none are fully in it !", 10):ToAll()
+else
+  MESSAGE:New("No GROUP are in zone, or one (or more) GROUP is completely in it !", 10):ToAll()
+end</code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_GROUP).CountInZone" >
+<strong>SET_GROUP:CountInZone(ZoneObject, Zone)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Iterate the SET<em>GROUP and count how many GROUPs are completely in the Zone
+That could easily be done with SET</em>GROUP:ForEachGroupCompletelyInZone(), but this function
+provides an easy to use shortcut...</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Zone.html##(ZONE)">Core.Zone#ZONE</a> ZoneObject </em></code>: 
+The Zone to be tested for.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> Zone </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#number:</em>
+the number of GROUPs completely in the Zone</p>
+
+			<h3>Usage:</h3>
+		<pre class="example"><code>local MyZone = ZONE:New("Zone1")
+local MySetGroup = SET_GROUP:New()
+MySetGroup:AddGroupsByName({"Group1", "Group2"})
+
+MESSAGE:New("There are " .. MySetGroup:CountInZone(MyZone) .. " GROUPs in the Zone !", 10):ToAll()</code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_GROUP).CountUnitInZone" >
+<strong>SET_GROUP:CountUnitInZone(ZoneObject, Zone)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Iterate the SET_GROUP and count how many UNITs are completely in the Zone</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Zone.html##(ZONE)">Core.Zone#ZONE</a> ZoneObject </em></code>: 
+The Zone to be tested for.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> Zone </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#number:</em>
+the number of GROUPs completely in the Zone</p>
+
+			<h3>Usage:</h3>
+		<pre class="example"><code>local MyZone = ZONE:New("Zone1")
+local MySetGroup = SET_GROUP:New()
+MySetGroup:AddGroupsByName({"Group1", "Group2"})
+
+MESSAGE:New("There are " .. MySetGroup:CountUnitInZone(MyZone) .. " UNITs in the Zone !", 10):ToAll()</code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(SET_GROUP).FilterCategories" >
 <strong>SET_GROUP:FilterCategories(Categories)</strong>
 </a>
@@ -3878,6 +4179,51 @@ self</p>
 			<h3>Usage:</h3>
 		<pre class="example"><code>-- Define a new SET_GROUP Object. This DBObject will contain a reference to all alive GROUPS.
 DBObject = SET_GROUP:New()</code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_GROUP).NoneInZone" >
+<strong>SET_GROUP:NoneInZone(ZoneObject, Zone)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Iterate the SET_GROUP and return true if no <a href="GROUP.html">GROUP</a> of the <a href="SET_GROUP.html">SET_GROUP</a> is in <a href="ZONE.html">ZONE</a>
+This could also be achieved with <code>not SET_GROUP:AnyPartlyInZone(Zone)</code>, but it's easier for the 
+mission designer to add a dedicated method</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Zone.html##(ZONE)">Core.Zone#ZONE</a> ZoneObject </em></code>: 
+The Zone to be tested for.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> Zone </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+true if no <a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> is inside the <a href="Core.Zone.html##(ZONE)">Core.Zone#ZONE</a> in any way, false otherwise.</p>
+
+			<h3>Usage:</h3>
+		<pre class="example"><code>local MyZone = ZONE:New("Zone1")
+local MySetGroup = SET_GROUP:New()
+MySetGroup:AddGroupsByName({"Group1", "Group2"})
+
+if MySetGroup:NoneInZone(MyZone) then
+  MESSAGE:New("No GROUP is completely in zone !", 10):ToAll()
+else
+  MESSAGE:New("No UNIT of any GROUP is in zone !", 10):ToAll()
+end</code></pre>
 
 </dd>
 </dl>
