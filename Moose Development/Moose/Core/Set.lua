@@ -1031,7 +1031,7 @@ function SET_GROUP:AnyCompletelyInZone(Zone)
   return false
 end
 
---- Iterate the SET_GROUP and return true if at least one  @{#UNIT} of one @{GROUP} of the @{SET_GROUP} is in @{ZONE}
+--- Iterate the SET_GROUP and return true if at least one @{#UNIT} of one @{GROUP} of the @{SET_GROUP} is in @{ZONE}
 -- @param #SET_GROUP self
 -- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
 -- @return #boolean true if at least one of the @{Wrapper.Group#GROUP} is partly or completly inside the @{Core.Zone#ZONE}, false otherwise.
@@ -1045,7 +1045,7 @@ end
 -- else
 --   MESSAGE:New("No UNIT of any GROUP is in zone !", 10):ToAll()
 -- end
-function SET_GROUP:AnyPartlyInZone(Zone)
+function SET_GROUP:AnyInZone(Zone)
   self:F2(Zone)
   local Set = self:GetSet()
   for GroupID, GroupData in pairs(Set) do -- For each GROUP in SET_GROUP
@@ -1054,6 +1054,40 @@ function SET_GROUP:AnyPartlyInZone(Zone)
     end
   end
   return false
+end
+
+--- Iterate the SET_GROUP and return true if at least one @{GROUP} of the @{SET_GROUP} is partly in @{ZONE}.
+-- Will return false if a @{GROUP} is fully in the @{ZONE}
+-- @param #SET_GROUP self
+-- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
+-- @return #boolean true if at least one of the @{Wrapper.Group#GROUP} is partly or completly inside the @{Core.Zone#ZONE}, false otherwise.
+-- @usage
+-- local MyZone = ZONE:New("Zone1")
+-- local MySetGroup = SET_GROUP:New()
+-- MySetGroup:AddGroupsByName({"Group1", "Group2"})
+--
+-- if MySetGroup:AnyPartlyInZone(MyZone) then
+--   MESSAGE:New("At least one GROUP is partially in the zone, but none are fully in it !", 10):ToAll()
+-- else
+--   MESSAGE:New("No GROUP are in zone, or one GROUP is completely in it !", 10):ToAll()
+-- end
+function SET_GROUP:AnyPartlyInZone(Zone)
+  self:F2(Zone)
+  local IsPartlyInZone = false
+  local Set = self:GetSet()
+  for GroupID, GroupData in pairs(Set) do -- For each GROUP in SET_GROUP
+    if GroupData:IsCompletelyInZone(Zone) then
+      return false
+    elseif GroupData:IsPartlyInZone(Zone) then 
+      IsPartlyInZone = true -- at least one GROUP is partly in zone
+    end
+  end
+  
+  if IsPartlyInZone then
+    return true
+  else
+    return false
+  end
 end
 
 --- Iterate the SET_GROUP and return true if no @{GROUP} of the @{SET_GROUP} is in @{ZONE}
