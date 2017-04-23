@@ -29,6 +29,8 @@
 -- @type POSITIONABLE
 -- @extends Wrapper.Identifiable#IDENTIFIABLE
 -- @field #string PositionableName The name of the measurable.
+-- @field Core.Spot#SPOT Spot The laser Spot.
+-- @field #number LaserCode The last assigned laser code.
 POSITIONABLE = {
   ClassName = "POSITIONABLE",
   PositionableName = "",
@@ -426,6 +428,30 @@ function POSITIONABLE:MessageToGroup( Message, Duration, MessageGroup, Name )
   return nil
 end
 
+--- (R2.1) Send a message to a @{Set#SET_GROUP}.
+-- The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.
+-- @param #POSITIONABLE self
+-- @param #string Message The message text
+-- @param Dcs.DCSTypes#Duration Duration The duration of the message.
+-- @param Core.Set#SET_GROUP MessageSetGroup The SET_GROUP collection receiving the message.
+-- @param #string Name (optional) The Name of the sender. If not provided, the Name is the type of the Positionable.
+function POSITIONABLE:MessageToSetGroup( Message, Duration, MessageSetGroup, Name )
+  self:F2( { Message, Duration } )
+
+  local DCSObject = self:GetDCSObject()
+  if DCSObject then
+    if DCSObject:isExist() then
+      MessageSetGroup:ForEachGroup(
+        function( MessageGroup )
+          self:GetMessage( Message, Duration, Name ):ToGroup( MessageGroup )
+        end 
+      )
+    end
+  end
+
+  return nil
+end
+
 --- Send a message to the players in the @{Group}.
 -- The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.
 -- @param #POSITIONABLE self
@@ -477,6 +503,7 @@ function POSITIONABLE:LaseUnit( Target, LaserCode, Duration )
   self:E("bulding spot")
   self.Spot = SPOT:New( self ) -- Core.Spot#SPOT
   self.Spot:LaseOn( Target, LaserCode, Duration)
+  self.LaserCode = LaserCode
   
   return self.Spot
   
@@ -509,4 +536,20 @@ function POSITIONABLE:IsLasing()
   end
 
   return Lasing
+end
+
+--- (R2.1) Get the Spot
+-- @param #POSITIONABLE self
+-- @return Core.Spot#SPOT The Spot
+function POSITIONABLE:GetSpot()
+  
+  return self.Spot
+end
+
+--- (R2.1) Get the last assigned laser code
+-- @param #POSITIONABLE self
+-- @return #number The laser code
+function POSITIONABLE:GetLaserCode()
+  
+  return self.LaserCode
 end

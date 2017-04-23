@@ -141,6 +141,8 @@ do
     self.LaseScheduler = SCHEDULER:New( self )
   
     self:SetEventPriority( 5 )
+    
+    self.Lasing = false
   
     return self
   end
@@ -161,6 +163,8 @@ do
     
     self.Target = Target
     self.LaserCode = LaserCode
+    
+    self.Lasing = true
     
     local RecceDcsUnit = self.Recce:GetDCSObject()
     
@@ -184,7 +188,7 @@ do
       if EventData.IniDCSUnitName == self.Target:GetName() then
         self:E( {"Target dead ", self.Target:GetName() } )
         self:Destroyed()
-        self:LaseOff( 0.1 )
+        self:LaseOff()
       end
     end
   end
@@ -196,7 +200,7 @@ do
   function SPOT:onafterLasing( From, Event, To )
   
     if self.Target:IsAlive() then
-      self.SpotIR:setPoint( self.Target:GetPointVec3():AddY(1):GetVec3() )
+      self.SpotIR:setPoint( self.Target:GetPointVec3():AddY(1):AddY(math.random(-100,100)/100):AddX(math.random(-100,100)/100):GetVec3() )
       self.SpotLaser:setPoint( self.Target:GetPointVec3():AddY(1):GetVec3() )
       self:__Lasing( -0.2 )
     else
@@ -213,6 +217,8 @@ do
   function SPOT:onafterLaseOff( From, Event, To )
   
     self:E( {"Stopped lasing for ", self.Target:GetName() , SpotIR = self.SportIR, SpotLaser = self.SpotLaser } )
+    
+    self.Lasing = false
     
     self.SpotIR:destroy()
     self.SpotLaser:destroy()
@@ -234,15 +240,7 @@ do
   -- @param #SPOT self
   -- @return #boolean true if it is lasing
   function SPOT:IsLasing()
-    self:F2()
-  
-    local Lasing = false
-    
-    if self.SpotIR then
-      Lasing = true
-    end
-  
-    return Lasing
+    return self.Lasing
   end
   
 end
