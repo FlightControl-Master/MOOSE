@@ -119,7 +119,9 @@ do -- AI_DESIGNATE
   --   * **@{#AI_DESIGNATE.Smoke}**: Smoke the targets with the specified Index.
   --   * **@{#AI_DESIGNATE.Status}**: Report designation status.
   -- 
-  -- ## 3. Set laser codes
+  -- ## 3. Laser codes
+  -- 
+  -- ### 3.1 Set possible laser codes
   -- 
   -- An array of laser codes can be provided, that will be used by the AI_DESIGNATE when lasing.
   -- The laser code is communicated by the Recce when it is lasing a larget.
@@ -136,6 +138,10 @@ do -- AI_DESIGNATE
   --     AIDesignate:SetLaserCodes( { 1214, 1131, 1614, 1138 } )
   --     
   -- The above sets a collection of possible laser codes that can be assigned. **Note the { } notation!**
+  -- 
+  -- ### 3.2 Auto generate laser codes
+  -- 
+  -- WIP
   -- 
   -- ## 4. Autolase to automatically lase detected targets.
   -- 
