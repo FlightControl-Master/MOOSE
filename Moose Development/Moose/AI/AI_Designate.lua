@@ -122,9 +122,9 @@ do -- AI_DESIGNATE
   --- AI_DESIGNATE Constructor. This class is an abstract class and should not be instantiated.
   -- @param #AI_DESIGNATE self
   -- @param Functional.Detection#DETECTION_BASE Detection
-  -- @param Core.Set#SET_GROUP GroupSet The set of groups to designate for.
+  -- @param Core.Set#SET_GROUP AttackSet The Attack collection of GROUP objects to designate and report for.
   -- @return #AI_DESIGNATE
-  function AI_DESIGNATE:New( Detection, GroupSet )
+  function AI_DESIGNATE:New( Detection, AttackSet )
   
     local self = BASE:Inherit( self, FSM:New() ) -- #AI_DESIGNATE
     self:F( { Detection } )
@@ -295,18 +295,22 @@ do -- AI_DESIGNATE
     -- @param #number Delay
     
     self.Detection = Detection
-    self.GroupSet = GroupSet
+    self.AttackSet = AttackSet
     self.RecceSet = Detection:GetDetectionSetGroup()
     self.Spots = {}
     self.Designating = {}
     
-    self:SetLaserCodes( 1688 )
+    self.LaseDuration = 60
+    
+    self:SetLaserCodes( 1688 ) -- set self.LaserCodes
+    self:SetAutoLase( false ) -- set self.Autolase
     
     self.LaserCodesUsed = {}
     
     
     self.Detection:__Start( 2 )
-
+    
+    self:SetDesignateMenu()
     
     return self
   end
@@ -327,6 +331,29 @@ do -- AI_DESIGNATE
     return self
   end
   
+  --- Set auto lase.
+  -- Auto lase will start lasing targets immediately when these are in range.
+  -- @param #AI_DESIGNATE self
+  -- @param #boolean AutoLase
+  -- @return #AI_DESIGNATE
+  function AI_DESIGNATE:SetAutoLase( AutoLase )
+
+    self.AutoLase = AutoLase
+    
+    local AutoLaseOnOff = ( AutoLase == true ) and "On" or "Off"
+
+    local Recce = self.RecceSet:GetFirst()
+    
+    if Recce then
+      Recce:MessageToSetGroup( "Auto Lase " .. AutoLaseOnOff .. ".", 15, self.AttackSet )
+    end
+
+    self:ActivateAutoLase()
+    self:SetDesignateMenu()      
+
+    return self
+  end
+  
 
   --- 
   -- @param #AI_DESIGNATE self
@@ -335,7 +362,11 @@ do -- AI_DESIGNATE
     
     self:__Detect( -60 )
     
+    self:ActivateAutoLase()
+    
     self:SendStatus()
+    
+    
     self:SetDesignateMenu()      
   
     return self
@@ -357,11 +388,32 @@ do -- AI_DESIGNATE
     
     local RecceLeader = self.RecceSet:GetFirst() -- Wrapper.Group#GROUP
 
-    self.GroupSet:ForEachGroup(
+    RecceLeader:MessageToSetGroup( DetectedReport:Text( "\n" ), 15, self.AttackSet )
+    
+    return self
+  end
+
+  --- Coordinates the Auto Lase.
+  -- @param #AI_DESIGNATE self
+  -- @return #AI_DESIGNATE
+  function AI_DESIGNATE:ActivateAutoLase()
+
+    self.AttackSet:Flush()
+
+    self.AttackSet:ForEachGroup(
     
       --- @param Wrapper.Group#GROUP GroupReport
       function( AttackGroup )
-        RecceLeader:MessageToGroup( DetectedReport:Text( "\n" ), 15, AttackGroup )
+
+        local DetectedItems = self.Detection:GetDetectedItems()
+        
+        for Index, DetectedItemData in pairs( DetectedItems ) do
+          if self.AutoLase then
+            if not self.Designating[Index] then
+              self:LaseOn( Index, self.LaseDuration ) 
+            end
+          end
+        end
       end
     )
     
@@ -373,9 +425,9 @@ do -- AI_DESIGNATE
   -- @return #AI_DESIGNATE
   function AI_DESIGNATE:SetDesignateMenu()
 
-    self.GroupSet:Flush()
+    self.AttackSet:Flush()
 
-    self.GroupSet:ForEachGroup(
+    self.AttackSet:ForEachGroup(
     
       --- @param Wrapper.Group#GROUP GroupReport
       function( AttackGroup )
@@ -389,6 +441,13 @@ do -- AI_DESIGNATE
         self:E(DesignateMenu)
         AttackGroup:SetState( AttackGroup, "DesignateMenu", DesignateMenu )
         
+        -- Set Menu option for auto lase
+
+        if self.AutoLase then        
+          MENU_GROUP_COMMAND:New( AttackGroup, "Auto Lase Off", DesignateMenu, self.MenuAutoLase, self, false )
+        else
+          MENU_GROUP_COMMAND:New( AttackGroup, "Auto Lase On", DesignateMenu, self.MenuAutoLase, self, true )
+        end        
       
         local DetectedItems = self.Detection:GetDetectedItems()
         
@@ -398,14 +457,14 @@ do -- AI_DESIGNATE
           
           if not self.Designating[Index] then
             local DetectedMenu = MENU_GROUP:New( AttackGroup, Report, DesignateMenu )
-            MENU_GROUP_COMMAND:New( AttackGroup, "Lase target 60 secs", DetectedMenu, self.MenuLaseOn, self, AttackGroup, Index, 60 )
-            MENU_GROUP_COMMAND:New( AttackGroup, "Lase target 120 secs", DetectedMenu, self.MenuLaseOn, self,AttackGroup, Index, 120 )
-            MENU_GROUP_COMMAND:New( AttackGroup, "Smoke red", DetectedMenu, self.MenuSmoke, self, AttackGroup, Index, SMOKECOLOR.Red )
-            MENU_GROUP_COMMAND:New( AttackGroup, "Smoke blue", DetectedMenu, self.MenuSmoke, self, AttackGroup, Index, SMOKECOLOR.Blue )
-            MENU_GROUP_COMMAND:New( AttackGroup, "Smoke green", DetectedMenu, self.MenuSmoke, self, AttackGroup, Index, SMOKECOLOR.Green )
-            MENU_GROUP_COMMAND:New( AttackGroup, "Smoke white", DetectedMenu, self.MenuSmoke, self, AttackGroup, Index, SMOKECOLOR.White )
-            MENU_GROUP_COMMAND:New( AttackGroup, "Smoke orange", DetectedMenu, self.MenuSmoke, self, AttackGroup, Index, SMOKECOLOR.Orange )
-            MENU_GROUP_COMMAND:New( AttackGroup, "Illuminate", DetectedMenu, self.MenuIlluminate, self, AttackGroup, Index )
+            MENU_GROUP_COMMAND:New( AttackGroup, "Lase target 60 secs", DetectedMenu, self.MenuLaseOn, self, Index, 60 )
+            MENU_GROUP_COMMAND:New( AttackGroup, "Lase target 120 secs", DetectedMenu, self.MenuLaseOn, self, Index, 120 )
+            MENU_GROUP_COMMAND:New( AttackGroup, "Smoke red", DetectedMenu, self.MenuSmoke, self, Index, SMOKECOLOR.Red )
+            MENU_GROUP_COMMAND:New( AttackGroup, "Smoke blue", DetectedMenu, self.MenuSmoke, self, Index, SMOKECOLOR.Blue )
+            MENU_GROUP_COMMAND:New( AttackGroup, "Smoke green", DetectedMenu, self.MenuSmoke, self, Index, SMOKECOLOR.Green )
+            MENU_GROUP_COMMAND:New( AttackGroup, "Smoke white", DetectedMenu, self.MenuSmoke, self, Index, SMOKECOLOR.White )
+            MENU_GROUP_COMMAND:New( AttackGroup, "Smoke orange", DetectedMenu, self.MenuSmoke, self, Index, SMOKECOLOR.Orange )
+            MENU_GROUP_COMMAND:New( AttackGroup, "Illuminate", DetectedMenu, self.MenuIlluminate, self, Index )
           else
             if self.Designating[Index] == "Laser" then
               Report = "Lasing " .. Report
@@ -416,7 +475,7 @@ do -- AI_DESIGNATE
             end
             local DetectedMenu = MENU_GROUP:New( AttackGroup, Report, DesignateMenu )
             if self.Designating[Index] == "Laser" then
-              MENU_GROUP_COMMAND:New( AttackGroup, "Stop lasing", DetectedMenu, self.MenuLaseOff, self, AttackGroup, Index )
+              MENU_GROUP_COMMAND:New( AttackGroup, "Stop lasing", DetectedMenu, self.MenuLaseOff, self, Index )
             else
             end
           end
@@ -429,59 +488,66 @@ do -- AI_DESIGNATE
   
   --- 
   -- @param #AI_DESIGNATE self
-  function AI_DESIGNATE:MenuSmoke( AttackGroup, Index, Color )
+  function AI_DESIGNATE:MenuAutoLase( AutoLase )
 
-    self:E("Designate through Smoke")
+    self:E("AutoLase")
 
-    self.Designating[Index] = "Smoke"
-    self:__Smoke( 1, AttackGroup, Index, Color )    
+    self:SetAutoLase( AutoLase )
   end
 
   --- 
   -- @param #AI_DESIGNATE self
-  function AI_DESIGNATE:MenuIlluminate( AttackGroup, Index )
+  function AI_DESIGNATE:MenuSmoke( Index, Color )
+
+    self:E("Designate through Smoke")
+
+    self.Designating[Index] = "Smoke"
+    self:__Smoke( 1, Index, Color )    
+  end
+
+  --- 
+  -- @param #AI_DESIGNATE self
+  function AI_DESIGNATE:MenuIlluminate( Index )
 
     self:E("Designate through Illumination")
 
     self.Designating[Index] = "Illuminate"
     
-    self:__Illuminate( 1, AttackGroup, Index )
+    self:__Illuminate( 1, Index )
   end
 
   --- 
   -- @param #AI_DESIGNATE self
-  function AI_DESIGNATE:MenuLaseOn( AttackGroup, Index, Duration )
+  function AI_DESIGNATE:MenuLaseOn( Index, Duration )
 
     self:E("Designate through Lase")
     
-    self.Designating[Index] = "Laser"
-    self:__LaseOn( 1, AttackGroup, Index, Duration ) 
+    self:__LaseOn( 1, Index, Duration ) 
   end
 
   --- 
   -- @param #AI_DESIGNATE self
-  function AI_DESIGNATE:MenuLaseOff( AttackGroup, Index, Duration )
+  function AI_DESIGNATE:MenuLaseOff( Index, Duration )
 
     self:E("Lasing off")
 
     self.Designating[Index] = nil
-    self:__LaseOff( 1, AttackGroup, Index ) 
+    self:__LaseOff( 1, Index ) 
   end
 
   --- 
   -- @param #AI_DESIGNATE self
-  -- @return #AI_DESIGNATE
-  function AI_DESIGNATE:onafterLaseOn( From, Event, To, AttackGroup, Index, Duration )
+  function AI_DESIGNATE:onafterLaseOn( From, Event, To, Index, Duration )
   
-    self:__Lasing( 5, AttackGroup, Index, Duration )
-  
+    self.Designating[Index] = "Laser"
+    self:Lasing( Index, Duration )
   end
   
 
   --- 
   -- @param #AI_DESIGNATE self
   -- @return #AI_DESIGNATE
-  function AI_DESIGNATE:onafterLasing( From, Event, To, AttackGroup, Index, Duration )
+  function AI_DESIGNATE:onafterLasing( From, Event, To, Index, Duration )
   
     local TargetSetUnit = self.Detection:GetDetectedSet( Index )
     
@@ -495,8 +561,6 @@ do -- AI_DESIGNATE
         self.Spots[TargetUnit] = nil
       end
     end
-
-    local MoreTargets = false
 
     TargetSetUnit:ForEachUnit(
       --- @param Wrapper.Unit#UNIT SmokeUnit
@@ -518,10 +582,10 @@ do -- AI_DESIGNATE
                       local Spot = RecceUnit:LaseUnit( TargetUnit, LaserCode, Duration )
                       function Spot:OnAfterDestroyed( From, Event, To )
                         self:E( "Destroyed Message" )
-                        self.Recce:MessageToGroup( "Target " .. TargetUnit:GetTypeName() .. " destroyed." .. TargetSetUnit:Count() .. " targets left.", 5, AttackGroup )
+                        self.Recce:MessageToSetGroup( "Target " .. TargetUnit:GetTypeName() .. " destroyed." .. TargetSetUnit:Count() .. " targets left.", 15, self.AttackSet )
                       end
                       self.Spots[TargetUnit] = Spot
-                      RecceUnit:MessageToGroup( "Lasing " .. TargetUnit:GetTypeName() .. " for " .. Duration .. "s, code: " .. Spot.LaserCode, 5, AttackGroup )
+                      RecceUnit:MessageToSetGroup( "Lasing " .. TargetUnit:GetTypeName() .. " for " .. Duration .. "s, code: " .. Spot.LaserCode, 5, self.AttackSet )
                       break
                     end
                   end
@@ -531,7 +595,7 @@ do -- AI_DESIGNATE
                     local Spot = self.Spots[TargetUnit] -- Core.Spot#SPOT
                     if Spot then
                       Spot.Recce:LaseOff()
-                      Spot.Recce:MessageToGroup( "Target " .. TargetUnit:GetTypeName() "out of LOS. Cancelling lase!", 5, AttackGroup )
+                      Spot.Recce:MessageToGroup( "Target " .. TargetUnit:GetTypeName() "out of LOS. Cancelling lase!", 5, self.AttackSet )
                     end
                   end  
                 end
@@ -540,7 +604,7 @@ do -- AI_DESIGNATE
           else
             MoreTargets = true
             local RecceUnit = Spot.Recce
-            RecceUnit:MessageToGroup( "Lasing " .. TargetUnit:GetTypeName() .. ", code " .. Spot.LaserCode, 5, AttackGroup )
+            RecceUnit:MessageToSetGroup( "Lasing " .. TargetUnit:GetTypeName() .. ", code " .. Spot.LaserCode, 5, self.AttackSet )
           end
         else
           self.Spots[TargetUnit] = nil
@@ -548,11 +612,7 @@ do -- AI_DESIGNATE
       end
     )
 
-    if MoreTargets == true then
-      self:__Lasing( 30, AttackGroup, Index, Duration )
-    else
-      self:__LaseOff( 1, AttackGroup, Index ) 
-    end
+    self:__Lasing( 15, Index, Duration )
     
     self:SetDesignateMenu()
 
@@ -561,9 +621,13 @@ do -- AI_DESIGNATE
   --- 
   -- @param #AI_DESIGNATE self
   -- @return #AI_DESIGNATE
-  function AI_DESIGNATE:onafterLaseOff( From, Event, To, AttackGroup, Index )
+  function AI_DESIGNATE:onafterLaseOff( From, Event, To, Index )
   
-    self.RecceSet:GetFirst():MessageToGroup( "Stopped lasing.", 15, AttackGroup )
+    local Recce = self.RecceSet:GetFirst()
+    
+    if Recce then 
+      Recce:MessageToSetGroup( "Stopped lasing.", 15, self.AttackSet )
+    end
     
     local TargetSetUnit = self.Detection:GetDetectedSet( Index )
     
@@ -571,7 +635,7 @@ do -- AI_DESIGNATE
     
     for SpotID, SpotData in pairs( Spots ) do
       local Spot = SpotData -- Core.Spot#SPOT
-      Spot.Recce:MessageToGroup( "Stopped lasing " .. Spot.Target:GetTypeName() .. ".", 15, AttackGroup )
+      Spot.Recce:MessageToSetGroup( "Stopped lasing " .. Spot.Target:GetTypeName() .. ".", 15, self.AttackSet )
       Spot:LaseOff()
     end
     
@@ -586,7 +650,7 @@ do -- AI_DESIGNATE
   --- 
   -- @param #AI_DESIGNATE self
   -- @return #AI_DESIGNATE
-  function AI_DESIGNATE:onafterSmoke( From, Event, To, AttackGroup, Index, Color )
+  function AI_DESIGNATE:onafterSmoke( From, Event, To, Index, Color )
   
 
     local TargetSetUnit = self.Detection:GetDetectedSet( Index )
@@ -599,15 +663,17 @@ do -- AI_DESIGNATE
         if math.random( 1, TargetSetUnitCount ) == math.random( 1, TargetSetUnitCount ) then
           local RecceGroup = self.RecceSet:FindNearestGroupFromPointVec2(SmokeUnit:GetPointVec2())
           local RecceUnit = RecceGroup:GetUnit( 1 )
-          RecceUnit:MessageToGroup( "Smoking " .. SmokeUnit:GetTypeName() .. ".", 5, AttackGroup )
-          SCHEDULER:New( self,
-            function()
-              if SmokeUnit:IsAlive() then
-                SmokeUnit:Smoke( Color, 150 )
-              end
-            self:Done( Index )
-            end, {}, math.random( 5, 20 ) 
-          )
+          if RecceUnit then
+            RecceUnit:MessageToSetGroup( "Smoking " .. SmokeUnit:GetTypeName() .. ".", 5, self.AttackSet )
+            SCHEDULER:New( self,
+              function()
+                if SmokeUnit:IsAlive() then
+                  SmokeUnit:Smoke( Color, 150 )
+                end
+              self:Done( Index )
+              end, {}, math.random( 5, 20 ) 
+            )
+          end
         end
       end
     )
@@ -618,16 +684,17 @@ do -- AI_DESIGNATE
   --- Illuminating
   -- @param #AI_DESIGNATE self
   -- @return #AI_DESIGNATE
-  function AI_DESIGNATE:onafterIlluminate( From, Event, To, AttackGroup, Index )
+  function AI_DESIGNATE:onafterIlluminate( From, Event, To, Index )
   
     local TargetSetUnit = self.Detection:GetDetectedSet( Index )
     
     local TargetUnit = TargetSetUnit:GetFirst()
   
     if TargetUnit then
-        local RecceGroup = self.RecceSet:FindNearestGroupFromPointVec2(TargetUnit:GetPointVec2())
-        local RecceUnit = RecceGroup:GetUnit( 1 )
-        RecceUnit:MessageToGroup( "Illuminating " .. TargetUnit:GetTypeName() .. ".", 5, AttackGroup )
+      local RecceGroup = self.RecceSet:FindNearestGroupFromPointVec2(TargetUnit:GetPointVec2())
+      local RecceUnit = RecceGroup:GetUnit( 1 )
+      if RecceUnit then
+        RecceUnit:MessageToGroup( "Illuminating " .. TargetUnit:GetTypeName() .. ".", 5, self.AttackSet )
         SCHEDULER:New( self,
           function()
             if TargetUnit:IsAlive() then
@@ -636,6 +703,7 @@ do -- AI_DESIGNATE
           self:Done( Index )
           end, {}, math.random( 5, 20 ) 
         )
+      end
     end
   end
 
