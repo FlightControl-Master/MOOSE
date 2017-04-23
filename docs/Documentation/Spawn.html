@@ -123,48 +123,6 @@
 
 <hr/>
 
-<h1><strong>API CHANGE HISTORY</strong></h1>
-
-<p>The underlying change log documents the API changes. Please read this carefully. The following notation is used:</p>
-
-<ul>
-    <li><strong>Added</strong> parts are expressed in bold type face.</li>
-    <li><em>Removed</em> parts are expressed in italic type face.</li>
-</ul>
-
-<p>Hereby the change log:</p>
-
-<p>2017-04-08: SPAWN:<strong>InitDelayOnOff( DelayOnOff )</strong> added. <br/>
-2017-04-08: SPAWN:<strong>InitDelayOn()</strong> added. <br/>
-2017-04-08: SPAWN:<strong>InitDelayOff()</strong> added.  </p>
-
-<p>2017-03-14: SPAWN:<strong>InitKeepUnitNames()</strong> added. <br/>
-2017-03-14: SPAWN:<strong>InitRandomizePosition( RandomizePosition, OuterRadious, InnerRadius )</strong> added.  </p>
-
-<p>2017-02-04: SPAWN:InitUnControlled( <strong>UnControlled</strong> ) replaces SPAWN:InitUnControlled().  </p>
-
-<p>2017-01-24: SPAWN:<strong>InitAIOnOff( AIOnOff )</strong> added. <br/>
-2017-01-24: SPAWN:<strong>InitAIOn()</strong> added. <br/>
-2017-01-24: SPAWN:<strong>InitAIOff()</strong> added.  </p>
-
-<p>2016-08-15: SPAWN:<strong>InitCleanUp</strong>( SpawnCleanUpInterval ) replaces SPAWN:<em>CleanUp</em>( SpawnCleanUpInterval ). <br/>
-2016-08-15: SPAWN:<strong>InitRandomizeZones( SpawnZones )</strong> added.</p>
-
-<p>2016-08-14: SPAWN:<strong>OnSpawnGroup</strong>( SpawnCallBackFunction, ... ) replaces SPAWN:<em>SpawnFunction</em>( SpawnCallBackFunction, ... ). <br/>
-2016-08-14: SPAWN.SpawnInZone( Zone, <strong>RandomizeGroup</strong>, SpawnIndex ) replaces SpawnInZone( Zone, <em>RandomizeUnits, OuterRadius, InnerRadius,</em> SpawnIndex ). <br/>
-2016-08-14: SPAWN.SpawnFromVec3( Vec3, SpawnIndex ) replaces SpawnFromVec3( Vec3, <em>RandomizeUnits, OuterRadius, InnerRadius,</em> SpawnIndex ). <br/>
-2016-08-14: SPAWN.SpawnFromVec2( Vec2, SpawnIndex ) replaces SpawnFromVec2( Vec2, <em>RandomizeUnits, OuterRadius, InnerRadius,</em> SpawnIndex ). <br/>
-2016-08-14: SPAWN.SpawnFromUnit( SpawnUnit, SpawnIndex ) replaces SpawnFromUnit( SpawnUnit, <em>RandomizeUnits, OuterRadius, InnerRadius,</em> SpawnIndex ). <br/>
-2016-08-14: SPAWN.SpawnFromUnit( SpawnUnit, SpawnIndex ) replaces SpawnFromStatic( SpawnStatic, <em>RandomizeUnits, OuterRadius, InnerRadius,</em> SpawnIndex ). <br/>
-2016-08-14: SPAWN.<strong>InitRandomizeUnits( RandomizeUnits, OuterRadius, InnerRadius )</strong> added. <br/>
-2016-08-14: SPAWN.<strong>Init</strong>Limit( SpawnMaxUnitsAlive, SpawnMaxGroups ) replaces SPAWN.<em>Limit</em>( SpawnMaxUnitsAlive, SpawnMaxGroups ). <br/>
-2016-08-14: SPAWN.<strong>Init</strong>Array( SpawnAngle, SpawnWidth, SpawnDeltaX, SpawnDeltaY ) replaces SPAWN.<em>Array</em>( SpawnAngle, SpawnWidth, SpawnDeltaX, SpawnDeltaY ). <br/>
-2016-08-14: SPAWN.<strong>Init</strong>RandomizeRoute( SpawnStartPoint, SpawnEndPoint, SpawnRadius, SpawnHeight ) replaces SPAWN.<em>RandomizeRoute</em>( SpawnStartPoint, SpawnEndPoint, SpawnRadius, SpawnHeight ). <br/>
-2016-08-14: SPAWN.<strong>Init</strong>RandomizeTemplate( SpawnTemplatePrefixTable ) replaces SPAWN.<em>RandomizeTemplate</em>( SpawnTemplatePrefixTable ). <br/>
-2016-08-14: SPAWN.<strong>Init</strong>UnControlled() replaces SPAWN.<em>UnControlled</em>().  </p>
-
-<hr/>
-
 <h1><strong>AUTHORS and CONTRIBUTIONS</strong></h1>
 
 <h3>Contributions:</h3>
@@ -810,12 +768,6 @@ and any spaces before and after the resulting name are removed.</p>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SPAWN)._TranslateRotate">SPAWN:_TranslateRotate(SpawnIndex, SpawnRootX, SpawnRootY, SpawnX, SpawnY, SpawnAngle)</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SPAWN).uncontrolled">SPAWN.uncontrolled</a></td>
 		<td class="summary">
 
 </td>
@@ -2119,6 +2071,9 @@ The group that was spawned. You can use this group for further actions.</p>
 	
 
 
+	
+<p> Don't repeat the group from Take-Off till Landing and back Take-Off by ReSpawning.</p>
+
 </dd>
 </dl>
 		<dl class="function">
@@ -2572,6 +2527,9 @@ when nothing was spawned.</p>
 	
 
 
+	
+<p> Overwrite unit names by default with group name.</p>
+
 </dd>
 </dl>
 		<dl class="function">
@@ -2585,6 +2543,9 @@ when nothing was spawned.</p>
 <dd>
 	
 
+
+	
+<p> By default, no InitLimit</p>
 
 </dd>
 </dl>
@@ -2621,7 +2582,7 @@ when nothing was spawned.</p>
 		<dl class="function">
 <dt>
 
-		<em></em>
+		<em>#number</em>
 <a id="#(SPAWN).SpawnMaxGroups" >
 <strong>SPAWN.SpawnMaxGroups</strong>
 </a>
@@ -2638,7 +2599,7 @@ when nothing was spawned.</p>
 		<dl class="function">
 <dt>
 
-		<em></em>
+		<em>#number</em>
 <a id="#(SPAWN).SpawnMaxUnitsAlive" >
 <strong>SPAWN.SpawnMaxUnitsAlive</strong>
 </a>
@@ -2990,7 +2951,7 @@ Spawn_BE_KA50 = SPAWN:New( 'BE KA-50@RAMP-Ground Defense' ):Schedule( 600, 0.5 )
 
 
 	
-<p> When the first Spawn executes, all the Groups need to be made visible before start.</p>
+<p> Flag that indicates if all the Groups of the SpawnGroup need to be visible when Spawned.</p>
 
 </dd>
 </dl>
@@ -3556,20 +3517,6 @@ True = Continue Scheduler</p>
 
 				</li>
 		</ul>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em></em>
-<a id="#(SPAWN).uncontrolled" >
-<strong>SPAWN.uncontrolled</strong>
-</a>
-</dt>
-<dd>
-	
-
-
 </dd>
 </dl>
 

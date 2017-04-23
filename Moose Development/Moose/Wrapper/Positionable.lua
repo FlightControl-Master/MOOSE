@@ -428,14 +428,14 @@ function POSITIONABLE:MessageToGroup( Message, Duration, MessageGroup, Name )
   return nil
 end
 
---- (R2.1) Send a message to a @{Set#SET_GROUP}.
+--- Send a message to a @{Set#SET_GROUP}.
 -- The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.
 -- @param #POSITIONABLE self
 -- @param #string Message The message text
 -- @param Dcs.DCSTypes#Duration Duration The duration of the message.
 -- @param Core.Set#SET_GROUP MessageSetGroup The SET_GROUP collection receiving the message.
 -- @param #string Name (optional) The Name of the sender. If not provided, the Name is the type of the Positionable.
-function POSITIONABLE:MessageToSetGroup( Message, Duration, MessageSetGroup, Name )
+function POSITIONABLE:MessageToSetGroup( Message, Duration, MessageSetGroup, Name )  --R2.1
   self:F2( { Message, Duration } )
 
   local DCSObject = self:GetDCSObject()
@@ -469,30 +469,30 @@ function POSITIONABLE:Message( Message, Duration, Name )
   return nil
 end
 
---- (R2.1) Create a @{Radio#RADIO}, to allow radio transmission for this POSITIONABLE. 
+--- Create a @{Radio#RADIO}, to allow radio transmission for this POSITIONABLE. 
 -- Set parameters with the methods provided, then use RADIO:Broadcast() to actually broadcast the message
 -- @param #POSITIONABLE self
 -- @return #RADIO Radio
-function POSITIONABLE:GetRadio()
+function POSITIONABLE:GetRadio() --R2.1
   self:F2(self)
   return RADIO:New(self) 
 end
 
---- (R2.1) Create a @{Radio#BEACON}, to allow this POSITIONABLE to broadcast beacon signals
+--- Create a @{Radio#BEACON}, to allow this POSITIONABLE to broadcast beacon signals
 -- @param #POSITIONABLE self
 -- @return #RADIO Radio
-function POSITIONABLE:GetBeacon()
+function POSITIONABLE:GetBeacon() --R2.1
   self:F2(self)
   return BEACON:New(self) 
 end
 
---- (R2.1) Start Lasing a POSITIONABLE
+--- Start Lasing a POSITIONABLE
 -- @param #POSITIONABLE self
 -- @param #POSITIONABLE Target
 -- @param #number LaserCode
 -- @param #number Duration
 -- @return Core.Spot#SPOT
-function POSITIONABLE:LaseUnit( Target, LaserCode, Duration )
+function POSITIONABLE:LaseUnit( Target, LaserCode, Duration ) --R2.1
   self:F2()
 
   LaserCode = LaserCode or math.random( 1000, 9999 )
@@ -509,10 +509,10 @@ function POSITIONABLE:LaseUnit( Target, LaserCode, Duration )
   
 end
 
---- (R2.1) Stop Lasing a POSITIONABLE
+--- Stop Lasing a POSITIONABLE
 -- @param #POSITIONABLE self
 -- @return #POSITIONABLE
-function POSITIONABLE:LaseOff()
+function POSITIONABLE:LaseOff() --R2.1
   self:F2()
 
   if self.Spot then
@@ -523,10 +523,10 @@ function POSITIONABLE:LaseOff()
   return self
 end
 
---- (R2.1) Check if the POSITIONABLE is lasing a target
+--- Check if the POSITIONABLE is lasing a target
 -- @param #POSITIONABLE self
 -- @return #boolean true if it is lasing a target
-function POSITIONABLE:IsLasing()
+function POSITIONABLE:IsLasing() --R2.1
   self:F2()
 
   local Lasing = false
@@ -538,18 +538,18 @@ function POSITIONABLE:IsLasing()
   return Lasing
 end
 
---- (R2.1) Get the Spot
+--- Get the Spot
 -- @param #POSITIONABLE self
 -- @return Core.Spot#SPOT The Spot
-function POSITIONABLE:GetSpot()
+function POSITIONABLE:GetSpot() --R2.1
   
   return self.Spot
 end
 
---- (R2.1) Get the last assigned laser code
+--- Get the last assigned laser code
 -- @param #POSITIONABLE self
 -- @return #number The laser code
-function POSITIONABLE:GetLaserCode()
+function POSITIONABLE:GetLaserCode() --R2.1
   
   return self.LaserCode
 end
