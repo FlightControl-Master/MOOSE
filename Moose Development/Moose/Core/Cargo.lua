@@ -224,14 +224,14 @@ do -- CARGO
 -- @map < #string, Wrapper.Positionable#POSITIONABLE > The alive POSITIONABLE objects representing the the cargo.
 
 
---- (R2.1) CARGO Constructor. This class is an abstract class and should not be instantiated.
+--- CARGO Constructor. This class is an abstract class and should not be instantiated.
 -- @param #CARGO self
 -- @param #string Type
 -- @param #string Name
 -- @param #number Weight
 -- @param #number NearRadius (optional)
 -- @return #CARGO
-function CARGO:New( Type, Name, Weight )
+function CARGO:New( Type, Name, Weight ) --R2.1
 
   local self = BASE:Inherit( self, FSM:New() ) -- #CARGO
   self:F( { Type, Name, Weight } )
@@ -266,10 +266,10 @@ function CARGO:New( Type, Name, Weight )
   return self
 end
 
---- (R2.1) Get the name of the Cargo.
+--- Get the name of the Cargo.
 -- @param #CARGO self
 -- @return #string The name of the Cargo.
-function CARGO:GetName()
+function CARGO:GetName() --R2.1
   return self.Name
 end
 

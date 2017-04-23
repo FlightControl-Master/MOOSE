@@ -1,10 +1,15 @@
---- **Core  (Release 2.1)** -- Management of SPOT logistics, that can be transported from and to transportation carriers.
+--- **Core 2.1** -- Management of SPOT logistics, that can be transported from and to transportation carriers.
 --
 -- ![Banner Image](..\Presentations\SPOT\Dia1.JPG)
 --
 -- ===
 -- 
--- Spot lases points endlessly or for a duration.
+-- SPOT implements the DCS Spot class functionality, but adds additional luxury to be able to:
+-- 
+--   * Spot for a defined duration.
+--   * wiggle the spot at the target.
+--   * Provide a @{Unit} as a target, instead of a point.
+--   * Implement a status machine, LaseOn, LaseOff.
 --
 -- ====
 -- 
@@ -22,9 +27,20 @@
 -- 
 -- ### [SPOT YouTube Channel]()
 -- 
--- ====
+-- ===
 -- 
--- This module is still under construction, but is described above works already, and will keep working ...
+-- # **AUTHORS and CONTRIBUTIONS**
+-- 
+-- ### Contributions: 
+-- 
+--   * [**Ciribob**](https://forums.eagle.ru/member.php?u=112175): Showing the way how to lase targets + how laser codes work!!! Explained the autolase script.
+--   * [**EasyEB**](https://forums.eagle.ru/member.php?u=112055): Ideas and Beta Testing
+--   * [**Wingthor**](https://forums.eagle.ru/member.php?u=123698): Beta Testing
+--   
+-- 
+-- ### Authors: 
+-- 
+--   * **FlightControl**: Design & Programming
 -- 
 -- @module Spot
 
@@ -32,10 +48,43 @@
 do
 
   --- @type SPOT
-  -- @extends Core.Base#BASE
+  -- @extends Core.Fsm#FSM
 
 
-  --- 
+  --- # SPOT class, extends @{Fsm#FSM}
+  -- 
+  -- SPOT implements the DCS Spot class functionality, but adds additional luxury to be able to:
+  -- 
+  --   * Spot for a defined duration.
+  --   * wiggle the spot at the target.
+  --   * Provide a @{Unit} as a target, instead of a point.
+  --   * Implement a status machine, LaseOn, LaseOff.
+  -- 
+  -- ## 1. SPOT constructor
+  --   
+  --   * @{#SPOT.New}(): Creates a new SPOT object.
+  -- 
+  -- ## 2. SPOT is a FSM
+  -- 
+  -- ![Process]()
+  -- 
+  -- ### 2.1 SPOT States
+  -- 
+  --   * **Off**: Lasing is switched off.
+  --   * **On**: Lasing is switched on.
+  --   * **Destroyed**: Target is destroyed.
+  -- 
+  -- ### 2.2 SPOT Events
+  -- 
+  --   * **@{#SPOT.LaseOn}(Target, LaserCode, Duration)**: Lase to a target.
+  --   * **@{#SPOT.LaseOff}()**: Stop lasing the target.
+  --   * **@{#SPOT.Lasing}()**: Target is being lased.
+  --   * **@{#SPOT.Destroyed}()**: Triggered when target is destroyed.
+  -- 
+  -- ## 3. Check if a Target is being lased
+  -- 
+  -- The method @{#SPOT.IsLasing}() indicates whether lasing is on or off.
+  -- 
   -- @field #SPOT
   SPOT = {
     ClassName = "SPOT",

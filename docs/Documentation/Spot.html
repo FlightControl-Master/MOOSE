@@ -95,7 +95,7 @@
 	<div id="content">
    <h1>Module <code>Spot</code></h1>
    
-<p><strong>Core  (Release 2.1)</strong> -- Management of SPOT logistics, that can be transported from and to transportation carriers.</p>
+<p><strong>Core 2.1</strong> -- Management of SPOT logistics, that can be transported from and to transportation carriers.</p>
 
    
 
@@ -103,7 +103,14 @@
 
 <hr/>
 
-<p>Spot lases points endlessly or for a duration.</p>
+<p>SPOT implements the DCS Spot class functionality, but adds additional luxury to be able to:</p>
+
+<ul>
+    <li>Spot for a defined duration.</li>
+    <li>wiggle the spot at the target.</li>
+    <li>Provide a <a href="Unit.html">Unit</a> as a target, instead of a point.</li>
+    <li>Implement a status machine, LaseOn, LaseOff.</li>
+</ul>
 
 <hr/>
 
@@ -123,7 +130,22 @@
 
 <hr/>
 
-<p>This module is still under construction, but is described above works already, and will keep working ...</p>
+<h1><strong>AUTHORS and CONTRIBUTIONS</strong></h1>
+
+<h3>Contributions:</h3>
+
+<ul>
+    <li><a href="https://forums.eagle.ru/member.php?u=112175"><strong>Ciribob</strong></a>: Showing the way how to lase targets + how laser codes work!!! Explained the autolase script.</li>
+    <li><a href="https://forums.eagle.ru/member.php?u=112055"><strong>EasyEB</strong></a>: Ideas and Beta Testing</li>
+    <li><a href="https://forums.eagle.ru/member.php?u=123698"><strong>Wingthor</strong></a>: Beta Testing</li>
+</ul>
+
+
+<h3>Authors:</h3>
+
+<ul>
+    <li><strong>FlightControl</strong>: Design &amp; Programming</li>
+</ul>
 
 
 	<h2>Global(s)</h2>
@@ -131,34 +153,28 @@
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="#SPOT">SPOT</a></td>
 		<td class="summary">
+<h1>SPOT class, extends <a href="Fsm.html##(FSM)">Fsm#FSM</a></h1>
 
+<p>SPOT implements the DCS Spot class functionality, but adds additional luxury to be able to:</p>
+
+<ul>
+    <li>Spot for a defined duration.</li>
+</ul>
 </td>
 		</tr>
 	</table>
 			<h2><a id="#(SPOT)">Type <code>SPOT</code></a></h2>
 				<table class="function_list">
 		<tr>
-<<<<<<< HEAD
-		<td class="name" nowrap="nowrap"><a href="##(SPOT).IsLasing">SPOT:IsLasing()</a></td>
-		<td class="summary">
-<p>Check if the SPOT is lasing</p>
-=======
 		<td class="name" nowrap="nowrap"><a href="##(SPOT).Destroyed">SPOT:Destroyed()</a></td>
 		<td class="summary">
 <p>Destroyed Trigger for SPOT</p>
->>>>>>> master
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SPOT).LaseOff">SPOT:LaseOff()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SPOT).IsLasing">SPOT:IsLasing()</a></td>
 		<td class="summary">
-<p>LaseOff Trigger for SPOT</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SPOT).LaseOn">SPOT:LaseOn()</a></td>
-		<td class="summary">
-<p>LaseOn Trigger for SPOT</p>
+<p>Check if the SPOT is lasing</p>
 </td>
 		</tr>
 		<tr>
@@ -186,21 +202,24 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPOT).Lasing">SPOT.Lasing</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SPOT).New">SPOT:New(Recce, LaserCode, Duration)</a></td>
 		<td class="summary">
 <p>SPOT Constructor.</p>
 </td>
 		</tr>
 		<tr>
-<<<<<<< HEAD
-=======
 		<td class="name" nowrap="nowrap"><a href="##(SPOT).OnAfterDestroyed">SPOT:OnAfterDestroyed(From, Event, To)</a></td>
 		<td class="summary">
 <p>Destroyed Handler OnAfter for SPOT</p>
 </td>
 		</tr>
 		<tr>
->>>>>>> master
 		<td class="name" nowrap="nowrap"><a href="##(SPOT).OnAfterLaseOff">SPOT:OnAfterLaseOff(From, Event, To)</a></td>
 		<td class="summary">
 <p>LaseOff Handler OnAfter for SPOT</p>
@@ -213,15 +232,12 @@
 </td>
 		</tr>
 		<tr>
-<<<<<<< HEAD
-=======
 		<td class="name" nowrap="nowrap"><a href="##(SPOT).OnBeforeDestroyed">SPOT:OnBeforeDestroyed(From, Event, To)</a></td>
 		<td class="summary">
 <p>Destroyed Handler OnBefore for SPOT</p>
 </td>
 		</tr>
 		<tr>
->>>>>>> master
 		<td class="name" nowrap="nowrap"><a href="##(SPOT).OnBeforeLaseOff">SPOT:OnBeforeLaseOff(From, Event, To)</a></td>
 		<td class="summary">
 <p>LaseOff Handler OnBefore for SPOT</p>
@@ -270,15 +286,12 @@
 </td>
 		</tr>
 		<tr>
-<<<<<<< HEAD
-=======
 		<td class="name" nowrap="nowrap"><a href="##(SPOT).__Destroyed">SPOT:__Destroyed(Delay)</a></td>
 		<td class="summary">
 <p>Destroyed Asynchronous Trigger for SPOT</p>
 </td>
 		</tr>
 		<tr>
->>>>>>> master
 		<td class="name" nowrap="nowrap"><a href="##(SPOT).__LaseOff">SPOT:__LaseOff(Delay)</a></td>
 		<td class="summary">
 <p>LaseOff Asynchronous Trigger for SPOT</p>
@@ -321,6 +334,51 @@
 </dt>
 <dd>
 	
+<h1>SPOT class, extends <a href="Fsm.html##(FSM)">Fsm#FSM</a></h1>
+
+<p>SPOT implements the DCS Spot class functionality, but adds additional luxury to be able to:</p>
+
+<ul>
+    <li>Spot for a defined duration.</li>
+</ul>
+
+	
+<ul>
+    <li>wiggle the spot at the target.</li>
+    <li>Provide a <a href="Unit.html">Unit</a> as a target, instead of a point.</li>
+    <li>Implement a status machine, LaseOn, LaseOff.</li>
+</ul>
+
+<h2>1. SPOT constructor</h2>
+
+<ul>
+    <li><a href="##(SPOT).New">SPOT.New</a>(): Creates a new SPOT object.</li>
+</ul>
+
+<h2>2. SPOT is a FSM</h2>
+
+<p><img src="" alt="Process"/></p>
+
+<h3>2.1 SPOT States</h3>
+
+<ul>
+    <li><strong>Off</strong>: Lasing is switched off.</li>
+    <li><strong>On</strong>: Lasing is switched on.</li>
+    <li><strong>Destroyed</strong>: Target is destroyed.</li>
+</ul>
+
+<h3>2.2 SPOT Events</h3>
+
+<ul>
+    <li>**<a href="##(SPOT).LaseOn">SPOT.LaseOn</a>(Target, LaserCode, Duration)**: Lase to a target.</li>
+    <li>**<a href="##(SPOT).LaseOff">SPOT.LaseOff</a>()**: Stop lasing the target.</li>
+    <li>**<a href="##(SPOT).Lasing">SPOT.Lasing</a>()**: Target is being lased.</li>
+    <li>**<a href="##(SPOT).Destroyed">SPOT.Destroyed</a>()**: Triggered when target is destroyed.</li>
+</ul>
+
+<h2>3. Check if a Target is being lased</h2>
+
+<p>The method <a href="##(SPOT).IsLasing">SPOT.IsLasing</a>() indicates whether lasing is on or off.</p>
 
 
 </dd>
@@ -332,53 +390,31 @@
 		<dl class="function">
 <dt>
 
-<<<<<<< HEAD
-<a id="#(SPOT).IsLasing" >
-<strong>SPOT:IsLasing()</strong>
-=======
 <a id="#(SPOT).Destroyed" >
 <strong>SPOT:Destroyed()</strong>
->>>>>>> master
 </a>
 </dt>
 <dd>
 	
-<<<<<<< HEAD
+<p>Destroyed Trigger for SPOT</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SPOT).IsLasing" >
+<strong>SPOT:IsLasing()</strong>
+</a>
+</dt>
+<dd>
+	
 <p>Check if the SPOT is lasing</p>
 
 		<h3>Return value</h3>
 				
 <p><em>#boolean:</em>
 true if it is lasing</p>
-=======
-<p>Destroyed Trigger for SPOT</p>
->>>>>>> master
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(SPOT).LaseOff" >
-<strong>SPOT:LaseOff()</strong>
-</a>
-</dt>
-<dd>
-	
-<p>LaseOff Trigger for SPOT</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(SPOT).LaseOn" >
-<strong>SPOT:LaseOn()</strong>
-</a>
-</dt>
-<dd>
-	
-<p>LaseOn Trigger for SPOT</p>
 
 </dd>
 </dl>
@@ -439,6 +475,20 @@ true if it is lasing</p>
 		<dl class="function">
 <dt>
 
+		<em>#boolean</em>
+<a id="#(SPOT).Lasing" >
+<strong>SPOT.Lasing</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(SPOT).New" >
 <strong>SPOT:New(Recce, LaserCode, Duration)</strong>
 </a>
@@ -475,8 +525,6 @@ true if it is lasing</p>
 		<dl class="function">
 <dt>
 
-<<<<<<< HEAD
-=======
 <a id="#(SPOT).OnAfterDestroyed" >
 <strong>SPOT:OnAfterDestroyed(From, Event, To)</strong>
 </a>
@@ -508,7 +556,6 @@ true if it is lasing</p>
 		<dl class="function">
 <dt>
 
->>>>>>> master
 <a id="#(SPOT).OnAfterLaseOff" >
 <strong>SPOT:OnAfterLaseOff(From, Event, To)</strong>
 </a>
@@ -571,8 +618,6 @@ true if it is lasing</p>
 		<dl class="function">
 <dt>
 
-<<<<<<< HEAD
-=======
 <a id="#(SPOT).OnBeforeDestroyed" >
 <strong>SPOT:OnBeforeDestroyed(From, Event, To)</strong>
 </a>
@@ -609,7 +654,6 @@ true if it is lasing</p>
 		<dl class="function">
 <dt>
 
->>>>>>> master
 <a id="#(SPOT).OnBeforeLaseOff" >
 <strong>SPOT:OnBeforeLaseOff(From, Event, To)</strong>
 </a>
@@ -730,10 +774,6 @@ true if it is lasing</p>
 		<dl class="function">
 <dt>
 
-<<<<<<< HEAD
-<a id="#(SPOT).Spot" >
-<strong>SPOT.Spot</strong>
-=======
 <a id="#(SPOT).SpotIR" >
 <strong>SPOT.SpotIR</strong>
 </a>
@@ -749,7 +789,6 @@ true if it is lasing</p>
 
 <a id="#(SPOT).SpotLaser" >
 <strong>SPOT.SpotLaser</strong>
->>>>>>> master
 </a>
 </dt>
 <dd>
@@ -774,8 +813,6 @@ true if it is lasing</p>
 		<dl class="function">
 <dt>
 
-<<<<<<< HEAD
-=======
 <a id="#(SPOT).__Destroyed" >
 <strong>SPOT:__Destroyed(Delay)</strong>
 </a>
@@ -797,7 +834,6 @@ true if it is lasing</p>
 		<dl class="function">
 <dt>
 
->>>>>>> master
 <a id="#(SPOT).__LaseOff" >
 <strong>SPOT:__LaseOff(Delay)</strong>
 </a>

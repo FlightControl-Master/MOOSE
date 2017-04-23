@@ -1012,22 +1012,22 @@ end
 
 do -- Detection
 
-  --- (R2.1) Returns if a unit is detecting the TargetUnit.
+  --- Returns if a unit is detecting the TargetUnit.
   -- @param #UNIT self
   -- @param #UNIT TargetUnit
   -- @return #boolean true If the TargetUnit is detected by the unit, otherwise false.
-  function UNIT:IsDetected( TargetUnit )
+  function UNIT:IsDetected( TargetUnit ) --R2.1
 
     local TargetIsDetected, TargetIsVisible, TargetLastTime, TargetKnowType, TargetKnowDistance, TargetLastPos, TargetLastVelocity = self:IsTargetDetected( TargetUnit:GetDCSObject() )  
     
     return TargetIsDetected
   end
   
-  --- (R2.1) Returns if a unit has Line of Sight (LOS) with the TargetUnit.
+  --- Returns if a unit has Line of Sight (LOS) with the TargetUnit.
   -- @param #UNIT self
   -- @param #UNIT TargetUnit
   -- @return #boolean true If the TargetUnit has LOS with the unit, otherwise false.
-  function UNIT:IsLOS( TargetUnit )
+  function UNIT:IsLOS( TargetUnit ) --R2.1
 
     local IsLOS = self:GetPointVec3():IsLOS( TargetUnit:GetPointVec3() )
 

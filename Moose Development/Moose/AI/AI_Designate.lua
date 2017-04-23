@@ -1,9 +1,35 @@
---- **AI (Release 2.1)** -- Management of target designation.
+--- **AI R2.1** -- Management of target **Designation**.
 --
 -- --![Banner Image](..\Presentations\DESIGNATE\Dia1.JPG)
 --
 -- ===
 --
+-- AI_DESIGNATE is orchestrating the designation of potential targets executed by a Recce group, 
+-- and communicates these to a dedicated attacking group of players, 
+-- so that following a dynamically generated menu system, 
+-- each detected set of potential targets can be lased or smoked...
+-- 
+-- Targets can be:
+-- 
+--   * **Lased** for a period of time.
+--   * **Smoked**. Artillery or airplanes with Illuminatino ordonance need to be present. (WIP, but early demo ready.)
+--   * **Illuminated** through an illumination bomb. Artillery or airplanes with Illuminatino ordonance need to be present. (WIP, but early demo ready.
+-- 
+-- ===
+-- 
+-- # **AUTHORS and CONTRIBUTIONS**
+-- 
+-- ### Contributions: 
+-- 
+--   * [**Ciribob**](https://forums.eagle.ru/member.php?u=112175): Showing the way how to lase targets + how laser codes work!!! Explained the autolase script.
+--   * [**EasyEB**](https://forums.eagle.ru/member.php?u=112055): Ideas and Beta Testing
+--   * [**Wingthor**](https://forums.eagle.ru/member.php?u=123698): Beta Testing
+--   
+-- 
+-- ### Authors: 
+-- 
+--   * **FlightControl**: Design & Programming
+-- 
 -- @module AI_Designate
 
 
@@ -79,7 +105,7 @@ do -- AI_DESIGNATE
   -- 
   -- ## 2. AI_DESIGNATE is a FSM
   -- 
-  -- ![Process](µ)
+  -- ![Process]()
   -- 
   -- ### 2.1 AI_DESIGNATE States
   -- 
@@ -111,7 +137,16 @@ do -- AI_DESIGNATE
   --     
   -- The above sets a collection of possible laser codes that can be assigned. **Note the { } notation!**
   -- 
+  -- ## 4. Autolase to automatically lase detected targets.
   -- 
+  -- _DetectionItems_ can be auto lased once detected by _Recces_. As such, there is almost no action required from the _Players_ using the _Designate Menu_.
+  -- The **auto lase** function can be activated through the Designation Menu.
+  -- Use the method @{#AI_DESIGNATE.SetAutoLase}() to activate or deactivate the auto lase function programmatically.
+  -- Note that autolase will automatically activate lasing for ALL _DetectedItems_. Individual items can be switched-off if required using the _Designation Menu_.
+  -- 
+  --     AIDesignate:SetAutoLase( true )
+  -- 
+  -- Activate the auto lasing.
   -- 
   -- @field #AI_DESIGNATE
   -- 
@@ -321,7 +356,7 @@ do -- AI_DESIGNATE
   -- @param #AI_DESIGNATE self
   -- @param #list<#number> LaserCodes
   -- @return #AI_DESIGNATE
-  function AI_DESIGNATE:SetLaserCodes( LaserCodes )
+  function AI_DESIGNATE:SetLaserCodes( LaserCodes ) --R2.1
 
     self.LaserCodes = ( type( LaserCodes ) == "table" ) and LaserCodes or { LaserCodes }
     self:E(self.LaserCodes)
@@ -336,7 +371,7 @@ do -- AI_DESIGNATE
   -- @param #AI_DESIGNATE self
   -- @param #boolean AutoLase
   -- @return #AI_DESIGNATE
-  function AI_DESIGNATE:SetAutoLase( AutoLase )
+  function AI_DESIGNATE:SetAutoLase( AutoLase ) --R2.1
 
     self.AutoLase = AutoLase
     
