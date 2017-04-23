@@ -1,4 +1,4 @@
---- **Core** -- Spawn dynamically new STATICs in your missions.
+--- (R2.1) **Core** -- Spawn dynamically new STATICs in your missions.
 --  
 -- ![Banner Image](..\Presentations\SPAWNSTATIC\Dia1.JPG)
 -- 
@@ -95,7 +95,7 @@ SPAWNSTATIC = {
 -- @param #SPAWNSTATIC self
 -- @param #string SpawnTemplatePrefix is the name of the Group in the ME that defines the Template.  Each new group will have the name starting with SpawnTemplatePrefix.
 -- @return #SPAWNSTATIC
-function SPAWNSTATIC:NewFromStatic( SpawnTemplatePrefix, CountryID )
+function SPAWNSTATIC:NewFromStatic( SpawnTemplatePrefix, CountryID ) --R2.1
 	local self = BASE:Inherit( self, BASE:New() ) -- #SPAWNSTATIC
 	self:F( { SpawnTemplatePrefix } )
   
@@ -117,7 +117,7 @@ end
 -- @param #SPAWNSTATIC self
 -- @param #string SpawnTypeName is the name of the type.
 -- @return #SPAWNSTATIC
-function SPAWNSTATIC:NewFromType( SpawnTypeName, SpawnShapeName, SpawnCategory, CountryID )
+function SPAWNSTATIC:NewFromType( SpawnTypeName, SpawnShapeName, SpawnCategory, CountryID ) --R2.1
   local self = BASE:Inherit( self, BASE:New() ) -- #SPAWNSTATIC
   self:F( { SpawnTypeName } )
   
@@ -137,7 +137,7 @@ end
 -- @param #number Heading The heading of the static, which is a number in degrees from 0 to 360.
 -- @param #string (optional) The name of the new static.
 -- @return #SPAWNSTATIC
-function SPAWNSTATIC:SpawnFromPointVec2( PointVec2, Heading, NewName )
+function SPAWNSTATIC:SpawnFromPointVec2( PointVec2, Heading, NewName ) --R2.1
   self:F( { PointVec2, Heading, NewName  } )
   
   local CountryName = _DATABASE.COUNTRY_NAME[self.CountryID]
@@ -167,7 +167,7 @@ end
 -- @param #number Heading The heading of the static, which is a number in degrees from 0 to 360.
 -- @param #string (optional) The name of the new static.
 -- @return #SPAWNSTATIC
-function SPAWNSTATIC:SpawnFromZone( Zone, Heading, NewName )
+function SPAWNSTATIC:SpawnFromZone( Zone, Heading, NewName ) --R2.1
   self:F( { Zone, Heading, NewName  } )
 
   local Static = self:SpawnFromPointVec2( Zone:GetPointVec2(), Heading, NewName )

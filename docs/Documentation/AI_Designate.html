@@ -95,13 +95,45 @@
 	<div id="content">
    <h1>Module <code>AI_Designate</code></h1>
    
-<p><strong>AI (Release 2.1)</strong> -- Management of target designation.</p>
+<p><strong>AI R2.1</strong> -- Management of target <strong>Designation</strong>.</p>
 
    
 
 <p>--<img src="..\Presentations\DESIGNATE\Dia1.JPG" alt="Banner Image"/></p>
 
 <hr/>
+
+<p>AI_DESIGNATE is orchestrating the designation of potential targets executed by a Recce group, 
+and communicates these to a dedicated attacking group of players, 
+so that following a dynamically generated menu system, 
+each detected set of potential targets can be lased or smoked...</p>
+
+<p>Targets can be:</p>
+
+<ul>
+    <li><strong>Lased</strong> for a period of time.</li>
+    <li><strong>Smoked</strong>. Artillery or airplanes with Illuminatino ordonance need to be present. (WIP, but early demo ready.)</li>
+    <li><strong>Illuminated</strong> through an illumination bomb. Artillery or airplanes with Illuminatino ordonance need to be present. (WIP, but early demo ready.</li>
+</ul>
+
+<hr/>
+
+<h1><strong>AUTHORS and CONTRIBUTIONS</strong></h1>
+
+<h3>Contributions:</h3>
+
+<ul>
+    <li><a href="https://forums.eagle.ru/member.php?u=112175"><strong>Ciribob</strong></a>: Showing the way how to lase targets + how laser codes work!!! Explained the autolase script.</li>
+    <li><a href="https://forums.eagle.ru/member.php?u=112055"><strong>EasyEB</strong></a>: Ideas and Beta Testing</li>
+    <li><a href="https://forums.eagle.ru/member.php?u=123698"><strong>Wingthor</strong></a>: Beta Testing</li>
+</ul>
+
+
+<h3>Authors:</h3>
+
+<ul>
+    <li><strong>FlightControl</strong>: Design &amp; Programming</li>
+</ul>
 
 
 	<h2>Global(s)</h2>
@@ -121,6 +153,30 @@ each detected set of potential targets can be lased or smoked...</p>
 			<h2><a id="#(AI_DESIGNATE)">Type <code>AI_DESIGNATE</code></a></h2>
 				<table class="function_list">
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).ActivateAutoLase">AI_DESIGNATE:ActivateAutoLase()</a></td>
+		<td class="summary">
+<p>Coordinates the Auto Lase.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).AttackSet">AI_DESIGNATE.AttackSet</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).AutoLase">AI_DESIGNATE.AutoLase</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).Designating">AI_DESIGNATE.Designating</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).Detect">AI_DESIGNATE:Detect()</a></td>
 		<td class="summary">
 <p>Detect Trigger for AI_DESIGNATE</p>
@@ -133,7 +189,13 @@ each detected set of potential targets can be lased or smoked...</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).GroupSet">AI_DESIGNATE.GroupSet</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).Illuminate">AI_DESIGNATE:Illuminate()</a></td>
+		<td class="summary">
+<p>Illuminate Trigger for AI_DESIGNATE</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).LaseDuration">AI_DESIGNATE.LaseDuration</a></td>
 		<td class="summary">
 
 </td>
@@ -157,25 +219,49 @@ each detected set of potential targets can be lased or smoked...</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).MenuLaseOff">AI_DESIGNATE:MenuLaseOff(AttackGroup, Index, Duration)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).LaserCodesUsed">AI_DESIGNATE.LaserCodesUsed</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).MenuLaseOn">AI_DESIGNATE:MenuLaseOn(AttackGroup, Index, Duration)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).MenuAutoLase">AI_DESIGNATE:MenuAutoLase(AutoLase)</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).MenuSmoke">AI_DESIGNATE:MenuSmoke(AttackGroup, Index)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).MenuIlluminate">AI_DESIGNATE:MenuIlluminate(Index)</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).New">AI_DESIGNATE:New(Detection, GroupSet)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).MenuLaseOff">AI_DESIGNATE:MenuLaseOff(Index, Duration)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).MenuLaseOn">AI_DESIGNATE:MenuLaseOn(Index, Duration)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).MenuSmoke">AI_DESIGNATE:MenuSmoke(Index, Color)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).MenuStatus">AI_DESIGNATE:MenuStatus(AttackGroup)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).New">AI_DESIGNATE:New(Detection, AttackSet)</a></td>
 		<td class="summary">
 <p>AI_DESIGNATE Constructor.</p>
 </td>
@@ -184,6 +270,12 @@ each detected set of potential targets can be lased or smoked...</p>
 		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).OnAfterDetect">AI_DESIGNATE:OnAfterDetect(From, Event, To)</a></td>
 		<td class="summary">
 <p>Detect Handler OnAfter for AI_DESIGNATE</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).OnAfterIlluminate">AI_DESIGNATE:OnAfterIlluminate(From, Event, To)</a></td>
+		<td class="summary">
+<p>Illuminate Handler OnAfter for AI_DESIGNATE</p>
 </td>
 		</tr>
 		<tr>
@@ -217,6 +309,12 @@ each detected set of potential targets can be lased or smoked...</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).OnBeforeIlluminate">AI_DESIGNATE:OnBeforeIlluminate(From, Event, To)</a></td>
+		<td class="summary">
+<p>Illuminate Handler OnBefore for AI_DESIGNATE</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).OnBeforeLaseOff">AI_DESIGNATE:OnBeforeLaseOff(From, Event, To)</a></td>
 		<td class="summary">
 <p>LaseOff Handler OnBefore for AI_DESIGNATE </p>
@@ -247,9 +345,21 @@ each detected set of potential targets can be lased or smoked...</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).Recces">AI_DESIGNATE.Recces</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).SendStatus">AI_DESIGNATE:SendStatus()</a></td>
 		<td class="summary">
 <p>Sends the status to the Attack Groups.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).SetAutoLase">AI_DESIGNATE:SetAutoLase(AutoLase)</a></td>
+		<td class="summary">
+<p>Set auto lase.</p>
 </td>
 		</tr>
 		<tr>
@@ -271,12 +381,6 @@ each detected set of potential targets can be lased or smoked...</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).Spots">AI_DESIGNATE.Spots</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).Status">AI_DESIGNATE:Status()</a></td>
 		<td class="summary">
 <p>Status Trigger for AI_DESIGNATE </p>
@@ -286,6 +390,12 @@ each detected set of potential targets can be lased or smoked...</p>
 		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).__Detect">AI_DESIGNATE:__Detect(Delay)</a></td>
 		<td class="summary">
 <p>Detect Asynchronous Trigger for AI_DESIGNATE</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).__Illuminate">AI_DESIGNATE:__Illuminate(Delay)</a></td>
+		<td class="summary">
+<p>Illuminate Asynchronous Trigger for AI_DESIGNATE</p>
 </td>
 		</tr>
 		<tr>
@@ -319,19 +429,37 @@ each detected set of potential targets can be lased or smoked...</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).onafterLaseOff">AI_DESIGNATE:onafterLaseOff(From, Event, To, AttackGroup, Index)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).onafterDone">AI_DESIGNATE:onafterDone(From, Event, To, Index)</a></td>
+		<td class="summary">
+<p>Done</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).onafterIlluminate">AI_DESIGNATE:onafterIlluminate(From, Event, To, Index)</a></td>
+		<td class="summary">
+<p>Illuminating</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).onafterLaseOff">AI_DESIGNATE:onafterLaseOff(From, Event, To, Index)</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).onafterLaseOn">AI_DESIGNATE:onafterLaseOn(From, Event, To, AttackGroup, Index, Duration)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).onafterLaseOn">AI_DESIGNATE:onafterLaseOn(From, Event, To, Index, Duration)</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).onafterSmoke">AI_DESIGNATE:onafterSmoke(From, Event, To, AttackGroup, Index)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).onafterLasing">AI_DESIGNATE:onafterLasing(From, Event, To, Index, Duration)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).onafterSmoke">AI_DESIGNATE:onafterSmoke(From, Event, To, Index, Color)</a></td>
 		<td class="summary">
 
 </td>
@@ -358,24 +486,67 @@ each detected set of potential targets can be lased or smoked...</p>
 
 	
 
-<p>The Recce group is detecting as part of the DETECTION_ class continuously targets.
-Once targets have been detected, they will be reported. The AI_DESIGNATE object will fire the <strong>Detect</strong> event in this case!
-As part of the reporting, the following happens:</p>
+<p>Targets can be:</p>
 
 <ul>
-    <li>A message is sent to each GROUP of the Attack SET_GROUP, containing the threat level and the target composition.</li>
-    <li>A menu is created and updated for each GROUP of the Attack SET_GROUP, containing the the treat level and the target composition.</li>
+    <li><strong>Lased</strong> for a period of time.</li>
+    <li><strong>Smoked</strong>. Artillery or airplanes with Illuminatino ordonance need to be present. (WIP, but early demo ready.)</li>
+    <li><strong>Illuminated</strong> through an illumination bomb. Artillery or airplanes with Illuminatino ordonance need to be present. (WIP, but early demo ready.</li>
 </ul>
 
-<p>One of the players in one of the Attack GROUPs, can then select a Target Set by selecting one of the menu options.
-Each menu option has two modes: </p>
+<p>The following terminology is being used throughout this document:</p>
 
 <ul>
-    <li>If the Target Set is not being designated, then the Designate menu for the target Set will provide options to Lase or Smoke the targets.</li>
-    <li>If the Target Set is being designated, then the Designate menu will provide an option to cancel the designation.</li>
+    <li>The <strong>DesignateObject</strong> is the object of the AI_DESIGNATE class, which is this class explained in the document.</li>
+    <li>The <strong>DetectionObject</strong> is the object of a DETECTION_ class (DETECTION<em>TYPES, DETECTION</em>AREAS, DETECTION_UNITS), which is executing the detection and grouping of Targets into <em>DetectionItems</em>.</li>
+    <li><strong>DetectionItems</strong> is the list of detected target groupings by the <em>DetectionObject</em>. Each <em>DetectionItem</em> contains a <em>TargetSet</em>.</li>
+    <li><strong>DetectionItem</strong> is one element of the <em>DetectionItems</em> list, and contains a <em>TargetSet</em>.</li>
+    <li>The <strong>TargetSet</strong> is a SET_UNITS collection of <em>Targets</em>, that have been detected by the <em>DetectionObject</em>.</li>
+    <li>A <strong>Target</strong> is a detected UNIT object by the <em>DetectionObject</em>.</li>
+    <li>A <strong>Threat Level</strong> is a number from 0 to 10 that is calculated based on the threat of the Target in an Air to Ground battle scenario.</li>
+    <li>The <strong>RecceSet</strong> is a SET_GROUP collection that contains the <strong>RecceGroups</strong>.</li>
+    <li>A <strong>RecceGroup</strong> is a GROUP object containing the <strong>Recces</strong>.</li>
+    <li>A <strong>Recce</strong> is a UNIT object executing the reconnaissance as part the <em>DetectionObject</em>. A Recce can be of any UNIT type.</li>
+    <li>An <strong>AttackGroup</strong> is a GROUP object that contain <em>Players</em>.</li>
+    <li>A <strong>Player</strong> is an active CLIENT object containing a human player.</li>
+    <li>A <strong>Designate Menu</strong> is the menu that is dynamically created during the designation process for each <em>AttackGroup</em>.</li>
 </ul>
 
-<p>In this way, the AI can assist players to designate ground targets for a coordinated attack!</p>
+<p>The <em>RecceSet</em> is continuously detecting for potential <em>Targets</em>, executing its task as part of the <em>DetectionObject</em>.
+Once <em>Targets</em> have been detected, the <em>DesignateObject</em> will trigger the <strong>Detect Event</strong>.</p>
+
+<p>As part of the Detect Event, the <em>DetectionItems</em> list is used by the <em>DesignateObject</em> to provide the <em>Players</em> with:</p>
+
+<ul>
+    <li>The <em>RecceGroups</em> are reporting to each <em>AttackGroup</em>, sending <strong>Messages</strong> containing the <em>Threat Level</em> and the <em>TargetSet</em> composition.</li>
+    <li><strong>Menu options</strong> are created and updated for each <em>AttackGroup</em>, containing the <em>Threat Level</em> and the <em>TargetSet</em> composition.</li>
+</ul>
+
+<p>A <em>Player</em> can then select an action from the <em>Designate Menu</em>. </p>
+
+<p><strong>Note that each selected action will be executed for a <em>TargetSet</em>, thus the <em>Target</em> grouping done by the <em>DetectionObject</em>.</strong></p>
+
+<p>Each <strong>Menu Option</strong> in the <em>Designate Menu</em> has two modes: </p>
+
+<ol>
+    <li>If the <em>TargetSet</em> <strong>is not being designated</strong>, then the <strong>Designate Menu</strong> option for the target Set will provide options to <strong>Lase</strong> or <strong>Smoke</strong> the targets.</li>
+    <li>If the Target Set <strong>is being designated</strong>, then the <strong>Designate Menu</strong> option will provide an option to stop or cancel the designation.</li>
+</ol>
+
+<p>While designating, the <em>RecceGroups</em> will report any change in <em>TargetSet</em> composition or <em>Target</em> presence.</p>
+
+<p>The following logic is executed when a <em>TargetSet</em> is selected to be <em>lased</em> from the <em>Designation Menu</em>:</p>
+
+<ul>
+    <li>The <em>RecceSet</em> is searched for any <em>Recce</em> that is within <em>designation distance</em> from a <em>Target</em> in the <em>TargetSet</em> that is currently not being designated.</li>
+    <li>If there is a <em>Recce</em> found that is currently no designating a target, and is within designation distance from the <em>Target</em>, then that <em>Target</em> will be designated.</li>
+    <li>During designation, any <em>Recce</em> that does not have Line of Sight (LOS) and is not within disignation distance from the <em>Target</em>, will stop designating the <em>Target</em>, and a report is given.</li>
+    <li>When a <em>Recce</em> is designating a <em>Target</em>, and that <em>Target</em> is destroyed, then the <em>Recce</em> will stop designating the <em>Target</em>, and will report the event.</li>
+    <li>When a <em>Recce</em> is designating a <em>Target</em>, and that <em>Recce</em> is destroyed, then the <em>Recce</em> will be removed from the <em>RecceSet</em> and designation will stop without reporting.</li>
+    <li>When all <em>RecceGroups</em> are destroyed from the <em>RecceSet</em>, then the DesignationObject will stop functioning, and nothing will be reported.</li>
+</ul>
+
+<p>In this way, the DesignationObject assists players to designate ground targets for a coordinated attack!</p>
 
 <p>Have FUN!</p>
 
@@ -387,7 +558,7 @@ Each menu option has two modes: </p>
 
 <h2>2. AI_DESIGNATE is a FSM</h2>
 
-<p><img src="µ" alt="Process"/></p>
+<p><img src="" alt="Process"/></p>
 
 <h3>2.1 AI_DESIGNATE States</h3>
 
@@ -425,7 +596,17 @@ One laser code can be given or an sequence of laser codes through an table...</p
 
 <p>The above sets a collection of possible laser codes that can be assigned. <strong>Note the { } notation!</strong></p>
 
+<h2>4. Autolase to automatically lase detected targets.</h2>
 
+<p><em>DetectionItems</em> can be auto lased once detected by <em>Recces</em>. As such, there is almost no action required from the <em>Players</em> using the <em>Designate Menu</em>.
+The <strong>auto lase</strong> function can be activated through the Designation Menu.
+Use the method <a href="##(AI_DESIGNATE).SetAutoLase">AI_DESIGNATE.SetAutoLase</a>() to activate or deactivate the auto lase function programmatically.
+Note that autolase will automatically activate lasing for ALL <em>DetectedItems</em>. Individual items can be switched-off if required using the <em>Designation Menu</em>.</p>
+
+<pre><code>AIDesignate:SetAutoLase( true )
+</code></pre>
+
+<p>Activate the auto lasing.</p>
 
 
 </dd>
@@ -434,6 +615,66 @@ One laser code can be given or an sequence of laser codes through an table...</p
 	
 			<h2><a id="#(AI_DESIGNATE)" >Type <code>AI_DESIGNATE</code></a></h2>
 				<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_DESIGNATE).ActivateAutoLase" >
+<strong>AI_DESIGNATE:ActivateAutoLase()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Coordinates the Auto Lase.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(AI_DESIGNATE)">#AI_DESIGNATE</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(AI_DESIGNATE).AttackSet" >
+<strong>AI_DESIGNATE.AttackSet</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(AI_DESIGNATE).AutoLase" >
+<strong>AI_DESIGNATE.AutoLase</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(AI_DESIGNATE).Designating" >
+<strong>AI_DESIGNATE.Designating</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
 		<dl class="function">
 <dt>
 
@@ -464,9 +705,22 @@ One laser code can be given or an sequence of laser codes through an table...</p
 		<dl class="function">
 <dt>
 
-		<em></em>
-<a id="#(AI_DESIGNATE).GroupSet" >
-<strong>AI_DESIGNATE.GroupSet</strong>
+<a id="#(AI_DESIGNATE).Illuminate" >
+<strong>AI_DESIGNATE:Illuminate()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Illuminate Trigger for AI_DESIGNATE</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#number</em>
+<a id="#(AI_DESIGNATE).LaseDuration" >
+<strong>AI_DESIGNATE.LaseDuration</strong>
 </a>
 </dt>
 <dd>
@@ -517,8 +771,64 @@ One laser code can be given or an sequence of laser codes through an table...</p
 		<dl class="function">
 <dt>
 
+		<em></em>
+<a id="#(AI_DESIGNATE).LaserCodesUsed" >
+<strong>AI_DESIGNATE.LaserCodesUsed</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_DESIGNATE).MenuAutoLase" >
+<strong>AI_DESIGNATE:MenuAutoLase(AutoLase)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> AutoLase </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_DESIGNATE).MenuIlluminate" >
+<strong>AI_DESIGNATE:MenuIlluminate(Index)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> Index </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(AI_DESIGNATE).MenuLaseOff" >
-<strong>AI_DESIGNATE:MenuLaseOff(AttackGroup, Index, Duration)</strong>
+<strong>AI_DESIGNATE:MenuLaseOff(Index, Duration)</strong>
 </a>
 </dt>
 <dd>
@@ -527,11 +837,6 @@ One laser code can be given or an sequence of laser codes through an table...</p
 
 		<h3>Parameters</h3>
 		<ul>
-				<li>
-				
-<p><code><em> AttackGroup </em></code>: </p>
-
-				</li>
 				<li>
 				
 <p><code><em> Index </em></code>: </p>
@@ -549,7 +854,7 @@ One laser code can be given or an sequence of laser codes through an table...</p
 <dt>
 
 <a id="#(AI_DESIGNATE).MenuLaseOn" >
-<strong>AI_DESIGNATE:MenuLaseOn(AttackGroup, Index, Duration)</strong>
+<strong>AI_DESIGNATE:MenuLaseOn(Index, Duration)</strong>
 </a>
 </dt>
 <dd>
@@ -558,11 +863,6 @@ One laser code can be given or an sequence of laser codes through an table...</p
 
 		<h3>Parameters</h3>
 		<ul>
-				<li>
-				
-<p><code><em> AttackGroup </em></code>: </p>
-
-				</li>
 				<li>
 				
 <p><code><em> Index </em></code>: </p>
@@ -580,7 +880,7 @@ One laser code can be given or an sequence of laser codes through an table...</p
 <dt>
 
 <a id="#(AI_DESIGNATE).MenuSmoke" >
-<strong>AI_DESIGNATE:MenuSmoke(AttackGroup, Index)</strong>
+<strong>AI_DESIGNATE:MenuSmoke(Index, Color)</strong>
 </a>
 </dt>
 <dd>
@@ -591,12 +891,33 @@ One laser code can be given or an sequence of laser codes through an table...</p
 		<ul>
 				<li>
 				
-<p><code><em> AttackGroup </em></code>: </p>
+<p><code><em> Index </em></code>: </p>
 
 				</li>
 				<li>
 				
-<p><code><em> Index </em></code>: </p>
+<p><code><em> Color </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_DESIGNATE).MenuStatus" >
+<strong>AI_DESIGNATE:MenuStatus(AttackGroup)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> AttackGroup </em></code>: </p>
 
 				</li>
 		</ul>
@@ -606,7 +927,7 @@ One laser code can be given or an sequence of laser codes through an table...</p
 <dt>
 
 <a id="#(AI_DESIGNATE).New" >
-<strong>AI_DESIGNATE:New(Detection, GroupSet)</strong>
+<strong>AI_DESIGNATE:New(Detection, AttackSet)</strong>
 </a>
 </dt>
 <dd>
@@ -625,8 +946,8 @@ One laser code can be given or an sequence of laser codes through an table...</p
 				</li>
 				<li>
 				
-<p><code><em><a href="Core.Set.html##(SET_GROUP)">Core.Set#SET_GROUP</a> GroupSet </em></code>: 
-The set of groups to designate for.</p>
+<p><code><em><a href="Core.Set.html##(SET_GROUP)">Core.Set#SET_GROUP</a> AttackSet </em></code>: 
+The Attack collection of GROUP objects to designate and report for.</p>
 
 				</li>
 		</ul>
@@ -647,6 +968,37 @@ The set of groups to designate for.</p>
 <dd>
 	
 <p>Detect Handler OnAfter for AI_DESIGNATE</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_DESIGNATE).OnAfterIlluminate" >
+<strong>AI_DESIGNATE:OnAfterIlluminate(From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Illuminate Handler OnAfter for AI_DESIGNATE</p>
 
 		<h3>Parameters</h3>
 		<ul>
@@ -802,6 +1154,42 @@ The set of groups to designate for.</p>
 <dd>
 	
 <p>Detect Handler OnBefore for AI_DESIGNATE</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_DESIGNATE).OnBeforeIlluminate" >
+<strong>AI_DESIGNATE:OnBeforeIlluminate(From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Illuminate Handler OnBefore for AI_DESIGNATE</p>
 
 		<h3>Parameters</h3>
 		<ul>
@@ -989,6 +1377,20 @@ The set of groups to designate for.</p>
 		<dl class="function">
 <dt>
 
+		<em></em>
+<a id="#(AI_DESIGNATE).Recces" >
+<strong>AI_DESIGNATE.Recces</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(AI_DESIGNATE).SendStatus" >
 <strong>AI_DESIGNATE:SendStatus()</strong>
 </a>
@@ -997,6 +1399,35 @@ The set of groups to designate for.</p>
 	
 <p>Sends the status to the Attack Groups.</p>
 
+		<h3>Return value</h3>
+				
+<p><em><a href="##(AI_DESIGNATE)">#AI_DESIGNATE</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_DESIGNATE).SetAutoLase" >
+<strong>AI_DESIGNATE:SetAutoLase(AutoLase)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set auto lase.</p>
+
+	
+<p>Auto lase will start lasing targets immediately when these are in range.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#boolean AutoLase </em></code>: </p>
+
+				</li>
+		</ul>
 		<h3>Return value</h3>
 				
 <p><em><a href="##(AI_DESIGNATE)">#AI_DESIGNATE</a>:</em></p>
@@ -1073,20 +1504,6 @@ number> LaserCodes</p>
 		<dl class="function">
 <dt>
 
-		<em></em>
-<a id="#(AI_DESIGNATE).Spots" >
-<strong>AI_DESIGNATE.Spots</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
 <a id="#(AI_DESIGNATE).Status" >
 <strong>AI_DESIGNATE:Status()</strong>
 </a>
@@ -1107,6 +1524,27 @@ number> LaserCodes</p>
 <dd>
 	
 <p>Detect Asynchronous Trigger for AI_DESIGNATE</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number Delay </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_DESIGNATE).__Illuminate" >
+<strong>AI_DESIGNATE:__Illuminate(Delay)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Illuminate Asynchronous Trigger for AI_DESIGNATE</p>
 
 		<h3>Parameter</h3>
 		<ul>
@@ -1223,8 +1661,90 @@ number> LaserCodes</p>
 		<dl class="function">
 <dt>
 
+<a id="#(AI_DESIGNATE).onafterDone" >
+<strong>AI_DESIGNATE:onafterDone(From, Event, To, Index)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Done</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> To </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> Index </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(AI_DESIGNATE)">#AI_DESIGNATE</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_DESIGNATE).onafterIlluminate" >
+<strong>AI_DESIGNATE:onafterIlluminate(From, Event, To, Index)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Illuminating</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> To </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> Index </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(AI_DESIGNATE)">#AI_DESIGNATE</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(AI_DESIGNATE).onafterLaseOff" >
-<strong>AI_DESIGNATE:onafterLaseOff(From, Event, To, AttackGroup, Index)</strong>
+<strong>AI_DESIGNATE:onafterLaseOff(From, Event, To, Index)</strong>
 </a>
 </dt>
 <dd>
@@ -1246,11 +1766,6 @@ number> LaserCodes</p>
 				<li>
 				
 <p><code><em> To </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em> AttackGroup </em></code>: </p>
 
 				</li>
 				<li>
@@ -1270,7 +1785,7 @@ number> LaserCodes</p>
 <dt>
 
 <a id="#(AI_DESIGNATE).onafterLaseOn" >
-<strong>AI_DESIGNATE:onafterLaseOn(From, Event, To, AttackGroup, Index, Duration)</strong>
+<strong>AI_DESIGNATE:onafterLaseOn(From, Event, To, Index, Duration)</strong>
 </a>
 </dt>
 <dd>
@@ -1296,7 +1811,43 @@ number> LaserCodes</p>
 				</li>
 				<li>
 				
-<p><code><em> AttackGroup </em></code>: </p>
+<p><code><em> Index </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> Duration </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_DESIGNATE).onafterLasing" >
+<strong>AI_DESIGNATE:onafterLasing(From, Event, To, Index, Duration)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> To </em></code>: </p>
 
 				</li>
 				<li>
@@ -1321,7 +1872,7 @@ number> LaserCodes</p>
 <dt>
 
 <a id="#(AI_DESIGNATE).onafterSmoke" >
-<strong>AI_DESIGNATE:onafterSmoke(From, Event, To, AttackGroup, Index)</strong>
+<strong>AI_DESIGNATE:onafterSmoke(From, Event, To, Index, Color)</strong>
 </a>
 </dt>
 <dd>
@@ -1347,12 +1898,12 @@ number> LaserCodes</p>
 				</li>
 				<li>
 				
-<p><code><em> AttackGroup </em></code>: </p>
+<p><code><em> Index </em></code>: </p>
 
 				</li>
 				<li>
 				
-<p><code><em> Index </em></code>: </p>
+<p><code><em> Color </em></code>: </p>
 
 				</li>
 		</ul>

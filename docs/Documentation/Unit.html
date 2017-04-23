@@ -303,6 +303,12 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(UNIT).IsDetected">UNIT:IsDetected(TargetUnit)</a></td>
+		<td class="summary">
+<p>Returns if a unit is detecting the TargetUnit.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(UNIT).IsFriendly">UNIT:IsFriendly(FriendlyCoalition)</a></td>
 		<td class="summary">
 <p>Returns if the unit is a friendly unit.</p>
@@ -318,6 +324,12 @@
 		<td class="name" nowrap="nowrap"><a href="##(UNIT).IsInZone">UNIT:IsInZone(Zone)</a></td>
 		<td class="summary">
 <p>Returns true if the unit is within a <a href="Zone.html">Zone</a>.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(UNIT).IsLOS">UNIT:IsLOS(TargetUnit)</a></td>
+		<td class="summary">
+<p>Returns if a unit has Line of Sight (LOS) with the TargetUnit.</p>
 </td>
 		</tr>
 		<tr>
@@ -498,13 +510,22 @@ If you want to obtain the complete <strong>3D position</strong> including ori�
 
 <p>The UNIT class contains methods to test the location or proximity against zones or other objects.</p>
 
-<h3>Zones</h3>
+<h3>Zones range</h3>
 
 <p>To test whether the Unit is within a <strong>zone</strong>, use the <a href="##(UNIT).IsInZone">UNIT.IsInZone</a>() or the <a href="##(UNIT).IsNotInZone">UNIT.IsNotInZone</a>() methods. Any zone can be tested on, but the zone must be derived from <a href="Zone.html##(ZONE_BASE)">Zone#ZONE_BASE</a>. </p>
 
-<h3>Units</h3>
+<h3>Unit range</h3>
 
-<p>Test if another DCS Unit is within a given radius of the current DCS Unit, use the <a href="##(UNIT).OtherUnitInRadius">UNIT.OtherUnitInRadius</a>() method.</p>
+<ul>
+    <li>Test if another DCS Unit is within a given radius of the current DCS Unit, use the <a href="##(UNIT).OtherUnitInRadius">UNIT.OtherUnitInRadius</a>() method.</li>
+</ul>
+
+<h2>Test Line of Sight</h2>
+
+<ul>
+    <li>Use the <a href="##(UNIT).IsLOS">UNIT.IsLOS</a>() method to check if the given unit is within line of sight.</li>
+</ul>
+
 
 
 </dd>
@@ -1278,6 +1299,32 @@ if the Unit is not existing or is not alive.  </p>
 		<dl class="function">
 <dt>
 
+<a id="#(UNIT).IsDetected" >
+<strong>UNIT:IsDetected(TargetUnit)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns if a unit is detecting the TargetUnit.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="##(UNIT)">#UNIT</a> TargetUnit </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+true If the TargetUnit is detected by the unit, otherwise false.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(UNIT).IsFriendly" >
 <strong>UNIT:IsFriendly(FriendlyCoalition)</strong>
 </a>
@@ -1346,6 +1393,32 @@ The zone to test.</p>
 				
 <p><em>#boolean:</em>
 Returns true if the unit is within the <a href="Zone.html##(ZONE_BASE)">Zone#ZONE_BASE</a></p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(UNIT).IsLOS" >
+<strong>UNIT:IsLOS(TargetUnit)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns if a unit has Line of Sight (LOS) with the TargetUnit.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="##(UNIT)">#UNIT</a> TargetUnit </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+true If the TargetUnit has LOS with the unit, otherwise false.</p>
 
 </dd>
 </dl>

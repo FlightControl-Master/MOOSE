@@ -64,13 +64,18 @@
 -- 
 -- The UNIT class contains methods to test the location or proximity against zones or other objects.
 -- 
--- ### Zones
+-- ### Zones range
 -- 
 -- To test whether the Unit is within a **zone**, use the @{#UNIT.IsInZone}() or the @{#UNIT.IsNotInZone}() methods. Any zone can be tested on, but the zone must be derived from @{Zone#ZONE_BASE}. 
 -- 
--- ### Units
+-- ### Unit range
 -- 
--- Test if another DCS Unit is within a given radius of the current DCS Unit, use the @{#UNIT.OtherUnitInRadius}() method.
+--   * Test if another DCS Unit is within a given radius of the current DCS Unit, use the @{#UNIT.OtherUnitInRadius}() method.
+--   
+-- ## Test Line of Sight
+-- 
+--   * Use the @{#UNIT.IsLOS}() method to check if the given unit is within line of sight.
+-- 
 -- 
 -- @field #UNIT UNIT
 UNIT = {
@@ -1001,6 +1006,32 @@ do -- Event Handling
     self:EventDispatcher():Reset( self )
     
     return self
+  end
+
+end
+
+do -- Detection
+
+  --- Returns if a unit is detecting the TargetUnit.
+  -- @param #UNIT self
+  -- @param #UNIT TargetUnit
+  -- @return #boolean true If the TargetUnit is detected by the unit, otherwise false.
+  function UNIT:IsDetected( TargetUnit ) --R2.1
+
+    local TargetIsDetected, TargetIsVisible, TargetLastTime, TargetKnowType, TargetKnowDistance, TargetLastPos, TargetLastVelocity = self:IsTargetDetected( TargetUnit:GetDCSObject() )  
+    
+    return TargetIsDetected
+  end
+  
+  --- Returns if a unit has Line of Sight (LOS) with the TargetUnit.
+  -- @param #UNIT self
+  -- @param #UNIT TargetUnit
+  -- @return #boolean true If the TargetUnit has LOS with the unit, otherwise false.
+  function UNIT:IsLOS( TargetUnit ) --R2.1
+
+    local IsLOS = self:GetPointVec3():IsLOS( TargetUnit:GetPointVec3() )
+
+    return IsLOS
   end
   
 

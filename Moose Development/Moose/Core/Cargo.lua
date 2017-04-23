@@ -1,4 +1,4 @@
---- **Core** -- Management of CARGO logistics, that can be transported from and to transportation carriers.
+--- **(R2.1) Core** -- Management of CARGO logistics, that can be transported from and to transportation carriers.
 --
 -- ![Banner Image](..\Presentations\CARGO\Dia1.JPG)
 --
@@ -165,7 +165,7 @@ do -- CARGO
   -- @field #boolean Representable This flag defines if the cargo can be represented by a DCS Unit.
   -- @field #boolean Containable This flag defines if the cargo can be contained within a DCS Unit.
   
-  --- # CARGO class, extends @{Fsm#FSM_PROCESS}
+  --- # (R2.1) CARGO class, extends @{Fsm#FSM_PROCESS}
   -- 
   -- The CARGO class defines the core functions that defines a cargo object within MOOSE.
   -- A cargo is a logical object defined that is available for transport, and has a life status within a simulation.
@@ -231,7 +231,7 @@ do -- CARGO
 -- @param #number Weight
 -- @param #number NearRadius (optional)
 -- @return #CARGO
-function CARGO:New( Type, Name, Weight )
+function CARGO:New( Type, Name, Weight ) --R2.1
 
   local self = BASE:Inherit( self, FSM:New() ) -- #CARGO
   self:F( { Type, Name, Weight } )
@@ -269,7 +269,7 @@ end
 --- Get the name of the Cargo.
 -- @param #CARGO self
 -- @return #string The name of the Cargo.
-function CARGO:GetName()
+function CARGO:GetName() --R2.1
   return self.Name
 end
 

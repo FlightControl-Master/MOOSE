@@ -342,6 +342,26 @@ function SET_BASE:_FilterStart()
   return self
 end
 
+--- Starts the filtering of the Dead events for the collection.
+-- @param #SET_BASE self
+-- @return #SET_BASE self
+function SET_BASE:FilterDeads()
+
+  self:HandleEvent( EVENTS.Dead, self._EventOnDeadOrCrash )
+  
+  return self
+end
+
+--- Starts the filtering of the Crash events for the collection.
+-- @param #SET_BASE self
+-- @return #SET_BASE self
+function SET_BASE:FilterCrashes()
+
+  self:HandleEvent( EVENTS.Crash, self._EventOnDeadOrCrash )
+  
+  return self
+end
+
 --- Stops the filtering for the defined collection.
 -- @param #SET_BASE self
 -- @return #SET_BASE self
@@ -430,7 +450,7 @@ function SET_BASE:_EventOnDeadOrCrash( Event )
 
   if Event.IniDCSUnit then
     local ObjectName, Object = self:FindInDatabase( Event )
-    if ObjectName and Object ~= nil then
+    if ObjectName then
       self:Remove( ObjectName )
     end
   end
@@ -961,6 +981,185 @@ function SET_GROUP:ForEachGroupNotInZone( ZoneObject, IteratorFunction, ... )
   return self
 end
 
+--- Iterate the SET_GROUP and return true if all the @{Wrapper.Group#GROUP} are completely in the @{Core.Zone#ZONE}
+-- @param #SET_GROUP self
+-- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
+-- @return #boolean true if all the @{Wrapper.Group#GROUP} are completly in the @{Core.Zone#ZONE}, false otherwise
+-- @usage
+-- local MyZone = ZONE:New("Zone1")
+-- local MySetGroup = SET_GROUP:New()
+-- MySetGroup:AddGroupsByName({"Group1", "Group2"})
+--
+-- if MySetGroup:AllCompletelyInZone(MyZone) then
+--   MESSAGE:New("All the SET's GROUP are in zone !", 10):ToAll()
+-- else
+--   MESSAGE:New("Some or all SET's GROUP are outside zone !", 10):ToAll()
+-- end
+function SET_GROUP:AllCompletelyInZone(Zone)
+  self:F2(Zone)
+  local Set = self:GetSet()
+  for GroupID, GroupData in pairs(Set) do -- For each GROUP in SET_GROUP
+    if not GroupData:IsCompletelyInZone(Zone) then 
+      return false
+    end
+  end
+  return true
+end
+
+--- Iterate the SET_GROUP and return true if at least one of the @{Wrapper.Group#GROUP} is completely inside the @{Core.Zone#ZONE}
+-- @param #SET_GROUP self
+-- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
+-- @return #boolean true if at least one of the @{Wrapper.Group#GROUP} is completly inside the @{Core.Zone#ZONE}, false otherwise.
+-- @usage
+-- local MyZone = ZONE:New("Zone1")
+-- local MySetGroup = SET_GROUP:New()
+-- MySetGroup:AddGroupsByName({"Group1", "Group2"})
+--
+-- if MySetGroup:AnyCompletelyInZone(MyZone) then
+--   MESSAGE:New("At least one GROUP is completely in zone !", 10):ToAll()
+-- else
+--   MESSAGE:New("No GROUP is completely in zone !", 10):ToAll()
+-- end
+function SET_GROUP:AnyCompletelyInZone(Zone)
+  self:F2(Zone)
+  local Set = self:GetSet()
+  for GroupID, GroupData in pairs(Set) do -- For each GROUP in SET_GROUP
+    if GroupData:IsCompletelyInZone(Zone) then 
+      return true
+    end
+  end
+  return false
+end
+
+--- Iterate the SET_GROUP and return true if at least one @{#UNIT} of one @{GROUP} of the @{SET_GROUP} is in @{ZONE}
+-- @param #SET_GROUP self
+-- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
+-- @return #boolean true if at least one of the @{Wrapper.Group#GROUP} is partly or completly inside the @{Core.Zone#ZONE}, false otherwise.
+-- @usage
+-- local MyZone = ZONE:New("Zone1")
+-- local MySetGroup = SET_GROUP:New()
+-- MySetGroup:AddGroupsByName({"Group1", "Group2"})
+--
+-- if MySetGroup:AnyPartlyInZone(MyZone) then
+--   MESSAGE:New("At least one GROUP has at least one UNIT in zone !", 10):ToAll()
+-- else
+--   MESSAGE:New("No UNIT of any GROUP is in zone !", 10):ToAll()
+-- end
+function SET_GROUP:AnyInZone(Zone)
+  self:F2(Zone)
+  local Set = self:GetSet()
+  for GroupID, GroupData in pairs(Set) do -- For each GROUP in SET_GROUP
+    if GroupData:IsPartlyInZone(Zone) or GroupData:IsCompletelyInZone(Zone) then 
+      return true
+    end
+  end
+  return false
+end
+
+--- Iterate the SET_GROUP and return true if at least one @{GROUP} of the @{SET_GROUP} is partly in @{ZONE}.
+-- Will return false if a @{GROUP} is fully in the @{ZONE}
+-- @param #SET_GROUP self
+-- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
+-- @return #boolean true if at least one of the @{Wrapper.Group#GROUP} is partly or completly inside the @{Core.Zone#ZONE}, false otherwise.
+-- @usage
+-- local MyZone = ZONE:New("Zone1")
+-- local MySetGroup = SET_GROUP:New()
+-- MySetGroup:AddGroupsByName({"Group1", "Group2"})
+--
+-- if MySetGroup:AnyPartlyInZone(MyZone) then
+--   MESSAGE:New("At least one GROUP is partially in the zone, but none are fully in it !", 10):ToAll()
+-- else
+--   MESSAGE:New("No GROUP are in zone, or one (or more) GROUP is completely in it !", 10):ToAll()
+-- end
+function SET_GROUP:AnyPartlyInZone(Zone)
+  self:F2(Zone)
+  local IsPartlyInZone = false
+  local Set = self:GetSet()
+  for GroupID, GroupData in pairs(Set) do -- For each GROUP in SET_GROUP
+    if GroupData:IsCompletelyInZone(Zone) then
+      return false
+    elseif GroupData:IsPartlyInZone(Zone) then 
+      IsPartlyInZone = true -- at least one GROUP is partly in zone
+    end
+  end
+  
+  if IsPartlyInZone then
+    return true
+  else
+    return false
+  end
+end
+
+--- Iterate the SET_GROUP and return true if no @{GROUP} of the @{SET_GROUP} is in @{ZONE}
+-- This could also be achieved with `not SET_GROUP:AnyPartlyInZone(Zone)`, but it's easier for the 
+-- mission designer to add a dedicated method
+-- @param #SET_GROUP self
+-- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
+-- @return #boolean true if no @{Wrapper.Group#GROUP} is inside the @{Core.Zone#ZONE} in any way, false otherwise.
+-- @usage
+-- local MyZone = ZONE:New("Zone1")
+-- local MySetGroup = SET_GROUP:New()
+-- MySetGroup:AddGroupsByName({"Group1", "Group2"})
+--
+-- if MySetGroup:NoneInZone(MyZone) then
+--   MESSAGE:New("No GROUP is completely in zone !", 10):ToAll()
+-- else
+--   MESSAGE:New("No UNIT of any GROUP is in zone !", 10):ToAll()
+-- end
+function SET_GROUP:NoneInZone(Zone)
+  self:F2(Zone)
+  local Set = self:GetSet()
+  for GroupID, GroupData in pairs(Set) do -- For each GROUP in SET_GROUP
+    if not GroupData:IsNotInZone(Zone) then -- If the GROUP is in Zone in any way
+      return false
+    end
+  end
+  return true
+end
+
+--- Iterate the SET_GROUP and count how many GROUPs are completely in the Zone
+-- That could easily be done with SET_GROUP:ForEachGroupCompletelyInZone(), but this function
+-- provides an easy to use shortcut...
+-- @param #SET_GROUP self
+-- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
+-- @return #number the number of GROUPs completely in the Zone
+-- @usage
+-- local MyZone = ZONE:New("Zone1")
+-- local MySetGroup = SET_GROUP:New()
+-- MySetGroup:AddGroupsByName({"Group1", "Group2"})
+--
+-- MESSAGE:New("There are " .. MySetGroup:CountInZone(MyZone) .. " GROUPs in the Zone !", 10):ToAll()
+function SET_GROUP:CountInZone(Zone)
+  self:F2(Zone)
+  local Count = 0
+  local Set = self:GetSet()
+  for GroupID, GroupData in pairs(Set) do -- For each GROUP in SET_GROUP
+    if GroupData:IsCompletelyInZone(Zone) then 
+      Count = Count + 1
+    end
+  end
+  return Count
+end
+
+--- Iterate the SET_GROUP and count how many UNITs are completely in the Zone
+-- @param #SET_GROUP self
+-- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
+-- @return #number the number of GROUPs completely in the Zone
+-- @usage
+-- local MyZone = ZONE:New("Zone1")
+-- local MySetGroup = SET_GROUP:New()
+-- MySetGroup:AddGroupsByName({"Group1", "Group2"})
+--
+-- MESSAGE:New("There are " .. MySetGroup:CountUnitInZone(MyZone) .. " UNITs in the Zone !", 10):ToAll()
+function SET_GROUP:CountUnitInZone(Zone)
+  self:F2(Zone)
+  local Count = 0
+  local Set = self:GetSet()
+  for GroupID, GroupData in pairs(Set) do -- For each GROUP in SET_GROUP
+    Count = Count + GroupData:CountInZone(Zone)
+  end
+  return Count
+end
 
 ----- Iterate the SET_GROUP and call an interator function for each **alive** player, providing the Group of the player and optional parameters.
 ---- @param #SET_GROUP self
@@ -2420,7 +2619,7 @@ end
 --- @type SET_CARGO
 -- @extends Core.Set#SET_BASE
 
---- # SET_CARGO class, extends @{Set#SET_BASE}
+--- # (R2.1) SET_CARGO class, extends @{Set#SET_BASE}
 -- 
 -- Mission designers can use the @{Set#SET_CARGO} class to build sets of cargos optionally belonging to certain:
 -- 
@@ -2482,7 +2681,7 @@ SET_CARGO = {
 }
 
 
---- Creates a new SET_CARGO object, building a set of cargos belonging to a coalitions and categories.
+--- (R2.1) Creates a new SET_CARGO object, building a set of cargos belonging to a coalitions and categories.
 -- @param #SET_CARGO self
 -- @return #SET_CARGO self
 -- @usage
@@ -2495,7 +2694,7 @@ function SET_CARGO:New()
   return self
 end
 
---- Add CARGOs to SET_CARGO.
+--- (R2.1) Add CARGOs to SET_CARGO.
 -- @param Core.Set#SET_CARGO self
 -- @param #string AddCargoNames A single name or an array of CARGO names.
 -- @return self
@@ -2510,7 +2709,7 @@ function SET_CARGO:AddCargosByName( AddCargoNames )
   return self
 end
 
---- Remove CARGOs from SET_CARGO.
+--- (R2.1) Remove CARGOs from SET_CARGO.
 -- @param Core.Set#SET_CARGO self
 -- @param Wrapper.Cargo#CARGO RemoveCargoNames A single name or an array of CARGO names.
 -- @return self
@@ -2526,7 +2725,7 @@ function SET_CARGO:RemoveCargosByName( RemoveCargoNames )
 end
 
 
---- Finds a Cargo based on the Cargo Name.
+--- (R2.1) Finds a Cargo based on the Cargo Name.
 -- @param #SET_CARGO self
 -- @param #string CargoName
 -- @return Wrapper.Cargo#CARGO The found Cargo.
@@ -2538,7 +2737,7 @@ end
 
 
 
---- Builds a set of cargos of coalitions.
+--- (R2.1) Builds a set of cargos of coalitions.
 -- Possible current coalitions are red, blue and neutral.
 -- @param #SET_CARGO self
 -- @param #string Coalitions Can take the following values: "red", "blue", "neutral".
@@ -2556,7 +2755,7 @@ function SET_CARGO:FilterCoalitions( Coalitions )
   return self
 end
 
---- Builds a set of cargos of defined cargo types.
+--- (R2.1) Builds a set of cargos of defined cargo types.
 -- Possible current types are those types known within DCS world.
 -- @param #SET_CARGO self
 -- @param #string Types Can take those type strings known within DCS world.
@@ -2575,7 +2774,7 @@ function SET_CARGO:FilterTypes( Types )
 end
 
 
---- Builds a set of cargos of defined countries.
+--- (R2.1) Builds a set of cargos of defined countries.
 -- Possible current countries are those known within DCS world.
 -- @param #SET_CARGO self
 -- @param #string Countries Can take those country strings known within DCS world.
@@ -2594,7 +2793,7 @@ function SET_CARGO:FilterCountries( Countries )
 end
 
 
---- Builds a set of cargos of defined cargo prefixes.
+--- (R2.1) Builds a set of cargos of defined cargo prefixes.
 -- All the cargos starting with the given prefixes will be included within the set.
 -- @param #SET_CARGO self
 -- @param #string Prefixes The prefix of which the cargo name starts with.
@@ -2614,7 +2813,7 @@ end
 
 
 
---- Starts the filtering.
+--- (R2.1) Starts the filtering.
 -- @param #SET_CARGO self
 -- @return #SET_CARGO self
 function SET_CARGO:FilterStart()
@@ -2630,7 +2829,7 @@ function SET_CARGO:FilterStart()
 end
 
 
---- Handles the Database to check on an event (birth) that the Object was added in the Database.
+--- (R2.1) Handles the Database to check on an event (birth) that the Object was added in the Database.
 -- This is required, because sometimes the _DATABASE birth event gets called later than the SET_BASE birth event!
 -- @param #SET_CARGO self
 -- @param Core.Event#EVENTDATA Event
@@ -2642,7 +2841,7 @@ function SET_CARGO:AddInDatabase( Event )
   return Event.IniDCSUnitName, self.Database[Event.IniDCSUnitName]
 end
 
---- Handles the Database to check on any event that Object exists in the Database.
+--- (R2.1) Handles the Database to check on any event that Object exists in the Database.
 -- This is required, because sometimes the _DATABASE event gets called later than the SET_BASE event or vise versa!
 -- @param #SET_CARGO self
 -- @param Core.Event#EVENTDATA Event
@@ -2654,7 +2853,7 @@ function SET_CARGO:FindInDatabase( Event )
   return Event.IniDCSUnitName, self.Database[Event.IniDCSUnitName]
 end
 
---- Iterate the SET_CARGO and call an interator function for each CARGO, providing the CARGO and optional parameters.
+--- (R2.1) Iterate the SET_CARGO and call an interator function for each CARGO, providing the CARGO and optional parameters.
 -- @param #SET_CARGO self
 -- @param #function IteratorFunction The function that will be called when there is an alive CARGO in the SET_CARGO. The function needs to accept a CARGO parameter.
 -- @return #SET_CARGO self
@@ -2666,7 +2865,7 @@ function SET_CARGO:ForEachCargo( IteratorFunction, ... )
   return self
 end
 
---- Iterate the SET_CARGO while identifying the nearest @{Cargo#CARGO} from a @{Point#POINT_VEC2}.
+--- (R2.1) Iterate the SET_CARGO while identifying the nearest @{Cargo#CARGO} from a @{Point#POINT_VEC2}.
 -- @param #SET_CARGO self
 -- @param Core.Point#POINT_VEC2 PointVec2 A @{Point#POINT_VEC2} object from where to evaluate the closest @{Cargo#CARGO}.
 -- @return Wrapper.Cargo#CARGO The closest @{Cargo#CARGO}.
@@ -2679,7 +2878,7 @@ end
 
 
 
----
+--- (R2.1) 
 -- @param #SET_CARGO self
 -- @param AI.AI_Cargo#AI_CARGO MCargo
 -- @return #SET_CARGO self
@@ -2733,7 +2932,7 @@ function SET_CARGO:IsIncludeObject( MCargo )
   return MCargoInclude
 end
 
---- Handles the OnEventNewCargo event for the Set.
+--- (R2.1) Handles the OnEventNewCargo event for the Set.
 -- @param #SET_CARGO self
 -- @param Core.Event#EVENTDATA EventData
 function SET_CARGO:OnEventNewCargo( EventData )
@@ -2745,7 +2944,7 @@ function SET_CARGO:OnEventNewCargo( EventData )
   end
 end
 
---- Handles the OnDead or OnCrash event for alive units set.
+--- (R2.1) Handles the OnDead or OnCrash event for alive units set.
 -- @param #SET_CARGO self
 -- @param Core.Event#EVENTDATA EventData
 function SET_CARGO:OnEventDeleteCargo( EventData )

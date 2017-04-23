@@ -789,6 +789,25 @@ function POINT_VEC3:FlareRed( Azimuth )
   self:Flare( FLARECOLOR.Red, Azimuth )
 end
 
+--- Returns if a PointVec3 has Line of Sight (LOS) with the ToPointVec3.
+-- @param #POINT_VEC3 self
+-- @param #POINT_VEC3 ToPointVec3
+-- @return #boolean true If the ToPointVec3 has LOS with the PointVec3, otherwise false.
+function POINT_VEC3:IsLOS( ToPointVec3 ) --R2.1
+
+  -- Measurement of visibility should not be from the ground, so Adding a hypotethical 2 meters to each PointVec3.
+  local FromVec3 = self:GetVec3()
+  FromVec3.y = FromVec3.y + 2
+  
+  local ToVec3 = ToPointVec3:GetVec3()
+  ToVec3.y = ToVec3.y + 2
+  
+  local IsLOS = land.isVisible( FromVec3, ToVec3 )
+
+  return IsLOS
+end
+
+
 end
 
 do -- POINT_VEC2
