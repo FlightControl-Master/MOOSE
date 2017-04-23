@@ -105,7 +105,7 @@ do -- AI_DESIGNATE
   -- 
   -- ## 2. AI_DESIGNATE is a FSM
   -- 
-  -- ![Process]()
+  -- ![Process](..\Presentations\DESIGNATE\Dia2.JPG)
   -- 
   -- ### 2.1 AI_DESIGNATE States
   -- 
@@ -141,7 +141,7 @@ do -- AI_DESIGNATE
   -- 
   -- ### 3.2 Auto generate laser codes
   -- 
-  -- WIP
+  -- Use the method @{#AI_DESIGNATE.GenerateLaserCodes}() to generate all possible laser codes. Logic implemented and advised by Ciribob!
   -- 
   -- ## 4. Autolase to automatically lase detected targets.
   -- 
@@ -371,6 +371,59 @@ do -- AI_DESIGNATE
 
     return self
   end
+  
+  --- Generate an array of possible laser codes.
+  -- Each new lase will select a code from this table.
+  -- The entered value can range from 1111 - 1788,
+  -- -- but the first digit of the series must be a 1 or 2
+  -- -- and the last three digits must be between 1 and 8.
+  --  The range used to be bugged so its not 1 - 8 but 0 - 7.
+  -- function below will use the range 1-7 just in case
+  -- @param #AI_DESIGNATE self
+  -- @return #AI_DESIGNATE
+  function AI_DESIGNATE:GenerateLaserCodes() --R2.1
+
+    self.LaserCodes = {}
+    
+    local function containsDigit(_number, _numberToFind)
+
+      local _thisNumber = _number
+      local _thisDigit = 0
+  
+      while _thisNumber ~= 0 do
+        _thisDigit = _thisNumber % 10
+        _thisNumber = math.floor(_thisNumber / 10)
+        if _thisDigit == _numberToFind then
+          return true
+        end
+      end
+  
+      return false
+    end
+
+    -- generate list of laser codes
+    local _code = 1111
+    local _count = 1
+    while _code < 1777 and _count < 30 do
+      while true do
+        _code = _code + 1
+        if not containsDigit(_code, 8)
+       and not containsDigit(_code, 9)
+       and not containsDigit(_code, 0) then
+          self:T(_code)            
+          table.insert( self.LaserCodes, _code )
+          break
+        end
+      end
+      _count = _count + 1
+    end
+
+    self.LaserCodesUsed = {}
+
+    return self
+  end
+  
+  
   
   --- Set auto lase.
   -- Auto lase will start lasing targets immediately when these are in range.
@@ -780,4 +833,5 @@ do -- AI_DESIGNATE
 
 end
 
+-- Help from Ciribob
 

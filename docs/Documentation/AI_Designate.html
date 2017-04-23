@@ -189,6 +189,12 @@ each detected set of potential targets can be lased or smoked...</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).GenerateLaserCodes">AI_DESIGNATE:GenerateLaserCodes()</a></td>
+		<td class="summary">
+<p>Generate an array of possible laser codes.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(AI_DESIGNATE).Illuminate">AI_DESIGNATE:Illuminate()</a></td>
 		<td class="summary">
 <p>Illuminate Trigger for AI_DESIGNATE</p>
@@ -558,7 +564,7 @@ Once <em>Targets</em> have been detected, the <em>DesignateObject</em> will trig
 
 <h2>2. AI_DESIGNATE is a FSM</h2>
 
-<p><img src="" alt="Process"/></p>
+<p><img src="..\Presentations\DESIGNATE\Dia2.JPG" alt="Process"/></p>
 
 <h3>2.1 AI_DESIGNATE States</h3>
 
@@ -576,7 +582,9 @@ Once <em>Targets</em> have been detected, the <em>DesignateObject</em> will trig
     <li>**<a href="##(AI_DESIGNATE).Status">AI_DESIGNATE.Status</a>**: Report designation status.</li>
 </ul>
 
-<h2>3. Set laser codes</h2>
+<h2>3. Laser codes</h2>
+
+<h3>3.1 Set possible laser codes</h3>
 
 <p>An array of laser codes can be provided, that will be used by the AI_DESIGNATE when lasing.
 The laser code is communicated by the Recce when it is lasing a larget.
@@ -595,6 +603,10 @@ One laser code can be given or an sequence of laser codes through an table...</p
 </code></pre>
 
 <p>The above sets a collection of possible laser codes that can be assigned. <strong>Note the { } notation!</strong></p>
+
+<h3>3.2 Auto generate laser codes</h3>
+
+<p>Use the method <a href="##(AI_DESIGNATE).GenerateLaserCodes">AI_DESIGNATE.GenerateLaserCodes</a>() to generate all possible laser codes. Logic implemented and advised by Ciribob!</p>
 
 <h2>4. Autolase to automatically lase detected targets.</h2>
 
@@ -698,6 +710,32 @@ Note that autolase will automatically activate lasing for ALL <em>DetectedItems<
 </dt>
 <dd>
 	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_DESIGNATE).GenerateLaserCodes" >
+<strong>AI_DESIGNATE:GenerateLaserCodes()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Generate an array of possible laser codes.</p>
+
+	
+<p>Each new lase will select a code from this table.
+The entered value can range from 1111 - 1788,
+-- but the first digit of the series must be a 1 or 2
+-- and the last three digits must be between 1 and 8.
+ The range used to be bugged so its not 1 - 8 but 0 - 7.
+function below will use the range 1-7 just in case</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(AI_DESIGNATE)">#AI_DESIGNATE</a>:</em></p>
 
 
 </dd>
