@@ -29,6 +29,8 @@
 -- @type POSITIONABLE
 -- @extends Wrapper.Identifiable#IDENTIFIABLE
 -- @field #string PositionableName The name of the measurable.
+-- @field Core.Spot#SPOT Spot The laser Spot.
+-- @field #number LaserCode The last assigned laser code.
 POSITIONABLE = {
   ClassName = "POSITIONABLE",
   PositionableName = "",
@@ -501,6 +503,7 @@ function POSITIONABLE:LaseUnit( Target, LaserCode, Duration )
   self:E("bulding spot")
   self.Spot = SPOT:New( self ) -- Core.Spot#SPOT
   self.Spot:LaseOn( Target, LaserCode, Duration)
+  self.LaserCode = LaserCode
   
   return self.Spot
   
@@ -541,4 +544,12 @@ end
 function POSITIONABLE:GetSpot()
   
   return self.Spot
+end
+
+--- (R2.1) Get the last assigned laser code
+-- @param #POSITIONABLE self
+-- @return #number The laser code
+function POSITIONABLE:GetLaserCode()
+  
+  return self.LaserCode
 end

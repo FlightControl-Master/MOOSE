@@ -448,6 +448,8 @@ do -- AI_DESIGNATE
         else
           MENU_GROUP_COMMAND:New( AttackGroup, "Auto Lase On", DesignateMenu, self.MenuAutoLase, self, true )
         end        
+
+        MENU_GROUP_COMMAND:New( AttackGroup, "Report Designation Status", DesignateMenu, self.MenuStatus, self, AttackGroup )
       
         local DetectedItems = self.Detection:GetDetectedItems()
         
@@ -485,6 +487,27 @@ do -- AI_DESIGNATE
     
     return self
   end
+
+  --- 
+  -- @param #AI_DESIGNATE self
+  function AI_DESIGNATE:MenuStatus( AttackGroup )
+
+    self:E("Status")
+
+  self.RecceSet:ForEachGroup(
+    function( RecceGroup )
+      local RecceUnits = RecceGroup:GetUnits()
+      for UnitID, RecceData in pairs( RecceUnits ) do
+        local Recce = RecceData -- Wrapper.Unit#UNIT
+        if Recce:IsLasing() then
+          Recce:MessageToGroup( "Marking " .. Recce:GetSpot().Target:GetTypeName() .. " with laser " .. Recce:GetSpot().LaserCode .. ".", 5, AttackGroup )
+        end
+      end
+    end
+  )
+
+  end
+
   
   --- 
   -- @param #AI_DESIGNATE self
@@ -556,7 +579,7 @@ do -- AI_DESIGNATE
     for TargetUnit, RecceData in pairs( self.Recces ) do
       local Recce = RecceData -- Wrapper.Unit#UNIT
       if not Recce:IsLasing() then
-        local LaserCode = self.LaserCodesUsed[Recce] --(Not deleted when stopping with lasing).
+        local LaserCode = Recce:GetLaserCode() --(Not deleted when stopping with lasing).
         self.LaserCodesUsed[LaserCode] = nil
         self.Recces[TargetUnit] = nil
       end
@@ -568,7 +591,7 @@ do -- AI_DESIGNATE
         self:E("In procedure")
         if TargetUnit:IsAlive() then
           local Recce = self.Recces[TargetUnit]
-          if (not Recce) or ( Recce and Recce:IsLasing() == false ) then
+          if not Recce then
             for RecceGroupID, RecceGroup in pairs( self.RecceSet:GetSet() ) do
               for UnitID, UnitData in pairs( RecceGroup:GetUnits() or {} ) do
                 local RecceUnit = UnitData -- Wrapper.Unit#UNIT
@@ -579,14 +602,17 @@ do -- AI_DESIGNATE
                     if not self.LaserCodesUsed[LaserCode] then
                       self.LaserCodesUsed[LaserCode] = LaserCodeIndex
                       local Spot = RecceUnit:LaseUnit( TargetUnit, LaserCode, Duration )
+                      local AttackSet = self.AttackSet
                       function Spot:OnAfterDestroyed( From, Event, To )
                         self:E( "Destroyed Message" )
-                        self.Recce:MessageToSetGroup( "Target " .. TargetUnit:GetTypeName() .. " destroyed." .. TargetSetUnit:Count() .. " targets left.", 15, self.AttackSet )
+                        self.Recce:MessageToSetGroup( "Target " .. TargetUnit:GetTypeName() .. " destroyed." .. TargetSetUnit:Count() .. " targets left.", 15, AttackSet )
                       end
                       self.Recces[TargetUnit] = RecceUnit
-                      RecceUnit:MessageToSetGroup( "Lasing " .. TargetUnit:GetTypeName() .. " for " .. Duration .. "s, code: " .. RecceUnit:GetSpot().LaserCode, 5, self.AttackSet )
+                      RecceUnit:MessageToSetGroup( "Marking " .. TargetUnit:GetTypeName() .. " with laser " .. RecceUnit:GetSpot().LaserCode .. " for " .. Duration .. "s.", 5, self.AttackSet )
                       break
                     end
+                  else
+                    RecceUnit:MessageToSetGroup( "Can't lase " .. TargetUnit:GetTypeName(), 5, self.AttackSet )
                   end
                 else
                   -- The Recce is lasing, but the Target is not detected or within LOS. So stop lasing and send a report.
@@ -601,11 +627,8 @@ do -- AI_DESIGNATE
               end
             end
           else
-            local RecceUnit = Recce.Recce
-            RecceUnit:MessageToSetGroup( "Lasing " .. TargetUnit:GetTypeName() .. ", code " .. Recce.LaserCode, 5, self.AttackSet )
+            Recce:MessageToSetGroup( "Marking " .. TargetUnit:GetTypeName() .. " with laser " .. Recce.LaserCode .. ".", 5, self.AttackSet )
           end
-        else
-          self.Recces[TargetUnit] = nil
         end
       end
     )
