@@ -981,6 +981,185 @@ function SET_GROUP:ForEachGroupNotInZone( ZoneObject, IteratorFunction, ... )
   return self
 end
 
+--- Iterate the SET_GROUP and return true if all the @{Wrapper.Group#GROUP} are completely in the @{Core.Zone#ZONE}
+-- @param #SET_GROUP self
+-- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
+-- @return #boolean true if all the @{Wrapper.Group#GROUP} are completly in the @{Core.Zone#ZONE}, false otherwise
+-- @usage
+-- local MyZone = ZONE:New("Zone1")
+-- local MySetGroup = SET_GROUP:New()
+-- MySetGroup:AddGroupsByName({"Group1", "Group2"})
+--
+-- if MySetGroup:AllCompletelyInZone(MyZone) then
+--   MESSAGE:New("All the SET's GROUP are in zone !", 10):ToAll()
+-- else
+--   MESSAGE:New("Some or all SET's GROUP are outside zone !", 10):ToAll()
+-- end
+function SET_GROUP:AllCompletelyInZone(Zone)
+  self:F2(Zone)
+  local Set = self:GetSet()
+  for GroupID, GroupData in pairs(Set) do -- For each GROUP in SET_GROUP
+    if not GroupData:IsCompletelyInZone(Zone) then 
+      return false
+    end
+  end
+  return true
+end
+
+--- Iterate the SET_GROUP and return true if at least one of the @{Wrapper.Group#GROUP} is completely inside the @{Core.Zone#ZONE}
+-- @param #SET_GROUP self
+-- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
+-- @return #boolean true if at least one of the @{Wrapper.Group#GROUP} is completly inside the @{Core.Zone#ZONE}, false otherwise.
+-- @usage
+-- local MyZone = ZONE:New("Zone1")
+-- local MySetGroup = SET_GROUP:New()
+-- MySetGroup:AddGroupsByName({"Group1", "Group2"})
+--
+-- if MySetGroup:AnyCompletelyInZone(MyZone) then
+--   MESSAGE:New("At least one GROUP is completely in zone !", 10):ToAll()
+-- else
+--   MESSAGE:New("No GROUP is completely in zone !", 10):ToAll()
+-- end
+function SET_GROUP:AnyCompletelyInZone(Zone)
+  self:F2(Zone)
+  local Set = self:GetSet()
+  for GroupID, GroupData in pairs(Set) do -- For each GROUP in SET_GROUP
+    if GroupData:IsCompletelyInZone(Zone) then 
+      return true
+    end
+  end
+  return false
+end
+
+--- Iterate the SET_GROUP and return true if at least one @{#UNIT} of one @{GROUP} of the @{SET_GROUP} is in @{ZONE}
+-- @param #SET_GROUP self
+-- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
+-- @return #boolean true if at least one of the @{Wrapper.Group#GROUP} is partly or completly inside the @{Core.Zone#ZONE}, false otherwise.
+-- @usage
+-- local MyZone = ZONE:New("Zone1")
+-- local MySetGroup = SET_GROUP:New()
+-- MySetGroup:AddGroupsByName({"Group1", "Group2"})
+--
+-- if MySetGroup:AnyPartlyInZone(MyZone) then
+--   MESSAGE:New("At least one GROUP has at least one UNIT in zone !", 10):ToAll()
+-- else
+--   MESSAGE:New("No UNIT of any GROUP is in zone !", 10):ToAll()
+-- end
+function SET_GROUP:AnyInZone(Zone)
+  self:F2(Zone)
+  local Set = self:GetSet()
+  for GroupID, GroupData in pairs(Set) do -- For each GROUP in SET_GROUP
+    if GroupData:IsPartlyInZone(Zone) or GroupData:IsCompletelyInZone(Zone) then 
+      return true
+    end
+  end
+  return false
+end
+
+--- Iterate the SET_GROUP and return true if at least one @{GROUP} of the @{SET_GROUP} is partly in @{ZONE}.
+-- Will return false if a @{GROUP} is fully in the @{ZONE}
+-- @param #SET_GROUP self
+-- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
+-- @return #boolean true if at least one of the @{Wrapper.Group#GROUP} is partly or completly inside the @{Core.Zone#ZONE}, false otherwise.
+-- @usage
+-- local MyZone = ZONE:New("Zone1")
+-- local MySetGroup = SET_GROUP:New()
+-- MySetGroup:AddGroupsByName({"Group1", "Group2"})
+--
+-- if MySetGroup:AnyPartlyInZone(MyZone) then
+--   MESSAGE:New("At least one GROUP is partially in the zone, but none are fully in it !", 10):ToAll()
+-- else
+--   MESSAGE:New("No GROUP are in zone, or one (or more) GROUP is completely in it !", 10):ToAll()
+-- end
+function SET_GROUP:AnyPartlyInZone(Zone)
+  self:F2(Zone)
+  local IsPartlyInZone = false
+  local Set = self:GetSet()
+  for GroupID, GroupData in pairs(Set) do -- For each GROUP in SET_GROUP
+    if GroupData:IsCompletelyInZone(Zone) then
+      return false
+    elseif GroupData:IsPartlyInZone(Zone) then 
+      IsPartlyInZone = true -- at least one GROUP is partly in zone
+    end
+  end
+  
+  if IsPartlyInZone then
+    return true
+  else
+    return false
+  end
+end
+
+--- Iterate the SET_GROUP and return true if no @{GROUP} of the @{SET_GROUP} is in @{ZONE}
+-- This could also be achieved with `not SET_GROUP:AnyPartlyInZone(Zone)`, but it's easier for the 
+-- mission designer to add a dedicated method
+-- @param #SET_GROUP self
+-- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
+-- @return #boolean true if no @{Wrapper.Group#GROUP} is inside the @{Core.Zone#ZONE} in any way, false otherwise.
+-- @usage
+-- local MyZone = ZONE:New("Zone1")
+-- local MySetGroup = SET_GROUP:New()
+-- MySetGroup:AddGroupsByName({"Group1", "Group2"})
+--
+-- if MySetGroup:NoneInZone(MyZone) then
+--   MESSAGE:New("No GROUP is completely in zone !", 10):ToAll()
+-- else
+--   MESSAGE:New("No UNIT of any GROUP is in zone !", 10):ToAll()
+-- end
+function SET_GROUP:NoneInZone(Zone)
+  self:F2(Zone)
+  local Set = self:GetSet()
+  for GroupID, GroupData in pairs(Set) do -- For each GROUP in SET_GROUP
+    if not GroupData:IsNotInZone(Zone) then -- If the GROUP is in Zone in any way
+      return false
+    end
+  end
+  return true
+end
+
+--- Iterate the SET_GROUP and count how many GROUPs are completely in the Zone
+-- That could easily be done with SET_GROUP:ForEachGroupCompletelyInZone(), but this function
+-- provides an easy to use shortcut...
+-- @param #SET_GROUP self
+-- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
+-- @return #number the number of GROUPs completely in the Zone
+-- @usage
+-- local MyZone = ZONE:New("Zone1")
+-- local MySetGroup = SET_GROUP:New()
+-- MySetGroup:AddGroupsByName({"Group1", "Group2"})
+--
+-- MESSAGE:New("There are " .. MySetGroup:CountInZone(MyZone) .. " GROUPs in the Zone !", 10):ToAll()
+function SET_GROUP:CountInZone(Zone)
+  self:F2(Zone)
+  local Count = 0
+  local Set = self:GetSet()
+  for GroupID, GroupData in pairs(Set) do -- For each GROUP in SET_GROUP
+    if GroupData:IsCompletelyInZone(Zone) then 
+      Count = Count + 1
+    end
+  end
+  return Count
+end
+
+--- Iterate the SET_GROUP and count how many UNITs are completely in the Zone
+-- @param #SET_GROUP self
+-- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
+-- @return #number the number of GROUPs completely in the Zone
+-- @usage
+-- local MyZone = ZONE:New("Zone1")
+-- local MySetGroup = SET_GROUP:New()
+-- MySetGroup:AddGroupsByName({"Group1", "Group2"})
+--
+-- MESSAGE:New("There are " .. MySetGroup:CountUnitInZone(MyZone) .. " UNITs in the Zone !", 10):ToAll()
+function SET_GROUP:CountUnitInZone(Zone)
+  self:F2(Zone)
+  local Count = 0
+  local Set = self:GetSet()
+  for GroupID, GroupData in pairs(Set) do -- For each GROUP in SET_GROUP
+    Count = Count + GroupData:CountInZone(Zone)
+  end
+  return Count
+end
 
 ----- Iterate the SET_GROUP and call an interator function for each **alive** player, providing the Group of the player and optional parameters.
 ---- @param #SET_GROUP self
