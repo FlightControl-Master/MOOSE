@@ -534,3 +534,11 @@ function POSITIONABLE:IsLasing()
 
   return Lasing
 end
+
+--- (R2.1) Get the Spot
+-- @param #POSITIONABLE self
+-- @return Core.Spot#SPOT The Spot
+function POSITIONABLE:GetSpot()
+  
+  return self.Spot
+end

@@ -297,7 +297,7 @@ do -- AI_DESIGNATE
     self.Detection = Detection
     self.AttackSet = AttackSet
     self.RecceSet = Detection:GetDetectionSetGroup()
-    self.Spots = {}
+    self.Recces = {}
     self.Designating = {}
     
     self.LaseDuration = 60
@@ -553,12 +553,12 @@ do -- AI_DESIGNATE
     
     TargetSetUnit:Flush()
 
-    for TargetUnit, SpotData in pairs( self.Spots ) do
-      local Spot = SpotData -- Core.Spot#SPOT
-      if not Spot:IsLasing() then
-        local LaserCode = Spot.LaserCode --(Not deleted when stopping with lasing).
+    for TargetUnit, RecceData in pairs( self.Recces ) do
+      local Recce = RecceData -- Wrapper.Unit#UNIT
+      if not Recce:IsLasing() then
+        local LaserCode = self.LaserCodesUsed[Recce] --(Not deleted when stopping with lasing).
         self.LaserCodesUsed[LaserCode] = nil
-        self.Spots[TargetUnit] = nil
+        self.Recces[TargetUnit] = nil
       end
     end
 
@@ -567,8 +567,8 @@ do -- AI_DESIGNATE
       function( TargetUnit )
         self:E("In procedure")
         if TargetUnit:IsAlive() then
-          local Spot = self.Spots[TargetUnit]
-          if (not Spot) or ( Spot and Spot:IsLasing() == false ) then
+          local Recce = self.Recces[TargetUnit]
+          if (not Recce) or ( Recce and Recce:IsLasing() == false ) then
             for RecceGroupID, RecceGroup in pairs( self.RecceSet:GetSet() ) do
               for UnitID, UnitData in pairs( RecceGroup:GetUnits() or {} ) do
                 local RecceUnit = UnitData -- Wrapper.Unit#UNIT
@@ -577,37 +577,35 @@ do -- AI_DESIGNATE
                     local LaserCodeIndex = math.random( 1, #self.LaserCodes )
                     local LaserCode = self.LaserCodes[LaserCodeIndex]
                     if not self.LaserCodesUsed[LaserCode] then
-                      MoreTargets = true
                       self.LaserCodesUsed[LaserCode] = LaserCodeIndex
                       local Spot = RecceUnit:LaseUnit( TargetUnit, LaserCode, Duration )
                       function Spot:OnAfterDestroyed( From, Event, To )
                         self:E( "Destroyed Message" )
                         self.Recce:MessageToSetGroup( "Target " .. TargetUnit:GetTypeName() .. " destroyed." .. TargetSetUnit:Count() .. " targets left.", 15, self.AttackSet )
                       end
-                      self.Spots[TargetUnit] = Spot
-                      RecceUnit:MessageToSetGroup( "Lasing " .. TargetUnit:GetTypeName() .. " for " .. Duration .. "s, code: " .. Spot.LaserCode, 5, self.AttackSet )
+                      self.Recces[TargetUnit] = RecceUnit
+                      RecceUnit:MessageToSetGroup( "Lasing " .. TargetUnit:GetTypeName() .. " for " .. Duration .. "s, code: " .. RecceUnit:GetSpot().LaserCode, 5, self.AttackSet )
                       break
                     end
                   end
                 else
                   -- The Recce is lasing, but the Target is not detected or within LOS. So stop lasing and send a report.
                   if not RecceUnit:IsDetected( TargetUnit ) or not RecceUnit:IsLOS( TargetUnit ) then
-                    local Spot = self.Spots[TargetUnit] -- Core.Spot#SPOT
-                    if Spot then
-                      Spot.Recce:LaseOff()
-                      Spot.Recce:MessageToGroup( "Target " .. TargetUnit:GetTypeName() "out of LOS. Cancelling lase!", 5, self.AttackSet )
+                    local Recce = self.Recces[TargetUnit] -- Wrapper.Unit#UNIT
+                    if Recce then
+                      Recce:LaseOff()
+                      Recce:MessageToGroup( "Target " .. TargetUnit:GetTypeName() "out of LOS. Cancelling lase!", 5, self.AttackSet )
                     end
                   end  
                 end
               end
             end
           else
-            MoreTargets = true
-            local RecceUnit = Spot.Recce
-            RecceUnit:MessageToSetGroup( "Lasing " .. TargetUnit:GetTypeName() .. ", code " .. Spot.LaserCode, 5, self.AttackSet )
+            local RecceUnit = Recce.Recce
+            RecceUnit:MessageToSetGroup( "Lasing " .. TargetUnit:GetTypeName() .. ", code " .. Recce.LaserCode, 5, self.AttackSet )
           end
         else
-          self.Spots[TargetUnit] = nil
+          self.Recces[TargetUnit] = nil
         end
       end
     )
@@ -631,16 +629,16 @@ do -- AI_DESIGNATE
     
     local TargetSetUnit = self.Detection:GetDetectedSet( Index )
     
-    local Spots = self.Spots
+    local Recces = self.Recces
     
-    for SpotID, SpotData in pairs( Spots ) do
-      local Spot = SpotData -- Core.Spot#SPOT
-      Spot.Recce:MessageToSetGroup( "Stopped lasing " .. Spot.Target:GetTypeName() .. ".", 15, self.AttackSet )
-      Spot:LaseOff()
+    for TargetID, RecceData in pairs( Recces ) do
+      local Recce = RecceData -- Wrapper.Unit#UNIT
+      Recce:MessageToSetGroup( "Stopped lasing " .. Recce:GetSpot().Target:GetTypeName() .. ".", 15, self.AttackSet )
+      Recce:LaseOff()
     end
     
-    Spots = nil
-    self.Spots = {}
+    Recces = nil
+    self.Recces = {}
     self.LaserCodesUsed = {}
 
     self:SetDesignateMenu()
