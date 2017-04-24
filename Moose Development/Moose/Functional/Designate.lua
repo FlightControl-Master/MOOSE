@@ -1,10 +1,10 @@
---- **AI R2.1** -- Management of target **Designation**.
+--- **Funtional R2.1** -- Management of target **Designation**.
 --
 -- --![Banner Image](..\Presentations\DESIGNATE\Dia1.JPG)
 --
 -- ===
 --
--- AI_DESIGNATE is orchestrating the designation of potential targets executed by a Recce group, 
+-- DESIGNATE is orchestrating the designation of potential targets executed by a Recce group, 
 -- and communicates these to a dedicated attacking group of players, 
 -- so that following a dynamically generated menu system, 
 -- each detected set of potential targets can be lased or smoked...
@@ -30,17 +30,17 @@
 -- 
 --   * **FlightControl**: Design & Programming
 -- 
--- @module AI_Designate
+-- @module Designate
 
 
-do -- AI_DESIGNATE
+do -- DESIGNATE
 
-  --- @type AI_DESIGNATE
+  --- @type DESIGNATE
   -- @extends Core.Fsm#FSM_PROCESS
 
-  --- # AI_DESIGNATE class, extends @{Fsm#FSM}
+  --- # DESIGNATE class, extends @{Fsm#FSM}
   -- 
-  -- AI_DESIGNATE is orchestrating the designation of potential targets executed by a Recce group, 
+  -- DESIGNATE is orchestrating the designation of potential targets executed by a Recce group, 
   -- and communicates these to a dedicated attacking group of players, 
   -- so that following a dynamically generated menu system, 
   -- each detected set of potential targets can be lased or smoked...
@@ -53,7 +53,7 @@ do -- AI_DESIGNATE
   -- 
   -- The following terminology is being used throughout this document:
   -- 
-  --   * The **DesignateObject** is the object of the AI_DESIGNATE class, which is this class explained in the document.
+  --   * The **DesignateObject** is the object of the DESIGNATE class, which is this class explained in the document.
   --   * The **DetectionObject** is the object of a DETECTION_ class (DETECTION_TYPES, DETECTION_AREAS, DETECTION_UNITS), which is executing the detection and grouping of Targets into _DetectionItems_.
   --   * **DetectionItems** is the list of detected target groupings by the _DetectionObject_. Each _DetectionItem_ contains a _TargetSet_.
   --   * **DetectionItem** is one element of the _DetectionItems_ list, and contains a _TargetSet_.
@@ -99,58 +99,58 @@ do -- AI_DESIGNATE
   -- 
   -- Have FUN!
   -- 
-  -- ## 1. AI_DESIGNATE constructor
+  -- ## 1. DESIGNATE constructor
   --   
-  --   * @{#AI_DESIGNATE.New}(): Creates a new AI_DESIGNATE object.
+  --   * @{#DESIGNATE.New}(): Creates a new DESIGNATE object.
   -- 
-  -- ## 2. AI_DESIGNATE is a FSM
+  -- ## 2. DESIGNATE is a FSM
   -- 
   -- ![Process](..\Presentations\DESIGNATE\Dia2.JPG)
   -- 
-  -- ### 2.1 AI_DESIGNATE States
+  -- ### 2.1 DESIGNATE States
   -- 
   --   * **Designating** ( Group ): The process is not started yet.
   -- 
-  -- ### 2.2 AI_DESIGNATE Events
+  -- ### 2.2 DESIGNATE Events
   -- 
-  --   * **@{#AI_DESIGNATE.Detect}**: Detect targets.
-  --   * **@{#AI_DESIGNATE.LaseOn}**: Lase the targets with the specified Index.
-  --   * **@{#AI_DESIGNATE.LaseOff}**: Stop lasing the targets with the specified Index.
-  --   * **@{#AI_DESIGNATE.Smoke}**: Smoke the targets with the specified Index.
-  --   * **@{#AI_DESIGNATE.Status}**: Report designation status.
+  --   * **@{#DESIGNATE.Detect}**: Detect targets.
+  --   * **@{#DESIGNATE.LaseOn}**: Lase the targets with the specified Index.
+  --   * **@{#DESIGNATE.LaseOff}**: Stop lasing the targets with the specified Index.
+  --   * **@{#DESIGNATE.Smoke}**: Smoke the targets with the specified Index.
+  --   * **@{#DESIGNATE.Status}**: Report designation status.
   -- 
   -- ## 3. Laser codes
   -- 
   -- ### 3.1 Set possible laser codes
   -- 
-  -- An array of laser codes can be provided, that will be used by the AI_DESIGNATE when lasing.
+  -- An array of laser codes can be provided, that will be used by the DESIGNATE when lasing.
   -- The laser code is communicated by the Recce when it is lasing a larget.
   -- Note that the default laser code is 1113.
   -- Working known laser codes are: 1113,1462,1483,1537,1362,1214,1131,1182,1644,1614,1515,1411,1621,1138,1542,1678,1573,1314,1643,1257,1467,1375,1341,1275,1237
   -- 
-  -- Use the method @{#AI_DESIGNATE.SetLaserCodes}() to set the possible laser codes to be selected from.
+  -- Use the method @{#DESIGNATE.SetLaserCodes}() to set the possible laser codes to be selected from.
   -- One laser code can be given or an sequence of laser codes through an table...
   -- 
-  --     AIDesignate:SetLaserCodes( 1214 )
+  --     Designate:SetLaserCodes( 1214 )
   --     
   -- The above sets one laser code with the value 1214.
   -- 
-  --     AIDesignate:SetLaserCodes( { 1214, 1131, 1614, 1138 } )
+  --     Designate:SetLaserCodes( { 1214, 1131, 1614, 1138 } )
   --     
   -- The above sets a collection of possible laser codes that can be assigned. **Note the { } notation!**
   -- 
   -- ### 3.2 Auto generate laser codes
   -- 
-  -- Use the method @{#AI_DESIGNATE.GenerateLaserCodes}() to generate all possible laser codes. Logic implemented and advised by Ciribob!
+  -- Use the method @{#DESIGNATE.GenerateLaserCodes}() to generate all possible laser codes. Logic implemented and advised by Ciribob!
   -- 
   -- ## 4. Autolase to automatically lase detected targets.
   -- 
   -- DetectionItems can be auto lased once detected by Recces. As such, there is almost no action required from the Players using the Designate Menu.
   -- The **auto lase** function can be activated through the Designation Menu.
-  -- Use the method @{#AI_DESIGNATE.SetAutoLase}() to activate or deactivate the auto lase function programmatically.
+  -- Use the method @{#DESIGNATE.SetAutoLase}() to activate or deactivate the auto lase function programmatically.
   -- Note that autolase will automatically activate lasing for ALL DetectedItems. Individual items can be switched-off if required using the Designation Menu.
   -- 
-  --     AIDesignate:SetAutoLase( true )
+  --     Designate:SetAutoLase( true )
   -- 
   -- Activate the auto lasing.
   -- 
@@ -160,12 +160,12 @@ do -- AI_DESIGNATE
   -- SAMs are of a higher threat than normal tanks. So, if the Target type was recognized, the Recces will select those targets that form the biggest threat first,
   -- and will continue this until the remaining vehicles with the lowest threat have been reached.
   -- 
-  -- This threat level prioritization can be activated using the method @{#AI_DESIGNATE.SetThreatLevelPrioritization}().
+  -- This threat level prioritization can be activated using the method @{#DESIGNATE.SetThreatLevelPrioritization}().
   -- If not activated, Targets will be selected in a random order, but most like those first which are the closest to the Recce marking the Target.
   -- 
-  --     AIDesignate:SetThreatLevelPrioritization( true )
+  --     Designate:SetThreatLevelPrioritization( true )
   --     
-  -- The example will activate the threat level prioritization for this the AIDesignate object. Threats will be marked based on the threat level of the Target.
+  -- The example will activate the threat level prioritization for this the Designate object. Threats will be marked based on the threat level of the Target.
   -- 
   -- ## 6. Status Report
   -- 
@@ -175,193 +175,195 @@ do -- AI_DESIGNATE
   --   * The status report can be automatically flashed by selecting "Status" -> "Flash Status On".
   --   * The automatic flashing of the status report can be deactivated by selecting "Status" -> "Flash Status Off".
   --   * The flashing of the status menu is disabled by default.
-  --   * The method @{#AI_DESIGNATE.FlashStatusMenu}() can be used to enable or disable to flashing of the status menu.
+  --   * The method @{#DESIGNATE.FlashStatusMenu}() can be used to enable or disable to flashing of the status menu.
   --   
-  --     AIDesignate:FlashStatusMenu( true )
+  --     Designate:FlashStatusMenu( true )
   --     
-  -- The example will activate the flashing of the status menu for this AIDesignate object.
+  -- The example will activate the flashing of the status menu for this Designate object.
   -- 
-  -- @field #AI_DESIGNATE
+  -- @field #DESIGNATE
   -- 
-  AI_DESIGNATE = {
-    ClassName = "AI_DESIGNATE",
+  DESIGNATE = {
+    ClassName = "DESIGNATE",
   }
 
-  --- AI_DESIGNATE Constructor. This class is an abstract class and should not be instantiated.
-  -- @param #AI_DESIGNATE self
+  --- DESIGNATE Constructor. This class is an abstract class and should not be instantiated.
+  -- @param #DESIGNATE self
+  -- @param Tasking.CommandCenter#COMMANDCENTER CC
   -- @param Functional.Detection#DETECTION_BASE Detection
   -- @param Core.Set#SET_GROUP AttackSet The Attack collection of GROUP objects to designate and report for.
-  -- @return #AI_DESIGNATE
-  function AI_DESIGNATE:New( Detection, AttackSet )
+  -- @return #DESIGNATE
+  function DESIGNATE:New( CC, Detection, AttackSet )
   
-    local self = BASE:Inherit( self, FSM:New() ) -- #AI_DESIGNATE
+    local self = BASE:Inherit( self, FSM:New() ) -- #DESIGNATE
     self:F( { Detection } )
   
     self:SetStartState( "Designating" )
     
     self:AddTransition( "*", "Detect", "*" )
     
-    --- Detect Handler OnBefore for AI_DESIGNATE
-    -- @function [parent=#AI_DESIGNATE] OnBeforeDetect
-    -- @param #AI_DESIGNATE self
+    --- Detect Handler OnBefore for DESIGNATE
+    -- @function [parent=#DESIGNATE] OnBeforeDetect
+    -- @param #DESIGNATE self
     -- @param #string From
     -- @param #string Event
     -- @param #string To
     -- @return #boolean
     
-    --- Detect Handler OnAfter for AI_DESIGNATE
-    -- @function [parent=#AI_DESIGNATE] OnAfterDetect
-    -- @param #AI_DESIGNATE self
+    --- Detect Handler OnAfter for DESIGNATE
+    -- @function [parent=#DESIGNATE] OnAfterDetect
+    -- @param #DESIGNATE self
     -- @param #string From
     -- @param #string Event
     -- @param #string To
     
-    --- Detect Trigger for AI_DESIGNATE
-    -- @function [parent=#AI_DESIGNATE] Detect
-    -- @param #AI_DESIGNATE self
+    --- Detect Trigger for DESIGNATE
+    -- @function [parent=#DESIGNATE] Detect
+    -- @param #DESIGNATE self
     
-    --- Detect Asynchronous Trigger for AI_DESIGNATE
-    -- @function [parent=#AI_DESIGNATE] __Detect
-    -- @param #AI_DESIGNATE self
+    --- Detect Asynchronous Trigger for DESIGNATE
+    -- @function [parent=#DESIGNATE] __Detect
+    -- @param #DESIGNATE self
     -- @param #number Delay
     
 
     self:AddTransition( "*", "LaseOn", "Lasing" )
     
-    --- LaseOn Handler OnBefore for AI_DESIGNATE 
-    -- @function [parent=#AI_DESIGNATE ] OnBeforeLaseOn
-    -- @param #AI_DESIGNATE  self
+    --- LaseOn Handler OnBefore for DESIGNATE 
+    -- @function [parent=#DESIGNATE ] OnBeforeLaseOn
+    -- @param #DESIGNATE  self
     -- @param #string From
     -- @param #string Event
     -- @param #string To
     -- @return #boolean
     
-    --- LaseOn Handler OnAfter for AI_DESIGNATE 
-    -- @function [parent=#AI_DESIGNATE ] OnAfterLaseOn
-    -- @param #AI_DESIGNATE  self
+    --- LaseOn Handler OnAfter for DESIGNATE 
+    -- @function [parent=#DESIGNATE ] OnAfterLaseOn
+    -- @param #DESIGNATE  self
     -- @param #string From
     -- @param #string Event
     -- @param #string To
     
-    --- LaseOn Trigger for AI_DESIGNATE 
-    -- @function [parent=#AI_DESIGNATE ] LaseOn
-    -- @param #AI_DESIGNATE  self
+    --- LaseOn Trigger for DESIGNATE 
+    -- @function [parent=#DESIGNATE ] LaseOn
+    -- @param #DESIGNATE  self
     
-    --- LaseOn Asynchronous Trigger for AI_DESIGNATE 
-    -- @function [parent=#AI_DESIGNATE ] __LaseOn
-    -- @param #AI_DESIGNATE  self
+    --- LaseOn Asynchronous Trigger for DESIGNATE 
+    -- @function [parent=#DESIGNATE ] __LaseOn
+    -- @param #DESIGNATE  self
     -- @param #number Delay
     
     self:AddTransition( "Lasing", "Lasing", "Lasing" )
     
     self:AddTransition( "*", "LaseOff", "Designate" )
     
-    --- LaseOff Handler OnBefore for AI_DESIGNATE 
-    -- @function [parent=#AI_DESIGNATE ] OnBeforeLaseOff
-    -- @param #AI_DESIGNATE  self
+    --- LaseOff Handler OnBefore for DESIGNATE 
+    -- @function [parent=#DESIGNATE ] OnBeforeLaseOff
+    -- @param #DESIGNATE  self
     -- @param #string From
     -- @param #string Event
     -- @param #string To
     -- @return #boolean
     
-    --- LaseOff Handler OnAfter for AI_DESIGNATE 
-    -- @function [parent=#AI_DESIGNATE ] OnAfterLaseOff
-    -- @param #AI_DESIGNATE  self
+    --- LaseOff Handler OnAfter for DESIGNATE 
+    -- @function [parent=#DESIGNATE ] OnAfterLaseOff
+    -- @param #DESIGNATE  self
     -- @param #string From
     -- @param #string Event
     -- @param #string To
     
-    --- LaseOff Trigger for AI_DESIGNATE 
-    -- @function [parent=#AI_DESIGNATE ] LaseOff
-    -- @param #AI_DESIGNATE  self
+    --- LaseOff Trigger for DESIGNATE 
+    -- @function [parent=#DESIGNATE ] LaseOff
+    -- @param #DESIGNATE  self
     
-    --- LaseOff Asynchronous Trigger for AI_DESIGNATE 
-    -- @function [parent=#AI_DESIGNATE ] __LaseOff
-    -- @param #AI_DESIGNATE  self
+    --- LaseOff Asynchronous Trigger for DESIGNATE 
+    -- @function [parent=#DESIGNATE ] __LaseOff
+    -- @param #DESIGNATE  self
     -- @param #number Delay
     
     
     
     self:AddTransition( "*", "Smoke", "*" )
     
-    --- Smoke Handler OnBefore for AI_DESIGNATE 
-    -- @function [parent=#AI_DESIGNATE ] OnBeforeSmoke
-    -- @param #AI_DESIGNATE  self
+    --- Smoke Handler OnBefore for DESIGNATE 
+    -- @function [parent=#DESIGNATE ] OnBeforeSmoke
+    -- @param #DESIGNATE  self
     -- @param #string From
     -- @param #string Event
     -- @param #string To
     -- @return #boolean
     
-    --- Smoke Handler OnAfter for AI_DESIGNATE 
-    -- @function [parent=#AI_DESIGNATE ] OnAfterSmoke
-    -- @param #AI_DESIGNATE  self
+    --- Smoke Handler OnAfter for DESIGNATE 
+    -- @function [parent=#DESIGNATE ] OnAfterSmoke
+    -- @param #DESIGNATE  self
     -- @param #string From
     -- @param #string Event
     -- @param #string To
     
-    --- Smoke Trigger for AI_DESIGNATE 
-    -- @function [parent=#AI_DESIGNATE ] Smoke
-    -- @param #AI_DESIGNATE  self
+    --- Smoke Trigger for DESIGNATE 
+    -- @function [parent=#DESIGNATE ] Smoke
+    -- @param #DESIGNATE  self
     
-    --- Smoke Asynchronous Trigger for AI_DESIGNATE 
-    -- @function [parent=#AI_DESIGNATE ] __Smoke
-    -- @param #AI_DESIGNATE  self
+    --- Smoke Asynchronous Trigger for DESIGNATE 
+    -- @function [parent=#DESIGNATE ] __Smoke
+    -- @param #DESIGNATE  self
     -- @param #number Delay
     
     self:AddTransition( "*", "Illuminate", "*" )
     
-    --- Illuminate Handler OnBefore for AI_DESIGNATE
-    -- @function [parent=#AI_DESIGNATE] OnBeforeIlluminate
-    -- @param #AI_DESIGNATE self
+    --- Illuminate Handler OnBefore for DESIGNATE
+    -- @function [parent=#DESIGNATE] OnBeforeIlluminate
+    -- @param #DESIGNATE self
     -- @param #string From
     -- @param #string Event
     -- @param #string To
     -- @return #boolean
     
-    --- Illuminate Handler OnAfter for AI_DESIGNATE
-    -- @function [parent=#AI_DESIGNATE] OnAfterIlluminate
-    -- @param #AI_DESIGNATE self
+    --- Illuminate Handler OnAfter for DESIGNATE
+    -- @function [parent=#DESIGNATE] OnAfterIlluminate
+    -- @param #DESIGNATE self
     -- @param #string From
     -- @param #string Event
     -- @param #string To
     
-    --- Illuminate Trigger for AI_DESIGNATE
-    -- @function [parent=#AI_DESIGNATE] Illuminate
-    -- @param #AI_DESIGNATE self
+    --- Illuminate Trigger for DESIGNATE
+    -- @function [parent=#DESIGNATE] Illuminate
+    -- @param #DESIGNATE self
     
-    --- Illuminate Asynchronous Trigger for AI_DESIGNATE
-    -- @function [parent=#AI_DESIGNATE] __Illuminate
-    -- @param #AI_DESIGNATE self
+    --- Illuminate Asynchronous Trigger for DESIGNATE
+    -- @function [parent=#DESIGNATE] __Illuminate
+    -- @param #DESIGNATE self
     -- @param #number Delay
 
     self:AddTransition( "*", "Done", "*" )
     
     self:AddTransition( "*", "Status", "*" )
     
-    --- Status Handler OnBefore for AI_DESIGNATE 
-    -- @function [parent=#AI_DESIGNATE ] OnBeforeStatus
-    -- @param #AI_DESIGNATE  self
+    --- Status Handler OnBefore for DESIGNATE 
+    -- @function [parent=#DESIGNATE ] OnBeforeStatus
+    -- @param #DESIGNATE  self
     -- @param #string From
     -- @param #string Event
     -- @param #string To
     -- @return #boolean
     
-    --- Status Handler OnAfter for AI_DESIGNATE 
-    -- @function [parent=#AI_DESIGNATE ] OnAfterStatus
-    -- @param #AI_DESIGNATE  self
+    --- Status Handler OnAfter for DESIGNATE 
+    -- @function [parent=#DESIGNATE ] OnAfterStatus
+    -- @param #DESIGNATE  self
     -- @param #string From
     -- @param #string Event
     -- @param #string To
     
-    --- Status Trigger for AI_DESIGNATE 
-    -- @function [parent=#AI_DESIGNATE ] Status
-    -- @param #AI_DESIGNATE  self
+    --- Status Trigger for DESIGNATE 
+    -- @function [parent=#DESIGNATE ] Status
+    -- @param #DESIGNATE  self
     
-    --- Status Asynchronous Trigger for AI_DESIGNATE 
-    -- @function [parent=#AI_DESIGNATE ] __Status
-    -- @param #AI_DESIGNATE  self
+    --- Status Asynchronous Trigger for DESIGNATE 
+    -- @function [parent=#DESIGNATE ] __Status
+    -- @param #DESIGNATE  self
     -- @param #number Delay
     
+    self.CC = CC
     self.Detection = Detection
     self.AttackSet = AttackSet
     self.RecceSet = Detection:GetDetectionSetGroup()
@@ -387,10 +389,10 @@ do -- AI_DESIGNATE
   end
 
   --- Set the flashing of the status menu.
-  -- @param #AI_DESIGNATE self
+  -- @param #DESIGNATE self
   -- @param #boolean FlashMenu true: the status menu will be flashed every detection run; false: no flashing of the menu.
-  -- @return #AI_DESIGNATE
-  function AI_DESIGNATE:SetFlashStatusMenu( FlashMenu ) --R2.1
+  -- @return #DESIGNATE
+  function DESIGNATE:SetFlashStatusMenu( FlashMenu ) --R2.1
 
     self.FlashStatusMenu = {}
 
@@ -408,10 +410,10 @@ do -- AI_DESIGNATE
 
   --- Set an array of possible laser codes.
   -- Each new lase will select a code from this table.
-  -- @param #AI_DESIGNATE self
+  -- @param #DESIGNATE self
   -- @param #list<#number> LaserCodes
-  -- @return #AI_DESIGNATE
-  function AI_DESIGNATE:SetLaserCodes( LaserCodes ) --R2.1
+  -- @return #DESIGNATE
+  function DESIGNATE:SetLaserCodes( LaserCodes ) --R2.1
 
     self.LaserCodes = ( type( LaserCodes ) == "table" ) and LaserCodes or { LaserCodes }
     self:E(self.LaserCodes)
@@ -428,9 +430,9 @@ do -- AI_DESIGNATE
   -- -- and the last three digits must be between 1 and 8.
   --  The range used to be bugged so its not 1 - 8 but 0 - 7.
   -- function below will use the range 1-7 just in case
-  -- @param #AI_DESIGNATE self
-  -- @return #AI_DESIGNATE
-  function AI_DESIGNATE:GenerateLaserCodes() --R2.1
+  -- @param #DESIGNATE self
+  -- @return #DESIGNATE
+  function DESIGNATE:GenerateLaserCodes() --R2.1
 
     self.LaserCodes = {}
     
@@ -476,19 +478,19 @@ do -- AI_DESIGNATE
   
   --- Set auto lase.
   -- Auto lase will start lasing targets immediately when these are in range.
-  -- @param #AI_DESIGNATE self
+  -- @param #DESIGNATE self
   -- @param #boolean AutoLase
-  -- @return #AI_DESIGNATE
-  function AI_DESIGNATE:SetAutoLase( AutoLase ) --R2.1
+  -- @return #DESIGNATE
+  function DESIGNATE:SetAutoLase( AutoLase ) --R2.1
 
     self.AutoLase = AutoLase
     
     local AutoLaseOnOff = ( AutoLase == true ) and "On" or "Off"
 
-    local Recce = self.RecceSet:GetFirst()
+    local CC = self.CC:GetPositionable()
     
-    if Recce then
-      Recce:MessageToSetGroup( "Auto Lase " .. AutoLaseOnOff .. ".", 15, self.AttackSet )
+    if CC then
+      CC:MessageToSetGroup( "Auto Lase " .. AutoLaseOnOff .. ".", 15, self.AttackSet )
     end
 
     self:ActivateAutoLase()
@@ -498,10 +500,10 @@ do -- AI_DESIGNATE
   end
 
   --- Set priorization of Targets based on the **Threat Level of the Target** in an Air to Ground context.
-  -- @param #AI_DESIGNATE self
+  -- @param #DESIGNATE self
   -- @param #boolean Prioritize
-  -- @return #AI_DESIGNATE
-  function AI_DESIGNATE:SetThreatLevelPrioritization( Prioritize ) --R2.1
+  -- @return #DESIGNATE
+  function DESIGNATE:SetThreatLevelPrioritization( Prioritize ) --R2.1
 
     self.ThreatLevelPrioritization = Prioritize
     
@@ -511,9 +513,9 @@ do -- AI_DESIGNATE
   
 
   --- 
-  -- @param #AI_DESIGNATE self
-  -- @return #AI_DESIGNATE
-  function AI_DESIGNATE:onafterDetect()
+  -- @param #DESIGNATE self
+  -- @return #DESIGNATE
+  function DESIGNATE:onafterDetect()
     
     self:__Detect( -60 )
     
@@ -525,10 +527,10 @@ do -- AI_DESIGNATE
   end
 
   --- Sends the status to the Attack Groups.
-  -- @param #AI_DESIGNATE self
+  -- @param #DESIGNATE self
   -- @param Wrapper.Group#GROUP AttackGroup
-  -- @return #AI_DESIGNATE
-  function AI_DESIGNATE:SendStatus( MenuAttackGroup )
+  -- @return #DESIGNATE
+  function DESIGNATE:SendStatus( MenuAttackGroup )
 
     
     self.AttackSet:ForEachGroup(
@@ -547,9 +549,9 @@ do -- AI_DESIGNATE
             DetectedReport:Add(" - " .. Report)
           end
           
-          local RecceLeader = self.RecceSet:GetFirst() -- Wrapper.Group#GROUP
+          local CC = self.CC:GetPositionable()
       
-          RecceLeader:MessageToGroup( DetectedReport:Text( "\n" ), 15, AttackGroup )
+          CC:MessageToGroup( DetectedReport:Text( "\n" ), 15, AttackGroup )
           
           local DesignationReport = REPORT:New( "Targets currently marked:" )
       
@@ -565,7 +567,7 @@ do -- AI_DESIGNATE
             end
           )
       
-          RecceLeader:MessageToGroup( DesignationReport:Text(), 15, AttackGroup )
+          CC:MessageToGroup( DesignationReport:Text(), 15, AttackGroup )
         end
       end
     )
@@ -574,9 +576,9 @@ do -- AI_DESIGNATE
   end
 
   --- Coordinates the Auto Lase.
-  -- @param #AI_DESIGNATE self
-  -- @return #AI_DESIGNATE
-  function AI_DESIGNATE:ActivateAutoLase()
+  -- @param #DESIGNATE self
+  -- @return #DESIGNATE
+  function DESIGNATE:ActivateAutoLase()
 
     self.AttackSet:Flush()
 
@@ -601,9 +603,9 @@ do -- AI_DESIGNATE
   end
 
   --- Sets the Designate Menu.
-  -- @param #AI_DESIGNATE self
-  -- @return #AI_DESIGNATE
-  function AI_DESIGNATE:SetDesignateMenu()
+  -- @param #DESIGNATE self
+  -- @return #DESIGNATE
+  function DESIGNATE:SetDesignateMenu()
 
     self.AttackSet:Flush()
 
@@ -675,8 +677,8 @@ do -- AI_DESIGNATE
   end
 
   --- 
-  -- @param #AI_DESIGNATE self
-  function AI_DESIGNATE:MenuStatus( AttackGroup )
+  -- @param #DESIGNATE self
+  function DESIGNATE:MenuStatus( AttackGroup )
 
     self:E("Status")
 
@@ -684,8 +686,8 @@ do -- AI_DESIGNATE
   end
   
   --- 
-  -- @param #AI_DESIGNATE self
-  function AI_DESIGNATE:MenuFlashStatus( AttackGroup, Flash )
+  -- @param #DESIGNATE self
+  function DESIGNATE:MenuFlashStatus( AttackGroup, Flash )
 
     self:E("Flash Status")
 
@@ -695,8 +697,8 @@ do -- AI_DESIGNATE
 
   
   --- 
-  -- @param #AI_DESIGNATE self
-  function AI_DESIGNATE:MenuAutoLase( AutoLase )
+  -- @param #DESIGNATE self
+  function DESIGNATE:MenuAutoLase( AutoLase )
 
     self:E("AutoLase")
 
@@ -704,8 +706,8 @@ do -- AI_DESIGNATE
   end
 
   --- 
-  -- @param #AI_DESIGNATE self
-  function AI_DESIGNATE:MenuSmoke( Index, Color )
+  -- @param #DESIGNATE self
+  function DESIGNATE:MenuSmoke( Index, Color )
 
     self:E("Designate through Smoke")
 
@@ -714,8 +716,8 @@ do -- AI_DESIGNATE
   end
 
   --- 
-  -- @param #AI_DESIGNATE self
-  function AI_DESIGNATE:MenuIlluminate( Index )
+  -- @param #DESIGNATE self
+  function DESIGNATE:MenuIlluminate( Index )
 
     self:E("Designate through Illumination")
 
@@ -725,8 +727,8 @@ do -- AI_DESIGNATE
   end
 
   --- 
-  -- @param #AI_DESIGNATE self
-  function AI_DESIGNATE:MenuLaseOn( Index, Duration )
+  -- @param #DESIGNATE self
+  function DESIGNATE:MenuLaseOn( Index, Duration )
 
     self:E("Designate through Lase")
     
@@ -734,8 +736,8 @@ do -- AI_DESIGNATE
   end
 
   --- 
-  -- @param #AI_DESIGNATE self
-  function AI_DESIGNATE:MenuLaseOff( Index, Duration )
+  -- @param #DESIGNATE self
+  function DESIGNATE:MenuLaseOff( Index, Duration )
 
     self:E("Lasing off")
 
@@ -744,8 +746,8 @@ do -- AI_DESIGNATE
   end
 
   --- 
-  -- @param #AI_DESIGNATE self
-  function AI_DESIGNATE:onafterLaseOn( From, Event, To, Index, Duration )
+  -- @param #DESIGNATE self
+  function DESIGNATE:onafterLaseOn( From, Event, To, Index, Duration )
   
     self.Designating[Index] = "Laser"
     self:Lasing( Index, Duration )
@@ -753,9 +755,9 @@ do -- AI_DESIGNATE
   
 
   --- 
-  -- @param #AI_DESIGNATE self
-  -- @return #AI_DESIGNATE
-  function AI_DESIGNATE:onafterLasing( From, Event, To, Index, Duration )
+  -- @param #DESIGNATE self
+  -- @return #DESIGNATE
+  function DESIGNATE:onafterLasing( From, Event, To, Index, Duration )
   
     local TargetSetUnit = self.Detection:GetDetectedSet( Index )
     
@@ -825,14 +827,14 @@ do -- AI_DESIGNATE
   end
     
   --- 
-  -- @param #AI_DESIGNATE self
-  -- @return #AI_DESIGNATE
-  function AI_DESIGNATE:onafterLaseOff( From, Event, To, Index )
+  -- @param #DESIGNATE self
+  -- @return #DESIGNATE
+  function DESIGNATE:onafterLaseOff( From, Event, To, Index )
   
-    local Recce = self.RecceSet:GetFirst()
+    local CC = self.CC:GetPositionable()
     
-    if Recce then 
-      Recce:MessageToSetGroup( "Stopped lasing.", 5, self.AttackSet )
+    if CC then 
+      CC:MessageToSetGroup( "Stopped lasing.", 5, self.AttackSet )
     end
     
     local TargetSetUnit = self.Detection:GetDetectedSet( Index )
@@ -854,9 +856,9 @@ do -- AI_DESIGNATE
 
 
   --- 
-  -- @param #AI_DESIGNATE self
-  -- @return #AI_DESIGNATE
-  function AI_DESIGNATE:onafterSmoke( From, Event, To, Index, Color )
+  -- @param #DESIGNATE self
+  -- @return #DESIGNATE
+  function DESIGNATE:onafterSmoke( From, Event, To, Index, Color )
   
 
     local TargetSetUnit = self.Detection:GetDetectedSet( Index )
@@ -888,9 +890,9 @@ do -- AI_DESIGNATE
   end
 
   --- Illuminating
-  -- @param #AI_DESIGNATE self
-  -- @return #AI_DESIGNATE
-  function AI_DESIGNATE:onafterIlluminate( From, Event, To, Index )
+  -- @param #DESIGNATE self
+  -- @return #DESIGNATE
+  function DESIGNATE:onafterIlluminate( From, Event, To, Index )
   
     local TargetSetUnit = self.Detection:GetDetectedSet( Index )
     
@@ -914,9 +916,9 @@ do -- AI_DESIGNATE
   end
 
   --- Done
-  -- @param #AI_DESIGNATE self
-  -- @return #AI_DESIGNATE
-  function AI_DESIGNATE:onafterDone( From, Event, To, Index )
+  -- @param #DESIGNATE self
+  -- @return #DESIGNATE
+  function DESIGNATE:onafterDone( From, Event, To, Index )
 
     self.Designating[Index] = nil
     self:SetDesignateMenu()
