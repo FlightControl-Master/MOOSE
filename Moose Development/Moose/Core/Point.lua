@@ -542,16 +542,59 @@ function POINT_VEC3:ToStringBR( AngleRadians, Distance )
   return s
 end
 
---- Provides a Bearing / Range string
+--- Provides a Lat Lon string
 -- @param #POINT_VEC3 self
--- @param #number AngleRadians The angle in randians
--- @param #number Distance The distance
--- @return #string The BR Text
-function POINT_VEC3:ToStringLL( acc, DMS )
+-- @param #number Accuracy The accurancy of significant numbers behind the comma... So Accurancy of 2 is 0.01.
+-- @param #boolean DMS true = Degrees, Minutes, Seconds; false = Degrees, Minutes
+-- @return #string The LL Text
+function POINT_VEC3:ToStringLL( Accuracy, DMS )
 
-  acc = acc or 3
+  Accuracy = Accuracy or 3
   local lat, lon = coord.LOtoLL( self:GetVec3() )
-  return UTILS.tostringLL(lat, lon, acc, DMS)
+  return UTILS.tostringLL( lat, lon, Accuracy, DMS )
+end
+
+--- Provides a MGRS string
+-- @param #POINT_VEC3 self
+-- @param #number Accuracy of the 5 digit code. 
+-- Precision depends on the Accuracy choosen: 
+--   * 0 = no digits - precision level 100 km 
+--   * 1 = 1 digits - precision level 10 km 
+--   * 2 = 2 digits - precision level 1 km 
+--   * 3 = 3 digits - precision level 100 m 
+--   * 4 = 4 digits - precision level 10 m.
+-- @return #string The MGRS Text
+function POINT_VEC3:ToStringMGRS( Accuracy )
+
+  Accuracy = Accuracy or 3
+  local lat, lon = coord.LOtoLL( self:GetVec3() )
+  local MGRS = coord.LLtoMGRS( lat, lon )
+  return UTILS.tostringMGRS( MGRS, Accuracy )
+end
+
+--- Provides a coordinate string of the point, based on a coordinate format system:
+--   * Uses default settings in POINT_VEC3.
+--   * Can be overridden if for a GROUP containing x clients, a menu was selected to override the default.
+-- 
+-- @param #POINT_VEC3 self
+-- @param Wrapper.Group#GROUP PlayerGroup The specific group with specific settings.
+-- @return #string The coordinate Text
+function POINT_VEC3:ToString( PlayerGroup ) --R2.3
+
+  PlayerGroup = PlayerGroup or GROUP
+
+  local CoordFormat = PlayerGroup:GetCoordFormat()
+  
+  if CoordFormat == "LL" then
+    return self:ToStringLL( PlayerGroup:GetLLAccuracy(), PlayerGroup:GetLLDMS() )
+  end
+  
+  if CoordFormat == "MGRS" then
+    return self:ToStringMGRS( PlayerGroup:GetMGRSAccuracy() )
+  end
+  
+  return nil
+  
 end
 
 --- Return the altitude text of the POINT_VEC3.
