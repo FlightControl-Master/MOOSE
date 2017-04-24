@@ -140,7 +140,7 @@ function SET_BASE:Add( ObjectName, Object )
   
   self.List.Count = self.List.Count + 1
   
-  self.Set[ObjectName] = t._
+  self.Set[ObjectName] = Object
   
   table.insert( self.Index, ObjectName )
   
@@ -345,7 +345,7 @@ end
 --- Starts the filtering of the Dead events for the collection.
 -- @param #SET_BASE self
 -- @return #SET_BASE self
-function SET_BASE:FilterDeads()
+function SET_BASE:FilterDeads() --R2.1 allow deads to be filtered to automatically handle deads in the collection.
 
   self:HandleEvent( EVENTS.Dead, self._EventOnDeadOrCrash )
   
@@ -355,7 +355,7 @@ end
 --- Starts the filtering of the Crash events for the collection.
 -- @param #SET_BASE self
 -- @return #SET_BASE self
-function SET_BASE:FilterCrashes()
+function SET_BASE:FilterCrashes() --R2.1 allow crashes to be filtered to automatically handle crashes in the collection.
 
   self:HandleEvent( EVENTS.Crash, self._EventOnDeadOrCrash )
   
@@ -1346,7 +1346,7 @@ SET_UNIT = {
 function SET_UNIT:New()
 
   -- Inherits from BASE
-  local self = BASE:Inherit( self, SET_BASE:New( _DATABASE.UNITS ) )
+  local self = BASE:Inherit( self, SET_BASE:New( _DATABASE.UNITS ) ) -- Core.Set#SET_UNIT
 
   return self
 end
@@ -1583,6 +1583,50 @@ function SET_UNIT:ForEachUnit( IteratorFunction, ... )
   
   self:ForEach( IteratorFunction, arg, self.Set )
 
+  return self
+end
+
+--- Iterate the SET_UNIT **sorted *per Threat Level** and call an interator function for each **alive** UNIT, providing the UNIT and optional parameters.
+-- 
+-- @param #SET_UNIT self
+-- @param #number FromThreatLevel The TreatLevel to start the evaluation **From** (this must be a value between 0 and 10).
+-- @param #number ToThreatLevel The TreatLevel to stop the evaluation **To** (this must be a value between 0 and 10).
+-- @param #function IteratorFunction The function that will be called when there is an alive UNIT in the SET_UNIT. The function needs to accept a UNIT parameter.
+-- @return #SET_UNIT self
+-- @usage
+-- 
+--     UnitSet:ForEachUnitPerThreatLevel( 10, 0,
+--       -- @param Wrapper.Unit#UNIT UnitObject The UNIT object in the UnitSet, that will be passed to the local function for evaluation.
+--       function( UnitObject )
+--         .. logic ..
+--       end
+--     )
+-- 
+function SET_UNIT:ForEachUnitPerThreatLevel( FromThreatLevel, ToThreatLevel, IteratorFunction, ... ) --R2.1 Threat Level implementation
+  self:F2( arg )
+  
+  local ThreatLevelSet = {}
+  
+  for UnitName, UnitObject in pairs( self.Set ) do
+    local Unit = UnitObject -- Wrapper.Unit#UNIT
+  
+    local ThreatLevel = Unit:GetThreatLevel()
+    ThreatLevelSet[ThreatLevel] = ThreatLevelSet[ThreatLevel] or {}
+    ThreatLevelSet[ThreatLevel].Set = ThreatLevelSet[ThreatLevel].Set or {}
+    ThreatLevelSet[ThreatLevel].Set[UnitName] = UnitObject
+    self:E( { ThreatLevel = ThreatLevel, ThreatLevelSet = ThreatLevelSet[ThreatLevel].Set } )
+  end
+  
+  local ThreatLevelIncrement = FromThreatLevel <= ToThreatLevel and 1 or -1
+  
+  for ThreatLevel = FromThreatLevel, ToThreatLevel, ThreatLevelIncrement do
+    self:E( { ThreatLevel = ThreatLevel } )
+    local ThreatLevelItem = ThreatLevelSet[ThreatLevel]
+    if ThreatLevelItem then
+      self:ForEach( IteratorFunction, arg, ThreatLevelItem.Set )
+    end
+  end
+  
   return self
 end
 

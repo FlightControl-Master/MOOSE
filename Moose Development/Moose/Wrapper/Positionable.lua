@@ -302,19 +302,38 @@ function POSITIONABLE:GetVelocityKMH()
   return nil
 end
 
+
+--- Returns the message text with the callsign embedded (if there is one).
+-- @param #POSITIONABLE self
+-- @param #string Message The message text
+-- @param #string Name (optional) The Name of the sender. If not provided, the Name is the type of the Positionable.
+-- @return #string The message text
+function POSITIONABLE:GetMessageText( Message, Name ) --R2.1 added
+
+  local DCSObject = self:GetDCSObject()
+  if DCSObject then
+    Name = Name and ( " (" .. Name .. ")" ) or ""
+    local Callsign = self:GetCallsign() ~= "" and self:GetCallsign() or self:GetName()
+    local MessageText = Callsign .. Name .. ": " .. Message
+    return MessageText
+  end
+
+  return nil
+end
+
+
 --- Returns a message with the callsign embedded (if there is one).
 -- @param #POSITIONABLE self
 -- @param #string Message The message text
 -- @param Dcs.DCSTypes#Duration Duration The duration of the message.
 -- @param #string Name (optional) The Name of the sender. If not provided, the Name is the type of the Positionable.
 -- @return Core.Message#MESSAGE
-function POSITIONABLE:GetMessage( Message, Duration, Name )
+function POSITIONABLE:GetMessage( Message, Duration, Name ) --R2.1 changed callsign and name and using GetMessageText
 
   local DCSObject = self:GetDCSObject()
   if DCSObject then
-    Name = Name or self:GetTypeName()
-    local Callsign = self:GetCallsign() ~= "" and self:GetCallsign() or self:GetName()
-    return MESSAGE:New( Message, Duration, Callsign .. " (" .. Name .. ")" )
+    local MessageText = self:GetMessageText( Message, Name )
+    return MESSAGE:New( MessageText, Duration )
   end
 
   return nil

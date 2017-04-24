@@ -184,6 +184,12 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POSITIONABLE).GetMessageText">POSITIONABLE:GetMessageText(Message, Name)</a></td>
+		<td class="summary">
+<p>Returns the message text with the callsign embedded (if there is one).</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(POSITIONABLE).GetPointVec2">POSITIONABLE:GetPointVec2()</a></td>
 		<td class="summary">
 <p>Returns a POINT_VEC2 object indicating the point in 2D of the POSITIONABLE within the mission.</p>
@@ -530,6 +536,39 @@ The duration of the message.</p>
 				
 <p><em><a href="Core.Message.html##(MESSAGE)">Core.Message#MESSAGE</a>:</em></p>
 
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(POSITIONABLE).GetMessageText" >
+<strong>POSITIONABLE:GetMessageText(Message, Name)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the message text with the callsign embedded (if there is one).</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Message </em></code>: 
+The message text</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Name </em></code>: 
+(optional) The Name of the sender. If not provided, the Name is the type of the Positionable.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#string:</em>
+The message text</p>
 
 </dd>
 </dl>

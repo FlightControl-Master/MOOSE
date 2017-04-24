@@ -972,6 +972,13 @@ mission designer to add a dedicated method</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_UNIT).ForEachUnitPerThreatLevel">SET_UNIT:ForEachUnitPerThreatLevel(FromThreatLevel, ToThreatLevel, IteratorFunction, ...)</a></td>
+		<td class="summary">
+<p>Iterate the SET_UNIT <strong>sorted *per Threat Level</strong> and call an interator function for each <strong>alive</strong> UNIT, providing the UNIT and optional parameters.</p>
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SET_UNIT).GetTypeNames">SET_UNIT:GetTypeNames(Delimiter)</a></td>
 		<td class="summary">
 <p>Retrieve the type names of the <a href="Unit.html">Unit</a>s in the SET, delimited by an optional delimiter.</p>
@@ -4749,6 +4756,61 @@ The function that will be called when there is an alive UNIT in the SET_UNIT. Th
 				
 <p><em><a href="##(SET_UNIT)">#SET_UNIT</a>:</em>
 self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_UNIT).ForEachUnitPerThreatLevel" >
+<strong>SET_UNIT:ForEachUnitPerThreatLevel(FromThreatLevel, ToThreatLevel, IteratorFunction, ...)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Iterate the SET_UNIT <strong>sorted *per Threat Level</strong> and call an interator function for each <strong>alive</strong> UNIT, providing the UNIT and optional parameters.</p>
+
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number FromThreatLevel </em></code>: 
+The TreatLevel to start the evaluation <strong>From</strong> (this must be a value between 0 and 10).</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number ToThreatLevel </em></code>: 
+The TreatLevel to stop the evaluation <strong>To</strong> (this must be a value between 0 and 10).</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#function IteratorFunction </em></code>: 
+The function that will be called when there is an alive UNIT in the SET_UNIT. The function needs to accept a UNIT parameter.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> ... </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET_UNIT)">#SET_UNIT</a>:</em>
+self</p>
+
+			<h3>Usage:</h3>
+		<pre class="example"><code>
+    UnitSet:ForEachUnitPerThreatLevel( 10, 0,
+      -- @param Wrapper.Unit#UNIT UnitObject The UNIT object in the UnitSet, that will be passed to the local function for evaluation.
+      function( UnitObject )
+        .. logic ..
+      end
+    )
+</code></pre>
 
 </dd>
 </dl>

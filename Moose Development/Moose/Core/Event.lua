@@ -1,4 +1,4 @@
---- **Core** - EVENT models DCS **event dispatching** using a **publish-subscribe** model.
+--- **Core R2.1** - EVENT models DCS **event dispatching** using a **publish-subscribe** model.
 -- 
 -- ![Banner Image](..\Presentations\EVENT\Dia1.JPG)
 -- 
@@ -491,7 +491,7 @@ end
 -- @param Core.Base#BASE EventClass The self instance of the class for which the event is.
 -- @param Dcs.DCSWorld#world.event EventID
 -- @return #EVENT.Events
-function EVENT:Reset( EventObject )
+function EVENT:Reset( EventObject ) --R2.1
 
   self:E( { "Resetting subscriptions for class: ", EventObject:GetClassNameAndID() } )
 
