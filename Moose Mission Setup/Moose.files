@@ -37,12 +37,12 @@ Functional/Escort.lua
 Functional/MissileTrainer.lua
 Functional/AirbasePolice.lua
 Functional/Detection.lua
+Functional/Designate.lua
 
 AI/AI_Balancer.lua
 AI/AI_Patrol.lua
 AI/AI_Cap.lua
 AI/AI_Cas.lua
-AI/AI_Designate.lua
 
 Actions/Act_Assign.lua
 Actions/Act_Route.lua

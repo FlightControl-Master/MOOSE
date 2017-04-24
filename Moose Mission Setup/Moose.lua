@@ -1,5 +1,5 @@
 env.info( '*** MOOSE DYNAMIC INCLUDE START *** ' )
-env.info( 'Moose Generation Timestamp: 20170423_1757' )
+env.info( 'Moose Generation Timestamp: 20170424_1257' )
 
 local base = _G
 
@@ -57,11 +57,11 @@ __Moose.Include( 'Functional/Escort.lua' )
 __Moose.Include( 'Functional/MissileTrainer.lua' )
 __Moose.Include( 'Functional/AirbasePolice.lua' )
 __Moose.Include( 'Functional/Detection.lua' )
+__Moose.Include( 'Functional/Designate.lua' )
 __Moose.Include( 'AI/AI_Balancer.lua' )
 __Moose.Include( 'AI/AI_Patrol.lua' )
 __Moose.Include( 'AI/AI_Cap.lua' )
 __Moose.Include( 'AI/AI_Cas.lua' )
-__Moose.Include( 'AI/AI_Designate.lua' )
 __Moose.Include( 'Actions/Act_Assign.lua' )
 __Moose.Include( 'Actions/Act_Route.lua' )
 __Moose.Include( 'Actions/Act_Account.lua' )
