@@ -67,33 +67,33 @@ do -- AI_DESIGNATE
   --   * A **Player** is an active CLIENT object containing a human player.
   --   * A **Designate Menu** is the menu that is dynamically created during the designation process for each _AttackGroup_.
   -- 
-  -- The _RecceSet_ is continuously detecting for potential _Targets_, executing its task as part of the _DetectionObject_.
-  -- Once _Targets_ have been detected, the _DesignateObject_ will trigger the **Detect Event**.
+  -- The RecceSet is continuously detecting for potential Targets, executing its task as part of the DetectionObject.
+  -- Once Targets have been detected, the DesignateObject will trigger the **Detect Event**.
   -- 
-  -- As part of the Detect Event, the _DetectionItems_ list is used by the _DesignateObject_ to provide the _Players_ with:
+  -- As part of the Detect Event, the DetectionItems list is used by the DesignateObject to provide the Players with:
   -- 
-  --   * The _RecceGroups_ are reporting to each _AttackGroup_, sending **Messages** containing the _Threat Level_ and the _TargetSet_ composition.
-  --   * **Menu options** are created and updated for each _AttackGroup_, containing the _Threat Level_ and the _TargetSet_ composition.
+  --   * The RecceGroups are reporting to each AttackGroup, sending **Messages** containing the Threat Level and the TargetSet composition.
+  --   * **Menu options** are created and updated for each AttackGroup, containing the Threat Level and the TargetSet composition.
   -- 
-  -- A _Player_ can then select an action from the _Designate Menu_. 
+  -- A Player can then select an action from the Designate Menu. 
   -- 
-  -- **Note that each selected action will be executed for a _TargetSet_, thus the _Target_ grouping done by the _DetectionObject_.**
+  -- **Note that each selected action will be executed for a TargetSet, thus the Target grouping done by the DetectionObject.**
   -- 
-  -- Each **Menu Option** in the _Designate Menu_ has two modes: 
+  -- Each **Menu Option** in the Designate Menu has two modes: 
   -- 
-  --   1. If the _TargetSet_ **is not being designated**, then the **Designate Menu** option for the target Set will provide options to **Lase** or **Smoke** the targets.
+  --   1. If the TargetSet **is not being designated**, then the **Designate Menu** option for the target Set will provide options to **Lase** or **Smoke** the targets.
   --   2. If the Target Set **is being designated**, then the **Designate Menu** option will provide an option to stop or cancel the designation.
   -- 
-  -- While designating, the _RecceGroups_ will report any change in _TargetSet_ composition or _Target_ presence.
+  -- While designating, the RecceGroups will report any change in TargetSet composition or Target presence.
   -- 
-  -- The following logic is executed when a _TargetSet_ is selected to be *lased* from the _Designation Menu_:
+  -- The following logic is executed when a TargetSet is selected to be *lased* from the Designation Menu:
   -- 
-  --   * The _RecceSet_ is searched for any _Recce_ that is within *designation distance* from a _Target_ in the _TargetSet_ that is currently not being designated.
-  --   * If there is a _Recce_ found that is currently no designating a target, and is within designation distance from the _Target_, then that _Target_ will be designated.
-  --   * During designation, any _Recce_ that does not have Line of Sight (LOS) and is not within disignation distance from the _Target_, will stop designating the _Target_, and a report is given.
-  --   * When a _Recce_ is designating a _Target_, and that _Target_ is destroyed, then the _Recce_ will stop designating the _Target_, and will report the event.
-  --   * When a _Recce_ is designating a _Target_, and that _Recce_ is destroyed, then the _Recce_ will be removed from the _RecceSet_ and designation will stop without reporting.
-  --   * When all _RecceGroups_ are destroyed from the _RecceSet_, then the DesignationObject will stop functioning, and nothing will be reported.
+  --   * The RecceSet is searched for any Recce that is within *designation distance* from a Target in the TargetSet that is currently not being designated.
+  --   * If there is a Recce found that is currently no designating a target, and is within designation distance from the Target, then that Target will be designated.
+  --   * During designation, any Recce that does not have Line of Sight (LOS) and is not within disignation distance from the Target, will stop designating the Target, and a report is given.
+  --   * When a Recce is designating a Target, and that Target is destroyed, then the Recce will stop designating the Target, and will report the event.
+  --   * When a Recce is designating a Target, and that Recce is destroyed, then the Recce will be removed from the RecceSet and designation will stop without reporting.
+  --   * When all RecceGroups are destroyed from the RecceSet, then the DesignationObject will stop functioning, and nothing will be reported.
   --   
   -- In this way, the DesignationObject assists players to designate ground targets for a coordinated attack!
   -- 
@@ -145,14 +145,41 @@ do -- AI_DESIGNATE
   -- 
   -- ## 4. Autolase to automatically lase detected targets.
   -- 
-  -- _DetectionItems_ can be auto lased once detected by _Recces_. As such, there is almost no action required from the _Players_ using the _Designate Menu_.
+  -- DetectionItems can be auto lased once detected by Recces. As such, there is almost no action required from the Players using the Designate Menu.
   -- The **auto lase** function can be activated through the Designation Menu.
   -- Use the method @{#AI_DESIGNATE.SetAutoLase}() to activate or deactivate the auto lase function programmatically.
-  -- Note that autolase will automatically activate lasing for ALL _DetectedItems_. Individual items can be switched-off if required using the _Designation Menu_.
+  -- Note that autolase will automatically activate lasing for ALL DetectedItems. Individual items can be switched-off if required using the Designation Menu.
   -- 
   --     AIDesignate:SetAutoLase( true )
   -- 
   -- Activate the auto lasing.
+  -- 
+  -- ## 5. Target prioritization on threat level
+  -- 
+  -- Targets can be detected of different types in one DetectionItem. Depending on the type of the Target, a different threat level applies in an Air to Ground combat context.
+  -- SAMs are of a higher threat than normal tanks. So, if the Target type was recognized, the Recces will select those targets that form the biggest threat first,
+  -- and will continue this until the remaining vehicles with the lowest threat have been reached.
+  -- 
+  -- This threat level prioritization can be activated using the method @{#AI_DESIGNATE.SetThreatLevelPrioritization}().
+  -- If not activated, Targets will be selected in a random order, but most like those first which are the closest to the Recce marking the Target.
+  -- 
+  --     AIDesignate:SetThreatLevelPrioritization( true )
+  --     
+  -- The example will activate the threat level prioritization for this the AIDesignate object. Threats will be marked based on the threat level of the Target.
+  -- 
+  -- ## 6. Status Report
+  -- 
+  -- A status report is available that displays the current Targets detected, grouped per DetectionItem, and a list of which Targets are currently being marked.
+  -- 
+  --   * The status report can be shown by selecting "Status" -> "Report Status" from the Designation menu .
+  --   * The status report can be automatically flashed by selecting "Status" -> "Flash Status On".
+  --   * The automatic flashing of the status report can be deactivated by selecting "Status" -> "Flash Status Off".
+  --   * The flashing of the status menu is disabled by default.
+  --   * The method @{#AI_DESIGNATE.FlashStatusMenu}() can be used to enable or disable to flashing of the status menu.
+  --   
+  --     AIDesignate:FlashStatusMenu( true )
+  --     
+  -- The example will activate the flashing of the status menu for this AIDesignate object.
   -- 
   -- @field #AI_DESIGNATE
   -- 
@@ -171,6 +198,7 @@ do -- AI_DESIGNATE
     self:F( { Detection } )
   
     self:SetStartState( "Designating" )
+    
     self:AddTransition( "*", "Detect", "*" )
     
     --- Detect Handler OnBefore for AI_DESIGNATE
@@ -196,7 +224,6 @@ do -- AI_DESIGNATE
     -- @function [parent=#AI_DESIGNATE] __Detect
     -- @param #AI_DESIGNATE self
     -- @param #number Delay
-    
     
 
     self:AddTransition( "*", "LaseOn", "Lasing" )
@@ -343,19 +370,41 @@ do -- AI_DESIGNATE
     
     self.LaseDuration = 60
     
+    self:SetFlashStatusMenu( false )
+    self:SetDesignateMenu()
+    
     self:SetLaserCodes( 1688 ) -- set self.LaserCodes
     self:SetAutoLase( false ) -- set self.Autolase
+    
+    self:SetThreatLevelPrioritization( false ) -- self.ThreatLevelPrioritization, default is threat level priorization off
     
     self.LaserCodesUsed = {}
     
     
     self.Detection:__Start( 2 )
     
-    self:SetDesignateMenu()
-    
     return self
   end
-  
+
+  --- Set the flashing of the status menu.
+  -- @param #AI_DESIGNATE self
+  -- @param #boolean FlashMenu true: the status menu will be flashed every detection run; false: no flashing of the menu.
+  -- @return #AI_DESIGNATE
+  function AI_DESIGNATE:SetFlashStatusMenu( FlashMenu ) --R2.1
+
+    self.FlashStatusMenu = {}
+
+    self.AttackSet:ForEachGroup(
+    
+      --- @param Wrapper.Group#GROUP GroupReport
+      function( AttackGroup )
+        self.FlashStatusMenu[AttackGroup] = FlashMenu
+      end
+    )
+
+    return self
+  end
+
 
   --- Set an array of possible laser codes.
   -- Each new lase will select a code from this table.
@@ -447,6 +496,18 @@ do -- AI_DESIGNATE
 
     return self
   end
+
+  --- Set priorization of Targets based on the **Threat Level of the Target** in an Air to Ground context.
+  -- @param #AI_DESIGNATE self
+  -- @param #boolean Prioritize
+  -- @return #AI_DESIGNATE
+  function AI_DESIGNATE:SetThreatLevelPrioritization( Prioritize ) --R2.1
+
+    self.ThreatLevelPrioritization = Prioritize
+    
+    return self
+  end
+  
   
 
   --- 
@@ -457,10 +518,7 @@ do -- AI_DESIGNATE
     self:__Detect( -60 )
     
     self:ActivateAutoLase()
-    
     self:SendStatus()
-    
-    
     self:SetDesignateMenu()      
   
     return self
@@ -468,21 +526,49 @@ do -- AI_DESIGNATE
 
   --- Sends the status to the Attack Groups.
   -- @param #AI_DESIGNATE self
+  -- @param Wrapper.Group#GROUP AttackGroup
   -- @return #AI_DESIGNATE
-  function AI_DESIGNATE:SendStatus()
+  function AI_DESIGNATE:SendStatus( MenuAttackGroup )
 
-    local DetectedReport = REPORT:New( "Targets ready to be designated:" )
-    local DetectedItems = self.Detection:GetDetectedItems()
     
-    for Index, DetectedItemData in pairs( DetectedItems ) do
+    self.AttackSet:ForEachGroup(
+    
+      --- @param Wrapper.Group#GROUP GroupReport
+      function( AttackGroup )
       
-      local Report = self.Detection:DetectedItemReportSummary( Index )
-      DetectedReport:Add(" - " .. Report)
-    end
-    
-    local RecceLeader = self.RecceSet:GetFirst() -- Wrapper.Group#GROUP
+        if self.FlashStatusMenu[AttackGroup] or AttackGroup:GetName() == MenuAttackGroup:GetName() then
 
-    RecceLeader:MessageToSetGroup( DetectedReport:Text( "\n" ), 15, self.AttackSet )
+          local DetectedReport = REPORT:New( "Targets ready to be designated:" )
+          local DetectedItems = self.Detection:GetDetectedItems()
+          
+          for Index, DetectedItemData in pairs( DetectedItems ) do
+            
+            local Report = self.Detection:DetectedItemReportSummary( Index )
+            DetectedReport:Add(" - " .. Report)
+          end
+          
+          local RecceLeader = self.RecceSet:GetFirst() -- Wrapper.Group#GROUP
+      
+          RecceLeader:MessageToGroup( DetectedReport:Text( "\n" ), 15, AttackGroup )
+          
+          local DesignationReport = REPORT:New( "Targets currently marked:" )
+      
+          self.RecceSet:ForEachGroup(
+            function( RecceGroup )
+              local RecceUnits = RecceGroup:GetUnits()
+              for UnitID, RecceData in pairs( RecceUnits ) do
+                local Recce = RecceData -- Wrapper.Unit#UNIT
+                if Recce:IsLasing() then
+                  DesignationReport:Add( " - " .. Recce:GetMessageText( "Marking " .. Recce:GetSpot().Target:GetTypeName() .. " with laser " .. Recce:GetSpot().LaserCode .. "." ) )
+                end
+              end
+            end
+          )
+      
+          RecceLeader:MessageToGroup( DesignationReport:Text(), 15, AttackGroup )
+        end
+      end
+    )
     
     return self
   end
@@ -543,7 +629,13 @@ do -- AI_DESIGNATE
           MENU_GROUP_COMMAND:New( AttackGroup, "Auto Lase On", DesignateMenu, self.MenuAutoLase, self, true )
         end        
 
-        MENU_GROUP_COMMAND:New( AttackGroup, "Report Designation Status", DesignateMenu, self.MenuStatus, self, AttackGroup )
+        local StatusMenu = MENU_GROUP:New( AttackGroup, "Status", DesignateMenu )
+        MENU_GROUP_COMMAND:New( AttackGroup, "Report Status", StatusMenu, self.MenuStatus, self, AttackGroup )
+        if self.FlashStatusMenu[AttackGroup] then
+          MENU_GROUP_COMMAND:New( AttackGroup, "Flash Status Off", StatusMenu, self.MenuFlashStatus, self, AttackGroup, false )
+        else
+           MENU_GROUP_COMMAND:New( AttackGroup, "Flash Status On", StatusMenu, self.MenuFlashStatus, self, AttackGroup, true )
+        end        
       
         local DetectedItems = self.Detection:GetDetectedItems()
         
@@ -588,18 +680,17 @@ do -- AI_DESIGNATE
 
     self:E("Status")
 
-  self.RecceSet:ForEachGroup(
-    function( RecceGroup )
-      local RecceUnits = RecceGroup:GetUnits()
-      for UnitID, RecceData in pairs( RecceUnits ) do
-        local Recce = RecceData -- Wrapper.Unit#UNIT
-        if Recce:IsLasing() then
-          Recce:MessageToGroup( "Marking " .. Recce:GetSpot().Target:GetTypeName() .. " with laser " .. Recce:GetSpot().LaserCode .. ".", 5, AttackGroup )
-        end
-      end
-    end
-  )
+    self:SendStatus( AttackGroup )  
+  end
+  
+  --- 
+  -- @param #AI_DESIGNATE self
+  function AI_DESIGNATE:MenuFlashStatus( AttackGroup, Flash )
 
+    self:E("Flash Status")
+
+    self.FlashStatusMenu[AttackGroup] = Flash
+    self:SetDesignateMenu()
   end
 
   
@@ -679,7 +770,7 @@ do -- AI_DESIGNATE
       end
     end
 
-    TargetSetUnit:ForEachUnit(
+    TargetSetUnit:ForEachUnitPerThreatLevel( 10, 0,
       --- @param Wrapper.Unit#UNIT SmokeUnit
       function( TargetUnit )
         self:E("In procedure")
@@ -699,14 +790,14 @@ do -- AI_DESIGNATE
                       local AttackSet = self.AttackSet
                       function Spot:OnAfterDestroyed( From, Event, To )
                         self:E( "Destroyed Message" )
-                        self.Recce:MessageToSetGroup( "Target " .. TargetUnit:GetTypeName() .. " destroyed." .. TargetSetUnit:Count() .. " targets left.", 15, AttackSet )
+                        self.Recce:MessageToSetGroup( "Target " .. TargetUnit:GetTypeName() .. " destroyed. " .. TargetSetUnit:Count() .. " targets left.", 5, AttackSet )
                       end
                       self.Recces[TargetUnit] = RecceUnit
                       RecceUnit:MessageToSetGroup( "Marking " .. TargetUnit:GetTypeName() .. " with laser " .. RecceUnit:GetSpot().LaserCode .. " for " .. Duration .. "s.", 5, self.AttackSet )
                       break
                     end
                   else
-                    RecceUnit:MessageToSetGroup( "Can't lase " .. TargetUnit:GetTypeName(), 5, self.AttackSet )
+                    RecceUnit:MessageToSetGroup( "Can't mark " .. TargetUnit:GetTypeName(), 5, self.AttackSet )
                   end
                 else
                   -- The Recce is lasing, but the Target is not detected or within LOS. So stop lasing and send a report.
@@ -741,7 +832,7 @@ do -- AI_DESIGNATE
     local Recce = self.RecceSet:GetFirst()
     
     if Recce then 
-      Recce:MessageToSetGroup( "Stopped lasing.", 15, self.AttackSet )
+      Recce:MessageToSetGroup( "Stopped lasing.", 5, self.AttackSet )
     end
     
     local TargetSetUnit = self.Detection:GetDetectedSet( Index )
@@ -750,7 +841,7 @@ do -- AI_DESIGNATE
     
     for TargetID, RecceData in pairs( Recces ) do
       local Recce = RecceData -- Wrapper.Unit#UNIT
-      Recce:MessageToSetGroup( "Stopped lasing " .. Recce:GetSpot().Target:GetTypeName() .. ".", 15, self.AttackSet )
+      Recce:MessageToSetGroup( "Stopped lasing " .. Recce:GetSpot().Target:GetTypeName() .. ".", 5, self.AttackSet )
       Recce:LaseOff()
     end
     

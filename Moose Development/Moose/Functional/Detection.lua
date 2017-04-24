@@ -678,14 +678,53 @@ do -- DETECTION_BASE
       
       if self.DetectionCount > 0 and self.DetectionRun == self.DetectionCount then
         self:T( "--> Create Detection Sets" )
-        self:CreateDetectionSets()
 
+        self:CreateDetectionItems() -- Polymorphic call to Create/Update the DetectionItems list for the DETECTION_ class grouping method.
+        self:CleanDetectionItems() -- Any DetectionItem that has a Set with zero elements in it, must be removed from the DetectionItems list.
+ 
         self:__Detect( self.DetectionInterval )
       end
 
     end
   
   
+  end
+  
+  do -- DetectionItems Creation
+  
+    --- Make a DetectionSet table. This function will be overridden in the derived clsses.
+    -- @param #DETECTION_BASE self
+    -- @return #DETECTION_BASE
+    function DETECTION_BASE:CleanDetectionItems() --R2.1 Clean the DetectionItems list
+      self:F2()
+    
+      -- We clean all DetectedItems.
+      -- if there are any remaining DetectedItems with no Set Objects then the Item in the DetectedItems must be deleted.
+  
+      for DetectedItemID, DetectedItemData in pairs( self.DetectedItems ) do
+    
+        local DetectedItem = DetectedItemData -- #DETECTION_BASE.DetectedItem
+        local DetectedSet = DetectedItem.Set
+        
+        if DetectedSet:Count() == 0 then
+          self.DetectedItems[DetectedItemID] = nil
+        end
+      end
+
+      return self
+    end
+  
+    --- Make a DetectionSet table. This function will be overridden in the derived clsses.
+    -- @param #DETECTION_BASE self
+    -- @return #DETECTION_BASE
+    function DETECTION_BASE:CreateDetectionItems()
+      self:F2()
+    
+      self:E( "Error, in DETECTION_BASE class..." )
+      return self
+    end
+  
+
   end
   
   do -- Initialization methods
@@ -1255,16 +1294,6 @@ do -- DETECTION_BASE
     return DetectionSetGroup
   end
   
-  --- Make a DetectionSet table. This function will be overridden in the derived clsses.
-  -- @param #DETECTION_BASE self
-  -- @return #DETECTION_BASE self
-  function DETECTION_BASE:CreateDetectionSets()
-  	self:F2()
-  
-    self:E( "Error, in DETECTION_BASE class..." )
-  
-  end
-  
   
   --- Schedule the DETECTION construction.
   -- @param #DETECTION_BASE self
@@ -1359,7 +1388,7 @@ do -- DETECTION_UNITS
   -- For each DetectedItem, a one field array is created containing the Unit detected.
   -- @param #DETECTION_UNITS self
   -- @return #DETECTION_UNITS self
-  function DETECTION_UNITS:CreateDetectionSets()
+  function DETECTION_UNITS:CreateDetectionItems()
     self:F2( #self.DetectedObjects )
   
     -- Loop the current detected items, and check if each object still exists and is detected.
@@ -1582,7 +1611,7 @@ do -- DETECTION_TYPES
   -- For each DetectedItem, a one field array is created containing the Unit detected.
   -- @param #DETECTION_TYPES self
   -- @return #DETECTION_TYPES self
-  function DETECTION_TYPES:CreateDetectionSets()
+  function DETECTION_TYPES:CreateDetectionItems()
     self:F2( #self.DetectedObjects )
   
     -- Loop the current detected items, and check if each object still exists and is detected.
@@ -1636,6 +1665,9 @@ do -- DETECTION_TYPES
       end    
     end
     
+    
+
+    -- Check if there are any friendlies nearby.    
     for DetectedItemID, DetectedItemData in pairs( self.DetectedItems ) do
   
       local DetectedItem = DetectedItemData -- #DETECTION_BASE.DetectedItem
@@ -1974,7 +2006,7 @@ do -- DETECTION_AREAS
   --- Make a DetectionSet table. This function will be overridden in the derived clsses.
   -- @param #DETECTION_AREAS self
   -- @return #DETECTION_AREAS self
-  function DETECTION_AREAS:CreateDetectionSets()
+  function DETECTION_AREAS:CreateDetectionItems()
     self:F2()
   
   
@@ -2121,7 +2153,7 @@ do -- DETECTION_AREAS
         
           -- New detection area
           local DetectedItem = self:AddDetectedItemZone( nil, 
-            SET_UNIT:New(),
+            SET_UNIT:New():FilterDeads():FilterCrashes(),
             ZONE_UNIT:New( DetectedUnitName, DetectedUnit, self.DetectionZoneRange )
           )
           --self:E( DetectedItem.Zone.ZoneUNIT.UnitName )

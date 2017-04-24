@@ -189,7 +189,7 @@ DETECTION uses the in-built detection capabilities of DCS World, but adds new fu
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS).CreateDetectionSets">DETECTION_AREAS:CreateDetectionSets()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS).CreateDetectionItems">DETECTION_AREAS:CreateDetectionItems()</a></td>
 		<td class="summary">
 <p>Make a DetectionSet table.</p>
 </td>
@@ -349,13 +349,19 @@ DETECTION uses the in-built detection capabilities of DCS World, but adds new fu
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).CleanDetectionItems">DETECTION_BASE:CleanDetectionItems()</a></td>
+		<td class="summary">
+<p>Make a DetectionSet table.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).CountryID">DETECTION_BASE.CountryID</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).CreateDetectionSets">DETECTION_BASE:CreateDetectionSets()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).CreateDetectionItems">DETECTION_BASE:CreateDetectionItems()</a></td>
 		<td class="summary">
 <p>Make a DetectionSet table.</p>
 </td>
@@ -930,7 +936,7 @@ The different values of Unit.Category can be:</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_TYPES).CreateDetectionSets">DETECTION_TYPES:CreateDetectionSets()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_TYPES).CreateDetectionItems">DETECTION_TYPES:CreateDetectionItems()</a></td>
 		<td class="summary">
 <p>Create the DetectedItems list from the DetectedObjects table.</p>
 </td>
@@ -1006,7 +1012,7 @@ The different values of Unit.Category can be:</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_UNITS).CreateDetectionSets">DETECTION_UNITS:CreateDetectionSets()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_UNITS).CreateDetectionItems">DETECTION_UNITS:CreateDetectionItems()</a></td>
 		<td class="summary">
 <p>Create the DetectedItems list from the DetectedObjects table.</p>
 </td>
@@ -1454,8 +1460,8 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(DETECTION_AREAS).CreateDetectionSets" >
-<strong>DETECTION_AREAS:CreateDetectionSets()</strong>
+<a id="#(DETECTION_AREAS).CreateDetectionItems" >
+<strong>DETECTION_AREAS:CreateDetectionItems()</strong>
 </a>
 </dt>
 <dd>
@@ -2029,6 +2035,27 @@ The index of the DetectedItem.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(DETECTION_BASE).CleanDetectionItems" >
+<strong>DETECTION_BASE:CleanDetectionItems()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Make a DetectionSet table.</p>
+
+	
+<p>This function will be overridden in the derived clsses.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(DETECTION_BASE)">#DETECTION_BASE</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 		<em></em>
 <a id="#(DETECTION_BASE).CountryID" >
 <strong>DETECTION_BASE.CountryID</strong>
@@ -2043,8 +2070,8 @@ The index of the DetectedItem.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(DETECTION_BASE).CreateDetectionSets" >
-<strong>DETECTION_BASE:CreateDetectionSets()</strong>
+<a id="#(DETECTION_BASE).CreateDetectionItems" >
+<strong>DETECTION_BASE:CreateDetectionItems()</strong>
 </a>
 </dt>
 <dd>
@@ -2056,8 +2083,8 @@ The index of the DetectedItem.</p>
 
 		<h3>Return value</h3>
 				
-<p><em><a href="##(DETECTION_BASE)">#DETECTION_BASE</a>:</em>
-self</p>
+<p><em><a href="##(DETECTION_BASE)">#DETECTION_BASE</a>:</em></p>
+
 
 </dd>
 </dl>
@@ -2174,6 +2201,7 @@ self</p>
 		<dl class="function">
 <dt>
 
+		<em>#number</em>
 <a id="#(DETECTION_BASE).DetectedItemCount" >
 <strong>DETECTION_BASE.DetectedItemCount</strong>
 </a>
@@ -2187,6 +2215,7 @@ self</p>
 		<dl class="function">
 <dt>
 
+		<em>#number</em>
 <a id="#(DETECTION_BASE).DetectedItemMax" >
 <strong>DETECTION_BASE.DetectedItemMax</strong>
 </a>
@@ -2300,7 +2329,7 @@ self</p>
 		<dl class="function">
 <dt>
 
-		<em></em>
+		<em>#number</em>
 <a id="#(DETECTION_BASE).DetectionInterval" >
 <strong>DETECTION_BASE.DetectionInterval</strong>
 </a>
@@ -4110,8 +4139,8 @@ Beware that when the amount of different types detected is large, the DetectedIt
 		<dl class="function">
 <dt>
 
-<a id="#(DETECTION_TYPES).CreateDetectionSets" >
-<strong>DETECTION_TYPES:CreateDetectionSets()</strong>
+<a id="#(DETECTION_TYPES).CreateDetectionItems" >
+<strong>DETECTION_TYPES:CreateDetectionItems()</strong>
 </a>
 </dt>
 <dd>
@@ -4345,8 +4374,8 @@ Beware that when the amount of units detected is large, the DetectedItems list w
 		<dl class="function">
 <dt>
 
-<a id="#(DETECTION_UNITS).CreateDetectionSets" >
-<strong>DETECTION_UNITS:CreateDetectionSets()</strong>
+<a id="#(DETECTION_UNITS).CreateDetectionItems" >
+<strong>DETECTION_UNITS:CreateDetectionItems()</strong>
 </a>
 </dt>
 <dd>
