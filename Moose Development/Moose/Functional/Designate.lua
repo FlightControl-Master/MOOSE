@@ -538,7 +538,7 @@ do -- DESIGNATE
       --- @param Wrapper.Group#GROUP GroupReport
       function( AttackGroup )
       
-        if self.FlashStatusMenu[AttackGroup] or AttackGroup:GetName() == MenuAttackGroup:GetName() then
+        if self.FlashStatusMenu[AttackGroup] or ( MenuAttackGroup and ( AttackGroup:GetName() == MenuAttackGroup:GetName() ) ) then
 
           local DetectedReport = REPORT:New( "Targets ready to be designated:" )
           local DetectedItems = self.Detection:GetDetectedItems()
