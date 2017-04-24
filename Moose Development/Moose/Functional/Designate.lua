@@ -902,7 +902,7 @@ do -- DESIGNATE
       local RecceGroup = self.RecceSet:FindNearestGroupFromPointVec2(TargetUnit:GetPointVec2())
       local RecceUnit = RecceGroup:GetUnit( 1 )
       if RecceUnit then
-        RecceUnit:MessageToGroup( "Illuminating " .. TargetUnit:GetTypeName() .. ".", 5, self.AttackSet )
+        RecceUnit:MessageToSetGroup( "Illuminating " .. TargetUnit:GetTypeName() .. ".", 5, self.AttackSet )
         SCHEDULER:New( self,
           function()
             if TargetUnit:IsAlive() then
