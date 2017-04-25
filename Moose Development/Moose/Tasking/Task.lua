@@ -191,6 +191,7 @@ function TASK:New( Mission, SetGroupAssign, TaskName, TaskType )
   
   self.FsmTemplate = self.FsmTemplate or FSM_PROCESS:New()
   
+  self.TaskInfo = {}
   
   return self
 end
@@ -546,8 +547,23 @@ function TASK:SetMenu( MenuTime )
 
   self.SetGroup:Flush()
   for TaskGroupID, TaskGroupData in pairs( self.SetGroup:GetSet() ) do
-    local TaskGroup = TaskGroupData -- Wrapper.Group#GROUP 
+    local TaskGroup = TaskGroupData -- Wrapper.Group#GROUP
     if TaskGroup:IsAlive() and TaskGroup:GetPlayerNames() then
+    
+      -- Set Mission Menus
+      
+      local Mission = self:GetMission()
+      local MissionMenu = Mission:GetMenu()
+      if MissionMenu then
+        TaskGroup.MenuReports = MENU_GROUP:New( TaskGroup, "Reports", MissionMenu )
+        MENU_GROUP_COMMAND:New( TaskGroup, "Report Tasks", TaskGroup.MenuReports, Mission.MenuReportSummary, Mission, TaskGroup )
+        MENU_GROUP_COMMAND:New( TaskGroup, "Report Planned Tasks", TaskGroup.MenuReports, Mission.MenuReportOverview, Mission, TaskGroup, "Planned" )
+        MENU_GROUP_COMMAND:New( TaskGroup, "Report Ongoing Tasks", TaskGroup.MenuReports, Mission.MenuReportOverview, Mission, TaskGroup, "Ongoing" )
+        MENU_GROUP_COMMAND:New( TaskGroup, "Report Successful Tasks", TaskGroup.MenuReports, Mission.MenuReportOverview, Mission, TaskGroup, "Success" )
+        MENU_GROUP_COMMAND:New( TaskGroup, "Report Failed Tasks", TaskGroup.MenuReports, Mission.MenuReportOverview, Mission, TaskGroup, "Failed" )
+        MENU_GROUP_COMMAND:New( TaskGroup, "Report Held Tasks", TaskGroup.MenuReports, Mission.MenuReportOverview, Mission, TaskGroup, "Hold" )
+      end
+    
       if self:IsStatePlanned() or self:IsStateReplanned() then
         self:SetMenuForGroup( TaskGroup, MenuTime )
       end
@@ -838,6 +854,14 @@ end
 -- @param #string TaskType
 function TASK:SetType( TaskType )
   self.TaskType = TaskType
+end
+
+--- Sets the Information on the Task
+-- @param #TASK self
+-- @param #string TaskInfo
+function TASK:SetInfo( TaskInfo, TaskInfoText )
+
+  self.TaskInfo[TaskInfo] = TaskInfoText
 end
 
 --- Gets the Type of the Task
@@ -1144,6 +1168,27 @@ function TASK:ReportSummary()
   return Report:Text()
 end
 
+--- Create an overiew report of the Task.
+-- List the Task Name and Status
+-- @param #TASK self
+-- @return #string
+function TASK:ReportOverview()
+
+  local Report = REPORT:New()
+  
+  -- List the name of the Task.
+  local Name = self:GetName()
+  
+  -- Determine the status of the Task.
+  local State = self:GetState()
+  
+  local Detection = self.TaskInfo["Detection"] and " - " .. self.TaskInfo["Detection"] or "" 
+  
+  Report:Add( "Task " .. Name .. Detection )
+
+  return Report:Text()
+end
+
 
 --- Create a detailed report of the Task.
 -- List the Task Status, and the Players assigned to the Task.
@@ -1161,17 +1206,23 @@ function TASK:ReportDetails()
   
   -- Loop each Unit active in the Task, and find Player Names.
   local PlayerNames = {}
-  local PlayerReport = REPORT:New( " - Players:" )
+  local PlayerReport = REPORT:New( "\n   Players:" )
   for PlayerGroupID, PlayerGroupData in pairs( self:GetGroups():GetSet() ) do
     local PlayerGroup = PlayerGroupData -- Wrapper.Group#GROUP
     PlayerNames = PlayerGroup:GetPlayerNames()
     if PlayerNames then
-      PlayerReport:Add( " -- Group " .. PlayerGroup:GetCallsign() .. ": " .. table.concat( PlayerNames, ", " ) )
+      PlayerReport:Add( "   Group " .. PlayerGroup:GetCallsign() .. ": " .. table.concat( PlayerNames, ", " ) )
     end
   end
+
+  local Detection = self.TaskInfo["Detection"] and "\n   Detection: " .. self.TaskInfo["Detection"] or "" 
+  local Changes = self.TaskInfo["Changes"] and "\n   Changes: " .. self.TaskInfo["Changes"] or ""
+  local Players = PlayerReport:Text()
+
+  Report:Add( "Task " .. Name .. Players .. Detection .. Changes )
   
   -- Loop each Process in the Task, and find Reporting Details.
-  Report:Add( string.format( " - Task %s\n -- State '%s'\n%s", Name, State, PlayerReport:Text() ) )
+  Report:Add( string.format( "Task %s\n -- State '%s'\n%s", Name, State, PlayerReport:Text() ) )
   return Report:Text()
 end
 

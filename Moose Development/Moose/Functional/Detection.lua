@@ -1172,6 +1172,7 @@ do -- DETECTION_BASE
     
     DetectedItem.Set = Set or SET_UNIT:New():FilterDeads():FilterCrashes()
     DetectedItem.ItemID = ItemPrefix .. "." .. self.DetectedItemMax
+    DetectedItem.ID = self.DetectedItemMax
     DetectedItem.Removed = false
     
     return DetectedItem
@@ -1239,11 +1240,25 @@ do -- DETECTION_BASE
   -- @param #DETECTION_BASE self
   -- @param #number Index
   -- @return #string DetectedItemID
-  function DETECTION_BASE:GetDetectedItemID( Index )
+  function DETECTION_BASE:GetDetectedItemID( Index ) --R2.1
   
     local DetectedItem = self.DetectedItems[Index]
     if DetectedItem then
       return DetectedItem.ItemID
+    end
+    
+    return ""
+  end
+  
+  --- Get a detected ID using a given numeric index.
+  -- @param #DETECTION_BASE self
+  -- @param #number Index
+  -- @return #string DetectedItemID
+  function DETECTION_BASE:GetDetectedID( Index ) --R2.1
+  
+    local DetectedItem = self.DetectedItems[Index]
+    if DetectedItem then
+      return DetectedItem.ID
     end
     
     return ""

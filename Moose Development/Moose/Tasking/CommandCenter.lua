@@ -162,6 +162,8 @@ function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
       end
     end
   )
+  
+  self:SetMenu()
 	
 	return self
 end
@@ -220,12 +222,12 @@ function COMMANDCENTER:SetMenu()
   self.CommandCenterMenu = self.CommandCenterMenu or MENU_COALITION:New( self.CommandCenterCoalition, "Command Center (" .. self:GetName() .. ")" )
 
   local MenuTime = timer.getTime()
-  for MissionID, Mission in pairs( self:GetMissions() ) do
+  for MissionID, Mission in pairs( self:GetMissions() or {} ) do
     local Mission = Mission -- Tasking.Mission#MISSION
     Mission:SetMenu( MenuTime )
   end
 
-  for MissionID, Mission in pairs( self:GetMissions() ) do
+  for MissionID, Mission in pairs( self:GetMissions() or {} ) do
     local Mission = Mission -- Tasking.Mission#MISSION
     Mission:RemoveMenu( MenuTime )
   end
