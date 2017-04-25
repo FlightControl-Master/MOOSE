@@ -1777,9 +1777,12 @@ do -- DETECTION_TYPES
 
       local DetectedItemCoordinate = DetectedItemUnit:GetCoordinate()
       local DetectedItemCoordText = DetectedItemCoordinate:ToString()
+      
+      self:E( { DetectedItemID,
+        DetectedItemCoordText } )
 
       local ReportSummary = string.format( 
-        "%S - %s", 
+        "%s - %s", 
         DetectedItemID,
         DetectedItemCoordText
       )
@@ -1813,7 +1816,7 @@ do -- DETECTION_TYPES
       local DetectedItemCoordText = DetectedItemCoordinate:ToString()
 
       local ReportSummary = string.format( 
-        "%S - %s - Threat:[%s](%2d) - %2d of %s", 
+        "%s - %s - Threat:[%s](%2d) - %2d of %s", 
         DetectedItemID,
         DetectedItemCoordText,
         string.rep(  "■", ThreatLevelA2G ),
