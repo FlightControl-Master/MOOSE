@@ -563,7 +563,7 @@ function TASK:SetMenu( MenuTime )
         MENU_GROUP_COMMAND:New( TaskGroup, "Report Failed Tasks", TaskGroup.MenuReports, Mission.MenuReportOverview, Mission, TaskGroup, "Failed" )
         MENU_GROUP_COMMAND:New( TaskGroup, "Report Held Tasks", TaskGroup.MenuReports, Mission.MenuReportOverview, Mission, TaskGroup, "Hold" )
       end
-    
+      
       if self:IsStatePlanned() or self:IsStateReplanned() then
         self:SetMenuForGroup( TaskGroup, MenuTime )
       end
@@ -1196,7 +1196,7 @@ end
 -- @return #string
 function TASK:ReportDetails()
 
-  local Report = REPORT:New()
+  local Report = REPORT:New():SetIndent( 3 )
   
   -- List the name of the Task.
   local Name = self:GetName()
@@ -1206,23 +1206,29 @@ function TASK:ReportDetails()
   
   -- Loop each Unit active in the Task, and find Player Names.
   local PlayerNames = {}
-  local PlayerReport = REPORT:New( "\n   Players:" )
+  local PlayerReport = REPORT:New()
   for PlayerGroupID, PlayerGroupData in pairs( self:GetGroups():GetSet() ) do
+    
     local PlayerGroup = PlayerGroupData -- Wrapper.Group#GROUP
+    
     PlayerNames = PlayerGroup:GetPlayerNames()
     if PlayerNames then
-      PlayerReport:Add( "   Group " .. PlayerGroup:GetCallsign() .. ": " .. table.concat( PlayerNames, ", " ) )
+      PlayerReport:Add( "Group " .. PlayerGroup:GetCallsign() .. ": " .. table.concat( PlayerNames, ", " ) )
     end
   end
-
-  local Detection = self.TaskInfo["Detection"] and "\n   Detection: " .. self.TaskInfo["Detection"] or "" 
-  local Changes = self.TaskInfo["Changes"] and "\n   Changes: " .. self.TaskInfo["Changes"] or ""
   local Players = PlayerReport:Text()
 
-  Report:Add( "Task " .. Name .. Players .. Detection .. Changes )
+  local Detection = self.TaskInfo["Detection"] or "" 
+  local Changes = self.TaskInfo["Changes"] or ""
+
+  Report:Add( "Task: " .. Name .. " - " .. State .. " - Detailed Report" )
+  Report:Add( " - Players: " )
+  Report:AddIndent( Players )
+  Report:Add( " - Detection: " )
+  Report:AddIndent( Detection )
+  Report:Add( " - Detection Changes: \n" )
+  Report:AddIndent( Changes )
   
-  -- Loop each Process in the Task, and find Reporting Details.
-  Report:Add( string.format( "Task %s\n -- State '%s'\n%s", Name, State, PlayerReport:Text() ) )
   return Report:Text()
 end
 

@@ -17,7 +17,7 @@ REPORT = {
 -- @return #REPORT
 function REPORT:New( Title )
 
-  local self = BASE:Inherit( self, BASE:New() )
+  local self = BASE:Inherit( self, BASE:New() ) -- #REPORT
 
   self.Report = {}
   if Title then
@@ -27,13 +27,32 @@ function REPORT:New( Title )
   return self
 end
 
+--- Set indent of a REPORT.
+-- @param #REPORT self
+-- @param #number Indent
+-- @return #REPORT
+function REPORT:SetIndent( Indent )
+  self.Indent = Indent
+  return self
+end
+
+
 --- Add a new line to a REPORT.
 -- @param #REPORT self
 -- @param #string Text
 -- @return #REPORT
 function REPORT:Add( Text )
   self.Report[#self.Report+1] = Text
-  return self.Report[#self.Report]
+  return self
+end
+
+--- Add a new line to a REPORT.
+-- @param #REPORT self
+-- @param #string Text
+-- @return #REPORT
+function REPORT:AddIndent( Text )
+  self.Report[#self.Report+1] = string.rep(" ", self.Indent ) .. Text
+  return self
 end
 
 --- Produces the text of the report, taking into account an optional delimeter, which is \n by default.
