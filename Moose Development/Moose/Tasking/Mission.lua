@@ -406,9 +406,8 @@ end
 
 --- Gets the mission menu for the coalition.
 -- @param #MISSION self
--- @param Wrapper.Group#GROUP TaskGroup
 -- @return Core.Menu#MENU_COALITION self
-function MISSION:GetMenu( TaskGroup )
+function MISSION:GetMenu()
 
   local CommandCenter = self:GetCommandCenter()
   local CommandCenterMenu = CommandCenter:GetMenu()
@@ -542,6 +541,21 @@ function MISSION:HasGroup( TaskGroup )
   return Has
 end
 
+--- @param #MISSION self
+-- @return #number
+function MISSION:GetTasksRemaining()
+  -- Determine how many tasks are remaining.
+  local TasksRemaining = 0
+  for TaskID, Task in pairs( self:GetTasks() ) do
+    local Task = Task -- Tasking.Task#TASK
+    if Task:IsStateSuccess() or Task:IsStateFailed() then
+    else
+      TasksRemaining = TasksRemaining + 1
+    end
+  end
+  return TasksRemaining
+end
+
 --- Create a summary report of the Mission (one line).
 -- @param #MISSION self
 -- @return #string
@@ -554,18 +568,15 @@ function MISSION:ReportSummary()
   
   -- Determine the status of the mission.
   local Status = self:GetState()
+  local TasksRemaining = self:GetTasksRemaining()
   
+  Report:Add( "Mission " .. Name .. " - " .. Status .. " - " .. TasksRemaining .. " tasks remaining." )
+
   -- Determine how many tasks are remaining.
-  local TasksRemaining = 0
   for TaskID, Task in pairs( self:GetTasks() ) do
     local Task = Task -- Tasking.Task#TASK
-    if Task:IsStateSuccess() or Task:IsStateFailed() then
-    else
-      TasksRemaining = TasksRemaining + 1
-    end
+    Report:Add( "- " .. Task:ReportSummary() )
   end
-
-  Report:Add( "Mission " .. Name .. " - " .. Status .. " - " .. TasksRemaining .. " tasks remaining." )
   
   return Report:Text()
 end
@@ -573,7 +584,7 @@ end
 --- Create a overview report of the Mission (multiple lines).
 -- @param #MISSION self
 -- @return #string
-function MISSION:ReportOverview()
+function MISSION:ReportOverview( TaskStatus )
 
   local Report = REPORT:New()
 
@@ -582,14 +593,17 @@ function MISSION:ReportOverview()
   
   -- Determine the status of the mission.
   local Status = self:GetState()
+  local TasksRemaining = self:GetTasksRemaining()
 
-  Report:Add( "Mission " .. Name .. " - State '" .. Status .. "'" )
+  Report:Add( "Mission " .. Name .. " - " .. Status .. " Task Report ")
   
   -- Determine how many tasks are remaining.
   local TasksRemaining = 0
   for TaskID, Task in pairs( self:GetTasks() ) do
     local Task = Task -- Tasking.Task#TASK
-    Report:Add( "- " .. Task:ReportSummary() )
+    if Task:Is( TaskStatus ) then
+      Report:Add( "\n - " .. Task:ReportOverview() )
+    end
   end
 
   return Report:Text()
@@ -608,7 +622,7 @@ function MISSION:ReportDetails()
   -- Determine the status of the mission.
   local Status = self:GetState()
   
-  Report:Add( "Mission " .. Name .. " - State '" .. Status .. "'" )
+  Report:Add( "Mission " .. Name .. " - " .. Status )
   
   -- Determine how many tasks are remaining.
   local TasksRemaining = 0
@@ -631,5 +645,22 @@ function MISSION:GetTasks()
 
 	return self.Tasks
 end
- 
 
+--- @param #MISSION self
+-- @param Wrapper.Group#GROUP ReportGroup
+function MISSION:MenuReportSummary( ReportGroup )
+
+  local Report = self:ReportSummary()
+  
+  self:GetCommandCenter():MessageToGroup( Report, ReportGroup )
+end
+
+--- @param #MISSION self
+-- @param #string TaskStatus The status
+-- @param Wrapper.Group#GROUP ReportGroup
+function MISSION:MenuReportOverview( ReportGroup, TaskStatus )
+
+  local Report = self:ReportOverview( TaskStatus )
+  
+  self:GetCommandCenter():MessageToGroup( Report, ReportGroup )
+end

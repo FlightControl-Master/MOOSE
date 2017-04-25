@@ -208,10 +208,6 @@ do -- TASK_A2G_DISPATCHER
     local ChangeMsg = {}
     
     local Mission = self.Mission
-    local ReportSEAD = REPORT:New( "- SEAD Tasks:")
-    local ReportCAS = REPORT:New( "- CAS Tasks:")
-    local ReportBAI = REPORT:New( "- BAI Tasks:")
-    local ReportChanges = REPORT:New( " - Changes:" )
 
     --- First we need to  the detected targets.
     for DetectedItemID, DetectedItem in pairs( Detection:GetDetectedItems() ) do
@@ -222,7 +218,7 @@ do -- TASK_A2G_DISPATCHER
       self:E( { "Targets in DetectedItem", DetectedItem.ItemID, DetectedSet:Count(), tostring( DetectedItem ) } )
       DetectedSet:Flush()
       
-      local ItemID = DetectedItem.ItemID
+      local ItemID = DetectedItem.ID
       
       -- Evaluate SEAD Tasking
       local SEADTask = Mission:GetTask( string.format( "SEAD.%03d", ItemID ) )
@@ -233,12 +229,11 @@ do -- TASK_A2G_DISPATCHER
           local Task = TASK_SEAD:New( Mission, self.SetGroup, string.format( "SEAD.%03d", ItemID ), TargetSetUnit )
           Task:SetTargetZone( DetectedZone )
           Task:SetDispatcher( self )
+          Task:SetInfo( "Detection", Detection:DetectedItemReportSummary( DetectedItemID ) )
+          Task:SetInfo( "Changes", Detection:GetChangeText( DetectedItem ) )
           SEADTask = Mission:AddTask( Task )
         end
       end        
-      if SEADTask and SEADTask:IsStatePlanned() then
-        ReportSEAD:Add( string.format( " - %s.%02d - %s", "SEAD", ItemID, Detection:DetectedItemReportSummary(DetectedItemID) ) )
-      end
 
       -- Evaluate CAS Tasking
       local CASTask = Mission:GetTask( string.format( "CAS.%03d", ItemID ) )
@@ -249,12 +244,11 @@ do -- TASK_A2G_DISPATCHER
           local Task = TASK_CAS:New( Mission, self.SetGroup, string.format( "CAS.%03d", ItemID ), TargetSetUnit )
           Task:SetTargetZone( DetectedZone )
           Task:SetDispatcher( self )
+          Task:SetInfo( "Detection", Detection:DetectedItemReportSummary( DetectedItemID ) ) 
+          Task:SetInfo( "Changes", Detection:GetChangeText( DetectedItem ) )
           CASTask = Mission:AddTask( Task )
         end
       end        
-      if CASTask and CASTask:IsStatePlanned() then
-        ReportCAS:Add( string.format( " - %s.%02d - %s", "CAS", ItemID, Detection:DetectedItemReportSummary(DetectedItemID) ) )
-      end
 
       -- Evaluate BAI Tasking
       local BAITask = Mission:GetTask( string.format( "BAI.%03d", ItemID ) )
@@ -265,19 +259,12 @@ do -- TASK_A2G_DISPATCHER
           local Task = TASK_BAI:New( Mission, self.SetGroup, string.format( "BAI.%03d", ItemID ), TargetSetUnit )
           Task:SetTargetZone( DetectedZone )
           Task:SetDispatcher( self )
+          Task:SetInfo( "Detection", Detection:DetectedItemReportSummary( DetectedItemID ) )
+          Task:SetInfo( "Changes", Detection:GetChangeText( DetectedItem ) )
           BAITask = Mission:AddTask( Task )
         end
       end        
-      if BAITask and BAITask:IsStatePlanned() then
-        ReportBAI:Add( string.format( " - %s.%02d - %s", "BAI", ItemID, Detection:DetectedItemReportSummary(DetectedItemID) ) )
-      end
-      
 
-      -- Loop through the changes ...
-      local ChangeText = Detection:GetChangeText( DetectedItem )
-      ReportChanges:Add( ChangeText )
-        
-      
       -- OK, so the tasking has been done, now delete the changes reported for the area.
       Detection:AcceptChanges( DetectedItem )
       
@@ -287,14 +274,15 @@ do -- TASK_A2G_DISPATCHER
     Mission:GetCommandCenter():SetMenu()
     
     for TaskGroupID, TaskGroup in pairs( self.SetGroup:GetSet() ) do
+        Mission:GetCommandCenter():MessageToGroup( string.format( "There are %d tasks remaining for mission *%s*. Subscribe to a task using the menu.", Mission:GetTasksRemaining(), Mission:GetName() ), TaskGroup )
       if not TaskGroup:GetState( TaskGroup, "Assigned" ) then
-        Mission:GetCommandCenter():MessageToGroup( 
-          string.format( "HQ Reporting - Planned tasks for mission '%s':\n%s\n", 
-                         self.Mission:GetName(),
-                         string.format( "%s\n\n%s\n\n%s\n\n%s", ReportSEAD:Text(), ReportCAS:Text(), ReportBAI:Text(), ReportChanges:Text()
-                       )
-          ), TaskGroup  
-        )
+--        Mission:GetCommandCenter():MessageToGroup( 
+--          string.format( "HQ Reporting - Planned tasks for mission '%s':\n\n%s\n", 
+--                         self.Mission:GetName(),
+--                         string.format( "%s\n\n%s\n\n%s\n\n%s", ReportSEAD:Text(), ReportCAS:Text(), ReportBAI:Text(), ReportChanges:Text()
+--                       )
+--          ), TaskGroup  
+--        )
       end
     end
     
