@@ -134,6 +134,27 @@ function POSITIONABLE:GetPointVec3()
   return nil
 end
 
+--- Returns a COORDINATE object indicating the point in 3D of the POSITIONABLE within the mission.
+-- @param Wrapper.Positionable#POSITIONABLE self
+-- @return Core.Point#COORDINATE The COORDINATE of the POSITIONABLE.
+-- @return #nil The POSITIONABLE is not existing or alive.  
+function POSITIONABLE:GetCoordinate()
+  self:F2( self.PositionableName )
+
+  local DCSPositionable = self:GetDCSObject()
+  
+  if DCSPositionable then
+    local PositionableVec3 = self:GetPositionVec3()
+    
+    local PositionableCoordinate = COORDINATE:NewFromVec3( PositionableVec3 )
+  
+    self:T2( PositionableCoordinate )
+    return PositionableCoordinate
+  end
+  
+  return nil
+end
+
 
 --- Returns a random @{DCSTypes#Vec3} vector within a range, indicating the point in 3D of the POSITIONABLE within the mission.
 -- @param Wrapper.Positionable#POSITIONABLE self

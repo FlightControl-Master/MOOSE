@@ -529,9 +529,11 @@ do -- DESIGNATE
   --- Sends the status to the Attack Groups.
   -- @param #DESIGNATE self
   -- @param Wrapper.Group#GROUP AttackGroup
+  -- @param #number Duration The time in seconds the report should be visible.
   -- @return #DESIGNATE
-  function DESIGNATE:SendStatus( MenuAttackGroup )
+  function DESIGNATE:SendStatus( MenuAttackGroup, Duration )
 
+    Duration = Duration or 10
     
     self.AttackSet:ForEachGroup(
     
@@ -540,7 +542,7 @@ do -- DESIGNATE
       
         if self.FlashStatusMenu[AttackGroup] or ( MenuAttackGroup and ( AttackGroup:GetName() == MenuAttackGroup:GetName() ) ) then
 
-          local DetectedReport = REPORT:New( "Targets ready to be designated:" )
+          local DetectedReport = REPORT:New( "Targets designated:\n" )
           local DetectedItems = self.Detection:GetDetectedItems()
           
           for Index, DetectedItemData in pairs( DetectedItems ) do
@@ -551,9 +553,9 @@ do -- DESIGNATE
           
           local CC = self.CC:GetPositionable()
       
-          CC:MessageToGroup( DetectedReport:Text( "\n" ), 15, AttackGroup )
+          CC:MessageToGroup( DetectedReport:Text( "\n" ), Duration, AttackGroup )
           
-          local DesignationReport = REPORT:New( "Targets currently marked:" )
+          local DesignationReport = REPORT:New( "Targets marked:\n" )
       
           self.RecceSet:ForEachGroup(
             function( RecceGroup )
@@ -567,7 +569,7 @@ do -- DESIGNATE
             end
           )
       
-          CC:MessageToGroup( DesignationReport:Text(), 15, AttackGroup )
+          CC:MessageToGroup( DesignationReport:Text(), Duration, AttackGroup )
         end
       end
     )
@@ -632,18 +634,21 @@ do -- DESIGNATE
         end        
 
         local StatusMenu = MENU_GROUP:New( AttackGroup, "Status", DesignateMenu )
-        MENU_GROUP_COMMAND:New( AttackGroup, "Report Status", StatusMenu, self.MenuStatus, self, AttackGroup )
+        MENU_GROUP_COMMAND:New( AttackGroup, "Report Status 15s", StatusMenu, self.MenuStatus, self, AttackGroup, 15 )
+        MENU_GROUP_COMMAND:New( AttackGroup, "Report Status 30s", StatusMenu, self.MenuStatus, self, AttackGroup, 30 )
+        MENU_GROUP_COMMAND:New( AttackGroup, "Report Status 60s", StatusMenu, self.MenuStatus, self, AttackGroup, 60 )
+        
         if self.FlashStatusMenu[AttackGroup] then
-          MENU_GROUP_COMMAND:New( AttackGroup, "Flash Status Off", StatusMenu, self.MenuFlashStatus, self, AttackGroup, false )
+          MENU_GROUP_COMMAND:New( AttackGroup, "Flash Status Report Off", StatusMenu, self.MenuFlashStatus, self, AttackGroup, false )
         else
-           MENU_GROUP_COMMAND:New( AttackGroup, "Flash Status On", StatusMenu, self.MenuFlashStatus, self, AttackGroup, true )
+           MENU_GROUP_COMMAND:New( AttackGroup, "Flash Status Report On", StatusMenu, self.MenuFlashStatus, self, AttackGroup, true )
         end        
       
         local DetectedItems = self.Detection:GetDetectedItems()
         
         for Index, DetectedItemData in pairs( DetectedItems ) do
           
-          local Report = self.Detection:DetectedItemReportSummary( Index )
+          local Report = self.Detection:DetectedItemMenu( Index )
           
           if not self.Designating[Index] then
             local DetectedMenu = MENU_GROUP:New( AttackGroup, Report, DesignateMenu )
@@ -678,11 +683,11 @@ do -- DESIGNATE
 
   --- 
   -- @param #DESIGNATE self
-  function DESIGNATE:MenuStatus( AttackGroup )
+  function DESIGNATE:MenuStatus( AttackGroup, Duration )
 
     self:E("Status")
 
-    self:SendStatus( AttackGroup )  
+    self:SendStatus( AttackGroup, Duration )  
   end
   
   --- 
