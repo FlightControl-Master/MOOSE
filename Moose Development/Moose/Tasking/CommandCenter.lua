@@ -31,7 +31,7 @@ end
 -- @param #REPORT self
 -- @param #number Indent
 -- @return #REPORT
-function REPORT:SetIndent( Indent )
+function REPORT:SetIndent( Indent ) --R2.1
   self.Indent = Indent
   return self
 end
@@ -50,7 +50,7 @@ end
 -- @param #REPORT self
 -- @param #string Text
 -- @return #REPORT
-function REPORT:AddIndent( Text )
+function REPORT:AddIndent( Text ) --R2.1
   self.Report[#self.Report+1] = string.rep(" ", self.Indent ) .. Text:gsub("\n","\n"..string.rep( " ", self.Indent ) )
   return self
 end

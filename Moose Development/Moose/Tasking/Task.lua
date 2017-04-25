@@ -542,7 +542,7 @@ end
 -- @param #TASK self
 -- @param #number MenuTime
 -- @return #TASK
-function TASK:SetMenu( MenuTime )
+function TASK:SetMenu( MenuTime ) --R2.1 Mission Reports and Task Reports added. Fixes issue #424.
   self:F()
 
   self.SetGroup:Flush()
@@ -1153,7 +1153,7 @@ do -- Reporting
 -- List the Task Name and Status
 -- @param #TASK self
 -- @return #string
-function TASK:ReportSummary()
+function TASK:ReportSummary() --R2.1 fixed report. Now nicely formatted and contains the info required.
 
   local Report = REPORT:New()
   
@@ -1172,7 +1172,7 @@ end
 -- List the Task Name and Status
 -- @param #TASK self
 -- @return #string
-function TASK:ReportOverview()
+function TASK:ReportOverview() --R2.1 fixed report. Now nicely formatted and contains the info required.
 
   local Report = REPORT:New()
   
@@ -1194,7 +1194,7 @@ end
 -- List the Task Status, and the Players assigned to the Task.
 -- @param #TASK self
 -- @return #string
-function TASK:ReportDetails()
+function TASK:ReportDetails() --R2.1 fixed report. Now nicely formatted and contains the info required.
 
   local Report = REPORT:New():SetIndent( 3 )
   

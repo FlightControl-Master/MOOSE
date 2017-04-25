@@ -1036,7 +1036,7 @@ end
 --- Return no text for the altitude of the POINT_VEC2.
 -- @param #POINT_VEC2 self
 -- @return #string Empty string.
-function POINT_VEC2:GetAltitudeText()
+function POINT_VEC2:GetAltitudeText() 
   return ''
 end
 
@@ -1045,7 +1045,7 @@ end
 -- @param Dcs.DCSTypes#Distance Distance The Distance to be added in meters.
 -- @param Dcs.DCSTypes#Angle Angle The Angle in degrees.
 -- @return #POINT_VEC2 The new calculated POINT_VEC2.
-function POINT_VEC2:Translate( Distance, Angle )
+function POINT_VEC2:Translate( Distance, Angle ) 
   local SX = self:GetX()
   local SY = self:GetY()
   local Radians = Angle / 180 * math.pi
@@ -1065,7 +1065,7 @@ do -- COORDINATE
   -- @param Dcs.DCSTypes#Distance y The y coordinate of the Vec3 point, pointing to the Right.
   -- @param Dcs.DCSTypes#Distance LandHeightAdd (optional) The default height if required to be evaluated will be the land height of the x, y coordinate. You can specify an extra height to be added to the land height.
   -- @return Core.Point#COORDINATE
-  function COORDINATE:New( x, y, LandHeightAdd )
+  function COORDINATE:New( x, y, LandHeightAdd ) --R2.1 Fixes issue #424.
   
     self = BASE:Inherit( self, POINT_VEC2:New( x, y, LandHeightAdd ) ) -- Core.Point#COORDINATE
     self:F2( self )
@@ -1078,7 +1078,7 @@ do -- COORDINATE
   -- @param Dcs.DCSTypes#Vec2 Vec2 The Vec2 point.
   -- @param Dcs.DCSTypes#Distance LandHeightAdd (optional) The default height if required to be evaluated will be the land height of the x, y coordinate. You can specify an extra height to be added to the land height.
   -- @return Core.Point#COORDINATE self
-  function COORDINATE:NewFromVec2( Vec2, LandHeightAdd )
+  function COORDINATE:NewFromVec2( Vec2, LandHeightAdd ) --R2.1 Fixes issue #424.
   
     self = BASE:Inherit( self, POINT_VEC2:NewFromVec2( Vec2, LandHeightAdd ) ) -- Core.Point#COORDINATE
     self:F2( self )
@@ -1090,7 +1090,7 @@ do -- COORDINATE
   -- @param #COORDINATE self
   -- @param Dcs.DCSTypes#Vec3 Vec3 The Vec3 point.
   -- @return Core.Point#COORDINATE self
-  function COORDINATE:NewFromVec3( Vec3 )
+  function COORDINATE:NewFromVec3( Vec3 ) --R2.1 Fixes issue #424.
   
     self = BASE:Inherit( self, POINT_VEC2:NewFromVec3( Vec3 ) ) -- Core.Point#COORDINATE
     self:F2( self )
@@ -1105,7 +1105,7 @@ do -- COORDINATE
   -- @param #number LL_Accuracy The accurancy of significant numbers behind the comma... So Accurancy of 2 is 0.01.
   -- @param #boolean LL_DMS true = Degrees, Minutes, Seconds; false = Degrees, Minutes
   -- @return #string The LL Text
-  function COORDINATE:ToStringLL( LL_Accuracy, LL_DMS )
+  function COORDINATE:ToStringLL( LL_Accuracy, LL_DMS ) --R2.1 Fixes issue #424.
   
     LL_Accuracy = LL_Accuracy or self.LL_Accuracy
     LL_DMS = LL_DMS or self.LL_DMS
@@ -1123,7 +1123,7 @@ do -- COORDINATE
   --   * 3 = 3 digits - precision level 100 m 
   --   * 4 = 4 digits - precision level 10 m.
   -- @return #string The MGRS Text
-  function COORDINATE:ToStringMGRS( MGRS_Accuracy )
+  function COORDINATE:ToStringMGRS( MGRS_Accuracy ) --R2.1 Fixes issue #424.
   
     MGRS_Accuracy = MGRS_Accuracy or self.MGRS_Accuracy
     local lat, lon = coord.LOtoLL( self:GetVec3() )
@@ -1137,7 +1137,7 @@ do -- COORDINATE
   -- 
   -- @param #COORDINATE self
   -- @return #string The coordinate Text in the configured coordinate system.
-  function COORDINATE:ToString() --R2.3
+  function COORDINATE:ToString() --R2.1 Fixes issue #424.
   
     local Coordinate = COORDINATE -- Core.Point#COORDINATE
   
@@ -1157,7 +1157,7 @@ do -- COORDINATE
   
   --- @param #COORDINATE self
   -- @return #string The coordinate Text in the configured coordinate system.
-  function COORDINATE:CoordinateMenu( RootMenu ) --R2.1
+  function COORDINATE:CoordinateMenu( RootMenu ) --R2.1 Fixes issue #424.
   
     if self.SystemMenu then
       self.SystemMenu:Remove()
@@ -1190,24 +1190,24 @@ do -- COORDINATE
   end
 
   --- @param #COORDINATE self
-  function COORDINATE:MenuSystem( System ) --R2.1
+  function COORDINATE:MenuSystem( System ) --R2.1 Fixes issue #424.
     self.System = System
     self:CoordinateMenu()
   end
 
   --- @param #COORDINATE self
-  function COORDINATE:MenuLL_Accuracy( LL_Accuracy ) --R2.1
+  function COORDINATE:MenuLL_Accuracy( LL_Accuracy ) --R2.1 Fixes issue #424.
     self.LL_Accuracy = LL_Accuracy
     self:CoordinateMenu()
   end
   
   --- @param #COORDINATE self
-  function COORDINATE:MenuLL_DMS( LL_DMS ) --R2.1
+  function COORDINATE:MenuLL_DMS( LL_DMS ) --R2.1 Fixes issue #424.
     self.LL_DMS = LL_DMS
     self:CoordinateMenu()
   end
   --- @param #COORDINATE self
-  function COORDINATE:MenuMGRS_Accuracy( MGRS_Accuracy ) --R2.1
+  function COORDINATE:MenuMGRS_Accuracy( MGRS_Accuracy ) --R2.1 Fixes issue #424.
     self.MGRS_Accuracy = MGRS_Accuracy
     self:CoordinateMenu()
   end
