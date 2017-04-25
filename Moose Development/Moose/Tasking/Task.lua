@@ -1222,11 +1222,11 @@ function TASK:ReportDetails()
   local Changes = self.TaskInfo["Changes"] or ""
 
   Report:Add( "Task: " .. Name .. " - " .. State .. " - Detailed Report" )
-  Report:Add( " - Players: " )
+  Report:Add( "\n - Players:" )
   Report:AddIndent( Players )
-  Report:Add( " - Detection: " )
+  Report:Add( "\n - Detection:" )
   Report:AddIndent( Detection )
-  Report:Add( " - Detection Changes: \n" )
+  Report:Add( "\n - Detection Changes:" )
   Report:AddIndent( Changes )
   
   return Report:Text()

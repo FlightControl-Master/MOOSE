@@ -51,7 +51,7 @@ end
 -- @param #string Text
 -- @return #REPORT
 function REPORT:AddIndent( Text )
-  self.Report[#self.Report+1] = string.rep(" ", self.Indent ) .. Text
+  self.Report[#self.Report+1] = string.rep(" ", self.Indent ) .. Text:gsub("\n","\n"..string.rep( " ", self.Indent ) )
   return self
 end
 
