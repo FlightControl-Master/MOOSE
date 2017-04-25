@@ -748,6 +748,19 @@ function DATABASE:ForEach( IteratorFunction, FinalizeFunction, arg, Set )
 end
 
 
+--- Iterate the DATABASE and call an iterator function for each **alive** STATIC, providing the STATIC and optional parameters.
+-- @param #DATABASE self
+-- @param #function IteratorFunction The function that will be called for each object in the database. The function needs to accept a STATIC parameter.
+-- @return #DATABASE self
+function DATABASE:ForEachStatic( IteratorFunction, FinalizeFunction, ... )  --R2.1
+  self:F2( arg )
+  
+  self:ForEach( IteratorFunction, FinalizeFunction, arg, self.STATICS )
+
+  return self
+end
+
+
 --- Iterate the DATABASE and call an iterator function for each **alive** UNIT, providing the UNIT and optional parameters.
 -- @param #DATABASE self
 -- @param #function IteratorFunction The function that will be called for each object in the database. The function needs to accept a UNIT parameter.
@@ -759,6 +772,7 @@ function DATABASE:ForEachUnit( IteratorFunction, FinalizeFunction, ... )
 
   return self
 end
+
 
 --- Iterate the DATABASE and call an iterator function for each **alive** GROUP, providing the GROUP and optional parameters.
 -- @param #DATABASE self
