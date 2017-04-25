@@ -182,8 +182,7 @@
 --   * @{#POINT_VEC3.ToStringBR}(): Generates a Bearing & Range text in the format of DDD for DI where DDD is degrees and DI is distance.
 --   * @{#POINT_VEC3.ToStringLL}(): Generates a Latutude & Longutude text.
 --   
--- @field #POINT_VEC3 POINT_VEC3
--- 
+-- @field #POINT_VEC3
 POINT_VEC3 = {
   ClassName = "POINT_VEC3",
   Metric = true,
@@ -230,12 +229,54 @@ POINT_VEC3 = {
 -- 
 --      local Vec2 = PointVec2:AddX( 100 ):AddY( 2000 ):GetVec2()
 --      
--- @field #POINT_VEC2 POINT_VEC2
---
+-- @field #POINT_VEC2
 POINT_VEC2 = {
   ClassName = "POINT_VEC2",
 }
 
+
+--- @type COORDINATE
+-- @field #number LL_Accuracy
+-- @field #boolean LL_DMS
+-- @field #number MGRS_Accuracy
+-- @field #string System
+-- @extends Core.Point#POINT_VEC2
+
+
+--- # COORDINATE class, extends @{Point#COORDINATE}
+-- 
+-- The COORDINATE class defines a 2D coordinate in the simulator. The height coordinate (if needed) will be the land height + an optional added height specified.
+-- A COORDINATE can be expressed in LL or in MGRS.
+-- 
+-- ## COORDINATE constructor
+-- 
+-- A new COORDINATE instance can be created with:
+-- 
+--  * @{Point#COORDINATE.New}(): a 2D point, taking an additional height parameter.
+--  * @{Point#COORDINATE.NewFromVec2}(): a 2D point created from a @{DCSTypes#Vec2}.
+-- 
+-- ## Manupulate the X, Altitude, Y coordinates of the 2D point
+-- 
+-- A COORDINATE class works in 2D space, with an altitude setting. It contains internally an X, Altitude, Y coordinate.
+-- Methods exist to manupulate these coordinates.
+-- 
+-- The current X, Altitude, Y axis can be retrieved with the methods @{#COORDINATE.GetX}(), @{#COORDINATE.GetAlt}(), @{#COORDINATE.GetY}() respectively.
+-- The methods @{#COORDINATE.SetX}(), @{#COORDINATE.SetAlt}(), @{#COORDINATE.SetY}() change the respective axis with a new value.
+-- The current Lat(itude), Alt(itude), Lon(gitude) values can also be retrieved with the methods @{#COORDINATE.GetLat}(), @{#COORDINATE.GetAlt}(), @{#COORDINATE.GetLon}() respectively.
+-- The current axis values can be changed by using the methods @{#COORDINATE.AddX}(), @{#COORDINATE.AddAlt}(), @{#COORDINATE.AddY}()
+-- to add or substract a value from the current respective axis value.
+-- Note that the Set and Add methods return the current COORDINATE object, so these manipulation methods can be chained... For example:
+-- 
+--      local Vec2 = PointVec2:AddX( 100 ):AddY( 2000 ):GetVec2()
+--      
+-- @field #COORDINATE
+COORDINATE = {
+  ClassName = "COORDINATE",
+  LL_Accuracy = 2,
+  LL_DMS = true,
+  MGRS_Accuracy = 5,
+  System = "MGRS",
+}
 
 do -- POINT_VEC3
 
@@ -542,60 +583,6 @@ function POINT_VEC3:ToStringBR( AngleRadians, Distance )
   return s
 end
 
---- Provides a Lat Lon string
--- @param #POINT_VEC3 self
--- @param #number Accuracy The accurancy of significant numbers behind the comma... So Accurancy of 2 is 0.01.
--- @param #boolean DMS true = Degrees, Minutes, Seconds; false = Degrees, Minutes
--- @return #string The LL Text
-function POINT_VEC3:ToStringLL( Accuracy, DMS )
-
-  Accuracy = Accuracy or 3
-  local lat, lon = coord.LOtoLL( self:GetVec3() )
-  return UTILS.tostringLL( lat, lon, Accuracy, DMS )
-end
-
---- Provides a MGRS string
--- @param #POINT_VEC3 self
--- @param #number Accuracy of the 5 digit code. 
--- Precision depends on the Accuracy choosen: 
---   * 0 = no digits - precision level 100 km 
---   * 1 = 1 digits - precision level 10 km 
---   * 2 = 2 digits - precision level 1 km 
---   * 3 = 3 digits - precision level 100 m 
---   * 4 = 4 digits - precision level 10 m.
--- @return #string The MGRS Text
-function POINT_VEC3:ToStringMGRS( Accuracy )
-
-  Accuracy = Accuracy or 3
-  local lat, lon = coord.LOtoLL( self:GetVec3() )
-  local MGRS = coord.LLtoMGRS( lat, lon )
-  return UTILS.tostringMGRS( MGRS, Accuracy )
-end
-
---- Provides a coordinate string of the point, based on a coordinate format system:
---   * Uses default settings in POINT_VEC3.
---   * Can be overridden if for a GROUP containing x clients, a menu was selected to override the default.
--- 
--- @param #POINT_VEC3 self
--- @param Wrapper.Group#GROUP PlayerGroup The specific group with specific settings.
--- @return #string The coordinate Text
-function POINT_VEC3:ToString( PlayerGroup ) --R2.3
-
-  PlayerGroup = PlayerGroup or GROUP
-
-  local CoordFormat = PlayerGroup:GetCoordFormat()
-  
-  if CoordFormat == "LL" then
-    return self:ToStringLL( PlayerGroup:GetLLAccuracy(), PlayerGroup:GetLLDMS() )
-  end
-  
-  if CoordFormat == "MGRS" then
-    return self:ToStringMGRS( PlayerGroup:GetMGRSAccuracy() )
-  end
-  
-  return nil
-  
-end
 
 --- Return the altitude text of the POINT_VEC3.
 -- @param #POINT_VEC3 self
@@ -1070,4 +1057,159 @@ end
 
 end
 
+do -- COORDINATE
 
+  --- COORDINATE constructor.
+  -- @param #COORDINATE self
+  -- @param Dcs.DCSTypes#Distance x The x coordinate of the Vec3 point, pointing to the North.
+  -- @param Dcs.DCSTypes#Distance y The y coordinate of the Vec3 point, pointing to the Right.
+  -- @param Dcs.DCSTypes#Distance LandHeightAdd (optional) The default height if required to be evaluated will be the land height of the x, y coordinate. You can specify an extra height to be added to the land height.
+  -- @return Core.Point#COORDINATE
+  function COORDINATE:New( x, y, LandHeightAdd )
+  
+    self = BASE:Inherit( self, POINT_VEC2:New( x, y, LandHeightAdd ) ) -- Core.Point#COORDINATE
+    self:F2( self )
+    
+    return self
+  end
+  
+  --- Create a new COORDINATE object from  Vec2 coordinates.
+  -- @param #COORDINATE self
+  -- @param Dcs.DCSTypes#Vec2 Vec2 The Vec2 point.
+  -- @param Dcs.DCSTypes#Distance LandHeightAdd (optional) The default height if required to be evaluated will be the land height of the x, y coordinate. You can specify an extra height to be added to the land height.
+  -- @return Core.Point#COORDINATE self
+  function COORDINATE:NewFromVec2( Vec2, LandHeightAdd )
+  
+    self = BASE:Inherit( self, POINT_VEC2:NewFromVec2( Vec2, LandHeightAdd ) ) -- Core.Point#COORDINATE
+    self:F2( self )
+  
+    return self
+  end
+
+  --- Create a new COORDINATE object from  Vec3 coordinates.
+  -- @param #COORDINATE self
+  -- @param Dcs.DCSTypes#Vec3 Vec3 The Vec3 point.
+  -- @return Core.Point#COORDINATE self
+  function COORDINATE:NewFromVec3( Vec3 )
+  
+    self = BASE:Inherit( self, POINT_VEC2:NewFromVec3( Vec3 ) ) -- Core.Point#COORDINATE
+    self:F2( self )
+  
+    return self
+  end
+
+
+
+  --- Provides a Lat Lon string
+  -- @param #COORDINATE self
+  -- @param #number LL_Accuracy The accurancy of significant numbers behind the comma... So Accurancy of 2 is 0.01.
+  -- @param #boolean LL_DMS true = Degrees, Minutes, Seconds; false = Degrees, Minutes
+  -- @return #string The LL Text
+  function COORDINATE:ToStringLL( LL_Accuracy, LL_DMS )
+  
+    LL_Accuracy = LL_Accuracy or self.LL_Accuracy
+    LL_DMS = LL_DMS or self.LL_DMS
+    local lat, lon = coord.LOtoLL( self:GetVec3() )
+    return "LL:" .. UTILS.tostringLL( lat, lon, LL_Accuracy, LL_DMS )
+  end
+  
+  --- Provides a MGRS string
+  -- @param #COORDINATE self
+  -- @param #number MGRS_Accuracy of the 5 digit code. 
+  -- Precision depends on the Accuracy choosen: 
+  --   * 0 = no digits - precision level 100 km 
+  --   * 1 = 1 digits - precision level 10 km 
+  --   * 2 = 2 digits - precision level 1 km 
+  --   * 3 = 3 digits - precision level 100 m 
+  --   * 4 = 4 digits - precision level 10 m.
+  -- @return #string The MGRS Text
+  function COORDINATE:ToStringMGRS( MGRS_Accuracy )
+  
+    MGRS_Accuracy = MGRS_Accuracy or self.MGRS_Accuracy
+    local lat, lon = coord.LOtoLL( self:GetVec3() )
+    local MGRS = coord.LLtoMGRS( lat, lon )
+    return "MGRS:" .. UTILS.tostringMGRS( MGRS, MGRS_Accuracy )
+  end
+  
+  --- Provides a coordinate string of the point, based on a coordinate format system:
+  --   * Uses default settings in COORDINATE.
+  --   * Can be overridden if for a GROUP containing x clients, a menu was selected to override the default.
+  -- 
+  -- @param #COORDINATE self
+  -- @return #string The coordinate Text in the configured coordinate system.
+  function COORDINATE:ToString() --R2.3
+  
+    local Coordinate = COORDINATE -- Core.Point#COORDINATE
+  
+    local CoordSystem = Coordinate.System
+    
+    if CoordSystem == "LL" then
+      return self:ToStringLL( Coordinate.LL_Accuracy, Coordinate.LL_DMS )
+    end
+    
+    if CoordSystem == "MGRS" then
+      return self:ToStringMGRS( Coordinate.MGRS_Accuracy )
+    end
+    
+    return nil
+    
+  end
+  
+  --- @param #COORDINATE self
+  -- @return #string The coordinate Text in the configured coordinate system.
+  function COORDINATE:CoordinateMenu( RootMenu ) --R2.1
+  
+    if self.SystemMenu then
+      self.SystemMenu:Remove()
+      self.SystemMenu = nil
+    end
+    
+    self.SystemMenu = MENU_MISSION:New( "System Settings" )
+    local CoordinateMenu = MENU_MISSION:New( "Coordinates", self.SystemMenu )
+
+    local Coordinate = COORDINATE
+    
+    if Coordinate.System == "LL" then
+      MENU_MISSION_COMMAND:New( "Activate MGRS", CoordinateMenu, Coordinate.MenuSystem, Coordinate, "MGRS" )
+      MENU_MISSION_COMMAND:New( "LL Accuracy 1", CoordinateMenu, Coordinate.MenuLL_Accuracy, Coordinate, 1 )
+      MENU_MISSION_COMMAND:New( "LL Accuracy 2", CoordinateMenu, Coordinate.MenuLL_Accuracy, Coordinate, 2 )
+      MENU_MISSION_COMMAND:New( "LL Accuracy 3", CoordinateMenu, Coordinate.MenuLL_Accuracy, Coordinate, 3 )
+      MENU_MISSION_COMMAND:New( "LL Decimal On", CoordinateMenu, Coordinate.MenuLL_DMS, Coordinate, true )
+      MENU_MISSION_COMMAND:New( "LL Decimal Off", CoordinateMenu, Coordinate.MenuLL_DMS, Coordinate, false )
+    end
+
+    if Coordinate.System == "MGRS" then
+      MENU_MISSION_COMMAND:New( "Activate LL", CoordinateMenu, Coordinate.MenuSystem, Coordinate, "LL" )
+      MENU_MISSION_COMMAND:New( "MGRS Accuracy 1", CoordinateMenu, Coordinate.MenuMGRS_Accuracy, Coordinate, 1 )
+      MENU_MISSION_COMMAND:New( "MGRS Accuracy 2", CoordinateMenu, Coordinate.MenuMGRS_Accuracy, Coordinate, 2 )
+      MENU_MISSION_COMMAND:New( "MGRS Accuracy 3", CoordinateMenu, Coordinate.MenuMGRS_Accuracy, Coordinate, 3 )
+      MENU_MISSION_COMMAND:New( "MGRS Accuracy 4", CoordinateMenu, Coordinate.MenuMGRS_Accuracy, Coordinate, 4 )
+      MENU_MISSION_COMMAND:New( "MGRS Accuracy 5", CoordinateMenu, Coordinate.MenuMGRS_Accuracy, Coordinate, 5 )
+    end
+    
+  end
+
+  --- @param #COORDINATE self
+  function COORDINATE:MenuSystem( System ) --R2.1
+    self.System = System
+    self:CoordinateMenu()
+  end
+
+  --- @param #COORDINATE self
+  function COORDINATE:MenuLL_Accuracy( LL_Accuracy ) --R2.1
+    self.LL_Accuracy = LL_Accuracy
+    self:CoordinateMenu()
+  end
+  
+  --- @param #COORDINATE self
+  function COORDINATE:MenuLL_DMS( LL_DMS ) --R2.1
+    self.LL_DMS = LL_DMS
+    self:CoordinateMenu()
+  end
+  --- @param #COORDINATE self
+  function COORDINATE:MenuMGRS_Accuracy( MGRS_Accuracy ) --R2.1
+    self.MGRS_Accuracy = MGRS_Accuracy
+    self:CoordinateMenu()
+  end
+
+end

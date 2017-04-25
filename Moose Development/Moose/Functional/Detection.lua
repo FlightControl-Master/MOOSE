@@ -1154,10 +1154,11 @@ do -- DETECTION_BASE
   --- Adds a new DetectedItem to the DetectedItems list.
   -- The DetectedItem is a table and contains a SET_UNIT in the field Set.
   -- @param #DETECTION_BASE self
+  -- @param ItemPrefix
   -- @param #string DetectedItemIndex The index of the DetectedItem.
   -- @param Core.Set#SET_UNIT Set (optional) The Set of Units to be added.
   -- @return #DETECTION_BASE.DetectedItem
-  function DETECTION_BASE:AddDetectedItem( DetectedItemIndex, Set )
+  function DETECTION_BASE:AddDetectedItem( ItemPrefix, DetectedItemIndex, Set )
   
     local DetectedItem = {}
     self.DetectedItemCount = self.DetectedItemCount + 1
@@ -1170,7 +1171,7 @@ do -- DETECTION_BASE
     end
     
     DetectedItem.Set = Set or SET_UNIT:New():FilterDeads():FilterCrashes()
-    DetectedItem.ItemID = self.DetectedItemMax
+    DetectedItem.ItemID = ItemPrefix .. "." .. self.DetectedItemMax
     DetectedItem.Removed = false
     
     return DetectedItem
@@ -1185,7 +1186,7 @@ do -- DETECTION_BASE
   -- @return #DETECTION_BASE.DetectedItem
   function DETECTION_BASE:AddDetectedItemZone( DetectedItemIndex, Set, Zone )
   
-    local DetectedItem = self:AddDetectedItem( DetectedItemIndex, Set )
+    local DetectedItem = self:AddDetectedItem( "AREA", DetectedItemIndex, Set )
 
     DetectedItem.Zone = Zone
     
@@ -1234,6 +1235,20 @@ do -- DETECTION_BASE
     return nil
   end
   
+  --- Get a detected ItemID using a given numeric index.
+  -- @param #DETECTION_BASE self
+  -- @param #number Index
+  -- @return #string DetectedItemID
+  function DETECTION_BASE:GetDetectedItemID( Index )
+  
+    local DetectedItem = self.DetectedItems[Index]
+    if DetectedItem then
+      return DetectedItem.ItemID
+    end
+    
+    return ""
+  end
+  
   --- Get the @{Set#SET_UNIT} of a detecttion area using a given numeric index.
   -- @param #DETECTION_BASE self
   -- @param #number Index
@@ -1266,7 +1281,16 @@ do -- DETECTION_BASE
     end
 
   end  
-  
+
+  --- Menu of a detected item using a given numeric index.
+  -- @param #DETECTION_BASE self
+  -- @param Index
+  -- @return #string
+  function DETECTION_BASE:DetectedItemMenu( Index )
+    self:F( Index )
+    return nil
+  end
+
   
   --- Report summary of a detected item using a given numeric index.
   -- @param #DETECTION_BASE self
@@ -1434,7 +1458,7 @@ do -- DETECTION_UNITS
           local DetectedItem = self:GetDetectedItem( DetectedUnitName )
           if not DetectedItem then
             self:T( "Added new DetectedItem" )
-            DetectedItem = self:AddDetectedItem( DetectedUnitName )
+            DetectedItem = self:AddDetectedItem( "UNIT", DetectedUnitName )
             DetectedItem.Type = DetectedUnit:GetTypeName()
             DetectedItem.Name = DetectedObjectData.Name
             DetectedItem.Visible = DetectedObjectData.Visible
@@ -1457,6 +1481,44 @@ do -- DETECTION_UNITS
     end
     
   end
+
+  --- Menu of a DetectedItem using a given numeric index.
+  -- @param #DETECTION_UNITS self
+  -- @param Index
+  -- @return #string
+  function DETECTION_UNITS:DetectedItemMenu( Index )
+    self:F( Index )
+  
+    local DetectedItem = self:GetDetectedItem( Index )
+    local DetectedSet = self:GetDetectedSet( Index )
+    local DetectedItemID = self:GetDetectedItemID( Index )
+    
+    self:T( DetectedSet )
+    if DetectedSet then
+      local ReportSummary = ""
+      local UnitDistanceText = ""
+      local UnitCategoryText = ""
+  
+      local DetectedItemUnit = DetectedSet:GetFirst() -- Wrapper.Unit#UNIT
+      
+      if DetectedItemUnit and DetectedItemUnit:IsAlive() then
+        self:T(DetectedItemUnit)
+  
+        local DetectedItemCoordinate = DetectedItemUnit:GetCoordinate()
+        local DetectedItemCoordText = DetectedItemCoordinate:ToString()
+ 
+        ReportSummary = string.format( 
+          "%s - %s",
+          DetectedItemID,
+          DetectedItemCoordText
+        )
+      end
+      
+      self:T( ReportSummary )
+    
+      return ReportSummary
+    end
+  end
   
   --- Report summary of a DetectedItem using a given numeric index.
   -- @param #DETECTION_UNITS self
@@ -1467,6 +1529,7 @@ do -- DETECTION_UNITS
   
     local DetectedItem = self:GetDetectedItem( Index )
     local DetectedSet = self:GetDetectedSet( Index )
+    local DetectedItemID = self:GetDetectedItemID( Index )
     
     self:T( DetectedSet )
     if DetectedSet then
@@ -1489,19 +1552,20 @@ do -- DETECTION_UNITS
         end
         
         if DetectedItem.Visible == false then
-          UnitDistanceText = string.format( "%.2f", DetectedItem.Distance ) .. " estimated km"
+          UnitDistanceText = string.format( "%.2f", DetectedItem.Distance ) .. " km, estimated"
         else
-          UnitDistanceText = string.format( "%.2f", DetectedItem.Distance ) .. " km, visual contact"
+          UnitDistanceText = string.format( "%.2f", DetectedItem.Distance ) .. " km, visual"
         end
         
-        local DetectedItemPointVec3 = DetectedItemUnit:GetPointVec3()
-        local DetectedItemPointLL = DetectedItemPointVec3:ToStringLL( 3, true )
+        local DetectedItemCoordinate = DetectedItemUnit:GetCoordinate()
+        local DetectedItemCoordText = DetectedItemCoordinate:ToString()
  
         local ThreatLevelA2G = DetectedItemUnit:GetThreatLevel( DetectedItem )
         
         ReportSummary = string.format( 
-          "%s - Threat [%s] (%2d) - %s%s",
-          DetectedItemPointLL,
+          "%s - %s - Threat:[%s](%2d) - %s%s",
+          DetectedItemID,
+          DetectedItemCoordText,
           string.rep(  "■", ThreatLevelA2G ),
           ThreatLevelA2G,
           UnitCategoryText,
@@ -1514,6 +1578,7 @@ do -- DETECTION_UNITS
       return ReportSummary
     end
   end
+
   
   --- Report detailed of a detection result.
   -- @param #DETECTION_UNITS self
@@ -1655,7 +1720,7 @@ do -- DETECTION_TYPES
           local DetectedTypeName = DetectedUnit:GetTypeName()
           local DetectedItem = self:GetDetectedItem( DetectedTypeName )
           if not DetectedItem then
-            DetectedItem = self:AddDetectedItem( DetectedTypeName )
+            DetectedItem = self:AddDetectedItem( "TYPE", DetectedTypeName )
             DetectedItem.Type = DetectedUnit:GetTypeName()
           end
         
@@ -1678,6 +1743,36 @@ do -- DETECTION_TYPES
     end
     
   end
+
+  --- Menu of a DetectedItem using a given numeric index.
+  -- @param #DETECTION_TYPES self
+  -- @param Index
+  -- @return #string
+  function DETECTION_TYPES:DetectedItemMenu( DetectedTypeName )
+    self:F( DetectedTypeName )
+  
+    local DetectedItem = self:GetDetectedItem( DetectedTypeName )
+    local DetectedSet = self:GetDetectedSet( DetectedTypeName )
+    local DetectedItemID = self:GetDetectedItemID( DetectedTypeName )
+    
+    self:T( DetectedItem )
+    if DetectedItem then
+
+      local DetectedItemUnit = DetectedSet:GetFirst()
+
+      local DetectedItemCoordinate = DetectedItemUnit:GetCoordinate()
+      local DetectedItemCoordText = DetectedItemCoordinate:ToString()
+
+      local ReportSummary = string.format( 
+        "%S - %s", 
+        DetectedItemID,
+        DetectedItemCoordText
+      )
+      self:T( ReportSummary )
+    
+      return ReportSummary
+    end
+  end
   
   --- Report summary of a DetectedItem using a given numeric index.
   -- @param #DETECTION_TYPES self
@@ -1688,6 +1783,7 @@ do -- DETECTION_TYPES
   
     local DetectedItem = self:GetDetectedItem( DetectedTypeName )
     local DetectedSet = self:GetDetectedSet( DetectedTypeName )
+    local DetectedItemID = self:GetDetectedItemID( DetectedTypeName )
     
     self:T( DetectedItem )
     if DetectedItem then
@@ -1695,9 +1791,16 @@ do -- DETECTION_TYPES
       local ThreatLevelA2G = DetectedSet:CalculateThreatLevelA2G()
       local DetectedItemsCount = DetectedSet:Count()
       local DetectedItemType = DetectedItem.Type
+      
+      local DetectedItemUnit = DetectedSet:GetFirst()
+
+      local DetectedItemCoordinate = DetectedItemUnit:GetCoordinate()
+      local DetectedItemCoordText = DetectedItemCoordinate:ToString()
 
       local ReportSummary = string.format( 
-        "Threat [%s] (%2d) - %2d of %s", 
+        "%S - %s - Threat:[%s](%2d) - %2d of %s", 
+        DetectedItemID,
+        DetectedItemCoordText,
         string.rep(  "■", ThreatLevelA2G ),
         ThreatLevelA2G,
         DetectedItemsCount,
@@ -1794,6 +1897,36 @@ do -- DETECTION_AREAS
     
     return self
   end
+
+  --- Menu of a detected item using a given numeric index.
+  -- @param #DETECTION_AREAS self
+  -- @param Index
+  -- @return #string
+  function DETECTION_AREAS:DetectedItemMenu( Index )
+    self:F( Index )
+  
+    local DetectedItem = self:GetDetectedItem( Index )
+    local DetectedItemID = self:GetDetectedItemID( Index )
+    
+    if DetectedItem then
+      local DetectedSet = self:GetDetectedSet( Index )
+      local ReportSummaryItem
+      
+      local DetectedZone = self:GetDetectedZone( Index )
+      local DetectedItemCoordinate = DetectedZone:GetCoordinate()
+      local DetectedItemCoordText = DetectedItemCoordinate:ToString()
+
+      local ReportSummary = string.format( 
+        "%s - %s", 
+        DetectedItemID,
+        DetectedItemCoordText
+      )
+      
+      return ReportSummary
+    end
+    
+    return nil
+  end
   
   --- Report summary of a detected item using a given numeric index.
   -- @param #DETECTION_AREAS self
@@ -1803,21 +1936,24 @@ do -- DETECTION_AREAS
     self:F( Index )
   
     local DetectedItem = self:GetDetectedItem( Index )
+    local DetectedItemID = self:GetDetectedItemID( Index )
+    
     if DetectedItem then
       local DetectedSet = self:GetDetectedSet( Index )
       local ReportSummaryItem
       
       local DetectedZone = self:GetDetectedZone( Index )
-      local DetectedItemPointVec3 = DetectedZone:GetPointVec3()
-      local DetectedItemPointLL = DetectedItemPointVec3:ToStringLL( 3, true )
+      local DetectedItemCoordinate = DetectedZone:GetCoordinate()
+      local DetectedItemCoordText = DetectedItemCoordinate:ToString()
 
       local ThreatLevelA2G = self:GetTreatLevelA2G( DetectedItem )
       local DetectedItemsCount = DetectedSet:Count()
       local DetectedItemsTypes = DetectedSet:GetTypeNames()
 
       local ReportSummary = string.format( 
-        "%s - Threat [%s] (%2d) - %2d of %s", 
-        DetectedItemPointLL,
+        "%s - %s - Threat:[%s](%2d)\n   %2d of %s", 
+        DetectedItemID,
+        DetectedItemCoordText,
         string.rep(  "■", ThreatLevelA2G ),
         ThreatLevelA2G,
         DetectedItemsCount,
