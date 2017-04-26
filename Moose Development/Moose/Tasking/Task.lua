@@ -283,7 +283,6 @@ function TASK:AbortUnit( PlayerUnit )
         if #PlayerGroup:GetUnits() == 1 then
           self:UnAssignFromGroup( PlayerGroup )
           PlayerGroup:SetState( PlayerGroup, "Assigned", nil )
-          self:RemoveMenuForGroup( PlayerGroup )
         end
         self:Abort()
         self:PlayerAborted( PlayerUnit )
@@ -322,7 +321,6 @@ function TASK:CrashUnit( PlayerUnit )
         self:E( { TaskGroup = PlayerGroup:GetName(), GetUnits = PlayerGroup:GetUnits() } )
         if #PlayerGroup:GetUnits() == 1 then
           PlayerGroup:SetState( PlayerGroup, "Assigned", nil )
-          self:RemoveMenuForGroup( PlayerGroup )
         end
         self:PlayerCrashed( PlayerUnit )
       end
@@ -357,17 +355,18 @@ end
 -- @param Wrapper.Group#GROUP TaskGroup
 -- @return #TASK
 function TASK:AssignToGroup( TaskGroup )
-  self:F2( TaskGroup:GetName() )
+  self:F( TaskGroup:GetName() )
   
   local TaskGroupName = TaskGroup:GetName()
   
   TaskGroup:SetState( TaskGroup, "Assigned", self )
   
+  self:E("Task is assigned to " .. TaskGroup:GetName() )
+  
   local Mission = self:GetMission()
   local MissionMenu = Mission:GetMenu( TaskGroup )
   MissionMenu:RemoveSubMenus()
   
-  --self:RemoveMenuForGroup( TaskGroup )
   self:SetAssignedMenuForGroup( TaskGroup )
   
   local TaskUnits = TaskGroup:GetUnits()
@@ -481,6 +480,8 @@ function TASK:UnAssignFromGroup( TaskGroup )
   self:F2( { TaskGroup } )
   
   TaskGroup:SetState( TaskGroup, "Assigned", nil )
+
+  self:E("Task is unassigned from " .. TaskGroup:GetName() )
 
   self:RemoveAssignedMenuForGroup( TaskGroup )
 
