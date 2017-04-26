@@ -191,7 +191,7 @@ function SCHEDULEDISPATCHER:Start( Scheduler, CallID )
       )
     end
   else
-    for CallID, Schedule in pairs( self.Schedule[Scheduler] ) do
+    for CallID, Schedule in pairs( self.Schedule[Scheduler] or {} ) do
       self:Start( Scheduler, CallID ) -- Recursive
     end
   end
@@ -209,7 +209,7 @@ function SCHEDULEDISPATCHER:Stop( Scheduler, CallID )
       Schedule[CallID].ScheduleID = nil
     end
   else
-    for CallID, Schedule in pairs( self.Schedule[Scheduler] ) do
+    for CallID, Schedule in pairs( self.Schedule[Scheduler] or {} ) do
       self:Stop( Scheduler, CallID ) -- Recursive
     end
   end
@@ -218,7 +218,7 @@ end
 function SCHEDULEDISPATCHER:Clear( Scheduler )
   self:F2( { Scheduler = Scheduler } )
 
-  for CallID, Schedule in pairs( self.Schedule[Scheduler] ) do
+  for CallID, Schedule in pairs( self.Schedule[Scheduler] or {} ) do
     self:Stop( Scheduler, CallID ) -- Recursive
   end
 end

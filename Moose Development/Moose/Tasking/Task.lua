@@ -558,7 +558,7 @@ function TASK:SetMenu( MenuTime ) --R2.1 Mission Reports and Task Reports added.
         TaskGroup.MenuReports = MENU_GROUP:New( TaskGroup, "Reports", MissionMenu )
         MENU_GROUP_COMMAND:New( TaskGroup, "Report Tasks", TaskGroup.MenuReports, Mission.MenuReportSummary, Mission, TaskGroup )
         MENU_GROUP_COMMAND:New( TaskGroup, "Report Planned Tasks", TaskGroup.MenuReports, Mission.MenuReportOverview, Mission, TaskGroup, "Planned" )
-        MENU_GROUP_COMMAND:New( TaskGroup, "Report Ongoing Tasks", TaskGroup.MenuReports, Mission.MenuReportOverview, Mission, TaskGroup, "Ongoing" )
+        MENU_GROUP_COMMAND:New( TaskGroup, "Report Assigned Tasks", TaskGroup.MenuReports, Mission.MenuReportOverview, Mission, TaskGroup, "Assigned" )
         MENU_GROUP_COMMAND:New( TaskGroup, "Report Successful Tasks", TaskGroup.MenuReports, Mission.MenuReportOverview, Mission, TaskGroup, "Success" )
         MENU_GROUP_COMMAND:New( TaskGroup, "Report Failed Tasks", TaskGroup.MenuReports, Mission.MenuReportOverview, Mission, TaskGroup, "Failed" )
         MENU_GROUP_COMMAND:New( TaskGroup, "Report Held Tasks", TaskGroup.MenuReports, Mission.MenuReportOverview, Mission, TaskGroup, "Hold" )
@@ -796,7 +796,9 @@ function TASK:RemoveStateMachine( TaskUnit )
 
   self:E( self.Fsm )
   for TaskUnitT, Fsm in pairs( self.Fsm ) do
+    local Fsm = Fsm -- Core.Fsm#FSM_PROCESS
     self:E( TaskUnitT )
+    Fsm:Remove()
   end
 
   self.Fsm[TaskUnit] = nil

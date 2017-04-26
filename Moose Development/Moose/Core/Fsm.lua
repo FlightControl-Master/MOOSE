@@ -1003,8 +1003,11 @@ do -- FSM_PROCESS
   -- @param #FSM_PROCESS self
   -- @return #FSM_PROCESS
   function FSM_PROCESS:Remove()
-    self:T( { self:GetClassNameAndID() } )
-  
+    self:F( { self:GetClassNameAndID() } )
+
+    self:F( "Clearing Schedules" )
+    self.CallScheduler:Clear()
+    
     -- Copy Processes
     for ProcessID, Process in pairs( self:GetProcesses() ) do
       self:E( { Process} )
