@@ -93,8 +93,6 @@ do -- TASK_A2G
     self.TargetSetUnit = TargetSetUnit
     self.TaskType = TaskType
 
-    Mission:AddTask( self )
-    
     local Fsm = self:GetUnitProcess()
     
 
@@ -374,6 +372,8 @@ do -- TASK_SEAD
     local self = BASE:Inherit( self, TASK_A2G:New( Mission, SetGroup, TaskName, TargetSetUnit, "SEAD" ) ) -- #TASK_SEAD
     self:F()
     
+    Mission:AddTask( self )
+    
     return self
   end 
 
@@ -403,6 +403,8 @@ do -- TASK_BAI
     local self = BASE:Inherit( self, TASK_A2G:New( Mission, SetGroup, TaskName, TargetSetUnit, "BAI" ) ) -- #TASK_BAI
     self:F()
     
+    Mission:AddTask( self )
+    
     return self
   end 
 
@@ -431,6 +433,8 @@ do -- TASK_CAS
   function TASK_CAS:New( Mission, SetGroup, TaskName, TargetSetUnit )
     local self = BASE:Inherit( self, TASK_A2G:New( Mission, SetGroup, TaskName, TargetSetUnit, "CAS" ) ) -- #TASK_CAS
     self:F()
+    
+    Mission:AddTask( self )
     
     return self
   end 
