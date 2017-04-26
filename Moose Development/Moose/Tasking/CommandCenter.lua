@@ -9,6 +9,7 @@
 -- @extends Core.Base#BASE
 REPORT = {
   ClassName = "REPORT",
+  Title = "",
 }
 
 --- Create a new REPORT.
@@ -20,12 +21,23 @@ function REPORT:New( Title )
   local self = BASE:Inherit( self, BASE:New() ) -- #REPORT
 
   self.Report = {}
+  
+  Title = Title or ""
   if Title then
-    self.Report[#self.Report+1] = Title  
+    self.Title = Title  
   end
 
   return self
 end
+
+--- Has the REPORT Text?
+-- @param #REPORT self
+-- @return #boolean
+function REPORT:HasText() --R2.1
+  
+  return #self.Report > 0
+end
+
 
 --- Set indent of a REPORT.
 -- @param #REPORT self
@@ -61,7 +73,7 @@ end
 -- @return #string The report text.
 function REPORT:Text( Delimiter )
   Delimiter = Delimiter or "\n"
-  local ReportText = table.concat( self.Report, Delimiter ) or ""
+  local ReportText = ( self.Title ~= "" and self.Title .. Delimiter or self.Title ) .. table.concat( self.Report, Delimiter ) or ""
   return ReportText
 end
 
