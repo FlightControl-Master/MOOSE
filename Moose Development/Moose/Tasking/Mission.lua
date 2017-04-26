@@ -26,35 +26,35 @@ function MISSION:New( CommandCenter, MissionName, MissionPriority, MissionBriefi
 
   local self = BASE:Inherit( self, FSM:New() ) -- Core.Fsm#FSM
 
-  self:SetStartState( "Idle" )
+  self:SetStartState( "IDLE" )
   
-  self:AddTransition( "Idle", "Start", "Ongoing" )
+  self:AddTransition( "IDLE", "Start", "ENGAGED" )
   
-  --- OnLeave Transition Handler for State Idle.
-  -- @function [parent=#MISSION] OnLeaveIdle
+  --- OnLeave Transition Handler for State IDLE.
+  -- @function [parent=#MISSION] OnLeaveIDLE
   -- @param #MISSION self
   -- @param #string From The From State string.
   -- @param #string Event The Event string.
   -- @param #string To The To State string.
   -- @return #boolean Return false to cancel Transition.
   
-  --- OnEnter Transition Handler for State Idle.
-  -- @function [parent=#MISSION] OnEnterIdle
+  --- OnEnter Transition Handler for State IDLE.
+  -- @function [parent=#MISSION] OnEnterIDLE
   -- @param #MISSION self
   -- @param #string From The From State string.
   -- @param #string Event The Event string.
   -- @param #string To The To State string.
   
-  --- OnLeave Transition Handler for State Ongoing.
-  -- @function [parent=#MISSION] OnLeaveOngoing
+  --- OnLeave Transition Handler for State ENGAGED.
+  -- @function [parent=#MISSION] OnLeaveENGAGED
   -- @param #MISSION self
   -- @param #string From The From State string.
   -- @param #string Event The Event string.
   -- @param #string To The To State string.
   -- @return #boolean Return false to cancel Transition.
   
-  --- OnEnter Transition Handler for State Ongoing.
-  -- @function [parent=#MISSION] OnEnterOngoing
+  --- OnEnter Transition Handler for State ENGAGED.
+  -- @function [parent=#MISSION] OnEnterENGAGED
   -- @param #MISSION self
   -- @param #string From The From State string.
   -- @param #string Event The Event string.
@@ -84,18 +84,18 @@ function MISSION:New( CommandCenter, MissionName, MissionPriority, MissionBriefi
   -- @param #MISSION self
   -- @param #number Delay The delay in seconds.
   
-  self:AddTransition( "Ongoing", "Stop", "Idle" )
+  self:AddTransition( "ENGAGED", "Stop", "IDLE" )
   
-  --- OnLeave Transition Handler for State Idle.
-  -- @function [parent=#MISSION] OnLeaveIdle
+  --- OnLeave Transition Handler for State IDLE.
+  -- @function [parent=#MISSION] OnLeaveIDLE
   -- @param #MISSION self
   -- @param #string From The From State string.
   -- @param #string Event The Event string.
   -- @param #string To The To State string.
   -- @return #boolean Return false to cancel Transition.
   
-  --- OnEnter Transition Handler for State Idle.
-  -- @function [parent=#MISSION] OnEnterIdle
+  --- OnEnter Transition Handler for State IDLE.
+  -- @function [parent=#MISSION] OnEnterIDLE
   -- @param #MISSION self
   -- @param #string From The From State string.
   -- @param #string Event The Event string.
@@ -125,18 +125,18 @@ function MISSION:New( CommandCenter, MissionName, MissionPriority, MissionBriefi
   -- @param #MISSION self
   -- @param #number Delay The delay in seconds.
   
-  self:AddTransition( "Ongoing", "Complete", "Completed" )
+  self:AddTransition( "ENGAGED", "Complete", "COMPLETED" )
   
-  --- OnLeave Transition Handler for State Completed.
-  -- @function [parent=#MISSION] OnLeaveCompleted
+  --- OnLeave Transition Handler for State COMPLETED.
+  -- @function [parent=#MISSION] OnLeaveCOMPLETED
   -- @param #MISSION self
   -- @param #string From The From State string.
   -- @param #string Event The Event string.
   -- @param #string To The To State string.
   -- @return #boolean Return false to cancel Transition.
   
-  --- OnEnter Transition Handler for State Completed.
-  -- @function [parent=#MISSION] OnEnterCompleted
+  --- OnEnter Transition Handler for State COMPLETED.
+  -- @function [parent=#MISSION] OnEnterCOMPLETED
   -- @param #MISSION self
   -- @param #string From The From State string.
   -- @param #string Event The Event string.
@@ -166,18 +166,18 @@ function MISSION:New( CommandCenter, MissionName, MissionPriority, MissionBriefi
   -- @param #MISSION self
   -- @param #number Delay The delay in seconds.
   
-  self:AddTransition( "*", "Fail", "Failed" )
+  self:AddTransition( "*", "Fail", "FAILED" )
   
-  --- OnLeave Transition Handler for State Failed.
-  -- @function [parent=#MISSION] OnLeaveFailed
+  --- OnLeave Transition Handler for State FAILED.
+  -- @function [parent=#MISSION] OnLeaveFAILED
   -- @param #MISSION self
   -- @param #string From The From State string.
   -- @param #string Event The Event string.
   -- @param #string To The To State string.
   -- @return #boolean Return false to cancel Transition.
   
-  --- OnEnter Transition Handler for State Failed.
-  -- @function [parent=#MISSION] OnEnterFailed
+  --- OnEnter Transition Handler for State FAILED.
+  -- @function [parent=#MISSION] OnEnterFAILED
   -- @param #MISSION self
   -- @param #string From The From State string.
   -- @param #string Event The Event string.
@@ -235,7 +235,7 @@ function MISSION:onbeforeComplete( From, Event, To )
 
   for TaskID, Task in pairs( self:GetTasks() ) do
     local Task = Task -- Tasking.Task#TASK
-    if not Task:IsStateSuccess() and not Task:IsStateFailed() and not Task:IsStateAborted() and not Task:IsStateCancelled() then
+    if not Task:IsStateSuccess() and not Task:IsStateFAILED() and not Task:IsStateAborted() and not Task:IsStateCancelled() then
       return false -- Mission cannot be completed. Other Tasks are still active.
     end
   end
@@ -247,7 +247,7 @@ end
 -- @param #string From
 -- @param #string Event
 -- @param #string To
-function MISSION:onenterCompleted( From, Event, To )
+function MISSION:onenterCOMPLETED( From, Event, To )
 
   self:GetCommandCenter():MessageToCoalition( "Mission " .. self:GetName() .. " has been completed! Good job guys!" )
 end
@@ -489,39 +489,39 @@ function MISSION:GetNextTaskID( Task )
   return self.Tasks[TaskName].n
 end
 
---- Is the @{Mission} **Completed**.
+--- Is the @{Mission} **COMPLETED**.
 -- @param #MISSION self
 -- @return #boolean
-function MISSION:IsCompleted()
-  return self:Is( "Completed" )
+function MISSION:IsCOMPLETED()
+  return self:Is( "COMPLETED" )
 end
 
---- Is the @{Mission} **Idle**.
+--- Is the @{Mission} **IDLE**.
 -- @param #MISSION self
 -- @return #boolean
-function MISSION:IsIdle()
-  return self:Is( "Idle" )
+function MISSION:IsIDLE()
+  return self:Is( "IDLE" )
 end
 
---- Is the @{Mission} **Ongoing**.
+--- Is the @{Mission} **ENGAGED**.
 -- @param #MISSION self
 -- @return #boolean
-function MISSION:IsOngoing()
-  return self:Is( "Ongoing" )
+function MISSION:IsENGAGED()
+  return self:Is( "ENGAGED" )
 end
 
---- Is the @{Mission} **Failed**.
+--- Is the @{Mission} **FAILED**.
 -- @param #MISSION self
 -- @return #boolean
-function MISSION:IsFailed()
-  return self:Is( "Failed" )
+function MISSION:IsFAILED()
+  return self:Is( "FAILED" )
 end
 
---- Is the @{Mission} **Hold**.
+--- Is the @{Mission} **HOLD**.
 -- @param #MISSION self
 -- @return #boolean
-function MISSION:IsHold()
-  return self:Is( "Hold" )
+function MISSION:IsHOLD()
+  return self:Is( "HOLD" )
 end
 
 --- Validates if the Mission has a Group
@@ -548,7 +548,7 @@ function MISSION:GetTasksRemaining()
   local TasksRemaining = 0
   for TaskID, Task in pairs( self:GetTasks() ) do
     local Task = Task -- Tasking.Task#TASK
-    if Task:IsStateSuccess() or Task:IsStateFailed() then
+    if Task:IsStateSuccess() or Task:IsStateFAILED() then
     else
       TasksRemaining = TasksRemaining + 1
     end

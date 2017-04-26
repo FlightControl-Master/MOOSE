@@ -161,7 +161,7 @@ function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
       local PlayerUnit = EventData.IniUnit
       for MissionID, Mission in pairs( self:GetMissions() ) do
         local Mission = Mission -- Tasking.Mission#MISSION
-        if Mission:IsOngoing() then
+        if Mission:IsENGAGED() then
           Mission:AbortUnit( PlayerUnit )
         end
       end

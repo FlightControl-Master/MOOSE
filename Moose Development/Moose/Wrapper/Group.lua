@@ -156,7 +156,6 @@ end
 -- @param #GROUP self
 -- @return Dcs.DCSWrapper.Group#Group The DCS Group.
 function GROUP:GetDCSObject()
-  self:F(self.GroupName)
   local DCSGroup = Group.getByName( self.GroupName )
 
   if DCSGroup then
