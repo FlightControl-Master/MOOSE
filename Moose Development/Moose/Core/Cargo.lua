@@ -237,7 +237,7 @@ function CARGO:New( Type, Name, Weight ) --R2.1
   self:F( { Type, Name, Weight } )
   
   self:SetStartState( "UnLoaded" )
-  self:AddTransition( "UnLoaded", "Board", "Boarding" )
+  self:AddTransition( { "UnLoaded", "Boarding" }, "Board", "Boarding" )
   self:AddTransition( "Boarding" , "Boarding", "Boarding" )
   self:AddTransition( "Boarding", "Load", "Loaded" )
   self:AddTransition( "UnLoaded", "Load", "Loaded" )
@@ -701,7 +701,27 @@ function CARGO_UNIT:onafterBoard( From, Event, To, CargoCarrier, NearRadius, ...
     if self:IsNear( CargoCarrier:GetPointVec2(), NearRadius ) then
       self:Load( CargoCarrier, NearRadius, ... )
     else
-      self:__Boarding( 1, CargoCarrier, NearRadius )
+      local Speed = 90
+      local Angle = 180
+      local Distance = 5
+      
+      NearRadius = NearRadius or 25
+    
+      local CargoCarrierPointVec2 = CargoCarrier:GetPointVec2()
+      local CargoCarrierHeading = CargoCarrier:GetHeading() -- Get Heading of object in degrees.
+      local CargoDeployHeading = ( ( CargoCarrierHeading + Angle ) >= 360 ) and ( CargoCarrierHeading + Angle - 360 ) or ( CargoCarrierHeading + Angle )
+      local CargoDeployPointVec2 = CargoCarrierPointVec2:Translate( Distance, CargoDeployHeading )
+    
+      local Points = {}
+    
+      local PointStartVec2 = self.CargoObject:GetPointVec2()
+    
+      Points[#Points+1] = PointStartVec2:RoutePointGround( Speed )
+      Points[#Points+1] = CargoDeployPointVec2:RoutePointGround( Speed )
+    
+      local TaskRoute = self.CargoObject:TaskRoute( Points )
+      self.CargoObject:SetTask( TaskRoute, 2 )
+      self:__Boarding( -1, CargoCarrier, NearRadius )
     end
   end
   
@@ -738,28 +758,9 @@ end
 function CARGO_UNIT:onafterBoarding( From, Event, To, CargoCarrier, NearRadius, ... )
   self:F( { From, Event, To, CargoCarrier.UnitName, NearRadius } )
   
-  local Speed = 90
-  local Angle = 180
-  local Distance = 5
   
-  NearRadius = NearRadius or 25
-
-  local CargoCarrierPointVec2 = CargoCarrier:GetPointVec2()
-  local CargoCarrierHeading = CargoCarrier:GetHeading() -- Get Heading of object in degrees.
-  local CargoDeployHeading = ( ( CargoCarrierHeading + Angle ) >= 360 ) and ( CargoCarrierHeading + Angle - 360 ) or ( CargoCarrierHeading + Angle )
-  local CargoDeployPointVec2 = CargoCarrierPointVec2:Translate( Distance, CargoDeployHeading )
-
-  local Points = {}
-
-  local PointStartVec2 = self.CargoObject:GetPointVec2()
-
-  Points[#Points+1] = PointStartVec2:RoutePointGround( Speed )
-  Points[#Points+1] = CargoDeployPointVec2:RoutePointGround( Speed )
-
-  local TaskRoute = self.CargoObject:TaskRoute( Points )
-  self.CargoObject:SetTask( TaskRoute, 2 )
-  
-  self:__Boarding( -5, CargoCarrier, NearRadius, ... )
+  self:__Boarding( -1, CargoCarrier, NearRadius, ... )
+  self:__Board( -15, CargoCarrier, NearRadius, ... )
   
 end
 
