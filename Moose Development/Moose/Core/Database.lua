@@ -51,6 +51,7 @@ DATABASE = {
     ClientsByID = {},
   },
   UNITS = {},
+  UNITS_Index = {},
   STATICS = {},
   GROUPS = {},
   PLAYERS = {},
@@ -99,7 +100,7 @@ function DATABASE:New()
   self:HandleEvent( EVENTS.DeleteCargo )
   
   -- Follow alive players and clients
-  self:HandleEvent( EVENTS.PlayerEnterUnit, self._EventOnPlayerEnterUnit )
+--  self:HandleEvent( EVENTS.PlayerEnterUnit, self._EventOnPlayerEnterUnit )
   self:HandleEvent( EVENTS.PlayerLeaveUnit, self._EventOnPlayerLeaveUnit )
   
   self:_RegisterTemplates()
@@ -108,6 +109,33 @@ function DATABASE:New()
   self:_RegisterStatics()
   self:_RegisterPlayers()
   self:_RegisterAirbases()
+
+  self.UNITS_Position = 0
+  
+  --- @param Wrapper.Unit#UNIT PlayerUnit
+  local function CheckPlayers( self )
+
+    local UNITS_Count = #self.UNITS_Index
+    if UNITS_Count > 0 then
+      self.UNITS_Position = ( ( self.UNITS_Position <= UNITS_Count ) and self.UNITS_Position + 1 ) or 1
+      local PlayerUnit = self.UNITS[self.UNITS_Index[self.UNITS_Position]]
+      if PlayerUnit then
+        local UnitName = PlayerUnit:GetName()  
+        local PlayerName = PlayerUnit:GetPlayerName()
+        self:E( { UNITS_Count, self.UNITS_Position, UnitName, PlayerName } )
+        if PlayerName and PlayerName ~= "" then
+          if not self.PLAYERS[PlayerName] or self.PLAYERS[PlayerName] ~= PlayerUnit then
+            self:E( { "Add player for unit:", UnitName, PlayerName } )
+            self:AddPlayer( UnitName, PlayerName )
+          _EVENTDISPATCHER:CreateEventPlayerEnterUnit( PlayerUnit )
+          end
+        end
+      end
+    end
+  end
+  
+  self:E( "Scheduling" )
+  local PlayerCheckSchedule = SCHEDULER:New( nil, CheckPlayers, { self }, 2, 0.05 )
   
   return self
 end
@@ -130,6 +158,8 @@ function DATABASE:AddUnit( DCSUnitName )
   if not  self.UNITS[DCSUnitName] then
     local UnitRegister = UNIT:Register( DCSUnitName )
     self.UNITS[DCSUnitName] = UNIT:Register( DCSUnitName )
+    
+    table.insert( self.UNITS_Index, DCSUnitName )
   end
   
   return self.UNITS[DCSUnitName]
@@ -140,7 +170,7 @@ end
 -- @param #DATABASE self
 function DATABASE:DeleteUnit( DCSUnitName )
 
-  --self.UNITS[DCSUnitName] = nil 
+  self.UNITS[DCSUnitName] = nil 
 end
 
 --- Adds a Static based on the Static Name in the DATABASE.

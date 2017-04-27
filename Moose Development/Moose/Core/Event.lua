@@ -730,6 +730,21 @@ do -- Event Creation
     world.onEvent( Event )
   end
 
+  --- Creation of a S_EVENT_PLAYER_ENTER_UNIT Event.
+  -- @param #EVENT self
+  -- @param Wrapper.Unit#UNIT PlayerUnit.
+  function EVENT:CreateEventPlayerEnterUnit( PlayerUnit )
+    self:F( { PlayerUnit } )
+  
+    local Event = {
+      id = EVENTS.PlayerEnterUnit,
+      time = timer.getTime(),
+      initiator = PlayerUnit:GetDCSObject()
+      }
+  
+    world.onEvent( Event )
+  end
+
 end
 
 --- @param #EVENT self
@@ -749,8 +764,6 @@ function EVENT:onEvent( Event )
 
   local EventMeta = _EVENTMETA[Event.id]
 
-  self:E( { EventMeta.Text, Event } )
-  
   if self and self.Events and self.Events[Event.id] then
 
     if Event.initiator then    
