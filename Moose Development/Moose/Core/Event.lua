@@ -748,6 +748,8 @@ function EVENT:onEvent( Event )
 
 
   local EventMeta = _EVENTMETA[Event.id]
+
+  self:E( { EventMeta.Text, Event } )
   
   if self and self.Events and self.Events[Event.id] then
 
@@ -863,7 +865,7 @@ function EVENT:onEvent( Event )
     local PriorityBegin = PriorityOrder == -1 and 5 or 1
     local PriorityEnd = PriorityOrder == -1 and 1 or 5
 
-    if Event.IniObjectCategory ~= 3 then
+    if Event.IniObjectCategory ~= Object.Category.STATIC then
       self:E( { EventMeta.Text, Event, Event.IniDCSUnitName, Event.TgtDCSUnitName, PriorityOrder } )
     end
     
