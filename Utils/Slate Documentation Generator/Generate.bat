@@ -1,3 +1,4 @@
+@echo off
 :: Generate the Markdown doc
 "./bin/SlateDocGenerator2.exe" "../../../MOOSE/Moose Development/Moose" ../../../slate/source
 
@@ -10,5 +11,6 @@ rmdir /s /q "./bin/TEMP"
 robocopy ../../docs/Presentations ../../../slate/source/includes/Pictures /MIR /NJH /NJS
 
 :: Deploy the Slate documentation
-"C:\Program Files\Git\bin\bash.exe" --login -i -c "cd slate | git commit -a -m "Doc Update" | ./deploy.sh"
-
+echo A shell will open. To deploy the Slate website, please run the following command. Otherwise, simply close the shell.
+echo $ Moose/Utils/Deploy.sh
+%localappdata%\GitHub\GitHub.appref-ms --open-shell
