@@ -195,6 +195,12 @@ DETECTION uses the in-built detection capabilities of DCS World, but adds new fu
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS).DetectedItemMenu">DETECTION_AREAS:DetectedItemMenu(Index)</a></td>
+		<td class="summary">
+<p>Menu of a detected item using a given numeric index.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS).DetectedItemReportSummary">DETECTION_AREAS:DetectedItemReportSummary(Index)</a></td>
 		<td class="summary">
 <p>Report summary of a detected item using a given numeric index.</p>
@@ -204,6 +210,12 @@ DETECTION uses the in-built detection capabilities of DCS World, but adds new fu
 		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS).DetectedItems">DETECTION_AREAS.DetectedItems</a></td>
 		<td class="summary">
 <p>A list of areas containing the set of <a href="Unit.html">Unit</a>s, <a href="Zone.html">Zone</a>s, the center <a href="Unit.html">Unit</a> within the zone, and ID of each area that was detected within a DetectionZoneRange.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS).DetectedReportDetailed">DETECTION_AREAS:DetectedReportDetailed()</a></td>
+		<td class="summary">
+<p>Report detailed of a detection result.</p>
 </td>
 		</tr>
 		<tr>
@@ -331,7 +343,7 @@ DETECTION uses the in-built detection capabilities of DCS World, but adds new fu
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).AddDetectedItem">DETECTION_BASE:AddDetectedItem(DetectedItemIndex, Set)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).AddDetectedItem">DETECTION_BASE:AddDetectedItem(ItemPrefix, DetectedItemIndex, Set)</a></td>
 		<td class="summary">
 <p>Adds a new DetectedItem to the DetectedItems list.</p>
 </td>
@@ -427,6 +439,12 @@ DETECTION uses the in-built detection capabilities of DCS World, but adds new fu
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).DetectedItemMenu">DETECTION_BASE:DetectedItemMenu(Index)</a></td>
+		<td class="summary">
+<p>Menu of a detected item using a given numeric index.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).DetectedItemReportSummary">DETECTION_BASE:DetectedItemReportSummary(Index)</a></td>
 		<td class="summary">
 <p>Report summary of a detected item using a given numeric index.</p>
@@ -516,9 +534,21 @@ The different values of Unit.Category can be:</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).GetDetectedID">DETECTION_BASE:GetDetectedID(Index)</a></td>
+		<td class="summary">
+<p>Get a detected ID using a given numeric index.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).GetDetectedItem">DETECTION_BASE:GetDetectedItem(Index)</a></td>
 		<td class="summary">
 <p>Get a detected item using a given numeric index.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).GetDetectedItemID">DETECTION_BASE:GetDetectedItemID(Index)</a></td>
+		<td class="summary">
+<p>Get a detected ItemID using a given numeric index.</p>
 </td>
 		</tr>
 		<tr>
@@ -908,6 +938,42 @@ The different values of Unit.Category can be:</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE.DetectedObject).IsVisible">DETECTION_BASE.DetectedObject.IsVisible</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE.DetectedObject).KnowDistance">DETECTION_BASE.DetectedObject.KnowDistance</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE.DetectedObject).KnowType">DETECTION_BASE.DetectedObject.KnowType</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE.DetectedObject).LastPos">DETECTION_BASE.DetectedObject.LastPos</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE.DetectedObject).LastTime">DETECTION_BASE.DetectedObject.LastTime</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE.DetectedObject).LastVelocity">DETECTION_BASE.DetectedObject.LastVelocity</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE.DetectedObject).Name">DETECTION_BASE.DetectedObject.Name</a></td>
 		<td class="summary">
 
@@ -915,12 +981,6 @@ The different values of Unit.Category can be:</p>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE.DetectedObject).Type">DETECTION_BASE.DetectedObject.Type</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE.DetectedObject).Visible">DETECTION_BASE.DetectedObject.Visible</a></td>
 		<td class="summary">
 
 </td>
@@ -939,6 +999,12 @@ The different values of Unit.Category can be:</p>
 		<td class="name" nowrap="nowrap"><a href="##(DETECTION_TYPES).CreateDetectionItems">DETECTION_TYPES:CreateDetectionItems()</a></td>
 		<td class="summary">
 <p>Create the DetectedItems list from the DetectedObjects table.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_TYPES).DetectedItemMenu">DETECTION_TYPES:DetectedItemMenu(Index, DetectedTypeName)</a></td>
+		<td class="summary">
+<p>Menu of a DetectedItem using a given numeric index.</p>
 </td>
 		</tr>
 		<tr>
@@ -1015,6 +1081,12 @@ The different values of Unit.Category can be:</p>
 		<td class="name" nowrap="nowrap"><a href="##(DETECTION_UNITS).CreateDetectionItems">DETECTION_UNITS:CreateDetectionItems()</a></td>
 		<td class="summary">
 <p>Create the DetectedItems list from the DetectedObjects table.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_UNITS).DetectedItemMenu">DETECTION_UNITS:DetectedItemMenu(Index)</a></td>
+		<td class="summary">
+<p>Menu of a DetectedItem using a given numeric index.</p>
 </td>
 		</tr>
 		<tr>
@@ -1481,6 +1553,32 @@ self</p>
 		<dl class="function">
 <dt>
 
+<a id="#(DETECTION_AREAS).DetectedItemMenu" >
+<strong>DETECTION_AREAS:DetectedItemMenu(Index)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Menu of a detected item using a given numeric index.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> Index </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#string:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(DETECTION_AREAS).DetectedItemReportSummary" >
 <strong>DETECTION_AREAS:DetectedItemReportSummary(Index)</strong>
 </a>
@@ -1515,6 +1613,24 @@ self</p>
 <dd>
 	
 <p>A list of areas containing the set of <a href="Unit.html">Unit</a>s, <a href="Zone.html">Zone</a>s, the center <a href="Unit.html">Unit</a> within the zone, and ID of each area that was detected within a DetectionZoneRange.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_AREAS).DetectedReportDetailed" >
+<strong>DETECTION_AREAS:DetectedReportDetailed()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Report detailed of a detection result.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#string:</em></p>
+
 
 </dd>
 </dl>
@@ -1944,7 +2060,7 @@ self</p>
 <dt>
 
 <a id="#(DETECTION_BASE).AddDetectedItem" >
-<strong>DETECTION_BASE:AddDetectedItem(DetectedItemIndex, Set)</strong>
+<strong>DETECTION_BASE:AddDetectedItem(ItemPrefix, DetectedItemIndex, Set)</strong>
 </a>
 </dt>
 <dd>
@@ -1956,6 +2072,11 @@ self</p>
 
 		<h3>Parameters</h3>
 		<ul>
+				<li>
+				
+<p><code><em> ItemPrefix </em></code>: </p>
+
+				</li>
 				<li>
 				
 <p><code><em>#string DetectedItemIndex </em></code>: 
@@ -2228,6 +2349,32 @@ The index of the DetectedItem.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(DETECTION_BASE).DetectedItemMenu" >
+<strong>DETECTION_BASE:DetectedItemMenu(Index)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Menu of a detected item using a given numeric index.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> Index </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#string:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(DETECTION_BASE).DetectedItemReportSummary" >
 <strong>DETECTION_BASE:DetectedItemReportSummary(Index)</strong>
 </a>
@@ -2468,6 +2615,32 @@ self</p>
 		<dl class="function">
 <dt>
 
+<a id="#(DETECTION_BASE).GetDetectedID" >
+<strong>DETECTION_BASE:GetDetectedID(Index)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Get a detected ID using a given numeric index.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number Index </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#string:</em>
+DetectedItemID</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(DETECTION_BASE).GetDetectedItem" >
 <strong>DETECTION_BASE:GetDetectedItem(Index)</strong>
 </a>
@@ -2488,6 +2661,32 @@ self</p>
 				
 <p><em><a href="##(DETECTION_BASE.DetectedItem)">#DETECTION_BASE.DetectedItem</a>:</em></p>
 
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_BASE).GetDetectedItemID" >
+<strong>DETECTION_BASE:GetDetectedItemID(Index)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Get a detected ItemID using a given numeric index.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number Index </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#string:</em>
+DetectedItemID</p>
 
 </dd>
 </dl>
@@ -4066,6 +4265,90 @@ The To State string.</p>
 		<dl class="function">
 <dt>
 
+		<em>#boolean</em>
+<a id="#(DETECTION_BASE.DetectedObject).IsVisible" >
+<strong>DETECTION_BASE.DetectedObject.IsVisible</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#boolean</em>
+<a id="#(DETECTION_BASE.DetectedObject).KnowDistance" >
+<strong>DETECTION_BASE.DetectedObject.KnowDistance</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#boolean</em>
+<a id="#(DETECTION_BASE.DetectedObject).KnowType" >
+<strong>DETECTION_BASE.DetectedObject.KnowType</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#boolean</em>
+<a id="#(DETECTION_BASE.DetectedObject).LastPos" >
+<strong>DETECTION_BASE.DetectedObject.LastPos</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#number</em>
+<a id="#(DETECTION_BASE.DetectedObject).LastTime" >
+<strong>DETECTION_BASE.DetectedObject.LastTime</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#number</em>
+<a id="#(DETECTION_BASE.DetectedObject).LastVelocity" >
+<strong>DETECTION_BASE.DetectedObject.LastVelocity</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 		<em>#string</em>
 <a id="#(DETECTION_BASE.DetectedObject).Name" >
 <strong>DETECTION_BASE.DetectedObject.Name</strong>
@@ -4083,20 +4366,6 @@ The To State string.</p>
 		<em>#string</em>
 <a id="#(DETECTION_BASE.DetectedObject).Type" >
 <strong>DETECTION_BASE.DetectedObject.Type</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em>#boolean</em>
-<a id="#(DETECTION_BASE.DetectedObject).Visible" >
-<strong>DETECTION_BASE.DetectedObject.Visible</strong>
 </a>
 </dt>
 <dd>
@@ -4153,6 +4422,37 @@ Beware that when the amount of different types detected is large, the DetectedIt
 				
 <p><em><a href="##(DETECTION_TYPES)">#DETECTION_TYPES</a>:</em>
 self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_TYPES).DetectedItemMenu" >
+<strong>DETECTION_TYPES:DetectedItemMenu(Index, DetectedTypeName)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Menu of a DetectedItem using a given numeric index.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> Index </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> DetectedTypeName </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#string:</em></p>
+
 
 </dd>
 </dl>
@@ -4388,6 +4688,32 @@ Beware that when the amount of units detected is large, the DetectedItems list w
 				
 <p><em><a href="##(DETECTION_UNITS)">#DETECTION_UNITS</a>:</em>
 self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_UNITS).DetectedItemMenu" >
+<strong>DETECTION_UNITS:DetectedItemMenu(Index)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Menu of a DetectedItem using a given numeric index.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> Index </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#string:</em></p>
+
 
 </dd>
 </dl>
