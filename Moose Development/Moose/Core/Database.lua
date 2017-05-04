@@ -112,7 +112,7 @@ function DATABASE:New()
 
   self.UNITS_Position = 0
   
-  --- @param Wrapper.Unit#UNIT PlayerUnit
+  --- @param #DATABASE self
   local function CheckPlayers( self )
 
     local UNITS_Count = #self.UNITS_Index
@@ -122,12 +122,12 @@ function DATABASE:New()
       if PlayerUnit then
         local UnitName = PlayerUnit:GetName()  
         local PlayerName = PlayerUnit:GetPlayerName()
-        self:E( { UNITS_Count, self.UNITS_Position, UnitName, PlayerName } )
+        --self:E( { UNITS_Count, self.UNITS_Position, UnitName, PlayerName } )
         if PlayerName and PlayerName ~= "" then
-          if not self.PLAYERS[PlayerName] or self.PLAYERS[PlayerName] ~= PlayerUnit then
+          if self.PLAYERS[PlayerName] == nil or self.PLAYERS[PlayerName] ~= UnitName then
             self:E( { "Add player for unit:", UnitName, PlayerName } )
             self:AddPlayer( UnitName, PlayerName )
-          _EVENTDISPATCHER:CreateEventPlayerEnterUnit( PlayerUnit )
+            --_EVENTDISPATCHER:CreateEventPlayerEnterUnit( PlayerUnit )
           end
         end
       end
@@ -135,7 +135,7 @@ function DATABASE:New()
   end
   
   self:E( "Scheduling" )
-  local PlayerCheckSchedule = SCHEDULER:New( nil, CheckPlayers, { self }, 2, 0.05 )
+  local PlayerCheckSchedule = SCHEDULER:New( nil, CheckPlayers, { self }, 2, 0.1 )
   
   return self
 end
@@ -311,7 +311,7 @@ function DATABASE:AddPlayer( UnitName, PlayerName )
 
   if PlayerName then
     self:E( { "Add player for unit:", UnitName, PlayerName } )
-    self.PLAYERS[PlayerName] = self:FindUnit( UnitName )
+    self.PLAYERS[PlayerName] = UnitName
     self.PLAYERSJOINED[PlayerName] = PlayerName
   end
 end

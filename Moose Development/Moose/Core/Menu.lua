@@ -780,9 +780,9 @@ do
       self = MenuGroup._Menus[Path]
     else
       self = BASE:Inherit( self, MENU_BASE:New( MenuText, ParentMenu ) )
-      if MenuGroup:IsAlive() then
+      --if MenuGroup:IsAlive() then
         MenuGroup._Menus[Path] = self
-      end
+      --end
 
       self.MenuGroup = MenuGroup
       self.Path = Path
@@ -886,9 +886,9 @@ do
     else
       self = BASE:Inherit( self, MENU_COMMAND_BASE:New( MenuText, ParentMenu, CommandMenuFunction, arg ) )
       
-      if MenuGroup:IsAlive() then
+      --if MenuGroup:IsAlive() then
         MenuGroup._Menus[Path] = self
-      end
+      --end
 
       self.Path = Path
       self.MenuGroup = MenuGroup
