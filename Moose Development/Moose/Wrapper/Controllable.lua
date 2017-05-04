@@ -1782,7 +1782,7 @@ function CONTROLLABLE:GetDetectedTargets( DetectVisual, DetectOptical, DetectRad
   return nil
 end
 
-function CONTROLLABLE:IsTargetDetected( DCSObject )
+function CONTROLLABLE:IsTargetDetected( DCSObject, DetectVisual, DetectOptical, DetectRadar, DetectIRST, DetectRWR, DetectDLINK )
   self:F2( self.ControllableName )
 
   local DCSControllable = self:GetDCSObject()

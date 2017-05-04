@@ -190,7 +190,7 @@ do -- DETECTION_BASE
   --      local SetGroup = SET_GROUP:New():FilterPrefixes( "FAC" ):FilterStart() -- Build a SetGroup of Forward Air Controllers.
   -- 
   --      -- Build a detect object.
-  --      local Detection = DETECTION_BASE:New( SetGroup )
+  --      local Detection = DETECTION_UNITS:New( SetGroup )
   --      
   --      -- This will accept detected units if the range is below 5000 meters.
   --      Detection:SetAcceptRange( 5000 ) 
@@ -211,7 +211,7 @@ do -- DETECTION_BASE
   --      local ZoneAccept2 = ZONE:New( "AcceptZone2" )
   --      
   --      -- Build a detect object.
-  --      local Detection = DETECTION_BASE:New( SetGroup )
+  --      local Detection = DETECTION_UNITS:New( SetGroup )
   --      
   --      -- This will accept detected units by Detection when the unit is within ZoneAccept1 OR ZoneAccept2.
   --      Detection:SetAcceptZones( { ZoneAccept1, ZoneAccept2 } ) 
@@ -232,7 +232,7 @@ do -- DETECTION_BASE
   --      local ZoneReject2 = ZONE:New( "RejectZone2" )
   --      
   --      -- Build a detect object.
-  --      local Detection = DETECTION_BASE:New( SetGroup )
+  --      local Detection = DETECTION_UNITS:New( SetGroup )
   --      
   --      -- This will reject detected units by Detection when the unit is within ZoneReject1 OR ZoneReject2.
   --      Detection:SetRejectZones( { ZoneReject1, ZoneReject2 } ) 
@@ -273,10 +273,16 @@ do -- DETECTION_BASE
   
   --- @type DETECTION_BASE.DetectedObject
   -- @field #string Name
-  -- @field #boolean Visible
+  -- @field #boolean IsVisible
+  -- @field #boolean KnowType
+  -- @field #boolean KnowDistance
   -- @field #string Type
   -- @field #number Distance
   -- @field #boolean Identified
+  -- @field #number LastTime
+  -- @field #boolean LastPos
+  -- @field #number LastVelocity
+
   
   --- @type DETECTION_BASE.DetectedItems
   -- @list <#DETECTION_BASE.DetectedItem>
@@ -309,12 +315,12 @@ do -- DETECTION_BASE
     
     self.DetectionInterval = 30
     
-    self:InitDetectVisual( false )
-    self:InitDetectOptical( false )
-    self:InitDetectRadar( false )
-    self:InitDetectRWR( false )
-    self:InitDetectIRST( false )
-    self:InitDetectDLINK( false )
+    self:InitDetectVisual( nil )
+    self:InitDetectOptical( nil )
+    self:InitDetectRadar( nil )
+    self:InitDetectRWR( nil )
+    self:InitDetectIRST( nil )
+    self:InitDetectDLINK( nil )
     
     self:FilterCategories( {
       Unit.Category.AIRPLANE,
@@ -531,6 +537,7 @@ do -- DETECTION_BASE
         self:T( { "DetectionGroup is Alive", DetectionGroup:GetName() } )
         
         local DetectionGroupName = DetectionGroup:GetName()
+        local DetectionUnit = DetectionGroup:GetUnit(1)
         
         local DetectedUnits = {}
         
@@ -550,6 +557,18 @@ do -- DETECTION_BASE
           
           if DetectedObject and DetectedObject:isExist() and DetectedObject.id_ < 50000000 then -- and ( DetectedObject:getCategory() == Object.Category.UNIT or DetectedObject:getCategory() == Object.Category.STATIC ) then
     
+            local TargetIsDetected, TargetIsVisible, TargetLastTime, TargetKnowType, TargetKnowDistance, TargetLastPos, TargetLastVelocity = DetectionUnit:IsTargetDetected( 
+              DetectedObject,
+              self.DetectVisual,
+              self.DetectOptical,
+              self.DetectRadar,
+              self.DetectIRST,
+              self.DetectRWR,
+              self.DetectDLINK
+            )
+            
+            self:T( { TargetIsDetected = TargetIsDetected, TargetIsVisible = TargetIsVisible, TargetLastTime = TargetLastTime, TargetKnowType = TargetKnowType, TargetKnowDistance = TargetKnowDistance, TargetLastPos = TargetLastPos, TargetLastVelocity = TargetLastVelocity } )
+
             local DetectionAccepted = true
             
             local DetectedObjectName = DetectedObject:getName()
@@ -648,12 +667,14 @@ do -- DETECTION_BASE
               
               HasDetectedObjects = true
     
-              if not self.DetectedObjects[DetectedObjectName] then
-                self.DetectedObjects[DetectedObjectName] = {}
-              end
+              self.DetectedObjects[DetectedObjectName] = self.DetectedObjects[DetectedObjectName] or {} 
               self.DetectedObjects[DetectedObjectName].Name = DetectedObjectName
-              self.DetectedObjects[DetectedObjectName].Visible = Detection.visible
-              self.DetectedObjects[DetectedObjectName].Type = Detection.type
+              self.DetectedObjects[DetectedObjectName].IsVisible = TargetIsVisible 
+              self.DetectedObjects[DetectedObjectName].LastTime = TargetLastTime
+              self.DetectedObjects[DetectedObjectName].LastPos = TargetLastPos
+              self.DetectedObjects[DetectedObjectName].LastVelocity = TargetLastVelocity
+              self.DetectedObjects[DetectedObjectName].KnowType = TargetKnowType
+              self.DetectedObjects[DetectedObjectName].KnowDistance = Detection.distance   -- TargetKnowDistance
               self.DetectedObjects[DetectedObjectName].Distance = Distance
               
               local DetectedUnit = UNIT:FindByName( DetectedObjectName )
@@ -707,7 +728,7 @@ do -- DETECTION_BASE
         local DetectedSet = DetectedItem.Set
         
         if DetectedSet:Count() == 0 then
-          self.DetectedItems[DetectedItemID] = nil
+          self:RemoveDetectedItem(DetectedItemID)
         end
       end
 
@@ -1200,8 +1221,10 @@ do -- DETECTION_BASE
   -- @param #number DetectedItemIndex The index or position in the DetectedItems list where the item needs to be removed.
   function DETECTION_BASE:RemoveDetectedItem( DetectedItemIndex )
     
-    self.DetectedItemCount = self.DetectedItemCount - 1
-    self.DetectedItems[DetectedItemIndex] = nil
+    if self.DetectedItems[DetectedItemIndex] then
+      self.DetectedItemCount = self.DetectedItemCount - 1
+      self.DetectedItems[DetectedItemIndex] = nil
+    end
   end
   
   
@@ -1215,7 +1238,7 @@ do -- DETECTION_BASE
   
   --- Get the amount of SETs with detected objects.
   -- @param #DETECTION_BASE self
-  -- @return #number Count
+  -- @return #number The amount of detected items. Note that the amount of detected items can differ with the reality, because detections are not real-time but doen in intervals!
   function DETECTION_BASE:GetDetectedItemsCount()
   
     local DetectedCount = self.DetectedItemCount
@@ -1435,7 +1458,6 @@ do -- DETECTION_UNITS
     for DetectedItemID, DetectedItem in pairs( self.DetectedItems ) do
     
       local DetectedItemSet = DetectedItem.Set -- Core.Set#SET_UNIT
-      local DetectedTypeName = DetectedItem.Type
       
       for DetectedUnitName, DetectedUnitData in pairs( DetectedItemSet:GetSet() ) do
         local DetectedUnit = DetectedUnitData -- Wrapper.Unit#UNIT
@@ -1450,6 +1472,17 @@ do -- DETECTION_UNITS
             
           -- Yes, the DetectedUnit is still detected or exists. Flag as identified.
           self:IdentifyDetectedObject( DetectedObject )
+          
+          -- Update the detection with the new data provided.
+          DetectedItem.TypeName = DetectedUnit:GetTypeName()            
+          DetectedItem.Name = DetectedObject.Name
+          DetectedItem.IsVisible = DetectedObject.IsVisible 
+          DetectedItem.LastTime = DetectedObject.LastTime
+          DetectedItem.LastPos = DetectedObject.LastPos
+          DetectedItem.LastVelocity = DetectedObject.LastVelocity
+          DetectedItem.KnowType = DetectedObject.KnowType
+          DetectedItem.KnowDistance = DetectedObject.KnowDistance
+          DetectedItem.Distance = DetectedObject.Distance
         else
           -- There was no DetectedObject, remove DetectedUnit from the Set.
           self:AddChangeUnit( DetectedItem, "RU", DetectedUnitName )
@@ -1474,10 +1507,15 @@ do -- DETECTION_UNITS
           if not DetectedItem then
             self:T( "Added new DetectedItem" )
             DetectedItem = self:AddDetectedItem( "UNIT", DetectedUnitName )
-            DetectedItem.Type = DetectedUnit:GetTypeName()
-            DetectedItem.Name = DetectedObjectData.Name
-            DetectedItem.Visible = DetectedObjectData.Visible
-            DetectedItem.Distance = DetectedObjectData.Distance
+            DetectedItem.TypeName = DetectedUnit:GetTypeName()            
+            DetectedItem.Name = DetectedObject.Name
+            DetectedItem.IsVisible = DetectedObject.IsVisible 
+            DetectedItem.LastTime = DetectedObject.LastTime
+            DetectedItem.LastPos = DetectedObject.LastPos
+            DetectedItem.LastVelocity = DetectedObject.LastVelocity
+            DetectedItem.KnowType = DetectedObject.KnowType
+            DetectedItem.KnowDistance = DetectedObject.KnowDistance
+            DetectedItem.Distance = DetectedObject.Distance
           end
         
           DetectedItem.Set:AddUnit( DetectedUnit )
@@ -1557,19 +1595,27 @@ do -- DETECTION_UNITS
       if DetectedItemUnit and DetectedItemUnit:IsAlive() then
         self:T(DetectedItemUnit)
   
-        local UnitCategoryName = DetectedItemUnit:GetCategoryName() or ""
-        local UnitCategoryType = DetectedItemUnit:GetTypeName() or ""
   
-        if DetectedItem.Type and UnitCategoryName and UnitCategoryType then
-          UnitCategoryText = UnitCategoryName .. " (" .. UnitCategoryType .. ") at "
+        if DetectedItem.KnowType then
+          local UnitCategoryName = DetectedItemUnit:GetCategoryName()
+          if UnitCategoryName then
+            UnitCategoryText = UnitCategoryName
+          end
+          if DetectedItem.TypeName then
+            UnitCategoryText = UnitCategoryText .. " (" .. DetectedItem.TypeName .. ")"
+          end
         else
-          UnitCategoryText = "Unknown target at "
+          UnitCategoryText = "Unknown"
         end
         
-        if DetectedItem.Visible == false then
-          UnitDistanceText = string.format( "%.2f", DetectedItem.Distance ) .. " km, estimated"
+        if DetectedItem.KnowDistance then
+          if DetectedItem.IsVisible then
+            UnitDistanceText = " at " .. string.format( "%.2f", DetectedItem.Distance ) .. " km"
+          end
         else
-          UnitDistanceText = string.format( "%.2f", DetectedItem.Distance ) .. " km, visual"
+          if DetectedItem.IsVisible then
+            UnitDistanceText = " at +/- " .. string.format( "%.0f", DetectedItem.Distance ) .. " km"
+          end
         end
         
         local DetectedItemCoordinate = DetectedItemUnit:GetCoordinate()
@@ -1699,7 +1745,7 @@ do -- DETECTION_TYPES
     for DetectedItemID, DetectedItem in pairs( self.DetectedItems ) do
     
       local DetectedItemSet = DetectedItem.Set -- Core.Set#SET_UNIT
-      local DetectedTypeName = DetectedItem.Type
+      local DetectedTypeName = DetectedItem.TypeName
       
       for DetectedUnitName, DetectedUnitData in pairs( DetectedItemSet:GetSet() ) do
         local DetectedUnit = DetectedUnitData -- Wrapper.Unit#UNIT
@@ -1736,7 +1782,7 @@ do -- DETECTION_TYPES
           local DetectedItem = self:GetDetectedItem( DetectedTypeName )
           if not DetectedItem then
             DetectedItem = self:AddDetectedItem( "TYPE", DetectedTypeName )
-            DetectedItem.Type = DetectedUnit:GetTypeName()
+            DetectedItem.TypeName = DetectedUnit:GetTypeName()
           end
         
           DetectedItem.Set:AddUnit( DetectedUnit )
@@ -1808,7 +1854,7 @@ do -- DETECTION_TYPES
 
       local ThreatLevelA2G = DetectedSet:CalculateThreatLevelA2G()
       local DetectedItemsCount = DetectedSet:Count()
-      local DetectedItemType = DetectedItem.Type
+      local DetectedItemType = DetectedItem.TypeName
       
       local DetectedItemUnit = DetectedSet:GetFirst()
 
@@ -1967,7 +2013,7 @@ do -- DETECTION_AREAS
       local ThreatLevelA2G = self:GetTreatLevelA2G( DetectedItem )
       local DetectedItemsCount = DetectedSet:Count()
       local DetectedItemsTypes = DetectedSet:GetTypeNames()
-
+      
       local ReportSummary = string.format( 
         "%s - %s - Threat:[%s](%2d)\n   %2d of %s", 
         DetectedItemID,
@@ -1983,6 +2029,25 @@ do -- DETECTION_AREAS
     
     return nil
   end
+
+  --- Report detailed of a detection result.
+  -- @param #DETECTION_AREAS self
+  -- @return #string
+  function DETECTION_AREAS:DetectedReportDetailed() --R2.1  Fixed missing report
+    self:F()
+    
+    local Report = REPORT:New( "Detected areas:" )
+    for DetectedItemIndex, DetectedItem in pairs( self.DetectedItems ) do
+      local DetectedItem = DetectedItem -- #DETECTION_BASE.DetectedItem
+      local ReportSummary = self:DetectedItemReportSummary( DetectedItemIndex )
+      Report:Add( ReportSummary )
+    end
+    
+    local ReportText = Report:Text()
+    
+    return ReportText
+  end
+
   
   
   --- Returns if there are friendlies nearby the FAC units ...
