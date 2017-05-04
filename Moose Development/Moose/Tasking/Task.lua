@@ -277,14 +277,9 @@ function TASK:AbortUnit( PlayerUnit )
       self:E( { IsAssignedToGroup = IsAssignedToGroup } )
       if IsAssignedToGroup then
         local PlayerName = PlayerUnit:GetPlayerName()
-        self:UnAssignFromUnit( PlayerUnit )
         self:MessageToGroups( PlayerName .. " aborted Task " .. self:GetName() )
-        self:E( { TaskGroup = PlayerGroup:GetName(), GetUnits = PlayerGroup:GetUnits() } )
-        if #PlayerGroup:GetUnits() == 1 then
-          self:UnAssignFromGroup( PlayerGroup )
-          PlayerGroup:SetState( PlayerGroup, "Assigned", nil )
-        end
-        self:Abort()
+        self:UnAssignFromGroup( PlayerGroup )
+        --self:Abort()
         self:PlayerAborted( PlayerUnit )
       end
     end
