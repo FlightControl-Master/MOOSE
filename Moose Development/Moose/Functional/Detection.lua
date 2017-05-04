@@ -567,7 +567,7 @@ do -- DETECTION_BASE
               self.DetectDLINK
             )
             
-            self:T( { TargetIsDetected = TargetIsDetected, TargetIsVisible = TargetIsVisible, TargetLastTime = TargetLastTime, TargetKnowType = TargetKnowType, TargetKnowDistance = TargetKnowDistance, TargetLastPos = TargetLastPos, TargetLastVelocity = TargetLastVelocity } )
+            self:T2( { TargetIsDetected = TargetIsDetected, TargetIsVisible = TargetIsVisible, TargetLastTime = TargetLastTime, TargetKnowType = TargetKnowType, TargetKnowDistance = TargetKnowDistance, TargetLastPos = TargetLastPos, TargetLastVelocity = TargetLastVelocity } )
 
             local DetectionAccepted = true
             
@@ -585,7 +585,7 @@ do -- DETECTION_BASE
 
             local DetectedUnitCategory = DetectedObject:getDesc().category
     
-            self:T( { "Detected Target:", DetectionGroupName, DetectedObjectName, Distance, DetectedUnitCategory } )
+            self:T2( { "Detected Target:", DetectionGroupName, DetectedObjectName, Distance, DetectedUnitCategory } )
 
             -- Calculate Acceptance
             
@@ -1154,7 +1154,7 @@ do -- DETECTION_BASE
   -- @param #string ObjectName
   -- @return #DETECTION_BASE.DetectedObject
   function DETECTION_BASE:GetDetectedObject( ObjectName )
-  	self:F( ObjectName )
+  	self:F2( ObjectName )
     
     if ObjectName then
       local DetectedObject = self.DetectedObjects[ObjectName]

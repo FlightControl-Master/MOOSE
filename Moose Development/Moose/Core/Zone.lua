@@ -731,7 +731,7 @@ end
 -- @param #ZONE_UNIT self
 -- @return Dcs.DCSTypes#Vec2 The location of the zone based on the @{Unit#UNIT}location.
 function ZONE_UNIT:GetVec2()
-  self:F( self.ZoneName )
+  self:F2( self.ZoneName )
   
   local ZoneVec2 = self.ZoneUNIT:GetVec2()
   if ZoneVec2 then
@@ -741,7 +741,7 @@ function ZONE_UNIT:GetVec2()
     return self.LastVec2
   end
 
-  self:T( { ZoneVec2 } )
+  self:T2( { ZoneVec2 } )
 
   return nil  
 end

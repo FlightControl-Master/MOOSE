@@ -839,7 +839,7 @@ do
           self.ParentMenu.MenuCount = self.ParentMenu.MenuCount - 1
           if self.ParentMenu.MenuCount == 0 then
             if self.MenuRemoveParent == true then
-              self:T( "Removing Parent Menu " )
+              self:T2( "Removing Parent Menu " )
               self.ParentMenu:Remove()
             end
           end
@@ -927,7 +927,7 @@ do
         self.ParentMenu.MenuCount = self.ParentMenu.MenuCount - 1
         if self.ParentMenu.MenuCount == 0 then
           if self.MenuRemoveParent == true then
-            self:T( "Removing Parent Menu " )
+            self:T2( "Removing Parent Menu " )
             self.ParentMenu:Remove()
           end
         end
