@@ -158,6 +158,14 @@
 	<h2>Global(s)</h2>
 	<table class="function_list">
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="#COORDINATE">COORDINATE</a></td>
+		<td class="summary">
+<h1>COORDINATE class, extends <a href="Point.html##(COORDINATE)">Point#COORDINATE</a></h1>
+
+<p>The COORDINATE class defines a 2D coordinate in the simulator.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="#POINT_VEC2">POINT_VEC2</a></td>
 		<td class="summary">
 <h1>POINT_VEC2 class, extends <a href="Point.html##(POINT_VEC3)">Point#POINT_VEC3</a></h1>
@@ -174,6 +182,107 @@
 </td>
 		</tr>
 	</table>
+			<h2><a id="#(COORDINATE)">Type <code>COORDINATE</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).CoordinateMenu">COORDINATE:CoordinateMenu(RootMenu)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).LL_Accuracy">COORDINATE.LL_Accuracy</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).LL_DMS">COORDINATE.LL_DMS</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).MGRS_Accuracy">COORDINATE.MGRS_Accuracy</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).MenuLL_Accuracy">COORDINATE:MenuLL_Accuracy(LL_Accuracy)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).MenuLL_DMS">COORDINATE:MenuLL_DMS(LL_DMS)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).MenuMGRS_Accuracy">COORDINATE:MenuMGRS_Accuracy(MGRS_Accuracy)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).MenuSystem">COORDINATE:MenuSystem(System)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).New">COORDINATE:New(x, y, LandHeightAdd)</a></td>
+		<td class="summary">
+<p>COORDINATE constructor.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).NewFromVec2">COORDINATE:NewFromVec2(Vec2, LandHeightAdd)</a></td>
+		<td class="summary">
+<p>Create a new COORDINATE object from  Vec2 coordinates.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).NewFromVec3">COORDINATE:NewFromVec3(Vec3)</a></td>
+		<td class="summary">
+<p>Create a new COORDINATE object from  Vec3 coordinates.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).System">COORDINATE.System</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).SystemMenu">COORDINATE.SystemMenu</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).ToString">COORDINATE:ToString()</a></td>
+		<td class="summary">
+<p>Provides a coordinate string of the point, based on a coordinate format system:
+  * Uses default settings in COORDINATE.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).ToStringLL">COORDINATE:ToStringLL(LL_Accuracy, LL_DMS)</a></td>
+		<td class="summary">
+<p>Provides a Lat Lon string</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).ToStringMGRS">COORDINATE:ToStringMGRS(MGRS_Accuracy)</a></td>
+		<td class="summary">
+<p>Provides a MGRS string</p>
+</td>
+		</tr>
+	</table>
+
 			<h2><a id="#(POINT_VEC2)">Type <code>POINT_VEC2</code></a></h2>
 				<table class="function_list">
 		<tr>
@@ -625,12 +734,6 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).ToStringLL">POINT_VEC3:ToStringLL(AngleRadians, Distance, acc, DMS)</a></td>
-		<td class="summary">
-<p>Provides a Bearing / Range string</p>
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).Translate">POINT_VEC3:Translate(Distance, Angle)</a></td>
 		<td class="summary">
 <p>Add a Distance in meters from the POINT<em>VEC3 horizontal plane, with the given angle, and calculate the new POINT</em>VEC3.</p>
@@ -699,6 +802,51 @@
 	</table>
 
 	<h2>Global(s)</h2>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(COORDINATE)">#COORDINATE</a></em>
+<a id="COORDINATE" >
+<strong>COORDINATE</strong>
+</a>
+</dt>
+<dd>
+	
+<h1>COORDINATE class, extends <a href="Point.html##(COORDINATE)">Point#COORDINATE</a></h1>
+
+<p>The COORDINATE class defines a 2D coordinate in the simulator.</p>
+
+	
+<p>The height coordinate (if needed) will be the land height + an optional added height specified.
+A COORDINATE can be expressed in LL or in MGRS.</p>
+
+<h2>COORDINATE constructor</h2>
+
+<p>A new COORDINATE instance can be created with:</p>
+
+<ul>
+    <li><a href="Point.html##(COORDINATE).New">Point#COORDINATE.New</a>(): a 2D point, taking an additional height parameter.</li>
+    <li><a href="Point.html##(COORDINATE).NewFromVec2">Point#COORDINATE.NewFromVec2</a>(): a 2D point created from a <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a>.</li>
+</ul>
+
+<h2>Manupulate the X, Altitude, Y coordinates of the 2D point</h2>
+
+<p>A COORDINATE class works in 2D space, with an altitude setting. It contains internally an X, Altitude, Y coordinate.
+Methods exist to manupulate these coordinates.</p>
+
+<p>The current X, Altitude, Y axis can be retrieved with the methods <a href="##(COORDINATE).GetX">COORDINATE.GetX</a>(), <a href="##(COORDINATE).GetAlt">COORDINATE.GetAlt</a>(), <a href="##(COORDINATE).GetY">COORDINATE.GetY</a>() respectively.
+The methods <a href="##(COORDINATE).SetX">COORDINATE.SetX</a>(), <a href="##(COORDINATE).SetAlt">COORDINATE.SetAlt</a>(), <a href="##(COORDINATE).SetY">COORDINATE.SetY</a>() change the respective axis with a new value.
+The current Lat(itude), Alt(itude), Lon(gitude) values can also be retrieved with the methods <a href="##(COORDINATE).GetLat">COORDINATE.GetLat</a>(), <a href="##(COORDINATE).GetAlt">COORDINATE.GetAlt</a>(), <a href="##(COORDINATE).GetLon">COORDINATE.GetLon</a>() respectively.
+The current axis values can be changed by using the methods <a href="##(COORDINATE).AddX">COORDINATE.AddX</a>(), <a href="##(COORDINATE).AddAlt">COORDINATE.AddAlt</a>(), <a href="##(COORDINATE).AddY">COORDINATE.AddY</a>()
+to add or substract a value from the current respective axis value.
+Note that the Set and Add methods return the current COORDINATE object, so these manipulation methods can be chained... For example:</p>
+
+<pre><code> local Vec2 = PointVec2:AddX( 100 ):AddY( 2000 ):GetVec2()
+ 
+</code></pre>
+
+</dd>
+</dl>
 		<dl class="function">
 <dt>
 
@@ -904,6 +1052,378 @@ Note that the Set and Add methods return the current POINT_VEC3 object, so these
 </dl>
 	<h2><a id="#(Point)" >Type <code>Point</code></a></h2>
 	
+			<h2><a id="#(COORDINATE)" >Type <code>COORDINATE</code></a></h2>
+				<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+<a id="#(COORDINATE).CoordinateMenu" >
+<strong>COORDINATE:CoordinateMenu(RootMenu)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> RootMenu </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#string:</em>
+The coordinate Text in the configured coordinate system.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#number</em>
+<a id="#(COORDINATE).LL_Accuracy" >
+<strong>COORDINATE.LL_Accuracy</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#boolean</em>
+<a id="#(COORDINATE).LL_DMS" >
+<strong>COORDINATE.LL_DMS</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#number</em>
+<a id="#(COORDINATE).MGRS_Accuracy" >
+<strong>COORDINATE.MGRS_Accuracy</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(COORDINATE).MenuLL_Accuracy" >
+<strong>COORDINATE:MenuLL_Accuracy(LL_Accuracy)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> LL_Accuracy </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(COORDINATE).MenuLL_DMS" >
+<strong>COORDINATE:MenuLL_DMS(LL_DMS)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> LL_DMS </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(COORDINATE).MenuMGRS_Accuracy" >
+<strong>COORDINATE:MenuMGRS_Accuracy(MGRS_Accuracy)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> MGRS_Accuracy </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(COORDINATE).MenuSystem" >
+<strong>COORDINATE:MenuSystem(System)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> System </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(COORDINATE).New" >
+<strong>COORDINATE:New(x, y, LandHeightAdd)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>COORDINATE constructor.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a> x </em></code>: 
+The x coordinate of the Vec3 point, pointing to the North.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a> y </em></code>: 
+The y coordinate of the Vec3 point, pointing to the Right.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a> LandHeightAdd </em></code>: 
+(optional) The default height if required to be evaluated will be the land height of the x, y coordinate. You can specify an extra height to be added to the land height.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="Core.Point.html##(COORDINATE)">Core.Point#COORDINATE</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(COORDINATE).NewFromVec2" >
+<strong>COORDINATE:NewFromVec2(Vec2, LandHeightAdd)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Create a new COORDINATE object from  Vec2 coordinates.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a> Vec2 </em></code>: 
+The Vec2 point.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a> LandHeightAdd </em></code>: 
+(optional) The default height if required to be evaluated will be the land height of the x, y coordinate. You can specify an extra height to be added to the land height.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="Core.Point.html##(COORDINATE)">Core.Point#COORDINATE</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(COORDINATE).NewFromVec3" >
+<strong>COORDINATE:NewFromVec3(Vec3)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Create a new COORDINATE object from  Vec3 coordinates.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSTypes.html##(Vec3)">Dcs.DCSTypes#Vec3</a> Vec3 </em></code>: 
+The Vec3 point.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="Core.Point.html##(COORDINATE)">Core.Point#COORDINATE</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(COORDINATE).System" >
+<strong>COORDINATE.System</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(COORDINATE).SystemMenu" >
+<strong>COORDINATE.SystemMenu</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(COORDINATE).ToString" >
+<strong>COORDINATE:ToString()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Provides a coordinate string of the point, based on a coordinate format system:
+  * Uses default settings in COORDINATE.</p>
+
+	
+<ul>
+    <li>Can be overridden if for a GROUP containing x clients, a menu was selected to override the default.</li>
+</ul>
+
+
+		<h3>Return value</h3>
+				
+<p><em>#string:</em>
+The coordinate Text in the configured coordinate system.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(COORDINATE).ToStringLL" >
+<strong>COORDINATE:ToStringLL(LL_Accuracy, LL_DMS)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Provides a Lat Lon string</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number LL_Accuracy </em></code>: 
+The accurancy of significant numbers behind the comma... So Accurancy of 2 is 0.01.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#boolean LL_DMS </em></code>: 
+true = Degrees, Minutes, Seconds; false = Degrees, Minutes</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#string:</em>
+The LL Text</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(COORDINATE).ToStringMGRS" >
+<strong>COORDINATE:ToStringMGRS(MGRS_Accuracy)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Provides a MGRS string</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number MGRS_Accuracy </em></code>: 
+of the 5 digit code. 
+Precision depends on the Accuracy choosen: 
+  * 0 = no digits - precision level 100 km 
+  * 1 = 1 digits - precision level 10 km 
+  * 2 = 2 digits - precision level 1 km 
+  * 3 = 3 digits - precision level 100 m 
+  * 4 = 4 digits - precision level 10 m.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#string:</em>
+The MGRS Text</p>
+
+</dd>
+</dl>
+
 			<h2><a id="#(POINT_VEC2)" >Type <code>POINT_VEC2</code></a></h2>
 				<h3>Field(s)</h3>
 		<dl class="function">
@@ -2651,49 +3171,6 @@ The angle in randians</p>
 				
 <p><code><em>#number Distance </em></code>: 
 The distance</p>
-
-				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em>#string:</em>
-The BR Text</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(POINT_VEC3).ToStringLL" >
-<strong>POINT_VEC3:ToStringLL(AngleRadians, Distance, acc, DMS)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Provides a Bearing / Range string</p>
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em>#number AngleRadians </em></code>: 
-The angle in randians</p>
-
-				</li>
-				<li>
-				
-<p><code><em>#number Distance </em></code>: 
-The distance</p>
-
-				</li>
-				<li>
-				
-<p><code><em> acc </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em> DMS </em></code>: </p>
 
 				</li>
 		</ul>

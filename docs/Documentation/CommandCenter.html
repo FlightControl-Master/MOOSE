@@ -254,7 +254,25 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(REPORT).AddIndent">REPORT:AddIndent(Text)</a></td>
+		<td class="summary">
+<p>Add a new line to a REPORT.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(REPORT).ClassName">REPORT.ClassName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(REPORT).HasText">REPORT:HasText()</a></td>
+		<td class="summary">
+<p>Has the REPORT Text?</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(REPORT).Indent">REPORT.Indent</a></td>
 		<td class="summary">
 
 </td>
@@ -266,9 +284,27 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(REPORT).Report">REPORT.Report</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(REPORT).SetIndent">REPORT:SetIndent(Indent)</a></td>
+		<td class="summary">
+<p>Set indent of a REPORT.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(REPORT).Text">REPORT:Text(Delimiter)</a></td>
 		<td class="summary">
 <p>Produces the text of the report, taking into account an optional delimeter, which is \n by default.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(REPORT).Title">REPORT.Title</a></td>
+		<td class="summary">
+
 </td>
 		</tr>
 	</table>
@@ -770,9 +806,67 @@ Group#GROUP</p>
 		<dl class="function">
 <dt>
 
+<a id="#(REPORT).AddIndent" >
+<strong>REPORT:AddIndent(Text)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Add a new line to a REPORT.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Text </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(REPORT)">#REPORT</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 		<em>#string</em>
 <a id="#(REPORT).ClassName" >
 <strong>REPORT.ClassName</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(REPORT).HasText" >
+<strong>REPORT:HasText()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Has the REPORT Text?</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(REPORT).Indent" >
+<strong>REPORT.Indent</strong>
 </a>
 </dt>
 <dd>
@@ -810,6 +904,46 @@ Group#GROUP</p>
 		<dl class="function">
 <dt>
 
+		<em></em>
+<a id="#(REPORT).Report" >
+<strong>REPORT.Report</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(REPORT).SetIndent" >
+<strong>REPORT:SetIndent(Indent)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set indent of a REPORT.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number Indent </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(REPORT)">#REPORT</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(REPORT).Text" >
 <strong>REPORT:Text(Delimiter)</strong>
 </a>
@@ -831,6 +965,20 @@ Group#GROUP</p>
 				
 <p><em>#string:</em>
 The report text.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(REPORT).Title" >
+<strong>REPORT.Title</strong>
+</a>
+</dt>
+<dd>
+	
+
 
 </dd>
 </dl>

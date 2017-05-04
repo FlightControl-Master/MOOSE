@@ -279,7 +279,7 @@ each detected set of potential targets can be lased or smoked...</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DESIGNATE).MenuStatus">DESIGNATE:MenuStatus(AttackGroup)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DESIGNATE).MenuStatus">DESIGNATE:MenuStatus(AttackGroup, Duration)</a></td>
 		<td class="summary">
 
 </td>
@@ -375,7 +375,7 @@ each detected set of potential targets can be lased or smoked...</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DESIGNATE).SendStatus">DESIGNATE:SendStatus(AttackGroup, MenuAttackGroup)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DESIGNATE).SendStatus">DESIGNATE:SendStatus(AttackGroup, Duration, MenuAttackGroup)</a></td>
 		<td class="summary">
 <p>Sends the status to the Attack Groups.</p>
 </td>
@@ -890,7 +890,6 @@ function below will use the range 1-7 just in case</p>
 		<dl class="function">
 <dt>
 
-		<em></em>
 <a id="#(DESIGNATE).LaserCodes" >
 <strong>DESIGNATE.LaserCodes</strong>
 </a>
@@ -1065,18 +1064,23 @@ function below will use the range 1-7 just in case</p>
 <dt>
 
 <a id="#(DESIGNATE).MenuStatus" >
-<strong>DESIGNATE:MenuStatus(AttackGroup)</strong>
+<strong>DESIGNATE:MenuStatus(AttackGroup, Duration)</strong>
 </a>
 </dt>
 <dd>
 	
 
 
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
 <p><code><em> AttackGroup </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> Duration </em></code>: </p>
 
 				</li>
 		</ul>
@@ -1556,7 +1560,7 @@ The Attack collection of GROUP objects to designate and report for.</p>
 <dt>
 
 <a id="#(DESIGNATE).SendStatus" >
-<strong>DESIGNATE:SendStatus(AttackGroup, MenuAttackGroup)</strong>
+<strong>DESIGNATE:SendStatus(AttackGroup, Duration, MenuAttackGroup)</strong>
 </a>
 </dt>
 <dd>
@@ -1568,6 +1572,12 @@ The Attack collection of GROUP objects to designate and report for.</p>
 				<li>
 				
 <p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> AttackGroup </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Duration </em></code>: 
+The time in seconds the report should be visible.</p>
 
 				</li>
 				<li>
