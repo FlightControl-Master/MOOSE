@@ -190,7 +190,7 @@ do -- DETECTION_BASE
   --      local SetGroup = SET_GROUP:New():FilterPrefixes( "FAC" ):FilterStart() -- Build a SetGroup of Forward Air Controllers.
   -- 
   --      -- Build a detect object.
-  --      local Detection = DETECTION_BASE:New( SetGroup )
+  --      local Detection = DETECTION_UNITS:New( SetGroup )
   --      
   --      -- This will accept detected units if the range is below 5000 meters.
   --      Detection:SetAcceptRange( 5000 ) 
@@ -211,7 +211,7 @@ do -- DETECTION_BASE
   --      local ZoneAccept2 = ZONE:New( "AcceptZone2" )
   --      
   --      -- Build a detect object.
-  --      local Detection = DETECTION_BASE:New( SetGroup )
+  --      local Detection = DETECTION_UNITS:New( SetGroup )
   --      
   --      -- This will accept detected units by Detection when the unit is within ZoneAccept1 OR ZoneAccept2.
   --      Detection:SetAcceptZones( { ZoneAccept1, ZoneAccept2 } ) 
@@ -232,7 +232,7 @@ do -- DETECTION_BASE
   --      local ZoneReject2 = ZONE:New( "RejectZone2" )
   --      
   --      -- Build a detect object.
-  --      local Detection = DETECTION_BASE:New( SetGroup )
+  --      local Detection = DETECTION_UNITS:New( SetGroup )
   --      
   --      -- This will reject detected units by Detection when the unit is within ZoneReject1 OR ZoneReject2.
   --      Detection:SetRejectZones( { ZoneReject1, ZoneReject2 } ) 
@@ -728,7 +728,7 @@ do -- DETECTION_BASE
         local DetectedSet = DetectedItem.Set
         
         if DetectedSet:Count() == 0 then
-          self.DetectedItems[DetectedItemID] = nil
+          self:RemoveDetectedItem(DetectedItemID)
         end
       end
 
@@ -1221,8 +1221,10 @@ do -- DETECTION_BASE
   -- @param #number DetectedItemIndex The index or position in the DetectedItems list where the item needs to be removed.
   function DETECTION_BASE:RemoveDetectedItem( DetectedItemIndex )
     
-    self.DetectedItemCount = self.DetectedItemCount - 1
-    self.DetectedItems[DetectedItemIndex] = nil
+    if self.DetectedItems[DetectedItemIndex] then
+      self.DetectedItemCount = self.DetectedItemCount - 1
+      self.DetectedItems[DetectedItemIndex] = nil
+    end
   end
   
   
@@ -1236,7 +1238,7 @@ do -- DETECTION_BASE
   
   --- Get the amount of SETs with detected objects.
   -- @param #DETECTION_BASE self
-  -- @return #number Count
+  -- @return #number The amount of detected items. Note that the amount of detected items can differ with the reality, because detections are not real-time but doen in intervals!
   function DETECTION_BASE:GetDetectedItemsCount()
   
     local DetectedCount = self.DetectedItemCount

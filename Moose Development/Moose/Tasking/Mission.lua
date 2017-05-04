@@ -295,6 +295,7 @@ function MISSION:AbortUnit( PlayerUnit )
   local PlayerUnitRemoved = false
   
   for TaskID, Task in pairs( self:GetTasks() ) do
+    local Task = Task -- Tasking.Task#TASK
     if Task:AbortUnit( PlayerUnit ) then
       PlayerUnitRemoved = true
     end
