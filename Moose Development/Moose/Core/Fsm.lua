@@ -1014,6 +1014,8 @@ do -- FSM_PROCESS
       Process.fsm:Remove()
       Process.fsm = nil
     end
+    
+    self._Processes = nil
   
     return self
   end

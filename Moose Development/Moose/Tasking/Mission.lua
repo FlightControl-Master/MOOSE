@@ -549,7 +549,7 @@ function MISSION:GetTasksRemaining()
   local TasksRemaining = 0
   for TaskID, Task in pairs( self:GetTasks() ) do
     local Task = Task -- Tasking.Task#TASK
-    if Task:IsStateSuccess() or Task:IsStateFAILED() then
+    if Task:IsStateSuccess() or Task:IsStateFailed() then
     else
       TasksRemaining = TasksRemaining + 1
     end

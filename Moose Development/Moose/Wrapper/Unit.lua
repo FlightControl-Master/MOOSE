@@ -724,7 +724,7 @@ function UNIT:IsInZone( Zone )
   if self:IsAlive() then
     local IsInZone = Zone:IsVec3InZone( self:GetVec3() )
   
-    self:T( { IsInZone } )
+    self:T2( { IsInZone } )
     return IsInZone 
   end
   

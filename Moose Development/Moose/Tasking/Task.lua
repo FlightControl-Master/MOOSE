@@ -724,7 +724,12 @@ end
 -- @param #TASK self
 function TASK:MenuTaskAbort( TaskGroup )
 
-  self:Abort()
+  for PlayerUnitName, PlayerUnit in pairs( TaskGroup:GetUnits() ) do
+    self:AbortUnit( PlayerUnit )
+  end
+  
+  self:GetMission():GetCommandCenter():GetPositionable():MessageToSetGroup( "Abort", 15, self.SetGroup )
+  
 end
 
 

@@ -91,7 +91,7 @@ do -- MENU_BASE
   -- @param #boolean RemoveParent If true, the parent menu is automatically removed when this menu is the last child menu of that parent @{Menu}.
   -- @return #MENU_BASE
   function MENU_BASE:SetRemoveParent( RemoveParent )
-    self:F( { RemoveParent } )
+    self:F2( { RemoveParent } )
     self.MenuRemoveParent = RemoveParent
     return self
   end
@@ -780,9 +780,9 @@ do
       self = MenuGroup._Menus[Path]
     else
       self = BASE:Inherit( self, MENU_BASE:New( MenuText, ParentMenu ) )
-      if MenuGroup:IsAlive() then
+      --if MenuGroup:IsAlive() then
         MenuGroup._Menus[Path] = self
-      end
+      --end
 
       self.MenuGroup = MenuGroup
       self.Path = Path
@@ -839,7 +839,7 @@ do
           self.ParentMenu.MenuCount = self.ParentMenu.MenuCount - 1
           if self.ParentMenu.MenuCount == 0 then
             if self.MenuRemoveParent == true then
-              self:T( "Removing Parent Menu " )
+              self:T2( "Removing Parent Menu " )
               self.ParentMenu:Remove()
             end
           end
@@ -886,9 +886,9 @@ do
     else
       self = BASE:Inherit( self, MENU_COMMAND_BASE:New( MenuText, ParentMenu, CommandMenuFunction, arg ) )
       
-      if MenuGroup:IsAlive() then
+      --if MenuGroup:IsAlive() then
         MenuGroup._Menus[Path] = self
-      end
+      --end
 
       self.Path = Path
       self.MenuGroup = MenuGroup
@@ -902,7 +902,7 @@ do
       if self.ParentMenu and self.ParentMenu.Menus then
         self.ParentMenu.Menus[MenuText] = self
         self.ParentMenu.MenuCount = self.ParentMenu.MenuCount + 1
-        self:F( { ParentMenu.Menus, MenuText } )
+        self:F2( { ParentMenu.Menus, MenuText } )
       end
     end
 
@@ -927,7 +927,7 @@ do
         self.ParentMenu.MenuCount = self.ParentMenu.MenuCount - 1
         if self.ParentMenu.MenuCount == 0 then
           if self.MenuRemoveParent == true then
-            self:T( "Removing Parent Menu " )
+            self:T2( "Removing Parent Menu " )
             self.ParentMenu:Remove()
           end
         end
