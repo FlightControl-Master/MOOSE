@@ -135,7 +135,7 @@ function DATABASE:New()
   end
   
   self:E( "Scheduling" )
-  local PlayerCheckSchedule = SCHEDULER:New( nil, CheckPlayers, { self }, 2, 0.1 )
+  --local PlayerCheckSchedule = SCHEDULER:New( nil, CheckPlayers, { self }, 2, 0.1 )
   
   return self
 end
