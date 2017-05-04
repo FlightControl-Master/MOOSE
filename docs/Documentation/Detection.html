@@ -1330,7 +1330,7 @@ Use the method <a href="Detection.html##(DETECTION_BASE).SetAcceptRange">Detecti
 <pre><code> local SetGroup = SET_GROUP:New():FilterPrefixes( "FAC" ):FilterStart() -- Build a SetGroup of Forward Air Controllers.
 
  -- Build a detect object.
- local Detection = DETECTION_BASE:New( SetGroup )
+ local Detection = DETECTION_UNITS:New( SetGroup )
 
  -- This will accept detected units if the range is below 5000 meters.
  Detection:SetAcceptRange( 5000 ) 
@@ -1352,7 +1352,7 @@ Use the method <a href="Detection.html##(DETECTION_BASE).SetAcceptZones">Detecti
  local ZoneAccept2 = ZONE:New( "AcceptZone2" )
 
  -- Build a detect object.
- local Detection = DETECTION_BASE:New( SetGroup )
+ local Detection = DETECTION_UNITS:New( SetGroup )
 
  -- This will accept detected units by Detection when the unit is within ZoneAccept1 OR ZoneAccept2.
  Detection:SetAcceptZones( { ZoneAccept1, ZoneAccept2 } ) 
@@ -1374,7 +1374,7 @@ An example of how to use the method is shown below.</p>
  local ZoneReject2 = ZONE:New( "RejectZone2" )
 
  -- Build a detect object.
- local Detection = DETECTION_BASE:New( SetGroup )
+ local Detection = DETECTION_UNITS:New( SetGroup )
 
  -- This will reject detected units by Detection when the unit is within ZoneReject1 OR ZoneReject2.
  Detection:SetRejectZones( { ZoneReject1, ZoneReject2 } ) 
@@ -2476,7 +2476,7 @@ The index of the DetectedItem.</p>
 		<dl class="function">
 <dt>
 
-		<em>#number</em>
+		<em></em>
 <a id="#(DETECTION_BASE).DetectionInterval" >
 <strong>DETECTION_BASE.DetectionInterval</strong>
 </a>
@@ -2723,7 +2723,7 @@ DetectedItemID</p>
 		<h3>Return value</h3>
 				
 <p><em>#number:</em>
-Count</p>
+The amount of detected items. Note that the amount of detected items can differ with the reality, because detections are not real-time but doen in intervals!</p>
 
 </dd>
 </dl>
