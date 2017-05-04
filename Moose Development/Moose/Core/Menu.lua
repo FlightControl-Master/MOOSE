@@ -91,7 +91,7 @@ do -- MENU_BASE
   -- @param #boolean RemoveParent If true, the parent menu is automatically removed when this menu is the last child menu of that parent @{Menu}.
   -- @return #MENU_BASE
   function MENU_BASE:SetRemoveParent( RemoveParent )
-    self:F( { RemoveParent } )
+    self:F2( { RemoveParent } )
     self.MenuRemoveParent = RemoveParent
     return self
   end
@@ -902,7 +902,7 @@ do
       if self.ParentMenu and self.ParentMenu.Menus then
         self.ParentMenu.Menus[MenuText] = self
         self.ParentMenu.MenuCount = self.ParentMenu.MenuCount + 1
-        self:F( { ParentMenu.Menus, MenuText } )
+        self:F2( { ParentMenu.Menus, MenuText } )
       end
     end
 
