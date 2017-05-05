@@ -12,6 +12,7 @@ MISSION = {
 	ClassName = "MISSION",
 	Name = "",
 	MissionStatus = "PENDING",
+	AssignedGroups = {},
 }
 
 --- This is the main MISSION declaration method. Each Mission is like the master or a Mission orchestration between, Clients, Tasks, Stages etc.
@@ -288,20 +289,17 @@ end
 -- If the Unit is part of a Task in the Mission, true is returned.
 -- @param #MISSION self
 -- @param Wrapper.Unit#UNIT PlayerUnit The CLIENT or UNIT of the Player joining the Mission.
--- @return #boolean true if Unit is part of a Task in the Mission.
+-- @return #MISSION
 function MISSION:AbortUnit( PlayerUnit )
   self:F( { PlayerUnit = PlayerUnit } )
   
-  local PlayerUnitRemoved = false
-  
   for TaskID, Task in pairs( self:GetTasks() ) do
     local Task = Task -- Tasking.Task#TASK
-    if Task:AbortUnit( PlayerUnit ) then
-      PlayerUnitRemoved = true
-    end
+    local PlayerGroup = PlayerUnit:GetGroup()
+    Task:AbortGroup( PlayerGroup )
   end
   
-  return PlayerUnitRemoved
+  return self
 end
 
 --- Handles a crash of a PlayerUnit from the Mission.
@@ -366,7 +364,7 @@ end
 -- @param #MISSION self
 -- @param #number MenuTime
 function MISSION:SetMenu( MenuTime )
-  self:F()
+  self:F( { self:GetName(), MenuTime } )
   
   for _, TaskData in pairs( self:GetTasks() ) do
     local Task = TaskData -- Tasking.Task#TASK
@@ -378,7 +376,7 @@ end
 -- @param #MISSION self
 -- @param #number MenuTime
 function MISSION:RemoveMenu( MenuTime )
-  self:F()
+  self:F( { self:GetName(), MenuTime } )
   
   for _, Task in pairs( self:GetTasks() ) do
     local Task = Task -- Tasking.Task#TASK
@@ -386,6 +384,58 @@ function MISSION:RemoveMenu( MenuTime )
   end
 end
 
+
+do -- Group Assignment
+
+  --- Returns if the @{Mission} is assigned to the Group.
+  -- @param #MISSION self
+  -- @param Wrapper.Group#GROUP MissionGroup
+  -- @return #boolean
+  function MISSION:IsGroupAssigned( MissionGroup )
+  
+    local MissionGroupName = MissionGroup:GetName()
+    
+    if self.AssignedGroups[MissionGroupName] == MissionGroup then
+      self:T( { "Mission is assigned to:", MissionGroup:GetName() } )
+      return true
+    end
+    
+    self:T( { "Mission is not assigned to:", MissionGroup:GetName() } )
+    return false
+  end
+  
+  
+  --- Set @{Group} assigned to the @{Mission}.
+  -- @param #MISSION self
+  -- @param Wrapper.Group#GROUP MissionGroup
+  -- @return #MISSION
+  function MISSION:SetGroupAssigned( MissionGroup )
+  
+    local MissionName = self:GetName()
+    local MissionGroupName = MissionGroup:GetName()
+  
+    self.AssignedGroups[MissionGroupName] = MissionGroup
+    self:E( string.format( "Mission %s is assigned to %s", MissionName, MissionGroupName ) )
+    
+    return self
+  end
+  
+  --- Clear the @{Group} assignment from the @{Mission}.
+  -- @param #MISSION self
+  -- @param Wrapper.Group#GROUP MissionGroup
+  -- @return #MISSION
+  function MISSION:ClearGroupAssignment( MissionGroup )
+  
+    local MissionName = self:GetName()
+    local MissionGroupName = MissionGroup:GetName()
+  
+    self.AssignedGroups[MissionGroupName] = nil
+    self:E( string.format( "Mission %s is unassigned to %s", MissionName, MissionGroupName ) )
+    
+    return self
+  end
+  
+end
 
 --- Gets the COMMANDCENTER.
 -- @param #MISSION self
@@ -642,7 +692,6 @@ end
 -- Tasks = Mission:GetTasks()
 -- env.info( "Task 2 Completion = " .. Tasks[2]:GetGoalPercentage() .. "%" )
 function MISSION:GetTasks()
-	self:F()
 
 	return self.Tasks
 end

@@ -165,11 +165,10 @@ end
 -- @param #SET_BASE self
 -- @param #string ObjectName
 function SET_BASE:Remove( ObjectName )
-  self:F( ObjectName )
 
   local t = self.Set[ObjectName]
   
-  self:E( { ObjectName, t } )
+  self:F3( { ObjectName, t } )
 
   if t then  
     if t._next then
@@ -1568,7 +1567,7 @@ end
 -- @return #string The name of the UNIT
 -- @return #table The UNIT
 function SET_UNIT:FindInDatabase( Event )
-  self:E( { Event.IniDCSUnitName, self.Set[Event.IniDCSUnitName], Event } )
+  self:F2( { Event.IniDCSUnitName, self.Set[Event.IniDCSUnitName], Event } )
 
 
   return Event.IniDCSUnitName, self.Set[Event.IniDCSUnitName]

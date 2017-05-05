@@ -277,9 +277,7 @@ do -- TASK_A2G_DISPATCHER
       Mission:GetCommandCenter():SetMenu()
       
       for TaskGroupID, TaskGroup in pairs( self.SetGroup:GetSet() ) do
-        if not TaskGroup:GetState( TaskGroup, "Assigned" ) then
-          Mission:GetCommandCenter():MessageToGroup( string.format( "Mission *%s* has tasks %s. Subscribe to a task using the Mission *Overlord* radio menu.", Mission:GetName(), TaskReport:Text(", ") ), TaskGroup )
-        end
+        Mission:GetCommandCenter():MessageToGroup( string.format( "Mission *%s* has tasks %s. Subscribe to a task using the Mission *Overlord* radio menu.", Mission:GetName(), TaskReport:Text(", ") ), TaskGroup )
       end
       
     end

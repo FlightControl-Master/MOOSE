@@ -1011,12 +1011,12 @@ do -- FSM_PROCESS
     -- Copy Processes
     for ProcessID, Process in pairs( self:GetProcesses() ) do
       self:E( { Process} )
-      Process.fsm:Remove()
-      Process.fsm = nil
+      if Process.fsm then
+        Process.fsm:Remove()
+        Process.fsm = nil
+      end
     end
     
-    self._Processes = nil
-  
     return self
   end
   
@@ -1121,7 +1121,7 @@ end
     self:T( { ProcessUnit, From, Event, To, Dummy, self:IsTrace() } )
   
     if self:IsTrace() then
-      MESSAGE:New( "@ Process " .. self:GetClassNameAndID() .. " : " .. Event .. " changed to state " .. To, 2 ):ToAll()
+      --MESSAGE:New( "@ Process " .. self:GetClassNameAndID() .. " : " .. Event .. " changed to state " .. To, 2 ):ToAll()
     end
   
     self:T( { Scores = self._Scores, To = To } )

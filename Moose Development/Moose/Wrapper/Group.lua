@@ -1141,7 +1141,7 @@ do -- Players
       end   
     end
     
-    self:F( PlayerNames )
+    self:F2( PlayerNames )
     return PlayerNames
   end
   
