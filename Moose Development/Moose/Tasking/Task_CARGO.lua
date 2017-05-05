@@ -312,7 +312,7 @@ do -- TASK_CARGO
       self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
 
       
-      self.Cargo = Cargo
+      self.Cargo = Cargo -- Core.Cargo#CARGO
       Task:SetCargoPickup( self.Cargo, TaskUnit )
       self:__RouteToPickupPoint( -0.1 )
     end
@@ -326,6 +326,7 @@ do -- TASK_CARGO
       self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
       
       if TaskUnit:IsAir() then
+        self.Cargo.CargoObject:GetUnit(1):SmokeRed()
         self:__Land( -0.1, "Pickup" )
       else
         self:__SelectAction( -0.1 )
