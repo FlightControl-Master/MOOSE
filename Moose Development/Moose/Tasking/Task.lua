@@ -261,13 +261,10 @@ end
 -- @param #TASK self
 -- @param Wrapper.Unit#UNIT PlayerUnit The CLIENT or UNIT of the Player aborting the Task.
 -- @return #boolean true if Unit is part of the Task.
-function TASK:AbortUnit( PlayerUnit )
-  self:F( { PlayerUnit = PlayerUnit } )
-  
-  local PlayerUnitAborted = false
+function TASK:AbortGroup( PlayerGroup )
+  self:F( { PlayerGroup = PlayerGroup } )
   
   local PlayerGroups = self:GetGroups()
-  local PlayerGroup = PlayerUnit:GetGroup()
 
   -- Is the PlayerGroup part of the PlayerGroups?  
   if PlayerGroups:IsIncludeObject( PlayerGroup ) then
@@ -278,7 +275,7 @@ function TASK:AbortUnit( PlayerUnit )
       local IsGroupAssigned = self:IsGroupAssigned( PlayerGroup )
       self:E( { IsGroupAssigned = IsGroupAssigned } )
       if IsGroupAssigned then
-        local PlayerName = PlayerUnit:GetPlayerName()
+        local PlayerName = PlayerGroup:GetUnit(1):GetPlayerName()
         self:MessageToGroups( PlayerName .. " aborted Task " .. self:GetName() )
         self:UnAssignFromGroup( PlayerGroup )
         --self:Abort()
@@ -286,22 +283,24 @@ function TASK:AbortUnit( PlayerUnit )
         -- Now check if the task needs to go to hold...
         -- It will go to hold, if there are no players in the mission...
         
+        PlayerGroups:Flush()
         local IsRemaining = false
-        for GroupName, AssignedGroup in pairs( PlayerGroups ) do
-           IsRemaining = ( IsRemaining == false ) and self:IsGroupAssigned( AssignedGroup ) or IsRemaining 
+        for GroupName, AssignedGroup in pairs( PlayerGroups:GetSet() or {} ) do
+           IsRemaining = ( ( IsRemaining == false ) and self:IsGroupAssigned( AssignedGroup ) ) or IsRemaining 
+           self:F( { Task = self:GetName(), IsRemaining = IsRemaining } )
         end
         
         if IsRemaining == false then
           self:Abort()
         end
         
-        self:PlayerAborted( PlayerUnit )
+        self:PlayerAborted( PlayerGroup:GetUnit(1) )
       end
       
     end
   end
   
-  return PlayerUnitAborted
+  return self
 end
 
 --- A PlayerUnit crashed in a Task. Abort the Player.
@@ -369,7 +368,7 @@ do -- Group Assignment
   
     local TaskGroupName = TaskGroup:GetName()
     
-    if self.AssignedGroups[TaskGroupName] == TaskGroup then
+    if self.AssignedGroups[TaskGroupName] then
       self:T( { "Task is assigned to:", TaskGroup:GetName() } )
       return true
     end
@@ -808,10 +807,7 @@ end
 -- @param #TASK self
 function TASK:MenuTaskAbort( TaskGroup )
 
-  for PlayerUnitName, PlayerUnit in pairs( TaskGroup:GetUnits() ) do
-    self:AbortUnit( PlayerUnit )
-  end
-  
+  self:AbortGroup( TaskGroup )
 end
 
 

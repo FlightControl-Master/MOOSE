@@ -810,9 +810,9 @@ do
   -- @param MenuTime
   -- @return #MENU_GROUP self
   function MENU_GROUP:RemoveSubMenus( MenuTime )
-    self:F2( { self.MenuPath, MenuTime, self.MenuTime } )
+    --self:F2( { self.MenuPath, MenuTime, self.MenuTime } )
   
-    self:T( { "Removing Group SubMenus:", self.MenuGroup:GetName(), self.MenuPath } )
+    --self:T( { "Removing Group SubMenus:", self.MenuGroup:GetName(), self.MenuPath } )
     for MenuText, Menu in pairs( self.Menus ) do
       Menu:Remove( MenuTime )
     end
@@ -825,7 +825,7 @@ do
   -- @param MenuTime
   -- @return #nil
   function MENU_GROUP:Remove( MenuTime )
-    self:F( { self.MenuGroupID, self.MenuPath, MenuTime, self.MenuTime } )
+    --self:F2( { self.MenuGroupID, self.MenuPath, MenuTime, self.MenuTime } )
   
     self:RemoveSubMenus( MenuTime )
     
@@ -844,7 +844,7 @@ do
             end
           end
         end
-        self:T( { "Removing Group Menu:", self.MenuGroup:GetName(), self.MenuGroup._Menus[self.Path].Path } )
+        self:T( { "Removing Group Menu:", MenuGroup = self.MenuGroup:GetName(), MenuPath = self.MenuGroup._Menus[self.Path].Path } )
         self.MenuGroup._Menus[self.Path] = nil
         self = nil
       end
@@ -896,7 +896,7 @@ do
       self.MenuText = MenuText
       self.ParentMenu = ParentMenu
 
-      self:T( { "Adding Group Command Menu:", MenuGroup:GetName(), MenuText, self.MenuParentPath } )
+      self:T( { "Adding Group Command Menu:", MenuGroup = MenuGroup:GetName(), MenuText = MenuText, MenuPath = self.MenuParentPath } )
       self.MenuPath = missionCommands.addCommandForGroup( self.MenuGroupID, MenuText, self.MenuParentPath, self.MenuCallHandler, arg )
 
       if self.ParentMenu and self.ParentMenu.Menus then
@@ -914,14 +914,14 @@ do
   -- @param MenuTime
   -- @return #nil
   function MENU_GROUP_COMMAND:Remove( MenuTime )
-    self:F( { self.MenuGroupID, self.MenuPath, MenuTime, self.MenuTime } )
+    --self:F2( { self.MenuGroupID, self.MenuPath, MenuTime, self.MenuTime } )
 
     if not MenuTime or self.MenuTime ~= MenuTime then
       if self.MenuGroup._Menus[self.Path] then
         self = self.MenuGroup._Menus[self.Path]
     
         missionCommands.removeItemForGroup( self.MenuGroupID, self.MenuPath )
-        self:T( { "Removing Group Command Menu:", self.MenuGroup:GetName(), self.MenuText, self.Path, self.MenuGroup._Menus[self.Path].Path } )
+        self:T( { "Removing Group Command Menu:", MenuGroup = self.MenuGroup:GetName(), MenuText = self.MenuText, MenuPath = self.Path } )
 
         self.ParentMenu.Menus[self.MenuText] = nil
         self.ParentMenu.MenuCount = self.ParentMenu.MenuCount - 1
