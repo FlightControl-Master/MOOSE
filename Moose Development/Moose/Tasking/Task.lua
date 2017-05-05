@@ -287,8 +287,8 @@ function TASK:AbortUnit( PlayerUnit )
         -- It will go to hold, if there are no players in the mission...
         
         local IsRemaining = false
-        for GroupName, GroupData in pairs( PlayerGroups ) do
-           IsRemaining = ( IsRemaining == false ) and self:IsGroupAssigned( PlayerGroup ) or IsRemaining 
+        for GroupName, AssignedGroup in pairs( PlayerGroups ) do
+           IsRemaining = ( IsRemaining == false ) and self:IsGroupAssigned( AssignedGroup ) or IsRemaining 
         end
         
         if IsRemaining == false then
