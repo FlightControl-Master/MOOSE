@@ -269,7 +269,6 @@ end
 -- @param #COMMANDCENTER self
 -- @return Core.Menu#MENU_COALITION
 function COMMANDCENTER:GetMenu()
-  self:F()
   return self.CommandCenterMenu
 end
 

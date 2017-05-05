@@ -82,7 +82,7 @@ do -- MENU_BASE
   -- @param #string MenuText The text of the child menu.
   -- @return #MENU_BASE
   function MENU_BASE:GetMenu( MenuText )
-    self:F( { self.Menus, MenuText } )
+    self:F2( { Menu = self.Menus[MenuText] } )
     return self.Menus[MenuText]
   end
   
