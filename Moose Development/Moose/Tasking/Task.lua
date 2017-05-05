@@ -286,10 +286,14 @@ function TASK:AbortGroup( PlayerGroup )
         PlayerGroups:Flush()
         local IsRemaining = false
         for GroupName, AssignedGroup in pairs( PlayerGroups:GetSet() or {} ) do
-           IsRemaining = ( ( IsRemaining == false ) and self:IsGroupAssigned( AssignedGroup ) ) or IsRemaining 
-           self:F( { Task = self:GetName(), IsRemaining = IsRemaining } )
+          if self:IsGroupAssigned( AssignedGroup ) == true then
+            IsRemaining = true
+            self:F( { Task = self:GetName(), IsRemaining = IsRemaining } )
+           break
+          end
         end
-        
+
+        self:F( { Task = self:GetName(), IsRemaining = IsRemaining } )
         if IsRemaining == false then
           self:Abort()
         end
