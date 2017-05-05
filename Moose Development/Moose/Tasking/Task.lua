@@ -78,6 +78,7 @@ TASK = {
   Mission = nil,
   CommandCenter = nil,
   TimeOut = 0,
+  AssignedGroups = {},
 }
 
 --- FSM PlayerAborted event handler prototype for TASK.
@@ -164,6 +165,7 @@ function TASK:New( Mission, SetGroupAssign, TaskName, TaskType )
   self:AddTransition( "Planned", "Assign", "Assigned" )
   self:AddTransition( "Assigned", "AssignUnit", "Assigned" )
   self:AddTransition( "Assigned", "Success", "Success" )
+  self:AddTransition( "Assigned", "Hold", "Hold" )
   self:AddTransition( "Assigned", "Fail", "Failed" )
   self:AddTransition( "Assigned", "Abort", "Aborted" )
   self:AddTransition( "Assigned", "Cancel", "Cancelled" )
@@ -241,9 +243,9 @@ function TASK:JoinUnit( PlayerUnit, PlayerGroup )
       --self:MessageToGroups( PlayerUnit:GetPlayerName() .. " is planning to join Task " .. self:GetName() )
     end
     if self:IsStateAssigned() then
-      local IsAssignedToGroup = self:IsAssignedToGroup( PlayerGroup )
-      self:E( { IsAssignedToGroup = IsAssignedToGroup } )
-      if IsAssignedToGroup then
+      local IsGroupAssigned = self:IsGroupAssigned( PlayerGroup )
+      self:E( { IsGroupAssigned = IsGroupAssigned } )
+      if IsGroupAssigned then
         self:AssignToUnit( PlayerUnit )
         self:MessageToGroups( PlayerUnit:GetPlayerName() .. " joined Task " .. self:GetName() )
       end
@@ -273,15 +275,29 @@ function TASK:AbortUnit( PlayerUnit )
     -- Check if the PlayerGroup is already assigned to the Task. If yes, the PlayerGroup is aborted from the Task.
     -- If the PlayerUnit was the last unit of the PlayerGroup, the menu needs to be removed from the Group.
     if self:IsStateAssigned() then
-      local IsAssignedToGroup = self:IsAssignedToGroup( PlayerGroup )
-      self:E( { IsAssignedToGroup = IsAssignedToGroup } )
-      if IsAssignedToGroup then
+      local IsGroupAssigned = self:IsGroupAssigned( PlayerGroup )
+      self:E( { IsGroupAssigned = IsGroupAssigned } )
+      if IsGroupAssigned then
         local PlayerName = PlayerUnit:GetPlayerName()
         self:MessageToGroups( PlayerName .. " aborted Task " .. self:GetName() )
         self:UnAssignFromGroup( PlayerGroup )
         --self:Abort()
+
+        -- Now check if the task needs to go to hold...
+        -- It will go to hold, if there are no players in the mission...
+        
+        local IsRemaining = false
+        for GroupName, GroupData in pairs( PlayerGroups ) do
+           IsRemaining = ( IsRemaining == false ) and self:IsGroupAssigned( PlayerGroup ) or IsRemaining 
+        end
+        
+        if IsRemaining == false then
+          self:Abort()
+        end
+        
         self:PlayerAborted( PlayerUnit )
       end
+      
     end
   end
   
@@ -308,14 +324,14 @@ function TASK:CrashUnit( PlayerUnit )
     -- Check if the PlayerGroup is already assigned to the Task. If yes, the PlayerGroup is aborted from the Task.
     -- If the PlayerUnit was the last unit of the PlayerGroup, the menu needs to be removed from the Group.
     if self:IsStateAssigned() then
-      local IsAssignedToGroup = self:IsAssignedToGroup( PlayerGroup )
-      self:E( { IsAssignedToGroup = IsAssignedToGroup } )
-      if IsAssignedToGroup then
+      local IsGroupAssigned = self:IsGroupAssigned( PlayerGroup )
+      self:E( { IsGroupAssigned = IsGroupAssigned } )
+      if IsGroupAssigned then
         self:UnAssignFromUnit( PlayerUnit )
         self:MessageToGroups( PlayerUnit:GetPlayerName() .. " crashed in Task " .. self:GetName() )
         self:E( { TaskGroup = PlayerGroup:GetName(), GetUnits = PlayerGroup:GetUnits() } )
         if #PlayerGroup:GetUnits() == 1 then
-          PlayerGroup:SetState( PlayerGroup, "Assigned", nil )
+          self:ClearGroupAssignment( PlayerGroup )
         end
         self:PlayerCrashed( PlayerUnit )
       end
@@ -343,39 +359,135 @@ function TASK:GetGroups()
   return self.SetGroup
 end
 
+do -- Group Assignment
 
+  --- Returns if the @{Task} is assigned to the Group.
+  -- @param #TASK self
+  -- @param Wrapper.Group#GROUP TaskGroup
+  -- @return #boolean
+  function TASK:IsGroupAssigned( TaskGroup )
+  
+    local TaskGroupName = TaskGroup:GetName()
+    
+    if self.AssignedGroups[TaskGroupName] == TaskGroup then
+      self:T( { "Task is assigned to:", TaskGroup:GetName() } )
+      return true
+    end
+    
+    self:T( { "Task is not assigned to:", TaskGroup:GetName() } )
+    return false
+  end
+  
+  
+  --- Set @{Group} assigned to the @{Task}.
+  -- @param #TASK self
+  -- @param Wrapper.Group#GROUP TaskGroup
+  -- @return #TASK
+  function TASK:SetGroupAssigned( TaskGroup )
+  
+    local TaskName = self:GetName()
+    local TaskGroupName = TaskGroup:GetName()
+  
+    self.AssignedGroups[TaskGroupName] = TaskGroup
+    self:E( string.format( "Task %s is assigned to %s", TaskName, TaskGroupName ) )
+    
+    local SetAssignedGroups = self:GetGroups()
+    
+    SetAssignedGroups:ForEachGroup(
+      function( AssignedGroup )
+        if self:IsGroupAssigned(AssignedGroup) then
+          self:GetMission():GetCommandCenter():MessageToGroup( string.format( "Task %s is assigned to group %s.", TaskName, TaskGroupName ), AssignedGroup )
+        else
+          self:GetMission():GetCommandCenter():MessageToGroup( string.format( "Task %s is assigned to your group.", TaskName ), AssignedGroup )
+        end
+      end
+    )
+    
+    return self
+  end
+  
+  --- Clear the @{Group} assignment from the @{Task}.
+  -- @param #TASK self
+  -- @param Wrapper.Group#GROUP TaskGroup
+  -- @return #TASK
+  function TASK:ClearGroupAssignment( TaskGroup )
+  
+    local TaskName = self:GetName()
+    local TaskGroupName = TaskGroup:GetName()
+  
+    self.AssignedGroups[TaskGroupName] = nil
+    self:E( string.format( "Task %s is unassigned to %s", TaskName, TaskGroupName ) )
+    
+    local SetAssignedGroups = self:GetGroups()
 
---- Assign the @{Task} to a @{Group}.
--- @param #TASK self
--- @param Wrapper.Group#GROUP TaskGroup
--- @return #TASK
-function TASK:AssignToGroup( TaskGroup )
-  self:F( TaskGroup:GetName() )
+    SetAssignedGroups:ForEachGroup(
+      function( AssignedGroup )
+        if self:IsGroupAssigned(AssignedGroup) then
+          self:GetMission():GetCommandCenter():MessageToGroup( string.format( "Task %s is unassigned from group %s.", TaskName, TaskGroupName ), AssignedGroup )
+        else
+          self:GetMission():GetCommandCenter():MessageToGroup( string.format( "Task %s is unassigned from your group.", TaskName ), AssignedGroup )
+        end
+      end
+    )
+    
+    return self
+  end
   
-  local TaskGroupName = TaskGroup:GetName()
+end
+
+do -- Group Assignment
+
+  --- Assign the @{Task} to a @{Group}.
+  -- @param #TASK self
+  -- @param Wrapper.Group#GROUP TaskGroup
+  -- @return #TASK
+  function TASK:AssignToGroup( TaskGroup )
+    self:F( TaskGroup:GetName() )
+    
+    local TaskGroupName = TaskGroup:GetName()
+    
+    self:SetGroupAssigned( TaskGroup )
+    
+    local Mission = self:GetMission()
+    local MissionMenu = Mission:GetMenu( TaskGroup )
+    MissionMenu:RemoveSubMenus()
+    
+    self:SetAssignedMenuForGroup( TaskGroup )
+    
+    local TaskUnits = TaskGroup:GetUnits()
+    for UnitID, UnitData in pairs( TaskUnits ) do
+      local TaskUnit = UnitData -- Wrapper.Unit#UNIT
+      local PlayerName = TaskUnit:GetPlayerName()
+      self:E(PlayerName)
+      if PlayerName ~= nil or PlayerName ~= "" then
+        self:AssignToUnit( TaskUnit )
+      end
+    end
+    
+    return self
+  end
   
-  TaskGroup:SetState( TaskGroup, "Assigned", self )
+  --- UnAssign the @{Task} from a @{Group}.
+  -- @param #TASK self
+  function TASK:UnAssignFromGroup( TaskGroup )
+    self:F2( { TaskGroup } )
+    
+    self:ClearGroupAssignment( TaskGroup )
   
-  self:E("Task is assigned to " .. TaskGroup:GetName() )
+    self:RemoveAssignedMenuForGroup( TaskGroup )
   
-  local Mission = self:GetMission()
-  local MissionMenu = Mission:GetMenu( TaskGroup )
-  MissionMenu:RemoveSubMenus()
-  
-  self:SetAssignedMenuForGroup( TaskGroup )
-  
-  local TaskUnits = TaskGroup:GetUnits()
-  for UnitID, UnitData in pairs( TaskUnits ) do
-    local TaskUnit = UnitData -- Wrapper.Unit#UNIT
-    local PlayerName = TaskUnit:GetPlayerName()
-    self:E(PlayerName)
-    if PlayerName ~= nil or PlayerName ~= "" then
-      self:AssignToUnit( TaskUnit )
+    local TaskUnits = TaskGroup:GetUnits()
+    for UnitID, UnitData in pairs( TaskUnits ) do
+      local TaskUnit = UnitData -- Wrapper.Unit#UNIT
+      local PlayerName = TaskUnit:GetPlayerName()
+      if PlayerName ~= nil or PlayerName ~= "" then
+        self:UnAssignFromUnit( TaskUnit )
+      end
     end
   end
   
-  return self
 end
+
 
 ---
 -- @param #TASK self
@@ -452,7 +564,7 @@ function TASK:SendBriefingToAssignedGroups()
   
   for TaskGroupName, TaskGroup in pairs( self.SetGroup:GetSet() ) do
 
-    if self:IsAssignedToGroup( TaskGroup ) then    
+    if self:IsGroupAssigned( TaskGroup ) then    
       TaskGroup:Message( self.TaskBriefing, 60 )
     end
   end
@@ -469,47 +581,7 @@ function TASK:UnAssignFromGroups()
   end
 end
 
---- UnAssign the @{Task} from a @{Group}.
--- @param #TASK self
-function TASK:UnAssignFromGroup( TaskGroup )
-  self:F2( { TaskGroup } )
-  
-  TaskGroup:SetState( TaskGroup, "Assigned", nil )
 
-  self:E("Task is unassigned from " .. TaskGroup:GetName() )
-
-  self:RemoveAssignedMenuForGroup( TaskGroup )
-
-  local TaskUnits = TaskGroup:GetUnits()
-  for UnitID, UnitData in pairs( TaskUnits ) do
-    local TaskUnit = UnitData -- Wrapper.Unit#UNIT
-    local PlayerName = TaskUnit:GetPlayerName()
-    if PlayerName ~= nil or PlayerName ~= "" then
-      self:UnAssignFromUnit( TaskUnit )
-    end
-  end
-end
-
-
-
---- Returns if the @{Task} is assigned to the Group.
--- @param #TASK self
--- @param Wrapper.Group#GROUP TaskGroup
--- @return #boolean
-function TASK:IsAssignedToGroup( TaskGroup )
-
-  local TaskGroupName = TaskGroup:GetName()
-  
-  if self:IsStateAssigned() then
-    if TaskGroup:GetState( TaskGroup, "Assigned" ) == self then
-      self:T( { "Task is assigned to:", TaskGroup:GetName() } )
-      return true
-    end
-  end
-  
-  self:T( { "Task is not assigned to:", TaskGroup:GetName() } )
-  return false
-end
 
 --- Returns if the @{Task} has still alive and assigned Units.
 -- @param #TASK self
@@ -519,7 +591,7 @@ function TASK:HasAliveUnits()
   
   for TaskGroupID, TaskGroup in pairs( self.SetGroup:GetSet() ) do
     if self:IsStateAssigned() then
-      if self:IsAssignedToGroup( TaskGroup ) then
+      if self:IsGroupAssigned( TaskGroup ) then
         for TaskUnitID, TaskUnit in pairs( TaskGroup:GetUnits() ) do
           if TaskUnit:IsAlive() then
             self:T( { HasAliveUnits = true } )
@@ -560,9 +632,9 @@ function TASK:SetMenu( MenuTime ) --R2.1 Mission Reports and Task Reports added.
         MENU_GROUP_COMMAND:New( TaskGroup, "Report Held Tasks", TaskGroup.MenuReports, Mission.MenuReportOverview, Mission, TaskGroup, "Hold" )
       end
       
-      if self:IsStatePlanned() or self:IsStateReplanned() then
+--      if self:IsStatePlanned() or self:IsStateReplanned() then
         self:SetMenuForGroup( TaskGroup, MenuTime )
-      end
+--      end
     end
   end  
 end
@@ -575,12 +647,10 @@ end
 -- @return #TASK
 function TASK:SetMenuForGroup( TaskGroup, MenuTime )
 
-  if not TaskGroup:GetState( TaskGroup, "Assigned" ) then
-    self:SetPlannedMenuForGroup( TaskGroup, self:GetTaskName(), MenuTime )
+  if self:IsGroupAssigned( TaskGroup ) then
+    self:SetAssignedMenuForGroup( TaskGroup, MenuTime )
   else
-    if not self:IsAssignedToGroup( TaskGroup ) then
-      self:SetAssignedMenuForGroup( TaskGroup, MenuTime )
-    end
+    self:SetPlannedMenuForGroup( TaskGroup, self:GetTaskName(), MenuTime )
   end
 end
 
@@ -640,7 +710,7 @@ function TASK:RemoveMenu( MenuTime )
   for TaskGroupID, TaskGroup in pairs( self.SetGroup:GetSet() ) do
     local TaskGroup = TaskGroup -- Wrapper.Group#GROUP 
     if TaskGroup:IsAlive() and TaskGroup:GetPlayerNames() then
-      if not self:IsAssignedToGroup( TaskGroup ) then
+      if not self:IsGroupAssigned( TaskGroup ) then
         self:RemovePlannedMenuForGroup( TaskGroup, MenuTime )
       end
     end
@@ -722,8 +792,6 @@ function TASK:MenuTaskAbort( TaskGroup )
   for PlayerUnitName, PlayerUnit in pairs( TaskGroup:GetUnits() ) do
     self:AbortUnit( PlayerUnit )
   end
-  
-  self:GetMission():GetCommandCenter():GetPositionable():MessageToSetGroup( "Abort", 15, self.SetGroup )
   
 end
 
@@ -1020,14 +1088,17 @@ function TASK:onenterAssigned( From, Event, To, PlayerUnit, PlayerName )
 
   self:E( { "Task Assigned", self.Dispatcher } )
   
-  self:MessageToGroups( "Task " .. self:GetName() .. " has been assigned to your group." )
-  
-  if self.Dispatcher then
-    self:E( "Firing Assign event " )
-    self.Dispatcher:Assign( self, PlayerUnit, PlayerName )
+  if From ~= "Assigned" then
+    self:GetMission():GetCommandCenter():MessageToCoalition( "Task " .. self:GetName() .. " is assigned." )
+    if self.Dispatcher then
+      self:E( "Firing Assign event " )
+      self.Dispatcher:Assign( self, PlayerUnit, PlayerName )
+    end
+    
+    self:GetMission():__Start( 1 )
+    
+    self:SetMenu()
   end
-  
-  self:GetMission():__Start( 1 )
 end
 
 
@@ -1056,12 +1127,13 @@ end
 function TASK:onenterAborted( From, Event, To )
 
   self:E( "Task Aborted" )
-
-  self:GetMission():GetCommandCenter():MessageToCoalition( "Task " .. self:GetName() .. " has been aborted! Task may be replanned." )
   
-  self:UnAssignFromGroups()
+  if From ~= "Aborted" then
+    self:GetMission():GetCommandCenter():MessageToCoalition( "Task " .. self:GetName() .. " has been aborted! Task may be replanned." )
+    self:__Replan( 5 )
+    self:SetMenu()
+  end
   
-  self:__Replan( 5 )
 end
 
 --- FSM function for a TASK
@@ -1101,7 +1173,7 @@ end
 function TASK:onstatechange( From, Event, To )
 
   if self:IsTrace() then
-    MESSAGE:New( "@ Task " .. self.TaskName .. " : " .. Event .. " changed to state " .. To, 2 ):ToAll()
+    --MESSAGE:New( "@ Task " .. self.TaskName .. " : " .. From .. " changed to " .. To .. " by " .. Event, 2 ):ToAll()
   end
 
   if self.Scores[To] then

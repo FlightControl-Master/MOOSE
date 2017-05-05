@@ -1121,7 +1121,7 @@ end
     self:T( { ProcessUnit, From, Event, To, Dummy, self:IsTrace() } )
   
     if self:IsTrace() then
-      MESSAGE:New( "@ Process " .. self:GetClassNameAndID() .. " : " .. Event .. " changed to state " .. To, 2 ):ToAll()
+      --MESSAGE:New( "@ Process " .. self:GetClassNameAndID() .. " : " .. Event .. " changed to state " .. To, 2 ):ToAll()
     end
   
     self:T( { Scores = self._Scores, To = To } )
