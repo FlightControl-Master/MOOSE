@@ -585,7 +585,9 @@ function TASK:UnAssignFromGroups()
   self:F2()
   
   for TaskGroupName, TaskGroup in pairs( self.SetGroup:GetSet() ) do
-    self:UnAssignFromGroup( TaskGroup )
+    if self:IsGroupAssigned(TaskGroup) then
+      self:UnAssignFromGroup( TaskGroup )
+    end
   end
 end
 
