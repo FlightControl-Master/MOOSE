@@ -17,7 +17,7 @@ For /R %1 %%M IN (*.miz) do (
   copy ..\..\Moose.lua l10n\DEFAULT > NUL:
   copy "%%~pM%%~nM.lua" l10n\DEFAULT\*.* > NUL:
   rem dir l10n\DEFAULT 
-  7z -bb0 u "%%M" "l10n\DEFAULT\*.lua" > NUL:
+  "%~dp0..\..\Utils\7-Zip\7z" -bb0 u "%%M" "l10n\DEFAULT\*.lua" > NUL:
   cd ..
   rmdir /S /Q Temp
 )

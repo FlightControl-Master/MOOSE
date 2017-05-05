@@ -319,6 +319,7 @@ function GROUP:GetUnit( UnitNumber )
   local DCSGroup = self:GetDCSObject()
 
   if DCSGroup then
+    local DCSUnit = DCSGroup:getUnit( UnitNumber )
     local UnitFound = UNIT:Find( DCSGroup:getUnit( UnitNumber ) )
     self:T2( UnitFound )
     return UnitFound
@@ -553,22 +554,23 @@ end
 function GROUP:IsPartlyInZone( Zone )
   self:F2( { self.GroupName, Zone } )
   
-  local PartlyInZone = false
+  local IsOneUnitInZone = false
+  local IsOneUnitOutsideZone = false
   
   for UnitID, UnitData in pairs( self:GetUnits() ) do
     local Unit = UnitData -- Wrapper.Unit#UNIT
     if Zone:IsVec3InZone( Unit:GetVec3() ) then
-      PartlyInZone = true
+      IsOneUnitInZone = true
     else
-      -- So, if there were groups in the zone found, and suddenly one NOT in the zone, 
-      -- then the group is partialy in the zone :-)
-      if PartlyInZone == true then
-        return true
-      end
+      IsOneUnitOutsideZone = true
     end
   end
   
-  return false
+  if IsOneUnitInZone and IsOneUnitOutsideZone then
+    return true
+  else
+    return false
+  end
 end
 
 --- Returns true if none of the group units of the group are within a @{Zone}.
@@ -586,6 +588,24 @@ function GROUP:IsNotInZone( Zone )
   end
   
   return true
+end
+
+--- Returns the number of UNITs that are in the @{Zone}
+-- @param #GROUP self
+-- @param Core.Zone#ZONE_BASE Zone The zone to test.
+-- @return #number The number of UNITs that are in the @{Zone}
+function GROUP:CountInZone( Zone )
+  self:F2( {self.GroupName, Zone} )
+  local Count = 0
+  
+  for UnitID, UnitData in pairs( self:GetUnits() ) do
+    local Unit = UnitData -- Wrapper.Unit#UNIT
+    if Zone:IsVec3InZone( Unit:GetVec3() ) then
+      Count = Count + 1
+    end
+  end
+  
+  return Count
 end
 
 --- Returns if the group is of an air category.
@@ -834,6 +854,9 @@ function GROUP:Respawn( Template )
   
   self:Destroy()
   _DATABASE:Spawn( Template )
+  
+  self:ResetEvents()
+  
 end
 
 --- Returns the group template from the @{DATABASE} (_DATABASE object).
@@ -1077,7 +1100,21 @@ do -- Event Handling
   -- @return #GROUP
   function GROUP:UnHandleEvent( Event )
   
-    self:EventDispatcher():RemoveForGroup( self:GetName(), self, Event )
+    self:EventDispatcher():Remove( self, Event )
+    
+    return self
+  end
+
+  --- Reset the subscriptions.
+  -- @param #GROUP self
+  -- @return #GROUP
+  function GROUP:ResetEvents()
+  
+    self:EventDispatcher():Reset( self )
+    
+    for UnitID, UnitData in pairs( self:GetUnits() ) do
+      UnitData:ResetEvents()
+    end
     
     return self
   end
@@ -1104,7 +1141,7 @@ do -- Players
       end   
     end
     
-    self:F( PlayerNames )
+    self:F2( PlayerNames )
     return PlayerNames
   end
   

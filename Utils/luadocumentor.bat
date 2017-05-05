@@ -1,0 +1,3 @@
+@echo off
+"./luarocks/lua5.1" -e "package.path=\"./luarocks/systree/share/lua/5.1/?.lua;./luarocks/systree/share/lua/5.1/?/init.lua;./luarocks/systree/share/lua/5.1/?.lua;./luarocks/systree/share/lua/5.1/?/init.lua;./luarocks/lua/?.lua;\"..package.path; package.cpath=\"./luarocks/lib/lua/5.1/?.dll;./luarocks/systree/lib/lua/5.1/?.dll;\"..package.cpath" -e "local k,l,_=pcall(require,\"luarocks.loader\") _=k and l.add_context(\"luadocumentor\",\"0.1.5-1\")" "./luarocks/systree/lib/luarocks/rocks/luadocumentor/0.1.5-1/bin/luadocumentor" -f doc -d "../docs/Documentation" -s "../docs/Stylesheet/stylesheet.css" "../Moose Development/Moose" %*
+exit /b %ERRORLEVEL%

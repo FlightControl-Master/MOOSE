@@ -9,6 +9,7 @@
 -- @extends Core.Base#BASE
 REPORT = {
   ClassName = "REPORT",
+  Title = "",
 }
 
 --- Create a new REPORT.
@@ -17,15 +18,36 @@ REPORT = {
 -- @return #REPORT
 function REPORT:New( Title )
 
-  local self = BASE:Inherit( self, BASE:New() )
+  local self = BASE:Inherit( self, BASE:New() ) -- #REPORT
 
   self.Report = {}
+  
+  Title = Title or ""
   if Title then
-    self.Report[#self.Report+1] = Title  
+    self.Title = Title  
   end
 
   return self
 end
+
+--- Has the REPORT Text?
+-- @param #REPORT self
+-- @return #boolean
+function REPORT:HasText() --R2.1
+  
+  return #self.Report > 0
+end
+
+
+--- Set indent of a REPORT.
+-- @param #REPORT self
+-- @param #number Indent
+-- @return #REPORT
+function REPORT:SetIndent( Indent ) --R2.1
+  self.Indent = Indent
+  return self
+end
+
 
 --- Add a new line to a REPORT.
 -- @param #REPORT self
@@ -33,7 +55,16 @@ end
 -- @return #REPORT
 function REPORT:Add( Text )
   self.Report[#self.Report+1] = Text
-  return self.Report[#self.Report]
+  return self
+end
+
+--- Add a new line to a REPORT.
+-- @param #REPORT self
+-- @param #string Text
+-- @return #REPORT
+function REPORT:AddIndent( Text ) --R2.1
+  self.Report[#self.Report+1] = string.rep(" ", self.Indent ) .. Text:gsub("\n","\n"..string.rep( " ", self.Indent ) )
+  return self
 end
 
 --- Produces the text of the report, taking into account an optional delimeter, which is \n by default.
@@ -42,7 +73,7 @@ end
 -- @return #string The report text.
 function REPORT:Text( Delimiter )
   Delimiter = Delimiter or "\n"
-  local ReportText = table.concat( self.Report, Delimiter ) or ""
+  local ReportText = ( self.Title ~= "" and self.Title .. Delimiter or self.Title ) .. table.concat( self.Report, Delimiter ) or ""
   return ReportText
 end
 
@@ -120,6 +151,21 @@ function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
   -- Handle when a player leaves a slot and goes back to spectators ... 
   -- The PlayerUnit will be UnAssigned from the Task.
   -- When there is no Unit left running the Task, the Task goes into Abort...
+  self:HandleEvent( EVENTS.MissionEnd,
+    --- @param #TASK self
+    -- @param Core.Event#EVENTDATA EventData
+    function( self, EventData )
+      local PlayerUnit = EventData.IniUnit
+      for MissionID, Mission in pairs( self:GetMissions() ) do
+        local Mission = Mission -- Tasking.Mission#MISSION
+        Mission:Stop()
+      end
+    end
+  )
+
+  -- Handle when a player leaves a slot and goes back to spectators ... 
+  -- The PlayerUnit will be UnAssigned from the Task.
+  -- When there is no Unit left running the Task, the Task goes into Abort...
   self:HandleEvent( EVENTS.PlayerLeaveUnit,
     --- @param #TASK self
     -- @param Core.Event#EVENTDATA EventData
@@ -127,7 +173,9 @@ function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
       local PlayerUnit = EventData.IniUnit
       for MissionID, Mission in pairs( self:GetMissions() ) do
         local Mission = Mission -- Tasking.Mission#MISSION
-        Mission:AbortUnit( PlayerUnit )
+        if Mission:IsENGAGED() then
+          Mission:AbortUnit( PlayerUnit )
+        end
       end
     end
   )
@@ -145,6 +193,8 @@ function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
       end
     end
   )
+  
+  self:SetMenu()
 	
 	return self
 end
@@ -203,12 +253,12 @@ function COMMANDCENTER:SetMenu()
   self.CommandCenterMenu = self.CommandCenterMenu or MENU_COALITION:New( self.CommandCenterCoalition, "Command Center (" .. self:GetName() .. ")" )
 
   local MenuTime = timer.getTime()
-  for MissionID, Mission in pairs( self:GetMissions() ) do
+  for MissionID, Mission in pairs( self:GetMissions() or {} ) do
     local Mission = Mission -- Tasking.Mission#MISSION
     Mission:SetMenu( MenuTime )
   end
 
-  for MissionID, Mission in pairs( self:GetMissions() ) do
+  for MissionID, Mission in pairs( self:GetMissions() or {} ) do
     local Mission = Mission -- Tasking.Mission#MISSION
     Mission:RemoveMenu( MenuTime )
   end
@@ -219,7 +269,6 @@ end
 -- @param #COMMANDCENTER self
 -- @return Core.Menu#MENU_COALITION
 function COMMANDCENTER:GetMenu()
-  self:F()
   return self.CommandCenterMenu
 end
 
@@ -257,8 +306,7 @@ end
 -- @param #sring Name (optional) The name of the Group used as a prefix for the message to the Group. If not provided, there will be nothing shown.
 function COMMANDCENTER:MessageToGroup( Message, TaskGroup, Name )
 
-  local Prefix = "@ Group"
-  Prefix = Prefix .. ( Name and " (" .. Name .. "): " or '' )
+  local Prefix = Name and "@ " .. Name .. ": " or "@ " .. TaskGroup:GetCallsign() .. ": "
   Message = Prefix .. Message 
   self:GetPositionable():MessageToGroup( Message , 20, TaskGroup, self:GetName() )
 

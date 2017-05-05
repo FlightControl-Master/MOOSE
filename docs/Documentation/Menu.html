@@ -31,7 +31,23 @@
 					<li><a href="Client.html">Client</a></li>
 					<li><a href="CommandCenter.html">CommandCenter</a></li>
 					<li><a href="Controllable.html">Controllable</a></li>
+					<li><a href="DCSAirbase.html">DCSAirbase</a></li>
+					<li><a href="DCSCoalitionObject.html">DCSCoalitionObject</a></li>
+					<li><a href="DCSCommand.html">DCSCommand</a></li>
+					<li><a href="DCSController.html">DCSController</a></li>
+					<li><a href="DCSGroup.html">DCSGroup</a></li>
+					<li><a href="DCSObject.html">DCSObject</a></li>
+					<li><a href="DCSTask.html">DCSTask</a></li>
+					<li><a href="DCSTypes.html">DCSTypes</a></li>
+					<li><a href="DCSUnit.html">DCSUnit</a></li>
+					<li><a href="DCSVec3.html">DCSVec3</a></li>
+					<li><a href="DCSWorld.html">DCSWorld</a></li>
+					<li><a href="DCSZone.html">DCSZone</a></li>
+					<li><a href="DCScountry.html">DCScountry</a></li>
+					<li><a href="DCStimer.html">DCStimer</a></li>
+					<li><a href="DCStrigger.html">DCStrigger</a></li>
 					<li><a href="Database.html">Database</a></li>
+					<li><a href="Designate.html">Designate</a></li>
 					<li><a href="Detection.html">Detection</a></li>
 					<li><a href="DetectionManager.html">DetectionManager</a></li>
 					<li><a href="Escort.html">Escort</a></li>
@@ -59,14 +75,20 @@
 					<li><a href="Set.html">Set</a></li>
 					<li><a href="Smoke.html">Smoke</a></li>
 					<li><a href="Spawn.html">Spawn</a></li>
+					<li><a href="SpawnStatic.html">SpawnStatic</a></li>
+					<li><a href="Spot.html">Spot</a></li>
 					<li><a href="Static.html">Static</a></li>
+					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="Task.html">Task</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
 					<li><a href="Task_A2G_Dispatcher.html">Task_A2G_Dispatcher</a></li>
+					<li><a href="Task_Cargo.html">Task_Cargo</a></li>
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
 					<li><a href="Unit.html">Unit</a></li>
 					<li><a href="Utils.html">Utils</a></li>
 					<li><a href="Zone.html">Zone</a></li>
+					<li><a href="env.html">env</a></li>
+					<li><a href="land.html">land</a></li>
 					<li><a href="routines.html">routines</a></li>
 		</ul>
 	</div>
@@ -108,158 +130,102 @@ On top, MOOSE implements <strong>variable parameter</strong> passing for command
 
 <hr/>
 
-<p>The above menus classes <strong>are derived</strong> from 2 main <strong>abstract</strong> classes defined within the MOOSE framework (so don't use these):</p>
+<h1><strong>AUTHORS and CONTRIBUTIONS</strong></h1>
 
-<h1>1) MENU_ BASE abstract base classes (don't use them)</h1>
-<p>The underlying base menu classes are <strong>NOT</strong> to be used within your missions.
-These are simply abstract base classes defining a couple of fields that are used by the 
-derived MENU_ classes to manage menus.</p>
+<h3>Contributions:</h3>
 
-<h2>1.1) <a href="##(MENU_BASE)">#MENU_BASE</a> class, extends <a href="Base.html##(BASE)">Base#BASE</a></h2>
-<p>The <a href="##(MENU_BASE)">#MENU_BASE</a> class defines the main MENU class where other MENU classes are derived from.</p>
+<h3>Authors:</h3>
 
-<h2>1.2) <a href="##(MENU_COMMAND_BASE)">#MENU<em>COMMAND</em>BASE</a> class, extends <a href="Base.html##(BASE)">Base#BASE</a></h2>
-<p>The <a href="##(MENU_COMMAND_BASE)">#MENU<em>COMMAND</em>BASE</a> class defines the main MENU class where other MENU COMMAND_ classes are derived from, in order to set commands.</p>
-
-<hr/>
-
-<p><strong>The next menus define the MENU classes that you can use within your missions.</strong></p>
-
-<h1>2) MENU MISSION classes</h1>
-<p>The underlying classes manage the menus for a complete mission file.</p>
-
-<h2>2.1) <a href="##(MENU_MISSION)">#MENU_MISSION</a> class, extends <a href="Menu.html##(MENU_BASE)">Menu#MENU_BASE</a></h2>
-<p>The <a href="Menu.html##(MENU_MISSION)">Menu#MENU_MISSION</a> class manages the main menus for a complete mission. <br/>
-You can add menus with the <a href="##(MENU_MISSION).New">MENU_MISSION.New</a> method, which constructs a MENU_MISSION object and returns you the object reference.
-Using this object reference, you can then remove ALL the menus and submenus underlying automatically with <a href="##(MENU_MISSION).Remove">MENU_MISSION.Remove</a>.</p>
-
-<h2>2.2) <a href="##(MENU_MISSION_COMMAND)">#MENU<em>MISSION</em>COMMAND</a> class, extends <a href="Menu.html##(MENU_COMMAND_BASE)">Menu#MENU<em>COMMAND</em>BASE</a></h2>
-<p>The <a href="Menu.html##(MENU_MISSION_COMMAND)">Menu#MENU<em>MISSION</em>COMMAND</a> class manages the command menus for a complete mission, which allow players to execute functions during mission execution. <br/>
-You can add menus with the <a href="##(MENU_MISSION_COMMAND).New">MENU<em>MISSION</em>COMMAND.New</a> method, which constructs a MENU<em>MISSION</em>COMMAND object and returns you the object reference.
-Using this object reference, you can then remove ALL the menus and submenus underlying automatically with <a href="##(MENU_MISSION_COMMAND).Remove">MENU<em>MISSION</em>COMMAND.Remove</a>.</p>
-
-<hr/>
-
-<h1>3) MENU COALITION classes</h1>
-<p>The underlying classes manage the menus for whole coalitions.</p>
-
-<h2>3.1) <a href="##(MENU_COALITION)">#MENU_COALITION</a> class, extends <a href="Menu.html##(MENU_BASE)">Menu#MENU_BASE</a></h2>
-<p>The <a href="Menu.html##(MENU_COALITION)">Menu#MENU_COALITION</a> class manages the main menus for coalitions. <br/>
-You can add menus with the <a href="##(MENU_COALITION).New">MENU_COALITION.New</a> method, which constructs a MENU_COALITION object and returns you the object reference.
-Using this object reference, you can then remove ALL the menus and submenus underlying automatically with <a href="##(MENU_COALITION).Remove">MENU_COALITION.Remove</a>.</p>
-
-<h2>3.2) <a href="Menu.html##(MENU_COALITION_COMMAND)">Menu#MENU<em>COALITION</em>COMMAND</a> class, extends <a href="Menu.html##(MENU_COMMAND_BASE)">Menu#MENU<em>COMMAND</em>BASE</a></h2>
-<p>The <a href="Menu.html##(MENU_COALITION_COMMAND)">Menu#MENU<em>COALITION</em>COMMAND</a> class manages the command menus for coalitions, which allow players to execute functions during mission execution. <br/>
-You can add menus with the <a href="##(MENU_COALITION_COMMAND).New">MENU<em>COALITION</em>COMMAND.New</a> method, which constructs a MENU<em>COALITION</em>COMMAND object and returns you the object reference.
-Using this object reference, you can then remove ALL the menus and submenus underlying automatically with <a href="##(MENU_COALITION_COMMAND).Remove">MENU<em>COALITION</em>COMMAND.Remove</a>.</p>
-
-<hr/>
-
-<h1>4) MENU GROUP classes</h1>
-<p>The underlying classes manage the menus for groups. Note that groups can be inactive, alive or can be destroyed.</p>
-
-<h2>4.1) <a href="Menu.html##(MENU_GROUP)">Menu#MENU_GROUP</a> class, extends <a href="Menu.html##(MENU_BASE)">Menu#MENU_BASE</a></h2>
-<p>The <a href="Menu.html##(MENU_GROUP)">Menu#MENU_GROUP</a> class manages the main menus for coalitions. <br/>
-You can add menus with the <a href="##(MENU_GROUP).New">MENU_GROUP.New</a> method, which constructs a MENU_GROUP object and returns you the object reference.
-Using this object reference, you can then remove ALL the menus and submenus underlying automatically with <a href="##(MENU_GROUP).Remove">MENU_GROUP.Remove</a>.</p>
-
-<h2>4.2) <a href="Menu.html##(MENU_GROUP_COMMAND)">Menu#MENU<em>GROUP</em>COMMAND</a> class, extends <a href="Menu.html##(MENU_COMMAND_BASE)">Menu#MENU<em>COMMAND</em>BASE</a></h2>
-<p>The <a href="Menu.html##(MENU_GROUP_COMMAND)">Menu#MENU<em>GROUP</em>COMMAND</a> class manages the command menus for coalitions, which allow players to execute functions during mission execution. <br/>
-You can add menus with the <a href="##(MENU_GROUP_COMMAND).New">MENU<em>GROUP</em>COMMAND.New</a> method, which constructs a MENU<em>GROUP</em>COMMAND object and returns you the object reference.
-Using this object reference, you can then remove ALL the menus and submenus underlying automatically with <a href="##(MENU_GROUP_COMMAND).Remove">MENU<em>GROUP</em>COMMAND.Remove</a>.</p>
-
-<hr/>
-
-<h1>5) MENU CLIENT classes</h1>
-<p>The underlying classes manage the menus for units with skill level client or player.</p>
-
-<h2>5.1) <a href="Menu.html##(MENU_CLIENT)">Menu#MENU_CLIENT</a> class, extends <a href="Menu.html##(MENU_BASE)">Menu#MENU_BASE</a></h2>
-<p>The <a href="Menu.html##(MENU_CLIENT)">Menu#MENU_CLIENT</a> class manages the main menus for coalitions. <br/>
-You can add menus with the <a href="##(MENU_CLIENT).New">MENU_CLIENT.New</a> method, which constructs a MENU_CLIENT object and returns you the object reference.
-Using this object reference, you can then remove ALL the menus and submenus underlying automatically with <a href="##(MENU_CLIENT).Remove">MENU_CLIENT.Remove</a>.</p>
-
-<h2>5.2) <a href="Menu.html##(MENU_CLIENT_COMMAND)">Menu#MENU<em>CLIENT</em>COMMAND</a> class, extends <a href="Menu.html##(MENU_COMMAND_BASE)">Menu#MENU<em>COMMAND</em>BASE</a></h2>
-<p>The <a href="Menu.html##(MENU_CLIENT_COMMAND)">Menu#MENU<em>CLIENT</em>COMMAND</a> class manages the command menus for coalitions, which allow players to execute functions during mission execution. <br/>
-You can add menus with the <a href="##(MENU_CLIENT_COMMAND).New">MENU<em>CLIENT</em>COMMAND.New</a> method, which constructs a MENU<em>CLIENT</em>COMMAND object and returns you the object reference.
-Using this object reference, you can then remove ALL the menus and submenus underlying automatically with <a href="##(MENU_CLIENT_COMMAND).Remove">MENU<em>CLIENT</em>COMMAND.Remove</a>.</p>
-
-<hr/>
-
-<h3>Contributions: -</h3>
-<h3>Authors: FlightControl : Design &amp; Programming</h3>
-
+<ul>
+    <li><strong>FlightControl</strong>: Design &amp; Programming
+    </li>
+</ul>
 
 	<h2>Global(s)</h2>
 	<table class="function_list">
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="#MENU_BASE">MENU_BASE</a></td>
 		<td class="summary">
-
+<h1>MENU_BASE class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
+<p>The MENU_BASE class defines the main MENU class where other MENU classes are derived from.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="#MENU_CLIENT">MENU_CLIENT</a></td>
 		<td class="summary">
+<h1>MENU_CLIENT class, extends <a href="Menu.html##(MENU_BASE)">Menu#MENU_BASE</a></h1>
 
+<p>The MENU_CLIENT class manages the main menus for coalitions.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="#MENU_CLIENT_COMMAND">MENU_CLIENT_COMMAND</a></td>
 		<td class="summary">
+<h1>MENU<em>CLIENT</em>COMMAND class, extends <a href="Menu.html##(MENU_COMMAND_BASE)">Menu#MENU<em>COMMAND</em>BASE</a></h1>
 
+<p>The MENU<em>CLIENT</em>COMMAND class manages the command menus for coalitions, which allow players to execute functions during mission execution.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="#MENU_COALITION">MENU_COALITION</a></td>
 		<td class="summary">
+<h1>MENU_COALITION class, extends <a href="Menu.html##(MENU_BASE)">Menu#MENU_BASE</a></h1>
 
+<p>The <a href="Menu.html##(MENU_COALITION)">Menu#MENU_COALITION</a> class manages the main menus for coalitions.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="#MENU_COALITION_COMMAND">MENU_COALITION_COMMAND</a></td>
 		<td class="summary">
+<h1>MENU<em>COALITION</em>COMMAND class, extends <a href="Menu.html##(MENU_COMMAND_BASE)">Menu#MENU<em>COMMAND</em>BASE</a></h1>
 
+<p>The MENU<em>COALITION</em>COMMAND class manages the command menus for coalitions, which allow players to execute functions during mission execution.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="#MENU_COMMAND_BASE">MENU_COMMAND_BASE</a></td>
 		<td class="summary">
-
+<h1>MENU<em>COMMAND</em>BASE class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
+<hr/>
+<p>The MENU<em>COMMAND</em>BASE class defines the main MENU class where other MENU COMMAND_ 
+classes are derived from, in order to set commands.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="#MENU_GROUP">MENU_GROUP</a></td>
 		<td class="summary">
+<h1>MENU_GROUP class, extends <a href="Menu.html##(MENU_BASE)">Menu#MENU_BASE</a></h1>
 
+<p>The MENU_GROUP class manages the main menus for coalitions.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="#MENU_GROUP_COMMAND">MENU_GROUP_COMMAND</a></td>
 		<td class="summary">
+<h1>MENU<em>GROUP</em>COMMAND class, extends <a href="Menu.html##(MENU_COMMAND_BASE)">Menu#MENU<em>COMMAND</em>BASE</a></h1>
 
+<p>The <a href="Menu.html##(MENU_GROUP_COMMAND)">Menu#MENU<em>GROUP</em>COMMAND</a> class manages the command menus for coalitions, which allow players to execute functions during mission execution.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="#MENU_MISSION">MENU_MISSION</a></td>
 		<td class="summary">
+<h1>MENU_MISSION class, extends <a href="Menu.html##(MENU_BASE)">Menu#MENU_BASE</a></h1>
 
+<p>The MENU_MISSION class manages the main menus for a complete mission.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="#MENU_MISSION_COMMAND">MENU_MISSION_COMMAND</a></td>
 		<td class="summary">
+<h1>MENU<em>MISSION</em>COMMAND class, extends <a href="Menu.html##(MENU_COMMAND_BASE)">Menu#MENU<em>COMMAND</em>BASE</a></h1>
 
+<p>The MENU<em>MISSION</em>COMMAND class manages the command menus for a complete mission, which allow players to execute functions during mission execution.</p>
 </td>
 		</tr>
 	</table>
 			<h2><a id="#(MENU_BASE)">Type <code>MENU_BASE</code></a></h2>
 				<table class="function_list">
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MENU_BASE).ClassName">MENU_BASE.ClassName</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(MENU_BASE).GetMenu">MENU_BASE:GetMenu(MenuText)</a></td>
 		<td class="summary">
@@ -267,25 +233,7 @@ Using this object reference, you can then remove ALL the menus and submenus unde
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MENU_BASE).MenuParentPath">MENU_BASE.MenuParentPath</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MENU_BASE).MenuPath">MENU_BASE.MenuPath</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(MENU_BASE).MenuRemoveParent">MENU_BASE.MenuRemoveParent</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MENU_BASE).MenuText">MENU_BASE.MenuText</a></td>
 		<td class="summary">
 
 </td>
@@ -319,12 +267,6 @@ Using this object reference, you can then remove ALL the menus and submenus unde
 			<h2><a id="#(MENU_CLIENT)">Type <code>MENU_CLIENT</code></a></h2>
 				<table class="function_list">
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MENU_CLIENT).ClassName">MENU_CLIENT.ClassName</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(MENU_CLIENT).New">MENU_CLIENT:New(Client, MenuText, ParentMenu)</a></td>
 		<td class="summary">
 <p>MENU_CLIENT constructor.</p>
@@ -347,12 +289,6 @@ Using this object reference, you can then remove ALL the menus and submenus unde
 			<h2><a id="#(MENU_CLIENT_COMMAND)">Type <code>MENU_CLIENT_COMMAND</code></a></h2>
 				<table class="function_list">
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MENU_CLIENT_COMMAND).ClassName">MENU_CLIENT_COMMAND.ClassName</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(MENU_CLIENT_COMMAND).New">MENU_CLIENT_COMMAND:New(Client, MenuText, ParentMenu, CommandMenuFunction, ...)</a></td>
 		<td class="summary">
 <p>MENU<em>CLIENT</em>COMMAND constructor.</p>
@@ -368,12 +304,6 @@ Using this object reference, you can then remove ALL the menus and submenus unde
 
 			<h2><a id="#(MENU_COALITION)">Type <code>MENU_COALITION</code></a></h2>
 				<table class="function_list">
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MENU_COALITION).ClassName">MENU_COALITION.ClassName</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(MENU_COALITION).New">MENU_COALITION:New(Coalition, MenuText, ParentMenu)</a></td>
 		<td class="summary">
@@ -397,12 +327,6 @@ Using this object reference, you can then remove ALL the menus and submenus unde
 			<h2><a id="#(MENU_COALITION_COMMAND)">Type <code>MENU_COALITION_COMMAND</code></a></h2>
 				<table class="function_list">
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MENU_COALITION_COMMAND).ClassName">MENU_COALITION_COMMAND.ClassName</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(MENU_COALITION_COMMAND).New">MENU_COALITION_COMMAND:New(Coalition, MenuText, ParentMenu, CommandMenuFunction, CommandMenuArgument, ...)</a></td>
 		<td class="summary">
 <p>MENU_COALITION constructor.</p>
@@ -419,24 +343,6 @@ Using this object reference, you can then remove ALL the menus and submenus unde
 			<h2><a id="#(MENU_COMMAND_BASE)">Type <code>MENU_COMMAND_BASE</code></a></h2>
 				<table class="function_list">
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MENU_COMMAND_BASE).ClassName">MENU_COMMAND_BASE.ClassName</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MENU_COMMAND_BASE).CommandMenuArgument">MENU_COMMAND_BASE.CommandMenuArgument</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MENU_COMMAND_BASE).CommandMenuFunction">MENU_COMMAND_BASE.CommandMenuFunction</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(MENU_COMMAND_BASE).MenuCallHandler">MENU_COMMAND_BASE.MenuCallHandler</a></td>
 		<td class="summary">
 
@@ -452,12 +358,6 @@ Using this object reference, you can then remove ALL the menus and submenus unde
 
 			<h2><a id="#(MENU_GROUP)">Type <code>MENU_GROUP</code></a></h2>
 				<table class="function_list">
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MENU_GROUP).ClassName">MENU_GROUP.ClassName</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(MENU_GROUP).MenuGroup">MENU_GROUP.MenuGroup</a></td>
 		<td class="summary">
@@ -517,12 +417,6 @@ Using this object reference, you can then remove ALL the menus and submenus unde
 			<h2><a id="#(MENU_GROUP_COMMAND)">Type <code>MENU_GROUP_COMMAND</code></a></h2>
 				<table class="function_list">
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MENU_GROUP_COMMAND).ClassName">MENU_GROUP_COMMAND.ClassName</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(MENU_GROUP_COMMAND).MenuGroup">MENU_GROUP_COMMAND.MenuGroup</a></td>
 		<td class="summary">
 
@@ -575,12 +469,6 @@ Using this object reference, you can then remove ALL the menus and submenus unde
 			<h2><a id="#(MENU_MISSION)">Type <code>MENU_MISSION</code></a></h2>
 				<table class="function_list">
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MENU_MISSION).ClassName">MENU_MISSION.ClassName</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(MENU_MISSION).New">MENU_MISSION:New(MenuText, ParentMenu)</a></td>
 		<td class="summary">
 <p>MENU_MISSION constructor.</p>
@@ -602,12 +490,6 @@ Using this object reference, you can then remove ALL the menus and submenus unde
 
 			<h2><a id="#(MENU_MISSION_COMMAND)">Type <code>MENU_MISSION_COMMAND</code></a></h2>
 				<table class="function_list">
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MENU_MISSION_COMMAND).ClassName">MENU_MISSION_COMMAND.ClassName</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(MENU_MISSION_COMMAND).New">MENU_MISSION_COMMAND:New(MenuText, ParentMenu, CommandMenuFunction, CommandMenuArgument, ...)</a></td>
 		<td class="summary">
@@ -633,7 +515,11 @@ Using this object reference, you can then remove ALL the menus and submenus unde
 </dt>
 <dd>
 	
+<h1>MENU_BASE class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
+<p>The MENU_BASE class defines the main MENU class where other MENU classes are derived from.</p>
 
+	
+<p>This is an abstract class, so don't use it.</p>
 
 </dd>
 </dl>
@@ -647,7 +533,65 @@ Using this object reference, you can then remove ALL the menus and submenus unde
 </dt>
 <dd>
 	
+<h1>MENU_CLIENT class, extends <a href="Menu.html##(MENU_BASE)">Menu#MENU_BASE</a></h1>
 
+<p>The MENU_CLIENT class manages the main menus for coalitions.</p>
+
+	
+<p>You can add menus with the <a href="##(MENU_CLIENT).New">MENU_CLIENT.New</a> method, which constructs a MENU_CLIENT object and returns you the object reference.
+Using this object reference, you can then remove ALL the menus and submenus underlying automatically with <a href="##(MENU_CLIENT).Remove">MENU_CLIENT.Remove</a>.</p>
+
+
+			<h3>Usage:</h3>
+		<pre class="example"><code> -- This demo creates a menu structure for the two clients of planes.
+ -- Each client will receive a different menu structure.
+ -- To test, join the planes, then look at the other radio menus (Option F10).
+ -- Then switch planes and check if the menu is still there.
+ -- And play with the Add and Remove menu options.
+ 
+ -- Note that in multi player, this will only work after the DCS clients bug is solved.
+
+ local function ShowStatus( PlaneClient, StatusText, Coalition )
+
+   MESSAGE:New( Coalition, 15 ):ToRed()
+   PlaneClient:Message( StatusText, 15 )
+ end
+
+ local MenuStatus = {}
+
+ local function RemoveStatusMenu( MenuClient )
+   local MenuClientName = MenuClient:GetName()
+   MenuStatus[MenuClientName]:Remove()
+ end
+
+ --- @param Wrapper.Client#CLIENT MenuClient
+ local function AddStatusMenu( MenuClient )
+   local MenuClientName = MenuClient:GetName()
+   -- This would create a menu for the red coalition under the MenuCoalitionRed menu object.
+   MenuStatus[MenuClientName] = MENU_CLIENT:New( MenuClient, "Status for Planes" )
+   MENU_CLIENT_COMMAND:New( MenuClient, "Show Status", MenuStatus[MenuClientName], ShowStatus, MenuClient, "Status of planes is ok!", "Message to Red Coalition" )
+ end
+
+ SCHEDULER:New( nil,
+   function()
+     local PlaneClient = CLIENT:FindByName( "Plane 1" )
+     if PlaneClient and PlaneClient:IsAlive() then
+       local MenuManage = MENU_CLIENT:New( PlaneClient, "Manage Menus" )
+       MENU_CLIENT_COMMAND:New( PlaneClient, "Add Status Menu Plane 1", MenuManage, AddStatusMenu, PlaneClient )
+       MENU_CLIENT_COMMAND:New( PlaneClient, "Remove Status Menu Plane 1", MenuManage, RemoveStatusMenu, PlaneClient )
+     end
+   end, {}, 10, 10 )
+
+ SCHEDULER:New( nil,
+   function()
+     local PlaneClient = CLIENT:FindByName( "Plane 2" )
+     if PlaneClient and PlaneClient:IsAlive() then
+       local MenuManage = MENU_CLIENT:New( PlaneClient, "Manage Menus" )
+       MENU_CLIENT_COMMAND:New( PlaneClient, "Add Status Menu Plane 2", MenuManage, AddStatusMenu, PlaneClient )
+       MENU_CLIENT_COMMAND:New( PlaneClient, "Remove Status Menu Plane 2", MenuManage, RemoveStatusMenu, PlaneClient )
+     end
+   end, {}, 10, 10 )
+   </code></pre>
 
 </dd>
 </dl>
@@ -661,6 +605,13 @@ Using this object reference, you can then remove ALL the menus and submenus unde
 </dt>
 <dd>
 	
+<h1>MENU<em>CLIENT</em>COMMAND class, extends <a href="Menu.html##(MENU_COMMAND_BASE)">Menu#MENU<em>COMMAND</em>BASE</a></h1>
+
+<p>The MENU<em>CLIENT</em>COMMAND class manages the command menus for coalitions, which allow players to execute functions during mission execution.</p>
+
+	
+<p>You can add menus with the <a href="##(MENU_CLIENT_COMMAND).New">MENU<em>CLIENT</em>COMMAND.New</a> method, which constructs a MENU<em>CLIENT</em>COMMAND object and returns you the object reference.
+Using this object reference, you can then remove ALL the menus and submenus underlying automatically with <a href="##(MENU_CLIENT_COMMAND).Remove">MENU<em>CLIENT</em>COMMAND.Remove</a>.</p>
 
 
 </dd>
@@ -675,7 +626,53 @@ Using this object reference, you can then remove ALL the menus and submenus unde
 </dt>
 <dd>
 	
+<h1>MENU_COALITION class, extends <a href="Menu.html##(MENU_BASE)">Menu#MENU_BASE</a></h1>
 
+<p>The <a href="Menu.html##(MENU_COALITION)">Menu#MENU_COALITION</a> class manages the main menus for coalitions.</p>
+
+	
+<p>You can add menus with the <a href="##(MENU_COALITION).New">MENU_COALITION.New</a> method, which constructs a MENU_COALITION object and returns you the object reference.
+Using this object reference, you can then remove ALL the menus and submenus underlying automatically with <a href="##(MENU_COALITION).Remove">MENU_COALITION.Remove</a>.</p>
+
+
+
+			<h3>Usage:</h3>
+		<pre class="example"><code> -- This demo creates a menu structure for the planes within the red coalition.
+ -- To test, join the planes, then look at the other radio menus (Option F10).
+ -- Then switch planes and check if the menu is still there.
+
+ local Plane1 = CLIENT:FindByName( "Plane 1" )
+ local Plane2 = CLIENT:FindByName( "Plane 2" )
+
+
+ -- This would create a menu for the red coalition under the main DCS "Others" menu.
+ local MenuCoalitionRed = MENU_COALITION:New( coalition.side.RED, "Manage Menus" )
+
+
+ local function ShowStatus( StatusText, Coalition )
+
+   MESSAGE:New( Coalition, 15 ):ToRed()
+   Plane1:Message( StatusText, 15 )
+   Plane2:Message( StatusText, 15 )
+ end
+
+ local MenuStatus -- Menu#MENU_COALITION
+ local MenuStatusShow -- Menu#MENU_COALITION_COMMAND
+
+ local function RemoveStatusMenu()
+   MenuStatus:Remove()
+ end
+
+ local function AddStatusMenu()
+   
+   -- This would create a menu for the red coalition under the MenuCoalitionRed menu object.
+   MenuStatus = MENU_COALITION:New( coalition.side.RED, "Status for Planes" )
+   MenuStatusShow = MENU_COALITION_COMMAND:New( coalition.side.RED, "Show Status", MenuStatus, ShowStatus, "Status of planes is ok!", "Message to Red Coalition" )
+ end
+
+ local MenuAdd = MENU_COALITION_COMMAND:New( coalition.side.RED, "Add Status Menu", MenuCoalitionRed, AddStatusMenu )
+ local MenuRemove = MENU_COALITION_COMMAND:New( coalition.side.RED, "Remove Status Menu", MenuCoalitionRed, RemoveStatusMenu )
+ </code></pre>
 
 </dd>
 </dl>
@@ -689,6 +686,13 @@ Using this object reference, you can then remove ALL the menus and submenus unde
 </dt>
 <dd>
 	
+<h1>MENU<em>COALITION</em>COMMAND class, extends <a href="Menu.html##(MENU_COMMAND_BASE)">Menu#MENU<em>COMMAND</em>BASE</a></h1>
+
+<p>The MENU<em>COALITION</em>COMMAND class manages the command menus for coalitions, which allow players to execute functions during mission execution.</p>
+
+	
+<p>You can add menus with the <a href="##(MENU_COALITION_COMMAND).New">MENU<em>COALITION</em>COMMAND.New</a> method, which constructs a MENU<em>COALITION</em>COMMAND object and returns you the object reference.
+Using this object reference, you can then remove ALL the menus and submenus underlying automatically with <a href="##(MENU_COALITION_COMMAND).Remove">MENU<em>COALITION</em>COMMAND.Remove</a>.</p>
 
 
 </dd>
@@ -703,7 +707,10 @@ Using this object reference, you can then remove ALL the menus and submenus unde
 </dt>
 <dd>
 	
-
+<h1>MENU<em>COMMAND</em>BASE class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
+<hr/>
+<p>The MENU<em>COMMAND</em>BASE class defines the main MENU class where other MENU COMMAND_ 
+classes are derived from, in order to set commands.</p>
 
 </dd>
 </dl>
@@ -717,7 +724,65 @@ Using this object reference, you can then remove ALL the menus and submenus unde
 </dt>
 <dd>
 	
+<h1>MENU_GROUP class, extends <a href="Menu.html##(MENU_BASE)">Menu#MENU_BASE</a></h1>
 
+<p>The MENU_GROUP class manages the main menus for coalitions.</p>
+
+	
+<p>You can add menus with the <a href="##(MENU_GROUP).New">MENU_GROUP.New</a> method, which constructs a MENU_GROUP object and returns you the object reference.
+Using this object reference, you can then remove ALL the menus and submenus underlying automatically with <a href="##(MENU_GROUP).Remove">MENU_GROUP.Remove</a>.</p>
+
+
+			<h3>Usage:</h3>
+		<pre class="example"><code> -- This demo creates a menu structure for the two groups of planes.
+ -- Each group will receive a different menu structure.
+ -- To test, join the planes, then look at the other radio menus (Option F10).
+ -- Then switch planes and check if the menu is still there.
+ -- And play with the Add and Remove menu options.
+ 
+ -- Note that in multi player, this will only work after the DCS groups bug is solved.
+
+ local function ShowStatus( PlaneGroup, StatusText, Coalition )
+
+   MESSAGE:New( Coalition, 15 ):ToRed()
+   PlaneGroup:Message( StatusText, 15 )
+ end
+
+ local MenuStatus = {}
+
+ local function RemoveStatusMenu( MenuGroup )
+   local MenuGroupName = MenuGroup:GetName()
+   MenuStatus[MenuGroupName]:Remove()
+ end
+
+ --- @param Wrapper.Group#GROUP MenuGroup
+ local function AddStatusMenu( MenuGroup )
+   local MenuGroupName = MenuGroup:GetName()
+   -- This would create a menu for the red coalition under the MenuCoalitionRed menu object.
+   MenuStatus[MenuGroupName] = MENU_GROUP:New( MenuGroup, "Status for Planes" )
+   MENU_GROUP_COMMAND:New( MenuGroup, "Show Status", MenuStatus[MenuGroupName], ShowStatus, MenuGroup, "Status of planes is ok!", "Message to Red Coalition" )
+ end
+
+ SCHEDULER:New( nil,
+   function()
+     local PlaneGroup = GROUP:FindByName( "Plane 1" )
+     if PlaneGroup and PlaneGroup:IsAlive() then
+       local MenuManage = MENU_GROUP:New( PlaneGroup, "Manage Menus" )
+       MENU_GROUP_COMMAND:New( PlaneGroup, "Add Status Menu Plane 1", MenuManage, AddStatusMenu, PlaneGroup )
+       MENU_GROUP_COMMAND:New( PlaneGroup, "Remove Status Menu Plane 1", MenuManage, RemoveStatusMenu, PlaneGroup )
+     end
+   end, {}, 10, 10 )
+
+ SCHEDULER:New( nil,
+   function()
+     local PlaneGroup = GROUP:FindByName( "Plane 2" )
+     if PlaneGroup and PlaneGroup:IsAlive() then
+       local MenuManage = MENU_GROUP:New( PlaneGroup, "Manage Menus" )
+       MENU_GROUP_COMMAND:New( PlaneGroup, "Add Status Menu Plane 2", MenuManage, AddStatusMenu, PlaneGroup )
+       MENU_GROUP_COMMAND:New( PlaneGroup, "Remove Status Menu Plane 2", MenuManage, RemoveStatusMenu, PlaneGroup )
+     end
+   end, {}, 10, 10 )
+</code></pre>
 
 </dd>
 </dl>
@@ -731,6 +796,13 @@ Using this object reference, you can then remove ALL the menus and submenus unde
 </dt>
 <dd>
 	
+<h1>MENU<em>GROUP</em>COMMAND class, extends <a href="Menu.html##(MENU_COMMAND_BASE)">Menu#MENU<em>COMMAND</em>BASE</a></h1>
+
+<p>The <a href="Menu.html##(MENU_GROUP_COMMAND)">Menu#MENU<em>GROUP</em>COMMAND</a> class manages the command menus for coalitions, which allow players to execute functions during mission execution.</p>
+
+	
+<p>You can add menus with the <a href="##(MENU_GROUP_COMMAND).New">MENU<em>GROUP</em>COMMAND.New</a> method, which constructs a MENU<em>GROUP</em>COMMAND object and returns you the object reference.
+Using this object reference, you can then remove ALL the menus and submenus underlying automatically with <a href="##(MENU_GROUP_COMMAND).Remove">MENU<em>GROUP</em>COMMAND.Remove</a>.</p>
 
 
 </dd>
@@ -745,7 +817,13 @@ Using this object reference, you can then remove ALL the menus and submenus unde
 </dt>
 <dd>
 	
+<h1>MENU_MISSION class, extends <a href="Menu.html##(MENU_BASE)">Menu#MENU_BASE</a></h1>
 
+<p>The MENU_MISSION class manages the main menus for a complete mission.</p>
+
+	
+<p>You can add menus with the <a href="##(MENU_MISSION).New">MENU_MISSION.New</a> method, which constructs a MENU_MISSION object and returns you the object reference.
+Using this object reference, you can then remove ALL the menus and submenus underlying automatically with <a href="##(MENU_MISSION).Remove">MENU_MISSION.Remove</a>.</p>
 
 </dd>
 </dl>
@@ -759,6 +837,13 @@ Using this object reference, you can then remove ALL the menus and submenus unde
 </dt>
 <dd>
 	
+<h1>MENU<em>MISSION</em>COMMAND class, extends <a href="Menu.html##(MENU_COMMAND_BASE)">Menu#MENU<em>COMMAND</em>BASE</a></h1>
+
+<p>The MENU<em>MISSION</em>COMMAND class manages the command menus for a complete mission, which allow players to execute functions during mission execution.</p>
+
+	
+<p>You can add menus with the <a href="##(MENU_MISSION_COMMAND).New">MENU<em>MISSION</em>COMMAND.New</a> method, which constructs a MENU<em>MISSION</em>COMMAND object and returns you the object reference.
+Using this object reference, you can then remove ALL the menus and submenus underlying automatically with <a href="##(MENU_MISSION_COMMAND).Remove">MENU<em>MISSION</em>COMMAND.Remove</a>.</p>
 
 
 </dd>
@@ -766,24 +851,7 @@ Using this object reference, you can then remove ALL the menus and submenus unde
 	<h2><a id="#(Menu)" >Type <code>Menu</code></a></h2>
 	
 			<h2><a id="#(MENU_BASE)" >Type <code>MENU_BASE</code></a></h2>
-				
-<p>The MENU_BASE class</p>
-
-	<h3>Field(s)</h3>
-		<dl class="function">
-<dt>
-
-		<em>#string</em>
-<a id="#(MENU_BASE).ClassName" >
-<strong>MENU_BASE.ClassName</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
+				<h3>Field(s)</h3>
 		<dl class="function">
 <dt>
 
@@ -814,49 +882,9 @@ The text of the child menu.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(MENU_BASE).MenuParentPath" >
-<strong>MENU_BASE.MenuParentPath</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(MENU_BASE).MenuPath" >
-<strong>MENU_BASE.MenuPath</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
 		<em></em>
 <a id="#(MENU_BASE).MenuRemoveParent" >
 <strong>MENU_BASE.MenuRemoveParent</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em>#string</em>
-<a id="#(MENU_BASE).MenuText" >
-<strong>MENU_BASE.MenuText</strong>
 </a>
 </dt>
 <dd>
@@ -982,71 +1010,7 @@ If true, the parent menu is automatically removed when this menu is the last chi
 	
 <p>Creates a new radio command item for a coalition, which can invoke a function with parameters.</p>
 
-			<h3>Usage:</h3>
-		<pre class="example"><code> -- This demo creates a menu structure for the two clients of planes.
- -- Each client will receive a different menu structure.
- -- To test, join the planes, then look at the other radio menus (Option F10).
- -- Then switch planes and check if the menu is still there.
- -- And play with the Add and Remove menu options.
- 
- -- Note that in multi player, this will only work after the DCS clients bug is solved.
-
- local function ShowStatus( PlaneClient, StatusText, Coalition )
-
-   MESSAGE:New( Coalition, 15 ):ToRed()
-   PlaneClient:Message( StatusText, 15 )
- end
-
- local MenuStatus = {}
-
- local function RemoveStatusMenu( MenuClient )
-   local MenuClientName = MenuClient:GetName()
-   MenuStatus[MenuClientName]:Remove()
- end
-
- --- @param Wrapper.Client#CLIENT MenuClient
- local function AddStatusMenu( MenuClient )
-   local MenuClientName = MenuClient:GetName()
-   -- This would create a menu for the red coalition under the MenuCoalitionRed menu object.
-   MenuStatus[MenuClientName] = MENU_CLIENT:New( MenuClient, "Status for Planes" )
-   MENU_CLIENT_COMMAND:New( MenuClient, "Show Status", MenuStatus[MenuClientName], ShowStatus, MenuClient, "Status of planes is ok!", "Message to Red Coalition" )
- end
-
- SCHEDULER:New( nil,
-   function()
-     local PlaneClient = CLIENT:FindByName( "Plane 1" )
-     if PlaneClient and PlaneClient:IsAlive() then
-       local MenuManage = MENU_CLIENT:New( PlaneClient, "Manage Menus" )
-       MENU_CLIENT_COMMAND:New( PlaneClient, "Add Status Menu Plane 1", MenuManage, AddStatusMenu, PlaneClient )
-       MENU_CLIENT_COMMAND:New( PlaneClient, "Remove Status Menu Plane 1", MenuManage, RemoveStatusMenu, PlaneClient )
-     end
-   end, {}, 10, 10 )
-
- SCHEDULER:New( nil,
-   function()
-     local PlaneClient = CLIENT:FindByName( "Plane 2" )
-     if PlaneClient and PlaneClient:IsAlive() then
-       local MenuManage = MENU_CLIENT:New( PlaneClient, "Manage Menus" )
-       MENU_CLIENT_COMMAND:New( PlaneClient, "Add Status Menu Plane 2", MenuManage, AddStatusMenu, PlaneClient )
-       MENU_CLIENT_COMMAND:New( PlaneClient, "Remove Status Menu Plane 2", MenuManage, RemoveStatusMenu, PlaneClient )
-     end
-   end, {}, 10, 10 )</code></pre>
-
 	<h3>Field(s)</h3>
-		<dl class="function">
-<dt>
-
-		<em>#string</em>
-<a id="#(MENU_CLIENT).ClassName" >
-<strong>MENU_CLIENT.ClassName</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
 		<dl class="function">
 <dt>
 
@@ -1127,24 +1091,7 @@ self</p>
 </dl>
 
 			<h2><a id="#(MENU_CLIENT_COMMAND)" >Type <code>MENU_CLIENT_COMMAND</code></a></h2>
-				
-<p>The MENU<em>CLIENT</em>COMMAND class</p>
-
-	<h3>Field(s)</h3>
-		<dl class="function">
-<dt>
-
-		<em>#string</em>
-<a id="#(MENU_CLIENT_COMMAND).ClassName" >
-<strong>MENU_CLIENT_COMMAND.ClassName</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
+				<h3>Field(s)</h3>
 		<dl class="function">
 <dt>
 
@@ -1218,61 +1165,7 @@ self</p>
 </dl>
 
 			<h2><a id="#(MENU_COALITION)" >Type <code>MENU_COALITION</code></a></h2>
-				
-<p>The MENU_COALITION class</p>
-
-			<h3>Usage:</h3>
-		<pre class="example"><code> -- This demo creates a menu structure for the planes within the red coalition.
- -- To test, join the planes, then look at the other radio menus (Option F10).
- -- Then switch planes and check if the menu is still there.
-
- local Plane1 = CLIENT:FindByName( "Plane 1" )
- local Plane2 = CLIENT:FindByName( "Plane 2" )
-
-
- -- This would create a menu for the red coalition under the main DCS "Others" menu.
- local MenuCoalitionRed = MENU_COALITION:New( coalition.side.RED, "Manage Menus" )
-
-
- local function ShowStatus( StatusText, Coalition )
-
-   MESSAGE:New( Coalition, 15 ):ToRed()
-   Plane1:Message( StatusText, 15 )
-   Plane2:Message( StatusText, 15 )
- end
-
- local MenuStatus -- Menu#MENU_COALITION
- local MenuStatusShow -- Menu#MENU_COALITION_COMMAND
-
- local function RemoveStatusMenu()
-   MenuStatus:Remove()
- end
-
- local function AddStatusMenu()
-   
-   -- This would create a menu for the red coalition under the MenuCoalitionRed menu object.
-   MenuStatus = MENU_COALITION:New( coalition.side.RED, "Status for Planes" )
-   MenuStatusShow = MENU_COALITION_COMMAND:New( coalition.side.RED, "Show Status", MenuStatus, ShowStatus, "Status of planes is ok!", "Message to Red Coalition" )
- end
-
- local MenuAdd = MENU_COALITION_COMMAND:New( coalition.side.RED, "Add Status Menu", MenuCoalitionRed, AddStatusMenu )
- local MenuRemove = MENU_COALITION_COMMAND:New( coalition.side.RED, "Remove Status Menu", MenuCoalitionRed, RemoveStatusMenu )</code></pre>
-
-	<h3>Field(s)</h3>
-		<dl class="function">
-<dt>
-
-		<em>#string</em>
-<a id="#(MENU_COALITION).ClassName" >
-<strong>MENU_COALITION.ClassName</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
+				<h3>Field(s)</h3>
 		<dl class="function">
 <dt>
 
@@ -1356,24 +1249,7 @@ self</p>
 </dl>
 
 			<h2><a id="#(MENU_COALITION_COMMAND)" >Type <code>MENU_COALITION_COMMAND</code></a></h2>
-				
-<p>The MENU<em>COALITION</em>COMMAND class</p>
-
-	<h3>Field(s)</h3>
-		<dl class="function">
-<dt>
-
-		<em>#string</em>
-<a id="#(MENU_COALITION_COMMAND).ClassName" >
-<strong>MENU_COALITION_COMMAND.ClassName</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
+				<h3>Field(s)</h3>
 		<dl class="function">
 <dt>
 
@@ -1453,50 +1329,7 @@ An argument for the function. There can only be ONE argument given. So multiple 
 </dl>
 
 			<h2><a id="#(MENU_COMMAND_BASE)" >Type <code>MENU_COMMAND_BASE</code></a></h2>
-				
-<p>The MENU<em>COMMAND</em>BASE class</p>
-
-	<h3>Field(s)</h3>
-		<dl class="function">
-<dt>
-
-		<em>#string</em>
-<a id="#(MENU_COMMAND_BASE).ClassName" >
-<strong>MENU_COMMAND_BASE.ClassName</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(MENU_COMMAND_BASE).CommandMenuArgument" >
-<strong>MENU_COMMAND_BASE.CommandMenuArgument</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(MENU_COMMAND_BASE).CommandMenuFunction" >
-<strong>MENU_COMMAND_BASE.CommandMenuFunction</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
+				<h3>Field(s)</h3>
 		<dl class="function">
 <dt>
 
@@ -1565,75 +1398,7 @@ ENU<em>COMMAND</em>BASE</p>
 </dl>
 
 			<h2><a id="#(MENU_GROUP)" >Type <code>MENU_GROUP</code></a></h2>
-				
-<p>The MENU_GROUP class</p>
-
-			<h3>Usage:</h3>
-		<pre class="example"><code> -- This demo creates a menu structure for the two groups of planes.
- -- Each group will receive a different menu structure.
- -- To test, join the planes, then look at the other radio menus (Option F10).
- -- Then switch planes and check if the menu is still there.
- -- And play with the Add and Remove menu options.
- 
- -- Note that in multi player, this will only work after the DCS groups bug is solved.
-
- local function ShowStatus( PlaneGroup, StatusText, Coalition )
-
-   MESSAGE:New( Coalition, 15 ):ToRed()
-   PlaneGroup:Message( StatusText, 15 )
- end
-
- local MenuStatus = {}
-
- local function RemoveStatusMenu( MenuGroup )
-   local MenuGroupName = MenuGroup:GetName()
-   MenuStatus[MenuGroupName]:Remove()
- end
-
- --- @param Wrapper.Group#GROUP MenuGroup
- local function AddStatusMenu( MenuGroup )
-   local MenuGroupName = MenuGroup:GetName()
-   -- This would create a menu for the red coalition under the MenuCoalitionRed menu object.
-   MenuStatus[MenuGroupName] = MENU_GROUP:New( MenuGroup, "Status for Planes" )
-   MENU_GROUP_COMMAND:New( MenuGroup, "Show Status", MenuStatus[MenuGroupName], ShowStatus, MenuGroup, "Status of planes is ok!", "Message to Red Coalition" )
- end
-
- SCHEDULER:New( nil,
-   function()
-     local PlaneGroup = GROUP:FindByName( "Plane 1" )
-     if PlaneGroup and PlaneGroup:IsAlive() then
-       local MenuManage = MENU_GROUP:New( PlaneGroup, "Manage Menus" )
-       MENU_GROUP_COMMAND:New( PlaneGroup, "Add Status Menu Plane 1", MenuManage, AddStatusMenu, PlaneGroup )
-       MENU_GROUP_COMMAND:New( PlaneGroup, "Remove Status Menu Plane 1", MenuManage, RemoveStatusMenu, PlaneGroup )
-     end
-   end, {}, 10, 10 )
-
- SCHEDULER:New( nil,
-   function()
-     local PlaneGroup = GROUP:FindByName( "Plane 2" )
-     if PlaneGroup and PlaneGroup:IsAlive() then
-       local MenuManage = MENU_GROUP:New( PlaneGroup, "Manage Menus" )
-       MENU_GROUP_COMMAND:New( PlaneGroup, "Add Status Menu Plane 2", MenuManage, AddStatusMenu, PlaneGroup )
-       MENU_GROUP_COMMAND:New( PlaneGroup, "Remove Status Menu Plane 2", MenuManage, RemoveStatusMenu, PlaneGroup )
-     end
-   end, {}, 10, 10 )
-</code></pre>
-
-	<h3>Field(s)</h3>
-		<dl class="function">
-<dt>
-
-		<em>#string</em>
-<a id="#(MENU_GROUP).ClassName" >
-<strong>MENU_GROUP.ClassName</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
+				<h3>Field(s)</h3>
 		<dl class="function">
 <dt>
 
@@ -1814,24 +1579,7 @@ self</p>
 </dl>
 
 			<h2><a id="#(MENU_GROUP_COMMAND)" >Type <code>MENU_GROUP_COMMAND</code></a></h2>
-				
-<p>The MENU<em>GROUP</em>COMMAND class</p>
-
-	<h3>Field(s)</h3>
-		<dl class="function">
-<dt>
-
-		<em>#string</em>
-<a id="#(MENU_GROUP_COMMAND).ClassName" >
-<strong>MENU_GROUP_COMMAND.ClassName</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
+				<h3>Field(s)</h3>
 		<dl class="function">
 <dt>
 
@@ -2000,24 +1748,7 @@ An argument for the function.</p>
 </dl>
 
 			<h2><a id="#(MENU_MISSION)" >Type <code>MENU_MISSION</code></a></h2>
-				
-<p>The MENU_MISSION class</p>
-
-	<h3>Field(s)</h3>
-		<dl class="function">
-<dt>
-
-		<em>#string</em>
-<a id="#(MENU_MISSION).ClassName" >
-<strong>MENU_MISSION.ClassName</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
+				<h3>Field(s)</h3>
 		<dl class="function">
 <dt>
 
@@ -2095,24 +1826,7 @@ The parent menu. This parameter can be ignored if you want the menu to be locate
 </dl>
 
 			<h2><a id="#(MENU_MISSION_COMMAND)" >Type <code>MENU_MISSION_COMMAND</code></a></h2>
-				
-<p>The MENU<em>MISSION</em>COMMAND class</p>
-
-	<h3>Field(s)</h3>
-		<dl class="function">
-<dt>
-
-		<em>#string</em>
-<a id="#(MENU_MISSION_COMMAND).ClassName" >
-<strong>MENU_MISSION_COMMAND.ClassName</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
+				<h3>Field(s)</h3>
 		<dl class="function">
 <dt>
 

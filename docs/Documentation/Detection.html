@@ -31,7 +31,23 @@
 					<li><a href="Client.html">Client</a></li>
 					<li><a href="CommandCenter.html">CommandCenter</a></li>
 					<li><a href="Controllable.html">Controllable</a></li>
+					<li><a href="DCSAirbase.html">DCSAirbase</a></li>
+					<li><a href="DCSCoalitionObject.html">DCSCoalitionObject</a></li>
+					<li><a href="DCSCommand.html">DCSCommand</a></li>
+					<li><a href="DCSController.html">DCSController</a></li>
+					<li><a href="DCSGroup.html">DCSGroup</a></li>
+					<li><a href="DCSObject.html">DCSObject</a></li>
+					<li><a href="DCSTask.html">DCSTask</a></li>
+					<li><a href="DCSTypes.html">DCSTypes</a></li>
+					<li><a href="DCSUnit.html">DCSUnit</a></li>
+					<li><a href="DCSVec3.html">DCSVec3</a></li>
+					<li><a href="DCSWorld.html">DCSWorld</a></li>
+					<li><a href="DCSZone.html">DCSZone</a></li>
+					<li><a href="DCScountry.html">DCScountry</a></li>
+					<li><a href="DCStimer.html">DCStimer</a></li>
+					<li><a href="DCStrigger.html">DCStrigger</a></li>
 					<li><a href="Database.html">Database</a></li>
+					<li><a href="Designate.html">Designate</a></li>
 					<li>Detection</li>
 					<li><a href="DetectionManager.html">DetectionManager</a></li>
 					<li><a href="Escort.html">Escort</a></li>
@@ -59,14 +75,20 @@
 					<li><a href="Set.html">Set</a></li>
 					<li><a href="Smoke.html">Smoke</a></li>
 					<li><a href="Spawn.html">Spawn</a></li>
+					<li><a href="SpawnStatic.html">SpawnStatic</a></li>
+					<li><a href="Spot.html">Spot</a></li>
 					<li><a href="Static.html">Static</a></li>
+					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="Task.html">Task</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
 					<li><a href="Task_A2G_Dispatcher.html">Task_A2G_Dispatcher</a></li>
+					<li><a href="Task_Cargo.html">Task_Cargo</a></li>
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
 					<li><a href="Unit.html">Unit</a></li>
 					<li><a href="Utils.html">Utils</a></li>
 					<li><a href="Zone.html">Zone</a></li>
+					<li><a href="env.html">env</a></li>
+					<li><a href="land.html">land</a></li>
 					<li><a href="routines.html">routines</a></li>
 		</ul>
 	</div>
@@ -84,8 +106,25 @@
 <p>DETECTION classes facilitate the detection of enemy units within the battle zone executed by FACs (Forward Air Controllers) or RECCEs (Reconnassance Units).
 DETECTION uses the in-built detection capabilities of DCS World, but adds new functionalities.</p>
 
-<p>Please watch this <a href="https://youtu.be/C7p81dUwP-E">youtube video</a> that explains the detection concepts.</p>
+<p>Find the DETECTION classes documentation further in this document in the globals section.</p>
 
+<hr/>
+
+<h1>Demo Missions</h1>
+
+<h3><a href="https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master-release/DET%20-%20Detection">DETECTION Demo Missions and Source Code</a></h3>
+
+<h3><a href="https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/DET%20-%20Detection">DETECTION Demo Missions, only for Beta Testers</a></h3>
+
+<h3><a href="https://github.com/FlightControl-Master/MOOSE_MISSIONS/releases">ALL Demo Missions pack of the Latest Release</a></h3>
+
+<hr/>
+
+<h1>YouTube Channel</h1>
+
+<h3><a href="https://www.youtube.com/playlist?list=PL7ZUrU4zZUl3Cf5jpI6BS0sBOVWK__tji">DETECTION YouTube Channel</a></h3>
+
+<hr/>
 
 <h3>Contributions:</h3>
 
@@ -111,7 +150,9 @@ DETECTION uses the in-built detection capabilities of DCS World, but adds new fu
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="#DETECTION_BASE">DETECTION_BASE</a></td>
 		<td class="summary">
+<p>DETECTION_BASE class, extends <a href="Fsm.html##(FSM)">Fsm#FSM</a></p>
 
+<p>The DETECTION_BASE class defines the core functions to administer detected objects.</p>
 </td>
 		</tr>
 		<tr>
@@ -148,9 +189,15 @@ DETECTION uses the in-built detection capabilities of DCS World, but adds new fu
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS).CreateDetectionSets">DETECTION_AREAS:CreateDetectionSets()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS).CreateDetectionItems">DETECTION_AREAS:CreateDetectionItems()</a></td>
 		<td class="summary">
 <p>Make a DetectionSet table.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS).DetectedItemMenu">DETECTION_AREAS:DetectedItemMenu(Index)</a></td>
+		<td class="summary">
+<p>Menu of a detected item using a given numeric index.</p>
 </td>
 		</tr>
 		<tr>
@@ -163,6 +210,12 @@ DETECTION uses the in-built detection capabilities of DCS World, but adds new fu
 		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS).DetectedItems">DETECTION_AREAS.DetectedItems</a></td>
 		<td class="summary">
 <p>A list of areas containing the set of <a href="Unit.html">Unit</a>s, <a href="Zone.html">Zone</a>s, the center <a href="Unit.html">Unit</a> within the zone, and ID of each area that was detected within a DetectionZoneRange.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS).DetectedReportDetailed">DETECTION_AREAS:DetectedReportDetailed()</a></td>
+		<td class="summary">
+<p>Report detailed of a detection result.</p>
 </td>
 		</tr>
 		<tr>
@@ -290,7 +343,7 @@ DETECTION uses the in-built detection capabilities of DCS World, but adds new fu
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).AddDetectedItem">DETECTION_BASE:AddDetectedItem(DetectedItemIndex, Set)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).AddDetectedItem">DETECTION_BASE:AddDetectedItem(ItemPrefix, DetectedItemIndex, Set)</a></td>
 		<td class="summary">
 <p>Adds a new DetectedItem to the DetectedItems list.</p>
 </td>
@@ -308,9 +361,9 @@ DETECTION uses the in-built detection capabilities of DCS World, but adds new fu
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).ClassName">DETECTION_BASE.ClassName</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).CleanDetectionItems">DETECTION_BASE:CleanDetectionItems()</a></td>
 		<td class="summary">
-
+<p>Make a DetectionSet table.</p>
 </td>
 		</tr>
 		<tr>
@@ -320,7 +373,7 @@ DETECTION uses the in-built detection capabilities of DCS World, but adds new fu
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).CreateDetectionSets">DETECTION_BASE:CreateDetectionSets()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).CreateDetectionItems">DETECTION_BASE:CreateDetectionItems()</a></td>
 		<td class="summary">
 <p>Make a DetectionSet table.</p>
 </td>
@@ -383,6 +436,12 @@ DETECTION uses the in-built detection capabilities of DCS World, but adds new fu
 		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).DetectedItemMax">DETECTION_BASE.DetectedItemMax</a></td>
 		<td class="summary">
 
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).DetectedItemMenu">DETECTION_BASE:DetectedItemMenu(Index)</a></td>
+		<td class="summary">
+<p>Menu of a detected item using a given numeric index.</p>
 </td>
 		</tr>
 		<tr>
@@ -458,9 +517,38 @@ DETECTION uses the in-built detection capabilities of DCS World, but adds new fu
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).FilterCategories">DETECTION_BASE:FilterCategories(<, FilterCategories)</a></td>
+		<td class="summary">
+<p>Filter the detected units based on Unit.Category <br/>
+The different values of Unit.Category can be:</p>
+
+<ul>
+    <li>Unit.Category.AIRPLANE</li>
+    <li>Unit.Category.GROUND_UNIT</li>
+    <li>Unit.Category.HELICOPTER</li>
+    <li>Unit.Category.SHIP</li>
+    <li>Unit.Category.STRUCTURE</li>
+</ul>
+
+<p>Multiple Unit.Category entries can be given as a table and then these will be evaluated as an OR expression.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).GetDetectedID">DETECTION_BASE:GetDetectedID(Index)</a></td>
+		<td class="summary">
+<p>Get a detected ID using a given numeric index.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).GetDetectedItem">DETECTION_BASE:GetDetectedItem(Index)</a></td>
 		<td class="summary">
 <p>Get a detected item using a given numeric index.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).GetDetectedItemID">DETECTION_BASE:GetDetectedItemID(Index)</a></td>
+		<td class="summary">
+<p>Get a detected ItemID using a given numeric index.</p>
 </td>
 		</tr>
 		<tr>
@@ -850,6 +938,42 @@ DETECTION uses the in-built detection capabilities of DCS World, but adds new fu
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE.DetectedObject).IsVisible">DETECTION_BASE.DetectedObject.IsVisible</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE.DetectedObject).KnowDistance">DETECTION_BASE.DetectedObject.KnowDistance</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE.DetectedObject).KnowType">DETECTION_BASE.DetectedObject.KnowType</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE.DetectedObject).LastPos">DETECTION_BASE.DetectedObject.LastPos</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE.DetectedObject).LastTime">DETECTION_BASE.DetectedObject.LastTime</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE.DetectedObject).LastVelocity">DETECTION_BASE.DetectedObject.LastVelocity</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE.DetectedObject).Name">DETECTION_BASE.DetectedObject.Name</a></td>
 		<td class="summary">
 
@@ -857,12 +981,6 @@ DETECTION uses the in-built detection capabilities of DCS World, but adds new fu
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE.DetectedObject).Type">DETECTION_BASE.DetectedObject.Type</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE.DetectedObject).Visible">DETECTION_BASE.DetectedObject.Visible</a></td>
 		<td class="summary">
 
 </td>
@@ -878,9 +996,15 @@ DETECTION uses the in-built detection capabilities of DCS World, but adds new fu
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_TYPES).CreateDetectionSets">DETECTION_TYPES:CreateDetectionSets()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_TYPES).CreateDetectionItems">DETECTION_TYPES:CreateDetectionItems()</a></td>
 		<td class="summary">
 <p>Create the DetectedItems list from the DetectedObjects table.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_TYPES).DetectedItemMenu">DETECTION_TYPES:DetectedItemMenu(Index, DetectedTypeName)</a></td>
+		<td class="summary">
+<p>Menu of a DetectedItem using a given numeric index.</p>
 </td>
 		</tr>
 		<tr>
@@ -954,9 +1078,15 @@ DETECTION uses the in-built detection capabilities of DCS World, but adds new fu
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_UNITS).CreateDetectionSets">DETECTION_UNITS:CreateDetectionSets()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_UNITS).CreateDetectionItems">DETECTION_UNITS:CreateDetectionItems()</a></td>
 		<td class="summary">
 <p>Create the DetectedItems list from the DetectedObjects table.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_UNITS).DetectedItemMenu">DETECTION_UNITS:DetectedItemMenu(Index)</a></td>
+		<td class="summary">
+<p>Menu of a DetectedItem using a given numeric index.</p>
 </td>
 		</tr>
 		<tr>
@@ -1046,7 +1176,233 @@ DETECTION uses the in-built detection capabilities of DCS World, but adds new fu
 </dt>
 <dd>
 	
+<p>DETECTION_BASE class, extends <a href="Fsm.html##(FSM)">Fsm#FSM</a></p>
 
+<p>The DETECTION_BASE class defines the core functions to administer detected objects.</p>
+
+	
+<p>The DETECTION_BASE class will detect objects within the battle zone for a list of <a href="Group.html">Group</a>s detecting targets following (a) detection method(s).</p>
+
+<h2>DETECTION_BASE constructor</h2>
+
+<p>Construct a new DETECTION_BASE instance using the <a href="##(DETECTION_BASE).New">DETECTION_BASE.New</a>() method.</p>
+
+<h2>Initialization</h2>
+
+<p>By default, detection will return detected objects with all the detection sensors available.
+However, you can ask how the objects were found with specific detection methods. 
+If you use one of the below methods, the detection will work with the detection method specified.
+You can specify to apply multiple detection methods.</p>
+
+<p>Use the following functions to report the objects it detected using the methods Visual, Optical, Radar, IRST, RWR, DLINK:</p>
+
+<ul>
+    <li><a href="##(DETECTION_BASE).InitDetectVisual">DETECTION_BASE.InitDetectVisual</a>(): Detected using Visual.</li>
+    <li><a href="##(DETECTION_BASE).InitDetectOptical">DETECTION_BASE.InitDetectOptical</a>(): Detected using Optical.</li>
+    <li><a href="##(DETECTION_BASE).InitDetectRadar">DETECTION_BASE.InitDetectRadar</a>(): Detected using Radar.</li>
+    <li><a href="##(DETECTION_BASE).InitDetectIRST">DETECTION_BASE.InitDetectIRST</a>(): Detected using IRST.</li>
+    <li><a href="##(DETECTION_BASE).InitDetectRWR">DETECTION_BASE.InitDetectRWR</a>(): Detected using RWR.</li>
+    <li><a href="##(DETECTION_BASE).InitDetectDLINK">DETECTION_BASE.InitDetectDLINK</a>(): Detected using DLINK.</li>
+</ul>
+
+<h2><strong>Filter</strong> detected units based on <strong>category of the unit</strong></h2>
+
+<p>Filter the detected units based on Unit.Category using the method <a href="##(DETECTION_BASE).FilterCategories">DETECTION_BASE.FilterCategories</a>(). <br/>
+The different values of Unit.Category can be:</p>
+
+<ul>
+    <li>Unit.Category.AIRPLANE</li>
+    <li>Unit.Category.GROUND_UNIT</li>
+    <li>Unit.Category.HELICOPTER</li>
+    <li>Unit.Category.SHIP</li>
+    <li>Unit.Category.STRUCTURE</li>
+</ul>
+
+<p>Multiple Unit.Category entries can be given as a table and then these will be evaluated as an OR expression.</p>
+
+<p>Example to filter a single category (Unit.Category.AIRPLANE).</p>
+
+<pre><code>DetectionObject:FilterCategories( Unit.Category.AIRPLANE ) 
+</code></pre>
+
+<p>Example to filter multiple categories (Unit.Category.AIRPLANE, Unit.Category.HELICOPTER). Note the {}.</p>
+
+<pre><code>DetectionObject:FilterCategories( { Unit.Category.AIRPLANE, Unit.Category.HELICOPTER } )
+</code></pre>
+
+
+<h2><strong>DETECTION_ derived classes</strong> group the detected units into a <strong>DetectedItems[]</strong> list</h2>
+
+<p>DETECTION<em>BASE derived classes build a list called DetectedItems[], which is essentially a first later 
+of grouping of detected units. Each DetectedItem within the DetectedItems[] list contains
+a SET</em>UNIT object that contains the  detected units that belong to that group.</p>
+
+<p>Derived classes will apply different methods to group the detected units. 
+Examples are per area, per quadrant, per distance, per type.
+See further the derived DETECTION classes on which grouping methods are currently supported. </p>
+
+<p>Various methods exist how to retrieve the grouped items from a DETECTION_BASE derived class:</p>
+
+<ul>
+    <li>The method <a href="Detection.html##(DETECTION_BASE).GetDetectedItems">Detection#DETECTION_BASE.GetDetectedItems</a>() retrieves the DetectedItems[] list.</li>
+    <li>A DetectedItem from the DetectedItems[] list can be retrieved using the method <a href="Detection.html##(DETECTION_BASE).GetDetectedItem">Detection#DETECTION_BASE.GetDetectedItem</a>( DetectedItemIndex ).
+    Note that this method returns a DetectedItem element from the list, that contains a Set variable and further information
+    about the DetectedItem that is set by the DETECTION_BASE derived classes, used to group the DetectedItem.</li>
+    <li>A DetectedSet from the DetectedItems[] list can be retrieved using the method <a href="Detection.html##(DETECTION_BASE).GetDetectedSet">Detection#DETECTION_BASE.GetDetectedSet</a>( DetectedItemIndex ).
+    This method retrieves the Set from a DetectedItem element from the DetectedItem list (DetectedItems[ DetectedItemIndex ].Set ).</li>
+</ul>
+
+<h2><strong>Visual filters</strong> to fine-tune the probability of the detected objects</h2>
+
+<p>By default, DCS World will return any object that is in LOS and within "visual reach", or detectable through one of the electronic detection means.
+That being said, the DCS World detection algorithm can sometimes be unrealistic.
+Especially for a visual detection, DCS World is able to report within 1 second a detailed detection of a group of 20 units (including types of the units) that are 10 kilometers away, using only visual capabilities.
+Additionally, trees and other obstacles are not accounted during the DCS World detection.</p>
+
+<p>Therefore, an additional (optional) filtering has been built into the DETECTION_BASE class, that can be set for visual detected units.
+For electronic detection, this filtering is not applied, only for visually detected targets.</p>
+
+<p>The following additional filtering can be applied for visual filtering:</p>
+
+<ul>
+    <li>A probability factor per kilometer distance.</li>
+    <li>A probability factor based on the alpha angle between the detected object and the unit detecting.
+    A detection from a higher altitude allows for better detection than when on the ground.</li>
+    <li>Define a probability factor for "cloudy zones", which are zones where forests or villages are located. In these zones, detection will be much more difficult.
+    The mission designer needs to define these cloudy zones within the mission, and needs to register these zones in the DETECTION_ objects additing a probability factor per zone.</li>
+</ul>
+
+<p>I advise however, that, when you first use the DETECTION derived classes, that you don't use these filters.
+Only when you experience unrealistic behaviour in your missions, these filters could be applied.</p>
+
+
+<h3>Distance visual detection probability</h3>
+
+<p>Upon a <strong>visual</strong> detection, the further away a detected object is, the less likely it is to be detected properly.
+Also, the speed of accurate detection plays a role.</p>
+
+<p>A distance probability factor between 0 and 1 can be given, that will model a linear extrapolated probability over 10 km distance.</p>
+
+<p>For example, if a probability factor of 0.6 (60%) is given, the extrapolated probabilities over 15 kilometers would like like:
+1 km: 96%, 2 km: 92%, 3 km: 88%, 4 km: 84%, 5 km: 80%, 6 km: 76%, 7 km: 72%, 8 km: 68%, 9 km: 64%, 10 km: 60%, 11 km: 56%, 12 km: 52%, 13 km: 48%, 14 km: 44%, 15 km: 40%.</p>
+
+<p>Note that based on this probability factor, not only the detection but also the <strong>type</strong> of the unit will be applied!</p>
+
+<p>Use the method <a href="Detection.html##(DETECTION_BASE).SetDistanceProbability">Detection#DETECTION_BASE.SetDistanceProbability</a>() to set the probability factor upon a 10 km distance.</p>
+
+<h3>Alpha Angle visual detection probability</h3>
+
+<p>Upon a <strong>visual</strong> detection, the higher the unit is during the detecting process, the more likely the detected unit is to be detected properly.
+A detection at a 90% alpha angle is the most optimal, a detection at 10% is less and a detection at 0% is less likely to be correct.</p>
+
+<p>A probability factor between 0 and 1 can be given, that will model a progressive extrapolated probability if the target would be detected at a 0° angle.</p>
+
+<p>For example, if a alpha angle probability factor of 0.7 is given, the extrapolated probabilities of the different angles would look like:
+0°: 70%, 10°: 75,21%, 20°: 80,26%, 30°: 85%, 40°: 89,28%, 50°: 92,98%, 60°: 95,98%, 70°: 98,19%, 80°: 99,54%, 90°: 100%</p>
+
+<p>Use the method <a href="Detection.html##(DETECTION_BASE).SetAlphaAngleProbability">Detection#DETECTION_BASE.SetAlphaAngleProbability</a>() to set the probability factor if 0°.</p>
+
+<h3>Cloudy Zones detection probability</h3>
+
+<p>Upon a <strong>visual</strong> detection, the more a detected unit is within a cloudy zone, the less likely the detected unit is to be detected successfully.
+The Cloudy Zones work with the ZONE_BASE derived classes. The mission designer can define within the mission
+zones that reflect cloudy areas where detected units may not be so easily visually detected.</p>
+
+<p>Use the method <a href="Detection.html##(DETECTION_BASE).SetZoneProbability">Detection#DETECTION_BASE.SetZoneProbability</a>() to set for a defined number of zones, the probability factors.</p>
+
+<p>Note however, that the more zones are defined to be "cloudy" within a detection, the more performance it will take
+from the DETECTION<em>BASE to calculate the presence of the detected unit within each zone.
+Expecially for ZONE</em>POLYGON, try to limit the amount of nodes of the polygon!</p>
+
+<p>Typically, this kind of filter would be applied for very specific areas were a detection needs to be very realisting for
+AI not to detect so easily targets within a forrest or village rich area.</p>
+
+<h2>Accept / Reject detected units</h2>
+
+<p>DETECTION_BASE can accept or reject successful detections based on the location of the detected object, 
+if it is located in range or located inside or outside of specific zones.</p>
+
+<h3>Detection acceptance of within range limit</h3>
+
+<p>A range can be set that will limit a successful detection for a unit.
+Use the method <a href="Detection.html##(DETECTION_BASE).SetAcceptRange">Detection#DETECTION_BASE.SetAcceptRange</a>() to apply a range in meters till where detected units will be accepted.</p>
+
+<pre><code> local SetGroup = SET_GROUP:New():FilterPrefixes( "FAC" ):FilterStart() -- Build a SetGroup of Forward Air Controllers.
+
+ -- Build a detect object.
+ local Detection = DETECTION_UNITS:New( SetGroup )
+
+ -- This will accept detected units if the range is below 5000 meters.
+ Detection:SetAcceptRange( 5000 ) 
+
+ -- Start the Detection.
+ Detection:Start()
+</code></pre>
+
+
+<h3>Detection acceptance if within zone(s).</h3>
+
+<p>Specific ZONE<em>BASE object(s) can be given as a parameter, which will only accept a detection if the unit is within the specified ZONE</em>BASE object(s).
+Use the method <a href="Detection.html##(DETECTION_BASE).SetAcceptZones">Detection#DETECTION_BASE.SetAcceptZones</a>() will accept detected units if they are within the specified zones.</p>
+
+<pre><code> local SetGroup = SET_GROUP:New():FilterPrefixes( "FAC" ):FilterStart() -- Build a SetGroup of Forward Air Controllers.
+
+ -- Search fo the zones where units are to be accepted.
+ local ZoneAccept1 = ZONE:New( "AcceptZone1" )
+ local ZoneAccept2 = ZONE:New( "AcceptZone2" )
+
+ -- Build a detect object.
+ local Detection = DETECTION_UNITS:New( SetGroup )
+
+ -- This will accept detected units by Detection when the unit is within ZoneAccept1 OR ZoneAccept2.
+ Detection:SetAcceptZones( { ZoneAccept1, ZoneAccept2 } ) 
+
+ -- Start the Detection.
+ Detection:Start()
+</code></pre>
+
+<h3>Detection rejectance if within zone(s).</h3>
+
+<p>Specific ZONE<em>BASE object(s) can be given as a parameter, which will reject detection if the unit is within the specified ZONE</em>BASE object(s).
+Use the method <a href="Detection.html##(DETECTION_BASE).SetRejectZones">Detection#DETECTION_BASE.SetRejectZones</a>() will reject detected units if they are within the specified zones.
+An example of how to use the method is shown below.</p>
+
+<pre><code> local SetGroup = SET_GROUP:New():FilterPrefixes( "FAC" ):FilterStart() -- Build a SetGroup of Forward Air Controllers.
+
+ -- Search fo the zones where units are to be rejected.
+ local ZoneReject1 = ZONE:New( "RejectZone1" )
+ local ZoneReject2 = ZONE:New( "RejectZone2" )
+
+ -- Build a detect object.
+ local Detection = DETECTION_UNITS:New( SetGroup )
+
+ -- This will reject detected units by Detection when the unit is within ZoneReject1 OR ZoneReject2.
+ Detection:SetRejectZones( { ZoneReject1, ZoneReject2 } ) 
+
+ -- Start the Detection.
+ Detection:Start()
+</code></pre>
+
+<h2>DETECTION_BASE is a Finite State Machine</h2>
+
+<p>Various Events and State Transitions can be tailored using DETECTION_BASE.</p>
+
+<h3>DETECTION_BASE States</h3>
+
+<ul>
+    <li><strong>Detecting</strong>: The detection is running.</li>
+    <li><strong>Stopped</strong>: The detection is stopped.</li>
+</ul>
+
+<h3>DETECTION_BASE Events</h3>
+
+<ul>
+    <li><strong>Start</strong>: Start the detection process.</li>
+    <li><strong>Detect</strong>: Detect new units.</li>
+    <li><strong>Detected</strong>: New units have been detected.</li>
+    <li><strong>Stop</strong>: Stop the detection process.
+    </li>
+</ul>
 
 </dd>
 </dl>
@@ -1176,8 +1532,8 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(DETECTION_AREAS).CreateDetectionSets" >
-<strong>DETECTION_AREAS:CreateDetectionSets()</strong>
+<a id="#(DETECTION_AREAS).CreateDetectionItems" >
+<strong>DETECTION_AREAS:CreateDetectionItems()</strong>
 </a>
 </dt>
 <dd>
@@ -1191,6 +1547,32 @@ self</p>
 				
 <p><em><a href="##(DETECTION_AREAS)">#DETECTION_AREAS</a>:</em>
 self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_AREAS).DetectedItemMenu" >
+<strong>DETECTION_AREAS:DetectedItemMenu(Index)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Menu of a detected item using a given numeric index.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> Index </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#string:</em></p>
+
 
 </dd>
 </dl>
@@ -1231,6 +1613,24 @@ self</p>
 <dd>
 	
 <p>A list of areas containing the set of <a href="Unit.html">Unit</a>s, <a href="Zone.html">Zone</a>s, the center <a href="Unit.html">Unit</a> within the zone, and ID of each area that was detected within a DetectionZoneRange.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_AREAS).DetectedReportDetailed" >
+<strong>DETECTION_AREAS:DetectedReportDetailed()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Report detailed of a detection result.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#string:</em></p>
+
 
 </dd>
 </dl>
@@ -1529,209 +1929,7 @@ self</p>
 </dl>
 
 			<h2><a id="#(DETECTION_BASE)" >Type <code>DETECTION_BASE</code></a></h2>
-				
-<h1>1) DETECTION_BASE class, extends <a href="Fsm.html##(FSM)">Fsm#FSM</a></h1>
-
-<p>The DETECTION_BASE class defines the core functions to administer detected objects.</p>
-
-	
-<p>The DETECTION_BASE class will detect objects within the battle zone for a list of <a href="Group.html">Group</a>s detecting targets following (a) detection method(s).</p>
-
-<h2>1.1) DETECTION_BASE constructor</h2>
-
-<p>Construct a new DETECTION_BASE instance using the <a href="##(DETECTION_BASE).New">DETECTION_BASE.New</a>() method.</p>
-
-<h2>1.2) DETECTION_BASE initialization</h2>
-
-<p>By default, detection will return detected objects with all the detection sensors available.
-However, you can ask how the objects were found with specific detection methods. 
-If you use one of the below methods, the detection will work with the detection method specified.
-You can specify to apply multiple detection methods.</p>
-
-<p>Use the following functions to report the objects it detected using the methods Visual, Optical, Radar, IRST, RWR, DLINK:</p>
-
-<ul>
-    <li><a href="##(DETECTION_BASE).InitDetectVisual">DETECTION_BASE.InitDetectVisual</a>(): Detected using Visual.</li>
-    <li><a href="##(DETECTION_BASE).InitDetectOptical">DETECTION_BASE.InitDetectOptical</a>(): Detected using Optical.</li>
-    <li><a href="##(DETECTION_BASE).InitDetectRadar">DETECTION_BASE.InitDetectRadar</a>(): Detected using Radar.</li>
-    <li><a href="##(DETECTION_BASE).InitDetectIRST">DETECTION_BASE.InitDetectIRST</a>(): Detected using IRST.</li>
-    <li><a href="##(DETECTION_BASE).InitDetectRWR">DETECTION_BASE.InitDetectRWR</a>(): Detected using RWR.</li>
-    <li><a href="##(DETECTION_BASE).InitDetectDLINK">DETECTION_BASE.InitDetectDLINK</a>(): Detected using DLINK.</li>
-</ul>
-
-<h2>1.3) DETECTION_BASE derived classes group the detected units into a DetectedItems[] list</h2>
-
-<p>DETECTION<em>BASE derived classes build a list called DetectedItems[], which is essentially a first later 
-of grouping of detected units. Each DetectedItem within the DetectedItems[] list contains
-a SET</em>UNIT object that contains the  detected units that belong to that group.</p>
-
-<p>Derived classes will apply different methods to group the detected units. 
-Examples are per area, per quadrant, per distance, per type.
-See further the derived DETECTION classes on which grouping methods are currently supported. </p>
-
-<p>Various methods exist how to retrieve the grouped items from a DETECTION_BASE derived class:</p>
-
-<ul>
-    <li>The method <a href="Detection.html##(DETECTION_BASE).GetDetectedItems">Detection#DETECTION_BASE.GetDetectedItems</a>() retrieves the DetectedItems[] list.</li>
-    <li>A DetectedItem from the DetectedItems[] list can be retrieved using the method <a href="Detection.html##(DETECTION_BASE).GetDetectedItem">Detection#DETECTION_BASE.GetDetectedItem</a>( DetectedItemIndex ).
-    Note that this method returns a DetectedItem element from the list, that contains a Set variable and further information
-    about the DetectedItem that is set by the DETECTION_BASE derived classes, used to group the DetectedItem.</li>
-    <li>A DetectedSet from the DetectedItems[] list can be retrieved using the method <a href="Detection.html##(DETECTION_BASE).GetDetectedSet">Detection#DETECTION_BASE.GetDetectedSet</a>( DetectedItemIndex ).
-    This method retrieves the Set from a DetectedItem element from the DetectedItem list (DetectedItems[ DetectedItemIndex ].Set ).</li>
-</ul>
-
-<h2>1.4) Apply additional Filters to fine-tune the detected objects</h2>
-
-<p>By default, DCS World will return any object that is in LOS and within "visual reach", or detectable through one of the electronic detection means.
-That being said, the DCS World detection algorithm can sometimes be unrealistic.
-Especially for a visual detection, DCS World is able to report within 1 second a detailed detection of a group of 20 units (including types of the units) that are 10 kilometers away, using only visual capabilities.
-Additionally, trees and other obstacles are not accounted during the DCS World detection.</p>
-
-<p>Therefore, an additional (optional) filtering has been built into the DETECTION_BASE class, that can be set for visual detected units.
-For electronic detection, this filtering is not applied, only for visually detected targets.</p>
-
-<p>The following additional filtering can be applied for visual filtering:</p>
-
-<ul>
-    <li>A probability factor per kilometer distance.</li>
-    <li>A probability factor based on the alpha angle between the detected object and the unit detecting.
-    A detection from a higher altitude allows for better detection than when on the ground.</li>
-    <li>Define a probability factor for "cloudy zones", which are zones where forests or villages are located. In these zones, detection will be much more difficult.
-    The mission designer needs to define these cloudy zones within the mission, and needs to register these zones in the DETECTION_ objects additing a probability factor per zone.</li>
-</ul>
-
-<p>I advise however, that, when you first use the DETECTION derived classes, that you don't use these filters.
-Only when you experience unrealistic behaviour in your missions, these filters could be applied.</p>
-
-<h3>1.4.1 ) Distance visual detection probability</h3>
-
-<p>Upon a <strong>visual</strong> detection, the further away a detected object is, the less likely it is to be detected properly.
-Also, the speed of accurate detection plays a role.</p>
-
-<p>A distance probability factor between 0 and 1 can be given, that will model a linear extrapolated probability over 10 km distance.</p>
-
-<p>For example, if a probability factor of 0.6 (60%) is given, the extrapolated probabilities over 15 kilometers would like like:
-1 km: 96%, 2 km: 92%, 3 km: 88%, 4 km: 84%, 5 km: 80%, 6 km: 76%, 7 km: 72%, 8 km: 68%, 9 km: 64%, 10 km: 60%, 11 km: 56%, 12 km: 52%, 13 km: 48%, 14 km: 44%, 15 km: 40%.</p>
-
-<p>Note that based on this probability factor, not only the detection but also the <strong>type</strong> of the unit will be applied!</p>
-
-<p>Use the method <a href="Detection.html##(DETECTION_BASE).SetDistanceProbability">Detection#DETECTION_BASE.SetDistanceProbability</a>() to set the probability factor upon a 10 km distance.</p>
-
-<h3>1.4.2 ) Alpha Angle visual detection probability</h3>
-
-<p>Upon a <strong>visual</strong> detection, the higher the unit is during the detecting process, the more likely the detected unit is to be detected properly.
-A detection at a 90% alpha angle is the most optimal, a detection at 10% is less and a detection at 0% is less likely to be correct.</p>
-
-<p>A probability factor between 0 and 1 can be given, that will model a progressive extrapolated probability if the target would be detected at a 0° angle.</p>
-
-<p>For example, if a alpha angle probability factor of 0.7 is given, the extrapolated probabilities of the different angles would look like:
-0°: 70%, 10°: 75,21%, 20°: 80,26%, 30°: 85%, 40°: 89,28%, 50°: 92,98%, 60°: 95,98%, 70°: 98,19%, 80°: 99,54%, 90°: 100%</p>
-
-<p>Use the method <a href="Detection.html##(DETECTION_BASE).SetAlphaAngleProbability">Detection#DETECTION_BASE.SetAlphaAngleProbability</a>() to set the probability factor if 0°.</p>
-
-<h3>1.4.3 ) Cloudy Zones detection probability</h3>
-
-<p>Upon a <strong>visual</strong> detection, the more a detected unit is within a cloudy zone, the less likely the detected unit is to be detected successfully.
-The Cloudy Zones work with the ZONE_BASE derived classes. The mission designer can define within the mission
-zones that reflect cloudy areas where detected units may not be so easily visually detected.</p>
-
-<p>Use the method <a href="Detection.html##(DETECTION_BASE).SetZoneProbability">Detection#DETECTION_BASE.SetZoneProbability</a>() to set for a defined number of zones, the probability factors.</p>
-
-<p>Note however, that the more zones are defined to be "cloudy" within a detection, the more performance it will take
-from the DETECTION<em>BASE to calculate the presence of the detected unit within each zone.
-Expecially for ZONE</em>POLYGON, try to limit the amount of nodes of the polygon!</p>
-
-<p>Typically, this kind of filter would be applied for very specific areas were a detection needs to be very realisting for
-AI not to detect so easily targets within a forrest or village rich area.</p>
-
-<h2>1.5 ) Accept / Reject detected units</h2>
-
-<p>DETECTION_BASE can accept or reject successful detections based on the location of the detected object, 
-if it is located in range or located inside or outside of specific zones.</p>
-
-<h3>1.5.1 ) Detection acceptance of within range limit</h3>
-
-<p>A range can be set that will limit a successful detection for a unit.
-Use the method <a href="Detection.html##(DETECTION_BASE).SetAcceptRange">Detection#DETECTION_BASE.SetAcceptRange</a>() to apply a range in meters till where detected units will be accepted.</p>
-
-<pre><code> local SetGroup = SET_GROUP:New():FilterPrefixes( "FAC" ):FilterStart() -- Build a SetGroup of Forward Air Controllers.
-
- -- Build a detect object.
- local Detection = DETECTION_BASE:New( SetGroup )
-
- -- This will accept detected units if the range is below 5000 meters.
- Detection:SetAcceptRange( 5000 ) 
-
- -- Start the Detection.
- Detection:Start()
-</code></pre>
-
-
-<h3>1.5.2 ) Detection acceptance if within zone(s).</h3>
-
-<p>Specific ZONE<em>BASE object(s) can be given as a parameter, which will only accept a detection if the unit is within the specified ZONE</em>BASE object(s).
-Use the method <a href="Detection.html##(DETECTION_BASE).SetAcceptZones">Detection#DETECTION_BASE.SetAcceptZones</a>() will accept detected units if they are within the specified zones.</p>
-
-<pre><code> local SetGroup = SET_GROUP:New():FilterPrefixes( "FAC" ):FilterStart() -- Build a SetGroup of Forward Air Controllers.
-
- -- Search fo the zones where units are to be accepted.
- local ZoneAccept1 = ZONE:New( "AcceptZone1" )
- local ZoneAccept2 = ZONE:New( "AcceptZone2" )
-
- -- Build a detect object.
- local Detection = DETECTION_BASE:New( SetGroup )
-
- -- This will accept detected units by Detection when the unit is within ZoneAccept1 OR ZoneAccept2.
- Detection:SetAcceptZones( { ZoneAccept1, ZoneAccept2 } ) 
-
- -- Start the Detection.
- Detection:Start()
-</code></pre>
-
-<h3>1.5.3 ) Detection rejectance if within zone(s).</h3>
-
-<p>Specific ZONE<em>BASE object(s) can be given as a parameter, which will reject detection if the unit is within the specified ZONE</em>BASE object(s).
-Use the method <a href="Detection.html##(DETECTION_BASE).SetRejectZones">Detection#DETECTION_BASE.SetRejectZones</a>() will reject detected units if they are within the specified zones.
-An example of how to use the method is shown below.</p>
-
-<pre><code> local SetGroup = SET_GROUP:New():FilterPrefixes( "FAC" ):FilterStart() -- Build a SetGroup of Forward Air Controllers.
-
- -- Search fo the zones where units are to be rejected.
- local ZoneReject1 = ZONE:New( "RejectZone1" )
- local ZoneReject2 = ZONE:New( "RejectZone2" )
-
- -- Build a detect object.
- local Detection = DETECTION_BASE:New( SetGroup )
-
- -- This will reject detected units by Detection when the unit is within ZoneReject1 OR ZoneReject2.
- Detection:SetRejectZones( { ZoneReject1, ZoneReject2 } ) 
-
- -- Start the Detection.
- Detection:Start()
-</code></pre>
-
-<h2>1.6) DETECTION_BASE is a Finite State Machine</h2>
-
-<p>Various Events and State Transitions can be tailored using DETECTION_BASE.</p>
-
-<h3>1.6.1) DETECTION_BASE States</h3>
-
-<ul>
-    <li><strong>Detecting</strong>: The detection is running.</li>
-    <li><strong>Stopped</strong>: The detection is stopped.</li>
-</ul>
-
-<h3>1.6.2) DETECTION_BASE Events</h3>
-
-<ul>
-    <li><strong>Start</strong>: Start the detection process.</li>
-    <li><strong>Detect</strong>: Detect new units.</li>
-    <li><strong>Detected</strong>: New units have been detected.</li>
-    <li><strong>Stop</strong>: Stop the detection process.</li>
-</ul>
-
-
-	<h3>Field(s)</h3>
+				<h3>Field(s)</h3>
 		<dl class="function">
 <dt>
 
@@ -1862,7 +2060,7 @@ self</p>
 <dt>
 
 <a id="#(DETECTION_BASE).AddDetectedItem" >
-<strong>DETECTION_BASE:AddDetectedItem(DetectedItemIndex, Set)</strong>
+<strong>DETECTION_BASE:AddDetectedItem(ItemPrefix, DetectedItemIndex, Set)</strong>
 </a>
 </dt>
 <dd>
@@ -1874,6 +2072,11 @@ self</p>
 
 		<h3>Parameters</h3>
 		<ul>
+				<li>
+				
+<p><code><em> ItemPrefix </em></code>: </p>
+
+				</li>
 				<li>
 				
 <p><code><em>#string DetectedItemIndex </em></code>: 
@@ -1953,13 +2156,20 @@ The index of the DetectedItem.</p>
 		<dl class="function">
 <dt>
 
-		<em>#string</em>
-<a id="#(DETECTION_BASE).ClassName" >
-<strong>DETECTION_BASE.ClassName</strong>
+<a id="#(DETECTION_BASE).CleanDetectionItems" >
+<strong>DETECTION_BASE:CleanDetectionItems()</strong>
 </a>
 </dt>
 <dd>
 	
+<p>Make a DetectionSet table.</p>
+
+	
+<p>This function will be overridden in the derived clsses.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(DETECTION_BASE)">#DETECTION_BASE</a>:</em></p>
 
 
 </dd>
@@ -1981,8 +2191,8 @@ The index of the DetectedItem.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(DETECTION_BASE).CreateDetectionSets" >
-<strong>DETECTION_BASE:CreateDetectionSets()</strong>
+<a id="#(DETECTION_BASE).CreateDetectionItems" >
+<strong>DETECTION_BASE:CreateDetectionItems()</strong>
 </a>
 </dt>
 <dd>
@@ -1994,8 +2204,8 @@ The index of the DetectedItem.</p>
 
 		<h3>Return value</h3>
 				
-<p><em><a href="##(DETECTION_BASE)">#DETECTION_BASE</a>:</em>
-self</p>
+<p><em><a href="##(DETECTION_BASE)">#DETECTION_BASE</a>:</em></p>
+
 
 </dd>
 </dl>
@@ -2112,6 +2322,7 @@ self</p>
 		<dl class="function">
 <dt>
 
+		<em>#number</em>
 <a id="#(DETECTION_BASE).DetectedItemCount" >
 <strong>DETECTION_BASE.DetectedItemCount</strong>
 </a>
@@ -2125,12 +2336,39 @@ self</p>
 		<dl class="function">
 <dt>
 
+		<em>#number</em>
 <a id="#(DETECTION_BASE).DetectedItemMax" >
 <strong>DETECTION_BASE.DetectedItemMax</strong>
 </a>
 </dt>
 <dd>
 	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_BASE).DetectedItemMenu" >
+<strong>DETECTION_BASE:DetectedItemMenu(Index)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Menu of a detected item using a given numeric index.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> Index </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#string:</em></p>
 
 
 </dd>
@@ -2322,6 +2560,88 @@ self</p>
 		<dl class="function">
 <dt>
 
+<a id="#(DETECTION_BASE).FilterCategories" >
+<strong>DETECTION_BASE:FilterCategories(<, FilterCategories)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Filter the detected units based on Unit.Category <br/>
+The different values of Unit.Category can be:</p>
+
+<ul>
+    <li>Unit.Category.AIRPLANE</li>
+    <li>Unit.Category.GROUND_UNIT</li>
+    <li>Unit.Category.HELICOPTER</li>
+    <li>Unit.Category.SHIP</li>
+    <li>Unit.Category.STRUCTURE</li>
+</ul>
+
+<p>Multiple Unit.Category entries can be given as a table and then these will be evaluated as an OR expression.</p>
+
+	
+
+<p>Example to filter a single category (Unit.Category.AIRPLANE).</p>
+
+<pre><code>DetectionObject:FilterCategories( Unit.Category.AIRPLANE ) 
+</code></pre>
+
+<p>Example to filter multiple categories (Unit.Category.AIRPLANE, Unit.Category.HELICOPTER). Note the {}.</p>
+
+<pre><code>DetectionObject:FilterCategories( { Unit.Category.AIRPLANE, Unit.Category.HELICOPTER } )
+</code></pre>
+
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="##(list)">#list</a> &lt; </em></code>: 
+cs.DCSUnit#Unit> FilterCategories The Categories entries</p>
+
+				</li>
+				<li>
+				
+<p><code><em> FilterCategories </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(DETECTION_BASE)">#DETECTION_BASE</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_BASE).GetDetectedID" >
+<strong>DETECTION_BASE:GetDetectedID(Index)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Get a detected ID using a given numeric index.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number Index </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#string:</em>
+DetectedItemID</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(DETECTION_BASE).GetDetectedItem" >
 <strong>DETECTION_BASE:GetDetectedItem(Index)</strong>
 </a>
@@ -2342,6 +2662,32 @@ self</p>
 				
 <p><em><a href="##(DETECTION_BASE.DetectedItem)">#DETECTION_BASE.DetectedItem</a>:</em></p>
 
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_BASE).GetDetectedItemID" >
+<strong>DETECTION_BASE:GetDetectedItemID(Index)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Get a detected ItemID using a given numeric index.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number Index </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#string:</em>
+DetectedItemID</p>
 
 </dd>
 </dl>
@@ -2377,7 +2723,7 @@ self</p>
 		<h3>Return value</h3>
 				
 <p><em>#number:</em>
-Count</p>
+The amount of detected items. Note that the amount of detected items can differ with the reality, because detections are not real-time but doen in intervals!</p>
 
 </dd>
 </dl>
@@ -2472,7 +2818,7 @@ DetectedZone</p>
 
 		<h3>Return value</h3>
 				
-<p><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a>:</em></p>
+<p><em><a href="Core.Set.html##(SET_GROUP)">Core.Set#SET_GROUP</a>:</em></p>
 
 
 </dd>
@@ -3920,6 +4266,90 @@ The To State string.</p>
 		<dl class="function">
 <dt>
 
+		<em>#boolean</em>
+<a id="#(DETECTION_BASE.DetectedObject).IsVisible" >
+<strong>DETECTION_BASE.DetectedObject.IsVisible</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#boolean</em>
+<a id="#(DETECTION_BASE.DetectedObject).KnowDistance" >
+<strong>DETECTION_BASE.DetectedObject.KnowDistance</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#boolean</em>
+<a id="#(DETECTION_BASE.DetectedObject).KnowType" >
+<strong>DETECTION_BASE.DetectedObject.KnowType</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#boolean</em>
+<a id="#(DETECTION_BASE.DetectedObject).LastPos" >
+<strong>DETECTION_BASE.DetectedObject.LastPos</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#number</em>
+<a id="#(DETECTION_BASE.DetectedObject).LastTime" >
+<strong>DETECTION_BASE.DetectedObject.LastTime</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#number</em>
+<a id="#(DETECTION_BASE.DetectedObject).LastVelocity" >
+<strong>DETECTION_BASE.DetectedObject.LastVelocity</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 		<em>#string</em>
 <a id="#(DETECTION_BASE.DetectedObject).Name" >
 <strong>DETECTION_BASE.DetectedObject.Name</strong>
@@ -3937,20 +4367,6 @@ The To State string.</p>
 		<em>#string</em>
 <a id="#(DETECTION_BASE.DetectedObject).Type" >
 <strong>DETECTION_BASE.DetectedObject.Type</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em>#boolean</em>
-<a id="#(DETECTION_BASE.DetectedObject).Visible" >
-<strong>DETECTION_BASE.DetectedObject.Visible</strong>
 </a>
 </dt>
 <dd>
@@ -3992,8 +4408,8 @@ Beware that when the amount of different types detected is large, the DetectedIt
 		<dl class="function">
 <dt>
 
-<a id="#(DETECTION_TYPES).CreateDetectionSets" >
-<strong>DETECTION_TYPES:CreateDetectionSets()</strong>
+<a id="#(DETECTION_TYPES).CreateDetectionItems" >
+<strong>DETECTION_TYPES:CreateDetectionItems()</strong>
 </a>
 </dt>
 <dd>
@@ -4007,6 +4423,37 @@ Beware that when the amount of different types detected is large, the DetectedIt
 				
 <p><em><a href="##(DETECTION_TYPES)">#DETECTION_TYPES</a>:</em>
 self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_TYPES).DetectedItemMenu" >
+<strong>DETECTION_TYPES:DetectedItemMenu(Index, DetectedTypeName)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Menu of a DetectedItem using a given numeric index.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> Index </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> DetectedTypeName </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#string:</em></p>
+
 
 </dd>
 </dl>
@@ -4227,8 +4674,8 @@ Beware that when the amount of units detected is large, the DetectedItems list w
 		<dl class="function">
 <dt>
 
-<a id="#(DETECTION_UNITS).CreateDetectionSets" >
-<strong>DETECTION_UNITS:CreateDetectionSets()</strong>
+<a id="#(DETECTION_UNITS).CreateDetectionItems" >
+<strong>DETECTION_UNITS:CreateDetectionItems()</strong>
 </a>
 </dt>
 <dd>
@@ -4242,6 +4689,32 @@ Beware that when the amount of units detected is large, the DetectedItems list w
 				
 <p><em><a href="##(DETECTION_UNITS)">#DETECTION_UNITS</a>:</em>
 self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_UNITS).DetectedItemMenu" >
+<strong>DETECTION_UNITS:DetectedItemMenu(Index)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Menu of a DetectedItem using a given numeric index.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> Index </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#string:</em></p>
+
 
 </dd>
 </dl>
@@ -4428,6 +4901,8 @@ self</p>
 </dl>
 
 			<h2><a id="#(DETECTION_UNITS.DetectedItem)" >Type <code>DETECTION_UNITS.DetectedItem</code></a></h2>
+			
+			<h2><a id="#(list)" >Type <code>list</code></a></h2>
 			
 </div>
 

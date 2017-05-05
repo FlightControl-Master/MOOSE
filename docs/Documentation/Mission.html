@@ -31,7 +31,23 @@
 					<li><a href="Client.html">Client</a></li>
 					<li><a href="CommandCenter.html">CommandCenter</a></li>
 					<li><a href="Controllable.html">Controllable</a></li>
+					<li><a href="DCSAirbase.html">DCSAirbase</a></li>
+					<li><a href="DCSCoalitionObject.html">DCSCoalitionObject</a></li>
+					<li><a href="DCSCommand.html">DCSCommand</a></li>
+					<li><a href="DCSController.html">DCSController</a></li>
+					<li><a href="DCSGroup.html">DCSGroup</a></li>
+					<li><a href="DCSObject.html">DCSObject</a></li>
+					<li><a href="DCSTask.html">DCSTask</a></li>
+					<li><a href="DCSTypes.html">DCSTypes</a></li>
+					<li><a href="DCSUnit.html">DCSUnit</a></li>
+					<li><a href="DCSVec3.html">DCSVec3</a></li>
+					<li><a href="DCSWorld.html">DCSWorld</a></li>
+					<li><a href="DCSZone.html">DCSZone</a></li>
+					<li><a href="DCScountry.html">DCScountry</a></li>
+					<li><a href="DCStimer.html">DCStimer</a></li>
+					<li><a href="DCStrigger.html">DCStrigger</a></li>
 					<li><a href="Database.html">Database</a></li>
+					<li><a href="Designate.html">Designate</a></li>
 					<li><a href="Detection.html">Detection</a></li>
 					<li><a href="DetectionManager.html">DetectionManager</a></li>
 					<li><a href="Escort.html">Escort</a></li>
@@ -59,14 +75,20 @@
 					<li><a href="Set.html">Set</a></li>
 					<li><a href="Smoke.html">Smoke</a></li>
 					<li><a href="Spawn.html">Spawn</a></li>
+					<li><a href="SpawnStatic.html">SpawnStatic</a></li>
+					<li><a href="Spot.html">Spot</a></li>
 					<li><a href="Static.html">Static</a></li>
+					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="Task.html">Task</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
 					<li><a href="Task_A2G_Dispatcher.html">Task_A2G_Dispatcher</a></li>
+					<li><a href="Task_Cargo.html">Task_Cargo</a></li>
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
 					<li><a href="Unit.html">Unit</a></li>
 					<li><a href="Utils.html">Utils</a></li>
 					<li><a href="Zone.html">Zone</a></li>
+					<li><a href="env.html">env</a></li>
+					<li><a href="land.html">land</a></li>
 					<li><a href="routines.html">routines</a></li>
 		</ul>
 	</div>
@@ -145,7 +167,7 @@ A <a href="CLIENT.html">CLIENT</a> needs to be registered within the <a href="MI
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MISSION).GetMenu">MISSION:GetMenu(TaskGroup)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(MISSION).GetMenu">MISSION:GetMenu()</a></td>
 		<td class="summary">
 <p>Gets the mission menu for the coalition.</p>
 </td>
@@ -181,45 +203,63 @@ A <a href="CLIENT.html">CLIENT</a> needs to be registered within the <a href="MI
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MISSION).GetTasksRemaining">MISSION:GetTasksRemaining()</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(MISSION).HasGroup">MISSION.HasGroup(#, self, TaskGroup)</a></td>
 		<td class="summary">
 <p>Validates if the Mission has a Group</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MISSION).IsCompleted">MISSION:IsCompleted()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(MISSION).IsCOMPLETED">MISSION:IsCOMPLETED()</a></td>
 		<td class="summary">
-<p>Is the <a href="Mission.html">Mission</a> <strong>Completed</strong>.</p>
+<p>Is the <a href="Mission.html">Mission</a> <strong>COMPLETED</strong>.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MISSION).IsFailed">MISSION:IsFailed()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(MISSION).IsENGAGED">MISSION:IsENGAGED()</a></td>
 		<td class="summary">
-<p>Is the <a href="Mission.html">Mission</a> <strong>Failed</strong>.</p>
+<p>Is the <a href="Mission.html">Mission</a> <strong>ENGAGED</strong>.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MISSION).IsHold">MISSION:IsHold()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(MISSION).IsFAILED">MISSION:IsFAILED()</a></td>
 		<td class="summary">
-<p>Is the <a href="Mission.html">Mission</a> <strong>Hold</strong>.</p>
+<p>Is the <a href="Mission.html">Mission</a> <strong>FAILED</strong>.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MISSION).IsIdle">MISSION:IsIdle()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(MISSION).IsHOLD">MISSION:IsHOLD()</a></td>
 		<td class="summary">
-<p>Is the <a href="Mission.html">Mission</a> <strong>Idle</strong>.</p>
+<p>Is the <a href="Mission.html">Mission</a> <strong>HOLD</strong>.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MISSION).IsOngoing">MISSION:IsOngoing()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(MISSION).IsIDLE">MISSION:IsIDLE()</a></td>
 		<td class="summary">
-<p>Is the <a href="Mission.html">Mission</a> <strong>Ongoing</strong>.</p>
+<p>Is the <a href="Mission.html">Mission</a> <strong>IDLE</strong>.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(MISSION).JoinUnit">MISSION:JoinUnit(PlayerUnit, PlayerGroup)</a></td>
 		<td class="summary">
 <p>Add a Unit to join the Mission.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MISSION).MenuReportOverview">MISSION:MenuReportOverview(TaskStatus, ReportGroup)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MISSION).MenuReportSummary">MISSION:MenuReportSummary(ReportGroup)</a></td>
+		<td class="summary">
+
 </td>
 		</tr>
 		<tr>
@@ -301,51 +341,51 @@ A <a href="CLIENT.html">CLIENT</a> needs to be registered within the <a href="MI
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MISSION).OnEnterCompleted">MISSION:OnEnterCompleted(From, Event, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(MISSION).OnEnterCOMPLETED">MISSION:OnEnterCOMPLETED(From, Event, To)</a></td>
 		<td class="summary">
-<p>OnEnter Transition Handler for State Completed.</p>
+<p>OnEnter Transition Handler for State COMPLETED.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MISSION).OnEnterFailed">MISSION:OnEnterFailed(From, Event, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(MISSION).OnEnterENGAGED">MISSION:OnEnterENGAGED(From, Event, To)</a></td>
 		<td class="summary">
-<p>OnEnter Transition Handler for State Failed.</p>
+<p>OnEnter Transition Handler for State ENGAGED.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MISSION).OnEnterIdle">MISSION:OnEnterIdle(From, Event, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(MISSION).OnEnterFAILED">MISSION:OnEnterFAILED(From, Event, To)</a></td>
 		<td class="summary">
-<p>OnEnter Transition Handler for State Idle.</p>
+<p>OnEnter Transition Handler for State FAILED.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MISSION).OnEnterOngoing">MISSION:OnEnterOngoing(From, Event, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(MISSION).OnEnterIDLE">MISSION:OnEnterIDLE(From, Event, To)</a></td>
 		<td class="summary">
-<p>OnEnter Transition Handler for State Ongoing.</p>
+<p>OnEnter Transition Handler for State IDLE.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MISSION).OnLeaveCompleted">MISSION:OnLeaveCompleted(From, Event, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(MISSION).OnLeaveCOMPLETED">MISSION:OnLeaveCOMPLETED(From, Event, To)</a></td>
 		<td class="summary">
-<p>OnLeave Transition Handler for State Completed.</p>
+<p>OnLeave Transition Handler for State COMPLETED.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MISSION).OnLeaveFailed">MISSION:OnLeaveFailed(From, Event, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(MISSION).OnLeaveENGAGED">MISSION:OnLeaveENGAGED(From, Event, To)</a></td>
 		<td class="summary">
-<p>OnLeave Transition Handler for State Failed.</p>
+<p>OnLeave Transition Handler for State ENGAGED.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MISSION).OnLeaveIdle">MISSION:OnLeaveIdle(From, Event, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(MISSION).OnLeaveFAILED">MISSION:OnLeaveFAILED(From, Event, To)</a></td>
 		<td class="summary">
-<p>OnLeave Transition Handler for State Idle.</p>
+<p>OnLeave Transition Handler for State FAILED.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MISSION).OnLeaveOngoing">MISSION:OnLeaveOngoing(From, Event, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(MISSION).OnLeaveIDLE">MISSION:OnLeaveIDLE(From, Event, To)</a></td>
 		<td class="summary">
-<p>OnLeave Transition Handler for State Ongoing.</p>
+<p>OnLeave Transition Handler for State IDLE.</p>
 </td>
 		</tr>
 		<tr>
@@ -373,7 +413,7 @@ A <a href="CLIENT.html">CLIENT</a> needs to be registered within the <a href="MI
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MISSION).ReportOverview">MISSION:ReportOverview()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(MISSION).ReportOverview">MISSION:ReportOverview(TaskStatus)</a></td>
 		<td class="summary">
 <p>Create a overview report of the Mission (multiple lines).</p>
 </td>
@@ -445,7 +485,7 @@ A <a href="CLIENT.html">CLIENT</a> needs to be registered within the <a href="MI
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MISSION).onenterCompleted">MISSION:onenterCompleted(From, Event, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(MISSION).onenterCOMPLETED">MISSION:onenterCOMPLETED(From, Event, To)</a></td>
 		<td class="summary">
 
 </td>
@@ -675,21 +715,13 @@ true if Unit is part of a Task in the Mission.</p>
 <dt>
 
 <a id="#(MISSION).GetMenu" >
-<strong>MISSION:GetMenu(TaskGroup)</strong>
+<strong>MISSION:GetMenu()</strong>
 </a>
 </dt>
 <dd>
 	
 <p>Gets the mission menu for the coalition.</p>
 
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> TaskGroup </em></code>: </p>
-
-				</li>
-		</ul>
 		<h3>Return value</h3>
 				
 <p><em><a href="Core.Menu.html##(MENU_COALITION)">Core.Menu#MENU_COALITION</a>:</em>
@@ -834,6 +866,24 @@ env.info( "Task 2 Completion = " .. Tasks[2]:GetGoalPercentage() .. "%" )</code>
 		<dl class="function">
 <dt>
 
+<a id="#(MISSION).GetTasksRemaining" >
+<strong>MISSION:GetTasksRemaining()</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Return value</h3>
+				
+<p><em>#number:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(MISSION).HasGroup" >
 <strong>MISSION.HasGroup(#, self, TaskGroup)</strong>
 </a>
@@ -871,13 +921,13 @@ true if the Mission has a Group.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(MISSION).IsCompleted" >
-<strong>MISSION:IsCompleted()</strong>
+<a id="#(MISSION).IsCOMPLETED" >
+<strong>MISSION:IsCOMPLETED()</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Is the <a href="Mission.html">Mission</a> <strong>Completed</strong>.</p>
+<p>Is the <a href="Mission.html">Mission</a> <strong>COMPLETED</strong>.</p>
 
 		<h3>Return value</h3>
 				
@@ -889,13 +939,13 @@ true if the Mission has a Group.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(MISSION).IsFailed" >
-<strong>MISSION:IsFailed()</strong>
+<a id="#(MISSION).IsENGAGED" >
+<strong>MISSION:IsENGAGED()</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Is the <a href="Mission.html">Mission</a> <strong>Failed</strong>.</p>
+<p>Is the <a href="Mission.html">Mission</a> <strong>ENGAGED</strong>.</p>
 
 		<h3>Return value</h3>
 				
@@ -907,13 +957,13 @@ true if the Mission has a Group.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(MISSION).IsHold" >
-<strong>MISSION:IsHold()</strong>
+<a id="#(MISSION).IsFAILED" >
+<strong>MISSION:IsFAILED()</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Is the <a href="Mission.html">Mission</a> <strong>Hold</strong>.</p>
+<p>Is the <a href="Mission.html">Mission</a> <strong>FAILED</strong>.</p>
 
 		<h3>Return value</h3>
 				
@@ -925,13 +975,13 @@ true if the Mission has a Group.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(MISSION).IsIdle" >
-<strong>MISSION:IsIdle()</strong>
+<a id="#(MISSION).IsHOLD" >
+<strong>MISSION:IsHOLD()</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Is the <a href="Mission.html">Mission</a> <strong>Idle</strong>.</p>
+<p>Is the <a href="Mission.html">Mission</a> <strong>HOLD</strong>.</p>
 
 		<h3>Return value</h3>
 				
@@ -943,13 +993,13 @@ true if the Mission has a Group.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(MISSION).IsOngoing" >
-<strong>MISSION:IsOngoing()</strong>
+<a id="#(MISSION).IsIDLE" >
+<strong>MISSION:IsIDLE()</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Is the <a href="Mission.html">Mission</a> <strong>Ongoing</strong>.</p>
+<p>Is the <a href="Mission.html">Mission</a> <strong>IDLE</strong>.</p>
 
 		<h3>Return value</h3>
 				
@@ -994,6 +1044,54 @@ The GROUP of the player joining the Mission.</p>
 <p><em>#boolean:</em>
 true if Unit is part of a Task in the Mission.</p>
 
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(MISSION).MenuReportOverview" >
+<strong>MISSION:MenuReportOverview(TaskStatus, ReportGroup)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string TaskStatus </em></code>: 
+The status</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> ReportGroup </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(MISSION).MenuReportSummary" >
+<strong>MISSION:MenuReportSummary(ReportGroup)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> ReportGroup </em></code>: </p>
+
+				</li>
+		</ul>
 </dd>
 </dl>
 		<dl class="function">
@@ -1400,13 +1498,13 @@ Return false to cancel Transition.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(MISSION).OnEnterCompleted" >
-<strong>MISSION:OnEnterCompleted(From, Event, To)</strong>
+<a id="#(MISSION).OnEnterCOMPLETED" >
+<strong>MISSION:OnEnterCOMPLETED(From, Event, To)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>OnEnter Transition Handler for State Completed.</p>
+<p>OnEnter Transition Handler for State COMPLETED.</p>
 
 		<h3>Parameters</h3>
 		<ul>
@@ -1434,13 +1532,13 @@ The To State string.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(MISSION).OnEnterFailed" >
-<strong>MISSION:OnEnterFailed(From, Event, To)</strong>
+<a id="#(MISSION).OnEnterENGAGED" >
+<strong>MISSION:OnEnterENGAGED(From, Event, To)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>OnEnter Transition Handler for State Failed.</p>
+<p>OnEnter Transition Handler for State ENGAGED.</p>
 
 		<h3>Parameters</h3>
 		<ul>
@@ -1468,13 +1566,13 @@ The To State string.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(MISSION).OnEnterIdle" >
-<strong>MISSION:OnEnterIdle(From, Event, To)</strong>
+<a id="#(MISSION).OnEnterFAILED" >
+<strong>MISSION:OnEnterFAILED(From, Event, To)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>OnEnter Transition Handler for State Idle.</p>
+<p>OnEnter Transition Handler for State FAILED.</p>
 
 		<h3>Parameters</h3>
 		<ul>
@@ -1502,13 +1600,13 @@ The To State string.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(MISSION).OnEnterOngoing" >
-<strong>MISSION:OnEnterOngoing(From, Event, To)</strong>
+<a id="#(MISSION).OnEnterIDLE" >
+<strong>MISSION:OnEnterIDLE(From, Event, To)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>OnEnter Transition Handler for State Ongoing.</p>
+<p>OnEnter Transition Handler for State IDLE.</p>
 
 		<h3>Parameters</h3>
 		<ul>
@@ -1536,52 +1634,13 @@ The To State string.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(MISSION).OnLeaveCompleted" >
-<strong>MISSION:OnLeaveCompleted(From, Event, To)</strong>
+<a id="#(MISSION).OnLeaveCOMPLETED" >
+<strong>MISSION:OnLeaveCOMPLETED(From, Event, To)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>OnLeave Transition Handler for State Completed.</p>
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em>#string From </em></code>: 
-The From State string.</p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string Event </em></code>: 
-The Event string.</p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string To </em></code>: 
-The To State string.</p>
-
-				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em>#boolean:</em>
-Return false to cancel Transition.</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(MISSION).OnLeaveFailed" >
-<strong>MISSION:OnLeaveFailed(From, Event, To)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>OnLeave Transition Handler for State Failed.</p>
+<p>OnLeave Transition Handler for State COMPLETED.</p>
 
 		<h3>Parameters</h3>
 		<ul>
@@ -1614,13 +1673,13 @@ Return false to cancel Transition.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(MISSION).OnLeaveIdle" >
-<strong>MISSION:OnLeaveIdle(From, Event, To)</strong>
+<a id="#(MISSION).OnLeaveENGAGED" >
+<strong>MISSION:OnLeaveENGAGED(From, Event, To)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>OnLeave Transition Handler for State Idle.</p>
+<p>OnLeave Transition Handler for State ENGAGED.</p>
 
 		<h3>Parameters</h3>
 		<ul>
@@ -1653,13 +1712,52 @@ Return false to cancel Transition.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(MISSION).OnLeaveOngoing" >
-<strong>MISSION:OnLeaveOngoing(From, Event, To)</strong>
+<a id="#(MISSION).OnLeaveFAILED" >
+<strong>MISSION:OnLeaveFAILED(From, Event, To)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>OnLeave Transition Handler for State Ongoing.</p>
+<p>OnLeave Transition Handler for State FAILED.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string From </em></code>: 
+The From State string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: 
+The Event string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: 
+The To State string.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+Return false to cancel Transition.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(MISSION).OnLeaveIDLE" >
+<strong>MISSION:OnLeaveIDLE(From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>OnLeave Transition Handler for State IDLE.</p>
 
 		<h3>Parameters</h3>
 		<ul>
@@ -1789,13 +1887,21 @@ self</p>
 <dt>
 
 <a id="#(MISSION).ReportOverview" >
-<strong>MISSION:ReportOverview()</strong>
+<strong>MISSION:ReportOverview(TaskStatus)</strong>
 </a>
 </dt>
 <dd>
 	
 <p>Create a overview report of the Mission (multiple lines).</p>
 
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> TaskStatus </em></code>: </p>
+
+				</li>
+		</ul>
 		<h3>Return value</h3>
 				
 <p><em>#string:</em></p>
@@ -2025,8 +2131,8 @@ The delay in seconds.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(MISSION).onenterCompleted" >
-<strong>MISSION:onenterCompleted(From, Event, To)</strong>
+<a id="#(MISSION).onenterCOMPLETED" >
+<strong>MISSION:onenterCOMPLETED(From, Event, To)</strong>
 </a>
 </dt>
 <dd>
