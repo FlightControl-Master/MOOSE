@@ -693,7 +693,12 @@ function TASK:SetPlannedMenuForGroup( TaskGroup, MenuTime )
   local CommandCenterMenu = CommandCenter:GetMenu()
 
   local TaskType = self:GetType()
-  local TaskText = self:GetName()
+--  local TaskThreatLevel = self.TaskInfo["ThreatLevel"]
+--  local TaskThreatLevelString = TaskThreatLevel and " [" .. string.rep( "■", TaskThreatLevel ) .. "]" or " []" 
+  local TaskPlayerCount = self:GetPlayerCount()
+  local TaskPlayerString = string.format( " (%dp)", TaskPlayerCount )
+  local TaskText = string.format( "%s%s", self:GetName(), TaskPlayerString ) --, TaskThreatLevelString )
+  local TaskName = string.format( "%s", self:GetName() )
 
   local MissionMenu = MENU_GROUP:New( TaskGroup, MissionName, CommandCenterMenu ):SetTime( MenuTime )
   
@@ -702,10 +707,10 @@ function TASK:SetPlannedMenuForGroup( TaskGroup, MenuTime )
   local TaskPlannedMenu = MENU_GROUP:New( TaskGroup, "Planned Tasks", MissionMenu ):SetTime( MenuTime )
   local TaskTypeMenu = MENU_GROUP:New( TaskGroup, TaskType, TaskPlannedMenu ):SetTime( MenuTime ):SetRemoveParent( true )
   local TaskTypeMenu = MENU_GROUP:New( TaskGroup, TaskText, TaskTypeMenu ):SetTime( MenuTime ):SetRemoveParent( true )
-  local ReportTaskMenu = MENU_GROUP_COMMAND:New( TaskGroup, string.format( "Report Task %s Status", TaskText ), TaskTypeMenu, self.MenuTaskStatus, self, TaskGroup ):SetTime( MenuTime ):SetRemoveParent( true )
+  local ReportTaskMenu = MENU_GROUP_COMMAND:New( TaskGroup, string.format( "Report Task Status" ), TaskTypeMenu, self.MenuTaskStatus, self, TaskGroup ):SetTime( MenuTime ):SetRemoveParent( true )
   
   if not Mission:IsGroupAssigned( TaskGroup ) then
-    local JoinTaskMenu = MENU_GROUP_COMMAND:New( TaskGroup, string.format( "Join Task %s", TaskText ), TaskTypeMenu, self.MenuAssignToGroup, { self = self, TaskGroup = TaskGroup } ):SetTime( MenuTime ):SetRemoveParent( true )
+    local JoinTaskMenu = MENU_GROUP_COMMAND:New( TaskGroup, string.format( "Join Task" ), TaskTypeMenu, self.MenuAssignToGroup, { self = self, TaskGroup = TaskGroup } ):SetTime( MenuTime ):SetRemoveParent( true )
   end
       
   return self
@@ -725,15 +730,19 @@ function TASK:SetAssignedMenuForGroup( TaskGroup, MenuTime )
   local CommandCenterMenu = CommandCenter:GetMenu()
 
   local TaskType = self:GetType()
-  local TaskText = self:GetName()
+--  local TaskThreatLevel = self.TaskInfo["ThreatLevel"]
+--  local TaskThreatLevelString = TaskThreatLevel and " [" .. string.rep( "■", TaskThreatLevel ) .. "]" or " []" 
+  local TaskPlayerCount = self:GetPlayerCount()
+  local TaskPlayerString = string.format( " (%dp)", TaskPlayerCount )
+  local TaskText = string.format( "%s%s", self:GetName(), TaskPlayerString ) --, TaskThreatLevelString )
+  local TaskName = string.format( "%s", self:GetName() )
 
   local MissionMenu = MENU_GROUP:New( TaskGroup, MissionName, CommandCenterMenu ):SetTime( MenuTime )
   local MissionMenu = Mission:GetMenu( TaskGroup )
 
-
-  local TaskAssignedMenu = MENU_GROUP:New( TaskGroup, string.format( "Assigned Task %s", TaskText ), MissionMenu ):SetTime( MenuTime )
-  local TaskTypeMenu = MENU_GROUP_COMMAND:New( TaskGroup, string.format( "Report Task %s Status", TaskText ), TaskAssignedMenu, self.MenuTaskStatus, self, TaskGroup ):SetTime( MenuTime ):SetRemoveParent( true )
-  local TaskMenu = MENU_GROUP_COMMAND:New( TaskGroup, string.format( "Abort Group from Task %s", TaskText ), TaskAssignedMenu, self.MenuTaskAbort, self, TaskGroup ):SetTime( MenuTime ):SetRemoveParent( true )
+  local TaskAssignedMenu = MENU_GROUP:New( TaskGroup, string.format( "Assigned Task %s", TaskName ), MissionMenu ):SetTime( MenuTime )
+  local TaskTypeMenu = MENU_GROUP_COMMAND:New( TaskGroup, string.format( "Report Task Status" ), TaskAssignedMenu, self.MenuTaskStatus, self, TaskGroup ):SetTime( MenuTime ):SetRemoveParent( true )
+  local TaskMenu = MENU_GROUP_COMMAND:New( TaskGroup, string.format( "Abort Group from Task" ), TaskAssignedMenu, self.MenuTaskAbort, self, TaskGroup ):SetTime( MenuTime ):SetRemoveParent( true )
 
   return self
 end
@@ -769,9 +778,9 @@ function TASK:RefreshMenus( TaskGroup, MenuTime )
 
   local MissionMenu = Mission:GetMenu( TaskGroup )
 
-  local TaskText = self:GetName()
+  local TaskName = self:GetName()
   local PlannedMenu = MissionMenu:GetMenu( "Planned Tasks" )
-  local AssignedMenu = MissionMenu:GetMenu( string.format( "Assigned Task %s", TaskText ) )
+  local AssignedMenu = MissionMenu:GetMenu( string.format( "Assigned Task %s", TaskName ) )
   
   if PlannedMenu then
     PlannedMenu:Remove( MenuTime )
@@ -1300,6 +1309,47 @@ function TASK:ReportOverview() --R2.1 fixed report. Now nicely formatted and con
   return Report:Text()
 end
 
+--- Create a count of the players in the Task.
+-- @param #TASK self
+-- @return #number The total number of players in the task.
+function TASK:GetPlayerCount() --R2.1 Get a count of the players.
+
+  local PlayerCount = 0
+
+  -- Loop each Unit active in the Task, and find Player Names.
+  for TaskGroupID, PlayerGroup in pairs( self:GetGroups():GetSet() ) do
+    local PlayerGroup = PlayerGroup -- Wrapper.Group#GROUP
+    if self:IsGroupAssigned( PlayerGroup ) then
+      local PlayerNames = PlayerGroup:GetPlayerNames()
+        PlayerCount = PlayerCount + #PlayerNames
+    end
+  end
+
+  return PlayerCount
+end
+
+
+--- Create a list of the players in the Task.
+-- @param #TASK self
+-- @return #map<#string,Wrapper.Group#GROUP> A map of the players
+function TASK:GetPlayerNames() --R2.1 Get a map of the players.
+
+  local PlayerNameMap = {}
+
+  -- Loop each Unit active in the Task, and find Player Names.
+  for TaskGroupID, PlayerGroup in pairs( self:GetGroups():GetSet() ) do
+    local PlayerGroup = PlayerGroup -- Wrapper.Group#GROUP
+    if self:IsGroupAssigned( PlayerGroup ) then
+      local PlayerNames = PlayerGroup:GetPlayerNames()
+      for PlayerNameID, PlayerName in pairs( PlayerNames ) do
+        PlayerNameMap[PlayerName] = PlayerGroup
+      end
+    end
+  end
+
+  return PlayerNameMap
+end
+
 
 --- Create a detailed report of the Task.
 -- List the Task Status, and the Players assigned to the Task.
@@ -1314,18 +1364,13 @@ function TASK:ReportDetails() --R2.1 fixed report. Now nicely formatted and cont
   
   -- Determine the status of the Task.
   local State = self:GetState()
-  
+
   -- Loop each Unit active in the Task, and find Player Names.
-  local PlayerNames = {}
+  local PlayerNames = self:GetPlayerNames()
+  
   local PlayerReport = REPORT:New()
-  for PlayerGroupID, PlayerGroupData in pairs( self:GetGroups():GetSet() ) do
-    
-    local PlayerGroup = PlayerGroupData -- Wrapper.Group#GROUP
-    
-    PlayerNames = PlayerGroup:GetPlayerNames()
-    if PlayerNames then
-      PlayerReport:Add( "Group " .. PlayerGroup:GetCallsign() .. ": " .. table.concat( PlayerNames, ", " ) )
-    end
+  for PlayerName, PlayerGroup in pairs( PlayerNames ) do
+    PlayerReport:Add( "Group " .. PlayerGroup:GetCallsign() .. ": " .. PlayerName )
   end
   local Players = PlayerReport:Text()
 
