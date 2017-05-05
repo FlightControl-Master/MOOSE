@@ -308,19 +308,17 @@ end
 -- If the Unit is part of a Task in the Mission, true is returned.
 -- @param #MISSION self
 -- @param Wrapper.Unit#UNIT PlayerUnit The CLIENT or UNIT of the Player crashing.
--- @return #boolean true if Unit is part of a Task in the Mission.
+-- @return #MISSION
 function MISSION:CrashUnit( PlayerUnit )
   self:F( { PlayerUnit = PlayerUnit } )
   
-  local PlayerUnitRemoved = false
-  
   for TaskID, Task in pairs( self:GetTasks() ) do
-    if Task:CrashUnit( PlayerUnit ) then
-      PlayerUnitRemoved = true
-    end
+    local Task = Task -- Tasking.Task#TASK
+    local PlayerGroup = PlayerUnit:GetGroup()
+    Task:CrashGroup( PlayerGroup )
   end
   
-  return PlayerUnitRemoved
+  return self
 end
 
 --- Add a scoring to the mission.

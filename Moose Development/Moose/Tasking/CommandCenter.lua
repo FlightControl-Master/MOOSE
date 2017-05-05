@@ -189,7 +189,10 @@ function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
     function( self, EventData )
       local PlayerUnit = EventData.IniUnit
       for MissionID, Mission in pairs( self:GetMissions() ) do
-        Mission:CrashUnit( PlayerUnit )
+        local Mission = Mission -- Tasking.Mission#MISSION
+        if Mission:IsENGAGED() then
+          Mission:CrashUnit( PlayerUnit )
+        end
       end
     end
   )

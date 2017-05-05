@@ -260,7 +260,7 @@ end
 -- If the Unit is part of the Task, true is returned.
 -- @param #TASK self
 -- @param Wrapper.Unit#UNIT PlayerUnit The CLIENT or UNIT of the Player aborting the Task.
--- @return #boolean true if Unit is part of the Task.
+-- @return #TASK
 function TASK:AbortGroup( PlayerGroup )
   self:F( { PlayerGroup = PlayerGroup } )
   
@@ -312,14 +312,11 @@ end
 -- If the Unit is part of the Task, true is returned.
 -- @param #TASK self
 -- @param Wrapper.Unit#UNIT PlayerUnit The CLIENT or UNIT of the Player aborting the Task.
--- @return #boolean true if Unit is part of the Task.
-function TASK:CrashUnit( PlayerUnit )
-  self:F( { PlayerUnit = PlayerUnit } )
-  
-  local PlayerUnitCrashed = false
+-- @return #TASK
+function TASK:CrashGroup( PlayerGroup )
+  self:F( { PlayerGroup = PlayerGroup } )
   
   local PlayerGroups = self:GetGroups()
-  local PlayerGroup = PlayerUnit:GetGroup()
 
   -- Is the PlayerGroup part of the PlayerGroups?  
   if PlayerGroups:IsIncludeObject( PlayerGroup ) then
@@ -330,18 +327,35 @@ function TASK:CrashUnit( PlayerUnit )
       local IsGroupAssigned = self:IsGroupAssigned( PlayerGroup )
       self:E( { IsGroupAssigned = IsGroupAssigned } )
       if IsGroupAssigned then
-        self:UnAssignFromUnit( PlayerUnit )
-        self:MessageToGroups( PlayerUnit:GetPlayerName() .. " crashed in Task " .. self:GetName() )
-        self:E( { TaskGroup = PlayerGroup:GetName(), GetUnits = PlayerGroup:GetUnits() } )
-        if #PlayerGroup:GetUnits() == 1 then
-          self:ClearGroupAssignment( PlayerGroup )
+        local PlayerName = PlayerGroup:GetUnit(1):GetPlayerName()
+        self:MessageToGroups( PlayerName .. " crashed! " )
+        self:UnAssignFromGroup( PlayerGroup )
+
+        -- Now check if the task needs to go to hold...
+        -- It will go to hold, if there are no players in the mission...
+        
+        PlayerGroups:Flush()
+        local IsRemaining = false
+        for GroupName, AssignedGroup in pairs( PlayerGroups:GetSet() or {} ) do
+          if self:IsGroupAssigned( AssignedGroup ) == true then
+            IsRemaining = true
+            self:F( { Task = self:GetName(), IsRemaining = IsRemaining } )
+           break
+          end
         end
-        self:PlayerCrashed( PlayerUnit )
+
+        self:F( { Task = self:GetName(), IsRemaining = IsRemaining } )
+        if IsRemaining == false then
+          self:Abort()
+        end
+        
+        self:PlayerCrashed( PlayerGroup:GetUnit(1) )
       end
+      
     end
   end
   
-  return PlayerUnitCrashed
+  return self
 end
 
 
