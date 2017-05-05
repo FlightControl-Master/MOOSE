@@ -754,7 +754,7 @@ function TASK:RefreshMenus( TaskGroup, MenuTime )
   local MissionMenu = Mission:GetMenu( TaskGroup )
 
   local TaskText = self:GetName()
-  local PlannedMenu = MissionMenu:GetMenu( string.format( "Planned Tasks", TaskText ) )
+  local PlannedMenu = MissionMenu:GetMenu( "Planned Tasks" )
   local AssignedMenu = MissionMenu:GetMenu( string.format( "Assigned Task %s", TaskText ) )
   
   if PlannedMenu then

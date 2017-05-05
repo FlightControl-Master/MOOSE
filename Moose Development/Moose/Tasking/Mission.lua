@@ -289,20 +289,17 @@ end
 -- If the Unit is part of a Task in the Mission, true is returned.
 -- @param #MISSION self
 -- @param Wrapper.Unit#UNIT PlayerUnit The CLIENT or UNIT of the Player joining the Mission.
--- @return #boolean true if Unit is part of a Task in the Mission.
+-- @return #MISSION
 function MISSION:AbortUnit( PlayerUnit )
   self:F( { PlayerUnit = PlayerUnit } )
   
-  local PlayerUnitRemoved = false
-  
   for TaskID, Task in pairs( self:GetTasks() ) do
     local Task = Task -- Tasking.Task#TASK
-    if Task:AbortUnit( PlayerUnit ) then
-      PlayerUnitRemoved = true
-    end
+    local PlayerGroup = PlayerUnit:GetGroup()
+    Task:AbortGroup( PlayerGroup )
   end
   
-  return PlayerUnitRemoved
+  return self
 end
 
 --- Handles a crash of a PlayerUnit from the Mission.
