@@ -882,13 +882,14 @@ end
 function TASK:RemoveStateMachine( TaskUnit )
   self:F( { TaskUnit, self.Fsm[TaskUnit] ~= nil } )
 
-  self:E( self.Fsm )
-  for TaskUnitT, Fsm in pairs( self.Fsm ) do
-    local Fsm = Fsm -- Core.Fsm#FSM_PROCESS
-    self:E( TaskUnitT )
-    Fsm:Remove()
-  end
+  --self:E( self.Fsm )
+  --for TaskUnitT, Fsm in pairs( self.Fsm ) do
+    --local Fsm = Fsm -- Core.Fsm#FSM_PROCESS
+    --self:E( TaskUnitT )
+    --self.Fsm[TaskUnit] = nil
+  --end
 
+  self.Fsm[TaskUnit]:Remove()
   self.Fsm[TaskUnit] = nil
   
   collectgarbage()

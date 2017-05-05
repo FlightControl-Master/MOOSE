@@ -882,7 +882,7 @@ do
     local Path = ( ParentMenu and ( table.concat( ParentMenu.MenuPath or {}, "@" ) .. "@" .. MenuText ) ) or MenuText 
     if MenuGroup._Menus[Path] then
       self = MenuGroup._Menus[Path]
-      self:T( { "Re-using Group Command Menu:", MenuGroup:GetName(), MenuText } )
+      self:F2( { "Re-using Group Command Menu:", MenuGroup:GetName(), MenuText } )
     else
       self = BASE:Inherit( self, MENU_COMMAND_BASE:New( MenuText, ParentMenu, CommandMenuFunction, arg ) )
       
@@ -896,7 +896,7 @@ do
       self.MenuText = MenuText
       self.ParentMenu = ParentMenu
 
-      self:T( { "Adding Group Command Menu:", MenuGroup = MenuGroup:GetName(), MenuText = MenuText, MenuPath = self.MenuParentPath } )
+      self:F( { "Adding Group Command Menu:", MenuGroup = MenuGroup:GetName(), MenuText = MenuText, MenuPath = self.MenuParentPath } )
       self.MenuPath = missionCommands.addCommandForGroup( self.MenuGroupID, MenuText, self.MenuParentPath, self.MenuCallHandler, arg )
 
       if self.ParentMenu and self.ParentMenu.Menus then
