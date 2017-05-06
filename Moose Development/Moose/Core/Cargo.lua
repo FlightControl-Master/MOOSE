@@ -234,7 +234,7 @@ do -- CARGO
 function CARGO:New( Type, Name, Weight ) --R2.1
 
   local self = BASE:Inherit( self, FSM:New() ) -- #CARGO
-  self:F( { Type, Name, Weight } )
+  self:E( { Type, Name, Weight } )
   
   self:SetStartState( "UnLoaded" )
   self:AddTransition( { "UnLoaded", "Boarding" }, "Board", "Boarding" )
@@ -299,7 +299,7 @@ end
 -- @param #CARGO self
 -- @return #CARGO
 function CARGO:Spawn( PointVec2 )
-  self:F()
+  self:E()
 
 end
 
@@ -310,7 +310,7 @@ end
 -- @param Core.Zone#ZONE_BASE Zone
 -- @return #boolean **true** if cargo is in the Zone, **false** if cargo is not in the Zone.
 function CARGO:IsInZone( Zone )
-  self:F( { Zone } )
+  self:E( { Zone } )
 
   if self:IsLoaded() then
     return Zone:IsPointVec2InZone( self.CargoCarrier:GetPointVec2() )
@@ -329,7 +329,7 @@ end
 -- @param #number NearRadius The radius when the cargo will board the Carrier (to avoid collision).
 -- @return #boolean
 function CARGO:IsNear( PointVec2, NearRadius )
-  self:F( { PointVec2 } )
+  self:E( { PointVec2 } )
 
   local Distance = PointVec2:DistanceFromPointVec2( self.CargoObject:GetPointVec2() )
   self:T( Distance )
@@ -382,7 +382,7 @@ do -- CARGO_REPRESENTABLE
   -- @return #CARGO_REPRESENTABLE
   function CARGO_REPRESENTABLE:New( CargoObject, Type, Name, Weight, ReportRadius, NearRadius )
     local self = BASE:Inherit( self, CARGO:New( Type, Name, Weight, ReportRadius, NearRadius ) ) -- #CARGO_REPRESENTABLE
-    self:F( { Type, Name, Weight, ReportRadius, NearRadius } )
+    self:E( { Type, Name, Weight, ReportRadius, NearRadius } )
   
     return self
   end
@@ -393,7 +393,7 @@ do -- CARGO_REPRESENTABLE
   -- @param #number Speed
   -- @return #CARGO_REPRESENTABLE
   function CARGO_REPRESENTABLE:RouteTo( ToPointVec2, Speed )
-    self:F2( ToPointVec2 )
+    self:E2( ToPointVec2 )
   
     local Points = {}
   
@@ -429,7 +429,7 @@ end -- CARGO_REPRESENTABLE
   -- @return #CARGO_REPORTABLE
   function CARGO_REPORTABLE:New( CargoObject, Type, Name, Weight, ReportRadius )
     local self = BASE:Inherit( self, CARGO:New( Type, Name, Weight ) ) -- #CARGO_REPORTABLE
-    self:F( { Type, Name, Weight, ReportRadius } )
+    self:E( { Type, Name, Weight, ReportRadius } )
   
     self.ReportRadius = ReportRadius or 1000
     self.CargoObject = CargoObject
@@ -442,7 +442,7 @@ end -- CARGO_REPRESENTABLE
   -- @param Core.Point#POINT_VEC2 PointVec2
   -- @return #boolean
   function CARGO_REPORTABLE:IsInRadius( PointVec2 )
-    self:F( { PointVec2 } )
+    self:E( { PointVec2 } )
   
     local Distance = 0
     if self:IsLoaded() then
@@ -513,7 +513,7 @@ do -- CARGO_UNIT
 -- @return #CARGO_UNIT
 function CARGO_UNIT:New( CargoUnit, Type, Name, Weight, NearRadius )
   local self = BASE:Inherit( self, CARGO_REPRESENTABLE:New( CargoUnit, Type, Name, Weight, NearRadius ) ) -- #CARGO_UNIT
-  self:F( { Type, Name, Weight, NearRadius } )
+  self:E( { Type, Name, Weight, NearRadius } )
 
   self:T( CargoUnit )
   self.CargoObject = CargoUnit
@@ -542,7 +542,7 @@ end
 -- @param #string To
 -- @param Core.Point#POINT_VEC2 ToPointVec2
 function CARGO_UNIT:onenterUnBoarding( From, Event, To, ToPointVec2, NearRadius )
-  self:F()
+  self:E()
 
   NearRadius = NearRadius or 25
 
@@ -599,9 +599,9 @@ end
 -- @param #string To
 -- @param Core.Point#POINT_VEC2 ToPointVec2
 function CARGO_UNIT:onleaveUnBoarding( From, Event, To, ToPointVec2, NearRadius )
-  self:F( { ToPointVec2, From, Event, To } )
+  self:E( { From, Event, To, ToPointVec2, NearRadius } )
 
-  NearRadius = NearRadius or 25
+  local NearRadius = NearRadius or 25
 
   local Angle = 180
   local Speed = 10
@@ -625,9 +625,9 @@ end
 -- @param #string To
 -- @param Core.Point#POINT_VEC2 ToPointVec2
 function CARGO_UNIT:onafterUnBoarding( From, Event, To, ToPointVec2, NearRadius )
-  self:F( { ToPointVec2, From, Event, To } )
+  self:E( { ToPointVec2, From, Event, To } )
 
-  NearRadius = NearRadius or 25
+  local NearRadius = NearRadius or 25
 
   self.CargoInAir = self.CargoObject:InAir()
 
@@ -652,7 +652,7 @@ end
 -- @param #string To
 -- @param Core.Point#POINT_VEC2
 function CARGO_UNIT:onenterUnLoaded( From, Event, To, ToPointVec2 )
-  self:F( { ToPointVec2, From, Event, To } )
+  self:E( { ToPointVec2, From, Event, To } )
 
   local Angle = 180
   local Speed = 10
@@ -687,9 +687,9 @@ end
 -- @param #string From
 -- @param #string To
 function CARGO_UNIT:onafterBoard( From, Event, To, CargoCarrier, NearRadius, ... )
-  self:F()
+  self:E()
 
-  NearRadius = NearRadius or 25
+  local NearRadius = NearRadius or 25
   
   self.CargoInAir = self.CargoObject:InAir()
 
@@ -735,9 +735,9 @@ end
 -- @param #string To
 -- @param Wrapper.Unit#UNIT CargoCarrier
 function CARGO_UNIT:onleaveBoarding( From, Event, To, CargoCarrier, NearRadius, ... )
-  self:F( { From, Event, To, CargoCarrier.UnitName, NearRadius } )
+  self:E( { From, Event, To, CargoCarrier.UnitName, NearRadius } )
 
-  NearRadius = NearRadius or 25
+  local NearRadius = NearRadius or 25
 
   if self:IsNear( CargoCarrier:GetPointVec2(), NearRadius ) then
     self:__Load( 1, CargoCarrier, ... )
@@ -756,11 +756,11 @@ end
 -- @param Wrapper.Unit#UNIT CargoCarrier
 -- @param #number NearRadius
 function CARGO_UNIT:onafterBoarding( From, Event, To, CargoCarrier, NearRadius, ... )
-  self:F( { From, Event, To, CargoCarrier.UnitName, NearRadius } )
+  self:E( { From, Event, To, CargoCarrier.UnitName, NearRadius } )
   
   
   self:__Boarding( -1, CargoCarrier, NearRadius, ... )
-  self:__Board( -15, CargoCarrier, NearRadius, ... )
+  self:__Board( -10, CargoCarrier, NearRadius, ... )
   
 end
 
@@ -772,13 +772,13 @@ end
 -- @param #string To
 -- @param Wrapper.Unit#UNIT CargoCarrier
 function CARGO_UNIT:onenterBoarding( From, Event, To, CargoCarrier, NearRadius, ... )
-  self:F( { From, Event, To, CargoCarrier.UnitName, NearRadius } )
+  self:E( { From, Event, To, CargoCarrier.UnitName, NearRadius } )
   
   local Speed = 90
   local Angle = 180
   local Distance = 5
   
-  NearRadius = NearRadius or 25
+  local NearRadius = NearRadius or 25
 
   if From == "UnLoaded" or From == "Boarding" then
   
@@ -793,7 +793,7 @@ end
 -- @param #string To
 -- @param Wrapper.Unit#UNIT CargoCarrier
 function CARGO_UNIT:onenterLoaded( From, Event, To, CargoCarrier )
-  self:F()
+  self:E( { From, Event, To, CargoCarrier } )
 
   self.CargoCarrier = CargoCarrier
   
@@ -827,7 +827,7 @@ do -- CARGO_PACKAGE
 -- @return #CARGO_PACKAGE
 function CARGO_PACKAGE:New( CargoCarrier, Type, Name, Weight, ReportRadius, NearRadius )
   local self = BASE:Inherit( self, CARGO_REPRESENTABLE:New( CargoCarrier, Type, Name, Weight, ReportRadius, NearRadius ) ) -- #CARGO_PACKAGE
-  self:F( { Type, Name, Weight, ReportRadius, NearRadius } )
+  self:E( { Type, Name, Weight, ReportRadius, NearRadius } )
 
   self:T( CargoCarrier )
   self.CargoCarrier = CargoCarrier
@@ -845,7 +845,7 @@ end
 -- @param #number BoardDistance
 -- @param #number Angle
 function CARGO_PACKAGE:onafterOnBoard( From, Event, To, CargoCarrier, Speed, BoardDistance, LoadDistance, Angle )
-  self:F()
+  self:E()
 
   self.CargoInAir = self.CargoCarrier:InAir()
 
@@ -878,7 +878,7 @@ end
 -- @param Wrapper.Unit#UNIT CargoCarrier
 -- @return #boolean
 function CARGO_PACKAGE:IsNear( CargoCarrier )
-  self:F()
+  self:E()
 
   local CargoCarrierPoint = CargoCarrier:GetPointVec2()
   
@@ -899,7 +899,7 @@ end
 -- @param #string To
 -- @param Wrapper.Unit#UNIT CargoCarrier
 function CARGO_PACKAGE:onafterOnBoarded( From, Event, To, CargoCarrier, Speed, BoardDistance, LoadDistance, Angle )
-  self:F()
+  self:E()
 
   if self:IsNear( CargoCarrier ) then
     self:__Load( 1, CargoCarrier, Speed, LoadDistance, Angle )
@@ -919,7 +919,7 @@ end
 -- @param #number Radius
 -- @param #number Angle
 function CARGO_PACKAGE:onafterUnBoard( From, Event, To, CargoCarrier, Speed, UnLoadDistance, UnBoardDistance, Radius, Angle )
-  self:F()
+  self:E()
 
   self.CargoInAir = self.CargoCarrier:InAir()
 
@@ -957,7 +957,7 @@ end
 -- @param #string To
 -- @param Wrapper.Unit#UNIT CargoCarrier
 function CARGO_PACKAGE:onafterUnBoarded( From, Event, To, CargoCarrier, Speed )
-  self:F()
+  self:E()
 
   if self:IsNear( CargoCarrier ) then
     self:__UnLoad( 1, CargoCarrier, Speed )
@@ -976,7 +976,7 @@ end
 -- @param #number LoadDistance
 -- @param #number Angle
 function CARGO_PACKAGE:onafterLoad( From, Event, To, CargoCarrier, Speed, LoadDistance, Angle )
-  self:F()
+  self:E()
 
   self.CargoCarrier = CargoCarrier
 
@@ -1002,7 +1002,7 @@ end
 -- @param #number Distance
 -- @param #number Angle
 function CARGO_PACKAGE:onafterUnLoad( From, Event, To, CargoCarrier, Speed, Distance, Angle )
-  self:F()
+  self:E()
   
   local StartPointVec2 = self.CargoCarrier:GetPointVec2()
   local CargoCarrierHeading = self.CargoCarrier:GetHeading() -- Get Heading of object in degrees.
@@ -1049,7 +1049,7 @@ do -- CARGO_GROUP
 -- @return #CARGO_GROUP
 function CARGO_GROUP:New( CargoGroup, Type, Name, ReportRadius )
   local self = BASE:Inherit( self, CARGO_REPORTABLE:New( CargoGroup, Type, Name, 0, ReportRadius ) ) -- #CARGO_GROUP
-  self:F( { Type, Name, ReportRadius } )
+  self:E( { Type, Name, ReportRadius } )
 
   self.CargoSet = SET_CARGO:New()
   
@@ -1082,9 +1082,9 @@ end
 -- @param #string From
 -- @param #string To
 function CARGO_GROUP:onenterBoarding( From, Event, To, CargoCarrier, NearRadius, ... )
-  self:F( { CargoCarrier.UnitName, From, Event, To } )
+  self:E( { CargoCarrier.UnitName, From, Event, To } )
   
-  NearRadius = NearRadius or 25
+  local NearRadius = NearRadius or 25
   
   if From == "UnLoaded" then
 
@@ -1107,7 +1107,7 @@ end
 -- @param #string From
 -- @param #string To
 function CARGO_GROUP:onenterLoaded( From, Event, To, CargoCarrier, ... )
-  self:F( { CargoCarrier.UnitName, From, Event, To } )
+  self:E( { CargoCarrier.UnitName, From, Event, To } )
   
   if From == "UnLoaded" then
     -- For each Cargo object within the CARGO_GROUP, load each cargo to the CargoCarrier.
@@ -1128,9 +1128,9 @@ end
 -- @param #string From
 -- @param #string To
 function CARGO_GROUP:onleaveBoarding( From, Event, To, CargoCarrier, NearRadius, ... )
-  self:F( { CargoCarrier.UnitName, From, Event, To } )
+  self:E( { CargoCarrier.UnitName, From, Event, To } )
 
-  NearRadius = NearRadius or 25
+  local NearRadius = NearRadius or 25
 
   local Boarded = true
 
@@ -1159,9 +1159,9 @@ end
 -- @param #string From
 -- @param #string To
 function CARGO_GROUP:onenterUnBoarding( From, Event, To, ToPointVec2, NearRadius, ... )
-  self:F({From, Event, To, ToPointVec2, NearRadius})
+  self:E( {From, Event, To, ToPointVec2, NearRadius } )
 
-  NearRadius = NearRadius or 25
+  local NearRadius = NearRadius or 25
 
   local Timer = 1
 
@@ -1187,9 +1187,9 @@ end
 -- @param #string From
 -- @param #string To
 function CARGO_GROUP:onleaveUnBoarding( From, Event, To, ToPointVec2, NearRadius, ... )
-  self:F( { From, Event, To, ToPointVec2, NearRadius } )
+  self:E( { From, Event, To, ToPointVec2, NearRadius } )
 
-  NearRadius = NearRadius or 25
+  local NearRadius = NearRadius or 25
 
   local Angle = 180
   local Speed = 10
@@ -1224,9 +1224,9 @@ end
 -- @param #string From
 -- @param #string To
 function CARGO_GROUP:onafterUnBoarding( From, Event, To, ToPointVec2, NearRadius, ... )
-  self:F( { From, Event, To, ToPointVec2, NearRadius } )
+  self:E( { From, Event, To, ToPointVec2, NearRadius } )
 
-  NearRadius = NearRadius or 25
+  local NearRadius = NearRadius or 25
 
   self:__UnLoad( 1, ToPointVec2, ... )
 end
@@ -1240,7 +1240,7 @@ end
 -- @param #string From
 -- @param #string To
 function CARGO_GROUP:onenterUnLoaded( From, Event, To, ToPointVec2, ... )
-  self:F( { From, Event, To, ToPointVec2 } )
+  self:E( { From, Event, To, ToPointVec2 } )
 
   if From == "Loaded" then
     

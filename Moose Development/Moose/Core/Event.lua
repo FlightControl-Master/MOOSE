@@ -890,7 +890,7 @@ function EVENT:onEvent( Event )
         for EventClass, EventData in pairs( self.Events[Event.id][EventPriority] ) do
 
           if Event.IniObjectCategory ~= Object.Category.STATIC then
-            self:E( { "Evaluating: ", EventClass:GetClassNameAndID() } )
+            --self:E( { "Evaluating: ", EventClass:GetClassNameAndID() } )
           end
           
           Event.IniGroup = GROUP:FindByName( Event.IniDCSGroupName )

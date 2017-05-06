@@ -211,7 +211,7 @@ do -- TASK_CARGO
     --- 
     -- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
-    -- @param Tasking.Task_Cargo#TASK_CARGO Task
+    -- @param Tasking.Task_CARGO#TASK_CARGO Task
     function Fsm:onenterWaitingForCommand( TaskUnit, Task )
       self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
 
@@ -472,31 +472,41 @@ do -- TASK_CARGO
     -- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
     -- @param Tasking.Task_Cargo#TASK_CARGO Task
+    -- @param From
+    -- @param Event
+    -- @param To
+    -- @param Cargo
+    -- @param Core.Zone#ZONE_BASE DeployZone
     function Fsm:onafterPrepareUnBoarding( TaskUnit, Task, From, Event, To, Cargo, DeployZone )
-      self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
+      self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID(), From, Event, To, Cargo, DeployZone } )
 
       self.Cargo = Cargo
-      self.DeployZone = DeployZone      
-      self:__UnBoard( -0.1 )
+      self.DeployZone = DeployZone  -- Core.Zone#ZONE_BASE
+      self:__UnBoard( -0.1, Cargo, DeployZone )
     end
     
     --- 
     -- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
     -- @param Tasking.Task_Cargo#TASK_CARGO Task
-    function Fsm:onafterUnBoard( TaskUnit, Task )
-      self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
+    -- @param From
+    -- @param Event
+    -- @param To
+    -- @param Cargo
+    -- @param Core.Zone#ZONE_BASE DeployZone
+    function Fsm:onafterUnBoard( TaskUnit, Task, From, Event, To, Cargo, DeployZone )
+      self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID(), From, Event, To, Cargo, DeployZone } )
 
       function self.Cargo:OnEnterUnLoaded( From, Event, To, DeployZone, TaskProcess )
       
-        self:E({From, Event, To, TaskUnit, TaskProcess })
+        self:E({From, Event, To, DeployZone, TaskProcess })
         
         TaskProcess:__UnBoarded( -0.1 )
       
       end
 
       self.Cargo:MessageToGroup( "UnBoarding ...", TaskUnit:GetGroup() )
-      self.Cargo:UnBoard( self.DeployZone:GetPointVec2(), 20, self )
+      self.Cargo:UnBoard( DeployZone:GetPointVec2(), 400, self )
     end
 
 

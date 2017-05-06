@@ -27,6 +27,18 @@ function MISSION:New( CommandCenter, MissionName, MissionPriority, MissionBriefi
 
   local self = BASE:Inherit( self, FSM:New() ) -- Core.Fsm#FSM
 
+  self:T( { MissionName, MissionPriority, MissionBriefing, MissionCoalition } )
+  
+  self.CommandCenter = CommandCenter
+  CommandCenter:AddMission( self )
+  
+  self.Name = MissionName
+  self.MissionPriority = MissionPriority
+  self.MissionBriefing = MissionBriefing
+  self.MissionCoalition = MissionCoalition
+  
+  self.Tasks = {}
+
   self:SetStartState( "IDLE" )
   
   self:AddTransition( "IDLE", "Start", "ENGAGED" )
@@ -208,17 +220,6 @@ function MISSION:New( CommandCenter, MissionName, MissionPriority, MissionBriefi
   -- @param #MISSION self
   -- @param #number Delay The delay in seconds.
   
-	self:T( { MissionName, MissionPriority, MissionBriefing, MissionCoalition } )
-  
-  self.CommandCenter = CommandCenter
-  CommandCenter:AddMission( self )
-  
-	self.Name = MissionName
-	self.MissionPriority = MissionPriority
-	self.MissionBriefing = MissionBriefing
-	self.MissionCoalition = MissionCoalition
-	
-	self.Tasks = {}
 	
 	-- Private  implementations
 	
@@ -257,7 +258,7 @@ end
 -- @param #MISSION self
 -- @return #MISSION self
 function MISSION:GetName()
-  return self.Name
+  return string.format( "Mission %s (%s)", self.Name, self.MissionPriority )
 end
 
 --- Add a Unit to join the Mission.
