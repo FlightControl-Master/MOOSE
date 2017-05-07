@@ -334,7 +334,7 @@ function POSITIONABLE:GetMessageText( Message, Name ) --R2.1 added
   local DCSObject = self:GetDCSObject()
   if DCSObject then
     Name = Name and ( " (" .. Name .. ")" ) or ""
-    local Callsign = self:GetCallsign() ~= "" and self:GetCallsign() or self:GetName()
+    local Callsign = string.format( "[%s]", self:GetCallsign() ~= "" and self:GetCallsign() or self:GetName() )
     local MessageText = Callsign .. Name .. ": " .. Message
     return MessageText
   end
@@ -383,12 +383,19 @@ end
 -- @param #string Message The message text
 -- @param Dcs.DCSTYpes#Duration Duration The duration of the message.
 -- @param Dcs.DCScoalition#coalition MessageCoalition The Coalition receiving the message.
--- @param #string Name (optional) The Name of the sender. If not provided, the Name is the type of the Positionable.
-function POSITIONABLE:MessageToCoalition( Message, Duration, MessageCoalition, Name )
+function POSITIONABLE:MessageToCoalition( Message, Duration, MessageCoalition )
   self:F2( { Message, Duration } )
 
+  local Name = ""
+  
   local DCSObject = self:GetDCSObject()
   if DCSObject then
+    if MessageCoalition == coalition.side.BLUE then
+      Name = "Blue coalition"
+    end
+    if MessageCoalition == coalition.side.RED then
+      Name = "Red coalition"
+    end
     self:GetMessage( Message, Duration, Name ):ToCoalition( MessageCoalition )
   end
 

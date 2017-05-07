@@ -157,9 +157,9 @@ TASK = {
 -- @param #string TaskName The name of the Task
 -- @param #string TaskType The type of the Task
 -- @return #TASK self
-function TASK:New( Mission, SetGroupAssign, TaskName, TaskType )
+function TASK:New( Mission, SetGroupAssign, TaskName, TaskType, TaskBriefing )
 
-  local self = BASE:Inherit( self, FSM_TASK:New() ) -- Core.Fsm#FSM_TASK
+  local self = BASE:Inherit( self, FSM_TASK:New() ) -- Tasking.Task#TASK
 
   self:SetStartState( "Planned" )
   self:AddTransition( "Planned", "Assign", "Assigned" )
@@ -189,7 +189,7 @@ function TASK:New( Mission, SetGroupAssign, TaskName, TaskType )
   self:SetName( TaskName )
   self:SetID( Mission:GetNextTaskID( self ) ) -- The Mission orchestrates the task sequences ..
 
-  self.TaskBriefing = "You are invited for the task: " .. self.TaskName .. "."
+  self:SetBriefing( TaskBriefing )
   
   self.FsmTemplate = self.FsmTemplate or FSM_PROCESS:New()
   
@@ -413,15 +413,15 @@ do -- Group Assignment
     
     local SetAssignedGroups = self:GetGroups()
     
-    SetAssignedGroups:ForEachGroup(
-      function( AssignedGroup )
-        if self:IsGroupAssigned(AssignedGroup) then
-          self:GetMission():GetCommandCenter():MessageToGroup( string.format( "Task %s is assigned to group %s.", TaskName, TaskGroupName ), AssignedGroup )
-        else
-          self:GetMission():GetCommandCenter():MessageToGroup( string.format( "Task %s is assigned to your group.", TaskName ), AssignedGroup )
-        end
-      end
-    )
+--    SetAssignedGroups:ForEachGroup(
+--      function( AssignedGroup )
+--        if self:IsGroupAssigned(AssignedGroup) then
+--          self:GetMission():GetCommandCenter():MessageToGroup( string.format( "Task %s is assigned to group %s.", TaskName, TaskGroupName ), AssignedGroup )
+--        else
+--          self:GetMission():GetCommandCenter():MessageToGroup( string.format( "Task %s is assigned to your group.", TaskName ), AssignedGroup )
+--        end
+--      end
+--    )
     
     return self
   end
@@ -468,6 +468,8 @@ do -- Group Assignment
     self:F( TaskGroup:GetName() )
     
     local TaskGroupName = TaskGroup:GetName()
+    local Mission = self:GetMission()
+    local CommandCenter = Mission:GetCommandCenter()
     
     self:SetGroupAssigned( TaskGroup )
     
@@ -478,11 +480,16 @@ do -- Group Assignment
       self:E(PlayerName)
       if PlayerName ~= nil or PlayerName ~= "" then
         self:AssignToUnit( TaskUnit )
+        CommandCenter:MessageToGroup( 
+          string.format( 'Task "%s": Briefing for player (%s):\n%s', 
+            self:GetName(), 
+            PlayerName, 
+            self:GetBriefing()
+          ), TaskGroup 
+        )
       end
     end
 
-    local Mission = self:GetMission()
-    local CommandCenter = Mission:GetCommandCenter()
     CommandCenter:SetMenu()
     
     return self
@@ -848,6 +855,13 @@ function TASK:GetTaskName()
   return self.TaskName
 end
 
+--- Returns the @{Task} briefing.
+-- @param #TASK self
+-- @return #string Task briefing.
+function TASK:GetTaskBriefing()
+  return self.TaskBriefing
+end
+
 
 
 
@@ -1117,8 +1131,16 @@ end
 -- @param #string TaskBriefing
 -- @return #TASK self
 function TASK:SetBriefing( TaskBriefing )
+  self:E(TaskBriefing)
   self.TaskBriefing = TaskBriefing
   return self
+end
+
+--- Gets the @{Task} briefing.
+-- @param #TASK self
+-- @return #string The briefing text.
+function TASK:GetBriefing()
+  return self.TaskBriefing
 end
 
 

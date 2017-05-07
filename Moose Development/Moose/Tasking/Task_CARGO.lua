@@ -153,7 +153,7 @@ do -- TASK_CARGO
   -- 
   -- ===
   -- 
-  -- @field #TASK_CARGO TASK_CARGO
+  -- @field #TASK_CARGO
   --   
   TASK_CARGO = {
     ClassName = "TASK_CARGO",
@@ -166,9 +166,10 @@ do -- TASK_CARGO
   -- @param #string TaskName The name of the Task.
   -- @param Core.Set#SET_CARGO SetCargo The scope of the cargo to be transported.
   -- @param #string TaskType The type of Cargo task.
+  -- @param #string TaskBriefing The Cargo Task briefing.
   -- @return #TASK_CARGO self
-  function TASK_CARGO:New( Mission, SetGroup, TaskName, SetCargo, TaskType )
-    local self = BASE:Inherit( self, TASK:New( Mission, SetGroup, TaskName, TaskType ) ) -- #TASK_CARGO
+  function TASK_CARGO:New( Mission, SetGroup, TaskName, SetCargo, TaskType, TaskBriefing )
+    local self = BASE:Inherit( self, TASK:New( Mission, SetGroup, TaskName, TaskType, TaskBriefing ) ) -- #TASK_CARGO
     self:F( {Mission, SetGroup, TaskName, SetCargo, TaskType})
   
     self.SetCargo = SetCargo
@@ -696,9 +697,10 @@ do -- TASK_CARGO_TRANSPORT
   -- @param Set#SET_GROUP SetGroup The set of groups for which the Task can be assigned.
   -- @param #string TaskName The name of the Task.
   -- @param Core.Set#SET_CARGO SetCargo The scope of the cargo to be transported.
+  -- @param #string TaskBriefing The Cargo Task briefing.
   -- @return #TASK_CARGO_TRANSPORT self
-  function TASK_CARGO_TRANSPORT:New( Mission, SetGroup, TaskName, SetCargo )
-    local self = BASE:Inherit( self, TASK_CARGO:New( Mission, SetGroup, TaskName, SetCargo, "Transport" ) ) -- #TASK_CARGO_TRANSPORT
+  function TASK_CARGO_TRANSPORT:New( Mission, SetGroup, TaskName, SetCargo, TaskBriefing )
+    local self = BASE:Inherit( self, TASK_CARGO:New( Mission, SetGroup, TaskName, SetCargo, "Transport", TaskBriefing ) ) -- #TASK_CARGO_TRANSPORT
     self:F()
     
     Mission:AddTask( self )
@@ -709,8 +711,6 @@ do -- TASK_CARGO_TRANSPORT
     self:AddTransition( "*", "CargoPickedUp", "*" )
     self:AddTransition( "*", "CargoDeployed", "*" )
     
-    do
-      
       --- OnBefore Transition Handler for Event CargoPickedUp.
       -- @function [parent=#TASK_CARGO_TRANSPORT] OnBeforeCargoPickedUp
       -- @param #TASK_CARGO_TRANSPORT self
@@ -742,9 +742,7 @@ do -- TASK_CARGO_TRANSPORT
       -- @param #number Delay The delay in seconds.
       -- @param Wrapper.Unit#UNIT TaskUnit The Unit (Client) that PickedUp the cargo. You can use this to retrieve the PlayerName etc.
       -- @param Core.Cargo#CARGO Cargo The Cargo that got PickedUp by the TaskUnit. You can use this to check Cargo Status.
-    end
     
-    do        
       --- OnBefore Transition Handler for Event CargoDeployed.
       -- @function [parent=#TASK_CARGO_TRANSPORT] OnBeforeCargoDeployed
       -- @param #TASK_CARGO_TRANSPORT self
@@ -780,9 +778,25 @@ do -- TASK_CARGO_TRANSPORT
       -- @param Wrapper.Unit#UNIT TaskUnit The Unit (Client) that Deployed the cargo. You can use this to retrieve the PlayerName etc.
       -- @param Core.Cargo#CARGO Cargo The Cargo that got PickedUp by the TaskUnit. You can use this to check Cargo Status.
       -- @param Core.Zone#ZONE DeployZone The zone where the Cargo got Deployed or UnBoarded.
-    end
 
     local Fsm = self:GetUnitProcess()
+
+    local CargoReport = REPORT:New( "Transport Cargo. The following cargo needs to be transported including initial positions:")
+    
+    SetCargo:ForEachCargo(
+      --- @param Core.Cargo#CARGO Cargo
+      function( Cargo )
+        local CargoType = Cargo:GetType()
+        local CargoName = Cargo:GetName()
+        local CargoCoordinate = Cargo:GetCoordinate()
+        CargoReport:Add( string.format( '- "%s" (%s) at %s', CargoName, CargoType, CargoCoordinate:ToString() ) )
+      end
+    )
+    
+    self:SetBriefing( 
+      TaskBriefing or 
+      CargoReport:Text()
+    )
 
     
     return self
@@ -815,7 +829,7 @@ do -- TASK_CARGO_TRANSPORT
         end
       end
     end
-    
+
     return CargoDeployed
   end
   

@@ -280,6 +280,14 @@ function CARGO:GetType()
   return self.Type
 end
 
+--- Get the current coordinates of the Cargo.
+-- @param #CARGO self
+-- @return Core.Point#COORDINATE The coordinates of the Cargo.
+function CARGO:GetCoordinate()
+  return self.CargoObject:GetCoordinate()
+end
+
+
 --- Check if cargo is loaded.
 -- @param #CARGO self
 -- @return #boolean true if loaded

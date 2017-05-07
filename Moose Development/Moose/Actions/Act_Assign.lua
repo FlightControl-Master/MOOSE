@@ -173,8 +173,6 @@ do -- ACT_ASSIGN_ACCEPT
   
     local ProcessGroup = ProcessUnit:GetGroup()
 
-    self:Message( "You are assigned to the task " .. self.Task:GetName() )  
-
     self.Task:Assign( ProcessUnit, ProcessUnit:GetPlayerName() )
   end
   
