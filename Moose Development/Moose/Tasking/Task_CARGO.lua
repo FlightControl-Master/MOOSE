@@ -182,24 +182,24 @@ do -- TASK_CARGO
 
     Fsm:AddProcess   ( "Planned", "Accept", ACT_ASSIGN_ACCEPT:New( self.TaskBriefing ), { Assigned = "SelectAction", Rejected = "Reject" }  )
     
-    Fsm:AddTransition( { "Assigned", "WaitingForCommand", "ArrivedAtPickup", "ArrivedAtDeploy", "Boarded", "UnBoarded", "Landed" }, "SelectAction", "WaitingForCommand" )
+    Fsm:AddTransition( { "Assigned", "WaitingForCommand", "ArrivedAtPickup", "ArrivedAtDeploy", "Boarded", "UnBoarded", "Landed", "Boarding" }, "SelectAction", "*" )
 
-    Fsm:AddTransition( "WaitingForCommand", "RouteToPickup", "RoutingToPickup" )
+    Fsm:AddTransition( "*", "RouteToPickup", "RoutingToPickup" )
     Fsm:AddProcess   ( "RoutingToPickup", "RouteToPickupPoint", ACT_ROUTE_POINT:New(), { Arrived = "ArriveAtPickup" } )
     Fsm:AddTransition( "Arrived", "ArriveAtPickup", "ArrivedAtPickup" )
 
-    Fsm:AddTransition( "WaitingForCommand", "RouteToDeploy", "RoutingToDeploy" )
+    Fsm:AddTransition( "*", "RouteToDeploy", "RoutingToDeploy" )
     Fsm:AddProcess   ( "RoutingToDeploy", "RouteToDeployZone", ACT_ROUTE_ZONE:New(), { Arrived = "ArriveAtDeploy" } )
     Fsm:AddTransition( "Arrived", "ArriveAtDeploy", "ArrivedAtDeploy" )
     
     Fsm:AddTransition( { "ArrivedAtPickup", "ArrivedAtDeploy", "Landing" }, "Land", "Landing" )
     Fsm:AddTransition( "Landing", "Landed", "Landed" )
     
-    Fsm:AddTransition( "WaitingForCommand", "PrepareBoarding", "AwaitBoarding" )
+    Fsm:AddTransition( "*", "PrepareBoarding", "AwaitBoarding" )
     Fsm:AddTransition( "AwaitBoarding", "Board", "Boarding" )
     Fsm:AddTransition( "Boarding", "Boarded", "Boarded" )
 
-    Fsm:AddTransition( "WaitingForCommand", "PrepareUnBoarding", "AwaitUnBoarding" )
+    Fsm:AddTransition( "*", "PrepareUnBoarding", "AwaitUnBoarding" )
     Fsm:AddTransition( "AwaitUnBoarding", "UnBoard", "UnBoarding" )
     Fsm:AddTransition( "UnBoarding", "UnBoarded", "UnBoarded" )
     
@@ -213,14 +213,12 @@ do -- TASK_CARGO
     -- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
     -- @param Tasking.Task_CARGO#TASK_CARGO Task
-    function Fsm:onenterWaitingForCommand( TaskUnit, Task )
+    function Fsm:onafterSelectAction( TaskUnit, Task )
       self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
 
-      if TaskUnit.Menu then
-        TaskUnit.Menu:Remove()
-      end
+      local MenuTime = timer.getTime()
             
-      TaskUnit.Menu = MENU_GROUP:New( TaskUnit:GetGroup(), Task:GetName() .. " @ " .. TaskUnit:GetName() )
+      TaskUnit.Menu = MENU_GROUP:New( TaskUnit:GetGroup(), Task:GetName() .. " @ " .. TaskUnit:GetName() ):SetTime( MenuTime )
       
       Task.SetCargo:ForEachCargo(
         
@@ -235,7 +233,7 @@ do -- TASK_CARGO
                 self.MenuBoardCargo,
                 self,
                 Cargo
-              )
+              ):SetTime(MenuTime)
             else
               MENU_GROUP_COMMAND:New(
                 TaskUnit:GetGroup(),
@@ -244,23 +242,24 @@ do -- TASK_CARGO
                 self.MenuRouteToPickup,
                 self,
                 Cargo
-              )
+              ):SetTime(MenuTime)
             end
           end
           
           if Cargo:IsLoaded() then
+            
+            MENU_GROUP_COMMAND:New(
+              TaskUnit:GetGroup(),
+              "Unboard cargo " .. Cargo.Name,
+              TaskUnit.Menu,
+              self.MenuUnBoardCargo,
+              self,
+              Cargo
+            ):SetTime(MenuTime)
+
+            -- Deployzones are optional zones that can be selected to request routing information.
             for DeployZoneName, DeployZone in pairs( Task.DeployZones ) do
-              if Cargo:IsInZone( DeployZone ) then
-                MENU_GROUP_COMMAND:New(
-                  TaskUnit:GetGroup(),
-                  "Unboard cargo " .. Cargo.Name,
-                  TaskUnit.Menu,
-                  self.MenuUnBoardCargo,
-                  self,
-                  Cargo,
-                  DeployZone
-                )
-              else
+              if not Cargo:IsInZone( DeployZone ) then
                 MENU_GROUP_COMMAND:New(
                   TaskUnit:GetGroup(),
                   "Route to Deploy cargo at " .. DeployZoneName,
@@ -268,13 +267,16 @@ do -- TASK_CARGO
                   self.MenuRouteToDeploy,
                   self,
                   DeployZone
-                )
+                ):SetTime(MenuTime)
               end
             end
           end
         
         end
       )
+
+      TaskUnit.Menu:Remove( MenuTime )
+      
       
       self:__SelectAction( -15 )
       
@@ -476,12 +478,20 @@ do -- TASK_CARGO
     -- @param To
     -- @param Cargo
     -- @param Core.Zone#ZONE_BASE DeployZone
-    function Fsm:onafterPrepareUnBoarding( TaskUnit, Task, From, Event, To, Cargo, DeployZone )
-      self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID(), From, Event, To, Cargo, DeployZone } )
+    function Fsm:onafterPrepareUnBoarding( TaskUnit, Task, From, Event, To, Cargo  )
+      self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID(), From, Event, To, Cargo  } )
 
       self.Cargo = Cargo
-      self.DeployZone = DeployZone  -- Core.Zone#ZONE_BASE
-      self:__UnBoard( -0.1, Cargo, DeployZone )
+      self.DeployZone = nil
+
+      -- Check if the Cargo is at a deployzone... If it is, provide it as a parameter!      
+      for DeployZoneName, DeployZone in pairs( Task.DeployZones ) do
+        if Cargo:IsInZone( DeployZone ) then
+          self.DeployZone = DeployZone  -- Core.Zone#ZONE_BASE
+          break      
+        end
+      end
+      self:__UnBoard( -0.1, Cargo, self.DeployZone )
     end
     
     --- 
