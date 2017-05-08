@@ -277,6 +277,8 @@ do -- TASK_CARGO
       )
       
       self:__SelectAction( -15 )
+      
+      Task:GetMission():GetCommandCenter():MessageToGroup("Cargo menu is ready ...", TaskUnit:GetGroup() )
     end
     
     --- 
@@ -429,14 +431,10 @@ do -- TASK_CARGO
       self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
 
       function self.Cargo:OnEnterLoaded( From, Event, To, TaskUnit, TaskProcess )
-      
         self:E({From, Event, To, TaskUnit, TaskProcess })
-        
         TaskProcess:__Boarded( 0.1 )
-      
       end
 
-      
       if self.Cargo:IsInRadius( TaskUnit:GetPointVec2() ) then
         if TaskUnit:InAir() then
           --- ABORT the boarding. Split group if any and go back to select action.
