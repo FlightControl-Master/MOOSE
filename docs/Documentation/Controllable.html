@@ -539,7 +539,7 @@ This is different from the EnRoute tasks, where the targets of the task need to 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).TaskAttackMapObject">CONTROLLABLE:TaskAttackMapObject(Vec2, WeaponType, WeaponExpend, AttackQty, Direction, ControllableAttack)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).TaskAttackMapObject">CONTROLLABLE:TaskAttackMapObject(Vec2, GroupAttack, WeaponExpend, AttackQty, Direction, Altitude, WeaponType)</a></td>
 		<td class="summary">
 <p>(AIR) Attacking the map object (building, structure, e.t.c).</p>
 </td>
@@ -551,7 +551,7 @@ This is different from the EnRoute tasks, where the targets of the task need to 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).TaskBombing">CONTROLLABLE:TaskBombing(Vec2, GroupAttack, WeaponExpend, AttackQty, Direction, WeaponType)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).TaskBombing">CONTROLLABLE:TaskBombing(Vec2, GroupAttack, WeaponExpend, AttackQty, Direction, Altitude, WeaponType)</a></td>
 		<td class="summary">
 <p>(AIR) Delivering weapon at the point on the ground. </p>
 </td>
@@ -2095,7 +2095,7 @@ The DCS task structure.</p>
 <dt>
 
 <a id="#(CONTROLLABLE).TaskAttackMapObject" >
-<strong>CONTROLLABLE:TaskAttackMapObject(Vec2, WeaponType, WeaponExpend, AttackQty, Direction, ControllableAttack)</strong>
+<strong>CONTROLLABLE:TaskAttackMapObject(Vec2, GroupAttack, WeaponExpend, AttackQty, Direction, Altitude, WeaponType)</strong>
 </a>
 </dt>
 <dd>
@@ -2107,13 +2107,13 @@ The DCS task structure.</p>
 				<li>
 				
 <p><code><em><a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a> Vec2 </em></code>: 
-2D-coordinates of the point the map object is closest to. The distance between the point and the map object must not be greater than 2000 meters. Object id is not used here because Mission Editor doesn't support map object identificators.</p>
+2D-coordinates of the point to deliver weapon at.</p>
 
 				</li>
 				<li>
 				
-<p><code><em>#number WeaponType </em></code>: 
-(optional) Bitmask of weapon types those allowed to use. If parameter is not defined that means no limits on weapon usage.</p>
+<p><code><em>#boolean GroupAttack </em></code>: 
+(optional) If true, all units in the group will attack the Unit when found.</p>
 
 				</li>
 				<li>
@@ -2136,8 +2136,14 @@ The DCS task structure.</p>
 				</li>
 				<li>
 				
-<p><code><em>#boolean ControllableAttack </em></code>: 
-(optional) Flag indicates that the target must be engaged by all aircrafts of the controllable. Has effect only if the task is assigned to a controllable, not to a single aircraft.</p>
+<p><code><em>#number Altitude </em></code>: 
+(optional) The altitude from where to attack.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number WeaponType </em></code>: 
+(optional) The WeaponType.</p>
 
 				</li>
 		</ul>
@@ -2221,7 +2227,7 @@ The DCS task structure.</p>
 <dt>
 
 <a id="#(CONTROLLABLE).TaskBombing" >
-<strong>CONTROLLABLE:TaskBombing(Vec2, GroupAttack, WeaponExpend, AttackQty, Direction, WeaponType)</strong>
+<strong>CONTROLLABLE:TaskBombing(Vec2, GroupAttack, WeaponExpend, AttackQty, Direction, Altitude, WeaponType)</strong>
 </a>
 </dt>
 <dd>
@@ -2239,7 +2245,7 @@ The DCS task structure.</p>
 				<li>
 				
 <p><code><em>#boolean GroupAttack </em></code>: 
-(optional) Flag indicates that the target must be engaged by all aircrafts of the group. Has effect only if the task is assigned to a group, not to a single aircraft.</p>
+(optional) If true, all units in the group will attack the Unit when found.</p>
 
 				</li>
 				<li>
@@ -2251,7 +2257,7 @@ The DCS task structure.</p>
 				<li>
 				
 <p><code><em>#number AttackQty </em></code>: 
-(optional) Desired quantity of passes. The parameter is not the same in AttackGroup and AttackUnit tasks. </p>
+(optional) This parameter limits maximal quantity of attack. The aicraft/controllable will not make more attack than allowed even if the target controllable not destroyed and the aicraft/controllable still have ammo. If not defined the aircraft/controllable will attack target until it will be destroyed or until the aircraft/controllable will run out of ammo.</p>
 
 				</li>
 				<li>
@@ -2262,8 +2268,14 @@ The DCS task structure.</p>
 				</li>
 				<li>
 				
+<p><code><em>#number Altitude </em></code>: 
+(optional) The altitude from where to attack.</p>
+
+				</li>
+				<li>
+				
 <p><code><em>#number WeaponType </em></code>: 
-(optional) Bitmask of weapon types those allowed to use. If parameter is not defined that means no limits on weapon usage.</p>
+(optional) The WeaponType.</p>
 
 				</li>
 		</ul>

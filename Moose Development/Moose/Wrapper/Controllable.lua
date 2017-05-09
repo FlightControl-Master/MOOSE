@@ -585,37 +585,29 @@ end
 --- (AIR) Delivering weapon at the point on the ground. 
 -- @param #CONTROLLABLE self
 -- @param Dcs.DCSTypes#Vec2 Vec2 2D-coordinates of the point to deliver weapon at.
--- @param #boolean GroupAttack (optional) Flag indicates that the target must be engaged by all aircrafts of the group. Has effect only if the task is assigned to a group, not to a single aircraft.
+-- @param #boolean GroupAttack (optional) If true, all units in the group will attack the Unit when found.
 -- @param Dcs.DCSTypes#AI.Task.WeaponExpend WeaponExpend (optional) Determines how much weapon will be released at each attack. If parameter is not defined the unit / controllable will choose expend on its own discretion.
--- @param #number AttackQty (optional) Desired quantity of passes. The parameter is not the same in AttackGroup and AttackUnit tasks. 
+-- @param #number AttackQty (optional) This parameter limits maximal quantity of attack. The aicraft/controllable will not make more attack than allowed even if the target controllable not destroyed and the aicraft/controllable still have ammo. If not defined the aircraft/controllable will attack target until it will be destroyed or until the aircraft/controllable will run out of ammo.
 -- @param Dcs.DCSTypes#Azimuth Direction (optional) Desired ingress direction from the target to the attacking aircraft. Controllable/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain controllable/aircraft will choose another direction.
--- @param #number WeaponType (optional) Bitmask of weapon types those allowed to use. If parameter is not defined that means no limits on weapon usage.
+-- @param #number Altitude (optional) The altitude from where to attack.
+-- @param #number WeaponType (optional) The WeaponType.
 -- @return Dcs.DCSTasking.Task#Task The DCS task structure.
-function CONTROLLABLE:TaskBombing( Vec2, GroupAttack, WeaponExpend, AttackQty, Direction, WeaponType )
-  self:F2( { self.ControllableName, Vec2, GroupAttack, WeaponExpend, AttackQty, Direction, WeaponType } )
-
---  Bombing = { 
---    id = 'Bombing', 
---    params = { 
---      point = Vec2,
---      weaponType = number, 
---      expend = enum AI.Task.WeaponExpend,
---      attackQty = number, 
---      direction = Azimuth, 
---      controllableAttack = boolean, 
---    } 
---  } 
+function CONTROLLABLE:TaskBombing( Vec2, GroupAttack, WeaponExpend, AttackQty, Direction, Altitude, WeaponType )
+  self:F2( { self.ControllableName, Vec2, GroupAttack, WeaponExpend, AttackQty, Direction, Altitude, WeaponType } )
 
   local DCSTask
   DCSTask = { 
     id = 'Bombing',
     params = {
       point = Vec2,
-      groupAttack = GroupAttack, 
+      groupAttack = GroupAttack or false,
       expend = WeaponExpend or "Auto",
+      attackQtyLimit = AttackQty and true or false,
       attackQty = AttackQty, 
       directionEnabled = Direction and true or false,
       direction = Direction, 
+      altitudeEnabled = Altitude and true or false,
+      altitude = Altitude or 30,
       weaponType = WeaponType, 
       },
   },
@@ -623,6 +615,41 @@ function CONTROLLABLE:TaskBombing( Vec2, GroupAttack, WeaponExpend, AttackQty, D
   self:T3( { DCSTask } )
   return DCSTask
 end
+
+--- (AIR) Attacking the map object (building, structure, e.t.c).
+-- @param #CONTROLLABLE self
+-- @param Dcs.DCSTypes#Vec2 Vec2 2D-coordinates of the point to deliver weapon at.
+-- @param #boolean GroupAttack (optional) If true, all units in the group will attack the Unit when found.
+-- @param Dcs.DCSTypes#AI.Task.WeaponExpend WeaponExpend (optional) Determines how much weapon will be released at each attack. If parameter is not defined the unit / controllable will choose expend on its own discretion.
+-- @param #number AttackQty (optional) This parameter limits maximal quantity of attack. The aicraft/controllable will not make more attack than allowed even if the target controllable not destroyed and the aicraft/controllable still have ammo. If not defined the aircraft/controllable will attack target until it will be destroyed or until the aircraft/controllable will run out of ammo.
+-- @param Dcs.DCSTypes#Azimuth Direction (optional) Desired ingress direction from the target to the attacking aircraft. Controllable/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain controllable/aircraft will choose another direction.
+-- @param #number Altitude (optional) The altitude from where to attack.
+-- @param #number WeaponType (optional) The WeaponType.
+-- @return Dcs.DCSTasking.Task#Task The DCS task structure.
+function CONTROLLABLE:TaskAttackMapObject( Vec2, GroupAttack, WeaponExpend, AttackQty, Direction, Altitude, WeaponType )
+  self:F2( { self.ControllableName, Vec2, GroupAttack, WeaponExpend, AttackQty, Direction, Altitude, WeaponType } )
+
+  local DCSTask
+  DCSTask = { 
+    id = 'AttackMapObject',
+    params = {
+      point = Vec2,
+      groupAttack = GroupAttack or false,
+      expend = WeaponExpend or "Auto",
+      attackQtyLimit = AttackQty and true or false,
+      attackQty = AttackQty, 
+      directionEnabled = Direction and true or false,
+      direction = Direction, 
+      altitudeEnabled = Altitude and true or false,
+      altitude = Altitude or 30,
+      weaponType = WeaponType, 
+    },
+  },
+
+  self:T3( { DCSTask } )
+  return DCSTask
+end
+
 
 --- (AIR) Orbit at a specified position at a specified alititude during a specified duration with a specified speed.
 -- @param #CONTROLLABLE self
@@ -702,45 +729,6 @@ end
 
 
 
---- (AIR) Attacking the map object (building, structure, e.t.c).
--- @param #CONTROLLABLE self
--- @param Dcs.DCSTypes#Vec2 Vec2 2D-coordinates of the point the map object is closest to. The distance between the point and the map object must not be greater than 2000 meters. Object id is not used here because Mission Editor doesn't support map object identificators.
--- @param #number WeaponType (optional) Bitmask of weapon types those allowed to use. If parameter is not defined that means no limits on weapon usage.
--- @param Dcs.DCSTypes#AI.Task.WeaponExpend WeaponExpend (optional) Determines how much weapon will be released at each attack. If parameter is not defined the unit / controllable will choose expend on its own discretion.
--- @param #number AttackQty (optional) This parameter limits maximal quantity of attack. The aicraft/controllable will not make more attack than allowed even if the target controllable not destroyed and the aicraft/controllable still have ammo. If not defined the aircraft/controllable will attack target until it will be destroyed or until the aircraft/controllable will run out of ammo.
--- @param Dcs.DCSTypes#Azimuth Direction (optional) Desired ingress direction from the target to the attacking aircraft. Controllable/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain controllable/aircraft will choose another direction.
--- @param #boolean ControllableAttack (optional) Flag indicates that the target must be engaged by all aircrafts of the controllable. Has effect only if the task is assigned to a controllable, not to a single aircraft.
--- @return Dcs.DCSTasking.Task#Task The DCS task structure.
-function CONTROLLABLE:TaskAttackMapObject( Vec2, WeaponType, WeaponExpend, AttackQty, Direction, ControllableAttack )
-  self:F2( { self.ControllableName, Vec2, WeaponType, WeaponExpend, AttackQty, Direction, ControllableAttack } )
-
---  AttackMapObject = { 
---    id = 'AttackMapObject', 
---    params = { 
---      point = Vec2,
---      weaponType = number, 
---      expend = enum AI.Task.WeaponExpend,
---      attackQty = number, 
---      direction = Azimuth, 
---      controllableAttack = boolean, 
---    } 
---  } 
-
-  local DCSTask
-  DCSTask = { id = 'AttackMapObject',
-    params = {
-    point = Vec2,
-    weaponType = WeaponType, 
-    expend = WeaponExpend,
-    attackQty = AttackQty, 
-    direction = Direction, 
-    controllableAttack = ControllableAttack, 
-    },
-  },
-
-  self:T3( { DCSTask } )
-  return DCSTask
-end
 
 
 --- (AIR) Delivering weapon on the runway.

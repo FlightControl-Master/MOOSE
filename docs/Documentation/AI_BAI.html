@@ -96,7 +96,7 @@
 	<div id="content">
    <h1>Module <code>AI_BAI</code></h1>
    
-<p><strong>AI</strong> -- <strong>Provide Battleground Air Interdiction (bombing).</strong></p>
+<p><strong>AI</strong> -- <strong>Provide Battlefield Air Interdiction (bombing).</strong></p>
 
 <p><img src="..\Presentations\AI_BAI\Dia1.JPG" alt="Banner Image"/></p>
 
@@ -342,6 +342,30 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_BAI_ZONE).Search">AI_BAI_ZONE.Search</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_BAI_ZONE).SearchOff">AI_BAI_ZONE:SearchOff()</a></td>
+		<td class="summary">
+<p>If Search is Off, the current zone coordinate will be the center of the bombing.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_BAI_ZONE).SearchOn">AI_BAI_ZONE:SearchOn()</a></td>
+		<td class="summary">
+<p>If Search is On, BAI will search for potential targets in the zone.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_BAI_ZONE).SearchOnOff">AI_BAI_ZONE:SearchOnOff(Search)</a></td>
+		<td class="summary">
+<p>Specifies whether to search for potential targets in the zone, or let the center of the zone be the bombing coordinate.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(AI_BAI_ZONE).SetEngageZone">AI_BAI_ZONE:SetEngageZone(EngageZone)</a></td>
 		<td class="summary">
 <p>Set the Engage Zone where the AI is performing BOMB.</p>
@@ -489,7 +513,7 @@ Any target that is detected in the Engage Zone will be reported and will be dest
 
 <p><img src="..\Presentations\AI_BAI\Dia10.JPG" alt="Engage Event"/></p>
 
-<p>When the AI has accomplished the BOMB, it will fly back to the Patrol Zone.</p>
+<p>When the AI has accomplished the Bombing, it will fly back to the Patrol Zone.</p>
 
 <p><img src="..\Presentations\AI_BAI\Dia11.JPG" alt="Engage Event"/></p>
 
@@ -533,6 +557,19 @@ It can be notified to go RTB through the <strong>RTB</strong> event.</p>
     <li>**<a href="##(AI_BAI_ZONE).Destroyed">AI<em>BAI</em>ZONE.Destroyed</a>**: The AI has destroyed all target <a href="Unit.html">Unit</a>s assigned in the BOMB task.</li>
     <li><strong>Status</strong>: The AI is checking status (fuel and damage). When the tresholds have been reached, the AI will RTB.</li>
 </ul>
+
+<h2>3. Modify the Engage Zone behaviour to pinpoint a <strong>map object</strong> or <strong>scenery object</strong></h2>
+
+<p>Use the method <a href="##(AI_BAI_ZONE).SearchOff">AI<em>BAI</em>ZONE.SearchOff</a>() to specify that the EngageZone is not to be searched for potential targets (units), but that the center of the zone
+is the point where a map object is to be destroyed (like a bridge).</p>
+
+<p>Example:</p>
+
+<pre><code> -- Tell the BAI not to search for potential targets in the BAIEngagementZone, but rather use the center of the BAIEngagementZone as the bombing location.
+ AIBAIZone:SearchOff()
+</code></pre>
+
+<p>Searching can be switched back on with the method <a href="##(AI_BAI_ZONE).SearchOn">AI<em>BAI</em>ZONE.SearchOn</a>(). Use the method <a href="##(AI_BAI_ZONE).SearchOnOff">AI<em>BAI</em>ZONE.SearchOnOff</a>() to flexibily switch searching on or off.</p>
 
 <hr/>
 
@@ -1363,6 +1400,85 @@ The To State string.</p>
 				
 <p><em>#boolean:</em>
 Return false to cancel Transition.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(AI_BAI_ZONE).Search" >
+<strong>AI_BAI_ZONE.Search</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_BAI_ZONE).SearchOff" >
+<strong>AI_BAI_ZONE:SearchOff()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>If Search is Off, the current zone coordinate will be the center of the bombing.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(AI_BAI_ZONE)">#AI<em>BAI</em>ZONE</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_BAI_ZONE).SearchOn" >
+<strong>AI_BAI_ZONE:SearchOn()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>If Search is On, BAI will search for potential targets in the zone.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(AI_BAI_ZONE)">#AI<em>BAI</em>ZONE</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_BAI_ZONE).SearchOnOff" >
+<strong>AI_BAI_ZONE:SearchOnOff(Search)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Specifies whether to search for potential targets in the zone, or let the center of the zone be the bombing coordinate.</p>
+
+	
+<p>AI<em>BAI</em>ZONE will search for potential targets by default.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> Search </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(AI_BAI_ZONE)">#AI<em>BAI</em>ZONE</a>:</em></p>
+
 
 </dd>
 </dl>

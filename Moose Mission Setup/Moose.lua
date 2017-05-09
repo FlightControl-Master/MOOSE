@@ -1,5 +1,5 @@
 env.info( '*** MOOSE DYNAMIC INCLUDE START *** ' )
-env.info( 'Moose Generation Timestamp: 20170509_1415' )
+env.info( 'Moose Generation Timestamp: 20170509_2025' )
 
 local base = _G
 
