@@ -246,6 +246,8 @@ function CARGO:New( Type, Name, Weight ) --R2.1
   self:AddTransition( "UnBoarding", "UnBoarding", "UnBoarding" )
   self:AddTransition( "UnBoarding", "UnLoad", "UnLoaded" )
   self:AddTransition( "Loaded", "UnLoad", "UnLoaded" )
+  self:AddTransition( "*", "Destroyed", "Destroyed" )
+  self:AddTransition( "*", "Respawn", "UnLoaded" )
 
 
   self.Type = Type
@@ -263,6 +265,7 @@ function CARGO:New( Type, Name, Weight ) --R2.1
   CARGOS[self.Name] = self
 
   self:SetEventPriority( 5 )
+  
 
   return self
 end
@@ -272,6 +275,17 @@ end
 -- @return #string The name of the Cargo.
 function CARGO:GetName() --R2.1
   return self.Name
+end
+
+--- Get the object name of the Cargo.
+-- @param #CARGO self
+-- @return #string The object name of the Cargo.
+function CARGO:GetObjectName() --R2.1
+  if self:IsLoaded() then
+    return self.CargoCarrier:GetName()
+  else
+    return self.CargoObject:GetName()
+  end 
 end
 
 --- Get the type of the Cargo.
@@ -302,6 +316,20 @@ end
 function CARGO:IsUnLoaded()
   return self:Is( "UnLoaded" )
 end
+
+--- Check if cargo is alive.
+-- @param #CARGO self
+-- @return #boolean true if unloaded
+function CARGO:IsAlive()
+
+  if self:IsLoaded() then
+    return self.CargoCarrier:IsAlive()
+  else
+    return self.CargoObject:IsAlive()
+  end 
+end
+
+
 
 
 --- Template method to spawn a new representation of the CARGO in the simulator.
@@ -529,6 +557,16 @@ function CARGO_UNIT:New( CargoUnit, Type, Name, Weight, NearRadius )
 
   self:T( self.ClassName )
 
+  self:HandleEvent( EVENTS.Dead,
+    --- @param #CARGO Cargo
+    -- @param Core.Event#EVENTDATA EventData 
+    function( Cargo, EventData )
+      if Cargo:GetObjectName() == EventData.IniUnit:GetName() then
+        self:E( { "Cargo destroyed", Cargo } )
+        Cargo:Destroyed()
+      end
+    end
+  )
 
   return self
 end
@@ -949,6 +987,7 @@ function CARGO_GROUP:onafterBoarding( From, Event, To, CargoCarrier, NearRadius,
 
   local Boarded = true
   local Cancelled = false
+  local Dead = true
 
   self.CargoSet:Flush()
 
@@ -962,18 +1001,26 @@ function CARGO_GROUP:onafterBoarding( From, Event, To, CargoCarrier, NearRadius,
     if Cargo:is( "UnLoaded" ) then
       Cancelled = true
     end
-    
+
+    if not Cargo:is( "Destroyed" ) then
+      Dead = false
+    end
     
   end
 
-  if not Cancelled then
-    if not Boarded then
-      self:__Boarding( 1, CargoCarrier, NearRadius, ... )
+  if not Dead then
+
+    if not Cancelled then
+      if not Boarded then
+        self:__Boarding( 1, CargoCarrier, NearRadius, ... )
+      else
+        self:__Load( 1, CargoCarrier, ... )
+      end
     else
-      self:__Load( 1, CargoCarrier, ... )
+        self:__CancelBoarding( 1, CargoCarrier, NearRadius, ... )
     end
   else
-    self:__CancelBoarding( 1, CargoCarrier, NearRadius, ... )
+    self:__Destroyed( 1, CargoCarrier, NearRadius, ... )
   end
   
 end
