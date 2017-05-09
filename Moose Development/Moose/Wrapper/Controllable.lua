@@ -585,14 +585,14 @@ end
 --- (AIR) Delivering weapon at the point on the ground. 
 -- @param #CONTROLLABLE self
 -- @param Dcs.DCSTypes#Vec2 Vec2 2D-coordinates of the point to deliver weapon at.
--- @param #number WeaponType (optional) Bitmask of weapon types those allowed to use. If parameter is not defined that means no limits on weapon usage.
+-- @param #boolean GroupAttack (optional) Flag indicates that the target must be engaged by all aircrafts of the group. Has effect only if the task is assigned to a group, not to a single aircraft.
 -- @param Dcs.DCSTypes#AI.Task.WeaponExpend WeaponExpend (optional) Determines how much weapon will be released at each attack. If parameter is not defined the unit / controllable will choose expend on its own discretion.
 -- @param #number AttackQty (optional) Desired quantity of passes. The parameter is not the same in AttackGroup and AttackUnit tasks. 
 -- @param Dcs.DCSTypes#Azimuth Direction (optional) Desired ingress direction from the target to the attacking aircraft. Controllable/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain controllable/aircraft will choose another direction.
--- @param #boolean ControllableAttack (optional) Flag indicates that the target must be engaged by all aircrafts of the controllable. Has effect only if the task is assigned to a controllable, not to a single aircraft.
+-- @param #number WeaponType (optional) Bitmask of weapon types those allowed to use. If parameter is not defined that means no limits on weapon usage.
 -- @return Dcs.DCSTasking.Task#Task The DCS task structure.
-function CONTROLLABLE:TaskBombing( Vec2, WeaponType, WeaponExpend, AttackQty, Direction, ControllableAttack )
-  self:F2( { self.ControllableName, Vec2, WeaponType, WeaponExpend, AttackQty, Direction, ControllableAttack } )
+function CONTROLLABLE:TaskBombing( Vec2, GroupAttack, WeaponExpend, AttackQty, Direction, WeaponType )
+  self:F2( { self.ControllableName, Vec2, GroupAttack, WeaponExpend, AttackQty, Direction, WeaponType } )
 
 --  Bombing = { 
 --    id = 'Bombing', 
@@ -607,15 +607,17 @@ function CONTROLLABLE:TaskBombing( Vec2, WeaponType, WeaponExpend, AttackQty, Di
 --  } 
 
   local DCSTask
-  DCSTask = { id = 'Bombing',
+  DCSTask = { 
+    id = 'Bombing',
     params = {
-    point = Vec2,
-    weaponType = WeaponType, 
-    expend = WeaponExpend,
-    attackQty = AttackQty, 
-    direction = Direction, 
-    controllableAttack = ControllableAttack, 
-    },
+      point = Vec2,
+      groupAttack = GroupAttack, 
+      expend = WeaponExpend or "Auto",
+      attackQty = AttackQty, 
+      directionEnabled = Direction and true or false,
+      direction = Direction, 
+      weaponType = WeaponType, 
+      },
   },
 
   self:T3( { DCSTask } )

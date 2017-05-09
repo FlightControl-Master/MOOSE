@@ -17,6 +17,7 @@
 				<a href="index.html">index</a>
 			</li></ul>
 		<ul>
+					<li><a href="AI_BAI.html">AI_BAI</a></li>
 					<li><a href="AI_Balancer.html">AI_Balancer</a></li>
 					<li><a href="AI_Cap.html">AI_Cap</a></li>
 					<li><a href="AI_Cas.html">AI_Cas</a></li>
@@ -550,7 +551,7 @@ This is different from the EnRoute tasks, where the targets of the task need to 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).TaskBombing">CONTROLLABLE:TaskBombing(Vec2, WeaponType, WeaponExpend, AttackQty, Direction, ControllableAttack)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).TaskBombing">CONTROLLABLE:TaskBombing(Vec2, GroupAttack, WeaponExpend, AttackQty, Direction, WeaponType)</a></td>
 		<td class="summary">
 <p>(AIR) Delivering weapon at the point on the ground. </p>
 </td>
@@ -2220,7 +2221,7 @@ The DCS task structure.</p>
 <dt>
 
 <a id="#(CONTROLLABLE).TaskBombing" >
-<strong>CONTROLLABLE:TaskBombing(Vec2, WeaponType, WeaponExpend, AttackQty, Direction, ControllableAttack)</strong>
+<strong>CONTROLLABLE:TaskBombing(Vec2, GroupAttack, WeaponExpend, AttackQty, Direction, WeaponType)</strong>
 </a>
 </dt>
 <dd>
@@ -2237,8 +2238,8 @@ The DCS task structure.</p>
 				</li>
 				<li>
 				
-<p><code><em>#number WeaponType </em></code>: 
-(optional) Bitmask of weapon types those allowed to use. If parameter is not defined that means no limits on weapon usage.</p>
+<p><code><em>#boolean GroupAttack </em></code>: 
+(optional) Flag indicates that the target must be engaged by all aircrafts of the group. Has effect only if the task is assigned to a group, not to a single aircraft.</p>
 
 				</li>
 				<li>
@@ -2261,8 +2262,8 @@ The DCS task structure.</p>
 				</li>
 				<li>
 				
-<p><code><em>#boolean ControllableAttack </em></code>: 
-(optional) Flag indicates that the target must be engaged by all aircrafts of the controllable. Has effect only if the task is assigned to a controllable, not to a single aircraft.</p>
+<p><code><em>#number WeaponType </em></code>: 
+(optional) Bitmask of weapon types those allowed to use. If parameter is not defined that means no limits on weapon usage.</p>
 
 				</li>
 		</ul>

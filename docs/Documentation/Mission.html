@@ -17,6 +17,7 @@
 				<a href="index.html">index</a>
 			</li></ul>
 		<ul>
+					<li><a href="AI_BAI.html">AI_BAI</a></li>
 					<li><a href="AI_Balancer.html">AI_Balancer</a></li>
 					<li><a href="AI_Cap.html">AI_Cap</a></li>
 					<li><a href="AI_Cas.html">AI_Cas</a></li>
@@ -131,9 +132,21 @@ A <a href="CLIENT.html">CLIENT</a> needs to be registered within the <a href="MI
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MISSION).AssignedGroups">MISSION.AssignedGroups</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(MISSION).ClassName">MISSION.ClassName</a></td>
 		<td class="summary">
 
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MISSION).ClearGroupAssignment">MISSION:ClearGroupAssignment(MissionGroup)</a></td>
+		<td class="summary">
+<p>Clear the <a href="Group.html">Group</a> assignment from the <a href="Mission.html">Mission</a>.</p>
 </td>
 		</tr>
 		<tr>
@@ -197,6 +210,12 @@ A <a href="CLIENT.html">CLIENT</a> needs to be registered within the <a href="MI
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MISSION).GetTaskTypes">MISSION:GetTaskTypes()</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(MISSION).GetTasks">MISSION:GetTasks()</a></td>
 		<td class="summary">
 <p>Get all the TASKs from the Mission.</p>
@@ -230,6 +249,12 @@ A <a href="CLIENT.html">CLIENT</a> needs to be registered within the <a href="MI
 		<td class="name" nowrap="nowrap"><a href="##(MISSION).IsFAILED">MISSION:IsFAILED()</a></td>
 		<td class="summary">
 <p>Is the <a href="Mission.html">Mission</a> <strong>FAILED</strong>.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MISSION).IsGroupAssigned">MISSION:IsGroupAssigned(MissionGroup)</a></td>
+		<td class="summary">
+<p>Returns if the <a href="Mission.html">Mission</a> is assigned to the Group.</p>
 </td>
 		</tr>
 		<tr>
@@ -419,6 +444,18 @@ A <a href="CLIENT.html">CLIENT</a> needs to be registered within the <a href="MI
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MISSION).ReportPlayers">MISSION:ReportPlayers()</a></td>
+		<td class="summary">
+<p>Create a player report of the Mission.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MISSION).ReportStatus">MISSION:ReportStatus()</a></td>
+		<td class="summary">
+<p>Create a status report of the Mission.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(MISSION).ReportSummary">MISSION:ReportSummary()</a></td>
 		<td class="summary">
 <p>Create a summary report of the Mission (one line).</p>
@@ -428,6 +465,12 @@ A <a href="CLIENT.html">CLIENT</a> needs to be registered within the <a href="MI
 		<td class="name" nowrap="nowrap"><a href="##(MISSION).Scoring">MISSION.Scoring</a></td>
 		<td class="summary">
 
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MISSION).SetGroupAssigned">MISSION:SetGroupAssigned(MissionGroup)</a></td>
+		<td class="summary">
+<p>Set <a href="Group.html">Group</a> assigned to the <a href="Mission.html">Mission</a>.</p>
 </td>
 		</tr>
 		<tr>
@@ -541,8 +584,8 @@ The CLIENT or UNIT of the Player joining the Mission.</p>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em>#boolean:</em>
-true if Unit is part of a Task in the Mission.</p>
+<p><em><a href="##(MISSION)">#MISSION</a>:</em></p>
+
 
 </dd>
 </dl>
@@ -606,6 +649,20 @@ The task added.</p>
 		<dl class="function">
 <dt>
 
+		<em></em>
+<a id="#(MISSION).AssignedGroups" >
+<strong>MISSION.AssignedGroups</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 		<em>#string</em>
 <a id="#(MISSION).ClassName" >
 <strong>MISSION.ClassName</strong>
@@ -613,6 +670,32 @@ The task added.</p>
 </dt>
 <dd>
 	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(MISSION).ClearGroupAssignment" >
+<strong>MISSION:ClearGroupAssignment(MissionGroup)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Clear the <a href="Group.html">Group</a> assignment from the <a href="Mission.html">Mission</a>.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> MissionGroup </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(MISSION)">#MISSION</a>:</em></p>
 
 
 </dd>
@@ -657,8 +740,8 @@ The CLIENT or UNIT of the Player crashing.</p>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em>#boolean:</em>
-true if Unit is part of a Task in the Mission.</p>
+<p><em><a href="##(MISSION)">#MISSION</a>:</em></p>
+
 
 </dd>
 </dl>
@@ -840,6 +923,24 @@ Returns nil if no task was found.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(MISSION).GetTaskTypes" >
+<strong>MISSION:GetTaskTypes()</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Return value</h3>
+				
+<p><em>#number:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(MISSION).GetTasks" >
 <strong>MISSION:GetTasks()</strong>
 </a>
@@ -965,6 +1066,32 @@ true if the Mission has a Group.</p>
 	
 <p>Is the <a href="Mission.html">Mission</a> <strong>FAILED</strong>.</p>
 
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(MISSION).IsGroupAssigned" >
+<strong>MISSION:IsGroupAssigned(MissionGroup)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns if the <a href="Mission.html">Mission</a> is assigned to the Group.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> MissionGroup </em></code>: </p>
+
+				</li>
+		</ul>
 		<h3>Return value</h3>
 				
 <p><em>#boolean:</em></p>
@@ -1912,6 +2039,67 @@ self</p>
 		<dl class="function">
 <dt>
 
+<a id="#(MISSION).ReportPlayers" >
+<strong>MISSION:ReportPlayers()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Create a player report of the Mission.</p>
+
+	
+<p>This reports provides a one liner of the mission status. It indicates how many players and how many Tasks.</p>
+
+<pre><code>Mission "&lt;MissionName&gt;" - Status "&lt;MissionStatus&gt;"
+ - Player "&lt;PlayerName&gt;: Task &lt;TaskName&gt; &lt;TaskStatus&gt;, Task &lt;TaskName&gt; &lt;TaskStatus&gt;
+ - Player &lt;PlayerName&gt;: Task &lt;TaskName&gt; &lt;TaskStatus&gt;, Task &lt;TaskName&gt; &lt;TaskStatus&gt;
+ - ..
+</code></pre>
+
+
+		<h3>Return value</h3>
+				
+<p><em>#string:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(MISSION).ReportStatus" >
+<strong>MISSION:ReportStatus()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Create a status report of the Mission.</p>
+
+	
+<p>This reports provides a one liner of the mission status. It indicates how many players and how many Tasks.</p>
+
+<pre><code>Mission "&lt;MissionName&gt;" - Status "&lt;MissionStatus&gt;"
+ - Task Types: &lt;TaskType&gt;, &lt;TaskType&gt;
+ - &lt;xx&gt; Planned Tasks (xp)
+ - &lt;xx&gt; Assigned Tasks(xp)
+ - &lt;xx&gt; Success Tasks (xp)
+ - &lt;xx&gt; Hold Tasks (xp)
+ - &lt;xx&gt; Cancelled Tasks (xp)
+ - &lt;xx&gt; Aborted Tasks (xp)
+ - &lt;xx&gt; Failed Tasks (xp)
+</code></pre>
+
+
+		<h3>Return value</h3>
+				
+<p><em>#string:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(MISSION).ReportSummary" >
 <strong>MISSION:ReportSummary()</strong>
 </a>
@@ -1937,6 +2125,32 @@ self</p>
 </dt>
 <dd>
 	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(MISSION).SetGroupAssigned" >
+<strong>MISSION:SetGroupAssigned(MissionGroup)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set <a href="Group.html">Group</a> assigned to the <a href="Mission.html">Mission</a>.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> MissionGroup </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(MISSION)">#MISSION</a>:</em></p>
 
 
 </dd>
