@@ -524,7 +524,8 @@ end
 -- @return #boolean
 function TASK:HasGroup( FindGroup )
 
-  return self:GetGroups():IsIncludeObject( FindGroup )
+  local SetAttackGroup = self:GetGroups()
+  return SetAttackGroup:FindGroup(FindGroup)
 
 end
 

@@ -223,7 +223,7 @@ function MISSION:New( CommandCenter, MissionName, MissionPriority, MissionBriefi
 	
 	-- Private  implementations
 	
-	
+	CommandCenter:SetMenu()
 
 	return self
 end

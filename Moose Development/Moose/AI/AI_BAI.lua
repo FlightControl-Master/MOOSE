@@ -1,4 +1,4 @@
---- **AI** -- **Provide Battleground Air Interdiction (bombing).**
+--- **AI** -- **Provide Battlefield Air Interdiction (bombing).**
 --
 -- ![Banner Image](..\Presentations\AI_BAI\Dia1.JPG)
 -- 
