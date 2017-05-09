@@ -17,6 +17,7 @@
 				<a href="index.html">index</a>
 			</li></ul>
 		<ul>
+					<li><a href="AI_BAI.html">AI_BAI</a></li>
 					<li><a href="AI_Balancer.html">AI_Balancer</a></li>
 					<li><a href="AI_Cap.html">AI_Cap</a></li>
 					<li><a href="AI_Cas.html">AI_Cas</a></li>
@@ -127,7 +128,7 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK).AbortUnit">TASK:AbortUnit(PlayerUnit)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).AbortGroup">TASK:AbortGroup(PlayerUnit, PlayerGroup)</a></td>
 		<td class="summary">
 <p>Abort a PlayerUnit from a Task.</p>
 </td>
@@ -151,13 +152,19 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).ClearGroupAssignment">TASK:ClearGroupAssignment(TaskGroup)</a></td>
+		<td class="summary">
+<p>Clear the <a href="Group.html">Group</a> assignment from the <a href="Task.html">Task</a>.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(TASK).CommandCenter">TASK.CommandCenter</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK).CrashUnit">TASK:CrashUnit(PlayerUnit)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).CrashGroup">TASK:CrashGroup(PlayerUnit, PlayerGroup)</a></td>
 		<td class="summary">
 <p>A PlayerUnit crashed in a Task.</p>
 </td>
@@ -187,6 +194,12 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).GetBriefing">TASK:GetBriefing()</a></td>
+		<td class="summary">
+<p>Gets the <a href="Task.html">Task</a> briefing.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(TASK).GetGroups">TASK:GetGroups()</a></td>
 		<td class="summary">
 <p>Gets the SET_GROUP assigned to the TASK.</p>
@@ -211,6 +224,18 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).GetPlayerCount">TASK:GetPlayerCount()</a></td>
+		<td class="summary">
+<p>Create a count of the players in the Task.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).GetPlayerNames">TASK:GetPlayerNames()</a></td>
+		<td class="summary">
+<p>Create a list of the players in the Task.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(TASK).GetProcessTemplate">TASK:GetProcessTemplate(ProcessName)</a></td>
 		<td class="summary">
 <p>Get the default or currently assigned <a href="Process.html">Process</a> template with key ProcessName.</p>
@@ -232,6 +257,12 @@
 		<td class="name" nowrap="nowrap"><a href="##(TASK).GetStateString">TASK:GetStateString()</a></td>
 		<td class="summary">
 <p>Gets the <a href="Task.html">Task</a> status.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).GetTaskBriefing">TASK:GetTaskBriefing()</a></td>
+		<td class="summary">
+<p>Returns the <a href="Task.html">Task</a> briefing.</p>
 </td>
 		</tr>
 		<tr>
@@ -277,7 +308,7 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK).IsAssignedToGroup">TASK:IsAssignedToGroup(TaskGroup)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).IsGroupAssigned">TASK:IsGroupAssigned(TaskGroup)</a></td>
 		<td class="summary">
 <p>Returns if the <a href="Task.html">Task</a> is assigned to the Group.</p>
 </td>
@@ -367,7 +398,7 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK).New">TASK:New(Mission, SetGroupAssign, TaskName, TaskType)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).New">TASK:New(Mission, SetGroupAssign, TaskName, TaskType, TaskBriefing)</a></td>
 		<td class="summary">
 <p>Instantiates a new TASK.</p>
 </td>
@@ -391,6 +422,12 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).RefreshMenus">TASK:RefreshMenus(TaskGroup, MenuTime)</a></td>
+		<td class="summary">
+<p>Remove the menu option of the <a href="Task.html">Task</a> for a <a href="Group.html">Group</a>.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(TASK).RemoveAssignedMenuForGroup">TASK:RemoveAssignedMenuForGroup(TaskGroup, MenuTime)</a></td>
 		<td class="summary">
 <p>Remove the assigned menu option of the <a href="Task.html">Task</a> for a <a href="Group.html">Group</a>.</p>
@@ -400,12 +437,6 @@
 		<td class="name" nowrap="nowrap"><a href="##(TASK).RemoveMenu">TASK:RemoveMenu(MenuTime)</a></td>
 		<td class="summary">
 <p>Remove the menu options of the <a href="Task.html">Task</a> to all the groups in the SetGroup.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK).RemovePlannedMenuForGroup">TASK:RemovePlannedMenuForGroup(TaskGroup, MenuTime)</a></td>
-		<td class="summary">
-<p>Remove the menu option of the <a href="Task.html">Task</a> for a <a href="Group.html">Group</a>.</p>
 </td>
 		</tr>
 		<tr>
@@ -466,6 +497,12 @@
 		<td class="name" nowrap="nowrap"><a href="##(TASK).SetGroup">TASK.SetGroup</a></td>
 		<td class="summary">
 <p>The Set of Groups assigned to the Task</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).SetGroupAssigned">TASK:SetGroupAssigned(TaskGroup)</a></td>
+		<td class="summary">
+<p>Set <a href="Group.html">Group</a> assigned to the <a href="Task.html">Task</a>.</p>
 </td>
 		</tr>
 		<tr>
@@ -805,8 +842,8 @@ Use the method <a href="##(TASK).AddScore">TASK.AddScore</a>() to add scores whe
 		<dl class="function">
 <dt>
 
-<a id="#(TASK).AbortUnit" >
-<strong>TASK:AbortUnit(PlayerUnit)</strong>
+<a id="#(TASK).AbortGroup" >
+<strong>TASK:AbortGroup(PlayerUnit, PlayerGroup)</strong>
 </a>
 </dt>
 <dd>
@@ -817,7 +854,7 @@ Use the method <a href="##(TASK).AddScore">TASK.AddScore</a>() to add scores whe
 <p>If the Unit was not part of the Task, false is returned.
 If the Unit is part of the Task, true is returned.</p>
 
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
@@ -825,11 +862,16 @@ If the Unit is part of the Task, true is returned.</p>
 The CLIENT or UNIT of the Player aborting the Task.</p>
 
 				</li>
+				<li>
+				
+<p><code><em> PlayerGroup </em></code>: </p>
+
+				</li>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em>#boolean:</em>
-true if Unit is part of the Task.</p>
+<p><em><a href="##(TASK)">#TASK</a>:</em></p>
+
 
 </dd>
 </dl>
@@ -904,6 +946,32 @@ self</p>
 		<dl class="function">
 <dt>
 
+<a id="#(TASK).ClearGroupAssignment" >
+<strong>TASK:ClearGroupAssignment(TaskGroup)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Clear the <a href="Group.html">Group</a> assignment from the <a href="Task.html">Task</a>.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> TaskGroup </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(TASK)">#TASK</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 		<em><a href="Tasking.CommandCenter.html##(COMMANDCENTER)">Tasking.CommandCenter#COMMANDCENTER</a></em>
 <a id="#(TASK).CommandCenter" >
 <strong>TASK.CommandCenter</strong>
@@ -918,8 +986,8 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK).CrashUnit" >
-<strong>TASK:CrashUnit(PlayerUnit)</strong>
+<a id="#(TASK).CrashGroup" >
+<strong>TASK:CrashGroup(PlayerUnit, PlayerGroup)</strong>
 </a>
 </dt>
 <dd>
@@ -931,7 +999,7 @@ self</p>
 If the Unit was not part of the Task, false is returned.
 If the Unit is part of the Task, true is returned.</p>
 
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
@@ -939,11 +1007,16 @@ If the Unit is part of the Task, true is returned.</p>
 The CLIENT or UNIT of the Player aborting the Task.</p>
 
 				</li>
+				<li>
+				
+<p><code><em> PlayerGroup </em></code>: </p>
+
+				</li>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em>#boolean:</em>
-true if Unit is part of the Task.</p>
+<p><em><a href="##(TASK)">#TASK</a>:</em></p>
+
 
 </dd>
 </dl>
@@ -1022,6 +1095,24 @@ true if Unit is part of the Task.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(TASK).GetBriefing" >
+<strong>TASK:GetBriefing()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Gets the <a href="Task.html">Task</a> briefing.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#string:</em>
+The briefing text.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(TASK).GetGroups" >
 <strong>TASK:GetGroups()</strong>
 </a>
@@ -1088,6 +1179,42 @@ TaskID</p>
 				
 <p><em>#string:</em>
 The Task Name</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).GetPlayerCount" >
+<strong>TASK:GetPlayerCount()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Create a count of the players in the Task.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#number:</em>
+The total number of players in the task.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).GetPlayerNames" >
+<strong>TASK:GetPlayerNames()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Create a list of the players in the Task.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(map)">#map</a>:</em></p>
+<h1>string,Wrapper.Group#GROUP> A map of the players</h1>
 
 </dd>
 </dl>
@@ -1171,6 +1298,24 @@ Scoring</p>
 <dd>
 	
 <p>Gets the <a href="Task.html">Task</a> status.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).GetTaskBriefing" >
+<strong>TASK:GetTaskBriefing()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the <a href="Task.html">Task</a> briefing.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#string:</em>
+Task briefing.</p>
 
 </dd>
 </dl>
@@ -1327,8 +1472,8 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK).IsAssignedToGroup" >
-<strong>TASK:IsAssignedToGroup(TaskGroup)</strong>
+<a id="#(TASK).IsGroupAssigned" >
+<strong>TASK:IsGroupAssigned(TaskGroup)</strong>
 </a>
 </dt>
 <dd>
@@ -1594,7 +1739,7 @@ true if Unit is part of the Task.</p>
 <dt>
 
 <a id="#(TASK).New" >
-<strong>TASK:New(Mission, SetGroupAssign, TaskName, TaskType)</strong>
+<strong>TASK:New(Mission, SetGroupAssign, TaskName, TaskType, TaskBriefing)</strong>
 </a>
 </dt>
 <dd>
@@ -1628,6 +1773,11 @@ The name of the Task</p>
 				
 <p><code><em>#string TaskType </em></code>: 
 The type of the Task</p>
+
+				</li>
+				<li>
+				
+<p><code><em> TaskBriefing </em></code>: </p>
 
 				</li>
 		</ul>
@@ -1725,6 +1875,37 @@ The name of the Player.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(TASK).RefreshMenus" >
+<strong>TASK:RefreshMenus(TaskGroup, MenuTime)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Remove the menu option of the <a href="Task.html">Task</a> for a <a href="Group.html">Group</a>.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> TaskGroup </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number MenuTime </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(TASK)">#TASK</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(TASK).RemoveAssignedMenuForGroup" >
 <strong>TASK:RemoveAssignedMenuForGroup(TaskGroup, MenuTime)</strong>
 </a>
@@ -1776,37 +1957,6 @@ self</p>
 				
 <p><em><a href="##(TASK)">#TASK</a>:</em></p>
 
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(TASK).RemovePlannedMenuForGroup" >
-<strong>TASK:RemovePlannedMenuForGroup(TaskGroup, MenuTime)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Remove the menu option of the <a href="Task.html">Task</a> for a <a href="Group.html">Group</a>.</p>
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> TaskGroup </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em>#number MenuTime </em></code>: </p>
-
-				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em><a href="##(TASK)">#TASK</a>:</em>
-self</p>
 
 </dd>
 </dl>
@@ -2022,6 +2172,32 @@ self</p>
 <dd>
 	
 <p>The Set of Groups assigned to the Task</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).SetGroupAssigned" >
+<strong>TASK:SetGroupAssigned(TaskGroup)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set <a href="Group.html">Group</a> assigned to the <a href="Task.html">Task</a>.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> TaskGroup </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(TASK)">#TASK</a>:</em></p>
+
 
 </dd>
 </dl>
@@ -2900,6 +3076,8 @@ self</p>
 </dl>
 
 			<h2><a id="#(integer)" >Type <code>integer</code></a></h2>
+			
+			<h2><a id="#(map)" >Type <code>map</code></a></h2>
 			
 </div>
 
