@@ -146,6 +146,18 @@
 --   * **@{#AI_BAI_ZONE.Destroyed}**: The AI has destroyed all target @{Unit}s assigned in the BOMB task.
 --   * **Status**: The AI is checking status (fuel and damage). When the tresholds have been reached, the AI will RTB.
 -- 
+-- ## 3. Modify the Engage Zone behaviour to pinpoint a **map object** or **scenery object**
+-- 
+-- Use the method @{#AI_BAI_ZONE.SearchOff}() to specify that the EngageZone is not to be searched for potential targets (UNITs), but that the center of the zone
+-- is the point where a map object is to be destroyed (like a bridge).
+-- 
+-- Example:
+-- 
+--      -- Tell the BAI not to search for potential targets in the BAIEngagementZone, but rather use the center of the BAIEngagementZone as the bombing location.
+--      AIBAIZone:SearchOff()
+-- 
+-- Searching can be switched back on with the method @{#AI_BAI_ZONE.SearchOn}(). Use the method @{#AI_BAI_ZONE.SearchOnOff}() to flexibily switch searching on or off.
+-- 
 -- ===
 -- 
 -- @field #AI_BAI_ZONE
@@ -542,7 +554,6 @@ function AI_BAI_ZONE:onafterEngage( Controllable, From, Event, To,
         true 
       )
     
-    EngageRoute[#EngageRoute+1] = CurrentRoutePoint
     EngageRoute[#EngageRoute+1] = CurrentRoutePoint
 
     local AttackTasks = {}
