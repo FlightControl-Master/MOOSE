@@ -9,6 +9,7 @@
 -- @extends Core.Base#BASE
 REPORT = {
   ClassName = "REPORT",
+  Title = "",
 }
 
 --- Create a new REPORT.
@@ -20,12 +21,23 @@ function REPORT:New( Title )
   local self = BASE:Inherit( self, BASE:New() ) -- #REPORT
 
   self.Report = {}
+  
+  Title = Title or ""
   if Title then
-    self.Report[#self.Report+1] = Title  
+    self.Title = Title  
   end
 
   return self
 end
+
+--- Has the REPORT Text?
+-- @param #REPORT self
+-- @return #boolean
+function REPORT:HasText() --R2.1
+  
+  return #self.Report > 0
+end
+
 
 --- Set indent of a REPORT.
 -- @param #REPORT self
@@ -61,7 +73,7 @@ end
 -- @return #string The report text.
 function REPORT:Text( Delimiter )
   Delimiter = Delimiter or "\n"
-  local ReportText = table.concat( self.Report, Delimiter ) or ""
+  local ReportText = ( self.Title ~= "" and self.Title .. Delimiter or self.Title ) .. table.concat( self.Report, Delimiter ) or ""
   return ReportText
 end
 
@@ -100,9 +112,9 @@ function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
       if EventData.IniObjectCategory == 1 then
         local EventGroup = GROUP:Find( EventData.IniDCSGroup )
         if EventGroup and self:HasGroup( EventGroup ) then
-          local MenuReporting = MENU_GROUP:New( EventGroup, "Reporting", self.CommandCenterMenu )
-          local MenuMissionsSummary = MENU_GROUP_COMMAND:New( EventGroup, "Missions Summary Report", MenuReporting, self.ReportSummary, self, EventGroup )
-          local MenuMissionsDetails = MENU_GROUP_COMMAND:New( EventGroup, "Missions Details Report", MenuReporting, self.ReportDetails, self, EventGroup )
+          local MenuReporting = MENU_GROUP:New( EventGroup, "Missions Reports", self.CommandCenterMenu )
+          local MenuMissionsSummary = MENU_GROUP_COMMAND:New( EventGroup, "Missions Status Report", MenuReporting, self.ReportMissionsStatus, self, EventGroup )
+          local MenuMissionsDetails = MENU_GROUP_COMMAND:New( EventGroup, "Missions Players Report", MenuReporting, self.ReportMissionsPlayers, self, EventGroup )
           self:ReportSummary( EventGroup )
         end
         local PlayerUnit = EventData.IniUnit
@@ -161,7 +173,7 @@ function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
       local PlayerUnit = EventData.IniUnit
       for MissionID, Mission in pairs( self:GetMissions() ) do
         local Mission = Mission -- Tasking.Mission#MISSION
-        if Mission:IsOngoing() then
+        if Mission:IsENGAGED() then
           Mission:AbortUnit( PlayerUnit )
         end
       end
@@ -177,7 +189,10 @@ function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
     function( self, EventData )
       local PlayerUnit = EventData.IniUnit
       for MissionID, Mission in pairs( self:GetMissions() ) do
-        Mission:CrashUnit( PlayerUnit )
+        local Mission = Mission -- Tasking.Mission#MISSION
+        if Mission:IsENGAGED() then
+          Mission:CrashUnit( PlayerUnit )
+        end
       end
     end
   )
@@ -257,7 +272,6 @@ end
 -- @param #COMMANDCENTER self
 -- @return Core.Menu#MENU_COALITION
 function COMMANDCENTER:GetMenu()
-  self:F()
   return self.CommandCenterMenu
 end
 
@@ -293,11 +307,9 @@ end
 -- @param #string Message
 -- @param Wrapper.Group#GROUP TaskGroup
 -- @param #sring Name (optional) The name of the Group used as a prefix for the message to the Group. If not provided, there will be nothing shown.
-function COMMANDCENTER:MessageToGroup( Message, TaskGroup, Name )
+function COMMANDCENTER:MessageToGroup( Message, TaskGroup )
 
-  local Prefix = Name and "@ " .. Name .. ": " or "@ " .. TaskGroup:GetCallsign() .. ": "
-  Message = Prefix .. Message 
-  self:GetPositionable():MessageToGroup( Message , 20, TaskGroup, self:GetName() )
+  self:GetPositionable():MessageToGroup( Message , 15, TaskGroup, self:GetName() )
 
 end
 
@@ -307,7 +319,8 @@ function COMMANDCENTER:MessageToCoalition( Message )
 
   local CCCoalition = self:GetPositionable():GetCoalition()
     --TODO: Fix coalition bug!
-    self:GetPositionable():MessageToCoalition( Message, 20, CCCoalition, self:GetName() )
+    
+    self:GetPositionable():MessageToCoalition( Message, 15, CCCoalition )
 
 end
 
@@ -315,18 +328,37 @@ end
 --- Report the status of all MISSIONs to a GROUP.
 -- Each Mission is listed, with an indication how many Tasks are still to be completed.
 -- @param #COMMANDCENTER self
-function COMMANDCENTER:ReportSummary( ReportGroup )
+function COMMANDCENTER:ReportMissionsStatus( ReportGroup )
+  self:E( ReportGroup )
+
+  local Report = REPORT:New()
+
+  Report:Add( "Status report of all missions." )
+  
+  for MissionID, Mission in pairs( self.Missions ) do
+    local Mission = Mission -- Tasking.Mission#MISSION
+    Report:Add( " - " .. Mission:ReportStatus() )
+  end
+  
+  self:MessageToGroup( Report:Text(), ReportGroup )
+end
+
+--- Report the players of all MISSIONs to a GROUP.
+-- Each Mission is listed, with an indication how many Tasks are still to be completed.
+-- @param #COMMANDCENTER self
+function COMMANDCENTER:ReportMissionsPlayers( ReportGroup )
   self:E( ReportGroup )
 
   local Report = REPORT:New()
   
+  Report:Add( "Players active in all missions." )
+
   for MissionID, Mission in pairs( self.Missions ) do
     local Mission = Mission -- Tasking.Mission#MISSION
-    Report:Add( " - " .. Mission:ReportOverview() )
+    Report:Add( " - " .. Mission:ReportPlayers() )
   end
   
-  self:GetPositionable():MessageToGroup( Report:Text(), 30, ReportGroup )
-  
+  self:MessageToGroup( Report:Text(), ReportGroup )
 end
 
 --- Report the status of a Task to a Group.
@@ -342,6 +374,6 @@ function COMMANDCENTER:ReportDetails( ReportGroup, Task )
     Report:Add( " - " .. Mission:ReportDetails() )
   end
   
-  self:GetPositionable():MessageToGroup( Report:Text(), 30, ReportGroup )
+  self:MessageToGroup( Report:Text(), ReportGroup )
 end
 

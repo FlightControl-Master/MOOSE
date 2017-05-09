@@ -55,6 +55,7 @@ do -- TASK_A2G_DISPATCHER
     ClassName = "TASK_A2G_DISPATCHER",
     Mission = nil,
     Detection = nil,
+    Tasks = {},
   }
   
   
@@ -181,14 +182,16 @@ do -- TASK_A2G_DISPATCHER
   -- @param #TASK_A2G_DISPATCHER self
   -- @param Tasking.Mission#MISSION Mission
   -- @param Tasking.Task#TASK Task
-  -- @param Functional.Detection#DETECTION_AREAS.DetectedItem DetectedItem
+  -- @param #boolean DetectedItemID
+  -- @param #boolean DetectedItemChange
   -- @return Tasking.Task#TASK
-  function TASK_A2G_DISPATCHER:EvaluateRemoveTask( Mission, Task, DetectedItem )
+  function TASK_A2G_DISPATCHER:EvaluateRemoveTask( Mission, Task, DetectedItemID, DetectedItemChanged )
     
     if Task then
-      if Task:IsStatePlanned() and DetectedItem.Changed == true then
+      if Task:IsStatePlanned() and DetectedItemChanged == true then
         self:E( "Removing Tasking: " .. Task:GetTaskName() )
-        Task = Mission:RemoveTask( Task )
+        Mission:RemoveTask( Task )
+        self.Tasks[DetectedItemID] = nil
       end
     end
     
@@ -208,82 +211,78 @@ do -- TASK_A2G_DISPATCHER
     local ChangeMsg = {}
     
     local Mission = self.Mission
-
-    --- First we need to  the detected targets.
-    for DetectedItemID, DetectedItem in pairs( Detection:GetDetectedItems() ) do
     
-      local DetectedItem = DetectedItem -- Functional.Detection#DETECTION_BASE.DetectedItem
-      local DetectedSet = DetectedItem.Set -- Functional.Detection#DETECTION_BASE.DetectedSet
-      local DetectedZone = DetectedItem.Zone
-      self:E( { "Targets in DetectedItem", DetectedItem.ItemID, DetectedSet:Count(), tostring( DetectedItem ) } )
-      DetectedSet:Flush()
-      
-      local ItemID = DetectedItem.ID
-      
-      -- Evaluate SEAD Tasking
-      local SEADTask = Mission:GetTask( string.format( "SEAD.%03d", ItemID ) )
-      SEADTask = self:EvaluateRemoveTask( Mission, SEADTask, DetectedItem )
-      if not SEADTask then
-        local TargetSetUnit = self:EvaluateSEAD( DetectedItem ) -- Returns a SetUnit if there are targets to be SEADed...
-        if TargetSetUnit then
-          local Task = TASK_SEAD:New( Mission, self.SetGroup, string.format( "SEAD.%03d", ItemID ), TargetSetUnit )
-          Task:SetTargetZone( DetectedZone )
-          Task:SetDispatcher( self )
-          Task:SetInfo( "Detection", Detection:DetectedItemReportSummary( DetectedItemID ) )
-          Task:SetInfo( "Changes", Detection:GetChangeText( DetectedItem ) )
-          SEADTask = Mission:AddTask( Task )
-        end
-      end        
-
-      -- Evaluate CAS Tasking
-      local CASTask = Mission:GetTask( string.format( "CAS.%03d", ItemID ) )
-      CASTask = self:EvaluateRemoveTask( Mission, CASTask, DetectedItem )
-      if not CASTask then
-        local TargetSetUnit = self:EvaluateCAS( DetectedItem ) -- Returns a SetUnit if there are targets to be SEADed...
-        if TargetSetUnit then
-          local Task = TASK_CAS:New( Mission, self.SetGroup, string.format( "CAS.%03d", ItemID ), TargetSetUnit )
-          Task:SetTargetZone( DetectedZone )
-          Task:SetDispatcher( self )
-          Task:SetInfo( "Detection", Detection:DetectedItemReportSummary( DetectedItemID ) ) 
-          Task:SetInfo( "Changes", Detection:GetChangeText( DetectedItem ) )
-          CASTask = Mission:AddTask( Task )
-        end
-      end        
-
-      -- Evaluate BAI Tasking
-      local BAITask = Mission:GetTask( string.format( "BAI.%03d", ItemID ) )
-      BAITask = self:EvaluateRemoveTask( Mission, BAITask, DetectedItem )
-      if not BAITask then
-        local TargetSetUnit = self:EvaluateBAI( DetectedItem, self.Mission:GetCommandCenter():GetPositionable():GetCoalition() ) -- Returns a SetUnit if there are targets to be SEADed...
-        if TargetSetUnit then
-          local Task = TASK_BAI:New( Mission, self.SetGroup, string.format( "BAI.%03d", ItemID ), TargetSetUnit )
-          Task:SetTargetZone( DetectedZone )
-          Task:SetDispatcher( self )
-          Task:SetInfo( "Detection", Detection:DetectedItemReportSummary( DetectedItemID ) )
-          Task:SetInfo( "Changes", Detection:GetChangeText( DetectedItem ) )
-          BAITask = Mission:AddTask( Task )
-        end
-      end        
-
-      -- OK, so the tasking has been done, now delete the changes reported for the area.
-      Detection:AcceptChanges( DetectedItem )
-      
-    end
+    if Mission:IsIDLE() or Mission:IsENGAGED() then
     
-    -- TODO set menus using the HQ coordinator
-    Mission:GetCommandCenter():SetMenu()
-    
-    for TaskGroupID, TaskGroup in pairs( self.SetGroup:GetSet() ) do
-        Mission:GetCommandCenter():MessageToGroup( string.format( "There are %d tasks remaining for mission *%s*. Subscribe to a task using the menu.", Mission:GetTasksRemaining(), Mission:GetName() ), TaskGroup )
-      if not TaskGroup:GetState( TaskGroup, "Assigned" ) then
---        Mission:GetCommandCenter():MessageToGroup( 
---          string.format( "HQ Reporting - Planned tasks for mission '%s':\n\n%s\n", 
---                         self.Mission:GetName(),
---                         string.format( "%s\n\n%s\n\n%s\n\n%s", ReportSEAD:Text(), ReportCAS:Text(), ReportBAI:Text(), ReportChanges:Text()
---                       )
---          ), TaskGroup  
---        )
+      local TaskReport = REPORT:New()
+
+      --- First we need to  the detected targets.
+      for DetectedItemID, DetectedItem in pairs( Detection:GetDetectedItems() ) do
+      
+        local DetectedItem = DetectedItem -- Functional.Detection#DETECTION_BASE.DetectedItem
+        local DetectedSet = DetectedItem.Set -- Core.Set#SET_UNIT
+        local DetectedZone = DetectedItem.Zone
+        self:E( { "Targets in DetectedItem", DetectedItem.ItemID, DetectedSet:Count(), tostring( DetectedItem ) } )
+        DetectedSet:Flush()
+        
+        local DetectedItemID = DetectedItem.ID
+        local DetectedItemChanged = DetectedItem.Changed
+        
+        local Task = self.Tasks[DetectedItemID]
+        Task = self:EvaluateRemoveTask( Mission, Task, DetectedItemID, DetectedItemChanged ) -- Task will be removed if it is planned and changed.
+
+        -- Evaluate SEAD
+        if not Task then
+          local TargetSetUnit = self:EvaluateSEAD( DetectedItem ) -- Returns a SetUnit if there are targets to be SEADed...
+          if TargetSetUnit then
+            Task = TASK_SEAD:New( Mission, self.SetGroup, string.format( "SEAD.%03d", DetectedItemID ), TargetSetUnit )
+          end
+
+          -- Evaluate CAS
+          if not Task then
+            local TargetSetUnit = self:EvaluateCAS( DetectedItem ) -- Returns a SetUnit if there are targets to be CASed...
+            if TargetSetUnit then
+              Task = TASK_CAS:New( Mission, self.SetGroup, string.format( "CAS.%03d", DetectedItemID ), TargetSetUnit )
+            end
+
+            -- Evaluate BAI
+            if not Task then
+              local TargetSetUnit = self:EvaluateBAI( DetectedItem, self.Mission:GetCommandCenter():GetPositionable():GetCoalition() ) -- Returns a SetUnit if there are targets to be BAIed...
+              if TargetSetUnit then
+                Task = TASK_BAI:New( Mission, self.SetGroup, string.format( "BAI.%03d", DetectedItemID ), TargetSetUnit )
+              end
+            end
+          end
+          
+          if Task then
+            self.Tasks[DetectedItemID] = Task
+            Task:SetTargetZone( DetectedZone )
+            Task:SetDispatcher( self )
+            Task:SetInfo( "ThreatLevel", DetectedSet:CalculateThreatLevelA2G() )
+            Task:SetInfo( "Detection", Detection:DetectedItemReportSummary( DetectedItemID ) )
+            Task:SetInfo( "Changes", Detection:GetChangeText( DetectedItem ) )
+            Mission:AddTask( Task )
+          else
+            self:E("This should not happen")
+          end
+
+        end
+
+        TaskReport:Add( Task:GetName() )
+  
+        -- OK, so the tasking has been done, now delete the changes reported for the area.
+        Detection:AcceptChanges( DetectedItem )
       end
+      
+      -- TODO set menus using the HQ coordinator
+      Mission:GetCommandCenter():SetMenu()
+      
+      for TaskGroupID, TaskGroup in pairs( self.SetGroup:GetSet() ) do
+        if not Mission:IsGroupAssigned(TaskGroup) then
+          Mission:GetCommandCenter():MessageToGroup( string.format( "Mission *%s* has tasks %s. Subscribe to a task using the Mission *Overlord* radio menu.", Mission:GetName(), TaskReport:Text(", ") ), TaskGroup )
+        end
+      end
+      
     end
     
     return true

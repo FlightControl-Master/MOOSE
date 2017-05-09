@@ -165,11 +165,10 @@ end
 -- @param #SET_BASE self
 -- @param #string ObjectName
 function SET_BASE:Remove( ObjectName )
-  self:F( ObjectName )
 
   local t = self.Set[ObjectName]
   
-  self:E( { ObjectName, t } )
+  self:F3( { ObjectName, t } )
 
   if t then  
     if t._next then
@@ -1337,6 +1336,11 @@ SET_UNIT = {
 }
 
 
+--- Get the first unit from the set.
+-- @function [parent=#SET_UNIT] GetFirst
+-- @param #SET_UNIT self
+-- @return Wrapper.Unit#UNIT The UNIT object.
+
 --- Creates a new SET_UNIT object, building a set of units belonging to a coalitions, categories, countries, types or with defined prefix names.
 -- @param #SET_UNIT self
 -- @return #SET_UNIT
@@ -1568,7 +1572,7 @@ end
 -- @return #string The name of the UNIT
 -- @return #table The UNIT
 function SET_UNIT:FindInDatabase( Event )
-  self:E( { Event.IniDCSUnitName, self.Set[Event.IniDCSUnitName], Event } )
+  self:F2( { Event.IniDCSUnitName, self.Set[Event.IniDCSUnitName], Event } )
 
 
   return Event.IniDCSUnitName, self.Set[Event.IniDCSUnitName]

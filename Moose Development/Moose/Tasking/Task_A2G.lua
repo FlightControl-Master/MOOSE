@@ -86,15 +86,13 @@ do -- TASK_A2G
   -- @param Core.Zone#ZONE_BASE TargetZone The target zone, if known.
   -- If the TargetZone parameter is specified, the player will be routed to the center of the zone where all the targets are assumed to be.
   -- @return #TASK_A2G self
-  function TASK_A2G:New( Mission, SetGroup, TaskName, TargetSetUnit, TaskType )
-    local self = BASE:Inherit( self, TASK:New( Mission, SetGroup, TaskName, TaskType ) ) -- Tasking.Task#TASK_A2G
+  function TASK_A2G:New( Mission, SetGroup, TaskName, TargetSetUnit, TaskType, TaskBriefing )
+    local self = BASE:Inherit( self, TASK:New( Mission, SetGroup, TaskName, TaskType, TaskBriefing ) ) -- Tasking.Task#TASK_A2G
     self:F()
   
     self.TargetSetUnit = TargetSetUnit
     self.TaskType = TaskType
 
-    Mission:AddTask( self )
-    
     local Fsm = self:GetUnitProcess()
     
 
@@ -366,14 +364,28 @@ do -- TASK_SEAD
   --- Instantiates a new TASK_SEAD.
   -- @param #TASK_SEAD self
   -- @param Tasking.Mission#MISSION Mission
-  -- @param Set#SET_GROUP SetGroup The set of groups for which the Task can be assigned.
+  -- @param Core.Set#SET_GROUP SetGroup The set of groups for which the Task can be assigned.
   -- @param #string TaskName The name of the Task.
-  -- @param Set#SET_UNIT TargetSetUnit 
+  -- @param Core.Set#SET_UNIT TargetSetUnit 
+  -- @param #string TaskBriefing The briefing of the task.
   -- @return #TASK_SEAD self
-  function TASK_SEAD:New( Mission, SetGroup, TaskName, TargetSetUnit )
-    local self = BASE:Inherit( self, TASK_A2G:New( Mission, SetGroup, TaskName, TargetSetUnit, "SEAD" ) ) -- #TASK_SEAD
+  function TASK_SEAD:New( Mission, SetGroup, TaskName, TargetSetUnit, TaskBriefing )
+    local self = BASE:Inherit( self, TASK_A2G:New( Mission, SetGroup, TaskName, TargetSetUnit, "SEAD", TaskBriefing ) ) -- #TASK_SEAD
     self:F()
     
+    Mission:AddTask( self )
+    
+    local TargetCoord = TargetSetUnit:GetFirst():GetCoordinate()
+    local TargetPositionText = TargetCoord:ToString()
+    local TargetThreatLevel = TargetSetUnit:CalculateThreatLevelA2G()
+
+    self:SetBriefing( 
+      TaskBriefing or 
+      "Execute a Suppression of Enemy Air Defenses.\n" ..
+      "Initial Coordinates: " .. TargetPositionText .. "\n" ..
+      "Threat Level: [" .. string.rep(  "■", TargetThreatLevel ) .. "]"
+    )
+
     return self
   end 
 
@@ -392,17 +404,28 @@ do -- TASK_BAI
   --- Instantiates a new TASK_BAI.
   -- @param #TASK_BAI self
   -- @param Tasking.Mission#MISSION Mission
-  -- @param Set#SET_GROUP SetGroup The set of groups for which the Task can be assigned.
+  -- @param Core.Set#SET_GROUP SetGroup The set of groups for which the Task can be assigned.
   -- @param #string TaskName The name of the Task.
-  -- @param Set#SET_UNIT UnitSetTargets
-  -- @param #number TargetDistance The distance to Target when the Player is considered to have "arrived" at the engagement range.
-  -- @param Core.Zone#ZONE_BASE TargetZone The target zone, if known.
-  -- If the TargetZone parameter is specified, the player will be routed to the center of the zone where all the targets are assumed to be.
+  -- @param Core.Set#SET_UNIT TargetSetUnit 
+  -- @param #string TaskBriefing The briefing of the task.
   -- @return #TASK_BAI self
-  function TASK_BAI:New( Mission, SetGroup, TaskName, TargetSetUnit )
-    local self = BASE:Inherit( self, TASK_A2G:New( Mission, SetGroup, TaskName, TargetSetUnit, "BAI" ) ) -- #TASK_BAI
+  function TASK_BAI:New( Mission, SetGroup, TaskName, TargetSetUnit, TaskBriefing )
+    local self = BASE:Inherit( self, TASK_A2G:New( Mission, SetGroup, TaskName, TargetSetUnit, "BAI", TaskBriefing ) ) -- #TASK_BAI
     self:F()
     
+    Mission:AddTask( self )
+    
+    local TargetCoord = TargetSetUnit:GetFirst():GetCoordinate()
+    local TargetPositionText = TargetCoord:ToString()
+    local TargetThreatLevel = TargetSetUnit:CalculateThreatLevelA2G()
+    
+    self:SetBriefing( 
+      TaskBriefing or 
+      "Execute a Battleground Air Interdiction of a group of enemy targets.\n" ..
+      "Initial Coordinates: " .. TargetPositionText .. "\n" ..
+      "Threat Level: [" .. string.rep(  "■", TargetThreatLevel ) .. "]"
+    )
+
     return self
   end 
 
@@ -421,16 +444,28 @@ do -- TASK_CAS
   --- Instantiates a new TASK_CAS.
   -- @param #TASK_CAS self
   -- @param Tasking.Mission#MISSION Mission
-  -- @param Set#SET_GROUP SetGroup The set of groups for which the Task can be assigned.
+  -- @param Core.Set#SET_GROUP SetGroup The set of groups for which the Task can be assigned.
   -- @param #string TaskName The name of the Task.
-  -- @param Set#SET_UNIT UnitSetTargets
-  -- @param #number TargetDistance The distance to Target when the Player is considered to have "arrived" at the engagement range.
-  -- @param Core.Zone#ZONE_BASE TargetZone The target zone, if known.
-  -- If the TargetZone parameter is specified, the player will be routed to the center of the zone where all the targets are assumed to be.
+  -- @param Core.Set#SET_UNIT TargetSetUnit 
+  -- @param #string TaskBriefing The briefing of the task.
   -- @return #TASK_CAS self
-  function TASK_CAS:New( Mission, SetGroup, TaskName, TargetSetUnit )
-    local self = BASE:Inherit( self, TASK_A2G:New( Mission, SetGroup, TaskName, TargetSetUnit, "CAS" ) ) -- #TASK_CAS
+  function TASK_CAS:New( Mission, SetGroup, TaskName, TargetSetUnit, TaskBriefing )
+    local self = BASE:Inherit( self, TASK_A2G:New( Mission, SetGroup, TaskName, TargetSetUnit, "CAS", TaskBriefing ) ) -- #TASK_CAS
     self:F()
+    
+    Mission:AddTask( self )
+    
+    local TargetCoord = TargetSetUnit:GetFirst():GetCoordinate()
+    local TargetPositionText = TargetCoord:ToString()
+    local TargetThreatLevel = TargetSetUnit:CalculateThreatLevelA2G()
+    
+    self:SetBriefing( 
+      TaskBriefing or 
+      "Execute a Close Air Support for a group of enemy targets.\n" ..
+      "Beware of friendlies at the vicinity!\n" ..
+      "Initial Coordinates: " .. TargetPositionText .. "\n" ..
+      "Threat Level: [" .. string.rep(  "■", TargetThreatLevel ) .. "]"
+    )
     
     return self
   end 

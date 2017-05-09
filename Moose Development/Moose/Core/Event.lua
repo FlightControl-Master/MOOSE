@@ -730,6 +730,21 @@ do -- Event Creation
     world.onEvent( Event )
   end
 
+  --- Creation of a S_EVENT_PLAYER_ENTER_UNIT Event.
+  -- @param #EVENT self
+  -- @param Wrapper.Unit#UNIT PlayerUnit.
+  function EVENT:CreateEventPlayerEnterUnit( PlayerUnit )
+    self:F( { PlayerUnit } )
+  
+    local Event = {
+      id = EVENTS.PlayerEnterUnit,
+      time = timer.getTime(),
+      initiator = PlayerUnit:GetDCSObject()
+      }
+  
+    world.onEvent( Event )
+  end
+
 end
 
 --- @param #EVENT self
@@ -748,7 +763,7 @@ function EVENT:onEvent( Event )
 
 
   local EventMeta = _EVENTMETA[Event.id]
-  
+
   if self and self.Events and self.Events[Event.id] then
 
     if Event.initiator then    
@@ -863,7 +878,7 @@ function EVENT:onEvent( Event )
     local PriorityBegin = PriorityOrder == -1 and 5 or 1
     local PriorityEnd = PriorityOrder == -1 and 1 or 5
 
-    if Event.IniObjectCategory ~= 3 then
+    if Event.IniObjectCategory ~= Object.Category.STATIC then
       self:E( { EventMeta.Text, Event, Event.IniDCSUnitName, Event.TgtDCSUnitName, PriorityOrder } )
     end
     
@@ -874,8 +889,10 @@ function EVENT:onEvent( Event )
         -- Okay, we got the event from DCS. Now loop the SORTED self.EventSorted[] table for the received Event.id, and for each EventData registered, check if a function needs to be called.
         for EventClass, EventData in pairs( self.Events[Event.id][EventPriority] ) do
 
-          self:E( { "Evaluating: ", EventClass:GetClassNameAndID() } )
-
+          if Event.IniObjectCategory ~= Object.Category.STATIC then
+            --self:E( { "Evaluating: ", EventClass:GetClassNameAndID() } )
+          end
+          
           Event.IniGroup = GROUP:FindByName( Event.IniDCSGroupName )
           Event.TgtGroup = GROUP:FindByName( Event.TgtDCSGroupName )
         

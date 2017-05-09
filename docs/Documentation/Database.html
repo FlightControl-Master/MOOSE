@@ -329,6 +329,12 @@ The following iterator methods are currently available within the DATABASE:</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).ForEachStatic">DATABASE:ForEachStatic(IteratorFunction, FinalizeFunction, ...)</a></td>
+		<td class="summary">
+<p>Iterate the DATABASE and call an iterator function for each <strong>alive</strong> STATIC, providing the STATIC and optional parameters.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DATABASE).ForEachUnit">DATABASE:ForEachUnit(IteratorFunction, FinalizeFunction, ...)</a></td>
 		<td class="summary">
 <p>Iterate the DATABASE and call an iterator function for each <strong>alive</strong> UNIT, providing the UNIT and optional parameters.</p>
@@ -1261,6 +1267,43 @@ self</p>
 				
 <p><code><em>#function IteratorFunction </em></code>: 
 The function that will be called for each object in the database. The function needs to accept a UNIT parameter.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> ... </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(DATABASE)">#DATABASE</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DATABASE).ForEachStatic" >
+<strong>DATABASE:ForEachStatic(IteratorFunction, FinalizeFunction, ...)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Iterate the DATABASE and call an iterator function for each <strong>alive</strong> STATIC, providing the STATIC and optional parameters.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#function IteratorFunction </em></code>: 
+The function that will be called for each object in the database. The function needs to accept a STATIC parameter.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> FinalizeFunction </em></code>: </p>
 
 				</li>
 				<li>
