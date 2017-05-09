@@ -421,7 +421,7 @@ do -- TASK_BAI
     
     self:SetBriefing( 
       TaskBriefing or 
-      "Execute a Battleground Air Interdiction of a group of enemy targets.\n" ..
+      "Execute a Battlefield Air Interdiction of a group of enemy targets.\n" ..
       "Initial Coordinates: " .. TargetPositionText .. "\n" ..
       "Threat Level: [" .. string.rep(  "■", TargetThreatLevel ) .. "]"
     )
