@@ -174,6 +174,7 @@ function AI_BAI_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude
   self.Accomplished = false
   
   self:SetDetectionZone( self.EngageZone )
+  self:SearchOn()
 
   self:AddTransition( { "Patrolling", "Engaging" }, "Engage", "Engaging" ) -- FSM_CONTROLLABLE Transition for type #AI_BAI_ZONE.
 
@@ -369,6 +370,38 @@ function AI_BAI_ZONE:SetEngageZone( EngageZone )
 end
 
 
+--- Specifies whether to search for potential targets in the zone, or let the center of the zone be the bombing coordinate.
+-- AI_BAI_ZONE will search for potential targets by default.
+-- @param #AI_BAI_ZONE self
+-- @return #AI_BAI_ZONE
+function AI_BAI_ZONE:SearchOnOff( Search )
+
+  self.Search = Search
+  
+  return self
+end
+
+--- If Search is Off, the current zone coordinate will be the center of the bombing.
+-- @param #AI_BAI_ZONE self
+-- @return #AI_BAI_ZONE
+function AI_BAI_ZONE:SearchOff()
+
+  self:SearchOnOff( false )
+
+  return self
+end
+
+
+--- If Search is On, BAI will search for potential targets in the zone.
+-- @param #AI_BAI_ZONE self
+-- @return #AI_BAI_ZONE
+function AI_BAI_ZONE:SearchOn()
+
+  self:SearchOnOff( true )
+
+  return self
+end
+
 
 --- onafter State Transition for Event Start.
 -- @param #AI_BAI_ZONE self
@@ -412,26 +445,41 @@ end
 -- @param #string Event The Event string.
 -- @param #string To The To State string.
 function AI_BAI_ZONE:onafterTarget( Controllable, From, Event, To )
-  self:E("onafterTarget")
+  self:F({"onafterTarget",self.Search,Controllable:IsAlive()})
+  
+  
 
   if Controllable:IsAlive() then
 
     local AttackTasks = {}
 
-    for DetectedUnit, Detected in pairs( self.DetectedUnits ) do
-      local DetectedUnit = DetectedUnit -- Wrapper.Unit#UNIT
-      if DetectedUnit:IsAlive() then
-        if DetectedUnit:IsInZone( self.EngageZone ) then
-          if Detected == true then
-            self:E( {"Target: ", DetectedUnit } )
-            self.DetectedUnits[DetectedUnit] = false
-            local AttackTask = Controllable:TaskAttackUnit( DetectedUnit, false, self.EngageWeaponExpend, self.EngageAttackQty, self.EngageDirection, self.EngageAltitude, nil )
-            self.Controllable:PushTask( AttackTask, 1 )
+    if self.Search == true then
+      for DetectedUnit, Detected in pairs( self.DetectedUnits ) do
+        local DetectedUnit = DetectedUnit -- Wrapper.Unit#UNIT
+        if DetectedUnit:IsAlive() then
+          if DetectedUnit:IsInZone( self.EngageZone ) then
+            if Detected == true then
+              self:F( {"Target: ", DetectedUnit } )
+              self.DetectedUnits[DetectedUnit] = false
+              local AttackTask = Controllable:TaskAttackUnit( DetectedUnit, false, self.EngageWeaponExpend, self.EngageAttackQty, self.EngageDirection, self.EngageAltitude, nil )
+              self.Controllable:PushTask( AttackTask, 1 )
+            end
           end
+        else
+          self.DetectedUnits[DetectedUnit] = nil
         end
-      else
-        self.DetectedUnits[DetectedUnit] = nil
       end
+    else
+      self:F("Attack zone")
+      local AttackTask = Controllable:TaskAttackMapObject( 
+        self.EngageZone:GetPointVec2():GetVec2(),
+        true, 
+        self.EngageWeaponExpend, 
+        self.EngageAttackQty, 
+        self.EngageDirection,
+        self.EngageAltitude
+      )
+      self.Controllable:PushTask( AttackTask, 1 )
     end
 
     self:__Target( -10 )
@@ -466,6 +514,7 @@ function AI_BAI_ZONE:onafterEngage( Controllable, From, Event, To,
                                     EngageWeaponExpend, 
                                     EngageAttackQty, 
                                     EngageDirection )
+
   self:F("onafterEngage")
 
   self.EngageSpeed = EngageSpeed or 400
@@ -494,29 +543,44 @@ function AI_BAI_ZONE:onafterEngage( Controllable, From, Event, To,
       )
     
     EngageRoute[#EngageRoute+1] = CurrentRoutePoint
+    EngageRoute[#EngageRoute+1] = CurrentRoutePoint
 
     local AttackTasks = {}
-
-    for DetectedUnitID, DetectedUnitData in pairs( self.DetectedUnits ) do
-      local DetectedUnit = DetectedUnitData -- Wrapper.Unit#UNIT
-      self:T( DetectedUnit )
-      if DetectedUnit:IsAlive() then
-        if DetectedUnit:IsInZone( self.EngageZone ) then
-          self:E( {"Engaging ", DetectedUnit } )
-          AttackTasks[#AttackTasks+1] = Controllable:TaskBombing( 
-            DetectedUnit:GetPointVec2():GetVec2(),
-            true, 
-            EngageWeaponExpend, 
-            EngageAttackQty, 
-            EngageDirection 
-          )
+    
+    if self.Search == true then
+  
+      for DetectedUnitID, DetectedUnitData in pairs( self.DetectedUnits ) do
+        local DetectedUnit = DetectedUnitData -- Wrapper.Unit#UNIT
+        self:T( DetectedUnit )
+        if DetectedUnit:IsAlive() then
+          if DetectedUnit:IsInZone( self.EngageZone ) then
+            self:F( {"Engaging ", DetectedUnit } )
+            AttackTasks[#AttackTasks+1] = Controllable:TaskBombing( 
+              DetectedUnit:GetPointVec2():GetVec2(),
+              true, 
+              EngageWeaponExpend, 
+              EngageAttackQty, 
+              EngageDirection,
+              EngageAltitude 
+            )
+          end
+        else
+          self.DetectedUnits[DetectedUnit] = nil
         end
-      else
-        self.DetectedUnits[DetectedUnit] = nil
       end
+    else
+      self:F("Attack zone")
+      AttackTasks[#AttackTasks+1] = Controllable:TaskAttackMapObject( 
+        self.EngageZone:GetPointVec2():GetVec2(),
+        true, 
+        EngageWeaponExpend, 
+        EngageAttackQty, 
+        EngageDirection,
+        EngageAltitude 
+      )
     end
 
-    EngageRoute[1].task = Controllable:TaskCombo( AttackTasks )
+    EngageRoute[#EngageRoute].task = Controllable:TaskCombo( AttackTasks )
 
     --- Define a random point in the @{Zone}. The AI will fly to that point within the zone.
     
@@ -538,6 +602,9 @@ function AI_BAI_ZONE:onafterEngage( Controllable, From, Event, To,
     
     EngageRoute[#EngageRoute+1] = ToTargetRoutePoint
 
+    Controllable:OptionROEOpenFire()
+    Controllable:OptionROTVertical()
+
     --- Now we're going to do something special, we're going to call a function from a waypoint action at the AIControllable...
     Controllable:WayPointInitialize( EngageRoute )
     
@@ -549,9 +616,6 @@ function AI_BAI_ZONE:onafterEngage( Controllable, From, Event, To,
     --- NOW ROUTE THE GROUP!
     Controllable:WayPointExecute( 1 )
 
-    Controllable:OptionROEOpenFire()
-    Controllable:OptionROTVertical()
-    
     self:SetDetectionInterval( 2 )
     self:SetDetectionActivated()
     self:__Target( -2 ) -- Start Targetting
