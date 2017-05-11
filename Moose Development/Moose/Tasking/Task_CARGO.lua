@@ -284,7 +284,7 @@ do -- TASK_CARGO
       
       self:__SelectAction( -15 )
       
-      Task:GetMission():GetCommandCenter():MessageToGroup("Cargo menu is ready ...", TaskUnit:GetGroup() )
+      --Task:GetMission():GetCommandCenter():MessageToGroup("Cargo menu is ready ...", TaskUnit:GetGroup() )
     end
     
     --- 
