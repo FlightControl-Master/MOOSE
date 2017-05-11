@@ -36,7 +36,7 @@
 --
 --   * **FlightControl**: Concept, Design & Programming.
 --   
--- @module AI_Follow
+-- @module AI_Formation
 
 --- AI_FORMATION class
 -- @type AI_FORMATION

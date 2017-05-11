@@ -51,7 +51,7 @@
 --
 --   * **FlightControl**: Concept, Design & Programming.
 --
--- @module AI_BAI
+-- @module AI_Bai
 
 
 --- AI_BAI_ZONE class
