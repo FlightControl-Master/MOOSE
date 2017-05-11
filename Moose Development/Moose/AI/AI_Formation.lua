@@ -67,7 +67,15 @@
 -- 
 -- The following menus are created within the RADIO MENU of an active unit hosted by a player:
 -- 
---  * @{Follow#AI_FORMATION.SetFormation}(): Set a Vec3 position for a GroupName within the GroupSet following.
+--  * @{AI_Formation#AI_FORMATION.FormationRandom}(): Form a randomized formation (can cause crashed of planes :-)).
+--  * @{AI_Formation#AI_FORMATION.FormationLeftLine}(): Form a left line formation.
+--  * @{AI_Formation#AI_FORMATION.FormationRightLine}(): Form a right line formation.
+--  * @{AI_Formation#AI_FORMATION.FormationRightWing}(): Form a right wing formation.
+--  * @{AI_Formation#AI_FORMATION.FormationLeftWing}(): Form a left wing formation.
+--  * @{AI_Formation#AI_FORMATION.FormationCenterLine}(): Form a center line formation.
+--  * @{AI_Formation#AI_FORMATION.FormationCenterWing}(): Form a center wing formation.
+--  * @{AI_Formation#AI_FORMATION.FormationCenterBoxed}(): Form a center boxed formation.
+--  
 --
 -- @usage
 -- -- Declare a new FollowPlanes object as follows:
@@ -110,7 +118,7 @@ AI_FORMATION = {
 --- AI_FORMATION class constructor for an AI group
 -- @param #AI_FORMATION self
 -- @param Unit#UNIT FollowUnit The UNIT leading the FolllowGroupSet.
--- @param Set#SET_GROUP FollowGroupSet The group AI escorting the FollowUnit.
+-- @param Core.Set#SET_GROUP FollowGroupSet The group AI escorting the FollowUnit.
 -- @param #string FollowName Name of the escort.
 -- @return #AI_FORMATION self
 function AI_FORMATION:New( FollowUnit, FollowGroupSet, FollowName, FollowBriefing )
@@ -126,23 +134,151 @@ function AI_FORMATION:New( FollowUnit, FollowGroupSet, FollowName, FollowBriefin
 
   self:AddTransition( "None", "Start", "Following" )
   
-  self:AddTransition( "*", "Follow", "Following" )
+  self:AddTransition( "*", "FormationLeftLine", "*" )
   
-  FollowGroupSet:ForEachGroup(
-    --- @param Group#GROUP FollowGroup
-    function( FollowGroup, FollowName, FollowUnit )
-      local Vec3 = { x = math.random( -20, -150 ), y = math.random( -50, 50 ), z = math.random( -800, 800 ) }
-      FollowGroup:SetState( self, "Vec3", Vec3 )
-      FollowGroup:OptionROTPassiveDefense()
-      FollowGroup:OptionROEReturnFire()
-      --FollowGroup:MessageToClient( FollowGroup:GetCategoryName() .. " '" .. FollowName .. "' (" .. FollowGroup:GetCallsign() .. ") reporting! " ..
-      --  "We're following your flight. ",
-      --  60, FollowUnit
-      --)
-    end,
-    FollowName, self.FollowUnit
-  )
+  --- FormationLeftLine Handler OnBefore for AI_FORMATION
+  -- @function [parent=#AI_FORMATION] OnBeforeFormationLeftLine
+  -- @param #AI_FORMATION self
+  -- @param Core.Set#SET_GROUP FollowGroupSet The group AI escorting the FollowUnit.
+  -- @param #string From
+  -- @param #string Event
+  -- @param #string To
+  -- @param #number XSpace The space on the X-axis in meters between each group.
+  -- @param #nubmer YSpace The start position on the Y-axis in meters for each group.
+  -- @param #number ZSpace The start position on the Z-axis in meters for each group.
+  -- @return #boolean
+  
+  --- FormationLeftLine Handler OnAfter for AI_FORMATION
+  -- @function [parent=#AI_FORMATION] OnAfterFormationLeftLine
+  -- @param #AI_FORMATION self
+  -- @param Core.Set#SET_GROUP FollowGroupSet The group AI escorting the FollowUnit.
+  -- @param #string From
+  -- @param #string Event
+  -- @param #string To
+  -- @param #number XSpace The space on the X-axis in meters between each group.
+  -- @param #nubmer YSpace The start position on the Y-axis in meters for each group.
+  -- @param #number ZSpace The start position on the Z-axis in meters for each group.
+  
+  --- FormationLeftLine Trigger for AI_FORMATION
+  -- @function [parent=#AI_FORMATION] FormationLeftLine
+  -- @param #AI_FORMATION self
+  
+  --- FormationLeftLine Asynchronous Trigger for AI_FORMATION
+  -- @function [parent=#AI_FORMATION] __FormationLeftLine
+  -- @param #AI_FORMATION self
+  -- @param #number Delay
+  
+  
+  self:AddTransition( "*", "FormationRightLine", "*" )
+  
+  --- FormationRightLine Handler OnBefore for AI_FORMATION
+  -- @function [parent=#AI_FORMATION] OnBeforeFormationRightLine
+  -- @param #AI_FORMATION self
+  -- @param Core.Set#SET_GROUP FollowGroupSet The group AI escorting the FollowUnit.
+  -- @param #string From
+  -- @param #string Event
+  -- @param #string To
+  -- @param #number XSpace The space on the X-axis in meters between each group.
+  -- @param #nubmer YSpace The start position on the Y-axis in meters for each group.
+  -- @param #number ZSpace The start position on the Z-axis in meters for each group.
+  -- @return #boolean
+  
+  --- FormationRightLine Handler OnAfter for AI_FORMATION
+  -- @function [parent=#AI_FORMATION] OnAfterFormationRightLine
+  -- @param #AI_FORMATION self
+  -- @param Core.Set#SET_GROUP FollowGroupSet The group AI escorting the FollowUnit.
+  -- @param #string From
+  -- @param #string Event
+  -- @param #string To
+  -- @param #number XSpace The space on the X-axis in meters between each group.
+  -- @param #nubmer YSpace The start position on the Y-axis in meters for each group.
+  -- @param #number ZSpace The start position on the Z-axis in meters for each group.
+  
+  --- FormationRightLine Trigger for AI_FORMATION
+  -- @function [parent=#AI_FORMATION] FormationRightLine
+  -- @param #AI_FORMATION self
+  
+  --- FormationRightLine Asynchronous Trigger for AI_FORMATION
+  -- @function [parent=#AI_FORMATION] __FormationRightLine
+  -- @param #AI_FORMATION self
+  -- @param #number Delay
+  
+  self:AddTransition( "*", "FormationLeftWing", "*" )
+  
+  --- FormationLeftWing Handler OnBefore for AI_FORMATION
+  -- @function [parent=#AI_FORMATION] OnBeforeFormationLeftWing
+  -- @param #AI_FORMATION self
+  -- @param Core.Set#SET_GROUP FollowGroupSet The group AI escorting the FollowUnit.
+  -- @param #string From
+  -- @param #string Event
+  -- @param #string To
+  -- @param #number XSpace The space on the X-axis in meters between each group.
+  -- @param #nubmer YSpace The start position on the Y-axis in meters for each group.
+  -- @param #number ZSpace The start position on the Z-axis in meters for each group.
+  -- @return #boolean
+  
+  --- FormationLeftWing Handler OnAfter for AI_FORMATION
+  -- @function [parent=#AI_FORMATION] OnAfterFormationLeftWing
+  -- @param #AI_FORMATION self
+  -- @param Core.Set#SET_GROUP FollowGroupSet The group AI escorting the FollowUnit.
+  -- @param #string From
+  -- @param #string Event
+  -- @param #string To
+  -- @param #number XSpace The space on the X-axis in meters between each group.
+  -- @param #nubmer YSpace The start position on the Y-axis in meters for each group.
+  -- @param #number ZSpace The start position on the Z-axis in meters for each group.
+  
+  --- FormationLeftWing Trigger for AI_FORMATION
+  -- @function [parent=#AI_FORMATION] FormationLeftWing
+  -- @param #AI_FORMATION self
+  
+  --- FormationLeftWing Asynchronous Trigger for AI_FORMATION
+  -- @function [parent=#AI_FORMATION] __FormationLeftWing
+  -- @param #AI_FORMATION self
+  -- @param #number Delay
+  
+  
+  self:AddTransition( "*", "FormationRightWing", "*" )
+  
+  --- FormationRightWing Handler OnBefore for AI_FORMATION
+  -- @function [parent=#AI_FORMATION] OnBeforeFormationRightWing
+  -- @param #AI_FORMATION self
+  -- @param Core.Set#SET_GROUP FollowGroupSet The group AI escorting the FollowUnit.
+  -- @param #string From
+  -- @param #string Event
+  -- @param #string To
+  -- @param #number XSpace The space on the X-axis in meters between each group.
+  -- @param #nubmer YSpace The start position on the Y-axis in meters for each group.
+  -- @param #number ZSpace The start position on the Z-axis in meters for each group.
+  -- @return #boolean
+  
+  --- FormationRightWing Handler OnAfter for AI_FORMATION
+  -- @function [parent=#AI_FORMATION] OnAfterFormationRightWing
+  -- @param #AI_FORMATION self
+  -- @param Core.Set#SET_GROUP FollowGroupSet The group AI escorting the FollowUnit.
+  -- @param #string From
+  -- @param #string Event
+  -- @param #string To
+  -- @param #number XSpace The space on the X-axis in meters between each group.
+  -- @param #nubmer YSpace The start position on the Y-axis in meters for each group.
+  -- @param #number ZSpace The start position on the Z-axis in meters for each group.
+  
+  --- FormationRightWing Trigger for AI_FORMATION
+  -- @function [parent=#AI_FORMATION] FormationRightWing
+  -- @param #AI_FORMATION self
+  
+  --- FormationRightWing Asynchronous Trigger for AI_FORMATION
+  -- @function [parent=#AI_FORMATION] __FormationRightWing
+  -- @param #AI_FORMATION self
+  -- @param #number Delay
+  
+  
+  
+  
+  
+  self:AddTransition( "*", "Follow", "Following" )
 
+  self:FormationLeftLine( 50, 0, 100 )
   
   self.FollowName = FollowName
   self.FollowBriefing = FollowBriefing
@@ -160,9 +296,148 @@ end
 -- This allows to visualize where the escort is flying to.
 -- @param #AI_FORMATION self
 -- @param #boolean SmokeDirection If true, then the direction vector will be smoked.
+-- @return #AI_FORMATION
 function AI_FORMATION:TestSmokeDirectionVector( SmokeDirection )
   self.SmokeDirectionVector = ( SmokeDirection == true ) and true or false
   return self
+end
+
+--- FormationLeftLine Handler OnAfter for AI_FORMATION
+-- @function [parent=#AI_FORMATION] OnAfterFormationLeftLine
+-- @param #AI_FORMATION self
+-- @param Core.Set#SET_GROUP FollowGroupSet The group AI escorting the FollowUnit.
+-- @param #string From
+-- @param #string Event
+-- @param #string To
+-- @param #number XSpace The space on the X-axis in meters between each group.
+-- @param #nubmer YSpace The start position on the Y-axis in meters for each group.
+-- @param #number ZSpace The start position on the Z-axis in meters for each group.
+function AI_FORMATION:onafterFormationLeftLine( FollowGroupSet, From , Event , To, XSpace, YSpace, ZSpace )
+  self:E( { FollowGroupSet, From , Event , To, XSpace, YSpace, ZSpace } )
+
+  FollowGroupSet:Flush()
+  
+  local FollowSet = FollowGroupSet:GetSet()
+  
+  local i = 0
+  
+  for FollowID, FollowGroup in pairs( FollowSet ) do
+  
+    local PointVec3 = POINT_VEC3:New()
+    PointVec3:SetX( -XSpace )
+    PointVec3:SetY( YSpace )
+    PointVec3:SetZ( i * ZSpace )
+  
+    local Vec3 = PointVec3:GetVec3()
+    self:E( Vec3 )
+    FollowGroup:SetState( self, "Vec3", Vec3 )
+    FollowGroup:OptionROTPassiveDefense()
+    FollowGroup:OptionROEReturnFire()
+    i = i + 1
+  end
+
+end
+
+
+--- FormationRightLine Handler OnAfter for AI_FORMATION
+-- @function [parent=#AI_FORMATION] OnAfterFormationLeftLine
+-- @param #AI_FORMATION self
+-- @param Core.Set#SET_GROUP FollowGroupSet The group AI escorting the FollowUnit.
+-- @param #string From
+-- @param #string Event
+-- @param #string To
+-- @param #number XSpace The space on the X-axis in meters between each group.
+-- @param #nubmer YSpace The start position on the Y-axis in meters for each group.
+-- @param #number ZSpace The start position on the Z-axis in meters for each group.
+function AI_FORMATION:onafterFormationRightLine( FollowGroupSet, From , Event , To, XSpace, YSpace, ZSpace )
+
+  local FollowSet = FollowGroupSet:GetSet()
+  
+  local i = 0
+  
+  for FollowID, FollowGroup in pairs( FollowSet ) do
+  
+    local PointVec3 = POINT_VEC3:New()
+    PointVec3:SetX( i * XSpace )
+    PointVec3:SetY( YSpace )
+    PointVec3:SetZ( -ZSpace )
+  
+    local Vec3 = PointVec3:GetVec3()
+    self:E( Vec3 )
+    FollowGroup:SetState( self, "Vec3", Vec3 )
+    FollowGroup:OptionROTPassiveDefense()
+    FollowGroup:OptionROEReturnFire()
+    i = i + 1
+  end
+
+end
+
+
+--- FormationLeftWing Handler OnAfter for AI_FORMATION
+-- @function [parent=#AI_FORMATION] OnAfterFormationLeftWing
+-- @param #AI_FORMATION self
+-- @param Core.Set#SET_GROUP FollowGroupSet The group AI escorting the FollowUnit.
+-- @param #string From
+-- @param #string Event
+-- @param #string To
+-- @param #number XSpace The space on the X-axis in meters between each group.
+-- @param #nubmer YSpace The start position on the Y-axis in meters for each group.
+-- @param #number ZSpace The start position on the Z-axis in meters for each group.
+function AI_FORMATION:onafterFormationLeftWing( FollowGroupSet, From , Event , To, XSpace, YSpace, ZSpace )
+
+  local FollowSet = FollowGroupSet:GetSet()
+  
+  local i = 0
+  
+  for FollowID, FollowGroup in pairs( FollowSet ) do
+  
+    local PointVec3 = POINT_VEC3:New()
+    PointVec3:SetX( -i * XSpace )
+    PointVec3:SetY( i * YSpace )
+    PointVec3:SetZ( -ZSpace )
+  
+    local Vec3 = PointVec3:GetVec3()
+    self:E( Vec3 )
+    FollowGroup:SetState( self, "Vec3", Vec3 )
+    FollowGroup:OptionROTPassiveDefense()
+    FollowGroup:OptionROEReturnFire()
+    i = i + 1
+  end
+
+end
+
+
+--- FormationRightWing Handler OnAfter for AI_FORMATION
+-- @function [parent=#AI_FORMATION] OnAfterFormationLeftWing
+-- @param #AI_FORMATION self
+-- @param Core.Set#SET_GROUP FollowGroupSet The group AI escorting the FollowUnit.
+-- @param #string From
+-- @param #string Event
+-- @param #string To
+-- @param #number XSpace The space on the X-axis in meters between each group.
+-- @param #nubmer YSpace The start position on the Y-axis in meters for each group.
+-- @param #number ZSpace The start position on the Z-axis in meters for each group.
+function AI_FORMATION:onafterFormationRightWing( FollowGroupSet, From , Event , To, XSpace, YSpace, ZSpace )
+
+  local FollowSet = FollowGroupSet:GetSet()
+  
+  local i = 0
+  
+  for FollowID, FollowGroup in pairs( FollowSet ) do
+  
+    local PointVec3 = POINT_VEC3:New()
+    PointVec3:SetX( i * XSpace )
+    PointVec3:SetY( i * YSpace )
+    PointVec3:SetZ( -ZSpace )
+    
+    local Vec3 = PointVec3:GetVec3()
+    self:E( Vec3 )
+    FollowGroup:SetState( self, "Vec3", Vec3 )
+    FollowGroup:OptionROTPassiveDefense()
+    FollowGroup:OptionROEReturnFire()
+    i = i + 1
+  end
+
 end
 
 
@@ -194,111 +469,108 @@ function AI_FORMATION:onenterFollowing( FollowGroupSet )
     end
         
     FollowGroupSet:ForEachGroup(
-      --- @param Group#GROUP FollowGroup
-      -- @param Unit#UNIT ClientUnit
+      --- @param Wrapper.Group#GROUP FollowGroup
+      -- @param Wrapper.Unit#UNIT ClientUnit
       function( FollowGroup, ClientUnit, CT1, CV1, CT2, CV2 )
         
         local GroupUnit = FollowGroup:GetUnit( 1 )
         local FollowFormation = FollowGroup:GetState( self, "Vec3" )
-        self:T( FollowFormation )
-        local FollowDistance = FollowFormation.x
-        
-        self:T( {ClientUnit.UnitName, GroupUnit.UnitName } )
-
-        local GT1 = GroupUnit:GetState( self, "GT1" )
-    
-        if CT1 == nil or CT1 == 0 or GT1 == nil or GT1 == 0 then
-          GroupUnit:SetState( self, "GV1", GroupUnit:GetPointVec3() )
-          GroupUnit:SetState( self, "GT1", timer.getTime() ) 
-        else
-          local CD = ( ( CV2.x - CV1.x )^2 + ( CV2.y - CV1.y )^2 + ( CV2.z - CV1.z )^2 ) ^ 0.5
-          local CT = CT2 - CT1
-    
-          local CS = ( 3600 / CT ) * ( CD / 1000 )
-    
-          self:T2( { "Client:", CS, CD, CT, CV2, CV1, CT2, CT1 } )
-    
+        if FollowFormation then
+          local FollowDistance = FollowFormation.x
+          
           local GT1 = GroupUnit:GetState( self, "GT1" )
-          local GT2 = timer.getTime()
-          local GV1 = GroupUnit:GetState( self, "GV1" )
-          local GV2 = GroupUnit:GetPointVec3()
-          GroupUnit:SetState( self, "GT1", GT2 )
-          GroupUnit:SetState( self, "GV1", GV2 )
-    
-          local GD = ( ( GV2.x - GV1.x )^2 + ( GV2.y - GV1.y )^2 + ( GV2.z - GV1.z )^2 ) ^ 0.5
-          local GT = GT2 - GT1
-    
-          local GS = ( 3600 / GT ) * ( GD / 1000 )
-    
-          self:T2( { "Group:", GS, GD, GT, GV2, GV1, GT2, GT1 } )
-    
-          -- Calculate the group direction vector
-          local GV = { x = GV2.x - CV2.x, y = GV2.y - CV2.y, z = GV2.z - CV2.z }
-    
-          -- Calculate GH2, GH2 with the same height as CV2.
-          local GH2 = { x = GV2.x, y = CV2.y, z = GV2.z }
-    
-          -- Calculate the angle of GV to the orthonormal plane
-          local alpha = math.atan2( GV.z, GV.x )
-    
-          -- Now we calculate the intersecting vector between the circle around CV2 with radius FollowDistance and GH2.
-          -- From the GeoGebra model: CVI = (x(CV2) + FollowDistance cos(alpha), y(GH2) + FollowDistance sin(alpha), z(CV2))
-          local CVI = { x = CV2.x + FollowDistance * math.cos(alpha),
-            y = GH2.y + FollowFormation.y,
-            z = CV2.z + FollowDistance * math.sin(alpha),
-          }
-    
-          -- Calculate the direction vector DV of the escort group. We use CVI as the base and CV2 as the direction.
-          local DV = { x = CV2.x - CVI.x, y = CV2.y - CVI.y, z = CV2.z - CVI.z }
-    
-          -- We now calculate the unary direction vector DVu, so that we can multiply DVu with the speed, which is expressed in meters / s.
-          -- We need to calculate this vector to predict the point the escort group needs to fly to according its speed.
-          -- The distance of the destination point should be far enough not to have the aircraft starting to swipe left to right...
-          local DVu = { x = DV.x / FollowDistance, y = DV.y / FollowDistance, z = DV.z / FollowDistance }
-    
-          -- Now we can calculate the group destination vector GDV.
-          local GDV = { x = DVu.x * CS * 8 + CVI.x, y = CVI.y, z = DVu.z * CS * 8 + CVI.z }
-          
-          local GDV_Formation = { 
-            x = GDV.x + ( FollowFormation.x * math.cos(alpha) - FollowFormation.z * math.sin(alpha) ), 
-            y = GDV.y, 
-            z = GDV.z + ( FollowFormation.z * math.cos(alpha) + FollowFormation.x * math.sin(alpha) )
-          }
-          
-          if self.SmokeDirectionVector == true then
-            trigger.action.smoke( GDV, trigger.smokeColor.Green )
-            trigger.action.smoke( GDV_Formation, trigger.smokeColor.White )
+      
+          if CT1 == nil or CT1 == 0 or GT1 == nil or GT1 == 0 then
+            GroupUnit:SetState( self, "GV1", GroupUnit:GetPointVec3() )
+            GroupUnit:SetState( self, "GT1", timer.getTime() ) 
+          else
+            local CD = ( ( CV2.x - CV1.x )^2 + ( CV2.y - CV1.y )^2 + ( CV2.z - CV1.z )^2 ) ^ 0.5
+            local CT = CT2 - CT1
+      
+            local CS = ( 3600 / CT ) * ( CD / 1000 )
+      
+            self:T2( { "Client:", CS, CD, CT, CV2, CV1, CT2, CT1 } )
+      
+            local GT1 = GroupUnit:GetState( self, "GT1" )
+            local GT2 = timer.getTime()
+            local GV1 = GroupUnit:GetState( self, "GV1" )
+            local GV2 = GroupUnit:GetPointVec3()
+            GroupUnit:SetState( self, "GT1", GT2 )
+            GroupUnit:SetState( self, "GV1", GV2 )
+      
+            local GD = ( ( GV2.x - GV1.x )^2 + ( GV2.y - GV1.y )^2 + ( GV2.z - GV1.z )^2 ) ^ 0.5
+            local GT = GT2 - GT1
+      
+            local GS = ( 3600 / GT ) * ( GD / 1000 )
+      
+            --self:E( { "Group:", GS = GS,GD =  GD, GT = GT, GV2 = GV2, GV1 = GV1, GT2 = GT2, GT1 = GT1 } )
+      
+            -- Calculate the group direction vector
+            local GV = { x = GV2.x - CV2.x + FollowFormation.x, y = GV2.y - CV2.y, z = GV2.z - CV2.z + FollowFormation.z }
+      
+            -- Calculate GH2, GH2 with the same height as CV2.
+            local GH2 = { x = GV2.x, y = CV2.y, z = GV2.z }
+      
+            -- Calculate the angle of GV to the orthonormal plane
+            local alpha = math.atan2( GV.z, GV.x )
+      
+            -- Now we calculate the intersecting vector between the circle around CV2 with radius FollowDistance and GH2.
+            -- From the GeoGebra model: CVI = (x(CV2) + FollowDistance cos(alpha), y(GH2) + FollowDistance sin(alpha), z(CV2))
+            local CVI = { x = CV2.x + FollowDistance * math.cos(alpha),
+              y = GH2.y, -- + FollowFormation.y,
+              z = CV2.z + FollowDistance * math.sin(alpha),
+            }
+      
+            -- Calculate the direction vector DV of the escort group. We use CVI as the base and CV2 as the direction.
+            local DV = { x = CV2.x - CVI.x, y = CV2.y - CVI.y, z = CV2.z - CVI.z }
+      
+            -- We now calculate the unary direction vector DVu, so that we can multiply DVu with the speed, which is expressed in meters / s.
+            -- We need to calculate this vector to predict the point the escort group needs to fly to according its speed.
+            -- The distance of the destination point should be far enough not to have the aircraft starting to swipe left to right...
+            local DVu = { x = DV.x / FollowDistance, y = DV.y, z = DV.z / FollowDistance }
+      
+            -- Now we can calculate the group destination vector GDV.
+            local GDV = { x = DVu.x * CS * 10 + CVI.x, y = CVI.y, z = DVu.z * CS * 10 + CVI.z }
+            
+            local ADDx = FollowFormation.x * math.cos(alpha) - FollowFormation.z * math.sin(alpha)
+            local ADDz = FollowFormation.z * math.cos(alpha) + FollowFormation.x * math.sin(alpha)
+            
+            self:E( { ALPHA = alpha, GDVx = GDV.x, GDVz = GDV.z, ADDx = ADDx, ADDz = ADDz, FOLLOWx = FollowFormation.x, FOLLOWz = FollowFormation.z } )
+            
+--            local GDV_Formation = GDV
+            local GDV_Formation = { 
+              x = GDV.x + ADDx, 
+              y = GDV.y, 
+              z = GDV.z + ADDz
+            }
+            
+            if self.SmokeDirectionVector == true then
+              trigger.action.smoke( GDV, trigger.smokeColor.Green )
+              trigger.action.smoke( GDV_Formation, trigger.smokeColor.White )
+            end
+            
+            -- Measure distance between client and group
+            local CatchUpDistance = ( ( GDV_Formation.x - GV2.x )^2 + ( GDV_Formation.y - GV2.y )^2 + ( GDV_Formation.z - GV2.z )^2 ) ^ 0.5
+      
+            -- The calculation of the Speed would simulate that the group would take 30 seconds to overcome
+            -- the requested Distance).
+            local Time = 10
+            local CatchUpSpeed = ( CatchUpDistance - ( CS * 20 ) ) / Time
+      
+            local Speed = CS + CatchUpSpeed
+            if Speed < 0 then
+              Speed = 0
+            end
+            
+            -- Now route the escort to the desired point with the desired speed.
+            FollowGroup:RouteToVec3( GDV_Formation, Speed / 3.6 ) -- DCS models speed in Mps (Miles per second)
           end
-          
-          self:T3( { "CV2:", CV2 } )
-          self:T3( { "CVI:", CVI } )
-          self:T2( { "GDV:", GDV } )
-    
-          -- Measure distance between client and group
-          local CatchUpDistance = ( ( GDV_Formation.x - GV2.x )^2 + ( GDV_Formation.y - GV2.y )^2 + ( GDV_Formation.z - GV2.z )^2 ) ^ 0.5
-    
-          -- The calculation of the Speed would simulate that the group would take 30 seconds to overcome
-          -- the requested Distance).
-          local Time = 20
-          local CatchUpSpeed = ( CatchUpDistance - ( CS * 9.5 ) ) / Time
-    
-          local Speed = CS + CatchUpSpeed
-          if Speed < 0 then
-            Speed = 0
-          end
-          
-          self:T({CatchUpDistance, CatchUpSpeed})
-    
-          self:T3( { "Client Speed, Follow Speed, Speed, FollowDistance, Time:", CS, GS, Speed, FollowDistance, Time } )
-    
-          -- Now route the escort to the desired point with the desired speed.
-          FollowGroup:RouteToVec3( GDV_Formation, Speed / 3.6 ) -- DCS models speed in Mps (Miles per second)
         end
       end,
       ClientUnit, CT1, CV1, CT2, CV2
     )
 
-    self:__Follow( -0.5 )
+    self:__Follow( -10 )
   end
   
 end
