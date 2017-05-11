@@ -143,9 +143,10 @@ function AI_FORMATION:New( FollowUnit, FollowGroupSet, FollowName, FollowBriefin
   -- @param #string From
   -- @param #string Event
   -- @param #string To
-  -- @param #number XSpace The space on the X-axis in meters between each group.
-  -- @param #nubmer YSpace The start position on the Y-axis in meters for each group.
-  -- @param #number ZSpace The start position on the Z-axis in meters for each group.
+  -- @param #number XStart The start position on the X-axis in meters for the first group.
+  -- @param #nubmer YStart The start position on the Y-axis in meters for the first group.
+  -- @param #nubmer ZStart The start position on the Z-axis in meters for the first group.
+  -- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
   -- @return #boolean
   
   --- FormationLeftLine Handler OnAfter for AI_FORMATION
@@ -155,18 +156,27 @@ function AI_FORMATION:New( FollowUnit, FollowGroupSet, FollowName, FollowBriefin
   -- @param #string From
   -- @param #string Event
   -- @param #string To
-  -- @param #number XSpace The space on the X-axis in meters between each group.
-  -- @param #nubmer YSpace The start position on the Y-axis in meters for each group.
-  -- @param #number ZSpace The start position on the Z-axis in meters for each group.
+  -- @param #number XStart The start position on the X-axis in meters for the first group.
+  -- @param #nubmer YStart The start position on the Y-axis in meters for the first group.
+  -- @param #nubmer ZStart The start position on the Z-axis in meters for the first group.
+  -- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
   
   --- FormationLeftLine Trigger for AI_FORMATION
   -- @function [parent=#AI_FORMATION] FormationLeftLine
   -- @param #AI_FORMATION self
+  -- @param #number XStart The start position on the X-axis in meters for the first group.
+  -- @param #nubmer YStart The start position on the Y-axis in meters for the first group.
+  -- @param #nubmer ZStart The start position on the Z-axis in meters for the first group.
+  -- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
   
   --- FormationLeftLine Asynchronous Trigger for AI_FORMATION
   -- @function [parent=#AI_FORMATION] __FormationLeftLine
   -- @param #AI_FORMATION self
   -- @param #number Delay
+  -- @param #number XStart The start position on the X-axis in meters for the first group.
+  -- @param #nubmer YStart The start position on the Y-axis in meters for the first group.
+  -- @param #nubmer ZStart The start position on the Z-axis in meters for the first group.
+  -- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
   
   
   self:AddTransition( "*", "FormationRightLine", "*" )
@@ -178,9 +188,10 @@ function AI_FORMATION:New( FollowUnit, FollowGroupSet, FollowName, FollowBriefin
   -- @param #string From
   -- @param #string Event
   -- @param #string To
-  -- @param #number XSpace The space on the X-axis in meters between each group.
-  -- @param #nubmer YSpace The start position on the Y-axis in meters for each group.
-  -- @param #number ZSpace The start position on the Z-axis in meters for each group.
+  -- @param #number XStart The start position on the X-axis in meters for the first group.
+  -- @param #nubmer YStart The start position on the Y-axis in meters for the first group.
+  -- @param #nubmer ZStart The start position on the Z-axis in meters for the first group.
+  -- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
   -- @return #boolean
   
   --- FormationRightLine Handler OnAfter for AI_FORMATION
@@ -190,18 +201,27 @@ function AI_FORMATION:New( FollowUnit, FollowGroupSet, FollowName, FollowBriefin
   -- @param #string From
   -- @param #string Event
   -- @param #string To
-  -- @param #number XSpace The space on the X-axis in meters between each group.
-  -- @param #nubmer YSpace The start position on the Y-axis in meters for each group.
-  -- @param #number ZSpace The start position on the Z-axis in meters for each group.
+  -- @param #number XStart The start position on the X-axis in meters for the first group.
+  -- @param #nubmer YStart The start position on the Y-axis in meters for the first group.
+  -- @param #nubmer ZStart The start position on the Z-axis in meters for the first group.
+  -- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
   
   --- FormationRightLine Trigger for AI_FORMATION
   -- @function [parent=#AI_FORMATION] FormationRightLine
   -- @param #AI_FORMATION self
+  -- @param #number XStart The start position on the X-axis in meters for the first group.
+  -- @param #nubmer YStart The start position on the Y-axis in meters for the first group.
+  -- @param #nubmer ZStart The start position on the Z-axis in meters for the first group.
+  -- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
   
   --- FormationRightLine Asynchronous Trigger for AI_FORMATION
   -- @function [parent=#AI_FORMATION] __FormationRightLine
   -- @param #AI_FORMATION self
   -- @param #number Delay
+  -- @param #number XStart The start position on the X-axis in meters for the first group.
+  -- @param #nubmer YStart The start position on the Y-axis in meters for the first group.
+  -- @param #nubmer ZStart The start position on the Z-axis in meters for the first group.
+  -- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
   
   self:AddTransition( "*", "FormationLeftWing", "*" )
   
@@ -212,9 +232,11 @@ function AI_FORMATION:New( FollowUnit, FollowGroupSet, FollowName, FollowBriefin
   -- @param #string From
   -- @param #string Event
   -- @param #string To
-  -- @param #number XSpace The space on the X-axis in meters between each group.
-  -- @param #nubmer YSpace The start position on the Y-axis in meters for each group.
-  -- @param #number ZSpace The start position on the Z-axis in meters for each group.
+  -- @param #number XStart The start position on the X-axis in meters for the first group.
+  -- @param #number XSpace The space between groups on the X-axis in meters for each sequent group.
+  -- @param #nubmer YStart The start position on the Y-axis in meters for the first group.
+  -- @param #nubmer ZStart The start position on the Z-axis in meters for the first group.
+  -- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
   -- @return #boolean
   
   --- FormationLeftWing Handler OnAfter for AI_FORMATION
@@ -224,18 +246,30 @@ function AI_FORMATION:New( FollowUnit, FollowGroupSet, FollowName, FollowBriefin
   -- @param #string From
   -- @param #string Event
   -- @param #string To
-  -- @param #number XSpace The space on the X-axis in meters between each group.
-  -- @param #nubmer YSpace The start position on the Y-axis in meters for each group.
-  -- @param #number ZSpace The start position on the Z-axis in meters for each group.
+  -- @param #number XStart The start position on the X-axis in meters for the first group.
+  -- @param #number XSpace The space between groups on the X-axis in meters for each sequent group.
+  -- @param #nubmer YStart The start position on the Y-axis in meters for the first group.
+  -- @param #nubmer ZStart The start position on the Z-axis in meters for the first group.
+  -- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
   
   --- FormationLeftWing Trigger for AI_FORMATION
   -- @function [parent=#AI_FORMATION] FormationLeftWing
   -- @param #AI_FORMATION self
+  -- @param #number XStart The start position on the X-axis in meters for the first group.
+  -- @param #number XSpace The space between groups on the X-axis in meters for each sequent group.
+  -- @param #nubmer YStart The start position on the Y-axis in meters for the first group.
+  -- @param #nubmer ZStart The start position on the Z-axis in meters for the first group.
+  -- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
   
   --- FormationLeftWing Asynchronous Trigger for AI_FORMATION
   -- @function [parent=#AI_FORMATION] __FormationLeftWing
   -- @param #AI_FORMATION self
   -- @param #number Delay
+  -- @param #number XStart The start position on the X-axis in meters for the first group.
+  -- @param #number XSpace The space between groups on the X-axis in meters for each sequent group.
+  -- @param #nubmer YStart The start position on the Y-axis in meters for the first group.
+  -- @param #nubmer ZStart The start position on the Z-axis in meters for the first group.
+  -- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
   
   
   self:AddTransition( "*", "FormationRightWing", "*" )
@@ -247,9 +281,11 @@ function AI_FORMATION:New( FollowUnit, FollowGroupSet, FollowName, FollowBriefin
   -- @param #string From
   -- @param #string Event
   -- @param #string To
-  -- @param #number XSpace The space on the X-axis in meters between each group.
-  -- @param #nubmer YSpace The start position on the Y-axis in meters for each group.
-  -- @param #number ZSpace The start position on the Z-axis in meters for each group.
+  -- @param #number XStart The start position on the X-axis in meters for the first group.
+  -- @param #number XSpace The space between groups on the X-axis in meters for each sequent group.
+  -- @param #nubmer YStart The start position on the Y-axis in meters for the first group.
+  -- @param #nubmer ZStart The start position on the Z-axis in meters for the first group.
+  -- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
   -- @return #boolean
   
   --- FormationRightWing Handler OnAfter for AI_FORMATION
@@ -259,26 +295,35 @@ function AI_FORMATION:New( FollowUnit, FollowGroupSet, FollowName, FollowBriefin
   -- @param #string From
   -- @param #string Event
   -- @param #string To
-  -- @param #number XSpace The space on the X-axis in meters between each group.
-  -- @param #nubmer YSpace The start position on the Y-axis in meters for each group.
-  -- @param #number ZSpace The start position on the Z-axis in meters for each group.
+  -- @param #number XStart The start position on the X-axis in meters for the first group.
+  -- @param #number XSpace The space between groups on the X-axis in meters for each sequent group.
+  -- @param #nubmer YStart The start position on the Y-axis in meters for the first group.
+  -- @param #nubmer ZStart The start position on the Z-axis in meters for the first group.
+  -- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
   
   --- FormationRightWing Trigger for AI_FORMATION
   -- @function [parent=#AI_FORMATION] FormationRightWing
   -- @param #AI_FORMATION self
+  -- @param #number XStart The start position on the X-axis in meters for the first group.
+  -- @param #number XSpace The space between groups on the X-axis in meters for each sequent group.
+  -- @param #nubmer YStart The start position on the Y-axis in meters for the first group.
+  -- @param #nubmer ZStart The start position on the Z-axis in meters for the first group.
+  -- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
   
   --- FormationRightWing Asynchronous Trigger for AI_FORMATION
   -- @function [parent=#AI_FORMATION] __FormationRightWing
   -- @param #AI_FORMATION self
   -- @param #number Delay
-  
-  
-  
+  -- @param #number XStart The start position on the X-axis in meters for the first group.
+  -- @param #number XSpace The space between groups on the X-axis in meters for each sequent group.
+  -- @param #nubmer YStart The start position on the Y-axis in meters for the first group.
+  -- @param #nubmer ZStart The start position on the Z-axis in meters for the first group.
+  -- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
   
   
   self:AddTransition( "*", "Follow", "Following" )
 
-  self:FormationLeftLine( 50, 0, 100 )
+  self:FormationLeftLine( 500, 0, 250, 250 )
   
   self.FollowName = FollowName
   self.FollowBriefing = FollowBriefing
@@ -309,11 +354,12 @@ end
 -- @param #string From
 -- @param #string Event
 -- @param #string To
--- @param #number XSpace The space on the X-axis in meters between each group.
--- @param #nubmer YSpace The start position on the Y-axis in meters for each group.
--- @param #number ZSpace The start position on the Z-axis in meters for each group.
-function AI_FORMATION:onafterFormationLeftLine( FollowGroupSet, From , Event , To, XSpace, YSpace, ZSpace )
-  self:E( { FollowGroupSet, From , Event , To, XSpace, YSpace, ZSpace } )
+-- @param #number XStart The start position on the X-axis in meters for the first group.
+-- @param #nubmer YStart The start position on the Y-axis in meters for the first group.
+-- @param #nubmer ZStart The start position on the Z-axis in meters for the first group.
+-- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
+function AI_FORMATION:onafterFormationLeftLine( FollowGroupSet, From , Event , To, XStart, YStart, ZStart, ZSpace )
+  self:E( { FollowGroupSet, From , Event ,To, XStart, YStart, ZStart, ZSpace } )
 
   FollowGroupSet:Flush()
   
@@ -324,9 +370,9 @@ function AI_FORMATION:onafterFormationLeftLine( FollowGroupSet, From , Event , T
   for FollowID, FollowGroup in pairs( FollowSet ) do
   
     local PointVec3 = POINT_VEC3:New()
-    PointVec3:SetX( -XSpace )
-    PointVec3:SetY( YSpace )
-    PointVec3:SetZ( i * ZSpace )
+    PointVec3:SetX( XStart )
+    PointVec3:SetY( YStart )
+    PointVec3:SetZ( ZStart + i * ZSpace )
   
     local Vec3 = PointVec3:GetVec3()
     self:E( Vec3 )
@@ -340,16 +386,18 @@ end
 
 
 --- FormationRightLine Handler OnAfter for AI_FORMATION
--- @function [parent=#AI_FORMATION] OnAfterFormationLeftLine
+-- @function [parent=#AI_FORMATION] OnAfterFormationRightLine
 -- @param #AI_FORMATION self
 -- @param Core.Set#SET_GROUP FollowGroupSet The group AI escorting the FollowUnit.
 -- @param #string From
 -- @param #string Event
 -- @param #string To
--- @param #number XSpace The space on the X-axis in meters between each group.
--- @param #nubmer YSpace The start position on the Y-axis in meters for each group.
--- @param #number ZSpace The start position on the Z-axis in meters for each group.
-function AI_FORMATION:onafterFormationRightLine( FollowGroupSet, From , Event , To, XSpace, YSpace, ZSpace )
+-- @param #number XStart The start position on the X-axis in meters for the first group.
+-- @param #nubmer YStart The start position on the Y-axis in meters for the first group.
+-- @param #nubmer ZStart The start position on the Z-axis in meters for the first group.
+-- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
+function AI_FORMATION:onafterFormationRightLine( FollowGroupSet, From , Event , To, XStart, YStart, ZStart, ZSpace )
+  self:E( { FollowGroupSet, From , Event , To, XStart, YStart, ZStart, ZSpace } )
 
   local FollowSet = FollowGroupSet:GetSet()
   
@@ -358,9 +406,9 @@ function AI_FORMATION:onafterFormationRightLine( FollowGroupSet, From , Event , 
   for FollowID, FollowGroup in pairs( FollowSet ) do
   
     local PointVec3 = POINT_VEC3:New()
-    PointVec3:SetX( i * XSpace )
-    PointVec3:SetY( YSpace )
-    PointVec3:SetZ( -ZSpace )
+    PointVec3:SetX( XStart )
+    PointVec3:SetY( YStart )
+    PointVec3:SetZ( -(ZStart + i * ZSpace) )
   
     local Vec3 = PointVec3:GetVec3()
     self:E( Vec3 )
@@ -380,10 +428,12 @@ end
 -- @param #string From
 -- @param #string Event
 -- @param #string To
--- @param #number XSpace The space on the X-axis in meters between each group.
--- @param #nubmer YSpace The start position on the Y-axis in meters for each group.
--- @param #number ZSpace The start position on the Z-axis in meters for each group.
-function AI_FORMATION:onafterFormationLeftWing( FollowGroupSet, From , Event , To, XSpace, YSpace, ZSpace )
+-- @param #number XStart The start position on the X-axis in meters for the first group.
+-- @param #number XSpace The space between groups on the X-axis in meters for each sequent group.
+-- @param #nubmer YStart The start position on the Y-axis in meters for the first group.
+-- @param #nubmer ZStart The start position on the Z-axis in meters for the first group.
+-- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
+function AI_FORMATION:onafterFormationLeftWing( FollowGroupSet, From , Event , To, XStart, XSpace, YStart, ZStart, ZSpace )
 
   local FollowSet = FollowGroupSet:GetSet()
   
@@ -392,9 +442,9 @@ function AI_FORMATION:onafterFormationLeftWing( FollowGroupSet, From , Event , T
   for FollowID, FollowGroup in pairs( FollowSet ) do
   
     local PointVec3 = POINT_VEC3:New()
-    PointVec3:SetX( -i * XSpace )
-    PointVec3:SetY( i * YSpace )
-    PointVec3:SetZ( -ZSpace )
+    PointVec3:SetX( XStart + i * XSpace )
+    PointVec3:SetY( YStart )
+    PointVec3:SetZ( ZStart + i * ZSpace )
   
     local Vec3 = PointVec3:GetVec3()
     self:E( Vec3 )
@@ -408,16 +458,18 @@ end
 
 
 --- FormationRightWing Handler OnAfter for AI_FORMATION
--- @function [parent=#AI_FORMATION] OnAfterFormationLeftWing
+-- @function [parent=#AI_FORMATION] OnAfterFormationRightWing
 -- @param #AI_FORMATION self
 -- @param Core.Set#SET_GROUP FollowGroupSet The group AI escorting the FollowUnit.
 -- @param #string From
 -- @param #string Event
 -- @param #string To
--- @param #number XSpace The space on the X-axis in meters between each group.
--- @param #nubmer YSpace The start position on the Y-axis in meters for each group.
--- @param #number ZSpace The start position on the Z-axis in meters for each group.
-function AI_FORMATION:onafterFormationRightWing( FollowGroupSet, From , Event , To, XSpace, YSpace, ZSpace )
+-- @param #number XStart The start position on the X-axis in meters for the first group.
+-- @param #number XSpace The space between groups on the X-axis in meters for each sequent group.
+-- @param #nubmer YStart The start position on the Y-axis in meters for the first group.
+-- @param #nubmer ZStart The start position on the Z-axis in meters for the first group.
+-- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
+function AI_FORMATION:onafterFormationRightWing( FollowGroupSet, From , Event , To, XStart, XSpace, YStart, ZStart, ZSpace )
 
   local FollowSet = FollowGroupSet:GetSet()
   
@@ -426,10 +478,10 @@ function AI_FORMATION:onafterFormationRightWing( FollowGroupSet, From , Event , 
   for FollowID, FollowGroup in pairs( FollowSet ) do
   
     local PointVec3 = POINT_VEC3:New()
-    PointVec3:SetX( i * XSpace )
-    PointVec3:SetY( i * YSpace )
-    PointVec3:SetZ( -ZSpace )
-    
+    PointVec3:SetX( XStart + i * XSpace )
+    PointVec3:SetY( YStart )
+    PointVec3:SetZ( -(ZStart + i * ZSpace) )
+  
     local Vec3 = PointVec3:GetVec3()
     self:E( Vec3 )
     FollowGroup:SetState( self, "Vec3", Vec3 )
@@ -439,6 +491,8 @@ function AI_FORMATION:onafterFormationRightWing( FollowGroupSet, From , Event , 
   end
 
 end
+
+
 
 
 --- @param Follow#AI_FORMATION self
@@ -555,7 +609,7 @@ function AI_FORMATION:onenterFollowing( FollowGroupSet )
             -- The calculation of the Speed would simulate that the group would take 30 seconds to overcome
             -- the requested Distance).
             local Time = 10
-            local CatchUpSpeed = ( CatchUpDistance - ( CS * 20 ) ) / Time
+            local CatchUpSpeed = ( CatchUpDistance - ( CS * 15 ) ) / Time
       
             local Speed = CS + CatchUpSpeed
             if Speed < 0 then
