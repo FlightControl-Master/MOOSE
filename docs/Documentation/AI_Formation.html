@@ -200,6 +200,12 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_FORMATION).FormationCenterWing">AI_FORMATION:FormationCenterWing(XStart, XSpace, YStart, ZStart, ZSpace)</a></td>
+		<td class="summary">
+<p>FormationCenterWing Trigger for AI_FORMATION</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(AI_FORMATION).FormationLeftLine">AI_FORMATION:FormationLeftLine(XStart, YStart, ZStart, ZSpace)</a></td>
 		<td class="summary">
 <p>FormationLeftLine Trigger for AI_FORMATION</p>
@@ -230,6 +236,12 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_FORMATION).OnAfterFormationCenterWing">AI_FORMATION:OnAfterFormationCenterWing(FollowGroupSet, From, Event, To, XStart, XSpace, YStart, ZStart, ZSpace)</a></td>
+		<td class="summary">
+<p>FormationCenterWing Handler OnAfter for AI_FORMATION</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(AI_FORMATION).OnAfterFormationLeftLine">AI_FORMATION:OnAfterFormationLeftLine(FollowGroupSet, From, Event, To, XStart, YStart, ZStart, ZSpace)</a></td>
 		<td class="summary">
 <p>FormationLeftLine Handler OnAfter for AI_FORMATION</p>
@@ -251,6 +263,12 @@
 		<td class="name" nowrap="nowrap"><a href="##(AI_FORMATION).OnAfterFormationRightWing">AI_FORMATION:OnAfterFormationRightWing(FollowGroupSet, From, Event, To, XStart, XSpace, YStart, ZStart, ZSpace)</a></td>
 		<td class="summary">
 <p>FormationRightWing Handler OnAfter for AI_FORMATION</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_FORMATION).OnBeforeFormationCenterWing">AI_FORMATION:OnBeforeFormationCenterWing(FollowGroupSet, From, Event, To, XStart, XSpace, YStart, ZStart, ZSpace)</a></td>
+		<td class="summary">
+<p>FormationCenterWing Handler OnBefore for AI_FORMATION</p>
 </td>
 		</tr>
 		<tr>
@@ -302,6 +320,12 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_FORMATION).__FormationCenterWing">AI_FORMATION:__FormationCenterWing(Delay, XStart, XSpace, YStart, ZStart, ZSpace)</a></td>
+		<td class="summary">
+<p>FormationCenterWing Asynchronous Trigger for AI_FORMATION</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(AI_FORMATION).__FormationLeftLine">AI_FORMATION:__FormationLeftLine(Delay, XStart, YStart, ZStart, ZSpace)</a></td>
 		<td class="summary">
 <p>FormationLeftLine Asynchronous Trigger for AI_FORMATION</p>
@@ -323,6 +347,12 @@
 		<td class="name" nowrap="nowrap"><a href="##(AI_FORMATION).__FormationRightWing">AI_FORMATION:__FormationRightWing(Delay, XStart, XSpace, YStart, ZStart, ZSpace)</a></td>
 		<td class="summary">
 <p>FormationRightWing Asynchronous Trigger for AI_FORMATION</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_FORMATION).onafterFormationCenterWing">AI_FORMATION:onafterFormationCenterWing(FollowGroupSet, From, Event, To, XStart, XSpace, YStart, ZStart, ZSpace)</a></td>
+		<td class="summary">
+
 </td>
 		</tr>
 		<tr>
@@ -437,21 +467,18 @@
     <li><a href="AI_Formation.html##(AI_FORMATION).FormationRightWing">AI<em>Formation#AI</em>FORMATION.FormationRightWing</a>(): Form a right wing formation.</li>
     <li><a href="AI_Formation.html##(AI_FORMATION).FormationLeftWing">AI<em>Formation#AI</em>FORMATION.FormationLeftWing</a>(): Form a left wing formation.</li>
     <li><a href="AI_Formation.html##(AI_FORMATION).FormationCenterLine">AI<em>Formation#AI</em>FORMATION.FormationCenterLine</a>(): Form a center line formation.</li>
-    <li><a href="AI_Formation.html##(AI_FORMATION).FormationCenterWing">AI<em>Formation#AI</em>FORMATION.FormationCenterWing</a>(): Form a center wing formation.</li>
     <li><a href="AI_Formation.html##(AI_FORMATION).FormationCenterBoxed">AI<em>Formation#AI</em>FORMATION.FormationCenterBoxed</a>(): Form a center boxed formation.</li>
 </ul>
 
 
 
 			<h3>Usage:</h3>
-		<pre class="example"><code>-- Declare a new FollowPlanes object as follows:
-
--- First find the GROUP object and the CLIENT object.
-local FollowUnit = CLIENT:FindByName( "Unit Name" ) -- The Unit Name is the name of the unit flagged with the skill Client in the mission editor.
-local FollowGroup = GROUP:FindByName( "Group Name" ) -- The Group Name is the name of the group that will escort the Follow Client.
-
--- Now use these 2 objects to construct the new FollowPlanes object.
-FollowPlanes = AI_FORMATION:New( FollowUnit, FollowGroup, "Desert", "Welcome to the mission. You are escorted by a plane with code name 'Desert', which can be instructed through the F10 radio menu." )
+		<pre class="example"><code>local FollowGroupSet = SET_GROUP:New():FilterCategories("plane"):FilterCoalitions("blue"):FilterPrefixes("Follow"):FilterStart()
+FollowGroupSet:Flush()
+local LeaderUnit = UNIT:FindByName( "Leader" )
+local LargeFormation = AI_FORMATION:New( LeaderUnit, FollowGroupSet, "Center Wing Formation", "Briefing" )
+LargeFormation:FormationCenterWing( 500, 50, 0, 250, 250 )
+LargeFormation:__Start( 1 )
 </code></pre>
 
 </dd>
@@ -559,6 +586,52 @@ FollowPlanes = AI_FORMATION:New( FollowUnit, FollowGroup, "Desert", "Welcome to 
 	
 
 
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_FORMATION).FormationCenterWing" >
+<strong>AI_FORMATION:FormationCenterWing(XStart, XSpace, YStart, ZStart, ZSpace)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>FormationCenterWing Trigger for AI_FORMATION</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number XStart </em></code>: 
+The start position on the X-axis in meters for the first group.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number XSpace </em></code>: 
+The space between groups on the X-axis in meters for each sequent group.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="##(nubmer)">#nubmer</a> YStart </em></code>: 
+The start position on the Y-axis in meters for the first group.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="##(nubmer)">#nubmer</a> ZStart </em></code>: 
+The start position on the Z-axis in meters for the first group.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number ZSpace </em></code>: 
+The space between groups on the Z-axis in meters for each sequent group.</p>
+
+				</li>
+		</ul>
 </dd>
 </dl>
 		<dl class="function">
@@ -775,6 +848,73 @@ Name of the escort.</p>
 <p><em><a href="##(AI_FORMATION)">#AI_FORMATION</a>:</em>
 self</p>
 
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_FORMATION).OnAfterFormationCenterWing" >
+<strong>AI_FORMATION:OnAfterFormationCenterWing(FollowGroupSet, From, Event, To, XStart, XSpace, YStart, ZStart, ZSpace)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>FormationCenterWing Handler OnAfter for AI_FORMATION</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Set.html##(SET_GROUP)">Core.Set#SET_GROUP</a> FollowGroupSet </em></code>: 
+The group AI escorting the FollowUnit.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number XStart </em></code>: 
+The start position on the X-axis in meters for the first group.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number XSpace </em></code>: 
+The space between groups on the X-axis in meters for each sequent group.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="##(nubmer)">#nubmer</a> YStart </em></code>: 
+The start position on the Y-axis in meters for the first group.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="##(nubmer)">#nubmer</a> ZStart </em></code>: 
+The start position on the Z-axis in meters for the first group.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number ZSpace </em></code>: 
+The space between groups on the Z-axis in meters for each sequent group.</p>
+
+				</li>
+		</ul>
 </dd>
 </dl>
 		<dl class="function">
@@ -1031,6 +1171,78 @@ The space between groups on the Z-axis in meters for each sequent group.</p>
 
 				</li>
 		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_FORMATION).OnBeforeFormationCenterWing" >
+<strong>AI_FORMATION:OnBeforeFormationCenterWing(FollowGroupSet, From, Event, To, XStart, XSpace, YStart, ZStart, ZSpace)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>FormationCenterWing Handler OnBefore for AI_FORMATION</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Set.html##(SET_GROUP)">Core.Set#SET_GROUP</a> FollowGroupSet </em></code>: 
+The group AI escorting the FollowUnit.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number XStart </em></code>: 
+The start position on the X-axis in meters for the first group.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number XSpace </em></code>: 
+The space between groups on the X-axis in meters for each sequent group.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="##(nubmer)">#nubmer</a> YStart </em></code>: 
+The start position on the Y-axis in meters for the first group.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="##(nubmer)">#nubmer</a> ZStart </em></code>: 
+The start position on the Z-axis in meters for the first group.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number ZSpace </em></code>: 
+The space between groups on the Z-axis in meters for each sequent group.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em></p>
+
+
 </dd>
 </dl>
 		<dl class="function">
@@ -1383,6 +1595,57 @@ If true, then the direction vector will be smoked.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(AI_FORMATION).__FormationCenterWing" >
+<strong>AI_FORMATION:__FormationCenterWing(Delay, XStart, XSpace, YStart, ZStart, ZSpace)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>FormationCenterWing Asynchronous Trigger for AI_FORMATION</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number Delay </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number XStart </em></code>: 
+The start position on the X-axis in meters for the first group.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number XSpace </em></code>: 
+The space between groups on the X-axis in meters for each sequent group.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="##(nubmer)">#nubmer</a> YStart </em></code>: 
+The start position on the Y-axis in meters for the first group.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="##(nubmer)">#nubmer</a> ZStart </em></code>: 
+The start position on the Z-axis in meters for the first group.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number ZSpace </em></code>: 
+The space between groups on the Z-axis in meters for each sequent group.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(AI_FORMATION).__FormationLeftLine" >
 <strong>AI_FORMATION:__FormationLeftLine(Delay, XStart, YStart, ZStart, ZSpace)</strong>
 </a>
@@ -1567,6 +1830,67 @@ The start position on the Z-axis in meters for the first group.</p>
 				
 <p><code><em>#number ZSpace </em></code>: 
 The space between groups on the Z-axis in meters for each sequent group.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_FORMATION).onafterFormationCenterWing" >
+<strong>AI_FORMATION:onafterFormationCenterWing(FollowGroupSet, From, Event, To, XStart, XSpace, YStart, ZStart, ZSpace)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> FollowGroupSet </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> To </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> XStart </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> XSpace </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> YStart </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> ZStart </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> ZSpace </em></code>: </p>
 
 				</li>
 		</ul>

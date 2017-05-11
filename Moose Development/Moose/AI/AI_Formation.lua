@@ -73,19 +73,16 @@
 --  * @{AI_Formation#AI_FORMATION.FormationRightWing}(): Form a right wing formation.
 --  * @{AI_Formation#AI_FORMATION.FormationLeftWing}(): Form a left wing formation.
 --  * @{AI_Formation#AI_FORMATION.FormationCenterLine}(): Form a center line formation.
---  * @{AI_Formation#AI_FORMATION.FormationCenterWing}(): Form a center wing formation.
 --  * @{AI_Formation#AI_FORMATION.FormationCenterBoxed}(): Form a center boxed formation.
 --  
 --
 -- @usage
--- -- Declare a new FollowPlanes object as follows:
--- 
--- -- First find the GROUP object and the CLIENT object.
--- local FollowUnit = CLIENT:FindByName( "Unit Name" ) -- The Unit Name is the name of the unit flagged with the skill Client in the mission editor.
--- local FollowGroup = GROUP:FindByName( "Group Name" ) -- The Group Name is the name of the group that will escort the Follow Client.
--- 
--- -- Now use these 2 objects to construct the new FollowPlanes object.
--- FollowPlanes = AI_FORMATION:New( FollowUnit, FollowGroup, "Desert", "Welcome to the mission. You are escorted by a plane with code name 'Desert', which can be instructed through the F10 radio menu." )
+-- local FollowGroupSet = SET_GROUP:New():FilterCategories("plane"):FilterCoalitions("blue"):FilterPrefixes("Follow"):FilterStart()
+-- FollowGroupSet:Flush()
+-- local LeaderUnit = UNIT:FindByName( "Leader" )
+-- local LargeFormation = AI_FORMATION:New( LeaderUnit, FollowGroupSet, "Center Wing Formation", "Briefing" )
+-- LargeFormation:FormationCenterWing( 500, 50, 0, 250, 250 )
+-- LargeFormation:__Start( 1 )
 -- 
 -- @field #AI_FORMATION 
 AI_FORMATION = {
@@ -320,6 +317,56 @@ function AI_FORMATION:New( FollowUnit, FollowGroupSet, FollowName, FollowBriefin
   -- @param #nubmer ZStart The start position on the Z-axis in meters for the first group.
   -- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
   
+    self:AddTransition( "*", "FormationCenterWing", "*" )
+  
+  --- FormationCenterWing Handler OnBefore for AI_FORMATION
+  -- @function [parent=#AI_FORMATION] OnBeforeFormationCenterWing
+  -- @param #AI_FORMATION self
+  -- @param Core.Set#SET_GROUP FollowGroupSet The group AI escorting the FollowUnit.
+  -- @param #string From
+  -- @param #string Event
+  -- @param #string To
+  -- @param #number XStart The start position on the X-axis in meters for the first group.
+  -- @param #number XSpace The space between groups on the X-axis in meters for each sequent group.
+  -- @param #nubmer YStart The start position on the Y-axis in meters for the first group.
+  -- @param #nubmer ZStart The start position on the Z-axis in meters for the first group.
+  -- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
+  -- @return #boolean
+  
+  --- FormationCenterWing Handler OnAfter for AI_FORMATION
+  -- @function [parent=#AI_FORMATION] OnAfterFormationCenterWing
+  -- @param #AI_FORMATION self
+  -- @param Core.Set#SET_GROUP FollowGroupSet The group AI escorting the FollowUnit.
+  -- @param #string From
+  -- @param #string Event
+  -- @param #string To
+  -- @param #number XStart The start position on the X-axis in meters for the first group.
+  -- @param #number XSpace The space between groups on the X-axis in meters for each sequent group.
+  -- @param #nubmer YStart The start position on the Y-axis in meters for the first group.
+  -- @param #nubmer ZStart The start position on the Z-axis in meters for the first group.
+  -- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
+  
+  --- FormationCenterWing Trigger for AI_FORMATION
+  -- @function [parent=#AI_FORMATION] FormationCenterWing
+  -- @param #AI_FORMATION self
+  -- @param #number XStart The start position on the X-axis in meters for the first group.
+  -- @param #number XSpace The space between groups on the X-axis in meters for each sequent group.
+  -- @param #nubmer YStart The start position on the Y-axis in meters for the first group.
+  -- @param #nubmer ZStart The start position on the Z-axis in meters for the first group.
+  -- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
+  
+  --- FormationCenterWing Asynchronous Trigger for AI_FORMATION
+  -- @function [parent=#AI_FORMATION] __FormationCenterWing
+  -- @param #AI_FORMATION self
+  -- @param #number Delay
+  -- @param #number XStart The start position on the X-axis in meters for the first group.
+  -- @param #number XSpace The space between groups on the X-axis in meters for each sequent group.
+  -- @param #nubmer YStart The start position on the Y-axis in meters for the first group.
+  -- @param #nubmer ZStart The start position on the Z-axis in meters for the first group.
+  -- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
+  
+  
+  
   
   self:AddTransition( "*", "Follow", "Following" )
 
@@ -492,6 +539,47 @@ function AI_FORMATION:onafterFormationRightWing( FollowGroupSet, From , Event , 
 
 end
 
+
+--- FormationCenterWing Handler OnAfter for AI_FORMATION
+-- @function [parent=#AI_FORMATION] OnAfterFormationCenterWing
+-- @param #AI_FORMATION self
+-- @param Core.Set#SET_GROUP FollowGroupSet The group AI escorting the FollowUnit.
+-- @param #string From
+-- @param #string Event
+-- @param #string To
+-- @param #number XStart The start position on the X-axis in meters for the first group.
+-- @param #number XSpace The space between groups on the X-axis in meters for each sequent group.
+-- @param #nubmer YStart The start position on the Y-axis in meters for the first group.
+-- @param #nubmer ZStart The start position on the Z-axis in meters for the first group.
+-- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
+function AI_FORMATION:onafterFormationCenterWing( FollowGroupSet, From , Event , To, XStart, XSpace, YStart, ZStart, ZSpace )
+
+  local FollowSet = FollowGroupSet:GetSet()
+  
+  local i = 0
+  
+  for FollowID, FollowGroup in pairs( FollowSet ) do
+  
+    local PointVec3 = POINT_VEC3:New()
+    
+    local Side = ( i % 2 == 0 ) and 1 or -1
+    local Row = i / 2 + 1
+    
+    self:E(Side)
+    
+    PointVec3:SetX( XStart + Row * XSpace )
+    PointVec3:SetY( YStart )
+    PointVec3:SetZ( Side * ( ZStart + i * ZSpace ) )
+  
+    local Vec3 = PointVec3:GetVec3()
+    self:E( Vec3 )
+    FollowGroup:SetState( self, "Vec3", Vec3 )
+    FollowGroup:OptionROTPassiveDefense()
+    FollowGroup:OptionROEReturnFire()
+    i = i + 1
+  end
+
+end
 
 
 
