@@ -630,6 +630,9 @@ function AI_FORMATION:onenterFollowing( FollowGroupSet )
             local CT = CT2 - CT1
       
             local CS = ( 3600 / CT ) * ( CD / 1000 )
+
+            local CDV = { x = CV2.x - CV1.x, y = CV2.y - CV1.y, z = CV2.z - CV1.z }
+            local Ca = math.atan2( CDV.z, CDV.x )
       
             self:T2( { "Client:", CS, CD, CT, CV2, CV1, CT2, CT1 } )
       
@@ -646,9 +649,12 @@ function AI_FORMATION:onenterFollowing( FollowGroupSet )
             local GS = ( 3600 / GT ) * ( GD / 1000 )
       
             --self:E( { "Group:", GS = GS,GD =  GD, GT = GT, GV2 = GV2, GV1 = GV1, GT2 = GT2, GT1 = GT1 } )
+
+            local GVx = FollowFormation.x * math.cos(Ca) - FollowFormation.z * math.sin(Ca)
+            local GVz = FollowFormation.z * math.cos(Ca) + FollowFormation.x * math.sin(Ca)
       
             -- Calculate the group direction vector
-            local GV = { x = GV2.x - CV2.x + FollowFormation.x, y = GV2.y - CV2.y, z = GV2.z - CV2.z + FollowFormation.z }
+            local GV = { x = GV2.x - CV2.x + GVx, y = GV2.y - CV2.y, z = GV2.z - CV2.z + GVz }
       
             -- Calculate GH2, GH2 with the same height as CV2.
             local GH2 = { x = GV2.x, y = CV2.y, z = GV2.z }
@@ -672,7 +678,7 @@ function AI_FORMATION:onenterFollowing( FollowGroupSet )
             local DVu = { x = DV.x / FollowDistance, y = DV.y, z = DV.z / FollowDistance }
       
             -- Now we can calculate the group destination vector GDV.
-            local GDV = { x = DVu.x * CS * 10 + CVI.x, y = CVI.y, z = DVu.z * CS * 10 + CVI.z }
+            local GDV = { x = DVu.x * CS + CVI.x, y = CVI.y, z = DVu.z * CS + CVI.z }
             
             local ADDx = FollowFormation.x * math.cos(alpha) - FollowFormation.z * math.sin(alpha)
             local ADDz = FollowFormation.z * math.cos(alpha) + FollowFormation.x * math.sin(alpha)
@@ -681,9 +687,9 @@ function AI_FORMATION:onenterFollowing( FollowGroupSet )
             
 --            local GDV_Formation = GDV
             local GDV_Formation = { 
-              x = GDV.x + ADDx, 
+              x = GDV.x + GVx, 
               y = GDV.y, 
-              z = GDV.z + ADDz
+              z = GDV.z + GVz
             }
             
             if self.SmokeDirectionVector == true then
