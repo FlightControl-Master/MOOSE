@@ -406,7 +406,7 @@ end
 -- @param #nubmer ZStart The start position on the Z-axis in meters for the first group.
 -- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
 function AI_FORMATION:onafterFormationLeftLine( FollowGroupSet, From , Event , To, XStart, YStart, ZStart, ZSpace )
-  self:E( { FollowGroupSet, From , Event ,To, XStart, YStart, ZStart, ZSpace } )
+  self:F( { FollowGroupSet, From , Event ,To, XStart, YStart, ZStart, ZSpace } )
 
   FollowGroupSet:Flush()
   
@@ -422,7 +422,6 @@ function AI_FORMATION:onafterFormationLeftLine( FollowGroupSet, From , Event , T
     PointVec3:SetZ( ZStart + i * ZSpace )
   
     local Vec3 = PointVec3:GetVec3()
-    self:E( Vec3 )
     FollowGroup:SetState( self, "Vec3", Vec3 )
     FollowGroup:OptionROTPassiveDefense()
     FollowGroup:OptionROEReturnFire()
@@ -444,7 +443,7 @@ end
 -- @param #nubmer ZStart The start position on the Z-axis in meters for the first group.
 -- @param #number ZSpace The space between groups on the Z-axis in meters for each sequent group.
 function AI_FORMATION:onafterFormationRightLine( FollowGroupSet, From , Event , To, XStart, YStart, ZStart, ZSpace )
-  self:E( { FollowGroupSet, From , Event , To, XStart, YStart, ZStart, ZSpace } )
+  self:F( { FollowGroupSet, From , Event , To, XStart, YStart, ZStart, ZSpace } )
 
   local FollowSet = FollowGroupSet:GetSet()
   
@@ -458,7 +457,6 @@ function AI_FORMATION:onafterFormationRightLine( FollowGroupSet, From , Event , 
     PointVec3:SetZ( -(ZStart + i * ZSpace) )
   
     local Vec3 = PointVec3:GetVec3()
-    self:E( Vec3 )
     FollowGroup:SetState( self, "Vec3", Vec3 )
     FollowGroup:OptionROTPassiveDefense()
     FollowGroup:OptionROEReturnFire()
@@ -494,7 +492,6 @@ function AI_FORMATION:onafterFormationLeftWing( FollowGroupSet, From , Event , T
     PointVec3:SetZ( ZStart + i * ZSpace )
   
     local Vec3 = PointVec3:GetVec3()
-    self:E( Vec3 )
     FollowGroup:SetState( self, "Vec3", Vec3 )
     FollowGroup:OptionROTPassiveDefense()
     FollowGroup:OptionROEReturnFire()
@@ -530,7 +527,6 @@ function AI_FORMATION:onafterFormationRightWing( FollowGroupSet, From , Event , 
     PointVec3:SetZ( -(ZStart + i * ZSpace) )
   
     local Vec3 = PointVec3:GetVec3()
-    self:E( Vec3 )
     FollowGroup:SetState( self, "Vec3", Vec3 )
     FollowGroup:OptionROTPassiveDefense()
     FollowGroup:OptionROEReturnFire()
@@ -565,14 +561,11 @@ function AI_FORMATION:onafterFormationCenterWing( FollowGroupSet, From , Event ,
     local Side = ( i % 2 == 0 ) and 1 or -1
     local Row = i / 2 + 1
     
-    self:E(Side)
-    
     PointVec3:SetX( XStart + Row * XSpace )
     PointVec3:SetY( YStart )
     PointVec3:SetZ( Side * ( ZStart + i * ZSpace ) )
   
     local Vec3 = PointVec3:GetVec3()
-    self:E( Vec3 )
     FollowGroup:SetState( self, "Vec3", Vec3 )
     FollowGroup:OptionROTPassiveDefense()
     FollowGroup:OptionROEReturnFire()
@@ -629,12 +622,10 @@ function AI_FORMATION:onenterFollowing( FollowGroupSet )
             local CD = ( ( CV2.x - CV1.x )^2 + ( CV2.y - CV1.y )^2 + ( CV2.z - CV1.z )^2 ) ^ 0.5
             local CT = CT2 - CT1
       
-            local CS = ( 3600 / CT ) * ( CD / 1000 )
+            local CS = ( 3600 / CT ) * ( CD / 1000 ) / 3.6
 
-            local CDV = { x = CV2.x - CV1.x, y = CV2.y - CV1.y, z = CV2.z - CV1.z }
-            local Ca = math.atan2( CDV.z, CDV.x )
-      
-            self:T2( { "Client:", CS, CD, CT, CV2, CV1, CT2, CT1 } )
+            local CDv = { x = CV2.x - CV1.x, y = CV2.y - CV1.y, z = CV2.z - CV1.z }
+            local Ca = math.atan2( CDv.x, CDv.z )
       
             local GT1 = GroupUnit:GetState( self, "GT1" )
             local GT2 = timer.getTime()
@@ -646,27 +637,24 @@ function AI_FORMATION:onenterFollowing( FollowGroupSet )
             local GD = ( ( GV2.x - GV1.x )^2 + ( GV2.y - GV1.y )^2 + ( GV2.z - GV1.z )^2 ) ^ 0.5
             local GT = GT2 - GT1
       
-            local GS = ( 3600 / GT ) * ( GD / 1000 )
-      
-            --self:E( { "Group:", GS = GS,GD =  GD, GT = GT, GV2 = GV2, GV1 = GV1, GT2 = GT2, GT1 = GT1 } )
-
-            local GVx = FollowFormation.x * math.cos(Ca) - FollowFormation.z * math.sin(Ca)
-            local GVz = FollowFormation.z * math.cos(Ca) + FollowFormation.x * math.sin(Ca)
       
             -- Calculate the group direction vector
-            local GV = { x = GV2.x - CV2.x + GVx, y = GV2.y - CV2.y, z = GV2.z - CV2.z + GVz }
+            local GV = { x = GV2.x - CV2.x, y = GV2.y - CV2.y, z = GV2.z - CV2.z  }
       
             -- Calculate GH2, GH2 with the same height as CV2.
             local GH2 = { x = GV2.x, y = CV2.y, z = GV2.z }
       
             -- Calculate the angle of GV to the orthonormal plane
-            local alpha = math.atan2( GV.z, GV.x )
+            local alpha = math.atan2( GV.x, GV.z )
       
+            local GVx = FollowFormation.z * math.cos( Ca ) + FollowFormation.x * math.sin( Ca )
+            local GVz = FollowFormation.x * math.cos( Ca ) - FollowFormation.z * math.sin( Ca )
+
             -- Now we calculate the intersecting vector between the circle around CV2 with radius FollowDistance and GH2.
             -- From the GeoGebra model: CVI = (x(CV2) + FollowDistance cos(alpha), y(GH2) + FollowDistance sin(alpha), z(CV2))
-            local CVI = { x = CV2.x + FollowDistance * math.cos(alpha),
+            local CVI = { x = CV2.x + CS * 10 * math.sin(Ca),
               y = GH2.y, -- + FollowFormation.y,
-              z = CV2.z + FollowDistance * math.sin(alpha),
+              z = CV2.z + CS * 10 * math.cos(Ca),
             }
       
             -- Calculate the direction vector DV of the escort group. We use CVI as the base and CV2 as the direction.
@@ -678,18 +666,15 @@ function AI_FORMATION:onenterFollowing( FollowGroupSet )
             local DVu = { x = DV.x / FollowDistance, y = DV.y, z = DV.z / FollowDistance }
       
             -- Now we can calculate the group destination vector GDV.
-            local GDV = { x = DVu.x * CS + CVI.x, y = CVI.y, z = DVu.z * CS + CVI.z }
+            local GDV = { x = CVI.x, y = CVI.y, z = CVI.z }
             
             local ADDx = FollowFormation.x * math.cos(alpha) - FollowFormation.z * math.sin(alpha)
             local ADDz = FollowFormation.z * math.cos(alpha) + FollowFormation.x * math.sin(alpha)
             
-            self:E( { ALPHA = alpha, GDVx = GDV.x, GDVz = GDV.z, ADDx = ADDx, ADDz = ADDz, FOLLOWx = FollowFormation.x, FOLLOWz = FollowFormation.z } )
-            
---            local GDV_Formation = GDV
             local GDV_Formation = { 
-              x = GDV.x + GVx, 
+              x = GDV.x - GVx, 
               y = GDV.y, 
-              z = GDV.z + GVz
+              z = GDV.z - GVz
             }
             
             if self.SmokeDirectionVector == true then
@@ -697,28 +682,35 @@ function AI_FORMATION:onenterFollowing( FollowGroupSet )
               trigger.action.smoke( GDV_Formation, trigger.smokeColor.White )
             end
             
-            -- Measure distance between client and group
-            local CatchUpDistance = ( ( GDV_Formation.x - GV2.x )^2 + ( GDV_Formation.y - GV2.y )^2 + ( GDV_Formation.z - GV2.z )^2 ) ^ 0.5
-      
-            -- The calculation of the Speed would simulate that the group would take 30 seconds to overcome
-            -- the requested Distance).
-            local Time = 10
-            local CatchUpSpeed = ( CatchUpDistance - ( CS * 15 ) ) / Time
-      
-            local Speed = CS + CatchUpSpeed
+            
+            -- Calculate the distance
+
+            local GDv =  { x = GV2.x - CV1.x, y =  GV2.y - CV1.y, z = GV2.z - CV1.z }
+            
+            local Alpha_T = math.atan2( GDv.x, GDv.z ) - math.atan2( CDv.x, CDv.z ) 
+            local Alpha_R = ( Alpha_T < 0 ) and Alpha_T + 2 * math.pi or Alpha_T
+            local Position = math.cos( Alpha_R )
+            local GD = ( ( GDv.x )^2 + ( GDv.z )^2 ) ^ 0.5
+            local Distance = GD * Position + FollowDistance - CS * 2
+            
+            
+            
+            local Time = 40
+            local Speed = - Distance / Time
+            local GS = Speed + CS
             if Speed < 0 then
               Speed = 0
             end
-            
+
             -- Now route the escort to the desired point with the desired speed.
-            FollowGroup:RouteToVec3( GDV_Formation, Speed / 3.6 ) -- DCS models speed in Mps (Miles per second)
+            FollowGroup:RouteToVec3( GDV_Formation, GS ) -- DCS models speed in Mps (Miles per second)
           end
         end
       end,
       ClientUnit, CT1, CV1, CT2, CV2
     )
 
-    self:__Follow( -10 )
+    self:__Follow( -2 )
   end
   
 end
