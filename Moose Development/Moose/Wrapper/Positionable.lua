@@ -1,25 +1,4 @@
---- This module contains the POSITIONABLE class.
--- 
--- 1) @{Positionable#POSITIONABLE} class, extends @{Identifiable#IDENTIFIABLE}
--- ===========================================================
--- The @{Positionable#POSITIONABLE} class is a wrapper class to handle the POSITIONABLE objects:
---
---  * Support all DCS APIs.
---  * Enhance with POSITIONABLE specific APIs not in the DCS API set.
---  * Manage the "state" of the POSITIONABLE.
---
--- 1.1) POSITIONABLE constructor:
--- ------------------------------
--- The POSITIONABLE class provides the following functions to construct a POSITIONABLE instance:
---
---  * @{Positionable#POSITIONABLE.New}(): Create a POSITIONABLE instance.
---
--- 1.2) POSITIONABLE methods:
--- --------------------------
--- The following methods can be used to identify an measurable object:
--- 
---    * @{Positionable#POSITIONABLE.GetID}(): Returns the ID of the measurable object.
---    * @{Positionable#POSITIONABLE.GetName}(): Returns the name of the measurable object.
+--- **Wrapper** -- This module contains the POSITIONABLE class.
 -- 
 -- ===
 -- 
@@ -31,11 +10,34 @@
 -- @field #string PositionableName The name of the measurable.
 -- @field Core.Spot#SPOT Spot The laser Spot.
 -- @field #number LaserCode The last assigned laser code.
+
+--- # POSITIONABLE class, extends @{Identifiable#IDENTIFIABLE}
+-- 
+-- The POSITIONABLE class is a wrapper class to handle the POSITIONABLE objects:
+--
+--  * Support all DCS APIs.
+--  * Enhance with POSITIONABLE specific APIs not in the DCS API set.
+--  * Manage the "state" of the POSITIONABLE.
+--
+-- ## POSITIONABLE constructor
+-- 
+-- The POSITIONABLE class provides the following functions to construct a POSITIONABLE instance:
+--
+--  * @{Positionable#POSITIONABLE.New}(): Create a POSITIONABLE instance.
+--
+-- ## POSITIONABLE methods
+-- 
+-- The following methods can be used to identify an measurable object:
+-- 
+--    * @{Positionable#POSITIONABLE.GetID}(): Returns the ID of the measurable object.
+--    * @{Positionable#POSITIONABLE.GetName}(): Returns the name of the measurable object.
+-- 
+-- 
+-- @field #POSITIONABLE 
 POSITIONABLE = {
   ClassName = "POSITIONABLE",
   PositionableName = "",
 }
-
 --- A DCSPositionable
 -- @type DCSPositionable
 -- @field id_ The ID of the controllable in DCS
@@ -207,6 +209,28 @@ function POSITIONABLE:GetVec3()
   return nil
 end
 
+
+--- Get the bounding box of the underlying POSITIONABLE DCS Object.
+-- @param #POSITIONABLE self
+-- @return Dcs.DCSTypes#Distance The bounding box of the POSITIONABLE.
+-- @return #nil The POSITIONABLE is not existing or alive.  
+function POSITIONABLE:GetBoundingBox() --R2.1
+  self:F2()
+
+  local DCSPositionable = self:GetDCSObject()
+  
+  if DCSPositionable then
+    local PositionableDesc = DCSPositionable:getDesc() --Dcs.DCSTypes#Desc
+    if PositionableDesc then
+      local PositionableBox = PositionableDesc.box
+      return PositionableBox
+    end
+  end
+  
+  return nil
+end
+
+
 --- Returns the altitude of the POSITIONABLE.
 -- @param Wrapper.Positionable#POSITIONABLE self
 -- @return Dcs.DCSTypes#Distance The altitude of the POSITIONABLE.
@@ -302,6 +326,29 @@ function POSITIONABLE:GetVelocity()
   
   return nil
 end
+
+
+--- Returns the POSITIONABLE height in meters.
+-- @param Wrapper.Positionable#POSITIONABLE self
+-- @return Dcs.DCSTypes#Vec3 The height of the positionable.
+-- @return #nil The POSITIONABLE is not existing or alive.  
+function POSITIONABLE:GetHeight() --R2.1
+  self:F2( self.PositionableName )
+
+  local DCSPositionable = self:GetDCSObject()
+  
+  if DCSPositionable then
+    local PositionablePosition = DCSPositionable:getPosition()
+    if PositionablePosition then
+      local PositionableHeight = PositionablePosition.p.y
+      self:T2( PositionableHeight )
+      return PositionableHeight
+    end
+  end
+  
+  return nil
+end
+
 
 --- Returns the POSITIONABLE velocity in km/h.
 -- @param Wrapper.Positionable#POSITIONABLE self
@@ -600,3 +647,6 @@ function POSITIONABLE:GetLaserCode() --R2.1
   
   return self.LaserCode
 end
+
+
+
