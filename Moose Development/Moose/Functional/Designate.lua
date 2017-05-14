@@ -201,7 +201,6 @@ do -- DESIGNATE
     self:SetStartState( "Designating" )
     
     self:AddTransition( "*", "Detect", "*" )
-    
     --- Detect Handler OnBefore for DESIGNATE
     -- @function [parent=#DESIGNATE] OnBeforeDetect
     -- @param #DESIGNATE self
@@ -226,9 +225,7 @@ do -- DESIGNATE
     -- @param #DESIGNATE self
     -- @param #number Delay
     
-
     self:AddTransition( "*", "LaseOn", "Lasing" )
-    
     --- LaseOn Handler OnBefore for DESIGNATE 
     -- @function [parent=#DESIGNATE ] OnBeforeLaseOn
     -- @param #DESIGNATE  self
@@ -256,7 +253,6 @@ do -- DESIGNATE
     self:AddTransition( "Lasing", "Lasing", "Lasing" )
     
     self:AddTransition( "*", "LaseOff", "Designate" )
-    
     --- LaseOff Handler OnBefore for DESIGNATE 
     -- @function [parent=#DESIGNATE ] OnBeforeLaseOff
     -- @param #DESIGNATE  self
@@ -281,10 +277,7 @@ do -- DESIGNATE
     -- @param #DESIGNATE  self
     -- @param #number Delay
     
-    
-    
     self:AddTransition( "*", "Smoke", "*" )
-    
     --- Smoke Handler OnBefore for DESIGNATE 
     -- @function [parent=#DESIGNATE ] OnBeforeSmoke
     -- @param #DESIGNATE  self
@@ -310,7 +303,6 @@ do -- DESIGNATE
     -- @param #number Delay
     
     self:AddTransition( "*", "Illuminate", "*" )
-    
     --- Illuminate Handler OnBefore for DESIGNATE
     -- @function [parent=#DESIGNATE] OnBeforeIlluminate
     -- @param #DESIGNATE self
@@ -338,7 +330,6 @@ do -- DESIGNATE
     self:AddTransition( "*", "Done", "*" )
     
     self:AddTransition( "*", "Status", "*" )
-    
     --- Status Handler OnBefore for DESIGNATE 
     -- @function [parent=#DESIGNATE ] OnBeforeStatus
     -- @param #DESIGNATE  self
@@ -865,7 +856,6 @@ do -- DESIGNATE
   -- @return #DESIGNATE
   function DESIGNATE:onafterSmoke( From, Event, To, Index, Color )
   
-
     local TargetSetUnit = self.Detection:GetDetectedSet( Index )
     local TargetSetUnitCount = TargetSetUnit:Count()
   
@@ -900,7 +890,6 @@ do -- DESIGNATE
   function DESIGNATE:onafterIlluminate( From, Event, To, Index )
   
     local TargetSetUnit = self.Detection:GetDetectedSet( Index )
-    
     local TargetUnit = TargetSetUnit:GetFirst()
   
     if TargetUnit then

@@ -220,7 +220,6 @@ function MISSION:New( CommandCenter, MissionName, MissionPriority, MissionBriefi
   -- @param #MISSION self
   -- @param #number Delay The delay in seconds.
   
-	
 	-- Private  implementations
 	
 	CommandCenter:SetMenu()
@@ -280,6 +279,8 @@ function MISSION:JoinUnit( PlayerUnit, PlayerGroup )
       PlayerUnitAdded = true
     end
   end
+  
+  self:GetCommandCenter():SetMenu()
   
   return PlayerUnitAdded
 end
@@ -384,6 +385,7 @@ function MISSION:RemoveMenu( MenuTime )
 end
 
 
+
 do -- Group Assignment
 
   --- Returns if the @{Mission} is assigned to the Group.
@@ -457,16 +459,34 @@ end
 --- Gets the mission menu for the coalition.
 -- @param #MISSION self
 -- @return Core.Menu#MENU_COALITION self
-function MISSION:GetMenu()
+function MISSION:GetMenu( TaskGroup ) -- R2.1 -- Changed Menu Structure
 
   local CommandCenter = self:GetCommandCenter()
   local CommandCenterMenu = CommandCenter:GetMenu()
 
   local MissionName = self:GetName()
-  local MissionMenu = CommandCenterMenu:GetMenu( MissionName )
+  --local MissionMenu = CommandCenterMenu:GetMenu( MissionName )
   
-  return MissionMenu
+  self.MissionMenu = self.MissionMenu or {}
+  self.MissionMenu[TaskGroup] = self.MissionMenu[TaskGroup] or {}
+  
+  local Menu = self.MissionMenu[TaskGroup]
+  
+  Menu.MainMenu = Menu.MainMenu or MENU_GROUP:New( TaskGroup, self:GetName(), CommandCenterMenu )
+  Menu.BriefingMenu = Menu.BriefingMenu or MENU_GROUP_COMMAND:New( TaskGroup, "Mission Briefing", Menu.MainMenu, self.MenuReportBriefing, self, TaskGroup )
+
+  Menu.ReportsMenu = Menu.ReportsMenu or                              MENU_GROUP:New( TaskGroup, "Reports", Menu.MainMenu )
+  Menu.ReportTasksMenu = Menu.ReportTasksMenu or                      MENU_GROUP_COMMAND:New( TaskGroup, "Report Tasks", Menu.ReportsMenu, self.MenuReportSummary, self, TaskGroup )
+  Menu.ReportPlannedTasksMenu = Menu.ReportPlannedTasksMenu or        MENU_GROUP_COMMAND:New( TaskGroup, "Report Planned Tasks", Menu.ReportsMenu, self.MenuReportOverview, self, TaskGroup, "Planned" )
+  Menu.ReportAssignedTasksMenu = Menu.ReportAssignedTasksMenu or      MENU_GROUP_COMMAND:New( TaskGroup, "Report Assigned Tasks", Menu.ReportsMenu, self.MenuReportOverview, self, TaskGroup, "Assigned" )
+  Menu.ReportSuccessTasksMenu = Menu.ReportSuccessTasksMenu or        MENU_GROUP_COMMAND:New( TaskGroup, "Report Successful Tasks", Menu.ReportsMenu, self.MenuReportOverview, self, TaskGroup, "Success" )
+  Menu.ReportFailedTasksMenu = Menu.ReportFailedTasksMenu or          MENU_GROUP_COMMAND:New( TaskGroup, "Report Failed Tasks", Menu.ReportsMenu, self.MenuReportOverview, self, TaskGroup, "Failed" )
+  Menu.ReportHeldTasksMenu = Menu.ReportHeldTasksMenu or              MENU_GROUP_COMMAND:New( TaskGroup, "Report Held Tasks", Menu.ReportsMenu, self.MenuReportOverview, self, TaskGroup, "Hold" )
+  
+  return Menu.MainMenu
 end
+
+
 
 
 --- Get the TASK identified by the TaskNumber from the Mission. This function is useful in GoalFunctions.
@@ -618,6 +638,27 @@ function MISSION:GetTaskTypes()
     TaskTypeList[TaskType] = TaskType
   end
   return TaskTypeList
+end
+
+--- Create a briefing report of the Mission.
+-- @param #MISSION self
+-- @return #string
+function MISSION:ReportBriefing()
+
+  local Report = REPORT:New()
+
+  -- List the name of the mission.
+  local Name = self:GetName()
+  
+  -- Determine the status of the mission.
+  local Status = self:GetState()
+  local TasksRemaining = self:GetTasksRemaining()
+  
+  Report:Add( "Mission " .. Name .. " - " .. Status .. " - Briefing Report." )
+
+  Report:Add( self.MissionBriefing )
+  
+  return Report:Text()
 end
 
 
@@ -805,6 +846,14 @@ function MISSION:GetTasks()
 
 	return self.Tasks
 end
+
+function MISSION:MenuReportBriefing( ReportGroup )
+
+  local Report = self:ReportBriefing()
+  
+  self:GetCommandCenter():MessageToGroup( Report, ReportGroup )
+end
+
 
 --- @param #MISSION self
 -- @param Wrapper.Group#GROUP ReportGroup

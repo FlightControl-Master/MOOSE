@@ -653,20 +653,10 @@ function TASK:SetMenu( MenuTime ) --R2.1 Mission Reports and Task Reports added.
       -- Set Mission Menus
       
       local Mission = self:GetMission()
-      local MissionMenu = Mission:GetMenu()
+      local MissionMenu = Mission:GetMenu( TaskGroup )
       if MissionMenu then
-        TaskGroup.MenuReports = MENU_GROUP:New( TaskGroup, "Reports", MissionMenu )
-        MENU_GROUP_COMMAND:New( TaskGroup, "Report Tasks", TaskGroup.MenuReports, Mission.MenuReportSummary, Mission, TaskGroup )
-        MENU_GROUP_COMMAND:New( TaskGroup, "Report Planned Tasks", TaskGroup.MenuReports, Mission.MenuReportOverview, Mission, TaskGroup, "Planned" )
-        MENU_GROUP_COMMAND:New( TaskGroup, "Report Assigned Tasks", TaskGroup.MenuReports, Mission.MenuReportOverview, Mission, TaskGroup, "Assigned" )
-        MENU_GROUP_COMMAND:New( TaskGroup, "Report Successful Tasks", TaskGroup.MenuReports, Mission.MenuReportOverview, Mission, TaskGroup, "Success" )
-        MENU_GROUP_COMMAND:New( TaskGroup, "Report Failed Tasks", TaskGroup.MenuReports, Mission.MenuReportOverview, Mission, TaskGroup, "Failed" )
-        MENU_GROUP_COMMAND:New( TaskGroup, "Report Held Tasks", TaskGroup.MenuReports, Mission.MenuReportOverview, Mission, TaskGroup, "Hold" )
-      end
-      
---      if self:IsStatePlanned() or self:IsStateReplanned() then
         self:SetMenuForGroup( TaskGroup, MenuTime )
---      end
+      end
     end
   end  
 end
@@ -708,9 +698,10 @@ function TASK:SetPlannedMenuForGroup( TaskGroup, MenuTime )
   local TaskText = string.format( "%s%s", self:GetName(), TaskPlayerString ) --, TaskThreatLevelString )
   local TaskName = string.format( "%s", self:GetName() )
 
-  local MissionMenu = MENU_GROUP:New( TaskGroup, MissionName, CommandCenterMenu ):SetTime( MenuTime )
-  
   local MissionMenu = Mission:GetMenu( TaskGroup )
+  --local MissionMenu = MENU_GROUP:New( TaskGroup, MissionName, CommandCenterMenu ):SetTime( MenuTime )
+  
+  --local MissionMenu = Mission:GetMenu( TaskGroup )
 
   local TaskPlannedMenu = MENU_GROUP:New( TaskGroup, "Planned Tasks", MissionMenu ):SetTime( MenuTime )
   local TaskTypeMenu = MENU_GROUP:New( TaskGroup, TaskType, TaskPlannedMenu ):SetTime( MenuTime ):SetRemoveParent( true )
@@ -745,8 +736,9 @@ function TASK:SetAssignedMenuForGroup( TaskGroup, MenuTime )
   local TaskText = string.format( "%s%s", self:GetName(), TaskPlayerString ) --, TaskThreatLevelString )
   local TaskName = string.format( "%s", self:GetName() )
 
-  local MissionMenu = MENU_GROUP:New( TaskGroup, MissionName, CommandCenterMenu ):SetTime( MenuTime )
   local MissionMenu = Mission:GetMenu( TaskGroup )
+--  local MissionMenu = MENU_GROUP:New( TaskGroup, MissionName, CommandCenterMenu ):SetTime( MenuTime )
+--  local MissionMenu = Mission:GetMenu( TaskGroup )
 
   local TaskAssignedMenu = MENU_GROUP:New( TaskGroup, string.format( "Assigned Task %s", TaskName ), MissionMenu ):SetTime( MenuTime )
   local TaskTypeMenu = MENU_GROUP_COMMAND:New( TaskGroup, string.format( "Report Task Status" ), TaskAssignedMenu, self.MenuTaskStatus, self, TaskGroup ):SetTime( MenuTime ):SetRemoveParent( true )
