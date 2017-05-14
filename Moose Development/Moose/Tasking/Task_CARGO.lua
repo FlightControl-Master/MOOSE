@@ -153,7 +153,7 @@ do -- TASK_CARGO
   -- 
   -- ===
   -- 
-  -- @field #TASK_CARGO TASK_CARGO
+  -- @field #TASK_CARGO
   --   
   TASK_CARGO = {
     ClassName = "TASK_CARGO",
@@ -166,9 +166,10 @@ do -- TASK_CARGO
   -- @param #string TaskName The name of the Task.
   -- @param Core.Set#SET_CARGO SetCargo The scope of the cargo to be transported.
   -- @param #string TaskType The type of Cargo task.
+  -- @param #string TaskBriefing The Cargo Task briefing.
   -- @return #TASK_CARGO self
-  function TASK_CARGO:New( Mission, SetGroup, TaskName, SetCargo, TaskType )
-    local self = BASE:Inherit( self, TASK:New( Mission, SetGroup, TaskName, TaskType ) ) -- #TASK_CARGO
+  function TASK_CARGO:New( Mission, SetGroup, TaskName, SetCargo, TaskType, TaskBriefing )
+    local self = BASE:Inherit( self, TASK:New( Mission, SetGroup, TaskName, TaskType, TaskBriefing ) ) -- #TASK_CARGO
     self:F( {Mission, SetGroup, TaskName, SetCargo, TaskType})
   
     self.SetCargo = SetCargo
@@ -181,24 +182,24 @@ do -- TASK_CARGO
 
     Fsm:AddProcess   ( "Planned", "Accept", ACT_ASSIGN_ACCEPT:New( self.TaskBriefing ), { Assigned = "SelectAction", Rejected = "Reject" }  )
     
-    Fsm:AddTransition( { "Assigned", "WaitingForCommand", "ArrivedAtPickup", "ArrivedAtDeploy", "Boarded", "UnBoarded", "Landed" }, "SelectAction", "WaitingForCommand" )
+    Fsm:AddTransition( { "Assigned", "WaitingForCommand", "ArrivedAtPickup", "ArrivedAtDeploy", "Boarded", "UnBoarded", "Landed", "Boarding" }, "SelectAction", "*" )
 
-    Fsm:AddTransition( "WaitingForCommand", "RouteToPickup", "RoutingToPickup" )
+    Fsm:AddTransition( "*", "RouteToPickup", "RoutingToPickup" )
     Fsm:AddProcess   ( "RoutingToPickup", "RouteToPickupPoint", ACT_ROUTE_POINT:New(), { Arrived = "ArriveAtPickup" } )
     Fsm:AddTransition( "Arrived", "ArriveAtPickup", "ArrivedAtPickup" )
 
-    Fsm:AddTransition( "WaitingForCommand", "RouteToDeploy", "RoutingToDeploy" )
+    Fsm:AddTransition( "*", "RouteToDeploy", "RoutingToDeploy" )
     Fsm:AddProcess   ( "RoutingToDeploy", "RouteToDeployZone", ACT_ROUTE_ZONE:New(), { Arrived = "ArriveAtDeploy" } )
     Fsm:AddTransition( "Arrived", "ArriveAtDeploy", "ArrivedAtDeploy" )
     
     Fsm:AddTransition( { "ArrivedAtPickup", "ArrivedAtDeploy", "Landing" }, "Land", "Landing" )
     Fsm:AddTransition( "Landing", "Landed", "Landed" )
     
-    Fsm:AddTransition( "WaitingForCommand", "PrepareBoarding", "AwaitBoarding" )
+    Fsm:AddTransition( "*", "PrepareBoarding", "AwaitBoarding" )
     Fsm:AddTransition( "AwaitBoarding", "Board", "Boarding" )
     Fsm:AddTransition( "Boarding", "Boarded", "Boarded" )
 
-    Fsm:AddTransition( "WaitingForCommand", "PrepareUnBoarding", "AwaitUnBoarding" )
+    Fsm:AddTransition( "*", "PrepareUnBoarding", "AwaitUnBoarding" )
     Fsm:AddTransition( "AwaitUnBoarding", "UnBoard", "UnBoarding" )
     Fsm:AddTransition( "UnBoarding", "UnBoarded", "UnBoarded" )
     
@@ -211,71 +212,79 @@ do -- TASK_CARGO
     --- 
     -- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
-    -- @param Tasking.Task_Cargo#TASK_CARGO Task
-    function Fsm:onenterWaitingForCommand( TaskUnit, Task )
+    -- @param Tasking.Task_CARGO#TASK_CARGO Task
+    function Fsm:onafterSelectAction( TaskUnit, Task )
       self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
 
-      if TaskUnit.Menu then
-        TaskUnit.Menu:Remove()
-      end
+      local MenuTime = timer.getTime()
             
-      TaskUnit.Menu = MENU_GROUP:New( TaskUnit:GetGroup(), Task:GetName() .. " @ " .. TaskUnit:GetName() )
+      TaskUnit.Menu = MENU_GROUP:New( TaskUnit:GetGroup(), Task:GetName() .. " @ " .. TaskUnit:GetName() ):SetTime( MenuTime )
       
       Task.SetCargo:ForEachCargo(
         
         --- @param Core.Cargo#CARGO Cargo
         function( Cargo ) 
-          if Cargo:IsUnLoaded() then
-            if Cargo:IsInRadius( TaskUnit:GetPointVec2() ) then
-              MENU_GROUP_COMMAND:New(
-                TaskUnit:GetGroup(),
-                "Board cargo " .. Cargo.Name,
-                TaskUnit.Menu,
-                self.MenuBoardCargo,
-                self,
-                Cargo
-              )
-            else
-              MENU_GROUP_COMMAND:New(
-                TaskUnit:GetGroup(),
-                "Route to Pickup cargo " .. Cargo.Name,
-                TaskUnit.Menu,
-                self.MenuRouteToPickup,
-                self,
-                Cargo
-              )
-            end
-          end
-          
-          if Cargo:IsLoaded() then
-            for DeployZoneName, DeployZone in pairs( Task.DeployZones ) do
-              if Cargo:IsInZone( DeployZone ) then
+        
+          if Cargo:IsAlive() then
+        
+            if Cargo:IsUnLoaded() then
+              if Cargo:IsInRadius( TaskUnit:GetPointVec2() ) then
                 MENU_GROUP_COMMAND:New(
                   TaskUnit:GetGroup(),
-                  "Unboard cargo " .. Cargo.Name,
+                  "Board cargo " .. Cargo.Name,
                   TaskUnit.Menu,
-                  self.MenuUnBoardCargo,
+                  self.MenuBoardCargo,
                   self,
-                  Cargo,
-                  DeployZone
-                )
+                  Cargo
+                ):SetTime(MenuTime)
               else
                 MENU_GROUP_COMMAND:New(
                   TaskUnit:GetGroup(),
-                  "Route to Deploy cargo at " .. DeployZoneName,
+                  "Route to Pickup cargo " .. Cargo.Name,
                   TaskUnit.Menu,
-                  self.MenuRouteToDeploy,
+                  self.MenuRouteToPickup,
                   self,
-                  DeployZone
-                )
+                  Cargo
+                ):SetTime(MenuTime)
+              end
+            end
+            
+            if Cargo:IsLoaded() then
+              
+              MENU_GROUP_COMMAND:New(
+                TaskUnit:GetGroup(),
+                "Unboard cargo " .. Cargo.Name,
+                TaskUnit.Menu,
+                self.MenuUnBoardCargo,
+                self,
+                Cargo
+              ):SetTime(MenuTime)
+  
+              -- Deployzones are optional zones that can be selected to request routing information.
+              for DeployZoneName, DeployZone in pairs( Task.DeployZones ) do
+                if not Cargo:IsInZone( DeployZone ) then
+                  MENU_GROUP_COMMAND:New(
+                    TaskUnit:GetGroup(),
+                    "Route to Deploy cargo at " .. DeployZoneName,
+                    TaskUnit.Menu,
+                    self.MenuRouteToDeploy,
+                    self,
+                    DeployZone
+                  ):SetTime(MenuTime)
+                end
               end
             end
           end
         
         end
       )
+
+      TaskUnit.Menu:Remove( MenuTime )
+      
       
       self:__SelectAction( -15 )
+      
+      --Task:GetMission():GetCommandCenter():MessageToGroup("Cargo menu is ready ...", TaskUnit:GetGroup() )
     end
     
     --- 
@@ -308,13 +317,19 @@ do -- TASK_CARGO
     -- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
     -- @param Tasking.Task_Cargo#TASK_CARGO Task
+    -- @param From
+    -- @param Event
+    -- @param To
+    -- @param Core.Cargo#CARGO Cargo
     function Fsm:onafterRouteToPickup( TaskUnit, Task, From, Event, To, Cargo )
       self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
 
+      if Cargo:IsAlive() then
+        self.Cargo = Cargo -- Core.Cargo#CARGO
+        Task:SetCargoPickup( self.Cargo, TaskUnit )
+        self:__RouteToPickupPoint( -0.1 )
+      end
       
-      self.Cargo = Cargo
-      Task:SetCargoPickup( self.Cargo, TaskUnit )
-      self:__RouteToPickupPoint( -0.1 )
     end
 
 
@@ -325,10 +340,13 @@ do -- TASK_CARGO
     function Fsm:onafterArriveAtPickup( TaskUnit, Task )
       self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
       
-      if TaskUnit:IsAir() then
-        self:__Land( -0.1, "Pickup" )
-      else
-        self:__SelectAction( -0.1 )
+      if self.Cargo:IsAlive() then
+        if TaskUnit:IsAir() then
+          self.Cargo.CargoObject:GetUnit(1):SmokeRed()
+          self:__Land( -0.1, "Pickup" )
+        else
+          self:__SelectAction( -0.1 )
+        end
       end
     end
 
@@ -369,19 +387,21 @@ do -- TASK_CARGO
     function Fsm:onafterLand( TaskUnit, Task, From, Event, To, Action )
       self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
       
-      if self.Cargo:IsInRadius( TaskUnit:GetPointVec2() ) then
-        if TaskUnit:InAir() then
-          Task:GetMission():GetCommandCenter():MessageToGroup( "Land", TaskUnit:GetGroup() )
-          self:__Land( -10, Action )
+      if self.Cargo:IsAlive() then
+        if self.Cargo:IsInRadius( TaskUnit:GetPointVec2() ) then
+          if TaskUnit:InAir() then
+            Task:GetMission():GetCommandCenter():MessageToGroup( "Land", TaskUnit:GetGroup() )
+            self:__Land( -10, Action )
+          else
+            Task:GetMission():GetCommandCenter():MessageToGroup( "Landed ...", TaskUnit:GetGroup() )
+            self:__Landed( -0.1, Action )
+          end
         else
-          Task:GetMission():GetCommandCenter():MessageToGroup( "Landed ...", TaskUnit:GetGroup() )
-          self:__Landed( -0.1, Action )
-        end
-      else
-        if Action == "Pickup" then
-          self:__RouteToPickupZone( -0.1 )
-        else
-          self:__RouteToDeployZone( -0.1 )
+          if Action == "Pickup" then
+            self:__RouteToPickupZone( -0.1 )
+          else
+            self:__RouteToDeployZone( -0.1 )
+          end
         end
       end
     end
@@ -393,17 +413,19 @@ do -- TASK_CARGO
     function Fsm:onafterLanded( TaskUnit, Task, From, Event, To, Action )
       self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
       
-      if self.Cargo:IsInRadius( TaskUnit:GetPointVec2() ) then
-        if TaskUnit:InAir() then
-          self:__Land( -0.1, Action )
+      if self.Cargo:IsAlive() then
+        if self.Cargo:IsInRadius( TaskUnit:GetPointVec2() ) then
+          if TaskUnit:InAir() then
+            self:__Land( -0.1, Action )
+          else
+            self:__SelectAction( -0.1 )
+          end
         else
-          self:__SelectAction( -0.1 )
-        end
-      else
-        if Action == "Pickup" then
-          self:__RouteToPickupZone( -0.1 )
-        else
-          self:__RouteToDeployZone( -0.1 )
+          if Action == "Pickup" then
+            self:__RouteToPickupZone( -0.1 )
+          else
+            self:__RouteToDeployZone( -0.1 )
+          end
         end
       end
     end
@@ -415,8 +437,10 @@ do -- TASK_CARGO
     function Fsm:onafterPrepareBoarding( TaskUnit, Task, From, Event, To, Cargo )
       self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
       
-      self.Cargo = Cargo -- Core.Cargo#CARGO_GROUP
-      self:__Board( -0.1 )
+      if Cargo and Cargo:IsAlive() then
+        self.Cargo = Cargo -- Core.Cargo#CARGO_GROUP
+        self:__Board( -0.1 )
+      end
     end
     
     --- 
@@ -427,23 +451,21 @@ do -- TASK_CARGO
       self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
 
       function self.Cargo:OnEnterLoaded( From, Event, To, TaskUnit, TaskProcess )
-      
         self:E({From, Event, To, TaskUnit, TaskProcess })
-        
         TaskProcess:__Boarded( 0.1 )
-      
       end
 
-      
-      if self.Cargo:IsInRadius( TaskUnit:GetPointVec2() ) then
-        if TaskUnit:InAir() then
-          --- ABORT the boarding. Split group if any and go back to select action.
+      if self.Cargo:IsAlive() then
+        if self.Cargo:IsInRadius( TaskUnit:GetPointVec2() ) then
+          if TaskUnit:InAir() then
+            --- ABORT the boarding. Split group if any and go back to select action.
+          else
+            self.Cargo:MessageToGroup( "Boarding ...", TaskUnit:GetGroup() ) 
+            self.Cargo:Board( TaskUnit, 20, self )
+          end
         else
-          self.Cargo:MessageToGroup( "Boarding ...", TaskUnit:GetGroup() ) 
-          self.Cargo:Board( TaskUnit, 20, self )
+          --self:__ArriveAtCargo( -0.1 )
         end
-      else
-        --self:__ArriveAtCargo( -0.1 )
       end
     end
 
@@ -460,8 +482,10 @@ do -- TASK_CARGO
       
       -- TODO:I need to find a more decent solution for this. 
       Task:E( { CargoPickedUp = Task.CargoPickedUp } )
-      if Task.CargoPickedUp then
-        Task:CargoPickedUp( TaskUnit, self.Cargo )
+      if self.Cargo:IsAlive() then
+        if Task.CargoPickedUp then
+          Task:CargoPickedUp( TaskUnit, self.Cargo )
+        end
       end
       
     end
@@ -471,31 +495,50 @@ do -- TASK_CARGO
     -- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
     -- @param Tasking.Task_Cargo#TASK_CARGO Task
-    function Fsm:onafterPrepareUnBoarding( TaskUnit, Task, From, Event, To, Cargo, DeployZone )
-      self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
+    -- @param From
+    -- @param Event
+    -- @param To
+    -- @param Cargo
+    -- @param Core.Zone#ZONE_BASE DeployZone
+    function Fsm:onafterPrepareUnBoarding( TaskUnit, Task, From, Event, To, Cargo  )
+      self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID(), From, Event, To, Cargo  } )
 
       self.Cargo = Cargo
-      self.DeployZone = DeployZone      
-      self:__UnBoard( -0.1 )
+      self.DeployZone = nil
+
+      -- Check if the Cargo is at a deployzone... If it is, provide it as a parameter!      
+      if Cargo:IsAlive() then
+        for DeployZoneName, DeployZone in pairs( Task.DeployZones ) do
+          if Cargo:IsInZone( DeployZone ) then
+            self.DeployZone = DeployZone  -- Core.Zone#ZONE_BASE
+            break      
+          end
+        end
+        self:__UnBoard( -0.1, Cargo, self.DeployZone )
+      end
     end
     
     --- 
     -- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
     -- @param Tasking.Task_Cargo#TASK_CARGO Task
-    function Fsm:onafterUnBoard( TaskUnit, Task )
-      self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
+    -- @param From
+    -- @param Event
+    -- @param To
+    -- @param Cargo
+    -- @param Core.Zone#ZONE_BASE DeployZone
+    function Fsm:onafterUnBoard( TaskUnit, Task, From, Event, To, Cargo, DeployZone )
+      self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID(), From, Event, To, Cargo, DeployZone } )
 
       function self.Cargo:OnEnterUnLoaded( From, Event, To, DeployZone, TaskProcess )
-      
-        self:E({From, Event, To, TaskUnit, TaskProcess })
-        
+        self:E({From, Event, To, DeployZone, TaskProcess })
         TaskProcess:__UnBoarded( -0.1 )
-      
       end
 
-      self.Cargo:MessageToGroup( "UnBoarding ...", TaskUnit:GetGroup() )
-      self.Cargo:UnBoard( self.DeployZone:GetPointVec2(), 20, self )
+      if self.Cargo:IsAlive() then
+        self.Cargo:MessageToGroup( "UnBoarding ...", TaskUnit:GetGroup() )
+        self.Cargo:UnBoard( DeployZone:GetPointVec2(), 400, self )
+      end
     end
 
 
@@ -510,8 +553,10 @@ do -- TASK_CARGO
       
       -- TODO:I need to find a more decent solution for this.
       Task:E( { CargoDeployed = Task.CargoDeployed } )
-      if Task.CargoDeployed then
-        Task:CargoDeployed( TaskUnit, self.Cargo, self.DeployZone )
+      if self.Cargo:IsAlive() then
+        if Task.CargoDeployed then
+          Task:CargoDeployed( TaskUnit, self.Cargo, self.DeployZone )
+        end
       end
       
       self:__SelectAction( 1 )
@@ -685,9 +730,10 @@ do -- TASK_CARGO_TRANSPORT
   -- @param Set#SET_GROUP SetGroup The set of groups for which the Task can be assigned.
   -- @param #string TaskName The name of the Task.
   -- @param Core.Set#SET_CARGO SetCargo The scope of the cargo to be transported.
+  -- @param #string TaskBriefing The Cargo Task briefing.
   -- @return #TASK_CARGO_TRANSPORT self
-  function TASK_CARGO_TRANSPORT:New( Mission, SetGroup, TaskName, SetCargo )
-    local self = BASE:Inherit( self, TASK_CARGO:New( Mission, SetGroup, TaskName, SetCargo, "Transport" ) ) -- #TASK_CARGO_TRANSPORT
+  function TASK_CARGO_TRANSPORT:New( Mission, SetGroup, TaskName, SetCargo, TaskBriefing )
+    local self = BASE:Inherit( self, TASK_CARGO:New( Mission, SetGroup, TaskName, SetCargo, "Transport", TaskBriefing ) ) -- #TASK_CARGO_TRANSPORT
     self:F()
     
     Mission:AddTask( self )
@@ -698,8 +744,6 @@ do -- TASK_CARGO_TRANSPORT
     self:AddTransition( "*", "CargoPickedUp", "*" )
     self:AddTransition( "*", "CargoDeployed", "*" )
     
-    do
-      
       --- OnBefore Transition Handler for Event CargoPickedUp.
       -- @function [parent=#TASK_CARGO_TRANSPORT] OnBeforeCargoPickedUp
       -- @param #TASK_CARGO_TRANSPORT self
@@ -731,9 +775,7 @@ do -- TASK_CARGO_TRANSPORT
       -- @param #number Delay The delay in seconds.
       -- @param Wrapper.Unit#UNIT TaskUnit The Unit (Client) that PickedUp the cargo. You can use this to retrieve the PlayerName etc.
       -- @param Core.Cargo#CARGO Cargo The Cargo that got PickedUp by the TaskUnit. You can use this to check Cargo Status.
-    end
     
-    do        
       --- OnBefore Transition Handler for Event CargoDeployed.
       -- @function [parent=#TASK_CARGO_TRANSPORT] OnBeforeCargoDeployed
       -- @param #TASK_CARGO_TRANSPORT self
@@ -769,9 +811,25 @@ do -- TASK_CARGO_TRANSPORT
       -- @param Wrapper.Unit#UNIT TaskUnit The Unit (Client) that Deployed the cargo. You can use this to retrieve the PlayerName etc.
       -- @param Core.Cargo#CARGO Cargo The Cargo that got PickedUp by the TaskUnit. You can use this to check Cargo Status.
       -- @param Core.Zone#ZONE DeployZone The zone where the Cargo got Deployed or UnBoarded.
-    end
 
     local Fsm = self:GetUnitProcess()
+
+    local CargoReport = REPORT:New( "Transport Cargo. The following cargo needs to be transported including initial positions:")
+    
+    SetCargo:ForEachCargo(
+      --- @param Core.Cargo#CARGO Cargo
+      function( Cargo )
+        local CargoType = Cargo:GetType()
+        local CargoName = Cargo:GetName()
+        local CargoCoordinate = Cargo:GetCoordinate()
+        CargoReport:Add( string.format( '- "%s" (%s) at %s', CargoName, CargoType, CargoCoordinate:ToString() ) )
+      end
+    )
+    
+    self:SetBriefing( 
+      TaskBriefing or 
+      CargoReport:Text()
+    )
 
     
     return self
@@ -804,7 +862,7 @@ do -- TASK_CARGO_TRANSPORT
         end
       end
     end
-    
+
     return CargoDeployed
   end
   

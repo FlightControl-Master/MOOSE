@@ -1595,11 +1595,13 @@ function SPAWN:_OnBirth( EventData )
   
   if SpawnGroup then
     local EventPrefix = self:_GetPrefixFromGroup( SpawnGroup )
-		self:T( { "Birth Event:", EventPrefix, self.SpawnTemplatePrefix } )
-		if EventPrefix == self.SpawnTemplatePrefix or ( self.SpawnAliasPrefix and EventPrefix == self.SpawnAliasPrefix ) then
-			self.AliveUnits = self.AliveUnits + 1
-			self:T( "Alive Units: " .. self.AliveUnits )
-		end
+    if EventPrefix then -- EventPrefix can be nil if no # is found, which means, no spawnable group!
+  		self:T( { "Birth Event:", EventPrefix, self.SpawnTemplatePrefix } )
+  		if EventPrefix == self.SpawnTemplatePrefix or ( self.SpawnAliasPrefix and EventPrefix == self.SpawnAliasPrefix ) then
+  			self.AliveUnits = self.AliveUnits + 1
+  			self:T( "Alive Units: " .. self.AliveUnits )
+  		end
+    end
 	end
 
 end
@@ -1616,11 +1618,13 @@ function SPAWN:_OnDeadOrCrash( EventData )
   
 	if SpawnGroup then
 		local EventPrefix = self:_GetPrefixFromGroup( SpawnGroup )
-    self:T( { "Dead event: " .. EventPrefix } )
-		if EventPrefix == self.SpawnTemplatePrefix or ( self.SpawnAliasPrefix and EventPrefix == self.SpawnAliasPrefix ) then
-			self.AliveUnits = self.AliveUnits - 1
-			self:T( "Alive Units: " .. self.AliveUnits )
-		end
+		if EventPrefix then -- EventPrefix can be nil if no # is found, which means, no spawnable group!
+      self:T( { "Dead event: " .. EventPrefix } )
+  		if EventPrefix == self.SpawnTemplatePrefix or ( self.SpawnAliasPrefix and EventPrefix == self.SpawnAliasPrefix ) then
+  			self.AliveUnits = self.AliveUnits - 1
+  			self:T( "Alive Units: " .. self.AliveUnits )
+  		end
+    end
 	end
 end
 
@@ -1634,10 +1638,12 @@ function SPAWN:_OnTakeOff( EventData )
   local SpawnGroup = EventData.IniGroup
   if SpawnGroup then
     local EventPrefix = self:_GetPrefixFromGroup( SpawnGroup )
-    self:T( { "TakeOff event: " .. EventPrefix } )
-    if EventPrefix == self.SpawnTemplatePrefix or ( self.SpawnAliasPrefix and EventPrefix == self.SpawnAliasPrefix ) then
-  		self:T( "self.Landed = false" )
-  		SpawnGroup:SetState( SpawnGroup, "Spawn_Landed", false )
+    if EventPrefix then -- EventPrefix can be nil if no # is found, which means, no spawnable group!
+      self:T( { "TakeOff event: " .. EventPrefix } )
+      if EventPrefix == self.SpawnTemplatePrefix or ( self.SpawnAliasPrefix and EventPrefix == self.SpawnAliasPrefix ) then
+    		self:T( "self.Landed = false" )
+    		SpawnGroup:SetState( SpawnGroup, "Spawn_Landed", false )
+      end
     end
 	end
 end
@@ -1652,16 +1658,18 @@ function SPAWN:_OnLand( EventData )
   local SpawnGroup = EventData.IniGroup
   if SpawnGroup then
     local EventPrefix = self:_GetPrefixFromGroup( SpawnGroup )
-    self:T( { "Land event: " .. EventPrefix } )
-    if EventPrefix == self.SpawnTemplatePrefix or ( self.SpawnAliasPrefix and EventPrefix == self.SpawnAliasPrefix ) then
-	    -- TODO: Check if this is the last unit of the group that lands.
-	    SpawnGroup:SetState( SpawnGroup, "Spawn_Landed", true )
-			if self.RepeatOnLanding then
-				local SpawnGroupIndex = self:GetSpawnIndexFromGroup( SpawnGroup )
-				self:T( { "Landed:", "ReSpawn:", SpawnGroup:GetName(), SpawnGroupIndex } )
-				self:ReSpawn( SpawnGroupIndex )
-			end
-		end
+    if EventPrefix then -- EventPrefix can be nil if no # is found, which means, no spawnable group!
+      self:T( { "Land event: " .. EventPrefix } )
+      if EventPrefix == self.SpawnTemplatePrefix or ( self.SpawnAliasPrefix and EventPrefix == self.SpawnAliasPrefix ) then
+  	    -- TODO: Check if this is the last unit of the group that lands.
+  	    SpawnGroup:SetState( SpawnGroup, "Spawn_Landed", true )
+  			if self.RepeatOnLanding then
+  				local SpawnGroupIndex = self:GetSpawnIndexFromGroup( SpawnGroup )
+  				self:T( { "Landed:", "ReSpawn:", SpawnGroup:GetName(), SpawnGroupIndex } )
+  				self:ReSpawn( SpawnGroupIndex )
+  			end
+  		end
+    end
 	end
 end
 
@@ -1676,16 +1684,18 @@ function SPAWN:_OnEngineShutDown( EventData )
   local SpawnGroup = EventData.IniGroup
   if SpawnGroup then
     local EventPrefix = self:_GetPrefixFromGroup( SpawnGroup )
-    self:T( { "EngineShutdown event: " .. EventPrefix } )
-    if EventPrefix == self.SpawnTemplatePrefix or ( self.SpawnAliasPrefix and EventPrefix == self.SpawnAliasPrefix ) then
-			-- todo: test if on the runway
-			local Landed = SpawnGroup:GetState( SpawnGroup, "Spawn_Landed" )
-			if Landed and self.RepeatOnEngineShutDown then
-				local SpawnGroupIndex = self:GetSpawnIndexFromGroup( SpawnGroup )
-				self:T( { "EngineShutDown: ", "ReSpawn:", SpawnGroup:GetName(), SpawnGroupIndex } )
-				self:ReSpawn( SpawnGroupIndex )
-			end
-		end
+    if EventPrefix then -- EventPrefix can be nil if no # is found, which means, no spawnable group!
+      self:T( { "EngineShutdown event: " .. EventPrefix } )
+      if EventPrefix == self.SpawnTemplatePrefix or ( self.SpawnAliasPrefix and EventPrefix == self.SpawnAliasPrefix ) then
+  			-- todo: test if on the runway
+  			local Landed = SpawnGroup:GetState( SpawnGroup, "Spawn_Landed" )
+  			if Landed and self.RepeatOnEngineShutDown then
+  				local SpawnGroupIndex = self:GetSpawnIndexFromGroup( SpawnGroup )
+  				self:T( { "EngineShutDown: ", "ReSpawn:", SpawnGroup:GetName(), SpawnGroupIndex } )
+  				self:ReSpawn( SpawnGroupIndex )
+  			end
+  		end
+    end
 	end
 end
 

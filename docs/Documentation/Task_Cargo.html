@@ -17,9 +17,11 @@
 				<a href="index.html">index</a>
 			</li></ul>
 		<ul>
+					<li><a href="AI_Bai.html">AI_Bai</a></li>
 					<li><a href="AI_Balancer.html">AI_Balancer</a></li>
 					<li><a href="AI_Cap.html">AI_Cap</a></li>
 					<li><a href="AI_Cas.html">AI_Cas</a></li>
+					<li><a href="AI_Formation.html">AI_Formation</a></li>
 					<li><a href="AI_Patrol.html">AI_Patrol</a></li>
 					<li><a href="Account.html">Account</a></li>
 					<li><a href="Airbase.html">Airbase</a></li>
@@ -219,7 +221,7 @@ and various dedicated deployment zones.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_CARGO).New">TASK_CARGO:New(Mission, SetGroup, TaskName, SetCargo, TaskType)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_CARGO).New">TASK_CARGO:New(Mission, SetGroup, TaskName, SetCargo, TaskType, TaskBriefing)</a></td>
 		<td class="summary">
 <p>Instantiates a new TASK_CARGO.</p>
 </td>
@@ -283,6 +285,18 @@ and various dedicated deployment zones.</p>
 			<h2><a id="#(TASK_CARGO_TRANSPORT)">Type <code>TASK_CARGO_TRANSPORT</code></a></h2>
 				<table class="function_list">
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_CARGO_TRANSPORT).CargoDeployed">TASK_CARGO_TRANSPORT:CargoDeployed(TaskUnit, Cargo, DeployZone)</a></td>
+		<td class="summary">
+<p>Synchronous Event Trigger for Event CargoDeployed.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_CARGO_TRANSPORT).CargoPickedUp">TASK_CARGO_TRANSPORT:CargoPickedUp(TaskUnit, Cargo)</a></td>
+		<td class="summary">
+<p>Synchronous Event Trigger for Event CargoPickedUp.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(TASK_CARGO_TRANSPORT).ClassName">TASK_CARGO_TRANSPORT.ClassName</a></td>
 		<td class="summary">
 
@@ -295,9 +309,45 @@ and various dedicated deployment zones.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_CARGO_TRANSPORT).New">TASK_CARGO_TRANSPORT:New(Mission, SetGroup, TaskName, SetCargo)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_CARGO_TRANSPORT).New">TASK_CARGO_TRANSPORT:New(Mission, SetGroup, TaskName, SetCargo, TaskBriefing)</a></td>
 		<td class="summary">
 <p>Instantiates a new TASK<em>CARGO</em>TRANSPORT.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_CARGO_TRANSPORT).OnAfterCargoDeployed">TASK_CARGO_TRANSPORT:OnAfterCargoDeployed(From, Event, To, TaskUnit, Cargo, DeployZone)</a></td>
+		<td class="summary">
+<p>OnAfter Transition Handler for Event CargoDeployed.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_CARGO_TRANSPORT).OnAfterCargoPickedUp">TASK_CARGO_TRANSPORT:OnAfterCargoPickedUp(From, Event, To, TaskUnit, Cargo)</a></td>
+		<td class="summary">
+<p>OnAfter Transition Handler for Event CargoPickedUp.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_CARGO_TRANSPORT).OnBeforeCargoDeployed">TASK_CARGO_TRANSPORT:OnBeforeCargoDeployed(From, Event, To, TaskUnit, Cargo, DeployZone)</a></td>
+		<td class="summary">
+<p>OnBefore Transition Handler for Event CargoDeployed.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_CARGO_TRANSPORT).OnBeforeCargoPickedUp">TASK_CARGO_TRANSPORT:OnBeforeCargoPickedUp(From, Event, To, TaskUnit, Cargo)</a></td>
+		<td class="summary">
+<p>OnBefore Transition Handler for Event CargoPickedUp.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_CARGO_TRANSPORT).__CargoDeployed">TASK_CARGO_TRANSPORT:__CargoDeployed(Delay, TaskUnit, Cargo, DeployZone)</a></td>
+		<td class="summary">
+<p>Asynchronous Event Trigger for Event CargoDeployed.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_CARGO_TRANSPORT).__CargoPickedUp">TASK_CARGO_TRANSPORT:__CargoPickedUp(Delay, TaskUnit, Cargo)</a></td>
+		<td class="summary">
+<p>Asynchronous Event Trigger for Event CargoPickedUp.</p>
 </td>
 		</tr>
 	</table>
@@ -467,7 +517,6 @@ based on the tasking capabilities defined in <a href="Task.html##(TASK)">Task#TA
 		<dl class="function">
 <dt>
 
-		<em></em>
 <a id="#(FSM_PROCESS).DeployZone" >
 <strong>FSM_PROCESS.DeployZone</strong>
 </a>
@@ -608,7 +657,7 @@ The Zone object where the Target is located on the map.</p>
 <dt>
 
 <a id="#(TASK_CARGO).New" >
-<strong>TASK_CARGO:New(Mission, SetGroup, TaskName, SetCargo, TaskType)</strong>
+<strong>TASK_CARGO:New(Mission, SetGroup, TaskName, SetCargo, TaskType, TaskBriefing)</strong>
 </a>
 </dt>
 <dd>
@@ -644,6 +693,12 @@ The scope of the cargo to be transported.</p>
 				
 <p><code><em>#string TaskType </em></code>: 
 The type of Cargo task.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string TaskBriefing </em></code>: 
+The Cargo Task briefing.</p>
 
 				</li>
 		</ul>
@@ -936,6 +991,68 @@ The score in points.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(TASK_CARGO_TRANSPORT).CargoDeployed" >
+<strong>TASK_CARGO_TRANSPORT:CargoDeployed(TaskUnit, Cargo, DeployZone)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Synchronous Event Trigger for Event CargoDeployed.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> TaskUnit </em></code>: 
+The Unit (Client) that Deployed the cargo. You can use this to retrieve the PlayerName etc.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Core.Cargo.html##(CARGO)">Core.Cargo#CARGO</a> Cargo </em></code>: 
+The Cargo that got PickedUp by the TaskUnit. You can use this to check Cargo Status.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Core.Zone.html##(ZONE)">Core.Zone#ZONE</a> DeployZone </em></code>: 
+The zone where the Cargo got Deployed or UnBoarded.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_CARGO_TRANSPORT).CargoPickedUp" >
+<strong>TASK_CARGO_TRANSPORT:CargoPickedUp(TaskUnit, Cargo)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Synchronous Event Trigger for Event CargoPickedUp.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> TaskUnit </em></code>: 
+The Unit (Client) that PickedUp the cargo. You can use this to retrieve the PlayerName etc.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Core.Cargo.html##(CARGO)">Core.Cargo#CARGO</a> Cargo </em></code>: 
+The Cargo that got PickedUp by the TaskUnit. You can use this to check Cargo Status.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 		<em>#string</em>
 <a id="#(TASK_CARGO_TRANSPORT).ClassName" >
 <strong>TASK_CARGO_TRANSPORT.ClassName</strong>
@@ -969,7 +1086,7 @@ The score in points.</p>
 <dt>
 
 <a id="#(TASK_CARGO_TRANSPORT).New" >
-<strong>TASK_CARGO_TRANSPORT:New(Mission, SetGroup, TaskName, SetCargo)</strong>
+<strong>TASK_CARGO_TRANSPORT:New(Mission, SetGroup, TaskName, SetCargo, TaskBriefing)</strong>
 </a>
 </dt>
 <dd>
@@ -1001,12 +1118,298 @@ The name of the Task.</p>
 The scope of the cargo to be transported.</p>
 
 				</li>
+				<li>
+				
+<p><code><em>#string TaskBriefing </em></code>: 
+The Cargo Task briefing.</p>
+
+				</li>
 		</ul>
 		<h3>Return value</h3>
 				
 <p><em><a href="##(TASK_CARGO_TRANSPORT)">#TASK<em>CARGO</em>TRANSPORT</a>:</em>
 self</p>
 
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_CARGO_TRANSPORT).OnAfterCargoDeployed" >
+<strong>TASK_CARGO_TRANSPORT:OnAfterCargoDeployed(From, Event, To, TaskUnit, Cargo, DeployZone)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>OnAfter Transition Handler for Event CargoDeployed.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string From </em></code>: 
+The From State string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: 
+The Event string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: 
+The To State string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> TaskUnit </em></code>: 
+The Unit (Client) that Deployed the cargo. You can use this to retrieve the PlayerName etc.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Core.Cargo.html##(CARGO)">Core.Cargo#CARGO</a> Cargo </em></code>: 
+The Cargo that got PickedUp by the TaskUnit. You can use this to check Cargo Status.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Core.Zone.html##(ZONE)">Core.Zone#ZONE</a> DeployZone </em></code>: 
+The zone where the Cargo got Deployed or UnBoarded.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_CARGO_TRANSPORT).OnAfterCargoPickedUp" >
+<strong>TASK_CARGO_TRANSPORT:OnAfterCargoPickedUp(From, Event, To, TaskUnit, Cargo)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>OnAfter Transition Handler for Event CargoPickedUp.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string From </em></code>: 
+The From State string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: 
+The Event string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: 
+The To State string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> TaskUnit </em></code>: 
+The Unit (Client) that PickedUp the cargo. You can use this to retrieve the PlayerName etc.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Core.Cargo.html##(CARGO)">Core.Cargo#CARGO</a> Cargo </em></code>: 
+The Cargo that got PickedUp by the TaskUnit. You can use this to check Cargo Status.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_CARGO_TRANSPORT).OnBeforeCargoDeployed" >
+<strong>TASK_CARGO_TRANSPORT:OnBeforeCargoDeployed(From, Event, To, TaskUnit, Cargo, DeployZone)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>OnBefore Transition Handler for Event CargoDeployed.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string From </em></code>: 
+The From State string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: 
+The Event string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: 
+The To State string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> TaskUnit </em></code>: 
+The Unit (Client) that Deployed the cargo. You can use this to retrieve the PlayerName etc.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Core.Cargo.html##(CARGO)">Core.Cargo#CARGO</a> Cargo </em></code>: 
+The Cargo that got PickedUp by the TaskUnit. You can use this to check Cargo Status.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Core.Zone.html##(ZONE)">Core.Zone#ZONE</a> DeployZone </em></code>: 
+The zone where the Cargo got Deployed or UnBoarded.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+Return false to cancel Transition.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_CARGO_TRANSPORT).OnBeforeCargoPickedUp" >
+<strong>TASK_CARGO_TRANSPORT:OnBeforeCargoPickedUp(From, Event, To, TaskUnit, Cargo)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>OnBefore Transition Handler for Event CargoPickedUp.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string From </em></code>: 
+The From State string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: 
+The Event string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: 
+The To State string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> TaskUnit </em></code>: 
+The Unit (Client) that PickedUp the cargo. You can use this to retrieve the PlayerName etc.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Core.Cargo.html##(CARGO)">Core.Cargo#CARGO</a> Cargo </em></code>: 
+The Cargo that got PickedUp by the TaskUnit. You can use this to check Cargo Status.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+Return false to cancel Transition.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_CARGO_TRANSPORT).__CargoDeployed" >
+<strong>TASK_CARGO_TRANSPORT:__CargoDeployed(Delay, TaskUnit, Cargo, DeployZone)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Asynchronous Event Trigger for Event CargoDeployed.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number Delay </em></code>: 
+The delay in seconds.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> TaskUnit </em></code>: 
+The Unit (Client) that Deployed the cargo. You can use this to retrieve the PlayerName etc.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Core.Cargo.html##(CARGO)">Core.Cargo#CARGO</a> Cargo </em></code>: 
+The Cargo that got PickedUp by the TaskUnit. You can use this to check Cargo Status.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Core.Zone.html##(ZONE)">Core.Zone#ZONE</a> DeployZone </em></code>: 
+The zone where the Cargo got Deployed or UnBoarded.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_CARGO_TRANSPORT).__CargoPickedUp" >
+<strong>TASK_CARGO_TRANSPORT:__CargoPickedUp(Delay, TaskUnit, Cargo)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Asynchronous Event Trigger for Event CargoPickedUp.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number Delay </em></code>: 
+The delay in seconds.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> TaskUnit </em></code>: 
+The Unit (Client) that PickedUp the cargo. You can use this to retrieve the PlayerName etc.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Core.Cargo.html##(CARGO)">Core.Cargo#CARGO</a> Cargo </em></code>: 
+The Cargo that got PickedUp by the TaskUnit. You can use this to check Cargo Status.</p>
+
+				</li>
+		</ul>
 </dd>
 </dl>
 

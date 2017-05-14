@@ -1336,6 +1336,11 @@ SET_UNIT = {
 }
 
 
+--- Get the first unit from the set.
+-- @function [parent=#SET_UNIT] GetFirst
+-- @param #SET_UNIT self
+-- @return Wrapper.Unit#UNIT The UNIT object.
+
 --- Creates a new SET_UNIT object, building a set of units belonging to a coalitions, categories, countries, types or with defined prefix names.
 -- @param #SET_UNIT self
 -- @return #SET_UNIT

@@ -17,9 +17,11 @@
 				<a href="index.html">index</a>
 			</li></ul>
 		<ul>
+					<li><a href="AI_Bai.html">AI_Bai</a></li>
 					<li><a href="AI_Balancer.html">AI_Balancer</a></li>
 					<li><a href="AI_Cap.html">AI_Cap</a></li>
 					<li><a href="AI_Cas.html">AI_Cas</a></li>
+					<li><a href="AI_Formation.html">AI_Formation</a></li>
 					<li><a href="AI_Patrol.html">AI_Patrol</a></li>
 					<li><a href="Account.html">Account</a></li>
 					<li><a href="Airbase.html">Airbase</a></li>
@@ -215,9 +217,21 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO).GetCoordinate">CARGO:GetCoordinate()</a></td>
+		<td class="summary">
+<p>Get the current coordinates of the Cargo.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(CARGO).GetName">CARGO:GetName()</a></td>
 		<td class="summary">
 <p>Get the name of the Cargo.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO).GetObjectName">CARGO:GetObjectName()</a></td>
+		<td class="summary">
+<p>Get the object name of the Cargo.</p>
 </td>
 		</tr>
 		<tr>
@@ -230,6 +244,12 @@
 		<td class="name" nowrap="nowrap"><a href="##(CARGO).GetType">CARGO:GetType()</a></td>
 		<td class="summary">
 <p>Get the type of the Cargo.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO).IsAlive">CARGO:IsAlive()</a></td>
+		<td class="summary">
+<p>Check if cargo is alive.</p>
 </td>
 		</tr>
 		<tr>
@@ -435,6 +455,12 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_GROUP).onafterBoarding">CARGO_GROUP:onafterBoarding(CargoCarrier, Event, From, To, NearRadius, ...)</a></td>
+		<td class="summary">
+<p>Leave Boarding State.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(CARGO_GROUP).onafterUnBoarding">CARGO_GROUP:onafterUnBoarding(ToPointVec2, Event, From, To, NearRadius, ...)</a></td>
 		<td class="summary">
 <p>UnBoard Event.</p>
@@ -462,12 +488,6 @@
 		<td class="name" nowrap="nowrap"><a href="##(CARGO_GROUP).onenterUnLoaded">CARGO_GROUP:onenterUnLoaded(Core, Event, From, To, ToPointVec2, ...)</a></td>
 		<td class="summary">
 <p>Enter UnLoaded State.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CARGO_GROUP).onleaveBoarding">CARGO_GROUP:onleaveBoarding(CargoCarrier, Event, From, To, NearRadius, ...)</a></td>
-		<td class="summary">
-<p>Leave Boarding State.</p>
 </td>
 		</tr>
 		<tr>
@@ -655,6 +675,12 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_UNIT).RunCount">CARGO_UNIT.RunCount</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(CARGO_UNIT).onafterBoard">CARGO_UNIT:onafterBoard(Event, From, To, CargoCarrier, NearRadius, ...)</a></td>
 		<td class="summary">
 <p>Board Event.</p>
@@ -694,12 +720,6 @@
 		<td class="name" nowrap="nowrap"><a href="##(CARGO_UNIT).onenterUnLoaded">CARGO_UNIT:onenterUnLoaded(Event, From, To, Core, ToPointVec2)</a></td>
 		<td class="summary">
 <p>Enter UnLoaded State.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CARGO_UNIT).onleaveBoarding">CARGO_UNIT:onleaveBoarding(Event, From, To, CargoCarrier, NearRadius, ...)</a></td>
-		<td class="summary">
-<p>Leave Boarding State.</p>
 </td>
 		</tr>
 		<tr>
@@ -964,6 +984,24 @@ The radius when the cargo will board the Carrier (to avoid collision).</p>
 		<dl class="function">
 <dt>
 
+<a id="#(CARGO).GetCoordinate" >
+<strong>CARGO:GetCoordinate()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Get the current coordinates of the Cargo.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="Core.Point.html##(COORDINATE)">Core.Point#COORDINATE</a>:</em>
+The coordinates of the Cargo.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(CARGO).GetName" >
 <strong>CARGO:GetName()</strong>
 </a>
@@ -976,6 +1014,24 @@ The radius when the cargo will board the Carrier (to avoid collision).</p>
 				
 <p><em>#string:</em>
 The name of the Cargo.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO).GetObjectName" >
+<strong>CARGO:GetObjectName()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Get the object name of the Cargo.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#string:</em>
+The object name of the Cargo.</p>
 
 </dd>
 </dl>
@@ -1012,6 +1068,24 @@ The name of the Cargo.</p>
 				
 <p><em>#string:</em>
 The type of the Cargo.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO).IsAlive" >
+<strong>CARGO:IsAlive()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Check if cargo is alive.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+true if unloaded</p>
 
 </dd>
 </dl>
@@ -1809,6 +1883,52 @@ The amount of seconds to delay the action.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(CARGO_GROUP).onafterBoarding" >
+<strong>CARGO_GROUP:onafterBoarding(CargoCarrier, Event, From, To, NearRadius, ...)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Leave Boarding State.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> CargoCarrier </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> NearRadius </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> ... </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(CARGO_GROUP).onafterUnBoarding" >
 <strong>CARGO_GROUP:onafterUnBoarding(ToPointVec2, Event, From, To, NearRadius, ...)</strong>
 </a>
@@ -2022,52 +2142,6 @@ Point#POINT_VEC2</p>
 				<li>
 				
 <p><code><em> ToPointVec2 </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em> ... </em></code>: </p>
-
-				</li>
-		</ul>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(CARGO_GROUP).onleaveBoarding" >
-<strong>CARGO_GROUP:onleaveBoarding(CargoCarrier, Event, From, To, NearRadius, ...)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Leave Boarding State.</p>
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> CargoCarrier </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string Event </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string From </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string To </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em> NearRadius </em></code>: </p>
 
 				</li>
 				<li>
@@ -2847,7 +2921,6 @@ The range till cargo will board.</p>
 		<dl class="function">
 <dt>
 
-		<em></em>
 <a id="#(CARGO_UNIT).CargoCarrier" >
 <strong>CARGO_UNIT.CargoCarrier</strong>
 </a>
@@ -2962,6 +3035,20 @@ The range till cargo will board.</p>
 
 <a id="#(CARGO_UNIT).OnUnLoadedCallBack" >
 <strong>CARGO_UNIT.OnUnLoadedCallBack</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#number</em>
+<a id="#(CARGO_UNIT).RunCount" >
+<strong>CARGO_UNIT.RunCount</strong>
 </a>
 </dt>
 <dd>
@@ -3263,52 +3350,6 @@ Point#POINT_VEC2</p>
 				<li>
 				
 <p><code><em> ToPointVec2 </em></code>: </p>
-
-				</li>
-		</ul>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(CARGO_UNIT).onleaveBoarding" >
-<strong>CARGO_UNIT:onleaveBoarding(Event, From, To, CargoCarrier, NearRadius, ...)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Leave Boarding State.</p>
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em>#string Event </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string From </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string To </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> CargoCarrier </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em> NearRadius </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em> ... </em></code>: </p>
 
 				</li>
 		</ul>

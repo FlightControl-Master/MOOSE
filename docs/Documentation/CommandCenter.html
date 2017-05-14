@@ -17,9 +17,11 @@
 				<a href="index.html">index</a>
 			</li></ul>
 		<ul>
+					<li><a href="AI_Bai.html">AI_Bai</a></li>
 					<li><a href="AI_Balancer.html">AI_Balancer</a></li>
 					<li><a href="AI_Cap.html">AI_Cap</a></li>
 					<li><a href="AI_Cas.html">AI_Cas</a></li>
+					<li><a href="AI_Formation.html">AI_Formation</a></li>
 					<li><a href="AI_Patrol.html">AI_Patrol</a></li>
 					<li><a href="Account.html">Account</a></li>
 					<li><a href="Airbase.html">Airbase</a></li>
@@ -232,7 +234,13 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(COMMANDCENTER).ReportSummary">COMMANDCENTER:ReportSummary(ReportGroup)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(COMMANDCENTER).ReportMissionsPlayers">COMMANDCENTER:ReportMissionsPlayers(ReportGroup)</a></td>
+		<td class="summary">
+<p>Report the players of all MISSIONs to a GROUP.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(COMMANDCENTER).ReportMissionsStatus">COMMANDCENTER:ReportMissionsStatus(ReportGroup)</a></td>
 		<td class="summary">
 <p>Report the status of all MISSIONs to a GROUP.</p>
 </td>
@@ -737,8 +745,32 @@ Group#GROUP</p>
 		<dl class="function">
 <dt>
 
-<a id="#(COMMANDCENTER).ReportSummary" >
-<strong>COMMANDCENTER:ReportSummary(ReportGroup)</strong>
+<a id="#(COMMANDCENTER).ReportMissionsPlayers" >
+<strong>COMMANDCENTER:ReportMissionsPlayers(ReportGroup)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Report the players of all MISSIONs to a GROUP.</p>
+
+	
+<p>Each Mission is listed, with an indication how many Tasks are still to be completed.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> ReportGroup </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(COMMANDCENTER).ReportMissionsStatus" >
+<strong>COMMANDCENTER:ReportMissionsStatus(ReportGroup)</strong>
 </a>
 </dt>
 <dd>

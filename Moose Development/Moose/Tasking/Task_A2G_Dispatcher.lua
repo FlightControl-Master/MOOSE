@@ -220,7 +220,7 @@ do -- TASK_A2G_DISPATCHER
       for DetectedItemID, DetectedItem in pairs( Detection:GetDetectedItems() ) do
       
         local DetectedItem = DetectedItem -- Functional.Detection#DETECTION_BASE.DetectedItem
-        local DetectedSet = DetectedItem.Set -- Functional.Detection#DETECTION_BASE.DetectedSet
+        local DetectedSet = DetectedItem.Set -- Core.Set#SET_UNIT
         local DetectedZone = DetectedItem.Zone
         self:E( { "Targets in DetectedItem", DetectedItem.ItemID, DetectedSet:Count(), tostring( DetectedItem ) } )
         DetectedSet:Flush()
@@ -258,6 +258,7 @@ do -- TASK_A2G_DISPATCHER
             self.Tasks[DetectedItemID] = Task
             Task:SetTargetZone( DetectedZone )
             Task:SetDispatcher( self )
+            Task:SetInfo( "ThreatLevel", DetectedSet:CalculateThreatLevelA2G() )
             Task:SetInfo( "Detection", Detection:DetectedItemReportSummary( DetectedItemID ) )
             Task:SetInfo( "Changes", Detection:GetChangeText( DetectedItem ) )
             Mission:AddTask( Task )
@@ -277,7 +278,9 @@ do -- TASK_A2G_DISPATCHER
       Mission:GetCommandCenter():SetMenu()
       
       for TaskGroupID, TaskGroup in pairs( self.SetGroup:GetSet() ) do
-        Mission:GetCommandCenter():MessageToGroup( string.format( "Mission *%s* has tasks %s. Subscribe to a task using the Mission *Overlord* radio menu.", Mission:GetName(), TaskReport:Text(", ") ), TaskGroup )
+        if not Mission:IsGroupAssigned(TaskGroup) then
+          Mission:GetCommandCenter():MessageToGroup( string.format( "Mission *%s* has tasks %s. Subscribe to a task using the Mission *Overlord* radio menu.", Mission:GetName(), TaskReport:Text(", ") ), TaskGroup )
+        end
       end
       
     end

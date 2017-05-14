@@ -27,6 +27,18 @@ function MISSION:New( CommandCenter, MissionName, MissionPriority, MissionBriefi
 
   local self = BASE:Inherit( self, FSM:New() ) -- Core.Fsm#FSM
 
+  self:T( { MissionName, MissionPriority, MissionBriefing, MissionCoalition } )
+  
+  self.CommandCenter = CommandCenter
+  CommandCenter:AddMission( self )
+  
+  self.Name = MissionName
+  self.MissionPriority = MissionPriority
+  self.MissionBriefing = MissionBriefing
+  self.MissionCoalition = MissionCoalition
+  
+  self.Tasks = {}
+
   self:SetStartState( "IDLE" )
   
   self:AddTransition( "IDLE", "Start", "ENGAGED" )
@@ -208,21 +220,10 @@ function MISSION:New( CommandCenter, MissionName, MissionPriority, MissionBriefi
   -- @param #MISSION self
   -- @param #number Delay The delay in seconds.
   
-	self:T( { MissionName, MissionPriority, MissionBriefing, MissionCoalition } )
-  
-  self.CommandCenter = CommandCenter
-  CommandCenter:AddMission( self )
-  
-	self.Name = MissionName
-	self.MissionPriority = MissionPriority
-	self.MissionBriefing = MissionBriefing
-	self.MissionCoalition = MissionCoalition
-	
-	self.Tasks = {}
 	
 	-- Private  implementations
 	
-	
+	CommandCenter:SetMenu()
 
 	return self
 end
@@ -257,7 +258,7 @@ end
 -- @param #MISSION self
 -- @return #MISSION self
 function MISSION:GetName()
-  return self.Name
+  return string.format( 'Mission "%s (%s)"', self.Name, self.MissionPriority )
 end
 
 --- Add a Unit to join the Mission.
@@ -308,19 +309,17 @@ end
 -- If the Unit is part of a Task in the Mission, true is returned.
 -- @param #MISSION self
 -- @param Wrapper.Unit#UNIT PlayerUnit The CLIENT or UNIT of the Player crashing.
--- @return #boolean true if Unit is part of a Task in the Mission.
+-- @return #MISSION
 function MISSION:CrashUnit( PlayerUnit )
   self:F( { PlayerUnit = PlayerUnit } )
   
-  local PlayerUnitRemoved = false
-  
   for TaskID, Task in pairs( self:GetTasks() ) do
-    if Task:CrashUnit( PlayerUnit ) then
-      PlayerUnitRemoved = true
-    end
+    local Task = Task -- Tasking.Task#TASK
+    local PlayerGroup = PlayerUnit:GetGroup()
+    Task:CrashGroup( PlayerGroup )
   end
   
-  return PlayerUnitRemoved
+  return self
 end
 
 --- Add a scoring to the mission.
@@ -607,6 +606,117 @@ function MISSION:GetTasksRemaining()
   return TasksRemaining
 end
 
+--- @param #MISSION self
+-- @return #number
+function MISSION:GetTaskTypes()
+  -- Determine how many tasks are remaining.
+  local TaskTypeList = {}
+  local TasksRemaining = 0
+  for TaskID, Task in pairs( self:GetTasks() ) do
+    local Task = Task -- Tasking.Task#TASK
+    local TaskType = Task:GetType()
+    TaskTypeList[TaskType] = TaskType
+  end
+  return TaskTypeList
+end
+
+
+--- Create a status report of the Mission.
+-- This reports provides a one liner of the mission status. It indicates how many players and how many Tasks.
+-- 
+--     Mission "<MissionName>" - Status "<MissionStatus>"
+--      - Task Types: <TaskType>, <TaskType>
+--      - <xx> Planned Tasks (xp)
+--      - <xx> Assigned Tasks(xp)
+--      - <xx> Success Tasks (xp)
+--      - <xx> Hold Tasks (xp)
+--      - <xx> Cancelled Tasks (xp)
+--      - <xx> Aborted Tasks (xp)
+--      - <xx> Failed Tasks (xp)
+-- 
+-- @param #MISSION self
+-- @return #string
+function MISSION:ReportStatus()
+
+  local Report = REPORT:New()
+
+  -- List the name of the mission.
+  local Name = self:GetName()
+  
+  -- Determine the status of the mission.
+  local Status = self:GetState()
+  local TasksRemaining = self:GetTasksRemaining()
+
+  Report:Add( string.format( '%s - Status "%s"', Name, Status ) )
+  
+  local TaskTypes = self:GetTaskTypes()
+  
+  Report:Add( string.format( " - Task Types: %s", table.concat(TaskTypes, ", " ) ) )
+  
+  local TaskStatusList = { "Planned", "Assigned", "Success", "Hold", "Cancelled", "Aborted", "Failed" }
+  
+  for TaskStatusID, TaskStatus in pairs( TaskStatusList ) do
+    local TaskCount = 0
+    local TaskPlayerCount = 0 
+    -- Determine how many tasks are remaining.
+    for TaskID, Task in pairs( self:GetTasks() ) do
+      local Task = Task -- Tasking.Task#TASK
+      if Task:Is( TaskStatus ) then
+        TaskCount = TaskCount + 1
+        TaskPlayerCount = TaskPlayerCount + Task:GetPlayerCount()
+      end
+    end
+    if TaskCount > 0 then
+      Report:Add( string.format( " - %02d %s Tasks (%dp)", TaskCount, TaskStatus, TaskPlayerCount ) )
+    end
+  end
+
+  return Report:Text()
+end
+
+--- Create a player report of the Mission.
+-- This reports provides a one liner of the mission status. It indicates how many players and how many Tasks.
+-- 
+--     Mission "<MissionName>" - Status "<MissionStatus>"
+--      - Player "<PlayerName>: Task <TaskName> <TaskStatus>, Task <TaskName> <TaskStatus>
+--      - Player <PlayerName>: Task <TaskName> <TaskStatus>, Task <TaskName> <TaskStatus>
+--      - ..
+-- 
+-- @param #MISSION self
+-- @return #string
+function MISSION:ReportPlayers()
+
+  local Report = REPORT:New()
+
+  -- List the name of the mission.
+  local Name = self:GetName()
+  
+  -- Determine the status of the mission.
+  local Status = self:GetState()
+  local TasksRemaining = self:GetTasksRemaining()
+
+  Report:Add( string.format( '%s - Status "%s"', Name, Status ) )
+  
+  local PlayerList = {}
+  
+  -- Determine how many tasks are remaining.
+  for TaskID, Task in pairs( self:GetTasks() ) do
+    local Task = Task -- Tasking.Task#TASK
+    local PlayerNames = Task:GetPlayerNames()
+    for PlayerID, PlayerName in pairs( PlayerNames ) do
+      PlayerList[PlayerName] = Task:GetName()
+    end
+    
+  end
+
+  for PlayerName, TaskName in pairs( PlayerList ) do
+    Report:Add( string.format( ' - Player (%s): Task "%s"', PlayerName, TaskName ) )
+  end
+  
+  return Report:Text()
+end
+
+
 --- Create a summary report of the Mission (one line).
 -- @param #MISSION self
 -- @return #string
@@ -646,7 +756,7 @@ function MISSION:ReportOverview( TaskStatus )
   local Status = self:GetState()
   local TasksRemaining = self:GetTasksRemaining()
 
-  Report:Add( "Mission " .. Name .. " - " .. Status .. " Task Report ")
+  Report:Add( string.format( '%s - Status "%s"', Name, Status ) )
   
   -- Determine how many tasks are remaining.
   local TasksRemaining = 0
@@ -673,7 +783,7 @@ function MISSION:ReportDetails()
   -- Determine the status of the mission.
   local Status = self:GetState()
   
-  Report:Add( "Mission " .. Name .. " - " .. Status )
+  Report:Add( string.format( '%s - Status "%s"', Name, Status ) )
   
   -- Determine how many tasks are remaining.
   local TasksRemaining = 0

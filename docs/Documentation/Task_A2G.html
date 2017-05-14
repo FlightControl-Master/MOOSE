@@ -17,9 +17,11 @@
 				<a href="index.html">index</a>
 			</li></ul>
 		<ul>
+					<li><a href="AI_Bai.html">AI_Bai</a></li>
 					<li><a href="AI_Balancer.html">AI_Balancer</a></li>
 					<li><a href="AI_Cap.html">AI_Cap</a></li>
 					<li><a href="AI_Cas.html">AI_Cas</a></li>
+					<li><a href="AI_Formation.html">AI_Formation</a></li>
 					<li><a href="AI_Patrol.html">AI_Patrol</a></li>
 					<li><a href="Account.html">Account</a></li>
 					<li><a href="Airbase.html">Airbase</a></li>
@@ -240,7 +242,7 @@ The TASK_A2G is implemented using a <a href="Statemachine.html##(FSM_TASK)">Stat
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G).New">TASK_A2G:New(Mission, SetGroup, TaskName, UnitSetTargets, TargetDistance, TargetZone, TargetSetUnit, TaskType)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G).New">TASK_A2G:New(Mission, SetGroup, TaskName, UnitSetTargets, TargetDistance, TargetZone, TargetSetUnit, TaskType, TaskBriefing)</a></td>
 		<td class="summary">
 <p>Instantiates a new TASK_A2G.</p>
 </td>
@@ -304,7 +306,7 @@ The TASK_A2G is implemented using a <a href="Statemachine.html##(FSM_TASK)">Stat
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BAI).New">TASK_BAI:New(Mission, SetGroup, TaskName, UnitSetTargets, TargetDistance, TargetZone, TargetSetUnit)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_BAI).New">TASK_BAI:New(Mission, SetGroup, TaskName, TargetSetUnit, TaskBriefing)</a></td>
 		<td class="summary">
 <p>Instantiates a new TASK_BAI.</p>
 </td>
@@ -326,7 +328,7 @@ The TASK_A2G is implemented using a <a href="Statemachine.html##(FSM_TASK)">Stat
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_CAS).New">TASK_CAS:New(Mission, SetGroup, TaskName, UnitSetTargets, TargetDistance, TargetZone, TargetSetUnit)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_CAS).New">TASK_CAS:New(Mission, SetGroup, TaskName, TargetSetUnit, TaskBriefing)</a></td>
 		<td class="summary">
 <p>Instantiates a new TASK_CAS.</p>
 </td>
@@ -348,7 +350,7 @@ The TASK_A2G is implemented using a <a href="Statemachine.html##(FSM_TASK)">Stat
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_SEAD).New">TASK_SEAD:New(Mission, SetGroup, TaskName, TargetSetUnit)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_SEAD).New">TASK_SEAD:New(Mission, SetGroup, TaskName, TargetSetUnit, TaskBriefing)</a></td>
 		<td class="summary">
 <p>Instantiates a new TASK_SEAD.</p>
 </td>
@@ -572,7 +574,7 @@ The Zone object where the Target is located on the map.</p>
 <dt>
 
 <a id="#(TASK_A2G).New" >
-<strong>TASK_A2G:New(Mission, SetGroup, TaskName, UnitSetTargets, TargetDistance, TargetZone, TargetSetUnit, TaskType)</strong>
+<strong>TASK_A2G:New(Mission, SetGroup, TaskName, UnitSetTargets, TargetDistance, TargetZone, TargetSetUnit, TaskType, TaskBriefing)</strong>
 </a>
 </dt>
 <dd>
@@ -624,6 +626,11 @@ If the TargetZone parameter is specified, the player will be routed to the cente
 				<li>
 				
 <p><code><em> TaskType </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> TaskBriefing </em></code>: </p>
 
 				</li>
 		</ul>
@@ -900,7 +907,7 @@ The Zone object where the Target is located on the map.</p>
 <dt>
 
 <a id="#(TASK_BAI).New" >
-<strong>TASK_BAI:New(Mission, SetGroup, TaskName, UnitSetTargets, TargetDistance, TargetZone, TargetSetUnit)</strong>
+<strong>TASK_BAI:New(Mission, SetGroup, TaskName, TargetSetUnit, TaskBriefing)</strong>
 </a>
 </dt>
 <dd>
@@ -916,7 +923,7 @@ The Zone object where the Target is located on the map.</p>
 				</li>
 				<li>
 				
-<p><code><em><a href="Set.html##(SET_GROUP)">Set#SET_GROUP</a> SetGroup </em></code>: 
+<p><code><em><a href="Core.Set.html##(SET_GROUP)">Core.Set#SET_GROUP</a> SetGroup </em></code>: 
 The set of groups for which the Task can be assigned.</p>
 
 				</li>
@@ -928,25 +935,13 @@ The name of the Task.</p>
 				</li>
 				<li>
 				
-<p><code><em><a href="Set.html##(SET_UNIT)">Set#SET_UNIT</a> UnitSetTargets </em></code>: </p>
+<p><code><em><a href="Core.Set.html##(SET_UNIT)">Core.Set#SET_UNIT</a> TargetSetUnit </em></code>: </p>
 
 				</li>
 				<li>
 				
-<p><code><em>#number TargetDistance </em></code>: 
-The distance to Target when the Player is considered to have "arrived" at the engagement range.</p>
-
-				</li>
-				<li>
-				
-<p><code><em><a href="Core.Zone.html##(ZONE_BASE)">Core.Zone#ZONE_BASE</a> TargetZone </em></code>: 
-The target zone, if known.
-If the TargetZone parameter is specified, the player will be routed to the center of the zone where all the targets are assumed to be.</p>
-
-				</li>
-				<li>
-				
-<p><code><em> TargetSetUnit </em></code>: </p>
+<p><code><em>#string TaskBriefing </em></code>: 
+The briefing of the task.</p>
 
 				</li>
 		</ul>
@@ -995,7 +990,7 @@ self</p>
 <dt>
 
 <a id="#(TASK_CAS).New" >
-<strong>TASK_CAS:New(Mission, SetGroup, TaskName, UnitSetTargets, TargetDistance, TargetZone, TargetSetUnit)</strong>
+<strong>TASK_CAS:New(Mission, SetGroup, TaskName, TargetSetUnit, TaskBriefing)</strong>
 </a>
 </dt>
 <dd>
@@ -1011,7 +1006,7 @@ self</p>
 				</li>
 				<li>
 				
-<p><code><em><a href="Set.html##(SET_GROUP)">Set#SET_GROUP</a> SetGroup </em></code>: 
+<p><code><em><a href="Core.Set.html##(SET_GROUP)">Core.Set#SET_GROUP</a> SetGroup </em></code>: 
 The set of groups for which the Task can be assigned.</p>
 
 				</li>
@@ -1023,25 +1018,13 @@ The name of the Task.</p>
 				</li>
 				<li>
 				
-<p><code><em><a href="Set.html##(SET_UNIT)">Set#SET_UNIT</a> UnitSetTargets </em></code>: </p>
+<p><code><em><a href="Core.Set.html##(SET_UNIT)">Core.Set#SET_UNIT</a> TargetSetUnit </em></code>: </p>
 
 				</li>
 				<li>
 				
-<p><code><em>#number TargetDistance </em></code>: 
-The distance to Target when the Player is considered to have "arrived" at the engagement range.</p>
-
-				</li>
-				<li>
-				
-<p><code><em><a href="Core.Zone.html##(ZONE_BASE)">Core.Zone#ZONE_BASE</a> TargetZone </em></code>: 
-The target zone, if known.
-If the TargetZone parameter is specified, the player will be routed to the center of the zone where all the targets are assumed to be.</p>
-
-				</li>
-				<li>
-				
-<p><code><em> TargetSetUnit </em></code>: </p>
+<p><code><em>#string TaskBriefing </em></code>: 
+The briefing of the task.</p>
 
 				</li>
 		</ul>
@@ -1090,7 +1073,7 @@ self</p>
 <dt>
 
 <a id="#(TASK_SEAD).New" >
-<strong>TASK_SEAD:New(Mission, SetGroup, TaskName, TargetSetUnit)</strong>
+<strong>TASK_SEAD:New(Mission, SetGroup, TaskName, TargetSetUnit, TaskBriefing)</strong>
 </a>
 </dt>
 <dd>
@@ -1106,7 +1089,7 @@ self</p>
 				</li>
 				<li>
 				
-<p><code><em><a href="Set.html##(SET_GROUP)">Set#SET_GROUP</a> SetGroup </em></code>: 
+<p><code><em><a href="Core.Set.html##(SET_GROUP)">Core.Set#SET_GROUP</a> SetGroup </em></code>: 
 The set of groups for which the Task can be assigned.</p>
 
 				</li>
@@ -1118,7 +1101,13 @@ The name of the Task.</p>
 				</li>
 				<li>
 				
-<p><code><em><a href="Set.html##(SET_UNIT)">Set#SET_UNIT</a> TargetSetUnit </em></code>: </p>
+<p><code><em><a href="Core.Set.html##(SET_UNIT)">Core.Set#SET_UNIT</a> TargetSetUnit </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string TaskBriefing </em></code>: 
+The briefing of the task.</p>
 
 				</li>
 		</ul>
