@@ -1611,28 +1611,32 @@ function SET_UNIT:ForEachUnitPerThreatLevel( FromThreatLevel, ToThreatLevel, Ite
   
   local ThreatLevelSet = {}
   
-  for UnitName, UnitObject in pairs( self.Set ) do
-    local Unit = UnitObject -- Wrapper.Unit#UNIT
-  
-    local ThreatLevel = Unit:GetThreatLevel()
-    ThreatLevelSet[ThreatLevel] = ThreatLevelSet[ThreatLevel] or {}
-    ThreatLevelSet[ThreatLevel].Set = ThreatLevelSet[ThreatLevel].Set or {}
-    ThreatLevelSet[ThreatLevel].Set[UnitName] = UnitObject
-    self:E( { ThreatLevel = ThreatLevel, ThreatLevelSet = ThreatLevelSet[ThreatLevel].Set } )
-  end
-  
-  local ThreatLevelIncrement = FromThreatLevel <= ToThreatLevel and 1 or -1
-  
-  for ThreatLevel = FromThreatLevel, ToThreatLevel, ThreatLevelIncrement do
-    self:E( { ThreatLevel = ThreatLevel } )
-    local ThreatLevelItem = ThreatLevelSet[ThreatLevel]
-    if ThreatLevelItem then
-      self:ForEach( IteratorFunction, arg, ThreatLevelItem.Set )
+  if self:Count() ~= 0 then
+    for UnitName, UnitObject in pairs( self.Set ) do
+      local Unit = UnitObject -- Wrapper.Unit#UNIT
+    
+      local ThreatLevel = Unit:GetThreatLevel()
+      ThreatLevelSet[ThreatLevel] = ThreatLevelSet[ThreatLevel] or {}
+      ThreatLevelSet[ThreatLevel].Set = ThreatLevelSet[ThreatLevel].Set or {}
+      ThreatLevelSet[ThreatLevel].Set[UnitName] = UnitObject
+      self:E( { ThreatLevel = ThreatLevel, ThreatLevelSet = ThreatLevelSet[ThreatLevel].Set } )
+    end
+    
+    local ThreatLevelIncrement = FromThreatLevel <= ToThreatLevel and 1 or -1
+    
+    for ThreatLevel = FromThreatLevel, ToThreatLevel, ThreatLevelIncrement do
+      self:E( { ThreatLevel = ThreatLevel } )
+      local ThreatLevelItem = ThreatLevelSet[ThreatLevel]
+      if ThreatLevelItem then
+        self:ForEach( IteratorFunction, arg, ThreatLevelItem.Set )
+      end
     end
   end
   
   return self
 end
+
+
 
 --- Iterate the SET_UNIT and call an iterator function for each **alive** UNIT presence completely in a @{Zone}, providing the UNIT and optional parameters to the called function.
 -- @param #SET_UNIT self
