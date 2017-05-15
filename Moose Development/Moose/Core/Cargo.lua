@@ -385,6 +385,13 @@ function CARGO:GetPointVec2()
   return self.CargoObject:GetPointVec2()
 end
 
+--- Get the current Coordinate of the cargo.
+-- @param #CARGO self
+-- @return Core.Point#COORDINATE
+function CARGO:GetCoordinate()
+  return self.CargoObject:GetCoordinate()
+end
+
 --- Set the weight of the cargo.
 -- @param #CARGO self
 -- @param #number Weight The weight in kg.

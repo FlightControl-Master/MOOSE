@@ -185,12 +185,14 @@ do -- TASK_CARGO
     Fsm:AddTransition( { "Assigned", "WaitingForCommand", "ArrivedAtPickup", "ArrivedAtDeploy", "Boarded", "UnBoarded", "Landed", "Boarding" }, "SelectAction", "*" )
 
     Fsm:AddTransition( "*", "RouteToPickup", "RoutingToPickup" )
-    Fsm:AddProcess   ( "RoutingToPickup", "RouteToPickupPoint", ACT_ROUTE_POINT:New(), { Arrived = "ArriveAtPickup" } )
+    Fsm:AddProcess   ( "RoutingToPickup", "RouteToPickupPoint", ACT_ROUTE_POINT:New(), { Arrived = "ArriveAtPickup", Cancelled = "CancelRouteToPickup" } )
     Fsm:AddTransition( "Arrived", "ArriveAtPickup", "ArrivedAtPickup" )
+    Fsm:AddTransition( "Cancelled", "CancelRouteToPickup", "WaitingForCommand" )
 
     Fsm:AddTransition( "*", "RouteToDeploy", "RoutingToDeploy" )
-    Fsm:AddProcess   ( "RoutingToDeploy", "RouteToDeployZone", ACT_ROUTE_ZONE:New(), { Arrived = "ArriveAtDeploy" } )
+    Fsm:AddProcess   ( "RoutingToDeploy", "RouteToDeployZone", ACT_ROUTE_ZONE:New(), { Arrived = "ArriveAtDeploy", Cancelled = "CancelRouteToDeploy" } )
     Fsm:AddTransition( "Arrived", "ArriveAtDeploy", "ArrivedAtDeploy" )
+    Fsm:AddTransition( "Cancelled", "CancelRouteToDeploy", "WaitingForCommand" )
     
     Fsm:AddTransition( { "ArrivedAtPickup", "ArrivedAtDeploy", "Landing" }, "Land", "Landing" )
     Fsm:AddTransition( "Landing", "Landed", "Landed" )
@@ -219,6 +221,7 @@ do -- TASK_CARGO
       local MenuTime = timer.getTime()
             
       TaskUnit.Menu = MENU_GROUP:New( TaskUnit:GetGroup(), Task:GetName() .. " @ " .. TaskUnit:GetName() ):SetTime( MenuTime )
+
       
       Task.SetCargo:ForEachCargo(
         
@@ -226,6 +229,17 @@ do -- TASK_CARGO
         function( Cargo ) 
         
           if Cargo:IsAlive() then
+        
+--            if Task:is( "RoutingToPickup" ) then
+--              MENU_GROUP_COMMAND:New(
+--                TaskUnit:GetGroup(),
+--                "Cancel Route " .. Cargo.Name,
+--                TaskUnit.Menu,
+--                self.MenuRouteToPickupCancel,
+--                self,
+--                Cargo
+--              ):SetTime(MenuTime)
+--            end
         
             if Cargo:IsUnLoaded() then
               if Cargo:IsInRadius( TaskUnit:GetPointVec2() ) then
@@ -308,7 +322,7 @@ do -- TASK_CARGO
     function Fsm:MenuRouteToPickup( Cargo )
       self:__RouteToPickup( 1.0, Cargo )
     end
-    
+
     function Fsm:MenuRouteToDeploy( DeployZone )
       self:__RouteToDeploy( 1.0, DeployZone )
     end
@@ -351,6 +365,17 @@ do -- TASK_CARGO
     end
 
 
+    --- 
+    -- @param #FSM_PROCESS self
+    -- @param Wrapper.Unit#UNIT TaskUnit
+    -- @param Tasking.Task_Cargo#TASK_CARGO Task
+    function Fsm:onafterCancelRouteToPickup( TaskUnit, Task )
+      self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
+      
+      self:__SelectAction( -0.1 )
+    end
+
+
     --- Route to DeployZone
     -- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
@@ -379,8 +404,18 @@ do -- TASK_CARGO
     end
 
 
+    ---
+    -- @param #FSM_PROCESS self
+    -- @param Wrapper.Unit#UNIT TaskUnit
+    -- @param Tasking.Task_Cargo#TASK_CARGO Task
+    function Fsm:onafterCancelRouteToDeploy( TaskUnit, Task )
+      self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
+      
+      self:__SelectAction( -0.1 )
+    end
 
-    --- 
+
+
     -- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
     -- @param Tasking.Task_Cargo#TASK_CARGO Task
@@ -594,14 +629,17 @@ do -- TASK_CARGO
   -- @param AI.AI_Cargo#AI_CARGO Cargo The cargo.
   -- @param Wrapper.Unit#UNIT TaskUnit
   -- @return #TASK_CARGO
-  function TASK_CARGO:SetCargoPickup( Cargo, TaskUnit  )
+  function TASK_CARGO:SetCargoPickup( Cargo, TaskUnit )
   
     self:F({Cargo, TaskUnit})
     local ProcessUnit = self:GetUnitProcess( TaskUnit )
   
     local ActRouteCargo = ProcessUnit:GetProcess( "RoutingToPickup", "RouteToPickupPoint" ) -- Actions.Act_Route#ACT_ROUTE_POINT
-    ActRouteCargo:SetPointVec2( Cargo:GetPointVec2() )
+    ActRouteCargo:Reset()
+    ActRouteCargo:SetCoordinate( Cargo:GetCoordinate() )
     ActRouteCargo:SetRange( Cargo:GetBoardingRange() )
+    ActRouteCargo:SetMenuCancel( TaskUnit:GetGroup(), "Cancel Routing to Cargo " .. Cargo:GetName(), TaskUnit.Menu )
+    ActRouteCargo:Start()
     return self
   end
   
@@ -615,7 +653,10 @@ do -- TASK_CARGO
     local ProcessUnit = self:GetUnitProcess( TaskUnit )
 
     local ActRouteDeployZone = ProcessUnit:GetProcess( "RoutingToDeploy", "RouteToDeployZone" ) -- Actions.Act_Route#ACT_ROUTE_ZONE
+    ActRouteDeployZone:Reset()
     ActRouteDeployZone:SetZone( DeployZone )
+    ActRouteDeployZone:SetMenuCancel( TaskUnit:GetGroup(), "Cancel Routing to Deploy Zone" .. DeployZone:GetName(), TaskUnit.Menu )
+    ActRouteDeployZone:Start()
     return self
   end
    
