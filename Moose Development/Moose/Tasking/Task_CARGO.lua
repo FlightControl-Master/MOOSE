@@ -537,7 +537,11 @@ do -- TASK_CARGO
 
       if self.Cargo:IsAlive() then
         self.Cargo:MessageToGroup( "UnBoarding ...", TaskUnit:GetGroup() )
-        self.Cargo:UnBoard( DeployZone:GetPointVec2(), 400, self )
+        if DeployZone then
+          self.Cargo:UnBoard( DeployZone:GetPointVec2(), 400, self )
+        else
+          self.Cargo:UnBoard( TaskUnit:GetPointVec2():AddX(60), 400, self )
+        end          
       end
     end
 
