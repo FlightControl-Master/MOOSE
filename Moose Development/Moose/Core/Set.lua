@@ -2739,7 +2739,7 @@ SET_CARGO = {
 -- @usage
 -- -- Define a new SET_CARGO Object. The DatabaseSet will contain a reference to all Cargos.
 -- DatabaseSet = SET_CARGO:New()
-function SET_CARGO:New()
+function SET_CARGO:New() --R2.1
   -- Inherits from BASE
   local self = BASE:Inherit( self, SET_BASE:New( _DATABASE.CARGOS ) )
 
@@ -2750,7 +2750,7 @@ end
 -- @param Core.Set#SET_CARGO self
 -- @param #string AddCargoNames A single name or an array of CARGO names.
 -- @return self
-function SET_CARGO:AddCargosByName( AddCargoNames )
+function SET_CARGO:AddCargosByName( AddCargoNames ) --R2.1
 
   local AddCargoNamesArray = ( type( AddCargoNames ) == "table" ) and AddCargoNames or { AddCargoNames }
   
@@ -2765,7 +2765,7 @@ end
 -- @param Core.Set#SET_CARGO self
 -- @param Wrapper.Cargo#CARGO RemoveCargoNames A single name or an array of CARGO names.
 -- @return self
-function SET_CARGO:RemoveCargosByName( RemoveCargoNames )
+function SET_CARGO:RemoveCargosByName( RemoveCargoNames ) --R2.1
 
   local RemoveCargoNamesArray = ( type( RemoveCargoNames ) == "table" ) and RemoveCargoNames or { RemoveCargoNames }
   
@@ -2781,7 +2781,7 @@ end
 -- @param #SET_CARGO self
 -- @param #string CargoName
 -- @return Wrapper.Cargo#CARGO The found Cargo.
-function SET_CARGO:FindCargo( CargoName )
+function SET_CARGO:FindCargo( CargoName ) --R2.1
 
   local CargoFound = self.Set[CargoName]
   return CargoFound
@@ -2794,7 +2794,7 @@ end
 -- @param #SET_CARGO self
 -- @param #string Coalitions Can take the following values: "red", "blue", "neutral".
 -- @return #SET_CARGO self
-function SET_CARGO:FilterCoalitions( Coalitions )
+function SET_CARGO:FilterCoalitions( Coalitions ) --R2.1
   if not self.Filter.Coalitions then
     self.Filter.Coalitions = {}
   end
@@ -2812,7 +2812,7 @@ end
 -- @param #SET_CARGO self
 -- @param #string Types Can take those type strings known within DCS world.
 -- @return #SET_CARGO self
-function SET_CARGO:FilterTypes( Types )
+function SET_CARGO:FilterTypes( Types ) --R2.1
   if not self.Filter.Types then
     self.Filter.Types = {}
   end
@@ -2831,7 +2831,7 @@ end
 -- @param #SET_CARGO self
 -- @param #string Countries Can take those country strings known within DCS world.
 -- @return #SET_CARGO self
-function SET_CARGO:FilterCountries( Countries )
+function SET_CARGO:FilterCountries( Countries ) --R2.1
   if not self.Filter.Countries then
     self.Filter.Countries = {}
   end
@@ -2850,7 +2850,7 @@ end
 -- @param #SET_CARGO self
 -- @param #string Prefixes The prefix of which the cargo name starts with.
 -- @return #SET_CARGO self
-function SET_CARGO:FilterPrefixes( Prefixes )
+function SET_CARGO:FilterPrefixes( Prefixes ) --R2.1
   if not self.Filter.CargoPrefixes then
     self.Filter.CargoPrefixes = {}
   end
@@ -2868,7 +2868,7 @@ end
 --- (R2.1) Starts the filtering.
 -- @param #SET_CARGO self
 -- @return #SET_CARGO self
-function SET_CARGO:FilterStart()
+function SET_CARGO:FilterStart() --R2.1
 
   if _DATABASE then
     self:_FilterStart()
@@ -2887,7 +2887,7 @@ end
 -- @param Core.Event#EVENTDATA Event
 -- @return #string The name of the CARGO
 -- @return #table The CARGO
-function SET_CARGO:AddInDatabase( Event )
+function SET_CARGO:AddInDatabase( Event ) --R2.1
   self:F3( { Event } )
 
   return Event.IniDCSUnitName, self.Database[Event.IniDCSUnitName]
@@ -2899,7 +2899,7 @@ end
 -- @param Core.Event#EVENTDATA Event
 -- @return #string The name of the CARGO
 -- @return #table The CARGO
-function SET_CARGO:FindInDatabase( Event )
+function SET_CARGO:FindInDatabase( Event ) --R2.1
   self:F3( { Event } )
 
   return Event.IniDCSUnitName, self.Database[Event.IniDCSUnitName]
@@ -2909,7 +2909,7 @@ end
 -- @param #SET_CARGO self
 -- @param #function IteratorFunction The function that will be called when there is an alive CARGO in the SET_CARGO. The function needs to accept a CARGO parameter.
 -- @return #SET_CARGO self
-function SET_CARGO:ForEachCargo( IteratorFunction, ... )
+function SET_CARGO:ForEachCargo( IteratorFunction, ... ) --R2.1
   self:F2( arg )
   
   self:ForEach( IteratorFunction, arg, self.Set )
@@ -2921,7 +2921,7 @@ end
 -- @param #SET_CARGO self
 -- @param Core.Point#POINT_VEC2 PointVec2 A @{Point#POINT_VEC2} object from where to evaluate the closest @{Cargo#CARGO}.
 -- @return Wrapper.Cargo#CARGO The closest @{Cargo#CARGO}.
-function SET_CARGO:FindNearestCargoFromPointVec2( PointVec2 )
+function SET_CARGO:FindNearestCargoFromPointVec2( PointVec2 ) --R2.1
   self:F2( PointVec2 )
   
   local NearestCargo = self:FindNearestObjectFromPointVec2( PointVec2 )
@@ -2934,7 +2934,7 @@ end
 -- @param #SET_CARGO self
 -- @param AI.AI_Cargo#AI_CARGO MCargo
 -- @return #SET_CARGO self
-function SET_CARGO:IsIncludeObject( MCargo )
+function SET_CARGO:IsIncludeObject( MCargo ) --R2.1
   self:F2( MCargo )
 
   local MCargoInclude = true
@@ -2987,7 +2987,7 @@ end
 --- (R2.1) Handles the OnEventNewCargo event for the Set.
 -- @param #SET_CARGO self
 -- @param Core.Event#EVENTDATA EventData
-function SET_CARGO:OnEventNewCargo( EventData )
+function SET_CARGO:OnEventNewCargo( EventData ) --R2.1
 
   if EventData.Cargo then
     if EventData.Cargo and self:IsIncludeObject( EventData.Cargo ) then
@@ -2999,7 +2999,7 @@ end
 --- (R2.1) Handles the OnDead or OnCrash event for alive units set.
 -- @param #SET_CARGO self
 -- @param Core.Event#EVENTDATA EventData
-function SET_CARGO:OnEventDeleteCargo( EventData )
+function SET_CARGO:OnEventDeleteCargo( EventData ) --R2.1
   self:F3( { EventData } )
 
   if EventData.Cargo then
