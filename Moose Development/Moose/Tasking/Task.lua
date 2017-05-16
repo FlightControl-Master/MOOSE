@@ -1174,7 +1174,7 @@ function TASK:onenterSuccess( From, Event, To )
   self:GetMission():GetCommandCenter():MessageToCoalition( "Task " .. self:GetName() .. " is successful! Good job!" )
   self:UnAssignFromGroups()
   
-  self:GetMission():__Complete( 1 )
+  --self:GetMission():__Complete( 1 )
   
 end
 
