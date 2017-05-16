@@ -223,6 +223,23 @@ function ZONE_BASE:GetPointVec2()
 end
 
 
+--- Returns a @{Point#COORDINATE} of the zone.
+-- @param #ZONE_BASE self
+-- @param Dcs.DCSTypes#Distance Height The height to add to the land height where the center of the zone is located.
+-- @return Core.Point#COORDINATE The Coordinate of the zone.
+function ZONE_BASE:GetCoordinate()
+  self:F2( self.ZoneName )
+  
+  local Vec2 = self:GetVec2()
+
+  local Coordinate = COORDINATE:NewFromVec2( Vec2 )
+
+  self:T2( { Coordinate } )
+  
+  return Coordinate  
+end
+
+
 --- Returns the @{DCSTypes#Vec3} of the zone.
 -- @param #ZONE_BASE self
 -- @param Dcs.DCSTypes#Distance Height The height to add to the land height where the center of the zone is located.

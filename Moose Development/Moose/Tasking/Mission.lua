@@ -227,21 +227,6 @@ function MISSION:New( CommandCenter, MissionName, MissionPriority, MissionBriefi
 	return self
 end
 
--- FSM function for a MISSION
--- @param #MISSION self
--- @param #string From
--- @param #string Event
--- @param #string To
-function MISSION:onbeforeComplete( From, Event, To )
-
-  for TaskID, Task in pairs( self:GetTasks() ) do
-    local Task = Task -- Tasking.Task#TASK
-    if not Task:IsStateSuccess() and not Task:IsStateFAILED() and not Task:IsStateAborted() and not Task:IsStateCancelled() then
-      return false -- Mission cannot be completed. Other Tasks are still active.
-    end
-  end
-  return true -- Allow Mission completion.
-end
 
 -- FSM function for a MISSION
 -- @param #MISSION self
@@ -250,7 +235,7 @@ end
 -- @param #string To
 function MISSION:onenterCOMPLETED( From, Event, To )
 
-  self:GetCommandCenter():MessageToCoalition( "Mission " .. self:GetName() .. " has been completed! Good job guys!" )
+  self:GetCommandCenter():MessageToCoalition( self:GetName() .. " has been completed! Good job guys!" )
 end
 
 --- Gets the mission name.

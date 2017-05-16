@@ -159,12 +159,22 @@ do -- ACT_ROUTE
 
     local RouteText = ""
 
-    if self.RouteMode == "B" then
+    if self.Coordinate and self.RouteMode == "B" then
       RouteText = "Route to " .. FromCoordinate:GetBRText( self.Coordinate ) .. " km."
     end
     
-    if self.RouteMode == "C" then
+    if self.Coordinate and self.RouteMode == "C" then
       RouteText = "Route to " .. self.Coordinate:ToString()
+    end
+    
+    if self.Zone and self.RouteMode == "B" then
+      local Coordinate = self.Zone:GetCoordinate()
+      RouteText = "Route to zone bearing " .. FromCoordinate:GetBRText( Coordinate ) .. " km."
+    end
+
+    if self.Zone and self.RouteMode == "C" then
+      local Coordinate = self.Zone:GetCoordinate()
+      RouteText = "Route to zone at " .. Coordinate:ToString()
     end
       
     return RouteText

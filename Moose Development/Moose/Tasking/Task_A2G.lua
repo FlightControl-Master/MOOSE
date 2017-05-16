@@ -130,7 +130,7 @@ do -- TASK_A2G
       if Task:GetRendezVousZone( TaskUnit ) then
         self:__RouteToRendezVousZone( 0.1 )
       else
-        if Task:GetRendezVousPointVec2( TaskUnit ) then
+        if Task:GetRendezVousCoordinate( TaskUnit ) then
           self:__RouteToRendezVousPoint( 0.1 )
         else
           self:__ArriveAtRendezVous( 0.1 )
@@ -173,9 +173,9 @@ do -- TASK_A2G
       else
         local TargetUnit = Task.TargetSetUnit:GetFirst() -- Wrapper.Unit#UNIT
         if TargetUnit then
-          local PointVec2 = TargetUnit:GetPointVec2()
-          self:T( { TargetPointVec2 = PointVec2, PointVec2:GetX(), PointVec2:GetAlt(), PointVec2:GetZ() } )
-          Task:SetTargetPointVec2( TargetUnit:GetPointVec2(), TaskUnit )
+          local Coordinate = TargetUnit:GetCoordinate()
+          self:T( { TargetCoordinate = Coordinate, Coordinate:GetX(), Coordinate:GetAlt(), Coordinate:GetZ() } )
+          Task:SetTargetCoordinate( TargetUnit:GetCoordinate(), TaskUnit )
         end
         self:__RouteToTargetPoint( 0.1 )
       end
@@ -189,7 +189,7 @@ do -- TASK_A2G
       self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
       local TargetUnit = Task.TargetSetUnit:GetFirst() -- Wrapper.Unit#UNIT
       if TargetUnit then
-        Task:SetTargetPointVec2( TargetUnit:GetPointVec2(), TaskUnit )
+        Task:SetTargetCoordinate( TargetUnit:GetCoordinate(), TaskUnit )
       end
       self:__RouteToTargets( -10 )
     end
@@ -204,28 +204,28 @@ do -- TASK_A2G
   end
 
   --- @param #TASK_A2G self
-  -- @param Core.Point#POINT_VEC2 RendezVousPointVec2 The PointVec2 object referencing to the 2D point where the RendezVous point is located on the map.
+  -- @param Core.Point#COORDINATE RendezVousCoordinate The Coordinate object referencing to the 2D point where the RendezVous point is located on the map.
   -- @param #number RendezVousRange The RendezVousRange that defines when the player is considered to have arrived at the RendezVous point.
   -- @param Wrapper.Unit#UNIT TaskUnit
-  function TASK_A2G:SetRendezVousPointVec2( RendezVousPointVec2, RendezVousRange, TaskUnit  )
+  function TASK_A2G:SetRendezVousCoordinate( RendezVousCoordinate, RendezVousRange, TaskUnit  )
   
     local ProcessUnit = self:GetUnitProcess( TaskUnit )
   
     local ActRouteRendezVous = ProcessUnit:GetProcess( "RoutingToRendezVous", "RouteToRendezVousPoint" ) -- Actions.Act_Route#ACT_ROUTE_POINT
-    ActRouteRendezVous:SetPointVec2( RendezVousPointVec2 )
+    ActRouteRendezVous:SetCoordinate( RendezVousCoordinate )
     ActRouteRendezVous:SetRange( RendezVousRange )
   end
   
   --- @param #TASK_A2G self
   -- @param Wrapper.Unit#UNIT TaskUnit
-  -- @return Core.Point#POINT_VEC2 The PointVec2 object referencing to the 2D point where the RendezVous point is located on the map.
+  -- @return Core.Point#COORDINATE The Coordinate object referencing to the 2D point where the RendezVous point is located on the map.
   -- @return #number The RendezVousRange that defines when the player is considered to have arrived at the RendezVous point.
-  function TASK_A2G:GetRendezVousPointVec2( TaskUnit )
+  function TASK_A2G:GetRendezVousCoordinate( TaskUnit )
   
     local ProcessUnit = self:GetUnitProcess( TaskUnit )
 
     local ActRouteRendezVous = ProcessUnit:GetProcess( "RoutingToRendezVous", "RouteToRendezVousPoint" ) -- Actions.Act_Route#ACT_ROUTE_POINT
-    return ActRouteRendezVous:GetPointVec2(), ActRouteRendezVous:GetRange()
+    return ActRouteRendezVous:GetCoordinate(), ActRouteRendezVous:GetRange()
   end
   
   
@@ -253,26 +253,26 @@ do -- TASK_A2G
   end
   
   --- @param #TASK_A2G self
-  -- @param Core.Point#POINT_VEC2 TargetPointVec2 The PointVec2 object where the Target is located on the map.
+  -- @param Core.Point#COORDINATE TargetCoordinate The Coordinate object where the Target is located on the map.
   -- @param Wrapper.Unit#UNIT TaskUnit
-  function TASK_A2G:SetTargetPointVec2( TargetPointVec2, TaskUnit )
+  function TASK_A2G:SetTargetCoordinate( TargetCoordinate, TaskUnit )
   
     local ProcessUnit = self:GetUnitProcess( TaskUnit )
 
     local ActRouteTarget = ProcessUnit:GetProcess( "Engaging", "RouteToTargetPoint" ) -- Actions.Act_Route#ACT_ROUTE_POINT
-    ActRouteTarget:SetPointVec2( TargetPointVec2 )
+    ActRouteTarget:SetCoordinate( TargetCoordinate )
   end
    
 
   --- @param #TASK_A2G self
   -- @param Wrapper.Unit#UNIT TaskUnit
-  -- @return Core.Point#POINT_VEC2 The PointVec2 object where the Target is located on the map.
-  function TASK_A2G:GetTargetPointVec2( TaskUnit )
+  -- @return Core.Point#COORDINATE The Coordinate object where the Target is located on the map.
+  function TASK_A2G:GetTargetCoordinate( TaskUnit )
 
     local ProcessUnit = self:GetUnitProcess( TaskUnit )
 
     local ActRouteTarget = ProcessUnit:GetProcess( "Engaging", "RouteToTargetPoint" ) -- Actions.Act_Route#ACT_ROUTE_POINT
-    return ActRouteTarget:GetPointVec2()
+    return ActRouteTarget:GetCoordinate()
   end
 
 
