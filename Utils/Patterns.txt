@@ -1,0 +1,19 @@
+Replace hyperlinks from md to bb
+\[(.*?)\]\((.*?)\)
+[URL="$2"]$1[/URL]
+
+Replace bold from md to bb
+\*\*(.*?)\*\*
+[b]$1[/b]
+
+Replace heading 3 from md to bb
+### (.*?)$
+[SIZE=5]$1[/SIZE]
+
+Replace heading 2 from md to bb
+## (.*?)$
+[SIZE=6]$1[/SIZE]
+
+Replace heading 1 from md to bb
+# (.*?)$
+[SIZE=7]$1[/SIZE]
