@@ -1,15 +1,86 @@
-# MOOSE Release 2.1
+# MOOSE Release 2.1.0
 
 Find here a new release of MOOSE, **release 2.1.0**!
 A lot of work has been into the preparation of this.
 You'll find new features as well as a couple of important bug fixes.
 
-## 1) New MOOSE classes have been added.
+Release 2.1 can be downloaded from here.
+
+
+
+
+## Summary
+
+First of all, this release would not have been possible without the help and contribution of many
+members of this community. THANK YOU!
+
+This release brings you **an improved tasking mechanism**. 
+Tasking is the system in MOOSE that allows to:
+
+  * Execute **co-op** missions and tasks
+  * **Detect** targets dynamically
+  * Define new tasks **dynamically**
+  * Execute the tasks
+  * Complete the mission **goals**
+  * Extensive menu system and briefings/reports for **player interaction**
+  * Improved Scoring of mission goal achievements, and task achievements.
+
+On top, release brings you new functionality by the introduction of new classes to:
+
+  * **Designate targets** (lase, smoke or illuminate targets) by AI, assisting your attack. Allows to drop laser guides bombs.
+  * A new **tasking** system to **transport cargo** of various types
+  * Dynamically **spawn static objects**
+  * Improved **coordinate system**
+  * Build **large formations**, like bombers flying to a target area
+
+
+
+   
+## 1. TASKING SYSTEM!
+
+A lot of work has been done in improving the tasking framework within MOOSE.
+
+**The tasking system comes with TASK DISPATCHING mechanisms, that DYNAMICALLY 
+allocate new tasks based on the tactical or strategical situation in the mission!!!
+These tasks can then be engaged upon by the players!!!**
+
+The [TASK\_A2G\_DISPATCHER](http://flightcontrol-master.github.io/MOOSE/Documentation/Task_A2G_Dispatcher.html) class implements the dynamic dispatching of tasks upon groups of detected units determined a Set of FAC (groups). The FAC will detect units, will group them, and will dispatch Tasks to groups. Depending on the type of target detected, different tasks will be dispatched. Find a summary below describing for which situation a task type is created:
+
+  * **CAS Task**: Is created when there are enemy ground units within range of the FAC, while there are friendly units in the FAC perimeter.
+  * **BAI Task**: Is created when there are enemy ground units within range of the FAC, while there are NO other friendly units within the FAC perimeter.
+  * **SEAD Task**: Is created when there are enemy ground units wihtin range of the FAC, with air search radars.
+
+More TASK_... dispatcher classes are to come in the future, like A2A, G2G, etc...
+
+Improvements on the TASKING are in summary:
+
+  * A COMMANDCENTER has a dedicated menu.
+  * A MISSION has a dedicated menu system.
+  * A MISSION has a briefing report.
+  * A MISSION has dedicated status reports.
+  * A MISSION has for each TASK TYPE a menu.
+  * A MISSION has for each TASK TYPE a dedicated menu system for each TASK defined.
+  * A MISSION has an "assigned" task menu that contains menu actions relevant to the assigned task.
+  * A TASK (of various types) has a dedicated menu system.
+  * A TASK has a briefing report.
+  * A TASK has dedicated status reports.
+  * Player reports can be retrieved that explain which player is at which task.
+  * ...
+  
+TASKING is vast, and at the moment there is too much to explain.  
+**The best way to explore the TASKING is to TRY it...**  
+I suggest you have a look at the [GORI Valley Mission - Iteration 3](https://www.youtube.com/watch?v=v2Us8SS1-44&t=1070s).
+
+
+
+
+## 2. New MOOSE classes have been added.
 
 MOOSE 2.1.0 comes with new classes that extends the functionality of the MOOSE framework and allow you to do new things in your missions:
 
 
-### 1.1) Target designation by laser, smoke or illumination.
+
+### 2.1. Target designation by laser, smoke or illumination.
 
 [DESIGNATE](http://flightcontrol-master.github.io/MOOSE/Documentation/Designate.html) is orchestrating the designation of potential targets executed by a Recce group, 
 and communicates these to a dedicated attacking group of players, 
@@ -22,9 +93,13 @@ Targets can be:
    * **Smoked**. Artillery or airplanes with Illuminatino ordonance need to be present. (WIP, but early demo ready.)
    * **Illuminated** through an illumination bomb. Artillery or airplanes with Illuminatino ordonance need to be present. (WIP, but early demo ready.
 
-Find more information of the [DESIGNATE class here](http://flightcontrol-master.github.io/MOOSE/Documentation/Designate.html#DESIGNATE).
+[DESIGNATE is demonstrated on youtube](https://www.youtube.com/playlist?list=PL7ZUrU4zZUl0dQ9UKQMb7YL8z2sKSqemH)
 
-### 1.2) Build large formations of AI.
+DESIGNATE Demo Missions: [DES - Designation]()
+
+
+
+### 2.2. Build large formations of AI.
 
 [AI_FORMATION](http://flightcontrol-master.github.io/MOOSE/Documentation/AI_Formation.html) makes AI @{GROUP}s fly in formation of various compositions.
 The AI_FORMATION class models formations in a different manner than the internal DCS formation logic!!!
@@ -35,7 +110,12 @@ The purpose of the class is to:
   * Build large formations (like a large bomber field).
   * Form formations that DCS does not support off the shelve.
 
-### 1.3) Transport cargo of different types to various locations as a human task within a mission.
+AI_FORMATION Demo Missions: [FOR - AI Group Formation]()
+
+
+
+
+### 2.3. Transport cargo of different types to various locations as a human task within a mission.
 
 The Moose framework provides various CARGO classes that allow DCS physical or logical objects to be transported or sling loaded by Carriers.
 The CARGO_ classes, as part of the moose core, are able to Board, Load, UnBoard and UnLoad cargo between Carrier units.
@@ -75,67 +155,70 @@ classes to the MOOSE framework quickly. Sling-loading, package, beacon and other
 Note 2: **AI_CARGO has been renamed to CARGO and now forms part of the Core or MOOSE**.
 If you were using AI_CARGO in your missions, please rename AI_CARGO with CARGO...
 
-### 1.4) Dynamically spawn STATIC objects into your mission.
+TASK_TRANSPORT_CARGO is demonstrated at the [GORI Valley Mission - Iteration 4](https://www.youtube.com/watch?v=v2Us8SS1-44&t=1070s)
+
+TASK_TRANSPORT_CARGO test missions:
+
+
+
+
+### 2.4. Dynamically spawn STATIC objects into your mission.
 
 The [SPAWNSTATIC](http://flightcontrol-master.github.io/MOOSE/Documentation/SpawnStatic.html#SPAWNSTATIC) class allows to spawn dynamically new Statics.
 By creating a copy of an existing static object template as defined in the Mission Editor (ME), SPAWNSTATIC can retireve the properties of the defined static object template (like type, category etc), and "copy" these properties to create a new static object and place it at the desired coordinate.
 New spawned Statics get the same name as the name of the template Static, or gets the given name when a new name is provided at the Spawn method. 
 
-### 1.5) Better coordinate management in MGRS or LLor LLDecimal.
-
-The [COORDINATE](http://flightcontrol-master.github.io/MOOSE/Documentation/Point.html#COORDINATE) class defines a 2D coordinate in the simulator. 
-The height coordinate (if needed) will be the land height + an optional added height specified.
-A COORDINATE can be expressed in LL or in MGRS.
-
-## 2) A lot of components have been reworked and bugs have been fixed.
-
-### 2.1) TASKING SYSTEM!
-
-A lot of work has been done in improving the tasking framework within MOOSE.
-
-**The tasking system comes with TASK DISPATCHING mechanisms, that DYNAMICALLY 
-allocate new tasks based on the tactical or strategical situation in the mission!!!
-These tasks can then be engaged upon by the players!!!**
-
-The [TASK\_A2G\_DISPATCHER](http://flightcontrol-master.github.io/MOOSE/Documentation/Task_A2G_Dispatcher.html) class implements the dynamic dispatching of tasks upon groups of detected units determined a Set of FAC (groups). The FAC will detect units, will group them, and will dispatch Tasks to groups. Depending on the type of target detected, different tasks will be dispatched. Find a summary below describing for which situation a task type is created:
-
-    * CAS Task: Is created when there are enemy ground units within range of the FAC, while there are friendly units in the FAC perimeter.
-    * BAI Task: Is created when there are enemy ground units within range of the FAC, while there are NO other friendly units within the FAC perimeter.
-    * SEAD Task: Is created when there are enemy ground units wihtin range of the FAC, with air search radars.
-
-More TASK_... dispatcher classes are to come in the future, like A2A, G2G, etc...
-
-Improvements on the TASKING are in summary:
-
-  * A COMMANDCENTER has a dedicated menu.
-  * A MISSION has a dedicated menu system.
-  * A MISSION has a briefing report.
-  * A MISSION has dedicated status reports.
-  * A MISSION has for each TASK TYPE a menu.
-  * A MISSION has for each TASK TYPE a dedicated menu system for each TASK defined.
-  * A MISSION has an "assigned" task menu that contains menu actions relevant to the assigned task.
-  * A TASK (of various types) has a dedicated menu system.
-  * A TASK has a briefing report.
-  * A TASK has dedicated status reports.
-  * Player reports can be retrieved that explain which player is at which task.
-  * ...
-  
-TASKING is vast, and at the moment there is too much to explain.
-The best way to explore the TASKING is to TRY it...
-I suggest you have a look at the GORI valley mission here, to have a look:
 
 
-### 2.2) Better event handling and event dispatching.
+### 2.5. Better coordinate management in MGRS or LLor LLDecimal.
+
+The [COORDINATE](http://flightcontrol-master.github.io/MOOSE/Documentation/Point.html#COORDINATE) class 
+defines a 2D coordinate in the simulator. A COORDINATE can be expressed in LL or in MGRS.
+
+
+
+### 2.6. Improved scoring system
+
+Scoring is implemented throught the [SCORING](http://flightcontrol-master.github.io/MOOSE/Documentation/Scoring.html) class.
+The scoring system has been improved a lot! Now, the scoring is correctly counting scores on normal units, statics and scenary objects.
+Specific scores can be registered for specific targets. The scoring works together with the tasking system, so players can achieve 
+additional scores when they achieve goals!
+
+
+
+
+
+## 3. A lot of components have been reworked and bugs have been fixed.
+
+
+
+### 3.1. Better event handling and event dispatching.
 
 The underlying mechanisms to handle DCS events has been improved. Bugs have been fixed.
+The MISSION_END event is now also supported.
 
-### 2.3) Cargo handling has been made much better now.
+
+
+### 2.2. Cargo handling has been made much better now.
 
 As a result, some of the WIP cargo classes that were defined earlier are still WIP.
 But as mentioned earlier, new CARGO classes can be published faster now.
 The framework is now more consistent internally.
 
-## 3) A lot of new methods have been defined in several existing or new classes.
+
+
+### 2.3. Beacons and Radio
+
+The Radio contains 2 classes : RADIO and BEACON
+  
+What are radio communications in DCS ?
+
+  * Radio transmissions consist of **sound files** that are broadcasted on a specific **frequency** (e.g. 115MHz) and **modulation** (e.g. AM),
+  * They can be **subtitled** for a specific **duration**, the **power** in Watts of the transmiter's antenna can be set, and the transmission can be **looped**.
+
+
+
+## 3. A lot of new methods have been defined in several existing or new classes.
 
 AI_FORMATION:New( FollowUnit, FollowGroupSet, FollowName, FollowBriefing ) --R2.1  
 AI_FORMATION:TestSmokeDirectionVector( SmokeDirection ) --R2.1  
