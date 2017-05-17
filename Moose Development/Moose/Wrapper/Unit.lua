@@ -640,7 +640,7 @@ function UNIT:GetThreatLevel()
       "Unarmed", 
       "Tanker", 
       "AWACS", 
-      "Transport Helicpter",   
+      "Transport Helicopter",   
       "UAV",
       "Bomber",
       "Strategic Bomber",
