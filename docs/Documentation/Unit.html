@@ -17,9 +17,11 @@
 				<a href="index.html">index</a>
 			</li></ul>
 		<ul>
+					<li><a href="AI_Bai.html">AI_Bai</a></li>
 					<li><a href="AI_Balancer.html">AI_Balancer</a></li>
 					<li><a href="AI_Cap.html">AI_Cap</a></li>
 					<li><a href="AI_Cas.html">AI_Cas</a></li>
+					<li><a href="AI_Formation.html">AI_Formation</a></li>
 					<li><a href="AI_Patrol.html">AI_Patrol</a></li>
 					<li><a href="Account.html">Account</a></li>
 					<li><a href="Airbase.html">Airbase</a></li>
@@ -31,7 +33,23 @@
 					<li><a href="Client.html">Client</a></li>
 					<li><a href="CommandCenter.html">CommandCenter</a></li>
 					<li><a href="Controllable.html">Controllable</a></li>
+					<li><a href="DCSAirbase.html">DCSAirbase</a></li>
+					<li><a href="DCSCoalitionObject.html">DCSCoalitionObject</a></li>
+					<li><a href="DCSCommand.html">DCSCommand</a></li>
+					<li><a href="DCSController.html">DCSController</a></li>
+					<li><a href="DCSGroup.html">DCSGroup</a></li>
+					<li><a href="DCSObject.html">DCSObject</a></li>
+					<li><a href="DCSTask.html">DCSTask</a></li>
+					<li><a href="DCSTypes.html">DCSTypes</a></li>
+					<li><a href="DCSUnit.html">DCSUnit</a></li>
+					<li><a href="DCSVec3.html">DCSVec3</a></li>
+					<li><a href="DCSWorld.html">DCSWorld</a></li>
+					<li><a href="DCSZone.html">DCSZone</a></li>
+					<li><a href="DCScountry.html">DCScountry</a></li>
+					<li><a href="DCStimer.html">DCStimer</a></li>
+					<li><a href="DCStrigger.html">DCStrigger</a></li>
 					<li><a href="Database.html">Database</a></li>
+					<li><a href="Designate.html">Designate</a></li>
 					<li><a href="Detection.html">Detection</a></li>
 					<li><a href="DetectionManager.html">DetectionManager</a></li>
 					<li><a href="Escort.html">Escort</a></li>
@@ -59,14 +77,20 @@
 					<li><a href="Set.html">Set</a></li>
 					<li><a href="Smoke.html">Smoke</a></li>
 					<li><a href="Spawn.html">Spawn</a></li>
+					<li><a href="SpawnStatic.html">SpawnStatic</a></li>
+					<li><a href="Spot.html">Spot</a></li>
 					<li><a href="Static.html">Static</a></li>
+					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="Task.html">Task</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
 					<li><a href="Task_A2G_Dispatcher.html">Task_A2G_Dispatcher</a></li>
+					<li><a href="Task_Cargo.html">Task_Cargo</a></li>
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
 					<li>Unit</li>
 					<li><a href="Utils.html">Utils</a></li>
 					<li><a href="Zone.html">Zone</a></li>
+					<li><a href="env.html">env</a></li>
+					<li><a href="land.html">land</a></li>
 					<li><a href="routines.html">routines</a></li>
 		</ul>
 	</div>
@@ -281,6 +305,12 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(UNIT).IsDetected">UNIT:IsDetected(TargetUnit)</a></td>
+		<td class="summary">
+<p>Returns if a unit is detecting the TargetUnit.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(UNIT).IsFriendly">UNIT:IsFriendly(FriendlyCoalition)</a></td>
 		<td class="summary">
 <p>Returns if the unit is a friendly unit.</p>
@@ -296,6 +326,12 @@
 		<td class="name" nowrap="nowrap"><a href="##(UNIT).IsInZone">UNIT:IsInZone(Zone)</a></td>
 		<td class="summary">
 <p>Returns true if the unit is within a <a href="Zone.html">Zone</a>.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(UNIT).IsLOS">UNIT:IsLOS(TargetUnit)</a></td>
+		<td class="summary">
+<p>Returns if a unit has Line of Sight (LOS) with the TargetUnit.</p>
 </td>
 		</tr>
 		<tr>
@@ -332,6 +368,12 @@
 		<td class="name" nowrap="nowrap"><a href="##(UNIT).Register">UNIT:Register(UnitName)</a></td>
 		<td class="summary">
 <p>Create a new UNIT from DCSUnit.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(UNIT).ResetEvents">UNIT:ResetEvents()</a></td>
+		<td class="summary">
+<p>Reset the subscriptions.</p>
 </td>
 		</tr>
 		<tr>
@@ -470,13 +512,22 @@ If you want to obtain the complete <strong>3D position</strong> including ori�
 
 <p>The UNIT class contains methods to test the location or proximity against zones or other objects.</p>
 
-<h3>Zones</h3>
+<h3>Zones range</h3>
 
 <p>To test whether the Unit is within a <strong>zone</strong>, use the <a href="##(UNIT).IsInZone">UNIT.IsInZone</a>() or the <a href="##(UNIT).IsNotInZone">UNIT.IsNotInZone</a>() methods. Any zone can be tested on, but the zone must be derived from <a href="Zone.html##(ZONE_BASE)">Zone#ZONE_BASE</a>. </p>
 
-<h3>Units</h3>
+<h3>Unit range</h3>
 
-<p>Test if another DCS Unit is within a given radius of the current DCS Unit, use the <a href="##(UNIT).OtherUnitInRadius">UNIT.OtherUnitInRadius</a>() method.</p>
+<ul>
+    <li>Test if another DCS Unit is within a given radius of the current DCS Unit, use the <a href="##(UNIT).OtherUnitInRadius">UNIT.OtherUnitInRadius</a>() method.</li>
+</ul>
+
+<h2>Test Line of Sight</h2>
+
+<ul>
+    <li>Use the <a href="##(UNIT).IsLOS">UNIT.IsLOS</a>() method to check if the given unit is within line of sight.</li>
+</ul>
+
 
 
 </dd>
@@ -1250,6 +1301,32 @@ if the Unit is not existing or is not alive.  </p>
 		<dl class="function">
 <dt>
 
+<a id="#(UNIT).IsDetected" >
+<strong>UNIT:IsDetected(TargetUnit)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns if a unit is detecting the TargetUnit.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="##(UNIT)">#UNIT</a> TargetUnit </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+true If the TargetUnit is detected by the unit, otherwise false.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(UNIT).IsFriendly" >
 <strong>UNIT:IsFriendly(FriendlyCoalition)</strong>
 </a>
@@ -1318,6 +1395,32 @@ The zone to test.</p>
 				
 <p><em>#boolean:</em>
 Returns true if the unit is within the <a href="Zone.html##(ZONE_BASE)">Zone#ZONE_BASE</a></p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(UNIT).IsLOS" >
+<strong>UNIT:IsLOS(TargetUnit)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns if a unit has Line of Sight (LOS) with the TargetUnit.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="##(UNIT)">#UNIT</a> TargetUnit </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+true If the TargetUnit has LOS with the unit, otherwise false.</p>
 
 </dd>
 </dl>
@@ -1489,6 +1592,24 @@ The name of the DCS unit.</p>
 
 				</li>
 		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(UNIT)">#UNIT</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(UNIT).ResetEvents" >
+<strong>UNIT:ResetEvents()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Reset the subscriptions.</p>
+
 		<h3>Return value</h3>
 				
 <p><em><a href="##(UNIT)">#UNIT</a>:</em></p>

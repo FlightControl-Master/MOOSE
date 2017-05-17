@@ -219,16 +219,17 @@ local _ClassID = 0
 BASE = {
   ClassName = "BASE",
   ClassID = 0,
-  _Private = {},
   Events = {},
-  States = {}
+  States = {},
+  _ = {},
 }
 
 --- The Formation Class
 -- @type FORMATION
 -- @field Cone A cone formation.
 FORMATION = {
-  Cone = "Cone" 
+  Cone = "Cone",
+  Vee = "Vee" 
 }
 
 
@@ -360,7 +361,7 @@ do -- Event Handling
   -- @param #BASE self
   -- @return #number The @{Event} processing Priority.
   function BASE:GetEventPriority()
-    return self._Private.EventPriority or 5
+    return self._.EventPriority or 5
   end
   
   --- Set the Class @{Event} processing Priority.
@@ -370,7 +371,7 @@ do -- Event Handling
   -- @param #number EventPriority The @{Event} processing Priority.
   -- @return self
   function BASE:SetEventPriority( EventPriority )
-    self._Private.EventPriority = EventPriority
+    self._.EventPriority = EventPriority
   end
   
   --- Remove all subscribed events
@@ -450,6 +451,12 @@ do -- Event Handling
   --- Occurs when an aircraft connects with a tanker and begins taking on fuel.
   -- initiator : The unit that is receiving fuel. 
   -- @function [parent=#BASE] OnEventRefueling
+  -- @param #BASE self
+  -- @param Core.Event#EVENTDATA EventData The EventData structure.
+
+  --- Occurs when an object is dead.
+  -- initiator : The unit that is dead. 
+  -- @function [parent=#BASE] OnEventDead
   -- @param #BASE self
   -- @param Core.Event#EVENTDATA EventData The EventData structure.
 

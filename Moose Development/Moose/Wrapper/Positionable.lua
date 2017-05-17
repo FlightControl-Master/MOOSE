@@ -1,25 +1,4 @@
---- This module contains the POSITIONABLE class.
--- 
--- 1) @{Positionable#POSITIONABLE} class, extends @{Identifiable#IDENTIFIABLE}
--- ===========================================================
--- The @{Positionable#POSITIONABLE} class is a wrapper class to handle the POSITIONABLE objects:
---
---  * Support all DCS APIs.
---  * Enhance with POSITIONABLE specific APIs not in the DCS API set.
---  * Manage the "state" of the POSITIONABLE.
---
--- 1.1) POSITIONABLE constructor:
--- ------------------------------
--- The POSITIONABLE class provides the following functions to construct a POSITIONABLE instance:
---
---  * @{Positionable#POSITIONABLE.New}(): Create a POSITIONABLE instance.
---
--- 1.2) POSITIONABLE methods:
--- --------------------------
--- The following methods can be used to identify an measurable object:
--- 
---    * @{Positionable#POSITIONABLE.GetID}(): Returns the ID of the measurable object.
---    * @{Positionable#POSITIONABLE.GetName}(): Returns the name of the measurable object.
+--- **Wrapper** -- This module contains the POSITIONABLE class.
 -- 
 -- ===
 -- 
@@ -29,11 +8,36 @@
 -- @type POSITIONABLE
 -- @extends Wrapper.Identifiable#IDENTIFIABLE
 -- @field #string PositionableName The name of the measurable.
+-- @field Core.Spot#SPOT Spot The laser Spot.
+-- @field #number LaserCode The last assigned laser code.
+
+--- # POSITIONABLE class, extends @{Identifiable#IDENTIFIABLE}
+-- 
+-- The POSITIONABLE class is a wrapper class to handle the POSITIONABLE objects:
+--
+--  * Support all DCS APIs.
+--  * Enhance with POSITIONABLE specific APIs not in the DCS API set.
+--  * Manage the "state" of the POSITIONABLE.
+--
+-- ## POSITIONABLE constructor
+-- 
+-- The POSITIONABLE class provides the following functions to construct a POSITIONABLE instance:
+--
+--  * @{Positionable#POSITIONABLE.New}(): Create a POSITIONABLE instance.
+--
+-- ## POSITIONABLE methods
+-- 
+-- The following methods can be used to identify an measurable object:
+-- 
+--    * @{Positionable#POSITIONABLE.GetID}(): Returns the ID of the measurable object.
+--    * @{Positionable#POSITIONABLE.GetName}(): Returns the name of the measurable object.
+-- 
+-- 
+-- @field #POSITIONABLE 
 POSITIONABLE = {
   ClassName = "POSITIONABLE",
   PositionableName = "",
 }
-
 --- A DCSPositionable
 -- @type DCSPositionable
 -- @field id_ The ID of the controllable in DCS
@@ -132,6 +136,27 @@ function POSITIONABLE:GetPointVec3()
   return nil
 end
 
+--- Returns a COORDINATE object indicating the point in 3D of the POSITIONABLE within the mission.
+-- @param Wrapper.Positionable#POSITIONABLE self
+-- @return Core.Point#COORDINATE The COORDINATE of the POSITIONABLE.
+-- @return #nil The POSITIONABLE is not existing or alive.  
+function POSITIONABLE:GetCoordinate()
+  self:F2( self.PositionableName )
+
+  local DCSPositionable = self:GetDCSObject()
+  
+  if DCSPositionable then
+    local PositionableVec3 = self:GetPositionVec3()
+    
+    local PositionableCoordinate = COORDINATE:NewFromVec3( PositionableVec3 )
+  
+    self:T2( PositionableCoordinate )
+    return PositionableCoordinate
+  end
+  
+  return nil
+end
+
 
 --- Returns a random @{DCSTypes#Vec3} vector within a range, indicating the point in 3D of the POSITIONABLE within the mission.
 -- @param Wrapper.Positionable#POSITIONABLE self
@@ -183,6 +208,28 @@ function POSITIONABLE:GetVec3()
   
   return nil
 end
+
+
+--- Get the bounding box of the underlying POSITIONABLE DCS Object.
+-- @param #POSITIONABLE self
+-- @return Dcs.DCSTypes#Distance The bounding box of the POSITIONABLE.
+-- @return #nil The POSITIONABLE is not existing or alive.  
+function POSITIONABLE:GetBoundingBox() --R2.1
+  self:F2()
+
+  local DCSPositionable = self:GetDCSObject()
+  
+  if DCSPositionable then
+    local PositionableDesc = DCSPositionable:getDesc() --Dcs.DCSTypes#Desc
+    if PositionableDesc then
+      local PositionableBox = PositionableDesc.box
+      return PositionableBox
+    end
+  end
+  
+  return nil
+end
+
 
 --- Returns the altitude of the POSITIONABLE.
 -- @param Wrapper.Positionable#POSITIONABLE self
@@ -280,6 +327,29 @@ function POSITIONABLE:GetVelocity()
   return nil
 end
 
+
+--- Returns the POSITIONABLE height in meters.
+-- @param Wrapper.Positionable#POSITIONABLE self
+-- @return Dcs.DCSTypes#Vec3 The height of the positionable.
+-- @return #nil The POSITIONABLE is not existing or alive.  
+function POSITIONABLE:GetHeight() --R2.1
+  self:F2( self.PositionableName )
+
+  local DCSPositionable = self:GetDCSObject()
+  
+  if DCSPositionable then
+    local PositionablePosition = DCSPositionable:getPosition()
+    if PositionablePosition then
+      local PositionableHeight = PositionablePosition.p.y
+      self:T2( PositionableHeight )
+      return PositionableHeight
+    end
+  end
+  
+  return nil
+end
+
+
 --- Returns the POSITIONABLE velocity in km/h.
 -- @param Wrapper.Positionable#POSITIONABLE self
 -- @return #number The velocity in km/h
@@ -300,18 +370,38 @@ function POSITIONABLE:GetVelocityKMH()
   return nil
 end
 
+
+--- Returns the message text with the callsign embedded (if there is one).
+-- @param #POSITIONABLE self
+-- @param #string Message The message text
+-- @param #string Name (optional) The Name of the sender. If not provided, the Name is the type of the Positionable.
+-- @return #string The message text
+function POSITIONABLE:GetMessageText( Message, Name ) --R2.1 added
+
+  local DCSObject = self:GetDCSObject()
+  if DCSObject then
+    Name = Name and ( " (" .. Name .. ")" ) or ""
+    local Callsign = string.format( "[%s]", self:GetCallsign() ~= "" and self:GetCallsign() or self:GetName() )
+    local MessageText = Callsign .. Name .. ": " .. Message
+    return MessageText
+  end
+
+  return nil
+end
+
+
 --- Returns a message with the callsign embedded (if there is one).
 -- @param #POSITIONABLE self
 -- @param #string Message The message text
 -- @param Dcs.DCSTypes#Duration Duration The duration of the message.
 -- @param #string Name (optional) The Name of the sender. If not provided, the Name is the type of the Positionable.
 -- @return Core.Message#MESSAGE
-function POSITIONABLE:GetMessage( Message, Duration, Name )
+function POSITIONABLE:GetMessage( Message, Duration, Name ) --R2.1 changed callsign and name and using GetMessageText
 
   local DCSObject = self:GetDCSObject()
   if DCSObject then
-    Name = Name or self:GetTypeName()
-    return MESSAGE:New( Message, Duration, self:GetCallsign() .. " (" .. Name .. ")" )
+    local MessageText = self:GetMessageText( Message, Name )
+    return MESSAGE:New( MessageText, Duration )
   end
 
   return nil
@@ -340,12 +430,19 @@ end
 -- @param #string Message The message text
 -- @param Dcs.DCSTYpes#Duration Duration The duration of the message.
 -- @param Dcs.DCScoalition#coalition MessageCoalition The Coalition receiving the message.
--- @param #string Name (optional) The Name of the sender. If not provided, the Name is the type of the Positionable.
-function POSITIONABLE:MessageToCoalition( Message, Duration, MessageCoalition, Name )
+function POSITIONABLE:MessageToCoalition( Message, Duration, MessageCoalition )
   self:F2( { Message, Duration } )
 
+  local Name = ""
+  
   local DCSObject = self:GetDCSObject()
   if DCSObject then
+    if MessageCoalition == coalition.side.BLUE then
+      Name = "Blue coalition"
+    end
+    if MessageCoalition == coalition.side.RED then
+      Name = "Red coalition"
+    end
     self:GetMessage( Message, Duration, Name ):ToCoalition( MessageCoalition )
   end
 
@@ -425,6 +522,30 @@ function POSITIONABLE:MessageToGroup( Message, Duration, MessageGroup, Name )
   return nil
 end
 
+--- Send a message to a @{Set#SET_GROUP}.
+-- The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.
+-- @param #POSITIONABLE self
+-- @param #string Message The message text
+-- @param Dcs.DCSTypes#Duration Duration The duration of the message.
+-- @param Core.Set#SET_GROUP MessageSetGroup The SET_GROUP collection receiving the message.
+-- @param #string Name (optional) The Name of the sender. If not provided, the Name is the type of the Positionable.
+function POSITIONABLE:MessageToSetGroup( Message, Duration, MessageSetGroup, Name )  --R2.1
+  self:F2( { Message, Duration } )
+
+  local DCSObject = self:GetDCSObject()
+  if DCSObject then
+    if DCSObject:isExist() then
+      MessageSetGroup:ForEachGroup(
+        function( MessageGroup )
+          self:GetMessage( Message, Duration, Name ):ToGroup( MessageGroup )
+        end 
+      )
+    end
+  end
+
+  return nil
+end
+
 --- Send a message to the players in the @{Group}.
 -- The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.
 -- @param #POSITIONABLE self
@@ -446,7 +567,86 @@ end
 -- Set parameters with the methods provided, then use RADIO:Broadcast() to actually broadcast the message
 -- @param #POSITIONABLE self
 -- @return #RADIO Radio
-function POSITIONABLE:GetRadio()
+function POSITIONABLE:GetRadio() --R2.1
   self:F2(self)
   return RADIO:New(self) 
 end
+
+--- Create a @{Radio#BEACON}, to allow this POSITIONABLE to broadcast beacon signals
+-- @param #POSITIONABLE self
+-- @return #RADIO Radio
+function POSITIONABLE:GetBeacon() --R2.1
+  self:F2(self)
+  return BEACON:New(self) 
+end
+
+--- Start Lasing a POSITIONABLE
+-- @param #POSITIONABLE self
+-- @param #POSITIONABLE Target
+-- @param #number LaserCode
+-- @param #number Duration
+-- @return Core.Spot#SPOT
+function POSITIONABLE:LaseUnit( Target, LaserCode, Duration ) --R2.1
+  self:F2()
+
+  LaserCode = LaserCode or math.random( 1000, 9999 )
+
+  local RecceDcsUnit = self:GetDCSObject()
+  local TargetVec3 = Target:GetVec3()
+
+  self:E("bulding spot")
+  self.Spot = SPOT:New( self ) -- Core.Spot#SPOT
+  self.Spot:LaseOn( Target, LaserCode, Duration)
+  self.LaserCode = LaserCode
+  
+  return self.Spot
+  
+end
+
+--- Stop Lasing a POSITIONABLE
+-- @param #POSITIONABLE self
+-- @return #POSITIONABLE
+function POSITIONABLE:LaseOff() --R2.1
+  self:F2()
+
+  if self.Spot then
+    self.Spot:LaseOff()
+    self.Spot = nil
+  end
+
+  return self
+end
+
+--- Check if the POSITIONABLE is lasing a target
+-- @param #POSITIONABLE self
+-- @return #boolean true if it is lasing a target
+function POSITIONABLE:IsLasing() --R2.1
+  self:F2()
+
+  local Lasing = false
+  
+  if self.Spot then
+    Lasing = self.Spot:IsLasing()
+  end
+
+  return Lasing
+end
+
+--- Get the Spot
+-- @param #POSITIONABLE self
+-- @return Core.Spot#SPOT The Spot
+function POSITIONABLE:GetSpot() --R2.1
+  
+  return self.Spot
+end
+
+--- Get the last assigned laser code
+-- @param #POSITIONABLE self
+-- @return #number The laser code
+function POSITIONABLE:GetLaserCode() --R2.1
+  
+  return self.LaserCode
+end
+
+
+

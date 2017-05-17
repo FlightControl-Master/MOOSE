@@ -276,6 +276,16 @@ UTILS.tostringLL = function( lat, lon, acc, DMS)
   end
 end
 
+-- acc- the accuracy of each easting/northing.  0, 1, 2, 3, 4, or 5.
+UTILS.tostringMGRS = function(MGRS, acc) --R2.1
+  if acc == 0 then
+    return MGRS.UTMZone .. ' ' .. MGRS.MGRSDigraph
+  else
+    return MGRS.UTMZone .. ' ' .. MGRS.MGRSDigraph .. ' ' .. string.format('%0' .. acc .. 'd', UTILS.Round(MGRS.Easting/(10^(5-acc)), 0))
+           .. ' ' .. string.format('%0' .. acc .. 'd', UTILS.Round(MGRS.Northing/(10^(5-acc)), 0))
+  end
+end
+
 
 --- From http://lua-users.org/wiki/SimpleRound
 -- use negative idp for rounding ahead of decimal place, positive for rounding after decimal place

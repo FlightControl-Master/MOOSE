@@ -3,7 +3,7 @@
 <listAttribute key="org.eclipse.debug.ui.favoriteGroups">
 <listEntry value="org.eclipse.ui.externaltools.launchGroup"/>
 </listAttribute>
-<stringAttribute key="org.eclipse.ui.externaltools.ATTR_LOCATION" value="${system_path:lua.exe}"/>
+<stringAttribute key="org.eclipse.ui.externaltools.ATTR_LOCATION" value="${workspace_loc:/Moose_Framework/Utils/luarocks/lua5.1.exe}"/>
 <stringAttribute key="org.eclipse.ui.externaltools.ATTR_TOOL_ARGUMENTS" value="&quot;Moose_Create.lua&quot; &#13;&#10;&quot;S&quot;&#13;&#10;&quot;${current_date}&quot; &#13;&#10;&quot;${workspace_loc:/Moose_Framework//Moose Development/Moose}&quot; &#13;&#10;&quot;${workspace_loc:/Moose_Framework/Moose Mission Setup}&quot;"/>
 <stringAttribute key="org.eclipse.ui.externaltools.ATTR_WORKING_DIRECTORY" value="${workspace_loc:/Moose_Framework/Moose Mission Setup}"/>
 </launchConfiguration>

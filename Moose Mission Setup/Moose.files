@@ -13,6 +13,9 @@ Core/Point.lua
 Core/Message.lua
 Core/Fsm.lua
 Core/Radio.lua
+Core/SpawnStatic.lua
+Core/Cargo.lua
+Core/Spot.lua
 
 Wrapper/Object.lua
 Wrapper/Identifiable.lua
@@ -34,12 +37,14 @@ Functional/Escort.lua
 Functional/MissileTrainer.lua
 Functional/AirbasePolice.lua
 Functional/Detection.lua
+Functional/Designate.lua
 
 AI/AI_Balancer.lua
 AI/AI_Patrol.lua
 AI/AI_Cap.lua
 AI/AI_Cas.lua
-AI/AI_Cargo.lua
+AI/AI_Bai.lua
+AI/AI_Formation.lua
 
 Actions/Act_Assign.lua
 Actions/Act_Route.lua
@@ -52,5 +57,6 @@ Tasking/Task.lua
 Tasking/DetectionManager.lua
 Tasking/Task_A2G_Dispatcher.lua
 Tasking/Task_A2G.lua
+Tasking/Task_Cargo.lua
 
 Moose.lua

@@ -12,6 +12,7 @@ MISSION = {
 	ClassName = "MISSION",
 	Name = "",
 	MissionStatus = "PENDING",
+	AssignedGroups = {},
 }
 
 --- This is the main MISSION declaration method. Each Mission is like the master or a Mission orchestration between, Clients, Tasks, Stages etc.
@@ -26,35 +27,47 @@ function MISSION:New( CommandCenter, MissionName, MissionPriority, MissionBriefi
 
   local self = BASE:Inherit( self, FSM:New() ) -- Core.Fsm#FSM
 
-  self:SetStartState( "Idle" )
+  self:T( { MissionName, MissionPriority, MissionBriefing, MissionCoalition } )
   
-  self:AddTransition( "Idle", "Start", "Ongoing" )
+  self.CommandCenter = CommandCenter
+  CommandCenter:AddMission( self )
   
-  --- OnLeave Transition Handler for State Idle.
-  -- @function [parent=#MISSION] OnLeaveIdle
+  self.Name = MissionName
+  self.MissionPriority = MissionPriority
+  self.MissionBriefing = MissionBriefing
+  self.MissionCoalition = MissionCoalition
+  
+  self.Tasks = {}
+
+  self:SetStartState( "IDLE" )
+  
+  self:AddTransition( "IDLE", "Start", "ENGAGED" )
+  
+  --- OnLeave Transition Handler for State IDLE.
+  -- @function [parent=#MISSION] OnLeaveIDLE
   -- @param #MISSION self
   -- @param #string From The From State string.
   -- @param #string Event The Event string.
   -- @param #string To The To State string.
   -- @return #boolean Return false to cancel Transition.
   
-  --- OnEnter Transition Handler for State Idle.
-  -- @function [parent=#MISSION] OnEnterIdle
+  --- OnEnter Transition Handler for State IDLE.
+  -- @function [parent=#MISSION] OnEnterIDLE
   -- @param #MISSION self
   -- @param #string From The From State string.
   -- @param #string Event The Event string.
   -- @param #string To The To State string.
   
-  --- OnLeave Transition Handler for State Ongoing.
-  -- @function [parent=#MISSION] OnLeaveOngoing
+  --- OnLeave Transition Handler for State ENGAGED.
+  -- @function [parent=#MISSION] OnLeaveENGAGED
   -- @param #MISSION self
   -- @param #string From The From State string.
   -- @param #string Event The Event string.
   -- @param #string To The To State string.
   -- @return #boolean Return false to cancel Transition.
   
-  --- OnEnter Transition Handler for State Ongoing.
-  -- @function [parent=#MISSION] OnEnterOngoing
+  --- OnEnter Transition Handler for State ENGAGED.
+  -- @function [parent=#MISSION] OnEnterENGAGED
   -- @param #MISSION self
   -- @param #string From The From State string.
   -- @param #string Event The Event string.
@@ -84,18 +97,18 @@ function MISSION:New( CommandCenter, MissionName, MissionPriority, MissionBriefi
   -- @param #MISSION self
   -- @param #number Delay The delay in seconds.
   
-  self:AddTransition( "Ongoing", "Stop", "Idle" )
+  self:AddTransition( "ENGAGED", "Stop", "IDLE" )
   
-  --- OnLeave Transition Handler for State Idle.
-  -- @function [parent=#MISSION] OnLeaveIdle
+  --- OnLeave Transition Handler for State IDLE.
+  -- @function [parent=#MISSION] OnLeaveIDLE
   -- @param #MISSION self
   -- @param #string From The From State string.
   -- @param #string Event The Event string.
   -- @param #string To The To State string.
   -- @return #boolean Return false to cancel Transition.
   
-  --- OnEnter Transition Handler for State Idle.
-  -- @function [parent=#MISSION] OnEnterIdle
+  --- OnEnter Transition Handler for State IDLE.
+  -- @function [parent=#MISSION] OnEnterIDLE
   -- @param #MISSION self
   -- @param #string From The From State string.
   -- @param #string Event The Event string.
@@ -125,18 +138,18 @@ function MISSION:New( CommandCenter, MissionName, MissionPriority, MissionBriefi
   -- @param #MISSION self
   -- @param #number Delay The delay in seconds.
   
-  self:AddTransition( "Ongoing", "Complete", "Completed" )
+  self:AddTransition( "ENGAGED", "Complete", "COMPLETED" )
   
-  --- OnLeave Transition Handler for State Completed.
-  -- @function [parent=#MISSION] OnLeaveCompleted
+  --- OnLeave Transition Handler for State COMPLETED.
+  -- @function [parent=#MISSION] OnLeaveCOMPLETED
   -- @param #MISSION self
   -- @param #string From The From State string.
   -- @param #string Event The Event string.
   -- @param #string To The To State string.
   -- @return #boolean Return false to cancel Transition.
   
-  --- OnEnter Transition Handler for State Completed.
-  -- @function [parent=#MISSION] OnEnterCompleted
+  --- OnEnter Transition Handler for State COMPLETED.
+  -- @function [parent=#MISSION] OnEnterCOMPLETED
   -- @param #MISSION self
   -- @param #string From The From State string.
   -- @param #string Event The Event string.
@@ -166,18 +179,18 @@ function MISSION:New( CommandCenter, MissionName, MissionPriority, MissionBriefi
   -- @param #MISSION self
   -- @param #number Delay The delay in seconds.
   
-  self:AddTransition( "*", "Fail", "Failed" )
+  self:AddTransition( "*", "Fail", "FAILED" )
   
-  --- OnLeave Transition Handler for State Failed.
-  -- @function [parent=#MISSION] OnLeaveFailed
+  --- OnLeave Transition Handler for State FAILED.
+  -- @function [parent=#MISSION] OnLeaveFAILED
   -- @param #MISSION self
   -- @param #string From The From State string.
   -- @param #string Event The Event string.
   -- @param #string To The To State string.
   -- @return #boolean Return false to cancel Transition.
   
-  --- OnEnter Transition Handler for State Failed.
-  -- @function [parent=#MISSION] OnEnterFailed
+  --- OnEnter Transition Handler for State FAILED.
+  -- @function [parent=#MISSION] OnEnterFAILED
   -- @param #MISSION self
   -- @param #string From The From State string.
   -- @param #string Event The Event string.
@@ -207,56 +220,29 @@ function MISSION:New( CommandCenter, MissionName, MissionPriority, MissionBriefi
   -- @param #MISSION self
   -- @param #number Delay The delay in seconds.
   
-	self:T( { MissionName, MissionPriority, MissionBriefing, MissionCoalition } )
-  
-  self.CommandCenter = CommandCenter
-  CommandCenter:AddMission( self )
-  
-	self.Name = MissionName
-	self.MissionPriority = MissionPriority
-	self.MissionBriefing = MissionBriefing
-	self.MissionCoalition = MissionCoalition
-	
-	self.Tasks = {}
-	
 	-- Private  implementations
 	
-	
+	CommandCenter:SetMenu()
 
 	return self
 end
 
--- FSM function for a MISSION
--- @param #MISSION self
--- @param #string From
--- @param #string Event
--- @param #string To
-function MISSION:onbeforeComplete( From, Event, To )
-
-  for TaskID, Task in pairs( self:GetTasks() ) do
-    local Task = Task -- Tasking.Task#TASK
-    if not Task:IsStateSuccess() and not Task:IsStateFailed() and not Task:IsStateAborted() and not Task:IsStateCancelled() then
-      return false -- Mission cannot be completed. Other Tasks are still active.
-    end
-  end
-  return true -- Allow Mission completion.
-end
 
 -- FSM function for a MISSION
 -- @param #MISSION self
 -- @param #string From
 -- @param #string Event
 -- @param #string To
-function MISSION:onenterCompleted( From, Event, To )
+function MISSION:onenterCOMPLETED( From, Event, To )
 
-  self:GetCommandCenter():MessageToCoalition( "Mission " .. self:GetName() .. " has been completed! Good job guys!" )
+  self:GetCommandCenter():MessageToCoalition( self:GetName() .. " has been completed! Good job guys!" )
 end
 
 --- Gets the mission name.
 -- @param #MISSION self
 -- @return #MISSION self
 function MISSION:GetName()
-  return self.Name
+  return string.format( 'Mission "%s (%s)"', self.Name, self.MissionPriority )
 end
 
 --- Add a Unit to join the Mission.
@@ -279,6 +265,8 @@ function MISSION:JoinUnit( PlayerUnit, PlayerGroup )
     end
   end
   
+  self:GetCommandCenter():SetMenu()
+  
   return PlayerUnitAdded
 end
 
@@ -288,19 +276,17 @@ end
 -- If the Unit is part of a Task in the Mission, true is returned.
 -- @param #MISSION self
 -- @param Wrapper.Unit#UNIT PlayerUnit The CLIENT or UNIT of the Player joining the Mission.
--- @return #boolean true if Unit is part of a Task in the Mission.
+-- @return #MISSION
 function MISSION:AbortUnit( PlayerUnit )
   self:F( { PlayerUnit = PlayerUnit } )
   
-  local PlayerUnitRemoved = false
-  
   for TaskID, Task in pairs( self:GetTasks() ) do
-    if Task:AbortUnit( PlayerUnit ) then
-      PlayerUnitRemoved = true
-    end
+    local Task = Task -- Tasking.Task#TASK
+    local PlayerGroup = PlayerUnit:GetGroup()
+    Task:AbortGroup( PlayerGroup )
   end
   
-  return PlayerUnitRemoved
+  return self
 end
 
 --- Handles a crash of a PlayerUnit from the Mission.
@@ -309,19 +295,17 @@ end
 -- If the Unit is part of a Task in the Mission, true is returned.
 -- @param #MISSION self
 -- @param Wrapper.Unit#UNIT PlayerUnit The CLIENT or UNIT of the Player crashing.
--- @return #boolean true if Unit is part of a Task in the Mission.
+-- @return #MISSION
 function MISSION:CrashUnit( PlayerUnit )
   self:F( { PlayerUnit = PlayerUnit } )
   
-  local PlayerUnitRemoved = false
-  
   for TaskID, Task in pairs( self:GetTasks() ) do
-    if Task:CrashUnit( PlayerUnit ) then
-      PlayerUnitRemoved = true
-    end
+    local Task = Task -- Tasking.Task#TASK
+    local PlayerGroup = PlayerUnit:GetGroup()
+    Task:CrashGroup( PlayerGroup )
   end
   
-  return PlayerUnitRemoved
+  return self
 end
 
 --- Add a scoring to the mission.
@@ -365,7 +349,7 @@ end
 -- @param #MISSION self
 -- @param #number MenuTime
 function MISSION:SetMenu( MenuTime )
-  self:F()
+  self:F( { self:GetName(), MenuTime } )
   
   for _, TaskData in pairs( self:GetTasks() ) do
     local Task = TaskData -- Tasking.Task#TASK
@@ -377,7 +361,7 @@ end
 -- @param #MISSION self
 -- @param #number MenuTime
 function MISSION:RemoveMenu( MenuTime )
-  self:F()
+  self:F( { self:GetName(), MenuTime } )
   
   for _, Task in pairs( self:GetTasks() ) do
     local Task = Task -- Tasking.Task#TASK
@@ -385,6 +369,59 @@ function MISSION:RemoveMenu( MenuTime )
   end
 end
 
+
+
+do -- Group Assignment
+
+  --- Returns if the @{Mission} is assigned to the Group.
+  -- @param #MISSION self
+  -- @param Wrapper.Group#GROUP MissionGroup
+  -- @return #boolean
+  function MISSION:IsGroupAssigned( MissionGroup )
+  
+    local MissionGroupName = MissionGroup:GetName()
+    
+    if self.AssignedGroups[MissionGroupName] == MissionGroup then
+      self:T( { "Mission is assigned to:", MissionGroup:GetName() } )
+      return true
+    end
+    
+    self:T( { "Mission is not assigned to:", MissionGroup:GetName() } )
+    return false
+  end
+  
+  
+  --- Set @{Group} assigned to the @{Mission}.
+  -- @param #MISSION self
+  -- @param Wrapper.Group#GROUP MissionGroup
+  -- @return #MISSION
+  function MISSION:SetGroupAssigned( MissionGroup )
+  
+    local MissionName = self:GetName()
+    local MissionGroupName = MissionGroup:GetName()
+  
+    self.AssignedGroups[MissionGroupName] = MissionGroup
+    self:E( string.format( "Mission %s is assigned to %s", MissionName, MissionGroupName ) )
+    
+    return self
+  end
+  
+  --- Clear the @{Group} assignment from the @{Mission}.
+  -- @param #MISSION self
+  -- @param Wrapper.Group#GROUP MissionGroup
+  -- @return #MISSION
+  function MISSION:ClearGroupAssignment( MissionGroup )
+  
+    local MissionName = self:GetName()
+    local MissionGroupName = MissionGroup:GetName()
+  
+    self.AssignedGroups[MissionGroupName] = nil
+    self:E( string.format( "Mission %s is unassigned to %s", MissionName, MissionGroupName ) )
+    
+    return self
+  end
+  
+end
 
 --- Gets the COMMANDCENTER.
 -- @param #MISSION self
@@ -406,18 +443,35 @@ end
 
 --- Gets the mission menu for the coalition.
 -- @param #MISSION self
--- @param Wrapper.Group#GROUP TaskGroup
 -- @return Core.Menu#MENU_COALITION self
-function MISSION:GetMenu( TaskGroup )
+function MISSION:GetMenu( TaskGroup ) -- R2.1 -- Changed Menu Structure
 
   local CommandCenter = self:GetCommandCenter()
   local CommandCenterMenu = CommandCenter:GetMenu()
 
   local MissionName = self:GetName()
-  local MissionMenu = CommandCenterMenu:GetMenu( MissionName )
+  --local MissionMenu = CommandCenterMenu:GetMenu( MissionName )
   
-  return MissionMenu
+  self.MissionMenu = self.MissionMenu or {}
+  self.MissionMenu[TaskGroup] = self.MissionMenu[TaskGroup] or {}
+  
+  local Menu = self.MissionMenu[TaskGroup]
+  
+  Menu.MainMenu = Menu.MainMenu or MENU_GROUP:New( TaskGroup, self:GetName(), CommandCenterMenu )
+  Menu.BriefingMenu = Menu.BriefingMenu or MENU_GROUP_COMMAND:New( TaskGroup, "Mission Briefing", Menu.MainMenu, self.MenuReportBriefing, self, TaskGroup )
+
+  Menu.ReportsMenu = Menu.ReportsMenu or                              MENU_GROUP:New( TaskGroup, "Reports", Menu.MainMenu )
+  Menu.ReportTasksMenu = Menu.ReportTasksMenu or                      MENU_GROUP_COMMAND:New( TaskGroup, "Report Tasks", Menu.ReportsMenu, self.MenuReportSummary, self, TaskGroup )
+  Menu.ReportPlannedTasksMenu = Menu.ReportPlannedTasksMenu or        MENU_GROUP_COMMAND:New( TaskGroup, "Report Planned Tasks", Menu.ReportsMenu, self.MenuReportOverview, self, TaskGroup, "Planned" )
+  Menu.ReportAssignedTasksMenu = Menu.ReportAssignedTasksMenu or      MENU_GROUP_COMMAND:New( TaskGroup, "Report Assigned Tasks", Menu.ReportsMenu, self.MenuReportOverview, self, TaskGroup, "Assigned" )
+  Menu.ReportSuccessTasksMenu = Menu.ReportSuccessTasksMenu or        MENU_GROUP_COMMAND:New( TaskGroup, "Report Successful Tasks", Menu.ReportsMenu, self.MenuReportOverview, self, TaskGroup, "Success" )
+  Menu.ReportFailedTasksMenu = Menu.ReportFailedTasksMenu or          MENU_GROUP_COMMAND:New( TaskGroup, "Report Failed Tasks", Menu.ReportsMenu, self.MenuReportOverview, self, TaskGroup, "Failed" )
+  Menu.ReportHeldTasksMenu = Menu.ReportHeldTasksMenu or              MENU_GROUP_COMMAND:New( TaskGroup, "Report Held Tasks", Menu.ReportsMenu, self.MenuReportOverview, self, TaskGroup, "Hold" )
+  
+  return Menu.MainMenu
 end
+
+
 
 
 --- Get the TASK identified by the TaskNumber from the Mission. This function is useful in GoalFunctions.
@@ -490,39 +544,39 @@ function MISSION:GetNextTaskID( Task )
   return self.Tasks[TaskName].n
 end
 
---- Is the @{Mission} **Completed**.
+--- Is the @{Mission} **COMPLETED**.
 -- @param #MISSION self
 -- @return #boolean
-function MISSION:IsCompleted()
-  return self:Is( "Completed" )
+function MISSION:IsCOMPLETED()
+  return self:Is( "COMPLETED" )
 end
 
---- Is the @{Mission} **Idle**.
+--- Is the @{Mission} **IDLE**.
 -- @param #MISSION self
 -- @return #boolean
-function MISSION:IsIdle()
-  return self:Is( "Idle" )
+function MISSION:IsIDLE()
+  return self:Is( "IDLE" )
 end
 
---- Is the @{Mission} **Ongoing**.
+--- Is the @{Mission} **ENGAGED**.
 -- @param #MISSION self
 -- @return #boolean
-function MISSION:IsOngoing()
-  return self:Is( "Ongoing" )
+function MISSION:IsENGAGED()
+  return self:Is( "ENGAGED" )
 end
 
---- Is the @{Mission} **Failed**.
+--- Is the @{Mission} **FAILED**.
 -- @param #MISSION self
 -- @return #boolean
-function MISSION:IsFailed()
-  return self:Is( "Failed" )
+function MISSION:IsFAILED()
+  return self:Is( "FAILED" )
 end
 
---- Is the @{Mission} **Hold**.
+--- Is the @{Mission} **HOLD**.
 -- @param #MISSION self
 -- @return #boolean
-function MISSION:IsHold()
-  return self:Is( "Hold" )
+function MISSION:IsHOLD()
+  return self:Is( "HOLD" )
 end
 
 --- Validates if the Mission has a Group
@@ -542,6 +596,153 @@ function MISSION:HasGroup( TaskGroup )
   return Has
 end
 
+--- @param #MISSION self
+-- @return #number
+function MISSION:GetTasksRemaining()
+  -- Determine how many tasks are remaining.
+  local TasksRemaining = 0
+  for TaskID, Task in pairs( self:GetTasks() ) do
+    local Task = Task -- Tasking.Task#TASK
+    if Task:IsStateSuccess() or Task:IsStateFailed() then
+    else
+      TasksRemaining = TasksRemaining + 1
+    end
+  end
+  return TasksRemaining
+end
+
+--- @param #MISSION self
+-- @return #number
+function MISSION:GetTaskTypes()
+  -- Determine how many tasks are remaining.
+  local TaskTypeList = {}
+  local TasksRemaining = 0
+  for TaskID, Task in pairs( self:GetTasks() ) do
+    local Task = Task -- Tasking.Task#TASK
+    local TaskType = Task:GetType()
+    TaskTypeList[TaskType] = TaskType
+  end
+  return TaskTypeList
+end
+
+--- Create a briefing report of the Mission.
+-- @param #MISSION self
+-- @return #string
+function MISSION:ReportBriefing()
+
+  local Report = REPORT:New()
+
+  -- List the name of the mission.
+  local Name = self:GetName()
+  
+  -- Determine the status of the mission.
+  local Status = self:GetState()
+  local TasksRemaining = self:GetTasksRemaining()
+  
+  Report:Add( "Mission " .. Name .. " - " .. Status .. " - Briefing Report." )
+
+  Report:Add( self.MissionBriefing )
+  
+  return Report:Text()
+end
+
+
+--- Create a status report of the Mission.
+-- This reports provides a one liner of the mission status. It indicates how many players and how many Tasks.
+-- 
+--     Mission "<MissionName>" - Status "<MissionStatus>"
+--      - Task Types: <TaskType>, <TaskType>
+--      - <xx> Planned Tasks (xp)
+--      - <xx> Assigned Tasks(xp)
+--      - <xx> Success Tasks (xp)
+--      - <xx> Hold Tasks (xp)
+--      - <xx> Cancelled Tasks (xp)
+--      - <xx> Aborted Tasks (xp)
+--      - <xx> Failed Tasks (xp)
+-- 
+-- @param #MISSION self
+-- @return #string
+function MISSION:ReportStatus()
+
+  local Report = REPORT:New()
+
+  -- List the name of the mission.
+  local Name = self:GetName()
+  
+  -- Determine the status of the mission.
+  local Status = self:GetState()
+  local TasksRemaining = self:GetTasksRemaining()
+
+  Report:Add( string.format( '%s - Status "%s"', Name, Status ) )
+  
+  local TaskTypes = self:GetTaskTypes()
+  
+  Report:Add( string.format( " - Task Types: %s", table.concat(TaskTypes, ", " ) ) )
+  
+  local TaskStatusList = { "Planned", "Assigned", "Success", "Hold", "Cancelled", "Aborted", "Failed" }
+  
+  for TaskStatusID, TaskStatus in pairs( TaskStatusList ) do
+    local TaskCount = 0
+    local TaskPlayerCount = 0 
+    -- Determine how many tasks are remaining.
+    for TaskID, Task in pairs( self:GetTasks() ) do
+      local Task = Task -- Tasking.Task#TASK
+      if Task:Is( TaskStatus ) then
+        TaskCount = TaskCount + 1
+        TaskPlayerCount = TaskPlayerCount + Task:GetPlayerCount()
+      end
+    end
+    if TaskCount > 0 then
+      Report:Add( string.format( " - %02d %s Tasks (%dp)", TaskCount, TaskStatus, TaskPlayerCount ) )
+    end
+  end
+
+  return Report:Text()
+end
+
+--- Create a player report of the Mission.
+-- This reports provides a one liner of the mission status. It indicates how many players and how many Tasks.
+-- 
+--     Mission "<MissionName>" - Status "<MissionStatus>"
+--      - Player "<PlayerName>: Task <TaskName> <TaskStatus>, Task <TaskName> <TaskStatus>
+--      - Player <PlayerName>: Task <TaskName> <TaskStatus>, Task <TaskName> <TaskStatus>
+--      - ..
+-- 
+-- @param #MISSION self
+-- @return #string
+function MISSION:ReportPlayers()
+
+  local Report = REPORT:New()
+
+  -- List the name of the mission.
+  local Name = self:GetName()
+  
+  -- Determine the status of the mission.
+  local Status = self:GetState()
+  local TasksRemaining = self:GetTasksRemaining()
+
+  Report:Add( string.format( '%s - Status "%s"', Name, Status ) )
+  
+  local PlayerList = {}
+  
+  -- Determine how many tasks are remaining.
+  for TaskID, Task in pairs( self:GetTasks() ) do
+    local Task = Task -- Tasking.Task#TASK
+    local PlayerNames = Task:GetPlayerNames()
+    for PlayerID, PlayerName in pairs( PlayerNames ) do
+      PlayerList[PlayerName] = Task:GetName()
+    end
+    
+  end
+
+  for PlayerName, TaskName in pairs( PlayerList ) do
+    Report:Add( string.format( ' - Player (%s): Task "%s"', PlayerName, TaskName ) )
+  end
+  
+  return Report:Text()
+end
+
+
 --- Create a summary report of the Mission (one line).
 -- @param #MISSION self
 -- @return #string
@@ -554,18 +755,15 @@ function MISSION:ReportSummary()
   
   -- Determine the status of the mission.
   local Status = self:GetState()
+  local TasksRemaining = self:GetTasksRemaining()
   
+  Report:Add( "Mission " .. Name .. " - " .. Status .. " - " .. TasksRemaining .. " tasks remaining." )
+
   -- Determine how many tasks are remaining.
-  local TasksRemaining = 0
   for TaskID, Task in pairs( self:GetTasks() ) do
     local Task = Task -- Tasking.Task#TASK
-    if Task:IsStateSuccess() or Task:IsStateFailed() then
-    else
-      TasksRemaining = TasksRemaining + 1
-    end
+    Report:Add( "- " .. Task:ReportSummary() )
   end
-
-  Report:Add( "Mission " .. Name .. " - " .. Status .. " - " .. TasksRemaining .. " tasks remaining." )
   
   return Report:Text()
 end
@@ -573,7 +771,7 @@ end
 --- Create a overview report of the Mission (multiple lines).
 -- @param #MISSION self
 -- @return #string
-function MISSION:ReportOverview()
+function MISSION:ReportOverview( TaskStatus )
 
   local Report = REPORT:New()
 
@@ -582,14 +780,17 @@ function MISSION:ReportOverview()
   
   -- Determine the status of the mission.
   local Status = self:GetState()
+  local TasksRemaining = self:GetTasksRemaining()
 
-  Report:Add( "Mission " .. Name .. " - State '" .. Status .. "'" )
+  Report:Add( string.format( '%s - Status "%s"', Name, Status ) )
   
   -- Determine how many tasks are remaining.
   local TasksRemaining = 0
   for TaskID, Task in pairs( self:GetTasks() ) do
     local Task = Task -- Tasking.Task#TASK
-    Report:Add( "- " .. Task:ReportSummary() )
+    if Task:Is( TaskStatus ) then
+      Report:Add( "\n - " .. Task:ReportOverview() )
+    end
   end
 
   return Report:Text()
@@ -608,7 +809,7 @@ function MISSION:ReportDetails()
   -- Determine the status of the mission.
   local Status = self:GetState()
   
-  Report:Add( "Mission " .. Name .. " - State '" .. Status .. "'" )
+  Report:Add( string.format( '%s - Status "%s"', Name, Status ) )
   
   -- Determine how many tasks are remaining.
   local TasksRemaining = 0
@@ -627,9 +828,33 @@ end
 -- Tasks = Mission:GetTasks()
 -- env.info( "Task 2 Completion = " .. Tasks[2]:GetGoalPercentage() .. "%" )
 function MISSION:GetTasks()
-	self:F()
 
 	return self.Tasks
 end
- 
 
+function MISSION:MenuReportBriefing( ReportGroup )
+
+  local Report = self:ReportBriefing()
+  
+  self:GetCommandCenter():MessageToGroup( Report, ReportGroup )
+end
+
+
+--- @param #MISSION self
+-- @param Wrapper.Group#GROUP ReportGroup
+function MISSION:MenuReportSummary( ReportGroup )
+
+  local Report = self:ReportSummary()
+  
+  self:GetCommandCenter():MessageToGroup( Report, ReportGroup )
+end
+
+--- @param #MISSION self
+-- @param #string TaskStatus The status
+-- @param Wrapper.Group#GROUP ReportGroup
+function MISSION:MenuReportOverview( ReportGroup, TaskStatus )
+
+  local Report = self:ReportOverview( TaskStatus )
+  
+  self:GetCommandCenter():MessageToGroup( Report, ReportGroup )
+end

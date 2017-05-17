@@ -17,9 +17,11 @@
 				<a href="index.html">index</a>
 			</li></ul>
 		<ul>
+					<li><a href="AI_Bai.html">AI_Bai</a></li>
 					<li><a href="AI_Balancer.html">AI_Balancer</a></li>
 					<li><a href="AI_Cap.html">AI_Cap</a></li>
 					<li><a href="AI_Cas.html">AI_Cas</a></li>
+					<li><a href="AI_Formation.html">AI_Formation</a></li>
 					<li><a href="AI_Patrol.html">AI_Patrol</a></li>
 					<li><a href="Account.html">Account</a></li>
 					<li><a href="Airbase.html">Airbase</a></li>
@@ -31,7 +33,23 @@
 					<li><a href="Client.html">Client</a></li>
 					<li>CommandCenter</li>
 					<li><a href="Controllable.html">Controllable</a></li>
+					<li><a href="DCSAirbase.html">DCSAirbase</a></li>
+					<li><a href="DCSCoalitionObject.html">DCSCoalitionObject</a></li>
+					<li><a href="DCSCommand.html">DCSCommand</a></li>
+					<li><a href="DCSController.html">DCSController</a></li>
+					<li><a href="DCSGroup.html">DCSGroup</a></li>
+					<li><a href="DCSObject.html">DCSObject</a></li>
+					<li><a href="DCSTask.html">DCSTask</a></li>
+					<li><a href="DCSTypes.html">DCSTypes</a></li>
+					<li><a href="DCSUnit.html">DCSUnit</a></li>
+					<li><a href="DCSVec3.html">DCSVec3</a></li>
+					<li><a href="DCSWorld.html">DCSWorld</a></li>
+					<li><a href="DCSZone.html">DCSZone</a></li>
+					<li><a href="DCScountry.html">DCScountry</a></li>
+					<li><a href="DCStimer.html">DCStimer</a></li>
+					<li><a href="DCStrigger.html">DCStrigger</a></li>
 					<li><a href="Database.html">Database</a></li>
+					<li><a href="Designate.html">Designate</a></li>
 					<li><a href="Detection.html">Detection</a></li>
 					<li><a href="DetectionManager.html">DetectionManager</a></li>
 					<li><a href="Escort.html">Escort</a></li>
@@ -59,14 +77,20 @@
 					<li><a href="Set.html">Set</a></li>
 					<li><a href="Smoke.html">Smoke</a></li>
 					<li><a href="Spawn.html">Spawn</a></li>
+					<li><a href="SpawnStatic.html">SpawnStatic</a></li>
+					<li><a href="Spot.html">Spot</a></li>
 					<li><a href="Static.html">Static</a></li>
+					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="Task.html">Task</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
 					<li><a href="Task_A2G_Dispatcher.html">Task_A2G_Dispatcher</a></li>
+					<li><a href="Task_Cargo.html">Task_Cargo</a></li>
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
 					<li><a href="Unit.html">Unit</a></li>
 					<li><a href="Utils.html">Utils</a></li>
 					<li><a href="Zone.html">Zone</a></li>
+					<li><a href="env.html">env</a></li>
+					<li><a href="land.html">land</a></li>
 					<li><a href="routines.html">routines</a></li>
 		</ul>
 	</div>
@@ -210,7 +234,13 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(COMMANDCENTER).ReportSummary">COMMANDCENTER:ReportSummary(ReportGroup)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(COMMANDCENTER).ReportMissionsPlayers">COMMANDCENTER:ReportMissionsPlayers(ReportGroup)</a></td>
+		<td class="summary">
+<p>Report the players of all MISSIONs to a GROUP.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(COMMANDCENTER).ReportMissionsStatus">COMMANDCENTER:ReportMissionsStatus(ReportGroup)</a></td>
 		<td class="summary">
 <p>Report the status of all MISSIONs to a GROUP.</p>
 </td>
@@ -232,7 +262,25 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(REPORT).AddIndent">REPORT:AddIndent(Text)</a></td>
+		<td class="summary">
+<p>Add a new line to a REPORT.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(REPORT).ClassName">REPORT.ClassName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(REPORT).HasText">REPORT:HasText()</a></td>
+		<td class="summary">
+<p>Has the REPORT Text?</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(REPORT).Indent">REPORT.Indent</a></td>
 		<td class="summary">
 
 </td>
@@ -244,9 +292,27 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(REPORT).Report">REPORT.Report</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(REPORT).SetIndent">REPORT:SetIndent(Indent)</a></td>
+		<td class="summary">
+<p>Set indent of a REPORT.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(REPORT).Text">REPORT:Text(Delimiter)</a></td>
 		<td class="summary">
 <p>Produces the text of the report, taking into account an optional delimeter, which is \n by default.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(REPORT).Title">REPORT.Title</a></td>
+		<td class="summary">
+
 </td>
 		</tr>
 	</table>
@@ -679,8 +745,32 @@ Group#GROUP</p>
 		<dl class="function">
 <dt>
 
-<a id="#(COMMANDCENTER).ReportSummary" >
-<strong>COMMANDCENTER:ReportSummary(ReportGroup)</strong>
+<a id="#(COMMANDCENTER).ReportMissionsPlayers" >
+<strong>COMMANDCENTER:ReportMissionsPlayers(ReportGroup)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Report the players of all MISSIONs to a GROUP.</p>
+
+	
+<p>Each Mission is listed, with an indication how many Tasks are still to be completed.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> ReportGroup </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(COMMANDCENTER).ReportMissionsStatus" >
+<strong>COMMANDCENTER:ReportMissionsStatus(ReportGroup)</strong>
 </a>
 </dt>
 <dd>
@@ -748,9 +838,67 @@ Group#GROUP</p>
 		<dl class="function">
 <dt>
 
+<a id="#(REPORT).AddIndent" >
+<strong>REPORT:AddIndent(Text)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Add a new line to a REPORT.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Text </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(REPORT)">#REPORT</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 		<em>#string</em>
 <a id="#(REPORT).ClassName" >
 <strong>REPORT.ClassName</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(REPORT).HasText" >
+<strong>REPORT:HasText()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Has the REPORT Text?</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(REPORT).Indent" >
+<strong>REPORT.Indent</strong>
 </a>
 </dt>
 <dd>
@@ -788,6 +936,46 @@ Group#GROUP</p>
 		<dl class="function">
 <dt>
 
+		<em></em>
+<a id="#(REPORT).Report" >
+<strong>REPORT.Report</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(REPORT).SetIndent" >
+<strong>REPORT:SetIndent(Indent)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set indent of a REPORT.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number Indent </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(REPORT)">#REPORT</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(REPORT).Text" >
 <strong>REPORT:Text(Delimiter)</strong>
 </a>
@@ -809,6 +997,20 @@ Group#GROUP</p>
 				
 <p><em>#string:</em>
 The report text.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(REPORT).Title" >
+<strong>REPORT.Title</strong>
+</a>
+</dt>
+<dd>
+	
+
 
 </dd>
 </dl>
