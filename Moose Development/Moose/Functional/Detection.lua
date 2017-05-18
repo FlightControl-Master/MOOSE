@@ -1192,6 +1192,7 @@ do -- DETECTION_BASE
     end
     
     DetectedItem.Set = Set or SET_UNIT:New():FilterDeads():FilterCrashes()
+    DetectedItem.Index = DetectedItemIndex
     DetectedItem.ItemID = ItemPrefix .. "." .. self.DetectedItemMax
     DetectedItem.ID = self.DetectedItemMax
     DetectedItem.Removed = false
@@ -1578,7 +1579,7 @@ do -- DETECTION_UNITS
   -- @param Index
   -- @return #string
   function DETECTION_UNITS:DetectedItemReportSummary( Index )
-    self:F( Index )
+    self:F( { Index, self.DetectedItems } )
   
     local DetectedItem = self:GetDetectedItem( Index )
     local DetectedSet = self:GetDetectedSet( Index )

@@ -167,25 +167,26 @@ do -- TASK_A2A_DISPATCHER
         self:E( { "Targets in DetectedItem", DetectedItem.ItemID, DetectedSet:Count(), tostring( DetectedItem ) } )
         DetectedSet:Flush()
         
-        local DetectedItemID = DetectedItem.ID
+        local DetectedID = DetectedItem.ID
+        local DetectedIndex = DetectedItem.Index
         local DetectedItemChanged = DetectedItem.Changed
         
-        local Task = self.Tasks[DetectedItemID]
-        Task = self:EvaluateRemoveTask( Mission, Task, DetectedItemID, DetectedItemChanged ) -- Task will be removed if it is planned and changed.
+        local Task = self.Tasks[DetectedID]
+        Task = self:EvaluateRemoveTask( Mission, Task, DetectedID, DetectedItemChanged ) -- Task will be removed if it is planned and changed.
 
         -- Evaluate INTERCEPT
         if not Task then
           local TargetSetUnit = self:EvaluateINTERCEPT( DetectedItem ) -- Returns a SetUnit if there are targets to be INTERCEPTed...
           if TargetSetUnit then
-            Task = TASK_INTERCEPT:New( Mission, self.SetGroup, string.format( "INTERCEPT.%03d", DetectedItemID ), TargetSetUnit )
+            Task = TASK_INTERCEPT:New( Mission, self.SetGroup, string.format( "INTERCEPT.%03d", DetectedID ), TargetSetUnit )
           end
 
           if Task then
-            self.Tasks[DetectedItemID] = Task
+            self.Tasks[DetectedID] = Task
             Task:SetTargetZone( DetectedZone )
             Task:SetDispatcher( self )
             Task:SetInfo( "ThreatLevel", DetectedSet:CalculateThreatLevelA2G() )
-            Task:SetInfo( "Detection", Detection:DetectedItemReportSummary( DetectedItemID ) )
+            Task:SetInfo( "Detection", Detection:DetectedItemReportSummary( DetectedIndex ) )
             Task:SetInfo( "Changes", Detection:GetChangeText( DetectedItem ) )
             Mission:AddTask( Task )
           else
@@ -202,10 +203,12 @@ do -- TASK_A2A_DISPATCHER
       
       -- TODO set menus using the HQ coordinator
       Mission:GetCommandCenter():SetMenu()
+
+      local TaskText = TaskReport:Text(", ")
       
       for TaskGroupID, TaskGroup in pairs( self.SetGroup:GetSet() ) do
-        if not Mission:IsGroupAssigned(TaskGroup) then
-          Mission:GetCommandCenter():MessageToGroup( string.format( "%s has tasks %s. Subscribe to a task using the radio menu.", Mission:GetName(), TaskReport:Text(", ") ), TaskGroup )
+        if ( not Mission:IsGroupAssigned(TaskGroup) ) and TaskText ~= "" then
+          Mission:GetCommandCenter():MessageToGroup( string.format( "%s has tasks %s. Subscribe to a task using the radio menu.", Mission:GetName(), TaskText ), TaskGroup )
         end
       end
       
