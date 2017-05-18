@@ -1302,6 +1302,37 @@ do -- DETECTION_BASE
     
     return nil
   end
+  
+  do -- Coordinates
+
+    --- Get the COORDINATE of a detection item using a given numeric index.
+    -- @param #DETECTION_BASE self
+    -- @param #number Index
+    -- @return Core.Point#COORDINATE Coordinate
+    function DETECTION_BASE:GetDetectedItemCoordinate( Index )
+    
+      -- If the Zone is set, return the coordinate of the Zone.
+      local DetectedItemSet = self:GetDetectedSet( Index )
+      local FirstUnit = DetectedItemSet:GetFirst()
+
+      local DetectedZone = self:GetDetectedItemZone( Index )
+      if DetectedZone then
+        local Coordinate = DetectedZone:GetCoordinate()
+        Coordinate:SetHeading(FirstUnit:GetHeading())
+        return Coordinate
+      end
+      
+      -- If no Zone is set, return the coordinate of the first unit in the Set
+      if FirstUnit then
+        local Coordinate = FirstUnit:GetCoordinate()
+        FirstUnit:SetHeading(FirstUnit:GetHeading())
+        return Coordinate
+      end
+      
+      return nil
+    end
+  
+  end
 
   do -- Zones
   
@@ -1309,12 +1340,14 @@ do -- DETECTION_BASE
     -- @param #DETECTION_BASE self
     -- @param #number Index
     -- @return Core.Zone#ZONE_UNIT DetectedZone
-    function DETECTION_BASE:GetDetectedZone( Index )
+    function DETECTION_BASE:GetDetectedItemZone( Index )
     
       local DetectedZone = self.DetectedItems[Index].Zone
       if DetectedZone then
         return DetectedZone
       end
+      
+      local Detected
       
       return nil
     end
@@ -1579,7 +1612,7 @@ do -- DETECTION_UNITS
   -- @param Index
   -- @return #string
   function DETECTION_UNITS:DetectedItemReportSummary( Index )
-    self:F( Index )
+    self:F( { Index, self.DetectedItems } )
   
     local DetectedItem = self:GetDetectedItem( Index )
     local DetectedSet = self:GetDetectedSet( Index )
@@ -1977,7 +2010,7 @@ do -- DETECTION_AREAS
       local DetectedSet = self:GetDetectedSet( Index )
       local ReportSummaryItem
       
-      local DetectedZone = self:GetDetectedZone( Index )
+      local DetectedZone = self:GetDetectedItemZone( Index )
       local DetectedItemCoordinate = DetectedZone:GetCoordinate()
       local DetectedItemCoordText = DetectedItemCoordinate:ToString()
 
@@ -2007,7 +2040,7 @@ do -- DETECTION_AREAS
       local DetectedSet = self:GetDetectedSet( Index )
       local ReportSummaryItem
       
-      local DetectedZone = self:GetDetectedZone( Index )
+      local DetectedZone = self:GetDetectedItemZone( Index )
       local DetectedItemCoordinate = DetectedZone:GetCoordinate()
       local DetectedItemCoordText = DetectedItemCoordinate:ToString()
 
