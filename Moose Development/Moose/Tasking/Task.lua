@@ -683,7 +683,7 @@ end
 -- @param #number MenuTime
 -- @return #TASK self
 function TASK:SetPlannedMenuForGroup( TaskGroup, MenuTime )
-  self:E( TaskGroup:GetName() )
+  self:F( TaskGroup:GetName() )
 
   local Mission = self:GetMission()
   local MissionName = Mission:GetName()

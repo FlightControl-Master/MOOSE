@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' )
-env.info( 'Moose Generation Timestamp: 20170518_0928' )
+env.info( 'Moose Generation Timestamp: 20170518_1408' )
 
 --- Various routines
 -- @module routines
@@ -31188,6 +31188,7 @@ do -- DETECTION_BASE
     end
     
     DetectedItem.Set = Set or SET_UNIT:New():FilterDeads():FilterCrashes()
+    DetectedItem.Index = DetectedItemIndex
     DetectedItem.ItemID = ItemPrefix .. "." .. self.DetectedItemMax
     DetectedItem.ID = self.DetectedItemMax
     DetectedItem.Removed = false
@@ -40679,7 +40680,7 @@ end
 -- @param #number MenuTime
 -- @return #TASK self
 function TASK:SetPlannedMenuForGroup( TaskGroup, MenuTime )
-  self:E( TaskGroup:GetName() )
+  self:F( TaskGroup:GetName() )
 
   local Mission = self:GetMission()
   local MissionName = Mission:GetName()
@@ -41848,6 +41849,7 @@ do -- TASK_A2G_DISPATCHER
         DetectedSet:Flush()
         
         local DetectedItemID = DetectedItem.ID
+        local DetectedItemIndex = DetectedItem.Index
         local DetectedItemChanged = DetectedItem.Changed
         
         local Task = self.Tasks[DetectedItemID]
@@ -41881,7 +41883,7 @@ do -- TASK_A2G_DISPATCHER
             Task:SetTargetZone( DetectedZone )
             Task:SetDispatcher( self )
             Task:SetInfo( "ThreatLevel", DetectedSet:CalculateThreatLevelA2G() )
-            Task:SetInfo( "Detection", Detection:DetectedItemReportSummary( DetectedItemID ) )
+            Task:SetInfo( "Detection", Detection:DetectedItemReportSummary( DetectedItemIndex ) )
             Task:SetInfo( "Changes", Detection:GetChangeText( DetectedItem ) )
             Mission:AddTask( Task )
           else
