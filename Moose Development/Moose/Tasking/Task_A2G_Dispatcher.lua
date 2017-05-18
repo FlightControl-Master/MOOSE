@@ -226,6 +226,7 @@ do -- TASK_A2G_DISPATCHER
         DetectedSet:Flush()
         
         local DetectedItemID = DetectedItem.ID
+        local DetectedItemIndex = DetectedItem.Index
         local DetectedItemChanged = DetectedItem.Changed
         
         local Task = self.Tasks[DetectedItemID]
@@ -259,7 +260,7 @@ do -- TASK_A2G_DISPATCHER
             Task:SetTargetZone( DetectedZone )
             Task:SetDispatcher( self )
             Task:SetInfo( "ThreatLevel", DetectedSet:CalculateThreatLevelA2G() )
-            Task:SetInfo( "Detection", Detection:DetectedItemReportSummary( DetectedItemID ) )
+            Task:SetInfo( "Detection", Detection:DetectedItemReportSummary( DetectedItemIndex ) )
             Task:SetInfo( "Changes", Detection:GetChangeText( DetectedItem ) )
             Mission:AddTask( Task )
           else
