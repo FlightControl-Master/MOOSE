@@ -1192,7 +1192,7 @@ do -- DETECTION_BASE
     end
     
     DetectedItem.Set = Set or SET_UNIT:New():FilterDeads():FilterCrashes()
-    DetectedItem.Index = DetectedItemIndex
+    DetectedItem.Index = DetectedItemIndex or self.DetectedItemCount
     DetectedItem.ItemID = ItemPrefix .. "." .. self.DetectedItemMax
     DetectedItem.ID = self.DetectedItemMax
     DetectedItem.Removed = false
