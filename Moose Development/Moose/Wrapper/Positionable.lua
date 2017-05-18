@@ -149,6 +149,7 @@ function POSITIONABLE:GetCoordinate()
     local PositionableVec3 = self:GetPositionVec3()
     
     local PositionableCoordinate = COORDINATE:NewFromVec3( PositionableVec3 )
+    PositionableCoordinate:SetHeading( self:GetHeading() )
   
     self:T2( PositionableCoordinate )
     return PositionableCoordinate

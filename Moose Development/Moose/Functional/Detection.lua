@@ -1192,7 +1192,7 @@ do -- DETECTION_BASE
     end
     
     DetectedItem.Set = Set or SET_UNIT:New():FilterDeads():FilterCrashes()
-    DetectedItem.Index = DetectedItemIndex
+    DetectedItem.Index = DetectedItemIndex or self.DetectedItemCount
     DetectedItem.ItemID = ItemPrefix .. "." .. self.DetectedItemMax
     DetectedItem.ID = self.DetectedItemMax
     DetectedItem.Removed = false
@@ -1312,16 +1312,21 @@ do -- DETECTION_BASE
     function DETECTION_BASE:GetDetectedItemCoordinate( Index )
     
       -- If the Zone is set, return the coordinate of the Zone.
+      local DetectedItemSet = self:GetDetectedSet( Index )
+      local FirstUnit = DetectedItemSet:GetFirst()
+
       local DetectedZone = self:GetDetectedItemZone( Index )
       if DetectedZone then
-        return DetectedZone:GetCoordinate()
+        local Coordinate = DetectedZone:GetCoordinate()
+        Coordinate:SetHeading(FirstUnit:GetHeading())
+        return Coordinate
       end
       
       -- If no Zone is set, return the coordinate of the first unit in the Set
-      local DetectedItemSet = self:GetDetectedSet( Index )
-      local FirstUnit = DetectedItemSet:GetFirst()
       if FirstUnit then
-        return FirstUnit:GetCoordinate()
+        local Coordinate = FirstUnit:GetCoordinate()
+        FirstUnit:SetHeading(FirstUnit:GetHeading())
+        return Coordinate
       end
       
       return nil
