@@ -567,7 +567,7 @@ end
 -- @param #number AngleRadians The angle in randians
 -- @param #number Distance The distance
 -- @return #string The BR Text
-function POINT_VEC3:ToStringBR( AngleRadians, Distance )
+function POINT_VEC3:GetBRText( AngleRadians, Distance )
 
   AngleRadians = UTILS.Round( UTILS.ToDegree( AngleRadians ), 0 )
   if self:IsMetric() then
@@ -593,17 +593,6 @@ function POINT_VEC3:GetAltitudeText()
   else
     return ' at ' .. UTILS.Round( UTILS.MetersToFeet( self:GetY() ), 0 )
   end
-end
-
---- Return a BR string from a POINT_VEC3 to the POINT_VEC3.
--- @param #POINT_VEC3 self
--- @param #POINT_VEC3 TargetPointVec3 The target POINT_VEC3.
--- @return #string The BR text.
-function POINT_VEC3:GetBRText( TargetPointVec3 )
-    local DirectionVec3 = self:GetDirectionVec3( TargetPointVec3 )
-    local AngleRadians =  self:GetAngleRadians( DirectionVec3 )
-    local Distance = self:Get2DDistance( TargetPointVec3 )
-    return self:ToStringBR( AngleRadians, Distance )
 end
 
 --- Sets the POINT_VEC3 metric or NM.
@@ -1033,13 +1022,6 @@ function POINT_VEC2:DistanceFromVec2( Vec2Reference )
 end
 
 
---- Return no text for the altitude of the POINT_VEC2.
--- @param #POINT_VEC2 self
--- @return #string Empty string.
-function POINT_VEC2:GetAltitudeText() 
-  return ''
-end
-
 --- Add a Distance in meters from the POINT_VEC2 orthonormal plane, with the given angle, and calculate the new POINT_VEC2.
 -- @param #POINT_VEC2 self
 -- @param Dcs.DCSTypes#Distance Distance The Distance to be added in meters.
@@ -1098,7 +1080,41 @@ do -- COORDINATE
     return self
   end
 
+  --- Return a BR string from a COORDINATE to the COORDINATE.
+  -- @param #COORDINATE self
+  -- @param #COORDINATE TargetCoordinate The target COORDINATE.
+  -- @return #string The BR text.
+  function COORDINATE:ToStringBR( TargetCoordinate )
+      local DirectionVec3 = self:GetDirectionVec3( TargetCoordinate )
+      local AngleRadians =  self:GetAngleRadians( DirectionVec3 )
+      local Distance = self:Get2DDistance( TargetCoordinate )
+      return "BR: " .. self:GetBRText( AngleRadians, Distance )
+  end
 
+  --- Return a BRAA string from a COORDINATE to the COORDINATE.
+  -- @param #COORDINATE self
+  -- @param #COORDINATE TargetCoordinate The target COORDINATE.
+  -- @return #string The BR text.
+  function COORDINATE:ToStringBRAA( TargetCoordinate )
+      local DirectionVec3 = self:GetDirectionVec3( TargetCoordinate )
+      local AngleRadians =  self:GetAngleRadians( DirectionVec3 )
+      local Distance = self:Get2DDistance( TargetCoordinate )
+      local Altitude = self:GetAltitudeText()
+      return "BRAA: " .. self:GetBRText( AngleRadians, Distance ) .. Altitude .. ", flanking"
+  end
+
+  --- Return a BULLS string from a COORDINATE to the BULLS of the coalition.
+  -- @param #COORDINATE self
+  -- @param Dcs.DCSCoalition#coalition.side Coalition The coalition.
+  -- @return #string The BR text.
+  function COORDINATE:ToStringBULLS( Coalition )
+      local TargetCoordinate = COORDINATE:NewFromVec3( coalition.getMainRefPoint( Coalition ) )
+      local DirectionVec3 = self:GetDirectionVec3( TargetCoordinate )
+      local AngleRadians =  self:GetAngleRadians( DirectionVec3 )
+      local Distance = self:Get2DDistance( TargetCoordinate )
+      local Altitude = self:GetAltitudeText()
+      return "BULLS: " .. self:GetBRText( AngleRadians, Distance ) .. Altitude .. ", flanking"
+  end
 
   --- Provides a Lat Lon string
   -- @param #COORDINATE self
@@ -1110,7 +1126,7 @@ do -- COORDINATE
     LL_Accuracy = LL_Accuracy or self.LL_Accuracy
     LL_DMS = LL_DMS or self.LL_DMS
     local lat, lon = coord.LOtoLL( self:GetVec3() )
-    return "LL:" .. UTILS.tostringLL( lat, lon, LL_Accuracy, LL_DMS )
+    return "LL: " .. UTILS.tostringLL( lat, lon, LL_Accuracy, LL_DMS )
   end
   
   --- Provides a MGRS string
@@ -1128,7 +1144,7 @@ do -- COORDINATE
     MGRS_Accuracy = MGRS_Accuracy or self.MGRS_Accuracy
     local lat, lon = coord.LOtoLL( self:GetVec3() )
     local MGRS = coord.LLtoMGRS( lat, lon )
-    return "MGRS:" .. UTILS.tostringMGRS( MGRS, MGRS_Accuracy )
+    return "MGRS: " .. UTILS.tostringMGRS( MGRS, MGRS_Accuracy )
   end
   
   --- Provides a coordinate string of the point, based on a coordinate format system:

@@ -825,7 +825,7 @@ end
 -- @param #TASK self
 function TASK:MenuTaskStatus( TaskGroup )
 
-  local ReportText = self:ReportDetails()
+  local ReportText = self:ReportDetails( TaskGroup )
   
   self:T( ReportText )
   self:GetMission():GetCommandCenter():MessageToGroup( ReportText, TaskGroup )
@@ -1369,8 +1369,9 @@ end
 --- Create a detailed report of the Task.
 -- List the Task Status, and the Players assigned to the Task.
 -- @param #TASK self
+-- @param Wrapper.Group#GROUP TaskGroup
 -- @return #string
-function TASK:ReportDetails() --R2.1 fixed report. Now nicely formatted and contains the info required.
+function TASK:ReportDetails( TaskGroup ) --R2.1 fixed report. Now nicely formatted and contains the info required.
 
   local Report = REPORT:New():SetIndent( 3 )
   
@@ -1389,16 +1390,29 @@ function TASK:ReportDetails() --R2.1 fixed report. Now nicely formatted and cont
   end
   local Players = PlayerReport:Text()
 
-  local Detection = self.TaskInfo["Detection"] or "" 
-  local Changes = self.TaskInfo["Changes"] or ""
-
   Report:Add( "Task: " .. Name .. " - " .. State .. " - Detailed Report" )
-  Report:Add( "\n - Players:" )
+  Report:Add( " - Players:" )
   Report:AddIndent( Players )
-  Report:Add( "\n - Detection:" )
-  Report:AddIndent( Detection )
-  Report:Add( "\n - Detection Changes:" )
-  Report:AddIndent( Changes )
+  
+  for TaskInfoID, TaskInfo in pairs( self.TaskInfo ) do
+    
+    local TaskInfoIDText = string.format( " - %s: ", TaskInfoID )
+
+    if type(TaskInfo) == "string" then
+      Report:Add( TaskInfoIDText .. TaskInfo )
+    elseif type(TaskInfo) == "table" then
+      if TaskInfoID == "Coordinates" then
+        local FromCoordinate = TaskGroup:GetUnit(1):GetCoordinate()
+        Report:Add( TaskInfoIDText )
+        Report:AddIndent( TaskInfo:ToStringLL() )
+        Report:AddIndent( TaskInfo:ToStringMGRS() )
+        Report:AddIndent( TaskInfo:ToStringBRAA( FromCoordinate ) )
+        Report:AddIndent( TaskInfo:ToStringBULLS( TaskGroup:GetCoalition() ) )
+      else
+      end
+    end
+    
+  end
   
   return Report:Text()
 end
