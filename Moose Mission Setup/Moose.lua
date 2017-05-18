@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' )
-env.info( 'Moose Generation Timestamp: 20170518_1408' )
+env.info( 'Moose Generation Timestamp: 20170518_2056' )
 
 --- Various routines
 -- @module routines
@@ -31188,7 +31188,7 @@ do -- DETECTION_BASE
     end
     
     DetectedItem.Set = Set or SET_UNIT:New():FilterDeads():FilterCrashes()
-    DetectedItem.Index = DetectedItemIndex
+    DetectedItem.Index = DetectedItemIndex or self.DetectedItemCount
     DetectedItem.ItemID = ItemPrefix .. "." .. self.DetectedItemMax
     DetectedItem.ID = self.DetectedItemMax
     DetectedItem.Removed = false
