@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' )
-env.info( 'Moose Generation Timestamp: 20170518_0926' )
+env.info( 'Moose Generation Timestamp: 20170518_0928' )
 
 --- Various routines
 -- @module routines
@@ -41899,9 +41899,11 @@ do -- TASK_A2G_DISPATCHER
       -- TODO set menus using the HQ coordinator
       Mission:GetCommandCenter():SetMenu()
       
+      local TaskText = TaskReport:Text(", ")
+      
       for TaskGroupID, TaskGroup in pairs( self.SetGroup:GetSet() ) do
-        if not Mission:IsGroupAssigned(TaskGroup) then
-          Mission:GetCommandCenter():MessageToGroup( string.format( "Mission *%s* has tasks %s. Subscribe to a task using the Mission *Overlord* radio menu.", Mission:GetName(), TaskReport:Text(", ") ), TaskGroup )
+        if ( not Mission:IsGroupAssigned(TaskGroup) ) and TaskText ~= "" then
+          Mission:GetCommandCenter():MessageToGroup( string.format( "%s has tasks %s. Subscribe to a task using the radio menu.", Mission:GetName(), TaskText ), TaskGroup )
         end
       end
       
