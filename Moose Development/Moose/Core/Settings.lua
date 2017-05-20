@@ -123,6 +123,20 @@ do -- SETTINGS
     return self.A2GSystem == "MGRS"
   end
 
+  --- Sets A2G BRA
+  -- @param #SETTINGS self
+  -- @return #SETTINGS
+  function SETTINGS:SetA2G_BRA()
+    self.A2GSystem = "BRA"
+  end
+
+  --- Is BRA
+  -- @param #SETTINGS self
+  -- @return #boolean true if BRA
+  function SETTINGS:IsA2G_BRA()
+    return self.A2GSystem == "BRA"
+  end
+
   --- Sets A2A BRA
   -- @param #SETTINGS self
   -- @return #SETTINGS
@@ -165,6 +179,7 @@ do -- SETTINGS
     local A2GCoordinateMenu = MENU_MISSION:New( "A2G Coordinate System", self.SystemMenu )
   
     if self:IsA2G_LL() then
+      MENU_MISSION_COMMAND:New( "Activate BRA", A2GCoordinateMenu, self.A2GMenuSystem, self, "BRA" )
       MENU_MISSION_COMMAND:New( "Activate MGRS", A2GCoordinateMenu, self.A2GMenuSystem, self, "MGRS" )
       MENU_MISSION_COMMAND:New( "LL Accuracy 1", A2GCoordinateMenu, self.MenuLL_Accuracy, self, 1 )
       MENU_MISSION_COMMAND:New( "LL Accuracy 2", A2GCoordinateMenu, self.MenuLL_Accuracy, self, 2 )
@@ -174,12 +189,18 @@ do -- SETTINGS
     end
   
     if self:IsA2G_MGRS() then
+      MENU_MISSION_COMMAND:New( "Activate BRA", A2GCoordinateMenu, self.A2GMenuSystem, self, "BRA" )
       MENU_MISSION_COMMAND:New( "Activate LL", A2GCoordinateMenu, self.A2GMenuSystem, self, "LL" )
       MENU_MISSION_COMMAND:New( "MGRS Accuracy 1", A2GCoordinateMenu, self.MenuMGRS_Accuracy, self, 1 )
       MENU_MISSION_COMMAND:New( "MGRS Accuracy 2", A2GCoordinateMenu, self.MenuMGRS_Accuracy, self, 2 )
       MENU_MISSION_COMMAND:New( "MGRS Accuracy 3", A2GCoordinateMenu, self.MenuMGRS_Accuracy, self, 3 )
       MENU_MISSION_COMMAND:New( "MGRS Accuracy 4", A2GCoordinateMenu, self.MenuMGRS_Accuracy, self, 4 )
       MENU_MISSION_COMMAND:New( "MGRS Accuracy 5", A2GCoordinateMenu, self.MenuMGRS_Accuracy, self, 5 )
+    end
+
+    if self:IsA2G_BRA() then
+      MENU_MISSION_COMMAND:New( "Activate MGRS", A2GCoordinateMenu, self.A2GMenuSystem, self, "MGRS" )
+      MENU_MISSION_COMMAND:New( "Activate LL", A2GCoordinateMenu, self.A2GMenuSystem, self, "LL" )
     end
 
     local A2ACoordinateMenu = MENU_MISSION:New( "A2A Coordinate System", self.SystemMenu )
