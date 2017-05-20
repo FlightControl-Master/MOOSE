@@ -154,29 +154,21 @@ do -- ACT_ROUTE
   --- Get the routing text to be displayed.
   -- The route mode determines the text displayed.
   -- @param #ACT_ROUTE self
+  -- @param Core.Point#COORDINATE FromCoordinate
   -- @return #string
   function ACT_ROUTE:GetRouteText( FromCoordinate )
 
     local RouteText = ""
 
-    if self.Coordinate and self.RouteMode == "B" then
-      RouteText = "Route to " .. FromCoordinate:GetBRText( self.Coordinate ) .. " km."
+
+    if self.Coordinate then
+      RouteText = "Route to " .. self.Coordinate:ToString( FromCoordinate )
     end
     
-    if self.Coordinate and self.RouteMode == "C" then
-      RouteText = "Route to " .. self.Coordinate:ToString()
-    end
-    
-    if self.Zone and self.RouteMode == "B" then
-      local Coordinate = self.Zone:GetCoordinate()
-      RouteText = "Route to zone bearing " .. FromCoordinate:GetBRText( Coordinate ) .. " km."
+    if self.Zone then
+      RouteText = "Route to " .. self.Zone:GetCoordinate():ToString( FromCoordinate )
     end
 
-    if self.Zone and self.RouteMode == "C" then
-      local Coordinate = self.Zone:GetCoordinate()
-      RouteText = "Route to zone at " .. Coordinate:ToString()
-    end
-      
     return RouteText
   end
 
@@ -438,10 +430,7 @@ do -- ACT_ROUTE_ZONE
   -- @param #string To
   function ACT_ROUTE_ZONE:onafterReport( ProcessUnit, From, Event, To )
   
-    local ZoneVec2 = self.Zone:GetVec2()
-    local ZoneCoordinate = COORDINATE:New( ZoneVec2.x, ZoneVec2.y )
-    local TaskUnitVec2 = ProcessUnit:GetVec2()
-    local TaskUnitCoordinate = COORDINATE:New( TaskUnitVec2.x, TaskUnitVec2.y )
+    local TaskUnitCoordinate = ProcessUnit:GetCoordinate()
     local RouteText = self:GetRouteText( TaskUnitCoordinate )
     self:Message( RouteText )
   end

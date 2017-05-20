@@ -72,7 +72,7 @@ do -- TASK_A2A_DISPATCHER
     self.Mission = Mission
     
     self.Detection:FilterCategories( Unit.Category.AIRPLANE, Unit.Category.HELICOPTER )
-    self.Detection:InitDetectRadar( true )
+    --self.Detection:InitDetectRadar( true )
     self.Detection:SetDetectionInterval( 30 )
     
     self:AddTransition( "Started", "Assign", "Started" )
@@ -190,7 +190,11 @@ do -- TASK_A2A_DISPATCHER
             local DetectedItemsCount = DetectedSet:Count()
             local DetectedItemsTypes = DetectedSet:GetTypeNames()
             Task:SetInfo( "Targets", string.format( "%d of %s", DetectedItemsCount, DetectedItemsTypes ) ) 
-            Task:SetInfo( "Coordinates", Detection:GetDetectedItemCoordinate( DetectedIndex ) )
+            
+            local Coordinate = Detection:GetDetectedItemCoordinate( DetectedIndex )
+            Coordinate:SetModeA2A()
+            
+            Task:SetInfo( "Coordinates", Coordinate )
             Task:SetInfo( "Object", DetectedSet:GetFirst() )
             Mission:AddTask( Task )
           else

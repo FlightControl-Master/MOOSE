@@ -1403,9 +1403,10 @@ function TASK:ReportDetails( TaskGroup ) --R2.1 fixed report. Now nicely formatt
     elseif type(TaskInfo) == "table" then
       if TaskInfoID == "Coordinates" then
         local FromCoordinate = TaskGroup:GetUnit(1):GetCoordinate()
+        local ToCoordinate = TaskInfo -- Core.Point#COORDINATE
         Report:Add( TaskInfoIDText )
-        Report:AddIndent( TaskInfo:ToStringBRAA( FromCoordinate ) .. ", " .. TaskInfo:ToStringAspect( FromCoordinate ) )
-        Report:AddIndent( TaskInfo:ToStringBULLS( TaskGroup:GetCoalition() ) )
+        Report:AddIndent( ToCoordinate:ToStringBRAA( FromCoordinate ) .. ", " .. TaskInfo:ToStringAspect( FromCoordinate ) )
+        Report:AddIndent( ToCoordinate:ToStringBULLS( TaskGroup:GetCoalition() ) )
       else
       end
     end

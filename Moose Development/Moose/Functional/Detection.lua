@@ -1308,7 +1308,7 @@ do -- DETECTION_BASE
     --- Get the COORDINATE of a detection item using a given numeric index.
     -- @param #DETECTION_BASE self
     -- @param #number Index
-    -- @return Core.Point#COORDINATE Coordinate
+    -- @return Core.Point#COORDINATE
     function DETECTION_BASE:GetDetectedItemCoordinate( Index )
     
       -- If the Zone is set, return the coordinate of the Zone.
@@ -1317,14 +1317,15 @@ do -- DETECTION_BASE
 
       local DetectedZone = self:GetDetectedItemZone( Index )
       if DetectedZone then
-        local Coordinate = DetectedZone:GetCoordinate()
+        local Coordinate = DetectedZone:GetPointVec2()
         Coordinate:SetHeading(FirstUnit:GetHeading())
+        Coordinate:SetAlt( FirstUnit:GetAltitude() )
         return Coordinate
       end
       
       -- If no Zone is set, return the coordinate of the first unit in the Set
       if FirstUnit then
-        local Coordinate = FirstUnit:GetCoordinate()
+        local Coordinate = FirstUnit:GetPointVec3()
         FirstUnit:SetHeading(FirstUnit:GetHeading())
         return Coordinate
       end
