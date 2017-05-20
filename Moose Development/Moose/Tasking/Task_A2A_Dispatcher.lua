@@ -184,18 +184,8 @@ do -- TASK_A2A_DISPATCHER
 
           if Task then
             self.Tasks[DetectedID] = Task
-            Task:SetTargetZone( DetectedZone )
+            Task:SetTargetZone( DetectedZone, DetectedSet:GetFirst():GetAltitude(), DetectedSet:GetFirst():GetHeading() )
             Task:SetDispatcher( self )
-            Task:SetInfo( "ThreatLevel", "[" .. string.rep(  "■", DetectedSet:CalculateThreatLevelA2G() ) .. "]" )
-            local DetectedItemsCount = DetectedSet:Count()
-            local DetectedItemsTypes = DetectedSet:GetTypeNames()
-            Task:SetInfo( "Targets", string.format( "%d of %s", DetectedItemsCount, DetectedItemsTypes ) ) 
-            
-            local Coordinate = Detection:GetDetectedItemCoordinate( DetectedIndex )
-            Coordinate:SetModeA2A()
-            
-            Task:SetInfo( "Coordinates", Coordinate )
-            Task:SetInfo( "Object", DetectedSet:GetFirst() )
             Mission:AddTask( Task )
           else
             self:E("This should not happen")

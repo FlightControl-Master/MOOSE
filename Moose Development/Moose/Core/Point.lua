@@ -241,6 +241,7 @@ POINT_VEC3 = {
 -- @extends Core.Point#COORDINATE
 
 
+
 --- # POINT_VEC2 class, extends @{Point#COORDINATE}
 --
 -- The @{Point#POINT_VEC2} class defines a 2D point in the simulator. The height coordinate (if needed) will be the land height + an optional added height specified.
@@ -270,8 +271,6 @@ POINT_VEC3 = {
 POINT_VEC2 = {
   ClassName = "POINT_VEC2",
 }
-
-
 
 
 do -- COORDINATE
@@ -449,6 +448,8 @@ do -- COORDINATE
       else
         return ' at ' .. UTILS.Round( UTILS.MetersToFeet( self.y ), -3 )
       end
+    else
+      return ""
     end
   end
 
@@ -720,7 +721,8 @@ do -- COORDINATE
     local AngleRadians =  self:GetAngleRadians( DirectionVec3 )
     local Distance = FromCoordinate:Get2DDistance( self )
     local Altitude = self:GetAltitudeText()
-    return "BRAA: " .. self:GetBRText( AngleRadians, Distance, Settings )
+    local AspectText = self:ToStringAspect( FromCoordinate )
+    return "BRAA: " .. self:GetBRText( AngleRadians, Distance, Settings ) .. ( AspectText and ", " .. AspectText or "" )
   end
 
   --- Return a BULLS string from a COORDINATE to the BULLS of the coalition.
@@ -791,24 +793,26 @@ do -- COORDINATE
   --   * Uses default settings in COORDINATE.
   --   * Can be overridden if for a GROUP containing x clients, a menu was selected to override the default.
   -- @param #COORDINATE self
-  -- @param #COORDINATE FromCoordinate
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable
   -- @param Core.Settings#SETTINGS Settings
   -- @return #string The coordinate Text in the configured coordinate system.
-  function COORDINATE:ToString( FromCoordinate, Settings ) -- R2.2
+  function COORDINATE:ToString( Controllable, Settings ) -- R2.2
 
     local Settings = Settings or _SETTINGS
+    
+    local IsAir = Controllable and Controllable:IsAir() or false
 
-    if self:IsModeA2A() then
+    if IsAir then
+      local Coordinate = Controllable:GetCoordinate()
+      Coordinate:SetModeA2A()
       if Settings:IsA2A_BRA()  then
-        return self:ToStringBRAA( FromCoordinate, Settings )
+        return self:ToStringBRAA( Coordinate, Settings )
       end
   
       if Settings:IsA2A_BULLS() then
-        return self:ToStringBULLS( FromCoordinate, Settings )
+        return self:ToStringBULLS( Coordinate, Settings )
       end
-    end
-    
-    if self:IsModeA2G() then
+    else
       if Settings:IsA2G_LL()  then
         return self:ToStringLL( Settings )
       end
@@ -816,7 +820,7 @@ do -- COORDINATE
         return self:ToStringMGRS( Settings )
       end
     end
-
+    
     return nil
 
   end

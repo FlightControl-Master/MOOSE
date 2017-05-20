@@ -251,7 +251,7 @@ function ZONE_BASE:GetVec3( Height )
   
   local Vec2 = self:GetVec2()
 
-  local Vec3 = { x = Vec2.x, y = land.getHeight( self:GetVec2() ) + Height, z = Vec2.y }
+  local Vec3 = { x = Vec2.x, y = Height and Height or land.getHeight( self:GetVec2() ), z = Vec2.y }
 
   self:T2( { Vec3 } )
   

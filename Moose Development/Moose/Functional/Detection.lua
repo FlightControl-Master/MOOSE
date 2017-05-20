@@ -1359,7 +1359,7 @@ do -- DETECTION_BASE
   -- @param #DETECTION_BASE self
   -- @param Index
   -- @return #string
-  function DETECTION_BASE:DetectedItemMenu( Index )
+  function DETECTION_BASE:DetectedItemMenu( Index, AttackGroup )
     self:F( Index )
     return nil
   end
@@ -1369,7 +1369,7 @@ do -- DETECTION_BASE
   -- @param #DETECTION_BASE self
   -- @param Index
   -- @return #string
-  function DETECTION_BASE:DetectedItemReportSummary( Index )
+  function DETECTION_BASE:DetectedItemReportSummary( Index, AttackGroup )
     self:F( Index )
     return nil
   end
@@ -1377,7 +1377,7 @@ do -- DETECTION_BASE
   --- Report detailed of a detectedion result.
   -- @param #DETECTION_BASE self
   -- @return #string
-  function DETECTION_BASE:DetectedReportDetailed()
+  function DETECTION_BASE:DetectedReportDetailed( AttackGroup )
     self:F()
     return nil
   end
@@ -1574,7 +1574,7 @@ do -- DETECTION_UNITS
   -- @param #DETECTION_UNITS self
   -- @param Index
   -- @return #string
-  function DETECTION_UNITS:DetectedItemMenu( Index )
+  function DETECTION_UNITS:DetectedItemMenu( Index, AttackGroup )
     self:F( Index )
   
     local DetectedItem = self:GetDetectedItem( Index )
@@ -1593,7 +1593,7 @@ do -- DETECTION_UNITS
         self:T(DetectedItemUnit)
   
         local DetectedItemCoordinate = DetectedItemUnit:GetCoordinate()
-        local DetectedItemCoordText = DetectedItemCoordinate:ToString()
+        local DetectedItemCoordText = DetectedItemCoordinate:ToString( AttackGroup )
  
         ReportSummary = string.format( 
           "%s - %s",
@@ -1612,7 +1612,7 @@ do -- DETECTION_UNITS
   -- @param #DETECTION_UNITS self
   -- @param Index
   -- @return #string
-  function DETECTION_UNITS:DetectedItemReportSummary( Index )
+  function DETECTION_UNITS:DetectedItemReportSummary( Index, AttackGroup )
     self:F( { Index, self.DetectedItems } )
   
     local DetectedItem = self:GetDetectedItem( Index )
@@ -1654,7 +1654,7 @@ do -- DETECTION_UNITS
         end
         
         local DetectedItemCoordinate = DetectedItemUnit:GetCoordinate()
-        local DetectedItemCoordText = DetectedItemCoordinate:ToString()
+        local DetectedItemCoordText = DetectedItemCoordinate:ToString( AttackGroup )
  
         local ThreatLevelA2G = DetectedItemUnit:GetThreatLevel( DetectedItem )
         
@@ -1679,13 +1679,13 @@ do -- DETECTION_UNITS
   --- Report detailed of a detection result.
   -- @param #DETECTION_UNITS self
   -- @return #string
-  function DETECTION_UNITS:DetectedReportDetailed()
+  function DETECTION_UNITS:DetectedReportDetailed( AttackGroup )
     self:F()
     
     local Report = REPORT:New( "Detected units:" )
     for DetectedItemID, DetectedItem in pairs( self.DetectedItems ) do
       local DetectedItem = DetectedItem -- #DETECTION_BASE.DetectedItem
-      local ReportSummary = self:DetectedItemReportSummary( DetectedItemID )
+      local ReportSummary = self:DetectedItemReportSummary( DetectedItemID, AttackGroup )
       Report:Add( ReportSummary )
     end
     
@@ -1844,7 +1844,7 @@ do -- DETECTION_TYPES
   -- @param #DETECTION_TYPES self
   -- @param Index
   -- @return #string
-  function DETECTION_TYPES:DetectedItemMenu( DetectedTypeName )
+  function DETECTION_TYPES:DetectedItemMenu( DetectedTypeName, AttackGroup )
     self:F( DetectedTypeName )
   
     local DetectedItem = self:GetDetectedItem( DetectedTypeName )
@@ -1857,7 +1857,7 @@ do -- DETECTION_TYPES
       local DetectedItemUnit = DetectedSet:GetFirst()
 
       local DetectedItemCoordinate = DetectedItemUnit:GetCoordinate()
-      local DetectedItemCoordText = DetectedItemCoordinate:ToString()
+      local DetectedItemCoordText = DetectedItemCoordinate:ToString( AttackGroup )
       
       self:E( { DetectedItemID,
         DetectedItemCoordText } )
@@ -1877,7 +1877,7 @@ do -- DETECTION_TYPES
   -- @param #DETECTION_TYPES self
   -- @param Index
   -- @return #string
-  function DETECTION_TYPES:DetectedItemReportSummary( DetectedTypeName )
+  function DETECTION_TYPES:DetectedItemReportSummary( DetectedTypeName, AttackGroup )
     self:F( DetectedTypeName )
   
     local DetectedItem = self:GetDetectedItem( DetectedTypeName )
@@ -1894,7 +1894,7 @@ do -- DETECTION_TYPES
       local DetectedItemUnit = DetectedSet:GetFirst()
 
       local DetectedItemCoordinate = DetectedItemUnit:GetCoordinate()
-      local DetectedItemCoordText = DetectedItemCoordinate:ToString()
+      local DetectedItemCoordText = DetectedItemCoordinate:ToString( AttackGroup )
 
       local ReportSummary = string.format( 
         "%s - %s - Threat:[%s](%2d) - %2d of %s", 
@@ -1914,13 +1914,13 @@ do -- DETECTION_TYPES
   --- Report detailed of a detection result.
   -- @param #DETECTION_TYPES self
   -- @return #string
-  function DETECTION_TYPES:DetectedReportDetailed()
+  function DETECTION_TYPES:DetectedReportDetailed( AttackGroup )
     self:F()
     
     local Report = REPORT:New( "Detected types:" )
     for DetectedItemTypeName, DetectedItem in pairs( self.DetectedItems ) do
       local DetectedItem = DetectedItem -- #DETECTION_BASE.DetectedItem
-      local ReportSummary = self:DetectedItemReportSummary( DetectedItemTypeName )
+      local ReportSummary = self:DetectedItemReportSummary( DetectedItemTypeName, AttackGroup )
       Report:Add( ReportSummary )
     end
     
@@ -2001,7 +2001,7 @@ do -- DETECTION_AREAS
   -- @param #DETECTION_AREAS self
   -- @param Index
   -- @return #string
-  function DETECTION_AREAS:DetectedItemMenu( Index )
+  function DETECTION_AREAS:DetectedItemMenu( Index, AttackGroup )
     self:F( Index )
   
     local DetectedItem = self:GetDetectedItem( Index )
@@ -2013,7 +2013,7 @@ do -- DETECTION_AREAS
       
       local DetectedZone = self:GetDetectedItemZone( Index )
       local DetectedItemCoordinate = DetectedZone:GetCoordinate()
-      local DetectedItemCoordText = DetectedItemCoordinate:ToString()
+      local DetectedItemCoordText = DetectedItemCoordinate:ToString( AttackGroup )
 
       local ReportSummary = string.format( 
         "%s - %s", 
@@ -2031,7 +2031,7 @@ do -- DETECTION_AREAS
   -- @param #DETECTION_AREAS self
   -- @param Index
   -- @return #string
-  function DETECTION_AREAS:DetectedItemReportSummary( Index )
+  function DETECTION_AREAS:DetectedItemReportSummary( Index, AttackGroup )
     self:F( Index )
   
     local DetectedItem = self:GetDetectedItem( Index )
@@ -2043,7 +2043,7 @@ do -- DETECTION_AREAS
       
       local DetectedZone = self:GetDetectedItemZone( Index )
       local DetectedItemCoordinate = DetectedZone:GetCoordinate()
-      local DetectedItemCoordText = DetectedItemCoordinate:ToString()
+      local DetectedItemCoordText = DetectedItemCoordinate:ToString( AttackGroup )
 
       local ThreatLevelA2G = self:GetTreatLevelA2G( DetectedItem )
       local DetectedItemsCount = DetectedSet:Count()
@@ -2068,13 +2068,13 @@ do -- DETECTION_AREAS
   --- Report detailed of a detection result.
   -- @param #DETECTION_AREAS self
   -- @return #string
-  function DETECTION_AREAS:DetectedReportDetailed() --R2.1  Fixed missing report
+  function DETECTION_AREAS:DetectedReportDetailed( AttackGroup) --R2.1  Fixed missing report
     self:F()
     
     local Report = REPORT:New( "Detected areas:" )
     for DetectedItemIndex, DetectedItem in pairs( self.DetectedItems ) do
       local DetectedItem = DetectedItem -- #DETECTION_BASE.DetectedItem
-      local ReportSummary = self:DetectedItemReportSummary( DetectedItemIndex )
+      local ReportSummary = self:DetectedItemReportSummary( DetectedItemIndex, AttackGroup )
       Report:Add( ReportSummary )
     end
     

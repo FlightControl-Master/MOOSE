@@ -154,19 +154,20 @@ do -- ACT_ROUTE
   --- Get the routing text to be displayed.
   -- The route mode determines the text displayed.
   -- @param #ACT_ROUTE self
-  -- @param Core.Point#COORDINATE FromCoordinate
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable
   -- @return #string
-  function ACT_ROUTE:GetRouteText( FromCoordinate )
+  function ACT_ROUTE:GetRouteText( Controllable )
 
     local RouteText = ""
 
-
     if self.Coordinate then
-      RouteText = "Route to " .. self.Coordinate:ToString( FromCoordinate )
+      RouteText = "Route to " .. self.Coordinate:ToString( Controllable )
     end
     
     if self.Zone then
-      RouteText = "Route to " .. self.Zone:GetCoordinate():ToString( FromCoordinate )
+      local Coordinate = self.Zone:GetPointVec3( self.Altitude )
+      Coordinate:SetHeading( self.Heading )
+      RouteText = "Route to zone " .. Coordinate:ToString( Controllable )
     end
 
     return RouteText
@@ -395,8 +396,12 @@ do -- ACT_ROUTE_ZONE
   --- Set Zone
   -- @param #ACT_ROUTE_ZONE self
   -- @param Core.Zone#ZONE_BASE Zone The Zone object where to route to.
-  function ACT_ROUTE_ZONE:SetZone( Zone )
+  -- @param #number Altitude
+  -- @param #number Heading
+  function ACT_ROUTE_ZONE:SetZone( Zone, Altitude, Heading ) -- R2.2 Added altitude and heading
     self.Zone = Zone
+    self.Altitude = Altitude
+    self.Heading = Heading
   end  
 
   --- Get Zone
@@ -429,9 +434,9 @@ do -- ACT_ROUTE_ZONE
   -- @param #string From
   -- @param #string To
   function ACT_ROUTE_ZONE:onafterReport( ProcessUnit, From, Event, To )
+    self:E( { ProcessUnit = ProcessUnit } )
   
-    local TaskUnitCoordinate = ProcessUnit:GetCoordinate()
-    local RouteText = self:GetRouteText( TaskUnitCoordinate )
+    local RouteText = self:GetRouteText( ProcessUnit )
     self:Message( RouteText )
   end
 

@@ -538,7 +538,7 @@ do -- DESIGNATE
           
           for Index, DetectedItemData in pairs( DetectedItems ) do
             
-            local Report = self.Detection:DetectedItemReportSummary( Index )
+            local Report = self.Detection:DetectedItemReportSummary( Index, AttackGroup )
             DetectedReport:Add(" - " .. Report)
           end
           
@@ -639,7 +639,7 @@ do -- DESIGNATE
         
         for Index, DetectedItemData in pairs( DetectedItems ) do
           
-          local Report = self.Detection:DetectedItemMenu( Index )
+          local Report = self.Detection:DetectedItemMenu( Index, AttackGroup )
           
           if not self.Designating[Index] then
             local DetectedMenu = MENU_GROUP:New( AttackGroup, Report, DesignateMenu )
