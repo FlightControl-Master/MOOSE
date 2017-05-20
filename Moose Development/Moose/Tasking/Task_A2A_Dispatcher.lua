@@ -129,11 +129,11 @@ do -- TASK_A2A_DISPATCHER
   -- @param #boolean DetectedItemID
   -- @param #boolean DetectedItemChange
   -- @return Tasking.Task#TASK
-  function TASK_A2A_DISPATCHER:EvaluateRemoveTask( Mission, Task, DetectedItemID, DetectedItemChanged )
+  function TASK_A2A_DISPATCHER:EvaluateRemoveTask( Mission, Task, DetectedItem, DetectedItemID, DetectedItemChanged )
     
     
     if Task then
-      local FriendliesNearBy = self.Detection:IsFriendliesNearBy( DetectedItemID )
+      local FriendliesNearBy = self.Detection:IsFriendliesNearBy( DetectedItem )
       
       if Task:IsStatePlanned() and DetectedItemChanged == true and FriendliesNearBy then
         self:E( "Removing Tasking: " .. Task:GetTaskName() )
@@ -177,7 +177,7 @@ do -- TASK_A2A_DISPATCHER
         local DetectedItemChanged = DetectedItem.Changed
         
         local Task = self.Tasks[DetectedID]
-        Task = self:EvaluateRemoveTask( Mission, Task, DetectedID, DetectedItemChanged ) -- Task will be removed if it is planned and changed.
+        Task = self:EvaluateRemoveTask( Mission, Task, DetectedItem, DetectedID, DetectedItemChanged ) -- Task will be removed if it is planned and changed.
 
         -- Evaluate INTERCEPT
         if not Task then
