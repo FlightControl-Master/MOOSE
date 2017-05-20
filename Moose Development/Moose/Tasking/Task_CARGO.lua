@@ -327,6 +327,37 @@ do -- TASK_CARGO
       self:__RouteToDeploy( 1.0, DeployZone )
     end
     
+    --- ¤TASL_CARGP
+    --@return SmokeCole
+    function TASK_CARGO:GetSmokeColor ()
+      return self.SmokeColor
+    end
+    
+    ---#TASK_CARGO
+    --@param Color Might be Blue, Red or Green
+    function TASK_CARGO:SetSmokeColor(Color)
+       -- Makes sure Coloe is set
+       if Color == nil then
+          Color = "SmokeRed()" -- Make sure a default color is exist
+       else
+        local ValidColors = {"Red", "Blue", "Green"}
+        for index,value in ipairs (ValidColors) do
+          if value == Color then
+            self.SmokeColor = value
+            break
+          end
+          -- Color is invalid, set it green as signal
+          self.SmokeColor = "SmokeGreen()"
+        end
+       end
+       self.SmokeColor = Color
+    end
+    
+    ---
+    --#TASK_CAROG_TRANSPORT self
+    --#Wrapper.Unit#UNIT
+
+    
     --- Route to Cargo
     -- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
@@ -353,10 +384,16 @@ do -- TASK_CARGO
     -- @param Tasking.Task_Cargo#TASK_CARGO Task
     function Fsm:onafterArriveAtPickup( TaskUnit, Task )
       self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
-      
       if self.Cargo:IsAlive() then
         if TaskUnit:IsAir() then
-          self.Cargo.CargoObject:GetUnit(1):SmokeRed()
+          local ColorToUse = TASK_CARGO:GetSmokeColor()
+          if ColorToUse == "Green" then
+            self.Cargo.CargoObject:GetUnit(1):SmokeGreen()
+          elseif ColorToUse == "Blue" then
+            self.Cargo.CargoObject:GetUnit(1):SmokeBlue()
+          else
+             self.Cargo.CargoObject:GetUnit(1):SmokeRed()
+          end
           self:__Land( -0.1, "Pickup" )
         else
           self:__SelectAction( -0.1 )
@@ -910,6 +947,11 @@ do -- TASK_CARGO_TRANSPORT
 
     return CargoDeployed
   end
+  
+      
+    ---
+  
+  
   
 
 end
