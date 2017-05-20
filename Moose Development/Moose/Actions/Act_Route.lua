@@ -346,8 +346,7 @@ do -- ACT_ROUTE_POINT
   -- @param #string To
   function ACT_ROUTE_POINT:onafterReport( ProcessUnit, From, Event, To )
   
-    local TaskUnitCoordinate = ProcessUnit:GetCoordinate()
-    local RouteText = self:GetRouteText( TaskUnitCoordinate )
+    local RouteText = self:GetRouteText( ProcessUnit )
     self:Message( RouteText )
   end
 

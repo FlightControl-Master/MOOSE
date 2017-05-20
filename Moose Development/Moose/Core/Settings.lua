@@ -160,10 +160,11 @@ do -- SETTINGS
       self.SystemMenu = nil
     end
   
-    self.SystemMenu = MENU_MISSION:New( "Coordinate Settings" )
+    self.SystemMenu = MENU_MISSION:New( "Settings" )
+    
     local A2GCoordinateMenu = MENU_MISSION:New( "A2G Coordinate System", self.SystemMenu )
   
-    if self:IsA2GLL() then
+    if self:IsA2G_LL() then
       MENU_MISSION_COMMAND:New( "Activate MGRS", A2GCoordinateMenu, self.A2GMenuSystem, self, "MGRS" )
       MENU_MISSION_COMMAND:New( "LL Accuracy 1", A2GCoordinateMenu, self.MenuLL_Accuracy, self, 1 )
       MENU_MISSION_COMMAND:New( "LL Accuracy 2", A2GCoordinateMenu, self.MenuLL_Accuracy, self, 2 )
@@ -172,7 +173,7 @@ do -- SETTINGS
       MENU_MISSION_COMMAND:New( "LL Decimal Off", A2GCoordinateMenu, self.MenuLL_DMS, self, false )
     end
   
-    if self:IsA2GMGRS() then
+    if self:IsA2G_MGRS() then
       MENU_MISSION_COMMAND:New( "Activate LL", A2GCoordinateMenu, self.A2GMenuSystem, self, "LL" )
       MENU_MISSION_COMMAND:New( "MGRS Accuracy 1", A2GCoordinateMenu, self.MenuMGRS_Accuracy, self, 1 )
       MENU_MISSION_COMMAND:New( "MGRS Accuracy 2", A2GCoordinateMenu, self.MenuMGRS_Accuracy, self, 2 )
@@ -183,12 +184,12 @@ do -- SETTINGS
 
     local A2ACoordinateMenu = MENU_MISSION:New( "A2A Coordinate System", self.SystemMenu )
 
-    if self:IsA2ABULLS() then
-      MENU_MISSION_COMMAND:New( "Activate BRA", A2GCoordinateMenu, self.A2AMenuSystem, self, "BRA" )
+    if self:IsA2A_BULLS() then
+      MENU_MISSION_COMMAND:New( "Activate BRA", A2ACoordinateMenu, self.A2AMenuSystem, self, "BRA" )
     end
   
-    if self:IsA2ABRA() then
-      MENU_MISSION_COMMAND:New( "Activate BULLS", A2GCoordinateMenu, self.A2AMenuSystem, self, "BULLS" )
+    if self:IsA2A_BRA() then
+      MENU_MISSION_COMMAND:New( "Activate BULLS", A2ACoordinateMenu, self.A2AMenuSystem, self, "BULLS" )
     end
     
     return self
@@ -197,30 +198,30 @@ do -- SETTINGS
   --- @param #SETTINGS self
   function SETTINGS:A2GMenuSystem( A2GSystem )
     self.A2GSystem = A2GSystem
-    self:CoordinateMenu()
+    self:SettingsMenu()
   end
 
   --- @param #SETTINGS self
   function SETTINGS:A2AMenuSystem( A2ASystem )
     self.A2ASystem = A2ASystem
-    self:CoordinateMenu()
+    self:SettingsMenu()
   end
 
   --- @param #SETTINGS self
   function SETTINGS:MenuLL_Accuracy( LL_Accuracy )
     self.LL_Accuracy = LL_Accuracy
-    self:CoordinateMenu()
+    self:SettingsMenu()
   end
 
   --- @param #SETTINGS self
   function SETTINGS:MenuLL_DMS( LL_DMS )
     self.LL_DMS = LL_DMS
-    self:CoordinateMenu()
+    self:SettingsMenu()
   end
   --- @param #SETTINGS self
   function SETTINGS:MenuMGRS_Accuracy( MGRS_Accuracy )
     self.MGRS_Accuracy = MGRS_Accuracy
-    self:CoordinateMenu()
+    self:SettingsMenu()
   end
 
 end

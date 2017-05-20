@@ -2217,4 +2217,22 @@ function CONTROLLABLE:WayPointExecute( WayPoint, WaitTime )
   return self
 end
 
+--- Returns if the Controllable contains AirPlanes.
+-- @param #CONTROLLABLE self
+-- @return #boolean true if Controllable contains AirPlanes.
+function CONTROLLABLE:IsAirPlane()
+  self:F2()
+
+  local DCSObject = self:GetDCSObject()
+
+  if DCSObject then
+    local Category = DCSObject:getCategory()
+    self:T2( Category )
+    return Category == Unit.Category.AIRPLANE
+  end
+
+  return nil
+end
+
+
 -- Message APIs

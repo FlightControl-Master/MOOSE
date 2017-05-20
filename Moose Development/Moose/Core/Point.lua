@@ -797,10 +797,12 @@ do -- COORDINATE
   -- @param Core.Settings#SETTINGS Settings
   -- @return #string The coordinate Text in the configured coordinate system.
   function COORDINATE:ToString( Controllable, Settings ) -- R2.2
+  
+    self:E( { Controllable = Controllable } )
 
     local Settings = Settings or _SETTINGS
     
-    local IsAir = Controllable and Controllable:IsAir() or false
+    local IsAir = Controllable and Controllable:IsAirPlane() or false
 
     if IsAir then
       local Coordinate = Controllable:GetCoordinate()
