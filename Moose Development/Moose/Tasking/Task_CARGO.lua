@@ -338,7 +338,7 @@ do -- TASK_CARGO
     function TASK_CARGO:SetSmokeColor(Color)
        -- Makes sure Coloe is set
        if Color == nil then
-          Color = "SmokeRed()" -- Make sure a default color is exist
+          Color = "Red" -- Make sure a default color is exist
        else
         local ValidColors = {"Red", "Blue", "Green"}
         for index,value in ipairs (ValidColors) do
@@ -347,7 +347,8 @@ do -- TASK_CARGO
             break
           end
           -- Color is invalid, set it green as signal
-          self.SmokeColor = "SmokeGreen()"
+          self.SmokeColor = "Green"
+          BASE:E("Invalid color is set using GREEN")
         end
        end
        self.SmokeColor = Color
