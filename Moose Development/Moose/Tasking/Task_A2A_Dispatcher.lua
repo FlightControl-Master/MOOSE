@@ -105,8 +105,9 @@ do -- TASK_A2A_DISPATCHER
     local DetectedZone = DetectedItem.Zone
 
     -- Put here the intercept logic....
+    local FriendliesNearBy = self.Detection:IsFriendliesNearBy( DetectedItem )
 
-    if true then
+    if not FriendliesNearBy == true then
 
       -- Here we're doing something advanced... We're copying the DetectedSet, but making a new Set only with SEADable Radar units in it.
       local TargetSetUnit = SET_UNIT:New()
@@ -130,8 +131,11 @@ do -- TASK_A2A_DISPATCHER
   -- @return Tasking.Task#TASK
   function TASK_A2A_DISPATCHER:EvaluateRemoveTask( Mission, Task, DetectedItemID, DetectedItemChanged )
     
+    
     if Task then
-      if Task:IsStatePlanned() and DetectedItemChanged == true then
+      local FriendliesNearBy = self.Detection:IsFriendliesNearBy( DetectedItemID )
+      
+      if Task:IsStatePlanned() and DetectedItemChanged == true and FriendliesNearBy then
         self:E( "Removing Tasking: " .. Task:GetTaskName() )
         Mission:RemoveTask( Task )
         self.Tasks[DetectedItemID] = nil

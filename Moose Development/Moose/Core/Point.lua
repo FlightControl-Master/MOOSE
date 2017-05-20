@@ -709,7 +709,7 @@ do -- COORDINATE
     local DirectionVec3 = self:GetDirectionVec3( FromCoordinate )
     local AngleRadians =  self:GetAngleRadians( DirectionVec3 )
     local Distance = self:Get2DDistance( FromCoordinate )
-    return "BR: " .. self:GetBRText( AngleRadians, Distance, Settings )
+    return "BR, " .. self:GetBRText( AngleRadians, Distance, Settings )
   end
 
   --- Return a BRAA string from a COORDINATE to the COORDINATE.
@@ -721,8 +721,7 @@ do -- COORDINATE
     local AngleRadians =  self:GetAngleRadians( DirectionVec3 )
     local Distance = FromCoordinate:Get2DDistance( self )
     local Altitude = self:GetAltitudeText()
-    local AspectText = self:ToStringAspect( FromCoordinate )
-    return "BRAA: " .. self:GetBRText( AngleRadians, Distance, Settings ) .. ( AspectText and ", " .. AspectText or "" )
+    return "BRA, " .. self:GetBRText( AngleRadians, Distance, Settings )
   end
 
   --- Return a BULLS string from a COORDINATE to the BULLS of the coalition.
@@ -735,7 +734,7 @@ do -- COORDINATE
     local AngleRadians =  self:GetAngleRadians( DirectionVec3 )
     local Distance = self:Get2DDistance( TargetCoordinate )
     local Altitude = self:GetAltitudeText()
-    return "BULLS: " .. self:GetBRText( AngleRadians, Distance, Settings )
+    return "BULLS, " .. self:GetBRText( AngleRadians, Distance, Settings )
   end
 
   --- Return an aspect string from a COORDINATE to the Angle of the object.
@@ -774,7 +773,7 @@ do -- COORDINATE
     local LL_Accuracy = Settings and Settings.LL_Accuracy or _SETTINGS.LL_Accuracy
     local LL_DMS = Settings and Settings.LL_DMS or _SETTINGS.LL_DMS
     local lat, lon = coord.LOtoLL( self:GetVec3() )
-    return "LL: " .. UTILS.tostringLL( lat, lon, LL_Accuracy, LL_DMS )
+    return "LL, " .. UTILS.tostringLL( lat, lon, LL_Accuracy, LL_DMS )
   end
 
   --- Provides a MGRS string
@@ -786,7 +785,7 @@ do -- COORDINATE
     local MGRS_Accuracy = Settings and Settings.MGRS_Accuracy or _SETTINGS.MGRS_Accuracy
     local lat, lon = coord.LOtoLL( self:GetVec3() )
     local MGRS = coord.LLtoMGRS( lat, lon )
-    return "MGRS: " .. UTILS.tostringMGRS( MGRS, MGRS_Accuracy )
+    return "MGRS, " .. UTILS.tostringMGRS( MGRS, MGRS_Accuracy )
   end
 
   --- Provides a coordinate string of the point, based on a coordinate format system:

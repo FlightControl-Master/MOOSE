@@ -161,13 +161,13 @@ do -- ACT_ROUTE
     local RouteText = ""
 
     if self.Coordinate then
-      RouteText = "Route to " .. self.Coordinate:ToString( Controllable )
+      RouteText = self.Coordinate:ToString( Controllable )
     end
     
     if self.Zone then
       local Coordinate = self.Zone:GetPointVec3( self.Altitude )
       Coordinate:SetHeading( self.Heading )
-      RouteText = "Route to zone " .. Coordinate:ToString( Controllable )
+      RouteText = Coordinate:ToString( Controllable )
     end
 
     return RouteText

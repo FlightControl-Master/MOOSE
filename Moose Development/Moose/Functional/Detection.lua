@@ -239,6 +239,11 @@ do -- DETECTION_BASE
   --      
   --      -- Start the Detection.
   --      Detection:Start()
+  --      
+  -- ## Detection of Friendlies Nearby
+  -- 
+  -- Use the method @{Detection#DETECTION_BASE.SetFriendliesRange}() to set the range what will indicate when friendlies are nearby
+  -- a DetectedItem. The default range is 6000 meters. For air detections, it is advisory to use about 30.000 meters.
   -- 
   -- ## DETECTION_BASE is a Finite State Machine
   --
@@ -329,6 +334,8 @@ do -- DETECTION_BASE
       Unit.Category.SHIP,
       Unit.Category.STRUCTURE
     } )
+    
+    self:SetFriendlesRange( 6000 )
   
     -- Create FSM transitions.
     
@@ -879,6 +886,22 @@ do -- DETECTION_BASE
     end
   
   end
+
+  do -- Friendlies Radius
+
+    --- Set the radius in meters to validate if friendlies are nearby.
+    -- @param #DETECTION_BASE self
+    -- @param #number FriendliesRange Radius to use when checking if Friendlies are nearby.
+    -- @return #DETECTION_BASE self
+    function DETECTION_BASE:SetFriendlesRange( FriendliesRange ) --R2.2 Friendlies range
+      self:F2()
+    
+      self.FriendliesRange = FriendliesRange
+      
+      return self
+    end
+  
+  end
   
   do -- Accept / Reject detected units
   
@@ -1071,7 +1094,7 @@ do -- DETECTION_BASE
          id = world.VolumeType.SPHERE,
           params = {
            point = DetectedUnit:GetVec3(),
-           radius = 6000,
+           radius = self.FriendliesRadius,
           }
           
          }
@@ -1411,7 +1434,7 @@ end
 
 do -- DETECTION_UNITS
 
-  --- # 2) DETECTION_UNITS class, extends @{Detection#DETECTION_BASE}
+  --- # DETECTION_UNITS class, extends @{Detection#DETECTION_BASE}
   -- 
   -- The DETECTION_UNITS class will detect units within the battle zone.
   -- It will build a DetectedItems list filled with DetectedItems. Each DetectedItem will contain a field Set, which contains a @{Set#SET_UNIT} containing ONE @{UNIT} object reference.

@@ -2226,8 +2226,8 @@ function CONTROLLABLE:IsAirPlane()
   local DCSObject = self:GetDCSObject()
 
   if DCSObject then
-    local Category = DCSObject:getCategory()
-    self:T2( Category )
+    local Category = DCSObject:getDesc().category
+    self:T( Category )
     return Category == Unit.Category.AIRPLANE
   end
 
