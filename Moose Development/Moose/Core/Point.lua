@@ -458,7 +458,7 @@ do -- COORDINATE
     local Settings = Settings or _SETTINGS
     if Altitude ~= 0 then
       if Settings:IsMetric() then
-        return " at" .. UTILS.Round( self.y, -3 ) .. " meters"
+        return " at " .. UTILS.Round( self.y, -3 ) .. " meters"
       else
         return " at " .. UTILS.Round( UTILS.MetersToFeet( self.y ), -3 ) .. " feet"
       end
@@ -759,7 +759,7 @@ do -- COORDINATE
   -- @param #COORDINATE TargetCoordinate The target COORDINATE.
   -- @return #string The BR text.
   function COORDINATE:ToStringBR( FromCoordinate, Settings )
-    local DirectionVec3 = self:GetDirectionVec3( FromCoordinate )
+    local DirectionVec3 = FromCoordinate:GetDirectionVec3( self )
     local AngleRadians =  self:GetAngleRadians( DirectionVec3 )
     local Distance = self:Get2DDistance( FromCoordinate )
     return "BR, " .. self:GetBRText( AngleRadians, Distance, Settings )
@@ -769,7 +769,7 @@ do -- COORDINATE
   -- @param #COORDINATE self
   -- @param #COORDINATE TargetCoordinate The target COORDINATE.
   -- @return #string The BR text.
-  function COORDINATE:ToStringBRAA( FromCoordinate, Settings )
+  function COORDINATE:ToStringBRA( FromCoordinate, Settings )
     local DirectionVec3 = FromCoordinate:GetDirectionVec3( self )
     local AngleRadians =  self:GetAngleRadians( DirectionVec3 )
     local Distance = FromCoordinate:Get2DDistance( self )
@@ -860,7 +860,7 @@ do -- COORDINATE
       if Settings:IsA2A_BRA()  then
         local Coordinate = Controllable:GetCoordinate()
         Coordinate:SetModeA2A()
-        return self:ToStringBRAA( Coordinate, Settings ) 
+        return self:ToStringBRA( Coordinate, Settings ) 
       end
   
       if Settings:IsA2A_BULLS() then
@@ -872,7 +872,7 @@ do -- COORDINATE
       if Settings:IsA2G_BRA()  then
         local Coordinate = Controllable:GetCoordinate()
         Coordinate:SetModeA2A()
-        return Controllable and self:ToStringBRAA( Coordinate, Settings ) or self:ToStringMGRS( Settings )
+        return Controllable and self:ToStringBR( Coordinate, Settings ) or self:ToStringMGRS( Settings )
       end
       if Settings:IsA2G_LL()  then
         return self:ToStringLL( Settings )

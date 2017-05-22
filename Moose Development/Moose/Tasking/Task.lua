@@ -1405,7 +1405,7 @@ function TASK:ReportDetails( TaskGroup ) --R2.1 fixed report. Now nicely formatt
         local FromCoordinate = TaskGroup:GetUnit(1):GetCoordinate()
         local ToCoordinate = TaskInfo -- Core.Point#COORDINATE
         Report:Add( TaskInfoIDText )
-        Report:AddIndent( ToCoordinate:ToStringBRAA( FromCoordinate ) .. ", " .. TaskInfo:ToStringAspect( FromCoordinate ) )
+        Report:AddIndent( ToCoordinate:ToStringBRA( FromCoordinate ) .. ", " .. TaskInfo:ToStringAspect( FromCoordinate ) )
         Report:AddIndent( ToCoordinate:ToStringBULLS( TaskGroup:GetCoalition() ) )
       else
       end

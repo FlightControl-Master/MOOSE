@@ -335,7 +335,7 @@ do -- DETECTION_BASE
       Unit.Category.STRUCTURE
     } )
     
-    self:SetFriendlesRange( 6000 )
+    self:SetFriendliesRange( 6000 )
   
     -- Create FSM transitions.
     
@@ -893,7 +893,7 @@ do -- DETECTION_BASE
     -- @param #DETECTION_BASE self
     -- @param #number FriendliesRange Radius to use when checking if Friendlies are nearby.
     -- @return #DETECTION_BASE self
-    function DETECTION_BASE:SetFriendlesRange( FriendliesRange ) --R2.2 Friendlies range
+    function DETECTION_BASE:SetFriendliesRange( FriendliesRange ) --R2.2 Friendlies range
       self:F2()
     
       self.FriendliesRange = FriendliesRange
@@ -1094,7 +1094,7 @@ do -- DETECTION_BASE
          id = world.VolumeType.SPHERE,
           params = {
            point = DetectedUnit:GetVec3(),
-           radius = self.FriendliesRadius,
+           radius = self.FriendliesRange,
           }
           
          }

@@ -101,7 +101,7 @@ function DATABASE:New()
   self:HandleEvent( EVENTS.DeleteCargo )
   
   -- Follow alive players and clients
---  self:HandleEvent( EVENTS.PlayerEnterUnit, self._EventOnPlayerEnterUnit )
+  self:HandleEvent( EVENTS.PlayerEnterUnit, self._EventOnPlayerEnterUnit )
   self:HandleEvent( EVENTS.PlayerLeaveUnit, self._EventOnPlayerLeaveUnit )
   
   self:_RegisterTemplates()
@@ -118,7 +118,7 @@ function DATABASE:New()
   
     local CoalitionsData = { AlivePlayersRed = coalition.getPlayers( coalition.side.RED ), AlivePlayersBlue = coalition.getPlayers( coalition.side.BLUE ) }
     for CoalitionId, CoalitionData in pairs( CoalitionsData ) do
-      self:T( { "CoalitionData:", CoalitionData } )
+      self:E( { "CoalitionData:", CoalitionData } )
       for UnitId, UnitData in pairs( CoalitionData ) do
         if UnitData and UnitData:isExist() then
         
@@ -715,6 +715,8 @@ function DATABASE:_EventOnPlayerEnterUnit( Event )
       if not self.PLAYERS[PlayerName] then
         self:AddPlayer( Event.IniUnitName, PlayerName )
       end
+      local Settings = SETTINGS:Set( PlayerName )
+      Settings:SetPlayerMenu( Event.IniUnit )
     end
   end
 end

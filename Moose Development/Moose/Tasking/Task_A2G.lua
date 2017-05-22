@@ -174,7 +174,7 @@ do -- TASK_A2G
         local TargetUnit = Task.TargetSetUnit:GetFirst() -- Wrapper.Unit#UNIT
         if TargetUnit then
           local Coordinate = TargetUnit:GetCoordinate()
-          self:T( { TargetCoordinate = Coordinate, Coordinate:GetX(), Coordinate:GetAlt(), Coordinate:GetZ() } )
+          self:T( { TargetCoordinate = Coordinate, Coordinate:GetX(), Coordinate:GetY(), Coordinate:GetZ() } )
           Task:SetTargetCoordinate( TargetUnit:GetCoordinate(), TaskUnit )
         end
         self:__RouteToTargetPoint( 0.1 )
