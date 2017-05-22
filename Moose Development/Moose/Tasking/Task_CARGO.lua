@@ -327,31 +327,24 @@ do -- TASK_CARGO
       self:__RouteToDeploy( 1.0, DeployZone )
     end
     
-    --- ¤TASL_CARGP
-    --@return SmokeCole
+    --- ¤TASK_CARGO
+    --@return SmokeColor
     function TASK_CARGO:GetSmokeColor ()
       return self.SmokeColor
     end
     
     ---#TASK_CARGO
     --@param Color Might be Blue, Red or Green
-    function TASK_CARGO:SetSmokeColor(Color)
+    function TASK_CARGO:SetSmokeColor(SmokeColor)
        -- Makes sure Coloe is set
-       if Color == nil then
-          Color = "Red" -- Make sure a default color is exist
-       else
-        local ValidColors = {"Red", "Blue", "Green"}
-        for index,value in ipairs (ValidColors) do
-          if value == Color then
-            self.SmokeColor = value
-            break
-          end
-          -- Color is invalid, set it green as signal
-          self.SmokeColor = "Green"
-          BASE:E("Invalid color is set using GREEN")
+       if SmokeColor == nil then
+       self:F2(SmokeColor)
+          self.SmokeColor = SMOKECOLOR.Red -- Make sure a default color is exist
+       elseif type(SmokeColor) == "number" then
+        if SmokeColor > 0 and SmokeColor <=5 then -- Make sure number is within ragne, assuming first enum is one
+          self.SmokeColor = SMOKECOLOR.SmokeColor
         end
        end
-       self.SmokeColor = Color
     end
     
     ---
