@@ -412,29 +412,43 @@ do -- COORDINATE
     return ( ( TargetVec3.x - SourceVec3.x ) ^ 2 + ( TargetVec3.y - SourceVec3.y ) ^ 2 + ( TargetVec3.z - SourceVec3.z ) ^ 2 ) ^ 0.5
   end
 
-  --- Provides a Bearing / Range string
+
+  --- Provides a bearing text in degrees.
   -- @param #COORDINATE self
-  -- @param #number AngleRadians The angle in randians
-  -- @param #number Distance The distance
-  -- @return #string The BR Text
-  function COORDINATE:GetBRText( AngleRadians, Distance, Settings )
+  -- @param #number AngleRadians The angle in randians.
+  -- @param #number Precision The precision.
+  -- @param Core.Settings#SETTINGS Settings
+  -- @return #string The bearing text in degrees.
+  function COORDINATE:GetBearingText( AngleRadians, Precision, Settings )
 
-    local Settings = Settings or _SETTINGS
+    local Settings = Settings or _SETTINGS -- Core.Settings#SETTINGS
 
-    AngleRadians = UTILS.Round( UTILS.ToDegree( AngleRadians ), 0 )
-    if Settings:IsMetric() then
-      Distance = UTILS.Round( Distance / 1000, 2 )
-    else
-      Distance = UTILS.Round( UTILS.MetersToNM( Distance ), 2 )
-    end
-
-    local s = string.format( '%03d', AngleRadians ) .. ' for ' .. Distance
-
-    s = s .. self:GetAltitudeText() -- When the POINT is a VEC2, there will be no altitude shown.
-
+    local AngleDegrees = UTILS.Round( UTILS.ToDegree( AngleRadians ), Precision )
+  
+    local s = string.format( '%03d°', AngleDegrees ) 
+    
     return s
   end
 
+  --- Provides a distance text expressed in the units of measurement.
+  -- @param #COORDINATE self
+  -- @param #number Distance The distance in meters.
+  -- @param Core.Settings#SETTINGS Settings
+  -- @return #string The distance text expressed in the units of measurement.
+  function COORDINATE:GetDistanceText( Distance, Settings )
+
+    local Settings = Settings or _SETTINGS -- Core.Settings#SETTINGS
+
+    local DistanceText
+
+    if Settings:IsMetric() then
+      DistanceText = " for " .. UTILS.Round( Distance / 1000, 2 ) .. " km"
+    else
+      DistanceText = " for " .. UTILS.Round( UTILS.MetersToNM( Distance ), 2 ) .. " miles"
+    end
+    
+    return DistanceText
+  end
 
   --- Return the altitude text of the COORDINATE.
   -- @param #COORDINATE self
@@ -444,14 +458,53 @@ do -- COORDINATE
     local Settings = Settings or _SETTINGS
     if Altitude ~= 0 then
       if Settings:IsMetric() then
-        return ' at ' .. UTILS.Round( self.y, -3 )
+        return " at" .. UTILS.Round( self.y, -3 ) .. " meters"
       else
-        return ' at ' .. UTILS.Round( UTILS.MetersToFeet( self.y ), -3 )
+        return " at " .. UTILS.Round( UTILS.MetersToFeet( self.y ), -3 ) .. " feet"
       end
     else
       return ""
     end
   end
+
+
+  --- Provides a Bearing / Range string
+  -- @param #COORDINATE self
+  -- @param #number AngleRadians The angle in randians
+  -- @param #number Distance The distance
+  -- @param Core.Settings#SETTINGS Settings
+  -- @return #string The BR Text
+  function COORDINATE:GetBRText( AngleRadians, Distance, Settings )
+
+    local Settings = Settings or _SETTINGS -- Core.Settings#SETTINGS
+
+    local BearingText = self:GetBearingText( AngleRadians, 0, Settings )
+    local DistanceText = self:GetDistanceText( Distance, Settings )
+    
+    local BRText = BearingText .. DistanceText
+
+    return BRText
+  end
+
+  --- Provides a Bearing / Range / Altitude string
+  -- @param #COORDINATE self
+  -- @param #number AngleRadians The angle in randians
+  -- @param #number Distance The distance
+  -- @param Core.Settings#SETTINGS Settings
+  -- @return #string The BRA Text
+  function COORDINATE:GetBRAText( AngleRadians, Distance, Settings )
+
+    local Settings = Settings or _SETTINGS -- Core.Settings#SETTINGS
+
+    local BearingText = self:GetBearingText( AngleRadians, 0, Settings )
+    local DistanceText = self:GetDistanceText( Distance, Settings )
+    local AltitudeText = self:GetAltitudeText( Settings )
+
+    local BRAText = BearingText .. DistanceText .. AltitudeText -- When the POINT is a VEC2, there will be no altitude shown.
+
+    return BRAText
+  end
+
 
 
   --- Add a Distance in meters from the COORDINATE horizontal plane, with the given angle, and calculate the new COORDINATE.
@@ -721,7 +774,7 @@ do -- COORDINATE
     local AngleRadians =  self:GetAngleRadians( DirectionVec3 )
     local Distance = FromCoordinate:Get2DDistance( self )
     local Altitude = self:GetAltitudeText()
-    return "BRA, " .. self:GetBRText( AngleRadians, Distance, Settings )
+    return "BRA, " .. self:GetBRAText( AngleRadians, Distance, Settings )
   end
 
   --- Return a BULLS string from a COORDINATE to the BULLS of the coalition.
