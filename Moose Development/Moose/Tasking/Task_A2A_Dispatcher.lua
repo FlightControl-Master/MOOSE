@@ -72,7 +72,7 @@ do -- TASK_A2A_DISPATCHER
     self.Mission = Mission
     
     self.Detection:FilterCategories( Unit.Category.AIRPLANE, Unit.Category.HELICOPTER )
-    self.Detection:InitDetectRadar( true )
+    --self.Detection:InitDetectRadar( true )
     self.Detection:SetDetectionInterval( 30 )
     
     self:AddTransition( "Started", "Assign", "Started" )
@@ -105,8 +105,9 @@ do -- TASK_A2A_DISPATCHER
     local DetectedZone = DetectedItem.Zone
 
     -- Put here the intercept logic....
+    local FriendliesNearBy = self.Detection:IsFriendliesNearBy( DetectedItem )
 
-    if true then
+    if not FriendliesNearBy == true then
 
       -- Here we're doing something advanced... We're copying the DetectedSet, but making a new Set only with SEADable Radar units in it.
       local TargetSetUnit = SET_UNIT:New()
@@ -128,10 +129,13 @@ do -- TASK_A2A_DISPATCHER
   -- @param #boolean DetectedItemID
   -- @param #boolean DetectedItemChange
   -- @return Tasking.Task#TASK
-  function TASK_A2A_DISPATCHER:EvaluateRemoveTask( Mission, Task, DetectedItemID, DetectedItemChanged )
+  function TASK_A2A_DISPATCHER:EvaluateRemoveTask( Mission, Task, DetectedItem, DetectedItemID, DetectedItemChanged )
+    
     
     if Task then
-      if Task:IsStatePlanned() and DetectedItemChanged == true then
+      local FriendliesNearBy = self.Detection:IsFriendliesNearBy( DetectedItem )
+      
+      if Task:IsStatePlanned() and DetectedItemChanged == true and FriendliesNearBy then
         self:E( "Removing Tasking: " .. Task:GetTaskName() )
         Mission:RemoveTask( Task )
         self.Tasks[DetectedItemID] = nil
@@ -173,7 +177,7 @@ do -- TASK_A2A_DISPATCHER
         local DetectedItemChanged = DetectedItem.Changed
         
         local Task = self.Tasks[DetectedID]
-        Task = self:EvaluateRemoveTask( Mission, Task, DetectedID, DetectedItemChanged ) -- Task will be removed if it is planned and changed.
+        Task = self:EvaluateRemoveTask( Mission, Task, DetectedItem, DetectedID, DetectedItemChanged ) -- Task will be removed if it is planned and changed.
 
         -- Evaluate INTERCEPT
         if not Task then
@@ -184,14 +188,8 @@ do -- TASK_A2A_DISPATCHER
 
           if Task then
             self.Tasks[DetectedID] = Task
-            Task:SetTargetZone( DetectedZone )
+            Task:SetTargetZone( DetectedZone, DetectedSet:GetFirst():GetAltitude(), DetectedSet:GetFirst():GetHeading() )
             Task:SetDispatcher( self )
-            Task:SetInfo( "ThreatLevel", "[" .. string.rep(  "■", DetectedSet:CalculateThreatLevelA2G() ) .. "]" )
-            local DetectedItemsCount = DetectedSet:Count()
-            local DetectedItemsTypes = DetectedSet:GetTypeNames()
-            Task:SetInfo( "Targets", string.format( "%d of %s", DetectedItemsCount, DetectedItemsTypes ) ) 
-            Task:SetInfo( "Coordinates", Detection:GetDetectedItemCoordinate( DetectedIndex ) )
-            Task:SetInfo( "Object", DetectedSet:GetFirst() )
             Mission:AddTask( Task )
           else
             self:E("This should not happen")

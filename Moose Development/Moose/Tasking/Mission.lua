@@ -265,8 +265,6 @@ function MISSION:JoinUnit( PlayerUnit, PlayerGroup )
     end
   end
   
-  self:GetCommandCenter():SetMenu()
-  
   return PlayerUnitAdded
 end
 

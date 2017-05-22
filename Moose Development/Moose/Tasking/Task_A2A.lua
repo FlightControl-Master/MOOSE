@@ -243,6 +243,8 @@ do -- TASK_A2A
   -- @param Wrapper.Unit#UNIT TaskUnit
   function TASK_A2A:SetTargetCoordinate( TargetCoordinate, TaskUnit )
   
+    TargetCoordinate:SetModeA2A()
+  
     local ProcessUnit = self:GetUnitProcess( TaskUnit )
 
     local ActRouteTarget = ProcessUnit:GetProcess( "Engaging", "RouteToTargetPoint" ) -- Actions.Act_Route#ACT_ROUTE_POINT
@@ -265,12 +267,12 @@ do -- TASK_A2A
   --- @param #TASK_A2A self
   -- @param Core.Zone#ZONE_BASE TargetZone The Zone object where the Target is located on the map.
   -- @param Wrapper.Unit#UNIT TaskUnit
-  function TASK_A2A:SetTargetZone( TargetZone, TaskUnit )
+  function TASK_A2A:SetTargetZone( TargetZone, Altitude, Heading, TaskUnit )
   
     local ProcessUnit = self:GetUnitProcess( TaskUnit )
 
     local ActRouteTarget = ProcessUnit:GetProcess( "Engaging", "RouteToTargetZone" ) -- Actions.Act_Route#ACT_ROUTE_ZONE
-    ActRouteTarget:SetZone( TargetZone )
+    ActRouteTarget:SetZone( TargetZone, Altitude, Heading )
   end
    
 
@@ -363,17 +365,20 @@ do -- TASK_INTERCEPT
     
     --TODO: Add BR, Altitude, type of planes...
     
-    local TargetCoord = TargetSetUnit:GetFirst():GetCoordinate()
-    local TargetPositionText = TargetCoord:ToString()
-    local TargetThreatLevel = TargetSetUnit:CalculateThreatLevelA2G()
-
     self:SetBriefing( 
       TaskBriefing or 
-      "Intercept incoming intruders.\n" ..
-      "Last Known Coordinates: " .. TargetPositionText .. "\n" ..
-      "Threat Level: [" .. string.rep(  "■", TargetThreatLevel ) .. "]"
+      "Intercept incoming intruders.\n"
     )
 
+    local TargetCoordinate = TargetSetUnit:GetFirst():GetCoordinate()
+    TargetCoordinate:SetModeA2A()
+    self:SetInfo( "Coordinates", TargetCoordinate )
+
+    self:SetInfo( "ThreatLevel", "[" .. string.rep(  "■", TargetSetUnit:CalculateThreatLevelA2G() ) .. "]" )
+    local DetectedItemsCount = TargetSetUnit:Count()
+    local DetectedItemsTypes = TargetSetUnit:GetTypeNames()
+    self:SetInfo( "Targets", string.format( "%d of %s", DetectedItemsCount, DetectedItemsTypes ) ) 
+    
     return self
   end 
 

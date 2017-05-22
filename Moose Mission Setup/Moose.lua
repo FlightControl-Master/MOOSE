@@ -1,5 +1,5 @@
 env.info( '*** MOOSE DYNAMIC INCLUDE START *** ' )
-env.info( 'Moose Generation Timestamp: 20170517_1856' )
+env.info( 'Moose Generation Timestamp: 20170522_1100' )
 
 local base = _G
 
@@ -27,6 +27,7 @@ __Moose.Include( 'Core/Base.lua' )
 __Moose.Include( 'Core/Scheduler.lua' )
 __Moose.Include( 'Core/ScheduleDispatcher.lua' )
 __Moose.Include( 'Core/Event.lua' )
+__Moose.Include( 'Core/Settings.lua' )
 __Moose.Include( 'Core/Menu.lua' )
 __Moose.Include( 'Core/Zone.lua' )
 __Moose.Include( 'Core/Database.lua' )

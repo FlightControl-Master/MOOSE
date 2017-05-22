@@ -9,4 +9,5 @@ _SCHEDULEDISPATCHER = SCHEDULEDISPATCHER:New() -- Core.Timer#SCHEDULEDISPATCHER
 --- Declare the main database object, which is used internally by the MOOSE classes.
 _DATABASE = DATABASE:New() -- Database#DATABASE
 
---COORDINATE:CoordinateMenu()
+_SETTINGS = SETTINGS:Set()
+_SETTINGS:SetSystemMenu( nil )
