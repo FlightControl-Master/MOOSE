@@ -122,6 +122,8 @@ function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
             local PlayerGroup = EventData.IniGroup -- The GROUP object should be filled!
             Mission:JoinUnit( PlayerUnit, PlayerGroup )
           end
+          self:SetMenu()
+         _DATABASE:PlayerSettingsMenu( PlayerUnit ) 
         end
       end
       

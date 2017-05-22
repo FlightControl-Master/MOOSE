@@ -125,6 +125,32 @@
 --     
 -- The above documents that 2 Scoring objects are created, ScoringFirstMission and ScoringSecondMission. 
 -- 
+-- ### **IMPORTANT!!!*  
+-- In order to allow DCS world to write CSV files, you need to adapt a configuration file in your DCS world installation **on the server**.
+-- For this, browse to the **missionscripting.lua** file in your DCS world installation folder.
+-- For me, this installation folder is in _D:\\Program Files\\Eagle Dynamics\\DCS World\Scripts_.
+-- 
+-- Edit a few code lines in the MissionScripting.lua file. Comment out the lines **os**, **io** and **lfs**:
+-- 
+--        do
+--          --sanitizeModule('os')
+--          --sanitizeModule('io')
+--          --sanitizeModule('lfs')
+--          require = nil
+--          loadlib = nil
+--        end
+-- 
+-- When these lines are not sanitized, functions become available to check the time, and to write files to your system at the above specified location.  
+-- Note that the MissionScripting.lua file provides a warning. So please beware of this warning as outlined by Eagle Dynamics!
+-- 
+--        --Sanitize Mission Scripting environment
+--        --This makes unavailable some unsecure functions. 
+--        --Mission downloaded from server to client may contain potentialy harmful lua code that may use these functions.
+--        --You can remove the code below and make availble these functions at your own risk.
+-- 
+-- The MOOSE designer cannot take any responsibility of any damage inflicted as a result of the de-sanitization.
+-- That being said, I hope that the SCORING class provides you with a great add-on to score your squad mates achievements.
+-- 
 -- ## 1.9) Configure messages.
 -- 
 -- When players hit or destroy targets, messages are sent.

@@ -799,21 +799,28 @@ do -- COORDINATE
   
     self:E( { Controllable = Controllable } )
 
-    local Settings = Settings or _SETTINGS
+    local Settings = Settings or ( Controllable and _DATABASE:GetPlayerSettings( Controllable:GetPlayerName() ) ) or _SETTINGS
     
     local IsAir = Controllable and Controllable:IsAirPlane() or false
 
     if IsAir then
-      local Coordinate = Controllable:GetCoordinate()
-      Coordinate:SetModeA2A()
       if Settings:IsA2A_BRA()  then
-        return self:ToStringBRAA( Coordinate, Settings )
+        local Coordinate = Controllable:GetCoordinate()
+        Coordinate:SetModeA2A()
+        return self:ToStringBRAA( Coordinate, Settings ) 
       end
   
       if Settings:IsA2A_BULLS() then
+        local Coordinate = Controllable:GetCoordinate()
+        Coordinate:SetModeA2A()
         return self:ToStringBULLS( Coordinate, Settings )
       end
     else
+      if Settings:IsA2G_BRA()  then
+        local Coordinate = Controllable:GetCoordinate()
+        Coordinate:SetModeA2A()
+        return Controllable and self:ToStringBRAA( Coordinate, Settings ) or self:ToStringMGRS( Settings )
+      end
       if Settings:IsA2G_LL()  then
         return self:ToStringLL( Settings )
       end
