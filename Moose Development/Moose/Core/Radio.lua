@@ -79,7 +79,7 @@
 -- @field #string Subtitle Subtitle of the transmission
 -- @field #number SubtitleDuration Duration of the Subtitle in seconds
 -- @field #number Power Power of the antenna is Watts
--- @field #boolean Loop 
+-- @field #boolean Loop (default true)
 -- @extends Core.Base#BASE
 RADIO = {
   ClassName = "RADIO",
@@ -89,7 +89,7 @@ RADIO = {
   Subtitle = "",
   SubtitleDuration = 0,
   Power = 100,
-  Loop = 0,
+  Loop = true,
 }
 
 --- Create a new RADIO Object. This doesn't broadcast a transmission, though, use @{#RADIO.Broadcast} to actually broadcast
@@ -101,6 +101,7 @@ RADIO = {
 function RADIO:New(Positionable)
   local self = BASE:Inherit( self, BASE:New() ) -- Core.Radio#RADIO
   
+  self.Loop = true        -- default Loop to true (not sure the above RADIO definition actually is working)
   self:F(Positionable)
   
   if Positionable:GetPointVec2() then -- It's stupid, but the only way I found to make sure positionable is valid
@@ -296,6 +297,7 @@ end
 -- @return #RADIO self
 function RADIO:Broadcast()
   self:F()
+  
   -- If the POSITIONABLE is actually a UNIT or a GROUP, use the more complicated DCS command system
   if self.Positionable.ClassName == "UNIT" or self.Positionable.ClassName == "GROUP" then
     self:T2("Broadcasting from a UNIT or a GROUP")
