@@ -174,6 +174,7 @@ do -- TASK_CARGO
   
     self.SetCargo = SetCargo
     self.TaskType = TaskType
+    self.SmokeColor = SMOKECOLOR.Red
     
     self.DeployZones = {} -- setmetatable( {}, { __mode = "v" } ) -- weak table on value
 
@@ -327,25 +328,7 @@ do -- TASK_CARGO
       self:__RouteToDeploy( 1.0, DeployZone )
     end
     
-    --- ¤TASK_CARGO
-    --@return SmokeColor
-    function TASK_CARGO:GetSmokeColor ()
-      return self.SmokeColor
-    end
     
-    ---#TASK_CARGO
-    --@param Color Might be Blue, Red or Green
-    function TASK_CARGO:SetSmokeColor(SmokeColor)
-       -- Makes sure Coloe is set
-       if SmokeColor == nil then
-       self:F2(SmokeColor)
-          self.SmokeColor = SMOKECOLOR.Red -- Make sure a default color is exist
-       elseif type(SmokeColor) == "number" then
-        if SmokeColor > 0 and SmokeColor <=5 then -- Make sure number is within ragne, assuming first enum is one
-          self.SmokeColor = SMOKECOLOR.SmokeColor
-        end
-       end
-    end
     
     ---
     --#TASK_CAROG_TRANSPORT self
@@ -381,12 +364,16 @@ do -- TASK_CARGO
       if self.Cargo:IsAlive() then
         if TaskUnit:IsAir() then
           local ColorToUse = TASK_CARGO:GetSmokeColor()
-          if ColorToUse == "Green" then
+          if ColorToUse == SMOKECOLOR.Green then
             self.Cargo.CargoObject:GetUnit(1):SmokeGreen()
-          elseif ColorToUse == "Blue" then
+          elseif ColorToUse == SMOKECOLOR.Blue then
             self.Cargo.CargoObject:GetUnit(1):SmokeBlue()
+          elseif ColorToUse == SMOKECOLOR.Orange then
+            self.Cargo.CargoObject:GetUnit(1):SmokeOrange()
+          elseif ColorToUse == SMOKECOLOR.White then
+            self.Cargo.CargoObject:GetUnit(1):SmokeWhite()
           else
-             self.Cargo.CargoObject:GetUnit(1):SmokeRed()
+            self.Cargo.CargoObject:GetUnit(1):SmokeRed()
           end
           self:__Land( -0.1, "Pickup" )
         else
@@ -636,6 +623,26 @@ do -- TASK_CARGO
     return self
  
   end
+  
+   --- 
+    -- #TASK_CARGO
+    --@return SmokeColor
+    function TASK_CARGO:GetSmokeColor()
+      return self.SmokeColor
+    end
+
+    --@param Color Might be SMOKECOLOR.Blue, SMOKECOLOR.Red SMOKECOLOR.Orange, SMOKECOLOR.White or SMOKECOLOR.Green
+    function TASK_CARGO:SetSmokeColor(SmokeColor)
+       -- Makes sure Coloe is set
+       if SmokeColor == nil then
+          self.SmokeColor = SMOKECOLOR.Red -- Make sure a default color is exist
+       elseif type(SmokeColor) == "number" then
+       self:F2(SmokeColor)
+        if SmokeColor > 0 and SmokeColor <=5 then -- Make sure number is within ragne, assuming first enum is one
+          self.SmokeColor = SMOKECOLOR.SmokeColor
+        end
+       end
+    end
   
   --- @param #TASK_CARGO self
   function TASK_CARGO:GetPlannedMenuText()
