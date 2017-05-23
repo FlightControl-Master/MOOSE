@@ -640,7 +640,6 @@ end
 -- @param #BASE self
 -- @param Object The object that holds the Value set by the Key.
 -- @param Key The key that is used to retrieve the value. Note that the key can be a #string, but it can also be any other type!
--- @param Value The value to is stored in the Object.
 -- @return The Value retrieved.
 function BASE:GetState( Object, Key )
 

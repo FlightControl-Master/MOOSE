@@ -769,7 +769,7 @@ end
 --- Create a overview report of the Mission (multiple lines).
 -- @param #MISSION self
 -- @return #string
-function MISSION:ReportOverview( TaskStatus )
+function MISSION:ReportOverview( ReportGroup, TaskStatus )
 
   local Report = REPORT:New()
 
@@ -787,7 +787,7 @@ function MISSION:ReportOverview( TaskStatus )
   for TaskID, Task in pairs( self:GetTasks() ) do
     local Task = Task -- Tasking.Task#TASK
     if Task:Is( TaskStatus ) then
-      Report:Add( "\n - " .. Task:ReportOverview() )
+      Report:Add( "\n - " .. Task:ReportOverview( ReportGroup ) )
     end
   end
 
@@ -852,7 +852,7 @@ end
 -- @param Wrapper.Group#GROUP ReportGroup
 function MISSION:MenuReportOverview( ReportGroup, TaskStatus )
 
-  local Report = self:ReportOverview( TaskStatus )
+  local Report = self:ReportOverview( ReportGroup, TaskStatus )
   
   self:GetCommandCenter():MessageToGroup( Report, ReportGroup )
 end

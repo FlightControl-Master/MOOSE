@@ -1072,8 +1072,15 @@ do -- DETECTION_BASE
     -- @return #boolean trhe if there are friendlies nearby 
     function DETECTION_BASE:IsFriendliesNearBy( DetectedItem )
       
-      self:T3( DetectedItem.FriendliesNearBy )
-      return DetectedItem.FriendliesNearBy or false
+      return DetectedItem.FriendliesNearBy ~= nil or false
+    end
+  
+    --- Returns friendly units nearby the FAC units ...
+    -- @param #DETECTION_BASE self
+    -- @return #map<#string,Wrapper.Unit#UNIT> The map of Friendly UNITs. 
+    function DETECTION_BASE:GetFriendliesNearBy( DetectedItem )
+      
+      return DetectedItem.FriendliesNearBy
     end
   
     --- Background worker function to determine if there are friendlies nearby ...
@@ -1085,7 +1092,7 @@ do -- DETECTION_BASE
       local DetectedSet = ReportGroupData.DetectedItem.Set
       local DetectedUnit = DetectedSet:GetFirst()
     
-      DetectedItem.FriendliesNearBy = false
+      DetectedItem.FriendliesNearBy = nil
 
       if DetectedUnit then
       
@@ -1120,7 +1127,8 @@ do -- DETECTION_BASE
             self:T3( { "Friendlies search:", FoundUnitName, FoundUnitCoalition, EnemyUnitName, EnemyCoalition, FoundUnitInReportSetGroup } )
             
             if FoundUnitCoalition ~= EnemyCoalition and FoundUnitInReportSetGroup == false then
-              DetectedItem.FriendliesNearBy = true
+              DetectedItem.FriendliesNearBy = DetectedItem.FriendliesNearBy or {}
+              DetectedItem.FriendliesNearBy[FoundUnitName] = UNIT:Find( FoundDCSUnit )
               return false
             end
             
@@ -2106,16 +2114,6 @@ do -- DETECTION_AREAS
     return ReportText
   end
 
-  
-  
-  --- Returns if there are friendlies nearby the FAC units ...
-  -- @param #DETECTION_AREAS self
-  -- @return #boolean trhe if there are friendlies nearby 
-  function DETECTION_AREAS:IsFriendliesNearBy( DetectedItem )
-    
-    self:T3( DetectedItem.FriendliesNearBy )
-    return DetectedItem.FriendliesNearBy or false
-  end
   
   --- Calculate the maxium A2G threat level of the DetectedItem.
   -- @param #DETECTION_AREAS self
