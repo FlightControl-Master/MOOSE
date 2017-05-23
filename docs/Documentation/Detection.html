@@ -75,6 +75,7 @@
 					<li><a href="Scoring.html">Scoring</a></li>
 					<li><a href="Sead.html">Sead</a></li>
 					<li><a href="Set.html">Set</a></li>
+					<li><a href="Settings.html">Settings</a></li>
 					<li><a href="Smoke.html">Smoke</a></li>
 					<li><a href="Spawn.html">Spawn</a></li>
 					<li><a href="SpawnStatic.html">SpawnStatic</a></li>
@@ -82,6 +83,8 @@
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="Task.html">Task</a></li>
+					<li><a href="Task_A2A.html">Task_A2A</a></li>
+					<li><a href="Task_A2A_Dispatcher.html">Task_A2A_Dispatcher</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
 					<li><a href="Task_A2G_Dispatcher.html">Task_A2G_Dispatcher</a></li>
 					<li><a href="Task_Cargo.html">Task_Cargo</a></li>
@@ -197,13 +200,13 @@ DETECTION uses the in-built detection capabilities of DCS World, but adds new fu
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS).DetectedItemMenu">DETECTION_AREAS:DetectedItemMenu(Index)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS).DetectedItemMenu">DETECTION_AREAS:DetectedItemMenu(Index, AttackGroup)</a></td>
 		<td class="summary">
 <p>Menu of a detected item using a given numeric index.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS).DetectedItemReportSummary">DETECTION_AREAS:DetectedItemReportSummary(Index)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS).DetectedItemReportSummary">DETECTION_AREAS:DetectedItemReportSummary(Index, AttackGroup)</a></td>
 		<td class="summary">
 <p>Report summary of a detected item using a given numeric index.</p>
 </td>
@@ -215,7 +218,7 @@ DETECTION uses the in-built detection capabilities of DCS World, but adds new fu
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS).DetectedReportDetailed">DETECTION_AREAS:DetectedReportDetailed()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS).DetectedReportDetailed">DETECTION_AREAS:DetectedReportDetailed(AttackGroup)</a></td>
 		<td class="summary">
 <p>Report detailed of a detection result.</p>
 </td>
@@ -248,12 +251,6 @@ DETECTION uses the in-built detection capabilities of DCS World, but adds new fu
 		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS).GetTreatLevelA2G">DETECTION_AREAS:GetTreatLevelA2G(DetectedItem)</a></td>
 		<td class="summary">
 <p>Returns the A2G threat level of the units in the DetectedItem</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS).IsFriendliesNearBy">DETECTION_AREAS:IsFriendliesNearBy(DetectedItem)</a></td>
-		<td class="summary">
-<p>Returns if there are friendlies nearby the FAC units ...</p>
 </td>
 		</tr>
 		<tr>
@@ -441,13 +438,13 @@ DETECTION uses the in-built detection capabilities of DCS World, but adds new fu
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).DetectedItemMenu">DETECTION_BASE:DetectedItemMenu(Index)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).DetectedItemMenu">DETECTION_BASE:DetectedItemMenu(Index, AttackGroup)</a></td>
 		<td class="summary">
 <p>Menu of a detected item using a given numeric index.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).DetectedItemReportSummary">DETECTION_BASE:DetectedItemReportSummary(Index)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).DetectedItemReportSummary">DETECTION_BASE:DetectedItemReportSummary(Index, AttackGroup)</a></td>
 		<td class="summary">
 <p>Report summary of a detected item using a given numeric index.</p>
 </td>
@@ -471,7 +468,7 @@ DETECTION uses the in-built detection capabilities of DCS World, but adds new fu
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).DetectedReportDetailed">DETECTION_BASE:DetectedReportDetailed()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).DetectedReportDetailed">DETECTION_BASE:DetectedReportDetailed(AttackGroup)</a></td>
 		<td class="summary">
 <p>Report detailed of a detectedion result.</p>
 </td>
@@ -536,6 +533,12 @@ The different values of Unit.Category can be:</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).FriendliesRange">DETECTION_BASE.FriendliesRange</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).GetDetectedID">DETECTION_BASE:GetDetectedID(Index)</a></td>
 		<td class="summary">
 <p>Get a detected ID using a given numeric index.</p>
@@ -548,9 +551,21 @@ The different values of Unit.Category can be:</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).GetDetectedItemCoordinate">DETECTION_BASE:GetDetectedItemCoordinate(Index)</a></td>
+		<td class="summary">
+<p>Get the COORDINATE of a detection item using a given numeric index.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).GetDetectedItemID">DETECTION_BASE:GetDetectedItemID(Index)</a></td>
 		<td class="summary">
 <p>Get a detected ItemID using a given numeric index.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).GetDetectedItemZone">DETECTION_BASE:GetDetectedItemZone(Index)</a></td>
+		<td class="summary">
+<p>Get the <a href="Zone.html##(ZONE_UNIT)">Zone#ZONE_UNIT</a> of a detection area using a given numeric index.</p>
 </td>
 		</tr>
 		<tr>
@@ -578,15 +593,21 @@ The different values of Unit.Category can be:</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).GetDetectedZone">DETECTION_BASE:GetDetectedZone(Index)</a></td>
-		<td class="summary">
-<p>Get the <a href="Zone.html##(ZONE_UNIT)">Zone#ZONE_UNIT</a> of a detection area using a given numeric index.</p>
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).GetDetectionSetGroup">DETECTION_BASE:GetDetectionSetGroup()</a></td>
 		<td class="summary">
 <p>Get the detection Groups.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).GetFriendliesNearBy">DETECTION_BASE:GetFriendliesNearBy(DetectedItem)</a></td>
+		<td class="summary">
+<p>Returns friendly units nearby the FAC units ...</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).GetPlayersNearBy">DETECTION_BASE:GetPlayersNearBy(DetectedItem)</a></td>
+		<td class="summary">
+<p>Returns friendly units nearby the FAC units ...</p>
 </td>
 		</tr>
 		<tr>
@@ -639,6 +660,12 @@ The different values of Unit.Category can be:</p>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).IsFriendliesNearBy">DETECTION_BASE:IsFriendliesNearBy(DetectedItem)</a></td>
+		<td class="summary">
+<p>Returns if there are friendlies nearby the FAC units ...</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).IsPlayersNearBy">DETECTION_BASE:IsPlayersNearBy(DetectedItem)</a></td>
 		<td class="summary">
 <p>Returns if there are friendlies nearby the FAC units ...</p>
 </td>
@@ -785,6 +812,12 @@ The different values of Unit.Category can be:</p>
 		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).SetDistanceProbability">DETECTION_BASE:SetDistanceProbability(DistanceProbability)</a></td>
 		<td class="summary">
 <p>Upon a <strong>visual</strong> detection, the further away a detected object is, the less likely it is to be detected properly.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).SetFriendliesRange">DETECTION_BASE:SetFriendliesRange(FriendliesRange)</a></td>
+		<td class="summary">
+<p>Set the radius in meters to validate if friendlies are nearby.</p>
 </td>
 		</tr>
 		<tr>
@@ -1004,19 +1037,19 @@ The different values of Unit.Category can be:</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_TYPES).DetectedItemMenu">DETECTION_TYPES:DetectedItemMenu(Index, DetectedTypeName)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_TYPES).DetectedItemMenu">DETECTION_TYPES:DetectedItemMenu(Index, DetectedTypeName, AttackGroup)</a></td>
 		<td class="summary">
 <p>Menu of a DetectedItem using a given numeric index.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_TYPES).DetectedItemReportSummary">DETECTION_TYPES:DetectedItemReportSummary(Index, DetectedTypeName)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_TYPES).DetectedItemReportSummary">DETECTION_TYPES:DetectedItemReportSummary(Index, DetectedTypeName, AttackGroup)</a></td>
 		<td class="summary">
 <p>Report summary of a DetectedItem using a given numeric index.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_TYPES).DetectedReportDetailed">DETECTION_TYPES:DetectedReportDetailed()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_TYPES).DetectedReportDetailed">DETECTION_TYPES:DetectedReportDetailed(AttackGroup)</a></td>
 		<td class="summary">
 <p>Report detailed of a detection result.</p>
 </td>
@@ -1086,19 +1119,19 @@ The different values of Unit.Category can be:</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_UNITS).DetectedItemMenu">DETECTION_UNITS:DetectedItemMenu(Index)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_UNITS).DetectedItemMenu">DETECTION_UNITS:DetectedItemMenu(Index, AttackGroup)</a></td>
 		<td class="summary">
 <p>Menu of a DetectedItem using a given numeric index.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_UNITS).DetectedItemReportSummary">DETECTION_UNITS:DetectedItemReportSummary(Index)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_UNITS).DetectedItemReportSummary">DETECTION_UNITS:DetectedItemReportSummary(Index, AttackGroup)</a></td>
 		<td class="summary">
 <p>Report summary of a DetectedItem using a given numeric index.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_UNITS).DetectedReportDetailed">DETECTION_UNITS:DetectedReportDetailed()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_UNITS).DetectedReportDetailed">DETECTION_UNITS:DetectedReportDetailed(AttackGroup)</a></td>
 		<td class="summary">
 <p>Report detailed of a detection result.</p>
 </td>
@@ -1385,6 +1418,11 @@ An example of how to use the method is shown below.</p>
  Detection:Start()
 </code></pre>
 
+<h2>Detection of Friendlies Nearby</h2>
+
+<p>Use the method <a href="Detection.html##(DETECTION_BASE).SetFriendliesRange">Detection#DETECTION_BASE.SetFriendliesRange</a>() to set the range what will indicate when friendlies are nearby
+a DetectedItem. The default range is 6000 meters. For air detections, it is advisory to use about 30.000 meters.</p>
+
 <h2>DETECTION_BASE is a Finite State Machine</h2>
 
 <p>Various Events and State Transitions can be tailored using DETECTION_BASE.</p>
@@ -1556,18 +1594,23 @@ self</p>
 <dt>
 
 <a id="#(DETECTION_AREAS).DetectedItemMenu" >
-<strong>DETECTION_AREAS:DetectedItemMenu(Index)</strong>
+<strong>DETECTION_AREAS:DetectedItemMenu(Index, AttackGroup)</strong>
 </a>
 </dt>
 <dd>
 	
 <p>Menu of a detected item using a given numeric index.</p>
 
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
 <p><code><em> Index </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> AttackGroup </em></code>: </p>
 
 				</li>
 		</ul>
@@ -1582,18 +1625,23 @@ self</p>
 <dt>
 
 <a id="#(DETECTION_AREAS).DetectedItemReportSummary" >
-<strong>DETECTION_AREAS:DetectedItemReportSummary(Index)</strong>
+<strong>DETECTION_AREAS:DetectedItemReportSummary(Index, AttackGroup)</strong>
 </a>
 </dt>
 <dd>
 	
 <p>Report summary of a detected item using a given numeric index.</p>
 
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
 <p><code><em> Index </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> AttackGroup </em></code>: </p>
 
 				</li>
 		</ul>
@@ -1622,13 +1670,21 @@ self</p>
 <dt>
 
 <a id="#(DETECTION_AREAS).DetectedReportDetailed" >
-<strong>DETECTION_AREAS:DetectedReportDetailed()</strong>
+<strong>DETECTION_AREAS:DetectedReportDetailed(AttackGroup)</strong>
 </a>
 </dt>
 <dd>
 	
 <p>Report detailed of a detection result.</p>
 
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> AttackGroup </em></code>: </p>
+
+				</li>
+		</ul>
 		<h3>Return value</h3>
 				
 <p><em>#string:</em></p>
@@ -1735,32 +1791,6 @@ The Changes text</p>
 				
 <p><em>#number:</em>
 a scale from 0 to 10. </p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(DETECTION_AREAS).IsFriendliesNearBy" >
-<strong>DETECTION_AREAS:IsFriendliesNearBy(DetectedItem)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Returns if there are friendlies nearby the FAC units ...</p>
-
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em> DetectedItem </em></code>: </p>
-
-				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em>#boolean:</em>
-trhe if there are friendlies nearby </p>
 
 </dd>
 </dl>
@@ -2324,6 +2354,7 @@ The index of the DetectedItem.</p>
 		<dl class="function">
 <dt>
 
+		<em>#number</em>
 <a id="#(DETECTION_BASE).DetectedItemCount" >
 <strong>DETECTION_BASE.DetectedItemCount</strong>
 </a>
@@ -2337,6 +2368,7 @@ The index of the DetectedItem.</p>
 		<dl class="function">
 <dt>
 
+		<em>#number</em>
 <a id="#(DETECTION_BASE).DetectedItemMax" >
 <strong>DETECTION_BASE.DetectedItemMax</strong>
 </a>
@@ -2351,18 +2383,23 @@ The index of the DetectedItem.</p>
 <dt>
 
 <a id="#(DETECTION_BASE).DetectedItemMenu" >
-<strong>DETECTION_BASE:DetectedItemMenu(Index)</strong>
+<strong>DETECTION_BASE:DetectedItemMenu(Index, AttackGroup)</strong>
 </a>
 </dt>
 <dd>
 	
 <p>Menu of a detected item using a given numeric index.</p>
 
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
 <p><code><em> Index </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> AttackGroup </em></code>: </p>
 
 				</li>
 		</ul>
@@ -2377,18 +2414,23 @@ The index of the DetectedItem.</p>
 <dt>
 
 <a id="#(DETECTION_BASE).DetectedItemReportSummary" >
-<strong>DETECTION_BASE:DetectedItemReportSummary(Index)</strong>
+<strong>DETECTION_BASE:DetectedItemReportSummary(Index, AttackGroup)</strong>
 </a>
 </dt>
 <dd>
 	
 <p>Report summary of a detected item using a given numeric index.</p>
 
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
 <p><code><em> Index </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> AttackGroup </em></code>: </p>
 
 				</li>
 		</ul>
@@ -2445,13 +2487,21 @@ The index of the DetectedItem.</p>
 <dt>
 
 <a id="#(DETECTION_BASE).DetectedReportDetailed" >
-<strong>DETECTION_BASE:DetectedReportDetailed()</strong>
+<strong>DETECTION_BASE:DetectedReportDetailed(AttackGroup)</strong>
 </a>
 </dt>
 <dd>
 	
 <p>Report detailed of a detectedion result.</p>
 
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> AttackGroup </em></code>: </p>
+
+				</li>
+		</ul>
 		<h3>Return value</h3>
 				
 <p><em>#string:</em></p>
@@ -2616,6 +2666,20 @@ self</p>
 		<dl class="function">
 <dt>
 
+		<em></em>
+<a id="#(DETECTION_BASE).FriendliesRange" >
+<strong>DETECTION_BASE.FriendliesRange</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(DETECTION_BASE).GetDetectedID" >
 <strong>DETECTION_BASE:GetDetectedID(Index)</strong>
 </a>
@@ -2668,6 +2732,32 @@ DetectedItemID</p>
 		<dl class="function">
 <dt>
 
+<a id="#(DETECTION_BASE).GetDetectedItemCoordinate" >
+<strong>DETECTION_BASE:GetDetectedItemCoordinate(Index)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Get the COORDINATE of a detection item using a given numeric index.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number Index </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="Core.Point.html##(COORDINATE)">Core.Point#COORDINATE</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(DETECTION_BASE).GetDetectedItemID" >
 <strong>DETECTION_BASE:GetDetectedItemID(Index)</strong>
 </a>
@@ -2688,6 +2778,32 @@ DetectedItemID</p>
 				
 <p><em>#string:</em>
 DetectedItemID</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_BASE).GetDetectedItemZone" >
+<strong>DETECTION_BASE:GetDetectedItemZone(Index)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Get the <a href="Zone.html##(ZONE_UNIT)">Zone#ZONE_UNIT</a> of a detection area using a given numeric index.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number Index </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="Core.Zone.html##(ZONE_UNIT)">Core.Zone#ZONE_UNIT</a>:</em>
+DetectedZone</p>
 
 </dd>
 </dl>
@@ -2782,32 +2898,6 @@ DetectedSet</p>
 		<dl class="function">
 <dt>
 
-<a id="#(DETECTION_BASE).GetDetectedZone" >
-<strong>DETECTION_BASE:GetDetectedZone(Index)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Get the <a href="Zone.html##(ZONE_UNIT)">Zone#ZONE_UNIT</a> of a detection area using a given numeric index.</p>
-
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em>#number Index </em></code>: </p>
-
-				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em><a href="Core.Zone.html##(ZONE_UNIT)">Core.Zone#ZONE_UNIT</a>:</em>
-DetectedZone</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
 <a id="#(DETECTION_BASE).GetDetectionSetGroup" >
 <strong>DETECTION_BASE:GetDetectionSetGroup()</strong>
 </a>
@@ -2820,6 +2910,58 @@ DetectedZone</p>
 				
 <p><em><a href="Core.Set.html##(SET_GROUP)">Core.Set#SET_GROUP</a>:</em></p>
 
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_BASE).GetFriendliesNearBy" >
+<strong>DETECTION_BASE:GetFriendliesNearBy(DetectedItem)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns friendly units nearby the FAC units ...</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> DetectedItem </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(map)">#map</a>:</em></p>
+<h1>string,Wrapper.Unit#UNIT> The map of Friendly UNITs.</h1>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_BASE).GetPlayersNearBy" >
+<strong>DETECTION_BASE:GetPlayersNearBy(DetectedItem)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns friendly units nearby the FAC units ...</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> DetectedItem </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(map)">#map</a>:</em></p>
+<h1>string,Wrapper.Unit#UNIT> The map of Friendly UNITs.</h1>
 
 </dd>
 </dl>
@@ -3031,6 +3173,32 @@ true if already identified.</p>
 
 <a id="#(DETECTION_BASE).IsFriendliesNearBy" >
 <strong>DETECTION_BASE:IsFriendliesNearBy(DetectedItem)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns if there are friendlies nearby the FAC units ...</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> DetectedItem </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+trhe if there are friendlies nearby </p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_BASE).IsPlayersNearBy" >
+<strong>DETECTION_BASE:IsPlayersNearBy(DetectedItem)</strong>
 </a>
 </dt>
 <dd>
@@ -3790,6 +3958,33 @@ self</p>
 		<dl class="function">
 <dt>
 
+<a id="#(DETECTION_BASE).SetFriendliesRange" >
+<strong>DETECTION_BASE:SetFriendliesRange(FriendliesRange)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set the radius in meters to validate if friendlies are nearby.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number FriendliesRange </em></code>: 
+Radius to use when checking if Friendlies are nearby.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(DETECTION_BASE)">#DETECTION_BASE</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(DETECTION_BASE).SetRejectZones" >
 <strong>DETECTION_BASE:SetRejectZones(RejectZones)</strong>
 </a>
@@ -4430,7 +4625,7 @@ self</p>
 <dt>
 
 <a id="#(DETECTION_TYPES).DetectedItemMenu" >
-<strong>DETECTION_TYPES:DetectedItemMenu(Index, DetectedTypeName)</strong>
+<strong>DETECTION_TYPES:DetectedItemMenu(Index, DetectedTypeName, AttackGroup)</strong>
 </a>
 </dt>
 <dd>
@@ -4449,6 +4644,11 @@ self</p>
 <p><code><em> DetectedTypeName </em></code>: </p>
 
 				</li>
+				<li>
+				
+<p><code><em> AttackGroup </em></code>: </p>
+
+				</li>
 		</ul>
 		<h3>Return value</h3>
 				
@@ -4461,7 +4661,7 @@ self</p>
 <dt>
 
 <a id="#(DETECTION_TYPES).DetectedItemReportSummary" >
-<strong>DETECTION_TYPES:DetectedItemReportSummary(Index, DetectedTypeName)</strong>
+<strong>DETECTION_TYPES:DetectedItemReportSummary(Index, DetectedTypeName, AttackGroup)</strong>
 </a>
 </dt>
 <dd>
@@ -4480,6 +4680,11 @@ self</p>
 <p><code><em> DetectedTypeName </em></code>: </p>
 
 				</li>
+				<li>
+				
+<p><code><em> AttackGroup </em></code>: </p>
+
+				</li>
 		</ul>
 		<h3>Return value</h3>
 				
@@ -4492,13 +4697,21 @@ self</p>
 <dt>
 
 <a id="#(DETECTION_TYPES).DetectedReportDetailed" >
-<strong>DETECTION_TYPES:DetectedReportDetailed()</strong>
+<strong>DETECTION_TYPES:DetectedReportDetailed(AttackGroup)</strong>
 </a>
 </dt>
 <dd>
 	
 <p>Report detailed of a detection result.</p>
 
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> AttackGroup </em></code>: </p>
+
+				</li>
+		</ul>
 		<h3>Return value</h3>
 				
 <p><em>#string:</em></p>
@@ -4647,7 +4860,7 @@ self</p>
 			
 			<h2><a id="#(DETECTION_UNITS)" >Type <code>DETECTION_UNITS</code></a></h2>
 				
-<h1>2) DETECTION_UNITS class, extends <a href="Detection.html##(DETECTION_BASE)">Detection#DETECTION_BASE</a></h1>
+<h1>DETECTION_UNITS class, extends <a href="Detection.html##(DETECTION_BASE)">Detection#DETECTION_BASE</a></h1>
 
 <p>The DETECTION_UNITS class will detect units within the battle zone.</p>
 
@@ -4696,18 +4909,23 @@ self</p>
 <dt>
 
 <a id="#(DETECTION_UNITS).DetectedItemMenu" >
-<strong>DETECTION_UNITS:DetectedItemMenu(Index)</strong>
+<strong>DETECTION_UNITS:DetectedItemMenu(Index, AttackGroup)</strong>
 </a>
 </dt>
 <dd>
 	
 <p>Menu of a DetectedItem using a given numeric index.</p>
 
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
 <p><code><em> Index </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> AttackGroup </em></code>: </p>
 
 				</li>
 		</ul>
@@ -4722,18 +4940,23 @@ self</p>
 <dt>
 
 <a id="#(DETECTION_UNITS).DetectedItemReportSummary" >
-<strong>DETECTION_UNITS:DetectedItemReportSummary(Index)</strong>
+<strong>DETECTION_UNITS:DetectedItemReportSummary(Index, AttackGroup)</strong>
 </a>
 </dt>
 <dd>
 	
 <p>Report summary of a DetectedItem using a given numeric index.</p>
 
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
 <p><code><em> Index </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> AttackGroup </em></code>: </p>
 
 				</li>
 		</ul>
@@ -4748,13 +4971,21 @@ self</p>
 <dt>
 
 <a id="#(DETECTION_UNITS).DetectedReportDetailed" >
-<strong>DETECTION_UNITS:DetectedReportDetailed()</strong>
+<strong>DETECTION_UNITS:DetectedReportDetailed(AttackGroup)</strong>
 </a>
 </dt>
 <dd>
 	
 <p>Report detailed of a detection result.</p>
 
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> AttackGroup </em></code>: </p>
+
+				</li>
+		</ul>
 		<h3>Return value</h3>
 				
 <p><em>#string:</em></p>
@@ -4903,6 +5134,8 @@ self</p>
 			<h2><a id="#(DETECTION_UNITS.DetectedItem)" >Type <code>DETECTION_UNITS.DetectedItem</code></a></h2>
 			
 			<h2><a id="#(list)" >Type <code>list</code></a></h2>
+			
+			<h2><a id="#(map)" >Type <code>map</code></a></h2>
 			
 </div>
 

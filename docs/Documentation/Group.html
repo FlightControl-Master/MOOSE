@@ -75,6 +75,7 @@
 					<li><a href="Scoring.html">Scoring</a></li>
 					<li><a href="Sead.html">Sead</a></li>
 					<li><a href="Set.html">Set</a></li>
+					<li><a href="Settings.html">Settings</a></li>
 					<li><a href="Smoke.html">Smoke</a></li>
 					<li><a href="Spawn.html">Spawn</a></li>
 					<li><a href="SpawnStatic.html">SpawnStatic</a></li>
@@ -82,6 +83,8 @@
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="Task.html">Task</a></li>
+					<li><a href="Task_A2A.html">Task_A2A</a></li>
+					<li><a href="Task_A2A_Dispatcher.html">Task_A2A_Dispatcher</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
 					<li><a href="Task_A2G_Dispatcher.html">Task_A2G_Dispatcher</a></li>
 					<li><a href="Task_Cargo.html">Task_Cargo</a></li>
@@ -240,6 +243,12 @@
 		<td class="name" nowrap="nowrap"><a href="##(GROUP).GetCoalition">GROUP:GetCoalition()</a></td>
 		<td class="summary">
 <p>Returns the coalition of the DCS Group.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).GetCoordinate">GROUP:GetCoordinate()</a></td>
+		<td class="summary">
+<p>Returns a COORDINATE object indicating the point of the first UNIT of the GROUP within the mission.</p>
 </td>
 		</tr>
 		<tr>
@@ -853,6 +862,34 @@ Category name = Helicopter, Airplane, Ground Unit, Ship</p>
 <p><em><a href="Dcs.DCSCoalitionWrapper.Object.html##(coalition.side)">Dcs.DCSCoalitionWrapper.Object#coalition.side</a>:</em>
 The coalition side of the DCS Group.</p>
 
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).GetCoordinate" >
+<strong>GROUP:GetCoordinate()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns a COORDINATE object indicating the point of the first UNIT of the GROUP within the mission.</p>
+
+		<h3>Return values</h3>
+			<ol>
+				<li>
+				
+<p><em><a href="Core.Point.html##(COORDINATE)">Core.Point#COORDINATE</a>:</em>
+The COORDINATE of the GROUP.</p>
+
+				</li>
+				<li>
+				
+<p><em>#nil:</em>
+The POSITIONABLE is not existing or alive.  </p>
+
+				</li>
+			</ol>
 </dd>
 </dl>
 		<dl class="function">

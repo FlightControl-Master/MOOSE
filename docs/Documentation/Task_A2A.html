@@ -83,9 +83,9 @@
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="Task.html">Task</a></li>
-					<li><a href="Task_A2A.html">Task_A2A</a></li>
+					<li>Task_A2A</li>
 					<li><a href="Task_A2A_Dispatcher.html">Task_A2A_Dispatcher</a></li>
-					<li>Task_A2G</li>
+					<li><a href="Task_A2G.html">Task_A2G</a></li>
 					<li><a href="Task_A2G_Dispatcher.html">Task_A2G_Dispatcher</a></li>
 					<li><a href="Task_Cargo.html">Task_Cargo</a></li>
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
@@ -98,54 +98,42 @@
 		</ul>
 	</div>
 	<div id="content">
-   <h1>Module <code>Task_A2G</code></h1>
+   <h1>Module <code>Task_A2A</code></h1>
    
-<p><strong>Tasking</strong> - The TASK_A2G models tasks for players in Air to Ground engagements.</p>
+<p><strong>Tasking</strong> - The TASK_A2A models tasks for players in Air to Air engagements.</p>
 
    
 
-<p><img src="..\Presentations\TASK_A2G\Dia1.JPG" alt="Banner Image"/></p>
+<p><img src="..\Presentations\TASK_A2A\Dia1.JPG" alt="Banner Image"/></p>
 
 
-<h1>1) <a href="Task_A2G.html##(TASK_A2G)">Task<em>A2G#TASK</em>A2G</a> class, extends <a href="Task.html##(TASK)">Task#TASK</a></h1>
+<h1>1) <a href="Task_A2A.html##(TASK_A2A)">Task<em>A2A#TASK</em>A2A</a> class, extends <a href="Task.html##(TASK)">Task#TASK</a></h1>
 
-<p>The <a href="##(TASK_A2G)">#TASK_A2G</a> class defines Air To Ground tasks for a <a href="Set.html">Set</a> of Target Units, 
+<p>The <a href="##(TASK_A2A)">#TASK_A2A</a> class defines Air To Air tasks for a <a href="Set.html">Set</a> of Target Units, 
 based on the tasking capabilities defined in <a href="Task.html##(TASK)">Task#TASK</a>.
-The TASK_A2G is implemented using a <a href="Statemachine.html##(FSM_TASK)">Statemachine#FSM_TASK</a>, and has the following statuses:</p>
+The TASK_A2A is implemented using a <a href="Statemachine.html##(FSM_TASK)">Statemachine#FSM_TASK</a>, and has the following statuses:</p>
 
 <ul>
     <li><strong>None</strong>: Start of the process</li>
-    <li><strong>Planned</strong>: The A2G task is planned.</li>
-    <li><strong>Assigned</strong>: The A2G task is assigned to a <a href="Group.html##(GROUP)">Group#GROUP</a>.</li>
-    <li><strong>Success</strong>: The A2G task is successfully completed.</li>
-    <li><strong>Failed</strong>: The A2G task has failed. This will happen if the player exists the task early, without communicating a possible cancellation to HQ.</li>
+    <li><strong>Planned</strong>: The A2A task is planned.</li>
+    <li><strong>Assigned</strong>: The A2A task is assigned to a <a href="Group.html##(GROUP)">Group#GROUP</a>.</li>
+    <li><strong>Success</strong>: The A2A task is successfully completed.</li>
+    <li><strong>Failed</strong>: The A2A task has failed. This will happen if the player exists the task early, without communicating a possible cancellation to HQ.</li>
 </ul>
 
-<h1>1.1) Set the scoring of achievements in an A2G attack.</h1>
+<h1>1.1) Set the scoring of achievements in an A2A attack.</h1>
 
 <p>Scoring or penalties can be given in the following circumstances:</p>
 
 <ul>
-    <li><a href="##(TASK_A2G).SetScoreOnDestroy">TASK_A2G.SetScoreOnDestroy</a>(): Set a score when a target in scope of the A2G attack, has been destroyed.</li>
-    <li><a href="##(TASK_A2G).SetScoreOnSuccess">TASK_A2G.SetScoreOnSuccess</a>(): Set a score when all the targets in scope of the A2G attack, have been destroyed.</li>
-    <li><a href="##(TASK_A2G).SetPenaltyOnFailed">TASK_A2G.SetPenaltyOnFailed</a>(): Set a penalty when the A2G attack has failed.</li>
+    <li><a href="##(TASK_A2A).SetScoreOnDestroy">TASK_A2A.SetScoreOnDestroy</a>(): Set a score when a target in scope of the A2A attack, has been destroyed.</li>
+    <li><a href="##(TASK_A2A).SetScoreOnSuccess">TASK_A2A.SetScoreOnSuccess</a>(): Set a score when all the targets in scope of the A2A attack, have been destroyed.</li>
+    <li><a href="##(TASK_A2A).SetPenaltyOnFailed">TASK_A2A.SetPenaltyOnFailed</a>(): Set a penalty when the A2A attack has failed.</li>
 </ul>
 
-<h1>2) <a href="Task_A2G.html##(TASK_SEAD)">Task<em>A2G#TASK</em>SEAD</a> class, extends <a href="Task_A2G.html##(TASK_A2G)">Task<em>A2G#TASK</em>A2G</a></h1>
+<h1>2) <a href="Task_A2A.html##(TASK_INTERCEPT)">Task<em>A2A#TASK</em>INTERCEPT</a> class, extends <a href="Task_A2A.html##(TASK_A2A)">Task<em>A2A#TASK</em>A2A</a></h1>
 
-<p>The <a href="##(TASK_SEAD)">#TASK_SEAD</a> class defines a SEAD task for a <a href="Set.html">Set</a> of Target Units.</p>
-
-<hr/>
-
-<h1>3) <a href="Task_A2G.html##(TASK_CAS)">Task<em>A2G#TASK</em>CAS</a> class, extends <a href="Task_A2G.html##(TASK_A2G)">Task<em>A2G#TASK</em>A2G</a></h1>
-
-<p>The <a href="##(TASK_CAS)">#TASK_CAS</a> class defines a CAS task for a <a href="Set.html">Set</a> of Target Units.</p>
-
-<hr/>
-
-<h1>4) <a href="Task_A2G.html##(TASK_BAI)">Task<em>A2G#TASK</em>BAI</a> class, extends <a href="Task_A2G.html##(TASK_A2G)">Task<em>A2G#TASK</em>A2G</a></h1>
-
-<p>The <a href="##(TASK_BAI)">#TASK_BAI</a> class defines a BAI task for a <a href="Set.html">Set</a> of Target Units.</p>
+<p>The TASK<em>A2A</em>INTERCEPT class defines an INTERCEPT task for a <a href="Set.html">Set</a> of Target Units.</p>
 
 <hr/>
 
@@ -160,17 +148,13 @@ The TASK_A2G is implemented using a <a href="Statemachine.html##(FSM_TASK)">Stat
 
 <p>Hereby the change log:</p>
 
-<p>2017-03-09: Revised version.</p>
-
 <hr/>
 
 <h1><strong>AUTHORS and CONTRIBUTIONS</strong></h1>
 
 <h3>Contributions:</h3>
 
-<ul>
-    <li><strong>[WingThor]</strong>: Concept, Advice &amp; Testing.</li>
-</ul>
+
 
 <h3>Authors:</h3>
 
@@ -182,184 +166,156 @@ The TASK_A2G is implemented using a <a href="Statemachine.html##(FSM_TASK)">Stat
 	<h2>Global(s)</h2>
 	<table class="function_list">
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="#TASK_A2G">TASK_A2G</a></td>
+		<td class="name" nowrap="nowrap"><a href="#TASK_A2A">TASK_A2A</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="#TASK_BAI">TASK_BAI</a></td>
+		<td class="name" nowrap="nowrap"><a href="#TASK_A2A_ENGAGE">TASK_A2A_ENGAGE</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="#TASK_CAS">TASK_CAS</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="#TASK_SEAD">TASK_SEAD</a></td>
+		<td class="name" nowrap="nowrap"><a href="#TASK_A2A_INTERCEPT">TASK_A2A_INTERCEPT</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 	</table>
-			<h2><a id="#(TASK_A2G)">Type <code>TASK_A2G</code></a></h2>
+			<h2><a id="#(TASK_A2A)">Type <code>TASK_A2A</code></a></h2>
 				<table class="function_list">
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G).ClassName">TASK_A2G.ClassName</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_A2A).ClassName">TASK_A2A.ClassName</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G).GetPlannedMenuText">TASK_A2G:GetPlannedMenuText()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_A2A).GetPlannedMenuText">TASK_A2A:GetPlannedMenuText()</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G).GetRendezVousCoordinate">TASK_A2G:GetRendezVousCoordinate(TaskUnit)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_A2A).GetRendezVousCoordinate">TASK_A2A:GetRendezVousCoordinate(TaskUnit)</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G).GetRendezVousZone">TASK_A2G:GetRendezVousZone(TaskUnit)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_A2A).GetRendezVousZone">TASK_A2A:GetRendezVousZone(TaskUnit)</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G).GetTargetCoordinate">TASK_A2G:GetTargetCoordinate(TaskUnit)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_A2A).GetTargetCoordinate">TASK_A2A:GetTargetCoordinate(TaskUnit)</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G).GetTargetZone">TASK_A2G:GetTargetZone(TaskUnit)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_A2A).GetTargetZone">TASK_A2A:GetTargetZone(TaskUnit)</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G).New">TASK_A2G:New(Mission, SetGroup, TaskName, UnitSetTargets, TargetDistance, TargetZone, TargetSetUnit, TaskType, TaskBriefing)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_A2A).New">TASK_A2A:New(Mission, SetAttack, TaskName, UnitSetTargets, TargetDistance, TargetZone, TargetSetUnit, TaskType, TaskBriefing)</a></td>
 		<td class="summary">
-<p>Instantiates a new TASK_A2G.</p>
+<p>Instantiates a new TASK_A2A.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G).SetPenaltyOnFailed">TASK_A2G:SetPenaltyOnFailed(Text, Penalty, TaskUnit)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_A2A).SetPenaltyOnFailed">TASK_A2A:SetPenaltyOnFailed(Text, Penalty, TaskUnit)</a></td>
 		<td class="summary">
-<p>Set a penalty when the A2G attack has failed.</p>
+<p>Set a penalty when the A2A attack has failed.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G).SetRendezVousCoordinate">TASK_A2G:SetRendezVousCoordinate(RendezVousCoordinate, RendezVousRange, TaskUnit)</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G).SetRendezVousZone">TASK_A2G:SetRendezVousZone(RendezVousZone, TaskUnit)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_A2A).SetRendezVousCoordinate">TASK_A2A:SetRendezVousCoordinate(RendezVousCoordinate, RendezVousRange, TaskUnit)</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G).SetScoreOnDestroy">TASK_A2G:SetScoreOnDestroy(Text, Score, TaskUnit)</a></td>
-		<td class="summary">
-<p>Set a score when a target in scope of the A2G attack, has been destroyed .</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G).SetScoreOnSuccess">TASK_A2G:SetScoreOnSuccess(Text, Score, TaskUnit)</a></td>
-		<td class="summary">
-<p>Set a score when all the targets in scope of the A2G attack, have been destroyed.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G).SetTargetCoordinate">TASK_A2G:SetTargetCoordinate(TargetCoordinate, TaskUnit)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_A2A).SetRendezVousZone">TASK_A2A:SetRendezVousZone(RendezVousZone, TaskUnit)</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G).SetTargetZone">TASK_A2G:SetTargetZone(TargetZone, TaskUnit)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_A2A).SetScoreOnDestroy">TASK_A2A:SetScoreOnDestroy(Text, Score, TaskUnit)</a></td>
+		<td class="summary">
+<p>Set a score when a target in scope of the A2A attack, has been destroyed .</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_A2A).SetScoreOnSuccess">TASK_A2A:SetScoreOnSuccess(Text, Score, TaskUnit)</a></td>
+		<td class="summary">
+<p>Set a score when all the targets in scope of the A2A attack, have been destroyed.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_A2A).SetTargetCoordinate">TASK_A2A:SetTargetCoordinate(TargetCoordinate, TaskUnit)</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G).TargetSetUnit">TASK_A2G.TargetSetUnit</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_A2A).SetTargetZone">TASK_A2A:SetTargetZone(TargetZone, TaskUnit, Altitude, Heading)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_A2A).TargetSetUnit">TASK_A2A.TargetSetUnit</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 	</table>
 
-			<h2><a id="#(TASK_BAI)">Type <code>TASK_BAI</code></a></h2>
+			<h2><a id="#(TASK_A2A_ENGAGE)">Type <code>TASK_A2A_ENGAGE</code></a></h2>
 				<table class="function_list">
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BAI).ClassName">TASK_BAI.ClassName</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_A2A_ENGAGE).ClassName">TASK_A2A_ENGAGE.ClassName</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BAI).New">TASK_BAI:New(Mission, SetGroup, TaskName, TargetSetUnit, TaskBriefing)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_A2A_ENGAGE).New">TASK_A2A_ENGAGE:New(Mission, SetGroup, TaskName, TargetSetUnit, TaskBriefing)</a></td>
 		<td class="summary">
-<p>Instantiates a new TASK_BAI.</p>
+<p>Instantiates a new TASK<em>A2A</em>ENGAGE.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_BAI).TargetSetUnit">TASK_BAI.TargetSetUnit</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_A2A_ENGAGE).TargetSetUnit">TASK_A2A_ENGAGE.TargetSetUnit</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 	</table>
 
-			<h2><a id="#(TASK_CAS)">Type <code>TASK_CAS</code></a></h2>
+			<h2><a id="#(TASK_A2A_INTERCEPT)">Type <code>TASK_A2A_INTERCEPT</code></a></h2>
 				<table class="function_list">
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_CAS).ClassName">TASK_CAS.ClassName</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_A2A_INTERCEPT).ClassName">TASK_A2A_INTERCEPT.ClassName</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_CAS).New">TASK_CAS:New(Mission, SetGroup, TaskName, TargetSetUnit, TaskBriefing)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_A2A_INTERCEPT).New">TASK_A2A_INTERCEPT:New(Mission, SetGroup, TaskName, TargetSetUnit, TaskBriefing)</a></td>
 		<td class="summary">
-<p>Instantiates a new TASK_CAS.</p>
+<p>Instantiates a new TASK<em>A2A</em>INTERCEPT.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_CAS).TargetSetUnit">TASK_CAS.TargetSetUnit</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-	</table>
-
-			<h2><a id="#(TASK_SEAD)">Type <code>TASK_SEAD</code></a></h2>
-				<table class="function_list">
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_SEAD).ClassName">TASK_SEAD.ClassName</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_SEAD).New">TASK_SEAD:New(Mission, SetGroup, TaskName, TargetSetUnit, TaskBriefing)</a></td>
-		<td class="summary">
-<p>Instantiates a new TASK_SEAD.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_SEAD).TargetSetUnit">TASK_SEAD.TargetSetUnit</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_A2A_INTERCEPT).TargetSetUnit">TASK_A2A_INTERCEPT.TargetSetUnit</a></td>
 		<td class="summary">
 
 </td>
@@ -370,9 +326,9 @@ The TASK_A2G is implemented using a <a href="Statemachine.html##(FSM_TASK)">Stat
 		<dl class="function">
 <dt>
 
-		<em><a href="##(TASK_A2G)">#TASK_A2G</a></em>
-<a id="TASK_A2G" >
-<strong>TASK_A2G</strong>
+		<em><a href="##(TASK_A2A)">#TASK_A2A</a></em>
+<a id="TASK_A2A" >
+<strong>TASK_A2A</strong>
 </a>
 </dt>
 <dd>
@@ -384,9 +340,9 @@ The TASK_A2G is implemented using a <a href="Statemachine.html##(FSM_TASK)">Stat
 		<dl class="function">
 <dt>
 
-		<em><a href="##(TASK_BAI)">#TASK_BAI</a></em>
-<a id="TASK_BAI" >
-<strong>TASK_BAI</strong>
+		<em><a href="##(TASK_A2A_ENGAGE)">#TASK_A2A_ENGAGE</a></em>
+<a id="TASK_A2A_ENGAGE" >
+<strong>TASK_A2A_ENGAGE</strong>
 </a>
 </dt>
 <dd>
@@ -398,9 +354,9 @@ The TASK_A2G is implemented using a <a href="Statemachine.html##(FSM_TASK)">Stat
 		<dl class="function">
 <dt>
 
-		<em><a href="##(TASK_CAS)">#TASK_CAS</a></em>
-<a id="TASK_CAS" >
-<strong>TASK_CAS</strong>
+		<em><a href="##(TASK_A2A_INTERCEPT)">#TASK_A2A_INTERCEPT</a></em>
+<a id="TASK_A2A_INTERCEPT" >
+<strong>TASK_A2A_INTERCEPT</strong>
 </a>
 </dt>
 <dd>
@@ -409,35 +365,21 @@ The TASK_A2G is implemented using a <a href="Statemachine.html##(FSM_TASK)">Stat
 
 </dd>
 </dl>
-		<dl class="function">
-<dt>
-
-		<em><a href="##(TASK_SEAD)">#TASK_SEAD</a></em>
-<a id="TASK_SEAD" >
-<strong>TASK_SEAD</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-	<h2><a id="#(Task_A2G)" >Type <code>Task_A2G</code></a></h2>
+	<h2><a id="#(Task_A2A)" >Type <code>Task_A2A</code></a></h2>
 	
 			<h2><a id="#(FSM_PROCESS)" >Type <code>FSM_PROCESS</code></a></h2>
 			
-			<h2><a id="#(TASK_A2G)" >Type <code>TASK_A2G</code></a></h2>
+			<h2><a id="#(TASK_A2A)" >Type <code>TASK_A2A</code></a></h2>
 				
-<p>The TASK_A2G class</p>
+<p>The TASK_A2A class</p>
 
 	<h3>Field(s)</h3>
 		<dl class="function">
 <dt>
 
 		<em>#string</em>
-<a id="#(TASK_A2G).ClassName" >
-<strong>TASK_A2G.ClassName</strong>
+<a id="#(TASK_A2A).ClassName" >
+<strong>TASK_A2A.ClassName</strong>
 </a>
 </dt>
 <dd>
@@ -449,8 +391,8 @@ The TASK_A2G is implemented using a <a href="Statemachine.html##(FSM_TASK)">Stat
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_A2G).GetPlannedMenuText" >
-<strong>TASK_A2G:GetPlannedMenuText()</strong>
+<a id="#(TASK_A2A).GetPlannedMenuText" >
+<strong>TASK_A2A:GetPlannedMenuText()</strong>
 </a>
 </dt>
 <dd>
@@ -462,8 +404,8 @@ The TASK_A2G is implemented using a <a href="Statemachine.html##(FSM_TASK)">Stat
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_A2G).GetRendezVousCoordinate" >
-<strong>TASK_A2G:GetRendezVousCoordinate(TaskUnit)</strong>
+<a id="#(TASK_A2A).GetRendezVousCoordinate" >
+<strong>TASK_A2A:GetRendezVousCoordinate(TaskUnit)</strong>
 </a>
 </dt>
 <dd>
@@ -498,8 +440,8 @@ The RendezVousRange that defines when the player is considered to have arrived a
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_A2G).GetRendezVousZone" >
-<strong>TASK_A2G:GetRendezVousZone(TaskUnit)</strong>
+<a id="#(TASK_A2A).GetRendezVousZone" >
+<strong>TASK_A2A:GetRendezVousZone(TaskUnit)</strong>
 </a>
 </dt>
 <dd>
@@ -524,8 +466,8 @@ The Zone object where the RendezVous is located on the map.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_A2G).GetTargetCoordinate" >
-<strong>TASK_A2G:GetTargetCoordinate(TaskUnit)</strong>
+<a id="#(TASK_A2A).GetTargetCoordinate" >
+<strong>TASK_A2A:GetTargetCoordinate(TaskUnit)</strong>
 </a>
 </dt>
 <dd>
@@ -550,8 +492,8 @@ The Coordinate object where the Target is located on the map.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_A2G).GetTargetZone" >
-<strong>TASK_A2G:GetTargetZone(TaskUnit)</strong>
+<a id="#(TASK_A2A).GetTargetZone" >
+<strong>TASK_A2A:GetTargetZone(TaskUnit)</strong>
 </a>
 </dt>
 <dd>
@@ -576,13 +518,13 @@ The Zone object where the Target is located on the map.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_A2G).New" >
-<strong>TASK_A2G:New(Mission, SetGroup, TaskName, UnitSetTargets, TargetDistance, TargetZone, TargetSetUnit, TaskType, TaskBriefing)</strong>
+<a id="#(TASK_A2A).New" >
+<strong>TASK_A2A:New(Mission, SetAttack, TaskName, UnitSetTargets, TargetDistance, TargetZone, TargetSetUnit, TaskType, TaskBriefing)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Instantiates a new TASK_A2G.</p>
+<p>Instantiates a new TASK_A2A.</p>
 
 		<h3>Parameters</h3>
 		<ul>
@@ -593,7 +535,7 @@ The Zone object where the Target is located on the map.</p>
 				</li>
 				<li>
 				
-<p><code><em><a href="Set.html##(SET_GROUP)">Set#SET_GROUP</a> SetGroup </em></code>: 
+<p><code><em><a href="Set.html##(SET_GROUP)">Set#SET_GROUP</a> SetAttack </em></code>: 
 The set of groups for which the Task can be assigned.</p>
 
 				</li>
@@ -639,7 +581,7 @@ If the TargetZone parameter is specified, the player will be routed to the cente
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="##(TASK_A2G)">#TASK_A2G</a>:</em>
+<p><em><a href="##(TASK_A2A)">#TASK_A2A</a>:</em>
 self</p>
 
 </dd>
@@ -647,20 +589,20 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_A2G).SetPenaltyOnFailed" >
-<strong>TASK_A2G:SetPenaltyOnFailed(Text, Penalty, TaskUnit)</strong>
+<a id="#(TASK_A2A).SetPenaltyOnFailed" >
+<strong>TASK_A2A:SetPenaltyOnFailed(Text, Penalty, TaskUnit)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Set a penalty when the A2G attack has failed.</p>
+<p>Set a penalty when the A2A attack has failed.</p>
 
 		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
 <p><code><em>#string Text </em></code>: 
-The text to display to the player, when the A2G attack has failed.</p>
+The text to display to the player, when the A2A attack has failed.</p>
 
 				</li>
 				<li>
@@ -677,7 +619,7 @@ The penalty in points.</p>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="##(TASK_A2G)">#TASK_A2G</a>:</em></p>
+<p><em><a href="##(TASK_A2A)">#TASK_A2A</a>:</em></p>
 
 
 </dd>
@@ -685,8 +627,8 @@ The penalty in points.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_A2G).SetRendezVousCoordinate" >
-<strong>TASK_A2G:SetRendezVousCoordinate(RendezVousCoordinate, RendezVousRange, TaskUnit)</strong>
+<a id="#(TASK_A2A).SetRendezVousCoordinate" >
+<strong>TASK_A2A:SetRendezVousCoordinate(RendezVousCoordinate, RendezVousRange, TaskUnit)</strong>
 </a>
 </dt>
 <dd>
@@ -718,8 +660,8 @@ The RendezVousRange that defines when the player is considered to have arrived a
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_A2G).SetRendezVousZone" >
-<strong>TASK_A2G:SetRendezVousZone(RendezVousZone, TaskUnit)</strong>
+<a id="#(TASK_A2A).SetRendezVousZone" >
+<strong>TASK_A2A:SetRendezVousZone(RendezVousZone, TaskUnit)</strong>
 </a>
 </dt>
 <dd>
@@ -745,13 +687,13 @@ The Zone object where the RendezVous is located on the map.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_A2G).SetScoreOnDestroy" >
-<strong>TASK_A2G:SetScoreOnDestroy(Text, Score, TaskUnit)</strong>
+<a id="#(TASK_A2A).SetScoreOnDestroy" >
+<strong>TASK_A2A:SetScoreOnDestroy(Text, Score, TaskUnit)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Set a score when a target in scope of the A2G attack, has been destroyed .</p>
+<p>Set a score when a target in scope of the A2A attack, has been destroyed .</p>
 
 		<h3>Parameters</h3>
 		<ul>
@@ -775,7 +717,7 @@ The score in points.</p>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="##(TASK_A2G)">#TASK_A2G</a>:</em></p>
+<p><em><a href="##(TASK_A2A)">#TASK_A2A</a>:</em></p>
 
 
 </dd>
@@ -783,13 +725,13 @@ The score in points.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_A2G).SetScoreOnSuccess" >
-<strong>TASK_A2G:SetScoreOnSuccess(Text, Score, TaskUnit)</strong>
+<a id="#(TASK_A2A).SetScoreOnSuccess" >
+<strong>TASK_A2A:SetScoreOnSuccess(Text, Score, TaskUnit)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Set a score when all the targets in scope of the A2G attack, have been destroyed.</p>
+<p>Set a score when all the targets in scope of the A2A attack, have been destroyed.</p>
 
 		<h3>Parameters</h3>
 		<ul>
@@ -813,7 +755,7 @@ The score in points.</p>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="##(TASK_A2G)">#TASK_A2G</a>:</em></p>
+<p><em><a href="##(TASK_A2A)">#TASK_A2A</a>:</em></p>
 
 
 </dd>
@@ -821,8 +763,8 @@ The score in points.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_A2G).SetTargetCoordinate" >
-<strong>TASK_A2G:SetTargetCoordinate(TargetCoordinate, TaskUnit)</strong>
+<a id="#(TASK_A2A).SetTargetCoordinate" >
+<strong>TASK_A2A:SetTargetCoordinate(TargetCoordinate, TaskUnit)</strong>
 </a>
 </dt>
 <dd>
@@ -848,8 +790,8 @@ The Coordinate object where the Target is located on the map.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_A2G).SetTargetZone" >
-<strong>TASK_A2G:SetTargetZone(TargetZone, TaskUnit)</strong>
+<a id="#(TASK_A2A).SetTargetZone" >
+<strong>TASK_A2A:SetTargetZone(TargetZone, TaskUnit, Altitude, Heading)</strong>
 </a>
 </dt>
 <dd>
@@ -869,6 +811,16 @@ The Zone object where the Target is located on the map.</p>
 <p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> TaskUnit </em></code>: </p>
 
 				</li>
+				<li>
+				
+<p><code><em> Altitude </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> Heading </em></code>: </p>
+
+				</li>
 		</ul>
 </dd>
 </dl>
@@ -876,8 +828,8 @@ The Zone object where the Target is located on the map.</p>
 <dt>
 
 		<em><a href="Set.html##(SET_UNIT)">Set#SET_UNIT</a></em>
-<a id="#(TASK_A2G).TargetSetUnit" >
-<strong>TASK_A2G.TargetSetUnit</strong>
+<a id="#(TASK_A2A).TargetSetUnit" >
+<strong>TASK_A2A.TargetSetUnit</strong>
 </a>
 </dt>
 <dd>
@@ -887,17 +839,17 @@ The Zone object where the Target is located on the map.</p>
 </dd>
 </dl>
 
-			<h2><a id="#(TASK_BAI)" >Type <code>TASK_BAI</code></a></h2>
+			<h2><a id="#(TASK_A2A_ENGAGE)" >Type <code>TASK_A2A_ENGAGE</code></a></h2>
 				
-<p>The TASK_BAI class</p>
+<p>The TASK<em>A2A</em>ENGAGE class</p>
 
 	<h3>Field(s)</h3>
 		<dl class="function">
 <dt>
 
 		<em>#string</em>
-<a id="#(TASK_BAI).ClassName" >
-<strong>TASK_BAI.ClassName</strong>
+<a id="#(TASK_A2A_ENGAGE).ClassName" >
+<strong>TASK_A2A_ENGAGE.ClassName</strong>
 </a>
 </dt>
 <dd>
@@ -909,13 +861,13 @@ The Zone object where the Target is located on the map.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_BAI).New" >
-<strong>TASK_BAI:New(Mission, SetGroup, TaskName, TargetSetUnit, TaskBriefing)</strong>
+<a id="#(TASK_A2A_ENGAGE).New" >
+<strong>TASK_A2A_ENGAGE:New(Mission, SetGroup, TaskName, TargetSetUnit, TaskBriefing)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Instantiates a new TASK_BAI.</p>
+<p>Instantiates a new TASK<em>A2A</em>ENGAGE.</p>
 
 		<h3>Parameters</h3>
 		<ul>
@@ -950,7 +902,7 @@ The briefing of the task.</p>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="##(TASK_BAI)">#TASK_BAI</a>:</em>
+<p><em><a href="##(TASK_A2A_ENGAGE)">#TASK<em>A2A</em>ENGAGE</a>:</em>
 self</p>
 
 </dd>
@@ -959,8 +911,8 @@ self</p>
 <dt>
 
 		<em><a href="Set.html##(SET_UNIT)">Set#SET_UNIT</a></em>
-<a id="#(TASK_BAI).TargetSetUnit" >
-<strong>TASK_BAI.TargetSetUnit</strong>
+<a id="#(TASK_A2A_ENGAGE).TargetSetUnit" >
+<strong>TASK_A2A_ENGAGE.TargetSetUnit</strong>
 </a>
 </dt>
 <dd>
@@ -970,17 +922,17 @@ self</p>
 </dd>
 </dl>
 
-			<h2><a id="#(TASK_CAS)" >Type <code>TASK_CAS</code></a></h2>
+			<h2><a id="#(TASK_A2A_INTERCEPT)" >Type <code>TASK_A2A_INTERCEPT</code></a></h2>
 				
-<p>The TASK_CAS class</p>
+<p>The TASK<em>A2A</em>INTERCEPT class</p>
 
 	<h3>Field(s)</h3>
 		<dl class="function">
 <dt>
 
 		<em>#string</em>
-<a id="#(TASK_CAS).ClassName" >
-<strong>TASK_CAS.ClassName</strong>
+<a id="#(TASK_A2A_INTERCEPT).ClassName" >
+<strong>TASK_A2A_INTERCEPT.ClassName</strong>
 </a>
 </dt>
 <dd>
@@ -992,13 +944,13 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_CAS).New" >
-<strong>TASK_CAS:New(Mission, SetGroup, TaskName, TargetSetUnit, TaskBriefing)</strong>
+<a id="#(TASK_A2A_INTERCEPT).New" >
+<strong>TASK_A2A_INTERCEPT:New(Mission, SetGroup, TaskName, TargetSetUnit, TaskBriefing)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Instantiates a new TASK_CAS.</p>
+<p>Instantiates a new TASK<em>A2A</em>INTERCEPT.</p>
 
 		<h3>Parameters</h3>
 		<ul>
@@ -1033,7 +985,7 @@ The briefing of the task.</p>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="##(TASK_CAS)">#TASK_CAS</a>:</em>
+<p><em><a href="##(TASK_A2A_INTERCEPT)">#TASK<em>A2A</em>INTERCEPT</a>:</em>
 self</p>
 
 </dd>
@@ -1042,91 +994,8 @@ self</p>
 <dt>
 
 		<em><a href="Set.html##(SET_UNIT)">Set#SET_UNIT</a></em>
-<a id="#(TASK_CAS).TargetSetUnit" >
-<strong>TASK_CAS.TargetSetUnit</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-
-			<h2><a id="#(TASK_SEAD)" >Type <code>TASK_SEAD</code></a></h2>
-				
-<p>The TASK_SEAD class</p>
-
-	<h3>Field(s)</h3>
-		<dl class="function">
-<dt>
-
-		<em>#string</em>
-<a id="#(TASK_SEAD).ClassName" >
-<strong>TASK_SEAD.ClassName</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(TASK_SEAD).New" >
-<strong>TASK_SEAD:New(Mission, SetGroup, TaskName, TargetSetUnit, TaskBriefing)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Instantiates a new TASK_SEAD.</p>
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="Tasking.Mission.html##(MISSION)">Tasking.Mission#MISSION</a> Mission </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em><a href="Core.Set.html##(SET_GROUP)">Core.Set#SET_GROUP</a> SetGroup </em></code>: 
-The set of groups for which the Task can be assigned.</p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string TaskName </em></code>: 
-The name of the Task.</p>
-
-				</li>
-				<li>
-				
-<p><code><em><a href="Core.Set.html##(SET_UNIT)">Core.Set#SET_UNIT</a> TargetSetUnit </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string TaskBriefing </em></code>: 
-The briefing of the task.</p>
-
-				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em><a href="##(TASK_SEAD)">#TASK_SEAD</a>:</em>
-self</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em><a href="Set.html##(SET_UNIT)">Set#SET_UNIT</a></em>
-<a id="#(TASK_SEAD).TargetSetUnit" >
-<strong>TASK_SEAD.TargetSetUnit</strong>
+<a id="#(TASK_A2A_INTERCEPT).TargetSetUnit" >
+<strong>TASK_A2A_INTERCEPT.TargetSetUnit</strong>
 </a>
 </dt>
 <dd>
