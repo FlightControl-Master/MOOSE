@@ -165,7 +165,7 @@ do -- TASK_A2A_DISPATCHER
         local TaskName = Task:GetName()
         local TaskType = TaskName:match( "(%u+)%.%d+" )
         
-        self:E( { TaskType = TaskType } )
+        self:T2( { TaskType = TaskType } )
         
         local Remove = false
         
@@ -183,7 +183,7 @@ do -- TASK_A2A_DISPATCHER
         end
          
         if DetectedItemChanged == true or Remove then
-          self:E( "Removing Tasking: " .. Task:GetTaskName() )
+          self:T2( "Removing Tasking: " .. Task:GetTaskName() )
           Mission:RemoveTask( Task )
           self.Tasks[DetectedItemID] = nil
         end
