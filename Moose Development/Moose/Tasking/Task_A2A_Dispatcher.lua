@@ -153,19 +153,40 @@ do -- TASK_A2A_DISPATCHER
   -- @param #TASK_A2A_DISPATCHER self
   -- @param Tasking.Mission#MISSION Mission
   -- @param Tasking.Task#TASK Task
+  -- @param Functional.Detection#DETECTION_BASE Detection The detection created by the @{Detection#DETECTION_BASE} derived object.
   -- @param #boolean DetectedItemID
   -- @param #boolean DetectedItemChange
   -- @return Tasking.Task#TASK
-  function TASK_A2A_DISPATCHER:EvaluateRemoveTask( Mission, Task, DetectedItem, DetectedItemID, DetectedItemChanged )
-    
+  function TASK_A2A_DISPATCHER:EvaluateRemoveTask( Mission, Task, Detection, DetectedItem, DetectedItemID, DetectedItemChanged )
     
     if Task then
 
-      local TaskName = Task:GetName()
-      if Task:IsStatePlanned() and DetectedItemChanged == true then
-        self:E( "Removing Tasking: " .. Task:GetTaskName() )
-        Mission:RemoveTask( Task )
-        self.Tasks[DetectedItemID] = nil
+      if Task:IsStatePlanned() then
+        local TaskName = Task:GetName()
+        local TaskType = TaskName:match( "(%u+)%.%d+" )
+        
+        self:E( { TaskType = TaskType } )
+        
+        local Remove = false
+        
+        local IsPlayers = Detection:IsPlayersNearBy( DetectedItem )
+        if TaskType == "ENGAGE" then
+          if IsPlayers == false then
+            Remove = true
+          end
+        end
+        
+        if TaskType == "INTERCEPT" then
+          if IsPlayers == true then
+            Remove = true
+          end
+        end
+         
+        if DetectedItemChanged == true or Remove then
+          self:E( "Removing Tasking: " .. Task:GetTaskName() )
+          Mission:RemoveTask( Task )
+          self.Tasks[DetectedItemID] = nil
+        end
       end
     end
     
@@ -294,7 +315,7 @@ do -- TASK_A2A_DISPATCHER
         local DetectedItemChanged = DetectedItem.Changed
         
         local Task = self.Tasks[DetectedID]
-        Task = self:EvaluateRemoveTask( Mission, Task, DetectedItem, DetectedID, DetectedItemChanged ) -- Task will be removed if it is planned and changed.
+        Task = self:EvaluateRemoveTask( Mission, Task, Detection, DetectedItem, DetectedID, DetectedItemChanged ) -- Task will be removed if it is planned and changed.
 
         -- Evaluate INTERCEPT
         if not Task then
