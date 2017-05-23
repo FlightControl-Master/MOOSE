@@ -1307,21 +1307,35 @@ end
 -- List the Task Name and Status
 -- @param #TASK self
 -- @return #string
-function TASK:ReportOverview() --R2.1 fixed report. Now nicely formatted and contains the info required.
+function TASK:ReportOverview( ReportGroup ) --R2.1 fixed report. Now nicely formatted and contains the info required.
 
-  local Report = REPORT:New()
   
   -- List the name of the Task.
   local Name = self:GetName()
+  local Report = REPORT:New( "Task " .. Name )
   
   -- Determine the status of the Task.
   local State = self:GetState()
   
-  local Detection = self.TaskInfo["Detection"] and " - " .. self.TaskInfo["Detection"] or "" 
-  
-  Report:Add( "Task " .. Name .. Detection )
+  for TaskInfoID, TaskInfo in pairs( self.TaskInfo ) do
 
-  return Report:Text()
+    local TaskInfoIDText = string.format( " - %s: ", TaskInfoID )
+  
+    if type(TaskInfo) == "string" then
+      Report:Add( TaskInfoIDText .. TaskInfo )
+    elseif type(TaskInfo) == "table" then
+      if TaskInfoID == "Coordinates" then
+        local FromCoordinate = ReportGroup:GetUnit(1):GetCoordinate()
+        local ToCoordinate = TaskInfo -- Core.Point#COORDINATE
+        Report:Add( TaskInfoIDText )
+        Report:AddIndent( ToCoordinate:ToStringBRA( FromCoordinate ) .. ", " .. TaskInfo:ToStringAspect( FromCoordinate ) )
+        --Report:AddIndent( ToCoordinate:ToStringBULLS( ReportGroup:GetCoalition() ) )
+      else
+      end
+    end
+  end
+  
+  return Report:Text( ", ")
 end
 
 --- Create a count of the players in the Task.

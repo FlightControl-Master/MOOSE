@@ -348,7 +348,9 @@ do -- TASK_INTERCEPT
   TASK_INTERCEPT = {
     ClassName = "TASK_INTERCEPT",
   }
-  
+
+
+
   --- Instantiates a new TASK_INTERCEPT.
   -- @param #TASK_INTERCEPT self
   -- @param Tasking.Mission#MISSION Mission

@@ -26,6 +26,8 @@ function REPORT:New( Title )
   if Title then
     self.Title = Title  
   end
+  
+  self:SetIndent( 3 )
 
   return self
 end

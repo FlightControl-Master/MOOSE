@@ -104,10 +104,7 @@ do -- TASK_A2A_DISPATCHER
     local DetectedSet = DetectedItem.Set
     local DetectedZone = DetectedItem.Zone
 
-    -- Put here the intercept logic....
-    local FriendliesNearBy = self.Detection:IsFriendliesNearBy( DetectedItem )
-
-    if not FriendliesNearBy == true then
+    if true then
 
       -- Here we're doing something advanced... We're copying the DetectedSet, but making a new Set only with SEADable Radar units in it.
       local TargetSetUnit = SET_UNIT:New()
@@ -119,6 +116,7 @@ do -- TASK_A2A_DISPATCHER
     
     return nil
   end
+  
 
   
   --- Evaluates the removal of the Task from the Mission.
@@ -133,9 +131,9 @@ do -- TASK_A2A_DISPATCHER
     
     
     if Task then
-      local FriendliesNearBy = self.Detection:IsFriendliesNearBy( DetectedItem )
-      
-      if Task:IsStatePlanned() and DetectedItemChanged == true and FriendliesNearBy then
+
+      local TaskName = Task:GetName()
+      if Task:IsStatePlanned() and DetectedItemChanged == true then
         self:E( "Removing Tasking: " .. Task:GetTaskName() )
         Mission:RemoveTask( Task )
         self.Tasks[DetectedItemID] = nil
@@ -144,7 +142,50 @@ do -- TASK_A2A_DISPATCHER
     
     return Task
   end
+
+  --- Calculates which friendlies are nearby the area
+  -- @param #TASK_A2A_DISPATCHER self
+  -- @param DetectedItem
+  -- @return #number, Core.CommandCenter#REPORT
+  function TASK_A2A_DISPATCHER:GetFriendliesNearBy( DetectedItem )
   
+    local DetectedSet = DetectedItem.Set
+    local FriendlyUnitsNearBy = self.Detection:GetFriendliesNearBy( DetectedItem )
+    
+    local FriendlyTypes = {}
+    local FriendliesCount = 0
+
+    if FriendlyUnitsNearBy then
+      local DetectedTreatLevel = DetectedSet:CalculateThreatLevelA2G()
+      for FriendlyUnitName, FriendlyUnitData in pairs( FriendlyUnitsNearBy ) do
+        local FriendlyUnit = FriendlyUnitData -- Wrapper.Unit#UNIT
+        if FriendlyUnit:IsAirPlane() then
+          local FriendlyUnitThreatLevel = FriendlyUnit:GetThreatLevel()
+          FriendliesCount = FriendliesCount + 1
+          local FriendlyType = FriendlyUnit:GetTypeName()
+          FriendlyTypes[FriendlyType] = FriendlyTypes[FriendlyType] and ( FriendlyTypes[FriendlyType] + 1 ) or 1
+          if DetectedTreatLevel < FriendlyUnitThreatLevel + 2 then
+          end
+        end
+      end
+      
+    end
+
+    self:E( { FriendliesCount = FriendliesCount } )
+    
+    local FriendlyTypesReport = REPORT:New()
+    
+    if FriendliesCount > 0 then
+      for FriendlyType, FriendlyTypeCount in pairs( FriendlyTypes ) do
+        FriendlyTypesReport:Add( string.format("%d of %s", FriendlyTypeCount, FriendlyType ) )
+      end
+    else
+      FriendlyTypesReport:Add( "-" )
+    end
+    
+    
+    return FriendliesCount, FriendlyTypesReport
+  end
 
   --- Assigns tasks in relation to the detected items to the @{Set#SET_GROUP}.
   -- @param #TASK_A2A_DISPATCHER self
@@ -181,9 +222,10 @@ do -- TASK_A2A_DISPATCHER
 
         -- Evaluate INTERCEPT
         if not Task then
+          local TaskName = string.format( "INTERCEPT.%03d", DetectedID )
           local TargetSetUnit = self:EvaluateINTERCEPT( DetectedItem ) -- Returns a SetUnit if there are targets to be INTERCEPTed...
           if TargetSetUnit then
-            Task = TASK_INTERCEPT:New( Mission, self.SetGroup, string.format( "INTERCEPT.%03d", DetectedID ), TargetSetUnit )
+            Task = TASK_INTERCEPT:New( Mission, self.SetGroup, TaskName, TargetSetUnit )
           end
 
           if Task then
@@ -191,13 +233,16 @@ do -- TASK_A2A_DISPATCHER
             Task:SetTargetZone( DetectedZone, DetectedSet:GetFirst():GetAltitude(), DetectedSet:GetFirst():GetHeading() )
             Task:SetDispatcher( self )
             Mission:AddTask( Task )
+            
+            TaskReport:Add( Task:GetName() )
           else
             self:E("This should not happen")
           end
 
         end
 
-        TaskReport:Add( Task:GetName() )
+        local FriendliesCount, FriendliesReport = self:GetFriendliesNearBy( DetectedItem )
+        Task:SetInfo( "Friendlies", string.format( "%d ( %s )", FriendliesCount, FriendliesReport:Text( "," ) ) ) 
   
         -- OK, so the tasking has been done, now delete the changes reported for the area.
         Detection:AcceptChanges( DetectedItem )
