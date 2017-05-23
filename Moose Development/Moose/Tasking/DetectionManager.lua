@@ -77,7 +77,7 @@ do -- DETECTION MANAGER
     self:SetReportDisplayTime( 25 )
   
     self:E( { Detection = Detection } )
-    Detection:__Start( 1 )
+    Detection:__Start( 3 )
 
     return self
   end

@@ -1083,6 +1083,22 @@ do -- DETECTION_BASE
       return DetectedItem.FriendliesNearBy
     end
   
+    --- Returns if there are friendlies nearby the FAC units ...
+    -- @param #DETECTION_BASE self
+    -- @return #boolean trhe if there are friendlies nearby 
+    function DETECTION_BASE:IsPlayersNearBy( DetectedItem )
+      
+      return DetectedItem.PlayersNearBy ~= nil or false
+    end
+  
+    --- Returns friendly units nearby the FAC units ...
+    -- @param #DETECTION_BASE self
+    -- @return #map<#string,Wrapper.Unit#UNIT> The map of Friendly UNITs. 
+    function DETECTION_BASE:GetPlayersNearBy( DetectedItem )
+      
+      return DetectedItem.PlayersNearBy
+    end
+  
     --- Background worker function to determine if there are friendlies nearby ...
     -- @param #DETECTION_BASE self
     function DETECTION_BASE:ReportFriendliesNearBy( ReportGroupData )
@@ -1106,36 +1122,52 @@ do -- DETECTION_BASE
           
          }
          
-         --- @param Dcs.DCSWrapper.Unit#Unit FoundDCSUnit
-         -- @param Wrapper.Group#GROUP ReportGroup
-         -- @param Set#SET_GROUP ReportSetGroup
-         local FindNearByFriendlies = function( FoundDCSUnit, ReportGroupData )
+        --- @param Dcs.DCSWrapper.Unit#Unit FoundDCSUnit
+        -- @param Wrapper.Group#GROUP ReportGroup
+        -- @param Set#SET_GROUP ReportSetGroup
+        local FindNearByFriendlies = function( FoundDCSUnit, ReportGroupData )
             
-            local DetectedItem = ReportGroupData.DetectedItem  -- Functional.Detection#DETECTION_BASE.DetectedItem    
-            local DetectedSet = ReportGroupData.DetectedItem.Set
-            local DetectedUnit = DetectedSet:GetFirst() -- Wrapper.Unit#UNIT
-            local ReportSetGroup = ReportGroupData.ReportSetGroup
-      
-            local EnemyCoalition = DetectedUnit:GetCoalition()
-            
-            local FoundUnitCoalition = FoundDCSUnit:getCoalition()
-            local FoundUnitName = FoundDCSUnit:getName()
-            local FoundUnitGroupName = FoundDCSUnit:getGroup():getName()
-            local EnemyUnitName = DetectedUnit:GetName()
-            local FoundUnitInReportSetGroup = ReportSetGroup:FindGroup( FoundUnitGroupName ) ~= nil
-            
-            self:T3( { "Friendlies search:", FoundUnitName, FoundUnitCoalition, EnemyUnitName, EnemyCoalition, FoundUnitInReportSetGroup } )
-            
-            if FoundUnitCoalition ~= EnemyCoalition and FoundUnitInReportSetGroup == false then
-              DetectedItem.FriendliesNearBy = DetectedItem.FriendliesNearBy or {}
-              DetectedItem.FriendliesNearBy[FoundUnitName] = UNIT:Find( FoundDCSUnit )
-              return false
-            end
-            
-            return true
+          local DetectedItem = ReportGroupData.DetectedItem  -- Functional.Detection#DETECTION_BASE.DetectedItem    
+          local DetectedSet = ReportGroupData.DetectedItem.Set
+          local DetectedUnit = DetectedSet:GetFirst() -- Wrapper.Unit#UNIT
+          local ReportSetGroup = ReportGroupData.ReportSetGroup
+    
+          local EnemyCoalition = DetectedUnit:GetCoalition()
+          
+          local FoundUnitCoalition = FoundDCSUnit:getCoalition()
+          local FoundUnitName = FoundDCSUnit:getName()
+          local FoundUnitGroupName = FoundDCSUnit:getGroup():getName()
+          local EnemyUnitName = DetectedUnit:GetName()
+          local FoundUnitInReportSetGroup = ReportSetGroup:FindGroup( FoundUnitGroupName ) ~= nil
+          
+          self:T3( { "Friendlies search:", FoundUnitName, FoundUnitCoalition, EnemyUnitName, EnemyCoalition, FoundUnitInReportSetGroup } )
+          
+          if FoundUnitCoalition ~= EnemyCoalition and FoundUnitInReportSetGroup == false then
+            DetectedItem.FriendliesNearBy = DetectedItem.FriendliesNearBy or {}
+            DetectedItem.FriendliesNearBy[FoundUnitName] = UNIT:Find( FoundDCSUnit )
+            return false
+          end
+          
+          return true
         end
         
         world.searchObjects( Object.Category.UNIT, SphereSearch, FindNearByFriendlies, ReportGroupData )
+
+        DetectedItem.PlayersNearBy = nil
+        DetectedItem.PlayersNearBy = DetectedItem.PlayersNearBy or {}
+        local DetectionZone = ZONE_UNIT:New( "DetectionPlayers", DetectedUnit, self.FriendliesRange )
+        
+        _DATABASE:ForEachPlayer(
+          --- @param Wrapper.Unit#UNIT PlayerUnit
+          function( PlayerUnitName )
+            local PlayerUnit = UNIT:FindByName( PlayerUnitName )
+            if PlayerUnit:IsInZone(DetectionZone) then
+              DetectedItem.FriendliesNearBy = DetectedItem.FriendliesNearBy or {}
+              local PlayerUnitName = PlayerUnit:GetName()
+              DetectedItem.PlayersNearBy[PlayerUnitName] = PlayerUnit
+            end
+          end
+        )
       end    
     end
   
