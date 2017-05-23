@@ -104,6 +104,7 @@ do -- TASK_A2A_DISPATCHER
     local DetectedSet = DetectedItem.Set
     local DetectedZone = DetectedItem.Zone
 
+
     if true then
 
       -- Here we're doing something advanced... We're copying the DetectedSet, but making a new Set only with SEADable Radar units in it.
@@ -117,6 +118,34 @@ do -- TASK_A2A_DISPATCHER
     return nil
   end
   
+  --- Creates an ENGAGE task when there are human friendlies airborne near the targets.
+  -- @param #TASK_A2A_DISPATCHER self
+  -- @param Functional.Detection#DETECTION_BASE.DetectedItem DetectedItem
+  -- @return Set#SET_UNIT TargetSetUnit: The target set of units.
+  -- @return #nil If there are no targets to be set.
+  function TASK_A2A_DISPATCHER:EvaluateENGAGE( DetectedItem )
+    self:F( { DetectedItem.ItemID } )
+  
+    local DetectedSet = DetectedItem.Set
+    local DetectedZone = DetectedItem.Zone
+
+    local PlayersCount, PlayersReport = self:GetPlayerFriendliesNearBy( DetectedItem )
+
+
+    if PlayersCount > 0 then
+
+      -- Here we're doing something advanced... We're copying the DetectedSet, but making a new Set only with SEADable Radar units in it.
+      local TargetSetUnit = SET_UNIT:New()
+      TargetSetUnit:SetDatabase( DetectedSet )
+      TargetSetUnit:FilterOnce() -- Filter but don't do any events!!! Elements are added manually upon each detection.
+    
+      return TargetSetUnit
+    end
+    
+    return nil
+  end
+  
+
 
   
   --- Evaluates the removal of the Task from the Mission.
@@ -187,6 +216,53 @@ do -- TASK_A2A_DISPATCHER
     return FriendliesCount, FriendlyTypesReport
   end
 
+  --- Calculates which HUMAN friendlies are nearby the area
+  -- @param #TASK_A2A_DISPATCHER self
+  -- @param DetectedItem
+  -- @return #number, Core.CommandCenter#REPORT
+  function TASK_A2A_DISPATCHER:GetPlayerFriendliesNearBy( DetectedItem )
+  
+    local DetectedSet = DetectedItem.Set
+    local PlayersNearBy = self.Detection:GetPlayersNearBy( DetectedItem )
+    
+    local PlayerTypes = {}
+    local PlayersCount = 0
+
+    if PlayersNearBy then
+      local DetectedTreatLevel = DetectedSet:CalculateThreatLevelA2G()
+      for PlayerUnitName, PlayerUnitData in pairs( PlayersNearBy ) do
+        local PlayerUnit = PlayerUnitData -- Wrapper.Unit#UNIT
+        local PlayerName = PlayerUnit:GetPlayerName()
+        self:E( { PlayerName = PlayerName, PlayerUnit = PlayerUnit } )
+        if PlayerUnit:IsAirPlane() and PlayerName ~= nil then
+          local FriendlyUnitThreatLevel = PlayerUnit:GetThreatLevel()
+          PlayersCount = PlayersCount + 1
+          local PlayerType = PlayerUnit:GetTypeName()
+          PlayerTypes[PlayerName] = PlayerType
+          if DetectedTreatLevel < FriendlyUnitThreatLevel + 2 then
+          end
+        end
+      end
+      
+    end
+
+    self:E( { PlayersCount = PlayersCount } )
+    
+    local PlayerTypesReport = REPORT:New()
+    
+    if PlayersCount > 0 then
+      for PlayerName, PlayerType in pairs( PlayerTypes ) do
+        PlayerTypesReport:Add( string.format('"%s" in %s', PlayerName, PlayerType ) )
+      end
+    else
+      PlayerTypesReport:Add( "-" )
+    end
+    
+    
+    return PlayersCount, PlayerTypesReport
+  end
+
+
   --- Assigns tasks in relation to the detected items to the @{Set#SET_GROUP}.
   -- @param #TASK_A2A_DISPATCHER self
   -- @param Functional.Detection#DETECTION_BASE Detection The detection created by the @{Detection#DETECTION_BASE} derived object.
@@ -222,10 +298,14 @@ do -- TASK_A2A_DISPATCHER
 
         -- Evaluate INTERCEPT
         if not Task then
-          local TaskName = string.format( "INTERCEPT.%03d", DetectedID )
-          local TargetSetUnit = self:EvaluateINTERCEPT( DetectedItem ) -- Returns a SetUnit if there are targets to be INTERCEPTed...
+          local TargetSetUnit = self:EvaluateENGAGE( DetectedItem ) -- Returns a SetUnit if there are targets to be INTERCEPTed...
           if TargetSetUnit then
-            Task = TASK_INTERCEPT:New( Mission, self.SetGroup, TaskName, TargetSetUnit )
+            Task = TASK_A2A_ENGAGE:New( Mission, self.SetGroup, string.format( "ENGAGE.%03d", DetectedID ), TargetSetUnit )
+          else
+            local TargetSetUnit = self:EvaluateINTERCEPT( DetectedItem ) -- Returns a SetUnit if there are targets to be INTERCEPTed...
+            if TargetSetUnit then
+              Task = TASK_A2A_INTERCEPT:New( Mission, self.SetGroup, string.format( "INTERCEPT.%03d", DetectedID ), TargetSetUnit )
+            end
           end
 
           if Task then
@@ -243,6 +323,9 @@ do -- TASK_A2A_DISPATCHER
 
         local FriendliesCount, FriendliesReport = self:GetFriendliesNearBy( DetectedItem )
         Task:SetInfo( "Friendlies", string.format( "%d ( %s )", FriendliesCount, FriendliesReport:Text( "," ) ) ) 
+        
+        local PlayersCount, PlayersReport = self:GetPlayerFriendliesNearBy( DetectedItem )
+        Task:SetInfo( "Players", string.format( "%d ( %s )", PlayersCount, PlayersReport:Text( "," ) ) ) 
   
         -- OK, so the tasking has been done, now delete the changes reported for the area.
         Detection:AcceptChanges( DetectedItem )

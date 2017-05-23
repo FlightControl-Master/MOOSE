@@ -56,6 +56,7 @@ DATABASE = {
   GROUPS = {},
   PLAYERS = {},
   PLAYERSJOINED = {},
+  PLAYERUNITS = {},
   CLIENTS = {},
   CARGOS = {},
   AIRBASES = {},
@@ -319,17 +320,19 @@ function DATABASE:AddPlayer( UnitName, PlayerName )
   if PlayerName then
     self:E( { "Add player for unit:", UnitName, PlayerName } )
     self.PLAYERS[PlayerName] = UnitName
+    self.PLAYERUNITS[UnitName] = PlayerName
     self.PLAYERSJOINED[PlayerName] = PlayerName
   end
 end
 
 --- Deletes a player from the DATABASE based on the Player Name.
 -- @param #DATABASE self
-function DATABASE:DeletePlayer( PlayerName )
+function DATABASE:DeletePlayer( UnitName, PlayerName )
 
   if PlayerName then
     self:E( { "Clean player:", PlayerName } )
     self.PLAYERS[PlayerName] = nil
+    self.PLAYERUNITS[UnitName] = PlayerName
   end
 end
 
@@ -734,7 +737,7 @@ function DATABASE:_EventOnPlayerLeaveUnit( Event )
       if self.PLAYERS[PlayerName] then
         local Settings = SETTINGS:Set( PlayerName )
         Settings:RemovePlayerMenu( Event.IniUnit )
-        self:DeletePlayer( PlayerName )
+        self:DeletePlayer( Event.IniUnit, PlayerName )
       end
     end
   end
@@ -819,10 +822,10 @@ end
 -- @param #DATABASE self
 -- @param #function IteratorFunction The function that will be called for each object in the database. The function needs to accept a GROUP parameter.
 -- @return #DATABASE self
-function DATABASE:ForEachGroup( IteratorFunction, ... )
+function DATABASE:ForEachGroup( IteratorFunction, FinalizeFunction, ... )
   self:F2( arg )
   
-  self:ForEach( IteratorFunction, arg, self.GROUPS )
+  self:ForEach( IteratorFunction, FinalizeFunction, arg, self.GROUPS )
 
   return self
 end
@@ -832,10 +835,10 @@ end
 -- @param #DATABASE self
 -- @param #function IteratorFunction The function that will be called for each object in the database. The function needs to accept the player name.
 -- @return #DATABASE self
-function DATABASE:ForEachPlayer( IteratorFunction, ... )
+function DATABASE:ForEachPlayer( IteratorFunction, FinalizeFunction, ... )
   self:F2( arg )
   
-  self:ForEach( IteratorFunction, arg, self.PLAYERS )
+  self:ForEach( IteratorFunction, FinalizeFunction, arg, self.PLAYERS )
   
   return self
 end
@@ -845,13 +848,26 @@ end
 -- @param #DATABASE self
 -- @param #function IteratorFunction The function that will be called for each object in the database. The function needs to accept a UNIT parameter.
 -- @return #DATABASE self
-function DATABASE:ForEachPlayerJoined( IteratorFunction, ... )
+function DATABASE:ForEachPlayerJoined( IteratorFunction, FinalizeFunction, ... )
   self:F2( arg )
   
-  self:ForEach( IteratorFunction, arg, self.PLAYERSJOINED )
+  self:ForEach( IteratorFunction, FinalizeFunction, arg, self.PLAYERSJOINED )
   
   return self
 end
+
+--- Iterate the DATABASE and call an iterator function for each **ALIVE** player UNIT, providing the player UNIT and optional parameters.
+-- @param #DATABASE self
+-- @param #function IteratorFunction The function that will be called for each object in the database. The function needs to accept the player name.
+-- @return #DATABASE self
+function DATABASE:ForEachPlayerUnit( IteratorFunction, FinalizeFunction, ... )
+  self:F2( arg )
+  
+  self:ForEach( IteratorFunction, FinalizeFunction, arg, self.PLAYERUNITS )
+  
+  return self
+end
+
 
 --- Iterate the DATABASE and call an iterator function for each CLIENT, providing the CLIENT to the function and optional parameters.
 -- @param #DATABASE self

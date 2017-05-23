@@ -339,28 +339,28 @@ do -- TASK_A2A
 end 
 
 
-do -- TASK_INTERCEPT
+do -- TASK_A2A_INTERCEPT
 
-  --- The TASK_INTERCEPT class
-  -- @type TASK_INTERCEPT
+  --- The TASK_A2A_INTERCEPT class
+  -- @type TASK_A2A_INTERCEPT
   -- @field Set#SET_UNIT TargetSetUnit
   -- @extends Tasking.Task#TASK
-  TASK_INTERCEPT = {
-    ClassName = "TASK_INTERCEPT",
+  TASK_A2A_INTERCEPT = {
+    ClassName = "TASK_A2A_INTERCEPT",
   }
 
 
 
-  --- Instantiates a new TASK_INTERCEPT.
-  -- @param #TASK_INTERCEPT self
+  --- Instantiates a new TASK_A2A_INTERCEPT.
+  -- @param #TASK_A2A_INTERCEPT self
   -- @param Tasking.Mission#MISSION Mission
   -- @param Core.Set#SET_GROUP SetGroup The set of groups for which the Task can be assigned.
   -- @param #string TaskName The name of the Task.
   -- @param Core.Set#SET_UNIT TargetSetUnit 
   -- @param #string TaskBriefing The briefing of the task.
-  -- @return #TASK_INTERCEPT self
-  function TASK_INTERCEPT:New( Mission, SetGroup, TaskName, TargetSetUnit, TaskBriefing )
-    local self = BASE:Inherit( self, TASK_A2A:New( Mission, SetGroup, TaskName, TargetSetUnit, "INTERCEPT", TaskBriefing ) ) -- #TASK_INTERCEPT
+  -- @return #TASK_A2A_INTERCEPT self
+  function TASK_A2A_INTERCEPT:New( Mission, SetGroup, TaskName, TargetSetUnit, TaskBriefing )
+    local self = BASE:Inherit( self, TASK_A2A:New( Mission, SetGroup, TaskName, TargetSetUnit, "INTERCEPT", TaskBriefing ) ) -- #TASK_A2A_INTERCEPT
     self:F()
     
     Mission:AddTask( self )
@@ -370,6 +370,54 @@ do -- TASK_INTERCEPT
     self:SetBriefing( 
       TaskBriefing or 
       "Intercept incoming intruders.\n"
+    )
+
+    local TargetCoordinate = TargetSetUnit:GetFirst():GetCoordinate()
+    TargetCoordinate:SetModeA2A()
+    self:SetInfo( "Coordinates", TargetCoordinate )
+
+    self:SetInfo( "ThreatLevel", "[" .. string.rep(  "■", TargetSetUnit:CalculateThreatLevelA2G() ) .. "]" )
+    local DetectedItemsCount = TargetSetUnit:Count()
+    local DetectedItemsTypes = TargetSetUnit:GetTypeNames()
+    self:SetInfo( "Targets", string.format( "%d of %s", DetectedItemsCount, DetectedItemsTypes ) ) 
+    
+    return self
+  end 
+
+end
+
+
+do -- TASK_A2A_ENGAGE
+
+  --- The TASK_A2A_ENGAGE class
+  -- @type TASK_A2A_ENGAGE
+  -- @field Set#SET_UNIT TargetSetUnit
+  -- @extends Tasking.Task#TASK
+  TASK_A2A_ENGAGE = {
+    ClassName = "TASK_A2A_ENGAGE",
+  }
+
+
+
+  --- Instantiates a new TASK_A2A_ENGAGE.
+  -- @param #TASK_A2A_ENGAGE self
+  -- @param Tasking.Mission#MISSION Mission
+  -- @param Core.Set#SET_GROUP SetGroup The set of groups for which the Task can be assigned.
+  -- @param #string TaskName The name of the Task.
+  -- @param Core.Set#SET_UNIT TargetSetUnit 
+  -- @param #string TaskBriefing The briefing of the task.
+  -- @return #TASK_A2A_ENGAGE self
+  function TASK_A2A_ENGAGE:New( Mission, SetGroup, TaskName, TargetSetUnit, TaskBriefing )
+    local self = BASE:Inherit( self, TASK_A2A:New( Mission, SetGroup, TaskName, TargetSetUnit, "ENGAGE", TaskBriefing ) ) -- #TASK_A2A_ENGAGE
+    self:F()
+    
+    Mission:AddTask( self )
+    
+    --TODO: Add BR, Altitude, type of planes...
+    
+    self:SetBriefing( 
+      TaskBriefing or 
+      "Bogeys are nearby! Those players who are near to the intruders are requested to ENGAGE!\n"
     )
 
     local TargetCoordinate = TargetSetUnit:GetFirst():GetCoordinate()
