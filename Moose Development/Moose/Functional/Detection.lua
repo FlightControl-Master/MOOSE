@@ -1088,7 +1088,7 @@ do -- DETECTION_BASE
     -- @return #boolean trhe if there are friendlies nearby 
     function DETECTION_BASE:IsPlayersNearBy( DetectedItem )
       
-      return DetectedItem.PlayersNearBy ~= nil or false
+      return DetectedItem.PlayersNearBy ~= nil
     end
   
     --- Returns friendly units nearby the FAC units ...
@@ -1154,7 +1154,6 @@ do -- DETECTION_BASE
         world.searchObjects( Object.Category.UNIT, SphereSearch, FindNearByFriendlies, ReportGroupData )
 
         DetectedItem.PlayersNearBy = nil
-        DetectedItem.PlayersNearBy = DetectedItem.PlayersNearBy or {}
         local DetectionZone = ZONE_UNIT:New( "DetectionPlayers", DetectedUnit, self.FriendliesRange )
         
         _DATABASE:ForEachPlayer(
@@ -1164,7 +1163,10 @@ do -- DETECTION_BASE
             if PlayerUnit:IsInZone(DetectionZone) then
               DetectedItem.FriendliesNearBy = DetectedItem.FriendliesNearBy or {}
               local PlayerUnitName = PlayerUnit:GetName()
+              DetectedItem.PlayersNearBy = DetectedItem.PlayersNearBy or {}
               DetectedItem.PlayersNearBy[PlayerUnitName] = PlayerUnit
+              DetectedItem.FriendliesNearBy = DetectedItem.FriendliesNearBy or {}
+              DetectedItem.FriendliesNearBy[PlayerUnitName] = PlayerUnit
             end
           end
         )
