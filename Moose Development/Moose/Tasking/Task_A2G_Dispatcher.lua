@@ -185,13 +185,13 @@ do -- TASK_A2G_DISPATCHER
   -- @param #boolean DetectedItemID
   -- @param #boolean DetectedItemChange
   -- @return Tasking.Task#TASK
-  function TASK_A2G_DISPATCHER:EvaluateRemoveTask( Mission, Task, DetectedItemID, DetectedItemChanged )
+  function TASK_A2G_DISPATCHER:EvaluateRemoveTask( Mission, Task, TaskIndex, DetectedItemChanged )
     
     if Task then
       if Task:IsStatePlanned() and DetectedItemChanged == true then
         self:E( "Removing Tasking: " .. Task:GetTaskName() )
         Mission:RemoveTask( Task )
-        self.Tasks[DetectedItemID] = nil
+        self.Tasks[TaskIndex] = nil
       end
     end
     
@@ -216,6 +216,22 @@ do -- TASK_A2G_DISPATCHER
     
       local TaskReport = REPORT:New()
 
+      -- Checking the task queue for the dispatcher, and removing any obsolete task!
+      for TaskIndex, TaskData in pairs( self.Tasks ) do
+        local Task = TaskData -- Tasking.Task#TASK
+        if Task:IsStatePlanned() then
+          local DetectedItem = Detection:GetDetectedItem( TaskIndex )
+          if not DetectedItem then
+            local TaskText = Task:GetName()
+            for TaskGroupID, TaskGroup in pairs( self.SetGroup:GetSet() ) do
+              Mission:GetCommandCenter():MessageToGroup( string.format( "Obsolete A2G task %s for %s removed.", TaskText, Mission:GetName() ), TaskGroup )
+            end
+            Mission:RemoveTask( Task )
+            self.Tasks[TaskIndex] = nil
+          end
+        end
+      end
+
       --- First we need to  the detected targets.
       for DetectedItemID, DetectedItem in pairs( Detection:GetDetectedItems() ) do
       
@@ -226,11 +242,11 @@ do -- TASK_A2G_DISPATCHER
         DetectedSet:Flush()
         
         local DetectedItemID = DetectedItem.ID
-        local DetectedItemIndex = DetectedItem.Index
+        local TaskIndex = DetectedItem.Index
         local DetectedItemChanged = DetectedItem.Changed
         
-        local Task = self.Tasks[DetectedItemID]
-        Task = self:EvaluateRemoveTask( Mission, Task, DetectedItemID, DetectedItemChanged ) -- Task will be removed if it is planned and changed.
+        local Task = self.Tasks[TaskIndex]
+        Task = self:EvaluateRemoveTask( Mission, Task, TaskIndex, DetectedItemChanged ) -- Task will be removed if it is planned and changed.
 
         -- Evaluate SEAD
         if not Task then
@@ -256,11 +272,11 @@ do -- TASK_A2G_DISPATCHER
           end
           
           if Task then
-            self.Tasks[DetectedItemID] = Task
+            self.Tasks[TaskIndex] = Task
             Task:SetTargetZone( DetectedZone )
             Task:SetDispatcher( self )
             Task:SetInfo( "ThreatLevel", DetectedSet:CalculateThreatLevelA2G() )
-            Task:SetInfo( "Detection", Detection:DetectedItemReportSummary( DetectedItemIndex ) )
+            Task:SetInfo( "Detection", Detection:DetectedItemReportSummary( TaskIndex ) )
             Task:SetInfo( "Changes", Detection:GetChangeText( DetectedItem ) )
             Mission:AddTask( Task )
           else
