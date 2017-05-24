@@ -181,9 +181,16 @@ do -- TASK_A2A_DISPATCHER
             Remove = true
           end
         end
+
+        local DetectedSet = DetectedItem.Set -- Core.Set#SET_UNIT
+        DetectedSet:Flush()
+        self:E( { DetectedSetCount = DetectedSet:Count() } )
+        if DetectedSet:Count() == 0 then
+          Remove = true
+        end
          
         if DetectedItemChanged == true or Remove then
-          self:T2( "Removing Tasking: " .. Task:GetTaskName() )
+          self:E( "Removing Tasking: " .. Task:GetTaskName() )
           Mission:RemoveTask( Task )
           self.Tasks[DetectedItemID] = nil
         end
@@ -306,6 +313,7 @@ do -- TASK_A2A_DISPATCHER
       
         local DetectedItem = DetectedItem -- Functional.Detection#DETECTION_BASE.DetectedItem
         local DetectedSet = DetectedItem.Set -- Core.Set#SET_UNIT
+        local DetectedCount = DetectedSet:Count()
         local DetectedZone = DetectedItem.Zone
         self:E( { "Targets in DetectedItem", DetectedItem.ItemID, DetectedSet:Count(), tostring( DetectedItem ) } )
         DetectedSet:Flush()
@@ -318,7 +326,7 @@ do -- TASK_A2A_DISPATCHER
         Task = self:EvaluateRemoveTask( Mission, Task, Detection, DetectedItem, DetectedID, DetectedItemChanged ) -- Task will be removed if it is planned and changed.
 
         -- Evaluate INTERCEPT
-        if not Task then
+        if not Task and DetectedCount > 0 then
           local TargetSetUnit = self:EvaluateENGAGE( DetectedItem ) -- Returns a SetUnit if there are targets to be INTERCEPTed...
           if TargetSetUnit then
             Task = TASK_A2A_ENGAGE:New( Mission, self.SetGroup, string.format( "ENGAGE.%03d", DetectedID ), TargetSetUnit )
@@ -342,11 +350,12 @@ do -- TASK_A2A_DISPATCHER
 
         end
 
-        local FriendliesCount, FriendliesReport = self:GetFriendliesNearBy( DetectedItem )
-        Task:SetInfo( "Friendlies", string.format( "%d ( %s )", FriendliesCount, FriendliesReport:Text( "," ) ) ) 
-        
-        local PlayersCount, PlayersReport = self:GetPlayerFriendliesNearBy( DetectedItem )
-        Task:SetInfo( "Players", string.format( "%d ( %s )", PlayersCount, PlayersReport:Text( "," ) ) ) 
+        if Task then
+          local FriendliesCount, FriendliesReport = self:GetFriendliesNearBy( DetectedItem )
+          Task:SetInfo( "Friendlies", string.format( "%d ( %s )", FriendliesCount, FriendliesReport:Text( "," ) ) ) 
+          local PlayersCount, PlayersReport = self:GetPlayerFriendliesNearBy( DetectedItem )
+          Task:SetInfo( "Players", string.format( "%d ( %s )", PlayersCount, PlayersReport:Text( "," ) ) ) 
+        end
   
         -- OK, so the tasking has been done, now delete the changes reported for the area.
         Detection:AcceptChanges( DetectedItem )

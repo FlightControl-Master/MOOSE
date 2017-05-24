@@ -2365,7 +2365,7 @@ do -- DETECTION_AREAS
               self:IdentifyDetectedObject( DetectedObject )
               AreaExists = true
   
-              DetectedItem.Zone:BoundZone( 12, self.CountryID, true)
+              --DetectedItem.Zone:BoundZone( 12, self.CountryID, true)
   
               -- Assign the Unit as the new center unit of the detected area.
               DetectedItem.Zone = ZONE_UNIT:New( DetectedUnit:GetName(), DetectedUnit, self.DetectionZoneRange )
@@ -2418,7 +2418,7 @@ do -- DETECTION_AREAS
             end
           end
         else
-          DetectedItem.Zone:BoundZone( 12, self.CountryID, true)
+          --DetectedItem.Zone:BoundZone( 12, self.CountryID, true)
           self:RemoveDetectedItem( DetectedItemID )
           self:AddChangeItem( DetectedItem, "RA" )
         end
