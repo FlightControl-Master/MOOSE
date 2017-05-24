@@ -157,7 +157,7 @@ do -- TASK_A2A_DISPATCHER
   -- @param #boolean DetectedItemID
   -- @param #boolean DetectedItemChange
   -- @return Tasking.Task#TASK
-  function TASK_A2A_DISPATCHER:EvaluateRemoveTask( Mission, Task, Detection, DetectedItem, DetectedItemID, DetectedItemChanged )
+  function TASK_A2A_DISPATCHER:EvaluateRemoveTask( Mission, Task, Detection, DetectedItem, DetectedItemIndex, DetectedItemChanged )
     
     if Task then
 
@@ -183,16 +183,16 @@ do -- TASK_A2A_DISPATCHER
         end
 
         local DetectedSet = DetectedItem.Set -- Core.Set#SET_UNIT
-        DetectedSet:Flush()
-        self:E( { DetectedSetCount = DetectedSet:Count() } )
+        --DetectedSet:Flush()
+        --self:E( { DetectedSetCount = DetectedSet:Count() } )
         if DetectedSet:Count() == 0 then
           Remove = true
         end
          
         if DetectedItemChanged == true or Remove then
-          self:E( "Removing Tasking: " .. Task:GetTaskName() )
+          --self:E( "Removing Tasking: " .. Task:GetTaskName() )
           Mission:RemoveTask( Task )
-          self.Tasks[DetectedItemID] = nil
+          self.Tasks[DetectedItemIndex] = nil
         end
       end
     end
@@ -228,7 +228,7 @@ do -- TASK_A2A_DISPATCHER
       
     end
 
-    self:E( { FriendliesCount = FriendliesCount } )
+    --self:E( { FriendliesCount = FriendliesCount } )
     
     local FriendlyTypesReport = REPORT:New()
     
@@ -261,7 +261,7 @@ do -- TASK_A2A_DISPATCHER
       for PlayerUnitName, PlayerUnitData in pairs( PlayersNearBy ) do
         local PlayerUnit = PlayerUnitData -- Wrapper.Unit#UNIT
         local PlayerName = PlayerUnit:GetPlayerName()
-        self:E( { PlayerName = PlayerName, PlayerUnit = PlayerUnit } )
+        --self:E( { PlayerName = PlayerName, PlayerUnit = PlayerUnit } )
         if PlayerUnit:IsAirPlane() and PlayerName ~= nil then
           local FriendlyUnitThreatLevel = PlayerUnit:GetThreatLevel()
           PlayersCount = PlayersCount + 1
@@ -274,7 +274,7 @@ do -- TASK_A2A_DISPATCHER
       
     end
 
-    self:E( { PlayersCount = PlayersCount } )
+    --self:E( { PlayersCount = PlayersCount } )
     
     local PlayerTypesReport = REPORT:New()
     
@@ -307,23 +307,36 @@ do -- TASK_A2A_DISPATCHER
     if Mission:IsIDLE() or Mission:IsENGAGED() then
     
       local TaskReport = REPORT:New()
+      
+      -- Checking the task queue for the dispatcher, and removing any obsolete task!
+      for TaskIndex, Task in pairs( self.Tasks ) do
+        local DetectedItem = Detection:GetDetectedItem( TaskIndex )
+        if not DetectedItem then
+          local TaskText = Task:GetName()
+          for TaskGroupID, TaskGroup in pairs( self.SetGroup:GetSet() ) do
+            Mission:GetCommandCenter():MessageToGroup( string.format( "Obsolete A2A task %s for %s removed.", TaskText, Mission:GetName() ), TaskGroup )
+          end
+          Mission:RemoveTask( Task )
+          self.Tasks[TaskIndex] = nil
+        end
+      end
 
-      --- First we need to  the detected targets.
+      -- Now that all obsolete tasks are removed, loop through the detected targets.
       for DetectedItemID, DetectedItem in pairs( Detection:GetDetectedItems() ) do
       
         local DetectedItem = DetectedItem -- Functional.Detection#DETECTION_BASE.DetectedItem
         local DetectedSet = DetectedItem.Set -- Core.Set#SET_UNIT
         local DetectedCount = DetectedSet:Count()
         local DetectedZone = DetectedItem.Zone
-        self:E( { "Targets in DetectedItem", DetectedItem.ItemID, DetectedSet:Count(), tostring( DetectedItem ) } )
-        DetectedSet:Flush()
+        --self:E( { "Targets in DetectedItem", DetectedItem.ItemID, DetectedSet:Count(), tostring( DetectedItem ) } )
+        --DetectedSet:Flush()
         
         local DetectedID = DetectedItem.ID
-        local DetectedIndex = DetectedItem.Index
+        local TaskIndex = DetectedItem.Index
         local DetectedItemChanged = DetectedItem.Changed
         
-        local Task = self.Tasks[DetectedID]
-        Task = self:EvaluateRemoveTask( Mission, Task, Detection, DetectedItem, DetectedID, DetectedItemChanged ) -- Task will be removed if it is planned and changed.
+        local Task = self.Tasks[TaskIndex]
+        Task = self:EvaluateRemoveTask( Mission, Task, Detection, DetectedItem, TaskIndex, DetectedItemChanged ) -- Task will be removed if it is planned and changed.
 
         -- Evaluate INTERCEPT
         if not Task and DetectedCount > 0 then
@@ -338,7 +351,7 @@ do -- TASK_A2A_DISPATCHER
           end
 
           if Task then
-            self.Tasks[DetectedID] = Task
+            self.Tasks[TaskIndex] = Task
             Task:SetTargetZone( DetectedZone, DetectedSet:GetFirst():GetAltitude(), DetectedSet:GetFirst():GetHeading() )
             Task:SetDispatcher( self )
             Mission:AddTask( Task )
