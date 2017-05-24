@@ -309,15 +309,18 @@ do -- TASK_A2A_DISPATCHER
       local TaskReport = REPORT:New()
       
       -- Checking the task queue for the dispatcher, and removing any obsolete task!
-      for TaskIndex, Task in pairs( self.Tasks ) do
-        local DetectedItem = Detection:GetDetectedItem( TaskIndex )
-        if not DetectedItem then
-          local TaskText = Task:GetName()
-          for TaskGroupID, TaskGroup in pairs( self.SetGroup:GetSet() ) do
-            Mission:GetCommandCenter():MessageToGroup( string.format( "Obsolete A2A task %s for %s removed.", TaskText, Mission:GetName() ), TaskGroup )
+      for TaskIndex, TaskData in pairs( self.Tasks ) do
+        local Task = TaskData -- Tasking.Task#TASK
+        if Task:IsStatePlanned() then
+          local DetectedItem = Detection:GetDetectedItem( TaskIndex )
+          if not DetectedItem then
+            local TaskText = Task:GetName()
+            for TaskGroupID, TaskGroup in pairs( self.SetGroup:GetSet() ) do
+              Mission:GetCommandCenter():MessageToGroup( string.format( "Obsolete A2A task %s for %s removed.", TaskText, Mission:GetName() ), TaskGroup )
+            end
+            Mission:RemoveTask( Task )
+            self.Tasks[TaskIndex] = nil
           end
-          Mission:RemoveTask( Task )
-          self.Tasks[TaskIndex] = nil
         end
       end
 
