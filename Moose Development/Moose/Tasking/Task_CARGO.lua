@@ -364,17 +364,7 @@ do -- TASK_CARGO
       self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
       if self.Cargo:IsAlive() then
         if TaskUnit:IsAir() then
-          local ColorToUse = TASK_CARGO:GetSmokeColor()
-          if ColorToUse == SMOKECOLOR.Green then
-            self.Cargo.CargoObject:GetUnit(1):SmokeGreen()
-          elseif ColorToUse == SMOKECOLOR.Blue then
-            self.Cargo.CargoObject:GetUnit(1):SmokeBlue()
-          elseif ColorToUse == SMOKECOLOR.Orange then
-            self.Cargo.CargoObject:GetUnit(1):SmokeOrange()
-          elseif ColorToUse == SMOKECOLOR.White then
-            self.Cargo.CargoObject:GetUnit(1):SmokeWhite()
-          else
-            self.Cargo.CargoObject:GetUnit(1):SmokeRed()
+            TaskUnit:Smoke(TASK_CARGO:GetSmokeColor(),15)
           end
           self:__Land( -0.1, "Pickup" )
         else
