@@ -355,6 +355,7 @@ do -- TASK_CARGO
     end
 
 
+
     --- 
     -- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
@@ -624,24 +625,24 @@ do -- TASK_CARGO
  
   end
   
-   --- 
-    -- #TASK_CARGO
-    --@return SmokeColor
-    function TASK_CARGO:GetSmokeColor()
-      return self.SmokeColor
-    end
 
-    --@param Color Might be SMOKECOLOR.Blue, SMOKECOLOR.Red SMOKECOLOR.Orange, SMOKECOLOR.White or SMOKECOLOR.Green
+    ---@param Color Might be SMOKECOLOR.Blue, SMOKECOLOR.Red SMOKECOLOR.Orange, SMOKECOLOR.White or SMOKECOLOR.Green
     function TASK_CARGO:SetSmokeColor(SmokeColor)
        -- Makes sure Coloe is set
        if SmokeColor == nil then
           self.SmokeColor = SMOKECOLOR.Red -- Make sure a default color is exist
+          
        elseif type(SmokeColor) == "number" then
        self:F2(SmokeColor)
         if SmokeColor > 0 and SmokeColor <=5 then -- Make sure number is within ragne, assuming first enum is one
           self.SmokeColor = SMOKECOLOR.SmokeColor
         end
        end
+    end
+     
+    --@return SmokeColor
+    function TASK_CARGO:GetSmokeColor()
+      return self.SmokeColor
     end
   
   --- @param #TASK_CARGO self
