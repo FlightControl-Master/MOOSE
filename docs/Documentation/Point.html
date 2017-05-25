@@ -167,7 +167,7 @@
 		<td class="summary">
 <h1>COORDINATE class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
 
-<p>The COORDINATE class defines a 2D coordinate in the simulator.</p>
+<p>COORDINATE defines a 3D point in the simulator and with its methods, you can use or manipulate the point in 3D space.</p>
 </td>
 		</tr>
 		<tr>
@@ -189,6 +189,12 @@
 	</table>
 			<h2><a id="#(COORDINATE)">Type <code>COORDINATE</code></a></h2>
 				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).DistanceFromVec2">COORDINATE:DistanceFromVec2(Vec2Reference)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).Explosion">COORDINATE:Explosion(ExplosionIntensity)</a></td>
 		<td class="summary">
@@ -292,6 +298,18 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).GetRandomVec2InRadius">COORDINATE:GetRandomVec2InRadius(OuterRadius, InnerRadius)</a></td>
+		<td class="summary">
+<p>Return a random Vec2 within an Outer Radius and optionally NOT within an Inner Radius of the COORDINATE.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).GetRandomVec3InRadius">COORDINATE:GetRandomVec3InRadius(OuterRadius, InnerRadius)</a></td>
+		<td class="summary">
+<p>Return a random Vec3 within an Outer Radius and optionally NOT within an Inner Radius of the COORDINATE.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).GetVec2">COORDINATE:GetVec2()</a></td>
 		<td class="summary">
 <p>Return the coordinates of the COORDINATE in Vec2 format.</p>
@@ -312,7 +330,7 @@
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).IsLOS">COORDINATE:IsLOS(ToCoordinate)</a></td>
 		<td class="summary">
-<p>Returns if a Coordinate has Line of Sight (LOS) with the ToPointVec3.</p>
+<p>Returns if a Coordinate has Line of Sight (LOS) with the ToCoordinate.</p>
 </td>
 		</tr>
 		<tr>
@@ -463,7 +481,7 @@
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).Translate">COORDINATE:Translate(Distance, Angle)</a></td>
 		<td class="summary">
-<p>Add a Distance in meters from the COORDINATE horizontal plane, with the given angle, and calculate the new COORDINATE.</p>
+<p>Add a Distance in meters from the COORDINATE orthonormal plane, with the given angle, and calculate the new COORDINATE.</p>
 </td>
 		</tr>
 		<tr>
@@ -513,12 +531,6 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC2).DistanceFromVec2">POINT_VEC2:DistanceFromVec2(Vec2Reference)</a></td>
-		<td class="summary">
-<p>Calculate the distance from a reference <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a>.</p>
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC2).GetAlt">POINT_VEC2:GetAlt()</a></td>
 		<td class="summary">
 <p>Return the altitude (height) of the land at the POINT_VEC2.</p>
@@ -540,12 +552,6 @@
 		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC2).GetRandomPointVec2InRadius">POINT_VEC2:GetRandomPointVec2InRadius(OuterRadius, InnerRadius)</a></td>
 		<td class="summary">
 <p>Return a random POINT<em>VEC2 within an Outer Radius and optionally NOT within an Inner Radius of the POINT</em>VEC2.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC2).GetRandomVec2InRadius">POINT_VEC2:GetRandomVec2InRadius(OuterRadius, InnerRadius)</a></td>
-		<td class="summary">
-<p>Return a random Vec2 within an Outer Radius and optionally NOT within an Inner Radius of the POINT_VEC2.</p>
 </td>
 		</tr>
 		<tr>
@@ -609,12 +615,6 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC2).Translate">POINT_VEC2:Translate(Distance, Angle)</a></td>
-		<td class="summary">
-<p>Add a Distance in meters from the POINT<em>VEC2 orthonormal plane, with the given angle, and calculate the new POINT</em>VEC2.</p>
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC2).x">POINT_VEC2.x</a></td>
 		<td class="summary">
 <p>The x coordinate in meters.</p>
@@ -664,12 +664,6 @@
 		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).GetRandomPointVec3InRadius">POINT_VEC3:GetRandomPointVec3InRadius(OuterRadius, InnerRadius)</a></td>
 		<td class="summary">
 <p>Return a random POINT<em>VEC3 within an Outer Radius and optionally NOT within an Inner Radius of the POINT</em>VEC3.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(POINT_VEC3).GetRandomVec3InRadius">POINT_VEC3:GetRandomVec3InRadius(OuterRadius, InnerRadius)</a></td>
-		<td class="summary">
-<p>Return a random Vec3 within an Outer Radius and optionally NOT within an Inner Radius of the POINT_VEC3.</p>
 </td>
 		</tr>
 		<tr>
@@ -825,35 +819,126 @@
 	
 <h1>COORDINATE class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
 
-<p>The COORDINATE class defines a 2D coordinate in the simulator.</p>
+<p>COORDINATE defines a 3D point in the simulator and with its methods, you can use or manipulate the point in 3D space.</p>
 
 	
-<p>The height coordinate (if needed) will be the land height + an optional added height specified.
-A COORDINATE can be expressed in LL or in MGRS.</p>
 
 <h2>COORDINATE constructor</h2>
 
-<p>A new COORDINATE instance can be created with:</p>
+<p>A new COORDINATE object can be created with:</p>
 
 <ul>
-    <li><a href="Point.html##(COORDINATE).New">Point#COORDINATE.New</a>(): a 2D point, taking an additional height parameter.</li>
-    <li><a href="Point.html##(COORDINATE).NewFromVec2">Point#COORDINATE.NewFromVec2</a>(): a 2D point created from a <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a>.</li>
+    <li><a href="##(COORDINATE).New">COORDINATE.New</a>(): a 3D point.</li>
+    <li><a href="##(COORDINATE).NewFromVec2">COORDINATE.NewFromVec2</a>(): a 2D point created from a <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a>.</li>
+    <li><a href="##(COORDINATE).NewFromVec3">COORDINATE.NewFromVec3</a>(): a 3D point created from a <a href="DCSTypes.html##(Vec3)">DCSTypes#Vec3</a>.</li>
 </ul>
 
-<h2>Manupulate the X, Altitude, Y coordinates of the 2D point</h2>
+<h2>Create waypoints for routes</h2>
 
-<p>A COORDINATE class works in 2D space, with an altitude setting. It contains internally an X, Altitude, Y coordinate.
-Methods exist to manupulate these coordinates.</p>
+<p>A COORDINATE can prepare waypoints for Ground and Air groups to be embedded into a Route.</p>
 
-<p>The current X, Altitude, Y axis can be retrieved with the methods <a href="##(COORDINATE).GetX">COORDINATE.GetX</a>(), <a href="##(COORDINATE).GetAlt">COORDINATE.GetAlt</a>(), <a href="##(COORDINATE).GetY">COORDINATE.GetY</a>() respectively.
-The methods <a href="##(COORDINATE).SetX">COORDINATE.SetX</a>(), <a href="##(COORDINATE).SetAlt">COORDINATE.SetAlt</a>(), <a href="##(COORDINATE).SetY">COORDINATE.SetY</a>() change the respective axis with a new value.
-The current Lat(itude), Alt(itude), Lon(gitude) values can also be retrieved with the methods <a href="##(COORDINATE).GetLat">COORDINATE.GetLat</a>(), <a href="##(COORDINATE).GetAlt">COORDINATE.GetAlt</a>(), <a href="##(COORDINATE).GetLon">COORDINATE.GetLon</a>() respectively.
-The current axis values can be changed by using the methods <a href="##(COORDINATE).AddX">COORDINATE.AddX</a>(), <a href="##(COORDINATE).AddAlt">COORDINATE.AddAlt</a>(), <a href="##(COORDINATE).AddY">COORDINATE.AddY</a>()
-to add or substract a value from the current respective axis value.
-Note that the Set and Add methods return the current COORDINATE object, so these manipulation methods can be chained... For example:</p>
+<ul>
+    <li><a href="##(COORDINATE).RoutePointAir">COORDINATE.RoutePointAir</a>(): Build an air route point.</li>
+    <li><a href="##(COORDINATE).RoutePointGround">COORDINATE.RoutePointGround</a>(): Build a ground route point.</li>
+</ul>
 
-<pre><code> local Vec2 = PointVec2:AddX( 100 ):AddY( 2000 ):GetVec2()
-</code></pre>
+<p>Route points can be used in the Route methods of the <a href="Group.html##(GROUP)">Group#GROUP</a> class.</p>
+
+
+<h2>Smoke, flare, explode, illuminate</h2>
+
+<p>At the point a smoke, flare, explosion and illumination bomb can be triggered. Use the following methods:</p>
+
+<h3>Smoke</h3>
+
+<ul>
+    <li><a href="##(COORDINATE).Smoke">COORDINATE.Smoke</a>(): To smoke the point in a certain color.</li>
+    <li><a href="##(COORDINATE).SmokeBlue">COORDINATE.SmokeBlue</a>(): To smoke the point in blue.</li>
+    <li><a href="##(COORDINATE).SmokeRed">COORDINATE.SmokeRed</a>(): To smoke the point in red.</li>
+    <li><a href="##(COORDINATE).SmokeOrange">COORDINATE.SmokeOrange</a>(): To smoke the point in orange.</li>
+    <li><a href="##(COORDINATE).SmokeWhite">COORDINATE.SmokeWhite</a>(): To smoke the point in white.</li>
+    <li><a href="##(COORDINATE).SmokeGreen">COORDINATE.SmokeGreen</a>(): To smoke the point in green.</li>
+</ul>
+
+<h3>Flare</h3>
+
+<ul>
+    <li><a href="##(COORDINATE).Flare">COORDINATE.Flare</a>(): To flare the point in a certain color.</li>
+    <li><a href="##(COORDINATE).FlareRed">COORDINATE.FlareRed</a>(): To flare the point in red.</li>
+    <li><a href="##(COORDINATE).FlareYellow">COORDINATE.FlareYellow</a>(): To flare the point in yellow.</li>
+    <li><a href="##(COORDINATE).FlareWhite">COORDINATE.FlareWhite</a>(): To flare the point in white.</li>
+    <li><a href="##(COORDINATE).FlareGreen">COORDINATE.FlareGreen</a>(): To flare the point in green.</li>
+</ul>
+
+<h3>Explode</h3>
+
+<ul>
+    <li><a href="##(COORDINATE).Explosion">COORDINATE.Explosion</a>(): To explode the point with a certain intensity.</li>
+</ul>
+
+<h3>Illuminate</h3>
+
+<ul>
+    <li><a href="##(COORDINATE).IlluminationBomb">COORDINATE.IlluminationBomb</a>(): To illuminate the point.</li>
+</ul>
+
+
+<h2>3D calculation methods</h2>
+
+<p>Various calculation methods exist to use or manipulate 3D space. Find below a short description of each method:</p>
+
+<h3>Distance</h3>
+
+<ul>
+    <li><a href="##(COORDINATE).Get3DDistance">COORDINATE.Get3DDistance</a>(): Obtain the distance from the current 3D point to the provided 3D point in 3D space.</li>
+    <li><a href="##(COORDINATE).Get2DDistance">COORDINATE.Get2DDistance</a>(): Obtain the distance from the current 3D point to the provided 3D point in 2D space.</li>
+</ul>
+
+<h3>Angle</h3>
+
+<ul>
+    <li><a href="##(COORDINATE).GetAngleDegrees">COORDINATE.GetAngleDegrees</a>(): Obtain the angle in degrees from the current 3D point with the provided 3D direction vector.</li>
+    <li><a href="##(COORDINATE).GetAngleRadians">COORDINATE.GetAngleRadians</a>(): Obtain the angle in radians from the current 3D point with the provided 3D direction vector.</li>
+    <li><a href="##(COORDINATE).GetDirectionVec3">COORDINATE.GetDirectionVec3</a>(): Obtain the 3D direction vector from the current 3D point to the provided 3D point.</li>
+</ul>
+
+<h3>Translation</h3>
+
+<ul>
+    <li><a href="##(COORDINATE).Translate">COORDINATE.Translate</a>(): Translate the current 3D point towards an other 3D point using the given Distance and Angle.</li>
+</ul>
+
+<h3>Get the North correction of the current location</h3>
+
+<ul>
+    <li><a href="##(COORDINATE).GetNorthCorrection">COORDINATE.GetNorthCorrection</a>(): Obtains the north correction at the current 3D point.</li>
+</ul>
+
+
+<h2>Point Randomization</h2>
+
+<p>Various methods exist to calculate random locations around a given 3D point.</p>
+
+<ul>
+    <li><a href="##(COORDINATE).GetRandomVec2InRadius">COORDINATE.GetRandomVec2InRadius</a>(): Provides a random 2D vector around the current 3D point, in the given inner to outer band.</li>
+    <li><a href="##(COORDINATE).GetRandomVec3InRadius">COORDINATE.GetRandomVec3InRadius</a>(): Provides a random 3D vector around the current 3D point, in the given inner to outer band.</li>
+</ul>
+
+
+<h2>Metric system</h2>
+
+<ul>
+    <li><a href="##(COORDINATE).IsMetric">COORDINATE.IsMetric</a>(): Returns if the 3D point is Metric or Nautical Miles.</li>
+    <li><a href="##(COORDINATE).SetMetric">COORDINATE.SetMetric</a>(): Sets the 3D point to Metric or Nautical Miles.</li>
+</ul>
+
+
+<h2>Coorinate text generation</h2>
+
+<ul>
+    <li><a href="##(COORDINATE).ToStringBR">COORDINATE.ToStringBR</a>(): Generates a Bearing &amp; Range text in the format of DDD for DI where DDD is degrees and DI is distance.</li>
+    <li><a href="##(COORDINATE).ToStringLL">COORDINATE.ToStringLL</a>(): Generates a Latutude &amp; Longutude text.</li>
+</ul>
 
 
 </dd>
@@ -949,86 +1034,9 @@ Note that the Set and Add methods return the current POINT_VEC3 object, so these
 </code></pre>
 
 
-<h2>Create waypoints for routes</h2>
-
-<p>A POINT_VEC3 can prepare waypoints for Ground and Air groups to be embedded into a Route.</p>
-
-<ul>
-    <li><a href="##(POINT_VEC3).RoutePointAir">POINT_VEC3.RoutePointAir</a>(): Build an air route point.</li>
-    <li><a href="##(POINT_VEC3).RoutePointGround">POINT_VEC3.RoutePointGround</a>(): Build a ground route point.</li>
-</ul>
-
-<p>Route points can be used in the Route methods of the <a href="Group.html##(GROUP)">Group#GROUP</a> class.</p>
-
-
-<h2>Smoke, flare, explode, illuminate</h2>
-
-<p>At the point a smoke, flare, explosion and illumination bomb can be triggered. Use the following methods:</p>
-
-<h3>Smoke</h3>
-
-<ul>
-    <li><a href="##(POINT_VEC3).Smoke">POINT_VEC3.Smoke</a>(): To smoke the point in a certain color.</li>
-    <li><a href="##(POINT_VEC3).SmokeBlue">POINT_VEC3.SmokeBlue</a>(): To smoke the point in blue.</li>
-    <li><a href="##(POINT_VEC3).SmokeRed">POINT_VEC3.SmokeRed</a>(): To smoke the point in red.</li>
-    <li><a href="##(POINT_VEC3).SmokeOrange">POINT_VEC3.SmokeOrange</a>(): To smoke the point in orange.</li>
-    <li><a href="##(POINT_VEC3).SmokeWhite">POINT_VEC3.SmokeWhite</a>(): To smoke the point in white.</li>
-    <li><a href="##(POINT_VEC3).SmokeGreen">POINT_VEC3.SmokeGreen</a>(): To smoke the point in green.</li>
-</ul>
-
-<h3>Flare</h3>
-
-<ul>
-    <li><a href="##(POINT_VEC3).Flare">POINT_VEC3.Flare</a>(): To flare the point in a certain color.</li>
-    <li><a href="##(POINT_VEC3).FlareRed">POINT_VEC3.FlareRed</a>(): To flare the point in red.</li>
-    <li><a href="##(POINT_VEC3).FlareYellow">POINT_VEC3.FlareYellow</a>(): To flare the point in yellow.</li>
-    <li><a href="##(POINT_VEC3).FlareWhite">POINT_VEC3.FlareWhite</a>(): To flare the point in white.</li>
-    <li><a href="##(POINT_VEC3).FlareGreen">POINT_VEC3.FlareGreen</a>(): To flare the point in green.</li>
-</ul>
-
-<h3>Explode</h3>
-
-<ul>
-    <li><a href="##(POINT_VEC3).Explosion">POINT_VEC3.Explosion</a>(): To explode the point with a certain intensity.</li>
-</ul>
-
-<h3>Illuminate</h3>
-
-<ul>
-    <li><a href="##(POINT_VEC3).IlluminationBomb">POINT_VEC3.IlluminationBomb</a>(): To illuminate the point.</li>
-</ul>
-
-
 <h2>3D calculation methods</h2>
 
 <p>Various calculation methods exist to use or manipulate 3D space. Find below a short description of each method:</p>
-
-<h3>Distance</h3>
-
-<ul>
-    <li><a href="##(POINT_VEC3).Get3DDistance">POINT_VEC3.Get3DDistance</a>(): Obtain the distance from the current 3D point to the provided 3D point in 3D space.</li>
-    <li><a href="##(POINT_VEC3).Get2DDistance">POINT_VEC3.Get2DDistance</a>(): Obtain the distance from the current 3D point to the provided 3D point in 2D space.</li>
-</ul>
-
-<h3>Angle</h3>
-
-<ul>
-    <li><a href="##(POINT_VEC3).GetAngleDegrees">POINT_VEC3.GetAngleDegrees</a>(): Obtain the angle in degrees from the current 3D point with the provided 3D direction vector.</li>
-    <li><a href="##(POINT_VEC3).GetAngleRadians">POINT_VEC3.GetAngleRadians</a>(): Obtain the angle in radians from the current 3D point with the provided 3D direction vector.</li>
-    <li><a href="##(POINT_VEC3).GetDirectionVec3">POINT_VEC3.GetDirectionVec3</a>(): Obtain the 3D direction vector from the current 3D point to the provided 3D point.</li>
-</ul>
-
-<h3>Translation</h3>
-
-<ul>
-    <li><a href="##(POINT_VEC3).Translate">POINT_VEC3.Translate</a>(): Translate the current 3D point towards an other 3D point using the given Distance and Angle.</li>
-</ul>
-
-<h3>Get the North correction of the current location</h3>
-
-<ul>
-    <li><a href="##(POINT_VEC3).GetNorthCorrection">POINT_VEC3.GetNorthCorrection</a>(): Obtains the north correction at the current 3D point.</li>
-</ul>
 
 
 <h2>Point Randomization</h2>
@@ -1036,27 +1044,9 @@ Note that the Set and Add methods return the current POINT_VEC3 object, so these
 <p>Various methods exist to calculate random locations around a given 3D point.</p>
 
 <ul>
-    <li><a href="##(POINT_VEC3).GetRandomPointVec2InRadius">POINT_VEC3.GetRandomPointVec2InRadius</a>(): Provides a random 2D point around the current 3D point, in the given inner to outer band.</li>
     <li><a href="##(POINT_VEC3).GetRandomPointVec3InRadius">POINT_VEC3.GetRandomPointVec3InRadius</a>(): Provides a random 3D point around the current 3D point, in the given inner to outer band.</li>
-    <li><a href="##(POINT_VEC3).GetRandomVec2InRadius">POINT_VEC3.GetRandomVec2InRadius</a>(): Provides a random 2D vector around the current 3D point, in the given inner to outer band.</li>
-    <li><a href="##(POINT_VEC3).GetRandomVec3InRadius">POINT_VEC3.GetRandomVec3InRadius</a>(): Provides a random 3D vector around the current 3D point, in the given inner to outer band.</li>
 </ul>
 
-
-<h2>Metric system</h2>
-
-<ul>
-    <li><a href="##(POINT_VEC3).IsMetric">POINT_VEC3.IsMetric</a>(): Returns if the 3D point is Metric or Nautical Miles.</li>
-    <li><a href="##(POINT_VEC3).SetMetric">POINT_VEC3.SetMetric</a>(): Sets the 3D point to Metric or Nautical Miles.</li>
-</ul>
-
-
-<h2>Coorinate text generation</h2>
-
-<ul>
-    <li><a href="##(POINT_VEC3).ToStringBR">POINT_VEC3.ToStringBR</a>(): Generates a Bearing &amp; Range text in the format of DDD for DI where DDD is degrees and DI is distance.</li>
-    <li><a href="##(POINT_VEC3).ToStringLL">POINT_VEC3.ToStringLL</a>(): Generates a Latutude &amp; Longutude text.</li>
-</ul>
 
 
 </dd>
@@ -1065,6 +1055,34 @@ Note that the Set and Add methods return the current POINT_VEC3 object, so these
 	
 			<h2><a id="#(COORDINATE)" >Type <code>COORDINATE</code></a></h2>
 				<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+<a id="#(COORDINATE).DistanceFromVec2" >
+<strong>COORDINATE:DistanceFromVec2(Vec2Reference)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+	
+<p>TODO: check this to replace
+- Calculate the distance from a reference <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a>.
+ @param #COORDINATE self
+ @param Dcs.DCSTypes#Vec2 Vec2Reference The reference <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a>.
+ @return Dcs.DCSTypes#Distance The distance from the reference <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> in meters.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> Vec2Reference </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
 		<dl class="function">
 <dt>
 
@@ -1548,6 +1566,68 @@ CorrectionRadians The correction in radians.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(COORDINATE).GetRandomVec2InRadius" >
+<strong>COORDINATE:GetRandomVec2InRadius(OuterRadius, InnerRadius)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Return a random Vec2 within an Outer Radius and optionally NOT within an Inner Radius of the COORDINATE.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a> OuterRadius </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a> InnerRadius </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a>:</em>
+Vec2</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(COORDINATE).GetRandomVec3InRadius" >
+<strong>COORDINATE:GetRandomVec3InRadius(OuterRadius, InnerRadius)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Return a random Vec3 within an Outer Radius and optionally NOT within an Inner Radius of the COORDINATE.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a> OuterRadius </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a> InnerRadius </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="Dcs.DCSTypes.html##(Vec3)">Dcs.DCSTypes#Vec3</a>:</em>
+Vec3</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(COORDINATE).GetVec2" >
 <strong>COORDINATE:GetVec2()</strong>
 </a>
@@ -1603,7 +1683,7 @@ The Vec3 format coordinate.</p>
 </dt>
 <dd>
 	
-<p>Returns if a Coordinate has Line of Sight (LOS) with the ToPointVec3.</p>
+<p>Returns if a Coordinate has Line of Sight (LOS) with the ToCoordinate.</p>
 
 		<h3>Parameter</h3>
 		<ul>
@@ -2229,7 +2309,7 @@ The MGRS Text</p>
 </dt>
 <dd>
 	
-<p>Add a Distance in meters from the COORDINATE horizontal plane, with the given angle, and calculate the new COORDINATE.</p>
+<p>Add a Distance in meters from the COORDINATE orthonormal plane, with the given angle, and calculate the new COORDINATE.</p>
 
 		<h3>Parameters</h3>
 		<ul>
@@ -2416,33 +2496,6 @@ The y coordinate.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(POINT_VEC2).DistanceFromVec2" >
-<strong>POINT_VEC2:DistanceFromVec2(Vec2Reference)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Calculate the distance from a reference <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a>.</p>
-
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a> Vec2Reference </em></code>: 
-The reference <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a>.</p>
-
-				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a>:</em>
-The distance from the reference <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> in meters.</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
 <a id="#(POINT_VEC2).GetAlt" >
 <strong>POINT_VEC2:GetAlt()</strong>
 </a>
@@ -2522,37 +2575,6 @@ The y coodinate.</p>
 				
 <p><em><a href="##(POINT_VEC2)">#POINT_VEC2</a>:</em></p>
 
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(POINT_VEC2).GetRandomVec2InRadius" >
-<strong>POINT_VEC2:GetRandomVec2InRadius(OuterRadius, InnerRadius)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Return a random Vec2 within an Outer Radius and optionally NOT within an Inner Radius of the POINT_VEC2.</p>
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a> OuterRadius </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a> InnerRadius </em></code>: </p>
-
-				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em><a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a>:</em>
-Vec2</p>
 
 </dd>
 </dl>
@@ -2833,39 +2855,6 @@ The y coordinate.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(POINT_VEC2).Translate" >
-<strong>POINT_VEC2:Translate(Distance, Angle)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Add a Distance in meters from the POINT<em>VEC2 orthonormal plane, with the given angle, and calculate the new POINT</em>VEC2.</p>
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a> Distance </em></code>: 
-The Distance to be added in meters.</p>
-
-				</li>
-				<li>
-				
-<p><code><em><a href="Dcs.DCSTypes.html##(Angle)">Dcs.DCSTypes#Angle</a> Angle </em></code>: 
-The Angle in degrees.</p>
-
-				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em><a href="##(POINT_VEC2)">#POINT_VEC2</a>:</em>
-The new calculated POINT_VEC2.</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
 		<em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a></em>
 <a id="#(POINT_VEC2).x" >
 <strong>POINT_VEC2.x</strong>
@@ -2894,7 +2883,6 @@ The new calculated POINT_VEC2.</p>
 		<dl class="function">
 <dt>
 
-		<em></em>
 <a id="#(POINT_VEC2).z" >
 <strong>POINT_VEC2.z</strong>
 </a>
@@ -3034,37 +3022,6 @@ The z coordinate value to add to the current z coodinate.</p>
 				
 <p><em><a href="##(POINT_VEC3)">#POINT_VEC3</a>:</em></p>
 
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(POINT_VEC3).GetRandomVec3InRadius" >
-<strong>POINT_VEC3:GetRandomVec3InRadius(OuterRadius, InnerRadius)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Return a random Vec3 within an Outer Radius and optionally NOT within an Inner Radius of the POINT_VEC3.</p>
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a> OuterRadius </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a> InnerRadius </em></code>: </p>
-
-				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em><a href="Dcs.DCSTypes.html##(Vec3)">Dcs.DCSTypes#Vec3</a>:</em>
-Vec3</p>
 
 </dd>
 </dl>

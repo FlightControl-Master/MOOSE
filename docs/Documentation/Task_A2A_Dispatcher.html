@@ -185,7 +185,7 @@ Find a summary below describing for which situation a task type is created:</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_A2A_DISPATCHER).EvaluateRemoveTask">TASK_A2A_DISPATCHER:EvaluateRemoveTask(Mission, Task, Detection, DetectedItemID, DetectedItemChange, DetectedItem, DetectedItemChanged)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_A2A_DISPATCHER).EvaluateRemoveTask">TASK_A2A_DISPATCHER:EvaluateRemoveTask(Mission, Task, Detection, DetectedItemID, DetectedItemChange, DetectedItem, DetectedItemIndex, DetectedItemChanged)</a></td>
 		<td class="summary">
 <p>Evaluates the removal of the Task from the Mission.</p>
 </td>
@@ -366,7 +366,7 @@ If there are no targets to be set.</p>
 <dt>
 
 <a id="#(TASK_A2A_DISPATCHER).EvaluateRemoveTask" >
-<strong>TASK_A2A_DISPATCHER:EvaluateRemoveTask(Mission, Task, Detection, DetectedItemID, DetectedItemChange, DetectedItem, DetectedItemChanged)</strong>
+<strong>TASK_A2A_DISPATCHER:EvaluateRemoveTask(Mission, Task, Detection, DetectedItemID, DetectedItemChange, DetectedItem, DetectedItemIndex, DetectedItemChanged)</strong>
 </a>
 </dt>
 <dd>
@@ -407,6 +407,11 @@ The detection created by the <a href="Detection.html##(DETECTION_BASE)">Detectio
 				<li>
 				
 <p><code><em> DetectedItem </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> DetectedItemIndex </em></code>: </p>
 
 				</li>
 				<li>
