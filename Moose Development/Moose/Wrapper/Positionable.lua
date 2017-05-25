@@ -148,7 +148,7 @@ function POSITIONABLE:GetCoordinate()
   if DCSPositionable then
     local PositionableVec3 = self:GetPositionVec3()
     
-    local PositionableCoordinate = COORDINATE:NewFromVec3( PositionableVec3 )
+    local PositionableCoordinate = POINT_VEC3:NewFromVec3( PositionableVec3 )
     PositionableCoordinate:SetHeading( self:GetHeading() )
   
     self:T2( PositionableCoordinate )

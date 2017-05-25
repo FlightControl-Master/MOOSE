@@ -75,6 +75,7 @@
 					<li>Scoring</li>
 					<li><a href="Sead.html">Sead</a></li>
 					<li><a href="Set.html">Set</a></li>
+					<li><a href="Settings.html">Settings</a></li>
 					<li><a href="Smoke.html">Smoke</a></li>
 					<li><a href="Spawn.html">Spawn</a></li>
 					<li><a href="SpawnStatic.html">SpawnStatic</a></li>
@@ -82,6 +83,8 @@
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="Task.html">Task</a></li>
+					<li><a href="Task_A2A.html">Task_A2A</a></li>
+					<li><a href="Task_A2A_Dispatcher.html">Task_A2A_Dispatcher</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
 					<li><a href="Task_A2G_Dispatcher.html">Task_A2G_Dispatcher</a></li>
 					<li><a href="Task_Cargo.html">Task_Cargo</a></li>
@@ -231,6 +234,34 @@ local ScoringSecondMission = SCORING:New( "SecondMission" )
 </code></pre>
 
 <p>The above documents that 2 Scoring objects are created, ScoringFirstMission and ScoringSecondMission. </p>
+
+<h3><em>*IMPORTANT!!!</em></h3>
+<p>In order to allow DCS world to write CSV files, you need to adapt a configuration file in your DCS world installation <strong>on the server</strong>.
+For this, browse to the <strong>missionscripting.lua</strong> file in your DCS world installation folder.
+For me, this installation folder is in <em>D:\Program Files\Eagle Dynamics\DCS World\Scripts</em>.</p>
+
+<p>Edit a few code lines in the MissionScripting.lua file. Comment out the lines <strong>os</strong>, <strong>io</strong> and <strong>lfs</strong>:</p>
+
+<pre><code>   do
+     --sanitizeModule('os')
+     --sanitizeModule('io')
+     --sanitizeModule('lfs')
+     require = nil
+     loadlib = nil
+   end
+</code></pre>
+
+<p>When these lines are not sanitized, functions become available to check the time, and to write files to your system at the above specified location. <br/>
+Note that the MissionScripting.lua file provides a warning. So please beware of this warning as outlined by Eagle Dynamics!</p>
+
+<pre><code>   --Sanitize Mission Scripting environment
+   --This makes unavailable some unsecure functions. 
+   --Mission downloaded from server to client may contain potentialy harmful lua code that may use these functions.
+   --You can remove the code below and make availble these functions at your own risk.
+</code></pre>
+
+<p>The MOOSE designer cannot take any responsibility of any damage inflicted as a result of the de-sanitization.
+That being said, I hope that the SCORING class provides you with a great add-on to score your squad mates achievements.</p>
 
 <h2>1.9) Configure messages.</h2>
 

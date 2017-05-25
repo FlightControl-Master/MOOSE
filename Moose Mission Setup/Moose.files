@@ -5,6 +5,7 @@ Core/Base.lua
 Core/Scheduler.lua
 Core/ScheduleDispatcher.lua
 Core/Event.lua
+Core/Settings.lua
 Core/Menu.lua
 Core/Zone.lua
 Core/Database.lua

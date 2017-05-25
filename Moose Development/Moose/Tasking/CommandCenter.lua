@@ -26,6 +26,8 @@ function REPORT:New( Title )
   if Title then
     self.Title = Title  
   end
+  
+  self:SetIndent( 3 )
 
   return self
 end
@@ -116,13 +118,14 @@ function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
           local MenuMissionsSummary = MENU_GROUP_COMMAND:New( EventGroup, "Missions Status Report", MenuReporting, self.ReportMissionsStatus, self, EventGroup )
           local MenuMissionsDetails = MENU_GROUP_COMMAND:New( EventGroup, "Missions Players Report", MenuReporting, self.ReportMissionsPlayers, self, EventGroup )
           self:ReportSummary( EventGroup )
-        end
-        local PlayerUnit = EventData.IniUnit
-        for MissionID, Mission in pairs( self:GetMissions() ) do
-          local Mission = Mission -- Tasking.Mission#MISSION
-          local PlayerGroup = EventData.IniGroup -- The GROUP object should be filled!
-          Mission:JoinUnit( PlayerUnit, PlayerGroup )
-          Mission:ReportDetails()
+          local PlayerUnit = EventData.IniUnit
+          for MissionID, Mission in pairs( self:GetMissions() ) do
+            local Mission = Mission -- Tasking.Mission#MISSION
+            local PlayerGroup = EventData.IniGroup -- The GROUP object should be filled!
+            Mission:JoinUnit( PlayerUnit, PlayerGroup )
+          end
+          self:SetMenu()
+         _DATABASE:PlayerSettingsMenu( PlayerUnit ) 
         end
       end
       

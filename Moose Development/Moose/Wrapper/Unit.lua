@@ -315,7 +315,8 @@ function UNIT:GetPlayerName()
     return PlayerName
   end
 
-  return nil
+    return nil
+
 end
 
 --- Returns the unit's number in the group. 

@@ -174,7 +174,7 @@ do -- TASK_A2G
         local TargetUnit = Task.TargetSetUnit:GetFirst() -- Wrapper.Unit#UNIT
         if TargetUnit then
           local Coordinate = TargetUnit:GetCoordinate()
-          self:T( { TargetCoordinate = Coordinate, Coordinate:GetX(), Coordinate:GetAlt(), Coordinate:GetZ() } )
+          self:T( { TargetCoordinate = Coordinate, Coordinate:GetX(), Coordinate:GetY(), Coordinate:GetZ() } )
           Task:SetTargetCoordinate( TargetUnit:GetCoordinate(), TaskUnit )
         end
         self:__RouteToTargetPoint( 0.1 )
@@ -375,16 +375,19 @@ do -- TASK_SEAD
     
     Mission:AddTask( self )
     
-    local TargetCoord = TargetSetUnit:GetFirst():GetCoordinate()
-    local TargetPositionText = TargetCoord:ToString()
-    local TargetThreatLevel = TargetSetUnit:CalculateThreatLevelA2G()
-
     self:SetBriefing( 
       TaskBriefing or 
-      "Execute a Suppression of Enemy Air Defenses.\n" ..
-      "Initial Coordinates: " .. TargetPositionText .. "\n" ..
-      "Threat Level: [" .. string.rep(  "■", TargetThreatLevel ) .. "]"
+      "Execute a Suppression of Enemy Air Defenses.\n"
     )
+
+    local TargetCoordinate = TargetSetUnit:GetFirst():GetCoordinate()
+    TargetCoordinate:SetModeA2G()
+    self:SetInfo( "Coordinates", TargetCoordinate )
+
+    self:SetInfo( "ThreatLevel", "[" .. string.rep(  "■", TargetSetUnit:CalculateThreatLevelA2G() ) .. "]" )
+    local DetectedItemsCount = TargetSetUnit:Count()
+    local DetectedItemsTypes = TargetSetUnit:GetTypeNames()
+    self:SetInfo( "Targets", string.format( "%d of %s", DetectedItemsCount, DetectedItemsTypes ) ) 
 
     return self
   end 
@@ -415,16 +418,19 @@ do -- TASK_BAI
     
     Mission:AddTask( self )
     
-    local TargetCoord = TargetSetUnit:GetFirst():GetCoordinate()
-    local TargetPositionText = TargetCoord:ToString()
-    local TargetThreatLevel = TargetSetUnit:CalculateThreatLevelA2G()
-    
     self:SetBriefing( 
       TaskBriefing or 
-      "Execute a Battlefield Air Interdiction of a group of enemy targets.\n" ..
-      "Initial Coordinates: " .. TargetPositionText .. "\n" ..
-      "Threat Level: [" .. string.rep(  "■", TargetThreatLevel ) .. "]"
+      "Execute a Battlefield Air Interdiction of a group of enemy targets.\n"
     )
+
+    local TargetCoordinate = TargetSetUnit:GetFirst():GetCoordinate()
+    TargetCoordinate:SetModeA2G()
+    self:SetInfo( "Coordinates", TargetCoordinate )
+
+    self:SetInfo( "ThreatLevel", "[" .. string.rep(  "■", TargetSetUnit:CalculateThreatLevelA2G() ) .. "]" )
+    local DetectedItemsCount = TargetSetUnit:Count()
+    local DetectedItemsTypes = TargetSetUnit:GetTypeNames()
+    self:SetInfo( "Targets", string.format( "%d of %s", DetectedItemsCount, DetectedItemsTypes ) ) 
 
     return self
   end 
@@ -455,18 +461,21 @@ do -- TASK_CAS
     
     Mission:AddTask( self )
     
-    local TargetCoord = TargetSetUnit:GetFirst():GetCoordinate()
-    local TargetPositionText = TargetCoord:ToString()
-    local TargetThreatLevel = TargetSetUnit:CalculateThreatLevelA2G()
-    
     self:SetBriefing( 
       TaskBriefing or 
       "Execute a Close Air Support for a group of enemy targets.\n" ..
-      "Beware of friendlies at the vicinity!\n" ..
-      "Initial Coordinates: " .. TargetPositionText .. "\n" ..
-      "Threat Level: [" .. string.rep(  "■", TargetThreatLevel ) .. "]"
+      "Beware of friendlies at the vicinity!\n"
     )
-    
+
+    local TargetCoordinate = TargetSetUnit:GetFirst():GetCoordinate()
+    TargetCoordinate:SetModeA2G()
+    self:SetInfo( "Coordinates", TargetCoordinate )
+
+    self:SetInfo( "ThreatLevel", "[" .. string.rep(  "■", TargetSetUnit:CalculateThreatLevelA2G() ) .. "]" )
+    local DetectedItemsCount = TargetSetUnit:Count()
+    local DetectedItemsTypes = TargetSetUnit:GetTypeNames()
+    self:SetInfo( "Targets", string.format( "%d of %s", DetectedItemsCount, DetectedItemsTypes ) ) 
+
     return self
   end 
 

@@ -1164,7 +1164,7 @@ function ESCORT:_ReportTargetsScheduler()
           self:E( { DetectedItemID, DetectedItem } )
           -- Remove the sub menus of the Attack menu of the Escort for the EscortGroup.
   
-          local DetectedItemReportSummary = self.Detection:DetectedItemReportSummary( DetectedItemID )
+          local DetectedItemReportSummary = self.Detection:DetectedItemReportSummary( DetectedItemID, EscortGroupData )
 
           if ClientEscortGroupName == EscortGroupName then
           

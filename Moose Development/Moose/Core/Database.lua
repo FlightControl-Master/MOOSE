@@ -56,12 +56,14 @@ DATABASE = {
   GROUPS = {},
   PLAYERS = {},
   PLAYERSJOINED = {},
+  PLAYERUNITS = {},
   CLIENTS = {},
   CARGOS = {},
   AIRBASES = {},
   COUNTRY_ID = {},
   COUNTRY_NAME = {},
   NavPoints = {},
+  PLAYERSETTINGS = {},
 }
 
 local _DATABASECoalition =
@@ -100,34 +102,40 @@ function DATABASE:New()
   self:HandleEvent( EVENTS.DeleteCargo )
   
   -- Follow alive players and clients
---  self:HandleEvent( EVENTS.PlayerEnterUnit, self._EventOnPlayerEnterUnit )
+  self:HandleEvent( EVENTS.PlayerEnterUnit, self._EventOnPlayerEnterUnit )
   self:HandleEvent( EVENTS.PlayerLeaveUnit, self._EventOnPlayerLeaveUnit )
   
   self:_RegisterTemplates()
   self:_RegisterGroupsAndUnits()
   self:_RegisterClients()
   self:_RegisterStatics()
-  self:_RegisterPlayers()
+  --self:_RegisterPlayers()
   self:_RegisterAirbases()
 
   self.UNITS_Position = 0
   
   --- @param #DATABASE self
   local function CheckPlayers( self )
+  
+    local CoalitionsData = { AlivePlayersRed = coalition.getPlayers( coalition.side.RED ), AlivePlayersBlue = coalition.getPlayers( coalition.side.BLUE ) }
+    for CoalitionId, CoalitionData in pairs( CoalitionsData ) do
+      self:E( { "CoalitionData:", CoalitionData } )
+      for UnitId, UnitData in pairs( CoalitionData ) do
+        if UnitData and UnitData:isExist() then
+        
+          local UnitName = UnitData:getName()
+          local PlayerName = UnitData:getPlayerName()
+          local PlayerUnit = UNIT:Find( UnitData )
+          self:T( { "UnitData:", UnitData, UnitName, PlayerName, PlayerUnit } )
 
-    local UNITS_Count = #self.UNITS_Index
-    if UNITS_Count > 0 then
-      self.UNITS_Position = ( ( self.UNITS_Position <= UNITS_Count ) and self.UNITS_Position + 1 ) or 1
-      local PlayerUnit = self.UNITS[self.UNITS_Index[self.UNITS_Position]]
-      if PlayerUnit then
-        local UnitName = PlayerUnit:GetName()  
-        local PlayerName = PlayerUnit:GetPlayerName()
-        --self:E( { UNITS_Count, self.UNITS_Position, UnitName, PlayerName } )
-        if PlayerName and PlayerName ~= "" then
-          if self.PLAYERS[PlayerName] == nil or self.PLAYERS[PlayerName] ~= UnitName then
-            self:E( { "Add player for unit:", UnitName, PlayerName } )
-            self:AddPlayer( UnitName, PlayerName )
-            --_EVENTDISPATCHER:CreateEventPlayerEnterUnit( PlayerUnit )
+          if PlayerName and PlayerName ~= "" then
+            if self.PLAYERS[PlayerName] == nil or self.PLAYERS[PlayerName] ~= UnitName then
+              self:E( { "Add player for unit:", UnitName, PlayerName } )
+              self:AddPlayer( UnitName, PlayerName )
+              --_EVENTDISPATCHER:CreateEventPlayerEnterUnit( PlayerUnit )
+              local Settings = SETTINGS:Set( PlayerName )
+              Settings:SetPlayerMenu( PlayerUnit )
+            end
           end
         end
       end
@@ -135,7 +143,7 @@ function DATABASE:New()
   end
   
   self:E( "Scheduling" )
-  --local PlayerCheckSchedule = SCHEDULER:New( nil, CheckPlayers, { self }, 2, 0.1 )
+  PlayerCheckSchedule = SCHEDULER:New( nil, CheckPlayers, { self }, 1, 1 )
   
   return self
 end
@@ -312,17 +320,19 @@ function DATABASE:AddPlayer( UnitName, PlayerName )
   if PlayerName then
     self:E( { "Add player for unit:", UnitName, PlayerName } )
     self.PLAYERS[PlayerName] = UnitName
+    self.PLAYERUNITS[UnitName] = PlayerName
     self.PLAYERSJOINED[PlayerName] = PlayerName
   end
 end
 
 --- Deletes a player from the DATABASE based on the Player Name.
 -- @param #DATABASE self
-function DATABASE:DeletePlayer( PlayerName )
+function DATABASE:DeletePlayer( UnitName, PlayerName )
 
   if PlayerName then
     self:E( { "Clean player:", PlayerName } )
     self.PLAYERS[PlayerName] = nil
+    self.PLAYERUNITS[UnitName] = PlayerName
   end
 end
 
@@ -667,7 +677,7 @@ function DATABASE:_EventOnBirth( Event )
         self:AddGroup( Event.IniDCSGroupName )
       end
     end
-    self:_EventOnPlayerEnterUnit( Event )
+    --self:_EventOnPlayerEnterUnit( Event )
   end
 end
 
@@ -708,6 +718,8 @@ function DATABASE:_EventOnPlayerEnterUnit( Event )
       if not self.PLAYERS[PlayerName] then
         self:AddPlayer( Event.IniUnitName, PlayerName )
       end
+      local Settings = SETTINGS:Set( PlayerName )
+      Settings:SetPlayerMenu( Event.IniUnit )
     end
   end
 end
@@ -723,7 +735,9 @@ function DATABASE:_EventOnPlayerLeaveUnit( Event )
     if Event.IniObjectCategory == 1 then
       local PlayerName = Event.IniUnit:GetPlayerName()
       if self.PLAYERS[PlayerName] then
-        self:DeletePlayer( PlayerName )
+        local Settings = SETTINGS:Set( PlayerName )
+        Settings:RemovePlayerMenu( Event.IniUnit )
+        self:DeletePlayer( Event.IniUnit, PlayerName )
       end
     end
   end
@@ -808,10 +822,10 @@ end
 -- @param #DATABASE self
 -- @param #function IteratorFunction The function that will be called for each object in the database. The function needs to accept a GROUP parameter.
 -- @return #DATABASE self
-function DATABASE:ForEachGroup( IteratorFunction, ... )
+function DATABASE:ForEachGroup( IteratorFunction, FinalizeFunction, ... )
   self:F2( arg )
   
-  self:ForEach( IteratorFunction, arg, self.GROUPS )
+  self:ForEach( IteratorFunction, FinalizeFunction, arg, self.GROUPS )
 
   return self
 end
@@ -821,10 +835,10 @@ end
 -- @param #DATABASE self
 -- @param #function IteratorFunction The function that will be called for each object in the database. The function needs to accept the player name.
 -- @return #DATABASE self
-function DATABASE:ForEachPlayer( IteratorFunction, ... )
+function DATABASE:ForEachPlayer( IteratorFunction, FinalizeFunction, ... )
   self:F2( arg )
   
-  self:ForEach( IteratorFunction, arg, self.PLAYERS )
+  self:ForEach( IteratorFunction, FinalizeFunction, arg, self.PLAYERS )
   
   return self
 end
@@ -834,13 +848,26 @@ end
 -- @param #DATABASE self
 -- @param #function IteratorFunction The function that will be called for each object in the database. The function needs to accept a UNIT parameter.
 -- @return #DATABASE self
-function DATABASE:ForEachPlayerJoined( IteratorFunction, ... )
+function DATABASE:ForEachPlayerJoined( IteratorFunction, FinalizeFunction, ... )
   self:F2( arg )
   
-  self:ForEach( IteratorFunction, arg, self.PLAYERSJOINED )
+  self:ForEach( IteratorFunction, FinalizeFunction, arg, self.PLAYERSJOINED )
   
   return self
 end
+
+--- Iterate the DATABASE and call an iterator function for each **ALIVE** player UNIT, providing the player UNIT and optional parameters.
+-- @param #DATABASE self
+-- @param #function IteratorFunction The function that will be called for each object in the database. The function needs to accept the player name.
+-- @return #DATABASE self
+function DATABASE:ForEachPlayerUnit( IteratorFunction, FinalizeFunction, ... )
+  self:F2( arg )
+  
+  self:ForEach( IteratorFunction, FinalizeFunction, arg, self.PLAYERUNITS )
+  
+  return self
+end
+
 
 --- Iterate the DATABASE and call an iterator function for each CLIENT, providing the CLIENT to the function and optional parameters.
 -- @param #DATABASE self
@@ -889,6 +916,29 @@ function DATABASE:OnEventDeleteCargo( EventData )
     self:DeleteCargo( EventData.Cargo.Name )
   end
 end
+
+
+--- Gets the player settings
+-- @param #DATABASE self
+-- @param #string PlayerName
+-- @return Core.Settings#SETTINGS
+function DATABASE:GetPlayerSettings( PlayerName )
+  self:E({PlayerName})
+  return self.PLAYERSETTINGS[PlayerName]
+end
+
+
+--- Sets the player settings
+-- @param #DATABASE self
+-- @param #string PlayerName
+-- @param Core.Settings#SETTINGS Settings
+-- @return Core.Settings#SETTINGS
+function DATABASE:SetPlayerSettings( PlayerName, Settings )
+  self:E({PlayerName, Settings})
+  self.PLAYERSETTINGS[PlayerName] = Settings
+end
+
+
 
 
 --- @param #DATABASE self

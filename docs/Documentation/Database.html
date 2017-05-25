@@ -75,6 +75,7 @@
 					<li><a href="Scoring.html">Scoring</a></li>
 					<li><a href="Sead.html">Sead</a></li>
 					<li><a href="Set.html">Set</a></li>
+					<li><a href="Settings.html">Settings</a></li>
 					<li><a href="Smoke.html">Smoke</a></li>
 					<li><a href="Spawn.html">Spawn</a></li>
 					<li><a href="SpawnStatic.html">SpawnStatic</a></li>
@@ -82,6 +83,8 @@
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="Task.html">Task</a></li>
+					<li><a href="Task_A2A.html">Task_A2A</a></li>
+					<li><a href="Task_A2A_Dispatcher.html">Task_A2A_Dispatcher</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
 					<li><a href="Task_A2G_Dispatcher.html">Task_A2G_Dispatcher</a></li>
 					<li><a href="Task_Cargo.html">Task_Cargo</a></li>
@@ -143,6 +146,12 @@ The following iterator methods are currently available within the DATABASE:</p>
 	<table class="function_list">
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="#DATABASE">DATABASE</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#PlayerCheckSchedule">PlayerCheckSchedule</a></td>
 		<td class="summary">
 
 </td>
@@ -241,7 +250,7 @@ The following iterator methods are currently available within the DATABASE:</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DATABASE).DeletePlayer">DATABASE:DeletePlayer(PlayerName)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).DeletePlayer">DATABASE:DeletePlayer(UnitName, PlayerName)</a></td>
 		<td class="summary">
 <p>Deletes a player from the DATABASE based on the Player Name.</p>
 </td>
@@ -313,21 +322,27 @@ The following iterator methods are currently available within the DATABASE:</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DATABASE).ForEachGroup">DATABASE:ForEachGroup(IteratorFunction, ...)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).ForEachGroup">DATABASE:ForEachGroup(IteratorFunction, FinalizeFunction, ...)</a></td>
 		<td class="summary">
 <p>Iterate the DATABASE and call an iterator function for each <strong>alive</strong> GROUP, providing the GROUP and optional parameters.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DATABASE).ForEachPlayer">DATABASE:ForEachPlayer(IteratorFunction, ...)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).ForEachPlayer">DATABASE:ForEachPlayer(IteratorFunction, FinalizeFunction, ...)</a></td>
 		<td class="summary">
 <p>Iterate the DATABASE and call an iterator function for each <strong>ALIVE</strong> player, providing the player name and optional parameters.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DATABASE).ForEachPlayerJoined">DATABASE:ForEachPlayerJoined(IteratorFunction, ...)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).ForEachPlayerJoined">DATABASE:ForEachPlayerJoined(IteratorFunction, FinalizeFunction, ...)</a></td>
 		<td class="summary">
 <p>Iterate the DATABASE and call an iterator function for each player who has joined the mission, providing the Unit of the player and optional parameters.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).ForEachPlayerUnit">DATABASE:ForEachPlayerUnit(IteratorFunction, FinalizeFunction, ...)</a></td>
+		<td class="summary">
+<p>Iterate the DATABASE and call an iterator function for each <strong>ALIVE</strong> player UNIT, providing the player UNIT and optional parameters.</p>
 </td>
 		</tr>
 		<tr>
@@ -397,6 +412,12 @@ The following iterator methods are currently available within the DATABASE:</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).GetPlayerSettings">DATABASE:GetPlayerSettings(PlayerName)</a></td>
+		<td class="summary">
+<p>Gets the player settings</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DATABASE).GetStaticUnitTemplate">DATABASE:GetStaticUnitTemplate(StaticName)</a></td>
 		<td class="summary">
 
@@ -445,7 +466,19 @@ The following iterator methods are currently available within the DATABASE:</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).PLAYERSETTINGS">DATABASE.PLAYERSETTINGS</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DATABASE).PLAYERSJOINED">DATABASE.PLAYERSJOINED</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).PLAYERUNITS">DATABASE.PLAYERUNITS</a></td>
 		<td class="summary">
 
 </td>
@@ -454,6 +487,12 @@ The following iterator methods are currently available within the DATABASE:</p>
 		<td class="name" nowrap="nowrap"><a href="##(DATABASE).STATICS">DATABASE.STATICS</a></td>
 		<td class="summary">
 
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).SetPlayerSettings">DATABASE:SetPlayerSettings(PlayerName, Settings)</a></td>
+		<td class="summary">
+<p>Sets the player settings</p>
 </td>
 		</tr>
 		<tr>
@@ -573,6 +612,20 @@ The following iterator methods are currently available within the DATABASE:</p>
 		<em><a href="##(DATABASE)">#DATABASE</a></em>
 <a id="DATABASE" >
 <strong>DATABASE</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="PlayerCheckSchedule" >
+<strong>PlayerCheckSchedule</strong>
 </a>
 </dt>
 <dd>
@@ -879,15 +932,20 @@ The name of the airbase</p>
 <dt>
 
 <a id="#(DATABASE).DeletePlayer" >
-<strong>DATABASE:DeletePlayer(PlayerName)</strong>
+<strong>DATABASE:DeletePlayer(UnitName, PlayerName)</strong>
 </a>
 </dt>
 <dd>
 	
 <p>Deletes a player from the DATABASE based on the Player Name.</p>
 
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
+				<li>
+				
+<p><code><em> UnitName </em></code>: </p>
+
+				</li>
 				<li>
 				
 <p><code><em> PlayerName </em></code>: </p>
@@ -1204,7 +1262,7 @@ self</p>
 <dt>
 
 <a id="#(DATABASE).ForEachGroup" >
-<strong>DATABASE:ForEachGroup(IteratorFunction, ...)</strong>
+<strong>DATABASE:ForEachGroup(IteratorFunction, FinalizeFunction, ...)</strong>
 </a>
 </dt>
 <dd>
@@ -1217,6 +1275,11 @@ self</p>
 				
 <p><code><em>#function IteratorFunction </em></code>: 
 The function that will be called for each object in the database. The function needs to accept a GROUP parameter.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> FinalizeFunction </em></code>: </p>
 
 				</li>
 				<li>
@@ -1236,7 +1299,7 @@ self</p>
 <dt>
 
 <a id="#(DATABASE).ForEachPlayer" >
-<strong>DATABASE:ForEachPlayer(IteratorFunction, ...)</strong>
+<strong>DATABASE:ForEachPlayer(IteratorFunction, FinalizeFunction, ...)</strong>
 </a>
 </dt>
 <dd>
@@ -1249,6 +1312,11 @@ self</p>
 				
 <p><code><em>#function IteratorFunction </em></code>: 
 The function that will be called for each object in the database. The function needs to accept the player name.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> FinalizeFunction </em></code>: </p>
 
 				</li>
 				<li>
@@ -1268,7 +1336,7 @@ self</p>
 <dt>
 
 <a id="#(DATABASE).ForEachPlayerJoined" >
-<strong>DATABASE:ForEachPlayerJoined(IteratorFunction, ...)</strong>
+<strong>DATABASE:ForEachPlayerJoined(IteratorFunction, FinalizeFunction, ...)</strong>
 </a>
 </dt>
 <dd>
@@ -1281,6 +1349,48 @@ self</p>
 				
 <p><code><em>#function IteratorFunction </em></code>: 
 The function that will be called for each object in the database. The function needs to accept a UNIT parameter.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> FinalizeFunction </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> ... </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(DATABASE)">#DATABASE</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DATABASE).ForEachPlayerUnit" >
+<strong>DATABASE:ForEachPlayerUnit(IteratorFunction, FinalizeFunction, ...)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Iterate the DATABASE and call an iterator function for each <strong>ALIVE</strong> player UNIT, providing the player UNIT and optional parameters.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#function IteratorFunction </em></code>: 
+The function that will be called for each object in the database. The function needs to accept the player name.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> FinalizeFunction </em></code>: </p>
 
 				</li>
 				<li>
@@ -1555,6 +1665,32 @@ self</p>
 		<dl class="function">
 <dt>
 
+<a id="#(DATABASE).GetPlayerSettings" >
+<strong>DATABASE:GetPlayerSettings(PlayerName)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Gets the player settings</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string PlayerName </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="Core.Settings.html##(SETTINGS)">Core.Settings#SETTINGS</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(DATABASE).GetStaticUnitTemplate" >
 <strong>DATABASE:GetStaticUnitTemplate(StaticName)</strong>
 </a>
@@ -1704,8 +1840,36 @@ DBObject = DATABASE:New()</code></pre>
 <dt>
 
 		<em></em>
+<a id="#(DATABASE).PLAYERSETTINGS" >
+<strong>DATABASE.PLAYERSETTINGS</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
 <a id="#(DATABASE).PLAYERSJOINED" >
 <strong>DATABASE.PLAYERSJOINED</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(DATABASE).PLAYERUNITS" >
+<strong>DATABASE.PLAYERUNITS</strong>
 </a>
 </dt>
 <dd>
@@ -1724,6 +1888,37 @@ DBObject = DATABASE:New()</code></pre>
 </dt>
 <dd>
 	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DATABASE).SetPlayerSettings" >
+<strong>DATABASE:SetPlayerSettings(PlayerName, Settings)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Sets the player settings</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string PlayerName </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Core.Settings.html##(SETTINGS)">Core.Settings#SETTINGS</a> Settings </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="Core.Settings.html##(SETTINGS)">Core.Settings#SETTINGS</a>:</em></p>
 
 
 </dd>
@@ -1830,6 +2025,7 @@ self</p>
 		<dl class="function">
 <dt>
 
+		<em>#number</em>
 <a id="#(DATABASE).UNITS_Position" >
 <strong>DATABASE.UNITS_Position</strong>
 </a>

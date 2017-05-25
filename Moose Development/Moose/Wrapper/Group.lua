@@ -485,6 +485,25 @@ function GROUP:GetPointVec2()
   return nil
 end
 
+--- Returns a COORDINATE object indicating the point of the first UNIT of the GROUP within the mission.
+-- @param Wrapper.Group#GROUP self
+-- @return Core.Point#COORDINATE The COORDINATE of the GROUP.
+-- @return #nil The POSITIONABLE is not existing or alive.  
+function GROUP:GetCoordinate()
+  self:F2( self.PositionableName )
+
+  local FirstUnit = self:GetUnit(1)
+  
+  if FirstUnit then
+    local FirstUnitCoordinate = FirstUnit:GetCoordinate()
+    self:T3(FirstUnitCoordinate)
+    return FirstUnitCoordinate
+  end
+  
+  return nil
+end
+
+
 --- Returns a random @{DCSTypes#Vec3} vector (point in 3D of the UNIT within the mission) within a range around the first UNIT of the GROUP.
 -- @param #GROUP self
 -- @param #number Radius
