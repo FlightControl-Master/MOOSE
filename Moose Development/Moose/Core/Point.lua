@@ -175,8 +175,6 @@ do -- COORDINATE
     self.y = y
     self.z = z
     
-    self:SetModeA2G()
-
     return self
   end
 
@@ -688,35 +686,6 @@ do -- COORDINATE
   end
 
 
-  --- Set the mode to A2G
-  -- @param #COORDINATE self
-  -- @return #COORDINATE
-  function COORDINATE:SetModeA2G()
-    self.Mode = "A2G"
-  end
-
-  --- Is the mode to A2G
-  -- @param #COORDINATE self
-  -- @return #boolean
-  function COORDINATE:IsModeA2G()
-    return self.Mode == "A2G"
-  end
-  
-  --- Set the mode to A2A
-  -- @param #COORDINATE self
-  -- @return #COORDINATE
-  function COORDINATE:SetModeA2A()
-    self.Mode = "A2A"
-  end
-  
-  --- Is the mode to A2A
-  -- @param #COORDINATE self
-  -- @return #boolean
-  function COORDINATE:IsModeA2A()
-    return self.Mode == "A2A"
-  end
-  
-
   --- Return a BR string from a COORDINATE to the COORDINATE.
   -- @param #COORDINATE self
   -- @param #COORDINATE TargetCoordinate The target COORDINATE.
@@ -822,19 +791,16 @@ do -- COORDINATE
     if IsAir then
       if Settings:IsA2A_BRA()  then
         local Coordinate = Controllable:GetCoordinate()
-        Coordinate:SetModeA2A()
         return self:ToStringBRA( Coordinate, Settings ) 
       end
   
       if Settings:IsA2A_BULLS() then
         local Coordinate = Controllable:GetCoordinate()
-        Coordinate:SetModeA2A()
         return self:ToStringBULLS( Coordinate, Settings )
       end
     else
       if Settings:IsA2G_BRA()  then
         local Coordinate = Controllable:GetCoordinate()
-        Coordinate:SetModeA2A()
         return Controllable and self:ToStringBR( Coordinate, Settings ) or self:ToStringMGRS( Settings )
       end
       if Settings:IsA2G_LL()  then
@@ -979,7 +945,7 @@ do -- POINT_VEC3
 
     local self = BASE:Inherit( self, COORDINATE:NewFromVec3( Vec3 ) ) -- Core.Point#POINT_VEC3
     self:F2( self )
-
+  
     return self
   end
 
@@ -1141,7 +1107,7 @@ do -- POINT_VEC2
     LandHeightAdd = LandHeightAdd or 0
     LandHeight = LandHeight + LandHeightAdd
 
-    local self = BASE:Inherit( self, COORDINATE:New( Vec2.x, LandHeight, Vec2.y ) ) -- Core.Point#POINT_VEC2
+    local self = BASE:Inherit( self, COORDINATE:NewFromVec2( Vec2, LandHeightAdd ) ) -- Core.Point#POINT_VEC2
     self:F2( self )
 
     return self

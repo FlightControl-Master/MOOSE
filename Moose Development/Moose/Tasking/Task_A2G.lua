@@ -381,7 +381,6 @@ do -- TASK_SEAD
     )
 
     local TargetCoordinate = TargetSetUnit:GetFirst():GetCoordinate()
-    TargetCoordinate:SetModeA2G()
     self:SetInfo( "Coordinates", TargetCoordinate )
 
     self:SetInfo( "ThreatLevel", "[" .. string.rep(  "■", TargetSetUnit:CalculateThreatLevelA2G() ) .. "]" )
@@ -424,7 +423,6 @@ do -- TASK_BAI
     )
 
     local TargetCoordinate = TargetSetUnit:GetFirst():GetCoordinate()
-    TargetCoordinate:SetModeA2G()
     self:SetInfo( "Coordinates", TargetCoordinate )
 
     self:SetInfo( "ThreatLevel", "[" .. string.rep(  "■", TargetSetUnit:CalculateThreatLevelA2G() ) .. "]" )
@@ -468,7 +466,6 @@ do -- TASK_CAS
     )
 
     local TargetCoordinate = TargetSetUnit:GetFirst():GetCoordinate()
-    TargetCoordinate:SetModeA2G()
     self:SetInfo( "Coordinates", TargetCoordinate )
 
     self:SetInfo( "ThreatLevel", "[" .. string.rep(  "■", TargetSetUnit:CalculateThreatLevelA2G() ) .. "]" )
