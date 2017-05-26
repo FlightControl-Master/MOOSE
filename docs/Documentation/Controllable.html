@@ -75,6 +75,7 @@
 					<li><a href="Scoring.html">Scoring</a></li>
 					<li><a href="Sead.html">Sead</a></li>
 					<li><a href="Set.html">Set</a></li>
+					<li><a href="Settings.html">Settings</a></li>
 					<li><a href="Smoke.html">Smoke</a></li>
 					<li><a href="Spawn.html">Spawn</a></li>
 					<li><a href="SpawnStatic.html">SpawnStatic</a></li>
@@ -82,6 +83,8 @@
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="Task.html">Task</a></li>
+					<li><a href="Task_A2A.html">Task_A2A</a></li>
+					<li><a href="Task_A2A_Dispatcher.html">Task_A2A_Dispatcher</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
 					<li><a href="Task_A2G_Dispatcher.html">Task_A2G_Dispatcher</a></li>
 					<li><a href="Task_Cargo.html">Task_Cargo</a></li>
@@ -381,6 +384,12 @@ This is different from the EnRoute tasks, where the targets of the task need to 
 		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).GetWayPoints">CONTROLLABLE:GetWayPoints()</a></td>
 		<td class="summary">
 <p>Get the current WayPoints set with the WayPoint functions( Note that the WayPoints can be nil, although there ARE waypoints).</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).IsAirPlane">CONTROLLABLE:IsAirPlane()</a></td>
+		<td class="summary">
+<p>Returns if the Controllable contains AirPlanes.</p>
 </td>
 		</tr>
 		<tr>
@@ -1461,6 +1470,24 @@ Wrapper.Unit#UNIT> The UNITs wrappers.</p>
 				
 <p><em>#table:</em>
 WayPoints If WayPoints is given, then return the WayPoints structure.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CONTROLLABLE).IsAirPlane" >
+<strong>CONTROLLABLE:IsAirPlane()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns if the Controllable contains AirPlanes.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+true if Controllable contains AirPlanes.</p>
 
 </dd>
 </dl>

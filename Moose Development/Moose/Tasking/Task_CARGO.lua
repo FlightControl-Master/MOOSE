@@ -174,6 +174,7 @@ do -- TASK_CARGO
   
     self.SetCargo = SetCargo
     self.TaskType = TaskType
+    self.SmokeColor = SMOKECOLOR.Red
     
     self.DeployZones = {} -- setmetatable( {}, { __mode = "v" } ) -- weak table on value
 
@@ -327,6 +328,13 @@ do -- TASK_CARGO
       self:__RouteToDeploy( 1.0, DeployZone )
     end
     
+    
+    
+    ---
+    --#TASK_CAROG_TRANSPORT self
+    --#Wrapper.Unit#UNIT
+
+    
     --- Route to Cargo
     -- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
@@ -347,16 +355,16 @@ do -- TASK_CARGO
     end
 
 
+
     --- 
     -- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
     -- @param Tasking.Task_Cargo#TASK_CARGO Task
     function Fsm:onafterArriveAtPickup( TaskUnit, Task )
       self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
-      
       if self.Cargo:IsAlive() then
+        TaskUnit:Smoke( Task:GetSmokeColor(), 15 )
         if TaskUnit:IsAir() then
-          self.Cargo.CargoObject:GetUnit(1):SmokeRed()
           self:__Land( -0.1, "Pickup" )
         else
           self:__SelectAction( -0.1 )
@@ -605,6 +613,26 @@ do -- TASK_CARGO
     return self
  
   end
+  
+
+    ---@param Color Might be SMOKECOLOR.Blue, SMOKECOLOR.Red SMOKECOLOR.Orange, SMOKECOLOR.White or SMOKECOLOR.Green
+    function TASK_CARGO:SetSmokeColor(SmokeColor)
+       -- Makes sure Coloe is set
+       if SmokeColor == nil then
+          self.SmokeColor = SMOKECOLOR.Red -- Make sure a default color is exist
+          
+       elseif type(SmokeColor) == "number" then
+       self:F2(SmokeColor)
+        if SmokeColor > 0 and SmokeColor <=5 then -- Make sure number is within ragne, assuming first enum is one
+          self.SmokeColor = SMOKECOLOR.SmokeColor
+        end
+       end
+    end
+     
+    --@return SmokeColor
+    function TASK_CARGO:GetSmokeColor()
+      return self.SmokeColor
+    end
   
   --- @param #TASK_CARGO self
   function TASK_CARGO:GetPlannedMenuText()
@@ -910,6 +938,11 @@ do -- TASK_CARGO_TRANSPORT
 
     return CargoDeployed
   end
+  
+      
+    ---
+  
+  
   
 
 end

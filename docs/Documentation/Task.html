@@ -75,6 +75,7 @@
 					<li><a href="Scoring.html">Scoring</a></li>
 					<li><a href="Sead.html">Sead</a></li>
 					<li><a href="Set.html">Set</a></li>
+					<li><a href="Settings.html">Settings</a></li>
 					<li><a href="Smoke.html">Smoke</a></li>
 					<li><a href="Spawn.html">Spawn</a></li>
 					<li><a href="SpawnStatic.html">SpawnStatic</a></li>
@@ -82,6 +83,8 @@
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li>Task</li>
+					<li><a href="Task_A2A.html">Task_A2A</a></li>
+					<li><a href="Task_A2A_Dispatcher.html">Task_A2A_Dispatcher</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
 					<li><a href="Task_A2G_Dispatcher.html">Task_A2G_Dispatcher</a></li>
 					<li><a href="Task_Cargo.html">Task_Cargo</a></li>
@@ -453,13 +456,13 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK).ReportDetails">TASK:ReportDetails()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).ReportDetails">TASK:ReportDetails(TaskGroup)</a></td>
 		<td class="summary">
 <p>Create a detailed report of the Task.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK).ReportOverview">TASK:ReportOverview()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).ReportOverview">TASK:ReportOverview(ReportGroup)</a></td>
 		<td class="summary">
 <p>Create an overiew report of the Task.</p>
 </td>
@@ -2007,7 +2010,7 @@ self</p>
 <dt>
 
 <a id="#(TASK).ReportDetails" >
-<strong>TASK:ReportDetails()</strong>
+<strong>TASK:ReportDetails(TaskGroup)</strong>
 </a>
 </dt>
 <dd>
@@ -2017,6 +2020,14 @@ self</p>
 	
 <p>List the Task Status, and the Players assigned to the Task.</p>
 
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> TaskGroup </em></code>: </p>
+
+				</li>
+		</ul>
 		<h3>Return value</h3>
 				
 <p><em>#string:</em></p>
@@ -2028,7 +2039,7 @@ self</p>
 <dt>
 
 <a id="#(TASK).ReportOverview" >
-<strong>TASK:ReportOverview()</strong>
+<strong>TASK:ReportOverview(ReportGroup)</strong>
 </a>
 </dt>
 <dd>
@@ -2038,6 +2049,14 @@ self</p>
 	
 <p>List the Task Name and Status</p>
 
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> ReportGroup </em></code>: </p>
+
+				</li>
+		</ul>
 		<h3>Return value</h3>
 				
 <p><em>#string:</em></p>

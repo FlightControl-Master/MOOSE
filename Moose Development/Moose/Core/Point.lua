@@ -54,226 +54,113 @@
 -- @module Point
 
 
---- @type COORDINATE
--- @extends Core.Base#BASE
 
---- # COORDINATE class, extends @{Base#BASE}
---
--- The COORDINATE class defines a 2D coordinate in the simulator. The height coordinate (if needed) will be the land height + an optional added height specified.
--- A COORDINATE can be expressed in LL or in MGRS.
---
--- ## COORDINATE constructor
---
--- A new COORDINATE instance can be created with:
---
---  * @{Point#COORDINATE.New}(): a 2D point, taking an additional height parameter.
---  * @{Point#COORDINATE.NewFromVec2}(): a 2D point created from a @{DCSTypes#Vec2}.
---
--- ## Manupulate the X, Altitude, Y coordinates of the 2D point
---
--- A COORDINATE class works in 2D space, with an altitude setting. It contains internally an X, Altitude, Y coordinate.
--- Methods exist to manupulate these coordinates.
---
--- The current X, Altitude, Y axis can be retrieved with the methods @{#COORDINATE.GetX}(), @{#COORDINATE.GetAlt}(), @{#COORDINATE.GetY}() respectively.
--- The methods @{#COORDINATE.SetX}(), @{#COORDINATE.SetAlt}(), @{#COORDINATE.SetY}() change the respective axis with a new value.
--- The current Lat(itude), Alt(itude), Lon(gitude) values can also be retrieved with the methods @{#COORDINATE.GetLat}(), @{#COORDINATE.GetAlt}(), @{#COORDINATE.GetLon}() respectively.
--- The current axis values can be changed by using the methods @{#COORDINATE.AddX}(), @{#COORDINATE.AddAlt}(), @{#COORDINATE.AddY}()
--- to add or substract a value from the current respective axis value.
--- Note that the Set and Add methods return the current COORDINATE object, so these manipulation methods can be chained... For example:
---
---      local Vec2 = PointVec2:AddX( 100 ):AddY( 2000 ):GetVec2()
---
--- @field #COORDINATE
-COORDINATE = {
-  ClassName = "COORDINATE",
-}
-
---- The POINT_VEC3 class
--- @type POINT_VEC3
--- @field #number x The x coordinate in 3D space.
--- @field #number y The y coordinate in 3D space.
--- @field #number z The z coordiante in 3D space.
--- @field Utilities.Utils#SMOKECOLOR SmokeColor
--- @field Utilities.Utils#FLARECOLOR FlareColor
--- @field #POINT_VEC3.RoutePointAltType RoutePointAltType
--- @field #POINT_VEC3.RoutePointType RoutePointType
--- @field #POINT_VEC3.RoutePointAction RoutePointAction
--- @extends Core.Point#COORDINATE
-
-
---- # POINT_VEC3 class, extends @{Point#COORDINATE}
---
--- POINT_VEC3 defines a 3D point in the simulator and with its methods, you can use or manipulate the point in 3D space.
---
--- **Important Note:** Most of the functions in this section were taken from MIST, and reworked to OO concepts.
--- In order to keep the credibility of the the author,
--- I want to emphasize that the formulas embedded in the MIST framework were created by Grimes or previous authors,
--- who you can find on the Eagle Dynamics Forums.
---
---
--- ## POINT_VEC3 constructor
---
--- A new POINT_VEC3 object can be created with:
---
---  * @{#POINT_VEC3.New}(): a 3D point.
---  * @{#POINT_VEC3.NewFromVec3}(): a 3D point created from a @{DCSTypes#Vec3}.
---
---
--- ## Manupulate the X, Y, Z coordinates of the POINT_VEC3
---
--- A POINT_VEC3 class works in 3D space. It contains internally an X, Y, Z coordinate.
--- Methods exist to manupulate these coordinates.
---
--- The current X, Y, Z axis can be retrieved with the methods @{#POINT_VEC3.GetX}(), @{#POINT_VEC3.GetY}(), @{#POINT_VEC3.GetZ}() respectively.
--- The methods @{#POINT_VEC3.SetX}(), @{#POINT_VEC3.SetY}(), @{#POINT_VEC3.SetZ}() change the respective axis with a new value.
--- The current axis values can be changed by using the methods @{#POINT_VEC3.AddX}(), @{#POINT_VEC3.AddY}(), @{#POINT_VEC3.AddZ}()
--- to add or substract a value from the current respective axis value.
--- Note that the Set and Add methods return the current POINT_VEC3 object, so these manipulation methods can be chained... For example:
---
---      local Vec3 = PointVec3:AddX( 100 ):AddZ( 150 ):GetVec3()
---
---
--- ## Create waypoints for routes
---
--- A POINT_VEC3 can prepare waypoints for Ground and Air groups to be embedded into a Route.
---
---   * @{#POINT_VEC3.RoutePointAir}(): Build an air route point.
---   * @{#POINT_VEC3.RoutePointGround}(): Build a ground route point.
---
--- Route points can be used in the Route methods of the @{Group#GROUP} class.
---
---
--- ## Smoke, flare, explode, illuminate
---
--- At the point a smoke, flare, explosion and illumination bomb can be triggered. Use the following methods:
---
--- ### Smoke
---
---   * @{#POINT_VEC3.Smoke}(): To smoke the point in a certain color.
---   * @{#POINT_VEC3.SmokeBlue}(): To smoke the point in blue.
---   * @{#POINT_VEC3.SmokeRed}(): To smoke the point in red.
---   * @{#POINT_VEC3.SmokeOrange}(): To smoke the point in orange.
---   * @{#POINT_VEC3.SmokeWhite}(): To smoke the point in white.
---   * @{#POINT_VEC3.SmokeGreen}(): To smoke the point in green.
---
--- ### Flare
---
---   * @{#POINT_VEC3.Flare}(): To flare the point in a certain color.
---   * @{#POINT_VEC3.FlareRed}(): To flare the point in red.
---   * @{#POINT_VEC3.FlareYellow}(): To flare the point in yellow.
---   * @{#POINT_VEC3.FlareWhite}(): To flare the point in white.
---   * @{#POINT_VEC3.FlareGreen}(): To flare the point in green.
---
--- ### Explode
---
---   * @{#POINT_VEC3.Explosion}(): To explode the point with a certain intensity.
---
--- ### Illuminate
---
---   * @{#POINT_VEC3.IlluminationBomb}(): To illuminate the point.
---
---
--- ## 3D calculation methods
---
--- Various calculation methods exist to use or manipulate 3D space. Find below a short description of each method:
---
--- ### Distance
---
---   * @{#POINT_VEC3.Get3DDistance}(): Obtain the distance from the current 3D point to the provided 3D point in 3D space.
---   * @{#POINT_VEC3.Get2DDistance}(): Obtain the distance from the current 3D point to the provided 3D point in 2D space.
---
--- ### Angle
---
---   * @{#POINT_VEC3.GetAngleDegrees}(): Obtain the angle in degrees from the current 3D point with the provided 3D direction vector.
---   * @{#POINT_VEC3.GetAngleRadians}(): Obtain the angle in radians from the current 3D point with the provided 3D direction vector.
---   * @{#POINT_VEC3.GetDirectionVec3}(): Obtain the 3D direction vector from the current 3D point to the provided 3D point.
---
--- ### Translation
---
---   * @{#POINT_VEC3.Translate}(): Translate the current 3D point towards an other 3D point using the given Distance and Angle.
---
--- ### Get the North correction of the current location
---
---   * @{#POINT_VEC3.GetNorthCorrection}(): Obtains the north correction at the current 3D point.
---
---
--- ## Point Randomization
---
--- Various methods exist to calculate random locations around a given 3D point.
---
---   * @{#POINT_VEC3.GetRandomPointVec2InRadius}(): Provides a random 2D point around the current 3D point, in the given inner to outer band.
---   * @{#POINT_VEC3.GetRandomPointVec3InRadius}(): Provides a random 3D point around the current 3D point, in the given inner to outer band.
---   * @{#POINT_VEC3.GetRandomVec2InRadius}(): Provides a random 2D vector around the current 3D point, in the given inner to outer band.
---   * @{#POINT_VEC3.GetRandomVec3InRadius}(): Provides a random 3D vector around the current 3D point, in the given inner to outer band.
---
---
--- ## Metric system
---
---   * @{#POINT_VEC3.IsMetric}(): Returns if the 3D point is Metric or Nautical Miles.
---   * @{#POINT_VEC3.SetMetric}(): Sets the 3D point to Metric or Nautical Miles.
---
---
--- ## Coorinate text generation
---
---   * @{#POINT_VEC3.ToStringBR}(): Generates a Bearing & Range text in the format of DDD for DI where DDD is degrees and DI is distance.
---   * @{#POINT_VEC3.ToStringLL}(): Generates a Latutude & Longutude text.
---
--- @field #POINT_VEC3
-POINT_VEC3 = {
-  ClassName = "POINT_VEC3",
-  Metric = true,
-  RoutePointAltType = {
-    BARO = "BARO",
-  },
-  RoutePointType = {
-    TakeOffParking = "TakeOffParking",
-    TurningPoint = "Turning Point",
-  },
-  RoutePointAction = {
-    FromParkingArea = "From Parking Area",
-    TurningPoint = "Turning Point",
-  },
-}
-
---- @type POINT_VEC2
--- @field Dcs.DCSTypes#Distance x The x coordinate in meters.
--- @field Dcs.DCSTypes#Distance y the y coordinate in meters.
--- @extends Core.Point#COORDINATE
-
-
-
---- # POINT_VEC2 class, extends @{Point#COORDINATE}
---
--- The @{Point#POINT_VEC2} class defines a 2D point in the simulator. The height coordinate (if needed) will be the land height + an optional added height specified.
---
--- ## POINT_VEC2 constructor
---
--- A new POINT_VEC2 instance can be created with:
---
---  * @{Point#POINT_VEC2.New}(): a 2D point, taking an additional height parameter.
---  * @{Point#POINT_VEC2.NewFromVec2}(): a 2D point created from a @{DCSTypes#Vec2}.
---
--- ## Manupulate the X, Altitude, Y coordinates of the 2D point
---
--- A POINT_VEC2 class works in 2D space, with an altitude setting. It contains internally an X, Altitude, Y coordinate.
--- Methods exist to manupulate these coordinates.
---
--- The current X, Altitude, Y axis can be retrieved with the methods @{#POINT_VEC2.GetX}(), @{#POINT_VEC2.GetAlt}(), @{#POINT_VEC2.GetY}() respectively.
--- The methods @{#POINT_VEC2.SetX}(), @{#POINT_VEC2.SetAlt}(), @{#POINT_VEC2.SetY}() change the respective axis with a new value.
--- The current Lat(itude), Alt(itude), Lon(gitude) values can also be retrieved with the methods @{#POINT_VEC2.GetLat}(), @{#POINT_VEC2.GetAlt}(), @{#POINT_VEC2.GetLon}() respectively.
--- The current axis values can be changed by using the methods @{#POINT_VEC2.AddX}(), @{#POINT_VEC2.AddAlt}(), @{#POINT_VEC2.AddY}()
--- to add or substract a value from the current respective axis value.
--- Note that the Set and Add methods return the current POINT_VEC2 object, so these manipulation methods can be chained... For example:
---
---      local Vec2 = PointVec2:AddX( 100 ):AddY( 2000 ):GetVec2()
---
--- @field #POINT_VEC2
-POINT_VEC2 = {
-  ClassName = "POINT_VEC2",
-}
 
 
 do -- COORDINATE
+
+  --- @type COORDINATE
+  -- @extends Core.Base#BASE
+  
+  --- # COORDINATE class, extends @{Base#BASE}
+  --
+  -- COORDINATE defines a 3D point in the simulator and with its methods, you can use or manipulate the point in 3D space.
+  --
+  -- ## COORDINATE constructor
+  --
+  -- A new COORDINATE object can be created with:
+  --
+  --  * @{#COORDINATE.New}(): a 3D point.
+  --  * @{#COORDINATE.NewFromVec2}(): a 2D point created from a @{DCSTypes#Vec2}.
+  --  * @{#COORDINATE.NewFromVec3}(): a 3D point created from a @{DCSTypes#Vec3}.
+  --
+  -- ## Create waypoints for routes
+  --
+  -- A COORDINATE can prepare waypoints for Ground and Air groups to be embedded into a Route.
+  --
+  --   * @{#COORDINATE.RoutePointAir}(): Build an air route point.
+  --   * @{#COORDINATE.RoutePointGround}(): Build a ground route point.
+  --
+  -- Route points can be used in the Route methods of the @{Group#GROUP} class.
+  --
+  --
+  -- ## Smoke, flare, explode, illuminate
+  --
+  -- At the point a smoke, flare, explosion and illumination bomb can be triggered. Use the following methods:
+  --
+  -- ### Smoke
+  --
+  --   * @{#COORDINATE.Smoke}(): To smoke the point in a certain color.
+  --   * @{#COORDINATE.SmokeBlue}(): To smoke the point in blue.
+  --   * @{#COORDINATE.SmokeRed}(): To smoke the point in red.
+  --   * @{#COORDINATE.SmokeOrange}(): To smoke the point in orange.
+  --   * @{#COORDINATE.SmokeWhite}(): To smoke the point in white.
+  --   * @{#COORDINATE.SmokeGreen}(): To smoke the point in green.
+  --
+  -- ### Flare
+  --
+  --   * @{#COORDINATE.Flare}(): To flare the point in a certain color.
+  --   * @{#COORDINATE.FlareRed}(): To flare the point in red.
+  --   * @{#COORDINATE.FlareYellow}(): To flare the point in yellow.
+  --   * @{#COORDINATE.FlareWhite}(): To flare the point in white.
+  --   * @{#COORDINATE.FlareGreen}(): To flare the point in green.
+  --
+  -- ### Explode
+  --
+  --   * @{#COORDINATE.Explosion}(): To explode the point with a certain intensity.
+  --
+  -- ### Illuminate
+  --
+  --   * @{#COORDINATE.IlluminationBomb}(): To illuminate the point.
+  --
+  --
+  -- ## 3D calculation methods
+  --
+  -- Various calculation methods exist to use or manipulate 3D space. Find below a short description of each method:
+  --
+  -- ### Distance
+  --
+  --   * @{#COORDINATE.Get3DDistance}(): Obtain the distance from the current 3D point to the provided 3D point in 3D space.
+  --   * @{#COORDINATE.Get2DDistance}(): Obtain the distance from the current 3D point to the provided 3D point in 2D space.
+  --
+  -- ### Angle
+  --
+  --   * @{#COORDINATE.GetAngleDegrees}(): Obtain the angle in degrees from the current 3D point with the provided 3D direction vector.
+  --   * @{#COORDINATE.GetAngleRadians}(): Obtain the angle in radians from the current 3D point with the provided 3D direction vector.
+  --   * @{#COORDINATE.GetDirectionVec3}(): Obtain the 3D direction vector from the current 3D point to the provided 3D point.
+  --
+  -- ### Translation
+  --
+  --   * @{#COORDINATE.Translate}(): Translate the current 3D point towards an other 3D point using the given Distance and Angle.
+  --
+  -- ### Get the North correction of the current location
+  --
+  --   * @{#COORDINATE.GetNorthCorrection}(): Obtains the north correction at the current 3D point.
+  --
+  --
+  -- ## Point Randomization
+  --
+  -- Various methods exist to calculate random locations around a given 3D point.
+  --
+  --   * @{#COORDINATE.GetRandomVec2InRadius}(): Provides a random 2D vector around the current 3D point, in the given inner to outer band.
+  --   * @{#COORDINATE.GetRandomVec3InRadius}(): Provides a random 3D vector around the current 3D point, in the given inner to outer band.
+  --
+  --
+  -- ## Metric system
+  --
+  --   * @{#COORDINATE.IsMetric}(): Returns if the 3D point is Metric or Nautical Miles.
+  --   * @{#COORDINATE.SetMetric}(): Sets the 3D point to Metric or Nautical Miles.
+  --
+  --
+  -- ## Coorinate text generation
+  --
+  --   * @{#COORDINATE.ToStringBR}(): Generates a Bearing & Range text in the format of DDD for DI where DDD is degrees and DI is distance.
+  --   * @{#COORDINATE.ToStringLL}(): Generates a Latutude & Longutude text.
+  --
+  -- @field #COORDINATE
+  COORDINATE = {
+    ClassName = "COORDINATE",
+  }
 
   --- COORDINATE constructor.
   -- @param #COORDINATE self
@@ -288,8 +175,6 @@ do -- COORDINATE
     self.y = y
     self.z = z
     
-    self:SetModeA2G()
-
     return self
   end
 
@@ -342,7 +227,83 @@ do -- COORDINATE
   function COORDINATE:GetVec2()
     return { x = self.x, y = self.z }
   end
-  
+
+  --TODO: check this to replace
+  --- Calculate the distance from a reference @{DCSTypes#Vec2}.
+  -- @param #COORDINATE self
+  -- @param Dcs.DCSTypes#Vec2 Vec2Reference The reference @{DCSTypes#Vec2}.
+  -- @return Dcs.DCSTypes#Distance The distance from the reference @{DCSTypes#Vec2} in meters.
+  function COORDINATE:DistanceFromVec2( Vec2Reference )
+    self:F2( Vec2Reference )
+
+    local Distance = ( ( Vec2Reference.x - self.x ) ^ 2 + ( Vec2Reference.y - self.z ) ^2 ) ^0.5
+
+    self:T2( Distance )
+    return Distance
+  end
+
+
+  --- Add a Distance in meters from the COORDINATE orthonormal plane, with the given angle, and calculate the new COORDINATE.
+  -- @param #COORDINATE self
+  -- @param Dcs.DCSTypes#Distance Distance The Distance to be added in meters.
+  -- @param Dcs.DCSTypes#Angle Angle The Angle in degrees.
+  -- @return #COORDINATE The new calculated COORDINATE.
+  function COORDINATE:Translate( Distance, Angle )
+    local SX = self.x
+    local SY = self.z
+    local Radians = Angle / 180 * math.pi
+    local TX = Distance * math.cos( Radians ) + SX
+    local TY = Distance * math.sin( Radians ) + SY
+
+    return COORDINATE:NewFromVec2( { x = TX, y = TY } )
+  end
+
+  --- Return a random Vec2 within an Outer Radius and optionally NOT within an Inner Radius of the COORDINATE.
+  -- @param #COORDINATE self
+  -- @param Dcs.DCSTypes#Distance OuterRadius
+  -- @param Dcs.DCSTypes#Distance InnerRadius
+  -- @return Dcs.DCSTypes#Vec2 Vec2
+  function COORDINATE:GetRandomVec2InRadius( OuterRadius, InnerRadius )
+    self:F2( { OuterRadius, InnerRadius } )
+
+    local Theta = 2 * math.pi * math.random()
+    local Radials = math.random() + math.random()
+    if Radials > 1 then
+      Radials = 2 - Radials
+    end
+
+    local RadialMultiplier
+    if InnerRadius and InnerRadius <= OuterRadius then
+      RadialMultiplier = ( OuterRadius - InnerRadius ) * Radials + InnerRadius
+    else
+      RadialMultiplier = OuterRadius * Radials
+    end
+
+    local RandomVec2
+    if OuterRadius > 0 then
+      RandomVec2 = { x = math.cos( Theta ) * RadialMultiplier + self.x, y = math.sin( Theta ) * RadialMultiplier + self.z }
+    else
+      RandomVec2 = { x = self.x, y = self.z }
+    end
+
+    return RandomVec2
+  end
+
+
+  --- Return a random Vec3 within an Outer Radius and optionally NOT within an Inner Radius of the COORDINATE.
+  -- @param #COORDINATE self
+  -- @param Dcs.DCSTypes#Distance OuterRadius
+  -- @param Dcs.DCSTypes#Distance InnerRadius
+  -- @return Dcs.DCSTypes#Vec3 Vec3
+  function COORDINATE:GetRandomVec3InRadius( OuterRadius, InnerRadius )
+
+    local RandomVec2 = self:GetRandomVec2InRadius( OuterRadius, InnerRadius )
+    local y = self.y + math.random( InnerRadius, OuterRadius )
+    local RandomVec3 = { x = RandomVec2.x, y = y, z = RandomVec2.y }
+
+    return RandomVec3
+  end
+
 
   function COORDINATE:SetHeading( Heading )
     self.Heading = Heading
@@ -706,7 +667,7 @@ do -- COORDINATE
     self:Flare( FLARECOLOR.Red, Azimuth )
   end
 
-  --- Returns if a Coordinate has Line of Sight (LOS) with the ToPointVec3.
+  --- Returns if a Coordinate has Line of Sight (LOS) with the ToCoordinate.
   -- @param #COORDINATE self
   -- @param #COORDINATE ToCoordinate
   -- @return #boolean true If the ToCoordinate has LOS with the Coordinate, otherwise false.
@@ -724,35 +685,6 @@ do -- COORDINATE
     return IsLOS
   end
 
-
-  --- Set the mode to A2G
-  -- @param #COORDINATE self
-  -- @return #COORDINATE
-  function COORDINATE:SetModeA2G()
-    self.Mode = "A2G"
-  end
-
-  --- Is the mode to A2G
-  -- @param #COORDINATE self
-  -- @return #boolean
-  function COORDINATE:IsModeA2G()
-    return self.Mode == "A2G"
-  end
-  
-  --- Set the mode to A2A
-  -- @param #COORDINATE self
-  -- @return #COORDINATE
-  function COORDINATE:SetModeA2A()
-    self.Mode = "A2A"
-  end
-  
-  --- Is the mode to A2A
-  -- @param #COORDINATE self
-  -- @return #boolean
-  function COORDINATE:IsModeA2A()
-    return self.Mode == "A2A"
-  end
-  
 
   --- Return a BR string from a COORDINATE to the COORDINATE.
   -- @param #COORDINATE self
@@ -859,19 +791,16 @@ do -- COORDINATE
     if IsAir then
       if Settings:IsA2A_BRA()  then
         local Coordinate = Controllable:GetCoordinate()
-        Coordinate:SetModeA2A()
         return self:ToStringBRA( Coordinate, Settings ) 
       end
   
       if Settings:IsA2A_BULLS() then
         local Coordinate = Controllable:GetCoordinate()
-        Coordinate:SetModeA2A()
         return self:ToStringBULLS( Coordinate, Settings )
       end
     else
       if Settings:IsA2G_BRA()  then
         local Coordinate = Controllable:GetCoordinate()
-        Coordinate:SetModeA2A()
         return Controllable and self:ToStringBR( Coordinate, Settings ) or self:ToStringMGRS( Settings )
       end
       if Settings:IsA2G_LL()  then
@@ -889,6 +818,80 @@ do -- COORDINATE
 end
 
 do -- POINT_VEC3
+
+  --- The POINT_VEC3 class
+  -- @type POINT_VEC3
+  -- @field #number x The x coordinate in 3D space.
+  -- @field #number y The y coordinate in 3D space.
+  -- @field #number z The z coordiante in 3D space.
+  -- @field Utilities.Utils#SMOKECOLOR SmokeColor
+  -- @field Utilities.Utils#FLARECOLOR FlareColor
+  -- @field #POINT_VEC3.RoutePointAltType RoutePointAltType
+  -- @field #POINT_VEC3.RoutePointType RoutePointType
+  -- @field #POINT_VEC3.RoutePointAction RoutePointAction
+  -- @extends Core.Point#COORDINATE
+  
+  
+  --- # POINT_VEC3 class, extends @{Point#COORDINATE}
+  --
+  -- POINT_VEC3 defines a 3D point in the simulator and with its methods, you can use or manipulate the point in 3D space.
+  --
+  -- **Important Note:** Most of the functions in this section were taken from MIST, and reworked to OO concepts.
+  -- In order to keep the credibility of the the author,
+  -- I want to emphasize that the formulas embedded in the MIST framework were created by Grimes or previous authors,
+  -- who you can find on the Eagle Dynamics Forums.
+  --
+  --
+  -- ## POINT_VEC3 constructor
+  --
+  -- A new POINT_VEC3 object can be created with:
+  --
+  --  * @{#POINT_VEC3.New}(): a 3D point.
+  --  * @{#POINT_VEC3.NewFromVec3}(): a 3D point created from a @{DCSTypes#Vec3}.
+  --
+  --
+  -- ## Manupulate the X, Y, Z coordinates of the POINT_VEC3
+  --
+  -- A POINT_VEC3 class works in 3D space. It contains internally an X, Y, Z coordinate.
+  -- Methods exist to manupulate these coordinates.
+  --
+  -- The current X, Y, Z axis can be retrieved with the methods @{#POINT_VEC3.GetX}(), @{#POINT_VEC3.GetY}(), @{#POINT_VEC3.GetZ}() respectively.
+  -- The methods @{#POINT_VEC3.SetX}(), @{#POINT_VEC3.SetY}(), @{#POINT_VEC3.SetZ}() change the respective axis with a new value.
+  -- The current axis values can be changed by using the methods @{#POINT_VEC3.AddX}(), @{#POINT_VEC3.AddY}(), @{#POINT_VEC3.AddZ}()
+  -- to add or substract a value from the current respective axis value.
+  -- Note that the Set and Add methods return the current POINT_VEC3 object, so these manipulation methods can be chained... For example:
+  --
+  --      local Vec3 = PointVec3:AddX( 100 ):AddZ( 150 ):GetVec3()
+  --
+  --
+  -- ## 3D calculation methods
+  --
+  -- Various calculation methods exist to use or manipulate 3D space. Find below a short description of each method:
+  --
+  --
+  -- ## Point Randomization
+  --
+  -- Various methods exist to calculate random locations around a given 3D point.
+  --
+  --   * @{#POINT_VEC3.GetRandomPointVec3InRadius}(): Provides a random 3D point around the current 3D point, in the given inner to outer band.
+  --
+  --
+  -- @field #POINT_VEC3
+  POINT_VEC3 = {
+    ClassName = "POINT_VEC3",
+    Metric = true,
+    RoutePointAltType = {
+      BARO = "BARO",
+    },
+    RoutePointType = {
+      TakeOffParking = "TakeOffParking",
+      TurningPoint = "Turning Point",
+    },
+    RoutePointAction = {
+      FromParkingArea = "From Parking Area",
+      TurningPoint = "Turning Point",
+    },
+  }
 
   --- RoutePoint AltTypes
   -- @type POINT_VEC3.RoutePointAltType
@@ -916,7 +919,7 @@ do -- POINT_VEC3
 
     local self = BASE:Inherit( self, COORDINATE:New( x, y, z ) ) -- Core.Point#POINT_VEC3
     self:F2( self )
-
+    
     return self
   end
 
@@ -942,7 +945,7 @@ do -- POINT_VEC3
 
     local self = BASE:Inherit( self, COORDINATE:NewFromVec3( Vec3 ) ) -- Core.Point#POINT_VEC3
     self:F2( self )
-
+  
     return self
   end
 
@@ -1023,20 +1026,6 @@ do -- POINT_VEC3
     return self
   end
 
-  --- Return a random Vec3 within an Outer Radius and optionally NOT within an Inner Radius of the POINT_VEC3.
-  -- @param #POINT_VEC3 self
-  -- @param Dcs.DCSTypes#Distance OuterRadius
-  -- @param Dcs.DCSTypes#Distance InnerRadius
-  -- @return Dcs.DCSTypes#Vec3 Vec3
-  function POINT_VEC3:GetRandomVec3InRadius( OuterRadius, InnerRadius )
-
-    local RandomVec2 = self:GetRandomVec2InRadius( OuterRadius, InnerRadius )
-    local y = self:GetY() + math.random( InnerRadius, OuterRadius )
-    local RandomVec3 = { x = RandomVec2.x, y = y, z = RandomVec2.y }
-
-    return RandomVec3
-  end
-
   --- Return a random POINT_VEC3 within an Outer Radius and optionally NOT within an Inner Radius of the POINT_VEC3.
   -- @param #POINT_VEC3 self
   -- @param Dcs.DCSTypes#Distance OuterRadius
@@ -1051,6 +1040,41 @@ end
 
 do -- POINT_VEC2
 
+  --- @type POINT_VEC2
+  -- @field Dcs.DCSTypes#Distance x The x coordinate in meters.
+  -- @field Dcs.DCSTypes#Distance y the y coordinate in meters.
+  -- @extends Core.Point#COORDINATE
+  
+  --- # POINT_VEC2 class, extends @{Point#COORDINATE}
+  --
+  -- The @{Point#POINT_VEC2} class defines a 2D point in the simulator. The height coordinate (if needed) will be the land height + an optional added height specified.
+  --
+  -- ## POINT_VEC2 constructor
+  --
+  -- A new POINT_VEC2 instance can be created with:
+  --
+  --  * @{Point#POINT_VEC2.New}(): a 2D point, taking an additional height parameter.
+  --  * @{Point#POINT_VEC2.NewFromVec2}(): a 2D point created from a @{DCSTypes#Vec2}.
+  --
+  -- ## Manupulate the X, Altitude, Y coordinates of the 2D point
+  --
+  -- A POINT_VEC2 class works in 2D space, with an altitude setting. It contains internally an X, Altitude, Y coordinate.
+  -- Methods exist to manupulate these coordinates.
+  --
+  -- The current X, Altitude, Y axis can be retrieved with the methods @{#POINT_VEC2.GetX}(), @{#POINT_VEC2.GetAlt}(), @{#POINT_VEC2.GetY}() respectively.
+  -- The methods @{#POINT_VEC2.SetX}(), @{#POINT_VEC2.SetAlt}(), @{#POINT_VEC2.SetY}() change the respective axis with a new value.
+  -- The current Lat(itude), Alt(itude), Lon(gitude) values can also be retrieved with the methods @{#POINT_VEC2.GetLat}(), @{#POINT_VEC2.GetAlt}(), @{#POINT_VEC2.GetLon}() respectively.
+  -- The current axis values can be changed by using the methods @{#POINT_VEC2.AddX}(), @{#POINT_VEC2.AddAlt}(), @{#POINT_VEC2.AddY}()
+  -- to add or substract a value from the current respective axis value.
+  -- Note that the Set and Add methods return the current POINT_VEC2 object, so these manipulation methods can be chained... For example:
+  --
+  --      local Vec2 = PointVec2:AddX( 100 ):AddY( 2000 ):GetVec2()
+  --
+  -- @field #POINT_VEC2
+  POINT_VEC2 = {
+    ClassName = "POINT_VEC2",
+  }
+  
 
 
   --- POINT_VEC2 constructor.
@@ -1083,7 +1107,7 @@ do -- POINT_VEC2
     LandHeightAdd = LandHeightAdd or 0
     LandHeight = LandHeight + LandHeightAdd
 
-    local self = BASE:Inherit( self, COORDINATE:New( Vec2.x, LandHeight, Vec2.y ) ) -- Core.Point#POINT_VEC2
+    local self = BASE:Inherit( self, COORDINATE:NewFromVec2( Vec2, LandHeightAdd ) ) -- Core.Point#POINT_VEC2
     self:F2( self )
 
     return self
@@ -1210,36 +1234,6 @@ do -- POINT_VEC2
     return self
   end
 
-  --- Return a random Vec2 within an Outer Radius and optionally NOT within an Inner Radius of the POINT_VEC2.
-  -- @param #POINT_VEC2 self
-  -- @param Dcs.DCSTypes#Distance OuterRadius
-  -- @param Dcs.DCSTypes#Distance InnerRadius
-  -- @return Dcs.DCSTypes#Vec2 Vec2
-  function POINT_VEC2:GetRandomVec2InRadius( OuterRadius, InnerRadius )
-    self:F2( { OuterRadius, InnerRadius } )
-
-    local Theta = 2 * math.pi * math.random()
-    local Radials = math.random() + math.random()
-    if Radials > 1 then
-      Radials = 2 - Radials
-    end
-
-    local RadialMultiplier
-    if InnerRadius and InnerRadius <= OuterRadius then
-      RadialMultiplier = ( OuterRadius - InnerRadius ) * Radials + InnerRadius
-    else
-      RadialMultiplier = OuterRadius * Radials
-    end
-
-    local RandomVec2
-    if OuterRadius > 0 then
-      RandomVec2 = { x = math.cos( Theta ) * RadialMultiplier + self:GetX(), y = math.sin( Theta ) * RadialMultiplier + self:GetZ() }
-    else
-      RandomVec2 = { x = self:GetX(), y = self:GetZ() }
-    end
-
-    return RandomVec2
-  end
 
   --- Return a random POINT_VEC2 within an Outer Radius and optionally NOT within an Inner Radius of the POINT_VEC2.
   -- @param #POINT_VEC2 self
@@ -1252,8 +1246,7 @@ do -- POINT_VEC2
     return POINT_VEC2:NewFromVec2( self:GetRandomVec2InRadius( OuterRadius, InnerRadius ) )
   end
 
-
--- TODO: Check this to replace
+  -- TODO: Check this to replace
   --- Calculate the distance from a reference @{#POINT_VEC2}.
   -- @param #POINT_VEC2 self
   -- @param #POINT_VEC2 PointVec2Reference The reference @{#POINT_VEC2}.
@@ -1261,41 +1254,10 @@ do -- POINT_VEC2
   function POINT_VEC2:DistanceFromPointVec2( PointVec2Reference )
     self:F2( PointVec2Reference )
 
-    local Distance = ( ( PointVec2Reference:GetX() - self:GetX() ) ^ 2 + ( PointVec2Reference:GetY() - self:GetY() ) ^2 ) ^0.5
+    local Distance = ( ( PointVec2Reference.x - self.x ) ^ 2 + ( PointVec2Reference.z - self.z ) ^2 ) ^ 0.5
 
     self:T2( Distance )
     return Distance
-  end
-
---TODO: check this to replace
-
-  --- Calculate the distance from a reference @{DCSTypes#Vec2}.
-  -- @param #POINT_VEC2 self
-  -- @param Dcs.DCSTypes#Vec2 Vec2Reference The reference @{DCSTypes#Vec2}.
-  -- @return Dcs.DCSTypes#Distance The distance from the reference @{DCSTypes#Vec2} in meters.
-  function POINT_VEC2:DistanceFromVec2( Vec2Reference )
-    self:F2( Vec2Reference )
-
-    local Distance = ( ( Vec2Reference.x - self:GetX() ) ^ 2 + ( Vec2Reference.y - self:GetY() ) ^2 ) ^0.5
-
-    self:T2( Distance )
-    return Distance
-  end
-
-
-  --- Add a Distance in meters from the POINT_VEC2 orthonormal plane, with the given angle, and calculate the new POINT_VEC2.
-  -- @param #POINT_VEC2 self
-  -- @param Dcs.DCSTypes#Distance Distance The Distance to be added in meters.
-  -- @param Dcs.DCSTypes#Angle Angle The Angle in degrees.
-  -- @return #POINT_VEC2 The new calculated POINT_VEC2.
-  function POINT_VEC2:Translate( Distance, Angle )
-    local SX = self:GetX()
-    local SY = self:GetY()
-    local Radians = Angle / 180 * math.pi
-    local TX = Distance * math.cos( Radians ) + SX
-    local TY = Distance * math.sin( Radians ) + SY
-
-    return POINT_VEC2:New( TX, TY )
   end
 
 end

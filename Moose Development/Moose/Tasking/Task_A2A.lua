@@ -243,8 +243,6 @@ do -- TASK_A2A
   -- @param Wrapper.Unit#UNIT TaskUnit
   function TASK_A2A:SetTargetCoordinate( TargetCoordinate, TaskUnit )
   
-    TargetCoordinate:SetModeA2A()
-  
     local ProcessUnit = self:GetUnitProcess( TaskUnit )
 
     local ActRouteTarget = ProcessUnit:GetProcess( "Engaging", "RouteToTargetPoint" ) -- Actions.Act_Route#ACT_ROUTE_POINT
@@ -373,7 +371,6 @@ do -- TASK_A2A_INTERCEPT
     )
 
     local TargetCoordinate = TargetSetUnit:GetFirst():GetCoordinate()
-    TargetCoordinate:SetModeA2A()
     self:SetInfo( "Coordinates", TargetCoordinate )
 
     self:SetInfo( "ThreatLevel", "[" .. string.rep(  "■", TargetSetUnit:CalculateThreatLevelA2G() ) .. "]" )
@@ -421,7 +418,6 @@ do -- TASK_A2A_ENGAGE
     )
 
     local TargetCoordinate = TargetSetUnit:GetFirst():GetCoordinate()
-    TargetCoordinate:SetModeA2A()
     self:SetInfo( "Coordinates", TargetCoordinate )
 
     self:SetInfo( "ThreatLevel", "[" .. string.rep(  "■", TargetSetUnit:CalculateThreatLevelA2G() ) .. "]" )

@@ -512,7 +512,7 @@ do -- DETECTION_BASE
     -- @param #string Event The Event string.
     -- @param #string To The To State string.
     function DETECTION_BASE:onafterDetect(From,Event,To)
-      self:E( {From,Event,To})
+      self:E( { From, Event, To } )
 
       local DetectDelay = 0.1
       self.DetectionCount = 0
@@ -520,7 +520,7 @@ do -- DETECTION_BASE
       self:UnIdentifyAllDetectedObjects() -- Resets the DetectedObjectsIdentified table
       
       for DetectionGroupID, DetectionGroupData in pairs( self.DetectionSetGroup:GetSet() ) do
-        self:E( {DetectionGroupData})
+        --self:E( { DetectionGroupData } )
         self:__DetectionGroup( DetectDelay, DetectionGroupData ) -- Process each detection asynchronously.
         self.DetectionCount = self.DetectionCount + 1
         DetectDelay = DetectDelay + 0.1
@@ -533,7 +533,7 @@ do -- DETECTION_BASE
     -- @param #string To The To State string.
     -- @param Wrapper.Group#GROUP DetectionGroup The Group detecting.
     function DETECTION_BASE:onafterDetectionGroup( From, Event, To, DetectionGroup  )
-      self:E( {From,Event,To})
+      self:E( { From, Event, To } )
       
       self.DetectionRun = self.DetectionRun + 1
       
@@ -1563,7 +1563,7 @@ do -- DETECTION_UNITS
         local DetectedUnit = DetectedUnitData -- Wrapper.Unit#UNIT
 
         local DetectedObject = nil
-        self:E( DetectedUnit )
+        --self:E( DetectedUnit )
         if DetectedUnit:IsAlive() then
         --self:E(DetectedUnit:GetName())
           DetectedObject = self:GetDetectedObject( DetectedUnit:GetName() )
@@ -1924,8 +1924,8 @@ do -- DETECTION_TYPES
       local DetectedItemCoordinate = DetectedItemUnit:GetCoordinate()
       local DetectedItemCoordText = DetectedItemCoordinate:ToString( AttackGroup )
       
-      self:E( { DetectedItemID,
-        DetectedItemCoordText } )
+      --self:E( { DetectedItemID,
+      --  DetectedItemCoordText } )
 
       local ReportSummary = string.format( 
         "%s - %s", 
@@ -2365,7 +2365,7 @@ do -- DETECTION_AREAS
               self:IdentifyDetectedObject( DetectedObject )
               AreaExists = true
   
-              DetectedItem.Zone:BoundZone( 12, self.CountryID, true)
+              --DetectedItem.Zone:BoundZone( 12, self.CountryID, true)
   
               -- Assign the Unit as the new center unit of the detected area.
               DetectedItem.Zone = ZONE_UNIT:New( DetectedUnit:GetName(), DetectedUnit, self.DetectionZoneRange )
@@ -2374,6 +2374,9 @@ do -- DETECTION_AREAS
   
               -- We don't need to add the DetectedObject to the area set, because it is already there ...
               break
+            else
+              DetectedSet:Remove( DetectedUnitName )
+              self:AddChangeUnit( DetectedItem, "RU", DetectedUnit:GetTypeName() )
             end
           end
         end
@@ -2418,12 +2421,14 @@ do -- DETECTION_AREAS
             end
           end
         else
-          DetectedItem.Zone:BoundZone( 12, self.CountryID, true)
+          --DetectedItem.Zone:BoundZone( 12, self.CountryID, true)
           self:RemoveDetectedItem( DetectedItemID )
           self:AddChangeItem( DetectedItem, "RA" )
         end
       end
     end
+    
+    
     
     -- We iterated through the existing detection areas and:
     --  - We checked which units are still detected in each detection area. Those units were flagged as Identified.
@@ -2488,11 +2493,14 @@ do -- DETECTION_AREAS
       if DETECTION_AREAS._SmokeDetectedUnits or self._SmokeDetectedUnits then
         DetectedZone.ZoneUNIT:SmokeRed()
       end
+      
+      --DetectedSet:Flush()
+      
       DetectedSet:ForEachUnit(
         --- @param Wrapper.Unit#UNIT DetectedUnit
         function( DetectedUnit )
           if DetectedUnit:IsAlive() then
-            self:T( "Detected Set #" .. DetectedItem.ItemID .. ":" .. DetectedUnit:GetName() )
+            --self:T( "Detected Set #" .. DetectedItem.ItemID .. ":" .. DetectedUnit:GetName() )
             if DETECTION_AREAS._FlareDetectedUnits or self._FlareDetectedUnits then
               DetectedUnit:FlareGreen()
             end
