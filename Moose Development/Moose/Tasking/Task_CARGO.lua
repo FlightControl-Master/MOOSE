@@ -363,9 +363,8 @@ do -- TASK_CARGO
     function Fsm:onafterArriveAtPickup( TaskUnit, Task )
       self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
       if self.Cargo:IsAlive() then
+        TaskUnit:Smoke( Task:GetSmokeColor(), 15 )
         if TaskUnit:IsAir() then
-            TaskUnit:Smoke(TASK_CARGO:GetSmokeColor(),15)
-          end
           self:__Land( -0.1, "Pickup" )
         else
           self:__SelectAction( -0.1 )
