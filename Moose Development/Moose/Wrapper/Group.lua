@@ -426,6 +426,24 @@ function GROUP:GetTypeName()
   return nil
 end
 
+--- Gets the player name of the group.
+-- @param #GROUP self
+-- @return #string The player name of the group.
+function GROUP:GetPlayerName()
+  self:F2( self.GroupName )
+
+  local DCSGroup = self:GetDCSObject()
+
+  if DCSGroup then
+    local PlayerName = DCSGroup:getUnit(1):getPlayerName()
+    self:T3( PlayerName )
+    return( PlayerName )
+  end
+
+  return nil
+end
+
+
 --- Gets the CallSign of the first DCS Unit of the DCS Group.
 -- @param #GROUP self
 -- @return #string The CallSign of the first DCS Unit of the DCS Group.

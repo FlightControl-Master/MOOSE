@@ -383,7 +383,7 @@ do -- TASK_SEAD
     local TargetCoordinate = TargetSetUnit:GetFirst():GetCoordinate()
     self:SetInfo( "Coordinates", TargetCoordinate )
 
-    self:SetInfo( "ThreatLevel", "[" .. string.rep(  "■", TargetSetUnit:CalculateThreatLevelA2G() ) .. "]" )
+    self:SetInfo( "Threat", "[" .. string.rep(  "■", TargetSetUnit:CalculateThreatLevelA2G() ) .. "]" )
     local DetectedItemsCount = TargetSetUnit:Count()
     local DetectedItemsTypes = TargetSetUnit:GetTypeNames()
     self:SetInfo( "Targets", string.format( "%d of %s", DetectedItemsCount, DetectedItemsTypes ) ) 
@@ -425,7 +425,7 @@ do -- TASK_BAI
     local TargetCoordinate = TargetSetUnit:GetFirst():GetCoordinate()
     self:SetInfo( "Coordinates", TargetCoordinate )
 
-    self:SetInfo( "ThreatLevel", "[" .. string.rep(  "■", TargetSetUnit:CalculateThreatLevelA2G() ) .. "]" )
+    self:SetInfo( "Threat", "[" .. string.rep(  "■", TargetSetUnit:CalculateThreatLevelA2G() ) .. "]" )
     local DetectedItemsCount = TargetSetUnit:Count()
     local DetectedItemsTypes = TargetSetUnit:GetTypeNames()
     self:SetInfo( "Targets", string.format( "%d of %s", DetectedItemsCount, DetectedItemsTypes ) ) 
@@ -468,7 +468,7 @@ do -- TASK_CAS
     local TargetCoordinate = TargetSetUnit:GetFirst():GetCoordinate()
     self:SetInfo( "Coordinates", TargetCoordinate )
 
-    self:SetInfo( "ThreatLevel", "[" .. string.rep(  "■", TargetSetUnit:CalculateThreatLevelA2G() ) .. "]" )
+    self:SetInfo( "Threat", "[" .. string.rep(  "■", TargetSetUnit:CalculateThreatLevelA2G() ) .. "]" )
     local DetectedItemsCount = TargetSetUnit:Count()
     local DetectedItemsTypes = TargetSetUnit:GetTypeNames()
     self:SetInfo( "Targets", string.format( "%d of %s", DetectedItemsCount, DetectedItemsTypes ) ) 

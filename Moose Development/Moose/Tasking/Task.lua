@@ -1174,7 +1174,7 @@ function TASK:onenterSuccess( From, Event, To )
   self:GetMission():GetCommandCenter():MessageToCoalition( "Task " .. self:GetName() .. " is successful! Good job!" )
   self:UnAssignFromGroups()
   
-  --self:GetMission():__Complete( 1 )
+  self:GetMission():__MissionGoals( 1 )
   
 end
 
@@ -1312,14 +1312,14 @@ function TASK:ReportOverview( ReportGroup ) --R2.1 fixed report. Now nicely form
   
   -- List the name of the Task.
   local Name = self:GetName()
-  local Report = REPORT:New( "Task " .. Name )
+  local Report = REPORT:New( Name )
   
   -- Determine the status of the Task.
   local State = self:GetState()
   
   for TaskInfoID, TaskInfo in pairs( self.TaskInfo ) do
 
-    local TaskInfoIDText = string.format( " - %s: ", TaskInfoID )
+    local TaskInfoIDText = string.format( "%s: ", TaskInfoID )
   
     if type(TaskInfo) == "string" then
       Report:Add( TaskInfoIDText .. TaskInfo )
@@ -1327,8 +1327,8 @@ function TASK:ReportOverview( ReportGroup ) --R2.1 fixed report. Now nicely form
       if TaskInfoID == "Coordinates" then
         local FromCoordinate = ReportGroup:GetUnit(1):GetCoordinate()
         local ToCoordinate = TaskInfo -- Core.Point#COORDINATE
-        Report:Add( TaskInfoIDText )
-        Report:AddIndent( ToCoordinate:ToStringBRA( FromCoordinate ) .. ", " .. TaskInfo:ToStringAspect( FromCoordinate ) )
+        --Report:Add( TaskInfoIDText )
+        Report:Add( ToCoordinate:ToString( ReportGroup ) )
         --Report:AddIndent( ToCoordinate:ToStringBULLS( ReportGroup:GetCoalition() ) )
       else
       end
