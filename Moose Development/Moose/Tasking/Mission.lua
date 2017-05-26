@@ -220,6 +220,33 @@ function MISSION:New( CommandCenter, MissionName, MissionPriority, MissionBriefi
   -- @param #MISSION self
   -- @param #number Delay The delay in seconds.
   
+  
+  self:AddTransition( "*", "MissionGoals", "*" )
+  
+  --- MissionGoals Handler OnBefore for MISSION
+  -- @function [parent=#MISSION] OnBeforeMissionGoals
+  -- @param #MISSION self
+  -- @param #string From
+  -- @param #string Event
+  -- @param #string To
+  -- @return #boolean
+  
+  --- MissionGoals Handler OnAfter for MISSION
+  -- @function [parent=#MISSION] OnAfterMissionGoals
+  -- @param #MISSION self
+  -- @param #string From
+  -- @param #string Event
+  -- @param #string To
+  
+  --- MissionGoals Trigger for MISSION
+  -- @function [parent=#MISSION] MissionGoals
+  -- @param #MISSION self
+  
+  --- MissionGoals Asynchronous Trigger for MISSION
+  -- @function [parent=#MISSION] __MissionGoals
+  -- @param #MISSION self
+  -- @param #number Delay
+  
 	-- Private  implementations
 	
 	CommandCenter:SetMenu()
@@ -780,14 +807,14 @@ function MISSION:ReportOverview( ReportGroup, TaskStatus )
   local Status = self:GetState()
   local TasksRemaining = self:GetTasksRemaining()
 
-  Report:Add( string.format( '%s - Status "%s"', Name, Status ) )
+  Report:Add( string.format( '%s - %s - %s Tasks', Name, Status, TaskStatus ) )
   
   -- Determine how many tasks are remaining.
   local TasksRemaining = 0
   for TaskID, Task in pairs( self:GetTasks() ) do
     local Task = Task -- Tasking.Task#TASK
     if Task:Is( TaskStatus ) then
-      Report:Add( "\n - " .. Task:ReportOverview( ReportGroup ) )
+      Report:Add( " - " .. Task:ReportOverview( ReportGroup ) )
     end
   end
 
