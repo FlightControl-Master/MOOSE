@@ -189,7 +189,7 @@ do -- TASK_A2G_DISPATCHER
     
     if Task then
       if Task:IsStatePlanned() and DetectedItemChanged == true then
-        self:E( "Removing Tasking: " .. Task:GetTaskName() )
+        --self:E( "Removing Tasking: " .. Task:GetTaskName() )
         Mission:RemoveTask( Task )
         self.Tasks[TaskIndex] = nil
       end
@@ -238,7 +238,7 @@ do -- TASK_A2G_DISPATCHER
         local DetectedItem = DetectedItem -- Functional.Detection#DETECTION_BASE.DetectedItem
         local DetectedSet = DetectedItem.Set -- Core.Set#SET_UNIT
         local DetectedZone = DetectedItem.Zone
-        self:E( { "Targets in DetectedItem", DetectedItem.ItemID, DetectedSet:Count(), tostring( DetectedItem ) } )
+        --self:E( { "Targets in DetectedItem", DetectedItem.ItemID, DetectedSet:Count(), tostring( DetectedItem ) } )
         DetectedSet:Flush()
         
         local DetectedItemID = DetectedItem.ID
@@ -275,17 +275,15 @@ do -- TASK_A2G_DISPATCHER
             self.Tasks[TaskIndex] = Task
             Task:SetTargetZone( DetectedZone )
             Task:SetDispatcher( self )
-            Task:SetInfo( "ThreatLevel", DetectedSet:CalculateThreatLevelA2G() )
-            Task:SetInfo( "Detection", Detection:DetectedItemReportSummary( TaskIndex ) )
-            Task:SetInfo( "Changes", Detection:GetChangeText( DetectedItem ) )
             Mission:AddTask( Task )
+    
+            TaskReport:Add( Task:GetName() )
           else
             self:E("This should not happen")
           end
 
         end
 
-        TaskReport:Add( Task:GetName() )
   
         -- OK, so the tasking has been done, now delete the changes reported for the area.
         Detection:AcceptChanges( DetectedItem )

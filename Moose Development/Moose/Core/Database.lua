@@ -119,18 +119,18 @@ function DATABASE:New()
   
     local CoalitionsData = { AlivePlayersRed = coalition.getPlayers( coalition.side.RED ), AlivePlayersBlue = coalition.getPlayers( coalition.side.BLUE ) }
     for CoalitionId, CoalitionData in pairs( CoalitionsData ) do
-      self:E( { "CoalitionData:", CoalitionData } )
+      --self:E( { "CoalitionData:", CoalitionData } )
       for UnitId, UnitData in pairs( CoalitionData ) do
         if UnitData and UnitData:isExist() then
         
           local UnitName = UnitData:getName()
           local PlayerName = UnitData:getPlayerName()
           local PlayerUnit = UNIT:Find( UnitData )
-          self:T( { "UnitData:", UnitData, UnitName, PlayerName, PlayerUnit } )
+          --self:T( { "UnitData:", UnitData, UnitName, PlayerName, PlayerUnit } )
 
           if PlayerName and PlayerName ~= "" then
             if self.PLAYERS[PlayerName] == nil or self.PLAYERS[PlayerName] ~= UnitName then
-              self:E( { "Add player for unit:", UnitName, PlayerName } )
+              --self:E( { "Add player for unit:", UnitName, PlayerName } )
               self:AddPlayer( UnitName, PlayerName )
               --_EVENTDISPATCHER:CreateEventPlayerEnterUnit( PlayerUnit )
               local Settings = SETTINGS:Set( PlayerName )
