@@ -13,9 +13,9 @@
 -- 
 -- # Demo Missions
 -- 
--- ### [CARGO Demo Missions source code]()
+-- ### [CARGO Demo Missions source code](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master-release/CGO%20-%20Cargo)
 -- 
--- ### [CARGO Demo Missions, only for beta testers]()
+-- ### [CARGO Demo Missions, only for beta testers](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/CGO%20-%20Cargo)
 --
 -- ### [ALL Demo Missions pack of the last release](https://github.com/FlightControl-Master/MOOSE_MISSIONS/releases)
 -- 
@@ -23,7 +23,7 @@
 -- 
 -- # YouTube Channel
 -- 
--- ### [SPAWNSTATIC YouTube Channel]()
+-- ### [CARGO YouTube Channel](https://www.youtube.com/watch?v=tM00lTlkpYs&list=PL7ZUrU4zZUl2zUTuKrLW5RsO9zLMqUtbf)
 -- 
 -- ====
 -- 
