@@ -304,6 +304,12 @@ A <a href="CLIENT.html">CLIENT</a> needs to be registered within the <a href="MI
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MISSION).MissionGoals">MISSION:MissionGoals()</a></td>
+		<td class="summary">
+<p>MissionGoals Trigger for MISSION</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(MISSION).MissionMenu">MISSION.MissionMenu</a></td>
 		<td class="summary">
 
@@ -340,6 +346,12 @@ A <a href="CLIENT.html">CLIENT</a> needs to be registered within the <a href="MI
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MISSION).OnAfterMissionGoals">MISSION:OnAfterMissionGoals(From, Event, To)</a></td>
+		<td class="summary">
+<p>MissionGoals Handler OnAfter for MISSION</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(MISSION).OnAfterStart">MISSION:OnAfterStart(From, Event, To)</a></td>
 		<td class="summary">
 <p>OnAfter Transition Handler for Event Start.</p>
@@ -361,6 +373,12 @@ A <a href="CLIENT.html">CLIENT</a> needs to be registered within the <a href="MI
 		<td class="name" nowrap="nowrap"><a href="##(MISSION).OnBeforeFail">MISSION:OnBeforeFail(From, Event, To)</a></td>
 		<td class="summary">
 <p>OnBefore Transition Handler for Event Fail.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MISSION).OnBeforeMissionGoals">MISSION:OnBeforeMissionGoals(From, Event, To)</a></td>
+		<td class="summary">
+<p>MissionGoals Handler OnBefore for MISSION</p>
 </td>
 		</tr>
 		<tr>
@@ -523,6 +541,12 @@ A <a href="CLIENT.html">CLIENT</a> needs to be registered within the <a href="MI
 		<td class="name" nowrap="nowrap"><a href="##(MISSION).__Fail">MISSION:__Fail(Delay)</a></td>
 		<td class="summary">
 <p>Asynchronous Event Trigger for Event Fail.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MISSION).__MissionGoals">MISSION:__MissionGoals(Delay)</a></td>
+		<td class="summary">
+<p>MissionGoals Asynchronous Trigger for MISSION</p>
 </td>
 		</tr>
 		<tr>
@@ -1277,6 +1301,19 @@ The status</p>
 		<dl class="function">
 <dt>
 
+<a id="#(MISSION).MissionGoals" >
+<strong>MISSION:MissionGoals()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>MissionGoals Trigger for MISSION</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 		<em><a href="Core.Menu.html##(MENU_COALITION)">Core.Menu#MENU_COALITION</a></em>
 <a id="#(MISSION).MissionMenu" >
 <strong>MISSION.MissionMenu</strong>
@@ -1440,6 +1477,37 @@ The To State string.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(MISSION).OnAfterMissionGoals" >
+<strong>MISSION:OnAfterMissionGoals(From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>MissionGoals Handler OnAfter for MISSION</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(MISSION).OnAfterStart" >
 <strong>MISSION:OnAfterStart(From, Event, To)</strong>
 </a>
@@ -1580,6 +1648,42 @@ The To State string.</p>
 				
 <p><em>#boolean:</em>
 Return false to cancel Transition.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(MISSION).OnBeforeMissionGoals" >
+<strong>MISSION:OnBeforeMissionGoals(From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>MissionGoals Handler OnBefore for MISSION</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em></p>
+
 
 </dd>
 </dl>
@@ -2317,6 +2421,27 @@ The delay in seconds.</p>
 				
 <p><code><em>#number Delay </em></code>: 
 The delay in seconds.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(MISSION).__MissionGoals" >
+<strong>MISSION:__MissionGoals(Delay)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>MissionGoals Asynchronous Trigger for MISSION</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number Delay </em></code>: </p>
 
 				</li>
 		</ul>
