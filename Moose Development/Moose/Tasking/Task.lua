@@ -1385,7 +1385,7 @@ end
 -- @param #TASK self
 -- @param Wrapper.Group#GROUP TaskGroup
 -- @return #string
-function TASK:ReportDetails( TaskGroup ) --R2.1 fixed report. Now nicely formatted and contains the info required.
+function TASK:ReportDetails( ReportGroup )
 
   local Report = REPORT:New():SetIndent( 3 )
   
@@ -1416,11 +1416,11 @@ function TASK:ReportDetails( TaskGroup ) --R2.1 fixed report. Now nicely formatt
       Report:Add( TaskInfoIDText .. TaskInfo )
     elseif type(TaskInfo) == "table" then
       if TaskInfoID == "Coordinates" then
-        local FromCoordinate = TaskGroup:GetUnit(1):GetCoordinate()
+        local FromCoordinate = ReportGroup:GetUnit(1):GetCoordinate()
         local ToCoordinate = TaskInfo -- Core.Point#COORDINATE
         Report:Add( TaskInfoIDText )
         Report:AddIndent( ToCoordinate:ToStringBRA( FromCoordinate ) .. ", " .. TaskInfo:ToStringAspect( FromCoordinate ) )
-        Report:AddIndent( ToCoordinate:ToStringBULLS( TaskGroup:GetCoalition() ) )
+        Report:AddIndent( ToCoordinate:ToStringBULLS( ReportGroup:GetCoalition() ) )
       else
       end
     end
