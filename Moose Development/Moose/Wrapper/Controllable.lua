@@ -61,6 +61,7 @@
 --   * @{#CONTROLLABLE.EnRouteTaskAWACS}: (AIR) Aircraft will act as an AWACS for friendly units (will provide them with information about contacts). No parameters.
 --   * @{#CONTROLLABLE.EnRouteTaskEngageControllable}: (AIR) Engaging a controllable. The task does not assign the target controllable to the unit/controllable to attack now; it just allows the unit/controllable to engage the target controllable as well as other assigned targets.
 --   * @{#CONTROLLABLE.EnRouteTaskEngageTargets}: (AIR) Engaging targets of defined types.
+--   * @{#CONTROLLABLE.EnRouteTaskEngageTargetsInZone}: (AIR) Engaging a targets of defined types at circle-shaped zone.
 --   * @{#CONTROLLABLE.EnRouteTaskEWR}: (AIR) Attack the Unit.
 --   * @{#CONTROLLABLE.EnRouteTaskFAC}: (AIR + GROUND) The task makes the controllable/unit a FAC and lets the FAC to choose a targets (enemy ground controllable) around as well as other assigned targets.
 --   * @{#CONTROLLABLE.EnRouteTaskFAC_EngageControllable}: (AIR + GROUND) The task makes the controllable/unit a FAC and lets the FAC to choose the target (enemy ground controllable) as well as other assigned targets.
@@ -1088,7 +1089,7 @@ end
 -- @param Dcs.DCSTypes#AttributeNameArray TargetTypes Array of target categories allowed to engage. 
 -- @param #number Priority All en-route tasks have the priority parameter. This is a number (less value - higher priority) that determines actions related to what task will be performed first. 
 -- @return Dcs.DCSTasking.Task#Task The DCS task structure.
-function CONTROLLABLE:EnRouteTaskEngageTargets( Vec2, Radius, TargetTypes, Priority )
+function CONTROLLABLE:EnRouteTaskEngageTargetsInZone( Vec2, Radius, TargetTypes, Priority )
   self:F2( { self.ControllableName, Vec2, Radius, TargetTypes, Priority } )
 
 --  EngageTargetsInZone = { 
