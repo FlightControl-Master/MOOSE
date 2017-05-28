@@ -1025,8 +1025,8 @@ function DATABASE:_RegisterTemplates()
     end --if coa_name == 'red' or coa_name == 'blue' and type(coa_data) == 'table' then
   end --for coa_name, coa_data in pairs(mission.coalition) do
 
-  for ZoneID, ZoneData in pairs( env.triggers.zones ) do
-    local ZoneName = ZoneData.Name
+  for ZoneID, ZoneData in pairs( env.mission.triggers.zones ) do
+    local ZoneName = ZoneData.name
     self.ZONENAMES[ZoneName] = ZoneName
   end
 

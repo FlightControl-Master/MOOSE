@@ -262,13 +262,14 @@ end
 -- @param #string ReferenceZonePrefix Reference points.
 -- @return #COMMANDCENTER
 function COMMANDCENTER:SetReferenceZones( ReferenceZonePrefix )
-  local MatchPattern = "(" .. ReferenceZonePrefix .. ")" .. "#(a+)"
+  local MatchPattern = "(.*)#(.*)"
+  self:F( { MatchPattern = MatchPattern } )
   for ReferenceZoneName in pairs( _DATABASE.ZONENAMES ) do
     local ZoneName, ReferenceName = string.match( ReferenceZoneName, MatchPattern )
-    self:T( { ZoneName = ZoneName, ReferenceName = ReferenceName } )
-    if ZoneName and ReferenceName then
-      self.ReferencePoints[ZoneName] = ZONE:New( ZoneName )
-      self.ReferenceNames[ZoneName] = ReferenceName
+    self:F( { ZoneName = ZoneName, ReferenceName = ReferenceName } )
+    if ZoneName and ReferenceName and ZoneName == ReferenceZonePrefix then
+      self.ReferencePoints[ReferenceZoneName] = ZONE:New( ReferenceZoneName )
+      self.ReferenceNames[ReferenceZoneName] = ReferenceName
     end
   end
   return self
@@ -283,6 +284,17 @@ end
 function COMMANDCENTER:SetModeWWII()
   self.CommunicationMode = "WWII"
 end
+
+
+--- Returns if the commandcenter operations is in WWII mode
+-- @param #COMMANDCENTER self
+-- @return #boolean true if in WWII mode.
+function COMMANDCENTER:IsModeWWII()
+  return self.CommunicationMode == "WWII"
+end
+
+
+
 
 --- Sets the menu structure of the Missions governed by the HQ command center.
 -- @param #COMMANDCENTER self
