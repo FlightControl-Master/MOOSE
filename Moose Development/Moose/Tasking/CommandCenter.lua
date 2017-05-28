@@ -149,7 +149,9 @@ function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
         local Mission = Mission -- Tasking.Mission#MISSION
         local PlayerGroup = EventData.IniGroup -- The GROUP object should be filled!
         Mission:JoinUnit( PlayerUnit, PlayerGroup )
-        Mission:ReportDetails( PlayerGroup )
+        local MissionReport  = Mission:ReportDetails( PlayerGroup )
+        self:MessageToGroup( MissionReport, PlayerGroup )
+        
       end
     end
   )
