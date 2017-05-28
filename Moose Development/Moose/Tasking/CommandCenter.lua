@@ -91,6 +91,9 @@ COMMANDCENTER = {
   CommandCenterCoalition = nil,
   CommandCenterPositionable = nil,
   Name = "",
+  ReferencePoints = {},
+  ReferenceNames = {},
+  CommunicationMode = "80",
 }
 --- The constructor takes an IDENTIFIABLE as the HQ command center.
 -- @param #COMMANDCENTER self
@@ -249,6 +252,34 @@ function COMMANDCENTER:RemoveMission( Mission )
   self.Missions[Mission] = nil
 
   return Mission
+end
+
+--- Set reference points known by the command center to guide airborne units during WWII.
+-- These reference points are zones, with a special name.
+-- @param #COMMANDCENTER self
+-- @param #string ReferenceZonePrefix Reference points.
+-- @return #COMMANDCENTER
+function COMMANDCENTER:SetReferenceZones( ReferenceZonePrefix )
+  local MatchPattern = "(" .. ReferenceZonePrefix .. ")" .. "#(a+)"
+  for ReferenceZoneName in pairs( _DATABASE.ZONENAMES ) do
+    local ZoneName, ReferenceName = string.match( ReferenceZoneName, MatchPattern )
+    self:T( { ZoneName = ZoneName, ReferenceName = ReferenceName } )
+    if ZoneName and ReferenceName then
+      self.ReferencePoints[ZoneName] = ZONE:New( ZoneName )
+      self.ReferenceNames[ZoneName] = ReferenceName
+    end
+  end
+  return self
+end
+
+--- Set the commandcenter operations in WWII mode
+-- This will disable LL, MGRS, BRA, BULLS from the settings.
+-- It will also disable the settings at the settings menu for these.
+-- And, it will use any ReferenceZones set as reference points for communication.
+-- @param #COMMANDCENTER self
+-- @return #COMMANDCENTER
+function COMMANDCENTER:SetModeWWII()
+  self.CommunicationMode = "WWII"
 end
 
 --- Sets the menu structure of the Missions governed by the HQ command center.
