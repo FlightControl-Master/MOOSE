@@ -1,35 +1,6 @@
 --- **Tasking** - The TASK_A2A_DISPATCHER creates and manages player TASK_A2A tasks based on detected targets.
 -- 
 -- ===
--- 
--- # 1) @{#TASK_A2A_DISPATCHER} class, extends @{#DETECTION_MANAGER}
--- 
--- The @{#TASK_A2A_DISPATCHER} class implements the dynamic dispatching of tasks upon groups of detected units determined a @{Set} of EWR installation groups.
--- The EWR will detect units, will group them, and will dispatch @{Task}s to groups. Depending on the type of target detected, different tasks will be dispatched.
--- Find a summary below describing for which situation a task type is created:
--- 
---   * **INTERCEPT Task**: Is created when the target is known, is detected and within a danger zone, and there is no friendly airborne in range.
---   * **SWEEP Task**: Is created when the target is unknown, was detected and the last position is only known, and within a danger zone, and there is no friendly airborne in range.
---   * **ENGAGE Task**: Is created when the target is known, is detected and within a danger zone, and there is a friendly airborne in range, that will receive this task.
---   
--- Other task types will follow...
--- 
--- 3.1) TASK_A2A_DISPATCHER constructor:
--- --------------------------------------
--- The @{#TASK_A2A_DISPATCHER.New}() method creates a new TASK_A2A_DISPATCHER instance.
---    
--- ===
---
--- # **API CHANGE HISTORY**
---
--- The underlying change log documents the API changes. Please read this carefully. The following notation is used:
---
---   * **Added** parts are expressed in bold type face.
---   * _Removed_ parts are expressed in italic type face.
---
--- Hereby the change log:
---
--- ===
 --
 -- # **AUTHORS and CONTRIBUTIONS**
 --
@@ -45,10 +16,25 @@ do -- TASK_A2A_DISPATCHER
 
   --- TASK_A2A_DISPATCHER class.
   -- @type TASK_A2A_DISPATCHER
-  -- @field Set#SET_GROUP SetGroup The groups to which the FAC will report to.
-  -- @field Functional.Detection#DETECTION_BASE Detection The DETECTION_BASE object that is used to report the detected objects. The Detection object will only function in RADAR mode!!!
-  -- @field Tasking.Mission#MISSION Mission
   -- @extends Tasking.DetectionManager#DETECTION_MANAGER
+
+  --- # TASK_A2A_DISPATCHER class, extends @{Tasking#DETECTION_MANAGER}
+  -- 
+  -- The @{#TASK_A2A_DISPATCHER} class implements the dynamic dispatching of tasks upon groups of detected units determined a @{Set} of EWR installation groups.
+  -- The EWR will detect units, will group them, and will dispatch @{Task}s to groups. Depending on the type of target detected, different tasks will be dispatched.
+  -- Find a summary below describing for which situation a task type is created:
+  -- 
+  --   * **INTERCEPT Task**: Is created when the target is known, is detected and within a danger zone, and there is no friendly airborne in range.
+  --   * **SWEEP Task**: Is created when the target is unknown, was detected and the last position is only known, and within a danger zone, and there is no friendly airborne in range.
+  --   * **ENGAGE Task**: Is created when the target is known, is detected and within a danger zone, and there is a friendly airborne in range, that will receive this task.
+  --   
+  -- Other task types will follow...
+  -- 
+  -- # TASK_A2A_DISPATCHER constructor:
+  -- --------------------------------------
+  -- The @{#TASK_A2A_DISPATCHER.New}() method creates a new TASK_A2A_DISPATCHER instance.
+  -- 
+  -- @field #TASK_A2A_DISPATCHER
   TASK_A2A_DISPATCHER = {
     ClassName = "TASK_A2A_DISPATCHER",
     Mission = nil,
@@ -71,6 +57,8 @@ do -- TASK_A2A_DISPATCHER
     self.Detection = Detection
     self.Mission = Mission
     
+    
+    -- TODO: Check detection through radar.
     self.Detection:FilterCategories( Unit.Category.AIRPLANE, Unit.Category.HELICOPTER )
     --self.Detection:InitDetectRadar( true )
     self.Detection:SetDetectionInterval( 30 )

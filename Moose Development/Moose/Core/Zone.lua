@@ -225,7 +225,6 @@ end
 
 --- Returns a @{Point#COORDINATE} of the zone.
 -- @param #ZONE_BASE self
--- @param Dcs.DCSTypes#Distance Height The height to add to the land height where the center of the zone is located.
 -- @return Core.Point#COORDINATE The Coordinate of the zone.
 function ZONE_BASE:GetCoordinate()
   self:F2( self.ZoneName )
