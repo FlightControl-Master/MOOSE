@@ -40,6 +40,7 @@ do -- TASK_A2A_DISPATCHER
     Mission = nil,
     Detection = nil,
     Tasks = {},
+    SweepZones = {},
   }
   
   
@@ -92,10 +93,11 @@ do -- TASK_A2A_DISPATCHER
     local DetectedSet = DetectedItem.Set
     local DetectedZone = DetectedItem.Zone
 
+    -- Check if there is at least one UNIT in the DetectedSet is visible.
+    
+    if DetectedItem.IsDetected == true then
 
-    if true then
-
-      -- Here we're doing something advanced... We're copying the DetectedSet, but making a new Set only with SEADable Radar units in it.
+      -- Here we're doing something advanced... We're copying the DetectedSet.
       local TargetSetUnit = SET_UNIT:New()
       TargetSetUnit:SetDatabase( DetectedSet )
       TargetSetUnit:FilterOnce() -- Filter but don't do any events!!! Elements are added manually upon each detection.
@@ -105,6 +107,33 @@ do -- TASK_A2A_DISPATCHER
     
     return nil
   end
+
+  
+  --- Creates an SWEEP task when there are targets for it.
+  -- @param #TASK_A2A_DISPATCHER self
+  -- @param Functional.Detection#DETECTION_BASE.DetectedItem DetectedItem
+  -- @return Set#SET_UNIT TargetSetUnit: The target set of units.
+  -- @return #nil If there are no targets to be set.
+  function TASK_A2A_DISPATCHER:EvaluateSWEEP( DetectedItem )
+    self:F( { DetectedItem.ItemID } )
+  
+    local DetectedSet = DetectedItem.Set
+    local DetectedZone = DetectedItem.Zone
+
+
+    if DetectedItem.IsDetected == false then
+
+      -- Here we're doing something advanced... We're copying the DetectedSet.
+      local TargetSetUnit = SET_UNIT:New()
+      TargetSetUnit:SetDatabase( DetectedSet )
+      TargetSetUnit:FilterOnce() -- Filter but don't do any events!!! Elements are added manually upon each detection.
+    
+      return TargetSetUnit
+    end
+    
+    return nil
+  end
+
   
   --- Creates an ENGAGE task when there are human friendlies airborne near the targets.
   -- @param #TASK_A2A_DISPATCHER self
@@ -119,10 +148,11 @@ do -- TASK_A2A_DISPATCHER
 
     local PlayersCount, PlayersReport = self:GetPlayerFriendliesNearBy( DetectedItem )
 
+    
+    -- Only allow ENGAGE when there are Players near the zone, and when the Area has detected items since the last run in a 60 seconds time zone.
+    if PlayersCount > 0 and DetectedItem.IsDetected == true then
 
-    if PlayersCount > 0 then
-
-      -- Here we're doing something advanced... We're copying the DetectedSet, but making a new Set only with SEADable Radar units in it.
+      -- Here we're doing something advanced... We're copying the DetectedSet.
       local TargetSetUnit = SET_UNIT:New()
       TargetSetUnit:SetDatabase( DetectedSet )
       TargetSetUnit:FilterOnce() -- Filter but don't do any events!!! Elements are added manually upon each detection.
@@ -166,6 +196,15 @@ do -- TASK_A2A_DISPATCHER
         
         if TaskType == "INTERCEPT" then
           if IsPlayers == true then
+            Remove = true
+          end
+          if DetectedItem.IsDetected == false then
+            Remove = true
+          end
+        end
+        
+        if TaskType == "SWEEP" then
+          if DetectedItem.IsDetected == true then
             Remove = true
           end
         end
@@ -338,6 +377,11 @@ do -- TASK_A2A_DISPATCHER
             local TargetSetUnit = self:EvaluateINTERCEPT( DetectedItem ) -- Returns a SetUnit if there are targets to be INTERCEPTed...
             if TargetSetUnit then
               Task = TASK_A2A_INTERCEPT:New( Mission, self.SetGroup, string.format( "INTERCEPT.%03d", DetectedID ), TargetSetUnit )
+            else
+              local TargetSetUnit = self:EvaluateSWEEP( DetectedItem ) -- Returns a SetUnit 
+              if TargetSetUnit then
+                Task = TASK_A2A_SWEEP:New( Mission, self.SetGroup, string.format( "SWEEP.%03d", DetectedID ), TargetSetUnit )
+              end  
             end
           end
 
