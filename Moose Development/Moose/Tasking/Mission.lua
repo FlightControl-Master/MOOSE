@@ -494,8 +494,7 @@ function MISSION:GetMenu( TaskGroup ) -- R2.1 -- Changed Menu Structure
   Menu.ReportHeldTasksMenu = Menu.ReportHeldTasksMenu or              MENU_GROUP_COMMAND:New( TaskGroup, "Report Held Tasks", Menu.TaskReportsMenu, self.MenuReportTasksPerStatus, self, TaskGroup, "Hold" )
   
   Menu.PlayerReportsMenu = Menu.PlayerReportsMenu or                  MENU_GROUP:New( TaskGroup, "Player Reports", Menu.MainMenu )
-  Menu.ReportActivePlayersMenu = Menu.ReportActivePlayersMenu or      MENU_GROUP_COMMAND:New( TaskGroup, "Report Active Players", Menu.PlayerReportsMenu, self.MenuReportActivePlayers, self, TaskGroup )
-  Menu.ReportJoinedPlayersMenu = Menu.ReportJoinedPlayersMenu or      MENU_GROUP_COMMAND:New( TaskGroup, "Report Joined Players", Menu.PlayerReportsMenu, self.MenuReportJoinedPlayers, self, TaskGroup )
+  Menu.ReportPlayersPerTaskMenu = Menu.ReportPlayersPerTaskMenu or    MENU_GROUP_COMMAND:New( TaskGroup, "Report Players per Task", Menu.PlayerReportsMenu, self.MenuReportPlayersPerTask, self, TaskGroup )
   
   return Menu.MainMenu
 end
@@ -739,7 +738,7 @@ end
 -- 
 -- @param #MISSION self
 -- @return #string
-function MISSION:ReportPlayers()
+function MISSION:ReportPlayersPerTask( ReportGroup )
 
   local Report = REPORT:New()
 
@@ -749,7 +748,7 @@ function MISSION:ReportPlayers()
   -- Determine the status of the mission.
   local Status = self:GetState()
 
-  Report:Add( string.format( '%s - %s - Active Players Report', Name, Status ) )
+  Report:Add( string.format( '%s - %s - Players per Task Report', Name, Status ) )
   
   local PlayerList = {}
   
@@ -757,7 +756,7 @@ function MISSION:ReportPlayers()
   for TaskID, Task in pairs( self:GetTasks() ) do
     local Task = Task -- Tasking.Task#TASK
     local PlayerNames = Task:GetPlayerNames()
-    for PlayerID, PlayerName in pairs( PlayerNames ) do
+    for PlayerName, PlayerGroup in pairs( PlayerNames ) do
       PlayerList[PlayerName] = Task:GetName()
     end
     
@@ -885,23 +884,16 @@ function MISSION:MenuReportTasksPerStatus( ReportGroup, TaskStatus )
   self:GetCommandCenter():MessageToGroup( Report, ReportGroup )
 end
 
+
 --- @param #MISSION self
 -- @param Wrapper.Group#GROUP ReportGroup
-function MISSION:MenuReportActivePlayers( ReportGroup )
+function MISSION:MenuReportPlayersPerTask( ReportGroup )
 
-  local Report = self:ReportPlayers()
+  local Report = self:ReportPlayersPerTask()
   
   self:GetCommandCenter():MessageToGroup( Report, ReportGroup )
 end
 
---- @param #MISSION self
--- @param Wrapper.Group#GROUP ReportGroup
-function MISSION:MenuReportJoinedPlayers( ReportGroup )
-
-  local Report = self:ReportPlayers()
-  
-  self:GetCommandCenter():MessageToGroup( Report, ReportGroup )
-end
 
 
 
