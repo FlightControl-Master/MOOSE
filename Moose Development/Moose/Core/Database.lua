@@ -64,6 +64,7 @@ DATABASE = {
   COUNTRY_NAME = {},
   NavPoints = {},
   PLAYERSETTINGS = {},
+  ZONENAMES = {},
 }
 
 local _DATABASECoalition =
@@ -1023,6 +1024,11 @@ function DATABASE:_RegisterTemplates()
       end --if coa_data.country then --there is a country table
     end --if coa_name == 'red' or coa_name == 'blue' and type(coa_data) == 'table' then
   end --for coa_name, coa_data in pairs(mission.coalition) do
+
+  for ZoneID, ZoneData in pairs( env.mission.triggers.zones ) do
+    local ZoneName = ZoneData.name
+    self.ZONENAMES[ZoneName] = ZoneName
+  end
 
   return self
 end

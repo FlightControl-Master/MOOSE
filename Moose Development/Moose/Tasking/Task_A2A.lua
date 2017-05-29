@@ -384,6 +384,53 @@ do -- TASK_A2A_INTERCEPT
 end
 
 
+do -- TASK_A2A_SWEEP
+
+  --- The TASK_A2A_SWEEP class
+  -- @type TASK_A2A_SWEEP
+  -- @field Set#SET_UNIT TargetSetUnit
+  -- @extends Tasking.Task#TASK
+  TASK_A2A_SWEEP = {
+    ClassName = "TASK_A2A_SWEEP",
+  }
+
+
+
+  --- Instantiates a new TASK_A2A_SWEEP.
+  -- @param #TASK_A2A_SWEEP self
+  -- @param Tasking.Mission#MISSION Mission
+  -- @param Core.Set#SET_GROUP SetGroup The set of groups for which the Task can be assigned.
+  -- @param #string TaskName The name of the Task.
+  -- @param Core.Set#SET_UNIT TargetSetUnit 
+  -- @param #string TaskBriefing The briefing of the task.
+  -- @return #TASK_A2A_SWEEP self
+  function TASK_A2A_SWEEP:New( Mission, SetGroup, TaskName, TargetSetUnit, TaskBriefing )
+    local self = BASE:Inherit( self, TASK_A2A:New( Mission, SetGroup, TaskName, TargetSetUnit, "INTERCEPT", TaskBriefing ) ) -- #TASK_A2A_SWEEP
+    self:F()
+    
+    Mission:AddTask( self )
+    
+    --TODO: Add BR, Altitude, type of planes...
+    
+    self:SetBriefing( 
+      TaskBriefing or 
+      "Perform a fighter sweep. Incoming intruders were detected and could be hiding at the location.\n"
+    )
+
+    local TargetCoordinate = TargetSetUnit:GetFirst():GetCoordinate()
+    self:SetInfo( "Coordinates", TargetCoordinate )
+
+    self:SetInfo( "Assumed Threat", "[" .. string.rep(  "■", TargetSetUnit:CalculateThreatLevelA2G() ) .. "]" )
+    local DetectedItemsCount = TargetSetUnit:Count()
+    local DetectedItemsTypes = TargetSetUnit:GetTypeNames()
+    self:SetInfo( "Lost Targets", string.format( "%d of %s", DetectedItemsCount, DetectedItemsTypes ) ) 
+    
+    return self
+  end 
+
+end
+
+
 do -- TASK_A2A_ENGAGE
 
   --- The TASK_A2A_ENGAGE class

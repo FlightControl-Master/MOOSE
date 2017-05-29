@@ -62,6 +62,7 @@ do -- COORDINATE
   --- @type COORDINATE
   -- @extends Core.Base#BASE
   
+  
   --- # COORDINATE class, extends @{Base#BASE}
   --
   -- COORDINATE defines a 3D point in the simulator and with its methods, you can use or manipulate the point in 3D space.
@@ -182,7 +183,7 @@ do -- COORDINATE
   -- @param #COORDINATE self
   -- @param Dcs.DCSTypes#Vec2 Vec2 The Vec2 point.
   -- @param Dcs.DCSTypes#Distance LandHeightAdd (optional) The default height if required to be evaluated will be the land height of the x, y coordinate. You can specify an extra height to be added to the land height.
-  -- @return Core.Point#COORDINATE
+  -- @return #COORDINATE
   function COORDINATE:NewFromVec2( Vec2, LandHeightAdd ) 
 
     local LandHeight = land.getHeight( Vec2 )
@@ -204,9 +205,8 @@ do -- COORDINATE
   -- @return Core.Point#COORDINATE
   function COORDINATE:NewFromVec3( Vec3 ) 
 
-    local self = self:New( Vec3.x, Vec3.y, Vec3.z )
+    local self = self:New( Vec3.x, Vec3.y, Vec3.z ) -- #COORDINATE
 
-    --local self = BASE:Inherit( self, POINT_VEC3:NewFromVec3( Vec3 ) ) -- Core.Point#COORDINATE
     self:F2( self )
 
     return self
@@ -780,6 +780,37 @@ do -- COORDINATE
   -- @param Wrapper.Controllable#CONTROLLABLE Controllable
   -- @param Core.Settings#SETTINGS Settings
   -- @return #string The coordinate Text in the configured coordinate system.
+  function COORDINATE:ToStringFromRP( ReferenceCoord, ReferenceName, Controllable, Settings ) -- R2.2
+  
+    self:E( { ReferenceCoord = ReferenceCoord, ReferenceName = ReferenceName } )
+
+    local Settings = Settings or ( Controllable and _DATABASE:GetPlayerSettings( Controllable:GetPlayerName() ) ) or _SETTINGS
+    
+    local IsAir = Controllable and Controllable:IsAirPlane() or false
+
+    if IsAir then
+      local DirectionVec3 = ReferenceCoord:GetDirectionVec3( self )
+      local AngleRadians =  self:GetAngleRadians( DirectionVec3 )
+      local Distance = self:Get2DDistance( ReferenceCoord )
+      return "Targets are the last seen " .. self:GetBRText( AngleRadians, Distance, Settings ) .. " from " .. ReferenceName
+    else
+      local DirectionVec3 = ReferenceCoord:GetDirectionVec3( self )
+      local AngleRadians =  self:GetAngleRadians( DirectionVec3 )
+      local Distance = self:Get2DDistance( ReferenceCoord )
+      return "Target are located " .. self:GetBRText( AngleRadians, Distance, Settings ) .. " from " .. ReferenceName
+    end
+    
+    return nil
+
+  end
+
+  --- Provides a coordinate string of the point, based on a coordinate format system:
+  --   * Uses default settings in COORDINATE.
+  --   * Can be overridden if for a GROUP containing x clients, a menu was selected to override the default.
+  -- @param #COORDINATE self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable
+  -- @param Core.Settings#SETTINGS Settings
+  -- @return #string The coordinate Text in the configured coordinate system.
   function COORDINATE:ToString( Controllable, Settings ) -- R2.2
   
     self:E( { Controllable = Controllable } )
@@ -1107,7 +1138,7 @@ do -- POINT_VEC2
     LandHeightAdd = LandHeightAdd or 0
     LandHeight = LandHeight + LandHeightAdd
 
-    local self = BASE:Inherit( self, COORDINATE:NewFromVec2( Vec2, LandHeightAdd ) ) -- Core.Point#POINT_VEC2
+    local self = BASE:Inherit( self, COORDINATE:NewFromVec2( Vec2, LandHeightAdd ) ) -- #POINT_VEC2
     self:F2( self )
 
     return self
@@ -1119,9 +1150,7 @@ do -- POINT_VEC2
   -- @return Core.Point#POINT_VEC2 self
   function POINT_VEC2:NewFromVec3( Vec3 )
 
-    local self = BASE:Inherit( self, BASE:New() )
-
-    local self = BASE:Inherit( self, COORDINATE:New( Vec3.x, Vec3.y, Vec3.z ) ) -- Core.Point#POINT_VEC2
+    local self = BASE:Inherit( self, COORDINATE:NewFromVec3( Vec3 ) ) -- #POINT_VEC2
     self:F2( self )
 
     return self

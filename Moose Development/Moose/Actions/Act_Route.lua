@@ -157,17 +157,49 @@ do -- ACT_ROUTE
   -- @param Wrapper.Controllable#CONTROLLABLE Controllable
   -- @return #string
   function ACT_ROUTE:GetRouteText( Controllable )
-
+    
+    self:E()
+    
     local RouteText = ""
 
+    local Coordinate = nil -- Core.Point#COORDINATE
+    
     if self.Coordinate then
-      RouteText = self.Coordinate:ToString( Controllable )
+      Coordinate = self.Coordinate
     end
     
     if self.Zone then
-      local Coordinate = self.Zone:GetPointVec3( self.Altitude )
+      Coordinate = self.Zone:GetPointVec3( self.Altitude )
       Coordinate:SetHeading( self.Heading )
-      RouteText = Coordinate:ToString( Controllable )
+    end
+    
+
+    local CC = self:GetTask():GetMission():GetCommandCenter()
+    if CC then
+      if CC:IsModeWWII() then
+        -- Find closest reference point to the target.
+        local ShortestDistance = 0
+        local ShortestReferencePoint = nil
+        local ShortestReferenceName = ""
+        self:E( { CC.ReferencePoints } )
+        for ZoneName, Zone in pairs( CC.ReferencePoints ) do
+          self:E( { ZoneName = ZoneName } )
+          local Zone = Zone -- Core.Zone#ZONE
+          local ZoneCoord = Zone:GetCoordinate()
+          local ZoneDistance = ZoneCoord:Get2DDistance( self.Coordinate )
+          self:E( { ShortestDistance, ShortestReferenceName } )
+          if ShortestDistance == 0 or ZoneDistance < ShortestDistance then
+            ShortestDistance = ZoneDistance
+            ShortestReferencePoint = ZoneCoord
+            ShortestReferenceName = CC.ReferenceNames[ZoneName]
+          end
+        end
+        if ShortestReferencePoint then
+          RouteText = Coordinate:ToStringFromRP( ShortestReferencePoint, ShortestReferenceName, Controllable )
+        end
+      else
+        RouteText = self.Coordinate:ToString( Controllable )
+      end
     end
 
     return RouteText

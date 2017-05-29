@@ -218,6 +218,12 @@ and various dedicated deployment zones.</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_CARGO).GetSmokeColor">TASK_CARGO:GetSmokeColor()</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(TASK_CARGO).GetTargetZone">TASK_CARGO:GetTargetZone(TaskUnit)</a></td>
 		<td class="summary">
 
@@ -275,6 +281,18 @@ and various dedicated deployment zones.</p>
 		<td class="name" nowrap="nowrap"><a href="##(TASK_CARGO).SetScoreOnSuccess">TASK_CARGO:SetScoreOnSuccess(Text, Score, TaskUnit)</a></td>
 		<td class="summary">
 <p>Set a score when all the targets in scope of the A2G attack, have been destroyed.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_CARGO).SetSmokeColor">TASK_CARGO.SetSmokeColor(Color, self, SmokeColor)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_CARGO).SmokeColor">TASK_CARGO.SmokeColor</a></td>
+		<td class="summary">
+
 </td>
 		</tr>
 		<tr>
@@ -506,7 +524,7 @@ based on the tasking capabilities defined in <a href="Task.html##(TASK)">Task#TA
 		<dl class="function">
 <dt>
 
-		<em><a href="Core.Cargo.html##(CARGO_GROUP)">Core.Cargo#CARGO_GROUP</a></em>
+		<em></em>
 <a id="#(FSM_PROCESS).Cargo" >
 <strong>FSM_PROCESS.Cargo</strong>
 </a>
@@ -628,6 +646,22 @@ Core.Zone#ZONE_BASE> The Deployment Zones.</p>
 <dd>
 	
 
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_CARGO).GetSmokeColor" >
+<strong>TASK_CARGO:GetSmokeColor()</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+	
+<p>@return SmokeColor</p>
 
 </dd>
 </dl>
@@ -968,6 +1002,52 @@ The score in points.</p>
 		<h3>Return value</h3>
 				
 <p><em><a href="##(TASK_CARGO)">#TASK_CARGO</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_CARGO).SetSmokeColor" >
+<strong>TASK_CARGO.SetSmokeColor(Color, self, SmokeColor)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> Color </em></code>: 
+Might be SMOKECOLOR.Blue, SMOKECOLOR.Red SMOKECOLOR.Orange, SMOKECOLOR.White or SMOKECOLOR.Green</p>
+
+				</li>
+				<li>
+				
+<p><code><em> self </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> SmokeColor </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(TASK_CARGO).SmokeColor" >
+<strong>TASK_CARGO.SmokeColor</strong>
+</a>
+</dt>
+<dd>
+	
 
 
 </dd>

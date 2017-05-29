@@ -519,9 +519,11 @@ do -- DETECTION_BASE
       self.DetectionRun = 0
       self:UnIdentifyAllDetectedObjects() -- Resets the DetectedObjectsIdentified table
       
+      local DetectionTimeStamp = timer.getTime()
+      
       for DetectionGroupID, DetectionGroupData in pairs( self.DetectionSetGroup:GetSet() ) do
         --self:E( { DetectionGroupData } )
-        self:__DetectionGroup( DetectDelay, DetectionGroupData ) -- Process each detection asynchronously.
+        self:__DetectionGroup( DetectDelay, DetectionGroupData, DetectionTimeStamp ) -- Process each detection asynchronously.
         self.DetectionCount = self.DetectionCount + 1
         DetectDelay = DetectDelay + 0.1
       end
@@ -532,7 +534,7 @@ do -- DETECTION_BASE
     -- @param #string Event The Event string.
     -- @param #string To The To State string.
     -- @param Wrapper.Group#GROUP DetectionGroup The Group detecting.
-    function DETECTION_BASE:onafterDetectionGroup( From, Event, To, DetectionGroup  )
+    function DETECTION_BASE:onafterDetectionGroup( From, Event, To, DetectionGroup, DetectionTimeStamp  )
       self:E( { From, Event, To } )
       
       self.DetectionRun = self.DetectionRun + 1
@@ -557,7 +559,7 @@ do -- DETECTION_BASE
           self.DetectDLINK
         )
         
-        self:T( DetectedTargets )
+        self:F( DetectedTargets )
         
         for DetectionObjectID, Detection in pairs( DetectedTargets ) do
           local DetectedObject = Detection.object -- Dcs.DCSWrapper.Object#Object
@@ -592,7 +594,7 @@ do -- DETECTION_BASE
 
             local DetectedUnitCategory = DetectedObject:getDesc().category
     
-            self:T2( { "Detected Target:", DetectionGroupName, DetectedObjectName, Distance, DetectedUnitCategory } )
+            self:F( { "Detected Target:", DetectionGroupName, DetectedObjectName, Distance, DetectedUnitCategory } )
 
             -- Calculate Acceptance
             
@@ -676,6 +678,7 @@ do -- DETECTION_BASE
     
               self.DetectedObjects[DetectedObjectName] = self.DetectedObjects[DetectedObjectName] or {} 
               self.DetectedObjects[DetectedObjectName].Name = DetectedObjectName
+              self.DetectedObjects[DetectedObjectName].IsDetected = TargetIsDetected
               self.DetectedObjects[DetectedObjectName].IsVisible = TargetIsVisible 
               self.DetectedObjects[DetectedObjectName].LastTime = TargetLastTime
               self.DetectedObjects[DetectedObjectName].LastPos = TargetLastPos
@@ -683,6 +686,7 @@ do -- DETECTION_BASE
               self.DetectedObjects[DetectedObjectName].KnowType = TargetKnowType
               self.DetectedObjects[DetectedObjectName].KnowDistance = Detection.distance   -- TargetKnowDistance
               self.DetectedObjects[DetectedObjectName].Distance = Distance
+              self.DetectedObjects[DetectedObjectName].DetectionTimeStamp = DetectionTimeStamp
               
               local DetectedUnit = UNIT:FindByName( DetectedObjectName )
               
@@ -706,9 +710,23 @@ do -- DETECTION_BASE
       
       if self.DetectionCount > 0 and self.DetectionRun == self.DetectionCount then
         self:T( "--> Create Detection Sets" )
+        
+        -- First check if all DetectedObjects were detected.
+        -- This is important. When there are DetectedObjects in the list, but were not detected,
+        -- And these remain undetected for more than 60 seconds, then these DetectedObjects will be flagged as not Detected.
+        -- IsDetected = false!
+        -- This is used in A2A_TASK_DISPATCHER to initiate fighter sweeping! The TASK_A2A_INTERCEPT tasks will be replaced with TASK_A2A_SWEEP tasks.
+        for DetectedObjectName, DetectedObject in pairs( self.DetectedObjects ) do
+          if self.DetectedObjects[DetectedObjectName].IsDetected == true and self.DetectedObjects[DetectedObjectName].DetectionTimeStamp + 60 <= DetectionTimeStamp then
+            self.DetectedObjects[DetectedObjectName].IsDetected = false
+          end
+        end
 
         self:CreateDetectionItems() -- Polymorphic call to Create/Update the DetectionItems list for the DETECTION_ class grouping method.
-        self:CleanDetectionItems() -- Any DetectionItem that has a Set with zero elements in it, must be removed from the DetectionItems list.
+        for DetectedItemID, DetectedItem in pairs( self.DetectedItems ) do
+          self:UpdateDetectedItemDetection( DetectedItem )
+          self:CleanDetectionItem( DetectedItem, DetectedItemID ) -- Any DetectionItem that has a Set with zero elements in it, must be removed from the DetectionItems list.
+        end
  
         self:__Detect( self.DetectionInterval )
       end
@@ -720,23 +738,19 @@ do -- DETECTION_BASE
   
   do -- DetectionItems Creation
   
-    --- Make a DetectionSet table. This function will be overridden in the derived clsses.
+    -- Clean the DetectedItem table.
     -- @param #DETECTION_BASE self
     -- @return #DETECTION_BASE
-    function DETECTION_BASE:CleanDetectionItems() --R2.1 Clean the DetectionItems list
+    function DETECTION_BASE:CleanDetectionItem( DetectedItem, DetectedItemID )
       self:F2()
     
       -- We clean all DetectedItems.
       -- if there are any remaining DetectedItems with no Set Objects then the Item in the DetectedItems must be deleted.
   
-      for DetectedItemID, DetectedItemData in pairs( self.DetectedItems ) do
-    
-        local DetectedItem = DetectedItemData -- #DETECTION_BASE.DetectedItem
-        local DetectedSet = DetectedItem.Set
-        
-        if DetectedSet:Count() == 0 then
-          self:RemoveDetectedItem(DetectedItemID)
-        end
+      local DetectedSet = DetectedItem.Set
+      
+      if DetectedSet:Count() == 0 then
+        self:RemoveDetectedItem( DetectedItemID )
       end
 
       return self
@@ -1160,7 +1174,7 @@ do -- DETECTION_BASE
           --- @param Wrapper.Unit#UNIT PlayerUnit
           function( PlayerUnitName )
             local PlayerUnit = UNIT:FindByName( PlayerUnitName )
-            if PlayerUnit:IsInZone(DetectionZone) then
+            if PlayerUnit and PlayerUnit:IsInZone(DetectionZone) then
               DetectedItem.FriendliesNearBy = DetectedItem.FriendliesNearBy or {}
               local PlayerUnitName = PlayerUnit:GetName()
               DetectedItem.PlayersNearBy = DetectedItem.PlayersNearBy or {}
@@ -1366,6 +1380,37 @@ do -- DETECTION_BASE
     end
     
     return nil
+  end
+  
+  --- Set IsDetected flag for all DetectedItems.
+  -- @param #DETECTION_BASE self
+  -- @return #DETECTION_BASE.DetectedItem DetectedItem
+  -- @return #boolean true if at least one UNIT is detected from the DetectedSet, false if no UNIT was detected from the DetectedSet.
+  function DETECTION_BASE:UpdateDetectedItemDetection( DetectedItem )
+    
+    local IsDetected = false
+    
+    for UnitName, UnitData in pairs( DetectedItem.Set:GetSet() ) do
+      local DetectedObject = self.DetectedObjects[UnitName]
+      if DetectedObject.IsDetected then
+        IsDetected = true
+        break
+      end
+    end
+  
+    self:F( { IsDetected = DetectedItem.IsDetected } )
+  
+    DetectedItem.IsDetected = IsDetected
+    
+    return IsDetected
+  end
+
+  --- Checks if there is at least one UNIT detected in the Set of the the DetectedItem.
+  -- @param #DETECTION_BASE self
+  -- @return #boolean true if at least one UNIT is detected from the DetectedSet, false if no UNIT was detected from the DetectedSet.
+  function DETECTION_BASE:IsDetectedItemDetected( DetectedItem ) 
+  
+    return DetectedItem.IsDetected
   end
   
   do -- Coordinates
@@ -2195,7 +2240,7 @@ do -- DETECTION_AREAS
     DetectedItem.NearestFAC = NearestFAC
     
   end
-  
+
   --- Returns the A2G threat level of the units in the DetectedItem
   -- @param #DETECTION_AREAS self
   -- @param #DETECTION_BASE.DetectedItem DetectedItem
@@ -2325,6 +2370,7 @@ do -- DETECTION_AREAS
     for DetectedItemID, DetectedItemData in pairs( self.DetectedItems ) do
       
       local DetectedItem = DetectedItemData -- #DETECTION_BASE.DetectedItem
+      
       if DetectedItem then
       
         self:T( { "Detected Item ID:", DetectedItemID } )
@@ -2489,7 +2535,7 @@ do -- DETECTION_AREAS
       self:ReportFriendliesNearBy( { DetectedItem = DetectedItem, ReportSetGroup = self.DetectionSetGroup } ) -- Fill the Friendlies table
       self:CalculateThreatLevelA2G( DetectedItem )  -- Calculate A2G threat level
       self:NearestFAC( DetectedItem )
-  
+      
       if DETECTION_AREAS._SmokeDetectedUnits or self._SmokeDetectedUnits then
         DetectedZone.ZoneUNIT:SmokeRed()
       end

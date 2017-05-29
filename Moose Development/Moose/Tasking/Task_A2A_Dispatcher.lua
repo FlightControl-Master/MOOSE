@@ -1,35 +1,6 @@
 --- **Tasking** - The TASK_A2A_DISPATCHER creates and manages player TASK_A2A tasks based on detected targets.
 -- 
 -- ===
--- 
--- # 1) @{#TASK_A2A_DISPATCHER} class, extends @{#DETECTION_MANAGER}
--- 
--- The @{#TASK_A2A_DISPATCHER} class implements the dynamic dispatching of tasks upon groups of detected units determined a @{Set} of EWR installation groups.
--- The EWR will detect units, will group them, and will dispatch @{Task}s to groups. Depending on the type of target detected, different tasks will be dispatched.
--- Find a summary below describing for which situation a task type is created:
--- 
---   * **INTERCEPT Task**: Is created when the target is known, is detected and within a danger zone, and there is no friendly airborne in range.
---   * **SWEEP Task**: Is created when the target is unknown, was detected and the last position is only known, and within a danger zone, and there is no friendly airborne in range.
---   * **ENGAGE Task**: Is created when the target is known, is detected and within a danger zone, and there is a friendly airborne in range, that will receive this task.
---   
--- Other task types will follow...
--- 
--- 3.1) TASK_A2A_DISPATCHER constructor:
--- --------------------------------------
--- The @{#TASK_A2A_DISPATCHER.New}() method creates a new TASK_A2A_DISPATCHER instance.
---    
--- ===
---
--- # **API CHANGE HISTORY**
---
--- The underlying change log documents the API changes. Please read this carefully. The following notation is used:
---
---   * **Added** parts are expressed in bold type face.
---   * _Removed_ parts are expressed in italic type face.
---
--- Hereby the change log:
---
--- ===
 --
 -- # **AUTHORS and CONTRIBUTIONS**
 --
@@ -45,15 +16,31 @@ do -- TASK_A2A_DISPATCHER
 
   --- TASK_A2A_DISPATCHER class.
   -- @type TASK_A2A_DISPATCHER
-  -- @field Set#SET_GROUP SetGroup The groups to which the FAC will report to.
-  -- @field Functional.Detection#DETECTION_BASE Detection The DETECTION_BASE object that is used to report the detected objects. The Detection object will only function in RADAR mode!!!
-  -- @field Tasking.Mission#MISSION Mission
   -- @extends Tasking.DetectionManager#DETECTION_MANAGER
+
+  --- # TASK_A2A_DISPATCHER class, extends @{Tasking#DETECTION_MANAGER}
+  -- 
+  -- The @{#TASK_A2A_DISPATCHER} class implements the dynamic dispatching of tasks upon groups of detected units determined a @{Set} of EWR installation groups.
+  -- The EWR will detect units, will group them, and will dispatch @{Task}s to groups. Depending on the type of target detected, different tasks will be dispatched.
+  -- Find a summary below describing for which situation a task type is created:
+  -- 
+  --   * **INTERCEPT Task**: Is created when the target is known, is detected and within a danger zone, and there is no friendly airborne in range.
+  --   * **SWEEP Task**: Is created when the target is unknown, was detected and the last position is only known, and within a danger zone, and there is no friendly airborne in range.
+  --   * **ENGAGE Task**: Is created when the target is known, is detected and within a danger zone, and there is a friendly airborne in range, that will receive this task.
+  --   
+  -- Other task types will follow...
+  -- 
+  -- # TASK_A2A_DISPATCHER constructor:
+  -- --------------------------------------
+  -- The @{#TASK_A2A_DISPATCHER.New}() method creates a new TASK_A2A_DISPATCHER instance.
+  -- 
+  -- @field #TASK_A2A_DISPATCHER
   TASK_A2A_DISPATCHER = {
     ClassName = "TASK_A2A_DISPATCHER",
     Mission = nil,
     Detection = nil,
     Tasks = {},
+    SweepZones = {},
   }
   
   
@@ -71,6 +58,8 @@ do -- TASK_A2A_DISPATCHER
     self.Detection = Detection
     self.Mission = Mission
     
+    
+    -- TODO: Check detection through radar.
     self.Detection:FilterCategories( Unit.Category.AIRPLANE, Unit.Category.HELICOPTER )
     --self.Detection:InitDetectRadar( true )
     self.Detection:SetDetectionInterval( 30 )
@@ -104,10 +93,11 @@ do -- TASK_A2A_DISPATCHER
     local DetectedSet = DetectedItem.Set
     local DetectedZone = DetectedItem.Zone
 
+    -- Check if there is at least one UNIT in the DetectedSet is visible.
+    
+    if DetectedItem.IsDetected == true then
 
-    if true then
-
-      -- Here we're doing something advanced... We're copying the DetectedSet, but making a new Set only with SEADable Radar units in it.
+      -- Here we're doing something advanced... We're copying the DetectedSet.
       local TargetSetUnit = SET_UNIT:New()
       TargetSetUnit:SetDatabase( DetectedSet )
       TargetSetUnit:FilterOnce() -- Filter but don't do any events!!! Elements are added manually upon each detection.
@@ -117,6 +107,33 @@ do -- TASK_A2A_DISPATCHER
     
     return nil
   end
+
+  
+  --- Creates an SWEEP task when there are targets for it.
+  -- @param #TASK_A2A_DISPATCHER self
+  -- @param Functional.Detection#DETECTION_BASE.DetectedItem DetectedItem
+  -- @return Set#SET_UNIT TargetSetUnit: The target set of units.
+  -- @return #nil If there are no targets to be set.
+  function TASK_A2A_DISPATCHER:EvaluateSWEEP( DetectedItem )
+    self:F( { DetectedItem.ItemID } )
+  
+    local DetectedSet = DetectedItem.Set
+    local DetectedZone = DetectedItem.Zone
+
+
+    if DetectedItem.IsDetected == false then
+
+      -- Here we're doing something advanced... We're copying the DetectedSet.
+      local TargetSetUnit = SET_UNIT:New()
+      TargetSetUnit:SetDatabase( DetectedSet )
+      TargetSetUnit:FilterOnce() -- Filter but don't do any events!!! Elements are added manually upon each detection.
+    
+      return TargetSetUnit
+    end
+    
+    return nil
+  end
+
   
   --- Creates an ENGAGE task when there are human friendlies airborne near the targets.
   -- @param #TASK_A2A_DISPATCHER self
@@ -131,10 +148,11 @@ do -- TASK_A2A_DISPATCHER
 
     local PlayersCount, PlayersReport = self:GetPlayerFriendliesNearBy( DetectedItem )
 
+    
+    -- Only allow ENGAGE when there are Players near the zone, and when the Area has detected items since the last run in a 60 seconds time zone.
+    if PlayersCount > 0 and DetectedItem.IsDetected == true then
 
-    if PlayersCount > 0 then
-
-      -- Here we're doing something advanced... We're copying the DetectedSet, but making a new Set only with SEADable Radar units in it.
+      -- Here we're doing something advanced... We're copying the DetectedSet.
       local TargetSetUnit = SET_UNIT:New()
       TargetSetUnit:SetDatabase( DetectedSet )
       TargetSetUnit:FilterOnce() -- Filter but don't do any events!!! Elements are added manually upon each detection.
@@ -178,6 +196,15 @@ do -- TASK_A2A_DISPATCHER
         
         if TaskType == "INTERCEPT" then
           if IsPlayers == true then
+            Remove = true
+          end
+          if DetectedItem.IsDetected == false then
+            Remove = true
+          end
+        end
+        
+        if TaskType == "SWEEP" then
+          if DetectedItem.IsDetected == true then
             Remove = true
           end
         end
@@ -350,6 +377,11 @@ do -- TASK_A2A_DISPATCHER
             local TargetSetUnit = self:EvaluateINTERCEPT( DetectedItem ) -- Returns a SetUnit if there are targets to be INTERCEPTed...
             if TargetSetUnit then
               Task = TASK_A2A_INTERCEPT:New( Mission, self.SetGroup, string.format( "INTERCEPT.%03d", DetectedID ), TargetSetUnit )
+            else
+              local TargetSetUnit = self:EvaluateSWEEP( DetectedItem ) -- Returns a SetUnit 
+              if TargetSetUnit then
+                Task = TASK_A2A_SWEEP:New( Mission, self.SetGroup, string.format( "SWEEP.%03d", DetectedID ), TargetSetUnit )
+              end  
             end
           end
 
