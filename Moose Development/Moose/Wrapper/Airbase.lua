@@ -1,17 +1,28 @@
---- This module contains the AIRBASE classes.
+--- **Wrapper** -- AIRBASE is a wrapper class to handle the DCS Airbase objects.
+-- 
+-- ====
+-- 
+-- ### Author: **Sven Van de Velde (FlightControl)**
+-- 
+-- ### Contributions: 
 -- 
 -- ===
 -- 
--- 1) @{Airbase#AIRBASE} class, extends @{Positionable#POSITIONABLE}
--- =================================================================
--- The @{AIRBASE} class is a wrapper class to handle the DCS Airbase objects:
+-- @module Airbase
+
+
+--- @type AIRBASE
+-- @extends Wrapper.Positionable#POSITIONABLE
+
+--- # AIRBASE class, extends @{Positionable#POSITIONABLE}
+-- 
+-- AIRBASE is a wrapper class to handle the DCS Airbase objects:
 -- 
 --  * Support all DCS Airbase APIs.
 --  * Enhance with Airbase specific APIs not in the DCS Airbase API set.
 --  
---  
--- 1.1) AIRBASE reference methods
--- ------------------------------ 
+-- ## AIRBASE reference methods
+-- 
 -- For each DCS Airbase object alive within a running mission, a AIRBASE wrapper object (instance) will be created within the _@{DATABASE} object.
 -- This is done at the beginning of the mission (when the mission starts).
 --  
@@ -29,27 +40,14 @@
 --  
 -- IMPORTANT: ONE SHOULD NEVER SANATIZE these AIRBASE OBJECT REFERENCES! (make the AIRBASE object references nil).
 -- 
--- 1.2) DCS AIRBASE APIs
--- ---------------------
+-- ## DCS Airbase APIs
+-- 
 -- The DCS Airbase APIs are used extensively within MOOSE. The AIRBASE class has for each DCS Airbase API a corresponding method.
 -- To be able to distinguish easily in your code the difference between a AIRBASE API call and a DCS Airbase API call,
 -- the first letter of the method is also capitalized. So, by example, the DCS Airbase method @{DCSWrapper.Airbase#Airbase.getName}()
 -- is implemented in the AIRBASE class as @{#AIRBASE.GetName}().
 -- 
--- More functions will be added
--- ----------------------------
--- During the MOOSE development, more functions will be added. 
--- 
--- @module Airbase
--- @author FlightControl
-
-
-
-
-
---- The AIRBASE class
--- @type AIRBASE
--- @extends Wrapper.Positionable#POSITIONABLE
+-- @field #AIRBASE
 AIRBASE = {
   ClassName="AIRBASE",
   CategoryName = { 

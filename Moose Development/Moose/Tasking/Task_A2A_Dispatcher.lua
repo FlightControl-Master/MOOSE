@@ -1,14 +1,12 @@
 --- **Tasking** - The TASK_A2A_DISPATCHER creates and manages player TASK_A2A tasks based on detected targets.
 -- 
--- ===
---
--- # **AUTHORS and CONTRIBUTIONS**
---
--- ### Contributions:
---        
--- ### Authors:
---
---   * **FlightControl**: Concept, Design & Programming.
+-- ====
+-- 
+-- ### Author: **Sven Van de Velde (FlightControl)**
+-- 
+-- ### Contributions: 
+-- 
+-- ====
 -- 
 -- @module Task_A2A_Dispatcher
 

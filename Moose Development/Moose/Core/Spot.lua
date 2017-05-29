@@ -1,8 +1,8 @@
---- **Core 2.1** -- Management of SPOT logistics, that can be transported from and to transportation carriers.
+--- **Core** -- Management of SPOT logistics, that can be transported from and to transportation carriers.
 --
 -- ![Banner Image](..\Presentations\SPOT\Dia1.JPG)
 --
--- ===
+-- ====
 -- 
 -- SPOT implements the DCS Spot class functionality, but adds additional luxury to be able to:
 -- 
@@ -27,20 +27,16 @@
 -- 
 -- ### [SPOT YouTube Channel]()
 -- 
--- ===
+-- ====
 -- 
--- # **AUTHORS and CONTRIBUTIONS**
--- 
+-- ### Author: **Sven Van de Velde (FlightControl)**
 -- ### Contributions: 
 -- 
 --   * [**Ciribob**](https://forums.eagle.ru/member.php?u=112175): Showing the way how to lase targets + how laser codes work!!! Explained the autolase script.
 --   * [**EasyEB**](https://forums.eagle.ru/member.php?u=112055): Ideas and Beta Testing
 --   * [**Wingthor**](https://forums.eagle.ru/member.php?u=123698): Beta Testing
---   
 -- 
--- ### Authors: 
--- 
---   * **FlightControl**: Design & Programming
+-- ====
 -- 
 -- @module Spot
 

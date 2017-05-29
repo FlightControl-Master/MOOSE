@@ -1,4 +1,4 @@
---- **Functional** - DETECTION_ classes model the detection of enemy units by FACs or RECCEs and group them according various methods.
+--- **Functional** -- DETECTION_ classes model the detection of enemy units by FACs or RECCEs and group them according various methods.
 -- 
 -- ![Banner Image](..\Presentations\DETECTION\Dia1.JPG)
 -- 

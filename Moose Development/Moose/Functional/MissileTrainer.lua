@@ -1,4 +1,4 @@
---- This module contains the MISSILETRAINER class.
+--- **Functional** -- MISSILETRAINER helps you to train missile avoidance.
 -- 
 -- ===
 --

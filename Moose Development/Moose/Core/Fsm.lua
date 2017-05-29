@@ -1,4 +1,4 @@
---- **Core** - The **FSM** (**F**inite **S**tate **M**achine) class and derived **FSM\_** classes 
+--- **Core** -- The **FSM** (**F**inite **S**tate **M**achine) class and derived **FSM\_** classes 
 -- are design patterns allowing efficient (long-lasting) processes and workflows.
 -- 
 -- ![Banner Image](..\Presentations\FSM\Dia1.JPG)
@@ -58,31 +58,11 @@
 -- 
 -- ====
 -- 
--- # **API CHANGE HISTORY**
 -- 
--- The underlying change log documents the API changes. Please read this carefully. The following notation is used:
--- 
---   * **Added** parts are expressed in bold type face.
---   * _Removed_ parts are expressed in italic type face.
--- 
--- YYYY-MM-DD: CLASS:**NewFunction**( Params ) replaces CLASS:_OldFunction_( Params )
--- YYYY-MM-DD: CLASS:**NewFunction( Params )** added
--- 
--- Hereby the change log:
--- 
---   * 2016-12-18: Released.
--- 
--- ===
--- 
--- # **AUTHORS and CONTRIBUTIONS**
--- 
+-- ### Author: **Sven Van de Velde (FlightControl)**
 -- ### Contributions: 
 -- 
---   * [**Pikey**](https://forums.eagle.ru/member.php?u=62835): Review of documentation & advice for improvements.
--- 
--- ### Authors: 
--- 
---   * [**FlightControl**](https://forums.eagle.ru/member.php?u=89536): Design & Programming & documentation.
+-- ====
 --
 -- @module Fsm
 

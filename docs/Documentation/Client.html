@@ -100,45 +100,17 @@
 	<div id="content">
    <h1>Module <code>Client</code></h1>
    
-<p>This module contains the CLIENT class.</p>
+<p><strong>Wrapper</strong> -- CLIENT wraps DCS Unit objects acting as a <strong>Client</strong> or <strong>Player</strong> within a mission.</p>
 
    
 
-<h1>1) <a href="Client.html##(CLIENT)">Client#CLIENT</a> class, extends <a href="Unit.html##(UNIT)">Unit#UNIT</a></h1>
-<p>Clients are those <strong>Units</strong> defined within the Mission Editor that have the skillset defined as <strong>Client</strong> or <strong>Player</strong>.
-Note that clients are NOT the same as Units, they are NOT necessarily alive.
-The <a href="Client.html##(CLIENT)">Client#CLIENT</a> class is a wrapper class to handle the DCS Unit objects that have the skillset defined as <strong>Client</strong> or <strong>Player</strong>:</p>
+<hr/>
 
-<ul>
-    <li>Wraps the DCS Unit objects with skill level set to Player or Client.</li>
-    <li>Support all DCS Unit APIs.</li>
-    <li>Enhance with Unit specific APIs not in the DCS Group API set.</li>
-    <li>When player joins Unit, execute alive init logic.</li>
-    <li>Handles messages to players.</li>
-    <li>Manage the "state" of the DCS Unit.</li>
-</ul>
+<h3>Author: <strong>Sven Van de Velde (FlightControl)</strong></h3>
 
-<p>Clients are being used by the <a href="MISSION.html">MISSION</a> class to follow players and register their successes.</p>
+<h3>Contributions:</h3>
 
-<h2>1.1) CLIENT reference methods</h2>
-<p>For each DCS Unit having skill level Player or Client, a CLIENT wrapper object (instance) will be created within the _<a href="DATABASE.html">DATABASE</a> object.
-This is done at the beginning of the mission (when the mission starts).</p>
-
-<p>The CLIENT class does not contain a :New() method, rather it provides :Find() methods to retrieve the object reference
-using the DCS Unit or the DCS UnitName.</p>
-
-<p>Another thing to know is that CLIENT objects do not "contain" the DCS Unit object. 
-The CLIENT methods will reference the DCS Unit object by name when it is needed during API execution.
-If the DCS Unit object does not exist or is nil, the CLIENT methods will return nil and log an exception in the DCS.log file.</p>
-
-<p>The CLIENT class provides the following functions to retrieve quickly the relevant CLIENT instance:</p>
-
-<ul>
-    <li><a href="##(CLIENT).Find">CLIENT.Find</a>(): Find a CLIENT instance from the _DATABASE object using a DCS Unit object.</li>
-    <li><a href="##(CLIENT).FindByName">CLIENT.FindByName</a>(): Find a CLIENT instance from the _DATABASE object using a DCS Unit name.</li>
-</ul>
-
-<p>IMPORTANT: ONE SHOULD NEVER SANATIZE these CLIENT OBJECT REFERENCES! (make the CLIENT object references nil).</p>
+<hr/>
 
 
 	<h2>Global(s)</h2>
@@ -146,7 +118,9 @@ If the DCS Unit object does not exist or is nil, the CLIENT methods will return 
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="#CLIENT">CLIENT</a></td>
 		<td class="summary">
+<h1>CLIENT class, extends <a href="Unit.html##(UNIT)">Unit#UNIT</a></h1>
 
+<p>Clients are those <strong>Units</strong> defined within the Mission Editor that have the skillset defined as <strong>Client</strong> or <strong>Player</strong>.</p>
 </td>
 		</tr>
 	</table>
@@ -162,18 +136,6 @@ If the DCS Unit object does not exist or is nil, the CLIENT methods will return 
 		<td class="name" nowrap="nowrap"><a href="##(CLIENT).Alive">CLIENT:Alive(CallBackFunction, ...)</a></td>
 		<td class="summary">
 <p>Checks for a client alive event and calls a function on a continuous basis.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CLIENT).ClassName">CLIENT.ClassName</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CLIENT).ClientAlive">CLIENT.ClientAlive</a></td>
-		<td class="summary">
-
 </td>
 		</tr>
 		<tr>
@@ -214,12 +176,6 @@ If the DCS Unit object does not exist or is nil, the CLIENT methods will return 
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(CLIENT).ClientGroupUnit">CLIENT.ClientGroupUnit</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CLIENT).ClientName">CLIENT.ClientName</a></td>
 		<td class="summary">
 
 </td>
@@ -297,18 +253,6 @@ If the DCS Unit object does not exist or is nil, the CLIENT methods will return 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CLIENT).Messages">CLIENT.Messages</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CLIENT).ONBOARDSIDE">CLIENT.ONBOARDSIDE</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(CLIENT).Register">CLIENT:Register(ClientName)</a></td>
 		<td class="summary">
 
@@ -362,12 +306,6 @@ If the DCS Unit object does not exist or is nil, the CLIENT methods will return 
 
 </td>
 		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CLIENT)._Tasks">CLIENT._Tasks</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
 	</table>
 
 	<h2>Global(s)</h2>
@@ -381,6 +319,45 @@ If the DCS Unit object does not exist or is nil, the CLIENT methods will return 
 </dt>
 <dd>
 	
+<h1>CLIENT class, extends <a href="Unit.html##(UNIT)">Unit#UNIT</a></h1>
+
+<p>Clients are those <strong>Units</strong> defined within the Mission Editor that have the skillset defined as <strong>Client</strong> or <strong>Player</strong>.</p>
+
+	
+<p>Note that clients are NOT the same as Units, they are NOT necessarily alive.
+The CLIENT class is a wrapper class to handle the DCS Unit objects that have the skillset defined as <strong>Client</strong> or <strong>Player</strong>:</p>
+
+<ul>
+    <li>Wraps the DCS Unit objects with skill level set to Player or Client.</li>
+    <li>Support all DCS Unit APIs.</li>
+    <li>Enhance with Unit specific APIs not in the DCS Group API set.</li>
+    <li>When player joins Unit, execute alive init logic.</li>
+    <li>Handles messages to players.</li>
+    <li>Manage the "state" of the DCS Unit.</li>
+</ul>
+
+<p>Clients are being used by the <a href="MISSION.html">MISSION</a> class to follow players and register their successes.</p>
+
+<h2>CLIENT reference methods</h2>
+
+<p>For each DCS Unit having skill level Player or Client, a CLIENT wrapper object (instance) will be created within the _<a href="DATABASE.html">DATABASE</a> object.
+This is done at the beginning of the mission (when the mission starts).</p>
+
+<p>The CLIENT class does not contain a :New() method, rather it provides :Find() methods to retrieve the object reference
+using the DCS Unit or the DCS UnitName.</p>
+
+<p>Another thing to know is that CLIENT objects do not "contain" the DCS Unit object. 
+The CLIENT methods will reference the DCS Unit object by name when it is needed during API execution.
+If the DCS Unit object does not exist or is nil, the CLIENT methods will return nil and log an exception in the DCS.log file.</p>
+
+<p>The CLIENT class provides the following functions to retrieve quickly the relevant CLIENT instance:</p>
+
+<ul>
+    <li><a href="##(CLIENT).Find">CLIENT.Find</a>(): Find a CLIENT instance from the _DATABASE object using a DCS Unit object.</li>
+    <li><a href="##(CLIENT).FindByName">CLIENT.FindByName</a>(): Find a CLIENT instance from the _DATABASE object using a DCS Unit name.</li>
+</ul>
+
+<p><strong>IMPORTANT: ONE SHOULD NEVER SANATIZE these CLIENT OBJECT REFERENCES! (make the CLIENT object references nil).</strong></p>
 
 
 </dd>
@@ -447,34 +424,6 @@ Create a function that will be called when a player joins the slot.</p>
 		<h3>Return value</h3>
 				
 <p><em><a href="##(CLIENT)">#CLIENT</a>:</em></p>
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em>#string</em>
-<a id="#(CLIENT).ClassName" >
-<strong>CLIENT.ClassName</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em>#boolean</em>
-<a id="#(CLIENT).ClientAlive" >
-<strong>CLIENT.ClientAlive</strong>
-</a>
-</dt>
-<dd>
-	
 
 
 </dd>
@@ -568,19 +517,6 @@ Create a function that will be called when a player joins the slot.</p>
 
 <a id="#(CLIENT).ClientGroupUnit" >
 <strong>CLIENT.ClientGroupUnit</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(CLIENT).ClientName" >
-<strong>CLIENT.ClientName</strong>
 </a>
 </dt>
 <dd>
@@ -904,34 +840,6 @@ is the identifier of the message when displayed with intervals.</p>
 		<dl class="function">
 <dt>
 
-		<em></em>
-<a id="#(CLIENT).Messages" >
-<strong>CLIENT.Messages</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em></em>
-<a id="#(CLIENT).ONBOARDSIDE" >
-<strong>CLIENT.ONBOARDSIDE</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
 <a id="#(CLIENT).Register" >
 <strong>CLIENT:Register(ClientName)</strong>
 </a>
@@ -1105,20 +1013,6 @@ self</p>
 		<em></em>
 <a id="#(CLIENT)._Menus" >
 <strong>CLIENT._Menus</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em></em>
-<a id="#(CLIENT)._Tasks" >
-<strong>CLIENT._Tasks</strong>
 </a>
 </dt>
 <dd>

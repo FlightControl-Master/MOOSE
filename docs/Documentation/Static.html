@@ -100,39 +100,17 @@
 	<div id="content">
    <h1>Module <code>Static</code></h1>
    
-<p>This module contains the STATIC class.</p>
+<p><strong>Wrapper</strong> -- STATIC wraps the DCS StaticObject class.</p>
 
    
 
-<h1>1) <a href="Static.html##(STATIC)">Static#STATIC</a> class, extends <a href="Positionable.html##(POSITIONABLE)">Positionable#POSITIONABLE</a></h1>
-<p>Statics are <strong>Static Units</strong> defined within the Mission Editor.
-Note that Statics are almost the same as Units, but they don't have a controller.
-The <a href="Static.html##(STATIC)">Static#STATIC</a> class is a wrapper class to handle the DCS Static objects:</p>
+<hr/>
 
-<ul>
-    <li>Wraps the DCS Static objects.</li>
-    <li>Support all DCS Static APIs.</li>
-    <li>Enhance with Static specific APIs not in the DCS API set.</li>
-</ul>
+<h3>Author: <strong>Sven Van de Velde (FlightControl)</strong></h3>
 
-<h2>1.1) STATIC reference methods</h2>
-<p>For each DCS Static will have a STATIC wrapper object (instance) within the _<a href="DATABASE.html">DATABASE</a> object.
-This is done at the beginning of the mission (when the mission starts).</p>
+<h3>Contributions:</h3>
 
-<p>The STATIC class does not contain a :New() method, rather it provides :Find() methods to retrieve the object reference
-using the Static Name.</p>
-
-<p>Another thing to know is that STATIC objects do not "contain" the DCS Static object. 
-The STATIc methods will reference the DCS Static object by name when it is needed during API execution.
-If the DCS Static object does not exist or is nil, the STATIC methods will return nil and log an exception in the DCS.log file.</p>
-
-<p>The STATIc class provides the following functions to retrieve quickly the relevant STATIC instance:</p>
-
-<ul>
-    <li><a href="##(STATIC).FindByName">STATIC.FindByName</a>(): Find a STATIC instance from the _DATABASE object using a DCS Static name.</li>
-</ul>
-
-<p>IMPORTANT: ONE SHOULD NEVER SANATIZE these STATIC OBJECT REFERENCES! (make the STATIC object references nil).</p>
+<hr/>
 
 
 	<h2>Global(s)</h2>
@@ -140,18 +118,14 @@ If the DCS Static object does not exist or is nil, the STATIC methods will retur
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="#STATIC">STATIC</a></td>
 		<td class="summary">
+<h1>STATIC class, extends <a href="Positionable.html##(POSITIONABLE)">Positionable#POSITIONABLE</a></h1>
 
+<p>Statics are <strong>Static Units</strong> defined within the Mission Editor.</p>
 </td>
 		</tr>
 	</table>
 			<h2><a id="#(STATIC)">Type <code>STATIC</code></a></h2>
 				<table class="function_list">
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(STATIC).ClassName">STATIC.ClassName</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(STATIC).FindByName">STATIC:FindByName(StaticName, RaiseError)</a></td>
 		<td class="summary">
@@ -195,6 +169,39 @@ If the DCS Static object does not exist or is nil, the STATIC methods will retur
 </dt>
 <dd>
 	
+<h1>STATIC class, extends <a href="Positionable.html##(POSITIONABLE)">Positionable#POSITIONABLE</a></h1>
+
+<p>Statics are <strong>Static Units</strong> defined within the Mission Editor.</p>
+
+	
+<p>Note that Statics are almost the same as Units, but they don't have a controller.
+The <a href="Static.html##(STATIC)">Static#STATIC</a> class is a wrapper class to handle the DCS Static objects:</p>
+
+<ul>
+    <li>Wraps the DCS Static objects.</li>
+    <li>Support all DCS Static APIs.</li>
+    <li>Enhance with Static specific APIs not in the DCS API set.</li>
+</ul>
+
+<h2>STATIC reference methods</h2>
+
+<p>For each DCS Static will have a STATIC wrapper object (instance) within the _<a href="DATABASE.html">DATABASE</a> object.
+This is done at the beginning of the mission (when the mission starts).</p>
+
+<p>The STATIC class does not contain a :New() method, rather it provides :Find() methods to retrieve the object reference
+using the Static Name.</p>
+
+<p>Another thing to know is that STATIC objects do not "contain" the DCS Static object. 
+The STATIc methods will reference the DCS Static object by name when it is needed during API execution.
+If the DCS Static object does not exist or is nil, the STATIC methods will return nil and log an exception in the DCS.log file.</p>
+
+<p>The STATIc class provides the following functions to retrieve quickly the relevant STATIC instance:</p>
+
+<ul>
+    <li><a href="##(STATIC).FindByName">STATIC.FindByName</a>(): Find a STATIC instance from the _DATABASE object using a DCS Static name.</li>
+</ul>
+
+<p>IMPORTANT: ONE SHOULD NEVER SANATIZE these STATIC OBJECT REFERENCES! (make the STATIC object references nil).</p>
 
 
 </dd>
@@ -202,24 +209,7 @@ If the DCS Static object does not exist or is nil, the STATIC methods will retur
 	<h2><a id="#(Static)" >Type <code>Static</code></a></h2>
 	
 			<h2><a id="#(STATIC)" >Type <code>STATIC</code></a></h2>
-				
-<p>The STATIC class</p>
-
-	<h3>Field(s)</h3>
-		<dl class="function">
-<dt>
-
-		<em>#string</em>
-<a id="#(STATIC).ClassName" >
-<strong>STATIC.ClassName</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
+				<h3>Field(s)</h3>
 		<dl class="function">
 <dt>
 

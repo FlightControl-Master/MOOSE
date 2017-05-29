@@ -1,4 +1,4 @@
---- (R2.1) **Core** -- Spawn dynamically new STATICs in your missions.
+--- **Core** -- Spawn dynamically new STATICs in your missions.
 --  
 -- ![Banner Image](..\Presentations\SPAWNSTATIC\Dia1.JPG)
 -- 
@@ -24,24 +24,10 @@
 -- 
 -- ====
 -- 
--- # **API CHANGE HISTORY**
--- 
--- The underlying change log documents the API changes. Please read this carefully. The following notation is used:
--- 
---   * **Added** parts are expressed in bold type face.
---   * _Removed_ parts are expressed in italic type face.
--- 
--- Hereby the change log:
--- 
--- ===
--- 
--- # **AUTHORS and CONTRIBUTIONS**
--- 
+-- ### Author: **Sven Van de Velde (FlightControl)**
 -- ### Contributions: 
 -- 
--- ### Authors: 
--- 
---   * **FlightControl**: Design & Programming
+-- ====
 -- 
 -- @module SpawnStatic
 

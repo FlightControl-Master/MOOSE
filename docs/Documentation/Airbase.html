@@ -100,49 +100,17 @@
 	<div id="content">
    <h1>Module <code>Airbase</code></h1>
    
-<p>This module contains the AIRBASE classes.</p>
+<p><strong>Wrapper</strong> -- AIRBASE is a wrapper class to handle the DCS Airbase objects.</p>
 
    
 
 <hr/>
 
-<h1>1) <a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a> class, extends <a href="Positionable.html##(POSITIONABLE)">Positionable#POSITIONABLE</a></h1>
-<p>The <a href="AIRBASE.html">AIRBASE</a> class is a wrapper class to handle the DCS Airbase objects:</p>
+<h3>Author: <strong>Sven Van de Velde (FlightControl)</strong></h3>
 
-<ul>
-    <li>Support all DCS Airbase APIs.</li>
-    <li>Enhance with Airbase specific APIs not in the DCS Airbase API set.</li>
-</ul>
+<h3>Contributions:</h3>
 
-
-<h2>1.1) AIRBASE reference methods</h2>
-<p>For each DCS Airbase object alive within a running mission, a AIRBASE wrapper object (instance) will be created within the _<a href="DATABASE.html">DATABASE</a> object.
-This is done at the beginning of the mission (when the mission starts).</p>
-
-<p>The AIRBASE class <strong>does not contain a :New()</strong> method, rather it provides <strong>:Find()</strong> methods to retrieve the object reference
-using the DCS Airbase or the DCS AirbaseName.</p>
-
-<p>Another thing to know is that AIRBASE objects do not "contain" the DCS Airbase object. 
-The AIRBASE methods will reference the DCS Airbase object by name when it is needed during API execution.
-If the DCS Airbase object does not exist or is nil, the AIRBASE methods will return nil and log an exception in the DCS.log file.</p>
-
-<p>The AIRBASE class provides the following functions to retrieve quickly the relevant AIRBASE instance:</p>
-
-<ul>
-    <li><a href="##(AIRBASE).Find">AIRBASE.Find</a>(): Find a AIRBASE instance from the _DATABASE object using a DCS Airbase object.</li>
-    <li><a href="##(AIRBASE).FindByName">AIRBASE.FindByName</a>(): Find a AIRBASE instance from the _DATABASE object using a DCS Airbase name.</li>
-</ul>
-
-<p>IMPORTANT: ONE SHOULD NEVER SANATIZE these AIRBASE OBJECT REFERENCES! (make the AIRBASE object references nil).</p>
-
-<h2>1.2) DCS AIRBASE APIs</h2>
-<p>The DCS Airbase APIs are used extensively within MOOSE. The AIRBASE class has for each DCS Airbase API a corresponding method.
-To be able to distinguish easily in your code the difference between a AIRBASE API call and a DCS Airbase API call,
-the first letter of the method is also capitalized. So, by example, the DCS Airbase method <a href="DCSWrapper.Airbase.html##(Airbase).getName">DCSWrapper.Airbase#Airbase.getName</a>()
-is implemented in the AIRBASE class as <a href="##(AIRBASE).GetName">AIRBASE.GetName</a>().</p>
-
-<h2>More functions will be added</h2>
-<p>During the MOOSE development, more functions will be added. </p>
+<hr/>
 
 
 	<h2>Global(s)</h2>
@@ -150,24 +118,18 @@ is implemented in the AIRBASE class as <a href="##(AIRBASE).GetName">AIRBASE.Get
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="#AIRBASE">AIRBASE</a></td>
 		<td class="summary">
+<h1>AIRBASE class, extends <a href="Positionable.html##(POSITIONABLE)">Positionable#POSITIONABLE</a></h1>
 
+<p>AIRBASE is a wrapper class to handle the DCS Airbase objects:</p>
+
+<ul>
+    <li>Support all DCS Airbase APIs.</li>
+</ul>
 </td>
 		</tr>
 	</table>
 			<h2><a id="#(AIRBASE)">Type <code>AIRBASE</code></a></h2>
 				<table class="function_list">
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AIRBASE).CategoryName">AIRBASE.CategoryName</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AIRBASE).ClassName">AIRBASE.ClassName</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(AIRBASE).Find">AIRBASE:Find(DCSAirbase)</a></td>
 		<td class="summary">
@@ -205,6 +167,46 @@ is implemented in the AIRBASE class as <a href="##(AIRBASE).GetName">AIRBASE.Get
 </dt>
 <dd>
 	
+<h1>AIRBASE class, extends <a href="Positionable.html##(POSITIONABLE)">Positionable#POSITIONABLE</a></h1>
+
+<p>AIRBASE is a wrapper class to handle the DCS Airbase objects:</p>
+
+<ul>
+    <li>Support all DCS Airbase APIs.</li>
+</ul>
+
+	
+<ul>
+    <li>Enhance with Airbase specific APIs not in the DCS Airbase API set.</li>
+</ul>
+
+<h2>AIRBASE reference methods</h2>
+
+<p>For each DCS Airbase object alive within a running mission, a AIRBASE wrapper object (instance) will be created within the _<a href="DATABASE.html">DATABASE</a> object.
+This is done at the beginning of the mission (when the mission starts).</p>
+
+<p>The AIRBASE class <strong>does not contain a :New()</strong> method, rather it provides <strong>:Find()</strong> methods to retrieve the object reference
+using the DCS Airbase or the DCS AirbaseName.</p>
+
+<p>Another thing to know is that AIRBASE objects do not "contain" the DCS Airbase object. 
+The AIRBASE methods will reference the DCS Airbase object by name when it is needed during API execution.
+If the DCS Airbase object does not exist or is nil, the AIRBASE methods will return nil and log an exception in the DCS.log file.</p>
+
+<p>The AIRBASE class provides the following functions to retrieve quickly the relevant AIRBASE instance:</p>
+
+<ul>
+    <li><a href="##(AIRBASE).Find">AIRBASE.Find</a>(): Find a AIRBASE instance from the _DATABASE object using a DCS Airbase object.</li>
+    <li><a href="##(AIRBASE).FindByName">AIRBASE.FindByName</a>(): Find a AIRBASE instance from the _DATABASE object using a DCS Airbase name.</li>
+</ul>
+
+<p>IMPORTANT: ONE SHOULD NEVER SANATIZE these AIRBASE OBJECT REFERENCES! (make the AIRBASE object references nil).</p>
+
+<h2>DCS Airbase APIs</h2>
+
+<p>The DCS Airbase APIs are used extensively within MOOSE. The AIRBASE class has for each DCS Airbase API a corresponding method.
+To be able to distinguish easily in your code the difference between a AIRBASE API call and a DCS Airbase API call,
+the first letter of the method is also capitalized. So, by example, the DCS Airbase method <a href="DCSWrapper.Airbase.html##(Airbase).getName">DCSWrapper.Airbase#Airbase.getName</a>()
+is implemented in the AIRBASE class as <a href="##(AIRBASE).GetName">AIRBASE.GetName</a>().</p>
 
 
 </dd>
@@ -212,38 +214,7 @@ is implemented in the AIRBASE class as <a href="##(AIRBASE).GetName">AIRBASE.Get
 	<h2><a id="#(Airbase)" >Type <code>Airbase</code></a></h2>
 	
 			<h2><a id="#(AIRBASE)" >Type <code>AIRBASE</code></a></h2>
-				
-<p>The AIRBASE class</p>
-
-	<h3>Field(s)</h3>
-		<dl class="function">
-<dt>
-
-		<em></em>
-<a id="#(AIRBASE).CategoryName" >
-<strong>AIRBASE.CategoryName</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em>#string</em>
-<a id="#(AIRBASE).ClassName" >
-<strong>AIRBASE.ClassName</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
+				<h3>Field(s)</h3>
 		<dl class="function">
 <dt>
 

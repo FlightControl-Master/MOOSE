@@ -1,4 +1,4 @@
---- **Wrapper** -- GROUP is a wrapper class for the DCS Class Group.
+--- **Wrapper** -- GROUP wraps the DCS Class Group objects.
 -- 
 -- ===
 -- 
@@ -15,44 +15,21 @@
 -- 
 -- ====
 -- 
--- # **API CHANGE HISTORY**
--- 
--- The underlying change log documents the API changes. Please read this carefully. The following notation is used:
--- 
---   * **Added** parts are expressed in bold type face.
---   * _Removed_ parts are expressed in italic type face.
--- 
--- Hereby the change log:
--- 
--- 2017-03-26: GROUP:**RouteRTB( RTBAirbase, Speed )** added.  
--- 
--- 2017-03-07: GROUP:**HandleEvent( Event, EventFunction )** added.  
--- 2017-03-07: GROUP:**UnHandleEvent( Event )** added.
--- 
--- 2017-01-24: GROUP:**SetAIOnOff( AIOnOff )** added.  
--- 
--- 2017-01-24: GROUP:**SetAIOn()** added.  
--- 
--- 2017-01-24: GROUP:**SetAIOff()** added.  
--- 
--- ===
--- 
--- # **AUTHORS and CONTRIBUTIONS**
+-- ### Author: **Sven Van de Velde (FlightControl)**
 -- 
 -- ### Contributions: 
 -- 
 --   * [**Entropy**](https://forums.eagle.ru/member.php?u=111471), **Afinegan**: Came up with the requirement for AIOnOff().
 -- 
--- ### Authors: 
--- 
---   * **FlightControl**: Design & Programming
+-- ====
 -- 
 -- @module Group
--- @author FlightControl
+
 
 --- @type GROUP
 -- @extends Wrapper.Controllable#CONTROLLABLE
 -- @field #string GroupName The name of the group.
+
 
 --- 
 -- # GROUP class, extends @{Controllable#CONTROLLABLE}

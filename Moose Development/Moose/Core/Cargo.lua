@@ -1,4 +1,4 @@
---- **(R2.1) Core** -- Management of CARGO logistics, that can be transported from and to transportation carriers.
+--- **Core** -- Management of CARGO logistics, that can be transported from and to transportation carriers.
 --
 -- ![Banner Image](..\Presentations\CARGO\Dia1.JPG)
 --
@@ -9,6 +9,8 @@
 --   * CARGO_UNIT, represented by a @{Unit} in a singleton @{Group}: Cargo can be represented by a Unit in a Group. a CARGO_UNIT is representable...
 --   * CARGO_GROUP, represented by a @{Group}. A CARGO_GROUP is reportable...
 --   
+-- This module is still under construction, but is described above works already, and will keep working ...
+-- 
 -- ====
 -- 
 -- # Demo Missions
@@ -27,7 +29,10 @@
 -- 
 -- ====
 -- 
--- This module is still under construction, but is described above works already, and will keep working ...
+-- ### Author: **Sven Van de Velde (FlightControl)**
+-- ### Contributions: 
+-- 
+-- ====
 -- 
 -- @module Cargo
 

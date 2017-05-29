@@ -1,4 +1,4 @@
---- **Tasking (Release 2.1)** -- The TASK_CARGO models tasks for players to transport @{Cargo}.
+--- **Tasking** -- The TASK_CARGO models tasks for players to transport @{Cargo}.
 -- 
 -- ![Banner Image](..\Presentations\TASK_CARGO\Dia1.JPG)
 -- 
@@ -14,28 +14,13 @@
 -- 
 --   * @{#TASK_CARGO_TRANSPORT}: Defines a task for a human player to transport a set of cargo between various zones.
 -- 
--- ==
+-- ====
 -- 
--- # **API CHANGE HISTORY**
---
--- The underlying change log documents the API changes. Please read this carefully. The following notation is used:
---
---   * **Added** parts are expressed in bold type face.
---   * _Removed_ parts are expressed in italic type face.
---
--- Hereby the change log:
---
--- 2017-03-09: Revised version.
---
--- ===
---
--- # **AUTHORS and CONTRIBUTIONS**
---
--- ### Contributions:
---
--- ### Authors:
---
---   * **FlightControl**: Concept, Design & Programming.
+-- ### Author: **Sven Van de Velde (FlightControl)**
+-- 
+-- ### Contributions: 
+-- 
+-- ====
 --   
 -- @module Task_Cargo
 

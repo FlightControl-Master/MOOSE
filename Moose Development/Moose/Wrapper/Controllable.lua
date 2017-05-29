@@ -1,29 +1,48 @@
---- This module contains the CONTROLLABLE class.
+--- **Wrapper** -- CONTROLLABLE is an intermediate class wrapping Group and Unit classes "controllers".
 -- 
--- 1) @{Controllable#CONTROLLABLE} class, extends @{Positionable#POSITIONABLE}
--- ===========================================================
--- The @{Controllable#CONTROLLABLE} class is a wrapper class to handle the DCS Controllable objects:
+-- ====
+-- 
+-- ### Author: **Sven Van de Velde (FlightControl)**
+-- 
+-- ### Contributions: 
+-- 
+-- ===
+-- 
+-- @module Controllable
+
+
+
+--- @type CONTROLLABLE
+-- @extends Wrapper.Positionable#POSITIONABLE
+-- @field Dcs.DCSWrapper.Controllable#Controllable DCSControllable The DCS controllable class.
+-- @field #string ControllableName The name of the controllable.
+
+
+
+--- # CONTROLLABLE class, extends @{Positionable#POSITIONABLE}
+-- 
+-- CONTROLLABLE is a wrapper class to handle the "DCS Controllable objects", which are Groups and Units:
 --
 --  * Support all DCS Controllable APIs.
 --  * Enhance with Controllable specific APIs not in the DCS Controllable API set.
 --  * Handle local Controllable Controller.
 --  * Manage the "state" of the DCS Controllable.
 --
--- 1.1) CONTROLLABLE constructor
--- -----------------------------
+-- ## CONTROLLABLE constructor
+-- 
 -- The CONTROLLABLE class provides the following functions to construct a CONTROLLABLE instance:
 --
 --  * @{#CONTROLLABLE.New}(): Create a CONTROLLABLE instance.
 --
--- 1.2) CONTROLLABLE task methods
--- ------------------------------
+-- ## CONTROLLABLE Task methods
+-- 
 -- Several controllable task methods are available that help you to prepare tasks. 
 -- These methods return a string consisting of the task description, which can then be given to either a @{Controllable#CONTROLLABLE.PushTask} or @{Controllable#SetTask} method to assign the task to the CONTROLLABLE.
 -- Tasks are specific for the category of the CONTROLLABLE, more specific, for AIR, GROUND or AIR and GROUND. 
 -- Each task description where applicable indicates for which controllable category the task is valid.
 -- There are 2 main subdivisions of tasks: Assigned tasks and EnRoute tasks.
 -- 
--- ### 1.2.1) Assigned task methods
+-- ### Task assignment
 -- 
 -- Assigned task methods make the controllable execute the task where the location of the (possible) targets of the task are known before being detected.
 -- This is different from the EnRoute tasks, where the targets of the task need to be detected before the task can be executed.
@@ -54,7 +73,7 @@
 --   * @{#CONTROLLABLE.TaskRouteToZone}: (AIR + GROUND) Route the controllable to a given zone.
 --   * @{#CONTROLLABLE.TaskReturnToBase}: (AIR) Route the controllable to an airbase.
 --
--- ### 1.2.2) EnRoute task methods
+-- ### EnRoute assignment
 -- 
 -- EnRoute tasks require the targets of the task need to be detected by the controllable (using its sensors) before the task can be executed:
 -- 
@@ -67,7 +86,7 @@
 --   * @{#CONTROLLABLE.EnRouteTaskFAC_EngageControllable}: (AIR + GROUND) The task makes the controllable/unit a FAC and lets the FAC to choose the target (enemy ground controllable) as well as other assigned targets.
 --   * @{#CONTROLLABLE.EnRouteTaskTanker}: (AIR) Aircraft will act as a tanker for friendly units. No parameters.
 -- 
--- ### 1.2.3) Preparation task methods
+-- ### Task preparation
 -- 
 -- There are certain task methods that allow to tailor the task behaviour:
 --
@@ -76,24 +95,24 @@
 --   * @{#CONTROLLABLE.TaskCondition}: Return a condition section for a controlled task.
 --   * @{#CONTROLLABLE.TaskControlled}: Return a Controlled Task taking a Task and a TaskCondition.
 -- 
--- ### 1.2.4) Obtain the mission from controllable templates
+-- ### Obtain the mission from controllable templates
 -- 
 -- Controllable templates contain complete mission descriptions. Sometimes you want to copy a complete mission from a controllable and assign it to another:
 -- 
 --   * @{#CONTROLLABLE.TaskMission}: (AIR + GROUND) Return a mission task from a mission template.
 --
--- 1.3) CONTROLLABLE Command methods
--- --------------------------
+-- ## CONTROLLABLE Command methods
+-- 
 -- Controllable **command methods** prepare the execution of commands using the @{#CONTROLLABLE.SetCommand} method:
 -- 
 --   * @{#CONTROLLABLE.CommandDoScript}: Do Script command.
 --   * @{#CONTROLLABLE.CommandSwitchWayPoint}: Perform a switch waypoint command.
 -- 
--- 1.4) CONTROLLABLE Option methods
--- -------------------------
+-- ## CONTROLLABLE Option methods
+-- 
 -- Controllable **Option methods** change the behaviour of the Controllable while being alive.
 -- 
--- ### 1.4.1) Rule of Engagement:
+-- ### Rule of Engagement:
 -- 
 --   * @{#CONTROLLABLE.OptionROEWeaponFree} 
 --   * @{#CONTROLLABLE.OptionROEOpenFire}
@@ -107,7 +126,7 @@
 --   * @{#CONTROLLABLE.OptionROEReturnFirePossible}
 --   * @{#CONTROLLABLE.OptionROEEvadeFirePossible}
 -- 
--- ### 1.4.2) Rule on thread:
+-- ### Rule on thread:
 -- 
 --   * @{#CONTROLLABLE.OptionROTNoReaction}
 --   * @{#CONTROLLABLE.OptionROTPassiveDefense}
@@ -121,15 +140,7 @@
 --   * @{#CONTROLLABLE.OptionROTEvadeFirePossible}
 --   * @{#CONTROLLABLE.OptionROTVerticalPossible}
 -- 
--- ===
--- 
--- @module Controllable
-
---- The CONTROLLABLE class
--- @type CONTROLLABLE
--- @extends Wrapper.Positionable#POSITIONABLE
--- @field Dcs.DCSWrapper.Controllable#Controllable DCSControllable The DCS controllable class.
--- @field #string ControllableName The name of the controllable.
+-- @field #CONTROLLABLE
 CONTROLLABLE = {
   ClassName = "CONTROLLABLE",
   ControllableName = "",

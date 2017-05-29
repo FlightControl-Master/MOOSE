@@ -1,39 +1,34 @@
---- This module contains the IDENTIFIABLE class.
+--- **Wrapper** -- IDENTIFIABLE is an intermediate class wrapping DCS Object class derived Objects.
 -- 
--- 1) @{#IDENTIFIABLE} class, extends @{Object#OBJECT}
--- ===============================================================
--- The @{#IDENTIFIABLE} class is a wrapper class to handle the DCS Identifiable objects:
+-- ====
+-- 
+-- ### Author: **Sven Van de Velde (FlightControl)**
+-- 
+-- ### Contributions: 
+-- 
+-- ====
+-- 
+-- @module Identifiable
+
+--- @type IDENTIFIABLE
+-- @extends Wrapper.Object#OBJECT
+-- @field #string IdentifiableName The name of the identifiable.
+
+--- # IDENTIFIABLE class, extends @{Object#OBJECT}
+-- 
+-- The IDENTIFIABLE class is a wrapper class to handle the DCS Identifiable objects:
 --
 --  * Support all DCS Identifiable APIs.
 --  * Enhance with Identifiable specific APIs not in the DCS Identifiable API set.
 --  * Manage the "state" of the DCS Identifiable.
 --
--- 1.1) IDENTIFIABLE constructor:
--- ------------------------------
+-- ## IDENTIFIABLE constructor
+-- 
 -- The IDENTIFIABLE class provides the following functions to construct a IDENTIFIABLE instance:
 --
 --  * @{#IDENTIFIABLE.New}(): Create a IDENTIFIABLE instance.
 --
--- 1.2) IDENTIFIABLE methods:
--- --------------------------
--- The following methods can be used to identify an identifiable object:
--- 
---    * @{#IDENTIFIABLE.GetName}(): Returns the name of the Identifiable.
---    * @{#IDENTIFIABLE.IsAlive}(): Returns if the Identifiable is alive.
---    * @{#IDENTIFIABLE.GetTypeName}(): Returns the type name of the Identifiable.
---    * @{#IDENTIFIABLE.GetCoalition}(): Returns the coalition of the Identifiable.
---    * @{#IDENTIFIABLE.GetCountry}(): Returns the country of the Identifiable.
---    * @{#IDENTIFIABLE.GetDesc}(): Returns the descriptor structure of the Identifiable.
---    
--- 
--- ===
--- 
--- @module Identifiable
-
---- The IDENTIFIABLE class
--- @type IDENTIFIABLE
--- @extends Wrapper.Object#OBJECT
--- @field #string IdentifiableName The name of the identifiable.
+-- @field #IDENTIFIABLE
 IDENTIFIABLE = {
   ClassName = "IDENTIFIABLE",
   IdentifiableName = "",

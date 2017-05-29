@@ -26,19 +26,18 @@
 -- 
 -- ### [AI_CAS YouTube Channel](https://www.youtube.com/playlist?list=PL7ZUrU4zZUl3JBO1WDqqpyYRRmIkR2ir2)
 -- 
--- ===
+-- ====
 --
--- # **AUTHORS and CONTRIBUTIONS**
---
--- ### Contributions:
+-- 
+-- ### Author: **Sven Van de Velde (FlightControl)**
+-- 
+-- ### Contributions: 
 --
 --   * **[Quax](https://forums.eagle.ru/member.php?u=90530)**: Concept, Advice & Testing.
 --   * **[Pikey](https://forums.eagle.ru/member.php?u=62835)**: Concept, Advice & Testing.
 --   * **[Gunterlund](http://forums.eagle.ru:8080/member.php?u=75036)**: Test case revision.
 --
--- ### Authors:
---
---   * **FlightControl**: Concept, Design & Programming.
+-- ====
 --
 -- @module AI_Cas
 

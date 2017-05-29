@@ -1,4 +1,4 @@
---- **Core** - BASE forms **the basis of the MOOSE framework**. Each class within the MOOSE framework derives from BASE.
+--- **Core** -- BASE forms **the basis of the MOOSE framework**. Each class within the MOOSE framework derives from BASE.
 -- 
 -- ![Banner Image](..\Presentations\BASE\Dia1.JPG)
 -- 
@@ -8,29 +8,10 @@
 -- 
 -- ===
 -- 
--- # **API CHANGE HISTORY**
--- 
--- The underlying change log documents the API changes. Please read this carefully. The following notation is used:
--- 
---   * **Added** parts are expressed in bold type face.
---   * _Removed_ parts are expressed in italic type face.
--- 
--- YYYY-MM-DD: CLASS:**NewFunction**( Params ) replaces CLASS:_OldFunction_( Params )
--- YYYY-MM-DD: CLASS:**NewFunction( Params )** added
--- 
--- Hereby the change log:
--- 
--- ===
--- 
--- # **AUTHORS and CONTRIBUTIONS**
--- 
+-- ### Author: **Sven Van de Velde (FlightControl)**
 -- ### Contributions: 
 -- 
---   * None.
--- 
--- ### Authors: 
--- 
---   * **FlightControl**: Design & Programming
+-- ====
 -- 
 -- @module Base
 

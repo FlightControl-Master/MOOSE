@@ -1,4 +1,4 @@
---- **AI** - **Execute Combat Air Patrol (CAP).**
+--- **AI** -- **Execute Combat Air Patrol (CAP).**
 --
 -- ![Banner Image](..\Presentations\AI_CAP\Dia1.JPG)
 -- 
@@ -27,33 +27,18 @@
 -- ### [AI_CAP YouTube Channel](https://www.youtube.com/playlist?list=PL7ZUrU4zZUl1YCyPxJgoZn-CfhwyeW65L)
 -- 
 -- ====
---
--- # **API CHANGE HISTORY**
---
--- The underlying change log documents the API changes. Please read this carefully. The following notation is used:
---
---   * **Added** parts are expressed in bold type face.
---   * _Removed_ parts are expressed in italic type face.
---
--- Hereby the change log:
---
--- 2017-01-15: Initial class and API.
---
--- ===
---
--- # **AUTHORS and CONTRIBUTIONS**
---
--- ### Contributions:
+-- 
+-- ### Author: **Sven Van de Velde (FlightControl)**
+-- 
+-- ### Contributions: 
 --
 --   * **[Quax](https://forums.eagle.ru/member.php?u=90530)**: Concept, Advice & Testing.
 --   * **[Pikey](https://forums.eagle.ru/member.php?u=62835)**: Concept, Advice & Testing.
 --   * **[Gunterlund](http://forums.eagle.ru:8080/member.php?u=75036)**: Test case revision.
 --   * **[Whisper](http://forums.eagle.ru/member.php?u=3829): Testing.
 --   * **[Delta99](https://forums.eagle.ru/member.php?u=125166): Testing. 
---        
--- ### Authors:
---
---   * **FlightControl**: Concept, Design & Programming.
+-- 
+-- ====       
 --
 -- @module AI_Cap
 

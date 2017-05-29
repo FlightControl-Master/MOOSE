@@ -1,33 +1,36 @@
---- This module contains the OBJECT class.
+--- **Wrapper** -- OBJECT wraps the DCS Object derived objects.
 -- 
--- 1) @{Object#OBJECT} class, extends @{Base#BASE}
--- ===========================================================
--- The @{Object#OBJECT} class is a wrapper class to handle the DCS Object objects:
---
---  * Support all DCS Object APIs.
---  * Enhance with Object specific APIs not in the DCS Object API set.
---  * Manage the "state" of the DCS Object.
---
--- 1.1) OBJECT constructor:
--- ------------------------------
--- The OBJECT class provides the following functions to construct a OBJECT instance:
---
---  * @{Object#OBJECT.New}(): Create a OBJECT instance.
---
--- 1.2) OBJECT methods:
--- --------------------------
--- The following methods can be used to identify an Object object:
+-- ====
 -- 
---    * @{Object#OBJECT.GetID}(): Returns the ID of the Object object.
+-- ### Author: **Sven Van de Velde (FlightControl)**
+-- 
+-- ### Contributions: 
 -- 
 -- ===
 -- 
 -- @module Object
 
---- The OBJECT class
--- @type OBJECT
+
+--- @type OBJECT
 -- @extends Core.Base#BASE
 -- @field #string ObjectName The name of the Object.
+
+
+--- # OBJECT class, extends @{Base#BASE}
+-- 
+-- OBJECT handles the DCS Object objects:
+--
+--  * Support all DCS Object APIs.
+--  * Enhance with Object specific APIs not in the DCS Object API set.
+--  * Manage the "state" of the DCS Object.
+--
+-- ## OBJECT constructor:
+-- 
+-- The OBJECT class provides the following functions to construct a OBJECT instance:
+--
+--  * @{Object#OBJECT.New}(): Create a OBJECT instance.
+--
+-- @field #OBJECT
 OBJECT = {
   ClassName = "OBJECT",
   ObjectName = "",

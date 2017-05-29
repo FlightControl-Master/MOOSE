@@ -1,4 +1,4 @@
---- **AI** -- (R2.1) Build large **formations** of AI @{Group}s flying together.
+--- **AI** -- Build large **formations** of AI @{Group}s flying together.
 -- 
 -- ![Banner Image](..\Presentations\AI_FORMATION\Dia1.JPG)
 -- 
@@ -46,13 +46,11 @@
 -- 
 -- ===
 -- 
--- # **AUTHORS and CONTRIBUTIONS**
---
--- ### Contributions:
---
--- ### Authors:
---
---   * **FlightControl**: Concept, Design & Programming.
+-- ### Author: **Sven Van de Velde (FlightControl)**
+-- 
+-- ### Contributions: 
+-- 
+-- ====
 --   
 -- @module AI_Formation
 

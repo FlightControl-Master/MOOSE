@@ -2,51 +2,13 @@
 -- 
 -- ![Banner Image](..\Presentations\TASK_A2G\Dia1.JPG)
 -- 
+-- ====
 -- 
--- # 1) @{Task_A2G#TASK_A2G} class, extends @{Task#TASK}
+-- ### Author: **Sven Van de Velde (FlightControl)**
 -- 
--- The @{#TASK_A2G} class defines Air To Ground tasks for a @{Set} of Target Units, 
--- based on the tasking capabilities defined in @{Task#TASK}.
--- The TASK_A2G is implemented using a @{Statemachine#FSM_TASK}, and has the following statuses:
--- 
---   * **None**: Start of the process
---   * **Planned**: The A2G task is planned.
---   * **Assigned**: The A2G task is assigned to a @{Group#GROUP}.
---   * **Success**: The A2G task is successfully completed.
---   * **Failed**: The A2G task has failed. This will happen if the player exists the task early, without communicating a possible cancellation to HQ.
--- 
--- # 1.1) Set the scoring of achievements in an A2G attack.
--- 
--- Scoring or penalties can be given in the following circumstances:
--- 
---   * @{#TASK_A2G.SetScoreOnDestroy}(): Set a score when a target in scope of the A2G attack, has been destroyed.
---   * @{#TASK_A2G.SetScoreOnSuccess}(): Set a score when all the targets in scope of the A2G attack, have been destroyed.
---   * @{#TASK_A2G.SetPenaltyOnFailed}(): Set a penalty when the A2G attack has failed.
+-- ### Contributions: 
 -- 
 -- ====
---
--- # **API CHANGE HISTORY**
---
--- The underlying change log documents the API changes. Please read this carefully. The following notation is used:
---
---   * **Added** parts are expressed in bold type face.
---   * _Removed_ parts are expressed in italic type face.
---
--- Hereby the change log:
---
--- 2017-03-09: Revised version.
---
--- ===
---
--- # **AUTHORS and CONTRIBUTIONS**
---
--- ### Contributions:
---
---   * **[WingThor]**: Concept, Advice & Testing.
---        
--- ### Authors:
---
---   * **FlightControl**: Concept, Design & Programming.
 --   
 -- @module Task_A2G
 
@@ -56,6 +18,28 @@ do -- TASK_A2G
   -- @type TASK_A2G
   -- @field Set#SET_UNIT TargetSetUnit
   -- @extends Tasking.Task#TASK
+
+  --- # TASK_A2G class, extends @{Task#TASK}
+  -- 
+  -- The TASK_A2G class defines Air To Ground tasks for a @{Set} of Target Units, 
+  -- based on the tasking capabilities defined in @{Task#TASK}.
+  -- The TASK_A2G is implemented using a @{Fsm#FSM_TASK}, and has the following statuses:
+  -- 
+  --   * **None**: Start of the process
+  --   * **Planned**: The A2G task is planned.
+  --   * **Assigned**: The A2G task is assigned to a @{Group#GROUP}.
+  --   * **Success**: The A2G task is successfully completed.
+  --   * **Failed**: The A2G task has failed. This will happen if the player exists the task early, without communicating a possible cancellation to HQ.
+  -- 
+  -- ## Set the scoring of achievements in an A2G attack.
+  -- 
+  -- Scoring or penalties can be given in the following circumstances:
+  -- 
+  --   * @{#TASK_A2G.SetScoreOnDestroy}(): Set a score when a target in scope of the A2G attack, has been destroyed.
+  --   * @{#TASK_A2G.SetScoreOnSuccess}(): Set a score when all the targets in scope of the A2G attack, have been destroyed.
+  --   * @{#TASK_A2G.SetPenaltyOnFailed}(): Set a penalty when the A2G attack has failed.
+  -- 
+  -- @field #TASK_A2G
   TASK_A2G = {
     ClassName = "TASK_A2G",
   }

@@ -1,4 +1,4 @@
---- This module contains the DATABASE class, managing the database of mission objects. 
+--- **Core** -- DATABASE manages the database of mission objects. 
 -- 
 -- ====
 -- 
@@ -35,8 +35,13 @@
 -- 
 -- ===
 -- 
+-- 
+-- ### Author: **Sven Van de Velde (FlightControl)**
+-- ### Contributions: 
+-- 
+-- ====
 -- @module Database
--- @author FlightControl
+
 
 --- DATABASE class
 -- @type DATABASE

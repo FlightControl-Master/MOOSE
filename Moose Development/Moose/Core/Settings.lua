@@ -1,4 +1,4 @@
---- **Core** - **SETTINGS** classe defines the format settings management for measurement.
+--- **Core** -- **SETTINGS** classe defines the format settings management for measurement.
 --
 -- ![Banner Image](..\Presentations\SETTINGS\Dia1.JPG)
 --
@@ -19,12 +19,11 @@
 -- ### [SETTINGS YouTube Channel]()
 --
 -- ===
---
--- ### Authors:
---
---   * FlightControl : Design & Programming
---
--- ### Contributions:
+-- 
+-- ### Author: **Sven Van de Velde (FlightControl)**
+-- ### Contributions: 
+-- 
+-- ====
 --
 -- @module Settings
 

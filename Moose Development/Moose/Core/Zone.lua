@@ -1,8 +1,8 @@
---- **Core** - ZONE classes define **zones** within your mission of **various forms**, with **various capabilities**.
+--- **Core** -- ZONE classes define **zones** within your mission of **various forms**, with **various capabilities**.
 -- 
 -- ![Banner Image](..\Presentations\ZONE\Dia1.JPG)
 -- 
--- ===
+-- ====
 -- 
 -- There are essentially two core functions that zones accomodate:
 -- 
@@ -27,41 +27,12 @@
 --   * @{#ZONE_GROUP}: The ZONE_GROUP class defines by a zone around a @{Group#GROUP} with a radius.
 --   * @{#ZONE_POLYGON}: The ZONE_POLYGON class defines by a sequence of @{Group#GROUP} waypoints within the Mission Editor, forming a polygon.
 --
--- === 
+-- ==== 
 -- 
--- # **API CHANGE HISTORY**
+-- ### Author: **Sven Van de Velde (FlightControl)**
+-- ### Contributions: 
 -- 
--- The underlying change log documents the API changes. Please read this carefully. The following notation is used:
--- 
---   * **Added** parts are expressed in bold type face.
---   * _Removed_ parts are expressed in italic type face.
--- 
--- Hereby the change log:
--- 
--- 2017-02-28: ZONE\_BASE:**IsVec2InZone()** replaces ZONE\_BASE:_IsPointVec2InZone()_.  
--- 2017-02-28: ZONE\_BASE:**IsVec3InZone()** replaces ZONE\_BASE:_IsPointVec3InZone()_.  
--- 2017-02-28: ZONE\_RADIUS:**IsVec2InZone()** replaces ZONE\_RADIUS:_IsPointVec2InZone()_.  
--- 2017-02-28: ZONE\_RADIUS:**IsVec3InZone()** replaces ZONE\_RADIUS:_IsPointVec3InZone()_.  
--- 2017-02-28: ZONE\_POLYGON:**IsVec2InZone()** replaces ZONE\_POLYGON:_IsPointVec2InZone()_.  
--- 2017-02-28: ZONE\_POLYGON:**IsVec3InZone()** replaces ZONE\_POLYGON:_IsPointVec3InZone()_.  
--- 
--- 2017-02-18: ZONE\_POLYGON_BASE:**GetRandomPointVec2()** added.
--- 
--- 2017-02-18: ZONE\_POLYGON_BASE:**GetRandomPointVec3()** added.
--- 
--- 2017-02-18: ZONE\_RADIUS:**GetRandomPointVec3( inner, outer )** added.
--- 
--- 2017-02-18: ZONE\_RADIUS:**GetRandomPointVec2( inner, outer )** added.
--- 
--- 2016-08-15: ZONE\_BASE:**GetName()** added.
--- 
--- 2016-08-15: ZONE\_BASE:**SetZoneProbability( ZoneProbability )** added.
--- 
--- 2016-08-15: ZONE\_BASE:**GetZoneProbability()** added.
--- 
--- 2016-08-15: ZONE\_BASE:**GetZoneMaybe()** added.
--- 
--- ===
+-- ====
 -- 
 -- @module Zone
 

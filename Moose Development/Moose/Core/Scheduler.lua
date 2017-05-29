@@ -1,4 +1,4 @@
---- **Core** - SCHEDULER prepares and handles the **execution of functions over scheduled time (intervals)**.
+--- **Core** -- SCHEDULER prepares and handles the **execution of functions over scheduled time (intervals)**.
 --
 -- ![Banner Image](..\Presentations\SCHEDULER\Dia1.JPG)
 -- 

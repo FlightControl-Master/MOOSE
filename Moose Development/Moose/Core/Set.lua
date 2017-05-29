@@ -1,4 +1,4 @@
---- **Core** - SET_ classes define **collections** of objects to perform **bulk actions** and logically **group** objects.
+--- **Core** -- SET_ classes define **collections** of objects to perform **bulk actions** and logically **group** objects.
 -- 
 -- ![Banner Image](..\Presentations\SET\Dia1.JPG)
 -- 
@@ -23,12 +23,12 @@
 --   * Validate the presence of objects in the SET.
 --   * Trigger events when objects in the SET change a zone presence.
 -- 
--- ### Authors: 
+-- ====
 -- 
---   * FlightControl : Design & Programming
---   
+-- ### Author: **Sven Van de Velde (FlightControl)**
 -- ### Contributions: 
 -- 
+-- ====
 -- 
 -- @module Set
 

@@ -1,6 +1,7 @@
---- The CLEANUP class keeps an area clean of crashing or colliding airplanes. It also prevents airplanes from firing within this area.
+--- **Functional** -- The CLEANUP class keeps an area clean of crashing or colliding airplanes. It also prevents airplanes from firing within this area.
+-- 
+-- ====
 -- @module CleanUp
--- @author Flightcontrol
 
 
 

@@ -3,48 +3,13 @@
 -- ![Banner Image](..\Presentations\TASK_A2A\Dia1.JPG)
 -- 
 -- 
--- # 1) @{Task_A2A#TASK_A2A} class, extends @{Task#TASK}
+-- ====
 -- 
--- The @{#TASK_A2A} class defines Air To Air tasks for a @{Set} of Target Units, 
--- based on the tasking capabilities defined in @{Task#TASK}.
--- The TASK_A2A is implemented using a @{Statemachine#FSM_TASK}, and has the following statuses:
+-- ### Author: **Sven Van de Velde (FlightControl)**
 -- 
---   * **None**: Start of the process
---   * **Planned**: The A2A task is planned.
---   * **Assigned**: The A2A task is assigned to a @{Group#GROUP}.
---   * **Success**: The A2A task is successfully completed.
---   * **Failed**: The A2A task has failed. This will happen if the player exists the task early, without communicating a possible cancellation to HQ.
--- 
--- # 1.1) Set the scoring of achievements in an A2A attack.
--- 
--- Scoring or penalties can be given in the following circumstances:
--- 
---   * @{#TASK_A2A.SetScoreOnDestroy}(): Set a score when a target in scope of the A2A attack, has been destroyed.
---   * @{#TASK_A2A.SetScoreOnSuccess}(): Set a score when all the targets in scope of the A2A attack, have been destroyed.
---   * @{#TASK_A2A.SetPenaltyOnFailed}(): Set a penalty when the A2A attack has failed.
+-- ### Contributions: 
 -- 
 -- ====
---
--- # **API CHANGE HISTORY**
---
--- The underlying change log documents the API changes. Please read this carefully. The following notation is used:
---
---   * **Added** parts are expressed in bold type face.
---   * _Removed_ parts are expressed in italic type face.
---
--- Hereby the change log:
---
--- ===
---
--- # **AUTHORS and CONTRIBUTIONS**
---
--- ### Contributions:
---
---
---        
--- ### Authors:
---
---   * **FlightControl**: Concept, Design & Programming.
 --   
 -- @module Task_A2A
 
@@ -54,6 +19,28 @@ do -- TASK_A2A
   -- @type TASK_A2A
   -- @field Set#SET_UNIT TargetSetUnit
   -- @extends Tasking.Task#TASK
+
+  --- # TASK_A2A class, extends @{Task#TASK}
+  -- 
+  -- The TASK_A2A class defines Air To Air tasks for a @{Set} of Target Units, 
+  -- based on the tasking capabilities defined in @{Task#TASK}.
+  -- The TASK_A2A is implemented using a @{Fsm#FSM_TASK}, and has the following statuses:
+  -- 
+  --   * **None**: Start of the process
+  --   * **Planned**: The A2A task is planned.
+  --   * **Assigned**: The A2A task is assigned to a @{Group#GROUP}.
+  --   * **Success**: The A2A task is successfully completed.
+  --   * **Failed**: The A2A task has failed. This will happen if the player exists the task early, without communicating a possible cancellation to HQ.
+  -- 
+  -- # 1.1) Set the scoring of achievements in an A2A attack.
+  -- 
+  -- Scoring or penalties can be given in the following circumstances:
+  -- 
+  --   * @{#TASK_A2A.SetScoreOnDestroy}(): Set a score when a target in scope of the A2A attack, has been destroyed.
+  --   * @{#TASK_A2A.SetScoreOnSuccess}(): Set a score when all the targets in scope of the A2A attack, have been destroyed.
+  --   * @{#TASK_A2A.SetPenaltyOnFailed}(): Set a penalty when the A2A attack has failed.
+  -- 
+  -- @field #TASK_A2A
   TASK_A2A = {
     ClassName = "TASK_A2A",
   }

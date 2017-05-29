@@ -1,4 +1,4 @@
---- **Funtional R2.1** -- Management of target **Designation**.
+--- **Functional** -- Management of target **Designation**.
 --
 -- --![Banner Image](..\Presentations\DESIGNATE\Dia1.JPG)
 --

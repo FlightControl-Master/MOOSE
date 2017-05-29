@@ -9,7 +9,16 @@
 --  * Handle local Unit Controller.
 --  * Manage the "state" of the DCS Unit.
 --  
+-- ====
+-- 
+-- ### Author: **Sven Van de Velde (FlightControl)**
+-- 
+-- ### Contributions: 
+-- 
+-- ====
+-- 
 -- @module Unit
+
 
 --- @type UNIT
 -- @extends Wrapper.Controllable#CONTROLLABLE

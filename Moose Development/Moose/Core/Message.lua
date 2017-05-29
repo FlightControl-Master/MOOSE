@@ -1,4 +1,4 @@
---- **Core** - MESSAGE class takes are of the **real-time notifications** and **messages to players** during a simulation.
+--- **Core** -- MESSAGE class takes are of the **real-time notifications** and **messages to players** during a simulation.
 -- 
 -- ![Banner Image](..\Presentations\MESSAGE\Dia1.JPG)
 -- 
@@ -38,6 +38,13 @@
 --   
 --   * To all players using @{Message#MESSAGE.ToAllIf}().
 --   * To a coalition using @{Message#MESSAGE.ToCoalitionIf}().
+-- 
+-- ====
+--  
+-- ### Author: **Sven Van de Velde (FlightControl)**
+-- ### Contributions: 
+-- 
+-- ====
 -- 
 -- @field #MESSAGE
 MESSAGE = {

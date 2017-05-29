@@ -1,4 +1,6 @@
---- Taking the lead of AI escorting your flight.
+--- **Functional** -- Taking the lead of AI escorting your flight.
+-- 
+-- ====
 -- 
 -- @{#ESCORT} class
 -- ================

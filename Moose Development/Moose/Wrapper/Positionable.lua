@@ -1,8 +1,15 @@
---- **Wrapper** -- This module contains the POSITIONABLE class.
+--- **Wrapper** -- POSITIONABLE wraps DCS classes that are "positionable".
 -- 
--- ===
+-- ====
+-- 
+-- ### Author: **Sven Van de Velde (FlightControl)**
+-- 
+-- ### Contributions: 
+-- 
+-- ====
 -- 
 -- @module Positionable
+
 
 --- The POSITIONABLE class
 -- @type POSITIONABLE
@@ -10,6 +17,7 @@
 -- @field #string PositionableName The name of the measurable.
 -- @field Core.Spot#SPOT Spot The laser Spot.
 -- @field #number LaserCode The last assigned laser code.
+
 
 --- # POSITIONABLE class, extends @{Identifiable#IDENTIFIABLE}
 -- 
@@ -24,14 +32,6 @@
 -- The POSITIONABLE class provides the following functions to construct a POSITIONABLE instance:
 --
 --  * @{Positionable#POSITIONABLE.New}(): Create a POSITIONABLE instance.
---
--- ## POSITIONABLE methods
--- 
--- The following methods can be used to identify an measurable object:
--- 
---    * @{Positionable#POSITIONABLE.GetID}(): Returns the ID of the measurable object.
---    * @{Positionable#POSITIONABLE.GetName}(): Returns the name of the measurable object.
--- 
 -- 
 -- @field #POSITIONABLE 
 POSITIONABLE = {

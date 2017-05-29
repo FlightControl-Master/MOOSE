@@ -26,14 +26,11 @@
 --   * @{Menu#MENU_CLIENT_COMMAND}: Manages command menus for CLIENTs. This manages menus for units with the skill level "Client".
 -- 
 -- ===
--- 
--- # **AUTHORS and CONTRIBUTIONS**
--- 
+--- 
+-- ### Author: **Sven Van de Velde (FlightControl)**
 -- ### Contributions: 
 -- 
--- ### Authors: 
--- 
---   * **FlightControl**: Design & Programming
+-- ====
 --   
 -- @module Menu
 
