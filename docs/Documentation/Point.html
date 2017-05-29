@@ -437,6 +437,13 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).ToStringFromRP">COORDINATE:ToStringFromRP(Controllable, Settings, ReferenceCoord, ReferenceName)</a></td>
+		<td class="summary">
+<p>Provides a coordinate string of the point, based on a coordinate format system:
+  * Uses default settings in COORDINATE.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).ToStringLL">COORDINATE:ToStringLL(Settings)</a></td>
 		<td class="summary">
 <p>Provides a Lat Lon string</p>
@@ -1737,7 +1744,7 @@ The Vec2 point.</p>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="Core.Point.html##(COORDINATE)">Core.Point#COORDINATE</a>:</em></p>
+<p><em><a href="##(COORDINATE)">#COORDINATE</a>:</em></p>
 
 
 </dd>
@@ -2127,6 +2134,53 @@ The coalition.</p>
 				
 <p><em>#string:</em>
 The BR text.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(COORDINATE).ToStringFromRP" >
+<strong>COORDINATE:ToStringFromRP(Controllable, Settings, ReferenceCoord, ReferenceName)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Provides a coordinate string of the point, based on a coordinate format system:
+  * Uses default settings in COORDINATE.</p>
+
+	
+<ul>
+    <li>Can be overridden if for a GROUP containing x clients, a menu was selected to override the default.</li>
+</ul>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> Controllable </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Core.Settings.html##(SETTINGS)">Core.Settings#SETTINGS</a> Settings </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> ReferenceCoord </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> ReferenceName </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#string:</em>
+The coordinate Text in the configured coordinate system.</p>
 
 </dd>
 </dl>
@@ -2767,7 +2821,6 @@ The y coordinate.</p>
 		<dl class="function">
 <dt>
 
-		<em></em>
 <a id="#(POINT_VEC2).z" >
 <strong>POINT_VEC2.z</strong>
 </a>

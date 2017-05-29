@@ -286,13 +286,19 @@ A <a href="CLIENT.html">CLIENT</a> needs to be registered within the <a href="MI
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MISSION).MenuReportOverview">MISSION:MenuReportOverview(TaskStatus, ReportGroup)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(MISSION).MenuReportPlayersPerTask">MISSION:MenuReportPlayersPerTask(ReportGroup)</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MISSION).MenuReportSummary">MISSION:MenuReportSummary(ReportGroup)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(MISSION).MenuReportTasksPerStatus">MISSION:MenuReportTasksPerStatus(TaskStatus, ReportGroup)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MISSION).MenuReportTasksSummary">MISSION:MenuReportTasksSummary(ReportGroup)</a></td>
 		<td class="summary">
 
 </td>
@@ -466,7 +472,7 @@ A <a href="CLIENT.html">CLIENT</a> needs to be registered within the <a href="MI
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MISSION).ReportDetails">MISSION:ReportDetails()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(MISSION).ReportDetails">MISSION:ReportDetails(ReportGroup)</a></td>
 		<td class="summary">
 <p>Create a detailed report of the Mission, listing all the details of the Task.</p>
 </td>
@@ -478,9 +484,9 @@ A <a href="CLIENT.html">CLIENT</a> needs to be registered within the <a href="MI
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MISSION).ReportPlayers">MISSION:ReportPlayers()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(MISSION).ReportPlayersPerTask">MISSION:ReportPlayersPerTask(ReportGroup)</a></td>
 		<td class="summary">
-<p>Create a player report of the Mission.</p>
+<p>Create an active player report of the Mission.</p>
 </td>
 		</tr>
 		<tr>
@@ -1239,8 +1245,29 @@ true if Unit is part of a Task in the Mission.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(MISSION).MenuReportOverview" >
-<strong>MISSION:MenuReportOverview(TaskStatus, ReportGroup)</strong>
+<a id="#(MISSION).MenuReportPlayersPerTask" >
+<strong>MISSION:MenuReportPlayersPerTask(ReportGroup)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> ReportGroup </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(MISSION).MenuReportTasksPerStatus" >
+<strong>MISSION:MenuReportTasksPerStatus(TaskStatus, ReportGroup)</strong>
 </a>
 </dt>
 <dd>
@@ -1266,8 +1293,8 @@ The status</p>
 		<dl class="function">
 <dt>
 
-<a id="#(MISSION).MenuReportSummary" >
-<strong>MISSION:MenuReportSummary(ReportGroup)</strong>
+<a id="#(MISSION).MenuReportTasksSummary" >
+<strong>MISSION:MenuReportTasksSummary(ReportGroup)</strong>
 </a>
 </dt>
 <dd>
@@ -2157,13 +2184,21 @@ self</p>
 <dt>
 
 <a id="#(MISSION).ReportDetails" >
-<strong>MISSION:ReportDetails()</strong>
+<strong>MISSION:ReportDetails(ReportGroup)</strong>
 </a>
 </dt>
 <dd>
 	
 <p>Create a detailed report of the Mission, listing all the details of the Task.</p>
 
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> ReportGroup </em></code>: </p>
+
+				</li>
+		</ul>
 		<h3>Return value</h3>
 				
 <p><em>#string:</em></p>
@@ -2205,24 +2240,32 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(MISSION).ReportPlayers" >
-<strong>MISSION:ReportPlayers()</strong>
+<a id="#(MISSION).ReportPlayersPerTask" >
+<strong>MISSION:ReportPlayersPerTask(ReportGroup)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Create a player report of the Mission.</p>
+<p>Create an active player report of the Mission.</p>
 
 	
 <p>This reports provides a one liner of the mission status. It indicates how many players and how many Tasks.</p>
 
-<pre><code>Mission "&lt;MissionName&gt;" - Status "&lt;MissionStatus&gt;"
+<pre><code>Mission "&lt;MissionName&gt;" - &lt;MissionStatus&gt; - Active Players Report
  - Player "&lt;PlayerName&gt;: Task &lt;TaskName&gt; &lt;TaskStatus&gt;, Task &lt;TaskName&gt; &lt;TaskStatus&gt;
  - Player &lt;PlayerName&gt;: Task &lt;TaskName&gt; &lt;TaskStatus&gt;, Task &lt;TaskName&gt; &lt;TaskStatus&gt;
  - ..
 </code></pre>
 
 
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> ReportGroup </em></code>: </p>
+
+				</li>
+		</ul>
 		<h3>Return value</h3>
 				
 <p><em>#string:</em></p>

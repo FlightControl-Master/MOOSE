@@ -106,38 +106,6 @@
 
 <hr/>
 
-<h1>1) <a href="##(TASK_A2A_DISPATCHER)">#TASK<em>A2A</em>DISPATCHER</a> class, extends <a href="##(DETECTION_MANAGER)">#DETECTION_MANAGER</a></h1>
-
-<p>The <a href="##(TASK_A2A_DISPATCHER)">#TASK<em>A2A</em>DISPATCHER</a> class implements the dynamic dispatching of tasks upon groups of detected units determined a <a href="Set.html">Set</a> of EWR installation groups.
-The EWR will detect units, will group them, and will dispatch <a href="Task.html">Task</a>s to groups. Depending on the type of target detected, different tasks will be dispatched.
-Find a summary below describing for which situation a task type is created:</p>
-
-<ul>
-    <li><strong>INTERCEPT Task</strong>: Is created when the target is known, is detected and within a danger zone, and there is no friendly airborne in range.</li>
-    <li><strong>SWEEP Task</strong>: Is created when the target is unknown, was detected and the last position is only known, and within a danger zone, and there is no friendly airborne in range.</li>
-    <li><strong>ENGAGE Task</strong>: Is created when the target is known, is detected and within a danger zone, and there is a friendly airborne in range, that will receive this task.</li>
-</ul>
-
-<p>Other task types will follow...</p>
-
-<h2>3.1) TASK<em>A2A</em>DISPATCHER constructor:</h2>
-<p>The <a href="##(TASK_A2A_DISPATCHER).New">TASK<em>A2A</em>DISPATCHER.New</a>() method creates a new TASK<em>A2A</em>DISPATCHER instance.</p>
-
-<hr/>
-
-<h1><strong>API CHANGE HISTORY</strong></h1>
-
-<p>The underlying change log documents the API changes. Please read this carefully. The following notation is used:</p>
-
-<ul>
-    <li><strong>Added</strong> parts are expressed in bold type face.</li>
-    <li><em>Removed</em> parts are expressed in italic type face.</li>
-</ul>
-
-<p>Hereby the change log:</p>
-
-<hr/>
-
 <h1><strong>AUTHORS and CONTRIBUTIONS</strong></h1>
 
 <h3>Contributions:</h3>
@@ -154,22 +122,18 @@ Find a summary below describing for which situation a task type is created:</p>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="#TASK_A2A_DISPATCHER">TASK_A2A_DISPATCHER</a></td>
 		<td class="summary">
+<h1>TASK<em>A2A</em>DISPATCHER class, extends <a href="Tasking.html##(DETECTION_MANAGER)">Tasking#DETECTION_MANAGER</a></h1>
 
+<p>The <a href="##(TASK_A2A_DISPATCHER)">#TASK<em>A2A</em>DISPATCHER</a> class implements the dynamic dispatching of tasks upon groups of detected units determined a <a href="Set.html">Set</a> of EWR installation groups.</p>
 </td>
 		</tr>
 	</table>
 			<h2><a id="#(TASK_A2A_DISPATCHER)">Type <code>TASK_A2A_DISPATCHER</code></a></h2>
 				<table class="function_list">
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_A2A_DISPATCHER).ClassName">TASK_A2A_DISPATCHER.ClassName</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(TASK_A2A_DISPATCHER).Detection">TASK_A2A_DISPATCHER.Detection</a></td>
 		<td class="summary">
-<p>The DETECTION_BASE object that is used to report the detected objects. The Detection object will only function in RADAR mode!!!</p>
+
 </td>
 		</tr>
 		<tr>
@@ -188,6 +152,12 @@ Find a summary below describing for which situation a task type is created:</p>
 		<td class="name" nowrap="nowrap"><a href="##(TASK_A2A_DISPATCHER).EvaluateRemoveTask">TASK_A2A_DISPATCHER:EvaluateRemoveTask(Mission, Task, Detection, DetectedItemID, DetectedItemChange, DetectedItem, DetectedItemIndex, DetectedItemChanged)</a></td>
 		<td class="summary">
 <p>Evaluates the removal of the Task from the Mission.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_A2A_DISPATCHER).EvaluateSWEEP">TASK_A2A_DISPATCHER:EvaluateSWEEP(DetectedItem)</a></td>
+		<td class="summary">
+<p>Creates an SWEEP task when there are targets for it.</p>
 </td>
 		</tr>
 		<tr>
@@ -226,18 +196,6 @@ Find a summary below describing for which situation a task type is created:</p>
 <p>Assigns tasks in relation to the detected items to the <a href="Set.html##(SET_GROUP)">Set#SET_GROUP</a>.</p>
 </td>
 		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_A2A_DISPATCHER).SetGroup">TASK_A2A_DISPATCHER.SetGroup</a></td>
-		<td class="summary">
-<p>The groups to which the FAC will report to.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_A2A_DISPATCHER).Tasks">TASK_A2A_DISPATCHER.Tasks</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
 	</table>
 
 	<h2>Global(s)</h2>
@@ -251,6 +209,25 @@ Find a summary below describing for which situation a task type is created:</p>
 </dt>
 <dd>
 	
+<h1>TASK<em>A2A</em>DISPATCHER class, extends <a href="Tasking.html##(DETECTION_MANAGER)">Tasking#DETECTION_MANAGER</a></h1>
+
+<p>The <a href="##(TASK_A2A_DISPATCHER)">#TASK<em>A2A</em>DISPATCHER</a> class implements the dynamic dispatching of tasks upon groups of detected units determined a <a href="Set.html">Set</a> of EWR installation groups.</p>
+
+	
+<p>The EWR will detect units, will group them, and will dispatch <a href="Task.html">Task</a>s to groups. Depending on the type of target detected, different tasks will be dispatched.
+Find a summary below describing for which situation a task type is created:</p>
+
+<ul>
+    <li><strong>INTERCEPT Task</strong>: Is created when the target is known, is detected and within a danger zone, and there is no friendly airborne in range.</li>
+    <li><strong>SWEEP Task</strong>: Is created when the target is unknown, was detected and the last position is only known, and within a danger zone, and there is no friendly airborne in range.</li>
+    <li><strong>ENGAGE Task</strong>: Is created when the target is known, is detected and within a danger zone, and there is a friendly airborne in range, that will receive this task.</li>
+</ul>
+
+<p>Other task types will follow...</p>
+
+<h1>TASK<em>A2A</em>DISPATCHER constructor:</h1>
+<hr/>
+<p>The <a href="##(TASK_A2A_DISPATCHER).New">TASK<em>A2A</em>DISPATCHER.New</a>() method creates a new TASK<em>A2A</em>DISPATCHER instance.</p>
 
 
 </dd>
@@ -265,28 +242,14 @@ Find a summary below describing for which situation a task type is created:</p>
 		<dl class="function">
 <dt>
 
-		<em>#string</em>
-<a id="#(TASK_A2A_DISPATCHER).ClassName" >
-<strong>TASK_A2A_DISPATCHER.ClassName</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em><a href="Functional.Detection.html##(DETECTION_BASE)">Functional.Detection#DETECTION_BASE</a></em>
+		<em></em>
 <a id="#(TASK_A2A_DISPATCHER).Detection" >
 <strong>TASK_A2A_DISPATCHER.Detection</strong>
 </a>
 </dt>
 <dd>
 	
-<p>The DETECTION_BASE object that is used to report the detected objects. The Detection object will only function in RADAR mode!!!</p>
+
 
 </dd>
 </dl>
@@ -430,6 +393,42 @@ The detection created by the <a href="Detection.html##(DETECTION_BASE)">Detectio
 		<dl class="function">
 <dt>
 
+<a id="#(TASK_A2A_DISPATCHER).EvaluateSWEEP" >
+<strong>TASK_A2A_DISPATCHER:EvaluateSWEEP(DetectedItem)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Creates an SWEEP task when there are targets for it.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Functional.Detection.html##(DETECTION_BASE.DetectedItem)">Functional.Detection#DETECTION_BASE.DetectedItem</a> DetectedItem </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return values</h3>
+			<ol>
+				<li>
+				
+<p><em><a href="Set.html##(SET_UNIT)">Set#SET_UNIT</a>:</em>
+TargetSetUnit: The target set of units.</p>
+
+				</li>
+				<li>
+				
+<p><em>#nil:</em>
+If there are no targets to be set.</p>
+
+				</li>
+			</ol>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(TASK_A2A_DISPATCHER).GetFriendliesNearBy" >
 <strong>TASK_A2A_DISPATCHER:GetFriendliesNearBy(DetectedItem)</strong>
 </a>
@@ -482,7 +481,7 @@ The detection created by the <a href="Detection.html##(DETECTION_BASE)">Detectio
 		<dl class="function">
 <dt>
 
-		<em><a href="Tasking.Mission.html##(MISSION)">Tasking.Mission#MISSION</a></em>
+		<em></em>
 <a id="#(TASK_A2A_DISPATCHER).Mission" >
 <strong>TASK_A2A_DISPATCHER.Mission</strong>
 </a>
@@ -605,34 +604,6 @@ The detection created by the <a href="Detection.html##(DETECTION_BASE)">Detectio
 				
 <p><em>#boolean:</em>
 Return true if you want the task assigning to continue... false will cancel the loop.</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em><a href="Set.html##(SET_GROUP)">Set#SET_GROUP</a></em>
-<a id="#(TASK_A2A_DISPATCHER).SetGroup" >
-<strong>TASK_A2A_DISPATCHER.SetGroup</strong>
-</a>
-</dt>
-<dd>
-	
-<p>The groups to which the FAC will report to.</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em></em>
-<a id="#(TASK_A2A_DISPATCHER).Tasks" >
-<strong>TASK_A2A_DISPATCHER.Tasks</strong>
-</a>
-</dt>
-<dd>
-	
-
 
 </dd>
 </dl>

@@ -131,10 +131,6 @@ The TASK_A2A is implemented using a <a href="Statemachine.html##(FSM_TASK)">Stat
     <li><a href="##(TASK_A2A).SetPenaltyOnFailed">TASK_A2A.SetPenaltyOnFailed</a>(): Set a penalty when the A2A attack has failed.</li>
 </ul>
 
-<h1>2) <a href="Task_A2A.html##(TASK_INTERCEPT)">Task<em>A2A#TASK</em>INTERCEPT</a> class, extends <a href="Task_A2A.html##(TASK_A2A)">Task<em>A2A#TASK</em>A2A</a></h1>
-
-<p>The TASK<em>A2A</em>INTERCEPT class defines an INTERCEPT task for a <a href="Set.html">Set</a> of Target Units.</p>
-
 <hr/>
 
 <h1><strong>API CHANGE HISTORY</strong></h1>
@@ -174,13 +170,25 @@ The TASK_A2A is implemented using a <a href="Statemachine.html##(FSM_TASK)">Stat
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="#TASK_A2A_ENGAGE">TASK_A2A_ENGAGE</a></td>
 		<td class="summary">
+<h1>TASK<em>A2A</em>ENGAGE class, extends <a href="Task_A2A.html##(TASK_A2A)">Task<em>A2A#TASK</em>A2A</a></h1>
 
+<p>The TASK<em>A2A</em>ENGAGE class defines an engage task for a human player to be executed.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="#TASK_A2A_INTERCEPT">TASK_A2A_INTERCEPT</a></td>
 		<td class="summary">
+<h1>TASK<em>A2A</em>INTERCEPT class, extends <a href="Task_A2A.html##(TASK_A2A)">Task<em>A2A#TASK</em>A2A</a></h1>
 
+<p>The TASK<em>A2A</em>INTERCEPT class defines an intercept task for a human player to be executed.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#TASK_A2A_SWEEP">TASK_A2A_SWEEP</a></td>
+		<td class="summary">
+<h1>TASK<em>A2A</em>SWEEP class, extends <a href="Task_A2A.html##(TASK_A2A)">Task<em>A2A#TASK</em>A2A</a></h1>
+
+<p>The TASK<em>A2A</em>SWEEP class defines a sweep task for a human player to be executed.</p>
 </td>
 		</tr>
 	</table>
@@ -281,12 +289,6 @@ The TASK_A2A is implemented using a <a href="Statemachine.html##(FSM_TASK)">Stat
 			<h2><a id="#(TASK_A2A_ENGAGE)">Type <code>TASK_A2A_ENGAGE</code></a></h2>
 				<table class="function_list">
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_A2A_ENGAGE).ClassName">TASK_A2A_ENGAGE.ClassName</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(TASK_A2A_ENGAGE).New">TASK_A2A_ENGAGE:New(Mission, SetGroup, TaskName, TargetSetUnit, TaskBriefing)</a></td>
 		<td class="summary">
 <p>Instantiates a new TASK<em>A2A</em>ENGAGE.</p>
@@ -303,12 +305,6 @@ The TASK_A2A is implemented using a <a href="Statemachine.html##(FSM_TASK)">Stat
 			<h2><a id="#(TASK_A2A_INTERCEPT)">Type <code>TASK_A2A_INTERCEPT</code></a></h2>
 				<table class="function_list">
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_A2A_INTERCEPT).ClassName">TASK_A2A_INTERCEPT.ClassName</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(TASK_A2A_INTERCEPT).New">TASK_A2A_INTERCEPT:New(Mission, SetGroup, TaskName, TargetSetUnit, TaskBriefing)</a></td>
 		<td class="summary">
 <p>Instantiates a new TASK<em>A2A</em>INTERCEPT.</p>
@@ -316,6 +312,22 @@ The TASK_A2A is implemented using a <a href="Statemachine.html##(FSM_TASK)">Stat
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(TASK_A2A_INTERCEPT).TargetSetUnit">TASK_A2A_INTERCEPT.TargetSetUnit</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(TASK_A2A_SWEEP)">Type <code>TASK_A2A_SWEEP</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_A2A_SWEEP).New">TASK_A2A_SWEEP:New(Mission, SetGroup, TaskName, TargetSetUnit, TaskBriefing)</a></td>
+		<td class="summary">
+<p>Instantiates a new TASK<em>A2A</em>SWEEP.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_A2A_SWEEP).TargetSetUnit">TASK_A2A_SWEEP.TargetSetUnit</a></td>
 		<td class="summary">
 
 </td>
@@ -347,6 +359,18 @@ The TASK_A2A is implemented using a <a href="Statemachine.html##(FSM_TASK)">Stat
 </dt>
 <dd>
 	
+<h1>TASK<em>A2A</em>ENGAGE class, extends <a href="Task_A2A.html##(TASK_A2A)">Task<em>A2A#TASK</em>A2A</a></h1>
+
+<p>The TASK<em>A2A</em>ENGAGE class defines an engage task for a human player to be executed.</p>
+
+	
+<p>When enemy planes are close to human players, use this task type is used urge the players to get out there!</p>
+
+<p>The TASK<em>A2A</em>ENGAGE is used by the <a href="Task_A2A_Dispatcher.html##(TASK_A2A_DISPATCHER)">Task<em>A2A</em>Dispatcher#TASK<em>A2A</em>DISPATCHER</a> to automatically create engage tasks 
+based on detected airborne enemy targets intruding friendly airspace.</p>
+
+<p>The task is defined for a <a href="Mission.html##(MISSION)">Mission#MISSION</a>, where a friendly <a href="Set.html##(SET_GROUP)">Set#SET_GROUP</a> consisting of GROUPs with one human players each, is engaging the targets.
+The task is given a name and a briefing, that is used in the menu structure and in the reporting.</p>
 
 
 </dd>
@@ -361,6 +385,46 @@ The TASK_A2A is implemented using a <a href="Statemachine.html##(FSM_TASK)">Stat
 </dt>
 <dd>
 	
+<h1>TASK<em>A2A</em>INTERCEPT class, extends <a href="Task_A2A.html##(TASK_A2A)">Task<em>A2A#TASK</em>A2A</a></h1>
+
+<p>The TASK<em>A2A</em>INTERCEPT class defines an intercept task for a human player to be executed.</p>
+
+	
+<p>When enemy planes need to be intercepted by human players, use this task type to urgen the players to get out there!</p>
+
+<p>The TASK<em>A2A</em>INTERCEPT is used by the <a href="Task_A2A_Dispatcher.html##(TASK_A2A_DISPATCHER)">Task<em>A2A</em>Dispatcher#TASK<em>A2A</em>DISPATCHER</a> to automatically create intercept tasks 
+based on detected airborne enemy targets intruding friendly airspace.</p>
+
+<p>The task is defined for a <a href="Mission.html##(MISSION)">Mission#MISSION</a>, where a friendly <a href="Set.html##(SET_GROUP)">Set#SET_GROUP</a> consisting of GROUPs with one human players each, is intercepting the targets.
+The task is given a name and a briefing, that is used in the menu structure and in the reporting.</p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(TASK_A2A_SWEEP)">#TASK_A2A_SWEEP</a></em>
+<a id="TASK_A2A_SWEEP" >
+<strong>TASK_A2A_SWEEP</strong>
+</a>
+</dt>
+<dd>
+	
+<h1>TASK<em>A2A</em>SWEEP class, extends <a href="Task_A2A.html##(TASK_A2A)">Task<em>A2A#TASK</em>A2A</a></h1>
+
+<p>The TASK<em>A2A</em>SWEEP class defines a sweep task for a human player to be executed.</p>
+
+	
+<p>A sweep task needs to be given when targets were detected but somehow the detection was lost.
+Most likely, these enemy planes are hidden in the mountains or are flying under radar.
+These enemy planes need to be sweeped by human players, and use this task type to urge the players to get out there and find those enemy fighters.</p>
+
+<p>The TASK<em>A2A</em>SWEEP is used by the <a href="Task_A2A_Dispatcher.html##(TASK_A2A_DISPATCHER)">Task<em>A2A</em>Dispatcher#TASK<em>A2A</em>DISPATCHER</a> to automatically create sweep tasks 
+based on detected airborne enemy targets intruding friendly airspace, for which the detection has been lost for more than 60 seconds.</p>
+
+<p>The task is defined for a <a href="Mission.html##(MISSION)">Mission#MISSION</a>, where a friendly <a href="Set.html##(SET_GROUP)">Set#SET_GROUP</a> consisting of GROUPs with one human players each, is sweeping the targets.
+The task is given a name and a briefing, that is used in the menu structure and in the reporting.</p>
 
 
 </dd>
@@ -847,20 +911,6 @@ The Zone object where the Target is located on the map.</p>
 		<dl class="function">
 <dt>
 
-		<em>#string</em>
-<a id="#(TASK_A2A_ENGAGE).ClassName" >
-<strong>TASK_A2A_ENGAGE.ClassName</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
 <a id="#(TASK_A2A_ENGAGE).New" >
 <strong>TASK_A2A_ENGAGE:New(Mission, SetGroup, TaskName, TargetSetUnit, TaskBriefing)</strong>
 </a>
@@ -930,20 +980,6 @@ self</p>
 		<dl class="function">
 <dt>
 
-		<em>#string</em>
-<a id="#(TASK_A2A_INTERCEPT).ClassName" >
-<strong>TASK_A2A_INTERCEPT.ClassName</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
 <a id="#(TASK_A2A_INTERCEPT).New" >
 <strong>TASK_A2A_INTERCEPT:New(Mission, SetGroup, TaskName, TargetSetUnit, TaskBriefing)</strong>
 </a>
@@ -996,6 +1032,75 @@ self</p>
 		<em><a href="Set.html##(SET_UNIT)">Set#SET_UNIT</a></em>
 <a id="#(TASK_A2A_INTERCEPT).TargetSetUnit" >
 <strong>TASK_A2A_INTERCEPT.TargetSetUnit</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+
+			<h2><a id="#(TASK_A2A_SWEEP)" >Type <code>TASK_A2A_SWEEP</code></a></h2>
+				
+<p>The TASK<em>A2A</em>SWEEP class</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_A2A_SWEEP).New" >
+<strong>TASK_A2A_SWEEP:New(Mission, SetGroup, TaskName, TargetSetUnit, TaskBriefing)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Instantiates a new TASK<em>A2A</em>SWEEP.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Tasking.Mission.html##(MISSION)">Tasking.Mission#MISSION</a> Mission </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Core.Set.html##(SET_GROUP)">Core.Set#SET_GROUP</a> SetGroup </em></code>: 
+The set of groups for which the Task can be assigned.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string TaskName </em></code>: 
+The name of the Task.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Core.Set.html##(SET_UNIT)">Core.Set#SET_UNIT</a> TargetSetUnit </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string TaskBriefing </em></code>: 
+The briefing of the task.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(TASK_A2A_SWEEP)">#TASK<em>A2A</em>SWEEP</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="Set.html##(SET_UNIT)">Set#SET_UNIT</a></em>
+<a id="#(TASK_A2A_SWEEP).TargetSetUnit" >
+<strong>TASK_A2A_SWEEP.TargetSetUnit</strong>
 </a>
 </dt>
 <dd>

@@ -168,6 +168,7 @@ This is different from the EnRoute tasks, where the targets of the task need to 
     <li><a href="##(CONTROLLABLE).EnRouteTaskAWACS">CONTROLLABLE.EnRouteTaskAWACS</a>: (AIR) Aircraft will act as an AWACS for friendly units (will provide them with information about contacts). No parameters.</li>
     <li><a href="##(CONTROLLABLE).EnRouteTaskEngageControllable">CONTROLLABLE.EnRouteTaskEngageControllable</a>: (AIR) Engaging a controllable. The task does not assign the target controllable to the unit/controllable to attack now; it just allows the unit/controllable to engage the target controllable as well as other assigned targets.</li>
     <li><a href="##(CONTROLLABLE).EnRouteTaskEngageTargets">CONTROLLABLE.EnRouteTaskEngageTargets</a>: (AIR) Engaging targets of defined types.</li>
+    <li><a href="##(CONTROLLABLE).EnRouteTaskEngageTargetsInZone">CONTROLLABLE.EnRouteTaskEngageTargetsInZone</a>: (AIR) Engaging a targets of defined types at circle-shaped zone.</li>
     <li><a href="##(CONTROLLABLE).EnRouteTaskEWR">CONTROLLABLE.EnRouteTaskEWR</a>: (AIR) Attack the Unit.</li>
     <li><a href="##(CONTROLLABLE).EnRouteTaskFAC">CONTROLLABLE.EnRouteTaskFAC</a>: (AIR + GROUND) The task makes the controllable/unit a FAC and lets the FAC to choose a targets (enemy ground controllable) around as well as other assigned targets.</li>
     <li><a href="##(CONTROLLABLE).EnRouteTaskFAC_EngageControllable">CONTROLLABLE.EnRouteTaskFAC_EngageControllable</a>: (AIR + GROUND) The task makes the controllable/unit a FAC and lets the FAC to choose the target (enemy ground controllable) as well as other assigned targets.</li>
@@ -324,6 +325,12 @@ This is different from the EnRoute tasks, where the targets of the task need to 
 		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).EnRouteTaskEngageTargets">CONTROLLABLE:EnRouteTaskEngageTargets(Distance, TargetTypes, Priority)</a></td>
 		<td class="summary">
 <p>(AIR) Engaging targets of defined types.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).EnRouteTaskEngageTargetsInZone">CONTROLLABLE:EnRouteTaskEngageTargetsInZone(Vec2, Radius, TargetTypes, Priority)</a></td>
+		<td class="summary">
+<p>(AIR) Engaging a targets of defined types at circle-shaped zone.</p>
 </td>
 		</tr>
 		<tr>
@@ -1110,6 +1117,51 @@ Array of target categories allowed to engage. </p>
 				
 <p><code><em>#number Priority </em></code>: 
 All enroute tasks have the priority parameter. This is a number (less value - higher priority) that determines actions related to what task will be performed first. </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="Dcs.DCSTasking.Task.html##(Task)">Dcs.DCSTasking.Task#Task</a>:</em>
+The DCS task structure.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CONTROLLABLE).EnRouteTaskEngageTargetsInZone" >
+<strong>CONTROLLABLE:EnRouteTaskEngageTargetsInZone(Vec2, Radius, TargetTypes, Priority)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>(AIR) Engaging a targets of defined types at circle-shaped zone.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a> Vec2 </em></code>: 
+2D-coordinates of the zone. </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a> Radius </em></code>: 
+Radius of the zone. </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSTypes.html##(AttributeNameArray)">Dcs.DCSTypes#AttributeNameArray</a> TargetTypes </em></code>: 
+Array of target categories allowed to engage. </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Priority </em></code>: 
+All en-route tasks have the priority parameter. This is a number (less value - higher priority) that determines actions related to what task will be performed first. </p>
 
 				</li>
 		</ul>

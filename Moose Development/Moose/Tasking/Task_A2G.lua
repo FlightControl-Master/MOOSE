@@ -23,22 +23,6 @@
 --   * @{#TASK_A2G.SetScoreOnSuccess}(): Set a score when all the targets in scope of the A2G attack, have been destroyed.
 --   * @{#TASK_A2G.SetPenaltyOnFailed}(): Set a penalty when the A2G attack has failed.
 -- 
--- # 2) @{Task_A2G#TASK_SEAD} class, extends @{Task_A2G#TASK_A2G}
--- 
--- The @{#TASK_SEAD} class defines a SEAD task for a @{Set} of Target Units.
--- 
--- ===
--- 
--- # 3) @{Task_A2G#TASK_CAS} class, extends @{Task_A2G#TASK_A2G}
--- 
--- The @{#TASK_CAS} class defines a CAS task for a @{Set} of Target Units.
--- 
--- ===
--- 
--- # 4) @{Task_A2G#TASK_BAI} class, extends @{Task_A2G#TASK_A2G}
--- 
--- The @{#TASK_BAI} class defines a BAI task for a @{Set} of Target Units.
--- 
 -- ====
 --
 -- # **API CHANGE HISTORY**
@@ -351,26 +335,36 @@ do -- TASK_A2G
 end 
 
 
-do -- TASK_SEAD
+do -- TASK_A2G_SEAD
 
-  --- The TASK_SEAD class
-  -- @type TASK_SEAD
+  --- The TASK_A2G_SEAD class
+  -- @type TASK_A2G_SEAD
   -- @field Set#SET_UNIT TargetSetUnit
   -- @extends Tasking.Task#TASK
-  TASK_SEAD = {
-    ClassName = "TASK_SEAD",
+
+  --- # TASK_A2G_SEAD class, extends @{Task_A2G#TASK_A2G}
+  -- 
+  -- The TASK_A2G_SEAD class defines an Suppression or Extermination of Air Defenses task for a human player to be executed.
+  -- These tasks are important to be executed as they will help to achieve air superiority at the vicinity.
+  -- 
+  -- The TASK_A2G_SEAD is used by the @{Task_A2G_Dispatcher#TASK_A2G_DISPATCHER} to automatically create SEAD tasks 
+  -- based on detected enemy ground targets.
+  -- 
+  -- @field #TASK_A2G_SEAD
+  TASK_A2G_SEAD = {
+    ClassName = "TASK_A2G_SEAD",
   }
   
-  --- Instantiates a new TASK_SEAD.
-  -- @param #TASK_SEAD self
+  --- Instantiates a new TASK_A2G_SEAD.
+  -- @param #TASK_A2G_SEAD self
   -- @param Tasking.Mission#MISSION Mission
   -- @param Core.Set#SET_GROUP SetGroup The set of groups for which the Task can be assigned.
   -- @param #string TaskName The name of the Task.
   -- @param Core.Set#SET_UNIT TargetSetUnit 
   -- @param #string TaskBriefing The briefing of the task.
-  -- @return #TASK_SEAD self
-  function TASK_SEAD:New( Mission, SetGroup, TaskName, TargetSetUnit, TaskBriefing )
-    local self = BASE:Inherit( self, TASK_A2G:New( Mission, SetGroup, TaskName, TargetSetUnit, "SEAD", TaskBriefing ) ) -- #TASK_SEAD
+  -- @return #TASK_A2G_SEAD self
+  function TASK_A2G_SEAD:New( Mission, SetGroup, TaskName, TargetSetUnit, TaskBriefing )
+    local self = BASE:Inherit( self, TASK_A2G:New( Mission, SetGroup, TaskName, TargetSetUnit, "SEAD", TaskBriefing ) ) -- #TASK_A2G_SEAD
     self:F()
     
     Mission:AddTask( self )
@@ -393,26 +387,37 @@ do -- TASK_SEAD
 
 end
 
-do -- TASK_BAI
+do -- TASK_A2G_BAI
 
-  --- The TASK_BAI class
-  -- @type TASK_BAI
+  --- The TASK_A2G_BAI class
+  -- @type TASK_A2G_BAI
   -- @field Set#SET_UNIT TargetSetUnit
   -- @extends Tasking.Task#TASK
-  TASK_BAI = {
-    ClassName = "TASK_BAI",
+
+  --- # TASK_A2G_BAI class, extends @{Task_A2G#TASK_A2G}
+  -- 
+  -- The TASK_A2G_BAI class defines an Battlefield Air Interdiction task for a human player to be executed.
+  -- These tasks are more strategic in nature and are most of the time further away from friendly forces.
+  -- BAI tasks can also be used to express the abscence of friendly forces near the vicinity.
+  -- 
+  -- The TASK_A2G_BAI is used by the @{Task_A2G_Dispatcher#TASK_A2G_DISPATCHER} to automatically create BAI tasks 
+  -- based on detected enemy ground targets.
+  -- 
+  -- @field #TASK_A2G_BAI
+  TASK_A2G_BAI = {
+    ClassName = "TASK_A2G_BAI",
   }
   
-  --- Instantiates a new TASK_BAI.
-  -- @param #TASK_BAI self
+  --- Instantiates a new TASK_A2G_BAI.
+  -- @param #TASK_A2G_BAI self
   -- @param Tasking.Mission#MISSION Mission
   -- @param Core.Set#SET_GROUP SetGroup The set of groups for which the Task can be assigned.
   -- @param #string TaskName The name of the Task.
   -- @param Core.Set#SET_UNIT TargetSetUnit 
   -- @param #string TaskBriefing The briefing of the task.
-  -- @return #TASK_BAI self
-  function TASK_BAI:New( Mission, SetGroup, TaskName, TargetSetUnit, TaskBriefing )
-    local self = BASE:Inherit( self, TASK_A2G:New( Mission, SetGroup, TaskName, TargetSetUnit, "BAI", TaskBriefing ) ) -- #TASK_BAI
+  -- @return #TASK_A2G_BAI self
+  function TASK_A2G_BAI:New( Mission, SetGroup, TaskName, TargetSetUnit, TaskBriefing )
+    local self = BASE:Inherit( self, TASK_A2G:New( Mission, SetGroup, TaskName, TargetSetUnit, "BAI", TaskBriefing ) ) -- #TASK_A2G_BAI
     self:F()
     
     Mission:AddTask( self )
@@ -435,26 +440,36 @@ do -- TASK_BAI
 
 end
 
-do -- TASK_CAS
+do -- TASK_A2G_CAS
 
-  --- The TASK_CAS class
-  -- @type TASK_CAS
+  --- The TASK_A2G_CAS class
+  -- @type TASK_A2G_CAS
   -- @field Set#SET_UNIT TargetSetUnit
   -- @extends Tasking.Task#TASK
-  TASK_CAS = {
-    ClassName = "TASK_CAS",
+
+  --- # TASK_A2G_CAS class, extends @{Task_A2G#TASK_A2G}
+  -- 
+  -- The TASK_A2G_CAS class defines an Close Air Support task for a human player to be executed.
+  -- Friendly forces will be in the vicinity within 6km from the enemy.
+  -- 
+  -- The TASK_A2G_CAS is used by the @{Task_A2G_Dispatcher#TASK_A2G_DISPATCHER} to automatically create CAS tasks 
+  -- based on detected enemy ground targets.
+  -- 
+  -- @field #TASK_A2G_CAS
+  TASK_A2G_CAS = {
+    ClassName = "TASK_A2G_CAS",
   }
   
-  --- Instantiates a new TASK_CAS.
-  -- @param #TASK_CAS self
+  --- Instantiates a new TASK_A2G_CAS.
+  -- @param #TASK_A2G_CAS self
   -- @param Tasking.Mission#MISSION Mission
   -- @param Core.Set#SET_GROUP SetGroup The set of groups for which the Task can be assigned.
   -- @param #string TaskName The name of the Task.
   -- @param Core.Set#SET_UNIT TargetSetUnit 
   -- @param #string TaskBriefing The briefing of the task.
-  -- @return #TASK_CAS self
-  function TASK_CAS:New( Mission, SetGroup, TaskName, TargetSetUnit, TaskBriefing )
-    local self = BASE:Inherit( self, TASK_A2G:New( Mission, SetGroup, TaskName, TargetSetUnit, "CAS", TaskBriefing ) ) -- #TASK_CAS
+  -- @return #TASK_A2G_CAS self
+  function TASK_A2G_CAS:New( Mission, SetGroup, TaskName, TargetSetUnit, TaskBriefing )
+    local self = BASE:Inherit( self, TASK_A2G:New( Mission, SetGroup, TaskName, TargetSetUnit, "CAS", TaskBriefing ) ) -- #TASK_A2G_CAS
     self:F()
     
     Mission:AddTask( self )

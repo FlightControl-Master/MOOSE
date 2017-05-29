@@ -110,7 +110,9 @@
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="#COMMANDCENTER">COMMANDCENTER</a></td>
 		<td class="summary">
+<h1>COMMANDCENTER class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
 
+<p> The COMMANDCENTER class governs multiple missions, the tasking and the reporting.</p>
 </td>
 		</tr>
 		<tr>
@@ -129,12 +131,6 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(COMMANDCENTER).ClassName">COMMANDCENTER.ClassName</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(COMMANDCENTER).CommandCenterCoalition">COMMANDCENTER.CommandCenterCoalition</a></td>
 		<td class="summary">
 
@@ -147,13 +143,7 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(COMMANDCENTER).CommandCenterName">COMMANDCENTER.CommandCenterName</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(COMMANDCENTER).CommandCenterPositionable">COMMANDCENTER.CommandCenterPositionable</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(COMMANDCENTER).CommunicationMode">COMMANDCENTER.CommunicationMode</a></td>
 		<td class="summary">
 
 </td>
@@ -195,6 +185,12 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(COMMANDCENTER).IsModeWWII">COMMANDCENTER:IsModeWWII()</a></td>
+		<td class="summary">
+<p>Returns if the commandcenter operations is in WWII mode</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(COMMANDCENTER).MessageToAll">COMMANDCENTER:MessageToAll(Message)</a></td>
 		<td class="summary">
 <p>Send a CC message to the coalition of the CC.</p>
@@ -210,12 +206,6 @@
 		<td class="name" nowrap="nowrap"><a href="##(COMMANDCENTER).MessageToGroup">COMMANDCENTER:MessageToGroup(Message, TaskGroup, Name)</a></td>
 		<td class="summary">
 <p>Send a CC message to a GROUP.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(COMMANDCENTER).Name">COMMANDCENTER.Name</a></td>
-		<td class="summary">
-
 </td>
 		</tr>
 		<tr>
@@ -252,6 +242,20 @@
 		<td class="name" nowrap="nowrap"><a href="##(COMMANDCENTER).SetMenu">COMMANDCENTER:SetMenu()</a></td>
 		<td class="summary">
 <p>Sets the menu structure of the Missions governed by the HQ command center.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(COMMANDCENTER).SetModeWWII">COMMANDCENTER:SetModeWWII()</a></td>
+		<td class="summary">
+<p>Set the commandcenter operations in WWII mode
+This will disable LL, MGRS, BRA, BULLS navigatin messages sent by the Command Center, 
+and will be replaced by a navigation using Reference Zones.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(COMMANDCENTER).SetReferenceZones">COMMANDCENTER:SetReferenceZones(ReferenceZonePrefix)</a></td>
+		<td class="summary">
+<p>Set special Reference Zones known by the Command Center to guide airborne pilots during WWII.</p>
 </td>
 		</tr>
 	</table>
@@ -331,7 +335,59 @@
 </dt>
 <dd>
 	
+<h1>COMMANDCENTER class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
 
+<p> The COMMANDCENTER class governs multiple missions, the tasking and the reporting.</p>
+
+	
+<p> 
+ The commandcenter communicates important messages between the various groups of human players executing tasks in missions.</p>
+
+<h2>COMMANDCENTER constructor</h2>
+
+<ul>
+    <li><a href="##(COMMANDCENTER).New">COMMANDCENTER.New</a>(): Creates a new COMMANDCENTER object.</li>
+</ul>
+
+<h2>Mission Management</h2>
+
+<ul>
+    <li><a href="##(COMMANDCENTER).AddMission">COMMANDCENTER.AddMission</a>(): Adds a mission to the commandcenter control.</li>
+    <li><a href="##(COMMANDCENTER).RemoveMission">COMMANDCENTER.RemoveMission</a>(): Removes a mission to the commandcenter control.</li>
+    <li><a href="##(COMMANDCENTER).GetMissions">COMMANDCENTER.GetMissions</a>(): Retrieves the missions table controlled by the commandcenter.</li>
+</ul>
+
+<h2>Reference Zones</h2>
+
+<p>Command Centers may be aware of certain Reference Zones within the battleground. These Reference Zones can refer to
+known areas, recognizable buildings or sites, or any other point of interest.
+Command Centers will use these Reference Zones to help pilots with defining coordinates in terms of navigation
+during the WWII era.
+The Reference Zones are related to the WWII mode that the Command Center will operate in.
+Use the method <a href="##(COMMANDCENTER).SetModeWWII">COMMANDCENTER.SetModeWWII</a>() to set the mode of communication to the WWII mode.</p>
+
+<p>In WWII mode, the Command Center will receive detected targets, and will select for each target the closest
+nearby Reference Zone. This allows pilots to navigate easier through the battle field readying for combat.</p>
+
+<p>The Reference Zones need to be set by the Mission Designer in the Mission Editor.
+Reference Zones are set by normal trigger zones. One can color the zones in a specific color, 
+and the radius of the zones doesn't matter, only the point is important. Place the center of these Reference Zones at
+specific scenery objects or points of interest (like cities, rivers, hills, crossing etc).
+The trigger zones indicating a Reference Zone need to follow a specific syntax.
+The name of each trigger zone expressing a Reference Zone need to start with a classification name of the object,
+followed by a #, followed by a symbolic name of the Reference Zone.
+A few examples:</p>
+
+<ul>
+    <li>A church at Tskinvali would be indicated as: <em>Church#Tskinvali</em></li>
+    <li>A train station near Kobuleti would be indicated as: <em>Station#Kobuleti</em></li>
+</ul>
+
+<p>The COMMANDCENTER class contains a method to indicate which trigger zones need to be used as Reference Zones.
+This is done by using the method <a href="##(COMMANDCENTER).SetReferenceZones">COMMANDCENTER.SetReferenceZones</a>().
+For the moment, only one Reference Zone class can be specified, but in the future, more classes will become possible.</p>
+
+<p>  </p>
 
 </dd>
 </dl>
@@ -385,20 +441,6 @@
 		<dl class="function">
 <dt>
 
-		<em>#string</em>
-<a id="#(COMMANDCENTER).ClassName" >
-<strong>COMMANDCENTER.ClassName</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
 		<em><a href="Dcs.DCSCoalitionWrapper.Object.html##(coalition)">Dcs.DCSCoalitionWrapper.Object#coalition</a></em>
 <a id="#(COMMANDCENTER).CommandCenterCoalition" >
 <strong>COMMANDCENTER.CommandCenterCoalition</strong>
@@ -427,21 +469,8 @@
 <dt>
 
 		<em>#string</em>
-<a id="#(COMMANDCENTER).CommandCenterName" >
-<strong>COMMANDCENTER.CommandCenterName</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(COMMANDCENTER).CommandCenterPositionable" >
-<strong>COMMANDCENTER.CommandCenterPositionable</strong>
+<a id="#(COMMANDCENTER).CommunicationMode" >
+<strong>COMMANDCENTER.CommunicationMode</strong>
 </a>
 </dt>
 <dd>
@@ -571,6 +600,24 @@ Group#GROUP</p>
 		<dl class="function">
 <dt>
 
+<a id="#(COMMANDCENTER).IsModeWWII" >
+<strong>COMMANDCENTER:IsModeWWII()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns if the commandcenter operations is in WWII mode</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+true if in WWII mode.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(COMMANDCENTER).MessageToAll" >
 <strong>COMMANDCENTER:MessageToAll(Message)</strong>
 </a>
@@ -640,20 +687,6 @@ Group#GROUP</p>
 
 				</li>
 		</ul>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em>#string</em>
-<a id="#(COMMANDCENTER).Name" >
-<strong>COMMANDCENTER.Name</strong>
-</a>
-</dt>
-<dd>
-	
-
-
 </dd>
 </dl>
 		<dl class="function">
@@ -803,6 +836,81 @@ Group#GROUP</p>
 <dd>
 	
 <p>Sets the menu structure of the Missions governed by the HQ command center.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(COMMANDCENTER).SetModeWWII" >
+<strong>COMMANDCENTER:SetModeWWII()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set the commandcenter operations in WWII mode
+This will disable LL, MGRS, BRA, BULLS navigatin messages sent by the Command Center, 
+and will be replaced by a navigation using Reference Zones.</p>
+
+	
+<p>It will also disable the settings at the settings menu for these.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(COMMANDCENTER)">#COMMANDCENTER</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(COMMANDCENTER).SetReferenceZones" >
+<strong>COMMANDCENTER:SetReferenceZones(ReferenceZonePrefix)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set special Reference Zones known by the Command Center to guide airborne pilots during WWII.</p>
+
+	
+
+<p>These Reference Zones are normal trigger zones, with a special naming.
+The Reference Zones need to be set by the Mission Designer in the Mission Editor.
+Reference Zones are set by normal trigger zones. One can color the zones in a specific color, 
+and the radius of the zones doesn't matter, only the center of the zone is important. Place the center of these Reference Zones at
+specific scenery objects or points of interest (like cities, rivers, hills, crossing etc).
+The trigger zones indicating a Reference Zone need to follow a specific syntax.
+The name of each trigger zone expressing a Reference Zone need to start with a classification name of the object,
+followed by a #, followed by a symbolic name of the Reference Zone.
+A few examples:</p>
+
+<ul>
+    <li>A church at Tskinvali would be indicated as: <em>Church#Tskinvali</em></li>
+    <li>A train station near Kobuleti would be indicated as: <em>Station#Kobuleti</em></li>
+</ul>
+
+<p>Taking the above example, this is how this method would be used:</p>
+
+<pre><code>CC:SetReferenceZones( "Church" )
+CC:SetReferenceZones( "Station" )
+</code></pre>
+
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string ReferenceZonePrefix </em></code>: 
+The name before the #-mark indicating the class of the Reference Zones.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(COMMANDCENTER)">#COMMANDCENTER</a>:</em></p>
+
 
 </dd>
 </dl>

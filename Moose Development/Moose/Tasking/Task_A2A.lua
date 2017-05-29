@@ -23,10 +23,6 @@
 --   * @{#TASK_A2A.SetScoreOnSuccess}(): Set a score when all the targets in scope of the A2A attack, have been destroyed.
 --   * @{#TASK_A2A.SetPenaltyOnFailed}(): Set a penalty when the A2A attack has failed.
 -- 
--- # 2) @{Task_A2A#TASK_INTERCEPT} class, extends @{Task_A2A#TASK_A2A}
--- 
--- The TASK_A2A_INTERCEPT class defines an INTERCEPT task for a @{Set} of Target Units.
--- 
 -- ====
 --
 -- # **API CHANGE HISTORY**
@@ -343,6 +339,19 @@ do -- TASK_A2A_INTERCEPT
   -- @type TASK_A2A_INTERCEPT
   -- @field Set#SET_UNIT TargetSetUnit
   -- @extends Tasking.Task#TASK
+
+  --- # TASK_A2A_INTERCEPT class, extends @{Task_A2A#TASK_A2A}
+  -- 
+  -- The TASK_A2A_INTERCEPT class defines an intercept task for a human player to be executed.
+  -- When enemy planes need to be intercepted by human players, use this task type to urgen the players to get out there!
+  -- 
+  -- The TASK_A2A_INTERCEPT is used by the @{Task_A2A_Dispatcher#TASK_A2A_DISPATCHER} to automatically create intercept tasks 
+  -- based on detected airborne enemy targets intruding friendly airspace.
+  -- 
+  -- The task is defined for a @{Mission#MISSION}, where a friendly @{Set#SET_GROUP} consisting of GROUPs with one human players each, is intercepting the targets.
+  -- The task is given a name and a briefing, that is used in the menu structure and in the reporting.
+  -- 
+  -- @field #TASK_A2A_INTERCEPT
   TASK_A2A_INTERCEPT = {
     ClassName = "TASK_A2A_INTERCEPT",
   }
@@ -390,6 +399,21 @@ do -- TASK_A2A_SWEEP
   -- @type TASK_A2A_SWEEP
   -- @field Set#SET_UNIT TargetSetUnit
   -- @extends Tasking.Task#TASK
+
+  --- # TASK_A2A_SWEEP class, extends @{Task_A2A#TASK_A2A}
+  -- 
+  -- The TASK_A2A_SWEEP class defines a sweep task for a human player to be executed.
+  -- A sweep task needs to be given when targets were detected but somehow the detection was lost.
+  -- Most likely, these enemy planes are hidden in the mountains or are flying under radar.
+  -- These enemy planes need to be sweeped by human players, and use this task type to urge the players to get out there and find those enemy fighters.
+  -- 
+  -- The TASK_A2A_SWEEP is used by the @{Task_A2A_Dispatcher#TASK_A2A_DISPATCHER} to automatically create sweep tasks 
+  -- based on detected airborne enemy targets intruding friendly airspace, for which the detection has been lost for more than 60 seconds.
+  -- 
+  -- The task is defined for a @{Mission#MISSION}, where a friendly @{Set#SET_GROUP} consisting of GROUPs with one human players each, is sweeping the targets.
+  -- The task is given a name and a briefing, that is used in the menu structure and in the reporting.
+  -- 
+  -- @field #TASK_A2A_SWEEP
   TASK_A2A_SWEEP = {
     ClassName = "TASK_A2A_SWEEP",
   }
@@ -437,6 +461,19 @@ do -- TASK_A2A_ENGAGE
   -- @type TASK_A2A_ENGAGE
   -- @field Set#SET_UNIT TargetSetUnit
   -- @extends Tasking.Task#TASK
+
+  --- # TASK_A2A_ENGAGE class, extends @{Task_A2A#TASK_A2A}
+  -- 
+  -- The TASK_A2A_ENGAGE class defines an engage task for a human player to be executed.
+  -- When enemy planes are close to human players, use this task type is used urge the players to get out there!
+  -- 
+  -- The TASK_A2A_ENGAGE is used by the @{Task_A2A_Dispatcher#TASK_A2A_DISPATCHER} to automatically create engage tasks 
+  -- based on detected airborne enemy targets intruding friendly airspace.
+  -- 
+  -- The task is defined for a @{Mission#MISSION}, where a friendly @{Set#SET_GROUP} consisting of GROUPs with one human players each, is engaging the targets.
+  -- The task is given a name and a briefing, that is used in the menu structure and in the reporting.
+  -- 
+  -- @field #TASK_A2A_ENGAGE
   TASK_A2A_ENGAGE = {
     ClassName = "TASK_A2A_ENGAGE",
   }
@@ -461,7 +498,7 @@ do -- TASK_A2A_ENGAGE
     
     self:SetBriefing( 
       TaskBriefing or 
-      "Bogeys are nearby! Those players who are near to the intruders are requested to ENGAGE!\n"
+      "Bogeys are nearby! Players close by are ordered to ENGAGE the intruders!\n"
     )
 
     local TargetCoordinate = TargetSetUnit:GetFirst():GetCoordinate()

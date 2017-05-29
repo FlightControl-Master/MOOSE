@@ -360,9 +360,9 @@ DETECTION uses the in-built detection capabilities of DCS World, but adds new fu
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).CleanDetectionItems">DETECTION_BASE:CleanDetectionItems()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).CleanDetectionItem">DETECTION_BASE:CleanDetectionItem(DetectedItem, DetectedItemID)</a></td>
 		<td class="summary">
-<p>Make a DetectionSet table.</p>
+
 </td>
 		</tr>
 		<tr>
@@ -653,6 +653,12 @@ The different values of Unit.Category can be:</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).IsDetectedItemDetected">DETECTION_BASE:IsDetectedItemDetected(DetectedItem)</a></td>
+		<td class="summary">
+<p>Checks if there is at least one UNIT detected in the Set of the the DetectedItem.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).IsDetectedObjectIdentified">DETECTION_BASE:IsDetectedObjectIdentified(DetectedObject)</a></td>
 		<td class="summary">
 <p>Determines if a detected object has already been identified during detection processing.</p>
@@ -857,6 +863,12 @@ The different values of Unit.Category can be:</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).UpdateDetectedItemDetection">DETECTION_BASE:UpdateDetectedItemDetection(DetectedItem)</a></td>
+		<td class="summary">
+<p>Set IsDetected flag for all DetectedItems.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).ZoneProbability">DETECTION_BASE.ZoneProbability</a></td>
 		<td class="summary">
 
@@ -893,7 +905,7 @@ The different values of Unit.Category can be:</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).onafterDetectionGroup">DETECTION_BASE:onafterDetectionGroup(From, Event, To, DetectionGroup)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).onafterDetectionGroup">DETECTION_BASE:onafterDetectionGroup(From, Event, To, DetectionGroup, DetectionTimeStamp)</a></td>
 		<td class="summary">
 
 </td>
@@ -2188,22 +2200,32 @@ The index of the DetectedItem.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(DETECTION_BASE).CleanDetectionItems" >
-<strong>DETECTION_BASE:CleanDetectionItems()</strong>
+<a id="#(DETECTION_BASE).CleanDetectionItem" >
+<strong>DETECTION_BASE:CleanDetectionItem(DetectedItem, DetectedItemID)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Make a DetectionSet table.</p>
+
 
 	
-<p>This function will be overridden in the derived clsses.</p>
+<p> Clean the DetectedItem table.
+ @param #DETECTION<em>BASE self
+ @return #DETECTION</em>BASE</p>
 
-		<h3>Return value</h3>
+		<h3>Parameters</h3>
+		<ul>
+				<li>
 				
-<p><em><a href="##(DETECTION_BASE)">#DETECTION_BASE</a>:</em></p>
+<p><code><em> DetectedItem </em></code>: </p>
 
+				</li>
+				<li>
+				
+<p><code><em> DetectedItemID </em></code>: </p>
 
+				</li>
+		</ul>
 </dd>
 </dl>
 		<dl class="function">
@@ -3139,6 +3161,32 @@ self</p>
 				
 <p><em><a href="##(DETECTION_BASE)">#DETECTION_BASE</a>:</em>
 self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_BASE).IsDetectedItemDetected" >
+<strong>DETECTION_BASE:IsDetectedItemDetected(DetectedItem)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Checks if there is at least one UNIT detected in the Set of the the DetectedItem.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> DetectedItem </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+true if at least one UNIT is detected from the DetectedSet, false if no UNIT was detected from the DetectedSet.</p>
 
 </dd>
 </dl>
@@ -4103,6 +4151,42 @@ self</p>
 		<dl class="function">
 <dt>
 
+<a id="#(DETECTION_BASE).UpdateDetectedItemDetection" >
+<strong>DETECTION_BASE:UpdateDetectedItemDetection(DetectedItem)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set IsDetected flag for all DetectedItems.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> DetectedItem </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return values</h3>
+			<ol>
+				<li>
+				
+<p><em><a href="##(DETECTION_BASE.DetectedItem)">#DETECTION_BASE.DetectedItem</a>:</em>
+DetectedItem</p>
+
+				</li>
+				<li>
+				
+<p><em>#boolean:</em>
+true if at least one UNIT is detected from the DetectedSet, false if no UNIT was detected from the DetectedSet.</p>
+
+				</li>
+			</ol>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 		<em></em>
 <a id="#(DETECTION_BASE).ZoneProbability" >
 <strong>DETECTION_BASE.ZoneProbability</strong>
@@ -4240,7 +4324,7 @@ The To State string.</p>
 <dt>
 
 <a id="#(DETECTION_BASE).onafterDetectionGroup" >
-<strong>DETECTION_BASE:onafterDetectionGroup(From, Event, To, DetectionGroup)</strong>
+<strong>DETECTION_BASE:onafterDetectionGroup(From, Event, To, DetectionGroup, DetectionTimeStamp)</strong>
 </a>
 </dt>
 <dd>
@@ -4271,6 +4355,11 @@ The To State string.</p>
 				
 <p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> DetectionGroup </em></code>: 
 The Group detecting.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> DetectionTimeStamp </em></code>: </p>
 
 				</li>
 		</ul>
