@@ -101,13 +101,13 @@ function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleAr
       Scheduler = self.PersistentSchedulers[CallID]
     end
 
-    self:T3( { Scheduler = Scheduler } )
+    --self:T3( { Scheduler = Scheduler } )
     
     if Scheduler then
 
       local Schedule = self.Schedule[Scheduler][CallID]
       
-      self:T3( { Schedule = Schedule } )
+      --self:T3( { Schedule = Schedule } )
 
       local ScheduleObject = Scheduler.SchedulerObject
       --local ScheduleObjectName = Scheduler.SchedulerObject:GetNameAndClassID()
@@ -145,7 +145,7 @@ function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleAr
               ( Randomize * Repeat  / 2 )
             ) +
             0.01
-          self:T3( { Repeat = CallID, CurrentTime, ScheduleTime, ScheduleArguments } )
+          --self:T3( { Repeat = CallID, CurrentTime, ScheduleTime, ScheduleArguments } )
           return ScheduleTime -- returns the next time the function needs to be called.
         else
           self:Stop( Scheduler, CallID )
