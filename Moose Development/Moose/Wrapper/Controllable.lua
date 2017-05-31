@@ -386,7 +386,7 @@ function CONTROLLABLE:TaskCombo( DCSTasks )
   }
   
   for TaskID, Task in ipairs( DCSTasks ) do
-    self:E( Task )
+    self:T( Task )
   end
 
   self:T3( { DCSTaskCombo } )
@@ -585,7 +585,7 @@ function CONTROLLABLE:TaskAttackUnit( AttackUnit, GroupAttack, WeaponExpend, Att
     }
   }
 
-  self:E( DCSTask )
+  self:T3( DCSTask )
   
   return DCSTask
 end

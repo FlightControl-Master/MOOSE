@@ -226,7 +226,6 @@ end
 -- @param #SET_BASE self
 -- @return Core.Base#BASE
 function SET_BASE:GetFirst()
-  self:F()
 
   local ObjectName = self.Index[1]
   local FirstObject = self.Set[ObjectName]
@@ -238,7 +237,6 @@ end
 -- @param #SET_BASE self
 -- @return Core.Base#BASE
 function SET_BASE:GetLast()
-  self:F()
 
   local ObjectName = self.Index[#self.Index]
   local LastObject = self.Set[ObjectName]
@@ -250,12 +248,9 @@ end
 -- @param #SET_BASE self
 -- @return Core.Base#BASE
 function SET_BASE:GetRandom()
-  self:F()
 
   local RandomItem = self.Set[self.Index[math.random(#self.Index)]]
-
   self:T3( { RandomItem } )
-
   return RandomItem
 end
 
