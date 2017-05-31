@@ -152,7 +152,7 @@ CONTROLLABLE = {
 -- @param Dcs.DCSWrapper.Controllable#Controllable ControllableName The DCS Controllable name
 -- @return #CONTROLLABLE self
 function CONTROLLABLE:New( ControllableName )
-  local self = BASE:Inherit( self, POSITIONABLE:New( ControllableName ) )
+  local self = BASE:Inherit( self, POSITIONABLE:New( ControllableName ) ) -- #CONTROLLABLE
   self:F2( ControllableName )
   self.ControllableName = ControllableName
   
@@ -166,12 +166,10 @@ end
 -- @param #CONTROLLABLE self
 -- @return Dcs.DCSController#Controller
 function CONTROLLABLE:_GetController()
-  self:F2( { self.ControllableName } )
   local DCSControllable = self:GetDCSObject()
 
   if DCSControllable then
     local ControllableController = DCSControllable:getController()
-    self:T3( ControllableController )
     return ControllableController
   end
 
@@ -300,14 +298,13 @@ end
 -- @param #CONTROLLABLE self
 -- @return Wrapper.Controllable#CONTROLLABLE self
 function CONTROLLABLE:SetTask( DCSTask, WaitTime )
-  self:F2( { DCSTask } )
+  self:F2( { DCSTask = DCSTask } )
 
   local DCSControllable = self:GetDCSObject()
 
   if DCSControllable then
 
     local Controller = self:_GetController()
-    self:T3( Controller )
 
     -- When a controllable SPAWNs, it takes about a second to get the controllable in the simulator. Setting tasks to unspawned controllables provides unexpected results.
     -- Therefore we schedule the functions to set the mission and options for the Controllable.

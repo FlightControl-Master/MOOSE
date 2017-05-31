@@ -59,6 +59,9 @@ do -- AI_A2A_DISPATCHER
     -- This table models the currently alive AI_A2A processes.
     self.AI_A2A = self.AI_A2A or {}
     
+    -- These two tables model the AIGroups having an assignment and the Targets having an AIGroup.    
+    self.A2A_Targets = self.A2A_Targets or {}
+    self.A2A_Tasks = self.A2A_Tasks or {}
     
     -- TODO: Check detection through radar.
     self.Detection:FilterCategories( Unit.Category.AIRPLANE, Unit.Category.HELICOPTER )
@@ -78,7 +81,7 @@ do -- AI_A2A_DISPATCHER
     -- @param #string PlayerName
     
     self:AddTransition( "*", "CAP", "*" )
-    
+
     --- CAP Handler OnBefore for AI_A2A_DISPATCHER
     -- @function [parent=#AI_A2A_DISPATCHER] OnBeforeCAP
     -- @param #AI_A2A_DISPATCHER self
@@ -103,6 +106,57 @@ do -- AI_A2A_DISPATCHER
     -- @param #AI_A2A_DISPATCHER self
     -- @param #number Delay
     
+    self:AddTransition( "*", "INTERCEPT", "*" )
+
+    --- INTERCEPT Handler OnBefore for AI_A2A_DISPATCHER
+    -- @function [parent=#AI_A2A_DISPATCHER] OnBeforeINTERCEPT
+    -- @param #AI_A2A_DISPATCHER self
+    -- @param #string From
+    -- @param #string Event
+    -- @param #string To
+    -- @return #boolean
+    
+    --- INTERCEPT Handler OnAfter for AI_A2A_DISPATCHER
+    -- @function [parent=#AI_A2A_DISPATCHER] OnAfterINTERCEPT
+    -- @param #AI_A2A_DISPATCHER self
+    -- @param #string From
+    -- @param #string Event
+    -- @param #string To
+    
+    --- INTERCEPT Trigger for AI_A2A_DISPATCHER
+    -- @function [parent=#AI_A2A_DISPATCHER] INTERCEPT
+    -- @param #AI_A2A_DISPATCHER self
+    
+    --- INTERCEPT Asynchronous Trigger for AI_A2A_DISPATCHER
+    -- @function [parent=#AI_A2A_DISPATCHER] __INTERCEPT
+    -- @param #AI_A2A_DISPATCHER self
+    -- @param #number Delay
+    
+    self:AddTransition( "*", "ENGAGE", "*" )
+        
+    --- ENGAGE Handler OnBefore for AI_A2A_DISPATCHER
+    -- @function [parent=#AI_A2A_DISPATCHER] OnBeforeENGAGE
+    -- @param #AI_A2A_DISPATCHER self
+    -- @param #string From
+    -- @param #string Event
+    -- @param #string To
+    -- @return #boolean
+    
+    --- ENGAGE Handler OnAfter for AI_A2A_DISPATCHER
+    -- @function [parent=#AI_A2A_DISPATCHER] OnAfterENGAGE
+    -- @param #AI_A2A_DISPATCHER self
+    -- @param #string From
+    -- @param #string Event
+    -- @param #string To
+    
+    --- ENGAGE Trigger for AI_A2A_DISPATCHER
+    -- @function [parent=#AI_A2A_DISPATCHER] ENGAGE
+    -- @param #AI_A2A_DISPATCHER self
+    
+    --- ENGAGE Asynchronous Trigger for AI_A2A_DISPATCHER
+    -- @function [parent=#AI_A2A_DISPATCHER] __ENGAGE
+    -- @param #AI_A2A_DISPATCHER self
+    -- @param #number Delay
     
     
     
@@ -111,17 +165,112 @@ do -- AI_A2A_DISPATCHER
     return self
   end
   
+  
   function AI_A2A_DISPATCHER:onafterCAP()
-    for CAPName, CAP in pairs( self.AI_A2A["CAP"] ) do
+  
+    local A2AType = "CAP"
+
+    for CAPName, CAP in pairs( self.AI_A2A[A2AType] or {} ) do
+
       local AIGroup = CAP.Spawn:Spawn()
       self:F( { AIGroup = AIGroup:GetName() } )
+
       if AIGroup then
-        CAP.Fsm = CAP.Fsm or {}
-        CAP.Fsm[AIGroup] = AI_A2A_CAP:New( AIGroup, CAP.Zone, CAP.FloorAltitude, CAP.CeilingAltitude, CAP.MinSpeed, CAP.MaxSpeed, CAP.AltType )
-        CAP.Fsm[AIGroup]:__Patrol( 2 )
+
+        local Fsm = AI_A2A_CAP:New( AIGroup, CAP.Zone, CAP.FloorAltitude, CAP.CeilingAltitude, CAP.MinSpeed, CAP.MaxSpeed, CAP.AltType )
+        Fsm:__Patrol( 1 )
+
+        self.A2A_Tasks = self.A2A_Tasks or {}
+        self.A2A_Tasks[AIGroup] = self.A2A_Tasks[AIGroup] or {}
+        self.A2A_Tasks[AIGroup].Type = A2AType
+        self.A2A_Tasks[AIGroup].Fsm = Fsm
       end
     end
   end
+
+  function AI_A2A_DISPATCHER:onafterENGAGE( From, Event, To, TargetSetUnit, TargetReference, AIGroups )
+  
+    local A2AType = "CAP"
+
+    self:F( { AIGroups = AIGroups } )
+
+    if AIGroups then
+
+      for AIGroupID, AIGroup in pairs( AIGroups ) do
+
+        local Fsm = self.A2A_Tasks[AIGroup].Fsm
+        Fsm:__Engage( 1, TargetSetUnit ) -- Engage on the TargetSetUnit
+
+        self.A2A_Tasks[AIGroup].Target = TargetReference
+  
+        self.A2A_Targets[TargetReference] = self.A2A_Targets[TargetReference] or {}
+        self.A2A_Targets[TargetReference].Set = TargetSetUnit
+        self.A2A_Targets[TargetReference].Groups = self.A2A_Targets[TargetReference].Groups or {}
+        local Groups = self.A2A_Targets[TargetReference].Groups
+        local GroupName = AIGroup:GetName()
+        Groups[GroupName] = AIGroup
+      end
+    end
+  end
+
+
+  function AI_A2A_DISPATCHER:onafterINTERCEPT( From, Event, To, TargetSetUnit, TargetReference, DefendersMissing )
+
+    local A2AType = "INTERCEPT"
+    
+    local ClosestDistance = 0
+    local ClosestINTERCEPTName = nil
+    
+    local AttackerCount = TargetSetUnit:Count()
+    DefendersMissing = AttackerCount - DefendersMissing
+    
+    while( DefendersMissing < AttackerCount ) do
+
+      for INTERCEPTName, INTERCEPT in pairs( self.AI_A2A[A2AType] or {} ) do
+  
+        local SpawnCoord = INTERCEPT.Spawn:GetCoordinate() -- Core.Point#COORDINATE
+        local TargetCoord = TargetSetUnit:GetFirst():GetCoordinate()
+        local Distance = SpawnCoord:Get2DDistance( TargetCoord )
+  
+        if ClosestDistance == 0 or Distance < ClosestDistance then
+          ClosestDistance = Distance
+          ClosestINTERCEPTName = INTERCEPTName
+        end
+      end
+      
+      if ClosestINTERCEPTName then
+      
+        local INTERCEPT = self.AI_A2A[A2AType][ClosestINTERCEPTName]
+      
+        local AIGroup = INTERCEPT.Spawn:Spawn()
+        self:F( { AIGroup = AIGroup:GetName() } )
+  
+        if AIGroup then
+        
+          DefendersMissing = DefendersMissing + AIGroup:GetSize()
+  
+          local Fsm = AI_A2A_INTERCEPT:New( AIGroup )
+          Fsm:__Engage( 1, TargetSetUnit ) -- Engage on the TargetSetUnit
+  
+          self.A2A_Tasks = self.A2A_Tasks or {}
+          self.A2A_Tasks[AIGroup] = self.A2A_Tasks[AIGroup] or {}
+          self.A2A_Tasks[AIGroup].Type = A2AType
+          self.A2A_Tasks[AIGroup].Fsm = Fsm
+          self.A2A_Tasks[AIGroup].Target = TargetReference
+          
+          self.A2A_Targets[TargetReference] = self.A2A_Targets[TargetReference] or {}
+          self.A2A_Targets[TargetReference].Set = TargetSetUnit
+          self.A2A_Targets[TargetReference].Groups = self.A2A_Targets[TargetReference].Groups or {}
+          local Groups = self.A2A_Targets[TargetReference].Groups
+          local GroupName = AIGroup:GetName()
+          Groups[GroupName] = AIGroup
+          
+        end
+      end
+    end
+  end
+
+
   
   function AI_A2A_DISPATCHER:SetCAP( CAPName, CAPSpawn, CAPZone, CAPFloorAltitude, CAPCeilingAltitude, CAPMinSpeed, CAPMaxSpeed, CAPAltType )
   
@@ -140,47 +289,18 @@ do -- AI_A2A_DISPATCHER
     
   end
   
-  function AI_A2A_DISPATCHER:SetINTERCEPT( INTERCEPTName, INTERCEPTSpawn, CAPZone, CAPFloorAltitude, CAPCeilingAltitude, CAPMinSpeed, CAPMaxSpeed, CAPAltType )
+  function AI_A2A_DISPATCHER:SetINTERCEPT( Name, Spawn, MinSpeed, MaxSpeed )
   
     self.AI_A2A["INTERCEPT"] = self.AI_A2A["INTERCEPT"] or {} 
-    self.AI_A2A["INTERCEPT"][INTERCEPTName] = self.AI_A2A["INTERCEPT"][INTERCEPTName] or {}
+    self.AI_A2A["INTERCEPT"][Name] = self.AI_A2A["INTERCEPT"][Name] or {}
     
-    local INTERCEPT = self.AI_A2A["INTERCEPT"][INTERCEPTName]
-    INTERCEPT.Name = INTERCEPTName
-    INTERCEPT.Spawn = INTERCEPTSpawn
-    INTERCEPT.Zone = CAPZone
-    INTERCEPT.FloorAltitude = CAPFloorAltitude
-    INTERCEPT.CeilingAltitude = CAPCeilingAltitude
-    INTERCEPT.MinSpeed = CAPMinSpeed
-    INTERCEPT.MaxSpeed = CAPMaxSpeed
-    INTERCEPT.AltType = CAPAltType
+    local INTERCEPT = self.AI_A2A["INTERCEPT"][Name]
+    INTERCEPT.Name = Name
+    INTERCEPT.Spawn = Spawn
+    INTERCEPT.MinSpeed = MinSpeed
+    INTERCEPT.MaxSpeed = MaxSpeed
   end
   
-  --- Creates an INTERCEPT task when there are targets for it.
-  -- @param #AI_A2A_DISPATCHER self
-  -- @param Functional.Detection#DETECTION_BASE.DetectedItem DetectedItem
-  -- @return Set#SET_UNIT TargetSetUnit: The target set of units.
-  -- @return #nil If there are no targets to be set.
-  function AI_A2A_DISPATCHER:EvaluateINTERCEPT( DetectedItem )
-    self:F( { DetectedItem.ItemID } )
-  
-    local DetectedSet = DetectedItem.Set
-    local DetectedZone = DetectedItem.Zone
-
-    -- Check if there is at least one UNIT in the DetectedSet is visible.
-    
-    if DetectedItem.IsDetected == true then
-
-      -- Here we're doing something advanced... We're copying the DetectedSet.
-      local TargetSetUnit = SET_UNIT:New()
-      TargetSetUnit:SetDatabase( DetectedSet )
-      TargetSetUnit:FilterOnce() -- Filter but don't do any events!!! Elements are added manually upon each detection.
-    
-      return TargetSetUnit
-    end
-    
-    return nil
-  end
 
   
   --- Creates an SWEEP task when there are targets for it.
@@ -207,8 +327,64 @@ do -- AI_A2A_DISPATCHER
     
     return nil
   end
-
   
+  function AI_A2A_DISPATCHER:CountDefendersEngaged( DetectedItem )
+
+    -- First, count the active AIGroups Units, targetting the DetectedSet
+    local AIUnitCount = 0
+    
+    for AIGroupName, AIGroup in pairs( ( self.A2A_Targets[DetectedItem] and self.A2A_Targets[DetectedItem].Groups ) or {} ) do
+      local AIGroup = AIGroup -- Wrapper.Group#GROUP
+      if AIGroup:IsAlive() then
+        AIUnitCount = AIUnitCount + AIGroup:GetSize()
+      end 
+    end
+
+    return AIUnitCount
+  end
+  
+  function AI_A2A_DISPATCHER:CountDefendersToBeEngaged( DetectedItem, DefenderCount )
+  
+    local ResultAIGroups = nil
+
+    local DetectedSet = DetectedItem.Set
+    local DetectedCount = DetectedSet:Count()
+
+    local AIFriendlies = self:GetAIFriendliesNearBy( DetectedItem )
+    
+    for AIName, AIFriendly in pairs( AIFriendlies ) do
+      -- We only allow to ENGAGE targets as long as the Units on both sides are balanced.
+      if DetectedCount > DefenderCount then 
+        local AIGroup = AIFriendly :GetGroup() -- Wrapper.Group#GROUP
+        self:F( { AIFriendly = AIGroup } )
+        if AIGroup:IsAlive() then
+          -- Ok, so we have a friendly near the potential target.
+          -- Now we need to check if the AIGroup has a Task.
+          local AIGroupTask = self.A2A_Tasks[AIGroup]
+          self:F({AIGroupTask = AIGroupTask})
+          if AIGroupTask then
+            -- The Task should be CAP
+            self:F( { Type = AIGroupTask.Type } )
+            if AIGroupTask.Type == "CAP" then
+              -- If there is no target, then add the AIGroup to the ResultAIGroups for Engagement to the TargetSet
+              self:F( { Target = AIGroupTask.Target } )
+              if AIGroupTask.Target == nil then
+                ResultAIGroups = ResultAIGroups or {}
+                ResultAIGroups[AIGroup] = AIGroup
+                DefenderCount = DefenderCount + AIGroup:GetSize()
+              end
+            end
+          end 
+        end
+      else
+        break
+      end
+    end
+
+    return ResultAIGroups
+  end
+
+
   --- Creates an ENGAGE task when there are human friendlies airborne near the targets.
   -- @param #AI_A2A_DISPATCHER self
   -- @param Functional.Detection#DETECTION_BASE.DetectedItem DetectedItem
@@ -217,105 +393,49 @@ do -- AI_A2A_DISPATCHER
   function AI_A2A_DISPATCHER:EvaluateENGAGE( DetectedItem )
     self:F( { DetectedItem.ItemID } )
   
-    local ResultEngage = false
-    local ResultAIGroup = nil
-    local ResultCAPName = nil
-  
     local DetectedSet = DetectedItem.Set
-    local DetectedZone = DetectedItem.Zone
 
-    for CAPName, CAP in pairs( self.AI_A2A["CAP"] ) do
-      for AIGroup, Fsm in pairs( CAP.Fsm ) do
-        self:F( { CAP = CAPName } )
-        self:F( { CAPFsm = CAP.Fsm } )
-        self:F( { AIGroup = tostring( AIGroup ), AIGroup:GetName() } )
-        local CAPFsm = CAP.Fsm[AIGroup]
-        if CAPFsm then
-          self:F( { CAPState = CAPFsm:GetState() } )
-          if CAPFsm:Is( "Patrolling" ) then
-            ResultEngage = true
-            ResultAIGroup = AIGroup
-            ResultCAPName = CAPName
-          end
-        end
-        break
-      end
-    end
+    -- First, count the active AIGroups Units, targetting the DetectedSet
+    local DefenderCount = self:CountDefendersEngaged( DetectedItem )
 
+    local DefenderGroups = self:CountDefendersToBeEngaged( DetectedItem, DefenderCount )
     
     -- Only allow ENGAGE when there are Players near the zone, and when the Area has detected items since the last run in a 60 seconds time zone.
-    if ResultEngage == true and DetectedItem.IsDetected == true then
+    if DefenderGroups and DetectedItem.IsDetected == true then
       
-      self:E("ENGAGE")
-      return DetectedSet, ResultCAPName, ResultAIGroup
+      return DetectedSet, DefenderGroups
     end
     
-    return nil
+    return nil, nil
   end
   
-
-
-  
-  --- Evaluates the removal of the Task from the Mission.
-  -- Can only occur when the DetectedItem is Changed AND the state of the Task is "Planned".
+  --- Creates an INTERCEPT task when there are targets for it.
   -- @param #AI_A2A_DISPATCHER self
-  -- @param Tasking.Mission#MISSION Mission
-  -- @param Tasking.Task#TASK Task
-  -- @param Functional.Detection#DETECTION_BASE Detection The detection created by the @{Detection#DETECTION_BASE} derived object.
-  -- @param #boolean DetectedItemID
-  -- @param #boolean DetectedItemChange
-  -- @return Tasking.Task#TASK
-  function AI_A2A_DISPATCHER:EvaluateRemoveTask( Mission, Task, Detection, DetectedItem, DetectedItemIndex, DetectedItemChanged )
-    
-    if Task then
+  -- @param Functional.Detection#DETECTION_BASE.DetectedItem DetectedItem
+  -- @return Set#SET_UNIT TargetSetUnit: The target set of units.
+  -- @return #nil If there are no targets to be set.
+  function AI_A2A_DISPATCHER:EvaluateINTERCEPT( DetectedItem )
+    self:F( { DetectedItem.ItemID } )
+  
+    local AttackerSet = DetectedItem.Set
+    AttackerSet:Flush()
+    local AttackerCount = AttackerSet:Count()
 
-      if Task:IsStatePlanned() then
-        local TaskName = Task:GetName()
-        local TaskType = TaskName:match( "(%u+)%.%d+" )
-        
-        self:T2( { TaskType = TaskType } )
-        
-        local Remove = false
-        
-        local IsPlayers = Detection:IsPlayersNearBy( DetectedItem )
-        if TaskType == "ENGAGE" then
-          if IsPlayers == false then
-            Remove = true
-          end
-        end
-        
-        if TaskType == "INTERCEPT" then
-          if IsPlayers == true then
-            Remove = true
-          end
-          if DetectedItem.IsDetected == false then
-            Remove = true
-          end
-        end
-        
-        if TaskType == "SWEEP" then
-          if DetectedItem.IsDetected == true then
-            Remove = true
-          end
-        end
+    -- First, count the active AIGroups Units, targetting the DetectedSet
+    local DefenderCount = self:CountDefendersEngaged( DetectedItem )
+    local DefendersMissing = AttackerCount - DefenderCount
 
-        local DetectedSet = DetectedItem.Set -- Core.Set#SET_UNIT
-        --DetectedSet:Flush()
-        --self:E( { DetectedSetCount = DetectedSet:Count() } )
-        if DetectedSet:Count() == 0 then
-          Remove = true
-        end
-         
-        if DetectedItemChanged == true or Remove then
-          --self:E( "Removing Tasking: " .. Task:GetTaskName() )
-          Mission:RemoveTask( Task )
-          self.Tasks[DetectedItemIndex] = nil
-        end
-      end
+    -- Only allow ENGAGE when there are Players near the zone, and when the Area has detected items since the last run in a 60 seconds time zone.
+    if DetectedItem.IsDetected == true then
+      
+      return DetectedItem.Set, DefendersMissing
     end
     
-    return Task
+    return nil, nil
   end
+
+
+  
 
   --- Calculates which friendlies are nearby the area
   -- @param #AI_A2A_DISPATCHER self
@@ -419,6 +539,41 @@ do -- AI_A2A_DISPATCHER
   end
 
 
+  --- Evaluates the removal of the Task from the Mission.
+  -- Can only occur when the DetectedItem is Changed AND the state of the Task is "Planned".
+  -- @param #AI_A2A_DISPATCHER self
+  -- @param Tasking.Mission#MISSION Mission
+  -- @param Tasking.Task#TASK Task
+  -- @param Functional.Detection#DETECTION_BASE Detection The detection created by the @{Detection#DETECTION_BASE} derived object.
+  -- @param #boolean DetectedItemID
+  -- @param #boolean DetectedItemChange
+  -- @return Tasking.Task#TASK
+  function AI_A2A_DISPATCHER:EvaluateRemoveTask( DetectedItem, A2A_Index )
+    
+    local A2A_Target = self.A2A_Targets[A2A_Index]
+
+    if A2A_Target then 
+      
+      for AIGroupName, AIGroup in pairs( A2A_Target.Groups ) do
+        local AIGroup = AIGroup -- Wrapper.Group#GROUP
+        if not AIGroup:IsAlive() then
+          self.A2A_Tasks[AIGroup] = nil
+          self.A2A_Targets[A2A_Index].Groups[AIGroupName] = nil
+        end
+      end
+       
+      local DetectedSet = DetectedItem.Set -- Core.Set#SET_UNIT
+      DetectedSet:Flush()
+      self:E( { DetectedSetCount = DetectedSet:Count() } )
+      if DetectedSet:Count() == 0 then
+        self.A2A_Targets[A2A_Index] = nil
+      end
+    end
+
+    return self.A2A_Targets[A2A_Index]
+  end
+
+
   --- Assigns A2A AI Tasks in relation to the detected items.
   -- @param #AI_A2A_DISPATCHER self
   -- @param Functional.Detection#DETECTION_BASE Detection The detection created by the @{Detection#DETECTION_BASE} derived object.
@@ -451,22 +606,35 @@ do -- AI_A2A_DISPATCHER
       local DetectedSet = DetectedItem.Set -- Core.Set#SET_UNIT
       local DetectedCount = DetectedSet:Count()
       local DetectedZone = DetectedItem.Zone
-      --self:E( { "Targets in DetectedItem", DetectedItem.ItemID, DetectedSet:Count(), tostring( DetectedItem ) } )
-      --DetectedSet:Flush()
+      self:E( { "Targets in DetectedItem", DetectedItem.ItemID, DetectedSet:Count() } )
+      DetectedSet:Flush()
       
       local DetectedID = DetectedItem.ID
-      local AI_A2A_Index = DetectedItem.Index
+      local A2A_Index = DetectedItem.Index
       local DetectedItemChanged = DetectedItem.Changed
       
---      local AI_A2A_Process = self.AI_A2A_Processes[AI_A2A_Index]
---      AI_A2A_Process = self:EvaluateRemoveTask( AI_A2A_Process, Detection, DetectedItem, AI_A2A_Index, DetectedItemChanged ) -- Task will be removed if it is planned and changed.
+      self:E( { A2A_Index = A2A_Index } )
+      
+      
+      local A2A_Target = self:EvaluateRemoveTask( DetectedItem, A2A_Index )
+      self:E( { A2A_Index = A2A_Index, A2A_Target = A2A_Target } )
+      DetectedSet:Flush()
 
       -- Evaluate A2A_Action
-      if DetectedCount > 0 then
-        local TargetSetUnit, CAPName, AIGroup = self:EvaluateENGAGE( DetectedItem ) -- Returns a SetUnit if there are targets to be INTERCEPTed...
+      if not A2A_Target then
+        local TargetSetUnit, AIGroups = self:EvaluateENGAGE( DetectedItem ) -- Returns a SetUnit if there are targets to be INTERCEPTed...
+        self:F( { AIGroups = AIGroups } )
         if TargetSetUnit then
-          local CAP = self.AI_A2A["CAP"][CAPName]
-          CAP.Fsm[AIGroup]:__Engage( 1, TargetSetUnit )
+          self:ENGAGE( TargetSetUnit, A2A_Index, AIGroups )
+        else
+          do
+            local AttackerSet, DefendersMissing = self:EvaluateINTERCEPT( DetectedItem )
+            self:F( { DefendersMissing = DefendersMissing } )
+            AttackerSet:Flush()
+            if AttackerSet then
+              self:INTERCEPT( AttackerSet, A2A_Index, DefendersMissing )
+            end
+          end
         end
       end
     end

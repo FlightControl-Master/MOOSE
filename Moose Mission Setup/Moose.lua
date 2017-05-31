@@ -1,5 +1,5 @@
 env.info( '*** MOOSE DYNAMIC INCLUDE START *** ' )
-env.info( 'Moose Generation Timestamp: 20170530_1057' )
+env.info( 'Moose Generation Timestamp: 20170531_0925' )
 
 local base = _G
 
@@ -63,6 +63,7 @@ __Moose.Include( 'AI/AI_Balancer.lua' )
 __Moose.Include( 'AI/AI_A2A.lua' )
 __Moose.Include( 'AI/AI_A2A_Patrol.lua' )
 __Moose.Include( 'AI/AI_A2A_Cap.lua' )
+__Moose.Include( 'AI/AI_A2A_Intercept.lua' )
 __Moose.Include( 'AI/AI_A2A_Dispatcher.lua' )
 __Moose.Include( 'AI/AI_Patrol.lua' )
 __Moose.Include( 'AI/AI_Cap.lua' )

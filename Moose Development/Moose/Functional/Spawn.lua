@@ -1112,6 +1112,19 @@ function SPAWN:InitUnControlled( UnControlled )
 end
 
 
+--- Get the Coordinate of the Group that is Late Activated as the template for the SPAWN object.
+-- @param #SPAWN self
+-- @return Core.Point#COORDINATE The Coordinate
+function SPAWN:GetCoordinate()
+
+  local LateGroup = GROUP:FindByName( self.SpawnTemplatePrefix )
+  if LateGroup then
+    return LateGroup:GetCoordinate()
+  end
+  
+  return nil
+end
+
 
 --- Will return the SpawnGroupName either with with a specific count number or without any count.
 -- @param #SPAWN self

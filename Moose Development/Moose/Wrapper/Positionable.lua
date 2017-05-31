@@ -31,7 +31,18 @@
 -- 
 -- The POSITIONABLE class provides the following functions to construct a POSITIONABLE instance:
 --
---  * @{Positionable#POSITIONABLE.New}(): Create a POSITIONABLE instance.
+--  * @{#POSITIONABLE.New}(): Create a POSITIONABLE instance.
+-- 
+-- ## Get the current speed
+-- 
+-- There are 3 methods that can be used to determine the speed.
+-- Use @{#POSITIONABLE.GetVelocityKMH}() to retrieve the current speed in km/h. Use @{#POSITIONABLE.GetVelocityMPS}() to retrieve the speed in meters per second.
+-- The method @{#POSITIONABLE.GetVelocity}() returns the speed vector (a Vec3).
+-- 
+-- ## Get the current altitude
+-- 
+-- Altitude can be retrieved using the method @{#POSITIONABLE.GetHeight}() and returns the current altitude in meters from the orthonormal plane.
+-- 
 -- 
 -- @field #POSITIONABLE 
 POSITIONABLE = {
@@ -364,6 +375,25 @@ function POSITIONABLE:GetVelocityKMH()
     local VelocityVec3 = self:GetVelocity()
     local Velocity = ( VelocityVec3.x ^ 2 + VelocityVec3.y ^ 2 + VelocityVec3.z ^ 2 ) ^ 0.5 -- in meters / sec
     local Velocity = Velocity * 3.6 -- now it is in km/h.
+    self:T3( Velocity )
+    return Velocity
+  end
+  
+  return nil
+end
+
+--- Returns the POSITIONABLE velocity in meters per second.
+-- @param Wrapper.Positionable#POSITIONABLE self
+-- @return #number The velocity in meters per second.
+-- @return #nil The POSITIONABLE is not existing or alive.  
+function POSITIONABLE:GetVelocityMPS()
+  self:F2( self.PositionableName )
+
+  local DCSPositionable = self:GetDCSObject()
+  
+  if DCSPositionable then
+    local VelocityVec3 = self:GetVelocity()
+    local Velocity = ( VelocityVec3.x ^ 2 + VelocityVec3.y ^ 2 + VelocityVec3.z ^ 2 ) ^ 0.5 -- in meters / sec
     self:T3( Velocity )
     return Velocity
   end
