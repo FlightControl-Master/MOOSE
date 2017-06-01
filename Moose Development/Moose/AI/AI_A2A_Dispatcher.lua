@@ -168,26 +168,27 @@ do -- AI_A2A_DISPATCHER
   
   function AI_A2A_DISPATCHER:onafterCAP( SquadronName, Repeat )
   
-    local A2AType = "CAP"
-
-    self.DefenderSquadrons["CAP"] = self.DefenderSquadrons["CAP"] or {} 
-    self.DefenderSquadrons["CAP"][SquadronName] = self.DefenderSquadrons["CAP"][SquadronName] or {}
+    self.DefenderSquadrons[SquadronName] = self.DefenderSquadrons[SquadronName] or {} 
+    self.DefenderSquadrons[SquadronName].Cap = self.DefenderSquadrons[SquadronName].Cap or {}
     
-    local CAP = self.DefenderSquadrons["CAP"][SquadronName]
-    if CAP then
+    local DefenderSquadron = self.DefenderSquadrons[SquadronName]
+    local Cap = DefenderSquadron.Cap
+    
+    if Cap then
     
       if self:CanCAP( SquadronName ) then
-        local AIGroup = CAP.Spawn:Spawn()
+        local Spawn = DefenderSquadron.Spawn[ math.random( 1, #DefenderSquadron.Spawn ) ]
+        local AIGroup = Spawn:SpawnAtAirbase( DefenderSquadron.Airbase )
         self:F( { AIGroup = AIGroup:GetName() } )
   
         if AIGroup then
   
-          local Fsm = AI_A2A_CAP:New( AIGroup, CAP.Zone, CAP.FloorAltitude, CAP.CeilingAltitude, CAP.MinSpeed, CAP.MaxSpeed, CAP.AltType )
+          local Fsm = AI_A2A_CAP:New( AIGroup, Cap.Zone, Cap.FloorAltitude, Cap.CeilingAltitude, Cap.MinSpeed, Cap.MaxSpeed, Cap.AltType )
           Fsm:__Patrol( 1 )
   
           self.DefenderTasks = self.DefenderTasks or {}
           self.DefenderTasks[AIGroup] = self.DefenderTasks[AIGroup] or {}
-          self.DefenderTasks[AIGroup].Type = A2AType
+          self.DefenderTasks[AIGroup].Type = "CAP"
           self.DefenderTasks[AIGroup].Fsm = Fsm
         end
       end
@@ -202,8 +203,6 @@ do -- AI_A2A_DISPATCHER
 
   function AI_A2A_DISPATCHER:onafterENGAGE( From, Event, To, TargetSetUnit, TargetReference, AIGroups )
   
-    local A2AType = "CAP"
-
     self:F( { AIGroups = AIGroups } )
 
     if AIGroups then
@@ -229,33 +228,35 @@ do -- AI_A2A_DISPATCHER
 
   function AI_A2A_DISPATCHER:onafterINTERCEPT( From, Event, To, TargetSetUnit, TargetReference, DefendersMissing )
 
-    local A2AType = "INTERCEPT"
-    
     local ClosestDistance = 0
-    local ClosestINTERCEPTName = nil
+    local ClosestDefenderSquadronName = nil
     
     local AttackerCount = TargetSetUnit:Count()
     local DefendersCount = 0
     
     while( DefendersCount < DefendersMissing ) do
 
-      for INTERCEPTName, INTERCEPT in pairs( self.DefenderSquadrons[A2AType] or {} ) do
-  
-        local SpawnCoord = INTERCEPT.Spawn:GetCoordinate() -- Core.Point#COORDINATE
-        local TargetCoord = TargetSetUnit:GetFirst():GetCoordinate()
-        local Distance = SpawnCoord:Get2DDistance( TargetCoord )
-  
-        if ClosestDistance == 0 or Distance < ClosestDistance then
-          ClosestDistance = Distance
-          ClosestINTERCEPTName = INTERCEPTName
+      for SquadronName, DefenderSquadron in pairs( self.DefenderSquadrons or {} ) do
+        for InterceptID, Intercept in pairs( DefenderSquadron.Intercept or {} ) do
+    
+          local SpawnCoord = DefenderSquadron.Airbase:GetCoordinate() -- Core.Point#COORDINATE
+          local TargetCoord = TargetSetUnit:GetFirst():GetCoordinate()
+          local Distance = SpawnCoord:Get2DDistance( TargetCoord )
+    
+          if ClosestDistance == 0 or Distance < ClosestDistance then
+            ClosestDistance = Distance
+            ClosestDefenderSquadronName = SquadronName
+          end
         end
       end
       
-      if ClosestINTERCEPTName then
+      if ClosestDefenderSquadronName then
       
-        local INTERCEPT = self.DefenderSquadrons[A2AType][ClosestINTERCEPTName]
+        local DefenderSquadron = self.DefenderSquadrons[ClosestDefenderSquadronName]
+        local Intercept = self.DefenderSquadrons[ClosestDefenderSquadronName].Intercept
       
-        local AIGroup = INTERCEPT.Spawn:Spawn()
+        local Spawn = DefenderSquadron.Spawn[ math.random( 1, #DefenderSquadron.Spawn ) ]
+        local AIGroup = Spawn:SpawnAtAirbase( DefenderSquadron.Airbase )
         self:F( { AIGroup = AIGroup:GetName() } )
   
         if AIGroup then
@@ -267,7 +268,7 @@ do -- AI_A2A_DISPATCHER
   
           self.DefenderTasks = self.DefenderTasks or {}
           self.DefenderTasks[AIGroup] = self.DefenderTasks[AIGroup] or {}
-          self.DefenderTasks[AIGroup].Type = A2AType
+          self.DefenderTasks[AIGroup].Type = "INTERCEPT"
           self.DefenderTasks[AIGroup].Fsm = Fsm
           self.DefenderTasks[AIGroup].Target = TargetReference
           
@@ -284,53 +285,80 @@ do -- AI_A2A_DISPATCHER
   end
 
 
+  function AI_A2A_DISPATCHER:SetSquadron( SquadronName, AirbaseName, SpawnTemplates, Resources )
   
-  function AI_A2A_DISPATCHER:SetCAP( SquadronName, Spawn, Zone, FloorAltitude, CeilingAltitude, MinSpeed, MaxSpeed, AltType )
-  
-    self.DefenderSquadrons["CAP"] = self.DefenderSquadrons["CAP"] or {} 
-    self.DefenderSquadrons["CAP"][SquadronName] = self.DefenderSquadrons["CAP"][SquadronName] or {}
-    
-    local CAP = self.DefenderSquadrons["CAP"][SquadronName]
-    CAP.Name = SquadronName
-    CAP.Spawn = Spawn -- Funtional.Spawn#SPAWN
-    CAP.Zone = Zone
-    CAP.FloorAltitude = FloorAltitude
-    CAP.CeilingAltitude = CeilingAltitude
-    CAP.MinSpeed = MinSpeed
-    CAP.MaxSpeed = MaxSpeed
-    CAP.AltType = AltType
+    self.DefenderSquadrons[SquadronName] = self.DefenderSquadrons[SquadronName] or {} 
 
-    self:SetCAPInterval( SquadronName, 60, 300, 1 )
+    local DefenderSquadron = self.DefenderSquadrons[SquadronName]
+    
+    self:E( { AirbaseName = AirbaseName } )
+    DefenderSquadron.Airbase = AIRBASE:FindByName( AirbaseName )
+    self:E( { Airbase = DefenderSquadron.Airbase } )
+    self:E( { AirbaseObject = DefenderSquadron.Airbase:GetDCSObject() } )
+    
+    DefenderSquadron.Spawn = {}
+    if type( SpawnTemplates ) == "string" then
+      local SpawnTemplate = SpawnTemplates
+      DefenderSquadron.Spawn[1] = SPAWN:New( SpawnTemplate )
+    else
+      for TemplateID, SpawnTemplate in pairs( SpawnTemplates ) do
+        DefenderSquadron.Spawn[#DefenderSquadron.Spawn+1] = SPAWN:New( SpawnTemplate )
+      end
+    end
+    DefenderSquadron.Resources = Resources
+  end
+
+  
+  function AI_A2A_DISPATCHER:SetCAP( SquadronName, Zone, FloorAltitude, CeilingAltitude, MinSpeed, MaxSpeed, AltType )
+  
+    self.DefenderSquadrons[SquadronName] = self.DefenderSquadrons[SquadronName] or {} 
+    self.DefenderSquadrons[SquadronName].Cap = self.DefenderSquadrons[SquadronName].Cap or {}
+    
+    local DefenderSquadron = self.DefenderSquadrons[SquadronName]
+
+    local Cap = self.DefenderSquadrons[SquadronName].Cap
+    Cap.Name = SquadronName
+    Cap.Zone = Zone
+    Cap.FloorAltitude = FloorAltitude
+    Cap.CeilingAltitude = CeilingAltitude
+    Cap.MinSpeed = MinSpeed
+    Cap.MaxSpeed = MaxSpeed
+    Cap.AltType = AltType
+
+    self:SetCAPInterval( SquadronName, 2, 180, 600, 1 )
     
   end
   
-  function AI_A2A_DISPATCHER:SetCAPInterval( SquadronName, LowInterval, HighInterval, Probability )
+  function AI_A2A_DISPATCHER:SetCAPInterval( SquadronName, Limit, LowInterval, HighInterval, Probability )
   
-    self.DefenderSquadrons["CAP"] = self.DefenderSquadrons["CAP"] or {} 
-    self.DefenderSquadrons["CAP"][SquadronName] = self.DefenderSquadrons["CAP"][SquadronName] or {}
+    self.DefenderSquadrons[SquadronName] = self.DefenderSquadrons[SquadronName] or {} 
+    self.DefenderSquadrons[SquadronName].Cap = self.DefenderSquadrons[SquadronName].Cap or {}
 
-    local CAP = self.DefenderSquadrons["CAP"][SquadronName]
-  
-    if CAP then
-      CAP.LowInterval = LowInterval
-      CAP.HighInterval = HighInterval
-      CAP.Probability = Probability
+    local DefenderSquadron = self.DefenderSquadrons[SquadronName]
+
+    local Cap = self.DefenderSquadrons[SquadronName].Cap
+    if Cap then
+      Cap.LowInterval = LowInterval
+      Cap.HighInterval = HighInterval
+      Cap.Probability = Probability
+      Cap.Limit = Limit
     else
       error( "This squadron does not exist:" .. SquadronName )
     end
     
-    self:__CAP( self:GetCAPDelay( SquadronName ), SquadronName, true )
+    self:__CAP( -self:GetCAPDelay( SquadronName ), SquadronName, true )
   end
   
   function AI_A2A_DISPATCHER:GetCAPDelay( SquadronName )
   
-    self.DefenderSquadrons["CAP"] = self.DefenderSquadrons["CAP"] or {} 
-    self.DefenderSquadrons["CAP"][SquadronName] = self.DefenderSquadrons["CAP"][SquadronName] or {}
+    self.DefenderSquadrons[SquadronName] = self.DefenderSquadrons[SquadronName] or {} 
+    self.DefenderSquadrons[SquadronName].Cap = self.DefenderSquadrons[SquadronName].Cap or {}
 
-    local CAP = self.DefenderSquadrons["CAP"][SquadronName]
+    local DefenderSquadron = self.DefenderSquadrons[SquadronName]
 
-    if CAP then
-      return math.random( CAP.LowInterval, CAP.HighInterval )
+    local Cap = self.DefenderSquadrons[SquadronName].Cap
+    if Cap then
+      return math.random( Cap.LowInterval, Cap.HighInterval )
     else
       error( "This squadron does not exist:" .. SquadronName )
     end
@@ -338,33 +366,34 @@ do -- AI_A2A_DISPATCHER
 
   function AI_A2A_DISPATCHER:CanCAP( SquadronName )
   
-    self.DefenderSquadrons["CAP"] = self.DefenderSquadrons["CAP"] or {} 
-    self.DefenderSquadrons["CAP"][SquadronName] = self.DefenderSquadrons["CAP"][SquadronName] or {}
+    self.DefenderSquadrons[SquadronName] = self.DefenderSquadrons[SquadronName] or {} 
+    self.DefenderSquadrons[SquadronName].Cap = self.DefenderSquadrons[SquadronName].Cap or {}
 
-    local CAP = self.DefenderSquadrons["CAP"][SquadronName]
+    local DefenderSquadron = self.DefenderSquadrons[SquadronName]
 
-    if CAP then
-      local Probability = math.random()
-      if Probability < CAP.Probability then
-        return true
-      else
-        return false
+    local Cap = self.DefenderSquadrons[SquadronName].Cap
+    if Cap then
+      local CapCount = self:CountCapAirborne( SquadronName )
+      if CapCount < Cap.Limit then
+        local Probability = math.random()
+        if Probability <= Cap.Probability then
+          return true
+        end
       end
+      return false
     else
       error( "This squadron does not exist:" .. SquadronName )
     end
   end
   
-  function AI_A2A_DISPATCHER:SetINTERCEPT( Name, Spawn, MinSpeed, MaxSpeed )
+  function AI_A2A_DISPATCHER:SetINTERCEPT( SquadronName, MinSpeed, MaxSpeed )
   
-    self.DefenderSquadrons["INTERCEPT"] = self.DefenderSquadrons["INTERCEPT"] or {} 
-    self.DefenderSquadrons["INTERCEPT"][Name] = self.DefenderSquadrons["INTERCEPT"][Name] or {}
+    self.DefenderSquadrons[SquadronName] = self.DefenderSquadrons[SquadronName] or {} 
+    self.DefenderSquadrons[SquadronName].Intercept = self.DefenderSquadrons[SquadronName].Intercept or {}
     
-    local INTERCEPT = self.DefenderSquadrons["INTERCEPT"][Name]
-    INTERCEPT.Name = Name
-    INTERCEPT.Spawn = Spawn
-    INTERCEPT.MinSpeed = MinSpeed
-    INTERCEPT.MaxSpeed = MaxSpeed
+    local Intercept = self.DefenderSquadrons[SquadronName].Intercept
+    Intercept.Name = SquadronName
+    Intercept.MaxSpeed = MaxSpeed
   end
   
 
@@ -393,6 +422,22 @@ do -- AI_A2A_DISPATCHER
     
     return nil
   end
+
+  function AI_A2A_DISPATCHER:CountCapAirborne( SquadronName )
+
+    -- First, count the active AIGroups Units, targetting the DetectedSet
+    local CapCount = 0
+    
+    local DefenderSquadron = self.DefenderSquadrons[SquadronName]
+    if DefenderSquadron then
+      for InterceptID, Intercept in pairs( DefenderSquadron.Intercept or {} ) do
+        CapCount = CapCount + 1
+      end
+    end
+
+    return CapCount
+  end
+  
   
   function AI_A2A_DISPATCHER:CountDefendersEngaged( DetectedItem )
 
@@ -613,27 +658,27 @@ do -- AI_A2A_DISPATCHER
   -- @param #boolean DetectedItemID
   -- @param #boolean DetectedItemChange
   -- @return Tasking.Task#TASK
-  function AI_A2A_DISPATCHER:EvaluateRemoveTask( DetectedItem, A2A_Index )
+  function AI_A2A_DISPATCHER:EvaluateRemoveTask( DetectedItem, TargetIndex )
     
-    local A2A_Target = self.DefenderTargets[A2A_Index]
+    local DefenderTarget = self.DefenderTargets[TargetIndex]
 
-    if A2A_Target then 
+    if DefenderTarget then 
       
-      for AIGroupName, AIGroup in pairs( A2A_Target.Groups ) do
+      for AIGroupName, AIGroup in pairs( DefenderTarget.Groups ) do
         local AIGroup = AIGroup -- Wrapper.Group#GROUP
         if not AIGroup:IsAlive() then
           self.DefenderTasks[AIGroup] = nil
-          self.DefenderTargets[A2A_Index].Groups[AIGroupName] = nil
+          self.DefenderTargets[TargetIndex].Groups[AIGroupName] = nil
         end
       end
        
       local DetectedSet = DetectedItem.Set -- Core.Set#SET_UNIT
       if DetectedSet:Count() == 0 then
-        self.DefenderTargets[A2A_Index] = nil
+        self.DefenderTargets[TargetIndex] = nil
       end
     end
 
-    return self.DefenderTargets[A2A_Index]
+    return self.DefenderTargets[TargetIndex]
   end
 
 

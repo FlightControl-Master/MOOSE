@@ -138,12 +138,13 @@ do -- COORDINATE
     ClassName = "COORDINATE",
   }
 
+
   --- COORDINATE constructor.
   -- @param #COORDINATE self
   -- @param Dcs.DCSTypes#Distance x The x coordinate of the Vec3 point, pointing to the North.
   -- @param Dcs.DCSTypes#Distance y The y coordinate of the Vec3 point, pointing to the Right.
   -- @param Dcs.DCSTypes#Distance z The z coordinate of the Vec3 point, pointing to the Right.
-  -- @return Core.Point#COORDINATE
+  -- @return #COORDINATE
   function COORDINATE:New( x, y, z ) 
 
     local self = BASE:Inherit( self, BASE:New() ) -- #COORDINATE
@@ -177,7 +178,7 @@ do -- COORDINATE
   --- Create a new COORDINATE object from  Vec3 coordinates.
   -- @param #COORDINATE self
   -- @param Dcs.DCSTypes#Vec3 Vec3 The Vec3 point.
-  -- @return Core.Point#COORDINATE
+  -- @return #COORDINATE
   function COORDINATE:NewFromVec3( Vec3 ) 
 
     local self = self:New( Vec3.x, Vec3.y, Vec3.z ) -- #COORDINATE

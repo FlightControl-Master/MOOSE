@@ -957,6 +957,68 @@ function SPAWN:OnSpawnGroup( SpawnCallBackFunction, ... )
   return self
 end
 
+--- Will spawn a group at an airbase. 
+-- This method is mostly advisable to be used if you want to simulate spawning units at an airbase.
+-- Note that each point in the route assigned to the spawning group is reset to the point of the spawn.
+-- You can use the returned group to further define the route to be followed.
+-- @param #SPAWN self
+-- @param Wrapper.Airbase#AIRBASE Airbase The @{Airbase} where to spawn the group.
+-- @param #number SpawnIndex (optional) The index which group to spawn within the given zone.
+-- @return Wrapper.Group#GROUP that was spawned.
+-- @return #nil Nothing was spawned.
+function SPAWN:SpawnAtAirbase( Airbase, SpawnIndex )
+  self:F( { self.SpawnTemplatePrefix, Airbase, SpawnIndex } )
+
+  local PointVec3 = Airbase:GetPointVec3()
+  self:T2(PointVec3)
+
+  if SpawnIndex then
+  else
+    SpawnIndex = self.SpawnIndex + 1
+  end
+  
+  if self:_GetSpawnIndex( SpawnIndex ) then
+    
+    local SpawnTemplate = self.SpawnGroups[self.SpawnIndex].SpawnTemplate
+  
+    if SpawnTemplate then
+
+      self:T( { "Current point of ", self.SpawnTemplatePrefix, Airbase } )
+
+      -- Translate the position of the Group Template to the Vec3.
+      for UnitID = 1, #SpawnTemplate.units do
+        self:T( 'Before Translation SpawnTemplate.units['..UnitID..'].x = ' .. SpawnTemplate.units[UnitID].x .. ', SpawnTemplate.units['..UnitID..'].y = ' .. SpawnTemplate.units[UnitID].y )
+        local UnitTemplate = SpawnTemplate.units[UnitID]
+        local SX = UnitTemplate.x
+        local SY = UnitTemplate.y 
+        local BX = SpawnTemplate.route.points[1].x
+        local BY = SpawnTemplate.route.points[1].y
+        local TX = PointVec3.x + ( SX - BX )
+        local TY = PointVec3.z + ( SY - BY )
+        SpawnTemplate.units[UnitID].x = TX
+        SpawnTemplate.units[UnitID].y = TY
+        SpawnTemplate.units[UnitID].alt = PointVec3.y
+        self:T( 'After Translation SpawnTemplate.units['..UnitID..'].x = ' .. SpawnTemplate.units[UnitID].x .. ', SpawnTemplate.units['..UnitID..'].y = ' .. SpawnTemplate.units[UnitID].y )
+      end
+      
+      SpawnTemplate.route.points[1].x = PointVec3.x
+      SpawnTemplate.route.points[1].y = PointVec3.z
+      SpawnTemplate.route.points[1].alt = Airbase.y
+      SpawnTemplate.route.points[1].action = "From Parking Area Hot"
+      SpawnTemplate.route.points[1].type = "TakeOffParkingHot"
+      SpawnTemplate.route.points[1].airdromeId = Airbase:GetID()
+      
+      SpawnTemplate.x = PointVec3.x
+      SpawnTemplate.y = PointVec3.z
+              
+      return self:SpawnWithIndex( self.SpawnIndex )
+    end
+  end
+  
+  return nil
+end
+
+
 
 --- Will spawn a group from a Vec3 in 3D space. 
 -- This method is mostly advisable to be used if you want to simulate spawning units in the air, like helicopters or airplanes.

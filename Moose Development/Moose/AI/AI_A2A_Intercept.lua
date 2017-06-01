@@ -21,6 +21,9 @@
 -- @module AI_A2A_Intercept
 
 
+BASE:TraceClass("AI_A2A_INTERCEPT")
+
+
 --- @type AI_A2A_INTERCEPT
 -- @extends AI.AI_A2A#AI_A2A
 
@@ -352,32 +355,40 @@ function AI_A2A_INTERCEPT:onafterEngage( AIGroup, From, Event, To, AttackSetUnit
     local EngageRoute = {}
 
     --- Calculate the current route point.
-    local CurrentVec2 = AIGroup:GetVec2()
     
-    --TODO: Create GetAltitude function for GROUP, and delete GetUnit(1).
-    local CurrentAltitude = AIGroup:GetUnit(1):GetAltitude()
-    local CurrentSpeed = AIGroup:GetUnit(1):GetVelocityKMH()
-    local CurrentPointVec3 = POINT_VEC3:New( CurrentVec2.x, CurrentAltitude, CurrentVec2.y )
-    local ToEngageZoneSpeed = self.PatrolMaxSpeed
-    local CurrentRoutePoint = CurrentPointVec3:RoutePointAir( 
-        self.PatrolAltType, 
-        POINT_VEC3.RoutePointType.TurningPoint, 
-        POINT_VEC3.RoutePointAction.TurningPoint, 
-        CurrentSpeed, 
-        true 
-      )
-    
-    EngageRoute[#EngageRoute+1] = CurrentRoutePoint
+    local CurrentCoord = AIGroup:GetCoordinate()
+    local ToTargetSpeed = math.random( self.MinSpeed, self.MaxSpeed )
+
+    if not AIGroup:GetUnit(1):IsAboveRunway() then
+      
+      --TODO: Create GetAltitude function for GROUP, and delete GetUnit(1).
+      local CurrentSpeed = AIGroup:GetUnit(1):GetVelocityKMH()
+      local ToEngageZoneSpeed = self.PatrolMaxSpeed
+      local CurrentRoutePoint = CurrentCoord:RoutePointAir( 
+          self.PatrolAltType, 
+          POINT_VEC3.RoutePointType.TurningPoint, 
+          POINT_VEC3.RoutePointAction.TurningPoint, 
+          ToTargetSpeed, 
+          true 
+        )
+      
+      EngageRoute[#EngageRoute+1] = CurrentRoutePoint
+    end
 
     
      --- Find the target point.
+    
+    
     local ToTargetCoord = self.AttackSetUnit:GetFirst():GetCoordinate()
 
-    local ToTargetSpeed = math.random( self.MinSpeed, self.MaxSpeed )
+    local ToInterceptAngle = CurrentCoord:GetAngleDegrees( CurrentCoord:GetDirectionVec3( ToTargetCoord ) )
+    local ToInterceptCoord = CurrentCoord:Translate( 5000, ToInterceptAngle )
+
     self:T2( { self.MinSpeed, self.MaxSpeed, ToTargetSpeed } )
+   
     
     --- Create a route point of type air.
-    local ToPatrolRoutePoint = ToTargetCoord:RoutePointAir( 
+    local ToPatrolRoutePoint = ToInterceptCoord:RoutePointAir( 
       self.PatrolAltType, 
       POINT_VEC3.RoutePointType.TurningPoint, 
       POINT_VEC3.RoutePointAction.TurningPoint, 
@@ -386,6 +397,8 @@ function AI_A2A_INTERCEPT:onafterEngage( AIGroup, From, Event, To, AttackSetUnit
     )
 
     EngageRoute[#EngageRoute+1] = ToPatrolRoutePoint
+    
+    
 
     AIGroup:OptionROEOpenFire()
     AIGroup:OptionROTPassiveDefense()
@@ -394,7 +407,7 @@ function AI_A2A_INTERCEPT:onafterEngage( AIGroup, From, Event, To, AttackSetUnit
 
     for AttackUnitID, AttackUnit in pairs( self.AttackSetUnit:GetSet() ) do
       local AttackUnit = AttackUnit -- Wrapper.Unit#UNIT
-      self:T( { AttackUnit, AttackUnit:IsAlive(), AttackUnit:IsAir() } )
+      self:T( { "Intercepting Unit:", AttackUnit:GetName(), AttackUnit:IsAlive(), AttackUnit:IsAir() } )
       if AttackUnit:IsAlive() and AttackUnit:IsAir() then
         AttackTasks[#AttackTasks+1] = AIGroup:TaskAttackUnit( AttackUnit )
       end
