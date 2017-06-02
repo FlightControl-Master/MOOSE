@@ -2194,7 +2194,7 @@ function CONTROLLABLE:TaskFunction( WayPoint, WayPointIndex, FunctionString, Fun
     ), WayPointIndex
   )
 
-  self:T3( DCSTask )
+  self:T( DCSTask )
 
   return DCSTask
 

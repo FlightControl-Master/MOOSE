@@ -197,7 +197,7 @@ do -- AI_A2A_DISPATCHER
     end
     
     if Repeat then
-      self:__CAP( self:GetCAPDelay( SquadronName ), SquadronName, true )
+      self:__CAP( -self:GetCAPDelay( SquadronName ), SquadronName, true )
     end
   end
 
@@ -263,7 +263,7 @@ do -- AI_A2A_DISPATCHER
         
           DefendersCount = DefendersCount + AIGroup:GetSize()
   
-          local Fsm = AI_A2A_INTERCEPT:New( AIGroup )
+          local Fsm = AI_A2A_INTERCEPT:New( AIGroup, Intercept.MinSpeed, Intercept.MaxSpeed )
           Fsm:__Engage( 1, TargetSetUnit ) -- Engage on the TargetSetUnit
   
           self.DefenderTasks = self.DefenderTasks or {}
@@ -374,6 +374,7 @@ do -- AI_A2A_DISPATCHER
     local Cap = self.DefenderSquadrons[SquadronName].Cap
     if Cap then
       local CapCount = self:CountCapAirborne( SquadronName )
+      self:F( { CapCount = CapCount, CapLimit = Cap.Limit } )
       if CapCount < Cap.Limit then
         local Probability = math.random()
         if Probability <= Cap.Probability then
@@ -393,6 +394,7 @@ do -- AI_A2A_DISPATCHER
     
     local Intercept = self.DefenderSquadrons[SquadronName].Intercept
     Intercept.Name = SquadronName
+    Intercept.MinSpeed = MinSpeed
     Intercept.MaxSpeed = MaxSpeed
   end
   

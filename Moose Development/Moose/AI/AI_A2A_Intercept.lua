@@ -309,11 +309,12 @@ end
 -- todo: need to fix this global function
 
 --- @param Wrapper.Group#GROUP AIControllable
-function _NewEngageInterceptRoute( AIControllable )
+function AI_A2A_INTERCEPT.InterceptRoute( AIControllable )
 
   AIControllable:T( "NewEngageRoute" )
   local EngageZone = AIControllable:GetState( AIControllable, "EngageZone" ) -- AI.AI_Cap#AI_A2A_INTERCEPT
   EngageZone:__Engage( 1 )
+  AIControllable:MessageToAll( AIControllable:GetName() .. " Engaging", 15 )
 end
 
 --- @param #AI_A2A_INTERCEPT self
@@ -357,49 +358,42 @@ function AI_A2A_INTERCEPT:onafterEngage( AIGroup, From, Event, To, AttackSetUnit
     --- Calculate the current route point.
     
     local CurrentCoord = AIGroup:GetCoordinate()
+    local ToTargetCoord = self.AttackSetUnit:GetFirst():GetCoordinate()
     local ToTargetSpeed = math.random( self.MinSpeed, self.MaxSpeed )
+    local ToInterceptAngle = CurrentCoord:GetAngleDegrees( CurrentCoord:GetDirectionVec3( ToTargetCoord ) )
+    self:F( { Angle = ToInterceptAngle, ToTargetSpeed = ToTargetSpeed } )
 
-    if not AIGroup:GetUnit(1):IsAboveRunway() then
-      
-      --TODO: Create GetAltitude function for GROUP, and delete GetUnit(1).
-      local CurrentSpeed = AIGroup:GetUnit(1):GetVelocityKMH()
-      local ToEngageZoneSpeed = self.PatrolMaxSpeed
-      local CurrentRoutePoint = CurrentCoord:RoutePointAir( 
-          self.PatrolAltType, 
-          POINT_VEC3.RoutePointType.TurningPoint, 
-          POINT_VEC3.RoutePointAction.TurningPoint, 
-          ToTargetSpeed, 
-          true 
-        )
-      
-      EngageRoute[#EngageRoute+1] = CurrentRoutePoint
-    end
+    --TODO: Create GetAltitude function for GROUP, and delete GetUnit(1).
+    local ToEngageZoneSpeed = self.PatrolMaxSpeed
+--    local CurrentRoutePoint = CurrentCoord:RoutePointAir( 
+--        self.PatrolAltType, 
+--        POINT_VEC3.RoutePointType.TurningPoint, 
+--        POINT_VEC3.RoutePointAction.TurningPoint, 
+--        ToTargetSpeed, 
+--        true 
+--      )
+--    EngageRoute[#EngageRoute+1] = CurrentRoutePoint
 
     
      --- Find the target point.
     
     
-    local ToTargetCoord = self.AttackSetUnit:GetFirst():GetCoordinate()
 
-    local ToInterceptAngle = CurrentCoord:GetAngleDegrees( CurrentCoord:GetDirectionVec3( ToTargetCoord ) )
-    local ToInterceptCoord = CurrentCoord:Translate( 5000, ToInterceptAngle )
 
     self:T2( { self.MinSpeed, self.MaxSpeed, ToTargetSpeed } )
    
     
     --- Create a route point of type air.
-    local ToPatrolRoutePoint = ToInterceptCoord:RoutePointAir( 
+    local ToPatrolRoutePoint = CurrentCoord:Translate( 5000, ToInterceptAngle ):RoutePointAir( 
       self.PatrolAltType, 
       POINT_VEC3.RoutePointType.TurningPoint, 
       POINT_VEC3.RoutePointAction.TurningPoint, 
       ToTargetSpeed, 
       true 
     )
-
+    
     EngageRoute[#EngageRoute+1] = ToPatrolRoutePoint
     
-    
-
     AIGroup:OptionROEOpenFire()
     AIGroup:OptionROTPassiveDefense()
 
@@ -418,15 +412,14 @@ function AI_A2A_INTERCEPT:onafterEngage( AIGroup, From, Event, To, AttackSetUnit
     
     
     if #AttackTasks == 0 then
-      self:E("No targets found -> Going back to Patrolling")
+      self:E("No targets found -> Going RTB")
       self:__RTB( 1 )
     else
+      AttackTasks[#AttackTasks+1] = AIGroup:TaskFunction( 1, #AttackTasks, "AI_A2A_INTERCEPT.InterceptRoute" )
       EngageRoute[1].task = AIGroup:TaskCombo( AttackTasks )
       
       --- Do a trick, link the NewEngageRoute function of the object to the AIControllable in a temporary variable ...
       AIGroup:SetState( AIGroup, "EngageZone", self )
-  
-      AIGroup:WayPointFunction( #EngageRoute, 1, "_NewEngageCapRoute" )
     end
     
     --- NOW ROUTE THE GROUP!
