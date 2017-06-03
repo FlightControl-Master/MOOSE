@@ -198,7 +198,13 @@ function AI_A2A:New( AIGroup )
   return self
 end
 
+function AI_A2A:SetDispatcher( Dispatcher )
+  self.Dispatcher = Dispatcher
+end
 
+function AI_A2A:GetDispatcher()
+  return self.Dispatcher
+end
 
 
 --- Sets (modifies) the minimum and maximum speed of the patrol.

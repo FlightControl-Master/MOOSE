@@ -361,27 +361,6 @@ function AI_A2A_INTERCEPT:onafterEngage( AIGroup, From, Event, To, AttackSetUnit
     local ToTargetCoord = self.AttackSetUnit:GetFirst():GetCoordinate()
     local ToTargetSpeed = math.random( self.MinSpeed, self.MaxSpeed )
     local ToInterceptAngle = CurrentCoord:GetAngleDegrees( CurrentCoord:GetDirectionVec3( ToTargetCoord ) )
-    self:F( { Angle = ToInterceptAngle, ToTargetSpeed = ToTargetSpeed } )
-
-    --TODO: Create GetAltitude function for GROUP, and delete GetUnit(1).
-    local ToEngageZoneSpeed = self.PatrolMaxSpeed
---    local CurrentRoutePoint = CurrentCoord:RoutePointAir( 
---        self.PatrolAltType, 
---        POINT_VEC3.RoutePointType.TurningPoint, 
---        POINT_VEC3.RoutePointAction.TurningPoint, 
---        ToTargetSpeed, 
---        true 
---      )
---    EngageRoute[#EngageRoute+1] = CurrentRoutePoint
-
-    
-     --- Find the target point.
-    
-    
-
-
-    self:T2( { self.MinSpeed, self.MaxSpeed, ToTargetSpeed } )
-   
     
     --- Create a route point of type air.
     local ToPatrolRoutePoint = CurrentCoord:Translate( 5000, ToInterceptAngle ):RoutePointAir( 
@@ -391,6 +370,9 @@ function AI_A2A_INTERCEPT:onafterEngage( AIGroup, From, Event, To, AttackSetUnit
       ToTargetSpeed, 
       true 
     )
+
+    self:F( { Angle = ToInterceptAngle, ToTargetSpeed = ToTargetSpeed } )
+    self:T2( { self.MinSpeed, self.MaxSpeed, ToTargetSpeed } )
     
     EngageRoute[#EngageRoute+1] = ToPatrolRoutePoint
     

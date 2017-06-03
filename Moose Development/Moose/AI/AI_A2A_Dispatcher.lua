@@ -60,7 +60,6 @@ do -- AI_A2A_DISPATCHER
     
     -- This table models the DefenderSquadron templates.
     self.DefenderSquadrons = self.DefenderSquadrons or {} -- The Defender Squadrons.    
-    self.DefenderTargets = self.DefenderTargets or {} -- The Intruders currently attacked by the Defenders.
     self.DefenderTasks = self.DefenderTasks or {} -- The Defenders Tasks.
     
     -- TODO: Check detection through radar.
@@ -166,8 +165,11 @@ do -- AI_A2A_DISPATCHER
   end
   
   
-  function AI_A2A_DISPATCHER:onafterCAP( SquadronName, Repeat )
+  ---
+  -- @param #AI_A2A_DISPATCHER self
+  function AI_A2A_DISPATCHER:onafterCAP( From, Event, To, SquadronName )
   
+    self:F({SquadronName = SquadronName})
     self.DefenderSquadrons[SquadronName] = self.DefenderSquadrons[SquadronName] or {} 
     self.DefenderSquadrons[SquadronName].Cap = self.DefenderSquadrons[SquadronName].Cap or {}
     
@@ -184,24 +186,78 @@ do -- AI_A2A_DISPATCHER
         if AIGroup then
   
           local Fsm = AI_A2A_CAP:New( AIGroup, Cap.Zone, Cap.FloorAltitude, Cap.CeilingAltitude, Cap.MinSpeed, Cap.MaxSpeed, Cap.AltType )
+          Fsm:SetDispatcher( self )
           Fsm:__Patrol( 1 )
   
-          self.DefenderTasks = self.DefenderTasks or {}
-          self.DefenderTasks[AIGroup] = self.DefenderTasks[AIGroup] or {}
-          self.DefenderTasks[AIGroup].Type = "CAP"
-          self.DefenderTasks[AIGroup].Fsm = Fsm
+          self:SetDefenderTask( AIGroup, "CAP", Fsm )
         end
       end
     else
       error( "This squadron does not exist:" .. SquadronName )
     end
     
-    if Repeat then
-      self:__CAP( -self:GetCAPDelay( SquadronName ), SquadronName, true )
-    end
   end
 
-  function AI_A2A_DISPATCHER:onafterENGAGE( From, Event, To, TargetSetUnit, TargetReference, AIGroups )
+
+  ---
+  -- @param #AI_A2A_DISPATCHER self
+  function AI_A2A_DISPATCHER:GetDefenderTasks()
+    return self.DefenderTasks or {}
+  end
+  
+  ---
+  -- @param #AI_A2A_DISPATCHER self
+  function AI_A2A_DISPATCHER:GetDefenderTask( AIGroup )
+    return self.DefenderTasks[AIGroup]
+  end
+
+  ---
+  -- @param #AI_A2A_DISPATCHER self
+  function AI_A2A_DISPATCHER:GetDefenderTaskFsm( AIGroup )
+    return self:GetDefenderTask( AIGroup ).Fsm
+  end
+  
+  ---
+  -- @param #AI_A2A_DISPATCHER self
+  function AI_A2A_DISPATCHER:GetDefenderTaskTarget( AIGroup )
+    return self:GetDefenderTask( AIGroup ).Target
+  end
+
+  ---
+  -- @param #AI_A2A_DISPATCHER self
+  function AI_A2A_DISPATCHER:ClearDefenderTask( AIGroup )
+    self.DefenderTasks[AIGroup] = nil
+    return self
+  end
+
+  
+  ---
+  -- @param #AI_A2A_DISPATCHER self
+  function AI_A2A_DISPATCHER:SetDefenderTask( AIGroup, Type, Fsm, Target )
+    self.DefenderTasks[AIGroup] = self.DefenderTasks[AIGroup] or {}
+    self.DefenderTasks[AIGroup].Type = Type
+    self.DefenderTasks[AIGroup].Fsm = Fsm
+    
+    self:SetDefenderTaskTarget( AIGroup, Target )
+    return self
+  end
+  
+  
+  ---
+  -- @param #AI_A2A_DISPATCHER self
+  -- @param Wrapper.Group#GROUP AIGroup
+  function AI_A2A_DISPATCHER:SetDefenderTaskTarget( AIGroup, Target )
+
+    if Target then
+      AIGroup:MessageToAll( AIGroup:GetName().. " target " .. Target.Index, 300 )
+      self.DefenderTasks[AIGroup].Target = Target
+    end
+    return self
+  end
+
+  ---
+  -- @param #AI_A2A_DISPATCHER self
+  function AI_A2A_DISPATCHER:onafterENGAGE( From, Event, To, Target, AIGroups )
   
     self:F( { AIGroups = AIGroups } )
 
@@ -209,38 +265,31 @@ do -- AI_A2A_DISPATCHER
 
       for AIGroupID, AIGroup in pairs( AIGroups ) do
 
-        local Fsm = self.DefenderTasks[AIGroup].Fsm
-        TargetSetUnit:Flush()
-        Fsm:__Engage( 1, TargetSetUnit ) -- Engage on the TargetSetUnit
-
-        self.DefenderTasks[AIGroup].Target = TargetReference
-  
-        self.DefenderTargets[TargetReference] = self.DefenderTargets[TargetReference] or {}
-        self.DefenderTargets[TargetReference].Set = TargetSetUnit
-        self.DefenderTargets[TargetReference].Groups = self.DefenderTargets[TargetReference].Groups or {}
-        local Groups = self.DefenderTargets[TargetReference].Groups
-        local GroupName = AIGroup:GetName()
-        Groups[GroupName] = AIGroup
+        local Fsm = self:GetDefenderTaskFsm( AIGroup )
+        Fsm:__Engage( 1, Target.Set ) -- Engage on the TargetSetUnit
+        
+        self:SetDefenderTaskTarget( AIGroup, Target )
       end
     end
   end
 
-
-  function AI_A2A_DISPATCHER:onafterINTERCEPT( From, Event, To, TargetSetUnit, TargetReference, DefendersMissing )
+  ---
+  -- @param #AI_A2A_DISPATCHER self
+  function AI_A2A_DISPATCHER:onafterINTERCEPT( From, Event, To, Target, DefendersMissing )
 
     local ClosestDistance = 0
     local ClosestDefenderSquadronName = nil
     
-    local AttackerCount = TargetSetUnit:Count()
+    local AttackerCount = Target.Set:Count()
     local DefendersCount = 0
-    
+
     while( DefendersCount < DefendersMissing ) do
 
       for SquadronName, DefenderSquadron in pairs( self.DefenderSquadrons or {} ) do
         for InterceptID, Intercept in pairs( DefenderSquadron.Intercept or {} ) do
     
           local SpawnCoord = DefenderSquadron.Airbase:GetCoordinate() -- Core.Point#COORDINATE
-          local TargetCoord = TargetSetUnit:GetFirst():GetCoordinate()
+          local TargetCoord = Target.Set:GetFirst():GetCoordinate()
           local Distance = SpawnCoord:Get2DDistance( TargetCoord )
     
           if ClosestDistance == 0 or Distance < ClosestDistance then
@@ -264,20 +313,18 @@ do -- AI_A2A_DISPATCHER
           DefendersCount = DefendersCount + AIGroup:GetSize()
   
           local Fsm = AI_A2A_INTERCEPT:New( AIGroup, Intercept.MinSpeed, Intercept.MaxSpeed )
-          Fsm:__Engage( 1, TargetSetUnit ) -- Engage on the TargetSetUnit
+          Fsm:SetDispatcher( self )
+          Fsm:__Engage( 1, Target.Set ) -- Engage on the TargetSetUnit
+
   
-          self.DefenderTasks = self.DefenderTasks or {}
-          self.DefenderTasks[AIGroup] = self.DefenderTasks[AIGroup] or {}
-          self.DefenderTasks[AIGroup].Type = "INTERCEPT"
-          self.DefenderTasks[AIGroup].Fsm = Fsm
-          self.DefenderTasks[AIGroup].Target = TargetReference
+          self:SetDefenderTask( AIGroup, "INTERCEPT", Fsm, Target )
           
-          self.DefenderTargets[TargetReference] = self.DefenderTargets[TargetReference] or {}
-          self.DefenderTargets[TargetReference].Set = TargetSetUnit
-          self.DefenderTargets[TargetReference].Groups = self.DefenderTargets[TargetReference].Groups or {}
-          local Groups = self.DefenderTargets[TargetReference].Groups
-          local GroupName = AIGroup:GetName()
-          Groups[GroupName] = AIGroup
+          function Fsm:onafterRTB()
+            local Dispatcher = self:GetDispatcher() -- #AI_A2A_DISPATCHER
+            local AIGroup = self:GetControllable()
+            AIGroup:MessageToAll( AIGroup:GetName().. " cleared " .. Dispatcher.DefenderTasks[AIGroup].Target.Index, 300 )
+            Dispatcher:ClearDefenderTask( AIGroup )
+          end
           
         end
       end
@@ -285,6 +332,8 @@ do -- AI_A2A_DISPATCHER
   end
 
 
+  ---
+  -- @param #AI_A2A_DISPATCHER self
   function AI_A2A_DISPATCHER:SetSquadron( SquadronName, AirbaseName, SpawnTemplates, Resources )
   
     self.DefenderSquadrons[SquadronName] = self.DefenderSquadrons[SquadronName] or {} 
@@ -309,6 +358,8 @@ do -- AI_A2A_DISPATCHER
   end
 
   
+  ---
+  -- @param #AI_A2A_DISPATCHER self
   function AI_A2A_DISPATCHER:SetCAP( SquadronName, Zone, FloorAltitude, CeilingAltitude, MinSpeed, MaxSpeed, AltType )
   
     self.DefenderSquadrons[SquadronName] = self.DefenderSquadrons[SquadronName] or {} 
@@ -329,7 +380,15 @@ do -- AI_A2A_DISPATCHER
     
   end
   
-  function AI_A2A_DISPATCHER:SetCAPInterval( SquadronName, Limit, LowInterval, HighInterval, Probability )
+  ---
+  -- @param AI_A2A_DISPATCHER
+  function AI_A2A_DISPATCHER:SchedulerCAP( SquadronName )
+    self:CAP( SquadronName )
+  end
+  
+  ---
+  -- @param #AI_A2A_DISPATCHER self
+  function AI_A2A_DISPATCHER:SetCAPInterval( SquadronName, CapLimit, LowInterval, HighInterval, Probability )
   
     self.DefenderSquadrons[SquadronName] = self.DefenderSquadrons[SquadronName] or {} 
     self.DefenderSquadrons[SquadronName].Cap = self.DefenderSquadrons[SquadronName].Cap or {}
@@ -341,14 +400,21 @@ do -- AI_A2A_DISPATCHER
       Cap.LowInterval = LowInterval
       Cap.HighInterval = HighInterval
       Cap.Probability = Probability
-      Cap.Limit = Limit
+      Cap.CapLimit = CapLimit
+      Cap.Scheduler = Cap.Scheduler or SCHEDULER:New( self ) 
+      local Scheduler = Cap.Scheduler -- Core.Scheduler#SCHEDULER
+      local Variance = ( HighInterval - LowInterval ) / 2
+      local Median = LowInterval + Variance
+      local Randomization = Variance / Median
+      Scheduler:Schedule(self, self.SchedulerCAP, { SquadronName }, Median, Median, Randomization )
     else
       error( "This squadron does not exist:" .. SquadronName )
     end
-    
-    self:__CAP( -self:GetCAPDelay( SquadronName ), SquadronName, true )
+
   end
   
+  ---
+  -- @param #AI_A2A_DISPATCHER self
   function AI_A2A_DISPATCHER:GetCAPDelay( SquadronName )
   
     self.DefenderSquadrons[SquadronName] = self.DefenderSquadrons[SquadronName] or {} 
@@ -364,18 +430,22 @@ do -- AI_A2A_DISPATCHER
     end
   end
 
+  ---
+  -- @param #AI_A2A_DISPATCHER self
   function AI_A2A_DISPATCHER:CanCAP( SquadronName )
+    self:F({SquadronName = SquadronName})
   
     self.DefenderSquadrons[SquadronName] = self.DefenderSquadrons[SquadronName] or {} 
     self.DefenderSquadrons[SquadronName].Cap = self.DefenderSquadrons[SquadronName].Cap or {}
 
     local DefenderSquadron = self.DefenderSquadrons[SquadronName]
 
-    local Cap = self.DefenderSquadrons[SquadronName].Cap
+    local Cap = DefenderSquadron.Cap
     if Cap then
+      self:E( { Cap = Cap } )
       local CapCount = self:CountCapAirborne( SquadronName )
-      self:F( { CapCount = CapCount, CapLimit = Cap.Limit } )
-      if CapCount < Cap.Limit then
+      self:F( { CapCount = CapCount, CapLimit = Cap.CapLimit } )
+      if CapCount < Cap.CapLimit then
         local Probability = math.random()
         if Probability <= Cap.Probability then
           return true
@@ -387,6 +457,8 @@ do -- AI_A2A_DISPATCHER
     end
   end
   
+  ---
+  -- @param #AI_A2A_DISPATCHER self
   function AI_A2A_DISPATCHER:SetINTERCEPT( SquadronName, MinSpeed, MaxSpeed )
   
     self.DefenderSquadrons[SquadronName] = self.DefenderSquadrons[SquadronName] or {} 
@@ -425,15 +497,20 @@ do -- AI_A2A_DISPATCHER
     return nil
   end
 
+  ---
+  -- @param #AI_A2A_DISPATCHER self
   function AI_A2A_DISPATCHER:CountCapAirborne( SquadronName )
 
-    -- First, count the active AIGroups Units, targetting the DetectedSet
     local CapCount = 0
     
     local DefenderSquadron = self.DefenderSquadrons[SquadronName]
     if DefenderSquadron then
-      for InterceptID, Intercept in pairs( DefenderSquadron.Intercept or {} ) do
-        CapCount = CapCount + 1
+      for AIGroup, DefenderTask in pairs( self:GetDefenderTasks() ) do
+        if DefenderTask.Type == "CAP" then
+          if AIGroup:IsAlive() then
+            CapCount = CapCount + 1
+          end
+        end
       end
     end
 
@@ -441,21 +518,27 @@ do -- AI_A2A_DISPATCHER
   end
   
   
-  function AI_A2A_DISPATCHER:CountDefendersEngaged( DetectedItem )
+  ---
+  -- @param #AI_A2A_DISPATCHER self
+  function AI_A2A_DISPATCHER:CountDefendersEngaged( Target )
 
     -- First, count the active AIGroups Units, targetting the DetectedSet
     local AIUnitCount = 0
     
-    for AIGroupName, AIGroup in pairs( ( self.DefenderTargets[DetectedItem] and self.DefenderTargets[DetectedItem].Groups ) or {} ) do
+    for AIGroup, DefenderTask in pairs( self:GetDefenderTasks() ) do
       local AIGroup = AIGroup -- Wrapper.Group#GROUP
-      if AIGroup:IsAlive() then
-        AIUnitCount = AIUnitCount + AIGroup:GetSize()
-      end 
+      if self:GetDefenderTaskTarget( AIGroup ) == Target then
+        if AIGroup:IsAlive() then
+          AIUnitCount = AIUnitCount + AIGroup:GetSize()
+        end
+      end
     end
 
     return AIUnitCount
   end
   
+  ---
+  -- @param #AI_A2A_DISPATCHER self
   function AI_A2A_DISPATCHER:CountDefendersToBeEngaged( DetectedItem, DefenderCount )
   
     local ResultAIGroups = nil
@@ -468,20 +551,20 @@ do -- AI_A2A_DISPATCHER
     for AIName, AIFriendly in pairs( AIFriendlies or {} ) do
       -- We only allow to ENGAGE targets as long as the Units on both sides are balanced.
       if DetectedCount > DefenderCount then 
-        local AIGroup = AIFriendly :GetGroup() -- Wrapper.Group#GROUP
+        local AIGroup = AIFriendly:GetGroup() -- Wrapper.Group#GROUP
         self:F( { AIFriendly = AIGroup } )
-        if AIGroup:IsAlive() then
+        if AIGroup and AIGroup:IsAlive() then
           -- Ok, so we have a friendly near the potential target.
           -- Now we need to check if the AIGroup has a Task.
-          local AIGroupTask = self.DefenderTasks[AIGroup]
-          self:F( {AIGroupTask = AIGroupTask } )
-          if AIGroupTask then
-            -- The Task should be CAP
-            self:F( { Type = AIGroupTask.Type } )
-            if AIGroupTask.Type == "CAP" then
+          local DefenderTask = self:GetDefenderTask( AIGroup )
+          self:F( {AIGroupTask = DefenderTask } )
+          if DefenderTask then
+            -- The Task should be CAP or INTERCEPT
+            self:F( { Type = DefenderTask.Type } )
+            if DefenderTask.Type == "CAP" or DefenderTask.Type == "INTERCEPT" then
               -- If there is no target, then add the AIGroup to the ResultAIGroups for Engagement to the TargetSet
-              self:F( { Target = AIGroupTask.Target } )
-              if AIGroupTask.Target == nil then
+              self:F( { Target = DefenderTask.Target } )
+              if DefenderTask.Target == nil then
                 ResultAIGroups = ResultAIGroups or {}
                 ResultAIGroups[AIGroup] = AIGroup
                 DefenderCount = DefenderCount + AIGroup:GetSize()
@@ -506,17 +589,18 @@ do -- AI_A2A_DISPATCHER
   function AI_A2A_DISPATCHER:EvaluateENGAGE( DetectedItem )
     self:F( { DetectedItem.ItemID } )
   
-    local DetectedSet = DetectedItem.Set
-
     -- First, count the active AIGroups Units, targetting the DetectedSet
     local DefenderCount = self:CountDefendersEngaged( DetectedItem )
-
     local DefenderGroups = self:CountDefendersToBeEngaged( DetectedItem, DefenderCount )
     
-    -- Only allow ENGAGE when there are Players near the zone, and when the Area has detected items since the last run in a 60 seconds time zone.
+    -- Only allow ENGAGE when:
+    -- 1. There are friendly units near the detected attackers.
+    -- 2. There is sufficient fuel
+    -- 3. There is sufficient ammo
+    -- 4. The plane is not damaged
     if DefenderGroups and DetectedItem.IsDetected == true then
       
-      return DetectedSet, DefenderGroups
+      return DefenderGroups
     end
     
     return nil, nil
@@ -527,20 +611,19 @@ do -- AI_A2A_DISPATCHER
   -- @param Functional.Detection#DETECTION_BASE.DetectedItem DetectedItem
   -- @return Set#SET_UNIT TargetSetUnit: The target set of units.
   -- @return #nil If there are no targets to be set.
-  function AI_A2A_DISPATCHER:EvaluateINTERCEPT( DetectedItem )
-    self:F( { DetectedItem.ItemID } )
+  function AI_A2A_DISPATCHER:EvaluateINTERCEPT( Target )
+    self:F( { Target.ItemID } )
   
-    local AttackerSet = DetectedItem.Set
+    local AttackerSet = Target.Set
     local AttackerCount = AttackerSet:Count()
 
     -- First, count the active AIGroups Units, targetting the DetectedSet
-    local DefenderCount = self:CountDefendersEngaged( DetectedItem )
+    local DefenderCount = self:CountDefendersEngaged( Target )
     local DefendersMissing = AttackerCount - DefenderCount
 
-    -- Only allow ENGAGE when there are Players near the zone, and when the Area has detected items since the last run in a 60 seconds time zone.
-    if DetectedItem.IsDetected == true then
+    if Target.IsDetected == true then
       
-      return DetectedItem.Set, DefendersMissing
+      return DefendersMissing
     end
     
     return nil, nil
@@ -553,10 +636,10 @@ do -- AI_A2A_DISPATCHER
   -- @param #AI_A2A_DISPATCHER self
   -- @param DetectedItem
   -- @return #number, Core.CommandCenter#REPORT
-  function AI_A2A_DISPATCHER:GetFriendliesNearBy( DetectedItem )
+  function AI_A2A_DISPATCHER:GetFriendliesNearBy( Target )
   
-    local DetectedSet = DetectedItem.Set
-    local FriendlyUnitsNearBy = self.Detection:GetFriendliesNearBy( DetectedItem )
+    local DetectedSet = Target.Set
+    local FriendlyUnitsNearBy = self.Detection:GetFriendliesNearBy( Target )
     
     local FriendlyTypes = {}
     local FriendliesCount = 0
@@ -651,39 +734,6 @@ do -- AI_A2A_DISPATCHER
   end
 
 
-  --- Evaluates the removal of the Task from the Mission.
-  -- Can only occur when the DetectedItem is Changed AND the state of the Task is "Planned".
-  -- @param #AI_A2A_DISPATCHER self
-  -- @param Tasking.Mission#MISSION Mission
-  -- @param Tasking.Task#TASK Task
-  -- @param Functional.Detection#DETECTION_BASE Detection The detection created by the @{Detection#DETECTION_BASE} derived object.
-  -- @param #boolean DetectedItemID
-  -- @param #boolean DetectedItemChange
-  -- @return Tasking.Task#TASK
-  function AI_A2A_DISPATCHER:EvaluateRemoveTask( DetectedItem, TargetIndex )
-    
-    local DefenderTarget = self.DefenderTargets[TargetIndex]
-
-    if DefenderTarget then 
-      
-      for AIGroupName, AIGroup in pairs( DefenderTarget.Groups ) do
-        local AIGroup = AIGroup -- Wrapper.Group#GROUP
-        if not AIGroup:IsAlive() then
-          self.DefenderTasks[AIGroup] = nil
-          self.DefenderTargets[TargetIndex].Groups[AIGroupName] = nil
-        end
-      end
-       
-      local DetectedSet = DetectedItem.Set -- Core.Set#SET_UNIT
-      if DetectedSet:Count() == 0 then
-        self.DefenderTargets[TargetIndex] = nil
-      end
-    end
-
-    return self.DefenderTargets[TargetIndex]
-  end
-
-
   --- Assigns A2A AI Tasks in relation to the detected items.
   -- @param #AI_A2A_DISPATCHER self
   -- @param Functional.Detection#DETECTION_BASE Detection The detection created by the @{Detection#DETECTION_BASE} derived object.
@@ -695,18 +745,8 @@ do -- AI_A2A_DISPATCHER
     local ChangeMsg = {}
     
     local TaskReport = REPORT:New()
-      
---    -- Checking the Process queue for the dispatcher, and removing any obsolete task!
---    for AI_A2A_Index, AI_A2A_Process in pairs( self.AI_A2A_Processes ) do
---
---      local AI_A2A_Process = AI_A2A_Process
---      if AI_A2A_Process:IsStatePlanned() then
---        local DetectedItem = Detection:GetDetectedItem( AI_A2A_Index )
---        if not DetectedItem then
---          self.AI_A2A_Process[AI_A2A_Index] = nil
---        end
---      end
---    end
+
+          
 
     -- Now that all obsolete tasks are removed, loop through the detected targets.
     for DetectedItemID, DetectedItem in pairs( Detection:GetDetectedItems() ) do
@@ -717,29 +757,31 @@ do -- AI_A2A_DISPATCHER
       local DetectedZone = DetectedItem.Zone
 
       self:F( { "Targets in DetectedItem", DetectedItem.ItemID, DetectedSet:Count() } )
-      
+
+      for AIGroup, DefenderTask in pairs( self:GetDefenderTasks() ) do
+        local AIGroup = AIGroup -- Wrapper.Group#GROUP
+        if not AIGroup:IsAlive() then
+          self:ClearDefenderTask( AIGroup )            
+        end
+      end
+
       local DetectedID = DetectedItem.ID
       local A2A_Index = DetectedItem.Index
       local DetectedItemChanged = DetectedItem.Changed
       
-      local A2A_Target = self:EvaluateRemoveTask( DetectedItem, A2A_Index )
-      self:F( { A2A_Index = A2A_Index, A2A_Target = A2A_Target } )
-
-      -- Evaluate A2A_Action
-      if not A2A_Target then
-        local TargetSetUnit, AIGroups = self:EvaluateENGAGE( DetectedItem ) -- Returns a SetUnit if there are targets to be INTERCEPTed...
+      do 
+        local AIGroups = self:EvaluateENGAGE( DetectedItem ) -- Returns a SetUnit if there are targets to be INTERCEPTed...
         self:F( { AIGroups = AIGroups } )
-        if TargetSetUnit then
-          self:ENGAGE( TargetSetUnit, A2A_Index, AIGroups )
-        else
-          do
-            local AttackerSet, DefendersMissing = self:EvaluateINTERCEPT( DetectedItem )
-            self:F( { DefendersMissing = DefendersMissing } )
-            AttackerSet:Flush()
-            if AttackerSet then
-              self:INTERCEPT( AttackerSet, A2A_Index, DefendersMissing )
-            end
-          end
+        if AIGroups then
+          self:ENGAGE( DetectedItem, AIGroups )
+        end
+      end
+
+      do
+        local DefendersMissing = self:EvaluateINTERCEPT( DetectedItem )
+        self:F( { DefendersMissing = DefendersMissing } )
+        if DefendersMissing then
+          self:INTERCEPT( DetectedItem, DefendersMissing )
         end
       end
     end
