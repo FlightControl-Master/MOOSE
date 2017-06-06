@@ -1659,6 +1659,59 @@ function CONTROLLABLE:TaskRouteToZone( Zone, Randomize, Speed, Formation )
   return nil
 end
 
+--- (GROUND) Route the controllable to a given Vec2.
+-- A speed can be given in km/h.
+-- A given formation can be given.
+-- @param #CONTROLLABLE self
+-- @param #Vec2 Vec2 The Vec2 where to route to.
+-- @param #number Speed The speed.
+-- @param Base#FORMATION Formation The formation string.
+function CONTROLLABLE:TaskRouteToVec2( Vec2, Speed, Formation )
+
+  local DCSControllable = self:GetDCSObject()
+
+  if DCSControllable then
+
+    local ControllablePoint = self:GetVec2()
+
+    local PointFrom = {}
+    PointFrom.x = ControllablePoint.x
+    PointFrom.y = ControllablePoint.y
+    PointFrom.type = "Turning Point"
+    PointFrom.action = Formation or "Cone"
+    PointFrom.speed = 20 / 1.6
+
+
+    local PointTo = {}
+
+    PointTo.x = Vec2.x
+    PointTo.y = Vec2.y
+    PointTo.type = "Turning Point"
+
+    if Formation then
+      PointTo.action = Formation
+    else
+      PointTo.action = "Cone"
+    end
+
+    if Speed then
+      PointTo.speed = Speed
+    else
+      PointTo.speed = 60 / 3.6
+    end
+
+    local Points = { PointFrom, PointTo }
+
+    self:T3( Points )
+
+    self:Route( Points )
+
+    return self
+  end
+
+  return nil
+end
+
 
 -- Commands
 
