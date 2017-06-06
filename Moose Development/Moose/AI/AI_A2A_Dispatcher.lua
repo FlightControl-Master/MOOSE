@@ -48,10 +48,18 @@ do -- AI_A2A_DISPATCHER
   --- AI_A2A_DISPATCHER constructor.
   -- @param #AI_A2A_DISPATCHER self
   -- @param #string The Squadron Name. This name is used to control the squadron settings in the A2A dispatcher, and also in communication to human players.
-  -- @param Functional.Spawn#SPAWN SpawnA2A The SPAWN object to create groups that will receive the dispatched A2A Tasks. These spawn objects MUST contain all AI units.
-  -- @param Functional.Detection#DETECTION_BASE Detection The detection results that are used to dynamically assign new tasks.
+  -- @param Core.Set#SET_GROUP DetectionSetGroup The @{Set} of group objects that will setup the Early Warning Radar network.
+  -- @param #number GroupingRadius The radius in meters wherein detected planes are being grouped as one target area. 
+  -- For airplanes, 6000 (6km) is recommended, and is also the default value of this parameter.
   -- @return #AI_A2A_DISPATCHER self
-  function AI_A2A_DISPATCHER:New( Detection )
+  -- @usage
+  --   
+  --   -- Set a new AI A2A Dispatcher object, based on an EWR network with a 6 km grouping radius.
+  --   
+  -- 
+  function AI_A2A_DISPATCHER:New( DetectionSetGroup, GroupingRadius )
+
+    local Detection = DETECTION_AREAS:New( DetectionSetGroup, GroupingRadius )
   
     -- Inherits from DETECTION_MANAGER
     local self = BASE:Inherit( self, DETECTION_MANAGER:New( nil, Detection ) ) -- #AI_A2A_DISPATCHER
@@ -164,8 +172,8 @@ do -- AI_A2A_DISPATCHER
     -- This will avoid the detection to still "know" the shot unit until the next detection.
     -- Otherwise, a new intercept or engage may happen for an already shot plane!
     
-    self:HandleEvent( EVENTS.Crash )
-    self:HandleEvent( EVENTS.Dead )
+    self:HandleEvent( EVENTS.Crash, self.OnEventCrashOrDead )
+    self:HandleEvent( EVENTS.Dead, self.OnEventCrashOrDead )
     
     self:__Start( 5 )
     
@@ -174,10 +182,54 @@ do -- AI_A2A_DISPATCHER
 
   --- @param #AI_A2A_DISPATCHER self
   -- @param Core.Event#EVENTDATA EventData
-  function AI_A2A_DISPATCHER:OnEventCrash( EventData )
+  function AI_A2A_DISPATCHER:OnEventCrashOrDead( EventData )
     self.Detection:ForgetDetectedUnit( EventData.IniUnitName )  
   end
-    
+
+  --- Define the radius to engage any target by airborne friendlies, which are executing cap or returning from an intercept mission.
+  -- So, if there is a target area detected and reported, 
+  -- then any friendlies that are airborne near this target area, 
+  -- will be commanded to (re-)engage that target when available (if no other tasks were commanded).
+  -- For example, if 100000 is given as a value, then any friendly that is airborne within 100km from the detected target, 
+  -- will be considered to receive the command to engage that target area.
+  -- You need to evaluate the value of this parameter carefully.
+  -- If too small, more intercept missions may be triggered upon detected target areas.
+  -- If too large, any airborne cap may not be able to reach the detected target area in time, because it is too far.
+  -- @param #AI_A2A_DISPATCHER self
+  -- @param #number FriendliesRadius The radius to report friendlies near the target.
+  -- @return #AI_A2A_DISPATCHER
+  -- @usage
+  -- 
+  --   -- Set 100km as the radius to engage any target by airborne friendlies.
+  --   Dispatcher:InitDetectionFriendiesRadius( 100000 )
+  --   
+  function AI_A2A_DISPATCHER:InitEngageRadius( FriendliesRadius )
+
+    self.Detection:SetFriendliesRange( FriendliesRadius )
+  
+    return self
+  end
+  
+  --- Define a border area to simulate a **cold war** scenario.
+  -- A **cold war** is one where CAP aircraft patrol their territory but will not attack enemy aircraft or launch GCI aircraft unless enemy aircraft enter their territory. In other words the EWR may detect an enemy aircraft but will only send aircraft to attack it if it crosses the border.
+  -- A **hot war** is one where CAP aircraft will intercept any detected enemy aircraft and GCI aircraft will launch against detected enemy aircraft without regard for territory. In other words if the ground radar can detect the enemy aircraft then it will send CAP and GCI aircraft to attack it.
+  -- If it’s a cold war then the **borders of red and blue territory** need to be defined using a @{zone} object derived from @{Zone#ZONE_BASE}. This method needs to be used for this.
+  -- If a hot war is chosen then **no borders** actually need to be defined using the helicopter units other than it makes it easier sometimes for the mission maker to envisage where the red and blue territories roughly are. In a hot war the borders are effectively defined by the ground based radar coverage of a coalition. Set the noborders parameter to 1
+  -- @param #AI_A2A_DISPATCHER self
+  -- @param Core.Zone#ZONE_BASE BorderZone An object derived from ZONE_BASE, that defines a zone between
+  -- @return #AI_A2A_DISPATCHER
+  -- @usage
+  -- 
+  --   -- Set a polygon zone as the border for the A2A dispatcher.
+  --   local BorderZone = ZONE_POLYGON( "CCCP Border", GROUP:FindByName( "CCCP Border" ) ) -- The GROUP object is a late activate helicopter unit.
+  --   Dispatcher:InitBorderZone( BorderZone )
+  --   
+  function AI_A2A_DISPATCHER:InitBorderZone( BorderZone )
+
+    self.Detection:SetAcceptZones( BorderZone )
+
+    return self
+  end
 
   --- Calculates which AI friendlies are nearby the area
   -- @param #AI_A2A_DISPATCHER self
@@ -261,6 +313,7 @@ do -- AI_A2A_DISPATCHER
     return self
   end
 
+
   ---
   -- @param #AI_A2A_DISPATCHER self
   -- @return #AI_A2A_DISPATCHER
@@ -288,15 +341,22 @@ do -- AI_A2A_DISPATCHER
     end
     DefenderSquadron.Resources = Resources
     
-    self:SetOverhead( SquadronName, 1 )
+    self:SetSquadronOverhead( SquadronName, 1 )
     return self
   end
 
   
   ---
   -- @param #AI_A2A_DISPATCHER self
+  -- @param #string SquadronName The squadron name.
+  -- @param Core.Zone#ZONE_BASE Zone The @{Zone} object derived from @{Zone#ZONE_BASE} that defines the zone wherein the CAP will be executed.
+  -- @param #number FloorAltitude The minimum altitude at which the cap can be executed.
+  -- @param #number CeilingAltitude the maximum altitude at which the cap can be executed.
+  -- @param #number MinSpeed The minimum speed at which the cap can be executed.
+  -- @param #number MaxSpeed The maximum speed at which the cap can be executed.
+  -- @param #number AltType The altitude type, which is a string "BARO" defining Barometric or "RADIO" defining radio controlled altitude.
   -- @return #AI_A2A_DISPATCHER
-  function AI_A2A_DISPATCHER:SetCAP( SquadronName, Zone, FloorAltitude, CeilingAltitude, MinSpeed, MaxSpeed, AltType )
+  function AI_A2A_DISPATCHER:SetSquadronCap( SquadronName, Zone, FloorAltitude, CeilingAltitude, MinSpeed, MaxSpeed, AltType )
   
     self.DefenderSquadrons[SquadronName] = self.DefenderSquadrons[SquadronName] or {} 
     self.DefenderSquadrons[SquadronName].Cap = self.DefenderSquadrons[SquadronName].Cap or {}
@@ -312,20 +372,23 @@ do -- AI_A2A_DISPATCHER
     Cap.MaxSpeed = MaxSpeed
     Cap.AltType = AltType
 
-    self:SetCAPInterval( SquadronName, 2, 180, 600, 1 )
+    self:SetSquadronCapInterval( SquadronName, 2, 180, 600, 1 )
     
+    return self
   end
   
   ---
   -- @param AI_A2A_DISPATCHER
+  -- @param #string SquadronName The squadron name.
   function AI_A2A_DISPATCHER:SchedulerCAP( SquadronName )
     self:CAP( SquadronName )
   end
   
   ---
   -- @param #AI_A2A_DISPATCHER self
+  -- @param #string SquadronName The squadron name.
   -- @return #AI_A2A_DISPATCHER
-  function AI_A2A_DISPATCHER:SetCAPInterval( SquadronName, CapLimit, LowInterval, HighInterval, Probability )
+  function AI_A2A_DISPATCHER:SetSquadronCapInterval( SquadronName, CapLimit, LowInterval, HighInterval, Probability )
   
     self.DefenderSquadrons[SquadronName] = self.DefenderSquadrons[SquadronName] or {} 
     self.DefenderSquadrons[SquadronName].Cap = self.DefenderSquadrons[SquadronName].Cap or {}
@@ -352,6 +415,7 @@ do -- AI_A2A_DISPATCHER
   
   ---
   -- @param #AI_A2A_DISPATCHER self
+  -- @param #string SquadronName The squadron name.
   -- @return #AI_A2A_DISPATCHER
   function AI_A2A_DISPATCHER:GetCAPDelay( SquadronName )
   
@@ -370,6 +434,7 @@ do -- AI_A2A_DISPATCHER
 
   ---
   -- @param #AI_A2A_DISPATCHER self
+  -- @param #string SquadronName The squadron name.
   function AI_A2A_DISPATCHER:CanCAP( SquadronName )
     self:F({SquadronName = SquadronName})
   
@@ -395,8 +460,11 @@ do -- AI_A2A_DISPATCHER
   
   ---
   -- @param #AI_A2A_DISPATCHER self
+  -- @param #string SquadronName The squadron name.
+  -- @param #number MinSpeed The minimum speed at which the gci can be executed.
+  -- @param #number MaxSpeed The maximum speed at which the gci can be executed.
   -- @return #AI_A2A_DISPATCHER
-  function AI_A2A_DISPATCHER:SetINTERCEPT( SquadronName, MinSpeed, MaxSpeed )
+  function AI_A2A_DISPATCHER:SetSquadronGci( SquadronName, MinSpeed, MaxSpeed )
   
     self.DefenderSquadrons[SquadronName] = self.DefenderSquadrons[SquadronName] or {} 
     self.DefenderSquadrons[SquadronName].Intercept = self.DefenderSquadrons[SquadronName].Intercept or {}
@@ -439,7 +507,7 @@ do -- AI_A2A_DISPATCHER
   -- 
   -- 
   -- @return #AI_A2A_DISPATCHER
-  function AI_A2A_DISPATCHER:SetOverhead( SquadronName, Overhead )
+  function AI_A2A_DISPATCHER:SetSquadronOverhead( SquadronName, Overhead )
   
     self.Overhead = Overhead
     
