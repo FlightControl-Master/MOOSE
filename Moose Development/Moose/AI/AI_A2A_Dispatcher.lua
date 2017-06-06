@@ -378,13 +378,6 @@ do -- AI_A2A_DISPATCHER
   end
   
   ---
-  -- @param AI_A2A_DISPATCHER
-  -- @param #string SquadronName The squadron name.
-  function AI_A2A_DISPATCHER:SchedulerCAP( SquadronName )
-    self:CAP( SquadronName )
-  end
-  
-  ---
   -- @param #AI_A2A_DISPATCHER self
   -- @param #string SquadronName The squadron name.
   -- @return #AI_A2A_DISPATCHER
@@ -976,6 +969,13 @@ do
     return FriendliesCount, FriendlyTypesReport
   end
 
+  ---
+  -- @param AI_A2A_DISPATCHER
+  -- @param #string SquadronName The squadron name.
+  function AI_A2A_DISPATCHER:SchedulerCAP( SquadronName )
+    self:CAP( SquadronName )
+  end
+  
 
 
 end
