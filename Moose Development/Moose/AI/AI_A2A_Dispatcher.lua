@@ -475,7 +475,7 @@ do -- AI_A2A_DISPATCHER
     Intercept.MaxSpeed = MaxSpeed
   end
   
-  ---
+  --- Defines the amount of extra planes that will take-off as part of the defense system.
   -- @param #AI_A2A_DISPATCHER self
   -- @param #string SquadronName The name of the squadron.
   -- @param #number Overhead The %-tage of Units that dispatching command will allocate to intercept in surplus of detected amount of units.
@@ -496,20 +496,38 @@ do -- AI_A2A_DISPATCHER
   --  
   -- @usage:
   -- 
-  --   local Dispatcher = AI_A2A_DISPATCHER:New( EWR )
+  --   local Dispatcher = AI_A2A_DISPATCHER:New( ... )
   --   
   --   -- An overhead of 1,5 with 1 planes detected, will allocate 2 planes ( 1 * 1,5 ) = 1,5 => rounded up gives 2.
   --   -- An overhead of 1,5 with 2 planes detected, will allocate 3 planes ( 2 * 1,5 ) = 3 =>  rounded up gives 3.
   --   -- An overhead of 1,5 with 3 planes detected, will allocate 5 planes ( 3 * 1,5 ) = 4,5 => rounded up gives 5 planes.
   --   -- An overhead of 1,5 with 4 planes detected, will allocate 6 planes ( 4 * 1,5 ) = 6  => rounded up gives 6 planes.
   --   
-  --   Dispatcher:SetOverhead( 1,5 )
+  --   Dispatcher:SetSquadronOverhead( 1,5 )
   -- 
   -- 
   -- @return #AI_A2A_DISPATCHER
   function AI_A2A_DISPATCHER:SetSquadronOverhead( SquadronName, Overhead )
   
     self.Overhead = Overhead
+    
+    return self
+  end
+
+  --- 
+  -- @param #AI_A2A_DISPATCHER self
+  -- @param #string SquadronName The name of the squadron.
+  -- @param #number Grouping The level of grouping that will be applied of the CAP or GCI defenders. 
+  -- @usage:
+  -- 
+  --   local Dispatcher = AI_A2A_DISPATCHER:New( ... )
+  --   Dispatcher:SetSquadronGrouping( 2 )
+  -- 
+  -- 
+  -- @return #AI_A2A_DISPATCHER
+  function AI_A2A_DISPATCHER:SetSquadronGrouping( SquadronName, Grouping )
+  
+    self.Grouping = Grouping
     
     return self
   end
