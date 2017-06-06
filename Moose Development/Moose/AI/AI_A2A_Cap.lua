@@ -26,6 +26,7 @@
 --
 -- @module AI_A2A_Cap
 
+BASE:TraceClass("AI_A2A_CAP")
 
 --- @type AI_A2A_CAP
 -- @extends AI.AI_A2A_Patrol#AI_A2A_PATROL
@@ -116,8 +117,6 @@
 AI_A2A_CAP = {
   ClassName = "AI_A2A_CAP",
 }
-
-
 
 --- Creates a new AI_A2A_CAP object
 -- @param #AI_A2A_CAP self
@@ -343,11 +342,10 @@ end
 
 -- todo: need to fix this global function
 
---- @param Wrapper.Controllable#CONTROLLABLE AIControllable
-function _NewEngageCapRoute( AIControllable )
+--- @param Wrapper.Group#GROUP AIGroup
+function AI_A2A_CAP.AttackRoute( AIGroup )
 
-  AIControllable:T( "NewEngageRoute" )
-  local EngageZone = AIControllable:GetState( AIControllable, "EngageZone" ) -- AI.AI_Cap#AI_A2A_CAP
+  local EngageZone = AIGroup:GetState( AIGroup, "EngageZone" ) -- AI.AI_Cap#AI_A2A_CAP
   EngageZone:__Engage( 1 )
 end
 
@@ -384,85 +382,71 @@ function AI_A2A_CAP:onafterEngage( AIGroup, From, Event, To, AttackSetUnit )
   self:F( { AIGroup, From, Event, To, AttackSetUnit} )
 
   self.AttackSetUnit = AttackSetUnit or self.AttackSetUnit -- Core.Set#SET_UNIT
+  
+  local FirstAttackUnit = self.AttackSetUnit:GetFirst()
+  
+  if FirstAttackUnit then
+  
+    if AIGroup:IsAlive() then
 
-  if AIGroup:IsAlive() then
+      local EngageRoute = {}
 
-    local EngageRoute = {}
-
-    --- Calculate the current route point.
-    local CurrentVec2 = self.Controllable:GetVec2()
-    
-    --TODO: Create GetAltitude function for GROUP, and delete GetUnit(1).
-    local CurrentAltitude = self.Controllable:GetUnit(1):GetAltitude()
-    local CurrentPointVec3 = POINT_VEC3:New( CurrentVec2.x, CurrentAltitude, CurrentVec2.y )
-    local ToEngageZoneSpeed = self.PatrolMaxSpeed
-    local CurrentRoutePoint = CurrentPointVec3:RoutePointAir( 
+      --- Calculate the target route point.
+      local CurrentCoord = AIGroup:GetCoordinate()
+      local ToTargetCoord = self.AttackSetUnit:GetFirst():GetCoordinate()
+      local ToTargetSpeed = math.random( self.MinSpeed, self.MaxSpeed )
+      local ToInterceptAngle = CurrentCoord:GetAngleDegrees( CurrentCoord:GetDirectionVec3( ToTargetCoord ) )
+      
+      --- Create a route point of type air.
+      local ToPatrolRoutePoint = CurrentCoord:Translate( 5000, ToInterceptAngle ):RoutePointAir( 
         self.PatrolAltType, 
         POINT_VEC3.RoutePointType.TurningPoint, 
         POINT_VEC3.RoutePointAction.TurningPoint, 
-        ToEngageZoneSpeed, 
+        ToTargetSpeed, 
         true 
       )
-    
-    EngageRoute[#EngageRoute+1] = CurrentRoutePoint
-
-    
-     --- Find a random 2D point in PatrolZone.
-    local ToTargetVec2 = self.PatrolZone:GetRandomVec2()
-    self:T2( ToTargetVec2 )
-
-    --- Define Speed and Altitude.
-    local ToTargetAltitude = math.random( self.EngageFloorAltitude, self.EngageCeilingAltitude )
-    local ToTargetSpeed = math.random( self.PatrolMinSpeed, self.PatrolMaxSpeed )
-    self:T2( { self.PatrolMinSpeed, self.PatrolMaxSpeed, ToTargetSpeed } )
-    
-    --- Obtain a 3D @{Point} from the 2D point + altitude.
-    local ToTargetPointVec3 = POINT_VEC3:New( ToTargetVec2.x, ToTargetAltitude, ToTargetVec2.y )
-    
-    --- Create a route point of type air.
-    local ToPatrolRoutePoint = ToTargetPointVec3:RoutePointAir( 
-      self.PatrolAltType, 
-      POINT_VEC3.RoutePointType.TurningPoint, 
-      POINT_VEC3.RoutePointAction.TurningPoint, 
-      ToTargetSpeed, 
-      true 
-    )
-
-    EngageRoute[#EngageRoute+1] = ToPatrolRoutePoint
-
-    AIGroup:OptionROEOpenFire()
-    AIGroup:OptionROTPassiveDefense()
-
-    local AttackTasks = {}
-
-    for AttackUnitID, AttackUnit in pairs( self.AttackSetUnit:GetSet() ) do
-      local AttackUnit = AttackUnit -- Wrapper.Unit#UNIT
-      self:T( { AttackUnit, AttackUnit:IsAlive(), AttackUnit:IsAir() } )
-      if AttackUnit:IsAlive() and AttackUnit:IsAir() then
-        AttackTasks[#AttackTasks+1] = AIGroup:TaskAttackUnit( AttackUnit )
-      end
-    end
-
-    --- Now we're going to do something special, we're going to call a function from a waypoint action at the AIControllable...
-    self.Controllable:WayPointInitialize( EngageRoute )
-    
-    
-    if #AttackTasks == 0 then
-      self:E("No targets found -> Going back to Patrolling")
-      self:__Abort( 1 )
-      self:__Route( 1 )
-    else
-      EngageRoute[1].task = AIGroup:TaskCombo( AttackTasks )
+  
+      self:F( { Angle = ToInterceptAngle, ToTargetSpeed = ToTargetSpeed } )
+      self:T2( { self.MinSpeed, self.MaxSpeed, ToTargetSpeed } )
       
-      --- Do a trick, link the NewEngageRoute function of the object to the AIControllable in a temporary variable ...
-      self.Controllable:SetState( self.Controllable, "EngageZone", self )
+      EngageRoute[#EngageRoute+1] = ToPatrolRoutePoint
+
+      AIGroup:OptionROEOpenFire()
+      AIGroup:OptionROTPassiveDefense()
   
-      self.Controllable:WayPointFunction( #EngageRoute, 1, "_NewEngageCapRoute" )
+      local AttackTasks = {}
+  
+      for AttackUnitID, AttackUnit in pairs( self.AttackSetUnit:GetSet() ) do
+        local AttackUnit = AttackUnit -- Wrapper.Unit#UNIT
+        self:T( { "Attacking Unit:", AttackUnit:GetName(), AttackUnit:IsAlive(), AttackUnit:IsAir() } )
+        if AttackUnit:IsAlive() and AttackUnit:IsAir() then
+          AttackTasks[#AttackTasks+1] = AIGroup:TaskAttackUnit( AttackUnit )
+        end
+      end
+  
+      --- Now we're going to do something special, we're going to call a function from a waypoint action at the AIControllable...
+      self.Controllable:WayPointInitialize( EngageRoute )
+      
+      
+      if #AttackTasks == 0 then
+        self:E("No targets found -> Going back to Patrolling")
+        self:__Abort( 1 )
+        self:__Route( 1 )
+      else
+        AttackTasks[#AttackTasks+1] = AIGroup:TaskFunction( 1, #AttackTasks, "AI_A2A_CAP.AttackRoute" )
+        EngageRoute[1].task = AIGroup:TaskCombo( AttackTasks )
+        
+        --- Do a trick, link the NewEngageRoute function of the object to the AIControllable in a temporary variable ...
+        AIGroup:SetState( AIGroup, "EngageZone", self )
+      end
+      
+      --- NOW ROUTE THE GROUP!
+      AIGroup:WayPointExecute( 1, 2 )
     end
-    
-    --- NOW ROUTE THE GROUP!
-    self.Controllable:WayPointExecute( 1, 2 )
-  
+  else
+    self:E("No targets found -> Going back to Patrolling")
+    self:__Abort( 1 )
+    self:__Route( 1 )
   end
 end
 

@@ -12,6 +12,8 @@
 -- 
 -- @module AI_A2A
 
+BASE:TraceClass("AI_A2A")
+
 
 --- @type AI_A2A
 -- @extends Core.Fsm#FSM_CONTROLLABLE
@@ -72,6 +74,32 @@ function AI_A2A:New( AIGroup )
   self:ManageDamage( 1 )
 
   self:SetStartState( "Stopped" ) 
+  
+  self:AddTransition( "*", "Start", "Started" )
+  
+  --- Start Handler OnBefore for AI_A2A
+  -- @function [parent=#AI_A2A] OnBeforeStart
+  -- @param #AI_A2A self
+  -- @param #string From
+  -- @param #string Event
+  -- @param #string To
+  -- @return #boolean
+  
+  --- Start Handler OnAfter for AI_A2A
+  -- @function [parent=#AI_A2A] OnAfterStart
+  -- @param #AI_A2A self
+  -- @param #string From
+  -- @param #string Event
+  -- @param #string To
+  
+  --- Start Trigger for AI_A2A
+  -- @function [parent=#AI_A2A] Start
+  -- @param #AI_A2A self
+  
+  --- Start Asynchronous Trigger for AI_A2A
+  -- @function [parent=#AI_A2A] __Start
+  -- @param #AI_A2A self
+  -- @param #number Delay
 
   self:AddTransition( "*", "Stop", "Stopped" )
 
@@ -287,7 +315,7 @@ end
 function AI_A2A:onafterStart( Controllable, From, Event, To )
   self:F2()
 
-  self:__Status( 60 ) -- Check status status every 30 seconds.
+  self:__Status( 10 ) -- Check status status every 30 seconds.
   
   self:HandleEvent( EVENTS.PilotDead, self.OnPilotDead )
   self:HandleEvent( EVENTS.Crash, self.OnCrash )
@@ -307,13 +335,14 @@ end
 
 --- @param #AI_A2A self
 function AI_A2A:onafterStatus()
-  self:F2()
+  self:F()
 
   if self.Controllable and self.Controllable:IsAlive() then
   
     local RTB = false
     
     local Fuel = self.Controllable:GetUnit(1):GetFuel()
+    self:F({Fuel=Fuel})
     if Fuel < self.PatrolFuelTresholdPercentage then
       self:E( self.Controllable:GetName() .. " is out of fuel:" .. Fuel .. ", RTB!" )
       local OldAIControllable = self.Controllable
@@ -329,7 +358,9 @@ function AI_A2A:onafterStatus()
     
     -- TODO: Check GROUP damage function.
     local Damage = self.Controllable:GetLife()
-    if Damage <= self.PatrolDamageTreshold then
+    local InitialLife = self.Controllable:GetLife0()
+    self:F( { Damage = Damage, InitialLife = InitialLife, DamageTreshold = self.PatrolDamageTreshold } )
+    if ( Damage / InitialLife ) < self.PatrolDamageTreshold then
       self:E( self.Controllable:GetName() .. " is damaged:" .. Damage .. ", RTB!" )
       RTB = true
     end
@@ -337,7 +368,7 @@ function AI_A2A:onafterStatus()
     if RTB == true then
       self:RTB()
     else
-      self:__Status( 60 ) -- Execute the Patrol event after 30 seconds.
+      self:__Status( 10 ) -- Execute the Patrol event after 30 seconds.
     end
   end
 end

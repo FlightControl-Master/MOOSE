@@ -228,6 +228,36 @@ function CONTROLLABLE:GetLife()
   return nil
 end
 
+--- Returns the initial health.
+-- @param #CONTROLLABLE self
+-- @return #number The controllable health value (unit or group average).
+-- @return #nil The controllable is not existing or alive.  
+function CONTROLLABLE:GetLife0()
+  self:F2( self.ControllableName )
+
+  local DCSControllable = self:GetDCSObject()
+  
+  if DCSControllable then
+    local UnitLife = 0
+    local Units = self:GetUnits()
+    if #Units == 1 then
+      local Unit = Units[1] -- Wrapper.Unit#UNIT
+      UnitLife = Unit:GetLife0()
+    else
+      local UnitLifeTotal = 0
+      for UnitID, Unit in pairs( Units ) do
+        local Unit = Unit -- Wrapper.Unit#UNIT
+        UnitLifeTotal = UnitLifeTotal + Unit:GetLife0()
+      end
+      UnitLife = UnitLifeTotal / #Units
+    end
+    return UnitLife
+  end
+  
+  return nil
+end
+
+
 
 
 -- Tasks

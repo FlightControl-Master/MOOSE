@@ -611,7 +611,7 @@ do -- DETECTION_BASE
             if self.AcceptZones then
               for AcceptZoneID, AcceptZone in pairs( self.AcceptZones ) do
                 local AcceptZone = AcceptZone -- Core.Zone#ZONE_BASE
-                if AcceptZone:IsPointVec2InZone( DetectedObjectVec2 ) == false then
+                if AcceptZone:IsVec2InZone( DetectedObjectVec2 ) == false then
                   DetectionAccepted = false
                 end
               end
@@ -755,6 +755,25 @@ do -- DETECTION_BASE
       
       if DetectedSet:Count() == 0 then
         self:RemoveDetectedItem( DetectedItemID )
+      end
+
+      return self
+    end
+    
+    --- Forget a Unit from a DetectionItem
+    -- @param #DETECTION_BASE self
+    -- @param #string UnitName The UnitName that needs to be forgotten from the DetectionItem Sets.
+    -- @return #DETECTION_BASE
+    function DETECTION_BASE:ForgetDetectedUnit( UnitName )
+      self:F2()
+    
+      local DetectedItems = self:GetDetectedItems()
+      
+      for DetectedItemIndex, DetectedItem in pairs( DetectedItems ) do
+        local DetectedSet = self:GetDetectedSet( DetectedItemIndex )
+        if DetectedSet then
+          DetectedSet:RemoveUnitsByName( UnitName )
+        end
       end
 
       return self

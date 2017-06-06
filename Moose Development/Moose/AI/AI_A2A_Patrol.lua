@@ -179,7 +179,7 @@ function AI_A2A_PATROL:New( AIGroup, PatrolZone, PatrolFloorAltitude, PatrolCeil
   -- defafult PatrolAltType to "RADIO" if not specified
   self.PatrolAltType = PatrolAltType or "RADIO"
   
-  self:AddTransition( "Stopped", "Patrol", "Patrolling" )
+  self:AddTransition( "Started", "Patrol", "Patrolling" )
 
 --- OnBefore Transition Handler for Event Patrol.
 -- @function [parent=#AI_A2A_PATROL] OnBeforePatrol
