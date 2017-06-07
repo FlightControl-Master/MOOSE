@@ -975,7 +975,8 @@ function SPAWN:SpawnFromVec3( Vec3, SpawnIndex )
 
   if SpawnIndex then
   else
-    SpawnIndex = self.SpawnIndex + 1
+    self.SpawnIndex = self.SpawnIndex + 1
+    SpawnIndex = self.SpawnIndex
   end
   
   if self:_GetSpawnIndex( SpawnIndex ) then
