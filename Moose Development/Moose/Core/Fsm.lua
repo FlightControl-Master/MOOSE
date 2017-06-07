@@ -569,7 +569,7 @@ do -- FSM
       return errmsg
     end
     if self[handler] then
-      self:T( "Calling " .. handler )
+      self:T2( "Calling " .. handler )
       self._EventSchedules[EventName] = nil
       local Result, Value = xpcall( function() return self[handler]( self, unpack( params ) ) end, ErrorHandler )
       return Value
