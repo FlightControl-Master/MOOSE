@@ -132,7 +132,7 @@ function AI_A2A_INTERCEPT:New( AIGroup, MinSpeed, MaxSpeed )
   
   self.PatrolAltType = "RADIO"
   
-  self:AddTransition( { "Started", "Engaging" }, "Engage", "Engaging" ) -- FSM_CONTROLLABLE Transition for type #AI_A2A_INTERCEPT.
+  self:AddTransition( { "Started", "Engaging", "RTB" }, "Engage", "Engaging" ) -- FSM_CONTROLLABLE Transition for type #AI_A2A_INTERCEPT.
 
   --- OnBefore Transition Handler for Event Engage.
   -- @function [parent=#AI_A2A_INTERCEPT] OnBeforeEngage

@@ -136,7 +136,7 @@ function AI_A2A_CAP:New( AIGroup, PatrolZone, PatrolFloorAltitude, PatrolCeiling
   self.Accomplished = false
   self.Engaging = false
   
-  self:AddTransition( { "Patrolling", "Engaging" }, "Engage", "Engaging" ) -- FSM_CONTROLLABLE Transition for type #AI_A2A_CAP.
+  self:AddTransition( { "Patrolling", "Engaging", "RTB" }, "Engage", "Engaging" ) -- FSM_CONTROLLABLE Transition for type #AI_A2A_CAP.
 
   --- OnBefore Transition Handler for Event Engage.
   -- @function [parent=#AI_A2A_CAP] OnBeforeEngage

@@ -1,4 +1,4 @@
---- **Tasking** - The AI_A2A_DISPATCHER creates and manages AI_A2A tasks based on detected targets.
+--- **AI** - The AI_A2A_DISPATCHER creates and manages AI_A2A tasks based on detected targets.
 -- 
 -- ====
 -- 
@@ -145,6 +145,13 @@ do -- AI_A2A_DISPATCHER
   -- Essentially this controls how many flights of GCI aircraft can be active at any time.
   -- Note allowing large numbers of active GCI flights can adversely impact mission performance on low or medium specification hosts/servers.
   -- 
+  -- # Country, type, load out, skill and skins for CAP and GCI aircraft?
+  -- 
+  --   * Note these can be from any countries within the coalition but must be an aircraft with one of the main tasks being “CAP”.
+  --   * Obviously skins which are selected must be available to all players that join the mission otherwise they will see a default skin.
+  --   * Load outs should be appropriate to a CAP mission eg perhaps drop tanks for CAP flights and extra missiles for GCI flights. 
+  --   * These decisions will eventually lead to template aircraft units being placed as late activation units that the script will use as templates for spawning CAP and GCI flights. Up to 4 different aircraft configurations can be chosen for each coalition. The spawned aircraft will inherit the characteristics of the template aircraft.
+  --   * The selected aircraft type must be able to perform the CAP tasking for the chosen country. 
   -- 
   -- 
   -- @field #AI_A2A_DISPATCHER
@@ -391,6 +398,24 @@ do -- AI_A2A_DISPATCHER
       self:F( { Target = Message } )
     end
     self.DefenderTasks[AIGroup] = nil
+    return self
+  end
+
+  ---
+  -- @param #AI_A2A_DISPATCHER self
+  function AI_A2A_DISPATCHER:ClearDefenderTaskTarget( AIGroup )
+    if AIGroup:IsAlive() and self.DefenderTasks[AIGroup] then
+      local Target = self.DefenderTasks[AIGroup].Target
+      local Message = "Clearing (" .. self.DefenderTasks[AIGroup].Type .. ") " 
+      Message = Message .. AIGroup:GetName() 
+      if Target then
+        Message = Message .. ( Target and ( " from " .. Target.Index .. " [" .. Target.Set:Count() .. "]" ) ) or ""
+      end
+      self:F( { Target = Message } )
+    end
+    if AIGroup and self.DefenderTasks[AIGroup] and self.DefenderTasks[AIGroup].Target then
+      self.DefenderTasks[AIGroup].Target = nil
+    end
     return self
   end
 
@@ -786,6 +811,7 @@ do -- AI_A2A_DISPATCHER
   
           local Fsm = AI_A2A_CAP:New( AIGroup, Cap.Zone, Cap.FloorAltitude, Cap.CeilingAltitude, Cap.MinSpeed, Cap.MaxSpeed, Cap.AltType )
           Fsm:SetDispatcher( self )
+          Fsm:SetHomeAirbase( DefenderSquadron.Airbase )
           Fsm:Start()
           Fsm:__Patrol( 1 )
   
@@ -814,11 +840,12 @@ do -- AI_A2A_DISPATCHER
         
         self:SetDefenderTaskTarget( AIGroup, Target )
 
-        function Fsm:onafterRTB()
+        function Fsm:onafterRTB( AIGroup, From, Event, To )
           self:F({"CAP RTB"})
+          self:GetParent(self).onafterRTB( self, AIGroup, From, Event, To )
           local Dispatcher = self:GetDispatcher() -- #AI_A2A_DISPATCHER
           local AIGroup = self:GetControllable()
-          Dispatcher:ClearDefenderTask( AIGroup )
+          Dispatcher:ClearDefenderTaskTarget( AIGroup )
         end
       end
     end
@@ -884,17 +911,21 @@ do -- AI_A2A_DISPATCHER
           
           local Fsm = AI_A2A_INTERCEPT:New( AIGroup, Intercept.MinSpeed, Intercept.MaxSpeed )
           Fsm:SetDispatcher( self )
+          Fsm:SetHomeAirbase( DefenderSquadron.Airbase )
           Fsm:Start()
           Fsm:__Engage( 1, Target.Set ) -- Engage on the TargetSetUnit
 
   
           self:SetDefenderTask( AIGroup, "INTERCEPT", Fsm, Target )
           
-          function Fsm:onafterRTB()
+          
+          function Fsm:onafterRTB( AIGroup, From, Event, To )
             self:F({"INTERCEPT RTB"})
+            self:GetParent(self).onafterRTB( self, AIGroup, From, Event, To )
+            
             local Dispatcher = self:GetDispatcher() -- #AI_A2A_DISPATCHER
             local AIGroup = self:GetControllable()
-            Dispatcher:ClearDefenderTask( AIGroup )
+            Dispatcher:ClearDefenderTaskTarget( AIGroup )
           end
           
         end
@@ -971,7 +1002,15 @@ do -- AI_A2A_DISPATCHER
     for AIGroup, DefenderTask in pairs( self:GetDefenderTasks() ) do
       local AIGroup = AIGroup -- Wrapper.Group#GROUP
       if not AIGroup:IsAlive() then
-        self:ClearDefenderTask( AIGroup )            
+        self:ClearDefenderTask( AIGroup )
+      else
+        if DefenderTask.Target then
+          if DefenderTask.Target.Set then
+            if DefenderTask.Target.Set:Count() == 0 then
+              self:ClearDefenderTaskTarget( AIGroup )
+            end
+          end
+        end            
       end
     end
 

@@ -261,6 +261,18 @@ function AI_A2A:SetAltitude( PatrolFloorAltitude, PatrolCeilingAltitude )
 end
 
 
+--- Sets the home airbase.
+-- @param #AI_A2A self
+-- @param Wrapper.Airbase#AIRBASE HomeAirbase
+-- @return #AI_A2A self
+function AI_A2A:SetHomeAirbase( HomeAirbase )
+  self:F2( { HomeAirbase } )
+  
+  self.HomeAirbase = HomeAirbase
+end
+
+
+
 --- Set the status checking off.
 -- @param #AI_A2A self
 -- @return #AI_A2A self
@@ -374,39 +386,67 @@ function AI_A2A:onafterStatus()
 end
 
 
---- @param #AI_A2A self
-function AI_A2A:onafterRTB()
-  self:F2()
+--- @param Wrapper.Group#GROUP AIGroup
+function AI_A2A.RTBRoute( AIGroup )
 
-  if self.Controllable and self.Controllable:IsAlive() then
+  AIGroup:E( { "RTBRoute:", AIGroup:GetName() } )
+  local _AI_A2A = AIGroup:GetState( AIGroup, "AI_A2A" ) -- #AI_A2A
+  _AI_A2A:__Engage( 1 )
+end
+
+--- @param #AI_A2A self
+-- @param Wrapper.Group#GROUP AIGroup
+function AI_A2A:onafterRTB( AIGroup, From, Event, To )
+  self:F( { AIGroup, From, Event, To } )
+
+  if AIGroup and AIGroup:IsAlive() then
 
     self.CheckStatus = false
     
-    local PatrolRoute = {}
-  
-    --- Calculate the current route point.
-    local CurrentVec2 = self.Controllable:GetVec2()
+    local EngageRoute = {}
+
+    --- Calculate the target route point.
     
-    --TODO: Create GetAltitude function for GROUP, and delete GetUnit(1).
-    local CurrentAltitude = self.Controllable:GetUnit(1):GetAltitude()
-    local CurrentPointVec3 = POINT_VEC3:New( CurrentVec2.x, CurrentAltitude, CurrentVec2.y )
-    local ToPatrolZoneSpeed = self.PatrolMaxSpeed
-    local CurrentRoutePoint = CurrentPointVec3:RoutePointAir( 
-        self.PatrolAltType, 
-        POINT_VEC3.RoutePointType.TurningPoint, 
-        POINT_VEC3.RoutePointAction.TurningPoint, 
-        ToPatrolZoneSpeed, 
-        true 
-      )
+    local CurrentCoord = AIGroup:GetCoordinate()
+    local ToTargetCoord = self.HomeAirbase:GetCoordinate()
+    local ToTargetSpeed = math.random( self.MinSpeed, self.MaxSpeed )
+    local ToInterceptAngle = CurrentCoord:GetAngleDegrees( CurrentCoord:GetDirectionVec3( ToTargetCoord ) )
+
+    local Distance = CurrentCoord:Get2DDistance( ToTargetCoord )
     
-    PatrolRoute[#PatrolRoute+1] = CurrentRoutePoint
+    local ToAirbaseCoord = CurrentCoord:Translate( 5000, ToInterceptAngle )
+    if Distance > 10000 then
+      ToAirbaseCoord = ToTargetCoord
+    end
+    --- Create a route point of type air.
+    local ToPatrolRoutePoint = ToAirbaseCoord:RoutePointAir( 
+      self.PatrolAltType, 
+      POINT_VEC3.RoutePointType.TurningPoint, 
+      POINT_VEC3.RoutePointAction.TurningPoint, 
+      ToTargetSpeed, 
+      true 
+    )
+
+    self:F( { Angle = ToInterceptAngle, ToTargetSpeed = ToTargetSpeed } )
+    self:T2( { self.MinSpeed, self.MaxSpeed, ToTargetSpeed } )
     
+    EngageRoute[#EngageRoute+1] = ToPatrolRoutePoint
+    
+    AIGroup:OptionROEHoldFire()
+    AIGroup:OptionROTEvadeFire()
+
     --- Now we're going to do something special, we're going to call a function from a waypoint action at the AIControllable...
-    self.Controllable:WayPointInitialize( PatrolRoute )
+    AIGroup:WayPointInitialize( EngageRoute )
   
+    local Tasks = {}
+    Tasks[#Tasks+1] = AIGroup:TaskFunction( 1, 1, "AI_A2A.RTBRoute" )
+    EngageRoute[1].task = AIGroup:TaskCombo( Tasks )
+
+    AIGroup:SetState( AIGroup, "AI_A2A", self )
+
     --- NOW ROUTE THE GROUP!
-    self.Controllable:WayPointExecute( 1, 1 )
-    
+    AIGroup:WayPointExecute( 1, 2 )
+      
   end
     
 end
