@@ -1167,6 +1167,7 @@ do -- DETECTION_BASE
           local DetectedItem = ReportGroupData.DetectedItem  -- Functional.Detection#DETECTION_BASE.DetectedItem    
           local DetectedSet = ReportGroupData.DetectedItem.Set
           local DetectedUnit = DetectedSet:GetFirst() -- Wrapper.Unit#UNIT
+          local CenterCoord = DetectedUnit:GetCoordinate()
           local ReportSetGroup = ReportGroupData.ReportSetGroup
     
           local EnemyCoalition = DetectedUnit:GetCoalition()
@@ -1181,7 +1182,9 @@ do -- DETECTION_BASE
           
           if FoundUnitCoalition ~= EnemyCoalition and FoundUnitInReportSetGroup == false then
             DetectedItem.FriendliesNearBy = DetectedItem.FriendliesNearBy or {}
-            DetectedItem.FriendliesNearBy[FoundUnitName] = UNIT:Find( FoundDCSUnit )
+            local FriendlyUnit = UNIT:Find( FoundDCSUnit )
+            local Distance = CenterCoord:Get2DDistance( FriendlyUnit:GetCoordinate() )
+            DetectedItem.FriendliesNearBy[Distance] = FriendlyUnit
             return true
           end
           

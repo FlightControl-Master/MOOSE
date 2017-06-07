@@ -26,7 +26,7 @@
 --
 -- @module AI_A2A_Cap
 
-BASE:TraceClass("AI_A2A_CAP")
+--BASE:TraceClass("AI_A2A_CAP")
 
 --- @type AI_A2A_CAP
 -- @extends AI.AI_A2A_Patrol#AI_A2A_PATROL

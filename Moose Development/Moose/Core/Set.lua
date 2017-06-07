@@ -598,6 +598,20 @@ function SET_BASE:IsIncludeObject( Object )
   return true
 end
 
+--- Gets a string with all the object names.
+-- @param #SET_BASE self
+-- @return #string A string with the names of the objects.
+function SET_BASE:GetObjectNames()
+  self:F3()
+
+  local ObjectNames = ""
+  for ObjectName, Object in pairs( self.Set ) do
+    ObjectNames = ObjectNames .. ObjectName .. ", "
+  end
+  
+  return ObjectNames
+end
+
 --- Flushes the current SET_BASE contents in the log ... (for debugging reasons).
 -- @param #SET_BASE self
 -- @return #string A string with the names of the objects.

@@ -269,7 +269,7 @@ do -- AI_A2A_DISPATCHER
   ---
   -- @param #AI_A2A_DISPATCHER self
   function AI_A2A_DISPATCHER:ClearDefenderTask( AIGroup )
-    if AIGroup:IsAlive() then
+    if AIGroup:IsAlive() and self.DefenderTasks[AIGroup] then
       local Target = self.DefenderTasks[AIGroup].Target
       local Message = "Clearing (" .. self.DefenderTasks[AIGroup].Type .. ") " 
       Message = Message .. AIGroup:GetName() 
@@ -342,7 +342,21 @@ do -- AI_A2A_DISPATCHER
     DefenderSquadron.Resources = Resources
     
     self:SetSquadronOverhead( SquadronName, 1 )
+
     return self
+  end
+  
+  --- Get an item from the Squadron table.
+  -- @param #AI_A2A_DISPATCHER self
+  -- @return #table
+  function AI_A2A_DISPATCHER:GetSquadron( SquadronName )
+    local DefenderSquadron = self.DefenderSquadrons[SquadronName]
+    
+    if not DefenderSquadron then
+      error( "Unknown Squadron:" .. SquadronName )
+    end
+    
+    return DefenderSquadron
   end
 
   
@@ -361,7 +375,7 @@ do -- AI_A2A_DISPATCHER
     self.DefenderSquadrons[SquadronName] = self.DefenderSquadrons[SquadronName] or {} 
     self.DefenderSquadrons[SquadronName].Cap = self.DefenderSquadrons[SquadronName].Cap or {}
     
-    local DefenderSquadron = self.DefenderSquadrons[SquadronName]
+    local DefenderSquadron = self:GetSquadron( SquadronName )
 
     local Cap = self.DefenderSquadrons[SquadronName].Cap
     Cap.Name = SquadronName
@@ -386,7 +400,7 @@ do -- AI_A2A_DISPATCHER
     self.DefenderSquadrons[SquadronName] = self.DefenderSquadrons[SquadronName] or {} 
     self.DefenderSquadrons[SquadronName].Cap = self.DefenderSquadrons[SquadronName].Cap or {}
 
-    local DefenderSquadron = self.DefenderSquadrons[SquadronName]
+    local DefenderSquadron = self:GetSquadron( SquadronName )
 
     local Cap = self.DefenderSquadrons[SquadronName].Cap
     if Cap then
@@ -415,7 +429,7 @@ do -- AI_A2A_DISPATCHER
     self.DefenderSquadrons[SquadronName] = self.DefenderSquadrons[SquadronName] or {} 
     self.DefenderSquadrons[SquadronName].Cap = self.DefenderSquadrons[SquadronName].Cap or {}
 
-    local DefenderSquadron = self.DefenderSquadrons[SquadronName]
+    local DefenderSquadron = self:GetSquadron( SquadronName )
 
     local Cap = self.DefenderSquadrons[SquadronName].Cap
     if Cap then
@@ -434,7 +448,7 @@ do -- AI_A2A_DISPATCHER
     self.DefenderSquadrons[SquadronName] = self.DefenderSquadrons[SquadronName] or {} 
     self.DefenderSquadrons[SquadronName].Cap = self.DefenderSquadrons[SquadronName].Cap or {}
 
-    local DefenderSquadron = self.DefenderSquadrons[SquadronName]
+    local DefenderSquadron = self:GetSquadron( SquadronName )
 
     local Cap = DefenderSquadron.Cap
     if Cap then
@@ -501,8 +515,9 @@ do -- AI_A2A_DISPATCHER
   -- 
   -- @return #AI_A2A_DISPATCHER
   function AI_A2A_DISPATCHER:SetSquadronOverhead( SquadronName, Overhead )
-  
-    self.Overhead = Overhead
+
+    local DefenderSquadron = self:GetSquadron( SquadronName )
+    DefenderSquadron.Overhead = Overhead
     
     return self
   end
@@ -520,7 +535,8 @@ do -- AI_A2A_DISPATCHER
   -- @return #AI_A2A_DISPATCHER
   function AI_A2A_DISPATCHER:SetSquadronGrouping( SquadronName, Grouping )
   
-    self.Grouping = Grouping
+    local DefenderSquadron = self:GetSquadron( SquadronName )
+    DefenderSquadron.Grouping = Grouping
     
     return self
   end
@@ -602,13 +618,15 @@ do -- AI_A2A_DISPATCHER
 
     local AIFriendlies = self:GetAIFriendliesNearBy( DetectedItem )
     
-    for AIName, AIFriendly in pairs( AIFriendlies or {} ) do
+    for FriendlyDistance, AIFriendly in UTILS.spairs( AIFriendlies or {} ) do
       -- We only allow to ENGAGE targets as long as the Units on both sides are balanced.
       if DetectedCount > DefenderCount then 
         local Friendly = AIFriendly:GetGroup() -- Wrapper.Group#GROUP
         if Friendly and Friendly:IsAlive() then
           -- Ok, so we have a friendly near the potential target.
           -- Now we need to check if the AIGroup has a Task.
+          self:F( { FriendlyName = Friendly:GetName() } )
+          self:F( { FriendlyDistance = FriendlyDistance } )
           local DefenderTask = self:GetDefenderTask( Friendly )
           if DefenderTask then
             -- The Task should be CAP or INTERCEPT
@@ -641,13 +659,14 @@ do -- AI_A2A_DISPATCHER
     self.DefenderSquadrons[SquadronName] = self.DefenderSquadrons[SquadronName] or {} 
     self.DefenderSquadrons[SquadronName].Cap = self.DefenderSquadrons[SquadronName].Cap or {}
     
-    local DefenderSquadron = self.DefenderSquadrons[SquadronName]
+    local DefenderSquadron = self:GetSquadron( SquadronName )
     local Cap = DefenderSquadron.Cap
     
     if Cap then
     
       if self:CanCAP( SquadronName ) then
         local Spawn = DefenderSquadron.Spawn[ math.random( 1, #DefenderSquadron.Spawn ) ]
+        Spawn:InitGrouping( DefenderSquadron.Grouping )
         local AIGroup = Spawn:SpawnAtAirbase( DefenderSquadron.Airbase )
         self:F( { AIGroup = AIGroup:GetName() } )
   
@@ -682,6 +701,13 @@ do -- AI_A2A_DISPATCHER
         Fsm:__Engage( 1, Target.Set ) -- Engage on the TargetSetUnit
         
         self:SetDefenderTaskTarget( AIGroup, Target )
+
+        function Fsm:onafterRTB()
+          self:F({"CAP RTB"})
+          local Dispatcher = self:GetDispatcher() -- #AI_A2A_DISPATCHER
+          local AIGroup = self:GetControllable()
+          Dispatcher:ClearDefenderTask( AIGroup )
+        end
       end
     end
   end
@@ -706,7 +732,8 @@ do -- AI_A2A_DISPATCHER
       DefendersCount = DefendersCount + AIGroup:GetSize()
     end
 
-    while( DefendersCount < DefendersMissing ) do
+    DefendersCount = DefendersMissing
+    while( DefendersCount > 0 ) do
     
       for SquadronName, DefenderSquadron in pairs( self.DefenderSquadrons or {} ) do
         for InterceptID, Intercept in pairs( DefenderSquadron.Intercept or {} ) do
@@ -724,16 +751,24 @@ do -- AI_A2A_DISPATCHER
       
       if ClosestDefenderSquadronName then
       
-        local DefenderSquadron = self.DefenderSquadrons[ClosestDefenderSquadronName]
+        local DefenderSquadron = self:GetSquadron( ClosestDefenderSquadronName )
+        local DefenderOverhead = DefenderSquadron.Overhead
+        local DefenderGrouping = DefenderSquadron.Grouping
+        local DefendersNeeded = math.ceil( DefendersCount * DefenderOverhead )
         local Intercept = self.DefenderSquadrons[ClosestDefenderSquadronName].Intercept
       
         local Spawn = DefenderSquadron.Spawn[ math.random( 1, #DefenderSquadron.Spawn ) ]
+        if DefenderGrouping then
+          Spawn:InitGrouping( ( DefenderGrouping < DefendersNeeded ) and DefenderGrouping or DefendersNeeded )
+        else
+          Spawn:InitGrouping()
+        end
         local AIGroup = Spawn:SpawnAtAirbase( DefenderSquadron.Airbase )
         self:F( { AIGroup = AIGroup:GetName() } )
   
         if AIGroup then
 
-          DefendersCount = DefendersCount + AIGroup:GetSize()
+          DefendersCount = DefendersCount - AIGroup:GetSize()
           
           local Fsm = AI_A2A_INTERCEPT:New( AIGroup, Intercept.MinSpeed, Intercept.MaxSpeed )
           Fsm:SetDispatcher( self )
@@ -744,7 +779,7 @@ do -- AI_A2A_DISPATCHER
           self:SetDefenderTask( AIGroup, "INTERCEPT", Fsm, Target )
           
           function Fsm:onafterRTB()
-            self:F({"RTB"})
+            self:F({"INTERCEPT RTB"})
             local Dispatcher = self:GetDispatcher() -- #AI_A2A_DISPATCHER
             local AIGroup = self:GetControllable()
             Dispatcher:ClearDefenderTask( AIGroup )
@@ -795,7 +830,7 @@ do -- AI_A2A_DISPATCHER
 
     -- First, count the active AIGroups Units, targetting the DetectedSet
     local DefenderCount = self:CountDefendersEngaged( Target )
-    local DefendersMissing = math.ceil( ( AttackerCount - DefenderCount ) * self.Overhead )
+    local DefendersMissing = AttackerCount - DefenderCount
 
     local Friendlies = self:CountDefendersToBeEngaged( Target, DefenderCount )
 
@@ -865,7 +900,7 @@ do -- AI_A2A_DISPATCHER
       local Defender = Defender -- Wrapper.Group#GROUP
        local Message = string.format( "%s, %s", Defender:GetName(), DefenderTask.Type )
        if DefenderTask.Target then
-        Message = Message .. " => " .. DefenderTask.Target.Index
+        Message = Message .. " => " .. DefenderTask.Target.Index .. " : " .. DefenderTask.Target.Set:GetObjectNames()
        end
        self:F( { Tactical = Message } )
     end

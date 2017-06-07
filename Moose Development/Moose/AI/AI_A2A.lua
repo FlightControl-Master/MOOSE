@@ -71,7 +71,7 @@ function AI_A2A:New( AIGroup )
   self:SetControllable( AIGroup )
   
   self:ManageFuel( .2, 60 )
-  self:ManageDamage( 1 )
+  self:ManageDamage( 0.4 )
 
   self:SetStartState( "Stopped" ) 
   

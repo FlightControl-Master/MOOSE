@@ -21,7 +21,7 @@
 -- @module AI_A2A_Intercept
 
 
-BASE:TraceClass("AI_A2A_INTERCEPT")
+--BASE:TraceClass("AI_A2A_INTERCEPT")
 
 
 --- @type AI_A2A_INTERCEPT

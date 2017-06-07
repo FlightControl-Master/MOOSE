@@ -37,6 +37,7 @@
 -- 
 -- @module Spawn
 
+--BASE:TraceClass("SPAWN")
 
 
 --- SPAWN Class
@@ -299,6 +300,7 @@ function SPAWN:New( SpawnTemplatePrefix )
     self.SpawnUnControlled = false
     self.SpawnInitKeepUnitNames = false               -- Overwrite unit names by default with group name.
     self.DelayOnOff = false                           -- No intial delay when spawning the first group.
+    self.Grouping = nil                               -- No grouping
 
 		self.SpawnGroups = {}														-- Array containing the descriptions of each Group to be Spawned.
 	else
@@ -343,6 +345,7 @@ function SPAWN:NewWithAlias( SpawnTemplatePrefix, SpawnAliasPrefix )
     self.SpawnUnControlled = false
     self.SpawnInitKeepUnitNames = false               -- Overwrite unit names by default with group name.
     self.DelayOnOff = false                           -- No intial delay when spawning the first group.
+    self.Grouping = nil
 
 		self.SpawnGroups = {}														-- Array containing the descriptions of each Group to be Spawned.
 	else
@@ -508,6 +511,20 @@ function SPAWN:InitRandomizeTemplate( SpawnTemplatePrefixTable )
 	
 	return self
 end
+
+--- When spawning a new group, make the grouping of the units according the InitGrouping setting.
+-- @param #SPAWN self
+-- @param #number Grouping Indicates the maximum amount of units in the group. 
+-- @return #SPAWN
+function SPAWN:InitGrouping( Grouping ) -- R2.2
+  self:F( { self.SpawnTemplatePrefix, Grouping } )
+
+  self.SpawnGrouping = Grouping
+
+  return self
+end
+
+
 
 --TODO: Add example.
 --- This method provides the functionality to randomize the spawning of the Groups at a given list of zones of different types.
@@ -966,7 +983,7 @@ end
 -- @param #number SpawnIndex (optional) The index which group to spawn within the given zone.
 -- @return Wrapper.Group#GROUP that was spawned.
 -- @return #nil Nothing was spawned.
-function SPAWN:SpawnAtAirbase( Airbase, SpawnIndex )
+function SPAWN:SpawnAtAirbase( Airbase, SpawnIndex ) -- R2.2
   self:F( { self.SpawnTemplatePrefix, Airbase, SpawnIndex } )
 
   local PointVec3 = Airbase:GetPointVec3()
@@ -1445,7 +1462,7 @@ end
 -- @param #string SpawnTemplatePrefix
 -- @param #number SpawnIndex
 -- @return #SPAWN self
-function SPAWN:_Prepare( SpawnTemplatePrefix, SpawnIndex )
+function SPAWN:_Prepare( SpawnTemplatePrefix, SpawnIndex ) --R2.2
 	self:F( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix } )
 	
 	local SpawnTemplate = self:_GetTemplate( SpawnTemplatePrefix )
@@ -1459,6 +1476,23 @@ function SPAWN:_Prepare( SpawnTemplatePrefix, SpawnIndex )
 	  self:T3( "For ground units, visible needs to be false..." )
 		SpawnTemplate.visible = false 
 	end
+	
+	if self.SpawnGrouping then
+	  local UnitAmount = #SpawnTemplate.units
+	  self:F( { UnitAmount = UnitAmount, SpawnGrouping = self.SpawnGrouping } )
+	  if UnitAmount > self.SpawnGrouping then
+      for UnitID = self.SpawnGrouping + 1, UnitAmount do
+        SpawnTemplate.units[UnitID] = nil
+      end
+    else
+      if UnitAmount < self.SpawnGrouping then
+        for UnitID = UnitAmount + 1, self.SpawnGrouping do
+          SpawnTemplate.units[UnitID] = UTILS.DeepCopy( SpawnTemplate.units[1] )
+          SpawnTemplate.units[UnitID].unitId = nil
+        end
+      end
+    end
+  end
 	
   if self.SpawnInitKeepUnitNames == false then
   	for UnitID = 1, #SpawnTemplate.units do
