@@ -396,7 +396,7 @@ do -- FSM
     Transition.Event = Event
     Transition.To = To
   
-    self:T( Transition )
+    self:T2( Transition )
     
     self._Transitions[Transition] = Transition
     self:_eventmap( self.Events, Transition )
@@ -534,7 +534,7 @@ do -- FSM
       local __Event = "__" .. EventStructure.Event
       self[Event] = self[Event] or self:_create_transition(Event)
       self[__Event] = self[__Event] or self:_delayed_transition(Event)
-      self:T( "Added methods: " .. Event .. ", " .. __Event )
+      self:T2( "Added methods: " .. Event .. ", " .. __Event )
       Events[Event] = self.Events[Event] or { map = {} }
       self:_add_to_map( Events[Event].map, EventStructure )
   
