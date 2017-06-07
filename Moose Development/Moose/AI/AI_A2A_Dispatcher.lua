@@ -20,20 +20,132 @@ do -- AI_A2A_DISPATCHER
 
   --- # AI_A2A_DISPATCHER class, extends @{Tasking#DETECTION_MANAGER}
   -- 
-  -- The @{#AI_A2A_DISPATCHER} class implements the dynamic dispatching of tasks upon groups of detected units determined a @{Set} of EWR installation groups.
-  -- The EWR will detect units, will group them, and will dispatch AI_A2A tasks to groups. Depending on the type of target detected, different tasks will be dispatched.
-  -- Find a summary below describing for which situation a task type is created:
+  -- The @{#AI_A2A_DISPATCHER} class is designed to create an automatic air defence system for a coalition. 
+  -- It includes automatic spawning of Combat Air Patrol aircraft (CAP) and Ground Controlled Intercept aircraft (GCI) in response to enemy air movements that are detected by a ground based radar network. 
+  -- CAP flights will take off and proceed to designated CAP zones where they will remain on station until the ground radars direct them to intercept detected enemy aircraft or they run short of fuel and must return to base (RTB). When a CAP flight leaves their zone to perform an interception or return to base a new CAP flight will spawn to take their place.
+  -- If all CAP flights are engaged or RTB then additional GCI interceptors will scramble to intercept unengaged enemy aircraft under ground radar control.
+  -- With a little time and with a little work it provides the mission designer with a convincing and completely automatic air defence system. 
+  -- In short it is a plug in very flexible and configurable air defence module for DCS World.
   -- 
-  --   * **INTERCEPT**: Is created when the target is known, is detected and within a danger zone, and there is no friendly airborne in range.
-  --   * **SWEEP**: Is created when the target is unknown, was detected and the last position is only known, and within a danger zone, and there is no friendly airborne in range.
-  --   * **CAP**: Is created during the mission. Targets are patrolling the zones outlined.
-  --   * **ENGAGE Task**: Is created when the target is known, is detected and within a danger zone, and there is a friendly airborne patrolling and in range, that will receive this task.
-  --   
-  -- Other task types will follow...
+  -- Note that in order to create a two way A2A defense system, two AI_A2A_DISPATCHER defense system may need to be created, for each coalition one.
+  -- This is a good implementation, because maybe in the future, more coalitions may become available in DCS world.
   -- 
-  -- # AI_A2A_DISPATCHER constructor:
-  -- --------------------------------------
+  -- ## AI_A2A_DISPATCHER constructor:
+  -- 
   -- The @{#AI_A2A_DISPATCHER.New}() method creates a new AI_A2A_DISPATCHER instance.
+  -- There are two parameters required, a @{Set#SET_GROUP} that defines the groups within the EWR network, and a radius in meters, that will be used to group detected targets.
+  -- 
+  -- ## Which countries will be selected for each coalition?
+  -- 
+  -- Which countries are assigned to a coalition influences which units are available to the coalition. 
+  -- For example because the mission calls for a EWR radar on the blue side the Ukraine might be chosen as a blue country 
+  -- so that the 55G6 EWR radar unit is available to blue.  
+  -- Some countries assign different tasking to aircraft, for example Germany assigns the CAP task to F-4E Phantoms but the USA does not.  
+  -- Therefore if F4s are wanted as a coalition’s CAP or GCI aircraft Germany will need to be assigned to that coalition. 
+  -- 
+  -- ## Area of red and blue territories?
+  -- 
+  -- According to the tactical and strategic design of the mission broadly decide the shape and extent of red and blue territories. 
+  -- They should be laid out such that a border area is created between the two coalitions.
+  -- 
+  -- See more below regarding borders.
+  -- 
+  -- ## Is it a hot or cold war?
+  -- 
+  -- Define a border area to simulate a **cold war** scenario and use the method @{#AI_A2A_DISPATCHER.InitBorderZone}() to create a border zone for the dispatcher.
+  -- 
+  -- A **cold war** is one where CAP aircraft patrol their territory but will not attack enemy aircraft or launch GCI aircraft unless enemy aircraft enter their territory. In other words the EWR may detect an enemy aircraft but will only send aircraft to attack it if it crosses the border.
+  -- A **hot war** is one where CAP aircraft will intercept any detected enemy aircraft and GCI aircraft will launch against detected enemy aircraft without regard for territory. In other words if the ground radar can detect the enemy aircraft then it will send CAP and GCI aircraft to attack it.
+  -- If it’s a cold war then the **borders of red and blue territory** need to be defined using a @{zone} object derived from @{Zone#ZONE_BASE}.
+  -- If a hot war is chosen then **no borders** actually need to be defined using the helicopter units other than it makes it easier sometimes for the mission maker to envisage where the red and blue territories roughly are. In a hot war the borders are effectively defined by the ground based radar coverage of a coalition. Set the noborders parameter to 1
+  -- 
+  -- ## Which squadrons act at which airfields within their territory?
+  -- 
+  -- **Squadrons** operate at defined airfields, have specific plane types and have limited resources.
+  -- 
+  -- Use the method @{#AI_A2A_DISPATCHER.SetSquadron}() to setup a new squadron active at an airfield, while defining which plane types are being used by the squadron and how many resources are available.
+  -- Note that squadrons have specific settings that need to be specified using the Squadron... methods.
+  -- The name of the squadron given acts as the **squadron key** in the AI_A2A_DISPATCHER:Squadron...() methods.
+  -- 
+  -- ## How are EWR networks defined?
+  -- 
+  -- Typically EWR networks are setup using 55G6 EWR, 1L13 EWR, Hawk sr and Patriot str ground based radar units. 
+  -- These radars have different ranges and 55G6 EWR and 1L13 EWR radars are Eastern Bloc units (eg Russia, Ukraine, Georgia) while the Hawk and Patriot radars are Western (eg US).
+  -- Additionally, ANY other radar capable unit can be part of the EWR network! Also AWACS airborne units, planes, helicopters can help to detect targets, as long as they have radar.
+  -- The position of these units is very important as they need to provide enough coverage 
+  -- to pick up enemy aircraft as they approach so that CAP and GCI flights can be tasked to intercept them. 
+  -- Additionally in a hot war situation where the border is no longer respected the placement of radars has a big effect on how fast the war escalates. 
+  -- For example if they are a long way forward and can detect enemy planes on the ground and taking off 
+  -- they will start to vector CAP and GCI flights to attack them straight away which will immediately draw a response from the other coalition. 
+  -- Having the radars further back will mean a slower escalation because fewer targets will be detected and 
+  -- therefore less CAP and GCI flights will spawn and this will tend to make just the border area active rather than a melee over the whole map. 
+  -- It all depends on what the desired effect is. 
+  -- 
+  -- EWR networks are dynamically constructed, that is, they form part of the @{Set#SET_GROUP} object that is given as the input parameter of the AI_A2A_DISPATCHER class.
+  -- By defining in a smart way the names or name prefixes of the groups of EWR capable units, these units will be automatically added or deleted from the EWR network, 
+  -- increasing or decreasing the radar coverage of the Early Warning System.
+  -- 
+  -- ## How many CAP zones will be required and where will they be located?
+  -- 
+  --   * CAP zones are patrol areas where Combat Air Patrol (CAP) flights loiter until they either return to base due to low fuel or are assigned an interception task by ground control.
+  --   
+  --   * As the CAP flights wander around within the zone waiting to be tasked these zones need to be large enough that the aircraft are not constantly turning 
+  --   but do not have to be big and numerous enough to completely cover a border.
+  --   
+  --   * CAP zones can be of any type, and are derived from the @{Zone#ZONE_BASE} class. Zones can be @{Zone#ZONE}, @{Zone#ZONE_POLYGON}, @{Zone#ZONE_UNIT}, @{Zone#GROUP}, etc.
+  --   This allows to setup static, moveable or complex zones wherein aircraft will perform the CAP.
+  --   
+  --   * Typically 20000-50000 metres radius is used and they are spaced so that aircraft in the zone waiting for tasks don’t have to far to travel to protect their coalitions important targets. 
+  --   These targets are chosen as part of the mission design and might be an important airfield or town etc. 
+  --   Zone size is also determined somewhat by territory size, plane types (eg WW2 aircraft might mean smaller zones or more zones because they are slower and take longer to intercept enemy aircraft)
+  --   
+  --   * In a cold war it is important to make sure a CAP zone doesn’t intrude into enemy territory as otherwise CAP flights will likely cross borders 
+  --   and spark a full scale conflict which will escalate rapidly.
+  --   
+  --   * CAP flights must travel to a CAP zone before they are “on station” and ready for tasking. 
+  --   Therefore if their airfield is in their CAP zone they are on station immediately. 
+  --   You might not do this though if having the airfield in the CAP zone allows it to be attacked easily so might position the CAP zone closer 
+  --   to the border and accept the period of time a CAP flight will be unavailable for tasking while they travel to their zone.
+  --   
+  --   * Typically if a CAP flight is tasked and therefore leaves their zone empty while they go off and intercept their target another CAP flight will spawn to take their place.
+  --   
+  -- CAP zones need to be setup per squadron. The method @{#AI_A2A_DISPATCHER.SetSquadronCap() defines a CAP zone for a squadron.
+  -- Setting-up a CAP zone also requires specific parameters, like the minimum and maximum altitude, minimum speed and maximum speed and the altitude type that define how the
+  -- squadron will perform the CAP while partrolling. Different terrain types requires different types of CAP. 
+  --  
+  -- ## How many aircraft will CAP or GCI and how will they be grouped?
+  -- 
+  -- Choices are 1, 2, 3 or 4 when CAP flights spawn. Use the method @{#AI_A2A_DISPATCHER.SetSquadronGrouping}() to set the amount of CAP flights that will take-off when spawned.
+  -- In the case of GCI, the @{#AI_A2A_DISPATCHER.SetSquadronGrouping}() method has additional behaviour. When there aren't enough CAP flights airborne, a GCI will be initiated for the remaining
+  -- targets to be engaged. Depending on the grouping parameter, the spawned flights for GCI are grouped into this setting.   
+  -- For example with a group setting of 2, if 3 targets are detected and cannot be engaged by CAP or any airborne flight, 
+  -- a GCI needs to be started, the GCI flights will be grouped as follows: Group 1 of 2 flights and Group 2 of one flight!
+  -- 
+  -- The **grouping value is set for a Squadron**, and can be **dynamically adjusted** during mission execution, so to adjust the defense flights grouping when the tactical situation changes.
+  -- 
+  -- ## How to balance or setup effective air defenses in case of GCI?
+  -- 
+  -- Overhead The %-tage of Units that dispatching command will allocate to intercept in surplus of detected amount of units.
+  -- The default overhead is 1, so equal balance. The @{#AI_A2A_DISPATCHER.SetOverhead}() method can be used to tweak the defense strength,
+  -- taking into account the plane types of the squadron. For example, a MIG-31 with full long-distance A2A missiles payload, may still be less effective than a F-15C with short missiles...
+  -- 
+  -- So in this case, one may want to use the @{#AI_A2A_DISPATCHER.SetOverhead}() method to allocate more defending planes as the amount of detected attacking planes.
+  -- The overhead must be given as a decimal value with 1 as the neutral value, which means that overhead values: 
+  -- 
+  --   * Higher than 1, will increase the defense unit amounts.
+  --   * Lower than 1, will decrease the defense unit amounts.
+  -- 
+  -- The amount of defending units is calculated by multiplying the amount of detected attacking planes as part of the detected group 
+  -- multiplied by the Overhead and rounded up to the smallest integer. 
+  -- 
+  -- The **overhead value is set for a Squadron**, and can be **dynamically adjusted** during mission execution, so to adjust the defense overhead when the tactical situation changes.
+  -- 
+  -- ## Number of spawned and active GCI interceptor flights for each coalition?
+  -- 
+  -- Essentially this controls how many flights of GCI aircraft can be active at any time.
+  -- Note allowing large numbers of active GCI flights can adversely impact mission performance on low or medium specification hosts/servers.
+  -- 
+  -- 
   -- 
   -- @field #AI_A2A_DISPATCHER
   AI_A2A_DISPATCHER = {
