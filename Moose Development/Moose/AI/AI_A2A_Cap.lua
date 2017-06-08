@@ -126,9 +126,11 @@ AI_A2A_CAP = {
 -- @param Dcs.DCSTypes#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
 -- @param Dcs.DCSTypes#Speed  PatrolMinSpeed The minimum speed of the @{Controllable} in km/h.
 -- @param Dcs.DCSTypes#Speed  PatrolMaxSpeed The maximum speed of the @{Controllable} in km/h.
+-- @param Dcs.DCSTypes#Speed  EngageMinSpeed The minimum speed of the @{Controllable} in km/h when engaging a target.
+-- @param Dcs.DCSTypes#Speed  EngageMaxSpeed The maximum speed of the @{Controllable} in km/h when engaging a target.
 -- @param Dcs.DCSTypes#AltitudeType PatrolAltType The altitude type ("RADIO"=="AGL", "BARO"=="ASL"). Defaults to RADIO
 -- @return #AI_A2A_CAP
-function AI_A2A_CAP:New( AIGroup, PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, PatrolAltType )
+function AI_A2A_CAP:New( AIGroup, PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, EngageMinSpeed, EngageMaxSpeed, PatrolAltType )
 
   -- Inherits from BASE
   local self = BASE:Inherit( self, AI_A2A_PATROL:New( AIGroup, PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, PatrolAltType ) ) -- #AI_A2A_CAP
@@ -136,7 +138,10 @@ function AI_A2A_CAP:New( AIGroup, PatrolZone, PatrolFloorAltitude, PatrolCeiling
   self.Accomplished = false
   self.Engaging = false
   
-  self:AddTransition( { "Patrolling", "Engaging", "RTB" }, "Engage", "Engaging" ) -- FSM_CONTROLLABLE Transition for type #AI_A2A_CAP.
+  self.EngageMinSpeed = EngageMinSpeed
+  self.EngageMaxSpeed = EngageMaxSpeed
+  
+  self:AddTransition( { "Patrolling", "Engaging", "Returning" }, "Engage", "Engaging" ) -- FSM_CONTROLLABLE Transition for type #AI_A2A_CAP.
 
   --- OnBefore Transition Handler for Event Engage.
   -- @function [parent=#AI_A2A_CAP] OnBeforeEngage
@@ -394,7 +399,7 @@ function AI_A2A_CAP:onafterEngage( AIGroup, From, Event, To, AttackSetUnit )
       --- Calculate the target route point.
       local CurrentCoord = AIGroup:GetCoordinate()
       local ToTargetCoord = self.AttackSetUnit:GetFirst():GetCoordinate()
-      local ToTargetSpeed = math.random( self.MinSpeed, self.MaxSpeed )
+      local ToTargetSpeed = math.random( self.EngageMinSpeed, self.EngageMaxSpeed )
       local ToInterceptAngle = CurrentCoord:GetAngleDegrees( CurrentCoord:GetDirectionVec3( ToTargetCoord ) )
       
       --- Create a route point of type air.

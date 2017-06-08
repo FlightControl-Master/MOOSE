@@ -119,7 +119,7 @@ AI_A2A_INTERCEPT = {
 -- @param #AI_A2A_INTERCEPT self
 -- @param Wrapper.Group#GROUP AIGroup
 -- @return #AI_A2A_INTERCEPT
-function AI_A2A_INTERCEPT:New( AIGroup, MinSpeed, MaxSpeed )
+function AI_A2A_INTERCEPT:New( AIGroup, EngageMinSpeed, EngageMaxSpeed )
 
   -- Inherits from BASE
   local self = BASE:Inherit( self, AI_A2A:New( AIGroup ) ) -- #AI_A2A_INTERCEPT
@@ -127,12 +127,12 @@ function AI_A2A_INTERCEPT:New( AIGroup, MinSpeed, MaxSpeed )
   self.Accomplished = false
   self.Engaging = false
   
-  self.MinSpeed = MinSpeed
-  self.MaxSpeed = MaxSpeed
+  self.EngageMinSpeed = EngageMinSpeed
+  self.EngageMaxSpeed = EngageMaxSpeed
   
   self.PatrolAltType = "RADIO"
   
-  self:AddTransition( { "Started", "Engaging", "RTB" }, "Engage", "Engaging" ) -- FSM_CONTROLLABLE Transition for type #AI_A2A_INTERCEPT.
+  self:AddTransition( { "Started", "Engaging", "Returning" }, "Engage", "Engaging" ) -- FSM_CONTROLLABLE Transition for type #AI_A2A_INTERCEPT.
 
   --- OnBefore Transition Handler for Event Engage.
   -- @function [parent=#AI_A2A_INTERCEPT] OnBeforeEngage
@@ -366,7 +366,7 @@ function AI_A2A_INTERCEPT:onafterEngage( AIGroup, From, Event, To, AttackSetUnit
       local ToTargetCoord = self.AttackSetUnit:GetFirst():GetCoordinate()
       self:SetTargetDistance( ToTargetCoord ) -- For RTB status check
       
-      local ToTargetSpeed = math.random( self.MinSpeed, self.MaxSpeed )
+      local ToTargetSpeed = math.random( self.EngageMinSpeed, self.EngageMaxSpeed )
       local ToInterceptAngle = CurrentCoord:GetAngleDegrees( CurrentCoord:GetDirectionVec3( ToTargetCoord ) )
       
       --- Create a route point of type air.
@@ -379,7 +379,7 @@ function AI_A2A_INTERCEPT:onafterEngage( AIGroup, From, Event, To, AttackSetUnit
       )
   
       self:F( { Angle = ToInterceptAngle, ToTargetSpeed = ToTargetSpeed } )
-      self:T2( { self.MinSpeed, self.MaxSpeed, ToTargetSpeed } )
+      self:T2( { self.EngageMinSpeed, self.EngageMaxSpeed, ToTargetSpeed } )
       
       EngageRoute[#EngageRoute+1] = ToPatrolRoutePoint
       
@@ -403,7 +403,7 @@ function AI_A2A_INTERCEPT:onafterEngage( AIGroup, From, Event, To, AttackSetUnit
       if #AttackTasks == 0 then
         self:E("No targets found -> Going RTB")
         self:Return()
-        self:__RTB( 1 )
+        self:RTB()
       else
         AttackTasks[#AttackTasks+1] = AIGroup:TaskFunction( 1, #AttackTasks, "AI_A2A_INTERCEPT.InterceptRoute" )
         EngageRoute[1].task = AIGroup:TaskCombo( AttackTasks )
@@ -419,7 +419,7 @@ function AI_A2A_INTERCEPT:onafterEngage( AIGroup, From, Event, To, AttackSetUnit
   else
     self:E("No targets found -> Going RTB")
     self:Return()
-    self:__RTB( 1 )
+    self:RTB()
   end
 end
 

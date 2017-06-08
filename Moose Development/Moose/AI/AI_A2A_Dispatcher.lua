@@ -302,7 +302,7 @@ do -- AI_A2A_DISPATCHER
   --- @param #AI_A2A_DISPATCHER self
   -- @param Core.Event#EVENTDATA EventData
   function AI_A2A_DISPATCHER:OnEventCrashOrDead( EventData )
-    self.Detection:ForgetDetectedUnit( EventData.IniUnitName )  
+    self.Detection:ForgetDetectedUnit( EventData.IniUnitName ) 
   end
 
   --- Define the radius to engage any target by airborne friendlies, which are executing cap or returning from an intercept mission.
@@ -513,11 +513,13 @@ do -- AI_A2A_DISPATCHER
   -- @param Core.Zone#ZONE_BASE Zone The @{Zone} object derived from @{Zone#ZONE_BASE} that defines the zone wherein the CAP will be executed.
   -- @param #number FloorAltitude The minimum altitude at which the cap can be executed.
   -- @param #number CeilingAltitude the maximum altitude at which the cap can be executed.
-  -- @param #number MinSpeed The minimum speed at which the cap can be executed.
-  -- @param #number MaxSpeed The maximum speed at which the cap can be executed.
+  -- @param #number PatrolMinSpeed The minimum speed at which the cap can be executed.
+  -- @param #number PatrolMaxSpeed The maximum speed at which the cap can be executed.
+  -- @param #number EngageMinSpeed The minimum speed at which the engage can be executed.
+  -- @param #number EngageMaxSpeed The maximum speed at which the engage can be executed.
   -- @param #number AltType The altitude type, which is a string "BARO" defining Barometric or "RADIO" defining radio controlled altitude.
   -- @return #AI_A2A_DISPATCHER
-  function AI_A2A_DISPATCHER:SetSquadronCap( SquadronName, Zone, FloorAltitude, CeilingAltitude, MinSpeed, MaxSpeed, AltType )
+  function AI_A2A_DISPATCHER:SetSquadronCap( SquadronName, Zone, FloorAltitude, CeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, EngageMinSpeed, EngageMaxSpeed, AltType )
   
     self.DefenderSquadrons[SquadronName] = self.DefenderSquadrons[SquadronName] or {} 
     self.DefenderSquadrons[SquadronName].Cap = self.DefenderSquadrons[SquadronName].Cap or {}
@@ -529,8 +531,10 @@ do -- AI_A2A_DISPATCHER
     Cap.Zone = Zone
     Cap.FloorAltitude = FloorAltitude
     Cap.CeilingAltitude = CeilingAltitude
-    Cap.MinSpeed = MinSpeed
-    Cap.MaxSpeed = MaxSpeed
+    Cap.PatrolMinSpeed = PatrolMinSpeed
+    Cap.PatrolMaxSpeed = PatrolMaxSpeed
+    Cap.EngageMinSpeed = EngageMinSpeed
+    Cap.EngageMaxSpeed = EngageMaxSpeed
     Cap.AltType = AltType
 
     self:SetSquadronCapInterval( SquadronName, 2, 180, 600, 1 )
@@ -615,18 +619,18 @@ do -- AI_A2A_DISPATCHER
   ---
   -- @param #AI_A2A_DISPATCHER self
   -- @param #string SquadronName The squadron name.
-  -- @param #number MinSpeed The minimum speed at which the gci can be executed.
-  -- @param #number MaxSpeed The maximum speed at which the gci can be executed.
+  -- @param #number EngageMinSpeed The minimum speed at which the gci can be executed.
+  -- @param #number EngageMaxSpeed The maximum speed at which the gci can be executed.
   -- @return #AI_A2A_DISPATCHER
-  function AI_A2A_DISPATCHER:SetSquadronGci( SquadronName, MinSpeed, MaxSpeed )
+  function AI_A2A_DISPATCHER:SetSquadronGci( SquadronName, EngageMinSpeed, EngageMaxSpeed )
   
     self.DefenderSquadrons[SquadronName] = self.DefenderSquadrons[SquadronName] or {} 
     self.DefenderSquadrons[SquadronName].Intercept = self.DefenderSquadrons[SquadronName].Intercept or {}
     
     local Intercept = self.DefenderSquadrons[SquadronName].Intercept
     Intercept.Name = SquadronName
-    Intercept.MinSpeed = MinSpeed
-    Intercept.MaxSpeed = MaxSpeed
+    Intercept.EngageMinSpeed = EngageMinSpeed
+    Intercept.EngageMaxSpeed = EngageMaxSpeed
   end
   
   --- Defines the amount of extra planes that will take-off as part of the defense system.
@@ -725,7 +729,11 @@ do -- AI_A2A_DISPATCHER
       for AIGroup, DefenderTask in pairs( self:GetDefenderTasks() ) do
         if DefenderTask.Type == "CAP" then
           if AIGroup:IsAlive() then
-            CapCount = CapCount + 1
+            -- Check if the CAP is patrolling or engaging. If not, this is not a valid CAP, even if it is alive!
+            -- The CAP could be damaged, lost control, or out of fuel!
+            if DefenderTask.Fsm:Is( "Patrolling" ) or DefenderTask.Fsm:Is( "Engaging" ) then
+              CapCount = CapCount + 1
+            end
           end
         end
       end
@@ -772,8 +780,6 @@ do -- AI_A2A_DISPATCHER
         if Friendly and Friendly:IsAlive() then
           -- Ok, so we have a friendly near the potential target.
           -- Now we need to check if the AIGroup has a Task.
-          self:F( { FriendlyName = Friendly:GetName() } )
-          self:F( { FriendlyDistance = FriendlyDistance } )
           local DefenderTask = self:GetDefenderTask( Friendly )
           if DefenderTask then
             -- The Task should be CAP or INTERCEPT
@@ -783,7 +789,7 @@ do -- AI_A2A_DISPATCHER
                 Friendlies = Friendlies or {}
                 Friendlies[Friendly] = Friendly
                 DefenderCount = DefenderCount + Friendly:GetSize()
-                self:F( { Friendly = Friendly:GetName() } )
+                self:F( { Friendly = Friendly:GetName(), FriendlyDistance = FriendlyDistance } )
               end
             end
           end 
@@ -819,7 +825,7 @@ do -- AI_A2A_DISPATCHER
   
         if AIGroup then
   
-          local Fsm = AI_A2A_CAP:New( AIGroup, Cap.Zone, Cap.FloorAltitude, Cap.CeilingAltitude, Cap.MinSpeed, Cap.MaxSpeed, Cap.AltType )
+          local Fsm = AI_A2A_CAP:New( AIGroup, Cap.Zone, Cap.FloorAltitude, Cap.CeilingAltitude, Cap.PatrolMinSpeed, Cap.PatrolMaxSpeed, Cap.EngageMinSpeed, Cap.EngageMaxSpeed, Cap.AltType )
           Fsm:SetDispatcher( self )
           Fsm:SetHomeAirbase( DefenderSquadron.Airbase )
           Fsm:Start()
@@ -917,7 +923,7 @@ do -- AI_A2A_DISPATCHER
 
           DefendersCount = DefendersCount - AIGroup:GetSize()
           
-          local Fsm = AI_A2A_INTERCEPT:New( AIGroup, Intercept.MinSpeed, Intercept.MaxSpeed )
+          local Fsm = AI_A2A_INTERCEPT:New( AIGroup, Intercept.EngageMinSpeed, Intercept.EngageMaxSpeed )
           Fsm:SetDispatcher( self )
           Fsm:SetHomeAirbase( DefenderSquadron.Airbase )
           Fsm:Start()
@@ -954,6 +960,8 @@ do -- AI_A2A_DISPATCHER
     -- First, count the active AIGroups Units, targetting the DetectedSet
     local DefenderCount = self:CountDefendersEngaged( DetectedItem )
     local DefenderGroups = self:CountDefendersToBeEngaged( DetectedItem, DefenderCount )
+
+    self:F( { DefenderCount = DefenderCount } )
     
     -- Only allow ENGAGE when:
     -- 1. There are friendly units near the detected attackers.
@@ -982,6 +990,7 @@ do -- AI_A2A_DISPATCHER
     -- First, count the active AIGroups Units, targetting the DetectedSet
     local DefenderCount = self:CountDefendersEngaged( Target )
     local DefendersMissing = AttackerCount - DefenderCount
+    self:F( { AttackerCount = AttackerCount, DefenderCount = DefenderCount, DefendersMissing = DefendersMissing } )
 
     local Friendlies = self:CountDefendersToBeEngaged( Target, DefenderCount )
 
@@ -1057,9 +1066,9 @@ do -- AI_A2A_DISPATCHER
     -- Show tactical situation
     for Defender, DefenderTask in pairs( self:GetDefenderTasks() ) do
       local Defender = Defender -- Wrapper.Group#GROUP
-       local Message = string.format( "%s, %s", Defender:GetName(), DefenderTask.Type )
+       local Message = string.format( "%s ( %s - %s )", Defender:GetName(), DefenderTask.Type, DefenderTask.Fsm:GetState() )
        if DefenderTask.Target then
-        Message = Message .. " => " .. DefenderTask.Target.Index .. " : " .. DefenderTask.Target.Set:GetObjectNames()
+        Message = Message .. string.format( " => %s : %s", DefenderTask.Target.ItemID, DefenderTask.Target.Set:GetObjectNames() )
        end
        self:F( { Tactical = Message } )
     end

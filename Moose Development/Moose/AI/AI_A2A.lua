@@ -434,6 +434,8 @@ end
 function AI_A2A:onafterRTB( AIGroup, From, Event, To )
   self:F( { AIGroup, From, Event, To } )
 
+  self:E( "Group " .. self.Controllable:GetName() .. " ... RTB! ( " .. self:GetState() .. " )" )
+  
   if AIGroup and AIGroup:IsAlive() then
 
     self.CheckStatus = false
@@ -446,7 +448,7 @@ function AI_A2A:onafterRTB( AIGroup, From, Event, To )
     
     local CurrentCoord = AIGroup:GetCoordinate()
     local ToTargetCoord = self.HomeAirbase:GetCoordinate()
-    local ToTargetSpeed = math.random( self.MinSpeed, self.MaxSpeed )
+    local ToTargetSpeed = math.random( self.PatrolMinSpeed, self.PatrolMaxSpeed )
     local ToInterceptAngle = CurrentCoord:GetAngleDegrees( CurrentCoord:GetDirectionVec3( ToTargetCoord ) )
 
     local Distance = CurrentCoord:Get2DDistance( ToTargetCoord )
