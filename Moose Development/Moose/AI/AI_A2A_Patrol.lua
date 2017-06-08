@@ -297,6 +297,8 @@ end
 function AI_A2A_PATROL:onafterPatrol( Controllable, From, Event, To )
   self:F2()
 
+  self:ClearTargetDistance()
+
   self:__Route( 1 )
   
   self.Controllable:OnReSpawn(

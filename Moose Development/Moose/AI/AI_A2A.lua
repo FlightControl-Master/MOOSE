@@ -174,7 +174,7 @@ function AI_A2A:New( AIGroup )
 -- @param #AI_A2A self
 -- @param #number Delay The delay in seconds.
 
-  self:AddTransition( "*", "RTB", "Returning" ) -- FSM_CONTROLLABLE Transition for type #AI_A2A.
+  self:AddTransition( "*", "RTB", "*" ) -- FSM_CONTROLLABLE Transition for type #AI_A2A.
 
 --- OnBefore Transition Handler for Event RTB.
 -- @function [parent=#AI_A2A] OnBeforeRTB
@@ -219,6 +219,11 @@ function AI_A2A:New( AIGroup )
 -- @param #string Event The Event string.
 -- @param #string To The To State string.
 
+
+  self:AddTransition( "*", "Return", "Returning" )
+  self:AddTransition( "*", "LostControl", "LostControl" )
+  self:AddTransition( "*", "Fuel", "Fuel" )
+  self:AddTransition( "*", "Damaged", "Damaged" )
   self:AddTransition( "*", "Eject", "*" )
   self:AddTransition( "*", "Crash", "Crashed" )
   self:AddTransition( "*", "PilotDead", "*" )
@@ -232,6 +237,21 @@ end
 
 function AI_A2A:GetDispatcher()
   return self.Dispatcher
+end
+
+function AI_A2A:SetTargetDistance( Coordinate )
+
+  local CurrentCoord = self.Controllable:GetCoordinate()
+  self.TargetDistance = CurrentCoord:Get2DDistance( Coordinate )
+
+  self.ClosestTargetDistance = ( not self.ClosestTargetDistance or self.ClosestTargetDistance > self.TargetDistance ) and self.TargetDistance or self.ClosestTargetDistance
+end
+
+
+function AI_A2A:ClearTargetDistance()
+
+  self.TargetDistance = nil
+  self.ClosestTargetDistance = nil
 end
 
 
@@ -356,7 +376,7 @@ function AI_A2A:onafterStatus()
     local Fuel = self.Controllable:GetUnit(1):GetFuel()
     self:F({Fuel=Fuel})
     if Fuel < self.PatrolFuelTresholdPercentage then
-      self:E( self.Controllable:GetName() .. " is out of fuel:" .. Fuel .. ", RTB!" )
+      self:E( self.Controllable:GetName() .. " is out of fuel: " .. Fuel .. " ... RTB!" )
       local OldAIControllable = self.Controllable
       local AIControllableTemplate = self.Controllable:GetTemplate()
       
@@ -364,6 +384,7 @@ function AI_A2A:onafterStatus()
       local TimedOrbitTask = OldAIControllable:TaskControlled( OrbitTask, OldAIControllable:TaskCondition(nil,nil,nil,nil,self.PatrolOutOfFuelOrbitTime,nil ) )
       OldAIControllable:SetTask( TimedOrbitTask, 10 )
 
+      self:Fuel()
       RTB = true
     else
     end
@@ -373,8 +394,22 @@ function AI_A2A:onafterStatus()
     local InitialLife = self.Controllable:GetLife0()
     self:F( { Damage = Damage, InitialLife = InitialLife, DamageTreshold = self.PatrolDamageTreshold } )
     if ( Damage / InitialLife ) < self.PatrolDamageTreshold then
-      self:E( self.Controllable:GetName() .. " is damaged:" .. Damage .. ", RTB!" )
+      self:E( self.Controllable:GetName() .. " is damaged: " .. Damage .. " ... RTB!" )
+      self:Damaged()
       RTB = true
+    end
+
+    -- Check if planes went RTB
+    local TargetDistance = self.TargetDistance
+    local ClosestTargetDistance = self.ClosestTargetDistance
+    if TargetDistance then
+      if ClosestTargetDistance <= 40000 then
+        if TargetDistance > 40000 then
+          self:E( "Lost control of group " .. self.Controllable:GetName() .. " ... RTB!" )
+          self:LostControl()
+          RTB = true
+        end
+      end
     end
     
     if RTB == true then
@@ -402,6 +437,8 @@ function AI_A2A:onafterRTB( AIGroup, From, Event, To )
   if AIGroup and AIGroup:IsAlive() then
 
     self.CheckStatus = false
+    
+    self:ClearTargetDistance()
     
     local EngageRoute = {}
 

@@ -335,7 +335,8 @@ end
 -- @param #string To The To State string.
 function AI_A2A_INTERCEPT:onafterAbort( AIGroup, From, Event, To )
   AIGroup:ClearTasks()
-  self:__Route( 1 )
+  self:Return()
+  self:__RTB( 1 )
 end
 
 
@@ -361,7 +362,10 @@ function AI_A2A_INTERCEPT:onafterEngage( AIGroup, From, Event, To, AttackSetUnit
       --- Calculate the target route point.
       
       local CurrentCoord = AIGroup:GetCoordinate()
+      
       local ToTargetCoord = self.AttackSetUnit:GetFirst():GetCoordinate()
+      self:SetTargetDistance( ToTargetCoord ) -- For RTB status check
+      
       local ToTargetSpeed = math.random( self.MinSpeed, self.MaxSpeed )
       local ToInterceptAngle = CurrentCoord:GetAngleDegrees( CurrentCoord:GetDirectionVec3( ToTargetCoord ) )
       
@@ -398,6 +402,7 @@ function AI_A2A_INTERCEPT:onafterEngage( AIGroup, From, Event, To, AttackSetUnit
       
       if #AttackTasks == 0 then
         self:E("No targets found -> Going RTB")
+        self:Return()
         self:__RTB( 1 )
       else
         AttackTasks[#AttackTasks+1] = AIGroup:TaskFunction( 1, #AttackTasks, "AI_A2A_INTERCEPT.InterceptRoute" )
@@ -413,6 +418,7 @@ function AI_A2A_INTERCEPT:onafterEngage( AIGroup, From, Event, To, AttackSetUnit
     end
   else
     self:E("No targets found -> Going RTB")
+    self:Return()
     self:__RTB( 1 )
   end
 end

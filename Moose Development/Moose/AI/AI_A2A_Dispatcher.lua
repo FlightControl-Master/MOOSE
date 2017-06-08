@@ -404,17 +404,27 @@ do -- AI_A2A_DISPATCHER
   ---
   -- @param #AI_A2A_DISPATCHER self
   function AI_A2A_DISPATCHER:ClearDefenderTaskTarget( AIGroup )
-    if AIGroup:IsAlive() and self.DefenderTasks[AIGroup] then
-      local Target = self.DefenderTasks[AIGroup].Target
-      local Message = "Clearing (" .. self.DefenderTasks[AIGroup].Type .. ") " 
+    
+    local DefenderTask = self:GetDefenderTask( AIGroup )
+    
+    if AIGroup:IsAlive() and DefenderTask then
+      local Target = DefenderTask.Target
+      local Message = "Clearing (" .. DefenderTask.Type .. ") " 
       Message = Message .. AIGroup:GetName() 
       if Target then
         Message = Message .. ( Target and ( " from " .. Target.Index .. " [" .. Target.Set:Count() .. "]" ) ) or ""
       end
       self:F( { Target = Message } )
     end
-    if AIGroup and self.DefenderTasks[AIGroup] and self.DefenderTasks[AIGroup].Target then
-      self.DefenderTasks[AIGroup].Target = nil
+    if AIGroup and DefenderTask and DefenderTask.Target then
+      DefenderTask.Target = nil
+    end
+    if AIGroup and DefenderTask then
+      if DefenderTask.Fsm:Is( "Fuel" ) 
+      or DefenderTask.Fsm:Is( "LostControl") 
+      or DefenderTask.Fsm:Is( "Damaged" ) then
+        self:ClearDefenderTask( AIGroup )
+      end
     end
     return self
   end
@@ -829,8 +839,6 @@ do -- AI_A2A_DISPATCHER
   -- @param #AI_A2A_DISPATCHER self
   function AI_A2A_DISPATCHER:onafterENGAGE( From, Event, To, Target, AIGroups )
   
-    self:F( { AIGroups = AIGroups } )
-
     if AIGroups then
 
       for AIGroupID, AIGroup in pairs( AIGroups ) do
@@ -1010,7 +1018,7 @@ do -- AI_A2A_DISPATCHER
               self:ClearDefenderTaskTarget( AIGroup )
             end
           end
-        end            
+        end
       end
     end
 
