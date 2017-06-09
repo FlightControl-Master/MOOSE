@@ -265,6 +265,14 @@ SPAWN = {
 }
 
 
+--- Enumerator for spawns at airbases
+-- @type SPAWN.Takeoff
+-- @extends Wrapper.Group#GROUP.Takeoff
+
+--- @field #SPAWN.Takeoff Takeoff
+SPAWN.Takeoff = GROUP.Takeoff
+
+
 --- @type SPAWN.SpawnZoneTable
 -- @list <Core.Zone#ZONE_BASE> SpawnZone
 
@@ -980,21 +988,18 @@ end
 -- You can use the returned group to further define the route to be followed.
 -- @param #SPAWN self
 -- @param Wrapper.Airbase#AIRBASE Airbase The @{Airbase} where to spawn the group.
--- @param #number SpawnIndex (optional) The index which group to spawn within the given zone.
+-- @param #SPAWN.Takeoff Takeoff (optional) The location and takeoff method. Default is Hot.
 -- @return Wrapper.Group#GROUP that was spawned.
 -- @return #nil Nothing was spawned.
-function SPAWN:SpawnAtAirbase( Airbase, SpawnIndex ) -- R2.2
-  self:F( { self.SpawnTemplatePrefix, Airbase, SpawnIndex } )
+function SPAWN:SpawnAtAirbase( Airbase, Takeoff ) -- R2.2
+  self:F( { self.SpawnTemplatePrefix, Airbase } )
 
   local PointVec3 = Airbase:GetPointVec3()
   self:T2(PointVec3)
 
-  if SpawnIndex then
-  else
-    SpawnIndex = self.SpawnIndex + 1
-  end
+  Takeoff = Takeoff or SPAWN.Takeoff.Hot
   
-  if self:_GetSpawnIndex( SpawnIndex ) then
+  if self:_GetSpawnIndex( self.SpawnIndex + 1 ) then
     
     local SpawnTemplate = self.SpawnGroups[self.SpawnIndex].SpawnTemplate
   
@@ -1021,8 +1026,7 @@ function SPAWN:SpawnAtAirbase( Airbase, SpawnIndex ) -- R2.2
       SpawnTemplate.route.points[1].x = PointVec3.x
       SpawnTemplate.route.points[1].y = PointVec3.z
       SpawnTemplate.route.points[1].alt = Airbase.y
-      SpawnTemplate.route.points[1].action = "From Parking Area Hot"
-      SpawnTemplate.route.points[1].type = "TakeOffParkingHot"
+      SpawnTemplate.route.points[1].type = GROUPTEMPLATE.Takeoff[Takeoff]
       SpawnTemplate.route.points[1].airdromeId = Airbase:GetID()
       
       SpawnTemplate.x = PointVec3.x

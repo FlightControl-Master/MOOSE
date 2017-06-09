@@ -129,6 +129,8 @@ function AI_A2A_INTERCEPT:New( AIGroup, EngageMinSpeed, EngageMaxSpeed )
   
   self.EngageMinSpeed = EngageMinSpeed
   self.EngageMaxSpeed = EngageMaxSpeed
+  self.PatrolMinSpeed = EngageMinSpeed
+  self.PatrolMaxSpeed = EngageMaxSpeed
   
   self.PatrolAltType = "RADIO"
   

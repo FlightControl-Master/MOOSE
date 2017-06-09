@@ -162,7 +162,22 @@ do -- AI_A2A_DISPATCHER
     Tasks = {},
     SweepZones = {},
   }
+
+
+  --- Enumerator for spawns at airbases
+  -- @type AI_A2A_DISPATCHER.Takeoff
+  -- @extends Wrapper.Group#GROUP.Takeoff
   
+  --- @field #AI_A2A_DISPATCHER.Takeoff Takeoff
+  AI_A2A_DISPATCHER.Takeoff = GROUP.Takeoff
+  
+  --- Defnes Landing location.
+  -- @field Landing
+  AI_A2A_DISPATCHER.Landing = {
+    NearAirbase = 1,
+    AtRunway = 2,
+    AtEngineShutdown = 3,
+  }
   
   --- AI_A2A_DISPATCHER constructor.
   -- @param #AI_A2A_DISPATCHER self
@@ -294,6 +309,10 @@ do -- AI_A2A_DISPATCHER
     self:HandleEvent( EVENTS.Crash, self.OnEventCrashOrDead )
     self:HandleEvent( EVENTS.Dead, self.OnEventCrashOrDead )
     
+    self:HandleEvent( EVENTS.Land )
+    self:HandleEvent( EVENTS.EngineShutdown )
+    
+    
     self:__Start( 5 )
     
     return self
@@ -305,6 +324,44 @@ do -- AI_A2A_DISPATCHER
     self.Detection:ForgetDetectedUnit( EventData.IniUnitName ) 
   end
 
+  --- @param #AI_A2A_DISPATCHER self
+  -- @param Core.Event#EVENTDATA EventData
+  function AI_A2A_DISPATCHER:OnEventLand( EventData )
+    local DefenderUnit = EventData.IniUnit
+    local Defender = EventData.IniGroup
+    local Squadron = self:GetSquadronFromDefender( Defender )
+    if Squadron then
+      self:F( { SquadronName = Squadron.Name } )
+      local LandingMethod = self:GetSquadronLanding( Squadron.Name )
+      if LandingMethod == AI_A2A_DISPATCHER.Landing.AtRunway then
+        local DefenderSize = Defender:GetSize()
+        if DefenderSize == 1 then
+          self:RemoveDefenderFromSquadron( Squadron, Defender )
+        end
+        DefenderUnit:Destroy()
+      end
+    end 
+  end
+  
+  --- @param #AI_A2A_DISPATCHER self
+  -- @param Core.Event#EVENTDATA EventData
+  function AI_A2A_DISPATCHER:OnEventEngineShutdown( EventData )
+    local DefenderUnit = EventData.IniUnit
+    local Defender = EventData.IniGroup
+    local Squadron = self:GetSquadronFromDefender( Defender )
+    if Squadron then
+      self:F( { SquadronName = Squadron.Name } )
+      local LandingMethod = self:GetSquadronLanding( Squadron.Name )
+      if LandingMethod == AI_A2A_DISPATCHER.Landing.AtEngineShutdown then
+        local DefenderSize = Defender:GetSize()
+        if DefenderSize == 1 then
+          self:RemoveDefenderFromSquadron( Squadron, Defender )
+        end
+        DefenderUnit:Destroy()
+      end
+    end 
+  end
+  
   --- Define the radius to engage any target by airborne friendlies, which are executing cap or returning from an intercept mission.
   -- So, if there is a target area detected and reported, 
   -- then any friendlies that are airborne near this target area, 
@@ -369,61 +426,61 @@ do -- AI_A2A_DISPATCHER
   
   ---
   -- @param #AI_A2A_DISPATCHER self
-  function AI_A2A_DISPATCHER:GetDefenderTask( AIGroup )
-    return self.DefenderTasks[AIGroup]
+  function AI_A2A_DISPATCHER:GetDefenderTask( Defender )
+    return self.DefenderTasks[Defender]
   end
 
   ---
   -- @param #AI_A2A_DISPATCHER self
-  function AI_A2A_DISPATCHER:GetDefenderTaskFsm( AIGroup )
-    return self:GetDefenderTask( AIGroup ).Fsm
+  function AI_A2A_DISPATCHER:GetDefenderTaskFsm( Defender )
+    return self:GetDefenderTask( Defender ).Fsm
   end
   
   ---
   -- @param #AI_A2A_DISPATCHER self
-  function AI_A2A_DISPATCHER:GetDefenderTaskTarget( AIGroup )
-    return self:GetDefenderTask( AIGroup ).Target
+  function AI_A2A_DISPATCHER:GetDefenderTaskTarget( Defender )
+    return self:GetDefenderTask( Defender ).Target
   end
 
   ---
   -- @param #AI_A2A_DISPATCHER self
-  function AI_A2A_DISPATCHER:ClearDefenderTask( AIGroup )
-    if AIGroup:IsAlive() and self.DefenderTasks[AIGroup] then
-      local Target = self.DefenderTasks[AIGroup].Target
-      local Message = "Clearing (" .. self.DefenderTasks[AIGroup].Type .. ") " 
-      Message = Message .. AIGroup:GetName() 
+  function AI_A2A_DISPATCHER:ClearDefenderTask( Defender )
+    if Defender:IsAlive() and self.DefenderTasks[Defender] then
+      local Target = self.DefenderTasks[Defender].Target
+      local Message = "Clearing (" .. self.DefenderTasks[Defender].Type .. ") " 
+      Message = Message .. Defender:GetName() 
       if Target then
         Message = Message .. ( Target and ( " from " .. Target.Index .. " [" .. Target.Set:Count() .. "]" ) ) or ""
       end
       self:F( { Target = Message } )
     end
-    self.DefenderTasks[AIGroup] = nil
+    self.DefenderTasks[Defender] = nil
     return self
   end
 
   ---
   -- @param #AI_A2A_DISPATCHER self
-  function AI_A2A_DISPATCHER:ClearDefenderTaskTarget( AIGroup )
+  function AI_A2A_DISPATCHER:ClearDefenderTaskTarget( Defender )
     
-    local DefenderTask = self:GetDefenderTask( AIGroup )
+    local DefenderTask = self:GetDefenderTask( Defender )
     
-    if AIGroup:IsAlive() and DefenderTask then
+    if Defender:IsAlive() and DefenderTask then
       local Target = DefenderTask.Target
       local Message = "Clearing (" .. DefenderTask.Type .. ") " 
-      Message = Message .. AIGroup:GetName() 
+      Message = Message .. Defender:GetName() 
       if Target then
         Message = Message .. ( Target and ( " from " .. Target.Index .. " [" .. Target.Set:Count() .. "]" ) ) or ""
       end
       self:F( { Target = Message } )
     end
-    if AIGroup and DefenderTask and DefenderTask.Target then
+    if Defender and DefenderTask and DefenderTask.Target then
       DefenderTask.Target = nil
     end
-    if AIGroup and DefenderTask then
+    if Defender and DefenderTask then
       if DefenderTask.Fsm:Is( "Fuel" ) 
       or DefenderTask.Fsm:Is( "LostControl") 
       or DefenderTask.Fsm:Is( "Damaged" ) then
-        self:ClearDefenderTask( AIGroup )
+        self:ClearDefenderTask( Defender )
       end
     end
     return self
@@ -432,13 +489,14 @@ do -- AI_A2A_DISPATCHER
   
   ---
   -- @param #AI_A2A_DISPATCHER self
-  function AI_A2A_DISPATCHER:SetDefenderTask( AIGroup, Type, Fsm, Target )
-    self.DefenderTasks[AIGroup] = self.DefenderTasks[AIGroup] or {}
-    self.DefenderTasks[AIGroup].Type = Type
-    self.DefenderTasks[AIGroup].Fsm = Fsm
+  function AI_A2A_DISPATCHER:SetDefenderTask( Defender, Type, Fsm, Target )
+  
+    self.DefenderTasks[Defender] = self.DefenderTasks[Defender] or {}
+    self.DefenderTasks[Defender].Type = Type
+    self.DefenderTasks[Defender].Fsm = Fsm
 
     if Target then
-      self:SetDefenderTaskTarget( AIGroup, Target )
+      self:SetDefenderTaskTarget( Defender, Target )
     end
     return self
   end
@@ -447,15 +505,15 @@ do -- AI_A2A_DISPATCHER
   ---
   -- @param #AI_A2A_DISPATCHER self
   -- @param Wrapper.Group#GROUP AIGroup
-  function AI_A2A_DISPATCHER:SetDefenderTaskTarget( AIGroup, Target )
+  function AI_A2A_DISPATCHER:SetDefenderTaskTarget( Defender, Target )
     
-    local Message = "(" .. self.DefenderTasks[AIGroup].Type .. ") " 
-    Message = Message .. AIGroup:GetName() 
+    local Message = "(" .. self.DefenderTasks[Defender].Type .. ") " 
+    Message = Message .. Defender:GetName() 
     Message = Message .. ( Target and ( " target " .. Target.Index .. " [" .. Target.Set:Count() .. "]" ) ) or ""
     self:F( { Target = Message } )
     if Target then
-      AIGroup:MessageToAll( Message, 1200 )
-      self.DefenderTasks[AIGroup].Target = Target
+      Defender:MessageToAll( Message, 1200 )
+      self.DefenderTasks[Defender].Target = Target
     end
     return self
   end
@@ -471,6 +529,7 @@ do -- AI_A2A_DISPATCHER
     local DefenderSquadron = self.DefenderSquadrons[SquadronName]
     
     self:E( { AirbaseName = AirbaseName } )
+    DefenderSquadron.Name = SquadronName
     DefenderSquadron.Airbase = AIRBASE:FindByName( AirbaseName )
     self:E( { Airbase = DefenderSquadron.Airbase } )
     self:E( { AirbaseObject = DefenderSquadron.Airbase:GetDCSObject() } )
@@ -478,17 +537,18 @@ do -- AI_A2A_DISPATCHER
     DefenderSquadron.Spawn = {}
     if type( SpawnTemplates ) == "string" then
       local SpawnTemplate = SpawnTemplates
-      self.DefenderSpawns[SpawnTemplate] = self.DefenderSpawns[SpawnTemplate] or SPAWN:New( SpawnTemplate )
+      self.DefenderSpawns[SpawnTemplate] = self.DefenderSpawns[SpawnTemplate] or SPAWN:New( SpawnTemplate ):InitCleanUp( 30 )
       DefenderSquadron.Spawn[1] = self.DefenderSpawns[SpawnTemplate]
     else
       for TemplateID, SpawnTemplate in pairs( SpawnTemplates ) do
-        self.DefenderSpawns[SpawnTemplate] = self.DefenderSpawns[SpawnTemplate] or SPAWN:New( SpawnTemplate )
+        self.DefenderSpawns[SpawnTemplate] = self.DefenderSpawns[SpawnTemplate] or SPAWN:New( SpawnTemplate ):InitCleanUp( 30 )
         DefenderSquadron.Spawn[#DefenderSquadron.Spawn+1] = self.DefenderSpawns[SpawnTemplate]
       end
     end
     DefenderSquadron.Resources = Resources
     
     self:SetSquadronOverhead( SquadronName, 1 )
+    self:SetSquadronTakeoffFromParkingHot( SquadronName )
 
     return self
   end
@@ -680,7 +740,7 @@ do -- AI_A2A_DISPATCHER
   -- @usage:
   -- 
   --   local Dispatcher = AI_A2A_DISPATCHER:New( ... )
-  --   Dispatcher:SetSquadronGrouping( 2 )
+  --   Dispatcher:SetSquadronGrouping( "SquadronName", 2 )
   -- 
   -- 
   -- @return #AI_A2A_DISPATCHER
@@ -690,6 +750,285 @@ do -- AI_A2A_DISPATCHER
     DefenderSquadron.Grouping = Grouping
     
     return self
+  end
+
+  --- Defines the method at which new flights will spawn and take-off as part of the defense system.
+  -- @param #AI_A2A_DISPATCHER self
+  -- @param #string SquadronName The name of the squadron.
+  -- @param #number Takeoff From the airbase hot, from the airbase cold, in the air, from the runway.
+  -- @usage:
+  -- 
+  --   local Dispatcher = AI_A2A_DISPATCHER:New( ... )
+  --   
+  --   -- Let new flights take-off in the air.
+  --   Dispatcher:SetSquadronTakeoff( "SquadronName", AI_A2A_Dispatcher.Takeoff.Air )
+  --   
+  --   -- Let new flights take-off from the runway.
+  --   Dispatcher:SetSquadronTakeoff( "SquadronName", AI_A2A_Dispatcher.Takeoff.Runway )
+  --   
+  --   -- Let new flights take-off from the airbase hot.
+  --   Dispatcher:SetSquadronTakeoff( "SquadronName", AI_A2A_Dispatcher.Takeoff.Hot )
+  -- 
+  --   -- Let new flights take-off from the airbase cold.
+  --   Dispatcher:SetSquadronTakeoff( "SquadronName", AI_A2A_Dispatcher.Takeoff.Cold )
+  -- 
+  -- 
+  -- @return #AI_A2A_DISPATCHER
+  -- 
+  function AI_A2A_DISPATCHER:SetSquadronTakeoff( SquadronName, Takeoff )
+
+    local DefenderSquadron = self:GetSquadron( SquadronName )
+    DefenderSquadron.Takeoff = Takeoff
+    
+    return self
+  end
+  
+
+  --- Gets the method at which new flights will spawn and take-off as part of the defense system.
+  -- @param #AI_A2A_DISPATCHER self
+  -- @param #string SquadronName The name of the squadron.
+  -- @return #number Takeoff From the airbase hot, from the airbase cold, in the air, from the runway.
+  -- @usage:
+  -- 
+  --   local Dispatcher = AI_A2A_DISPATCHER:New( ... )
+  --   
+  --   -- Let new flights take-off in the air.
+  --   local TakeoffMethod = Dispatcher:GetSquadronTakeoff( "SquadronName" )
+  --   if TakeOffMethod == , AI_A2A_Dispatcher.Takeoff.InAir then
+  --     ...
+  --   end
+  --   
+  function AI_A2A_DISPATCHER:GetSquadronTakeoff( SquadronName )
+
+    local DefenderSquadron = self:GetSquadron( SquadronName )
+    return DefenderSquadron.Takeoff
+  end
+  
+
+  --- Sets flights to take-off in the air, as part of the defense system.
+  -- @param #AI_A2A_DISPATCHER self
+  -- @param #string SquadronName The name of the squadron.
+  -- @usage:
+  -- 
+  --   local Dispatcher = AI_A2A_DISPATCHER:New( ... )
+  --   
+  --   -- Let new flights take-off in the air.
+  --   Dispatcher:SetSquadronTakeoffInAir( "SquadronName" )
+  --   
+  -- @return #AI_A2A_DISPATCHER
+  -- 
+  function AI_A2A_DISPATCHER:SetSquadronTakeoffInAir( SquadronName )
+
+    self:SetSquadronTakeoff( SquadronName, AI_A2A_DISPATCHER.Takeoff.Air )
+    
+    return self
+  end
+  
+
+  --- Sets flights to take-off from the runway, as part of the defense system.
+  -- @param #AI_A2A_DISPATCHER self
+  -- @param #string SquadronName The name of the squadron.
+  -- @usage:
+  -- 
+  --   local Dispatcher = AI_A2A_DISPATCHER:New( ... )
+  --   
+  --   -- Let new flights take-off in the air.
+  --   Dispatcher:SetSquadronTakeoffFromRunway( "SquadronName" )
+  --   
+  -- @return #AI_A2A_DISPATCHER
+  -- 
+  function AI_A2A_DISPATCHER:SetSquadronTakeoffFromRunway( SquadronName )
+
+    self:SetSquadronTakeoff( SquadronName, AI_A2A_DISPATCHER.Takeoff.Runway )
+    
+    return self
+  end
+  
+
+  --- Sets flights to take-off from the airbase at a hot location, as part of the defense system.
+  -- @param #AI_A2A_DISPATCHER self
+  -- @param #string SquadronName The name of the squadron.
+  -- @usage:
+  -- 
+  --   local Dispatcher = AI_A2A_DISPATCHER:New( ... )
+  --   
+  --   -- Let new flights take-off in the air.
+  --   Dispatcher:SetSquadronTakeoffFromParkingHot( "SquadronName" )
+  --   
+  -- @return #AI_A2A_DISPATCHER
+  -- 
+  function AI_A2A_DISPATCHER:SetSquadronTakeoffFromParkingHot( SquadronName )
+
+    self:SetSquadronTakeoff( SquadronName, AI_A2A_DISPATCHER.Takeoff.Hot )
+    
+    return self
+  end
+  
+  --- Sets flights to take-off from the airbase at a cold location, as part of the defense system.
+  -- @param #AI_A2A_DISPATCHER self
+  -- @param #string SquadronName The name of the squadron.
+  -- @usage:
+  -- 
+  --   local Dispatcher = AI_A2A_DISPATCHER:New( ... )
+  --   
+  --   -- Let new flights take-off in the air.
+  --   Dispatcher:SetSquadronTakeoffFromParkingCold( "SquadronName" )
+  --   
+  -- @return #AI_A2A_DISPATCHER
+  -- 
+  function AI_A2A_DISPATCHER:SetSquadronTakeoffFromParkingCold( SquadronName )
+
+    self:SetSquadronTakeoff( SquadronName, AI_A2A_DISPATCHER.Takeoff.Cold )
+    
+    return self
+  end
+  
+
+  --- Defines the method at which flights will land and despawn as part of the defense system.
+  -- @param #AI_A2A_DISPATCHER self
+  -- @param #string SquadronName The name of the squadron.
+  -- @param #number Landing The landing method which can be NearAirbase, AtRunway, AtEngineShutdown
+  -- @usage:
+  -- 
+  --   local Dispatcher = AI_A2A_DISPATCHER:New( ... )
+  --   
+  --   -- Let new flights take-off in the air.
+  --   Dispatcher:SetSquadronLanding( "SquadronName", AI_A2A_Dispatcher.Landing.NearAirbase )
+  --   
+  --   -- Let new flights take-off from the runway.
+  --   Dispatcher:SetSquadronLanding( "SquadronName", AI_A2A_Dispatcher.Landing.AtRunway )
+  --   
+  --   -- Let new flights take-off from the airbase hot.
+  --   Dispatcher:SetSquadronLanding( "SquadronName", AI_A2A_Dispatcher.Landing.AtEngineShutdown )
+  -- 
+  -- @return #AI_A2A_DISPATCHER
+  function AI_A2A_DISPATCHER:SetSquadronLanding( SquadronName, Landing )
+
+    local DefenderSquadron = self:GetSquadron( SquadronName )
+    DefenderSquadron.Landing = Landing
+    
+    return self
+  end
+  
+
+  --- Gets the method at which flights will land and despawn as part of the defense system.
+  -- @param #AI_A2A_DISPATCHER self
+  -- @param #string SquadronName The name of the squadron.
+  -- @return #number Landing The landing method which can be NearAirbase, AtRunway, AtEngineShutdown
+  -- @usage:
+  -- 
+  --   local Dispatcher = AI_A2A_DISPATCHER:New( ... )
+  --   
+  --   -- Let new flights take-off in the air.
+  --   local LandingMethod = Dispatcher:GetSquadronLanding( "SquadronName", AI_A2A_Dispatcher.Landing.NearAirbase )
+  --   if LandingMethod == AI_A2A_Dispatcher.Landing.NearAirbase then
+  --    ...
+  --   end
+  -- 
+  function AI_A2A_DISPATCHER:GetSquadronLanding( SquadronName )
+
+    local DefenderSquadron = self:GetSquadron( SquadronName )
+    return DefenderSquadron.Landing
+  end
+  
+
+  --- Sets flights to land and despawn near the airbase in the air, as part of the defense system.
+  -- @param #AI_A2A_DISPATCHER self
+  -- @param #string SquadronName The name of the squadron.
+  -- @usage:
+  -- 
+  --   local Dispatcher = AI_A2A_DISPATCHER:New( ... )
+  --   
+  --   -- Let flights land in the air and despawn.
+  --   Dispatcher:SetSquadronLandingNearAirbase( "SquadronName" )
+  --   
+  -- @return #AI_A2A_DISPATCHER
+  function AI_A2A_DISPATCHER:SetSquadronLandingNearAirbase( SquadronName )
+
+    self:SetSquadronLanding( SquadronName, AI_A2A_DISPATCHER.Landing.NearAirbase )
+    
+    return self
+  end
+  
+
+  --- Sets flights to land and despawn at the runway, as part of the defense system.
+  -- @param #AI_A2A_DISPATCHER self
+  -- @param #string SquadronName The name of the squadron.
+  -- @usage:
+  -- 
+  --   local Dispatcher = AI_A2A_DISPATCHER:New( ... )
+  --   
+  --   -- Let flights land at the runway and despawn.
+  --   Dispatcher:SetSquadronLandingAtRunway( "SquadronName" )
+  --   
+  -- @return #AI_A2A_DISPATCHER
+  function AI_A2A_DISPATCHER:SetSquadronLandingAtRunway( SquadronName )
+
+    self:SetSquadronLanding( SquadronName, AI_A2A_DISPATCHER.Landing.AtRunway )
+    
+    return self
+  end
+  
+
+  --- Sets flights to land and despawn at engine shutdown, as part of the defense system.
+  -- @param #AI_A2A_DISPATCHER self
+  -- @param #string SquadronName The name of the squadron.
+  -- @usage:
+  -- 
+  --   local Dispatcher = AI_A2A_DISPATCHER:New( ... )
+  --   
+  --   -- Let flights land and despawn at engine shutdown.
+  --   Dispatcher:SetSquadronLandingAtEngineShutdown( "SquadronName" )
+  --   
+  -- @return #AI_A2A_DISPATCHER
+  function AI_A2A_DISPATCHER:SetSquadronLandingAtEngineShutdown( SquadronName )
+
+    self:SetSquadronLanding( SquadronName, AI_A2A_DISPATCHER.Landing.AtEngineShutdown )
+    
+    return self
+  end
+  
+  --- Sets flights to take-off from the airbase at a cold location, as part of the defense system.
+  -- @param #AI_A2A_DISPATCHER self
+  -- @param #string SquadronName The name of the squadron.
+  -- @usage:
+  -- 
+  --   local Dispatcher = AI_A2A_DISPATCHER:New( ... )
+  --   
+  --   -- Let new flights take-off in the air.
+  --   Dispatcher:SetSquadronLandingFromAirbaseCold( "SquadronName" )
+  --   
+  -- @return #AI_A2A_DISPATCHER
+  function AI_A2A_DISPATCHER:SetSquadronLandingFromAirbaseCold( SquadronName )
+
+    self:SetSquadronLanding( SquadronName, AI_A2A_DISPATCHER.Landing.FromAirbaseCold )
+    
+    return self
+  end
+  
+  --- @param #AI_A2A_DISPATCHER self
+  function AI_A2A_DISPATCHER:AddDefenderToSquadron( Squadron, Defender )
+    self.Defenders = self.Defenders or {}
+    local DefenderName = Defender:GetName()
+    self.Defenders[ DefenderName ] = Squadron
+    Squadron.Resources = Squadron.Resources - 1
+    self:F( { DefenderName = DefenderName, SquadronResources = Squadron.Resources } )
+  end
+
+  --- @param #AI_A2A_DISPATCHER self
+  function AI_A2A_DISPATCHER:RemoveDefenderFromSquadron( Squadron, Defender )
+    self.Defenders = self.Defenders or {}
+    local DefenderName = Defender:GetName()
+    Squadron.Resources = Squadron.Resources + 1
+    self.Defenders[ DefenderName ] = nil
+    self:F( { DefenderName = DefenderName, SquadronResources = Squadron.Resources } )
+  end
+  
+  function AI_A2A_DISPATCHER:GetSquadronFromDefender( Defender )
+    self.Defenders = self.Defenders or {}
+    local DefenderName = Defender:GetName()
+    self:F( { DefenderName = DefenderName } )
+    return self.Defenders[ DefenderName ] 
   end
 
   
@@ -820,18 +1159,20 @@ do -- AI_A2A_DISPATCHER
       if self:CanCAP( SquadronName ) then
         local Spawn = DefenderSquadron.Spawn[ math.random( 1, #DefenderSquadron.Spawn ) ]
         Spawn:InitGrouping( DefenderSquadron.Grouping )
-        local AIGroup = Spawn:SpawnAtAirbase( DefenderSquadron.Airbase )
-        self:F( { AIGroup = AIGroup:GetName() } )
+
+        local TakeoffMethod = self:GetSquadronTakeoff( SquadronName )
+        local DefenderCAP = Spawn:SpawnAtAirbase( DefenderSquadron.Airbase, TakeoffMethod )
+        self:AddDefenderToSquadron( DefenderSquadron, DefenderCAP )
   
-        if AIGroup then
+        if DefenderCAP then
   
-          local Fsm = AI_A2A_CAP:New( AIGroup, Cap.Zone, Cap.FloorAltitude, Cap.CeilingAltitude, Cap.PatrolMinSpeed, Cap.PatrolMaxSpeed, Cap.EngageMinSpeed, Cap.EngageMaxSpeed, Cap.AltType )
+          local Fsm = AI_A2A_CAP:New( DefenderCAP, Cap.Zone, Cap.FloorAltitude, Cap.CeilingAltitude, Cap.PatrolMinSpeed, Cap.PatrolMaxSpeed, Cap.EngageMinSpeed, Cap.EngageMaxSpeed, Cap.AltType )
           Fsm:SetDispatcher( self )
           Fsm:SetHomeAirbase( DefenderSquadron.Airbase )
           Fsm:Start()
           Fsm:__Patrol( 1 )
   
-          self:SetDefenderTask( AIGroup, "CAP", Fsm )
+          self:SetDefenderTask( DefenderCAP, "CAP", Fsm )
         end
       end
     else
@@ -916,21 +1257,26 @@ do -- AI_A2A_DISPATCHER
         else
           Spawn:InitGrouping()
         end
-        local AIGroup = Spawn:SpawnAtAirbase( DefenderSquadron.Airbase )
-        self:F( { AIGroup = AIGroup:GetName() } )
-  
-        if AIGroup then
+        
+        local TakeoffMethod = self:GetSquadronTakeoff( ClosestDefenderSquadronName )
+        local DefenderGCI = Spawn:SpawnAtAirbase( DefenderSquadron.Airbase, TakeoffMethod )
+        self:F( { GCIDefender = DefenderGCI:GetName() } )
 
-          DefendersCount = DefendersCount - AIGroup:GetSize()
+        self:AddDefenderToSquadron( DefenderSquadron, DefenderGCI )
+        
+  
+        if DefenderGCI then
+
+          DefendersCount = DefendersCount - DefenderGCI:GetSize()
           
-          local Fsm = AI_A2A_INTERCEPT:New( AIGroup, Intercept.EngageMinSpeed, Intercept.EngageMaxSpeed )
+          local Fsm = AI_A2A_INTERCEPT:New( DefenderGCI, Intercept.EngageMinSpeed, Intercept.EngageMaxSpeed )
           Fsm:SetDispatcher( self )
           Fsm:SetHomeAirbase( DefenderSquadron.Airbase )
           Fsm:Start()
           Fsm:__Engage( 1, Target.Set ) -- Engage on the TargetSetUnit
 
   
-          self:SetDefenderTask( AIGroup, "INTERCEPT", Fsm, Target )
+          self:SetDefenderTask( DefenderGCI, "INTERCEPT", Fsm, Target )
           
           
           function Fsm:onafterRTB( AIGroup, From, Event, To )
