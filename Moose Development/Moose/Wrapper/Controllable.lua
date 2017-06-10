@@ -2210,6 +2210,57 @@ function CONTROLLABLE:OptionROTVertical()
   return nil
 end
 
+
+--- Set RTB on bingo fuel.
+-- @param #CONTROLLABLE self
+-- @param #boolean RTB true if RTB on bingo fuel (default), false if no RTB on bingo fuel.
+-- Warning! When you switch this option off, the airborne group will continue to fly until all fuel has been consumed, and will crash.
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:OptionRTBBingoFuel( RTB ) --R2.2
+  self:F2( { self.ControllableName } )
+
+  RTB = RTB or true
+
+  local DCSControllable = self:GetDCSObject()
+  if DCSControllable then
+    local Controller = self:_GetController()
+
+    if self:IsAir() then
+      Controller:setOption( AI.Option.Air.id.RTB_ON_BINGO, RTB )
+    end
+
+    return self
+  end
+
+  return nil
+end
+
+
+--- Set RTB on ammo.
+-- @param #CONTROLLABLE self
+-- @param #boolean WeaponsFlag Weapons.flag enumerator.
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:OptionRTBAmmo( WeaponsFlag )
+  self:F2( { self.ControllableName } )
+
+  local DCSControllable = self:GetDCSObject()
+  if DCSControllable then
+    local Controller = self:_GetController()
+
+    if self:IsAir() then
+      Controller:setOption( AI.Option.GROUND.id.RTB_ON_OUT_OF_AMMO, WeaponsFlag )
+    end
+
+    return self
+  end
+
+  return nil
+end
+
+
+
+
+
 --- Retrieve the controllable mission and allow to place function hooks within the mission waypoint plan.
 -- Use the method @{Controllable#CONTROLLABLE:WayPointFunction} to define the hook functions for specific waypoints.
 -- Use the method @{Controllable@CONTROLLABLE:WayPointExecute) to start the execution of the new mission plan.

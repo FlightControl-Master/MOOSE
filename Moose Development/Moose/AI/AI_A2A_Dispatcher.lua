@@ -476,13 +476,13 @@ do -- AI_A2A_DISPATCHER
     if Defender and DefenderTask and DefenderTask.Target then
       DefenderTask.Target = nil
     end
-    if Defender and DefenderTask then
-      if DefenderTask.Fsm:Is( "Fuel" ) 
-      or DefenderTask.Fsm:Is( "LostControl") 
-      or DefenderTask.Fsm:Is( "Damaged" ) then
-        self:ClearDefenderTask( Defender )
-      end
-    end
+--    if Defender and DefenderTask then
+--      if DefenderTask.Fsm:Is( "Fuel" ) 
+--      or DefenderTask.Fsm:Is( "LostControl") 
+--      or DefenderTask.Fsm:Is( "Damaged" ) then
+--        self:ClearDefenderTask( Defender )
+--      end
+--    end
     return self
   end
 
@@ -512,7 +512,6 @@ do -- AI_A2A_DISPATCHER
     Message = Message .. ( Target and ( " target " .. Target.Index .. " [" .. Target.Set:Count() .. "]" ) ) or ""
     self:F( { Target = Message } )
     if Target then
-      Defender:MessageToAll( Message, 1200 )
       self.DefenderTasks[Defender].Target = Target
     end
     return self
@@ -1125,10 +1124,13 @@ do -- AI_A2A_DISPATCHER
             if DefenderTask.Type == "CAP" or DefenderTask.Type == "INTERCEPT" then
               -- If there is no target, then add the AIGroup to the ResultAIGroups for Engagement to the TargetSet
               if DefenderTask.Target == nil then
-                Friendlies = Friendlies or {}
-                Friendlies[Friendly] = Friendly
-                DefenderCount = DefenderCount + Friendly:GetSize()
-                self:F( { Friendly = Friendly:GetName(), FriendlyDistance = FriendlyDistance } )
+                if DefenderTask.Fsm:Is( "Returning" )
+                or DefenderTask.Fsm:Is( "Patrolling" ) then
+                  Friendlies = Friendlies or {}
+                  Friendlies[Friendly] = Friendly
+                  DefenderCount = DefenderCount + Friendly:GetSize()
+                  self:F( { Friendly = Friendly:GetName(), FriendlyDistance = FriendlyDistance } )
+                end
               end
             end
           end 
@@ -1368,14 +1370,23 @@ do -- AI_A2A_DISPATCHER
         self:ClearDefenderTask( AIGroup )
       else
         if DefenderTask.Target then
-          if DefenderTask.Target.Set then
-            if DefenderTask.Target.Set:Count() == 0 then
-              self:ClearDefenderTaskTarget( AIGroup )
+          local Target = Detection:GetDetectedItem( DefenderTask.Target.Index )
+          if not Target then
+            self:F( { "Removing obsolete Target:", DefenderTask.Target.Index } )
+            self:ClearDefenderTaskTarget( AIGroup )
+          else
+            if DefenderTask.Target.Set then
+              if DefenderTask.Target.Set:Count() == 0 then
+                self:F( { "All Targets destroyed in Target, removing:", DefenderTask.Target.Index } )
+                self:ClearDefenderTaskTarget( AIGroup )
+              end
             end
           end
         end
       end
     end
+
+    local Report = REPORT:New( "\nTactical Overview" )
 
     -- Now that all obsolete tasks are removed, loop through the detected targets.
     for DetectedItemID, DetectedItem in pairs( Detection:GetDetectedItems() ) do
@@ -1407,19 +1418,30 @@ do -- AI_A2A_DISPATCHER
           self:INTERCEPT( DetectedItem, DefendersMissing, Friendlies )
         end
       end
+      
+      -- Show tactical situation
+      Report:Add( string.format( "\n - Target %s ( %s ): %s" , DetectedItem.ItemID, DetectedItem.Index, DetectedItem.Set:GetObjectNames() ) )
+      for Defender, DefenderTask in pairs( self:GetDefenderTasks() ) do
+        local Defender = Defender -- Wrapper.Group#GROUP
+         if DefenderTask.Target and DefenderTask.Target.ItemID == DetectedItem.ItemID then
+           Report:Add( string.format( "   - %s ( %s - %s )", Defender:GetName(), DefenderTask.Type, DefenderTask.Fsm:GetState() ) )
+         end
+      end
     end
-    
-    -- Show tactical situation
+
+    Report:Add( "\n - No Targets:")
+    local TaskCount = 0
     for Defender, DefenderTask in pairs( self:GetDefenderTasks() ) do
+      TaskCount = TaskCount + 1
       local Defender = Defender -- Wrapper.Group#GROUP
-       local Message = string.format( "%s ( %s - %s )", Defender:GetName(), DefenderTask.Type, DefenderTask.Fsm:GetState() )
-       if DefenderTask.Target then
-        Message = Message .. string.format( " => %s : %s", DefenderTask.Target.ItemID, DefenderTask.Target.Set:GetObjectNames() )
+       if not DefenderTask.Target then
+         Report:Add( string.format( "   - %s ( %s - %s )", Defender:GetName(), DefenderTask.Type, DefenderTask.Fsm:GetState() ) )
        end
-       self:F( { Tactical = Message } )
     end
-    
-    
+    Report:Add( string.format( "\n - %d Tasks", TaskCount ) )
+
+    self:T( Report:Text( "\n" ) )
+    trigger.action.outText( Report:Text( "\n" ), 25 )
     
     return true
   end

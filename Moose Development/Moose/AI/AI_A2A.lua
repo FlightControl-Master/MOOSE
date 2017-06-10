@@ -317,6 +317,8 @@ function AI_A2A:ManageFuel( PatrolFuelTresholdPercentage, PatrolOutOfFuelOrbitTi
   self.PatrolFuelTresholdPercentage = PatrolFuelTresholdPercentage
   self.PatrolOutOfFuelOrbitTime = PatrolOutOfFuelOrbitTime
   
+  self.Controllable:OptionRTBBingoFuel( false )
+  
   return self
 end
 
@@ -426,7 +428,7 @@ function AI_A2A.RTBRoute( AIGroup )
 
   AIGroup:E( { "RTBRoute:", AIGroup:GetName() } )
   local _AI_A2A = AIGroup:GetState( AIGroup, "AI_A2A" ) -- #AI_A2A
-  _AI_A2A:__Engage( 1 )
+  _AI_A2A:__RTB( 1 )
 end
 
 --- @param #AI_A2A self
@@ -449,11 +451,11 @@ function AI_A2A:onafterRTB( AIGroup, From, Event, To )
     local CurrentCoord = AIGroup:GetCoordinate()
     local ToTargetCoord = self.HomeAirbase:GetCoordinate()
     local ToTargetSpeed = math.random( self.PatrolMinSpeed, self.PatrolMaxSpeed )
-    local ToInterceptAngle = CurrentCoord:GetAngleDegrees( CurrentCoord:GetDirectionVec3( ToTargetCoord ) )
+    local ToAirbaseAngle = CurrentCoord:GetAngleDegrees( CurrentCoord:GetDirectionVec3( ToTargetCoord ) )
 
     local Distance = CurrentCoord:Get2DDistance( ToTargetCoord )
     
-    local ToAirbaseCoord = CurrentCoord:Translate( 5000, ToInterceptAngle )
+    local ToAirbaseCoord = CurrentCoord:Translate( 5000, ToAirbaseAngle )
     if Distance > 10000 then
       ToAirbaseCoord = ToTargetCoord
     end
@@ -466,7 +468,7 @@ function AI_A2A:onafterRTB( AIGroup, From, Event, To )
       true 
     )
 
-    self:F( { Angle = ToInterceptAngle, ToTargetSpeed = ToTargetSpeed } )
+    self:F( { Angle = ToAirbaseAngle, ToTargetSpeed = ToTargetSpeed } )
     self:T2( { self.MinSpeed, self.MaxSpeed, ToTargetSpeed } )
     
     EngageRoute[#EngageRoute+1] = ToPatrolRoutePoint
