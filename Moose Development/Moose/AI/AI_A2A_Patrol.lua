@@ -312,23 +312,23 @@ end
 
 
 
---- @param Wrapper.Controllable#CONTROLLABLE AIControllable
+--- @param Wrapper.Group#GROUP AIGroup
 -- This statis method is called from the route path within the last task at the last waaypoint of the Controllable.
 -- Note that this method is required, as triggers the next route when patrolling for the Controllable.
-function AI_A2A_PATROL:_NewPatrolRoute( AIControllable )
+function AI_A2A_PATROL:PatrolRoute( AIGroup )
 
-  local PatrolZone = AIControllable:GetState( AIControllable, "PatrolZone" ) -- PatrolCore.Zone#AI_A2A_PATROL
-  PatrolZone:__Route( 1 )
+  local _AI_A2A_Patrol = AIGroup:GetState( AIGroup, "AI_A2A_PATROL" ) -- #AI_A2A_PATROL
+  _AI_A2A_Patrol:Route()
 end
 
 
 --- Defines a new patrol route using the @{Process_PatrolZone} parameters and settings.
 -- @param #AI_A2A_PATROL self
--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+-- @param Wrapper.Group#GROUP AIGroup The AIGroup managed by the FSM.
 -- @param #string From The From State string.
 -- @param #string Event The Event string.
 -- @param #string To The To State string.
-function AI_A2A_PATROL:onafterRoute( Controllable, From, Event, To )
+function AI_A2A_PATROL:onafterRoute( AIGroup, From, Event, To )
 
   self:F2()
 
@@ -338,91 +338,43 @@ function AI_A2A_PATROL:onafterRoute( Controllable, From, Event, To )
   end
 
   
-  if self.Controllable:IsAlive() then
-    -- Determine if the AIControllable is within the PatrolZone. 
-    -- If not, make a waypoint within the to that the AIControllable will fly at maximum speed to that point.
+  if AIGroup:IsAlive() then
     
     local PatrolRoute = {}
 
-    -- Calculate the current route point of the controllable as the start point of the route.
-    -- However, when the controllable is not in the air,
-    -- the controllable current waypoint is probably the airbase...
-    -- Thus, if we would take the current waypoint as the startpoint, upon take-off, the controllable flies
-    -- immediately back to the airbase, and this is not correct.
-    -- Therefore, when on a runway, get as the current route point a random point within the PatrolZone.
-    -- This will make the plane fly immediately to the patrol zone.
+    --- Calculate the target route point.
     
-    if self.Controllable:InAir() == false then
-      self:E( "Not in the air, finding route path within PatrolZone" )
-      local CurrentVec2 = self.Controllable:GetVec2()
-      --TODO: Create GetAltitude function for GROUP, and delete GetUnit(1).
-      local CurrentAltitude = self.Controllable:GetUnit(1):GetAltitude()
-      local CurrentPointVec3 = POINT_VEC3:New( CurrentVec2.x, CurrentAltitude, CurrentVec2.y )
-      local ToPatrolZoneSpeed = self.PatrolMaxSpeed
-      local CurrentRoutePoint = CurrentPointVec3:RoutePointAir( 
-          self.PatrolAltType, 
-          POINT_VEC3.RoutePointType.TakeOffParking, 
-          POINT_VEC3.RoutePointAction.FromParkingArea, 
-          ToPatrolZoneSpeed, 
-          true 
-        )
-      PatrolRoute[#PatrolRoute+1] = CurrentRoutePoint
-    else
-      self:E( "In the air, finding route path within PatrolZone" )
-      local CurrentVec2 = self.Controllable:GetVec2()
-      --TODO: Create GetAltitude function for GROUP, and delete GetUnit(1).
-      local CurrentAltitude = self.Controllable:GetUnit(1):GetAltitude()
-      local CurrentPointVec3 = POINT_VEC3:New( CurrentVec2.x, CurrentAltitude, CurrentVec2.y )
-      local ToPatrolZoneSpeed = self.PatrolMaxSpeed
-      local CurrentRoutePoint = CurrentPointVec3:RoutePointAir( 
-          self.PatrolAltType, 
-          POINT_VEC3.RoutePointType.TurningPoint, 
-          POINT_VEC3.RoutePointAction.TurningPoint, 
-          ToPatrolZoneSpeed, 
-          true 
-        )
-      PatrolRoute[#PatrolRoute+1] = CurrentRoutePoint
-    end    
+    local CurrentCoord = AIGroup:GetCoordinate()
     
+    local ToTargetCoord = self.PatrolZone:GetRandomPointVec2()
+    self:SetTargetDistance( ToTargetCoord ) -- For RTB status check
     
-    --- Define a random point in the @{Zone}. The AI will fly to that point within the zone.
-    
-      --- Find a random 2D point in PatrolZone.
-    local ToTargetVec2 = self.PatrolZone:GetRandomVec2()
-    self:T2( ToTargetVec2 )
-
-    --- Define Speed and Altitude.
-    local ToTargetAltitude = math.random( self.PatrolFloorAltitude, self.PatrolCeilingAltitude )
     local ToTargetSpeed = math.random( self.PatrolMinSpeed, self.PatrolMaxSpeed )
-    self:T2( { self.PatrolMinSpeed, self.PatrolMaxSpeed, ToTargetSpeed } )
-    
-    --- Obtain a 3D @{Point} from the 2D point + altitude.
-    local ToTargetPointVec3 = POINT_VEC3:New( ToTargetVec2.x, ToTargetAltitude, ToTargetVec2.y )
     
     --- Create a route point of type air.
-    local ToTargetRoutePoint = ToTargetPointVec3:RoutePointAir( 
+    local ToPatrolRoutePoint = ToTargetCoord:RoutePointAir( 
       self.PatrolAltType, 
       POINT_VEC3.RoutePointType.TurningPoint, 
       POINT_VEC3.RoutePointAction.TurningPoint, 
       ToTargetSpeed, 
       true 
     )
-    
-    --self.CoordTest:SpawnFromVec3( ToTargetPointVec3:GetVec3() )
-    
-    --ToTargetPointVec3:SmokeRed()
 
-    PatrolRoute[#PatrolRoute+1] = ToTargetRoutePoint
+    PatrolRoute[#PatrolRoute+1] = ToPatrolRoutePoint
     
     --- Now we're going to do something special, we're going to call a function from a waypoint action at the AIControllable...
-    self.Controllable:WayPointInitialize( PatrolRoute )
+    AIGroup:WayPointInitialize( PatrolRoute )
+
+    local Tasks = {}
+    Tasks[#Tasks+1] = AIGroup:TaskFunction( 1, 1, "AI_A2A_PATROL.PatrolRoute" )
+    
+    PatrolRoute[1].task = AIGroup:TaskCombo( Tasks )
     
     --- Do a trick, link the NewPatrolRoute function of the PATROLGROUP object to the AIControllable in a temporary variable ...
-    self.Controllable:SetState( self.Controllable, "PatrolZone", self )
-    self.Controllable:WayPointFunction( #PatrolRoute, 1, "AI_A2A_PATROL:_NewPatrolRoute" )
+    AIGroup:SetState( AIGroup, "AI_A2A_PATROL", self )
 
     --- NOW ROUTE THE GROUP!
-    self.Controllable:WayPointExecute( 1, 2 )
+    AIGroup:WayPointExecute( 1, 2 )
   end
 
 end

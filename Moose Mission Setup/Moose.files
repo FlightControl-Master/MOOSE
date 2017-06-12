@@ -44,7 +44,7 @@ AI/AI_Balancer.lua
 AI/AI_A2A.lua
 AI/AI_A2A_Patrol.lua
 AI/AI_A2A_Cap.lua
-AI/AI_A2A_Intercept.lua
+AI/AI_A2A_Gci.lua
 AI/AI_A2A_Dispatcher.lua
 AI/AI_Patrol.lua
 AI/AI_Cap.lua

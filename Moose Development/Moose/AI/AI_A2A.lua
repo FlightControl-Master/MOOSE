@@ -428,7 +428,7 @@ function AI_A2A.RTBRoute( AIGroup )
 
   AIGroup:E( { "RTBRoute:", AIGroup:GetName() } )
   local _AI_A2A = AIGroup:GetState( AIGroup, "AI_A2A" ) -- #AI_A2A
-  _AI_A2A:__RTB( 1 )
+  _AI_A2A:RTB()
 end
 
 --- @param #AI_A2A self
