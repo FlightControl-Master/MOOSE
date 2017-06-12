@@ -351,7 +351,7 @@ end
 function AI_A2A_CAP.AttackRoute( AIGroup )
 
   local EngageZone = AIGroup:GetState( AIGroup, "EngageZone" ) -- AI.AI_Cap#AI_A2A_CAP
-  EngageZone:Engage()
+  EngageZone:__Engage( 0.5 )
 end
 
 --- @param #AI_A2A_CAP self
@@ -373,7 +373,7 @@ end
 -- @param #string To The To State string.
 function AI_A2A_CAP:onafterAbort( AIGroup, From, Event, To )
   AIGroup:ClearTasks()
-  self:Route()
+  self:__Route( 0.5 )
 end
 
 
@@ -435,8 +435,7 @@ function AI_A2A_CAP:onafterEngage( AIGroup, From, Event, To, AttackSetUnit )
       
       if #AttackTasks == 0 then
         self:E("No targets found -> Going back to Patrolling")
-        self:Abort()
-        self:Route()
+        self:__Abort( 0.5 )
       else
         AttackTasks[#AttackTasks+1] = AIGroup:TaskFunction( 1, #AttackTasks, "AI_A2A_CAP.AttackRoute" )
         EngageRoute[1].task = AIGroup:TaskCombo( AttackTasks )
@@ -450,8 +449,7 @@ function AI_A2A_CAP:onafterEngage( AIGroup, From, Event, To, AttackSetUnit )
     end
   else
     self:E("No targets found -> Going back to Patrolling")
-    self:Abort()
-    self:Route()
+    self:__Abort( 0.5 )
   end
 end
 

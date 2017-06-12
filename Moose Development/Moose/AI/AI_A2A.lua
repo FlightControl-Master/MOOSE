@@ -221,6 +221,7 @@ function AI_A2A:New( AIGroup )
 
 
   self:AddTransition( "*", "Return", "Returning" )
+  self:AddTransition( "*", "Home", "Home" )
   self:AddTransition( "*", "LostControl", "LostControl" )
   self:AddTransition( "*", "Fuel", "Fuel" )
   self:AddTransition( "*", "Damaged", "Damaged" )
@@ -415,7 +416,7 @@ function AI_A2A:onafterStatus()
     end
     
     if RTB == true then
-      self:RTB()
+      self:__RTB( 0.5 )
     else
       self:__Status( 10 ) -- Execute the Patrol event after 30 seconds.
     end
@@ -428,7 +429,7 @@ function AI_A2A.RTBRoute( AIGroup )
 
   AIGroup:E( { "RTBRoute:", AIGroup:GetName() } )
   local _AI_A2A = AIGroup:GetState( AIGroup, "AI_A2A" ) -- #AI_A2A
-  _AI_A2A:RTB()
+  _AI_A2A:__RTB( 0.5 )
 end
 
 --- @param #AI_A2A self
@@ -436,14 +437,14 @@ end
 function AI_A2A:onafterRTB( AIGroup, From, Event, To )
   self:F( { AIGroup, From, Event, To } )
 
-  self:E( "Group " .. self.Controllable:GetName() .. " ... RTB! ( " .. self:GetState() .. " )" )
+  self:E( "Group " .. self.Controllable:GetName() .. " ... Returning! ( " .. self:GetState() .. " )" )
   
   if AIGroup and AIGroup:IsAlive() then
 
     self.CheckStatus = false
     
     self:ClearTargetDistance()
-    
+
     local EngageRoute = {}
 
     --- Calculate the target route point.
@@ -456,8 +457,9 @@ function AI_A2A:onafterRTB( AIGroup, From, Event, To )
     local Distance = CurrentCoord:Get2DDistance( ToTargetCoord )
     
     local ToAirbaseCoord = CurrentCoord:Translate( 5000, ToAirbaseAngle )
-    if Distance > 10000 then
-      ToAirbaseCoord = ToTargetCoord
+    if Distance < 5000 then
+      self:Home()
+      return
     end
     --- Create a route point of type air.
     local ToPatrolRoutePoint = ToAirbaseCoord:RoutePointAir( 
@@ -491,6 +493,19 @@ function AI_A2A:onafterRTB( AIGroup, From, Event, To )
   end
     
 end
+
+--- @param #AI_A2A self
+-- @param Wrapper.Group#GROUP AIGroup
+function AI_A2A:onafterHome( AIGroup, From, Event, To )
+  self:F( { AIGroup, From, Event, To } )
+
+  self:E( "Group " .. self.Controllable:GetName() .. " ... Home! ( " .. self:GetState() .. " )" )
+  
+  if AIGroup and AIGroup:IsAlive() then
+  end
+
+end
+    
 
 
 --- @param #AI_A2A self

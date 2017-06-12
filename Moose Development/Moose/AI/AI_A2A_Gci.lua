@@ -315,7 +315,7 @@ function AI_A2A_GCI.InterceptRoute( AIControllable )
 
   AIControllable:T( "NewEngageRoute" )
   local EngageZone = AIControllable:GetState( AIControllable, "EngageZone" ) -- AI.AI_Cap#AI_A2A_GCI
-  EngageZone:Engage()
+  EngageZone:__Engage( 0.5 )
 end
 
 --- @param #AI_A2A_GCI self
@@ -338,7 +338,7 @@ end
 function AI_A2A_GCI:onafterAbort( AIGroup, From, Event, To )
   AIGroup:ClearTasks()
   self:Return()
-  self:RTB()
+  self:__RTB( 0.5 )
 end
 
 
@@ -405,7 +405,7 @@ function AI_A2A_GCI:onafterEngage( AIGroup, From, Event, To, AttackSetUnit )
       if #AttackTasks == 0 then
         self:E("No targets found -> Going RTB")
         self:Return()
-        self:RTB()
+        self:__RTB( 0.5 )
       else
         AttackTasks[#AttackTasks+1] = AIGroup:TaskFunction( 1, #AttackTasks, "AI_A2A_GCI.InterceptRoute" )
         EngageRoute[1].task = AIGroup:TaskCombo( AttackTasks )
@@ -421,7 +421,7 @@ function AI_A2A_GCI:onafterEngage( AIGroup, From, Event, To, AttackSetUnit )
   else
     self:E("No targets found -> Going RTB")
     self:Return()
-    self:RTB()
+    self:__RTB( 0.5 )
   end
 end
 

@@ -352,6 +352,24 @@ function CONTROLLABLE:SetTask( DCSTask, WaitTime )
   return nil
 end
 
+--- Checking the Task Queue of the controllable. Returns false if no task is on the queue. true if there is a task.
+-- @param #CONTROLLABLE self
+-- @return Wrapper.Controllable#CONTROLLABLE self
+function CONTROLLABLE:HasTask() --R2.2
+
+  local HasTaskResult = false
+
+  local DCSControllable = self:GetDCSObject()
+
+  if DCSControllable then
+
+    local Controller = self:_GetController()
+    HasTaskResult = Controller:hasTask()
+  end
+
+  return HasTaskResult
+end
+
 
 --- Return a condition section for a controlled task.
 -- @param #CONTROLLABLE self
