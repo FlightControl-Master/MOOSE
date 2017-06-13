@@ -126,9 +126,9 @@
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="#AI_A2A_DISPATCHER">AI_A2A_DISPATCHER</a></td>
 		<td class="summary">
-<h1>AI<em>A2A</em>DISPATCHER class, extends <a href="Tasking.html##(DETECTION_MANAGER)">Tasking#DETECTION_MANAGER</a></h1>
+<h1>AI_A2A_DISPATCHER class, extends <a href="Tasking.html##(DETECTION_MANAGER)">Tasking#DETECTION_MANAGER</a></h1>
 
-<p>The <a href="##(AI_A2A_DISPATCHER)">#AI<em>A2A</em>DISPATCHER</a> class is designed to create an automatic air defence system for a coalition.</p>
+<p>The <a href="##(AI)">#AI</a> class is designed to create an automatic air defence system for a coalition.</p>
 </td>
 		</tr>
 	</table>
@@ -597,9 +597,9 @@
 </dt>
 <dd>
 	
-<h1>AI<em>A2A</em>DISPATCHER class, extends <a href="Tasking.html##(DETECTION_MANAGER)">Tasking#DETECTION_MANAGER</a></h1>
+<h1>AI_A2A_DISPATCHER class, extends <a href="Tasking.html##(DETECTION_MANAGER)">Tasking#DETECTION_MANAGER</a></h1>
 
-<p>The <a href="##(AI_A2A_DISPATCHER)">#AI<em>A2A</em>DISPATCHER</a> class is designed to create an automatic air defence system for a coalition.</p>
+<p>The <a href="##(AI)">#AI</a> class is designed to create an automatic air defence system for a coalition.</p>
 
 	
 <p>It includes automatic spawning of Combat Air Patrol aircraft (CAP) and Ground Controlled Intercept aircraft (GCI) in response to enemy air movements that are detected by a ground based radar network. 
@@ -608,12 +608,12 @@ If all CAP flights are engaged or RTB then additional GCI interceptors will scra
 With a little time and with a little work it provides the mission designer with a convincing and completely automatic air defence system. 
 In short it is a plug in very flexible and configurable air defence module for DCS World.</p>
 
-<p>Note that in order to create a two way A2A defense system, two AI<em>A2A</em>DISPATCHER defense system may need to be created, for each coalition one.
+<p>Note that in order to create a two way A2A defense system, two AI_A2A_DISPATCHER defense system may need to be created, for each coalition one.
 This is a good implementation, because maybe in the future, more coalitions may become available in DCS world.</p>
 
-<h2>1. AI<em>A2A</em>DISPATCHER constructor:</h2>
+<h2>1. AI_A2A_DISPATCHER constructor:</h2>
 
-<p>The <a href="##(AI_A2A_DISPATCHER).New">AI<em>A2A</em>DISPATCHER.New</a>() method creates a new AI<em>A2A</em>DISPATCHER instance.
+<p>The <a href="##(AI_A2A_DISPATCHER).New">AI<em>A2A</em>DISPATCHER.New</a>() method creates a new AI_A2A_DISPATCHER instance.
 There are two parameters required, a <a href="Set.html##(SET_GROUP)">Set#SET_GROUP</a> that defines the Groups of the EWR network, and a radius in meters, that will be used to group the detected targets.</p>
 
 <p>The <a href="##(AI_A2A_DISPATCHER).New">AI<em>A2A</em>DISPATCHER.New</a>() method is used to setup the EWR network and to define the grouping.</p>
@@ -632,7 +632,7 @@ Having the radars further back will mean a slower escalation because fewer targe
 therefore less CAP and GCI flights will spawn and this will tend to make just the border area active rather than a melee over the whole map. 
 It all depends on what the desired effect is. </p>
 
-<p>EWR networks are dynamically constructed, that is, they form part of the <a href="Set.html##(SET_GROUP)">Set#SET_GROUP</a> object that is given as the input parameter of the AI<em>A2A</em>DISPATCHER class.
+<p>EWR networks are dynamically constructed, that is, they form part of the <a href="Set.html##(SET_GROUP)">Set#SET_GROUP</a> object that is given as the input parameter of the AI_A2A_DISPATCHER class.
 By defining in a smart way the names or name prefixes of the groups of EWR capable units, these units will be automatically added or deleted from the EWR network, 
 increasing or decreasing the radar coverage of the Early Warning System.</p>
 
@@ -686,7 +686,7 @@ If a hot war is chosen then <strong>no borders</strong> actually need to be defi
 
 <h2>4. Squadrons:</h2>
 
-<p>The AI<em>A2A</em>DISPATCHER works with <strong>Squadrons</strong>, that need to be defined using the different methods available.</p>
+<p>The AI_A2A_DISPATCHER works with <strong>Squadrons</strong>, that need to be defined using the different methods available.</p>
 
 <p>Use the method <a href="##(AI_A2A_DISPATCHER).SetSquadron">AI<em>A2A</em>DISPATCHER.SetSquadron</a>() to <strong>setup a new squadron</strong> active at an airfield, 
 while defining which plane types are being used by the squadron and how many resources are available.</p>
@@ -700,7 +700,7 @@ while defining which plane types are being used by the squadron and how many res
     <li>Have a limited set of resources.</li>
 </ul>
 
-<p>The name of the squadron given acts as the <strong>squadron key</strong> in the AI<em>A2A</em>DISPATCHER:Squadron...() methods.</p>
+<p>The name of the squadron given acts as the <strong>squadron key</strong> in the AI_A2A_DISPATCHER:Squadron...() methods.</p>
 
 <p>Additionally, squadrons have specific configuration options to:</p>
 
