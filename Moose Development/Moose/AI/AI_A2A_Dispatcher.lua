@@ -1,9 +1,11 @@
 --- **AI** - The AI_A2A_DISPATCHER creates an automatic A2A defense system based on an EWR network targets and coordinating CAP and GCI.
 -- 
+-- ![Banner Image](..\Presentations\AI_A2A_DISPATCHER\Dia1.JPG)
+-- 
 -- ====
 -- 
--- ### Authors: **Sven Van de Velde (FlightControl)**
---              **Stonehouse**
+-- ### Authors: **Sven Van de Velde (FlightControl)** rework of GCICAP + introduction of new concepts (squadrons).
+-- ### Authors: **Stonehouse**, **SNAFU** in terms of the advice, documentation, and the original GCICAP script.
 -- 
 -- ### Contributions: 
 -- 
