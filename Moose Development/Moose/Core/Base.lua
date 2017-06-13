@@ -703,7 +703,7 @@ end
 --- Set tracing for a class
 -- @param #BASE self
 -- @param #string Class
-function --BASE:TraceClass( Class )
+function BASE:TraceClass( Class )
   _TraceClass[Class] = true
   _TraceClassMethod[Class] = {}
   self:E( "Tracing class " .. Class )
@@ -713,7 +713,7 @@ end
 -- @param #BASE self
 -- @param #string Class
 -- @param #string Method
-function --BASE:TraceClassMethod( Class, Method )
+function BASE:TraceClassMethod( Class, Method )
   if not _TraceClassMethod[Class] then
     _TraceClassMethod[Class] = {}
     _TraceClassMethod[Class].Method = {}
