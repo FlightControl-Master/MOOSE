@@ -21,21 +21,21 @@ do -- AI_A2A_DISPATCHER
   -- @type AI_A2A_DISPATCHER
   -- @extends Tasking.DetectionManager#DETECTION_MANAGER
 
-  --- # AI_A2A_DISPATCHER class, extends @{Tasking#DETECTION_MANAGER}
+  --- # AI\_A2A\_DISPATCHER class, extends @{Tasking#DETECTION_MANAGER}
   -- 
-  -- The @{#AI_A2A_DISPATCHER} class is designed to create an automatic air defence system for a coalition. 
+  -- The @{#AI\_A2A\_DISPATCHER} class is designed to create an automatic air defence system for a coalition. 
   -- It includes automatic spawning of Combat Air Patrol aircraft (CAP) and Ground Controlled Intercept aircraft (GCI) in response to enemy air movements that are detected by a ground based radar network. 
   -- CAP flights will take off and proceed to designated CAP zones where they will remain on station until the ground radars direct them to intercept detected enemy aircraft or they run short of fuel and must return to base (RTB). When a CAP flight leaves their zone to perform an interception or return to base a new CAP flight will spawn to take their place.
   -- If all CAP flights are engaged or RTB then additional GCI interceptors will scramble to intercept unengaged enemy aircraft under ground radar control.
   -- With a little time and with a little work it provides the mission designer with a convincing and completely automatic air defence system. 
   -- In short it is a plug in very flexible and configurable air defence module for DCS World.
   -- 
-  -- Note that in order to create a two way A2A defense system, two AI_A2A_DISPATCHER defense system may need to be created, for each coalition one.
+  -- Note that in order to create a two way A2A defense system, two AI\_A2A\_DISPATCHER defense system may need to be created, for each coalition one.
   -- This is a good implementation, because maybe in the future, more coalitions may become available in DCS world.
   -- 
-  -- ## 1. AI_A2A_DISPATCHER constructor:
+  -- ## 1. AI\_A2A\_DISPATCHER constructor:
   -- 
-  -- The @{#AI_A2A_DISPATCHER.New}() method creates a new AI_A2A_DISPATCHER instance.
+  -- The @{#AI_A2A_DISPATCHER.New}() method creates a new AI\_A2A\_DISPATCHER instance.
   -- There are two parameters required, a @{Set#SET_GROUP} that defines the Groups of the EWR network, and a radius in meters, that will be used to group the detected targets.
   -- 
   -- The @{#AI_A2A_DISPATCHER.New}() method is used to setup the EWR network and to define the grouping.
@@ -54,7 +54,7 @@ do -- AI_A2A_DISPATCHER
   -- therefore less CAP and GCI flights will spawn and this will tend to make just the border area active rather than a melee over the whole map. 
   -- It all depends on what the desired effect is. 
   -- 
-  -- EWR networks are dynamically constructed, that is, they form part of the @{Set#SET_GROUP} object that is given as the input parameter of the AI_A2A_DISPATCHER class.
+  -- EWR networks are dynamically constructed, that is, they form part of the @{Set#SET_GROUP} object that is given as the input parameter of the AI\_A2A\_DISPATCHER class.
   -- By defining in a smart way the names or name prefixes of the groups of EWR capable units, these units will be automatically added or deleted from the EWR network, 
   -- increasing or decreasing the radar coverage of the Early Warning System.
   -- 
@@ -107,7 +107,7 @@ do -- AI_A2A_DISPATCHER
   -- 
   -- ## 4. Squadrons: 
   -- 
-  -- The AI_A2A_DISPATCHER works with **Squadrons**, that need to be defined using the different methods available.
+  -- The AI\_A2A\_DISPATCHER works with **Squadrons**, that need to be defined using the different methods available.
   -- 
   -- Use the method @{#AI_A2A_DISPATCHER.SetSquadron}() to **setup a new squadron** active at an airfield, 
   -- while defining which plane types are being used by the squadron and how many resources are available.
@@ -119,7 +119,7 @@ do -- AI_A2A_DISPATCHER
   --   * Are located at one airbase.
   --   * Have a limited set of resources.
   -- 
-  -- The name of the squadron given acts as the **squadron key** in the AI_A2A_DISPATCHER:Squadron...() methods.
+  -- The name of the squadron given acts as the **squadron key** in the AI\_A2A\_DISPATCHER:Squadron...() methods.
   -- 
   -- Additionally, squadrons have specific configuration options to:
   -- 
