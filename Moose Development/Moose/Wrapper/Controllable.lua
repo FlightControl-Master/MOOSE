@@ -152,7 +152,7 @@ CONTROLLABLE = {
 -- @param Dcs.DCSWrapper.Controllable#Controllable ControllableName The DCS Controllable name
 -- @return #CONTROLLABLE self
 function CONTROLLABLE:New( ControllableName )
-  local self = BASE:Inherit( self, POSITIONABLE:New( ControllableName ) )
+  local self = BASE:Inherit( self, POSITIONABLE:New( ControllableName ) ) -- #CONTROLLABLE
   self:F2( ControllableName )
   self.ControllableName = ControllableName
   
@@ -166,12 +166,10 @@ end
 -- @param #CONTROLLABLE self
 -- @return Dcs.DCSController#Controller
 function CONTROLLABLE:_GetController()
-  self:F2( { self.ControllableName } )
   local DCSControllable = self:GetDCSObject()
 
   if DCSControllable then
     local ControllableController = DCSControllable:getController()
-    self:T3( ControllableController )
     return ControllableController
   end
 
@@ -229,6 +227,36 @@ function CONTROLLABLE:GetLife()
   
   return nil
 end
+
+--- Returns the initial health.
+-- @param #CONTROLLABLE self
+-- @return #number The controllable health value (unit or group average).
+-- @return #nil The controllable is not existing or alive.  
+function CONTROLLABLE:GetLife0()
+  self:F2( self.ControllableName )
+
+  local DCSControllable = self:GetDCSObject()
+  
+  if DCSControllable then
+    local UnitLife = 0
+    local Units = self:GetUnits()
+    if #Units == 1 then
+      local Unit = Units[1] -- Wrapper.Unit#UNIT
+      UnitLife = Unit:GetLife0()
+    else
+      local UnitLifeTotal = 0
+      for UnitID, Unit in pairs( Units ) do
+        local Unit = Unit -- Wrapper.Unit#UNIT
+        UnitLifeTotal = UnitLifeTotal + Unit:GetLife0()
+      end
+      UnitLife = UnitLifeTotal / #Units
+    end
+    return UnitLife
+  end
+  
+  return nil
+end
+
 
 
 
@@ -300,14 +328,13 @@ end
 -- @param #CONTROLLABLE self
 -- @return Wrapper.Controllable#CONTROLLABLE self
 function CONTROLLABLE:SetTask( DCSTask, WaitTime )
-  self:F2( { DCSTask } )
+  self:F2( { DCSTask = DCSTask } )
 
   local DCSControllable = self:GetDCSObject()
 
   if DCSControllable then
 
     local Controller = self:_GetController()
-    self:T3( Controller )
 
     -- When a controllable SPAWNs, it takes about a second to get the controllable in the simulator. Setting tasks to unspawned controllables provides unexpected results.
     -- Therefore we schedule the functions to set the mission and options for the Controllable.
@@ -323,6 +350,24 @@ function CONTROLLABLE:SetTask( DCSTask, WaitTime )
   end
 
   return nil
+end
+
+--- Checking the Task Queue of the controllable. Returns false if no task is on the queue. true if there is a task.
+-- @param #CONTROLLABLE self
+-- @return Wrapper.Controllable#CONTROLLABLE self
+function CONTROLLABLE:HasTask() --R2.2
+
+  local HasTaskResult = false
+
+  local DCSControllable = self:GetDCSObject()
+
+  if DCSControllable then
+
+    local Controller = self:_GetController()
+    HasTaskResult = Controller:hasTask()
+  end
+
+  return HasTaskResult
 end
 
 
@@ -389,7 +434,7 @@ function CONTROLLABLE:TaskCombo( DCSTasks )
   }
   
   for TaskID, Task in ipairs( DCSTasks ) do
-    self:E( Task )
+    self:T( Task )
   end
 
   self:T3( { DCSTaskCombo } )
@@ -588,7 +633,7 @@ function CONTROLLABLE:TaskAttackUnit( AttackUnit, GroupAttack, WeaponExpend, Att
     }
   }
 
-  self:E( DCSTask )
+  self:T3( DCSTask )
   
   return DCSTask
 end
@@ -2183,6 +2228,57 @@ function CONTROLLABLE:OptionROTVertical()
   return nil
 end
 
+
+--- Set RTB on bingo fuel.
+-- @param #CONTROLLABLE self
+-- @param #boolean RTB true if RTB on bingo fuel (default), false if no RTB on bingo fuel.
+-- Warning! When you switch this option off, the airborne group will continue to fly until all fuel has been consumed, and will crash.
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:OptionRTBBingoFuel( RTB ) --R2.2
+  self:F2( { self.ControllableName } )
+
+  RTB = RTB or true
+
+  local DCSControllable = self:GetDCSObject()
+  if DCSControllable then
+    local Controller = self:_GetController()
+
+    if self:IsAir() then
+      Controller:setOption( AI.Option.Air.id.RTB_ON_BINGO, RTB )
+    end
+
+    return self
+  end
+
+  return nil
+end
+
+
+--- Set RTB on ammo.
+-- @param #CONTROLLABLE self
+-- @param #boolean WeaponsFlag Weapons.flag enumerator.
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:OptionRTBAmmo( WeaponsFlag )
+  self:F2( { self.ControllableName } )
+
+  local DCSControllable = self:GetDCSObject()
+  if DCSControllable then
+    local Controller = self:_GetController()
+
+    if self:IsAir() then
+      Controller:setOption( AI.Option.GROUND.id.RTB_ON_OUT_OF_AMMO, WeaponsFlag )
+    end
+
+    return self
+  end
+
+  return nil
+end
+
+
+
+
+
 --- Retrieve the controllable mission and allow to place function hooks within the mission waypoint plan.
 -- Use the method @{Controllable#CONTROLLABLE:WayPointFunction} to define the hook functions for specific waypoints.
 -- Use the method @{Controllable@CONTROLLABLE:WayPointExecute) to start the execution of the new mission plan.
@@ -2250,7 +2346,7 @@ function CONTROLLABLE:TaskFunction( WayPoint, WayPointIndex, FunctionString, Fun
     ), WayPointIndex
   )
 
-  self:T3( DCSTask )
+  self:T( DCSTask )
 
   return DCSTask
 

@@ -87,7 +87,7 @@ function MESSAGE:New( MessageText, MessageDuration, MessageCategory )
 
 	self.MessageDuration = MessageDuration or 5
 	self.MessageTime = timer.getTime()
-	self.MessageText = MessageText
+	self.MessageText = MessageText:gsub("^\n","",1):gsub("\n$","",1)
 	
 	self.MessageSent = false
 	self.MessageGroup = false

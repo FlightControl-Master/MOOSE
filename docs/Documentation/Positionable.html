@@ -17,6 +17,11 @@
 				<a href="index.html">index</a>
 			</li></ul>
 		<ul>
+					<li><a href="AI_A2A.html">AI_A2A</a></li>
+					<li><a href="AI_A2A_Cap.html">AI_A2A_Cap</a></li>
+					<li><a href="AI_A2A_Dispatcher.html">AI_A2A_Dispatcher</a></li>
+					<li><a href="AI_A2A_GCI.html">AI_A2A_GCI</a></li>
+					<li><a href="AI_A2A_Patrol.html">AI_A2A_Patrol</a></li>
 					<li><a href="AI_Bai.html">AI_Bai</a></li>
 					<li><a href="AI_Balancer.html">AI_Balancer</a></li>
 					<li><a href="AI_Cap.html">AI_Cap</a></li>
@@ -255,6 +260,12 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POSITIONABLE).GetVelocityMPS">POSITIONABLE:GetVelocityMPS()</a></td>
+		<td class="summary">
+<p>Returns the POSITIONABLE velocity in meters per second.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(POSITIONABLE).InAir">POSITIONABLE:InAir()</a></td>
 		<td class="summary">
 <p>Returns true if the POSITIONABLE is in the air.</p>
@@ -388,8 +399,19 @@
 <p>The POSITIONABLE class provides the following functions to construct a POSITIONABLE instance:</p>
 
 <ul>
-    <li><a href="Positionable.html##(POSITIONABLE).New">Positionable#POSITIONABLE.New</a>(): Create a POSITIONABLE instance.</li>
+    <li><a href="##(POSITIONABLE).New">POSITIONABLE.New</a>(): Create a POSITIONABLE instance.</li>
 </ul>
+
+<h2>Get the current speed</h2>
+
+<p>There are 3 methods that can be used to determine the speed.
+Use <a href="##(POSITIONABLE).GetVelocityKMH">POSITIONABLE.GetVelocityKMH</a>() to retrieve the current speed in km/h. Use <a href="##(POSITIONABLE).GetVelocityMPS">POSITIONABLE.GetVelocityMPS</a>() to retrieve the speed in meters per second.
+The method <a href="##(POSITIONABLE).GetVelocity">POSITIONABLE.GetVelocity</a>() returns the speed vector (a Vec3).</p>
+
+<h2>Get the current altitude</h2>
+
+<p>Altitude can be retrieved using the method <a href="##(POSITIONABLE).GetHeight">POSITIONABLE.GetHeight</a>() and returns the current altitude in meters from the orthonormal plane.</p>
+
 
 
 </dd>
@@ -932,6 +954,34 @@ The POSITIONABLE is not existing or alive.  </p>
 				
 <p><em>#number:</em>
 The velocity in km/h</p>
+
+				</li>
+				<li>
+				
+<p><em>#nil:</em>
+The POSITIONABLE is not existing or alive.  </p>
+
+				</li>
+			</ol>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(POSITIONABLE).GetVelocityMPS" >
+<strong>POSITIONABLE:GetVelocityMPS()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the POSITIONABLE velocity in meters per second.</p>
+
+		<h3>Return values</h3>
+			<ol>
+				<li>
+				
+<p><em>#number:</em>
+The velocity in meters per second.</p>
 
 				</li>
 				<li>

@@ -37,6 +37,7 @@
 -- 
 -- @module Spawn
 
+----BASE:TraceClass("SPAWN")
 
 
 --- SPAWN Class
@@ -264,6 +265,14 @@ SPAWN = {
 }
 
 
+--- Enumerator for spawns at airbases
+-- @type SPAWN.Takeoff
+-- @extends Wrapper.Group#GROUP.Takeoff
+
+--- @field #SPAWN.Takeoff Takeoff
+SPAWN.Takeoff = GROUP.Takeoff
+
+
 --- @type SPAWN.SpawnZoneTable
 -- @list <Core.Zone#ZONE_BASE> SpawnZone
 
@@ -299,6 +308,7 @@ function SPAWN:New( SpawnTemplatePrefix )
     self.SpawnUnControlled = false
     self.SpawnInitKeepUnitNames = false               -- Overwrite unit names by default with group name.
     self.DelayOnOff = false                           -- No intial delay when spawning the first group.
+    self.Grouping = nil                               -- No grouping
 
 		self.SpawnGroups = {}														-- Array containing the descriptions of each Group to be Spawned.
 	else
@@ -343,6 +353,7 @@ function SPAWN:NewWithAlias( SpawnTemplatePrefix, SpawnAliasPrefix )
     self.SpawnUnControlled = false
     self.SpawnInitKeepUnitNames = false               -- Overwrite unit names by default with group name.
     self.DelayOnOff = false                           -- No intial delay when spawning the first group.
+    self.Grouping = nil
 
 		self.SpawnGroups = {}														-- Array containing the descriptions of each Group to be Spawned.
 	else
@@ -508,6 +519,20 @@ function SPAWN:InitRandomizeTemplate( SpawnTemplatePrefixTable )
 	
 	return self
 end
+
+--- When spawning a new group, make the grouping of the units according the InitGrouping setting.
+-- @param #SPAWN self
+-- @param #number Grouping Indicates the maximum amount of units in the group. 
+-- @return #SPAWN
+function SPAWN:InitGrouping( Grouping ) -- R2.2
+  self:F( { self.SpawnTemplatePrefix, Grouping } )
+
+  self.SpawnGrouping = Grouping
+
+  return self
+end
+
+
 
 --TODO: Add example.
 --- This method provides the functionality to randomize the spawning of the Groups at a given list of zones of different types.
@@ -957,6 +982,64 @@ function SPAWN:OnSpawnGroup( SpawnCallBackFunction, ... )
   return self
 end
 
+--- Will spawn a group at an airbase. 
+-- This method is mostly advisable to be used if you want to simulate spawning units at an airbase.
+-- Note that each point in the route assigned to the spawning group is reset to the point of the spawn.
+-- You can use the returned group to further define the route to be followed.
+-- @param #SPAWN self
+-- @param Wrapper.Airbase#AIRBASE Airbase The @{Airbase} where to spawn the group.
+-- @param #SPAWN.Takeoff Takeoff (optional) The location and takeoff method. Default is Hot.
+-- @return Wrapper.Group#GROUP that was spawned.
+-- @return #nil Nothing was spawned.
+function SPAWN:SpawnAtAirbase( Airbase, Takeoff ) -- R2.2
+  self:F( { self.SpawnTemplatePrefix, Airbase } )
+
+  local PointVec3 = Airbase:GetPointVec3()
+  self:T2(PointVec3)
+
+  Takeoff = Takeoff or SPAWN.Takeoff.Hot
+  
+  if self:_GetSpawnIndex( self.SpawnIndex + 1 ) then
+    
+    local SpawnTemplate = self.SpawnGroups[self.SpawnIndex].SpawnTemplate
+  
+    if SpawnTemplate then
+
+      self:T( { "Current point of ", self.SpawnTemplatePrefix, Airbase } )
+
+      -- Translate the position of the Group Template to the Vec3.
+      for UnitID = 1, #SpawnTemplate.units do
+        self:T( 'Before Translation SpawnTemplate.units['..UnitID..'].x = ' .. SpawnTemplate.units[UnitID].x .. ', SpawnTemplate.units['..UnitID..'].y = ' .. SpawnTemplate.units[UnitID].y )
+        local UnitTemplate = SpawnTemplate.units[UnitID]
+        local SX = UnitTemplate.x
+        local SY = UnitTemplate.y 
+        local BX = SpawnTemplate.route.points[1].x
+        local BY = SpawnTemplate.route.points[1].y
+        local TX = PointVec3.x + ( SX - BX )
+        local TY = PointVec3.z + ( SY - BY )
+        SpawnTemplate.units[UnitID].x = TX
+        SpawnTemplate.units[UnitID].y = TY
+        SpawnTemplate.units[UnitID].alt = PointVec3.y
+        self:T( 'After Translation SpawnTemplate.units['..UnitID..'].x = ' .. SpawnTemplate.units[UnitID].x .. ', SpawnTemplate.units['..UnitID..'].y = ' .. SpawnTemplate.units[UnitID].y )
+      end
+      
+      SpawnTemplate.route.points[1].x = PointVec3.x
+      SpawnTemplate.route.points[1].y = PointVec3.z
+      SpawnTemplate.route.points[1].alt = Airbase.y
+      SpawnTemplate.route.points[1].type = GROUPTEMPLATE.Takeoff[Takeoff]
+      SpawnTemplate.route.points[1].airdromeId = Airbase:GetID()
+      
+      SpawnTemplate.x = PointVec3.x
+      SpawnTemplate.y = PointVec3.z
+              
+      return self:SpawnWithIndex( self.SpawnIndex )
+    end
+  end
+  
+  return nil
+end
+
+
 
 --- Will spawn a group from a Vec3 in 3D space. 
 -- This method is mostly advisable to be used if you want to simulate spawning units in the air, like helicopters or airplanes.
@@ -1111,6 +1194,19 @@ function SPAWN:InitUnControlled( UnControlled )
 	return self
 end
 
+
+--- Get the Coordinate of the Group that is Late Activated as the template for the SPAWN object.
+-- @param #SPAWN self
+-- @return Core.Point#COORDINATE The Coordinate
+function SPAWN:GetCoordinate()
+
+  local LateGroup = GROUP:FindByName( self.SpawnTemplatePrefix )
+  if LateGroup then
+    return LateGroup:GetCoordinate()
+  end
+  
+  return nil
+end
 
 
 --- Will return the SpawnGroupName either with with a specific count number or without any count.
@@ -1370,7 +1466,7 @@ end
 -- @param #string SpawnTemplatePrefix
 -- @param #number SpawnIndex
 -- @return #SPAWN self
-function SPAWN:_Prepare( SpawnTemplatePrefix, SpawnIndex )
+function SPAWN:_Prepare( SpawnTemplatePrefix, SpawnIndex ) --R2.2
 	self:F( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix } )
 	
 	local SpawnTemplate = self:_GetTemplate( SpawnTemplatePrefix )
@@ -1384,6 +1480,23 @@ function SPAWN:_Prepare( SpawnTemplatePrefix, SpawnIndex )
 	  self:T3( "For ground units, visible needs to be false..." )
 		SpawnTemplate.visible = false 
 	end
+	
+	if self.SpawnGrouping then
+	  local UnitAmount = #SpawnTemplate.units
+	  self:F( { UnitAmount = UnitAmount, SpawnGrouping = self.SpawnGrouping } )
+	  if UnitAmount > self.SpawnGrouping then
+      for UnitID = self.SpawnGrouping + 1, UnitAmount do
+        SpawnTemplate.units[UnitID] = nil
+      end
+    else
+      if UnitAmount < self.SpawnGrouping then
+        for UnitID = UnitAmount + 1, self.SpawnGrouping do
+          SpawnTemplate.units[UnitID] = UTILS.DeepCopy( SpawnTemplate.units[1] )
+          SpawnTemplate.units[UnitID].unitId = nil
+        end
+      end
+    end
+  end
 	
   if self.SpawnInitKeepUnitNames == false then
   	for UnitID = 1, #SpawnTemplate.units do

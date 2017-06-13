@@ -91,6 +91,25 @@ GROUP = {
   ClassName = "GROUP",
 }
 
+
+--- Enumerator for location at airbases
+-- @type GROUP.Takeoff
+GROUP.Takeoff = {
+  Air = 1,
+  Runway = 2,
+  Hot = 3,
+  Cold = 4,
+}
+
+GROUPTEMPLATE = {}
+
+GROUPTEMPLATE.Takeoff = {
+  [GROUP.Takeoff.Air] =     "Turning Point",
+  [GROUP.Takeoff.Runway] =  "TakeOff",
+  [GROUP.Takeoff.Hot] =     "TakeOffParkingHot",
+  [GROUP.Takeoff.Cold] =    "TakeOffParking",
+}
+
 --- Create a new GROUP from a DCSGroup
 -- @param #GROUP self
 -- @param Dcs.DCSWrapper.Group#Group GroupName The DCS Group name

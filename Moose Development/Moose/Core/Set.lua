@@ -84,11 +84,6 @@ function SET_BASE:New( Database )
   self.TimeInterval = 0.001
 
   self.Set = {}
-
-  self.List = {}
-  self.List.__index = self.List
-  self.List = setmetatable( { Count = 0 }, self.List )
-  
   self.Index = {}
   
   self.CallScheduler = SCHEDULER:New( self )
@@ -126,24 +121,8 @@ end
 function SET_BASE:Add( ObjectName, Object )
   self:F( ObjectName )
 
-  local t = { _ = Object }
-
-  if self.List.last then
-    self.List.last._next = t
-    t._prev = self.List.last
-    self.List.last = t
-  else
-    -- this is the first node
-    self.List.first = t
-    self.List.last = t
-  end
-  
-  self.List.Count = self.List.Count + 1
-  
   self.Set[ObjectName] = Object
-  
   table.insert( self.Index, ObjectName )
-  
 end
 
 --- Adds a @{Base#BASE} object in the @{Set#SET_BASE}, using the Object Name as the index.
@@ -166,42 +145,18 @@ end
 -- @param #string ObjectName
 function SET_BASE:Remove( ObjectName )
 
-  local t = self.Set[ObjectName]
+  local Object = self.Set[ObjectName]
   
-  self:F3( { ObjectName, t } )
+  self:F3( { ObjectName, Object } )
 
-  if t then  
-    if t._next then
-      if t._prev then
-        t._next._prev = t._prev
-        t._prev._next = t._next
-      else
-        -- this was the first node
-        t._next._prev = nil
-        self.List._first = t._next
-      end
-    elseif t._prev then
-      -- this was the last node
-      t._prev._next = nil
-      self.List._last = t._prev
-    else
-      -- this was the only node
-      self.List._first = nil
-      self.List._last = nil
-    end
-  
-    t._next = nil
-    t._prev = nil
-    self.List.Count = self.List.Count - 1
-    
+  if Object then  
     for Index, Key in ipairs( self.Index ) do
       if Key == ObjectName then
         table.remove( self.Index, Index )
+        self.Set[ObjectName] = nil
         break
       end
     end
-    
-    self.Set[ObjectName] = nil
     
   end
   
@@ -214,19 +169,16 @@ end
 function SET_BASE:Get( ObjectName )
   self:F( ObjectName )
 
-  local t = self.Set[ObjectName]
+  local Object = self.Set[ObjectName]
   
-  self:T3( { ObjectName, t } )
-  
-  return t
-  
+  self:T3( { ObjectName, Object } )
+  return Object
 end
 
 --- Gets the first object from the @{Set#SET_BASE} and derived classes.
 -- @param #SET_BASE self
 -- @return Core.Base#BASE
 function SET_BASE:GetFirst()
-  self:F()
 
   local ObjectName = self.Index[1]
   local FirstObject = self.Set[ObjectName]
@@ -238,7 +190,6 @@ end
 -- @param #SET_BASE self
 -- @return Core.Base#BASE
 function SET_BASE:GetLast()
-  self:F()
 
   local ObjectName = self.Index[#self.Index]
   local LastObject = self.Set[ObjectName]
@@ -250,12 +201,9 @@ end
 -- @param #SET_BASE self
 -- @return Core.Base#BASE
 function SET_BASE:GetRandom()
-  self:F()
 
   local RandomItem = self.Set[self.Index[math.random(#self.Index)]]
-
   self:T3( { RandomItem } )
-
   return RandomItem
 end
 
@@ -265,7 +213,7 @@ end
 -- @return #number Count
 function SET_BASE:Count()
 
-  return #self.Index or 0
+  return self.Index and #self.Index or 0
 end
 
 
@@ -601,6 +549,20 @@ function SET_BASE:IsIncludeObject( Object )
   self:F3( Object )
   
   return true
+end
+
+--- Gets a string with all the object names.
+-- @param #SET_BASE self
+-- @return #string A string with the names of the objects.
+function SET_BASE:GetObjectNames()
+  self:F3()
+
+  local ObjectNames = ""
+  for ObjectName, Object in pairs( self.Set ) do
+    ObjectNames = ObjectNames .. ObjectName .. ", "
+  end
+  
+  return ObjectNames
 end
 
 --- Flushes the current SET_BASE contents in the log ... (for debugging reasons).

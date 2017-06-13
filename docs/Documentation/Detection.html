@@ -17,6 +17,11 @@
 				<a href="index.html">index</a>
 			</li></ul>
 		<ul>
+					<li><a href="AI_A2A.html">AI_A2A</a></li>
+					<li><a href="AI_A2A_Cap.html">AI_A2A_Cap</a></li>
+					<li><a href="AI_A2A_Dispatcher.html">AI_A2A_Dispatcher</a></li>
+					<li><a href="AI_A2A_GCI.html">AI_A2A_GCI</a></li>
+					<li><a href="AI_A2A_Patrol.html">AI_A2A_Patrol</a></li>
 					<li><a href="AI_Bai.html">AI_Bai</a></li>
 					<li><a href="AI_Balancer.html">AI_Balancer</a></li>
 					<li><a href="AI_Cap.html">AI_Cap</a></li>
@@ -530,6 +535,12 @@ The different values of Unit.Category can be:</p>
 </ul>
 
 <p>Multiple Unit.Category entries can be given as a table and then these will be evaluated as an OR expression.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).ForgetDetectedUnit">DETECTION_BASE:ForgetDetectedUnit(UnitName)</a></td>
+		<td class="summary">
+<p>Forget a Unit from a DetectionItem</p>
 </td>
 		</tr>
 		<tr>
@@ -2389,7 +2400,6 @@ The index of the DetectedItem.</p>
 		<dl class="function">
 <dt>
 
-		<em>#number</em>
 <a id="#(DETECTION_BASE).DetectedItemMax" >
 <strong>DETECTION_BASE.DetectedItemMax</strong>
 </a>
@@ -2547,7 +2557,7 @@ The index of the DetectedItem.</p>
 		<dl class="function">
 <dt>
 
-		<em></em>
+		<em>#number</em>
 <a id="#(DETECTION_BASE).DetectionInterval" >
 <strong>DETECTION_BASE.DetectionInterval</strong>
 </a>
@@ -2681,6 +2691,33 @@ cs.DCSUnit#Unit> FilterCategories The Categories entries</p>
 				
 <p><em><a href="##(DETECTION_BASE)">#DETECTION_BASE</a>:</em>
 self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_BASE).ForgetDetectedUnit" >
+<strong>DETECTION_BASE:ForgetDetectedUnit(UnitName)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Forget a Unit from a DetectionItem</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string UnitName </em></code>: 
+The UnitName that needs to be forgotten from the DetectionItem Sets.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(DETECTION_BASE)">#DETECTION_BASE</a>:</em></p>
+
 
 </dd>
 </dl>

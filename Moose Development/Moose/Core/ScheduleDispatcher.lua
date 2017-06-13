@@ -62,7 +62,7 @@ function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleAr
 
   -- Initialize the ObjectSchedulers array, which is a weakly coupled table.
   -- If the object used as the key is nil, then the garbage collector will remove the item from the Functions array.
-  self.ObjectSchedulers = self.ObjectSchedulers or setmetatable( {}, { __mode = "v" } ) -- or {}
+  self.ObjectSchedulers = self.ObjectSchedulers or setmetatable( {}, { __mode = "v" } ) 
   
   if Scheduler.MasterObject then
     self.ObjectSchedulers[self.CallID] = Scheduler
@@ -101,13 +101,13 @@ function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleAr
       Scheduler = self.PersistentSchedulers[CallID]
     end
 
-    self:T3( { Scheduler = Scheduler } )
+    --self:T3( { Scheduler = Scheduler } )
     
     if Scheduler then
 
       local Schedule = self.Schedule[Scheduler][CallID]
       
-      self:T3( { Schedule = Schedule } )
+      --self:T3( { Schedule = Schedule } )
 
       local ScheduleObject = Scheduler.SchedulerObject
       --local ScheduleObjectName = Scheduler.SchedulerObject:GetNameAndClassID()
@@ -145,7 +145,7 @@ function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleAr
               ( Randomize * Repeat  / 2 )
             ) +
             0.01
-          self:T3( { Repeat = CallID, CurrentTime, ScheduleTime, ScheduleArguments } )
+          --self:T3( { Repeat = CallID, CurrentTime, ScheduleTime, ScheduleArguments } )
           return ScheduleTime -- returns the next time the function needs to be called.
         else
           self:Stop( Scheduler, CallID )
@@ -154,7 +154,7 @@ function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleAr
         self:Stop( Scheduler, CallID )
       end
     else
-      self:E( "Scheduled obscolete call for CallID: " .. CallID )
+      self:E( "Scheduled obsolete call for CallID: " .. CallID )
     end
     
     return nil

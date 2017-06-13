@@ -38,6 +38,7 @@
 -- 
 -- @module AI_Patrol
 
+
 --- AI_PATROL_ZONE class
 -- @type AI_PATROL_ZONE
 -- @field Wrapper.Controllable#CONTROLLABLE AIControllable The @{Controllable} patrolling.

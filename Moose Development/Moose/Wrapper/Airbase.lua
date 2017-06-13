@@ -47,7 +47,7 @@
 -- the first letter of the method is also capitalized. So, by example, the DCS Airbase method @{DCSWrapper.Airbase#Airbase.getName}()
 -- is implemented in the AIRBASE class as @{#AIRBASE.GetName}().
 -- 
--- @field #AIRBASE
+-- @field #AIRBASE AIRBASE
 AIRBASE = {
   ClassName="AIRBASE",
   CategoryName = { 
@@ -55,6 +55,31 @@ AIRBASE = {
     [Airbase.Category.HELIPAD]    = "Helipad",
     [Airbase.Category.SHIP]       = "Ship",
     },
+  }
+
+--- @field Caucasus
+AIRBASE.Caucasus = {
+  ["Gelendzhik"] = "Gelendzhik",
+  ["Krasnodar_Pashkovsky"] = "Krasnodar-Pashkovsky",
+  ["Sukhumi_Babushara"] = "Sukhumi-Babushara",
+  ["Gudauta"] = "Gudauta",
+  ["Batumi"] = "Batumi",
+  ["Senaki_Kolkhi"] = "Senaki-Kolkhi",
+  ["Kobuleti"] = "Kobuleti",
+  ["Kutaisi"] = "Kutaisi",
+  ["Tbilisi_Lochini"] = "Tbilisi-Lochini",
+  ["Soganlug"] = "Soganlug",
+  ["Vaziani"] = "Vaziani",
+  ["Anapa_Vityazevo"] = "Anapa-Vityazevo",
+  ["Krasnodar_Center"] = "Krasnodar-Center",
+  ["Novorossiysk"] = "Novorossiysk",
+  ["Krymsk"] = "Krymsk",
+  ["Maykop_Khanskaya"] = "Maykop-Khanskaya",
+  ["Sochi_Adler"] = "Sochi-Adler",
+  ["Mineralnye_Vody"] = "Mineralnye Vody",
+  ["Nalchik"] = "Nalchik",
+  ["Mozdok"] = "Mozdok",
+  ["Beslan"] = "Beslan",
   }
 
 -- Registration.

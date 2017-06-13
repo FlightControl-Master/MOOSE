@@ -37,6 +37,10 @@
 -- 
 -- @module Detection
 
+----BASE:TraceClass("DETECTION_BASE")
+----BASE:TraceClass("DETECTION_AREAS")
+----BASE:TraceClass("DETECTION_UNITS")
+----BASE:TraceClass("DETECTION_TYPES")
 
 do -- DETECTION_BASE
 
@@ -607,7 +611,7 @@ do -- DETECTION_BASE
             if self.AcceptZones then
               for AcceptZoneID, AcceptZone in pairs( self.AcceptZones ) do
                 local AcceptZone = AcceptZone -- Core.Zone#ZONE_BASE
-                if AcceptZone:IsPointVec2InZone( DetectedObjectVec2 ) == false then
+                if AcceptZone:IsVec2InZone( DetectedObjectVec2 ) == false then
                   DetectionAccepted = false
                 end
               end
@@ -751,6 +755,25 @@ do -- DETECTION_BASE
       
       if DetectedSet:Count() == 0 then
         self:RemoveDetectedItem( DetectedItemID )
+      end
+
+      return self
+    end
+    
+    --- Forget a Unit from a DetectionItem
+    -- @param #DETECTION_BASE self
+    -- @param #string UnitName The UnitName that needs to be forgotten from the DetectionItem Sets.
+    -- @return #DETECTION_BASE
+    function DETECTION_BASE:ForgetDetectedUnit( UnitName )
+      self:F2()
+    
+      local DetectedItems = self:GetDetectedItems()
+      
+      for DetectedItemIndex, DetectedItem in pairs( DetectedItems ) do
+        local DetectedSet = self:GetDetectedSet( DetectedItemIndex )
+        if DetectedSet then
+          DetectedSet:RemoveUnitsByName( UnitName )
+        end
       end
 
       return self
@@ -1144,6 +1167,7 @@ do -- DETECTION_BASE
           local DetectedItem = ReportGroupData.DetectedItem  -- Functional.Detection#DETECTION_BASE.DetectedItem    
           local DetectedSet = ReportGroupData.DetectedItem.Set
           local DetectedUnit = DetectedSet:GetFirst() -- Wrapper.Unit#UNIT
+          local CenterCoord = DetectedUnit:GetCoordinate()
           local ReportSetGroup = ReportGroupData.ReportSetGroup
     
           local EnemyCoalition = DetectedUnit:GetCoalition()
@@ -1154,12 +1178,14 @@ do -- DETECTION_BASE
           local EnemyUnitName = DetectedUnit:GetName()
           local FoundUnitInReportSetGroup = ReportSetGroup:FindGroup( FoundUnitGroupName ) ~= nil
           
-          self:T3( { "Friendlies search:", FoundUnitName, FoundUnitCoalition, EnemyUnitName, EnemyCoalition, FoundUnitInReportSetGroup } )
+          self:F( { "Friendlies search:", FoundUnitName, FoundUnitCoalition, EnemyUnitName, EnemyCoalition, FoundUnitInReportSetGroup } )
           
           if FoundUnitCoalition ~= EnemyCoalition and FoundUnitInReportSetGroup == false then
             DetectedItem.FriendliesNearBy = DetectedItem.FriendliesNearBy or {}
-            DetectedItem.FriendliesNearBy[FoundUnitName] = UNIT:Find( FoundDCSUnit )
-            return false
+            local FriendlyUnit = UNIT:Find( FoundDCSUnit )
+            local Distance = CenterCoord:Get2DDistance( FriendlyUnit:GetCoordinate() )
+            DetectedItem.FriendliesNearBy[Distance] = FriendlyUnit
+            return true
           end
           
           return true

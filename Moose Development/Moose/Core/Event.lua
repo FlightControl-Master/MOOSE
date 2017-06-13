@@ -983,7 +983,7 @@ function EVENT:onEvent( Event )
                   
                   -- There is an EventFunction defined, so call the EventFunction.
                   if Event.IniObjectCategory ~= 3 then
-                    self:E( { "Calling EventFunction for Class ", EventClass:GetClassNameAndID(), EventPriority } )
+                    self:F2( { "Calling EventFunction for Class ", EventClass:GetClassNameAndID(), EventPriority } )
                   end                
                   local Result, Value = xpcall( 
                     function() 
@@ -997,7 +997,7 @@ function EVENT:onEvent( Event )
                     
                     -- Now call the default event function.
                     if Event.IniObjectCategory ~= 3 then
-                      self:E( { "Calling " .. EventMeta.Event .. " for Class ", EventClass:GetClassNameAndID(), EventPriority } )
+                      self:F2( { "Calling " .. EventMeta.Event .. " for Class ", EventClass:GetClassNameAndID(), EventPriority } )
                     end
                                   
                     local Result, Value = xpcall( 
