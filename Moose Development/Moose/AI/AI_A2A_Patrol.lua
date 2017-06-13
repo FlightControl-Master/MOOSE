@@ -315,7 +315,7 @@ end
 --- @param Wrapper.Group#GROUP AIGroup
 -- This statis method is called from the route path within the last task at the last waaypoint of the Controllable.
 -- Note that this method is required, as triggers the next route when patrolling for the Controllable.
-function AI_A2A_PATROL:PatrolRoute( AIGroup )
+function AI_A2A_PATROL.PatrolRoute( AIGroup )
 
   local _AI_A2A_Patrol = AIGroup:GetState( AIGroup, "AI_A2A_PATROL" ) -- #AI_A2A_PATROL
   _AI_A2A_Patrol:Route()

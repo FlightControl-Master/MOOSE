@@ -475,6 +475,10 @@ do -- AI_A2A_DISPATCHER
     end
     if Defender and DefenderTask and DefenderTask.Target then
       DefenderTask.Target = nil
+      if DefenderTask.Fsm:Is("Engaging") then
+        DefenderTask.Fsm:Return()
+        DefenderTask.Fsm:__RTB( 0.5 )
+      end
     end
 --    if Defender and DefenderTask then
 --      if DefenderTask.Fsm:Is( "Fuel" ) 
@@ -1012,24 +1016,7 @@ do -- AI_A2A_DISPATCHER
     return self
   end
   
-  --- Sets flights to take-off from the airbase at a cold location, as part of the defense system.
-  -- @param #AI_A2A_DISPATCHER self
-  -- @param #string SquadronName The name of the squadron.
-  -- @usage:
-  -- 
-  --   local Dispatcher = AI_A2A_DISPATCHER:New( ... )
-  --   
-  --   -- Let new flights take-off in the air.
-  --   Dispatcher:SetSquadronLandingFromAirbaseCold( "SquadronName" )
-  --   
-  -- @return #AI_A2A_DISPATCHER
-  function AI_A2A_DISPATCHER:SetSquadronLandingFromAirbaseCold( SquadronName )
 
-    self:SetSquadronLanding( SquadronName, AI_A2A_DISPATCHER.Landing.FromAirbaseCold )
-    
-    return self
-  end
-  
   --- @param #AI_A2A_DISPATCHER self
   function AI_A2A_DISPATCHER:AddDefenderToSquadron( Squadron, Defender )
     self.Defenders = self.Defenders or {}
@@ -1229,6 +1216,21 @@ do -- AI_A2A_DISPATCHER
           local AIGroup = self:GetControllable()
           Dispatcher:ClearDefenderTaskTarget( AIGroup )
         end
+
+        --- @param #AI_A2A_DISPATCHER self
+        function Fsm:onafterHome( Defender, From, Event, To )
+          self:F({"CAP Home"})
+          self:GetParent(self).onafterHome( self, Defender, From, Event, To )
+          
+          local Dispatcher = self:GetDispatcher() -- #AI_A2A_DISPATCHER
+          local AIGroup = self:GetControllable()
+          local Squadron = Dispatcher:GetSquadronFromDefender( AIGroup )
+          if Dispatcher:GetSquadronLanding( Squadron.Name ) == AI_A2A_DISPATCHER.Landing.NearAirbase then
+            Dispatcher:RemoveDefenderFromSquadron( Squadron, AIGroup )
+            AIGroup:Destroy()
+          end
+        end
+
       end
     end
   end
@@ -1328,10 +1330,10 @@ do -- AI_A2A_DISPATCHER
                 
                 local Dispatcher = self:GetDispatcher() -- #AI_A2A_DISPATCHER
                 local AIGroup = self:GetControllable()
-                local Squadron = self:GetSquadronFromDefender( Defender )
-                if self:GetSquadronLanding( Squadron.Name ) == AI_A2A_DISPATCHER.Landing.NearAirbase then
-                  Dispatcher:RemoveDefenderFromSquadron( Squadron, Defender )
-                  Defender:Destroy()
+                local Squadron = Dispatcher:GetSquadronFromDefender( AIGroup )
+                if Dispatcher:GetSquadronLanding( Squadron.Name ) == AI_A2A_DISPATCHER.Landing.NearAirbase then
+                  Dispatcher:RemoveDefenderFromSquadron( Squadron, AIGroup )
+                  AIGroup:Destroy()
                 end
               end
             end
@@ -1420,6 +1422,7 @@ do -- AI_A2A_DISPATCHER
           if not Target then
             self:F( { "Removing obsolete Target:", DefenderTask.Target.Index } )
             self:ClearDefenderTaskTarget( AIGroup )
+            
           else
             if DefenderTask.Target.Set then
               if DefenderTask.Target.Set:Count() == 0 then
