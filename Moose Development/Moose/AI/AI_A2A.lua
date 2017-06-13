@@ -12,7 +12,7 @@
 -- 
 -- @module AI_A2A
 
-BASE:TraceClass("AI_A2A")
+--BASE:TraceClass("AI_A2A")
 
 
 --- @type AI_A2A
@@ -437,13 +437,15 @@ end
 function AI_A2A:onafterRTB( AIGroup, From, Event, To )
   self:F( { AIGroup, From, Event, To } )
 
-  self:E( "Group " .. self.Controllable:GetName() .. " ... Returning! ( " .. self:GetState() .. " )" )
+  self:E( "Group " .. self.Controllable:GetName() .. " ... RTB! ( " .. self:GetState() .. " )" )
   
   if AIGroup and AIGroup:IsAlive() then
 
     self.CheckStatus = false
     
     self:ClearTargetDistance()
+    AIGroup:ClearTasks()
+    AIGroup:ClearTasks()
 
     local EngageRoute = {}
 
@@ -488,7 +490,7 @@ function AI_A2A:onafterRTB( AIGroup, From, Event, To )
     AIGroup:SetState( AIGroup, "AI_A2A", self )
 
     --- NOW ROUTE THE GROUP!
-    AIGroup:WayPointExecute( 1, 2 )
+    AIGroup:WayPointExecute( 1, 0 )
       
   end
     

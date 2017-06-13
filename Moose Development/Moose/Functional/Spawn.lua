@@ -37,7 +37,7 @@
 -- 
 -- @module Spawn
 
---BASE:TraceClass("SPAWN")
+----BASE:TraceClass("SPAWN")
 
 
 --- SPAWN Class

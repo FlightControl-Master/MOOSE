@@ -17,6 +17,11 @@
 				<a href="index.html">index</a>
 			</li></ul>
 		<ul>
+					<li><a href="AI_A2A.html">AI_A2A</a></li>
+					<li><a href="AI_A2A_Cap.html">AI_A2A_Cap</a></li>
+					<li><a href="AI_A2A_Dispatcher.html">AI_A2A_Dispatcher</a></li>
+					<li><a href="AI_A2A_GCI.html">AI_A2A_GCI</a></li>
+					<li><a href="AI_A2A_Patrol.html">AI_A2A_Patrol</a></li>
 					<li><a href="AI_Bai.html">AI_Bai</a></li>
 					<li><a href="AI_Balancer.html">AI_Balancer</a></li>
 					<li><a href="AI_Cap.html">AI_Cap</a></li>
@@ -239,6 +244,12 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).GetLife0">CONTROLLABLE:GetLife0()</a></td>
+		<td class="summary">
+<p>Returns the initial health.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).GetTaskMission">CONTROLLABLE:GetTaskMission()</a></td>
 		<td class="summary">
 <p>Return the mission template of the controllable.</p>
@@ -260,6 +271,12 @@
 		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).GetWayPoints">CONTROLLABLE:GetWayPoints()</a></td>
 		<td class="summary">
 <p>Get the current WayPoints set with the WayPoint functions( Note that the WayPoints can be nil, although there ARE waypoints).</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).HasTask">CONTROLLABLE:HasTask()</a></td>
+		<td class="summary">
+<p>Checking the Task Queue of the controllable.</p>
 </td>
 		</tr>
 		<tr>
@@ -374,6 +391,18 @@
 		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).OptionROTVerticalPossible">CONTROLLABLE:OptionROTVerticalPossible()</a></td>
 		<td class="summary">
 <p>Can the CONTROLLABLE evade on fire using vertical manoeuvres?</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).OptionRTBAmmo">CONTROLLABLE:OptionRTBAmmo(WeaponsFlag)</a></td>
+		<td class="summary">
+<p>Set RTB on ammo.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).OptionRTBBingoFuel">CONTROLLABLE:OptionRTBBingoFuel(RTB)</a></td>
+		<td class="summary">
+<p>Set RTB on bingo fuel.</p>
 </td>
 		</tr>
 		<tr>
@@ -563,9 +592,21 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).TaskRouteToVec2">CONTROLLABLE:TaskRouteToVec2(Vec2, Speed, Formation)</a></td>
+		<td class="summary">
+<p>(GROUND) Route the controllable to a given Vec2.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).TaskRouteToZone">CONTROLLABLE:TaskRouteToZone(Zone, Randomize, Speed, Formation)</a></td>
 		<td class="summary">
 <p>(AIR + GROUND) Route the controllable to a given zone.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).TaskScheduler">CONTROLLABLE.TaskScheduler</a></td>
+		<td class="summary">
+
 </td>
 		</tr>
 		<tr>
@@ -602,6 +643,22 @@
 		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE)._GetController">CONTROLLABLE:_GetController()</a></td>
 		<td class="summary">
 <p>Get the controller for the CONTROLLABLE.</p>
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(Vec2)">Type <code>Vec2</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Vec2).x">Vec2.x</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Vec2).y">Vec2.y</a></td>
+		<td class="summary">
+
 </td>
 		</tr>
 	</table>
@@ -1446,6 +1503,34 @@ The controllable is not existing or alive.  </p>
 		<dl class="function">
 <dt>
 
+<a id="#(CONTROLLABLE).GetLife0" >
+<strong>CONTROLLABLE:GetLife0()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the initial health.</p>
+
+		<h3>Return values</h3>
+			<ol>
+				<li>
+				
+<p><em>#number:</em>
+The controllable health value (unit or group average).</p>
+
+				</li>
+				<li>
+				
+<p><em>#nil:</em>
+The controllable is not existing or alive.  </p>
+
+				</li>
+			</ol>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(CONTROLLABLE).GetTaskMission" >
 <strong>CONTROLLABLE:GetTaskMission()</strong>
 </a>
@@ -1513,6 +1598,27 @@ Wrapper.Unit#UNIT> The UNITs wrappers.</p>
 				
 <p><em>#table:</em>
 WayPoints If WayPoints is given, then return the WayPoints structure.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CONTROLLABLE).HasTask" >
+<strong>CONTROLLABLE:HasTask()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Checking the Task Queue of the controllable.</p>
+
+	
+<p>Returns false if no task is on the queue. true if there is a task.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a>:</em>
+self</p>
 
 </dd>
 </dl>
@@ -1897,6 +2003,61 @@ self</p>
 				
 <p><em>#boolean:</em></p>
 
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CONTROLLABLE).OptionRTBAmmo" >
+<strong>CONTROLLABLE:OptionRTBAmmo(WeaponsFlag)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set RTB on ammo.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#boolean WeaponsFlag </em></code>: 
+Weapons.flag enumerator.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(CONTROLLABLE)">#CONTROLLABLE</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CONTROLLABLE).OptionRTBBingoFuel" >
+<strong>CONTROLLABLE:OptionRTBBingoFuel(RTB)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set RTB on bingo fuel.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#boolean RTB </em></code>: 
+true if RTB on bingo fuel (default), false if no RTB on bingo fuel.
+Warning! When you switch this option off, the airborne group will continue to fly until all fuel has been consumed, and will crash.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(CONTROLLABLE)">#CONTROLLABLE</a>:</em>
+self</p>
 
 </dd>
 </dl>
@@ -3092,6 +3253,44 @@ A table of route points.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(CONTROLLABLE).TaskRouteToVec2" >
+<strong>CONTROLLABLE:TaskRouteToVec2(Vec2, Speed, Formation)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>(GROUND) Route the controllable to a given Vec2.</p>
+
+	
+<p>A speed can be given in km/h.
+A given formation can be given.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="##(Vec2)">#Vec2</a> Vec2 </em></code>: 
+The Vec2 where to route to.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Speed </em></code>: 
+The speed.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Base.html##(FORMATION)">Base#FORMATION</a> Formation </em></code>: 
+The formation string.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(CONTROLLABLE).TaskRouteToZone" >
 <strong>CONTROLLABLE:TaskRouteToZone(Zone, Randomize, Speed, Formation)</strong>
 </a>
@@ -3132,6 +3331,20 @@ The formation string.</p>
 
 				</li>
 		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(CONTROLLABLE).TaskScheduler" >
+<strong>CONTROLLABLE.TaskScheduler</strong>
+</a>
+</dt>
+<dd>
+	
+
+
 </dd>
 </dl>
 		<dl class="function">
@@ -3315,6 +3528,37 @@ If WayPoints is given, then use the route.</p>
 			
 			<h2><a id="#(DCSStopCondition)" >Type <code>DCSStopCondition</code></a></h2>
 			
+			<h2><a id="#(Vec2)" >Type <code>Vec2</code></a></h2>
+				<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(Vec2).x" >
+<strong>Vec2.x</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(Vec2).y" >
+<strong>Vec2.y</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+
 			<h2><a id="#(list)" >Type <code>list</code></a></h2>
 			
 </div>

@@ -17,6 +17,11 @@
 				<a href="index.html">index</a>
 			</li></ul>
 		<ul>
+					<li><a href="AI_A2A.html">AI_A2A</a></li>
+					<li><a href="AI_A2A_Cap.html">AI_A2A_Cap</a></li>
+					<li><a href="AI_A2A_Dispatcher.html">AI_A2A_Dispatcher</a></li>
+					<li><a href="AI_A2A_GCI.html">AI_A2A_GCI</a></li>
+					<li><a href="AI_A2A_Patrol.html">AI_A2A_Patrol</a></li>
 					<li><a href="AI_Bai.html">AI_Bai</a></li>
 					<li><a href="AI_Balancer.html">AI_Balancer</a></li>
 					<li><a href="AI_Cap.html">AI_Cap</a></li>
@@ -182,6 +187,30 @@ If an ad-hoc report is requested, use the method <a href="DetectionManager.html#
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_MANAGER).OnAfterStart">DETECTION_MANAGER:OnAfterStart(From, Event, To)</a></td>
+		<td class="summary">
+<p>Start Handler OnAfter for DETECTION_MANAGER</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_MANAGER).OnAfterStop">DETECTION_MANAGER:OnAfterStop(From, Event, To)</a></td>
+		<td class="summary">
+<p>Stop Handler OnAfter for DETECTION_MANAGER</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_MANAGER).OnBeforeStart">DETECTION_MANAGER:OnBeforeStart(From, Event, To)</a></td>
+		<td class="summary">
+<p>Start Handler OnBefore for DETECTION_MANAGER</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_MANAGER).OnBeforeStop">DETECTION_MANAGER:OnBeforeStop(From, Event, To)</a></td>
+		<td class="summary">
+<p>Stop Handler OnBefore for DETECTION_MANAGER</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DETECTION_MANAGER).ProcessDetected">DETECTION_MANAGER:ProcessDetected(Detection)</a></td>
 		<td class="summary">
 <p>Reports the detected items to the <a href="Set.html##(SET_GROUP)">Set#SET_GROUP</a>.</p>
@@ -206,6 +235,18 @@ If an ad-hoc report is requested, use the method <a href="DetectionManager.html#
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_MANAGER).Start">DETECTION_MANAGER:Start()</a></td>
+		<td class="summary">
+<p>Start Trigger for DETECTION_MANAGER</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_MANAGER).Stop">DETECTION_MANAGER:Stop()</a></td>
+		<td class="summary">
+<p>Stop Trigger for DETECTION_MANAGER</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DETECTION_MANAGER)._ReportDisplayTime">DETECTION_MANAGER._ReportDisplayTime</a></td>
 		<td class="summary">
 
@@ -215,6 +256,18 @@ If an ad-hoc report is requested, use the method <a href="DetectionManager.html#
 		<td class="name" nowrap="nowrap"><a href="##(DETECTION_MANAGER)._ReportInterval">DETECTION_MANAGER._ReportInterval</a></td>
 		<td class="summary">
 
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_MANAGER).__Start">DETECTION_MANAGER:__Start(Delay)</a></td>
+		<td class="summary">
+<p>Start Asynchronous Trigger for DETECTION_MANAGER</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_MANAGER).__Stop">DETECTION_MANAGER:__Stop(Delay)</a></td>
+		<td class="summary">
+<p>Stop Asynchronous Trigger for DETECTION_MANAGER</p>
 </td>
 		</tr>
 		<tr>
@@ -387,6 +440,140 @@ self</p>
 		<dl class="function">
 <dt>
 
+<a id="#(DETECTION_MANAGER).OnAfterStart" >
+<strong>DETECTION_MANAGER:OnAfterStart(From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Start Handler OnAfter for DETECTION_MANAGER</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_MANAGER).OnAfterStop" >
+<strong>DETECTION_MANAGER:OnAfterStop(From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Stop Handler OnAfter for DETECTION_MANAGER</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_MANAGER).OnBeforeStart" >
+<strong>DETECTION_MANAGER:OnBeforeStart(From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Start Handler OnBefore for DETECTION_MANAGER</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_MANAGER).OnBeforeStop" >
+<strong>DETECTION_MANAGER:OnBeforeStop(From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Stop Handler OnBefore for DETECTION_MANAGER</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(DETECTION_MANAGER).ProcessDetected" >
 <strong>DETECTION_MANAGER:ProcessDetected(Detection)</strong>
 </a>
@@ -481,6 +668,32 @@ self</p>
 		<dl class="function">
 <dt>
 
+<a id="#(DETECTION_MANAGER).Start" >
+<strong>DETECTION_MANAGER:Start()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Start Trigger for DETECTION_MANAGER</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_MANAGER).Stop" >
+<strong>DETECTION_MANAGER:Stop()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Stop Trigger for DETECTION_MANAGER</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 		<em></em>
 <a id="#(DETECTION_MANAGER)._ReportDisplayTime" >
 <strong>DETECTION_MANAGER._ReportDisplayTime</strong>
@@ -504,6 +717,48 @@ self</p>
 	
 
 
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_MANAGER).__Start" >
+<strong>DETECTION_MANAGER:__Start(Delay)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Start Asynchronous Trigger for DETECTION_MANAGER</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number Delay </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_MANAGER).__Stop" >
+<strong>DETECTION_MANAGER:__Stop(Delay)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Stop Asynchronous Trigger for DETECTION_MANAGER</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number Delay </em></code>: </p>
+
+				</li>
+		</ul>
 </dd>
 </dl>
 		<dl class="function">

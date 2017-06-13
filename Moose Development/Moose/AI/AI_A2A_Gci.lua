@@ -408,6 +408,7 @@ function AI_A2A_GCI:onafterEngage( AIGroup, From, Event, To, AttackSetUnit )
         self:__RTB( 0.5 )
       else
         AttackTasks[#AttackTasks+1] = AIGroup:TaskFunction( 1, #AttackTasks, "AI_A2A_GCI.InterceptRoute" )
+        AttackTasks[#AttackTasks+1] = AIGroup:TaskOrbitCircle( 4000, self.EngageMinSpeed )
         EngageRoute[1].task = AIGroup:TaskCombo( AttackTasks )
         
         --- Do a trick, link the NewEngageRoute function of the object to the AIControllable in a temporary variable ...
@@ -415,7 +416,7 @@ function AI_A2A_GCI:onafterEngage( AIGroup, From, Event, To, AttackSetUnit )
       end
       
       --- NOW ROUTE THE GROUP!
-      AIGroup:WayPointExecute( 1, 2 )
+      AIGroup:WayPointExecute( 1, 0 )
     
     end
   else

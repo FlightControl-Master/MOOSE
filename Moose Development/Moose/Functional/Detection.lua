@@ -37,10 +37,10 @@
 -- 
 -- @module Detection
 
---BASE:TraceClass("DETECTION_BASE")
---BASE:TraceClass("DETECTION_AREAS")
---BASE:TraceClass("DETECTION_UNITS")
---BASE:TraceClass("DETECTION_TYPES")
+----BASE:TraceClass("DETECTION_BASE")
+----BASE:TraceClass("DETECTION_AREAS")
+----BASE:TraceClass("DETECTION_UNITS")
+----BASE:TraceClass("DETECTION_TYPES")
 
 do -- DETECTION_BASE
 

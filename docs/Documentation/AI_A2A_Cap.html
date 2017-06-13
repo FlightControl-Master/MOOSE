@@ -18,13 +18,13 @@
 			</li></ul>
 		<ul>
 					<li><a href="AI_A2A.html">AI_A2A</a></li>
-					<li><a href="AI_A2A_Cap.html">AI_A2A_Cap</a></li>
+					<li>AI_A2A_Cap</li>
 					<li><a href="AI_A2A_Dispatcher.html">AI_A2A_Dispatcher</a></li>
 					<li><a href="AI_A2A_GCI.html">AI_A2A_GCI</a></li>
 					<li><a href="AI_A2A_Patrol.html">AI_A2A_Patrol</a></li>
 					<li><a href="AI_Bai.html">AI_Bai</a></li>
 					<li><a href="AI_Balancer.html">AI_Balancer</a></li>
-					<li>AI_Cap</li>
+					<li><a href="AI_Cap.html">AI_Cap</a></li>
 					<li><a href="AI_Cas.html">AI_Cas</a></li>
 					<li><a href="AI_Formation.html">AI_Formation</a></li>
 					<li><a href="AI_Patrol.html">AI_Patrol</a></li>
@@ -103,7 +103,7 @@
 		</ul>
 	</div>
 	<div id="content">
-   <h1>Module <code>AI_Cap</code></h1>
+   <h1>Module <code>AI_A2A_Cap</code></h1>
    
 <p><strong>AI</strong> -- <strong>Execute Combat Air Patrol (CAP).</strong></p>
 
@@ -118,24 +118,8 @@
 <p>There are the following types of CAP classes defined:</p>
 
 <ul>
-    <li><a href="##(AI_CAP_ZONE)">#AI<em>CAP</em>ZONE</a>: Perform a CAP in a zone.</li>
+    <li><a href="##(AI_A2A_CAP)">#AI<em>A2A</em>CAP</a>: Perform a CAP in a zone.</li>
 </ul>
-
-<hr/>
-
-<h1>Demo Missions</h1>
-
-<h3><a href="https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master-release/CAP%20-%20Combat%20Air%20Patrol">AI_CAP Demo Missions source code</a></h3>
-
-<h3><a href="https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/CAP%20-%20Combat%20Air%20Patrol">AI_CAP Demo Missions, only for beta testers</a></h3>
-
-<h3><a href="https://github.com/FlightControl-Master/MOOSE_MISSIONS/releases">ALL Demo Missions pack of the last release</a></h3>
-
-<hr/>
-
-<h1>YouTube Channel</h1>
-
-<h3><a href="https://www.youtube.com/playlist?list=PL7ZUrU4zZUl1YCyPxJgoZn-CfhwyeW65L">AI_CAP YouTube Channel</a></h3>
 
 <hr/>
 
@@ -157,253 +141,253 @@
 	<h2>Global(s)</h2>
 	<table class="function_list">
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="#AI_CAP_ZONE">AI_CAP_ZONE</a></td>
+		<td class="name" nowrap="nowrap"><a href="#AI_A2A_CAP">AI_A2A_CAP</a></td>
 		<td class="summary">
-<h1>AI<em>CAP</em>ZONE class, extends <a href="AI_CAP.html##(AI_PATROL_ZONE)">AI<em>CAP#AI</em>PATROL_ZONE</a></h1>
+<h1>AI<em>A2A</em>CAP class, extends <a href="AI_CAP.html##(AI_PATROL_ZONE)">AI<em>CAP#AI</em>PATROL_ZONE</a></h1>
 
-<p>The AI<em>CAP</em>ZONE class implements the core functions to patrol a <a href="Zone.html">Zone</a> by an AI <a href="Controllable.html">Controllable</a> or <a href="Group.html">Group</a> 
+<p>The AI<em>A2A</em>CAP class implements the core functions to patrol a <a href="Zone.html">Zone</a> by an AI <a href="Controllable.html">Controllable</a> or <a href="Group.html">Group</a> 
 and automatically engage any airborne enemies that are within a certain range or within a certain zone.</p>
 </td>
 		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="#_NewEngageCapRoute">_NewEngageCapRoute(AIControllable)</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
 	</table>
-			<h2><a id="#(AI_CAP_ZONE)">Type <code>AI_CAP_ZONE</code></a></h2>
+			<h2><a id="#(AI_A2A_CAP)">Type <code>AI_A2A_CAP</code></a></h2>
 				<table class="function_list">
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAP_ZONE).AIControllable">AI_CAP_ZONE.AIControllable</a></td>
-		<td class="summary">
-<p>The <a href="Controllable.html">Controllable</a> patrolling.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAP_ZONE).Abort">AI_CAP_ZONE:Abort()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).Abort">AI_A2A_CAP:Abort()</a></td>
 		<td class="summary">
 <p>Synchronous Event Trigger for Event Abort.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAP_ZONE).Accomplish">AI_CAP_ZONE:Accomplish()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).Accomplish">AI_A2A_CAP:Accomplish()</a></td>
 		<td class="summary">
 <p>Synchronous Event Trigger for Event Accomplish.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAP_ZONE).Accomplished">AI_CAP_ZONE.Accomplished</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).Accomplished">AI_A2A_CAP.Accomplished</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAP_ZONE).Destroy">AI_CAP_ZONE:Destroy()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).AttackRoute">AI_A2A_CAP.AttackRoute(AIGroup)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).AttackSetUnit">AI_A2A_CAP.AttackSetUnit</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).Destroy">AI_A2A_CAP:Destroy()</a></td>
 		<td class="summary">
 <p>Synchronous Event Trigger for Event Destroy.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAP_ZONE).Engage">AI_CAP_ZONE:Engage()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).Engage">AI_A2A_CAP:Engage()</a></td>
 		<td class="summary">
 <p>Synchronous Event Trigger for Event Engage.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAP_ZONE).EngageRange">AI_CAP_ZONE.EngageRange</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).EngageMaxSpeed">AI_A2A_CAP.EngageMaxSpeed</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAP_ZONE).EngageZone">AI_CAP_ZONE.EngageZone</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).EngageMinSpeed">AI_A2A_CAP.EngageMinSpeed</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAP_ZONE).Engaging">AI_CAP_ZONE.Engaging</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).EngageRange">AI_A2A_CAP.EngageRange</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAP_ZONE).Fired">AI_CAP_ZONE:Fired()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).EngageZone">AI_A2A_CAP.EngageZone</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).Engaging">AI_A2A_CAP.Engaging</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).Fired">AI_A2A_CAP:Fired()</a></td>
 		<td class="summary">
 <p>Synchronous Event Trigger for Event Fired.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAP_ZONE).New">AI_CAP_ZONE:New(PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, PatrolAltType)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).New">AI_A2A_CAP:New(AIGroup, PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, EngageMinSpeed, EngageMaxSpeed, PatrolAltType)</a></td>
 		<td class="summary">
-<p>Creates a new AI<em>CAP</em>ZONE object</p>
+<p>Creates a new AI<em>A2A</em>CAP object</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAP_ZONE).OnAfterAbort">AI_CAP_ZONE:OnAfterAbort(Controllable, From, Event, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).OnAfterAbort">AI_A2A_CAP:OnAfterAbort(Controllable, From, Event, To)</a></td>
 		<td class="summary">
 <p>OnAfter Transition Handler for Event Abort.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAP_ZONE).OnAfterAccomplish">AI_CAP_ZONE:OnAfterAccomplish(Controllable, From, Event, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).OnAfterAccomplish">AI_A2A_CAP:OnAfterAccomplish(Controllable, From, Event, To)</a></td>
 		<td class="summary">
 <p>OnAfter Transition Handler for Event Accomplish.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAP_ZONE).OnAfterDestroy">AI_CAP_ZONE:OnAfterDestroy(Controllable, From, Event, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).OnAfterDestroy">AI_A2A_CAP:OnAfterDestroy(Controllable, From, Event, To)</a></td>
 		<td class="summary">
 <p>OnAfter Transition Handler for Event Destroy.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAP_ZONE).OnAfterEngage">AI_CAP_ZONE:OnAfterEngage(Controllable, From, Event, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).OnAfterEngage">AI_A2A_CAP:OnAfterEngage(Controllable, From, Event, To)</a></td>
 		<td class="summary">
 <p>OnAfter Transition Handler for Event Engage.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAP_ZONE).OnAfterFired">AI_CAP_ZONE:OnAfterFired(Controllable, From, Event, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).OnAfterFired">AI_A2A_CAP:OnAfterFired(Controllable, From, Event, To)</a></td>
 		<td class="summary">
 <p>OnAfter Transition Handler for Event Fired.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAP_ZONE).OnBeforeAbort">AI_CAP_ZONE:OnBeforeAbort(Controllable, From, Event, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).OnBeforeAbort">AI_A2A_CAP:OnBeforeAbort(Controllable, From, Event, To)</a></td>
 		<td class="summary">
 <p>OnBefore Transition Handler for Event Abort.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAP_ZONE).OnBeforeAccomplish">AI_CAP_ZONE:OnBeforeAccomplish(Controllable, From, Event, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).OnBeforeAccomplish">AI_A2A_CAP:OnBeforeAccomplish(Controllable, From, Event, To)</a></td>
 		<td class="summary">
 <p>OnBefore Transition Handler for Event Accomplish.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAP_ZONE).OnBeforeDestroy">AI_CAP_ZONE:OnBeforeDestroy(Controllable, From, Event, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).OnBeforeDestroy">AI_A2A_CAP:OnBeforeDestroy(Controllable, From, Event, To)</a></td>
 		<td class="summary">
 <p>OnBefore Transition Handler for Event Destroy.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAP_ZONE).OnBeforeEngage">AI_CAP_ZONE:OnBeforeEngage(Controllable, From, Event, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).OnBeforeEngage">AI_A2A_CAP:OnBeforeEngage(Controllable, From, Event, To)</a></td>
 		<td class="summary">
 <p>OnBefore Transition Handler for Event Engage.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAP_ZONE).OnBeforeFired">AI_CAP_ZONE:OnBeforeFired(Controllable, From, Event, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).OnBeforeFired">AI_A2A_CAP:OnBeforeFired(Controllable, From, Event, To)</a></td>
 		<td class="summary">
 <p>OnBefore Transition Handler for Event Fired.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAP_ZONE).OnEnterEngaging">AI_CAP_ZONE:OnEnterEngaging(Controllable, From, Event, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).OnEnterEngaging">AI_A2A_CAP:OnEnterEngaging(Controllable, From, Event, To)</a></td>
 		<td class="summary">
 <p>OnEnter Transition Handler for State Engaging.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAP_ZONE).OnEventDead">AI_CAP_ZONE:OnEventDead(EventData)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).OnEventDead">AI_A2A_CAP:OnEventDead(EventData)</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAP_ZONE).OnLeaveEngaging">AI_CAP_ZONE:OnLeaveEngaging(Controllable, From, Event, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).OnLeaveEngaging">AI_A2A_CAP:OnLeaveEngaging(Controllable, From, Event, To)</a></td>
 		<td class="summary">
 <p>OnLeave Transition Handler for State Engaging.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAP_ZONE).SetEngageRange">AI_CAP_ZONE:SetEngageRange(EngageRange)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).SetEngageRange">AI_A2A_CAP:SetEngageRange(EngageRange)</a></td>
 		<td class="summary">
 <p>Set the Engage Range when the AI will engage with airborne enemies. </p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAP_ZONE).SetEngageZone">AI_CAP_ZONE:SetEngageZone(EngageZone)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).SetEngageZone">AI_A2A_CAP:SetEngageZone(EngageZone)</a></td>
 		<td class="summary">
 <p>Set the Engage Zone which defines where the AI will engage bogies. </p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAP_ZONE).TargetZone">AI_CAP_ZONE.TargetZone</a></td>
-		<td class="summary">
-<p>The <a href="Zone.html">Zone</a> where the patrol needs to be executed.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAP_ZONE).__Abort">AI_CAP_ZONE:__Abort(Delay)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).__Abort">AI_A2A_CAP:__Abort(Delay)</a></td>
 		<td class="summary">
 <p>Asynchronous Event Trigger for Event Abort.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAP_ZONE).__Accomplish">AI_CAP_ZONE:__Accomplish(Delay)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).__Accomplish">AI_A2A_CAP:__Accomplish(Delay)</a></td>
 		<td class="summary">
 <p>Asynchronous Event Trigger for Event Accomplish.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAP_ZONE).__Destroy">AI_CAP_ZONE:__Destroy(Delay)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).__Destroy">AI_A2A_CAP:__Destroy(Delay)</a></td>
 		<td class="summary">
 <p>Asynchronous Event Trigger for Event Destroy.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAP_ZONE).__Engage">AI_CAP_ZONE:__Engage(Delay)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).__Engage">AI_A2A_CAP:__Engage(Delay)</a></td>
 		<td class="summary">
 <p>Asynchronous Event Trigger for Event Engage.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAP_ZONE).__Fired">AI_CAP_ZONE:__Fired(Delay)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).__Fired">AI_A2A_CAP:__Fired(Delay)</a></td>
 		<td class="summary">
 <p>Asynchronous Event Trigger for Event Fired.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAP_ZONE).onafterAbort">AI_CAP_ZONE:onafterAbort(Controllable, From, Event, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).onafterAbort">AI_A2A_CAP:onafterAbort(AIGroup, From, Event, To)</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAP_ZONE).onafterAccomplish">AI_CAP_ZONE:onafterAccomplish(Controllable, From, Event, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).onafterAccomplish">AI_A2A_CAP:onafterAccomplish(Controllable, From, Event, To)</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAP_ZONE).onafterDestroy">AI_CAP_ZONE:onafterDestroy(Controllable, From, Event, To, EventData)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).onafterDestroy">AI_A2A_CAP:onafterDestroy(Controllable, From, Event, To, EventData)</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAP_ZONE).onafterDetected">AI_CAP_ZONE:onafterDetected(Controllable, From, Event, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).onafterEngage">AI_A2A_CAP:onafterEngage(AIGroup, From, Event, To, AttackSetUnit)</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAP_ZONE).onafterEngage">AI_CAP_ZONE:onafterEngage(Controllable, From, Event, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).onafterPatrol">AI_A2A_CAP:onafterPatrol(AIGroup, From, Event, To)</a></td>
 		<td class="summary">
-
+<p>onafter State Transition for Event Patrol.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAP_ZONE).onafterStart">AI_CAP_ZONE:onafterStart(Controllable, From, Event, To)</a></td>
-		<td class="summary">
-<p>onafter State Transition for Event Start.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_CAP_ZONE).onbeforeEngage">AI_CAP_ZONE:onbeforeEngage(Controllable, From, Event, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).onbeforeEngage">AI_A2A_CAP:onbeforeEngage(AIGroup, From, Event, To)</a></td>
 		<td class="summary">
 
 </td>
@@ -414,23 +398,23 @@ and automatically engage any airborne enemies that are within a certain range or
 		<dl class="function">
 <dt>
 
-		<em><a href="##(AI_CAP_ZONE)">#AI_CAP_ZONE</a></em>
-<a id="AI_CAP_ZONE" >
-<strong>AI_CAP_ZONE</strong>
+		<em><a href="##(AI_A2A_CAP)">#AI_A2A_CAP</a></em>
+<a id="AI_A2A_CAP" >
+<strong>AI_A2A_CAP</strong>
 </a>
 </dt>
 <dd>
 	
-<h1>AI<em>CAP</em>ZONE class, extends <a href="AI_CAP.html##(AI_PATROL_ZONE)">AI<em>CAP#AI</em>PATROL_ZONE</a></h1>
+<h1>AI<em>A2A</em>CAP class, extends <a href="AI_CAP.html##(AI_PATROL_ZONE)">AI<em>CAP#AI</em>PATROL_ZONE</a></h1>
 
-<p>The AI<em>CAP</em>ZONE class implements the core functions to patrol a <a href="Zone.html">Zone</a> by an AI <a href="Controllable.html">Controllable</a> or <a href="Group.html">Group</a> 
+<p>The AI<em>A2A</em>CAP class implements the core functions to patrol a <a href="Zone.html">Zone</a> by an AI <a href="Controllable.html">Controllable</a> or <a href="Group.html">Group</a> 
 and automatically engage any airborne enemies that are within a certain range or within a certain zone.</p>
 
 	
 
 <p><img src="..\Presentations\AI_CAP\Dia3.JPG" alt="Process"/></p>
 
-<p>The AI<em>CAP</em>ZONE is assigned a <a href="Group.html">Group</a> and this must be done before the AI<em>CAP</em>ZONE process can be started using the <strong>Start</strong> event.</p>
+<p>The AI<em>A2A</em>CAP is assigned a <a href="Group.html">Group</a> and this must be done before the AI<em>A2A</em>CAP process can be started using the <strong>Start</strong> event.</p>
 
 <p><img src="..\Presentations\AI_CAP\Dia4.JPG" alt="Process"/></p>
 
@@ -456,17 +440,17 @@ When the fuel treshold has been reached, the airplane will fly towards the neare
 
 <p><img src="..\Presentations\AI_CAP\Dia13.JPG" alt="Process"/></p>
 
-<h2>1. AI<em>CAP</em>ZONE constructor</h2>
+<h2>1. AI<em>A2A</em>CAP constructor</h2>
 
 <ul>
-    <li><a href="##(AI_CAP_ZONE).New">AI<em>CAP</em>ZONE.New</a>(): Creates a new AI<em>CAP</em>ZONE object.</li>
+    <li><a href="##(AI_A2A_CAP).New">AI<em>A2A</em>CAP.New</a>(): Creates a new AI<em>A2A</em>CAP object.</li>
 </ul>
 
-<h2>2. AI<em>CAP</em>ZONE is a FSM</h2>
+<h2>2. AI<em>A2A</em>CAP is a FSM</h2>
 
 <p><img src="..\Presentations\AI_CAP\Dia2.JPG" alt="Process"/></p>
 
-<h3>2.1 AI<em>CAP</em>ZONE States</h3>
+<h3>2.1 AI<em>A2A</em>CAP States</h3>
 
 <ul>
     <li><strong>None</strong> ( Group ): The process is not started yet.</li>
@@ -475,18 +459,18 @@ When the fuel treshold has been reached, the airplane will fly towards the neare
     <li><strong>Returning</strong> ( Group ): The AI is returning to Base..</li>
 </ul>
 
-<h3>2.2 AI<em>CAP</em>ZONE Events</h3>
+<h3>2.2 AI<em>A2A</em>CAP Events</h3>
 
 <ul>
     <li>**<a href="AI_Patrol.html##(AI_PATROL_ZONE).Start">AI<em>Patrol#AI</em>PATROL_ZONE.Start</a>**: Start the process.</li>
     <li>**<a href="AI_Patrol.html##(AI_PATROL_ZONE).Route">AI<em>Patrol#AI</em>PATROL_ZONE.Route</a>**: Route the AI to a new random 3D point within the Patrol Zone.</li>
-    <li>**<a href="##(AI_CAP_ZONE).Engage">AI<em>CAP</em>ZONE.Engage</a>**: Let the AI engage the bogeys.</li>
-    <li>**<a href="##(AI_CAP_ZONE).Abort">AI<em>CAP</em>ZONE.Abort</a>**: Aborts the engagement and return patrolling in the patrol zone.</li>
+    <li>**<a href="##(AI_A2A_CAP).Engage">AI<em>A2A</em>CAP.Engage</a>**: Let the AI engage the bogeys.</li>
+    <li>**<a href="##(AI_A2A_CAP).Abort">AI<em>A2A</em>CAP.Abort</a>**: Aborts the engagement and return patrolling in the patrol zone.</li>
     <li>**<a href="AI_Patrol.html##(AI_PATROL_ZONE).RTB">AI<em>Patrol#AI</em>PATROL_ZONE.RTB</a>**: Route the AI to the home base.</li>
     <li>**<a href="AI_Patrol.html##(AI_PATROL_ZONE).Detect">AI<em>Patrol#AI</em>PATROL_ZONE.Detect</a>**: The AI is detecting targets.</li>
     <li>**<a href="AI_Patrol.html##(AI_PATROL_ZONE).Detected">AI<em>Patrol#AI</em>PATROL_ZONE.Detected</a>**: The AI has detected new targets.</li>
-    <li>**<a href="##(AI_CAP_ZONE).Destroy">AI<em>CAP</em>ZONE.Destroy</a>**: The AI has destroyed a bogey <a href="Unit.html">Unit</a>.</li>
-    <li>**<a href="##(AI_CAP_ZONE).Destroyed">AI<em>CAP</em>ZONE.Destroyed</a>**: The AI has destroyed all bogeys <a href="Unit.html">Unit</a>s assigned in the CAS task.</li>
+    <li>**<a href="##(AI_A2A_CAP).Destroy">AI<em>A2A</em>CAP.Destroy</a>**: The AI has destroyed a bogey <a href="Unit.html">Unit</a>.</li>
+    <li>**<a href="##(AI_A2A_CAP).Destroyed">AI<em>A2A</em>CAP.Destroyed</a>**: The AI has destroyed all bogeys <a href="Unit.html">Unit</a>s assigned in the CAS task.</li>
     <li><strong>Status</strong> ( Group ): The AI is checking status (fuel and damage). When the tresholds have been reached, the AI will RTB.</li>
 </ul>
 
@@ -498,7 +482,7 @@ When the fuel treshold has been reached, the airplane will fly towards the neare
 that will define when the AI will engage with the detected airborne enemy targets.
 The range can be beyond or smaller than the range of the Patrol Zone.
 The range is applied at the position of the AI.
-Use the method <a href="AI_CAP.html##(AI_CAP_ZONE).SetEngageRange">AI<em>CAP#AI</em>CAP_ZONE.SetEngageRange</a>() to define that range.</p>
+Use the method <a href="AI_CAP.html##(AI_A2A_CAP).SetEngageRange">AI<em>CAP#AI</em>A2A_CAP.SetEngageRange</a>() to define that range.</p>
 
 <h2>4. Set the Zone of Engagement</h2>
 
@@ -506,57 +490,22 @@ Use the method <a href="AI_CAP.html##(AI_CAP_ZONE).SetEngageRange">AI<em>CAP#AI<
 
 <p>An optional <a href="Zone.html">Zone</a> can be set, 
 that will define when the AI will engage with the detected airborne enemy targets.
-Use the method <a href="AI_Cap.html##(AI_CAP_ZONE).SetEngageZone">AI<em>Cap#AI</em>CAP_ZONE.SetEngageZone</a>() to define that Zone.</p>
+Use the method <a href="AI_Cap.html##(AI_A2A_CAP).SetEngageZone">AI<em>Cap#AI</em>A2A_CAP.SetEngageZone</a>() to define that Zone.</p>
 
 <hr/>
 
 
 </dd>
 </dl>
-		<dl class="function">
-<dt>
-
-<a id="_NewEngageCapRoute" >
-<strong>_NewEngageCapRoute(AIControllable)</strong>
-</a>
-</dt>
-<dd>
+	<h2><a id="#(AI_A2A_Cap)" >Type <code>AI_A2A_Cap</code></a></h2>
 	
-
-
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> AIControllable </em></code>: </p>
-
-				</li>
-		</ul>
-</dd>
-</dl>
-	<h2><a id="#(AI_Cap)" >Type <code>AI_Cap</code></a></h2>
-	
-			<h2><a id="#(AI_CAP_ZONE)" >Type <code>AI_CAP_ZONE</code></a></h2>
+			<h2><a id="#(AI_A2A_CAP)" >Type <code>AI_A2A_CAP</code></a></h2>
 				<h3>Field(s)</h3>
 		<dl class="function">
 <dt>
 
-		<em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a></em>
-<a id="#(AI_CAP_ZONE).AIControllable" >
-<strong>AI_CAP_ZONE.AIControllable</strong>
-</a>
-</dt>
-<dd>
-	
-<p>The <a href="Controllable.html">Controllable</a> patrolling.</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(AI_CAP_ZONE).Abort" >
-<strong>AI_CAP_ZONE:Abort()</strong>
+<a id="#(AI_A2A_CAP).Abort" >
+<strong>AI_A2A_CAP:Abort()</strong>
 </a>
 </dt>
 <dd>
@@ -568,8 +517,8 @@ Use the method <a href="AI_Cap.html##(AI_CAP_ZONE).SetEngageZone">AI<em>Cap#AI</
 		<dl class="function">
 <dt>
 
-<a id="#(AI_CAP_ZONE).Accomplish" >
-<strong>AI_CAP_ZONE:Accomplish()</strong>
+<a id="#(AI_A2A_CAP).Accomplish" >
+<strong>AI_A2A_CAP:Accomplish()</strong>
 </a>
 </dt>
 <dd>
@@ -582,8 +531,8 @@ Use the method <a href="AI_Cap.html##(AI_CAP_ZONE).SetEngageZone">AI<em>Cap#AI</
 <dt>
 
 		<em>#boolean</em>
-<a id="#(AI_CAP_ZONE).Accomplished" >
-<strong>AI_CAP_ZONE.Accomplished</strong>
+<a id="#(AI_A2A_CAP).Accomplished" >
+<strong>AI_A2A_CAP.Accomplished</strong>
 </a>
 </dt>
 <dd>
@@ -595,8 +544,43 @@ Use the method <a href="AI_Cap.html##(AI_CAP_ZONE).SetEngageZone">AI<em>Cap#AI</
 		<dl class="function">
 <dt>
 
-<a id="#(AI_CAP_ZONE).Destroy" >
-<strong>AI_CAP_ZONE:Destroy()</strong>
+<a id="#(AI_A2A_CAP).AttackRoute" >
+<strong>AI_A2A_CAP.AttackRoute(AIGroup)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> AIGroup </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="Core.Set.html##(SET_UNIT)">Core.Set#SET_UNIT</a></em>
+<a id="#(AI_A2A_CAP).AttackSetUnit" >
+<strong>AI_A2A_CAP.AttackSetUnit</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_A2A_CAP).Destroy" >
+<strong>AI_A2A_CAP:Destroy()</strong>
 </a>
 </dt>
 <dd>
@@ -608,8 +592,8 @@ Use the method <a href="AI_Cap.html##(AI_CAP_ZONE).SetEngageZone">AI<em>Cap#AI</
 		<dl class="function">
 <dt>
 
-<a id="#(AI_CAP_ZONE).Engage" >
-<strong>AI_CAP_ZONE:Engage()</strong>
+<a id="#(AI_A2A_CAP).Engage" >
+<strong>AI_A2A_CAP:Engage()</strong>
 </a>
 </dt>
 <dd>
@@ -622,8 +606,8 @@ Use the method <a href="AI_Cap.html##(AI_CAP_ZONE).SetEngageZone">AI<em>Cap#AI</
 <dt>
 
 		<em></em>
-<a id="#(AI_CAP_ZONE).EngageRange" >
-<strong>AI_CAP_ZONE.EngageRange</strong>
+<a id="#(AI_A2A_CAP).EngageMaxSpeed" >
+<strong>AI_A2A_CAP.EngageMaxSpeed</strong>
 </a>
 </dt>
 <dd>
@@ -636,8 +620,36 @@ Use the method <a href="AI_Cap.html##(AI_CAP_ZONE).SetEngageZone">AI<em>Cap#AI</
 <dt>
 
 		<em></em>
-<a id="#(AI_CAP_ZONE).EngageZone" >
-<strong>AI_CAP_ZONE.EngageZone</strong>
+<a id="#(AI_A2A_CAP).EngageMinSpeed" >
+<strong>AI_A2A_CAP.EngageMinSpeed</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(AI_A2A_CAP).EngageRange" >
+<strong>AI_A2A_CAP.EngageRange</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(AI_A2A_CAP).EngageZone" >
+<strong>AI_A2A_CAP.EngageZone</strong>
 </a>
 </dt>
 <dd>
@@ -650,8 +662,8 @@ Use the method <a href="AI_Cap.html##(AI_CAP_ZONE).SetEngageZone">AI<em>Cap#AI</
 <dt>
 
 		<em>#boolean</em>
-<a id="#(AI_CAP_ZONE).Engaging" >
-<strong>AI_CAP_ZONE.Engaging</strong>
+<a id="#(AI_A2A_CAP).Engaging" >
+<strong>AI_A2A_CAP.Engaging</strong>
 </a>
 </dt>
 <dd>
@@ -663,8 +675,8 @@ Use the method <a href="AI_Cap.html##(AI_CAP_ZONE).SetEngageZone">AI<em>Cap#AI</
 		<dl class="function">
 <dt>
 
-<a id="#(AI_CAP_ZONE).Fired" >
-<strong>AI_CAP_ZONE:Fired()</strong>
+<a id="#(AI_A2A_CAP).Fired" >
+<strong>AI_A2A_CAP:Fired()</strong>
 </a>
 </dt>
 <dd>
@@ -676,16 +688,21 @@ Use the method <a href="AI_Cap.html##(AI_CAP_ZONE).SetEngageZone">AI<em>Cap#AI</
 		<dl class="function">
 <dt>
 
-<a id="#(AI_CAP_ZONE).New" >
-<strong>AI_CAP_ZONE:New(PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, PatrolAltType)</strong>
+<a id="#(AI_A2A_CAP).New" >
+<strong>AI_A2A_CAP:New(AIGroup, PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, EngageMinSpeed, EngageMaxSpeed, PatrolAltType)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Creates a new AI<em>CAP</em>ZONE object</p>
+<p>Creates a new AI<em>A2A</em>CAP object</p>
 
 		<h3>Parameters</h3>
 		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> AIGroup </em></code>: </p>
+
+				</li>
 				<li>
 				
 <p><code><em><a href="Core.Zone.html##(ZONE_BASE)">Core.Zone#ZONE_BASE</a> PatrolZone </em></code>: 
@@ -718,6 +735,18 @@ The maximum speed of the <a href="Controllable.html">Controllable</a> in km/h.</
 				</li>
 				<li>
 				
+<p><code><em><a href="Dcs.DCSTypes.html##(Speed)">Dcs.DCSTypes#Speed</a> EngageMinSpeed </em></code>: 
+The minimum speed of the <a href="Controllable.html">Controllable</a> in km/h when engaging a target.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSTypes.html##(Speed)">Dcs.DCSTypes#Speed</a> EngageMaxSpeed </em></code>: 
+The maximum speed of the <a href="Controllable.html">Controllable</a> in km/h when engaging a target.</p>
+
+				</li>
+				<li>
+				
 <p><code><em><a href="Dcs.DCSTypes.html##(AltitudeType)">Dcs.DCSTypes#AltitudeType</a> PatrolAltType </em></code>: 
 The altitude type ("RADIO"=="AGL", "BARO"=="ASL"). Defaults to RADIO</p>
 
@@ -725,16 +754,16 @@ The altitude type ("RADIO"=="AGL", "BARO"=="ASL"). Defaults to RADIO</p>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="##(AI_CAP_ZONE)">#AI<em>CAP</em>ZONE</a>:</em>
-self</p>
+<p><em><a href="##(AI_A2A_CAP)">#AI<em>A2A</em>CAP</a>:</em></p>
+
 
 </dd>
 </dl>
 		<dl class="function">
 <dt>
 
-<a id="#(AI_CAP_ZONE).OnAfterAbort" >
-<strong>AI_CAP_ZONE:OnAfterAbort(Controllable, From, Event, To)</strong>
+<a id="#(AI_A2A_CAP).OnAfterAbort" >
+<strong>AI_A2A_CAP:OnAfterAbort(Controllable, From, Event, To)</strong>
 </a>
 </dt>
 <dd>
@@ -773,8 +802,8 @@ The To State string.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(AI_CAP_ZONE).OnAfterAccomplish" >
-<strong>AI_CAP_ZONE:OnAfterAccomplish(Controllable, From, Event, To)</strong>
+<a id="#(AI_A2A_CAP).OnAfterAccomplish" >
+<strong>AI_A2A_CAP:OnAfterAccomplish(Controllable, From, Event, To)</strong>
 </a>
 </dt>
 <dd>
@@ -813,8 +842,8 @@ The To State string.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(AI_CAP_ZONE).OnAfterDestroy" >
-<strong>AI_CAP_ZONE:OnAfterDestroy(Controllable, From, Event, To)</strong>
+<a id="#(AI_A2A_CAP).OnAfterDestroy" >
+<strong>AI_A2A_CAP:OnAfterDestroy(Controllable, From, Event, To)</strong>
 </a>
 </dt>
 <dd>
@@ -853,8 +882,8 @@ The To State string.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(AI_CAP_ZONE).OnAfterEngage" >
-<strong>AI_CAP_ZONE:OnAfterEngage(Controllable, From, Event, To)</strong>
+<a id="#(AI_A2A_CAP).OnAfterEngage" >
+<strong>AI_A2A_CAP:OnAfterEngage(Controllable, From, Event, To)</strong>
 </a>
 </dt>
 <dd>
@@ -893,8 +922,8 @@ The To State string.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(AI_CAP_ZONE).OnAfterFired" >
-<strong>AI_CAP_ZONE:OnAfterFired(Controllable, From, Event, To)</strong>
+<a id="#(AI_A2A_CAP).OnAfterFired" >
+<strong>AI_A2A_CAP:OnAfterFired(Controllable, From, Event, To)</strong>
 </a>
 </dt>
 <dd>
@@ -933,8 +962,8 @@ The To State string.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(AI_CAP_ZONE).OnBeforeAbort" >
-<strong>AI_CAP_ZONE:OnBeforeAbort(Controllable, From, Event, To)</strong>
+<a id="#(AI_A2A_CAP).OnBeforeAbort" >
+<strong>AI_A2A_CAP:OnBeforeAbort(Controllable, From, Event, To)</strong>
 </a>
 </dt>
 <dd>
@@ -978,8 +1007,8 @@ Return false to cancel Transition.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(AI_CAP_ZONE).OnBeforeAccomplish" >
-<strong>AI_CAP_ZONE:OnBeforeAccomplish(Controllable, From, Event, To)</strong>
+<a id="#(AI_A2A_CAP).OnBeforeAccomplish" >
+<strong>AI_A2A_CAP:OnBeforeAccomplish(Controllable, From, Event, To)</strong>
 </a>
 </dt>
 <dd>
@@ -1023,8 +1052,8 @@ Return false to cancel Transition.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(AI_CAP_ZONE).OnBeforeDestroy" >
-<strong>AI_CAP_ZONE:OnBeforeDestroy(Controllable, From, Event, To)</strong>
+<a id="#(AI_A2A_CAP).OnBeforeDestroy" >
+<strong>AI_A2A_CAP:OnBeforeDestroy(Controllable, From, Event, To)</strong>
 </a>
 </dt>
 <dd>
@@ -1068,8 +1097,8 @@ Return false to cancel Transition.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(AI_CAP_ZONE).OnBeforeEngage" >
-<strong>AI_CAP_ZONE:OnBeforeEngage(Controllable, From, Event, To)</strong>
+<a id="#(AI_A2A_CAP).OnBeforeEngage" >
+<strong>AI_A2A_CAP:OnBeforeEngage(Controllable, From, Event, To)</strong>
 </a>
 </dt>
 <dd>
@@ -1113,8 +1142,8 @@ Return false to cancel Transition.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(AI_CAP_ZONE).OnBeforeFired" >
-<strong>AI_CAP_ZONE:OnBeforeFired(Controllable, From, Event, To)</strong>
+<a id="#(AI_A2A_CAP).OnBeforeFired" >
+<strong>AI_A2A_CAP:OnBeforeFired(Controllable, From, Event, To)</strong>
 </a>
 </dt>
 <dd>
@@ -1158,8 +1187,8 @@ Return false to cancel Transition.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(AI_CAP_ZONE).OnEnterEngaging" >
-<strong>AI_CAP_ZONE:OnEnterEngaging(Controllable, From, Event, To)</strong>
+<a id="#(AI_A2A_CAP).OnEnterEngaging" >
+<strong>AI_A2A_CAP:OnEnterEngaging(Controllable, From, Event, To)</strong>
 </a>
 </dt>
 <dd>
@@ -1198,8 +1227,8 @@ The To State string.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(AI_CAP_ZONE).OnEventDead" >
-<strong>AI_CAP_ZONE:OnEventDead(EventData)</strong>
+<a id="#(AI_A2A_CAP).OnEventDead" >
+<strong>AI_A2A_CAP:OnEventDead(EventData)</strong>
 </a>
 </dt>
 <dd>
@@ -1219,8 +1248,8 @@ The To State string.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(AI_CAP_ZONE).OnLeaveEngaging" >
-<strong>AI_CAP_ZONE:OnLeaveEngaging(Controllable, From, Event, To)</strong>
+<a id="#(AI_A2A_CAP).OnLeaveEngaging" >
+<strong>AI_A2A_CAP:OnLeaveEngaging(Controllable, From, Event, To)</strong>
 </a>
 </dt>
 <dd>
@@ -1264,8 +1293,8 @@ Return false to cancel Transition.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(AI_CAP_ZONE).SetEngageRange" >
-<strong>AI_CAP_ZONE:SetEngageRange(EngageRange)</strong>
+<a id="#(AI_A2A_CAP).SetEngageRange" >
+<strong>AI_A2A_CAP:SetEngageRange(EngageRange)</strong>
 </a>
 </dt>
 <dd>
@@ -1283,7 +1312,7 @@ The Engage Range.</p>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="##(AI_CAP_ZONE)">#AI<em>CAP</em>ZONE</a>:</em>
+<p><em><a href="##(AI_A2A_CAP)">#AI<em>A2A</em>CAP</a>:</em>
 self</p>
 
 </dd>
@@ -1291,8 +1320,8 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(AI_CAP_ZONE).SetEngageZone" >
-<strong>AI_CAP_ZONE:SetEngageZone(EngageZone)</strong>
+<a id="#(AI_A2A_CAP).SetEngageZone" >
+<strong>AI_A2A_CAP:SetEngageZone(EngageZone)</strong>
 </a>
 </dt>
 <dd>
@@ -1310,7 +1339,7 @@ The zone where the AI is performing CAP.</p>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="##(AI_CAP_ZONE)">#AI<em>CAP</em>ZONE</a>:</em>
+<p><em><a href="##(AI_A2A_CAP)">#AI<em>A2A</em>CAP</a>:</em>
 self</p>
 
 </dd>
@@ -1318,22 +1347,8 @@ self</p>
 		<dl class="function">
 <dt>
 
-		<em><a href="Core.Zone.html##(ZONE_BASE)">Core.Zone#ZONE_BASE</a></em>
-<a id="#(AI_CAP_ZONE).TargetZone" >
-<strong>AI_CAP_ZONE.TargetZone</strong>
-</a>
-</dt>
-<dd>
-	
-<p>The <a href="Zone.html">Zone</a> where the patrol needs to be executed.</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(AI_CAP_ZONE).__Abort" >
-<strong>AI_CAP_ZONE:__Abort(Delay)</strong>
+<a id="#(AI_A2A_CAP).__Abort" >
+<strong>AI_A2A_CAP:__Abort(Delay)</strong>
 </a>
 </dt>
 <dd>
@@ -1354,8 +1369,8 @@ The delay in seconds.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(AI_CAP_ZONE).__Accomplish" >
-<strong>AI_CAP_ZONE:__Accomplish(Delay)</strong>
+<a id="#(AI_A2A_CAP).__Accomplish" >
+<strong>AI_A2A_CAP:__Accomplish(Delay)</strong>
 </a>
 </dt>
 <dd>
@@ -1376,8 +1391,8 @@ The delay in seconds.  </p>
 		<dl class="function">
 <dt>
 
-<a id="#(AI_CAP_ZONE).__Destroy" >
-<strong>AI_CAP_ZONE:__Destroy(Delay)</strong>
+<a id="#(AI_A2A_CAP).__Destroy" >
+<strong>AI_A2A_CAP:__Destroy(Delay)</strong>
 </a>
 </dt>
 <dd>
@@ -1398,8 +1413,8 @@ The delay in seconds.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(AI_CAP_ZONE).__Engage" >
-<strong>AI_CAP_ZONE:__Engage(Delay)</strong>
+<a id="#(AI_A2A_CAP).__Engage" >
+<strong>AI_A2A_CAP:__Engage(Delay)</strong>
 </a>
 </dt>
 <dd>
@@ -1420,8 +1435,8 @@ The delay in seconds.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(AI_CAP_ZONE).__Fired" >
-<strong>AI_CAP_ZONE:__Fired(Delay)</strong>
+<a id="#(AI_A2A_CAP).__Fired" >
+<strong>AI_A2A_CAP:__Fired(Delay)</strong>
 </a>
 </dt>
 <dd>
@@ -1442,8 +1457,48 @@ The delay in seconds.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(AI_CAP_ZONE).onafterAbort" >
-<strong>AI_CAP_ZONE:onafterAbort(Controllable, From, Event, To)</strong>
+<a id="#(AI_A2A_CAP).onafterAbort" >
+<strong>AI_A2A_CAP:onafterAbort(AIGroup, From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> AIGroup </em></code>: 
+The AI Group managed by the FSM.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: 
+The From State string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: 
+The Event string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: 
+The To State string.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_A2A_CAP).onafterAccomplish" >
+<strong>AI_A2A_CAP:onafterAccomplish(Controllable, From, Event, To)</strong>
 </a>
 </dt>
 <dd>
@@ -1482,48 +1537,8 @@ The To State string.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(AI_CAP_ZONE).onafterAccomplish" >
-<strong>AI_CAP_ZONE:onafterAccomplish(Controllable, From, Event, To)</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> Controllable </em></code>: 
-The Controllable Object managed by the FSM.</p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string From </em></code>: 
-The From State string.</p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string Event </em></code>: 
-The Event string.</p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string To </em></code>: 
-The To State string.</p>
-
-				</li>
-		</ul>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(AI_CAP_ZONE).onafterDestroy" >
-<strong>AI_CAP_ZONE:onafterDestroy(Controllable, From, Event, To, EventData)</strong>
+<a id="#(AI_A2A_CAP).onafterDestroy" >
+<strong>AI_A2A_CAP:onafterDestroy(Controllable, From, Event, To, EventData)</strong>
 </a>
 </dt>
 <dd>
@@ -1567,8 +1582,8 @@ The To State string.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(AI_CAP_ZONE).onafterDetected" >
-<strong>AI_CAP_ZONE:onafterDetected(Controllable, From, Event, To)</strong>
+<a id="#(AI_A2A_CAP).onafterEngage" >
+<strong>AI_A2A_CAP:onafterEngage(AIGroup, From, Event, To, AttackSetUnit)</strong>
 </a>
 </dt>
 <dd>
@@ -1579,8 +1594,53 @@ The To State string.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> Controllable </em></code>: 
+<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> AIGroup </em></code>: 
 The Controllable Object managed by the FSM.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: 
+The From State string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: 
+The Event string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: 
+The To State string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> AttackSetUnit </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_A2A_CAP).onafterPatrol" >
+<strong>AI_A2A_CAP:onafterPatrol(AIGroup, From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>onafter State Transition for Event Patrol.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> AIGroup </em></code>: 
+The AI Group managed by the FSM.</p>
 
 				</li>
 				<li>
@@ -1607,8 +1667,8 @@ The To State string.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(AI_CAP_ZONE).onafterEngage" >
-<strong>AI_CAP_ZONE:onafterEngage(Controllable, From, Event, To)</strong>
+<a id="#(AI_A2A_CAP).onbeforeEngage" >
+<strong>AI_A2A_CAP:onbeforeEngage(AIGroup, From, Event, To)</strong>
 </a>
 </dt>
 <dd>
@@ -1619,87 +1679,7 @@ The To State string.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> Controllable </em></code>: 
-The Controllable Object managed by the FSM.</p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string From </em></code>: 
-The From State string.</p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string Event </em></code>: 
-The Event string.</p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string To </em></code>: 
-The To State string.</p>
-
-				</li>
-		</ul>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(AI_CAP_ZONE).onafterStart" >
-<strong>AI_CAP_ZONE:onafterStart(Controllable, From, Event, To)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>onafter State Transition for Event Start.</p>
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> Controllable </em></code>: 
-The Controllable Object managed by the FSM.</p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string From </em></code>: 
-The From State string.</p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string Event </em></code>: 
-The Event string.</p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string To </em></code>: 
-The To State string.</p>
-
-				</li>
-		</ul>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(AI_CAP_ZONE).onbeforeEngage" >
-<strong>AI_CAP_ZONE:onbeforeEngage(Controllable, From, Event, To)</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> Controllable </em></code>: 
+<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> AIGroup </em></code>: 
 The Controllable Object managed by the FSM.</p>
 
 				</li>
