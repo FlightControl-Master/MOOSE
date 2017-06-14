@@ -5,9 +5,9 @@ echo Generating LuaDocumentor Documentation
 echo --------------------------------------
 call luadocumentor.bat
 
-:: Generate Slate documentation
-echo Generating Slate Documentation
-echo ------------------------------
-cd "Slate Documentation Generator"
-call Generate.bat
-cd ..
+rem :: Generate Slate documentation
+rem echo Generating Slate Documentation
+rem echo ------------------------------
+rem cd "Slate Documentation Generator"
+rem call Generate.bat
+rem cd ..
