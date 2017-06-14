@@ -903,6 +903,8 @@ do -- AI_A2A_DISPATCHER
   -- @return #AI_A2A_DISPATCHER
   function AI_A2A_DISPATCHER:SetSquadron( SquadronName, AirbaseName, SpawnTemplates, Resources )
   
+    self:E( { SquadronName = SquadronName, AirbaseName = AirbaseName, SpawnTemplates = SpawnTemplates, Resources = Resources } )
+  
     self.DefenderSquadrons[SquadronName] = self.DefenderSquadrons[SquadronName] or {} 
 
     local DefenderSquadron = self.DefenderSquadrons[SquadronName]
