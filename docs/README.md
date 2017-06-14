@@ -1,4 +1,4 @@
-# 1) MOOSE framework
+# 1. MOOSE framework
 
 MOOSE is a **M**ission **O**bject **O**riented **S**cripting **E**nvironment, and is meant for mission designers and mission hosters.
 It allows to quickly setup complex missions using pre-scripted scenarios using the available classes within the MOOSE Framework.
@@ -17,55 +17,7 @@ Within the community, key users will start supporting, documenting, explaining a
 It is the ambition to grow this framework as a de-facto standard for mission designers to use.
 
 
-
-
-# 2) MOOSE usage
-
-The delivery of MOOSE follows a structured release process. Over time, new features are added that can be used in your mission.
-
-### The latest release of MOOSE can be downloaded **[here](https://github.com/FlightControl-Master/MOOSE/releases)**.  
-
-There are 3 different ways how you can use MOOSE, each with a different engagement and complexity level:
-
-
-
-## 2.1) Use MOOSE as a Mission Designer
-
-Refer to the detailed **[Usage Guide](Usage_Guide.html)** for more information.
-
-
-
-## 2.2) Beta test MOOSE
-
-Beta testers of MOOSE are requested to install additional software. 
-
-As a return or as a reward, testers get:
- 
-  * Newly developed features planned for the next MOOSE release can be tested and incorporated in your missions early.
-  * You can evaluate and contribute to the stability of the next release.
-  * Your mission creation workflow becomes very flexible. New features are dynamically added to you missions.
-
-Please read the detailed **[Beta Test Guide](Beta_Test_Guide.html)** for more information.
-  
-  
-  
-## 2.3) Contribute on the MOOSE development
-
-Those people who have experience in lua development or are excited to contribute to the MOOSE project are welcome.
-
-Please consult the **[Contribution Guide](Contribution_Guide.html)** for more information.
-  
-  
-  
-# 3) MOOSE Support Channels
-
-MOOSE is broadcasted, documented and supported through various social media channels.  
-
-Click here for the **[communities guide](Communities.html)** of the MOOSE framework.
-  
-  
-
-# 4) MOOSE Framework
+# 2. MOOSE Framework
 
 The following classes are currently embedded within MOOSE framework and can be included within your mission scripts:
 
@@ -92,7 +44,7 @@ You'll need to browse to the right MOOSE Class within the inheritance tree struc
 
 
 
-## 4.1) MOOSE Demonstration Missions
+## 2.1. MOOSE Demonstration Missions
 
 The framework comes with demonstration missions which can be downloaded [here](https://github.com/FlightControl-Master/MOOSE_MISSIONS/releases), that you can try out and helps you to code.  
 These missions provide examples of defined use cases how the MOOSE framework can be utilized. Each test mission is located in a separate directory, which contains at least one .lua file and .miz file.
@@ -105,7 +57,7 @@ Some of these exact test missions are also demonstrated in a video format on the
 
 
 
-## 4.2) MOOSE Core Classes
+## 2.2. MOOSE Core Classes
 
 These classes define the base building blocks of the MOOSE framework. These classes are heavily used within the MOOSE framework.
 
@@ -141,7 +93,7 @@ The POINT_VEC3 class manages the 3D simulation space, while the POINT_VEC2 class
 * [RADIO](Documentation/Radio.html): Create radio communication.
 
 
-## 4.3) MOOSE Wrapper Classes
+## 2.3. MOOSE Wrapper Classes
 
 MOOSE Wrapper Classes provide an object oriented hierarchical mechanism to manage the DCS objects within the simulator.
 Wrapper classes provide another easier mechanism to control Groups, Units, Statics, Airbases and other objects.
@@ -166,7 +118,7 @@ Wrapper classes provide another easier mechanism to control Groups, Units, Stati
 
 
 
-## 4.4) MOOSE Functional Classes
+## 2.4. MOOSE Functional Classes
 
 MOOSE Functional Classes provide various functions that are useful in mission design.
 
@@ -188,10 +140,12 @@ MOOSE Functional Classes provide various functions that are useful in mission de
 
 * [CLEANUP](Documentation/Cleanup.html): Keeps the airbases clean from clutter. (Only partly functional due to a bug in DCS, destroyed objects cannot be removed).
 
-## 4.5) MOOSE AI Controlling Classes
+## 2.5. MOOSE AI Controlling Classes
 
 MOOSE AI Controlling Classes provide mechanisms to control AI over long lasting processes.  
 These AI Controlling Classes are based on FSM (Finite State Machine) Classes, and provided an encapsulated way to make AI behave or execute an activity.
+
+* [AI_BALANCER](Documentation/AI_A2A_Dispatcher.html): Create an automatic and dynamic A2A defense system, executed by AI units, as a result of detected A2A airborne targets executing CAP and GCI. This script replaces the GCICAP script.
 
 * [AI_BALANCER](Documentation/AI_Balancer.html): Compensate in a multi player mission the abscence of players with dynamically spawned AI air units. When players join CLIENTS, the AI will either be destroyed, or will fly back to the home or nearest friendly airbase.
 
@@ -204,8 +158,7 @@ These AI Controlling Classes are based on FSM (Finite State Machine) Classes, an
 * [AI_BAI](Documentation/AI_Bai.html): Make an alive AI Group perform Battlefield Air Interdiction as a dynamic process.
 
 
-
-## 4.6) MOOSE Human Tasking Classes
+## 2.6. MOOSE Human Tasking Classes
 
 MOOSE Tasking Classes provide a comprehensive Mission Orchestration System.
 Through COMMANDCENTERs, multiple logical MISSIONs can be orchestrated for coalitions.
@@ -216,17 +169,18 @@ Each TASK has a TASK ACTION flow, which is the flow that a player (hosted by a U
 
 * [MISSION](Documentation/Mission.html): Each MISSION has various TASKs to be executed and accomplished by players.
 
+* [TASK](Documentation/Task_A2A_Dispatcher.html): Automatically and dynamically dispatch A2A tasks to be executed by human players, as a result of the detection of airborne targets within a Mission scope.
+
+* [TASK](Documentation/Task_A2G_Dispatcher.html): Automatically and dynamically dispatch A2G tasks to be executed by human players, as a result of the detection of ground targets within a Mission scope.
+
 * [TASK](Documentation/Task.html): Each TASK has a status, and has a TASK ACTION flow for each Player acting and executing the TASK.
 
-* [TASK_SEAD](Documentation/Task_SEAD.html): Models a SEAD Task, where a Player is routed towards an attack zone, and various SEADing targets need to be eliminated.
+* [TASK_CAS](Documentation/Task_A2G.html): Models a A2G tasks (SEAD, CAS and BAI) tasks, where a Player is routed towards an attack zone with enemies nearby, and various ground targets need to be eliminated.
 
-* [TASK_BAI](Documentation/Task_A2G.html): Models a CAP Task, where a Player is routed towards an attack zone without enemies nearby, and various ground targets need to be eliminated.
-
-* [TASK_CAS](Documentation/Task_A2G.html): Models a CAS Task, where a Player is routed towards an attack zone with enemies nearby, and various ground targets need to be eliminated.
+* [TASK_BAI](Documentation/Task_A2A.html): Models a A2A tasks (CAP, INTERCEPT, SWEEP) tasks, where a Player is routed towards an attack zone without enemies nearby, and various ground targets need to be eliminated.
 
 
-
-## 4.7) MOOSE Action Classes
+## 2.7. MOOSE Action Classes
 
 MOOSE Action Classes are task action sub-flows, that can be used and combined, to quickly define a comprehensive end-to-end task action flow.
 For example, for the SEAD Task, the task action flow combines the actions ASSIGN, ROUTE, ACCOUNT and ASSIST task action sub-flows.
@@ -241,9 +195,50 @@ For example, for the SEAD Task, the task action flow combines the actions ASSIGN
 
 
 
+# 3. MOOSE usage
+
+The delivery of MOOSE follows a structured release process. Over time, new features are added that can be used in your mission.
+
+### The latest release of MOOSE can be downloaded **[here](https://github.com/FlightControl-Master/MOOSE/releases)**.  
+
+There are 3 different ways how you can use MOOSE, each with a different engagement and complexity level:
 
 
-# 5) Credits
+## 3.1. Use MOOSE as a Mission Designer
+
+Refer to the detailed **[Usage Guide](Usage_Guide.html)** for more information.
+
+
+## 3.2. Beta test MOOSE
+
+Beta testers of MOOSE are requested to install additional software. 
+
+As a return or as a reward, testers get:
+ 
+  * Newly developed features planned for the next MOOSE release can be tested and incorporated in your missions early.
+  * You can evaluate and contribute to the stability of the next release.
+  * Your mission creation workflow becomes very flexible. New features are dynamically added to you missions.
+
+Please read the detailed **[Beta Test Guide](Beta_Test_Guide.html)** for more information.
+  
+  
+## 3.3. Contribute on the MOOSE development
+
+Those people who have experience in lua development or are excited to contribute to the MOOSE project are welcome.
+
+Please consult the **[Contribution Guide](Contribution_Guide.html)** for more information.
+  
+
+
+# 4. MOOSE Support Channels
+
+MOOSE is broadcasted, documented and supported through various social media channels.  
+
+Click here for the **[communities guide](Communities.html)** of the MOOSE framework.
+
+
+
+# 5. Credits
 
 Note that most of the framework is based on code i've written myself, 
 but some code of it is also based on code that i've seen as great scripting code and ideas, 

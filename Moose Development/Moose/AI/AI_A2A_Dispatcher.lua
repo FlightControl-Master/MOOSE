@@ -915,11 +915,11 @@ do -- AI_A2A_DISPATCHER
     DefenderSquadron.Spawn = {}
     if type( SpawnTemplates ) == "string" then
       local SpawnTemplate = SpawnTemplates
-      self.DefenderSpawns[SpawnTemplate] = self.DefenderSpawns[SpawnTemplate] or SPAWN:New( SpawnTemplate ):InitCleanUp( 30 )
+      self.DefenderSpawns[SpawnTemplate] = self.DefenderSpawns[SpawnTemplate] or SPAWN:New( SpawnTemplate ) -- :InitCleanUp( 180 )
       DefenderSquadron.Spawn[1] = self.DefenderSpawns[SpawnTemplate]
     else
       for TemplateID, SpawnTemplate in pairs( SpawnTemplates ) do
-        self.DefenderSpawns[SpawnTemplate] = self.DefenderSpawns[SpawnTemplate] or SPAWN:New( SpawnTemplate ):InitCleanUp( 30 )
+        self.DefenderSpawns[SpawnTemplate] = self.DefenderSpawns[SpawnTemplate] or SPAWN:New( SpawnTemplate ) -- :InitCleanUp( 180 )
         DefenderSquadron.Spawn[#DefenderSquadron.Spawn+1] = self.DefenderSpawns[SpawnTemplate]
       end
     end
@@ -1882,11 +1882,11 @@ do -- AI_A2A_DISPATCHER
 
       if self.TacticalDisplay then      
         -- Show tactical situation
-        Report:Add( string.format( "\n - Target %s ( %s ): %s" , DetectedItem.ItemID, DetectedItem.Index, DetectedItem.Set:GetObjectNames() ) )
+        Report:Add( string.format( "\n - Target %s ( %s ): ( #%d ) %s" , DetectedItem.ItemID, DetectedItem.Index, DetectedItem.Set:Count(), DetectedItem.Set:GetObjectNames() ) )
         for Defender, DefenderTask in pairs( self:GetDefenderTasks() ) do
           local Defender = Defender -- Wrapper.Group#GROUP
            if DefenderTask.Target and DefenderTask.Target.Index == DetectedItem.Index then
-             Report:Add( string.format( "   - %s ( %s - %s ) %s", Defender:GetName(), DefenderTask.Type, DefenderTask.Fsm:GetState(), Defender:HasTask() == true and "Executing" or "Idle" ) )
+             Report:Add( string.format( "   - %s ( %s - %s ): ( #%d ) %s", Defender:GetName(), DefenderTask.Type, DefenderTask.Fsm:GetState(), Defender:GetSize(), Defender:HasTask() == true and "Executing" or "Idle" ) )
            end
         end
       end
@@ -1900,7 +1900,7 @@ do -- AI_A2A_DISPATCHER
         local Defender = Defender -- Wrapper.Group#GROUP
         if not DefenderTask.Target then
           local DefenderHasTask = Defender:HasTask()
-          Report:Add( string.format( "   - %s ( %s - %s ) %s", Defender:GetName(), DefenderTask.Type, DefenderTask.Fsm:GetState(), Defender:HasTask() == true and "Executing" or "Idle" ) )
+          Report:Add( string.format( "   - %s ( %s - %s ): ( #%d ) %s", Defender:GetName(), DefenderTask.Type, DefenderTask.Fsm:GetState(), Defender:GetSize(), Defender:HasTask() == true and "Executing" or "Idle" ) )
         end
       end
       Report:Add( string.format( "\n - %d Tasks", TaskCount ) )
