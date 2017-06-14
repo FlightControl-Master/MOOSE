@@ -128,7 +128,9 @@
 		<td class="summary">
 <h1>AI_A2A_DISPATCHER class, extends <a href="Tasking.html##(DETECTION_MANAGER)">Tasking#DETECTION_MANAGER</a></h1>
 
-<p>The <a href="##(AI)">#AI</a> class is designed to create an automatic air defence system for a coalition.</p>
+<p><img src="..\Presentations\AI_A2A_DISPATCHER\Dia1.JPG" alt="Banner Image"/></p>
+
+<p>The <a href="##(AI_A2A_DISPATCHER)">#AI<em>A2A</em>DISPATCHER</a> class is designed to create an automatic air defence system for a coalition.</p>
 </td>
 		</tr>
 	</table>
@@ -599,9 +601,14 @@
 	
 <h1>AI_A2A_DISPATCHER class, extends <a href="Tasking.html##(DETECTION_MANAGER)">Tasking#DETECTION_MANAGER</a></h1>
 
-<p>The <a href="##(AI)">#AI</a> class is designed to create an automatic air defence system for a coalition.</p>
+<p><img src="..\Presentations\AI_A2A_DISPATCHER\Dia1.JPG" alt="Banner Image"/></p>
+
+<p>The <a href="##(AI_A2A_DISPATCHER)">#AI<em>A2A</em>DISPATCHER</a> class is designed to create an automatic air defence system for a coalition.</p>
 
 	
+
+<p><img src="..\Presentations\AI_A2A_DISPATCHER\Dia3.JPG" alt="Banner Image"/></p>
+
 <p>It includes automatic spawning of Combat Air Patrol aircraft (CAP) and Ground Controlled Intercept aircraft (GCI) in response to enemy air movements that are detected by a ground based radar network. 
 CAP flights will take off and proceed to designated CAP zones where they will remain on station until the ground radars direct them to intercept detected enemy aircraft or they run short of fuel and must return to base (RTB). When a CAP flight leaves their zone to perform an interception or return to base a new CAP flight will spawn to take their place.
 If all CAP flights are engaged or RTB then additional GCI interceptors will scramble to intercept unengaged enemy aircraft under ground radar control.
@@ -618,22 +625,30 @@ There are two parameters required, a <a href="Set.html##(SET_GROUP)">Set#SET_GRO
 
 <p>The <a href="##(AI_A2A_DISPATCHER).New">AI<em>A2A</em>DISPATCHER.New</a>() method is used to setup the EWR network and to define the grouping.</p>
 
-<h3>1.1. Define the EWR network:</h3>
+<h3>1.1. Define the <strong>EWR network</strong>:</h3>
+
+<p>As part of the AI_A2A_DISPATCHER constructor, an EWR network must be given as the first parameter.
+An EWR network, or, Early Warning Radar network, is used to early detect potential airborne targets and to understand the position of patrolling targets of the enemy.</p>
+
+<p><img src="..\Presentations\AI_A2A_DISPATCHER\Dia5.JPG" alt="Banner Image"/></p>
 
 <p>Typically EWR networks are setup using 55G6 EWR, 1L13 EWR, Hawk sr and Patriot str ground based radar units. 
 These radars have different ranges and 55G6 EWR and 1L13 EWR radars are Eastern Bloc units (eg Russia, Ukraine, Georgia) while the Hawk and Patriot radars are Western (eg US).
 Additionally, ANY other radar capable unit can be part of the EWR network! Also AWACS airborne units, planes, helicopters can help to detect targets, as long as they have radar.
 The position of these units is very important as they need to provide enough coverage 
-to pick up enemy aircraft as they approach so that CAP and GCI flights can be tasked to intercept them. 
-Additionally in a hot war situation where the border is no longer respected the placement of radars has a big effect on how fast the war escalates. 
+to pick up enemy aircraft as they approach so that CAP and GCI flights can be tasked to intercept them.</p>
+
+<p><img src="..\Presentations\AI_A2A_DISPATCHER\Dia7.JPG" alt="Banner Image"/></p>
+
+<p>Additionally in a hot war situation where the border is no longer respected the placement of radars has a big effect on how fast the war escalates. 
 For example if they are a long way forward and can detect enemy planes on the ground and taking off 
 they will start to vector CAP and GCI flights to attack them straight away which will immediately draw a response from the other coalition. 
 Having the radars further back will mean a slower escalation because fewer targets will be detected and 
 therefore less CAP and GCI flights will spawn and this will tend to make just the border area active rather than a melee over the whole map. 
 It all depends on what the desired effect is. </p>
 
-<p>EWR networks are dynamically constructed, that is, they form part of the <a href="Set.html##(SET_GROUP)">Set#SET_GROUP</a> object that is given as the input parameter of the AI_A2A_DISPATCHER class.
-By defining in a smart way the names or name prefixes of the groups of EWR capable units, these units will be automatically added or deleted from the EWR network, 
+<p>EWR networks are <strong>dynamically constructed</strong>, that is, they form part of the <a href="Set.html##(SET_GROUP)">Set#SET_GROUP</a> object that is given as the input parameter of the AI_A2A_DISPATCHER class.
+By defining in a <strong>smart way the names or name prefixes of the groups</strong> of EWR capable units, these units will be <strong>automatically added or deleted</strong> from the EWR network, 
 increasing or decreasing the radar coverage of the Early Warning System.</p>
 
 <p>See the following example to setup an EWR network containing EWR stations and AWACS.</p>
@@ -651,8 +666,11 @@ A2ADispatcher = AI_A2A_DISPATCHER:New( DetectionSetGroup, 30000 )
 <p>The above example creates a SET_GROUP instance, and stores this in the variable (object) <strong>DetectionSetGroup</strong>.
 <strong>DetectionSetGroup</strong> is then being configured to filter all active groups with a group name starting with <strong>DF CCCP AWACS</strong> or <strong>DF CCCP EWR</strong> to be included in the Set.
 <strong>DetectionSetGroup</strong> is then being ordered to start the dynamic filtering. Note that any destroy or new spawn of a group with the above names will be removed or added to the Set.
-The <strong>DetectionSetGroup</strong> variable is then passed to the <a href="##(AI_A2A_DISPATCHER).New">AI<em>A2A</em>DISPATCHER.New</a>() method to indicate the EWR network configuration and setup the A2A defense detection mechanism.
-As a second parameter of the <a href="##(AI_A2A_DISPATCHER).New">AI<em>A2A</em>DISPATCHER.New</a>() method, 30000 indicates that detected targets need to be grouped within a radius of 30km.
+The <strong>DetectionSetGroup</strong> variable is then passed to the <a href="##(AI_A2A_DISPATCHER).New">AI<em>A2A</em>DISPATCHER.New</a>() method to indicate the EWR network configuration and setup the A2A defense detection mechanism.</p>
+
+<h3>1.2. Define the detected <strong>target grouping radius</strong>:</h3>
+
+<p>As a second parameter of the <a href="##(AI_A2A_DISPATCHER).New">AI<em>A2A</em>DISPATCHER.New</a>() method, 30000 indicates that detected targets need to be grouped within a radius of 30km.
 The grouping radius should not be too small, but also depends on the types of planes and the era of the simulation.
 Fast planes like in the 80s, need a larger radius than WWII planes. <br/>
 Typically I suggest to use 30000 for new generation planes and 10000 for older era aircraft.</p>
@@ -662,8 +680,11 @@ group being detected. This may result in additional GCI being started by the dis
 
 <h2>2. Set the <strong>engage radius</strong>:</h2>
 
-<p>Define the radius to engage any target by airborne friendlies, which are executing cap or returning from an intercept mission.
-So, if there is a target area detected and reported, 
+<p>Define the radius to engage any target by airborne friendlies, which are executing cap or returning from an intercept mission.</p>
+
+<p><img src="..\Presentations\AI_A2A_DISPATCHER\Dia10.JPG" alt="Banner Image"/></p>
+
+<p>So, if there is a target area detected and reported, 
 then any friendlies that are airborne near this target area, 
 will be commanded to (re-)engage that target when available (if no other tasks were commanded).
 For example, if 100000 is given as a value, then any friendly that is airborne within 100km from the detected target, 
@@ -677,11 +698,16 @@ If too large, any airborne cap may not be able to reach the detected target area
 <p>According to the tactical and strategic design of the mission broadly decide the shape and extent of red and blue territories. 
 They should be laid out such that a border area is created between the two coalitions.</p>
 
+<p><img src="..\Presentations\AI_A2A_DISPATCHER\Dia4.JPG" alt="Banner Image"/></p>
+
 <p>Define a border area to simulate a <strong>cold war</strong> scenario and use the method <a href="##(AI_A2A_DISPATCHER).SetBorderZone">AI<em>A2A</em>DISPATCHER.SetBorderZone</a>() to create a border zone for the dispatcher.</p>
 
 <p>A <strong>cold war</strong> is one where CAP aircraft patrol their territory but will not attack enemy aircraft or launch GCI aircraft unless enemy aircraft enter their territory. In other words the EWR may detect an enemy aircraft but will only send aircraft to attack it if it crosses the border.
-A <strong>hot war</strong> is one where CAP aircraft will intercept any detected enemy aircraft and GCI aircraft will launch against detected enemy aircraft without regard for territory. In other words if the ground radar can detect the enemy aircraft then it will send CAP and GCI aircraft to attack it.
-If it’s a cold war then the <strong>borders of red and blue territory</strong> need to be defined using a <a href="zone.html">zone</a> object derived from <a href="Zone.html##(ZONE_BASE)">Zone#ZONE_BASE</a>.
+A <strong>hot war</strong> is one where CAP aircraft will intercept any detected enemy aircraft and GCI aircraft will launch against detected enemy aircraft without regard for territory. In other words if the ground radar can detect the enemy aircraft then it will send CAP and GCI aircraft to attack it.</p>
+
+<p><img src="..\Presentations\AI_A2A_DISPATCHER\Dia9.JPG" alt="Banner Image"/></p>
+
+<p>If it’s a cold war then the <strong>borders of red and blue territory</strong> need to be defined using a <a href="zone.html">zone</a> object derived from <a href="Zone.html##(ZONE_BASE)">Zone#ZONE_BASE</a>.
 If a hot war is chosen then <strong>no borders</strong> actually need to be defined using the helicopter units other than it makes it easier sometimes for the mission maker to envisage where the red and blue territories roughly are. In a hot war the borders are effectively defined by the ground based radar coverage of a coalition. Set the noborders parameter to 1</p>
 
 <h2>4. Squadrons:</h2>
@@ -758,8 +784,11 @@ Damaged or out-of-fuel aircraft are returning to the nearest friendly airbase an
 
 <h3>4.3. Set squadron grouping</h3>
 
-<p>Choices are 1, 2, 3 or 4 when CAP or GCI flights spawn. Use the method <a href="##(AI_A2A_DISPATCHER).SetSquadronGrouping">AI<em>A2A</em>DISPATCHER.SetSquadronGrouping</a>() to set the amount of CAP or GCI flights that will take-off when spawned.
-In the case of GCI, the <a href="##(AI_A2A_DISPATCHER).SetSquadronGrouping">AI<em>A2A</em>DISPATCHER.SetSquadronGrouping</a>() method has additional behaviour. When there aren't enough CAP flights airborne, a GCI will be initiated for the remaining
+<p>Use the method <a href="##(AI_A2A_DISPATCHER).SetSquadronGrouping">AI<em>A2A</em>DISPATCHER.SetSquadronGrouping</a>() to set the amount of CAP or GCI flights that will take-off when spawned.</p>
+
+<p><img src="..\Presentations\AI_A2A_DISPATCHER\Dia12.JPG" alt="Banner Image"/></p>
+
+<p>In the case of GCI, the <a href="##(AI_A2A_DISPATCHER).SetSquadronGrouping">AI<em>A2A</em>DISPATCHER.SetSquadronGrouping</a>() method has additional behaviour. When there aren't enough CAP flights airborne, a GCI will be initiated for the remaining
 targets to be engaged. Depending on the grouping parameter, the spawned flights for GCI are grouped into this setting. <br/>
 For example with a group setting of 2, if 3 targets are detected and cannot be engaged by CAP or any airborne flight, 
 a GCI needs to be started, the GCI flights will be grouped as follows: Group 1 of 2 flights and Group 2 of one flight!</p>
@@ -770,6 +799,8 @@ a GCI needs to be started, the GCI flights will be grouped as follows: Group 1 o
 
 <p>The effectiveness can be set with the <strong>overhead parameter</strong>. This is a number that is used to calculate the amount of Units that dispatching command will allocate to GCI in surplus of detected amount of units.
 The <strong>default value</strong> of the overhead parameter is 1.0, which means <strong>equal balance</strong>. </p>
+
+<p><img src="..\Presentations\AI_A2A_DISPATCHER\Dia11.JPG" alt="Banner Image"/></p>
 
 <p>However, depending on the (type of) aircraft (strength and payload) in the squadron and the amount of resources available, this parameter can be changed.</p>
 
@@ -794,8 +825,11 @@ multiplied by the Overhead and rounded up to the smallest integer. </p>
 
 <h3>5.1. Set the CAP zones</h3>
 
+<p>CAP zones are patrol areas where Combat Air Patrol (CAP) flights loiter until they either return to base due to low fuel or are assigned an interception task by ground control.</p>
+
+<p><img src="..\Presentations\AI_A2A_DISPATCHER\Dia6.JPG" alt="Banner Image"/></p>
+
 <ul>
-    <li><p>CAP zones are patrol areas where Combat Air Patrol (CAP) flights loiter until they either return to base due to low fuel or are assigned an interception task by ground control.</p></li>
     <li><p>As the CAP flights wander around within the zone waiting to be tasked, these zones need to be large enough that the aircraft are not constantly turning 
     but do not have to be big and numerous enough to completely cover a border.</p></li>
     <li><p>CAP zones can be of any type, and are derived from the <a href="Zone.html##(ZONE_BASE)">Zone#ZONE_BASE</a> class. Zones can be <a href="Zone.html##(ZONE)">Zone#ZONE</a>, <a href="Zone.html##(ZONE_POLYGON)">Zone#ZONE_POLYGON</a>, <a href="Zone.html##(ZONE_UNIT)">Zone#ZONE_UNIT</a>, <a href="Zone.html##(ZONE_GROUP)">Zone#ZONE_GROUP</a>, etc.
@@ -809,6 +843,8 @@ multiplied by the Overhead and rounded up to the smallest integer. </p>
     <li><p>CAP flights do not need to be in the CAP zone before they are “on station” and ready for tasking. </p></li>
     <li><p>Typically if a CAP flight is tasked and therefore leaves their zone empty while they go off and intercept their target another CAP flight will spawn to take their place.</p></li>
 </ul>
+
+<p><img src="..\Presentations\AI_A2A_DISPATCHER\Dia7.JPG" alt="Banner Image"/></p>
 
 <p>The following example illustrates how CAP zones are coded:</p>
 

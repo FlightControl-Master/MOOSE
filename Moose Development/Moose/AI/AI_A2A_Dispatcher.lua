@@ -23,7 +23,12 @@ do -- AI_A2A_DISPATCHER
 
   --- # AI\_A2A\_DISPATCHER class, extends @{Tasking#DETECTION_MANAGER}
   -- 
-  -- The @{#AI\_A2A\_DISPATCHER} class is designed to create an automatic air defence system for a coalition. 
+  -- ![Banner Image](..\Presentations\AI_A2A_DISPATCHER\Dia1.JPG)
+  -- 
+  -- The @{#AI_A2A_DISPATCHER} class is designed to create an automatic air defence system for a coalition. 
+  -- 
+  -- ![Banner Image](..\Presentations\AI_A2A_DISPATCHER\Dia3.JPG)
+  -- 
   -- It includes automatic spawning of Combat Air Patrol aircraft (CAP) and Ground Controlled Intercept aircraft (GCI) in response to enemy air movements that are detected by a ground based radar network. 
   -- CAP flights will take off and proceed to designated CAP zones where they will remain on station until the ground radars direct them to intercept detected enemy aircraft or they run short of fuel and must return to base (RTB). When a CAP flight leaves their zone to perform an interception or return to base a new CAP flight will spawn to take their place.
   -- If all CAP flights are engaged or RTB then additional GCI interceptors will scramble to intercept unengaged enemy aircraft under ground radar control.
@@ -40,13 +45,21 @@ do -- AI_A2A_DISPATCHER
   -- 
   -- The @{#AI_A2A_DISPATCHER.New}() method is used to setup the EWR network and to define the grouping.
   -- 
-  -- ### 1.1. Define the EWR network:
+  -- ### 1.1. Define the **EWR network**:
+  -- 
+  -- As part of the AI\_A2A\_DISPATCHER constructor, an EWR network must be given as the first parameter.
+  -- An EWR network, or, Early Warning Radar network, is used to early detect potential airborne targets and to understand the position of patrolling targets of the enemy.
+  -- 
+  -- ![Banner Image](..\Presentations\AI_A2A_DISPATCHER\Dia5.JPG)
   -- 
   -- Typically EWR networks are setup using 55G6 EWR, 1L13 EWR, Hawk sr and Patriot str ground based radar units. 
   -- These radars have different ranges and 55G6 EWR and 1L13 EWR radars are Eastern Bloc units (eg Russia, Ukraine, Georgia) while the Hawk and Patriot radars are Western (eg US).
   -- Additionally, ANY other radar capable unit can be part of the EWR network! Also AWACS airborne units, planes, helicopters can help to detect targets, as long as they have radar.
   -- The position of these units is very important as they need to provide enough coverage 
-  -- to pick up enemy aircraft as they approach so that CAP and GCI flights can be tasked to intercept them. 
+  -- to pick up enemy aircraft as they approach so that CAP and GCI flights can be tasked to intercept them.
+  -- 
+  -- ![Banner Image](..\Presentations\AI_A2A_DISPATCHER\Dia7.JPG)
+  --  
   -- Additionally in a hot war situation where the border is no longer respected the placement of radars has a big effect on how fast the war escalates. 
   -- For example if they are a long way forward and can detect enemy planes on the ground and taking off 
   -- they will start to vector CAP and GCI flights to attack them straight away which will immediately draw a response from the other coalition. 
@@ -54,8 +67,8 @@ do -- AI_A2A_DISPATCHER
   -- therefore less CAP and GCI flights will spawn and this will tend to make just the border area active rather than a melee over the whole map. 
   -- It all depends on what the desired effect is. 
   -- 
-  -- EWR networks are dynamically constructed, that is, they form part of the @{Set#SET_GROUP} object that is given as the input parameter of the AI\_A2A\_DISPATCHER class.
-  -- By defining in a smart way the names or name prefixes of the groups of EWR capable units, these units will be automatically added or deleted from the EWR network, 
+  -- EWR networks are **dynamically constructed**, that is, they form part of the @{Set#SET_GROUP} object that is given as the input parameter of the AI\_A2A\_DISPATCHER class.
+  -- By defining in a **smart way the names or name prefixes of the groups** of EWR capable units, these units will be **automatically added or deleted** from the EWR network, 
   -- increasing or decreasing the radar coverage of the Early Warning System.
   -- 
   -- See the following example to setup an EWR network containing EWR stations and AWACS.
@@ -73,6 +86,9 @@ do -- AI_A2A_DISPATCHER
   -- **DetectionSetGroup** is then being configured to filter all active groups with a group name starting with **DF CCCP AWACS** or **DF CCCP EWR** to be included in the Set.
   -- **DetectionSetGroup** is then being ordered to start the dynamic filtering. Note that any destroy or new spawn of a group with the above names will be removed or added to the Set.
   -- The **DetectionSetGroup** variable is then passed to the @{#AI_A2A_DISPATCHER.New}() method to indicate the EWR network configuration and setup the A2A defense detection mechanism.
+  -- 
+  -- ### 1.2. Define the detected **target grouping radius**:
+  -- 
   -- As a second parameter of the @{#AI_A2A_DISPATCHER.New}() method, 30000 indicates that detected targets need to be grouped within a radius of 30km.
   -- The grouping radius should not be too small, but also depends on the types of planes and the era of the simulation.
   -- Fast planes like in the 80s, need a larger radius than WWII planes.  
@@ -84,6 +100,9 @@ do -- AI_A2A_DISPATCHER
   -- ## 2. Set the **engage radius**:
   -- 
   -- Define the radius to engage any target by airborne friendlies, which are executing cap or returning from an intercept mission.
+  -- 
+  -- ![Banner Image](..\Presentations\AI_A2A_DISPATCHER\Dia10.JPG)
+  -- 
   -- So, if there is a target area detected and reported, 
   -- then any friendlies that are airborne near this target area, 
   -- will be commanded to (re-)engage that target when available (if no other tasks were commanded).
@@ -98,10 +117,15 @@ do -- AI_A2A_DISPATCHER
   -- According to the tactical and strategic design of the mission broadly decide the shape and extent of red and blue territories. 
   -- They should be laid out such that a border area is created between the two coalitions.
   -- 
+  -- ![Banner Image](..\Presentations\AI_A2A_DISPATCHER\Dia4.JPG)
+  -- 
   -- Define a border area to simulate a **cold war** scenario and use the method @{#AI_A2A_DISPATCHER.SetBorderZone}() to create a border zone for the dispatcher.
   -- 
   -- A **cold war** is one where CAP aircraft patrol their territory but will not attack enemy aircraft or launch GCI aircraft unless enemy aircraft enter their territory. In other words the EWR may detect an enemy aircraft but will only send aircraft to attack it if it crosses the border.
   -- A **hot war** is one where CAP aircraft will intercept any detected enemy aircraft and GCI aircraft will launch against detected enemy aircraft without regard for territory. In other words if the ground radar can detect the enemy aircraft then it will send CAP and GCI aircraft to attack it.
+  -- 
+  -- ![Banner Image](..\Presentations\AI_A2A_DISPATCHER\Dia9.JPG)
+  -- 
   -- If it’s a cold war then the **borders of red and blue territory** need to be defined using a @{zone} object derived from @{Zone#ZONE_BASE}.
   -- If a hot war is chosen then **no borders** actually need to be defined using the helicopter units other than it makes it easier sometimes for the mission maker to envisage where the red and blue territories roughly are. In a hot war the borders are effectively defined by the ground based radar coverage of a coalition. Set the noborders parameter to 1
   -- 
@@ -169,7 +193,10 @@ do -- AI_A2A_DISPATCHER
   -- 
   -- ### 4.3. Set squadron grouping
   -- 
-  -- Choices are 1, 2, 3 or 4 when CAP or GCI flights spawn. Use the method @{#AI_A2A_DISPATCHER.SetSquadronGrouping}() to set the amount of CAP or GCI flights that will take-off when spawned.
+  -- Use the method @{#AI_A2A_DISPATCHER.SetSquadronGrouping}() to set the amount of CAP or GCI flights that will take-off when spawned.
+  -- 
+  -- ![Banner Image](..\Presentations\AI_A2A_DISPATCHER\Dia12.JPG)
+  -- 
   -- In the case of GCI, the @{#AI_A2A_DISPATCHER.SetSquadronGrouping}() method has additional behaviour. When there aren't enough CAP flights airborne, a GCI will be initiated for the remaining
   -- targets to be engaged. Depending on the grouping parameter, the spawned flights for GCI are grouped into this setting.   
   -- For example with a group setting of 2, if 3 targets are detected and cannot be engaged by CAP or any airborne flight, 
@@ -181,6 +208,8 @@ do -- AI_A2A_DISPATCHER
   -- 
   -- The effectiveness can be set with the **overhead parameter**. This is a number that is used to calculate the amount of Units that dispatching command will allocate to GCI in surplus of detected amount of units.
   -- The **default value** of the overhead parameter is 1.0, which means **equal balance**. 
+  -- 
+  -- ![Banner Image](..\Presentations\AI_A2A_DISPATCHER\Dia11.JPG)
   -- 
   -- However, depending on the (type of) aircraft (strength and payload) in the squadron and the amount of resources available, this parameter can be changed.
   -- 
@@ -203,8 +232,10 @@ do -- AI_A2A_DISPATCHER
   -- 
   -- ### 5.1. Set the CAP zones
   -- 
-  --   * CAP zones are patrol areas where Combat Air Patrol (CAP) flights loiter until they either return to base due to low fuel or are assigned an interception task by ground control.
+  -- CAP zones are patrol areas where Combat Air Patrol (CAP) flights loiter until they either return to base due to low fuel or are assigned an interception task by ground control.
   --   
+  -- ![Banner Image](..\Presentations\AI_A2A_DISPATCHER\Dia6.JPG)
+  -- 
   --   * As the CAP flights wander around within the zone waiting to be tasked, these zones need to be large enough that the aircraft are not constantly turning 
   --   but do not have to be big and numerous enough to completely cover a border.
   --   
@@ -223,6 +254,8 @@ do -- AI_A2A_DISPATCHER
   --   
   --   * Typically if a CAP flight is tasked and therefore leaves their zone empty while they go off and intercept their target another CAP flight will spawn to take their place.
   --  
+  -- ![Banner Image](..\Presentations\AI_A2A_DISPATCHER\Dia7.JPG)
+  -- 
   -- The following example illustrates how CAP zones are coded:
   -- 
   --      -- CAP Squadron execution.
@@ -1633,31 +1666,35 @@ do -- AI_A2A_DISPATCHER
           self:GCI( DetectedItem, DefendersMissing, Friendlies )
         end
       end
-      
-      -- Show tactical situation
-      Report:Add( string.format( "\n - Target %s ( %s ): %s" , DetectedItem.ItemID, DetectedItem.Index, DetectedItem.Set:GetObjectNames() ) )
+
+      if self.TacticalDisplay then      
+        -- Show tactical situation
+        Report:Add( string.format( "\n - Target %s ( %s ): %s" , DetectedItem.ItemID, DetectedItem.Index, DetectedItem.Set:GetObjectNames() ) )
+        for Defender, DefenderTask in pairs( self:GetDefenderTasks() ) do
+          local Defender = Defender -- Wrapper.Group#GROUP
+           if DefenderTask.Target and DefenderTask.Target.Index == DetectedItem.Index then
+             Report:Add( string.format( "   - %s ( %s - %s ) %s", Defender:GetName(), DefenderTask.Type, DefenderTask.Fsm:GetState(), Defender:HasTask() == true and "Executing" or "Idle" ) )
+           end
+        end
+      end
+    end
+
+    if self.TacticalDisplay then
+      Report:Add( "\n - No Targets:")
+      local TaskCount = 0
       for Defender, DefenderTask in pairs( self:GetDefenderTasks() ) do
+        TaskCount = TaskCount + 1
         local Defender = Defender -- Wrapper.Group#GROUP
-         if DefenderTask.Target and DefenderTask.Target.Index == DetectedItem.Index then
-           Report:Add( string.format( "   - %s ( %s - %s ) %s", Defender:GetName(), DefenderTask.Type, DefenderTask.Fsm:GetState(), Defender:HasTask() == true and "Executing" or "Idle" ) )
-         end
+        if not DefenderTask.Target then
+          local DefenderHasTask = Defender:HasTask()
+          Report:Add( string.format( "   - %s ( %s - %s ) %s", Defender:GetName(), DefenderTask.Type, DefenderTask.Fsm:GetState(), Defender:HasTask() == true and "Executing" or "Idle" ) )
+        end
       end
+      Report:Add( string.format( "\n - %d Tasks", TaskCount ) )
+  
+      self:T( Report:Text( "\n" ) )
+      trigger.action.outText( Report:Text( "\n" ), 25 )
     end
-
-    Report:Add( "\n - No Targets:")
-    local TaskCount = 0
-    for Defender, DefenderTask in pairs( self:GetDefenderTasks() ) do
-      TaskCount = TaskCount + 1
-      local Defender = Defender -- Wrapper.Group#GROUP
-      if not DefenderTask.Target then
-        local DefenderHasTask = Defender:HasTask()
-        Report:Add( string.format( "   - %s ( %s - %s ) %s", Defender:GetName(), DefenderTask.Type, DefenderTask.Fsm:GetState(), Defender:HasTask() == true and "Executing" or "Idle" ) )
-      end
-    end
-    Report:Add( string.format( "\n - %d Tasks", TaskCount ) )
-
-    self:T( Report:Text( "\n" ) )
-    trigger.action.outText( Report:Text( "\n" ), 25 )
     
     return true
   end
