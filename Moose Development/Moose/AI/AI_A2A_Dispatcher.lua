@@ -909,11 +909,8 @@ do -- AI_A2A_DISPATCHER
 
     local DefenderSquadron = self.DefenderSquadrons[SquadronName]
     
-    self:E( { AirbaseName = AirbaseName } )
     DefenderSquadron.Name = SquadronName
     DefenderSquadron.Airbase = AIRBASE:FindByName( AirbaseName )
-    self:E( { Airbase = DefenderSquadron.Airbase } )
-    self:E( { AirbaseObject = DefenderSquadron.Airbase:GetDCSObject() } )
     
     DefenderSquadron.Spawn = {}
     if type( SpawnTemplates ) == "string" then
