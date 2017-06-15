@@ -68,7 +68,7 @@ do -- AI_A2A_DISPATCHER
   -- It all depends on what the desired effect is. 
   -- 
   -- EWR networks are **dynamically constructed**, that is, they form part of the @{Set#SET_GROUP} object that is given as the input parameter of the AI\_A2A\_DISPATCHER class.
-  -- By defining in a **smart way the names or name prefixes of the groups** of EWR capable units, these units will be **automatically added or deleted** from the EWR network, 
+  -- By defining in a **smart way the names or name prefixes of the groups** with EWR capable units, these groups will be **automatically added or deleted** from the EWR network, 
   -- increasing or decreasing the radar coverage of the Early Warning System.
   -- 
   -- See the following example to setup an EWR network containing EWR stations and AWACS.
@@ -127,7 +127,9 @@ do -- AI_A2A_DISPATCHER
   -- ![Banner Image](..\Presentations\AI_A2A_DISPATCHER\Dia9.JPG)
   -- 
   -- If it’s a cold war then the **borders of red and blue territory** need to be defined using a @{zone} object derived from @{Zone#ZONE_BASE}.
-  -- If a hot war is chosen then **no borders** actually need to be defined using the helicopter units other than it makes it easier sometimes for the mission maker to envisage where the red and blue territories roughly are. In a hot war the borders are effectively defined by the ground based radar coverage of a coalition. Set the noborders parameter to 1
+  -- If a hot war is chosen then **no borders** actually need to be defined using the helicopter units other than 
+  -- it makes it easier sometimes for the mission maker to envisage where the red and blue territories roughly are. 
+  -- In a hot war the borders are effectively defined by the ground based radar coverage of a coalition.
   -- 
   -- ## 4. Squadrons: 
   -- 

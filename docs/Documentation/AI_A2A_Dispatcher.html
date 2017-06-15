@@ -648,7 +648,7 @@ therefore less CAP and GCI flights will spawn and this will tend to make just th
 It all depends on what the desired effect is. </p>
 
 <p>EWR networks are <strong>dynamically constructed</strong>, that is, they form part of the <a href="Set.html##(SET_GROUP)">Set#SET_GROUP</a> object that is given as the input parameter of the AI_A2A_DISPATCHER class.
-By defining in a <strong>smart way the names or name prefixes of the groups</strong> of EWR capable units, these units will be <strong>automatically added or deleted</strong> from the EWR network, 
+By defining in a <strong>smart way the names or name prefixes of the groups</strong> with EWR capable units, these groups will be <strong>automatically added or deleted</strong> from the EWR network, 
 increasing or decreasing the radar coverage of the Early Warning System.</p>
 
 <p>See the following example to setup an EWR network containing EWR stations and AWACS.</p>
@@ -708,7 +708,9 @@ A <strong>hot war</strong> is one where CAP aircraft will intercept any detected
 <p><img src="..\Presentations\AI_A2A_DISPATCHER\Dia9.JPG" alt="Banner Image"/></p>
 
 <p>If it’s a cold war then the <strong>borders of red and blue territory</strong> need to be defined using a <a href="zone.html">zone</a> object derived from <a href="Zone.html##(ZONE_BASE)">Zone#ZONE_BASE</a>.
-If a hot war is chosen then <strong>no borders</strong> actually need to be defined using the helicopter units other than it makes it easier sometimes for the mission maker to envisage where the red and blue territories roughly are. In a hot war the borders are effectively defined by the ground based radar coverage of a coalition. Set the noborders parameter to 1</p>
+If a hot war is chosen then <strong>no borders</strong> actually need to be defined using the helicopter units other than 
+it makes it easier sometimes for the mission maker to envisage where the red and blue territories roughly are. 
+In a hot war the borders are effectively defined by the ground based radar coverage of a coalition.</p>
 
 <h2>4. Squadrons:</h2>
 
