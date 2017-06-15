@@ -229,6 +229,8 @@ function AI_A2A:New( AIGroup )
   self:AddTransition( "*", "Crash", "Crashed" )
   self:AddTransition( "*", "PilotDead", "*" )
   
+  self.IdleCount = 0
+  
   return self
 end
 
@@ -402,24 +404,26 @@ function AI_A2A:onafterStatus()
       RTB = true
     end
 
-    -- Check if planes went RTB
-    local TargetDistance = self.TargetDistance
-    local ClosestTargetDistance = self.ClosestTargetDistance
-    if TargetDistance then
-      if ClosestTargetDistance <= 40000 then
-        if TargetDistance > 40000 then
-          self:E( "Lost control of group " .. self.Controllable:GetName() .. " ... RTB!" )
+    -- Check if planes went RTB and are out of control.
+    if self.Controllable:HasTask() == false then
+      if not self:Is( "Started" ) and 
+         not self:Is( "Stopped" ) then
+        if self.IdleCount >= 2 then
+          self:E( self.Controllable:GetName() .. " control lost! " )
           self:LostControl()
-          RTB = true
+        else
+          self.IdleCount = self.IdleCount + 1
         end
       end
+    else
+      self.IdleCount = 0
     end
     
     if RTB == true then
       self:__RTB( 0.5 )
-    else
-      self:__Status( 10 ) -- Execute the Patrol event after 30 seconds.
     end
+    
+    self:__Status( 10 )
   end
 end
 
@@ -432,19 +436,21 @@ function AI_A2A.RTBRoute( AIGroup )
   _AI_A2A:__RTB( 0.5 )
 end
 
+
+
 --- @param #AI_A2A self
 -- @param Wrapper.Group#GROUP AIGroup
 function AI_A2A:onafterRTB( AIGroup, From, Event, To )
   self:F( { AIGroup, From, Event, To } )
 
-  self:E( "Group " .. self.Controllable:GetName() .. " ... RTB! ( " .. self:GetState() .. " )" )
   
   if AIGroup and AIGroup:IsAlive() then
 
+    self:E( "Group " .. AIGroup:GetName() .. " ... RTB! ( " .. self:GetState() .. " )" )
+    
     self.CheckStatus = false
     
     self:ClearTargetDistance()
-    AIGroup:ClearTasks()
     AIGroup:ClearTasks()
 
     local EngageRoute = {}
