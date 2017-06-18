@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' )
-env.info( 'Moose Generation Timestamp: 20170518_2056' )
+env.info( 'Moose Generation Timestamp: 20170618_0858' )
 
 --- Various routines
 -- @module routines
@@ -5070,7 +5070,7 @@ function EVENT:onEvent( Event )
         Event.IniUnitName = Event.IniDCSUnitName
         Event.IniUnit = SCENERY:Register( Event.IniDCSUnitName, Event.initiator )
         Event.IniCategory = Event.IniDCSUnit:getDesc().category
-        Event.IniTypeName = Event.IniDCSUnit:getTypeName()
+        Event.IniTypeName = Event.initiator:isExist() and Event.IniDCSUnit:getTypeName() or "SCENERY" -- TODO: Bug fix for 2.1!
       end
     end
     
