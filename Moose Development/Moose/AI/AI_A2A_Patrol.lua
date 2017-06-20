@@ -347,6 +347,7 @@ function AI_A2A_PATROL:onafterRoute( AIGroup, From, Event, To )
     local CurrentCoord = AIGroup:GetCoordinate()
     
     local ToTargetCoord = self.PatrolZone:GetRandomPointVec2()
+    ToTargetCoord:SetAlt(math.random( self.PatrolFloorAltitude,self.PatrolCeilingAltitude ) )
     self:SetTargetDistance( ToTargetCoord ) -- For RTB status check
     
     local ToTargetSpeed = math.random( self.PatrolMinSpeed, self.PatrolMaxSpeed )

@@ -68,7 +68,7 @@ do -- AI_A2A_DISPATCHER
   -- It all depends on what the desired effect is. 
   -- 
   -- EWR networks are **dynamically constructed**, that is, they form part of the @{Set#SET_GROUP} object that is given as the input parameter of the AI\_A2A\_DISPATCHER class.
-  -- By defining in a **smart way the names or name prefixes of the groups** of EWR capable units, these units will be **automatically added or deleted** from the EWR network, 
+  -- By defining in a **smart way the names or name prefixes of the groups** with EWR capable units, these groups will be **automatically added or deleted** from the EWR network, 
   -- increasing or decreasing the radar coverage of the Early Warning System.
   -- 
   -- See the following example to setup an EWR network containing EWR stations and AWACS.
@@ -127,7 +127,9 @@ do -- AI_A2A_DISPATCHER
   -- ![Banner Image](..\Presentations\AI_A2A_DISPATCHER\Dia9.JPG)
   -- 
   -- If it’s a cold war then the **borders of red and blue territory** need to be defined using a @{zone} object derived from @{Zone#ZONE_BASE}.
-  -- If a hot war is chosen then **no borders** actually need to be defined using the helicopter units other than it makes it easier sometimes for the mission maker to envisage where the red and blue territories roughly are. In a hot war the borders are effectively defined by the ground based radar coverage of a coalition. Set the noborders parameter to 1
+  -- If a hot war is chosen then **no borders** actually need to be defined using the helicopter units other than 
+  -- it makes it easier sometimes for the mission maker to envisage where the red and blue territories roughly are. 
+  -- In a hot war the borders are effectively defined by the ground based radar coverage of a coalition.
   -- 
   -- ## 4. Squadrons: 
   -- 
@@ -377,76 +379,76 @@ do -- AI_A2A_DISPATCHER
   -- 
   -- Find the following mission script as an example:
   -- 
-  --    -- Define a SET_GROUP object that builds a collection of groups that define the EWR network.
-  --    -- Here we build the network with all the groups that have a name starting with DF CCCP AWACS and DF CCCP EWR.
-  --    DetectionSetGroup = SET_GROUP:New()
-  --    DetectionSetGroup:FilterPrefixes( { "DF CCCP AWACS", "DF CCCP EWR" } )
-  --    DetectionSetGroup:FilterStart()
-  --    
-  --    -- Setup the A2A dispatcher, and initialize it.
-  --    A2ADispatcher = AI_A2A_DISPATCHER:New( DetectionSetGroup, 30000 )
-  --    
-  --    -- Initialize the dispatcher, setting up a border zone. This is a polygon, 
-  --    -- which takes the waypoints of a late activated group with the name CCCP Border as the boundaries of the border area.
-  --    -- Any enemy crossing this border will be engaged.
-  --    CCCPBorderZone = ZONE_POLYGON:New( "CCCP Border", GROUP:FindByName( "CCCP Border" ) )
-  --    A2ADispatcher:SetBorderZone( { CCCPBorderZone } )
-  --    
-  --    -- Initialize the dispatcher, setting up a radius of 100km where any airborne friendly 
-  --    -- without an assignment within 100km radius from a detected target, will engage that target.
-  --    A2ADispatcher:SetEngageRadius( 300000 )
-  --    
-  --    -- Setup the squadrons.
-  --    A2ADispatcher:SetSquadron( "Mineralnye", AIRBASE.Caucasus.Mineralnye_Vody, { "SQ CCCP SU-27" }, 20 )
-  --    A2ADispatcher:SetSquadron( "Maykop", AIRBASE.Caucasus.Maykop_Khanskaya, { "SQ CCCP MIG-31" }, 20 )
-  --    A2ADispatcher:SetSquadron( "Mozdok", AIRBASE.Caucasus.Mozdok, { "SQ CCCP MIG-31" }, 20 )
-  --    A2ADispatcher:SetSquadron( "Sochi", AIRBASE.Caucasus.Sochi_Adler, { "SQ CCCP SU-27" }, 20 )
-  --    A2ADispatcher:SetSquadron( "Novo", AIRBASE.Caucasus.Novorossiysk, { "SQ CCCP SU-27" }, 20 )
-  --    
-  --    -- Setup the overhead
-  --    A2ADispatcher:SetSquadronOverhead( "Mineralnye", 1.2 )
-  --    A2ADispatcher:SetSquadronOverhead( "Maykop", 1 )
-  --    A2ADispatcher:SetSquadronOverhead( "Mozdok", 1.5 )
-  --    A2ADispatcher:SetSquadronOverhead( "Sochi", 1 )
-  --    A2ADispatcher:SetSquadronOverhead( "Novo", 1 )
-  --    
-  --    -- Setup the Grouping
-  --    A2ADispatcher:SetSquadronGrouping( "Mineralnye", 2 )
-  --    A2ADispatcher:SetSquadronGrouping( "Sochi", 2 )
-  --    A2ADispatcher:SetSquadronGrouping( "Novo", 3 )
-  --    
-  --    -- Setup the Takeoff methods
-  --    A2ADispatcher:SetSquadronTakeoff( "Mineralnye", AI_A2A_DISPATCHER.Takeoff.Air )
-  --    A2ADispatcher:SetSquadronTakeoffInAir( "Sochi" )
-  --    A2ADispatcher:SetSquadronTakeoffFromRunway( "Mozdok" )
-  --    A2ADispatcher:SetSquadronTakeoffFromParkingCold( "Maykop" )
-  --    A2ADispatcher:SetSquadronTakeoffFromParkingHot( "Novo" )
-  --    
-  --    -- Setup the Landing methods
-  --    A2ADispatcher:SetSquadronLandingAtRunway( "Mineralnye" )
-  --    A2ADispatcher:SetSquadronLandingNearAirbase( "Sochi" )
-  --    A2ADispatcher:SetSquadronLandingAtEngineShutdown( "Mozdok" )
-  --    A2ADispatcher:SetSquadronLandingNearAirbase( "Maykop" )
-  --    A2ADispatcher:SetSquadronLanding( "Novo", AI_A2A_DISPATCHER.Landing.AtRunway )
-  --    
-  --    
-  --    -- CAP Squadron execution.
-  --    CAPZoneEast = ZONE_POLYGON:New( "CAP Zone East", GROUP:FindByName( "CAP Zone East" ) )
-  --    A2ADispatcher:SetSquadronCap( "Mineralnye", CAPZoneEast, 4000, 10000, 500, 600, 800, 900 )
-  --    A2ADispatcher:SetSquadronCapInterval( "Mineralnye", 2, 30, 60, 1 )
-  --    
-  --    CAPZoneWest = ZONE_POLYGON:New( "CAP Zone West", GROUP:FindByName( "CAP Zone West" ) )
-  --    A2ADispatcher:SetSquadronCap( "Sochi", CAPZoneWest, 4000, 8000, 600, 800, 800, 1200, "BARO" )
-  --    A2ADispatcher:SetSquadronCapInterval( "Sochi", 2, 30, 120, 1 )
-  --    
-  --    CAPZoneMiddle = ZONE:New( "CAP Zone Middle")
-  --    A2ADispatcher:SetSquadronCap( "Maykop", CAPZoneMiddle, 4000, 8000, 600, 800, 800, 1200, "RADIO" )
-  --    A2ADispatcher:SetSquadronCapInterval( "Sochi", 2, 30, 120, 1 )
-  --    
-  --    -- GCI Squadron execution.
-  --    A2ADispatcher:SetSquadronGci( "Mozdok", 900, 1200 )
-  --    A2ADispatcher:SetSquadronGci( "Novo", 900, 2100 )
-  --    A2ADispatcher:SetSquadronGci( "Maykop", 900, 1200 )
+  --        -- Define a SET_GROUP object that builds a collection of groups that define the EWR network.
+  --        -- Here we build the network with all the groups that have a name starting with DF CCCP AWACS and DF CCCP EWR.
+  --        DetectionSetGroup = SET_GROUP:New()
+  --        DetectionSetGroup:FilterPrefixes( { "DF CCCP AWACS", "DF CCCP EWR" } )
+  --        DetectionSetGroup:FilterStart()
+  --        
+  --        -- Setup the A2A dispatcher, and initialize it.
+  --        A2ADispatcher = AI_A2A_DISPATCHER:New( DetectionSetGroup, 30000 )
+  --        
+  --        -- Initialize the dispatcher, setting up a border zone. This is a polygon, 
+  --        -- which takes the waypoints of a late activated group with the name CCCP Border as the boundaries of the border area.
+  --        -- Any enemy crossing this border will be engaged.
+  --        CCCPBorderZone = ZONE_POLYGON:New( "CCCP Border", GROUP:FindByName( "CCCP Border" ) )
+  --        A2ADispatcher:SetBorderZone( { CCCPBorderZone } )
+  --        
+  --        -- Initialize the dispatcher, setting up a radius of 100km where any airborne friendly 
+  --        -- without an assignment within 100km radius from a detected target, will engage that target.
+  --        A2ADispatcher:SetEngageRadius( 300000 )
+  --        
+  --        -- Setup the squadrons.
+  --        A2ADispatcher:SetSquadron( "Mineralnye", AIRBASE.Caucasus.Mineralnye_Vody, { "SQ CCCP SU-27" }, 20 )
+  --        A2ADispatcher:SetSquadron( "Maykop", AIRBASE.Caucasus.Maykop_Khanskaya, { "SQ CCCP MIG-31" }, 20 )
+  --        A2ADispatcher:SetSquadron( "Mozdok", AIRBASE.Caucasus.Mozdok, { "SQ CCCP MIG-31" }, 20 )
+  --        A2ADispatcher:SetSquadron( "Sochi", AIRBASE.Caucasus.Sochi_Adler, { "SQ CCCP SU-27" }, 20 )
+  --        A2ADispatcher:SetSquadron( "Novo", AIRBASE.Caucasus.Novorossiysk, { "SQ CCCP SU-27" }, 20 )
+  --        
+  --        -- Setup the overhead
+  --        A2ADispatcher:SetSquadronOverhead( "Mineralnye", 1.2 )
+  --        A2ADispatcher:SetSquadronOverhead( "Maykop", 1 )
+  --        A2ADispatcher:SetSquadronOverhead( "Mozdok", 1.5 )
+  --        A2ADispatcher:SetSquadronOverhead( "Sochi", 1 )
+  --        A2ADispatcher:SetSquadronOverhead( "Novo", 1 )
+  --        
+  --        -- Setup the Grouping
+  --        A2ADispatcher:SetSquadronGrouping( "Mineralnye", 2 )
+  --        A2ADispatcher:SetSquadronGrouping( "Sochi", 2 )
+  --        A2ADispatcher:SetSquadronGrouping( "Novo", 3 )
+  --        
+  --        -- Setup the Takeoff methods
+  --        A2ADispatcher:SetSquadronTakeoff( "Mineralnye", AI_A2A_DISPATCHER.Takeoff.Air )
+  --        A2ADispatcher:SetSquadronTakeoffInAir( "Sochi" )
+  --        A2ADispatcher:SetSquadronTakeoffFromRunway( "Mozdok" )
+  --        A2ADispatcher:SetSquadronTakeoffFromParkingCold( "Maykop" )
+  --        A2ADispatcher:SetSquadronTakeoffFromParkingHot( "Novo" )
+  --        
+  --        -- Setup the Landing methods
+  --        A2ADispatcher:SetSquadronLandingAtRunway( "Mineralnye" )
+  --        A2ADispatcher:SetSquadronLandingNearAirbase( "Sochi" )
+  --        A2ADispatcher:SetSquadronLandingAtEngineShutdown( "Mozdok" )
+  --        A2ADispatcher:SetSquadronLandingNearAirbase( "Maykop" )
+  --        A2ADispatcher:SetSquadronLanding( "Novo", AI_A2A_DISPATCHER.Landing.AtRunway )
+  --        
+  --        
+  --        -- CAP Squadron execution.
+  --        CAPZoneEast = ZONE_POLYGON:New( "CAP Zone East", GROUP:FindByName( "CAP Zone East" ) )
+  --        A2ADispatcher:SetSquadronCap( "Mineralnye", CAPZoneEast, 4000, 10000, 500, 600, 800, 900 )
+  --        A2ADispatcher:SetSquadronCapInterval( "Mineralnye", 2, 30, 60, 1 )
+  --        
+  --        CAPZoneWest = ZONE_POLYGON:New( "CAP Zone West", GROUP:FindByName( "CAP Zone West" ) )
+  --        A2ADispatcher:SetSquadronCap( "Sochi", CAPZoneWest, 4000, 8000, 600, 800, 800, 1200, "BARO" )
+  --        A2ADispatcher:SetSquadronCapInterval( "Sochi", 2, 30, 120, 1 )
+  --        
+  --        CAPZoneMiddle = ZONE:New( "CAP Zone Middle")
+  --        A2ADispatcher:SetSquadronCap( "Maykop", CAPZoneMiddle, 4000, 8000, 600, 800, 800, 1200, "RADIO" )
+  --        A2ADispatcher:SetSquadronCapInterval( "Sochi", 2, 30, 120, 1 )
+  --        
+  --        -- GCI Squadron execution.
+  --        A2ADispatcher:SetSquadronGci( "Mozdok", 900, 1200 )
+  --        A2ADispatcher:SetSquadronGci( "Novo", 900, 2100 )
+  --        A2ADispatcher:SetSquadronGci( "Maykop", 900, 1200 )
   -- 
   -- #### 8.5.1. Script the EWR network
   -- 
@@ -903,24 +905,23 @@ do -- AI_A2A_DISPATCHER
   -- @return #AI_A2A_DISPATCHER
   function AI_A2A_DISPATCHER:SetSquadron( SquadronName, AirbaseName, SpawnTemplates, Resources )
   
+    self:E( { SquadronName = SquadronName, AirbaseName = AirbaseName, SpawnTemplates = SpawnTemplates, Resources = Resources } )
+  
     self.DefenderSquadrons[SquadronName] = self.DefenderSquadrons[SquadronName] or {} 
 
     local DefenderSquadron = self.DefenderSquadrons[SquadronName]
     
-    self:E( { AirbaseName = AirbaseName } )
     DefenderSquadron.Name = SquadronName
     DefenderSquadron.Airbase = AIRBASE:FindByName( AirbaseName )
-    self:E( { Airbase = DefenderSquadron.Airbase } )
-    self:E( { AirbaseObject = DefenderSquadron.Airbase:GetDCSObject() } )
     
     DefenderSquadron.Spawn = {}
     if type( SpawnTemplates ) == "string" then
       local SpawnTemplate = SpawnTemplates
-      self.DefenderSpawns[SpawnTemplate] = self.DefenderSpawns[SpawnTemplate] or SPAWN:New( SpawnTemplate ):InitCleanUp( 30 )
+      self.DefenderSpawns[SpawnTemplate] = self.DefenderSpawns[SpawnTemplate] or SPAWN:New( SpawnTemplate ) -- :InitCleanUp( 180 )
       DefenderSquadron.Spawn[1] = self.DefenderSpawns[SpawnTemplate]
     else
       for TemplateID, SpawnTemplate in pairs( SpawnTemplates ) do
-        self.DefenderSpawns[SpawnTemplate] = self.DefenderSpawns[SpawnTemplate] or SPAWN:New( SpawnTemplate ):InitCleanUp( 30 )
+        self.DefenderSpawns[SpawnTemplate] = self.DefenderSpawns[SpawnTemplate] or SPAWN:New( SpawnTemplate ) -- :InitCleanUp( 180 )
         DefenderSquadron.Spawn[#DefenderSquadron.Spawn+1] = self.DefenderSpawns[SpawnTemplate]
       end
     end
@@ -958,6 +959,21 @@ do -- AI_A2A_DISPATCHER
   -- @param #number EngageMaxSpeed The maximum speed at which the engage can be executed.
   -- @param #number AltType The altitude type, which is a string "BARO" defining Barometric or "RADIO" defining radio controlled altitude.
   -- @return #AI_A2A_DISPATCHER
+  -- @usage
+  -- 
+  --        -- CAP Squadron execution.
+  --        CAPZoneEast = ZONE_POLYGON:New( "CAP Zone East", GROUP:FindByName( "CAP Zone East" ) )
+  --        A2ADispatcher:SetSquadronCap( "Mineralnye", CAPZoneEast, 4000, 10000, 500, 600, 800, 900 )
+  --        A2ADispatcher:SetSquadronCapInterval( "Mineralnye", 2, 30, 60, 1 )
+  --        
+  --        CAPZoneWest = ZONE_POLYGON:New( "CAP Zone West", GROUP:FindByName( "CAP Zone West" ) )
+  --        A2ADispatcher:SetSquadronCap( "Sochi", CAPZoneWest, 4000, 8000, 600, 800, 800, 1200, "BARO" )
+  --        A2ADispatcher:SetSquadronCapInterval( "Sochi", 2, 30, 120, 1 )
+  --        
+  --        CAPZoneMiddle = ZONE:New( "CAP Zone Middle")
+  --        A2ADispatcher:SetSquadronCap( "Maykop", CAPZoneMiddle, 4000, 8000, 600, 800, 800, 1200, "RADIO" )
+  --        A2ADispatcher:SetSquadronCapInterval( "Sochi", 2, 30, 120, 1 )
+  -- 
   function AI_A2A_DISPATCHER:SetSquadronCap( SquadronName, Zone, FloorAltitude, CeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, EngageMinSpeed, EngageMaxSpeed, AltType )
   
     self.DefenderSquadrons[SquadronName] = self.DefenderSquadrons[SquadronName] or {} 
@@ -985,6 +1001,21 @@ do -- AI_A2A_DISPATCHER
   -- @param #AI_A2A_DISPATCHER self
   -- @param #string SquadronName The squadron name.
   -- @return #AI_A2A_DISPATCHER
+  -- @usage
+  -- 
+  --        -- CAP Squadron execution.
+  --        CAPZoneEast = ZONE_POLYGON:New( "CAP Zone East", GROUP:FindByName( "CAP Zone East" ) )
+  --        A2ADispatcher:SetSquadronCap( "Mineralnye", CAPZoneEast, 4000, 10000, 500, 600, 800, 900 )
+  --        A2ADispatcher:SetSquadronCapInterval( "Mineralnye", 2, 30, 60, 1 )
+  --        
+  --        CAPZoneWest = ZONE_POLYGON:New( "CAP Zone West", GROUP:FindByName( "CAP Zone West" ) )
+  --        A2ADispatcher:SetSquadronCap( "Sochi", CAPZoneWest, 4000, 8000, 600, 800, 800, 1200, "BARO" )
+  --        A2ADispatcher:SetSquadronCapInterval( "Sochi", 2, 30, 120, 1 )
+  --        
+  --        CAPZoneMiddle = ZONE:New( "CAP Zone Middle")
+  --        A2ADispatcher:SetSquadronCap( "Maykop", CAPZoneMiddle, 4000, 8000, 600, 800, 800, 1200, "RADIO" )
+  --        A2ADispatcher:SetSquadronCapInterval( "Sochi", 2, 30, 120, 1 )
+  -- 
   function AI_A2A_DISPATCHER:SetSquadronCapInterval( SquadronName, CapLimit, LowInterval, HighInterval, Probability )
   
     self.DefenderSquadrons[SquadronName] = self.DefenderSquadrons[SquadronName] or {} 
@@ -1085,6 +1116,13 @@ do -- AI_A2A_DISPATCHER
   -- @param #string SquadronName The squadron name.
   -- @param #number EngageMinSpeed The minimum speed at which the gci can be executed.
   -- @param #number EngageMaxSpeed The maximum speed at which the gci can be executed.
+  -- @usage 
+  -- 
+  --        -- GCI Squadron execution.
+  --        A2ADispatcher:SetSquadronGci( "Mozdok", 900, 1200 )
+  --        A2ADispatcher:SetSquadronGci( "Novo", 900, 2100 )
+  --        A2ADispatcher:SetSquadronGci( "Maykop", 900, 1200 )
+  -- 
   -- @return #AI_A2A_DISPATCHER
   function AI_A2A_DISPATCHER:SetSquadronGci( SquadronName, EngageMinSpeed, EngageMaxSpeed )
   
@@ -1846,11 +1884,11 @@ do -- AI_A2A_DISPATCHER
 
       if self.TacticalDisplay then      
         -- Show tactical situation
-        Report:Add( string.format( "\n - Target %s ( %s ): %s" , DetectedItem.ItemID, DetectedItem.Index, DetectedItem.Set:GetObjectNames() ) )
+        Report:Add( string.format( "\n - Target %s ( %s ): ( #%d ) %s" , DetectedItem.ItemID, DetectedItem.Index, DetectedItem.Set:Count(), DetectedItem.Set:GetObjectNames() ) )
         for Defender, DefenderTask in pairs( self:GetDefenderTasks() ) do
           local Defender = Defender -- Wrapper.Group#GROUP
            if DefenderTask.Target and DefenderTask.Target.Index == DetectedItem.Index then
-             Report:Add( string.format( "   - %s ( %s - %s ) %s", Defender:GetName(), DefenderTask.Type, DefenderTask.Fsm:GetState(), Defender:HasTask() == true and "Executing" or "Idle" ) )
+             Report:Add( string.format( "   - %s ( %s - %s ): ( #%d ) %s", Defender:GetName(), DefenderTask.Type, DefenderTask.Fsm:GetState(), Defender:GetSize(), Defender:HasTask() == true and "Executing" or "Idle" ) )
            end
         end
       end
@@ -1864,7 +1902,7 @@ do -- AI_A2A_DISPATCHER
         local Defender = Defender -- Wrapper.Group#GROUP
         if not DefenderTask.Target then
           local DefenderHasTask = Defender:HasTask()
-          Report:Add( string.format( "   - %s ( %s - %s ) %s", Defender:GetName(), DefenderTask.Type, DefenderTask.Fsm:GetState(), Defender:HasTask() == true and "Executing" or "Idle" ) )
+          Report:Add( string.format( "   - %s ( %s - %s ): ( #%d ) %s", Defender:GetName(), DefenderTask.Type, DefenderTask.Fsm:GetState(), Defender:GetSize(), Defender:HasTask() == true and "Executing" or "Idle" ) )
         end
       end
       Report:Add( string.format( "\n - %d Tasks", TaskCount ) )

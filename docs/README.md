@@ -1,4 +1,4 @@
-# 1) MOOSE framework
+# 1. MOOSE framework
 
 MOOSE is a **M**ission **O**bject **O**riented **S**cripting **E**nvironment, and is meant for mission designers and mission hosters.
 It allows to quickly setup complex missions using pre-scripted scenarios using the available classes within the MOOSE Framework.
@@ -17,55 +17,7 @@ Within the community, key users will start supporting, documenting, explaining a
 It is the ambition to grow this framework as a de-facto standard for mission designers to use.
 
 
-
-
-# 2) MOOSE usage
-
-The delivery of MOOSE follows a structured release process. Over time, new features are added that can be used in your mission.
-
-### The latest release of MOOSE can be downloaded **[here](https://github.com/FlightControl-Master/MOOSE/releases)**.  
-
-There are 3 different ways how you can use MOOSE, each with a different engagement and complexity level:
-
-
-
-## 2.1) Use MOOSE as a Mission Designer
-
-Refer to the detailed **[Usage Guide](Usage_Guide.html)** for more information.
-
-
-
-## 2.2) Beta test MOOSE
-
-Beta testers of MOOSE are requested to install additional software. 
-
-As a return or as a reward, testers get:
- 
-  * Newly developed features planned for the next MOOSE release can be tested and incorporated in your missions early.
-  * You can evaluate and contribute to the stability of the next release.
-  * Your mission creation workflow becomes very flexible. New features are dynamically added to you missions.
-
-Please read the detailed **[Beta Test Guide](Beta_Test_Guide.html)** for more information.
-  
-  
-  
-## 2.3) Contribute on the MOOSE development
-
-Those people who have experience in lua development or are excited to contribute to the MOOSE project are welcome.
-
-Please consult the **[Contribution Guide](Contribution_Guide.html)** for more information.
-  
-  
-  
-# 3) MOOSE Support Channels
-
-MOOSE is broadcasted, documented and supported through various social media channels.  
-
-Click here for the **[communities guide](Communities.html)** of the MOOSE framework.
-  
-  
-
-# 4) MOOSE Framework
+# 2. MOOSE Framework
 
 The following classes are currently embedded within MOOSE framework and can be included within your mission scripts:
 
@@ -92,7 +44,7 @@ You'll need to browse to the right MOOSE Class within the inheritance tree struc
 
 
 
-## 4.1) MOOSE Demonstration Missions
+## MOOSE Demonstration Missions
 
 The framework comes with demonstration missions which can be downloaded [here](https://github.com/FlightControl-Master/MOOSE_MISSIONS/releases), that you can try out and helps you to code.  
 These missions provide examples of defined use cases how the MOOSE framework can be utilized. Each test mission is located in a separate directory, which contains at least one .lua file and .miz file.
@@ -104,8 +56,92 @@ more complex mission scenarios by combining these MOOSE classes into a complex b
 Some of these exact test missions are also demonstrated in a video format on the [YouTube channel](https://www.youtube.com/channel/UCjrA9j5LQoWsG4SpS8i79Qg).
 
 
+## 2.1. MOOSE Human Tasking Classes
 
-## 4.2) MOOSE Core Classes
+MOOSE Tasking Classes provide a comprehensive Mission Orchestration System.
+Through COMMANDCENTERs, multiple logical MISSIONs can be orchestrated for coalitions.
+Within each MISSION, various TASKs can be defined.
+Each TASK has a TASK ACTION flow, which is the flow that a player (hosted by a UNIT) within the simulator needs to follow and accomplish.
+
+* [COMMANDCENTER](Documentation/CommandCenter.html): Orchestrates various logical MISSIONs for a coalition.
+
+* [MISSION](Documentation/Mission.html): Each MISSION has various TASKs to be executed and accomplished by players.
+
+* [TASK_A2A_DISPATCHER](Documentation/Task_A2A_Dispatcher.html): Automatically and dynamically dispatch A2A tasks to be executed by human players, as a result of the detection of airborne targets within a Mission scope.
+
+* [TASK_A2G_DISPATCHER](Documentation/Task_A2G_Dispatcher.html): Automatically and dynamically dispatch A2G tasks to be executed by human players, as a result of the detection of ground targets within a Mission scope.
+
+* [TASK_A2A](Documentation/Task_A2A.html): Models a A2A CAP, INTERCEPT and SWEEP tasks where a Player is routed towards an attack zone without enemies nearby, and various ground targets need to be eliminated.
+
+* [TASK_A2G](Documentation/Task_A2G.html): Models a A2G SEAD, CAS and BAI tasks where a Player is routed towards an attack zone with enemies nearby, and various ground targets need to be eliminated.
+
+
+## 2.2. MOOSE AI Controlling Classes
+
+MOOSE AI Controlling Classes provide mechanisms to control AI over long lasting processes.  
+These AI Controlling Classes are based on FSM (Finite State Machine) Classes, and provided an encapsulated way to make AI behave or execute an activity.
+
+* [AI_A2A_DISPATCHER](Documentation/AI_A2A_Dispatcher.html): Create an automatic and dynamic A2A defense system, executed by AI units, as a result of detected A2A airborne targets executing CAP and GCI. This script replaces the GCICAP script.
+
+* [AI_BALANCER](Documentation/AI_Balancer.html): Compensate in a multi player mission the abscence of players with dynamically spawned AI air units. When players join CLIENTS, the AI will either be destroyed, or will fly back to the home or nearest friendly airbase.
+
+* [AI_PATROL_ZONE](Documentation/AI_Patrol_Zone.html): Make an alive AI Group patrol a zone derived from the ZONE_BASE class. Manage out-of-fuel events and set altitude and speed ranges for the patrol.
+
+* [AI_CAP](Documentation/AI_Cap.html): Make an alive AI Group perform Combat Air Patrol as a dynamic process.
+
+* [AI_CAS](Documentation/AI_Cas.html): Make an alive AI Group perform Close Air Support as a dynamic process.
+
+* [AI_BAI](Documentation/AI_Bai.html): Make an alive AI Group perform Battlefield Air Interdiction as a dynamic process.
+
+
+## 2.3. MOOSE Functional Classes
+
+MOOSE Functional Classes provide various functions that are useful in mission design.
+
+* [SPAWN](Documentation/Spawn.html): Spawn new groups (and units) during mission execution.
+
+* [ESCORT](Documentation/Escort.html): Makes groups consisting of helicopters, airplanes, ground troops or ships within a mission joining your flight. You can control these groups through the ratio menu during your flight. Available commands are around: Navigation, Position Hold, Reporting (Target Detection), Attacking, Assisted Attacks, ROE, Evasion, Mission Execution and more ...
+
+* [MISSILETRAINER](Documentation/MissileTrainer.html): Missile trainer, it destroys missiles when they are within a certain range of player airplanes, displays tracking and alert messages of missile launches; approach; destruction, and configure with radio menu commands. Various APIs available to configure the trainer.
+
+* [DETECTION](Documentation/Detection.html): Detect other units using the available sensors of the detection unit. The DETECTION_BASE derived classes will provide different methods how the sets of detected objects are built.
+
+* [SCORING](Documentation/Scoring.html): Administer the scoring of player achievements, and create a CSV file logging the scoring events for use at team or squadron websites.
+
+* [SEAD](Documentation/Sead.html): Make SAM sites avoid SEAD missiles being fired at.
+
+* [DESIGNATE](Documentation/Designate.html): Make AI automatically designate detected targets, and provide menu options for players to give instructions to the AI how to designate (by laser, smoke or illumination).
+
+* [AIRBASEPOLICE](Documentation/AirbasePolice.html): Control the speed of players at the airbases. Speeding players are eliminated (does not work due to a bug in the DCS).
+
+* [CLEANUP](Documentation/Cleanup.html): Keeps the airbases clean from clutter. (Only partly functional due to a bug in DCS, destroyed objects cannot be removed).
+
+
+## 2.4. MOOSE Wrapper Classes
+
+MOOSE Wrapper Classes provide an object oriented hierarchical mechanism to manage the DCS objects within the simulator.
+Wrapper classes provide another easier mechanism to control Groups, Units, Statics, Airbases and other objects.
+
+* [OBJECT](Documentation/Object.html): This class provides the base for MOOSE objects.
+
+* [IDENTIFIABLE](Documentation/Identifiable.html): This class provides the base for MOOSE identifiable objects, which is every object within the simulator :-).
+
+* [POSITIONABLE](Documentation/Positionable.html): This class provides the base for MOOSE positionable objects. These are AIRBASEs, STATICs, GROUPs, UNITs ...
+
+* [CONTROLLABLE](Documentation/Controllable.html): This class provides the base for MOOSE controllable objects. These are GROUPs, UNITs, CLIENTs.
+
+* [AIRBASE](Documentation/Airbase.html): This class wraps a DCS Airbase object within the simulator.
+
+* [GROUP](Documentation/Group.html): This class wraps a DCS Group objects within the simulator.  
+
+* [UNIT](Documentation/Unit.html): This class wraps a DCS Unit object within the simulator.
+
+* [CLIENT](Documentation/Client.html): This class wraps a DCS Unit object within the simulator, which has a skill Client or Player.  
+
+* [STATIC](Documentation/Static.html): This class wraps a DCS StaticObject object within the simulator. 
+
+
+## 2.5. MOOSE Core Classes
 
 These classes define the base building blocks of the MOOSE framework. These classes are heavily used within the MOOSE framework.
 
@@ -141,109 +177,51 @@ The POINT_VEC3 class manages the 3D simulation space, while the POINT_VEC2 class
 * [RADIO](Documentation/Radio.html): Create radio communication.
 
 
-## 4.3) MOOSE Wrapper Classes
 
-MOOSE Wrapper Classes provide an object oriented hierarchical mechanism to manage the DCS objects within the simulator.
-Wrapper classes provide another easier mechanism to control Groups, Units, Statics, Airbases and other objects.
+# 3. MOOSE usage
 
-* **[OBJECT](Documentation/Object.html)**: This class provides the base for MOOSE objects.
+The delivery of MOOSE follows a structured release process. Over time, new features are added that can be used in your mission.
 
-* **[IDENTIFIABLE](Documentation/Identifiable.html)**: This class provides the base for MOOSE identifiable objects, which is every object within the simulator :-).
+### The latest release of MOOSE can be downloaded **[here](https://github.com/FlightControl-Master/MOOSE/releases)**.  
 
-* **[POSITIONABLE](Documentation/Positionable.html)**: This class provides the base for MOOSE positionable objects. These are AIRBASEs, STATICs, GROUPs, UNITs ...
-
-* **[CONTROLLABLE](Documentation/Controllable.html)**: This class provides the base for MOOSE controllable objects. These are GROUPs, UNITs, CLIENTs.
-
-* **[AIRBASE](Documentation/Airbase.html)**: This class wraps a DCS Airbase object within the simulator.
-
-* **[GROUP](Documentation/Group.html)**: This class wraps a DCS Group objects within the simulator.  
-
-* **[UNIT](Documentation/Unit.html)**: This class wraps a DCS Unit object within the simulator.
-
-* **[CLIENT](Documentation/Client.html)**: This class wraps a DCS Unit object within the simulator, which has a skill Client or Player.  
-
-* **[STATIC](Documentation/Static.html)**: This class wraps a DCS StaticObject object within the simulator. 
+There are 3 different ways how you can use MOOSE, each with a different engagement and complexity level:
 
 
+## 3.1. Use MOOSE as a Mission Designer
 
-## 4.4) MOOSE Functional Classes
+Refer to the detailed **[Usage Guide](Usage_Guide.html)** for more information.
 
-MOOSE Functional Classes provide various functions that are useful in mission design.
 
-* [SPAWN](Documentation/Spawn.html): Spawn new groups (and units) during mission execution.
+## 3.2. Beta test MOOSE
 
-* [ESCORT](Documentation/Escort.html): Makes groups consisting of helicopters, airplanes, ground troops or ships within a mission joining your flight. You can control these groups through the ratio menu during your flight. Available commands are around: Navigation, Position Hold, Reporting (Target Detection), Attacking, Assisted Attacks, ROE, Evasion, Mission Execution and more ...
+Beta testers of MOOSE are requested to install additional software. 
 
-* [MISSILETRAINER](Documentation/MissileTrainer.html): Missile trainer, it destroys missiles when they are within a certain range of player airplanes, displays tracking and alert messages of missile launches; approach; destruction, and configure with radio menu commands. Various APIs available to configure the trainer.
+As a return or as a reward, testers get:
+ 
+  * Newly developed features planned for the next MOOSE release can be tested and incorporated in your missions early.
+  * You can evaluate and contribute to the stability of the next release.
+  * Your mission creation workflow becomes very flexible. New features are dynamically added to you missions.
 
-* [DETECTION](Documentation/Detection.html): Detect other units using the available sensors of the detection unit. The DETECTION_BASE derived classes will provide different methods how the sets of detected objects are built.
+Please read the detailed **[Beta Test Guide](Beta_Test_Guide.html)** for more information.
+  
+  
+## 3.3. Contribute on the MOOSE development
 
-* [SCORING](Documentation/Scoring.html): Administer the scoring of player achievements, and create a CSV file logging the scoring events for use at team or squadron websites.
+Those people who have experience in lua development or are excited to contribute to the MOOSE project are welcome.
 
-* [SEAD](Documentation/Sead.html): Make SAM sites avoid SEAD missiles being fired at.
+Please consult the **[Contribution Guide](Contribution_Guide.html)** for more information.
+  
 
-* [DESIGNATE](Documentation/Designate.html): Make AI automatically designate detected targets, and provide menu options for players to give instructions to the AI how to designate (by laser, smoke or illumination).
 
-* [AIRBASEPOLICE](Documentation/AirbasePolice.html): Control the speed of players at the airbases. Speeding players are eliminated (does not work due to a bug in the DCS).
+# 4. MOOSE Support Channels
 
-* [CLEANUP](Documentation/Cleanup.html): Keeps the airbases clean from clutter. (Only partly functional due to a bug in DCS, destroyed objects cannot be removed).
+MOOSE is broadcasted, documented and supported through various social media channels.  
 
-## 4.5) MOOSE AI Controlling Classes
-
-MOOSE AI Controlling Classes provide mechanisms to control AI over long lasting processes.  
-These AI Controlling Classes are based on FSM (Finite State Machine) Classes, and provided an encapsulated way to make AI behave or execute an activity.
-
-* [AI_BALANCER](Documentation/AI_Balancer.html): Compensate in a multi player mission the abscence of players with dynamically spawned AI air units. When players join CLIENTS, the AI will either be destroyed, or will fly back to the home or nearest friendly airbase.
-
-* [AI_PATROL_ZONE](Documentation/AI_Patrol_Zone.html): Make an alive AI Group patrol a zone derived from the ZONE_BASE class. Manage out-of-fuel events and set altitude and speed ranges for the patrol.
-
-* [AI_CAP](Documentation/AI_Cap.html): Make an alive AI Group perform Combat Air Patrol as a dynamic process.
-
-* [AI_CAS](Documentation/AI_Cas.html): Make an alive AI Group perform Close Air Support as a dynamic process.
-
-* [AI_BAI](Documentation/AI_Bai.html): Make an alive AI Group perform Battlefield Air Interdiction as a dynamic process.
+Click here for the **[communities guide](Communities.html)** of the MOOSE framework.
 
 
 
-## 4.6) MOOSE Human Tasking Classes
-
-MOOSE Tasking Classes provide a comprehensive Mission Orchestration System.
-Through COMMANDCENTERs, multiple logical MISSIONs can be orchestrated for coalitions.
-Within each MISSION, various TASKs can be defined.
-Each TASK has a TASK ACTION flow, which is the flow that a player (hosted by a UNIT) within the simulator needs to follow and accomplish.
-
-* [COMMANDCENTER](Documentation/CommandCenter.html): Orchestrates various logical MISSIONs for a coalition.
-
-* [MISSION](Documentation/Mission.html): Each MISSION has various TASKs to be executed and accomplished by players.
-
-* [TASK](Documentation/Task.html): Each TASK has a status, and has a TASK ACTION flow for each Player acting and executing the TASK.
-
-* [TASK_SEAD](Documentation/Task_SEAD.html): Models a SEAD Task, where a Player is routed towards an attack zone, and various SEADing targets need to be eliminated.
-
-* [TASK_BAI](Documentation/Task_A2G.html): Models a CAP Task, where a Player is routed towards an attack zone without enemies nearby, and various ground targets need to be eliminated.
-
-* [TASK_CAS](Documentation/Task_A2G.html): Models a CAS Task, where a Player is routed towards an attack zone with enemies nearby, and various ground targets need to be eliminated.
-
-
-
-## 4.7) MOOSE Action Classes
-
-MOOSE Action Classes are task action sub-flows, that can be used and combined, to quickly define a comprehensive end-to-end task action flow.
-For example, for the SEAD Task, the task action flow combines the actions ASSIGN, ROUTE, ACCOUNT and ASSIST task action sub-flows.
-
-* [ACT_ASSIGN](Documentation/Assign.html): Mechanism to accept a TASK by a player. For example, assign the task only after the player accepts the task using the menu.
-
-* [ACT_ROUTE](Documentation/Route.html): Mechanisms to route players to zones or any other positionable coordinate. For example, route a player towards a zone.
-
-* [ACT_ACCOUNT](Documentation/Account.html): Mechanisms to account various events within the simulator. For example, account the dead events, accounting dead units within a Target SET within a ZONE.
-
-* [ACT_ASSIST](Documentation/Assist.html): Mechanisms to assist players executing a task. For example, acquire targets through smoking them.
-
-
-
-
-
-# 5) Credits
+# 5. Credits
 
 Note that most of the framework is based on code i've written myself, 
 but some code of it is also based on code that i've seen as great scripting code and ideas, 
