@@ -81,6 +81,63 @@ AIRBASE.Caucasus = {
   ["Mozdok"] = "Mozdok",
   ["Beslan"] = "Beslan",
   }
+  
+--- @field Nevada
+AIRBASE.Nevada = {
+  ["Creech_AFB"] = "Creech AFB",
+  ["Groom_Lake_AFB"] = "Groom Lake AFB",
+  ["McCarran_International_Airport"] = "McCarran International Airport",
+  ["Nellis_AFB"] = "Nellis AFB",
+  ["Beatty_Airport"] = "Beatty Airport",
+  ["Boulder_City_Airport"] = "Boulder City Airport",
+  ["Echo_Bay"] = "Echo Bay",
+  ["Henderson_Executive_Airport"] = "Henderson Executive Airport",
+  ["Jean_Airport"] = "Jean Airport",
+  ["Laughlin_Airport"] = "Laughlin Airport",
+  ["Lincoln_County"] = "Lincoln County",
+  ["Mellan_Airstrip"] = "Mellan Airstrip",
+  ["Mesquite"] = "Mesquite",
+  ["Mina_Airport_3Q0"] = "Mina Airport 3Q0",
+  ["North_Las_Vegas"] = "North Las Vegas",
+  ["Pahute_Mesa_Airstrip"] = "Pahute Mesa Airstrip",
+  ["Tonopah_Airport"] = "Tonopah Airport",
+  ["Tonopah_Test_Range_Airfield"] = "Tonopah Test Range Airfield",
+  }
+
+--- @field Normandy
+AIRBASE.Normandy = {
+  ["Saint_Pierre_du_Mont"] = "Saint Pierre du Mont",
+  ["Lignerolles"] = "Lignerolles",
+  ["Cretteville"] = "Cretteville",
+  ["Maupertus"] = "Maupertus",
+  ["Brucheville"] = "Brucheville",
+  ["Meautis"] = "Meautis",
+  ["Cricqueville-en-Bessin"] = "Cricqueville-en-Bessin",
+  ["Lessay"] = "Lessay",
+  ["Sainte-Laurent-sur-Mer"] = "Sainte-Laurent-sur-Mer",
+  ["Biniville"] = "Biniville",
+  ["Cardonville"] = "Cardonville",
+  ["Deux Jumeaux"] = "Deux Jumeaux",
+  ["Chippelle"] = "Chippelle",
+  ["Beuzeville"] = "Beuzeville",
+  ["Azeville"] = "Azeville",
+  ["Picauville"] = "Picauville",
+  ["Le Molay"] = "Le Molay",
+  ["Longues-sur-Mer"] = "Longues-sur-Mer",
+  ["Carpiquet"] = "Carpiquet",
+  ["Bazenville"] = "Bazenville",
+  ["Sainte-Croix-sur-Mer"] = "Sainte-Croix-sur-Mer",
+  ["Beny-sur-Mer"] = "Beny-sur-Mer",
+  ["Rucqueville"] = "Rucqueville",
+  ["Sommervieu"] = "Sommervieu",
+  ["Lantheuil"] = "Lantheuil",
+  ["Evreux"] = "Evreux",
+  ["Chailey"] = "Chailey",
+  ["Needs_Oar_Point"] = "Needs Oar Point",
+  ["Funtington"] = "Funtington",
+  ["Tangmere"] = "Tangmere",
+  ["Ford"] = "Ford",
+  }
 
 -- Registration.
   
