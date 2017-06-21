@@ -2,7 +2,6 @@
 -- 
 -- ![Banner Image](..\Presentations\TASK_A2A\Dia1.JPG)
 -- 
--- 
 -- ====
 -- 
 -- ### Author: **Sven Van de Velde (FlightControl)**
