@@ -1193,7 +1193,7 @@ function SET_GROUP:IsIncludeObject( MooseGroup )
     local MooseGroupPrefix = false
     for GroupPrefixId, GroupPrefix in pairs( self.Filter.GroupPrefixes ) do
       self:T3( { "Prefix:", string.find( MooseGroup:GetName(), GroupPrefix, 1 ), GroupPrefix } )
-      if string.find( MooseGroup:GetName(), GroupPrefix, 1 ) then
+      if string.find( MooseGroup:GetName(), GroupPrefix:gsub ("-", "%%-"), 1 ) then
         MooseGroupPrefix = true
       end
     end
