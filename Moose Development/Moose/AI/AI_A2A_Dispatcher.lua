@@ -385,8 +385,13 @@ do -- AI_A2A_DISPATCHER
   --        DetectionSetGroup:FilterPrefixes( { "DF CCCP AWACS", "DF CCCP EWR" } )
   --        DetectionSetGroup:FilterStart()
   --        
+  --        -- Here we define detection to be done by area, with a grouping radius of 3000.
+  --        Detection = DETECTION_AREAS:New( DetectionSetGroup, 30000 )
+  --        
   --        -- Setup the A2A dispatcher, and initialize it.
-  --        A2ADispatcher = AI_A2A_DISPATCHER:New( DetectionSetGroup, 30000 )
+  --        A2ADispatcher = AI_A2A_DISPATCHER:New( Detection )
+  --        
+  -- 
   --        
   --        -- Initialize the dispatcher, setting up a border zone. This is a polygon, 
   --        -- which takes the waypoints of a late activated group with the name CCCP Border as the boundaries of the border area.
@@ -515,10 +520,7 @@ do -- AI_A2A_DISPATCHER
   -- @field #AI_A2A_DISPATCHER
   AI_A2A_DISPATCHER = {
     ClassName = "AI_A2A_DISPATCHER",
-    Mission = nil,
     Detection = nil,
-    Tasks = {},
-    SweepZones = {},
   }
 
 
@@ -539,8 +541,7 @@ do -- AI_A2A_DISPATCHER
   
   --- AI_A2A_DISPATCHER constructor.
   -- @param #AI_A2A_DISPATCHER self
-  -- @param #string The Squadron Name. This name is used to control the squadron settings in the A2A dispatcher, and also in communication to human players.
-  -- @param Core.Set#SET_GROUP DetectionSetGroup The @{Set} of group objects that will setup the Early Warning Radar network.
+  -- @param Functional.Detection#DETECTION_BASE Detection The DETECTION object that will detects targets using the the Early Warning Radar network.
   -- @param #number GroupingRadius The radius in meters wherein detected planes are being grouped as one target area. 
   -- For airplanes, 6000 (6km) is recommended, and is also the default value of this parameter.
   -- @return #AI_A2A_DISPATCHER self
@@ -549,10 +550,8 @@ do -- AI_A2A_DISPATCHER
   --   -- Set a new AI A2A Dispatcher object, based on an EWR network with a 6 km grouping radius.
   --   
   -- 
-  function AI_A2A_DISPATCHER:New( DetectionSetGroup, GroupingRadius )
+  function AI_A2A_DISPATCHER:New( Detection )
 
-    local Detection = DETECTION_AREAS:New( DetectionSetGroup, GroupingRadius )
-  
     -- Inherits from DETECTION_MANAGER
     local self = BASE:Inherit( self, DETECTION_MANAGER:New( nil, Detection ) ) -- #AI_A2A_DISPATCHER
     
@@ -1025,9 +1024,9 @@ do -- AI_A2A_DISPATCHER
 
     local Cap = self.DefenderSquadrons[SquadronName].Cap
     if Cap then
-      Cap.LowInterval = LowInterval
-      Cap.HighInterval = HighInterval
-      Cap.Probability = Probability
+      Cap.LowInterval = LowInterval or 300
+      Cap.HighInterval = HighInterval or 600
+      Cap.Probability = Probability or 1
       Cap.CapLimit = CapLimit
       Cap.Scheduler = Cap.Scheduler or SCHEDULER:New( self ) 
       local Scheduler = Cap.Scheduler -- Core.Scheduler#SCHEDULER
@@ -2016,3 +2015,121 @@ do
   end
 
 end
+
+do
+
+  --- AI_A2A_DISPATCHER_GCICAP class.
+  -- @type AI_A2A_DISPATCHER_GCICAP
+  -- @extends #AI_A2A_DISPATCHER
+
+  --- # AI\_A2A\_DISPATCHER\_GCICAP class, extends @{AI#AI_A2A_DISPATCHER}
+  -- 
+  -- ![Banner Image](..\Presentations\AI_A2A_DISPATCHER\Dia1.JPG)
+  -- 
+  -- The @{#AI_A2A_DISPATCHER} class is designed to create an automatic air defence system for a coalition. 
+  -- 
+  -- 
+  -- ![Banner Image](..\Presentations\AI_A2A_DISPATCHER\Dia3.JPG)
+  -- 
+  -- It includes automatic spawning of Combat Air Patrol aircraft (CAP) and Ground Controlled Intercept aircraft (GCI) in response to enemy air movements that are detected by a ground based radar network. 
+  -- CAP flights will take off and proceed to designated CAP zones where they will remain on station until the ground radars direct them to intercept detected enemy aircraft or they run short of fuel and must return to base (RTB). When a CAP flight leaves their zone to perform an interception or return to base a new CAP flight will spawn to take their place.
+  -- If all CAP flights are engaged or RTB then additional GCI interceptors will scramble to intercept unengaged enemy aircraft under ground radar control.
+  -- With a little time and with a little work it provides the mission designer with a convincing and completely automatic air defence system. 
+  -- In short it is a plug in very flexible and configurable air defence module for DCS World.
+  -- 
+  -- Note that in order to create a two way A2A defense system, two AI\_A2A\_DISPATCHER_GCICAP defense system may need to be created, for each coalition one.
+  -- This is a good implementation, because maybe in the future, more coalitions may become available in DCS world.
+  -- 
+  -- ## 1. AI\_A2A\_DISPATCHER\_GCICAP constructor:
+  -- 
+  -- The @{#AI_A2A_DISPATCHER_GCICAP.New}() method creates a new AI\_A2A\_DISPATCHER\_GCICAP instance.
+  -- There are two parameters required, a list of prefix group names that collects the groups of the EWR network, and a radius in meters, 
+  -- that will be used to group the detected targets.
+  -- 
+  -- ### 1.1. Define the **EWR network**:
+  -- 
+  -- As part of the AI\_A2A\_DISPATCHER\_GCICAP constructor, a list of prefixes must be given of the group names defined within the mission editor,
+  -- that define the EWR network.
+  -- 
+  -- An EWR network, or, Early Warning Radar network, is used to early detect potential airborne targets and to understand the position of patrolling targets of the enemy.
+  -- 
+  -- ![Banner Image](..\Presentations\AI_A2A_DISPATCHER\Dia5.JPG)
+  -- 
+  -- Typically EWR networks are setup using 55G6 EWR, 1L13 EWR, Hawk sr and Patriot str ground based radar units. 
+  -- These radars have different ranges and 55G6 EWR and 1L13 EWR radars are Eastern Bloc units (eg Russia, Ukraine, Georgia) while the Hawk and Patriot radars are Western (eg US).
+  -- Additionally, ANY other radar capable unit can be part of the EWR network! Also AWACS airborne units, planes, helicopters can help to detect targets, as long as they have radar.
+  -- The position of these units is very important as they need to provide enough coverage 
+  -- to pick up enemy aircraft as they approach so that CAP and GCI flights can be tasked to intercept them.
+  -- 
+  -- ![Banner Image](..\Presentations\AI_A2A_DISPATCHER\Dia7.JPG)
+  --  
+  -- Additionally in a hot war situation where the border is no longer respected the placement of radars has a big effect on how fast the war escalates. 
+  -- For example if they are a long way forward and can detect enemy planes on the ground and taking off 
+  -- they will start to vector CAP and GCI flights to attack them straight away which will immediately draw a response from the other coalition. 
+  -- Having the radars further back will mean a slower escalation because fewer targets will be detected and 
+  -- therefore less CAP and GCI flights will spawn and this will tend to make just the border area active rather than a melee over the whole map. 
+  -- It all depends on what the desired effect is. 
+  -- 
+  -- EWR networks are **dynamically maintained**. By defining in a **smart way the names or name prefixes of the groups** with EWR capable units, these groups will be **automatically added or deleted** from the EWR network, 
+  -- increasing or decreasing the radar coverage of the Early Warning System.
+  -- 
+  -- See the following example to setup an EWR network containing EWR stations and AWACS.
+  -- 
+  --     -- Setup the A2A GCICAP dispatcher, and initialize it.
+  --     A2ADispatcher = AI_A2A_DISPATCHER_GCICAP:New( { "DF CCCP AWACS", "DF CCCP EWR" }, 30000 )
+  -- 
+  -- The above example creates a new AI_A2A_DISPATCHER_GCICAP instance, and stores this in the variable (object) **A2ADispatcher**.
+  -- The first parameter is are the prefixes of the group names that define the EWR network.
+  -- The A2A dispatcher will filter all active groups with a group name starting with **DF CCCP AWACS** or **DF CCCP EWR** to be included in the EWR network.
+  -- 
+  -- ### 1.2. Define the detected **target grouping radius**:
+  -- 
+  -- As a second parameter of the @{#AI_A2A_DISPATCHER_GCICAP.New}() method, a radius in meters must be given. The radius indicates that detected targets need to be grouped within a radius of 30km.
+  -- The grouping radius should not be too small, but also depends on the types of planes and the era of the simulation.
+  -- Fast planes like in the 80s, need a larger radius than WWII planes.  
+  -- Typically I suggest to use 30000 for new generation planes and 10000 for older era aircraft.
+  -- 
+  -- Note that detected targets are constantly re-grouped, that is, when certain detected aircraft are moving further than the group radius, then these aircraft will become a separate
+  -- group being detected. This may result in additional GCI being started by the dispatcher! So don't make this value too small!
+  -- 
+  -- ## 2. AI_A2A_DISPATCHER_DOCUMENTATION is derived from @{#AI_A2A_DISPATCHER}, 
+  -- so all further documentation needs to be consulted in this class
+  -- for documentation consistency.
+  -- 
+  -- @field #AI_A2A_DISPATCHER_GCICAP
+  AI_A2A_DISPATCHER_GCICAP = {
+    ClassName = "AI_A2A_DISPATCHER_GCICAP",
+    Detection = nil,
+  }
+
+
+  --- AI_A2A_DISPATCHER_GCICAP constructor.
+  -- @param #AI_A2A_DISPATCHER_GCICAP self
+  -- @param #list<#string> EWRPrefixes A list of prefixes that of groups that setup the Early Warning Radar network.
+  -- @param #number GroupingRadius The radius in meters wherein detected planes are being grouped as one target area. 
+  -- For airplanes, 6000 (6km) is recommended, and is also the default value of this parameter.
+  -- @return #AI_A2A_DISPATCHER_GCICAP
+  -- @usage
+  --   
+  --   -- Set a new AI A2A Dispatcher object, based on an EWR network with a 30 km grouping radius
+  --   -- This for ground and awacs installations.
+  --   
+  --   A2ADispatcher = AI_A2A_DISPATCHER_GCICAP:New( { "BlueEWRGroundRadars", "BlueEWRAwacs" }, 30000 )
+  --   
+  function AI_A2A_DISPATCHER_GCICAP:New( EWRPrefixes, GroupingRadius )
+
+    local SetGroup = SET_GROUP:New()
+    SetGroup:FilterPrefixes( EWRPrefixes )
+    SetGroup:FilterStart()
+
+    local Detection  = DETECTION_AREAS:New( SetGroup, GroupingRadius )
+
+    local self = BASE:Inherit( self, AI_A2A_DISPATCHER:New( Detection ) ) -- #AI_A2A_DISPATCHER_GCICAP
+    
+    self:__Start( 5 )
+    
+    return self
+  end
+
+end
+
