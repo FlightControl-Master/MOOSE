@@ -1030,8 +1030,8 @@ do -- AI_A2A_DISPATCHER
       Cap.CapLimit = CapLimit
       Cap.Scheduler = Cap.Scheduler or SCHEDULER:New( self ) 
       local Scheduler = Cap.Scheduler -- Core.Scheduler#SCHEDULER
-      local Variance = ( HighInterval - LowInterval ) / 2
-      local Median = LowInterval + Variance
+      local Variance = ( Cap.HighInterval - Cap.LowInterval ) / 2
+      local Median = Cap.LowInterval + Variance
       local Randomization = Variance / Median
       Scheduler:Schedule(self, self.SchedulerCAP, { SquadronName }, Median, Median, Randomization )
     else
