@@ -802,8 +802,8 @@ do -- COORDINATE
       end
   
       if Settings:IsA2A_BULLS() then
-        local Coordinate = Controllable:GetCoordinate()
-        return self:ToStringBULLS( Coordinate, Settings )
+        local Coalition = Controllable:GetCoalition()
+        return self:ToStringBULLS( Coalition, Settings )
       end
     else
       if Settings:IsA2G_BRA()  then
