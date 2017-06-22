@@ -652,10 +652,7 @@ This is a good implementation, because maybe in the future, more coalitions may 
 
 <h2>1. AI_A2A_DISPATCHER constructor:</h2>
 
-<p>The <a href="##(AI_A2A_DISPATCHER).New">AI<em>A2A</em>DISPATCHER.New</a>() method creates a new AI_A2A_DISPATCHER instance.
-There are two parameters required, a <a href="Set.html##(SET_GROUP)">Set#SET_GROUP</a> that defines the Groups of the EWR network, and a radius in meters, that will be used to group the detected targets.</p>
-
-<p>The <a href="##(AI_A2A_DISPATCHER).New">AI<em>A2A</em>DISPATCHER.New</a>() method is used to setup the EWR network and to define the grouping.</p>
+<p>The <a href="##(AI_A2A_DISPATCHER).New">AI<em>A2A</em>DISPATCHER.New</a>() method creates a new AI_A2A_DISPATCHER instance.</p>
 
 <h3>1.1. Define the <strong>EWR network</strong>:</h3>
 
@@ -679,7 +676,7 @@ Having the radars further back will mean a slower escalation because fewer targe
 therefore less CAP and GCI flights will spawn and this will tend to make just the border area active rather than a melee over the whole map. 
 It all depends on what the desired effect is. </p>
 
-<p>EWR networks are <strong>dynamically constructed</strong>, that is, they form part of the <a href="Set.html##(SET_GROUP)">Set#SET_GROUP</a> object that is given as the input parameter of the AI_A2A_DISPATCHER class.
+<p>EWR networks are <strong>dynamically constructed</strong>, that is, they form part of the <a href="Functional.html##(DETECTION_BASE)">Functional#DETECTION_BASE</a> object that is given as the input parameter of the AI_A2A_DISPATCHER class.
 By defining in a <strong>smart way the names or name prefixes of the groups</strong> with EWR capable units, these groups will be <strong>automatically added or deleted</strong> from the EWR network, 
 increasing or decreasing the radar coverage of the Early Warning System.</p>
 
@@ -691,18 +688,22 @@ DetectionSetGroup = SET_GROUP:New()
 DetectionSetGroup:FilterPrefixes( { "DF CCCP AWACS", "DF CCCP EWR" } )
 DetectionSetGroup:FilterStart()
 
+-- Setup the detection.
+Detection = DETECTION_AREAS:New( DetectionSetGroup, 30000 )
+
 -- Setup the A2A dispatcher, and initialize it.
-A2ADispatcher = AI_A2A_DISPATCHER:New( DetectionSetGroup, 30000 )
+A2ADispatcher = AI_A2A_DISPATCHER:New( Detection )
 </code></pre>
 
 <p>The above example creates a SET_GROUP instance, and stores this in the variable (object) <strong>DetectionSetGroup</strong>.
 <strong>DetectionSetGroup</strong> is then being configured to filter all active groups with a group name starting with <strong>DF CCCP AWACS</strong> or <strong>DF CCCP EWR</strong> to be included in the Set.
 <strong>DetectionSetGroup</strong> is then being ordered to start the dynamic filtering. Note that any destroy or new spawn of a group with the above names will be removed or added to the Set.
-The <strong>DetectionSetGroup</strong> variable is then passed to the <a href="##(AI_A2A_DISPATCHER).New">AI<em>A2A</em>DISPATCHER.New</a>() method to indicate the EWR network configuration and setup the A2A defense detection mechanism.</p>
+Then a new Detection object is created from the class DETECTION_AREAS. A grouping radius of 30000 is choosen, which is 30km.
+The <strong>Detection</strong> object is then passed to the <a href="##(AI_A2A_DISPATCHER).New">AI<em>A2A</em>DISPATCHER.New</a>() method to indicate the EWR network configuration and setup the A2A defense detection mechanism.</p>
 
-<h3>1.2. Define the detected <strong>target grouping radius</strong>:</h3>
+<h3>2. Define the detected <strong>target grouping radius</strong>:</h3>
 
-<p>As a second parameter of the <a href="##(AI_A2A_DISPATCHER).New">AI<em>A2A</em>DISPATCHER.New</a>() method, 30000 indicates that detected targets need to be grouped within a radius of 30km.
+<p>The target grouping radius is a property of the Detection object, that was passed to the AI_A2A_DISPATCHER object, but can be changed.
 The grouping radius should not be too small, but also depends on the types of planes and the era of the simulation.
 Fast planes like in the 80s, need a larger radius than WWII planes. <br/>
 Typically I suggest to use 30000 for new generation planes and 10000 for older era aircraft.</p>
@@ -710,7 +711,7 @@ Typically I suggest to use 30000 for new generation planes and 10000 for older e
 <p>Note that detected targets are constantly re-grouped, that is, when certain detected aircraft are moving further than the group radius, then these aircraft will become a separate
 group being detected. This may result in additional GCI being started by the dispatcher! So don't make this value too small!</p>
 
-<h2>2. Set the <strong>engage radius</strong>:</h2>
+<h2>3. Set the <strong>Engage radius</strong>:</h2>
 
 <p>Define the radius to engage any target by airborne friendlies, which are executing cap or returning from an intercept mission.</p>
 
@@ -725,7 +726,15 @@ You need to evaluate the value of this parameter carefully.
 If too small, more intercept missions may be triggered upon detected target areas.
 If too large, any airborne cap may not be able to reach the detected target area in time, because it is too far.</p>
 
-<h2>3. Set the <strong>borders</strong>:</h2>
+<h2>4. Set the <strong>Intercept radius</strong> or <strong>Gci radius</strong>:</h2>
+
+<p>When targets are detected that are still really far off, you don't want the AI<em>A2A</em>DISPATCHER to launch intercepts just yet.
+You want it to wait until a certain intercept range is reached, which is the distance of the closest airbase to targer being smaller than the <strong>Gci radius</strong>.
+The Gci radius is by default defined as 200km. This value can be overridden using the method <a href="##(AI_A2A_DISPATCHER).SetGciRadius">AI<em>A2A</em>DISPATCHER.SetGciRadius</a>().
+Override the default Gci radius when the era of the warfare is early, or, when you don't want to let the AI<em>A2A</em>DISPATCHER react immediately when
+a certain border or area is not being crossed.</p>
+
+<h2>5. Set the <strong>borders</strong>:</h2>
 
 <p>According to the tactical and strategic design of the mission broadly decide the shape and extent of red and blue territories. 
 They should be laid out such that a border area is created between the two coalitions.</p>
@@ -744,7 +753,7 @@ If a hot war is chosen then <strong>no borders</strong> actually need to be defi
 it makes it easier sometimes for the mission maker to envisage where the red and blue territories roughly are. 
 In a hot war the borders are effectively defined by the ground based radar coverage of a coalition.</p>
 
-<h2>4. Squadrons:</h2>
+<h2>6. Squadrons:</h2>
 
 <p>The AI_A2A_DISPATCHER works with <strong>Squadrons</strong>, that need to be defined using the different methods available.</p>
 
@@ -774,7 +783,7 @@ while defining which plane types are being used by the squadron and how many res
 <p>For performance and bug workaround reasons within DCS, squadrons have different methods to spawn new aircraft or land returning or damaged aircraft.</p>
 
 
-<h3>4.1. Set squadron take-off methods</h3>
+<h3>6.1. Set squadron take-off methods</h3>
 
 <p>Use the various SetSquadronTakeoff... methods to control how squadrons are taking-off from the airfield:</p>
 
@@ -799,7 +808,7 @@ The more and the longer aircraft need to taxi at an airfield, the more risk ther
 <p>Currently within the DCS engine, the airfield traffic coordination is erroneous and contains a lot of bugs.
 If you experience while testing problems with aircraft take-off or landing, please use one of the above methods as a solution to workaround these issues!</p>
 
-<h3>4.2. Set squadron landing methods</h3>
+<h3>6.2. Set squadron landing methods</h3>
 
 <p>In analogy with takeoff, the landing methods are to control how squadrons land at the airfield:</p>
 
@@ -816,7 +825,7 @@ A2A defense system, as no new CAP or GCI planes can takeoff.
 Note that the method <a href="##(AI_A2A_DISPATCHER).SetSquadronLandingNearAirbase">AI<em>A2A</em>DISPATCHER.SetSquadronLandingNearAirbase</a>() will only work for returning aircraft, not for damaged or out of fuel aircraft.
 Damaged or out-of-fuel aircraft are returning to the nearest friendly airbase and will land, and are out of control from ground control.</p>
 
-<h3>4.3. Set squadron grouping</h3>
+<h3>6.3. Set squadron grouping</h3>
 
 <p>Use the method <a href="##(AI_A2A_DISPATCHER).SetSquadronGrouping">AI<em>A2A</em>DISPATCHER.SetSquadronGrouping</a>() to set the amount of CAP or GCI flights that will take-off when spawned.</p>
 
@@ -829,7 +838,7 @@ a GCI needs to be started, the GCI flights will be grouped as follows: Group 1 o
 
 <p>The <strong>grouping value is set for a Squadron</strong>, and can be <strong>dynamically adjusted</strong> during mission execution, so to adjust the defense flights grouping when the tactical situation changes.</p>
 
-<h3>4.4. Balance or setup effectiveness of the air defenses in case of GCI</h3>
+<h3>6.4. Balance or setup effectiveness of the air defenses in case of GCI</h3>
 
 <p>The effectiveness can be set with the <strong>overhead parameter</strong>. This is a number that is used to calculate the amount of Units that dispatching command will allocate to GCI in surplus of detected amount of units.
 The <strong>default value</strong> of the overhead parameter is 1.0, which means <strong>equal balance</strong>. </p>
@@ -855,9 +864,9 @@ multiplied by the Overhead and rounded up to the smallest integer. </p>
 
 <p>The <strong>overhead value is set for a Squadron</strong>, and can be <strong>dynamically adjusted</strong> during mission execution, so to adjust the defense overhead when the tactical situation changes.</p>
 
-<h2>5. Setup a squadron for CAP</h2>
+<h2>7. Setup a squadron for CAP</h2>
 
-<h3>5.1. Set the CAP zones</h3>
+<h3>7.1. Set the CAP zones</h3>
 
 <p>CAP zones are patrol areas where Combat Air Patrol (CAP) flights loiter until they either return to base due to low fuel or are assigned an interception task by ground control.</p>
 
@@ -899,7 +908,7 @@ multiplied by the Overhead and rounded up to the smallest integer. </p>
 <p>Note the different <a href="Zone.html">Zone</a> MOOSE classes being used to create zones of different types. Please click the <a href="Zone.html">Zone</a> link for more information about the different zone types.
 Zones can be circles, can be setup in the mission editor using trigger zones, but can also be setup in the mission editor as polygons and in this case GROUP objects are being used!</p>
 
-<h2>5.2. Set the squadron to execute CAP:</h2>
+<h2>7.2. Set the squadron to execute CAP:</h2>
 
 <p>The method <a href="##(AI_A2A_DISPATCHER).SetSquadronCap">AI<em>A2A</em>DISPATCHER.SetSquadronCap</a>() defines a CAP execution for a squadron.</p>
 
@@ -923,7 +932,7 @@ Zones can be circles, can be setup in the mission editor using trigger zones, bu
 <p>   A2ADispatcher:SetSquadronCap( "Sochi", CAPZoneWest, 4000, 8000, 600, 800, 800, 1200, "BARO" )
    A2ADispatcher:SetSquadronCapInterval( "Sochi", 2, 30, 120, 1 )</p>
 
-<h2>6. Setup a squadron for GCI:</h2>
+<h2>8. Setup a squadron for GCI:</h2>
 
 <p>The method <a href="##(AI_A2A_DISPATCHER).SetSquadronGci">AI<em>A2A</em>DISPATCHER.SetSquadronGci</a>() defines a GCI execution for a squadron.</p>
 
@@ -942,19 +951,19 @@ too short will mean that the intruders may have alraedy passed the ideal interce
 
 <p>   A2ADispatcher:SetSquadronGci( "Mozdok", 900, 1200 )</p>
 
-<h2>7. Other configuration options</h2>
+<h2>9. Other configuration options</h2>
 
-<h3>7.1. Set a tactical display panel:</h3>
+<h3>9.1. Set a tactical display panel:</h3>
 
 <p>Every 30 seconds, a tactical display panel can be shown that illustrates what the status is of the different groups controlled by AI_A2A_DISPATCHER.
 Use the method <a href="##(AI_A2A_DISPATCHER).SetTacticalDisplay">AI<em>A2A</em>DISPATCHER.SetTacticalDisplay</a>() to switch on the tactical display panel. The default will not show this panel.
 Note that there may be some performance impact if this panel is shown.</p>
 
-<h2>8. Mission Editor Guide:</h2>
+<h2>10. Mission Editor Guide:</h2>
 
 <p>The following steps need to be followed, in order to setup the different borders, templates and groups within the mission editor:</p>
 
-<h3>8.1. Define your EWR network:</h3>
+<h3>10.1. Define your EWR network:</h3>
 
 <p><img src="..\Presentations\AI_A2A_DISPATCHER\Dia14.JPG" alt="Banner Image"/></p>
 
@@ -962,7 +971,7 @@ Note that there may be some performance impact if this panel is shown.</p>
 Create the naming of these groups as such, that these can be easily recognized and included as a prefix within your lua MOOSE mission script.
 These prefixes should be unique, so that accidentally no other groups would be incorporated within the EWR network.</p>
 
-<h3>8.2. Define the border zone:</h3>
+<h3>10.2. Define the border zone:</h3>
 
 <p><img src="..\Presentations\AI_A2A_DISPATCHER\Dia15.JPG" alt="Banner Image"/></p>
 
@@ -972,7 +981,7 @@ To do this, you need to create a zone using a helicopter group, that is late act
 Place the helicopter where the border zone should start, and draw using the waypoints the polygon zone around the area that is considered the border.
 The helicopter group name is included as the reference within your lua MOOSE mission script, so ensure that the name is unique and is easily recognizable.</p>
 
-<h3>8.3. Define the plane templates:</h3>
+<h3>10.3. Define the plane templates:</h3>
 
 <p><img src="..\Presentations\AI_A2A_DISPATCHER\Dia16.JPG" alt="Banner Image"/></p>
 
@@ -993,7 +1002,7 @@ These plane templates will never be activated, but are used to create a diverse 
 
 <p>Place these airplane templates are good visible locations within your mission, so you can easily retrieve them back.</p>
 
-<h3>8.4. Define the CAP zones:</h3>
+<h3>10.4. Define the CAP zones:</h3>
 
 <p><img src="..\Presentations\AI_A2A_DISPATCHER\Dia17.JPG" alt="Banner Image"/></p>
 
@@ -1004,7 +1013,7 @@ But you can also define other zone types instead, like moving zones.</p>
 
 <p>Or you can define also zones using trigger zones.</p>
 
-<h3>8.5. "Script it":</h3>
+<h3>10.5. "Script it":</h3>
 
 <p>Find the following mission script as an example:</p>
 
@@ -1085,15 +1094,15 @@ But you can also define other zone types instead, like moving zones.</p>
    A2ADispatcher:SetSquadronGci( "Maykop", 900, 1200 )
 </code></pre>
 
-<h4>8.5.1. Script the EWR network</h4>
+<h4>10.5.1. Script the EWR network</h4>
 
 <p><img src="..\Presentations\AI_A2A_DISPATCHER\Dia20.JPG" alt="Banner Image"/></p>
 
-<h4>8.5.2. Script the AI_A2A_DISPATCHER object and configure it</h4>
+<h4>10.5.2. Script the AI_A2A_DISPATCHER object and configure it</h4>
 
 <p><img src="..\Presentations\AI_A2A_DISPATCHER\Dia21.JPG" alt="Banner Image"/></p>
 
-<h4>8.5.3. Script the squadrons</h4>
+<h4>10.5.3. Script the squadrons</h4>
 
 <p><img src="..\Presentations\AI_A2A_DISPATCHER\Dia22.JPG" alt="Banner Image"/></p>
 
@@ -1116,9 +1125,9 @@ But you can also define other zone types instead, like moving zones.</p>
 
 <p>Use the @{#AI<em>A2A</em>DISPATCHER.SetSquadronGci)() method to define GCI execution for the squadron.</p>
 
-<h2>9. Q &amp; A:</h2>
+<h2>11. Q &amp; A:</h2>
 
-<h3>9.1. Which countries will be selected for each coalition?</h3>
+<h3>11.1. Which countries will be selected for each coalition?</h3>
 
 <p>Which countries are assigned to a coalition influences which units are available to the coalition. 
 For example because the mission calls for a EWR radar on the blue side the Ukraine might be chosen as a blue country 
@@ -1126,7 +1135,7 @@ so that the 55G6 EWR radar unit is available to blue. <br/>
 Some countries assign different tasking to aircraft, for example Germany assigns the CAP task to F-4E Phantoms but the USA does not. <br/>
 Therefore if F4s are wanted as a coalition’s CAP or GCI aircraft Germany will need to be assigned to that coalition. </p>
 
-<h3>9.2.Country, type, load out, skill and skins for CAP and GCI aircraft?</h3>
+<h3>11.2. Country, type, load out, skill and skins for CAP and GCI aircraft?</h3>
 
 <ul>
     <li>Note these can be from any countries within the coalition but must be an aircraft with one of the main tasks being “CAP”.</li>
