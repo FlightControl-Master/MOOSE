@@ -261,6 +261,12 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_DISPATCHER).GciRadius">AI_A2A_DISPATCHER.GciRadius</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_DISPATCHER).GetAIFriendliesNearBy">AI_A2A_DISPATCHER:GetAIFriendliesNearBy(DetectedItem)</a></td>
 		<td class="summary">
 <p>Calculates which AI friendlies are nearby the area</p>
@@ -441,9 +447,15 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_DISPATCHER).SetEngageRadius">AI_A2A_DISPATCHER:SetEngageRadius(FriendliesRadius)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_DISPATCHER).SetEngageRadius">AI_A2A_DISPATCHER:SetEngageRadius(EngageRadius)</a></td>
 		<td class="summary">
 <p>Define the radius to engage any target by airborne friendlies, which are executing cap or returning from an intercept mission.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_DISPATCHER).SetGciRadius">AI_A2A_DISPATCHER:SetGciRadius(GciRadius)</a></td>
+		<td class="summary">
+<p>Define the radius to check if a target can be engaged by an ground controlled intercept.</p>
 </td>
 		</tr>
 		<tr>
@@ -1645,6 +1657,19 @@ If there are no targets to be set.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(AI_A2A_DISPATCHER).GciRadius" >
+<strong>AI_A2A_DISPATCHER.GciRadius</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(AI_A2A_DISPATCHER).GetAIFriendliesNearBy" >
 <strong>AI_A2A_DISPATCHER:GetAIFriendliesNearBy(DetectedItem)</strong>
 </a>
@@ -2516,7 +2541,7 @@ An object derived from ZONE_BASE, that defines a zone between</p>
 <dt>
 
 <a id="#(AI_A2A_DISPATCHER).SetEngageRadius" >
-<strong>AI_A2A_DISPATCHER:SetEngageRadius(FriendliesRadius)</strong>
+<strong>AI_A2A_DISPATCHER:SetEngageRadius(EngageRadius)</strong>
 </a>
 </dt>
 <dd>
@@ -2537,8 +2562,8 @@ If too large, any airborne cap may not be able to reach the detected target area
 		<ul>
 				<li>
 				
-<p><code><em>#number FriendliesRadius </em></code>: 
-The radius to report friendlies near the target.</p>
+<p><code><em>#number EngageRadius </em></code>: 
+(Optional, Default = 100000) The radius to report friendlies near the target.</p>
 
 				</li>
 		</ul>
@@ -2549,8 +2574,57 @@ The radius to report friendlies near the target.</p>
 
 			<h3>Usage:</h3>
 		<pre class="example"><code>
+  -- Set 50km as the radius to engage any target by airborne friendlies.
+  Dispatcher:SetEngageRadius( 50000 )
+  
   -- Set 100km as the radius to engage any target by airborne friendlies.
-  Dispatcher:InitDetectionFriendiesRadius( 100000 )
+  Dispatcher:SetEngageRadius() -- 100000 is the default value.
+  </code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_A2A_DISPATCHER).SetGciRadius" >
+<strong>AI_A2A_DISPATCHER:SetGciRadius(GciRadius)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Define the radius to check if a target can be engaged by an ground controlled intercept.</p>
+
+	
+<p>So, if there is a target area detected and reported, 
+and a GCI is to be executed, 
+then it will be check if the target is within the GCI from the nearest airbase.
+For example, if 150000 is given as a value, then any airbase within 150km from the detected target, 
+will be considered to receive the command to GCI.
+You need to evaluate the value of this parameter carefully.
+If too small, intercept missions may be triggered too late.
+If too large, intercept missions may be triggered when the detected target is too far.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number GciRadius </em></code>: 
+(Optional, Default = 200000) The radius to ground control intercept detected targets from the nearest airbase.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(AI_A2A_DISPATCHER)">#AI<em>A2A</em>DISPATCHER</a>:</em></p>
+
+
+			<h3>Usage:</h3>
+		<pre class="example"><code>
+  -- Set 100km as the radius to ground control intercept detected targets from the nearest airbase.
+  Dispatcher:SetGciRadius( 100000 )
+  
+  -- Set 200km as the radius to ground control intercept.
+  Dispatcher:SetGciRadius() -- 200000 is the default value.
   </code></pre>
 
 </dd>
