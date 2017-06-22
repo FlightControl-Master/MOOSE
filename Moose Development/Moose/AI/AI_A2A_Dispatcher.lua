@@ -566,6 +566,9 @@ do -- AI_A2A_DISPATCHER
     self.Detection:FilterCategories( Unit.Category.AIRPLANE, Unit.Category.HELICOPTER )
     --self.Detection:InitDetectRadar( true )
     self.Detection:SetDetectionInterval( 30 )
+
+    self:SetEngageRadius()
+    self:SetGciRadius()
     
     self:AddTransition( "Started", "Assign", "Started" )
     
@@ -736,19 +739,51 @@ do -- AI_A2A_DISPATCHER
   -- If too small, more intercept missions may be triggered upon detected target areas.
   -- If too large, any airborne cap may not be able to reach the detected target area in time, because it is too far.
   -- @param #AI_A2A_DISPATCHER self
-  -- @param #number FriendliesRadius The radius to report friendlies near the target.
+  -- @param #number EngageRadius (Optional, Default = 100000) The radius to report friendlies near the target.
   -- @return #AI_A2A_DISPATCHER
   -- @usage
   -- 
-  --   -- Set 100km as the radius to engage any target by airborne friendlies.
-  --   Dispatcher:InitDetectionFriendiesRadius( 100000 )
+  --   -- Set 50km as the radius to engage any target by airborne friendlies.
+  --   Dispatcher:SetEngageRadius( 50000 )
   --   
-  function AI_A2A_DISPATCHER:SetEngageRadius( FriendliesRadius )
+  --   -- Set 100km as the radius to engage any target by airborne friendlies.
+  --   Dispatcher:SetEngageRadius() -- 100000 is the default value.
+  --   
+  function AI_A2A_DISPATCHER:SetEngageRadius( EngageRadius )
 
-    self.Detection:SetFriendliesRange( FriendliesRadius )
+    self.Detection:SetFriendliesRange( EngageRadius )
   
     return self
   end
+  
+  --- Define the radius to check if a target can be engaged by an ground controlled intercept.
+  -- So, if there is a target area detected and reported, 
+  -- and a GCI is to be executed, 
+  -- then it will be check if the target is within the GCI from the nearest airbase.
+  -- For example, if 150000 is given as a value, then any airbase within 150km from the detected target, 
+  -- will be considered to receive the command to GCI.
+  -- You need to evaluate the value of this parameter carefully.
+  -- If too small, intercept missions may be triggered too late.
+  -- If too large, intercept missions may be triggered when the detected target is too far.
+  -- @param #AI_A2A_DISPATCHER self
+  -- @param #number GciRadius (Optional, Default = 200000) The radius to ground control intercept detected targets from the nearest airbase.
+  -- @return #AI_A2A_DISPATCHER
+  -- @usage
+  -- 
+  --   -- Set 100km as the radius to ground control intercept detected targets from the nearest airbase.
+  --   Dispatcher:SetGciRadius( 100000 )
+  --   
+  --   -- Set 200km as the radius to ground control intercept.
+  --   Dispatcher:SetGciRadius() -- 200000 is the default value.
+  --   
+  function AI_A2A_DISPATCHER:SetGciRadius( GciRadius )
+
+    self.GciRadius = GciRadius or 200000 
+  
+    return self
+  end
+  
+  
   
   --- Define a border area to simulate a **cold war** scenario.
   -- A **cold war** is one where CAP aircraft patrol their territory but will not attack enemy aircraft or launch GCI aircraft unless enemy aircraft enter their territory. In other words the EWR may detect an enemy aircraft but will only send aircraft to attack it if it crosses the border.
@@ -927,7 +962,8 @@ do -- AI_A2A_DISPATCHER
     DefenderSquadron.Resources = Resources
     
     self:SetSquadronOverhead( SquadronName, 1 )
-    self:SetSquadronTakeoffFromParkingHot( SquadronName )
+    self:SetSquadronTakeoffInAir( SquadronName )
+    self:SetSquadronLandingNearAirbase(SquadronName)
 
     return self
   end
@@ -1652,9 +1688,6 @@ do -- AI_A2A_DISPATCHER
   -- @param #AI_A2A_DISPATCHER self
   function AI_A2A_DISPATCHER:onafterGCI( From, Event, To, Target, DefendersMissing, AIGroups )
 
-    local ClosestDistance = 0
-    local ClosestDefenderSquadronName = nil
-    
     local AttackerCount = Target.Set:Count()
     local DefendersCount = 0
 
@@ -1669,6 +1702,10 @@ do -- AI_A2A_DISPATCHER
     end
 
     DefendersCount = DefendersMissing
+
+    local ClosestDistance = 0
+    local ClosestDefenderSquadronName = nil
+    
     while( DefendersCount > 0 ) do
     
       for SquadronName, DefenderSquadron in pairs( self.DefenderSquadrons or {} ) do
@@ -1677,10 +1714,14 @@ do -- AI_A2A_DISPATCHER
           local SpawnCoord = DefenderSquadron.Airbase:GetCoordinate() -- Core.Point#COORDINATE
           local TargetCoord = Target.Set:GetFirst():GetCoordinate()
           local Distance = SpawnCoord:Get2DDistance( TargetCoord )
-    
+          
           if ClosestDistance == 0 or Distance < ClosestDistance then
-            ClosestDistance = Distance
-            ClosestDefenderSquadronName = SquadronName
+            
+            -- Only intercept if the distance to target is smaller or equal to the GciRadius limit.
+            if Distance <= self.GciRadius then
+              ClosestDistance = Distance
+              ClosestDefenderSquadronName = SquadronName
+            end
           end
         end
       end
@@ -1752,6 +1793,9 @@ do -- AI_A2A_DISPATCHER
             end
           end
         end
+      else
+        -- There isn't any closest airbase anymore, break the loop.
+        break
       end
     end
   end
