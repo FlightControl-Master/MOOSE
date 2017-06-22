@@ -2194,6 +2194,9 @@ The group that was spawned. You can use this group for further actions.</p>
 	
 
 
+	
+<p> Don't repeat the group from Take-Off till Landing and back Take-Off by ReSpawning.</p>
+
 </dd>
 </dl>
 		<dl class="function">
@@ -2740,6 +2743,9 @@ when nothing was spawned.</p>
 	
 
 
+	
+<p> By default, no InitLimit</p>
+
 </dd>
 </dl>
 		<dl class="function">
@@ -2775,7 +2781,7 @@ when nothing was spawned.</p>
 		<dl class="function">
 <dt>
 
-		<em></em>
+		<em>#number</em>
 <a id="#(SPAWN).SpawnMaxGroups" >
 <strong>SPAWN.SpawnMaxGroups</strong>
 </a>
@@ -2792,7 +2798,7 @@ when nothing was spawned.</p>
 		<dl class="function">
 <dt>
 
-		<em></em>
+		<em>#number</em>
 <a id="#(SPAWN).SpawnMaxUnitsAlive" >
 <strong>SPAWN.SpawnMaxUnitsAlive</strong>
 </a>
@@ -3144,7 +3150,7 @@ Spawn_BE_KA50 = SPAWN:New( 'BE KA-50@RAMP-Ground Defense' ):Schedule( 600, 0.5 )
 
 
 	
-<p> When the first Spawn executes, all the Groups need to be made visible before start.</p>
+<p> Flag that indicates if all the Groups of the SpawnGroup need to be visible when Spawned.</p>
 
 </dd>
 </dl>
