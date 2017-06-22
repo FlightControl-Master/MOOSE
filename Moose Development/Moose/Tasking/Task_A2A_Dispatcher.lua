@@ -198,7 +198,7 @@ do -- TASK_A2A_DISPATCHER
   --   -- Set 100km as the radius to engage any target by airborne friendlies.
   --   TaskA2ADispatcher:SetEngageRadius() -- 100000 is the default value.
   --   
-  function AI_A2A_DISPATCHER:SetEngageRadius( EngageRadius )
+  function TASK_A2A_DISPATCHER:SetEngageRadius( EngageRadius )
 
     self.Detection:SetFriendliesRange( EngageRadius or 100000 )
   
