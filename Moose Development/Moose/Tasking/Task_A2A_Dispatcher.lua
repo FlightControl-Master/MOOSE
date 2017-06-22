@@ -18,19 +18,116 @@ do -- TASK_A2A_DISPATCHER
 
   --- # TASK_A2A_DISPATCHER class, extends @{Tasking#DETECTION_MANAGER}
   -- 
+  -- ![Banner Image](..\Presentations\TASK_A2A_DISPATCHER\Dia1.JPG)
+  -- 
   -- The @{#TASK_A2A_DISPATCHER} class implements the dynamic dispatching of tasks upon groups of detected units determined a @{Set} of EWR installation groups.
+  -- 
+  -- ![Banner Image](..\Presentations\TASK_A2A_DISPATCHER\Dia3.JPG)
+  -- 
   -- The EWR will detect units, will group them, and will dispatch @{Task}s to groups. Depending on the type of target detected, different tasks will be dispatched.
   -- Find a summary below describing for which situation a task type is created:
+  -- 
+  -- ![Banner Image](..\Presentations\AI_A2A_DISPATCHER\Dia9.JPG)
   -- 
   --   * **INTERCEPT Task**: Is created when the target is known, is detected and within a danger zone, and there is no friendly airborne in range.
   --   * **SWEEP Task**: Is created when the target is unknown, was detected and the last position is only known, and within a danger zone, and there is no friendly airborne in range.
   --   * **ENGAGE Task**: Is created when the target is known, is detected and within a danger zone, and there is a friendly airborne in range, that will receive this task.
-  --   
-  -- Other task types will follow...
   -- 
-  -- # TASK_A2A_DISPATCHER constructor:
-  -- --------------------------------------
-  -- The @{#TASK_A2A_DISPATCHER.New}() method creates a new TASK_A2A_DISPATCHER instance.
+  -- ## 1. TASK\_A2A\_DISPATCHER constructor:
+  -- 
+  -- The @{#TASK_A2A_DISPATCHER.New}() method creates a new TASK\_A2A\_DISPATCHER instance.
+  -- 
+  -- ### 1.1. Define or set the **Mission**:
+  -- 
+  -- Tasking is executed to accomplish missions. Therefore, a MISSION object needs to be given as the first parameter.
+  -- 
+  --     local HQ = GROUP:FindByName( "HQ", "Bravo" )
+  --     local CommandCenter = COMMANDCENTER:New( HQ, "Lima" )
+  --     local Mission = MISSION:New( CommandCenter, "A2A Mission", "High", "Watch the air enemy units being detected.", coalition.side.RED )
+  -- 
+  -- Missions are governed by COMMANDCENTERS, so, ensure you have a COMMANDCENTER object installed and setup within your mission.
+  -- Create the MISSION object, and hook it under the command center.
+  -- 
+  -- ### 1.2. Build a set of the groups seated by human players:
+  -- 
+  -- ![Banner Image](..\Presentations\TASK_A2A_DISPATCHER\Dia6.JPG)
+  -- 
+  -- A set or collection of the groups wherein human players can be seated, these can be clients or units that can be joined as a slot or jumping into.
+  --     
+  --     local AttackGroups = SET_GROUP:New():FilterCoalitions( "red" ):FilterPrefixes( "Defender" ):FilterStart()
+  --     
+  -- The set is built using the SET_GROUP class. Apply any filter criteria to identify the correct groups for your mission.
+  -- Only these slots or units will be able to execute the mission and will receive tasks for this mission, once available.
+  -- 
+  -- ### 1.3. Define the **EWR network**:
+  -- 
+  -- As part of the TASK\_A2A\_DISPATCHER constructor, an EWR network must be given as the third parameter.
+  -- An EWR network, or, Early Warning Radar network, is used to early detect potential airborne targets and to understand the position of patrolling targets of the enemy.
+  -- 
+  -- ![Banner Image](..\Presentations\TASK_A2A_DISPATCHER\Dia5.JPG)
+  -- 
+  -- Typically EWR networks are setup using 55G6 EWR, 1L13 EWR, Hawk sr and Patriot str ground based radar units. 
+  -- These radars have different ranges and 55G6 EWR and 1L13 EWR radars are Eastern Bloc units (eg Russia, Ukraine, Georgia) while the Hawk and Patriot radars are Western (eg US).
+  -- Additionally, ANY other radar capable unit can be part of the EWR network! Also AWACS airborne units, planes, helicopters can help to detect targets, as long as they have radar.
+  -- The position of these units is very important as they need to provide enough coverage 
+  -- to pick up enemy aircraft as they approach so that CAP and GCI flights can be tasked to intercept them.
+  -- 
+  -- ![Banner Image](..\Presentations\TASK_A2A_DISPATCHER\Dia7.JPG)
+  --  
+  -- Additionally in a hot war situation where the border is no longer respected the placement of radars has a big effect on how fast the war escalates. 
+  -- For example if they are a long way forward and can detect enemy planes on the ground and taking off 
+  -- they will start to vector CAP and GCI flights to attack them straight away which will immediately draw a response from the other coalition. 
+  -- Having the radars further back will mean a slower escalation because fewer targets will be detected and 
+  -- therefore less CAP and GCI flights will spawn and this will tend to make just the border area active rather than a melee over the whole map. 
+  -- It all depends on what the desired effect is. 
+  -- 
+  -- EWR networks are **dynamically constructed**, that is, they form part of the @{Functional#DETECTION_BASE} object that is given as the input parameter of the TASK\_A2A\_DISPATCHER class.
+  -- By defining in a **smart way the names or name prefixes of the groups** with EWR capable units, these groups will be **automatically added or deleted** from the EWR network, 
+  -- increasing or decreasing the radar coverage of the Early Warning System.
+  -- 
+  -- See the following example to setup an EWR network containing EWR stations and AWACS.
+  -- 
+  --     local EWRSet = SET_GROUP:New():FilterPrefixes( "EWR" ):FilterCoalitions("red"):FilterStart()
+  --
+  --     local EWRDetection = DETECTION_AREAS:New( EWRSet, 6000 )
+  --     EWRDetection:SetFriendliesRange( 10000 )
+  --     EWRDetection:SetDetectionInterval(30)
+  --
+  --     -- Setup the A2A dispatcher, and initialize it.
+  --     A2ADispatcher = TASK_A2A_DISPATCHER:New( Detection )
+  -- 
+  -- The above example creates a SET_GROUP instance, and stores this in the variable (object) **EWRSet**.
+  -- **EWRSet** is then being configured to filter all active groups with a group name starting with **EWR** to be included in the Set.
+  -- **EWRSet** is then being ordered to start the dynamic filtering. Note that any destroy or new spawn of a group with the above names will be removed or added to the Set.
+  -- Then a new **EWRDetection** object is created from the class DETECTION_AREAS. A grouping radius of 6000 is choosen, which is 6km.
+  -- The **EWRDetection** object is then passed to the @{#TASK_A2A_DISPATCHER.New}() method to indicate the EWR network configuration and setup the A2A tasking and detection mechanism.
+  -- 
+  -- ### 2. Define the detected **target grouping radius**:
+  -- 
+  -- ![Banner Image](..\Presentations\TASK_A2A_DISPATCHER\Dia8.JPG)
+  -- 
+  -- The target grouping radius is a property of the Detection object, that was passed to the AI\_A2A\_DISPATCHER object, but can be changed.
+  -- The grouping radius should not be too small, but also depends on the types of planes and the era of the simulation.
+  -- Fast planes like in the 80s, need a larger radius than WWII planes.  
+  -- Typically I suggest to use 30000 for new generation planes and 10000 for older era aircraft.
+  -- 
+  -- Note that detected targets are constantly re-grouped, that is, when certain detected aircraft are moving further than the group radius, then these aircraft will become a separate
+  -- group being detected. This may result in additional GCI being started by the dispatcher! So don't make this value too small!
+  -- 
+  -- ## 3. Set the **Engage radius**:
+  -- 
+  -- Define the radius to engage any target by airborne friendlies, which are executing cap or returning from an intercept mission.
+  -- 
+  -- ![Banner Image](..\Presentations\AI_A2A_DISPATCHER\Dia11.JPG)
+  -- 
+  -- So, if there is a target area detected and reported, 
+  -- then any friendlies that are airborne near this target area, 
+  -- will be commanded to (re-)engage that target when available (if no other tasks were commanded).
+  -- For example, if 100000 is given as a value, then any friendly that is airborne within 100km from the detected target, 
+  -- will be considered to receive the command to engage that target area.
+  -- You need to evaluate the value of this parameter carefully.
+  -- If too small, more intercept missions may be triggered upon detected target areas.
+  -- If too large, any airborne cap may not be able to reach the detected target area in time, because it is too far.
   -- 
   -- @field #TASK_A2A_DISPATCHER
   TASK_A2A_DISPATCHER = {
@@ -78,6 +175,36 @@ do -- TASK_A2A_DISPATCHER
     
     return self
   end
+  
+
+  --- Define the radius to when an ENGAGE task will be generated for any nearby by airborne friendlies, which are executing cap or returning from an intercept mission.
+  -- So, if there is a target area detected and reported, 
+  -- then any friendlies that are airborne near this target area, 
+  -- will be commanded to (re-)engage that target when available (if no other tasks were commanded).
+  -- An ENGAGE task will be created for those pilots.
+  -- For example, if 100000 is given as a value, then any friendly that is airborne within 100km from the detected target, 
+  -- will be considered to receive the command to engage that target area.
+  -- You need to evaluate the value of this parameter carefully.
+  -- If too small, more intercept missions may be triggered upon detected target areas.
+  -- If too large, any airborne cap may not be able to reach the detected target area in time, because it is too far.
+  -- @param #TASK_A2A_DISPATCHER self
+  -- @param #number EngageRadius (Optional, Default = 100000) The radius to report friendlies near the target.
+  -- @return #TASK_A2A_DISPATCHER
+  -- @usage
+  -- 
+  --   -- Set 50km as the radius to engage any target by airborne friendlies.
+  --   TaskA2ADispatcher:SetEngageRadius( 50000 )
+  --   
+  --   -- Set 100km as the radius to engage any target by airborne friendlies.
+  --   TaskA2ADispatcher:SetEngageRadius() -- 100000 is the default value.
+  --   
+  function AI_A2A_DISPATCHER:SetEngageRadius( EngageRadius )
+
+    self.Detection:SetFriendliesRange( EngageRadius or 100000 )
+  
+    return self
+  end
+  
   
   
   --- Creates an INTERCEPT task when there are targets for it.
