@@ -198,7 +198,7 @@ do -- ACT_ROUTE
           RouteText = Coordinate:ToStringFromRP( ShortestReferencePoint, ShortestReferenceName, Controllable )
         end
       else
-        RouteText = self.Coordinate:ToString( Controllable )
+        RouteText = Coordinate:ToString( Controllable )
       end
     end
 

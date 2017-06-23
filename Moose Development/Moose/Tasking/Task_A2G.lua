@@ -75,14 +75,14 @@ do -- TASK_A2G
     Fsm:AddTransition( { "ArrivedAtRendezVous", "HoldingAtRendezVous" }, "Engage", "Engaging" )
     Fsm:AddTransition( { "ArrivedAtRendezVous", "HoldingAtRendezVous" }, "HoldAtRendezVous", "HoldingAtRendezVous" )
      
-    Fsm:AddProcess   ( "Engaging", "Account", ACT_ACCOUNT_DEADS:New( self.TargetSetUnit, self.TaskType ), { Accounted = "Success" } )
+    Fsm:AddProcess   ( "Engaging", "Account", ACT_ACCOUNT_DEADS:New( self.TargetSetUnit, self.TaskType ), {} )
     Fsm:AddTransition( "Engaging", "RouteToTarget", "Engaging" )
     Fsm:AddProcess( "Engaging", "RouteToTargetZone", ACT_ROUTE_ZONE:New(), {} )
     Fsm:AddProcess( "Engaging", "RouteToTargetPoint", ACT_ROUTE_POINT:New(), {} )
     Fsm:AddTransition( "Engaging", "RouteToTargets", "Engaging" )
     
-    Fsm:AddTransition( "Accounted", "DestroyedAll", "Accounted" )
-    Fsm:AddTransition( "Accounted", "Success", "Success" )
+    --Fsm:AddTransition( "Accounted", "DestroyedAll", "Accounted" )
+    --Fsm:AddTransition( "Accounted", "Success", "Success" )
     Fsm:AddTransition( "Rejected", "Reject", "Aborted" )
     Fsm:AddTransition( "Failed", "Fail", "Failed" )
     
@@ -369,6 +369,17 @@ do -- TASK_A2G_SEAD
     return self
   end 
 
+  --- @param #TASK_A2G_SEAD self
+  function TASK_A2G_SEAD:onafterGoal( TaskUnit, From, Event, To )
+    local TargetSetUnit = self.TargetSetUnit -- Core.Set#SET_UNIT
+    
+    if TargetSetUnit:Count() == 0 then
+      self:Success()
+    end
+    
+    self:__Goal( -10 )
+  end
+
 end
 
 do -- TASK_A2G_BAI
@@ -422,6 +433,17 @@ do -- TASK_A2G_BAI
     return self
   end 
 
+  --- @param #TASK_A2G_BAI self
+  function TASK_A2G_BAI:onafterGoal( TaskUnit, From, Event, To )
+    local TargetSetUnit = self.TargetSetUnit -- Core.Set#SET_UNIT
+    
+    if TargetSetUnit:Count() == 0 then
+      self:Success()
+    end
+    
+    self:__Goal( -10 )
+  end
+
 end
 
 do -- TASK_A2G_CAS
@@ -474,5 +496,16 @@ do -- TASK_A2G_CAS
 
     return self
   end 
+
+  --- @param #TASK_A2G_CAS self
+  function TASK_A2G_CAS:onafterGoal( TaskUnit, From, Event, To )
+    local TargetSetUnit = self.TargetSetUnit -- Core.Set#SET_UNIT
+    
+    if TargetSetUnit:Count() == 0 then
+      self:Success()
+    end
+    
+    self:__Goal( -10 )
+  end
 
 end

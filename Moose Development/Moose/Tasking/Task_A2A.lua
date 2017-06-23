@@ -75,14 +75,14 @@ do -- TASK_A2A
     Fsm:AddTransition( { "ArrivedAtRendezVous", "HoldingAtRendezVous" }, "Engage", "Engaging" )
     Fsm:AddTransition( { "ArrivedAtRendezVous", "HoldingAtRendezVous" }, "HoldAtRendezVous", "HoldingAtRendezVous" )
      
-    Fsm:AddProcess   ( "Engaging", "Account", ACT_ACCOUNT_DEADS:New( self.TargetSetUnit, self.TaskType ), { Accounted = "Success" } )
+    Fsm:AddProcess   ( "Engaging", "Account", ACT_ACCOUNT_DEADS:New( self.TargetSetUnit, self.TaskType ), {} )
     Fsm:AddTransition( "Engaging", "RouteToTarget", "Engaging" )
     Fsm:AddProcess( "Engaging", "RouteToTargetZone", ACT_ROUTE_ZONE:New(), {} )
     Fsm:AddProcess( "Engaging", "RouteToTargetPoint", ACT_ROUTE_POINT:New(), {} )
     Fsm:AddTransition( "Engaging", "RouteToTargets", "Engaging" )
     
-    Fsm:AddTransition( "Accounted", "DestroyedAll", "Accounted" )
-    Fsm:AddTransition( "Accounted", "Success", "Success" )
+--    Fsm:AddTransition( "Accounted", "DestroyedAll", "Accounted" )
+--    Fsm:AddTransition( "Accounted", "Success", "Success" )
     Fsm:AddTransition( "Rejected", "Reject", "Aborted" )
     Fsm:AddTransition( "Failed", "Fail", "Failed" )
     
@@ -170,7 +170,7 @@ do -- TASK_A2A
   function TASK_A2A:GetPlannedMenuText()
     return self:GetStateString() .. " - " .. self:GetTaskName() .. " ( " .. self.TargetSetUnit:GetUnitTypesText() .. " )"
   end
-
+  
   --- @param #TASK_A2A self
   -- @param Core.Point#COORDINATE RendezVousCoordinate The Coordinate object referencing to the 2D point where the RendezVous point is located on the map.
   -- @param #number RendezVousRange The RendezVousRange that defines when the player is considered to have arrived at the RendezVous point.
@@ -351,7 +351,7 @@ do -- TASK_A2A_INTERCEPT
   -- @param #string TaskName The name of the Task.
   -- @param Core.Set#SET_UNIT TargetSetUnit 
   -- @param #string TaskBriefing The briefing of the task.
-  -- @return #TASK_A2A_INTERCEPT self
+  -- @return #TASK_A2A_INTERCEPT
   function TASK_A2A_INTERCEPT:New( Mission, SetGroup, TaskName, TargetSetUnit, TaskBriefing )
     local self = BASE:Inherit( self, TASK_A2A:New( Mission, SetGroup, TaskName, TargetSetUnit, "INTERCEPT", TaskBriefing ) ) -- #TASK_A2A_INTERCEPT
     self:F()
@@ -375,6 +375,21 @@ do -- TASK_A2A_INTERCEPT
     
     return self
   end 
+
+
+  --- @param #TASK_A2A_INTERCEPT self
+  function TASK_A2A_INTERCEPT:onafterGoal( TaskUnit, From, Event, To )
+    local TargetSetUnit = self.TargetSetUnit -- Core.Set#SET_UNIT
+    
+    if TargetSetUnit:Count() == 0 then
+      self:Success()
+    end
+    
+    self:__Goal( -10 )
+  end
+  
+
+
 
 end
 
@@ -438,6 +453,17 @@ do -- TASK_A2A_SWEEP
     return self
   end 
 
+  --- @param #TASK_A2A_SWEEP self
+  function TASK_A2A_SWEEP:onafterGoal( TaskUnit, From, Event, To )
+    local TargetSetUnit = self.TargetSetUnit -- Core.Set#SET_UNIT
+    
+    if TargetSetUnit:Count() == 0 then
+      self:Success()
+    end
+    
+    self:__Goal( -10 )
+  end
+
 end
 
 
@@ -497,6 +523,18 @@ do -- TASK_A2A_ENGAGE
     
     return self
   end 
+
+  --- @param #TASK_A2A_ENGAGE self
+  function TASK_A2A_ENGAGE:onafterGoal( TaskUnit, From, Event, To )
+    local TargetSetUnit = self.TargetSetUnit -- Core.Set#SET_UNIT
+    
+    if TargetSetUnit:Count() == 0 then
+      self:Success()
+    end
+    
+    self:__Goal( -10 )
+  end
+  
 
 end
 

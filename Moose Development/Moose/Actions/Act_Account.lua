@@ -78,7 +78,6 @@ do -- ACT_ACCOUNT
     self:AddTransition( "Account", "NoMore", "Accounted")
     self:AddTransition( "*", "Fail", "Failed")
     
-    self:AddEndState( "Accounted" )
     self:AddEndState( "Failed" )
     
     self:SetStartState( "Assigned" ) 
@@ -97,6 +96,7 @@ do -- ACT_ACCOUNT
   function ACT_ACCOUNT:onafterStart( ProcessUnit, From, Event, To )
 
     self:HandleEvent( EVENTS.Dead, self.onfuncEventDead )
+    self:HandleEvent( EVENTS.Crash, self.onfuncEventCrash )
 
     self:__Wait( 1 )
   end
@@ -206,7 +206,7 @@ do -- ACT_ACCOUNT_DEADS
   function ACT_ACCOUNT_DEADS:onenterAccount( ProcessUnit, Task, From, Event, To, EventData  )
     self:T( { ProcessUnit, EventData, From, Event, To } )
     
-    self:T({self.Controllable})
+    self:T( { self.Controllable } )
   
     self.TargetSetUnit:Flush()
     
@@ -215,7 +215,7 @@ do -- ACT_ACCOUNT_DEADS
       self:T( "Sending Message" )
       local TaskGroup = ProcessUnit:GetGroup()
       self.TargetSetUnit:Remove( EventData.IniUnitName )
-      self:Message( "You hit a target. Your group with assigned " .. self.TaskName .. " task has " .. self.TargetSetUnit:Count() .. " targets ( " .. self.TargetSetUnit:GetUnitTypesText() .. " ) left to be destroyed." )
+      self:Message( "Target destroyed. Your group with assigned " .. self.TaskName .. " task has " .. self.TargetSetUnit:Count() .. " targets ( " .. self.TargetSetUnit:GetUnitTypesText() .. " ) left to be destroyed." )
     end
     self:T( { "After sending Message" } )
   end
@@ -240,6 +240,18 @@ do -- ACT_ACCOUNT_DEADS
   --- @param #ACT_ACCOUNT_DEADS self
   -- @param Event#EVENTDATA EventData
   function ACT_ACCOUNT_DEADS:onfuncEventDead( EventData )
+    self:T( { "EventDead", EventData } )
+
+    if EventData.IniDCSUnit then
+      self:Event( EventData )
+    end
+  end
+
+  --- DCS Events
+  
+  --- @param #ACT_ACCOUNT_DEADS self
+  -- @param Event#EVENTDATA EventData
+  function ACT_ACCOUNT_DEADS:onfuncEventCrash( EventData )
     self:T( { "EventDead", EventData } )
 
     if EventData.IniDCSUnit then

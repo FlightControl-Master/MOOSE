@@ -170,6 +170,36 @@ function TASK:New( Mission, SetGroupAssign, TaskName, TaskType, TaskBriefing )
   self:AddTransition( "Assigned", "Fail", "Failed" )
   self:AddTransition( "Assigned", "Abort", "Aborted" )
   self:AddTransition( "Assigned", "Cancel", "Cancelled" )
+  self:AddTransition( "Assigned", "Goal", "*" )
+  
+  --- Goal Handler OnBefore for TASK
+  -- @function [parent=#TASK] OnBeforeGoal
+  -- @param #TASK self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable
+  -- @param #string From
+  -- @param #string Event
+  -- @param #string To
+  -- @return #boolean
+  
+  --- Goal Handler OnAfter for TASK
+  -- @function [parent=#TASK] OnAfterGoal
+  -- @param #TASK self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable
+  -- @param #string From
+  -- @param #string Event
+  -- @param #string To
+  
+  --- Goal Trigger for TASK
+  -- @function [parent=#TASK] Goal
+  -- @param #TASK self
+  
+  --- Goal Asynchronous Trigger for TASK
+  -- @function [parent=#TASK] __Goal
+  -- @param #TASK self
+  -- @param #number Delay
+  
+  
+  
   self:AddTransition( "*", "PlayerCrashed", "*" )
   self:AddTransition( "*", "PlayerAborted", "*" )
   self:AddTransition( "*", "PlayerDead", "*" )
@@ -479,7 +509,7 @@ do -- Group Assignment
       local TaskUnit = UnitData -- Wrapper.Unit#UNIT
       local PlayerName = TaskUnit:GetPlayerName()
       self:E(PlayerName)
-      if PlayerName ~= nil or PlayerName ~= "" then
+      if PlayerName ~= nil and PlayerName ~= "" then
         self:AssignToUnit( TaskUnit )
         CommandCenter:MessageToGroup( 
           string.format( 'Task "%s": Briefing for player (%s):\n%s', 
@@ -1158,6 +1188,9 @@ function TASK:onenterAssigned( From, Event, To, PlayerUnit, PlayerName )
     
     self:GetMission():__Start( 1 )
     
+    -- When the task is assigned, the task goal needs to be checked of the derived classes.
+    self:__Goal( -10 )  -- Polymorphic
+     
     self:SetMenu()
   end
 end

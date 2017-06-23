@@ -1084,12 +1084,7 @@ end
   
     self.Task:Fail()
   end
-  
-  function FSM_PROCESS:onenterSuccess( ProcessUnit )
-    self:T( "Success" )
-  
-    self.Task:Success()
-  end
+
   
   --- StateMachine callback function for a FSM_PROCESS
   -- @param #FSM_PROCESS self
