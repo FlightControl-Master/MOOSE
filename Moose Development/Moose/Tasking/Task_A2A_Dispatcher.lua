@@ -1,8 +1,6 @@
 --- **Tasking** - The TASK_A2A_DISPATCHER creates and manages player TASK_A2A tasks based on detected targets.
 -- 
--- ![Banner Image](..\Presentations\TASK_A2A_DISPATCHER\Dia1.JPG)
--- 
--- The @{#TASK_A2A_DISPATCHER} class implements the dynamic dispatching of tasks upon groups of detected units determined a @{Set} of EWR installation groups.
+-- The @{#TASK_A2A_DISPATCHER} classes implement the dynamic dispatching of tasks upon groups of detected units determined a @{Set} of EWR installation groups.
 -- 
 -- ====
 -- 
@@ -98,7 +96,7 @@ do -- TASK_A2A_DISPATCHER
   --     EWRDetection:SetDetectionInterval(30)
   --
   --     -- Setup the A2A dispatcher, and initialize it.
-  --     A2ADispatcher = TASK_A2A_DISPATCHER:New( Detection )
+  --     A2ADispatcher = TASK_A2A_DISPATCHER:New( Mission, AttackGroups, EWRDetection )
   -- 
   -- The above example creates a SET_GROUP instance, and stores this in the variable (object) **EWRSet**.
   -- **EWRSet** is then being configured to filter all active groups with a group name starting with **EWR** to be included in the Set.

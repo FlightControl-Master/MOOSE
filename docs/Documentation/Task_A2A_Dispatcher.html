@@ -109,9 +109,7 @@
 
    
 
-<p><img src="..\Presentations\TASK_A2A_DISPATCHER\Dia1.JPG" alt="Banner Image"/></p>
-
-<p>The <a href="##(TASK_A2A_DISPATCHER)">#TASK<em>A2A</em>DISPATCHER</a> class implements the dynamic dispatching of tasks upon groups of detected units determined a <a href="Set.html">Set</a> of EWR installation groups.</p>
+<p>The <a href="##(TASK_A2A_DISPATCHER)">#TASK<em>A2A</em>DISPATCHER</a> classes implement the dynamic dispatching of tasks upon groups of detected units determined a <a href="Set.html">Set</a> of EWR installation groups.</p>
 
 <hr/>
 
@@ -306,7 +304,7 @@ EWRDetection:SetFriendliesRange( 10000 )
 EWRDetection:SetDetectionInterval(30)
 
 -- Setup the A2A dispatcher, and initialize it.
-A2ADispatcher = TASK_A2A_DISPATCHER:New( Detection )
+A2ADispatcher = TASK_A2A_DISPATCHER:New( Mission, AttackGroups, EWRDetection )
 </code></pre>
 
 <p>The above example creates a SET_GROUP instance, and stores this in the variable (object) <strong>EWRSet</strong>.
