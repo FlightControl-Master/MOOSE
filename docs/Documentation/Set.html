@@ -216,7 +216,7 @@
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="#SET_GROUP">SET_GROUP</a></td>
 		<td class="summary">
-<h1>2) SET_GROUP class, extends <a href="Set.html##(SET_BASE)">Set#SET_BASE</a></h1>
+<h1>SET_GROUP class, extends <a href="Set.html##(SET_BASE)">Set#SET_BASE</a></h1>
 
 <p>Mission designers can use the <a href="Set.html##(SET_GROUP)">Set#SET_GROUP</a> class to build sets of groups belonging to certain:</p>
 
@@ -788,6 +788,36 @@ provides an easy to use shortcut...</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_GROUP).FilterCategoryAirplane">SET_GROUP:FilterCategoryAirplane()</a></td>
+		<td class="summary">
+<p>Builds a set of groups out of airplane category.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_GROUP).FilterCategoryGround">SET_GROUP:FilterCategoryGround()</a></td>
+		<td class="summary">
+<p>Builds a set of groups out of ground category.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_GROUP).FilterCategoryHelicopter">SET_GROUP:FilterCategoryHelicopter()</a></td>
+		<td class="summary">
+<p>Builds a set of groups out of helicopter category.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_GROUP).FilterCategoryShip">SET_GROUP:FilterCategoryShip()</a></td>
+		<td class="summary">
+<p>Builds a set of groups out of ship category.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_GROUP).FilterCategoryStructure">SET_GROUP:FilterCategoryStructure()</a></td>
+		<td class="summary">
+<p>Builds a set of groups out of structure category.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SET_GROUP).FilterCoalitions">SET_GROUP:FilterCoalitions(Coalitions)</a></td>
 		<td class="summary">
 <p>Builds a set of groups of coalitions.</p>
@@ -1312,7 +1342,7 @@ The following iterator methods are currently available within the SET</em>CLIENT
 </dt>
 <dd>
 	
-<h1>2) SET_GROUP class, extends <a href="Set.html##(SET_BASE)">Set#SET_BASE</a></h1>
+<h1>SET_GROUP class, extends <a href="Set.html##(SET_BASE)">Set#SET_BASE</a></h1>
 
 <p>Mission designers can use the <a href="Set.html##(SET_GROUP)">Set#SET_GROUP</a> class to build sets of groups belonging to certain:</p>
 
@@ -1325,7 +1355,7 @@ The following iterator methods are currently available within the SET</em>CLIENT
 
 	
 <p> </p>
-<h2>2.1) SET_GROUP constructor</h2>
+<h2>1. SET_GROUP constructor</h2>
 
 <p>Create a new SET_GROUP object with the <a href="##(SET_GROUP).New">SET_GROUP.New</a> method:</p>
 
@@ -1333,12 +1363,12 @@ The following iterator methods are currently available within the SET</em>CLIENT
     <li><a href="##(SET_GROUP).New">SET_GROUP.New</a>: Creates a new SET_GROUP object.</li>
 </ul>
 
-<h2>2.2) Add or Remove GROUP(s) from SET_GROUP</h2>
+<h2>2. Add or Remove GROUP(s) from SET_GROUP</h2>
 
 <p>GROUPS can be added and removed using the <a href="Set.html##(SET_GROUP).AddGroupsByName">Set#SET_GROUP.AddGroupsByName</a> and <a href="Set.html##(SET_GROUP).RemoveGroupsByName">Set#SET_GROUP.RemoveGroupsByName</a> respectively. 
 These methods take a single GROUP name or an array of GROUP names to be added or removed from SET_GROUP.</p>
 
-<h2>2.3) SET_GROUP filter criteria</h2>
+<h2>3. SET_GROUP filter criteria</h2>
 
 <p>You can set filter criteria to define the set of groups within the SET_GROUP.
 Filter criteria are defined by:</p>
@@ -1349,6 +1379,17 @@ Filter criteria are defined by:</p>
     <li><a href="##(SET_GROUP).FilterCountries">SET_GROUP.FilterCountries</a>: Builds the SET_GROUP with the gruops belonging to the country(ies).</li>
     <li><a href="##(SET_GROUP).FilterPrefixes">SET_GROUP.FilterPrefixes</a>: Builds the SET_GROUP with the groups starting with the same prefix string(s).</li>
 </ul>
+
+<p>For the Category Filter, extra methods have been added:</p>
+
+<ul>
+    <li><a href="##(SET_GROUP).FilterCategoryAirplane">SET_GROUP.FilterCategoryAirplane</a>: Builds the SET_GROUP from airplanes.</li>
+    <li><a href="##(SET_GROUP).FilterCategoryHelicopter">SET_GROUP.FilterCategoryHelicopter</a>: Builds the SET_GROUP from helicopters.</li>
+    <li><a href="##(SET_GROUP).FilterCategoryGround">SET_GROUP.FilterCategoryGround</a>: Builds the SET_GROUP from ground vehicles or infantry.</li>
+    <li><a href="##(SET_GROUP).FilterCategoryShip">SET_GROUP.FilterCategoryShip</a>: Builds the SET_GROUP from ships.</li>
+    <li><a href="##(SET_GROUP).FilterCategoryStructure">SET_GROUP.FilterCategoryStructure</a>: Builds the SET_GROUP from structures.</li>
+</ul>
+
 
 <p>Once the filter criteria have been set for the SET_GROUP, you can start filtering using:</p>
 
@@ -1362,7 +1403,7 @@ Filter criteria are defined by:</p>
     <li><a href="##(SET_GROUP).FilterZones">SET_GROUP.FilterZones</a>: Builds the SET_GROUP with the groups within a <a href="Zone.html##(ZONE)">Zone#ZONE</a>.</li>
 </ul>
 
-<h2>2.4) SET_GROUP iterators</h2>
+<h2>4. SET_GROUP iterators</h2>
 
 <p>Once the filters have been defined and the SET<em>GROUP has been built, you can iterate the SET</em>GROUP with the available iterator methods.
 The iterator methods will walk the SET<em>GROUP set, and call for each element within the set a function that you provide.
@@ -3826,6 +3867,96 @@ Can take the following values: "plane", "helicopter", "ground", "ship".</p>
 
 				</li>
 		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET_GROUP)">#SET_GROUP</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_GROUP).FilterCategoryAirplane" >
+<strong>SET_GROUP:FilterCategoryAirplane()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Builds a set of groups out of airplane category.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET_GROUP)">#SET_GROUP</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_GROUP).FilterCategoryGround" >
+<strong>SET_GROUP:FilterCategoryGround()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Builds a set of groups out of ground category.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET_GROUP)">#SET_GROUP</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_GROUP).FilterCategoryHelicopter" >
+<strong>SET_GROUP:FilterCategoryHelicopter()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Builds a set of groups out of helicopter category.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET_GROUP)">#SET_GROUP</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_GROUP).FilterCategoryShip" >
+<strong>SET_GROUP:FilterCategoryShip()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Builds a set of groups out of ship category.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET_GROUP)">#SET_GROUP</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_GROUP).FilterCategoryStructure" >
+<strong>SET_GROUP:FilterCategoryStructure()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Builds a set of groups out of structure category.</p>
+
 		<h3>Return value</h3>
 				
 <p><em><a href="##(SET_GROUP)">#SET_GROUP</a>:</em>

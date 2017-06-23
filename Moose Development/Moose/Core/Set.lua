@@ -584,7 +584,7 @@ end
 --- @type SET_GROUP
 -- @extends Core.Set#SET_BASE
 
---- # 2) SET_GROUP class, extends @{Set#SET_BASE}
+--- # SET_GROUP class, extends @{Set#SET_BASE}
 -- 
 -- Mission designers can use the @{Set#SET_GROUP} class to build sets of groups belonging to certain:
 -- 
@@ -593,18 +593,18 @@ end
 --  * Countries
 --  * Starting with certain prefix strings.
 --  
--- ## 2.1) SET_GROUP constructor
+-- ## 1. SET_GROUP constructor
 -- 
 -- Create a new SET_GROUP object with the @{#SET_GROUP.New} method:
 -- 
 --    * @{#SET_GROUP.New}: Creates a new SET_GROUP object.
 -- 
--- ## 2.2) Add or Remove GROUP(s) from SET_GROUP
+-- ## 2. Add or Remove GROUP(s) from SET_GROUP
 -- 
 -- GROUPS can be added and removed using the @{Set#SET_GROUP.AddGroupsByName} and @{Set#SET_GROUP.RemoveGroupsByName} respectively. 
 -- These methods take a single GROUP name or an array of GROUP names to be added or removed from SET_GROUP.
 -- 
--- ## 2.3) SET_GROUP filter criteria
+-- ## 3. SET_GROUP filter criteria
 -- 
 -- You can set filter criteria to define the set of groups within the SET_GROUP.
 -- Filter criteria are defined by:
@@ -613,6 +613,15 @@ end
 --    * @{#SET_GROUP.FilterCategories}: Builds the SET_GROUP with the groups belonging to the category(ies).
 --    * @{#SET_GROUP.FilterCountries}: Builds the SET_GROUP with the gruops belonging to the country(ies).
 --    * @{#SET_GROUP.FilterPrefixes}: Builds the SET_GROUP with the groups starting with the same prefix string(s).
+-- 
+-- For the Category Filter, extra methods have been added:
+-- 
+--    * @{#SET_GROUP.FilterCategoryAirplane}: Builds the SET_GROUP from airplanes.
+--    * @{#SET_GROUP.FilterCategoryHelicopter}: Builds the SET_GROUP from helicopters.
+--    * @{#SET_GROUP.FilterCategoryGround}: Builds the SET_GROUP from ground vehicles or infantry.
+--    * @{#SET_GROUP.FilterCategoryShip}: Builds the SET_GROUP from ships.
+--    * @{#SET_GROUP.FilterCategoryStructure}: Builds the SET_GROUP from structures.
+-- 
 --   
 -- Once the filter criteria have been set for the SET_GROUP, you can start filtering using:
 -- 
@@ -622,7 +631,7 @@ end
 -- 
 --    * @{#SET_GROUP.FilterZones}: Builds the SET_GROUP with the groups within a @{Zone#ZONE}.
 -- 
--- ## 2.4) SET_GROUP iterators
+-- ## 4. SET_GROUP iterators
 -- 
 -- Once the filters have been defined and the SET_GROUP has been built, you can iterate the SET_GROUP with the available iterator methods.
 -- The iterator methods will walk the SET_GROUP set, and call for each element within the set a function that you provide.
@@ -652,7 +661,7 @@ SET_GROUP = {
     Categories = {
       plane = Group.Category.AIRPLANE,
       helicopter = Group.Category.HELICOPTER,
-      ground = Group.Category.GROUND_UNIT,
+      ground = Group.Category.GROUND, -- R2.2
       ship = Group.Category.SHIP,
       structure = Group.Category.STRUCTURE,
     },
@@ -780,6 +789,48 @@ function SET_GROUP:FilterCategories( Categories )
   end
   return self
 end
+
+--- Builds a set of groups out of ground category.
+-- @param #SET_GROUP self
+-- @return #SET_GROUP self
+function SET_GROUP:FilterCategoryGround()
+  self:FilterCategories( "ground" )
+  return self
+end
+
+--- Builds a set of groups out of airplane category.
+-- @param #SET_GROUP self
+-- @return #SET_GROUP self
+function SET_GROUP:FilterCategoryAirplane()
+  self:FilterCategories( "airplane" )
+  return self
+end
+
+--- Builds a set of groups out of helicopter category.
+-- @param #SET_GROUP self
+-- @return #SET_GROUP self
+function SET_GROUP:FilterCategoryHelicopter()
+  self:FilterCategories( "helicopter" )
+  return self
+end
+
+--- Builds a set of groups out of ship category.
+-- @param #SET_GROUP self
+-- @return #SET_GROUP self
+function SET_GROUP:FilterCategoryShip()
+  self:FilterCategories( "ship" )
+  return self
+end
+
+--- Builds a set of groups out of structure category.
+-- @param #SET_GROUP self
+-- @return #SET_GROUP self
+function SET_GROUP:FilterCategoryStructure()
+  self:FilterCategories( "structure" )
+  return self
+end
+
+
 
 --- Builds a set of groups of defined countries.
 -- Possible current countries are those known within DCS world.
