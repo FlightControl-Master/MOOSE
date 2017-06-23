@@ -802,7 +802,7 @@ end
 -- @param #SET_GROUP self
 -- @return #SET_GROUP self
 function SET_GROUP:FilterCategoryAirplane()
-  self:FilterCategories( "airplane" )
+  self:FilterCategories( "plane" )
   return self
 end
 
