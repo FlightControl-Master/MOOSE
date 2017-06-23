@@ -18,16 +18,16 @@ do -- TASK_A2A_DISPATCHER
 
   --- # TASK_A2A_DISPATCHER class, extends @{Tasking#DETECTION_MANAGER}
   -- 
-  -- ![Banner Image](..\Presentations\TASK_A2A_DISPATCHER\Dia1.JPG)
+  -- ![Banner Image](..\Presentations\TASK_A2A\Dia1.JPG)
   -- 
   -- The @{#TASK_A2A_DISPATCHER} class implements the dynamic dispatching of tasks upon groups of detected units determined a @{Set} of EWR installation groups.
   -- 
-  -- ![Banner Image](..\Presentations\TASK_A2A_DISPATCHER\Dia3.JPG)
+  -- ![Banner Image](..\Presentations\TASK_A2A\Dia3.JPG)
   -- 
   -- The EWR will detect units, will group them, and will dispatch @{Task}s to groups. Depending on the type of target detected, different tasks will be dispatched.
   -- Find a summary below describing for which situation a task type is created:
   -- 
-  -- ![Banner Image](..\Presentations\AI_A2A_DISPATCHER\Dia9.JPG)
+  -- ![Banner Image](..\Presentations\TASK_A2A\Dia9.JPG)
   -- 
   --   * **INTERCEPT Task**: Is created when the target is known, is detected and within a danger zone, and there is no friendly airborne in range.
   --   * **SWEEP Task**: Is created when the target is unknown, was detected and the last position is only known, and within a danger zone, and there is no friendly airborne in range.
@@ -50,7 +50,7 @@ do -- TASK_A2A_DISPATCHER
   -- 
   -- ### 1.2. Build a set of the groups seated by human players:
   -- 
-  -- ![Banner Image](..\Presentations\TASK_A2A_DISPATCHER\Dia6.JPG)
+  -- ![Banner Image](..\Presentations\TASK_A2A\Dia6.JPG)
   -- 
   -- A set or collection of the groups wherein human players can be seated, these can be clients or units that can be joined as a slot or jumping into.
   --     
@@ -64,7 +64,7 @@ do -- TASK_A2A_DISPATCHER
   -- As part of the TASK\_A2A\_DISPATCHER constructor, an EWR network must be given as the third parameter.
   -- An EWR network, or, Early Warning Radar network, is used to early detect potential airborne targets and to understand the position of patrolling targets of the enemy.
   -- 
-  -- ![Banner Image](..\Presentations\TASK_A2A_DISPATCHER\Dia5.JPG)
+  -- ![Banner Image](..\Presentations\TASK_A2A\Dia5.JPG)
   -- 
   -- Typically EWR networks are setup using 55G6 EWR, 1L13 EWR, Hawk sr and Patriot str ground based radar units. 
   -- These radars have different ranges and 55G6 EWR and 1L13 EWR radars are Eastern Bloc units (eg Russia, Ukraine, Georgia) while the Hawk and Patriot radars are Western (eg US).
@@ -72,7 +72,7 @@ do -- TASK_A2A_DISPATCHER
   -- The position of these units is very important as they need to provide enough coverage 
   -- to pick up enemy aircraft as they approach so that CAP and GCI flights can be tasked to intercept them.
   -- 
-  -- ![Banner Image](..\Presentations\TASK_A2A_DISPATCHER\Dia7.JPG)
+  -- ![Banner Image](..\Presentations\TASK_A2A\Dia7.JPG)
   --  
   -- Additionally in a hot war situation where the border is no longer respected the placement of radars has a big effect on how fast the war escalates. 
   -- For example if they are a long way forward and can detect enemy planes on the ground and taking off 
@@ -104,7 +104,7 @@ do -- TASK_A2A_DISPATCHER
   -- 
   -- ### 2. Define the detected **target grouping radius**:
   -- 
-  -- ![Banner Image](..\Presentations\TASK_A2A_DISPATCHER\Dia8.JPG)
+  -- ![Banner Image](..\Presentations\TASK_A2A\Dia8.JPG)
   -- 
   -- The target grouping radius is a property of the Detection object, that was passed to the AI\_A2A\_DISPATCHER object, but can be changed.
   -- The grouping radius should not be too small, but also depends on the types of planes and the era of the simulation.
@@ -118,7 +118,7 @@ do -- TASK_A2A_DISPATCHER
   -- 
   -- Define the radius to engage any target by airborne friendlies, which are executing cap or returning from an intercept mission.
   -- 
-  -- ![Banner Image](..\Presentations\AI_A2A_DISPATCHER\Dia11.JPG)
+  -- ![Banner Image](..\Presentations\TASK_A2A\Dia11.JPG)
   -- 
   -- So, if there is a target area detected and reported, 
   -- then any friendlies that are airborne near this target area, 
