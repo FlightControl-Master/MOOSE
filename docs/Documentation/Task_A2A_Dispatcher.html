@@ -109,6 +109,10 @@
 
    
 
+<p><img src="..\Presentations\TASK_A2A_DISPATCHER\Dia1.JPG" alt="Banner Image"/></p>
+
+<p>The <a href="##(TASK_A2A_DISPATCHER)">#TASK<em>A2A</em>DISPATCHER</a> class implements the dynamic dispatching of tasks upon groups of detected units determined a <a href="Set.html">Set</a> of EWR installation groups.</p>
+
 <hr/>
 
 <h3>Author: <strong>Sven Van de Velde (FlightControl)</strong></h3>
@@ -199,6 +203,12 @@
 <p>Assigns tasks in relation to the detected items to the <a href="Set.html##(SET_GROUP)">Set#SET_GROUP</a>.</p>
 </td>
 		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_A2A_DISPATCHER).SetEngageRadius">TASK_A2A_DISPATCHER:SetEngageRadius(EngageRadius)</a></td>
+		<td class="summary">
+<p>Define the radius to when an ENGAGE task will be generated for any nearby by airborne friendlies, which are executing cap or returning from an intercept mission.</p>
+</td>
+		</tr>
 	</table>
 
 	<h2>Global(s)</h2>
@@ -225,7 +235,7 @@
 <p>The EWR will detect units, will group them, and will dispatch <a href="Task.html">Task</a>s to groups. Depending on the type of target detected, different tasks will be dispatched.
 Find a summary below describing for which situation a task type is created:</p>
 
-<p><img src="..\Presentations\AI_A2A_DISPATCHER\Dia9.JPG" alt="Banner Image"/></p>
+<p><img src="..\Presentations\TASK_A2A_DISPATCHER\Dia9.JPG" alt="Banner Image"/></p>
 
 <ul>
     <li><strong>INTERCEPT Task</strong>: Is created when the target is known, is detected and within a danger zone, and there is no friendly airborne in range.</li>
@@ -321,7 +331,7 @@ group being detected. This may result in additional GCI being started by the dis
 
 <p>Define the radius to engage any target by airborne friendlies, which are executing cap or returning from an intercept mission.</p>
 
-<p><img src="..\Presentations\AI_A2A_DISPATCHER\Dia11.JPG" alt="Banner Image"/></p>
+<p><img src="..\Presentations\TASK_A2A_DISPATCHER\Dia11.JPG" alt="Banner Image"/></p>
 
 <p>So, if there is a target area detected and reported, 
 then any friendlies that are airborne near this target area, 
@@ -707,6 +717,53 @@ The detection created by the <a href="Detection.html##(DETECTION_BASE)">Detectio
 				
 <p><em>#boolean:</em>
 Return true if you want the task assigning to continue... false will cancel the loop.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_A2A_DISPATCHER).SetEngageRadius" >
+<strong>TASK_A2A_DISPATCHER:SetEngageRadius(EngageRadius)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Define the radius to when an ENGAGE task will be generated for any nearby by airborne friendlies, which are executing cap or returning from an intercept mission.</p>
+
+	
+<p>So, if there is a target area detected and reported, 
+then any friendlies that are airborne near this target area, 
+will be commanded to (re-)engage that target when available (if no other tasks were commanded).
+An ENGAGE task will be created for those pilots.
+For example, if 100000 is given as a value, then any friendly that is airborne within 100km from the detected target, 
+will be considered to receive the command to engage that target area.
+You need to evaluate the value of this parameter carefully.
+If too small, more intercept missions may be triggered upon detected target areas.
+If too large, any airborne cap may not be able to reach the detected target area in time, because it is too far.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number EngageRadius </em></code>: 
+(Optional, Default = 100000) The radius to report friendlies near the target.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(TASK_A2A_DISPATCHER)">#TASK<em>A2A</em>DISPATCHER</a>:</em></p>
+
+
+			<h3>Usage:</h3>
+		<pre class="example"><code>
+  -- Set 50km as the radius to engage any target by airborne friendlies.
+  TaskA2ADispatcher:SetEngageRadius( 50000 )
+  
+  -- Set 100km as the radius to engage any target by airborne friendlies.
+  TaskA2ADispatcher:SetEngageRadius() -- 100000 is the default value.
+  </code></pre>
 
 </dd>
 </dl>
