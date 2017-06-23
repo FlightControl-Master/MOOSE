@@ -1,5 +1,9 @@
 --- **Tasking** - The TASK_A2A_DISPATCHER creates and manages player TASK_A2A tasks based on detected targets.
 -- 
+-- ![Banner Image](..\Presentations\TASK_A2A\Dia1.JPG)
+-- 
+-- The @{#TASK_A2A_DISPATCHER} class implements the dynamic dispatching of tasks upon groups of detected units determined a @{Set} of EWR installation groups.
+-- 
 -- ====
 -- 
 -- ### Author: **Sven Van de Velde (FlightControl)**
