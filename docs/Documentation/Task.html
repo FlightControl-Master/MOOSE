@@ -144,6 +144,12 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).AddProgress">TASK:AddProgress(PlayerName, ProgressText, ProgressTime, ProgressPoints)</a></td>
+		<td class="summary">
+<p>Add Task Progress for a Player Name</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(TASK).AssignToGroup">TASK:AssignToGroup(TaskGroup)</a></td>
 		<td class="summary">
 <p>Assign the <a href="Task.html">Task</a> to a <a href="Group.html">Group</a>.</p>
@@ -300,6 +306,12 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).Goal">TASK:Goal()</a></td>
+		<td class="summary">
+<p>Goal Trigger for TASK</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(TASK).HasAliveUnits">TASK:HasAliveUnits()</a></td>
 		<td class="summary">
 <p>Returns if the <a href="Task.html">Task</a> has still alive and assigned Units.</p>
@@ -414,6 +426,12 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).OnAfterGoal">TASK:OnAfterGoal(Controllable, From, Event, To)</a></td>
+		<td class="summary">
+<p>Goal Handler OnAfter for TASK</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(TASK).OnAfterPlayerAborted">TASK:OnAfterPlayerAborted(PlayerUnit, PlayerName)</a></td>
 		<td class="summary">
 <p>FSM PlayerAborted event handler prototype for TASK.</p>
@@ -429,6 +447,12 @@
 		<td class="name" nowrap="nowrap"><a href="##(TASK).OnAfterPlayerDead">TASK:OnAfterPlayerDead(PlayerUnit, PlayerName)</a></td>
 		<td class="summary">
 <p>FSM PlayerDead event handler prototype for TASK.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).OnBeforeGoal">TASK:OnBeforeGoal(Controllable, From, Event, To)</a></td>
+		<td class="summary">
+<p>Goal Handler OnBefore for TASK</p>
 </td>
 		</tr>
 		<tr>
@@ -552,6 +576,24 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).SetScoreOnFail">TASK:SetScoreOnFail(PlayerName, Penalty, TaskUnit)</a></td>
+		<td class="summary">
+<p>Set a penalty when the A2A attack has failed.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).SetScoreOnProgress">TASK:SetScoreOnProgress(PlayerName, Score, TaskUnit)</a></td>
+		<td class="summary">
+<p>Set a score when progress has been made by the player.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).SetScoreOnSuccess">TASK:SetScoreOnSuccess(PlayerName, Score, TaskUnit)</a></td>
+		<td class="summary">
+<p>Set a score when all the targets in scope of the A2A attack, have been destroyed.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(TASK).SetStateMachine">TASK:SetStateMachine(TaskUnit, Fsm)</a></td>
 		<td class="summary">
 <p>Add a FiniteStateMachine to <a href="Task.html">Task</a> with key Task<a href="Unit.html">Unit</a></p>
@@ -648,6 +690,12 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).TaskProgress">TASK.TaskProgress</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(TASK).TaskScheduler">TASK.TaskScheduler</a></td>
 		<td class="summary">
 
@@ -699,6 +747,12 @@
 		<td class="name" nowrap="nowrap"><a href="##(TASK).__Fail">TASK:__Fail()</a></td>
 		<td class="summary">
 <p>FSM Fail asynchronous event function for TASK.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).__Goal">TASK:__Goal(Delay)</a></td>
+		<td class="summary">
+<p>Goal Asynchronous Trigger for TASK</p>
 </td>
 		</tr>
 		<tr>
@@ -875,6 +929,50 @@ The CLIENT or UNIT of the Player aborting the Task.</p>
 				<li>
 				
 <p><code><em> PlayerGroup </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(TASK)">#TASK</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).AddProgress" >
+<strong>TASK:AddProgress(PlayerName, ProgressText, ProgressTime, ProgressPoints)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Add Task Progress for a Player Name</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string PlayerName </em></code>: 
+The name of the player.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string ProgressText </em></code>: 
+The text that explains the Progress achieved.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number ProgressTime </em></code>: 
+The time the progress was achieved.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> ProgressPoints </em></code>: </p>
 
 				</li>
 		</ul>
@@ -1412,6 +1510,19 @@ TaskType</p>
 		<dl class="function">
 <dt>
 
+<a id="#(TASK).Goal" >
+<strong>TASK:Goal()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Goal Trigger for TASK</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(TASK).HasAliveUnits" >
 <strong>TASK:HasAliveUnits()</strong>
 </a>
@@ -1801,6 +1912,42 @@ self</p>
 		<dl class="function">
 <dt>
 
+<a id="#(TASK).OnAfterGoal" >
+<strong>TASK:OnAfterGoal(Controllable, From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Goal Handler OnAfter for TASK</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> Controllable </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(TASK).OnAfterPlayerAborted" >
 <strong>TASK:OnAfterPlayerAborted(PlayerUnit, PlayerName)</strong>
 </a>
@@ -1880,6 +2027,47 @@ The name of the Player.</p>
 
 				</li>
 		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).OnBeforeGoal" >
+<strong>TASK:OnBeforeGoal(Controllable, From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Goal Handler OnBefore for TASK</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> Controllable </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em></p>
+
+
 </dd>
 </dl>
 		<dl class="function">
@@ -2397,6 +2585,120 @@ self</p>
 		<dl class="function">
 <dt>
 
+<a id="#(TASK).SetScoreOnFail" >
+<strong>TASK:SetScoreOnFail(PlayerName, Penalty, TaskUnit)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set a penalty when the A2A attack has failed.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string PlayerName </em></code>: 
+The name of the player.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Penalty </em></code>: 
+The penalty in points, must be a negative value!</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> TaskUnit </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(TASK)">#TASK</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).SetScoreOnProgress" >
+<strong>TASK:SetScoreOnProgress(PlayerName, Score, TaskUnit)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set a score when progress has been made by the player.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string PlayerName </em></code>: 
+The name of the player.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Score </em></code>: 
+The score in points to be granted when task process has been achieved.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> TaskUnit </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(TASK)">#TASK</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).SetScoreOnSuccess" >
+<strong>TASK:SetScoreOnSuccess(PlayerName, Score, TaskUnit)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set a score when all the targets in scope of the A2A attack, have been destroyed.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string PlayerName </em></code>: 
+The name of the player.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Score </em></code>: 
+The score in points.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> TaskUnit </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(TASK)">#TASK</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(TASK).SetStateMachine" >
 <strong>TASK:SetStateMachine(TaskUnit, Fsm)</strong>
 </a>
@@ -2668,6 +2970,19 @@ Fsm#FSM_PROCESS</p>
 		<dl class="function">
 <dt>
 
+<a id="#(TASK).TaskProgress" >
+<strong>TASK.TaskProgress</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 		<em><a href="Core.Scheduler.html##(SCHEDULER)">Core.Scheduler#SCHEDULER</a></em>
 <a id="#(TASK).TaskScheduler" >
 <strong>TASK.TaskScheduler</strong>
@@ -2813,6 +3128,27 @@ self</p>
 	
 <p>Use this event to Fail the Task.</p>
 
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).__Goal" >
+<strong>TASK:__Goal(Delay)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Goal Asynchronous Trigger for TASK</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number Delay </em></code>: </p>
+
+				</li>
+		</ul>
 </dd>
 </dl>
 		<dl class="function">

@@ -195,12 +195,6 @@ based on the tasking capabilities defined in <a href="Task.html##(TASK)">Task#TA
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G).SetPenaltyOnFailed">TASK_A2G:SetPenaltyOnFailed(Text, Penalty, TaskUnit)</a></td>
-		<td class="summary">
-<p>Set a penalty when the A2G attack has failed.</p>
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G).SetRendezVousCoordinate">TASK_A2G:SetRendezVousCoordinate(RendezVousCoordinate, RendezVousRange, TaskUnit)</a></td>
 		<td class="summary">
 
@@ -210,18 +204,6 @@ based on the tasking capabilities defined in <a href="Task.html##(TASK)">Task#TA
 		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G).SetRendezVousZone">TASK_A2G:SetRendezVousZone(RendezVousZone, TaskUnit)</a></td>
 		<td class="summary">
 
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G).SetScoreOnDestroy">TASK_A2G:SetScoreOnDestroy(Text, Score, TaskUnit)</a></td>
-		<td class="summary">
-<p>Set a score when a target in scope of the A2G attack, has been destroyed .</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G).SetScoreOnSuccess">TASK_A2G:SetScoreOnSuccess(Text, Score, TaskUnit)</a></td>
-		<td class="summary">
-<p>Set a score when all the targets in scope of the A2G attack, have been destroyed.</p>
 </td>
 		</tr>
 		<tr>
@@ -253,7 +235,31 @@ based on the tasking capabilities defined in <a href="Task.html##(TASK)">Task#TA
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G_BAI).SetScoreOnFail">TASK_A2G_BAI:SetScoreOnFail(PlayerName, Penalty, TaskUnit)</a></td>
+		<td class="summary">
+<p>Set a penalty when the A2A attack has failed.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G_BAI).SetScoreOnProgress">TASK_A2G_BAI:SetScoreOnProgress(PlayerName, Score, TaskUnit)</a></td>
+		<td class="summary">
+<p>Set a score when a target in scope of the A2A attack, has been destroyed .</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G_BAI).SetScoreOnSuccess">TASK_A2G_BAI:SetScoreOnSuccess(PlayerName, Score, TaskUnit)</a></td>
+		<td class="summary">
+<p>Set a score when all the targets in scope of the A2A attack, have been destroyed.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G_BAI).TargetSetUnit">TASK_A2G_BAI.TargetSetUnit</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G_BAI).onafterGoal">TASK_A2G_BAI:onafterGoal(TaskUnit, From, Event, To)</a></td>
 		<td class="summary">
 
 </td>
@@ -269,7 +275,31 @@ based on the tasking capabilities defined in <a href="Task.html##(TASK)">Task#TA
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G_CAS).SetScoreOnFail">TASK_A2G_CAS:SetScoreOnFail(PlayerName, Penalty, TaskUnit)</a></td>
+		<td class="summary">
+<p>Set a penalty when the A2A attack has failed.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G_CAS).SetScoreOnProgress">TASK_A2G_CAS:SetScoreOnProgress(PlayerName, Score, TaskUnit)</a></td>
+		<td class="summary">
+<p>Set a score when a target in scope of the A2A attack, has been destroyed .</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G_CAS).SetScoreOnSuccess">TASK_A2G_CAS:SetScoreOnSuccess(PlayerName, Score, TaskUnit)</a></td>
+		<td class="summary">
+<p>Set a score when all the targets in scope of the A2A attack, have been destroyed.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G_CAS).TargetSetUnit">TASK_A2G_CAS.TargetSetUnit</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G_CAS).onafterGoal">TASK_A2G_CAS:onafterGoal(TaskUnit, From, Event, To)</a></td>
 		<td class="summary">
 
 </td>
@@ -285,7 +315,31 @@ based on the tasking capabilities defined in <a href="Task.html##(TASK)">Task#TA
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G_SEAD).SetScoreOnFail">TASK_A2G_SEAD:SetScoreOnFail(PlayerName, Penalty, TaskUnit)</a></td>
+		<td class="summary">
+<p>Set a penalty when the A2A attack has failed.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G_SEAD).SetScoreOnProgress">TASK_A2G_SEAD:SetScoreOnProgress(PlayerName, Score, TaskUnit)</a></td>
+		<td class="summary">
+<p>Set a score when a target in scope of the A2A attack, has been destroyed .</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G_SEAD).SetScoreOnSuccess">TASK_A2G_SEAD:SetScoreOnSuccess(PlayerName, Score, TaskUnit)</a></td>
+		<td class="summary">
+<p>Set a score when all the targets in scope of the A2A attack, have been destroyed.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G_SEAD).TargetSetUnit">TASK_A2G_SEAD.TargetSetUnit</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G_SEAD).onafterGoal">TASK_A2G_SEAD:onafterGoal(TaskUnit, From, Event, To)</a></td>
 		<td class="summary">
 
 </td>
@@ -612,44 +666,6 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_A2G).SetPenaltyOnFailed" >
-<strong>TASK_A2G:SetPenaltyOnFailed(Text, Penalty, TaskUnit)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Set a penalty when the A2G attack has failed.</p>
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em>#string Text </em></code>: 
-The text to display to the player, when the A2G attack has failed.</p>
-
-				</li>
-				<li>
-				
-<p><code><em>#number Penalty </em></code>: 
-The penalty in points.</p>
-
-				</li>
-				<li>
-				
-<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> TaskUnit </em></code>: </p>
-
-				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em><a href="##(TASK_A2G)">#TASK_A2G</a>:</em></p>
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
 <a id="#(TASK_A2G).SetRendezVousCoordinate" >
 <strong>TASK_A2G:SetRendezVousCoordinate(RendezVousCoordinate, RendezVousRange, TaskUnit)</strong>
 </a>
@@ -705,82 +721,6 @@ The Zone object where the RendezVous is located on the map.</p>
 
 				</li>
 		</ul>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(TASK_A2G).SetScoreOnDestroy" >
-<strong>TASK_A2G:SetScoreOnDestroy(Text, Score, TaskUnit)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Set a score when a target in scope of the A2G attack, has been destroyed .</p>
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em>#string Text </em></code>: 
-The text to display to the player, when the target has been destroyed.</p>
-
-				</li>
-				<li>
-				
-<p><code><em>#number Score </em></code>: 
-The score in points.</p>
-
-				</li>
-				<li>
-				
-<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> TaskUnit </em></code>: </p>
-
-				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em><a href="##(TASK_A2G)">#TASK_A2G</a>:</em></p>
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(TASK_A2G).SetScoreOnSuccess" >
-<strong>TASK_A2G:SetScoreOnSuccess(Text, Score, TaskUnit)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Set a score when all the targets in scope of the A2G attack, have been destroyed.</p>
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em>#string Text </em></code>: 
-The text to display to the player, when all targets hav been destroyed.</p>
-
-				</li>
-				<li>
-				
-<p><code><em>#number Score </em></code>: 
-The score in points.</p>
-
-				</li>
-				<li>
-				
-<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> TaskUnit </em></code>: </p>
-
-				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em><a href="##(TASK_A2G)">#TASK_A2G</a>:</em></p>
-
-
 </dd>
 </dl>
 		<dl class="function">
@@ -909,6 +849,120 @@ self</p>
 		<dl class="function">
 <dt>
 
+<a id="#(TASK_A2G_BAI).SetScoreOnFail" >
+<strong>TASK_A2G_BAI:SetScoreOnFail(PlayerName, Penalty, TaskUnit)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set a penalty when the A2A attack has failed.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string PlayerName </em></code>: 
+The name of the player.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Penalty </em></code>: 
+The penalty in points, must be a negative value!</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> TaskUnit </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(TASK_A2G_BAI)">#TASK<em>A2G</em>BAI</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_A2G_BAI).SetScoreOnProgress" >
+<strong>TASK_A2G_BAI:SetScoreOnProgress(PlayerName, Score, TaskUnit)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set a score when a target in scope of the A2A attack, has been destroyed .</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string PlayerName </em></code>: 
+The name of the player.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Score </em></code>: 
+The score in points to be granted when task process has been achieved.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> TaskUnit </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(TASK_A2G_BAI)">#TASK<em>A2G</em>BAI</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_A2G_BAI).SetScoreOnSuccess" >
+<strong>TASK_A2G_BAI:SetScoreOnSuccess(PlayerName, Score, TaskUnit)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set a score when all the targets in scope of the A2A attack, have been destroyed.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string PlayerName </em></code>: 
+The name of the player.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Score </em></code>: 
+The score in points.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> TaskUnit </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(TASK_A2G_BAI)">#TASK<em>A2G</em>BAI</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 		<em><a href="Set.html##(SET_UNIT)">Set#SET_UNIT</a></em>
 <a id="#(TASK_A2G_BAI).TargetSetUnit" >
 <strong>TASK_A2G_BAI.TargetSetUnit</strong>
@@ -918,6 +972,42 @@ self</p>
 	
 
 
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_A2G_BAI).onafterGoal" >
+<strong>TASK_A2G_BAI:onafterGoal(TaskUnit, From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> TaskUnit </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> To </em></code>: </p>
+
+				</li>
+		</ul>
 </dd>
 </dl>
 
@@ -978,6 +1068,120 @@ self</p>
 		<dl class="function">
 <dt>
 
+<a id="#(TASK_A2G_CAS).SetScoreOnFail" >
+<strong>TASK_A2G_CAS:SetScoreOnFail(PlayerName, Penalty, TaskUnit)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set a penalty when the A2A attack has failed.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string PlayerName </em></code>: 
+The name of the player.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Penalty </em></code>: 
+The penalty in points, must be a negative value!</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> TaskUnit </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(TASK_A2G_CAS)">#TASK<em>A2G</em>CAS</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_A2G_CAS).SetScoreOnProgress" >
+<strong>TASK_A2G_CAS:SetScoreOnProgress(PlayerName, Score, TaskUnit)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set a score when a target in scope of the A2A attack, has been destroyed .</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string PlayerName </em></code>: 
+The name of the player.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Score </em></code>: 
+The score in points to be granted when task process has been achieved.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> TaskUnit </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(TASK_A2G_CAS)">#TASK<em>A2G</em>CAS</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_A2G_CAS).SetScoreOnSuccess" >
+<strong>TASK_A2G_CAS:SetScoreOnSuccess(PlayerName, Score, TaskUnit)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set a score when all the targets in scope of the A2A attack, have been destroyed.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string PlayerName </em></code>: 
+The name of the player.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Score </em></code>: 
+The score in points.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> TaskUnit </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(TASK_A2G_CAS)">#TASK<em>A2G</em>CAS</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 		<em><a href="Set.html##(SET_UNIT)">Set#SET_UNIT</a></em>
 <a id="#(TASK_A2G_CAS).TargetSetUnit" >
 <strong>TASK_A2G_CAS.TargetSetUnit</strong>
@@ -987,6 +1191,42 @@ self</p>
 	
 
 
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_A2G_CAS).onafterGoal" >
+<strong>TASK_A2G_CAS:onafterGoal(TaskUnit, From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> TaskUnit </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> To </em></code>: </p>
+
+				</li>
+		</ul>
 </dd>
 </dl>
 
@@ -1047,6 +1287,120 @@ self</p>
 		<dl class="function">
 <dt>
 
+<a id="#(TASK_A2G_SEAD).SetScoreOnFail" >
+<strong>TASK_A2G_SEAD:SetScoreOnFail(PlayerName, Penalty, TaskUnit)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set a penalty when the A2A attack has failed.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string PlayerName </em></code>: 
+The name of the player.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Penalty </em></code>: 
+The penalty in points, must be a negative value!</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> TaskUnit </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(TASK_A2G_SEAD)">#TASK<em>A2G</em>SEAD</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_A2G_SEAD).SetScoreOnProgress" >
+<strong>TASK_A2G_SEAD:SetScoreOnProgress(PlayerName, Score, TaskUnit)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set a score when a target in scope of the A2A attack, has been destroyed .</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string PlayerName </em></code>: 
+The name of the player.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Score </em></code>: 
+The score in points to be granted when task process has been achieved.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> TaskUnit </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(TASK_A2G_SEAD)">#TASK<em>A2G</em>SEAD</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_A2G_SEAD).SetScoreOnSuccess" >
+<strong>TASK_A2G_SEAD:SetScoreOnSuccess(PlayerName, Score, TaskUnit)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set a score when all the targets in scope of the A2A attack, have been destroyed.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string PlayerName </em></code>: 
+The name of the player.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Score </em></code>: 
+The score in points.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> TaskUnit </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(TASK_A2G_SEAD)">#TASK<em>A2G</em>SEAD</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 		<em><a href="Set.html##(SET_UNIT)">Set#SET_UNIT</a></em>
 <a id="#(TASK_A2G_SEAD).TargetSetUnit" >
 <strong>TASK_A2G_SEAD.TargetSetUnit</strong>
@@ -1056,6 +1410,42 @@ self</p>
 	
 
 
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_A2G_SEAD).onafterGoal" >
+<strong>TASK_A2G_SEAD:onafterGoal(TaskUnit, From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> TaskUnit </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> To </em></code>: </p>
+
+				</li>
+		</ul>
 </dd>
 </dl>
 

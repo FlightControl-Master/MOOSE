@@ -252,13 +252,13 @@ and various dedicated deployment zones.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_CARGO).SetPenaltyOnFailed">TASK_CARGO:SetPenaltyOnFailed(Text, Penalty, TaskUnit)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_CARGO).SetScoreOnFail">TASK_CARGO:SetScoreOnFail(Text, Penalty, TaskUnit)</a></td>
 		<td class="summary">
 <p>Set a penalty when the A2G attack has failed.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_CARGO).SetScoreOnDestroy">TASK_CARGO:SetScoreOnDestroy(Text, Score, TaskUnit)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_CARGO).SetScoreOnProgress">TASK_CARGO:SetScoreOnProgress(Text, Score, TaskUnit)</a></td>
 		<td class="summary">
 <p>Set a score when a target in scope of the A2G attack, has been destroyed .</p>
 </td>
@@ -510,7 +510,7 @@ based on the tasking capabilities defined in <a href="Task.html##(TASK)">Task#TA
 		<dl class="function">
 <dt>
 
-		<em><a href="Core.Cargo.html##(CARGO_GROUP)">Core.Cargo#CARGO_GROUP</a></em>
+		<em></em>
 <a id="#(FSM_PROCESS).Cargo" >
 <strong>FSM_PROCESS.Cargo</strong>
 </a>
@@ -524,7 +524,6 @@ based on the tasking capabilities defined in <a href="Task.html##(TASK)">Task#TA
 		<dl class="function">
 <dt>
 
-		<em></em>
 <a id="#(FSM_PROCESS).DeployZone" >
 <strong>FSM_PROCESS.DeployZone</strong>
 </a>
@@ -881,8 +880,8 @@ ist<Core.Zone#ZONE> DeployZones</p>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_CARGO).SetPenaltyOnFailed" >
-<strong>TASK_CARGO:SetPenaltyOnFailed(Text, Penalty, TaskUnit)</strong>
+<a id="#(TASK_CARGO).SetScoreOnFail" >
+<strong>TASK_CARGO:SetScoreOnFail(Text, Penalty, TaskUnit)</strong>
 </a>
 </dt>
 <dd>
@@ -919,8 +918,8 @@ The penalty in points.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_CARGO).SetScoreOnDestroy" >
-<strong>TASK_CARGO:SetScoreOnDestroy(Text, Score, TaskUnit)</strong>
+<a id="#(TASK_CARGO).SetScoreOnProgress" >
+<strong>TASK_CARGO:SetScoreOnProgress(Text, Score, TaskUnit)</strong>
 </a>
 </dt>
 <dd>
