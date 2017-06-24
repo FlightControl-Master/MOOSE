@@ -694,9 +694,7 @@ function SCORING:_AddMissionTaskScore( Mission, PlayerUnit, Text, Score )
     PlayerData.Score = self.Players[PlayerName].Score + Score
     PlayerData.Mission[MissionName].ScoreTask = self.Players[PlayerName].Mission[MissionName].ScoreTask + Score
   
-    MESSAGE:New( "Player '" .. PlayerName .. "' has " .. Text .. " in Mission '" .. MissionName .. "'. " ..
-      Score .. " task score!",
-      30 ):ToAll()
+    MESSAGE:New( MissionName .. " : " .. Text .. " Score: " .. Score, 30 ):ToAll()
   
     self:ScoreCSV( PlayerName, "", "TASK_" .. MissionName:gsub( ' ', '_' ), 1, Score, PlayerUnit:GetName() )
   end
