@@ -342,7 +342,7 @@ do -- TASK_A2G_SEAD
 
     local ProcessUnit = self:GetUnitProcess( TaskUnit )
 
-    ProcessUnit:AddScoreProcess( "Engaging", "Account", "Account", "Player " .. PlayerName .. " has SEADed a target.", Score )
+    ProcessUnit:AddScoreProcess( "Engaging", "Account", "AccountForPlayer", "Player " .. PlayerName .. " has SEADed a target.", Score )
     
     return self
   end
@@ -455,7 +455,7 @@ do -- TASK_A2G_BAI
 
     local ProcessUnit = self:GetUnitProcess( TaskUnit )
 
-    ProcessUnit:AddScoreProcess( "Engaging", "Account", "Account", "Player " .. PlayerName .. " has destroyed a target in Battlefield Air Interdiction (BAI).", Score )
+    ProcessUnit:AddScoreProcess( "Engaging", "Account", "AccountForPlayer", "Player " .. PlayerName .. " has destroyed a target in Battlefield Air Interdiction (BAI).", Score )
     
     return self
   end
@@ -568,7 +568,7 @@ do -- TASK_A2G_CAS
 
     local ProcessUnit = self:GetUnitProcess( TaskUnit )
 
-    ProcessUnit:AddScoreProcess( "Engaging", "Account", "Account", "Player " .. PlayerName .. " has destroyed a target in Close Air Support (CAS).", Score )
+    ProcessUnit:AddScoreProcess( "Engaging", "Account", "AccountForPlayer", "Player " .. PlayerName .. " has destroyed a target in Close Air Support (CAS).", Score )
     
     return self
   end

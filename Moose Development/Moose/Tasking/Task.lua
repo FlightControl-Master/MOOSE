@@ -226,6 +226,8 @@ function TASK:New( Mission, SetGroupAssign, TaskName, TaskType, TaskBriefing )
   
   self.TaskInfo = {}
   
+  self.TaskProgress = {}
+  
   return self
 end
 
@@ -1468,9 +1470,25 @@ end
 end -- Reporting
 
 
-do -- Additional Scoring
+do -- Additional Task Scoring and Task Progress
 
-  --- Set a score when a target in scope of the A2A attack, has been destroyed .
+  --- Add Task Progress for a Player Name
+  -- @param #TASK self
+  -- @param #string PlayerName The name of the player.
+  -- @param #string ProgressText The text that explains the Progress achieved.
+  -- @param #number ProgressTime The time the progress was achieved.
+  -- @oaram #number ProgressPoints The amount of points of magnitude granted. This will determine the shared Mission Success scoring.
+  -- @return #TASK
+  function TASK:AddProgress( PlayerName, ProgressText, ProgressTime, ProgressPoints )
+    self.TaskProgress = self.TaskProgress or {}
+    self.TaskProgress[ProgressTime] = self.TaskProgress[ProgressTime] or {}
+    self.TaskProgress[ProgressTime].PlayerName = PlayerName
+    self.TaskProgress[ProgressTime].ProgressText = ProgressText
+    self.TaskProgress[ProgressTime].ProgressPoints = ProgressPoints
+    return self
+  end
+
+  --- Set a score when progress has been made by the player.
   -- @param #TASK self
   -- @param #string PlayerName The name of the player.
   -- @param #number Score The score in points to be granted when task process has been achieved.
@@ -1481,7 +1499,7 @@ do -- Additional Scoring
 
     local ProcessUnit = self:GetUnitProcess( TaskUnit )
 
-    ProcessUnit:AddScoreProcess( "Engaging", "Account", "Account", "Player " .. PlayerName .. " has achieved progress.", Score )
+    ProcessUnit:AddScoreProcess( "Engaging", "Account", "AccountPlayer", "Player " .. PlayerName .. " has achieved progress.", Score )
     
     return self
   end

@@ -350,7 +350,7 @@ do -- TASK_A2A_INTERCEPT
 
     local ProcessUnit = self:GetUnitProcess( TaskUnit )
 
-    ProcessUnit:AddScoreProcess( "Engaging", "Account", "Account", "Player " .. PlayerName .. " has intercepted a target.", Score )
+    ProcessUnit:AddScoreProcess( "Engaging", "Account", "AccountForPlayer", "Player " .. PlayerName .. " has intercepted a target.", Score )
     
     return self
   end
@@ -473,7 +473,7 @@ do -- TASK_A2A_SWEEP
 
     local ProcessUnit = self:GetUnitProcess( TaskUnit )
 
-    ProcessUnit:AddScoreProcess( "Engaging", "Account", "Account", "Player " .. PlayerName .. " has sweeped a target.", Score )
+    ProcessUnit:AddScoreProcess( "Engaging", "Account", "AccountForPlayer", "Player " .. PlayerName .. " has sweeped a target.", Score )
     
     return self
   end
@@ -592,7 +592,7 @@ do -- TASK_A2A_ENGAGE
 
     local ProcessUnit = self:GetUnitProcess( TaskUnit )
 
-    ProcessUnit:AddScoreProcess( "Engaging", "Account", "Account", "Player " .. PlayerName .. " has engaged and destroyed a target.", Score )
+    ProcessUnit:AddScoreProcess( "Engaging", "Account", "AccountForPlayer", "Player " .. PlayerName .. " has engaged and destroyed a target.", Score )
     
     return self
   end
