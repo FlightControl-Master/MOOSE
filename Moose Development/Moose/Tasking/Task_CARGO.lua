@@ -728,7 +728,7 @@ do -- TASK_CARGO
   -- @param #number Score The score in points.
   -- @param Wrapper.Unit#UNIT TaskUnit
   -- @return #TASK_CARGO
-  function TASK_CARGO:SetScoreOnDestroy( Text, Score, TaskUnit )
+  function TASK_CARGO:SetScoreOnProgress( Text, Score, TaskUnit )
     self:F( { Text, Score, TaskUnit } )
 
     local ProcessUnit = self:GetUnitProcess( TaskUnit )
@@ -760,7 +760,7 @@ do -- TASK_CARGO
   -- @param #number Penalty The penalty in points.
   -- @param Wrapper.Unit#UNIT TaskUnit
   -- @return #TASK_CARGO
-  function TASK_CARGO:SetPenaltyOnFailed( Text, Penalty, TaskUnit )
+  function TASK_CARGO:SetScoreOnFail( Text, Penalty, TaskUnit )
     self:F( { Text, Score, TaskUnit } )
 
     local ProcessUnit = self:GetUnitProcess( TaskUnit )

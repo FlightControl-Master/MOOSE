@@ -131,6 +131,44 @@ do -- TASK_A2A_DISPATCHER
   -- If too small, more intercept missions may be triggered upon detected target areas.
   -- If too large, any airborne cap may not be able to reach the detected target area in time, because it is too far.
   -- 
+  -- ## 4. Set **Scoring** and **Messages**:
+  -- 
+  -- The TASK\_A2A\_DISPATCHER is a state machine. It triggers the event Assign when a new player joins a @{Task} dispatched by the TASK\_A2A\_DISPATCHER.
+  -- An _event handler_ can be defined to catch the **Assign** event, and add **additional processing** to set _scoring_ and to _define messages_,
+  -- when the player reaches certain achievements in the task.
+  -- 
+  -- The prototype to handle the **Assign** event needs to be developed as follows:
+  -- 
+  --      TaskDispatcher = TASK_A2A_DISPATCHER:New( ... )
+  -- 
+  --      --- @param #TaskDispatcher self
+  --      -- @param #string From Contains the name of the state from where the Event was triggered.
+  --      -- @param #string Event Contains the name of the event that was triggered. In this case Assign.
+  --      -- @param #string To Contains the name of the state that will be transitioned to.
+  --      -- @param Tasking.Task_A2A#TASK_A2A Task The Task object, which is any derived object from TASK_A2A.
+  --      -- @param Wrapper.Unit#UNIT TaskUnit The Unit or Client that contains the Player.
+  --      -- @param #string PlayerName The name of the Player that joined the TaskUnit.
+  --      function TaskDispatcher:OnAfterAssign( From, Event, To, Task, TaskUnit, PlayerName )
+  --        Task:SetScoreOnProgress( PlayerName, 20, TaskUnit )
+  --        Task:SetScoreOnSuccess( PlayerName, 200, TaskUnit )
+  --        Task:SetScoreOnFail( PlayerName, -100, TaskUnit )
+  --      end
+  -- 
+  -- The **OnAfterAssign** method (function) is added to the TaskDispatcher object.
+  -- This method will be called when a new player joins a unit in the set of groups in scope of the dispatcher.
+  -- So, this method will be called only **ONCE** when a player joins a unit in scope of the task.
+  -- 
+  -- The TASK class implements various methods to additional **set scoring** for player achievements:
+  -- 
+  --   * @{Tasking.Task#TASK.SetScoreOnProgress}() will add additional scores when a player achieves **Progress** while executing the task.
+  --     Examples of **task progress** can be destroying units, arriving at zones etc.
+  --   
+  --   * @{Tasking.Task#TASK.SetScoreOnSuccess}() will add additional scores when the task goes into **Success** state. 
+  --     This means the **task has been successfully completed**.
+  --     
+  --   * @{Tasking.Task#TASK.SetScoreOnSuccess}() will add additional (negative) scores when the task goes into **Failed** state. 
+  --     This means the **task has not been successfully completed**, and the scores must be given with a negative value!
+  -- 
   -- @field #TASK_A2A_DISPATCHER
   TASK_A2A_DISPATCHER = {
     ClassName = "TASK_A2A_DISPATCHER",
@@ -158,7 +196,7 @@ do -- TASK_A2A_DISPATCHER
     
     -- TODO: Check detection through radar.
     self.Detection:FilterCategories( Unit.Category.AIRPLANE, Unit.Category.HELICOPTER )
-    --self.Detection:InitDetectRadar( true )
+    self.Detection:InitDetectRadar( true )
     self.Detection:SetDetectionInterval( 30 )
     
     self:AddTransition( "Started", "Assign", "Started" )

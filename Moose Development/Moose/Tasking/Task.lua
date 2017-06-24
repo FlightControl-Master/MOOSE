@@ -1466,3 +1466,56 @@ end
 
 
 end -- Reporting
+
+
+do -- Additional Scoring
+
+  --- Set a score when a target in scope of the A2A attack, has been destroyed .
+  -- @param #TASK self
+  -- @param #string PlayerName The name of the player.
+  -- @param #number Score The score in points to be granted when task process has been achieved.
+  -- @param Wrapper.Unit#UNIT TaskUnit
+  -- @return #TASK
+  function TASK:SetScoreOnProgress( PlayerName, Score, TaskUnit )
+    self:F( { PlayerName, Score, TaskUnit } )
+
+    local ProcessUnit = self:GetUnitProcess( TaskUnit )
+
+    ProcessUnit:AddScoreProcess( "Engaging", "Account", "Account", "Player " .. PlayerName .. " has achieved progress.", Score )
+    
+    return self
+  end
+
+  --- Set a score when all the targets in scope of the A2A attack, have been destroyed.
+  -- @param #TASK self
+  -- @param #string PlayerName The name of the player.
+  -- @param #number Score The score in points.
+  -- @param Wrapper.Unit#UNIT TaskUnit
+  -- @return #TASK
+  function TASK:SetScoreOnSuccess( PlayerName, Score, TaskUnit )
+    self:F( { PlayerName, Score, TaskUnit } )
+
+    local ProcessUnit = self:GetUnitProcess( TaskUnit )
+
+    ProcessUnit:AddScore( "Success", "The task is a success!", Score )
+    
+    return self
+  end
+
+  --- Set a penalty when the A2A attack has failed.
+  -- @param #TASK self
+  -- @param #string PlayerName The name of the player.
+  -- @param #number Penalty The penalty in points, must be a negative value!
+  -- @param Wrapper.Unit#UNIT TaskUnit
+  -- @return #TASK
+  function TASK:SetScoreOnFail( PlayerName, Penalty, TaskUnit )
+    self:F( { PlayerName, Penalty, TaskUnit } )
+
+    local ProcessUnit = self:GetUnitProcess( TaskUnit )
+
+    ProcessUnit:AddScore( "Failed", "The task is a failure!", Penalty )
+    
+    return self
+  end
+
+end
