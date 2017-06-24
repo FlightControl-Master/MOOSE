@@ -215,9 +215,9 @@ do -- ACT_ACCOUNT_DEADS
       local PlayerName = ProcessClient:GetPlayerName()
       local PlayerHit = self.PlayerHits and self.PlayerHits[EventData.IniUnitName]
       if PlayerHit == PlayerName then
-        self:Player()
+        self:Player( EventData )
       else
-        self:Other()
+        self:Other( EventData )
       end
     end
   end
