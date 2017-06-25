@@ -226,6 +226,18 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ACCOUNT_DEADS).OnEventHit">ACT_ACCOUNT_DEADS:OnEventHit(EventData)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ACCOUNT_DEADS).PlayerHits">ACT_ACCOUNT_DEADS.PlayerHits</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(ACT_ACCOUNT_DEADS).TargetSetUnit">ACT_ACCOUNT_DEADS.TargetSetUnit</a></td>
 		<td class="summary">
 
@@ -238,13 +250,19 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ACT_ACCOUNT_DEADS).onafterEvent">ACT_ACCOUNT_DEADS:onafterEvent(ProcessUnit, Event, From, To, Task)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ACCOUNT_DEADS).onafterEvent">ACT_ACCOUNT_DEADS:onafterEvent(ProcessClient, Task, From, Event, To, EventData)</a></td>
 		<td class="summary">
 <p>StateMachine callback function</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ACT_ACCOUNT_DEADS).onenterAccount">ACT_ACCOUNT_DEADS:onenterAccount(ProcessUnit, Event, From, To, Task, EventData)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ACCOUNT_DEADS).onenterAccountForOther">ACT_ACCOUNT_DEADS:onenterAccountForOther(ProcessClient, Task, From, Event, To, EventData)</a></td>
+		<td class="summary">
+<p>StateMachine callback function</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ACCOUNT_DEADS).onenterAccountForPlayer">ACT_ACCOUNT_DEADS:onenterAccountForPlayer(ProcessClient, Task, From, Event, To, EventData)</a></td>
 		<td class="summary">
 <p>StateMachine callback function</p>
 </td>
@@ -253,6 +271,12 @@
 		<td class="name" nowrap="nowrap"><a href="##(ACT_ACCOUNT_DEADS).onenterReport">ACT_ACCOUNT_DEADS:onenterReport(ProcessUnit, Event, From, To, Task)</a></td>
 		<td class="summary">
 <p>StateMachine callback function</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ACCOUNT_DEADS).onfuncEventCrash">ACT_ACCOUNT_DEADS:onfuncEventCrash(EventData)</a></td>
+		<td class="summary">
+
 </td>
 		</tr>
 		<tr>
@@ -679,6 +703,40 @@ Each successful dead will trigger an Account state transition that can be scored
 		<dl class="function">
 <dt>
 
+<a id="#(ACT_ACCOUNT_DEADS).OnEventHit" >
+<strong>ACT_ACCOUNT_DEADS:OnEventHit(EventData)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Event.html##(EVENTDATA)">Core.Event#EVENTDATA</a> EventData </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ACT_ACCOUNT_DEADS).PlayerHits" >
+<strong>ACT_ACCOUNT_DEADS.PlayerHits</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 		<em><a href="Set.html##(SET_UNIT)">Set#SET_UNIT</a></em>
 <a id="#(ACT_ACCOUNT_DEADS).TargetSetUnit" >
 <strong>ACT_ACCOUNT_DEADS.TargetSetUnit</strong>
@@ -708,7 +766,7 @@ Each successful dead will trigger an Account state transition that can be scored
 <dt>
 
 <a id="#(ACT_ACCOUNT_DEADS).onafterEvent" >
-<strong>ACT_ACCOUNT_DEADS:onafterEvent(ProcessUnit, Event, From, To, Task)</strong>
+<strong>ACT_ACCOUNT_DEADS:onafterEvent(ProcessClient, Task, From, Event, To, EventData)</strong>
 </a>
 </dt>
 <dd>
@@ -719,12 +777,12 @@ Each successful dead will trigger an Account state transition that can be scored
 		<ul>
 				<li>
 				
-<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> ProcessUnit </em></code>: </p>
+<p><code><em><a href="Wrapper.Client.html##(CLIENT)">Wrapper.Client#CLIENT</a> ProcessClient </em></code>: </p>
 
 				</li>
 				<li>
 				
-<p><code><em>#string Event </em></code>: </p>
+<p><code><em><a href="Tasking.Task.html##(TASK)">Tasking.Task#TASK</a> Task </em></code>: </p>
 
 				</li>
 				<li>
@@ -734,12 +792,17 @@ Each successful dead will trigger an Account state transition that can be scored
 				</li>
 				<li>
 				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
 <p><code><em>#string To </em></code>: </p>
 
 				</li>
 				<li>
 				
-<p><code><em> Task </em></code>: </p>
+<p><code><em><a href="Core.Event.html##(EVENTDATA)">Core.Event#EVENTDATA</a> EventData </em></code>: </p>
 
 				</li>
 		</ul>
@@ -748,8 +811,8 @@ Each successful dead will trigger an Account state transition that can be scored
 		<dl class="function">
 <dt>
 
-<a id="#(ACT_ACCOUNT_DEADS).onenterAccount" >
-<strong>ACT_ACCOUNT_DEADS:onenterAccount(ProcessUnit, Event, From, To, Task, EventData)</strong>
+<a id="#(ACT_ACCOUNT_DEADS).onenterAccountForOther" >
+<strong>ACT_ACCOUNT_DEADS:onenterAccountForOther(ProcessClient, Task, From, Event, To, EventData)</strong>
 </a>
 </dt>
 <dd>
@@ -760,12 +823,12 @@ Each successful dead will trigger an Account state transition that can be scored
 		<ul>
 				<li>
 				
-<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> ProcessUnit </em></code>: </p>
+<p><code><em><a href="Wrapper.Client.html##(CLIENT)">Wrapper.Client#CLIENT</a> ProcessClient </em></code>: </p>
 
 				</li>
 				<li>
 				
-<p><code><em>#string Event </em></code>: </p>
+<p><code><em><a href="Tasking.Task.html##(TASK)">Tasking.Task#TASK</a> Task </em></code>: </p>
 
 				</li>
 				<li>
@@ -775,17 +838,63 @@ Each successful dead will trigger an Account state transition that can be scored
 				</li>
 				<li>
 				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
 <p><code><em>#string To </em></code>: </p>
 
 				</li>
 				<li>
 				
-<p><code><em> Task </em></code>: </p>
+<p><code><em><a href="Core.Event.html##(EVENTDATA)">Core.Event#EVENTDATA</a> EventData </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ACT_ACCOUNT_DEADS).onenterAccountForPlayer" >
+<strong>ACT_ACCOUNT_DEADS:onenterAccountForPlayer(ProcessClient, Task, From, Event, To, EventData)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>StateMachine callback function</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Client.html##(CLIENT)">Wrapper.Client#CLIENT</a> ProcessClient </em></code>: </p>
 
 				</li>
 				<li>
 				
-<p><code><em> EventData </em></code>: </p>
+<p><code><em><a href="Tasking.Task.html##(TASK)">Tasking.Task#TASK</a> Task </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Core.Event.html##(EVENTDATA)">Core.Event#EVENTDATA</a> EventData </em></code>: </p>
 
 				</li>
 		</ul>
@@ -827,6 +936,27 @@ Each successful dead will trigger an Account state transition that can be scored
 				<li>
 				
 <p><code><em> Task </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ACT_ACCOUNT_DEADS).onfuncEventCrash" >
+<strong>ACT_ACCOUNT_DEADS:onfuncEventCrash(EventData)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Event.html##(EVENTDATA)">Event#EVENTDATA</a> EventData </em></code>: </p>
 
 				</li>
 		</ul>

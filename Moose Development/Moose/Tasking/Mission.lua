@@ -46,6 +46,7 @@ function MISSION:New( CommandCenter, MissionName, MissionPriority, MissionBriefi
   self.MissionCoalition = MissionCoalition
   
   self.Tasks = {}
+  self.PlayerNames = {} -- These are the players that achieved progress in the mission.
 
   self:SetStartState( "IDLE" )
   
@@ -501,7 +502,8 @@ function MISSION:GetMenu( TaskGroup ) -- R2.1 -- Changed Menu Structure
   Menu.ReportFailedTasksMenu = Menu.ReportFailedTasksMenu or          MENU_GROUP_COMMAND:New( TaskGroup, "Report Failed Tasks", Menu.TaskReportsMenu, self.MenuReportTasksPerStatus, self, TaskGroup, "Failed" )
   Menu.ReportHeldTasksMenu = Menu.ReportHeldTasksMenu or              MENU_GROUP_COMMAND:New( TaskGroup, "Report Held Tasks", Menu.TaskReportsMenu, self.MenuReportTasksPerStatus, self, TaskGroup, "Hold" )
   
-  Menu.PlayerReportsMenu = Menu.PlayerReportsMenu or                  MENU_GROUP:New( TaskGroup, "Player Reports", Menu.MainMenu )
+  Menu.PlayerReportsMenu = Menu.PlayerReportsMenu or                  MENU_GROUP:New( TaskGroup, "Statistics Reports", Menu.MainMenu )
+  Menu.ReportMissionHistory = Menu.ReportPlayersHistory or            MENU_GROUP_COMMAND:New( TaskGroup, "Report Mission Progress", Menu.PlayerReportsMenu, self.MenuReportPlayersProgress, self, TaskGroup )
   Menu.ReportPlayersPerTaskMenu = Menu.ReportPlayersPerTaskMenu or    MENU_GROUP_COMMAND:New( TaskGroup, "Report Players per Task", Menu.PlayerReportsMenu, self.MenuReportPlayersPerTask, self, TaskGroup )
   
   return Menu.MainMenu
@@ -661,6 +663,18 @@ function MISSION:GetTaskTypes()
   return TaskTypeList
 end
 
+
+function MISSION:AddPlayerName( PlayerName )
+  self.PlayerNames = self.PlayerNames or {}
+  self.PlayerNames[PlayerName] = PlayerName
+  return self
+end
+
+function MISSION:GetPlayerNames()
+  return self.PlayerNames
+end
+
+
 --- Create a briefing report of the Mission.
 -- @param #MISSION self
 -- @return #string
@@ -736,6 +750,7 @@ function MISSION:ReportStatus()
   return Report:Text()
 end
 
+
 --- Create an active player report of the Mission.
 -- This reports provides a one liner of the mission status. It indicates how many players and how many Tasks.
 -- 
@@ -772,6 +787,56 @@ function MISSION:ReportPlayersPerTask( ReportGroup )
 
   for PlayerName, TaskName in pairs( PlayerList ) do
     Report:Add( string.format( ' - Player (%s): Task "%s"', PlayerName, TaskName ) )
+  end
+  
+  return Report:Text()
+end
+
+--- Create an Mission Progress report of the Mission.
+-- This reports provides a one liner per player of the mission achievements per task.
+-- 
+--     Mission "<MissionName>" - <MissionStatus> - Active Players Report
+--      - Player <PlayerName>: Task <TaskName> <TaskStatus>: <Progress>
+--      - Player <PlayerName>: Task <TaskName> <TaskStatus>: <Progress>
+--      - ..
+-- 
+-- @param #MISSION self
+-- @return #string
+function MISSION:ReportPlayersProgress( ReportGroup )
+
+  local Report = REPORT:New()
+
+  -- List the name of the mission.
+  local Name = self:GetName()
+  
+  -- Determine the status of the mission.
+  local Status = self:GetState()
+
+  Report:Add( string.format( '%s - %s - Players per Task Progress Report', Name, Status ) )
+  
+  local PlayerList = {}
+  
+  -- Determine how many tasks are remaining.
+  for TaskID, Task in pairs( self:GetTasks() ) do
+    local Task = Task -- Tasking.Task#TASK
+    local TaskGoalTotal = Task:GetGoalTotal() or 0
+    local TaskName = Task:GetName()
+    PlayerList[TaskName] = PlayerList[TaskName] or {}
+    if TaskGoalTotal ~= 0 then
+      local PlayerNames = self:GetPlayerNames()
+      for PlayerName, PlayerData in pairs( PlayerNames ) do
+        PlayerList[TaskName][PlayerName] = string.format( 'Player (%s): Task "%s": %d%%', PlayerName, TaskName, Task:GetPlayerProgress( PlayerName ) * 100 / TaskGoalTotal )
+      end
+    else
+      PlayerList[TaskName]["_"] = string.format( 'Player (---): Task "%s": %d%%', TaskName, 0 )
+    end
+    
+  end
+
+  for TaskName, TaskData in pairs( PlayerList ) do
+    for PlayerName, TaskText in pairs( TaskData ) do
+      Report:Add( string.format( ' - %s', TaskText ) )
+    end
   end
   
   return Report:Text()
@@ -898,6 +963,15 @@ end
 function MISSION:MenuReportPlayersPerTask( ReportGroup )
 
   local Report = self:ReportPlayersPerTask()
+  
+  self:GetCommandCenter():MessageToGroup( Report, ReportGroup )
+end
+
+--- @param #MISSION self
+-- @param Wrapper.Group#GROUP ReportGroup
+function MISSION:MenuReportPlayersProgress( ReportGroup )
+
+  local Report = self:ReportPlayersProgress()
   
   self:GetCommandCenter():MessageToGroup( Report, ReportGroup )
 end

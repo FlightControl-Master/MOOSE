@@ -340,6 +340,45 @@ You need to evaluate the value of this parameter carefully.
 If too small, more intercept missions may be triggered upon detected target areas.
 If too large, any airborne cap may not be able to reach the detected target area in time, because it is too far.</p>
 
+<h2>4. Set <strong>Scoring</strong> and <strong>Messages</strong>:</h2>
+
+<p>The TASK_A2A_DISPATCHER is a state machine. It triggers the event Assign when a new player joins a <a href="Task.html">Task</a> dispatched by the TASK_A2A_DISPATCHER.
+An <em>event handler</em> can be defined to catch the <strong>Assign</strong> event, and add <strong>additional processing</strong> to set <em>scoring</em> and to <em>define messages</em>,
+when the player reaches certain achievements in the task.</p>
+
+<p>The prototype to handle the <strong>Assign</strong> event needs to be developed as follows:</p>
+
+<pre><code> TaskDispatcher = TASK_A2A_DISPATCHER:New( ... )
+
+ --- @param #TaskDispatcher self
+ -- @param #string From Contains the name of the state from where the Event was triggered.
+ -- @param #string Event Contains the name of the event that was triggered. In this case Assign.
+ -- @param #string To Contains the name of the state that will be transitioned to.
+ -- @param Tasking.Task_A2A#TASK_A2A Task The Task object, which is any derived object from TASK_A2A.
+ -- @param Wrapper.Unit#UNIT TaskUnit The Unit or Client that contains the Player.
+ -- @param #string PlayerName The name of the Player that joined the TaskUnit.
+ function TaskDispatcher:OnAfterAssign( From, Event, To, Task, TaskUnit, PlayerName )
+   Task:SetScoreOnProgress( PlayerName, 20, TaskUnit )
+   Task:SetScoreOnSuccess( PlayerName, 200, TaskUnit )
+   Task:SetScoreOnFail( PlayerName, -100, TaskUnit )
+ end
+</code></pre>
+
+<p>The <strong>OnAfterAssign</strong> method (function) is added to the TaskDispatcher object.
+This method will be called when a new player joins a unit in the set of groups in scope of the dispatcher.
+So, this method will be called only <strong>ONCE</strong> when a player joins a unit in scope of the task.</p>
+
+<p>The TASK class implements various methods to additional <strong>set scoring</strong> for player achievements:</p>
+
+<ul>
+    <li><p><a href="Tasking.Task.html##(TASK).SetScoreOnProgress">Tasking.Task#TASK.SetScoreOnProgress</a>() will add additional scores when a player achieves <strong>Progress</strong> while executing the task.
+    Examples of <strong>task progress</strong> can be destroying units, arriving at zones etc.</p></li>
+    <li><p><a href="Tasking.Task.html##(TASK).SetScoreOnSuccess">Tasking.Task#TASK.SetScoreOnSuccess</a>() will add additional scores when the task goes into <strong>Success</strong> state. 
+    This means the <strong>task has been successfully completed</strong>.</p></li>
+    <li><p><a href="Tasking.Task.html##(TASK).SetScoreOnSuccess">Tasking.Task#TASK.SetScoreOnSuccess</a>() will add additional (negative) scores when the task goes into <strong>Failed</strong> state. 
+    This means the <strong>task has not been successfully completed</strong>, and the scores must be given with a negative value!</p></li>
+</ul>
+
 
 </dd>
 </dl>
