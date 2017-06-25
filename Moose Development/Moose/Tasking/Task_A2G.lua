@@ -60,7 +60,7 @@ do -- TASK_A2G
   
     self.TargetSetUnit = TargetSetUnit
     self.TaskType = TaskType
-
+    
     local Fsm = self:GetUnitProcess()
     
 
@@ -266,7 +266,17 @@ do -- TASK_A2G
     local ActRouteTarget = ProcessUnit:GetProcess( "Engaging", "RouteToTargetZone" ) -- Actions.Act_Route#ACT_ROUTE_ZONE
     return ActRouteTarget:GetZone()
   end
+
+  function TASK_A2G:SetGoalTotal()
   
+    self.GoalTotal = self.TargetSetUnit:Count()
+  end
+
+  function TASK_A2G:GetGoalTotal()
+  
+    return self.GoalTotal
+  end
+
 end 
 
 

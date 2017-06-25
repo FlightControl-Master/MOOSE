@@ -266,6 +266,18 @@ do -- TASK_A2A
     local ActRouteTarget = ProcessUnit:GetProcess( "Engaging", "RouteToTargetZone" ) -- Actions.Act_Route#ACT_ROUTE_ZONE
     return ActRouteTarget:GetZone()
   end
+
+  function TASK_A2A:SetGoalTotal()
+  
+    self.GoalTotal = self.TargetSetUnit:Count()
+  end
+
+  function TASK_A2A:GetGoalTotal()
+  
+    return self.GoalTotal
+  end
+
+
   
 end 
 
@@ -386,8 +398,7 @@ do -- TASK_A2A_INTERCEPT
     
     return self
   end
-
-
+  
 
 end
 
