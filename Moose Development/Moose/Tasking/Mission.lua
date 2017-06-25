@@ -503,7 +503,7 @@ function MISSION:GetMenu( TaskGroup ) -- R2.1 -- Changed Menu Structure
   Menu.ReportHeldTasksMenu = Menu.ReportHeldTasksMenu or              MENU_GROUP_COMMAND:New( TaskGroup, "Report Held Tasks", Menu.TaskReportsMenu, self.MenuReportTasksPerStatus, self, TaskGroup, "Hold" )
   
   Menu.PlayerReportsMenu = Menu.PlayerReportsMenu or                  MENU_GROUP:New( TaskGroup, "Statistics Reports", Menu.MainMenu )
-  Menu.ReportMissionHistory = Menu.ReportPlayersHistory or            MENU_GROUP_COMMAND:New( TaskGroup, "Report Mission Achievements", Menu.PlayerReportsMenu, self.MenuReportPlayersProgress, self, TaskGroup )
+  Menu.ReportMissionHistory = Menu.ReportPlayersHistory or            MENU_GROUP_COMMAND:New( TaskGroup, "Report Mission Progress", Menu.PlayerReportsMenu, self.MenuReportPlayersProgress, self, TaskGroup )
   Menu.ReportPlayersPerTaskMenu = Menu.ReportPlayersPerTaskMenu or    MENU_GROUP_COMMAND:New( TaskGroup, "Report Players per Task", Menu.PlayerReportsMenu, self.MenuReportPlayersPerTask, self, TaskGroup )
   
   return Menu.MainMenu
@@ -820,20 +820,22 @@ function MISSION:ReportPlayersProgress( ReportGroup )
   for TaskID, Task in pairs( self:GetTasks() ) do
     local Task = Task -- Tasking.Task#TASK
     local TaskGoalTotal = Task:GetGoalTotal() or 0
+    local TaskName = Task:GetName()
+    PlayerList[TaskName] = PlayerList[TaskName] or {}
     if TaskGoalTotal ~= 0 then
       local PlayerNames = self:GetPlayerNames()
-      local TaskName = Task:GetName()
       for PlayerName, PlayerData in pairs( PlayerNames ) do
-        PlayerList[PlayerName] = PlayerList[PlayerName] or {}
-        PlayerList[PlayerName][TaskName] = string.format( 'Task "%s": %d%%', TaskName, Task:GetPlayerProgress( PlayerName ) * 100 / TaskGoalTotal )
+        PlayerList[TaskName][PlayerName] = string.format( 'Player (%s): Task "%s": %d%%', PlayerName, TaskName, Task:GetPlayerProgress( PlayerName ) * 100 / TaskGoalTotal )
       end
+    else
+      PlayerList[TaskName]["_"] = string.format( 'Player (---): Task "%s": %d%%', TaskName, 0 )
     end
     
   end
 
-  for PlayerName, PlayerData in pairs( PlayerList ) do
-    for TaskName, TaskText in pairs( PlayerData ) do
-      Report:Add( string.format( ' - Player (%s): %s', PlayerName, TaskText ) )
+  for TaskName, TaskData in pairs( PlayerList ) do
+    for PlayerName, TaskText in pairs( TaskData ) do
+      Report:Add( string.format( ' - %s', TaskText ) )
     end
   end
   
