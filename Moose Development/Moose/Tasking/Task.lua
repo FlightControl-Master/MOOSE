@@ -1183,6 +1183,11 @@ function TASK:onenterAssigned( From, Event, To, PlayerUnit, PlayerName )
   
   if From ~= "Assigned" then
     self:GetMission():GetCommandCenter():MessageToCoalition( "Task " .. self:GetName() .. " is assigned." )
+    
+    -- Set the total Progress to be achieved.
+    
+    self:SetGoalTotal() -- Polymorphic to set the initial goal total!
+    
     if self.Dispatcher then
       self:E( "Firing Assign event " )
       self.Dispatcher:Assign( self, PlayerUnit, PlayerName )
@@ -1485,7 +1490,18 @@ do -- Additional Task Scoring and Task Progress
     self.TaskProgress[ProgressTime].PlayerName = PlayerName
     self.TaskProgress[ProgressTime].ProgressText = ProgressText
     self.TaskProgress[ProgressTime].ProgressPoints = ProgressPoints
+    self:GetMission():AddPlayerName( PlayerName )
     return self
+  end
+  
+  function TASK:GetPlayerProgress( PlayerName )
+    local ProgressPlayer = 0
+    for ProgressTime, ProgressData in pairs( self.TaskProgress ) do
+      if PlayerName == ProgressData.PlayerName then
+        ProgressPlayer = ProgressPlayer + ProgressData.ProgressPoints
+      end
+    end
+    return ProgressPlayer
   end
 
   --- Set a score when progress has been made by the player.
