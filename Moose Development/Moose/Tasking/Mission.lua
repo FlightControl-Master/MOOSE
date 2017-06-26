@@ -686,10 +686,9 @@ function MISSION:ReportBriefing()
   local Name = self:GetName()
   
   -- Determine the status of the mission.
-  local Status = self:GetState()
-  local TasksRemaining = self:GetTasksRemaining()
+  local Status = "<" .. self:GetState() .. ">"
   
-  Report:Add( "Mission " .. Name .. " - " .. Status .. " - Briefing Report." )
+  Report:Add( string.format( '%s - %s - Mission Briefing Report', Name, Status ) )
 
   Report:Add( self.MissionBriefing )
   
@@ -720,8 +719,7 @@ function MISSION:ReportStatus()
   local Name = self:GetName()
   
   -- Determine the status of the mission.
-  local Status = self:GetState()
-  local TasksRemaining = self:GetTasksRemaining()
+  local Status = "<" .. self:GetState() .. ">"
 
   Report:Add( string.format( '%s - Status "%s"', Name, Status ) )
   
@@ -769,7 +767,7 @@ function MISSION:ReportPlayersPerTask( ReportGroup )
   local Name = self:GetName()
   
   -- Determine the status of the mission.
-  local Status = self:GetState()
+  local Status = "<" .. self:GetState() .. ">"
 
   Report:Add( string.format( '%s - %s - Players per Task Report', Name, Status ) )
   
@@ -810,7 +808,7 @@ function MISSION:ReportPlayersProgress( ReportGroup )
   local Name = self:GetName()
   
   -- Determine the status of the mission.
-  local Status = self:GetState()
+  local Status = "<" .. self:GetState() .. ">"
 
   Report:Add( string.format( '%s - %s - Players per Task Progress Report', Name, Status ) )
   
@@ -854,7 +852,7 @@ function MISSION:ReportSummary()
   local Name = self:GetName()
   
   -- Determine the status of the mission.
-  local Status = self:GetState()
+  local Status = "<" .. self:GetState() .. ">"
   
   Report:Add( string.format( '%s - %s - Task Overview Report', Name, Status ) )
 
@@ -878,7 +876,7 @@ function MISSION:ReportOverview( ReportGroup, TaskStatus )
   local Name = self:GetName()
   
   -- Determine the status of the mission.
-  local Status = self:GetState()
+  local Status = "<" .. self:GetState() .. ">"
 
   Report:Add( string.format( '%s - %s - %s Tasks Report', Name, Status, TaskStatus ) )
   
@@ -905,7 +903,7 @@ function MISSION:ReportDetails( ReportGroup )
   local Name = self:GetName()
   
   -- Determine the status of the mission.
-  local Status = self:GetState()
+  local Status = "<" .. self:GetState() .. ">"
   
   Report:Add( string.format( '%s - %s - Task Detailed Report', Name, Status ) )
   
@@ -930,6 +928,9 @@ function MISSION:GetTasks()
 	return self.Tasks
 end
 
+--- Reports the briefing.
+-- @param #MISSION self
+-- @param Wrapper.Group#GROUP ReportGroup The group to which the report needs to be sent.
 function MISSION:MenuReportBriefing( ReportGroup )
 
   local Report = self:ReportBriefing()
@@ -938,7 +939,9 @@ function MISSION:MenuReportBriefing( ReportGroup )
 end
 
 
---- @param #MISSION self
+
+--- Report the task summary.
+-- @param #MISSION self
 -- @param Wrapper.Group#GROUP ReportGroup
 function MISSION:MenuReportTasksSummary( ReportGroup )
 
@@ -946,6 +949,9 @@ function MISSION:MenuReportTasksSummary( ReportGroup )
   
   self:GetCommandCenter():MessageToGroup( Report, ReportGroup )
 end
+
+
+
 
 --- @param #MISSION self
 -- @param #string TaskStatus The status

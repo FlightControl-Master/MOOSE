@@ -702,9 +702,11 @@ end
 -- @return #TASK
 function TASK:SetMenuForGroup( TaskGroup, MenuTime )
 
-  self:SetPlannedMenuForGroup( TaskGroup, MenuTime )
-  if self:IsGroupAssigned( TaskGroup ) then
-    self:SetAssignedMenuForGroup( TaskGroup, MenuTime )
+  if self:IsStatePlanned() or self:IsStateAssigned() then
+    self:SetPlannedMenuForGroup( TaskGroup, MenuTime )
+    if self:IsGroupAssigned( TaskGroup ) then
+      self:SetAssignedMenuForGroup( TaskGroup, MenuTime )
+    end
   end
 end
 
@@ -1337,9 +1339,9 @@ function TASK:ReportSummary() --R2.1 fixed report. Now nicely formatted and cont
   local Name = self:GetName()
   
   -- Determine the status of the Task.
-  local State = self:GetState()
+  local Status = "<" .. self:GetState() .. ">"
   
-  Report:Add( "Task " .. Name .. " - State '" .. State )
+  Report:Add( 'Task ' .. Name .. ' - State ' .. Status )
 
   return Report:Text()
 end
@@ -1356,7 +1358,7 @@ function TASK:ReportOverview( ReportGroup ) --R2.1 fixed report. Now nicely form
   local Report = REPORT:New( Name )
   
   -- Determine the status of the Task.
-  local State = self:GetState()
+  local Status = "<" .. self:GetState() .. ">"
   
   for TaskInfoID, TaskInfo in pairs( self.TaskInfo ) do
 
@@ -1434,7 +1436,7 @@ function TASK:ReportDetails( ReportGroup )
   local Name = self:GetName()
   
   -- Determine the status of the Task.
-  local State = self:GetState()
+  local Status = "<" .. self:GetState() .. ">"
 
   -- Loop each Unit active in the Task, and find Player Names.
   local PlayerNames = self:GetPlayerNames()
@@ -1445,7 +1447,7 @@ function TASK:ReportDetails( ReportGroup )
   end
   local Players = PlayerReport:Text()
 
-  Report:Add( "Task: " .. Name .. " - " .. State .. " - Detailed Report" )
+  Report:Add( "Task: " .. Name .. " - " .. Status .. " - Detailed Report" )
   Report:Add( " - Players:" )
   Report:AddIndent( Players )
   
