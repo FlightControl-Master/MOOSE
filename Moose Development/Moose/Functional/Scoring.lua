@@ -273,7 +273,7 @@ function SCORING:New( GameName )
   -- Default penalty when a player changes coalition.
   self:SetCoalitionChangePenalty( self.ScaleDestroyPenalty )
   
-  self:SetDisplayDisplayMessagePrefix( "Score: " )
+  self:SetDisplayMessagePrefix()
   
   -- Event handlers  
   self:HandleEvent( EVENTS.Dead, self._EventOnDeadOrCrash )
@@ -293,8 +293,8 @@ end
 -- @param #SCORING self
 -- @param #string DisplayMessagePrefix (Default="Scoring: ") The scoring prefix string.
 -- @return #SCORING
-function SCORING:SetDisplayDisplayMessagePrefix( DisplayMessagePrefix )
-  self.DisplayDisplayMessagePrefix = DisplayDisplayMessagePrefix or "Scoring: "
+function SCORING:SetDisplayMessagePrefix( DisplayMessagePrefix )
+  self.DisplayMessagePrefix = DisplayMessagePrefix or "Scoring: "
   return self
 end
 
@@ -608,7 +608,7 @@ function SCORING:_AddPlayerFromUnit( UnitData )
       if self.Players[PlayerName].UnitCoalition ~= UnitCoalition then
         self.Players[PlayerName].Penalty = self.Players[PlayerName].Penalty + 50
         self.Players[PlayerName].PenaltyCoalition = self.Players[PlayerName].PenaltyCoalition + 1
-        MESSAGE:New( self.DisplayDisplayMessagePrefix .. "Player '" .. PlayerName .. "' changed coalition from " .. _SCORINGCoalition[self.Players[PlayerName].UnitCoalition] .. " to " .. _SCORINGCoalition[UnitCoalition] ..
+        MESSAGE:New( self.DisplayMessagePrefix .. "Player '" .. PlayerName .. "' changed coalition from " .. _SCORINGCoalition[self.Players[PlayerName].UnitCoalition] .. " to " .. _SCORINGCoalition[UnitCoalition] ..
           "(changed " .. self.Players[PlayerName].PenaltyCoalition .. " times the coalition). 50 Penalty points added.",
           2
         ):ToAll()
@@ -626,7 +626,7 @@ function SCORING:_AddPlayerFromUnit( UnitData )
 
     if self.Players[PlayerName].Penalty > self.Fratricide * 0.50 then
       if self.Players[PlayerName].PenaltyWarning < 1 then
-        MESSAGE:New( self.DisplayDisplayMessagePrefix .. "Player '" .. PlayerName .. "': WARNING! If you continue to commit FRATRICIDE and have a PENALTY score higher than " .. self.Fratricide .. ", you will be COURT MARTIALED and DISMISSED from this mission! \nYour total penalty is: " .. self.Players[PlayerName].Penalty,
+        MESSAGE:New( self.DisplayMessagePrefix .. "Player '" .. PlayerName .. "': WARNING! If you continue to commit FRATRICIDE and have a PENALTY score higher than " .. self.Fratricide .. ", you will be COURT MARTIALED and DISMISSED from this mission! \nYour total penalty is: " .. self.Players[PlayerName].Penalty,
           30
         ):ToAll()
         self.Players[PlayerName].PenaltyWarning = self.Players[PlayerName].PenaltyWarning + 1
@@ -635,7 +635,7 @@ function SCORING:_AddPlayerFromUnit( UnitData )
 
     if self.Players[PlayerName].Penalty > self.Fratricide then
       --UnitData:Destroy()
-      MESSAGE:New( self.DisplayDisplayMessagePrefix .. "Player '" .. PlayerName .. "' committed FRATRICIDE, he will be COURT MARTIALED and is DISMISSED from this mission!",
+      MESSAGE:New( self.DisplayMessagePrefix .. "Player '" .. PlayerName .. "' committed FRATRICIDE, he will be COURT MARTIALED and is DISMISSED from this mission!",
         10
       ):ToAll()
     end
@@ -668,7 +668,7 @@ function SCORING:AddGoalScore( PlayerUnit, GoalTag, Text, Score )
     PlayerData.Goals[GoalTag].Score = PlayerData.Goals[GoalTag].Score + Score  
     PlayerData.Score = PlayerData.Score + Score
   
-    MESSAGE:New( self.DisplayDisplayMessagePrefix .. Text, 30 ):ToAll()
+    MESSAGE:New( self.DisplayMessagePrefix .. Text, 30 ):ToAll()
   
     self:ScoreCSV( PlayerName, "", "GOAL_" .. string.upper( GoalTag ), 1, Score, PlayerUnit:GetName() )
   end
@@ -704,7 +704,7 @@ function SCORING:_AddMissionTaskScore( Mission, PlayerUnit, Text, Score )
     PlayerData.Score = self.Players[PlayerName].Score + Score
     PlayerData.Mission[MissionName].ScoreTask = self.Players[PlayerName].Mission[MissionName].ScoreTask + Score
   
-    MESSAGE:New( self.DisplayDisplayMessagePrefix .. MissionName .. " : " .. Text .. " Score: " .. Score, 30 ):ToAll()
+    MESSAGE:New( self.DisplayMessagePrefix .. MissionName .. " : " .. Text .. " Score: " .. Score, 30 ):ToAll()
   
     self:ScoreCSV( PlayerName, "", "TASK_" .. MissionName:gsub( ' ', '_' ), 1, Score, PlayerUnit:GetName() )
   end
@@ -732,7 +732,7 @@ function SCORING:_AddMissionScore( Mission, Text, Score )
       PlayerData.Score = PlayerData.Score + Score
       PlayerData.Mission[MissionName].ScoreMission = PlayerData.Mission[MissionName].ScoreMission + Score
 
-      MESSAGE:New( self.DisplayDisplayMessagePrefix .. "Player '" .. PlayerName .. "' has " .. Text .. " in Mission '" .. MissionName .. "'. " ..
+      MESSAGE:New( self.DisplayMessagePrefix .. "Player '" .. PlayerName .. "' has " .. Text .. " in Mission '" .. MissionName .. "'. " ..
         Score .. " mission score!",
         60 ):ToAll()
 
@@ -902,7 +902,7 @@ function SCORING:_EventOnHit( Event )
       
               if TargetPlayerName ~= nil then -- It is a player hitting another player ...
                 MESSAGE
-                  :New( self.DisplayDisplayMessagePrefix .. "Player '" .. InitPlayerName .. "' hit friendly player '" .. TargetPlayerName .. "' " .. 
+                  :New( self.DisplayMessagePrefix .. "Player '" .. InitPlayerName .. "' hit friendly player '" .. TargetPlayerName .. "' " .. 
                         TargetUnitCategory .. " ( " .. TargetType .. " ) " .. PlayerHit.PenaltyHit .. " times. " .. 
                         "Penalty: -" .. PlayerHit.Penalty .. ".  Score Total:" .. Player.Score - Player.Penalty,
                         2
@@ -911,7 +911,7 @@ function SCORING:_EventOnHit( Event )
                   :ToCoalitionIf( InitCoalition, self:IfMessagesHit() and self:IfMessagesToCoalition() )
               else
                 MESSAGE
-                  :New( self.DisplayDisplayMessagePrefix .. "Player '" .. InitPlayerName .. "' hit a friendly target " .. 
+                  :New( self.DisplayMessagePrefix .. "Player '" .. InitPlayerName .. "' hit a friendly target " .. 
                         TargetUnitCategory .. " ( " .. TargetType .. " ) " .. PlayerHit.PenaltyHit .. " times. " .. 
                         "Penalty: -" .. PlayerHit.Penalty .. ".  Score Total:" .. Player.Score - Player.Penalty,
                         2
@@ -926,7 +926,7 @@ function SCORING:_EventOnHit( Event )
               PlayerHit.ScoreHit = PlayerHit.ScoreHit + 1
               if TargetPlayerName ~= nil then -- It is a player hitting another player ...
                 MESSAGE
-                  :New( self.DisplayDisplayMessagePrefix .. "Player '" .. InitPlayerName .. "' hit enemy player '" .. TargetPlayerName .. "' "  .. 
+                  :New( self.DisplayMessagePrefix .. "Player '" .. InitPlayerName .. "' hit enemy player '" .. TargetPlayerName .. "' "  .. 
                         TargetUnitCategory .. " ( " .. TargetType .. " ) " .. PlayerHit.ScoreHit .. " times. " .. 
                         "Score: " .. PlayerHit.Score .. ".  Score Total:" .. Player.Score - Player.Penalty,
                         2
@@ -935,7 +935,7 @@ function SCORING:_EventOnHit( Event )
                   :ToCoalitionIf( InitCoalition, self:IfMessagesHit() and self:IfMessagesToCoalition() )
               else
                 MESSAGE
-                  :New( self.DisplayDisplayMessagePrefix .. "Player '" .. InitPlayerName .. "' hit an enemy target " .. 
+                  :New( self.DisplayMessagePrefix .. "Player '" .. InitPlayerName .. "' hit an enemy target " .. 
                         TargetUnitCategory .. " ( " .. TargetType .. " ) " .. PlayerHit.ScoreHit .. " times. " .. 
                         "Score: " .. PlayerHit.Score .. ".  Score Total:" .. Player.Score - Player.Penalty,
                         2
@@ -947,7 +947,7 @@ function SCORING:_EventOnHit( Event )
             end
           else -- A scenery object was hit.
             MESSAGE
-              :New( self.DisplayDisplayMessagePrefix .. "Player '" .. InitPlayerName .. "' hit a scenery object.",
+              :New( self.DisplayMessagePrefix .. "Player '" .. InitPlayerName .. "' hit a scenery object.",
                     2
                   )
               :ToAllIf( self:IfMessagesHit() and self:IfMessagesToAll() )
