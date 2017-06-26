@@ -702,9 +702,11 @@ end
 -- @return #TASK
 function TASK:SetMenuForGroup( TaskGroup, MenuTime )
 
-  self:SetPlannedMenuForGroup( TaskGroup, MenuTime )
-  if self:IsGroupAssigned( TaskGroup ) then
-    self:SetAssignedMenuForGroup( TaskGroup, MenuTime )
+  if self:IsStatePlanned() or self:IsStateAssigned() then
+    self:SetPlannedMenuForGroup( TaskGroup, MenuTime )
+    if self:IsGroupAssigned( TaskGroup ) then
+      self:SetAssignedMenuForGroup( TaskGroup, MenuTime )
+    end
   end
 end
 
