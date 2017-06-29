@@ -990,7 +990,6 @@ do -- FSM_PROCESS
     
     -- Copy Processes
     for ProcessID, Process in pairs( self:GetProcesses() ) do
-      self:E( { Process} )
       if Process.fsm then
         Process.fsm:Remove()
         Process.fsm = nil
