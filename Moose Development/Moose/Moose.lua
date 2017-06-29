@@ -11,3 +11,9 @@ _DATABASE = DATABASE:New() -- Core.Database#DATABASE
 
 _SETTINGS = SETTINGS:Set()
 _SETTINGS:SetSystemMenu( nil )
+
+
+local initconnection = require("debugger")
+initconnection( "127.0.0.1", 10000, "dcsserver", nil, nil, "C:\Program Files\Eagle Dynamics\DCS World" )
+
+print("hello")

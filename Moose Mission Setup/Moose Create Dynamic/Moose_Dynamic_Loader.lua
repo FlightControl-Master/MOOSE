@@ -3,10 +3,10 @@ local base = _G
 
 __Moose = {}
 
-__Moose.Include = function( IncludeFile )
+__Moose.Include = function( LuaPath, IncludeFile )
 	if not __Moose.Includes[ IncludeFile ] then
 		__Moose.Includes[IncludeFile] = IncludeFile
-		local f = assert( base.loadfile( __Moose.ProgramPath .. IncludeFile ) )
+		local f = assert( base.loadfile( LuaPath .. IncludeFile ) )
 		if f == nil then
 			error ("Moose: Could not load Moose file " .. IncludeFile )
 		else
