@@ -1185,7 +1185,7 @@ end
 -- @param #string To
 function TASK:onenterAssigned( From, Event, To, PlayerUnit, PlayerName )
 
-  self:E( { "Task Assigned", self.Dispatcher } )
+  self:E( { From, Event, To, PlayerUnit:GetName(), PlayerName } )
   
   if From ~= "Assigned" then
     self:GetMission():GetCommandCenter():MessageToCoalition( "Task " .. self:GetName() .. " is assigned." )
