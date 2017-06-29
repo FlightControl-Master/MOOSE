@@ -743,7 +743,10 @@ function EVENT:onEvent( Event )
 
   local EventMeta = _EVENTMETA[Event.id]
 
-  if self and self.Events and self.Events[Event.id] then
+  if self and 
+     self.Events and 
+     self.Events[Event.id] and
+     ( Event.initiator ~= nil or ( Event.initiator == nil and Event.id ~= EVENTS.PlayerLeaveUnit ) ) then
 
     if Event.initiator then    
 
