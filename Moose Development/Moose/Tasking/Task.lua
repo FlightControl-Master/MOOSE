@@ -1185,9 +1185,11 @@ end
 -- @param #string To
 function TASK:onenterAssigned( From, Event, To, PlayerUnit, PlayerName )
 
-  self:E( { "Task Assigned", self.Dispatcher } )
-  
+
+  --- This test is required, because the state transition will be fired also when the state does not change in case of an event.  
   if From ~= "Assigned" then
+    self:E( { From, Event, To, PlayerUnit:GetName(), PlayerName } )
+
     self:GetMission():GetCommandCenter():MessageToCoalition( "Task " .. self:GetName() .. " is assigned." )
     
     -- Set the total Progress to be achieved.
