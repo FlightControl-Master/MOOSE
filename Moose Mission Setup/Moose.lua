@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' )
-env.info( 'Moose Generation Timestamp: 20170626_2052' )
+env.info( 'Moose Generation Timestamp: 20170629_1040' )
 
 --- Various routines
 -- @module routines
@@ -14419,7 +14419,6 @@ do -- FSM_PROCESS
     
     -- Copy Processes
     for ProcessID, Process in pairs( self:GetProcesses() ) do
-      self:E( { Process} )
       if Process.fsm then
         Process.fsm:Remove()
         Process.fsm = nil
@@ -46071,8 +46070,9 @@ do -- Group Assignment
   
   --- UnAssign the @{Task} from a @{Group}.
   -- @param #TASK self
+  -- @param Wrapper.Group#GROUP TaskGroup
   function TASK:UnAssignFromGroup( TaskGroup )
-    self:F2( { TaskGroup } )
+    self:F2( { TaskGroup = TaskGroup:GetName() } )
     
     self:ClearGroupAssignment( TaskGroup )
   
@@ -46080,7 +46080,7 @@ do -- Group Assignment
     for UnitID, UnitData in pairs( TaskUnits ) do
       local TaskUnit = UnitData -- Wrapper.Unit#UNIT
       local PlayerName = TaskUnit:GetPlayerName()
-      if PlayerName ~= nil or PlayerName ~= "" then
+      if PlayerName ~= nil and PlayerName ~= "" then -- Only remove units that have players!
         self:UnAssignFromUnit( TaskUnit )
       end
     end
@@ -46488,7 +46488,7 @@ end
 -- @param Wrapper.Unit#UNIT TaskUnit
 -- @return #TASK self
 function TASK:RemoveStateMachine( TaskUnit )
-  self:F( { TaskUnit, self.Fsm[TaskUnit] ~= nil } )
+  self:F( { TaskUnit = TaskUnit:GetName(), HasFsm = ( self.Fsm[TaskUnit] ~= nil ) } )
 
   --self:E( self.Fsm )
   --for TaskUnitT, Fsm in pairs( self.Fsm ) do
@@ -46497,12 +46497,15 @@ function TASK:RemoveStateMachine( TaskUnit )
     --self.Fsm[TaskUnit] = nil
   --end
 
-  self.Fsm[TaskUnit]:Remove()
-  self.Fsm[TaskUnit] = nil
+  if self.Fsm[TaskUnit] then
+    self.Fsm[TaskUnit]:Remove()
+    self.Fsm[TaskUnit] = nil
+  end
   
   collectgarbage()
   self:E( "Garbage Collected, Processes should be finalized now ...")
 end
+
 
 --- Checks if there is a FiniteStateMachine assigned to Task@{Unit} for @{Task}
 -- @param #TASK self
