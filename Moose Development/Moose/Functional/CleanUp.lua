@@ -20,7 +20,7 @@
 -- 
 -- The CLEANUP class keeps airbases clean, and tries to guarantee continuous airbase operations, even under combat.
 -- 
--- @field CLEANUP
+-- @field #CLEANUP
 CLEANUP = {
 	ClassName = "CLEANUP",
 	TimeInterval = 0.2,
