@@ -279,6 +279,14 @@ do -- COORDINATE
 
     return RandomVec3
   end
+  
+  --- Return the height of the land at the coordinate.
+  -- @param #COORDINATE self
+  -- @return #number
+  function COORDINATE:GetLandHeight()
+    local Vec2 = { x = self.x, y = self.z }
+    return land.getHeight( Vec2 )
+  end
 
 
   function COORDINATE:SetHeading( Heading )

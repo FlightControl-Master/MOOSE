@@ -375,7 +375,12 @@ function DATABASE:Spawn( SpawnTemplate )
   SpawnTemplate.CountryID = SpawnCountryID
   SpawnTemplate.CategoryID = SpawnCategoryID
 
+  -- Ensure that for the spawned group and its units, there are GROUP and UNIT objects created in the DATABASE.
   local SpawnGroup = self:AddGroup( SpawnTemplate.name )
+  for UnitID, UnitData in pairs( SpawnTemplate.units ) do
+    self:AddUnit( UnitData.name )
+  end
+  
   return SpawnGroup
 end
 

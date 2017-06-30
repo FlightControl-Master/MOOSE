@@ -136,6 +136,12 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MISSION).AddPlayerName">MISSION:AddPlayerName(PlayerName)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(MISSION).AddScoring">MISSION:AddScoring(Scoring)</a></td>
 		<td class="summary">
 <p>Add a scoring to the mission.</p>
@@ -211,6 +217,12 @@
 		<td class="name" nowrap="nowrap"><a href="##(MISSION).GetNextTaskID">MISSION:GetNextTaskID(Task)</a></td>
 		<td class="summary">
 <p>Return the next <a href="Task.html">Task</a> ID to be completed within the <a href="Mission.html">Mission</a>. </p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MISSION).GetPlayerNames">MISSION:GetPlayerNames()</a></td>
+		<td class="summary">
+
 </td>
 		</tr>
 		<tr>
@@ -294,11 +306,17 @@
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(MISSION).MenuReportBriefing">MISSION:MenuReportBriefing(ReportGroup)</a></td>
 		<td class="summary">
-
+<p>Reports the briefing.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(MISSION).MenuReportPlayersPerTask">MISSION:MenuReportPlayersPerTask(ReportGroup)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MISSION).MenuReportPlayersProgress">MISSION:MenuReportPlayersProgress(ReportGroup)</a></td>
 		<td class="summary">
 
 </td>
@@ -312,7 +330,7 @@
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(MISSION).MenuReportTasksSummary">MISSION:MenuReportTasksSummary(ReportGroup)</a></td>
 		<td class="summary">
-
+<p>Report the task summary.</p>
 </td>
 		</tr>
 		<tr>
@@ -502,6 +520,12 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MISSION).ReportPlayersProgress">MISSION:ReportPlayersProgress(ReportGroup)</a></td>
+		<td class="summary">
+<p>Create an Mission Progress report of the Mission.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(MISSION).ReportStatus">MISSION:ReportStatus()</a></td>
 		<td class="summary">
 <p>Create a status report of the Mission.</p>
@@ -639,6 +663,27 @@ The CLIENT or UNIT of the Player joining the Mission.</p>
 <p><em><a href="##(MISSION)">#MISSION</a>:</em></p>
 
 
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(MISSION).AddPlayerName" >
+<strong>MISSION:AddPlayerName(PlayerName)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> PlayerName </em></code>: </p>
+
+				</li>
+		</ul>
 </dd>
 </dl>
 		<dl class="function">
@@ -914,6 +959,19 @@ is the <a href="Task.html">Task</a> object.</p>
 				
 <p><em><a href="Tasking.Task.html##(TASK)">Tasking.Task#TASK</a>:</em>
 The task added.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(MISSION).GetPlayerNames" >
+<strong>MISSION:GetPlayerNames()</strong>
+</a>
+</dt>
+<dd>
+	
+
 
 </dd>
 </dl>
@@ -1242,13 +1300,14 @@ true if Unit is part of a Task in the Mission.</p>
 </dt>
 <dd>
 	
-
+<p>Reports the briefing.</p>
 
 		<h3>Parameter</h3>
 		<ul>
 				<li>
 				
-<p><code><em> ReportGroup </em></code>: </p>
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> ReportGroup </em></code>: 
+The group to which the report needs to be sent.</p>
 
 				</li>
 		</ul>
@@ -1259,6 +1318,27 @@ true if Unit is part of a Task in the Mission.</p>
 
 <a id="#(MISSION).MenuReportPlayersPerTask" >
 <strong>MISSION:MenuReportPlayersPerTask(ReportGroup)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> ReportGroup </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(MISSION).MenuReportPlayersProgress" >
+<strong>MISSION:MenuReportPlayersProgress(ReportGroup)</strong>
 </a>
 </dt>
 <dd>
@@ -1311,7 +1391,7 @@ The status</p>
 </dt>
 <dd>
 	
-
+<p>Report the task summary.</p>
 
 		<h3>Parameter</h3>
 		<ul>
@@ -2266,6 +2346,42 @@ self</p>
 <pre><code>Mission "&lt;MissionName&gt;" - &lt;MissionStatus&gt; - Active Players Report
  - Player "&lt;PlayerName&gt;: Task &lt;TaskName&gt; &lt;TaskStatus&gt;, Task &lt;TaskName&gt; &lt;TaskStatus&gt;
  - Player &lt;PlayerName&gt;: Task &lt;TaskName&gt; &lt;TaskStatus&gt;, Task &lt;TaskName&gt; &lt;TaskStatus&gt;
+ - ..
+</code></pre>
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> ReportGroup </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#string:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(MISSION).ReportPlayersProgress" >
+<strong>MISSION:ReportPlayersProgress(ReportGroup)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Create an Mission Progress report of the Mission.</p>
+
+	
+<p>This reports provides a one liner per player of the mission achievements per task.</p>
+
+<pre><code>Mission "&lt;MissionName&gt;" - &lt;MissionStatus&gt; - Active Players Report
+ - Player &lt;PlayerName&gt;: Task &lt;TaskName&gt; &lt;TaskStatus&gt;: &lt;Progress&gt;
+ - Player &lt;PlayerName&gt;: Task &lt;TaskName&gt; &lt;TaskStatus&gt;: &lt;Progress&gt;
  - ..
 </code></pre>
 

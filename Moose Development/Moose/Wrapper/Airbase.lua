@@ -149,6 +149,7 @@ function AIRBASE:Register( AirbaseName )
 
   local self = BASE:Inherit( self, POSITIONABLE:New( AirbaseName ) )
   self.AirbaseName = AirbaseName
+  self.AirbaseZone = ZONE_RADIUS:New( AirbaseName, self:GetVec2(), 8000 )
   return self
 end
 
@@ -183,6 +184,13 @@ function AIRBASE:GetDCSObject()
   end
     
   return nil
+end
+
+--- Get the airbase zone.
+-- @param #AIRBASE self
+-- @return Core.Zone#ZONE_RADIUS The zone radius of the airbase.
+function AIRBASE:GetZone()
+  return self.AirbaseZone
 end
 
 
