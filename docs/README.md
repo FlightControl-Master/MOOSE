@@ -114,7 +114,7 @@ MOOSE Functional Classes provide various functions that are useful in mission de
 
 * [AIRBASEPOLICE](Documentation/AirbasePolice.html): Control the speed of players at the airbases. Speeding players are eliminated (does not work due to a bug in the DCS).
 
-* [CLEANUP](Documentation/Cleanup.html): Keeps the airbases clean from clutter. (Only partly functional due to a bug in DCS, destroyed objects cannot be removed).
+* [CLEANUP](Documentation/CleanUp.html): Keeps the airbases clean from clutter. (Only partly functional due to a bug in DCS, destroyed objects cannot be removed).
 
 
 ## 2.4. MOOSE Wrapper Classes

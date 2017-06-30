@@ -417,6 +417,12 @@ Various methods exist to configure:</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).DisplayMessagePrefix">SCORING.DisplayMessagePrefix</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SCORING).Fratricide">SCORING.Fratricide</a></td>
 		<td class="summary">
 
@@ -642,6 +648,12 @@ Various methods exist to configure:</p>
 		<td class="name" nowrap="nowrap"><a href="##(SCORING).SetCoalitionChangePenalty">SCORING:SetCoalitionChangePenalty(CoalitionChangePenalty)</a></td>
 		<td class="summary">
 <p>When a player changes the coalition, he can receive a penalty score.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).SetDisplayMessagePrefix">SCORING:SetDisplayMessagePrefix(DisplayMessagePrefix)</a></td>
+		<td class="summary">
+<p>Set a prefix string that will be displayed at each scoring message sent.</p>
 </td>
 		</tr>
 		<tr>
@@ -1032,6 +1044,19 @@ The Score value.</p>
 		<em></em>
 <a id="#(SCORING).CoalitionChangePenalty" >
 <strong>SCORING.CoalitionChangePenalty</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SCORING).DisplayMessagePrefix" >
+<strong>SCORING.DisplayMessagePrefix</strong>
 </a>
 </dt>
 <dd>
@@ -1881,6 +1906,33 @@ By default, the penalty for changing coalition is the default penalty scale.  </
 				
 <p><code><em>#number CoalitionChangePenalty </em></code>: 
 The amount of penalty that is given. </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SCORING)">#SCORING</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SCORING).SetDisplayMessagePrefix" >
+<strong>SCORING:SetDisplayMessagePrefix(DisplayMessagePrefix)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set a prefix string that will be displayed at each scoring message sent.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string DisplayMessagePrefix </em></code>: 
+(Default="Scoring: ") The scoring prefix string.</p>
 
 				</li>
 		</ul>
