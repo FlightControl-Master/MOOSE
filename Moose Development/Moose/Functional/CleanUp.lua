@@ -100,7 +100,7 @@ function CLEANUP:New( AirbaseNames )
 	
 	self:HandleEvent( EVENTS.Birth, self.__.OnEventBirth )
 	
-  self.CleanUpScheduler = SCHEDULER:New( self, self.__.CleanUpScheduler, {}, 1, self.TimeInterval )
+  self.__.CleanUpScheduler = SCHEDULER:New( self, self.__.CleanUpSchedule, {}, 1, self.TimeInterval )
 	
 	return self
 end
@@ -319,7 +319,7 @@ end
 
 --- At the defined time interval, CleanUp the Groups within the CleanUpList.
 -- @param #CLEANUP self
-function CLEANUP.__:CleanUpScheduler()
+function CLEANUP.__:CleanUpSchedule()
 
   local CleanUpCount = 0
 	for CleanUpUnitName, CleanUpListData in pairs( self.CleanUpList ) do
