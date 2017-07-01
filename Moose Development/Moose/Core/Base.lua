@@ -250,6 +250,7 @@ function BASE:Inherit( Child, Parent )
 	local Child = routines.utils.deepCopy( Child )
 
 	if Child ~= nil then
+	  Child.ClassParent = Parent
 
   -- This is for "private" methods...
   -- When a __ is passed to a method as "self", the __index will search for the method on the public method list of the same object too!
@@ -277,7 +278,7 @@ end
 -- @param #BASE Child is the Child class from which the Parent class needs to be retrieved.
 -- @return #BASE
 function BASE:GetParent( Child )
-	local Parent = getmetatable( Child )
+	local Parent = Child.ClassParent
 --	env.info('Inherited class of ' .. Child.ClassName .. ' is ' .. Parent.ClassName )
 	return Parent
 end
