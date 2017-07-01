@@ -140,12 +140,6 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CLEANUP).CleanUpScheduler">CLEANUP.CleanUpScheduler</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(CLEANUP).New">CLEANUP:New(<, AirbaseNames)</a></td>
 		<td class="summary">
 <p>Creates the main object which is handling the cleaning of the debris within the given Zone Names.</p>
@@ -171,72 +165,6 @@
 		<td class="name" nowrap="nowrap"><a href="##(CLEANUP.__).<">CLEANUP.__.<</a></td>
 		<td class="summary">
 <p>string,Wrapper.Airbase#AIRBASE> Airbases Map of Airbases.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CLEANUP.__).AddForCleanUp">CLEANUP.__:AddForCleanUp(CleanUpUnit, CleanUpUnitName)</a></td>
-		<td class="summary">
-<p>Add the <a href="DCSWrapper.Unit.html##(Unit)">DCSWrapper.Unit#Unit</a> to the CleanUpList for CleanUp.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CLEANUP.__).Airbases">CLEANUP.__.Airbases</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CLEANUP.__).CleanUpScheduler">CLEANUP.__:CleanUpScheduler()</a></td>
-		<td class="summary">
-<p>At the defined time interval, CleanUp the Groups within the CleanUpList.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CLEANUP.__).DestroyMissile">CLEANUP.__:DestroyMissile(MissileObject)</a></td>
-		<td class="summary">
-<p>Destroys a missile from the simulator, but checks first if it is still existing!</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CLEANUP.__).DestroyUnit">CLEANUP.__:DestroyUnit(CleanUpUnit)</a></td>
-		<td class="summary">
-<p>Destroys a <a href="Unit.html">Unit</a> from the simulator, but checks first if it is still existing!</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CLEANUP.__).EventAddForCleanUp">CLEANUP.__:EventAddForCleanUp(Event)</a></td>
-		<td class="summary">
-<p>Detects if the Unit has an S<em>EVENT</em>ENGINE<em>SHUTDOWN or an S</em>EVENT_HIT within the given AirbaseNames.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CLEANUP.__).IsInAirbase">CLEANUP.__:IsInAirbase(Vec2)</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CLEANUP.__).OnEventBirth">CLEANUP.__:OnEventBirth(EventData)</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CLEANUP.__).OnEventCrash">CLEANUP.__:OnEventCrash(Event)</a></td>
-		<td class="summary">
-<p>Detects if a crash event occurs.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CLEANUP.__).OnEventHit">CLEANUP.__:OnEventHit(Event)</a></td>
-		<td class="summary">
-<p>Detects if the Unit has an S<em>EVENT</em>HIT within the given AirbaseNames.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CLEANUP.__).OnEventShot">CLEANUP.__:OnEventShot(Event)</a></td>
-		<td class="summary">
-<p>Detects if a unit shoots a missile.</p>
 </td>
 		</tr>
 	</table>
@@ -340,20 +268,6 @@ The method <a href="##(CLEANUP).RemoveAirbase">CLEANUP.RemoveAirbase</a> removes
 		<dl class="function">
 <dt>
 
-		<em></em>
-<a id="#(CLEANUP).CleanUpScheduler" >
-<strong>CLEANUP.CleanUpScheduler</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
 <a id="#(CLEANUP).New" >
 <strong>CLEANUP:New(<, AirbaseNames)</strong>
 </a>
@@ -419,7 +333,7 @@ CleanUpKutaisi = CLEANUP:New( AIRBASE.Caucasus.Kutaisi )</code></pre>
 		<dl class="function">
 <dt>
 
-		<em><a href="##(CLEANUP.__)">#CLEANUP.__</a></em>
+		<em></em>
 <a id="#(CLEANUP).__" >
 <strong>CLEANUP.__</strong>
 </a>
@@ -427,6 +341,9 @@ CleanUpKutaisi = CLEANUP:New( AIRBASE.Caucasus.Kutaisi )</code></pre>
 <dd>
 	
 
+
+	
+<p> @field #CLEANUP.__</p>
 
 </dd>
 </dl>
@@ -445,240 +362,6 @@ CleanUpKutaisi = CLEANUP:New( AIRBASE.Caucasus.Kutaisi )</code></pre>
 	
 <p>string,Wrapper.Airbase#AIRBASE> Airbases Map of Airbases.</p>
 
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(CLEANUP.__).AddForCleanUp" >
-<strong>CLEANUP.__:AddForCleanUp(CleanUpUnit, CleanUpUnitName)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Add the <a href="DCSWrapper.Unit.html##(Unit)">DCSWrapper.Unit#Unit</a> to the CleanUpList for CleanUp.</p>
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> CleanUpUnit </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em> CleanUpUnitName </em></code>: </p>
-
-				</li>
-		</ul>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em><a href="##(CLEANUP.__.Airbases)">#CLEANUP.__.Airbases</a></em>
-<a id="#(CLEANUP.__).Airbases" >
-<strong>CLEANUP.__.Airbases</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(CLEANUP.__).CleanUpScheduler" >
-<strong>CLEANUP.__:CleanUpScheduler()</strong>
-</a>
-</dt>
-<dd>
-	
-<p>At the defined time interval, CleanUp the Groups within the CleanUpList.</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(CLEANUP.__).DestroyMissile" >
-<strong>CLEANUP.__:DestroyMissile(MissileObject)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Destroys a missile from the simulator, but checks first if it is still existing!</p>
-
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="Dcs.DCSTypes.html##(Weapon)">Dcs.DCSTypes#Weapon</a> MissileObject </em></code>: </p>
-
-				</li>
-		</ul>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(CLEANUP.__).DestroyUnit" >
-<strong>CLEANUP.__:DestroyUnit(CleanUpUnit)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Destroys a <a href="Unit.html">Unit</a> from the simulator, but checks first if it is still existing!</p>
-
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> CleanUpUnit </em></code>: 
-The object to be destroyed.</p>
-
-				</li>
-		</ul>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(CLEANUP.__).EventAddForCleanUp" >
-<strong>CLEANUP.__:EventAddForCleanUp(Event)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Detects if the Unit has an S<em>EVENT</em>ENGINE<em>SHUTDOWN or an S</em>EVENT_HIT within the given AirbaseNames.</p>
-
-	
-<p>If this is the case, add the Group to the CLEANUP List.</p>
-
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="Core.Event.html##(EVENTDATA)">Core.Event#EVENTDATA</a> Event </em></code>: </p>
-
-				</li>
-		</ul>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(CLEANUP.__).IsInAirbase" >
-<strong>CLEANUP.__:IsInAirbase(Vec2)</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em> Vec2 </em></code>: </p>
-
-				</li>
-		</ul>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(CLEANUP.__).OnEventBirth" >
-<strong>CLEANUP.__:OnEventBirth(EventData)</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="Core.Event.html##(EVENTDATA)">Core.Event#EVENTDATA</a> EventData </em></code>: </p>
-
-				</li>
-		</ul>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(CLEANUP.__).OnEventCrash" >
-<strong>CLEANUP.__:OnEventCrash(Event)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Detects if a crash event occurs.</p>
-
-	
-<p>Crashed units go into a CleanUpList for removal.</p>
-
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="Core.Event.html##(EVENTDATA)">Core.Event#EVENTDATA</a> Event </em></code>: </p>
-
-				</li>
-		</ul>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(CLEANUP.__).OnEventHit" >
-<strong>CLEANUP.__:OnEventHit(Event)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Detects if the Unit has an S<em>EVENT</em>HIT within the given AirbaseNames.</p>
-
-	
-<p>If this is the case, destroy the unit.</p>
-
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="Core.Event.html##(EVENTDATA)">Core.Event#EVENTDATA</a> Event </em></code>: </p>
-
-				</li>
-		</ul>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(CLEANUP.__).OnEventShot" >
-<strong>CLEANUP.__:OnEventShot(Event)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Detects if a unit shoots a missile.</p>
-
-	
-<p>If this occurs within one of the airbases, then the weapon used must be destroyed.</p>
-
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="Core.Event.html##(EVENTDATA)">Core.Event#EVENTDATA</a> Event </em></code>: </p>
-
-				</li>
-		</ul>
 </dd>
 </dl>
 

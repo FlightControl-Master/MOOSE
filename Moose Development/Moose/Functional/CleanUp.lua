@@ -9,7 +9,7 @@
 -- 
 -- @module CleanUp
 
---- @type CLEANUP.__
+--- @type CLEANUP.__ Methods which are not intended for mission designers, but which are used interally by the moose designer :-)
 -- @field #map<#string,Wrapper.Airbase#AIRBASE> Airbases Map of Airbases.
 -- @extends Core.Base#BASE
 
@@ -68,7 +68,7 @@ CLEANUP = {
 	CleanUpList = {},
 }
 
---- @field #CLEANUP.__
+-- @field #CLEANUP.__
 CLEANUP.__ = {}
 
 --- @field #CLEANUP.__.Airbases
