@@ -234,7 +234,7 @@ function BASE:New()
 	
 	-- This is for "private" methods...
 	-- When a __ is passed to a method as "self", the __index will search for the method on the public method list too!
-  if self.__ then
+  if rawget( self, "__" ) then
     setmetatable( self, { __index = self.__ } )
   end
 	
@@ -254,7 +254,7 @@ function BASE:Inherit( Child, Parent )
 
   -- This is for "private" methods...
   -- When a __ is passed to a method as "self", the __index will search for the method on the public method list of the same object too!
-    if Child.__ then
+    if rawget( Child, "__" ) then
       setmetatable( Child, { __index = Child.__ } )
       setmetatable( Child.__, { __index = Parent } )
     else
