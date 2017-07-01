@@ -10,11 +10,11 @@
 -- @module CleanUp
 
 --- @type CLEANUP.__
+-- @field #map<#string,Wrapper.Airbase#AIRBASE> Airbases Map of Airbases.
 -- @extends Core.Base#BASE
 
 --- @type CLEANUP
 -- @extends #CLEANUP.__
--- @field #map<#string,Wrapper.Airbase#AIRBASE> Airbases Map of Airbases.
 
 --- # CLEANUP, extends @{Base#BASE}
 -- 
@@ -66,11 +66,13 @@ CLEANUP = {
 	ClassName = "CLEANUP",
 	TimeInterval = 0.2,
 	CleanUpList = {},
-	Airbases = {},
 }
 
 --- @field #CLEANUP.__
 CLEANUP.__ = {}
+
+--- @field #CLEANUP.__.Airbases
+CLEANUP.__.Airbases = {}
 
 --- Creates the main object which is handling the cleaning of the debris within the given Zone Names.
 -- @param #CLEANUP self
@@ -108,8 +110,8 @@ end
 -- @param #string AirbaseName
 -- @return #CLEANUP
 function CLEANUP:AddAirbase( AirbaseName )
-  self.Airbases[AirbaseName] = AIRBASE:FindByName( AirbaseName )
-  self:F({"Airbase:", AirbaseName, self.Airbases[AirbaseName]:GetDesc()})
+  self.__.Airbases[AirbaseName] = AIRBASE:FindByName( AirbaseName )
+  self:F({"Airbase:", AirbaseName, self.__.Airbases[AirbaseName]:GetDesc()})
   
   return self
 end
@@ -119,7 +121,7 @@ end
 -- @param #string AirbaseName
 -- @return #CLEANUP
 function CLEANUP:RemoveAirbase( AirbaseName )
-  self.Airbases[AirbaseName] = nil
+  self.__.Airbases[AirbaseName] = nil
   return self
 end
 
@@ -128,7 +130,7 @@ end
 function CLEANUP.__:IsInAirbase( Vec2 )
 
   local InAirbase = false
-  for AirbaseName, Airbase in pairs( self.Airbases ) do
+  for AirbaseName, Airbase in pairs( self.__.Airbases ) do
     local Airbase = Airbase -- Wrapper.Airbase#AIRBASE
     if Airbase:GetZone():IsVec2InZone( Vec2 ) then
       InAirbase = true
