@@ -439,7 +439,7 @@ do -- TASK_A2A_SWEEP
   -- @param #string TaskBriefing The briefing of the task.
   -- @return #TASK_A2A_SWEEP self
   function TASK_A2A_SWEEP:New( Mission, SetGroup, TaskName, TargetSetUnit, TaskBriefing )
-    local self = BASE:Inherit( self, TASK_A2A:New( Mission, SetGroup, TaskName, TargetSetUnit, "INTERCEPT", TaskBriefing ) ) -- #TASK_A2A_SWEEP
+    local self = BASE:Inherit( self, TASK_A2A:New( Mission, SetGroup, TaskName, TargetSetUnit, "SWEEP", TaskBriefing ) ) -- #TASK_A2A_SWEEP
     self:F()
     
     Mission:AddTask( self )
