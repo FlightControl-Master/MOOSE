@@ -69,7 +69,6 @@ CLEANUP = {
 	Airbases = {},
 }
 
-
 --- @field #CLEANUP.__
 CLEANUP.__ = {}
 
