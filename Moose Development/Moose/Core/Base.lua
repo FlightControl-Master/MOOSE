@@ -201,6 +201,10 @@ BASE = {
   _ = {},
 }
 
+
+--- @field #BASE.__
+BASE.__ = {}
+
 --- The Formation Class
 -- @type FORMATION
 -- @field Cone A cone formation.
@@ -224,45 +228,17 @@ FORMATION = {
 -- @return #BASE
 function BASE:New()
   local self = routines.utils.deepCopy( self ) -- Create a new self instance
-	local MetaTable = {}
-	setmetatable( self, MetaTable )
-	self.__index = self
+
 	_ClassID = _ClassID + 1
 	self.ClassID = _ClassID
-
+	
+	-- This is for "private" methods...
+	-- When a __ is passed to a method as "self", the __index will search for the method on the public method list too!
+  if self.__ then
+    setmetatable( self, { __index = self.__ } )
+  end
 	
 	return self
-end
-
-function BASE:_Destructor()
-  --self:E("_Destructor")
-
-  --self:EventRemoveAll()
-end
-
-
--- THIS IS WHY WE NEED LUA 5.2 ...
-function BASE:_SetDestructor()
-
-  -- TODO: Okay, this is really technical...
-  -- When you set a proxy to a table to catch __gc, weak tables don't behave like weak...
-  -- Therefore, I am parking this logic until I've properly discussed all this with the community.
-
-  local proxy = newproxy(true)
-  local proxyMeta = getmetatable(proxy)
-
-  proxyMeta.__gc = function ()
-    env.info("In __gc for " .. self:GetClassNameAndID() )
-    if self._Destructor then
-        self:_Destructor()
-    end
-  end
-
-  -- keep the userdata from newproxy reachable until the object
-  -- table is about to be garbage-collected - then the __gc hook
-  -- will be invoked and the destructor called
-  rawset( self, '__proxy', proxy )
-  
 end
 
 --- This is the worker method to inherit from a parent class.
@@ -272,11 +248,18 @@ end
 -- @return #BASE Child
 function BASE:Inherit( Child, Parent )
 	local Child = routines.utils.deepCopy( Child )
-	--local Parent = routines.utils.deepCopy( Parent )
-  --local Parent = Parent
+
 	if Child ~= nil then
-		setmetatable( Child, Parent )
-		Child.__index = Child
+
+  -- This is for "private" methods...
+  -- When a __ is passed to a method as "self", the __index will search for the method on the public method list of the same object too!
+    if Child.__ then
+      setmetatable( Child, { __index = Child.__ } )
+      setmetatable( Child.__, { __index = Parent } )
+    else
+      setmetatable( Child, { __index = Parent } )
+    end
+    
 		
 		--Child:_SetDestructor()
 	end
@@ -895,3 +878,35 @@ end
 
 
 
+--- old stuff
+
+--function BASE:_Destructor()
+--  --self:E("_Destructor")
+--
+--  --self:EventRemoveAll()
+--end
+
+
+-- THIS IS WHY WE NEED LUA 5.2 ...
+--function BASE:_SetDestructor()
+--
+--  -- TODO: Okay, this is really technical...
+--  -- When you set a proxy to a table to catch __gc, weak tables don't behave like weak...
+--  -- Therefore, I am parking this logic until I've properly discussed all this with the community.
+--
+--  local proxy = newproxy(true)
+--  local proxyMeta = getmetatable(proxy)
+--
+--  proxyMeta.__gc = function ()
+--    env.info("In __gc for " .. self:GetClassNameAndID() )
+--    if self._Destructor then
+--        self:_Destructor()
+--    end
+--  end
+--
+--  -- keep the userdata from newproxy reachable until the object
+--  -- table is about to be garbage-collected - then the __gc hook
+--  -- will be invoked and the destructor called
+--  rawset( self, '__proxy', proxy )
+--  
+--end

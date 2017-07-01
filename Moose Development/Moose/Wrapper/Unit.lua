@@ -536,7 +536,7 @@ function UNIT:GetLife()
     return UnitLife
   end
   
-  return nil
+  return -1
 end
 
 --- Returns the Unit's initial health.
@@ -553,7 +553,7 @@ function UNIT:GetLife0()
     return UnitLife0
   end
   
-  return nil
+  return 0
 end
 
 --- Returns the category name of the #UNIT.
