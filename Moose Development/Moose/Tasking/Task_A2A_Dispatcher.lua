@@ -565,9 +565,9 @@ do -- TASK_A2A_DISPATCHER
 
         if Task then
           local FriendliesCount, FriendliesReport = self:GetFriendliesNearBy( DetectedItem )
-          Task:SetInfo( "Friendlies", string.format( "%d ( %s )", FriendliesCount, FriendliesReport:Text( "," ) ) ) 
+          Task:SetInfo( "Friendlies", string.format( "%d ( %s )", FriendliesCount, FriendliesReport:Text( "," ) ), 30 ) 
           local PlayersCount, PlayersReport = self:GetPlayerFriendliesNearBy( DetectedItem )
-          Task:SetInfo( "Players", string.format( "%d ( %s )", PlayersCount, PlayersReport:Text( "," ) ) ) 
+          Task:SetInfo( "Players", string.format( "%d ( %s )", PlayersCount, PlayersReport:Text( "," ) ), 31 ) 
         end
   
         -- OK, so the tasking has been done, now delete the changes reported for the area.
