@@ -2388,7 +2388,6 @@ function CONTROLLABLE:IsAirPlane()
 
   if DCSObject then
     local Category = DCSObject:getDesc().category
-    self:T( Category )
     return Category == Unit.Category.AIRPLANE
   end
 

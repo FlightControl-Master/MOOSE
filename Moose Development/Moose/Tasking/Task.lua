@@ -1488,7 +1488,7 @@ function TASK:ReportDetails( ReportGroup )
         local FromCoordinate = ReportGroup:GetUnit(1):GetCoordinate()
         local ToCoordinate = TaskInfo.TaskInfoText -- Core.Point#COORDINATE
         Report:Add( TaskInfoIDText )
-        Report:AddIndent( ToCoordinate:ToStringBRA( FromCoordinate ) .. ", " .. TaskInfo:ToStringAspect( FromCoordinate ) )
+        Report:AddIndent( ToCoordinate:ToStringBRA( FromCoordinate ) .. ", " .. TaskInfo.TaskInfoText:ToStringAspect( FromCoordinate ) )
         Report:AddIndent( ToCoordinate:ToStringBULLS( ReportGroup:GetCoalition() ) )
       else
       end

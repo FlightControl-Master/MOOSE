@@ -529,7 +529,7 @@ do -- DETECTION_BASE
         --self:E( { DetectionGroupData } )
         self:__DetectionGroup( DetectDelay, DetectionGroupData, DetectionTimeStamp ) -- Process each detection asynchronously.
         self.DetectionCount = self.DetectionCount + 1
-        DetectDelay = DetectDelay + 0.1
+        DetectDelay = DetectDelay + 1
       end
     end
     
@@ -1186,7 +1186,7 @@ do -- DETECTION_BASE
           local EnemyUnitName = DetectedUnit:GetName()
           local FoundUnitInReportSetGroup = ReportSetGroup:FindGroup( FoundUnitGroupName ) ~= nil
           
-          self:F( { "Friendlies search:", FoundUnitName, FoundUnitCoalition, EnemyUnitName, EnemyCoalition, FoundUnitInReportSetGroup } )
+          --self:F( { "Friendlies search:", FoundUnitName, FoundUnitCoalition, EnemyUnitName, EnemyCoalition, FoundUnitInReportSetGroup } )
           
           if FoundUnitCoalition ~= EnemyCoalition and FoundUnitInReportSetGroup == false then
             DetectedItem.FriendliesNearBy = DetectedItem.FriendliesNearBy or {}
