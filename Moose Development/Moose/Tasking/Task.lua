@@ -1020,10 +1020,15 @@ end
 
 --- Sets the Information on the Task
 -- @param #TASK self
--- @param #string TaskInfo
-function TASK:SetInfo( TaskInfo, TaskInfoText )
+-- @param #string TaskInfo The key and title of the task information.
+-- @param #string TaskInfoText The Task info text.
+-- @param #number TaskInfoOrder The ordering, a number between 0 and 99.
+function TASK:SetInfo( TaskInfo, TaskInfoText, TaskInfoOrder )
 
-  self.TaskInfo[TaskInfo] = TaskInfoText
+  self.TaskInfo = self.TaskInfo or {}
+  self.TaskInfo[TaskInfo] = self.TaskInfo[TaskInfo] or {}
+  self.TaskInfo[TaskInfo].TaskInfoText = TaskInfoText
+  self.TaskInfo[TaskInfo].TaskInfoOrder = TaskInfoOrder
 end
 
 --- Gets the Type of the Task
@@ -1365,26 +1370,41 @@ function TASK:ReportOverview( ReportGroup ) --R2.1 fixed report. Now nicely form
   
   -- Determine the status of the Task.
   local Status = "<" .. self:GetState() .. ">"
+
+  local Line = 0
+  local LineReport = REPORT:New()
   
-  for TaskInfoID, TaskInfo in pairs( self.TaskInfo ) do
+  for TaskInfoID, TaskInfo in UTILS.spairs( self.TaskInfo, function( t, a, b ) return t[a].TaskInfoOrder < t[b].TaskInfoOrder end ) do
+
+    self:F( { TaskInfo = TaskInfo } )
+
+    if Line < math.floor( TaskInfo.TaskInfoOrder / 10 ) then
+      Report:AddIndent( LineReport:Text( ", " ) )
+      LineReport = REPORT:New()
+      Line = math.floor( TaskInfo.TaskInfoOrder / 10 )
+    end
 
     local TaskInfoIDText = string.format( "%s: ", TaskInfoID )
-  
-    if type(TaskInfo) == "string" then
-      Report:Add( TaskInfoIDText .. TaskInfo )
+    
+    if type( TaskInfo.TaskInfoText ) == "string" then
+      LineReport:Add( TaskInfoIDText .. TaskInfo.TaskInfoText )
     elseif type(TaskInfo) == "table" then
       if TaskInfoID == "Coordinates" then
         local FromCoordinate = ReportGroup:GetUnit(1):GetCoordinate()
-        local ToCoordinate = TaskInfo -- Core.Point#COORDINATE
+        local ToCoordinate = TaskInfo.TaskInfoText -- Core.Point#COORDINATE
         --Report:Add( TaskInfoIDText )
-        Report:Add( ToCoordinate:ToString( ReportGroup ) )
+        LineReport:Add( ToCoordinate:ToString( ReportGroup ) )
         --Report:AddIndent( ToCoordinate:ToStringBULLS( ReportGroup:GetCoalition() ) )
       else
       end
     end
+    
+    
   end
+
+  Report:AddIndent( LineReport:Text( ", " ) )
   
-  return Report:Text( ", ")
+  return Report:Text()
 end
 
 --- Create a count of the players in the Task.
@@ -1457,16 +1477,16 @@ function TASK:ReportDetails( ReportGroup )
   Report:Add( " - Players:" )
   Report:AddIndent( Players )
   
-  for TaskInfoID, TaskInfo in pairs( self.TaskInfo ) do
+  for TaskInfoID, TaskInfo in pairs( self.TaskInfo, function( t, a, b ) return t[a].TaskInfoOrder < t[b].TaskInfoOrder end ) do
     
     local TaskInfoIDText = string.format( " - %s: ", TaskInfoID )
 
-    if type(TaskInfo) == "string" then
-      Report:Add( TaskInfoIDText .. TaskInfo )
+    if type( TaskInfo.TaskInfoText ) == "string" then
+      Report:Add( TaskInfoIDText .. TaskInfo.TaskInfoText )
     elseif type(TaskInfo) == "table" then
       if TaskInfoID == "Coordinates" then
         local FromCoordinate = ReportGroup:GetUnit(1):GetCoordinate()
-        local ToCoordinate = TaskInfo -- Core.Point#COORDINATE
+        local ToCoordinate = TaskInfo.TaskInfoText -- Core.Point#COORDINATE
         Report:Add( TaskInfoIDText )
         Report:AddIndent( ToCoordinate:ToStringBRA( FromCoordinate ) .. ", " .. TaskInfo:ToStringAspect( FromCoordinate ) )
         Report:AddIndent( ToCoordinate:ToStringBULLS( ReportGroup:GetCoalition() ) )

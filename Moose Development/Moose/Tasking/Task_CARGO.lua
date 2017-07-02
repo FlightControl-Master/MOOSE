@@ -770,6 +770,17 @@ do -- TASK_CARGO
     return self
   end
   
+  function TASK_CARGO:SetGoalTotal()
+  
+    self.GoalTotal = self.SetCargo:Count()
+  end
+
+  function TASK_CARGO:GetGoalTotal()
+  
+    return self.GoalTotal
+  end
+  
+  
 end 
 
 
@@ -903,11 +914,13 @@ do -- TASK_CARGO_TRANSPORT
     
     local DeployZones = self:GetDeployZones()
     
-    local CargoDeployed = true
+    local CargoDeployed = false
     
     -- Loop the CargoSet (so evaluate each Cargo in the SET_CARGO ).
     for CargoID, CargoData in pairs( Set ) do
       local Cargo = CargoData -- Core.Cargo#CARGO
+
+      local CargoInDeployZone = false
       
       -- Loop the DeployZones set for the TASK_CARGO_TRANSPORT.
       for DeployZoneID, DeployZone in pairs( DeployZones ) do
@@ -915,20 +928,27 @@ do -- TASK_CARGO_TRANSPORT
         -- If there is a Cargo not in one of DeployZones, then not all Cargo is deployed.
         self:T( { Cargo.CargoObject } )
         if Cargo:IsInZone( DeployZone ) then
-        else
-          CargoDeployed = false
+          CargoInDeployZone = true
         end
       end
+      
+      CargoDeployed = CargoDeployed or CargoInDeployZone      
+      
     end
 
     return CargoDeployed
   end
   
-      
-    ---
-  
-  
-  
+  --- @param #TASK_CARGO_TRANSPORT self
+  function TASK_CARGO_TRANSPORT:onafterGoal( TaskUnit, From, Event, To )
+    local CargoSet = self.CargoSet
+    
+    if self:IsAllCargoTransported() then
+      self:Success()
+    end
+    
+    self:__Goal( -10 )
+  end
 
 end
 

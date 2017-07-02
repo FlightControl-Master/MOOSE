@@ -365,7 +365,6 @@ end
 --- Returns the POSITIONABLE velocity in km/h.
 -- @param Wrapper.Positionable#POSITIONABLE self
 -- @return #number The velocity in km/h
--- @return #nil The POSITIONABLE is not existing or alive.  
 function POSITIONABLE:GetVelocityKMH()
   self:F2( self.PositionableName )
 
@@ -379,13 +378,12 @@ function POSITIONABLE:GetVelocityKMH()
     return Velocity
   end
   
-  return nil
+  return 0
 end
 
 --- Returns the POSITIONABLE velocity in meters per second.
 -- @param Wrapper.Positionable#POSITIONABLE self
 -- @return #number The velocity in meters per second.
--- @return #nil The POSITIONABLE is not existing or alive.  
 function POSITIONABLE:GetVelocityMPS()
   self:F2( self.PositionableName )
 
@@ -398,7 +396,7 @@ function POSITIONABLE:GetVelocityMPS()
     return Velocity
   end
   
-  return nil
+  return 0
 end
 
 
