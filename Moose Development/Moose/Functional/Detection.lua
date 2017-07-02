@@ -529,7 +529,7 @@ do -- DETECTION_BASE
         --self:E( { DetectionGroupData } )
         self:__DetectionGroup( DetectDelay, DetectionGroupData, DetectionTimeStamp ) -- Process each detection asynchronously.
         self.DetectionCount = self.DetectionCount + 1
-        DetectDelay = DetectDelay + 0.1
+        DetectDelay = DetectDelay + 1
       end
     end
     
