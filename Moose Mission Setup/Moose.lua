@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' )
-env.info( 'Moose Generation Timestamp: 20170630_1038' )
+env.info( 'Moose Generation Timestamp: 20170702_1258' )
 
 --- Various routines
 -- @module routines
@@ -3021,6 +3021,10 @@ BASE = {
   _ = {},
 }
 
+
+--- @field #BASE.__
+BASE.__ = {}
+
 --- The Formation Class
 -- @type FORMATION
 -- @field Cone A cone formation.
@@ -3044,45 +3048,17 @@ FORMATION = {
 -- @return #BASE
 function BASE:New()
   local self = routines.utils.deepCopy( self ) -- Create a new self instance
-	local MetaTable = {}
-	setmetatable( self, MetaTable )
-	self.__index = self
+
 	_ClassID = _ClassID + 1
 	self.ClassID = _ClassID
-
+	
+	-- This is for "private" methods...
+	-- When a __ is passed to a method as "self", the __index will search for the method on the public method list too!
+  if rawget( self, "__" ) then
+    setmetatable( self, { __index = self.__ } )
+  end
 	
 	return self
-end
-
-function BASE:_Destructor()
-  --self:E("_Destructor")
-
-  --self:EventRemoveAll()
-end
-
-
--- THIS IS WHY WE NEED LUA 5.2 ...
-function BASE:_SetDestructor()
-
-  -- TODO: Okay, this is really technical...
-  -- When you set a proxy to a table to catch __gc, weak tables don't behave like weak...
-  -- Therefore, I am parking this logic until I've properly discussed all this with the community.
-
-  local proxy = newproxy(true)
-  local proxyMeta = getmetatable(proxy)
-
-  proxyMeta.__gc = function ()
-    env.info("In __gc for " .. self:GetClassNameAndID() )
-    if self._Destructor then
-        self:_Destructor()
-    end
-  end
-
-  -- keep the userdata from newproxy reachable until the object
-  -- table is about to be garbage-collected - then the __gc hook
-  -- will be invoked and the destructor called
-  rawset( self, '__proxy', proxy )
-  
 end
 
 --- This is the worker method to inherit from a parent class.
@@ -3092,11 +3068,19 @@ end
 -- @return #BASE Child
 function BASE:Inherit( Child, Parent )
 	local Child = routines.utils.deepCopy( Child )
-	--local Parent = routines.utils.deepCopy( Parent )
-  --local Parent = Parent
+
 	if Child ~= nil then
-		setmetatable( Child, Parent )
-		Child.__index = Child
+	  Child.ClassParent = Parent
+
+  -- This is for "private" methods...
+  -- When a __ is passed to a method as "self", the __index will search for the method on the public method list of the same object too!
+    if rawget( Child, "__" ) then
+      setmetatable( Child, { __index = Child.__ } )
+      setmetatable( Child.__, { __index = Parent } )
+    else
+      setmetatable( Child, { __index = Parent } )
+    end
+    
 		
 		--Child:_SetDestructor()
 	end
@@ -3114,7 +3098,7 @@ end
 -- @param #BASE Child is the Child class from which the Parent class needs to be retrieved.
 -- @return #BASE
 function BASE:GetParent( Child )
-	local Parent = getmetatable( Child )
+	local Parent = Child.ClassParent
 --	env.info('Inherited class of ' .. Child.ClassName .. ' is ' .. Parent.ClassName )
 	return Parent
 end
@@ -3715,7 +3699,38 @@ end
 
 
 
---- **Core** -- SCHEDULER prepares and handles the **execution of functions over scheduled time (intervals)**.
+--- old stuff
+
+--function BASE:_Destructor()
+--  --self:E("_Destructor")
+--
+--  --self:EventRemoveAll()
+--end
+
+
+-- THIS IS WHY WE NEED LUA 5.2 ...
+--function BASE:_SetDestructor()
+--
+--  -- TODO: Okay, this is really technical...
+--  -- When you set a proxy to a table to catch __gc, weak tables don't behave like weak...
+--  -- Therefore, I am parking this logic until I've properly discussed all this with the community.
+--
+--  local proxy = newproxy(true)
+--  local proxyMeta = getmetatable(proxy)
+--
+--  proxyMeta.__gc = function ()
+--    env.info("In __gc for " .. self:GetClassNameAndID() )
+--    if self._Destructor then
+--        self:_Destructor()
+--    end
+--  end
+--
+--  -- keep the userdata from newproxy reachable until the object
+--  -- table is about to be garbage-collected - then the __gc hook
+--  -- will be invoked and the destructor called
+--  rawset( self, '__proxy', proxy )
+--  
+--end--- **Core** -- SCHEDULER prepares and handles the **execution of functions over scheduled time (intervals)**.
 --
 -- ![Banner Image](..\Presentations\SCHEDULER\Dia1.JPG)
 -- 
@@ -15770,7 +15785,12 @@ function CARGO:IsInZone( Zone )
   if self:IsLoaded() then
     return Zone:IsPointVec2InZone( self.CargoCarrier:GetPointVec2() )
   else
-    return Zone:IsPointVec2InZone( self.CargoObject:GetPointVec2() )
+    self:F( { Size = self.CargoObject:GetSize(), Units = self.CargoObject:GetUnits() } )
+    if self.CargoObject:GetSize() ~= 0 then
+      return Zone:IsPointVec2InZone( self.CargoObject:GetPointVec2() )
+    else
+      return false
+    end
   end  
   
   return nil
@@ -17739,7 +17759,6 @@ end
 --- Returns the POSITIONABLE velocity in km/h.
 -- @param Wrapper.Positionable#POSITIONABLE self
 -- @return #number The velocity in km/h
--- @return #nil The POSITIONABLE is not existing or alive.  
 function POSITIONABLE:GetVelocityKMH()
   self:F2( self.PositionableName )
 
@@ -17753,13 +17772,12 @@ function POSITIONABLE:GetVelocityKMH()
     return Velocity
   end
   
-  return nil
+  return 0
 end
 
 --- Returns the POSITIONABLE velocity in meters per second.
 -- @param Wrapper.Positionable#POSITIONABLE self
 -- @return #number The velocity in meters per second.
--- @return #nil The POSITIONABLE is not existing or alive.  
 function POSITIONABLE:GetVelocityMPS()
   self:F2( self.PositionableName )
 
@@ -17772,7 +17790,7 @@ function POSITIONABLE:GetVelocityMPS()
     return Velocity
   end
   
-  return nil
+  return 0
 end
 
 
@@ -20452,6 +20470,17 @@ function CONTROLLABLE:IsAirPlane()
   return nil
 end
 
+function CONTROLLABLE:GetSize()
+
+  local DCSObject = self:GetDCSObject()
+
+  if DCSObject then
+    return 1
+  else
+    return 0
+  end
+end
+
 
 -- Message APIs--- **Wrapper** -- GROUP wraps the DCS Class Group objects.
 -- 
@@ -20808,8 +20837,13 @@ function GROUP:GetSize()
 
   if DCSGroup then
     local GroupSize = DCSGroup:getSize()
-    self:T3( GroupSize )
-    return GroupSize
+    
+    if GroupSize then
+      self:T3( GroupSize )
+      return GroupSize
+    else
+      return 0
+    end
   end
 
   return nil
@@ -22171,7 +22205,7 @@ function UNIT:GetLife()
     return UnitLife
   end
   
-  return nil
+  return -1
 end
 
 --- Returns the Unit's initial health.
@@ -22188,7 +22222,7 @@ function UNIT:GetLife0()
     return UnitLife0
   end
   
-  return nil
+  return 0
 end
 
 --- Returns the category name of the #UNIT.
@@ -25281,8 +25315,6 @@ end
 
 --- **Functional** -- The CLEANUP class keeps an area clean of crashing or colliding airplanes. It also prevents airplanes from firing within this area.
 -- 
--- ![Banner Image](..\Presentations\CLEANUP\Dia1.JPG)
--- 
 -- ===
 -- 
 -- ### Author: **Sven Van de Velde (FlightControl)**
@@ -25292,22 +25324,70 @@ end
 -- 
 -- @module CleanUp
 
+--- @type CLEANUP.__ Methods which are not intended for mission designers, but which are used interally by the moose designer :-)
+-- @field #map<#string,Wrapper.Airbase#AIRBASE> Airbases Map of Airbases.
+-- @extends Core.Base#BASE
 
 --- @type CLEANUP
--- @extends Core.Base#BASE
--- @field #map<#string,Wrapper.Airbase#AIRBASE> Airbases Map of Airbases.
+-- @extends #CLEANUP.__
 
 --- # CLEANUP, extends @{Base#BASE}
 -- 
+-- ![Banner Image](..\Presentations\CLEANUP\Dia1.JPG)
+-- 
 -- The CLEANUP class keeps airbases clean, and tries to guarantee continuous airbase operations, even under combat.
+-- Specific airbases need to be provided that need to be guarded. Each airbase registered, will be guarded within a zone of 8 km around the airbase.
+-- Any unit that fires a missile, or shoots within the zone of an airbase, will be monitored by CLEANUP.
+-- Within the 8km zone, units cannot fire any missile, which prevents the airbase runway to receive missile or bomb hits. 
+-- Any airborne or ground unit that is on the runway below 30 meters (default value) will be automatically removed if it is damaged.
+-- 
+-- This is not a full 100% secure implementation. It is still possible that CLEANUP cannot prevent (in-time) to keep the airbase clean.
+-- The following situations may happen that will still stop the runway of an airbase:
+-- 
+--   * A damaged unit is not removed on time when above the runway, and crashes on the runway.
+--   * A bomb or missile is still able to dropped on the runway.
+--   * Units collide on the airbase, and could not be removed on time.
+--   
+-- When a unit is within the airbase zone and needs to be monitored,
+-- its status will be checked every 0.25 seconds! This is required to ensure that the airbase is kept clean.
+-- But as a result, there is more CPU overload.
+-- 
+-- So as an advise, I suggest you use the CLEANUP class with care:
+-- 
+--   * Only monitor airbases that really need to be monitored!
+--   * Try not to monitor airbases that are likely to be invaded by enemy troops.
+--     For these airbases, there is little use to keep them clean, as they will be invaded anyway...
+--     
+-- By following the above guidelines, you can add airbase cleanup with acceptable CPU overhead.
+-- 
+-- ## 1. CLEANUP Constructor
+-- 
+-- Creates the main object which is preventing the airbase to get polluted with debris on the runway, which halts the airbase.
+-- 
+--      -- Clean these Zones.
+--      CleanUpAirports = CLEANUP:New( { AIRBASE.Caucasus.Tbilisi, AIRBASE.Caucasus.Kutaisi )
+--      
+--      -- or
+--      CleanUpTbilisi = CLEANUP:New( AIRBASE.Caucasus.Tbilisi )
+--      CleanUpKutaisi = CLEANUP:New( AIRBASE.Caucasus.Kutaisi )
+-- 
+-- ## 2. Add or Remove airbases
+-- 
+-- The method @{#CLEANUP.AddAirbase} to add an airbase to the cleanup validation process.
+-- The method @{#CLEANUP.RemoveAirbase} removes an airbase from the cleanup validation process.
 -- 
 -- @field #CLEANUP
 CLEANUP = {
 	ClassName = "CLEANUP",
 	TimeInterval = 0.2,
 	CleanUpList = {},
-	Airbases = {},
 }
+
+-- @field #CLEANUP.__
+CLEANUP.__ = {}
+
+--- @field #CLEANUP.__.Airbases
+CLEANUP.__.Airbases = {}
 
 --- Creates the main object which is handling the cleaning of the debris within the given Zone Names.
 -- @param #CLEANUP self
@@ -25333,9 +25413,9 @@ function CLEANUP:New( AirbaseNames )
     self:AddAirbase( AirbaseName )
 	end
 	
-	self:HandleEvent( EVENTS.Birth )
+	self:HandleEvent( EVENTS.Birth, self.__.OnEventBirth )
 	
-  self.CleanUpScheduler = SCHEDULER:New( self, self._CleanUpScheduler, {}, 1, self.TimeInterval )
+  self.__.CleanUpScheduler = SCHEDULER:New( self, self.__.CleanUpSchedule, {}, 1, self.TimeInterval )
 	
 	return self
 end
@@ -25345,8 +25425,8 @@ end
 -- @param #string AirbaseName
 -- @return #CLEANUP
 function CLEANUP:AddAirbase( AirbaseName )
-  self.Airbases[AirbaseName] = AIRBASE:FindByName( AirbaseName )
-  self:F({"Airbase:", AirbaseName, self.Airbases[AirbaseName]:GetDesc()})
+  self.__.Airbases[AirbaseName] = AIRBASE:FindByName( AirbaseName )
+  self:F({"Airbase:", AirbaseName, self.__.Airbases[AirbaseName]:GetDesc()})
   
   return self
 end
@@ -25356,16 +25436,16 @@ end
 -- @param #string AirbaseName
 -- @return #CLEANUP
 function CLEANUP:RemoveAirbase( AirbaseName )
-  self.Airbases[AirbaseName] = nil
+  self.__.Airbases[AirbaseName] = nil
   return self
 end
 
 
 
-function CLEANUP:IsInAirbase( Vec2 )
+function CLEANUP.__:IsInAirbase( Vec2 )
 
   local InAirbase = false
-  for AirbaseName, Airbase in pairs( self.Airbases ) do
+  for AirbaseName, Airbase in pairs( self.__.Airbases ) do
     local Airbase = Airbase -- Wrapper.Airbase#AIRBASE
     if Airbase:GetZone():IsVec2InZone( Vec2 ) then
       InAirbase = true
@@ -25376,23 +25456,12 @@ function CLEANUP:IsInAirbase( Vec2 )
   return InAirbase
 end
 
---- Destroys a group from the simulator, but checks first if it is still existing!
--- @param #CLEANUP self
--- @param Dcs.DCSWrapper.Group#Group GroupObject The object to be destroyed.
--- @param #string CleanUpGroupName The groupname...
-function CLEANUP:_DestroyGroup( GroupObject, CleanUpGroupName )
-	self:F( { GroupObject, CleanUpGroupName } )
 
-	if GroupObject then -- and GroupObject:isExist() then
-		trigger.action.deactivateGroup(GroupObject)
-		self:T( { "GroupObject Destroyed", GroupObject } )
-	end
-end
 
 --- Destroys a @{Unit} from the simulator, but checks first if it is still existing!
 -- @param #CLEANUP self
 -- @param Wrapper.Unit#UNIT CleanUpUnit The object to be destroyed.
-function CLEANUP:_DestroyUnit( CleanUpUnit )
+function CLEANUP.__:DestroyUnit( CleanUpUnit )
 	self:F( { CleanUpUnit } )
 
 	if CleanUpUnit then
@@ -25412,13 +25481,14 @@ function CLEANUP:_DestroyUnit( CleanUpUnit )
 	end
 end
 
--- TODO check Dcs.DCSTypes#Weapon
+
+
 --- Destroys a missile from the simulator, but checks first if it is still existing!
 -- @param #CLEANUP self
 -- @param Dcs.DCSTypes#Weapon MissileObject
-function CLEANUP:_DestroyMissile( MissileObject )
+function CLEANUP.__:DestroyMissile( MissileObject )
 	self:F( { MissileObject } )
-
+  
 	if MissileObject and MissileObject:isExist() then
 		MissileObject:destroy()
 		self:T( "MissileObject Destroyed")
@@ -25427,30 +25497,31 @@ end
 
 --- @param #CLEANUP self
 -- @param Core.Event#EVENTDATA EventData
-function CLEANUP:OnEventBirth( EventData )
+function CLEANUP.__:OnEventBirth( EventData )
   self:F( { EventData } )
   
   self.CleanUpList[EventData.IniDCSUnitName] = {}
-  self.CleanUpList[EventData.IniDCSUnitName].CleanUpUnit = EventData.IniDCSUnit
-  self.CleanUpList[EventData.IniDCSUnitName].CleanUpGroup = EventData.IniDCSGroup
+  self.CleanUpList[EventData.IniDCSUnitName].CleanUpUnit = EventData.IniUnit
+  self.CleanUpList[EventData.IniDCSUnitName].CleanUpGroup = EventData.IniGroup
   self.CleanUpList[EventData.IniDCSUnitName].CleanUpGroupName = EventData.IniDCSGroupName
   self.CleanUpList[EventData.IniDCSUnitName].CleanUpUnitName = EventData.IniDCSUnitName
 
-  self:HandleEvent( EVENTS.EngineShutdown , self._EventAddForCleanUp )
-  self:HandleEvent( EVENTS.EngineStartup, self._EventAddForCleanUp )
-  self:HandleEvent( EVENTS.Hit, self._EventAddForCleanUp )
-  self:HandleEvent( EVENTS.PilotDead, self.OnEventCrash )
-  self:HandleEvent( EVENTS.Dead, self.OnEventCrash )
-  self:HandleEvent( EVENTS.Crash, self.OnEventCrash )
-  self:HandleEvent( EVENTS.Shot, self.OnEventShot )
+  self:HandleEvent( EVENTS.EngineShutdown , self.__.EventAddForCleanUp )
+  self:HandleEvent( EVENTS.EngineStartup, self.__.EventAddForCleanUp )
+  self:HandleEvent( EVENTS.Hit, self.__.EventAddForCleanUp )
+  self:HandleEvent( EVENTS.PilotDead, self.__.OnEventCrash )
+  self:HandleEvent( EVENTS.Dead, self.__.OnEventCrash )
+  self:HandleEvent( EVENTS.Crash, self.__.OnEventCrash )
+  self:HandleEvent( EVENTS.Shot, self.__.OnEventShot )
 
 end
+
 
 --- Detects if a crash event occurs.
 -- Crashed units go into a CleanUpList for removal.
 -- @param #CLEANUP self
--- @param Dcs.DCSTypes#Event event
-function CLEANUP:OnEventCrash( Event )
+-- @param Core.Event#EVENTDATA Event
+function CLEANUP.__:OnEventCrash( Event )
 	self:F( { Event } )
 
   --TODO: This stuff is not working due to a DCS bug. Burning units cannot be destroyed.
@@ -25461,10 +25532,10 @@ function CLEANUP:OnEventCrash( Event )
 	-- self:T("after deactivateGroup")
 	-- event.initiator:destroy()
 
-  if Event.IniDCSUnitName then
+  if Event.IniDCSUnitName and Event.IniCategory == Object.Category.UNIT then
     self.CleanUpList[Event.IniDCSUnitName] = {}
-    self.CleanUpList[Event.IniDCSUnitName].CleanUpUnit = Event.IniDCSUnit
-    self.CleanUpList[Event.IniDCSUnitName].CleanUpGroup = Event.IniDCSGroup
+    self.CleanUpList[Event.IniDCSUnitName].CleanUpUnit = Event.IniUnit
+    self.CleanUpList[Event.IniDCSUnitName].CleanUpGroup = Event.IniGroup
     self.CleanUpList[Event.IniDCSUnitName].CleanUpGroupName = Event.IniDCSGroupName
     self.CleanUpList[Event.IniDCSUnitName].CleanUpUnitName = Event.IniDCSUnitName
   end
@@ -25475,79 +25546,85 @@ end
 -- If this occurs within one of the airbases, then the weapon used must be destroyed.
 -- @param #CLEANUP self
 -- @param Core.Event#EVENTDATA Event
-function CLEANUP:OnEventShot( Event )
+function CLEANUP.__:OnEventShot( Event )
 	self:F( { Event } )
 
 	-- Test if the missile was fired within one of the CLEANUP.AirbaseNames.
 	if self:IsInAirbase( Event.IniUnit:GetVec2() ) then
 		-- Okay, the missile was fired within the CLEANUP.AirbaseNames, destroy the fired weapon.
-    self:_DestroyMissile( Event.Weapon )
+    self:DestroyMissile( Event.Weapon )
 	end
 end
-
 
 --- Detects if the Unit has an S_EVENT_HIT within the given AirbaseNames. If this is the case, destroy the unit.
 -- @param #CLEANUP self
 -- @param Core.Event#EVENTDATA Event
-function CLEANUP:OnEventHit( Event )
+function CLEANUP.__:OnEventHit( Event )
 	self:F( { Event } )
 
 	if Event.IniUnit then
 		if self:IsInAirbase( Event.IniUnit:GetVec2() ) then
-			self:T( { "Life: ", Event.IniDCSUnitName, ' = ',  Event.IniDCSUnit:getLife(), "/", Event.IniDCSUnit:getLife0() } )
-			if Event.IniDCSUnit:getLife() < Event.IniDCSUnit:getLife0() then
+			self:T( { "Life: ", Event.IniDCSUnitName, ' = ',  Event.IniUnit:GetLife(), "/", Event.IniUnit:GetLife0() } )
+			if Event.IniUnit:GetLife() < Event.IniUnit:GetLife0() then
 				self:T( "CleanUp: Destroy: " .. Event.IniDCSUnitName )
-        CLEANUP:_DestroyUnit( Event.IniUnit )
+        CLEANUP.__:DestroyUnit( Event.IniUnit )
 			end
 		end
 	end
 
 	if Event.TgtUnit then
 		if self:IsInAirbase( Event.TgtUnit:GetVec2() ) then
-			self:T( { "Life: ", Event.TgtDCSUnitName, ' = ', Event.TgtDCSUnit:getLife(), "/", Event.TgtDCSUnit:getLife0() } )
-			if Event.TgtDCSUnit:getLife() < Event.TgtDCSUnit:getLife0() then
+			self:T( { "Life: ", Event.TgtDCSUnitName, ' = ', Event.TgtUnit:GetLife(), "/", Event.TgtUnit:GetLife0() } )
+			if Event.TgtUnit:GetLife() < Event.TgtUnit:GetLife0() then
 				self:T( "CleanUp: Destroy: " .. Event.TgtDCSUnitName )
-        CLEANUP:_DestroyUnit( Event.TgtUnit )
+        CLEANUP.__:DestroyUnit( Event.TgtUnit )
 			end
 		end
 	end
 end
 
 --- Add the @{DCSWrapper.Unit#Unit} to the CleanUpList for CleanUp.
-function CLEANUP:_AddForCleanUp( CleanUpUnit, CleanUpUnitName )
+-- @param #CLEANUP self
+-- @param Wrapper.Unit#UNIT CleanUpUnit
+-- @oaram #string CleanUpUnitName
+function CLEANUP.__:AddForCleanUp( CleanUpUnit, CleanUpUnitName )
 	self:F( { CleanUpUnit, CleanUpUnitName } )
 
 	self.CleanUpList[CleanUpUnitName] = {}
 	self.CleanUpList[CleanUpUnitName].CleanUpUnit = CleanUpUnit
 	self.CleanUpList[CleanUpUnitName].CleanUpUnitName = CleanUpUnitName
-	self.CleanUpList[CleanUpUnitName].CleanUpGroup = Unit.getGroup(CleanUpUnit)
-	self.CleanUpList[CleanUpUnitName].CleanUpGroupName = Unit.getGroup(CleanUpUnit):getName()
+	
+	local CleanUpGroup = CleanUpUnit:GetGroup()
+	
+	self.CleanUpList[CleanUpUnitName].CleanUpGroup = CleanUpGroup
+	self.CleanUpList[CleanUpUnitName].CleanUpGroupName = CleanUpGroup:GetName()
 	self.CleanUpList[CleanUpUnitName].CleanUpTime = timer.getTime()
 	self.CleanUpList[CleanUpUnitName].CleanUpMoved = false
 
-	self:T( { "CleanUp: Add to CleanUpList: ", Unit.getGroup(CleanUpUnit):getName(), CleanUpUnitName } )
+	self:T( { "CleanUp: Add to CleanUpList: ", CleanUpGroup:GetName(), CleanUpUnitName } )
 	
 end
 
 --- Detects if the Unit has an S_EVENT_ENGINE_SHUTDOWN or an S_EVENT_HIT within the given AirbaseNames. If this is the case, add the Group to the CLEANUP List.
--- @param #CLEANUP self
+-- @param #CLEANUP.__ self
 -- @param Core.Event#EVENTDATA Event
-function CLEANUP:_EventAddForCleanUp( Event )
+function CLEANUP.__:EventAddForCleanUp( Event )
 
   self:F({Event})
 
-	if Event.IniDCSUnit then
+
+	if Event.IniDCSUnit and Event.IniCategory == Object.Category.UNIT then
 		if self.CleanUpList[Event.IniDCSUnitName] == nil then
 			if self:IsInAirbase( Event.IniUnit:GetVec2() ) then
-				self:_AddForCleanUp( Event.IniDCSUnit, Event.IniDCSUnitName )
+				self:AddForCleanUp( Event.IniUnit, Event.IniDCSUnitName )
 			end
 		end
 	end
 
-	if Event.TgtDCSUnit then
+	if Event.TgtDCSUnit and Event.TgtCategory == Object.Category.UNIT then
 		if self.CleanUpList[Event.TgtDCSUnitName] == nil then
 			if self:IsInAirbase( Event.TgtUnit:GetVec2() ) then
-				self:_AddForCleanUp( Event.TgtDCSUnit, Event.TgtDCSUnitName )
+				self:AddForCleanUp( Event.TgtUnit, Event.TgtDCSUnitName )
 			end
 		end
 	end
@@ -25557,23 +25634,23 @@ end
 
 --- At the defined time interval, CleanUp the Groups within the CleanUpList.
 -- @param #CLEANUP self
-function CLEANUP:_CleanUpScheduler()
+function CLEANUP.__:CleanUpSchedule()
 
   local CleanUpCount = 0
-	for CleanUpUnitName, UnitData in pairs( self.CleanUpList ) do
+	for CleanUpUnitName, CleanUpListData in pairs( self.CleanUpList ) do
 	  CleanUpCount = CleanUpCount + 1
 	
-		local CleanUpUnit = UNIT:FindByName( CleanUpUnitName )
-		local CleanUpDCSUnit = Unit.getByName( CleanUpUnitName )
-		local CleanUpGroupName = UnitData.CleanUpGroupName
+		local CleanUpUnit = CleanUpListData.CleanUpUnit -- Wrapper.Unit#UNIT
+		local CleanUpGroupName = CleanUpListData.CleanUpGroupName
 
-		if CleanUpUnit then
+		if CleanUpUnit:IsAlive() ~= nil then
 
 			if _DATABASE:GetStatusGroup( CleanUpGroupName ) ~= "ReSpawn" then
 
 				local CleanUpCoordinate = CleanUpUnit:GetCoordinate()
 
-				if CleanUpDCSUnit and CleanUpDCSUnit:getLife() <= CleanUpDCSUnit:getLife0() * 0.95 then
+        self:T( { "CleanUp Scheduler", CleanUpUnitName } )
+        if CleanUpUnit:GetLife() <= CleanUpUnit:GetLife0() * 0.95 then
 					if CleanUpUnit:IsAboveRunway() then
 						if CleanUpUnit:InAir() then
 
@@ -25582,11 +25659,11 @@ function CLEANUP:_CleanUpScheduler()
 							
 							if CleanUpUnitHeight < 30 then
 								self:T( { "CleanUp Scheduler", "Destroy " .. CleanUpUnitName .. " because below safe height and damaged." } )
-								self:_DestroyUnit( CleanUpUnit )
+								self:DestroyUnit( CleanUpUnit )
 							end
 						else
 							self:T( { "CleanUp Scheduler", "Destroy " .. CleanUpUnitName .. " because on runway and damaged." } )
-							self:_DestroyUnit(CleanUpUnit )
+							self:DestroyUnit( CleanUpUnit )
 						end
 					end
 				end
@@ -25594,15 +25671,15 @@ function CLEANUP:_CleanUpScheduler()
 				if CleanUpUnit then
 					local CleanUpUnitVelocity = CleanUpUnit:GetVelocityKMH()
 					if CleanUpUnitVelocity < 1 then
-						if UnitData.CleanUpMoved then
-							if UnitData.CleanUpTime + 180 <= timer.getTime() then
+						if CleanUpListData.CleanUpMoved then
+							if CleanUpListData.CleanUpTime + 180 <= timer.getTime() then
 								self:T( { "CleanUp Scheduler", "Destroy due to not moving anymore " .. CleanUpUnitName } )
-								self:_DestroyUnit( CleanUpUnit )
+								self:DestroyUnit( CleanUpUnit )
 							end
 						end
 					else
-						UnitData.CleanUpTime = timer.getTime()
-						UnitData.CleanUpMoved = true
+						CleanUpListData.CleanUpTime = timer.getTime()
+						CleanUpListData.CleanUpMoved = true
 					end
 				end
 				
@@ -37353,8 +37430,6 @@ do -- AI_A2A_DISPATCHER
   --- AI_A2A_DISPATCHER constructor.
   -- @param #AI_A2A_DISPATCHER self
   -- @param Functional.Detection#DETECTION_BASE Detection The DETECTION object that will detects targets using the the Early Warning Radar network.
-  -- @param #number GroupingRadius The radius in meters wherein detected planes are being grouped as one target area. 
-  -- For airplanes, 6000 (6km) is recommended, and is also the default value of this parameter.
   -- @return #AI_A2A_DISPATCHER self
   -- @usage
   --   
@@ -46606,10 +46681,15 @@ end
 
 --- Sets the Information on the Task
 -- @param #TASK self
--- @param #string TaskInfo
-function TASK:SetInfo( TaskInfo, TaskInfoText )
+-- @param #string TaskInfo The key and title of the task information.
+-- @param #string TaskInfoText The Task info text.
+-- @param #number TaskInfoOrder The ordering, a number between 0 and 99.
+function TASK:SetInfo( TaskInfo, TaskInfoText, TaskInfoOrder )
 
-  self.TaskInfo[TaskInfo] = TaskInfoText
+  self.TaskInfo = self.TaskInfo or {}
+  self.TaskInfo[TaskInfo] = self.TaskInfo[TaskInfo] or {}
+  self.TaskInfo[TaskInfo].TaskInfoText = TaskInfoText
+  self.TaskInfo[TaskInfo].TaskInfoOrder = TaskInfoOrder
 end
 
 --- Gets the Type of the Task
@@ -46951,26 +47031,41 @@ function TASK:ReportOverview( ReportGroup ) --R2.1 fixed report. Now nicely form
   
   -- Determine the status of the Task.
   local Status = "<" .. self:GetState() .. ">"
+
+  local Line = 0
+  local LineReport = REPORT:New()
   
-  for TaskInfoID, TaskInfo in pairs( self.TaskInfo ) do
+  for TaskInfoID, TaskInfo in UTILS.spairs( self.TaskInfo, function( t, a, b ) return t[a].TaskInfoOrder < t[b].TaskInfoOrder end ) do
+
+    self:F( { TaskInfo = TaskInfo } )
+
+    if Line < math.floor( TaskInfo.TaskInfoOrder / 10 ) then
+      Report:AddIndent( LineReport:Text( ", " ) )
+      LineReport = REPORT:New()
+      Line = math.floor( TaskInfo.TaskInfoOrder / 10 )
+    end
 
     local TaskInfoIDText = string.format( "%s: ", TaskInfoID )
-  
-    if type(TaskInfo) == "string" then
-      Report:Add( TaskInfoIDText .. TaskInfo )
+    
+    if type( TaskInfo.TaskInfoText ) == "string" then
+      LineReport:Add( TaskInfoIDText .. TaskInfo.TaskInfoText )
     elseif type(TaskInfo) == "table" then
       if TaskInfoID == "Coordinates" then
         local FromCoordinate = ReportGroup:GetUnit(1):GetCoordinate()
-        local ToCoordinate = TaskInfo -- Core.Point#COORDINATE
+        local ToCoordinate = TaskInfo.TaskInfoText -- Core.Point#COORDINATE
         --Report:Add( TaskInfoIDText )
-        Report:Add( ToCoordinate:ToString( ReportGroup ) )
+        LineReport:Add( ToCoordinate:ToString( ReportGroup ) )
         --Report:AddIndent( ToCoordinate:ToStringBULLS( ReportGroup:GetCoalition() ) )
       else
       end
     end
+    
+    
   end
+
+  Report:AddIndent( LineReport:Text( ", " ) )
   
-  return Report:Text( ", ")
+  return Report:Text()
 end
 
 --- Create a count of the players in the Task.
@@ -47043,16 +47138,16 @@ function TASK:ReportDetails( ReportGroup )
   Report:Add( " - Players:" )
   Report:AddIndent( Players )
   
-  for TaskInfoID, TaskInfo in pairs( self.TaskInfo ) do
+  for TaskInfoID, TaskInfo in pairs( self.TaskInfo, function( t, a, b ) return t[a].TaskInfoOrder < t[b].TaskInfoOrder end ) do
     
     local TaskInfoIDText = string.format( " - %s: ", TaskInfoID )
 
-    if type(TaskInfo) == "string" then
-      Report:Add( TaskInfoIDText .. TaskInfo )
+    if type( TaskInfo.TaskInfoText ) == "string" then
+      Report:Add( TaskInfoIDText .. TaskInfo.TaskInfoText )
     elseif type(TaskInfo) == "table" then
       if TaskInfoID == "Coordinates" then
         local FromCoordinate = ReportGroup:GetUnit(1):GetCoordinate()
-        local ToCoordinate = TaskInfo -- Core.Point#COORDINATE
+        local ToCoordinate = TaskInfo.TaskInfoText -- Core.Point#COORDINATE
         Report:Add( TaskInfoIDText )
         Report:AddIndent( ToCoordinate:ToStringBRA( FromCoordinate ) .. ", " .. TaskInfo:ToStringAspect( FromCoordinate ) )
         Report:AddIndent( ToCoordinate:ToStringBULLS( ReportGroup:GetCoalition() ) )
@@ -48033,12 +48128,12 @@ do -- TASK_A2G_SEAD
     )
 
     local TargetCoordinate = TargetSetUnit:GetFirst():GetCoordinate()
-    self:SetInfo( "Coordinates", TargetCoordinate )
+    self:SetInfo( "Coordinates", TargetCoordinate, 10 )
 
-    self:SetInfo( "Threat", "[" .. string.rep(  "■", TargetSetUnit:CalculateThreatLevelA2G() ) .. "]" )
+    self:SetInfo( "Threat", "[" .. string.rep(  "■", TargetSetUnit:CalculateThreatLevelA2G() ) .. "]", 11 )
     local DetectedItemsCount = TargetSetUnit:Count()
     local DetectedItemsTypes = TargetSetUnit:GetTypeNames()
-    self:SetInfo( "Targets", string.format( "%d of %s", DetectedItemsCount, DetectedItemsTypes ) ) 
+    self:SetInfo( "Targets", string.format( "%d of %s", DetectedItemsCount, DetectedItemsTypes ), 0 ) 
 
     return self
   end 
@@ -48146,12 +48241,12 @@ do -- TASK_A2G_BAI
     )
 
     local TargetCoordinate = TargetSetUnit:GetFirst():GetCoordinate()
-    self:SetInfo( "Coordinates", TargetCoordinate )
+    self:SetInfo( "Coordinates", TargetCoordinate, 10 )
 
-    self:SetInfo( "Threat", "[" .. string.rep(  "■", TargetSetUnit:CalculateThreatLevelA2G() ) .. "]" )
+    self:SetInfo( "Threat", "[" .. string.rep(  "■", TargetSetUnit:CalculateThreatLevelA2G() ) .. "]", 11 )
     local DetectedItemsCount = TargetSetUnit:Count()
     local DetectedItemsTypes = TargetSetUnit:GetTypeNames()
-    self:SetInfo( "Targets", string.format( "%d of %s", DetectedItemsCount, DetectedItemsTypes ) ) 
+    self:SetInfo( "Targets", string.format( "%d of %s", DetectedItemsCount, DetectedItemsTypes ), 0 ) 
 
     return self
   end 
@@ -48259,12 +48354,12 @@ do -- TASK_A2G_CAS
     )
 
     local TargetCoordinate = TargetSetUnit:GetFirst():GetCoordinate()
-    self:SetInfo( "Coordinates", TargetCoordinate )
+    self:SetInfo( "Coordinates", TargetCoordinate, 10 )
 
-    self:SetInfo( "Threat", "[" .. string.rep(  "■", TargetSetUnit:CalculateThreatLevelA2G() ) .. "]" )
+    self:SetInfo( "Threat", "[" .. string.rep(  "■", TargetSetUnit:CalculateThreatLevelA2G() ) .. "]", 11 )
     local DetectedItemsCount = TargetSetUnit:Count()
     local DetectedItemsTypes = TargetSetUnit:GetTypeNames()
-    self:SetInfo( "Targets", string.format( "%d of %s", DetectedItemsCount, DetectedItemsTypes ) ) 
+    self:SetInfo( "Targets", string.format( "%d of %s", DetectedItemsCount, DetectedItemsTypes ), 0 ) 
 
     return self
   end 
@@ -48897,9 +48992,9 @@ do -- TASK_A2A_DISPATCHER
 
         if Task then
           local FriendliesCount, FriendliesReport = self:GetFriendliesNearBy( DetectedItem )
-          Task:SetInfo( "Friendlies", string.format( "%d ( %s )", FriendliesCount, FriendliesReport:Text( "," ) ) ) 
+          Task:SetInfo( "Friendlies", string.format( "%d ( %s )", FriendliesCount, FriendliesReport:Text( "," ) ), 30 ) 
           local PlayersCount, PlayersReport = self:GetPlayerFriendliesNearBy( DetectedItem )
-          Task:SetInfo( "Players", string.format( "%d ( %s )", PlayersCount, PlayersReport:Text( "," ) ) ) 
+          Task:SetInfo( "Players", string.format( "%d ( %s )", PlayersCount, PlayersReport:Text( "," ) ), 31 ) 
         end
   
         -- OK, so the tasking has been done, now delete the changes reported for the area.
@@ -49254,12 +49349,12 @@ do -- TASK_A2A_INTERCEPT
     )
 
     local TargetCoordinate = TargetSetUnit:GetFirst():GetCoordinate()
-    self:SetInfo( "Coordinates", TargetCoordinate )
+    self:SetInfo( "Coordinates", TargetCoordinate, 10 )
 
-    self:SetInfo( "Threat", "[" .. string.rep(  "■", TargetSetUnit:CalculateThreatLevelA2G() ) .. "]" )
+    self:SetInfo( "Threat", "[" .. string.rep(  "■", TargetSetUnit:CalculateThreatLevelA2G() ) .. "]", 11 )
     local DetectedItemsCount = TargetSetUnit:Count()
     local DetectedItemsTypes = TargetSetUnit:GetTypeNames()
-    self:SetInfo( "Targets", string.format( "%d of %s", DetectedItemsCount, DetectedItemsTypes ) ) 
+    self:SetInfo( "Targets", string.format( "%d of %s", DetectedItemsCount, DetectedItemsTypes ), 0 ) 
     
     return self
   end 
@@ -49364,7 +49459,7 @@ do -- TASK_A2A_SWEEP
   -- @param #string TaskBriefing The briefing of the task.
   -- @return #TASK_A2A_SWEEP self
   function TASK_A2A_SWEEP:New( Mission, SetGroup, TaskName, TargetSetUnit, TaskBriefing )
-    local self = BASE:Inherit( self, TASK_A2A:New( Mission, SetGroup, TaskName, TargetSetUnit, "INTERCEPT", TaskBriefing ) ) -- #TASK_A2A_SWEEP
+    local self = BASE:Inherit( self, TASK_A2A:New( Mission, SetGroup, TaskName, TargetSetUnit, "SWEEP", TaskBriefing ) ) -- #TASK_A2A_SWEEP
     self:F()
     
     Mission:AddTask( self )
@@ -49377,12 +49472,12 @@ do -- TASK_A2A_SWEEP
     )
 
     local TargetCoordinate = TargetSetUnit:GetFirst():GetCoordinate()
-    self:SetInfo( "Coordinates", TargetCoordinate )
+    self:SetInfo( "Coordinates", TargetCoordinate, 10 )
 
-    self:SetInfo( "Assumed Threat", "[" .. string.rep(  "■", TargetSetUnit:CalculateThreatLevelA2G() ) .. "]" )
+    self:SetInfo( "Assumed Threat", "[" .. string.rep(  "■", TargetSetUnit:CalculateThreatLevelA2G() ) .. "]", 11 )
     local DetectedItemsCount = TargetSetUnit:Count()
     local DetectedItemsTypes = TargetSetUnit:GetTypeNames()
-    self:SetInfo( "Lost Targets", string.format( "%d of %s", DetectedItemsCount, DetectedItemsTypes ) ) 
+    self:SetInfo( "Lost Targets", string.format( "%d of %s", DetectedItemsCount, DetectedItemsTypes ), 0 ) 
     
     return self
   end 
@@ -49496,12 +49591,12 @@ do -- TASK_A2A_ENGAGE
     )
 
     local TargetCoordinate = TargetSetUnit:GetFirst():GetCoordinate()
-    self:SetInfo( "Coordinates", TargetCoordinate )
+    self:SetInfo( "Coordinates", TargetCoordinate, 10 )
 
-    self:SetInfo( "Threat", "[" .. string.rep(  "■", TargetSetUnit:CalculateThreatLevelA2G() ) .. "]" )
+    self:SetInfo( "Threat", "[" .. string.rep(  "■", TargetSetUnit:CalculateThreatLevelA2G() ) .. "]", 11 )
     local DetectedItemsCount = TargetSetUnit:Count()
     local DetectedItemsTypes = TargetSetUnit:GetTypeNames()
-    self:SetInfo( "Targets", string.format( "%d of %s", DetectedItemsCount, DetectedItemsTypes ) ) 
+    self:SetInfo( "Targets", string.format( "%d of %s", DetectedItemsCount, DetectedItemsTypes ), 0 ) 
     
     return self
   end 
@@ -50339,6 +50434,17 @@ do -- TASK_CARGO
     return self
   end
   
+  function TASK_CARGO:SetGoalTotal()
+  
+    self.GoalTotal = self.SetCargo:Count()
+  end
+
+  function TASK_CARGO:GetGoalTotal()
+  
+    return self.GoalTotal
+  end
+  
+  
 end 
 
 
@@ -50472,11 +50578,13 @@ do -- TASK_CARGO_TRANSPORT
     
     local DeployZones = self:GetDeployZones()
     
-    local CargoDeployed = true
+    local CargoDeployed = false
     
     -- Loop the CargoSet (so evaluate each Cargo in the SET_CARGO ).
     for CargoID, CargoData in pairs( Set ) do
       local Cargo = CargoData -- Core.Cargo#CARGO
+
+      local CargoInDeployZone = false
       
       -- Loop the DeployZones set for the TASK_CARGO_TRANSPORT.
       for DeployZoneID, DeployZone in pairs( DeployZones ) do
@@ -50484,20 +50592,27 @@ do -- TASK_CARGO_TRANSPORT
         -- If there is a Cargo not in one of DeployZones, then not all Cargo is deployed.
         self:T( { Cargo.CargoObject } )
         if Cargo:IsInZone( DeployZone ) then
-        else
-          CargoDeployed = false
+          CargoInDeployZone = true
         end
       end
+      
+      CargoDeployed = CargoDeployed or CargoInDeployZone      
+      
     end
 
     return CargoDeployed
   end
   
-      
-    ---
-  
-  
-  
+  --- @param #TASK_CARGO_TRANSPORT self
+  function TASK_CARGO_TRANSPORT:onafterGoal( TaskUnit, From, Event, To )
+    local CargoSet = self.CargoSet
+    
+    if self:IsAllCargoTransported() then
+      self:Success()
+    end
+    
+    self:__Goal( -10 )
+  end
 
 end
 
