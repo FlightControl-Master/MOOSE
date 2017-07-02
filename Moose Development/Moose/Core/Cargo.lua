@@ -357,6 +357,7 @@ function CARGO:IsInZone( Zone )
   if self:IsLoaded() then
     return Zone:IsPointVec2InZone( self.CargoCarrier:GetPointVec2() )
   else
+    self:F( { Size = self.CargoObject:GetSize(), Units = self.CargoObject:GetUnits() } )
     if self.CargoObject:GetSize() ~= 0 then
       return Zone:IsPointVec2InZone( self.CargoObject:GetPointVec2() )
     else
