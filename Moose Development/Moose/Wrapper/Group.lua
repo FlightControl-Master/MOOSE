@@ -353,8 +353,13 @@ function GROUP:GetSize()
 
   if DCSGroup then
     local GroupSize = DCSGroup:getSize()
-    self:T3( GroupSize )
-    return GroupSize
+    
+    if GroupSize then
+      self:T3( GroupSize )
+      return GroupSize
+    else
+      return 0
+    end
   end
 
   return nil

@@ -770,6 +770,17 @@ do -- TASK_CARGO
     return self
   end
   
+  function TASK_CARGO:SetGoalTotal()
+  
+    self.GoalTotal = self.SetCargo:Count()
+  end
+
+  function TASK_CARGO:GetGoalTotal()
+  
+    return self.GoalTotal
+  end
+  
+  
 end 
 
 
@@ -924,11 +935,16 @@ do -- TASK_CARGO_TRANSPORT
     return CargoDeployed
   end
   
-      
-    ---
-  
-  
-  
+  --- @param #TASK_CARGO_TRANSPORT self
+  function TASK_CARGO_TRANSPORT:onafterGoal( TaskUnit, From, Event, To )
+    local CargoSet = self.CargoSet
+    
+    if self:IsAllCargoTransported() then
+      self:Success()
+    end
+    
+    self:__Goal( -10 )
+  end
 
 end
 
