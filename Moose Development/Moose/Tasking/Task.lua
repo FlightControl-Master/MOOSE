@@ -1365,8 +1365,8 @@ function TASK:ReportOverview( ReportGroup ) --R2.1 fixed report. Now nicely form
 
   
   -- List the name of the Task.
-  local Name = self:GetName()
-  local Report = REPORT:New( Name )
+  local TaskName = self:GetName()
+  local Report = REPORT:New()
   
   -- Determine the status of the Task.
   local Status = "<" .. self:GetState() .. ">"
@@ -1379,7 +1379,11 @@ function TASK:ReportOverview( ReportGroup ) --R2.1 fixed report. Now nicely form
     self:F( { TaskInfo = TaskInfo } )
 
     if Line < math.floor( TaskInfo.TaskInfoOrder / 10 ) then
-      Report:AddIndent( LineReport:Text( ", " ) )
+      if Line ~= 0 then
+        Report:AddIndent( LineReport:Text( ", " ) )
+      else
+        Report:Add( TaskName .. ":" .. LineReport:Text( ", " ))
+      end
       LineReport = REPORT:New()
       Line = math.floor( TaskInfo.TaskInfoOrder / 10 )
     end
