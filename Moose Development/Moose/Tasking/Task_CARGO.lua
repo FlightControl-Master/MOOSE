@@ -922,13 +922,16 @@ do -- TASK_CARGO_TRANSPORT
 
       local CargoInDeployZone = false
       
-      -- Loop the DeployZones set for the TASK_CARGO_TRANSPORT.
-      for DeployZoneID, DeployZone in pairs( DeployZones ) do
+      if Cargo:IsUnLoaded() then
       
-        -- If there is a Cargo not in one of DeployZones, then not all Cargo is deployed.
-        self:T( { Cargo.CargoObject } )
-        if Cargo:IsInZone( DeployZone ) then
-          CargoInDeployZone = true
+        -- Loop the DeployZones set for the TASK_CARGO_TRANSPORT.
+        for DeployZoneID, DeployZone in pairs( DeployZones ) do
+        
+          -- If there is a Cargo not in one of DeployZones, then not all Cargo is deployed.
+          self:T( { Cargo.CargoObject } )
+          if Cargo:IsInZone( DeployZone ) then
+            CargoInDeployZone = true
+          end
         end
       end
       
