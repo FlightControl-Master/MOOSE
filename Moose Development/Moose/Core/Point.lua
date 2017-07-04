@@ -804,7 +804,7 @@ do -- COORDINATE
     local IsAir = Controllable and Controllable:IsAirPlane() or false
 
     if IsAir then
-      if Settings:IsA2A_BRA()  then
+      if Settings:IsA2A_BRAA()  then
         local Coordinate = Controllable:GetCoordinate()
         return self:ToStringBRA( Coordinate, Settings ) 
       end
@@ -814,7 +814,7 @@ do -- COORDINATE
         return self:ToStringBULLS( Coalition, Settings )
       end
     else
-      if Settings:IsA2G_BRA()  then
+      if Settings:IsA2G_BR()  then
         local Coordinate = Controllable:GetCoordinate()
         return Controllable and self:ToStringBR( Coordinate, Settings ) or self:ToStringMGRS( Settings )
       end

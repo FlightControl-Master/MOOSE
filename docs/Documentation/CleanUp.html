@@ -152,6 +152,12 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CLEANUP).SetCleanMissiles">CLEANUP:SetCleanMissiles(CleanMissiles)</a></td>
+		<td class="summary">
+<p>Enables or disables the cleaning of missiles within the airbase zones.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(CLEANUP).__">CLEANUP.__</a></td>
 		<td class="summary">
 
@@ -229,8 +235,14 @@ But as a result, there is more CPU overload.</p>
 
 <h2>2. Add or Remove airbases</h2>
 
-<p>The method <a href="##(CLEANUP).AddAirbase">CLEANUP.AddAirbase</a> to add an airbase to the cleanup validation process.
-The method <a href="##(CLEANUP).RemoveAirbase">CLEANUP.RemoveAirbase</a> removes an airbase from the cleanup validation process.</p>
+<p>The method <a href="##(CLEANUP).AddAirbase">CLEANUP.AddAirbase</a>() to add an airbase to the cleanup validation process.
+The method <a href="##(CLEANUP).RemoveAirbase">CLEANUP.RemoveAirbase</a>() removes an airbase from the cleanup validation process.</p>
+
+<h2>3. Clean missiles and bombs within the airbase zone.</h2>
+
+<p>When missiles or bombs hit the runway, the airbase operations stop.
+Use the method <a href="##(CLEANUP).SetCleanMissiles">CLEANUP.SetCleanMissiles</a>() to control the cleaning of missiles, which will prevent airbases to stop.
+Note that this method will not allow anymore airbases to be attacked, so there is a trade-off here to do.</p>
 
 
 </dd>
@@ -320,6 +332,41 @@ CleanUpKutaisi = CLEANUP:New( AIRBASE.Caucasus.Kutaisi )</code></pre>
 				<li>
 				
 <p><code><em>#string AirbaseName </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(CLEANUP)">#CLEANUP</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CLEANUP).SetCleanMissiles" >
+<strong>CLEANUP:SetCleanMissiles(CleanMissiles)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Enables or disables the cleaning of missiles within the airbase zones.</p>
+
+	
+<p>Airbase operations stop when a missile or bomb is dropped at a runway.
+Note that when this method is used, the airbase operations won't stop if
+the missile or bomb was cleaned within the airbase zone, which is 8km from the center of the airbase.
+However, there is a trade-off to make. Attacks on airbases won't be possible anymore if this method is used.
+Note, one can also use the method <a href="##(CLEANUP).RemoveAirbase">CLEANUP.RemoveAirbase</a>() to remove the airbase from the control process as a whole,
+when an enemy unit is near. That is also an option...</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string CleanMissiles </em></code>: 
+(Default=true) If true, missiles fired are immediately destroyed. If false missiles are not controlled.</p>
 
 				</li>
 		</ul>

@@ -260,6 +260,8 @@ function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
   )
   
   self:SetMenu()
+  
+  _SETTINGS:SetSystemMenu( CommandCenterPositionable )
 	
 	return self
 end

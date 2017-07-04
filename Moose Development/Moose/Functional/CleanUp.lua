@@ -64,7 +64,7 @@
 -- ## 3. Clean missiles and bombs within the airbase zone.
 -- 
 -- When missiles or bombs hit the runway, the airbase operations stop.
--- Use the method @{#CLEANUP.CleanMissilesOn}() to control the cleaning of missiles, which will prevent airbases to stop.
+-- Use the method @{#CLEANUP.SetCleanMissiles}() to control the cleaning of missiles, which will prevent airbases to stop.
 -- Note that this method will not allow anymore airbases to be attacked, so there is a trade-off here to do.
 -- 
 -- @field #CLEANUP
@@ -148,7 +148,7 @@ end
 -- @param #CLEANUP self
 -- @param #string CleanMissiles (Default=true) If true, missiles fired are immediately destroyed. If false missiles are not controlled.
 -- @return #CLEANUP
-function CLEANUP:CleanMissilesOn( CleanMissiles )
+function CLEANUP:SetCleanMissiles( CleanMissiles )
 
   if CleanMissiles or true then
     self:HandleEvent( EVENTS.Shot, self.__.OnEventShot )
