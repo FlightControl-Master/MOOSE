@@ -584,7 +584,7 @@ do -- TASK_CARGO
       self.Cargo:MessageToGroup( "UnBoarded ...", TaskUnit:GetGroup() )
       
       -- TODO:I need to find a more decent solution for this.
-      Task:E( { CargoDeployed = Task.CargoDeployed } )
+      Task:E( { CargoDeployed = Task.CargoDeployed and "true" or "false" } )
       if self.Cargo:IsAlive() then
         if Task.CargoDeployed then
           Task:CargoDeployed( TaskUnit, self.Cargo, self.DeployZone )
@@ -812,6 +812,8 @@ do -- TASK_CARGO_TRANSPORT
     
     self:AddTransition( "*", "CargoPickedUp", "*" )
     self:AddTransition( "*", "CargoDeployed", "*" )
+    
+    self:E( { CargoDeployed = self.CargoDeployed ~= nil and "true" or "false" } )
     
       --- OnBefore Transition Handler for Event CargoPickedUp.
       -- @function [parent=#TASK_CARGO_TRANSPORT] OnBeforeCargoPickedUp

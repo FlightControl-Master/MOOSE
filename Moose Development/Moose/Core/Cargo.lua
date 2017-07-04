@@ -251,6 +251,7 @@ function CARGO:New( Type, Name, Weight ) --R2.1
   self:AddTransition( "UnBoarding", "UnBoarding", "UnBoarding" )
   self:AddTransition( "UnBoarding", "UnLoad", "UnLoaded" )
   self:AddTransition( "Loaded", "UnLoad", "UnLoaded" )
+  self:AddTransition( "*", "Damaged", "Damaged" )
   self:AddTransition( "*", "Destroyed", "Destroyed" )
   self:AddTransition( "*", "Respawn", "UnLoaded" )
 
