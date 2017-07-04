@@ -58,8 +58,14 @@
 -- 
 -- ## 2. Add or Remove airbases
 -- 
--- The method @{#CLEANUP.AddAirbase} to add an airbase to the cleanup validation process.
--- The method @{#CLEANUP.RemoveAirbase} removes an airbase from the cleanup validation process.
+-- The method @{#CLEANUP.AddAirbase}() to add an airbase to the cleanup validation process.
+-- The method @{#CLEANUP.RemoveAirbase}() removes an airbase from the cleanup validation process.
+-- 
+-- ## 3. Clean missiles and bombs within the airbase zone.
+-- 
+-- When missiles or bombs hit the runway, the airbase operations stop.
+-- Use the method @{#CLEANUP.CleanMissilesOn}() to control the cleaning of missiles, which will prevent airbases to stop.
+-- Note that this method will not allow anymore airbases to be attacked, so there is a trade-off here to do.
 -- 
 -- @field #CLEANUP
 CLEANUP = {
@@ -101,6 +107,13 @@ function CLEANUP:New( AirbaseNames )
 	self:HandleEvent( EVENTS.Birth, self.__.OnEventBirth )
 	
   self.__.CleanUpScheduler = SCHEDULER:New( self, self.__.CleanUpSchedule, {}, 1, self.TimeInterval )
+
+  self:HandleEvent( EVENTS.EngineShutdown , self.__.EventAddForCleanUp )
+  self:HandleEvent( EVENTS.EngineStartup, self.__.EventAddForCleanUp )
+  self:HandleEvent( EVENTS.Hit, self.__.EventAddForCleanUp )
+  self:HandleEvent( EVENTS.PilotDead, self.__.OnEventCrash )
+  self:HandleEvent( EVENTS.Dead, self.__.OnEventCrash )
+  self:HandleEvent( EVENTS.Crash, self.__.OnEventCrash )
 	
 	return self
 end
@@ -125,7 +138,24 @@ function CLEANUP:RemoveAirbase( AirbaseName )
   return self
 end
 
+--- Enables or disables the cleaning of missiles within the airbase zones.
+-- Airbase operations stop when a missile or bomb is dropped at a runway.
+-- Note that when this method is used, the airbase operations won't stop if
+-- the missile or bomb was cleaned within the airbase zone, which is 8km from the center of the airbase.
+-- However, there is a trade-off to make. Attacks on airbases won't be possible anymore if this method is used.
+-- Note, one can also use the method @{#CLEANUP.RemoveAirbase}() to remove the airbase from the control process as a whole,
+-- when an enemy unit is near. That is also an option...
+-- @param #CLEANUP self
+-- @param #string CleanMissiles (Default=true) If true, missiles fired are immediately destroyed. If false missiles are not controlled.
+-- @return #CLEANUP
+function CLEANUP:CleanMissilesOn( CleanMissiles )
 
+  if CleanMissiles or true then
+    self:HandleEvent( EVENTS.Shot, self.__.OnEventShot )
+  else
+    self:UnHandleEvent( EVENTS.Shot )
+  end
+end
 
 function CLEANUP.__:IsInAirbase( Vec2 )
 
@@ -190,14 +220,6 @@ function CLEANUP.__:OnEventBirth( EventData )
   self.CleanUpList[EventData.IniDCSUnitName].CleanUpGroup = EventData.IniGroup
   self.CleanUpList[EventData.IniDCSUnitName].CleanUpGroupName = EventData.IniDCSGroupName
   self.CleanUpList[EventData.IniDCSUnitName].CleanUpUnitName = EventData.IniDCSUnitName
-
-  self:HandleEvent( EVENTS.EngineShutdown , self.__.EventAddForCleanUp )
-  self:HandleEvent( EVENTS.EngineStartup, self.__.EventAddForCleanUp )
-  self:HandleEvent( EVENTS.Hit, self.__.EventAddForCleanUp )
-  self:HandleEvent( EVENTS.PilotDead, self.__.OnEventCrash )
-  self:HandleEvent( EVENTS.Dead, self.__.OnEventCrash )
-  self:HandleEvent( EVENTS.Crash, self.__.OnEventCrash )
-  self:HandleEvent( EVENTS.Shot, self.__.OnEventShot )
 
 end
 
