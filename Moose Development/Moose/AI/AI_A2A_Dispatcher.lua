@@ -954,6 +954,9 @@ do -- AI_A2A_DISPATCHER
     
     DefenderSquadron.Name = SquadronName
     DefenderSquadron.Airbase = AIRBASE:FindByName( AirbaseName )
+    if not DefenderSquadron.Airbase then
+      error( "Cannot find airbase with name:" .. AirbaseName )
+    end
     
     DefenderSquadron.Spawn = {}
     if type( SpawnTemplates ) == "string" then
@@ -1718,6 +1721,7 @@ do -- AI_A2A_DISPATCHER
       for SquadronName, DefenderSquadron in pairs( self.DefenderSquadrons or {} ) do
         for InterceptID, Intercept in pairs( DefenderSquadron.Gci or {} ) do
     
+          self:E( { DefenderSquadron } )
           local SpawnCoord = DefenderSquadron.Airbase:GetCoordinate() -- Core.Point#COORDINATE
           local TargetCoord = Target.Set:GetFirst():GetCoordinate()
           local Distance = SpawnCoord:Get2DDistance( TargetCoord )
@@ -2069,16 +2073,14 @@ end
 
 do
 
-  --- AI_A2A_DISPATCHER_GCICAP class.
-  -- @type AI_A2A_DISPATCHER_GCICAP
+  --- @type AI_A2A_GCICAP
   -- @extends #AI_A2A_DISPATCHER
 
-  --- # AI\_A2A\_DISPATCHER\_GCICAP class, extends @{AI#AI_A2A_DISPATCHER}
+  --- # AI\_A2A\_GCICAP class, extends @{AI#AI_A2A_DISPATCHER}
   -- 
   -- ![Banner Image](..\Presentations\AI_A2A_DISPATCHER\Dia1.JPG)
   -- 
-  -- The @{#AI_A2A_DISPATCHER} class is designed to create an automatic air defence system for a coalition. 
-  -- 
+  -- The AI_A2A_GCICAP class is designed to create an automatic air defence system for a coalition setting up GCI and CAP air defenses. 
   -- 
   -- ![Banner Image](..\Presentations\AI_A2A_DISPATCHER\Dia3.JPG)
   -- 
@@ -2088,18 +2090,18 @@ do
   -- With a little time and with a little work it provides the mission designer with a convincing and completely automatic air defence system. 
   -- In short it is a plug in very flexible and configurable air defence module for DCS World.
   -- 
-  -- Note that in order to create a two way A2A defense system, two AI\_A2A\_DISPATCHER_GCICAP defense system may need to be created, for each coalition one.
+  -- Note that in order to create a two way A2A defense system, two AI\_A2A\_GCICAP defense system may need to be created, for each coalition one.
   -- This is a good implementation, because maybe in the future, more coalitions may become available in DCS world.
   -- 
-  -- ## 1. AI\_A2A\_DISPATCHER\_GCICAP constructor:
+  -- ## 1. AI\_A2A\_GCICAP constructor:
   -- 
-  -- The @{#AI_A2A_DISPATCHER_GCICAP.New}() method creates a new AI\_A2A\_DISPATCHER\_GCICAP instance.
+  -- The @{#AI_A2A_GCICAP.New}() method creates a new AI\_A2A\_GCICAP instance.
   -- There are two parameters required, a list of prefix group names that collects the groups of the EWR network, and a radius in meters, 
   -- that will be used to group the detected targets.
   -- 
   -- ### 1.1. Define the **EWR network**:
   -- 
-  -- As part of the AI\_A2A\_DISPATCHER\_GCICAP constructor, a list of prefixes must be given of the group names defined within the mission editor,
+  -- As part of the AI\_A2A\_GCICAP constructor, a list of prefixes must be given of the group names defined within the mission editor,
   -- that define the EWR network.
   -- 
   -- An EWR network, or, Early Warning Radar network, is used to early detect potential airborne targets and to understand the position of patrolling targets of the enemy.
@@ -2147,35 +2149,175 @@ do
   -- so all further documentation needs to be consulted in this class
   -- for documentation consistency.
   -- 
-  -- @field #AI_A2A_DISPATCHER_GCICAP
-  AI_A2A_DISPATCHER_GCICAP = {
-    ClassName = "AI_A2A_DISPATCHER_GCICAP",
+  -- @field #AI_A2A_GCICAP
+  AI_A2A_GCICAP = {
+    ClassName = "AI_A2A_GCICAP",
     Detection = nil,
   }
 
 
-  --- AI_A2A_DISPATCHER_GCICAP constructor.
-  -- @param #AI_A2A_DISPATCHER_GCICAP self
+  --- AI_A2A_GCICAP constructor.
+  -- @param #AI_A2A_GCICAP self
   -- @param #list<#string> EWRPrefixes A list of prefixes that of groups that setup the Early Warning Radar network.
   -- @param #number GroupingRadius The radius in meters wherein detected planes are being grouped as one target area. 
   -- For airplanes, 6000 (6km) is recommended, and is also the default value of this parameter.
   -- @return #AI_A2A_DISPATCHER_GCICAP
   -- @usage
   --   
-  --   -- Set a new AI A2A Dispatcher object, based on an EWR network with a 30 km grouping radius
+  --   -- Set a new AI A2A GCICAP object, based on an EWR network with a 30 km grouping radius
   --   -- This for ground and awacs installations.
   --   
-  --   A2ADispatcher = AI_A2A_DISPATCHER_GCICAP:New( { "BlueEWRGroundRadars", "BlueEWRAwacs" }, 30000 )
+  --   A2ADispatcher = AI_A2A_GCICAP:New( { "BlueEWRGroundRadars", "BlueEWRAwacs" }, 30000 )
   --   
-  function AI_A2A_DISPATCHER_GCICAP:New( EWRPrefixes, GroupingRadius )
+  function AI_A2A_GCICAP:New( EWRPrefixes, TemplatePrefixes, CAPPrefixes, CapLimit, GroupingRadius, EngageRadius )
 
-    local SetGroup = SET_GROUP:New()
-    SetGroup:FilterPrefixes( EWRPrefixes )
-    SetGroup:FilterStart()
+    GroupingRadius = GroupingRadius or 30000
+    EngageRadius = EngageRadius or 100000
 
-    local Detection  = DETECTION_AREAS:New( SetGroup, GroupingRadius )
+    local EWRSetGroup = SET_GROUP:New()
+    EWRSetGroup:FilterPrefixes( EWRPrefixes )
+    EWRSetGroup:FilterStart()
 
-    local self = BASE:Inherit( self, AI_A2A_DISPATCHER:New( Detection ) ) -- #AI_A2A_DISPATCHER_GCICAP
+    local Detection  = DETECTION_AREAS:New( EWRSetGroup, GroupingRadius )
+
+    local self = BASE:Inherit( self, AI_A2A_DISPATCHER:New( Detection ) ) -- #AI_A2A_GCICAP
+    
+    self:SetEngageRadius( EngageRadius )
+
+    -- Determine the coalition of the EWRNetwork, this will be the coalition of the GCICAP.
+    local EWRFirst = EWRSetGroup:GetFirst() -- Wrapper.Group#GROUP
+    local EWRCoalition = EWRFirst:GetCoalition()
+
+
+    -- Determine the airbases belonging to the coalition.
+    local AirbaseNames = {} -- #list<#string>
+    for AirbaseID, AirbaseData in pairs( _DATABASE.AIRBASES ) do
+      local Airbase = AirbaseData -- Wrapper.Airbase#AIRBASE
+      local AirbaseName = Airbase:GetName()
+      if Airbase:GetCoalition() == EWRCoalition then
+        table.insert( AirbaseNames, AirbaseName )
+      end
+    end    
+    
+    self.Templates = SET_GROUP
+      :New()
+      :FilterPrefixes( TemplatePrefixes )
+      :FilterOnce()
+
+    -- Setup squadrons
+    
+    for AirbaseID, AirbaseName in pairs( AirbaseNames ) do
+      local Airbase = _DATABASE:FindAirbase( AirbaseName ) -- Wrapper.Airbase#AIRBASE
+      local AirbaseName = Airbase:GetName()
+      local AirbaseCoord = Airbase:GetCoordinate()
+      local AirbaseZone = ZONE_RADIUS:New( "Airbase", AirbaseCoord:GetVec2(), 10000 )
+      local Templates = nil
+      for TemplateID, Template in pairs( self.Templates:GetSet() ) do
+        local Template = Template -- Wrapper.Group#GROUP
+        local TemplateCoord = Template:GetCoordinate()
+        if AirbaseZone:IsVec2InZone( TemplateCoord:GetVec2() ) then
+          Templates = Templates or {}
+          table.insert( Templates, Template:GetName() )
+        end
+      end
+      if Templates then
+        self:SetSquadron( AirbaseName, AirbaseName, Templates, 30 )
+      end
+    end
+
+    -- Setup CAP.
+    -- Find for each CAP the nearest airbase to the (start or center) of the zone. 
+    -- CAP will be launched from there.
+    
+    self.CAPTemplates = SET_GROUP:New()
+    self.CAPTemplates:FilterPrefixes( CAPPrefixes )
+    self.CAPTemplates:FilterOnce()
+    
+    for CAPID, CAPTemplate in pairs( self.CAPTemplates:GetSet() ) do
+      local CAPZone = ZONE_POLYGON:New( CAPTemplate:GetName(), CAPTemplate )
+      -- Now find the closest airbase from the ZONE (start or center)
+      local AirbaseDistance = 99999999
+      local AirbaseClosest = nil -- Wrapper.Airbase#AIRBASE
+      for AirbaseID, AirbaseName in pairs( AirbaseNames ) do
+        local Airbase = _DATABASE:FindAirbase( AirbaseName ) -- Wrapper.Airbase#AIRBASE
+        local AirbaseName = Airbase:GetName()
+        local AirbaseCoord = Airbase:GetCoordinate()
+        local Squadron = self.DefenderSquadrons[AirbaseName]
+        if Squadron then
+          local Distance = AirbaseCoord:Get2DDistance( CAPZone:GetCoordinate() )
+          if Distance < AirbaseDistance then
+            AirbaseDistance = Distance
+            AirbaseClosest = Airbase
+          end
+        end
+      end
+      if AirbaseClosest then
+        self:SetSquadronCap( AirbaseClosest:GetName(), CAPZone, 6000, 10000, 500, 800, 800, 1200, "RADIO" )
+        self:SetSquadronCapInterval( AirbaseClosest:GetName(), CapLimit, 300, 600, 1 )
+      end          
+    end    
+
+    -- Setup GCI.
+    -- GCI is setup for all Squadrons.
+    for AirbaseID, AirbaseName in pairs( AirbaseNames ) do
+      local Airbase = _DATABASE:FindAirbase( AirbaseName ) -- Wrapper.Airbase#AIRBASE
+      local AirbaseName = Airbase:GetName()
+      local Squadron = self.DefenderSquadrons[AirbaseName]
+      if Squadron then
+        self:SetSquadronGci( AirbaseName, 800, 1200 )
+      end
+    end
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     
     self:__Start( 5 )
     
