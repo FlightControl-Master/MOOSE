@@ -214,6 +214,16 @@ function DATABASE:FindStatic( StaticName )
   return StaticFound
 end
 
+--- Finds a AIRBASE based on the AirbaseName.
+-- @param #DATABASE self
+-- @param #string AirbaseName
+-- @return Wrapper.Airbase#AIRBASE The found AIRBASE.
+function DATABASE:FindAirbase( AirbaseName )
+
+  local AirbaseFound = self.AIRBASES[AirbaseName]
+  return AirbaseFound
+end
+
 --- Adds a Airbase based on the Airbase Name in the DATABASE.
 -- @param #DATABASE self
 -- @param #string AirbaseName The name of the airbase
