@@ -309,7 +309,7 @@ function TASK:AbortGroup( PlayerGroup )
       self:E( { IsGroupAssigned = IsGroupAssigned } )
       if IsGroupAssigned then
         local PlayerName = PlayerGroup:GetUnit(1):GetPlayerName()
-        self:MessageToGroups( PlayerName .. " aborted Task " .. self:GetName() )
+        --self:MessageToGroups( PlayerName .. " aborted Task " .. self:GetName() )
         self:UnAssignFromGroup( PlayerGroup )
         --self:Abort()
 
@@ -469,7 +469,7 @@ do -- Group Assignment
     local TaskGroupName = TaskGroup:GetName()
   
     self.AssignedGroups[TaskGroupName] = nil
-    self:E( string.format( "Task %s is unassigned to %s", TaskName, TaskGroupName ) )
+    --self:E( string.format( "Task %s is unassigned to %s", TaskName, TaskGroupName ) )
 
     -- Set the group to be assigned at mission level. This allows to decide the menu options on mission level for this group.
     self:GetMission():ClearGroupAssignment( TaskGroup )
@@ -1365,8 +1365,8 @@ function TASK:ReportOverview( ReportGroup ) --R2.1 fixed report. Now nicely form
 
   
   -- List the name of the Task.
-  local Name = self:GetName()
-  local Report = REPORT:New( Name )
+  local TaskName = self:GetName()
+  local Report = REPORT:New()
   
   -- Determine the status of the Task.
   local Status = "<" .. self:GetState() .. ">"
@@ -1379,7 +1379,11 @@ function TASK:ReportOverview( ReportGroup ) --R2.1 fixed report. Now nicely form
     self:F( { TaskInfo = TaskInfo } )
 
     if Line < math.floor( TaskInfo.TaskInfoOrder / 10 ) then
-      Report:AddIndent( LineReport:Text( ", " ) )
+      if Line ~= 0 then
+        Report:AddIndent( LineReport:Text( ", " ) )
+      else
+        Report:Add( TaskName .. ":" .. LineReport:Text( ", " ))
+      end
       LineReport = REPORT:New()
       Line = math.floor( TaskInfo.TaskInfoOrder / 10 )
     end

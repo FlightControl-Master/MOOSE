@@ -198,6 +198,12 @@ and various dedicated deployment zones.</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_CARGO).GetGoalTotal">TASK_CARGO:GetGoalTotal()</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(TASK_CARGO).GetPlannedMenuText">TASK_CARGO:GetPlannedMenuText()</a></td>
 		<td class="summary">
 
@@ -247,6 +253,12 @@ and various dedicated deployment zones.</p>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(TASK_CARGO).SetDeployZones">TASK_CARGO:SetDeployZones(@, TaskUnit, DeployZones)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_CARGO).SetGoalTotal">TASK_CARGO:SetGoalTotal()</a></td>
 		<td class="summary">
 
 </td>
@@ -355,6 +367,12 @@ and various dedicated deployment zones.</p>
 		<td class="name" nowrap="nowrap"><a href="##(TASK_CARGO_TRANSPORT).__CargoPickedUp">TASK_CARGO_TRANSPORT:__CargoPickedUp(Delay, TaskUnit, Cargo)</a></td>
 		<td class="summary">
 <p>Asynchronous Event Trigger for Event CargoPickedUp.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_CARGO_TRANSPORT).onafterGoal">TASK_CARGO_TRANSPORT:onafterGoal(TaskUnit, From, Event, To)</a></td>
+		<td class="summary">
+
 </td>
 		</tr>
 	</table>
@@ -510,7 +528,7 @@ based on the tasking capabilities defined in <a href="Task.html##(TASK)">Task#TA
 		<dl class="function">
 <dt>
 
-		<em></em>
+		<em><a href="Core.Cargo.html##(CARGO_GROUP)">Core.Cargo#CARGO_GROUP</a></em>
 <a id="#(FSM_PROCESS).Cargo" >
 <strong>FSM_PROCESS.Cargo</strong>
 </a>
@@ -524,6 +542,7 @@ based on the tasking capabilities defined in <a href="Task.html##(TASK)">Task#TA
 		<dl class="function">
 <dt>
 
+		<em></em>
 <a id="#(FSM_PROCESS).DeployZone" >
 <strong>FSM_PROCESS.DeployZone</strong>
 </a>
@@ -618,6 +637,19 @@ The Cargo Set.</p>
 				
 <p><em><a href="##(list)">#list</a>:</em>
 Core.Zone#ZONE_BASE> The Deployment Zones.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_CARGO).GetGoalTotal" >
+<strong>TASK_CARGO:GetGoalTotal()</strong>
+</a>
+</dt>
+<dd>
+	
+
 
 </dd>
 </dl>
@@ -873,6 +905,19 @@ ist<Core.Zone#ZONE> DeployZones</p>
 		<h3>Return value</h3>
 				
 <p><em><a href="##(TASK_CARGO)">#TASK_CARGO</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_CARGO).SetGoalTotal" >
+<strong>TASK_CARGO:SetGoalTotal()</strong>
+</a>
+</dt>
+<dd>
+	
 
 
 </dd>
@@ -1476,6 +1521,42 @@ The Unit (Client) that PickedUp the cargo. You can use this to retrieve the Play
 				
 <p><code><em><a href="Core.Cargo.html##(CARGO)">Core.Cargo#CARGO</a> Cargo </em></code>: 
 The Cargo that got PickedUp by the TaskUnit. You can use this to check Cargo Status.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_CARGO_TRANSPORT).onafterGoal" >
+<strong>TASK_CARGO_TRANSPORT:onafterGoal(TaskUnit, From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> TaskUnit </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> To </em></code>: </p>
 
 				</li>
 		</ul>
