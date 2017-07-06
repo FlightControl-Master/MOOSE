@@ -450,7 +450,7 @@ do -- Group Assignment
     local MissionGroupName = MissionGroup:GetName()
   
     self.AssignedGroups[MissionGroupName] = nil
-    self:E( string.format( "Mission %s is unassigned to %s", MissionName, MissionGroupName ) )
+    --self:E( string.format( "Mission %s is unassigned to %s", MissionName, MissionGroupName ) )
     
     return self
   end
