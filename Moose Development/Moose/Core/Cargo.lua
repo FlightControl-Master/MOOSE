@@ -271,9 +271,7 @@ function CARGO:New( Type, Name, Weight ) --R2.1
 
   CARGOS[self.Name] = self
 
-  self:SetEventPriority( 5 )
   
-
   return self
 end
 
@@ -316,6 +314,13 @@ end
 -- @return Core.Point#COORDINATE The coordinates of the Cargo.
 function CARGO:GetCoordinate()
   return self.CargoObject:GetCoordinate()
+end
+
+--- Check if cargo is destroyed.
+-- @param #CARGO self
+-- @return #boolean true if destroyed
+function CARGO:IsDestroyed()
+  return self:Is( "Destroyed" )
 end
 
 
@@ -513,6 +518,8 @@ end -- CARGO_REPRESENTABLE
   
     self.ReportRadius = ReportRadius or 1000
     self.CargoObject = CargoObject
+
+
   
     return self
   end
@@ -565,9 +572,12 @@ end -- CARGO_REPRESENTABLE
   -- @param #CARGO_REPORTABLE self
   function CARGO_REPORTABLE:Respawn()
 
+    self:F({"Respawning"})
+
     for CargoID, CargoData in pairs( self.CargoSet:GetSet() ) do
       local Cargo = CargoData -- #CARGO
       Cargo:Destroy()
+      Cargo:SetStartState( "UnLoaded" )
     end
 
     local CargoObject = self.CargoObject -- Wrapper.Group#GROUP
@@ -577,23 +587,12 @@ end -- CARGO_REPRESENTABLE
     self:SetDeployed( false )
   
     local WeightGroup = 0
-  
-    for UnitID, UnitData in pairs( CargoObject:GetUnits() ) do
-      local Unit = UnitData -- Wrapper.Unit#UNIT
-      local WeightUnit = Unit:GetDesc().massEmpty
-      WeightGroup = WeightGroup + WeightUnit
-      local CargoUnit = CARGO_UNIT:New( Unit, self.Type, Unit:GetName(), WeightUnit )
-      self.CargoSet:Add( CargoUnit:GetName(), CargoUnit )
-    end
-
-    self:SetWeight( WeightGroup )
-  
-    self:T( { "Weight Cargo", WeightGroup } )
-    
+        
     self:SetStartState( "UnLoaded" )
     
   end
 
+  
 end
 
 do -- CARGO_UNIT
@@ -644,6 +643,8 @@ function CARGO_UNIT:New( CargoUnit, Type, Name, Weight, NearRadius )
     end
   )
 
+  self:SetEventPriority( 5 )
+
   return self
 end
 
@@ -653,6 +654,7 @@ end
 function CARGO_UNIT:Destroy()
 
   -- Cargo objects are deleted from the _DATABASE and SET_CARGO objects.
+  self:F( { CargoName = self:GetName() } )
   _EVENTDISPATCHER:CreateEventDeleteCargo( self )
 
   return self
@@ -1000,6 +1002,30 @@ function CARGO_GROUP:New( CargoGroup, Type, Name, ReportRadius )
   -- Cargo objects are added to the _DATABASE and SET_CARGO objects.
   _EVENTDISPATCHER:CreateEventNewCargo( self )
   
+  self:HandleEvent( EVENTS.Dead,
+    --- @param #CARGO Cargo
+    -- @param Core.Event#EVENTDATA EventData 
+    function( Cargo, EventData )
+      
+      local Destroyed = true
+      for CargoID, CargoData in pairs( self.CargoSet:GetSet() ) do
+        local Cargo = CargoData -- #CARGO
+        if Cargo:IsAlive() then
+          Destroyed = false
+        else
+          Cargo:Destroyed()
+        end
+      end
+      
+      if Destroyed then
+        self:Destroyed()
+        self:E( { "Cargo destroyed", Cargo } )
+      end
+    end
+  )
+
+  self:SetEventPriority( 4 )
+  
   return self
 end
 
@@ -1212,6 +1238,23 @@ function CARGO_GROUP:onenterUnLoaded( From, Event, To, ToPointVec2, ... )
   end
   
 end
+
+
+  --- Respawn the cargo when destroyed
+  -- @param #CARGO_GROUP self
+  -- @param #boolean RespawnDestroyed
+  function CARGO_GROUP:RespawnOnDestroyed( RespawnDestroyed )
+    self:F({"In function RespawnOnDestroyed"})
+    if RespawnDestroyed then
+      self.onenterDestroyed = function( self )
+        self:F("IN FUNCTION")
+        self:Respawn()
+      end
+    else
+      self.onenterDestroyed = nil
+    end
+      
+  end
 
 end -- CARGO_GROUP
 
