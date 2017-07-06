@@ -161,6 +161,9 @@ do -- TASK_CARGO
     self.TaskType = TaskType
     self.SmokeColor = SMOKECOLOR.Red
     
+    self.CargoItemCount = {} -- Map of Carriers having a cargo item count to check the cargo loading limits.
+    self.CargoLimit = 2
+    
     self.DeployZones = {} -- setmetatable( {}, { __mode = "v" } ) -- weak table on value
 
     
@@ -202,11 +205,18 @@ do -- TASK_CARGO
     -- @param Wrapper.Unit#UNIT TaskUnit
     -- @param Tasking.Task_CARGO#TASK_CARGO Task
     function Fsm:onafterSelectAction( TaskUnit, Task )
-      self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
+      
+      local TaskUnitName = TaskUnit:GetName()
+      
+      self:E( { TaskUnit = TaskUnitName, Task = Task and Task:GetClassNameAndID() } )
 
       local MenuTime = timer.getTime()
             
       TaskUnit.Menu = MENU_GROUP:New( TaskUnit:GetGroup(), Task:GetName() .. " @ " .. TaskUnit:GetName() ):SetTime( MenuTime )
+
+      local CargoItemCount = TaskUnit:CargoItemCount()
+
+      --Task:GetMission():GetCommandCenter():MessageToGroup( "Cargo in carrier: " .. CargoItemCount, TaskUnit:GetGroup() )
 
       
       Task.SetCargo:ForEachCargo(
@@ -226,51 +236,35 @@ do -- TASK_CARGO
 --                Cargo
 --              ):SetTime(MenuTime)
 --            end
+
+
         
             if Cargo:IsUnLoaded() then
-              if Cargo:IsInRadius( TaskUnit:GetPointVec2() ) then
-                MENU_GROUP_COMMAND:New(
-                  TaskUnit:GetGroup(),
-                  "Board cargo " .. Cargo.Name,
-                  TaskUnit.Menu,
-                  self.MenuBoardCargo,
-                  self,
-                  Cargo
-                ):SetTime(MenuTime)
-              else
-                MENU_GROUP_COMMAND:New(
-                  TaskUnit:GetGroup(),
-                  "Route to Pickup cargo " .. Cargo.Name,
-                  TaskUnit.Menu,
-                  self.MenuRouteToPickup,
-                  self,
-                  Cargo
-                ):SetTime(MenuTime)
+              if CargoItemCount < Task.CargoLimit then 
+                if Cargo:IsInRadius( TaskUnit:GetPointVec2() ) then
+                  local NotInDeployZones = true
+                  for DeployZoneName, DeployZone in pairs( Task.DeployZones ) do
+                    if Cargo:IsInZone( DeployZone ) then
+                      NotInDeployZones = false
+                    end
+                  end
+                  if NotInDeployZones then
+                    MENU_GROUP_COMMAND:New( TaskUnit:GetGroup(), "Board cargo " .. Cargo.Name, TaskUnit.Menu, self.MenuBoardCargo, self, Cargo ):SetTime(MenuTime)
+                  end
+                else
+                  MENU_GROUP_COMMAND:New( TaskUnit:GetGroup(), "Route to Pickup cargo " .. Cargo.Name, TaskUnit.Menu, self.MenuRouteToPickup, self, Cargo ):SetTime(MenuTime)
+                end
               end
             end
             
             if Cargo:IsLoaded() then
               
-              MENU_GROUP_COMMAND:New(
-                TaskUnit:GetGroup(),
-                "Unboard cargo " .. Cargo.Name,
-                TaskUnit.Menu,
-                self.MenuUnBoardCargo,
-                self,
-                Cargo
-              ):SetTime(MenuTime)
+              MENU_GROUP_COMMAND:New( TaskUnit:GetGroup(), "Unboard cargo " .. Cargo.Name, TaskUnit.Menu, self.MenuUnBoardCargo, self, Cargo ):SetTime(MenuTime)
   
               -- Deployzones are optional zones that can be selected to request routing information.
               for DeployZoneName, DeployZone in pairs( Task.DeployZones ) do
                 if not Cargo:IsInZone( DeployZone ) then
-                  MENU_GROUP_COMMAND:New(
-                    TaskUnit:GetGroup(),
-                    "Route to Deploy cargo at " .. DeployZoneName,
-                    TaskUnit.Menu,
-                    self.MenuRouteToDeploy,
-                    self,
-                    DeployZone
-                  ):SetTime(MenuTime)
+                  MENU_GROUP_COMMAND:New( TaskUnit:GetGroup(), "Route to Deploy cargo at " .. DeployZoneName, TaskUnit.Menu, self.MenuRouteToDeploy, self, DeployZone ):SetTime(MenuTime)
                 end
               end
             end
@@ -284,8 +278,8 @@ do -- TASK_CARGO
       
       self:__SelectAction( -15 )
       
-      --Task:GetMission():GetCommandCenter():MessageToGroup("Cargo menu is ready ...", TaskUnit:GetGroup() )
     end
+    
     
     --- 
     -- @param #FSM_PROCESS self
@@ -503,9 +497,14 @@ do -- TASK_CARGO
     -- @param Wrapper.Unit#UNIT TaskUnit
     -- @param Tasking.Task_Cargo#TASK_CARGO Task
     function Fsm:onafterBoarded( TaskUnit, Task )
-      self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
+      
+      local TaskUnitName = TaskUnit:GetName()
+      self:E( { TaskUnit = TaskUnitName, Task = Task and Task:GetClassNameAndID() } )
       
       self.Cargo:MessageToGroup( "Boarded ...", TaskUnit:GetGroup() )
+
+      TaskUnit:AddCargo( self.Cargo )
+
       self:__SelectAction( 1 )
       
       -- TODO:I need to find a more decent solution for this. 
@@ -579,10 +578,25 @@ do -- TASK_CARGO
     -- @param Wrapper.Unit#UNIT TaskUnit
     -- @param Tasking.Task_Cargo#TASK_CARGO Task
     function Fsm:onafterUnBoarded( TaskUnit, Task )
-      self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
+
+      local TaskUnitName = TaskUnit:GetName()
+      self:E( { TaskUnit = TaskUnitName, Task = Task and Task:GetClassNameAndID() } )
       
       self.Cargo:MessageToGroup( "UnBoarded ...", TaskUnit:GetGroup() )
+
+      TaskUnit:RemoveCargo( self.Cargo )
+
+      local NotInDeployZones = true
+      for DeployZoneName, DeployZone in pairs( Task.DeployZones ) do
+        if self.Cargo:IsInZone( DeployZone ) then
+          NotInDeployZones = false
+        end
+      end
       
+      if NotInDeployZones == false then
+        self.Cargo:SetDeployed( true )
+      end
+            
       -- TODO:I need to find a more decent solution for this.
       Task:E( { CargoDeployed = Task.CargoDeployed and "true" or "false" } )
       if self.Cargo:IsAlive() then
@@ -598,7 +612,16 @@ do -- TASK_CARGO
     return self
  
   end
-  
+
+    --- Set a limit on the amount of cargo items that can be loaded into the Carriers.
+    -- @param #TASK_CARGO self
+    -- @param CargoLimit Specifies a number of cargo items that can be loaded in the helicopter.
+    -- @return #TASK_CARGO
+    function TASK_CARGO:SetCargoLimit( CargoLimit )
+      self.CargoLimit = CargoLimit
+      return self
+    end
+    
 
     ---@param Color Might be SMOKECOLOR.Blue, SMOKECOLOR.Red SMOKECOLOR.Orange, SMOKECOLOR.White or SMOKECOLOR.Green
     function TASK_CARGO:SetSmokeColor(SmokeColor)
@@ -916,29 +939,26 @@ do -- TASK_CARGO_TRANSPORT
     
     local DeployZones = self:GetDeployZones()
     
-    local CargoDeployed = false
+    local CargoDeployed = true
     
     -- Loop the CargoSet (so evaluate each Cargo in the SET_CARGO ).
     for CargoID, CargoData in pairs( Set ) do
       local Cargo = CargoData -- Core.Cargo#CARGO
 
-      local CargoInDeployZone = false
-      
-      if Cargo:IsUnLoaded() then
+      if Cargo:IsDeployed() then
       
         -- Loop the DeployZones set for the TASK_CARGO_TRANSPORT.
         for DeployZoneID, DeployZone in pairs( DeployZones ) do
         
           -- If there is a Cargo not in one of DeployZones, then not all Cargo is deployed.
           self:T( { Cargo.CargoObject } )
-          if Cargo:IsInZone( DeployZone ) then
-            CargoInDeployZone = true
+          if Cargo:IsInZone( DeployZone ) == false then
+            CargoDeployed = false
           end
         end
+      else
+        CargoDeployed = false
       end
-      
-      CargoDeployed = CargoDeployed or CargoInDeployZone      
-      
     end
 
     return CargoDeployed
