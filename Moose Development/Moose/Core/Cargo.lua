@@ -210,8 +210,7 @@ do -- CARGO
   --     The state transition method needs to start with the name **OnEnter + the name of the state**. 
   --     These state transition methods need to provide a return value, which is specified at the function description.
   --
-  -- @field #CARGO CARGO
-  --
+  -- @field #CARGO
   CARGO = {
     ClassName = "CARGO",
     Type = nil,
@@ -265,6 +264,8 @@ function CARGO:New( Type, Name, Weight ) --R2.1
   self.Slingloadable = false
   self.Moveable = false
   self.Containable = false
+  
+  self:SetDeployed( false )
 
   self.CargoScheduler = SCHEDULER:New()
 
@@ -274,6 +275,15 @@ function CARGO:New( Type, Name, Weight ) --R2.1
   
 
   return self
+end
+
+--- Destroy the cargo.
+-- @param #CARGO self
+function CARGO:Destroy()
+  if self.CargoObject then
+    self.CargoObject:Destroy()
+  end
+  self:Destroyed()
 end
 
 --- Get the name of the Cargo.
@@ -333,6 +343,19 @@ function CARGO:IsAlive()
   else
     return self.CargoObject:IsAlive()
   end 
+end
+
+--- Set the cargo as deployed
+-- @param #CARGO self
+function CARGO:SetDeployed( Deployed )
+  self.Deployed = Deployed
+end
+
+--- Is the cargo deployed
+-- @param #CARGO self
+-- @return #boolean
+function CARGO:IsDeployed()
+  return self.Deployed
 end
 
 
@@ -486,6 +509,8 @@ end -- CARGO_REPRESENTABLE
     local self = BASE:Inherit( self, CARGO:New( Type, Name, Weight ) ) -- #CARGO_REPORTABLE
     self:F( { Type, Name, Weight, ReportRadius } )
   
+    self.CargoSet = SET_CARGO:New() -- Core.Set#SET_CARGO
+  
     self.ReportRadius = ReportRadius or 1000
     self.CargoObject = CargoObject
   
@@ -517,7 +542,7 @@ end -- CARGO_REPRESENTABLE
   end
 
   --- Send a CC message to a GROUP.
-  -- @param #COMMANDCENTER self
+  -- @param #CARGO_REPORTABLE self
   -- @param #string Message
   -- @param Wrapper.Group#GROUP TaskGroup
   -- @param #sring Name (optional) The name of the Group used as a prefix for the message to the Group. If not provided, there will be nothing shown.
@@ -530,10 +555,43 @@ end -- CARGO_REPRESENTABLE
   end
 
   --- Get the range till cargo will board.
-  -- @param #CARGO self
+  -- @param #CARGO_REPORTABLE self
   -- @return #number The range till cargo will board.
   function CARGO_REPORTABLE:GetBoardingRange()
     return self.ReportRadius
+  end
+  
+  --- Respawn the cargo.
+  -- @param #CARGO_REPORTABLE self
+  function CARGO_REPORTABLE:Respawn()
+
+    for CargoID, CargoData in pairs( self.CargoSet:GetSet() ) do
+      local Cargo = CargoData -- #CARGO
+      Cargo:Destroy()
+    end
+
+    local CargoObject = self.CargoObject -- Wrapper.Group#GROUP
+    local Template = CargoObject:GetTemplate()
+    CargoObject:Respawn( Template )
+  
+    self:SetDeployed( false )
+  
+    local WeightGroup = 0
+  
+    for UnitID, UnitData in pairs( CargoObject:GetUnits() ) do
+      local Unit = UnitData -- Wrapper.Unit#UNIT
+      local WeightUnit = Unit:GetDesc().massEmpty
+      WeightGroup = WeightGroup + WeightUnit
+      local CargoUnit = CARGO_UNIT:New( Unit, self.Type, Unit:GetName(), WeightUnit )
+      self.CargoSet:Add( CargoUnit:GetName(), CargoUnit )
+    end
+
+    self:SetWeight( WeightGroup )
+  
+    self:T( { "Weight Cargo", WeightGroup } )
+    
+    self:SetStartState( "UnLoaded" )
+    
   end
 
 end
@@ -922,8 +980,6 @@ function CARGO_GROUP:New( CargoGroup, Type, Name, ReportRadius )
   local self = BASE:Inherit( self, CARGO_REPORTABLE:New( CargoGroup, Type, Name, 0, ReportRadius ) ) -- #CARGO_GROUP
   self:F( { Type, Name, ReportRadius } )
 
-  self.CargoSet = SET_CARGO:New()
-  
   self.CargoObject = CargoGroup
   self:SetDeployed( false )
   
@@ -1049,19 +1105,6 @@ end
 -- @return #CARGO_GROUP
 function CARGO_GROUP:GetCount()
   return self.CargoSet:Count()
-end
-
---- Set the cargo as deployed
--- @param #CARGO_GROUP self
-function CARGO_GROUP:SetDeployed( Deployed )
-  self.Deployed = Deployed
-end
-
---- Is the cargo deployed
--- @param #CARGO_GROUP self
--- @return #boolean
-function CARGO_GROUP:IsDeployed()
-  return self.Deployed
 end
 
 

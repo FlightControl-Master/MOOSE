@@ -2748,13 +2748,13 @@ SET_CARGO = {
 
 --- (R2.1) Creates a new SET_CARGO object, building a set of cargos belonging to a coalitions and categories.
 -- @param #SET_CARGO self
--- @return #SET_CARGO self
+-- @return #SET_CARGO
 -- @usage
 -- -- Define a new SET_CARGO Object. The DatabaseSet will contain a reference to all Cargos.
 -- DatabaseSet = SET_CARGO:New()
 function SET_CARGO:New() --R2.1
   -- Inherits from BASE
-  local self = BASE:Inherit( self, SET_BASE:New( _DATABASE.CARGOS ) )
+  local self = BASE:Inherit( self, SET_BASE:New( _DATABASE.CARGOS ) ) -- #SET_CARGO
 
   return self
 end
