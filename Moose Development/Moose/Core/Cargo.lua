@@ -925,6 +925,7 @@ function CARGO_GROUP:New( CargoGroup, Type, Name, ReportRadius )
   self.CargoSet = SET_CARGO:New()
   
   self.CargoObject = CargoGroup
+  self:SetDeployed( false )
   
   local WeightGroup = 0
   
@@ -1042,6 +1043,27 @@ function CARGO_GROUP:onafterBoarding( From, Event, To, CargoCarrier, NearRadius,
   end
   
 end
+
+--- Get the amount of cargo units in the group.
+-- @param #CARGO_GROUP self
+-- @return #CARGO_GROUP
+function CARGO_GROUP:GetCount()
+  return self.CargoSet:Count()
+end
+
+--- Set the cargo as deployed
+-- @param #CARGO_GROUP self
+function CARGO_GROUP:SetDeployed( Deployed )
+  self.Deployed = Deployed
+end
+
+--- Is the cargo deployed
+-- @param #CARGO_GROUP self
+-- @return #boolean
+function CARGO_GROUP:IsDeployed()
+  return self.Deployed
+end
+
 
 --- Enter UnBoarding State.
 -- @param #CARGO_GROUP self

@@ -10,13 +10,11 @@
 -- 
 -- @module Positionable
 
-
---- The POSITIONABLE class
--- @type POSITIONABLE
+--- @type POSITIONABLE.__ Methods which are not intended for mission designers, but which are used interally by the moose designer :-)
 -- @extends Wrapper.Identifiable#IDENTIFIABLE
--- @field #string PositionableName The name of the measurable.
--- @field Core.Spot#SPOT Spot The laser Spot.
--- @field #number LaserCode The last assigned laser code.
+
+--- @type POSITIONABLE
+-- @extends POSITIONABLE.__
 
 
 --- # POSITIONABLE class, extends @{Identifiable#IDENTIFIABLE}
@@ -49,6 +47,14 @@ POSITIONABLE = {
   ClassName = "POSITIONABLE",
   PositionableName = "",
 }
+
+--- @field #POSITIONABLE.__
+POSITIONABLE.__ = {}
+
+--- @field #POSITIONABLE.__.Cargo
+POSITIONABLE.__.Cargo = {}
+
+
 --- A DCSPositionable
 -- @type DCSPositionable
 -- @field id_ The ID of the controllable in DCS
@@ -677,5 +683,38 @@ function POSITIONABLE:GetLaserCode() --R2.1
   return self.LaserCode
 end
 
+--- Add cargo.
+-- @param #POSITIONABLE self
+-- @param Core.Cargo#CARGO Cargo
+-- @return #POSITIONABLE
+function POSITIONABLE:AddCargo( Cargo )
+  self.__.Cargo[Cargo] = Cargo
+  return self
+end
 
+--- Remove cargo.
+-- @param #POSITIONABLE self
+-- @param Core.Cargo#CARGO Cargo
+-- @return #POSITIONABLE
+function POSITIONABLE:RemoveCargo( Cargo )
+  self.__.Cargo[Cargo] = nil
+  return self
+end
 
+--- Returns if carrier has given cargo.
+-- @param #POSITIONABLE self
+-- @return Core.Cargo#CARGO Cargo
+function POSITIONABLE:HasCargo( Cargo )
+  return self.__.Cargo[Cargo]
+end
+
+--- Get cargo item count.
+-- @param #POSITIONABLE self
+-- @return Core.Cargo#CARGO Cargo
+function POSITIONABLE:CargoItemCount()
+  local ItemCount = 0
+  for CargoName, Cargo in pairs( self.__.Cargo ) do
+    ItemCount = ItemCount + Cargo:GetCount()
+  end
+  return ItemCount
+end
