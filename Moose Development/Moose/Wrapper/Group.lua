@@ -869,25 +869,28 @@ end
 -- @param #table Template The template of the Group retrieved with GROUP:GetTemplate()
 function GROUP:Respawn( Template )
 
-  local Vec3 = self:GetVec3()
-  Template.x = Vec3.x
-  Template.y = Vec3.z
-  --Template.x = nil
-  --Template.y = nil
-  
-  self:E( #Template.units )
-  for UnitID, UnitData in pairs( self:GetUnits() ) do
-    local GroupUnit = UnitData -- Wrapper.Unit#UNIT
-    self:E( GroupUnit:GetName() )
-    if GroupUnit:IsAlive() then
-      local GroupUnitVec3 = GroupUnit:GetVec3()
-      local GroupUnitHeading = GroupUnit:GetHeading()
-      Template.units[UnitID].alt = GroupUnitVec3.y
-      Template.units[UnitID].x = GroupUnitVec3.x
-      Template.units[UnitID].y = GroupUnitVec3.z
-      Template.units[UnitID].heading = GroupUnitHeading
-      self:E( { UnitID, Template.units[UnitID], Template.units[UnitID] } )
+  if self:IsAlive() then
+    local Vec3 = self:GetVec3()
+    Template.x = Vec3.x
+    Template.y = Vec3.z
+    --Template.x = nil
+    --Template.y = nil
+    
+    self:E( #Template.units )
+    for UnitID, UnitData in pairs( self:GetUnits() ) do
+      local GroupUnit = UnitData -- Wrapper.Unit#UNIT
+      self:E( GroupUnit:GetName() )
+      if GroupUnit:IsAlive() then
+        local GroupUnitVec3 = GroupUnit:GetVec3()
+        local GroupUnitHeading = GroupUnit:GetHeading()
+        Template.units[UnitID].alt = GroupUnitVec3.y
+        Template.units[UnitID].x = GroupUnitVec3.x
+        Template.units[UnitID].y = GroupUnitVec3.z
+        Template.units[UnitID].heading = GroupUnitHeading
+        self:E( { UnitID, Template.units[UnitID], Template.units[UnitID] } )
+      end
     end
+    
   end
   
   self:Destroy()

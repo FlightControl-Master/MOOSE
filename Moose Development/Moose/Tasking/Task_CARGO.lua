@@ -168,6 +168,8 @@ do -- TASK_CARGO
 
     
     local Fsm = self:GetUnitProcess()
+    
+    Fsm:SetStartState( "Planned" )
 
     Fsm:AddProcess   ( "Planned", "Accept", ACT_ASSIGN_ACCEPT:New( self.TaskBriefing ), { Assigned = "SelectAction", Rejected = "Reject" }  )
     
@@ -314,8 +316,7 @@ do -- TASK_CARGO
     --#Wrapper.Unit#UNIT
 
     
-    --- Route to Cargo
-    -- @param #FSM_PROCESS self
+    --- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
     -- @param Tasking.Task_Cargo#TASK_CARGO Task
     -- @param From
@@ -335,8 +336,7 @@ do -- TASK_CARGO
 
 
 
-    --- 
-    -- @param #FSM_PROCESS self
+    --- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
     -- @param Tasking.Task_Cargo#TASK_CARGO Task
     function Fsm:onafterArriveAtPickup( TaskUnit, Task )
@@ -344,6 +344,7 @@ do -- TASK_CARGO
       if self.Cargo:IsAlive() then
         TaskUnit:Smoke( Task:GetSmokeColor(), 15 )
         if TaskUnit:IsAir() then
+          Task:GetMission():GetCommandCenter():MessageToGroup( "Land", TaskUnit:GetGroup() )
           self:__Land( -0.1, "Pickup" )
         else
           self:__SelectAction( -0.1 )
@@ -352,8 +353,7 @@ do -- TASK_CARGO
     end
 
 
-    --- 
-    -- @param #FSM_PROCESS self
+    --- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
     -- @param Tasking.Task_Cargo#TASK_CARGO Task
     function Fsm:onafterCancelRouteToPickup( TaskUnit, Task )
@@ -363,8 +363,7 @@ do -- TASK_CARGO
     end
 
 
-    --- Route to DeployZone
-    -- @param #FSM_PROCESS self
+    --- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
     function Fsm:onafterRouteToDeploy( TaskUnit, Task, From, Event, To, DeployZone )
       self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
@@ -376,14 +375,14 @@ do -- TASK_CARGO
     end
 
 
-    --- 
-    -- @param #FSM_PROCESS self
+    --- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
     -- @param Tasking.Task_Cargo#TASK_CARGO Task
     function Fsm:onafterArriveAtDeploy( TaskUnit, Task )
       self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
       
       if TaskUnit:IsAir() then
+        Task:GetMission():GetCommandCenter():MessageToGroup( "Land", TaskUnit:GetGroup() )
         self:__Land( -0.1, "Deploy" )
       else
         self:__SelectAction( -0.1 )
@@ -391,8 +390,7 @@ do -- TASK_CARGO
     end
 
 
-    ---
-    -- @param #FSM_PROCESS self
+    --- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
     -- @param Tasking.Task_Cargo#TASK_CARGO Task
     function Fsm:onafterCancelRouteToDeploy( TaskUnit, Task )
@@ -403,7 +401,7 @@ do -- TASK_CARGO
 
 
 
-    -- @param #FSM_PROCESS self
+    --- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
     -- @param Tasking.Task_Cargo#TASK_CARGO Task
     function Fsm:onafterLand( TaskUnit, Task, From, Event, To, Action )
@@ -412,7 +410,6 @@ do -- TASK_CARGO
       if self.Cargo:IsAlive() then
         if self.Cargo:IsInRadius( TaskUnit:GetPointVec2() ) then
           if TaskUnit:InAir() then
-            Task:GetMission():GetCommandCenter():MessageToGroup( "Land", TaskUnit:GetGroup() )
             self:__Land( -10, Action )
           else
             Task:GetMission():GetCommandCenter():MessageToGroup( "Landed ...", TaskUnit:GetGroup() )
@@ -428,8 +425,7 @@ do -- TASK_CARGO
       end
     end
 
-    --- 
-    -- @param #FSM_PROCESS self
+    --- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
     -- @param Tasking.Task_Cargo#TASK_CARGO Task
     function Fsm:onafterLanded( TaskUnit, Task, From, Event, To, Action )
@@ -452,8 +448,7 @@ do -- TASK_CARGO
       end
     end
     
-    --- 
-    -- @param #FSM_PROCESS self
+    --- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
     -- @param Tasking.Task_Cargo#TASK_CARGO Task
     function Fsm:onafterPrepareBoarding( TaskUnit, Task, From, Event, To, Cargo )
@@ -465,8 +460,7 @@ do -- TASK_CARGO
       end
     end
     
-    --- 
-    -- @param #FSM_PROCESS self
+    --- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
     -- @param Tasking.Task_Cargo#TASK_CARGO Task
     function Fsm:onafterBoard( TaskUnit, Task )
@@ -492,8 +486,7 @@ do -- TASK_CARGO
     end
 
 
-    --- 
-    -- @param #FSM_PROCESS self
+    --- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
     -- @param Tasking.Task_Cargo#TASK_CARGO Task
     function Fsm:onafterBoarded( TaskUnit, Task )

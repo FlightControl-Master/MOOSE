@@ -164,7 +164,7 @@ do -- CARGO
   -- @field #number Weight A number defining the weight of the cargo. The weight is expressed in kg.
   -- @field #number NearRadius (optional) A number defining the radius in meters when the cargo is near to a Carrier, so that it can be loaded.
   -- @field Wrapper.Controllable#CONTROLLABLE CargoObject The alive DCS object representing the cargo. This value can be nil, meaning, that the cargo is not represented anywhere...
-  -- @field Wrapper.Controllable#CONTROLLABLE CargoCarrier The alive DCS object carrying the cargo. This value can be nil, meaning, that the cargo is not contained anywhere...
+  -- @field Wrapper.Client#CLIENT CargoCarrier The alive DCS object carrying the cargo. This value can be nil, meaning, that the cargo is not contained anywhere...
   -- @field #boolean Slingloadable This flag defines if the cargo can be slingloaded.
   -- @field #boolean Moveable This flag defines if the cargo is moveable.
   -- @field #boolean Representable This flag defines if the cargo can be represented by a DCS Unit.
@@ -210,8 +210,7 @@ do -- CARGO
   --     The state transition method needs to start with the name **OnEnter + the name of the state**. 
   --     These state transition methods need to provide a return value, which is specified at the function description.
   --
-  -- @field #CARGO CARGO
-  --
+  -- @field #CARGO
   CARGO = {
     ClassName = "CARGO",
     Type = nil,
@@ -265,15 +264,24 @@ function CARGO:New( Type, Name, Weight ) --R2.1
   self.Slingloadable = false
   self.Moveable = false
   self.Containable = false
+  
+  self:SetDeployed( false )
 
   self.CargoScheduler = SCHEDULER:New()
 
   CARGOS[self.Name] = self
 
-  self:SetEventPriority( 5 )
   
-
   return self
+end
+
+--- Destroy the cargo.
+-- @param #CARGO self
+function CARGO:Destroy()
+  if self.CargoObject then
+    self.CargoObject:Destroy()
+  end
+  self:Destroyed()
 end
 
 --- Get the name of the Cargo.
@@ -308,6 +316,13 @@ function CARGO:GetCoordinate()
   return self.CargoObject:GetCoordinate()
 end
 
+--- Check if cargo is destroyed.
+-- @param #CARGO self
+-- @return #boolean true if destroyed
+function CARGO:IsDestroyed()
+  return self:Is( "Destroyed" )
+end
+
 
 --- Check if cargo is loaded.
 -- @param #CARGO self
@@ -333,6 +348,19 @@ function CARGO:IsAlive()
   else
     return self.CargoObject:IsAlive()
   end 
+end
+
+--- Set the cargo as deployed
+-- @param #CARGO self
+function CARGO:SetDeployed( Deployed )
+  self.Deployed = Deployed
+end
+
+--- Is the cargo deployed
+-- @param #CARGO self
+-- @return #boolean
+function CARGO:IsDeployed()
+  return self.Deployed
 end
 
 
@@ -486,8 +514,12 @@ end -- CARGO_REPRESENTABLE
     local self = BASE:Inherit( self, CARGO:New( Type, Name, Weight ) ) -- #CARGO_REPORTABLE
     self:F( { Type, Name, Weight, ReportRadius } )
   
+    self.CargoSet = SET_CARGO:New() -- Core.Set#SET_CARGO
+  
     self.ReportRadius = ReportRadius or 1000
     self.CargoObject = CargoObject
+
+
   
     return self
   end
@@ -517,7 +549,7 @@ end -- CARGO_REPRESENTABLE
   end
 
   --- Send a CC message to a GROUP.
-  -- @param #COMMANDCENTER self
+  -- @param #CARGO_REPORTABLE self
   -- @param #string Message
   -- @param Wrapper.Group#GROUP TaskGroup
   -- @param #sring Name (optional) The name of the Group used as a prefix for the message to the Group. If not provided, there will be nothing shown.
@@ -530,12 +562,38 @@ end -- CARGO_REPRESENTABLE
   end
 
   --- Get the range till cargo will board.
-  -- @param #CARGO self
+  -- @param #CARGO_REPORTABLE self
   -- @return #number The range till cargo will board.
   function CARGO_REPORTABLE:GetBoardingRange()
     return self.ReportRadius
   end
+  
+  --- Respawn the cargo.
+  -- @param #CARGO_REPORTABLE self
+  function CARGO_REPORTABLE:Respawn()
 
+    self:F({"Respawning"})
+
+    for CargoID, CargoData in pairs( self.CargoSet:GetSet() ) do
+      local Cargo = CargoData -- #CARGO
+      Cargo:Destroy()
+      Cargo:SetStartState( "UnLoaded" )
+    end
+
+    local CargoObject = self.CargoObject -- Wrapper.Group#GROUP
+    CargoObject:Destroy()
+    local Template = CargoObject:GetTemplate()
+    CargoObject:Respawn( Template )
+  
+    self:SetDeployed( false )
+  
+    local WeightGroup = 0
+        
+    self:SetStartState( "UnLoaded" )
+    
+  end
+
+  
 end
 
 do -- CARGO_UNIT
@@ -575,16 +633,18 @@ function CARGO_UNIT:New( CargoUnit, Type, Name, Weight, NearRadius )
 
   self:T( self.ClassName )
 
-  self:HandleEvent( EVENTS.Dead,
-    --- @param #CARGO Cargo
-    -- @param Core.Event#EVENTDATA EventData 
-    function( Cargo, EventData )
-      if Cargo:GetObjectName() == EventData.IniUnit:GetName() then
-        self:E( { "Cargo destroyed", Cargo } )
-        Cargo:Destroyed()
-      end
-    end
-  )
+--  self:HandleEvent( EVENTS.Dead,
+--    --- @param #CARGO Cargo
+--    -- @param Core.Event#EVENTDATA EventData 
+--    function( Cargo, EventData )
+--      if Cargo:GetObjectName() == EventData.IniUnit:GetName() then
+--        self:E( { "Cargo destroyed", Cargo } )
+--        Cargo:Destroyed()
+--      end
+--    end
+--  )
+
+  self:SetEventPriority( 5 )
 
   return self
 end
@@ -595,6 +655,7 @@ end
 function CARGO_UNIT:Destroy()
 
   -- Cargo objects are deleted from the _DATABASE and SET_CARGO objects.
+  self:F( { CargoName = self:GetName() } )
   _EVENTDISPATCHER:CreateEventDeleteCargo( self )
 
   return self
@@ -922,10 +983,9 @@ function CARGO_GROUP:New( CargoGroup, Type, Name, ReportRadius )
   local self = BASE:Inherit( self, CARGO_REPORTABLE:New( CargoGroup, Type, Name, 0, ReportRadius ) ) -- #CARGO_GROUP
   self:F( { Type, Name, ReportRadius } )
 
-  self.CargoSet = SET_CARGO:New()
-  
   self.CargoObject = CargoGroup
   self:SetDeployed( false )
+  self.CargoGroup = CargoGroup
   
   local WeightGroup = 0
   
@@ -944,7 +1004,43 @@ function CARGO_GROUP:New( CargoGroup, Type, Name, ReportRadius )
   -- Cargo objects are added to the _DATABASE and SET_CARGO objects.
   _EVENTDISPATCHER:CreateEventNewCargo( self )
   
+  self:HandleEvent( EVENTS.Dead, self.OnEventCargoDead )
+  self:HandleEvent( EVENTS.Crash, self.OnEventCargoDead )
+  self:HandleEvent( EVENTS.PlayerLeaveUnit, self.OnEventCargoDead )
+  
+  self:SetEventPriority( 4 )
+  
   return self
+end
+
+--- @param #CARGO Cargo
+-- @param Core.Event#EVENTDATA EventData 
+function CARGO_GROUP:OnEventCargoDead( EventData )
+
+  local Destroyed = false
+  
+  if self:IsDestroyed() or self:IsUnLoaded() then
+    Destroyed = true
+    for CargoID, CargoData in pairs( self.CargoSet:GetSet() ) do
+      local Cargo = CargoData -- #CARGO
+      if Cargo:IsAlive() then
+        Destroyed = false
+      else
+        Cargo:Destroyed()
+      end
+    end
+  else
+    if self.CargoCarrier:GetName() == EventData.IniUnitName then
+      Destroyed = true
+      self.CargoCarrier:ClearCargo()
+    end
+  end
+  
+  if Destroyed then
+    self:Destroyed()
+    self:E( { "Cargo group destroyed" } )
+  end
+
 end
 
 --- Enter Boarding State.
@@ -988,7 +1084,7 @@ function CARGO_GROUP:onenterLoaded( From, Event, To, CargoCarrier, ... )
     end
   end
   
-  self.CargoObject:Destroy()
+  --self.CargoObject:Destroy()
   self.CargoCarrier = CargoCarrier
   
 end
@@ -1049,19 +1145,6 @@ end
 -- @return #CARGO_GROUP
 function CARGO_GROUP:GetCount()
   return self.CargoSet:Count()
-end
-
---- Set the cargo as deployed
--- @param #CARGO_GROUP self
-function CARGO_GROUP:SetDeployed( Deployed )
-  self.Deployed = Deployed
-end
-
---- Is the cargo deployed
--- @param #CARGO_GROUP self
--- @return #boolean
-function CARGO_GROUP:IsDeployed()
-  return self.Deployed
 end
 
 
@@ -1169,6 +1252,23 @@ function CARGO_GROUP:onenterUnLoaded( From, Event, To, ToPointVec2, ... )
   end
   
 end
+
+
+  --- Respawn the cargo when destroyed
+  -- @param #CARGO_GROUP self
+  -- @param #boolean RespawnDestroyed
+  function CARGO_GROUP:RespawnOnDestroyed( RespawnDestroyed )
+    self:F({"In function RespawnOnDestroyed"})
+    if RespawnDestroyed then
+      self.onenterDestroyed = function( self )
+        self:F("IN FUNCTION")
+        self:Respawn()
+      end
+    else
+      self.onenterDestroyed = nil
+    end
+      
+  end
 
 end -- CARGO_GROUP
 
