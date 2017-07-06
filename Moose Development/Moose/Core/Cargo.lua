@@ -581,6 +581,7 @@ end -- CARGO_REPRESENTABLE
     end
 
     local CargoObject = self.CargoObject -- Wrapper.Group#GROUP
+    CargoObject:Destroy()
     local Template = CargoObject:GetTemplate()
     CargoObject:Respawn( Template )
   
@@ -632,16 +633,16 @@ function CARGO_UNIT:New( CargoUnit, Type, Name, Weight, NearRadius )
 
   self:T( self.ClassName )
 
-  self:HandleEvent( EVENTS.Dead,
-    --- @param #CARGO Cargo
-    -- @param Core.Event#EVENTDATA EventData 
-    function( Cargo, EventData )
-      if Cargo:GetObjectName() == EventData.IniUnit:GetName() then
-        self:E( { "Cargo destroyed", Cargo } )
-        Cargo:Destroyed()
-      end
-    end
-  )
+--  self:HandleEvent( EVENTS.Dead,
+--    --- @param #CARGO Cargo
+--    -- @param Core.Event#EVENTDATA EventData 
+--    function( Cargo, EventData )
+--      if Cargo:GetObjectName() == EventData.IniUnit:GetName() then
+--        self:E( { "Cargo destroyed", Cargo } )
+--        Cargo:Destroyed()
+--      end
+--    end
+--  )
 
   self:SetEventPriority( 5 )
 
@@ -984,6 +985,7 @@ function CARGO_GROUP:New( CargoGroup, Type, Name, ReportRadius )
 
   self.CargoObject = CargoGroup
   self:SetDeployed( false )
+  self.CargoGroup = CargoGroup
   
   local WeightGroup = 0
   
@@ -1002,31 +1004,42 @@ function CARGO_GROUP:New( CargoGroup, Type, Name, ReportRadius )
   -- Cargo objects are added to the _DATABASE and SET_CARGO objects.
   _EVENTDISPATCHER:CreateEventNewCargo( self )
   
-  self:HandleEvent( EVENTS.Dead,
-    --- @param #CARGO Cargo
-    -- @param Core.Event#EVENTDATA EventData 
-    function( Cargo, EventData )
-      
-      local Destroyed = true
-      for CargoID, CargoData in pairs( self.CargoSet:GetSet() ) do
-        local Cargo = CargoData -- #CARGO
-        if Cargo:IsAlive() then
-          Destroyed = false
-        else
-          Cargo:Destroyed()
-        end
-      end
-      
-      if Destroyed then
-        self:Destroyed()
-        self:E( { "Cargo destroyed", Cargo } )
-      end
-    end
-  )
-
+  self:HandleEvent( EVENTS.Dead, self.OnEventCargoDead )
+  self:HandleEvent( EVENTS.Crash, self.OnEventCargoDead )
+  self:HandleEvent( EVENTS.PlayerLeaveUnit, self.OnEventCargoDead )
+  
   self:SetEventPriority( 4 )
   
   return self
+end
+
+--- @param #CARGO Cargo
+-- @param Core.Event#EVENTDATA EventData 
+function CARGO_GROUP:OnEventCargoDead( EventData )
+
+  local Destroyed = false
+  
+  if self:IsDestroyed() or self:IsUnLoaded() then
+    Destroyed = true
+    for CargoID, CargoData in pairs( self.CargoSet:GetSet() ) do
+      local Cargo = CargoData -- #CARGO
+      if Cargo:IsAlive() then
+        Destroyed = false
+      else
+        Cargo:Destroyed()
+      end
+    end
+  else
+    if self.CargoCarrier:GetName() == EventData.IniUnitName then
+      Destroyed = true
+    end
+  end
+  
+  if Destroyed then
+    self:Destroyed()
+    self:E( { "Cargo group destroyed" } )
+  end
+
 end
 
 --- Enter Boarding State.
@@ -1070,7 +1083,7 @@ function CARGO_GROUP:onenterLoaded( From, Event, To, CargoCarrier, ... )
     end
   end
   
-  self.CargoObject:Destroy()
+  --self.CargoObject:Destroy()
   self.CargoCarrier = CargoCarrier
   
 end
