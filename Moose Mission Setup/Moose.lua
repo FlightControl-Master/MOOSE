@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' )
-env.info( 'Moose Generation Timestamp: 20170702_2317' )
+env.info( 'Moose Generation Timestamp: 20170706_2151' )
 
 --- Various routines
 -- @module routines
@@ -5370,7 +5370,7 @@ do -- SETTINGS
       local self = BASE:Inherit( self, BASE:New() ) -- #SETTINGS
       self:SetMetric() -- Defaults
       self:SetA2G_MGRS() -- Defaults
-      self:SetA2A_BRA() -- Defaults
+      self:SetA2A_BRAA() -- Defaults
       self:SetLL_Accuracy( 2 ) -- Defaults
       self:SetLL_DMS( true ) -- Defaults
       self:SetMGRS_Accuracy( 5 ) -- Defaults
@@ -5493,31 +5493,31 @@ do -- SETTINGS
   --- Sets A2G BRA
   -- @param #SETTINGS self
   -- @return #SETTINGS
-  function SETTINGS:SetA2G_BRA()
-    self.A2GSystem = "BRA"
+  function SETTINGS:SetA2G_BR()
+    self.A2GSystem = "BR"
   end
 
   --- Is BRA
   -- @param #SETTINGS self
   -- @return #boolean true if BRA
-  function SETTINGS:IsA2G_BRA()
-    self:E( { BRA = ( self.A2GSystem and self.A2GSystem == "BRA" ) or ( not self.A2GSystem and _SETTINGS:IsA2G_BRA() ) } )
-    return ( self.A2GSystem and self.A2GSystem == "BRA" ) or ( not self.A2GSystem and _SETTINGS:IsA2G_BRA() )
+  function SETTINGS:IsA2G_BR()
+    self:E( { BRA = ( self.A2GSystem and self.A2GSystem == "BR" ) or ( not self.A2GSystem and _SETTINGS:IsA2G_BR() ) } )
+    return ( self.A2GSystem and self.A2GSystem == "BR" ) or ( not self.A2GSystem and _SETTINGS:IsA2G_BR() )
   end
 
   --- Sets A2A BRA
   -- @param #SETTINGS self
   -- @return #SETTINGS
-  function SETTINGS:SetA2A_BRA()
-    self.A2ASystem = "BRA"
+  function SETTINGS:SetA2A_BRAA()
+    self.A2ASystem = "BRAA"
   end
 
   --- Is BRA
   -- @param #SETTINGS self
   -- @return #boolean true if BRA
-  function SETTINGS:IsA2A_BRA()
-    self:E( { BRA = ( self.A2ASystem and self.A2ASystem == "BRA" ) or ( not self.A2ASystem and _SETTINGS:IsA2A_BRA() ) } )
-    return ( self.A2ASystem and self.A2ASystem == "BRA" ) or ( not self.A2ASystem and _SETTINGS:IsA2A_BRA() )
+  function SETTINGS:IsA2A_BRAA()
+    self:E( { BRA = ( self.A2ASystem and self.A2ASystem == "BRAA" ) or ( not self.A2ASystem and _SETTINGS:IsA2A_BRAA() ) } )
+    return ( self.A2ASystem and self.A2ASystem == "BRAA" ) or ( not self.A2ASystem and _SETTINGS:IsA2A_BRAA() )
   end
 
   --- Sets A2A BULLS
@@ -5536,66 +5536,62 @@ do -- SETTINGS
 
   --- @param #SETTINGS self
   -- @return #SETTINGS
-  function SETTINGS:SetSystemMenu( RootMenu, MenuText )
+  function SETTINGS:SetSystemMenu( MenuGroup, RootMenu )
 
-    MenuText = MenuText or "System Settings"
-  
-    if not self.SettingsMenu then
-      self.SettingsMenu = MENU_MISSION:New( MenuText, RootMenu )
-    end
-
-    if self.DefaultMenu then
-      self.DefaultMenu:Remove()
-      self.DefaultMenu = nil
-    end
-    self.DefaultMenu = MENU_MISSION:New( "Default Settings", self.SettingsMenu )
+    local MenuText = "System Settings"
     
-    local A2GCoordinateMenu = MENU_MISSION:New( "A2G Coordinate System", self.DefaultMenu )
+    local MenuTime = timer.getTime()
+    
+    local SettingsMenu = MENU_GROUP:New( MenuGroup, MenuText, RootMenu ):SetTime( MenuTime )
+
+    local A2GCoordinateMenu = MENU_GROUP:New( MenuGroup, "A2G Coordinate System", SettingsMenu ):SetTime( MenuTime )
   
     if self:IsA2G_LL() then
-      MENU_MISSION_COMMAND:New( "Activate BRA", A2GCoordinateMenu, self.A2GMenuSystem, self, "BRA" )
-      MENU_MISSION_COMMAND:New( "Activate MGRS", A2GCoordinateMenu, self.A2GMenuSystem, self, "MGRS" )
-      MENU_MISSION_COMMAND:New( "LL Accuracy 1", A2GCoordinateMenu, self.MenuLL_Accuracy, self, 1 )
-      MENU_MISSION_COMMAND:New( "LL Accuracy 2", A2GCoordinateMenu, self.MenuLL_Accuracy, self, 2 )
-      MENU_MISSION_COMMAND:New( "LL Accuracy 3", A2GCoordinateMenu, self.MenuLL_Accuracy, self, 3 )
-      MENU_MISSION_COMMAND:New( "LL Decimal On", A2GCoordinateMenu, self.MenuLL_DMS, self, true )
-      MENU_MISSION_COMMAND:New( "LL Decimal Off", A2GCoordinateMenu, self.MenuLL_DMS, self, false )
+      MENU_GROUP_COMMAND:New( MenuGroup, "Bearing, Range (BR)", A2GCoordinateMenu, self.A2GMenuSystem, self, MenuGroup, RootMenu, "BR" ):SetTime( MenuTime )
+      MENU_GROUP_COMMAND:New( MenuGroup, "Military Grid (MGRS)", A2GCoordinateMenu, self.A2GMenuSystem, self, MenuGroup, RootMenu, "MGRS" ):SetTime( MenuTime )
+      MENU_GROUP_COMMAND:New( MenuGroup, "Lattitude Longitude (LL) Accuracy 1", A2GCoordinateMenu, self.MenuLL_Accuracy, self, MenuGroup, RootMenu, 1 ):SetTime( MenuTime )
+      MENU_GROUP_COMMAND:New( MenuGroup, "Lattitude Longitude (LL) Accuracy 2", A2GCoordinateMenu, self.MenuLL_Accuracy, self, MenuGroup, RootMenu, 2 ):SetTime( MenuTime )
+      MENU_GROUP_COMMAND:New( MenuGroup, "Lattitude Longitude (LL) Accuracy 3", A2GCoordinateMenu, self.MenuLL_Accuracy, self, MenuGroup, RootMenu, 3 ):SetTime( MenuTime )
+      MENU_GROUP_COMMAND:New( MenuGroup, "Lattitude Longitude (LL) Decimal On", A2GCoordinateMenu, self.MenuLL_DMS, self, MenuGroup, RootMenu, true ):SetTime( MenuTime )
+      MENU_GROUP_COMMAND:New( MenuGroup, "Lattitude Longitude (LL) Decimal Off", A2GCoordinateMenu, self.MenuLL_DMS, self, MenuGroup, RootMenu, false ):SetTime( MenuTime )
     end
   
     if self:IsA2G_MGRS() then
-      MENU_MISSION_COMMAND:New( "Activate BRA", A2GCoordinateMenu, self.A2GMenuSystem, self, "BRA" )
-      MENU_MISSION_COMMAND:New( "Activate LL", A2GCoordinateMenu, self.A2GMenuSystem, self, "LL" )
-      MENU_MISSION_COMMAND:New( "MGRS Accuracy 1", A2GCoordinateMenu, self.MenuMGRS_Accuracy, self, 1 )
-      MENU_MISSION_COMMAND:New( "MGRS Accuracy 2", A2GCoordinateMenu, self.MenuMGRS_Accuracy, self, 2 )
-      MENU_MISSION_COMMAND:New( "MGRS Accuracy 3", A2GCoordinateMenu, self.MenuMGRS_Accuracy, self, 3 )
-      MENU_MISSION_COMMAND:New( "MGRS Accuracy 4", A2GCoordinateMenu, self.MenuMGRS_Accuracy, self, 4 )
-      MENU_MISSION_COMMAND:New( "MGRS Accuracy 5", A2GCoordinateMenu, self.MenuMGRS_Accuracy, self, 5 )
+      MENU_GROUP_COMMAND:New( MenuGroup, "Bearing, Range (BR)", A2GCoordinateMenu, self.A2GMenuSystem, self, MenuGroup, RootMenu, "BR" ):SetTime( MenuTime )
+      MENU_GROUP_COMMAND:New( MenuGroup, "Lattitude Longitude (LL)", A2GCoordinateMenu, self.A2GMenuSystem, self, MenuGroup, RootMenu, "LL" ):SetTime( MenuTime )
+      MENU_GROUP_COMMAND:New( MenuGroup, "Military Grid (MGRS) Accuracy 1", A2GCoordinateMenu, self.MenuMGRS_Accuracy, self, MenuGroup, RootMenu, 1 ):SetTime( MenuTime )
+      MENU_GROUP_COMMAND:New( MenuGroup, "Military Grid (MGRS) Accuracy 2", A2GCoordinateMenu, self.MenuMGRS_Accuracy, self, MenuGroup, RootMenu, 2 ):SetTime( MenuTime )
+      MENU_GROUP_COMMAND:New( MenuGroup, "Military Grid (MGRS) Accuracy 3", A2GCoordinateMenu, self.MenuMGRS_Accuracy, self, MenuGroup, RootMenu, 3 ):SetTime( MenuTime )
+      MENU_GROUP_COMMAND:New( MenuGroup, "Military Grid (MGRS) Accuracy 4", A2GCoordinateMenu, self.MenuMGRS_Accuracy, self, MenuGroup, RootMenu, 4 ):SetTime( MenuTime )
+      MENU_GROUP_COMMAND:New( MenuGroup, "Military Grid (MGRS) Accuracy 5", A2GCoordinateMenu, self.MenuMGRS_Accuracy, self, MenuGroup, RootMenu, 5 ):SetTime( MenuTime )
     end
 
-    if self:IsA2G_BRA() then
-      MENU_MISSION_COMMAND:New( "Activate MGRS", A2GCoordinateMenu, self.A2GMenuSystem, self, "MGRS" )
-      MENU_MISSION_COMMAND:New( "Activate LL", A2GCoordinateMenu, self.A2GMenuSystem, self, "LL" )
+    if self:IsA2G_BR() then
+      MENU_GROUP_COMMAND:New( MenuGroup, "Military Grid (MGRS)", A2GCoordinateMenu, self.A2GMenuSystem, self, MenuGroup, RootMenu, "MGRS" ):SetTime( MenuTime )
+      MENU_GROUP_COMMAND:New( MenuGroup, "Lattitude Longitude (LL)", A2GCoordinateMenu, self.A2GMenuSystem, self, MenuGroup, RootMenu, "LL" ):SetTime( MenuTime )
     end
 
-    local A2ACoordinateMenu = MENU_MISSION:New( "A2A Coordinate System", self.DefaultMenu )
+    local A2ACoordinateMenu = MENU_GROUP:New( MenuGroup, "A2A Coordinate System", SettingsMenu ):SetTime( MenuTime )
 
     if self:IsA2A_BULLS() then
-      MENU_MISSION_COMMAND:New( "Activate BRA", A2ACoordinateMenu, self.A2AMenuSystem, self, "BRA" )
+      MENU_GROUP_COMMAND:New( MenuGroup, "Bearing Range Altitude Aspect (BRAA)", A2ACoordinateMenu, self.A2AMenuSystem, self, MenuGroup, RootMenu, "BRAA" ):SetTime( MenuTime )
     end
   
-    if self:IsA2A_BRA() then
-      MENU_MISSION_COMMAND:New( "Activate BULLS", A2ACoordinateMenu, self.A2AMenuSystem, self, "BULLS" )
+    if self:IsA2A_BRAA() then
+      MENU_GROUP_COMMAND:New( MenuGroup, "Bullseye (BULLS)", A2ACoordinateMenu, self.A2AMenuSystem, self, MenuGroup, RootMenu, "BULLS" ):SetTime( MenuTime )
     end
     
-    local MetricsMenu = MENU_MISSION:New( "Measures and Weights System", self.DefaultMenu )
+    local MetricsMenu = MENU_GROUP:New( MenuGroup, "Measures and Weights System", SettingsMenu ):SetTime( MenuTime )
     
     if self:IsMetric() then
-      MENU_MISSION_COMMAND:New( "Activate Imperial", MetricsMenu, self.MenuMWSystem, self, false )
+      MENU_GROUP_COMMAND:New( MenuGroup, "Imperial (Miles,Feet)", MetricsMenu, self.MenuMWSystem, self, MenuGroup, RootMenu, false ):SetTime( MenuTime )
     end
     
     if self:IsImperial() then
-      MENU_MISSION_COMMAND:New( "Activate Metric", MetricsMenu, self.MenuMWSystem, self, true )
+      MENU_GROUP_COMMAND:New( MenuGroup, "Metric (Kilometers,Meters)", MetricsMenu, self.MenuMWSystem, self, MenuGroup, RootMenu, true ):SetTime( MenuTime )
     end    
+
+    SettingsMenu:Remove( MenuTime )
     
     return self
   end
@@ -5607,65 +5603,59 @@ do -- SETTINGS
   -- @return #SETTINGS
   function SETTINGS:SetPlayerMenu( PlayerUnit )
 
-    local MenuText = "Player Settings"
-    self.MenuText = MenuText
-    
-    local SettingsMenu = _SETTINGS.SettingsMenu
-    
     local PlayerGroup = PlayerUnit:GetGroup()
     local PlayerName = PlayerUnit:GetPlayerName()
     local PlayerNames = PlayerGroup:GetPlayerNames()
 
-    local GroupMenu = MENU_GROUP:New( PlayerGroup, MenuText, SettingsMenu )
-    local PlayerMenu = MENU_GROUP:New( PlayerGroup, 'Settings "' .. PlayerName .. '"', GroupMenu )
+    local PlayerMenu = MENU_GROUP:New( PlayerGroup, 'Settings "' .. PlayerName .. '"' )
     
     self.PlayerMenu = PlayerMenu
 
     local A2GCoordinateMenu = MENU_GROUP:New( PlayerGroup, "A2G Coordinate System", PlayerMenu )
   
     if self:IsA2G_LL() then
-      MENU_GROUP_COMMAND:New( PlayerGroup, "Activate BRA", A2GCoordinateMenu, self.MenuGroupA2GSystem, self, PlayerUnit, PlayerGroup, PlayerName, "BRA" )
-      MENU_GROUP_COMMAND:New( PlayerGroup, "Activate MGRS", A2GCoordinateMenu, self.MenuGroupA2GSystem, self, PlayerUnit, PlayerGroup, PlayerName, "MGRS" )
-      MENU_GROUP_COMMAND:New( PlayerGroup, "LL Accuracy 1", A2GCoordinateMenu, self.MenuGroupLL_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 1 )
-      MENU_GROUP_COMMAND:New( PlayerGroup, "LL Accuracy 2", A2GCoordinateMenu, self.MenuGroupLL_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 2 )
-      MENU_GROUP_COMMAND:New( PlayerGroup, "LL Accuracy 3", A2GCoordinateMenu, self.MenuGroupLL_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 3 )
-      MENU_GROUP_COMMAND:New( PlayerGroup, "LL Decimal On", A2GCoordinateMenu, self.MenuGroupLL_DMSSystem, self, PlayerUnit, PlayerGroup, PlayerName, true )
-      MENU_GROUP_COMMAND:New( PlayerGroup, "LL Decimal Off", A2GCoordinateMenu, self.MenuGroupLL_DMSSystem, self, PlayerUnit, PlayerGroup, PlayerName, false )
+      MENU_GROUP_COMMAND:New( PlayerGroup, "Bearing, Range (BR)", A2GCoordinateMenu, self.MenuGroupA2GSystem, self, PlayerUnit, PlayerGroup, PlayerName, "BR" )
+      MENU_GROUP_COMMAND:New( PlayerGroup, "Military Grid (MGRS)", A2GCoordinateMenu, self.MenuGroupA2GSystem, self, PlayerUnit, PlayerGroup, PlayerName, "MGRS" )
+      MENU_GROUP_COMMAND:New( PlayerGroup, "Lattitude Longitude (LL) Accuracy 1", A2GCoordinateMenu, self.MenuGroupLL_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 1 )
+      MENU_GROUP_COMMAND:New( PlayerGroup, "Lattitude Longitude (LL) Accuracy 2", A2GCoordinateMenu, self.MenuGroupLL_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 2 )
+      MENU_GROUP_COMMAND:New( PlayerGroup, "Lattitude Longitude (LL) Accuracy 3", A2GCoordinateMenu, self.MenuGroupLL_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 3 )
+      MENU_GROUP_COMMAND:New( PlayerGroup, "Lattitude Longitude (LL) Decimal On", A2GCoordinateMenu, self.MenuGroupLL_DMSSystem, self, PlayerUnit, PlayerGroup, PlayerName, true )
+      MENU_GROUP_COMMAND:New( PlayerGroup, "Lattitude Longitude (LL) Decimal Off", A2GCoordinateMenu, self.MenuGroupLL_DMSSystem, self, PlayerUnit, PlayerGroup, PlayerName, false )
     end
   
     if self:IsA2G_MGRS() then
-      MENU_GROUP_COMMAND:New( PlayerGroup, "Activate BRA", A2GCoordinateMenu, self.MenuGroupA2GSystem, self, PlayerUnit, PlayerGroup, PlayerName, "BRA" )
-      MENU_GROUP_COMMAND:New( PlayerGroup, "Activate LL", A2GCoordinateMenu, self.MenuGroupA2GSystem, self, PlayerUnit, PlayerGroup, PlayerName, "LL" )
-      MENU_GROUP_COMMAND:New( PlayerGroup, "MGRS Accuracy 1", A2GCoordinateMenu, self.MenuGroupMGRS_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 1 )
-      MENU_GROUP_COMMAND:New( PlayerGroup, "MGRS Accuracy 2", A2GCoordinateMenu, self.MenuGroupMGRS_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 2 )
-      MENU_GROUP_COMMAND:New( PlayerGroup, "MGRS Accuracy 3", A2GCoordinateMenu, self.MenuGroupMGRS_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 3 )
-      MENU_GROUP_COMMAND:New( PlayerGroup, "MGRS Accuracy 4", A2GCoordinateMenu, self.MenuGroupMGRS_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 4 )
-      MENU_GROUP_COMMAND:New( PlayerGroup, "MGRS Accuracy 5", A2GCoordinateMenu, self.MenuGroupMGRS_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 5 )
+      MENU_GROUP_COMMAND:New( PlayerGroup, "Bearing Range (BR)", A2GCoordinateMenu, self.MenuGroupA2GSystem, self, PlayerUnit, PlayerGroup, PlayerName, "BR" )
+      MENU_GROUP_COMMAND:New( PlayerGroup, "Lattitude Longitude (LL)", A2GCoordinateMenu, self.MenuGroupA2GSystem, self, PlayerUnit, PlayerGroup, PlayerName, "LL" )
+      MENU_GROUP_COMMAND:New( PlayerGroup, "Military Grid (MGRS) Accuracy 1", A2GCoordinateMenu, self.MenuGroupMGRS_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 1 )
+      MENU_GROUP_COMMAND:New( PlayerGroup, "Military Grid (MGRS) Accuracy 2", A2GCoordinateMenu, self.MenuGroupMGRS_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 2 )
+      MENU_GROUP_COMMAND:New( PlayerGroup, "Military Grid (MGRS) Accuracy 3", A2GCoordinateMenu, self.MenuGroupMGRS_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 3 )
+      MENU_GROUP_COMMAND:New( PlayerGroup, "Military Grid (MGRS) Accuracy 4", A2GCoordinateMenu, self.MenuGroupMGRS_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 4 )
+      MENU_GROUP_COMMAND:New( PlayerGroup, "Military Grid (MGRS) Accuracy 5", A2GCoordinateMenu, self.MenuGroupMGRS_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 5 )
     end
 
-    if self:IsA2G_BRA() then
-      MENU_GROUP_COMMAND:New( PlayerGroup, "Activate MGRS", A2GCoordinateMenu, self.MenuGroupA2GSystem, self, PlayerUnit, PlayerGroup, PlayerName, "MGRS" )
-      MENU_GROUP_COMMAND:New( PlayerGroup, "Activate LL", A2GCoordinateMenu, self.MenuGroupA2GSystem, self, PlayerUnit, PlayerGroup, PlayerName, "LL" )
+    if self:IsA2G_BR() then
+      MENU_GROUP_COMMAND:New( PlayerGroup, "Military Grid (MGRS)", A2GCoordinateMenu, self.MenuGroupA2GSystem, self, PlayerUnit, PlayerGroup, PlayerName, "MGRS" )
+      MENU_GROUP_COMMAND:New( PlayerGroup, "Lattitude Longitude (LL)", A2GCoordinateMenu, self.MenuGroupA2GSystem, self, PlayerUnit, PlayerGroup, PlayerName, "LL" )
     end
 
     local A2ACoordinateMenu = MENU_GROUP:New( PlayerGroup, "A2A Coordinate System", PlayerMenu )
 
     if self:IsA2A_BULLS() then
-      MENU_GROUP_COMMAND:New( PlayerGroup, "Activate BRA", A2ACoordinateMenu, self.MenuGroupA2ASystem, self, PlayerUnit, PlayerGroup, PlayerName, "BRA" )
+      MENU_GROUP_COMMAND:New( PlayerGroup, "Bearing Range Altitude Aspect (BRAA)", A2ACoordinateMenu, self.MenuGroupA2ASystem, self, PlayerUnit, PlayerGroup, PlayerName, "BRAA" )
     end
   
-    if self:IsA2A_BRA() then
-      MENU_GROUP_COMMAND:New( PlayerGroup, "Activate BULLS", A2ACoordinateMenu, self.MenuGroupA2ASystem, self, PlayerUnit, PlayerGroup, PlayerName, "BULLS" )
+    if self:IsA2A_BRAA() then
+      MENU_GROUP_COMMAND:New( PlayerGroup, "Bullseye (BULLS)", A2ACoordinateMenu, self.MenuGroupA2ASystem, self, PlayerUnit, PlayerGroup, PlayerName, "BULLS" )
     end
 
     local MetricsMenu = MENU_GROUP:New( PlayerGroup, "Measures and Weights System", PlayerMenu )
     
     if self:IsMetric() then
-      MENU_GROUP_COMMAND:New( PlayerGroup, "Activate Imperial", MetricsMenu, self.MenuGroupMWSystem, self, PlayerUnit, PlayerGroup, PlayerName, false )
+      MENU_GROUP_COMMAND:New( PlayerGroup, "Imperial (Miles,Feet)", MetricsMenu, self.MenuGroupMWSystem, self, PlayerUnit, PlayerGroup, PlayerName, false )
     end
     
     if self:IsImperial() then
-      MENU_GROUP_COMMAND:New( PlayerGroup, "Activate Metric", MetricsMenu, self.MenuGroupMWSystem, self, PlayerUnit, PlayerGroup, PlayerName, true )
+      MENU_GROUP_COMMAND:New( PlayerGroup, "Metric (Kilometers,Meters)", MetricsMenu, self.MenuGroupMWSystem, self, PlayerUnit, PlayerGroup, PlayerName, true )
     end    
     
     return self
@@ -5686,40 +5676,45 @@ do -- SETTINGS
 
 
   --- @param #SETTINGS self
-  function SETTINGS:A2GMenuSystem( A2GSystem )
+  function SETTINGS:A2GMenuSystem( MenuGroup, RootMenu, A2GSystem )
     self.A2GSystem = A2GSystem
-    self:SetSystemMenu()
+    MESSAGE:New( string.format("Settings: Default A2G coordinate system set to %s for all players!.", A2GSystem ), 5 ):ToAll()
+    self:SetSystemMenu( MenuGroup, RootMenu )
   end
 
   --- @param #SETTINGS self
-  function SETTINGS:A2AMenuSystem( A2ASystem )
+  function SETTINGS:A2AMenuSystem( MenuGroup, RootMenu, A2ASystem )
     self.A2ASystem = A2ASystem
-    self:SetSystemMenu()
+    MESSAGE:New( string.format("Settings: Default A2A coordinate system set to %s for all players!.", A2ASystem ), 5 ):ToAll()
+    self:SetSystemMenu( MenuGroup, RootMenu )
   end
 
   --- @param #SETTINGS self
-  function SETTINGS:MenuLL_Accuracy( LL_Accuracy )
+  function SETTINGS:MenuLL_Accuracy( MenuGroup, RootMenu, LL_Accuracy )
     self.LL_Accuracy = LL_Accuracy
-    self:SetSystemMenu()
+    MESSAGE:New( string.format("Settings: Default LL accuracy set to %s for all players!.", LL_Accuracy ), 5 ):ToAll()
+    self:SetSystemMenu( MenuGroup, RootMenu )
   end
 
   --- @param #SETTINGS self
-  function SETTINGS:MenuLL_DMS( LL_DMS )
+  function SETTINGS:MenuLL_DMS( MenuGroup, RootMenu, LL_DMS )
     self.LL_DMS = LL_DMS
-    self:SetSystemMenu()
+    MESSAGE:New( string.format("Settings: Default LL format set to %s for all players!.", LL_DMS or "Decimal" or "HMS" ), 5 ):ToAll()
+    self:SetSystemMenu( MenuGroup, RootMenu )
   end
 
   --- @param #SETTINGS self
-  function SETTINGS:MenuMGRS_Accuracy( MGRS_Accuracy )
+  function SETTINGS:MenuMGRS_Accuracy( MenuGroup, RootMenu, MGRS_Accuracy )
     self.MGRS_Accuracy = MGRS_Accuracy
-    self:SetSystemMenu()
+    MESSAGE:New( string.format("Settings: Default MGRS accuracy set to %s for all players!.", MGRS_Accuracy ), 5 ):ToAll()
+    self:SetSystemMenu( MenuGroup, RootMenu )
   end
 
   --- @param #SETTINGS self
-  function SETTINGS:MenuMWSystem( MW )
+  function SETTINGS:MenuMWSystem( MenuGroup, RootMenu, MW )
     self.Metric = MW
     MESSAGE:New( string.format("Settings: Default measurement format set to %s for all players!.", MW and "Metric" or "Imperial" ), 5 ):ToAll()
-    self:SetSystemMenu()
+    self:SetSystemMenu( MenuGroup, RootMenu )
   end
 
   do
@@ -5751,7 +5746,7 @@ do -- SETTINGS
     --- @param #SETTINGS self
     function SETTINGS:MenuGroupLL_DMSSystem( PlayerUnit, PlayerGroup, PlayerName, LL_DMS )
       self.LL_DMS = LL_DMS
-      MESSAGE:New( string.format("Settings: A2G LL format mode set to %s for player %s.", LL_DMS and "DMS" or "HMS", PlayerName ), 5 ):ToGroup( PlayerGroup )
+      MESSAGE:New( string.format("Settings: A2G LL format mode set to %s for player %s.", LL_DMS and "Decimal" or "HMS", PlayerName ), 5 ):ToGroup( PlayerGroup )
       self:RemovePlayerMenu(PlayerUnit)
       self:SetPlayerMenu(PlayerUnit)
     end
@@ -8064,6 +8059,16 @@ function DATABASE:FindStatic( StaticName )
 
   local StaticFound = self.STATICS[StaticName]
   return StaticFound
+end
+
+--- Finds a AIRBASE based on the AirbaseName.
+-- @param #DATABASE self
+-- @param #string AirbaseName
+-- @return Wrapper.Airbase#AIRBASE The found AIRBASE.
+function DATABASE:FindAirbase( AirbaseName )
+
+  local AirbaseFound = self.AIRBASES[AirbaseName]
+  return AirbaseFound
 end
 
 --- Adds a Airbase based on the Airbase Name in the DATABASE.
@@ -11648,13 +11653,13 @@ SET_CARGO = {
 
 --- (R2.1) Creates a new SET_CARGO object, building a set of cargos belonging to a coalitions and categories.
 -- @param #SET_CARGO self
--- @return #SET_CARGO self
+-- @return #SET_CARGO
 -- @usage
 -- -- Define a new SET_CARGO Object. The DatabaseSet will contain a reference to all Cargos.
 -- DatabaseSet = SET_CARGO:New()
 function SET_CARGO:New() --R2.1
   -- Inherits from BASE
-  local self = BASE:Inherit( self, SET_BASE:New( _DATABASE.CARGOS ) )
+  local self = BASE:Inherit( self, SET_BASE:New( _DATABASE.CARGOS ) ) -- #SET_CARGO
 
   return self
 end
@@ -12729,7 +12734,7 @@ do -- COORDINATE
     local IsAir = Controllable and Controllable:IsAirPlane() or false
 
     if IsAir then
-      if Settings:IsA2A_BRA()  then
+      if Settings:IsA2A_BRAA()  then
         local Coordinate = Controllable:GetCoordinate()
         return self:ToStringBRA( Coordinate, Settings ) 
       end
@@ -12739,7 +12744,7 @@ do -- COORDINATE
         return self:ToStringBULLS( Coalition, Settings )
       end
     else
-      if Settings:IsA2G_BRA()  then
+      if Settings:IsA2G_BR()  then
         local Coordinate = Controllable:GetCoordinate()
         return Controllable and self:ToStringBR( Coordinate, Settings ) or self:ToStringMGRS( Settings )
       end
@@ -15592,7 +15597,7 @@ do -- CARGO
   -- @field #number Weight A number defining the weight of the cargo. The weight is expressed in kg.
   -- @field #number NearRadius (optional) A number defining the radius in meters when the cargo is near to a Carrier, so that it can be loaded.
   -- @field Wrapper.Controllable#CONTROLLABLE CargoObject The alive DCS object representing the cargo. This value can be nil, meaning, that the cargo is not represented anywhere...
-  -- @field Wrapper.Controllable#CONTROLLABLE CargoCarrier The alive DCS object carrying the cargo. This value can be nil, meaning, that the cargo is not contained anywhere...
+  -- @field Wrapper.Client#CLIENT CargoCarrier The alive DCS object carrying the cargo. This value can be nil, meaning, that the cargo is not contained anywhere...
   -- @field #boolean Slingloadable This flag defines if the cargo can be slingloaded.
   -- @field #boolean Moveable This flag defines if the cargo is moveable.
   -- @field #boolean Representable This flag defines if the cargo can be represented by a DCS Unit.
@@ -15638,8 +15643,7 @@ do -- CARGO
   --     The state transition method needs to start with the name **OnEnter + the name of the state**. 
   --     These state transition methods need to provide a return value, which is specified at the function description.
   --
-  -- @field #CARGO CARGO
-  --
+  -- @field #CARGO
   CARGO = {
     ClassName = "CARGO",
     Type = nil,
@@ -15679,6 +15683,7 @@ function CARGO:New( Type, Name, Weight ) --R2.1
   self:AddTransition( "UnBoarding", "UnBoarding", "UnBoarding" )
   self:AddTransition( "UnBoarding", "UnLoad", "UnLoaded" )
   self:AddTransition( "Loaded", "UnLoad", "UnLoaded" )
+  self:AddTransition( "*", "Damaged", "Damaged" )
   self:AddTransition( "*", "Destroyed", "Destroyed" )
   self:AddTransition( "*", "Respawn", "UnLoaded" )
 
@@ -15692,15 +15697,24 @@ function CARGO:New( Type, Name, Weight ) --R2.1
   self.Slingloadable = false
   self.Moveable = false
   self.Containable = false
+  
+  self:SetDeployed( false )
 
   self.CargoScheduler = SCHEDULER:New()
 
   CARGOS[self.Name] = self
 
-  self:SetEventPriority( 5 )
   
-
   return self
+end
+
+--- Destroy the cargo.
+-- @param #CARGO self
+function CARGO:Destroy()
+  if self.CargoObject then
+    self.CargoObject:Destroy()
+  end
+  self:Destroyed()
 end
 
 --- Get the name of the Cargo.
@@ -15735,6 +15749,13 @@ function CARGO:GetCoordinate()
   return self.CargoObject:GetCoordinate()
 end
 
+--- Check if cargo is destroyed.
+-- @param #CARGO self
+-- @return #boolean true if destroyed
+function CARGO:IsDestroyed()
+  return self:Is( "Destroyed" )
+end
+
 
 --- Check if cargo is loaded.
 -- @param #CARGO self
@@ -15760,6 +15781,19 @@ function CARGO:IsAlive()
   else
     return self.CargoObject:IsAlive()
   end 
+end
+
+--- Set the cargo as deployed
+-- @param #CARGO self
+function CARGO:SetDeployed( Deployed )
+  self.Deployed = Deployed
+end
+
+--- Is the cargo deployed
+-- @param #CARGO self
+-- @return #boolean
+function CARGO:IsDeployed()
+  return self.Deployed
 end
 
 
@@ -15913,8 +15947,12 @@ end -- CARGO_REPRESENTABLE
     local self = BASE:Inherit( self, CARGO:New( Type, Name, Weight ) ) -- #CARGO_REPORTABLE
     self:F( { Type, Name, Weight, ReportRadius } )
   
+    self.CargoSet = SET_CARGO:New() -- Core.Set#SET_CARGO
+  
     self.ReportRadius = ReportRadius or 1000
     self.CargoObject = CargoObject
+
+
   
     return self
   end
@@ -15944,7 +15982,7 @@ end -- CARGO_REPRESENTABLE
   end
 
   --- Send a CC message to a GROUP.
-  -- @param #COMMANDCENTER self
+  -- @param #CARGO_REPORTABLE self
   -- @param #string Message
   -- @param Wrapper.Group#GROUP TaskGroup
   -- @param #sring Name (optional) The name of the Group used as a prefix for the message to the Group. If not provided, there will be nothing shown.
@@ -15957,12 +15995,38 @@ end -- CARGO_REPRESENTABLE
   end
 
   --- Get the range till cargo will board.
-  -- @param #CARGO self
+  -- @param #CARGO_REPORTABLE self
   -- @return #number The range till cargo will board.
   function CARGO_REPORTABLE:GetBoardingRange()
     return self.ReportRadius
   end
+  
+  --- Respawn the cargo.
+  -- @param #CARGO_REPORTABLE self
+  function CARGO_REPORTABLE:Respawn()
 
+    self:F({"Respawning"})
+
+    for CargoID, CargoData in pairs( self.CargoSet:GetSet() ) do
+      local Cargo = CargoData -- #CARGO
+      Cargo:Destroy()
+      Cargo:SetStartState( "UnLoaded" )
+    end
+
+    local CargoObject = self.CargoObject -- Wrapper.Group#GROUP
+    CargoObject:Destroy()
+    local Template = CargoObject:GetTemplate()
+    CargoObject:Respawn( Template )
+  
+    self:SetDeployed( false )
+  
+    local WeightGroup = 0
+        
+    self:SetStartState( "UnLoaded" )
+    
+  end
+
+  
 end
 
 do -- CARGO_UNIT
@@ -16002,16 +16066,18 @@ function CARGO_UNIT:New( CargoUnit, Type, Name, Weight, NearRadius )
 
   self:T( self.ClassName )
 
-  self:HandleEvent( EVENTS.Dead,
-    --- @param #CARGO Cargo
-    -- @param Core.Event#EVENTDATA EventData 
-    function( Cargo, EventData )
-      if Cargo:GetObjectName() == EventData.IniUnit:GetName() then
-        self:E( { "Cargo destroyed", Cargo } )
-        Cargo:Destroyed()
-      end
-    end
-  )
+--  self:HandleEvent( EVENTS.Dead,
+--    --- @param #CARGO Cargo
+--    -- @param Core.Event#EVENTDATA EventData 
+--    function( Cargo, EventData )
+--      if Cargo:GetObjectName() == EventData.IniUnit:GetName() then
+--        self:E( { "Cargo destroyed", Cargo } )
+--        Cargo:Destroyed()
+--      end
+--    end
+--  )
+
+  self:SetEventPriority( 5 )
 
   return self
 end
@@ -16022,6 +16088,7 @@ end
 function CARGO_UNIT:Destroy()
 
   -- Cargo objects are deleted from the _DATABASE and SET_CARGO objects.
+  self:F( { CargoName = self:GetName() } )
   _EVENTDISPATCHER:CreateEventDeleteCargo( self )
 
   return self
@@ -16349,9 +16416,9 @@ function CARGO_GROUP:New( CargoGroup, Type, Name, ReportRadius )
   local self = BASE:Inherit( self, CARGO_REPORTABLE:New( CargoGroup, Type, Name, 0, ReportRadius ) ) -- #CARGO_GROUP
   self:F( { Type, Name, ReportRadius } )
 
-  self.CargoSet = SET_CARGO:New()
-  
   self.CargoObject = CargoGroup
+  self:SetDeployed( false )
+  self.CargoGroup = CargoGroup
   
   local WeightGroup = 0
   
@@ -16370,7 +16437,43 @@ function CARGO_GROUP:New( CargoGroup, Type, Name, ReportRadius )
   -- Cargo objects are added to the _DATABASE and SET_CARGO objects.
   _EVENTDISPATCHER:CreateEventNewCargo( self )
   
+  self:HandleEvent( EVENTS.Dead, self.OnEventCargoDead )
+  self:HandleEvent( EVENTS.Crash, self.OnEventCargoDead )
+  self:HandleEvent( EVENTS.PlayerLeaveUnit, self.OnEventCargoDead )
+  
+  self:SetEventPriority( 4 )
+  
   return self
+end
+
+--- @param #CARGO Cargo
+-- @param Core.Event#EVENTDATA EventData 
+function CARGO_GROUP:OnEventCargoDead( EventData )
+
+  local Destroyed = false
+  
+  if self:IsDestroyed() or self:IsUnLoaded() then
+    Destroyed = true
+    for CargoID, CargoData in pairs( self.CargoSet:GetSet() ) do
+      local Cargo = CargoData -- #CARGO
+      if Cargo:IsAlive() then
+        Destroyed = false
+      else
+        Cargo:Destroyed()
+      end
+    end
+  else
+    if self.CargoCarrier:GetName() == EventData.IniUnitName then
+      Destroyed = true
+      self.CargoCarrier:ClearCargo()
+    end
+  end
+  
+  if Destroyed then
+    self:Destroyed()
+    self:E( { "Cargo group destroyed" } )
+  end
+
 end
 
 --- Enter Boarding State.
@@ -16414,7 +16517,7 @@ function CARGO_GROUP:onenterLoaded( From, Event, To, CargoCarrier, ... )
     end
   end
   
-  self.CargoObject:Destroy()
+  --self.CargoObject:Destroy()
   self.CargoCarrier = CargoCarrier
   
 end
@@ -16469,6 +16572,14 @@ function CARGO_GROUP:onafterBoarding( From, Event, To, CargoCarrier, NearRadius,
   end
   
 end
+
+--- Get the amount of cargo units in the group.
+-- @param #CARGO_GROUP self
+-- @return #CARGO_GROUP
+function CARGO_GROUP:GetCount()
+  return self.CargoSet:Count()
+end
+
 
 --- Enter UnBoarding State.
 -- @param #CARGO_GROUP self
@@ -16574,6 +16685,23 @@ function CARGO_GROUP:onenterUnLoaded( From, Event, To, ToPointVec2, ... )
   end
   
 end
+
+
+  --- Respawn the cargo when destroyed
+  -- @param #CARGO_GROUP self
+  -- @param #boolean RespawnDestroyed
+  function CARGO_GROUP:RespawnOnDestroyed( RespawnDestroyed )
+    self:F({"In function RespawnOnDestroyed"})
+    if RespawnDestroyed then
+      self.onenterDestroyed = function( self )
+        self:F("IN FUNCTION")
+        self:Respawn()
+      end
+    else
+      self.onenterDestroyed = nil
+    end
+      
+  end
 
 end -- CARGO_GROUP
 
@@ -17404,13 +17532,11 @@ end
 -- 
 -- @module Positionable
 
-
---- The POSITIONABLE class
--- @type POSITIONABLE
+--- @type POSITIONABLE.__ Methods which are not intended for mission designers, but which are used interally by the moose designer :-)
 -- @extends Wrapper.Identifiable#IDENTIFIABLE
--- @field #string PositionableName The name of the measurable.
--- @field Core.Spot#SPOT Spot The laser Spot.
--- @field #number LaserCode The last assigned laser code.
+
+--- @type POSITIONABLE
+-- @extends POSITIONABLE.__
 
 
 --- # POSITIONABLE class, extends @{Identifiable#IDENTIFIABLE}
@@ -17443,6 +17569,14 @@ POSITIONABLE = {
   ClassName = "POSITIONABLE",
   PositionableName = "",
 }
+
+--- @field #POSITIONABLE.__
+POSITIONABLE.__ = {}
+
+--- @field #POSITIONABLE.__.Cargo
+POSITIONABLE.__.Cargo = {}
+
+
 --- A DCSPositionable
 -- @type DCSPositionable
 -- @field id_ The ID of the controllable in DCS
@@ -18071,8 +18205,47 @@ function POSITIONABLE:GetLaserCode() --R2.1
   return self.LaserCode
 end
 
+--- Add cargo.
+-- @param #POSITIONABLE self
+-- @param Core.Cargo#CARGO Cargo
+-- @return #POSITIONABLE
+function POSITIONABLE:AddCargo( Cargo )
+  self.__.Cargo[Cargo] = Cargo
+  return self
+end
 
+--- Remove cargo.
+-- @param #POSITIONABLE self
+-- @param Core.Cargo#CARGO Cargo
+-- @return #POSITIONABLE
+function POSITIONABLE:RemoveCargo( Cargo )
+  self.__.Cargo[Cargo] = nil
+  return self
+end
 
+--- Returns if carrier has given cargo.
+-- @param #POSITIONABLE self
+-- @return Core.Cargo#CARGO Cargo
+function POSITIONABLE:HasCargo( Cargo )
+  return self.__.Cargo[Cargo]
+end
+
+--- Clear all cargo.
+-- @param #POSITIONABLE self
+function POSITIONABLE:ClearCargo()
+  self.__.Cargo = {}
+end
+
+--- Get cargo item count.
+-- @param #POSITIONABLE self
+-- @return Core.Cargo#CARGO Cargo
+function POSITIONABLE:CargoItemCount()
+  local ItemCount = 0
+  for CargoName, Cargo in pairs( self.__.Cargo ) do
+    ItemCount = ItemCount + Cargo:GetCount()
+  end
+  return ItemCount
+end
 --- **Wrapper** -- CONTROLLABLE is an intermediate class wrapping Group and Unit classes "controllers".
 -- 
 -- ====
@@ -21352,25 +21525,28 @@ end
 -- @param #table Template The template of the Group retrieved with GROUP:GetTemplate()
 function GROUP:Respawn( Template )
 
-  local Vec3 = self:GetVec3()
-  Template.x = Vec3.x
-  Template.y = Vec3.z
-  --Template.x = nil
-  --Template.y = nil
-  
-  self:E( #Template.units )
-  for UnitID, UnitData in pairs( self:GetUnits() ) do
-    local GroupUnit = UnitData -- Wrapper.Unit#UNIT
-    self:E( GroupUnit:GetName() )
-    if GroupUnit:IsAlive() then
-      local GroupUnitVec3 = GroupUnit:GetVec3()
-      local GroupUnitHeading = GroupUnit:GetHeading()
-      Template.units[UnitID].alt = GroupUnitVec3.y
-      Template.units[UnitID].x = GroupUnitVec3.x
-      Template.units[UnitID].y = GroupUnitVec3.z
-      Template.units[UnitID].heading = GroupUnitHeading
-      self:E( { UnitID, Template.units[UnitID], Template.units[UnitID] } )
+  if self:IsAlive() then
+    local Vec3 = self:GetVec3()
+    Template.x = Vec3.x
+    Template.y = Vec3.z
+    --Template.x = nil
+    --Template.y = nil
+    
+    self:E( #Template.units )
+    for UnitID, UnitData in pairs( self:GetUnits() ) do
+      local GroupUnit = UnitData -- Wrapper.Unit#UNIT
+      self:E( GroupUnit:GetName() )
+      if GroupUnit:IsAlive() then
+        local GroupUnitVec3 = GroupUnit:GetVec3()
+        local GroupUnitHeading = GroupUnit:GetHeading()
+        Template.units[UnitID].alt = GroupUnitVec3.y
+        Template.units[UnitID].x = GroupUnitVec3.x
+        Template.units[UnitID].y = GroupUnitVec3.z
+        Template.units[UnitID].heading = GroupUnitHeading
+        self:E( { UnitID, Template.units[UnitID], Template.units[UnitID] } )
+      end
     end
+    
   end
   
   self:Destroy()
@@ -24175,10 +24351,10 @@ function SCORING:_AddPlayerFromUnit( UnitData )
     end
 
     if self.Players[PlayerName].Penalty > self.Fratricide then
-      --UnitData:Destroy()
       MESSAGE:New( self.DisplayMessagePrefix .. "Player '" .. PlayerName .. "' committed FRATRICIDE, he will be COURT MARTIALED and is DISMISSED from this mission!",
         10
       ):ToAll()
+      UnitData:Destroy()
     end
 
   end
@@ -25372,8 +25548,14 @@ end
 -- 
 -- ## 2. Add or Remove airbases
 -- 
--- The method @{#CLEANUP.AddAirbase} to add an airbase to the cleanup validation process.
--- The method @{#CLEANUP.RemoveAirbase} removes an airbase from the cleanup validation process.
+-- The method @{#CLEANUP.AddAirbase}() to add an airbase to the cleanup validation process.
+-- The method @{#CLEANUP.RemoveAirbase}() removes an airbase from the cleanup validation process.
+-- 
+-- ## 3. Clean missiles and bombs within the airbase zone.
+-- 
+-- When missiles or bombs hit the runway, the airbase operations stop.
+-- Use the method @{#CLEANUP.SetCleanMissiles}() to control the cleaning of missiles, which will prevent airbases to stop.
+-- Note that this method will not allow anymore airbases to be attacked, so there is a trade-off here to do.
 -- 
 -- @field #CLEANUP
 CLEANUP = {
@@ -25415,6 +25597,13 @@ function CLEANUP:New( AirbaseNames )
 	self:HandleEvent( EVENTS.Birth, self.__.OnEventBirth )
 	
   self.__.CleanUpScheduler = SCHEDULER:New( self, self.__.CleanUpSchedule, {}, 1, self.TimeInterval )
+
+  self:HandleEvent( EVENTS.EngineShutdown , self.__.EventAddForCleanUp )
+  self:HandleEvent( EVENTS.EngineStartup, self.__.EventAddForCleanUp )
+  self:HandleEvent( EVENTS.Hit, self.__.EventAddForCleanUp )
+  self:HandleEvent( EVENTS.PilotDead, self.__.OnEventCrash )
+  self:HandleEvent( EVENTS.Dead, self.__.OnEventCrash )
+  self:HandleEvent( EVENTS.Crash, self.__.OnEventCrash )
 	
 	return self
 end
@@ -25439,7 +25628,24 @@ function CLEANUP:RemoveAirbase( AirbaseName )
   return self
 end
 
+--- Enables or disables the cleaning of missiles within the airbase zones.
+-- Airbase operations stop when a missile or bomb is dropped at a runway.
+-- Note that when this method is used, the airbase operations won't stop if
+-- the missile or bomb was cleaned within the airbase zone, which is 8km from the center of the airbase.
+-- However, there is a trade-off to make. Attacks on airbases won't be possible anymore if this method is used.
+-- Note, one can also use the method @{#CLEANUP.RemoveAirbase}() to remove the airbase from the control process as a whole,
+-- when an enemy unit is near. That is also an option...
+-- @param #CLEANUP self
+-- @param #string CleanMissiles (Default=true) If true, missiles fired are immediately destroyed. If false missiles are not controlled.
+-- @return #CLEANUP
+function CLEANUP:SetCleanMissiles( CleanMissiles )
 
+  if CleanMissiles or true then
+    self:HandleEvent( EVENTS.Shot, self.__.OnEventShot )
+  else
+    self:UnHandleEvent( EVENTS.Shot )
+  end
+end
 
 function CLEANUP.__:IsInAirbase( Vec2 )
 
@@ -25504,14 +25710,6 @@ function CLEANUP.__:OnEventBirth( EventData )
   self.CleanUpList[EventData.IniDCSUnitName].CleanUpGroup = EventData.IniGroup
   self.CleanUpList[EventData.IniDCSUnitName].CleanUpGroupName = EventData.IniDCSGroupName
   self.CleanUpList[EventData.IniDCSUnitName].CleanUpUnitName = EventData.IniDCSUnitName
-
-  self:HandleEvent( EVENTS.EngineShutdown , self.__.EventAddForCleanUp )
-  self:HandleEvent( EVENTS.EngineStartup, self.__.EventAddForCleanUp )
-  self:HandleEvent( EVENTS.Hit, self.__.EventAddForCleanUp )
-  self:HandleEvent( EVENTS.PilotDead, self.__.OnEventCrash )
-  self:HandleEvent( EVENTS.Dead, self.__.OnEventCrash )
-  self:HandleEvent( EVENTS.Crash, self.__.OnEventCrash )
-  self:HandleEvent( EVENTS.Shot, self.__.OnEventShot )
 
 end
 
@@ -37836,6 +38034,9 @@ do -- AI_A2A_DISPATCHER
     
     DefenderSquadron.Name = SquadronName
     DefenderSquadron.Airbase = AIRBASE:FindByName( AirbaseName )
+    if not DefenderSquadron.Airbase then
+      error( "Cannot find airbase with name:" .. AirbaseName )
+    end
     
     DefenderSquadron.Spawn = {}
     if type( SpawnTemplates ) == "string" then
@@ -38600,6 +38801,7 @@ do -- AI_A2A_DISPATCHER
       for SquadronName, DefenderSquadron in pairs( self.DefenderSquadrons or {} ) do
         for InterceptID, Intercept in pairs( DefenderSquadron.Gci or {} ) do
     
+          self:E( { DefenderSquadron } )
           local SpawnCoord = DefenderSquadron.Airbase:GetCoordinate() -- Core.Point#COORDINATE
           local TargetCoord = Target.Set:GetFirst():GetCoordinate()
           local Distance = SpawnCoord:Get2DDistance( TargetCoord )
@@ -38951,16 +39153,14 @@ end
 
 do
 
-  --- AI_A2A_DISPATCHER_GCICAP class.
-  -- @type AI_A2A_DISPATCHER_GCICAP
+  --- @type AI_A2A_GCICAP
   -- @extends #AI_A2A_DISPATCHER
 
-  --- # AI\_A2A\_DISPATCHER\_GCICAP class, extends @{AI#AI_A2A_DISPATCHER}
+  --- # AI\_A2A\_GCICAP class, extends @{AI#AI_A2A_DISPATCHER}
   -- 
   -- ![Banner Image](..\Presentations\AI_A2A_DISPATCHER\Dia1.JPG)
   -- 
-  -- The @{#AI_A2A_DISPATCHER} class is designed to create an automatic air defence system for a coalition. 
-  -- 
+  -- The AI_A2A_GCICAP class is designed to create an automatic air defence system for a coalition setting up GCI and CAP air defenses. 
   -- 
   -- ![Banner Image](..\Presentations\AI_A2A_DISPATCHER\Dia3.JPG)
   -- 
@@ -38970,18 +39170,18 @@ do
   -- With a little time and with a little work it provides the mission designer with a convincing and completely automatic air defence system. 
   -- In short it is a plug in very flexible and configurable air defence module for DCS World.
   -- 
-  -- Note that in order to create a two way A2A defense system, two AI\_A2A\_DISPATCHER_GCICAP defense system may need to be created, for each coalition one.
+  -- Note that in order to create a two way A2A defense system, two AI\_A2A\_GCICAP defense system may need to be created, for each coalition one.
   -- This is a good implementation, because maybe in the future, more coalitions may become available in DCS world.
   -- 
-  -- ## 1. AI\_A2A\_DISPATCHER\_GCICAP constructor:
+  -- ## 1. AI\_A2A\_GCICAP constructor:
   -- 
-  -- The @{#AI_A2A_DISPATCHER_GCICAP.New}() method creates a new AI\_A2A\_DISPATCHER\_GCICAP instance.
+  -- The @{#AI_A2A_GCICAP.New}() method creates a new AI\_A2A\_GCICAP instance.
   -- There are two parameters required, a list of prefix group names that collects the groups of the EWR network, and a radius in meters, 
   -- that will be used to group the detected targets.
   -- 
   -- ### 1.1. Define the **EWR network**:
   -- 
-  -- As part of the AI\_A2A\_DISPATCHER\_GCICAP constructor, a list of prefixes must be given of the group names defined within the mission editor,
+  -- As part of the AI\_A2A\_GCICAP constructor, a list of prefixes must be given of the group names defined within the mission editor,
   -- that define the EWR network.
   -- 
   -- An EWR network, or, Early Warning Radar network, is used to early detect potential airborne targets and to understand the position of patrolling targets of the enemy.
@@ -39029,35 +39229,175 @@ do
   -- so all further documentation needs to be consulted in this class
   -- for documentation consistency.
   -- 
-  -- @field #AI_A2A_DISPATCHER_GCICAP
-  AI_A2A_DISPATCHER_GCICAP = {
-    ClassName = "AI_A2A_DISPATCHER_GCICAP",
+  -- @field #AI_A2A_GCICAP
+  AI_A2A_GCICAP = {
+    ClassName = "AI_A2A_GCICAP",
     Detection = nil,
   }
 
 
-  --- AI_A2A_DISPATCHER_GCICAP constructor.
-  -- @param #AI_A2A_DISPATCHER_GCICAP self
+  --- AI_A2A_GCICAP constructor.
+  -- @param #AI_A2A_GCICAP self
   -- @param #list<#string> EWRPrefixes A list of prefixes that of groups that setup the Early Warning Radar network.
   -- @param #number GroupingRadius The radius in meters wherein detected planes are being grouped as one target area. 
   -- For airplanes, 6000 (6km) is recommended, and is also the default value of this parameter.
   -- @return #AI_A2A_DISPATCHER_GCICAP
   -- @usage
   --   
-  --   -- Set a new AI A2A Dispatcher object, based on an EWR network with a 30 km grouping radius
+  --   -- Set a new AI A2A GCICAP object, based on an EWR network with a 30 km grouping radius
   --   -- This for ground and awacs installations.
   --   
-  --   A2ADispatcher = AI_A2A_DISPATCHER_GCICAP:New( { "BlueEWRGroundRadars", "BlueEWRAwacs" }, 30000 )
+  --   A2ADispatcher = AI_A2A_GCICAP:New( { "BlueEWRGroundRadars", "BlueEWRAwacs" }, 30000 )
   --   
-  function AI_A2A_DISPATCHER_GCICAP:New( EWRPrefixes, GroupingRadius )
+  function AI_A2A_GCICAP:New( EWRPrefixes, TemplatePrefixes, CAPPrefixes, CapLimit, GroupingRadius, EngageRadius )
 
-    local SetGroup = SET_GROUP:New()
-    SetGroup:FilterPrefixes( EWRPrefixes )
-    SetGroup:FilterStart()
+    GroupingRadius = GroupingRadius or 30000
+    EngageRadius = EngageRadius or 100000
 
-    local Detection  = DETECTION_AREAS:New( SetGroup, GroupingRadius )
+    local EWRSetGroup = SET_GROUP:New()
+    EWRSetGroup:FilterPrefixes( EWRPrefixes )
+    EWRSetGroup:FilterStart()
 
-    local self = BASE:Inherit( self, AI_A2A_DISPATCHER:New( Detection ) ) -- #AI_A2A_DISPATCHER_GCICAP
+    local Detection  = DETECTION_AREAS:New( EWRSetGroup, GroupingRadius )
+
+    local self = BASE:Inherit( self, AI_A2A_DISPATCHER:New( Detection ) ) -- #AI_A2A_GCICAP
+    
+    self:SetEngageRadius( EngageRadius )
+
+    -- Determine the coalition of the EWRNetwork, this will be the coalition of the GCICAP.
+    local EWRFirst = EWRSetGroup:GetFirst() -- Wrapper.Group#GROUP
+    local EWRCoalition = EWRFirst:GetCoalition()
+
+
+    -- Determine the airbases belonging to the coalition.
+    local AirbaseNames = {} -- #list<#string>
+    for AirbaseID, AirbaseData in pairs( _DATABASE.AIRBASES ) do
+      local Airbase = AirbaseData -- Wrapper.Airbase#AIRBASE
+      local AirbaseName = Airbase:GetName()
+      if Airbase:GetCoalition() == EWRCoalition then
+        table.insert( AirbaseNames, AirbaseName )
+      end
+    end    
+    
+    self.Templates = SET_GROUP
+      :New()
+      :FilterPrefixes( TemplatePrefixes )
+      :FilterOnce()
+
+    -- Setup squadrons
+    
+    for AirbaseID, AirbaseName in pairs( AirbaseNames ) do
+      local Airbase = _DATABASE:FindAirbase( AirbaseName ) -- Wrapper.Airbase#AIRBASE
+      local AirbaseName = Airbase:GetName()
+      local AirbaseCoord = Airbase:GetCoordinate()
+      local AirbaseZone = ZONE_RADIUS:New( "Airbase", AirbaseCoord:GetVec2(), 10000 )
+      local Templates = nil
+      for TemplateID, Template in pairs( self.Templates:GetSet() ) do
+        local Template = Template -- Wrapper.Group#GROUP
+        local TemplateCoord = Template:GetCoordinate()
+        if AirbaseZone:IsVec2InZone( TemplateCoord:GetVec2() ) then
+          Templates = Templates or {}
+          table.insert( Templates, Template:GetName() )
+        end
+      end
+      if Templates then
+        self:SetSquadron( AirbaseName, AirbaseName, Templates, 30 )
+      end
+    end
+
+    -- Setup CAP.
+    -- Find for each CAP the nearest airbase to the (start or center) of the zone. 
+    -- CAP will be launched from there.
+    
+    self.CAPTemplates = SET_GROUP:New()
+    self.CAPTemplates:FilterPrefixes( CAPPrefixes )
+    self.CAPTemplates:FilterOnce()
+    
+    for CAPID, CAPTemplate in pairs( self.CAPTemplates:GetSet() ) do
+      local CAPZone = ZONE_POLYGON:New( CAPTemplate:GetName(), CAPTemplate )
+      -- Now find the closest airbase from the ZONE (start or center)
+      local AirbaseDistance = 99999999
+      local AirbaseClosest = nil -- Wrapper.Airbase#AIRBASE
+      for AirbaseID, AirbaseName in pairs( AirbaseNames ) do
+        local Airbase = _DATABASE:FindAirbase( AirbaseName ) -- Wrapper.Airbase#AIRBASE
+        local AirbaseName = Airbase:GetName()
+        local AirbaseCoord = Airbase:GetCoordinate()
+        local Squadron = self.DefenderSquadrons[AirbaseName]
+        if Squadron then
+          local Distance = AirbaseCoord:Get2DDistance( CAPZone:GetCoordinate() )
+          if Distance < AirbaseDistance then
+            AirbaseDistance = Distance
+            AirbaseClosest = Airbase
+          end
+        end
+      end
+      if AirbaseClosest then
+        self:SetSquadronCap( AirbaseClosest:GetName(), CAPZone, 6000, 10000, 500, 800, 800, 1200, "RADIO" )
+        self:SetSquadronCapInterval( AirbaseClosest:GetName(), CapLimit, 300, 600, 1 )
+      end          
+    end    
+
+    -- Setup GCI.
+    -- GCI is setup for all Squadrons.
+    for AirbaseID, AirbaseName in pairs( AirbaseNames ) do
+      local Airbase = _DATABASE:FindAirbase( AirbaseName ) -- Wrapper.Airbase#AIRBASE
+      local AirbaseName = Airbase:GetName()
+      local Squadron = self.DefenderSquadrons[AirbaseName]
+      if Squadron then
+        self:SetSquadronGci( AirbaseName, 800, 1200 )
+      end
+    end
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     
     self:__Start( 5 )
     
@@ -44435,6 +44775,8 @@ function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
   )
   
   self:SetMenu()
+  
+  _SETTINGS:SetSystemMenu( CommandCenterPositionable )
 	
 	return self
 end
@@ -45126,7 +45468,7 @@ do -- Group Assignment
     local MissionGroupName = MissionGroup:GetName()
   
     self.AssignedGroups[MissionGroupName] = nil
-    self:E( string.format( "Mission %s is unassigned to %s", MissionName, MissionGroupName ) )
+    --self:E( string.format( "Mission %s is unassigned to %s", MissionName, MissionGroupName ) )
     
     return self
   end
@@ -45973,7 +46315,7 @@ function TASK:AbortGroup( PlayerGroup )
       self:E( { IsGroupAssigned = IsGroupAssigned } )
       if IsGroupAssigned then
         local PlayerName = PlayerGroup:GetUnit(1):GetPlayerName()
-        self:MessageToGroups( PlayerName .. " aborted Task " .. self:GetName() )
+        --self:MessageToGroups( PlayerName .. " aborted Task " .. self:GetName() )
         self:UnAssignFromGroup( PlayerGroup )
         --self:Abort()
 
@@ -46133,7 +46475,7 @@ do -- Group Assignment
     local TaskGroupName = TaskGroup:GetName()
   
     self.AssignedGroups[TaskGroupName] = nil
-    self:E( string.format( "Task %s is unassigned to %s", TaskName, TaskGroupName ) )
+    --self:E( string.format( "Task %s is unassigned to %s", TaskName, TaskGroupName ) )
 
     -- Set the group to be assigned at mission level. This allows to decide the menu options on mission level for this group.
     self:GetMission():ClearGroupAssignment( TaskGroup )
@@ -47029,8 +47371,8 @@ function TASK:ReportOverview( ReportGroup ) --R2.1 fixed report. Now nicely form
 
   
   -- List the name of the Task.
-  local Name = self:GetName()
-  local Report = REPORT:New( Name )
+  local TaskName = self:GetName()
+  local Report = REPORT:New()
   
   -- Determine the status of the Task.
   local Status = "<" .. self:GetState() .. ">"
@@ -47043,7 +47385,11 @@ function TASK:ReportOverview( ReportGroup ) --R2.1 fixed report. Now nicely form
     self:F( { TaskInfo = TaskInfo } )
 
     if Line < math.floor( TaskInfo.TaskInfoOrder / 10 ) then
-      Report:AddIndent( LineReport:Text( ", " ) )
+      if Line ~= 0 then
+        Report:AddIndent( LineReport:Text( ", " ) )
+      else
+        Report:Add( TaskName .. ":" .. LineReport:Text( ", " ))
+      end
       LineReport = REPORT:New()
       Line = math.floor( TaskInfo.TaskInfoOrder / 10 )
     end
@@ -49828,10 +50174,15 @@ do -- TASK_CARGO
     self.TaskType = TaskType
     self.SmokeColor = SMOKECOLOR.Red
     
+    self.CargoItemCount = {} -- Map of Carriers having a cargo item count to check the cargo loading limits.
+    self.CargoLimit = 2
+    
     self.DeployZones = {} -- setmetatable( {}, { __mode = "v" } ) -- weak table on value
 
     
     local Fsm = self:GetUnitProcess()
+    
+    Fsm:SetStartState( "Planned" )
 
     Fsm:AddProcess   ( "Planned", "Accept", ACT_ASSIGN_ACCEPT:New( self.TaskBriefing ), { Assigned = "SelectAction", Rejected = "Reject" }  )
     
@@ -49869,11 +50220,18 @@ do -- TASK_CARGO
     -- @param Wrapper.Unit#UNIT TaskUnit
     -- @param Tasking.Task_CARGO#TASK_CARGO Task
     function Fsm:onafterSelectAction( TaskUnit, Task )
-      self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
+      
+      local TaskUnitName = TaskUnit:GetName()
+      
+      self:E( { TaskUnit = TaskUnitName, Task = Task and Task:GetClassNameAndID() } )
 
       local MenuTime = timer.getTime()
             
       TaskUnit.Menu = MENU_GROUP:New( TaskUnit:GetGroup(), Task:GetName() .. " @ " .. TaskUnit:GetName() ):SetTime( MenuTime )
+
+      local CargoItemCount = TaskUnit:CargoItemCount()
+
+      --Task:GetMission():GetCommandCenter():MessageToGroup( "Cargo in carrier: " .. CargoItemCount, TaskUnit:GetGroup() )
 
       
       Task.SetCargo:ForEachCargo(
@@ -49893,51 +50251,35 @@ do -- TASK_CARGO
 --                Cargo
 --              ):SetTime(MenuTime)
 --            end
+
+
         
             if Cargo:IsUnLoaded() then
-              if Cargo:IsInRadius( TaskUnit:GetPointVec2() ) then
-                MENU_GROUP_COMMAND:New(
-                  TaskUnit:GetGroup(),
-                  "Board cargo " .. Cargo.Name,
-                  TaskUnit.Menu,
-                  self.MenuBoardCargo,
-                  self,
-                  Cargo
-                ):SetTime(MenuTime)
-              else
-                MENU_GROUP_COMMAND:New(
-                  TaskUnit:GetGroup(),
-                  "Route to Pickup cargo " .. Cargo.Name,
-                  TaskUnit.Menu,
-                  self.MenuRouteToPickup,
-                  self,
-                  Cargo
-                ):SetTime(MenuTime)
+              if CargoItemCount < Task.CargoLimit then 
+                if Cargo:IsInRadius( TaskUnit:GetPointVec2() ) then
+                  local NotInDeployZones = true
+                  for DeployZoneName, DeployZone in pairs( Task.DeployZones ) do
+                    if Cargo:IsInZone( DeployZone ) then
+                      NotInDeployZones = false
+                    end
+                  end
+                  if NotInDeployZones then
+                    MENU_GROUP_COMMAND:New( TaskUnit:GetGroup(), "Board cargo " .. Cargo.Name, TaskUnit.Menu, self.MenuBoardCargo, self, Cargo ):SetTime(MenuTime)
+                  end
+                else
+                  MENU_GROUP_COMMAND:New( TaskUnit:GetGroup(), "Route to Pickup cargo " .. Cargo.Name, TaskUnit.Menu, self.MenuRouteToPickup, self, Cargo ):SetTime(MenuTime)
+                end
               end
             end
             
             if Cargo:IsLoaded() then
               
-              MENU_GROUP_COMMAND:New(
-                TaskUnit:GetGroup(),
-                "Unboard cargo " .. Cargo.Name,
-                TaskUnit.Menu,
-                self.MenuUnBoardCargo,
-                self,
-                Cargo
-              ):SetTime(MenuTime)
+              MENU_GROUP_COMMAND:New( TaskUnit:GetGroup(), "Unboard cargo " .. Cargo.Name, TaskUnit.Menu, self.MenuUnBoardCargo, self, Cargo ):SetTime(MenuTime)
   
               -- Deployzones are optional zones that can be selected to request routing information.
               for DeployZoneName, DeployZone in pairs( Task.DeployZones ) do
                 if not Cargo:IsInZone( DeployZone ) then
-                  MENU_GROUP_COMMAND:New(
-                    TaskUnit:GetGroup(),
-                    "Route to Deploy cargo at " .. DeployZoneName,
-                    TaskUnit.Menu,
-                    self.MenuRouteToDeploy,
-                    self,
-                    DeployZone
-                  ):SetTime(MenuTime)
+                  MENU_GROUP_COMMAND:New( TaskUnit:GetGroup(), "Route to Deploy cargo at " .. DeployZoneName, TaskUnit.Menu, self.MenuRouteToDeploy, self, DeployZone ):SetTime(MenuTime)
                 end
               end
             end
@@ -49951,8 +50293,8 @@ do -- TASK_CARGO
       
       self:__SelectAction( -15 )
       
-      --Task:GetMission():GetCommandCenter():MessageToGroup("Cargo menu is ready ...", TaskUnit:GetGroup() )
     end
+    
     
     --- 
     -- @param #FSM_PROCESS self
@@ -49987,8 +50329,7 @@ do -- TASK_CARGO
     --#Wrapper.Unit#UNIT
 
     
-    --- Route to Cargo
-    -- @param #FSM_PROCESS self
+    --- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
     -- @param Tasking.Task_Cargo#TASK_CARGO Task
     -- @param From
@@ -50008,8 +50349,7 @@ do -- TASK_CARGO
 
 
 
-    --- 
-    -- @param #FSM_PROCESS self
+    --- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
     -- @param Tasking.Task_Cargo#TASK_CARGO Task
     function Fsm:onafterArriveAtPickup( TaskUnit, Task )
@@ -50017,6 +50357,7 @@ do -- TASK_CARGO
       if self.Cargo:IsAlive() then
         TaskUnit:Smoke( Task:GetSmokeColor(), 15 )
         if TaskUnit:IsAir() then
+          Task:GetMission():GetCommandCenter():MessageToGroup( "Land", TaskUnit:GetGroup() )
           self:__Land( -0.1, "Pickup" )
         else
           self:__SelectAction( -0.1 )
@@ -50025,8 +50366,7 @@ do -- TASK_CARGO
     end
 
 
-    --- 
-    -- @param #FSM_PROCESS self
+    --- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
     -- @param Tasking.Task_Cargo#TASK_CARGO Task
     function Fsm:onafterCancelRouteToPickup( TaskUnit, Task )
@@ -50036,8 +50376,7 @@ do -- TASK_CARGO
     end
 
 
-    --- Route to DeployZone
-    -- @param #FSM_PROCESS self
+    --- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
     function Fsm:onafterRouteToDeploy( TaskUnit, Task, From, Event, To, DeployZone )
       self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
@@ -50049,14 +50388,14 @@ do -- TASK_CARGO
     end
 
 
-    --- 
-    -- @param #FSM_PROCESS self
+    --- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
     -- @param Tasking.Task_Cargo#TASK_CARGO Task
     function Fsm:onafterArriveAtDeploy( TaskUnit, Task )
       self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
       
       if TaskUnit:IsAir() then
+        Task:GetMission():GetCommandCenter():MessageToGroup( "Land", TaskUnit:GetGroup() )
         self:__Land( -0.1, "Deploy" )
       else
         self:__SelectAction( -0.1 )
@@ -50064,8 +50403,7 @@ do -- TASK_CARGO
     end
 
 
-    ---
-    -- @param #FSM_PROCESS self
+    --- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
     -- @param Tasking.Task_Cargo#TASK_CARGO Task
     function Fsm:onafterCancelRouteToDeploy( TaskUnit, Task )
@@ -50076,7 +50414,7 @@ do -- TASK_CARGO
 
 
 
-    -- @param #FSM_PROCESS self
+    --- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
     -- @param Tasking.Task_Cargo#TASK_CARGO Task
     function Fsm:onafterLand( TaskUnit, Task, From, Event, To, Action )
@@ -50085,7 +50423,6 @@ do -- TASK_CARGO
       if self.Cargo:IsAlive() then
         if self.Cargo:IsInRadius( TaskUnit:GetPointVec2() ) then
           if TaskUnit:InAir() then
-            Task:GetMission():GetCommandCenter():MessageToGroup( "Land", TaskUnit:GetGroup() )
             self:__Land( -10, Action )
           else
             Task:GetMission():GetCommandCenter():MessageToGroup( "Landed ...", TaskUnit:GetGroup() )
@@ -50101,8 +50438,7 @@ do -- TASK_CARGO
       end
     end
 
-    --- 
-    -- @param #FSM_PROCESS self
+    --- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
     -- @param Tasking.Task_Cargo#TASK_CARGO Task
     function Fsm:onafterLanded( TaskUnit, Task, From, Event, To, Action )
@@ -50125,8 +50461,7 @@ do -- TASK_CARGO
       end
     end
     
-    --- 
-    -- @param #FSM_PROCESS self
+    --- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
     -- @param Tasking.Task_Cargo#TASK_CARGO Task
     function Fsm:onafterPrepareBoarding( TaskUnit, Task, From, Event, To, Cargo )
@@ -50138,8 +50473,7 @@ do -- TASK_CARGO
       end
     end
     
-    --- 
-    -- @param #FSM_PROCESS self
+    --- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
     -- @param Tasking.Task_Cargo#TASK_CARGO Task
     function Fsm:onafterBoard( TaskUnit, Task )
@@ -50165,14 +50499,18 @@ do -- TASK_CARGO
     end
 
 
-    --- 
-    -- @param #FSM_PROCESS self
+    --- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
     -- @param Tasking.Task_Cargo#TASK_CARGO Task
     function Fsm:onafterBoarded( TaskUnit, Task )
-      self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
+      
+      local TaskUnitName = TaskUnit:GetName()
+      self:E( { TaskUnit = TaskUnitName, Task = Task and Task:GetClassNameAndID() } )
       
       self.Cargo:MessageToGroup( "Boarded ...", TaskUnit:GetGroup() )
+
+      TaskUnit:AddCargo( self.Cargo )
+
       self:__SelectAction( 1 )
       
       -- TODO:I need to find a more decent solution for this. 
@@ -50246,12 +50584,27 @@ do -- TASK_CARGO
     -- @param Wrapper.Unit#UNIT TaskUnit
     -- @param Tasking.Task_Cargo#TASK_CARGO Task
     function Fsm:onafterUnBoarded( TaskUnit, Task )
-      self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
+
+      local TaskUnitName = TaskUnit:GetName()
+      self:E( { TaskUnit = TaskUnitName, Task = Task and Task:GetClassNameAndID() } )
       
       self.Cargo:MessageToGroup( "UnBoarded ...", TaskUnit:GetGroup() )
+
+      TaskUnit:RemoveCargo( self.Cargo )
+
+      local NotInDeployZones = true
+      for DeployZoneName, DeployZone in pairs( Task.DeployZones ) do
+        if self.Cargo:IsInZone( DeployZone ) then
+          NotInDeployZones = false
+        end
+      end
       
+      if NotInDeployZones == false then
+        self.Cargo:SetDeployed( true )
+      end
+            
       -- TODO:I need to find a more decent solution for this.
-      Task:E( { CargoDeployed = Task.CargoDeployed } )
+      Task:E( { CargoDeployed = Task.CargoDeployed and "true" or "false" } )
       if self.Cargo:IsAlive() then
         if Task.CargoDeployed then
           Task:CargoDeployed( TaskUnit, self.Cargo, self.DeployZone )
@@ -50265,7 +50618,16 @@ do -- TASK_CARGO
     return self
  
   end
-  
+
+    --- Set a limit on the amount of cargo items that can be loaded into the Carriers.
+    -- @param #TASK_CARGO self
+    -- @param CargoLimit Specifies a number of cargo items that can be loaded in the helicopter.
+    -- @return #TASK_CARGO
+    function TASK_CARGO:SetCargoLimit( CargoLimit )
+      self.CargoLimit = CargoLimit
+      return self
+    end
+    
 
     ---@param Color Might be SMOKECOLOR.Blue, SMOKECOLOR.Red SMOKECOLOR.Orange, SMOKECOLOR.White or SMOKECOLOR.Green
     function TASK_CARGO:SetSmokeColor(SmokeColor)
@@ -50480,6 +50842,8 @@ do -- TASK_CARGO_TRANSPORT
     self:AddTransition( "*", "CargoPickedUp", "*" )
     self:AddTransition( "*", "CargoDeployed", "*" )
     
+    self:E( { CargoDeployed = self.CargoDeployed ~= nil and "true" or "false" } )
+    
       --- OnBefore Transition Handler for Event CargoPickedUp.
       -- @function [parent=#TASK_CARGO_TRANSPORT] OnBeforeCargoPickedUp
       -- @param #TASK_CARGO_TRANSPORT self
@@ -50581,26 +50945,26 @@ do -- TASK_CARGO_TRANSPORT
     
     local DeployZones = self:GetDeployZones()
     
-    local CargoDeployed = false
+    local CargoDeployed = true
     
     -- Loop the CargoSet (so evaluate each Cargo in the SET_CARGO ).
     for CargoID, CargoData in pairs( Set ) do
       local Cargo = CargoData -- Core.Cargo#CARGO
 
-      local CargoInDeployZone = false
+      if Cargo:IsDeployed() then
       
-      -- Loop the DeployZones set for the TASK_CARGO_TRANSPORT.
-      for DeployZoneID, DeployZone in pairs( DeployZones ) do
-      
-        -- If there is a Cargo not in one of DeployZones, then not all Cargo is deployed.
-        self:T( { Cargo.CargoObject } )
-        if Cargo:IsInZone( DeployZone ) then
-          CargoInDeployZone = true
+        -- Loop the DeployZones set for the TASK_CARGO_TRANSPORT.
+        for DeployZoneID, DeployZone in pairs( DeployZones ) do
+        
+          -- If there is a Cargo not in one of DeployZones, then not all Cargo is deployed.
+          self:T( { Cargo.CargoObject } )
+          if Cargo:IsInZone( DeployZone ) == false then
+            CargoDeployed = false
+          end
         end
+      else
+        CargoDeployed = false
       end
-      
-      CargoDeployed = CargoDeployed or CargoInDeployZone      
-      
     end
 
     return CargoDeployed
@@ -50631,6 +50995,6 @@ _SCHEDULEDISPATCHER = SCHEDULEDISPATCHER:New() -- Core.Timer#SCHEDULEDISPATCHER
 _DATABASE = DATABASE:New() -- Core.Database#DATABASE
 
 _SETTINGS = SETTINGS:Set()
-_SETTINGS:SetSystemMenu( nil )
+
 BASE:TraceOnOff( false )
 env.info( '*** MOOSE INCLUDE END *** ' )
