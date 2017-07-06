@@ -708,6 +708,12 @@ function POSITIONABLE:HasCargo( Cargo )
   return self.__.Cargo[Cargo]
 end
 
+--- Clear all cargo.
+-- @param #POSITIONABLE self
+function POSITIONABLE:ClearCargo()
+  self.__.Cargo = {}
+end
+
 --- Get cargo item count.
 -- @param #POSITIONABLE self
 -- @return Core.Cargo#CARGO Cargo

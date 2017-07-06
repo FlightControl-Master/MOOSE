@@ -309,7 +309,7 @@ function TASK:AbortGroup( PlayerGroup )
       self:E( { IsGroupAssigned = IsGroupAssigned } )
       if IsGroupAssigned then
         local PlayerName = PlayerGroup:GetUnit(1):GetPlayerName()
-        self:MessageToGroups( PlayerName .. " aborted Task " .. self:GetName() )
+        --self:MessageToGroups( PlayerName .. " aborted Task " .. self:GetName() )
         self:UnAssignFromGroup( PlayerGroup )
         --self:Abort()
 
@@ -469,7 +469,7 @@ do -- Group Assignment
     local TaskGroupName = TaskGroup:GetName()
   
     self.AssignedGroups[TaskGroupName] = nil
-    self:E( string.format( "Task %s is unassigned to %s", TaskName, TaskGroupName ) )
+    --self:E( string.format( "Task %s is unassigned to %s", TaskName, TaskGroupName ) )
 
     -- Set the group to be assigned at mission level. This allows to decide the menu options on mission level for this group.
     self:GetMission():ClearGroupAssignment( TaskGroup )
