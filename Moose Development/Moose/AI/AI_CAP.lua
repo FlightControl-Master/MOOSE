@@ -402,7 +402,7 @@ function AI_CAP_ZONE:onafterDetected( Controllable, From, Event, To )
     end
   
     if Engage == true then
-      self:E( 'Detected -> Engaging' )
+      self:F( 'Detected -> Engaging' )
       self:__Engage( 1 )
     end
   end
@@ -485,13 +485,13 @@ function AI_CAP_ZONE:onafterEngage( Controllable, From, Event, To )
       if DetectedUnit:IsAlive() and DetectedUnit:IsAir() then
         if self.EngageZone then
           if DetectedUnit:IsInZone( self.EngageZone ) then
-            self:E( {"Within Zone and Engaging ", DetectedUnit } )
+            self:F( {"Within Zone and Engaging ", DetectedUnit } )
             AttackTasks[#AttackTasks+1] = Controllable:TaskAttackUnit( DetectedUnit )
           end
         else        
           if self.EngageRange then
             if DetectedUnit:GetPointVec3():Get2DDistance(Controllable:GetPointVec3() ) <= self.EngageRange then
-              self:E( {"Within Range and Engaging", DetectedUnit } )
+              self:F( {"Within Range and Engaging", DetectedUnit } )
               AttackTasks[#AttackTasks+1] = Controllable:TaskAttackUnit( DetectedUnit )
             end
           else
@@ -508,7 +508,7 @@ function AI_CAP_ZONE:onafterEngage( Controllable, From, Event, To )
     
     
     if #AttackTasks == 0 then
-      self:E("No targets found -> Going back to Patrolling")
+      self:F("No targets found -> Going back to Patrolling")
       self:__Abort( 1 )
       self:__Route( 1 )
       self:SetDetectionActivated()
