@@ -251,7 +251,9 @@ do -- TASK_CARGO
                     end
                   end
                   if NotInDeployZones then
-                    MENU_GROUP_COMMAND:New( TaskUnit:GetGroup(), "Board cargo " .. Cargo.Name, TaskUnit.Menu, self.MenuBoardCargo, self, Cargo ):SetTime(MenuTime)
+                    if not TaskUnit:InAir() then
+                      MENU_GROUP_COMMAND:New( TaskUnit:GetGroup(), "Board cargo " .. Cargo.Name, TaskUnit.Menu, self.MenuBoardCargo, self, Cargo ):SetTime(MenuTime)
+                    end
                   end
                 else
                   MENU_GROUP_COMMAND:New( TaskUnit:GetGroup(), "Route to Pickup cargo " .. Cargo.Name, TaskUnit.Menu, self.MenuRouteToPickup, self, Cargo ):SetTime(MenuTime)
@@ -260,9 +262,9 @@ do -- TASK_CARGO
             end
             
             if Cargo:IsLoaded() then
-              
-              MENU_GROUP_COMMAND:New( TaskUnit:GetGroup(), "Unboard cargo " .. Cargo.Name, TaskUnit.Menu, self.MenuUnBoardCargo, self, Cargo ):SetTime(MenuTime)
-  
+              if not TaskUnit:InAir() then
+                MENU_GROUP_COMMAND:New( TaskUnit:GetGroup(), "Unboard cargo " .. Cargo.Name, TaskUnit.Menu, self.MenuUnBoardCargo, self, Cargo ):SetTime(MenuTime)
+              end
               -- Deployzones are optional zones that can be selected to request routing information.
               for DeployZoneName, DeployZone in pairs( Task.DeployZones ) do
                 if not Cargo:IsInZone( DeployZone ) then
@@ -607,6 +609,7 @@ do -- TASK_CARGO
  
   end
 
+
     --- Set a limit on the amount of cargo items that can be loaded into the Carriers.
     -- @param #TASK_CARGO self
     -- @param CargoLimit Specifies a number of cargo items that can be loaded in the helicopter.
@@ -922,6 +925,12 @@ do -- TASK_CARGO_TRANSPORT
     
     return self
   end 
+
+  function TASK_CARGO_TRANSPORT:ReportOrder( ReportGroup ) 
+    
+    return true
+  end
+
   
   --- 
   -- @param #TASK_CARGO_TRANSPORT self

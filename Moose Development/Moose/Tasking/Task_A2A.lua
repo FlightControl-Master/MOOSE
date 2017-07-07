@@ -330,14 +330,24 @@ do -- TASK_A2A_INTERCEPT
 
     local TargetCoordinate = TargetSetUnit:GetFirst():GetCoordinate()
     self:SetInfo( "Coordinates", TargetCoordinate, 10 )
-
+    
     self:SetInfo( "Threat", "[" .. string.rep(  "■", TargetSetUnit:CalculateThreatLevelA2G() ) .. "]", 11 )
     local DetectedItemsCount = TargetSetUnit:Count()
     local DetectedItemsTypes = TargetSetUnit:GetTypeNames()
     self:SetInfo( "Targets", string.format( "%d of %s", DetectedItemsCount, DetectedItemsTypes ), 0 ) 
     
     return self
-  end 
+  end
+  
+  --- @param #TASK_A2A_INTERCEPT self
+  -- @param Wrapper.Group#GROUP ReportGroup
+  function TASK_A2A_INTERCEPT:ReportOrder( ReportGroup ) 
+    self:F( { TaskInfo = self.TaskInfo } )
+    local Coordinate = self.TaskInfo.Coordinates.TaskInfoText
+    local Distance = ReportGroup:GetCoordinate():Get2DDistance( Coordinate )
+    
+    return Distance
+  end
 
 
   --- @param #TASK_A2A_INTERCEPT self
@@ -462,6 +472,13 @@ do -- TASK_A2A_SWEEP
     return self
   end 
 
+  function TASK_A2A_SWEEP:ReportOrder( ReportGroup ) 
+    local Coordinate = self.TaskInfo.Coordinates.TaskInfoText
+    local Distance = ReportGroup:GetCoordinate():Get2DDistance( Coordinate )
+    
+    return Distance
+  end
+
   --- @param #TASK_A2A_SWEEP self
   function TASK_A2A_SWEEP:onafterGoal( TaskUnit, From, Event, To )
     local TargetSetUnit = self.TargetSetUnit -- Core.Set#SET_UNIT
@@ -580,6 +597,13 @@ do -- TASK_A2A_ENGAGE
     
     return self
   end 
+
+  function TASK_A2A_ENGAGE:ReportOrder( ReportGroup ) 
+    local Coordinate = self.TaskInfo.Coordinates.TaskInfoText
+    local Distance = ReportGroup:GetCoordinate():Get2DDistance( Coordinate )
+    
+    return Distance
+  end
 
   --- @param #TASK_A2A_ENGAGE self
   function TASK_A2A_ENGAGE:onafterGoal( TaskUnit, From, Event, To )
