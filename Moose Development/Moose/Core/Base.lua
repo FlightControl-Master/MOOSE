@@ -254,7 +254,7 @@ function BASE:Inherit( Child, Parent )
   -- This is for "private" methods...
   -- When a __ is passed to a method as "self", the __index will search for the method on the public method list of the same object too!
     if rawget( Child, "__" ) then
-      setmetatable( Child, { __index = Child.__ } )
+      setmetatable( Child, { __index = Child.__  } )
       setmetatable( Child.__, { __index = Parent } )
     else
       setmetatable( Child, { __index = Parent } )
@@ -277,9 +277,9 @@ end
 function BASE:GetParent( Child )
   local Parent
   if rawget( Child, "__" ) then
-	  Parent = getmetatable( Child.__ ).__Index
+	  Parent = getmetatable( Child.__ ).__index
 	else
-	  Parent = getmetatable( Child ).__Index
+	  Parent = getmetatable( Child ).__index
 	end 
 	return Parent
 end
