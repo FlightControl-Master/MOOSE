@@ -234,9 +234,9 @@ function BASE:New()
 	
 	-- This is for "private" methods...
 	-- When a __ is passed to a method as "self", the __index will search for the method on the public method list too!
-  if rawget( self, "__" ) then
-    setmetatable( self, { __index = self.__ } )
-  end
+--  if rawget( self, "__" ) then
+    --setmetatable( self, { __index = self.__ } )
+--  end
 	
 	return self
 end
@@ -250,7 +250,6 @@ function BASE:Inherit( Child, Parent )
 	local Child = routines.utils.deepCopy( Child )
 
 	if Child ~= nil then
-	  Child.ClassParent = Parent
 
   -- This is for "private" methods...
   -- When a __ is passed to a method as "self", the __index will search for the method on the public method list of the same object too!
@@ -261,10 +260,8 @@ function BASE:Inherit( Child, Parent )
       setmetatable( Child, { __index = Parent } )
     end
     
-		
 		--Child:_SetDestructor()
 	end
-	--self:T( 'Inherited from ' .. Parent.ClassName ) 
 	return Child
 end
 
@@ -278,8 +275,12 @@ end
 -- @param #BASE Child is the Child class from which the Parent class needs to be retrieved.
 -- @return #BASE
 function BASE:GetParent( Child )
-	local Parent = Child.ClassParent
---	env.info('Inherited class of ' .. Child.ClassName .. ' is ' .. Parent.ClassName )
+  local Parent
+  if rawget( Child, "__" ) then
+	  Parent = getmetatable( Child.__ ).__Index
+	else
+	  Parent = getmetatable( Child ).__Index
+	end 
 	return Parent
 end
 
