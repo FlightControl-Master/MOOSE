@@ -913,7 +913,7 @@ do -- TASK_CARGO_TRANSPORT
         local CargoType = Cargo:GetType()
         local CargoName = Cargo:GetName()
         local CargoCoordinate = Cargo:GetCoordinate()
-        CargoReport:Add( string.format( '- "%s" (%s) at %s', CargoName, CargoType, CargoCoordinate:ToString() ) )
+        CargoReport:Add( string.format( '- "%s" (%s) at %s', CargoName, CargoType, CargoCoordinate:ToStringMGRS() ) )
       end
     )
     
