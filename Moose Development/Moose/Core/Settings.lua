@@ -55,7 +55,7 @@ do -- SETTINGS
     if PlayerName == nil then
       local self = BASE:Inherit( self, BASE:New() ) -- #SETTINGS
       self:SetMetric() -- Defaults
-      self:SetA2G_MGRS() -- Defaults
+      self:SetA2G_BR() -- Defaults
       self:SetA2A_BRAA() -- Defaults
       self:SetLL_Accuracy( 2 ) -- Defaults
       self:SetLL_DMS( true ) -- Defaults
