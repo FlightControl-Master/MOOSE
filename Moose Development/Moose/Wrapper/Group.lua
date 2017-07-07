@@ -1187,3 +1187,95 @@ do -- Players
   end
   
 end
+
+--do -- Smoke
+--
+----- Signal a flare at the position of the GROUP.
+---- @param #GROUP self
+---- @param Utilities.Utils#FLARECOLOR FlareColor
+--function GROUP:Flare( FlareColor )
+--  self:F2()
+--  trigger.action.signalFlare( self:GetVec3(), FlareColor , 0 )
+--end
+--
+----- Signal a white flare at the position of the GROUP.
+---- @param #GROUP self
+--function GROUP:FlareWhite()
+--  self:F2()
+--  trigger.action.signalFlare( self:GetVec3(), trigger.flareColor.White , 0 )
+--end
+--
+----- Signal a yellow flare at the position of the GROUP.
+---- @param #GROUP self
+--function GROUP:FlareYellow()
+--  self:F2()
+--  trigger.action.signalFlare( self:GetVec3(), trigger.flareColor.Yellow , 0 )
+--end
+--
+----- Signal a green flare at the position of the GROUP.
+---- @param #GROUP self
+--function GROUP:FlareGreen()
+--  self:F2()
+--  trigger.action.signalFlare( self:GetVec3(), trigger.flareColor.Green , 0 )
+--end
+--
+----- Signal a red flare at the position of the GROUP.
+---- @param #GROUP self
+--function GROUP:FlareRed()
+--  self:F2()
+--  local Vec3 = self:GetVec3()
+--  if Vec3 then
+--    trigger.action.signalFlare( Vec3, trigger.flareColor.Red, 0 )
+--  end
+--end
+--
+----- Smoke the GROUP.
+---- @param #GROUP self
+--function GROUP:Smoke( SmokeColor, Range )
+--  self:F2()
+--  if Range then
+--    trigger.action.smoke( self:GetRandomVec3( Range ), SmokeColor )
+--  else
+--    trigger.action.smoke( self:GetVec3(), SmokeColor )
+--  end
+--  
+--end
+--
+----- Smoke the GROUP Green.
+---- @param #GROUP self
+--function GROUP:SmokeGreen()
+--  self:F2()
+--  trigger.action.smoke( self:GetVec3(), trigger.smokeColor.Green )
+--end
+--
+----- Smoke the GROUP Red.
+---- @param #GROUP self
+--function GROUP:SmokeRed()
+--  self:F2()
+--  trigger.action.smoke( self:GetVec3(), trigger.smokeColor.Red )
+--end
+--
+----- Smoke the GROUP White.
+---- @param #GROUP self
+--function GROUP:SmokeWhite()
+--  self:F2()
+--  trigger.action.smoke( self:GetVec3(), trigger.smokeColor.White )
+--end
+--
+----- Smoke the GROUP Orange.
+---- @param #GROUP self
+--function GROUP:SmokeOrange()
+--  self:F2()
+--  trigger.action.smoke( self:GetVec3(), trigger.smokeColor.Orange )
+--end
+--
+----- Smoke the GROUP Blue.
+---- @param #GROUP self
+--function GROUP:SmokeBlue()
+--  self:F2()
+--  trigger.action.smoke( self:GetVec3(), trigger.smokeColor.Blue )
+--end
+--
+--
+--
+--end

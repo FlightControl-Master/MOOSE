@@ -342,7 +342,7 @@ do -- TASK_CARGO
     function Fsm:onafterArriveAtPickup( TaskUnit, Task )
       self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
       if self.Cargo:IsAlive() then
-        TaskUnit:Smoke( Task:GetSmokeColor(), 15 )
+        self.Cargo:Smoke( Task:GetSmokeColor(), 15 )
         if TaskUnit:IsAir() then
           Task:GetMission():GetCommandCenter():MessageToGroup( "Land", TaskUnit:GetGroup() )
           self:__Land( -0.1, "Pickup" )
@@ -592,6 +592,7 @@ do -- TASK_CARGO
             
       -- TODO:I need to find a more decent solution for this.
       Task:E( { CargoDeployed = Task.CargoDeployed and "true" or "false" } )
+      Task:E( { CargoIsAlive = self.Cargo:IsAlive() and "true" or "false" } )
       if self.Cargo:IsAlive() then
         if Task.CargoDeployed then
           Task:CargoDeployed( TaskUnit, self.Cargo, self.DeployZone )
