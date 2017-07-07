@@ -1,36 +1,13 @@
---- **Core** - BASE forms **the basis of the MOOSE framework**. Each class within the MOOSE framework derives from BASE.
+--- **Core** -- BASE forms **the basis of the MOOSE framework**. Each class within the MOOSE framework derives from BASE.
 -- 
 -- ![Banner Image](..\Presentations\BASE\Dia1.JPG)
 -- 
 -- ===
 -- 
--- The @{#BASE} class is the core root class from where every other class in moose is derived.
--- 
--- ===
--- 
--- # **API CHANGE HISTORY**
--- 
--- The underlying change log documents the API changes. Please read this carefully. The following notation is used:
--- 
---   * **Added** parts are expressed in bold type face.
---   * _Removed_ parts are expressed in italic type face.
--- 
--- YYYY-MM-DD: CLASS:**NewFunction**( Params ) replaces CLASS:_OldFunction_( Params )
--- YYYY-MM-DD: CLASS:**NewFunction( Params )** added
--- 
--- Hereby the change log:
--- 
--- ===
--- 
--- # **AUTHORS and CONTRIBUTIONS**
--- 
+-- ### Author: **Sven Van de Velde (FlightControl)**
 -- ### Contributions: 
 -- 
---   * None.
--- 
--- ### Authors: 
--- 
---   * **FlightControl**: Design & Programming
+-- ====
 -- 
 -- @module Base
 
@@ -219,16 +196,21 @@ local _ClassID = 0
 BASE = {
   ClassName = "BASE",
   ClassID = 0,
-  _Private = {},
   Events = {},
-  States = {}
+  States = {},
+  _ = {},
 }
+
+
+--- @field #BASE.__
+BASE.__ = {}
 
 --- The Formation Class
 -- @type FORMATION
 -- @field Cone A cone formation.
 FORMATION = {
-  Cone = "Cone" 
+  Cone = "Cone",
+  Vee = "Vee" 
 }
 
 
@@ -246,45 +228,17 @@ FORMATION = {
 -- @return #BASE
 function BASE:New()
   local self = routines.utils.deepCopy( self ) -- Create a new self instance
-	local MetaTable = {}
-	setmetatable( self, MetaTable )
-	self.__index = self
+
 	_ClassID = _ClassID + 1
 	self.ClassID = _ClassID
-
+	
+	-- This is for "private" methods...
+	-- When a __ is passed to a method as "self", the __index will search for the method on the public method list too!
+--  if rawget( self, "__" ) then
+    --setmetatable( self, { __index = self.__ } )
+--  end
 	
 	return self
-end
-
-function BASE:_Destructor()
-  --self:E("_Destructor")
-
-  --self:EventRemoveAll()
-end
-
-
--- THIS IS WHY WE NEED LUA 5.2 ...
-function BASE:_SetDestructor()
-
-  -- TODO: Okay, this is really technical...
-  -- When you set a proxy to a table to catch __gc, weak tables don't behave like weak...
-  -- Therefore, I am parking this logic until I've properly discussed all this with the community.
-
-  local proxy = newproxy(true)
-  local proxyMeta = getmetatable(proxy)
-
-  proxyMeta.__gc = function ()
-    env.info("In __gc for " .. self:GetClassNameAndID() )
-    if self._Destructor then
-        self:_Destructor()
-    end
-  end
-
-  -- keep the userdata from newproxy reachable until the object
-  -- table is about to be garbage-collected - then the __gc hook
-  -- will be invoked and the destructor called
-  rawset( self, '__proxy', proxy )
-  
 end
 
 --- This is the worker method to inherit from a parent class.
@@ -294,15 +248,20 @@ end
 -- @return #BASE Child
 function BASE:Inherit( Child, Parent )
 	local Child = routines.utils.deepCopy( Child )
-	--local Parent = routines.utils.deepCopy( Parent )
-  --local Parent = Parent
+
 	if Child ~= nil then
-		setmetatable( Child, Parent )
-		Child.__index = Child
-		
+
+  -- This is for "private" methods...
+  -- When a __ is passed to a method as "self", the __index will search for the method on the public method list of the same object too!
+    if rawget( Child, "__" ) then
+      setmetatable( Child, { __index = Child.__  } )
+      setmetatable( Child.__, { __index = Parent } )
+    else
+      setmetatable( Child, { __index = Parent } )
+    end
+    
 		--Child:_SetDestructor()
 	end
-	--self:T( 'Inherited from ' .. Parent.ClassName ) 
 	return Child
 end
 
@@ -316,8 +275,12 @@ end
 -- @param #BASE Child is the Child class from which the Parent class needs to be retrieved.
 -- @return #BASE
 function BASE:GetParent( Child )
-	local Parent = getmetatable( Child )
---	env.info('Inherited class of ' .. Child.ClassName .. ' is ' .. Parent.ClassName )
+  local Parent
+  if rawget( Child, "__" ) then
+	  Parent = getmetatable( Child.__ ).__index
+	else
+	  Parent = getmetatable( Child ).__index
+	end 
 	return Parent
 end
 
@@ -360,7 +323,7 @@ do -- Event Handling
   -- @param #BASE self
   -- @return #number The @{Event} processing Priority.
   function BASE:GetEventPriority()
-    return self._Private.EventPriority or 5
+    return self._.EventPriority or 5
   end
   
   --- Set the Class @{Event} processing Priority.
@@ -370,7 +333,7 @@ do -- Event Handling
   -- @param #number EventPriority The @{Event} processing Priority.
   -- @return self
   function BASE:SetEventPriority( EventPriority )
-    self._Private.EventPriority = EventPriority
+    self._.EventPriority = EventPriority
   end
   
   --- Remove all subscribed events
@@ -450,6 +413,12 @@ do -- Event Handling
   --- Occurs when an aircraft connects with a tanker and begins taking on fuel.
   -- initiator : The unit that is receiving fuel. 
   -- @function [parent=#BASE] OnEventRefueling
+  -- @param #BASE self
+  -- @param Core.Event#EVENTDATA EventData The EventData structure.
+
+  --- Occurs when an object is dead.
+  -- initiator : The unit that is dead. 
+  -- @function [parent=#BASE] OnEventDead
   -- @param #BASE self
   -- @param Core.Event#EVENTDATA EventData The EventData structure.
 
@@ -633,7 +602,6 @@ end
 -- @param #BASE self
 -- @param Object The object that holds the Value set by the Key.
 -- @param Key The key that is used to retrieve the value. Note that the key can be a #string, but it can also be any other type!
--- @param Value The value to is stored in the Object.
 -- @return The Value retrieved.
 function BASE:GetState( Object, Key )
 
@@ -912,3 +880,35 @@ end
 
 
 
+--- old stuff
+
+--function BASE:_Destructor()
+--  --self:E("_Destructor")
+--
+--  --self:EventRemoveAll()
+--end
+
+
+-- THIS IS WHY WE NEED LUA 5.2 ...
+--function BASE:_SetDestructor()
+--
+--  -- TODO: Okay, this is really technical...
+--  -- When you set a proxy to a table to catch __gc, weak tables don't behave like weak...
+--  -- Therefore, I am parking this logic until I've properly discussed all this with the community.
+--
+--  local proxy = newproxy(true)
+--  local proxyMeta = getmetatable(proxy)
+--
+--  proxyMeta.__gc = function ()
+--    env.info("In __gc for " .. self:GetClassNameAndID() )
+--    if self._Destructor then
+--        self:_Destructor()
+--    end
+--  end
+--
+--  -- keep the userdata from newproxy reachable until the object
+--  -- table is about to be garbage-collected - then the __gc hook
+--  -- will be invoked and the destructor called
+--  rawset( self, '__proxy', proxy )
+--  
+--end

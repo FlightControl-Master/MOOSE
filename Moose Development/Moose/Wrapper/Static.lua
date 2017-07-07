@@ -1,7 +1,21 @@
---- This module contains the STATIC class.
+--- **Wrapper** -- STATIC wraps the DCS StaticObject class.
 -- 
--- 1) @{Static#STATIC} class, extends @{Positionable#POSITIONABLE}
--- ===============================================================
+-- ====
+-- 
+-- ### Author: **Sven Van de Velde (FlightControl)**
+-- 
+-- ### Contributions: 
+-- 
+-- ====
+-- 
+-- @module Static
+
+
+--- @type STATIC
+-- @extends Wrapper.Positionable#POSITIONABLE
+
+--- # STATIC class, extends @{Positionable#POSITIONABLE}
+-- 
 -- Statics are **Static Units** defined within the Mission Editor.
 -- Note that Statics are almost the same as Units, but they don't have a controller.
 -- The @{Static#STATIC} class is a wrapper class to handle the DCS Static objects:
@@ -10,8 +24,8 @@
 --  * Support all DCS Static APIs.
 --  * Enhance with Static specific APIs not in the DCS API set.
 -- 
--- 1.1) STATIC reference methods
--- -----------------------------
+-- ## STATIC reference methods
+-- 
 -- For each DCS Static will have a STATIC wrapper object (instance) within the _@{DATABASE} object.
 -- This is done at the beginning of the mission (when the mission starts).
 --  
@@ -28,17 +42,7 @@
 --  
 -- IMPORTANT: ONE SHOULD NEVER SANATIZE these STATIC OBJECT REFERENCES! (make the STATIC object references nil).
 -- 
--- @module Static
--- @author FlightControl
-
-
-
-
-
-
---- The STATIC class
--- @type STATIC
--- @extends Wrapper.Positionable#POSITIONABLE
+-- @field #STATIC
 STATIC = {
 	ClassName = "STATIC",
 }

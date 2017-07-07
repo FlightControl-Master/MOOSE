@@ -1,11 +1,12 @@
---- **Tasking** -- This module contains the TASK class.
+--- **Tasking** -- This module contains the TASK class, the main engine to run human taskings.
 -- 
--- ===
+-- ====
 -- 
+-- ### Author: **Sven Van de Velde (FlightControl)**
 -- 
--- ===
+-- ### Contributions: 
 -- 
--- ### Authors: FlightControl - Design and Programming
+-- ====
 -- 
 -- @module Task
 
@@ -78,6 +79,7 @@ TASK = {
   Mission = nil,
   CommandCenter = nil,
   TimeOut = 0,
+  AssignedGroups = {},
 }
 
 --- FSM PlayerAborted event handler prototype for TASK.
@@ -156,17 +158,48 @@ TASK = {
 -- @param #string TaskName The name of the Task
 -- @param #string TaskType The type of the Task
 -- @return #TASK self
-function TASK:New( Mission, SetGroupAssign, TaskName, TaskType )
+function TASK:New( Mission, SetGroupAssign, TaskName, TaskType, TaskBriefing )
 
-  local self = BASE:Inherit( self, FSM_TASK:New() ) -- Core.Fsm#FSM_TASK
+  local self = BASE:Inherit( self, FSM_TASK:New() ) -- Tasking.Task#TASK
 
   self:SetStartState( "Planned" )
   self:AddTransition( "Planned", "Assign", "Assigned" )
   self:AddTransition( "Assigned", "AssignUnit", "Assigned" )
   self:AddTransition( "Assigned", "Success", "Success" )
+  self:AddTransition( "Assigned", "Hold", "Hold" )
   self:AddTransition( "Assigned", "Fail", "Failed" )
   self:AddTransition( "Assigned", "Abort", "Aborted" )
   self:AddTransition( "Assigned", "Cancel", "Cancelled" )
+  self:AddTransition( "Assigned", "Goal", "*" )
+  
+  --- Goal Handler OnBefore for TASK
+  -- @function [parent=#TASK] OnBeforeGoal
+  -- @param #TASK self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable
+  -- @param #string From
+  -- @param #string Event
+  -- @param #string To
+  -- @return #boolean
+  
+  --- Goal Handler OnAfter for TASK
+  -- @function [parent=#TASK] OnAfterGoal
+  -- @param #TASK self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable
+  -- @param #string From
+  -- @param #string Event
+  -- @param #string To
+  
+  --- Goal Trigger for TASK
+  -- @function [parent=#TASK] Goal
+  -- @param #TASK self
+  
+  --- Goal Asynchronous Trigger for TASK
+  -- @function [parent=#TASK] __Goal
+  -- @param #TASK self
+  -- @param #number Delay
+  
+  
+  
   self:AddTransition( "*", "PlayerCrashed", "*" )
   self:AddTransition( "*", "PlayerAborted", "*" )
   self:AddTransition( "*", "PlayerDead", "*" )
@@ -187,10 +220,13 @@ function TASK:New( Mission, SetGroupAssign, TaskName, TaskType )
   self:SetName( TaskName )
   self:SetID( Mission:GetNextTaskID( self ) ) -- The Mission orchestrates the task sequences ..
 
-  self.TaskBriefing = "You are invited for the task: " .. self.TaskName .. "."
+  self:SetBriefing( TaskBriefing )
   
   self.FsmTemplate = self.FsmTemplate or FSM_PROCESS:New()
   
+  self.TaskInfo = {}
+  
+  self.TaskProgress = {}
   
   return self
 end
@@ -216,7 +252,7 @@ function TASK:SetUnitProcess( FsmTemplate )
 end
 
 --- Add a PlayerUnit to join the Task.
--- For each Group within the Task, the Unit is check if it can join the Task.
+-- For each Group within the Task, the Unit is checked if it can join the Task.
 -- If the Unit was not part of the Task, false is returned.
 -- If the Unit is part of the Task, true is returned.
 -- @param #TASK self
@@ -240,9 +276,9 @@ function TASK:JoinUnit( PlayerUnit, PlayerGroup )
       --self:MessageToGroups( PlayerUnit:GetPlayerName() .. " is planning to join Task " .. self:GetName() )
     end
     if self:IsStateAssigned() then
-      local IsAssignedToGroup = self:IsAssignedToGroup( PlayerGroup )
-      self:E( { IsAssignedToGroup = IsAssignedToGroup } )
-      if IsAssignedToGroup then
+      local IsGroupAssigned = self:IsGroupAssigned( PlayerGroup )
+      self:E( { IsGroupAssigned = IsGroupAssigned } )
+      if IsGroupAssigned then
         self:AssignToUnit( PlayerUnit )
         self:MessageToGroups( PlayerUnit:GetPlayerName() .. " joined Task " .. self:GetName() )
       end
@@ -257,14 +293,11 @@ end
 -- If the Unit is part of the Task, true is returned.
 -- @param #TASK self
 -- @param Wrapper.Unit#UNIT PlayerUnit The CLIENT or UNIT of the Player aborting the Task.
--- @return #boolean true if Unit is part of the Task.
-function TASK:AbortUnit( PlayerUnit )
-  self:F( { PlayerUnit = PlayerUnit } )
-  
-  local PlayerUnitAborted = false
+-- @return #TASK
+function TASK:AbortGroup( PlayerGroup )
+  self:F( { PlayerGroup = PlayerGroup } )
   
   local PlayerGroups = self:GetGroups()
-  local PlayerGroup = PlayerUnit:GetGroup()
 
   -- Is the PlayerGroup part of the PlayerGroups?  
   if PlayerGroups:IsIncludeObject( PlayerGroup ) then
@@ -272,23 +305,39 @@ function TASK:AbortUnit( PlayerUnit )
     -- Check if the PlayerGroup is already assigned to the Task. If yes, the PlayerGroup is aborted from the Task.
     -- If the PlayerUnit was the last unit of the PlayerGroup, the menu needs to be removed from the Group.
     if self:IsStateAssigned() then
-      local IsAssignedToGroup = self:IsAssignedToGroup( PlayerGroup )
-      self:E( { IsAssignedToGroup = IsAssignedToGroup } )
-      if IsAssignedToGroup then
-        self:UnAssignFromUnit( PlayerUnit )
-        self:MessageToGroups( PlayerUnit:GetPlayerName() .. " aborted Task " .. self:GetName() )
-        self:E( { TaskGroup = PlayerGroup:GetName(), GetUnits = PlayerGroup:GetUnits() } )
-        if #PlayerGroup:GetUnits() == 1 then
-          self:UnAssignFromGroup( PlayerGroup )
-          PlayerGroup:SetState( PlayerGroup, "Assigned", nil )
-          self:RemoveMenuForGroup( PlayerGroup )
+      local IsGroupAssigned = self:IsGroupAssigned( PlayerGroup )
+      self:E( { IsGroupAssigned = IsGroupAssigned } )
+      if IsGroupAssigned then
+        local PlayerName = PlayerGroup:GetUnit(1):GetPlayerName()
+        --self:MessageToGroups( PlayerName .. " aborted Task " .. self:GetName() )
+        self:UnAssignFromGroup( PlayerGroup )
+        --self:Abort()
+
+        -- Now check if the task needs to go to hold...
+        -- It will go to hold, if there are no players in the mission...
+        
+        PlayerGroups:Flush()
+        local IsRemaining = false
+        for GroupName, AssignedGroup in pairs( PlayerGroups:GetSet() or {} ) do
+          if self:IsGroupAssigned( AssignedGroup ) == true then
+            IsRemaining = true
+            self:F( { Task = self:GetName(), IsRemaining = IsRemaining } )
+           break
+          end
         end
-        self:Abort()
+
+        self:F( { Task = self:GetName(), IsRemaining = IsRemaining } )
+        if IsRemaining == false then
+          self:Abort()
+        end
+        
+        self:PlayerAborted( PlayerGroup:GetUnit(1) )
       end
+      
     end
   end
   
-  return PlayerUnitAborted
+  return self
 end
 
 --- A PlayerUnit crashed in a Task. Abort the Player.
@@ -296,14 +345,11 @@ end
 -- If the Unit is part of the Task, true is returned.
 -- @param #TASK self
 -- @param Wrapper.Unit#UNIT PlayerUnit The CLIENT or UNIT of the Player aborting the Task.
--- @return #boolean true if Unit is part of the Task.
-function TASK:CrashUnit( PlayerUnit )
-  self:F( { PlayerUnit = PlayerUnit } )
-  
-  local PlayerUnitCrashed = false
+-- @return #TASK
+function TASK:CrashGroup( PlayerGroup )
+  self:F( { PlayerGroup = PlayerGroup } )
   
   local PlayerGroups = self:GetGroups()
-  local PlayerGroup = PlayerUnit:GetGroup()
 
   -- Is the PlayerGroup part of the PlayerGroups?  
   if PlayerGroups:IsIncludeObject( PlayerGroup ) then
@@ -311,22 +357,38 @@ function TASK:CrashUnit( PlayerUnit )
     -- Check if the PlayerGroup is already assigned to the Task. If yes, the PlayerGroup is aborted from the Task.
     -- If the PlayerUnit was the last unit of the PlayerGroup, the menu needs to be removed from the Group.
     if self:IsStateAssigned() then
-      local IsAssignedToGroup = self:IsAssignedToGroup( PlayerGroup )
-      self:E( { IsAssignedToGroup = IsAssignedToGroup } )
-      if IsAssignedToGroup then
-        self:UnAssignFromUnit( PlayerUnit )
-        self:MessageToGroups( PlayerUnit:GetPlayerName() .. " crashed in Task " .. self:GetName() )
-        self:E( { TaskGroup = PlayerGroup:GetName(), GetUnits = PlayerGroup:GetUnits() } )
-        if #PlayerGroup:GetUnits() == 1 then
-          PlayerGroup:SetState( PlayerGroup, "Assigned", nil )
-          self:RemoveMenuForGroup( PlayerGroup )
+      local IsGroupAssigned = self:IsGroupAssigned( PlayerGroup )
+      self:E( { IsGroupAssigned = IsGroupAssigned } )
+      if IsGroupAssigned then
+        local PlayerName = PlayerGroup:GetUnit(1):GetPlayerName()
+        self:MessageToGroups( PlayerName .. " crashed! " )
+        self:UnAssignFromGroup( PlayerGroup )
+
+        -- Now check if the task needs to go to hold...
+        -- It will go to hold, if there are no players in the mission...
+        
+        PlayerGroups:Flush()
+        local IsRemaining = false
+        for GroupName, AssignedGroup in pairs( PlayerGroups:GetSet() or {} ) do
+          if self:IsGroupAssigned( AssignedGroup ) == true then
+            IsRemaining = true
+            self:F( { Task = self:GetName(), IsRemaining = IsRemaining } )
+           break
+          end
         end
-        self:PlayerCrashed( PlayerUnit )
+
+        self:F( { Task = self:GetName(), IsRemaining = IsRemaining } )
+        if IsRemaining == false then
+          self:Abort()
+        end
+        
+        self:PlayerCrashed( PlayerGroup:GetUnit(1) )
       end
+      
     end
   end
   
-  return PlayerUnitCrashed
+  return self
 end
 
 
@@ -347,38 +409,148 @@ function TASK:GetGroups()
   return self.SetGroup
 end
 
+do -- Group Assignment
 
-
---- Assign the @{Task} to a @{Group}.
--- @param #TASK self
--- @param Wrapper.Group#GROUP TaskGroup
--- @return #TASK
-function TASK:AssignToGroup( TaskGroup )
-  self:F2( TaskGroup:GetName() )
+  --- Returns if the @{Task} is assigned to the Group.
+  -- @param #TASK self
+  -- @param Wrapper.Group#GROUP TaskGroup
+  -- @return #boolean
+  function TASK:IsGroupAssigned( TaskGroup )
   
-  local TaskGroupName = TaskGroup:GetName()
-  
-  TaskGroup:SetState( TaskGroup, "Assigned", self )
-  
-  local Mission = self:GetMission()
-  local MissionMenu = Mission:GetMenu( TaskGroup )
-  MissionMenu:RemoveSubMenus()
-  
-  --self:RemoveMenuForGroup( TaskGroup )
-  self:SetAssignedMenuForGroup( TaskGroup )
-  
-  local TaskUnits = TaskGroup:GetUnits()
-  for UnitID, UnitData in pairs( TaskUnits ) do
-    local TaskUnit = UnitData -- Wrapper.Unit#UNIT
-    local PlayerName = TaskUnit:GetPlayerName()
-    self:E(PlayerName)
-    if PlayerName ~= nil or PlayerName ~= "" then
-      self:AssignToUnit( TaskUnit )
+    local TaskGroupName = TaskGroup:GetName()
+    
+    if self.AssignedGroups[TaskGroupName] then
+      self:T( { "Task is assigned to:", TaskGroup:GetName() } )
+      return true
     end
+    
+    self:T( { "Task is not assigned to:", TaskGroup:GetName() } )
+    return false
   end
   
-  return self
+  
+  --- Set @{Group} assigned to the @{Task}.
+  -- @param #TASK self
+  -- @param Wrapper.Group#GROUP TaskGroup
+  -- @return #TASK
+  function TASK:SetGroupAssigned( TaskGroup )
+  
+    local TaskName = self:GetName()
+    local TaskGroupName = TaskGroup:GetName()
+  
+    self.AssignedGroups[TaskGroupName] = TaskGroup
+    self:E( string.format( "Task %s is assigned to %s", TaskName, TaskGroupName ) )
+    
+    -- Set the group to be assigned at mission level. This allows to decide the menu options on mission level for this group.
+    self:GetMission():SetGroupAssigned( TaskGroup )
+    
+    local SetAssignedGroups = self:GetGroups()
+    
+--    SetAssignedGroups:ForEachGroup(
+--      function( AssignedGroup )
+--        if self:IsGroupAssigned(AssignedGroup) then
+--          self:GetMission():GetCommandCenter():MessageToGroup( string.format( "Task %s is assigned to group %s.", TaskName, TaskGroupName ), AssignedGroup )
+--        else
+--          self:GetMission():GetCommandCenter():MessageToGroup( string.format( "Task %s is assigned to your group.", TaskName ), AssignedGroup )
+--        end
+--      end
+--    )
+    
+    return self
+  end
+  
+  --- Clear the @{Group} assignment from the @{Task}.
+  -- @param #TASK self
+  -- @param Wrapper.Group#GROUP TaskGroup
+  -- @return #TASK
+  function TASK:ClearGroupAssignment( TaskGroup )
+  
+    local TaskName = self:GetName()
+    local TaskGroupName = TaskGroup:GetName()
+  
+    self.AssignedGroups[TaskGroupName] = nil
+    --self:E( string.format( "Task %s is unassigned to %s", TaskName, TaskGroupName ) )
+
+    -- Set the group to be assigned at mission level. This allows to decide the menu options on mission level for this group.
+    self:GetMission():ClearGroupAssignment( TaskGroup )
+    
+    local SetAssignedGroups = self:GetGroups()
+
+    SetAssignedGroups:ForEachGroup(
+      function( AssignedGroup )
+        if self:IsGroupAssigned(AssignedGroup) then
+          self:GetMission():GetCommandCenter():MessageToGroup( string.format( "Task %s is unassigned from group %s.", TaskName, TaskGroupName ), AssignedGroup )
+        else
+          self:GetMission():GetCommandCenter():MessageToGroup( string.format( "Task %s is unassigned from your group.", TaskName ), AssignedGroup )
+        end
+      end
+    )
+    
+    return self
+  end
+  
 end
+
+do -- Group Assignment
+
+  --- Assign the @{Task} to a @{Group}.
+  -- @param #TASK self
+  -- @param Wrapper.Group#GROUP TaskGroup
+  -- @return #TASK
+  function TASK:AssignToGroup( TaskGroup )
+    self:F( TaskGroup:GetName() )
+    
+    local TaskGroupName = TaskGroup:GetName()
+    local Mission = self:GetMission()
+    local CommandCenter = Mission:GetCommandCenter()
+    
+    self:SetGroupAssigned( TaskGroup )
+    
+    local TaskUnits = TaskGroup:GetUnits()
+    for UnitID, UnitData in pairs( TaskUnits ) do
+      local TaskUnit = UnitData -- Wrapper.Unit#UNIT
+      local PlayerName = TaskUnit:GetPlayerName()
+      self:E(PlayerName)
+      if PlayerName ~= nil and PlayerName ~= "" then
+        self:AssignToUnit( TaskUnit )
+        CommandCenter:MessageToGroup( 
+          string.format( 'Task "%s": Briefing for player (%s):\n%s', 
+            self:GetName(), 
+            PlayerName, 
+            self:GetBriefing()
+          ), TaskGroup 
+        )
+      end
+    end
+
+    CommandCenter:SetMenu()
+    
+    return self
+  end
+  
+  --- UnAssign the @{Task} from a @{Group}.
+  -- @param #TASK self
+  -- @param Wrapper.Group#GROUP TaskGroup
+  function TASK:UnAssignFromGroup( TaskGroup )
+    self:F2( { TaskGroup = TaskGroup:GetName() } )
+    
+    self:ClearGroupAssignment( TaskGroup )
+  
+    local TaskUnits = TaskGroup:GetUnits()
+    for UnitID, UnitData in pairs( TaskUnits ) do
+      local TaskUnit = UnitData -- Wrapper.Unit#UNIT
+      local PlayerName = TaskUnit:GetPlayerName()
+      if PlayerName ~= nil and PlayerName ~= "" then -- Only remove units that have players!
+        self:UnAssignFromUnit( TaskUnit )
+      end
+    end
+
+    local Mission = self:GetMission()
+    local CommandCenter = Mission:GetCommandCenter()
+    CommandCenter:SetMenu()
+  end
+end
+
 
 ---
 -- @param #TASK self
@@ -386,7 +558,8 @@ end
 -- @return #boolean
 function TASK:HasGroup( FindGroup )
 
-  return self:GetGroups():IsIncludeObject( FindGroup )
+  local SetAttackGroup = self:GetGroups()
+  return SetAttackGroup:FindGroup(FindGroup)
 
 end
 
@@ -401,7 +574,6 @@ function TASK:AssignToUnit( TaskUnit )
   
   -- Assign a new FsmUnit to TaskUnit.
   local FsmUnit = self:SetStateMachine( TaskUnit, FsmTemplate:Copy( TaskUnit, self ) ) -- Core.Fsm#FSM_PROCESS
-  self:E({"Address FsmUnit", tostring( FsmUnit ) } )
   
   FsmUnit:SetStartState( "Planned" )
   
@@ -455,7 +627,7 @@ function TASK:SendBriefingToAssignedGroups()
   
   for TaskGroupName, TaskGroup in pairs( self.SetGroup:GetSet() ) do
 
-    if self:IsAssignedToGroup( TaskGroup ) then    
+    if self:IsGroupAssigned( TaskGroup ) then    
       TaskGroup:Message( self.TaskBriefing, 60 )
     end
   end
@@ -468,49 +640,13 @@ function TASK:UnAssignFromGroups()
   self:F2()
   
   for TaskGroupName, TaskGroup in pairs( self.SetGroup:GetSet() ) do
-    self:UnAssignFromGroup( TaskGroup )
-  end
-end
-
---- UnAssign the @{Task} from a @{Group}.
--- @param #TASK self
-function TASK:UnAssignFromGroup( TaskGroup )
-  self:F2( { TaskGroup } )
-  
-  TaskGroup:SetState( TaskGroup, "Assigned", nil )
-
-  self:RemoveAssignedMenuForGroup( TaskGroup )
-
-  local TaskUnits = TaskGroup:GetUnits()
-  for UnitID, UnitData in pairs( TaskUnits ) do
-    local TaskUnit = UnitData -- Wrapper.Unit#UNIT
-    local PlayerName = TaskUnit:GetPlayerName()
-    if PlayerName ~= nil or PlayerName ~= "" then
-      self:UnAssignFromUnit( TaskUnit )
+    if self:IsGroupAssigned(TaskGroup) then
+      self:UnAssignFromGroup( TaskGroup )
     end
   end
 end
 
 
-
---- Returns if the @{Task} is assigned to the Group.
--- @param #TASK self
--- @param Wrapper.Group#GROUP TaskGroup
--- @return #boolean
-function TASK:IsAssignedToGroup( TaskGroup )
-
-  local TaskGroupName = TaskGroup:GetName()
-  
-  if self:IsStateAssigned() then
-    if TaskGroup:GetState( TaskGroup, "Assigned" ) == self then
-      self:T( { "Task is assigned to:", TaskGroup:GetName() } )
-      return true
-    end
-  end
-  
-  self:T( { "Task is not assigned to:", TaskGroup:GetName() } )
-  return false
-end
 
 --- Returns if the @{Task} has still alive and assigned Units.
 -- @param #TASK self
@@ -520,7 +656,7 @@ function TASK:HasAliveUnits()
   
   for TaskGroupID, TaskGroup in pairs( self.SetGroup:GetSet() ) do
     if self:IsStateAssigned() then
-      if self:IsAssignedToGroup( TaskGroup ) then
+      if self:IsGroupAssigned( TaskGroup ) then
         for TaskUnitID, TaskUnit in pairs( TaskGroup:GetUnits() ) do
           if TaskUnit:IsAlive() then
             self:T( { HasAliveUnits = true } )
@@ -539,14 +675,19 @@ end
 -- @param #TASK self
 -- @param #number MenuTime
 -- @return #TASK
-function TASK:SetMenu( MenuTime )
-  self:F()
+function TASK:SetMenu( MenuTime ) --R2.1 Mission Reports and Task Reports added. Fixes issue #424.
+  self:F( { self:GetName(), MenuTime } )
 
-  self.SetGroup:Flush()
+  --self.SetGroup:Flush()
   for TaskGroupID, TaskGroupData in pairs( self.SetGroup:GetSet() ) do
-    local TaskGroup = TaskGroupData -- Wrapper.Group#GROUP 
+    local TaskGroup = TaskGroupData -- Wrapper.Group#GROUP
     if TaskGroup:IsAlive() and TaskGroup:GetPlayerNames() then
-      if self:IsStatePlanned() or self:IsStateReplanned() then
+    
+      -- Set Mission Menus
+      
+      local Mission = self:GetMission()
+      local MissionMenu = Mission:GetMenu( TaskGroup )
+      if MissionMenu then
         self:SetMenuForGroup( TaskGroup, MenuTime )
       end
     end
@@ -561,10 +702,9 @@ end
 -- @return #TASK
 function TASK:SetMenuForGroup( TaskGroup, MenuTime )
 
-  if not TaskGroup:GetState( TaskGroup, "Assigned" ) then
-    self:SetPlannedMenuForGroup( TaskGroup, self:GetTaskName(), MenuTime )
-  else
-    if not self:IsAssignedToGroup( TaskGroup ) then
+  if self:IsStatePlanned() or self:IsStateAssigned() then
+    self:SetPlannedMenuForGroup( TaskGroup, MenuTime )
+    if self:IsGroupAssigned( TaskGroup ) then
       self:SetAssignedMenuForGroup( TaskGroup, MenuTime )
     end
   end
@@ -577,22 +717,35 @@ end
 -- @param #string MenuText The menu text.
 -- @param #number MenuTime
 -- @return #TASK self
-function TASK:SetPlannedMenuForGroup( TaskGroup, MenuText, MenuTime )
-  self:E( TaskGroup:GetName() )
+function TASK:SetPlannedMenuForGroup( TaskGroup, MenuTime )
+  self:F( TaskGroup:GetName() )
 
   local Mission = self:GetMission()
   local MissionName = Mission:GetName()
   local CommandCenter = Mission:GetCommandCenter()
   local CommandCenterMenu = CommandCenter:GetMenu()
 
-  local MissionMenu = MENU_GROUP:New( TaskGroup, MissionName, CommandCenterMenu ):SetTime( MenuTime )
-  
-  
-  local MissionMenu = Mission:GetMenu( TaskGroup )
-
   local TaskType = self:GetType()
-  local TaskTypeMenu = MENU_GROUP:New( TaskGroup, TaskType, MissionMenu ):SetTime( MenuTime )
-  local TaskMenu = MENU_GROUP_COMMAND:New( TaskGroup, MenuText, TaskTypeMenu, self.MenuAssignToGroup, { self = self, TaskGroup = TaskGroup } ):SetTime( MenuTime ):SetRemoveParent( true )
+--  local TaskThreatLevel = self.TaskInfo["ThreatLevel"]
+--  local TaskThreatLevelString = TaskThreatLevel and " [" .. string.rep( "■", TaskThreatLevel ) .. "]" or " []" 
+  local TaskPlayerCount = self:GetPlayerCount()
+  local TaskPlayerString = string.format( " (%dp)", TaskPlayerCount )
+  local TaskText = string.format( "%s%s", self:GetName(), TaskPlayerString ) --, TaskThreatLevelString )
+  local TaskName = string.format( "%s", self:GetName() )
+
+  local MissionMenu = Mission:GetMenu( TaskGroup )
+  --local MissionMenu = MENU_GROUP:New( TaskGroup, MissionName, CommandCenterMenu ):SetTime( MenuTime )
+  
+  --local MissionMenu = Mission:GetMenu( TaskGroup )
+
+  local TaskPlannedMenu = MENU_GROUP:New( TaskGroup, "Planned Tasks", MissionMenu ):SetTime( MenuTime )
+  local TaskTypeMenu = MENU_GROUP:New( TaskGroup, TaskType, TaskPlannedMenu ):SetTime( MenuTime ):SetRemoveParent( true )
+  local TaskTypeMenu = MENU_GROUP:New( TaskGroup, TaskText, TaskTypeMenu ):SetTime( MenuTime ):SetRemoveParent( true )
+  local ReportTaskMenu = MENU_GROUP_COMMAND:New( TaskGroup, string.format( "Report Task Status" ), TaskTypeMenu, self.MenuTaskStatus, self, TaskGroup ):SetTime( MenuTime ):SetRemoveParent( true )
+  
+  if not Mission:IsGroupAssigned( TaskGroup ) then
+    local JoinTaskMenu = MENU_GROUP_COMMAND:New( TaskGroup, string.format( "Join Task" ), TaskTypeMenu, self.MenuAssignToGroup, { self = self, TaskGroup = TaskGroup } ):SetTime( MenuTime ):SetRemoveParent( true )
+  end
       
   return self
 end
@@ -603,15 +756,28 @@ end
 -- @param #number MenuTime
 -- @return #TASK self
 function TASK:SetAssignedMenuForGroup( TaskGroup, MenuTime )
-  self:E( TaskGroup:GetName() )
+  self:F( { TaskGroup:GetName(), MenuTime } )
 
   local Mission = self:GetMission()
+  local MissionName = Mission:GetName()
+  local CommandCenter = Mission:GetCommandCenter()
+  local CommandCenterMenu = CommandCenter:GetMenu()
+
+  local TaskType = self:GetType()
+--  local TaskThreatLevel = self.TaskInfo["ThreatLevel"]
+--  local TaskThreatLevelString = TaskThreatLevel and " [" .. string.rep( "■", TaskThreatLevel ) .. "]" or " []" 
+  local TaskPlayerCount = self:GetPlayerCount()
+  local TaskPlayerString = string.format( " (%dp)", TaskPlayerCount )
+  local TaskText = string.format( "%s%s", self:GetName(), TaskPlayerString ) --, TaskThreatLevelString )
+  local TaskName = string.format( "%s", self:GetName() )
+
   local MissionMenu = Mission:GetMenu( TaskGroup )
+--  local MissionMenu = MENU_GROUP:New( TaskGroup, MissionName, CommandCenterMenu ):SetTime( MenuTime )
+--  local MissionMenu = Mission:GetMenu( TaskGroup )
 
-  self:E( { MissionMenu = MissionMenu } )
-
-  local TaskTypeMenu = MENU_GROUP_COMMAND:New( TaskGroup, "Task Status", MissionMenu, self.MenuTaskStatus, self, TaskGroup ):SetTime( MenuTime )
-  local TaskMenu = MENU_GROUP_COMMAND:New( TaskGroup, "Abort Task", MissionMenu, self.MenuTaskAbort, self, TaskGroup ):SetTime( MenuTime )
+  local TaskAssignedMenu = MENU_GROUP:New( TaskGroup, string.format( "Assigned Task %s", TaskName ), MissionMenu ):SetTime( MenuTime )
+  local TaskTypeMenu = MENU_GROUP_COMMAND:New( TaskGroup, string.format( "Report Task Status" ), TaskAssignedMenu, self.MenuTaskStatus, self, TaskGroup ):SetTime( MenuTime ):SetRemoveParent( true )
+  local TaskMenu = MENU_GROUP_COMMAND:New( TaskGroup, string.format( "Abort Group from Task" ), TaskAssignedMenu, self.MenuTaskAbort, self, TaskGroup ):SetTime( MenuTime ):SetRemoveParent( true )
 
   return self
 end
@@ -621,14 +787,12 @@ end
 -- @param #number MenuTime
 -- @return #TASK
 function TASK:RemoveMenu( MenuTime )
-  self:F()
+  self:F( { self:GetName(), MenuTime } )
 
   for TaskGroupID, TaskGroup in pairs( self.SetGroup:GetSet() ) do
     local TaskGroup = TaskGroup -- Wrapper.Group#GROUP 
     if TaskGroup:IsAlive() and TaskGroup:GetPlayerNames() then
-      if not self:IsAssignedToGroup( TaskGroup ) then
-        self:RemovePlannedMenuForGroup( TaskGroup, MenuTime )
-      end
+      self:RefreshMenus( TaskGroup, MenuTime )
     end
   end
 end
@@ -639,24 +803,26 @@ end
 -- @param Wrapper.Group#GROUP TaskGroup
 -- @param #number MenuTime
 -- @return #TASK self
-function TASK:RemovePlannedMenuForGroup( TaskGroup, MenuTime )
-  self:F()
+function TASK:RefreshMenus( TaskGroup, MenuTime )
+  self:F( { TaskGroup:GetName(), MenuTime } )
 
   local Mission = self:GetMission()
   local MissionName = Mission:GetName()
-  
+  local CommandCenter = Mission:GetCommandCenter()
+  local CommandCenterMenu = CommandCenter:GetMenu()
+
   local MissionMenu = Mission:GetMenu( TaskGroup )
+
+  local TaskName = self:GetName()
+  local PlannedMenu = MissionMenu:GetMenu( "Planned Tasks" )
+  local AssignedMenu = MissionMenu:GetMenu( string.format( "Assigned Task %s", TaskName ) )
   
-  if MissionMenu then
-    local TaskType = self:GetType()
-    local TypeMenu = MissionMenu:GetMenu( TaskType )
-    
-    if TypeMenu then
-      local TaskMenu = TypeMenu:GetMenu( self:GetTaskName() )
-      if TaskMenu then
-        TaskMenu:Remove( MenuTime )
-      end
-    end
+  if PlannedMenu then
+    PlannedMenu:Remove( MenuTime )
+  end
+  
+  if AssignedMenu then
+    AssignedMenu:Remove( MenuTime )
   end
   
 end
@@ -694,7 +860,7 @@ end
 -- @param #TASK self
 function TASK:MenuTaskStatus( TaskGroup )
 
-  local ReportText = self:ReportDetails()
+  local ReportText = self:ReportDetails( TaskGroup )
   
   self:T( ReportText )
   self:GetMission():GetCommandCenter():MessageToGroup( ReportText, TaskGroup )
@@ -705,7 +871,7 @@ end
 -- @param #TASK self
 function TASK:MenuTaskAbort( TaskGroup )
 
-  self:Abort()
+  self:AbortGroup( TaskGroup )
 end
 
 
@@ -715,6 +881,13 @@ end
 -- @return #string TaskName
 function TASK:GetTaskName()
   return self.TaskName
+end
+
+--- Returns the @{Task} briefing.
+-- @param #TASK self
+-- @return #string Task briefing.
+function TASK:GetTaskBriefing()
+  return self.TaskBriefing
 end
 
 
@@ -774,18 +947,24 @@ end
 -- @param Wrapper.Unit#UNIT TaskUnit
 -- @return #TASK self
 function TASK:RemoveStateMachine( TaskUnit )
-  self:F( { TaskUnit, self.Fsm[TaskUnit] ~= nil } )
+  self:F( { TaskUnit = TaskUnit:GetName(), HasFsm = ( self.Fsm[TaskUnit] ~= nil ) } )
 
-  self:E( self.Fsm )
-  for TaskUnitT, Fsm in pairs( self.Fsm ) do
-    self:E( TaskUnitT )
+  --self:E( self.Fsm )
+  --for TaskUnitT, Fsm in pairs( self.Fsm ) do
+    --local Fsm = Fsm -- Core.Fsm#FSM_PROCESS
+    --self:E( TaskUnitT )
+    --self.Fsm[TaskUnit] = nil
+  --end
+
+  if self.Fsm[TaskUnit] then
+    self.Fsm[TaskUnit]:Remove()
+    self.Fsm[TaskUnit] = nil
   end
-
-  self.Fsm[TaskUnit] = nil
   
   collectgarbage()
   self:E( "Garbage Collected, Processes should be finalized now ...")
 end
+
 
 --- Checks if there is a FiniteStateMachine assigned to Task@{Unit} for @{Task}
 -- @param #TASK self
@@ -836,6 +1015,19 @@ end
 -- @param #string TaskType
 function TASK:SetType( TaskType )
   self.TaskType = TaskType
+end
+
+--- Sets the Information on the Task
+-- @param #TASK self
+-- @param #string TaskInfo The key and title of the task information.
+-- @param #string TaskInfoText The Task info text.
+-- @param #number TaskInfoOrder The ordering, a number between 0 and 99.
+function TASK:SetInfo( TaskInfo, TaskInfoText, TaskInfoOrder )
+
+  self.TaskInfo = self.TaskInfo or {}
+  self.TaskInfo[TaskInfo] = self.TaskInfo[TaskInfo] or {}
+  self.TaskInfo[TaskInfo].TaskInfoText = TaskInfoText
+  self.TaskInfo[TaskInfo].TaskInfoOrder = TaskInfoOrder
 end
 
 --- Gets the Type of the Task
@@ -975,8 +1167,16 @@ end
 -- @param #string TaskBriefing
 -- @return #TASK self
 function TASK:SetBriefing( TaskBriefing )
+  self:E(TaskBriefing)
   self.TaskBriefing = TaskBriefing
   return self
+end
+
+--- Gets the @{Task} briefing.
+-- @param #TASK self
+-- @return #string The briefing text.
+function TASK:GetBriefing()
+  return self.TaskBriefing
 end
 
 
@@ -989,16 +1189,29 @@ end
 -- @param #string To
 function TASK:onenterAssigned( From, Event, To, PlayerUnit, PlayerName )
 
-  self:E( { "Task Assigned", self.Dispatcher } )
-  
-  self:MessageToGroups( "Task " .. self:GetName() .. " has been assigned to your group." )
-  
-  if self.Dispatcher then
-    self:E( "Firing Assign event " )
-    self.Dispatcher:Assign( self, PlayerUnit, PlayerName )
+
+  --- This test is required, because the state transition will be fired also when the state does not change in case of an event.  
+  if From ~= "Assigned" then
+    self:E( { From, Event, To, PlayerUnit:GetName(), PlayerName } )
+
+    self:GetMission():GetCommandCenter():MessageToCoalition( "Task " .. self:GetName() .. " is assigned." )
+    
+    -- Set the total Progress to be achieved.
+    
+    self:SetGoalTotal() -- Polymorphic to set the initial goal total!
+    
+    if self.Dispatcher then
+      self:E( "Firing Assign event " )
+      self.Dispatcher:Assign( self, PlayerUnit, PlayerName )
+    end
+    
+    self:GetMission():__Start( 1 )
+    
+    -- When the task is assigned, the task goal needs to be checked of the derived classes.
+    self:__Goal( -10 )  -- Polymorphic
+     
+    self:SetMenu()
   end
-  
-  self:GetMission():__Start( 1 )
 end
 
 
@@ -1014,7 +1227,7 @@ function TASK:onenterSuccess( From, Event, To )
   self:GetMission():GetCommandCenter():MessageToCoalition( "Task " .. self:GetName() .. " is successful! Good job!" )
   self:UnAssignFromGroups()
   
-  self:GetMission():__Complete( 1 )
+  self:GetMission():__MissionGoals( 1 )
   
 end
 
@@ -1027,12 +1240,13 @@ end
 function TASK:onenterAborted( From, Event, To )
 
   self:E( "Task Aborted" )
-
-  self:GetMission():GetCommandCenter():MessageToCoalition( "Task " .. self:GetName() .. " has been aborted! Task may be replanned." )
   
-  self:UnAssignFromGroups()
+  if From ~= "Aborted" then
+    self:GetMission():GetCommandCenter():MessageToCoalition( "Task " .. self:GetName() .. " has been aborted! Task may be replanned." )
+    self:__Replan( 5 )
+    self:SetMenu()
+  end
   
-  self:__Replan( 5 )
 end
 
 --- FSM function for a TASK
@@ -1072,7 +1286,7 @@ end
 function TASK:onstatechange( From, Event, To )
 
   if self:IsTrace() then
-    MESSAGE:New( "@ Task " .. self.TaskName .. " : " .. Event .. " changed to state " .. To, 2 ):ToAll()
+    --MESSAGE:New( "@ Task " .. self.TaskName .. " : " .. From .. " changed to " .. To .. " by " .. Event, 2 ):ToAll()
   end
 
   if self.Scores[To] then
@@ -1127,7 +1341,7 @@ do -- Reporting
 -- List the Task Name and Status
 -- @param #TASK self
 -- @return #string
-function TASK:ReportSummary()
+function TASK:ReportSummary() --R2.1 fixed report. Now nicely formatted and contains the info required.
 
   local Report = REPORT:New()
   
@@ -1135,43 +1349,238 @@ function TASK:ReportSummary()
   local Name = self:GetName()
   
   -- Determine the status of the Task.
-  local State = self:GetState()
+  local Status = "<" .. self:GetState() .. ">"
   
-  Report:Add( "Task " .. Name .. " - State '" .. State )
+  Report:Add( 'Task ' .. Name .. ' - State ' .. Status )
 
   return Report:Text()
+end
+
+--- Create an overiew report of the Task.
+-- List the Task Name and Status
+-- @param #TASK self
+-- @return #string
+function TASK:ReportOverview( ReportGroup ) --R2.1 fixed report. Now nicely formatted and contains the info required.
+
+  
+  -- List the name of the Task.
+  local TaskName = self:GetName()
+  local Report = REPORT:New()
+  
+  -- Determine the status of the Task.
+  local Status = "<" .. self:GetState() .. ">"
+
+  local Line = 0
+  local LineReport = REPORT:New()
+  
+  for TaskInfoID, TaskInfo in UTILS.spairs( self.TaskInfo, function( t, a, b ) return t[a].TaskInfoOrder < t[b].TaskInfoOrder end ) do
+
+    self:F( { TaskInfo = TaskInfo } )
+
+    if Line < math.floor( TaskInfo.TaskInfoOrder / 10 ) then
+      if Line ~= 0 then
+        Report:AddIndent( LineReport:Text( ", " ) )
+      else
+        Report:Add( TaskName .. ":" .. LineReport:Text( ", " ))
+      end
+      LineReport = REPORT:New()
+      Line = math.floor( TaskInfo.TaskInfoOrder / 10 )
+    end
+
+    local TaskInfoIDText = string.format( "%s: ", TaskInfoID )
+    
+    if type( TaskInfo.TaskInfoText ) == "string" then
+      LineReport:Add( TaskInfoIDText .. TaskInfo.TaskInfoText )
+    elseif type(TaskInfo) == "table" then
+      if TaskInfoID == "Coordinates" then
+        local FromCoordinate = ReportGroup:GetUnit(1):GetCoordinate()
+        local ToCoordinate = TaskInfo.TaskInfoText -- Core.Point#COORDINATE
+        --Report:Add( TaskInfoIDText )
+        LineReport:Add( ToCoordinate:ToString( ReportGroup ) )
+        --Report:AddIndent( ToCoordinate:ToStringBULLS( ReportGroup:GetCoalition() ) )
+      else
+      end
+    end
+    
+    
+  end
+
+  Report:AddIndent( LineReport:Text( ", " ) )
+  
+  return Report:Text()
+end
+
+--- Create a count of the players in the Task.
+-- @param #TASK self
+-- @return #number The total number of players in the task.
+function TASK:GetPlayerCount() --R2.1 Get a count of the players.
+
+  local PlayerCount = 0
+
+  -- Loop each Unit active in the Task, and find Player Names.
+  for TaskGroupID, PlayerGroup in pairs( self:GetGroups():GetSet() ) do
+    local PlayerGroup = PlayerGroup -- Wrapper.Group#GROUP
+    if self:IsGroupAssigned( PlayerGroup ) then
+      local PlayerNames = PlayerGroup:GetPlayerNames()
+        PlayerCount = PlayerCount + #PlayerNames
+    end
+  end
+
+  return PlayerCount
+end
+
+
+--- Create a list of the players in the Task.
+-- @param #TASK self
+-- @return #map<#string,Wrapper.Group#GROUP> A map of the players
+function TASK:GetPlayerNames() --R2.1 Get a map of the players.
+
+  local PlayerNameMap = {}
+
+  -- Loop each Unit active in the Task, and find Player Names.
+  for TaskGroupID, PlayerGroup in pairs( self:GetGroups():GetSet() ) do
+    local PlayerGroup = PlayerGroup -- Wrapper.Group#GROUP
+    if self:IsGroupAssigned( PlayerGroup ) then
+      local PlayerNames = PlayerGroup:GetPlayerNames()
+      for PlayerNameID, PlayerName in pairs( PlayerNames ) do
+        PlayerNameMap[PlayerName] = PlayerGroup
+      end
+    end
+  end
+
+  return PlayerNameMap
 end
 
 
 --- Create a detailed report of the Task.
 -- List the Task Status, and the Players assigned to the Task.
 -- @param #TASK self
+-- @param Wrapper.Group#GROUP TaskGroup
 -- @return #string
-function TASK:ReportDetails()
+function TASK:ReportDetails( ReportGroup )
 
-  local Report = REPORT:New()
+  local Report = REPORT:New():SetIndent( 3 )
   
   -- List the name of the Task.
   local Name = self:GetName()
   
   -- Determine the status of the Task.
-  local State = self:GetState()
-  
+  local Status = "<" .. self:GetState() .. ">"
+
   -- Loop each Unit active in the Task, and find Player Names.
-  local PlayerNames = {}
-  local PlayerReport = REPORT:New( " - Players:" )
-  for PlayerGroupID, PlayerGroupData in pairs( self:GetGroups():GetSet() ) do
-    local PlayerGroup = PlayerGroupData -- Wrapper.Group#GROUP
-    PlayerNames = PlayerGroup:GetPlayerNames()
-    if PlayerNames then
-      PlayerReport:Add( " -- Group " .. PlayerGroup:GetCallsign() .. ": " .. table.concat( PlayerNames, ", " ) )
+  local PlayerNames = self:GetPlayerNames()
+  
+  local PlayerReport = REPORT:New()
+  for PlayerName, PlayerGroup in pairs( PlayerNames ) do
+    PlayerReport:Add( "Group " .. PlayerGroup:GetCallsign() .. ": " .. PlayerName )
+  end
+  local Players = PlayerReport:Text()
+
+  Report:Add( "Task: " .. Name .. " - " .. Status .. " - Detailed Report" )
+  Report:Add( " - Players:" )
+  Report:AddIndent( Players )
+  
+  for TaskInfoID, TaskInfo in pairs( self.TaskInfo, function( t, a, b ) return t[a].TaskInfoOrder < t[b].TaskInfoOrder end ) do
+    
+    local TaskInfoIDText = string.format( " - %s: ", TaskInfoID )
+
+    if type( TaskInfo.TaskInfoText ) == "string" then
+      Report:Add( TaskInfoIDText .. TaskInfo.TaskInfoText )
+    elseif type(TaskInfo) == "table" then
+      if TaskInfoID == "Coordinates" then
+        local FromCoordinate = ReportGroup:GetUnit(1):GetCoordinate()
+        local ToCoordinate = TaskInfo.TaskInfoText -- Core.Point#COORDINATE
+        Report:Add( TaskInfoIDText )
+        Report:AddIndent( ToCoordinate:ToStringBRA( FromCoordinate ) .. ", " .. TaskInfo.TaskInfoText:ToStringAspect( FromCoordinate ) )
+        Report:AddIndent( ToCoordinate:ToStringBULLS( ReportGroup:GetCoalition() ) )
+      else
+      end
     end
+    
   end
   
-  -- Loop each Process in the Task, and find Reporting Details.
-  Report:Add( string.format( " - Task %s\n -- State '%s'\n%s", Name, State, PlayerReport:Text() ) )
   return Report:Text()
 end
 
 
 end -- Reporting
+
+
+do -- Additional Task Scoring and Task Progress
+
+  --- Add Task Progress for a Player Name
+  -- @param #TASK self
+  -- @param #string PlayerName The name of the player.
+  -- @param #string ProgressText The text that explains the Progress achieved.
+  -- @param #number ProgressTime The time the progress was achieved.
+  -- @oaram #number ProgressPoints The amount of points of magnitude granted. This will determine the shared Mission Success scoring.
+  -- @return #TASK
+  function TASK:AddProgress( PlayerName, ProgressText, ProgressTime, ProgressPoints )
+    self.TaskProgress = self.TaskProgress or {}
+    self.TaskProgress[ProgressTime] = self.TaskProgress[ProgressTime] or {}
+    self.TaskProgress[ProgressTime].PlayerName = PlayerName
+    self.TaskProgress[ProgressTime].ProgressText = ProgressText
+    self.TaskProgress[ProgressTime].ProgressPoints = ProgressPoints
+    self:GetMission():AddPlayerName( PlayerName )
+    return self
+  end
+  
+  function TASK:GetPlayerProgress( PlayerName )
+    local ProgressPlayer = 0
+    for ProgressTime, ProgressData in pairs( self.TaskProgress ) do
+      if PlayerName == ProgressData.PlayerName then
+        ProgressPlayer = ProgressPlayer + ProgressData.ProgressPoints
+      end
+    end
+    return ProgressPlayer
+  end
+
+  --- Set a score when progress has been made by the player.
+  -- @param #TASK self
+  -- @param #string PlayerName The name of the player.
+  -- @param #number Score The score in points to be granted when task process has been achieved.
+  -- @param Wrapper.Unit#UNIT TaskUnit
+  -- @return #TASK
+  function TASK:SetScoreOnProgress( PlayerName, Score, TaskUnit )
+    self:F( { PlayerName, Score, TaskUnit } )
+
+    local ProcessUnit = self:GetUnitProcess( TaskUnit )
+
+    ProcessUnit:AddScoreProcess( "Engaging", "Account", "AccountPlayer", "Player " .. PlayerName .. " has achieved progress.", Score )
+    
+    return self
+  end
+
+  --- Set a score when all the targets in scope of the A2A attack, have been destroyed.
+  -- @param #TASK self
+  -- @param #string PlayerName The name of the player.
+  -- @param #number Score The score in points.
+  -- @param Wrapper.Unit#UNIT TaskUnit
+  -- @return #TASK
+  function TASK:SetScoreOnSuccess( PlayerName, Score, TaskUnit )
+    self:F( { PlayerName, Score, TaskUnit } )
+
+    local ProcessUnit = self:GetUnitProcess( TaskUnit )
+
+    ProcessUnit:AddScore( "Success", "The task is a success!", Score )
+    
+    return self
+  end
+
+  --- Set a penalty when the A2A attack has failed.
+  -- @param #TASK self
+  -- @param #string PlayerName The name of the player.
+  -- @param #number Penalty The penalty in points, must be a negative value!
+  -- @param Wrapper.Unit#UNIT TaskUnit
+  -- @return #TASK
+  function TASK:SetScoreOnFail( PlayerName, Penalty, TaskUnit )
+    self:F( { PlayerName, Penalty, TaskUnit } )
+
+    local ProcessUnit = self:GetUnitProcess( TaskUnit )
+
+    ProcessUnit:AddScore( "Failed", "The task is a failure!", Penalty )
+    
+    return self
+  end
+
+end

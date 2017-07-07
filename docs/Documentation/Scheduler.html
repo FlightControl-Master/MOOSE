@@ -17,9 +17,16 @@
 				<a href="index.html">index</a>
 			</li></ul>
 		<ul>
+					<li><a href="AI_A2A.html">AI_A2A</a></li>
+					<li><a href="AI_A2A_Cap.html">AI_A2A_Cap</a></li>
+					<li><a href="AI_A2A_Dispatcher.html">AI_A2A_Dispatcher</a></li>
+					<li><a href="AI_A2A_GCI.html">AI_A2A_GCI</a></li>
+					<li><a href="AI_A2A_Patrol.html">AI_A2A_Patrol</a></li>
+					<li><a href="AI_Bai.html">AI_Bai</a></li>
 					<li><a href="AI_Balancer.html">AI_Balancer</a></li>
 					<li><a href="AI_Cap.html">AI_Cap</a></li>
 					<li><a href="AI_Cas.html">AI_Cas</a></li>
+					<li><a href="AI_Formation.html">AI_Formation</a></li>
 					<li><a href="AI_Patrol.html">AI_Patrol</a></li>
 					<li><a href="Account.html">Account</a></li>
 					<li><a href="Airbase.html">Airbase</a></li>
@@ -31,7 +38,23 @@
 					<li><a href="Client.html">Client</a></li>
 					<li><a href="CommandCenter.html">CommandCenter</a></li>
 					<li><a href="Controllable.html">Controllable</a></li>
+					<li><a href="DCSAirbase.html">DCSAirbase</a></li>
+					<li><a href="DCSCoalitionObject.html">DCSCoalitionObject</a></li>
+					<li><a href="DCSCommand.html">DCSCommand</a></li>
+					<li><a href="DCSController.html">DCSController</a></li>
+					<li><a href="DCSGroup.html">DCSGroup</a></li>
+					<li><a href="DCSObject.html">DCSObject</a></li>
+					<li><a href="DCSTask.html">DCSTask</a></li>
+					<li><a href="DCSTypes.html">DCSTypes</a></li>
+					<li><a href="DCSUnit.html">DCSUnit</a></li>
+					<li><a href="DCSVec3.html">DCSVec3</a></li>
+					<li><a href="DCSWorld.html">DCSWorld</a></li>
+					<li><a href="DCSZone.html">DCSZone</a></li>
+					<li><a href="DCScountry.html">DCScountry</a></li>
+					<li><a href="DCStimer.html">DCStimer</a></li>
+					<li><a href="DCStrigger.html">DCStrigger</a></li>
 					<li><a href="Database.html">Database</a></li>
+					<li><a href="Designate.html">Designate</a></li>
 					<li><a href="Detection.html">Detection</a></li>
 					<li><a href="DetectionManager.html">DetectionManager</a></li>
 					<li><a href="Escort.html">Escort</a></li>
@@ -57,23 +80,32 @@
 					<li><a href="Scoring.html">Scoring</a></li>
 					<li><a href="Sead.html">Sead</a></li>
 					<li><a href="Set.html">Set</a></li>
+					<li><a href="Settings.html">Settings</a></li>
 					<li><a href="Smoke.html">Smoke</a></li>
 					<li><a href="Spawn.html">Spawn</a></li>
+					<li><a href="SpawnStatic.html">SpawnStatic</a></li>
+					<li><a href="Spot.html">Spot</a></li>
 					<li><a href="Static.html">Static</a></li>
+					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="Task.html">Task</a></li>
+					<li><a href="Task_A2A.html">Task_A2A</a></li>
+					<li><a href="Task_A2A_Dispatcher.html">Task_A2A_Dispatcher</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
 					<li><a href="Task_A2G_Dispatcher.html">Task_A2G_Dispatcher</a></li>
+					<li><a href="Task_Cargo.html">Task_Cargo</a></li>
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
 					<li><a href="Unit.html">Unit</a></li>
 					<li><a href="Utils.html">Utils</a></li>
 					<li><a href="Zone.html">Zone</a></li>
+					<li><a href="env.html">env</a></li>
+					<li><a href="land.html">land</a></li>
 					<li><a href="routines.html">routines</a></li>
 		</ul>
 	</div>
 	<div id="content">
    <h1>Module <code>Scheduler</code></h1>
    
-<p><strong>Core</strong> - SCHEDULER prepares and handles the <strong>execution of functions over scheduled time (intervals)</strong>.</p>
+<p><strong>Core</strong> -- SCHEDULER prepares and handles the <strong>execution of functions over scheduled time (intervals)</strong>.</p>
 
    
 
@@ -81,33 +113,30 @@
 
 <hr/>
 
-<h1>1) <a href="Scheduler.html##(SCHEDULER)">Scheduler#SCHEDULER</a> class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
-
-<p>The <a href="Scheduler.html##(SCHEDULER)">Scheduler#SCHEDULER</a> class creates schedule.</p>
-
-<h2>1.1) SCHEDULER constructor</h2>
-
-<p>The SCHEDULER class is quite easy to use, but note that the New constructor has variable parameters:</p>
+<p>SCHEDULER manages the <strong>scheduling of functions</strong>:</p>
 
 <ul>
-    <li><a href="Scheduler.html##(SCHEDULER).New">Scheduler#SCHEDULER.New</a>( nil ): Setup a new SCHEDULER object, which is persistently executed after garbage collection.</li>
-    <li><a href="Scheduler.html##(SCHEDULER).New">Scheduler#SCHEDULER.New</a>( Object ): Setup a new SCHEDULER object, which is linked to the Object. When the Object is nillified or destroyed, the SCHEDULER object will also be destroyed and stopped after garbage collection.</li>
-    <li><a href="Scheduler.html##(SCHEDULER).New">Scheduler#SCHEDULER.New</a>( nil, Function, FunctionArguments, Start, ... ): Setup a new persistent SCHEDULER object, and start a new schedule for the Function with the defined FunctionArguments according the Start and sequent parameters.</li>
-    <li><a href="Scheduler.html##(SCHEDULER).New">Scheduler#SCHEDULER.New</a>( Object, Function, FunctionArguments, Start, ... ): Setup a new SCHEDULER object, linked to Object, and start a new schedule for the Function with the defined FunctionArguments according the Start and sequent parameters.</li>
+    <li>optionally in an optional specified time interval, </li>
+    <li>optionally <strong>repeating</strong> with a specified time repeat interval, </li>
+    <li>optionally <strong>randomizing</strong> with a specified time interval randomization factor, </li>
+    <li>optionally <strong>stop</strong> the repeating after a specified time interval. </li>
 </ul>
 
-<h2>1.2) SCHEDULER timer stopping and (re-)starting.</h2>
+<hr/>
 
-<p>The SCHEDULER can be stopped and restarted with the following methods:</p>
+<h1>Demo Missions</h1>
 
-<ul>
-    <li><a href="Scheduler.html##(SCHEDULER).Start">Scheduler#SCHEDULER.Start</a>(): (Re-)Start the schedules within the SCHEDULER object. If a CallID is provided to :Start(), only the schedule referenced by CallID will be (re-)started.</li>
-    <li><a href="Scheduler.html##(SCHEDULER).Stop">Scheduler#SCHEDULER.Stop</a>(): Stop the schedules within the SCHEDULER object. If a CallID is provided to :Stop(), then only the schedule referenced by CallID will be stopped.</li>
-</ul>
+<h3><a href="https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master-release/SCH%20-%20Scheduler">SCHEDULER Demo Missions source code</a></h3>
 
-<h2>1.3) Create a new schedule</h2>
+<h3><a href="https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/SCH%20-%20Scheduler">SCHEDULER Demo Missions, only for beta testers</a></h3>
 
-<p>With <a href="Scheduler.html##(SCHEDULER).Schedule">Scheduler#SCHEDULER.Schedule</a>() a new time event can be scheduled. This function is used by the :New() constructor when a new schedule is planned.</p>
+<h3><a href="https://github.com/FlightControl-Master/MOOSE_MISSIONS/releases">ALL Demo Missions pack of the last release</a></h3>
+
+<hr/>
+
+<h1>YouTube Channel</h1>
+
+<h3><a href="">SCHEDULER YouTube Channel (none)</a></h3>
 
 <hr/>
 
@@ -123,12 +152,6 @@
     <li>FlightControl : Design &amp; Programming</li>
 </ul>
 
-<h3>Test Missions:</h3>
-
-<ul>
-    <li>SCH - Scheduler</li>
-</ul>
-
 <hr/>
 
 
@@ -137,18 +160,14 @@
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="#SCHEDULER">SCHEDULER</a></td>
 		<td class="summary">
+<h1>SCHEDULER class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
 
+<p>The SCHEDULER class creates schedule.</p>
 </td>
 		</tr>
 	</table>
 			<h2><a id="#(SCHEDULER)">Type <code>SCHEDULER</code></a></h2>
 				<table class="function_list">
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SCHEDULER).ClassName">SCHEDULER.ClassName</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SCHEDULER).Clear">SCHEDULER:Clear()</a></td>
 		<td class="summary">
@@ -186,12 +205,6 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SCHEDULER).Schedules">SCHEDULER.Schedules</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SCHEDULER).Start">SCHEDULER:Start(ScheduleID)</a></td>
 		<td class="summary">
 <p>(Re-)Starts the schedules or a specific schedule if a valid ScheduleID is provided.</p>
@@ -216,6 +229,169 @@
 </dt>
 <dd>
 	
+<h1>SCHEDULER class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
+
+<p>The SCHEDULER class creates schedule.</p>
+
+	
+
+<p>A SCHEDULER can manage <strong>multiple</strong> (repeating) schedules. Each planned or executing schedule has a unique <strong>ScheduleID</strong>.
+The ScheduleID is returned when the method <a href="##(SCHEDULER).Schedule">SCHEDULER.Schedule</a>() is called.
+It is recommended to store the ScheduleID in a variable, as it is used in the methods <a href="SCHEDULER.Start.html">SCHEDULER.Start</a>() and <a href="SCHEDULER.Stop.html">SCHEDULER.Stop</a>(),
+which can start and stop specific repeating schedules respectively within a SCHEDULER object.</p>
+
+<h2>SCHEDULER constructor</h2>
+
+<p>The SCHEDULER class is quite easy to use, but note that the New constructor has variable parameters:</p>
+
+<p>The <a href="##(SCHEDULER).New">SCHEDULER.New</a>() method returns 2 variables:</p>
+
+<ol>
+    <li>The SCHEDULER object reference.</li>
+    <li>The first schedule planned in the SCHEDULER object.</li>
+</ol>
+
+<p>To clarify the different appliances, lets have a look at the following examples: </p>
+
+<h3>Construct a SCHEDULER object without a persistent schedule.</h3>
+
+<ul>
+    <li><p><a href="##(SCHEDULER).New">SCHEDULER.New</a>( nil ): Setup a new SCHEDULER object, which is persistently executed after garbage collection.</p>
+    
+    <p>SchedulerObject = SCHEDULER:New()
+    SchedulerID = SchedulerObject:Schedule( nil, ScheduleFunction, {} )</p></li>
+</ul>
+
+<p>The above example creates a new SchedulerObject, but does not schedule anything.
+A separate schedule is created by using the SchedulerObject using the method :Schedule..., which returns a ScheduleID</p>
+
+<h3>Construct a SCHEDULER object without a volatile schedule, but volatile to the Object existence...</h3>
+
+<ul>
+    <li><p><a href="##(SCHEDULER).New">SCHEDULER.New</a>( Object ): Setup a new SCHEDULER object, which is linked to the Object. When the Object is nillified or destroyed, the SCHEDULER object will also be destroyed and stopped after garbage collection.</p>
+    
+    <p>ZoneObject = ZONE:New( "ZoneName" )
+    SchedulerObject = SCHEDULER:New( ZoneObject )
+    SchedulerID = SchedulerObject:Schedule( ZoneObject, ScheduleFunction, {} )
+    ...
+    ZoneObject = nil
+    garbagecollect()</p></li>
+</ul>
+
+<p>The above example creates a new SchedulerObject, but does not schedule anything, and is bound to the existence of ZoneObject, which is a ZONE.
+A separate schedule is created by using the SchedulerObject using the method :Schedule()..., which returns a ScheduleID
+Later in the logic, the ZoneObject is put to nil, and garbage is collected.
+As a result, the ScheduleObject will cancel any planned schedule.</p>
+
+<h3>Construct a SCHEDULER object with a persistent schedule.</h3>
+
+<ul>
+    <li><p><a href="##(SCHEDULER).New">SCHEDULER.New</a>( nil, Function, FunctionArguments, Start, ... ): Setup a new persistent SCHEDULER object, and start a new schedule for the Function with the defined FunctionArguments according the Start and sequent parameters.</p>
+    
+    <p>SchedulerObject, SchedulerID = SCHEDULER:New( nil, ScheduleFunction, {} )</p></li>
+</ul>
+
+<p>The above example creates a new SchedulerObject, and does schedule the first schedule as part of the call.
+Note that 2 variables are returned here: SchedulerObject, ScheduleID...</p>
+
+<h3>Construct a SCHEDULER object without a schedule, but volatile to the Object existence...</h3>
+
+<ul>
+    <li><p><a href="##(SCHEDULER).New">SCHEDULER.New</a>( Object, Function, FunctionArguments, Start, ... ): Setup a new SCHEDULER object, linked to Object, and start a new schedule for the Function with the defined FunctionArguments according the Start and sequent parameters.</p>
+    
+    <p>ZoneObject = ZONE:New( "ZoneName" )
+    SchedulerObject, SchedulerID = SCHEDULER:New( ZoneObject, ScheduleFunction, {} )
+    SchedulerID = SchedulerObject:Schedule( ZoneObject, ScheduleFunction, {} )
+    ...
+    ZoneObject = nil
+    garbagecollect()</p></li>
+</ul>
+
+<p>The above example creates a new SchedulerObject, and schedules a method call (ScheduleFunction), 
+and is bound to the existence of ZoneObject, which is a ZONE object (ZoneObject).
+Both a ScheduleObject and a SchedulerID variable are returned.
+Later in the logic, the ZoneObject is put to nil, and garbage is collected.
+As a result, the ScheduleObject will cancel the planned schedule.</p>
+
+<h2>SCHEDULER timer stopping and (re-)starting.</h2>
+
+<p>The SCHEDULER can be stopped and restarted with the following methods:</p>
+
+<ul>
+    <li><p><a href="##(SCHEDULER).Start">SCHEDULER.Start</a>(): (Re-)Start the schedules within the SCHEDULER object. If a CallID is provided to :Start(), only the schedule referenced by CallID will be (re-)started.</p></li>
+    <li><p><a href="##(SCHEDULER).Stop">SCHEDULER.Stop</a>(): Stop the schedules within the SCHEDULER object. If a CallID is provided to :Stop(), then only the schedule referenced by CallID will be stopped.</p>
+    
+    <p>ZoneObject = ZONE:New( "ZoneName" )
+    SchedulerObject, SchedulerID = SCHEDULER:New( ZoneObject, ScheduleFunction, {} )
+    SchedulerID = SchedulerObject:Schedule( ZoneObject, ScheduleFunction, {}, 10, 10 )
+    ...
+    SchedulerObject:Stop( SchedulerID )
+    ...
+    SchedulerObject:Start( SchedulerID )</p></li>
+</ul>
+
+<p>The above example creates a new SchedulerObject, and does schedule the first schedule as part of the call.
+Note that 2 variables are returned here: SchedulerObject, ScheduleID... <br/>
+Later in the logic, the repeating schedule with SchedulerID is stopped. <br/>
+A bit later, the repeating schedule with SchedulerId is (re)-started.  </p>
+
+<h2>Create a new schedule</h2>
+
+<p>With the method <a href="##(SCHEDULER).Schedule">SCHEDULER.Schedule</a>() a new time event can be scheduled. 
+This method is used by the :New() constructor when a new schedule is planned.</p>
+
+<p>Consider the following code fragment of the SCHEDULER object creation.</p>
+
+<pre><code>ZoneObject = ZONE:New( "ZoneName" )
+SchedulerObject = SCHEDULER:New( ZoneObject )
+</code></pre>
+
+<p>Several parameters can be specified that influence the behaviour of a Schedule.</p>
+
+<h3>A single schedule, immediately executed</h3>
+
+<pre><code>SchedulerID = SchedulerObject:Schedule( ZoneObject, ScheduleFunction, {} )
+</code></pre>
+
+<p>The above example schedules a new ScheduleFunction call to be executed asynchronously, within milleseconds ...</p>
+
+<h3>A single schedule, planned over time</h3>
+
+<pre><code>SchedulerID = SchedulerObject:Schedule( ZoneObject, ScheduleFunction, {}, 10 )
+</code></pre>
+
+<p>The above example schedules a new ScheduleFunction call to be executed asynchronously, within 10 seconds ...</p>
+
+<h3>A schedule with a repeating time interval, planned over time</h3>
+
+<pre><code>SchedulerID = SchedulerObject:Schedule( ZoneObject, ScheduleFunction, {}, 10, 60 )
+</code></pre>
+
+<p>The above example schedules a new ScheduleFunction call to be executed asynchronously, within 10 seconds, 
+and repeating 60 every seconds ...</p>
+
+<h3>A schedule with a repeating time interval, planned over time, with time interval randomization</h3>
+
+<pre><code>SchedulerID = SchedulerObject:Schedule( ZoneObject, ScheduleFunction, {}, 10, 60, 0.5 )
+</code></pre>
+
+<p>The above example schedules a new ScheduleFunction call to be executed asynchronously, within 10 seconds, 
+and repeating 60 seconds, with a 50% time interval randomization ...
+So the repeating time interval will be randomized using the <strong>0.5</strong>, <br/>
+and will calculate between <strong>60 - ( 60 * 0.5 )</strong> and <strong>60 + ( 60 * 0.5 )</strong> for each repeat, 
+which is in this example between <strong>30</strong> and <strong>90</strong> seconds.</p>
+
+<h3>A schedule with a repeating time interval, planned over time, with time interval randomization, and stop after a time interval</h3>
+
+<pre><code>SchedulerID = SchedulerObject:Schedule( ZoneObject, ScheduleFunction, {}, 10, 60, 0.5, 300 )
+</code></pre>
+
+<p>The above example schedules a new ScheduleFunction call to be executed asynchronously, within 10 seconds, 
+The schedule will repeat every 60 seconds.
+So the repeating time interval will be randomized using the <strong>0.5</strong>, <br/>
+and will calculate between <strong>60 - ( 60 * 0.5 )</strong> and <strong>60 + ( 60 * 0.5 )</strong> for each repeat, 
+which is in this example between <strong>30</strong> and <strong>90</strong> seconds.
+The schedule will stop after <strong>300</strong> seconds.</p>
 
 
 </dd>
@@ -227,20 +403,6 @@
 <p>The SCHEDULER class</p>
 
 	<h3>Field(s)</h3>
-		<dl class="function">
-<dt>
-
-		<em>#string</em>
-<a id="#(SCHEDULER).ClassName" >
-<strong>SCHEDULER.ClassName</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
 		<dl class="function">
 <dt>
 
@@ -435,20 +597,6 @@ The ScheduleID of the planned schedule.</p>
 		<em></em>
 <a id="#(SCHEDULER).SchedulerObject" >
 <strong>SCHEDULER.SchedulerObject</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em></em>
-<a id="#(SCHEDULER).Schedules" >
-<strong>SCHEDULER.Schedules</strong>
 </a>
 </dt>
 <dd>

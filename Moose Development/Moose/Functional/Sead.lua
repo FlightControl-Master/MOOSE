@@ -1,7 +1,8 @@
---- Provides defensive behaviour to a set of SAM sites within a running Mission.
+--- **Functional** -- Provides defensive behaviour to a set of SAM sites within a running Mission.
+-- 
+-- ====
+-- 
 -- @module Sead
--- @author to be searched on the forum
--- @author (co) Flightcontrol (Modified and enriched with functionality)
 
 --- The SEAD class
 -- @type SEAD

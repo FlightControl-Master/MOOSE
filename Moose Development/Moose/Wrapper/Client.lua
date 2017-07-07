@@ -1,10 +1,26 @@
---- This module contains the CLIENT class.
+--- **Wrapper** -- CLIENT wraps DCS Unit objects acting as a __Client__ or __Player__ within a mission.
 -- 
--- 1) @{Client#CLIENT} class, extends @{Unit#UNIT}
--- ===============================================
+-- ====
+-- 
+-- ### Author: **Sven Van de Velde (FlightControl)**
+-- 
+-- ### Contributions: 
+-- 
+-- ===
+-- 
+-- @module Client
+
+
+--- The CLIENT class
+-- @type CLIENT
+-- @extends Wrapper.Unit#UNIT
+
+
+--- # CLIENT class, extends @{Unit#UNIT}
+-- 
 -- Clients are those **Units** defined within the Mission Editor that have the skillset defined as __Client__ or __Player__.
 -- Note that clients are NOT the same as Units, they are NOT necessarily alive.
--- The @{Client#CLIENT} class is a wrapper class to handle the DCS Unit objects that have the skillset defined as __Client__ or __Player__:
+-- The CLIENT class is a wrapper class to handle the DCS Unit objects that have the skillset defined as __Client__ or __Player__:
 -- 
 --  * Wraps the DCS Unit objects with skill level set to Player or Client.
 --  * Support all DCS Unit APIs.
@@ -15,8 +31,8 @@
 -- 
 -- Clients are being used by the @{MISSION} class to follow players and register their successes.
 --  
--- 1.1) CLIENT reference methods
--- -----------------------------
+-- ## CLIENT reference methods
+-- 
 -- For each DCS Unit having skill level Player or Client, a CLIENT wrapper object (instance) will be created within the _@{DATABASE} object.
 -- This is done at the beginning of the mission (when the mission starts).
 --  
@@ -32,13 +48,9 @@
 --  * @{#CLIENT.Find}(): Find a CLIENT instance from the _DATABASE object using a DCS Unit object.
 --  * @{#CLIENT.FindByName}(): Find a CLIENT instance from the _DATABASE object using a DCS Unit name.
 --  
--- IMPORTANT: ONE SHOULD NEVER SANATIZE these CLIENT OBJECT REFERENCES! (make the CLIENT object references nil).
+-- **IMPORTANT: ONE SHOULD NEVER SANATIZE these CLIENT OBJECT REFERENCES! (make the CLIENT object references nil).**
 -- 
--- @module Client
-
---- The CLIENT class
--- @type CLIENT
--- @extends Wrapper.Unit#UNIT
+-- @field #CLIENT
 CLIENT = {
 	ONBOARDSIDE = {
 		NONE = 0,

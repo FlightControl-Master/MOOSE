@@ -1,4 +1,4 @@
---- **AI** - **Execute Combat Air Patrol (CAP).**
+--- **AI** -- **Execute Combat Air Patrol (CAP).**
 --
 -- ![Banner Image](..\Presentations\AI_CAP\Dia1.JPG)
 -- 
@@ -11,33 +11,34 @@
 --   * @{#AI_CAP_ZONE}: Perform a CAP in a zone.
 --   
 -- ====
+-- 
+-- # Demo Missions
+-- 
+-- ### [AI_CAP Demo Missions source code](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master-release/CAP%20-%20Combat%20Air%20Patrol)
+-- 
+-- ### [AI_CAP Demo Missions, only for beta testers](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/CAP%20-%20Combat%20Air%20Patrol)
 --
--- # **API CHANGE HISTORY**
---
--- The underlying change log documents the API changes. Please read this carefully. The following notation is used:
---
---   * **Added** parts are expressed in bold type face.
---   * _Removed_ parts are expressed in italic type face.
---
--- Hereby the change log:
---
--- 2017-01-15: Initial class and API.
---
--- ===
---
--- # **AUTHORS and CONTRIBUTIONS**
---
--- ### Contributions:
+-- ### [ALL Demo Missions pack of the last release](https://github.com/FlightControl-Master/MOOSE_MISSIONS/releases)
+-- 
+-- ====
+-- 
+-- # YouTube Channel
+-- 
+-- ### [AI_CAP YouTube Channel](https://www.youtube.com/playlist?list=PL7ZUrU4zZUl1YCyPxJgoZn-CfhwyeW65L)
+-- 
+-- ====
+-- 
+-- ### Author: **Sven Van de Velde (FlightControl)**
+-- 
+-- ### Contributions: 
 --
 --   * **[Quax](https://forums.eagle.ru/member.php?u=90530)**: Concept, Advice & Testing.
 --   * **[Pikey](https://forums.eagle.ru/member.php?u=62835)**: Concept, Advice & Testing.
 --   * **[Gunterlund](http://forums.eagle.ru:8080/member.php?u=75036)**: Test case revision.
 --   * **[Whisper](http://forums.eagle.ru/member.php?u=3829): Testing.
 --   * **[Delta99](https://forums.eagle.ru/member.php?u=125166): Testing. 
---        
--- ### Authors:
---
---   * **FlightControl**: Concept, Design & Programming.
+-- 
+-- ====       
 --
 -- @module AI_Cap
 
@@ -48,9 +49,9 @@
 -- @extends AI.AI_Patrol#AI_PATROL_ZONE
 
 
---- # 1) @{#AI_CAP_ZONE} class, extends @{AI_CAP#AI_PATROL_ZONE}
+--- # AI_CAP_ZONE class, extends @{AI_CAP#AI_PATROL_ZONE}
 -- 
--- The @{#AI_CAP_ZONE} class implements the core functions to patrol a @{Zone} by an AI @{Controllable} or @{Group} 
+-- The AI_CAP_ZONE class implements the core functions to patrol a @{Zone} by an AI @{Controllable} or @{Group} 
 -- and automatically engage any airborne enemies that are within a certain range or within a certain zone.
 -- 
 -- ![Process](..\Presentations\AI_CAP\Dia3.JPG)
@@ -81,22 +82,22 @@
 -- 
 -- ![Process](..\Presentations\AI_CAP\Dia13.JPG)
 -- 
--- ## 1.1) AI_CAP_ZONE constructor
+-- ## 1. AI_CAP_ZONE constructor
 --   
 --   * @{#AI_CAP_ZONE.New}(): Creates a new AI_CAP_ZONE object.
 -- 
--- ## 1.2) AI_CAP_ZONE is a FSM
+-- ## 2. AI_CAP_ZONE is a FSM
 -- 
 -- ![Process](..\Presentations\AI_CAP\Dia2.JPG)
 -- 
--- ### 1.2.1) AI_CAP_ZONE States
+-- ### 2.1 AI_CAP_ZONE States
 -- 
 --   * **None** ( Group ): The process is not started yet.
 --   * **Patrolling** ( Group ): The AI is patrolling the Patrol Zone.
 --   * **Engaging** ( Group ): The AI is engaging the bogeys.
 --   * **Returning** ( Group ): The AI is returning to Base..
 -- 
--- ### 1.2.2) AI_CAP_ZONE Events
+-- ### 2.2 AI_CAP_ZONE Events
 -- 
 --   * **@{AI_Patrol#AI_PATROL_ZONE.Start}**: Start the process.
 --   * **@{AI_Patrol#AI_PATROL_ZONE.Route}**: Route the AI to a new random 3D point within the Patrol Zone.
@@ -109,7 +110,7 @@
 --   * **@{#AI_CAP_ZONE.Destroyed}**: The AI has destroyed all bogeys @{Unit}s assigned in the CAS task.
 --   * **Status** ( Group ): The AI is checking status (fuel and damage). When the tresholds have been reached, the AI will RTB.
 --
--- ## 1.3) Set the Range of Engagement
+-- ## 3. Set the Range of Engagement
 -- 
 -- ![Range](..\Presentations\AI_CAP\Dia11.JPG)
 -- 
@@ -119,7 +120,7 @@
 -- The range is applied at the position of the AI.
 -- Use the method @{AI_CAP#AI_CAP_ZONE.SetEngageRange}() to define that range.
 --
--- ## 1.4) Set the Zone of Engagement
+-- ## 4. Set the Zone of Engagement
 -- 
 -- ![Zone](..\Presentations\AI_CAP\Dia12.JPG)
 -- 
@@ -129,8 +130,7 @@
 --  
 -- ===
 -- 
--- @field #AI_CAP_ZONE AI_CAP_ZONE
--- 
+-- @field #AI_CAP_ZONE
 AI_CAP_ZONE = {
   ClassName = "AI_CAP_ZONE",
 }

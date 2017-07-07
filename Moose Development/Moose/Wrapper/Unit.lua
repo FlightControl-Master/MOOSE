@@ -9,7 +9,16 @@
 --  * Handle local Unit Controller.
 --  * Manage the "state" of the DCS Unit.
 --  
+-- ====
+-- 
+-- ### Author: **Sven Van de Velde (FlightControl)**
+-- 
+-- ### Contributions: 
+-- 
+-- ====
+-- 
 -- @module Unit
+
 
 --- @type UNIT
 -- @extends Wrapper.Controllable#CONTROLLABLE
@@ -64,13 +73,18 @@
 -- 
 -- The UNIT class contains methods to test the location or proximity against zones or other objects.
 -- 
--- ### Zones
+-- ### Zones range
 -- 
 -- To test whether the Unit is within a **zone**, use the @{#UNIT.IsInZone}() or the @{#UNIT.IsNotInZone}() methods. Any zone can be tested on, but the zone must be derived from @{Zone#ZONE_BASE}. 
 -- 
--- ### Units
+-- ### Unit range
 -- 
--- Test if another DCS Unit is within a given radius of the current DCS Unit, use the @{#UNIT.OtherUnitInRadius}() method.
+--   * Test if another DCS Unit is within a given radius of the current DCS Unit, use the @{#UNIT.OtherUnitInRadius}() method.
+--   
+-- ## Test Line of Sight
+-- 
+--   * Use the @{#UNIT.IsLOS}() method to check if the given unit is within line of sight.
+-- 
 -- 
 -- @field #UNIT UNIT
 UNIT = {
@@ -310,7 +324,8 @@ function UNIT:GetPlayerName()
     return PlayerName
   end
 
-  return nil
+    return nil
+
 end
 
 --- Returns the unit's number in the group. 
@@ -521,7 +536,7 @@ function UNIT:GetLife()
     return UnitLife
   end
   
-  return nil
+  return -1
 end
 
 --- Returns the Unit's initial health.
@@ -538,7 +553,7 @@ function UNIT:GetLife0()
     return UnitLife0
   end
   
-  return nil
+  return 0
 end
 
 --- Returns the category name of the #UNIT.
@@ -635,12 +650,12 @@ function UNIT:GetThreatLevel()
       "Unarmed", 
       "Tanker", 
       "AWACS", 
-      "Transport Helicpter",   
+      "Transport Helicopter",   
       "UAV",
       "Bomber",
       "Strategic Bomber",
       "Attack Helicopter",
-      "Interceptor",
+      "Battleplane",
       "Multirole Fighter",
       "Fighter"
     }
@@ -719,7 +734,7 @@ function UNIT:IsInZone( Zone )
   if self:IsAlive() then
     local IsInZone = Zone:IsVec3InZone( self:GetVec3() )
   
-    self:T( { IsInZone } )
+    self:T2( { IsInZone } )
     return IsInZone 
   end
   
@@ -773,91 +788,7 @@ end
 
 
 
---- Signal a flare at the position of the UNIT.
--- @param #UNIT self
--- @param Utilities.Utils#FLARECOLOR FlareColor
-function UNIT:Flare( FlareColor )
-  self:F2()
-  trigger.action.signalFlare( self:GetVec3(), FlareColor , 0 )
-end
 
---- Signal a white flare at the position of the UNIT.
--- @param #UNIT self
-function UNIT:FlareWhite()
-  self:F2()
-  trigger.action.signalFlare( self:GetVec3(), trigger.flareColor.White , 0 )
-end
-
---- Signal a yellow flare at the position of the UNIT.
--- @param #UNIT self
-function UNIT:FlareYellow()
-  self:F2()
-  trigger.action.signalFlare( self:GetVec3(), trigger.flareColor.Yellow , 0 )
-end
-
---- Signal a green flare at the position of the UNIT.
--- @param #UNIT self
-function UNIT:FlareGreen()
-  self:F2()
-  trigger.action.signalFlare( self:GetVec3(), trigger.flareColor.Green , 0 )
-end
-
---- Signal a red flare at the position of the UNIT.
--- @param #UNIT self
-function UNIT:FlareRed()
-  self:F2()
-  local Vec3 = self:GetVec3()
-  if Vec3 then
-    trigger.action.signalFlare( Vec3, trigger.flareColor.Red, 0 )
-  end
-end
-
---- Smoke the UNIT.
--- @param #UNIT self
-function UNIT:Smoke( SmokeColor, Range )
-  self:F2()
-  if Range then
-    trigger.action.smoke( self:GetRandomVec3( Range ), SmokeColor )
-  else
-    trigger.action.smoke( self:GetVec3(), SmokeColor )
-  end
-  
-end
-
---- Smoke the UNIT Green.
--- @param #UNIT self
-function UNIT:SmokeGreen()
-  self:F2()
-  trigger.action.smoke( self:GetVec3(), trigger.smokeColor.Green )
-end
-
---- Smoke the UNIT Red.
--- @param #UNIT self
-function UNIT:SmokeRed()
-  self:F2()
-  trigger.action.smoke( self:GetVec3(), trigger.smokeColor.Red )
-end
-
---- Smoke the UNIT White.
--- @param #UNIT self
-function UNIT:SmokeWhite()
-  self:F2()
-  trigger.action.smoke( self:GetVec3(), trigger.smokeColor.White )
-end
-
---- Smoke the UNIT Orange.
--- @param #UNIT self
-function UNIT:SmokeOrange()
-  self:F2()
-  trigger.action.smoke( self:GetVec3(), trigger.smokeColor.Orange )
-end
-
---- Smoke the UNIT Blue.
--- @param #UNIT self
-function UNIT:SmokeBlue()
-  self:F2()
-  trigger.action.smoke( self:GetVec3(), trigger.smokeColor.Blue )
-end
 
 -- Is methods
 
@@ -990,5 +921,42 @@ do -- Event Handling
     
     return self
   end
+  
+  --- Reset the subscriptions.
+  -- @param #UNIT self
+  -- @return #UNIT
+  function UNIT:ResetEvents()
+  
+    self:EventDispatcher():Reset( self )
+    
+    return self
+  end
+
+end
+
+do -- Detection
+
+  --- Returns if a unit is detecting the TargetUnit.
+  -- @param #UNIT self
+  -- @param #UNIT TargetUnit
+  -- @return #boolean true If the TargetUnit is detected by the unit, otherwise false.
+  function UNIT:IsDetected( TargetUnit ) --R2.1
+
+    local TargetIsDetected, TargetIsVisible, TargetLastTime, TargetKnowType, TargetKnowDistance, TargetLastPos, TargetLastVelocity = self:IsTargetDetected( TargetUnit:GetDCSObject() )  
+    
+    return TargetIsDetected
+  end
+  
+  --- Returns if a unit has Line of Sight (LOS) with the TargetUnit.
+  -- @param #UNIT self
+  -- @param #UNIT TargetUnit
+  -- @return #boolean true If the TargetUnit has LOS with the unit, otherwise false.
+  function UNIT:IsLOS( TargetUnit ) --R2.1
+
+    local IsLOS = self:GetPointVec3():IsLOS( TargetUnit:GetPointVec3() )
+
+    return IsLOS
+  end
+  
 
 end

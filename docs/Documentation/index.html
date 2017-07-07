@@ -17,9 +17,16 @@
 				index
 			</li></ul>
 		<ul>
+					<li><a href="AI_A2A.html">AI_A2A</a></li>
+					<li><a href="AI_A2A_Cap.html">AI_A2A_Cap</a></li>
+					<li><a href="AI_A2A_Dispatcher.html">AI_A2A_Dispatcher</a></li>
+					<li><a href="AI_A2A_GCI.html">AI_A2A_GCI</a></li>
+					<li><a href="AI_A2A_Patrol.html">AI_A2A_Patrol</a></li>
+					<li><a href="AI_Bai.html">AI_Bai</a></li>
 					<li><a href="AI_Balancer.html">AI_Balancer</a></li>
 					<li><a href="AI_Cap.html">AI_Cap</a></li>
 					<li><a href="AI_Cas.html">AI_Cas</a></li>
+					<li><a href="AI_Formation.html">AI_Formation</a></li>
 					<li><a href="AI_Patrol.html">AI_Patrol</a></li>
 					<li><a href="Account.html">Account</a></li>
 					<li><a href="Airbase.html">Airbase</a></li>
@@ -31,7 +38,23 @@
 					<li><a href="Client.html">Client</a></li>
 					<li><a href="CommandCenter.html">CommandCenter</a></li>
 					<li><a href="Controllable.html">Controllable</a></li>
+					<li><a href="DCSAirbase.html">DCSAirbase</a></li>
+					<li><a href="DCSCoalitionObject.html">DCSCoalitionObject</a></li>
+					<li><a href="DCSCommand.html">DCSCommand</a></li>
+					<li><a href="DCSController.html">DCSController</a></li>
+					<li><a href="DCSGroup.html">DCSGroup</a></li>
+					<li><a href="DCSObject.html">DCSObject</a></li>
+					<li><a href="DCSTask.html">DCSTask</a></li>
+					<li><a href="DCSTypes.html">DCSTypes</a></li>
+					<li><a href="DCSUnit.html">DCSUnit</a></li>
+					<li><a href="DCSVec3.html">DCSVec3</a></li>
+					<li><a href="DCSWorld.html">DCSWorld</a></li>
+					<li><a href="DCSZone.html">DCSZone</a></li>
+					<li><a href="DCScountry.html">DCScountry</a></li>
+					<li><a href="DCStimer.html">DCStimer</a></li>
+					<li><a href="DCStrigger.html">DCStrigger</a></li>
 					<li><a href="Database.html">Database</a></li>
+					<li><a href="Designate.html">Designate</a></li>
 					<li><a href="Detection.html">Detection</a></li>
 					<li><a href="DetectionManager.html">DetectionManager</a></li>
 					<li><a href="Escort.html">Escort</a></li>
@@ -57,16 +80,25 @@
 					<li><a href="Scoring.html">Scoring</a></li>
 					<li><a href="Sead.html">Sead</a></li>
 					<li><a href="Set.html">Set</a></li>
+					<li><a href="Settings.html">Settings</a></li>
 					<li><a href="Smoke.html">Smoke</a></li>
 					<li><a href="Spawn.html">Spawn</a></li>
+					<li><a href="SpawnStatic.html">SpawnStatic</a></li>
+					<li><a href="Spot.html">Spot</a></li>
 					<li><a href="Static.html">Static</a></li>
+					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="Task.html">Task</a></li>
+					<li><a href="Task_A2A.html">Task_A2A</a></li>
+					<li><a href="Task_A2A_Dispatcher.html">Task_A2A_Dispatcher</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
 					<li><a href="Task_A2G_Dispatcher.html">Task_A2G_Dispatcher</a></li>
+					<li><a href="Task_Cargo.html">Task_Cargo</a></li>
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
 					<li><a href="Unit.html">Unit</a></li>
 					<li><a href="Utils.html">Utils</a></li>
 					<li><a href="Zone.html">Zone</a></li>
+					<li><a href="env.html">env</a></li>
+					<li><a href="land.html">land</a></li>
 					<li><a href="routines.html">routines</a></li>
 		</ul>
 	</div>
@@ -74,9 +106,78 @@
 <h2>Module</h2>
 	<table class="module_list">
 			<tr>
+			<td class="name" nowrap="nowrap"><a href="AI_A2A.html">AI_A2A</a></td>
+			<td class="summary">
+<p><strong>AI</strong> -- <strong>AI A2A Air Patrolling or Staging.</strong></p>
+
+<hr/>
+
+<h3>Author: <strong>Sven Van de Velde (FlightControl)</strong></h3>
+<h3>Contributions:</h3>
+
+<ul>
+    <li><strong><a href="https://forums.eagle.ru/member.php?u=112075">Dutch_Baron</a></strong>: Working together with James has resulted in the creation of the AI_BALANCER class.</li>
+</ul>
+</td>
+			</tr>
+			<tr>
+			<td class="name" nowrap="nowrap"><a href="AI_A2A_Cap.html">AI_A2A_Cap</a></td>
+			<td class="summary">
+<p><strong>AI</strong> -- <strong>Execute Combat Air Patrol (CAP).</strong></p>
+
+<p><img src="..\Presentations\AI_CAP\Dia1.JPG" alt="Banner Image"/></p>
+
+<hr/>
+
+<p>AI CAP classes makes AI Controllables execute a Combat Air Patrol.</p>
+</td>
+			</tr>
+			<tr>
+			<td class="name" nowrap="nowrap"><a href="AI_A2A_Dispatcher.html">AI_A2A_Dispatcher</a></td>
+			<td class="summary">
+<p><strong>AI</strong> - The AI<em>A2A</em>DISPATCHER creates an automatic A2A defense system based on an EWR network targets and coordinating CAP and GCI.</p>
+</td>
+			</tr>
+			<tr>
+			<td class="name" nowrap="nowrap"><a href="AI_A2A_GCI.html">AI_A2A_GCI</a></td>
+			<td class="summary">
+<p><strong>AI</strong> -- <strong>Execute Ground Controlled Interception (GCI).</strong></p>
+
+<p><img src="..\Presentations\AI_GCI\Dia1.JPG" alt="Banner Image"/></p>
+
+<hr/>
+
+<p>AI A2A_INTEREPT class makes AI Groups execute an Intercept.</p>
+</td>
+			</tr>
+			<tr>
+			<td class="name" nowrap="nowrap"><a href="AI_A2A_Patrol.html">AI_A2A_Patrol</a></td>
+			<td class="summary">
+<p><strong>AI</strong> -- <strong>Air Patrolling or Staging.</strong></p>
+
+<p><img src="..\Presentations\AI_PATROL\Dia1.JPG" alt="Banner Image"/></p>
+
+<hr/>
+
+<p>AI PATROL classes makes AI Controllables execute an Patrol.</p>
+</td>
+			</tr>
+			<tr>
+			<td class="name" nowrap="nowrap"><a href="AI_Bai.html">AI_Bai</a></td>
+			<td class="summary">
+<p><strong>AI</strong> -- <strong>Provide Battlefield Air Interdiction (bombing).</strong></p>
+
+<p><img src="..\Presentations\AI_BAI\Dia1.JPG" alt="Banner Image"/></p>
+
+<hr/>
+
+<p>AI_BAI classes makes AI Controllables execute bombing tasks.</p>
+</td>
+			</tr>
+			<tr>
 			<td class="name" nowrap="nowrap"><a href="AI_Balancer.html">AI_Balancer</a></td>
 			<td class="summary">
-<p>Single-Player:<strong>No</strong> / Multi-Player:<strong>Yes</strong> / AI:<strong>Yes</strong> / Human:<strong>No</strong> / Types:<strong>All</strong> -- <strong>AI Balancing will replace in multi player missions 
+<p><strong>AI</strong> -- <strong>AI Balancing will replace in multi player missions 
 non-occupied human slots with AI groups, in order to provide an engaging simulation environment, 
 even when there are hardly any players in the mission.</strong></p>
 
@@ -84,16 +185,34 @@ even when there are hardly any players in the mission.</strong></p>
 
 <hr/>
 
-<h1>1) <a href="AI_Balancer.html##(AI_BALANCER)">AI<em>Balancer#AI</em>BALANCER</a> class, extends <a href="Fsm.html##(FSM_SET)">Fsm#FSM_SET</a></h1>
+<h1>Demo Missions</h1>
 
-<p>The <a href="AI_Balancer.html##(AI_BALANCER)">AI<em>Balancer#AI</em>BALANCER</a> class monitors and manages as many replacement AI groups as there are
-CLIENTS in a SET_CLIENT collection, which are not occupied by human players.</p>
+<h3><a href="https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master-release/AIB%20-%20AI%20Balancing">AI_BALANCER Demo Missions source code</a></h3>
+
+<h3><a href="https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/AIB%20-%20AI%20Balancing">AI_BALANCER Demo Missions, only for beta testers</a></h3>
+
+<h3><a href="https://github.com/FlightControl-Master/MOOSE_MISSIONS/releases">ALL Demo Missions pack of the last release</a></h3>
+
+<hr/>
+
+<h1>YouTube Channel</h1>
+
+<h3><a href="https://www.youtube.com/playlist?list=PL7ZUrU4zZUl2CJVIrL1TdAumuVS8n64B7">AI_BALANCER YouTube Channel</a></h3>
+
+<hr/>
+
+<h3>Author: <strong>Sven Van de Velde (FlightControl)</strong></h3>
+<h3>Contributions:</h3>
+
+<ul>
+    <li><strong><a href="https://forums.eagle.ru/member.php?u=112075">Dutch_Baron</a></strong>: Working together with James has resulted in the creation of the AI_BALANCER class.</li>
+</ul>
 </td>
 			</tr>
 			<tr>
 			<td class="name" nowrap="nowrap"><a href="AI_Cap.html">AI_Cap</a></td>
 			<td class="summary">
-<p><strong>AI</strong> - <strong>Execute Combat Air Patrol (CAP).</strong></p>
+<p><strong>AI</strong> -- <strong>Execute Combat Air Patrol (CAP).</strong></p>
 
 <p><img src="..\Presentations\AI_CAP\Dia1.JPG" alt="Banner Image"/></p>
 
@@ -112,6 +231,12 @@ CLIENTS in a SET_CLIENT collection, which are not occupied by human players.</p>
 <hr/>
 
 <p>AI CAS classes makes AI Controllables execute a Close Air Support.</p>
+</td>
+			</tr>
+			<tr>
+			<td class="name" nowrap="nowrap"><a href="AI_Formation.html">AI_Formation</a></td>
+			<td class="summary">
+<p><strong>AI</strong> -- Build large <strong>formations</strong> of AI <a href="Group.html">Group</a>s flying together.</p>
 </td>
 			</tr>
 			<tr>
@@ -135,13 +260,13 @@ CLIENTS in a SET_CLIENT collection, which are not occupied by human players.</p>
 			<tr>
 			<td class="name" nowrap="nowrap"><a href="Airbase.html">Airbase</a></td>
 			<td class="summary">
-<p>This module contains the AIRBASE classes.</p>
+<p><strong>Wrapper</strong> -- AIRBASE is a wrapper class to handle the DCS Airbase objects.</p>
 </td>
 			</tr>
 			<tr>
 			<td class="name" nowrap="nowrap"><a href="AirbasePolice.html">AirbasePolice</a></td>
 			<td class="summary">
-<p>This module contains the AIRBASEPOLICE classes.</p>
+<p><strong>Functional</strong> -- This module monitors airbases traffic.</p>
 </td>
 			</tr>
 			<tr>
@@ -153,60 +278,145 @@ CLIENTS in a SET_CLIENT collection, which are not occupied by human players.</p>
 			<tr>
 			<td class="name" nowrap="nowrap"><a href="Base.html">Base</a></td>
 			<td class="summary">
-<p><strong>Core</strong> - BASE forms <strong>the basis of the MOOSE framework</strong>.</p>
+<p><strong>Core</strong> -- BASE forms <strong>the basis of the MOOSE framework</strong>.</p>
 </td>
 			</tr>
 			<tr>
 			<td class="name" nowrap="nowrap"><a href="Cargo.html">Cargo</a></td>
 			<td class="summary">
-<p>Single-Player:<strong>Yes</strong> / Multi-Player:<strong>Yes</strong> / AI:<strong>Yes</strong> / Human:<strong>No</strong> / Types:<strong>Ground</strong> -- <br/>
-<strong>Management of logical cargo objects, that can be transported from and to transportation carriers.</strong></p>
-
-<p><img src="..\Presentations\AI_CARGO\CARGO.JPG" alt="Banner Image"/></p>
-
-<hr/>
-
-<p>Cargo can be of various forms, always are composed out of ONE object ( one unit or one static or one slingload crate ):</p>
-
-<ul>
-    <li>AI<em>CARGO</em>UNIT, represented by a <a href="Unit.html">Unit</a> in a <a href="Group.html">Group</a>: Cargo can be represented by a Unit in a Group.</li>
-</ul>
+<p><strong>Core</strong> -- Management of CARGO logistics, that can be transported from and to transportation carriers.</p>
 </td>
 			</tr>
 			<tr>
 			<td class="name" nowrap="nowrap"><a href="CleanUp.html">CleanUp</a></td>
 			<td class="summary">
-<p>The CLEANUP class keeps an area clean of crashing or colliding airplanes.</p>
+<p><strong>Functional</strong> -- The CLEANUP class keeps an area clean of crashing or colliding airplanes.</p>
 </td>
 			</tr>
 			<tr>
 			<td class="name" nowrap="nowrap"><a href="Client.html">Client</a></td>
 			<td class="summary">
-<p>This module contains the CLIENT class.</p>
+<p><strong>Wrapper</strong> -- CLIENT wraps DCS Unit objects acting as a <strong>Client</strong> or <strong>Player</strong> within a mission.</p>
 </td>
 			</tr>
 			<tr>
 			<td class="name" nowrap="nowrap"><a href="CommandCenter.html">CommandCenter</a></td>
 			<td class="summary">
-<p>A COMMANDCENTER is the owner of multiple missions within MOOSE.</p>
+<p><strong>Tasking</strong> -- A COMMANDCENTER is the owner of multiple missions within MOOSE.</p>
 </td>
 			</tr>
 			<tr>
 			<td class="name" nowrap="nowrap"><a href="Controllable.html">Controllable</a></td>
 			<td class="summary">
-<p>This module contains the CONTROLLABLE class.</p>
+<p><strong>Wrapper</strong> -- CONTROLLABLE is an intermediate class wrapping Group and Unit classes "controllers".</p>
+</td>
+			</tr>
+			<tr>
+			<td class="name" nowrap="nowrap"><a href="DCSAirbase.html">DCSAirbase</a></td>
+			<td class="summary">
+
+</td>
+			</tr>
+			<tr>
+			<td class="name" nowrap="nowrap"><a href="DCSCoalitionObject.html">DCSCoalitionObject</a></td>
+			<td class="summary">
+
+</td>
+			</tr>
+			<tr>
+			<td class="name" nowrap="nowrap"><a href="DCSCommand.html">DCSCommand</a></td>
+			<td class="summary">
+
+</td>
+			</tr>
+			<tr>
+			<td class="name" nowrap="nowrap"><a href="DCSController.html">DCSController</a></td>
+			<td class="summary">
+
+</td>
+			</tr>
+			<tr>
+			<td class="name" nowrap="nowrap"><a href="DCSGroup.html">DCSGroup</a></td>
+			<td class="summary">
+
+</td>
+			</tr>
+			<tr>
+			<td class="name" nowrap="nowrap"><a href="DCSObject.html">DCSObject</a></td>
+			<td class="summary">
+
+</td>
+			</tr>
+			<tr>
+			<td class="name" nowrap="nowrap"><a href="DCSTask.html">DCSTask</a></td>
+			<td class="summary">
+
+</td>
+			</tr>
+			<tr>
+			<td class="name" nowrap="nowrap"><a href="DCSTypes.html">DCSTypes</a></td>
+			<td class="summary">
+
+</td>
+			</tr>
+			<tr>
+			<td class="name" nowrap="nowrap"><a href="DCSUnit.html">DCSUnit</a></td>
+			<td class="summary">
+
+</td>
+			</tr>
+			<tr>
+			<td class="name" nowrap="nowrap"><a href="DCSVec3.html">DCSVec3</a></td>
+			<td class="summary">
+
+</td>
+			</tr>
+			<tr>
+			<td class="name" nowrap="nowrap"><a href="DCSWorld.html">DCSWorld</a></td>
+			<td class="summary">
+
+</td>
+			</tr>
+			<tr>
+			<td class="name" nowrap="nowrap"><a href="DCSZone.html">DCSZone</a></td>
+			<td class="summary">
+
+</td>
+			</tr>
+			<tr>
+			<td class="name" nowrap="nowrap"><a href="DCScountry.html">DCScountry</a></td>
+			<td class="summary">
+
+</td>
+			</tr>
+			<tr>
+			<td class="name" nowrap="nowrap"><a href="DCStimer.html">DCStimer</a></td>
+			<td class="summary">
+
+</td>
+			</tr>
+			<tr>
+			<td class="name" nowrap="nowrap"><a href="DCStrigger.html">DCStrigger</a></td>
+			<td class="summary">
+
 </td>
 			</tr>
 			<tr>
 			<td class="name" nowrap="nowrap"><a href="Database.html">Database</a></td>
 			<td class="summary">
-<p>This module contains the DATABASE class, managing the database of mission objects.</p>
+<p><strong>Core</strong> -- DATABASE manages the database of mission objects.</p>
+</td>
+			</tr>
+			<tr>
+			<td class="name" nowrap="nowrap"><a href="Designate.html">Designate</a></td>
+			<td class="summary">
+<p><strong>Functional</strong> -- Management of target <strong>Designation</strong>.</p>
 </td>
 			</tr>
 			<tr>
 			<td class="name" nowrap="nowrap"><a href="Detection.html">Detection</a></td>
 			<td class="summary">
-<p><strong>Functional</strong> - DETECTION_ classes model the detection of enemy units by FACs or RECCEs and group them according various methods.</p>
+<p><strong>Functional</strong> -- DETECTION_ classes model the detection of enemy units by FACs or RECCEs and group them according various methods.</p>
 </td>
 			</tr>
 			<tr>
@@ -218,32 +428,32 @@ CLIENTS in a SET_CLIENT collection, which are not occupied by human players.</p>
 			<tr>
 			<td class="name" nowrap="nowrap"><a href="Escort.html">Escort</a></td>
 			<td class="summary">
-<p>Taking the lead of AI escorting your flight.</p>
+<p><strong>Functional</strong> -- Taking the lead of AI escorting your flight.</p>
 </td>
 			</tr>
 			<tr>
 			<td class="name" nowrap="nowrap"><a href="Event.html">Event</a></td>
 			<td class="summary">
-<p><strong>Core</strong> - EVENT models DCS <strong>event dispatching</strong> using a <strong>publish-subscribe</strong> model.</p>
+<p><strong>Core</strong> -- EVENT models DCS <strong>event dispatching</strong> using a <strong>publish-subscribe</strong> model.</p>
 </td>
 			</tr>
 			<tr>
 			<td class="name" nowrap="nowrap"><a href="Fsm.html">Fsm</a></td>
 			<td class="summary">
-<p><strong>Core</strong> - The <strong>FSM</strong> (<strong>F</strong>inite <strong>S</strong>tate <strong>M</strong>achine) class and derived <strong>FSM_</strong> classes 
+<p><strong>Core</strong> -- The <strong>FSM</strong> (<strong>F</strong>inite <strong>S</strong>tate <strong>M</strong>achine) class and derived <strong>FSM_</strong> classes 
 are design patterns allowing efficient (long-lasting) processes and workflows.</p>
 </td>
 			</tr>
 			<tr>
 			<td class="name" nowrap="nowrap"><a href="Group.html">Group</a></td>
 			<td class="summary">
-<p><strong>Wrapper</strong> -- GROUP is a wrapper class for the DCS Class Group.</p>
+<p><strong>Wrapper</strong> -- GROUP wraps the DCS Class Group objects.</p>
 </td>
 			</tr>
 			<tr>
 			<td class="name" nowrap="nowrap"><a href="Identifiable.html">Identifiable</a></td>
 			<td class="summary">
-<p>This module contains the IDENTIFIABLE class.</p>
+<p><strong>Wrapper</strong> -- IDENTIFIABLE is an intermediate class wrapping DCS Object class derived Objects.</p>
 </td>
 			</tr>
 			<tr>
@@ -255,43 +465,43 @@ are design patterns allowing efficient (long-lasting) processes and workflows.</
 			<tr>
 			<td class="name" nowrap="nowrap"><a href="Message.html">Message</a></td>
 			<td class="summary">
-<p><strong>Core</strong> - MESSAGE class takes are of the <strong>real-time notifications</strong> and <strong>messages to players</strong> during a simulation.</p>
+<p><strong>Core</strong> -- MESSAGE class takes are of the <strong>real-time notifications</strong> and <strong>messages to players</strong> during a simulation.</p>
 </td>
 			</tr>
 			<tr>
 			<td class="name" nowrap="nowrap"><a href="MissileTrainer.html">MissileTrainer</a></td>
 			<td class="summary">
-<p>This module contains the MISSILETRAINER class.</p>
+<p><strong>Functional</strong> -- MISSILETRAINER helps you to train missile avoidance.</p>
 </td>
 			</tr>
 			<tr>
 			<td class="name" nowrap="nowrap"><a href="Mission.html">Mission</a></td>
 			<td class="summary">
-<p>A MISSION is the main owner of a Mission orchestration within MOOSE .</p>
+<p><strong>Tasking</strong> -- A MISSION is the main owner of a Mission orchestration within MOOSE.</p>
 </td>
 			</tr>
 			<tr>
 			<td class="name" nowrap="nowrap"><a href="Movement.html">Movement</a></td>
 			<td class="summary">
-<p>Limit the simultaneous movement of Groups within a running Mission.</p>
+<p><strong>Functional</strong> -- Limit the MOVEMENT of simulaneous moving ground vehicles.</p>
 </td>
 			</tr>
 			<tr>
 			<td class="name" nowrap="nowrap"><a href="Object.html">Object</a></td>
 			<td class="summary">
-<p>This module contains the OBJECT class.</p>
+<p><strong>Wrapper</strong> -- OBJECT wraps the DCS Object derived objects.</p>
 </td>
 			</tr>
 			<tr>
 			<td class="name" nowrap="nowrap"><a href="Point.html">Point</a></td>
 			<td class="summary">
-<p><strong>Core</strong> - <strong>POINT_VEC</strong> classes define an <strong>extensive API</strong> to <strong>manage 3D points</strong> in the simulation space.</p>
+<p><strong>Core</strong> -- <strong>POINT_VEC</strong> classes define an <strong>extensive API</strong> to <strong>manage 3D points</strong> in the simulation space.</p>
 </td>
 			</tr>
 			<tr>
 			<td class="name" nowrap="nowrap"><a href="Positionable.html">Positionable</a></td>
 			<td class="summary">
-<p>This module contains the POSITIONABLE class.</p>
+<p><strong>Wrapper</strong> -- POSITIONABLE wraps DCS classes that are "positionable".</p>
 </td>
 			</tr>
 			<tr>
@@ -309,7 +519,7 @@ are design patterns allowing efficient (long-lasting) processes and workflows.</
 			<tr>
 			<td class="name" nowrap="nowrap"><a href="Radio.html">Radio</a></td>
 			<td class="summary">
-<p><strong>Core</strong> - The RADIO class is responsible for <strong>transmitting radio communications</strong>.</p>
+<p><strong>Core</strong> -- The RADIO Module is responsible for everything that is related to radio transmission and you can hear in DCS, be it TACAN beacons, Radio transmissions...</p>
 </td>
 			</tr>
 			<tr>
@@ -321,25 +531,25 @@ are design patterns allowing efficient (long-lasting) processes and workflows.</
 			<tr>
 			<td class="name" nowrap="nowrap"><a href="Scenery.html">Scenery</a></td>
 			<td class="summary">
-<p>This module contains the SCENERY class.</p>
+<p><strong>Wrapper</strong> -- SCENERY models scenery within the DCS simulator.</p>
 </td>
 			</tr>
 			<tr>
 			<td class="name" nowrap="nowrap"><a href="ScheduleDispatcher.html">ScheduleDispatcher</a></td>
 			<td class="summary">
-<p>This module defines the SCHEDULEDISPATCHER class, which is used by a central object called _SCHEDULEDISPATCHER.</p>
+<p><strong>Core</strong> -- SCHEDULEDISPATCHER dispatches the different schedules.</p>
 </td>
 			</tr>
 			<tr>
 			<td class="name" nowrap="nowrap"><a href="Scheduler.html">Scheduler</a></td>
 			<td class="summary">
-<p><strong>Core</strong> - SCHEDULER prepares and handles the <strong>execution of functions over scheduled time (intervals)</strong>.</p>
+<p><strong>Core</strong> -- SCHEDULER prepares and handles the <strong>execution of functions over scheduled time (intervals)</strong>.</p>
 </td>
 			</tr>
 			<tr>
 			<td class="name" nowrap="nowrap"><a href="Scoring.html">Scoring</a></td>
 			<td class="summary">
-<p>Single-Player:<strong>Yes</strong> / Multi-Player:<strong>Yes</strong> / Core:<strong>Yes</strong> -- <strong>Administer the scoring of player achievements, 
+<p><strong>Functional</strong> -- <strong>Administer the SCORING of player achievements, 
 and create a CSV file logging the scoring events for use at team or squadron websites.</strong></p>
 
 <p><img src="..\Presentations\SCORING\Dia1.JPG" alt="Banner Image"/></p>
@@ -353,13 +563,19 @@ and creates a CSV file logging the scoring events and results for use at team or
 			<tr>
 			<td class="name" nowrap="nowrap"><a href="Sead.html">Sead</a></td>
 			<td class="summary">
-<p>Provides defensive behaviour to a set of SAM sites within a running Mission.</p>
+<p><strong>Functional</strong> -- Provides defensive behaviour to a set of SAM sites within a running Mission.</p>
 </td>
 			</tr>
 			<tr>
 			<td class="name" nowrap="nowrap"><a href="Set.html">Set</a></td>
 			<td class="summary">
-<p><strong>Core</strong> - SET_ classes define <strong>collections</strong> of objects to perform <strong>bulk actions</strong> and logically <strong>group</strong> objects.</p>
+<p><strong>Core</strong> -- SET_ classes define <strong>collections</strong> of objects to perform <strong>bulk actions</strong> and logically <strong>group</strong> objects.</p>
+</td>
+			</tr>
+			<tr>
+			<td class="name" nowrap="nowrap"><a href="Settings.html">Settings</a></td>
+			<td class="summary">
+<p><strong>Core</strong> -- <strong>SETTINGS</strong> classe defines the format settings management for measurement.</p>
 </td>
 			</tr>
 			<tr>
@@ -371,28 +587,49 @@ and creates a CSV file logging the scoring events and results for use at team or
 			<tr>
 			<td class="name" nowrap="nowrap"><a href="Spawn.html">Spawn</a></td>
 			<td class="summary">
-<p>Single-Player:<strong>Yes</strong> / Multi-Player:<strong>Yes</strong> / AI:<strong>Yes</strong> / Human:<strong>No</strong> / Types:<strong>All</strong> -- <br/>
-<strong>Spawn groups of units dynamically in your missions.</strong></p>
-
-<p><img src="..\Presentations\SPAWN\SPAWN.JPG" alt="Banner Image"/></p>
-
-<hr/>
-
-<h1>1) <a href="##(SPAWN)">#SPAWN</a> class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
-
-<p>The <a href="##(SPAWN)">#SPAWN</a> class allows to spawn dynamically new groups, based on pre-defined initialization settings, modifying the behaviour when groups are spawned.</p>
+<p><strong>Functional</strong> -- Spawn dynamically new GROUPs in your missions.</p>
+</td>
+			</tr>
+			<tr>
+			<td class="name" nowrap="nowrap"><a href="SpawnStatic.html">SpawnStatic</a></td>
+			<td class="summary">
+<p><strong>Core</strong> -- Spawn dynamically new STATICs in your missions.</p>
+</td>
+			</tr>
+			<tr>
+			<td class="name" nowrap="nowrap"><a href="Spot.html">Spot</a></td>
+			<td class="summary">
+<p><strong>Core</strong> -- Management of SPOT logistics, that can be transported from and to transportation carriers.</p>
 </td>
 			</tr>
 			<tr>
 			<td class="name" nowrap="nowrap"><a href="Static.html">Static</a></td>
 			<td class="summary">
-<p>This module contains the STATIC class.</p>
+<p><strong>Wrapper</strong> -- STATIC wraps the DCS StaticObject class.</p>
+</td>
+			</tr>
+			<tr>
+			<td class="name" nowrap="nowrap"><a href="StaticObject.html">StaticObject</a></td>
+			<td class="summary">
+
 </td>
 			</tr>
 			<tr>
 			<td class="name" nowrap="nowrap"><a href="Task.html">Task</a></td>
 			<td class="summary">
-<p>This module contains the TASK class.</p>
+<p><strong>Tasking</strong> -- This module contains the TASK class, the main engine to run human taskings.</p>
+</td>
+			</tr>
+			<tr>
+			<td class="name" nowrap="nowrap"><a href="Task_A2A.html">Task_A2A</a></td>
+			<td class="summary">
+<p><strong>Tasking</strong> - The TASK_A2A models tasks for players in Air to Air engagements.</p>
+</td>
+			</tr>
+			<tr>
+			<td class="name" nowrap="nowrap"><a href="Task_A2A_Dispatcher.html">Task_A2A_Dispatcher</a></td>
+			<td class="summary">
+<p><strong>Tasking</strong> - The TASK<em>A2A</em>DISPATCHER creates and manages player TASK_A2A tasks based on detected targets.</p>
 </td>
 			</tr>
 			<tr>
@@ -405,6 +642,12 @@ and creates a CSV file logging the scoring events and results for use at team or
 			<td class="name" nowrap="nowrap"><a href="Task_A2G_Dispatcher.html">Task_A2G_Dispatcher</a></td>
 			<td class="summary">
 <p><strong>Tasking</strong> - The TASK<em>A2G</em>DISPATCHER creates and manages player TASK_A2G tasks based on detected targets.</p>
+</td>
+			</tr>
+			<tr>
+			<td class="name" nowrap="nowrap"><a href="Task_Cargo.html">Task_Cargo</a></td>
+			<td class="summary">
+<p><strong>Tasking</strong> -- The TASK_CARGO models tasks for players to transport <a href="Cargo.html">Cargo</a>.</p>
 </td>
 			</tr>
 			<tr>
@@ -429,7 +672,19 @@ which are excellent tools to be reused in an OO environment!.</p>
 			<tr>
 			<td class="name" nowrap="nowrap"><a href="Zone.html">Zone</a></td>
 			<td class="summary">
-<p><strong>Core</strong> - ZONE classes define <strong>zones</strong> within your mission of <strong>various forms</strong>, with <strong>various capabilities</strong>.</p>
+<p><strong>Core</strong> -- ZONE classes define <strong>zones</strong> within your mission of <strong>various forms</strong>, with <strong>various capabilities</strong>.</p>
+</td>
+			</tr>
+			<tr>
+			<td class="name" nowrap="nowrap"><a href="env.html">env</a></td>
+			<td class="summary">
+
+</td>
+			</tr>
+			<tr>
+			<td class="name" nowrap="nowrap"><a href="land.html">land</a></td>
+			<td class="summary">
+
 </td>
 			</tr>
 			<tr>

@@ -1,21 +1,27 @@
---- **Core** - MESSAGE class takes are of the **real-time notifications** and **messages to players** during a simulation.
+--- **Core** -- MESSAGE class takes are of the **real-time notifications** and **messages to players** during a simulation.
 -- 
 -- ![Banner Image](..\Presentations\MESSAGE\Dia1.JPG)
 -- 
 -- ===
 -- 
--- # 1) @{Message#MESSAGE} class, extends @{Base#BASE}
+-- @module Message
+
+--- The MESSAGE class
+-- @type MESSAGE
+-- @extends Core.Base#BASE
+
+--- # MESSAGE class, extends @{Base#BASE}
 -- 
 -- Message System to display Messages to Clients, Coalitions or All.
 -- Messages are shown on the display panel for an amount of seconds, and will then disappear.
 -- Messages can contain a category which is indicating the category of the message.
 -- 
--- ## 1.1) MESSAGE construction
+-- ## MESSAGE construction
 -- 
 -- Messages are created with @{Message#MESSAGE.New}. Note that when the MESSAGE object is created, no message is sent yet.
 -- To send messages, you need to use the To functions.
 -- 
--- ## 1.2) Send messages to an audience
+-- ## Send messages to an audience
 -- 
 -- Messages are sent:
 --
@@ -26,19 +32,21 @@
 --   * To the blue coalition using @{Message#MESSAGE.ToBlue}().
 --   * To all Players using @{Message#MESSAGE.ToAll}().
 -- 
--- ## 1.3) Send conditionally to an audience
+-- ## Send conditionally to an audience
 -- 
 -- Messages can be sent conditionally to an audience (when a condition is true):
 --   
 --   * To all players using @{Message#MESSAGE.ToAllIf}().
 --   * To a coalition using @{Message#MESSAGE.ToCoalitionIf}().
 -- 
+-- ====
+--  
+-- ### Author: **Sven Van de Velde (FlightControl)**
+-- ### Contributions: 
 -- 
--- @module Message
-
---- The MESSAGE class
--- @type MESSAGE
--- @extends Core.Base#BASE
+-- ====
+-- 
+-- @field #MESSAGE
 MESSAGE = {
 	ClassName = "MESSAGE", 
 	MessageCategory = 0,
@@ -79,7 +87,7 @@ function MESSAGE:New( MessageText, MessageDuration, MessageCategory )
 
 	self.MessageDuration = MessageDuration or 5
 	self.MessageTime = timer.getTime()
-	self.MessageText = MessageText
+	self.MessageText = MessageText:gsub("^\n","",1):gsub("\n$","",1)
 	
 	self.MessageSent = false
 	self.MessageGroup = false

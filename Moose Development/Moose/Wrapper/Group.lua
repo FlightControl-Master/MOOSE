@@ -1,4 +1,4 @@
---- **Wrapper** -- GROUP is a wrapper class for the DCS Class Group.
+--- **Wrapper** -- GROUP wraps the DCS Class Group objects.
 -- 
 -- ===
 -- 
@@ -15,44 +15,21 @@
 -- 
 -- ====
 -- 
--- # **API CHANGE HISTORY**
--- 
--- The underlying change log documents the API changes. Please read this carefully. The following notation is used:
--- 
---   * **Added** parts are expressed in bold type face.
---   * _Removed_ parts are expressed in italic type face.
--- 
--- Hereby the change log:
--- 
--- 2017-03-26: GROUP:**RouteRTB( RTBAirbase, Speed )** added.  
--- 
--- 2017-03-07: GROUP:**HandleEvent( Event, EventFunction )** added.  
--- 2017-03-07: GROUP:**UnHandleEvent( Event )** added.
--- 
--- 2017-01-24: GROUP:**SetAIOnOff( AIOnOff )** added.  
--- 
--- 2017-01-24: GROUP:**SetAIOn()** added.  
--- 
--- 2017-01-24: GROUP:**SetAIOff()** added.  
--- 
--- ===
--- 
--- # **AUTHORS and CONTRIBUTIONS**
+-- ### Author: **Sven Van de Velde (FlightControl)**
 -- 
 -- ### Contributions: 
 -- 
 --   * [**Entropy**](https://forums.eagle.ru/member.php?u=111471), **Afinegan**: Came up with the requirement for AIOnOff().
 -- 
--- ### Authors: 
--- 
---   * **FlightControl**: Design & Programming
+-- ====
 -- 
 -- @module Group
--- @author FlightControl
+
 
 --- @type GROUP
 -- @extends Wrapper.Controllable#CONTROLLABLE
 -- @field #string GroupName The name of the group.
+
 
 --- 
 -- # GROUP class, extends @{Controllable#CONTROLLABLE}
@@ -112,6 +89,25 @@
 -- @field #GROUP GROUP
 GROUP = {
   ClassName = "GROUP",
+}
+
+
+--- Enumerator for location at airbases
+-- @type GROUP.Takeoff
+GROUP.Takeoff = {
+  Air = 1,
+  Runway = 2,
+  Hot = 3,
+  Cold = 4,
+}
+
+GROUPTEMPLATE = {}
+
+GROUPTEMPLATE.Takeoff = {
+  [GROUP.Takeoff.Air] =     "Turning Point",
+  [GROUP.Takeoff.Runway] =  "TakeOff",
+  [GROUP.Takeoff.Hot] =     "TakeOffParkingHot",
+  [GROUP.Takeoff.Cold] =    "TakeOffParking",
 }
 
 --- Create a new GROUP from a DCSGroup
@@ -319,6 +315,7 @@ function GROUP:GetUnit( UnitNumber )
   local DCSGroup = self:GetDCSObject()
 
   if DCSGroup then
+    local DCSUnit = DCSGroup:getUnit( UnitNumber )
     local UnitFound = UNIT:Find( DCSGroup:getUnit( UnitNumber ) )
     self:T2( UnitFound )
     return UnitFound
@@ -356,8 +353,13 @@ function GROUP:GetSize()
 
   if DCSGroup then
     local GroupSize = DCSGroup:getSize()
-    self:T3( GroupSize )
-    return GroupSize
+    
+    if GroupSize then
+      self:T3( GroupSize )
+      return GroupSize
+    else
+      return 0
+    end
   end
 
   return nil
@@ -425,6 +427,24 @@ function GROUP:GetTypeName()
   return nil
 end
 
+--- Gets the player name of the group.
+-- @param #GROUP self
+-- @return #string The player name of the group.
+function GROUP:GetPlayerName()
+  self:F2( self.GroupName )
+
+  local DCSGroup = self:GetDCSObject()
+
+  if DCSGroup then
+    local PlayerName = DCSGroup:getUnit(1):getPlayerName()
+    self:T3( PlayerName )
+    return( PlayerName )
+  end
+
+  return nil
+end
+
+
 --- Gets the CallSign of the first DCS Unit of the DCS Group.
 -- @param #GROUP self
 -- @return #string The CallSign of the first DCS Unit of the DCS Group.
@@ -483,6 +503,25 @@ function GROUP:GetPointVec2()
   
   return nil
 end
+
+--- Returns a COORDINATE object indicating the point of the first UNIT of the GROUP within the mission.
+-- @param Wrapper.Group#GROUP self
+-- @return Core.Point#COORDINATE The COORDINATE of the GROUP.
+-- @return #nil The POSITIONABLE is not existing or alive.  
+function GROUP:GetCoordinate()
+  self:F2( self.PositionableName )
+
+  local FirstUnit = self:GetUnit(1)
+  
+  if FirstUnit then
+    local FirstUnitCoordinate = FirstUnit:GetCoordinate()
+    self:T3(FirstUnitCoordinate)
+    return FirstUnitCoordinate
+  end
+  
+  return nil
+end
+
 
 --- Returns a random @{DCSTypes#Vec3} vector (point in 3D of the UNIT within the mission) within a range around the first UNIT of the GROUP.
 -- @param #GROUP self
@@ -553,22 +592,23 @@ end
 function GROUP:IsPartlyInZone( Zone )
   self:F2( { self.GroupName, Zone } )
   
-  local PartlyInZone = false
+  local IsOneUnitInZone = false
+  local IsOneUnitOutsideZone = false
   
   for UnitID, UnitData in pairs( self:GetUnits() ) do
     local Unit = UnitData -- Wrapper.Unit#UNIT
     if Zone:IsVec3InZone( Unit:GetVec3() ) then
-      PartlyInZone = true
+      IsOneUnitInZone = true
     else
-      -- So, if there were groups in the zone found, and suddenly one NOT in the zone, 
-      -- then the group is partialy in the zone :-)
-      if PartlyInZone == true then
-        return true
-      end
+      IsOneUnitOutsideZone = true
     end
   end
   
-  return false
+  if IsOneUnitInZone and IsOneUnitOutsideZone then
+    return true
+  else
+    return false
+  end
 end
 
 --- Returns true if none of the group units of the group are within a @{Zone}.
@@ -586,6 +626,24 @@ function GROUP:IsNotInZone( Zone )
   end
   
   return true
+end
+
+--- Returns the number of UNITs that are in the @{Zone}
+-- @param #GROUP self
+-- @param Core.Zone#ZONE_BASE Zone The zone to test.
+-- @return #number The number of UNITs that are in the @{Zone}
+function GROUP:CountInZone( Zone )
+  self:F2( {self.GroupName, Zone} )
+  local Count = 0
+  
+  for UnitID, UnitData in pairs( self:GetUnits() ) do
+    local Unit = UnitData -- Wrapper.Unit#UNIT
+    if Zone:IsVec3InZone( Unit:GetVec3() ) then
+      Count = Count + 1
+    end
+  end
+  
+  return Count
 end
 
 --- Returns if the group is of an air category.
@@ -811,29 +869,35 @@ end
 -- @param #table Template The template of the Group retrieved with GROUP:GetTemplate()
 function GROUP:Respawn( Template )
 
-  local Vec3 = self:GetVec3()
-  Template.x = Vec3.x
-  Template.y = Vec3.z
-  --Template.x = nil
-  --Template.y = nil
-  
-  self:E( #Template.units )
-  for UnitID, UnitData in pairs( self:GetUnits() ) do
-    local GroupUnit = UnitData -- Wrapper.Unit#UNIT
-    self:E( GroupUnit:GetName() )
-    if GroupUnit:IsAlive() then
-      local GroupUnitVec3 = GroupUnit:GetVec3()
-      local GroupUnitHeading = GroupUnit:GetHeading()
-      Template.units[UnitID].alt = GroupUnitVec3.y
-      Template.units[UnitID].x = GroupUnitVec3.x
-      Template.units[UnitID].y = GroupUnitVec3.z
-      Template.units[UnitID].heading = GroupUnitHeading
-      self:E( { UnitID, Template.units[UnitID], Template.units[UnitID] } )
+  if self:IsAlive() then
+    local Vec3 = self:GetVec3()
+    Template.x = Vec3.x
+    Template.y = Vec3.z
+    --Template.x = nil
+    --Template.y = nil
+    
+    self:E( #Template.units )
+    for UnitID, UnitData in pairs( self:GetUnits() ) do
+      local GroupUnit = UnitData -- Wrapper.Unit#UNIT
+      self:E( GroupUnit:GetName() )
+      if GroupUnit:IsAlive() then
+        local GroupUnitVec3 = GroupUnit:GetVec3()
+        local GroupUnitHeading = GroupUnit:GetHeading()
+        Template.units[UnitID].alt = GroupUnitVec3.y
+        Template.units[UnitID].x = GroupUnitVec3.x
+        Template.units[UnitID].y = GroupUnitVec3.z
+        Template.units[UnitID].heading = GroupUnitHeading
+        self:E( { UnitID, Template.units[UnitID], Template.units[UnitID] } )
+      end
     end
+    
   end
   
   self:Destroy()
   _DATABASE:Spawn( Template )
+  
+  self:ResetEvents()
+  
 end
 
 --- Returns the group template from the @{DATABASE} (_DATABASE object).
@@ -1077,7 +1141,21 @@ do -- Event Handling
   -- @return #GROUP
   function GROUP:UnHandleEvent( Event )
   
-    self:EventDispatcher():RemoveForGroup( self:GetName(), self, Event )
+    self:EventDispatcher():Remove( self, Event )
+    
+    return self
+  end
+
+  --- Reset the subscriptions.
+  -- @param #GROUP self
+  -- @return #GROUP
+  function GROUP:ResetEvents()
+  
+    self:EventDispatcher():Reset( self )
+    
+    for UnitID, UnitData in pairs( self:GetUnits() ) do
+      UnitData:ResetEvents()
+    end
     
     return self
   end
@@ -1104,8 +1182,100 @@ do -- Players
       end   
     end
     
-    self:F( PlayerNames )
+    self:F2( PlayerNames )
     return PlayerNames
   end
   
 end
+
+--do -- Smoke
+--
+----- Signal a flare at the position of the GROUP.
+---- @param #GROUP self
+---- @param Utilities.Utils#FLARECOLOR FlareColor
+--function GROUP:Flare( FlareColor )
+--  self:F2()
+--  trigger.action.signalFlare( self:GetVec3(), FlareColor , 0 )
+--end
+--
+----- Signal a white flare at the position of the GROUP.
+---- @param #GROUP self
+--function GROUP:FlareWhite()
+--  self:F2()
+--  trigger.action.signalFlare( self:GetVec3(), trigger.flareColor.White , 0 )
+--end
+--
+----- Signal a yellow flare at the position of the GROUP.
+---- @param #GROUP self
+--function GROUP:FlareYellow()
+--  self:F2()
+--  trigger.action.signalFlare( self:GetVec3(), trigger.flareColor.Yellow , 0 )
+--end
+--
+----- Signal a green flare at the position of the GROUP.
+---- @param #GROUP self
+--function GROUP:FlareGreen()
+--  self:F2()
+--  trigger.action.signalFlare( self:GetVec3(), trigger.flareColor.Green , 0 )
+--end
+--
+----- Signal a red flare at the position of the GROUP.
+---- @param #GROUP self
+--function GROUP:FlareRed()
+--  self:F2()
+--  local Vec3 = self:GetVec3()
+--  if Vec3 then
+--    trigger.action.signalFlare( Vec3, trigger.flareColor.Red, 0 )
+--  end
+--end
+--
+----- Smoke the GROUP.
+---- @param #GROUP self
+--function GROUP:Smoke( SmokeColor, Range )
+--  self:F2()
+--  if Range then
+--    trigger.action.smoke( self:GetRandomVec3( Range ), SmokeColor )
+--  else
+--    trigger.action.smoke( self:GetVec3(), SmokeColor )
+--  end
+--  
+--end
+--
+----- Smoke the GROUP Green.
+---- @param #GROUP self
+--function GROUP:SmokeGreen()
+--  self:F2()
+--  trigger.action.smoke( self:GetVec3(), trigger.smokeColor.Green )
+--end
+--
+----- Smoke the GROUP Red.
+---- @param #GROUP self
+--function GROUP:SmokeRed()
+--  self:F2()
+--  trigger.action.smoke( self:GetVec3(), trigger.smokeColor.Red )
+--end
+--
+----- Smoke the GROUP White.
+---- @param #GROUP self
+--function GROUP:SmokeWhite()
+--  self:F2()
+--  trigger.action.smoke( self:GetVec3(), trigger.smokeColor.White )
+--end
+--
+----- Smoke the GROUP Orange.
+---- @param #GROUP self
+--function GROUP:SmokeOrange()
+--  self:F2()
+--  trigger.action.smoke( self:GetVec3(), trigger.smokeColor.Orange )
+--end
+--
+----- Smoke the GROUP Blue.
+---- @param #GROUP self
+--function GROUP:SmokeBlue()
+--  self:F2()
+--  trigger.action.smoke( self:GetVec3(), trigger.smokeColor.Blue )
+--end
+--
+--
+--
+--end

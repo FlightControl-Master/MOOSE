@@ -1,4 +1,4 @@
---- This module defines the SCHEDULEDISPATCHER class, which is used by a central object called _SCHEDULEDISPATCHER.
+--- **Core** -- SCHEDULEDISPATCHER dispatches the different schedules.
 -- 
 -- ===
 -- 
@@ -24,8 +24,6 @@
 -- The SCHEDULER object therefore keeps a table of "CallID's", which are returned after each planning of a new scheduled function by the SCHEDULEDISPATCHER.
 -- The SCHEDULER object plans new scheduled functions through the @{Scheduler#SCHEDULER.Schedule}() method. 
 -- The Schedule() method returns the CallID that is the reference ID for each planned schedule.
--- 
--- ===
 -- 
 -- ===
 -- 
@@ -64,7 +62,7 @@ function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleAr
 
   -- Initialize the ObjectSchedulers array, which is a weakly coupled table.
   -- If the object used as the key is nil, then the garbage collector will remove the item from the Functions array.
-  self.ObjectSchedulers = self.ObjectSchedulers or setmetatable( {}, { __mode = "v" } ) -- or {}
+  self.ObjectSchedulers = self.ObjectSchedulers or setmetatable( {}, { __mode = "v" } ) 
   
   if Scheduler.MasterObject then
     self.ObjectSchedulers[self.CallID] = Scheduler
@@ -103,13 +101,13 @@ function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleAr
       Scheduler = self.PersistentSchedulers[CallID]
     end
 
-    self:T3( { Scheduler = Scheduler } )
+    --self:T3( { Scheduler = Scheduler } )
     
     if Scheduler then
 
       local Schedule = self.Schedule[Scheduler][CallID]
       
-      self:T3( { Schedule = Schedule } )
+      --self:T3( { Schedule = Schedule } )
 
       local ScheduleObject = Scheduler.SchedulerObject
       --local ScheduleObjectName = Scheduler.SchedulerObject:GetNameAndClassID()
@@ -147,7 +145,7 @@ function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleAr
               ( Randomize * Repeat  / 2 )
             ) +
             0.01
-          self:T3( { Repeat = CallID, CurrentTime, ScheduleTime, ScheduleArguments } )
+          --self:T3( { Repeat = CallID, CurrentTime, ScheduleTime, ScheduleArguments } )
           return ScheduleTime -- returns the next time the function needs to be called.
         else
           self:Stop( Scheduler, CallID )
@@ -156,7 +154,7 @@ function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleAr
         self:Stop( Scheduler, CallID )
       end
     else
-      self:E( "Scheduled obscolete call for CallID: " .. CallID )
+      self:E( "Scheduled obsolete call for CallID: " .. CallID )
     end
     
     return nil
@@ -191,7 +189,7 @@ function SCHEDULEDISPATCHER:Start( Scheduler, CallID )
       )
     end
   else
-    for CallID, Schedule in pairs( self.Schedule[Scheduler] ) do
+    for CallID, Schedule in pairs( self.Schedule[Scheduler] or {} ) do
       self:Start( Scheduler, CallID ) -- Recursive
     end
   end
@@ -209,7 +207,7 @@ function SCHEDULEDISPATCHER:Stop( Scheduler, CallID )
       Schedule[CallID].ScheduleID = nil
     end
   else
-    for CallID, Schedule in pairs( self.Schedule[Scheduler] ) do
+    for CallID, Schedule in pairs( self.Schedule[Scheduler] or {} ) do
       self:Stop( Scheduler, CallID ) -- Recursive
     end
   end
@@ -218,7 +216,7 @@ end
 function SCHEDULEDISPATCHER:Clear( Scheduler )
   self:F2( { Scheduler = Scheduler } )
 
-  for CallID, Schedule in pairs( self.Schedule[Scheduler] ) do
+  for CallID, Schedule in pairs( self.Schedule[Scheduler] or {} ) do
     self:Stop( Scheduler, CallID ) -- Recursive
   end
 end

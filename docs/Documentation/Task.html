@@ -17,9 +17,16 @@
 				<a href="index.html">index</a>
 			</li></ul>
 		<ul>
+					<li><a href="AI_A2A.html">AI_A2A</a></li>
+					<li><a href="AI_A2A_Cap.html">AI_A2A_Cap</a></li>
+					<li><a href="AI_A2A_Dispatcher.html">AI_A2A_Dispatcher</a></li>
+					<li><a href="AI_A2A_GCI.html">AI_A2A_GCI</a></li>
+					<li><a href="AI_A2A_Patrol.html">AI_A2A_Patrol</a></li>
+					<li><a href="AI_Bai.html">AI_Bai</a></li>
 					<li><a href="AI_Balancer.html">AI_Balancer</a></li>
 					<li><a href="AI_Cap.html">AI_Cap</a></li>
 					<li><a href="AI_Cas.html">AI_Cas</a></li>
+					<li><a href="AI_Formation.html">AI_Formation</a></li>
 					<li><a href="AI_Patrol.html">AI_Patrol</a></li>
 					<li><a href="Account.html">Account</a></li>
 					<li><a href="Airbase.html">Airbase</a></li>
@@ -31,7 +38,23 @@
 					<li><a href="Client.html">Client</a></li>
 					<li><a href="CommandCenter.html">CommandCenter</a></li>
 					<li><a href="Controllable.html">Controllable</a></li>
+					<li><a href="DCSAirbase.html">DCSAirbase</a></li>
+					<li><a href="DCSCoalitionObject.html">DCSCoalitionObject</a></li>
+					<li><a href="DCSCommand.html">DCSCommand</a></li>
+					<li><a href="DCSController.html">DCSController</a></li>
+					<li><a href="DCSGroup.html">DCSGroup</a></li>
+					<li><a href="DCSObject.html">DCSObject</a></li>
+					<li><a href="DCSTask.html">DCSTask</a></li>
+					<li><a href="DCSTypes.html">DCSTypes</a></li>
+					<li><a href="DCSUnit.html">DCSUnit</a></li>
+					<li><a href="DCSVec3.html">DCSVec3</a></li>
+					<li><a href="DCSWorld.html">DCSWorld</a></li>
+					<li><a href="DCSZone.html">DCSZone</a></li>
+					<li><a href="DCScountry.html">DCScountry</a></li>
+					<li><a href="DCStimer.html">DCStimer</a></li>
+					<li><a href="DCStrigger.html">DCStrigger</a></li>
 					<li><a href="Database.html">Database</a></li>
+					<li><a href="Designate.html">Designate</a></li>
 					<li><a href="Detection.html">Detection</a></li>
 					<li><a href="DetectionManager.html">DetectionManager</a></li>
 					<li><a href="Escort.html">Escort</a></li>
@@ -57,74 +80,42 @@
 					<li><a href="Scoring.html">Scoring</a></li>
 					<li><a href="Sead.html">Sead</a></li>
 					<li><a href="Set.html">Set</a></li>
+					<li><a href="Settings.html">Settings</a></li>
 					<li><a href="Smoke.html">Smoke</a></li>
 					<li><a href="Spawn.html">Spawn</a></li>
+					<li><a href="SpawnStatic.html">SpawnStatic</a></li>
+					<li><a href="Spot.html">Spot</a></li>
 					<li><a href="Static.html">Static</a></li>
+					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li>Task</li>
+					<li><a href="Task_A2A.html">Task_A2A</a></li>
+					<li><a href="Task_A2A_Dispatcher.html">Task_A2A_Dispatcher</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
 					<li><a href="Task_A2G_Dispatcher.html">Task_A2G_Dispatcher</a></li>
+					<li><a href="Task_Cargo.html">Task_Cargo</a></li>
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
 					<li><a href="Unit.html">Unit</a></li>
 					<li><a href="Utils.html">Utils</a></li>
 					<li><a href="Zone.html">Zone</a></li>
+					<li><a href="env.html">env</a></li>
+					<li><a href="land.html">land</a></li>
 					<li><a href="routines.html">routines</a></li>
 		</ul>
 	</div>
 	<div id="content">
    <h1>Module <code>Task</code></h1>
    
-<p>This module contains the TASK class.</p>
+<p><strong>Tasking</strong> -- This module contains the TASK class, the main engine to run human taskings.</p>
 
    
 
-<h1>1) <a href="##(TASK)">#TASK</a> class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
-<h2>1.1) The <a href="##(TASK)">#TASK</a> class implements the methods for task orchestration within MOOSE. </h2>
-<p>The class provides a couple of methods to:</p>
-
-<ul>
-    <li><a href="##(TASK).AssignToGroup">TASK.AssignToGroup</a>():Assign a task to a group (of players).</li>
-    <li><a href="##(TASK).AddProcess">TASK.AddProcess</a>():Add a <a href="Process.html">Process</a> to a task.</li>
-    <li><a href="##(TASK).RemoveProcesses">TASK.RemoveProcesses</a>():Remove a running <a href="Process.html">Process</a> from a running task.</li>
-    <li><a href="##(TASK).SetStateMachine">TASK.SetStateMachine</a>():Set a <a href="Fsm.html">Fsm</a> to a task.</li>
-    <li><a href="##(TASK).RemoveStateMachine">TASK.RemoveStateMachine</a>():Remove <a href="Fsm.html">Fsm</a> from a task.</li>
-    <li><a href="##(TASK).HasStateMachine">TASK.HasStateMachine</a>():Enquire if the task has a <a href="Fsm.html">Fsm</a></li>
-    <li><a href="##(TASK).AssignToUnit">TASK.AssignToUnit</a>(): Assign a task to a unit. (Needs to be implemented in the derived classes from <a href="##(TASK)">#TASK</a>.</li>
-    <li><a href="##(TASK).UnAssignFromUnit">TASK.UnAssignFromUnit</a>(): Unassign the task from a unit.</li>
-    <li><a href="##(TASK).SetTimeOut">TASK.SetTimeOut</a>(): Set timer in seconds before task gets cancelled if not assigned.</li>
-</ul>
-
-<h2>1.2) Set and enquire task status (beyond the task state machine processing).</h2>
-<p>A task needs to implement as a minimum the following task states:</p>
-
-<ul>
-    <li><strong>Success</strong>: Expresses the successful execution and finalization of the task.</li>
-    <li><strong>Failed</strong>: Expresses the failure of a task.</li>
-    <li><strong>Planned</strong>: Expresses that the task is created, but not yet in execution and is not assigned yet.</li>
-    <li><strong>Assigned</strong>: Expresses that the task is assigned to a Group of players, and that the task is in execution mode.</li>
-</ul>
-
-<p>A task may also implement the following task states:</p>
-
-<ul>
-    <li><strong>Rejected</strong>: Expresses that the task is rejected by a player, who was requested to accept the task.</li>
-    <li><strong>Cancelled</strong>: Expresses that the task is cancelled by HQ or through a logical situation where a cancellation of the task is required.</li>
-</ul>
-
-<p>A task can implement more statusses than the ones outlined above. Please consult the documentation of the specific tasks to understand the different status modelled.</p>
-
-<p>The status of tasks can be set by the methods <strong>State</strong> followed by the task status. An example is <code>StateAssigned()</code>.
-The status of tasks can be enquired by the methods <strong>IsState</strong> followed by the task status name. An example is <code>if IsStateAssigned() then</code>.</p>
-
-<h2>1.3) Add scoring when reaching a certain task status:</h2>
-<p>Upon reaching a certain task status in a task, additional scoring can be given. If the Mission has a scoring system attached, the scores will be added to the mission scoring.
-Use the method <a href="##(TASK).AddScore">TASK.AddScore</a>() to add scores when a status is reached.</p>
-
-<h2>1.4) Task briefing:</h2>
-<p>A task briefing can be given that is shown to the player when he is assigned to the task.</p>
-
 <hr/>
 
-<h3>Authors: FlightControl - Design and Programming</h3>
+<h3>Author: <strong>Sven Van de Velde (FlightControl)</strong></h3>
+
+<h3>Contributions:</h3>
+
+<hr/>
 
 
 	<h2>Global(s)</h2>
@@ -132,7 +123,9 @@ Use the method <a href="##(TASK).AddScore">TASK.AddScore</a>() to add scores whe
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="#TASK">TASK</a></td>
 		<td class="summary">
+<h1>TASK class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
 
+<h2>The TASK class implements the methods for task orchestration within MOOSE.</h2>
 </td>
 		</tr>
 	</table>
@@ -145,9 +138,15 @@ Use the method <a href="##(TASK).AddScore">TASK.AddScore</a>() to add scores whe
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK).AbortUnit">TASK:AbortUnit(PlayerUnit)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).AbortGroup">TASK:AbortGroup(PlayerUnit, PlayerGroup)</a></td>
 		<td class="summary">
 <p>Abort a PlayerUnit from a Task.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).AddProgress">TASK:AddProgress(PlayerName, ProgressText, ProgressTime, ProgressPoints)</a></td>
+		<td class="summary">
+<p>Add Task Progress for a Player Name</p>
 </td>
 		</tr>
 		<tr>
@@ -169,9 +168,9 @@ Use the method <a href="##(TASK).AddScore">TASK.AddScore</a>() to add scores whe
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK).ClassName">TASK.ClassName</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).ClearGroupAssignment">TASK:ClearGroupAssignment(TaskGroup)</a></td>
 		<td class="summary">
-
+<p>Clear the <a href="Group.html">Group</a> assignment from the <a href="Task.html">Task</a>.</p>
 </td>
 		</tr>
 		<tr>
@@ -181,7 +180,7 @@ Use the method <a href="##(TASK).AddScore">TASK.AddScore</a>() to add scores whe
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK).CrashUnit">TASK:CrashUnit(PlayerUnit)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).CrashGroup">TASK:CrashGroup(PlayerUnit, PlayerGroup)</a></td>
 		<td class="summary">
 <p>A PlayerUnit crashed in a Task.</p>
 </td>
@@ -211,6 +210,12 @@ Use the method <a href="##(TASK).AddScore">TASK.AddScore</a>() to add scores whe
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).GetBriefing">TASK:GetBriefing()</a></td>
+		<td class="summary">
+<p>Gets the <a href="Task.html">Task</a> briefing.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(TASK).GetGroups">TASK:GetGroups()</a></td>
 		<td class="summary">
 <p>Gets the SET_GROUP assigned to the TASK.</p>
@@ -232,6 +237,24 @@ Use the method <a href="##(TASK).AddScore">TASK.AddScore</a>() to add scores whe
 		<td class="name" nowrap="nowrap"><a href="##(TASK).GetName">TASK:GetName()</a></td>
 		<td class="summary">
 <p>Gets the Name of the Task</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).GetPlayerCount">TASK:GetPlayerCount()</a></td>
+		<td class="summary">
+<p>Create a count of the players in the Task.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).GetPlayerNames">TASK:GetPlayerNames()</a></td>
+		<td class="summary">
+<p>Create a list of the players in the Task.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).GetPlayerProgress">TASK:GetPlayerProgress(PlayerName)</a></td>
+		<td class="summary">
+
 </td>
 		</tr>
 		<tr>
@@ -259,6 +282,12 @@ Use the method <a href="##(TASK).AddScore">TASK.AddScore</a>() to add scores whe
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).GetTaskBriefing">TASK:GetTaskBriefing()</a></td>
+		<td class="summary">
+<p>Returns the <a href="Task.html">Task</a> briefing.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(TASK).GetTaskIndex">TASK:GetTaskIndex()</a></td>
 		<td class="summary">
 <p>Gets the Task Index, which is a combination of the Task type, the Task name.</p>
@@ -283,6 +312,12 @@ Use the method <a href="##(TASK).AddScore">TASK.AddScore</a>() to add scores whe
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).Goal">TASK:Goal()</a></td>
+		<td class="summary">
+<p>Goal Trigger for TASK</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(TASK).HasAliveUnits">TASK:HasAliveUnits()</a></td>
 		<td class="summary">
 <p>Returns if the <a href="Task.html">Task</a> has still alive and assigned Units.</p>
@@ -301,7 +336,7 @@ Use the method <a href="##(TASK).AddScore">TASK.AddScore</a>() to add scores whe
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK).IsAssignedToGroup">TASK:IsAssignedToGroup(TaskGroup)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).IsGroupAssigned">TASK:IsGroupAssigned(TaskGroup)</a></td>
 		<td class="summary">
 <p>Returns if the <a href="Task.html">Task</a> is assigned to the Group.</p>
 </td>
@@ -361,12 +396,6 @@ Use the method <a href="##(TASK).AddScore">TASK.AddScore</a>() to add scores whe
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK).Menu">TASK.Menu</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(TASK).MenuAssignToGroup">TASK.MenuAssignToGroup(MenuParam)</a></td>
 		<td class="summary">
 
@@ -397,9 +426,15 @@ Use the method <a href="##(TASK).AddScore">TASK.AddScore</a>() to add scores whe
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK).New">TASK:New(Mission, SetGroupAssign, TaskName, TaskType)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).New">TASK:New(Mission, SetGroupAssign, TaskName, TaskType, TaskBriefing)</a></td>
 		<td class="summary">
 <p>Instantiates a new TASK.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).OnAfterGoal">TASK:OnAfterGoal(Controllable, From, Event, To)</a></td>
+		<td class="summary">
+<p>Goal Handler OnAfter for TASK</p>
 </td>
 		</tr>
 		<tr>
@@ -421,21 +456,15 @@ Use the method <a href="##(TASK).AddScore">TASK.AddScore</a>() to add scores whe
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK).Players">TASK.Players</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).OnBeforeGoal">TASK:OnBeforeGoal(Controllable, From, Event, To)</a></td>
 		<td class="summary">
-
+<p>Goal Handler OnBefore for TASK</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK).ProcessClasses">TASK.ProcessClasses</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).RefreshMenus">TASK:RefreshMenus(TaskGroup, MenuTime)</a></td>
 		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK).Processes">TASK.Processes</a></td>
-		<td class="summary">
-
+<p>Remove the menu option of the <a href="Task.html">Task</a> for a <a href="Group.html">Group</a>.</p>
 </td>
 		</tr>
 		<tr>
@@ -451,12 +480,6 @@ Use the method <a href="##(TASK).AddScore">TASK.AddScore</a>() to add scores whe
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK).RemovePlannedMenuForGroup">TASK:RemovePlannedMenuForGroup(TaskGroup, MenuTime)</a></td>
-		<td class="summary">
-<p>Remove the menu option of the <a href="Task.html">Task</a> for a <a href="Group.html">Group</a>.</p>
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(TASK).RemoveStateMachine">TASK:RemoveStateMachine(TaskUnit)</a></td>
 		<td class="summary">
 <p>Remove FiniteStateMachines from <a href="Task.html">Task</a> with key Task<a href="Unit.html">Unit</a></p>
@@ -469,21 +492,21 @@ Use the method <a href="##(TASK).AddScore">TASK.AddScore</a>() to add scores whe
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK).ReportDetails">TASK:ReportDetails()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).ReportDetails">TASK:ReportDetails(TaskGroup, ReportGroup)</a></td>
 		<td class="summary">
 <p>Create a detailed report of the Task.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).ReportOverview">TASK:ReportOverview(ReportGroup)</a></td>
+		<td class="summary">
+<p>Create an overiew report of the Task.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(TASK).ReportSummary">TASK:ReportSummary()</a></td>
 		<td class="summary">
 <p>Create a summary report of the Task.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK).Scores">TASK.Scores</a></td>
-		<td class="summary">
-
 </td>
 		</tr>
 		<tr>
@@ -517,9 +540,21 @@ Use the method <a href="##(TASK).AddScore">TASK.AddScore</a>() to add scores whe
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).SetGroupAssigned">TASK:SetGroupAssigned(TaskGroup)</a></td>
+		<td class="summary">
+<p>Set <a href="Group.html">Group</a> assigned to the <a href="Task.html">Task</a>.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(TASK).SetID">TASK:SetID(TaskID)</a></td>
 		<td class="summary">
 <p>Sets the ID of the Task</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).SetInfo">TASK:SetInfo(TaskInfo, TaskInfoText, TaskInfoOrder)</a></td>
+		<td class="summary">
+<p>Sets the Information on the Task</p>
 </td>
 		</tr>
 		<tr>
@@ -544,6 +579,24 @@ Use the method <a href="##(TASK).AddScore">TASK.AddScore</a>() to add scores whe
 		<td class="name" nowrap="nowrap"><a href="##(TASK).SetPlannedMenuForGroup">TASK:SetPlannedMenuForGroup(TaskGroup, MenuText, MenuTime)</a></td>
 		<td class="summary">
 <p>Set the planned menu option of the <a href="Task.html">Task</a>.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).SetScoreOnFail">TASK:SetScoreOnFail(PlayerName, Penalty, TaskUnit)</a></td>
+		<td class="summary">
+<p>Set a penalty when the A2A attack has failed.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).SetScoreOnProgress">TASK:SetScoreOnProgress(PlayerName, Score, TaskUnit)</a></td>
+		<td class="summary">
+<p>Set a score when progress has been made by the player.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).SetScoreOnSuccess">TASK:SetScoreOnSuccess(PlayerName, Score, TaskUnit)</a></td>
+		<td class="summary">
+<p>Set a score when all the targets in scope of the A2A attack, have been destroyed.</p>
 </td>
 		</tr>
 		<tr>
@@ -637,7 +690,19 @@ Use the method <a href="##(TASK).AddScore">TASK.AddScore</a>() to add scores whe
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).TaskInfo">TASK.TaskInfo</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(TASK).TaskName">TASK.TaskName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).TaskProgress">TASK.TaskProgress</a></td>
 		<td class="summary">
 
 </td>
@@ -694,6 +759,12 @@ Use the method <a href="##(TASK).AddScore">TASK.AddScore</a>() to add scores whe
 		<td class="name" nowrap="nowrap"><a href="##(TASK).__Fail">TASK:__Fail()</a></td>
 		<td class="summary">
 <p>FSM Fail asynchronous event function for TASK.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).__Goal">TASK:__Goal(Delay)</a></td>
+		<td class="summary">
+<p>Goal Asynchronous Trigger for TASK</p>
 </td>
 		</tr>
 		<tr>
@@ -769,6 +840,57 @@ Use the method <a href="##(TASK).AddScore">TASK.AddScore</a>() to add scores whe
 </dt>
 <dd>
 	
+<h1>TASK class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
+
+<h2>The TASK class implements the methods for task orchestration within MOOSE.</h2>
+
+	
+
+<p>The class provides a couple of methods to:</p>
+
+<ul>
+    <li><a href="##(TASK).AssignToGroup">TASK.AssignToGroup</a>():Assign a task to a group (of players).</li>
+    <li><a href="##(TASK).AddProcess">TASK.AddProcess</a>():Add a <a href="Process.html">Process</a> to a task.</li>
+    <li><a href="##(TASK).RemoveProcesses">TASK.RemoveProcesses</a>():Remove a running <a href="Process.html">Process</a> from a running task.</li>
+    <li><a href="##(TASK).SetStateMachine">TASK.SetStateMachine</a>():Set a <a href="Fsm.html">Fsm</a> to a task.</li>
+    <li><a href="##(TASK).RemoveStateMachine">TASK.RemoveStateMachine</a>():Remove <a href="Fsm.html">Fsm</a> from a task.</li>
+    <li><a href="##(TASK).HasStateMachine">TASK.HasStateMachine</a>():Enquire if the task has a <a href="Fsm.html">Fsm</a></li>
+    <li><a href="##(TASK).AssignToUnit">TASK.AssignToUnit</a>(): Assign a task to a unit. (Needs to be implemented in the derived classes from <a href="##(TASK)">#TASK</a>.</li>
+    <li><a href="##(TASK).UnAssignFromUnit">TASK.UnAssignFromUnit</a>(): Unassign the task from a unit.</li>
+    <li><a href="##(TASK).SetTimeOut">TASK.SetTimeOut</a>(): Set timer in seconds before task gets cancelled if not assigned.</li>
+</ul>
+
+<h2>1.2) Set and enquire task status (beyond the task state machine processing).</h2>
+
+<p>A task needs to implement as a minimum the following task states:</p>
+
+<ul>
+    <li><strong>Success</strong>: Expresses the successful execution and finalization of the task.</li>
+    <li><strong>Failed</strong>: Expresses the failure of a task.</li>
+    <li><strong>Planned</strong>: Expresses that the task is created, but not yet in execution and is not assigned yet.</li>
+    <li><strong>Assigned</strong>: Expresses that the task is assigned to a Group of players, and that the task is in execution mode.</li>
+</ul>
+
+<p>A task may also implement the following task states:</p>
+
+<ul>
+    <li><strong>Rejected</strong>: Expresses that the task is rejected by a player, who was requested to accept the task.</li>
+    <li><strong>Cancelled</strong>: Expresses that the task is cancelled by HQ or through a logical situation where a cancellation of the task is required.</li>
+</ul>
+
+<p>A task can implement more statusses than the ones outlined above. Please consult the documentation of the specific tasks to understand the different status modelled.</p>
+
+<p>The status of tasks can be set by the methods <strong>State</strong> followed by the task status. An example is <code>StateAssigned()</code>.
+The status of tasks can be enquired by the methods <strong>IsState</strong> followed by the task status name. An example is <code>if IsStateAssigned() then</code>.</p>
+
+<h2>1.3) Add scoring when reaching a certain task status:</h2>
+
+<p>Upon reaching a certain task status in a task, additional scoring can be given. If the Mission has a scoring system attached, the scores will be added to the mission scoring.
+Use the method <a href="##(TASK).AddScore">TASK.AddScore</a>() to add scores when a status is reached.</p>
+
+<h2>1.4) Task briefing:</h2>
+
+<p>A task briefing can be given that is shown to the player when he is assigned to the task.</p>
 
 
 </dd>
@@ -776,10 +898,7 @@ Use the method <a href="##(TASK).AddScore">TASK.AddScore</a>() to add scores whe
 	<h2><a id="#(Task)" >Type <code>Task</code></a></h2>
 	
 			<h2><a id="#(TASK)" >Type <code>TASK</code></a></h2>
-				
-<p>The TASK class</p>
-
-	<h3>Field(s)</h3>
+				<h3>Field(s)</h3>
 		<dl class="function">
 <dt>
 
@@ -799,8 +918,8 @@ Use the method <a href="##(TASK).AddScore">TASK.AddScore</a>() to add scores whe
 		<dl class="function">
 <dt>
 
-<a id="#(TASK).AbortUnit" >
-<strong>TASK:AbortUnit(PlayerUnit)</strong>
+<a id="#(TASK).AbortGroup" >
+<strong>TASK:AbortGroup(PlayerUnit, PlayerGroup)</strong>
 </a>
 </dt>
 <dd>
@@ -811,7 +930,7 @@ Use the method <a href="##(TASK).AddScore">TASK.AddScore</a>() to add scores whe
 <p>If the Unit was not part of the Task, false is returned.
 If the Unit is part of the Task, true is returned.</p>
 
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
@@ -819,11 +938,60 @@ If the Unit is part of the Task, true is returned.</p>
 The CLIENT or UNIT of the Player aborting the Task.</p>
 
 				</li>
+				<li>
+				
+<p><code><em> PlayerGroup </em></code>: </p>
+
+				</li>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em>#boolean:</em>
-true if Unit is part of the Task.</p>
+<p><em><a href="##(TASK)">#TASK</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).AddProgress" >
+<strong>TASK:AddProgress(PlayerName, ProgressText, ProgressTime, ProgressPoints)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Add Task Progress for a Player Name</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string PlayerName </em></code>: 
+The name of the player.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string ProgressText </em></code>: 
+The text that explains the Progress achieved.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number ProgressTime </em></code>: 
+The time the progress was achieved.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> ProgressPoints </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(TASK)">#TASK</a>:</em></p>
+
 
 </dd>
 </dl>
@@ -898,13 +1066,25 @@ self</p>
 		<dl class="function">
 <dt>
 
-		<em>#string</em>
-<a id="#(TASK).ClassName" >
-<strong>TASK.ClassName</strong>
+<a id="#(TASK).ClearGroupAssignment" >
+<strong>TASK:ClearGroupAssignment(TaskGroup)</strong>
 </a>
 </dt>
 <dd>
 	
+<p>Clear the <a href="Group.html">Group</a> assignment from the <a href="Task.html">Task</a>.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> TaskGroup </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(TASK)">#TASK</a>:</em></p>
 
 
 </dd>
@@ -926,8 +1106,8 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK).CrashUnit" >
-<strong>TASK:CrashUnit(PlayerUnit)</strong>
+<a id="#(TASK).CrashGroup" >
+<strong>TASK:CrashGroup(PlayerUnit, PlayerGroup)</strong>
 </a>
 </dt>
 <dd>
@@ -939,7 +1119,7 @@ self</p>
 If the Unit was not part of the Task, false is returned.
 If the Unit is part of the Task, true is returned.</p>
 
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
@@ -947,11 +1127,16 @@ If the Unit is part of the Task, true is returned.</p>
 The CLIENT or UNIT of the Player aborting the Task.</p>
 
 				</li>
+				<li>
+				
+<p><code><em> PlayerGroup </em></code>: </p>
+
+				</li>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em>#boolean:</em>
-true if Unit is part of the Task.</p>
+<p><em><a href="##(TASK)">#TASK</a>:</em></p>
+
 
 </dd>
 </dl>
@@ -1030,6 +1215,24 @@ true if Unit is part of the Task.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(TASK).GetBriefing" >
+<strong>TASK:GetBriefing()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Gets the <a href="Task.html">Task</a> briefing.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#string:</em>
+The briefing text.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(TASK).GetGroups" >
 <strong>TASK:GetGroups()</strong>
 </a>
@@ -1097,6 +1300,63 @@ TaskID</p>
 <p><em>#string:</em>
 The Task Name</p>
 
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).GetPlayerCount" >
+<strong>TASK:GetPlayerCount()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Create a count of the players in the Task.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#number:</em>
+The total number of players in the task.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).GetPlayerNames" >
+<strong>TASK:GetPlayerNames()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Create a list of the players in the Task.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(map)">#map</a>:</em></p>
+<h1>string,Wrapper.Group#GROUP> A map of the players</h1>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).GetPlayerProgress" >
+<strong>TASK:GetPlayerProgress(PlayerName)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> PlayerName </em></code>: </p>
+
+				</li>
+		</ul>
 </dd>
 </dl>
 		<dl class="function">
@@ -1185,6 +1445,24 @@ Scoring</p>
 		<dl class="function">
 <dt>
 
+<a id="#(TASK).GetTaskBriefing" >
+<strong>TASK:GetTaskBriefing()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the <a href="Task.html">Task</a> briefing.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#string:</em>
+Task briefing.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(TASK).GetTaskIndex" >
 <strong>TASK:GetTaskIndex()</strong>
 </a>
@@ -1265,6 +1543,19 @@ TaskType</p>
 		<dl class="function">
 <dt>
 
+<a id="#(TASK).Goal" >
+<strong>TASK:Goal()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Goal Trigger for TASK</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(TASK).HasAliveUnits" >
 <strong>TASK:HasAliveUnits()</strong>
 </a>
@@ -1335,8 +1626,8 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK).IsAssignedToGroup" >
-<strong>TASK:IsAssignedToGroup(TaskGroup)</strong>
+<a id="#(TASK).IsGroupAssigned" >
+<strong>TASK:IsGroupAssigned(TaskGroup)</strong>
 </a>
 </dt>
 <dd>
@@ -1474,7 +1765,7 @@ self</p>
 <p>Add a PlayerUnit to join the Task.</p>
 
 	
-<p>For each Group within the Task, the Unit is check if it can join the Task.
+<p>For each Group within the Task, the Unit is checked if it can join the Task.
 If the Unit was not part of the Task, false is returned.
 If the Unit is part of the Task, true is returned.</p>
 
@@ -1497,20 +1788,6 @@ The GROUP of the player joining the Mission.</p>
 				
 <p><em>#boolean:</em>
 true if Unit is part of the Task.</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em></em>
-<a id="#(TASK).Menu" >
-<strong>TASK.Menu</strong>
-</a>
-</dt>
-<dd>
-	
-
 
 </dd>
 </dl>
@@ -1616,7 +1893,7 @@ true if Unit is part of the Task.</p>
 <dt>
 
 <a id="#(TASK).New" >
-<strong>TASK:New(Mission, SetGroupAssign, TaskName, TaskType)</strong>
+<strong>TASK:New(Mission, SetGroupAssign, TaskName, TaskType, TaskBriefing)</strong>
 </a>
 </dt>
 <dd>
@@ -1652,12 +1929,53 @@ The name of the Task</p>
 The type of the Task</p>
 
 				</li>
+				<li>
+				
+<p><code><em> TaskBriefing </em></code>: </p>
+
+				</li>
 		</ul>
 		<h3>Return value</h3>
 				
 <p><em><a href="##(TASK)">#TASK</a>:</em>
 self</p>
 
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).OnAfterGoal" >
+<strong>TASK:OnAfterGoal(Controllable, From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Goal Handler OnAfter for TASK</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> Controllable </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+		</ul>
 </dd>
 </dl>
 		<dl class="function">
@@ -1747,12 +2065,40 @@ The name of the Player.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK).Players" >
-<strong>TASK.Players</strong>
+<a id="#(TASK).OnBeforeGoal" >
+<strong>TASK:OnBeforeGoal(Controllable, From, Event, To)</strong>
 </a>
 </dt>
 <dd>
 	
+<p>Goal Handler OnBefore for TASK</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> Controllable </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em></p>
 
 
 </dd>
@@ -1760,28 +2106,31 @@ The name of the Player.</p>
 		<dl class="function">
 <dt>
 
-		<em></em>
-<a id="#(TASK).ProcessClasses" >
-<strong>TASK.ProcessClasses</strong>
+<a id="#(TASK).RefreshMenus" >
+<strong>TASK:RefreshMenus(TaskGroup, MenuTime)</strong>
 </a>
 </dt>
 <dd>
 	
+<p>Remove the menu option of the <a href="Task.html">Task</a> for a <a href="Group.html">Group</a>.</p>
 
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> TaskGroup </em></code>: </p>
 
-</dd>
-</dl>
-		<dl class="function">
-<dt>
+				</li>
+				<li>
+				
+<p><code><em>#number MenuTime </em></code>: </p>
 
-		<em></em>
-<a id="#(TASK).Processes" >
-<strong>TASK.Processes</strong>
-</a>
-</dt>
-<dd>
-	
-
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(TASK)">#TASK</a>:</em>
+self</p>
 
 </dd>
 </dl>
@@ -1845,37 +2194,6 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK).RemovePlannedMenuForGroup" >
-<strong>TASK:RemovePlannedMenuForGroup(TaskGroup, MenuTime)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Remove the menu option of the <a href="Task.html">Task</a> for a <a href="Group.html">Group</a>.</p>
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> TaskGroup </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em>#number MenuTime </em></code>: </p>
-
-				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em><a href="##(TASK)">#TASK</a>:</em>
-self</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
 <a id="#(TASK).RemoveStateMachine" >
 <strong>TASK:RemoveStateMachine(TaskUnit)</strong>
 </a>
@@ -1919,7 +2237,7 @@ self</p>
 <dt>
 
 <a id="#(TASK).ReportDetails" >
-<strong>TASK:ReportDetails()</strong>
+<strong>TASK:ReportDetails(TaskGroup, ReportGroup)</strong>
 </a>
 </dt>
 <dd>
@@ -1929,6 +2247,48 @@ self</p>
 	
 <p>List the Task Status, and the Players assigned to the Task.</p>
 
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> TaskGroup </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> ReportGroup </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#string:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).ReportOverview" >
+<strong>TASK:ReportOverview(ReportGroup)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Create an overiew report of the Task.</p>
+
+	
+<p>List the Task Name and Status</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> ReportGroup </em></code>: </p>
+
+				</li>
+		</ul>
 		<h3>Return value</h3>
 				
 <p><em>#string:</em></p>
@@ -1953,20 +2313,6 @@ self</p>
 		<h3>Return value</h3>
 				
 <p><em>#string:</em></p>
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em></em>
-<a id="#(TASK).Scores" >
-<strong>TASK.Scores</strong>
-</a>
-</dt>
-<dd>
-	
 
 
 </dd>
@@ -2084,6 +2430,32 @@ self</p>
 		<dl class="function">
 <dt>
 
+<a id="#(TASK).SetGroupAssigned" >
+<strong>TASK:SetGroupAssigned(TaskGroup)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set <a href="Group.html">Group</a> assigned to the <a href="Task.html">Task</a>.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> TaskGroup </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(TASK)">#TASK</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(TASK).SetID" >
 <strong>TASK:SetID(TaskID)</strong>
 </a>
@@ -2097,6 +2469,40 @@ self</p>
 				<li>
 				
 <p><code><em>#string TaskID </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).SetInfo" >
+<strong>TASK:SetInfo(TaskInfo, TaskInfoText, TaskInfoOrder)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Sets the Information on the Task</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string TaskInfo </em></code>: 
+The key and title of the task information.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string TaskInfoText </em></code>: 
+The Task info text.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number TaskInfoOrder </em></code>: 
+The ordering, a number between 0 and 99.</p>
 
 				</li>
 		</ul>
@@ -2214,6 +2620,120 @@ The menu text.</p>
 				
 <p><em><a href="##(TASK)">#TASK</a>:</em>
 self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).SetScoreOnFail" >
+<strong>TASK:SetScoreOnFail(PlayerName, Penalty, TaskUnit)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set a penalty when the A2A attack has failed.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string PlayerName </em></code>: 
+The name of the player.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Penalty </em></code>: 
+The penalty in points, must be a negative value!</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> TaskUnit </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(TASK)">#TASK</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).SetScoreOnProgress" >
+<strong>TASK:SetScoreOnProgress(PlayerName, Score, TaskUnit)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set a score when progress has been made by the player.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string PlayerName </em></code>: 
+The name of the player.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Score </em></code>: 
+The score in points to be granted when task process has been achieved.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> TaskUnit </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(TASK)">#TASK</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).SetScoreOnSuccess" >
+<strong>TASK:SetScoreOnSuccess(PlayerName, Score, TaskUnit)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set a score when all the targets in scope of the A2A attack, have been destroyed.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string PlayerName </em></code>: 
+The name of the player.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Score </em></code>: 
+The score in points.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> TaskUnit </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(TASK)">#TASK</a>:</em></p>
+
 
 </dd>
 </dl>
@@ -2477,9 +2997,35 @@ Fsm#FSM_PROCESS</p>
 		<dl class="function">
 <dt>
 
+<a id="#(TASK).TaskInfo" >
+<strong>TASK.TaskInfo</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 		<em></em>
 <a id="#(TASK).TaskName" >
 <strong>TASK.TaskName</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).TaskProgress" >
+<strong>TASK.TaskProgress</strong>
 </a>
 </dt>
 <dd>
@@ -2545,7 +3091,7 @@ Fsm#FSM_PROCESS</p>
 		<ul>
 				<li>
 				
-<p><code><em> TaskGroup </em></code>: </p>
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> TaskGroup </em></code>: </p>
 
 				</li>
 		</ul>
@@ -2636,6 +3182,27 @@ self</p>
 	
 <p>Use this event to Fail the Task.</p>
 
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).__Goal" >
+<strong>TASK:__Goal(Delay)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Goal Asynchronous Trigger for TASK</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number Delay </em></code>: </p>
+
+				</li>
+		</ul>
 </dd>
 </dl>
 		<dl class="function">
@@ -2930,6 +3497,8 @@ self</p>
 </dl>
 
 			<h2><a id="#(integer)" >Type <code>integer</code></a></h2>
+			
+			<h2><a id="#(map)" >Type <code>map</code></a></h2>
 			
 </div>
 

@@ -70,13 +70,67 @@ do -- DETECTION MANAGER
     
     self:SetStartState( "Stopped" )
     self:AddTransition( "Stopped", "Start", "Started" )
+    
+    --- Start Handler OnBefore for DETECTION_MANAGER
+    -- @function [parent=#DETECTION_MANAGER] OnBeforeStart
+    -- @param #DETECTION_MANAGER self
+    -- @param #string From
+    -- @param #string Event
+    -- @param #string To
+    -- @return #boolean
+    
+    --- Start Handler OnAfter for DETECTION_MANAGER
+    -- @function [parent=#DETECTION_MANAGER] OnAfterStart
+    -- @param #DETECTION_MANAGER self
+    -- @param #string From
+    -- @param #string Event
+    -- @param #string To
+    
+    --- Start Trigger for DETECTION_MANAGER
+    -- @function [parent=#DETECTION_MANAGER] Start
+    -- @param #DETECTION_MANAGER self
+    
+    --- Start Asynchronous Trigger for DETECTION_MANAGER
+    -- @function [parent=#DETECTION_MANAGER] __Start
+    -- @param #DETECTION_MANAGER self
+    -- @param #number Delay
+    
+    
+    
     self:AddTransition( "Started", "Stop", "Stopped" )
+    
+    --- Stop Handler OnBefore for DETECTION_MANAGER
+    -- @function [parent=#DETECTION_MANAGER] OnBeforeStop
+    -- @param #DETECTION_MANAGER self
+    -- @param #string From
+    -- @param #string Event
+    -- @param #string To
+    -- @return #boolean
+    
+    --- Stop Handler OnAfter for DETECTION_MANAGER
+    -- @function [parent=#DETECTION_MANAGER] OnAfterStop
+    -- @param #DETECTION_MANAGER self
+    -- @param #string From
+    -- @param #string Event
+    -- @param #string To
+    
+    --- Stop Trigger for DETECTION_MANAGER
+    -- @function [parent=#DETECTION_MANAGER] Stop
+    -- @param #DETECTION_MANAGER self
+    
+    --- Stop Asynchronous Trigger for DETECTION_MANAGER
+    -- @function [parent=#DETECTION_MANAGER] __Stop
+    -- @param #DETECTION_MANAGER self
+    -- @param #number Delay
+    
+
     self:AddTransition( "Started", "Report", "Started" )
     
     self:SetReportInterval( 30 )
     self:SetReportDisplayTime( 25 )
   
-    Detection:__Start( 1 )
+    self:E( { Detection = Detection } )
+    Detection:__Start( 3 )
 
     return self
   end

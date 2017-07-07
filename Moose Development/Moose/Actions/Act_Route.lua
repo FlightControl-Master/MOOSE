@@ -82,6 +82,7 @@ do -- ACT_ROUTE
   -- @field Tasking.Task#TASK TASK
   -- @field Wrapper.Unit#UNIT ProcessUnit
   -- @field Core.Zone#ZONE_BASE Zone
+  -- @field Core.Point#COORDINATE Coordinate
   -- @extends Core.Fsm#FSM_PROCESS
   ACT_ROUTE = { 
     ClassName = "ACT_ROUTE",
@@ -96,12 +97,13 @@ do -- ACT_ROUTE
     -- Inherits from BASE
     local self = BASE:Inherit( self, FSM_PROCESS:New( "ACT_ROUTE" ) ) -- Core.Fsm#FSM_PROCESS
  
+    self:AddTransition( "*", "Reset", "None" )
     self:AddTransition( "None", "Start", "Routing" )
-    self:AddTransition( "*", "Report", "Reporting" )
-    self:AddTransition( "*", "Route", "Routing" )
+    self:AddTransition( "*", "Report", "*" )
+    self:AddTransition( "Routing", "Route", "Routing" )
     self:AddTransition( "Routing", "Pause", "Pausing" )
-    self:AddTransition( "*", "Abort", "Aborted" )
     self:AddTransition( "Routing", "Arrive", "Arrived" )
+    self:AddTransition( "*", "Cancel", "Cancelled" )
     self:AddTransition( "Arrived", "Success", "Success" )
     self:AddTransition( "*", "Fail", "Failed" )
     self:AddTransition( "", "", "" )
@@ -109,10 +111,103 @@ do -- ACT_ROUTE
  
     self:AddEndState( "Arrived" )
     self:AddEndState( "Failed" )
+    self:AddEndState( "Cancelled" )
     
-    self:SetStartState( "None" )  
+    self:SetStartState( "None" )
+    
+    self:SetRouteMode( "C" )  
   
     return self
+  end
+  
+  --- Set a Cancel Menu item.
+  -- @param #ACT_ROUTE self
+  -- @return #ACT_ROUTE
+  function ACT_ROUTE:SetMenuCancel( MenuGroup, MenuText, ParentMenu, MenuTime )
+    
+    MENU_GROUP_COMMAND:New(
+      MenuGroup,
+      MenuText,
+      ParentMenu,
+      self.MenuCancel,
+      self
+    ):SetTime(MenuTime)
+    
+    return self
+  end
+  
+  --- Set the route mode.
+  -- There are 2 route modes supported:
+  -- 
+  --   * SetRouteMode( "B" ): Route mode is Bearing and Range.
+  --   * SetRouteMode( "C" ): Route mode is LL or MGRS according coordinate system setup.
+  -- 
+  -- @param #ACT_ROUTE self
+  -- @return #ACT_ROUTE
+  function ACT_ROUTE:SetRouteMode( RouteMode )
+  
+    self.RouteMode = RouteMode
+
+    return self  
+  end
+  
+  --- Get the routing text to be displayed.
+  -- The route mode determines the text displayed.
+  -- @param #ACT_ROUTE self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable
+  -- @return #string
+  function ACT_ROUTE:GetRouteText( Controllable )
+    
+    self:E()
+    
+    local RouteText = ""
+
+    local Coordinate = nil -- Core.Point#COORDINATE
+    
+    if self.Coordinate then
+      Coordinate = self.Coordinate
+    end
+    
+    if self.Zone then
+      Coordinate = self.Zone:GetPointVec3( self.Altitude )
+      Coordinate:SetHeading( self.Heading )
+    end
+    
+
+    local CC = self:GetTask():GetMission():GetCommandCenter()
+    if CC then
+      if CC:IsModeWWII() then
+        -- Find closest reference point to the target.
+        local ShortestDistance = 0
+        local ShortestReferencePoint = nil
+        local ShortestReferenceName = ""
+        self:E( { CC.ReferencePoints } )
+        for ZoneName, Zone in pairs( CC.ReferencePoints ) do
+          self:E( { ZoneName = ZoneName } )
+          local Zone = Zone -- Core.Zone#ZONE
+          local ZoneCoord = Zone:GetCoordinate()
+          local ZoneDistance = ZoneCoord:Get2DDistance( self.Coordinate )
+          self:E( { ShortestDistance, ShortestReferenceName } )
+          if ShortestDistance == 0 or ZoneDistance < ShortestDistance then
+            ShortestDistance = ZoneDistance
+            ShortestReferencePoint = ZoneCoord
+            ShortestReferenceName = CC.ReferenceNames[ZoneName]
+          end
+        end
+        if ShortestReferencePoint then
+          RouteText = Coordinate:ToStringFromRP( ShortestReferencePoint, ShortestReferenceName, Controllable )
+        end
+      else
+        RouteText = Coordinate:ToString( Controllable )
+      end
+    end
+
+    return RouteText
+  end
+
+  
+  function ACT_ROUTE:MenuCancel()
+    self:Cancel()
   end
 
   --- Task Events
@@ -189,15 +284,15 @@ do -- ACT_ROUTE_POINT
 
 
   --- Creates a new routing state machine. 
-  -- The task will route a controllable to a PointVec2 until the controllable is within the Range.
+  -- The task will route a controllable to a Coordinate until the controllable is within the Range.
   -- @param #ACT_ROUTE_POINT self
-  -- @param Core.Point#POINT_VEC2 The PointVec2 to Target.
+  -- @param Core.Point#COORDINATE The Coordinate to Target.
   -- @param #number Range The Distance to Target.
   -- @param Core.Zone#ZONE_BASE Zone
-  function ACT_ROUTE_POINT:New( PointVec2, Range )
+  function ACT_ROUTE_POINT:New( Coordinate, Range )
     local self = BASE:Inherit( self, ACT_ROUTE:New() ) -- #ACT_ROUTE_POINT
 
-    self.PointVec2 = PointVec2
+    self.Coordinate = Coordinate
     self.Range = Range or 0
     
     self.DisplayInterval = 30
@@ -208,34 +303,38 @@ do -- ACT_ROUTE_POINT
     return self
   end
   
+  --- Creates a new routing state machine. 
+  -- The task will route a controllable to a Coordinate until the controllable is within the Range.
+  -- @param #ACT_ROUTE_POINT self
   function ACT_ROUTE_POINT:Init( FsmRoute )
   
-    self.PointVec2 = FsmRoute.PointVec2
+    self.Coordinate = FsmRoute.Coordinate
     self.Range = FsmRoute.Range or 0
     
     self.DisplayInterval = 30
     self.DisplayCount = 30
     self.DisplayMessage = true
     self.DisplayTime = 10 -- 10 seconds is the default
+    self:SetStartState("None")
   end  
 
-  --- Set PointVec2
+  --- Set Coordinate
   -- @param #ACT_ROUTE_POINT self
-  -- @param Core.Point#POINT_VEC2 PointVec2 The PointVec2 to route to.
-  function ACT_ROUTE_POINT:SetPointVec2( PointVec2 )
-    self:F2( { PointVec2 } )
-    self.PointVec2 = PointVec2
+  -- @param Core.Point#COORDINATE Coordinate The Coordinate to route to.
+  function ACT_ROUTE_POINT:SetCoordinate( Coordinate )
+    self:F2( { Coordinate } )
+    self.Coordinate = Coordinate
   end  
 
-  --- Get PointVec2
+  --- Get Coordinate
   -- @param #ACT_ROUTE_POINT self
-  -- @return Core.Point#POINT_VEC2 PointVec2 The PointVec2 to route to.
-  function ACT_ROUTE_POINT:GetPointVec2()
-    self:F2( { self.PointVec2 } )
-    return self.PointVec2
+  -- @return Core.Point#COORDINATE Coordinate The Coordinate to route to.
+  function ACT_ROUTE_POINT:GetCoordinate()
+    self:F2( { self.Coordinate } )
+    return self.Coordinate
   end  
 
-  --- Set Range around PointVec2
+  --- Set Range around Coordinate
   -- @param #ACT_ROUTE_POINT self
   -- @param #number Range The Range to consider the arrival. Default is 10000 meters.
   function ACT_ROUTE_POINT:SetRange( Range )
@@ -243,7 +342,7 @@ do -- ACT_ROUTE_POINT
     self.Range = Range or 10000
   end  
   
-  --- Get Range around PointVec2
+  --- Get Range around Coordinate
   -- @param #ACT_ROUTE_POINT self
   -- @return #number The Range to consider the arrival. Default is 10000 meters.
   function ACT_ROUTE_POINT:GetRange()
@@ -257,7 +356,7 @@ do -- ACT_ROUTE_POINT
   function ACT_ROUTE_POINT:onfuncHasArrived( ProcessUnit )
 
     if ProcessUnit:IsAlive() then
-      local Distance = self.PointVec2:Get2DDistance( ProcessUnit:GetPointVec2() )
+      local Distance = self.Coordinate:Get2DDistance( ProcessUnit:GetCoordinate() )
       
       if Distance <= self.Range then
         local RouteText = "You have arrived."
@@ -277,10 +376,9 @@ do -- ACT_ROUTE_POINT
   -- @param #string Event
   -- @param #string From
   -- @param #string To
-  function ACT_ROUTE_POINT:onenterReporting( ProcessUnit, From, Event, To )
+  function ACT_ROUTE_POINT:onafterReport( ProcessUnit, From, Event, To )
   
-    local TaskUnitPointVec2 = ProcessUnit:GetPointVec2()
-    local RouteText = "Route to " .. TaskUnitPointVec2:GetBRText( self.PointVec2 ) .. " km."
+    local RouteText = self:GetRouteText( ProcessUnit )
     self:Message( RouteText )
   end
 
@@ -329,8 +427,12 @@ do -- ACT_ROUTE_ZONE
   --- Set Zone
   -- @param #ACT_ROUTE_ZONE self
   -- @param Core.Zone#ZONE_BASE Zone The Zone object where to route to.
-  function ACT_ROUTE_ZONE:SetZone( Zone )
+  -- @param #number Altitude
+  -- @param #number Heading
+  function ACT_ROUTE_ZONE:SetZone( Zone, Altitude, Heading ) -- R2.2 Added altitude and heading
     self.Zone = Zone
+    self.Altitude = Altitude
+    self.Heading = Heading
   end  
 
   --- Get Zone
@@ -362,13 +464,10 @@ do -- ACT_ROUTE_ZONE
   -- @param #string Event
   -- @param #string From
   -- @param #string To
-  function ACT_ROUTE_ZONE:onenterReporting( ProcessUnit, From, Event, To )
+  function ACT_ROUTE_ZONE:onafterReport( ProcessUnit, From, Event, To )
+    self:E( { ProcessUnit = ProcessUnit } )
   
-    local ZoneVec2 = self.Zone:GetVec2()
-    local ZonePointVec2 = POINT_VEC2:New( ZoneVec2.x, ZoneVec2.y )
-    local TaskUnitVec2 = ProcessUnit:GetVec2()
-    local TaskUnitPointVec2 = POINT_VEC2:New( TaskUnitVec2.x, TaskUnitVec2.y )
-    local RouteText = "Route to " .. TaskUnitPointVec2:GetBRText( ZonePointVec2 ) .. " km."
+    local RouteText = self:GetRouteText( ProcessUnit )
     self:Message( RouteText )
   end
 

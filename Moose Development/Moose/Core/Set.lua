@@ -1,4 +1,4 @@
---- **Core** - SET_ classes define **collections** of objects to perform **bulk actions** and logically **group** objects.
+--- **Core** -- SET_ classes define **collections** of objects to perform **bulk actions** and logically **group** objects.
 -- 
 -- ![Banner Image](..\Presentations\SET\Dia1.JPG)
 -- 
@@ -23,12 +23,12 @@
 --   * Validate the presence of objects in the SET.
 --   * Trigger events when objects in the SET change a zone presence.
 -- 
--- ### Authors: 
+-- ====
 -- 
---   * FlightControl : Design & Programming
---   
+-- ### Author: **Sven Van de Velde (FlightControl)**
 -- ### Contributions: 
 -- 
+-- ====
 -- 
 -- @module Set
 
@@ -84,11 +84,6 @@ function SET_BASE:New( Database )
   self.TimeInterval = 0.001
 
   self.Set = {}
-
-  self.List = {}
-  self.List.__index = self.List
-  self.List = setmetatable( { Count = 0 }, self.List )
-  
   self.Index = {}
   
   self.CallScheduler = SCHEDULER:New( self )
@@ -124,26 +119,10 @@ end
 -- @param Core.Base#BASE Object
 -- @return Core.Base#BASE The added BASE Object.
 function SET_BASE:Add( ObjectName, Object )
-  self:F2( ObjectName )
+  self:F( ObjectName )
 
-  local t = { _ = Object }
-
-  if self.List.last then
-    self.List.last._next = t
-    t._prev = self.List.last
-    self.List.last = t
-  else
-    -- this is the first node
-    self.List.first = t
-    self.List.last = t
-  end
-  
-  self.List.Count = self.List.Count + 1
-  
-  self.Set[ObjectName] = t._
-  
+  self.Set[ObjectName] = Object
   table.insert( self.Index, ObjectName )
-  
 end
 
 --- Adds a @{Base#BASE} object in the @{Set#SET_BASE}, using the Object Name as the index.
@@ -165,44 +144,19 @@ end
 -- @param #SET_BASE self
 -- @param #string ObjectName
 function SET_BASE:Remove( ObjectName )
-  self:F( ObjectName )
 
-  local t = self.Set[ObjectName]
+  local Object = self.Set[ObjectName]
   
-  self:E( { ObjectName, t } )
+  self:F3( { ObjectName, Object } )
 
-  if t then  
-    if t._next then
-      if t._prev then
-        t._next._prev = t._prev
-        t._prev._next = t._next
-      else
-        -- this was the first node
-        t._next._prev = nil
-        self.List._first = t._next
-      end
-    elseif t._prev then
-      -- this was the last node
-      t._prev._next = nil
-      self.List._last = t._prev
-    else
-      -- this was the only node
-      self.List._first = nil
-      self.List._last = nil
-    end
-  
-    t._next = nil
-    t._prev = nil
-    self.List.Count = self.List.Count - 1
-    
+  if Object then  
     for Index, Key in ipairs( self.Index ) do
       if Key == ObjectName then
         table.remove( self.Index, Index )
+        self.Set[ObjectName] = nil
         break
       end
     end
-    
-    self.Set[ObjectName] = nil
     
   end
   
@@ -215,19 +169,16 @@ end
 function SET_BASE:Get( ObjectName )
   self:F( ObjectName )
 
-  local t = self.Set[ObjectName]
+  local Object = self.Set[ObjectName]
   
-  self:T3( { ObjectName, t } )
-  
-  return t
-  
+  self:T3( { ObjectName, Object } )
+  return Object
 end
 
 --- Gets the first object from the @{Set#SET_BASE} and derived classes.
 -- @param #SET_BASE self
 -- @return Core.Base#BASE
 function SET_BASE:GetFirst()
-  self:F()
 
   local ObjectName = self.Index[1]
   local FirstObject = self.Set[ObjectName]
@@ -239,7 +190,6 @@ end
 -- @param #SET_BASE self
 -- @return Core.Base#BASE
 function SET_BASE:GetLast()
-  self:F()
 
   local ObjectName = self.Index[#self.Index]
   local LastObject = self.Set[ObjectName]
@@ -251,12 +201,9 @@ end
 -- @param #SET_BASE self
 -- @return Core.Base#BASE
 function SET_BASE:GetRandom()
-  self:F()
 
   local RandomItem = self.Set[self.Index[math.random(#self.Index)]]
-
   self:T3( { RandomItem } )
-
   return RandomItem
 end
 
@@ -266,7 +213,7 @@ end
 -- @return #number Count
 function SET_BASE:Count()
 
-  return #self.Index or 0
+  return self.Index and #self.Index or 0
 end
 
 
@@ -338,6 +285,26 @@ function SET_BASE:_FilterStart()
   self:HandleEvent( EVENTS.PlayerEnterUnit, self._EventOnPlayerEnterUnit )
   self:HandleEvent( EVENTS.PlayerLeaveUnit, self._EventOnPlayerLeaveUnit )
   
+  
+  return self
+end
+
+--- Starts the filtering of the Dead events for the collection.
+-- @param #SET_BASE self
+-- @return #SET_BASE self
+function SET_BASE:FilterDeads() --R2.1 allow deads to be filtered to automatically handle deads in the collection.
+
+  self:HandleEvent( EVENTS.Dead, self._EventOnDeadOrCrash )
+  
+  return self
+end
+
+--- Starts the filtering of the Crash events for the collection.
+-- @param #SET_BASE self
+-- @return #SET_BASE self
+function SET_BASE:FilterCrashes() --R2.1 allow crashes to be filtered to automatically handle crashes in the collection.
+
+  self:HandleEvent( EVENTS.Crash, self._EventOnDeadOrCrash )
   
   return self
 end
@@ -430,7 +397,7 @@ function SET_BASE:_EventOnDeadOrCrash( Event )
 
   if Event.IniDCSUnit then
     local ObjectName, Object = self:FindInDatabase( Event )
-    if ObjectName and Object ~= nil then
+    if ObjectName then
       self:Remove( ObjectName )
     end
   end
@@ -584,6 +551,20 @@ function SET_BASE:IsIncludeObject( Object )
   return true
 end
 
+--- Gets a string with all the object names.
+-- @param #SET_BASE self
+-- @return #string A string with the names of the objects.
+function SET_BASE:GetObjectNames()
+  self:F3()
+
+  local ObjectNames = ""
+  for ObjectName, Object in pairs( self.Set ) do
+    ObjectNames = ObjectNames .. ObjectName .. ", "
+  end
+  
+  return ObjectNames
+end
+
 --- Flushes the current SET_BASE contents in the log ... (for debugging reasons).
 -- @param #SET_BASE self
 -- @return #string A string with the names of the objects.
@@ -603,7 +584,7 @@ end
 --- @type SET_GROUP
 -- @extends Core.Set#SET_BASE
 
---- # 2) SET_GROUP class, extends @{Set#SET_BASE}
+--- # SET_GROUP class, extends @{Set#SET_BASE}
 -- 
 -- Mission designers can use the @{Set#SET_GROUP} class to build sets of groups belonging to certain:
 -- 
@@ -612,18 +593,18 @@ end
 --  * Countries
 --  * Starting with certain prefix strings.
 --  
--- ## 2.1) SET_GROUP constructor
+-- ## 1. SET_GROUP constructor
 -- 
 -- Create a new SET_GROUP object with the @{#SET_GROUP.New} method:
 -- 
 --    * @{#SET_GROUP.New}: Creates a new SET_GROUP object.
 -- 
--- ## 2.2) Add or Remove GROUP(s) from SET_GROUP
+-- ## 2. Add or Remove GROUP(s) from SET_GROUP
 -- 
 -- GROUPS can be added and removed using the @{Set#SET_GROUP.AddGroupsByName} and @{Set#SET_GROUP.RemoveGroupsByName} respectively. 
 -- These methods take a single GROUP name or an array of GROUP names to be added or removed from SET_GROUP.
 -- 
--- ## 2.3) SET_GROUP filter criteria
+-- ## 3. SET_GROUP filter criteria
 -- 
 -- You can set filter criteria to define the set of groups within the SET_GROUP.
 -- Filter criteria are defined by:
@@ -632,6 +613,15 @@ end
 --    * @{#SET_GROUP.FilterCategories}: Builds the SET_GROUP with the groups belonging to the category(ies).
 --    * @{#SET_GROUP.FilterCountries}: Builds the SET_GROUP with the gruops belonging to the country(ies).
 --    * @{#SET_GROUP.FilterPrefixes}: Builds the SET_GROUP with the groups starting with the same prefix string(s).
+-- 
+-- For the Category Filter, extra methods have been added:
+-- 
+--    * @{#SET_GROUP.FilterCategoryAirplane}: Builds the SET_GROUP from airplanes.
+--    * @{#SET_GROUP.FilterCategoryHelicopter}: Builds the SET_GROUP from helicopters.
+--    * @{#SET_GROUP.FilterCategoryGround}: Builds the SET_GROUP from ground vehicles or infantry.
+--    * @{#SET_GROUP.FilterCategoryShip}: Builds the SET_GROUP from ships.
+--    * @{#SET_GROUP.FilterCategoryStructure}: Builds the SET_GROUP from structures.
+-- 
 --   
 -- Once the filter criteria have been set for the SET_GROUP, you can start filtering using:
 -- 
@@ -641,7 +631,7 @@ end
 -- 
 --    * @{#SET_GROUP.FilterZones}: Builds the SET_GROUP with the groups within a @{Zone#ZONE}.
 -- 
--- ## 2.4) SET_GROUP iterators
+-- ## 4. SET_GROUP iterators
 -- 
 -- Once the filters have been defined and the SET_GROUP has been built, you can iterate the SET_GROUP with the available iterator methods.
 -- The iterator methods will walk the SET_GROUP set, and call for each element within the set a function that you provide.
@@ -671,7 +661,7 @@ SET_GROUP = {
     Categories = {
       plane = Group.Category.AIRPLANE,
       helicopter = Group.Category.HELICOPTER,
-      ground = Group.Category.GROUND_UNIT,
+      ground = Group.Category.GROUND, -- R2.2
       ship = Group.Category.SHIP,
       structure = Group.Category.STRUCTURE,
     },
@@ -736,6 +726,31 @@ function SET_GROUP:FindGroup( GroupName )
   return GroupFound
 end
 
+--- Iterate the SET_GROUP while identifying the nearest object from a @{Point#POINT_VEC2}.
+-- @param #SET_GROUP self
+-- @param Core.Point#POINT_VEC2 PointVec2 A @{Point#POINT_VEC2} object from where to evaluate the closest object in the set.
+-- @return Wrapper.Group#GROUP The closest group.
+function SET_GROUP:FindNearestGroupFromPointVec2( PointVec2 )
+  self:F2( PointVec2 )
+  
+  local NearestGroup = nil
+  local ClosestDistance = nil
+  
+  for ObjectID, ObjectData in pairs( self.Set ) do
+    if NearestGroup == nil then
+      NearestGroup = ObjectData
+      ClosestDistance = PointVec2:DistanceFromVec2( ObjectData:GetVec2() )
+    else
+      local Distance = PointVec2:DistanceFromVec2( ObjectData:GetVec2() )
+      if Distance < ClosestDistance then
+        NearestGroup = ObjectData
+        ClosestDistance = Distance
+      end
+    end
+  end
+  
+  return NearestGroup
+end
 
 
 --- Builds a set of groups of coalitions.
@@ -774,6 +789,48 @@ function SET_GROUP:FilterCategories( Categories )
   end
   return self
 end
+
+--- Builds a set of groups out of ground category.
+-- @param #SET_GROUP self
+-- @return #SET_GROUP self
+function SET_GROUP:FilterCategoryGround()
+  self:FilterCategories( "ground" )
+  return self
+end
+
+--- Builds a set of groups out of airplane category.
+-- @param #SET_GROUP self
+-- @return #SET_GROUP self
+function SET_GROUP:FilterCategoryAirplane()
+  self:FilterCategories( "plane" )
+  return self
+end
+
+--- Builds a set of groups out of helicopter category.
+-- @param #SET_GROUP self
+-- @return #SET_GROUP self
+function SET_GROUP:FilterCategoryHelicopter()
+  self:FilterCategories( "helicopter" )
+  return self
+end
+
+--- Builds a set of groups out of ship category.
+-- @param #SET_GROUP self
+-- @return #SET_GROUP self
+function SET_GROUP:FilterCategoryShip()
+  self:FilterCategories( "ship" )
+  return self
+end
+
+--- Builds a set of groups out of structure category.
+-- @param #SET_GROUP self
+-- @return #SET_GROUP self
+function SET_GROUP:FilterCategoryStructure()
+  self:FilterCategories( "structure" )
+  return self
+end
+
+
 
 --- Builds a set of groups of defined countries.
 -- Possible current countries are those known within DCS world.
@@ -936,6 +993,185 @@ function SET_GROUP:ForEachGroupNotInZone( ZoneObject, IteratorFunction, ... )
   return self
 end
 
+--- Iterate the SET_GROUP and return true if all the @{Wrapper.Group#GROUP} are completely in the @{Core.Zone#ZONE}
+-- @param #SET_GROUP self
+-- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
+-- @return #boolean true if all the @{Wrapper.Group#GROUP} are completly in the @{Core.Zone#ZONE}, false otherwise
+-- @usage
+-- local MyZone = ZONE:New("Zone1")
+-- local MySetGroup = SET_GROUP:New()
+-- MySetGroup:AddGroupsByName({"Group1", "Group2"})
+--
+-- if MySetGroup:AllCompletelyInZone(MyZone) then
+--   MESSAGE:New("All the SET's GROUP are in zone !", 10):ToAll()
+-- else
+--   MESSAGE:New("Some or all SET's GROUP are outside zone !", 10):ToAll()
+-- end
+function SET_GROUP:AllCompletelyInZone(Zone)
+  self:F2(Zone)
+  local Set = self:GetSet()
+  for GroupID, GroupData in pairs(Set) do -- For each GROUP in SET_GROUP
+    if not GroupData:IsCompletelyInZone(Zone) then 
+      return false
+    end
+  end
+  return true
+end
+
+--- Iterate the SET_GROUP and return true if at least one of the @{Wrapper.Group#GROUP} is completely inside the @{Core.Zone#ZONE}
+-- @param #SET_GROUP self
+-- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
+-- @return #boolean true if at least one of the @{Wrapper.Group#GROUP} is completly inside the @{Core.Zone#ZONE}, false otherwise.
+-- @usage
+-- local MyZone = ZONE:New("Zone1")
+-- local MySetGroup = SET_GROUP:New()
+-- MySetGroup:AddGroupsByName({"Group1", "Group2"})
+--
+-- if MySetGroup:AnyCompletelyInZone(MyZone) then
+--   MESSAGE:New("At least one GROUP is completely in zone !", 10):ToAll()
+-- else
+--   MESSAGE:New("No GROUP is completely in zone !", 10):ToAll()
+-- end
+function SET_GROUP:AnyCompletelyInZone(Zone)
+  self:F2(Zone)
+  local Set = self:GetSet()
+  for GroupID, GroupData in pairs(Set) do -- For each GROUP in SET_GROUP
+    if GroupData:IsCompletelyInZone(Zone) then 
+      return true
+    end
+  end
+  return false
+end
+
+--- Iterate the SET_GROUP and return true if at least one @{#UNIT} of one @{GROUP} of the @{SET_GROUP} is in @{ZONE}
+-- @param #SET_GROUP self
+-- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
+-- @return #boolean true if at least one of the @{Wrapper.Group#GROUP} is partly or completly inside the @{Core.Zone#ZONE}, false otherwise.
+-- @usage
+-- local MyZone = ZONE:New("Zone1")
+-- local MySetGroup = SET_GROUP:New()
+-- MySetGroup:AddGroupsByName({"Group1", "Group2"})
+--
+-- if MySetGroup:AnyPartlyInZone(MyZone) then
+--   MESSAGE:New("At least one GROUP has at least one UNIT in zone !", 10):ToAll()
+-- else
+--   MESSAGE:New("No UNIT of any GROUP is in zone !", 10):ToAll()
+-- end
+function SET_GROUP:AnyInZone(Zone)
+  self:F2(Zone)
+  local Set = self:GetSet()
+  for GroupID, GroupData in pairs(Set) do -- For each GROUP in SET_GROUP
+    if GroupData:IsPartlyInZone(Zone) or GroupData:IsCompletelyInZone(Zone) then 
+      return true
+    end
+  end
+  return false
+end
+
+--- Iterate the SET_GROUP and return true if at least one @{GROUP} of the @{SET_GROUP} is partly in @{ZONE}.
+-- Will return false if a @{GROUP} is fully in the @{ZONE}
+-- @param #SET_GROUP self
+-- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
+-- @return #boolean true if at least one of the @{Wrapper.Group#GROUP} is partly or completly inside the @{Core.Zone#ZONE}, false otherwise.
+-- @usage
+-- local MyZone = ZONE:New("Zone1")
+-- local MySetGroup = SET_GROUP:New()
+-- MySetGroup:AddGroupsByName({"Group1", "Group2"})
+--
+-- if MySetGroup:AnyPartlyInZone(MyZone) then
+--   MESSAGE:New("At least one GROUP is partially in the zone, but none are fully in it !", 10):ToAll()
+-- else
+--   MESSAGE:New("No GROUP are in zone, or one (or more) GROUP is completely in it !", 10):ToAll()
+-- end
+function SET_GROUP:AnyPartlyInZone(Zone)
+  self:F2(Zone)
+  local IsPartlyInZone = false
+  local Set = self:GetSet()
+  for GroupID, GroupData in pairs(Set) do -- For each GROUP in SET_GROUP
+    if GroupData:IsCompletelyInZone(Zone) then
+      return false
+    elseif GroupData:IsPartlyInZone(Zone) then 
+      IsPartlyInZone = true -- at least one GROUP is partly in zone
+    end
+  end
+  
+  if IsPartlyInZone then
+    return true
+  else
+    return false
+  end
+end
+
+--- Iterate the SET_GROUP and return true if no @{GROUP} of the @{SET_GROUP} is in @{ZONE}
+-- This could also be achieved with `not SET_GROUP:AnyPartlyInZone(Zone)`, but it's easier for the 
+-- mission designer to add a dedicated method
+-- @param #SET_GROUP self
+-- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
+-- @return #boolean true if no @{Wrapper.Group#GROUP} is inside the @{Core.Zone#ZONE} in any way, false otherwise.
+-- @usage
+-- local MyZone = ZONE:New("Zone1")
+-- local MySetGroup = SET_GROUP:New()
+-- MySetGroup:AddGroupsByName({"Group1", "Group2"})
+--
+-- if MySetGroup:NoneInZone(MyZone) then
+--   MESSAGE:New("No GROUP is completely in zone !", 10):ToAll()
+-- else
+--   MESSAGE:New("No UNIT of any GROUP is in zone !", 10):ToAll()
+-- end
+function SET_GROUP:NoneInZone(Zone)
+  self:F2(Zone)
+  local Set = self:GetSet()
+  for GroupID, GroupData in pairs(Set) do -- For each GROUP in SET_GROUP
+    if not GroupData:IsNotInZone(Zone) then -- If the GROUP is in Zone in any way
+      return false
+    end
+  end
+  return true
+end
+
+--- Iterate the SET_GROUP and count how many GROUPs are completely in the Zone
+-- That could easily be done with SET_GROUP:ForEachGroupCompletelyInZone(), but this function
+-- provides an easy to use shortcut...
+-- @param #SET_GROUP self
+-- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
+-- @return #number the number of GROUPs completely in the Zone
+-- @usage
+-- local MyZone = ZONE:New("Zone1")
+-- local MySetGroup = SET_GROUP:New()
+-- MySetGroup:AddGroupsByName({"Group1", "Group2"})
+--
+-- MESSAGE:New("There are " .. MySetGroup:CountInZone(MyZone) .. " GROUPs in the Zone !", 10):ToAll()
+function SET_GROUP:CountInZone(Zone)
+  self:F2(Zone)
+  local Count = 0
+  local Set = self:GetSet()
+  for GroupID, GroupData in pairs(Set) do -- For each GROUP in SET_GROUP
+    if GroupData:IsCompletelyInZone(Zone) then 
+      Count = Count + 1
+    end
+  end
+  return Count
+end
+
+--- Iterate the SET_GROUP and count how many UNITs are completely in the Zone
+-- @param #SET_GROUP self
+-- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
+-- @return #number the number of GROUPs completely in the Zone
+-- @usage
+-- local MyZone = ZONE:New("Zone1")
+-- local MySetGroup = SET_GROUP:New()
+-- MySetGroup:AddGroupsByName({"Group1", "Group2"})
+--
+-- MESSAGE:New("There are " .. MySetGroup:CountUnitInZone(MyZone) .. " UNITs in the Zone !", 10):ToAll()
+function SET_GROUP:CountUnitInZone(Zone)
+  self:F2(Zone)
+  local Count = 0
+  local Set = self:GetSet()
+  for GroupID, GroupData in pairs(Set) do -- For each GROUP in SET_GROUP
+    Count = Count + GroupData:CountInZone(Zone)
+  end
+  return Count
+end
 
 ----- Iterate the SET_GROUP and call an interator function for each **alive** player, providing the Group of the player and optional parameters.
 ---- @param #SET_GROUP self
@@ -1008,7 +1244,7 @@ function SET_GROUP:IsIncludeObject( MooseGroup )
     local MooseGroupPrefix = false
     for GroupPrefixId, GroupPrefix in pairs( self.Filter.GroupPrefixes ) do
       self:T3( { "Prefix:", string.find( MooseGroup:GetName(), GroupPrefix, 1 ), GroupPrefix } )
-      if string.find( MooseGroup:GetName(), GroupPrefix, 1 ) then
+      if string.find( MooseGroup:GetName(), GroupPrefix:gsub ("-", "%%-"), 1 ) then
         MooseGroupPrefix = true
       end
     end
@@ -1113,6 +1349,11 @@ SET_UNIT = {
 }
 
 
+--- Get the first unit from the set.
+-- @function [parent=#SET_UNIT] GetFirst
+-- @param #SET_UNIT self
+-- @return Wrapper.Unit#UNIT The UNIT object.
+
 --- Creates a new SET_UNIT object, building a set of units belonging to a coalitions, categories, countries, types or with defined prefix names.
 -- @param #SET_UNIT self
 -- @return #SET_UNIT
@@ -1122,7 +1363,7 @@ SET_UNIT = {
 function SET_UNIT:New()
 
   -- Inherits from BASE
-  local self = BASE:Inherit( self, SET_BASE:New( _DATABASE.UNITS ) )
+  local self = BASE:Inherit( self, SET_BASE:New( _DATABASE.UNITS ) ) -- Core.Set#SET_UNIT
 
   return self
 end
@@ -1344,7 +1585,7 @@ end
 -- @return #string The name of the UNIT
 -- @return #table The UNIT
 function SET_UNIT:FindInDatabase( Event )
-  self:E( { Event.IniDCSUnitName, self.Set[Event.IniDCSUnitName], Event } )
+  self:F2( { Event.IniDCSUnitName, self.Set[Event.IniDCSUnitName], Event } )
 
 
   return Event.IniDCSUnitName, self.Set[Event.IniDCSUnitName]
@@ -1362,6 +1603,54 @@ function SET_UNIT:ForEachUnit( IteratorFunction, ... )
   return self
 end
 
+--- Iterate the SET_UNIT **sorted *per Threat Level** and call an interator function for each **alive** UNIT, providing the UNIT and optional parameters.
+-- 
+-- @param #SET_UNIT self
+-- @param #number FromThreatLevel The TreatLevel to start the evaluation **From** (this must be a value between 0 and 10).
+-- @param #number ToThreatLevel The TreatLevel to stop the evaluation **To** (this must be a value between 0 and 10).
+-- @param #function IteratorFunction The function that will be called when there is an alive UNIT in the SET_UNIT. The function needs to accept a UNIT parameter.
+-- @return #SET_UNIT self
+-- @usage
+-- 
+--     UnitSet:ForEachUnitPerThreatLevel( 10, 0,
+--       -- @param Wrapper.Unit#UNIT UnitObject The UNIT object in the UnitSet, that will be passed to the local function for evaluation.
+--       function( UnitObject )
+--         .. logic ..
+--       end
+--     )
+-- 
+function SET_UNIT:ForEachUnitPerThreatLevel( FromThreatLevel, ToThreatLevel, IteratorFunction, ... ) --R2.1 Threat Level implementation
+  self:F2( arg )
+  
+  local ThreatLevelSet = {}
+  
+  if self:Count() ~= 0 then
+    for UnitName, UnitObject in pairs( self.Set ) do
+      local Unit = UnitObject -- Wrapper.Unit#UNIT
+    
+      local ThreatLevel = Unit:GetThreatLevel()
+      ThreatLevelSet[ThreatLevel] = ThreatLevelSet[ThreatLevel] or {}
+      ThreatLevelSet[ThreatLevel].Set = ThreatLevelSet[ThreatLevel].Set or {}
+      ThreatLevelSet[ThreatLevel].Set[UnitName] = UnitObject
+      self:E( { ThreatLevel = ThreatLevel, ThreatLevelSet = ThreatLevelSet[ThreatLevel].Set } )
+    end
+    
+    local ThreatLevelIncrement = FromThreatLevel <= ToThreatLevel and 1 or -1
+    
+    for ThreatLevel = FromThreatLevel, ToThreatLevel, ThreatLevelIncrement do
+      self:E( { ThreatLevel = ThreatLevel } )
+      local ThreatLevelItem = ThreatLevelSet[ThreatLevel]
+      if ThreatLevelItem then
+        self:ForEach( IteratorFunction, arg, ThreatLevelItem.Set )
+      end
+    end
+  end
+  
+  return self
+end
+
+
+
 --- Iterate the SET_UNIT and call an iterator function for each **alive** UNIT presence completely in a @{Zone}, providing the UNIT and optional parameters to the called function.
 -- @param #SET_UNIT self
 -- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
@@ -1374,7 +1663,7 @@ function SET_UNIT:ForEachUnitCompletelyInZone( ZoneObject, IteratorFunction, ...
     --- @param Core.Zone#ZONE_BASE ZoneObject
     -- @param Wrapper.Unit#UNIT UnitObject
     function( ZoneObject, UnitObject )
-      if UnitObject:IsCompletelyInZone( ZoneObject ) then
+      if UnitObject:IsInZone( ZoneObject ) then
         return true
       else
         return false
@@ -2391,3 +2680,346 @@ function SET_AIRBASE:IsIncludeObject( MAirbase )
   self:T2( MAirbaseInclude )
   return MAirbaseInclude
 end
+
+--- @type SET_CARGO
+-- @extends Core.Set#SET_BASE
+
+--- # (R2.1) SET_CARGO class, extends @{Set#SET_BASE}
+-- 
+-- Mission designers can use the @{Set#SET_CARGO} class to build sets of cargos optionally belonging to certain:
+-- 
+--  * Coalitions
+--  * Types
+--  * Name or Prefix
+--  
+-- ## SET_CARGO constructor
+-- 
+-- Create a new SET_CARGO object with the @{#SET_CARGO.New} method:
+-- 
+--    * @{#SET_CARGO.New}: Creates a new SET_CARGO object.
+--   
+-- ## Add or Remove CARGOs from SET_CARGO 
+-- 
+-- CARGOs can be added and removed using the @{Set#SET_CARGO.AddCargosByName} and @{Set#SET_CARGO.RemoveCargosByName} respectively. 
+-- These methods take a single CARGO name or an array of CARGO names to be added or removed from SET_CARGO.
+-- 
+-- ## SET_CARGO filter criteria 
+-- 
+-- You can set filter criteria to automatically maintain the SET_CARGO contents.
+-- Filter criteria are defined by:
+-- 
+--    * @{#SET_CARGO.FilterCoalitions}: Builds the SET_CARGO with the cargos belonging to the coalition(s).
+--    * @{#SET_CARGO.FilterPrefixes}: Builds the SET_CARGO with the cargos containing the prefix string(s).
+--    * @{#SET_CARGO.FilterTypes}: Builds the SET_CARGO with the cargos belonging to the cargo type(s).
+--    * @{#SET_CARGO.FilterCountries}: Builds the SET_CARGO with the cargos belonging to the country(ies).
+--   
+-- Once the filter criteria have been set for the SET_CARGO, you can start filtering using:
+-- 
+--   * @{#SET_CARGO.FilterStart}: Starts the filtering of the cargos within the SET_CARGO.
+-- 
+-- ## SET_CARGO iterators
+-- 
+-- Once the filters have been defined and the SET_CARGO has been built, you can iterate the SET_CARGO with the available iterator methods.
+-- The iterator methods will walk the SET_CARGO set, and call for each cargo within the set a function that you provide.
+-- The following iterator methods are currently available within the SET_CARGO:
+-- 
+--   * @{#SET_CARGO.ForEachCargo}: Calls a function for each cargo it finds within the SET_CARGO.
+-- 
+-- @field #SET_CARGO SET_CARGO
+-- 
+SET_CARGO = {
+  ClassName = "SET_CARGO",
+  Cargos = {},
+  Filter = {
+    Coalitions = nil,
+    Types = nil,
+    Countries = nil,
+    ClientPrefixes = nil,
+  },
+  FilterMeta = {
+    Coalitions = {
+      red = coalition.side.RED,
+      blue = coalition.side.BLUE,
+      neutral = coalition.side.NEUTRAL,
+    },
+  },
+}
+
+
+--- (R2.1) Creates a new SET_CARGO object, building a set of cargos belonging to a coalitions and categories.
+-- @param #SET_CARGO self
+-- @return #SET_CARGO
+-- @usage
+-- -- Define a new SET_CARGO Object. The DatabaseSet will contain a reference to all Cargos.
+-- DatabaseSet = SET_CARGO:New()
+function SET_CARGO:New() --R2.1
+  -- Inherits from BASE
+  local self = BASE:Inherit( self, SET_BASE:New( _DATABASE.CARGOS ) ) -- #SET_CARGO
+
+  return self
+end
+
+--- (R2.1) Add CARGOs to SET_CARGO.
+-- @param Core.Set#SET_CARGO self
+-- @param #string AddCargoNames A single name or an array of CARGO names.
+-- @return self
+function SET_CARGO:AddCargosByName( AddCargoNames ) --R2.1
+
+  local AddCargoNamesArray = ( type( AddCargoNames ) == "table" ) and AddCargoNames or { AddCargoNames }
+  
+  for AddCargoID, AddCargoName in pairs( AddCargoNamesArray ) do
+    self:Add( AddCargoName, CARGO:FindByName( AddCargoName ) )
+  end
+    
+  return self
+end
+
+--- (R2.1) Remove CARGOs from SET_CARGO.
+-- @param Core.Set#SET_CARGO self
+-- @param Wrapper.Cargo#CARGO RemoveCargoNames A single name or an array of CARGO names.
+-- @return self
+function SET_CARGO:RemoveCargosByName( RemoveCargoNames ) --R2.1
+
+  local RemoveCargoNamesArray = ( type( RemoveCargoNames ) == "table" ) and RemoveCargoNames or { RemoveCargoNames }
+  
+  for RemoveCargoID, RemoveCargoName in pairs( RemoveCargoNamesArray ) do
+    self:Remove( RemoveCargoName.CargoName )
+  end
+    
+  return self
+end
+
+
+--- (R2.1) Finds a Cargo based on the Cargo Name.
+-- @param #SET_CARGO self
+-- @param #string CargoName
+-- @return Wrapper.Cargo#CARGO The found Cargo.
+function SET_CARGO:FindCargo( CargoName ) --R2.1
+
+  local CargoFound = self.Set[CargoName]
+  return CargoFound
+end
+
+
+
+--- (R2.1) Builds a set of cargos of coalitions.
+-- Possible current coalitions are red, blue and neutral.
+-- @param #SET_CARGO self
+-- @param #string Coalitions Can take the following values: "red", "blue", "neutral".
+-- @return #SET_CARGO self
+function SET_CARGO:FilterCoalitions( Coalitions ) --R2.1
+  if not self.Filter.Coalitions then
+    self.Filter.Coalitions = {}
+  end
+  if type( Coalitions ) ~= "table" then
+    Coalitions = { Coalitions }
+  end
+  for CoalitionID, Coalition in pairs( Coalitions ) do
+    self.Filter.Coalitions[Coalition] = Coalition
+  end
+  return self
+end
+
+--- (R2.1) Builds a set of cargos of defined cargo types.
+-- Possible current types are those types known within DCS world.
+-- @param #SET_CARGO self
+-- @param #string Types Can take those type strings known within DCS world.
+-- @return #SET_CARGO self
+function SET_CARGO:FilterTypes( Types ) --R2.1
+  if not self.Filter.Types then
+    self.Filter.Types = {}
+  end
+  if type( Types ) ~= "table" then
+    Types = { Types }
+  end
+  for TypeID, Type in pairs( Types ) do
+    self.Filter.Types[Type] = Type
+  end
+  return self
+end
+
+
+--- (R2.1) Builds a set of cargos of defined countries.
+-- Possible current countries are those known within DCS world.
+-- @param #SET_CARGO self
+-- @param #string Countries Can take those country strings known within DCS world.
+-- @return #SET_CARGO self
+function SET_CARGO:FilterCountries( Countries ) --R2.1
+  if not self.Filter.Countries then
+    self.Filter.Countries = {}
+  end
+  if type( Countries ) ~= "table" then
+    Countries = { Countries }
+  end
+  for CountryID, Country in pairs( Countries ) do
+    self.Filter.Countries[Country] = Country
+  end
+  return self
+end
+
+
+--- (R2.1) Builds a set of cargos of defined cargo prefixes.
+-- All the cargos starting with the given prefixes will be included within the set.
+-- @param #SET_CARGO self
+-- @param #string Prefixes The prefix of which the cargo name starts with.
+-- @return #SET_CARGO self
+function SET_CARGO:FilterPrefixes( Prefixes ) --R2.1
+  if not self.Filter.CargoPrefixes then
+    self.Filter.CargoPrefixes = {}
+  end
+  if type( Prefixes ) ~= "table" then
+    Prefixes = { Prefixes }
+  end
+  for PrefixID, Prefix in pairs( Prefixes ) do
+    self.Filter.CargoPrefixes[Prefix] = Prefix
+  end
+  return self
+end
+
+
+
+--- (R2.1) Starts the filtering.
+-- @param #SET_CARGO self
+-- @return #SET_CARGO self
+function SET_CARGO:FilterStart() --R2.1
+
+  if _DATABASE then
+    self:_FilterStart()
+  end
+
+  self:HandleEvent( EVENTS.NewCargo )
+  self:HandleEvent( EVENTS.DeleteCargo )
+  
+  return self
+end
+
+
+--- (R2.1) Handles the Database to check on an event (birth) that the Object was added in the Database.
+-- This is required, because sometimes the _DATABASE birth event gets called later than the SET_BASE birth event!
+-- @param #SET_CARGO self
+-- @param Core.Event#EVENTDATA Event
+-- @return #string The name of the CARGO
+-- @return #table The CARGO
+function SET_CARGO:AddInDatabase( Event ) --R2.1
+  self:F3( { Event } )
+
+  return Event.IniDCSUnitName, self.Database[Event.IniDCSUnitName]
+end
+
+--- (R2.1) Handles the Database to check on any event that Object exists in the Database.
+-- This is required, because sometimes the _DATABASE event gets called later than the SET_BASE event or vise versa!
+-- @param #SET_CARGO self
+-- @param Core.Event#EVENTDATA Event
+-- @return #string The name of the CARGO
+-- @return #table The CARGO
+function SET_CARGO:FindInDatabase( Event ) --R2.1
+  self:F3( { Event } )
+
+  return Event.IniDCSUnitName, self.Database[Event.IniDCSUnitName]
+end
+
+--- (R2.1) Iterate the SET_CARGO and call an interator function for each CARGO, providing the CARGO and optional parameters.
+-- @param #SET_CARGO self
+-- @param #function IteratorFunction The function that will be called when there is an alive CARGO in the SET_CARGO. The function needs to accept a CARGO parameter.
+-- @return #SET_CARGO self
+function SET_CARGO:ForEachCargo( IteratorFunction, ... ) --R2.1
+  self:F2( arg )
+  
+  self:ForEach( IteratorFunction, arg, self.Set )
+
+  return self
+end
+
+--- (R2.1) Iterate the SET_CARGO while identifying the nearest @{Cargo#CARGO} from a @{Point#POINT_VEC2}.
+-- @param #SET_CARGO self
+-- @param Core.Point#POINT_VEC2 PointVec2 A @{Point#POINT_VEC2} object from where to evaluate the closest @{Cargo#CARGO}.
+-- @return Wrapper.Cargo#CARGO The closest @{Cargo#CARGO}.
+function SET_CARGO:FindNearestCargoFromPointVec2( PointVec2 ) --R2.1
+  self:F2( PointVec2 )
+  
+  local NearestCargo = self:FindNearestObjectFromPointVec2( PointVec2 )
+  return NearestCargo
+end
+
+
+
+--- (R2.1) 
+-- @param #SET_CARGO self
+-- @param AI.AI_Cargo#AI_CARGO MCargo
+-- @return #SET_CARGO self
+function SET_CARGO:IsIncludeObject( MCargo ) --R2.1
+  self:F2( MCargo )
+
+  local MCargoInclude = true
+
+  if MCargo then
+    local MCargoName = MCargo:GetName()
+  
+    if self.Filter.Coalitions then
+      local MCargoCoalition = false
+      for CoalitionID, CoalitionName in pairs( self.Filter.Coalitions ) do
+        local CargoCoalitionID = MCargo:GetCoalition()
+        self:T3( { "Coalition:", CargoCoalitionID, self.FilterMeta.Coalitions[CoalitionName], CoalitionName } )
+        if self.FilterMeta.Coalitions[CoalitionName] and self.FilterMeta.Coalitions[CoalitionName] == CargoCoalitionID then
+          MCargoCoalition = true
+        end
+      end
+      self:T( { "Evaluated Coalition", MCargoCoalition } )
+      MCargoInclude = MCargoInclude and MCargoCoalition
+    end
+
+    if self.Filter.Types then
+      local MCargoType = false
+      for TypeID, TypeName in pairs( self.Filter.Types ) do
+        self:T3( { "Type:", MCargo:GetType(), TypeName } )
+        if TypeName == MCargo:GetType() then
+          MCargoType = true
+        end
+      end
+      self:T( { "Evaluated Type", MCargoType } )
+      MCargoInclude = MCargoInclude and MCargoType
+    end
+    
+    if self.Filter.CargoPrefixes then
+      local MCargoPrefix = false
+      for CargoPrefixId, CargoPrefix in pairs( self.Filter.CargoPrefixes ) do
+        self:T3( { "Prefix:", string.find( MCargo.Name, CargoPrefix, 1 ), CargoPrefix } )
+        if string.find( MCargo.Name, CargoPrefix, 1 ) then
+          MCargoPrefix = true
+        end
+      end
+      self:T( { "Evaluated Prefix", MCargoPrefix } )
+      MCargoInclude = MCargoInclude and MCargoPrefix
+    end
+  end
+    
+  self:T2( MCargoInclude )
+  return MCargoInclude
+end
+
+--- (R2.1) Handles the OnEventNewCargo event for the Set.
+-- @param #SET_CARGO self
+-- @param Core.Event#EVENTDATA EventData
+function SET_CARGO:OnEventNewCargo( EventData ) --R2.1
+
+  if EventData.Cargo then
+    if EventData.Cargo and self:IsIncludeObject( EventData.Cargo ) then
+      self:Add( EventData.Cargo.Name , EventData.Cargo  )
+    end
+  end
+end
+
+--- (R2.1) Handles the OnDead or OnCrash event for alive units set.
+-- @param #SET_CARGO self
+-- @param Core.Event#EVENTDATA EventData
+function SET_CARGO:OnEventDeleteCargo( EventData ) --R2.1
+  self:F3( { EventData } )
+
+  if EventData.Cargo then
+    local Cargo = _DATABASE:FindCargo( EventData.Cargo.Name )
+    if Cargo and Cargo.Name then
+      self:Remove( Cargo.Name )
+    end
+  end
+end
+

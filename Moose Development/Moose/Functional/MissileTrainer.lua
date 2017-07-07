@@ -1,4 +1,4 @@
---- This module contains the MISSILETRAINER class.
+--- **Functional** -- MISSILETRAINER helps you to train missile avoidance.
 -- 
 -- ===
 --
@@ -442,7 +442,7 @@ function MISSILETRAINER._MenuMessages( MenuParameters )
 
   if MenuParameters.Distance ~= nil then
     self.Distance = MenuParameters.Distance
-    MESSAGE:New( "Hit detection distance set to " .. self.Distance .. " meters", 15, "Menu" ):ToAll()
+    MESSAGE:New( "Hit detection distance set to " .. self.Distance * 1000 .. " meters", 15, "Menu" ):ToAll()
   end
 
 end
@@ -570,72 +570,76 @@ function MISSILETRAINER:_TrackMissiles()
   for ClientDataID, ClientData in pairs( self.TrackingMissiles ) do
 
     local Client = ClientData.Client
-    self:T2( { Client:GetName() } )
+    
+    if Client and Client:IsAlive() then
 
-    for MissileDataID, MissileData in pairs( ClientData.MissileData ) do
-      self:T3( MissileDataID )
-
-      local TrainerSourceUnit = MissileData.TrainerSourceUnit
-      local TrainerWeapon = MissileData.TrainerWeapon
-      local TrainerTargetUnit = MissileData.TrainerTargetUnit
-      local TrainerWeaponTypeName = MissileData.TrainerWeaponTypeName
-      local TrainerWeaponLaunched = MissileData.TrainerWeaponLaunched
+      for MissileDataID, MissileData in pairs( ClientData.MissileData ) do
+        self:T3( MissileDataID )
   
-      if Client and Client:IsAlive() and TrainerSourceUnit and TrainerSourceUnit:IsAlive() and TrainerWeapon and TrainerWeapon:isExist() and TrainerTargetUnit and TrainerTargetUnit:IsAlive() then
-        local PositionMissile = TrainerWeapon:getPosition().p
-        local TargetVec3 = Client:GetVec3()
-  
-        local Distance = ( ( PositionMissile.x - TargetVec3.x )^2 +
-          ( PositionMissile.y - TargetVec3.y )^2 +
-          ( PositionMissile.z - TargetVec3.z )^2
-          ) ^ 0.5 / 1000
-  
-        if Distance <= self.Distance then
-          -- Hit alert
-          TrainerWeapon:destroy()
-          if self.MessagesOnOff == true and self.AlertsHitsOnOff == true then
-  
-            self:T( "killed" )
-  
-            local Message = MESSAGE:New(
-              string.format( "%s launched by %s killed %s",
-                TrainerWeapon:getTypeName(),
-                TrainerSourceUnit:GetTypeName(),
-                TrainerTargetUnit:GetPlayerName()
-              ), 15, "Hit Alert" )
-  
-            if self.AlertsToAll == true then
-              Message:ToAll()
-            else
-              Message:ToClient( Client )
+        local TrainerSourceUnit = MissileData.TrainerSourceUnit
+        local TrainerWeapon = MissileData.TrainerWeapon
+        local TrainerTargetUnit = MissileData.TrainerTargetUnit
+        local TrainerWeaponTypeName = MissileData.TrainerWeaponTypeName
+        local TrainerWeaponLaunched = MissileData.TrainerWeaponLaunched
+    
+        if Client and Client:IsAlive() and TrainerSourceUnit and TrainerSourceUnit:IsAlive() and TrainerWeapon and TrainerWeapon:isExist() and TrainerTargetUnit and TrainerTargetUnit:IsAlive() then
+          local PositionMissile = TrainerWeapon:getPosition().p
+          local TargetVec3 = Client:GetVec3()
+    
+          local Distance = ( ( PositionMissile.x - TargetVec3.x )^2 +
+            ( PositionMissile.y - TargetVec3.y )^2 +
+            ( PositionMissile.z - TargetVec3.z )^2
+            ) ^ 0.5 / 1000
+    
+          if Distance <= self.Distance then
+            -- Hit alert
+            TrainerWeapon:destroy()
+            if self.MessagesOnOff == true and self.AlertsHitsOnOff == true then
+    
+              self:T( "killed" )
+    
+              local Message = MESSAGE:New(
+                string.format( "%s launched by %s killed %s",
+                  TrainerWeapon:getTypeName(),
+                  TrainerSourceUnit:GetTypeName(),
+                  TrainerTargetUnit:GetPlayerName()
+                ), 15, "Hit Alert" )
+    
+              if self.AlertsToAll == true then
+                Message:ToAll()
+              else
+                Message:ToClient( Client )
+              end
+    
+              MissileData = nil
+              table.remove( ClientData.MissileData, MissileDataID )
+              self:T(ClientData.MissileData)
             end
-  
+          end
+        else
+          if not ( TrainerWeapon and TrainerWeapon:isExist() ) then
+            if self.MessagesOnOff == true and self.AlertsLaunchesOnOff == true then
+              -- Weapon does not exist anymore. Delete from Table
+              local Message = MESSAGE:New(
+                string.format( "%s launched by %s self destructed!",
+                  TrainerWeaponTypeName,
+                  TrainerSourceUnit:GetTypeName()
+                ), 5, "Tracking" )
+    
+              if self.AlertsToAll == true then
+                Message:ToAll()
+              else
+                Message:ToClient( Client )
+              end
+            end
             MissileData = nil
             table.remove( ClientData.MissileData, MissileDataID )
-            self:T(ClientData.MissileData)
+            self:T( ClientData.MissileData )
           end
-        end
-      else
-        if not ( TrainerWeapon and TrainerWeapon:isExist() ) then
-          if self.MessagesOnOff == true and self.AlertsLaunchesOnOff == true then
-            -- Weapon does not exist anymore. Delete from Table
-            local Message = MESSAGE:New(
-              string.format( "%s launched by %s self destructed!",
-                TrainerWeaponTypeName,
-                TrainerSourceUnit:GetTypeName()
-              ), 5, "Tracking" )
-  
-            if self.AlertsToAll == true then
-              Message:ToAll()
-            else
-              Message:ToClient( Client )
-            end
-          end
-          MissileData = nil
-          table.remove( ClientData.MissileData, MissileDataID )
-          self:T( ClientData.MissileData )
         end
       end
+    else
+      self.TrackingMissiles[ClientDataID] = nil
     end
   end
 
@@ -651,7 +655,7 @@ function MISSILETRAINER:_TrackMissiles()
     for ClientDataID, ClientData in pairs( self.TrackingMissiles ) do
   
       local Client = ClientData.Client
-      self:T2( { Client:GetName() } )
+      --self:T2( { Client:GetName() } )
   
   
       ClientData.MessageToClient = ""
@@ -661,7 +665,7 @@ function MISSILETRAINER:_TrackMissiles()
       for TrackingDataID, TrackingData in pairs( self.TrackingMissiles ) do
   
         for MissileDataID, MissileData in pairs( TrackingData.MissileData ) do
-          self:T3( MissileDataID )
+          --self:T3( MissileDataID )
   
           local TrainerSourceUnit = MissileData.TrainerSourceUnit
           local TrainerWeapon = MissileData.TrainerWeapon

@@ -17,9 +17,16 @@
 				<a href="index.html">index</a>
 			</li></ul>
 		<ul>
+					<li><a href="AI_A2A.html">AI_A2A</a></li>
+					<li><a href="AI_A2A_Cap.html">AI_A2A_Cap</a></li>
+					<li><a href="AI_A2A_Dispatcher.html">AI_A2A_Dispatcher</a></li>
+					<li><a href="AI_A2A_GCI.html">AI_A2A_GCI</a></li>
+					<li><a href="AI_A2A_Patrol.html">AI_A2A_Patrol</a></li>
+					<li><a href="AI_Bai.html">AI_Bai</a></li>
 					<li><a href="AI_Balancer.html">AI_Balancer</a></li>
 					<li><a href="AI_Cap.html">AI_Cap</a></li>
 					<li><a href="AI_Cas.html">AI_Cas</a></li>
+					<li><a href="AI_Formation.html">AI_Formation</a></li>
 					<li><a href="AI_Patrol.html">AI_Patrol</a></li>
 					<li><a href="Account.html">Account</a></li>
 					<li><a href="Airbase.html">Airbase</a></li>
@@ -31,7 +38,23 @@
 					<li><a href="Client.html">Client</a></li>
 					<li><a href="CommandCenter.html">CommandCenter</a></li>
 					<li><a href="Controllable.html">Controllable</a></li>
+					<li><a href="DCSAirbase.html">DCSAirbase</a></li>
+					<li><a href="DCSCoalitionObject.html">DCSCoalitionObject</a></li>
+					<li><a href="DCSCommand.html">DCSCommand</a></li>
+					<li><a href="DCSController.html">DCSController</a></li>
+					<li><a href="DCSGroup.html">DCSGroup</a></li>
+					<li><a href="DCSObject.html">DCSObject</a></li>
+					<li><a href="DCSTask.html">DCSTask</a></li>
+					<li><a href="DCSTypes.html">DCSTypes</a></li>
+					<li><a href="DCSUnit.html">DCSUnit</a></li>
+					<li><a href="DCSVec3.html">DCSVec3</a></li>
+					<li><a href="DCSWorld.html">DCSWorld</a></li>
+					<li><a href="DCSZone.html">DCSZone</a></li>
+					<li><a href="DCScountry.html">DCScountry</a></li>
+					<li><a href="DCStimer.html">DCStimer</a></li>
+					<li><a href="DCStrigger.html">DCStrigger</a></li>
 					<li><a href="Database.html">Database</a></li>
+					<li><a href="Designate.html">Designate</a></li>
 					<li><a href="Detection.html">Detection</a></li>
 					<li><a href="DetectionManager.html">DetectionManager</a></li>
 					<li><a href="Escort.html">Escort</a></li>
@@ -57,23 +80,32 @@
 					<li><a href="Scoring.html">Scoring</a></li>
 					<li><a href="Sead.html">Sead</a></li>
 					<li><a href="Set.html">Set</a></li>
+					<li><a href="Settings.html">Settings</a></li>
 					<li><a href="Smoke.html">Smoke</a></li>
 					<li><a href="Spawn.html">Spawn</a></li>
+					<li><a href="SpawnStatic.html">SpawnStatic</a></li>
+					<li><a href="Spot.html">Spot</a></li>
 					<li><a href="Static.html">Static</a></li>
+					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="Task.html">Task</a></li>
+					<li><a href="Task_A2A.html">Task_A2A</a></li>
+					<li><a href="Task_A2A_Dispatcher.html">Task_A2A_Dispatcher</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
 					<li><a href="Task_A2G_Dispatcher.html">Task_A2G_Dispatcher</a></li>
+					<li><a href="Task_Cargo.html">Task_Cargo</a></li>
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
 					<li><a href="Unit.html">Unit</a></li>
 					<li><a href="Utils.html">Utils</a></li>
 					<li><a href="Zone.html">Zone</a></li>
+					<li><a href="env.html">env</a></li>
+					<li><a href="land.html">land</a></li>
 					<li><a href="routines.html">routines</a></li>
 		</ul>
 	</div>
 	<div id="content">
    <h1>Module <code>Event</code></h1>
    
-<p><strong>Core</strong> - EVENT models DCS <strong>event dispatching</strong> using a <strong>publish-subscribe</strong> model.</p>
+<p><strong>Core</strong> -- EVENT models DCS <strong>event dispatching</strong> using a <strong>publish-subscribe</strong> model.</p>
 
    
 
@@ -244,36 +276,10 @@ Example code snippet:</p>
 
 <hr/>
 
-<h1><strong>API CHANGE HISTORY</strong></h1>
-
-<p>The underlying change log documents the API changes. Please read this carefully. The following notation is used:</p>
-
-<ul>
-    <li><strong>Added</strong> parts are expressed in bold type face.</li>
-    <li><em>Removed</em> parts are expressed in italic type face.</li>
-</ul>
-
-<p>YYYY-MM-DD: CLASS:<strong>NewFunction</strong>( Params ) replaces CLASS:<em>OldFunction</em>( Params )
-YYYY-MM-DD: CLASS:<strong>NewFunction( Params )</strong> added</p>
-
-<p>Hereby the change log:</p>
-
-<ul>
-    <li><p>2017-03-07: Added the correct event dispatching in case the event is subscribed by a GROUP.</p></li>
-    <li><p>2017-02-07: Did a complete revision of the Event Handing API and underlying mechanisms.</p></li>
-</ul>
-
-<hr/>
-
-<h1><strong>AUTHORS and CONTRIBUTIONS</strong></h1>
-
+<h3>Author: <strong>Sven Van de Velde (FlightControl)</strong></h3>
 <h3>Contributions:</h3>
 
-<h3>Authors:</h3>
-
-<ul>
-    <li><a href="https://forums.eagle.ru/member.php?u=89536"><strong>FlightControl</strong></a>: Design &amp; Programming &amp; documentation.</li>
-</ul>
+<hr/>
 
 
 	<h2>Global(s)</h2>
@@ -312,13 +318,31 @@ YYYY-MM-DD: CLASS:<strong>NewFunction( Params )</strong> added</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(EVENT).EventText">EVENT:EventText(EventID)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(EVENT).CreateEventDeleteCargo">EVENT:CreateEventDeleteCargo(Cargo)</a></td>
+		<td class="summary">
+<p>Creation of a Cargo Deletion Event.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(EVENT).CreateEventNewCargo">EVENT:CreateEventNewCargo(Cargo)</a></td>
+		<td class="summary">
+<p>Creation of a New Cargo Event.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(EVENT).CreateEventPlayerEnterUnit">EVENT:CreateEventPlayerEnterUnit(PlayerUnit)</a></td>
+		<td class="summary">
+<p>Creation of a S<em>EVENT</em>PLAYER<em>ENTER</em>UNIT Event.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(EVENT).Events">EVENT.Events</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(EVENT).Events">EVENT.Events</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(EVENT).EventsDead">EVENT.EventsDead</a></td>
 		<td class="summary">
 
 </td>
@@ -398,7 +422,7 @@ YYYY-MM-DD: CLASS:<strong>NewFunction( Params )</strong> added</p>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(EVENT).Remove">EVENT:Remove(EventClass, EventID)</a></td>
 		<td class="summary">
-<p>Removes an Events entry</p>
+<p>Removes a subscription</p>
 </td>
 		</tr>
 		<tr>
@@ -408,15 +432,9 @@ YYYY-MM-DD: CLASS:<strong>NewFunction( Params )</strong> added</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(EVENT).RemoveForGroup">EVENT:RemoveForGroup(GroupName, EventClass, EventID)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(EVENT).Reset">EVENT:Reset(EventClass, EventID, EventObject)</a></td>
 		<td class="summary">
-<p>Removes an Events entry for a GROUP.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(EVENT).RemoveForUnit">EVENT:RemoveForUnit(UnitName, EventClass, EventID)</a></td>
-		<td class="summary">
-<p>Removes an Events entry for a UNIT.</p>
+<p>Resets subscriptions</p>
 </td>
 		</tr>
 		<tr>
@@ -439,6 +457,18 @@ YYYY-MM-DD: CLASS:<strong>NewFunction( Params )</strong> added</p>
 
 			<h2><a id="#(EVENTDATA)">Type <code>EVENTDATA</code></a></h2>
 				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(EVENTDATA).Cargo">EVENTDATA.Cargo</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(EVENTDATA).CargoName">EVENTDATA.CargoName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(EVENTDATA).IniCategory">EVENTDATA.IniCategory</a></td>
 		<td class="summary">
@@ -721,6 +751,12 @@ YYYY-MM-DD: CLASS:<strong>NewFunction( Params )</strong> added</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(EVENTS).DeleteCargo">EVENTS.DeleteCargo</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(EVENTS).Ejection">EVENTS.Ejection</a></td>
 		<td class="summary">
 
@@ -764,6 +800,12 @@ YYYY-MM-DD: CLASS:<strong>NewFunction( Params )</strong> added</p>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(EVENTS).MissionStart">EVENTS.MissionStart</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(EVENTS).NewCargo">EVENTS.NewCargo</a></td>
 		<td class="summary">
 
 </td>
@@ -917,19 +959,63 @@ YYYY-MM-DD: CLASS:<strong>NewFunction( Params )</strong> added</p>
 		<dl class="function">
 <dt>
 
-<a id="#(EVENT).EventText" >
-<strong>EVENT:EventText(EventID)</strong>
+<a id="#(EVENT).CreateEventDeleteCargo" >
+<strong>EVENT:CreateEventDeleteCargo(Cargo)</strong>
 </a>
 </dt>
 <dd>
 	
-
+<p>Creation of a Cargo Deletion Event.</p>
 
 		<h3>Parameter</h3>
 		<ul>
 				<li>
 				
-<p><code><em> EventID </em></code>: </p>
+<p><code><em><a href="AI.AI_Cargo.html##(AI_CARGO)">AI.AI<em>Cargo#AI</em>CARGO</a> Cargo </em></code>: 
+The Cargo created.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(EVENT).CreateEventNewCargo" >
+<strong>EVENT:CreateEventNewCargo(Cargo)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Creation of a New Cargo Event.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="AI.AI_Cargo.html##(AI_CARGO)">AI.AI<em>Cargo#AI</em>CARGO</a> Cargo </em></code>: 
+The Cargo created.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(EVENT).CreateEventPlayerEnterUnit" >
+<strong>EVENT:CreateEventPlayerEnterUnit(PlayerUnit)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Creation of a S<em>EVENT</em>PLAYER<em>ENTER</em>UNIT Event.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> PlayerUnit </em></code>: </p>
 
 				</li>
 		</ul>
@@ -941,6 +1027,19 @@ YYYY-MM-DD: CLASS:<strong>NewFunction( Params )</strong> added</p>
 		<em><a href="##(EVENT.Events)">#EVENT.Events</a></em>
 <a id="#(EVENT).Events" >
 <strong>EVENT.Events</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(EVENT).EventsDead" >
+<strong>EVENT.EventsDead</strong>
 </a>
 </dt>
 <dd>
@@ -1405,7 +1504,7 @@ The self instance of the class for which the event is captured. When the event h
 </dt>
 <dd>
 	
-<p>Removes an Events entry</p>
+<p>Removes a subscription</p>
 
 		<h3>Parameters</h3>
 		<ul>
@@ -1452,22 +1551,16 @@ The self instance of the class for which the event is.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(EVENT).RemoveForGroup" >
-<strong>EVENT:RemoveForGroup(GroupName, EventClass, EventID)</strong>
+<a id="#(EVENT).Reset" >
+<strong>EVENT:Reset(EventClass, EventID, EventObject)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Removes an Events entry for a GROUP.</p>
+<p>Resets subscriptions</p>
 
 		<h3>Parameters</h3>
 		<ul>
-				<li>
-				
-<p><code><em>#string GroupName </em></code>: 
-The name of the GROUP.</p>
-
-				</li>
 				<li>
 				
 <p><code><em><a href="Core.Base.html##(BASE)">Core.Base#BASE</a> EventClass </em></code>: 
@@ -1479,42 +1572,9 @@ The self instance of the class for which the event is.</p>
 <p><code><em><a href="Dcs.DCSWorld.html##(world.event)">Dcs.DCSWorld#world.event</a> EventID </em></code>: </p>
 
 				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em><a href="##(EVENT.Events)">#EVENT.Events</a>:</em></p>
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(EVENT).RemoveForUnit" >
-<strong>EVENT:RemoveForUnit(UnitName, EventClass, EventID)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Removes an Events entry for a UNIT.</p>
-
-		<h3>Parameters</h3>
-		<ul>
 				<li>
 				
-<p><code><em>#string UnitName </em></code>: 
-The name of the UNIT.</p>
-
-				</li>
-				<li>
-				
-<p><code><em><a href="Core.Base.html##(BASE)">Core.Base#BASE</a> EventClass </em></code>: 
-The self instance of the class for which the event is.</p>
-
-				</li>
-				<li>
-				
-<p><code><em><a href="Dcs.DCSWorld.html##(world.event)">Dcs.DCSWorld#world.event</a> EventID </em></code>: </p>
+<p><code><em> EventObject </em></code>: </p>
 
 				</li>
 		</ul>
@@ -1578,11 +1638,39 @@ Note that at the beginning of each field description, there is an indication whi
 
 	
 <ul>
-    <li>A (Object.Category.)STATIC : A STATIC object type is involved in the Event.µ
+    <li>A (Object.Category.)STATIC : A STATIC object type is involved in the Event.Âµ
     </li>
 </ul>
 
 	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(EVENTDATA).Cargo" >
+<strong>EVENTDATA.Cargo</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(EVENTDATA).CargoName" >
+<strong>EVENTDATA.CargoName</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
 		<dl class="function">
 <dt>
 
@@ -2234,6 +2322,20 @@ Note that at the beginning of each field description, there is an indication whi
 <dt>
 
 		<em></em>
+<a id="#(EVENTS).DeleteCargo" >
+<strong>EVENTS.DeleteCargo</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
 <a id="#(EVENTS).Ejection" >
 <strong>EVENTS.Ejection</strong>
 </a>
@@ -2334,6 +2436,20 @@ Note that at the beginning of each field description, there is an indication whi
 		<em></em>
 <a id="#(EVENTS).MissionStart" >
 <strong>EVENTS.MissionStart</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(EVENTS).NewCargo" >
+<strong>EVENTS.NewCargo</strong>
 </a>
 </dt>
 <dd>

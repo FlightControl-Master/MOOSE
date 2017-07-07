@@ -276,6 +276,16 @@ UTILS.tostringLL = function( lat, lon, acc, DMS)
   end
 end
 
+-- acc- the accuracy of each easting/northing.  0, 1, 2, 3, 4, or 5.
+UTILS.tostringMGRS = function(MGRS, acc) --R2.1
+  if acc == 0 then
+    return MGRS.UTMZone .. ' ' .. MGRS.MGRSDigraph
+  else
+    return MGRS.UTMZone .. ' ' .. MGRS.MGRSDigraph .. ' ' .. string.format('%0' .. acc .. 'd', UTILS.Round(MGRS.Easting/(10^(5-acc)), 0))
+           .. ' ' .. string.format('%0' .. acc .. 'd', UTILS.Round(MGRS.Northing/(10^(5-acc)), 0))
+  end
+end
+
 
 --- From http://lua-users.org/wiki/SimpleRound
 -- use negative idp for rounding ahead of decimal place, positive for rounding after decimal place
@@ -292,4 +302,28 @@ function UTILS.DoString( s )
   else
     return false, err
   end
+end
+
+-- Here is a customized version of pairs, which I called spairs because it iterates over the table in a sorted order.
+function UTILS.spairs( t, order )
+    -- collect the keys
+    local keys = {}
+    for k in pairs(t) do keys[#keys+1] = k end
+
+    -- if order function given, sort by it by passing the table and keys a, b,
+    -- otherwise just sort the keys 
+    if order then
+        table.sort(keys, function(a,b) return order(t, a, b) end)
+    else
+        table.sort(keys)
+    end
+
+    -- return the iterator function
+    local i = 0
+    return function()
+        i = i + 1
+        if keys[i] then
+            return keys[i], t[keys[i]]
+        end
+    end
 end
