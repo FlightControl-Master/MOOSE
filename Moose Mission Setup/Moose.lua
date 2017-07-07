@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' )
-env.info( 'Moose Generation Timestamp: 20170706_2151' )
+env.info( 'Moose Generation Timestamp: 20170707_0826' )
 
 --- Various routines
 -- @module routines
@@ -3054,9 +3054,9 @@ function BASE:New()
 	
 	-- This is for "private" methods...
 	-- When a __ is passed to a method as "self", the __index will search for the method on the public method list too!
-  if rawget( self, "__" ) then
-    setmetatable( self, { __index = self.__ } )
-  end
+--  if rawget( self, "__" ) then
+    --setmetatable( self, { __index = self.__ } )
+--  end
 	
 	return self
 end
@@ -3070,7 +3070,6 @@ function BASE:Inherit( Child, Parent )
 	local Child = routines.utils.deepCopy( Child )
 
 	if Child ~= nil then
-	  Child.ClassParent = Parent
 
   -- This is for "private" methods...
   -- When a __ is passed to a method as "self", the __index will search for the method on the public method list of the same object too!
@@ -3081,10 +3080,8 @@ function BASE:Inherit( Child, Parent )
       setmetatable( Child, { __index = Parent } )
     end
     
-		
 		--Child:_SetDestructor()
 	end
-	--self:T( 'Inherited from ' .. Parent.ClassName ) 
 	return Child
 end
 
@@ -3098,8 +3095,12 @@ end
 -- @param #BASE Child is the Child class from which the Parent class needs to be retrieved.
 -- @return #BASE
 function BASE:GetParent( Child )
-	local Parent = Child.ClassParent
---	env.info('Inherited class of ' .. Child.ClassName .. ' is ' .. Parent.ClassName )
+  local Parent
+  if rawget( Child, "__" ) then
+	  Parent = getmetatable( Child.__ ).__Index
+	else
+	  Parent = getmetatable( Child ).__Index
+	end 
 	return Parent
 end
 
@@ -13879,7 +13880,7 @@ do -- FSM
   -- @param #table ReturnEvents A table indicating for which returned events of the SubFSM which Event must be triggered in the FSM.
   -- @return Core.Fsm#FSM_PROCESS The SubFSM.
   function FSM:AddProcess( From, Event, Process, ReturnEvents )
-    self:T( { From, Event, Process, ReturnEvents } )
+    self:T( { From, Event } )
   
     local Sub = {}
     Sub.From = From
@@ -14002,7 +14003,7 @@ do -- FSM
   end
   
   function FSM:_submap( subs, sub, name )
-    self:F( { sub = sub, name = name } )
+    --self:F( { sub = sub, name = name } )
     subs[sub.From] = subs[sub.From] or {}
     subs[sub.From][sub.Event] = subs[sub.From][sub.Event] or {}
     
@@ -14305,7 +14306,7 @@ do -- FSM_CONTROLLABLE
   -- @param Wrapper.Controllable#CONTROLLABLE FSMControllable
   -- @return #FSM_CONTROLLABLE
   function FSM_CONTROLLABLE:SetControllable( FSMControllable )
-    self:F( FSMControllable )
+    --self:F( FSMControllable:GetName() )
     self.Controllable = FSMControllable
   end
   
@@ -14365,7 +14366,7 @@ do -- FSM_PROCESS
   
     local self = BASE:Inherit( self, FSM_CONTROLLABLE:New() ) -- Core.Fsm#FSM_PROCESS
 
-    self:F( Controllable, Task )
+    --self:F( Controllable )
   
     self:Assign( Controllable, Task )
   
@@ -14421,7 +14422,7 @@ do -- FSM_PROCESS
   
     -- Copy Processes
     for ProcessID, Process in pairs( self:GetProcesses() ) do
-      self:E( { Process} )
+      --self:E( { Process:GetName() } )
       local FsmProcess = NewFsm:AddProcess( Process.From, Process.Event, Process.fsm:Copy( Controllable, Task ), Process.ReturnEvents )
     end
   
@@ -14523,7 +14524,7 @@ end
   -- @param Wrapper.Unit#UNIT ProcessUnit
   -- @return #FSM_PROCESS self
   function FSM_PROCESS:Assign( ProcessUnit, Task )
-    self:T( { Task, ProcessUnit } )
+    --self:T( { Task:GetName(), ProcessUnit:GetName() } )
   
     self:SetControllable( ProcessUnit )
     self:SetTask( Task )
@@ -14553,7 +14554,7 @@ end
   -- @param #string From
   -- @param #string To
   function FSM_PROCESS:onstatechange( ProcessUnit, Task, From, Event, To, Dummy )
-    self:T( { ProcessUnit, From, Event, To, Dummy, self:IsTrace() } )
+    self:T( { ProcessUnit:GetName(), From, Event, To, Dummy, self:IsTrace() } )
   
     if self:IsTrace() then
       --MESSAGE:New( "@ Process " .. self:GetClassNameAndID() .. " : " .. Event .. " changed to state " .. To, 2 ):ToAll()
@@ -46580,7 +46581,6 @@ function TASK:AssignToUnit( TaskUnit )
   
   -- Assign a new FsmUnit to TaskUnit.
   local FsmUnit = self:SetStateMachine( TaskUnit, FsmTemplate:Copy( TaskUnit, self ) ) -- Core.Fsm#FSM_PROCESS
-  self:E({"Address FsmUnit", tostring( FsmUnit ) } )
   
   FsmUnit:SetStartState( "Planned" )
   
