@@ -479,9 +479,9 @@ do -- Group Assignment
     SetAssignedGroups:ForEachGroup(
       function( AssignedGroup )
         if self:IsGroupAssigned(AssignedGroup) then
-          self:GetMission():GetCommandCenter():MessageToGroup( string.format( "Task %s is unassigned from group %s.", TaskName, TaskGroupName ), AssignedGroup )
+          --self:GetMission():GetCommandCenter():MessageToGroup( string.format( "Task %s is unassigned from group %s.", TaskName, TaskGroupName ), AssignedGroup )
         else
-          self:GetMission():GetCommandCenter():MessageToGroup( string.format( "Task %s is unassigned from your group.", TaskName ), AssignedGroup )
+          --self:GetMission():GetCommandCenter():MessageToGroup( string.format( "Task %s is unassigned from your group.", TaskName ), AssignedGroup )
         end
       end
     )
