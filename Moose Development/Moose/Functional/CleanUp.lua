@@ -150,7 +150,7 @@ end
 -- @return #CLEANUP_AIRBASE
 function CLEANUP_AIRBASE:SetCleanMissiles( CleanMissiles )
 
-  if CleanMissiles or true then
+  if CleanMissiles then
     self:HandleEvent( EVENTS.Shot, self.__.OnEventShot )
   else
     self:UnHandleEvent( EVENTS.Shot )
@@ -364,7 +364,7 @@ function CLEANUP_AIRBASE.__:CleanUpSchedule()
 							local CleanUpLandHeight = CleanUpCoordinate:GetLandHeight()
 							local CleanUpUnitHeight = CleanUpCoordinate.y - CleanUpLandHeight
 							
-							if CleanUpUnitHeight < 30 then
+							if CleanUpUnitHeight < 100 then
 								self:T( { "CleanUp Scheduler", "Destroy " .. CleanUpUnitName .. " because below safe height and damaged." } )
 								self:DestroyUnit( CleanUpUnit )
 							end

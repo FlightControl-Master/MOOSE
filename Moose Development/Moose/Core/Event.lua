@@ -450,16 +450,16 @@ end
 -- @param Core.Base#BASE EventClass The self instance of the class for which the event is.
 -- @param Dcs.DCSWorld#world.event EventID
 -- @return #EVENT.Events
-function EVENT:Remove( EventClass, EventID  )
+function EVENT:RemoveEvent( EventClass, EventID  )
 
   self:E( { "Removing subscription for class: ", EventClass:GetClassNameAndID() } )
 
   local EventPriority = EventClass:GetEventPriority()
 
-  self.EventsDead = self.EventsDead or {}
-  self.EventsDead[EventID] = self.EventsDead[EventID] or {}
-  self.EventsDead[EventID][EventPriority] = self.EventsDead[EventID][EventPriority] or {}  
-  self.EventsDead[EventID][EventPriority][EventClass] = self.Events[EventID][EventPriority][EventClass]
+  self.Events = self.Events or {}
+  self.Events[EventID] = self.Events[EventID] or {}
+  self.Events[EventID][EventPriority] = self.Events[EventID][EventPriority] or {}  
+  self.Events[EventID][EventPriority][EventClass] = self.Events[EventID][EventPriority][EventClass]
     
   self.Events[EventID][EventPriority][EventClass] = nil
   
@@ -529,7 +529,7 @@ end
 -- @param EventID
 -- @return #EVENT
 function EVENT:OnEventGeneric( EventFunction, EventClass, EventID )
-  self:F2( { EventID } )
+  self:E( { EventID } )
 
   local EventData = self:Init( EventID, EventClass )
   EventData.EventFunction = EventFunction
@@ -923,7 +923,7 @@ function EVENT:onEvent( Event )
               end
             else
               -- The EventClass is not alive anymore, we remove it from the EventHandlers...
-              self:Remove( EventClass, Event.id )
+              self:RemoveEvent( EventClass, Event.id )
             end                      
           else
 
@@ -973,7 +973,7 @@ function EVENT:onEvent( Event )
                 end
               else
                 -- The EventClass is not alive anymore, we remove it from the EventHandlers...
-                self:Remove( EventClass, Event.id )  
+                self:RemoveEvent( EventClass, Event.id )  
               end
             else
           
