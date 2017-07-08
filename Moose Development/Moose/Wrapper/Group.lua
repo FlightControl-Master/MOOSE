@@ -1170,7 +1170,7 @@ do -- Players
   -- @return #nil The group has no players
   function GROUP:GetPlayerNames()
   
-    local PlayerNames = nil
+    local PlayerNames = {}
     
     local Units = self:GetUnits()
     for UnitID, UnitData in pairs( Units ) do

@@ -1724,14 +1724,16 @@ do -- AI_A2A_DISPATCHER
           self:E( { DefenderSquadron } )
           local SpawnCoord = DefenderSquadron.Airbase:GetCoordinate() -- Core.Point#COORDINATE
           local TargetCoord = Target.Set:GetFirst():GetCoordinate()
-          local Distance = SpawnCoord:Get2DDistance( TargetCoord )
-          
-          if ClosestDistance == 0 or Distance < ClosestDistance then
+          if TargetCoord then
+            local Distance = SpawnCoord:Get2DDistance( TargetCoord )
             
-            -- Only intercept if the distance to target is smaller or equal to the GciRadius limit.
-            if Distance <= self.GciRadius then
-              ClosestDistance = Distance
-              ClosestDefenderSquadronName = SquadronName
+            if ClosestDistance == 0 or Distance < ClosestDistance then
+              
+              -- Only intercept if the distance to target is smaller or equal to the GciRadius limit.
+              if Distance <= self.GciRadius then
+                ClosestDistance = Distance
+                ClosestDefenderSquadronName = SquadronName
+              end
             end
           end
         end
