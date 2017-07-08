@@ -452,7 +452,7 @@ end
 -- @return #EVENT.Events
 function EVENT:RemoveEvent( EventClass, EventID  )
 
-  self:E( { "Removing subscription for class: ", EventClass:GetClassNameAndID() } )
+  self:F2( { "Removing subscription for class: ", EventClass:GetClassNameAndID() } )
 
   local EventPriority = EventClass:GetEventPriority()
 
@@ -529,7 +529,7 @@ end
 -- @param EventID
 -- @return #EVENT
 function EVENT:OnEventGeneric( EventFunction, EventClass, EventID )
-  self:E( { EventID } )
+  self:F2( { EventID } )
 
   local EventData = self:Init( EventID, EventClass )
   EventData.EventFunction = EventFunction
