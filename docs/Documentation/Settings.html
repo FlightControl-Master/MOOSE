@@ -148,7 +148,7 @@
 			<h2><a id="#(SETTINGS)">Type <code>SETTINGS</code></a></h2>
 				<table class="function_list">
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).A2AMenuSystem">SETTINGS:A2AMenuSystem(A2ASystem)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).A2AMenuSystem">SETTINGS:A2AMenuSystem(MenuGroup, RootMenu, A2ASystem)</a></td>
 		<td class="summary">
 
 </td>
@@ -160,19 +160,13 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).A2GMenuSystem">SETTINGS:A2GMenuSystem(A2GSystem)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).A2GMenuSystem">SETTINGS:A2GMenuSystem(MenuGroup, RootMenu, A2GSystem)</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).A2GSystem">SETTINGS.A2GSystem</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).DefaultMenu">SETTINGS.DefaultMenu</a></td>
 		<td class="summary">
 
 </td>
@@ -196,7 +190,7 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).IsA2A_BRA">SETTINGS:IsA2A_BRA()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).IsA2A_BRAA">SETTINGS:IsA2A_BRAA()</a></td>
 		<td class="summary">
 <p>Is BRA</p>
 </td>
@@ -208,7 +202,7 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).IsA2G_BRA">SETTINGS:IsA2G_BRA()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).IsA2G_BR">SETTINGS:IsA2G_BR()</a></td>
 		<td class="summary">
 <p>Is BRA</p>
 </td>
@@ -292,43 +286,31 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).MenuLL_Accuracy">SETTINGS:MenuLL_Accuracy(LL_Accuracy)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).MenuLL_Accuracy">SETTINGS:MenuLL_Accuracy(MenuGroup, RootMenu, LL_Accuracy)</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).MenuLL_DMS">SETTINGS:MenuLL_DMS(LL_DMS)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).MenuLL_DMS">SETTINGS:MenuLL_DMS(MenuGroup, RootMenu, LL_DMS)</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).MenuMGRS_Accuracy">SETTINGS:MenuMGRS_Accuracy(MGRS_Accuracy)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).MenuMGRS_Accuracy">SETTINGS:MenuMGRS_Accuracy(MenuGroup, RootMenu, MGRS_Accuracy)</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).MenuMWSystem">SETTINGS:MenuMWSystem(MW)</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).MenuText">SETTINGS.MenuText</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).MenuMWSystem">SETTINGS:MenuMWSystem(MenuGroup, RootMenu, MW)</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).Metric">SETTINGS.Metric</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).Metrics">SETTINGS.Metrics</a></td>
 		<td class="summary">
 
 </td>
@@ -352,7 +334,7 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).SetA2A_BRA">SETTINGS:SetA2A_BRA()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).SetA2A_BRAA">SETTINGS:SetA2A_BRAA()</a></td>
 		<td class="summary">
 <p>Sets A2A BRA</p>
 </td>
@@ -364,7 +346,7 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).SetA2G_BRA">SETTINGS:SetA2G_BRA()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).SetA2G_BR">SETTINGS:SetA2G_BR()</a></td>
 		<td class="summary">
 <p>Sets A2G BRA</p>
 </td>
@@ -418,13 +400,7 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).SetSystemMenu">SETTINGS:SetSystemMenu(RootMenu, MenuText)</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).SettingsMenu">SETTINGS.SettingsMenu</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).SetSystemMenu">SETTINGS:SetSystemMenu(MenuGroup, RootMenu)</a></td>
 		<td class="summary">
 
 </td>
@@ -455,15 +431,25 @@
 <dt>
 
 <a id="#(SETTINGS).A2AMenuSystem" >
-<strong>SETTINGS:A2AMenuSystem(A2ASystem)</strong>
+<strong>SETTINGS:A2AMenuSystem(MenuGroup, RootMenu, A2ASystem)</strong>
 </a>
 </dt>
 <dd>
 	
 
 
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
+				<li>
+				
+<p><code><em> MenuGroup </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> RootMenu </em></code>: </p>
+
+				</li>
 				<li>
 				
 <p><code><em> A2ASystem </em></code>: </p>
@@ -490,15 +476,25 @@
 <dt>
 
 <a id="#(SETTINGS).A2GMenuSystem" >
-<strong>SETTINGS:A2GMenuSystem(A2GSystem)</strong>
+<strong>SETTINGS:A2GMenuSystem(MenuGroup, RootMenu, A2GSystem)</strong>
 </a>
 </dt>
 <dd>
 	
 
 
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
+				<li>
+				
+<p><code><em> MenuGroup </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> RootMenu </em></code>: </p>
+
+				</li>
 				<li>
 				
 <p><code><em> A2GSystem </em></code>: </p>
@@ -513,19 +509,6 @@
 		<em>#string</em>
 <a id="#(SETTINGS).A2GSystem" >
 <strong>SETTINGS.A2GSystem</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(SETTINGS).DefaultMenu" >
-<strong>SETTINGS.DefaultMenu</strong>
 </a>
 </dt>
 <dd>
@@ -591,8 +574,8 @@
 		<dl class="function">
 <dt>
 
-<a id="#(SETTINGS).IsA2A_BRA" >
-<strong>SETTINGS:IsA2A_BRA()</strong>
+<a id="#(SETTINGS).IsA2A_BRAA" >
+<strong>SETTINGS:IsA2A_BRAA()</strong>
 </a>
 </dt>
 <dd>
@@ -627,8 +610,8 @@ true if BULLS</p>
 		<dl class="function">
 <dt>
 
-<a id="#(SETTINGS).IsA2G_BRA" >
-<strong>SETTINGS:IsA2G_BRA()</strong>
+<a id="#(SETTINGS).IsA2G_BR" >
+<strong>SETTINGS:IsA2G_BR()</strong>
 </a>
 </dt>
 <dd>
@@ -976,15 +959,25 @@ true if metric.</p>
 <dt>
 
 <a id="#(SETTINGS).MenuLL_Accuracy" >
-<strong>SETTINGS:MenuLL_Accuracy(LL_Accuracy)</strong>
+<strong>SETTINGS:MenuLL_Accuracy(MenuGroup, RootMenu, LL_Accuracy)</strong>
 </a>
 </dt>
 <dd>
 	
 
 
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
+				<li>
+				
+<p><code><em> MenuGroup </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> RootMenu </em></code>: </p>
+
+				</li>
 				<li>
 				
 <p><code><em> LL_Accuracy </em></code>: </p>
@@ -997,15 +990,25 @@ true if metric.</p>
 <dt>
 
 <a id="#(SETTINGS).MenuLL_DMS" >
-<strong>SETTINGS:MenuLL_DMS(LL_DMS)</strong>
+<strong>SETTINGS:MenuLL_DMS(MenuGroup, RootMenu, LL_DMS)</strong>
 </a>
 </dt>
 <dd>
 	
 
 
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
+				<li>
+				
+<p><code><em> MenuGroup </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> RootMenu </em></code>: </p>
+
+				</li>
 				<li>
 				
 <p><code><em> LL_DMS </em></code>: </p>
@@ -1018,15 +1021,25 @@ true if metric.</p>
 <dt>
 
 <a id="#(SETTINGS).MenuMGRS_Accuracy" >
-<strong>SETTINGS:MenuMGRS_Accuracy(MGRS_Accuracy)</strong>
+<strong>SETTINGS:MenuMGRS_Accuracy(MenuGroup, RootMenu, MGRS_Accuracy)</strong>
 </a>
 </dt>
 <dd>
 	
 
 
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
+				<li>
+				
+<p><code><em> MenuGroup </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> RootMenu </em></code>: </p>
+
+				</li>
 				<li>
 				
 <p><code><em> MGRS_Accuracy </em></code>: </p>
@@ -1039,15 +1052,25 @@ true if metric.</p>
 <dt>
 
 <a id="#(SETTINGS).MenuMWSystem" >
-<strong>SETTINGS:MenuMWSystem(MW)</strong>
+<strong>SETTINGS:MenuMWSystem(MenuGroup, RootMenu, MW)</strong>
 </a>
 </dt>
 <dd>
 	
 
 
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
+				<li>
+				
+<p><code><em> MenuGroup </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> RootMenu </em></code>: </p>
+
+				</li>
 				<li>
 				
 <p><code><em> MW </em></code>: </p>
@@ -1059,37 +1082,9 @@ true if metric.</p>
 		<dl class="function">
 <dt>
 
-		<em></em>
-<a id="#(SETTINGS).MenuText" >
-<strong>SETTINGS.MenuText</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em></em>
+		<em>#boolean</em>
 <a id="#(SETTINGS).Metric" >
 <strong>SETTINGS.Metric</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em></em>
-<a id="#(SETTINGS).Metrics" >
-<strong>SETTINGS.Metrics</strong>
 </a>
 </dt>
 <dd>
@@ -1172,8 +1167,8 @@ true if metric.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(SETTINGS).SetA2A_BRA" >
-<strong>SETTINGS:SetA2A_BRA()</strong>
+<a id="#(SETTINGS).SetA2A_BRAA" >
+<strong>SETTINGS:SetA2A_BRAA()</strong>
 </a>
 </dt>
 <dd>
@@ -1208,8 +1203,8 @@ true if metric.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(SETTINGS).SetA2G_BRA" >
-<strong>SETTINGS:SetA2G_BRA()</strong>
+<a id="#(SETTINGS).SetA2G_BR" >
+<strong>SETTINGS:SetA2G_BR()</strong>
 </a>
 </dt>
 <dd>
@@ -1403,7 +1398,7 @@ true if metric.</p>
 <dt>
 
 <a id="#(SETTINGS).SetSystemMenu" >
-<strong>SETTINGS:SetSystemMenu(RootMenu, MenuText)</strong>
+<strong>SETTINGS:SetSystemMenu(MenuGroup, RootMenu)</strong>
 </a>
 </dt>
 <dd>
@@ -1414,32 +1409,18 @@ true if metric.</p>
 		<ul>
 				<li>
 				
-<p><code><em> RootMenu </em></code>: </p>
+<p><code><em> MenuGroup </em></code>: </p>
 
 				</li>
 				<li>
 				
-<p><code><em> MenuText </em></code>: </p>
+<p><code><em> RootMenu </em></code>: </p>
 
 				</li>
 		</ul>
 		<h3>Return value</h3>
 				
 <p><em><a href="##(SETTINGS)">#SETTINGS</a>:</em></p>
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em></em>
-<a id="#(SETTINGS).SettingsMenu" >
-<strong>SETTINGS.SettingsMenu</strong>
-</a>
-</dt>
-<dd>
-	
 
 
 </dd>
