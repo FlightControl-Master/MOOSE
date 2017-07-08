@@ -364,7 +364,7 @@ do -- Event Handling
   -- @return #BASE
   function BASE:UnHandleEvent( Event )
   
-    self:EventDispatcher():Remove( self, Event )
+    self:EventDispatcher():RemoveEvent( self, Event )
     
     return self
   end

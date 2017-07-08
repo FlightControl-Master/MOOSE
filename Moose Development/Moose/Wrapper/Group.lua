@@ -1141,7 +1141,7 @@ do -- Event Handling
   -- @return #GROUP
   function GROUP:UnHandleEvent( Event )
   
-    self:EventDispatcher():Remove( self, Event )
+    self:EventDispatcher():RemoveEvent( self, Event )
     
     return self
   end

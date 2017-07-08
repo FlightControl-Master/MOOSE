@@ -1092,7 +1092,7 @@ function CARGO_GROUP:New( CargoGroup, Type, Name, ReportRadius )
   return self
 end
 
---- @param #CARGO Cargo
+--- @param #CARGO_GROUP self
 -- @param Core.Event#EVENTDATA EventData 
 function CARGO_GROUP:OnEventCargoDead( EventData )
 
@@ -1109,7 +1109,9 @@ function CARGO_GROUP:OnEventCargoDead( EventData )
       end
     end
   else
-    if self.CargoCarrier:GetName() == EventData.IniUnitName then
+    local CarrierName = self.CargoCarrier:GetName()
+    if CarrierName == EventData.IniDCSUnitName then
+      MESSAGE:New( "Cargo is lost from carrier " .. CarrierName, 15 ):ToAll()
       Destroyed = true
       self.CargoCarrier:ClearCargo()
     end
