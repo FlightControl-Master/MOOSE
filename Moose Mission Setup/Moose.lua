@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' )
-env.info( 'Moose Generation Timestamp: 20170708_0922' )
+env.info( 'Moose Generation Timestamp: 20170708_1419' )
 
 --- Various routines
 -- @module routines
@@ -3184,7 +3184,7 @@ do -- Event Handling
   -- @return #BASE
   function BASE:UnHandleEvent( Event )
   
-    self:EventDispatcher():Remove( self, Event )
+    self:EventDispatcher():RemoveEvent( self, Event )
     
     return self
   end
@@ -4724,16 +4724,16 @@ end
 -- @param Core.Base#BASE EventClass The self instance of the class for which the event is.
 -- @param Dcs.DCSWorld#world.event EventID
 -- @return #EVENT.Events
-function EVENT:Remove( EventClass, EventID  )
+function EVENT:RemoveEvent( EventClass, EventID  )
 
-  self:E( { "Removing subscription for class: ", EventClass:GetClassNameAndID() } )
+  self:F2( { "Removing subscription for class: ", EventClass:GetClassNameAndID() } )
 
   local EventPriority = EventClass:GetEventPriority()
 
-  self.EventsDead = self.EventsDead or {}
-  self.EventsDead[EventID] = self.EventsDead[EventID] or {}
-  self.EventsDead[EventID][EventPriority] = self.EventsDead[EventID][EventPriority] or {}  
-  self.EventsDead[EventID][EventPriority][EventClass] = self.Events[EventID][EventPriority][EventClass]
+  self.Events = self.Events or {}
+  self.Events[EventID] = self.Events[EventID] or {}
+  self.Events[EventID][EventPriority] = self.Events[EventID][EventPriority] or {}  
+  self.Events[EventID][EventPriority][EventClass] = self.Events[EventID][EventPriority][EventClass]
     
   self.Events[EventID][EventPriority][EventClass] = nil
   
@@ -5197,7 +5197,7 @@ function EVENT:onEvent( Event )
               end
             else
               -- The EventClass is not alive anymore, we remove it from the EventHandlers...
-              self:Remove( EventClass, Event.id )
+              self:RemoveEvent( EventClass, Event.id )
             end                      
           else
 
@@ -5247,7 +5247,7 @@ function EVENT:onEvent( Event )
                 end
               else
                 -- The EventClass is not alive anymore, we remove it from the EventHandlers...
-                self:Remove( EventClass, Event.id )  
+                self:RemoveEvent( EventClass, Event.id )  
               end
             else
           
@@ -16526,7 +16526,7 @@ function CARGO_GROUP:New( CargoGroup, Type, Name, ReportRadius )
   return self
 end
 
---- @param #CARGO Cargo
+--- @param #CARGO_GROUP self
 -- @param Core.Event#EVENTDATA EventData 
 function CARGO_GROUP:OnEventCargoDead( EventData )
 
@@ -16543,7 +16543,9 @@ function CARGO_GROUP:OnEventCargoDead( EventData )
       end
     end
   else
-    if self.CargoCarrier:GetName() == EventData.IniUnitName then
+    local CarrierName = self.CargoCarrier:GetName()
+    if CarrierName == EventData.IniDCSUnitName then
+      MESSAGE:New( "Cargo is lost from carrier " .. CarrierName, 15 ):ToAll()
       Destroyed = true
       self.CargoCarrier:ClearCargo()
     end
@@ -21969,7 +21971,7 @@ do -- Event Handling
   -- @return #GROUP
   function GROUP:UnHandleEvent( Event )
   
-    self:EventDispatcher():Remove( self, Event )
+    self:EventDispatcher():RemoveEvent( self, Event )
     
     return self
   end
@@ -25672,7 +25674,7 @@ function SCORING:CloseCSV()
   end
 end
 
---- **Functional** -- The CLEANUP class keeps an area clean of crashing or colliding airplanes. It also prevents airplanes from firing within this area.
+--- **Functional** -- The CLEANUP_AIRBASE class keeps an area clean of crashing or colliding airplanes. It also prevents airplanes from firing within this area.
 -- 
 -- ===
 -- 
@@ -25683,24 +25685,24 @@ end
 -- 
 -- @module CleanUp
 
---- @type CLEANUP.__ Methods which are not intended for mission designers, but which are used interally by the moose designer :-)
+--- @type CLEANUP_AIRBASE.__ Methods which are not intended for mission designers, but which are used interally by the moose designer :-)
 -- @field #map<#string,Wrapper.Airbase#AIRBASE> Airbases Map of Airbases.
 -- @extends Core.Base#BASE
 
---- @type CLEANUP
--- @extends #CLEANUP.__
+--- @type CLEANUP_AIRBASE
+-- @extends #CLEANUP_AIRBASE.__
 
---- # CLEANUP, extends @{Base#BASE}
+--- # CLEANUP_AIRBASE, extends @{Base#BASE}
 -- 
--- ![Banner Image](..\Presentations\CLEANUP\Dia1.JPG)
+-- ![Banner Image](..\Presentations\CLEANUP_AIRBASE\Dia1.JPG)
 -- 
--- The CLEANUP class keeps airbases clean, and tries to guarantee continuous airbase operations, even under combat.
+-- The CLEANUP_AIRBASE class keeps airbases clean, and tries to guarantee continuous airbase operations, even under combat.
 -- Specific airbases need to be provided that need to be guarded. Each airbase registered, will be guarded within a zone of 8 km around the airbase.
--- Any unit that fires a missile, or shoots within the zone of an airbase, will be monitored by CLEANUP.
+-- Any unit that fires a missile, or shoots within the zone of an airbase, will be monitored by CLEANUP_AIRBASE.
 -- Within the 8km zone, units cannot fire any missile, which prevents the airbase runway to receive missile or bomb hits. 
 -- Any airborne or ground unit that is on the runway below 30 meters (default value) will be automatically removed if it is damaged.
 -- 
--- This is not a full 100% secure implementation. It is still possible that CLEANUP cannot prevent (in-time) to keep the airbase clean.
+-- This is not a full 100% secure implementation. It is still possible that CLEANUP_AIRBASE cannot prevent (in-time) to keep the airbase clean.
 -- The following situations may happen that will still stop the runway of an airbase:
 -- 
 --   * A damaged unit is not removed on time when above the runway, and crashes on the runway.
@@ -25711,7 +25713,7 @@ end
 -- its status will be checked every 0.25 seconds! This is required to ensure that the airbase is kept clean.
 -- But as a result, there is more CPU overload.
 -- 
--- So as an advise, I suggest you use the CLEANUP class with care:
+-- So as an advise, I suggest you use the CLEANUP_AIRBASE class with care:
 -- 
 --   * Only monitor airbases that really need to be monitored!
 --   * Try not to monitor airbases that are likely to be invaded by enemy troops.
@@ -25719,54 +25721,54 @@ end
 --     
 -- By following the above guidelines, you can add airbase cleanup with acceptable CPU overhead.
 -- 
--- ## 1. CLEANUP Constructor
+-- ## 1. CLEANUP_AIRBASE Constructor
 -- 
 -- Creates the main object which is preventing the airbase to get polluted with debris on the runway, which halts the airbase.
 -- 
 --      -- Clean these Zones.
---      CleanUpAirports = CLEANUP:New( { AIRBASE.Caucasus.Tbilisi, AIRBASE.Caucasus.Kutaisi )
+--      CleanUpAirports = CLEANUP_AIRBASE:New( { AIRBASE.Caucasus.Tbilisi, AIRBASE.Caucasus.Kutaisi )
 --      
 --      -- or
---      CleanUpTbilisi = CLEANUP:New( AIRBASE.Caucasus.Tbilisi )
---      CleanUpKutaisi = CLEANUP:New( AIRBASE.Caucasus.Kutaisi )
+--      CleanUpTbilisi = CLEANUP_AIRBASE:New( AIRBASE.Caucasus.Tbilisi )
+--      CleanUpKutaisi = CLEANUP_AIRBASE:New( AIRBASE.Caucasus.Kutaisi )
 -- 
 -- ## 2. Add or Remove airbases
 -- 
--- The method @{#CLEANUP.AddAirbase}() to add an airbase to the cleanup validation process.
--- The method @{#CLEANUP.RemoveAirbase}() removes an airbase from the cleanup validation process.
+-- The method @{#CLEANUP_AIRBASE.AddAirbase}() to add an airbase to the cleanup validation process.
+-- The method @{#CLEANUP_AIRBASE.RemoveAirbase}() removes an airbase from the cleanup validation process.
 -- 
 -- ## 3. Clean missiles and bombs within the airbase zone.
 -- 
 -- When missiles or bombs hit the runway, the airbase operations stop.
--- Use the method @{#CLEANUP.SetCleanMissiles}() to control the cleaning of missiles, which will prevent airbases to stop.
+-- Use the method @{#CLEANUP_AIRBASE.SetCleanMissiles}() to control the cleaning of missiles, which will prevent airbases to stop.
 -- Note that this method will not allow anymore airbases to be attacked, so there is a trade-off here to do.
 -- 
--- @field #CLEANUP
-CLEANUP = {
-	ClassName = "CLEANUP",
+-- @field #CLEANUP_AIRBASE
+CLEANUP_AIRBASE = {
+	ClassName = "CLEANUP_AIRBASE",
 	TimeInterval = 0.2,
 	CleanUpList = {},
 }
 
--- @field #CLEANUP.__
-CLEANUP.__ = {}
+-- @field #CLEANUP_AIRBASE.__
+CLEANUP_AIRBASE.__ = {}
 
---- @field #CLEANUP.__.Airbases
-CLEANUP.__.Airbases = {}
+--- @field #CLEANUP_AIRBASE.__.Airbases
+CLEANUP_AIRBASE.__.Airbases = {}
 
 --- Creates the main object which is handling the cleaning of the debris within the given Zone Names.
--- @param #CLEANUP self
+-- @param #CLEANUP_AIRBASE self
 -- @param #list<#string> AirbaseNames Is a table of airbase names where the debris should be cleaned. Also a single string can be passed with one airbase name.
--- @return #CLEANUP
+-- @return #CLEANUP_AIRBASE
 -- @usage
 --  -- Clean these Zones.
--- CleanUpAirports = CLEANUP:New( { AIRBASE.Caucasus.Tbilisi, AIRBASE.Caucasus.Kutaisi )
+-- CleanUpAirports = CLEANUP_AIRBASE:New( { AIRBASE.Caucasus.Tbilisi, AIRBASE.Caucasus.Kutaisi )
 -- or
--- CleanUpTbilisi = CLEANUP:New( AIRBASE.Caucasus.Tbilisi )
--- CleanUpKutaisi = CLEANUP:New( AIRBASE.Caucasus.Kutaisi )
-function CLEANUP:New( AirbaseNames )	
+-- CleanUpTbilisi = CLEANUP_AIRBASE:New( AIRBASE.Caucasus.Tbilisi )
+-- CleanUpKutaisi = CLEANUP_AIRBASE:New( AIRBASE.Caucasus.Kutaisi )
+function CLEANUP_AIRBASE:New( AirbaseNames )	
 
-  local self = BASE:Inherit( self, BASE:New() ) -- #CLEANUP
+  local self = BASE:Inherit( self, BASE:New() ) -- #CLEANUP_AIRBASE
 	self:F( { AirbaseNames } )
 	
 	if type( AirbaseNames ) == 'table' then
@@ -25793,10 +25795,10 @@ function CLEANUP:New( AirbaseNames )
 end
 
 --- Adds an airbase to the airbase validation list.
--- @param #CLEANUP self
+-- @param #CLEANUP_AIRBASE self
 -- @param #string AirbaseName
--- @return #CLEANUP
-function CLEANUP:AddAirbase( AirbaseName )
+-- @return #CLEANUP_AIRBASE
+function CLEANUP_AIRBASE:AddAirbase( AirbaseName )
   self.__.Airbases[AirbaseName] = AIRBASE:FindByName( AirbaseName )
   self:F({"Airbase:", AirbaseName, self.__.Airbases[AirbaseName]:GetDesc()})
   
@@ -25804,10 +25806,10 @@ function CLEANUP:AddAirbase( AirbaseName )
 end
 
 --- Removes an airbase from the airbase validation list.
--- @param #CLEANUP self
+-- @param #CLEANUP_AIRBASE self
 -- @param #string AirbaseName
--- @return #CLEANUP
-function CLEANUP:RemoveAirbase( AirbaseName )
+-- @return #CLEANUP_AIRBASE
+function CLEANUP_AIRBASE:RemoveAirbase( AirbaseName )
   self.__.Airbases[AirbaseName] = nil
   return self
 end
@@ -25817,21 +25819,21 @@ end
 -- Note that when this method is used, the airbase operations won't stop if
 -- the missile or bomb was cleaned within the airbase zone, which is 8km from the center of the airbase.
 -- However, there is a trade-off to make. Attacks on airbases won't be possible anymore if this method is used.
--- Note, one can also use the method @{#CLEANUP.RemoveAirbase}() to remove the airbase from the control process as a whole,
+-- Note, one can also use the method @{#CLEANUP_AIRBASE.RemoveAirbase}() to remove the airbase from the control process as a whole,
 -- when an enemy unit is near. That is also an option...
--- @param #CLEANUP self
+-- @param #CLEANUP_AIRBASE self
 -- @param #string CleanMissiles (Default=true) If true, missiles fired are immediately destroyed. If false missiles are not controlled.
--- @return #CLEANUP
-function CLEANUP:SetCleanMissiles( CleanMissiles )
+-- @return #CLEANUP_AIRBASE
+function CLEANUP_AIRBASE:SetCleanMissiles( CleanMissiles )
 
-  if CleanMissiles or true then
+  if CleanMissiles then
     self:HandleEvent( EVENTS.Shot, self.__.OnEventShot )
   else
     self:UnHandleEvent( EVENTS.Shot )
   end
 end
 
-function CLEANUP.__:IsInAirbase( Vec2 )
+function CLEANUP_AIRBASE.__:IsInAirbase( Vec2 )
 
   local InAirbase = false
   for AirbaseName, Airbase in pairs( self.__.Airbases ) do
@@ -25848,9 +25850,9 @@ end
 
 
 --- Destroys a @{Unit} from the simulator, but checks first if it is still existing!
--- @param #CLEANUP self
+-- @param #CLEANUP_AIRBASE self
 -- @param Wrapper.Unit#UNIT CleanUpUnit The object to be destroyed.
-function CLEANUP.__:DestroyUnit( CleanUpUnit )
+function CLEANUP_AIRBASE.__:DestroyUnit( CleanUpUnit )
 	self:F( { CleanUpUnit } )
 
 	if CleanUpUnit then
@@ -25873,9 +25875,9 @@ end
 
 
 --- Destroys a missile from the simulator, but checks first if it is still existing!
--- @param #CLEANUP self
+-- @param #CLEANUP_AIRBASE self
 -- @param Dcs.DCSTypes#Weapon MissileObject
-function CLEANUP.__:DestroyMissile( MissileObject )
+function CLEANUP_AIRBASE.__:DestroyMissile( MissileObject )
 	self:F( { MissileObject } )
   
 	if MissileObject and MissileObject:isExist() then
@@ -25884,9 +25886,9 @@ function CLEANUP.__:DestroyMissile( MissileObject )
 	end
 end
 
---- @param #CLEANUP self
+--- @param #CLEANUP_AIRBASE self
 -- @param Core.Event#EVENTDATA EventData
-function CLEANUP.__:OnEventBirth( EventData )
+function CLEANUP_AIRBASE.__:OnEventBirth( EventData )
   self:F( { EventData } )
   
   self.CleanUpList[EventData.IniDCSUnitName] = {}
@@ -25900,9 +25902,9 @@ end
 
 --- Detects if a crash event occurs.
 -- Crashed units go into a CleanUpList for removal.
--- @param #CLEANUP self
+-- @param #CLEANUP_AIRBASE self
 -- @param Core.Event#EVENTDATA Event
-function CLEANUP.__:OnEventCrash( Event )
+function CLEANUP_AIRBASE.__:OnEventCrash( Event )
 	self:F( { Event } )
 
   --TODO: This stuff is not working due to a DCS bug. Burning units cannot be destroyed.
@@ -25925,22 +25927,22 @@ end
 
 --- Detects if a unit shoots a missile.
 -- If this occurs within one of the airbases, then the weapon used must be destroyed.
--- @param #CLEANUP self
+-- @param #CLEANUP_AIRBASE self
 -- @param Core.Event#EVENTDATA Event
-function CLEANUP.__:OnEventShot( Event )
+function CLEANUP_AIRBASE.__:OnEventShot( Event )
 	self:F( { Event } )
 
-	-- Test if the missile was fired within one of the CLEANUP.AirbaseNames.
+	-- Test if the missile was fired within one of the CLEANUP_AIRBASE.AirbaseNames.
 	if self:IsInAirbase( Event.IniUnit:GetVec2() ) then
-		-- Okay, the missile was fired within the CLEANUP.AirbaseNames, destroy the fired weapon.
+		-- Okay, the missile was fired within the CLEANUP_AIRBASE.AirbaseNames, destroy the fired weapon.
     self:DestroyMissile( Event.Weapon )
 	end
 end
 
 --- Detects if the Unit has an S_EVENT_HIT within the given AirbaseNames. If this is the case, destroy the unit.
--- @param #CLEANUP self
+-- @param #CLEANUP_AIRBASE self
 -- @param Core.Event#EVENTDATA Event
-function CLEANUP.__:OnEventHit( Event )
+function CLEANUP_AIRBASE.__:OnEventHit( Event )
 	self:F( { Event } )
 
 	if Event.IniUnit then
@@ -25948,7 +25950,7 @@ function CLEANUP.__:OnEventHit( Event )
 			self:T( { "Life: ", Event.IniDCSUnitName, ' = ',  Event.IniUnit:GetLife(), "/", Event.IniUnit:GetLife0() } )
 			if Event.IniUnit:GetLife() < Event.IniUnit:GetLife0() then
 				self:T( "CleanUp: Destroy: " .. Event.IniDCSUnitName )
-        CLEANUP.__:DestroyUnit( Event.IniUnit )
+        CLEANUP_AIRBASE.__:DestroyUnit( Event.IniUnit )
 			end
 		end
 	end
@@ -25958,17 +25960,17 @@ function CLEANUP.__:OnEventHit( Event )
 			self:T( { "Life: ", Event.TgtDCSUnitName, ' = ', Event.TgtUnit:GetLife(), "/", Event.TgtUnit:GetLife0() } )
 			if Event.TgtUnit:GetLife() < Event.TgtUnit:GetLife0() then
 				self:T( "CleanUp: Destroy: " .. Event.TgtDCSUnitName )
-        CLEANUP.__:DestroyUnit( Event.TgtUnit )
+        CLEANUP_AIRBASE.__:DestroyUnit( Event.TgtUnit )
 			end
 		end
 	end
 end
 
 --- Add the @{DCSWrapper.Unit#Unit} to the CleanUpList for CleanUp.
--- @param #CLEANUP self
+-- @param #CLEANUP_AIRBASE self
 -- @param Wrapper.Unit#UNIT CleanUpUnit
 -- @oaram #string CleanUpUnitName
-function CLEANUP.__:AddForCleanUp( CleanUpUnit, CleanUpUnitName )
+function CLEANUP_AIRBASE.__:AddForCleanUp( CleanUpUnit, CleanUpUnitName )
 	self:F( { CleanUpUnit, CleanUpUnitName } )
 
 	self.CleanUpList[CleanUpUnitName] = {}
@@ -25986,10 +25988,10 @@ function CLEANUP.__:AddForCleanUp( CleanUpUnit, CleanUpUnitName )
 	
 end
 
---- Detects if the Unit has an S_EVENT_ENGINE_SHUTDOWN or an S_EVENT_HIT within the given AirbaseNames. If this is the case, add the Group to the CLEANUP List.
--- @param #CLEANUP.__ self
+--- Detects if the Unit has an S_EVENT_ENGINE_SHUTDOWN or an S_EVENT_HIT within the given AirbaseNames. If this is the case, add the Group to the CLEANUP_AIRBASE List.
+-- @param #CLEANUP_AIRBASE.__ self
 -- @param Core.Event#EVENTDATA Event
-function CLEANUP.__:EventAddForCleanUp( Event )
+function CLEANUP_AIRBASE.__:EventAddForCleanUp( Event )
 
   self:F({Event})
 
@@ -26014,8 +26016,8 @@ end
 
 
 --- At the defined time interval, CleanUp the Groups within the CleanUpList.
--- @param #CLEANUP self
-function CLEANUP.__:CleanUpSchedule()
+-- @param #CLEANUP_AIRBASE self
+function CLEANUP_AIRBASE.__:CleanUpSchedule()
 
   local CleanUpCount = 0
 	for CleanUpUnitName, CleanUpListData in pairs( self.CleanUpList ) do
@@ -26038,7 +26040,7 @@ function CLEANUP.__:CleanUpSchedule()
 							local CleanUpLandHeight = CleanUpCoordinate:GetLandHeight()
 							local CleanUpUnitHeight = CleanUpCoordinate.y - CleanUpLandHeight
 							
-							if CleanUpUnitHeight < 30 then
+							if CleanUpUnitHeight < 100 then
 								self:T( { "CleanUp Scheduler", "Destroy " .. CleanUpUnitName .. " because below safe height and damaged." } )
 								self:DestroyUnit( CleanUpUnit )
 							end
@@ -46723,9 +46725,9 @@ do -- Group Assignment
     SetAssignedGroups:ForEachGroup(
       function( AssignedGroup )
         if self:IsGroupAssigned(AssignedGroup) then
-          self:GetMission():GetCommandCenter():MessageToGroup( string.format( "Task %s is unassigned from group %s.", TaskName, TaskGroupName ), AssignedGroup )
+          --self:GetMission():GetCommandCenter():MessageToGroup( string.format( "Task %s is unassigned from group %s.", TaskName, TaskGroupName ), AssignedGroup )
         else
-          self:GetMission():GetCommandCenter():MessageToGroup( string.format( "Task %s is unassigned from your group.", TaskName ), AssignedGroup )
+          --self:GetMission():GetCommandCenter():MessageToGroup( string.format( "Task %s is unassigned from your group.", TaskName ), AssignedGroup )
         end
       end
     )
