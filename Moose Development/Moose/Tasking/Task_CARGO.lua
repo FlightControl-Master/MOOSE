@@ -251,7 +251,9 @@ do -- TASK_CARGO
                     end
                   end
                   if NotInDeployZones then
-                    MENU_GROUP_COMMAND:New( TaskUnit:GetGroup(), "Board cargo " .. Cargo.Name, TaskUnit.Menu, self.MenuBoardCargo, self, Cargo ):SetTime(MenuTime)
+                    if not TaskUnit:InAir() then
+                      MENU_GROUP_COMMAND:New( TaskUnit:GetGroup(), "Board cargo " .. Cargo.Name, TaskUnit.Menu, self.MenuBoardCargo, self, Cargo ):SetTime(MenuTime)
+                    end
                   end
                 else
                   MENU_GROUP_COMMAND:New( TaskUnit:GetGroup(), "Route to Pickup cargo " .. Cargo.Name, TaskUnit.Menu, self.MenuRouteToPickup, self, Cargo ):SetTime(MenuTime)
@@ -260,9 +262,9 @@ do -- TASK_CARGO
             end
             
             if Cargo:IsLoaded() then
-              
-              MENU_GROUP_COMMAND:New( TaskUnit:GetGroup(), "Unboard cargo " .. Cargo.Name, TaskUnit.Menu, self.MenuUnBoardCargo, self, Cargo ):SetTime(MenuTime)
-  
+              if not TaskUnit:InAir() then
+                MENU_GROUP_COMMAND:New( TaskUnit:GetGroup(), "Unboard cargo " .. Cargo.Name, TaskUnit.Menu, self.MenuUnBoardCargo, self, Cargo ):SetTime(MenuTime)
+              end
               -- Deployzones are optional zones that can be selected to request routing information.
               for DeployZoneName, DeployZone in pairs( Task.DeployZones ) do
                 if not Cargo:IsInZone( DeployZone ) then
@@ -342,7 +344,7 @@ do -- TASK_CARGO
     function Fsm:onafterArriveAtPickup( TaskUnit, Task )
       self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
       if self.Cargo:IsAlive() then
-        TaskUnit:Smoke( Task:GetSmokeColor(), 15 )
+        self.Cargo:Smoke( Task:GetSmokeColor(), 15 )
         if TaskUnit:IsAir() then
           Task:GetMission():GetCommandCenter():MessageToGroup( "Land", TaskUnit:GetGroup() )
           self:__Land( -0.1, "Pickup" )
@@ -592,6 +594,7 @@ do -- TASK_CARGO
             
       -- TODO:I need to find a more decent solution for this.
       Task:E( { CargoDeployed = Task.CargoDeployed and "true" or "false" } )
+      Task:E( { CargoIsAlive = self.Cargo:IsAlive() and "true" or "false" } )
       if self.Cargo:IsAlive() then
         if Task.CargoDeployed then
           Task:CargoDeployed( TaskUnit, self.Cargo, self.DeployZone )
@@ -605,6 +608,7 @@ do -- TASK_CARGO
     return self
  
   end
+
 
     --- Set a limit on the amount of cargo items that can be loaded into the Carriers.
     -- @param #TASK_CARGO self
@@ -909,7 +913,7 @@ do -- TASK_CARGO_TRANSPORT
         local CargoType = Cargo:GetType()
         local CargoName = Cargo:GetName()
         local CargoCoordinate = Cargo:GetCoordinate()
-        CargoReport:Add( string.format( '- "%s" (%s) at %s', CargoName, CargoType, CargoCoordinate:ToString() ) )
+        CargoReport:Add( string.format( '- "%s" (%s) at %s', CargoName, CargoType, CargoCoordinate:ToStringMGRS() ) )
       end
     )
     
@@ -921,6 +925,12 @@ do -- TASK_CARGO_TRANSPORT
     
     return self
   end 
+
+  function TASK_CARGO_TRANSPORT:ReportOrder( ReportGroup ) 
+    
+    return true
+  end
+
   
   --- 
   -- @param #TASK_CARGO_TRANSPORT self

@@ -724,3 +724,91 @@ function POSITIONABLE:CargoItemCount()
   end
   return ItemCount
 end
+
+--- Signal a flare at the position of the POSITIONABLE.
+-- @param #POSITIONABLE self
+-- @param Utilities.Utils#FLARECOLOR FlareColor
+function POSITIONABLE:Flare( FlareColor )
+  self:F2()
+  trigger.action.signalFlare( self:GetVec3(), FlareColor , 0 )
+end
+
+--- Signal a white flare at the position of the POSITIONABLE.
+-- @param #POSITIONABLE self
+function POSITIONABLE:FlareWhite()
+  self:F2()
+  trigger.action.signalFlare( self:GetVec3(), trigger.flareColor.White , 0 )
+end
+
+--- Signal a yellow flare at the position of the POSITIONABLE.
+-- @param #POSITIONABLE self
+function POSITIONABLE:FlareYellow()
+  self:F2()
+  trigger.action.signalFlare( self:GetVec3(), trigger.flareColor.Yellow , 0 )
+end
+
+--- Signal a green flare at the position of the POSITIONABLE.
+-- @param #POSITIONABLE self
+function POSITIONABLE:FlareGreen()
+  self:F2()
+  trigger.action.signalFlare( self:GetVec3(), trigger.flareColor.Green , 0 )
+end
+
+--- Signal a red flare at the position of the POSITIONABLE.
+-- @param #POSITIONABLE self
+function POSITIONABLE:FlareRed()
+  self:F2()
+  local Vec3 = self:GetVec3()
+  if Vec3 then
+    trigger.action.signalFlare( Vec3, trigger.flareColor.Red, 0 )
+  end
+end
+
+--- Smoke the POSITIONABLE.
+-- @param #POSITIONABLE self
+function POSITIONABLE:Smoke( SmokeColor, Range )
+  self:F2()
+  if Range then
+    trigger.action.smoke( self:GetRandomVec3( Range ), SmokeColor )
+  else
+    trigger.action.smoke( self:GetVec3(), SmokeColor )
+  end
+  
+end
+
+--- Smoke the POSITIONABLE Green.
+-- @param #POSITIONABLE self
+function POSITIONABLE:SmokeGreen()
+  self:F2()
+  trigger.action.smoke( self:GetVec3(), trigger.smokeColor.Green )
+end
+
+--- Smoke the POSITIONABLE Red.
+-- @param #POSITIONABLE self
+function POSITIONABLE:SmokeRed()
+  self:F2()
+  trigger.action.smoke( self:GetVec3(), trigger.smokeColor.Red )
+end
+
+--- Smoke the POSITIONABLE White.
+-- @param #POSITIONABLE self
+function POSITIONABLE:SmokeWhite()
+  self:F2()
+  trigger.action.smoke( self:GetVec3(), trigger.smokeColor.White )
+end
+
+--- Smoke the POSITIONABLE Orange.
+-- @param #POSITIONABLE self
+function POSITIONABLE:SmokeOrange()
+  self:F2()
+  trigger.action.smoke( self:GetVec3(), trigger.smokeColor.Orange )
+end
+
+--- Smoke the POSITIONABLE Blue.
+-- @param #POSITIONABLE self
+function POSITIONABLE:SmokeBlue()
+  self:F2()
+  trigger.action.smoke( self:GetVec3(), trigger.smokeColor.Blue )
+end
+
+

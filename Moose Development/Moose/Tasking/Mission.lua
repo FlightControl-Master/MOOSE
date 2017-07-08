@@ -882,7 +882,7 @@ function MISSION:ReportOverview( ReportGroup, TaskStatus )
   
   -- Determine how many tasks are remaining.
   local TasksRemaining = 0
-  for TaskID, Task in pairs( self:GetTasks() ) do
+  for TaskID, Task in UTILS.spairs( self:GetTasks(), function( t, a, b ) return t[a]:ReportOrder( ReportGroup ) <  t[b]:ReportOrder( ReportGroup ) end  ) do
     local Task = Task -- Tasking.Task#TASK
     if Task:Is( TaskStatus ) then
       Report:Add( " - " .. Task:ReportOverview( ReportGroup ) )

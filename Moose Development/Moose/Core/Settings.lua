@@ -55,7 +55,7 @@ do -- SETTINGS
     if PlayerName == nil then
       local self = BASE:Inherit( self, BASE:New() ) -- #SETTINGS
       self:SetMetric() -- Defaults
-      self:SetA2G_MGRS() -- Defaults
+      self:SetA2G_BR() -- Defaults
       self:SetA2A_BRAA() -- Defaults
       self:SetLL_Accuracy( 2 ) -- Defaults
       self:SetLL_DMS( true ) -- Defaults
@@ -447,7 +447,7 @@ do -- SETTINGS
 
     --- @param #SETTINGS self
     function SETTINGS:MenuGroupMWSystem( PlayerUnit, PlayerGroup, PlayerName, MW )
-      self.Metrics = MW
+      self.Metric = MW
       MESSAGE:New( string.format("Settings: Measurement format set to %s for player %s.", MW and "Metric" or "Imperial", PlayerName ), 5 ):ToGroup( PlayerGroup )
       self:RemovePlayerMenu(PlayerUnit)
       self:SetPlayerMenu(PlayerUnit)

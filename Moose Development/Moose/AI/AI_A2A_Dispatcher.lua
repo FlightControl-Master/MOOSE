@@ -1724,14 +1724,16 @@ do -- AI_A2A_DISPATCHER
           self:E( { DefenderSquadron } )
           local SpawnCoord = DefenderSquadron.Airbase:GetCoordinate() -- Core.Point#COORDINATE
           local TargetCoord = Target.Set:GetFirst():GetCoordinate()
-          local Distance = SpawnCoord:Get2DDistance( TargetCoord )
-          
-          if ClosestDistance == 0 or Distance < ClosestDistance then
+          if TargetCoord then
+            local Distance = SpawnCoord:Get2DDistance( TargetCoord )
             
-            -- Only intercept if the distance to target is smaller or equal to the GciRadius limit.
-            if Distance <= self.GciRadius then
-              ClosestDistance = Distance
-              ClosestDefenderSquadronName = SquadronName
+            if ClosestDistance == 0 or Distance < ClosestDistance then
+              
+              -- Only intercept if the distance to target is smaller or equal to the GciRadius limit.
+              if Distance <= self.GciRadius then
+                ClosestDistance = Distance
+                ClosestDefenderSquadronName = SquadronName
+              end
             end
           end
         end
@@ -2081,33 +2083,33 @@ do
   -- ![Banner Image](..\Presentations\AI_A2A_DISPATCHER\Dia1.JPG)
   -- 
   -- The AI_A2A_GCICAP class is designed to create an automatic air defence system for a coalition setting up GCI and CAP air defenses. 
+  -- The class derives from @{AI#AI_A2A_DISPATCHER} and thus all the methods that are defined in this class, can be used also in AI\_A2A\_GCICAP.
   -- 
   -- ![Banner Image](..\Presentations\AI_A2A_DISPATCHER\Dia3.JPG)
   -- 
-  -- It includes automatic spawning of Combat Air Patrol aircraft (CAP) and Ground Controlled Intercept aircraft (GCI) in response to enemy air movements that are detected by a ground based radar network. 
-  -- CAP flights will take off and proceed to designated CAP zones where they will remain on station until the ground radars direct them to intercept detected enemy aircraft or they run short of fuel and must return to base (RTB). When a CAP flight leaves their zone to perform an interception or return to base a new CAP flight will spawn to take their place.
+  -- AI_A2A_GCICAP includes automatic spawning of Combat Air Patrol aircraft (CAP) and Ground Controlled Intercept aircraft (GCI) in response to enemy 
+  -- air movements that are detected by a ground based radar network. 
+  -- CAP flights will take off and proceed to designated CAP zones where they will remain on station until the ground radars direct them to intercept 
+  -- detected enemy aircraft or they run short of fuel and must return to base (RTB). 
+  -- When a CAP flight leaves their zone to perform an interception or return to base a new CAP flight will spawn to take their place.
   -- If all CAP flights are engaged or RTB then additional GCI interceptors will scramble to intercept unengaged enemy aircraft under ground radar control.
   -- With a little time and with a little work it provides the mission designer with a convincing and completely automatic air defence system. 
   -- In short it is a plug in very flexible and configurable air defence module for DCS World.
   -- 
-  -- Note that in order to create a two way A2A defense system, two AI\_A2A\_GCICAP defense system may need to be created, for each coalition one.
-  -- This is a good implementation, because maybe in the future, more coalitions may become available in DCS world.
+  -- The AI_A2A_GCICAP provides a lightweight configuration method using the mission editor.
   -- 
-  -- ## 1. AI\_A2A\_GCICAP constructor:
+  --   
+  -- ## 1) Configure a working AI\_A2A\_GCICAP defense system for ONE coalition. 
+  --   
+  -- ### 1.1) Define which airbases are for which coalition. 
   -- 
-  -- The @{#AI_A2A_GCICAP.New}() method creates a new AI\_A2A\_GCICAP instance.
-  -- There are two parameters required, a list of prefix group names that collects the groups of the EWR network, and a radius in meters, 
-  -- that will be used to group the detected targets.
+  -- Color the airbases red or blue. You can do this by selecting the airbase on the map, and select the coalition blue or red.
   -- 
-  -- ### 1.1. Define the **EWR network**:
-  -- 
-  -- As part of the AI\_A2A\_GCICAP constructor, a list of prefixes must be given of the group names defined within the mission editor,
-  -- that define the EWR network.
+  -- ### 1.2) Place Groups given a name starting with a **EWR prefix** of your choice to build your EWR network. 
+  --       
+  -- **All EWR groups starting with the EWR prefix (text) will be included in the detection system.**  
   -- 
   -- An EWR network, or, Early Warning Radar network, is used to early detect potential airborne targets and to understand the position of patrolling targets of the enemy.
-  -- 
-  -- ![Banner Image](..\Presentations\AI_A2A_DISPATCHER\Dia5.JPG)
-  -- 
   -- Typically EWR networks are setup using 55G6 EWR, 1L13 EWR, Hawk sr and Patriot str ground based radar units. 
   -- These radars have different ranges and 55G6 EWR and 1L13 EWR radars are Eastern Bloc units (eg Russia, Ukraine, Georgia) while the Hawk and Patriot radars are Western (eg US).
   -- Additionally, ANY other radar capable unit can be part of the EWR network! Also AWACS airborne units, planes, helicopters can help to detect targets, as long as they have radar.
@@ -2126,28 +2128,80 @@ do
   -- EWR networks are **dynamically maintained**. By defining in a **smart way the names or name prefixes of the groups** with EWR capable units, these groups will be **automatically added or deleted** from the EWR network, 
   -- increasing or decreasing the radar coverage of the Early Warning System.
   -- 
-  -- See the following example to setup an EWR network containing EWR stations and AWACS.
+  -- ### 1.3) Place Airplane or Helicopter Groups with late activation switched on 
   -- 
-  --     -- Setup the A2A GCICAP dispatcher, and initialize it.
-  --     A2ADispatcher = AI_A2A_DISPATCHER_GCICAP:New( { "DF CCCP AWACS", "DF CCCP EWR" }, 30000 )
+  -- These are **templates**, with a given name starting with **a Template prefix** above each airbase that you wanna have a squadron. 
+  -- These **templates** need to be within 10km from the airbase center. They don't need to have a slot at the airplane, they can just be positioned above the airbase, 
+  -- without a route, and should only have ONE unit.
   -- 
-  -- The above example creates a new AI_A2A_DISPATCHER_GCICAP instance, and stores this in the variable (object) **A2ADispatcher**.
-  -- The first parameter is are the prefixes of the group names that define the EWR network.
-  -- The A2A dispatcher will filter all active groups with a group name starting with **DF CCCP AWACS** or **DF CCCP EWR** to be included in the EWR network.
+  -- ### 1.4) Place floating helicopters to create the CAP zones. 
   -- 
-  -- ### 1.2. Define the detected **target grouping radius**:
+  -- The helicopter indicates the start of the CAP zone. 
+  -- The route points the form of the CAP zone polygon. 
+  -- The place of the helicopter is important, as the airbase closest to the helicopter will be the airbase from where the CAP planes will take off for CAP.
   -- 
-  -- As a second parameter of the @{#AI_A2A_DISPATCHER_GCICAP.New}() method, a radius in meters must be given. The radius indicates that detected targets need to be grouped within a radius of 30km.
+  -- ## 2) There are a lot of defaults set, which can be further modified using the methods in @{AI#AI_A2A_DISPATCHER}:
+  -- 
+  -- ### 2.1) Planes are taking off in the air from the airbases.
+  -- 
+  -- This prevents airbases to get cluttered with airplanes taking off, it also reduces the risk of human players colliding with taxiiing airplanes,
+  -- resulting in the airbase to halt operations.
+  -- 
+  -- ### 2.2) Planes return near the airbase or will land if damaged.
+  -- 
+  -- When damaged airplanes return to the airbase, they will be routed and will dissapear in the air when they are near the airbase.
+  -- There are exceptions to this rule, airplanes that aren't "listening" anymore due to damage or out of fuel, will return to the airbase and land.
+  -- 
+  -- ### 2.3) CAP operations setup for specific airbases, will be executed with the following parameters: 
+  -- 
+  --   * The altitude will range between 6000 and 10000 meters. 
+  --   * The CAP speed will vary between 500 and 800 km/h. 
+  --   * The engage speed between 800 and 1200 km/h.
+  --   
+  -- ### 2.4) Each airbase will perform GCI when required, with the following parameters:
+  -- 
+  --   * The engage speed is between 800 and 1200 km/h.
+  -- 
+  -- ### 2.5) Grouping or detected targets.
+  -- 
+  -- Detected targets are constantly re-grouped, that is, when certain detected aircraft are moving further than the group radius, then these aircraft will become a separate
+  -- group being detected.
+  -- 
+  -- Targets will be grouped within a radius of 30km by default.
+  -- 
+  -- The radius indicates that detected targets need to be grouped within a radius of 30km.
   -- The grouping radius should not be too small, but also depends on the types of planes and the era of the simulation.
   -- Fast planes like in the 80s, need a larger radius than WWII planes.  
   -- Typically I suggest to use 30000 for new generation planes and 10000 for older era aircraft.
   -- 
-  -- Note that detected targets are constantly re-grouped, that is, when certain detected aircraft are moving further than the group radius, then these aircraft will become a separate
-  -- group being detected. This may result in additional GCI being started by the dispatcher! So don't make this value too small!
+  -- ## 3) Additional notes:
   -- 
-  -- ## 2. AI_A2A_DISPATCHER_DOCUMENTATION is derived from @{#AI_A2A_DISPATCHER}, 
-  -- so all further documentation needs to be consulted in this class
-  -- for documentation consistency.
+  -- In order to create a two way A2A defense system, **two AI\_A2A\_GCICAP defense systems must need to be created**, for each coalition one.
+  -- Each defense system needs its own EWR network setup, airplane templates and CAP configurations.
+  -- 
+  -- This is a good implementation, because maybe in the future, more coalitions may become available in DCS world.
+  -- 
+  -- 
+  -- 
+  -- 
+  -- ## 4) Coding example how to use the AI\_A2A\_GCICAP class:
+  -- 
+  --      -- Setup the AI_A2A_GCICAP dispatcher for one coalition, and initialize it.
+  --      GCI_Red = AI_A2A_GCICAP:New( "EWR CCCP", "SQUADRON CCCP", "CAP CCCP", 2 )
+  -- 
+  -- This will create a GCI/CAP system for the RED coalition, and stores the reference to the GCI/CAP system in the `GCI\_Red` variable!
+  -- In the mission editor, the following setup will have taken place:
+  -- 
+  -- ![Banner Image](..\Presentations\AI_A2A_DISPATCHER\Dia5.JPG)
+  -- 
+  -- The following parameters were given to the :New method of AI_A2A_GCICAP, and mean the following:
+  -- 
+  --    * `EWR CCCP`: Groups of the RED coalition are placed that define the EWR network. These groups start with the name `EWR CCCP`.
+  --    * `SQUADRON CCCP`: Late activated Groups objects of the RED coalition are placed above the relevant airbases that will contain these templates in the squadron.
+  --      These late activated Groups start with the name `SQUADRON CCCP`. Each Group object contains only one Unit, and defines the weapon payload, skin and skill level.
+  --    * `CAP CCCP`: CAP Zones are defined using floating, late activated Helicopter Group objects, where the route points define the route of the polygon of the CAP Zone.
+  --      These Helicopter Group objects start with the name `CAP CCCP`, and will be the locations wherein CAP will be performed.
+  --    * `2` Defines how many CAP airplanes are patrolling in each CAP zone defined simulateneously.  
   -- 
   -- @field #AI_A2A_GCICAP
   AI_A2A_GCICAP = {

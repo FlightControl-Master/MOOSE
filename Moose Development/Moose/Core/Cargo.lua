@@ -374,6 +374,85 @@ function CARGO:Spawn( PointVec2 )
 
 end
 
+--- Signal a flare at the position of the CARGO.
+-- @param #CARGO self
+-- @param Utilities.Utils#FLARECOLOR FlareColor
+function CARGO:Flare( FlareColor )
+  if self:IsUnLoaded() then
+    trigger.action.signalFlare( self.CargoObject:GetVec3(), FlareColor , 0 )
+  end
+end
+
+--- Signal a white flare at the position of the CARGO.
+-- @param #CARGO self
+function CARGO:FlareWhite()
+  self:Flare( trigger.flareColor.White )
+end
+
+--- Signal a yellow flare at the position of the CARGO.
+-- @param #CARGO self
+function CARGO:FlareYellow()
+  self:Flare( trigger.flareColor.Yellow )
+end
+
+--- Signal a green flare at the position of the CARGO.
+-- @param #CARGO self
+function CARGO:FlareGreen()
+  self:Flare( trigger.flareColor.Green )
+end
+
+--- Signal a red flare at the position of the CARGO.
+-- @param #CARGO self
+function CARGO:FlareRed()
+  self:Flare( trigger.flareColor.Red )
+end
+
+--- Smoke the CARGO.
+-- @param #CARGO self
+function CARGO:Smoke( SmokeColor, Range )
+  self:F2()
+  if self:IsUnLoaded() then
+    if Range then
+      trigger.action.smoke( self.CargoObject:GetRandomVec3( Range ), SmokeColor )
+    else
+      trigger.action.smoke( self.CargoObject:GetVec3(), SmokeColor )
+    end
+  end
+end
+
+--- Smoke the CARGO Green.
+-- @param #CARGO self
+function CARGO:SmokeGreen()
+  self:Smoke( trigger.smokeColor.Green, Range )
+end
+
+--- Smoke the CARGO Red.
+-- @param #CARGO self
+function CARGO:SmokeRed()
+  self:Smoke( trigger.smokeColor.Red, Range )
+end
+
+--- Smoke the CARGO White.
+-- @param #CARGO self
+function CARGO:SmokeWhite()
+  self:Smoke( trigger.smokeColor.White, Range )
+end
+
+--- Smoke the CARGO Orange.
+-- @param #CARGO self
+function CARGO:SmokeOrange()
+  self:Smoke( trigger.smokeColor.Orange, Range )
+end
+
+--- Smoke the CARGO Blue.
+-- @param #CARGO self
+function CARGO:SmokeBlue()
+  self:Smoke( trigger.smokeColor.Blue, Range )
+end
+
+
+
+
 
 
 --- Check if Cargo is the given @{Zone}.
@@ -1162,6 +1241,10 @@ function CARGO_GROUP:onenterUnBoarding( From, Event, To, ToPointVec2, NearRadius
   local Timer = 1
 
   if From == "Loaded" then
+  
+    if self.CargoObject then
+      self.CargoObject:Destroy()
+    end
 
     -- For each Cargo object within the CARGO_GROUP, route each object to the CargoLoadPointVec2
     self.CargoSet:ForEach(

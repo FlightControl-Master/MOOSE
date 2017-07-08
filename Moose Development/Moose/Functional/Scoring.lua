@@ -294,7 +294,7 @@ end
 -- @param #string DisplayMessagePrefix (Default="Scoring: ") The scoring prefix string.
 -- @return #SCORING
 function SCORING:SetDisplayMessagePrefix( DisplayMessagePrefix )
-  self.DisplayMessagePrefix = DisplayMessagePrefix or "Scoring: "
+  self.DisplayMessagePrefix = DisplayMessagePrefix or ""
   return self
 end
 
@@ -637,7 +637,7 @@ function SCORING:_AddPlayerFromUnit( UnitData )
       MESSAGE:New( self.DisplayMessagePrefix .. "Player '" .. PlayerName .. "' committed FRATRICIDE, he will be COURT MARTIALED and is DISMISSED from this mission!",
         10
       ):ToAll()
-      UnitData:Destroy()
+      UnitData:GetGroup():Destroy()
     end
 
   end
@@ -911,7 +911,7 @@ function SCORING:_EventOnHit( Event )
                   :ToCoalitionIf( InitCoalition, self:IfMessagesHit() and self:IfMessagesToCoalition() )
               else
                 MESSAGE
-                  :New( self.DisplayMessagePrefix .. "Player '" .. InitPlayerName .. "' hit a friendly target " .. 
+                  :New( self.DisplayMessagePrefix .. "Player '" .. InitPlayerName .. "' hit friendly target " .. 
                         TargetUnitCategory .. " ( " .. TargetType .. " ) " .. PlayerHit.PenaltyHit .. " times. " .. 
                         "Penalty: -" .. PlayerHit.Penalty .. ".  Score Total:" .. Player.Score - Player.Penalty,
                         2
@@ -935,7 +935,7 @@ function SCORING:_EventOnHit( Event )
                   :ToCoalitionIf( InitCoalition, self:IfMessagesHit() and self:IfMessagesToCoalition() )
               else
                 MESSAGE
-                  :New( self.DisplayMessagePrefix .. "Player '" .. InitPlayerName .. "' hit an enemy target " .. 
+                  :New( self.DisplayMessagePrefix .. "Player '" .. InitPlayerName .. "' hit enemy target " .. 
                         TargetUnitCategory .. " ( " .. TargetType .. " ) " .. PlayerHit.ScoreHit .. " times. " .. 
                         "Score: " .. PlayerHit.Score .. ".  Score Total:" .. Player.Score - Player.Penalty,
                         2
@@ -947,7 +947,7 @@ function SCORING:_EventOnHit( Event )
             end
           else -- A scenery object was hit.
             MESSAGE
-              :New( self.DisplayMessagePrefix .. "Player '" .. InitPlayerName .. "' hit a scenery object.",
+              :New( self.DisplayMessagePrefix .. "Player '" .. InitPlayerName .. "' hit scenery object.",
                     2
                   )
               :ToAllIf( self:IfMessagesHit() and self:IfMessagesToAll() )
@@ -1008,9 +1008,9 @@ function SCORING:_EventOnHit( Event )
               PlayerHit.PenaltyHit = PlayerHit.PenaltyHit + 1
       
               MESSAGE
-                :New( self.DisplayMessagePrefix .. "Player '" .. Event.WeaponPlayerName .. "' hit a friendly target " .. 
-                      TargetUnitCategory .. " ( " .. TargetType .. " ) " .. PlayerHit.PenaltyHit .. " times. " .. 
-                      "Penalty: -" .. PlayerHit.Penalty .. ".  Score Total:" .. Player.Score - Player.Penalty,
+                :New( self.DisplayMessagePrefix .. "Player '" .. Event.WeaponPlayerName .. "' hit friendly target " .. 
+                      TargetUnitCategory .. " ( " .. TargetType .. " ) " .. 
+                      "Penalty: -" .. PlayerHit.Penalty .. " = " .. Player.Score - Player.Penalty,
                       2
                     )
                 :ToAllIf( self:IfMessagesHit() and self:IfMessagesToAll() )
@@ -1021,9 +1021,9 @@ function SCORING:_EventOnHit( Event )
               PlayerHit.Score = PlayerHit.Score + 1
               PlayerHit.ScoreHit = PlayerHit.ScoreHit + 1
               MESSAGE
-                :New( self.DisplayMessagePrefix .. "Player '" .. Event.WeaponPlayerName .. "' hit an enemy target " .. 
-                      TargetUnitCategory .. " ( " .. TargetType .. " ) " .. PlayerHit.ScoreHit .. " times. " .. 
-                      "Score: " .. PlayerHit.Score .. ".  Score Total:" .. Player.Score - Player.Penalty,
+                :New( self.DisplayMessagePrefix .. "Player '" .. Event.WeaponPlayerName .. "' hit enemy target " .. 
+                      TargetUnitCategory .. " ( " .. TargetType .. " ) " .. 
+                      "Score: +" .. PlayerHit.Score .. " = " .. Player.Score - Player.Penalty,
                       2
                     )
                 :ToAllIf( self:IfMessagesHit() and self:IfMessagesToAll() )
@@ -1032,7 +1032,7 @@ function SCORING:_EventOnHit( Event )
             end
           else -- A scenery object was hit.
             MESSAGE
-              :New( self.DisplayMessagePrefix .. "Player '" .. Event.WeaponPlayerName .. "' hit a scenery object.",
+              :New( self.DisplayMessagePrefix .. "Player '" .. Event.WeaponPlayerName .. "' hit scenery object.",
                     2
                   )
               :ToAllIf( self:IfMessagesHit() and self:IfMessagesToAll() )
@@ -1132,17 +1132,17 @@ function SCORING:_EventOnDeadOrCrash( Event )
             if Player.HitPlayers[TargetPlayerName] then -- A player destroyed another player
               MESSAGE
                 :New( self.DisplayMessagePrefix .. "Player '" .. PlayerName .. "' destroyed friendly player '" .. TargetPlayerName .. "' " .. 
-                      TargetUnitCategory .. " ( " .. ThreatTypeTarget .. " ) " .. TargetDestroy.PenaltyDestroy .. " times. " .. 
-                      "Penalty: -" .. TargetDestroy.Penalty .. ".  Score Total:" .. Player.Score - Player.Penalty,
+                      TargetUnitCategory .. " ( " .. ThreatTypeTarget .. " ) " .. 
+                      "Penalty: -" .. TargetDestroy.Penalty .. " = " .. Player.Score - Player.Penalty,
                       15 
                     )
                 :ToAllIf( self:IfMessagesDestroy() and self:IfMessagesToAll() )
                 :ToCoalitionIf( InitCoalition, self:IfMessagesDestroy() and self:IfMessagesToCoalition() )
             else
               MESSAGE
-                :New( self.DisplayMessagePrefix .. "Player '" .. PlayerName .. "' destroyed a friendly target " .. 
-                      TargetUnitCategory .. " ( " .. ThreatTypeTarget .. " ) " .. TargetDestroy.PenaltyDestroy .. " times. " .. 
-                      "Penalty: -" .. TargetDestroy.Penalty .. ".  Score Total:" .. Player.Score - Player.Penalty,
+                :New( self.DisplayMessagePrefix .. "Player '" .. PlayerName .. "' destroyed friendly target " .. 
+                      TargetUnitCategory .. " ( " .. ThreatTypeTarget .. " ) " .. 
+                      "Penalty: -" .. TargetDestroy.Penalty .. " = " .. Player.Score - Player.Penalty,
                       15 
                     )
                 :ToAllIf( self:IfMessagesDestroy() and self:IfMessagesToAll() )
@@ -1166,17 +1166,17 @@ function SCORING:_EventOnDeadOrCrash( Event )
             if Player.HitPlayers[TargetPlayerName] then -- A player destroyed another player
               MESSAGE
                 :New( self.DisplayMessagePrefix .. "Player '" .. PlayerName .. "' destroyed enemy player '" .. TargetPlayerName .. "' " .. 
-                      TargetUnitCategory .. " ( " .. ThreatTypeTarget .. " ) " .. TargetDestroy.ScoreDestroy .. " times. " .. 
-                      "Score: " .. TargetDestroy.Score .. ".  Score Total:" .. Player.Score - Player.Penalty,
+                      TargetUnitCategory .. " ( " .. ThreatTypeTarget .. " ) " .. 
+                      "Score: +" .. TargetDestroy.Score .. " = " .. Player.Score - Player.Penalty,
                       15 
                     )
                 :ToAllIf( self:IfMessagesDestroy() and self:IfMessagesToAll() )
                 :ToCoalitionIf( InitCoalition, self:IfMessagesDestroy() and self:IfMessagesToCoalition() )
             else
               MESSAGE
-                :New( self.DisplayMessagePrefix .. "Player '" .. PlayerName .. "' destroyed an enemy " .. 
-                      TargetUnitCategory .. " ( " .. ThreatTypeTarget .. " ) " .. TargetDestroy.ScoreDestroy .. " times. " .. 
-                      "Score: " .. TargetDestroy.Score .. ".  Total:" .. Player.Score - Player.Penalty,
+                :New( self.DisplayMessagePrefix .. "Player '" .. PlayerName .. "' destroyed enemy " .. 
+                      TargetUnitCategory .. " ( " .. ThreatTypeTarget .. " ) " .. 
+                      "Score: +" .. TargetDestroy.Score .. " = " .. Player.Score - Player.Penalty,
                       15 
                     )
                 :ToAllIf( self:IfMessagesDestroy() and self:IfMessagesToAll() )

@@ -329,7 +329,15 @@ do -- TASK_A2G_SEAD
 
     return self
   end 
-
+  
+  function TASK_A2G_SEAD:ReportOrder( ReportGroup ) 
+    local Coordinate = self.TaskInfo.Coordinates.TaskInfoText
+    local Distance = ReportGroup:GetCoordinate():Get2DDistance( Coordinate )
+    
+    return Distance
+  end
+  
+  
   --- @param #TASK_A2G_SEAD self
   function TASK_A2G_SEAD:onafterGoal( TaskUnit, From, Event, To )
     local TargetSetUnit = self.TargetSetUnit -- Core.Set#SET_UNIT
@@ -341,7 +349,7 @@ do -- TASK_A2G_SEAD
     self:__Goal( -10 )
   end
 
-  --- Set a score when a target in scope of the A2A attack, has been destroyed .
+  --- Set a score when a target in scope of the A2G attack, has been destroyed .
   -- @param #TASK_A2G_SEAD self
   -- @param #string PlayerName The name of the player.
   -- @param #number Score The score in points to be granted when task process has been achieved.
@@ -357,7 +365,7 @@ do -- TASK_A2G_SEAD
     return self
   end
 
-  --- Set a score when all the targets in scope of the A2A attack, have been destroyed.
+  --- Set a score when all the targets in scope of the A2G attack, have been destroyed.
   -- @param #TASK_A2G_SEAD self
   -- @param #string PlayerName The name of the player.
   -- @param #number Score The score in points.
@@ -373,7 +381,7 @@ do -- TASK_A2G_SEAD
     return self
   end
 
-  --- Set a penalty when the A2A attack has failed.
+  --- Set a penalty when the A2G attack has failed.
   -- @param #TASK_A2G_SEAD self
   -- @param #string PlayerName The name of the player.
   -- @param #number Penalty The penalty in points, must be a negative value!
@@ -443,6 +451,15 @@ do -- TASK_A2G_BAI
     return self
   end 
 
+
+  function TASK_A2G_BAI:ReportOrder( ReportGroup ) 
+    local Coordinate = self.TaskInfo.Coordinates.TaskInfoText
+    local Distance = ReportGroup:GetCoordinate():Get2DDistance( Coordinate )
+    
+    return Distance
+  end
+
+
   --- @param #TASK_A2G_BAI self
   function TASK_A2G_BAI:onafterGoal( TaskUnit, From, Event, To )
     local TargetSetUnit = self.TargetSetUnit -- Core.Set#SET_UNIT
@@ -454,7 +471,7 @@ do -- TASK_A2G_BAI
     self:__Goal( -10 )
   end
 
-  --- Set a score when a target in scope of the A2A attack, has been destroyed .
+  --- Set a score when a target in scope of the A2G attack, has been destroyed .
   -- @param #TASK_A2G_BAI self
   -- @param #string PlayerName The name of the player.
   -- @param #number Score The score in points to be granted when task process has been achieved.
@@ -470,7 +487,7 @@ do -- TASK_A2G_BAI
     return self
   end
 
-  --- Set a score when all the targets in scope of the A2A attack, have been destroyed.
+  --- Set a score when all the targets in scope of the A2G attack, have been destroyed.
   -- @param #TASK_A2G_BAI self
   -- @param #string PlayerName The name of the player.
   -- @param #number Score The score in points.
@@ -486,7 +503,7 @@ do -- TASK_A2G_BAI
     return self
   end
 
-  --- Set a penalty when the A2A attack has failed.
+  --- Set a penalty when the A2G attack has failed.
   -- @param #TASK_A2G_BAI self
   -- @param #string PlayerName The name of the player.
   -- @param #number Penalty The penalty in points, must be a negative value!
@@ -556,6 +573,14 @@ do -- TASK_A2G_CAS
     return self
   end 
 
+  function TASK_A2G_CAS:ReportOrder( ReportGroup ) 
+    local Coordinate = self.TaskInfo.Coordinates.TaskInfoText
+    local Distance = ReportGroup:GetCoordinate():Get2DDistance( Coordinate )
+    
+    return Distance
+  end
+
+
   --- @param #TASK_A2G_CAS self
   function TASK_A2G_CAS:onafterGoal( TaskUnit, From, Event, To )
     local TargetSetUnit = self.TargetSetUnit -- Core.Set#SET_UNIT
@@ -567,7 +592,7 @@ do -- TASK_A2G_CAS
     self:__Goal( -10 )
   end
 
-  --- Set a score when a target in scope of the A2A attack, has been destroyed .
+  --- Set a score when a target in scope of the A2G attack, has been destroyed .
   -- @param #TASK_A2G_CAS self
   -- @param #string PlayerName The name of the player.
   -- @param #number Score The score in points to be granted when task process has been achieved.
@@ -583,7 +608,7 @@ do -- TASK_A2G_CAS
     return self
   end
 
-  --- Set a score when all the targets in scope of the A2A attack, have been destroyed.
+  --- Set a score when all the targets in scope of the A2G attack, have been destroyed.
   -- @param #TASK_A2G_CAS self
   -- @param #string PlayerName The name of the player.
   -- @param #number Score The score in points.
@@ -599,7 +624,7 @@ do -- TASK_A2G_CAS
     return self
   end
 
-  --- Set a penalty when the A2A attack has failed.
+  --- Set a penalty when the A2G attack has failed.
   -- @param #TASK_A2G_CAS self
   -- @param #string PlayerName The name of the player.
   -- @param #number Penalty The penalty in points, must be a negative value!
