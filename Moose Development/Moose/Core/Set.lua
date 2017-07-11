@@ -884,6 +884,23 @@ function SET_GROUP:FilterStart()
   return self
 end
 
+--- Handles the OnDead or OnCrash event for alive groups set.
+-- Note: The GROUP object in the SET_GROUP collection will only be removed if the last unit is destroyed of the GROUP.
+-- @param #SET_GROUP self
+-- @param Core.Event#EVENTDATA Event
+function SET_GROUP:_EventOnDeadOrCrash( Event )
+  self:F3( { Event } )
+
+  if Event.IniDCSUnit then
+    local ObjectName, Object = self:FindInDatabase( Event )
+    if ObjectName then
+      if Event.IniDCSGroup:getSize() == 1 then -- Only remove if the last unit of the group was destroyed.
+        self:Remove( ObjectName )
+      end
+    end
+  end
+end
+
 --- Handles the Database to check on an event (birth) that the Object was added in the Database.
 -- This is required, because sometimes the _DATABASE birth event gets called later than the SET_BASE birth event!
 -- @param #SET_GROUP self
