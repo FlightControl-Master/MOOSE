@@ -276,7 +276,10 @@ end
 -- @return #BASE
 function BASE:GetParent( Child )
   local Parent
-  if rawget( Child, "__" ) then
+  -- BASE class has no parent
+  if Child.ClassName == 'BASE' then
+    Parent = nil
+  elseif rawget( Child, "__" ) then
 	  Parent = getmetatable( Child.__ ).__index
 	else
 	  Parent = getmetatable( Child ).__index
