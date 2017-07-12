@@ -33,6 +33,69 @@ FLARECOLOR = trigger.flareColor -- #FLARECOLOR
 -- @type UTILS
 UTILS = {}
 
+--- Function to infer instance of an object
+--
+-- ### Examples:
+--
+--    * UTILS.IsInstanceOf( 'some text', 'string' ) will return true
+--    * UTILS.IsInstanceOf( some_function, 'function' ) will return true
+--    * UTILS.IsInstanceOf( 10, 'number' ) will return true
+--    * UTILS.IsInstanceOf( false, 'boolean' ) will return true
+--    * UTILS.IsInstanceOf( nil, 'nil' ) will return true
+--
+--    * UTILS.IsInstanceOf( ZONE:New( 'some zone', ZONE ) will return true
+--    * UTILS.IsInstanceOf( ZONE:New( 'some zone', 'ZONE' ) will return true
+--    * UTILS.IsInstanceOf( ZONE:New( 'some zone', 'zone' ) will return true
+--    * UTILS.IsInstanceOf( ZONE:New( 'some zone', 'BASE' ) will return true
+--
+--    * UTILS.IsInstanceOf( ZONE:New( 'some zone', 'GROUP' ) will return false
+--
+--
+-- @param object is the object to be evaluated
+-- @param className is the name of the class to evaluate (can be either a string or a Moose class)
+-- @return #boolean
+UTILS.IsInstanceOf = function( object, className )
+  -- Is className NOT a string ?
+  if not type( className ) == 'string' then
+  
+    -- Is className a Moose class ?
+    if type( className ) == 'table' and className.IsInstanceOf ~= nil then
+    
+      -- Get the name of the Moose class as a string
+      className = className.ClassName
+      
+    -- className is neither a string nor a Moose class, throw an error
+    else
+    
+      -- I'm not sure if this should take advantage of MOOSE logging function, or throw an error for pcall
+      local err_str = 'className parameter should be a string; parameter received: '..type( className )
+      self:E( err_str )
+      return false
+      -- error( err_str )
+      
+    end
+  end
+  
+  -- Is the object a Moose class instance ?
+  if type( object ) == 'table' and object.IsInstanceOf ~= nil then
+  
+    -- Use the IsInstanceOf method of the BASE class
+    return object:IsInstanceOf( className )
+  else
+  
+    -- If the object is not an instance of a Moose class, evaluate against lua basic data types
+    local basicDataTypes = { 'string', 'number', 'function', 'boolean', 'nil', 'table' }
+    for _, basicDataType in ipairs( basicDataTypes ) do
+      if className == basicDataType then
+        return type( object ) == basicDataType
+      end
+    end
+  end
+  
+  -- Check failed
+  return false
+end
+
 
 --from http://lua-users.org/wiki/CopyTable
 UTILS.DeepCopy = function(object)
