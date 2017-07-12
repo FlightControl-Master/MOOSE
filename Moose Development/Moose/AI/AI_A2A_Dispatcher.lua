@@ -406,7 +406,7 @@ do -- AI_A2A_DISPATCHER
   --        -- which takes the waypoints of a late activated group with the name CCCP Border as the boundaries of the border area.
   --        -- Any enemy crossing this border will be engaged.
   --        CCCPBorderZone = ZONE_POLYGON:New( "CCCP Border", GROUP:FindByName( "CCCP Border" ) )
-  --        A2ADispatcher:SetBorderZone( { CCCPBorderZone } )
+  --        A2ADispatcher:SetBorderZone( CCCPBorderZone )
   --        
   --        -- Initialize the dispatcher, setting up a radius of 100km where any airborne friendly 
   --        -- without an assignment within 100km radius from a detected target, will engage that target.
@@ -798,13 +798,21 @@ do -- AI_A2A_DISPATCHER
   -- If it’s a cold war then the **borders of red and blue territory** need to be defined using a @{zone} object derived from @{Zone#ZONE_BASE}. This method needs to be used for this.
   -- If a hot war is chosen then **no borders** actually need to be defined using the helicopter units other than it makes it easier sometimes for the mission maker to envisage where the red and blue territories roughly are. In a hot war the borders are effectively defined by the ground based radar coverage of a coalition. Set the noborders parameter to 1
   -- @param #AI_A2A_DISPATCHER self
-  -- @param Core.Zone#ZONE_BASE BorderZone An object derived from ZONE_BASE, that defines a zone between
+  -- @param Core.Zone#ZONE_BASE BorderZone An object derived from ZONE_BASE, or a list of objects derived from ZONE_BASE.
   -- @return #AI_A2A_DISPATCHER
   -- @usage
   -- 
-  --   -- Set a polygon zone as the border for the A2A dispatcher.
+  --   -- Set one ZONE_POLYGON object as the border for the A2A dispatcher.
   --   local BorderZone = ZONE_POLYGON( "CCCP Border", GROUP:FindByName( "CCCP Border" ) ) -- The GROUP object is a late activate helicopter unit.
   --   Dispatcher:SetBorderZone( BorderZone )
+  --   
+  --   or
+  --   
+  --   -- Set two ZONE_POLYGON objects as the border for the A2A dispatcher.
+  --   local BorderZone1 = ZONE_POLYGON( "CCCP Border1", GROUP:FindByName( "CCCP Border1" ) ) -- The GROUP object is a late activate helicopter unit.
+  --   local BorderZone2 = ZONE_POLYGON( "CCCP Border2", GROUP:FindByName( "CCCP Border2" ) ) -- The GROUP object is a late activate helicopter unit.
+  --   Dispatcher:SetBorderZone( { BorderZone1, BorderZone2 } )
+  --   
   --   
   function AI_A2A_DISPATCHER:SetBorderZone( BorderZone )
 

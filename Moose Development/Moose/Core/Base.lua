@@ -297,25 +297,26 @@ end
 --    * ZONE:New( 'some zone' ):IsInstanceOf( 'BASE' ) will return true
 --
 --    * ZONE:New( 'some zone' ):IsInstanceOf( 'GROUP' ) will return false
---
--- @param ClassName is the name of the class or the class itself  to run the check against
+-- 
+-- @param #BASE self
+-- @param ClassName is the name of the class or the class itself to run the check against
 -- @return #boolean
-function BASE:IsInstanceOf( className )
+function BASE:IsInstanceOf( ClassName )
 
   -- Is className NOT a string ?
-  if type( className ) ~= 'string' then
+  if type( ClassName ) ~= 'string' then
   
     -- Is className a Moose class ?
-    if type( className ) == 'table' and className.ClassName ~= nil then
+    if type( ClassName ) == 'table' and ClassName.ClassName ~= nil then
     
       -- Get the name of the Moose class as a string
-      className = className.ClassName
+      ClassName = ClassName.ClassName
       
     -- className is neither a string nor a Moose class, throw an error
     else
     
       -- I'm not sure if this should take advantage of MOOSE logging function, or throw an error for pcall
-      local err_str = 'className parameter should be a string; parameter received: '..type( className )
+      local err_str = 'className parameter should be a string; parameter received: '..type( ClassName )
       self:E( err_str )
       -- error( err_str )
       return false
@@ -323,9 +324,9 @@ function BASE:IsInstanceOf( className )
     end
   end
   
-  className = string.upper( className )
+  ClassName = string.upper( ClassName )
 
-  if string.upper( self.ClassName ) == className then
+  if string.upper( self.ClassName ) == ClassName then
     return true
   end
 
@@ -333,7 +334,7 @@ function BASE:IsInstanceOf( className )
 
   while Parent do
 
-    if string.upper( Parent.ClassName ) == className then
+    if string.upper( Parent.ClassName ) == ClassName then
       return true
     end
 

@@ -909,6 +909,12 @@ mission designer to add a dedicated method</p>
 <p>Remove GROUP(s) from SET_GROUP.</p>
 </td>
 		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_GROUP)._EventOnDeadOrCrash">SET_GROUP:_EventOnDeadOrCrash(Event)</a></td>
+		<td class="summary">
+<p>Handles the OnDead or OnCrash event for alive groups set.</p>
+</td>
+		</tr>
 	</table>
 
 			<h2><a id="#(SET_UNIT)">Type <code>SET_UNIT</code></a></h2>
@@ -4428,6 +4434,30 @@ A single name or an array of GROUP names.</p>
 
 <p>self</p>
 
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_GROUP)._EventOnDeadOrCrash" >
+<strong>SET_GROUP:_EventOnDeadOrCrash(Event)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Handles the OnDead or OnCrash event for alive groups set.</p>
+
+	
+<p>Note: The GROUP object in the SET_GROUP collection will only be removed if the last unit is destroyed of the GROUP.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Event.html##(EVENTDATA)">Core.Event#EVENTDATA</a> Event </em></code>: </p>
+
+				</li>
+		</ul>
 </dd>
 </dl>
 

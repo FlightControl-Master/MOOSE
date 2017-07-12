@@ -342,12 +342,6 @@ Example code snippet:</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(EVENT).EventsDead">EVENT.EventsDead</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(EVENT).Init">EVENT:Init(EventID, EventClass)</a></td>
 		<td class="summary">
 <p>Initializes the Events structure for the event</p>
@@ -420,15 +414,15 @@ Example code snippet:</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(EVENT).Remove">EVENT:Remove(EventClass, EventID)</a></td>
-		<td class="summary">
-<p>Removes a subscription</p>
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(EVENT).RemoveAll">EVENT:RemoveAll(EventObject)</a></td>
 		<td class="summary">
 <p>Clears all event subscriptions for a <a href="Base.html##(BASE)">Base#BASE</a> derived object.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(EVENT).RemoveEvent">EVENT:RemoveEvent(EventClass, EventID)</a></td>
+		<td class="summary">
+<p>Removes a subscription</p>
 </td>
 		</tr>
 		<tr>
@@ -1038,19 +1032,6 @@ The Cargo created.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(EVENT).EventsDead" >
-<strong>EVENT.EventsDead</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
 <a id="#(EVENT).Init" >
 <strong>EVENT:Init(EventID, EventClass)</strong>
 </a>
@@ -1498,8 +1479,29 @@ The self instance of the class for which the event is captured. When the event h
 		<dl class="function">
 <dt>
 
-<a id="#(EVENT).Remove" >
-<strong>EVENT:Remove(EventClass, EventID)</strong>
+<a id="#(EVENT).RemoveAll" >
+<strong>EVENT:RemoveAll(EventObject)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Clears all event subscriptions for a <a href="Base.html##(BASE)">Base#BASE</a> derived object.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Base.html##(BASE)">Core.Base#BASE</a> EventObject </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(EVENT).RemoveEvent" >
+<strong>EVENT:RemoveEvent(EventClass, EventID)</strong>
 </a>
 </dt>
 <dd>
@@ -1525,27 +1527,6 @@ The self instance of the class for which the event is.</p>
 <p><em><a href="##(EVENT.Events)">#EVENT.Events</a>:</em></p>
 
 
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(EVENT).RemoveAll" >
-<strong>EVENT:RemoveAll(EventObject)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Clears all event subscriptions for a <a href="Base.html##(BASE)">Base#BASE</a> derived object.</p>
-
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="Core.Base.html##(BASE)">Core.Base#BASE</a> EventObject </em></code>: </p>
-
-				</li>
-		</ul>
 </dd>
 </dl>
 		<dl class="function">

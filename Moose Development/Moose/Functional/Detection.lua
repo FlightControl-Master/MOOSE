@@ -956,15 +956,20 @@ do -- DETECTION_BASE
     
     --- Accept detections if within the specified zone(s).
     -- @param #DETECTION_BASE self
-    -- @param AcceptZones Can be a list or ZONE_BASE objects, or a single ZONE_BASE object.
+    -- @param Core.Zone#ZONE_BASE AcceptZones Can be a list or ZONE_BASE objects, or a single ZONE_BASE object.
     -- @return #DETECTION_BASE self
     function DETECTION_BASE:SetAcceptZones( AcceptZones )
       self:F2()
     
       if type( AcceptZones ) == "table" then
-        self.AcceptZones = AcceptZones
+        if AcceptZones.ClassName and AcceptZones:IsInstanceOf( ZONE_BASE ) then
+          self.AcceptZones = { AcceptZones }
+        else
+          self.AcceptZones = AcceptZones
+        end
       else
-        self.AcceptZones = { AcceptZones }
+        self:E( { "AcceptZones must be a list of ZONE_BASE derived objects or one ZONE_BASE derived object", AcceptZones } )
+        error()
       end
       
       return self
@@ -972,15 +977,20 @@ do -- DETECTION_BASE
     
     --- Reject detections if within the specified zone(s).
     -- @param #DETECTION_BASE self
-    -- @param RejectZones Can be a list or ZONE_BASE objects, or a single ZONE_BASE object.
+    -- @param Core.Zone#ZONE_BASE RejectZones Can be a list or ZONE_BASE objects, or a single ZONE_BASE object.
     -- @return #DETECTION_BASE self
     function DETECTION_BASE:SetRejectZones( RejectZones )
       self:F2()
     
       if type( RejectZones ) == "table" then
-        self.RejectZones = RejectZones
+        if RejectZones.ClassName and RejectZones:IsInstanceOf( ZONE_BASE ) then
+          self.RejectZones = { RejectZones }
+        else
+          self.RejectZones = RejectZones
+        end
       else
-        self.RejectZones = { RejectZones }
+        self:E( { "RejectZones must be a list of ZONE_BASE derived objects or one ZONE_BASE derived object", RejectZones } )
+        error()
       end
       
       return self
