@@ -260,6 +260,12 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).IsInstanceOf">BASE.IsInstanceOf(ClassName, self, className)</a></td>
+		<td class="summary">
+<p>This is the worker method to check if an object is an (sub)instance of a class.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(BASE).IsTrace">BASE:IsTrace()</a></td>
 		<td class="summary">
 <p>Enquires if tracing is on (for the class).</p>
@@ -1219,6 +1225,56 @@ is the Parent class that the Child inherits from.</p>
 				
 <p><em><a href="##(BASE)">#BASE</a>:</em>
 Child</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(BASE).IsInstanceOf" >
+<strong>BASE.IsInstanceOf(ClassName, self, className)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>This is the worker method to check if an object is an (sub)instance of a class.</p>
+
+	
+
+<h3>Examples:</h3>
+
+<ul>
+    <li><p>ZONE:New( 'some zone' ):IsInstanceOf( ZONE ) will return true</p></li>
+    <li><p>ZONE:New( 'some zone' ):IsInstanceOf( 'ZONE' ) will return true</p></li>
+    <li><p>ZONE:New( 'some zone' ):IsInstanceOf( 'zone' ) will return true</p></li>
+    <li><p>ZONE:New( 'some zone' ):IsInstanceOf( 'BASE' ) will return true</p></li>
+    <li><p>ZONE:New( 'some zone' ):IsInstanceOf( 'GROUP' ) will return false</p></li>
+</ul>
+
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> ClassName </em></code>: 
+is the name of the class or the class itself  to run the check against</p>
+
+				</li>
+				<li>
+				
+<p><code><em> self </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> className </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em></p>
+
 
 </dd>
 </dl>
