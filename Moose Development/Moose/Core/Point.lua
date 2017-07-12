@@ -808,10 +808,15 @@ do -- COORDINATE
         local Coordinate = Controllable:GetCoordinate()
         return self:ToStringBRA( Coordinate, Settings ) 
       end
-  
       if Settings:IsA2A_BULLS() then
         local Coalition = Controllable:GetCoalition()
         return self:ToStringBULLS( Coalition, Settings )
+      end
+      if Settings:IsA2A_LL()  then
+        return self:ToStringLL( Settings )
+      end
+      if Settings:IsA2A_MGRS() then
+        return self:ToStringMGRS( Settings )
       end
     else
       if Settings:IsA2G_BR()  then

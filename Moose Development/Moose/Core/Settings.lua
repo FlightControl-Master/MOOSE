@@ -220,6 +220,34 @@ do -- SETTINGS
     return ( self.A2ASystem and self.A2ASystem == "BULLS" ) or ( not self.A2ASystem and _SETTINGS:IsA2A_BULLS() )
   end
 
+  --- Sets A2A LL
+  -- @param #SETTINGS self
+  -- @return #SETTINGS
+  function SETTINGS:SetA2A_LL()
+    self.A2ASystem = "LL"
+  end
+
+  --- Is LL
+  -- @param #SETTINGS self
+  -- @return #boolean true if LL
+  function SETTINGS:IsA2A_LL()
+    return ( self.A2ASystem and self.A2ASystem == "LL" ) or ( not self.A2ASystem and _SETTINGS:IsA2A_LL() )
+  end
+
+  --- Sets A2A MGRS
+  -- @param #SETTINGS self
+  -- @return #SETTINGS
+  function SETTINGS:SetA2A_MGRS()
+    self.A2ASystem = "MGRS"
+  end
+
+  --- Is MGRS
+  -- @param #SETTINGS self
+  -- @return #boolean true if MGRS
+  function SETTINGS:IsA2A_MGRS()
+    return ( self.A2ASystem and self.A2ASystem == "MGRS" ) or ( not self.A2ASystem and _SETTINGS:IsA2A_MGRS() )
+  end
+
   --- @param #SETTINGS self
   -- @return #SETTINGS
   function SETTINGS:SetSystemMenu( MenuGroup, RootMenu )
@@ -261,11 +289,38 @@ do -- SETTINGS
 
     if self:IsA2A_BULLS() then
       MENU_GROUP_COMMAND:New( MenuGroup, "Bearing Range Altitude Aspect (BRAA)", A2ACoordinateMenu, self.A2AMenuSystem, self, MenuGroup, RootMenu, "BRAA" ):SetTime( MenuTime )
+      MENU_GROUP_COMMAND:New( MenuGroup, "Military Grid (MGRS)", A2ACoordinateMenu, self.A2AMenuSystem, self, MenuGroup, RootMenu, "MGRS" ):SetTime( MenuTime )
+      MENU_GROUP_COMMAND:New( MenuGroup, "Lattitude Longitude (LL)", A2ACoordinateMenu, self.A2AMenuSystem, self, MenuGroup, RootMenu, "LL" ):SetTime( MenuTime )
     end
   
     if self:IsA2A_BRAA() then
       MENU_GROUP_COMMAND:New( MenuGroup, "Bullseye (BULLS)", A2ACoordinateMenu, self.A2AMenuSystem, self, MenuGroup, RootMenu, "BULLS" ):SetTime( MenuTime )
+      MENU_GROUP_COMMAND:New( MenuGroup, "Military Grid (MGRS)", A2ACoordinateMenu, self.A2AMenuSystem, self, MenuGroup, RootMenu, "MGRS" ):SetTime( MenuTime )
+      MENU_GROUP_COMMAND:New( MenuGroup, "Lattitude Longitude (LL)", A2ACoordinateMenu, self.A2AMenuSystem, self, MenuGroup, RootMenu, "LL" ):SetTime( MenuTime )
     end
+
+    if self:IsA2A_LL() then
+      MENU_GROUP_COMMAND:New( MenuGroup, "Bearing Range Altitude Aspect (BRAA)", A2ACoordinateMenu, self.A2AMenuSystem, self, MenuGroup, RootMenu, "BRAA" ):SetTime( MenuTime )
+      MENU_GROUP_COMMAND:New( MenuGroup, "Bullseye (BULLS)", A2ACoordinateMenu, self.A2AMenuSystem, self, MenuGroup, RootMenu, "BULLS" ):SetTime( MenuTime )
+      MENU_GROUP_COMMAND:New( MenuGroup, "Military Grid (MGRS)", A2ACoordinateMenu, self.A2AMenuSystem, self, MenuGroup, RootMenu, "MGRS" ):SetTime( MenuTime )
+      MENU_GROUP_COMMAND:New( MenuGroup, "Lattitude Longitude (LL) Accuracy 1", A2ACoordinateMenu, self.MenuLL_Accuracy, self, MenuGroup, RootMenu, 1 ):SetTime( MenuTime )
+      MENU_GROUP_COMMAND:New( MenuGroup, "Lattitude Longitude (LL) Accuracy 2", A2ACoordinateMenu, self.MenuLL_Accuracy, self, MenuGroup, RootMenu, 2 ):SetTime( MenuTime )
+      MENU_GROUP_COMMAND:New( MenuGroup, "Lattitude Longitude (LL) Accuracy 3", A2ACoordinateMenu, self.MenuLL_Accuracy, self, MenuGroup, RootMenu, 3 ):SetTime( MenuTime )
+      MENU_GROUP_COMMAND:New( MenuGroup, "Lattitude Longitude (LL) Decimal On", A2ACoordinateMenu, self.MenuLL_DMS, self, MenuGroup, RootMenu, true ):SetTime( MenuTime )
+      MENU_GROUP_COMMAND:New( MenuGroup, "Lattitude Longitude (LL) Decimal Off", A2ACoordinateMenu, self.MenuLL_DMS, self, MenuGroup, RootMenu, false ):SetTime( MenuTime )
+    end
+  
+    if self:IsA2A_MGRS() then
+      MENU_GROUP_COMMAND:New( MenuGroup, "Bearing Range Altitude Aspect (BRAA)", A2ACoordinateMenu, self.A2AMenuSystem, self, MenuGroup, RootMenu, "BRAA" ):SetTime( MenuTime )
+      MENU_GROUP_COMMAND:New( MenuGroup, "Bullseye (BULLS)", A2ACoordinateMenu, self.A2AMenuSystem, self, MenuGroup, RootMenu, "BULLS" ):SetTime( MenuTime )
+      MENU_GROUP_COMMAND:New( MenuGroup, "Lattitude Longitude (LL)", A2ACoordinateMenu, self.A2AMenuSystem, self, MenuGroup, RootMenu, "LL" ):SetTime( MenuTime )
+      MENU_GROUP_COMMAND:New( MenuGroup, "Military Grid (MGRS) Accuracy 1", A2ACoordinateMenu, self.MenuMGRS_Accuracy, self, MenuGroup, RootMenu, 1 ):SetTime( MenuTime )
+      MENU_GROUP_COMMAND:New( MenuGroup, "Military Grid (MGRS) Accuracy 2", A2ACoordinateMenu, self.MenuMGRS_Accuracy, self, MenuGroup, RootMenu, 2 ):SetTime( MenuTime )
+      MENU_GROUP_COMMAND:New( MenuGroup, "Military Grid (MGRS) Accuracy 3", A2ACoordinateMenu, self.MenuMGRS_Accuracy, self, MenuGroup, RootMenu, 3 ):SetTime( MenuTime )
+      MENU_GROUP_COMMAND:New( MenuGroup, "Military Grid (MGRS) Accuracy 4", A2ACoordinateMenu, self.MenuMGRS_Accuracy, self, MenuGroup, RootMenu, 4 ):SetTime( MenuTime )
+      MENU_GROUP_COMMAND:New( MenuGroup, "Military Grid (MGRS) Accuracy 5", A2ACoordinateMenu, self.MenuMGRS_Accuracy, self, MenuGroup, RootMenu, 5 ):SetTime( MenuTime )
+    end
+
     
     local MetricsMenu = MENU_GROUP:New( MenuGroup, "Measures and Weights System", SettingsMenu ):SetTime( MenuTime )
     
@@ -328,10 +383,36 @@ do -- SETTINGS
 
     if self:IsA2A_BULLS() then
       MENU_GROUP_COMMAND:New( PlayerGroup, "Bearing Range Altitude Aspect (BRAA)", A2ACoordinateMenu, self.MenuGroupA2ASystem, self, PlayerUnit, PlayerGroup, PlayerName, "BRAA" )
+      MENU_GROUP_COMMAND:New( PlayerGroup, "Military Grid (MGRS)", A2ACoordinateMenu, self.MenuGroupA2ASystem, self, PlayerUnit, PlayerGroup, PlayerName, "MGRS" )
+      MENU_GROUP_COMMAND:New( PlayerGroup, "Lattitude Longitude (LL)", A2ACoordinateMenu, self.MenuGroupA2ASystem, self, PlayerUnit, PlayerGroup, PlayerName, "LL" )
     end
   
     if self:IsA2A_BRAA() then
       MENU_GROUP_COMMAND:New( PlayerGroup, "Bullseye (BULLS)", A2ACoordinateMenu, self.MenuGroupA2ASystem, self, PlayerUnit, PlayerGroup, PlayerName, "BULLS" )
+      MENU_GROUP_COMMAND:New( PlayerGroup, "Military Grid (MGRS)", A2ACoordinateMenu, self.MenuGroupA2ASystem, self, PlayerUnit, PlayerGroup, PlayerName, "MGRS" )
+      MENU_GROUP_COMMAND:New( PlayerGroup, "Lattitude Longitude (LL)", A2ACoordinateMenu, self.MenuGroupA2ASystem, self, PlayerUnit, PlayerGroup, PlayerName, "LL" )
+    end
+
+    if self:IsA2A_LL() then
+      MENU_GROUP_COMMAND:New( PlayerGroup, "Bearing Range Altitude Aspect (BRAA)", A2ACoordinateMenu, self.MenuGroupA2ASystem, self, PlayerUnit, PlayerGroup, PlayerName, "BRAA" )
+      MENU_GROUP_COMMAND:New( PlayerGroup, "Bullseye (BULLS)", A2ACoordinateMenu, self.MenuGroupA2ASystem, self, PlayerUnit, PlayerGroup, PlayerName, "BULLS" )
+      MENU_GROUP_COMMAND:New( PlayerGroup, "Military Grid (MGRS)", A2ACoordinateMenu, self.MenuGroupA2ASystem, self, PlayerUnit, PlayerGroup, PlayerName, "MGRS" )
+      MENU_GROUP_COMMAND:New( PlayerGroup, "Lattitude Longitude (LL) Accuracy 1", A2ACoordinateMenu, self.MenuGroupLL_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 1 )
+      MENU_GROUP_COMMAND:New( PlayerGroup, "Lattitude Longitude (LL) Accuracy 2", A2ACoordinateMenu, self.MenuGroupLL_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 2 )
+      MENU_GROUP_COMMAND:New( PlayerGroup, "Lattitude Longitude (LL) Accuracy 3", A2ACoordinateMenu, self.MenuGroupLL_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 3 )
+      MENU_GROUP_COMMAND:New( PlayerGroup, "Lattitude Longitude (LL) Decimal On", A2ACoordinateMenu, self.MenuGroupLL_DMSSystem, self, PlayerUnit, PlayerGroup, PlayerName, true )
+      MENU_GROUP_COMMAND:New( PlayerGroup, "Lattitude Longitude (LL) Decimal Off", A2ACoordinateMenu, self.MenuGroupLL_DMSSystem, self, PlayerUnit, PlayerGroup, PlayerName, false )
+    end
+  
+    if self:IsA2A_MGRS() then
+      MENU_GROUP_COMMAND:New( PlayerGroup, "Bearing Range Altitude Aspect (BRAA)", A2ACoordinateMenu, self.MenuGroupA2ASystem, self, PlayerUnit, PlayerGroup, PlayerName, "BRAA" )
+      MENU_GROUP_COMMAND:New( PlayerGroup, "Bullseye (BULLS)", A2ACoordinateMenu, self.MenuGroupA2ASystem, self, PlayerUnit, PlayerGroup, PlayerName, "BULLS" )
+      MENU_GROUP_COMMAND:New( PlayerGroup, "Lattitude Longitude (LL)", A2ACoordinateMenu, self.MenuGroupA2ASystem, self, PlayerUnit, PlayerGroup, PlayerName, "LL" )
+      MENU_GROUP_COMMAND:New( PlayerGroup, "Military Grid (MGRS) Accuracy 1", A2ACoordinateMenu, self.MenuGroupMGRS_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 1 )
+      MENU_GROUP_COMMAND:New( PlayerGroup, "Military Grid (MGRS) Accuracy 2", A2ACoordinateMenu, self.MenuGroupMGRS_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 2 )
+      MENU_GROUP_COMMAND:New( PlayerGroup, "Military Grid (MGRS) Accuracy 3", A2ACoordinateMenu, self.MenuGroupMGRS_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 3 )
+      MENU_GROUP_COMMAND:New( PlayerGroup, "Military Grid (MGRS) Accuracy 4", A2ACoordinateMenu, self.MenuGroupMGRS_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 4 )
+      MENU_GROUP_COMMAND:New( PlayerGroup, "Military Grid (MGRS) Accuracy 5", A2ACoordinateMenu, self.MenuGroupMGRS_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 5 )
     end
 
     local MetricsMenu = MENU_GROUP:New( PlayerGroup, "Measures and Weights System", PlayerMenu )
