@@ -1250,19 +1250,23 @@ do -- DETECTION_BASE
   -- @param #DETECTION_BASE.DetectedObject DetectedObject
   -- @return #boolean true if already identified.
   function DETECTION_BASE:IsDetectedObjectIdentified( DetectedObject )
-    self:F3( DetectedObject.Name )
+    --self:F3( DetectedObject.Name )
   
     local DetectedObjectName = DetectedObject.Name
-    local DetectedObjectIdentified = self.DetectedObjectsIdentified[DetectedObjectName] == true
-    self:T3( DetectedObjectIdentified )
-    return DetectedObjectIdentified
+    if DetectedObjectName then
+      local DetectedObjectIdentified = self.DetectedObjectsIdentified[DetectedObjectName] == true
+      self:T3( DetectedObjectIdentified )
+      return DetectedObjectIdentified
+    else
+      return nil
+    end
   end
   
   --- Identifies a detected object during detection processing.
   -- @param #DETECTION_BASE self
   -- @param #DETECTION_BASE.DetectedObject DetectedObject
   function DETECTION_BASE:IdentifyDetectedObject( DetectedObject )
-    self:F( { "Identified:", DetectedObject.Name } )
+    --self:F( { "Identified:", DetectedObject.Name } )
   
     local DetectedObjectName = DetectedObject.Name
     self.DetectedObjectsIdentified[DetectedObjectName] = true
@@ -1289,16 +1293,18 @@ do -- DETECTION_BASE
   -- @param #string ObjectName
   -- @return #DETECTION_BASE.DetectedObject
   function DETECTION_BASE:GetDetectedObject( ObjectName )
-  	self:F2( ObjectName )
+  	--self:F2( ObjectName )
     
     if ObjectName then
       local DetectedObject = self.DetectedObjects[ObjectName]
-  
-      -- Only return detected objects that are alive!
-      local DetectedUnit = UNIT:FindByName( ObjectName )
-      if DetectedUnit and DetectedUnit:IsAlive() then
-        if self:IsDetectedObjectIdentified( DetectedObject ) == false then
-          return DetectedObject
+      
+      if DetectedObject then
+        -- Only return detected objects that are alive!
+        local DetectedUnit = UNIT:FindByName( ObjectName )
+        if DetectedUnit and DetectedUnit:IsAlive() then
+          if self:IsDetectedObjectIdentified( DetectedObject ) == false then
+            return DetectedObject
+          end
         end
       end
     end
