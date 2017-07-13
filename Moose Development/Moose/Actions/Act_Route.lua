@@ -174,6 +174,7 @@ do -- ACT_ROUTE
     end
     
 
+    local Task = self:GetTask() -- This is to dermine that the coordinates are for a specific task mode (A2A or A2G).
     local CC = self:GetTask():GetMission():GetCommandCenter()
     if CC then
       if CC:IsModeWWII() then
@@ -198,7 +199,7 @@ do -- ACT_ROUTE
           RouteText = Coordinate:ToStringFromRP( ShortestReferencePoint, ShortestReferenceName, Controllable )
         end
       else
-        RouteText = Coordinate:ToString( Controllable )
+        RouteText = Coordinate:ToString( Controllable, nil, Task )
       end
     end
 

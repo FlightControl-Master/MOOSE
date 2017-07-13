@@ -794,16 +794,39 @@ do -- COORDINATE
   -- @param #COORDINATE self
   -- @param Wrapper.Controllable#CONTROLLABLE Controllable
   -- @param Core.Settings#SETTINGS Settings
+  -- @param Tasking.Task#TASK Task The task for which coordinates need to be calculated.
   -- @return #string The coordinate Text in the configured coordinate system.
-  function COORDINATE:ToString( Controllable, Settings ) -- R2.2
+  function COORDINATE:ToString( Controllable, Settings, Task ) -- R2.2
   
     self:E( { Controllable = Controllable } )
 
     local Settings = Settings or ( Controllable and _DATABASE:GetPlayerSettings( Controllable:GetPlayerName() ) ) or _SETTINGS
-    
-    local IsAir = Controllable and Controllable:IsAirPlane() or false
 
-    if IsAir then
+    local ModeA2A = true
+    
+    if Task then
+      if Task:IsInstanceOf( TASK_A2A ) then
+        ModeA2A = true
+      else
+        if Task:IsInstanceOf( TASK_A2G ) then
+          ModeA2A = false
+        else
+          if Task:IsInstanceOf( TASK_CARGO ) then
+            ModeA2A = false
+          end
+        end
+      end
+    else
+      local IsAir = Controllable and Controllable:IsAirPlane() or false
+      if IsAir  then
+        ModeA2A = true
+      else
+        ModeA2A = false
+      end
+    end
+    
+
+    if ModeA2A then
       if Settings:IsA2A_BRAA()  then
         local Coordinate = Controllable:GetCoordinate()
         return self:ToStringBRA( Coordinate, Settings ) 
