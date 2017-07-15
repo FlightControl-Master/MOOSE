@@ -1025,7 +1025,7 @@ function SPAWN:SpawnAtAirbase( Airbase, Takeoff ) -- R2.2
       
       SpawnTemplate.route.points[1].x = PointVec3.x
       SpawnTemplate.route.points[1].y = PointVec3.z
-      SpawnTemplate.route.points[1].alt = Airbase.y
+      SpawnTemplate.route.points[1].alt = PointVec3.y + 200
       SpawnTemplate.route.points[1].type = GROUPTEMPLATE.Takeoff[Takeoff]
       SpawnTemplate.route.points[1].airdromeId = Airbase:GetID()
       

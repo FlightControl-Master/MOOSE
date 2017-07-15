@@ -27,6 +27,24 @@ do -- AI_A2A_DISPATCHER
   -- 
   -- The @{#AI_A2A_DISPATCHER} class is designed to create an automatic air defence system for a coalition. 
   -- 
+  -- ====
+  -- 
+  -- # Demo Mission
+  -- 
+  -- ### [AI\_A2A\_DISPATCHER Demo Mission](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/release-2-2-pre/AID%20-%20AI%20Dispatching/AID-100%20-%20AI_A2A%20-%20Demonstration)
+  -- 
+  -- ### [AI\_A2A\_DISPATCHER Mission, only for beta testers](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/AID%20-%20AI%20Dispatching/AID-100%20-%20AI_A2A%20-%20Demonstration)
+  --
+  -- ### [ALL Demo Missions pack of the last release](https://github.com/FlightControl-Master/MOOSE_MISSIONS/releases)
+  -- 
+  -- ====
+  -- 
+  -- # YouTube Channel
+  -- 
+  -- ### [---]()
+  -- 
+  -- ===
+  -- 
   -- ![Banner Image](..\Presentations\AI_A2A_DISPATCHER\Dia3.JPG)
   -- 
   -- It includes automatic spawning of Combat Air Patrol aircraft (CAP) and Ground Controlled Intercept aircraft (GCI) in response to enemy air movements that are detected by a ground based radar network. 
@@ -570,7 +588,7 @@ do -- AI_A2A_DISPATCHER
     self.DefenderTasks = {} -- The Defenders Tasks.
     
     -- TODO: Check detection through radar.
-    self.Detection:FilterCategories( Unit.Category.AIRPLANE, Unit.Category.HELICOPTER )
+    self.Detection:FilterCategories( { Unit.Category.AIRPLANE, Unit.Category.HELICOPTER } )
     --self.Detection:InitDetectRadar( true )
     self.Detection:SetDetectionInterval( 30 )
 
@@ -1640,7 +1658,7 @@ do -- AI_A2A_DISPATCHER
     
       if Cap then
     
-        local Spawn = DefenderSquadron.Spawn[ math.random( 1, #DefenderSquadron.Spawn ) ]
+        local Spawn = DefenderSquadron.Spawn[ math.random( 1, #DefenderSquadron.Spawn ) ] -- Functional.Spawn#SPAWN
         Spawn:InitGrouping( DefenderSquadron.Grouping )
 
         local TakeoffMethod = self:GetSquadronTakeoff( SquadronName )
@@ -2093,6 +2111,24 @@ do
   -- The AI_A2A_GCICAP class is designed to create an automatic air defence system for a coalition setting up GCI and CAP air defenses. 
   -- The class derives from @{AI#AI_A2A_DISPATCHER} and thus all the methods that are defined in this class, can be used also in AI\_A2A\_GCICAP.
   -- 
+  -- ====
+  -- 
+  -- # Demo Mission
+  -- 
+  -- ### [AI\_A2A\_GCICAP Demo Mission](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/release-2-2-pre/AID%20-%20AI%20Dispatching/AID-200%20-%20AI_A2A%20-%20GCICAP%20Demonstration)
+  -- 
+  -- ### [AI\_A2A\_GCICAP Mission, only for beta testers](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/AID%20-%20AI%20Dispatching/AID-200%20-%20AI_A2A%20-%20GCICAP%20Demonstration)
+  --
+  -- ### [ALL Demo Missions pack of the last release](https://github.com/FlightControl-Master/MOOSE_MISSIONS/releases)
+  -- 
+  -- ====
+  -- 
+  -- # YouTube Channel
+  -- 
+  -- ### [---]()
+  -- 
+  -- ===
+  -- 
   -- ![Banner Image](..\Presentations\AI_A2A_DISPATCHER\Dia3.JPG)
   -- 
   -- AI_A2A_GCICAP includes automatic spawning of Combat Air Patrol aircraft (CAP) and Ground Controlled Intercept aircraft (GCI) in response to enemy 
@@ -2139,7 +2175,7 @@ do
   -- ### 1.3) Place Airplane or Helicopter Groups with late activation switched on 
   -- 
   -- These are **templates**, with a given name starting with **a Template prefix** above each airbase that you wanna have a squadron. 
-  -- These **templates** need to be within 10km from the airbase center. They don't need to have a slot at the airplane, they can just be positioned above the airbase, 
+  -- These **templates** need to be within 1.5km from the airbase center. They don't need to have a slot at the airplane, they can just be positioned above the airbase, 
   -- without a route, and should only have ONE unit.
   -- 
   -- ### 1.4) Place floating helicopters to create the CAP zones. 
@@ -2272,7 +2308,7 @@ do
       local Airbase = _DATABASE:FindAirbase( AirbaseName ) -- Wrapper.Airbase#AIRBASE
       local AirbaseName = Airbase:GetName()
       local AirbaseCoord = Airbase:GetCoordinate()
-      local AirbaseZone = ZONE_RADIUS:New( "Airbase", AirbaseCoord:GetVec2(), 10000 )
+      local AirbaseZone = ZONE_RADIUS:New( "Airbase", AirbaseCoord:GetVec2(), 1500 )
       local Templates = nil
       for TemplateID, Template in pairs( self.Templates:GetSet() ) do
         local Template = Template -- Wrapper.Group#GROUP
@@ -2329,57 +2365,6 @@ do
         self:SetSquadronGci( AirbaseName, 800, 1200 )
       end
     end
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
     
     self:__Start( 5 )
     
