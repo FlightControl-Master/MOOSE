@@ -2259,7 +2259,7 @@ do
   -- @param #list<#string> EWRPrefixes A list of prefixes that of groups that setup the Early Warning Radar network.
   -- @param #number GroupingRadius The radius in meters wherein detected planes are being grouped as one target area. 
   -- For airplanes, 6000 (6km) is recommended, and is also the default value of this parameter.
-  -- @return #AI_A2A_DISPATCHER_GCICAP
+  -- @return #AI_A2A_GCICAP
   -- @usage
   --   
   --   -- Set a new AI A2A GCICAP object, based on an EWR network with a 30 km grouping radius
@@ -2304,14 +2304,17 @@ do
 
     -- Setup squadrons
     
+    self:F( { Airbases = AirbaseNames  } )
+    
     for AirbaseID, AirbaseName in pairs( AirbaseNames ) do
       local Airbase = _DATABASE:FindAirbase( AirbaseName ) -- Wrapper.Airbase#AIRBASE
       local AirbaseName = Airbase:GetName()
       local AirbaseCoord = Airbase:GetCoordinate()
-      local AirbaseZone = ZONE_RADIUS:New( "Airbase", AirbaseCoord:GetVec2(), 1500 )
+      local AirbaseZone = ZONE_RADIUS:New( "Airbase", AirbaseCoord:GetVec2(), 5000 )
       local Templates = nil
       for TemplateID, Template in pairs( self.Templates:GetSet() ) do
         local Template = Template -- Wrapper.Group#GROUP
+        self:F( { Template = Template:GetName() } )
         local TemplateCoord = Template:GetCoordinate()
         if AirbaseZone:IsVec2InZone( TemplateCoord:GetVec2() ) then
           Templates = Templates or {}
