@@ -204,7 +204,7 @@
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(MISSION).GetMenu">MISSION:GetMenu(TaskGroup)</a></td>
 		<td class="summary">
-<p>Gets the mission menu for the coalition.</p>
+<p>Gets the mission menu for the TaskGroup.</p>
 </td>
 		</tr>
 		<tr>
@@ -223,6 +223,12 @@
 		<td class="name" nowrap="nowrap"><a href="##(MISSION).GetPlayerNames">MISSION:GetPlayerNames()</a></td>
 		<td class="summary">
 
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MISSION).GetRootMenu">MISSION:GetRootMenu(TaskGroup)</a></td>
+		<td class="summary">
+<p>Gets the root mission menu for the TaskGroup.</p>
 </td>
 		</tr>
 		<tr>
@@ -900,7 +906,7 @@ The CLIENT or UNIT of the Player crashing.</p>
 </dt>
 <dd>
 	
-<p>Gets the mission menu for the coalition.</p>
+<p>Gets the mission menu for the TaskGroup.</p>
 
 		<h3>Parameter</h3>
 		<ul>
@@ -972,6 +978,32 @@ The task added.</p>
 <dd>
 	
 
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(MISSION).GetRootMenu" >
+<strong>MISSION:GetRootMenu(TaskGroup)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Gets the root mission menu for the TaskGroup.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> TaskGroup </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="Core.Menu.html##(MENU_COALITION)">Core.Menu#MENU_COALITION</a>:</em>
+self</p>
 
 </dd>
 </dl>

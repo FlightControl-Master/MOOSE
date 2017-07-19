@@ -167,7 +167,12 @@ do -- DESIGNATE
   --     
   -- The example will activate the threat level prioritization for this the Designate object. Threats will be marked based on the threat level of the Target.
   -- 
-  -- ## 6. Status Report
+  -- ## 6. Designate Menu Location for a Mission
+  -- 
+  -- You can make DESIGNATE work for a MISSION object. In this way, the Designate menu will not appear in the root of the radio menu, but in the menu of the Mission.
+  -- Use the method @{#DESIGNATE.SetMission}() to set the MISSION object for the designate function.
+  -- 
+  -- ## 7. Status Report
   -- 
   -- A status report is available that displays the current Targets detected, grouped per DetectionItem, and a list of which Targets are currently being marked.
   -- 
@@ -501,6 +506,17 @@ do -- DESIGNATE
     return self
   end
   
+  --- Set the MISSION object for which designate will function.
+  -- When a MISSION object is assigned, the menu for the designation will be located at the Mission Menu.
+  -- @param #DESIGNATE self
+  -- @param Tasking.Mission#MISSION Mission The MISSION object.
+  -- @return #DESIGNATE
+  function DESIGNATE:SetMission( Mission ) --R2.2
+
+    self.Mission = Mission
+
+    return self
+  end
   
 
   --- 
@@ -612,8 +628,15 @@ do -- DESIGNATE
           DesignateMenu = nil
           self:E("Remove Menu")
         end
-        DesignateMenu = MENU_GROUP:New( AttackGroup, "Designate" )
-        self:E(DesignateMenu)
+        
+        local MissionMenu = nil
+        
+        if self.Mission then
+          MissionMenu = self.Mission:GetRootMenu( AttackGroup )
+        end
+        
+        DesignateMenu = MENU_GROUP:New( AttackGroup, "Designate", MissionMenu )
+        self:E( DesignateMenu )
         AttackGroup:SetState( AttackGroup, "DesignateMenu", DesignateMenu )
         
         -- Set Menu option for auto lase

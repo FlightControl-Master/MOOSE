@@ -475,7 +475,28 @@ function MISSION:RemoveTaskMenu( Task )
 end
 
 
---- Gets the mission menu for the coalition.
+--- Gets the root mission menu for the TaskGroup.
+-- @param #MISSION self
+-- @return Core.Menu#MENU_COALITION self
+function MISSION:GetRootMenu( TaskGroup ) -- R2.2
+
+  local CommandCenter = self:GetCommandCenter()
+  local CommandCenterMenu = CommandCenter:GetMenu()
+
+  local MissionName = self:GetName()
+  --local MissionMenu = CommandCenterMenu:GetMenu( MissionName )
+  
+  self.MissionMenu = self.MissionMenu or {}
+  self.MissionMenu[TaskGroup] = self.MissionMenu[TaskGroup] or {}
+  
+  local Menu = self.MissionMenu[TaskGroup]
+  
+  Menu.MainMenu = Menu.MainMenu or MENU_GROUP:New( TaskGroup, self:GetName(), CommandCenterMenu )
+
+  return Menu.MainMenu
+end
+
+--- Gets the mission menu for the TaskGroup.
 -- @param #MISSION self
 -- @return Core.Menu#MENU_COALITION self
 function MISSION:GetMenu( TaskGroup ) -- R2.1 -- Changed Menu Structure
