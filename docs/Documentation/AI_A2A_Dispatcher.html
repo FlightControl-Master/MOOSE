@@ -1196,17 +1196,15 @@ Therefore if F4s are wanted as a coalition’s CAP or GCI aircraft Germany will 
 <p>The AI<em>A2A</em>GCICAP class is designed to create an automatic air defence system for a coalition setting up GCI and CAP air defenses.</p>
 
 	
-<p>The class derives from <a href="AI.html##(AI_A2A_DISPATCHER)">AI#AI<em>A2A</em>DISPATCHER</a> and thus all the methods that are defined in this class, can be used also in AI_A2A_GCICAP.</p>
+<p>The class derives from <a href="AI.html##(AI_A2A_DISPATCHER)">AI#AI<em>A2A</em>DISPATCHER</a> and thus, all the methods that are defined in the <a href="AI.html##(AI_A2A_DISPATCHER)">AI#AI<em>A2A</em>DISPATCHER</a> class, can be used also in AI_A2A_GCICAP.</p>
 
 <hr/>
 
-<h1>Demo Mission</h1>
+<h1>Demo Missions</h1>
 
-<h3><a href="https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/release-2-2-pre/AID%20-%20AI%20Dispatching/AID-200%20-%20AI_A2A%20-%20GCICAP%20Demonstration">AI_A2A_GCICAP Demo Mission</a></h3>
+<h3><a href="https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/release-2-2-pre/AID%20-%20AI%20Dispatching/AID-200%20-%20AI_A2A%20-%20GCICAP%20Demonstration">AI_A2A_GCICAP for mission designers</a></h3>
 
-<h3><a href="https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/AID%20-%20AI%20Dispatching/AID-200%20-%20AI_A2A%20-%20GCICAP%20Demonstration">AI_A2A_GCICAP Mission, only for beta testers</a></h3>
-
-<h3><a href="https://github.com/FlightControl-Master/MOOSE_MISSIONS/releases">ALL Demo Missions pack of the last release</a></h3>
+<h3><a href="https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/AID%20-%20AI%20Dispatching/AID-200%20-%20AI_A2A%20-%20GCICAP%20Demonstration">AI_A2A_GCICAP for beta testers</a></h3>
 
 <hr/>
 
@@ -1218,36 +1216,51 @@ Therefore if F4s are wanted as a coalition’s CAP or GCI aircraft Germany will 
 
 <p><img src="..\Presentations\AI_A2A_DISPATCHER\Dia3.JPG" alt="Banner Image"/></p>
 
-<p>AI<em>A2A</em>GCICAP includes automatic spawning of Combat Air Patrol aircraft (CAP) and Ground Controlled Intercept aircraft (GCI) in response to enemy 
-air movements that are detected by a ground based radar network. 
-CAP flights will take off and proceed to designated CAP zones where they will remain on station until the ground radars direct them to intercept 
-detected enemy aircraft or they run short of fuel and must return to base (RTB). 
-When a CAP flight leaves their zone to perform an interception or return to base a new CAP flight will spawn to take their place.
-If all CAP flights are engaged or RTB then additional GCI interceptors will scramble to intercept unengaged enemy aircraft under ground radar control.
-With a little time and with a little work it provides the mission designer with a convincing and completely automatic air defence system. 
-In short it is a plug in very flexible and configurable air defence module for DCS World.</p>
+<p>AI_A2A_GCICAP includes automatic spawning of Combat Air Patrol aircraft (CAP) and Ground Controlled Intercept aircraft (GCI) in response to enemy 
+air movements that are detected by an airborne or ground based radar network. </p>
 
-<p>The AI<em>A2A</em>GCICAP provides a lightweight configuration method using the mission editor.</p>
+<p>With a little time and with a little work it provides the mission designer with a convincing and completely automatic air defence system.</p>
 
+<p>The AI<em>A2A</em>GCICAP provides a lightweight configuration method using the mission editor. Within a very short time, and with very little coding, 
+the mission designer is able to configure a complete A2A defense system for a coalition using the DCS Mission Editor available functions. 
+Using the DCS Mission Editor, you define borders of the coalition which are guarded by GCICAP, 
+configure airbases to belong to the coalition, define squadrons flying certain types of planes or payloads per airbase, and define CAP zones.
+<strong>Very little lua needs to be applied, a one liner</strong>, which is fully explained below, which can be embedded 
+right in a DO SCRIPT trigger action or in a larger DO SCRIPT FILE trigger action. </p>
+
+<p>CAP flights will take off and proceed to designated CAP zones where they will remain on station until the ground radars direct them to intercept 
+detected enemy aircraft or they run short of fuel and must return to base (RTB). </p>
+
+<p>When a CAP flight leaves their zone to perform a GCI or return to base a new CAP flight will spawn to take its place.
+If all CAP flights are engaged or RTB then additional GCI interceptors will scramble to intercept unengaged enemy aircraft under ground radar control.</p>
+
+<p>In short it is a plug in very flexible and configurable air defence module for DCS World.</p>
+
+<hr/>
+
+<h1>The following actions need to be followed when using AI_A2A_GCICAP in your mission:</h1>
 
 <h2>1) Configure a working AI_A2A_GCICAP defense system for ONE coalition.</h2>
 
 <h3>1.1) Define which airbases are for which coalition.</h3>
 
+<p><img src="..\Presentations\AI_A2A_DISPATCHER\AI_A2A_GCICAP-ME_1.JPG" alt="Mission Editor Action"/></p>
+
 <p>Color the airbases red or blue. You can do this by selecting the airbase on the map, and select the coalition blue or red.</p>
 
-<h3>1.2) Place Groups given a name starting with a <strong>EWR prefix</strong> of your choice to build your EWR network.</h3>
+<h3>1.2) Place groups of units given a name starting with a <strong>EWR prefix</strong> of your choice to build your EWR network.</h3>
+
+<p><img src="..\Presentations\AI_A2A_DISPATCHER\AI_A2A_GCICAP-ME_2.JPG" alt="Mission Editor Action"/></p>
 
 <p><strong>All EWR groups starting with the EWR prefix (text) will be included in the detection system.</strong>  </p>
 
 <p>An EWR network, or, Early Warning Radar network, is used to early detect potential airborne targets and to understand the position of patrolling targets of the enemy.
 Typically EWR networks are setup using 55G6 EWR, 1L13 EWR, Hawk sr and Patriot str ground based radar units. 
 These radars have different ranges and 55G6 EWR and 1L13 EWR radars are Eastern Bloc units (eg Russia, Ukraine, Georgia) while the Hawk and Patriot radars are Western (eg US).
-Additionally, ANY other radar capable unit can be part of the EWR network! Also AWACS airborne units, planes, helicopters can help to detect targets, as long as they have radar.
+Additionally, ANY other radar capable unit can be part of the EWR network! 
+Also AWACS airborne units, planes, helicopters can help to detect targets, as long as they have radar.
 The position of these units is very important as they need to provide enough coverage 
 to pick up enemy aircraft as they approach so that CAP and GCI flights can be tasked to intercept them.</p>
-
-<p><img src="..\Presentations\AI_A2A_DISPATCHER\Dia7.JPG" alt="Banner Image"/></p>
 
 <p>Additionally in a hot war situation where the border is no longer respected the placement of radars has a big effect on how fast the war escalates. 
 For example if they are a long way forward and can detect enemy planes on the ground and taking off 
@@ -1259,17 +1272,30 @@ It all depends on what the desired effect is. </p>
 <p>EWR networks are <strong>dynamically maintained</strong>. By defining in a <strong>smart way the names or name prefixes of the groups</strong> with EWR capable units, these groups will be <strong>automatically added or deleted</strong> from the EWR network, 
 increasing or decreasing the radar coverage of the Early Warning System.</p>
 
-<h3>1.3) Place Airplane or Helicopter Groups with late activation switched on</h3>
+<h3>1.3) Place Airplane or Helicopter Groups with late activation switched on above the airbases to define Squadrons.</h3>
 
-<p>These are <strong>templates</strong>, with a given name starting with <strong>a Template prefix</strong> above each airbase that you wanna have a squadron. 
+<p><img src="..\Presentations\AI_A2A_DISPATCHER\AI_A2A_GCICAP-ME_3.JPG" alt="Mission Editor Action"/></p>
+
+<p>These are <strong>templates</strong>, with a given name starting with a <strong>Template prefix</strong> above each airbase that you wanna have a squadron. 
 These <strong>templates</strong> need to be within 1.5km from the airbase center. They don't need to have a slot at the airplane, they can just be positioned above the airbase, 
 without a route, and should only have ONE unit.</p>
 
-<h3>1.4) Place floating helicopters to create the CAP zones.</h3>
+<p><img src="..\Presentations\AI_A2A_DISPATCHER\AI_A2A_GCICAP-ME_4.JPG" alt="Mission Editor Action"/></p>
+
+<p><strong>All airplane or helicopter groups that are starting with any of the choosen Template Prefixes will result in a squadron created at the airbase.</strong>  </p>
+
+<h3>1.4) Place floating helicopters to create the CAP zones defined by its route points.</h3>
+
+<p><img src="..\Presentations\AI_A2A_DISPATCHER\AI_A2A_GCICAP-ME_5.JPG" alt="Mission Editor Action"/></p>
+
+<p><strong>All airplane or helicopter groups that are starting with any of the choosen Template Prefixes will result in a squadron created at the airbase.</strong>  </p>
 
 <p>The helicopter indicates the start of the CAP zone. 
-The route points the form of the CAP zone polygon. 
-The place of the helicopter is important, as the airbase closest to the helicopter will be the airbase from where the CAP planes will take off for CAP.</p>
+The route points define the form of the CAP zone polygon. </p>
+
+<p><img src="..\Presentations\AI_A2A_DISPATCHER\AI_A2A_GCICAP-ME_6.JPG" alt="Mission Editor Action"/></p>
+
+<p><strong>The place of the helicopter is important, as the airbase closest to the helicopter will be the airbase from where the CAP planes will take off for CAP.</strong></p>
 
 <h2>2) There are a lot of defaults set, which can be further modified using the methods in <a href="AI.html##(AI_A2A_DISPATCHER)">AI#AI<em>A2A</em>DISPATCHER</a>:</h2>
 
