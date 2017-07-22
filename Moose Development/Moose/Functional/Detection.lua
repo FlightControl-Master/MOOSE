@@ -344,7 +344,6 @@ do -- DETECTION_BASE
     -- Create FSM transitions.
     
     self:SetStartState( "Stopped" )
-    self.CountryID = DetectionSetGroup:GetFirst():GetCountry()
     
     self:AddTransition( "Stopped", "Start", "Detecting")
     
@@ -2626,6 +2625,7 @@ do -- DETECTION_AREAS
       end
 
       if DETECTION_AREAS._BoundDetectedZones or self._BoundDetectedZones then
+        self.CountryID = DetectionSetGroup:GetFirst():GetCountry()
         DetectedZone:BoundZone( 12, self.CountryID )
       end
     end

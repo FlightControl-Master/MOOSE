@@ -1304,10 +1304,48 @@ The route points define the form of the CAP zone polygon. </p>
 <p>This prevents airbases to get cluttered with airplanes taking off, it also reduces the risk of human players colliding with taxiiing airplanes,
 resulting in the airbase to halt operations.</p>
 
+<p>You can change the way how planes take off by using the inherited methods from AI_A2A_DISPATCHER:</p>
+
+<ul>
+    <li><a href="##(AI_A2A_DISPATCHER).SetSquadronTakeoff">AI<em>A2A</em>DISPATCHER.SetSquadronTakeoff</a>() is the generic configuration method to control takeoff from the air, hot, cold or from the runway. See the method for further details.</li>
+    <li><a href="##(AI_A2A_DISPATCHER).SetSquadronTakeoffInAir">AI<em>A2A</em>DISPATCHER.SetSquadronTakeoffInAir</a>() will spawn new aircraft from the squadron directly in the air.</li>
+    <li><a href="##(AI_A2A_DISPATCHER).SetSquadronTakeoffFromParkingCold">AI<em>A2A</em>DISPATCHER.SetSquadronTakeoffFromParkingCold</a>() will spawn new aircraft in without running engines at a parking spot at the airfield.</li>
+    <li><a href="##(AI_A2A_DISPATCHER).SetSquadronTakeoffFromParkingHot">AI<em>A2A</em>DISPATCHER.SetSquadronTakeoffFromParkingHot</a>() will spawn new aircraft in with running engines at a parking spot at the airfield.</li>
+    <li><a href="##(AI_A2A_DISPATCHER).SetSquadronTakeoffFromRunway">AI<em>A2A</em>DISPATCHER.SetSquadronTakeoffFromRunway</a>() will spawn new aircraft at the runway at the airfield.</li>
+</ul>
+
+<p>Use these methods to fine-tune for specific airfields that are known to create bottlenecks, or have reduced airbase efficiency.
+The more and the longer aircraft need to taxi at an airfield, the more risk there is that:</p>
+
+<ul>
+    <li>aircraft will stop waiting for each other or for a landing aircraft before takeoff.</li>
+    <li>aircraft may get into a "dead-lock" situation, where two aircraft are blocking each other.</li>
+    <li>aircraft may collide at the airbase.</li>
+    <li>aircraft may be awaiting the landing of a plane currently in the air, but never lands ...</li>
+</ul>
+
+<p>Currently within the DCS engine, the airfield traffic coordination is erroneous and contains a lot of bugs.
+If you experience while testing problems with aircraft take-off or landing, please use one of the above methods as a solution to workaround these issues!</p>
+
 <h3>2.2) Planes return near the airbase or will land if damaged.</h3>
 
 <p>When damaged airplanes return to the airbase, they will be routed and will dissapear in the air when they are near the airbase.
 There are exceptions to this rule, airplanes that aren't "listening" anymore due to damage or out of fuel, will return to the airbase and land.</p>
+
+<p>You can change the way how planes land by using the inherited methods from AI_A2A_DISPATCHER:</p>
+
+<ul>
+    <li><a href="##(AI_A2A_DISPATCHER).SetSquadronLanding">AI<em>A2A</em>DISPATCHER.SetSquadronLanding</a>() is the generic configuration method to control landing, namely despawn the aircraft near the airfield in the air, right after landing, or at engine shutdown.</li>
+    <li><a href="##(AI_A2A_DISPATCHER).SetSquadronLandingNearAirbase">AI<em>A2A</em>DISPATCHER.SetSquadronLandingNearAirbase</a>() will despawn the returning aircraft in the air when near the airfield.</li>
+    <li><a href="##(AI_A2A_DISPATCHER).SetSquadronLandingAtRunway">AI<em>A2A</em>DISPATCHER.SetSquadronLandingAtRunway</a>() will despawn the returning aircraft directly after landing at the runway.</li>
+    <li><a href="##(AI_A2A_DISPATCHER).SetSquadronLandingAtEngineShutdown">AI<em>A2A</em>DISPATCHER.SetSquadronLandingAtEngineShutdown</a>() will despawn the returning aircraft when the aircraft has returned to its parking spot and has turned off its engines.</li>
+</ul>
+
+<p>You can use these methods to minimize the airbase coodination overhead and to increase the airbase efficiency.
+When there are lots of aircraft returning for landing, at the same airbase, the takeoff process will be halted, which can cause a complete failure of the
+A2A defense system, as no new CAP or GCI planes can takeoff.
+Note that the method <a href="##(AI_A2A_DISPATCHER).SetSquadronLandingNearAirbase">AI<em>A2A</em>DISPATCHER.SetSquadronLandingNearAirbase</a>() will only work for returning aircraft, not for damaged or out of fuel aircraft.
+Damaged or out-of-fuel aircraft are returning to the nearest friendly airbase and will land, and are out of control from ground control.</p>
 
 <h3>2.3) CAP operations setup for specific airbases, will be executed with the following parameters:</h3>
 
@@ -1317,11 +1355,54 @@ There are exceptions to this rule, airplanes that aren't "listening" anymore due
     <li>The engage speed between 800 and 1200 km/h.</li>
 </ul>
 
+<p>You can change or add a CAP zone by using the inherited methods from AI_A2A_DISPATCHER:</p>
+
+<p>The method <a href="##(AI_A2A_DISPATCHER).SetSquadronCap">AI<em>A2A</em>DISPATCHER.SetSquadronCap</a>() defines a CAP execution for a squadron.</p>
+
+<p>Setting-up a CAP zone also requires specific parameters:</p>
+
+<ul>
+    <li>The minimum and maximum altitude</li>
+    <li>The minimum speed and maximum patrol speed</li>
+    <li>The minimum and maximum engage speed</li>
+    <li>The type of altitude measurement</li>
+</ul>
+
+<p>These define how the squadron will perform the CAP while partrolling. Different terrain types requires different types of CAP. </p>
+
+<p>The <a href="##(AI_A2A_DISPATCHER).SetSquadronCapInterval">AI<em>A2A</em>DISPATCHER.SetSquadronCapInterval</a>() method specifies <strong>how much</strong> and <strong>when</strong> CAP flights will takeoff.</p>
+
+<p>It is recommended not to overload the air defense with CAP flights, as these will decrease the performance of the overall system. </p>
+
+<p>For example, the following setup will create a CAP for squadron "Sochi":</p>
+
+<p>   A2ADispatcher:SetSquadronCap( "Sochi", CAPZoneWest, 4000, 8000, 600, 800, 800, 1200, "BARO" )
+   A2ADispatcher:SetSquadronCapInterval( "Sochi", 2, 30, 120, 1 )</p>
+
 <h3>2.4) Each airbase will perform GCI when required, with the following parameters:</h3>
 
 <ul>
     <li>The engage speed is between 800 and 1200 km/h.</li>
 </ul>
+
+<p>You can change or add a GCI parameters by using the inherited methods from AI_A2A_DISPATCHER:</p>
+
+<p>The method <a href="##(AI_A2A_DISPATCHER).SetSquadronGci">AI<em>A2A</em>DISPATCHER.SetSquadronGci</a>() defines a GCI execution for a squadron.</p>
+
+<p>Setting-up a GCI readiness also requires specific parameters:</p>
+
+<ul>
+    <li>The minimum speed and maximum patrol speed</li>
+</ul>
+
+<p>Essentially this controls how many flights of GCI aircraft can be active at any time.
+Note allowing large numbers of active GCI flights can adversely impact mission performance on low or medium specification hosts/servers.
+GCI needs to be setup at strategic airbases. Too far will mean that the aircraft need to fly a long way to reach the intruders, 
+too short will mean that the intruders may have alraedy passed the ideal interception point!</p>
+
+<p>For example, the following setup will create a GCI for squadron "Sochi":</p>
+
+<p>   A2ADispatcher:SetSquadronGci( "Mozdok", 900, 1200 )</p>
 
 <h3>2.5) Grouping or detected targets.</h3>
 
@@ -1341,9 +1422,6 @@ Typically I suggest to use 30000 for new generation planes and 10000 for older e
 Each defense system needs its own EWR network setup, airplane templates and CAP configurations.</p>
 
 <p>This is a good implementation, because maybe in the future, more coalitions may become available in DCS world.</p>
-
-
-
 
 <h2>4) Coding example how to use the AI_A2A_GCICAP class:</h2>
 

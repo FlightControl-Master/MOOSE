@@ -81,9 +81,9 @@ Each TASK has a TASK ACTION flow, which is the flow that a player (hosted by a U
 MOOSE AI Controlling Classes provide mechanisms to control AI over long lasting processes.  
 These AI Controlling Classes are based on FSM (Finite State Machine) Classes, and provided an encapsulated way to make AI behave or execute an activity.
 
-* [AI_A2A_GCICAP](Documentation/AI_A2A_Dispatcher.html): Create an automatic and dynamic A2A defense system, executed by AI units, as a result of detected A2A airborne targets executing CAP and GCI. Using an easy process you can define an air defense strategy using the Mission Editor.
+* [AI_A2A_GCICAP](Documentation/AI_A2A_Dispatcher.html#AI_A2A_GCICAP): Create an automatic and dynamic A2A defense system, executed by AI units, as a result of detected A2A airborne targets executing CAP and GCI. Using an easy process you can define an air defense strategy using the Mission Editor.
 
-* [AI_A2A_DISPATCHER](Documentation/AI_A2A_Dispatcher.html): Same as AI\_A2A\_GCICAP, but is for more advanced or developer type mission designers. This class provides more options.
+* [AI_A2A_DISPATCHER](Documentation/AI_A2A_Dispatcher.html#AI_A2A_DISPATCHER): Same as AI\_A2A\_GCICAP, but is for more advanced or developer type mission designers. This class provides more options.
 
 * [AI_BALANCER](Documentation/AI_Balancer.html): Compensate in a multi player mission the abscence of players with dynamically spawned AI air units. When players join CLIENTS, the AI will either be destroyed, or will fly back to the home or nearest friendly airbase.
 
@@ -155,24 +155,42 @@ These classes define the base building blocks of the MOOSE framework. These clas
 
 * [SCHEDULER](Documentation/Scheduler.html): This class implements a timer scheduler that will call at optional specified intervals repeatedly or just one time a scheduled function.
 
-* [FSM](Documentation/Fsm.html):  The main FSM class can be used to build a Finite State Machine. The derived FSM_ classes provide Finite State Machine building capability for CONTROLLABLEs, ACT_ (Task Actions) classes, TASKs and SETs.
+* [Finite State Machines](Documentation/Fsm.html):  Finite State Machine provides a process management or state machine capability for various scenarios.  
+* [FSM](Documentation/Fsm.html#FSM):  The main FSM class can be used to build a generic Finite State Machine.  
+* [FSM_CONTROLLABLE](Documentation/Fsm.html#FSM_CONTROLLABLE):  An FSM class to control a Controllable. A controllable is a group or unit that can be controlled.  
 
-* [MENU](Documentation/Menu.html): Set Menu options (F10) for All Players, Coalitions, Groups, Clients. MENU also manages the recursive removal of menus, which is a big asset!
+* [MENU](Documentation/Menu.html): Set Menu options under the radio menu (F10). MENU classes also manage the recursive removal of menus, and the intelligent refresh of menu options (only the changes are applied).  
+* [MENU_MISSION](Documentation/Menu.html#MENU_MISSION): Set a main menu structure for the complete mission, for all players.  
+* [MENU_MISSION_COMMAND](Documentation/Menu.html#MENU_MISSION_COMMAND): Set a main menu command for the complete mission, for all players.  
+* [MENU_COALITION](Documentation/Menu.html#MENU_COALITION): Set a menu structure for a coalition, for all players of that coalition.  
+* [MENU_COALITION_COMMAND](Documentation/Menu.html#MENU_COALITION_COMMAND): Set a menu command for a coalition, for all players of that coalition.  
+* [MENU_GROUP](Documentation/Menu.html#MENU_GROUP): Set a menu structure for a group, for all players of that group.  
+* [MENU_GROUP_COMMAND](Documentation/Menu.html#MENU_GROUP_COMMAND): Set a menu command for a group, for all players of that group.  
 
-* [SET](Documentation/Set.html): Create SETs of MOOSE objects.  SETs can be created for GROUPs, UNITs, AIRBASEs, ...  
-The SET can be filtered with defined filter criteria.  
-Iterators are available that iterate through the GROUPSET, calling a function for each object within the SET.
+* [SET](Documentation/Set.html): Create SETs of MOOSE objects. The SET can be filtered with defined filter criteria. Iterators are available that iterate through the SET, calling a function for each object within the SET. 
+* [SET_GROUP](Documentation/Set.html#SET_GROUP): Create a SET of GROUP objects.  
+* [SET_UNIT](Documentation/Set.html#SET_UNIT): Create a SET of UNIT objects.  
+* [SET_CLIENT](Documentation/Set.html#SET_CLIENT): Create a SET of CLIENT objects.  
+* [SET_AIRBASE](Documentation/Set.html#SET_AIRBASE): Create a SET of AIRBASE objects.  
+* [SET_CARGO](Documentation/Set.html#SET_CARGO): Create a SET of CARGO objects.  
 
 * [MESSAGE](Documentation/Message.html): A message publishing system, displaying messages to Clients, Coalitions or All players. 
 
-* [POINTS](Documentation/Point.html): A set of point classes to manage the 2D or 3D simulation space, through an extensive method library.  
-The POINT_VEC3 class manages the 3D simulation space, while the POINT_VEC2 class manages the 2D simulation space.
+* [COORDINATE](Documentation/Point.html#COORDINATE): Manage 2D and 3D points in the simulation space, and use its methods for various actions on the coordinate.  
+* [POINT_VEC2](Documentation/Point.html#POINT_VEC2): Manage 2D points in the simulation space.  
+* [POINT_VEC3](Documentation/Point.html#POINT_VEC3): Manage 3D points in the simulation space.  
 
-* [ZONES](Documentation/Zone.html): A set of zone classes that provide the functionality to validate the presence of GROUPS, UNITS, CLIENTS, STATICS within a certain ZONE. The zones can take various forms and can be movable.
+* [ZONES](Documentation/Zone.html#ZONE): Create a zone object from a trigger zone as defined in the Mission Editor.  
+* [ZONE_POLYGON](Documentation/Zone.html#ZONE_POLYGON): Create a zone object from a group object, which is late activated, and its route points define the zone.  
+* [ZONE_RADIUS](Documentation/Zone.html#ZONE_RADIUS): Create a zone object from a 2D vector on the battlefield, with a defined radius.  
+* [ZONE_UNIT](Documentation/Zone.html#ZONE_UNIT): Create a zone object around a unit on the battlefield, with a defined radius. This, this zone is a moving zone!  
+* [ZONE_GROUP](Documentation/Zone.html#ZONE_GROUP): Create a zone object around a group on the battlefield, with a defined radius. The first object in the group has the zone, and is thus a moving zone!  
 
-* [CARGO](Documentation/Cargo.html): Manage Cargo in the simulation.
+* [CARGO](Documentation/Cargo.html): Manage Cargo in the simulation.  
+* [CARGO_GROUP](Documentation/Cargo.html#CARGO_GROUP): Manage Cargo that is defined as a GROUP object within the simulation.  
 
-* [SPAWNSTATIC](Documentation/SpawnStatic.html): Spawn dynamically static objects.
+* [SPAWNSTATIC](Documentation/SpawnStatic.html): Spawn dynamically static objects.  
+* [SPAWNSTATIC](Documentation/SpawnStatic.html#SPAWNSTATIC): Spawn Static objects using a predefined "template".  
 
 * [BEACON](Documentation/Radio.html): Create beacons.
 
