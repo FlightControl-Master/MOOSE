@@ -2115,9 +2115,11 @@ do
   -- 
   -- # Demo Missions
   -- 
-  -- ### [AI\_A2A\_GCICAP for mission designers](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/release-2-2-pre/AID%20-%20AI%20Dispatching/AID-200%20-%20AI_A2A%20-%20GCICAP%20Demonstration)
+  -- ### [AI\_A2A\_GCICAP for Caucasus](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/release-2-2-pre/AID%20-%20AI%20Dispatching/AID-200%20-%20AI_A2A%20-%20GCICAP%20Demonstration)
+  -- ### [AI\_A2A\_GCICAP for NTTR](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/release-2-2-pre/AID%20-%20AI%20Dispatching/AID-210%20-%20NTTR%20AI_A2A_GCICAP%20Demonstration)
+  -- ### [AI\_A2A\_GCICAP for Normandy](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/release-2-2-pre/AID%20-%20AI%20Dispatching/AID-220%20-%20NORMANDY%20AI_A2A_GCICAP%20Demonstration)
   -- 
-  -- ### [AI\_A2A\_GCICAP for beta testers](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/AID%20-%20AI%20Dispatching/AID-200%20-%20AI_A2A%20-%20GCICAP%20Demonstration)
+  -- ### [AI\_A2A\_GCICAP for beta testers](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/AID%20-%20AI%20Dispatching)
   --
   -- ====
   -- 
@@ -2322,24 +2324,39 @@ do
   -- 
   -- This is a good implementation, because maybe in the future, more coalitions may become available in DCS world.
   -- 
-  -- ## 4) Coding example how to use the AI\_A2A\_GCICAP class:
+  -- ## 4) Coding examples how to use the AI\_A2A\_GCICAP class:
+  -- 
+  -- ### 4.1) An easy setup:
   -- 
   --      -- Setup the AI_A2A_GCICAP dispatcher for one coalition, and initialize it.
   --      GCI_Red = AI_A2A_GCICAP:New( "EWR CCCP", "SQUADRON CCCP", "CAP CCCP", 2 )
-  -- 
-  -- This will create a GCI/CAP system for the RED coalition, and stores the reference to the GCI/CAP system in the `GCI\_Red` variable!
-  -- In the mission editor, the following setup will have taken place:
-  -- 
-  -- ![Banner Image](..\Presentations\AI_A2A_DISPATCHER\Dia5.JPG)
-  -- 
+  --   -- 
   -- The following parameters were given to the :New method of AI_A2A_GCICAP, and mean the following:
   -- 
-  --    * `EWR CCCP`: Groups of the RED coalition are placed that define the EWR network. These groups start with the name `EWR CCCP`.
-  --    * `SQUADRON CCCP`: Late activated Groups objects of the RED coalition are placed above the relevant airbases that will contain these templates in the squadron.
+  --    * `"EWR CCCP"`: Groups of the blue coalition are placed that define the EWR network. These groups start with the name `EWR CCCP`.
+  --    * `"SQUADRON CCCP"`: Late activated Groups objects of the red coalition are placed above the relevant airbases that will contain these templates in the squadron.
   --      These late activated Groups start with the name `SQUADRON CCCP`. Each Group object contains only one Unit, and defines the weapon payload, skin and skill level.
-  --    * `CAP CCCP`: CAP Zones are defined using floating, late activated Helicopter Group objects, where the route points define the route of the polygon of the CAP Zone.
+  --    * `"CAP CCCP"`: CAP Zones are defined using floating, late activated Helicopter Group objects, where the route points define the route of the polygon of the CAP Zone.
   --      These Helicopter Group objects start with the name `CAP CCCP`, and will be the locations wherein CAP will be performed.
   --    * `2` Defines how many CAP airplanes are patrolling in each CAP zone defined simulateneously.  
+  -- 
+  -- 
+  -- ### 4.2) A more advanced setup:
+  -- 
+  --      -- Setup the AI_A2A_GCICAP dispatcher for the blue coalition.
+  -- 
+  --      A2A_GCICAP_Blue = AI_A2A_GCICAP:New( { "BLUE EWR" }, { "104th", "105th", "106th" }, { "104th CAP" }, 4 ) 
+  -- 
+  -- The following parameters for the :New method have the following meaning:
+  -- 
+  --    * `{ "BLUE EWR" }`: An array of the group name prefixes of the groups of the blue coalition are placed that define the EWR network. These groups start with the name `BLUE EWR`.
+  --    * `{ "104th", "105th", "106th" } `: An array of the group name prefixes of the Late activated Groups objects of the blue coalition are 
+  --      placed above the relevant airbases that will contain these templates in the squadron.
+  --      These late activated Groups start with the name `104th` or `105th` or `106th`. 
+  --    * `{ "104th CAP" }`: An array of the names of the CAP zones are defined using floating, late activated helicopter group objects, 
+  --      where the route points define the route of the polygon of the CAP Zone.
+  --      These Helicopter Group objects start with the name `104th CAP`, and will be the locations wherein CAP will be performed.
+  --    * `4` Defines how many CAP airplanes are patrolling in each CAP zone defined simulateneously.  
   -- 
   -- @field #AI_A2A_GCICAP
   AI_A2A_GCICAP = {
