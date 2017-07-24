@@ -81,19 +81,18 @@ Each TASK has a TASK ACTION flow, which is the flow that a player (hosted by a U
 MOOSE AI Controlling Classes provide mechanisms to control AI over long lasting processes.  
 These AI Controlling Classes are based on FSM (Finite State Machine) Classes, and provided an encapsulated way to make AI behave or execute an activity.
 
-* [AI_A2A_GCICAP](Documentation/AI_A2A_Dispatcher.html#AI_A2A_GCICAP): Create an automatic and dynamic A2A defense system, executed by AI units, as a result of detected A2A airborne targets executing CAP and GCI. Using an easy process you can define an air defense strategy using the Mission Editor.
+* [AI\_A2A\_GCICAP](Documentation/AI_A2A_Dispatcher.html#AI_A2A_GCICAP): Create an automatic and dynamic A2A defense system, executed by AI units, as a result of detected A2A airborne targets executing CAP and GCI. Using an easy process you can define an air defense strategy using the Mission Editor.
+* [AI\_A2A\_DISPATCHER](Documentation/AI_A2A_Dispatcher.html#AI_A2A_DISPATCHER): Same as AI\_A2A\_GCICAP, but is for more advanced or developer type mission designers. This class provides more options.
 
-* [AI_A2A_DISPATCHER](Documentation/AI_A2A_Dispatcher.html#AI_A2A_DISPATCHER): Same as AI\_A2A\_GCICAP, but is for more advanced or developer type mission designers. This class provides more options.
+* [AI\_BALANCER](Documentation/AI_Balancer.html): Compensate in a multi player mission the abscence of players with dynamically spawned AI air units. When players join CLIENTS, the AI will either be destroyed, or will fly back to the home or nearest friendly airbase.
 
-* [AI_BALANCER](Documentation/AI_Balancer.html): Compensate in a multi player mission the abscence of players with dynamically spawned AI air units. When players join CLIENTS, the AI will either be destroyed, or will fly back to the home or nearest friendly airbase.
+* [AI\_PATROL\_ZONE](Documentation/AI_Patrol_Zone.html): Make an alive AI Group patrol a zone derived from the ZONE_BASE class. Manage out-of-fuel events and set altitude and speed ranges for the patrol.
 
-* [AI_PATROL_ZONE](Documentation/AI_Patrol_Zone.html): Make an alive AI Group patrol a zone derived from the ZONE_BASE class. Manage out-of-fuel events and set altitude and speed ranges for the patrol.
+* [AI\_CAP](Documentation/AI_Cap.html): Make an alive AI Group perform Combat Air Patrol as a dynamic process.
 
-* [AI_CAP](Documentation/AI_Cap.html): Make an alive AI Group perform Combat Air Patrol as a dynamic process.
+* [AI\_CAS](Documentation/AI_Cas.html): Make an alive AI Group perform Close Air Support as a dynamic process.
 
-* [AI_CAS](Documentation/AI_Cas.html): Make an alive AI Group perform Close Air Support as a dynamic process.
-
-* [AI_BAI](Documentation/AI_Bai.html): Make an alive AI Group perform Battlefield Air Interdiction as a dynamic process.
+* [AI\_BAI](Documentation/AI_Bai.html): Make an alive AI Group perform Battlefield Air Interdiction as a dynamic process.
 
 
 ## 2.3. MOOSE Functional Classes
@@ -116,7 +115,7 @@ MOOSE Functional Classes provide various functions that are useful in mission de
 
 * [AIRBASEPOLICE](Documentation/AirbasePolice.html): Control the speed of players at the airbases. Speeding players are eliminated (does not work due to a bug in the DCS).
 
-* [CLEANUP_AIRBASE](Documentation/CleanUp.html): Keeps the airbases clean from clutter. (Only partly functional due to a bug in DCS, destroyed objects cannot be removed).
+* [CLEANUP\_AIRBASE](Documentation/CleanUp.html): Keeps the airbases clean from clutter. (Only partly functional due to a bug in DCS, destroyed objects cannot be removed).
 
 
 ## 2.4. MOOSE Wrapper Classes
@@ -157,44 +156,42 @@ These classes define the base building blocks of the MOOSE framework. These clas
 
 * [Finite State Machines](Documentation/Fsm.html):  Finite State Machine provides a process management or state machine capability for various scenarios.  
 * [FSM](Documentation/Fsm.html#FSM):  The main FSM class can be used to build a generic Finite State Machine.  
-* [FSM_CONTROLLABLE](Documentation/Fsm.html#FSM_CONTROLLABLE):  An FSM class to control a Controllable. A controllable is a group or unit that can be controlled.  
+* [FSM\_CONTROLLABLE](Documentation/Fsm.html#FSM_CONTROLLABLE):  An FSM class to control a Controllable. A controllable is a group or unit that can be controlled.  
 
 * [MENU](Documentation/Menu.html): Set Menu options under the radio menu (F10). MENU classes also manage the recursive removal of menus, and the intelligent refresh of menu options (only the changes are applied).  
-* [MENU_MISSION](Documentation/Menu.html#MENU_MISSION): Set a main menu structure for the complete mission, for all players.  
-* [MENU_MISSION_COMMAND](Documentation/Menu.html#MENU_MISSION_COMMAND): Set a main menu command for the complete mission, for all players.  
-* [MENU_COALITION](Documentation/Menu.html#MENU_COALITION): Set a menu structure for a coalition, for all players of that coalition.  
-* [MENU_COALITION_COMMAND](Documentation/Menu.html#MENU_COALITION_COMMAND): Set a menu command for a coalition, for all players of that coalition.  
-* [MENU_GROUP](Documentation/Menu.html#MENU_GROUP): Set a menu structure for a group, for all players of that group.  
-* [MENU_GROUP_COMMAND](Documentation/Menu.html#MENU_GROUP_COMMAND): Set a menu command for a group, for all players of that group.  
+* [MENU\_MISSION](Documentation/Menu.html#MENU_MISSION): Set a main menu structure for the complete mission, for all players.  
+* [MENU\_MISSION\_COMMAND](Documentation/Menu.html#MENU_MISSION_COMMAND): Set a main menu command for the complete mission, for all players.  
+* [MENU\_COALITION](Documentation/Menu.html#MENU_COALITION): Set a menu structure for a coalition, for all players of that coalition.  
+* [MENU\_COALITION\_COMMAND](Documentation/Menu.html#MENU_COALITION_COMMAND): Set a menu command for a coalition, for all players of that coalition.  
+* [MENU\_GROUP](Documentation/Menu.html#MENU_GROUP): Set a menu structure for a group, for all players of that group.  
+* [MENU\_GROUP\_COMMAND](Documentation/Menu.html#MENU_GROUP_COMMAND): Set a menu command for a group, for all players of that group.  
 
 * [SET](Documentation/Set.html): Create SETs of MOOSE objects. The SET can be filtered with defined filter criteria. Iterators are available that iterate through the SET, calling a function for each object within the SET. 
-* [SET_GROUP](Documentation/Set.html#SET_GROUP): Create a SET of GROUP objects.  
-* [SET_UNIT](Documentation/Set.html#SET_UNIT): Create a SET of UNIT objects.  
-* [SET_CLIENT](Documentation/Set.html#SET_CLIENT): Create a SET of CLIENT objects.  
-* [SET_AIRBASE](Documentation/Set.html#SET_AIRBASE): Create a SET of AIRBASE objects.  
-* [SET_CARGO](Documentation/Set.html#SET_CARGO): Create a SET of CARGO objects.  
+* [SET\_GROUP](Documentation/Set.html#SET_GROUP): Create a SET of GROUP objects.  
+* [SET\_UNIT](Documentation/Set.html#SET_UNIT): Create a SET of UNIT objects.  
+* [SET\_CLIENT](Documentation/Set.html#SET_CLIENT): Create a SET of CLIENT objects.  
+* [SET\_AIRBASE](Documentation/Set.html#SET_AIRBASE): Create a SET of AIRBASE objects.  
+* [SET\_CARGO](Documentation/Set.html#SET_CARGO): Create a SET of CARGO objects.  
 
 * [MESSAGE](Documentation/Message.html): A message publishing system, displaying messages to Clients, Coalitions or All players. 
 
 * [COORDINATE](Documentation/Point.html#COORDINATE): Manage 2D and 3D points in the simulation space, and use its methods for various actions on the coordinate.  
-* [POINT_VEC2](Documentation/Point.html#POINT_VEC2): Manage 2D points in the simulation space.  
-* [POINT_VEC3](Documentation/Point.html#POINT_VEC3): Manage 3D points in the simulation space.  
+* [POINT\_VEC2](Documentation/Point.html#POINT_VEC2): Manage 2D points in the simulation space.  
+* [POINT\_VEC3](Documentation/Point.html#POINT_VEC3): Manage 3D points in the simulation space.  
 
 * [ZONES](Documentation/Zone.html#ZONE): Create a zone object from a trigger zone as defined in the Mission Editor.  
-* [ZONE_POLYGON](Documentation/Zone.html#ZONE_POLYGON): Create a zone object from a group object, which is late activated, and its route points define the zone.  
-* [ZONE_RADIUS](Documentation/Zone.html#ZONE_RADIUS): Create a zone object from a 2D vector on the battlefield, with a defined radius.  
-* [ZONE_UNIT](Documentation/Zone.html#ZONE_UNIT): Create a zone object around a unit on the battlefield, with a defined radius. This, this zone is a moving zone!  
-* [ZONE_GROUP](Documentation/Zone.html#ZONE_GROUP): Create a zone object around a group on the battlefield, with a defined radius. The first object in the group has the zone, and is thus a moving zone!  
+* [ZONE\_POLYGON](Documentation/Zone.html#ZONE_POLYGON): Create a zone object from a group object, which is late activated, and its route points define the zone.  
+* [ZONE\_RADIUS](Documentation/Zone.html#ZONE_RADIUS): Create a zone object from a 2D vector on the battlefield, with a defined radius.  
+* [ZONE\_UNIT](Documentation/Zone.html#ZONE_UNIT): Create a zone object around a unit on the battlefield, with a defined radius. This, this zone is a moving zone!  
+* [ZONE\_GROUP](Documentation/Zone.html#ZONE_GROUP): Create a zone object around a group on the battlefield, with a defined radius. The first object in the group has the zone, and is thus a moving zone!  
 
 * [CARGO](Documentation/Cargo.html): Manage Cargo in the simulation.  
-* [CARGO_GROUP](Documentation/Cargo.html#CARGO_GROUP): Manage Cargo that is defined as a GROUP object within the simulation.  
+* [CARGO\_GROUP](Documentation/Cargo.html#CARGO_GROUP): Manage Cargo that is defined as a GROUP object within the simulation.  
 
-* [SPAWNSTATIC](Documentation/SpawnStatic.html): Spawn dynamically static objects.  
 * [SPAWNSTATIC](Documentation/SpawnStatic.html#SPAWNSTATIC): Spawn Static objects using a predefined "template".  
 
-* [BEACON](Documentation/Radio.html): Create beacons.
-
-* [RADIO](Documentation/Radio.html): Create radio communication.
+* [BEACON](Documentation/Radio.html): Create beacons.  
+* [RADIO](Documentation/Radio.html): Create radio communication.  
 
 
 
