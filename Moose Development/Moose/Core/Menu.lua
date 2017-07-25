@@ -809,7 +809,7 @@ do
   function MENU_GROUP:RemoveSubMenus( MenuTime )
     --self:F2( { self.MenuPath, MenuTime, self.MenuTime } )
   
-    --self:T( { "Removing Group SubMenus:", self.MenuGroup:GetName(), self.MenuPath } )
+    self:T( { "Removing Group SubMenus:", MenuTime, self.MenuGroup:GetName(), self.MenuPath } )
     for MenuText, Menu in pairs( self.Menus ) do
       Menu:Remove( MenuTime )
     end

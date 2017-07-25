@@ -302,7 +302,7 @@ do -- DETECTION_BASE
   -- @field Core.Zone#ZONE_UNIT Zone -- The Zone of the detected area.
   -- @field #boolean Changed Documents if the detected area has changes.
   -- @field #table Changes A list of the changes reported on the detected area. (It is up to the user of the detected area to consume those changes).
-  -- @field #number ItemID -- The identifier of the detected area.
+  -- @field #number ID -- The identifier of the detected area.
   -- @field #boolean FriendliesNearBy Indicates if there are friendlies within the detected area.
   -- @field Wrapper.Unit#UNIT NearestFAC The nearest FAC near the Area.
 
@@ -1073,14 +1073,14 @@ do -- DETECTION_BASE
     function DETECTION_BASE:AddChangeItem( DetectedItem, ChangeCode, ItemUnitType )
     
       DetectedItem.Changed = true
-      local ItemID = DetectedItem.ItemID
+      local ID = DetectedItem.ID
       
       DetectedItem.Changes = DetectedItem.Changes or {}
       DetectedItem.Changes[ChangeCode] = DetectedItem.Changes[ChangeCode] or {}
-      DetectedItem.Changes[ChangeCode].ItemID = ItemID
+      DetectedItem.Changes[ChangeCode].ID = ID
       DetectedItem.Changes[ChangeCode].ItemUnitType = ItemUnitType
     
-      self:T( { "Change on Detection Item:", DetectedItem.ItemID, ChangeCode, ItemUnitType } )
+      self:T( { "Change on Detection Item:", DetectedItem.ID, ChangeCode, ItemUnitType } )
     
       return self
     end
@@ -1095,15 +1095,15 @@ do -- DETECTION_BASE
     function DETECTION_BASE:AddChangeUnit( DetectedItem, ChangeCode, ChangeUnitType )
     
       DetectedItem.Changed = true
-      local ItemID = DetectedItem.ItemID
+      local ID = DetectedItem.ID
       
       DetectedItem.Changes = DetectedItem.Changes or {}
       DetectedItem.Changes[ChangeCode] = DetectedItem.Changes[ChangeCode] or {}
       DetectedItem.Changes[ChangeCode][ChangeUnitType] = DetectedItem.Changes[ChangeCode][ChangeUnitType] or 0
       DetectedItem.Changes[ChangeCode][ChangeUnitType] = DetectedItem.Changes[ChangeCode][ChangeUnitType] + 1
-      DetectedItem.Changes[ChangeCode].ItemID = ItemID
+      DetectedItem.Changes[ChangeCode].ID = ID
       
-      self:T( { "Change on Detection Item:", DetectedItem.ItemID, ChangeCode, ChangeUnitType } )
+      self:T( { "Change on Detection Item:", DetectedItem.ID, ChangeCode, ChangeUnitType } )
     
       return self
     end
@@ -1628,7 +1628,7 @@ do -- DETECTION_UNITS
       if ChangeCode == "AU" then
         local MTUT = {}
         for ChangeUnitType, ChangeUnitCount in pairs( ChangeData ) do
-          if ChangeUnitType  ~= "ItemID" then
+          if ChangeUnitType  ~= "ID" then
             MTUT[#MTUT+1] = ChangeUnitCount .. " of " .. ChangeUnitType
           end
         end
@@ -1638,7 +1638,7 @@ do -- DETECTION_UNITS
       if ChangeCode == "RU" then
         local MTUT = {}
         for ChangeUnitType, ChangeUnitCount in pairs( ChangeData ) do
-          if ChangeUnitType  ~= "ItemID" then
+          if ChangeUnitType  ~= "ID" then
             MTUT[#MTUT+1] = ChangeUnitCount .. " of " .. ChangeUnitType
           end
         end
@@ -1915,7 +1915,7 @@ do -- DETECTION_TYPES
       if ChangeCode == "AU" then
         local MTUT = {}
         for ChangeUnitType, ChangeUnitCount in pairs( ChangeData ) do
-          if ChangeUnitType  ~= "ItemID" then
+          if ChangeUnitType  ~= "ID" then
             MTUT[#MTUT+1] = ChangeUnitCount .. " of " .. ChangeUnitType
           end
         end
@@ -1925,7 +1925,7 @@ do -- DETECTION_TYPES
       if ChangeCode == "RU" then
         local MTUT = {}
         for ChangeUnitType, ChangeUnitCount in pairs( ChangeData ) do
-          if ChangeUnitType  ~= "ItemID" then
+          if ChangeUnitType  ~= "ID" then
             MTUT[#MTUT+1] = ChangeUnitCount .. " of " .. ChangeUnitType
           end
         end
@@ -2376,39 +2376,39 @@ do -- DETECTION_AREAS
     for ChangeCode, ChangeData in pairs( DetectedItem.Changes ) do
   
       if ChangeCode == "AA" then
-        MT[#MT+1] = "Detected new area " .. ChangeData.ItemID .. ". The center target is a " .. ChangeData.ItemUnitType .. "."
+        MT[#MT+1] = "Detected new area " .. ChangeData.ID .. ". The center target is a " .. ChangeData.ItemUnitType .. "."
       end
   
       if ChangeCode == "RAU" then
-        MT[#MT+1] = "Changed area " .. ChangeData.ItemID .. ". Removed the center target."
+        MT[#MT+1] = "Changed area " .. ChangeData.ID .. ". Removed the center target."
       end
       
       if ChangeCode == "AAU" then
-        MT[#MT+1] = "Changed area " .. ChangeData.ItemID .. ". The new center target is a " .. ChangeData.ItemUnitType .. "."
+        MT[#MT+1] = "Changed area " .. ChangeData.ID .. ". The new center target is a " .. ChangeData.ItemUnitType .. "."
       end
       
       if ChangeCode == "RA" then
-        MT[#MT+1] = "Removed old area " .. ChangeData.ItemID .. ". No more targets in this area."
+        MT[#MT+1] = "Removed old area " .. ChangeData.ID .. ". No more targets in this area."
       end
       
       if ChangeCode == "AU" then
         local MTUT = {}
         for ChangeUnitType, ChangeUnitCount in pairs( ChangeData ) do
-          if ChangeUnitType  ~= "ItemID" then
+          if ChangeUnitType  ~= "ID" then
             MTUT[#MTUT+1] = ChangeUnitCount .. " of " .. ChangeUnitType
           end
         end
-        MT[#MT+1] = "Detected for area " .. ChangeData.ItemID .. " new target(s) " .. table.concat( MTUT, ", " ) .. "."
+        MT[#MT+1] = "Detected for area " .. ChangeData.ID .. " new target(s) " .. table.concat( MTUT, ", " ) .. "."
       end
   
       if ChangeCode == "RU" then
         local MTUT = {}
         for ChangeUnitType, ChangeUnitCount in pairs( ChangeData ) do
-          if ChangeUnitType  ~= "ItemID" then
+          if ChangeUnitType  ~= "ID" then
             MTUT[#MTUT+1] = ChangeUnitCount .. " of " .. ChangeUnitType
           end
         end
-        MT[#MT+1] = "Removed for area " .. ChangeData.ItemID .. " invisible or destroyed target(s) " .. table.concat( MTUT, ", " ) .. "."
+        MT[#MT+1] = "Removed for area " .. ChangeData.ID .. " invisible or destroyed target(s) " .. table.concat( MTUT, ", " ) .. "."
       end
       
     end
@@ -2559,7 +2559,7 @@ do -- DETECTION_AREAS
           
           local DetectedItem = DetectedItemData -- #DETECTION_BASE.DetectedItem
           if DetectedItem then
-            self:T( "Detection Area #" .. DetectedItem.ItemID )
+            self:T( "Detection Area #" .. DetectedItem.ID )
             local DetectedSet = DetectedItem.Set
             if not self:IsDetectedObjectIdentified( DetectedObject ) and DetectedUnit:IsInZone( DetectedItem.Zone ) then
               self:IdentifyDetectedObject( DetectedObject )
@@ -2607,7 +2607,7 @@ do -- DETECTION_AREAS
         --- @param Wrapper.Unit#UNIT DetectedUnit
         function( DetectedUnit )
           if DetectedUnit:IsAlive() then
-            --self:T( "Detected Set #" .. DetectedItem.ItemID .. ":" .. DetectedUnit:GetName() )
+            --self:T( "Detected Set #" .. DetectedItem.ID .. ":" .. DetectedUnit:GetName() )
             if DETECTION_AREAS._FlareDetectedUnits or self._FlareDetectedUnits then
               DetectedUnit:FlareGreen()
             end
