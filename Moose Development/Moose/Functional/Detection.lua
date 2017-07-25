@@ -2625,7 +2625,7 @@ do -- DETECTION_AREAS
       end
 
       if DETECTION_AREAS._BoundDetectedZones or self._BoundDetectedZones then
-        self.CountryID = DetectionSetGroup:GetFirst():GetCountry()
+        self.CountryID = DetectedSet:GetFirst():GetCountry()
         DetectedZone:BoundZone( 12, self.CountryID )
       end
     end

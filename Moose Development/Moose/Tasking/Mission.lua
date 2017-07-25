@@ -486,14 +486,9 @@ function MISSION:GetRootMenu( TaskGroup ) -- R2.2
   local MissionName = self:GetName()
   --local MissionMenu = CommandCenterMenu:GetMenu( MissionName )
   
-  self.MissionMenu = self.MissionMenu or {}
-  self.MissionMenu[TaskGroup] = self.MissionMenu[TaskGroup] or {}
-  
-  local Menu = self.MissionMenu[TaskGroup]
-  
-  Menu.MainMenu = Menu.MainMenu or MENU_COALITION:New( self.MissionCoalition, self:GetName(), CommandCenterMenu )
+  self.MissionMenu = self.MissionMenu or MENU_COALITION:New( self.MissionCoalition, self:GetName(), CommandCenterMenu )
 
-  return Menu.MainMenu
+  return self.MissionMenu
 end
 
 --- Gets the mission menu for the TaskGroup.
@@ -507,27 +502,28 @@ function MISSION:GetMenu( TaskGroup ) -- R2.1 -- Changed Menu Structure
   local MissionName = self:GetName()
   --local MissionMenu = CommandCenterMenu:GetMenu( MissionName )
   
-  self.MissionMenu = self.MissionMenu or {}
-  self.MissionMenu[TaskGroup] = self.MissionMenu[TaskGroup] or {}
+  self.MissionGroupMenu = self.MissionGroupMenu or {}
+  self.MissionGroupMenu[TaskGroup] = self.MissionGroupMenu[TaskGroup] or {}
   
-  local Menu = self.MissionMenu[TaskGroup]
+  local GroupMenu = self.MissionGroupMenu[TaskGroup]
   
-  Menu.MainMenu = Menu.MainMenu or MENU_COALITION:New( self.MissionCoalition, self:GetName(), CommandCenterMenu )
-  Menu.BriefingMenu = Menu.BriefingMenu or MENU_GROUP_COMMAND:New( TaskGroup, "Mission Briefing", Menu.MainMenu, self.MenuReportBriefing, self, TaskGroup )
+  self.MissionMenu = self.MissionMenu or MENU_COALITION:New( self.MissionCoalition, self:GetName(), CommandCenterMenu )
+  
+  GroupMenu.BriefingMenu = GroupMenu.BriefingMenu or MENU_GROUP_COMMAND:New( TaskGroup, "Mission Briefing", self.MissionMenu, self.MenuReportBriefing, self, TaskGroup )
 
-  Menu.TaskReportsMenu = Menu.TaskReportsMenu or                      MENU_GROUP:New( TaskGroup, "Task Reports", Menu.MainMenu )
-  Menu.ReportTasksMenu = Menu.ReportTasksMenu or                      MENU_GROUP_COMMAND:New( TaskGroup, "Report Tasks", Menu.TaskReportsMenu, self.MenuReportTasksSummary, self, TaskGroup )
-  Menu.ReportPlannedTasksMenu = Menu.ReportPlannedTasksMenu or        MENU_GROUP_COMMAND:New( TaskGroup, "Report Planned Tasks", Menu.TaskReportsMenu, self.MenuReportTasksPerStatus, self, TaskGroup, "Planned" )
-  Menu.ReportAssignedTasksMenu = Menu.ReportAssignedTasksMenu or      MENU_GROUP_COMMAND:New( TaskGroup, "Report Assigned Tasks", Menu.TaskReportsMenu, self.MenuReportTasksPerStatus, self, TaskGroup, "Assigned" )
-  Menu.ReportSuccessTasksMenu = Menu.ReportSuccessTasksMenu or        MENU_GROUP_COMMAND:New( TaskGroup, "Report Successful Tasks", Menu.TaskReportsMenu, self.MenuReportTasksPerStatus, self, TaskGroup, "Success" )
-  Menu.ReportFailedTasksMenu = Menu.ReportFailedTasksMenu or          MENU_GROUP_COMMAND:New( TaskGroup, "Report Failed Tasks", Menu.TaskReportsMenu, self.MenuReportTasksPerStatus, self, TaskGroup, "Failed" )
-  Menu.ReportHeldTasksMenu = Menu.ReportHeldTasksMenu or              MENU_GROUP_COMMAND:New( TaskGroup, "Report Held Tasks", Menu.TaskReportsMenu, self.MenuReportTasksPerStatus, self, TaskGroup, "Hold" )
+  GroupMenu.TaskReportsMenu = GroupMenu.TaskReportsMenu or                      MENU_GROUP:New( TaskGroup, "Task Reports", self.MissionMenu )
+  GroupMenu.ReportTasksMenu = GroupMenu.ReportTasksMenu or                      MENU_GROUP_COMMAND:New( TaskGroup, "Report Tasks", GroupMenu.TaskReportsMenu, self.MenuReportTasksSummary, self, TaskGroup )
+  GroupMenu.ReportPlannedTasksMenu = GroupMenu.ReportPlannedTasksMenu or        MENU_GROUP_COMMAND:New( TaskGroup, "Report Planned Tasks", GroupMenu.TaskReportsMenu, self.MenuReportTasksPerStatus, self, TaskGroup, "Planned" )
+  GroupMenu.ReportAssignedTasksMenu = GroupMenu.ReportAssignedTasksMenu or      MENU_GROUP_COMMAND:New( TaskGroup, "Report Assigned Tasks", GroupMenu.TaskReportsMenu, self.MenuReportTasksPerStatus, self, TaskGroup, "Assigned" )
+  GroupMenu.ReportSuccessTasksMenu = GroupMenu.ReportSuccessTasksMenu or        MENU_GROUP_COMMAND:New( TaskGroup, "Report Successful Tasks", GroupMenu.TaskReportsMenu, self.MenuReportTasksPerStatus, self, TaskGroup, "Success" )
+  GroupMenu.ReportFailedTasksMenu = GroupMenu.ReportFailedTasksMenu or          MENU_GROUP_COMMAND:New( TaskGroup, "Report Failed Tasks", GroupMenu.TaskReportsMenu, self.MenuReportTasksPerStatus, self, TaskGroup, "Failed" )
+  GroupMenu.ReportHeldTasksMenu = GroupMenu.ReportHeldTasksMenu or              MENU_GROUP_COMMAND:New( TaskGroup, "Report Held Tasks", GroupMenu.TaskReportsMenu, self.MenuReportTasksPerStatus, self, TaskGroup, "Hold" )
   
-  Menu.PlayerReportsMenu = Menu.PlayerReportsMenu or                  MENU_GROUP:New( TaskGroup, "Statistics Reports", Menu.MainMenu )
-  Menu.ReportMissionHistory = Menu.ReportPlayersHistory or            MENU_GROUP_COMMAND:New( TaskGroup, "Report Mission Progress", Menu.PlayerReportsMenu, self.MenuReportPlayersProgress, self, TaskGroup )
-  Menu.ReportPlayersPerTaskMenu = Menu.ReportPlayersPerTaskMenu or    MENU_GROUP_COMMAND:New( TaskGroup, "Report Players per Task", Menu.PlayerReportsMenu, self.MenuReportPlayersPerTask, self, TaskGroup )
+  GroupMenu.PlayerReportsMenu = GroupMenu.PlayerReportsMenu or                  MENU_GROUP:New( TaskGroup, "Statistics Reports", self.MissionMenu )
+  GroupMenu.ReportMissionHistory = GroupMenu.ReportPlayersHistory or            MENU_GROUP_COMMAND:New( TaskGroup, "Report Mission Progress", GroupMenu.PlayerReportsMenu, self.MenuReportPlayersProgress, self, TaskGroup )
+  GroupMenu.ReportPlayersPerTaskMenu = GroupMenu.ReportPlayersPerTaskMenu or    MENU_GROUP_COMMAND:New( TaskGroup, "Report Players per Task", GroupMenu.PlayerReportsMenu, self.MenuReportPlayersPerTask, self, TaskGroup )
   
-  return Menu.MainMenu
+  return self.MissionMenu
 end
 
 
