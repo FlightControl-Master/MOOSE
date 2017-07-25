@@ -272,7 +272,7 @@ function TASK:JoinUnit( PlayerUnit, PlayerGroup )
     -- Check if the PlayerGroup is already assigned to the Task. If yes, the PlayerGroup is added to the Task.
     -- If the PlayerGroup is not assigned to the Task, the menu needs to be set. In that case, the PlayerUnit will become the GroupPlayer leader.
     if self:IsStatePlanned() or self:IsStateReplanned() then
-      self:SetMenuForGroup( PlayerGroup )
+      --self:SetMenuForGroup( PlayerGroup )
       --self:MessageToGroups( PlayerUnit:GetPlayerName() .. " is planning to join Task " .. self:GetName() )
     end
     if self:IsStateAssigned() then
@@ -738,13 +738,14 @@ function TASK:SetPlannedMenuForGroup( TaskGroup, MenuTime )
   
   --local MissionMenu = Mission:GetMenu( TaskGroup )
 
-  local TaskPlannedMenu = MENU_GROUP:New( TaskGroup, "Join Planned Task", MissionMenu, Mission.MenuReportTasksPerStatus, Mission, TaskGroup, "Planned" ):SetTime( MenuTime )
-  local TaskTypeMenu = MENU_GROUP:New( TaskGroup, TaskType, TaskPlannedMenu ):SetTime( MenuTime ):SetRemoveParent( true )
+  self.MenuPlanned = self.MenuPlanned or {}
+  self.MenuPlanned[TaskGroup] = MENU_GROUP:New( TaskGroup, "Join Planned Task", MissionMenu, Mission.MenuReportTasksPerStatus, Mission, TaskGroup, "Planned" ):SetTime( MenuTime )
+  local TaskTypeMenu = MENU_GROUP:New( TaskGroup, TaskType, self.MenuPlanned[TaskGroup] ):SetTime( MenuTime ):SetRemoveParent( true )
   local TaskTypeMenu = MENU_GROUP:New( TaskGroup, TaskText, TaskTypeMenu ):SetTime( MenuTime ):SetRemoveParent( true )
   local ReportTaskMenu = MENU_GROUP_COMMAND:New( TaskGroup, string.format( "Report Task Status" ), TaskTypeMenu, self.MenuTaskStatus, self, TaskGroup ):SetTime( MenuTime ):SetRemoveParent( true )
   
   if not Mission:IsGroupAssigned( TaskGroup ) then
-    local JoinTaskMenu = MENU_GROUP_COMMAND:New( TaskGroup, string.format( "Join Task" ), TaskTypeMenu, self.MenuAssignToGroup, { self = self, TaskGroup = TaskGroup } ):SetTime( MenuTime ):SetRemoveParent( true )
+    local JoinTaskMenu = MENU_GROUP_COMMAND:New( TaskGroup, string.format( "Join Task" ), TaskTypeMenu, self.MenuAssignToGroup, self, TaskGroup  ):SetTime( MenuTime ):SetRemoveParent( true )
   end
       
   return self
@@ -775,9 +776,10 @@ function TASK:SetAssignedMenuForGroup( TaskGroup, MenuTime )
 --  local MissionMenu = MENU_GROUP:New( TaskGroup, MissionName, CommandCenterMenu ):SetTime( MenuTime )
 --  local MissionMenu = Mission:GetMenu( TaskGroup )
 
-  local TaskAssignedMenu = MENU_GROUP:New( TaskGroup, string.format( "Assigned Task %s", TaskName ), MissionMenu ):SetTime( MenuTime )
-  local TaskTypeMenu = MENU_GROUP_COMMAND:New( TaskGroup, string.format( "Report Task Status" ), TaskAssignedMenu, self.MenuTaskStatus, self, TaskGroup ):SetTime( MenuTime ):SetRemoveParent( true )
-  local TaskMenu = MENU_GROUP_COMMAND:New( TaskGroup, string.format( "Abort Group from Task" ), TaskAssignedMenu, self.MenuTaskAbort, self, TaskGroup ):SetTime( MenuTime ):SetRemoveParent( true )
+  self.MenuAssigned = self.MenuAssigned or {}
+  self.MenuAssigned[TaskGroup] = MENU_GROUP:New( TaskGroup, string.format( "Assigned Task %s", TaskName ), MissionMenu ):SetTime( MenuTime )
+  local TaskTypeMenu = MENU_GROUP_COMMAND:New( TaskGroup, string.format( "Report Task Status" ), self.MenuAssigned[TaskGroup], self.MenuTaskStatus, self, TaskGroup ):SetTime( MenuTime ):SetRemoveParent( true )
+  local TaskMenu = MENU_GROUP_COMMAND:New( TaskGroup, string.format( "Abort Group from Task" ), self.MenuAssigned[TaskGroup], self.MenuTaskAbort, self, TaskGroup ):SetTime( MenuTime ):SetRemoveParent( true )
 
   return self
 end
@@ -791,9 +793,7 @@ function TASK:RemoveMenu( MenuTime )
 
   for TaskGroupID, TaskGroup in pairs( self.SetGroup:GetSet() ) do
     local TaskGroup = TaskGroup -- Wrapper.Group#GROUP 
-    if TaskGroup:IsAlive() and TaskGroup:GetPlayerNames() then
-      self:RefreshMenus( TaskGroup, MenuTime )
-    end
+    self:RefreshMenus( TaskGroup, MenuTime )
   end
 end
 
@@ -814,8 +814,11 @@ function TASK:RefreshMenus( TaskGroup, MenuTime )
   local MissionMenu = Mission:GetMenu( TaskGroup )
 
   local TaskName = self:GetName()
-  local PlannedMenu = MissionMenu:GetMenu( "Planned Tasks" )
-  local AssignedMenu = MissionMenu:GetMenu( string.format( "Assigned Task %s", TaskName ) )
+  self.MenuPlanned = self.MenuPlanned or {}
+  local PlannedMenu = self.MenuPlanned[TaskGroup]
+  
+  self.MenuAssigned = self.MenuAssigned or {}
+  local AssignedMenu = self.MenuAssigned[TaskGroup]
   
   if PlannedMenu then
     PlannedMenu:Remove( MenuTime )
@@ -846,11 +849,10 @@ function TASK:RemoveAssignedMenuForGroup( TaskGroup )
   
 end
 
-function TASK.MenuAssignToGroup( MenuParam )
+--- @param #TASK self
+-- @param Wrapper.Group#GROUP TaskGroup
+function TASK:MenuAssignToGroup( TaskGroup )
 
-  local self = MenuParam.self
-  local TaskGroup = MenuParam.TaskGroup
-  
   self:E( "Assigned menu selected")
   
   self:AssignToGroup( TaskGroup )
