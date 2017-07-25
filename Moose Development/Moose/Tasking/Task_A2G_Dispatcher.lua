@@ -81,7 +81,7 @@ do -- TASK_A2G_DISPATCHER
   --- Creates a SEAD task when there are targets for it.
   -- @param #TASK_A2G_DISPATCHER self
   -- @param Functional.Detection#DETECTION_AREAS.DetectedItem DetectedItem
-  -- @return Set#SET_UNIT TargetSetUnit: The target set of units.
+  -- @return Core.Set#SET_UNIT TargetSetUnit: The target set of units.
   -- @return #nil If there are no targets to be set.
   function TASK_A2G_DISPATCHER:EvaluateSEAD( DetectedItem )
     self:F( { DetectedItem.ItemID } )
@@ -109,7 +109,8 @@ do -- TASK_A2G_DISPATCHER
   --- Creates a CAS task when there are targets for it.
   -- @param #TASK_A2G_DISPATCHER self
   -- @param Functional.Detection#DETECTION_AREAS.DetectedItem DetectedItem
-  -- @return Tasking.Task#TASK
+  -- @return Core.Set#SET_UNIT TargetSetUnit: The target set of units.
+  -- @return #nil If there are no targets to be set.
   function TASK_A2G_DISPATCHER:EvaluateCAS( DetectedItem )
     self:F( { DetectedItem.ItemID } )
   
@@ -137,7 +138,8 @@ do -- TASK_A2G_DISPATCHER
   --- Creates a BAI task when there are targets for it.
   -- @param #TASK_A2G_DISPATCHER self
   -- @param Functional.Detection#DETECTION_AREAS.DetectedItem DetectedItem
-  -- @return Tasking.Task#TASK
+  -- @return Core.Set#SET_UNIT TargetSetUnit: The target set of units.
+  -- @return #nil If there are no targets to be set.
   function TASK_A2G_DISPATCHER:EvaluateBAI( DetectedItem, FriendlyCoalition )
     self:F( { DetectedItem.ItemID } )
   
@@ -230,7 +232,8 @@ do -- TASK_A2G_DISPATCHER
         local TaskIndex = DetectedItem.Index
         local DetectedItemChanged = DetectedItem.Changed
         
-        local Task = self.Tasks[TaskIndex]
+        local Task = self.Tasks[TaskIndex] -- Tasking.Task_A2G#TASK_A2A
+        
         Task = self:EvaluateRemoveTask( Mission, Task, TaskIndex, DetectedItemChanged ) -- Task will be removed if it is planned and changed.
 
         -- Evaluate SEAD
@@ -266,7 +269,46 @@ do -- TASK_A2G_DISPATCHER
           else
             self:E("This should not happen")
           end
-
+        else
+          -- If there is a Task and the task was assigned, then we check if the task was changed ... If it was, we need to reevaluate the targets.
+          if Task:IsStateAssigned() then
+            if DetectedItemChanged == true then -- The detection has changed, thus a new TargetSet is to be evaluated and set
+              local TargetsReport = REPORT:New()
+              if Task:IsInstanceOf( TASK_A2G_SEAD ) then
+                local TargetSetUnit = self:EvaluateSEAD( DetectedItem ) -- Returns a SetUnit if there are targets to be SEADed...
+                if TargetSetUnit then
+                  Task:SetTargetSetUnit( TargetSetUnit )
+                  Task:UpdateTaskInfo()
+                  TargetsReport:Add( Detection:GetChangeText( DetectedItem )  )
+                end
+              else
+                if Task:IsInstanceOf( TASK_A2G_CAS ) then
+                  local TargetSetUnit = self:EvaluateCAS( DetectedItem ) -- Returns a SetUnit if there are targets to be CASed...
+                  if TargetSetUnit then
+                    Task:SetTargetSetUnit( TargetSetUnit )
+                    Task:UpdateTaskInfo()
+                    TargetsReport:Add( Detection:GetChangeText( DetectedItem ) )
+                  end
+                else
+                  if Task:IsInstanceOf( TASK_A2G_BAI ) then
+                    local TargetSetUnit = self:EvaluateBAI( DetectedItem ) -- Returns a SetUnit if there are targets to be BAIed...
+                    if TargetSetUnit then
+                      Task:SetTargetSetUnit( TargetSetUnit )
+                      Task:UpdateTaskInfo()
+                      TargetsReport:Add( Detection:GetChangeText( DetectedItem ) )
+                    end
+                  end
+                end
+              end
+              -- Now we send to each group the changes.
+              for TaskGroupID, TaskGroup in pairs( self.SetGroup:GetSet() ) do
+                local TargetsText = TargetsReport:Text(", ")
+                if ( Mission:IsGroupAssigned(TaskGroup) ) and TargetsText ~= "" then
+                  Mission:GetCommandCenter():MessageToGroup( string.format( "Task %s has change of targets:\n %s", Task:GetName(), TargetsText ), TaskGroup )
+                end
+              end
+            end
+          end
         end
 
   
@@ -278,7 +320,6 @@ do -- TASK_A2G_DISPATCHER
       Mission:GetCommandCenter():SetMenu()
       
       local TaskText = TaskReport:Text(", ")
-      
       for TaskGroupID, TaskGroup in pairs( self.SetGroup:GetSet() ) do
         if ( not Mission:IsGroupAssigned(TaskGroup) ) and TaskText ~= "" then
           Mission:GetCommandCenter():MessageToGroup( string.format( "%s has tasks %s. Subscribe to a task using the radio menu.", Mission:GetName(), TaskText ), TaskGroup )

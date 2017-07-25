@@ -75,7 +75,7 @@ do -- TASK_A2G
     Fsm:AddTransition( { "ArrivedAtRendezVous", "HoldingAtRendezVous" }, "Engage", "Engaging" )
     Fsm:AddTransition( { "ArrivedAtRendezVous", "HoldingAtRendezVous" }, "HoldAtRendezVous", "HoldingAtRendezVous" )
      
-    Fsm:AddProcess   ( "Engaging", "Account", ACT_ACCOUNT_DEADS:New( self.TargetSetUnit, self.TaskType ), {} )
+    Fsm:AddProcess   ( "Engaging", "Account", ACT_ACCOUNT_DEADS:New(), {} )
     Fsm:AddTransition( "Engaging", "RouteToTarget", "Engaging" )
     Fsm:AddProcess( "Engaging", "RouteToTargetZone", ACT_ROUTE_ZONE:New(), {} )
     Fsm:AddProcess( "Engaging", "RouteToTargetPoint", ACT_ROUTE_POINT:New(), {} )
@@ -165,6 +165,15 @@ do -- TASK_A2G
     return self
  
   end
+
+  --- @param #TASK_A2G self
+  -- @param Core.Set#SET_UNIT TargetSetUnit The set of targets.
+  function TASK_A2G:SetTargetSetUnit( TargetSetUnit )
+  
+    self.TargetSetUnit = TargetSetUnit
+  end
+   
+
   
   --- @param #TASK_A2G self
   function TASK_A2G:GetPlannedMenuText()
@@ -319,17 +328,23 @@ do -- TASK_A2G_SEAD
       "Execute a Suppression of Enemy Air Defenses.\n"
     )
 
-    local TargetCoordinate = TargetSetUnit:GetFirst():GetCoordinate()
-    self:SetInfo( "Coordinates", TargetCoordinate, 10 )
-
-    self:SetInfo( "Threat", "[" .. string.rep(  "■", TargetSetUnit:CalculateThreatLevelA2G() ) .. "]", 11 )
-    local DetectedItemsCount = TargetSetUnit:Count()
-    local DetectedItemsTypes = TargetSetUnit:GetTypeNames()
-    self:SetInfo( "Targets", string.format( "%d of %s", DetectedItemsCount, DetectedItemsTypes ), 0 ) 
-
+    self:UpdateTaskInfo()
+    
     return self
   end 
-  
+
+  function TASK_A2G_SEAD:UpdateTaskInfo() 
+
+    local TargetCoordinate = self.TargetSetUnit:GetFirst():GetCoordinate()
+    self:SetInfo( "Coordinates", TargetCoordinate, 10 )
+
+    self:SetInfo( "Threat", "[" .. string.rep(  "■", self.TargetSetUnit:CalculateThreatLevelA2G() ) .. "]", 11 )
+    local DetectedItemsCount = self.TargetSetUnit:Count()
+    local DetectedItemsTypes = self.TargetSetUnit:GetTypeNames()
+    self:SetInfo( "Targets", string.format( "%d of %s", DetectedItemsCount, DetectedItemsTypes ), 0 ) 
+
+  end
+    
   function TASK_A2G_SEAD:ReportOrder( ReportGroup ) 
     local Coordinate = self.TaskInfo.Coordinates.TaskInfoText
     local Distance = ReportGroup:GetCoordinate():Get2DDistance( Coordinate )
@@ -440,16 +455,22 @@ do -- TASK_A2G_BAI
       "Execute a Battlefield Air Interdiction of a group of enemy targets.\n"
     )
 
-    local TargetCoordinate = TargetSetUnit:GetFirst():GetCoordinate()
+    self:UpdateTaskInfo()
+    
+    return self
+  end
+  
+  function TASK_A2G_BAI:UpdateTaskInfo() 
+
+    local TargetCoordinate = self.TargetSetUnit:GetFirst():GetCoordinate()
     self:SetInfo( "Coordinates", TargetCoordinate, 10 )
 
-    self:SetInfo( "Threat", "[" .. string.rep(  "■", TargetSetUnit:CalculateThreatLevelA2G() ) .. "]", 11 )
-    local DetectedItemsCount = TargetSetUnit:Count()
-    local DetectedItemsTypes = TargetSetUnit:GetTypeNames()
+    self:SetInfo( "Threat", "[" .. string.rep(  "■", self.TargetSetUnit:CalculateThreatLevelA2G() ) .. "]", 11 )
+    local DetectedItemsCount = self.TargetSetUnit:Count()
+    local DetectedItemsTypes = self.TargetSetUnit:GetTypeNames()
     self:SetInfo( "Targets", string.format( "%d of %s", DetectedItemsCount, DetectedItemsTypes ), 0 ) 
 
-    return self
-  end 
+  end
 
 
   function TASK_A2G_BAI:ReportOrder( ReportGroup ) 
@@ -562,16 +583,22 @@ do -- TASK_A2G_CAS
       "Beware of friendlies at the vicinity!\n"
     )
 
-    local TargetCoordinate = TargetSetUnit:GetFirst():GetCoordinate()
-    self:SetInfo( "Coordinates", TargetCoordinate, 10 )
-
-    self:SetInfo( "Threat", "[" .. string.rep(  "■", TargetSetUnit:CalculateThreatLevelA2G() ) .. "]", 11 )
-    local DetectedItemsCount = TargetSetUnit:Count()
-    local DetectedItemsTypes = TargetSetUnit:GetTypeNames()
-    self:SetInfo( "Targets", string.format( "%d of %s", DetectedItemsCount, DetectedItemsTypes ), 0 ) 
-
+    self:UpdateTaskInfo()
+    
     return self
   end 
+  
+  function TASK_A2G_CAS:UpdateTaskInfo()
+  
+    local TargetCoordinate = self.TargetSetUnit:GetFirst():GetCoordinate()
+    self:SetInfo( "Coordinates", TargetCoordinate, 10 )
+
+    self:SetInfo( "Threat", "[" .. string.rep(  "■", self.TargetSetUnit:CalculateThreatLevelA2G() ) .. "]", 11 )
+    local DetectedItemsCount = self.TargetSetUnit:Count()
+    local DetectedItemsTypes = self.TargetSetUnit:GetTypeNames()
+    self:SetInfo( "Targets", string.format( "%d of %s", DetectedItemsCount, DetectedItemsTypes ), 0 ) 
+
+  end
 
   function TASK_A2G_CAS:ReportOrder( ReportGroup ) 
     local Coordinate = self.TaskInfo.Coordinates.TaskInfoText

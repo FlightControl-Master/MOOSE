@@ -155,7 +155,6 @@ do -- ACT_ACCOUNT_DEADS
   -- @extends #ACT_ACCOUNT
   ACT_ACCOUNT_DEADS = { 
     ClassName = "ACT_ACCOUNT_DEADS",
-    TargetSetUnit = nil,
   }
 
 
@@ -163,13 +162,10 @@ do -- ACT_ACCOUNT_DEADS
   -- @param #ACT_ACCOUNT_DEADS self
   -- @param Set#SET_UNIT TargetSetUnit
   -- @param #string TaskName
-  function ACT_ACCOUNT_DEADS:New( TargetSetUnit, TaskName )
+  function ACT_ACCOUNT_DEADS:New()
     -- Inherits from BASE
     local self = BASE:Inherit( self, ACT_ACCOUNT:New() ) -- #ACT_ACCOUNT_DEADS
     
-    self.TargetSetUnit = TargetSetUnit 
-    self.TaskName = TaskName
-      
     self.DisplayInterval = 30
     self.DisplayCount = 30
     self.DisplayMessage = true
@@ -181,8 +177,8 @@ do -- ACT_ACCOUNT_DEADS
   
   function ACT_ACCOUNT_DEADS:Init( FsmAccount )
   
-    self.TargetSetUnit = FsmAccount.TargetSetUnit 
-    self.TaskName = FsmAccount.TaskName
+    self.Task = self:GetTask() 
+    self.TaskName = self.Task:GetName()
   end
 
   --- Process Events
@@ -196,7 +192,7 @@ do -- ACT_ACCOUNT_DEADS
   function ACT_ACCOUNT_DEADS:onenterReport( ProcessUnit, Task, From, Event, To )
     self:E( { ProcessUnit, From, Event, To } )
   
-    self:Message( "Your group with assigned " .. self.TaskName .. " task has " .. self.TargetSetUnit:GetUnitTypesText() .. " targets left to be destroyed." )
+    self:Message( "Your group with assigned " .. self.TaskName .. " task has " .. Task.TargetSetUnit:GetUnitTypesText() .. " targets left to be destroyed." )
   end
   
   
@@ -211,7 +207,7 @@ do -- ACT_ACCOUNT_DEADS
   function ACT_ACCOUNT_DEADS:onafterEvent( ProcessClient, Task, From, Event, To, EventData  )
     self:T( { ProcessClient:GetName(), Task:GetName(), From, Event, To, EventData } )
     
-    if self.TargetSetUnit:FindUnit( EventData.IniUnitName ) then
+    if Task.TargetSetUnit:FindUnit( EventData.IniUnitName ) then
       local PlayerName = ProcessClient:GetPlayerName()
       local PlayerHit = self.PlayerHits and self.PlayerHits[EventData.IniUnitName]
       if PlayerHit == PlayerName then
@@ -235,13 +231,13 @@ do -- ACT_ACCOUNT_DEADS
     
     local TaskGroup = ProcessClient:GetGroup()
 
-    self.TargetSetUnit:Remove( EventData.IniUnitName )
-    self:Message( "You have destroyed a target. Your group assigned with task " .. self.TaskName .. " has " .. self.TargetSetUnit:Count() .. " targets ( " .. self.TargetSetUnit:GetUnitTypesText() .. " ) left to be destroyed." )
+    Task.TargetSetUnit:Remove( EventData.IniUnitName )
+    self:Message( "You have destroyed a target.\nYour group assigned with task " .. self.TaskName .. " has\n" .. Task.TargetSetUnit:Count() .. " targets ( " .. Task.TargetSetUnit:GetUnitTypesText() .. " ) left to be destroyed." )
 
     local PlayerName = ProcessClient:GetPlayerName()
     Task:AddProgress( PlayerName, "Destroyed " .. EventData.IniTypeName, timer.getTime(), 1 )
 
-    if self.TargetSetUnit:Count() > 0 then
+    if Task.TargetSetUnit:Count() > 0 then
       self:__More( 1 )
     else
       self:__NoMore( 1 )
@@ -260,10 +256,10 @@ do -- ACT_ACCOUNT_DEADS
     self:T( { ProcessClient:GetName(), Task:GetName(), From, Event, To, EventData } )
     
     local TaskGroup = ProcessClient:GetGroup()
-    self.TargetSetUnit:Remove( EventData.IniUnitName )
-    self:Message( "One of the task targets has been destroyed. Your group assigned with task " .. self.TaskName .. " has " .. self.TargetSetUnit:Count() .. " targets ( " .. self.TargetSetUnit:GetUnitTypesText() .. " ) left to be destroyed." )
+    Task.TargetSetUnit:Remove( EventData.IniUnitName )
+    self:Message( "One of the task targets has been destroyed.\nYour group assigned with task " .. self.TaskName .. " has\n" .. Task.TargetSetUnit:Count() .. " targets ( " .. Task.TargetSetUnit:GetUnitTypesText() .. " ) left to be destroyed." )
 
-    if self.TargetSetUnit:Count() > 0 then
+    if Task.TargetSetUnit:Count() > 0 then
       self:__More( 1 )
     else
       self:__NoMore( 1 )
