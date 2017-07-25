@@ -491,7 +491,7 @@ function MISSION:GetRootMenu( TaskGroup ) -- R2.2
   
   local Menu = self.MissionMenu[TaskGroup]
   
-  Menu.MainMenu = Menu.MainMenu or MENU_GROUP:New( TaskGroup, self:GetName(), CommandCenterMenu )
+  Menu.MainMenu = Menu.MainMenu or MENU_COALITION:New( self.MissionCoalition, self:GetName(), CommandCenterMenu )
 
   return Menu.MainMenu
 end
@@ -512,7 +512,7 @@ function MISSION:GetMenu( TaskGroup ) -- R2.1 -- Changed Menu Structure
   
   local Menu = self.MissionMenu[TaskGroup]
   
-  Menu.MainMenu = Menu.MainMenu or MENU_GROUP:New( TaskGroup, self:GetName(), CommandCenterMenu )
+  Menu.MainMenu = Menu.MainMenu or MENU_COALITION:New( self.MissionCoalition, self:GetName(), CommandCenterMenu )
   Menu.BriefingMenu = Menu.BriefingMenu or MENU_GROUP_COMMAND:New( TaskGroup, "Mission Briefing", Menu.MainMenu, self.MenuReportBriefing, self, TaskGroup )
 
   Menu.TaskReportsMenu = Menu.TaskReportsMenu or                      MENU_GROUP:New( TaskGroup, "Task Reports", Menu.MainMenu )

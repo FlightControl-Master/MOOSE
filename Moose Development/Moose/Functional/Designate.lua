@@ -196,8 +196,9 @@ do -- DESIGNATE
   -- @param Tasking.CommandCenter#COMMANDCENTER CC
   -- @param Functional.Detection#DETECTION_BASE Detection
   -- @param Core.Set#SET_GROUP AttackSet The Attack collection of GROUP objects to designate and report for.
+  -- @param Tasking.Mission#MISSION Mission (Optional) The Mission where the menu needs to be attached.
   -- @return #DESIGNATE
-  function DESIGNATE:New( CC, Detection, AttackSet )
+  function DESIGNATE:New( CC, Detection, AttackSet, Mission )
   
     local self = BASE:Inherit( self, FSM:New() ) -- #DESIGNATE
     self:F( { Detection } )
@@ -368,6 +369,7 @@ do -- DESIGNATE
     self.LaseDuration = 60
     
     self:SetFlashStatusMenu( false )
+    self:SetMission( Mission )
     self:SetDesignateMenu()
     
     self:SetLaserCodes( 1688 ) -- set self.LaserCodes
