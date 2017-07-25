@@ -222,7 +222,7 @@ do
     
     self:HandleEvent( EVENTS.Dead )
     
-    self:__Lasing( -0.2 )
+    self:__Lasing( -1 )
   end
 
   --- @param #SPOT self
@@ -247,7 +247,7 @@ do
     if self.Target:IsAlive() then
       self.SpotIR:setPoint( self.Target:GetPointVec3():AddY(1):AddY(math.random(-100,100)/100):AddX(math.random(-100,100)/100):GetVec3() )
       self.SpotLaser:setPoint( self.Target:GetPointVec3():AddY(1):GetVec3() )
-      self:__Lasing( -0.2 )
+      self:__Lasing( -1 )
     else
       self:E( { "Target is not alive", self.Target:IsAlive() } )
     end
