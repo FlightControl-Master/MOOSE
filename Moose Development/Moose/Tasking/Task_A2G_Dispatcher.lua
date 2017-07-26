@@ -175,7 +175,7 @@ do -- TASK_A2G_DISPATCHER
   function TASK_A2G_DISPATCHER:EvaluateRemoveTask( Mission, Task, TaskIndex, DetectedItemChanged )
     
     if Task then
-      if Task:IsStatePlanned() and DetectedItemChanged == true then
+      if ( Task:IsStatePlanned() and DetectedItemChanged == true ) or Task:IsStateCancelled() then
         --self:E( "Removing Tasking: " .. Task:GetTaskName() )
         Mission:RemoveTask( Task )
         self.Tasks[TaskIndex] = nil
@@ -232,7 +232,62 @@ do -- TASK_A2G_DISPATCHER
         local TaskIndex = DetectedItem.Index
         local DetectedItemChanged = DetectedItem.Changed
         
-        local Task = self.Tasks[TaskIndex] -- Tasking.Task_A2G#TASK_A2A
+        local Task = self.Tasks[TaskIndex] -- Tasking.Task_A2G#TASK_A2G
+        
+        if Task then
+        
+          -- If there is a Task and the task was assigned, then we check if the task was changed ... If it was, we need to reevaluate the targets.
+          if Task:IsStateAssigned() then
+            if DetectedItemChanged == true then -- The detection has changed, thus a new TargetSet is to be evaluated and set
+              local TargetsReport = REPORT:New()
+              local TargetSetUnit = self:EvaluateSEAD( DetectedItem ) -- Returns a SetUnit if there are targets to be SEADed...
+              if TargetSetUnit then
+                if Task:IsInstanceOf( TASK_A2G_SEAD ) then
+                  Task:SetTargetSetUnit( TargetSetUnit )
+                  Task:UpdateTaskInfo()
+                  TargetsReport:Add( Detection:GetChangeText( DetectedItem )  )
+                else
+                  Task:Cancel()
+                end
+              else
+                local TargetSetUnit = self:EvaluateCAS( DetectedItem ) -- Returns a SetUnit if there are targets to be CASed...
+                if TargetSetUnit then
+                  if Task:IsInstanceOf( TASK_A2G_CAS ) then
+                    Task:SetTargetSetUnit( TargetSetUnit )
+                    Task:UpdateTaskInfo()
+                    TargetsReport:Add( Detection:GetChangeText( DetectedItem ) )
+                  else
+                    Task:Cancel()
+                    Task = nil
+                    self.Tasks[TaskIndex] = nil
+                  end
+                else
+                  local TargetSetUnit = self:EvaluateBAI( DetectedItem ) -- Returns a SetUnit if there are targets to be BAIed...
+                  if TargetSetUnit then
+                    if Task:IsInstanceOf( TASK_A2G_BAI ) then
+                      Task:SetTargetSetUnit( TargetSetUnit )
+                      Task:UpdateTaskInfo()
+                      TargetsReport:Add( Detection:GetChangeText( DetectedItem ) )
+                    else
+                      Task:Cancel()
+                      Task = nil
+                      self.Tasks[TaskIndex] = nil
+                    end
+                  end
+                end
+              end
+              
+              -- Now we send to each group the changes, if any.
+              for TaskGroupID, TaskGroup in pairs( self.SetGroup:GetSet() ) do
+                local TargetsText = TargetsReport:Text(", ")
+                if ( Mission:IsGroupAssigned(TaskGroup) ) and TargetsText ~= "" then
+                  Mission:GetCommandCenter():MessageToGroup( string.format( "Task %s has change of targets:\n %s", Task:GetName(), TargetsText ), TaskGroup )
+                end
+              end
+            end
+          end
+        end
+          
         
         Task = self:EvaluateRemoveTask( Mission, Task, TaskIndex, DetectedItemChanged ) -- Task will be removed if it is planned and changed.
 
@@ -268,46 +323,6 @@ do -- TASK_A2G_DISPATCHER
             TaskReport:Add( Task:GetName() )
           else
             self:E("This should not happen")
-          end
-        else
-          -- If there is a Task and the task was assigned, then we check if the task was changed ... If it was, we need to reevaluate the targets.
-          if Task:IsStateAssigned() then
-            if DetectedItemChanged == true then -- The detection has changed, thus a new TargetSet is to be evaluated and set
-              local TargetsReport = REPORT:New()
-              if Task:IsInstanceOf( TASK_A2G_SEAD ) then
-                local TargetSetUnit = self:EvaluateSEAD( DetectedItem ) -- Returns a SetUnit if there are targets to be SEADed...
-                if TargetSetUnit then
-                  Task:SetTargetSetUnit( TargetSetUnit )
-                  Task:UpdateTaskInfo()
-                  TargetsReport:Add( Detection:GetChangeText( DetectedItem )  )
-                end
-              else
-                if Task:IsInstanceOf( TASK_A2G_CAS ) then
-                  local TargetSetUnit = self:EvaluateCAS( DetectedItem ) -- Returns a SetUnit if there are targets to be CASed...
-                  if TargetSetUnit then
-                    Task:SetTargetSetUnit( TargetSetUnit )
-                    Task:UpdateTaskInfo()
-                    TargetsReport:Add( Detection:GetChangeText( DetectedItem ) )
-                  end
-                else
-                  if Task:IsInstanceOf( TASK_A2G_BAI ) then
-                    local TargetSetUnit = self:EvaluateBAI( DetectedItem ) -- Returns a SetUnit if there are targets to be BAIed...
-                    if TargetSetUnit then
-                      Task:SetTargetSetUnit( TargetSetUnit )
-                      Task:UpdateTaskInfo()
-                      TargetsReport:Add( Detection:GetChangeText( DetectedItem ) )
-                    end
-                  end
-                end
-              end
-              -- Now we send to each group the changes.
-              for TaskGroupID, TaskGroup in pairs( self.SetGroup:GetSet() ) do
-                local TargetsText = TargetsReport:Text(", ")
-                if ( Mission:IsGroupAssigned(TaskGroup) ) and TargetsText ~= "" then
-                  Mission:GetCommandCenter():MessageToGroup( string.format( "Task %s has change of targets:\n %s", Task:GetName(), TargetsText ), TaskGroup )
-                end
-              end
-            end
           end
         end
 

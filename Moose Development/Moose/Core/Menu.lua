@@ -854,7 +854,7 @@ do
             end
           end
         end
-        self:T( { "Removing Group Menu:", MenuGroup = self.MenuGroup:GetName(), MenuPath = self.MenuGroup._Menus[self.Path].Path } )
+        self:T( { "Removing Group Menu:", MenuGroup = self.MenuGroup:GetName() } )
         self.MenuGroup._Menus[self.Path] = nil
         self = nil
       end

@@ -1256,6 +1256,23 @@ end
 -- @param #string From
 -- @param #string Event
 -- @param #string To
+function TASK:onenterCancelled( From, Event, To )
+
+  self:E( "Task Cancelled" )
+  
+  if From ~= "Cancelled" then
+    self:GetMission():GetCommandCenter():MessageToCoalition( "Task " .. self:GetName() .. " has been cancelled! The tactical situation has changed." )
+    self:UnAssignFromGroups()
+    self:SetMenu()
+  end
+  
+end
+
+--- FSM function for a TASK
+-- @param #TASK self
+-- @param #string From
+-- @param #string Event
+-- @param #string To
 function TASK:onafterReplan( From, Event, To )
 
   self:E( "Task Replanned" )

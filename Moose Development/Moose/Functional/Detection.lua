@@ -584,6 +584,7 @@ do -- DETECTION_BASE
             local DetectionAccepted = true
             
             local DetectedObjectName = DetectedObject:getName()
+            local DetectedObjectType = DetectedObject:getTypeName()
     
             local DetectedObjectVec3 = DetectedObject:getPoint()
             local DetectedObjectVec2 = { x = DetectedObjectVec3.x, y = DetectedObjectVec3.z }
@@ -597,7 +598,7 @@ do -- DETECTION_BASE
 
             local DetectedUnitCategory = DetectedObject:getDesc().category
     
-            self:F( { "Detected Target:", DetectionGroupName, DetectedObjectName, Distance, DetectedUnitCategory } )
+            self:F( { "Detected Target:", DetectionGroupName, DetectedObjectName, DetectedObjectType, Distance, DetectedUnitCategory } )
 
             -- Calculate Acceptance
             
