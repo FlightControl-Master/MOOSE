@@ -81,8 +81,9 @@ Each TASK has a TASK ACTION flow, which is the flow that a player (hosted by a U
 MOOSE AI Controlling Classes provide mechanisms to control AI over long lasting processes.  
 These AI Controlling Classes are based on FSM (Finite State Machine) Classes, and provided an encapsulated way to make AI behave or execute an activity.
 
-* [AI\_A2A\_GCICAP](Documentation/AI_A2A_Dispatcher.html#AI_A2A_GCICAP): Create an automatic and dynamic A2A defense system, executed by AI units, as a result of detected A2A airborne targets executing CAP and GCI. Using an easy process you can define an air defense strategy using the Mission Editor.
-* [AI\_A2A\_DISPATCHER](Documentation/AI_A2A_Dispatcher.html#AI_A2A_DISPATCHER): Same as AI\_A2A\_GCICAP, but is for more advanced or developer type mission designers. This class provides more options.
+* [AI A2A Defenses](Documentation/AI_A2A_Dispatcher.html): Create automatic A2A defense systems executed by AI and perform CAP or GCI.
+   * [AI\_A2A\_GCICAP](Documentation/AI_A2A_Dispatcher.html#AI_A2A_GCICAP): Using an easy process you can define an A2A defense system using the Mission Editor.
+   * [AI\_A2A\_DISPATCHER](Documentation/AI_A2A_Dispatcher.html#AI_A2A_DISPATCHER): Same as AI\_A2A\_GCICAP, but is for more advanced or developer type mission designers. This class provides more options.
 
 * [AI\_BALANCER](Documentation/AI_Balancer.html): Compensate in a multi player mission the abscence of players with dynamically spawned AI air units. When players join CLIENTS, the AI will either be destroyed, or will fly back to the home or nearest friendly airbase.
 

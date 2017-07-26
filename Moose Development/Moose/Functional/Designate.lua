@@ -815,7 +815,7 @@ do -- DESIGNATE
                       break
                     end
                   else
-                    RecceUnit:MessageToSetGroup( "Can't mark " .. TargetUnit:GetTypeName(), 5, self.AttackSet )
+                    --RecceUnit:MessageToSetGroup( "Can't mark " .. TargetUnit:GetTypeName(), 5, self.AttackSet )
                   end
                 else
                   -- The Recce is lasing, but the Target is not detected or within LOS. So stop lasing and send a report.

@@ -10,6 +10,142 @@
 -- ### Contributions: 
 -- 
 -- ====
+--
+-- # QUICK START GUIDE
+-- 
+-- There are basically two classes available to model an A2A defense system.
+-- 
+-- AI\_A2A\_DISPATCHER is the main A2A defense class that models the A2A defense system.
+-- AI\_A2A\_GCICAP derives or inherits from AI\_A2A\_DISPATCHER and is a more **noob** user friendly class, but is less flexible.
+-- 
+-- Before you start using the AI\_A2A\_DISPATCHER or AI\_A2A\_GCICAP ask youself the following questions:
+-- 
+-- ## 0. Do I need AI\_A2A\_DISPATCHER or do I need AI\_A2A\_GCICAP?
+-- 
+-- AI\_A2A\_GCICAP, automates a lot of the below questions using the mission editor and requires minimal lua scripting.
+-- But the AI\_A2A\_GCICAP provides less flexibility and a lot of options are defaulted.
+-- With AI\_A2A\_DISPATCHER you can setup a much more **fine grained** A2A defense mechanism, but some more (easy) lua scripting is required.
+-- 
+-- ## 1. Which Coalition am I modeling an A2A defense system for? blue or red?
+-- 
+-- One AI\_A2A\_DISPATCHER object can create a defense system for **one coalition**, which is blue or red.
+-- If you want to create a **mutual defense system**, for both blue and red, then you need to create **two** AI\_A2A\_DISPATCHER **objects**,
+-- each governing their defense system.
+-- 
+--      
+-- ## 2. Which type of EWR will I setup? Grouping based per AREA, per TYPE or per UNIT? (Later others will follow).
+-- 
+-- The MOOSE framework leverages the @{Detection} classes to perform the EWR detection.
+-- Several types of @{Detection} classes exist, and the most common characteristics of these classes is that they:
+-- 
+--    * Perform detections from multiple FACs as one co-operating entity.
+--    * Communicate with a Head Quarters, which consolidates each detection.
+--    * Groups detections based on a method (per area, per type or per unit).
+--    * Communicates detections.
+-- 
+-- ## 3. Which EWR units will be used as part of the detection system? Only Ground or also Airborne?
+-- 
+-- Typically EWR networks are setup using 55G6 EWR, 1L13 EWR, Hawk sr and Patriot str ground based radar units. 
+-- These radars have different ranges and 55G6 EWR and 1L13 EWR radars are Eastern Bloc units (eg Russia, Ukraine, Georgia) while the Hawk and Patriot radars are Western (eg US).
+-- Additionally, ANY other radar capable unit can be part of the EWR network! Also AWACS airborne units, planes, helicopters can help to detect targets, as long as they have radar.
+-- The position of these units is very important as they need to provide enough coverage 
+-- to pick up enemy aircraft as they approach so that CAP and GCI flights can be tasked to intercept them.
+-- 
+-- ## 4. Is a border required?
+-- 
+-- Is this a cold car or a hot war situation? In case of a cold war situation, a border can be set that will only trigger defenses
+-- if the border is crossed by enemy units.
+-- 
+-- ## 5. What maximum range needs to be checked to allow defenses to engage any attacker?
+-- 
+-- A good functioning defense will have a "maximum range" evaluated to the enemy when CAP will be engaged or GCI will be spawned.
+-- 
+-- ## 6. Which Airbases, Carrier Ships, Farps will take part in the defense system for the Coalition?
+-- 
+-- Carefully plan which airbases will take part in the coalition. Color each airbase in the color of the coalition.
+-- 
+-- ## 7. Which Squadrons will I create and which name will I give each Squadron?
+-- 
+-- The defense system works with Squadrons. Each Squadron must be given a unique name, that forms the **key** to the defense system.
+-- Several options and activities can be set per Squadron.
+-- 
+-- ## 8. Where will the Squadrons be located? On Airbases? On Carrier Ships? On Farps?
+-- 
+-- Squadrons are placed as the "home base" on an airfield, carrier or farp.
+-- Carefully plan where each Squadron will be located as part of the defense system.
+-- 
+-- ## 9. Which plane models will I assign for each Squadron? Do I need one plane model or more plane models per squadron?
+-- 
+-- Per Squadron, one or multiple plane models can be allocated as **Templates**.
+-- These are late activated groups with one airplane or helicopter that start with a specific name, called the **template prefix**.
+-- The A2A defense system will select from the given templates a random template to spawn a new plane (group).
+--  
+-- ## 10. Which payloads, skills and skins will these plane models have?
+-- 
+-- Per Squadron, even if you have one plane model, you can still allocate multiple templates of one plane model, 
+-- each having different payloads, skills and skins. 
+-- The A2A defense system will select from the given templates a random template to spawn a new plane (group).
+-- 
+-- ## 11. For each Squadron, which will perform CAP?
+-- 
+-- Per Squadron, evaluate which Squadrons will perform CAP.
+-- Not all Squadrons need to perform CAP.
+-- 
+-- ## 12. For each Squadron doing CAP, in which ZONE(s) will the CAP be performed?
+-- 
+-- Per CAP, evaluate **where** the CAP will be performed, in other words, define the **zone**.
+-- Near the border or a bit further away?
+-- 
+-- ## 13. For each Squadron doing CAP, which zone types will I create?
+-- 
+-- Per CAP zone, evaluate whether you want:
+-- 
+--    * simple trigger zones
+--    * polygon zones
+--    * moving zones
+-- 
+-- Depending on the type of zone selected, a different @{Zone} object needs to be created from a ZONE_ class.
+-- 
+-- ## 14. For each Squadron doing CAP, what are the time intervals and CAP amounts to be performed?
+-- 
+-- For each CAP:
+-- 
+--    * **How many** CAP you want to have airborne at the same time?
+--    * **How frequent** you want the defense mechanism to check whether to start a new CAP?
+-- 
+-- ## 15. For each Squadron, which will perform GCI?
+-- 
+-- For each Squadron, evaluate which Squadrons will perform GCI?
+-- Not all Squadrons need to perform GCI.
+-- 
+-- ## 16. For each Squadron, which takeoff method will I use?
+-- 
+-- For each Squadron, evaluate which takeoff method will be used:
+-- 
+--    * Straight from the air (default)
+--    * From the runway
+--    * From a parking spot with running engines
+--    * From a parking spot with cold engines
+-- 
+-- ## 17. For each Squadron, which landing method will I use?
+-- 
+-- For each Squadron, evaluate which landing method will be used:
+-- 
+--    * Near the airbase when returning (default)
+--    * After landing on the runway
+--    * After engine shutdown after landing
+-- 
+-- ## 18. For each Squadron, which overhead will I use?
+-- 
+-- For each Squadron, depending on the airplane type (modern, old) and payload, which overhead is required to provide any defense?
+-- In other words, if **X** attacker airplanes are detected, how many **Y** defense airplanes need to be spawned per squadron?
+-- The **Y** is dependent on the type of airplane (era), payload, fuel levels, skills etc.
+-- The overhead is a **factor** that will calculate dynamically how many **Y** defenses will be required based on **X** attackers detected.
+-- 
+-- ## 19. For each Squadron, which grouping will I use?
+-- 
+-- When multiple targets are detected, how will defense airplanes be grouped when multiple defense airplanes are spawned for multiple attackers?
+-- Per one, two, three, four?
 -- 
 -- @module AI_A2A_Dispatcher
 
@@ -29,7 +165,7 @@ do -- AI_A2A_DISPATCHER
   -- 
   -- ====
   -- 
-  -- # Demo Mission
+  -- # Demo Missions
   -- 
   -- ### [AI\_A2A\_DISPATCHER Demo Mission](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/release-2-2-pre/AID%20-%20AI%20Dispatching/AID-100%20-%20AI_A2A%20-%20Demonstration)
   -- 
@@ -55,6 +191,10 @@ do -- AI_A2A_DISPATCHER
   -- 
   -- Note that in order to create a two way A2A defense system, two AI\_A2A\_DISPATCHER defense system may need to be created, for each coalition one.
   -- This is a good implementation, because maybe in the future, more coalitions may become available in DCS world.
+  -- 
+  -- ---
+  --
+  -- # USAGE GUIDE
   -- 
   -- ## 1. AI\_A2A\_DISPATCHER constructor:
   -- 
@@ -99,14 +239,20 @@ do -- AI_A2A_DISPATCHER
   --
   --     -- Setup the A2A dispatcher, and initialize it.
   --     A2ADispatcher = AI_A2A_DISPATCHER:New( Detection )
-  -- 
+  --     
+ -- 
   -- The above example creates a SET_GROUP instance, and stores this in the variable (object) **DetectionSetGroup**.
   -- **DetectionSetGroup** is then being configured to filter all active groups with a group name starting with **DF CCCP AWACS** or **DF CCCP EWR** to be included in the Set.
   -- **DetectionSetGroup** is then being ordered to start the dynamic filtering. Note that any destroy or new spawn of a group with the above names will be removed or added to the Set.
   -- Then a new Detection object is created from the class DETECTION_AREAS. A grouping radius of 30000 is choosen, which is 30km.
   -- The **Detection** object is then passed to the @{#AI_A2A_DISPATCHER.New}() method to indicate the EWR network configuration and setup the A2A defense detection mechanism.
   -- 
-  -- ### 2. Define the detected **target grouping radius**:
+  -- You could build a **mutual defense system** like this:
+  -- 
+  --      A2ADispatcher_Red = AI_A2A_DISPATCHER:New( EWR_Red )
+  --      A2ADispatcher_Blue = AI_A2A_DISPATCHER:New( EWR_Blue )
+  --    
+   -- ### 2. Define the detected **target grouping radius**:
   -- 
   -- The target grouping radius is a property of the Detection object, that was passed to the AI\_A2A\_DISPATCHER object, but can be changed.
   -- The grouping radius should not be too small, but also depends on the types of planes and the era of the simulation.
@@ -1025,6 +1171,7 @@ do -- AI_A2A_DISPATCHER
   -- Examples are `"Batumi"` or `"Tbilisi-Lochini"`. 
   -- EXACTLY the airbase name, between quotes `""`.
   -- To ease the airbase naming when using the LDT editor and IntelliSense, the @{Airbase#AIRBASE} class contains enumerations of the airbases of each map.
+  --    
   --    * Caucasus: @{Airbase#AIRBASE.Caucaus}
   --    * Nevada or NTTR: @{Airbase#AIRBASE.Nevada}
   --    * Normandy: @{Airbase#AIRBASE.Normandy}
@@ -1037,29 +1184,21 @@ do -- AI_A2A_DISPATCHER
   -- @param #number Resources A number that specifies how many resources are in stock of the squadron. It is still a bit buggy, this part. Just make this a large number for the moment. This will be fine tuned later.
   -- 
   -- @usage
-  -- 
   --   -- Now Setup the A2A dispatcher, and initialize it using the Detection object.
   --   A2ADispatcher = AI_A2A_DISPATCHER:New( Detection )  
-  --   
   -- @usage
-  --   
   --   -- This will create squadron "Squadron1" at "Batumi" airbase, and will use plane types "SQ1" and has 40 planes in stock...  
   --   A2ADispatcher:SetSquadron( "Squadron1", "Batumi", "SQ1", 40 )
-  --   
   -- @usage
-  --   
   --   -- This will create squadron "Sq 1" at "Batumi" airbase, and will use plane types "Mig-29" and "Su-27" and has 20 planes in stock...
   --   -- Note that in this implementation, the A2A dispatcher will select a random plane when a new plane (group) needs to be spawned for defenses.
   --   -- Note the usage of the {} for the airplane templates list.
   --   A2ADispatcher:SetSquadron( "Sq 1", "Batumi", { "Mig-29", "Su-27" }, 40 )
-  -- 
   -- @usage
-  -- 
   --   -- This will create 2 squadrons "104th" and "23th" at "Batumi" airbase, and will use plane types "Mig-29" and "Su-27" respectively and each squadron has 10 planes in stock...
   --   -- Note that in this implementation, the A2A dispatcher will select a random plane when a new plane (group) needs to be spawned for defenses.
-  --   A2ADispatcher:SetSquadron( "104th", "Batumi", "Mig-29", 40 )
-  --   A2ADispatcher:SetSquadron( "23th", "Batumi", "Su-27", 40 )
-  -- 
+  --   A2ADispatcher:SetSquadron( "104th", "Batumi", "Mig-29", 10 )
+  --   A2ADispatcher:SetSquadron( "23th", "Batumi", "Su-27", 10 )
   -- @return #AI_A2A_DISPATCHER
   function AI_A2A_DISPATCHER:SetSquadron( SquadronName, AirbaseName, SpawnTemplates, Resources )
   
