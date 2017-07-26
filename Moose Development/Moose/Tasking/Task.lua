@@ -745,6 +745,7 @@ function TASK:SetPlannedMenuForGroup( TaskGroup, MenuTime )
   local ReportTaskMenu = MENU_GROUP_COMMAND:New( TaskGroup, string.format( "Report Task Status" ), TaskTypeMenu, self.MenuTaskStatus, self, TaskGroup ):SetTime( MenuTime ):SetTag( "Tasking" ):SetRemoveParent( true )
   
   if not Mission:IsGroupAssigned( TaskGroup ) then
+    self:F( { "Replacing Join Task menu" } )
     local JoinTaskMenu = MENU_GROUP_COMMAND:New( TaskGroup, string.format( "Join Task" ), TaskTypeMenu, self.MenuAssignToGroup, self, TaskGroup  ):SetTime( MenuTime ):SetTag( "Tasking" ):SetRemoveParent( true )
   end
       
