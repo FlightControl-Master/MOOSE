@@ -461,7 +461,7 @@
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_DISPATCHER).SetSquadron">AI_A2A_DISPATCHER:SetSquadron(SquadronName, AirbaseName, SpawnTemplates, Resources)</a></td>
 		<td class="summary">
-
+<p>This is the main method to define Squadrons programmatically.</p>
 </td>
 		</tr>
 		<tr>
@@ -2241,6 +2241,11 @@ Takeoff From the airbase hot, from the airbase cold, in the air, from the runway
 	
 <p>AI<em>A2A</em>DISPATCHER constructor.</p>
 
+	
+<p>This is defining the A2A DISPATCHER for one coaliton.
+The Dispatcher works with a <a href="Functional.html##(Detection)">Functional#Detection</a> object that is taking of the detection of targets using the EWR units.
+The Detection object is polymorphic, depending on the type of detection object choosen, the detection will work differently.</p>
+
 		<h3>Parameter</h3>
 		<ul>
 				<li>
@@ -2257,8 +2262,18 @@ self</p>
 
 			<h3>Usage:</h3>
 		<pre class="example"><code>  
-  -- Set a new AI A2A Dispatcher object, based on an EWR network with a 6 km grouping radius.
+  -- Setup the Detection, using DETECTION_AREAS.
+  -- First define the SET of GROUPs that are defining the EWR network.
+  -- Here with prefixes DF CCCP AWACS, DF CCCP EWR.
+  DetectionSetGroup = SET_GROUP:New()
+  DetectionSetGroup:FilterPrefixes( { "DF CCCP AWACS", "DF CCCP EWR" } )
+  DetectionSetGroup:FilterStart()
   
+  -- Define the DETECTION_AREAS, using the DetectionSetGroup, with a 30km grouping radius.
+  Detection = DETECTION_AREAS:New( DetectionSetGroup, 30000 )
+
+  -- Now Setup the A2A dispatcher, and initialize it using the Detection object.
+  A2ADispatcher = AI_A2A_DISPATCHER:New( Detection )  --   
 </code></pre>
 
 </dd>
@@ -2694,16 +2709,19 @@ An object derived from ZONE<em>BASE, or a list of objects derived from ZONE</em>
 
 			<h3>Usage:</h3>
 		<pre class="example"><code>
+  -- Now Setup the A2A dispatcher, and initialize it using the Detection object.
+  A2ADispatcher = AI_A2A_DISPATCHER:New( Detection )  
+  
   -- Set one ZONE_POLYGON object as the border for the A2A dispatcher.
   local BorderZone = ZONE_POLYGON( "CCCP Border", GROUP:FindByName( "CCCP Border" ) ) -- The GROUP object is a late activate helicopter unit.
-  Dispatcher:SetBorderZone( BorderZone )
+  A2ADispatcher:SetBorderZone( BorderZone )
   
-  or
+or
   
   -- Set two ZONE_POLYGON objects as the border for the A2A dispatcher.
   local BorderZone1 = ZONE_POLYGON( "CCCP Border1", GROUP:FindByName( "CCCP Border1" ) ) -- The GROUP object is a late activate helicopter unit.
   local BorderZone2 = ZONE_POLYGON( "CCCP Border2", GROUP:FindByName( "CCCP Border2" ) ) -- The GROUP object is a late activate helicopter unit.
-  Dispatcher:SetBorderZone( { BorderZone1, BorderZone2 } )
+  A2ADispatcher:SetBorderZone( { BorderZone1, BorderZone2 } )
   
   </code></pre>
 
@@ -2859,11 +2877,14 @@ If too large, intercept missions may be triggered when the detected target is to
 
 			<h3>Usage:</h3>
 		<pre class="example"><code>
+  -- Now Setup the A2A dispatcher, and initialize it using the Detection object.
+  A2ADispatcher = AI_A2A_DISPATCHER:New( Detection )  --   
+  
   -- Set 100km as the radius to ground control intercept detected targets from the nearest airbase.
-  Dispatcher:SetGciRadius( 100000 )
+  A2ADispatcher:SetGciRadius( 100000 )
   
   -- Set 200km as the radius to ground control intercept.
-  Dispatcher:SetGciRadius() -- 200000 is the default value.
+  A2ADispatcher:SetGciRadius() -- 200000 is the default value.
   </code></pre>
 
 </dd>
@@ -2877,28 +2898,73 @@ If too large, intercept missions may be triggered when the detected target is to
 </dt>
 <dd>
 	
+<p>This is the main method to define Squadrons programmatically.</p>
+
+	
+<p>Squadrons:</p>
+
+<ul>
+    <li>Have a <strong>name or key</strong> that is the identifier or key of the squadron.</li>
+    <li>Have <strong>specific plane types</strong> defined by <strong>templates</strong>.</li>
+    <li>Are <strong>located at one specific airbase</strong>. Multiple squadrons can be located at one airbase through.</li>
+    <li>Have a limited set of <strong>resources</strong>.</li>
+</ul>
+
+<p>The name of the squadron given acts as the <strong>squadron key</strong> in the AI_A2A_DISPATCHER:Squadron...() methods.</p>
+
+<p>Additionally, squadrons have specific configuration options to:</p>
+
+<ul>
+    <li>Control how new aircraft are <strong>taking off</strong> from the airfield (in the air, cold, hot, at the runway).</li>
+    <li>Control how returning aircraft are <strong>landing</strong> at the airfield (in the air near the airbase, after landing, after engine shutdown).</li>
+    <li>Control the <strong>grouping</strong> of new aircraft spawned at the airfield. If there is more than one aircraft to be spawned, these may be grouped.</li>
+    <li>Control the <strong>overhead</strong> or defensive strength of the squadron. Depending on the types of planes and amount of resources, the mission designer can choose to increase or reduce the amount of planes spawned.</li>
+</ul>
+
+<p>For performance and bug workaround reasons within DCS, squadrons have different methods to spawn new aircraft or land returning or damaged aircraft.</p>
 
 
 		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
-<p><code><em> SquadronName </em></code>: </p>
+<p><code><em>#string SquadronName </em></code>: 
+A string (text) that defines the squadron identifier or the key of the Squadron. 
+It can be any name, for example <code>"104th Squadron"</code> or <code>"SQ SQUADRON1"</code>, whatever. 
+As long as you remember that this name becomes the identifier of your squadron you have defined. 
+You need to use this name in other methods too!</p>
+
 
 				</li>
 				<li>
 				
-<p><code><em> AirbaseName </em></code>: </p>
+<p><code><em>#string AirbaseName </em></code>: 
+The airbase name where you want to have the squadron located. 
+You need to specify here EXACTLY the name of the airbase as you see it in the mission editor. 
+Examples are <code>"Batumi"</code> or <code>"Tbilisi-Lochini"</code>. 
+EXACTLY the airbase name, between quotes <code>""</code>.
+To ease the airbase naming when using the LDT editor and IntelliSense, the <a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a> class contains enumerations of the airbases of each map.
+   * Caucasus: <a href="Airbase.html##(AIRBASE).Caucaus">Airbase#AIRBASE.Caucaus</a>
+   * Nevada or NTTR: <a href="Airbase.html##(AIRBASE).Nevada">Airbase#AIRBASE.Nevada</a>
+   * Normandy: <a href="Airbase.html##(AIRBASE).Normandy">Airbase#AIRBASE.Normandy</a></p>
+
 
 				</li>
 				<li>
 				
-<p><code><em> SpawnTemplates </em></code>: </p>
+<p><code><em>#string SpawnTemplates </em></code>: 
+A string or an array of strings specifying the <strong>prefix names of the templates</strong> (not going to explain what is templates here again). 
+Examples are <code>{ "104th", "105th" }</code> or <code>"104th"</code> or <code>"Template 1"</code> or <code>"BLUE PLANES"</code>. 
+Just remember that your template (groups late activated) need to start with the prefix you have specified in your code.
+If you have only one prefix name for a squadron, you don't need to use the <code>{ }</code>, otherwise you need to use the brackets.</p>
+
 
 				</li>
 				<li>
 				
-<p><code><em> Resources </em></code>: </p>
+<p><code><em>#number Resources </em></code>: 
+A number that specifies how many resources are in stock of the squadron. It is still a bit buggy, this part. Just make this a large number for the moment. This will be fine tuned later.</p>
+
 
 				</li>
 		</ul>
@@ -2906,6 +2972,30 @@ If too large, intercept missions may be triggered when the detected target is to
 				
 <p><em><a href="##(AI_A2A_DISPATCHER)">#AI<em>A2A</em>DISPATCHER</a>:</em></p>
 
+
+			<h3>Usages:</h3>
+		<ul>
+			<li><pre class="example"><code>
+  -- Now Setup the A2A dispatcher, and initialize it using the Detection object.
+  A2ADispatcher = AI_A2A_DISPATCHER:New( Detection )  
+  </code></pre></li>
+			<li><pre class="example"><code>  
+  -- This will create squadron "Squadron1" at "Batumi" airbase, and will use plane types "SQ1" and has 40 planes in stock...  
+  A2ADispatcher:SetSquadron( "Squadron1", "Batumi", "SQ1", 40 )
+  </code></pre></li>
+			<li><pre class="example"><code>  
+  -- This will create squadron "Sq 1" at "Batumi" airbase, and will use plane types "Mig-29" and "Su-27" and has 20 planes in stock...
+  -- Note that in this implementation, the A2A dispatcher will select a random plane when a new plane (group) needs to be spawned for defenses.
+  -- Note the usage of the {} for the airplane templates list.
+  A2ADispatcher:SetSquadron( "Sq 1", "Batumi", { "Mig-29", "Su-27" }, 40 )
+</code></pre></li>
+			<li><pre class="example"><code>
+  -- This will create 2 squadrons "104th" and "23th" at "Batumi" airbase, and will use plane types "Mig-29" and "Su-27" respectively and each squadron has 10 planes in stock...
+  -- Note that in this implementation, the A2A dispatcher will select a random plane when a new plane (group) needs to be spawned for defenses.
+  A2ADispatcher:SetSquadron( "104th", "Batumi", "Mig-29", 40 )
+  A2ADispatcher:SetSquadron( "23th", "Batumi", "Su-27", 40 )
+</code></pre></li>
+		</ul>
 
 </dd>
 </dl>
@@ -3598,6 +3688,15 @@ Provide a value of <strong>true</strong> to display every 30 seconds a tactical 
 				
 <p><em><a href="##(AI_A2A_DISPATCHER)">#AI<em>A2A</em>DISPATCHER</a>:</em></p>
 
+
+			<h3>Usage:</h3>
+		<pre class="example"><code>
+  -- Now Setup the A2A dispatcher, and initialize it using the Detection object.
+  A2ADispatcher = AI_A2A_DISPATCHER:New( Detection )  
+  
+  -- Now Setup the Tactical Display for debug mode.
+  A2ADispatcher:SetTacticalDisplay( true )
+  </code></pre>
 
 </dd>
 </dl>

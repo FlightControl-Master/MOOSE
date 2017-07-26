@@ -259,6 +259,12 @@ each detected set of potential targets can be lased or smoked...</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DESIGNATE).MenuDesignate">DESIGNATE.MenuDesignate</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DESIGNATE).MenuFlashStatus">DESIGNATE:MenuFlashStatus(AttackGroup, Flash)</a></td>
 		<td class="summary">
 
@@ -301,7 +307,7 @@ each detected set of potential targets can be lased or smoked...</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DESIGNATE).New">DESIGNATE:New(CC, Detection, AttackSet)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DESIGNATE).New">DESIGNATE:New(CC, Detection, AttackSet, Mission)</a></td>
 		<td class="summary">
 <p>DESIGNATE Constructor.</p>
 </td>
@@ -965,6 +971,19 @@ function below will use the range 1-7 just in case</p>
 		<dl class="function">
 <dt>
 
+<a id="#(DESIGNATE).MenuDesignate" >
+<strong>DESIGNATE.MenuDesignate</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(DESIGNATE).MenuFlashStatus" >
 <strong>DESIGNATE:MenuFlashStatus(AttackGroup, Flash)</strong>
 </a>
@@ -1131,7 +1150,7 @@ function below will use the range 1-7 just in case</p>
 <dt>
 
 <a id="#(DESIGNATE).New" >
-<strong>DESIGNATE:New(CC, Detection, AttackSet)</strong>
+<strong>DESIGNATE:New(CC, Detection, AttackSet, Mission)</strong>
 </a>
 </dt>
 <dd>
@@ -1157,6 +1176,12 @@ function below will use the range 1-7 just in case</p>
 				
 <p><code><em><a href="Core.Set.html##(SET_GROUP)">Core.Set#SET_GROUP</a> AttackSet </em></code>: 
 The Attack collection of GROUP objects to designate and report for.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Tasking.Mission.html##(MISSION)">Tasking.Mission#MISSION</a> Mission </em></code>: 
+(Optional) The Mission where the menu needs to be attached.</p>
 
 				</li>
 		</ul>
