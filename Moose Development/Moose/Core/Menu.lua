@@ -103,6 +103,15 @@ do -- MENU_BASE
     return self
   end
   
+  --- Sets a tag for later selection of menu refresh.
+  -- @param #MENU_BASE self
+  -- @param #string MenuTag A Tag or Key that will filter only menu items set with this key.
+  -- @return #MENU_BASE
+  function MENU_BASE:SetTag( MenuTag )
+    self.MenuTag = MenuTag
+    return self
+  end
+  
 end
 
 do -- MENU_COMMAND_BASE
@@ -805,13 +814,14 @@ do
   --- Removes the sub menus recursively of this MENU_GROUP.
   -- @param #MENU_GROUP self
   -- @param MenuTime
+  -- @param MenuTag A Tag or Key to filter the menus to be refreshed with the Tag set.
   -- @return #MENU_GROUP self
-  function MENU_GROUP:RemoveSubMenus( MenuTime )
+  function MENU_GROUP:RemoveSubMenus( MenuTime, Menutag )
     --self:F2( { self.MenuPath, MenuTime, self.MenuTime } )
   
-    self:T( { "Removing Group SubMenus:", MenuTime, self.MenuGroup:GetName(), self.MenuPath } )
+    self:T( { "Removing Group SubMenus:", MenuTime, MenuTag, self.MenuGroup:GetName(), self.MenuPath } )
     for MenuText, Menu in pairs( self.Menus ) do
-      Menu:Remove( MenuTime )
+      Menu:Remove( MenuTime, MenuTag )
     end
   
   end
@@ -820,24 +830,27 @@ do
   --- Removes the main menu and sub menus recursively of this MENU_GROUP.
   -- @param #MENU_GROUP self
   -- @param MenuTime
+  -- @param MenuTag A Tag or Key to filter the menus to be refreshed with the Tag set.
   -- @return #nil
-  function MENU_GROUP:Remove( MenuTime )
+  function MENU_GROUP:Remove( MenuTime, MenuTag )
     --self:F2( { self.MenuGroupID, self.MenuPath, MenuTime, self.MenuTime } )
   
-    self:RemoveSubMenus( MenuTime )
+    self:RemoveSubMenus( MenuTime, MenuTag )
     
     if not MenuTime or self.MenuTime ~= MenuTime then
-      if self.MenuGroup._Menus[self.Path] then
-        self = self.MenuGroup._Menus[self.Path]
-      
-        missionCommands.removeItemForGroup( self.MenuGroupID, self.MenuPath )
-        if self.ParentMenu then
-          self.ParentMenu.Menus[self.MenuText] = nil
-          self.ParentMenu.MenuCount = self.ParentMenu.MenuCount - 1
-          if self.ParentMenu.MenuCount == 0 then
-            if self.MenuRemoveParent == true then
-              self:T2( "Removing Parent Menu " )
-              self.ParentMenu:Remove()
+      if ( not MenuTag ) or ( MenuTag and self.MenuTag and MenuTag == self.MenuTag ) then
+        if self.MenuGroup._Menus[self.Path] then
+          self = self.MenuGroup._Menus[self.Path]
+        
+          missionCommands.removeItemForGroup( self.MenuGroupID, self.MenuPath )
+          if self.ParentMenu then
+            self.ParentMenu.Menus[self.MenuText] = nil
+            self.ParentMenu.MenuCount = self.ParentMenu.MenuCount - 1
+            if self.ParentMenu.MenuCount == 0 then
+              if self.MenuRemoveParent == true then
+                self:T2( "Removing Parent Menu " )
+                self.ParentMenu:Remove()
+              end
             end
           end
         end
@@ -909,28 +922,31 @@ do
   --- Removes a menu structure for a group.
   -- @param #MENU_GROUP_COMMAND self
   -- @param MenuTime
+  -- @param MenuTag A Tag or Key to filter the menus to be refreshed with the Tag set.
   -- @return #nil
-  function MENU_GROUP_COMMAND:Remove( MenuTime )
+  function MENU_GROUP_COMMAND:Remove( MenuTime, MenuTag )
     --self:F2( { self.MenuGroupID, self.MenuPath, MenuTime, self.MenuTime } )
 
     if not MenuTime or self.MenuTime ~= MenuTime then
-      if self.MenuGroup._Menus[self.Path] then
-        self = self.MenuGroup._Menus[self.Path]
-    
-        missionCommands.removeItemForGroup( self.MenuGroupID, self.MenuPath )
-        self:T( { "Removing Group Command Menu:", MenuGroup = self.MenuGroup:GetName(), MenuText = self.MenuText, MenuPath = self.Path } )
-
-        self.ParentMenu.Menus[self.MenuText] = nil
-        self.ParentMenu.MenuCount = self.ParentMenu.MenuCount - 1
-        if self.ParentMenu.MenuCount == 0 then
-          if self.MenuRemoveParent == true then
-            self:T2( "Removing Parent Menu " )
-            self.ParentMenu:Remove()
+      if ( not MenuTag ) or ( MenuTag and self.MenuTag and MenuTag == self.MenuTag ) then
+        if self.MenuGroup._Menus[self.Path] then
+          self = self.MenuGroup._Menus[self.Path]
+      
+          missionCommands.removeItemForGroup( self.MenuGroupID, self.MenuPath )
+          self:T( { "Removing Group Command Menu:", MenuGroup = self.MenuGroup:GetName(), MenuText = self.MenuText, MenuPath = self.Path } )
+  
+          self.ParentMenu.Menus[self.MenuText] = nil
+          self.ParentMenu.MenuCount = self.ParentMenu.MenuCount - 1
+          if self.ParentMenu.MenuCount == 0 then
+            if self.MenuRemoveParent == true then
+              self:T2( "Removing Parent Menu " )
+              self.ParentMenu:Remove()
+            end
           end
+  
+          self.MenuGroup._Menus[self.Path] = nil
+          self = nil
         end
-
-        self.MenuGroup._Menus[self.Path] = nil
-        self = nil
       end
     end
     

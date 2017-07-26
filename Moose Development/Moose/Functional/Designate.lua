@@ -623,12 +623,7 @@ do -- DESIGNATE
     
       --- @param Wrapper.Group#GROUP GroupReport
       function( AttackGroup )
-        local DesignateMenu = AttackGroup:GetState( AttackGroup, "DesignateMenu" ) -- Core.Menu#MENU_GROUP
-        if DesignateMenu then
-          DesignateMenu:Remove()
-          DesignateMenu = nil
-          self:E("Remove Menu")
-        end
+        self.MenuDesignate = self.MenuDesignate or {}
         
         local MissionMenu = nil
         
@@ -636,27 +631,27 @@ do -- DESIGNATE
           MissionMenu = self.Mission:GetRootMenu( AttackGroup )
         end
         
-        DesignateMenu = MENU_GROUP:New( AttackGroup, "Designate", MissionMenu )
-        self:E( DesignateMenu )
-        AttackGroup:SetState( AttackGroup, "DesignateMenu", DesignateMenu )
-        
+        local MenuTime = timer.getTime()
+        self.MenuDesignate[AttackGroup] = MENU_GROUP:New( AttackGroup, "Designate", MissionMenu ):SetTime( MenuTime ):SetTag( "Designate" ) 
+        local MenuDesignate = self.MenuDesignate[AttackGroup] -- Core.Menu#MENU_GROUP
+
         -- Set Menu option for auto lase
 
         if self.AutoLase then        
-          MENU_GROUP_COMMAND:New( AttackGroup, "Auto Lase Off", DesignateMenu, self.MenuAutoLase, self, false )
+          MENU_GROUP_COMMAND:New( AttackGroup, "Auto Lase Off", MenuDesignate, self.MenuAutoLase, self, false ):SetTime( MenuTime ):SetTag( "Designate" )
         else
-          MENU_GROUP_COMMAND:New( AttackGroup, "Auto Lase On", DesignateMenu, self.MenuAutoLase, self, true )
+          MENU_GROUP_COMMAND:New( AttackGroup, "Auto Lase On", MenuDesignate, self.MenuAutoLase, self, true ):SetTime( MenuTime ):SetTag( "Designate" )
         end        
 
-        local StatusMenu = MENU_GROUP:New( AttackGroup, "Status", DesignateMenu )
-        MENU_GROUP_COMMAND:New( AttackGroup, "Report Status 15s", StatusMenu, self.MenuStatus, self, AttackGroup, 15 )
-        MENU_GROUP_COMMAND:New( AttackGroup, "Report Status 30s", StatusMenu, self.MenuStatus, self, AttackGroup, 30 )
-        MENU_GROUP_COMMAND:New( AttackGroup, "Report Status 60s", StatusMenu, self.MenuStatus, self, AttackGroup, 60 )
+        local StatusMenu = MENU_GROUP:New( AttackGroup, "Status", MenuDesignate ):SetTime( MenuTime ):SetTag( "Designate" )
+        MENU_GROUP_COMMAND:New( AttackGroup, "Report Status 15s", StatusMenu, self.MenuStatus, self, AttackGroup, 15 ):SetTime( MenuTime ):SetTag( "Designate" )
+        MENU_GROUP_COMMAND:New( AttackGroup, "Report Status 30s", StatusMenu, self.MenuStatus, self, AttackGroup, 30 ):SetTime( MenuTime ):SetTag( "Designate" )
+        MENU_GROUP_COMMAND:New( AttackGroup, "Report Status 60s", StatusMenu, self.MenuStatus, self, AttackGroup, 60 ):SetTime( MenuTime ):SetTag( "Designate" )
         
         if self.FlashStatusMenu[AttackGroup] then
-          MENU_GROUP_COMMAND:New( AttackGroup, "Flash Status Report Off", StatusMenu, self.MenuFlashStatus, self, AttackGroup, false )
+          MENU_GROUP_COMMAND:New( AttackGroup, "Flash Status Report Off", StatusMenu, self.MenuFlashStatus, self, AttackGroup, false ):SetTime( MenuTime ):SetTag( "Designate" )
         else
-           MENU_GROUP_COMMAND:New( AttackGroup, "Flash Status Report On", StatusMenu, self.MenuFlashStatus, self, AttackGroup, true )
+           MENU_GROUP_COMMAND:New( AttackGroup, "Flash Status Report On", StatusMenu, self.MenuFlashStatus, self, AttackGroup, true ):SetTime( MenuTime ):SetTag( "Designate" )
         end        
       
         local DetectedItems = self.Detection:GetDetectedItems()
@@ -666,15 +661,15 @@ do -- DESIGNATE
           local Report = self.Detection:DetectedItemMenu( Index, AttackGroup )
           
           if not self.Designating[Index] then
-            local DetectedMenu = MENU_GROUP:New( AttackGroup, Report, DesignateMenu )
-            MENU_GROUP_COMMAND:New( AttackGroup, "Lase target 60 secs", DetectedMenu, self.MenuLaseOn, self, Index, 60 )
-            MENU_GROUP_COMMAND:New( AttackGroup, "Lase target 120 secs", DetectedMenu, self.MenuLaseOn, self, Index, 120 )
-            MENU_GROUP_COMMAND:New( AttackGroup, "Smoke red", DetectedMenu, self.MenuSmoke, self, Index, SMOKECOLOR.Red )
-            MENU_GROUP_COMMAND:New( AttackGroup, "Smoke blue", DetectedMenu, self.MenuSmoke, self, Index, SMOKECOLOR.Blue )
-            MENU_GROUP_COMMAND:New( AttackGroup, "Smoke green", DetectedMenu, self.MenuSmoke, self, Index, SMOKECOLOR.Green )
-            MENU_GROUP_COMMAND:New( AttackGroup, "Smoke white", DetectedMenu, self.MenuSmoke, self, Index, SMOKECOLOR.White )
-            MENU_GROUP_COMMAND:New( AttackGroup, "Smoke orange", DetectedMenu, self.MenuSmoke, self, Index, SMOKECOLOR.Orange )
-            MENU_GROUP_COMMAND:New( AttackGroup, "Illuminate", DetectedMenu, self.MenuIlluminate, self, Index )
+            local DetectedMenu = MENU_GROUP:New( AttackGroup, Report, MenuDesignate )
+            MENU_GROUP_COMMAND:New( AttackGroup, "Lase target 60 secs", DetectedMenu, self.MenuLaseOn, self, Index, 60 ):SetTime( MenuTime ):SetTag( "Designate" )
+            MENU_GROUP_COMMAND:New( AttackGroup, "Lase target 120 secs", DetectedMenu, self.MenuLaseOn, self, Index, 120 ):SetTime( MenuTime ):SetTag( "Designate" )
+            MENU_GROUP_COMMAND:New( AttackGroup, "Smoke red", DetectedMenu, self.MenuSmoke, self, Index, SMOKECOLOR.Red ):SetTime( MenuTime ):SetTag( "Designate" )
+            MENU_GROUP_COMMAND:New( AttackGroup, "Smoke blue", DetectedMenu, self.MenuSmoke, self, Index, SMOKECOLOR.Blue ):SetTime( MenuTime ):SetTag( "Designate" )
+            MENU_GROUP_COMMAND:New( AttackGroup, "Smoke green", DetectedMenu, self.MenuSmoke, self, Index, SMOKECOLOR.Green ):SetTime( MenuTime ):SetTag( "Designate" )
+            MENU_GROUP_COMMAND:New( AttackGroup, "Smoke white", DetectedMenu, self.MenuSmoke, self, Index, SMOKECOLOR.White ):SetTime( MenuTime ):SetTag( "Designate" )
+            MENU_GROUP_COMMAND:New( AttackGroup, "Smoke orange", DetectedMenu, self.MenuSmoke, self, Index, SMOKECOLOR.Orange ):SetTime( MenuTime ):SetTag( "Designate" )
+            MENU_GROUP_COMMAND:New( AttackGroup, "Illuminate", DetectedMenu, self.MenuIlluminate, self, Index ):SetTime( MenuTime ):SetTag( "Designate" )
           else
             if self.Designating[Index] == "Laser" then
               Report = "Lasing " .. Report
@@ -683,13 +678,14 @@ do -- DESIGNATE
             elseif self.Designating[Index] == "Illuminate" then
               Report = "Illuminating " .. Report
             end
-            local DetectedMenu = MENU_GROUP:New( AttackGroup, Report, DesignateMenu )
+            local DetectedMenu = MENU_GROUP:New( AttackGroup, Report, MenuDesignate ):SetTime( MenuTime ):SetTag( "Designate" )
             if self.Designating[Index] == "Laser" then
-              MENU_GROUP_COMMAND:New( AttackGroup, "Stop lasing", DetectedMenu, self.MenuLaseOff, self, Index )
+              MENU_GROUP_COMMAND:New( AttackGroup, "Stop lasing", DetectedMenu, self.MenuLaseOff, self, Index ):SetTime( MenuTime ):SetTag( "Designate" )
             else
             end
           end
         end
+        MenuDesignate:Remove( MenuTime, "Designate" )
       end
     )
     
