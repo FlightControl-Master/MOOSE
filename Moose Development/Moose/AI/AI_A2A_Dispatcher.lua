@@ -204,11 +204,14 @@ do -- AI_A2A_DISPATCHER
   -- 
   -- ## 1. AI\_A2A\_DISPATCHER constructor:
   -- 
+  -- ![Banner Image](..\Presentations\AI_A2A_DISPATCHER\AI_A2A_DISPATCHER-ME_1.JPG)
+  -- 
+  -- 
   -- The @{#AI_A2A_DISPATCHER.New}() method creates a new AI\_A2A\_DISPATCHER instance.
   -- 
   -- ### 1.1. Define the **EWR network**:
   -- 
-  -- As part of the AI\_A2A\_DISPATCHER constructor, an EWR network must be given as the first parameter.
+  -- As part of the AI\_A2A\_DISPATCHER :New() constructor, an EWR network must be given as the first parameter.
   -- An EWR network, or, Early Warning Radar network, is used to early detect potential airborne targets and to understand the position of patrolling targets of the enemy.
   -- 
   -- ![Banner Image](..\Presentations\AI_A2A_DISPATCHER\Dia5.JPG)
@@ -234,6 +237,9 @@ do -- AI_A2A_DISPATCHER
   -- 
   -- See the following example to setup an EWR network containing EWR stations and AWACS.
   -- 
+  -- ![Banner Image](..\Presentations\AI_A2A_DISPATCHER\AI_A2A_DISPATCHER-ME_2.JPG)
+  -- ![Banner Image](..\Presentations\AI_A2A_DISPATCHER\AI_A2A_DISPATCHER-ME_3.JPG)
+  -- 
   --     -- Define a SET_GROUP object that builds a collection of groups that define the EWR network.
   --     -- Here we build the network with all the groups that have a name starting with DF CCCP AWACS and DF CCCP EWR.
   --     DetectionSetGroup = SET_GROUP:New()
@@ -246,10 +252,10 @@ do -- AI_A2A_DISPATCHER
   --     -- Setup the A2A dispatcher, and initialize it.
   --     A2ADispatcher = AI_A2A_DISPATCHER:New( Detection )
   --     
- -- 
   -- The above example creates a SET_GROUP instance, and stores this in the variable (object) **DetectionSetGroup**.
   -- **DetectionSetGroup** is then being configured to filter all active groups with a group name starting with **DF CCCP AWACS** or **DF CCCP EWR** to be included in the Set.
   -- **DetectionSetGroup** is then being ordered to start the dynamic filtering. Note that any destroy or new spawn of a group with the above names will be removed or added to the Set.
+  -- 
   -- Then a new Detection object is created from the class DETECTION_AREAS. A grouping radius of 30000 is choosen, which is 30km.
   -- The **Detection** object is then passed to the @{#AI_A2A_DISPATCHER.New}() method to indicate the EWR network configuration and setup the A2A defense detection mechanism.
   -- 
@@ -283,6 +289,12 @@ do -- AI_A2A_DISPATCHER
   -- If too small, more intercept missions may be triggered upon detected target areas.
   -- If too large, any airborne cap may not be able to reach the detected target area in time, because it is too far.
   -- 
+  -- In this example an engage radius is set to 80 km.
+  -- 
+  --     -- Initialize the dispatcher, setting up a radius of 80km where any airborne friendly 
+  --     -- without an assignment within 80km radius from a detected target, will engage that target.
+  --     A2ADispatcher:SetEngageRadius( 80000 )
+  -- 
   -- ## 4. Set the **Intercept radius** or **Gci radius**:
   -- 
   -- When targets are detected that are still really far off, you don't want the AI_A2A_DISPATCHER to launch intercepts just yet.
@@ -290,6 +302,11 @@ do -- AI_A2A_DISPATCHER
   -- The Gci radius is by default defined as 200km. This value can be overridden using the method @{#AI_A2A_DISPATCHER.SetGciRadius}().
   -- Override the default Gci radius when the era of the warfare is early, or, when you don't want to let the AI_A2A_DISPATCHER react immediately when
   -- a certain border or area is not being crossed.
+  -- 
+  -- In this example, the GCI radius is setto 150 km:
+  -- 
+  --     -- Initialize the dispatcher, setting up a GCI radius of 150km where no GCI will be started if the target is further than 150 km from the closest airabse.
+  --     A2ADispatcher:SetGciRadius( 80000 )
   -- 
   -- ## 5. Set the **borders**:
   -- 
@@ -310,6 +327,21 @@ do -- AI_A2A_DISPATCHER
   -- it makes it easier sometimes for the mission maker to envisage where the red and blue territories roughly are. 
   -- In a hot war the borders are effectively defined by the ground based radar coverage of a coalition.
   -- 
+  -- In this example a border is set for the CCCP A2A dispatcher:
+  -- 
+  -- ![Banner Image](..\Presentations\AI_A2A_DISPATCHER\AI_A2A_DISPATCHER-ME_4.JPG)
+  -- 
+  --     -- Setup the A2A dispatcher, and initialize it.
+  --     A2ADispatcher = AI_A2A_DISPATCHER:New( Detection )
+  --     
+  --     -- Setup the border.
+  --     -- Initialize the dispatcher, setting up a border zone. This is a polygon, 
+  --     -- which takes the waypoints of a late activated group with the name CCCP Border as the boundaries of the border area.
+  --     -- Any enemy crossing this border will be engaged.
+  -- 
+  --     CCCPBorderZone = ZONE_POLYGON:New( "CCCP Border", GROUP:FindByName( "CCCP Border" ) )
+  --     A2ADispatcher:SetBorderZone( CCCPBorderZone )
+  --     
   -- ## 6. Squadrons: 
   -- 
   -- The AI\_A2A\_DISPATCHER works with **Squadrons**, that need to be defined using the different methods available.
@@ -335,6 +367,17 @@ do -- AI_A2A_DISPATCHER
   --   
   -- For performance and bug workaround reasons within DCS, squadrons have different methods to spawn new aircraft or land returning or damaged aircraft.
   -- 
+  -- This example defines a couple of squadrons. Note the templates defined within the Mission Editor.
+  -- 
+  -- ![Banner Image](..\Presentations\AI_A2A_DISPATCHER\AI_A2A_DISPATCHER-ME_5.JPG)
+  -- ![Banner Image](..\Presentations\AI_A2A_DISPATCHER\AI_A2A_DISPATCHER-ME_6.JPG)
+  -- 
+  --      -- Setup the squadrons.
+  --      A2ADispatcher:SetSquadron( "Mineralnye", AIRBASE.Caucasus.Mineralnye_Vody, { "SQ CCCP SU-27" }, 20 )
+  --      A2ADispatcher:SetSquadron( "Maykop", AIRBASE.Caucasus.Maykop_Khanskaya, { "SQ CCCP MIG-31" }, 20 )
+  --      A2ADispatcher:SetSquadron( "Mozdok", AIRBASE.Caucasus.Mozdok, { "SQ CCCP MIG-31" }, 20 )
+  --      A2ADispatcher:SetSquadron( "Sochi", AIRBASE.Caucasus.Sochi_Adler, { "SQ CCCP SU-27" }, 20 )
+  --      A2ADispatcher:SetSquadron( "Novo", AIRBASE.Caucasus.Novorossiysk, { "SQ CCCP SU-27" }, 20 )
   -- 
   -- ### 6.1. Set squadron take-off methods
   -- 
@@ -366,6 +409,22 @@ do -- AI_A2A_DISPATCHER
   -- Currently within the DCS engine, the airfield traffic coordination is erroneous and contains a lot of bugs.
   -- If you experience while testing problems with aircraft take-off or landing, please use one of the above methods as a solution to workaround these issues!
   -- 
+  -- This example sets the default takeoff method to be from the runway.
+  -- And for a couple of squadrons overrides this default method.
+  -- 
+  --      -- Setup the Takeoff methods
+  --      
+  --      -- The default takeoff
+  --      A2ADispatcher:SetDefaultTakeOffFromRunway()
+  --      
+  --      -- The individual takeoff per squadron
+  --      A2ADispatcher:SetSquadronTakeoff( "Mineralnye", AI_A2A_DISPATCHER.Takeoff.Air )
+  --      A2ADispatcher:SetSquadronTakeoffInAir( "Sochi" )
+  --      A2ADispatcher:SetSquadronTakeoffFromRunway( "Mozdok" )
+  --      A2ADispatcher:SetSquadronTakeoffFromParkingCold( "Maykop" )
+  --      A2ADispatcher:SetSquadronTakeoffFromParkingHot( "Novo" )  
+  -- 
+  -- 
   -- ### 6.2. Set squadron landing methods
   -- 
   -- In analogy with takeoff, the landing methods are to control how squadrons land at the airfield:
@@ -387,6 +446,22 @@ do -- AI_A2A_DISPATCHER
   -- A2A defense system, as no new CAP or GCI planes can takeoff.
   -- Note that the method @{#AI_A2A_DISPATCHER.SetSquadronLandingNearAirbase}() will only work for returning aircraft, not for damaged or out of fuel aircraft.
   -- Damaged or out-of-fuel aircraft are returning to the nearest friendly airbase and will land, and are out of control from ground control.
+  -- 
+  -- This example defines the default landing method to be at the runway.
+  -- And for a couple of squadrons overrides this default method.
+  -- 
+  --      -- Setup the Landing methods
+  -- 
+  --      -- The default landing method
+  --      A2ADispatcher:SetDefaultLandingAtRunway()
+  -- 
+  --      -- The individual landing per squadron
+  --      A2ADispatcher:SetSquadronLandingAtRunway( "Mineralnye" )
+  --      A2ADispatcher:SetSquadronLandingNearAirbase( "Sochi" )
+  --      A2ADispatcher:SetSquadronLandingAtEngineShutdown( "Mozdok" )
+  --      A2ADispatcher:SetSquadronLandingNearAirbase( "Maykop" )
+  --      A2ADispatcher:SetSquadronLanding( "Novo", AI_A2A_DISPATCHER.Landing.AtRunway )
+  -- 
   -- 
   -- ### 6.3. Set squadron grouping
   -- 
@@ -463,14 +538,20 @@ do -- AI_A2A_DISPATCHER
   -- 
   -- The following example illustrates how CAP zones are coded:
   -- 
+  -- ![Banner Image](..\Presentations\AI_A2A_DISPATCHER\AI_A2A_DISPATCHER-ME_8.JPG) 
+  -- 
   --      -- CAP Squadron execution.
   --      CAPZoneEast = ZONE_POLYGON:New( "CAP Zone East", GROUP:FindByName( "CAP Zone East" ) )
   --      A2ADispatcher:SetSquadronCap( "Mineralnye", CAPZoneEast, 4000, 10000, 500, 600, 800, 900 )
   --      A2ADispatcher:SetSquadronCapInterval( "Mineralnye", 2, 30, 60, 1 )
+  --      
+  -- ![Banner Image](..\Presentations\AI_A2A_DISPATCHER\AI_A2A_DISPATCHER-ME_7.JPG) 
   --        
   --      CAPZoneWest = ZONE_POLYGON:New( "CAP Zone West", GROUP:FindByName( "CAP Zone West" ) )
   --      A2ADispatcher:SetSquadronCap( "Sochi", CAPZoneWest, 4000, 8000, 600, 800, 800, 1200, "BARO" )
   --      A2ADispatcher:SetSquadronCapInterval( "Sochi", 2, 30, 120, 1 )
+  -- 
+  -- ![Banner Image](..\Presentations\AI_A2A_DISPATCHER\AI_A2A_DISPATCHER-ME_9.JPG) 
   --        
   --      CAPZoneMiddle = ZONE:New( "CAP Zone Middle")
   --      A2ADispatcher:SetSquadronCap( "Maykop", CAPZoneMiddle, 4000, 8000, 600, 800, 800, 1200, "RADIO" )
@@ -498,8 +579,8 @@ do -- AI_A2A_DISPATCHER
   -- 
   -- For example, the following setup will create a CAP for squadron "Sochi":
   -- 
-  --    A2ADispatcher:SetSquadronCap( "Sochi", CAPZoneWest, 4000, 8000, 600, 800, 800, 1200, "BARO" )
-  --    A2ADispatcher:SetSquadronCapInterval( "Sochi", 2, 30, 120, 1 )
+  --      A2ADispatcher:SetSquadronCap( "Sochi", CAPZoneWest, 4000, 8000, 600, 800, 800, 1200, "BARO" )
+  --      A2ADispatcher:SetSquadronCapInterval( "Sochi", 2, 30, 120, 1 )
   -- 
   -- ## 8. Setup a squadron for GCI:
   -- 
@@ -516,7 +597,7 @@ do -- AI_A2A_DISPATCHER
   -- 
   -- For example, the following setup will create a GCI for squadron "Sochi":
   -- 
-  --    A2ADispatcher:SetSquadronGci( "Mozdok", 900, 1200 )
+  --      A2ADispatcher:SetSquadronGci( "Mozdok", 900, 1200 )
   -- 
   -- ## 9. Other configuration options
   -- 
@@ -526,184 +607,9 @@ do -- AI_A2A_DISPATCHER
   -- Use the method @{#AI_A2A_DISPATCHER.SetTacticalDisplay}() to switch on the tactical display panel. The default will not show this panel.
   -- Note that there may be some performance impact if this panel is shown.
   -- 
-  -- ## 10. Mission Editor Guide:
+  -- ## 10. Q & A:
   -- 
-  -- The following steps need to be followed, in order to setup the different borders, templates and groups within the mission editor:
-  -- 
-  -- ### 10.1. Define your EWR network:
-  -- 
-  -- ![Banner Image](..\Presentations\AI_A2A_DISPATCHER\Dia14.JPG)
-  -- 
-  -- At strategic positions within the battlefield, position the correct groups of units that have radar detection capability in the battlefield.
-  -- Create the naming of these groups as such, that these can be easily recognized and included as a prefix within your lua MOOSE mission script.
-  -- These prefixes should be unique, so that accidentally no other groups would be incorporated within the EWR network.
-  -- 
-  -- ### 10.2. Define the border zone:
-  -- 
-  -- ![Banner Image](..\Presentations\AI_A2A_DISPATCHER\Dia15.JPG)
-  -- 
-  -- For a cold war situation, define your border zone.
-  -- You can do this in many ways, as the @{Zone} capability within MOOSE outlines. However, the best practice is to create a ZONE_POLYGON class.
-  -- To do this, you need to create a zone using a helicopter group, that is late activated, and has a unique group name.
-  -- Place the helicopter where the border zone should start, and draw using the waypoints the polygon zone around the area that is considered the border.
-  -- The helicopter group name is included as the reference within your lua MOOSE mission script, so ensure that the name is unique and is easily recognizable.
-  -- 
-  -- ### 10.3. Define the plane templates:
-  -- 
-  -- ![Banner Image](..\Presentations\AI_A2A_DISPATCHER\Dia16.JPG)
-  -- 
-  -- Define the templates of the planes that define the format of planes that will take part in the A2A defenses of your coalition.
-  -- These plane templates will never be activated, but are used to create a diverse airplane portfolio allocated to your squadrons.
-  -- 
-  -- IMPORTANT! **Plane templates MUST be of ONE unit, and must have the Late Activated flag switched on!**
-  -- 
-  -- Plane templates are used to diversify the defending squadrons with:
-  -- 
-  --   * different airplane types
-  --   * different airplane skins
-  --   * different skill levels
-  --   * different weapon payloads
-  --   * different fuel and other characteristics
-  --   
-  -- Place these airplane templates are good visible locations within your mission, so you can easily retrieve them back.
-  -- 
-  -- ### 10.4. Define the CAP zones:
-  -- 
-  -- ![Banner Image](..\Presentations\AI_A2A_DISPATCHER\Dia17.JPG)
-  -- 
-  -- Similar as with the border zone, define the CAP zones using helicopter group templates. Its waypoints define the polygon zones. 
-  -- But you can also define other zone types instead, like moving zones.
-  -- 
-  -- ![Banner Image](..\Presentations\AI_A2A_DISPATCHER\Dia18.JPG)
-  -- 
-  -- Or you can define also zones using trigger zones.
-  -- 
-  -- ### 10.5. "Script it":
-  -- 
-  -- Find the following mission script as an example:
-  -- 
-  --        -- Define a SET_GROUP object that builds a collection of groups that define the EWR network.
-  --        -- Here we build the network with all the groups that have a name starting with DF CCCP AWACS and DF CCCP EWR.
-  --        DetectionSetGroup = SET_GROUP:New()
-  --        DetectionSetGroup:FilterPrefixes( { "DF CCCP AWACS", "DF CCCP EWR" } )
-  --        DetectionSetGroup:FilterStart()
-  --        
-  --        -- Here we define detection to be done by area, with a grouping radius of 3000.
-  --        Detection = DETECTION_AREAS:New( DetectionSetGroup, 30000 )
-  --        
-  --        -- Setup the A2A dispatcher, and initialize it.
-  --        A2ADispatcher = AI_A2A_DISPATCHER:New( Detection )
-  --        
-  -- 
-  --        
-  --        -- Initialize the dispatcher, setting up a border zone. This is a polygon, 
-  --        -- which takes the waypoints of a late activated group with the name CCCP Border as the boundaries of the border area.
-  --        -- Any enemy crossing this border will be engaged.
-  --        CCCPBorderZone = ZONE_POLYGON:New( "CCCP Border", GROUP:FindByName( "CCCP Border" ) )
-  --        A2ADispatcher:SetBorderZone( CCCPBorderZone )
-  --        
-  --        -- Initialize the dispatcher, setting up a radius of 100km where any airborne friendly 
-  --        -- without an assignment within 100km radius from a detected target, will engage that target.
-  --        A2ADispatcher:SetEngageRadius( 300000 )
-  --        
-  --        -- Setup the squadrons.
-  --        A2ADispatcher:SetSquadron( "Mineralnye", AIRBASE.Caucasus.Mineralnye_Vody, { "SQ CCCP SU-27" }, 20 )
-  --        A2ADispatcher:SetSquadron( "Maykop", AIRBASE.Caucasus.Maykop_Khanskaya, { "SQ CCCP MIG-31" }, 20 )
-  --        A2ADispatcher:SetSquadron( "Mozdok", AIRBASE.Caucasus.Mozdok, { "SQ CCCP MIG-31" }, 20 )
-  --        A2ADispatcher:SetSquadron( "Sochi", AIRBASE.Caucasus.Sochi_Adler, { "SQ CCCP SU-27" }, 20 )
-  --        A2ADispatcher:SetSquadron( "Novo", AIRBASE.Caucasus.Novorossiysk, { "SQ CCCP SU-27" }, 20 )
-  --        
-  --        -- Setup the overhead
-  --        A2ADispatcher:SetSquadronOverhead( "Mineralnye", 1.2 )
-  --        A2ADispatcher:SetSquadronOverhead( "Maykop", 1 )
-  --        A2ADispatcher:SetSquadronOverhead( "Mozdok", 1.5 )
-  --        A2ADispatcher:SetSquadronOverhead( "Sochi", 1 )
-  --        A2ADispatcher:SetSquadronOverhead( "Novo", 1 )
-  --        
-  --        -- Setup the Grouping
-  --        A2ADispatcher:SetSquadronGrouping( "Mineralnye", 2 )
-  --        A2ADispatcher:SetSquadronGrouping( "Sochi", 2 )
-  --        A2ADispatcher:SetSquadronGrouping( "Novo", 3 )
-  --        
-  --        -- Setup the Takeoff methods
-  --        A2ADispatcher:SetSquadronTakeoff( "Mineralnye", AI_A2A_DISPATCHER.Takeoff.Air )
-  --        A2ADispatcher:SetSquadronTakeoffInAir( "Sochi" )
-  --        A2ADispatcher:SetSquadronTakeoffFromRunway( "Mozdok" )
-  --        A2ADispatcher:SetSquadronTakeoffFromParkingCold( "Maykop" )
-  --        A2ADispatcher:SetSquadronTakeoffFromParkingHot( "Novo" )
-  --        
-  --        -- Setup the Landing methods
-  --        A2ADispatcher:SetSquadronLandingAtRunway( "Mineralnye" )
-  --        A2ADispatcher:SetSquadronLandingNearAirbase( "Sochi" )
-  --        A2ADispatcher:SetSquadronLandingAtEngineShutdown( "Mozdok" )
-  --        A2ADispatcher:SetSquadronLandingNearAirbase( "Maykop" )
-  --        A2ADispatcher:SetSquadronLanding( "Novo", AI_A2A_DISPATCHER.Landing.AtRunway )
-  --        
-  --        
-  --        -- CAP Squadron execution.
-  --        CAPZoneEast = ZONE_POLYGON:New( "CAP Zone East", GROUP:FindByName( "CAP Zone East" ) )
-  --        A2ADispatcher:SetSquadronCap( "Mineralnye", CAPZoneEast, 4000, 10000, 500, 600, 800, 900 )
-  --        A2ADispatcher:SetSquadronCapInterval( "Mineralnye", 2, 30, 60, 1 )
-  --        
-  --        CAPZoneWest = ZONE_POLYGON:New( "CAP Zone West", GROUP:FindByName( "CAP Zone West" ) )
-  --        A2ADispatcher:SetSquadronCap( "Sochi", CAPZoneWest, 4000, 8000, 600, 800, 800, 1200, "BARO" )
-  --        A2ADispatcher:SetSquadronCapInterval( "Sochi", 2, 30, 120, 1 )
-  --        
-  --        CAPZoneMiddle = ZONE:New( "CAP Zone Middle")
-  --        A2ADispatcher:SetSquadronCap( "Maykop", CAPZoneMiddle, 4000, 8000, 600, 800, 800, 1200, "RADIO" )
-  --        A2ADispatcher:SetSquadronCapInterval( "Sochi", 2, 30, 120, 1 )
-  --        
-  --        -- GCI Squadron execution.
-  --        A2ADispatcher:SetSquadronGci( "Mozdok", 900, 1200 )
-  --        A2ADispatcher:SetSquadronGci( "Novo", 900, 2100 )
-  --        A2ADispatcher:SetSquadronGci( "Maykop", 900, 1200 )
-  -- 
-  -- #### 10.5.1. Script the EWR network
-  -- 
-  -- ![Banner Image](..\Presentations\AI_A2A_DISPATCHER\Dia20.JPG)
-  -- 
-  -- #### 10.5.2. Script the AI\_A2A\_DISPATCHER object and configure it
-  -- 
-  -- ![Banner Image](..\Presentations\AI_A2A_DISPATCHER\Dia21.JPG)
-  -- 
-  -- #### 10.5.3. Script the squadrons
-  -- 
-  -- ![Banner Image](..\Presentations\AI_A2A_DISPATCHER\Dia22.JPG)
-  -- 
-  -- Create the squadrons using the @{#AI_A2A_DISPATCHER.SetSquadron)() method.
-  -- 
-  -- ![Banner Image](..\Presentations\AI_A2A_DISPATCHER\Dia23.JPG)
-  -- 
-  -- Define the defense overhead of the squadrons using the @{#AI_A2A_DISPATCHER.SetSquadronOverhead)() method.
-  -- Group the squadron units using the @{#AI_A2A_DISPATCHER.SetSquadronGrouping)() method.
-  -- 
-  -- ![Banner Image](..\Presentations\AI_A2A_DISPATCHER\Dia24.JPG)
-  -- 
-  -- Set the takeoff method of the squadron using the @{#AI_A2A_DISPATCHER.SetSquadronTakeoff)() methods.
-  -- Set the landing method of the squadron using the @{#AI_A2A_DISPATCHER.SetSquadronLanding)() methods.
-  -- 
-  -- ![Banner Image](..\Presentations\AI_A2A_DISPATCHER\Dia25.JPG)
-  -- 
-  -- Create the @{Zone} objects using:
-  -- 
-  --   * @{Zone#ZONE} class to create a zone using a trigger zone set in the mission editor.
-  --   * @{Zone#ZONE_UNIT} class to create a zone around a unit object.
-  --   * @{Zone#ZONE_GROUP} class to create a zone around a group object.
-  --   * @{Zone#ZONE_POLYGON} class to create a polygon zone using a late activated group object.
-  -- 
-  -- Use the @{#AI_A2A_DISPATCHER.SetSquadronCap)() method to define CAP execution for the squadron, within the CAP zone defined.
-  -- 
-  -- ![Banner Image](..\Presentations\AI_A2A_DISPATCHER\Dia26.JPG)
-  -- 
-  -- Use the @{#AI_A2A_DISPATCHER.SetSquadronCapInterval)() method to define how many CAP groups can be airborne at the same time, and the timing intervals.
-  -- 
-  -- ![Banner Image](..\Presentations\AI_A2A_DISPATCHER\Dia27.JPG)
-  -- 
-  -- Use the @{#AI_A2A_DISPATCHER.SetSquadronGci)() method to define GCI execution for the squadron.
-  -- 
-  -- ## 11. Q & A:
-  -- 
-  -- ### 11.1. Which countries will be selected for each coalition?
+  -- ### 10.1. Which countries will be selected for each coalition?
   -- 
   -- Which countries are assigned to a coalition influences which units are available to the coalition. 
   -- For example because the mission calls for a EWR radar on the blue side the Ukraine might be chosen as a blue country 
@@ -711,7 +617,7 @@ do -- AI_A2A_DISPATCHER
   -- Some countries assign different tasking to aircraft, for example Germany assigns the CAP task to F-4E Phantoms but the USA does not.  
   -- Therefore if F4s are wanted as a coalition’s CAP or GCI aircraft Germany will need to be assigned to that coalition. 
   -- 
-  -- ### 11.2. Country, type, load out, skill and skins for CAP and GCI aircraft?
+  -- ### 10.2. Country, type, load out, skill and skins for CAP and GCI aircraft?
   -- 
   --   * Note these can be from any countries within the coalition but must be an aircraft with one of the main tasks being “CAP”.
   --   * Obviously skins which are selected must be available to all players that join the mission otherwise they will see a default skin.
