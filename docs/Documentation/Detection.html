@@ -217,7 +217,7 @@ DETECTION uses the in-built detection capabilities of DCS World, but adds new fu
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS).DetectedItemReportSummary">DETECTION_AREAS:DetectedItemReportSummary(Index, AttackGroup)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS).DetectedItemReportSummary">DETECTION_AREAS:DetectedItemReportSummary(Index, AttackGroup, Settings)</a></td>
 		<td class="summary">
 <p>Report summary of a detected item using a given numeric index.</p>
 </td>
@@ -449,7 +449,7 @@ DETECTION uses the in-built detection capabilities of DCS World, but adds new fu
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).DetectedItemReportSummary">DETECTION_BASE:DetectedItemReportSummary(Index, AttackGroup)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).DetectedItemReportSummary">DETECTION_BASE:DetectedItemReportSummary(Index, AttackGroup, Settings)</a></td>
 		<td class="summary">
 <p>Report summary of a detected item using a given numeric index.</p>
 </td>
@@ -1072,7 +1072,7 @@ The different values of Unit.Category can be:</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_TYPES).DetectedItemReportSummary">DETECTION_TYPES:DetectedItemReportSummary(Index, DetectedTypeName, AttackGroup)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_TYPES).DetectedItemReportSummary">DETECTION_TYPES:DetectedItemReportSummary(Index, AttackGroup, Settings, DetectedTypeName)</a></td>
 		<td class="summary">
 <p>Report summary of a DetectedItem using a given numeric index.</p>
 </td>
@@ -1154,7 +1154,7 @@ The different values of Unit.Category can be:</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_UNITS).DetectedItemReportSummary">DETECTION_UNITS:DetectedItemReportSummary(Index, AttackGroup)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_UNITS).DetectedItemReportSummary">DETECTION_UNITS:DetectedItemReportSummary(Index, AttackGroup, Settings)</a></td>
 		<td class="summary">
 <p>Report summary of a DetectedItem using a given numeric index.</p>
 </td>
@@ -1668,7 +1668,7 @@ self</p>
 <dt>
 
 <a id="#(DETECTION_AREAS).DetectedItemReportSummary" >
-<strong>DETECTION_AREAS:DetectedItemReportSummary(Index, AttackGroup)</strong>
+<strong>DETECTION_AREAS:DetectedItemReportSummary(Index, AttackGroup, Settings)</strong>
 </a>
 </dt>
 <dd>
@@ -1684,7 +1684,14 @@ self</p>
 				</li>
 				<li>
 				
-<p><code><em> AttackGroup </em></code>: </p>
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> AttackGroup </em></code>: 
+The group to get the settings for.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Core.Settings.html##(SETTINGS)">Core.Settings#SETTINGS</a> Settings </em></code>: 
+(Optional) Message formatting settings to use.</p>
 
 				</li>
 		</ul>
@@ -1724,7 +1731,8 @@ self</p>
 		<ul>
 				<li>
 				
-<p><code><em> AttackGroup </em></code>: </p>
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> AttackGroup </em></code>: 
+The group to generate the report for.</p>
 
 				</li>
 		</ul>
@@ -2393,7 +2401,6 @@ The index of the DetectedItem.</p>
 		<dl class="function">
 <dt>
 
-		<em>#number</em>
 <a id="#(DETECTION_BASE).DetectedItemCount" >
 <strong>DETECTION_BASE.DetectedItemCount</strong>
 </a>
@@ -2407,7 +2414,6 @@ The index of the DetectedItem.</p>
 		<dl class="function">
 <dt>
 
-		<em>#number</em>
 <a id="#(DETECTION_BASE).DetectedItemMax" >
 <strong>DETECTION_BASE.DetectedItemMax</strong>
 </a>
@@ -2453,7 +2459,7 @@ The index of the DetectedItem.</p>
 <dt>
 
 <a id="#(DETECTION_BASE).DetectedItemReportSummary" >
-<strong>DETECTION_BASE:DetectedItemReportSummary(Index, AttackGroup)</strong>
+<strong>DETECTION_BASE:DetectedItemReportSummary(Index, AttackGroup, Settings)</strong>
 </a>
 </dt>
 <dd>
@@ -2469,7 +2475,14 @@ The index of the DetectedItem.</p>
 				</li>
 				<li>
 				
-<p><code><em> AttackGroup </em></code>: </p>
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> AttackGroup </em></code>: 
+The group to generate the report for.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Core.Settings.html##(SETTINGS)">Core.Settings#SETTINGS</a> Settings </em></code>: 
+Message formatting settings to use.</p>
 
 				</li>
 		</ul>
@@ -2537,7 +2550,8 @@ The index of the DetectedItem.</p>
 		<ul>
 				<li>
 				
-<p><code><em> AttackGroup </em></code>: </p>
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> AttackGroup </em></code>: 
+The group to generate the report for.</p>
 
 				</li>
 		</ul>
@@ -2565,7 +2579,7 @@ The index of the DetectedItem.</p>
 		<dl class="function">
 <dt>
 
-		<em>#number</em>
+		<em></em>
 <a id="#(DETECTION_BASE).DetectionInterval" >
 <strong>DETECTION_BASE.DetectionInterval</strong>
 </a>
@@ -4820,7 +4834,7 @@ self</p>
 <dt>
 
 <a id="#(DETECTION_TYPES).DetectedItemReportSummary" >
-<strong>DETECTION_TYPES:DetectedItemReportSummary(Index, DetectedTypeName, AttackGroup)</strong>
+<strong>DETECTION_TYPES:DetectedItemReportSummary(Index, AttackGroup, Settings, DetectedTypeName)</strong>
 </a>
 </dt>
 <dd>
@@ -4836,12 +4850,19 @@ self</p>
 				</li>
 				<li>
 				
-<p><code><em> DetectedTypeName </em></code>: </p>
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> AttackGroup </em></code>: 
+The group to generate the report for.</p>
 
 				</li>
 				<li>
 				
-<p><code><em> AttackGroup </em></code>: </p>
+<p><code><em><a href="Core.Settings.html##(SETTINGS)">Core.Settings#SETTINGS</a> Settings </em></code>: 
+Message formatting settings to use.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> DetectedTypeName </em></code>: </p>
 
 				</li>
 		</ul>
@@ -4867,7 +4888,8 @@ self</p>
 		<ul>
 				<li>
 				
-<p><code><em> AttackGroup </em></code>: </p>
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> AttackGroup </em></code>: 
+The group to generate the report for.</p>
 
 				</li>
 		</ul>
@@ -5099,7 +5121,7 @@ self</p>
 <dt>
 
 <a id="#(DETECTION_UNITS).DetectedItemReportSummary" >
-<strong>DETECTION_UNITS:DetectedItemReportSummary(Index, AttackGroup)</strong>
+<strong>DETECTION_UNITS:DetectedItemReportSummary(Index, AttackGroup, Settings)</strong>
 </a>
 </dt>
 <dd>
@@ -5115,7 +5137,14 @@ self</p>
 				</li>
 				<li>
 				
-<p><code><em> AttackGroup </em></code>: </p>
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> AttackGroup </em></code>: 
+The group to generate the report for.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Core.Settings.html##(SETTINGS)">Core.Settings#SETTINGS</a> Settings </em></code>: 
+Message formatting settings to use.</p>
 
 				</li>
 		</ul>
@@ -5141,7 +5170,8 @@ self</p>
 		<ul>
 				<li>
 				
-<p><code><em> AttackGroup </em></code>: </p>
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> AttackGroup </em></code>: 
+The group to generate the report for.</p>
 
 				</li>
 		</ul>

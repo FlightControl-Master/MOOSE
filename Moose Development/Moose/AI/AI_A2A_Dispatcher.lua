@@ -3,13 +3,6 @@
 -- ![Banner Image](..\Presentations\AI_A2A_DISPATCHER\Dia1.JPG)
 -- 
 -- ====
--- 
--- ### Authors: **Sven Van de Velde (FlightControl)** rework of GCICAP + introduction of new concepts (squadrons).
--- ### Authors: **Stonehouse**, **SNAFU** in terms of the advice, documentation, and the original GCICAP script.
--- 
--- ### Contributions: 
--- 
--- ====
 --
 -- # QUICK START GUIDE
 -- 
@@ -18,7 +11,7 @@
 -- AI\_A2A\_DISPATCHER is the main A2A defense class that models the A2A defense system.
 -- AI\_A2A\_GCICAP derives or inherits from AI\_A2A\_DISPATCHER and is a more **noob** user friendly class, but is less flexible.
 -- 
--- Before you start using the AI\_A2A\_DISPATCHER or AI\_A2A\_GCICAP ask youself the following questions:
+-- Before you start using the AI\_A2A\_DISPATCHER or AI\_A2A\_GCICAP ask youself the following questions.
 -- 
 -- ## 0. Do I need AI\_A2A\_DISPATCHER or do I need AI\_A2A\_GCICAP?
 -- 
@@ -122,18 +115,22 @@
 -- 
 -- For each Squadron, evaluate which takeoff method will be used:
 -- 
---    * Straight from the air (default)
+--    * Straight from the air
 --    * From the runway
 --    * From a parking spot with running engines
 --    * From a parking spot with cold engines
+-- 
+-- **The default takeoff method is staight in the air.**
 -- 
 -- ## 17. For each Squadron, which landing method will I use?
 -- 
 -- For each Squadron, evaluate which landing method will be used:
 -- 
---    * Near the airbase when returning (default)
---    * After landing on the runway
---    * After engine shutdown after landing
+--    * Despawn near the airbase when returning
+--    * Despawn after landing on the runway
+--    * Despawn after engine shutdown after landing
+--    
+-- **The default landing method is despawn when near the airbase when returning.**
 -- 
 -- ## 18. For each Squadron, which overhead will I use?
 -- 
@@ -142,10 +139,19 @@
 -- The **Y** is dependent on the type of airplane (era), payload, fuel levels, skills etc.
 -- The overhead is a **factor** that will calculate dynamically how many **Y** defenses will be required based on **X** attackers detected.
 -- 
+-- **The default overhead is 1. A value greater than 1, like 1.5 will increase the overhead with 50%, a value smaller than 1, like 0.5 will decrease the overhead with 50%.**
+-- 
 -- ## 19. For each Squadron, which grouping will I use?
 -- 
 -- When multiple targets are detected, how will defense airplanes be grouped when multiple defense airplanes are spawned for multiple attackers?
 -- Per one, two, three, four?
+-- 
+-- **The default grouping is 1. That means, that each spawned defender will act individually.**
+-- 
+-- ===
+-- 
+-- ### Authors: **Sven Van de Velde (FlightControl)** rework of GCICAP + introduction of new concepts (squadrons).
+-- ### Authors: **Stonehouse**, **SNAFU** in terms of the advice, documentation, and the original GCICAP script.
 -- 
 -- @module AI_A2A_Dispatcher
 
@@ -192,7 +198,7 @@ do -- AI_A2A_DISPATCHER
   -- Note that in order to create a two way A2A defense system, two AI\_A2A\_DISPATCHER defense system may need to be created, for each coalition one.
   -- This is a good implementation, because maybe in the future, more coalitions may become available in DCS world.
   -- 
-  -- ---
+  -- ===
   --
   -- # USAGE GUIDE
   -- 
@@ -340,6 +346,15 @@ do -- AI_A2A_DISPATCHER
   --   * @{#AI_A2A_DISPATCHER.SetSquadronTakeoffFromParkingHot}() will spawn new aircraft in with running engines at a parking spot at the airfield.
   --   * @{#AI_A2A_DISPATCHER.SetSquadronTakeoffFromRunway}() will spawn new aircraft at the runway at the airfield.
   -- 
+  -- **The default landing method is to spawn new aircraft directly in the air.**
+  -- **The default takeoff method can be set for ALL squadrons that don't have an individual takeoff method configured.**
+  -- 
+  --   * @{#AI_A2A_DISPATCHER.SetDefaultTakeoff}() is the generic configuration method to control takeoff by default from the air, hot, cold or from the runway. See the method for further details.
+  --   * @{#AI_A2A_DISPATCHER.SetDefaultTakeoffInAir}() will spawn by default new aircraft from the squadron directly in the air.
+  --   * @{#AI_A2A_DISPATCHER.SetDefaultTakeoffFromParkingCold}() will spawn by default new aircraft in without running engines at a parking spot at the airfield.
+  --   * @{#AI_A2A_DISPATCHER.SetDefaultTakeoffFromParkingHot}() will spawn by default new aircraft in with running engines at a parking spot at the airfield.
+  --   * @{#AI_A2A_DISPATCHER.SetDefaultTakeoffFromRunway}() will spawn by default new aircraft at the runway at the airfield.
+  -- 
   -- Use these methods to fine-tune for specific airfields that are known to create bottlenecks, or have reduced airbase efficiency.
   -- The more and the longer aircraft need to taxi at an airfield, the more risk there is that:
   -- 
@@ -360,6 +375,13 @@ do -- AI_A2A_DISPATCHER
   --   * @{#AI_A2A_DISPATCHER.SetSquadronLandingAtRunway}() will despawn the returning aircraft directly after landing at the runway.
   --   * @{#AI_A2A_DISPATCHER.SetSquadronLandingAtEngineShutdown}() will despawn the returning aircraft when the aircraft has returned to its parking spot and has turned off its engines.
   -- 
+  -- **The default landing method can be set for ALL squadrons that don't have an individual landing method configured.**
+  -- 
+  --   * @{#AI_A2A_DISPATCHER.SetDefaultLanding}() is the generic configuration method to control by default landing, namely despawn the aircraft near the airfield in the air, right after landing, or at engine shutdown.
+  --   * @{#AI_A2A_DISPATCHER.SetDefaultLandingNearAirbase}() will despawn by default the returning aircraft in the air when near the airfield.
+  --   * @{#AI_A2A_DISPATCHER.SetDefaultLandingAtRunway}() will despawn by default the returning aircraft directly after landing at the runway.
+  --   * @{#AI_A2A_DISPATCHER.SetDefaultLandingAtEngineShutdown}() will despawn by default the returning aircraft when the aircraft has returned to its parking spot and has turned off its engines.
+  -- 
   -- You can use these methods to minimize the airbase coodination overhead and to increase the airbase efficiency.
   -- When there are lots of aircraft returning for landing, at the same airbase, the takeoff process will be halted, which can cause a complete failure of the
   -- A2A defense system, as no new CAP or GCI planes can takeoff.
@@ -368,7 +390,7 @@ do -- AI_A2A_DISPATCHER
   -- 
   -- ### 6.3. Set squadron grouping
   -- 
-  -- Use the method @{#AI_A2A_DISPATCHER.SetSquadronGrouping}() to set the amount of CAP or GCI flights that will take-off when spawned.
+  -- Use the method @{#AI_A2A_DISPATCHER.SetSquadronGrouping}() to set the grouping of CAP or GCI flights that will take-off when spawned.
   -- 
   -- ![Banner Image](..\Presentations\AI_A2A_DISPATCHER\Dia12.JPG)
   -- 
@@ -379,6 +401,10 @@ do -- AI_A2A_DISPATCHER
   -- 
   -- The **grouping value is set for a Squadron**, and can be **dynamically adjusted** during mission execution, so to adjust the defense flights grouping when the tactical situation changes.
   -- 
+  -- **The default grouping value can be set for ALL squadrons that don't have an individual grouping value configured.**
+  -- 
+  -- Use the method @{#AI_A2A_DISPATCHER.SetDefaultGrouping}() to set the **default grouping** of spawned airplanes for all squadrons.
+  -- 
   -- ### 6.4. Balance or setup effectiveness of the air defenses in case of GCI
   -- 
   -- The effectiveness can be set with the **overhead parameter**. This is a number that is used to calculate the amount of Units that dispatching command will allocate to GCI in surplus of detected amount of units.
@@ -388,7 +414,7 @@ do -- AI_A2A_DISPATCHER
   -- 
   -- However, depending on the (type of) aircraft (strength and payload) in the squadron and the amount of resources available, this parameter can be changed.
   -- 
-  -- The @{#AI_A2A_DISPATCHER.SetOverhead}() method can be used to tweak the defense strength,
+  -- The @{#AI_A2A_DISPATCHER.SetSquadronOverhead}() method can be used to tweak the defense strength,
   -- taking into account the plane types of the squadron. 
   -- 
   -- For example, a MIG-31 with full long-distance A2A missiles payload, may still be less effective than a F-15C with short missiles...
@@ -402,6 +428,10 @@ do -- AI_A2A_DISPATCHER
   -- multiplied by the Overhead and rounded up to the smallest integer. 
   -- 
   -- The **overhead value is set for a Squadron**, and can be **dynamically adjusted** during mission execution, so to adjust the defense overhead when the tactical situation changes.
+  --
+  -- **The default overhead value can be set for ALL squadrons that don't have an individual overhead value configured.**
+  --
+  -- Use the @{#AI_A2A_DISPATCHER.SetDefaultOverhead}() method can be used to set the default the defense strength for ALL squadrons.
   --
   -- ## 7. Setup a squadron for CAP
   -- 
@@ -745,6 +775,7 @@ do -- AI_A2A_DISPATCHER
     self.DefenderSquadrons = {} -- The Defender Squadrons.
     self.DefenderSpawns = {}
     self.DefenderTasks = {} -- The Defenders Tasks.
+    self.DefenderDefault = {} -- The Defender Default Settings over all Squadrons.
     
     -- TODO: Check detection through radar.
     self.Detection:FilterCategories( { Unit.Category.AIRPLANE, Unit.Category.HELICOPTER } )
@@ -753,6 +784,12 @@ do -- AI_A2A_DISPATCHER
 
     self:SetEngageRadius()
     self:SetGciRadius()
+    
+    self:SetDefaultTakeoff( AI_A2A_DISPATCHER.Takeoff.Air )
+    self:SetDefaultLanding( AI_A2A_DISPATCHER.Landing.NearAirbase )
+    self:SetDefaultOverhead( 1 )
+    self:SetDefaultGrouping( 1 )
+    
     
     self:AddTransition( "Started", "Assign", "Started" )
     
@@ -1228,7 +1265,6 @@ do -- AI_A2A_DISPATCHER
     DefenderSquadron.Resources = Resources
     
     self:SetSquadronOverhead( SquadronName, 1 )
-    self:SetSquadronTakeoffInAir( SquadronName )
     self:SetSquadronLandingNearAirbase(SquadronName)
 
     return self
@@ -1436,6 +1472,44 @@ do -- AI_A2A_DISPATCHER
     Intercept.EngageMaxSpeed = EngageMaxSpeed
   end
   
+  --- Defines the default amount of extra planes that will take-off as part of the defense system.
+  -- @param #AI_A2A_DISPATCHER self
+  -- @param #number Overhead The %-tage of Units that dispatching command will allocate to intercept in surplus of detected amount of units.
+  -- The default overhead is 1, so equal balance. The @{#AI_A2A_DISPATCHER.SetOverhead}() method can be used to tweak the defense strength,
+  -- taking into account the plane types of the squadron. For example, a MIG-31 with full long-distance A2A missiles payload, may still be less effective than a F-15C with short missiles...
+  -- So in this case, one may want to use the Overhead method to allocate more defending planes as the amount of detected attacking planes.
+  -- The overhead must be given as a decimal value with 1 as the neutral value, which means that Overhead values: 
+  -- 
+  --   * Higher than 1, will increase the defense unit amounts.
+  --   * Lower than 1, will decrease the defense unit amounts.
+  -- 
+  -- The amount of defending units is calculated by multiplying the amount of detected attacking planes as part of the detected group 
+  -- multiplied by the Overhead and rounded up to the smallest integer. 
+  -- 
+  -- The Overhead value set for a Squadron, can be programmatically adjusted (by using this SetOverhead method), to adjust the defense overhead during mission execution.
+  -- 
+  -- See example below.
+  --  
+  -- @usage:
+  -- 
+  --   local Dispatcher = AI_A2A_DISPATCHER:New( ... )
+  --   
+  --   -- An overhead of 1,5 with 1 planes detected, will allocate 2 planes ( 1 * 1,5 ) = 1,5 => rounded up gives 2.
+  --   -- An overhead of 1,5 with 2 planes detected, will allocate 3 planes ( 2 * 1,5 ) = 3 =>  rounded up gives 3.
+  --   -- An overhead of 1,5 with 3 planes detected, will allocate 5 planes ( 3 * 1,5 ) = 4,5 => rounded up gives 5 planes.
+  --   -- An overhead of 1,5 with 4 planes detected, will allocate 6 planes ( 4 * 1,5 ) = 6  => rounded up gives 6 planes.
+  --   
+  --   Dispatcher:SetDefaultOverhead( 1.5 )
+  -- 
+  -- @return #AI_A2A_DISPATCHER
+  function AI_A2A_DISPATCHER:SetDefaultOverhead( Overhead )
+
+    self.DefenderDefault.Overhead = Overhead
+    
+    return self
+  end
+
+
   --- Defines the amount of extra planes that will take-off as part of the defense system.
   -- @param #AI_A2A_DISPATCHER self
   -- @param #string SquadronName The name of the squadron.
@@ -1464,8 +1538,7 @@ do -- AI_A2A_DISPATCHER
   --   -- An overhead of 1,5 with 3 planes detected, will allocate 5 planes ( 3 * 1,5 ) = 4,5 => rounded up gives 5 planes.
   --   -- An overhead of 1,5 with 4 planes detected, will allocate 6 planes ( 4 * 1,5 ) = 6  => rounded up gives 6 planes.
   --   
-  --   Dispatcher:SetSquadronOverhead( 1,5 )
-  -- 
+  --   Dispatcher:SetSquadronOverhead( "SquadronName", 1.5 )
   -- 
   -- @return #AI_A2A_DISPATCHER
   function AI_A2A_DISPATCHER:SetSquadronOverhead( SquadronName, Overhead )
@@ -1476,13 +1549,38 @@ do -- AI_A2A_DISPATCHER
     return self
   end
 
-  --- 
+
+  --- Sets the default grouping of new airplanes spawned.
+  -- Grouping will trigger how new airplanes will be grouped if more than one airplane is spawned for defense.
+  -- @param #AI_A2A_DISPATCHER self
+  -- @param #number Grouping The level of grouping that will be applied of the CAP or GCI defenders. 
+  -- @usage:
+  -- 
+  --   local Dispatcher = AI_A2A_DISPATCHER:New( ... )
+  --   
+  --   -- Set a grouping by default per 2 airplanes.
+  --   Dispatcher:SetDefaultGrouping( 2 )
+  -- 
+  -- 
+  -- @return #AI_A2A_DISPATCHER
+  function AI_A2A_DISPATCHER:SetDefaultGrouping( Grouping )
+  
+    self.DefenderDefault.Grouping = Grouping
+    
+    return self
+  end
+
+
+  --- Sets the grouping of new airplanes spawned.
+  -- Grouping will trigger how new airplanes will be grouped if more than one airplane is spawned for defense.
   -- @param #AI_A2A_DISPATCHER self
   -- @param #string SquadronName The name of the squadron.
   -- @param #number Grouping The level of grouping that will be applied of the CAP or GCI defenders. 
   -- @usage:
   -- 
   --   local Dispatcher = AI_A2A_DISPATCHER:New( ... )
+  --   
+  --   -- Set a grouping per 2 airplanes.
   --   Dispatcher:SetSquadronGrouping( "SquadronName", 2 )
   -- 
   -- 
@@ -1491,6 +1589,36 @@ do -- AI_A2A_DISPATCHER
   
     local DefenderSquadron = self:GetSquadron( SquadronName )
     DefenderSquadron.Grouping = Grouping
+    
+    return self
+  end
+
+
+  --- Defines the default method at which new flights will spawn and take-off as part of the defense system.
+  -- @param #AI_A2A_DISPATCHER self
+  -- @param #number Takeoff From the airbase hot, from the airbase cold, in the air, from the runway.
+  -- @usage:
+  -- 
+  --   local Dispatcher = AI_A2A_DISPATCHER:New( ... )
+  --   
+  --   -- Let new flights by default take-off in the air.
+  --   Dispatcher:SetDefaultTakeoff( AI_A2A_Dispatcher.Takeoff.Air )
+  --   
+  --   -- Let new flights by default take-off from the runway.
+  --   Dispatcher:SetDefaultTakeoff( AI_A2A_Dispatcher.Takeoff.Runway )
+  --   
+  --   -- Let new flights by default take-off from the airbase hot.
+  --   Dispatcher:SetDefaultTakeoff( AI_A2A_Dispatcher.Takeoff.Hot )
+  -- 
+  --   -- Let new flights by default take-off from the airbase cold.
+  --   Dispatcher:SetDefaultTakeoff( AI_A2A_Dispatcher.Takeoff.Cold )
+  -- 
+  -- 
+  -- @return #AI_A2A_DISPATCHER
+  -- 
+  function AI_A2A_DISPATCHER:SetDefaultTakeoff( Takeoff )
+
+    self.DefenderDefault.Takeoff = Takeoff
     
     return self
   end
@@ -1527,6 +1655,24 @@ do -- AI_A2A_DISPATCHER
   end
   
 
+  --- Gets the default method at which new flights will spawn and take-off as part of the defense system.
+  -- @param #AI_A2A_DISPATCHER self
+  -- @return #number Takeoff From the airbase hot, from the airbase cold, in the air, from the runway.
+  -- @usage:
+  -- 
+  --   local Dispatcher = AI_A2A_DISPATCHER:New( ... )
+  --   
+  --   -- Let new flights by default take-off in the air.
+  --   local TakeoffMethod = Dispatcher:GetDefaultTakeoff()
+  --   if TakeOffMethod == , AI_A2A_Dispatcher.Takeoff.InAir then
+  --     ...
+  --   end
+  --   
+  function AI_A2A_DISPATCHER:GetDefaultTakeoff( )
+
+    return self.DefenderDefault.Takeoff
+  end
+  
   --- Gets the method at which new flights will spawn and take-off as part of the defense system.
   -- @param #AI_A2A_DISPATCHER self
   -- @param #string SquadronName The name of the squadron.
@@ -1544,10 +1690,29 @@ do -- AI_A2A_DISPATCHER
   function AI_A2A_DISPATCHER:GetSquadronTakeoff( SquadronName )
 
     local DefenderSquadron = self:GetSquadron( SquadronName )
-    return DefenderSquadron.Takeoff
+    return DefenderSquadron.Takeoff or self.DefenderDefault.Takeoff
   end
   
 
+  --- Sets flights to default take-off in the air, as part of the defense system.
+  -- @param #AI_A2A_DISPATCHER self
+  -- @usage:
+  -- 
+  --   local Dispatcher = AI_A2A_DISPATCHER:New( ... )
+  --   
+  --   -- Let new flights by default take-off in the air.
+  --   Dispatcher:SetDefaultTakeoffInAir()
+  --   
+  -- @return #AI_A2A_DISPATCHER
+  -- 
+  function AI_A2A_DISPATCHER:SetDefaultTakeoffInAir()
+
+    self:SetDefaultTakeoff( AI_A2A_DISPATCHER.Takeoff.Air )
+    
+    return self
+  end
+
+  
   --- Sets flights to take-off in the air, as part of the defense system.
   -- @param #AI_A2A_DISPATCHER self
   -- @param #string SquadronName The name of the squadron.
@@ -1566,8 +1731,27 @@ do -- AI_A2A_DISPATCHER
     
     return self
   end
-  
 
+
+  --- Sets flights by default to take-off from the runway, as part of the defense system.
+  -- @param #AI_A2A_DISPATCHER self
+  -- @usage:
+  -- 
+  --   local Dispatcher = AI_A2A_DISPATCHER:New( ... )
+  --   
+  --   -- Let new flights by default take-off from the runway.
+  --   Dispatcher:SetDefaultTakeoffFromRunway()
+  --   
+  -- @return #AI_A2A_DISPATCHER
+  -- 
+  function AI_A2A_DISPATCHER:SetDefaultTakeoffFromRunway()
+
+    self:SetDefaultTakeoff( AI_A2A_DISPATCHER.Takeoff.Runway )
+    
+    return self
+  end
+
+  
   --- Sets flights to take-off from the runway, as part of the defense system.
   -- @param #AI_A2A_DISPATCHER self
   -- @param #string SquadronName The name of the squadron.
@@ -1575,7 +1759,7 @@ do -- AI_A2A_DISPATCHER
   -- 
   --   local Dispatcher = AI_A2A_DISPATCHER:New( ... )
   --   
-  --   -- Let new flights take-off in the air.
+  --   -- Let new flights take-off from the runway.
   --   Dispatcher:SetSquadronTakeoffFromRunway( "SquadronName" )
   --   
   -- @return #AI_A2A_DISPATCHER
@@ -1587,6 +1771,24 @@ do -- AI_A2A_DISPATCHER
     return self
   end
   
+
+  --- Sets flights by default to take-off from the airbase at a hot location, as part of the defense system.
+  -- @param #AI_A2A_DISPATCHER self
+  -- @usage:
+  -- 
+  --   local Dispatcher = AI_A2A_DISPATCHER:New( ... )
+  --   
+  --   -- Let new flights by default take-off at a hot parking spot.
+  --   Dispatcher:SetDefaultTakeoffFromParkingHot()
+  --   
+  -- @return #AI_A2A_DISPATCHER
+  -- 
+  function AI_A2A_DISPATCHER:SetDefaultTakeoffFromParkingHot()
+
+    self:SetDefaultTakeoff( AI_A2A_DISPATCHER.Takeoff.Hot )
+    
+    return self
+  end
 
   --- Sets flights to take-off from the airbase at a hot location, as part of the defense system.
   -- @param #AI_A2A_DISPATCHER self
@@ -1607,6 +1809,26 @@ do -- AI_A2A_DISPATCHER
     return self
   end
   
+  
+  --- Sets flights to by default take-off from the airbase at a cold location, as part of the defense system.
+  -- @param #AI_A2A_DISPATCHER self
+  -- @usage:
+  -- 
+  --   local Dispatcher = AI_A2A_DISPATCHER:New( ... )
+  --   
+  --   -- Let new flights take-off from a cold parking spot.
+  --   Dispatcher:SetDefaultTakeoffFromParkingCold()
+  --   
+  -- @return #AI_A2A_DISPATCHER
+  -- 
+  function AI_A2A_DISPATCHER:SetDefaultTakeoffFromParkingCold()
+
+    self:SetDefaultTakeoff( AI_A2A_DISPATCHER.Takeoff.Cold )
+    
+    return self
+  end
+  
+
   --- Sets flights to take-off from the airbase at a cold location, as part of the defense system.
   -- @param #AI_A2A_DISPATCHER self
   -- @param #string SquadronName The name of the squadron.
@@ -1614,7 +1836,7 @@ do -- AI_A2A_DISPATCHER
   -- 
   --   local Dispatcher = AI_A2A_DISPATCHER:New( ... )
   --   
-  --   -- Let new flights take-off in the air.
+  --   -- Let new flights take-off from a cold parking spot.
   --   Dispatcher:SetSquadronTakeoffFromParkingCold( "SquadronName" )
   --   
   -- @return #AI_A2A_DISPATCHER
@@ -1622,6 +1844,31 @@ do -- AI_A2A_DISPATCHER
   function AI_A2A_DISPATCHER:SetSquadronTakeoffFromParkingCold( SquadronName )
 
     self:SetSquadronTakeoff( SquadronName, AI_A2A_DISPATCHER.Takeoff.Cold )
+    
+    return self
+  end
+  
+
+  --- Defines the default method at which flights will land and despawn as part of the defense system.
+  -- @param #AI_A2A_DISPATCHER self
+  -- @param #number Landing The landing method which can be NearAirbase, AtRunway, AtEngineShutdown
+  -- @usage:
+  -- 
+  --   local Dispatcher = AI_A2A_DISPATCHER:New( ... )
+  --   
+  --   -- Let new flights by default despawn near the airbase when returning.
+  --   Dispatcher:SetDefaultLanding( AI_A2A_Dispatcher.Landing.NearAirbase )
+  --   
+  --   -- Let new flights by default despawn after landing land at the runway.
+  --   Dispatcher:SetDefaultLanding( AI_A2A_Dispatcher.Landing.AtRunway )
+  --   
+  --   -- Let new flights by default despawn after landing and parking, and after engine shutdown.
+  --   Dispatcher:SetDefaultLanding( AI_A2A_Dispatcher.Landing.AtEngineShutdown )
+  -- 
+  -- @return #AI_A2A_DISPATCHER
+  function AI_A2A_DISPATCHER:SetDefaultLanding( Landing )
+
+    self.DefenderDefault.Landing = Landing
     
     return self
   end
@@ -1635,13 +1882,13 @@ do -- AI_A2A_DISPATCHER
   -- 
   --   local Dispatcher = AI_A2A_DISPATCHER:New( ... )
   --   
-  --   -- Let new flights take-off in the air.
+  --   -- Let new flights despawn near the airbase when returning.
   --   Dispatcher:SetSquadronLanding( "SquadronName", AI_A2A_Dispatcher.Landing.NearAirbase )
   --   
-  --   -- Let new flights take-off from the runway.
+  --   -- Let new flights despawn after landing land at the runway.
   --   Dispatcher:SetSquadronLanding( "SquadronName", AI_A2A_Dispatcher.Landing.AtRunway )
   --   
-  --   -- Let new flights take-off from the airbase hot.
+  --   -- Let new flights despawn after landing and parking, and after engine shutdown.
   --   Dispatcher:SetSquadronLanding( "SquadronName", AI_A2A_Dispatcher.Landing.AtEngineShutdown )
   -- 
   -- @return #AI_A2A_DISPATCHER
@@ -1654,6 +1901,25 @@ do -- AI_A2A_DISPATCHER
   end
   
 
+  --- Gets the default method at which flights will land and despawn as part of the defense system.
+  -- @param #AI_A2A_DISPATCHER self
+  -- @return #number Landing The landing method which can be NearAirbase, AtRunway, AtEngineShutdown
+  -- @usage:
+  -- 
+  --   local Dispatcher = AI_A2A_DISPATCHER:New( ... )
+  --   
+  --   -- Let new flights by default despawn near the airbase when returning.
+  --   local LandingMethod = Dispatcher:GetDefaultLanding( AI_A2A_Dispatcher.Landing.NearAirbase )
+  --   if LandingMethod == AI_A2A_Dispatcher.Landing.NearAirbase then
+  --    ...
+  --   end
+  -- 
+  function AI_A2A_DISPATCHER:GetDefaultLanding()
+
+    return self.DefenderDefault.Landing
+  end
+  
+
   --- Gets the method at which flights will land and despawn as part of the defense system.
   -- @param #AI_A2A_DISPATCHER self
   -- @param #string SquadronName The name of the squadron.
@@ -1662,7 +1928,7 @@ do -- AI_A2A_DISPATCHER
   -- 
   --   local Dispatcher = AI_A2A_DISPATCHER:New( ... )
   --   
-  --   -- Let new flights take-off in the air.
+  --   -- Let new flights despawn near the airbase when returning.
   --   local LandingMethod = Dispatcher:GetSquadronLanding( "SquadronName", AI_A2A_Dispatcher.Landing.NearAirbase )
   --   if LandingMethod == AI_A2A_Dispatcher.Landing.NearAirbase then
   --    ...
@@ -1671,7 +1937,25 @@ do -- AI_A2A_DISPATCHER
   function AI_A2A_DISPATCHER:GetSquadronLanding( SquadronName )
 
     local DefenderSquadron = self:GetSquadron( SquadronName )
-    return DefenderSquadron.Landing
+    return DefenderSquadron.Landing or self.DefenderDefault.Landing
+  end
+  
+
+  --- Sets flights by default to land and despawn near the airbase in the air, as part of the defense system.
+  -- @param #AI_A2A_DISPATCHER self
+  -- @usage:
+  -- 
+  --   local Dispatcher = AI_A2A_DISPATCHER:New( ... )
+  --   
+  --   -- Let flights by default to land near the airbase and despawn.
+  --   Dispatcher:SetDefaultLandingNearAirbase()
+  --   
+  -- @return #AI_A2A_DISPATCHER
+  function AI_A2A_DISPATCHER:SetDefaultLandingNearAirbase()
+
+    self:SetDefaultLanding( AI_A2A_DISPATCHER.Landing.NearAirbase )
+    
+    return self
   end
   
 
@@ -1682,13 +1966,31 @@ do -- AI_A2A_DISPATCHER
   -- 
   --   local Dispatcher = AI_A2A_DISPATCHER:New( ... )
   --   
-  --   -- Let flights land in the air and despawn.
+  --   -- Let flights to land near the airbase and despawn.
   --   Dispatcher:SetSquadronLandingNearAirbase( "SquadronName" )
   --   
   -- @return #AI_A2A_DISPATCHER
   function AI_A2A_DISPATCHER:SetSquadronLandingNearAirbase( SquadronName )
 
     self:SetSquadronLanding( SquadronName, AI_A2A_DISPATCHER.Landing.NearAirbase )
+    
+    return self
+  end
+  
+
+  --- Sets flights by default to land and despawn at the runway, as part of the defense system.
+  -- @param #AI_A2A_DISPATCHER self
+  -- @usage:
+  -- 
+  --   local Dispatcher = AI_A2A_DISPATCHER:New( ... )
+  --   
+  --   -- Let flights by default land at the runway and despawn.
+  --   Dispatcher:SetDefaultLandingAtRunway()
+  --   
+  -- @return #AI_A2A_DISPATCHER
+  function AI_A2A_DISPATCHER:SetDefaultLandingAtRunway()
+
+    self:SetDefaultLanding( AI_A2A_DISPATCHER.Landing.AtRunway )
     
     return self
   end
@@ -1708,6 +2010,24 @@ do -- AI_A2A_DISPATCHER
   function AI_A2A_DISPATCHER:SetSquadronLandingAtRunway( SquadronName )
 
     self:SetSquadronLanding( SquadronName, AI_A2A_DISPATCHER.Landing.AtRunway )
+    
+    return self
+  end
+  
+
+  --- Sets flights by default to land and despawn at engine shutdown, as part of the defense system.
+  -- @param #AI_A2A_DISPATCHER self
+  -- @usage:
+  -- 
+  --   local Dispatcher = AI_A2A_DISPATCHER:New( ... )
+  --   
+  --   -- Let flights by default land and despawn at engine shutdown.
+  --   Dispatcher:SetDefaultLandingAtEngineShutdown()
+  --   
+  -- @return #AI_A2A_DISPATCHER
+  function AI_A2A_DISPATCHER:SetDefaultLandingAtEngineShutdown()
+
+    self:SetDefaultLanding( AI_A2A_DISPATCHER.Landing.AtEngineShutdown )
     
     return self
   end
@@ -1889,7 +2209,8 @@ do -- AI_A2A_DISPATCHER
       if Cap then
     
         local Spawn = DefenderSquadron.Spawn[ math.random( 1, #DefenderSquadron.Spawn ) ] -- Functional.Spawn#SPAWN
-        Spawn:InitGrouping( DefenderSquadron.Grouping )
+        local DefenderGrouping = DefenderSquadron.Grouping or self.DefenderDefault.Grouping
+        Spawn:InitGrouping( DefenderGrouping )
 
         local TakeoffMethod = self:GetSquadronTakeoff( SquadronName )
         local DefenderCAP = Spawn:SpawnAtAirbase( DefenderSquadron.Airbase, TakeoffMethod )
@@ -2005,8 +2326,8 @@ do -- AI_A2A_DISPATCHER
           
           if Gci then
         
-            local DefenderOverhead = DefenderSquadron.Overhead
-            local DefenderGrouping = DefenderSquadron.Grouping
+            local DefenderOverhead = DefenderSquadron.Overhead or self.DefenderDefault.Overhead
+            local DefenderGrouping = DefenderSquadron.Grouping or self.DefenderDefault.Grouping
             local DefendersNeeded = math.ceil( DefendersCount * DefenderOverhead )
           
             local Spawn = DefenderSquadron.Spawn[ math.random( 1, #DefenderSquadron.Spawn ) ]

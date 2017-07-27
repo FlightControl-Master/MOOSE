@@ -295,6 +295,12 @@ and will be replaced by a navigation using Reference Zones.</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(REPORT).GetCount">REPORT:GetCount()</a></td>
+		<td class="summary">
+<p>Gets the amount of report items contained in the report.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(REPORT).HasText">REPORT:HasText()</a></td>
 		<td class="summary">
 <p>Has the REPORT Text?</p>
@@ -322,6 +328,12 @@ and will be replaced by a navigation using Reference Zones.</p>
 		<td class="name" nowrap="nowrap"><a href="##(REPORT).SetIndent">REPORT:SetIndent(Indent)</a></td>
 		<td class="summary">
 <p>Set indent of a REPORT.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(REPORT).SetTitle">REPORT:SetTitle(Title)</a></td>
+		<td class="summary">
+<p>Sets the title of the report.</p>
 </td>
 		</tr>
 		<tr>
@@ -1002,6 +1014,24 @@ The name before the #-mark indicating the class of the Reference Zones.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(REPORT).GetCount" >
+<strong>REPORT:GetCount()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Gets the amount of report items contained in the report.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#number:</em>
+Returns the number of report items contained in the report. 0 is returned if no report items are contained in the report. The title is not counted for.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(REPORT).HasText" >
 <strong>REPORT:HasText()</strong>
 </a>
@@ -1087,6 +1117,33 @@ The name before the #-mark indicating the class of the Reference Zones.</p>
 				<li>
 				
 <p><code><em>#number Indent </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(REPORT)">#REPORT</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(REPORT).SetTitle" >
+<strong>REPORT:SetTitle(Title)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Sets the title of the report.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Title </em></code>: 
+The title of the report.</p>
 
 				</li>
 		</ul>
