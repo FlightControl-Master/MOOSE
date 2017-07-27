@@ -1540,14 +1540,17 @@ do -- DETECTION_BASE
   --- Report summary of a detected item using a given numeric index.
   -- @param #DETECTION_BASE self
   -- @param Index
+  -- @param Wrapper.Group#GROUP AttackGroup The group to generate the report for.
+  -- @param Core.Settings#SETTINGS Settings Message formatting settings to use.
   -- @return #string
-  function DETECTION_BASE:DetectedItemReportSummary( Index, AttackGroup )
+  function DETECTION_BASE:DetectedItemReportSummary( Index, AttackGroup, Settings )
     self:F( Index )
     return nil
   end
   
   --- Report detailed of a detectedion result.
   -- @param #DETECTION_BASE self
+  -- @param Wrapper.Group#GROUP AttackGroup The group to generate the report for.
   -- @return #string
   function DETECTION_BASE:DetectedReportDetailed( AttackGroup )
     self:F()
@@ -1783,8 +1786,10 @@ do -- DETECTION_UNITS
   --- Report summary of a DetectedItem using a given numeric index.
   -- @param #DETECTION_UNITS self
   -- @param Index
+  -- @param Wrapper.Group#GROUP AttackGroup The group to generate the report for.
+  -- @param Core.Settings#SETTINGS Settings Message formatting settings to use.
   -- @return #string
-  function DETECTION_UNITS:DetectedItemReportSummary( Index, AttackGroup )
+  function DETECTION_UNITS:DetectedItemReportSummary( Index, AttackGroup, Settings )
     self:F( { Index, self.DetectedItems } )
   
     local DetectedItem = self:GetDetectedItem( Index )
@@ -1826,16 +1831,15 @@ do -- DETECTION_UNITS
         end
         
         local DetectedItemCoordinate = DetectedItemUnit:GetCoordinate()
-        local DetectedItemCoordText = DetectedItemCoordinate:ToString( AttackGroup )
+        local DetectedItemCoordText = DetectedItemCoordinate:ToString( AttackGroup, Settings )
  
         local ThreatLevelA2G = DetectedItemUnit:GetThreatLevel( DetectedItem )
         
         ReportSummary = string.format( 
-          "%s - %s - Threat:[%s](%2d) - %s%s",
+          "%s - %s\n - Threat: [%s]\n - Type: %s%s",
           DetectedItemID,
           DetectedItemCoordText,
           string.rep(  "■", ThreatLevelA2G ),
-          ThreatLevelA2G,
           UnitCategoryText,
           UnitDistanceText
         )
@@ -1850,14 +1854,16 @@ do -- DETECTION_UNITS
   
   --- Report detailed of a detection result.
   -- @param #DETECTION_UNITS self
+  -- @param Wrapper.Group#GROUP AttackGroup The group to generate the report for.
   -- @return #string
   function DETECTION_UNITS:DetectedReportDetailed( AttackGroup )
     self:F()
     
-    local Report = REPORT:New( "Detected units:" )
+    local Report = REPORT:New()
     for DetectedItemID, DetectedItem in pairs( self.DetectedItems ) do
       local DetectedItem = DetectedItem -- #DETECTION_BASE.DetectedItem
       local ReportSummary = self:DetectedItemReportSummary( DetectedItemID, AttackGroup )
+      Report:SetTitle( "Detected units:" )
       Report:Add( ReportSummary )
     end
     
@@ -2048,8 +2054,10 @@ do -- DETECTION_TYPES
   --- Report summary of a DetectedItem using a given numeric index.
   -- @param #DETECTION_TYPES self
   -- @param Index
+  -- @param Wrapper.Group#GROUP AttackGroup The group to generate the report for.
+  -- @param Core.Settings#SETTINGS Settings Message formatting settings to use.
   -- @return #string
-  function DETECTION_TYPES:DetectedItemReportSummary( DetectedTypeName, AttackGroup )
+  function DETECTION_TYPES:DetectedItemReportSummary( DetectedTypeName, AttackGroup, Settings )
     self:F( DetectedTypeName )
   
     local DetectedItem = self:GetDetectedItem( DetectedTypeName )
@@ -2066,14 +2074,13 @@ do -- DETECTION_TYPES
       local DetectedItemUnit = DetectedSet:GetFirst()
 
       local DetectedItemCoordinate = DetectedItemUnit:GetCoordinate()
-      local DetectedItemCoordText = DetectedItemCoordinate:ToString( AttackGroup )
+      local DetectedItemCoordText = DetectedItemCoordinate:ToString( AttackGroup, Settings )
 
       local ReportSummary = string.format( 
-        "%s - %s - Threat:[%s](%2d) - %2d of %s", 
+        "%s - %s\n - Threat: [%s]\n - Type: %2d of %s", 
         DetectedItemID,
         DetectedItemCoordText,
         string.rep(  "■", ThreatLevelA2G ),
-        ThreatLevelA2G,
         DetectedItemsCount,
         DetectedItemType
       )
@@ -2085,14 +2092,16 @@ do -- DETECTION_TYPES
   
   --- Report detailed of a detection result.
   -- @param #DETECTION_TYPES self
+  -- @param Wrapper.Group#GROUP AttackGroup The group to generate the report for.
   -- @return #string
   function DETECTION_TYPES:DetectedReportDetailed( AttackGroup )
     self:F()
     
-    local Report = REPORT:New( "Detected types:" )
+    local Report = REPORT:New()
     for DetectedItemTypeName, DetectedItem in pairs( self.DetectedItems ) do
       local DetectedItem = DetectedItem -- #DETECTION_BASE.DetectedItem
       local ReportSummary = self:DetectedItemReportSummary( DetectedItemTypeName, AttackGroup )
+      Report:SetTitle( "Detected types:" )
       Report:Add( ReportSummary )
     end
     
@@ -2202,8 +2211,10 @@ do -- DETECTION_AREAS
   --- Report summary of a detected item using a given numeric index.
   -- @param #DETECTION_AREAS self
   -- @param Index
+  -- @param Wrapper.Group#GROUP AttackGroup The group to get the settings for.
+  -- @param Core.Settings#SETTINGS Settings (Optional) Message formatting settings to use.
   -- @return #string
-  function DETECTION_AREAS:DetectedItemReportSummary( Index, AttackGroup )
+  function DETECTION_AREAS:DetectedItemReportSummary( Index, AttackGroup, Settings )
     self:F( Index )
   
     local DetectedItem = self:GetDetectedItem( Index )
@@ -2215,18 +2226,17 @@ do -- DETECTION_AREAS
       
       local DetectedZone = self:GetDetectedItemZone( Index )
       local DetectedItemCoordinate = DetectedZone:GetCoordinate()
-      local DetectedItemCoordText = DetectedItemCoordinate:ToString( AttackGroup )
+      local DetectedItemCoordText = DetectedItemCoordinate:ToString( AttackGroup, Settings )
 
       local ThreatLevelA2G = self:GetTreatLevelA2G( DetectedItem )
       local DetectedItemsCount = DetectedSet:Count()
       local DetectedItemsTypes = DetectedSet:GetTypeNames()
       
       local ReportSummary = string.format( 
-        "%s - %s - Threat:[%s](%2d)\n   %2d of %s", 
+        "%s - %s\n - Threat: [%s]\n - Type: %2d of %s", 
         DetectedItemID,
         DetectedItemCoordText,
         string.rep(  "■", ThreatLevelA2G ),
-        ThreatLevelA2G,
         DetectedItemsCount,
         DetectedItemsTypes
       )
@@ -2239,14 +2249,16 @@ do -- DETECTION_AREAS
 
   --- Report detailed of a detection result.
   -- @param #DETECTION_AREAS self
+  -- @param Wrapper.Group#GROUP AttackGroup The group to generate the report for.
   -- @return #string
-  function DETECTION_AREAS:DetectedReportDetailed( AttackGroup) --R2.1  Fixed missing report
+  function DETECTION_AREAS:DetectedReportDetailed( AttackGroup ) --R2.1  Fixed missing report
     self:F()
     
-    local Report = REPORT:New( "Detected areas:" )
+    local Report = REPORT:New()
     for DetectedItemIndex, DetectedItem in pairs( self.DetectedItems ) do
       local DetectedItem = DetectedItem -- #DETECTION_BASE.DetectedItem
       local ReportSummary = self:DetectedItemReportSummary( DetectedItemIndex, AttackGroup )
+      Report:SetTitle( "Detected areas:" )
       Report:Add( ReportSummary )
     end
     

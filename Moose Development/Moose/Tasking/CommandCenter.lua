@@ -30,12 +30,8 @@ function REPORT:New( Title )
   local self = BASE:Inherit( self, BASE:New() ) -- #REPORT
 
   self.Report = {}
-  
-  Title = Title or ""
-  if Title then
-    self.Title = Title  
-  end
-  
+
+  self:SetTitle( Title or "" )  
   self:SetIndent( 3 )
 
   return self
@@ -87,6 +83,23 @@ function REPORT:Text( Delimiter )
   local ReportText = ( self.Title ~= "" and self.Title .. Delimiter or self.Title ) .. table.concat( self.Report, Delimiter ) or ""
   return ReportText
 end
+
+--- Sets the title of the report.
+-- @param #REPORT self
+-- @param #string Title The title of the report.
+-- @return #REPORT
+function REPORT:SetTitle( Title )
+  self.Title = Title  
+  return self
+end
+
+--- Gets the amount of report items contained in the report.
+-- @param #REPORT self
+-- @return #number Returns the number of report items contained in the report. 0 is returned if no report items are contained in the report. The title is not counted for.
+function REPORT:GetCount()
+  return #self.Report
+end
+
 
 --- The COMMANDCENTER class
 -- @type COMMANDCENTER
