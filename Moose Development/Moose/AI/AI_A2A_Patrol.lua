@@ -362,6 +362,7 @@ function AI_A2A_PATROL:onafterRoute( AIGroup, From, Event, To )
     )
 
     PatrolRoute[#PatrolRoute+1] = ToPatrolRoutePoint
+    PatrolRoute[#PatrolRoute+1] = ToPatrolRoutePoint
     
     --- Now we're going to do something special, we're going to call a function from a waypoint action at the AIControllable...
     AIGroup:WayPointInitialize( PatrolRoute )
@@ -369,7 +370,7 @@ function AI_A2A_PATROL:onafterRoute( AIGroup, From, Event, To )
     local Tasks = {}
     Tasks[#Tasks+1] = AIGroup:TaskFunction( 1, 1, "AI_A2A_PATROL.PatrolRoute" )
     
-    PatrolRoute[1].task = AIGroup:TaskCombo( Tasks )
+    PatrolRoute[#PatrolRoute].task = AIGroup:TaskCombo( Tasks )
     
     --- Do a trick, link the NewPatrolRoute function of the PATROLGROUP object to the AIControllable in a temporary variable ...
     AIGroup:SetState( AIGroup, "AI_A2A_PATROL", self )

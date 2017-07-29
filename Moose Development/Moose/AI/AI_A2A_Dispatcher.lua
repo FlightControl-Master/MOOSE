@@ -1,3 +1,6 @@
+--BASE:TraceClass("AI_A2A_DISPATCHER")
+BASE:TraceClass("AI_A2A_GCICAP")
+
 --- **AI** - The AI_A2A_DISPATCHER creates an automatic A2A defense system based on an EWR network targets and coordinating CAP and GCI.
 -- 
 -- ![Banner Image](..\Presentations\AI_A2A_DISPATCHER\Dia1.JPG)
@@ -155,7 +158,7 @@
 -- 
 -- @module AI_A2A_Dispatcher
 
---BASE:TraceClass("AI_A2A_DISPATCHER")
+
 
 do -- AI_A2A_DISPATCHER
 
@@ -2255,7 +2258,7 @@ do -- AI_A2A_DISPATCHER
               Fsm:SetDispatcher( self )
               Fsm:SetHomeAirbase( DefenderSquadron.Airbase )
               Fsm:Start()
-              Fsm:__Engage( 1, Target.Set ) -- Engage on the TargetSetUnit
+              Fsm:__Engage( 5, Target.Set ) -- Engage on the TargetSetUnit
     
       
               self:SetDefenderTask( DefenderGCI, "GCI", Fsm, Target )

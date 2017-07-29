@@ -1,3 +1,5 @@
+BASE:TraceClass( "AI_A2A_GCI" )
+
 --- **AI** -- **Execute Ground Controlled Interception (GCI).**
 --
 -- ![Banner Image](..\Presentations\AI_GCI\Dia1.JPG)
@@ -313,8 +315,8 @@ end
 --- @param Wrapper.Group#GROUP AIControllable
 function AI_A2A_GCI.InterceptRoute( AIControllable )
 
-  AIControllable:T( "NewEngageRoute" )
   local EngageZone = AIControllable:GetState( AIControllable, "EngageZone" ) -- AI.AI_Cap#AI_A2A_GCI
+  EngageZone:E( "NewEngageRoute" )
   EngageZone:__Engage( 0.5 )
 end
 
@@ -360,6 +362,9 @@ function AI_A2A_GCI:onafterEngage( AIGroup, From, Event, To, AttackSetUnit )
     if AIGroup:IsAlive() then
   
       local EngageRoute = {}
+      
+      local CurrentCoord = AIGroup:GetCoordinate()
+            
   
       --- Calculate the target route point.
       
@@ -372,7 +377,7 @@ function AI_A2A_GCI:onafterEngage( AIGroup, From, Event, To, AttackSetUnit )
       local ToInterceptAngle = CurrentCoord:GetAngleDegrees( CurrentCoord:GetDirectionVec3( ToTargetCoord ) )
       
       --- Create a route point of type air.
-      local ToPatrolRoutePoint = CurrentCoord:Translate( 5000, ToInterceptAngle ):RoutePointAir( 
+      local ToPatrolRoutePoint = CurrentCoord:Translate( 10000, ToInterceptAngle ):RoutePointAir( 
         self.PatrolAltType, 
         POINT_VEC3.RoutePointType.TurningPoint, 
         POINT_VEC3.RoutePointAction.TurningPoint, 
@@ -381,19 +386,17 @@ function AI_A2A_GCI:onafterEngage( AIGroup, From, Event, To, AttackSetUnit )
       )
   
       self:F( { Angle = ToInterceptAngle, ToTargetSpeed = ToTargetSpeed } )
-      self:T2( { self.EngageMinSpeed, self.EngageMaxSpeed, ToTargetSpeed } )
+      self:F( { self.EngageMinSpeed, self.EngageMaxSpeed, ToTargetSpeed } )
       
       EngageRoute[#EngageRoute+1] = ToPatrolRoutePoint
+      EngageRoute[#EngageRoute+1] = ToPatrolRoutePoint
       
-      AIGroup:OptionROEOpenFire()
-      AIGroup:OptionROTPassiveDefense()
-  
       local AttackTasks = {}
   
       for AttackUnitID, AttackUnit in pairs( self.AttackSetUnit:GetSet() ) do
         local AttackUnit = AttackUnit -- Wrapper.Unit#UNIT
-        self:T( { "Intercepting Unit:", AttackUnit:GetName(), AttackUnit:IsAlive(), AttackUnit:IsAir() } )
         if AttackUnit:IsAlive() and AttackUnit:IsAir() then
+          self:T( { "Intercepting Unit:", AttackUnit:GetName(), AttackUnit:IsAlive(), AttackUnit:IsAir() } )
           AttackTasks[#AttackTasks+1] = AIGroup:TaskAttackUnit( AttackUnit )
         end
       end
@@ -407,9 +410,12 @@ function AI_A2A_GCI:onafterEngage( AIGroup, From, Event, To, AttackSetUnit )
         self:Return()
         self:__RTB( 0.5 )
       else
+        AIGroup:OptionROEOpenFire()
+        AIGroup:OptionROTPassiveDefense()
+
         AttackTasks[#AttackTasks+1] = AIGroup:TaskFunction( 1, #AttackTasks, "AI_A2A_GCI.InterceptRoute" )
         AttackTasks[#AttackTasks+1] = AIGroup:TaskOrbitCircle( 4000, self.EngageMinSpeed )
-        EngageRoute[1].task = AIGroup:TaskCombo( AttackTasks )
+        EngageRoute[#EngageRoute].task = AIGroup:TaskCombo( AttackTasks )
         
         --- Do a trick, link the NewEngageRoute function of the object to the AIControllable in a temporary variable ...
         AIGroup:SetState( AIGroup, "EngageZone", self )
