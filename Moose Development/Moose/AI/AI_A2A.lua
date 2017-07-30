@@ -70,8 +70,8 @@ function AI_A2A:New( AIGroup )
   
   self:SetControllable( AIGroup )
   
-  self:ManageFuel( .2, 60 )
-  self:ManageDamage( 0.4 )
+  self:SetFuelTreshold( .2, 60 )
+  self:SetDamageTreshold( 0.4 )
 
   self:SetStartState( "Stopped" ) 
   
@@ -314,7 +314,7 @@ end
 -- @param #number PatrolFuelTresholdPercentage The treshold in percentage (between 0 and 1) when the AIControllable is considered to get out of fuel.
 -- @param #number PatrolOutOfFuelOrbitTime The amount of seconds the out of fuel AIControllable will orbit before returning to the base.
 -- @return #AI_A2A self
-function AI_A2A:ManageFuel( PatrolFuelTresholdPercentage, PatrolOutOfFuelOrbitTime )
+function AI_A2A:SetFuelTreshold( PatrolFuelTresholdPercentage, PatrolOutOfFuelOrbitTime )
 
   self.PatrolManageFuel = true
   self.PatrolFuelTresholdPercentage = PatrolFuelTresholdPercentage
@@ -334,7 +334,7 @@ end
 -- @param #AI_A2A self
 -- @param #number PatrolDamageTreshold The treshold in percentage (between 0 and 1) when the AI is considered to be damaged.
 -- @return #AI_A2A self
-function AI_A2A:ManageDamage( PatrolDamageTreshold )
+function AI_A2A:SetDamageTreshold( PatrolDamageTreshold )
 
   self.PatrolManageDamage = true
   self.PatrolDamageTreshold = PatrolDamageTreshold

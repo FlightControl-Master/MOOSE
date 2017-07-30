@@ -288,7 +288,7 @@ Per one, two, three, four?</p>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="#AI_A2A_GCICAP">AI_A2A_GCICAP</a></td>
 		<td class="summary">
-<h1>AI_A2A_GCICAP class, extends <a href="AI.html##(AI_A2A_DISPATCHER)">AI#AI<em>A2A</em>DISPATCHER</a></h1>
+<h1>AI_A2A_GCICAP class, extends <a href="AI_A2A_Dispatcher.html##(AI_A2A_DISPATCHER)">AI<em>A2A</em>Dispatcher#AI<em>A2A</em>DISPATCHER</a></h1>
 
 <p><img src="..\Presentations\AI_A2A_DISPATCHER\Dia1.JPG" alt="Banner Image"/></p>
 
@@ -605,6 +605,18 @@ Per one, two, three, four?</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_DISPATCHER).SetDefaultDamageTreshold">AI_A2A_DISPATCHER:SetDefaultDamageTreshold(DamageTreshold)</a></td>
+		<td class="summary">
+<p>Set the default damage treshold when defenders will RTB.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_DISPATCHER).SetDefaultFuelTreshold">AI_A2A_DISPATCHER:SetDefaultFuelTreshold(FuelTreshold)</a></td>
+		<td class="summary">
+<p>Set the default fuel treshold when defenders will RTB or Refuel in the air.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_DISPATCHER).SetDefaultGrouping">AI_A2A_DISPATCHER:SetDefaultGrouping(Grouping)</a></td>
 		<td class="summary">
 <p>Sets the default grouping of new airplanes spawned.</p>
@@ -855,9 +867,15 @@ Per one, two, three, four?</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_GCICAP).New">AI_A2A_GCICAP:New(<, GroupingRadius, EWRPrefixes, TemplatePrefixes, CAPPrefixes, CapLimit, EngageRadius)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_GCICAP).New">AI_A2A_GCICAP:New(EWRPrefixes, TemplatePrefixes, CapPrefixes, CapLimit, GroupingRadius, EngageRadius, GciRadius)</a></td>
 		<td class="summary">
 <p>AI<em>A2A</em>GCICAP constructor.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_GCICAP).NewWithBorder">AI_A2A_GCICAP:NewWithBorder(EWRPrefixes, TemplatePrefixes, BorderPrefix, CapPrefixes, CapLimit, GroupingRadius, EngageRadius, GciRadius)</a></td>
+		<td class="summary">
+<p>AI<em>A2A</em>GCICAP constructor with border.</p>
 </td>
 		</tr>
 		<tr>
@@ -1119,16 +1137,7 @@ while defining which plane types are being used by the squadron and how many res
     <li><a href="##(AI_A2A_DISPATCHER).SetSquadronTakeoffFromRunway">AI<em>A2A</em>DISPATCHER.SetSquadronTakeoffFromRunway</a>() will spawn new aircraft at the runway at the airfield.</li>
 </ul>
 
-<p><strong>The default landing method is to spawn new aircraft directly in the air.</strong>
-<strong>The default takeoff method can be set for ALL squadrons that don't have an individual takeoff method configured.</strong></p>
-
-<ul>
-    <li><a href="##(AI_A2A_DISPATCHER).SetDefaultTakeoff">AI<em>A2A</em>DISPATCHER.SetDefaultTakeoff</a>() is the generic configuration method to control takeoff by default from the air, hot, cold or from the runway. See the method for further details.</li>
-    <li><a href="##(AI_A2A_DISPATCHER).SetDefaultTakeoffInAir">AI<em>A2A</em>DISPATCHER.SetDefaultTakeoffInAir</a>() will spawn by default new aircraft from the squadron directly in the air.</li>
-    <li><a href="##(AI_A2A_DISPATCHER).SetDefaultTakeoffFromParkingCold">AI<em>A2A</em>DISPATCHER.SetDefaultTakeoffFromParkingCold</a>() will spawn by default new aircraft in without running engines at a parking spot at the airfield.</li>
-    <li><a href="##(AI_A2A_DISPATCHER).SetDefaultTakeoffFromParkingHot">AI<em>A2A</em>DISPATCHER.SetDefaultTakeoffFromParkingHot</a>() will spawn by default new aircraft in with running engines at a parking spot at the airfield.</li>
-    <li><a href="##(AI_A2A_DISPATCHER).SetDefaultTakeoffFromRunway">AI<em>A2A</em>DISPATCHER.SetDefaultTakeoffFromRunway</a>() will spawn by default new aircraft at the runway at the airfield.</li>
-</ul>
+<p><strong>The default landing method is to spawn new aircraft directly in the air.</strong></p>
 
 <p>Use these methods to fine-tune for specific airfields that are known to create bottlenecks, or have reduced airbase efficiency.
 The more and the longer aircraft need to taxi at an airfield, the more risk there is that:</p>
@@ -1171,15 +1180,6 @@ And for a couple of squadrons overrides this default method.</p>
     <li><a href="##(AI_A2A_DISPATCHER).SetSquadronLandingAtEngineShutdown">AI<em>A2A</em>DISPATCHER.SetSquadronLandingAtEngineShutdown</a>() will despawn the returning aircraft when the aircraft has returned to its parking spot and has turned off its engines.</li>
 </ul>
 
-<p><strong>The default landing method can be set for ALL squadrons that don't have an individual landing method configured.</strong></p>
-
-<ul>
-    <li><a href="##(AI_A2A_DISPATCHER).SetDefaultLanding">AI<em>A2A</em>DISPATCHER.SetDefaultLanding</a>() is the generic configuration method to control by default landing, namely despawn the aircraft near the airfield in the air, right after landing, or at engine shutdown.</li>
-    <li><a href="##(AI_A2A_DISPATCHER).SetDefaultLandingNearAirbase">AI<em>A2A</em>DISPATCHER.SetDefaultLandingNearAirbase</a>() will despawn by default the returning aircraft in the air when near the airfield.</li>
-    <li><a href="##(AI_A2A_DISPATCHER).SetDefaultLandingAtRunway">AI<em>A2A</em>DISPATCHER.SetDefaultLandingAtRunway</a>() will despawn by default the returning aircraft directly after landing at the runway.</li>
-    <li><a href="##(AI_A2A_DISPATCHER).SetDefaultLandingAtEngineShutdown">AI<em>A2A</em>DISPATCHER.SetDefaultLandingAtEngineShutdown</a>() will despawn by default the returning aircraft when the aircraft has returned to its parking spot and has turned off its engines.</li>
-</ul>
-
 <p>You can use these methods to minimize the airbase coodination overhead and to increase the airbase efficiency.
 When there are lots of aircraft returning for landing, at the same airbase, the takeoff process will be halted, which can cause a complete failure of the
 A2A defense system, as no new CAP or GCI planes can takeoff.
@@ -1216,11 +1216,7 @@ a GCI needs to be started, the GCI flights will be grouped as follows: Group 1 o
 
 <p>The <strong>grouping value is set for a Squadron</strong>, and can be <strong>dynamically adjusted</strong> during mission execution, so to adjust the defense flights grouping when the tactical situation changes.</p>
 
-<p><strong>The default grouping value can be set for ALL squadrons that don't have an individual grouping value configured.</strong></p>
-
-<p>Use the method <a href="##(AI_A2A_DISPATCHER).SetDefaultGrouping">AI<em>A2A</em>DISPATCHER.SetDefaultGrouping</a>() to set the <strong>default grouping</strong> of spawned airplanes for all squadrons.</p>
-
-<h3>6.4. Balance or setup effectiveness of the air defenses in case of GCI</h3>
+<h3>6.4. Overhead and Balance the effectiveness of the air defenses in case of GCI</h3>
 
 <p>The effectiveness can be set with the <strong>overhead parameter</strong>. This is a number that is used to calculate the amount of Units that dispatching command will allocate to GCI in surplus of detected amount of units.
 The <strong>default value</strong> of the overhead parameter is 1.0, which means <strong>equal balance</strong>. </p>
@@ -1245,10 +1241,6 @@ The overhead must be given as a decimal value with 1 as the neutral value, which
 multiplied by the Overhead and rounded up to the smallest integer. </p>
 
 <p>The <strong>overhead value is set for a Squadron</strong>, and can be <strong>dynamically adjusted</strong> during mission execution, so to adjust the defense overhead when the tactical situation changes.</p>
-
-<p><strong>The default overhead value can be set for ALL squadrons that don't have an individual overhead value configured.</strong></p>
-
-<p>Use the <a href="##(AI_A2A_DISPATCHER).SetDefaultOverhead">AI<em>A2A</em>DISPATCHER.SetDefaultOverhead</a>() method can be used to set the default the defense strength for ALL squadrons.</p>
 
 <h2>7. Setup a squadron for CAP</h2>
 
@@ -1355,9 +1347,70 @@ too short will mean that the intruders may have alraedy passed the ideal interce
 Use the method <a href="##(AI_A2A_DISPATCHER).SetTacticalDisplay">AI<em>A2A</em>DISPATCHER.SetTacticalDisplay</a>() to switch on the tactical display panel. The default will not show this panel.
 Note that there may be some performance impact if this panel is shown.</p>
 
-<h2>10. Q &amp; A:</h2>
+<h2>10. Defaults settings.</h2>
 
-<h3>10.1. Which countries will be selected for each coalition?</h3>
+<p>This provides a good overview of the different parameters that are setup or hardcoded by default.
+For some default settings, a method is available that allows you to tweak the defaults.</p>
+
+<h2>10.1. Default takeoff method.</h2>
+
+<p>The default <strong>takeoff method</strong> is set to <strong>in the air</strong>, which means that new spawned airplanes will be spawned directly in the air above the airbase by default.</p>
+
+<p><strong>The default takeoff method can be set for ALL squadrons that don't have an individual takeoff method configured.</strong></p>
+
+<ul>
+    <li><a href="##(AI_A2A_DISPATCHER).SetDefaultTakeoff">AI<em>A2A</em>DISPATCHER.SetDefaultTakeoff</a>() is the generic configuration method to control takeoff by default from the air, hot, cold or from the runway. See the method for further details.</li>
+    <li><a href="##(AI_A2A_DISPATCHER).SetDefaultTakeoffInAir">AI<em>A2A</em>DISPATCHER.SetDefaultTakeoffInAir</a>() will spawn by default new aircraft from the squadron directly in the air.</li>
+    <li><a href="##(AI_A2A_DISPATCHER).SetDefaultTakeoffFromParkingCold">AI<em>A2A</em>DISPATCHER.SetDefaultTakeoffFromParkingCold</a>() will spawn by default new aircraft in without running engines at a parking spot at the airfield.</li>
+    <li><a href="##(AI_A2A_DISPATCHER).SetDefaultTakeoffFromParkingHot">AI<em>A2A</em>DISPATCHER.SetDefaultTakeoffFromParkingHot</a>() will spawn by default new aircraft in with running engines at a parking spot at the airfield.</li>
+    <li><a href="##(AI_A2A_DISPATCHER).SetDefaultTakeoffFromRunway">AI<em>A2A</em>DISPATCHER.SetDefaultTakeoffFromRunway</a>() will spawn by default new aircraft at the runway at the airfield.</li>
+</ul>
+
+<h2>10.2. Default landing method.</h2>
+
+<p>The default <strong>landing method</strong> is set to <strong>near the airbase</strong>, which means that returning airplanes will be despawned directly in the air by default.</p>
+
+<p>The default landing method can be set for ALL squadrons that don't have an individual landing method configured.</p>
+
+<ul>
+    <li><a href="##(AI_A2A_DISPATCHER).SetDefaultLanding">AI<em>A2A</em>DISPATCHER.SetDefaultLanding</a>() is the generic configuration method to control by default landing, namely despawn the aircraft near the airfield in the air, right after landing, or at engine shutdown.</li>
+    <li><a href="##(AI_A2A_DISPATCHER).SetDefaultLandingNearAirbase">AI<em>A2A</em>DISPATCHER.SetDefaultLandingNearAirbase</a>() will despawn by default the returning aircraft in the air when near the airfield.</li>
+    <li><a href="##(AI_A2A_DISPATCHER).SetDefaultLandingAtRunway">AI<em>A2A</em>DISPATCHER.SetDefaultLandingAtRunway</a>() will despawn by default the returning aircraft directly after landing at the runway.</li>
+    <li><a href="##(AI_A2A_DISPATCHER).SetDefaultLandingAtEngineShutdown">AI<em>A2A</em>DISPATCHER.SetDefaultLandingAtEngineShutdown</a>() will despawn by default the returning aircraft when the aircraft has returned to its parking spot and has turned off its engines.</li>
+</ul>
+
+<h2>10.3. Default overhead.</h2>
+
+<p>The default <strong>overhead</strong> is set to <strong>1</strong>. That essentially means that there isn't any overhead set by default.</p>
+
+<p>The default overhead value can be set for ALL squadrons that don't have an individual overhead value configured.</p>
+
+<p>Use the <a href="##(AI_A2A_DISPATCHER).SetDefaultOverhead">AI<em>A2A</em>DISPATCHER.SetDefaultOverhead</a>() method can be used to set the default overhead or defense strength for ALL squadrons.</p>
+
+<h2>10.4. Default grouping.</h2>
+
+<p>The default <strong>grouping</strong> is set to <strong>one airplane</strong>. That essentially means that there won't be any grouping applied by default.</p>
+
+<p>The default grouping value can be set for ALL squadrons that don't have an individual grouping value configured.</p>
+
+<p>Use the method <a href="##(AI_A2A_DISPATCHER).SetDefaultGrouping">AI<em>A2A</em>DISPATCHER.SetDefaultGrouping</a>() to set the <strong>default grouping</strong> of spawned airplanes for all squadrons.</p>
+
+<h2>10.5. RTB fuel treshold.</h2>
+
+<p>When an airplane gets <strong>out of fuel</strong> to a certain %-tage, which is <strong>15% (0.15)</strong>, it will go RTB, and will be replaced with a new airplane when applicable.</p>
+
+<p>Use the method <a href="##(AI_A2A_DISPATCHER).SetDefaultFuelTreshold">AI<em>A2A</em>DISPATCHER.SetDefaultFuelTreshold</a>() to set the <strong>default fuel treshold</strong> of spawned airplanes for all squadrons.</p>
+
+<h2>10.6. RTB damage treshold.</h2>
+
+<p>When an airplane is <strong>damaged</strong> to a certain %-tage, which is <strong>40% (0.40)</strong>, it will go RTB, and will be replaced with a new airplane when applicable.</p>
+
+<p>Use the method <a href="##(AI_A2A_DISPATCHER).SetDefaultDamageTreshold">AI<em>A2A</em>DISPATCHER.SetDefaultDamageTreshold</a>() to set the <strong>default damage treshold</strong> of spawned airplanes for all squadrons.</p>
+
+
+<h2>11. Q &amp; A:</h2>
+
+<h3>11.1. Which countries will be selected for each coalition?</h3>
 
 <p>Which countries are assigned to a coalition influences which units are available to the coalition. 
 For example because the mission calls for a EWR radar on the blue side the Ukraine might be chosen as a blue country 
@@ -1365,7 +1418,7 @@ so that the 55G6 EWR radar unit is available to blue. <br/>
 Some countries assign different tasking to aircraft, for example Germany assigns the CAP task to F-4E Phantoms but the USA does not. <br/>
 Therefore if F4s are wanted as a coalition’s CAP or GCI aircraft Germany will need to be assigned to that coalition. </p>
 
-<h3>10.2. Country, type, load out, skill and skins for CAP and GCI aircraft?</h3>
+<h3>11.2. Country, type, load out, skill and skins for CAP and GCI aircraft?</h3>
 
 <ul>
     <li>Note these can be from any countries within the coalition but must be an aircraft with one of the main tasks being “CAP”.</li>
@@ -1389,7 +1442,7 @@ Therefore if F4s are wanted as a coalition’s CAP or GCI aircraft Germany will 
 </dt>
 <dd>
 	
-<h1>AI_A2A_GCICAP class, extends <a href="AI.html##(AI_A2A_DISPATCHER)">AI#AI<em>A2A</em>DISPATCHER</a></h1>
+<h1>AI_A2A_GCICAP class, extends <a href="AI_A2A_Dispatcher.html##(AI_A2A_DISPATCHER)">AI<em>A2A</em>Dispatcher#AI<em>A2A</em>DISPATCHER</a></h1>
 
 <p><img src="..\Presentations\AI_A2A_DISPATCHER\Dia1.JPG" alt="Banner Image"/></p>
 
@@ -3007,6 +3060,84 @@ or
 		<dl class="function">
 <dt>
 
+<a id="#(AI_A2A_DISPATCHER).SetDefaultDamageTreshold" >
+<strong>AI_A2A_DISPATCHER:SetDefaultDamageTreshold(DamageTreshold)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set the default damage treshold when defenders will RTB.</p>
+
+	
+<p>The default damage treshold is by default set to 40%, which means that when the airplane is 40% damaged, it will go RTB.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number DamageTreshold </em></code>: 
+A decimal number between 0 and 1, that expresses the %-tage of the damage treshold before going RTB.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(AI_A2A_DISPATCHER)">#AI<em>A2A</em>DISPATCHER</a>:</em></p>
+
+
+			<h3>Usage:</h3>
+		<pre class="example"><code>
+  -- Now Setup the A2A dispatcher, and initialize it using the Detection object.
+  A2ADispatcher = AI_A2A_DISPATCHER:New( Detection )  
+  
+  -- Now Setup the default damage treshold.
+  A2ADispatcher:SetDefaultDamageTreshold( 0.90 ) -- Go RTB when the airplane 90% damaged.
+  </code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_A2A_DISPATCHER).SetDefaultFuelTreshold" >
+<strong>AI_A2A_DISPATCHER:SetDefaultFuelTreshold(FuelTreshold)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set the default fuel treshold when defenders will RTB or Refuel in the air.</p>
+
+	
+<p>The fuel treshold is by default set to 15%, which means that an airplane will stay in the air until 15% of its fuel has been consumed.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number FuelTreshold </em></code>: 
+A decimal number between 0 and 1, that expresses the %-tage of the treshold of fuel remaining in the tank when the plane will go RTB or Refuel.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(AI_A2A_DISPATCHER)">#AI<em>A2A</em>DISPATCHER</a>:</em></p>
+
+
+			<h3>Usage:</h3>
+		<pre class="example"><code>
+  -- Now Setup the A2A dispatcher, and initialize it using the Detection object.
+  A2ADispatcher = AI_A2A_DISPATCHER:New( Detection )  
+  
+  -- Now Setup the default fuel treshold.
+  A2ADispatcher:SetDefaultRefuelTreshold( 0.30 ) -- Go RTB when only 30% of fuel remaining in the tank.
+  </code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(AI_A2A_DISPATCHER).SetDefaultGrouping" >
 <strong>AI_A2A_DISPATCHER:SetDefaultGrouping(Grouping)</strong>
 </a>
@@ -4590,7 +4721,7 @@ Provide a value of <strong>true</strong> to display every 30 seconds a tactical 
 <dt>
 
 <a id="#(AI_A2A_GCICAP).New" >
-<strong>AI_A2A_GCICAP:New(<, GroupingRadius, EWRPrefixes, TemplatePrefixes, CAPPrefixes, CapLimit, EngageRadius)</strong>
+<strong>AI_A2A_GCICAP:New(EWRPrefixes, TemplatePrefixes, CapPrefixes, CapLimit, GroupingRadius, EngageRadius, GciRadius)</strong>
 </a>
 </dt>
 <dd>
@@ -4601,8 +4732,26 @@ Provide a value of <strong>true</strong> to display every 30 seconds a tactical 
 		<ul>
 				<li>
 				
-<p><code><em><a href="##(list)">#list</a> &lt; </em></code>: 
-string> EWRPrefixes A list of prefixes that of groups that setup the Early Warning Radar network.</p>
+<p><code><em>#string EWRPrefixes </em></code>: 
+A list of prefixes that of groups that setup the Early Warning Radar network.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string TemplatePrefixes </em></code>: 
+A list of template prefixes.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string CapPrefixes </em></code>: 
+A list of CAP zone prefixes (polygon zones).</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number CapLimit </em></code>: 
+A number of how many CAP maximum will be spawned.</p>
 
 				</li>
 				<li>
@@ -4614,27 +4763,92 @@ For airplanes, 6000 (6km) is recommended, and is also the default value of this 
 				</li>
 				<li>
 				
-<p><code><em> EWRPrefixes </em></code>: </p>
+<p><code><em>#number EngageRadius </em></code>: 
+The radius in meters wherein detected airplanes will be engaged by airborne defenders without a task.</p>
 
 				</li>
 				<li>
 				
-<p><code><em> TemplatePrefixes </em></code>: </p>
+<p><code><em>#number GciRadius </em></code>: 
+The radius in meters wherein detected airplanes will GCI.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(AI_A2A_GCICAP)">#AI<em>A2A</em>GCICAP</a>:</em></p>
+
+
+			<h3>Usage:</h3>
+		<pre class="example"><code>  
+  -- Set a new AI A2A GCICAP object, based on an EWR network with a 30 km grouping radius
+  -- This for ground and awacs installations.
+  
+  A2ADispatcher = AI_A2A_GCICAP:New( { "BlueEWRGroundRadars", "BlueEWRAwacs" }, 30000 )
+  </code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_A2A_GCICAP).NewWithBorder" >
+<strong>AI_A2A_GCICAP:NewWithBorder(EWRPrefixes, TemplatePrefixes, BorderPrefix, CapPrefixes, CapLimit, GroupingRadius, EngageRadius, GciRadius)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>AI<em>A2A</em>GCICAP constructor with border.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string EWRPrefixes </em></code>: 
+A list of prefixes that of groups that setup the Early Warning Radar network.</p>
 
 				</li>
 				<li>
 				
-<p><code><em> CAPPrefixes </em></code>: </p>
+<p><code><em>#string TemplatePrefixes </em></code>: 
+A list of template prefixes.</p>
 
 				</li>
 				<li>
 				
-<p><code><em> CapLimit </em></code>: </p>
+<p><code><em>#string BorderPrefix </em></code>: 
+A Border Zone Prefix.</p>
 
 				</li>
 				<li>
 				
-<p><code><em> EngageRadius </em></code>: </p>
+<p><code><em>#string CapPrefixes </em></code>: 
+A list of CAP zone prefixes (polygon zones).</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number CapLimit </em></code>: 
+A number of how many CAP maximum will be spawned.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number GroupingRadius </em></code>: 
+The radius in meters wherein detected planes are being grouped as one target area. 
+For airplanes, 6000 (6km) is recommended, and is also the default value of this parameter.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number EngageRadius </em></code>: 
+The radius in meters wherein detected airplanes will be engaged by airborne defenders without a task.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number GciRadius </em></code>: 
+The radius in meters wherein detected airplanes will GCI.</p>
 
 				</li>
 		</ul>

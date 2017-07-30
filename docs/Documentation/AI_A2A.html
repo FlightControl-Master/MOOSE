@@ -167,18 +167,6 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_A2A).ManageDamage">AI_A2A:ManageDamage(PatrolDamageTreshold)</a></td>
-		<td class="summary">
-<p>When the AI is damaged beyond a certain treshold, it is required that the AI returns to the home base.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_A2A).ManageFuel">AI_A2A:ManageFuel(PatrolFuelTresholdPercentage, PatrolOutOfFuelOrbitTime)</a></td>
-		<td class="summary">
-<p>When the AI is out of fuel, it is required that a new AI is started, before the old AI can return to the home base.</p>
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(AI_A2A).New">AI_A2A:New(AIGroup)</a></td>
 		<td class="summary">
 <p>Creates a new AI_A2A object</p>
@@ -347,9 +335,21 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A).SetDamageTreshold">AI_A2A:SetDamageTreshold(PatrolDamageTreshold)</a></td>
+		<td class="summary">
+<p>When the AI is damaged beyond a certain treshold, it is required that the AI returns to the home base.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(AI_A2A).SetDispatcher">AI_A2A:SetDispatcher(Dispatcher)</a></td>
 		<td class="summary">
 
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A).SetFuelTreshold">AI_A2A:SetFuelTreshold(PatrolFuelTresholdPercentage, PatrolOutOfFuelOrbitTime)</a></td>
+		<td class="summary">
+<p>When the AI is out of fuel, it is required that a new AI is started, before the old AI can return to the home base.</p>
 </td>
 		</tr>
 		<tr>
@@ -575,7 +575,6 @@
 		<dl class="function">
 <dt>
 
-		<em>#number</em>
 <a id="#(AI_A2A).IdleCount" >
 <strong>AI_A2A.IdleCount</strong>
 </a>
@@ -583,78 +582,6 @@
 <dd>
 	
 
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(AI_A2A).ManageDamage" >
-<strong>AI_A2A:ManageDamage(PatrolDamageTreshold)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>When the AI is damaged beyond a certain treshold, it is required that the AI returns to the home base.</p>
-
-	
-<p>However, damage cannot be foreseen early on. 
-Therefore, when the damage treshold is reached, 
-the AI will return immediately to the home base (RTB).
-Note that for groups, the average damage of the complete group will be calculated.
-So, in a group of 4 airplanes, 2 lost and 2 with damage 0.2, the damage treshold will be 0.25.</p>
-
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em>#number PatrolDamageTreshold </em></code>: 
-The treshold in percentage (between 0 and 1) when the AI is considered to be damaged.</p>
-
-				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em><a href="##(AI_A2A)">#AI_A2A</a>:</em>
-self</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(AI_A2A).ManageFuel" >
-<strong>AI_A2A:ManageFuel(PatrolFuelTresholdPercentage, PatrolOutOfFuelOrbitTime)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>When the AI is out of fuel, it is required that a new AI is started, before the old AI can return to the home base.</p>
-
-	
-<p>Therefore, with a parameter and a calculation of the distance to the home base, the fuel treshold is calculated.
-When the fuel treshold is reached, the AI will continue for a given time its patrol task in orbit, while a new AIControllable is targetted to the AI_A2A.
-Once the time is finished, the old AI will return to the base.</p>
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em>#number PatrolFuelTresholdPercentage </em></code>: 
-The treshold in percentage (between 0 and 1) when the AIControllable is considered to get out of fuel.</p>
-
-				</li>
-				<li>
-				
-<p><code><em>#number PatrolOutOfFuelOrbitTime </em></code>: 
-The amount of seconds the out of fuel AIControllable will orbit before returning to the base.</p>
-
-				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em><a href="##(AI_A2A)">#AI_A2A</a>:</em>
-self</p>
 
 </dd>
 </dl>
@@ -1436,6 +1363,40 @@ self</p>
 		<dl class="function">
 <dt>
 
+<a id="#(AI_A2A).SetDamageTreshold" >
+<strong>AI_A2A:SetDamageTreshold(PatrolDamageTreshold)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>When the AI is damaged beyond a certain treshold, it is required that the AI returns to the home base.</p>
+
+	
+<p>However, damage cannot be foreseen early on. 
+Therefore, when the damage treshold is reached, 
+the AI will return immediately to the home base (RTB).
+Note that for groups, the average damage of the complete group will be calculated.
+So, in a group of 4 airplanes, 2 lost and 2 with damage 0.2, the damage treshold will be 0.25.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number PatrolDamageTreshold </em></code>: 
+The treshold in percentage (between 0 and 1) when the AI is considered to be damaged.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(AI_A2A)">#AI_A2A</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(AI_A2A).SetDispatcher" >
 <strong>AI_A2A:SetDispatcher(Dispatcher)</strong>
 </a>
@@ -1452,6 +1413,44 @@ self</p>
 
 				</li>
 		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_A2A).SetFuelTreshold" >
+<strong>AI_A2A:SetFuelTreshold(PatrolFuelTresholdPercentage, PatrolOutOfFuelOrbitTime)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>When the AI is out of fuel, it is required that a new AI is started, before the old AI can return to the home base.</p>
+
+	
+<p>Therefore, with a parameter and a calculation of the distance to the home base, the fuel treshold is calculated.
+When the fuel treshold is reached, the AI will continue for a given time its patrol task in orbit, while a new AIControllable is targetted to the AI_A2A.
+Once the time is finished, the old AI will return to the base.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number PatrolFuelTresholdPercentage </em></code>: 
+The treshold in percentage (between 0 and 1) when the AIControllable is considered to get out of fuel.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number PatrolOutOfFuelOrbitTime </em></code>: 
+The amount of seconds the out of fuel AIControllable will orbit before returning to the base.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(AI_A2A)">#AI_A2A</a>:</em>
+self</p>
+
 </dd>
 </dl>
 		<dl class="function">

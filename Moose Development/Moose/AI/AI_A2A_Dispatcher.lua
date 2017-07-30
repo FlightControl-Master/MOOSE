@@ -390,13 +390,6 @@ do -- AI_A2A_DISPATCHER
   --   * @{#AI_A2A_DISPATCHER.SetSquadronTakeoffFromRunway}() will spawn new aircraft at the runway at the airfield.
   -- 
   -- **The default landing method is to spawn new aircraft directly in the air.**
-  -- **The default takeoff method can be set for ALL squadrons that don't have an individual takeoff method configured.**
-  -- 
-  --   * @{#AI_A2A_DISPATCHER.SetDefaultTakeoff}() is the generic configuration method to control takeoff by default from the air, hot, cold or from the runway. See the method for further details.
-  --   * @{#AI_A2A_DISPATCHER.SetDefaultTakeoffInAir}() will spawn by default new aircraft from the squadron directly in the air.
-  --   * @{#AI_A2A_DISPATCHER.SetDefaultTakeoffFromParkingCold}() will spawn by default new aircraft in without running engines at a parking spot at the airfield.
-  --   * @{#AI_A2A_DISPATCHER.SetDefaultTakeoffFromParkingHot}() will spawn by default new aircraft in with running engines at a parking spot at the airfield.
-  --   * @{#AI_A2A_DISPATCHER.SetDefaultTakeoffFromRunway}() will spawn by default new aircraft at the runway at the airfield.
   -- 
   -- Use these methods to fine-tune for specific airfields that are known to create bottlenecks, or have reduced airbase efficiency.
   -- The more and the longer aircraft need to taxi at an airfield, the more risk there is that:
@@ -434,13 +427,6 @@ do -- AI_A2A_DISPATCHER
   --   * @{#AI_A2A_DISPATCHER.SetSquadronLandingAtRunway}() will despawn the returning aircraft directly after landing at the runway.
   --   * @{#AI_A2A_DISPATCHER.SetSquadronLandingAtEngineShutdown}() will despawn the returning aircraft when the aircraft has returned to its parking spot and has turned off its engines.
   -- 
-  -- **The default landing method can be set for ALL squadrons that don't have an individual landing method configured.**
-  -- 
-  --   * @{#AI_A2A_DISPATCHER.SetDefaultLanding}() is the generic configuration method to control by default landing, namely despawn the aircraft near the airfield in the air, right after landing, or at engine shutdown.
-  --   * @{#AI_A2A_DISPATCHER.SetDefaultLandingNearAirbase}() will despawn by default the returning aircraft in the air when near the airfield.
-  --   * @{#AI_A2A_DISPATCHER.SetDefaultLandingAtRunway}() will despawn by default the returning aircraft directly after landing at the runway.
-  --   * @{#AI_A2A_DISPATCHER.SetDefaultLandingAtEngineShutdown}() will despawn by default the returning aircraft when the aircraft has returned to its parking spot and has turned off its engines.
-  -- 
   -- You can use these methods to minimize the airbase coodination overhead and to increase the airbase efficiency.
   -- When there are lots of aircraft returning for landing, at the same airbase, the takeoff process will be halted, which can cause a complete failure of the
   -- A2A defense system, as no new CAP or GCI planes can takeoff.
@@ -476,11 +462,7 @@ do -- AI_A2A_DISPATCHER
   -- 
   -- The **grouping value is set for a Squadron**, and can be **dynamically adjusted** during mission execution, so to adjust the defense flights grouping when the tactical situation changes.
   -- 
-  -- **The default grouping value can be set for ALL squadrons that don't have an individual grouping value configured.**
-  -- 
-  -- Use the method @{#AI_A2A_DISPATCHER.SetDefaultGrouping}() to set the **default grouping** of spawned airplanes for all squadrons.
-  -- 
-  -- ### 6.4. Balance or setup effectiveness of the air defenses in case of GCI
+  -- ### 6.4. Overhead and Balance the effectiveness of the air defenses in case of GCI
   -- 
   -- The effectiveness can be set with the **overhead parameter**. This is a number that is used to calculate the amount of Units that dispatching command will allocate to GCI in surplus of detected amount of units.
   -- The **default value** of the overhead parameter is 1.0, which means **equal balance**. 
@@ -503,10 +485,6 @@ do -- AI_A2A_DISPATCHER
   -- multiplied by the Overhead and rounded up to the smallest integer. 
   -- 
   -- The **overhead value is set for a Squadron**, and can be **dynamically adjusted** during mission execution, so to adjust the defense overhead when the tactical situation changes.
-  --
-  -- **The default overhead value can be set for ALL squadrons that don't have an individual overhead value configured.**
-  --
-  -- Use the @{#AI_A2A_DISPATCHER.SetDefaultOverhead}() method can be used to set the default the defense strength for ALL squadrons.
   --
   -- ## 7. Setup a squadron for CAP
   -- 
@@ -607,9 +585,66 @@ do -- AI_A2A_DISPATCHER
   -- Use the method @{#AI_A2A_DISPATCHER.SetTacticalDisplay}() to switch on the tactical display panel. The default will not show this panel.
   -- Note that there may be some performance impact if this panel is shown.
   -- 
-  -- ## 10. Q & A:
+  -- ## 10. Defaults settings.
   -- 
-  -- ### 10.1. Which countries will be selected for each coalition?
+  -- This provides a good overview of the different parameters that are setup or hardcoded by default.
+  -- For some default settings, a method is available that allows you to tweak the defaults.
+  -- 
+  -- ## 10.1. Default takeoff method.
+  -- 
+  -- The default **takeoff method** is set to **in the air**, which means that new spawned airplanes will be spawned directly in the air above the airbase by default.
+  -- 
+  -- **The default takeoff method can be set for ALL squadrons that don't have an individual takeoff method configured.**
+  -- 
+  --   * @{#AI_A2A_DISPATCHER.SetDefaultTakeoff}() is the generic configuration method to control takeoff by default from the air, hot, cold or from the runway. See the method for further details.
+  --   * @{#AI_A2A_DISPATCHER.SetDefaultTakeoffInAir}() will spawn by default new aircraft from the squadron directly in the air.
+  --   * @{#AI_A2A_DISPATCHER.SetDefaultTakeoffFromParkingCold}() will spawn by default new aircraft in without running engines at a parking spot at the airfield.
+  --   * @{#AI_A2A_DISPATCHER.SetDefaultTakeoffFromParkingHot}() will spawn by default new aircraft in with running engines at a parking spot at the airfield.
+  --   * @{#AI_A2A_DISPATCHER.SetDefaultTakeoffFromRunway}() will spawn by default new aircraft at the runway at the airfield.
+  -- 
+  -- ## 10.2. Default landing method.
+  -- 
+  -- The default **landing method** is set to **near the airbase**, which means that returning airplanes will be despawned directly in the air by default.
+  -- 
+  -- The default landing method can be set for ALL squadrons that don't have an individual landing method configured.
+  -- 
+  --   * @{#AI_A2A_DISPATCHER.SetDefaultLanding}() is the generic configuration method to control by default landing, namely despawn the aircraft near the airfield in the air, right after landing, or at engine shutdown.
+  --   * @{#AI_A2A_DISPATCHER.SetDefaultLandingNearAirbase}() will despawn by default the returning aircraft in the air when near the airfield.
+  --   * @{#AI_A2A_DISPATCHER.SetDefaultLandingAtRunway}() will despawn by default the returning aircraft directly after landing at the runway.
+  --   * @{#AI_A2A_DISPATCHER.SetDefaultLandingAtEngineShutdown}() will despawn by default the returning aircraft when the aircraft has returned to its parking spot and has turned off its engines.
+  -- 
+  -- ## 10.3. Default overhead.
+  -- 
+  -- The default **overhead** is set to **1**. That essentially means that there isn't any overhead set by default.
+  -- 
+  -- The default overhead value can be set for ALL squadrons that don't have an individual overhead value configured.
+  --
+  -- Use the @{#AI_A2A_DISPATCHER.SetDefaultOverhead}() method can be used to set the default overhead or defense strength for ALL squadrons.
+  --
+  -- ## 10.4. Default grouping.
+  -- 
+  -- The default **grouping** is set to **one airplane**. That essentially means that there won't be any grouping applied by default.
+  -- 
+  -- The default grouping value can be set for ALL squadrons that don't have an individual grouping value configured.
+  -- 
+  -- Use the method @{#AI_A2A_DISPATCHER.SetDefaultGrouping}() to set the **default grouping** of spawned airplanes for all squadrons.
+  -- 
+  -- ## 10.5. RTB fuel treshold.
+  -- 
+  -- When an airplane gets **out of fuel** to a certain %-tage, which is **15% (0.15)**, it will go RTB, and will be replaced with a new airplane when applicable.
+  -- 
+  -- Use the method @{#AI_A2A_DISPATCHER.SetDefaultFuelTreshold}() to set the **default fuel treshold** of spawned airplanes for all squadrons.
+  -- 
+  -- ## 10.6. RTB damage treshold.
+  -- 
+  -- When an airplane is **damaged** to a certain %-tage, which is **40% (0.40)**, it will go RTB, and will be replaced with a new airplane when applicable.
+  -- 
+  -- Use the method @{#AI_A2A_DISPATCHER.SetDefaultDamageTreshold}() to set the **default damage treshold** of spawned airplanes for all squadrons.
+  -- 
+  -- 
+  -- ## 11. Q & A:
+  -- 
+  -- ### 11.1. Which countries will be selected for each coalition?
   -- 
   -- Which countries are assigned to a coalition influences which units are available to the coalition. 
   -- For example because the mission calls for a EWR radar on the blue side the Ukraine might be chosen as a blue country 
@@ -617,7 +652,7 @@ do -- AI_A2A_DISPATCHER
   -- Some countries assign different tasking to aircraft, for example Germany assigns the CAP task to F-4E Phantoms but the USA does not.  
   -- Therefore if F4s are wanted as a coalition’s CAP or GCI aircraft Germany will need to be assigned to that coalition. 
   -- 
-  -- ### 10.2. Country, type, load out, skill and skins for CAP and GCI aircraft?
+  -- ### 11.2. Country, type, load out, skill and skins for CAP and GCI aircraft?
   -- 
   --   * Note these can be from any countries within the coalition but must be an aircraft with one of the main tasks being “CAP”.
   --   * Obviously skins which are selected must be available to all players that join the mission otherwise they will see a default skin.
@@ -695,6 +730,8 @@ do -- AI_A2A_DISPATCHER
     self:SetDefaultLanding( AI_A2A_DISPATCHER.Landing.NearAirbase )
     self:SetDefaultOverhead( 1 )
     self:SetDefaultGrouping( 1 )
+    self:SetDefaultFuelTreshold( 0.15, 0 ) -- 15% of fuel remaining in the tank will trigger the airplane to return to base or refuel.
+    self:SetDefaultDamageTreshold( 0.4 ) -- When 40% of damage, go RTB.
     
     
     self:AddTransition( "Started", "Assign", "Started" )
@@ -972,6 +1009,49 @@ do -- AI_A2A_DISPATCHER
     
     return self
   end  
+
+
+  --- Set the default fuel treshold when defenders will RTB or Refuel in the air.
+  -- The fuel treshold is by default set to 15%, which means that an airplane will stay in the air until 15% of its fuel has been consumed.
+  -- @param #AI_A2A_DISPATCHER self
+  -- @param #number FuelTreshold A decimal number between 0 and 1, that expresses the %-tage of the treshold of fuel remaining in the tank when the plane will go RTB or Refuel.
+  -- @return #AI_A2A_DISPATCHER
+  -- @usage
+  -- 
+  --   -- Now Setup the A2A dispatcher, and initialize it using the Detection object.
+  --   A2ADispatcher = AI_A2A_DISPATCHER:New( Detection )  
+  --   
+  --   -- Now Setup the default fuel treshold.
+  --   A2ADispatcher:SetDefaultRefuelTreshold( 0.30 ) -- Go RTB when only 30% of fuel remaining in the tank.
+  --   
+  function AI_A2A_DISPATCHER:SetDefaultFuelTreshold( FuelTreshold )
+    
+    self.DefenderDefault.FuelTreshold = FuelTreshold
+    
+    return self
+  end  
+
+
+  --- Set the default damage treshold when defenders will RTB.
+  -- The default damage treshold is by default set to 40%, which means that when the airplane is 40% damaged, it will go RTB.
+  -- @param #AI_A2A_DISPATCHER self
+  -- @param #number DamageTreshold A decimal number between 0 and 1, that expresses the %-tage of the damage treshold before going RTB.
+  -- @return #AI_A2A_DISPATCHER
+  -- @usage
+  -- 
+  --   -- Now Setup the A2A dispatcher, and initialize it using the Detection object.
+  --   A2ADispatcher = AI_A2A_DISPATCHER:New( Detection )  
+  --   
+  --   -- Now Setup the default damage treshold.
+  --   A2ADispatcher:SetDefaultDamageTreshold( 0.90 ) -- Go RTB when the airplane 90% damaged.
+  --   
+  function AI_A2A_DISPATCHER:SetDefaultDamageTreshold( DamageTreshold )
+    
+    self.DefenderDefault.DamageTreshold = DamageTreshold
+    
+    return self
+  end  
+
 
   --- Calculates which AI friendlies are nearby the area
   -- @param #AI_A2A_DISPATCHER self
@@ -2125,8 +2205,10 @@ do -- AI_A2A_DISPATCHER
           local Fsm = AI_A2A_CAP:New( DefenderCAP, Cap.Zone, Cap.FloorAltitude, Cap.CeilingAltitude, Cap.PatrolMinSpeed, Cap.PatrolMaxSpeed, Cap.EngageMinSpeed, Cap.EngageMaxSpeed, Cap.AltType )
           Fsm:SetDispatcher( self )
           Fsm:SetHomeAirbase( DefenderSquadron.Airbase )
+          Fsm:SetFuelTreshold( self.DefenderDefault.FuelTreshold, 60 )
+          Fsm:SetDamageTreshold( self.DefenderDefault.DamageTreshold )
           Fsm:Start()
-          Fsm:__Patrol( 1 )
+          Fsm:__Patrol( 2 )
   
           self:SetDefenderTask( DefenderCAP, "CAP", Fsm )
         end
@@ -2255,8 +2337,10 @@ do -- AI_A2A_DISPATCHER
               local Fsm = AI_A2A_GCI:New( DefenderGCI, Gci.EngageMinSpeed, Gci.EngageMaxSpeed )
               Fsm:SetDispatcher( self )
               Fsm:SetHomeAirbase( DefenderSquadron.Airbase )
+              Fsm:SetFuelTreshold( self.DefenderDefault.FuelTreshold, 60 )
+              Fsm:SetDamageTreshold( self.DefenderDefault.DamageTreshold )
               Fsm:Start()
-              Fsm:__Engage( 5, Target.Set ) -- Engage on the TargetSetUnit
+              Fsm:__Engage( 2, Target.Set ) -- Engage on the TargetSetUnit
     
       
               self:SetDefenderTask( DefenderGCI, "GCI", Fsm, Target )
