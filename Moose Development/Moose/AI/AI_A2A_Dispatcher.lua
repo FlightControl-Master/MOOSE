@@ -1,5 +1,5 @@
 --BASE:TraceClass("AI_A2A_DISPATCHER")
-BASE:TraceClass("AI_A2A_GCICAP")
+--BASE:TraceClass("AI_A2A_GCICAP")
 
 --- **AI** - The AI_A2A_DISPATCHER creates an automatic A2A defense system based on an EWR network targets and coordinating CAP and GCI.
 -- 
@@ -818,6 +818,7 @@ do -- AI_A2A_DISPATCHER
   --- @param #AI_A2A_DISPATCHER self
   -- @param Core.Event#EVENTDATA EventData
   function AI_A2A_DISPATCHER:OnEventLand( EventData )
+    self:F( "Landed" )
     local DefenderUnit = EventData.IniUnit
     local Defender = EventData.IniGroup
     local Squadron = self:GetSquadronFromDefender( Defender )
@@ -2944,6 +2945,12 @@ do
     end
     
     self:__Start( 5 )
+    
+    self:HandleEvent( EVENTS.Crash, self.OnEventCrashOrDead )
+    self:HandleEvent( EVENTS.Dead, self.OnEventCrashOrDead )
+    
+    self:HandleEvent( EVENTS.Land )
+    self:HandleEvent( EVENTS.EngineShutdown )
     
     return self
   end
