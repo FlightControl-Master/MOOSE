@@ -1,6 +1,3 @@
---BASE:TraceClass("AI_A2A_DISPATCHER")
---BASE:TraceClass("AI_A2A_GCICAP")
-
 --- **AI** - The AI_A2A_DISPATCHER creates an automatic A2A defense system based on an EWR network targets and coordinating CAP and GCI.
 -- 
 -- ![Banner Image](..\Presentations\AI_A2A_DISPATCHER\Dia1.JPG)

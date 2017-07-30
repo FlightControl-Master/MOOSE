@@ -1,5 +1,3 @@
-BASE:TraceClass( "AI_A2A_GCI" )
-
 --- **AI** -- **Execute Ground Controlled Interception (GCI).**
 --
 -- ![Banner Image](..\Presentations\AI_GCI\Dia1.JPG)
