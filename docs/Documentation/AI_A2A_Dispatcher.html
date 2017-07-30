@@ -605,13 +605,25 @@ Per one, two, three, four?</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_DISPATCHER).SetDefaultDamageTreshold">AI_A2A_DISPATCHER:SetDefaultDamageTreshold(DamageTreshold)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_DISPATCHER).SetDefaultCapLimit">AI_A2A_DISPATCHER:SetDefaultCapLimit(CapLimit)</a></td>
+		<td class="summary">
+<p>Set the default CAP limit for squadrons, which will be used to determine how many CAP can be airborne at the same time for the squadron.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_DISPATCHER).SetDefaultCapTimeInterval">AI_A2A_DISPATCHER:SetDefaultCapTimeInterval(CapMinSeconds, CapMaxSeconds)</a></td>
+		<td class="summary">
+<p>Set the default CAP time interval for squadrons, which will be used to determine a random CAP timing.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_DISPATCHER).SetDefaultDamageThreshold">AI_A2A_DISPATCHER:SetDefaultDamageThreshold(DamageThreshold)</a></td>
 		<td class="summary">
 <p>Set the default damage treshold when defenders will RTB.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_DISPATCHER).SetDefaultFuelTreshold">AI_A2A_DISPATCHER:SetDefaultFuelTreshold(FuelTreshold)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_DISPATCHER).SetDefaultFuelThreshold">AI_A2A_DISPATCHER:SetDefaultFuelThreshold(FuelThreshold)</a></td>
 		<td class="summary">
 <p>Set the default fuel treshold when defenders will RTB or Refuel in the air.</p>
 </td>
@@ -1395,18 +1407,35 @@ For some default settings, a method is available that allows you to tweak the de
 
 <p>Use the method <a href="##(AI_A2A_DISPATCHER).SetDefaultGrouping">AI<em>A2A</em>DISPATCHER.SetDefaultGrouping</a>() to set the <strong>default grouping</strong> of spawned airplanes for all squadrons.</p>
 
-<h2>10.5. RTB fuel treshold.</h2>
+<h2>10.5. Default RTB fuel treshold.</h2>
 
 <p>When an airplane gets <strong>out of fuel</strong> to a certain %-tage, which is <strong>15% (0.15)</strong>, it will go RTB, and will be replaced with a new airplane when applicable.</p>
 
-<p>Use the method <a href="##(AI_A2A_DISPATCHER).SetDefaultFuelTreshold">AI<em>A2A</em>DISPATCHER.SetDefaultFuelTreshold</a>() to set the <strong>default fuel treshold</strong> of spawned airplanes for all squadrons.</p>
+<p>Use the method <a href="##(AI_A2A_DISPATCHER).SetDefaultFuelThreshold">AI<em>A2A</em>DISPATCHER.SetDefaultFuelThreshold</a>() to set the <strong>default fuel treshold</strong> of spawned airplanes for all squadrons.</p>
 
-<h2>10.6. RTB damage treshold.</h2>
+<h2>10.6. Default RTB damage treshold.</h2>
 
 <p>When an airplane is <strong>damaged</strong> to a certain %-tage, which is <strong>40% (0.40)</strong>, it will go RTB, and will be replaced with a new airplane when applicable.</p>
 
-<p>Use the method <a href="##(AI_A2A_DISPATCHER).SetDefaultDamageTreshold">AI<em>A2A</em>DISPATCHER.SetDefaultDamageTreshold</a>() to set the <strong>default damage treshold</strong> of spawned airplanes for all squadrons.</p>
+<p>Use the method <a href="##(AI_A2A_DISPATCHER).SetDefaultDamageThreshold">AI<em>A2A</em>DISPATCHER.SetDefaultDamageThreshold</a>() to set the <strong>default damage treshold</strong> of spawned airplanes for all squadrons.</p>
 
+<h2>10.7. Default CAP Time Interval.</h2>
+
+<p>CAP is time driven, and will evaluate in random time intervals if a new CAP needs to be spawned.
+The <strong>default CAP time interval</strong> is between <strong>180</strong> and <strong>600</strong> seconds.</p>
+
+<p>Use the method <a href="##(AI_A2A_DISPATCHER).SetDefaultCapTimeInterval">AI<em>A2A</em>DISPATCHER.SetDefaultCapTimeInterval</a>() to set the <strong>default CAP time interval</strong> of spawned airplanes for all squadrons. <br/>
+Note that you can still change the CAP limit and CAP time intervals for each CAP individually using the <a href="##(AI_A2A_DISPATCHER).SetSquadronCapTimeInterval">AI<em>A2A</em>DISPATCHER.SetSquadronCapTimeInterval</a>() method.</p>
+
+<h2>10.8. Default CAP limit.</h2>
+
+<p>Multiple CAP can be airborne at the same time for one squadron, which is controlled by the <strong>CAP limit</strong>.
+The <strong>default CAP limit</strong> is 1 CAP per squadron to be airborne at the same time.
+Note that the default CAP limit is used when a Squadron CAP is defined, and cannot be changed afterwards.
+So, ensure that you set the default CAP limit <strong>before</strong> you spawn the Squadron CAP.</p>
+
+<p>Use the method <a href="##(AI_A2A_DISPATCHER).SetDefaultCapTimeInterval">AI<em>A2A</em>DISPATCHER.SetDefaultCapTimeInterval</a>() to set the <strong>default CAP time interval</strong> of spawned airplanes for all squadrons. <br/>
+Note that you can still change the CAP limit and CAP time intervals for each CAP individually using the <a href="##(AI_A2A_DISPATCHER).SetSquadronCapTimeInterval">AI<em>A2A</em>DISPATCHER.SetSquadronCapTimeInterval</a>() method.</p>
 
 <h2>11. Q &amp; A:</h2>
 
@@ -3060,8 +3089,92 @@ or
 		<dl class="function">
 <dt>
 
-<a id="#(AI_A2A_DISPATCHER).SetDefaultDamageTreshold" >
-<strong>AI_A2A_DISPATCHER:SetDefaultDamageTreshold(DamageTreshold)</strong>
+<a id="#(AI_A2A_DISPATCHER).SetDefaultCapLimit" >
+<strong>AI_A2A_DISPATCHER:SetDefaultCapLimit(CapLimit)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set the default CAP limit for squadrons, which will be used to determine how many CAP can be airborne at the same time for the squadron.</p>
+
+	
+<p>The default CAP time interval is 1 CAP.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number CapLimit </em></code>: 
+The maximum amount of CAP that can be airborne at the same time for the squadron.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(AI_A2A_DISPATCHER)">#AI<em>A2A</em>DISPATCHER</a>:</em></p>
+
+
+			<h3>Usage:</h3>
+		<pre class="example"><code>
+  -- Now Setup the A2A dispatcher, and initialize it using the Detection object.
+  A2ADispatcher = AI_A2A_DISPATCHER:New( Detection )  
+  
+  -- Now Setup the default CAP limit.
+  A2ADispatcher:SetDefaultCapLimit( 2 ) -- Maximum 2 CAP per squadron.
+  </code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_A2A_DISPATCHER).SetDefaultCapTimeInterval" >
+<strong>AI_A2A_DISPATCHER:SetDefaultCapTimeInterval(CapMinSeconds, CapMaxSeconds)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set the default CAP time interval for squadrons, which will be used to determine a random CAP timing.</p>
+
+	
+<p>The default CAP time interval is between 180 and 600 seconds.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number CapMinSeconds </em></code>: 
+The minimum amount of seconds for the random time interval.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number CapMaxSeconds </em></code>: 
+The maximum amount of seconds for the random time interval.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(AI_A2A_DISPATCHER)">#AI<em>A2A</em>DISPATCHER</a>:</em></p>
+
+
+			<h3>Usage:</h3>
+		<pre class="example"><code>
+  -- Now Setup the A2A dispatcher, and initialize it using the Detection object.
+  A2ADispatcher = AI_A2A_DISPATCHER:New( Detection )  
+  
+  -- Now Setup the default CAP time interval.
+  A2ADispatcher:SetDefaultCapTimeInterval( 300, 1200 ) -- Between 300 and 1200 seconds.
+  </code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_A2A_DISPATCHER).SetDefaultDamageThreshold" >
+<strong>AI_A2A_DISPATCHER:SetDefaultDamageThreshold(DamageThreshold)</strong>
 </a>
 </dt>
 <dd>
@@ -3075,7 +3188,7 @@ or
 		<ul>
 				<li>
 				
-<p><code><em>#number DamageTreshold </em></code>: 
+<p><code><em>#number DamageThreshold </em></code>: 
 A decimal number between 0 and 1, that expresses the %-tage of the damage treshold before going RTB.</p>
 
 				</li>
@@ -3091,7 +3204,7 @@ A decimal number between 0 and 1, that expresses the %-tage of the damage tresho
   A2ADispatcher = AI_A2A_DISPATCHER:New( Detection )  
   
   -- Now Setup the default damage treshold.
-  A2ADispatcher:SetDefaultDamageTreshold( 0.90 ) -- Go RTB when the airplane 90% damaged.
+  A2ADispatcher:SetDefaultDamageThreshold( 0.90 ) -- Go RTB when the airplane 90% damaged.
   </code></pre>
 
 </dd>
@@ -3099,8 +3212,8 @@ A decimal number between 0 and 1, that expresses the %-tage of the damage tresho
 		<dl class="function">
 <dt>
 
-<a id="#(AI_A2A_DISPATCHER).SetDefaultFuelTreshold" >
-<strong>AI_A2A_DISPATCHER:SetDefaultFuelTreshold(FuelTreshold)</strong>
+<a id="#(AI_A2A_DISPATCHER).SetDefaultFuelThreshold" >
+<strong>AI_A2A_DISPATCHER:SetDefaultFuelThreshold(FuelThreshold)</strong>
 </a>
 </dt>
 <dd>
@@ -3114,7 +3227,7 @@ A decimal number between 0 and 1, that expresses the %-tage of the damage tresho
 		<ul>
 				<li>
 				
-<p><code><em>#number FuelTreshold </em></code>: 
+<p><code><em>#number FuelThreshold </em></code>: 
 A decimal number between 0 and 1, that expresses the %-tage of the treshold of fuel remaining in the tank when the plane will go RTB or Refuel.</p>
 
 				</li>
@@ -3130,7 +3243,7 @@ A decimal number between 0 and 1, that expresses the %-tage of the treshold of f
   A2ADispatcher = AI_A2A_DISPATCHER:New( Detection )  
   
   -- Now Setup the default fuel treshold.
-  A2ADispatcher:SetDefaultRefuelTreshold( 0.30 ) -- Go RTB when only 30% of fuel remaining in the tank.
+  A2ADispatcher:SetDefaultRefuelThreshold( 0.30 ) -- Go RTB when only 30% of fuel remaining in the tank.
   </code></pre>
 
 </dd>

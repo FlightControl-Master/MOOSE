@@ -236,13 +236,13 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).ManageDamage">AI_PATROL_ZONE:ManageDamage(PatrolDamageTreshold)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).ManageDamage">AI_PATROL_ZONE:ManageDamage(PatrolDamageThreshold)</a></td>
 		<td class="summary">
 <p>When the AI is damaged beyond a certain treshold, it is required that the AI returns to the home base.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).ManageFuel">AI_PATROL_ZONE:ManageFuel(PatrolFuelTresholdPercentage, PatrolOutOfFuelOrbitTime)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).ManageFuel">AI_PATROL_ZONE:ManageFuel(PatrolFuelThresholdPercentage, PatrolOutOfFuelOrbitTime)</a></td>
 		<td class="summary">
 <p>When the AI is out of fuel, it is required that a new AI is started, before the old AI can return to the home base.</p>
 </td>
@@ -404,7 +404,7 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).PatrolDamageTreshold">AI_PATROL_ZONE.PatrolDamageTreshold</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).PatrolDamageThreshold">AI_PATROL_ZONE.PatrolDamageThreshold</a></td>
 		<td class="summary">
 
 </td>
@@ -416,7 +416,7 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).PatrolFuelTresholdPercentage">AI_PATROL_ZONE.PatrolFuelTresholdPercentage</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).PatrolFuelThresholdPercentage">AI_PATROL_ZONE.PatrolFuelThresholdPercentage</a></td>
 		<td class="summary">
 
 </td>
@@ -957,7 +957,7 @@ The list of <a href="Unit.html##(UNIT)">Unit#UNIT</a>s</p>
 <dt>
 
 <a id="#(AI_PATROL_ZONE).ManageDamage" >
-<strong>AI_PATROL_ZONE:ManageDamage(PatrolDamageTreshold)</strong>
+<strong>AI_PATROL_ZONE:ManageDamage(PatrolDamageThreshold)</strong>
 </a>
 </dt>
 <dd>
@@ -975,7 +975,7 @@ So, in a group of 4 airplanes, 2 lost and 2 with damage 0.2, the damage treshold
 		<ul>
 				<li>
 				
-<p><code><em>#number PatrolDamageTreshold </em></code>: 
+<p><code><em>#number PatrolDamageThreshold </em></code>: 
 The treshold in percentage (between 0 and 1) when the AI is considered to be damaged.</p>
 
 				</li>
@@ -991,7 +991,7 @@ self</p>
 <dt>
 
 <a id="#(AI_PATROL_ZONE).ManageFuel" >
-<strong>AI_PATROL_ZONE:ManageFuel(PatrolFuelTresholdPercentage, PatrolOutOfFuelOrbitTime)</strong>
+<strong>AI_PATROL_ZONE:ManageFuel(PatrolFuelThresholdPercentage, PatrolOutOfFuelOrbitTime)</strong>
 </a>
 </dt>
 <dd>
@@ -1007,7 +1007,7 @@ Once the time is finished, the old AI will return to the base.</p>
 		<ul>
 				<li>
 				
-<p><code><em>#number PatrolFuelTresholdPercentage </em></code>: 
+<p><code><em>#number PatrolFuelThresholdPercentage </em></code>: 
 The treshold in percentage (between 0 and 1) when the AIControllable is considered to get out of fuel.</p>
 
 				</li>
@@ -2035,8 +2035,8 @@ Return false to cancel Transition.</p>
 <dt>
 
 		<em></em>
-<a id="#(AI_PATROL_ZONE).PatrolDamageTreshold" >
-<strong>AI_PATROL_ZONE.PatrolDamageTreshold</strong>
+<a id="#(AI_PATROL_ZONE).PatrolDamageThreshold" >
+<strong>AI_PATROL_ZONE.PatrolDamageThreshold</strong>
 </a>
 </dt>
 <dd>
@@ -2063,8 +2063,8 @@ Return false to cancel Transition.</p>
 <dt>
 
 		<em></em>
-<a id="#(AI_PATROL_ZONE).PatrolFuelTresholdPercentage" >
-<strong>AI_PATROL_ZONE.PatrolFuelTresholdPercentage</strong>
+<a id="#(AI_PATROL_ZONE).PatrolFuelThresholdPercentage" >
+<strong>AI_PATROL_ZONE.PatrolFuelThresholdPercentage</strong>
 </a>
 </dt>
 <dd>

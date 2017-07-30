@@ -187,21 +187,21 @@ CLIENTS in a SET</em>CLIENT collection, which are not occupied by human players.
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_BALANCER).ReturnToHomeAirbase">AI_BALANCER:ReturnToHomeAirbase(ReturnTresholdRange)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_BALANCER).ReturnThresholdRange">AI_BALANCER.ReturnThresholdRange</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_BALANCER).ReturnToHomeAirbase">AI_BALANCER:ReturnToHomeAirbase(ReturnThresholdRange)</a></td>
 		<td class="summary">
 <p>Returns the AI to the home <a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a>.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_BALANCER).ReturnToNearestAirbases">AI_BALANCER:ReturnToNearestAirbases(ReturnTresholdRange, ReturnAirbaseSet)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_BALANCER).ReturnToNearestAirbases">AI_BALANCER:ReturnToNearestAirbases(ReturnThresholdRange, ReturnAirbaseSet)</a></td>
 		<td class="summary">
 <p>Returns the AI to the nearest friendly <a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a>.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_BALANCER).ReturnTresholdRange">AI_BALANCER.ReturnTresholdRange</a></td>
-		<td class="summary">
-
 </td>
 		</tr>
 		<tr>
@@ -456,8 +456,22 @@ The default Spawn object to spawn new AI Groups when needed.</p>
 		<dl class="function">
 <dt>
 
+		<em></em>
+<a id="#(AI_BALANCER).ReturnThresholdRange" >
+<strong>AI_BALANCER.ReturnThresholdRange</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(AI_BALANCER).ReturnToHomeAirbase" >
-<strong>AI_BALANCER:ReturnToHomeAirbase(ReturnTresholdRange)</strong>
+<strong>AI_BALANCER:ReturnToHomeAirbase(ReturnThresholdRange)</strong>
 </a>
 </dt>
 <dd>
@@ -468,8 +482,8 @@ The default Spawn object to spawn new AI Groups when needed.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a> ReturnTresholdRange </em></code>: 
-If there is an enemy <a href="Client.html##(CLIENT)">Client#CLIENT</a> within the ReturnTresholdRange given in meters, the AI will not return to the nearest <a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a>.</p>
+<p><code><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a> ReturnThresholdRange </em></code>: 
+If there is an enemy <a href="Client.html##(CLIENT)">Client#CLIENT</a> within the ReturnThresholdRange given in meters, the AI will not return to the nearest <a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a>.</p>
 
 				</li>
 		</ul>
@@ -479,7 +493,7 @@ If there is an enemy <a href="Client.html##(CLIENT)">Client#CLIENT</a> within th
 <dt>
 
 <a id="#(AI_BALANCER).ReturnToNearestAirbases" >
-<strong>AI_BALANCER:ReturnToNearestAirbases(ReturnTresholdRange, ReturnAirbaseSet)</strong>
+<strong>AI_BALANCER:ReturnToNearestAirbases(ReturnThresholdRange, ReturnAirbaseSet)</strong>
 </a>
 </dt>
 <dd>
@@ -490,8 +504,8 @@ If there is an enemy <a href="Client.html##(CLIENT)">Client#CLIENT</a> within th
 		<ul>
 				<li>
 				
-<p><code><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a> ReturnTresholdRange </em></code>: 
-If there is an enemy <a href="Client.html##(CLIENT)">Client#CLIENT</a> within the ReturnTresholdRange given in meters, the AI will not return to the nearest <a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a>.</p>
+<p><code><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a> ReturnThresholdRange </em></code>: 
+If there is an enemy <a href="Client.html##(CLIENT)">Client#CLIENT</a> within the ReturnThresholdRange given in meters, the AI will not return to the nearest <a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a>.</p>
 
 				</li>
 				<li>
@@ -501,20 +515,6 @@ The SET of <a href="Set.html##(SET_AIRBASE)">Set#SET_AIRBASE</a>s to evaluate wh
 
 				</li>
 		</ul>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em></em>
-<a id="#(AI_BALANCER).ReturnTresholdRange" >
-<strong>AI_BALANCER.ReturnTresholdRange</strong>
-</a>
-</dt>
-<dd>
-	
-
-
 </dd>
 </dl>
 		<dl class="function">
