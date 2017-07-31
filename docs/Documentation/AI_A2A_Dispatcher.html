@@ -389,6 +389,12 @@ Per one, two, three, four?</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_DISPATCHER).DisengageRadius">AI_A2A_DISPATCHER.DisengageRadius</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_DISPATCHER).ENGAGE">AI_A2A_DISPATCHER:ENGAGE()</a></td>
 		<td class="summary">
 <p>ENGAGE Trigger for AI<em>A2A</em>DISPATCHER</p>
@@ -401,7 +407,7 @@ Per one, two, three, four?</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_DISPATCHER).EvaluateGCI">AI_A2A_DISPATCHER:EvaluateGCI(DetectedItem, Target)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_DISPATCHER).EvaluateGCI">AI_A2A_DISPATCHER:EvaluateGCI(DetectedItem)</a></td>
 		<td class="summary">
 <p>Creates an GCI task when there are targets for it.</p>
 </td>
@@ -707,6 +713,12 @@ Per one, two, three, four?</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_DISPATCHER).SetDisengageRadius">AI_A2A_DISPATCHER:SetDisengageRadius(DisengageRadius)</a></td>
+		<td class="summary">
+<p>Define the radius to disengage any target when the distance to the home base is larger than the specified meters.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_DISPATCHER).SetEngageRadius">AI_A2A_DISPATCHER:SetEngageRadius(EngageRadius)</a></td>
 		<td class="summary">
 <p>Define the radius to engage any target by airborne friendlies, which are executing cap or returning from an intercept mission.</p>
@@ -716,6 +728,12 @@ Per one, two, three, four?</p>
 		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_DISPATCHER).SetGciRadius">AI_A2A_DISPATCHER:SetGciRadius(GciRadius)</a></td>
 		<td class="summary">
 <p>Define the radius to check if a target can be engaged by an ground controlled intercept.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_DISPATCHER).SetIntercept">AI_A2A_DISPATCHER:SetIntercept(InterceptDelay)</a></td>
+		<td class="summary">
+
 </td>
 		</tr>
 		<tr>
@@ -863,7 +881,7 @@ Per one, two, three, four?</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_DISPATCHER).onafterGCI">AI_A2A_DISPATCHER:onafterGCI(From, Event, To, Target, DefendersMissing, AIGroups)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_DISPATCHER).onafterGCI">AI_A2A_DISPATCHER:onafterGCI(From, Event, To, DetectedItem, DefendersMissing, Friendlies)</a></td>
 		<td class="summary">
 
 </td>
@@ -1419,7 +1437,9 @@ For some default settings, a method is available that allows you to tweak the de
 
 <p>Use the method <a href="##(AI_A2A_DISPATCHER).SetDefaultDamageThreshold">AI<em>A2A</em>DISPATCHER.SetDefaultDamageThreshold</a>() to set the <strong>default damage treshold</strong> of spawned airplanes for all squadrons.</p>
 
-<h2>10.7. Default CAP Time Interval.</h2>
+<h2>10.7. Default settings for CAP.</h2>
+
+<h3>10.7.1. Default CAP Time Interval.</h3>
 
 <p>CAP is time driven, and will evaluate in random time intervals if a new CAP needs to be spawned.
 The <strong>default CAP time interval</strong> is between <strong>180</strong> and <strong>600</strong> seconds.</p>
@@ -1427,7 +1447,7 @@ The <strong>default CAP time interval</strong> is between <strong>180</strong> a
 <p>Use the method <a href="##(AI_A2A_DISPATCHER).SetDefaultCapTimeInterval">AI<em>A2A</em>DISPATCHER.SetDefaultCapTimeInterval</a>() to set the <strong>default CAP time interval</strong> of spawned airplanes for all squadrons. <br/>
 Note that you can still change the CAP limit and CAP time intervals for each CAP individually using the <a href="##(AI_A2A_DISPATCHER).SetSquadronCapTimeInterval">AI<em>A2A</em>DISPATCHER.SetSquadronCapTimeInterval</a>() method.</p>
 
-<h2>10.8. Default CAP limit.</h2>
+<h3>10.7.2. Default CAP limit.</h3>
 
 <p>Multiple CAP can be airborne at the same time for one squadron, which is controlled by the <strong>CAP limit</strong>.
 The <strong>default CAP limit</strong> is 1 CAP per squadron to be airborne at the same time.
@@ -1436,6 +1456,38 @@ So, ensure that you set the default CAP limit <strong>before</strong> you spawn 
 
 <p>Use the method <a href="##(AI_A2A_DISPATCHER).SetDefaultCapTimeInterval">AI<em>A2A</em>DISPATCHER.SetDefaultCapTimeInterval</a>() to set the <strong>default CAP time interval</strong> of spawned airplanes for all squadrons. <br/>
 Note that you can still change the CAP limit and CAP time intervals for each CAP individually using the <a href="##(AI_A2A_DISPATCHER).SetSquadronCapTimeInterval">AI<em>A2A</em>DISPATCHER.SetSquadronCapTimeInterval</a>() method.</p>
+
+<h2>10.8. Default settings for GCI.</h2>
+
+<h2>10.8.1. Optimal intercept point calculation.</h2>
+
+<p>When intruders are detected, the intrusion path of the attackers can be monitored by the EWR. <br/>
+Although defender planes might be on standby at the airbase, it can still take some time to get the defenses up in the air if there aren't any defenses airborne.
+This time can easily take 2 to 3 minutes, and even then the defenders still need to fly towards the target, which takes also time.</p>
+
+<p>Therefore, an optimal <strong>intercept point</strong> is calculated which takes a couple of parameters:</p>
+
+<ul>
+    <li>The average bearing of the intruders for an amount of seconds.</li>
+    <li>The average speed of the intruders for an amount of seconds.</li>
+    <li>An assumed time it takes to get planes operational at the airbase.</li>
+</ul>
+
+<p>The <strong>intercept point</strong> will determine:</p>
+
+<ul>
+    <li>If there are any friendlies close to engage the target. These can be defenders performing CAP or defenders in RTB.</li>
+    <li>The optimal airbase from where defenders will takeoff for GCI.</li>
+</ul>
+
+<p>Use the method <a href="##(AI_A2A_DISPATCHER).SetIntercept">AI<em>A2A</em>DISPATCHER.SetIntercept</a>() to modify the assumed intercept delay time to calculate a valid interception.</p>
+
+<h2>10.8.2. Default disengage radius.</h2>
+
+<p>The radius to <strong>disengage any target</strong> when the <strong>distance</strong> of the defender to the <strong>home base</strong> is larger than the specified meters.
+The default disengage radius is <strong>100km</strong> (100000 meters). Note that the disengage radius is applicable to ALL squadrons!</p>
+
+<p>Use the method <a href="##(AI_A2A_DISPATCHER).SetDisengageRadius">AI<em>A2A</em>DISPATCHER.SetDisengageRadius</a>() to modify the default disengage radius to another distance setting.</p>
 
 <h2>11. Q &amp; A:</h2>
 
@@ -2055,6 +2107,20 @@ DefenderSquadron</p>
 		<dl class="function">
 <dt>
 
+		<em></em>
+<a id="#(AI_A2A_DISPATCHER).DisengageRadius" >
+<strong>AI_A2A_DISPATCHER.DisengageRadius</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(AI_A2A_DISPATCHER).ENGAGE" >
 <strong>AI_A2A_DISPATCHER:ENGAGE()</strong>
 </a>
@@ -2105,23 +2171,18 @@ If there are no targets to be set.</p>
 <dt>
 
 <a id="#(AI_A2A_DISPATCHER).EvaluateGCI" >
-<strong>AI_A2A_DISPATCHER:EvaluateGCI(DetectedItem, Target)</strong>
+<strong>AI_A2A_DISPATCHER:EvaluateGCI(DetectedItem)</strong>
 </a>
 </dt>
 <dd>
 	
 <p>Creates an GCI task when there are targets for it.</p>
 
-		<h3>Parameters</h3>
+		<h3>Parameter</h3>
 		<ul>
 				<li>
 				
 <p><code><em><a href="Functional.Detection.html##(DETECTION_BASE.DetectedItem)">Functional.Detection#DETECTION_BASE.DetectedItem</a> DetectedItem </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em> Target </em></code>: </p>
 
 				</li>
 		</ul>
@@ -3692,6 +3753,42 @@ From the airbase hot, from the airbase cold, in the air, from the runway.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(AI_A2A_DISPATCHER).SetDisengageRadius" >
+<strong>AI_A2A_DISPATCHER:SetDisengageRadius(DisengageRadius)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Define the radius to disengage any target when the distance to the home base is larger than the specified meters.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number DisengageRadius </em></code>: 
+(Optional, Default = 100000) The radius to disengage a target when too far from the home base.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(AI_A2A_DISPATCHER)">#AI<em>A2A</em>DISPATCHER</a>:</em></p>
+
+
+			<h3>Usage:</h3>
+		<pre class="example"><code>
+  -- Set 50km as the disengage radius.
+  Dispatcher:SetDisengageRadius( 50000 )
+  
+  -- Set 100km as the disengage radius.
+  Dispatcher:SetDisngageRadius() -- 100000 is the default value.
+  </code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(AI_A2A_DISPATCHER).SetEngageRadius" >
 <strong>AI_A2A_DISPATCHER:SetEngageRadius(EngageRadius)</strong>
 </a>
@@ -3782,6 +3879,27 @@ If too large, intercept missions may be triggered when the detected target is to
   A2ADispatcher:SetGciRadius() -- 200000 is the default value.
   </code></pre>
 
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_A2A_DISPATCHER).SetIntercept" >
+<strong>AI_A2A_DISPATCHER:SetIntercept(InterceptDelay)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> InterceptDelay </em></code>: </p>
+
+				</li>
+		</ul>
 </dd>
 </dl>
 		<dl class="function">
@@ -4766,7 +4884,7 @@ Provide a value of <strong>true</strong> to display every 30 seconds a tactical 
 <dt>
 
 <a id="#(AI_A2A_DISPATCHER).onafterGCI" >
-<strong>AI_A2A_DISPATCHER:onafterGCI(From, Event, To, Target, DefendersMissing, AIGroups)</strong>
+<strong>AI_A2A_DISPATCHER:onafterGCI(From, Event, To, DetectedItem, DefendersMissing, Friendlies)</strong>
 </a>
 </dt>
 <dd>
@@ -4792,7 +4910,7 @@ Provide a value of <strong>true</strong> to display every 30 seconds a tactical 
 				</li>
 				<li>
 				
-<p><code><em> Target </em></code>: </p>
+<p><code><em> DetectedItem </em></code>: </p>
 
 				</li>
 				<li>
@@ -4802,7 +4920,7 @@ Provide a value of <strong>true</strong> to display every 30 seconds a tactical 
 				</li>
 				<li>
 				
-<p><code><em> AIGroups </em></code>: </p>
+<p><code><em> Friendlies </em></code>: </p>
 
 				</li>
 		</ul>

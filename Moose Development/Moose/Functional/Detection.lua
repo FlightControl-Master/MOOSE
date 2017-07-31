@@ -940,6 +940,24 @@ do -- DETECTION_BASE
   
   end
   
+  do -- Intercept Point
+  
+    --- Set the parameters to calculate to optimal intercept point.
+    -- @param #DETECTION_BASE self
+    -- @param #boolean Intercept Intercept is true if an intercept point is calculated. Intercept is false if it is disabled. The default Intercept is false.
+    -- @param #number IntereptDelay If Intercept is true, then InterceptDelay is the average time it takes to get airplanes airborne.
+    -- @return #DETECTION_BASE self
+    function DETECTION_BASE:SetIntercept( Intercept, InterceptDelay )
+      self:F2()
+    
+      self.Intercept = Intercept
+      self.InterceptDelay = InterceptDelay
+      
+      return self
+    end
+
+  end
+  
   do -- Accept / Reject detected units
   
     --- Accept detections if within a range in meters.
@@ -1130,9 +1148,25 @@ do -- DETECTION_BASE
       return DetectedItem.FriendliesNearBy
     end
   
-    --- Returns friendly units nearby the FAC units sorted per distance ...
+    --- Returns if there are friendlies nearby the intercept ...
     -- @param #DETECTION_BASE self
-    -- @return #map<#number,Wrapper.Unit#UNIT> The map of Friendly UNITs. 
+    -- @return #boolean trhe if there are friendlies near the intercept.
+    function DETECTION_BASE:IsFriendliesNearIntercept( DetectedItem )
+      
+      return DetectedItem.FriendliesNearIntercept ~= nil or false
+    end
+  
+    --- Returns friendly units nearby the intercept point ...
+    -- @param #DETECTION_BASE self
+    -- @return #map<#string,Wrapper.Unit#UNIT> The map of Friendly UNITs. 
+    function DETECTION_BASE:GetFriendliesNearIntercept( DetectedItem )
+      
+      return DetectedItem.FriendliesNearIntercept
+    end
+  
+    --- Returns the distance used to identify friendlies near the deteted item ...
+    -- @param #DETECTION_BASE self
+    -- @return #number The distance. 
     function DETECTION_BASE:GetFriendliesDistance( DetectedItem )
       
       return DetectedItem.FriendliesDistance
@@ -1161,17 +1195,18 @@ do -- DETECTION_BASE
       
       local DetectedItem = ReportGroupData.DetectedItem  -- Functional.Detection#DETECTION_BASE.DetectedItem    
       local DetectedSet = ReportGroupData.DetectedItem.Set
-      local DetectedUnit = DetectedSet:GetFirst()
+      local DetectedUnit = DetectedSet:GetFirst() -- Wrapper.Unit#UNIT
     
       DetectedItem.FriendliesNearBy = nil
 
       if DetectedUnit then
       
+        local InterceptCoord = ReportGroupData.InterceptCoord or DetectedUnit:GetCoordinate()
         
         local SphereSearch = {
          id = world.VolumeType.SPHERE,
           params = {
-           point = DetectedUnit:GetVec3(),
+           point = InterceptCoord:GetVec3(),
            radius = self.FriendliesRange,
           }
           
@@ -1185,7 +1220,8 @@ do -- DETECTION_BASE
           local DetectedItem = ReportGroupData.DetectedItem  -- Functional.Detection#DETECTION_BASE.DetectedItem    
           local DetectedSet = ReportGroupData.DetectedItem.Set
           local DetectedUnit = DetectedSet:GetFirst() -- Wrapper.Unit#UNIT
-          local CenterCoord = DetectedUnit:GetCoordinate()
+          local DetectedUnitCoord = DetectedUnit:GetCoordinate()
+          local InterceptCoord = ReportGroupData.InterceptCoord or DetectedUnitCoord
           local ReportSetGroup = ReportGroupData.ReportSetGroup
     
           local EnemyCoalition = DetectedUnit:GetCoalition()
@@ -1202,8 +1238,10 @@ do -- DETECTION_BASE
             DetectedItem.FriendliesNearBy = DetectedItem.FriendliesNearBy or {}
             local FriendlyUnit = UNIT:Find( FoundDCSUnit )
             local FriendlyUnitName = FriendlyUnit:GetName()
+
             DetectedItem.FriendliesNearBy[FriendlyUnitName] = FriendlyUnit
-            local Distance = CenterCoord:Get2DDistance( FriendlyUnit:GetCoordinate() )
+            
+            local Distance = DetectedUnitCoord:Get2DDistance( FriendlyUnit:GetCoordinate() )
             DetectedItem.FriendliesDistance = DetectedItem.FriendliesDistance or {}
             DetectedItem.FriendliesDistance[Distance] = FriendlyUnit
             return true
@@ -1234,6 +1272,7 @@ do -- DETECTION_BASE
               DetectedItem.FriendliesNearBy[PlayerUnitName] = PlayerUnit
     
               local CenterCoord = DetectedUnit:GetCoordinate()
+
               local Distance = CenterCoord:Get2DDistance( PlayerUnit:GetCoordinate() )
               DetectedItem.FriendliesDistance = DetectedItem.FriendliesDistance or {}
               DetectedItem.FriendliesDistance[Distance] = PlayerUnit
@@ -2287,6 +2326,34 @@ do -- DETECTION_AREAS
     
   end
   
+  --- Calculate the optimal intercept point of the DetectedItem.
+  -- @param #DETECTION_AREAS self
+  -- @param #DETECTION_BASE.DetectedItem DetectedItem
+  function DETECTION_AREAS:CalculateIntercept( DetectedItem )
+
+    if self.Intercept then
+      local DetectedSet = DetectedItem.Set
+      local DetectedUnit = DetectedSet:GetFirst() -- Wrapper.Unit#UNIT
+      if DetectedUnit then
+        local UnitSpeed = DetectedUnit:GetVelocityMPS()
+        local UnitHeading = DetectedUnit:GetHeading()
+        local UnitCoord = DetectedUnit:GetCoordinate()
+    
+        local TranslateDistance = UnitSpeed * self.InterceptDelay
+        
+        local InterceptCoord = UnitCoord:Translate( TranslateDistance, UnitHeading )
+        
+        DetectedItem.InterceptCoord = InterceptCoord
+      else
+        DetectedItem.InterceptCoord = nil
+      end
+    else
+      DetectedItem.InterceptCoord = nil
+    end
+    
+  end
+  
+  
   --- Find the nearest FAC of the DetectedItem.
   -- @param #DETECTION_AREAS self
   -- @param #DETECTION_BASE.DetectedItem DetectedItem
@@ -2605,6 +2672,8 @@ do -- DETECTION_AREAS
       local DetectedItem = DetectedItemData -- #DETECTION_BASE.DetectedItem
       local DetectedSet = DetectedItem.Set
       local DetectedZone = DetectedItem.Zone
+      
+      self:CalculateIntercept( DetectedItem )
   
       self:ReportFriendliesNearBy( { DetectedItem = DetectedItem, ReportSetGroup = self.DetectionSetGroup } ) -- Fill the Friendlies table
       self:CalculateThreatLevelA2G( DetectedItem )  -- Calculate A2G threat level

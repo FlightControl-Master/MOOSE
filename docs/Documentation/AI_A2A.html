@@ -149,6 +149,12 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A).DisengageRadius">AI_A2A.DisengageRadius</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(AI_A2A).GetDispatcher">AI_A2A:GetDispatcher()</a></td>
 		<td class="summary">
 
@@ -338,6 +344,12 @@
 		<td class="name" nowrap="nowrap"><a href="##(AI_A2A).SetDamageThreshold">AI_A2A:SetDamageThreshold(PatrolDamageThreshold)</a></td>
 		<td class="summary">
 <p>When the AI is damaged beyond a certain treshold, it is required that the AI returns to the home base.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A).SetDisengageRadius">AI_A2A:SetDisengageRadius(DisengageRadius)</a></td>
+		<td class="summary">
+<p>Sets the disengage range, that when engaging a target beyond the specified range, the engagement will be cancelled and the plane will RTB.</p>
 </td>
 		</tr>
 		<tr>
@@ -548,6 +560,20 @@
 		<dl class="function">
 <dt>
 
+		<em></em>
+<a id="#(AI_A2A).DisengageRadius" >
+<strong>AI_A2A.DisengageRadius</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(AI_A2A).GetDispatcher" >
 <strong>AI_A2A:GetDispatcher()</strong>
 </a>
@@ -575,6 +601,7 @@
 		<dl class="function">
 <dt>
 
+		<em>#number</em>
 <a id="#(AI_A2A).IdleCount" >
 <strong>AI_A2A.IdleCount</strong>
 </a>
@@ -1384,6 +1411,33 @@ So, in a group of 4 airplanes, 2 lost and 2 with damage 0.2, the damage treshold
 				
 <p><code><em>#number PatrolDamageThreshold </em></code>: 
 The treshold in percentage (between 0 and 1) when the AI is considered to be damaged.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(AI_A2A)">#AI_A2A</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_A2A).SetDisengageRadius" >
+<strong>AI_A2A:SetDisengageRadius(DisengageRadius)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Sets the disengage range, that when engaging a target beyond the specified range, the engagement will be cancelled and the plane will RTB.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number DisengageRadius </em></code>: 
+The disengage range.</p>
 
 				</li>
 		</ul>

@@ -187,6 +187,12 @@ DETECTION uses the in-built detection capabilities of DCS World, but adds new fu
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS).CalculateIntercept">DETECTION_AREAS:CalculateIntercept(DetectedItem)</a></td>
+		<td class="summary">
+<p>Calculate the optimal intercept point of the DetectedItem.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS).CalculateThreatLevelA2G">DETECTION_AREAS:CalculateThreatLevelA2G(DetectedItem)</a></td>
 		<td class="summary">
 <p>Calculate the maxium A2G threat level of the DetectedItem.</p>
@@ -612,7 +618,7 @@ The different values of Unit.Category can be:</p>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).GetFriendliesDistance">DETECTION_BASE:GetFriendliesDistance(DetectedItem)</a></td>
 		<td class="summary">
-<p>Returns friendly units nearby the FAC units sorted per distance ...</p>
+<p>Returns the distance used to identify friendlies near the deteted item ...</p>
 </td>
 		</tr>
 		<tr>
@@ -667,6 +673,18 @@ The different values of Unit.Category can be:</p>
 		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).InitDetectVisual">DETECTION_BASE:InitDetectVisual(DetectVisual)</a></td>
 		<td class="summary">
 <p>Detect Visual.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).Intercept">DETECTION_BASE.Intercept</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).InterceptDelay">DETECTION_BASE.InterceptDelay</a></td>
+		<td class="summary">
+
 </td>
 		</tr>
 		<tr>
@@ -844,6 +862,12 @@ The different values of Unit.Category can be:</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).SetIntercept">DETECTION_BASE:SetIntercept(Intercept, IntereptDelay, InterceptDelay)</a></td>
+		<td class="summary">
+<p>Set the parameters to calculate to optimal intercept point.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).SetRejectZones">DETECTION_BASE:SetRejectZones(RejectZones)</a></td>
 		<td class="summary">
 <p>Reject detections if within the specified zone(s).</p>
@@ -959,6 +983,12 @@ The different values of Unit.Category can be:</p>
 		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE.DetectedItem).ID">DETECTION_BASE.DetectedItem.ID</a></td>
 		<td class="summary">
 <p>-- The identifier of the detected area.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE.DetectedItem).InterceptCoord">DETECTION_BASE.DetectedItem.InterceptCoord</a></td>
+		<td class="summary">
+
 </td>
 		</tr>
 		<tr>
@@ -1561,6 +1591,27 @@ a DetectedItem. The default range is 6000 meters. For air detections, it is advi
 <p><em><a href="##(DETECTION_AREAS)">#DETECTION_AREAS</a>:</em>
 self</p>
 
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_AREAS).CalculateIntercept" >
+<strong>DETECTION_AREAS:CalculateIntercept(DetectedItem)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Calculate the optimal intercept point of the DetectedItem.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="##(DETECTION_BASE.DetectedItem)">#DETECTION_BASE.DetectedItem</a> DetectedItem </em></code>: </p>
+
+				</li>
+		</ul>
 </dd>
 </dl>
 		<dl class="function">
@@ -3002,7 +3053,7 @@ DetectedSet</p>
 </dt>
 <dd>
 	
-<p>Returns friendly units nearby the FAC units sorted per distance ...</p>
+<p>Returns the distance used to identify friendlies near the deteted item ...</p>
 
 		<h3>Parameter</h3>
 		<ul>
@@ -3014,8 +3065,8 @@ DetectedSet</p>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="##(map)">#map</a>:</em></p>
-<h1>number,Wrapper.Unit#UNIT> The map of Friendly UNITs.</h1>
+<p><em>#number:</em>
+The distance. </p>
 
 </dd>
 </dl>
@@ -3245,6 +3296,34 @@ self</p>
 				
 <p><em><a href="##(DETECTION_BASE)">#DETECTION_BASE</a>:</em>
 self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(DETECTION_BASE).Intercept" >
+<strong>DETECTION_BASE.Intercept</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(DETECTION_BASE).InterceptDelay" >
+<strong>DETECTION_BASE.InterceptDelay</strong>
+</a>
+</dt>
+<dd>
+	
+
 
 </dd>
 </dl>
@@ -4117,6 +4196,44 @@ self</p>
 		<dl class="function">
 <dt>
 
+<a id="#(DETECTION_BASE).SetIntercept" >
+<strong>DETECTION_BASE:SetIntercept(Intercept, IntereptDelay, InterceptDelay)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set the parameters to calculate to optimal intercept point.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#boolean Intercept </em></code>: 
+Intercept is true if an intercept point is calculated. Intercept is false if it is disabled. The default Intercept is false.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number IntereptDelay </em></code>: 
+If Intercept is true, then InterceptDelay is the average time it takes to get airplanes airborne.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> InterceptDelay </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(DETECTION_BASE)">#DETECTION_BASE</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(DETECTION_BASE).SetRejectZones" >
 <strong>DETECTION_BASE:SetRejectZones(RejectZones)</strong>
 </a>
@@ -4539,6 +4656,20 @@ The To State string.</p>
 <dd>
 	
 <p>-- The identifier of the detected area.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(DETECTION_BASE.DetectedItem).InterceptCoord" >
+<strong>DETECTION_BASE.DetectedItem.InterceptCoord</strong>
+</a>
+</dt>
+<dd>
+	
+
 
 </dd>
 </dl>
