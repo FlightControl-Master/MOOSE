@@ -663,7 +663,7 @@ do -- AI_A2A_DISPATCHER
   -- 
   -- ## 10.8. Default settings for GCI.
   -- 
-  -- ## 10.8.1. Optimal intercept point.
+  -- ## 10.8.1. Optimal intercept point calculation.
   -- 
   -- When intruders are detected, the intrusion path of the attackers can be monitored by the EWR.  
   -- Although defender planes might be on standby at the airbase, it can still take some time to get the defenses up in the air if there aren't any defenses airborne.
@@ -673,14 +673,21 @@ do -- AI_A2A_DISPATCHER
   -- 
   --   * The average bearing of the intruders for an amount of seconds.
   --   * The average speed of the intruders for an amount of seconds.
-  --   * The altitude of the intruders.
   --   * An assumed time it takes to get planes operational at the airbase.
-  --   * The intercept speed, which is given as a parameter for each squadron or set by default for all squadrons.
   -- 
   -- The **intercept point** will determine:
   -- 
   --   * If there are any friendlies close to engage the target. These can be defenders performing CAP or defenders in RTB.
-  --   * The optimal airbase from where defenders will takeoff for gci.
+  --   * The optimal airbase from where defenders will takeoff for GCI.
+  -- 
+  -- Use the method @{#AI_A2A_DISPATCHER.SetIntercept}() to modify the assumed intercept delay time to calculate a valid interception.
+  -- 
+  -- ## 10.8.2. Default disengage radius.
+  -- 
+  -- The radius to **disengage any target** when the **distance** of the defender to the **home base** is larger than the specified meters.
+  -- The default disengage radius is **100km** (100000 meters). Note that the disengage radius is applicable to ALL squadrons!
+  --   
+  -- Use the method @{#AI_A2A_DISPATCHER.SetDisengageRadius}() to modify the default disengage radius to another distance setting.
   -- 
   -- ## 11. Q & A:
   -- 

@@ -1180,12 +1180,12 @@ do -- DETECTION_BASE
       local DetectedItem = ReportGroupData.DetectedItem  -- Functional.Detection#DETECTION_BASE.DetectedItem    
       local DetectedSet = ReportGroupData.DetectedItem.Set
       local DetectedUnit = DetectedSet:GetFirst() -- Wrapper.Unit#UNIT
-      local InterceptCoord = ReportGroupData.InterceptCoord or DetectedUnit:GetCoordinate()
     
       DetectedItem.FriendliesNearBy = nil
 
       if DetectedUnit then
       
+        local InterceptCoord = ReportGroupData.InterceptCoord or DetectedUnit:GetCoordinate()
         
         local SphereSearch = {
          id = world.VolumeType.SPHERE,
@@ -1204,8 +1204,8 @@ do -- DETECTION_BASE
           local DetectedItem = ReportGroupData.DetectedItem  -- Functional.Detection#DETECTION_BASE.DetectedItem    
           local DetectedSet = ReportGroupData.DetectedItem.Set
           local DetectedUnit = DetectedSet:GetFirst() -- Wrapper.Unit#UNIT
-          local InterceptCoord = ReportGroupData.InterceptCoord or DetectedUnit:GetCoordinate()
           local DetectedUnitCoord = DetectedUnit:GetCoordinate()
+          local InterceptCoord = ReportGroupData.InterceptCoord or DetectedUnitCoord
           local ReportSetGroup = ReportGroupData.ReportSetGroup
     
           local EnemyCoalition = DetectedUnit:GetCoalition()

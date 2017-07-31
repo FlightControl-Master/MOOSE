@@ -1459,7 +1459,7 @@ Note that you can still change the CAP limit and CAP time intervals for each CAP
 
 <h2>10.8. Default settings for GCI.</h2>
 
-<h2>10.8.1. Optimal intercept point.</h2>
+<h2>10.8.1. Optimal intercept point calculation.</h2>
 
 <p>When intruders are detected, the intrusion path of the attackers can be monitored by the EWR. <br/>
 Although defender planes might be on standby at the airbase, it can still take some time to get the defenses up in the air if there aren't any defenses airborne.
@@ -1470,17 +1470,24 @@ This time can easily take 2 to 3 minutes, and even then the defenders still need
 <ul>
     <li>The average bearing of the intruders for an amount of seconds.</li>
     <li>The average speed of the intruders for an amount of seconds.</li>
-    <li>The altitude of the intruders.</li>
     <li>An assumed time it takes to get planes operational at the airbase.</li>
-    <li>The intercept speed, which is given as a parameter for each squadron or set by default for all squadrons.</li>
 </ul>
 
 <p>The <strong>intercept point</strong> will determine:</p>
 
 <ul>
     <li>If there are any friendlies close to engage the target. These can be defenders performing CAP or defenders in RTB.</li>
-    <li>The optimal airbase from where defenders will takeoff for gci.</li>
+    <li>The optimal airbase from where defenders will takeoff for GCI.</li>
 </ul>
+
+<p>Use the method <a href="##(AI_A2A_DISPATCHER).SetIntercept">AI<em>A2A</em>DISPATCHER.SetIntercept</a>() to modify the assumed intercept delay time to calculate a valid interception.</p>
+
+<h2>10.8.2. Default disengage radius.</h2>
+
+<p>The radius to <strong>disengage any target</strong> when the <strong>distance</strong> of the defender to the <strong>home base</strong> is larger than the specified meters.
+The default disengage radius is <strong>100km</strong> (100000 meters). Note that the disengage radius is applicable to ALL squadrons!</p>
+
+<p>Use the method <a href="##(AI_A2A_DISPATCHER).SetDisengageRadius">AI<em>A2A</em>DISPATCHER.SetDisengageRadius</a>() to modify the default disengage radius to another distance setting.</p>
 
 <h2>11. Q &amp; A:</h2>
 
