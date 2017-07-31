@@ -72,6 +72,7 @@ function AI_A2A:New( AIGroup )
   
   self:SetFuelThreshold( .2, 60 )
   self:SetDamageThreshold( 0.4 )
+  self:SetDisengageRadius( 70000 )
 
   self:SetStartState( "Stopped" ) 
   
@@ -295,6 +296,15 @@ function AI_A2A:SetHomeAirbase( HomeAirbase )
 end
 
 
+--- Sets the disengage range, that when engaging a target beyond the specified range, the engagement will be cancelled and the plane will RTB.
+-- @param #AI_A2A self
+-- @param #number DisengageRadius The disengage range.
+-- @return #AI_A2A self
+function AI_A2A:SetDisengageRadius( DisengageRadius )
+  self:F2( { DisengageRadius } )
+  
+  self.DisengageRadius = DisengageRadius
+end
 
 --- Set the status checking off.
 -- @param #AI_A2A self
@@ -377,6 +387,16 @@ function AI_A2A:onafterStatus()
   if self.Controllable and self.Controllable:IsAlive() then
   
     local RTB = false
+    
+    local DistanceFromHomeBase = self.HomeAirbase:GetCoordinate():Get2DDistance( self.Controllable:GetCoordinate() )
+    self:F({DistanceFromHomeBase=DistanceFromHomeBase})
+    
+    if DistanceFromHomeBase > self.DisengageRadius then
+      self:E( self.Controllable:GetName() .. " is too far from home base, RTB!" )
+      self:Home()
+      RTB = true
+    end
+    
     
     local Fuel = self.Controllable:GetUnit(1):GetFuel()
     self:F({Fuel=Fuel})

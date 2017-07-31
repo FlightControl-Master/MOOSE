@@ -641,7 +641,9 @@ do -- AI_A2A_DISPATCHER
   -- 
   -- Use the method @{#AI_A2A_DISPATCHER.SetDefaultDamageThreshold}() to set the **default damage treshold** of spawned airplanes for all squadrons.
   -- 
-  -- ## 10.7. Default CAP Time Interval.
+  -- ## 10.7. Default settings for CAP.
+  -- 
+  -- ### 10.7.1. Default CAP Time Interval.
   -- 
   -- CAP is time driven, and will evaluate in random time intervals if a new CAP needs to be spawned.
   -- The **default CAP time interval** is between **180** and **600** seconds.
@@ -649,7 +651,7 @@ do -- AI_A2A_DISPATCHER
   -- Use the method @{#AI_A2A_DISPATCHER.SetDefaultCapTimeInterval}() to set the **default CAP time interval** of spawned airplanes for all squadrons.  
   -- Note that you can still change the CAP limit and CAP time intervals for each CAP individually using the @{#AI_A2A_DISPATCHER.SetSquadronCapTimeInterval}() method.
   -- 
-  -- ## 10.8. Default CAP limit.
+  -- ### 10.7.2. Default CAP limit.
   -- 
   -- Multiple CAP can be airborne at the same time for one squadron, which is controlled by the **CAP limit**.
   -- The **default CAP limit** is 1 CAP per squadron to be airborne at the same time.
@@ -658,6 +660,27 @@ do -- AI_A2A_DISPATCHER
   -- 
   -- Use the method @{#AI_A2A_DISPATCHER.SetDefaultCapTimeInterval}() to set the **default CAP time interval** of spawned airplanes for all squadrons.  
   -- Note that you can still change the CAP limit and CAP time intervals for each CAP individually using the @{#AI_A2A_DISPATCHER.SetSquadronCapTimeInterval}() method.
+  -- 
+  -- ## 10.8. Default settings for GCI.
+  -- 
+  -- ## 10.8.1. Optimal intercept point.
+  -- 
+  -- When intruders are detected, the intrusion path of the attackers can be monitored by the EWR.  
+  -- Although defender planes might be on standby at the airbase, it can still take some time to get the defenses up in the air if there aren't any defenses airborne.
+  -- This time can easily take 2 to 3 minutes, and even then the defenders still need to fly towards the target, which takes also time.
+  -- 
+  -- Therefore, an optimal **intercept point** is calculated which takes a couple of parameters:
+  -- 
+  --   * The average bearing of the intruders for an amount of seconds.
+  --   * The average speed of the intruders for an amount of seconds.
+  --   * The altitude of the intruders.
+  --   * An assumed time it takes to get planes operational at the airbase.
+  --   * The intercept speed, which is given as a parameter for each squadron or set by default for all squadrons.
+  -- 
+  -- The **intercept point** will determine:
+  -- 
+  --   * If there are any friendlies close to engage the target. These can be defenders performing CAP or defenders in RTB.
+  --   * The optimal airbase from where defenders will takeoff for gci.
   -- 
   -- ## 11. Q & A:
   -- 
@@ -751,6 +774,8 @@ do -- AI_A2A_DISPATCHER
     self:SetDefaultDamageThreshold( 0.4 ) -- When 40% of damage, go RTB.
     self:SetDefaultCapTimeInterval( 180, 600 ) -- Between 180 and 600 seconds.
     self:SetDefaultCapLimit( 1 ) -- Maximum one CAP per squadron.
+    self:SetIntercept( 300 )  -- A default intercept delay time of 300 seconds.
+    self:SetDisengageRadius( 100000 ) -- The default disengage radius is 100 km.
     
     
     self:AddTransition( "Started", "Assign", "Started" )
@@ -939,6 +964,26 @@ do -- AI_A2A_DISPATCHER
   
     return self
   end
+
+  --- Define the radius to disengage any target when the distance to the home base is larger than the specified meters.
+  -- @param #AI_A2A_DISPATCHER self
+  -- @param #number DisengageRadius (Optional, Default = 100000) The radius to disengage a target when too far from the home base.
+  -- @return #AI_A2A_DISPATCHER
+  -- @usage
+  -- 
+  --   -- Set 50km as the disengage radius.
+  --   Dispatcher:SetDisengageRadius( 50000 )
+  --   
+  --   -- Set 100km as the disengage radius.
+  --   Dispatcher:SetDisngageRadius() -- 100000 is the default value.
+  --   
+  function AI_A2A_DISPATCHER:SetDisengageRadius( DisengageRadius )
+
+    self.DisengageRadius = DisengageRadius
+  
+    return self
+  end
+  
   
   --- Define the radius to check if a target can be engaged by an ground controlled intercept.
   -- So, if there is a target area detected and reported, 
@@ -1092,7 +1137,7 @@ do -- AI_A2A_DISPATCHER
     self.DefenderDefault.CapMaxSeconds = CapMaxSeconds
     
     return self
-  end  
+  end
 
 
   --- Set the default CAP limit for squadrons, which will be used to determine how many CAP can be airborne at the same time for the squadron.
@@ -1116,13 +1161,24 @@ do -- AI_A2A_DISPATCHER
   end  
 
 
+  function AI_A2A_DISPATCHER:SetIntercept( InterceptDelay )
+    
+    self.DefenderDefault.InterceptDelay = InterceptDelay
+    
+    local Detection = self.Detection -- Functional.Detection#DETECTION_AREAS
+    Detection:SetIntercept( true, InterceptDelay )
+    
+    return self
+  end  
+
+
   --- Calculates which AI friendlies are nearby the area
   -- @param #AI_A2A_DISPATCHER self
   -- @param DetectedItem
   -- @return #number, Core.CommandCenter#REPORT
   function AI_A2A_DISPATCHER:GetAIFriendliesNearBy( DetectedItem )
   
-    local FriendliesNearBy = self.Detection:GetFriendliesDistance( DetectedItem )
+    local FriendliesNearBy = self.Detection:GetFriendliesNearBy( DetectedItem )
     
     return FriendliesNearBy
   end
@@ -2270,6 +2326,7 @@ do -- AI_A2A_DISPATCHER
           Fsm:SetHomeAirbase( DefenderSquadron.Airbase )
           Fsm:SetFuelThreshold( self.DefenderDefault.FuelThreshold, 60 )
           Fsm:SetDamageThreshold( self.DefenderDefault.DamageThreshold )
+          Fsm:SetDisengageRadius( self.DisengageRadius )
           Fsm:Start()
           Fsm:__Patrol( 2 )
   
@@ -2322,17 +2379,18 @@ do -- AI_A2A_DISPATCHER
 
   ---
   -- @param #AI_A2A_DISPATCHER self
-  function AI_A2A_DISPATCHER:onafterGCI( From, Event, To, Target, DefendersMissing, AIGroups )
+  function AI_A2A_DISPATCHER:onafterGCI( From, Event, To, DetectedItem, DefendersMissing, Friendlies )
 
-    local AttackerCount = Target.Set:Count()
+    local AttackerSet = DetectedItem.Set
+    local AttackerCount = AttackerSet:Count()
     local DefendersCount = 0
 
-    for AIGroupID, AIGroup in pairs( AIGroups or {} ) do
+    for DefenderID, AIGroup in pairs( Friendlies or {} ) do
 
       local Fsm = self:GetDefenderTaskFsm( AIGroup )
-      Fsm:__Engage( 1, Target.Set ) -- Engage on the TargetSetUnit
+      Fsm:__Engage( 1, AttackerSet ) -- Engage on the TargetSetUnit
       
-      self:SetDefenderTaskTarget( AIGroup, Target )
+      self:SetDefenderTaskTarget( AIGroup, DetectedItem )
 
       DefendersCount = DefendersCount + AIGroup:GetSize()
     end
@@ -2349,9 +2407,11 @@ do -- AI_A2A_DISPATCHER
     
           self:E( { DefenderSquadron } )
           local SpawnCoord = DefenderSquadron.Airbase:GetCoordinate() -- Core.Point#COORDINATE
-          local TargetCoord = Target.Set:GetFirst():GetCoordinate()
+          --local TargetCoord = AttackerSet:GetFirst():GetCoordinate()
+          local TargetCoord = DetectedItem.InterceptCoord
           if TargetCoord then
             local Distance = SpawnCoord:Get2DDistance( TargetCoord )
+            self:F( { Distance = Distance, TargetCoord = TargetCoord } )
             
             if ClosestDistance == 0 or Distance < ClosestDistance then
               
@@ -2402,11 +2462,12 @@ do -- AI_A2A_DISPATCHER
               Fsm:SetHomeAirbase( DefenderSquadron.Airbase )
               Fsm:SetFuelThreshold( self.DefenderDefault.FuelThreshold, 60 )
               Fsm:SetDamageThreshold( self.DefenderDefault.DamageThreshold )
+              Fsm:SetDisengageRadius( self.DisengageRadius )
               Fsm:Start()
-              Fsm:__Engage( 2, Target.Set ) -- Engage on the TargetSetUnit
+              Fsm:__Engage( 2, DetectedItem.Set ) -- Engage on the TargetSetUnit
     
       
-              self:SetDefenderTask( DefenderGCI, "GCI", Fsm, Target )
+              self:SetDefenderTask( DefenderGCI, "GCI", Fsm, DetectedItem )
               
               
               function Fsm:onafterRTB( Defender, From, Event, To )
@@ -2475,20 +2536,20 @@ do -- AI_A2A_DISPATCHER
   -- @param Functional.Detection#DETECTION_BASE.DetectedItem DetectedItem
   -- @return Set#SET_UNIT TargetSetUnit: The target set of units.
   -- @return #nil If there are no targets to be set.
-  function AI_A2A_DISPATCHER:EvaluateGCI( Target )
-    self:F( { Target.ItemID } )
+  function AI_A2A_DISPATCHER:EvaluateGCI( DetectedItem )
+    self:F( { DetectedItem.ItemID } )
   
-    local AttackerSet = Target.Set
+    local AttackerSet = DetectedItem.Set
     local AttackerCount = AttackerSet:Count()
 
     -- First, count the active AIGroups Units, targetting the DetectedSet
-    local DefenderCount = self:CountDefendersEngaged( Target )
+    local DefenderCount = self:CountDefendersEngaged( DetectedItem )
     local DefendersMissing = AttackerCount - DefenderCount
     self:F( { AttackerCount = AttackerCount, DefenderCount = DefenderCount, DefendersMissing = DefendersMissing } )
 
-    local Friendlies = self:CountDefendersToBeEngaged( Target, DefenderCount )
+    local Friendlies = self:CountDefendersToBeEngaged( DetectedItem, DefenderCount )
 
-    if Target.IsDetected == true then
+    if DetectedItem.IsDetected == true then
       
       return DefendersMissing, Friendlies
     end
