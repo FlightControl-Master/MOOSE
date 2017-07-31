@@ -1148,6 +1148,22 @@ do -- DETECTION_BASE
       return DetectedItem.FriendliesNearBy
     end
   
+    --- Returns if there are friendlies nearby the intercept ...
+    -- @param #DETECTION_BASE self
+    -- @return #boolean trhe if there are friendlies near the intercept.
+    function DETECTION_BASE:IsFriendliesNearIntercept( DetectedItem )
+      
+      return DetectedItem.FriendliesNearIntercept ~= nil or false
+    end
+  
+    --- Returns friendly units nearby the intercept point ...
+    -- @param #DETECTION_BASE self
+    -- @return #map<#string,Wrapper.Unit#UNIT> The map of Friendly UNITs. 
+    function DETECTION_BASE:GetFriendliesNearIntercept( DetectedItem )
+      
+      return DetectedItem.FriendliesNearIntercept
+    end
+  
     --- Returns the distance used to identify friendlies near the deteted item ...
     -- @param #DETECTION_BASE self
     -- @return #number The distance. 
@@ -1222,8 +1238,10 @@ do -- DETECTION_BASE
             DetectedItem.FriendliesNearBy = DetectedItem.FriendliesNearBy or {}
             local FriendlyUnit = UNIT:Find( FoundDCSUnit )
             local FriendlyUnitName = FriendlyUnit:GetName()
+
             DetectedItem.FriendliesNearBy[FriendlyUnitName] = FriendlyUnit
-            local Distance = InterceptCoord:Get2DDistance( FriendlyUnit:GetCoordinate() )
+            
+            local Distance = DetectedUnitCoord:Get2DDistance( FriendlyUnit:GetCoordinate() )
             DetectedItem.FriendliesDistance = DetectedItem.FriendliesDistance or {}
             DetectedItem.FriendliesDistance[Distance] = FriendlyUnit
             return true
@@ -1253,8 +1271,9 @@ do -- DETECTION_BASE
               DetectedItem.FriendliesNearBy = DetectedItem.FriendliesNearBy or {}
               DetectedItem.FriendliesNearBy[PlayerUnitName] = PlayerUnit
     
-              --local CenterCoord = DetectedUnit:GetCoordinate()
-              local Distance = InterceptCoord:Get2DDistance( PlayerUnit:GetCoordinate() )
+              local CenterCoord = DetectedUnit:GetCoordinate()
+
+              local Distance = CenterCoord:Get2DDistance( PlayerUnit:GetCoordinate() )
               DetectedItem.FriendliesDistance = DetectedItem.FriendliesDistance or {}
               DetectedItem.FriendliesDistance[Distance] = PlayerUnit
             end
@@ -2315,15 +2334,19 @@ do -- DETECTION_AREAS
     if self.Intercept then
       local DetectedSet = DetectedItem.Set
       local DetectedUnit = DetectedSet:GetFirst() -- Wrapper.Unit#UNIT
-      local UnitSpeed = DetectedUnit:GetVelocityMPS()
-      local UnitHeading = DetectedUnit:GetHeading()
-      local UnitCoord = DetectedUnit:GetCoordinate()
-  
-      local TranslateDistance = UnitSpeed * self.InterceptDelay
-      
-      local InterceptCoord = UnitCoord:Translate( TranslateDistance, UnitHeading )
-      
-      DetectedItem.InterceptCoord = InterceptCoord
+      if DetectedUnit then
+        local UnitSpeed = DetectedUnit:GetVelocityMPS()
+        local UnitHeading = DetectedUnit:GetHeading()
+        local UnitCoord = DetectedUnit:GetCoordinate()
+    
+        local TranslateDistance = UnitSpeed * self.InterceptDelay
+        
+        local InterceptCoord = UnitCoord:Translate( TranslateDistance, UnitHeading )
+        
+        DetectedItem.InterceptCoord = InterceptCoord
+      else
+        DetectedItem.InterceptCoord = nil
+      end
     else
       DetectedItem.InterceptCoord = nil
     end
