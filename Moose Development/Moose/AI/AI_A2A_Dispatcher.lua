@@ -772,6 +772,8 @@ do -- AI_A2A_DISPATCHER
 
     self:SetEngageRadius()
     self:SetGciRadius()
+    self:SetIntercept( 300 )  -- A default intercept delay time of 300 seconds.
+    self:SetDisengageRadius( 100000 ) -- The default disengage radius is 100 km.
     
     self:SetDefaultTakeoff( AI_A2A_DISPATCHER.Takeoff.Air )
     self:SetDefaultLanding( AI_A2A_DISPATCHER.Landing.NearAirbase )
@@ -781,8 +783,6 @@ do -- AI_A2A_DISPATCHER
     self:SetDefaultDamageThreshold( 0.4 ) -- When 40% of damage, go RTB.
     self:SetDefaultCapTimeInterval( 180, 600 ) -- Between 180 and 600 seconds.
     self:SetDefaultCapLimit( 1 ) -- Maximum one CAP per squadron.
-    self:SetIntercept( 300 )  -- A default intercept delay time of 300 seconds.
-    self:SetDisengageRadius( 100000 ) -- The default disengage radius is 100 km.
     
     
     self:AddTransition( "Started", "Assign", "Started" )
@@ -2445,58 +2445,66 @@ do -- AI_A2A_DISPATCHER
             local DefenderOverhead = DefenderSquadron.Overhead or self.DefenderDefault.Overhead
             local DefenderGrouping = DefenderSquadron.Grouping or self.DefenderDefault.Grouping
             local DefendersNeeded = math.ceil( DefendersCount * DefenderOverhead )
+            
+            self:F( { DefaultOverhead = self.DefenderDefault.Overhead, Overhead = DefenderOverhead } )
+            self:F( { DefaultGrouping = self.DefenderDefault.Grouping, Grouping = DefenderGrouping } )
+            self:F( { DefendersCount = DefendersCount, DefendersNeeded = DefendersNeeded } )
+            
+            while ( DefendersNeeded > 0 ) do
           
-            local Spawn = DefenderSquadron.Spawn[ math.random( 1, #DefenderSquadron.Spawn ) ]
-            if DefenderGrouping then
-              Spawn:InitGrouping( ( DefenderGrouping < DefendersNeeded ) and DefenderGrouping or DefendersNeeded )
-            else
-              Spawn:InitGrouping()
-            end
-            
-            local TakeoffMethod = self:GetSquadronTakeoff( ClosestDefenderSquadronName )
-            local DefenderGCI = Spawn:SpawnAtAirbase( DefenderSquadron.Airbase, TakeoffMethod )
-            self:F( { GCIDefender = DefenderGCI:GetName() } )
-    
-            self:AddDefenderToSquadron( DefenderSquadron, DefenderGCI )
-            
-      
-            if DefenderGCI then
-    
-              DefendersCount = DefendersCount - DefenderGCI:GetSize()
-              
-              local Fsm = AI_A2A_GCI:New( DefenderGCI, Gci.EngageMinSpeed, Gci.EngageMaxSpeed )
-              Fsm:SetDispatcher( self )
-              Fsm:SetHomeAirbase( DefenderSquadron.Airbase )
-              Fsm:SetFuelThreshold( self.DefenderDefault.FuelThreshold, 60 )
-              Fsm:SetDamageThreshold( self.DefenderDefault.DamageThreshold )
-              Fsm:SetDisengageRadius( self.DisengageRadius )
-              Fsm:Start()
-              Fsm:__Engage( 2, DetectedItem.Set ) -- Engage on the TargetSetUnit
-    
-      
-              self:SetDefenderTask( DefenderGCI, "GCI", Fsm, DetectedItem )
-              
-              
-              function Fsm:onafterRTB( Defender, From, Event, To )
-                self:F({"GCI RTB"})
-                self:GetParent(self).onafterRTB( self, Defender, From, Event, To )
-                
-                local Dispatcher = self:GetDispatcher() -- #AI_A2A_DISPATCHER
-                local AIGroup = self:GetControllable()
-                Dispatcher:ClearDefenderTaskTarget( AIGroup )
+              local Spawn = DefenderSquadron.Spawn[ math.random( 1, #DefenderSquadron.Spawn ) ] -- Functional.Spawn#SPAWN
+              if DefenderGrouping then
+                Spawn:InitGrouping( ( DefenderGrouping < DefendersNeeded ) and DefenderGrouping or DefendersNeeded )
+              else
+                Spawn:InitGrouping()
               end
               
-              --- @param #AI_A2A_DISPATCHER self
-              function Fsm:onafterHome( Defender, From, Event, To )
-                self:F({"GCI Home"})
-                self:GetParent(self).onafterHome( self, Defender, From, Event, To )
+              local TakeoffMethod = self:GetSquadronTakeoff( ClosestDefenderSquadronName )
+              local DefenderGCI = Spawn:SpawnAtAirbase( DefenderSquadron.Airbase, TakeoffMethod )
+              self:F( { GCIDefender = DefenderGCI:GetName() } )
+
+              DefendersNeeded = DefendersNeeded - DefenderGCI:GetSize()
+      
+              self:AddDefenderToSquadron( DefenderSquadron, DefenderGCI )
+        
+              if DefenderGCI then
+      
+                DefendersCount = DefendersCount - DefenderGCI:GetSize()
                 
-                local Dispatcher = self:GetDispatcher() -- #AI_A2A_DISPATCHER
-                local AIGroup = self:GetControllable()
-                local Squadron = Dispatcher:GetSquadronFromDefender( AIGroup )
-                if Dispatcher:GetSquadronLanding( Squadron.Name ) == AI_A2A_DISPATCHER.Landing.NearAirbase then
-                  Dispatcher:RemoveDefenderFromSquadron( Squadron, AIGroup )
-                  AIGroup:Destroy()
+                local Fsm = AI_A2A_GCI:New( DefenderGCI, Gci.EngageMinSpeed, Gci.EngageMaxSpeed )
+                Fsm:SetDispatcher( self )
+                Fsm:SetHomeAirbase( DefenderSquadron.Airbase )
+                Fsm:SetFuelThreshold( self.DefenderDefault.FuelThreshold, 60 )
+                Fsm:SetDamageThreshold( self.DefenderDefault.DamageThreshold )
+                Fsm:SetDisengageRadius( self.DisengageRadius )
+                Fsm:Start()
+                Fsm:__Engage( 2, DetectedItem.Set ) -- Engage on the TargetSetUnit
+      
+        
+                self:SetDefenderTask( DefenderGCI, "GCI", Fsm, DetectedItem )
+                
+                
+                function Fsm:onafterRTB( Defender, From, Event, To )
+                  self:F({"GCI RTB"})
+                  self:GetParent(self).onafterRTB( self, Defender, From, Event, To )
+                  
+                  local Dispatcher = self:GetDispatcher() -- #AI_A2A_DISPATCHER
+                  local AIGroup = self:GetControllable()
+                  Dispatcher:ClearDefenderTaskTarget( AIGroup )
+                end
+                
+                --- @param #AI_A2A_DISPATCHER self
+                function Fsm:onafterHome( Defender, From, Event, To )
+                  self:F({"GCI Home"})
+                  self:GetParent(self).onafterHome( self, Defender, From, Event, To )
+                  
+                  local Dispatcher = self:GetDispatcher() -- #AI_A2A_DISPATCHER
+                  local AIGroup = self:GetControllable()
+                  local Squadron = Dispatcher:GetSquadronFromDefender( AIGroup )
+                  if Dispatcher:GetSquadronLanding( Squadron.Name ) == AI_A2A_DISPATCHER.Landing.NearAirbase then
+                    Dispatcher:RemoveDefenderFromSquadron( Squadron, AIGroup )
+                    AIGroup:Destroy()
+                  end
                 end
               end
             end
