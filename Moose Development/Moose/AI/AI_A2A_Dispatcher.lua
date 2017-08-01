@@ -460,6 +460,8 @@ do -- AI_A2A_DISPATCHER
   -- For example with a group setting of 2, if 3 targets are detected and cannot be engaged by CAP or any airborne flight, 
   -- a GCI needs to be started, the GCI flights will be grouped as follows: Group 1 of 2 flights and Group 2 of one flight!
   -- 
+  -- Even more ... If one target has been detected, and the overhead is 1.5, grouping is 1, then two groups of planes will be spawned, with one unit each!
+  -- 
   -- The **grouping value is set for a Squadron**, and can be **dynamically adjusted** during mission execution, so to adjust the defense flights grouping when the tactical situation changes.
   -- 
   -- ### 6.4. Overhead and Balance the effectiveness of the air defenses in case of GCI
@@ -483,6 +485,8 @@ do -- AI_A2A_DISPATCHER
   -- 
   -- The amount of defending units is calculated by multiplying the amount of detected attacking planes as part of the detected group 
   -- multiplied by the Overhead and rounded up to the smallest integer. 
+  -- 
+  -- For example ... If one target has been detected, and the overhead is 1.5, grouping is 1, then two groups of planes will be spawned, with one unit each!
   -- 
   -- The **overhead value is set for a Squadron**, and can be **dynamically adjusted** during mission execution, so to adjust the defense overhead when the tactical situation changes.
   --
@@ -2163,11 +2167,11 @@ do -- AI_A2A_DISPATCHER
   
 
   --- @param #AI_A2A_DISPATCHER self
-  function AI_A2A_DISPATCHER:AddDefenderToSquadron( Squadron, Defender )
+  function AI_A2A_DISPATCHER:AddDefenderToSquadron( Squadron, Defender, Size )
     self.Defenders = self.Defenders or {}
     local DefenderName = Defender:GetName()
     self.Defenders[ DefenderName ] = Squadron
-    Squadron.Resources = Squadron.Resources - Defender:GetSize()
+    Squadron.Resources = Squadron.Resources - Size
     self:F( { DefenderName = DefenderName, SquadronResources = Squadron.Resources } )
   end
 
@@ -2324,7 +2328,7 @@ do -- AI_A2A_DISPATCHER
 
         local TakeoffMethod = self:GetSquadronTakeoff( SquadronName )
         local DefenderCAP = Spawn:SpawnAtAirbase( DefenderSquadron.Airbase, TakeoffMethod )
-        self:AddDefenderToSquadron( DefenderSquadron, DefenderCAP )
+        self:AddDefenderToSquadron( DefenderSquadron, DefenderCAP, DefenderGrouping )
   
         if DefenderCAP then
   
@@ -2367,13 +2371,19 @@ do -- AI_A2A_DISPATCHER
         end
 
         --- @param #AI_A2A_DISPATCHER self
-        function Fsm:onafterHome( Defender, From, Event, To )
+        function Fsm:onafterHome( Defender, From, Event, To, Action )
           self:F({"CAP Home"})
           self:GetParent(self).onafterHome( self, Defender, From, Event, To )
           
           local Dispatcher = self:GetDispatcher() -- #AI_A2A_DISPATCHER
           local AIGroup = self:GetControllable()
           local Squadron = Dispatcher:GetSquadronFromDefender( AIGroup )
+
+          if Action and Action == "Destroy" then
+            Dispatcher:RemoveDefenderFromSquadron( Squadron, AIGroup )
+            AIGroup:Destroy()
+          end
+          
           if Dispatcher:GetSquadronLanding( Squadron.Name ) == AI_A2A_DISPATCHER.Landing.NearAirbase then
             Dispatcher:RemoveDefenderFromSquadron( Squadron, AIGroup )
             AIGroup:Destroy()
@@ -2412,7 +2422,7 @@ do -- AI_A2A_DISPATCHER
       for SquadronName, DefenderSquadron in pairs( self.DefenderSquadrons or {} ) do
         for InterceptID, Intercept in pairs( DefenderSquadron.Gci or {} ) do
     
-          self:E( { DefenderSquadron } )
+          --self:E( { DefenderSquadron } )
           local SpawnCoord = DefenderSquadron.Airbase:GetCoordinate() -- Core.Point#COORDINATE
           --local TargetCoord = AttackerSet:GetFirst():GetCoordinate()
           local TargetCoord = DetectedItem.InterceptCoord
@@ -2453,23 +2463,24 @@ do -- AI_A2A_DISPATCHER
             while ( DefendersNeeded > 0 ) do
           
               local Spawn = DefenderSquadron.Spawn[ math.random( 1, #DefenderSquadron.Spawn ) ] -- Functional.Spawn#SPAWN
+              local DefenderGrouping = ( DefenderGrouping < DefendersNeeded ) and DefenderGrouping or DefendersNeeded
               if DefenderGrouping then
-                Spawn:InitGrouping( ( DefenderGrouping < DefendersNeeded ) and DefenderGrouping or DefendersNeeded )
+                Spawn:InitGrouping( DefenderGrouping )
               else
                 Spawn:InitGrouping()
               end
               
               local TakeoffMethod = self:GetSquadronTakeoff( ClosestDefenderSquadronName )
-              local DefenderGCI = Spawn:SpawnAtAirbase( DefenderSquadron.Airbase, TakeoffMethod )
+              local DefenderGCI = Spawn:SpawnAtAirbase( DefenderSquadron.Airbase, TakeoffMethod ) -- Wrapper.Group#GROUP
               self:F( { GCIDefender = DefenderGCI:GetName() } )
 
-              DefendersNeeded = DefendersNeeded - DefenderGCI:GetSize()
+              DefendersNeeded = DefendersNeeded - DefenderGrouping
       
-              self:AddDefenderToSquadron( DefenderSquadron, DefenderGCI )
+              self:AddDefenderToSquadron( DefenderSquadron, DefenderGCI, DefenderGrouping )
         
               if DefenderGCI then
       
-                DefendersCount = DefendersCount - DefenderGCI:GetSize()
+                DefendersCount = DefendersCount - DefenderGrouping
                 
                 local Fsm = AI_A2A_GCI:New( DefenderGCI, Gci.EngageMinSpeed, Gci.EngageMaxSpeed )
                 Fsm:SetDispatcher( self )
@@ -2492,15 +2503,35 @@ do -- AI_A2A_DISPATCHER
                   local AIGroup = self:GetControllable()
                   Dispatcher:ClearDefenderTaskTarget( AIGroup )
                 end
+
+                --- @param #AI_A2A_DISPATCHER self
+                function Fsm:onafterLostControl( Defender, From, Event, To )
+                  self:F({"GCI Home"})
+                  self:GetParent(self).onafterHome( self, Defender, From, Event, To )
+                  
+                  local Dispatcher = self:GetDispatcher() -- #AI_A2A_DISPATCHER
+                  local AIGroup = self:GetControllable() -- Wrapper.Group#GROUP
+                  local Squadron = Dispatcher:GetSquadronFromDefender( AIGroup )
+                  if AIGroup:IsAboveRunway() then
+                    Dispatcher:RemoveDefenderFromSquadron( Squadron, AIGroup )
+                    AIGroup:Destroy()
+                  end
+                end
                 
                 --- @param #AI_A2A_DISPATCHER self
-                function Fsm:onafterHome( Defender, From, Event, To )
+                function Fsm:onafterHome( Defender, From, Event, To, Action )
                   self:F({"GCI Home"})
                   self:GetParent(self).onafterHome( self, Defender, From, Event, To )
                   
                   local Dispatcher = self:GetDispatcher() -- #AI_A2A_DISPATCHER
                   local AIGroup = self:GetControllable()
                   local Squadron = Dispatcher:GetSquadronFromDefender( AIGroup )
+
+                  if Action and Action == "Destroy" then
+                    Dispatcher:RemoveDefenderFromSquadron( Squadron, AIGroup )
+                    AIGroup:Destroy()
+                  end
+
                   if Dispatcher:GetSquadronLanding( Squadron.Name ) == AI_A2A_DISPATCHER.Landing.NearAirbase then
                     Dispatcher:RemoveDefenderFromSquadron( Squadron, AIGroup )
                     AIGroup:Destroy()
@@ -2662,7 +2693,16 @@ do -- AI_A2A_DISPATCHER
         local Defender = Defender -- Wrapper.Group#GROUP
         if not DefenderTask.Target then
           local DefenderHasTask = Defender:HasTask()
-          Report:Add( string.format( "   - %s ( %s - %s ): ( #%d ) %s", Defender:GetName(), DefenderTask.Type, DefenderTask.Fsm:GetState(), Defender:GetSize(), Defender:HasTask() == true and "Executing" or "Idle" ) )
+          local Fuel = Defender:GetUnit(1):GetFuel() * 100
+          local Damage = Defender:GetLife() / Defender:GetLife0() * 100
+          Report:Add( string.format( "   - %s ( %s - %s ): ( #%d ) F: %3d, D:%3d - %s", 
+                                     Defender:GetName(), 
+                                     DefenderTask.Type, 
+                                     DefenderTask.Fsm:GetState(), 
+                                     Defender:GetSize(),
+                                     Fuel,
+                                     Damage, 
+                                     Defender:HasTask() == true and "Executing" or "Idle" ) )
         end
       end
       Report:Add( string.format( "\n - %d Tasks", TaskCount ) )

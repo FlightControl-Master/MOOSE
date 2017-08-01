@@ -340,7 +340,7 @@ function CONTROLLABLE:SetTask( DCSTask, WaitTime )
     -- Therefore we schedule the functions to set the mission and options for the Controllable.
     -- Controller.setTask( Controller, DCSTask )
 
-    if not WaitTime then
+    if not WaitTime or WaitTime == 0 then
       Controller:setTask( DCSTask )
     else
       self.TaskScheduler:Schedule( Controller, Controller.setTask, { DCSTask }, WaitTime )

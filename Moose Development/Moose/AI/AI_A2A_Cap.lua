@@ -350,8 +350,15 @@ end
 --- @param Wrapper.Group#GROUP AIGroup
 function AI_A2A_CAP.AttackRoute( AIGroup )
 
-  local EngageZone = AIGroup:GetState( AIGroup, "AI_A2A_CAP" ) -- AI.AI_Cap#AI_A2A_CAP
-  EngageZone:__Engage( 0.5 )
+  AIGroup:E( { "AI_A2A_CAP.AttackRoute:", AIGroup:GetName() } )
+
+  if AIGroup:IsAlive() then
+    local _AI_A2A_CAP = AIGroup:GetState( AIGroup, "AI_A2A_CAP" ) -- AI.AI_Cap#AI_A2A_CAP
+    _AI_A2A_CAP:__Engage( 0.5 )
+
+    local Task = AIGroup:TaskOrbitCircle( 4000, 400 )
+    AIGroup:SetTask( Task )
+  end
 end
 
 --- @param #AI_A2A_CAP self
@@ -438,17 +445,17 @@ function AI_A2A_CAP:onafterEngage( AIGroup, From, Event, To, AttackSetUnit )
         AIGroup:OptionROEOpenFire()
         AIGroup:OptionROTPassiveDefense()
 
-        AttackTasks[#AttackTasks+1] = AIGroup:TaskFunction( 1, #AttackTasks, "AI_A2A_CAP.AttackRoute" )
+        AttackTasks[#AttackTasks+1] = AIGroup:TaskFunction( 1, 1, "AI_A2A_CAP.AttackRoute" )
         AttackTasks[#AttackTasks+1] = AIGroup:TaskOrbitCircle( 4000, self.PatrolMinSpeed )
         
-        EngageRoute[#EngageRoute].task = AIGroup:TaskCombo( AttackTasks )
+        EngageRoute[1].task = AIGroup:TaskCombo( AttackTasks )
         
         --- Do a trick, link the NewEngageRoute function of the object to the AIControllable in a temporary variable ...
         AIGroup:SetState( AIGroup, "AI_A2A_CAP", self )
       end
       
       --- NOW ROUTE THE GROUP!
-      AIGroup:WayPointExecute( 1, 0 )
+      AIGroup:SetTask( AIGroup:TaskRoute( EngageRoute ), 1 )
     end
   else
     self:E("No targets found -> Going back to Patrolling")

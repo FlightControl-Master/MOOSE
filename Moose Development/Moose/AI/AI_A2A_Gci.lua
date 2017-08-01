@@ -311,11 +311,17 @@ end
 -- todo: need to fix this global function
 
 --- @param Wrapper.Group#GROUP AIControllable
-function AI_A2A_GCI.InterceptRoute( AIControllable )
+function AI_A2A_GCI.InterceptRoute( AIGroup )
 
-  local EngageZone = AIControllable:GetState( AIControllable, "EngageZone" ) -- AI.AI_Cap#AI_A2A_GCI
-  EngageZone:E( "NewEngageRoute" )
-  EngageZone:__Engage( 0.5 )
+  AIGroup:E( { "AI_A2A_GCI.InterceptRoute:", AIGroup:GetName() } )
+  
+  if AIGroup:IsAlive() then
+    local _AI_A2A_GCI = AIGroup:GetState( AIGroup, "AI_A2A_GCI" ) -- AI.AI_Cap#AI_A2A_GCI
+    _AI_A2A_GCI:__Engage( 0.5 )
+  
+    local Task = AIGroup:TaskOrbitCircle( 4000, 400 )
+    AIGroup:SetTask( Task )
+  end
 end
 
 --- @param #AI_A2A_GCI self
@@ -411,16 +417,17 @@ function AI_A2A_GCI:onafterEngage( AIGroup, From, Event, To, AttackSetUnit )
         AIGroup:OptionROEOpenFire()
         AIGroup:OptionROTPassiveDefense()
 
-        AttackTasks[#AttackTasks+1] = AIGroup:TaskFunction( 1, #AttackTasks, "AI_A2A_GCI.InterceptRoute" )
+        AttackTasks[#AttackTasks+1] = AIGroup:TaskFunction( 1, 1, "AI_A2A_GCI.InterceptRoute" )
         AttackTasks[#AttackTasks+1] = AIGroup:TaskOrbitCircle( 4000, self.EngageMinSpeed )
         EngageRoute[#EngageRoute].task = AIGroup:TaskCombo( AttackTasks )
         
         --- Do a trick, link the NewEngageRoute function of the object to the AIControllable in a temporary variable ...
-        AIGroup:SetState( AIGroup, "EngageZone", self )
+        AIGroup:SetState( AIGroup, "AI_A2A_GCI", self )
       end
       
       --- NOW ROUTE THE GROUP!
-      AIGroup:WayPointExecute( 1, 0 )
+      --AIGroup:ClearTasks()
+      AIGroup:SetTask( AIGroup:TaskRoute( EngageRoute ), 1 )
     
     end
   else

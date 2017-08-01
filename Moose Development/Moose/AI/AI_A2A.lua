@@ -222,6 +222,7 @@ function AI_A2A:New( AIGroup )
 
 
   self:AddTransition( "*", "Return", "Returning" )
+  self:AddTransition( "*", "Hold", "Holding" )
   self:AddTransition( "*", "Home", "Home" )
   self:AddTransition( "*", "LostControl", "LostControl" )
   self:AddTransition( "*", "Fuel", "Fuel" )
@@ -382,21 +383,34 @@ end
 
 --- @param #AI_A2A self
 function AI_A2A:onafterStatus()
-  self:F()
+
+  self:F( " Checking Status" )
 
   if self.Controllable and self.Controllable:IsAlive() then
   
     local RTB = false
     
     local DistanceFromHomeBase = self.HomeAirbase:GetCoordinate():Get2DDistance( self.Controllable:GetCoordinate() )
-    self:F({DistanceFromHomeBase=DistanceFromHomeBase})
     
-    if DistanceFromHomeBase > self.DisengageRadius then
-      self:E( self.Controllable:GetName() .. " is too far from home base, RTB!" )
-      self:Home()
-      RTB = true
+    if not self:Is( "Holding" ) and not self:Is( "Returning" ) then
+      local DistanceFromHomeBase = self.HomeAirbase:GetCoordinate():Get2DDistance( self.Controllable:GetCoordinate() )
+      self:F({DistanceFromHomeBase=DistanceFromHomeBase})
+      
+      if DistanceFromHomeBase > self.DisengageRadius then
+        self:E( self.Controllable:GetName() .. " is too far from home base, RTB!" )
+        self:Hold( 300 )
+        RTB = false
+      end
     end
     
+    if self:Is( "Damaged" ) or self:Is( "LostControl" ) then
+      if DistanceFromHomeBase < 5000 then
+        self:E( self.Controllable:GetName() .. " is too far from home base, RTB!" )
+        self:Home( "Destroy" )
+      end
+    end
+    
+
     
     local Fuel = self.Controllable:GetUnit(1):GetFuel()
     self:F({Fuel=Fuel})
@@ -427,10 +441,15 @@ function AI_A2A:onafterStatus()
     -- Check if planes went RTB and are out of control.
     if self.Controllable:HasTask() == false then
       if not self:Is( "Started" ) and 
-         not self:Is( "Stopped" ) then
+         not self:Is( "Stopped" ) and
+         not self:Is( "Home" ) then
         if self.IdleCount >= 2 then
-          self:E( self.Controllable:GetName() .. " control lost! " )
-          self:LostControl()
+          if Damage ~= InitialLife then
+            self:Damaged()
+          else  
+            self:E( self.Controllable:GetName() .. " control lost! " )
+            self:LostControl()
+          end
         else
           self.IdleCount = self.IdleCount + 1
         end
@@ -438,7 +457,7 @@ function AI_A2A:onafterStatus()
     else
       self.IdleCount = 0
     end
-    
+
     if RTB == true then
       self:__RTB( 0.5 )
     end
@@ -451,11 +470,30 @@ end
 --- @param Wrapper.Group#GROUP AIGroup
 function AI_A2A.RTBRoute( AIGroup )
 
-  AIGroup:E( { "RTBRoute:", AIGroup:GetName() } )
-  local _AI_A2A = AIGroup:GetState( AIGroup, "AI_A2A" ) -- #AI_A2A
-  _AI_A2A:__RTB( 0.5 )
+  AIGroup:E( { "AI_A2A.RTBRoute:", AIGroup:GetName() } )
+  
+  if AIGroup:IsAlive() then
+    local _AI_A2A = AIGroup:GetState( AIGroup, "AI_A2A" ) -- #AI_A2A
+    _AI_A2A:__RTB( 0.5 )
+    local Task = AIGroup:TaskOrbitCircle( 4000, 400 )
+    AIGroup:SetTask( Task )
+  end
+  
 end
 
+--- @param Wrapper.Group#GROUP AIGroup
+function AI_A2A.RTBHold( AIGroup )
+
+  AIGroup:E( { "AI_A2A.RTBHold:", AIGroup:GetName() } )
+  if AIGroup:IsAlive() then
+    local _AI_A2A = AIGroup:GetState( AIGroup, "AI_A2A" ) -- #AI_A2A
+    _AI_A2A:__RTB( 0.5 )
+    _AI_A2A:Return()
+    local Task = AIGroup:TaskOrbitCircle( 4000, 400 )
+    AIGroup:SetTask( Task )
+  end
+  
+end
 
 
 --- @param #AI_A2A self
@@ -467,8 +505,6 @@ function AI_A2A:onafterRTB( AIGroup, From, Event, To )
   if AIGroup and AIGroup:IsAlive() then
 
     self:E( "Group " .. AIGroup:GetName() .. " ... RTB! ( " .. self:GetState() .. " )" )
-    
-    self.CheckStatus = false
     
     self:ClearTargetDistance()
     AIGroup:ClearTasks()
@@ -486,6 +522,7 @@ function AI_A2A:onafterRTB( AIGroup, From, Event, To )
     
     local ToAirbaseCoord = CurrentCoord:Translate( 5000, ToAirbaseAngle )
     if Distance < 5000 then
+      self:E( "RTB and near the airbase!" )
       self:Home()
       return
     end
@@ -502,6 +539,7 @@ function AI_A2A:onafterRTB( AIGroup, From, Event, To )
     self:T2( { self.MinSpeed, self.MaxSpeed, ToTargetSpeed } )
     
     EngageRoute[#EngageRoute+1] = ToPatrolRoutePoint
+    EngageRoute[#EngageRoute+1] = ToPatrolRoutePoint
     
     AIGroup:OptionROEHoldFire()
     AIGroup:OptionROTEvadeFire()
@@ -511,12 +549,13 @@ function AI_A2A:onafterRTB( AIGroup, From, Event, To )
   
     local Tasks = {}
     Tasks[#Tasks+1] = AIGroup:TaskFunction( 1, 1, "AI_A2A.RTBRoute" )
-    EngageRoute[1].task = AIGroup:TaskCombo( Tasks )
+    Tasks[#Tasks+1] = AIGroup:TaskOrbitCircle( 4000, 350 )
+    EngageRoute[#EngageRoute].task = AIGroup:TaskCombo( Tasks )
 
     AIGroup:SetState( AIGroup, "AI_A2A", self )
 
     --- NOW ROUTE THE GROUP!
-    AIGroup:WayPointExecute( 1, 0 )
+    AIGroup:SetTask( AIGroup:TaskRoute( EngageRoute ), 1 )
       
   end
     
@@ -533,6 +572,30 @@ function AI_A2A:onafterHome( AIGroup, From, Event, To )
   end
 
 end
+
+--- @param #AI_A2A self
+-- @param Wrapper.Group#GROUP AIGroup
+function AI_A2A:onafterHold( AIGroup, From, Event, To, HoldTime )
+  self:F( { AIGroup, From, Event, To } )
+
+  self:E( "Group " .. self.Controllable:GetName() .. " ... Holding! ( " .. self:GetState() .. " )" )
+  
+  if AIGroup and AIGroup:IsAlive() then
+    local OrbitTask = AIGroup:TaskOrbitCircle( math.random( self.PatrolFloorAltitude, self.PatrolCeilingAltitude ), self.PatrolMinSpeed )
+    local TimedOrbitTask = AIGroup:TaskControlled( OrbitTask, AIGroup:TaskCondition( nil, nil, nil, nil, HoldTime , nil ) )
+    
+    local RTBTask = AIGroup:TaskFunction( 1, 1, "AI_A2A.RTBHold" )
+    
+    local OrbitHoldTask = AIGroup:TaskOrbitCircle( 4000, self.PatrolMinSpeed )
+    
+    AIGroup:SetState( AIGroup, "AI_A2A", self )
+    
+    AIGroup:SetTask( AIGroup:TaskCombo( { TimedOrbitTask, RTBTask, OrbitHoldTask } ), 0 )
+  end
+
+end
+
+
     
 
 
