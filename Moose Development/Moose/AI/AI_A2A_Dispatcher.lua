@@ -1487,8 +1487,6 @@ do -- AI_A2A_DISPATCHER
       local Median = Cap.LowInterval + Variance
       local Randomization = Variance / Median
       
-      self:E({Randomization = Randomization})
-      
       if ScheduleID then
         Scheduler:Stop( ScheduleID )
       end
