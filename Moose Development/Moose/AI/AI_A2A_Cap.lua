@@ -356,8 +356,8 @@ function AI_A2A_CAP.AttackRoute( AIGroup )
     local _AI_A2A_CAP = AIGroup:GetState( AIGroup, "AI_A2A_CAP" ) -- AI.AI_Cap#AI_A2A_CAP
     _AI_A2A_CAP:__Engage( 0.5 )
 
-    local Task = AIGroup:TaskOrbitCircle( 4000, 400 )
-    AIGroup:SetTask( Task )
+    --local Task = AIGroup:TaskOrbitCircle( 4000, 400 )
+    --AIGroup:SetTask( Task )
   end
 end
 
@@ -434,10 +434,6 @@ function AI_A2A_CAP:onafterEngage( AIGroup, From, Event, To, AttackSetUnit )
         end
       end
   
-      --- Now we're going to do something special, we're going to call a function from a waypoint action at the AIControllable...
-      self.Controllable:WayPointInitialize( EngageRoute )
-      
-      
       if #AttackTasks == 0 then
         self:E("No targets found -> Going back to Patrolling")
         self:__Abort( 0.5 )
@@ -446,7 +442,7 @@ function AI_A2A_CAP:onafterEngage( AIGroup, From, Event, To, AttackSetUnit )
         AIGroup:OptionROTPassiveDefense()
 
         AttackTasks[#AttackTasks+1] = AIGroup:TaskFunction( 1, 1, "AI_A2A_CAP.AttackRoute" )
-        AttackTasks[#AttackTasks+1] = AIGroup:TaskOrbitCircle( 4000, self.PatrolMinSpeed )
+        --AttackTasks[#AttackTasks+1] = AIGroup:TaskOrbitCircle( AIGroup:GetHeight(), self.PatrolMinSpeed )
         
         EngageRoute[1].task = AIGroup:TaskCombo( AttackTasks )
         

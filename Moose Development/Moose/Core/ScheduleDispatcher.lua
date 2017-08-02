@@ -79,8 +79,8 @@ function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleAr
   self.Schedule[Scheduler][self.CallID].Arguments = ScheduleArguments
   self.Schedule[Scheduler][self.CallID].StartTime = timer.getTime() + ( Start or 0 )
   self.Schedule[Scheduler][self.CallID].Start = Start + .1
-  self.Schedule[Scheduler][self.CallID].Repeat = Repeat
-  self.Schedule[Scheduler][self.CallID].Randomize = Randomize
+  self.Schedule[Scheduler][self.CallID].Repeat = Repeat or 0
+  self.Schedule[Scheduler][self.CallID].Randomize = Randomize or 0
   self.Schedule[Scheduler][self.CallID].Stop = Stop
 
   self:T3( self.Schedule[Scheduler][self.CallID] )
@@ -185,7 +185,7 @@ function SCHEDULEDISPATCHER:Start( Scheduler, CallID )
       Schedule[CallID].ScheduleID = timer.scheduleFunction( 
         Schedule[CallID].CallHandler, 
         CallID, 
-        timer.getTime() + Schedule[CallID].Start
+        timer.getTime() + Schedule[CallID].Start + math.random( - ( Schedule[CallID].Randomize * Schedule[CallID].Repeat / 2 ), ( Schedule[CallID].Randomize * Schedule[CallID].Repeat / 2 ) )
       )
     end
   else

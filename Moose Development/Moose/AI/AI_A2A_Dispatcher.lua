@@ -1482,10 +1482,18 @@ do -- AI_A2A_DISPATCHER
       Cap.CapLimit = CapLimit
       Cap.Scheduler = Cap.Scheduler or SCHEDULER:New( self ) 
       local Scheduler = Cap.Scheduler -- Core.Scheduler#SCHEDULER
+      local ScheduleID = Cap.ScheduleID
       local Variance = ( Cap.HighInterval - Cap.LowInterval ) / 2
       local Median = Cap.LowInterval + Variance
       local Randomization = Variance / Median
-      Scheduler:Schedule(self, self.SchedulerCAP, { SquadronName }, Median, Median, Randomization )
+      
+      self:E({Randomization = Randomization})
+      
+      if ScheduleID then
+        Scheduler:Stop( ScheduleID )
+      end
+      
+      Cap.ScheduleID = Scheduler:Schedule( self, self.SchedulerCAP, { SquadronName }, Median, Median, Randomization )
     else
       error( "This squadron does not exist:" .. SquadronName )
     end

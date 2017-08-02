@@ -319,8 +319,8 @@ function AI_A2A_GCI.InterceptRoute( AIGroup )
     local _AI_A2A_GCI = AIGroup:GetState( AIGroup, "AI_A2A_GCI" ) -- AI.AI_Cap#AI_A2A_GCI
     _AI_A2A_GCI:__Engage( 0.5 )
   
-    local Task = AIGroup:TaskOrbitCircle( 4000, 400 )
-    AIGroup:SetTask( Task )
+    --local Task = AIGroup:TaskOrbitCircle( 4000, 400 )
+    --AIGroup:SetTask( Task )
   end
 end
 
@@ -418,7 +418,7 @@ function AI_A2A_GCI:onafterEngage( AIGroup, From, Event, To, AttackSetUnit )
         AIGroup:OptionROTPassiveDefense()
 
         AttackTasks[#AttackTasks+1] = AIGroup:TaskFunction( 1, 1, "AI_A2A_GCI.InterceptRoute" )
-        AttackTasks[#AttackTasks+1] = AIGroup:TaskOrbitCircle( 4000, self.EngageMinSpeed )
+        --AttackTasks[#AttackTasks+1] = AIGroup:TaskOrbitCircle( AIGroup:GetHeight(), self.EngageMinSpeed )
         EngageRoute[#EngageRoute].task = AIGroup:TaskCombo( AttackTasks )
         
         --- Do a trick, link the NewEngageRoute function of the object to the AIControllable in a temporary variable ...
