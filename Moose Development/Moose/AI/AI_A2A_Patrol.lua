@@ -317,8 +317,13 @@ end
 -- Note that this method is required, as triggers the next route when patrolling for the Controllable.
 function AI_A2A_PATROL.PatrolRoute( AIGroup )
 
-  local _AI_A2A_Patrol = AIGroup:GetState( AIGroup, "AI_A2A_PATROL" ) -- #AI_A2A_PATROL
-  _AI_A2A_Patrol:Route()
+  AIGroup:E( { "AI_A2A_PATROL.PatrolRoute:", AIGroup:GetName() } )
+
+  if AIGroup:IsAlive() then
+    local _AI_A2A_Patrol = AIGroup:GetState( AIGroup, "AI_A2A_PATROL" ) -- #AI_A2A_PATROL
+    _AI_A2A_Patrol:Route()
+  end
+  
 end
 
 
@@ -347,7 +352,7 @@ function AI_A2A_PATROL:onafterRoute( AIGroup, From, Event, To )
     local CurrentCoord = AIGroup:GetCoordinate()
     
     local ToTargetCoord = self.PatrolZone:GetRandomPointVec2()
-    ToTargetCoord:SetAlt(math.random( self.PatrolFloorAltitude,self.PatrolCeilingAltitude ) )
+    ToTargetCoord:SetAlt( math.random( self.PatrolFloorAltitude, self.PatrolCeilingAltitude ) )
     self:SetTargetDistance( ToTargetCoord ) -- For RTB status check
     
     local ToTargetSpeed = math.random( self.PatrolMinSpeed, self.PatrolMaxSpeed )
@@ -364,9 +369,6 @@ function AI_A2A_PATROL:onafterRoute( AIGroup, From, Event, To )
     PatrolRoute[#PatrolRoute+1] = ToPatrolRoutePoint
     PatrolRoute[#PatrolRoute+1] = ToPatrolRoutePoint
     
-    --- Now we're going to do something special, we're going to call a function from a waypoint action at the AIControllable...
-    AIGroup:WayPointInitialize( PatrolRoute )
-
     local Tasks = {}
     Tasks[#Tasks+1] = AIGroup:TaskFunction( 1, 1, "AI_A2A_PATROL.PatrolRoute" )
     
@@ -375,8 +377,11 @@ function AI_A2A_PATROL:onafterRoute( AIGroup, From, Event, To )
     --- Do a trick, link the NewPatrolRoute function of the PATROLGROUP object to the AIControllable in a temporary variable ...
     AIGroup:SetState( AIGroup, "AI_A2A_PATROL", self )
 
+    AIGroup:OptionROEReturnFire()
+    AIGroup:OptionROTPassiveDefense()
+
     --- NOW ROUTE THE GROUP!
-    AIGroup:WayPointExecute( 1, 2 )
+    AIGroup:SetTask( AIGroup:TaskRoute( PatrolRoute ), 0.5 )
   end
 
 end

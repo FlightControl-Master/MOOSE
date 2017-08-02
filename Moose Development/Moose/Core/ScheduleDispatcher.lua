@@ -79,8 +79,8 @@ function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleAr
   self.Schedule[Scheduler][self.CallID].Arguments = ScheduleArguments
   self.Schedule[Scheduler][self.CallID].StartTime = timer.getTime() + ( Start or 0 )
   self.Schedule[Scheduler][self.CallID].Start = Start + .1
-  self.Schedule[Scheduler][self.CallID].Repeat = Repeat
-  self.Schedule[Scheduler][self.CallID].Randomize = Randomize
+  self.Schedule[Scheduler][self.CallID].Repeat = Repeat or 0
+  self.Schedule[Scheduler][self.CallID].Randomize = Randomize or 0
   self.Schedule[Scheduler][self.CallID].Stop = Stop
 
   self:T3( self.Schedule[Scheduler][self.CallID] )
@@ -133,10 +133,10 @@ function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleAr
       end
       
       local CurrentTime = timer.getTime()
-      local StartTime = CurrentTime + Start
+      local StartTime = Schedule.StartTime
       
       if Status and (( Result == nil ) or ( Result and Result ~= false ) ) then
-        if Repeat ~= 0 and ( Stop == 0 ) or ( Stop ~= 0 and CurrentTime <= StartTime + Stop ) then
+        if Repeat ~= 0 and ( ( Stop == 0 ) or ( Stop ~= 0 and CurrentTime <= StartTime + Stop ) ) then
           local ScheduleTime =
             CurrentTime +
             Repeat +
@@ -182,10 +182,11 @@ function SCHEDULEDISPATCHER:Start( Scheduler, CallID )
     -- Only start when there is no ScheduleID defined!
     -- This prevents to "Start" the scheduler twice with the same CallID...
     if not Schedule[CallID].ScheduleID then
+      Schedule[CallID].StartTime = timer.getTime()  -- Set the StartTime field to indicate when the scheduler started.
       Schedule[CallID].ScheduleID = timer.scheduleFunction( 
         Schedule[CallID].CallHandler, 
         CallID, 
-        timer.getTime() + Schedule[CallID].Start
+        timer.getTime() + Schedule[CallID].Start + math.random( - ( Schedule[CallID].Randomize * Schedule[CallID].Repeat / 2 ), ( Schedule[CallID].Randomize * Schedule[CallID].Repeat / 2 ) )
       )
     end
   else
