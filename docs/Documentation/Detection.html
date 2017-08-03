@@ -628,6 +628,12 @@ The different values of Unit.Category can be:</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).GetFriendliesNearIntercept">DETECTION_BASE:GetFriendliesNearIntercept(DetectedItem)</a></td>
+		<td class="summary">
+<p>Returns friendly units nearby the intercept point ...</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).GetPlayersNearBy">DETECTION_BASE:GetPlayersNearBy(DetectedItem)</a></td>
 		<td class="summary">
 <p>Returns friendly units nearby the FAC units ...</p>
@@ -703,6 +709,12 @@ The different values of Unit.Category can be:</p>
 		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).IsFriendliesNearBy">DETECTION_BASE:IsFriendliesNearBy(DetectedItem)</a></td>
 		<td class="summary">
 <p>Returns if there are friendlies nearby the FAC units ...</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).IsFriendliesNearIntercept">DETECTION_BASE:IsFriendliesNearIntercept(DetectedItem)</a></td>
+		<td class="summary">
+<p>Returns if there are friendlies nearby the intercept ...</p>
 </td>
 		</tr>
 		<tr>
@@ -2630,7 +2642,7 @@ The group to generate the report for.</p>
 		<dl class="function">
 <dt>
 
-		<em></em>
+		<em>#number</em>
 <a id="#(DETECTION_BASE).DetectionInterval" >
 <strong>DETECTION_BASE.DetectionInterval</strong>
 </a>
@@ -3099,6 +3111,32 @@ The distance. </p>
 		<dl class="function">
 <dt>
 
+<a id="#(DETECTION_BASE).GetFriendliesNearIntercept" >
+<strong>DETECTION_BASE:GetFriendliesNearIntercept(DetectedItem)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns friendly units nearby the intercept point ...</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> DetectedItem </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(map)">#map</a>:</em></p>
+<h1>string,Wrapper.Unit#UNIT> The map of Friendly UNITs.</h1>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(DETECTION_BASE).GetPlayersNearBy" >
 <strong>DETECTION_BASE:GetPlayersNearBy(DetectedItem)</strong>
 </a>
@@ -3402,6 +3440,32 @@ true if already identified.</p>
 				
 <p><em>#boolean:</em>
 trhe if there are friendlies nearby </p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_BASE).IsFriendliesNearIntercept" >
+<strong>DETECTION_BASE:IsFriendliesNearIntercept(DetectedItem)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns if there are friendlies nearby the intercept ...</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> DetectedItem </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+trhe if there are friendlies near the intercept.</p>
 
 </dd>
 </dl>

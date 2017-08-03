@@ -299,7 +299,7 @@ Per one, two, three, four?</p>
 			<h2><a id="#(AI_A2A_DISPATCHER)">Type <code>AI_A2A_DISPATCHER</code></a></h2>
 				<table class="function_list">
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_DISPATCHER).AddDefenderToSquadron">AI_A2A_DISPATCHER:AddDefenderToSquadron(Squadron, Defender)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_DISPATCHER).AddDefenderToSquadron">AI_A2A_DISPATCHER:AddDefenderToSquadron(Squadron, Defender, Size)</a></td>
 		<td class="summary">
 
 </td>
@@ -701,6 +701,12 @@ Per one, two, three, four?</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_DISPATCHER).SetDefaultTanker">AI_A2A_DISPATCHER:SetDefaultTanker(TankerName)</a></td>
+		<td class="summary">
+<p>Set the default tanker where defenders will Refuel in the air.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_DISPATCHER).SetDefenderTask">AI_A2A_DISPATCHER:SetDefenderTask(Defender, Type, Fsm, Target)</a></td>
 		<td class="summary">
 
@@ -752,6 +758,12 @@ Per one, two, three, four?</p>
 		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_DISPATCHER).SetSquadronCapInterval">AI_A2A_DISPATCHER:SetSquadronCapInterval(SquadronName, CapLimit, LowInterval, HighInterval, Probability)</a></td>
 		<td class="summary">
 
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_DISPATCHER).SetSquadronFuelThreshold">AI_A2A_DISPATCHER:SetSquadronFuelThreshold(SquadronName, FuelThreshold)</a></td>
+		<td class="summary">
+<p>Set the fuel treshold for the squadron when defenders will RTB or Refuel in the air.</p>
 </td>
 		</tr>
 		<tr>
@@ -824,6 +836,12 @@ Per one, two, three, four?</p>
 		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_DISPATCHER).SetSquadronTakeoffInAir">AI_A2A_DISPATCHER:SetSquadronTakeoffInAir(SquadronName)</a></td>
 		<td class="summary">
 <p>Sets flights to take-off in the air, as part of the defense system.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_DISPATCHER).SetSquadronTanker">AI_A2A_DISPATCHER:SetSquadronTanker(SquadronName, TankerName)</a></td>
+		<td class="summary">
+<p>Set the squadron tanker where defenders will Refuel in the air.</p>
 </td>
 		</tr>
 		<tr>
@@ -1244,9 +1262,11 @@ targets to be engaged. Depending on the grouping parameter, the spawned flights 
 For example with a group setting of 2, if 3 targets are detected and cannot be engaged by CAP or any airborne flight, 
 a GCI needs to be started, the GCI flights will be grouped as follows: Group 1 of 2 flights and Group 2 of one flight!</p>
 
+<p>Even more ... If one target has been detected, and the overhead is 1.5, grouping is 1, then two groups of planes will be spawned, with one unit each!</p>
+
 <p>The <strong>grouping value is set for a Squadron</strong>, and can be <strong>dynamically adjusted</strong> during mission execution, so to adjust the defense flights grouping when the tactical situation changes.</p>
 
-<h3>6.4. Overhead and Balance the effectiveness of the air defenses in case of GCI</h3>
+<h3>6.4. Overhead and Balance the effectiveness of the air defenses in case of GCI.</h3>
 
 <p>The effectiveness can be set with the <strong>overhead parameter</strong>. This is a number that is used to calculate the amount of Units that dispatching command will allocate to GCI in surplus of detected amount of units.
 The <strong>default value</strong> of the overhead parameter is 1.0, which means <strong>equal balance</strong>. </p>
@@ -1270,7 +1290,17 @@ The overhead must be given as a decimal value with 1 as the neutral value, which
 <p>The amount of defending units is calculated by multiplying the amount of detected attacking planes as part of the detected group 
 multiplied by the Overhead and rounded up to the smallest integer. </p>
 
+<p>For example ... If one target has been detected, and the overhead is 1.5, grouping is 1, then two groups of planes will be spawned, with one unit each!</p>
+
 <p>The <strong>overhead value is set for a Squadron</strong>, and can be <strong>dynamically adjusted</strong> during mission execution, so to adjust the defense overhead when the tactical situation changes.</p>
+
+<h2>6.5. Squadron fuel treshold.</h2>
+
+<p>When an airplane gets <strong>out of fuel</strong> to a certain %-tage, which is by default <strong>15% (0.15)</strong>, there are two possible actions that can be taken:
+ - The defender will go RTB, and will be replaced with a new defender if possible.
+ - The defender will refuel at a tanker, if a tanker has been specified for the squadron.</p>
+
+<p>Use the method <a href="##(AI_A2A_DISPATCHER).SetSquadronFuelThreshold">AI<em>A2A</em>DISPATCHER.SetSquadronFuelThreshold</a>() to set the <strong>squadron fuel treshold</strong> of spawned airplanes for all squadrons.</p>
 
 <h2>7. Setup a squadron for CAP</h2>
 
@@ -1347,6 +1377,32 @@ Zones can be circles, can be setup in the mission editor using trigger zones, bu
 
 <pre><code> A2ADispatcher:SetSquadronCap( "Sochi", CAPZoneWest, 4000, 8000, 600, 800, 800, 1200, "BARO" )
  A2ADispatcher:SetSquadronCapInterval( "Sochi", 2, 30, 120, 1 )
+</code></pre>
+
+<h2>7.3. Squadron tanker to refuel when executing CAP and defender is out of fuel.</h2>
+
+<p>Instead of sending CAP to RTB when out of fuel, you can let CAP refuel in mid air using a tanker.
+This greatly increases the efficiency of your CAP operations.</p>
+
+<p>In the mission editor, setup a group with task Refuelling. A tanker unit of the correct coalition will be automatically selected.
+Then, use the method <a href="##(AI_A2A_DISPATCHER).SetDefaultTanker">AI<em>A2A</em>DISPATCHER.SetDefaultTanker</a>() to set the default tanker for the refuelling.
+You can also specify a specific tanker for refuelling for a squadron  by using the method <a href="##(AI_A2A_DISPATCHER).SetSquadronTanker">AI<em>A2A</em>DISPATCHER.SetSquadronTanker</a>().</p>
+
+<p>When the tanker specified is alive and in the air, the tanker will be used for refuelling.</p>
+
+<p>For example, the following setup will create a CAP for squadron "Gelend" with a refuel task for the squadron:</p>
+
+<p><img src="..\Presentations\AI_A2A_DISPATCHER\AI_A2A_DISPATCHER-ME_10.JPG" alt="Banner Image"/></p>
+
+<pre><code> -- Define the CAP
+ A2ADispatcher:SetSquadron( "Gelend", AIRBASE.Caucasus.Gelendzhik, { "SQ CCCP SU-30" }, 20 )
+ A2ADispatcher:SetSquadronCap( "Gelend", ZONE:New( "PatrolZoneGelend" ), 4000, 8000, 600, 800, 1000, 1300 )
+ A2ADispatcher:SetSquadronCapInterval( "Gelend", 2, 30, 600, 1 ) 
+ A2ADispatcher:SetSquadronGci( "Gelend", 900, 1200 )
+
+ -- Setup the Refuelling for squadron "Gelend", at tanker (group) "TankerGelend" when the fuel in the tank of the CAP defenders is less than 80%.
+ A2ADispatcher:SetSquadronFuelThreshold( "Gelend", 0.8 )
+ A2ADispatcher:SetSquadronTanker( "Gelend", "TankerGelend" )
 </code></pre>
 
 <h2>8. Setup a squadron for GCI:</h2>
@@ -1457,6 +1513,32 @@ So, ensure that you set the default CAP limit <strong>before</strong> you spawn 
 <p>Use the method <a href="##(AI_A2A_DISPATCHER).SetDefaultCapTimeInterval">AI<em>A2A</em>DISPATCHER.SetDefaultCapTimeInterval</a>() to set the <strong>default CAP time interval</strong> of spawned airplanes for all squadrons. <br/>
 Note that you can still change the CAP limit and CAP time intervals for each CAP individually using the <a href="##(AI_A2A_DISPATCHER).SetSquadronCapTimeInterval">AI<em>A2A</em>DISPATCHER.SetSquadronCapTimeInterval</a>() method.</p>
 
+<h2>10.7.3. Default tanker for refuelling when executing CAP.</h2>
+
+<p>Instead of sending CAP to RTB when out of fuel, you can let CAP refuel in mid air using a tanker.
+This greatly increases the efficiency of your CAP operations.</p>
+
+<p>In the mission editor, setup a group with task Refuelling. A tanker unit of the correct coalition will be automatically selected.
+Then, use the method <a href="##(AI_A2A_DISPATCHER).SetDefaultTanker">AI<em>A2A</em>DISPATCHER.SetDefaultTanker</a>() to set the tanker for the dispatcher.
+Use the method <a href="##(AI_A2A_DISPATCHER).SetDefaultFuelTreshold">AI<em>A2A</em>DISPATCHER.SetDefaultFuelTreshold</a>() to set the %-tage left in the defender airplane tanks when a refuel action is needed.</p>
+
+<p>When the tanker specified is alive and in the air, the tanker will be used for refuelling.</p>
+
+<p>For example, the following setup will set the default refuel tanker to "Tanker":</p>
+
+<p><img src="..\Presentations\AI_A2A_DISPATCHER\AI_A2A_DISPATCHER-ME_11.JPG" alt="Banner Image"/></p>
+
+<pre><code> -- Define the CAP
+ A2ADispatcher:SetSquadron( "Sochi", AIRBASE.Caucasus.Sochi_Adler, { "SQ CCCP SU-34" }, 20 )
+ A2ADispatcher:SetSquadronCap( "Sochi", ZONE:New( "PatrolZone" ), 4000, 8000, 600, 800, 1000, 1300 )
+ A2ADispatcher:SetSquadronCapInterval("Sochi", 2, 30, 600, 1 ) 
+ A2ADispatcher:SetSquadronGci( "Sochi", 900, 1200 )
+
+ -- Set the default tanker for refuelling to "Tanker", when the default fuel treshold has reached 90% fuel left.
+ A2ADispatcher:SetDefaultFuelThreshold( 0.9 )
+ A2ADispatcher:SetDefaultTanker( "Tanker" )
+</code></pre>
+
 <h2>10.8. Default settings for GCI.</h2>
 
 <h2>10.8.1. Optimal intercept point calculation.</h2>
@@ -1485,9 +1567,10 @@ This time can easily take 2 to 3 minutes, and even then the defenders still need
 <h2>10.8.2. Default disengage radius.</h2>
 
 <p>The radius to <strong>disengage any target</strong> when the <strong>distance</strong> of the defender to the <strong>home base</strong> is larger than the specified meters.
-The default disengage radius is <strong>100km</strong> (100000 meters). Note that the disengage radius is applicable to ALL squadrons!</p>
+The default disengage radius is <strong>300km</strong> (300000 meters). Note that the disengage radius is applicable to ALL squadrons!</p>
 
 <p>Use the method <a href="##(AI_A2A_DISPATCHER).SetDisengageRadius">AI<em>A2A</em>DISPATCHER.SetDisengageRadius</a>() to modify the default disengage radius to another distance setting.</p>
+
 
 <h2>11. Q &amp; A:</h2>
 
@@ -1813,7 +1896,7 @@ The following parameters were given to the :New method of AI<em>A2A</em>GCICAP, 
 <dt>
 
 <a id="#(AI_A2A_DISPATCHER).AddDefenderToSquadron" >
-<strong>AI_A2A_DISPATCHER:AddDefenderToSquadron(Squadron, Defender)</strong>
+<strong>AI_A2A_DISPATCHER:AddDefenderToSquadron(Squadron, Defender, Size)</strong>
 </a>
 </dt>
 <dd>
@@ -1830,6 +1913,11 @@ The following parameters were given to the :New method of AI<em>A2A</em>GCICAP, 
 				<li>
 				
 <p><code><em> Defender </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> Size </em></code>: </p>
 
 				</li>
 		</ul>
@@ -2107,7 +2195,6 @@ DefenderSquadron</p>
 		<dl class="function">
 <dt>
 
-		<em></em>
 <a id="#(AI_A2A_DISPATCHER).DisengageRadius" >
 <strong>AI_A2A_DISPATCHER.DisengageRadius</strong>
 </a>
@@ -3686,6 +3773,44 @@ From the airbase hot, from the airbase cold, in the air, from the runway.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(AI_A2A_DISPATCHER).SetDefaultTanker" >
+<strong>AI_A2A_DISPATCHER:SetDefaultTanker(TankerName)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set the default tanker where defenders will Refuel in the air.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="##(strig)">#strig</a> TankerName </em></code>: 
+A string defining the group name of the Tanker as defined within the Mission Editor.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(AI_A2A_DISPATCHER)">#AI<em>A2A</em>DISPATCHER</a>:</em></p>
+
+
+			<h3>Usage:</h3>
+		<pre class="example"><code>
+  -- Now Setup the A2A dispatcher, and initialize it using the Detection object.
+  A2ADispatcher = AI_A2A_DISPATCHER:New( Detection )  
+  
+  -- Now Setup the default fuel treshold.
+  A2ADispatcher:SetDefaultRefuelThreshold( 0.30 ) -- Go RTB when only 30% of fuel remaining in the tank.
+  
+  -- Now Setup the default tanker.
+  A2ADispatcher:SetDefaultTanker( "Tanker" ) -- The group name of the tanker is "Tanker" in the Mission Editor.</code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(AI_A2A_DISPATCHER).SetDefenderTask" >
 <strong>AI_A2A_DISPATCHER:SetDefenderTask(Defender, Type, Fsm, Target)</strong>
 </a>
@@ -3766,7 +3891,7 @@ From the airbase hot, from the airbase cold, in the air, from the runway.</p>
 				<li>
 				
 <p><code><em>#number DisengageRadius </em></code>: 
-(Optional, Default = 100000) The radius to disengage a target when too far from the home base.</p>
+(Optional, Default = 300000) The radius to disengage a target when too far from the home base.</p>
 
 				</li>
 		</ul>
@@ -3781,7 +3906,7 @@ From the airbase hot, from the airbase cold, in the air, from the runway.</p>
   Dispatcher:SetDisengageRadius( 50000 )
   
   -- Set 100km as the disengage radius.
-  Dispatcher:SetDisngageRadius() -- 100000 is the default value.
+  Dispatcher:SetDisngageRadius() -- 300000 is the default value.
   </code></pre>
 
 </dd>
@@ -4158,6 +4283,51 @@ The squadron name.</p>
        A2ADispatcher:SetSquadronCap( "Maykop", CAPZoneMiddle, 4000, 8000, 600, 800, 800, 1200, "RADIO" )
        A2ADispatcher:SetSquadronCapInterval( "Sochi", 2, 30, 120, 1 )
 </code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_A2A_DISPATCHER).SetSquadronFuelThreshold" >
+<strong>AI_A2A_DISPATCHER:SetSquadronFuelThreshold(SquadronName, FuelThreshold)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set the fuel treshold for the squadron when defenders will RTB or Refuel in the air.</p>
+
+	
+<p>The fuel treshold is by default set to 15%, which means that an airplane will stay in the air until 15% of its fuel has been consumed.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string SquadronName </em></code>: 
+The name of the squadron.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number FuelThreshold </em></code>: 
+A decimal number between 0 and 1, that expresses the %-tage of the treshold of fuel remaining in the tank when the plane will go RTB or Refuel.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(AI_A2A_DISPATCHER)">#AI<em>A2A</em>DISPATCHER</a>:</em></p>
+
+
+			<h3>Usage:</h3>
+		<pre class="example"><code>
+  -- Now Setup the A2A dispatcher, and initialize it using the Detection object.
+  A2ADispatcher = AI_A2A_DISPATCHER:New( Detection )  
+  
+  -- Now Setup the default fuel treshold.
+  A2ADispatcher:SetSquadronRefuelThreshold( "SquadronName", 0.30 ) -- Go RTB when only 30% of fuel remaining in the tank.
+  </code></pre>
 
 </dd>
 </dl>
@@ -4673,6 +4843,50 @@ The name of the squadron.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(AI_A2A_DISPATCHER).SetSquadronTanker" >
+<strong>AI_A2A_DISPATCHER:SetSquadronTanker(SquadronName, TankerName)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set the squadron tanker where defenders will Refuel in the air.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string SquadronName </em></code>: 
+The name of the squadron.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="##(strig)">#strig</a> TankerName </em></code>: 
+A string defining the group name of the Tanker as defined within the Mission Editor.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(AI_A2A_DISPATCHER)">#AI<em>A2A</em>DISPATCHER</a>:</em></p>
+
+
+			<h3>Usage:</h3>
+		<pre class="example"><code>
+  -- Now Setup the A2A dispatcher, and initialize it using the Detection object.
+  A2ADispatcher = AI_A2A_DISPATCHER:New( Detection )  
+  
+  -- Now Setup the squadron fuel treshold.
+  A2ADispatcher:SetSquadronRefuelThreshold( "SquadronName", 0.30 ) -- Go RTB when only 30% of fuel remaining in the tank.
+  
+  -- Now Setup the squadron tanker.
+  A2ADispatcher:SetSquadronTanker( "SquadronName", "Tanker" ) -- The group name of the tanker is "Tanker" in the Mission Editor.</code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(AI_A2A_DISPATCHER).SetTacticalDisplay" >
 <strong>AI_A2A_DISPATCHER:SetTacticalDisplay(TacticalDisplay)</strong>
 </a>
@@ -5114,6 +5328,8 @@ The radius in meters wherein detected airplanes will GCI.</p>
 </dl>
 
 			<h2><a id="#(list)" >Type <code>list</code></a></h2>
+			
+			<h2><a id="#(strig)" >Type <code>strig</code></a></h2>
 			
 </div>
 

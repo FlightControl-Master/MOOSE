@@ -179,7 +179,7 @@ function AI_A2A_PATROL:New( AIGroup, PatrolZone, PatrolFloorAltitude, PatrolCeil
   -- defafult PatrolAltType to "RADIO" if not specified
   self.PatrolAltType = PatrolAltType or "RADIO"
   
-  self:AddTransition( "Started", "Patrol", "Patrolling" )
+  self:AddTransition( { "Started", "Refuelling" }, "Patrol", "Patrolling" )
 
 --- OnBefore Transition Handler for Event Patrol.
 -- @function [parent=#AI_A2A_PATROL] OnBeforePatrol
@@ -251,6 +251,8 @@ function AI_A2A_PATROL:New( AIGroup, PatrolZone, PatrolFloorAltitude, PatrolCeil
 -- @function [parent=#AI_A2A_PATROL] __Route
 -- @param #AI_A2A_PATROL self
 -- @param #number Delay The delay in seconds.
+
+
 
   self:AddTransition( "*", "Reset", "Patrolling" ) -- FSM_CONTROLLABLE Transition for type #AI_A2A_PATROL.
   
@@ -386,3 +388,14 @@ function AI_A2A_PATROL:onafterRoute( AIGroup, From, Event, To )
 
 end
 
+--- @param Wrapper.Group#GROUP AIGroup
+function AI_A2A_PATROL.Resume( AIGroup )
+
+  AIGroup:E( { "AI_A2A_PATROL.Resume:", AIGroup:GetName() } )
+  if AIGroup:IsAlive() then
+    local _AI_A2A = AIGroup:GetState( AIGroup, "AI_A2A" ) -- #AI_A2A
+      _AI_A2A:__Reset( 1 )
+      _AI_A2A:__Route( 5 )
+  end
+  
+end

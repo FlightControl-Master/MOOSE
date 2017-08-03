@@ -220,6 +220,33 @@ function AI_A2A:New( AIGroup )
 -- @param #string Event The Event string.
 -- @param #string To The To State string.
 
+  self:AddTransition( "Patrolling", "Refuel", "Refuelling" ) 
+
+  --- Refuel Handler OnBefore for AI_A2A
+  -- @function [parent=#AI_A2A] OnBeforeRefuel
+  -- @param #AI_A2A self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param #string From
+  -- @param #string Event
+  -- @param #string To
+  -- @return #boolean
+  
+  --- Refuel Handler OnAfter for AI_A2A
+  -- @function [parent=#AI_A2A] OnAfterRefuel
+  -- @param #AI_A2A self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param #string From
+  -- @param #string Event
+  -- @param #string To
+  
+  --- Refuel Trigger for AI_A2A
+  -- @function [parent=#AI_A2A] Refuel
+  -- @param #AI_A2A self
+  
+  --- Refuel Asynchronous Trigger for AI_A2A
+  -- @function [parent=#AI_A2A] __Refuel
+  -- @param #AI_A2A self
+  -- @param #number Delay
 
   self:AddTransition( "*", "Return", "Returning" )
   self:AddTransition( "*", "Hold", "Holding" )
@@ -294,6 +321,16 @@ function AI_A2A:SetHomeAirbase( HomeAirbase )
   self:F2( { HomeAirbase } )
   
   self.HomeAirbase = HomeAirbase
+end
+
+--- Sets to refuel at the given tanker.
+-- @param #AI_A2A self
+-- @param Wrapper.Group#GROUP TankerName The group name of the tanker as defined within the Mission Editor or spawned.
+-- @return #AI_A2A self
+function AI_A2A:SetTanker( TankerName )
+  self:F2( { TankerName } )
+  
+  self.TankerName = TankerName
 end
 
 
@@ -415,16 +452,21 @@ function AI_A2A:onafterStatus()
     local Fuel = self.Controllable:GetUnit(1):GetFuel()
     self:F({Fuel=Fuel})
     if Fuel < self.PatrolFuelThresholdPercentage then
-      self:E( self.Controllable:GetName() .. " is out of fuel: " .. Fuel .. " ... RTB!" )
-      local OldAIControllable = self.Controllable
-      local AIControllableTemplate = self.Controllable:GetTemplate()
-      
-      local OrbitTask = OldAIControllable:TaskOrbitCircle( math.random( self.PatrolFloorAltitude, self.PatrolCeilingAltitude ), self.PatrolMinSpeed )
-      local TimedOrbitTask = OldAIControllable:TaskControlled( OrbitTask, OldAIControllable:TaskCondition(nil,nil,nil,nil,self.PatrolOutOfFuelOrbitTime,nil ) )
-      OldAIControllable:SetTask( TimedOrbitTask, 10 )
-
-      self:Fuel()
-      RTB = true
+      if self.TankerName then
+        self:E( self.Controllable:GetName() .. " is out of fuel: " .. Fuel .. " ... Refuelling at Tanker!" )
+        self:Refuel()
+      else
+        self:E( self.Controllable:GetName() .. " is out of fuel: " .. Fuel .. " ... RTB!" )
+        local OldAIControllable = self.Controllable
+        local AIControllableTemplate = self.Controllable:GetTemplate()
+        
+        local OrbitTask = OldAIControllable:TaskOrbitCircle( math.random( self.PatrolFloorAltitude, self.PatrolCeilingAltitude ), self.PatrolMinSpeed )
+        local TimedOrbitTask = OldAIControllable:TaskControlled( OrbitTask, OldAIControllable:TaskCondition(nil,nil,nil,nil,self.PatrolOutOfFuelOrbitTime,nil ) )
+        OldAIControllable:SetTask( TimedOrbitTask, 10 )
+  
+        self:Fuel()
+        RTB = true
+      end
     else
     end
     
@@ -573,6 +615,8 @@ function AI_A2A:onafterHome( AIGroup, From, Event, To )
 
 end
 
+
+
 --- @param #AI_A2A self
 -- @param Wrapper.Group#GROUP AIGroup
 function AI_A2A:onafterHold( AIGroup, From, Event, To, HoldTime )
@@ -595,7 +639,69 @@ function AI_A2A:onafterHold( AIGroup, From, Event, To, HoldTime )
 
 end
 
+--- @param Wrapper.Group#GROUP AIGroup
+function AI_A2A.Resume( AIGroup )
 
+  AIGroup:E( { "AI_A2A.Resume:", AIGroup:GetName() } )
+  if AIGroup:IsAlive() then
+    local _AI_A2A = AIGroup:GetState( AIGroup, "AI_A2A" ) -- #AI_A2A
+    _AI_A2A:__RTB( 0.5 )
+    --_AI_A2A:Retur()
+  end
+  
+end
+
+--- @param #AI_A2A self
+-- @param Wrapper.Group#GROUP AIGroup
+function AI_A2A:onafterRefuel( AIGroup, From, Event, To )
+  self:F( { AIGroup, From, Event, To } )
+
+  self:E( "Group " .. self.Controllable:GetName() .. " ... Refuelling! ( " .. self:GetState() .. " )" )
+  
+  if AIGroup and AIGroup:IsAlive() then
+    local Tanker = GROUP:FindByName( self.TankerName )
+    if Tanker:IsAlive() and Tanker:IsAirPlane() then
+
+      local RefuelRoute = {}
+  
+      --- Calculate the target route point.
+      
+      local CurrentCoord = AIGroup:GetCoordinate()
+      local ToRefuelCoord = Tanker:GetCoordinate()
+      local ToRefuelSpeed = math.random( self.PatrolMinSpeed, self.PatrolMaxSpeed )
+      
+      --- Create a route point of type air.
+      local ToRefuelRoutePoint = ToRefuelCoord:RoutePointAir( 
+        self.PatrolAltType, 
+        POINT_VEC3.RoutePointType.TurningPoint, 
+        POINT_VEC3.RoutePointAction.TurningPoint, 
+        ToRefuelSpeed, 
+        true 
+      )
+  
+      self:F( { ToRefuelSpeed = ToRefuelSpeed } )
+      
+      RefuelRoute[#RefuelRoute+1] = ToRefuelRoutePoint
+      RefuelRoute[#RefuelRoute+1] = ToRefuelRoutePoint
+      
+      AIGroup:OptionROEHoldFire()
+      AIGroup:OptionROTEvadeFire()
+  
+      local Tasks = {}
+      Tasks[#Tasks+1] = AIGroup:TaskRefueling()
+      Tasks[#Tasks+1] = AIGroup:TaskFunction( 1, 1, self:GetClassName() .. ".Resume" )
+      RefuelRoute[#RefuelRoute].task = AIGroup:TaskCombo( Tasks )
+      AIGroup:SetState( AIGroup, "AI_A2A", self )
+  
+      --- NOW ROUTE THE GROUP!
+      AIGroup:SetTask( AIGroup:TaskRoute( RefuelRoute ), 1 )
+      
+    else
+      self:RTB()
+    end
+  end
+
+end
     
 
 
