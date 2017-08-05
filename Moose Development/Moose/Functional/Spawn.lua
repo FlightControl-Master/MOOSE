@@ -989,9 +989,10 @@ end
 -- @param #SPAWN self
 -- @param Wrapper.Airbase#AIRBASE Airbase The @{Airbase} where to spawn the group.
 -- @param #SPAWN.Takeoff Takeoff (optional) The location and takeoff method. Default is Hot.
+-- @param #number TakeoffAltitude (optional) The altitude above the ground.
 -- @return Wrapper.Group#GROUP that was spawned.
 -- @return #nil Nothing was spawned.
-function SPAWN:SpawnAtAirbase( Airbase, Takeoff ) -- R2.2
+function SPAWN:SpawnAtAirbase( Airbase, Takeoff, TakeoffAltitude ) -- R2.2
   self:F( { self.SpawnTemplatePrefix, Airbase } )
 
   local PointVec3 = Airbase:GetPointVec3()
@@ -1019,13 +1020,13 @@ function SPAWN:SpawnAtAirbase( Airbase, Takeoff ) -- R2.2
         local TY = PointVec3.z + ( SY - BY )
         SpawnTemplate.units[UnitID].x = TX
         SpawnTemplate.units[UnitID].y = TY
-        SpawnTemplate.units[UnitID].alt = PointVec3.y
+        SpawnTemplate.units[UnitID].alt = PointVec3.y + ( TakeoffAltitude or 200 )
         self:T( 'After Translation SpawnTemplate.units['..UnitID..'].x = ' .. SpawnTemplate.units[UnitID].x .. ', SpawnTemplate.units['..UnitID..'].y = ' .. SpawnTemplate.units[UnitID].y )
       end
       
       SpawnTemplate.route.points[1].x = PointVec3.x
       SpawnTemplate.route.points[1].y = PointVec3.z
-      SpawnTemplate.route.points[1].alt = PointVec3.y + 200
+      SpawnTemplate.route.points[1].alt = PointVec3.y + ( TakeoffAltitude or 200 )
       SpawnTemplate.route.points[1].type = GROUPTEMPLATE.Takeoff[Takeoff]
       SpawnTemplate.route.points[1].airdromeId = Airbase:GetID()
       

@@ -701,6 +701,12 @@ Per one, two, three, four?</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_DISPATCHER).SetDefaultTakeoffInAirAltitude">AI_A2A_DISPATCHER:SetDefaultTakeoffInAirAltitude(TakeoffAltitude)</a></td>
+		<td class="summary">
+<p>Defines the default altitude where airplanes will spawn in the air and take-off as part of the defense system, when the take-off in the air method has been selected.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_DISPATCHER).SetDefaultTanker">AI_A2A_DISPATCHER:SetDefaultTanker(TankerName)</a></td>
 		<td class="summary">
 <p>Set the default tanker where defenders will Refuel in the air.</p>
@@ -833,9 +839,15 @@ Per one, two, three, four?</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_DISPATCHER).SetSquadronTakeoffInAir">AI_A2A_DISPATCHER:SetSquadronTakeoffInAir(SquadronName)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_DISPATCHER).SetSquadronTakeoffInAir">AI_A2A_DISPATCHER:SetSquadronTakeoffInAir(SquadronName, TakeoffAltitude)</a></td>
 		<td class="summary">
 <p>Sets flights to take-off in the air, as part of the defense system.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_DISPATCHER).SetSquadronTakeoffInAirAltitude">AI_A2A_DISPATCHER:SetSquadronTakeoffInAirAltitude(SquadronName, TakeoffAltitude)</a></td>
+		<td class="summary">
+<p>Defines the default altitude where airplanes will spawn in the air and take-off as part of the defense system, when the take-off in the air method has been selected.</p>
 </td>
 		</tr>
 		<tr>
@@ -1216,6 +1228,15 @@ And for a couple of squadrons overrides this default method.</p>
  A2ADispatcher:SetSquadronTakeoffFromParkingHot( "Novo" )  
 </code></pre>
 
+
+<h4>6.1.1. Takeoff Altitude when spawning new aircraft in the air.</h4>
+
+<p>In the case of the <a href="##(AI_A2A_DISPATCHER).SetSquadronTakeoffInAir">AI<em>A2A</em>DISPATCHER.SetSquadronTakeoffInAir</a>() there is also an other parameter that can be applied.
+That is modifying or setting the <strong>altitude</strong> from where planes spawn in the air.
+Use the method <a href="##(AI_A2A_DISPATCHER).SetSquadronTakeoffInAirAltitude">AI<em>A2A</em>DISPATCHER.SetSquadronTakeoffInAirAltitude</a>() to set the altitude for a specific squadron.
+The default takeoff altitude can be modified or set using the method <a href="##(AI_A2A_DISPATCHER).SetSquadronTakeoffInAirAltitude">AI<em>A2A</em>DISPATCHER.SetSquadronTakeoffInAirAltitude</a>().
+As part of the method <a href="##(AI_A2A_DISPATCHER).SetSquadronTakeoffInAir">AI<em>A2A</em>DISPATCHER.SetSquadronTakeoffInAir</a>() a parameter can be specified to set the takeoff altitude.
+If this parameter is not specified, then the default altitude will be used for the squadron.</p>
 
 <h3>6.2. Set squadron landing methods</h3>
 
@@ -3773,6 +3794,42 @@ From the airbase hot, from the airbase cold, in the air, from the runway.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(AI_A2A_DISPATCHER).SetDefaultTakeoffInAirAltitude" >
+<strong>AI_A2A_DISPATCHER:SetDefaultTakeoffInAirAltitude(TakeoffAltitude)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Defines the default altitude where airplanes will spawn in the air and take-off as part of the defense system, when the take-off in the air method has been selected.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number TakeoffAltitude </em></code>: 
+The altitude in meters above the ground.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(AI_A2A_DISPATCHER)">#AI<em>A2A</em>DISPATCHER</a>:</em></p>
+
+
+			<h3>Usage:</h3>
+		<pre class="example"><code>
+
+  local A2ADispatcher = AI_A2A_DISPATCHER:New( ... )
+  
+  -- Set the default takeoff altitude when taking off in the air.
+  A2ADispatcher:SetDefaultTakeoffInAirAltitude( 2000 )  -- This makes planes start at 2000 meters above the ground.
+</code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(AI_A2A_DISPATCHER).SetDefaultTanker" >
 <strong>AI_A2A_DISPATCHER:SetDefaultTanker(TankerName)</strong>
 </a>
@@ -4808,19 +4865,25 @@ The name of the squadron.</p>
 <dt>
 
 <a id="#(AI_A2A_DISPATCHER).SetSquadronTakeoffInAir" >
-<strong>AI_A2A_DISPATCHER:SetSquadronTakeoffInAir(SquadronName)</strong>
+<strong>AI_A2A_DISPATCHER:SetSquadronTakeoffInAir(SquadronName, TakeoffAltitude)</strong>
 </a>
 </dt>
 <dd>
 	
 <p>Sets flights to take-off in the air, as part of the defense system.</p>
 
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
 <p><code><em>#string SquadronName </em></code>: 
 The name of the squadron.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number TakeoffAltitude </em></code>: 
+(optional) The altitude in meters above the ground. If not given, the default takeoff altitude will be used.</p>
 
 				</li>
 		</ul>
@@ -4836,6 +4899,48 @@ The name of the squadron.</p>
   
   -- Let new flights take-off in the air.
   Dispatcher:SetSquadronTakeoffInAir( "SquadronName" )
+  </code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_A2A_DISPATCHER).SetSquadronTakeoffInAirAltitude" >
+<strong>AI_A2A_DISPATCHER:SetSquadronTakeoffInAirAltitude(SquadronName, TakeoffAltitude)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Defines the default altitude where airplanes will spawn in the air and take-off as part of the defense system, when the take-off in the air method has been selected.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string SquadronName </em></code>: 
+The name of the squadron.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number TakeoffAltitude </em></code>: 
+The altitude in meters above the ground.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(AI_A2A_DISPATCHER)">#AI<em>A2A</em>DISPATCHER</a>:</em></p>
+
+
+			<h3>Usage:</h3>
+		<pre class="example"><code>
+
+  local A2ADispatcher = AI_A2A_DISPATCHER:New( ... )
+  
+  -- Set the default takeoff altitude when taking off in the air.
+  A2ADispatcher:SetSquadronTakeoffInAirAltitude( "SquadronName", 2000 ) -- This makes planes start at 2000 meters above the ground.
   </code></pre>
 
 </dd>
