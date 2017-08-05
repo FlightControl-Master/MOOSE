@@ -2368,24 +2368,24 @@ do -- AI_A2A_DISPATCHER
 
   --- @param #AI_A2A_DISPATCHER self
   function AI_A2A_DISPATCHER:AddDefenderToSquadron( Squadron, Defender, Size )
+    self.Defenders = self.Defenders or {}
+    local DefenderName = Defender:GetName()
+    self.Defenders[ DefenderName ] = Squadron
     if Squadron.Resources then
-      self.Defenders = self.Defenders or {}
-      local DefenderName = Defender:GetName()
-      self.Defenders[ DefenderName ] = Squadron
       Squadron.Resources = Squadron.Resources - Size
-      self:F( { DefenderName = DefenderName, SquadronResources = Squadron.Resources } )
     end
+    self:E( { DefenderName = DefenderName, SquadronResources = Squadron.Resources } )
   end
 
   --- @param #AI_A2A_DISPATCHER self
   function AI_A2A_DISPATCHER:RemoveDefenderFromSquadron( Squadron, Defender )
+    self.Defenders = self.Defenders or {}
+    local DefenderName = Defender:GetName()
     if Squadron.Resources then
-      self.Defenders = self.Defenders or {}
-      local DefenderName = Defender:GetName()
       Squadron.Resources = Squadron.Resources + Defender:GetSize()
-      self.Defenders[ DefenderName ] = nil
-      self:F( { DefenderName = DefenderName, SquadronResources = Squadron.Resources } )
     end
+    self.Defenders[ DefenderName ] = nil
+    self:F( { DefenderName = DefenderName, SquadronResources = Squadron.Resources } )
   end
   
   function AI_A2A_DISPATCHER:GetSquadronFromDefender( Defender )
@@ -2556,42 +2556,40 @@ do -- AI_A2A_DISPATCHER
 
   ---
   -- @param #AI_A2A_DISPATCHER self
-  function AI_A2A_DISPATCHER:onafterENGAGE( From, Event, To, Target, AIGroups )
+  function AI_A2A_DISPATCHER:onafterENGAGE( From, Event, To, Target, Defenders )
   
-    if AIGroups then
+    if Defenders then
 
-      for AIGroupID, AIGroup in pairs( AIGroups ) do
+      for DefenderID, Defender in pairs( Defenders ) do
 
-        local Fsm = self:GetDefenderTaskFsm( AIGroup )
+        local Fsm = self:GetDefenderTaskFsm( Defender )
         Fsm:__Engage( 1, Target.Set ) -- Engage on the TargetSetUnit
         
-        self:SetDefenderTaskTarget( AIGroup, Target )
+        self:SetDefenderTaskTarget( Defender, Target )
 
-        function Fsm:onafterRTB( AIGroup, From, Event, To )
-          self:F({"CAP RTB"})
-          self:GetParent(self).onafterRTB( self, AIGroup, From, Event, To )
+        function Fsm:onafterRTB( Defender, From, Event, To )
+          self:F({"CAP RTB", Defender:GetName()})
+          self:GetParent(self).onafterRTB( self, Defender, From, Event, To )
           local Dispatcher = self:GetDispatcher() -- #AI_A2A_DISPATCHER
-          local AIGroup = self:GetControllable()
-          Dispatcher:ClearDefenderTaskTarget( AIGroup )
+          Dispatcher:ClearDefenderTaskTarget( Defender )
         end
 
         --- @param #AI_A2A_DISPATCHER self
         function Fsm:onafterHome( Defender, From, Event, To, Action )
-          self:F({"CAP Home"})
+          self:F({"CAP Home", Defender:GetName()})
           self:GetParent(self).onafterHome( self, Defender, From, Event, To )
           
           local Dispatcher = self:GetDispatcher() -- #AI_A2A_DISPATCHER
-          local AIGroup = self:GetControllable()
-          local Squadron = Dispatcher:GetSquadronFromDefender( AIGroup )
+          local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
 
           if Action and Action == "Destroy" then
-            Dispatcher:RemoveDefenderFromSquadron( Squadron, AIGroup )
-            AIGroup:Destroy()
+            Dispatcher:RemoveDefenderFromSquadron( Squadron, Defender )
+            Defender:Destroy()
           end
           
           if Dispatcher:GetSquadronLanding( Squadron.Name ) == AI_A2A_DISPATCHER.Landing.NearAirbase then
-            Dispatcher:RemoveDefenderFromSquadron( Squadron, AIGroup )
-            AIGroup:Destroy()
+            Dispatcher:RemoveDefenderFromSquadron( Squadron, Defender )
+            Defender:Destroy()
           end
         end
 
@@ -2703,45 +2701,42 @@ do -- AI_A2A_DISPATCHER
                 
                 
                 function Fsm:onafterRTB( Defender, From, Event, To )
-                  self:F({"GCI RTB"})
+                  self:F({"GCI RTB", Defender:GetName()})
                   self:GetParent(self).onafterRTB( self, Defender, From, Event, To )
                   
                   local Dispatcher = self:GetDispatcher() -- #AI_A2A_DISPATCHER
-                  local AIGroup = self:GetControllable()
-                  Dispatcher:ClearDefenderTaskTarget( AIGroup )
+                  Dispatcher:ClearDefenderTaskTarget( Defender )
                 end
 
                 --- @param #AI_A2A_DISPATCHER self
                 function Fsm:onafterLostControl( Defender, From, Event, To )
-                  self:F({"GCI Home"})
+                  self:F({"GCI LostControl", Defender:GetName()})
                   self:GetParent(self).onafterHome( self, Defender, From, Event, To )
                   
-                  local Dispatcher = self:GetDispatcher() -- #AI_A2A_DISPATCHER
-                  local AIGroup = self:GetControllable() -- Wrapper.Group#GROUP
-                  local Squadron = Dispatcher:GetSquadronFromDefender( AIGroup )
-                  if AIGroup:IsAboveRunway() then
-                    Dispatcher:RemoveDefenderFromSquadron( Squadron, AIGroup )
-                    AIGroup:Destroy()
+                  local Dispatcher = Fsm:GetDispatcher() -- #AI_A2A_DISPATCHER
+                  local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
+                  if Defender:IsAboveRunway() then
+                    Dispatcher:RemoveDefenderFromSquadron( Squadron, Defender )
+                    Defender:Destroy()
                   end
                 end
                 
                 --- @param #AI_A2A_DISPATCHER self
                 function Fsm:onafterHome( Defender, From, Event, To, Action )
-                  self:F({"GCI Home"})
+                  self:F({"GCI Home", Defender:GetName()})
                   self:GetParent(self).onafterHome( self, Defender, From, Event, To )
                   
                   local Dispatcher = self:GetDispatcher() -- #AI_A2A_DISPATCHER
-                  local AIGroup = self:GetControllable()
-                  local Squadron = Dispatcher:GetSquadronFromDefender( AIGroup )
+                  local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
 
                   if Action and Action == "Destroy" then
-                    Dispatcher:RemoveDefenderFromSquadron( Squadron, AIGroup )
-                    AIGroup:Destroy()
+                    Dispatcher:RemoveDefenderFromSquadron( Squadron, Defender )
+                    Defender:Destroy()
                   end
 
                   if Dispatcher:GetSquadronLanding( Squadron.Name ) == AI_A2A_DISPATCHER.Landing.NearAirbase then
-                    Dispatcher:RemoveDefenderFromSquadron( Squadron, AIGroup )
-                    AIGroup:Destroy()
+                    Dispatcher:RemoveDefenderFromSquadron( Squadron, Defender )
+                    Defender:Destroy()
                   end
                 end
               end  -- if DefenderGCI then
