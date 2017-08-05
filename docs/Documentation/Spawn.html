@@ -423,7 +423,7 @@ and any spaces before and after the resulting name are removed.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SPAWN).SpawnAtAirbase">SPAWN:SpawnAtAirbase(Airbase, Takeoff)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN).SpawnAtAirbase">SPAWN:SpawnAtAirbase(Airbase, Takeoff, TakeoffAltitude)</a></td>
 		<td class="summary">
 <p>Will spawn a group at an airbase.</p>
 </td>
@@ -820,12 +820,6 @@ and any spaces before and after the resulting name are removed.</p>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SPAWN)._TranslateRotate">SPAWN:_TranslateRotate(SpawnIndex, SpawnRootX, SpawnRootY, SpawnX, SpawnY, SpawnAngle)</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SPAWN).uncontrolled">SPAWN.uncontrolled</a></td>
 		<td class="summary">
 
 </td>
@@ -2269,7 +2263,7 @@ The group that was spawned. You can use this group for further actions.</p>
 <dt>
 
 <a id="#(SPAWN).SpawnAtAirbase" >
-<strong>SPAWN:SpawnAtAirbase(Airbase, Takeoff)</strong>
+<strong>SPAWN:SpawnAtAirbase(Airbase, Takeoff, TakeoffAltitude)</strong>
 </a>
 </dt>
 <dd>
@@ -2293,6 +2287,12 @@ The <a href="Airbase.html">Airbase</a> where to spawn the group.</p>
 				
 <p><code><em><a href="##(SPAWN.Takeoff)">#SPAWN.Takeoff</a> Takeoff </em></code>: 
 (optional) The location and takeoff method. Default is Hot.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number TakeoffAltitude </em></code>: 
+(optional) The altitude above the ground.</p>
 
 				</li>
 		</ul>
@@ -2732,6 +2732,9 @@ when nothing was spawned.</p>
 	
 
 
+	
+<p> Overwrite unit names by default with group name.</p>
+
 </dd>
 </dl>
 		<dl class="function">
@@ -2745,6 +2748,9 @@ when nothing was spawned.</p>
 <dd>
 	
 
+
+	
+<p> By default, no InitLimit</p>
 
 </dd>
 </dl>
@@ -2781,7 +2787,7 @@ when nothing was spawned.</p>
 		<dl class="function">
 <dt>
 
-		<em></em>
+		<em>#number</em>
 <a id="#(SPAWN).SpawnMaxGroups" >
 <strong>SPAWN.SpawnMaxGroups</strong>
 </a>
@@ -2798,7 +2804,7 @@ when nothing was spawned.</p>
 		<dl class="function">
 <dt>
 
-		<em></em>
+		<em>#number</em>
 <a id="#(SPAWN).SpawnMaxUnitsAlive" >
 <strong>SPAWN.SpawnMaxUnitsAlive</strong>
 </a>
@@ -3126,7 +3132,7 @@ Spawn_BE_KA50 = SPAWN:New( 'BE KA-50@RAMP-Ground Defense' ):Schedule( 600, 0.5 )
 		<dl class="function">
 <dt>
 
-		<em></em>
+		<em>#boolean</em>
 <a id="#(SPAWN).SpawnUnControlled" >
 <strong>SPAWN.SpawnUnControlled</strong>
 </a>
@@ -3150,7 +3156,7 @@ Spawn_BE_KA50 = SPAWN:New( 'BE KA-50@RAMP-Ground Defense' ):Schedule( 600, 0.5 )
 
 
 	
-<p> When the first Spawn executes, all the Groups need to be made visible before start.</p>
+<p> Flag that indicates if all the Groups of the SpawnGroup need to be visible when Spawned.</p>
 
 </dd>
 </dl>
@@ -3730,20 +3736,6 @@ True = Continue Scheduler</p>
 
 				</li>
 		</ul>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em></em>
-<a id="#(SPAWN).uncontrolled" >
-<strong>SPAWN.uncontrolled</strong>
-</a>
-</dt>
-<dd>
-	
-
-
 </dd>
 </dl>
 
