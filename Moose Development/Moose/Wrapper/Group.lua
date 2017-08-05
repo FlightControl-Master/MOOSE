@@ -574,6 +574,8 @@ do -- Is Zone methods
 function GROUP:IsCompletelyInZone( Zone )
   self:F2( { self.GroupName, Zone } )
   
+  if not self:IsAlive() then return false end
+  
   for UnitID, UnitData in pairs( self:GetUnits() ) do
     local Unit = UnitData -- Wrapper.Unit#UNIT
     if Zone:IsVec3InZone( Unit:GetVec3() ) then
@@ -594,6 +596,8 @@ function GROUP:IsPartlyInZone( Zone )
   
   local IsOneUnitInZone = false
   local IsOneUnitOutsideZone = false
+  
+  if not self:IsAlive() then return false end
   
   for UnitID, UnitData in pairs( self:GetUnits() ) do
     local Unit = UnitData -- Wrapper.Unit#UNIT
@@ -618,6 +622,8 @@ end
 function GROUP:IsNotInZone( Zone )
   self:F2( { self.GroupName, Zone } )
   
+  if not self:IsAlive() then return true end
+  
   for UnitID, UnitData in pairs( self:GetUnits() ) do
     local Unit = UnitData -- Wrapper.Unit#UNIT
     if Zone:IsVec3InZone( Unit:GetVec3() ) then
@@ -635,6 +641,8 @@ end
 function GROUP:CountInZone( Zone )
   self:F2( {self.GroupName, Zone} )
   local Count = 0
+  
+  if not self:IsAlive() then return Count end
   
   for UnitID, UnitData in pairs( self:GetUnits() ) do
     local Unit = UnitData -- Wrapper.Unit#UNIT
