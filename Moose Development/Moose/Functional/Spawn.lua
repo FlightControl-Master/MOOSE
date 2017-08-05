@@ -1020,13 +1020,13 @@ function SPAWN:SpawnAtAirbase( Airbase, Takeoff, TakeoffAltitude ) -- R2.2
         local TY = PointVec3.z + ( SY - BY )
         SpawnTemplate.units[UnitID].x = TX
         SpawnTemplate.units[UnitID].y = TY
-        SpawnTemplate.units[UnitID].alt = PointVec3.y
+        SpawnTemplate.units[UnitID].alt = PointVec3.y + ( TakeoffAltitude or 200 )
         self:T( 'After Translation SpawnTemplate.units['..UnitID..'].x = ' .. SpawnTemplate.units[UnitID].x .. ', SpawnTemplate.units['..UnitID..'].y = ' .. SpawnTemplate.units[UnitID].y )
       end
       
       SpawnTemplate.route.points[1].x = PointVec3.x
       SpawnTemplate.route.points[1].y = PointVec3.z
-      SpawnTemplate.route.points[1].alt = PointVec3.y + TakeoffAltitude
+      SpawnTemplate.route.points[1].alt = PointVec3.y + ( TakeoffAltitude or 200 )
       SpawnTemplate.route.points[1].type = GROUPTEMPLATE.Takeoff[Takeoff]
       SpawnTemplate.route.points[1].airdromeId = Airbase:GetID()
       
