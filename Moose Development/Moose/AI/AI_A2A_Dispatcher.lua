@@ -418,6 +418,15 @@ do -- AI_A2A_DISPATCHER
   --      A2ADispatcher:SetSquadronTakeoffFromParkingHot( "Novo" )  
   -- 
   -- 
+  -- #### 6.1.1. Takeoff Altitude when spawning new aircraft in the air.
+  -- 
+  -- In the case of the @{#AI_A2A_DISPATCHER.SetSquadronTakeoffInAir}() there is also an other parameter that can be applied.
+  -- That is modifying or setting the **altitude** from where planes spawn in the air.
+  -- Use the method @{#AI_A2A_DISPATCHER.SetSquadronTakeoffInAirAltitude}() to set the altitude for a specific squadron.
+  -- The default takeoff altitude can be modified or set using the method @{#AI_A2A_DISPATCHER.SetSquadronTakeoffInAirAltitude}().
+  -- As part of the method @{#AI_A2A_DISPATCHER.SetSquadronTakeoffInAir}() a parameter can be specified to set the takeoff altitude.
+  -- If this parameter is not specified, then the default altitude will be used for the squadron.
+  -- 
   -- ### 6.2. Set squadron landing methods
   -- 
   -- In analogy with takeoff, the landing methods are to control how squadrons land at the airfield:
@@ -839,6 +848,7 @@ do -- AI_A2A_DISPATCHER
     self:SetDisengageRadius( 300000 ) -- The default disengage radius is 300 km.
     
     self:SetDefaultTakeoff( AI_A2A_DISPATCHER.Takeoff.Air )
+    self:SetDefaultTakeoffInAirAltitude( 500 ) -- Default takeoff is 500 meters above the ground.
     self:SetDefaultLanding( AI_A2A_DISPATCHER.Landing.NearAirbase )
     self:SetDefaultOverhead( 1 )
     self:SetDefaultGrouping( 1 )
@@ -1874,6 +1884,7 @@ do -- AI_A2A_DISPATCHER
   --- Sets flights to take-off in the air, as part of the defense system.
   -- @param #AI_A2A_DISPATCHER self
   -- @param #string SquadronName The name of the squadron.
+  -- @param #number TakeoffAltitude (optional) The altitude in meters above the ground. If not given, the default takeoff altitude will be used.
   -- @usage:
   -- 
   --   local Dispatcher = AI_A2A_DISPATCHER:New( ... )
@@ -1883,9 +1894,13 @@ do -- AI_A2A_DISPATCHER
   --   
   -- @return #AI_A2A_DISPATCHER
   -- 
-  function AI_A2A_DISPATCHER:SetSquadronTakeoffInAir( SquadronName )
+  function AI_A2A_DISPATCHER:SetSquadronTakeoffInAir( SquadronName, TakeoffAltitude )
 
     self:SetSquadronTakeoff( SquadronName, AI_A2A_DISPATCHER.Takeoff.Air )
+    
+    if TakeoffAltitude then
+      self:SetSquadronTakeoffInAirAltitude( SquadronName, TakeoffAltitude )
+    end
     
     return self
   end
@@ -2002,6 +2017,47 @@ do -- AI_A2A_DISPATCHER
   function AI_A2A_DISPATCHER:SetSquadronTakeoffFromParkingCold( SquadronName )
 
     self:SetSquadronTakeoff( SquadronName, AI_A2A_DISPATCHER.Takeoff.Cold )
+    
+    return self
+  end
+  
+
+  --- Defines the default altitude where airplanes will spawn in the air and take-off as part of the defense system, when the take-off in the air method has been selected.
+  -- @param #AI_A2A_DISPATCHER self
+  -- @param #number TakeoffAltitude The altitude in meters above the ground.
+  -- @usage:
+  -- 
+  --   local A2ADispatcher = AI_A2A_DISPATCHER:New( ... )
+  --   
+  --   -- Set the default takeoff altitude when taking off in the air.
+  --   A2ADispatcher:SetDefaultTakeoffInAirAltitude( 2000 )  -- This makes planes start at 2000 meters above the ground.
+  -- 
+  -- @return #AI_A2A_DISPATCHER
+  -- 
+  function AI_A2A_DISPATCHER:SetDefaultTakeoffInAirAltitude( TakeoffAltitude )
+
+    self.DefenderDefault.TakeoffAltitude = TakeoffAltitude
+    
+    return self
+  end
+
+  --- Defines the default altitude where airplanes will spawn in the air and take-off as part of the defense system, when the take-off in the air method has been selected.
+  -- @param #AI_A2A_DISPATCHER self
+  -- @param #string SquadronName The name of the squadron.
+  -- @param #number TakeoffAltitude The altitude in meters above the ground.
+  -- @usage:
+  -- 
+  --   local A2ADispatcher = AI_A2A_DISPATCHER:New( ... )
+  --   
+  --   -- Set the default takeoff altitude when taking off in the air.
+  --   A2ADispatcher:SetSquadronTakeoffInAirAltitude( "SquadronName", 2000 ) -- This makes planes start at 2000 meters above the ground.
+  --   
+  -- @return #AI_A2A_DISPATCHER
+  -- 
+  function AI_A2A_DISPATCHER:SetSquadronTakeoffInAirAltitude( SquadronName, TakeoffAltitude )
+
+    local DefenderSquadron = self:GetSquadron( SquadronName )
+    DefenderSquadron.TakeoffAltitude = TakeoffAltitude
     
     return self
   end
@@ -2461,7 +2517,7 @@ do -- AI_A2A_DISPATCHER
         Spawn:InitGrouping( DefenderGrouping )
 
         local TakeoffMethod = self:GetSquadronTakeoff( SquadronName )
-        local DefenderCAP = Spawn:SpawnAtAirbase( DefenderSquadron.Airbase, TakeoffMethod )
+        local DefenderCAP = Spawn:SpawnAtAirbase( DefenderSquadron.Airbase, TakeoffMethod, DefenderSquadron.TakeoffAltitude or self.DefenderDefault.TakeoffAltitude )
         self:AddDefenderToSquadron( DefenderSquadron, DefenderCAP, DefenderGrouping )
   
         if DefenderCAP then
@@ -2608,7 +2664,7 @@ do -- AI_A2A_DISPATCHER
               end
               
               local TakeoffMethod = self:GetSquadronTakeoff( ClosestDefenderSquadronName )
-              local DefenderGCI = Spawn:SpawnAtAirbase( DefenderSquadron.Airbase, TakeoffMethod ) -- Wrapper.Group#GROUP
+              local DefenderGCI = Spawn:SpawnAtAirbase( DefenderSquadron.Airbase, TakeoffMethod, DefenderSquadron.TakeoffAltitude or self.DefenderDefault.TakeoffAltitude ) -- Wrapper.Group#GROUP
               self:F( { GCIDefender = DefenderGCI:GetName() } )
 
               DefendersNeeded = DefendersNeeded - DefenderGrouping
