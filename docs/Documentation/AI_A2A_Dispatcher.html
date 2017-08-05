@@ -927,13 +927,13 @@ Per one, two, three, four?</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_GCICAP).New">AI_A2A_GCICAP:New(EWRPrefixes, TemplatePrefixes, CapPrefixes, CapLimit, GroupingRadius, EngageRadius, GciRadius)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_GCICAP).New">AI_A2A_GCICAP:New(EWRPrefixes, TemplatePrefixes, CapPrefixes, CapLimit, GroupingRadius, EngageRadius, GciRadius, Resources)</a></td>
 		<td class="summary">
 <p>AI<em>A2A</em>GCICAP constructor.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_GCICAP).NewWithBorder">AI_A2A_GCICAP:NewWithBorder(EWRPrefixes, TemplatePrefixes, BorderPrefix, CapPrefixes, CapLimit, GroupingRadius, EngageRadius, GciRadius)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_GCICAP).NewWithBorder">AI_A2A_GCICAP:NewWithBorder(EWRPrefixes, TemplatePrefixes, BorderPrefix, CapPrefixes, CapLimit, GroupingRadius, EngageRadius, GciRadius, Resources)</a></td>
 		<td class="summary">
 <p>AI<em>A2A</em>GCICAP constructor with border.</p>
 </td>
@@ -1156,7 +1156,7 @@ while defining which plane types are being used by the squadron and how many res
     <li>Have name (string) that is the identifier or key of the squadron.</li>
     <li>Have specific plane types.</li>
     <li>Are located at one airbase.</li>
-    <li>Have a limited set of resources.</li>
+    <li>Optionally have a limited set of resources. The default is that squadrons have <strong>unlimited resources</strong>.</li>
 </ul>
 
 <p>The name of the squadron given acts as the <strong>squadron key</strong> in the AI_A2A_DISPATCHER:Squadron...() methods.</p>
@@ -4102,7 +4102,7 @@ If too large, intercept missions may be triggered when the detected target is to
     <li>Have a <strong>name or key</strong> that is the identifier or key of the squadron.</li>
     <li>Have <strong>specific plane types</strong> defined by <strong>templates</strong>.</li>
     <li>Are <strong>located at one specific airbase</strong>. Multiple squadrons can be located at one airbase through.</li>
-    <li>Have a limited set of <strong>resources</strong>.</li>
+    <li>Optionally have a limited set of <strong>resources</strong>. The default is that squadrons have unlimited resources.</li>
 </ul>
 
 <p>The name of the squadron given acts as the <strong>squadron key</strong> in the AI_A2A_DISPATCHER:Squadron...() methods.</p>
@@ -4161,7 +4161,7 @@ If you have only one prefix name for a squadron, you don't need to use the <code
 				<li>
 				
 <p><code><em>#number Resources </em></code>: 
-A number that specifies how many resources are in stock of the squadron. It is still a bit buggy, this part. Just make this a large number for the moment. This will be fine tuned later.</p>
+(optional) A number that specifies how many resources are in stock of the squadron. If not specified, the squadron will have infinite resources available.</p>
 
 
 				</li>
@@ -4174,17 +4174,26 @@ A number that specifies how many resources are in stock of the squadron. It is s
 			<h3>Usages:</h3>
 		<ul>
 			<li><pre class="example"><code>  -- Now Setup the A2A dispatcher, and initialize it using the Detection object.
-  A2ADispatcher = AI_A2A_DISPATCHER:New( Detection )  </code></pre></li>
+  A2ADispatcher = AI_A2A_DISPATCHER:New( Detection )  
+  </code></pre></li>
 			<li><pre class="example"><code>  -- This will create squadron "Squadron1" at "Batumi" airbase, and will use plane types "SQ1" and has 40 planes in stock...  
-  A2ADispatcher:SetSquadron( "Squadron1", "Batumi", "SQ1", 40 )</code></pre></li>
+  A2ADispatcher:SetSquadron( "Squadron1", "Batumi", "SQ1", 40 )
+  </code></pre></li>
 			<li><pre class="example"><code>  -- This will create squadron "Sq 1" at "Batumi" airbase, and will use plane types "Mig-29" and "Su-27" and has 20 planes in stock...
-  -- Note that in this implementation, the A2A dispatcher will select a random plane when a new plane (group) needs to be spawned for defenses.
+  -- Note that in this implementation, the A2A dispatcher will select a random plane type when a new plane (group) needs to be spawned for defenses.
   -- Note the usage of the {} for the airplane templates list.
-  A2ADispatcher:SetSquadron( "Sq 1", "Batumi", { "Mig-29", "Su-27" }, 40 )</code></pre></li>
+  A2ADispatcher:SetSquadron( "Sq 1", "Batumi", { "Mig-29", "Su-27" }, 40 )
+  </code></pre></li>
 			<li><pre class="example"><code>  -- This will create 2 squadrons "104th" and "23th" at "Batumi" airbase, and will use plane types "Mig-29" and "Su-27" respectively and each squadron has 10 planes in stock...
-  -- Note that in this implementation, the A2A dispatcher will select a random plane when a new plane (group) needs to be spawned for defenses.
   A2ADispatcher:SetSquadron( "104th", "Batumi", "Mig-29", 10 )
-  A2ADispatcher:SetSquadron( "23th", "Batumi", "Su-27", 10 )</code></pre></li>
+  A2ADispatcher:SetSquadron( "23th", "Batumi", "Su-27", 10 )
+  </code></pre></li>
+			<li><pre class="example"><code>  -- This is an example like the previous, but now with infinite resources.
+  -- The Resources parameter is not given in the SetSquadron method.
+  A2ADispatcher:SetSquadron( "104th", "Batumi", "Mig-29" )
+  A2ADispatcher:SetSquadron( "23th", "Batumi", "Su-27" )
+  
+  </code></pre></li>
 		</ul>
 
 </dd>
@@ -5271,7 +5280,7 @@ Provide a value of <strong>true</strong> to display every 30 seconds a tactical 
 <dt>
 
 <a id="#(AI_A2A_GCICAP).New" >
-<strong>AI_A2A_GCICAP:New(EWRPrefixes, TemplatePrefixes, CapPrefixes, CapLimit, GroupingRadius, EngageRadius, GciRadius)</strong>
+<strong>AI_A2A_GCICAP:New(EWRPrefixes, TemplatePrefixes, CapPrefixes, CapLimit, GroupingRadius, EngageRadius, GciRadius, Resources)</strong>
 </a>
 </dt>
 <dd>
@@ -5323,19 +5332,88 @@ The radius in meters wherein detected airplanes will be engaged by airborne defe
 The radius in meters wherein detected airplanes will GCI.</p>
 
 				</li>
+				<li>
+				
+<p><code><em>#number Resources </em></code>: 
+The amount of resources that will be allocated to each squadron.</p>
+
+				</li>
 		</ul>
 		<h3>Return value</h3>
 				
 <p><em><a href="##(AI_A2A_GCICAP)">#AI<em>A2A</em>GCICAP</a>:</em></p>
 
 
-			<h3>Usage:</h3>
-		<pre class="example"><code>  
-  -- Set a new AI A2A GCICAP object, based on an EWR network with a 30 km grouping radius
-  -- This for ground and awacs installations.
-  
-  A2ADispatcher = AI_A2A_GCICAP:New( { "BlueEWRGroundRadars", "BlueEWRAwacs" }, 30000 )
-  </code></pre>
+			<h3>Usages:</h3>
+		<ul>
+			<li><pre class="example"><code>  
+  -- Setup a new GCICAP dispatcher object. Each squadron has unlimited resources.
+  -- The EWR network group prefix is "DF CCCP". All groups starting with "DF CCCP" will be part of the EWR network.
+  -- The Squadron Templates prefix is "SQ CCCP". All groups starting with "SQ CCCP" will be considered as airplane templates.
+  -- The CAP Zone prefix is "CAP Zone".
+  -- The CAP Limit is 2.
+  A2ADispatcher = AI_A2A_GCICAP:New( { "DF CCCP" }, { "SQ CCCP" }, { "CAP Zone" }, 2 )  
+  </code></pre></li>
+			<li><pre class="example"><code>  
+  -- Setup a new GCICAP dispatcher object. Each squadron has unlimited resources.
+  -- The EWR network group prefix is "DF CCCP". All groups starting with "DF CCCP" will be part of the EWR network.
+  -- The Squadron Templates prefix is "SQ CCCP". All groups starting with "SQ CCCP" will be considered as airplane templates.
+  -- The CAP Zone prefix is "CAP Zone".
+  -- The CAP Limit is 2.
+  -- The Grouping Radius is set to 20000. Thus all planes within a 20km radius will be grouped as a group of targets.
+  A2ADispatcher = AI_A2A_GCICAP:New( { "DF CCCP" }, { "SQ CCCP" }, { "CAP Zone" }, 2, 20000 )  
+  </code></pre></li>
+			<li><pre class="example"><code>  
+  -- Setup a new GCICAP dispatcher object. Each squadron has unlimited resources.
+  -- The EWR network group prefix is "DF CCCP". All groups starting with "DF CCCP" will be part of the EWR network.
+  -- The Squadron Templates prefix is "SQ CCCP". All groups starting with "SQ CCCP" will be considered as airplane templates.
+  -- The CAP Zone prefix is "CAP Zone".
+  -- The CAP Limit is 2.
+  -- The Grouping Radius is set to 20000. Thus all planes within a 20km radius will be grouped as a group of targets.
+  -- The Engage Radius is set to 60000. Any defender without a task, and in healthy condition, 
+  -- will be considered a defense task if the target is within 60km from the defender.
+  A2ADispatcher = AI_A2A_GCICAP:New( { "DF CCCP" }, { "SQ CCCP" }, { "CAP Zone" }, 2, 20000, 60000 )  
+  </code></pre></li>
+			<li><pre class="example"><code>  
+  -- Setup a new GCICAP dispatcher object. Each squadron has unlimited resources.
+  -- The EWR network group prefix is DF CCCP. All groups starting with DF CCCP will be part of the EWR network.
+  -- The Squadron Templates prefix is "SQ CCCP". All groups starting with "SQ CCCP" will be considered as airplane templates.
+  -- The CAP Zone prefix is "CAP Zone".
+  -- The CAP Limit is 2.
+  -- The Grouping Radius is set to 20000. Thus all planes within a 20km radius will be grouped as a group of targets.
+  -- The Engage Radius is set to 60000. Any defender without a task, and in healthy condition, 
+  -- will be considered a defense task if the target is within 60km from the defender.
+  -- The GCI Radius is set to 150000. Any target detected within 150km will be considered for GCI engagement.
+  A2ADispatcher = AI_A2A_GCICAP:New( { "DF CCCP" }, { "SQ CCCP" }, { "CAP Zone" }, 2, 20000, 60000, 150000 )  
+  </code></pre></li>
+			<li><pre class="example"><code>  
+  -- Setup a new GCICAP dispatcher object. Each squadron has 30 resources.
+  -- The EWR network group prefix is "DF CCCP". All groups starting with "DF CCCP" will be part of the EWR network.
+  -- The Squadron Templates prefix is "SQ CCCP". All groups starting with "SQ CCCP" will be considered as airplane templates.
+  -- The CAP Zone prefix is "CAP Zone".
+  -- The CAP Limit is 2.
+  -- The Grouping Radius is set to 20000. Thus all planes within a 20km radius will be grouped as a group of targets.
+  -- The Engage Radius is set to 60000. Any defender without a task, and in healthy condition, 
+  -- will be considered a defense task if the target is within 60km from the defender.
+  -- The GCI Radius is set to 150000. Any target detected within 150km will be considered for GCI engagement.
+  -- The amount of resources for each squadron is set to 30. Thus about 30 resources are allocated to each squadron created.
+
+  A2ADispatcher = AI_A2A_GCICAP:New( { "DF CCCP" }, { "SQ CCCP" }, { "CAP Zone" }, 2, 20000, 60000, 150000, 30 )  
+  </code></pre></li>
+			<li><pre class="example"><code>  
+  -- Setup a new GCICAP dispatcher object. Each squadron has 30 resources.
+  -- The EWR network group prefix is "DF CCCP". All groups starting with "DF CCCP" will be part of the EWR network.
+  -- The Squadron Templates prefix is "SQ CCCP". All groups starting with "SQ CCCP" will be considered as airplane templates.
+  -- The CAP Zone prefix is nil. No CAP is created.
+  -- The CAP Limit is nil.
+  -- The Grouping Radius is nil. The default range of 6km radius will be grouped as a group of targets.
+  -- The Engage Radius is set nil. The default Engage Radius will be used to consider a defenser being assigned to a task.
+  -- The GCI Radius is nil. Any target detected within the default GCI Radius will be considered for GCI engagement.
+  -- The amount of resources for each squadron is set to 30. Thus about 30 resources are allocated to each squadron created.
+
+  A2ADispatcher = AI_A2A_GCICAP:New( { "DF CCCP" }, { "SQ CCCP" }, nil, nil, nil, nil, nil, 30 )  
+  </code></pre></li>
+		</ul>
 
 </dd>
 </dl>
@@ -5343,7 +5421,7 @@ The radius in meters wherein detected airplanes will GCI.</p>
 <dt>
 
 <a id="#(AI_A2A_GCICAP).NewWithBorder" >
-<strong>AI_A2A_GCICAP:NewWithBorder(EWRPrefixes, TemplatePrefixes, BorderPrefix, CapPrefixes, CapLimit, GroupingRadius, EngageRadius, GciRadius)</strong>
+<strong>AI_A2A_GCICAP:NewWithBorder(EWRPrefixes, TemplatePrefixes, BorderPrefix, CapPrefixes, CapLimit, GroupingRadius, EngageRadius, GciRadius, Resources)</strong>
 </a>
 </dt>
 <dd>
@@ -5401,19 +5479,97 @@ The radius in meters wherein detected airplanes will be engaged by airborne defe
 The radius in meters wherein detected airplanes will GCI.</p>
 
 				</li>
+				<li>
+				
+<p><code><em>#number Resources </em></code>: 
+The amount of resources that will be allocated to each squadron.</p>
+
+				</li>
 		</ul>
 		<h3>Return value</h3>
 				
 <p><em><a href="##(AI_A2A_GCICAP)">#AI<em>A2A</em>GCICAP</a>:</em></p>
 
 
-			<h3>Usage:</h3>
-		<pre class="example"><code>  
-  -- Set a new AI A2A GCICAP object, based on an EWR network with a 30 km grouping radius
-  -- This for ground and awacs installations.
-  
-  A2ADispatcher = AI_A2A_GCICAP:New( { "BlueEWRGroundRadars", "BlueEWRAwacs" }, 30000 )
-  </code></pre>
+			<h3>Usages:</h3>
+		<ul>
+			<li><pre class="example"><code>  
+  -- Setup a new GCICAP dispatcher object with a border. Each squadron has unlimited resources.
+  -- The EWR network group prefix is "DF CCCP". All groups starting with "DF CCCP" will be part of the EWR network.
+  -- The Squadron Templates prefix is "SQ CCCP". All groups starting with "SQ CCCP" will be considered as airplane templates.
+  -- The CAP Zone prefix is "CAP Zone".
+  -- The CAP Limit is 2.
+
+  A2ADispatcher = AI_A2A_GCICAP:NewWithBorder( { "DF CCCP" }, { "SQ CCCP" }, "Border", { "CAP Zone" }, 2 )  
+  </code></pre></li>
+			<li><pre class="example"><code>  
+  -- Setup a new GCICAP dispatcher object with a border. Each squadron has unlimited resources.
+  -- The EWR network group prefix is "DF CCCP". All groups starting with "DF CCCP" will be part of the EWR network.
+  -- The Squadron Templates prefix is "SQ CCCP". All groups starting with "SQ CCCP" will be considered as airplane templates.
+  -- The Border prefix is "Border". This will setup a border using the group defined within the mission editor with the name Border.
+  -- The CAP Zone prefix is "CAP Zone".
+  -- The CAP Limit is 2.
+  -- The Grouping Radius is set to 20000. Thus all planes within a 20km radius will be grouped as a group of targets.
+
+  A2ADispatcher = AI_A2A_GCICAP:NewWithBorder( { "DF CCCP" }, { "SQ CCCP" }, "Border", { "CAP Zone" }, 2, 20000 )  
+  </code></pre></li>
+			<li><pre class="example"><code>  
+  -- Setup a new GCICAP dispatcher object with a border. Each squadron has unlimited resources.
+  -- The EWR network group prefix is "DF CCCP". All groups starting with "DF CCCP" will be part of the EWR network.
+  -- The Squadron Templates prefix is "SQ CCCP". All groups starting with "SQ CCCP" will be considered as airplane templates.
+  -- The Border prefix is "Border". This will setup a border using the group defined within the mission editor with the name Border.
+  -- The CAP Zone prefix is "CAP Zone".
+  -- The CAP Limit is 2.
+  -- The Grouping Radius is set to 20000. Thus all planes within a 20km radius will be grouped as a group of targets.
+  -- The Engage Radius is set to 60000. Any defender without a task, and in healthy condition, 
+  -- will be considered a defense task if the target is within 60km from the defender.
+
+  A2ADispatcher = AI_A2A_GCICAP:NewWithBorder( { "DF CCCP" }, { "SQ CCCP" }, "Border", { "CAP Zone" }, 2, 20000, 60000 )  
+  </code></pre></li>
+			<li><pre class="example"><code>  
+  -- Setup a new GCICAP dispatcher object with a border. Each squadron has unlimited resources.
+  -- The EWR network group prefix is "DF CCCP". All groups starting with "DF CCCP" will be part of the EWR network.
+  -- The Squadron Templates prefix is "SQ CCCP". All groups starting with "SQ CCCP" will be considered as airplane templates.
+  -- The Border prefix is "Border". This will setup a border using the group defined within the mission editor with the name Border.
+  -- The CAP Zone prefix is "CAP Zone".
+  -- The CAP Limit is 2.
+  -- The Grouping Radius is set to 20000. Thus all planes within a 20km radius will be grouped as a group of targets.
+  -- The Engage Radius is set to 60000. Any defender without a task, and in healthy condition, 
+  -- will be considered a defense task if the target is within 60km from the defender.
+  -- The GCI Radius is set to 150000. Any target detected within 150km will be considered for GCI engagement.
+
+  A2ADispatcher = AI_A2A_GCICAP:NewWithBorder( { "DF CCCP" }, { "SQ CCCP" }, "Border", { "CAP Zone" }, 2, 20000, 60000, 150000 )  
+  </code></pre></li>
+			<li><pre class="example"><code>  
+  -- Setup a new GCICAP dispatcher object with a border. Each squadron has 30 resources.
+  -- The EWR network group prefix is "DF CCCP". All groups starting with "DF CCCP" will be part of the EWR network.
+  -- The Squadron Templates prefix is "SQ CCCP". All groups starting with "SQ CCCP" will be considered as airplane templates.
+  -- The Border prefix is "Border". This will setup a border using the group defined within the mission editor with the name Border.
+  -- The CAP Zone prefix is "CAP Zone".
+  -- The CAP Limit is 2.
+  -- The Grouping Radius is set to 20000. Thus all planes within a 20km radius will be grouped as a group of targets.
+  -- The Engage Radius is set to 60000. Any defender without a task, and in healthy condition, 
+  -- will be considered a defense task if the target is within 60km from the defender.
+  -- The GCI Radius is set to 150000. Any target detected within 150km will be considered for GCI engagement.
+  -- The amount of resources for each squadron is set to 30. Thus about 30 resources are allocated to each squadron created.
+
+  A2ADispatcher = AI_A2A_GCICAP:NewWithBorder( { "DF CCCP" }, { "SQ CCCP" }, "Border", { "CAP Zone" }, 2, 20000, 60000, 150000, 30 )  
+  </code></pre></li>
+			<li><pre class="example"><code>  
+  -- Setup a new GCICAP dispatcher object with a border. Each squadron has 30 resources.
+  -- The EWR network group prefix is "DF CCCP". All groups starting with "DF CCCP" will be part of the EWR network.
+  -- The Squadron Templates prefix is "SQ CCCP". All groups starting with "SQ CCCP" will be considered as airplane templates.
+  -- The Border prefix is "Border". This will setup a border using the group defined within the mission editor with the name Border.
+  -- The CAP Zone prefix is nil. No CAP is created.
+  -- The CAP Limit is nil.
+  -- The Grouping Radius is nil. The default range of 6km radius will be grouped as a group of targets.
+  -- The Engage Radius is set nil. The default Engage Radius will be used to consider a defenser being assigned to a task.
+  -- The GCI Radius is nil. Any target detected within the default GCI Radius will be considered for GCI engagement.
+  -- The amount of resources for each squadron is set to 30. Thus about 30 resources are allocated to each squadron created.
+
+  A2ADispatcher = AI_A2A_GCICAP:NewWithBorder( { "DF CCCP" }, { "SQ CCCP" }, "Border", nil, nil, nil, nil, nil, 30 )  
+  </code></pre></li>
+		</ul>
 
 </dd>
 </dl>
