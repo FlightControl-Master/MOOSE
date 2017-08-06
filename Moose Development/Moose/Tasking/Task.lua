@@ -1401,8 +1401,7 @@ function TASK:ReportOverview( ReportGroup ) --R2.1 fixed report. Now nicely form
       if Line ~= 0 then
         Report:AddIndent( LineReport:Text( ", " ) )
       else
-        Report:Add( TaskName )
-        Report:AddIndent( "   " .. LineReport:Text( ", " ) )
+        Report:Add( TaskName .. " - " .. LineReport:Text( ", " ) )
       end
       LineReport = REPORT:New()
       Line = math.floor( TaskInfo.TaskInfoOrder / 10 )

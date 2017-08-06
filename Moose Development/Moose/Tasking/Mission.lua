@@ -902,6 +902,7 @@ function MISSION:ReportOverview( ReportGroup, TaskStatus )
   for TaskID, Task in UTILS.spairs( self:GetTasks(), function( t, a, b ) return t[a]:ReportOrder( ReportGroup ) <  t[b]:ReportOrder( ReportGroup ) end  ) do
     local Task = Task -- Tasking.Task#TASK
     if Task:Is( TaskStatus ) then
+      Report:Add( string.rep( "-", 140 ) )
       Report:Add( " - " .. Task:ReportOverview( ReportGroup ) )
     end
   end
