@@ -336,12 +336,12 @@ do -- TASK_A2G_SEAD
   function TASK_A2G_SEAD:UpdateTaskInfo() 
 
     local TargetCoordinate = self.TargetSetUnit:GetFirst():GetCoordinate()
-    self:SetInfo( "Coordinates", TargetCoordinate, 10 )
+    self:SetInfo( "Coordinates", TargetCoordinate, 0 )
 
     self:SetInfo( "Threat", "[" .. string.rep(  "■", self.TargetSetUnit:CalculateThreatLevelA2G() ) .. "]", 11 )
     local DetectedItemsCount = self.TargetSetUnit:Count()
     local DetectedItemsTypes = self.TargetSetUnit:GetTypeNames()
-    self:SetInfo( "Targets", string.format( "%d of %s", DetectedItemsCount, DetectedItemsTypes ), 0 ) 
+    self:SetInfo( "Targets", string.format( "%d of %s", DetectedItemsCount, DetectedItemsTypes ), 10 ) 
 
   end
     
@@ -463,12 +463,12 @@ do -- TASK_A2G_BAI
   function TASK_A2G_BAI:UpdateTaskInfo() 
 
     local TargetCoordinate = self.TargetSetUnit:GetFirst():GetCoordinate()
-    self:SetInfo( "Coordinates", TargetCoordinate, 10 )
+    self:SetInfo( "Coordinates", TargetCoordinate, 0 )
 
     self:SetInfo( "Threat", "[" .. string.rep(  "■", self.TargetSetUnit:CalculateThreatLevelA2G() ) .. "]", 11 )
     local DetectedItemsCount = self.TargetSetUnit:Count()
     local DetectedItemsTypes = self.TargetSetUnit:GetTypeNames()
-    self:SetInfo( "Targets", string.format( "%d of %s", DetectedItemsCount, DetectedItemsTypes ), 0 ) 
+    self:SetInfo( "Targets", string.format( "%d of %s", DetectedItemsCount, DetectedItemsTypes ), 10 ) 
 
   end
 
@@ -591,12 +591,12 @@ do -- TASK_A2G_CAS
   function TASK_A2G_CAS:UpdateTaskInfo()
   
     local TargetCoordinate = self.TargetSetUnit:GetFirst():GetCoordinate()
-    self:SetInfo( "Coordinates", TargetCoordinate, 10 )
+    self:SetInfo( "Coordinates", TargetCoordinate, 0 )
 
     self:SetInfo( "Threat", "[" .. string.rep(  "■", self.TargetSetUnit:CalculateThreatLevelA2G() ) .. "]", 11 )
     local DetectedItemsCount = self.TargetSetUnit:Count()
     local DetectedItemsTypes = self.TargetSetUnit:GetTypeNames()
-    self:SetInfo( "Targets", string.format( "%d of %s", DetectedItemsCount, DetectedItemsTypes ), 0 ) 
+    self:SetInfo( "Targets", string.format( "%d of %s", DetectedItemsCount, DetectedItemsTypes ), 10 ) 
 
   end
 
