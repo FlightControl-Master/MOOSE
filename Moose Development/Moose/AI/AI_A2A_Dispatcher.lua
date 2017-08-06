@@ -257,8 +257,8 @@ do -- AI_A2A_DISPATCHER
   -- 
   -- You could build a **mutual defense system** like this:
   -- 
-  --      A2ADispatcher_Red = AI_A2A_DISPATCHER:New( EWR_Red )
-  --      A2ADispatcher_Blue = AI_A2A_DISPATCHER:New( EWR_Blue )
+  --     A2ADispatcher_Red = AI_A2A_DISPATCHER:New( EWR_Red )
+  --     A2ADispatcher_Blue = AI_A2A_DISPATCHER:New( EWR_Blue )
   --    
    -- ### 2. Define the detected **target grouping radius**:
   -- 
@@ -313,14 +313,14 @@ do -- AI_A2A_DISPATCHER
   -- 
   -- In these examples, the Gci Radius is set to various values:
   -- 
-  --   -- Now Setup the A2A dispatcher, and initialize it using the Detection object.
-  --   A2ADispatcher = AI_A2A_DISPATCHER:New( Detection ) 
+  --     -- Now Setup the A2A dispatcher, and initialize it using the Detection object.
+  --     A2ADispatcher = AI_A2A_DISPATCHER:New( Detection ) 
   --   
-  --   -- Set 100km as the radius to ground control intercept detected targets from the nearest airbase.
-  --   A2ADispatcher:SetGciRadius( 100000 )
+  --     -- Set 100km as the radius to ground control intercept detected targets from the nearest airbase.
+  --     A2ADispatcher:SetGciRadius( 100000 )
   --   
-  --   -- Set 200km as the radius to ground control intercept.
-  --   A2ADispatcher:SetGciRadius() -- 200000 is the default value.
+  --     -- Set 200km as the radius to ground control intercept.
+  --     A2ADispatcher:SetGciRadius() -- 200000 is the default value.
   --   
   -- ## 5. Set the **borders**:
   -- 
