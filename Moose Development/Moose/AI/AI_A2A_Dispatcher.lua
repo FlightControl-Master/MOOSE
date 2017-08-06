@@ -173,11 +173,7 @@ do -- AI_A2A_DISPATCHER
   -- 
   -- # Demo Missions
   -- 
-  -- ### [AI\_A2A\_DISPATCHER Demo Mission](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/release-2-2-pre/AID%20-%20AI%20Dispatching/AID-100%20-%20AI_A2A%20-%20Demonstration)
-  -- 
-  -- ### [AI\_A2A\_DISPATCHER Mission, only for beta testers](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/AID%20-%20AI%20Dispatching/AID-100%20-%20AI_A2A%20-%20Demonstration)
-  --
-  -- ### [ALL Demo Missions pack of the last release](https://github.com/FlightControl-Master/MOOSE_MISSIONS/releases)
+  -- ### [AI\_A2A\_DISPATCHER Demo Missions](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/release-2-2-pre/AID%20-%20AI%20Dispatching/AID-100%20-%20AI_A2A%20-%20Demonstration)
   -- 
   -- ====
   -- 
@@ -246,7 +242,7 @@ do -- AI_A2A_DISPATCHER
   --     DetectionSetGroup:FilterPrefixes( { "DF CCCP AWACS", "DF CCCP EWR" } )
   --     DetectionSetGroup:FilterStart()
   --     
-  --     -- Setup the detection.
+  --     -- Setup the detection and group targets to a 30km range!
   --     Detection = DETECTION_AREAS:New( DetectionSetGroup, 30000 )
   --
   --     -- Setup the A2A dispatcher, and initialize it.
@@ -274,40 +270,58 @@ do -- AI_A2A_DISPATCHER
   -- Note that detected targets are constantly re-grouped, that is, when certain detected aircraft are moving further than the group radius, then these aircraft will become a separate
   -- group being detected. This may result in additional GCI being started by the dispatcher! So don't make this value too small!
   -- 
-  -- ## 3. Set the **Engage radius**:
+  -- ## 3. Set the **Engage Radius**:
   -- 
-  -- Define the radius to engage any target by airborne friendlies, which are executing cap or returning from an intercept mission.
+  -- Define the **Engage Radius** to **engage any target by airborne friendlies**, 
+  -- which are executing **cap** or **returning** from an intercept mission.
   -- 
   -- ![Banner Image](..\Presentations\AI_A2A_DISPATCHER\Dia10.JPG)
   -- 
-  -- So, if there is a target area detected and reported, 
+  -- If there is a target area detected and reported, 
   -- then any friendlies that are airborne near this target area, 
   -- will be commanded to (re-)engage that target when available (if no other tasks were commanded).
-  -- For example, if 100000 is given as a value, then any friendly that is airborne within 100km from the detected target, 
-  -- will be considered to receive the command to engage that target area.
-  -- You need to evaluate the value of this parameter carefully.
-  -- If too small, more intercept missions may be triggered upon detected target areas.
-  -- If too large, any airborne cap may not be able to reach the detected target area in time, because it is too far.
   -- 
-  -- In this example an engage radius is set to 80 km.
+  -- For example, if **50000** or **50km** is given as a value, then any friendly that is airborne within **50km** from the detected target, 
+  -- will be considered to receive the command to engage that target area.
+  -- 
+  -- You need to evaluate the value of this parameter carefully:
+  -- 
+  --   * If too small, more intercept missions may be triggered upon detected target areas.
+  --   * If too large, any airborne cap may not be able to reach the detected target area in time, because it is too far.
+  -- 
+  -- The **default** Engage Radius is defined as **100000** or **100km**. 
+  -- Use the method @{#AI_A2A_DISPATCHER.SetEngageRadius}() to set a specific Engage Radius.
+  -- **The Engage Radius is defined for ALL squadrons which are operational.**
+  -- 
+  -- In this example an Engage Radius is set to 80km.
   -- 
   --     -- Initialize the dispatcher, setting up a radius of 80km where any airborne friendly 
   --     -- without an assignment within 80km radius from a detected target, will engage that target.
   --     A2ADispatcher:SetEngageRadius( 80000 )
   -- 
-  -- ## 4. Set the **Intercept radius** or **Gci radius**:
+  -- ## 4. Set the **Ground Controlled Intercept Radius** or **Gci radius**:
   -- 
   -- When targets are detected that are still really far off, you don't want the AI_A2A_DISPATCHER to launch intercepts just yet.
-  -- You want it to wait until a certain intercept range is reached, which is the distance of the closest airbase to targer being smaller than the **Gci radius**.
-  -- The Gci radius is by default defined as 200km. This value can be overridden using the method @{#AI_A2A_DISPATCHER.SetGciRadius}().
-  -- Override the default Gci radius when the era of the warfare is early, or, when you don't want to let the AI_A2A_DISPATCHER react immediately when
-  -- a certain border or area is not being crossed.
+  -- You want it to wait until a certain Gci range is reached, which is the **distance of the closest airbase to target** 
+  -- being **smaller** than the **Ground Controlled Intercept radius** or **Gci radius**.
   -- 
-  -- In this example, the GCI radius is setto 150 km:
+  -- The **default** Gci radius is defined as **200000** or **200km**. Override the default Gci radius when the era of the warfare is early, or, 
+  -- when you don't want to let the AI_A2A_DISPATCHER react immediately when a certain border or area is not being crossed.
   -- 
-  --     -- Initialize the dispatcher, setting up a GCI radius of 150km where no GCI will be started if the target is further than 150 km from the closest airabse.
-  --     A2ADispatcher:SetGciRadius( 80000 )
+  -- Use the method @{#AI_A2A_DISPATCHER.SetGciRadius}() to set a specific controlled ground intercept radius.
+  -- **The Ground Controlled Intercept radius is defined for ALL squadrons which are operational.**
   -- 
+  -- In these examples, the Gci Radius is set to various values:
+  -- 
+  --   -- Now Setup the A2A dispatcher, and initialize it using the Detection object.
+  --   A2ADispatcher = AI_A2A_DISPATCHER:New( Detection ) 
+  --   
+  --   -- Set 100km as the radius to ground control intercept detected targets from the nearest airbase.
+  --   A2ADispatcher:SetGciRadius( 100000 )
+  --   
+  --   -- Set 200km as the radius to ground control intercept.
+  --   A2ADispatcher:SetGciRadius() -- 200000 is the default value.
+  --   
   -- ## 5. Set the **borders**:
   -- 
   -- According to the tactical and strategic design of the mission broadly decide the shape and extent of red and blue territories. 
@@ -315,7 +329,8 @@ do -- AI_A2A_DISPATCHER
   -- 
   -- ![Banner Image](..\Presentations\AI_A2A_DISPATCHER\Dia4.JPG)
   -- 
-  -- Define a border area to simulate a **cold war** scenario and use the method @{#AI_A2A_DISPATCHER.SetBorderZone}() to create a border zone for the dispatcher.
+  -- **Define a border area to simulate a cold war scenario.**
+  -- Use the method @{#AI_A2A_DISPATCHER.SetBorderZone}() to create a border zone for the dispatcher.
   -- 
   -- A **cold war** is one where CAP aircraft patrol their territory but will not attack enemy aircraft or launch GCI aircraft unless enemy aircraft enter their territory. In other words the EWR may detect an enemy aircraft but will only send aircraft to attack it if it crosses the border.
   -- A **hot war** is one where CAP aircraft will intercept any detected enemy aircraft and GCI aircraft will launch against detected enemy aircraft without regard for territory. In other words if the ground radar can detect the enemy aircraft then it will send CAP and GCI aircraft to attack it.
@@ -418,7 +433,7 @@ do -- AI_A2A_DISPATCHER
   --      A2ADispatcher:SetSquadronTakeoffFromParkingHot( "Novo" )  
   -- 
   -- 
-  -- #### 6.1.1. Takeoff Altitude when spawning new aircraft in the air.
+  -- ### 6.1. Set Squadron takeoff altitude when spawning new aircraft in the air.
   -- 
   -- In the case of the @{#AI_A2A_DISPATCHER.SetSquadronTakeoffInAir}() there is also an other parameter that can be applied.
   -- That is modifying or setting the **altitude** from where planes spawn in the air.
@@ -753,12 +768,12 @@ do -- AI_A2A_DISPATCHER
   -- 
   -- Use the method @{#AI_A2A_DISPATCHER.SetIntercept}() to modify the assumed intercept delay time to calculate a valid interception.
   -- 
-  -- ## 10.8.2. Default disengage radius.
+  -- ## 10.8.2. Default Disengage Radius.
   -- 
   -- The radius to **disengage any target** when the **distance** of the defender to the **home base** is larger than the specified meters.
-  -- The default disengage radius is **300km** (300000 meters). Note that the disengage radius is applicable to ALL squadrons!
+  -- The default Disengage Radius is **300km** (300000 meters). Note that the Disengage Radius is applicable to ALL squadrons!
   --   
-  -- Use the method @{#AI_A2A_DISPATCHER.SetDisengageRadius}() to modify the default disengage radius to another distance setting.
+  -- Use the method @{#AI_A2A_DISPATCHER.SetDisengageRadius}() to modify the default Disengage Radius to another distance setting.
   -- 
   -- 
   -- ## 11. Q & A:
@@ -845,7 +860,7 @@ do -- AI_A2A_DISPATCHER
     self:SetEngageRadius()
     self:SetGciRadius()
     self:SetIntercept( 300 )  -- A default intercept delay time of 300 seconds.
-    self:SetDisengageRadius( 300000 ) -- The default disengage radius is 300 km.
+    self:SetDisengageRadius( 300000 ) -- The default Disengage Radius is 300 km.
     
     self:SetDefaultTakeoff( AI_A2A_DISPATCHER.Takeoff.Air )
     self:SetDefaultTakeoffInAirAltitude( 500 ) -- Default takeoff is 500 meters above the ground.
@@ -1019,14 +1034,19 @@ do -- AI_A2A_DISPATCHER
   end
   
   --- Define the radius to engage any target by airborne friendlies, which are executing cap or returning from an intercept mission.
-  -- So, if there is a target area detected and reported, 
-  -- then any friendlies that are airborne near this target area, 
+  -- If there is a target area detected and reported, then any friendlies that are airborne near this target area, 
   -- will be commanded to (re-)engage that target when available (if no other tasks were commanded).
+  -- 
   -- For example, if 100000 is given as a value, then any friendly that is airborne within 100km from the detected target, 
   -- will be considered to receive the command to engage that target area.
-  -- You need to evaluate the value of this parameter carefully.
-  -- If too small, more intercept missions may be triggered upon detected target areas.
-  -- If too large, any airborne cap may not be able to reach the detected target area in time, because it is too far.
+  -- 
+  -- You need to evaluate the value of this parameter carefully:
+  -- 
+  --   * If too small, more intercept missions may be triggered upon detected target areas.
+  --   * If too large, any airborne cap may not be able to reach the detected target area in time, because it is too far.
+  --   
+  -- **Use the method @{#AI_A2A_DISPATCHER.SetEngageRadius}() to modify the default Engage Radius for ALL squadrons.**
+  -- 
   -- @param #AI_A2A_DISPATCHER self
   -- @param #number EngageRadius (Optional, Default = 100000) The radius to report friendlies near the target.
   -- @return #AI_A2A_DISPATCHER
@@ -1040,7 +1060,7 @@ do -- AI_A2A_DISPATCHER
   --   
   function AI_A2A_DISPATCHER:SetEngageRadius( EngageRadius )
 
-    self.Detection:SetFriendliesRange( EngageRadius )
+    self.Detection:SetFriendliesRange( EngageRadius or 100000 )
   
     return self
   end
@@ -1051,10 +1071,10 @@ do -- AI_A2A_DISPATCHER
   -- @return #AI_A2A_DISPATCHER
   -- @usage
   -- 
-  --   -- Set 50km as the disengage radius.
+  --   -- Set 50km as the Disengage Radius.
   --   Dispatcher:SetDisengageRadius( 50000 )
   --   
-  --   -- Set 100km as the disengage radius.
+  --   -- Set 100km as the Disengage Radius.
   --   Dispatcher:SetDisngageRadius() -- 300000 is the default value.
   --   
   function AI_A2A_DISPATCHER:SetDisengageRadius( DisengageRadius )
@@ -1066,21 +1086,23 @@ do -- AI_A2A_DISPATCHER
   
   
   --- Define the radius to check if a target can be engaged by an ground controlled intercept.
-  -- So, if there is a target area detected and reported, 
-  -- and a GCI is to be executed, 
-  -- then it will be check if the target is within the GCI from the nearest airbase.
-  -- For example, if 150000 is given as a value, then any airbase within 150km from the detected target, 
-  -- will be considered to receive the command to GCI.
-  -- You need to evaluate the value of this parameter carefully.
-  -- If too small, intercept missions may be triggered too late.
-  -- If too large, intercept missions may be triggered when the detected target is too far.
+  -- When targets are detected that are still really far off, you don't want the AI_A2A_DISPATCHER to launch intercepts just yet.
+  -- You want it to wait until a certain Gci range is reached, which is the **distance of the closest airbase to target** 
+  -- being **smaller** than the **Ground Controlled Intercept radius** or **Gci radius**.
+  -- 
+  -- The **default** Gci radius is defined as **200000** or **200km**. Override the default Gci radius when the era of the warfare is early, or, 
+  -- when you don't want to let the AI_A2A_DISPATCHER react immediately when a certain border or area is not being crossed.
+  -- 
+  -- Use the method @{#AI_A2A_DISPATCHER.SetGciRadius}() to set a specific controlled ground intercept radius.
+  -- **The Ground Controlled Intercept radius is defined for ALL squadrons which are operational.**
+  -- 
   -- @param #AI_A2A_DISPATCHER self
   -- @param #number GciRadius (Optional, Default = 200000) The radius to ground control intercept detected targets from the nearest airbase.
   -- @return #AI_A2A_DISPATCHER
   -- @usage
   -- 
   --   -- Now Setup the A2A dispatcher, and initialize it using the Detection object.
-  --   A2ADispatcher = AI_A2A_DISPATCHER:New( Detection )  --   
+  --   A2ADispatcher = AI_A2A_DISPATCHER:New( Detection ) 
   --   
   --   -- Set 100km as the radius to ground control intercept detected targets from the nearest airbase.
   --   A2ADispatcher:SetGciRadius( 100000 )
@@ -3386,15 +3408,11 @@ do
   --   
   function AI_A2A_GCICAP:New( EWRPrefixes, TemplatePrefixes, CapPrefixes, CapLimit, GroupingRadius, EngageRadius, GciRadius, Resources )
 
-    GroupingRadius = GroupingRadius or 30000
-    EngageRadius = EngageRadius or 100000
-    GciRadius = GciRadius or 150000
-
     local EWRSetGroup = SET_GROUP:New()
     EWRSetGroup:FilterPrefixes( EWRPrefixes )
     EWRSetGroup:FilterStart()
 
-    local Detection  = DETECTION_AREAS:New( EWRSetGroup, GroupingRadius )
+    local Detection  = DETECTION_AREAS:New( EWRSetGroup, GroupingRadius or 30000 )
 
     local self = BASE:Inherit( self, AI_A2A_DISPATCHER:New( Detection ) ) -- #AI_A2A_GCICAP
     
