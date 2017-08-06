@@ -313,7 +313,7 @@ end
 --- @param Wrapper.Group#GROUP AIControllable
 function AI_A2A_GCI.InterceptRoute( AIGroup )
 
-  AIGroup:E( { "AI_A2A_GCI.InterceptRoute:", AIGroup:GetName() } )
+  AIGroup:F( { "AI_A2A_GCI.InterceptRoute:", AIGroup:GetName() } )
   
   if AIGroup:IsAlive() then
     local _AI_A2A_GCI = AIGroup:GetState( AIGroup, "AI_A2A_GCI" ) -- AI.AI_Cap#AI_A2A_GCI

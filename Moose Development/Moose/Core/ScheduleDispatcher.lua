@@ -186,7 +186,7 @@ function SCHEDULEDISPATCHER:Start( Scheduler, CallID )
       Schedule[CallID].ScheduleID = timer.scheduleFunction( 
         Schedule[CallID].CallHandler, 
         CallID, 
-        timer.getTime() + Schedule[CallID].Start + math.random( - ( Schedule[CallID].Randomize * Schedule[CallID].Repeat / 2 ), ( Schedule[CallID].Randomize * Schedule[CallID].Repeat / 2 ) )
+        timer.getTime() + Schedule[CallID].Start 
       )
     end
   else

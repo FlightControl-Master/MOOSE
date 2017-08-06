@@ -512,7 +512,7 @@ end
 --- @param Wrapper.Group#GROUP AIGroup
 function AI_A2A.RTBRoute( AIGroup )
 
-  AIGroup:E( { "AI_A2A.RTBRoute:", AIGroup:GetName() } )
+  AIGroup:F( { "AI_A2A.RTBRoute:", AIGroup:GetName() } )
   
   if AIGroup:IsAlive() then
     local _AI_A2A = AIGroup:GetState( AIGroup, "AI_A2A" ) -- #AI_A2A
@@ -526,7 +526,7 @@ end
 --- @param Wrapper.Group#GROUP AIGroup
 function AI_A2A.RTBHold( AIGroup )
 
-  AIGroup:E( { "AI_A2A.RTBHold:", AIGroup:GetName() } )
+  AIGroup:F( { "AI_A2A.RTBHold:", AIGroup:GetName() } )
   if AIGroup:IsAlive() then
     local _AI_A2A = AIGroup:GetState( AIGroup, "AI_A2A" ) -- #AI_A2A
     _AI_A2A:__RTB( 0.5 )
@@ -642,7 +642,7 @@ end
 --- @param Wrapper.Group#GROUP AIGroup
 function AI_A2A.Resume( AIGroup )
 
-  AIGroup:E( { "AI_A2A.Resume:", AIGroup:GetName() } )
+  AIGroup:F( { "AI_A2A.Resume:", AIGroup:GetName() } )
   if AIGroup:IsAlive() then
     local _AI_A2A = AIGroup:GetState( AIGroup, "AI_A2A" ) -- #AI_A2A
     _AI_A2A:__RTB( 0.5 )

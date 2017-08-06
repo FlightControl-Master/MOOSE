@@ -350,7 +350,7 @@ end
 --- @param Wrapper.Group#GROUP AIGroup
 function AI_A2A_CAP.AttackRoute( AIGroup )
 
-  AIGroup:E( { "AI_A2A_CAP.AttackRoute:", AIGroup:GetName() } )
+  AIGroup:F( { "AI_A2A_CAP.AttackRoute:", AIGroup:GetName() } )
 
   if AIGroup:IsAlive() then
     local _AI_A2A_CAP = AIGroup:GetState( AIGroup, "AI_A2A_CAP" ) -- AI.AI_Cap#AI_A2A_CAP
@@ -497,7 +497,7 @@ end
 --- @param Wrapper.Group#GROUP AIGroup
 function AI_A2A_CAP.Resume( AIGroup )
 
-  AIGroup:E( { "AI_A2A_CAP.Resume:", AIGroup:GetName() } )
+  AIGroup:F( { "AI_A2A_CAP.Resume:", AIGroup:GetName() } )
   if AIGroup:IsAlive() then
     local _AI_A2A = AIGroup:GetState( AIGroup, "AI_A2A" ) -- #AI_A2A
       _AI_A2A:__Reset( 1 )
