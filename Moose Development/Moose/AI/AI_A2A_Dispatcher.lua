@@ -293,11 +293,13 @@ do -- AI_A2A_DISPATCHER
   -- Use the method @{#AI_A2A_DISPATCHER.SetEngageRadius}() to set a specific Engage Radius.
   -- **The Engage Radius is defined for ALL squadrons which are operational.**
   -- 
-  -- In this example an Engage Radius is set to 80km.
+  -- Demonstration Mission: [AID-019 - AI_A2A - Engage Range Test](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/release-2-2-pre/AID-019%20-%20AI_A2A%20-%20Engage%20Range%20Test)
   -- 
-  --     -- Initialize the dispatcher, setting up a radius of 80km where any airborne friendly 
-  --     -- without an assignment within 80km radius from a detected target, will engage that target.
-  --     A2ADispatcher:SetEngageRadius( 80000 )
+  -- In this example an Engage Radius is set to 50km.
+  -- 
+  --     -- Initialize the dispatcher, setting up a radius of 50km where any airborne friendly 
+  --     -- without an assignment within 50km radius from a detected target, will engage that target.
+  --     A2ADispatcher:SetEngageRadius( 50000 )
   -- 
   -- ## 4. Set the **Ground Controlled Intercept Radius** or **Gci radius**:
   -- 
