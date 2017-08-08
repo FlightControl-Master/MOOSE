@@ -436,6 +436,12 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).RouteGroundTo">CONTROLLABLE:RouteGroundTo(ToCoordinate, Speed, Formation, DelaySeconds)</a></td>
+		<td class="summary">
+<p>Make the GROUND controllable to drive towards a specific point.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).RouteToVec2">CONTROLLABLE:RouteToVec2(Point, Speed)</a></td>
 		<td class="summary">
 <p>(AIR + GROUND) Make the Controllable move to fly to a given point.</p>
@@ -460,7 +466,7 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).SetTaskAtWaypoint">CONTROLLABLE:SetTaskAtWaypoint(RouteList, WaypointNumber, Task)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).SetTaskWaypoint">CONTROLLABLE:SetTaskWaypoint(Waypoint, Task)</a></td>
 		<td class="summary">
 <p>Set a Task at a Waypoint using a Route list.</p>
 </td>
@@ -2214,6 +2220,51 @@ The CONTROLLABLE.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(CONTROLLABLE).RouteGroundTo" >
+<strong>CONTROLLABLE:RouteGroundTo(ToCoordinate, Speed, Formation, DelaySeconds)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Make the GROUND controllable to drive towards a specific point.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Point.html##(COORDINATE)">Core.Point#COORDINATE</a> ToCoordinate </em></code>: 
+A Coordinate to drive to.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Speed </em></code>: 
+(optional) Speed in km/h. The default speed is 999 km/h.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Formation </em></code>: 
+(optional) The route point Formation, which is a text string that specifies exactly the Text in the Type of the route point, like "Vee", "Echelon Right".</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number DelaySeconds </em></code>: 
+Wait for the specified seconds before executing the Route.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(CONTROLLABLE)">#CONTROLLABLE</a>:</em>
+The CONTROLLABLE.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(CONTROLLABLE).RouteToVec2" >
 <strong>CONTROLLABLE:RouteToVec2(Point, Speed)</strong>
 </a>
@@ -2337,8 +2388,8 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(CONTROLLABLE).SetTaskAtWaypoint" >
-<strong>CONTROLLABLE:SetTaskAtWaypoint(RouteList, WaypointNumber, Task)</strong>
+<a id="#(CONTROLLABLE).SetTaskWaypoint" >
+<strong>CONTROLLABLE:SetTaskWaypoint(Waypoint, Task)</strong>
 </a>
 </dt>
 <dd>
@@ -2349,14 +2400,8 @@ self</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE.RouteList)">Wrapper.Controllable#CONTROLLABLE.RouteList</a> RouteList </em></code>: 
-A list of Waypoints.</p>
-
-				</li>
-				<li>
-				
-<p><code><em>#number WaypointNumber </em></code>: 
-The number of the Waypoint. The first Waypoint starts at 1!</p>
+<p><code><em>#table Waypoint </em></code>: 
+The Waypoint!</p>
 
 				</li>
 				<li>
@@ -3124,8 +3169,8 @@ The variable arguments passed to the function when called! These arguments can b
    local ToCoord = RandomZone:GetCoordinate()
    
    -- Create a "ground route point", which is a "point" structure that can be given as a parameter to a Task
-   Route[#Route+1] = FromCoord:RoutePointGround( 72 )
-   Route[#Route+1] = ToCoord:RoutePointGround( 60, "Vee" )
+   Route[#Route+1] = FromCoord:WaypointGround( 72 )
+   Route[#Route+1] = ToCoord:WaypointGround( 60, "Vee" )
    
    local TaskRouteToZone = Vehicle:TaskFunction( "RouteToZone", RandomZone )
    

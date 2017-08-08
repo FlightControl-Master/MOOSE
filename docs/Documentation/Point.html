@@ -336,18 +336,6 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).RoutePointAir">COORDINATE:RoutePointAir(AltType, Type, Action, Speed, SpeedLocked)</a></td>
-		<td class="summary">
-<p>Build an air type route point.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).RoutePointGround">COORDINATE:RoutePointGround(Speed, Formation)</a></td>
-		<td class="summary">
-<p>Build an ground type route point.</p>
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).SetHeading">COORDINATE:SetHeading(Heading)</a></td>
 		<td class="summary">
 
@@ -443,6 +431,18 @@
 		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).Translate">COORDINATE:Translate(Distance, Angle)</a></td>
 		<td class="summary">
 <p>Add a Distance in meters from the COORDINATE orthonormal plane, with the given angle, and calculate the new COORDINATE.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).WaypointAir">COORDINATE:WaypointAir(AltType, Type, Action, Speed, SpeedLocked)</a></td>
+		<td class="summary">
+<p>Build an air type route point.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).WaypointGround">COORDINATE:WaypointGround(Speed, Formation)</a></td>
+		<td class="summary">
+<p>Build an ground type route point.</p>
 </td>
 		</tr>
 		<tr>
@@ -799,8 +799,8 @@
 <p>A COORDINATE can prepare waypoints for Ground and Air groups to be embedded into a Route.</p>
 
 <ul>
-    <li><a href="##(COORDINATE).RoutePointAir">COORDINATE.RoutePointAir</a>(): Build an air route point.</li>
-    <li><a href="##(COORDINATE).RoutePointGround">COORDINATE.RoutePointGround</a>(): Build a ground route point.</li>
+    <li><a href="##(COORDINATE).WaypointAir">COORDINATE.WaypointAir</a>(): Build an air route point.</li>
+    <li><a href="##(COORDINATE).WaypointGround">COORDINATE.WaypointGround</a>(): Build a ground route point.</li>
 </ul>
 
 <p>Route points can be used in the Route methods of the <a href="Group.html##(GROUP)">Group#GROUP</a> class.</p>
@@ -1781,90 +1781,6 @@ The Vec3 point.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(COORDINATE).RoutePointAir" >
-<strong>COORDINATE:RoutePointAir(AltType, Type, Action, Speed, SpeedLocked)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Build an air type route point.</p>
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="##(COORDINATE.RoutePointAltType)">#COORDINATE.RoutePointAltType</a> AltType </em></code>: 
-The altitude type.</p>
-
-				</li>
-				<li>
-				
-<p><code><em><a href="##(COORDINATE.RoutePointType)">#COORDINATE.RoutePointType</a> Type </em></code>: 
-The route point type.</p>
-
-				</li>
-				<li>
-				
-<p><code><em><a href="##(COORDINATE.RoutePointAction)">#COORDINATE.RoutePointAction</a> Action </em></code>: 
-The route point action.</p>
-
-				</li>
-				<li>
-				
-<p><code><em><a href="Dcs.DCSTypes.html##(Speed)">Dcs.DCSTypes#Speed</a> Speed </em></code>: 
-Airspeed in km/h.</p>
-
-				</li>
-				<li>
-				
-<p><code><em>#boolean SpeedLocked </em></code>: 
-true means the speed is locked.</p>
-
-				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em>#table:</em>
-The route point.</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(COORDINATE).RoutePointGround" >
-<strong>COORDINATE:RoutePointGround(Speed, Formation)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Build an ground type route point.</p>
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="Dcs.DCSTypes.html##(Speed)">Dcs.DCSTypes#Speed</a> Speed </em></code>: 
-Speed in km/h.</p>
-
-				</li>
-				<li>
-				
-<p><code><em><a href="##(COORDINATE.RoutePointAction)">#COORDINATE.RoutePointAction</a> Formation </em></code>: 
-The route point Formation.</p>
-
-				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em>#table:</em>
-The route point.</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
 <a id="#(COORDINATE).SetHeading" >
 <strong>COORDINATE:SetHeading(Heading)</strong>
 </a>
@@ -2276,6 +2192,90 @@ The Angle in degrees.</p>
 				
 <p><em><a href="##(COORDINATE)">#COORDINATE</a>:</em>
 The new calculated COORDINATE.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(COORDINATE).WaypointAir" >
+<strong>COORDINATE:WaypointAir(AltType, Type, Action, Speed, SpeedLocked)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Build an air type route point.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="##(COORDINATE.RoutePointAltType)">#COORDINATE.RoutePointAltType</a> AltType </em></code>: 
+The altitude type.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="##(COORDINATE.RoutePointType)">#COORDINATE.RoutePointType</a> Type </em></code>: 
+The route point type.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="##(COORDINATE.RoutePointAction)">#COORDINATE.RoutePointAction</a> Action </em></code>: 
+The route point action.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSTypes.html##(Speed)">Dcs.DCSTypes#Speed</a> Speed </em></code>: 
+Airspeed in km/h.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#boolean SpeedLocked </em></code>: 
+true means the speed is locked.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#table:</em>
+The route point.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(COORDINATE).WaypointGround" >
+<strong>COORDINATE:WaypointGround(Speed, Formation)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Build an ground type route point.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number Speed </em></code>: 
+(optional) Speed in km/h. The default speed is 999 km/h.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Formation </em></code>: 
+(optional) The route point Formation, which is a text string that specifies exactly the Text in the Type of the route point, like "Vee", "Echelon Right".</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#table:</em>
+The route point.</p>
 
 </dd>
 </dl>
@@ -2829,6 +2829,7 @@ The y coordinate.</p>
 		<dl class="function">
 <dt>
 
+		<em></em>
 <a id="#(POINT_VEC2).z" >
 <strong>POINT_VEC2.z</strong>
 </a>
