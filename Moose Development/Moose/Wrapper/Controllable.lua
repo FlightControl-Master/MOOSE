@@ -124,7 +124,15 @@
 --   * @{#CONTROLLABLE.CommandDoScript}: Do Script command.
 --   * @{#CONTROLLABLE.CommandSwitchWayPoint}: Perform a switch waypoint command.
 -- 
--- ## CONTROLLABLE Option methods
+-- ## Routing of Controllables
+-- 
+-- Different routing methods exist to route GROUPs and UNITs to different locations:
+--   
+--   * @{#CONTROLLABLE.Route}(): Make the Controllable to follow a given route.  
+--   * @{#CONTROLLABLE.RouteGroundTo}(): Make the GROUND Controllable to drive towards a specific coordinate.
+--   * @{#CONTROLLABLE.RouteAirTo}(): Make the AIR Controllable to fly towards a specific coordinate. 
+-- 
+-- ## Option methods
 -- 
 -- Controllable **Option methods** change the behaviour of the Controllable while being alive.
 -- 
@@ -1762,7 +1770,7 @@ function CONTROLLABLE:Route( Route, DelaySeconds )
 end
 
 
---- Make the GROUND controllable to drive towards a specific point.
+--- Make the GROUND Controllable to drive towards a specific point.
 -- @param #CONTROLLABLE self
 -- @param Core.Point#COORDINATE ToCoordinate A Coordinate to drive to.
 -- @param #number Speed (optional) Speed in km/h. The default speed is 999 km/h.
@@ -1780,6 +1788,29 @@ function CONTROLLABLE:RouteGroundTo( ToCoordinate, Speed, Formation, DelaySecond
 
   return self
 end
+
+
+--- Make the AIR Controllable fly towards a specific point.
+-- @param #CONTROLLABLE self
+-- @param Core.Point#COORDINATE ToCoordinate A Coordinate to drive to.
+-- @param Core.Point#COORDINATE.RoutePointAltType AltType The altitude type.
+-- @param Core.Point#COORDINATE.RoutePointType Type The route point type.
+-- @param Core.Point#COORDINATE.RoutePointAction Action The route point action.
+-- @param #number Speed (optional) Speed in km/h. The default speed is 999 km/h.
+-- @param #number DelaySeconds Wait for the specified seconds before executing the Route.
+-- @return #CONTROLLABLE The CONTROLLABLE.
+function CONTROLLABLE:RouteAirTo( ToCoordinate, AltType, Type, Action, Speed, DelaySeconds )
+
+  local FromCoordinate = self:GetCoordinate()
+  local FromWP = FromCoordinate:WaypointAir()
+
+  local ToWP = ToCoordinate:WaypointAir( AltType, Type, Action, Speed )
+
+  self:Route( { FromWP, ToWP }, DelaySeconds )
+
+  return self
+end
+
 
 --- (AIR + GROUND) Route the controllable to a given zone.
 -- The controllable final destination point can be randomized.

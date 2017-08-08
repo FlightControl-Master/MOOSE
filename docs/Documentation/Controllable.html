@@ -436,9 +436,15 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).RouteAirTo">CONTROLLABLE:RouteAirTo(ToCoordinate, AltType, Type, Action, Speed, DelaySeconds)</a></td>
+		<td class="summary">
+<p>Make the AIR Controllable fly towards a specific point.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).RouteGroundTo">CONTROLLABLE:RouteGroundTo(ToCoordinate, Speed, Formation, DelaySeconds)</a></td>
 		<td class="summary">
-<p>Make the GROUND controllable to drive towards a specific point.</p>
+<p>Make the GROUND Controllable to drive towards a specific point.</p>
 </td>
 		</tr>
 		<tr>
@@ -818,6 +824,16 @@ The method <a href="##(CONTROLLABLE).SetTaskAtWaypoint">CONTROLLABLE.SetTaskAtWa
 <ul>
     <li><a href="##(CONTROLLABLE).CommandDoScript">CONTROLLABLE.CommandDoScript</a>: Do Script command.</li>
     <li><a href="##(CONTROLLABLE).CommandSwitchWayPoint">CONTROLLABLE.CommandSwitchWayPoint</a>: Perform a switch waypoint command.</li>
+</ul>
+
+<h2>Routing of Controllables</h2>
+
+<p>Different routing methods exist to route GROUPs and UNITs to different locations:</p>
+
+<ul>
+    <li><a href="##(CONTROLLABLE).Route">CONTROLLABLE.Route</a>(): Make the Controllable to follow a given route.  </li>
+    <li><a href="##(CONTROLLABLE).RouteGroundTo">CONTROLLABLE.RouteGroundTo</a>(): Make the GROUND Controllable to drive towards a specific coordinate.</li>
+    <li><a href="##(CONTROLLABLE).RouteAirTo">CONTROLLABLE.RouteAirTo</a>(): Make the AIR Controllable to fly towards a specific coordinate. </li>
 </ul>
 
 <h2>CONTROLLABLE Option methods</h2>
@@ -2220,13 +2236,70 @@ The CONTROLLABLE.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(CONTROLLABLE).RouteAirTo" >
+<strong>CONTROLLABLE:RouteAirTo(ToCoordinate, AltType, Type, Action, Speed, DelaySeconds)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Make the AIR Controllable fly towards a specific point.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Point.html##(COORDINATE)">Core.Point#COORDINATE</a> ToCoordinate </em></code>: 
+A Coordinate to drive to.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Core.Point.html##(COORDINATE.RoutePointAltType)">Core.Point#COORDINATE.RoutePointAltType</a> AltType </em></code>: 
+The altitude type.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Core.Point.html##(COORDINATE.RoutePointType)">Core.Point#COORDINATE.RoutePointType</a> Type </em></code>: 
+The route point type.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Core.Point.html##(COORDINATE.RoutePointAction)">Core.Point#COORDINATE.RoutePointAction</a> Action </em></code>: 
+The route point action.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Speed </em></code>: 
+(optional) Speed in km/h. The default speed is 999 km/h.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number DelaySeconds </em></code>: 
+Wait for the specified seconds before executing the Route.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(CONTROLLABLE)">#CONTROLLABLE</a>:</em>
+The CONTROLLABLE.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(CONTROLLABLE).RouteGroundTo" >
 <strong>CONTROLLABLE:RouteGroundTo(ToCoordinate, Speed, Formation, DelaySeconds)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Make the GROUND controllable to drive towards a specific point.</p>
+<p>Make the GROUND Controllable to drive towards a specific point.</p>
 
 		<h3>Parameters</h3>
 		<ul>
