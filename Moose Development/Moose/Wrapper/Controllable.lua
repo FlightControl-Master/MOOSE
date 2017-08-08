@@ -1592,7 +1592,7 @@ function CONTROLLABLE:TaskFunction( FunctionString, ... )
   DCSScript[#DCSScript+1] = "local MissionControllable = GROUP:Find( ... ) "
 
   if arg and arg.n > 0 then
-    local ArgumentKey = tostring( arg )
+    local ArgumentKey = tostring( arg ):match("table: (.*)")
     self:SetState( self, ArgumentKey, arg )
     DCSScript[#DCSScript+1] = "local Arguments = MissionControllable:GetState( MissionControllable, '" .. ArgumentKey .. "' ) "
     DCSScript[#DCSScript+1] = "MissionControllable:ClearState( MissionControllable, '" .. ArgumentKey .. "' ) "
