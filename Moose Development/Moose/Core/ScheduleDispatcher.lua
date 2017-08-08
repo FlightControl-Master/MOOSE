@@ -100,11 +100,12 @@ function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleAr
     if not Scheduler then
       Scheduler = self.PersistentSchedulers[CallID]
     end
-
+    
     --self:T3( { Scheduler = Scheduler } )
     
     if Scheduler then
 
+      local MasterObject = tostring(Scheduler.MasterObject) 
       local Schedule = self.Schedule[Scheduler][CallID]
       
       --self:T3( { Schedule = Schedule } )
@@ -134,6 +135,9 @@ function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleAr
       
       local CurrentTime = timer.getTime()
       local StartTime = Schedule.StartTime
+
+      self:F3( { Master = MasterObject, CurrentTime = CurrentTime, StartTime = StartTime, Start = Start, Repeat = Repeat, Randomize = Randomize, Stop = Stop } )
+      
       
       if Status and (( Result == nil ) or ( Result and Result ~= false ) ) then
         if Repeat ~= 0 and ( ( Stop == 0 ) or ( Stop ~= 0 and CurrentTime <= StartTime + Stop ) ) then

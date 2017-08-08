@@ -238,6 +238,12 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).GetFuel">CONTROLLABLE:GetFuel()</a></td>
+		<td class="summary">
+<p>Returns relative amount of fuel (from 0.0 to 1.0) the unit has in its internal tanks.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).GetLife">CONTROLLABLE:GetLife()</a></td>
 		<td class="summary">
 <p>Returns the health.</p>
@@ -424,7 +430,7 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).Route">CONTROLLABLE:Route(GoPoints)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).Route">CONTROLLABLE:Route(Route, DelaySeconds)</a></td>
 		<td class="summary">
 <p>Make the controllable to follow a given route.</p>
 </td>
@@ -451,6 +457,12 @@
 		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).SetTask">CONTROLLABLE:SetTask(DCSTask, WaitTime)</a></td>
 		<td class="summary">
 <p>Clearing the Task Queue and Setting the Task on the queue from the controllable.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).SetTaskAtWaypoint">CONTROLLABLE:SetTaskAtWaypoint(RouteList, WaypointNumber, Task)</a></td>
+		<td class="summary">
+<p>Set a Task at a Waypoint using a Route list.</p>
 </td>
 		</tr>
 		<tr>
@@ -538,9 +550,9 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).TaskFunction">CONTROLLABLE:TaskFunction(WayPoint, WayPointIndex, FunctionString, FunctionArguments)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).TaskFunction">CONTROLLABLE:TaskFunction(FunctionString, ...)</a></td>
 		<td class="summary">
-
+<p>This creates a Task element, with an action to call a function as part of a Wrapped Task.</p>
 </td>
 		</tr>
 		<tr>
@@ -768,6 +780,22 @@ This is different from the EnRoute tasks, where the targets of the task need to 
     <li><a href="##(CONTROLLABLE).TaskCondition">CONTROLLABLE.TaskCondition</a>: Return a condition section for a controlled task.</li>
     <li><a href="##(CONTROLLABLE).TaskControlled">CONTROLLABLE.TaskControlled</a>: Return a Controlled Task taking a Task and a TaskCondition.</li>
 </ul>
+
+<h3>Call a function as a Task</h3>
+
+<p>A function can be called which is part of a Task. The method <a href="##(CONTROLLABLE).TaskFunction">CONTROLLABLE.TaskFunction</a>() prepares
+a Task that can call a GLOBAL function from within the Controller execution.
+This method can also be used to <strong>embed a function call when a certain waypoint has been reached</strong>.
+See below the <strong>Tasks at Waypoints</strong> section.</p>
+
+<p>Demonstration Mission: <a href="https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/release-2-2-pre/GRP - Group Commands/GRP-502 - Route at waypoint to random point">GRP-502 - Route at waypoint to random point</a></p>
+
+<h3>Tasks at Waypoints</h3>
+
+<p>Special Task methods are available to set tasks at certain waypoints.
+The method <a href="##(CONTROLLABLE).SetTaskAtWaypoint">CONTROLLABLE.SetTaskAtWaypoint</a>() helps preparing a Route, embedding a Task at the Waypoint of the Route.</p>
+
+<p>This creates a Task element, with an action to call a function as part of a Wrapped Task.</p>
 
 <h3>Obtain the mission from controllable templates</h3>
 
@@ -1478,6 +1506,27 @@ DetectedTargets</p>
 		<dl class="function">
 <dt>
 
+<a id="#(CONTROLLABLE).GetFuel" >
+<strong>CONTROLLABLE:GetFuel()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns relative amount of fuel (from 0.0 to 1.0) the unit has in its internal tanks.</p>
+
+	
+<p>This method returns nil to ensure polymorphic behaviour! This method needs to be overridden by GROUP or UNIT.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#nil:</em>
+The CONTROLLABLE is not existing or alive.  </p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(CONTROLLABLE).GetLife" >
 <strong>CONTROLLABLE:GetLife()</strong>
 </a>
@@ -2133,26 +2182,32 @@ self</p>
 <dt>
 
 <a id="#(CONTROLLABLE).Route" >
-<strong>CONTROLLABLE:Route(GoPoints)</strong>
+<strong>CONTROLLABLE:Route(Route, DelaySeconds)</strong>
 </a>
 </dt>
 <dd>
 	
 <p>Make the controllable to follow a given route.</p>
 
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
-<p><code><em>#table GoPoints </em></code>: 
+<p><code><em>#table Route </em></code>: 
 A table of Route Points.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number DelaySeconds </em></code>: 
+Wait for the specified seconds before executing the Route.</p>
 
 				</li>
 		</ul>
 		<h3>Return value</h3>
 				
 <p><em><a href="##(CONTROLLABLE)">#CONTROLLABLE</a>:</em>
-self</p>
+The CONTROLLABLE.</p>
 
 </dd>
 </dl>
@@ -2276,6 +2331,45 @@ self</p>
 				
 <p><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a>:</em>
 self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CONTROLLABLE).SetTaskAtWaypoint" >
+<strong>CONTROLLABLE:SetTaskAtWaypoint(RouteList, WaypointNumber, Task)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set a Task at a Waypoint using a Route list.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE.RouteList)">Wrapper.Controllable#CONTROLLABLE.RouteList</a> RouteList </em></code>: 
+A list of Waypoints.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number WaypointNumber </em></code>: 
+The number of the Waypoint. The first Waypoint starts at 1!</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSTasking.Task.html##(Task)">Dcs.DCSTasking.Task#Task</a> Task </em></code>: 
+The Task structure to be executed!</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="Dcs.DCSTasking.Task.html##(Task)">Dcs.DCSTasking.Task#Task</a>:</em></p>
+
 
 </dd>
 </dl>
@@ -2971,36 +3065,79 @@ The DCS task structure.</p>
 <dt>
 
 <a id="#(CONTROLLABLE).TaskFunction" >
-<strong>CONTROLLABLE:TaskFunction(WayPoint, WayPointIndex, FunctionString, FunctionArguments)</strong>
+<strong>CONTROLLABLE:TaskFunction(FunctionString, ...)</strong>
 </a>
 </dt>
 <dd>
 	
+<p>This creates a Task element, with an action to call a function as part of a Wrapped Task.</p>
 
+	
+<p>This Task can then be embedded at a Waypoint by calling the method <a href="##(CONTROLLABLE).SetTaskAtWaypoint">CONTROLLABLE.SetTaskAtWaypoint</a>.</p>
 
 		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
-<p><code><em> WayPoint </em></code>: </p>
+<p><code><em>#string FunctionString </em></code>: 
+The function name embedded as a string that will be called.</p>
 
 				</li>
 				<li>
 				
-<p><code><em> WayPointIndex </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em> FunctionString </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em> FunctionArguments </em></code>: </p>
+<p><code><em> ... </em></code>: 
+The variable arguments passed to the function when called! These arguments can be of any type!</p>
 
 				</li>
 		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(CONTROLLABLE)">#CONTROLLABLE</a>:</em></p>
+
+
+			<h3>Usage:</h3>
+		<pre class="example"><code>
+ local ZoneList = { 
+   ZONE:New( "ZONE1" ), 
+   ZONE:New( "ZONE2" ), 
+   ZONE:New( "ZONE3" ), 
+   ZONE:New( "ZONE4" ), 
+   ZONE:New( "ZONE5" ) 
+ }
+ 
+ GroundGroup = GROUP:FindByName( "Vehicle" )
+ 
+ --- @param Wrapper.Group#GROUP GroundGroup
+ function RouteToZone( Vehicle, ZoneRoute )
+ 
+   local Route = {}
+   
+   Vehicle:E( { ZoneRoute = ZoneRoute } )
+   
+   Vehicle:MessageToAll( "Moving to zone " .. ZoneRoute:GetName(), 10 )
+ 
+   -- Get the current coordinate of the Vehicle
+   local FromCoord = Vehicle:GetCoordinate()
+   
+   -- Select a random Zone and get the Coordinate of the new Zone.
+   local RandomZone = ZoneList[ math.random( 1, #ZoneList ) ] -- Core.Zone#ZONE
+   local ToCoord = RandomZone:GetCoordinate()
+   
+   -- Create a "ground route point", which is a "point" structure that can be given as a parameter to a Task
+   Route[#Route+1] = FromCoord:RoutePointGround( 72 )
+   Route[#Route+1] = ToCoord:RoutePointGround( 60, "Vee" )
+   
+   local TaskRouteToZone = Vehicle:TaskFunction( "RouteToZone", RandomZone )
+   
+   Vehicle:SetTaskAtWaypoint( Route, #Route, TaskRouteToZone ) -- Set for the given Route at Waypoint 2 the TaskRouteToZone.
+ 
+   Vehicle:Route( Route, math.random( 10, 20 ) ) -- Move after a random seconds to the Route. See the Route method for details.
+   
+ end
+   
+   RouteToZone( GroundGroup, ZoneList[1] )
+</code></pre>
+
 </dd>
 </dl>
 		<dl class="function">

@@ -317,13 +317,12 @@ end
 --- @param Wrapper.Group#GROUP AIGroup
 -- This statis method is called from the route path within the last task at the last waaypoint of the Controllable.
 -- Note that this method is required, as triggers the next route when patrolling for the Controllable.
-function AI_A2A_PATROL.PatrolRoute( AIGroup )
+function AI_A2A_PATROL.PatrolRoute( AIGroup, Fsm )
 
   AIGroup:F( { "AI_A2A_PATROL.PatrolRoute:", AIGroup:GetName() } )
 
   if AIGroup:IsAlive() then
-    local _AI_A2A_Patrol = AIGroup:GetState( AIGroup, "AI_A2A_PATROL" ) -- #AI_A2A_PATROL
-    _AI_A2A_Patrol:Route()
+    Fsm:Route()
   end
   
 end
@@ -372,12 +371,12 @@ function AI_A2A_PATROL:onafterRoute( AIGroup, From, Event, To )
     PatrolRoute[#PatrolRoute+1] = ToPatrolRoutePoint
     
     local Tasks = {}
-    Tasks[#Tasks+1] = AIGroup:TaskFunction( 1, 1, "AI_A2A_PATROL.PatrolRoute" )
+    Tasks[#Tasks+1] = AIGroup:TaskFunction( "AI_A2A_PATROL.PatrolRoute", self )
     
     PatrolRoute[#PatrolRoute].task = AIGroup:TaskCombo( Tasks )
     
     --- Do a trick, link the NewPatrolRoute function of the PATROLGROUP object to the AIControllable in a temporary variable ...
-    AIGroup:SetState( AIGroup, "AI_A2A_PATROL", self )
+    --AIGroup:SetState( AIGroup, "AI_A2A_PATROL", self )
 
     AIGroup:OptionROEReturnFire()
     AIGroup:OptionROTPassiveDefense()

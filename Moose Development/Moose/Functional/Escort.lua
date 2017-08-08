@@ -875,7 +875,7 @@ function ESCORT:_AttackTarget( DetectedItemID )
       end, Tasks
     )    
 
-    Tasks[#Tasks+1] = EscortGroup:TaskFunction( 1, 2, "_Resume", { "''" } )
+    Tasks[#Tasks+1] = EscortGroup:TaskFunction( "_Resume", { "''" } )
     
     EscortGroup:SetTask( 
       EscortGroup:TaskCombo(

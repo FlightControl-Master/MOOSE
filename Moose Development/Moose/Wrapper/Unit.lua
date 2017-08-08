@@ -486,12 +486,12 @@ function UNIT:GetRadar()
   return nil, nil
 end
 
---- Returns relative amount of fuel (from 0.0 to 1.0) the unit has in its internal tanks. If there are additional fuel tanks the value may be greater than 1.0.
+--- Returns relative amount of fuel (from 0.0 to 1.0) the UNIT has in its internal tanks. If there are additional fuel tanks the value may be greater than 1.0.
 -- @param #UNIT self
 -- @return #number The relative amount of fuel (from 0.0 to 1.0).
 -- @return #nil The DCS Unit is not existing or alive.  
 function UNIT:GetFuel()
-  self:F2( self.UnitName )
+  self:F( self.UnitName )
 
   local DCSUnit = self:GetDCSObject()
   

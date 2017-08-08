@@ -14,7 +14,7 @@
 -- @extends Wrapper.Identifiable#IDENTIFIABLE
 
 --- @type POSITIONABLE
--- @extends POSITIONABLE.__
+-- @extends Wrapper.Identifiable#IDENTIFIABLE
 
 
 --- # POSITIONABLE class, extends @{Identifiable#IDENTIFIABLE}

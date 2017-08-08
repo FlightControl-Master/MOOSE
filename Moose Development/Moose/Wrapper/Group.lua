@@ -565,6 +565,32 @@ function GROUP:GetHeading()
   
 end
 
+--- Returns relative amount of fuel (from 0.0 to 1.0) the group has in its internal tanks. If there are additional fuel tanks the value may be greater than 1.0.
+-- @param #GROUP self
+-- @return #number The relative amount of fuel (from 0.0 to 1.0).
+-- @return #nil The GROUP is not existing or alive.  
+function GROUP:GetFuel()
+  self:F( self.ControllableName )
+
+  local DCSControllable = self:GetDCSObject()
+  
+  if DCSControllable then
+    local GroupSize = self:GetSize()
+    local TotalFuel = 0
+    for UnitID, UnitData in pairs( self:GetUnits() ) do
+      local Unit = UnitData -- Wrapper.Unit#UNIT
+      local UnitFuel = Unit:GetFuel()
+      self:F( { Fuel = UnitFuel } )
+      TotalFuel = TotalFuel + UnitFuel
+    end
+    local GroupFuel = TotalFuel / GroupSize
+    return GroupFuel
+  end
+  
+  return 0
+end
+
+
 do -- Is Zone methods
 
 --- Returns true if all units of the group are within a @{Zone}.

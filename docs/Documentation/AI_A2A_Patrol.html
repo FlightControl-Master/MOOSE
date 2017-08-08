@@ -242,7 +242,7 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_PATROL).PatrolRoute">AI_A2A_PATROL.PatrolRoute(AIGroup)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_PATROL).PatrolRoute">AI_A2A_PATROL.PatrolRoute(AIGroup, Fsm)</a></td>
 		<td class="summary">
 
 </td>
@@ -852,20 +852,25 @@ Return false to cancel Transition.</p>
 <dt>
 
 <a id="#(AI_A2A_PATROL).PatrolRoute" >
-<strong>AI_A2A_PATROL.PatrolRoute(AIGroup)</strong>
+<strong>AI_A2A_PATROL.PatrolRoute(AIGroup, Fsm)</strong>
 </a>
 </dt>
 <dd>
 	
 
 
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
 <p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> AIGroup </em></code>: 
 This statis method is called from the route path within the last task at the last waaypoint of the Controllable.
 Note that this method is required, as triggers the next route when patrolling for the Controllable.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> Fsm </em></code>: </p>
 
 				</li>
 		</ul>
