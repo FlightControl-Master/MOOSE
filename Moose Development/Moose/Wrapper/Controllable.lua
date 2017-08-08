@@ -375,7 +375,6 @@ function CONTROLLABLE:SetTask( DCSTask, WaitTime )
 
     local function SetTask( Controller, DCSTask )
       local Controller = self:_GetController()
-      Controller:resetTask()
       Controller:setTask( DCSTask )
     end
 
@@ -1592,10 +1591,10 @@ function CONTROLLABLE:TaskFunction( FunctionString, ... )
   DCSScript[#DCSScript+1] = "local MissionControllable = GROUP:Find( ... ) "
 
   if arg and arg.n > 0 then
-    local ArgumentKey = tostring( arg ):match("table: (.*)")
+    local ArgumentKey = '_' .. tostring( arg ):match("table: (.*)")
     self:SetState( self, ArgumentKey, arg )
     DCSScript[#DCSScript+1] = "local Arguments = MissionControllable:GetState( MissionControllable, '" .. ArgumentKey .. "' ) "
-    DCSScript[#DCSScript+1] = "MissionControllable:ClearState( MissionControllable, '" .. ArgumentKey .. "' ) "
+    --DCSScript[#DCSScript+1] = "MissionControllable:ClearState( MissionControllable, '" .. ArgumentKey .. "' ) "
     DCSScript[#DCSScript+1] = FunctionString .. "( MissionControllable, unpack( Arguments ) )"
   else
     DCSScript[#DCSScript+1] = FunctionString .. "( MissionControllable )"

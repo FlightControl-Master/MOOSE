@@ -418,7 +418,6 @@ function AI_A2A_CAP:onafterEngage( AIGroup, From, Event, To, AttackSetUnit )
       self:T2( { self.MinSpeed, self.MaxSpeed, ToTargetSpeed } )
       
       EngageRoute[#EngageRoute+1] = ToPatrolRoutePoint
-      EngageRoute[#EngageRoute+1] = ToPatrolRoutePoint
 
       local AttackTasks = {}
   
@@ -438,15 +437,10 @@ function AI_A2A_CAP:onafterEngage( AIGroup, From, Event, To, AttackSetUnit )
         AIGroup:OptionROTPassiveDefense()
 
         AttackTasks[#AttackTasks+1] = AIGroup:TaskFunction( "AI_A2A_CAP.AttackRoute", self )
-        
-        EngageRoute[1].task = AIGroup:TaskCombo( AttackTasks )
-        
-        --- Do a trick, link the NewEngageRoute function of the object to the AIControllable in a temporary variable ...
-        --AIGroup:SetState( AIGroup, "AI_A2A_CAP", self )
+        EngageRoute[#EngageRoute].task = AIGroup:TaskCombo( AttackTasks )
       end
       
-      --- NOW ROUTE THE GROUP!
-      AIGroup:SetTask( AIGroup:TaskRoute( EngageRoute ), 1 )
+      AIGroup:Route( EngageRoute, 0.5 )
     end
   else
     self:E("No targets found -> Going back to Patrolling")

@@ -380,7 +380,7 @@ function AI_A2A_GCI:onafterEngage( AIGroup, From, Event, To, AttackSetUnit )
       local ToInterceptAngle = CurrentCoord:GetAngleDegrees( CurrentCoord:GetDirectionVec3( ToTargetCoord ) )
       
       --- Create a route point of type air.
-      local ToPatrolRoutePoint = CurrentCoord:Translate( 10000, ToInterceptAngle ):WaypointAir( 
+      local ToPatrolRoutePoint = CurrentCoord:Translate( 15000, ToInterceptAngle ):WaypointAir( 
         self.PatrolAltType, 
         POINT_VEC3.RoutePointType.TurningPoint, 
         POINT_VEC3.RoutePointAction.TurningPoint, 
@@ -391,7 +391,7 @@ function AI_A2A_GCI:onafterEngage( AIGroup, From, Event, To, AttackSetUnit )
       self:F( { Angle = ToInterceptAngle, ToTargetSpeed = ToTargetSpeed } )
       self:F( { self.EngageMinSpeed, self.EngageMaxSpeed, ToTargetSpeed } )
       
-      EngageRoute[#EngageRoute+1] = ToPatrolRoutePoint
+      --EngageRoute[#EngageRoute+1] = CurrentCoord:WaypointAir()
       EngageRoute[#EngageRoute+1] = ToPatrolRoutePoint
       
       local AttackTasks = {}
@@ -403,11 +403,7 @@ function AI_A2A_GCI:onafterEngage( AIGroup, From, Event, To, AttackSetUnit )
           AttackTasks[#AttackTasks+1] = AIGroup:TaskAttackUnit( AttackUnit )
         end
       end
-  
-      --- Now we're going to do something special, we're going to call a function from a waypoint action at the AIControllable...
-      AIGroup:WayPointInitialize( EngageRoute )
-      
-      
+        
       if #AttackTasks == 0 then
         self:E("No targets found -> Going RTB")
         self:Return()
@@ -418,14 +414,9 @@ function AI_A2A_GCI:onafterEngage( AIGroup, From, Event, To, AttackSetUnit )
 
         AttackTasks[#AttackTasks+1] = AIGroup:TaskFunction( "AI_A2A_GCI.InterceptRoute", self )
         EngageRoute[#EngageRoute].task = AIGroup:TaskCombo( AttackTasks )
-        
-        --- Do a trick, link the NewEngageRoute function of the object to the AIControllable in a temporary variable ...
-        --AIGroup:SetState( AIGroup, "AI_A2A_GCI", self )
       end
       
-      --- NOW ROUTE THE GROUP!
-      --AIGroup:ClearTasks()
-      AIGroup:SetTask( AIGroup:TaskRoute( EngageRoute ), 1 )
+      AIGroup:Route( EngageRoute, 0.5 )
     
     end
   else

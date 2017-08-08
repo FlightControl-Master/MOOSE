@@ -576,7 +576,6 @@ function AI_A2A:onafterRTB( AIGroup, From, Event, To )
     self:T2( { self.MinSpeed, self.MaxSpeed, ToTargetSpeed } )
     
     EngageRoute[#EngageRoute+1] = ToPatrolRoutePoint
-    EngageRoute[#EngageRoute+1] = ToPatrolRoutePoint
     
     AIGroup:OptionROEHoldFire()
     AIGroup:OptionROTEvadeFire()
@@ -586,13 +585,10 @@ function AI_A2A:onafterRTB( AIGroup, From, Event, To )
   
     local Tasks = {}
     Tasks[#Tasks+1] = AIGroup:TaskFunction( "AI_A2A.RTBRoute", self )
-    Tasks[#Tasks+1] = AIGroup:TaskOrbitCircle( 4000, 350 )
     EngageRoute[#EngageRoute].task = AIGroup:TaskCombo( Tasks )
 
-    --AIGroup:SetState( AIGroup, "AI_A2A", self )
-
     --- NOW ROUTE THE GROUP!
-    AIGroup:SetTask( AIGroup:TaskRoute( EngageRoute ), 1 )
+    AIGroup:Route( EngageRoute, 0.5 )
       
   end
     
@@ -675,7 +671,6 @@ function AI_A2A:onafterRefuel( AIGroup, From, Event, To )
       self:F( { ToRefuelSpeed = ToRefuelSpeed } )
       
       RefuelRoute[#RefuelRoute+1] = ToRefuelRoutePoint
-      RefuelRoute[#RefuelRoute+1] = ToRefuelRoutePoint
       
       AIGroup:OptionROEHoldFire()
       AIGroup:OptionROTEvadeFire()
@@ -684,11 +679,8 @@ function AI_A2A:onafterRefuel( AIGroup, From, Event, To )
       Tasks[#Tasks+1] = AIGroup:TaskRefueling()
       Tasks[#Tasks+1] = AIGroup:TaskFunction( self:GetClassName() .. ".Resume", self )
       RefuelRoute[#RefuelRoute].task = AIGroup:TaskCombo( Tasks )
-      --AIGroup:SetState( AIGroup, "AI_A2A", self )
   
-      --- NOW ROUTE THE GROUP!
-      AIGroup:SetTask( AIGroup:TaskRoute( RefuelRoute ), 1 )
-      
+      AIGroup:Route( RefuelRoute, 0.5 )
     else
       self:RTB()
     end

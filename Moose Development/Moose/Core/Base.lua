@@ -670,7 +670,7 @@ function BASE:GetState( Object, Key )
 
   if self.States[ClassNameAndID] then
     local Value = self.States[ClassNameAndID][Key] or false
-    self:T2( { ClassNameAndID, Key, Value } )
+    self:E( { ClassNameAndID, Key, Value } )
     return Value
   end
   

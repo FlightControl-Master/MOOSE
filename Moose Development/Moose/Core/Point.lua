@@ -484,12 +484,12 @@ do -- COORDINATE
     RoutePoint.x = self.x
     RoutePoint.y = self.z
     RoutePoint.alt = self.y
-    RoutePoint.alt_type = AltType
+    RoutePoint.alt_type = AltType or "RADIO"
 
-    RoutePoint.type = Type
-    RoutePoint.action = Action
+    RoutePoint.type = Type or nil
+    RoutePoint.action = Action or nil
 
-    RoutePoint.speed = Speed / 3.6
+    RoutePoint.speed = ( Speed and Speed / 3.6 ) or ( 500 / 3.6 )
     RoutePoint.speed_locked = true
 
     --  ["task"] =

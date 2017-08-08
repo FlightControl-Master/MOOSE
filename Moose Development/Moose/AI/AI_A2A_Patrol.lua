@@ -368,21 +368,15 @@ function AI_A2A_PATROL:onafterRoute( AIGroup, From, Event, To )
     )
 
     PatrolRoute[#PatrolRoute+1] = ToPatrolRoutePoint
-    PatrolRoute[#PatrolRoute+1] = ToPatrolRoutePoint
     
     local Tasks = {}
     Tasks[#Tasks+1] = AIGroup:TaskFunction( "AI_A2A_PATROL.PatrolRoute", self )
-    
     PatrolRoute[#PatrolRoute].task = AIGroup:TaskCombo( Tasks )
     
-    --- Do a trick, link the NewPatrolRoute function of the PATROLGROUP object to the AIControllable in a temporary variable ...
-    --AIGroup:SetState( AIGroup, "AI_A2A_PATROL", self )
-
     AIGroup:OptionROEReturnFire()
     AIGroup:OptionROTPassiveDefense()
 
-    --- NOW ROUTE THE GROUP!
-    AIGroup:SetTask( AIGroup:TaskRoute( PatrolRoute ), 0.5 )
+    AIGroup:Route( PatrolRoute, 0.5 )
   end
 
 end
