@@ -507,7 +507,6 @@ end
 --- Returns a COORDINATE object indicating the point of the first UNIT of the GROUP within the mission.
 -- @param Wrapper.Group#GROUP self
 -- @return Core.Point#COORDINATE The COORDINATE of the GROUP.
--- @return #nil The POSITIONABLE is not existing or alive.  
 function GROUP:GetCoordinate()
   self:F2( self.PositionableName )
 
@@ -1117,7 +1116,7 @@ do -- Route methods
     
         local PointTo = {}
         local AirbasePointVec2 = RTBAirbase:GetPointVec2()
-        local AirbaseAirPoint = AirbasePointVec2:RoutePointAir(
+        local AirbaseAirPoint = AirbasePointVec2:WaypointAir(
           POINT_VEC3.RoutePointAltType.BARO,
           "Land",
           "Landing", 

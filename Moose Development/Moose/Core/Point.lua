@@ -54,8 +54,8 @@ do -- COORDINATE
   --
   -- A COORDINATE can prepare waypoints for Ground and Air groups to be embedded into a Route.
   --
-  --   * @{#COORDINATE.RoutePointAir}(): Build an air route point.
-  --   * @{#COORDINATE.RoutePointGround}(): Build a ground route point.
+  --   * @{#COORDINATE.WaypointAir}(): Build an air route point.
+  --   * @{#COORDINATE.WaypointGround}(): Build a ground route point.
   --
   -- Route points can be used in the Route methods of the @{Group#GROUP} class.
   --
@@ -477,7 +477,7 @@ do -- COORDINATE
   -- @param Dcs.DCSTypes#Speed Speed Airspeed in km/h.
   -- @param #boolean SpeedLocked true means the speed is locked.
   -- @return #table The route point.
-  function COORDINATE:RoutePointAir( AltType, Type, Action, Speed, SpeedLocked )
+  function COORDINATE:WaypointAir( AltType, Type, Action, Speed, SpeedLocked )
     self:F2( { AltType, Type, Action, Speed, SpeedLocked } )
 
     local RoutePoint = {}
@@ -515,10 +515,10 @@ do -- COORDINATE
 
   --- Build an ground type route point.
   -- @param #COORDINATE self
-  -- @param Dcs.DCSTypes#Speed Speed Speed in km/h.
-  -- @param #COORDINATE.RoutePointAction Formation The route point Formation.
+  -- @param #number Speed (optional) Speed in km/h. The default speed is 999 km/h.
+  -- @param #string Formation (optional) The route point Formation, which is a text string that specifies exactly the Text in the Type of the route point, like "Vee", "Echelon Right".
   -- @return #table The route point.
-  function COORDINATE:RoutePointGround( Speed, Formation )
+  function COORDINATE:WaypointGround( Speed, Formation )
     self:F2( { Formation, Speed } )
 
     local RoutePoint = {}
@@ -528,7 +528,7 @@ do -- COORDINATE
     RoutePoint.action = Formation or ""
 
 
-    RoutePoint.speed = Speed / 3.6
+    RoutePoint.speed = ( Speed or 999 ) / 3.6
     RoutePoint.speed_locked = true
 
     --  ["task"] =

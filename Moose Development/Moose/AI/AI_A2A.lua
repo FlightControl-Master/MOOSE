@@ -564,7 +564,7 @@ function AI_A2A:onafterRTB( AIGroup, From, Event, To )
       return
     end
     --- Create a route point of type air.
-    local ToPatrolRoutePoint = ToAirbaseCoord:RoutePointAir( 
+    local ToPatrolRoutePoint = ToAirbaseCoord:WaypointAir( 
       self.PatrolAltType, 
       POINT_VEC3.RoutePointType.TurningPoint, 
       POINT_VEC3.RoutePointAction.TurningPoint, 
@@ -664,7 +664,7 @@ function AI_A2A:onafterRefuel( AIGroup, From, Event, To )
       local ToRefuelSpeed = math.random( self.PatrolMinSpeed, self.PatrolMaxSpeed )
       
       --- Create a route point of type air.
-      local ToRefuelRoutePoint = ToRefuelCoord:RoutePointAir( 
+      local ToRefuelRoutePoint = ToRefuelCoord:WaypointAir( 
         self.PatrolAltType, 
         POINT_VEC3.RoutePointType.TurningPoint, 
         POINT_VEC3.RoutePointAction.TurningPoint, 

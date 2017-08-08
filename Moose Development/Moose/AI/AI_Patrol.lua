@@ -748,7 +748,7 @@ function AI_PATROL_ZONE:onafterRoute( Controllable, From, Event, To )
       local CurrentAltitude = self.Controllable:GetUnit(1):GetAltitude()
       local CurrentPointVec3 = POINT_VEC3:New( CurrentVec2.x, CurrentAltitude, CurrentVec2.y )
       local ToPatrolZoneSpeed = self.PatrolMaxSpeed
-      local CurrentRoutePoint = CurrentPointVec3:RoutePointAir( 
+      local CurrentRoutePoint = CurrentPointVec3:WaypointAir( 
           self.PatrolAltType, 
           POINT_VEC3.RoutePointType.TakeOffParking, 
           POINT_VEC3.RoutePointAction.FromParkingArea, 
@@ -763,7 +763,7 @@ function AI_PATROL_ZONE:onafterRoute( Controllable, From, Event, To )
       local CurrentAltitude = self.Controllable:GetUnit(1):GetAltitude()
       local CurrentPointVec3 = POINT_VEC3:New( CurrentVec2.x, CurrentAltitude, CurrentVec2.y )
       local ToPatrolZoneSpeed = self.PatrolMaxSpeed
-      local CurrentRoutePoint = CurrentPointVec3:RoutePointAir( 
+      local CurrentRoutePoint = CurrentPointVec3:WaypointAir( 
           self.PatrolAltType, 
           POINT_VEC3.RoutePointType.TurningPoint, 
           POINT_VEC3.RoutePointAction.TurningPoint, 
@@ -789,7 +789,7 @@ function AI_PATROL_ZONE:onafterRoute( Controllable, From, Event, To )
     local ToTargetPointVec3 = POINT_VEC3:New( ToTargetVec2.x, ToTargetAltitude, ToTargetVec2.y )
     
     --- Create a route point of type air.
-    local ToTargetRoutePoint = ToTargetPointVec3:RoutePointAir( 
+    local ToTargetRoutePoint = ToTargetPointVec3:WaypointAir( 
       self.PatrolAltType, 
       POINT_VEC3.RoutePointType.TurningPoint, 
       POINT_VEC3.RoutePointAction.TurningPoint, 
@@ -877,7 +877,7 @@ function AI_PATROL_ZONE:onafterRTB()
     local CurrentAltitude = self.Controllable:GetUnit(1):GetAltitude()
     local CurrentPointVec3 = POINT_VEC3:New( CurrentVec2.x, CurrentAltitude, CurrentVec2.y )
     local ToPatrolZoneSpeed = self.PatrolMaxSpeed
-    local CurrentRoutePoint = CurrentPointVec3:RoutePointAir( 
+    local CurrentRoutePoint = CurrentPointVec3:WaypointAir( 
         self.PatrolAltType, 
         POINT_VEC3.RoutePointType.TurningPoint, 
         POINT_VEC3.RoutePointAction.TurningPoint, 

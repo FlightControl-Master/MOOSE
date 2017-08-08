@@ -359,7 +359,7 @@ function AI_A2A_PATROL:onafterRoute( AIGroup, From, Event, To )
     local ToTargetSpeed = math.random( self.PatrolMinSpeed, self.PatrolMaxSpeed )
     
     --- Create a route point of type air.
-    local ToPatrolRoutePoint = ToTargetCoord:RoutePointAir( 
+    local ToPatrolRoutePoint = ToTargetCoord:WaypointAir( 
       self.PatrolAltType, 
       POINT_VEC3.RoutePointType.TurningPoint, 
       POINT_VEC3.RoutePointAction.TurningPoint, 

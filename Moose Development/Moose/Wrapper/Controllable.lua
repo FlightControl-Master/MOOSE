@@ -360,16 +360,21 @@ function CONTROLLABLE:SetTask( DCSTask, WaitTime )
 
   if DCSControllable then
 
-    local Controller = self:_GetController()
 
     -- When a controllable SPAWNs, it takes about a second to get the controllable in the simulator. Setting tasks to unspawned controllables provides unexpected results.
     -- Therefore we schedule the functions to set the mission and options for the Controllable.
     -- Controller.setTask( Controller, DCSTask )
 
-    if not WaitTime or WaitTime == 0 then
+    local function SetTask( Controller, DCSTask )
+      local Controller = self:_GetController()
+      Controller:resetTask()
       Controller:setTask( DCSTask )
+    end
+
+    if not WaitTime or WaitTime == 0 then
+      SetTask( DCSTask )
     else
-      self.TaskScheduler:Schedule( Controller, Controller.setTask, { DCSTask }, WaitTime )
+      self.TaskScheduler:Schedule( self, SetTask, { DCSTask }, WaitTime )
     end
 
     return self
@@ -492,16 +497,15 @@ end
 
 --- Set a Task at a Waypoint using a Route list.
 -- @param #CONTROLLABLE self
--- @param Wrapper.Controllable#CONTROLLABLE.RouteList RouteList A list of Waypoints.
--- @param #number WaypointNumber The number of the Waypoint. The first Waypoint starts at 1!
+-- @param #table Waypoint The Waypoint!
 -- @param Dcs.DCSTasking.Task#Task Task The Task structure to be executed!
 -- @return Dcs.DCSTasking.Task#Task
-function CONTROLLABLE:SetTaskAtWaypoint( RouteList, WaypointNumber, Task )
+function CONTROLLABLE:SetTaskWaypoint( Waypoint, Task )
 
-  RouteList[ WaypointNumber ].task = self:TaskCombo( { Task } )
+  Waypoint.task = self:TaskCombo( { Task } )
 
-  self:T3( { RouteList[ WaypointNumber ].task } )
-  return RouteList[ WaypointNumber ].task
+  self:T3( { Waypoint.task } )
+  return Waypoint.task
 end
 
 
@@ -1558,8 +1562,8 @@ end
 --    local ToCoord = RandomZone:GetCoordinate()
 --    
 --    -- Create a "ground route point", which is a "point" structure that can be given as a parameter to a Task
---    Route[#Route+1] = FromCoord:RoutePointGround( 72 )
---    Route[#Route+1] = ToCoord:RoutePointGround( 60, "Vee" )
+--    Route[#Route+1] = FromCoord:WaypointGround( 72 )
+--    Route[#Route+1] = ToCoord:WaypointGround( 60, "Vee" )
 --    
 --    local TaskRouteToZone = Vehicle:TaskFunction( "RouteToZone", RandomZone )
 --    
@@ -1758,6 +1762,24 @@ function CONTROLLABLE:Route( Route, DelaySeconds )
 end
 
 
+--- Make the GROUND controllable to drive towards a specific point.
+-- @param #CONTROLLABLE self
+-- @param Core.Point#COORDINATE ToCoordinate A Coordinate to drive to.
+-- @param #number Speed (optional) Speed in km/h. The default speed is 999 km/h.
+-- @param #string Formation (optional) The route point Formation, which is a text string that specifies exactly the Text in the Type of the route point, like "Vee", "Echelon Right".
+-- @param #number DelaySeconds Wait for the specified seconds before executing the Route.
+-- @return #CONTROLLABLE The CONTROLLABLE.
+function CONTROLLABLE:RouteGroundTo( ToCoordinate, Speed, Formation, DelaySeconds )
+
+  local FromCoordinate = self:GetCoordinate()
+  
+  local FromWP = FromCoordinate:WaypointGround()
+  local ToWP = ToCoordinate:WaypointGround( Speed, Formation )
+
+  self:Route( { FromWP, ToWP }, DelaySeconds )
+
+  return self
+end
 
 --- (AIR + GROUND) Route the controllable to a given zone.
 -- The controllable final destination point can be randomized.

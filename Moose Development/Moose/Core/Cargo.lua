@@ -561,8 +561,8 @@ do -- CARGO_REPRESENTABLE
   
     local PointStartVec2 = self.CargoObject:GetPointVec2()
   
-    Points[#Points+1] = PointStartVec2:RoutePointGround( Speed )
-    Points[#Points+1] = ToPointVec2:RoutePointGround( Speed )
+    Points[#Points+1] = PointStartVec2:WaypointGround( Speed )
+    Points[#Points+1] = ToPointVec2:WaypointGround( Speed )
   
     local TaskRoute = self.CargoObject:TaskRoute( Points )
     self.CargoObject:SetTask( TaskRoute, 2 )
@@ -784,9 +784,9 @@ function CARGO_UNIT:onenterUnBoarding( From, Event, To, ToPointVec2, NearRadius 
       self.CargoCarrier = nil
 
       local Points = {}
-      Points[#Points+1] = CargoCarrierPointVec2:RoutePointGround( Speed )
+      Points[#Points+1] = CargoCarrierPointVec2:WaypointGround( Speed )
       
-      Points[#Points+1] = ToPointVec2:RoutePointGround( Speed )
+      Points[#Points+1] = ToPointVec2:WaypointGround( Speed )
   
       local TaskRoute = self.CargoObject:TaskRoute( Points )
       self.CargoObject:SetTask( TaskRoute, 1 )
@@ -923,8 +923,8 @@ function CARGO_UNIT:onafterBoard( From, Event, To, CargoCarrier, NearRadius, ...
     
       local PointStartVec2 = self.CargoObject:GetPointVec2()
     
-      Points[#Points+1] = PointStartVec2:RoutePointGround( Speed )
-      Points[#Points+1] = CargoDeployPointVec2:RoutePointGround( Speed )
+      Points[#Points+1] = PointStartVec2:WaypointGround( Speed )
+      Points[#Points+1] = CargoDeployPointVec2:WaypointGround( Speed )
     
       local TaskRoute = self.CargoObject:TaskRoute( Points )
       self.CargoObject:SetTask( TaskRoute, 2 )
@@ -971,8 +971,8 @@ function CARGO_UNIT:onafterBoarding( From, Event, To, CargoCarrier, NearRadius, 
         
           local PointStartVec2 = self.CargoObject:GetPointVec2()
         
-          Points[#Points+1] = PointStartVec2:RoutePointGround( Speed )
-          Points[#Points+1] = CargoDeployPointVec2:RoutePointGround( Speed )
+          Points[#Points+1] = PointStartVec2:WaypointGround( Speed )
+          Points[#Points+1] = CargoDeployPointVec2:WaypointGround( Speed )
         
           local TaskRoute = self.CargoObject:TaskRoute( Points )
           self.CargoObject:SetTask( TaskRoute, 0.2 )
@@ -1411,8 +1411,8 @@ function CARGO_PACKAGE:onafterOnBoard( From, Event, To, CargoCarrier, Speed, Boa
     self:T( { CargoCarrierHeading, CargoDeployHeading } )
     local CargoDeployPointVec2 = CargoCarrier:GetPointVec2():Translate( BoardDistance, CargoDeployHeading )
 
-    Points[#Points+1] = StartPointVec2:RoutePointGround( Speed )
-    Points[#Points+1] = CargoDeployPointVec2:RoutePointGround( Speed )
+    Points[#Points+1] = StartPointVec2:WaypointGround( Speed )
+    Points[#Points+1] = CargoDeployPointVec2:WaypointGround( Speed )
 
     local TaskRoute = self.CargoCarrier:TaskRoute( Points )
     self.CargoCarrier:SetTask( TaskRoute, 1 )
@@ -1488,8 +1488,8 @@ function CARGO_PACKAGE:onafterUnBoard( From, Event, To, CargoCarrier, Speed, UnL
     self:T( { CargoCarrierHeading, CargoDeployHeading } )
     local CargoDeployPointVec2 = StartPointVec2:Translate( UnBoardDistance, CargoDeployHeading )
 
-    Points[#Points+1] = StartPointVec2:RoutePointGround( Speed )
-    Points[#Points+1] = CargoDeployPointVec2:RoutePointGround( Speed )
+    Points[#Points+1] = StartPointVec2:WaypointGround( Speed )
+    Points[#Points+1] = CargoDeployPointVec2:WaypointGround( Speed )
 
     local TaskRoute = CargoCarrier:TaskRoute( Points )
     CargoCarrier:SetTask( TaskRoute, 1 )
@@ -1535,8 +1535,8 @@ function CARGO_PACKAGE:onafterLoad( From, Event, To, CargoCarrier, Speed, LoadDi
   local CargoDeployPointVec2 = StartPointVec2:Translate( LoadDistance, CargoDeployHeading )
   
   local Points = {}
-  Points[#Points+1] = StartPointVec2:RoutePointGround( Speed )
-  Points[#Points+1] = CargoDeployPointVec2:RoutePointGround( Speed )
+  Points[#Points+1] = StartPointVec2:WaypointGround( Speed )
+  Points[#Points+1] = CargoDeployPointVec2:WaypointGround( Speed )
 
   local TaskRoute = self.CargoCarrier:TaskRoute( Points )
   self.CargoCarrier:SetTask( TaskRoute, 1 )
@@ -1561,8 +1561,8 @@ function CARGO_PACKAGE:onafterUnLoad( From, Event, To, CargoCarrier, Speed, Dist
   self.CargoCarrier = CargoCarrier
 
   local Points = {}
-  Points[#Points+1] = StartPointVec2:RoutePointGround( Speed )
-  Points[#Points+1] = CargoDeployPointVec2:RoutePointGround( Speed )
+  Points[#Points+1] = StartPointVec2:WaypointGround( Speed )
+  Points[#Points+1] = CargoDeployPointVec2:WaypointGround( Speed )
 
   local TaskRoute = self.CargoCarrier:TaskRoute( Points )
   self.CargoCarrier:SetTask( TaskRoute, 1 )

@@ -156,7 +156,6 @@ end
 --- Returns a COORDINATE object indicating the point in 3D of the POSITIONABLE within the mission.
 -- @param Wrapper.Positionable#POSITIONABLE self
 -- @return Core.Point#COORDINATE The COORDINATE of the POSITIONABLE.
--- @return #nil The POSITIONABLE is not existing or alive.  
 function POSITIONABLE:GetCoordinate()
   self:F2( self.PositionableName )
 
@@ -165,7 +164,7 @@ function POSITIONABLE:GetCoordinate()
   if DCSPositionable then
     local PositionableVec3 = self:GetPositionVec3()
     
-    local PositionableCoordinate = POINT_VEC3:NewFromVec3( PositionableVec3 )
+    local PositionableCoordinate = COORDINATE:NewFromVec3( PositionableVec3 )
     PositionableCoordinate:SetHeading( self:GetHeading() )
   
     self:T2( PositionableCoordinate )
