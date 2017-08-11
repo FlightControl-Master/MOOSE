@@ -389,9 +389,9 @@ do -- DESIGNATE
     
     self:SetThreatLevelPrioritization( false ) -- self.ThreatLevelPrioritization, default is threat level priorization off
     self:SetMaximumDesignations( 5 ) -- Sets the maximum designations. The default is 5 designations.
+    self:SetMaximumDistanceDesignations( 12000 )  -- Sets the maximum distance on which designations can be accepted. The default is 8000 meters.
     
     self.LaserCodesUsed = {}
-    
     
     self.Detection:__Start( 2 )
     
@@ -426,6 +426,36 @@ do -- DESIGNATE
   -- @return #DESIGNATE
   function DESIGNATE:SetMaximumDesignations( MaximumDesignations )
     self.MaximumDesignations = MaximumDesignations
+    return self
+  end
+  
+
+  --- Set the maximum ground designation distance.
+  -- @param #DESIGNATE self
+  -- @param #number MaximumDistanceGroundDesignation Maximum ground designation distance in meters.
+  -- @return #DESIGNATE
+  function DESIGNATE:SetMaximumDistanceGroundDesignation( MaximumDistanceGroundDesignation )
+    self.MaximumDistanceGroundDesignation = MaximumDistanceGroundDesignation
+    return self
+  end
+  
+  
+  --- Set the maximum air designation distance.
+  -- @param #DESIGNATE self
+  -- @param #number MaximumDistanceAirDesignation Maximum air designation distance in meters.
+  -- @return #DESIGNATE
+  function DESIGNATE:SetMaximumDistanceAirDesignation( MaximumDistanceAirDesignation )
+    self.MaximumDistanceAirDesignation = MaximumDistanceAirDesignation
+    return self
+  end
+  
+  
+  --- Set the overall maximum distance when designations can be accepted.
+  -- @param #DESIGNATE self
+  -- @param #number MaximumDistanceDesignations Maximum distance in meters to accept designations.
+  -- @return #DESIGNATE
+  function DESIGNATE:SetMaximumDistanceDesignations( MaximumDistanceDesignations )
+    self.MaximumDistanceDesignations = MaximumDistanceDesignations
     return self
   end
   
@@ -599,16 +629,19 @@ do -- DESIGNATE
       for DesignateIndex, DetectedItem in pairs( DetectedItems ) do
         local IsDetected = self.Detection:IsDetectedItemDetected( DetectedItem )
         if IsDetected == true then
-          if self.Designating[DesignateIndex] == nil then
-            -- ok, we added one item to the designate scope.
-            self.AttackSet:ForEachGroup(
-              function( AttackGroup )
-                local DetectionText = self.Detection:DetectedItemReportSummary( DesignateIndex, AttackGroup ):Text( ", " )
-                self.CC:GetPositionable():MessageToGroup( "Targets detected at \n" .. DetectionText, 10, AttackGroup, "Designate" )
-              end
-            )
-            self.Designating[DesignateIndex] = ""
-            break
+          self:F( { DistanceRecce = DetectedItem.DistanceRecce } )
+          if DetectedItem.DistanceRecce <= self.MaximumDistanceDesignations then
+            if self.Designating[DesignateIndex] == nil then
+              -- ok, we added one item to the designate scope.
+              self.AttackSet:ForEachGroup(
+                function( AttackGroup )
+                  local DetectionText = self.Detection:DetectedItemReportSummary( DesignateIndex, AttackGroup ):Text( ", " )
+                  self.CC:GetPositionable():MessageToGroup( "Targets detected at \n" .. DetectionText, 10, AttackGroup, "Designate" )
+                end
+              )
+              self.Designating[DesignateIndex] = ""
+              break
+            end
           end
         end
       end
@@ -734,8 +767,6 @@ do -- DESIGNATE
         end        
       
         local DetectedItems = self.Detection:GetDetectedItems()
-        
-        local DetectedItemCount = 0
         
         for DesignateIndex, Designating in pairs( self.Designating ) do
 

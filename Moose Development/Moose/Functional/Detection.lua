@@ -1548,22 +1548,6 @@ do -- DETECTION_BASE
   end
 
 
-  --- Has the detected item LOS (Line Of Sight) with one of the Recce?
-  -- @param #DETECTION_BASE self
-  -- @param Index
-  -- @return #boolean true is LOS, false if no LOS.
-  function DETECTION_BASE:HasDetectedItemLOS( Index )
-    self:F( { Index = Index } )
-    
-    local DetectedItem = self:GetDetectedItem( Index )
-    if DetectedItem then
-      return DetectedItem.LOS
-    end
-    
-    return nil
-  end
-
-
   --- Menu of a detected item using a given numeric index.
   -- @param #DETECTION_BASE self
   -- @param Index
@@ -2410,25 +2394,24 @@ do -- DETECTION_AREAS
   -- @return Wrapper.Unit#UNIT The nearest FAC unit
   function DETECTION_AREAS:NearestFAC( DetectedItem )
     
-    local NearestFAC = nil
-    local MinDistance = 1000000000 -- Units are not further than 1000000 km away from an area :-)
+    local NearestRecce = nil
+    local DistanceRecce = 1000000000 -- Units are not further than 1000000 km away from an area :-)
     
-    for FACGroupName, FACGroupData in pairs( self.DetectionSetGroup:GetSet() ) do
-      for FACUnit, FACUnitData in pairs( FACGroupData:GetUnits() ) do
-        local FACUnit = FACUnitData -- Wrapper.Unit#UNIT
-        if FACUnit:IsActive() then
-          local Vec3 = FACUnit:GetVec3()
-          local PointVec3 = POINT_VEC3:NewFromVec3( Vec3 )
-          local Distance = PointVec3:Get2DDistance(POINT_VEC3:NewFromVec3( FACUnit:GetVec3() ) )
-          if Distance < MinDistance then
-            MinDistance = Distance
-            NearestFAC = FACUnit
+    for RecceGroupName, RecceGroup in pairs( self.DetectionSetGroup:GetSet() ) do
+      for RecceUnit, RecceUnit in pairs( RecceGroup:GetUnits() ) do
+        if RecceUnit:IsActive() then
+          local RecceUnitCoord = RecceUnit:GetCoordinate()
+          local Distance = RecceUnitCoord:Get2DDistance( self:GetDetectedItemCoordinate( DetectedItem.Index ) )
+          if Distance < DistanceRecce then
+            DistanceRecce = Distance
+            NearestRecce = RecceUnit
           end
         end
       end
     end
   
-    DetectedItem.NearestFAC = NearestFAC
+    DetectedItem.NearestFAC = NearestRecce
+    DetectedItem.DistanceRecce = DistanceRecce
     
   end
 
