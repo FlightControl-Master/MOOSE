@@ -692,6 +692,8 @@ do -- DETECTION_BASE
               self.DetectedObjects[DetectedObjectName].Distance = Distance
               self.DetectedObjects[DetectedObjectName].DetectionTimeStamp = DetectionTimeStamp
               
+              self:F( { DetectedObject = self.DetectedObjects[DetectedObjectName] } )
+              
               local DetectedUnit = UNIT:FindByName( DetectedObjectName )
               
               DetectedUnits[DetectedObjectName] = DetectedUnit
@@ -1493,6 +1495,7 @@ do -- DETECTION_BASE
     
     for UnitName, UnitData in pairs( DetectedItem.Set:GetSet() ) do
       local DetectedObject = self.DetectedObjects[UnitName]
+      self:F({UnitName = UnitName, IsDetected = DetectedObject.IsDetected})
       if DetectedObject.IsDetected then
         IsDetected = true
         break
@@ -1514,37 +1517,6 @@ do -- DETECTION_BASE
     return DetectedItem.IsDetected
   end
   
-  do -- Coordinates
-
-    --- Get the COORDINATE of a detection item using a given numeric index.
-    -- @param #DETECTION_BASE self
-    -- @param #number Index
-    -- @return Core.Point#COORDINATE
-    function DETECTION_BASE:GetDetectedItemCoordinate( Index )
-    
-      -- If the Zone is set, return the coordinate of the Zone.
-      local DetectedItemSet = self:GetDetectedSet( Index )
-      local FirstUnit = DetectedItemSet:GetFirst()
-
-      local DetectedZone = self:GetDetectedItemZone( Index )
-      if DetectedZone then
-        local Coordinate = DetectedZone:GetPointVec2()
-        Coordinate:SetHeading(FirstUnit:GetHeading())
-        Coordinate:SetAlt( FirstUnit:GetAltitude() )
-        return Coordinate
-      end
-      
-      -- If no Zone is set, return the coordinate of the first unit in the Set
-      if FirstUnit then
-        local Coordinate = FirstUnit:GetPointVec3()
-        FirstUnit:SetHeading(FirstUnit:GetHeading())
-        return Coordinate
-      end
-      
-      return nil
-    end
-  
-  end
 
   do -- Zones
   
@@ -1566,6 +1538,32 @@ do -- DETECTION_BASE
 
   end  
 
+  --- Get the detected item coordinate.
+  -- @param #DETECTION_BASE self
+  -- @param Index
+  -- @return Core.Point#COORDINATE
+  function DETECTION_BASE:GetDetectedItemCoordinate( Index )
+    self:F( { Index = Index } )
+    return nil
+  end
+
+
+  --- Has the detected item LOS (Line Of Sight) with one of the Recce?
+  -- @param #DETECTION_BASE self
+  -- @param Index
+  -- @return #boolean true is LOS, false if no LOS.
+  function DETECTION_BASE:HasDetectedItemLOS( Index )
+    self:F( { Index = Index } )
+    
+    local DetectedItem = self:GetDetectedItem( Index )
+    if DetectedItem then
+      return DetectedItem.LOS
+    end
+    
+    return nil
+  end
+
+
   --- Menu of a detected item using a given numeric index.
   -- @param #DETECTION_BASE self
   -- @param Index
@@ -1581,7 +1579,7 @@ do -- DETECTION_BASE
   -- @param Index
   -- @param Wrapper.Group#GROUP AttackGroup The group to generate the report for.
   -- @param Core.Settings#SETTINGS Settings Message formatting settings to use.
-  -- @return #string
+  -- @return Core.Report#REPORT
   function DETECTION_BASE:DetectedItemReportSummary( Index, AttackGroup, Settings )
     self:F( Index )
     return nil
@@ -1656,6 +1654,27 @@ do -- DETECTION_UNITS
     
     return self
   end
+
+  --- Get the detected item coordinate.
+  -- @param #DETECTION_UNITS self
+  -- @param Index
+  -- @return Core.Point#COORDINATE
+  function DETECTION_UNITS:GetDetectedItemCoordinate( Index )
+    self:F( { Index = Index } )
+  
+    local DetectedItem = self:GetDetectedItem( Index )
+    local DetectedSet = self:GetDetectedSet( Index )
+    
+    if DetectedSet then
+      local DetectedItemUnit = DetectedSet:GetFirst() -- Wrapper.Unit#UNIT
+      if DetectedItemUnit and DetectedItemUnit:IsAlive() then
+        local DetectedItemCoordinate = DetectedItemUnit:GetCoordinate()
+        DetectedItemCoordinate:SetHeading( DetectedItemUnit:GetHeading() )
+        return DetectedItemCoordinate
+      end
+    end
+  end
+
 
   --- Make text documenting the changes of the detected zone.
   -- @param #DETECTION_UNITS self
@@ -1827,7 +1846,7 @@ do -- DETECTION_UNITS
   -- @param Index
   -- @param Wrapper.Group#GROUP AttackGroup The group to generate the report for.
   -- @param Core.Settings#SETTINGS Settings Message formatting settings to use.
-  -- @return #string
+  -- @return Core.Report#REPORT The report of the detection items.
   function DETECTION_UNITS:DetectedItemReportSummary( Index, AttackGroup, Settings )
     self:F( { Index, self.DetectedItems } )
   
@@ -1874,20 +1893,14 @@ do -- DETECTION_UNITS
  
         local ThreatLevelA2G = DetectedItemUnit:GetThreatLevel( DetectedItem )
         
-        ReportSummary = string.format( 
-          "%s - %s\n - Threat: [%s]\n - Type: %s%s",
-          DetectedItemID,
-          DetectedItemCoordText,
-          string.rep(  "■", ThreatLevelA2G ),
-          UnitCategoryText,
-          UnitDistanceText
-        )
+        local Report = REPORT:New()
+        Report:Add(DetectedItemID .. ", " .. DetectedItemCoordText)
+        Report:Add( string.format( "Threat: [%s]", string.rep(  "■", ThreatLevelA2G ) ) )
+        Report:Add( string.format("Type: %s%s", UnitCategoryText, UnitDistanceText ) )
+        return Report
       end
-      
-      self:T( ReportSummary )
-    
-      return ReportSummary
     end
+    return nil
   end
 
   
@@ -1946,6 +1959,25 @@ do -- DETECTION_TYPES
     
     return self
   end
+
+  --- Get the detected item coordinate.
+  -- @param #DETECTION_TYPES self
+  -- @param DetectedTypeName
+  -- @return #Core.Point#COORDINATE
+  function DETECTION_TYPES:GetDetectedItemCoordinate( DetectedTypeName )
+    self:F( { DetectedTypeName = DetectedTypeName } )
+  
+    local DetectedItem = self:GetDetectedItem( DetectedTypeName )
+    local DetectedSet = self:GetDetectedSet( DetectedTypeName )
+    
+    if DetectedItem then
+      local DetectedItemUnit = DetectedSet:GetFirst()
+      local DetectedItemCoordinate = DetectedItemUnit:GetCoordinate()
+      DetectedItemCoordinate:SetHeading( DetectedItemUnit:GetHeading() )
+      return DetectedItemCoordinate
+    end
+  end
+  
   
   --- Make text documenting the changes of the detected zone.
   -- @param #DETECTION_TYPES self
@@ -2055,6 +2087,7 @@ do -- DETECTION_TYPES
       --self:NearestFAC( DetectedItem )
     end
     
+
   end
 
   --- Menu of a DetectedItem using a given numeric index.
@@ -2095,7 +2128,7 @@ do -- DETECTION_TYPES
   -- @param Index
   -- @param Wrapper.Group#GROUP AttackGroup The group to generate the report for.
   -- @param Core.Settings#SETTINGS Settings Message formatting settings to use.
-  -- @return #string
+  -- @return Core.Report#REPORT The report of the detection items.
   function DETECTION_TYPES:DetectedItemReportSummary( DetectedTypeName, AttackGroup, Settings )
     self:F( DetectedTypeName )
   
@@ -2115,17 +2148,11 @@ do -- DETECTION_TYPES
       local DetectedItemCoordinate = DetectedItemUnit:GetCoordinate()
       local DetectedItemCoordText = DetectedItemCoordinate:ToString( AttackGroup, Settings )
 
-      local ReportSummary = string.format( 
-        "%s - %s\n - Threat: [%s]\n - Type: %2d of %s", 
-        DetectedItemID,
-        DetectedItemCoordText,
-        string.rep(  "■", ThreatLevelA2G ),
-        DetectedItemsCount,
-        DetectedItemType
-      )
-      self:T( ReportSummary )
-    
-      return ReportSummary
+      local Report = REPORT:New()
+      Report:Add(DetectedItemID .. ", " .. DetectedItemCoordText)
+      Report:Add( string.format( "Threat: [%s]", string.rep(  "■", ThreatLevelA2G ) ) )
+      Report:Add( string.format("Type: %2d of %s", DetectedItemsCount, DetectedItemType ) )
+      return Report
     end
   end
   
@@ -2217,6 +2244,33 @@ do -- DETECTION_AREAS
     return self
   end
 
+  --- Get the detected item coordinate.
+  -- In this case, the coordinate is the center of the zone of the area, not the center unit!
+  -- So if units move, the retrieved coordinate can be different from the units positions.
+  -- @param #DETECTION_AREAS self
+  -- @param Index
+  -- @return Core.Point#COORDINATE The coordinate.
+  function DETECTION_AREAS:GetDetectedItemCoordinate( Index )
+    self:F( { Index = Index } )
+  
+    local DetectedItem = self:GetDetectedItem( Index )
+    local DetectedItemSet = self:GetDetectedSet( Index )
+    local FirstUnit = DetectedItemSet:GetFirst()
+    
+    if DetectedItem then
+      local DetectedZone = self:GetDetectedItemZone( Index )
+      -- TODO: Rework to COORDINATE. Problem with SetAlt.
+      local DetectedItemCoordinate = DetectedZone:GetPointVec2()
+      -- These need to be done to understand the heading and altitude of the first unit in the zone.
+      DetectedItemCoordinate:SetHeading( FirstUnit:GetHeading() )
+      DetectedItemCoordinate:SetAlt( FirstUnit:GetAltitude() )
+      
+      return DetectedItemCoordinate
+    end
+    
+    return nil
+  end
+
   --- Menu of a detected item using a given numeric index.
   -- @param #DETECTION_AREAS self
   -- @param Index
@@ -2252,7 +2306,7 @@ do -- DETECTION_AREAS
   -- @param Index
   -- @param Wrapper.Group#GROUP AttackGroup The group to get the settings for.
   -- @param Core.Settings#SETTINGS Settings (Optional) Message formatting settings to use.
-  -- @return #string
+  -- @return Core.Report#REPORT The report of the detection items.
   function DETECTION_AREAS:DetectedItemReportSummary( Index, AttackGroup, Settings )
     self:F( Index )
   
@@ -2271,16 +2325,12 @@ do -- DETECTION_AREAS
       local DetectedItemsCount = DetectedSet:Count()
       local DetectedItemsTypes = DetectedSet:GetTypeNames()
       
-      local ReportSummary = string.format( 
-        "%s - %s\n - Threat: [%s]\n - Type: %2d of %s", 
-        DetectedItemID,
-        DetectedItemCoordText,
-        string.rep(  "■", ThreatLevelA2G ),
-        DetectedItemsCount,
-        DetectedItemsTypes
-      )
+      local Report = REPORT:New()
+      Report:Add(DetectedItemID .. ", " .. DetectedItemCoordText)
+      Report:Add( string.format( "Threat: [%s]", string.rep(  "■", ThreatLevelA2G ) ) )
+      Report:Add( string.format("Type: %2d of %s", DetectedItemsCount, DetectedItemsTypes ) )
       
-      return ReportSummary
+      return Report
     end
     
     return nil

@@ -1171,7 +1171,7 @@ function ESCORT:_ReportTargetsScheduler()
 
           if ClientEscortGroupName == EscortGroupName then
           
-            DetectedMsgs[#DetectedMsgs+1] = DetectedItemReportSummary
+            DetectedMsgs[#DetectedMsgs+1] = DetectedItemReportSummary:Text("\n")
   
             MENU_CLIENT_COMMAND:New( self.EscortClient,
               DetectedItemReportSummary,
