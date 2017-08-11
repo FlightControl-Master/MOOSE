@@ -1,4 +1,4 @@
---- **Functional** -- Management of target **Designation**.
+--- **Functional** -- Management of target **Designation**. Lase, smoke and illuminate targets.
 --
 -- --![Banner Image](..\Presentations\DESIGNATE\Dia1.JPG)
 --
@@ -372,7 +372,7 @@ do -- DESIGNATE
     self:SetMission( Mission )
     self:SetDesignateMenu()
     
-    self:SetLaserCodes( 1688 ) -- set self.LaserCodes
+    self:SetLaserCodes( { 1688, 1130, 4785, 6547, 1465, 4578 } ) -- set self.LaserCodes
     self:SetAutoLase( false ) -- set self.Autolase
     
     self:SetThreatLevelPrioritization( false ) -- self.ThreatLevelPrioritization, default is threat level priorization off
@@ -413,7 +413,7 @@ do -- DESIGNATE
   function DESIGNATE:SetLaserCodes( LaserCodes ) --R2.1
 
     self.LaserCodes = ( type( LaserCodes ) == "table" ) and LaserCodes or { LaserCodes }
-    self:E(self.LaserCodes)
+    self:E( { LaserCodes = self.LaserCodes } )
     
     self.LaserCodesUsed = {}
 
@@ -599,11 +599,18 @@ do -- DESIGNATE
 
         local DetectedItems = self.Detection:GetDetectedItems()
         
+        local DetectedItemCount = 0
+        
         for Index, DetectedItemData in pairs( DetectedItems ) do
           if self.AutoLase then
             if not self.Designating[Index] then
               self:LaseOn( Index, self.LaseDuration ) 
             end
+          end
+          
+          DetectedItemCount = DetectedItemCount + 1
+          if DetectedItemCount >= 5 then
+            break
           end
         end
       end
@@ -656,12 +663,14 @@ do -- DESIGNATE
       
         local DetectedItems = self.Detection:GetDetectedItems()
         
+        local DetectedItemCount = 0
+        
         for Index, DetectedItemData in pairs( DetectedItems ) do
           
           local Report = self.Detection:DetectedItemMenu( Index, AttackGroup )
           
           if not self.Designating[Index] then
-            local DetectedMenu = MENU_GROUP:New( AttackGroup, Report, MenuDesignate )
+            local DetectedMenu = MENU_GROUP:New( AttackGroup, Report, MenuDesignate ):SetTime( MenuTime ):SetTag( "Designate" )
             MENU_GROUP_COMMAND:New( AttackGroup, "Lase target 60 secs", DetectedMenu, self.MenuLaseOn, self, Index, 60 ):SetTime( MenuTime ):SetTag( "Designate" )
             MENU_GROUP_COMMAND:New( AttackGroup, "Lase target 120 secs", DetectedMenu, self.MenuLaseOn, self, Index, 120 ):SetTime( MenuTime ):SetTag( "Designate" )
             MENU_GROUP_COMMAND:New( AttackGroup, "Smoke red", DetectedMenu, self.MenuSmoke, self, Index, SMOKECOLOR.Red ):SetTime( MenuTime ):SetTag( "Designate" )
@@ -683,6 +692,10 @@ do -- DESIGNATE
               MENU_GROUP_COMMAND:New( AttackGroup, "Stop lasing", DetectedMenu, self.MenuLaseOff, self, Index ):SetTime( MenuTime ):SetTag( "Designate" )
             else
             end
+          end
+          DetectedItemCount = DetectedItemCount + 1
+          if DetectedItemCount >= 5 then
+            break
           end
         end
         MenuDesignate:Remove( MenuTime, "Designate" )
@@ -779,10 +792,13 @@ do -- DESIGNATE
     
     TargetSetUnit:Flush()
 
+    --self:F( { Recces = self.Recces } ) 
     for TargetUnit, RecceData in pairs( self.Recces ) do
       local Recce = RecceData -- Wrapper.Unit#UNIT
+      self:F( { TargetUnit = TargetUnit, Recce = Recce:GetName() } )
       if not Recce:IsLasing() then
         local LaserCode = Recce:GetLaserCode() --(Not deleted when stopping with lasing).
+        self:F( { ClearingLaserCode = LaserCode } )
         self.LaserCodesUsed[LaserCode] = nil
         self.Recces[TargetUnit] = nil
       end
@@ -791,17 +807,22 @@ do -- DESIGNATE
     TargetSetUnit:ForEachUnitPerThreatLevel( 10, 0,
       --- @param Wrapper.Unit#UNIT SmokeUnit
       function( TargetUnit )
-        self:E("In procedure")
+        self:F( { TargetUnit = TargetUnit:GetName() } )
         if TargetUnit:IsAlive() then
           local Recce = self.Recces[TargetUnit]
           if not Recce then
+            self.RecceSet:Flush()
             for RecceGroupID, RecceGroup in pairs( self.RecceSet:GetSet() ) do
               for UnitID, UnitData in pairs( RecceGroup:GetUnits() or {} ) do
                 local RecceUnit = UnitData -- Wrapper.Unit#UNIT
+                local RecceUnitDesc = RecceUnit:GetDesc()
+                --self:F( { RecceUnit = RecceUnit:GetName(), RecceDescription = RecceUnitDesc } )
                 if RecceUnit:IsLasing() == false then
+                  --self:F( { IsDetected = RecceUnit:IsDetected( TargetUnit ), IsLOS = RecceUnit:IsLOS( TargetUnit ) } )
                   if RecceUnit:IsDetected( TargetUnit ) and RecceUnit:IsLOS( TargetUnit ) then
                     local LaserCodeIndex = math.random( 1, #self.LaserCodes )
                     local LaserCode = self.LaserCodes[LaserCodeIndex]
+                    --self:F( { LaserCode = LaserCode, LaserCodeUsed = self.LaserCodesUsed[LaserCode] } )
                     if not self.LaserCodesUsed[LaserCode] then
                       self.LaserCodesUsed[LaserCode] = LaserCodeIndex
                       local Spot = RecceUnit:LaseUnit( TargetUnit, LaserCode, Duration )
@@ -812,7 +833,8 @@ do -- DESIGNATE
                       end
                       self.Recces[TargetUnit] = RecceUnit
                       RecceUnit:MessageToSetGroup( "Marking " .. TargetUnit:GetTypeName() .. " with laser " .. RecceUnit:GetSpot().LaserCode .. " for " .. Duration .. "s.", 5, self.AttackSet )
-                      break
+                      -- OK. We have assigned for the Recce a TargetUnit. We can exit the function.
+                      return
                     end
                   else
                     --RecceUnit:MessageToSetGroup( "Can't mark " .. TargetUnit:GetTypeName(), 5, self.AttackSet )
@@ -823,7 +845,7 @@ do -- DESIGNATE
                     local Recce = self.Recces[TargetUnit] -- Wrapper.Unit#UNIT
                     if Recce then
                       Recce:LaseOff()
-                      Recce:MessageToGroup( "Target " .. TargetUnit:GetTypeName() "out of LOS. Cancelling lase!", 5, self.AttackSet )
+                      Recce:MessageToSetGroup( "Target " .. TargetUnit:GetTypeName() "out of LOS. Cancelling lase!", 5, self.AttackSet )
                     end
                   end  
                 end

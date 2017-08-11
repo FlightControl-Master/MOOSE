@@ -944,7 +944,7 @@ end
 -- @param #string PlayerName
 -- @return Core.Settings#SETTINGS
 function DATABASE:GetPlayerSettings( PlayerName )
-  self:E({PlayerName})
+  self:F2( { PlayerName } )
   return self.PLAYERSETTINGS[PlayerName]
 end
 
@@ -955,7 +955,7 @@ end
 -- @param Core.Settings#SETTINGS Settings
 -- @return Core.Settings#SETTINGS
 function DATABASE:SetPlayerSettings( PlayerName, Settings )
-  self:E({PlayerName, Settings})
+  self:F2( { PlayerName, Settings } )
   self.PLAYERSETTINGS[PlayerName] = Settings
 end
 
