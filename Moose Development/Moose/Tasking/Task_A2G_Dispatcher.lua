@@ -226,7 +226,7 @@ do -- TASK_A2G_DISPATCHER
         local DetectedSet = DetectedItem.Set -- Core.Set#SET_UNIT
         local DetectedZone = DetectedItem.Zone
         --self:E( { "Targets in DetectedItem", DetectedItem.ItemID, DetectedSet:Count(), tostring( DetectedItem ) } )
-        DetectedSet:Flush()
+        --DetectedSet:Flush()
         
         local DetectedItemID = DetectedItem.ID
         local TaskIndex = DetectedItem.Index

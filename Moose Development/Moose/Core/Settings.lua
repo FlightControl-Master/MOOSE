@@ -82,7 +82,6 @@ do -- SETTINGS
   -- @param #SETTINGS self
   -- @return #boolean true if metric.
   function SETTINGS:IsMetric()
-    self:E( {Metric = ( self.Metric ~= nil and self.Metric == true ) or ( self.Metric == nil and _SETTINGS:IsMetric() ) } )
     return ( self.Metric ~= nil and self.Metric == true ) or ( self.Metric == nil and _SETTINGS:IsMetric() )
   end
 
@@ -96,7 +95,6 @@ do -- SETTINGS
   -- @param #SETTINGS self
   -- @return #boolean true if imperial.
   function SETTINGS:IsImperial()
-    self:E( {Metric = ( self.Metric ~= nil and self.Metric == false ) or ( self.Metric == nil and _SETTINGS:IsMetric() ) } )
     return ( self.Metric ~= nil and self.Metric == false ) or ( self.Metric == nil and _SETTINGS:IsMetric() )
   end
 
@@ -187,7 +185,6 @@ do -- SETTINGS
   -- @param #SETTINGS self
   -- @return #boolean true if BRA
   function SETTINGS:IsA2G_BR()
-    self:E( { BRA = ( self.A2GSystem and self.A2GSystem == "BR" ) or ( not self.A2GSystem and _SETTINGS:IsA2G_BR() ) } )
     return ( self.A2GSystem and self.A2GSystem == "BR" ) or ( not self.A2GSystem and _SETTINGS:IsA2G_BR() )
   end
 

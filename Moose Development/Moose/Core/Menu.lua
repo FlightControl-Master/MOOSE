@@ -124,6 +124,7 @@ do -- MENU_COMMAND_BASE
   -- ----------------------------------------------------------
   -- The MENU_COMMAND_BASE class defines the main MENU class where other MENU COMMAND_ 
   -- classes are derived from, in order to set commands.
+  -- 
   -- @field #MENU_COMMAND_BASE
   MENU_COMMAND_BASE = {
     ClassName = "MENU_COMMAND_BASE",
@@ -137,15 +138,37 @@ do -- MENU_COMMAND_BASE
   -- @return #MENU_COMMAND_BASE
   function MENU_COMMAND_BASE:New( MenuText, ParentMenu, CommandMenuFunction, CommandMenuArguments )
   
-  	local self = BASE:Inherit( self, MENU_BASE:New( MenuText, ParentMenu ) )
+  	local self = BASE:Inherit( self, MENU_BASE:New( MenuText, ParentMenu ) ) -- #MENU_COMMAND_BASE
   
-    self.CommandMenuFunction = CommandMenuFunction
-    self.CommandMenuArguments = CommandMenuArguments
+    self:SetCommandMenuFunction( CommandMenuFunction )
+    self:SetCommandMenuArguments( CommandMenuArguments )
     self.MenuCallHandler = function()
       self.CommandMenuFunction( unpack( self.CommandMenuArguments ) )
     end
   	
   	return self
+  end
+  
+  --- This sets the new command function of a menu, 
+  -- so that if a menu is regenerated, or if command function changes,
+  -- that the function set for the menu is loosely coupled with the menu itself!!!
+  -- If the function changes, no new menu needs to be generated if the menu text is the same!!!
+  -- @param #MENU_COMMAND_BASE
+  -- @return #MENU_COMMAND_BASE
+  function MENU_COMMAND_BASE:SetCommandMenuFunction( CommandMenuFunction )
+    self.CommandMenuFunction = CommandMenuFunction
+    return self
+  end
+
+  --- This sets the new command arguments of a menu, 
+  -- so that if a menu is regenerated, or if command arguments change,
+  -- that the arguments set for the menu are loosely coupled with the menu itself!!!
+  -- If the arguments change, no new menu needs to be generated if the menu text is the same!!!
+  -- @param #MENU_COMMAND_BASE
+  -- @return #MENU_COMMAND_BASE
+  function MENU_COMMAND_BASE:SetCommandMenuArguments( CommandMenuArguments )
+    self.CommandMenuArguments = CommandMenuArguments
+    return self
   end
 
 end
@@ -257,7 +280,7 @@ do -- MENU_MISSION_COMMAND
     self:T( { MenuText, CommandMenuFunction, arg } )
     
   
-    self.MenuPath = missionCommands.addCommand( MenuText, self.MenuParentPath, self.MenuCallHandler, arg )
+    self.MenuPath = missionCommands.addCommand( MenuText, self.MenuParentPath, self.MenuCallHandler )
    
     ParentMenu.Menus[self.MenuPath] = self
     
@@ -430,7 +453,7 @@ do -- MENU_COALITION_COMMAND
     self:T( { MenuText, CommandMenuFunction, arg } )
     
   
-    self.MenuPath = missionCommands.addCommandForCoalition( self.MenuCoalition, MenuText, self.MenuParentPath, self.MenuCallHandler, arg )
+    self.MenuPath = missionCommands.addCommandForCoalition( self.MenuCoalition, MenuText, self.MenuParentPath, self.MenuCallHandler )
    
     ParentMenu.Menus[self.MenuPath] = self
     
@@ -663,7 +686,7 @@ do -- MENU_CLIENT
       missionCommands.removeItemForGroup( self.MenuClient:GetClientGroupID(), MenuPath[MenuPathID] )
     end
     
-  	self.MenuPath = missionCommands.addCommandForGroup( self.MenuClient:GetClientGroupID(), MenuText, MenuParentPath, self.MenuCallHandler, arg )
+  	self.MenuPath = missionCommands.addCommandForGroup( self.MenuClient:GetClientGroupID(), MenuText, MenuParentPath, self.MenuCallHandler )
     MenuPath[MenuPathID] = self.MenuPath
    
     if ParentMenu and ParentMenu.Menus then
@@ -817,7 +840,7 @@ do
   -- @param MenuTime
   -- @param MenuTag A Tag or Key to filter the menus to be refreshed with the Tag set.
   -- @return #MENU_GROUP self
-  function MENU_GROUP:RemoveSubMenus( MenuTime, Menutag )
+  function MENU_GROUP:RemoveSubMenus( MenuTime, MenuTag )
     --self:F2( { self.MenuPath, MenuTime, self.MenuTime } )
   
     self:T( { "Removing Group SubMenus:", MenuTime, MenuTag, self.MenuGroup:GetName(), self.MenuPath } )
@@ -866,7 +889,7 @@ do
   
   
   --- @type MENU_GROUP_COMMAND
-  -- @extends Core.Menu#MENU_BASE
+  -- @extends Core.Menu#MENU_COMMAND_BASE
   
   --- # MENU_GROUP_COMMAND class, extends @{Menu#MENU_COMMAND_BASE}
   -- 
@@ -890,12 +913,14 @@ do
   function MENU_GROUP_COMMAND:New( MenuGroup, MenuText, ParentMenu, CommandMenuFunction, ... )
    
     MenuGroup._Menus = MenuGroup._Menus or {}
-    local Path = ( ParentMenu and ( table.concat( ParentMenu.MenuPath or {}, "@" ) .. "@" .. MenuText ) ) or MenuText 
+    local Path = ( ParentMenu and ( table.concat( ParentMenu.MenuPath or {}, "@" ) .. "@" .. MenuText ) ) or MenuText
     if MenuGroup._Menus[Path] then
       self = MenuGroup._Menus[Path]
-      self:F2( { "Re-using Group Command Menu:", MenuGroup:GetName(), MenuText } )
-      missionCommands.removeItemForGroup( self.MenuGroupID, self.MenuPath )
-      
+      --self:E( { Path=Path } ) 
+      --self:E( { self.MenuTag, self.MenuTime, "Re-using Group Command Menu:", MenuGroup:GetName(), MenuText } )
+      self:SetCommandMenuFunction( CommandMenuFunction )
+      self:SetCommandMenuArguments( arg )
+      return self
     end
     self = BASE:Inherit( self, MENU_COMMAND_BASE:New( MenuText, ParentMenu, CommandMenuFunction, arg ) )
     
@@ -903,6 +928,7 @@ do
       MenuGroup._Menus[Path] = self
     --end
 
+    --self:E({Path=Path}) 
     self.Path = Path
     self.MenuGroup = MenuGroup
     self.MenuGroupID = MenuGroup:GetID()
@@ -910,7 +936,7 @@ do
     self.ParentMenu = ParentMenu
 
     self:F( { "Adding Group Command Menu:", MenuGroup = MenuGroup:GetName(), MenuText = MenuText, MenuPath = self.MenuParentPath } )
-    self.MenuPath = missionCommands.addCommandForGroup( self.MenuGroupID, MenuText, self.MenuParentPath, self.MenuCallHandler, arg )
+    self.MenuPath = missionCommands.addCommandForGroup( self.MenuGroupID, MenuText, self.MenuParentPath, self.MenuCallHandler )
 
     if self.ParentMenu and self.ParentMenu.Menus then
       self.ParentMenu.Menus[MenuText] = self
@@ -930,13 +956,14 @@ do
   function MENU_GROUP_COMMAND:Remove( MenuTime, MenuTag )
     --self:F2( { self.MenuGroupID, self.MenuPath, MenuTime, self.MenuTime } )
 
+    --self:E( { MenuTag = MenuTag, MenuTime = self.MenuTime, Path = self.Path } )
     if not MenuTime or self.MenuTime ~= MenuTime then
       if ( not MenuTag ) or ( MenuTag and self.MenuTag and MenuTag == self.MenuTag ) then
         if self.MenuGroup._Menus[self.Path] then
           self = self.MenuGroup._Menus[self.Path]
       
           missionCommands.removeItemForGroup( self.MenuGroupID, self.MenuPath )
-          self:T( { "Removing Group Command Menu:", MenuGroup = self.MenuGroup:GetName(), MenuText = self.MenuText, MenuPath = self.Path } )
+          --self:E( { "Removing Group Command Menu:", MenuGroup = self.MenuGroup:GetName(), MenuText = self.MenuText, MenuPath = self.Path } )
   
           self.ParentMenu.Menus[self.MenuText] = nil
           self.ParentMenu.MenuCount = self.ParentMenu.MenuCount - 1

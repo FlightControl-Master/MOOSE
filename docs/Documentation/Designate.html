@@ -108,6 +108,7 @@
 <p><strong>Functional</strong> -- Management of target <strong>Designation</strong>.</p>
 
    
+<p>Lase, smoke and illuminate targets.</p>
 
 <p>--<img src="..\Presentations\DESIGNATE\Dia1.JPG" alt="Banner Image"/></p>
 
@@ -163,12 +164,6 @@ each detected set of potential targets can be lased or smoked...</p>
 			<h2><a id="#(DESIGNATE)">Type <code>DESIGNATE</code></a></h2>
 				<table class="function_list">
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DESIGNATE).ActivateAutoLase">DESIGNATE:ActivateAutoLase()</a></td>
-		<td class="summary">
-<p>Coordinates the Auto Lase.</p>
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DESIGNATE).AttackSet">DESIGNATE.AttackSet</a></td>
 		<td class="summary">
 
@@ -187,9 +182,21 @@ each detected set of potential targets can be lased or smoked...</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DESIGNATE).CoordinateLase">DESIGNATE:CoordinateLase()</a></td>
+		<td class="summary">
+<p>Coordinates the Auto Lase.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DESIGNATE).Designating">DESIGNATE.Designating</a></td>
 		<td class="summary">
 
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DESIGNATE).DesignationScope">DESIGNATE:DesignationScope()</a></td>
+		<td class="summary">
+<p>Adapt the designation scope according the detected items.</p>
 </td>
 		</tr>
 		<tr>
@@ -253,6 +260,12 @@ each detected set of potential targets can be lased or smoked...</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DESIGNATE).MaximumDesignations">DESIGNATE.MaximumDesignations</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DESIGNATE).MenuAutoLase">DESIGNATE:MenuAutoLase(AutoLase)</a></td>
 		<td class="summary">
 
@@ -266,6 +279,12 @@ each detected set of potential targets can be lased or smoked...</p>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DESIGNATE).MenuFlashStatus">DESIGNATE:MenuFlashStatus(AttackGroup, Flash)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DESIGNATE).MenuForget">DESIGNATE:MenuForget(Index)</a></td>
 		<td class="summary">
 
 </td>
@@ -427,6 +446,12 @@ each detected set of potential targets can be lased or smoked...</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DESIGNATE).SetMaximumDesignations">DESIGNATE:SetMaximumDesignations(MaximumDesignations)</a></td>
+		<td class="summary">
+<p>Set the maximum amount of designations.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DESIGNATE).SetMission">DESIGNATE:SetMission(Mission)</a></td>
 		<td class="summary">
 <p>Set the MISSION object for which designate will function.</p>
@@ -585,11 +610,15 @@ each detected set of potential targets can be lased or smoked...</p>
 <p>The RecceSet is continuously detecting for potential Targets, executing its task as part of the DetectionObject.
 Once Targets have been detected, the DesignateObject will trigger the <strong>Detect Event</strong>.</p>
 
+<p>In order to prevent an overflow in the DesignateObject of detected targets, there is a maximum
+amount of DetectionItems that can be put in <strong>scope</strong> of the DesignateObject.
+We call this the <strong>MaximumDesignations</strong> term.</p>
+
 <p>As part of the Detect Event, the DetectionItems list is used by the DesignateObject to provide the Players with:</p>
 
 <ul>
     <li>The RecceGroups are reporting to each AttackGroup, sending <strong>Messages</strong> containing the Threat Level and the TargetSet composition.</li>
-    <li><strong>Menu options</strong> are created and updated for each AttackGroup, containing the Threat Level and the TargetSet composition.</li>
+    <li><strong>Menu options</strong> are created and updated for each AttackGroup, containing the Detection ID and the Coordinates.</li>
 </ul>
 
 <p>A Player can then select an action from the Designate Menu. </p>
@@ -633,7 +662,7 @@ Once Targets have been detected, the DesignateObject will trigger the <strong>De
 <h3>2.1 DESIGNATE States</h3>
 
 <ul>
-    <li><strong>Designating</strong> ( Group ): The process is not started yet.</li>
+    <li><strong>Designating</strong> ( Group ): The designation process.</li>
 </ul>
 
 <h3>2.2 DESIGNATE Events</h3>
@@ -646,9 +675,17 @@ Once Targets have been detected, the DesignateObject will trigger the <strong>De
     <li>**<a href="##(DESIGNATE).Status">DESIGNATE.Status</a>**: Report designation status.</li>
 </ul>
 
-<h2>3. Laser codes</h2>
+<h2>3. Maximum Designations</h2>
 
-<h3>3.1 Set possible laser codes</h3>
+<p>In order to prevent an overflow of designations due to many Detected Targets, there is a 
+Maximum Designations scope that is set in the DesignationObject.</p>
+
+<p>The method <a href="##(DESIGNATE).SetMaximumDesignations">DESIGNATE.SetMaximumDesignations</a>() will put a limit on the amount of designations put in scope of the DesignationObject.
+Using the menu system, the player can "forget" a designation, so that gradually a new designation can be put in scope when detected.</p>
+
+<h2>4. Laser codes</h2>
+
+<h3>4.1 Set possible laser codes</h3>
 
 <p>An array of laser codes can be provided, that will be used by the DESIGNATE when lasing.
 The laser code is communicated by the Recce when it is lasing a larget.
@@ -668,11 +705,11 @@ One laser code can be given or an sequence of laser codes through an table...</p
 
 <p>The above sets a collection of possible laser codes that can be assigned. <strong>Note the { } notation!</strong></p>
 
-<h3>3.2 Auto generate laser codes</h3>
+<h3>4.2 Auto generate laser codes</h3>
 
 <p>Use the method <a href="##(DESIGNATE).GenerateLaserCodes">DESIGNATE.GenerateLaserCodes</a>() to generate all possible laser codes. Logic implemented and advised by Ciribob!</p>
 
-<h2>4. Autolase to automatically lase detected targets.</h2>
+<h2>5. Autolase to automatically lase detected targets.</h2>
 
 <p>DetectionItems can be auto lased once detected by Recces. As such, there is almost no action required from the Players using the Designate Menu.
 The <strong>auto lase</strong> function can be activated through the Designation Menu.
@@ -684,7 +721,7 @@ Note that autolase will automatically activate lasing for ALL DetectedItems. Ind
 
 <p>Activate the auto lasing.</p>
 
-<h2>5. Target prioritization on threat level</h2>
+<h2>6. Target prioritization on threat level</h2>
 
 <p>Targets can be detected of different types in one DetectionItem. Depending on the type of the Target, a different threat level applies in an Air to Ground combat context.
 SAMs are of a higher threat than normal tanks. So, if the Target type was recognized, the Recces will select those targets that form the biggest threat first,
@@ -726,24 +763,6 @@ Use the method <a href="##(DESIGNATE).SetMission">DESIGNATE.SetMission</a>() to 
 	
 			<h2><a id="#(DESIGNATE)" >Type <code>DESIGNATE</code></a></h2>
 				<h3>Field(s)</h3>
-		<dl class="function">
-<dt>
-
-<a id="#(DESIGNATE).ActivateAutoLase" >
-<strong>DESIGNATE:ActivateAutoLase()</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Coordinates the Auto Lase.</p>
-
-		<h3>Return value</h3>
-				
-<p><em><a href="##(DESIGNATE)">#DESIGNATE</a>:</em></p>
-
-
-</dd>
-</dl>
 		<dl class="function">
 <dt>
 
@@ -789,6 +808,24 @@ Use the method <a href="##(DESIGNATE).SetMission">DESIGNATE.SetMission</a>() to 
 		<dl class="function">
 <dt>
 
+<a id="#(DESIGNATE).CoordinateLase" >
+<strong>DESIGNATE:CoordinateLase()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Coordinates the Auto Lase.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(DESIGNATE)">#DESIGNATE</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 		<em></em>
 <a id="#(DESIGNATE).Designating" >
 <strong>DESIGNATE.Designating</strong>
@@ -796,6 +833,24 @@ Use the method <a href="##(DESIGNATE).SetMission">DESIGNATE.SetMission</a>() to 
 </dt>
 <dd>
 	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DESIGNATE).DesignationScope" >
+<strong>DESIGNATE:DesignationScope()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Adapt the designation scope according the detected items.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(DESIGNATE)">#DESIGNATE</a>:</em></p>
 
 
 </dd>
@@ -923,7 +978,6 @@ function below will use the range 1-7 just in case</p>
 		<dl class="function">
 <dt>
 
-		<em></em>
 <a id="#(DESIGNATE).LaserCodes" >
 <strong>DESIGNATE.LaserCodes</strong>
 </a>
@@ -940,6 +994,20 @@ function below will use the range 1-7 just in case</p>
 		<em></em>
 <a id="#(DESIGNATE).LaserCodesUsed" >
 <strong>DESIGNATE.LaserCodesUsed</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(DESIGNATE).MaximumDesignations" >
+<strong>DESIGNATE.MaximumDesignations</strong>
 </a>
 </dt>
 <dd>
@@ -1003,6 +1071,27 @@ function below will use the range 1-7 just in case</p>
 				<li>
 				
 <p><code><em> Flash </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DESIGNATE).MenuForget" >
+<strong>DESIGNATE:MenuForget(Index)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> Index </em></code>: </p>
 
 				</li>
 		</ul>
@@ -1759,6 +1848,32 @@ number> LaserCodes</p>
 				<li>
 				
 <p><code><em> LaserCodes </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(DESIGNATE)">#DESIGNATE</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DESIGNATE).SetMaximumDesignations" >
+<strong>DESIGNATE:SetMaximumDesignations(MaximumDesignations)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set the maximum amount of designations.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number MaximumDesignations </em></code>: </p>
 
 				</li>
 		</ul>

@@ -2,6 +2,7 @@ Utilities/Routines.lua
 Utilities/Utils.lua
 
 Core/Base.lua
+Core/Report.lua
 Core/Scheduler.lua
 Core/ScheduleDispatcher.lua
 Core/Event.lua

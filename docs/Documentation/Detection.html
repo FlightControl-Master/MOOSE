@@ -265,6 +265,12 @@ DETECTION uses the in-built detection capabilities of DCS World, but adds new fu
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS).GetDetectedItemCoordinate">DETECTION_AREAS:GetDetectedItemCoordinate(Index)</a></td>
+		<td class="summary">
+<p>Get the detected item coordinate.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DETECTION_AREAS).GetTreatLevelA2G">DETECTION_AREAS:GetTreatLevelA2G(DetectedItem)</a></td>
 		<td class="summary">
 <p>Returns the A2G threat level of the units in the DetectedItem</p>
@@ -570,7 +576,7 @@ The different values of Unit.Category can be:</p>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).GetDetectedItemCoordinate">DETECTION_BASE:GetDetectedItemCoordinate(Index)</a></td>
 		<td class="summary">
-<p>Get the COORDINATE of a detection item using a given numeric index.</p>
+<p>Get the detected item coordinate.</p>
 </td>
 		</tr>
 		<tr>
@@ -637,6 +643,12 @@ The different values of Unit.Category can be:</p>
 		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).GetPlayersNearBy">DETECTION_BASE:GetPlayersNearBy(DetectedItem)</a></td>
 		<td class="summary">
 <p>Returns friendly units nearby the FAC units ...</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).HasDetectedItemLOS">DETECTION_BASE:HasDetectedItemLOS(Index)</a></td>
+		<td class="summary">
+<p>Has the detected item LOS (Line Of Sight) with one of the Recce?</p>
 </td>
 		</tr>
 		<tr>
@@ -1138,6 +1150,12 @@ The different values of Unit.Category can be:</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_TYPES).GetDetectedItemCoordinate">DETECTION_TYPES:GetDetectedItemCoordinate(DetectedTypeName)</a></td>
+		<td class="summary">
+<p>Get the detected item coordinate.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DETECTION_TYPES).New">DETECTION_TYPES:New(DetectionSetGroup)</a></td>
 		<td class="summary">
 <p>DETECTION_TYPES constructor.</p>
@@ -1217,6 +1235,12 @@ The different values of Unit.Category can be:</p>
 		<td class="name" nowrap="nowrap"><a href="##(DETECTION_UNITS).GetChangeText">DETECTION_UNITS:GetChangeText(DetectedItem)</a></td>
 		<td class="summary">
 <p>Make text documenting the changes of the detected zone.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_UNITS).GetDetectedItemCoordinate">DETECTION_UNITS:GetDetectedItemCoordinate(Index)</a></td>
+		<td class="summary">
+<p>Get the detected item coordinate.</p>
 </td>
 		</tr>
 		<tr>
@@ -1547,6 +1571,8 @@ a DetectedItem. The default range is 6000 meters. For air detections, it is advi
 </dl>
 	<h2><a id="#(Detection)" >Type <code>Detection</code></a></h2>
 	
+			<h2><a id="#(Core.Point)" >Type <code>Core.Point</code></a></h2>
+			
 			<h2><a id="#(DETECTION_AREAS)" >Type <code>DETECTION_AREAS</code></a></h2>
 				
 <p> # 4) DETECTION_AREAS class, extends <a href="Detection.html##(DETECTION_BASE)">Detection#DETECTION_BASE</a></p>
@@ -1760,8 +1786,8 @@ The group to get the settings for.</p>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em>#string:</em></p>
-
+<p><em><a href="Core.Report.html##(REPORT)">Core.Report#REPORT</a>:</em>
+The report of the detection items.</p>
 
 </dd>
 </dl>
@@ -1879,6 +1905,36 @@ self</p>
 				
 <p><em>#string:</em>
 The Changes text</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_AREAS).GetDetectedItemCoordinate" >
+<strong>DETECTION_AREAS:GetDetectedItemCoordinate(Index)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Get the detected item coordinate.</p>
+
+	
+<p>In this case, the coordinate is the center of the zone of the area, not the center unit!
+So if units move, the retrieved coordinate can be different from the units positions.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> Index </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="Core.Point.html##(COORDINATE)">Core.Point#COORDINATE</a>:</em>
+The coordinate.</p>
 
 </dd>
 </dl>
@@ -2551,7 +2607,7 @@ Message formatting settings to use.</p>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em>#string:</em></p>
+<p><em><a href="Core.Report.html##(REPORT)">Core.Report#REPORT</a>:</em></p>
 
 
 </dd>
@@ -2881,13 +2937,13 @@ DetectedItemID</p>
 </dt>
 <dd>
 	
-<p>Get the COORDINATE of a detection item using a given numeric index.</p>
+<p>Get the detected item coordinate.</p>
 
 		<h3>Parameter</h3>
 		<ul>
 				<li>
 				
-<p><code><em>#number Index </em></code>: </p>
+<p><code><em> Index </em></code>: </p>
 
 				</li>
 		</ul>
@@ -3157,6 +3213,32 @@ The distance. </p>
 				
 <p><em><a href="##(map)">#map</a>:</em></p>
 <h1>string,Wrapper.Unit#UNIT> The map of Friendly UNITs.</h1>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_BASE).HasDetectedItemLOS" >
+<strong>DETECTION_BASE:HasDetectedItemLOS(Index)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Has the detected item LOS (Line Of Sight) with one of the Recce?</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> Index </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+true is LOS, false if no LOS.</p>
 
 </dd>
 </dl>
@@ -5063,8 +5145,8 @@ Message formatting settings to use.</p>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em>#string:</em></p>
-
+<p><em><a href="Core.Report.html##(REPORT)">Core.Report#REPORT</a>:</em>
+The report of the detection items.</p>
 
 </dd>
 </dl>
@@ -5131,6 +5213,32 @@ The group to generate the report for.</p>
 				
 <p><em>#string:</em>
 The Changes text</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_TYPES).GetDetectedItemCoordinate" >
+<strong>DETECTION_TYPES:GetDetectedItemCoordinate(DetectedTypeName)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Get the detected item coordinate.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> DetectedTypeName </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(Core.Point)">#Core.Point</a>:</em>
+COORDINATE</p>
 
 </dd>
 </dl>
@@ -5345,8 +5453,8 @@ Message formatting settings to use.</p>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em>#string:</em></p>
-
+<p><em><a href="Core.Report.html##(REPORT)">Core.Report#REPORT</a>:</em>
+The report of the detection items.</p>
 
 </dd>
 </dl>
@@ -5414,6 +5522,32 @@ The group to generate the report for.</p>
 				
 <p><em>#string:</em>
 The Changes text</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_UNITS).GetDetectedItemCoordinate" >
+<strong>DETECTION_UNITS:GetDetectedItemCoordinate(Index)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Get the detected item coordinate.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> Index </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="Core.Point.html##(COORDINATE)">Core.Point#COORDINATE</a>:</em></p>
+
 
 </dd>
 </dl>
