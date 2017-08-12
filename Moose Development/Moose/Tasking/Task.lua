@@ -1382,6 +1382,7 @@ end
 -- @return #string
 function TASK:ReportOverview( ReportGroup ) --R2.1 fixed report. Now nicely formatted and contains the info required.
 
+  self:UpdateTaskInfo()
   
   -- List the name of the Task.
   local TaskName = self:GetName()
@@ -1478,6 +1479,8 @@ end
 -- @param Wrapper.Group#GROUP TaskGroup
 -- @return #string
 function TASK:ReportDetails( ReportGroup )
+
+  self:UpdateTaskInfo()
 
   local Report = REPORT:New():SetIndent( 3 )
   

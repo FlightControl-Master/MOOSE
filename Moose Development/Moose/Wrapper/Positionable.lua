@@ -765,11 +765,18 @@ end
 
 --- Smoke the POSITIONABLE.
 -- @param #POSITIONABLE self
-function POSITIONABLE:Smoke( SmokeColor, Range )
+-- @param Utilities.Utils#SMOKECOLOR SmokeColor The color to smoke to positionable.
+-- @param #number Range The range in meters to randomize the smoking around the positionable.
+-- @param #number AddHeight The height in meters to add to the altitude of the positionable.
+function POSITIONABLE:Smoke( SmokeColor, Range, AddHeight )
   self:F2()
   if Range then
-    trigger.action.smoke( self:GetRandomVec3( Range ), SmokeColor )
+    local Vec3 = self:GetRandomVec3( Range )
+    Vec3.y = Vec3.y + AddHeight or 0
+    trigger.action.smoke( Vec3, SmokeColor )
   else
+    local Vec3 = self:GetVec3()
+    Vec3.y = Vec3.y + AddHeight or 0
     trigger.action.smoke( self:GetVec3(), SmokeColor )
   end
   
