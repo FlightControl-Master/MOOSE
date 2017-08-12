@@ -699,7 +699,7 @@ do -- DESIGNATE
       
         if self.FlashStatusMenu[AttackGroup] or ( MenuAttackGroup and ( AttackGroup:GetName() == MenuAttackGroup:GetName() ) ) then
 
-          local DetectedReport = REPORT:New( "Detected Targets: \n" )
+          local DetectedReport = REPORT:New( "Targets ready for Designation:" )
           local DetectedItems = self.Detection:GetDetectedItems()
           
           for DesignateIndex, Designating in pairs( self.Designating ) do
