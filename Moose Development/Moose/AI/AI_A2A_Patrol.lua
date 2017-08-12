@@ -368,6 +368,7 @@ function AI_A2A_PATROL:onafterRoute( AIGroup, From, Event, To )
     )
 
     PatrolRoute[#PatrolRoute+1] = ToPatrolRoutePoint
+    PatrolRoute[#PatrolRoute+1] = ToPatrolRoutePoint
     
     local Tasks = {}
     Tasks[#Tasks+1] = AIGroup:TaskFunction( "AI_A2A_PATROL.PatrolRoute", self )

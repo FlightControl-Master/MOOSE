@@ -391,7 +391,7 @@ function AI_A2A_GCI:onafterEngage( AIGroup, From, Event, To, AttackSetUnit )
       self:F( { Angle = ToInterceptAngle, ToTargetSpeed = ToTargetSpeed } )
       self:F( { self.EngageMinSpeed, self.EngageMaxSpeed, ToTargetSpeed } )
       
-      --EngageRoute[#EngageRoute+1] = CurrentCoord:WaypointAir()
+      EngageRoute[#EngageRoute+1] = ToPatrolRoutePoint
       EngageRoute[#EngageRoute+1] = ToPatrolRoutePoint
       
       local AttackTasks = {}

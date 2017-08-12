@@ -418,6 +418,7 @@ function AI_A2A_CAP:onafterEngage( AIGroup, From, Event, To, AttackSetUnit )
       self:T2( { self.MinSpeed, self.MaxSpeed, ToTargetSpeed } )
       
       EngageRoute[#EngageRoute+1] = ToPatrolRoutePoint
+      EngageRoute[#EngageRoute+1] = ToPatrolRoutePoint
 
       local AttackTasks = {}
   

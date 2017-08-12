@@ -564,7 +564,7 @@ function AI_A2A:onafterRTB( AIGroup, From, Event, To )
       return
     end
     --- Create a route point of type air.
-    local ToPatrolRoutePoint = ToAirbaseCoord:WaypointAir( 
+    local ToRTBRoutePoint = ToAirbaseCoord:WaypointAir( 
       self.PatrolAltType, 
       POINT_VEC3.RoutePointType.TurningPoint, 
       POINT_VEC3.RoutePointAction.TurningPoint, 
@@ -575,7 +575,8 @@ function AI_A2A:onafterRTB( AIGroup, From, Event, To )
     self:F( { Angle = ToAirbaseAngle, ToTargetSpeed = ToTargetSpeed } )
     self:T2( { self.MinSpeed, self.MaxSpeed, ToTargetSpeed } )
     
-    EngageRoute[#EngageRoute+1] = ToPatrolRoutePoint
+    EngageRoute[#EngageRoute+1] = ToRTBRoutePoint
+    EngageRoute[#EngageRoute+1] = ToRTBRoutePoint
     
     AIGroup:OptionROEHoldFire()
     AIGroup:OptionROTEvadeFire()
@@ -670,6 +671,7 @@ function AI_A2A:onafterRefuel( AIGroup, From, Event, To )
   
       self:F( { ToRefuelSpeed = ToRefuelSpeed } )
       
+      RefuelRoute[#RefuelRoute+1] = ToRefuelRoutePoint
       RefuelRoute[#RefuelRoute+1] = ToRefuelRoutePoint
       
       AIGroup:OptionROEHoldFire()
