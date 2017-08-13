@@ -379,7 +379,7 @@ function CONTROLLABLE:SetTask( DCSTask, WaitTime )
     end
 
     if not WaitTime or WaitTime == 0 then
-      SetTask( DCSTask )
+      self:SetTask( DCSTask )
     else
       self.TaskScheduler:Schedule( self, SetTask, { DCSTask }, WaitTime )
     end

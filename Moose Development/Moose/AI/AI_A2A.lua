@@ -626,7 +626,7 @@ function AI_A2A:onafterHold( AIGroup, From, Event, To, HoldTime )
     
     --AIGroup:SetState( AIGroup, "AI_A2A", self )
     
-    AIGroup:SetTask( AIGroup:TaskCombo( { TimedOrbitTask, RTBTask, OrbitHoldTask } ), 0 )
+    AIGroup:SetTask( AIGroup:TaskCombo( { TimedOrbitTask, RTBTask, OrbitHoldTask } ), 1 )
   end
 
 end
