@@ -1449,7 +1449,6 @@ do -- AI_A2A_DISPATCHER
   -- @return #AI_A2A_DISPATCHER
   function AI_A2A_DISPATCHER:SetSquadron( SquadronName, AirbaseName, SpawnTemplates, Resources )
   
-    self:E( { SquadronName = SquadronName, AirbaseName = AirbaseName, SpawnTemplates = SpawnTemplates, Resources = Resources } )
   
     self.DefenderSquadrons[SquadronName] = self.DefenderSquadrons[SquadronName] or {} 
 
@@ -1473,6 +1472,8 @@ do -- AI_A2A_DISPATCHER
       end
     end
     DefenderSquadron.Resources = Resources
+
+    self:E( { Squadron = {SquadronName, AirbaseName, SpawnTemplates, Resources } } )
     
     return self
   end
@@ -1537,6 +1538,8 @@ do -- AI_A2A_DISPATCHER
     Cap.AltType = AltType
 
     self:SetSquadronCapInterval( SquadronName, self.DefenderDefault.CapLimit, self.DefenderDefault.CapMinSeconds, self.DefenderDefault.CapMaxSeconds, 1 )
+
+    self:E( { CAP = { SquadronName, Zone, FloorAltitude, CeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, EngageMinSpeed, EngageMaxSpeed, AltType } } )
     
     return self
   end
@@ -1684,6 +1687,8 @@ do -- AI_A2A_DISPATCHER
     Intercept.Name = SquadronName
     Intercept.EngageMinSpeed = EngageMinSpeed
     Intercept.EngageMaxSpeed = EngageMaxSpeed
+    
+    self:E( { GCI = { SquadronName, EngageMinSpeed, EngageMaxSpeed } } )
   end
   
   --- Defines the default amount of extra planes that will take-off as part of the defense system.
@@ -2637,6 +2642,8 @@ do -- AI_A2A_DISPATCHER
   -- @param #AI_A2A_DISPATCHER self
   function AI_A2A_DISPATCHER:onafterGCI( From, Event, To, DetectedItem, DefendersMissing, Friendlies )
 
+    self:F( { From, Event, To, DetectedItem.Index, DefendersMissing, Friendlies } )
+
     local AttackerSet = DetectedItem.Set
     local AttackerCount = AttackerSet:Count()
     local DefendersCount = 0
@@ -2659,17 +2666,19 @@ do -- AI_A2A_DISPATCHER
     local BreakLoop = false
     
     while( DefendersCount > 0 and not BreakLoop ) do
-    
+      self:F( { DefenderSquadrons = self.DefenderSquadrons } )
       for SquadronName, DefenderSquadron in pairs( self.DefenderSquadrons or {} ) do
+        self:F( { GCI = DefenderSquadron.Gci } )
         for InterceptID, Intercept in pairs( DefenderSquadron.Gci or {} ) do
     
-          --self:E( { DefenderSquadron } )
+          self:F( { DefenderSquadron } )
           local SpawnCoord = DefenderSquadron.Airbase:GetCoordinate() -- Core.Point#COORDINATE
           --local TargetCoord = AttackerSet:GetFirst():GetCoordinate()
-          local TargetCoord = DetectedItem.InterceptCoord
-          if TargetCoord then
-            local Distance = SpawnCoord:Get2DDistance( TargetCoord )
-              self:F( { Distance = Distance, TargetCoord = TargetCoord } )
+          local InterceptCoord = DetectedItem.InterceptCoord
+          self:F({InterceptCoord = InterceptCoord})
+          if InterceptCoord then
+            local Distance = SpawnCoord:Get2DDistance( InterceptCoord )
+              self:F( { Distance = Distance, InterceptCoord = InterceptCoord } )
             
             if ClosestDistance == 0 or Distance < ClosestDistance then
               
@@ -3455,6 +3464,7 @@ do
     -- Setup squadrons
     
     self:F( { Airbases = AirbaseNames  } )
+    self.Templates:Flush()
     
     for AirbaseID, AirbaseName in pairs( AirbaseNames ) do
       local Airbase = _DATABASE:FindAirbase( AirbaseName ) -- Wrapper.Airbase#AIRBASE

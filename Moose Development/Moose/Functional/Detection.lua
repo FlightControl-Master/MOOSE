@@ -2366,24 +2366,21 @@ do -- DETECTION_AREAS
   -- @param #DETECTION_BASE.DetectedItem DetectedItem
   function DETECTION_AREAS:CalculateIntercept( DetectedItem )
 
+    local DetectedSpeed = DetectedItem.Coordinate.Speed
+    local DetectedHeading = DetectedItem.Coordinate.Heading
+    local DetectedCoord = DetectedItem.Coordinate
+
     if self.Intercept then
       local DetectedSet = DetectedItem.Set
-      if DetectedUnit then
-        -- todo: speed
-        local DetectedSpeed = DetectedItem.Coordinate.Speed
-        local DetectedHeading = DetectedItem.Coordinate.Heading
-        local DetectedCoord = DetectedItem.Coordinate
-    
-        local TranslateDistance = DetectedSpeed * self.InterceptDelay
-        
-        local InterceptCoord = DetectedCoord:Translate( TranslateDistance, DetectedHeading )
-        
-        DetectedItem.InterceptCoord = InterceptCoord
-      else
-        DetectedItem.InterceptCoord = nil
-      end
+      -- todo: speed
+  
+      local TranslateDistance = DetectedSpeed * self.InterceptDelay
+      
+      local InterceptCoord = DetectedCoord:Translate( TranslateDistance, DetectedHeading )
+      
+      DetectedItem.InterceptCoord = InterceptCoord
     else
-      DetectedItem.InterceptCoord = nil
+      DetectedItem.InterceptCoord = DetectedCoord
     end
     
   end
