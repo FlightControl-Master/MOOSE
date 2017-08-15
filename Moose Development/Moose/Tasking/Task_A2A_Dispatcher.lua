@@ -382,9 +382,7 @@ do -- TASK_A2A_DISPATCHER
         end
          
         if DetectedItemChanged == true or Remove then
-          --self:E( "Removing Tasking: " .. Task:GetTaskName() )
-          Mission:RemoveTask( Task )
-          self.Tasks[DetectedItemIndex] = nil
+          Task = self:RemoveTask( DetectedItemIndex )
         end
       end
     end
@@ -482,6 +480,11 @@ do -- TASK_A2A_DISPATCHER
     return PlayersCount, PlayerTypesReport
   end
 
+  function TASK_A2A_DISPATCHER:RemoveTask( TaskIndex )
+    self.Mission:RemoveTask( self.Tasks[TaskIndex] )
+    self.Tasks[TaskIndex] = nil
+  end
+
 
   --- Assigns tasks in relation to the detected items to the @{Set#SET_GROUP}.
   -- @param #TASK_A2A_DISPATCHER self
@@ -510,8 +513,7 @@ do -- TASK_A2A_DISPATCHER
             for TaskGroupID, TaskGroup in pairs( self.SetGroup:GetSet() ) do
               Mission:GetCommandCenter():MessageToGroup( string.format( "Obsolete A2A task %s for %s removed.", TaskText, Mission:GetName() ), TaskGroup )
             end
-            Mission:RemoveTask( Task )
-            self.Tasks[TaskIndex] = nil
+            Task = self:RemoveTask( TaskIndex )
           end
         end
       end
@@ -538,21 +540,24 @@ do -- TASK_A2A_DISPATCHER
           local TargetSetUnit = self:EvaluateENGAGE( DetectedItem ) -- Returns a SetUnit if there are targets to be INTERCEPTed...
           if TargetSetUnit then
             Task = TASK_A2A_ENGAGE:New( Mission, self.SetGroup, string.format( "ENGAGE.%03d", DetectedID ), TargetSetUnit )
+            Task:SetDetection( Detection, TaskIndex )
           else
             local TargetSetUnit = self:EvaluateINTERCEPT( DetectedItem ) -- Returns a SetUnit if there are targets to be INTERCEPTed...
             if TargetSetUnit then
               Task = TASK_A2A_INTERCEPT:New( Mission, self.SetGroup, string.format( "INTERCEPT.%03d", DetectedID ), TargetSetUnit )
+              Task:SetDetection( Detection, TaskIndex )
             else
               local TargetSetUnit = self:EvaluateSWEEP( DetectedItem ) -- Returns a SetUnit 
               if TargetSetUnit then
                 Task = TASK_A2A_SWEEP:New( Mission, self.SetGroup, string.format( "SWEEP.%03d", DetectedID ), TargetSetUnit )
+                Task:SetDetection( Detection, TaskIndex )
               end  
             end
           end
 
           if Task then
             self.Tasks[TaskIndex] = Task
-            Task:SetTargetZone( DetectedZone, DetectedSet:GetFirst():GetAltitude(), DetectedSet:GetFirst():GetHeading() )
+            Task:SetTargetZone( DetectedZone, DetectedItem.Coordinate.y, DetectedItem.Coordinate.Heading )
             Task:SetDispatcher( self )
             Mission:AddTask( Task )
             

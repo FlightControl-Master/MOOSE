@@ -305,7 +305,7 @@ do -- DETECTION_BASE
   -- @field #number ID -- The identifier of the detected area.
   -- @field #boolean FriendliesNearBy Indicates if there are friendlies within the detected area.
   -- @field Wrapper.Unit#UNIT NearestFAC The nearest FAC near the Area.
-
+  -- @field Core.Point#COORDINATE Coordinate The last known coordinate of the DetectedItem.
   
   --- DETECTION constructor.
   -- @param #DETECTION_BASE self
@@ -603,6 +603,14 @@ do -- DETECTION_BASE
             -- Calculate Acceptance
             
             DetectionAccepted = self._.FilterCategories[DetectedUnitCategory] ~= nil and DetectionAccepted or false
+    
+--            if Distance > 15000 then
+--              if DetectedUnitCategory == Unit.Category.GROUND_UNIT or DetectedUnitCategory == Unit.Category.SHIP then
+--                if DetectedObject:hasSensors( Unit.SensorType.RADAR, Unit.RadarType.AS ) == false then
+--                  DetectionAccepted = false
+--                end
+--              end
+--            end
     
             if self.AcceptRange and Distance > self.AcceptRange then
               DetectionAccepted = false
@@ -1101,8 +1109,8 @@ do -- DETECTION_BASE
       DetectedItem.Changes[ChangeCode].ID = ID
       DetectedItem.Changes[ChangeCode].ItemUnitType = ItemUnitType
     
-      self:T( { "Change on Detection Item:", DetectedItem.ID, ChangeCode, ItemUnitType } )
-    
+      self:E( { "Change on Detection Item:", DetectedItem.ID, ChangeCode, ItemUnitType } )
+     
       return self
     end
     
@@ -1124,7 +1132,7 @@ do -- DETECTION_BASE
       DetectedItem.Changes[ChangeCode][ChangeUnitType] = DetectedItem.Changes[ChangeCode][ChangeUnitType] + 1
       DetectedItem.Changes[ChangeCode].ID = ID
       
-      self:T( { "Change on Detection Item:", DetectedItem.ID, ChangeCode, ChangeUnitType } )
+      self:E( { "Change on Detection Item:", DetectedItem.ID, ChangeCode, ChangeUnitType } )
     
       return self
     end
@@ -1353,6 +1361,32 @@ do -- DETECTION_BASE
     return nil
   end
   
+
+  --- Gets a detected unit type name, taking into account the detection results.
+  -- @param #DETECTION_BASE self
+  -- @param #Wrapper.Unit#UNIT DetectedUnit
+  -- @return #string The type name
+  function DETECTION_BASE:GetDetectedUnitTypeName( DetectedUnit )
+    --self:F2( ObjectName )
+    
+    if DetectedUnit and DetectedUnit:IsAlive() then
+      local DetectedUnitName = DetectedUnit:GetName()
+      local DetectedObject = self.DetectedObjects[DetectedUnitName]
+      
+      if DetectedObject then
+        if DetectedObject.KnowType then
+          return DetectedUnit:GetTypeName()
+        else
+          return "Unknown"
+        end
+      end
+    else
+      return "Dead:" .. DetectedUnit:GetName()
+    end
+    
+    return "Undetected:" .. DetectedUnit:GetName()
+  end
+
   
   --- Adds a new DetectedItem to the DetectedItems list.
   -- The DetectedItem is a table and contains a SET_UNIT in the field Set.
@@ -1538,14 +1572,77 @@ do -- DETECTION_BASE
 
   end  
 
+
+  --- Set the detected item coordinate.
+  -- @param #DETECTION_BASE self
+  -- @param #DETECTION_BASE.DetectedItem The DetectedItem to set the coordinate at.
+  -- @param Core.Point#COORDINATE Coordinate The coordinate to set the last know detected position at.
+  -- @param Wrapper.Unit#UNIT DetectedItemUnit The unit to set the heading and altitude from.
+  -- @return #DETECTION_BASE
+  function DETECTION_BASE:SetDetectedItemCoordinate( DetectedItem, Coordinate, DetectedItemUnit )
+    self:F( { Coordinate = Coordinate } )
+  
+    if DetectedItem then
+      if DetectedItemUnit then
+        DetectedItem.Coordinate = Coordinate
+        DetectedItem.Coordinate:SetHeading( DetectedItemUnit:GetHeading() )
+        DetectedItem.Coordinate.y = DetectedItemUnit:GetAltitude()
+        DetectedItem.Coordinate.Speed = DetectedItemUnit:GetVelocityMPS()
+      end
+    end
+  end
+
+
   --- Get the detected item coordinate.
   -- @param #DETECTION_BASE self
-  -- @param Index
+  -- @param #number Index
   -- @return Core.Point#COORDINATE
   function DETECTION_BASE:GetDetectedItemCoordinate( Index )
     self:F( { Index = Index } )
+  
+    local DetectedItem = self:GetDetectedItem( Index )
+    
+    if DetectedItem then
+      return DetectedItem.Coordinate
+    end
+    
     return nil
   end
+
+  --- Set the detected item threatlevel.
+  -- @param #DETECTION_BASE self
+  -- @param #DETECTION_BASE.DetectedItem The DetectedItem to calculate the threatlevel for.
+  -- @return #DETECTION_BASE
+  function DETECTION_BASE:SetDetectedItemThreatLevel( DetectedItem )
+  
+    local DetectedSet = DetectedItem.Set
+  
+    if DetectedItem then
+      DetectedItem.ThreatLevel = DetectedSet:CalculateThreatLevelA2G()
+    end
+  end
+  
+
+
+  --- Get the detected item coordinate.
+  -- @param #DETECTION_BASE self
+  -- @param #number Index
+  -- @return #number ThreatLevel
+  function DETECTION_BASE:GetDetectedItemThreatLevel( Index )
+    self:F( { Index = Index } )
+  
+    local DetectedItem = self:GetDetectedItem( Index )
+    
+    if DetectedItem then
+      return DetectedItem.ThreatLevel or 0
+    end
+    
+    return nil
+  end
+  
+  
+
+
 
 
   --- Menu of a detected item using a given numeric index.
@@ -1639,27 +1736,6 @@ do -- DETECTION_UNITS
     return self
   end
 
-  --- Get the detected item coordinate.
-  -- @param #DETECTION_UNITS self
-  -- @param Index
-  -- @return Core.Point#COORDINATE
-  function DETECTION_UNITS:GetDetectedItemCoordinate( Index )
-    self:F( { Index = Index } )
-  
-    local DetectedItem = self:GetDetectedItem( Index )
-    local DetectedSet = self:GetDetectedSet( Index )
-    
-    if DetectedSet then
-      local DetectedItemUnit = DetectedSet:GetFirst() -- Wrapper.Unit#UNIT
-      if DetectedItemUnit and DetectedItemUnit:IsAlive() then
-        local DetectedItemCoordinate = DetectedItemUnit:GetCoordinate()
-        DetectedItemCoordinate:SetHeading( DetectedItemUnit:GetHeading() )
-        return DetectedItemCoordinate
-      end
-    end
-  end
-
-
   --- Make text documenting the changes of the detected zone.
   -- @param #DETECTION_UNITS self
   -- @param #DETECTION_UNITS.DetectedItem DetectedItem
@@ -1727,6 +1803,7 @@ do -- DETECTION_UNITS
           
           -- Update the detection with the new data provided.
           DetectedItem.TypeName = DetectedUnit:GetTypeName()            
+          DetectedItem.CategoryName = DetectedUnit:GetCategoryName()            
           DetectedItem.Name = DetectedObject.Name
           DetectedItem.IsVisible = DetectedObject.IsVisible 
           DetectedItem.LastTime = DetectedObject.LastTime
@@ -1781,8 +1858,14 @@ do -- DETECTION_UNITS
       local DetectedItem = DetectedItemData -- #DETECTION_BASE.DetectedItem
       local DetectedSet = DetectedItem.Set
   
+      -- Set the last known coordinate.
+      local DetectedFirstUnit = DetectedSet:GetFirst()
+      local DetectedFirstUnitCoord = DetectedFirstUnit:GetCoordinate()
+      self:SetDetectedItemCoordinate( DetectedItem, DetectedFirstUnitCoord, DetectedFirstUnit )
+
       self:ReportFriendliesNearBy( { DetectedItem = DetectedItem, ReportSetGroup = self.DetectionSetGroup } ) -- Fill the Friendlies table
       --self:NearestFAC( DetectedItem )
+      
     end
     
   end
@@ -1804,21 +1887,14 @@ do -- DETECTION_UNITS
       local UnitDistanceText = ""
       local UnitCategoryText = ""
   
-      local DetectedItemUnit = DetectedSet:GetFirst() -- Wrapper.Unit#UNIT
-      
-      if DetectedItemUnit and DetectedItemUnit:IsAlive() then
-        self:T(DetectedItemUnit)
-  
-        local DetectedItemCoordinate = DetectedItemUnit:GetCoordinate()
-        local DetectedItemCoordText = DetectedItemCoordinate:ToString( AttackGroup )
- 
-        ReportSummary = string.format( 
-          "%s - %s",
-          DetectedItemID,
-          DetectedItemCoordText
-        )
-      end
-      
+      local DetectedItemCoordinate = self:GetDetectedItemCoordinate( Index )
+      local DetectedItemCoordText = DetectedItemCoordinate:ToString( AttackGroup )
+     
+      ReportSummary = string.format( 
+        "%s - %s",
+        DetectedItemID,
+        DetectedItemCoordText
+      )
       self:T( ReportSummary )
     
       return ReportSummary
@@ -1835,54 +1911,46 @@ do -- DETECTION_UNITS
     self:F( { Index, self.DetectedItems } )
   
     local DetectedItem = self:GetDetectedItem( Index )
-    local DetectedSet = self:GetDetectedSet( Index )
     local DetectedItemID = self:GetDetectedItemID( Index )
     
-    self:T( DetectedSet )
-    if DetectedSet then
+    if DetectedItem then
       local ReportSummary = ""
       local UnitDistanceText = ""
       local UnitCategoryText = ""
   
-      local DetectedItemUnit = DetectedSet:GetFirst() -- Wrapper.Unit#UNIT
+      if DetectedItem.KnowType then
+        local UnitCategoryName = DetectedItem.CategoryName
+        if UnitCategoryName then
+          UnitCategoryText = UnitCategoryName
+        end
+        if DetectedItem.TypeName then
+          UnitCategoryText = UnitCategoryText .. " (" .. DetectedItem.TypeName .. ")"
+        end
+      else
+        UnitCategoryText = "Unknown"
+      end
       
-      if DetectedItemUnit and DetectedItemUnit:IsAlive() then
-        self:T(DetectedItemUnit)
-  
-  
-        if DetectedItem.KnowType then
-          local UnitCategoryName = DetectedItemUnit:GetCategoryName()
-          if UnitCategoryName then
-            UnitCategoryText = UnitCategoryName
-          end
-          if DetectedItem.TypeName then
-            UnitCategoryText = UnitCategoryText .. " (" .. DetectedItem.TypeName .. ")"
-          end
-        else
-          UnitCategoryText = "Unknown"
+      if DetectedItem.KnowDistance then
+        if DetectedItem.IsVisible then
+          UnitDistanceText = " at " .. string.format( "%.2f", DetectedItem.Distance ) .. " km"
         end
-        
-        if DetectedItem.KnowDistance then
-          if DetectedItem.IsVisible then
-            UnitDistanceText = " at " .. string.format( "%.2f", DetectedItem.Distance ) .. " km"
-          end
-        else
-          if DetectedItem.IsVisible then
-            UnitDistanceText = " at +/- " .. string.format( "%.0f", DetectedItem.Distance ) .. " km"
-          end
+      else
+        if DetectedItem.IsVisible then
+          UnitDistanceText = " at +/- " .. string.format( "%.0f", DetectedItem.Distance ) .. " km"
         end
+      end
         
-        local DetectedItemCoordinate = DetectedItemUnit:GetCoordinate()
+        --TODO: solve Index reference
+        local DetectedItemCoordinate = self:GetDetectedItemCoordinate( Index )
         local DetectedItemCoordText = DetectedItemCoordinate:ToString( AttackGroup, Settings )
  
-        local ThreatLevelA2G = DetectedItemUnit:GetThreatLevel( DetectedItem )
+        local ThreatLevelA2G = self:GetDetectedItemThreatLevel( DetectedItem )
         
         local Report = REPORT:New()
         Report:Add(DetectedItemID .. ", " .. DetectedItemCoordText)
-        Report:Add( string.format( "Threat: [%s]", string.rep(  "■", ThreatLevelA2G ) ) )
-        Report:Add( string.format("Type: %s%s", UnitCategoryText, UnitDistanceText ) )
-        return Report
-      end
+      Report:Add( string.format( "Threat: [%s]", string.rep(  "■", ThreatLevelA2G ) ) )
+      Report:Add( string.format("Type: %s%s", UnitCategoryText, UnitDistanceText ) )
+      return Report
     end
     return nil
   end
@@ -1944,25 +2012,6 @@ do -- DETECTION_TYPES
     return self
   end
 
-  --- Get the detected item coordinate.
-  -- @param #DETECTION_TYPES self
-  -- @param DetectedTypeName
-  -- @return #Core.Point#COORDINATE
-  function DETECTION_TYPES:GetDetectedItemCoordinate( DetectedTypeName )
-    self:F( { DetectedTypeName = DetectedTypeName } )
-  
-    local DetectedItem = self:GetDetectedItem( DetectedTypeName )
-    local DetectedSet = self:GetDetectedSet( DetectedTypeName )
-    
-    if DetectedItem then
-      local DetectedItemUnit = DetectedSet:GetFirst()
-      local DetectedItemCoordinate = DetectedItemUnit:GetCoordinate()
-      DetectedItemCoordinate:SetHeading( DetectedItemUnit:GetHeading() )
-      return DetectedItemCoordinate
-    end
-  end
-  
-  
   --- Make text documenting the changes of the detected zone.
   -- @param #DETECTION_TYPES self
   -- @param #DETECTION_TYPES.DetectedItem DetectedItem
@@ -2067,9 +2116,15 @@ do -- DETECTION_TYPES
       local DetectedItem = DetectedItemData -- #DETECTION_BASE.DetectedItem
       local DetectedSet = DetectedItem.Set
   
+      -- Set the last known coordinate.
+      local DetectedFirstUnit = DetectedSet:GetFirst()
+      local DetectedUnitCoord = DetectedFirstUnit:GetCoordinate()
+      self:SetDetectedItemCoordinate( DetectedItem, DetectedUnitCoord, DetectedFirstUnit )
+
       self:ReportFriendliesNearBy( { DetectedItem = DetectedItem, ReportSetGroup = self.DetectionSetGroup } ) -- Fill the Friendlies table
       --self:NearestFAC( DetectedItem )
     end
+    
     
 
   end
@@ -2082,20 +2137,13 @@ do -- DETECTION_TYPES
     self:F( DetectedTypeName )
   
     local DetectedItem = self:GetDetectedItem( DetectedTypeName )
-    local DetectedSet = self:GetDetectedSet( DetectedTypeName )
     local DetectedItemID = self:GetDetectedItemID( DetectedTypeName )
     
-    self:T( DetectedItem )
     if DetectedItem then
 
-      local DetectedItemUnit = DetectedSet:GetFirst()
-
-      local DetectedItemCoordinate = DetectedItemUnit:GetCoordinate()
+      local DetectedItemCoordinate = self:GetDetectedItemCoordinate( DetectedTypeName )
       local DetectedItemCoordText = DetectedItemCoordinate:ToString( AttackGroup )
       
-      --self:E( { DetectedItemID,
-      --  DetectedItemCoordText } )
-
       local ReportSummary = string.format( 
         "%s - %s", 
         DetectedItemID,
@@ -2123,13 +2171,11 @@ do -- DETECTION_TYPES
     self:T( DetectedItem )
     if DetectedItem then
 
-      local ThreatLevelA2G = DetectedSet:CalculateThreatLevelA2G()
+      local ThreatLevelA2G = self:GetDetectedItemThreatLevel( DetectedTypeName )
       local DetectedItemsCount = DetectedSet:Count()
       local DetectedItemType = DetectedItem.TypeName
       
-      local DetectedItemUnit = DetectedSet:GetFirst()
-
-      local DetectedItemCoordinate = DetectedItemUnit:GetCoordinate()
+      local DetectedItemCoordinate = self:GetDetectedItemCoordinate( DetectedTypeName )
       local DetectedItemCoordText = DetectedItemCoordinate:ToString( AttackGroup, Settings )
 
       local Report = REPORT:New()
@@ -2228,32 +2274,6 @@ do -- DETECTION_AREAS
     return self
   end
 
-  --- Get the detected item coordinate.
-  -- In this case, the coordinate is the center of the zone of the area, not the center unit!
-  -- So if units move, the retrieved coordinate can be different from the units positions.
-  -- @param #DETECTION_AREAS self
-  -- @param Index
-  -- @return Core.Point#COORDINATE The coordinate.
-  function DETECTION_AREAS:GetDetectedItemCoordinate( Index )
-    self:F( { Index = Index } )
-  
-    local DetectedItem = self:GetDetectedItem( Index )
-    local DetectedItemSet = self:GetDetectedSet( Index )
-    local FirstUnit = DetectedItemSet:GetFirst()
-    
-    if DetectedItem then
-      local DetectedZone = self:GetDetectedItemZone( Index )
-      -- TODO: Rework to COORDINATE. Problem with SetAlt.
-      local DetectedItemCoordinate = DetectedZone:GetPointVec2()
-      -- These need to be done to understand the heading and altitude of the first unit in the zone.
-      DetectedItemCoordinate:SetHeading( FirstUnit:GetHeading() )
-      DetectedItemCoordinate:SetAlt( FirstUnit:GetAltitude() )
-      
-      return DetectedItemCoordinate
-    end
-    
-    return nil
-  end
 
   --- Menu of a detected item using a given numeric index.
   -- @param #DETECTION_AREAS self
@@ -2305,7 +2325,7 @@ do -- DETECTION_AREAS
       local DetectedItemCoordinate = DetectedZone:GetCoordinate()
       local DetectedItemCoordText = DetectedItemCoordinate:ToString( AttackGroup, Settings )
 
-      local ThreatLevelA2G = self:GetTreatLevelA2G( DetectedItem )
+      local ThreatLevelA2G = self:GetDetectedItemThreatLevel( Index )
       local DetectedItemsCount = DetectedSet:Count()
       local DetectedItemsTypes = DetectedSet:GetTypeNames()
       
@@ -2341,25 +2361,6 @@ do -- DETECTION_AREAS
   end
 
   
-  --- Calculate the maxium A2G threat level of the DetectedItem.
-  -- @param #DETECTION_AREAS self
-  -- @param #DETECTION_BASE.DetectedItem DetectedItem
-  function DETECTION_AREAS:CalculateThreatLevelA2G( DetectedItem )
-    
-    local MaxThreatLevelA2G = 0
-    for UnitName, UnitData in pairs( DetectedItem.Set:GetSet() ) do
-      local ThreatUnit = UnitData -- Wrapper.Unit#UNIT
-      local ThreatLevelA2G = ThreatUnit:GetThreatLevel()
-      if ThreatLevelA2G > MaxThreatLevelA2G then
-        MaxThreatLevelA2G = ThreatLevelA2G
-      end
-    end
-  
-    self:T3( MaxThreatLevelA2G )
-    DetectedItem.MaxThreatLevelA2G = MaxThreatLevelA2G
-    
-  end
-  
   --- Calculate the optimal intercept point of the DetectedItem.
   -- @param #DETECTION_AREAS self
   -- @param #DETECTION_BASE.DetectedItem DetectedItem
@@ -2367,15 +2368,15 @@ do -- DETECTION_AREAS
 
     if self.Intercept then
       local DetectedSet = DetectedItem.Set
-      local DetectedUnit = DetectedSet:GetFirst() -- Wrapper.Unit#UNIT
       if DetectedUnit then
-        local UnitSpeed = DetectedUnit:GetVelocityMPS()
-        local UnitHeading = DetectedUnit:GetHeading()
-        local UnitCoord = DetectedUnit:GetCoordinate()
+        -- todo: speed
+        local DetectedSpeed = DetectedItem.Coordinate.Speed
+        local DetectedHeading = DetectedItem.Coordinate.Heading
+        local DetectedCoord = DetectedItem.Coordinate
     
-        local TranslateDistance = UnitSpeed * self.InterceptDelay
+        local TranslateDistance = DetectedSpeed * self.InterceptDelay
         
-        local InterceptCoord = UnitCoord:Translate( TranslateDistance, UnitHeading )
+        local InterceptCoord = DetectedCoord:Translate( TranslateDistance, DetectedHeading )
         
         DetectedItem.InterceptCoord = InterceptCoord
       else
@@ -2415,18 +2416,6 @@ do -- DETECTION_AREAS
     
   end
 
-  --- Returns the A2G threat level of the units in the DetectedItem
-  -- @param #DETECTION_AREAS self
-  -- @param #DETECTION_BASE.DetectedItem DetectedItem
-  -- @return #number a scale from 0 to 10. 
-  function DETECTION_AREAS:GetTreatLevelA2G( DetectedItem )
-    
-    self:T3( DetectedItem.MaxThreatLevelA2G )
-    return DetectedItem.MaxThreatLevelA2G
-  end
-  
-  
-  
   --- Smoke the detected units
   -- @param #DETECTION_AREAS self
   -- @return #DETECTION_AREAS self
@@ -2571,13 +2560,14 @@ do -- DETECTION_AREAS
           -- First remove the center unit from the set.
           DetectedSet:RemoveUnitsByName( DetectedItem.Zone.ZoneUNIT.UnitName )
   
-          self:AddChangeItem( DetectedItem, 'RAU', "Dummy" )
+          self:AddChangeItem( DetectedItem, 'RAU', self:GetDetectedUnitTypeName( DetectedItem.Zone.ZoneUNIT ) )
           
           -- Then search for a new center area unit within the set. Note that the new area unit candidate must be within the area range.
           for DetectedUnitName, DetectedUnitData in pairs( DetectedSet:GetSet() ) do
    
             local DetectedUnit = DetectedUnitData -- Wrapper.Unit#UNIT
             local DetectedObject = self:GetDetectedObject( DetectedUnit.UnitName ) 
+            local DetectedUnitTypeName = self:GetDetectedUnitTypeName( DetectedUnit )
   
             -- The DetectedObject can be nil when the DetectedUnit is not alive anymore or it is not in the DetectedObjects map.
             -- If the DetectedUnit was already identified, DetectedObject will be nil.
@@ -2590,13 +2580,13 @@ do -- DETECTION_AREAS
               -- Assign the Unit as the new center unit of the detected area.
               DetectedItem.Zone = ZONE_UNIT:New( DetectedUnit:GetName(), DetectedUnit, self.DetectionZoneRange )
   
-              self:AddChangeItem( DetectedItem, "AAU", DetectedItem.Zone.ZoneUNIT:GetTypeName() )
+              self:AddChangeItem( DetectedItem, "AAU", DetectedUnitTypeName )
   
               -- We don't need to add the DetectedObject to the area set, because it is already there ...
               break
             else
               DetectedSet:Remove( DetectedUnitName )
-              self:AddChangeUnit( DetectedItem, "RU", DetectedUnit:GetTypeName() )
+              self:AddChangeUnit( DetectedItem, "RU", DetectedUnitTypeName )
             end
           end
         end
@@ -2612,13 +2602,15 @@ do -- DETECTION_AREAS
           for DetectedUnitName, DetectedUnitData in pairs( DetectedSet:GetSet() ) do
   
             local DetectedUnit = DetectedUnitData -- Wrapper.Unit#UNIT
+            local DetectedUnitTypeName = self:GetDetectedUnitTypeName( DetectedUnit )
+
             local DetectedObject = nil
             if DetectedUnit:IsAlive() then
             --self:E(DetectedUnit:GetName())
               DetectedObject = self:GetDetectedObject( DetectedUnit:GetName() )
             end
             if DetectedObject then
-            
+
               -- Check if the DetectedUnit is within the DetectedItem.Zone
               if DetectedUnit:IsInZone( DetectedItem.Zone ) then
                 
@@ -2628,7 +2620,7 @@ do -- DETECTION_AREAS
               else
                 -- No, the DetectedUnit is not within the DetectedItem.Zone, remove DetectedUnit from the Set.
                 DetectedSet:Remove( DetectedUnitName )
-                self:AddChangeUnit( DetectedItem, "RU", DetectedUnit:GetTypeName() )
+                self:AddChangeUnit( DetectedItem, "RU", DetectedUnitTypeName )
               end
             
             else
@@ -2665,6 +2657,7 @@ do -- DETECTION_AREAS
   
         -- We found an unidentified unit outside of any existing detection area.
         local DetectedUnit = UNIT:FindByName( DetectedUnitName ) -- Wrapper.Unit#UNIT
+        local DetectedUnitTypeName = self:GetDetectedUnitTypeName( DetectedUnit )
         
         local AddedToDetectionArea = false
       
@@ -2678,7 +2671,7 @@ do -- DETECTION_AREAS
               self:IdentifyDetectedObject( DetectedObject )
               DetectedSet:AddUnit( DetectedUnit )
               AddedToDetectionArea = true
-              self:AddChangeUnit( DetectedItem, "AU", DetectedUnit:GetTypeName() )
+              self:AddChangeUnit( DetectedItem, "AU", DetectedUnitTypeName )
             end
           end
         end
@@ -2692,7 +2685,7 @@ do -- DETECTION_AREAS
           )
           --self:E( DetectedItem.Zone.ZoneUNIT.UnitName )
           DetectedItem.Set:AddUnit( DetectedUnit )
-          self:AddChangeItem( DetectedItem, "AA", DetectedUnit:GetTypeName() )
+          self:AddChangeItem( DetectedItem, "AA", DetectedUnitTypeName )
         end  
       end
     end
@@ -2704,13 +2697,19 @@ do -- DETECTION_AREAS
   
       local DetectedItem = DetectedItemData -- #DETECTION_BASE.DetectedItem
       local DetectedSet = DetectedItem.Set
+      local DetectedFirstUnit = DetectedSet:GetFirst()
       local DetectedZone = DetectedItem.Zone
+ 
+      -- Set the last known coordinate to the detection item.
+      local DetectedZoneCoord = DetectedZone:GetCoordinate()
+      self:SetDetectedItemCoordinate( DetectedItem, DetectedZoneCoord, DetectedFirstUnit )
       
       self:CalculateIntercept( DetectedItem )
   
       self:ReportFriendliesNearBy( { DetectedItem = DetectedItem, ReportSetGroup = self.DetectionSetGroup } ) -- Fill the Friendlies table
-      self:CalculateThreatLevelA2G( DetectedItem )  -- Calculate A2G threat level
+      self:SetDetectedItemThreatLevel( DetectedItem )  -- Calculate A2G threat level
       self:NearestFAC( DetectedItem )
+
       
       if DETECTION_AREAS._SmokeDetectedUnits or self._SmokeDetectedUnits then
         DetectedZone.ZoneUNIT:SmokeRed()

@@ -1343,7 +1343,7 @@ function TASK:onbeforeTimeOut( From, Event, To )
   return false
 end
 
-do -- Dispatcher
+do -- Links
 
   --- Set dispatcher of a task
   -- @param #TASK self
@@ -1353,6 +1353,19 @@ do -- Dispatcher
     self.Dispatcher = Dispatcher
   end
 
+  --- Set detection of a task
+  -- @param #TASK self
+  -- @param Function.Detection#DETECTION_BASE Detection
+  -- @param #number DetectedItemIndex
+  -- @return #TASK
+  function TASK:SetDetection( Detection, DetectedItemIndex )
+    
+    self:E({DetectedItemIndex,Detection})
+    
+    self.Detection = Detection
+    self.DetectedItemIndex = DetectedItemIndex
+  end
+
 end
 
 do -- Reporting
@@ -1360,36 +1373,38 @@ do -- Reporting
 --- Create a summary report of the Task.
 -- List the Task Name and Status
 -- @param #TASK self
+-- @param Wrapper.Group#GROUP ReportGroup
 -- @return #string
-function TASK:ReportSummary() --R2.1 fixed report. Now nicely formatted and contains the info required.
+function TASK:ReportSummary( ReportGroup ) 
 
   local Report = REPORT:New()
   
   -- List the name of the Task.
-  local Name = self:GetName()
+  Report:Add( self:GetName() )
   
   -- Determine the status of the Task.
-  local Status = "<" .. self:GetState() .. ">"
+  Report:Add( "State: <" .. self:GetState() .. ">" )
   
-  Report:Add( 'Task ' .. Name .. ' - State ' .. Status )
-
-  return Report:Text()
+  if self.TaskInfo["Coordinates"] then
+    local TaskInfoIDText = string.format( "%s: ", "Coordinate" )
+    local TaskCoord = self.TaskInfo["Coordinates"].TaskInfoText -- Core.Point#COORDINATE
+    Report:Add( TaskInfoIDText .. TaskCoord:ToString( ReportGroup, nil, self ) )
+  end
+  
+  return Report:Text( ', ' )
 end
 
 --- Create an overiew report of the Task.
 -- List the Task Name and Status
 -- @param #TASK self
 -- @return #string
-function TASK:ReportOverview( ReportGroup ) --R2.1 fixed report. Now nicely formatted and contains the info required.
+function TASK:ReportOverview( ReportGroup )
 
   self:UpdateTaskInfo()
   
   -- List the name of the Task.
   local TaskName = self:GetName()
   local Report = REPORT:New()
-  
-  -- Determine the status of the Task.
-  local Status = "<" .. self:GetState() .. ">"
 
   local Line = 0
   local LineReport = REPORT:New()
@@ -1402,7 +1417,7 @@ function TASK:ReportOverview( ReportGroup ) --R2.1 fixed report. Now nicely form
       if Line ~= 0 then
         Report:AddIndent( LineReport:Text( ", " ) )
       else
-        Report:Add( TaskName .. " - " .. LineReport:Text( ", " ) )
+        Report:Add( TaskName .. ", " .. LineReport:Text( ", " ) )
       end
       LineReport = REPORT:New()
       Line = math.floor( TaskInfo.TaskInfoOrder / 10 )
@@ -1414,7 +1429,6 @@ function TASK:ReportOverview( ReportGroup ) --R2.1 fixed report. Now nicely form
       LineReport:Add( TaskInfoIDText .. TaskInfo.TaskInfoText )
     elseif type(TaskInfo) == "table" then
       if TaskInfoID == "Coordinates" then
-        local FromCoordinate = ReportGroup:GetUnit(1):GetCoordinate()
         local ToCoordinate = TaskInfo.TaskInfoText -- Core.Point#COORDINATE
         --Report:Add( TaskInfoIDText )
         LineReport:Add( TaskInfoIDText .. ToCoordinate:ToString( ReportGroup, nil, self ) )
@@ -1422,8 +1436,6 @@ function TASK:ReportOverview( ReportGroup ) --R2.1 fixed report. Now nicely form
       else
       end
     end
-    
-    
   end
 
   Report:AddIndent( LineReport:Text( ", " ) )

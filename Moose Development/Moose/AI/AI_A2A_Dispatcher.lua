@@ -1579,12 +1579,12 @@ do -- AI_A2A_DISPATCHER
       local Variance = ( Cap.HighInterval - Cap.LowInterval ) / 2
       local Median = Cap.LowInterval + Variance
       local Randomization = Variance / Median
+      local Start = math.random( 1, Cap.HighInterval )
       
       if ScheduleID then
         Scheduler:Stop( ScheduleID )
       end
       
-      Cap.ScheduleID = Scheduler:Schedule( self, self.SchedulerCAP, { SquadronName }, Median, Median, Randomization )
     else
       error( "This squadron does not exist:" .. SquadronName )
     end
@@ -1627,6 +1627,7 @@ do -- AI_A2A_DISPATCHER
       local Cap = DefenderSquadron.Cap
       if Cap then
         local CapCount = self:CountCapAirborne( SquadronName )
+        self:E( { CapCount = CapCount } )
         if CapCount < Cap.CapLimit then
           local Probability = math.random()
           if Probability <= Cap.Probability then

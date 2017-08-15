@@ -834,6 +834,20 @@ function ZONE_GROUP:GetRandomVec2()
   return Point
 end
 
+--- Returns a @{Point#POINT_VEC2} object reflecting a random 2D location within the zone.
+-- @param #ZONE_GROUP self
+-- @param #number inner (optional) Minimal distance from the center of the zone. Default is 0.
+-- @param #number outer (optional) Maximal distance from the outer edge of the zone. Default is the radius of the zone.
+-- @return Core.Point#POINT_VEC2 The @{Point#POINT_VEC2} object reflecting the random 3D location within the zone.
+function ZONE_GROUP:GetRandomPointVec2( inner, outer )
+  self:F( self.ZoneName, inner, outer )
+
+  local PointVec2 = POINT_VEC2:NewFromVec2( self:GetRandomVec2() )
+
+  self:T3( { PointVec2 } )
+  
+  return PointVec2
+end
 
 
 --- @type ZONE_POLYGON_BASE

@@ -797,11 +797,9 @@ do -- DESIGNATE
            MENU_GROUP_COMMAND:New( AttackGroup, "Flash Status Report On", StatusMenu, self.MenuFlashStatus, self, AttackGroup, true ):SetTime( MenuTime ):SetTag( self.DesignateName )
         end        
       
-        local DetectedItems = self.Detection:GetDetectedItems()
-        
         for DesignateIndex, Designating in pairs( self.Designating ) do
 
-          local DetectedItem = DetectedItems[DesignateIndex]
+          local DetectedItem = self.Detection:GetDetectedItem( DesignateIndex )
 
           if DetectedItem then
           

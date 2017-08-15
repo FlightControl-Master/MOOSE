@@ -860,8 +860,9 @@ end
 
 --- Create a summary report of the Mission (one line).
 -- @param #MISSION self
+-- @param Wrapper.Group#GROUP ReportGroup
 -- @return #string
-function MISSION:ReportSummary()
+function MISSION:ReportSummary( ReportGroup )
 
   local Report = REPORT:New()
 
@@ -874,9 +875,9 @@ function MISSION:ReportSummary()
   Report:Add( string.format( '%s - %s - Task Overview Report', Name, Status ) )
 
   -- Determine how many tasks are remaining.
-  for TaskID, Task in pairs( self:GetTasks() ) do
+  for TaskID, Task in UTILS.spairs( self:GetTasks(), function( t, a, b ) return t[a]:ReportOrder( ReportGroup ) <  t[b]:ReportOrder( ReportGroup ) end  ) do
     local Task = Task -- Tasking.Task#TASK
-    Report:Add( "- " .. Task:ReportSummary() )
+    Report:Add( "- " .. Task:ReportSummary( ReportGroup ) )
   end
   
   return Report:Text()
@@ -898,12 +899,16 @@ function MISSION:ReportOverview( ReportGroup, TaskStatus )
   Report:Add( string.format( '%s - %s - %s Tasks Report', Name, Status, TaskStatus ) )
   
   -- Determine how many tasks are remaining.
-  local TasksRemaining = 0
+  local Tasks = 0
   for TaskID, Task in UTILS.spairs( self:GetTasks(), function( t, a, b ) return t[a]:ReportOrder( ReportGroup ) <  t[b]:ReportOrder( ReportGroup ) end  ) do
     local Task = Task -- Tasking.Task#TASK
     if Task:Is( TaskStatus ) then
       Report:Add( string.rep( "-", 140 ) )
       Report:Add( " - " .. Task:ReportOverview( ReportGroup ) )
+    end
+    Tasks = Tasks + 1
+    if Tasks >= 8 then
+      break
     end
   end
 
@@ -963,7 +968,7 @@ end
 -- @param Wrapper.Group#GROUP ReportGroup
 function MISSION:MenuReportTasksSummary( ReportGroup )
 
-  local Report = self:ReportSummary()
+  local Report = self:ReportSummary( ReportGroup )
   
   self:GetCommandCenter():MessageToGroup( Report, ReportGroup )
 end

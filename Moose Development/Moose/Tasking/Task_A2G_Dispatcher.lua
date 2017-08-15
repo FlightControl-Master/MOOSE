@@ -121,8 +121,9 @@ do -- TASK_A2G_DISPATCHER
     -- Determine if the set has radar targets. If it does, construct a SEAD task.
     local GroundUnitCount = DetectedSet:HasGroundUnits()
     local FriendliesNearBy = self.Detection:IsFriendliesNearBy( DetectedItem )
+    local RadarCount = DetectedSet:HasSEAD()
 
-    if GroundUnitCount > 0 and FriendliesNearBy == true then
+    if RadarCount == 0 and GroundUnitCount > 0 and FriendliesNearBy == true then
 
       -- Copy the Set
       local TargetSetUnit = SET_UNIT:New()
@@ -150,8 +151,9 @@ do -- TASK_A2G_DISPATCHER
     -- Determine if the set has radar targets. If it does, construct a SEAD task.
     local GroundUnitCount = DetectedSet:HasGroundUnits()
     local FriendliesNearBy = self.Detection:IsFriendliesNearBy( DetectedItem )
+    local RadarCount = DetectedSet:HasSEAD()
 
-    if GroundUnitCount > 0 and FriendliesNearBy == false then
+    if RadarCount == 0 and GroundUnitCount > 0 and FriendliesNearBy == false then
 
       -- Copy the Set
       local TargetSetUnit = SET_UNIT:New()
@@ -162,6 +164,12 @@ do -- TASK_A2G_DISPATCHER
     end
   
     return nil
+  end
+  
+  
+  function TASK_A2G_DISPATCHER:RemoveTask( TaskIndex )
+    self.Mission:RemoveTask( self.Tasks[TaskIndex] )
+    self.Tasks[TaskIndex] = nil
   end
   
   --- Evaluates the removal of the Task from the Mission.
@@ -177,8 +185,7 @@ do -- TASK_A2G_DISPATCHER
     if Task then
       if ( Task:IsStatePlanned() and DetectedItemChanged == true ) or Task:IsStateCancelled() then
         --self:E( "Removing Tasking: " .. Task:GetTaskName() )
-        Mission:RemoveTask( Task )
-        self.Tasks[TaskIndex] = nil
+        self:RemoveTask( TaskIndex )
       end
     end
     
@@ -213,6 +220,7 @@ do -- TASK_A2G_DISPATCHER
             for TaskGroupID, TaskGroup in pairs( self.SetGroup:GetSet() ) do
               Mission:GetCommandCenter():MessageToGroup( string.format( "Obsolete A2G task %s for %s removed.", TaskText, Mission:GetName() ), TaskGroup )
             end
+            Task = self:RemoveTask( TaskIndex )
             Mission:RemoveTask( Task )
             self.Tasks[TaskIndex] = nil
           end
@@ -232,10 +240,11 @@ do -- TASK_A2G_DISPATCHER
         local TaskIndex = DetectedItem.Index
         local DetectedItemChanged = DetectedItem.Changed
         
+        self:E( { DetectedItemChanged = DetectedItemChanged, DetectedItemID = DetectedItemID, TaskIndex = TaskIndex } )
+        
         local Task = self.Tasks[TaskIndex] -- Tasking.Task_A2G#TASK_A2G
         
         if Task then
-        
           -- If there is a Task and the task was assigned, then we check if the task was changed ... If it was, we need to reevaluate the targets.
           if Task:IsStateAssigned() then
             if DetectedItemChanged == true then -- The detection has changed, thus a new TargetSet is to be evaluated and set
@@ -254,24 +263,24 @@ do -- TASK_A2G_DISPATCHER
                 if TargetSetUnit then
                   if Task:IsInstanceOf( TASK_A2G_CAS ) then
                     Task:SetTargetSetUnit( TargetSetUnit )
+                    Task:SetDetection( Detection, TaskIndex )
                     Task:UpdateTaskInfo()
                     TargetsReport:Add( Detection:GetChangeText( DetectedItem ) )
                   else
                     Task:Cancel()
-                    Task = nil
-                    self.Tasks[TaskIndex] = nil
+                    Task = self:RemoveTask( TaskIndex )
                   end
                 else
                   local TargetSetUnit = self:EvaluateBAI( DetectedItem ) -- Returns a SetUnit if there are targets to be BAIed...
                   if TargetSetUnit then
                     if Task:IsInstanceOf( TASK_A2G_BAI ) then
                       Task:SetTargetSetUnit( TargetSetUnit )
+                      Task:SetDetection( Detection, TaskIndex )
                       Task:UpdateTaskInfo()
                       TargetsReport:Add( Detection:GetChangeText( DetectedItem ) )
                     else
                       Task:Cancel()
-                      Task = nil
-                      self.Tasks[TaskIndex] = nil
+                      Task = self:RemoveTask( TaskIndex )
                     end
                   end
                 end
@@ -288,14 +297,56 @@ do -- TASK_A2G_DISPATCHER
           end
         end
           
-        
-        Task = self:EvaluateRemoveTask( Mission, Task, TaskIndex, DetectedItemChanged ) -- Task will be removed if it is planned and changed.
+        if Task then
+          if Task:IsStatePlanned() then
+            if DetectedItemChanged == true then -- The detection has changed, thus a new TargetSet is to be evaluated and set
+              if Task:IsInstanceOf( TASK_A2G_SEAD ) then
+                local TargetSetUnit = self:EvaluateSEAD( DetectedItem ) -- Returns a SetUnit if there are targets to be SEADed...
+                if TargetSetUnit then
+                  Task:SetTargetSetUnit( TargetSetUnit )
+                  Task:UpdateTaskInfo()
+                else
+                  Task:Cancel()
+                  Task = self:RemoveTask( TaskIndex )
+                end
+              else
+                if Task:IsInstanceOf( TASK_A2G_CAS ) then
+                  local TargetSetUnit = self:EvaluateCAS( DetectedItem ) -- Returns a SetUnit if there are targets to be CASed...
+                  if TargetSetUnit then
+                    Task:SetTargetSetUnit( TargetSetUnit )
+                    Task:SetDetection( Detection, TaskIndex )
+                    Task:UpdateTaskInfo()
+                  else
+                    Task:Cancel()
+                    Task = self:RemoveTask( TaskIndex )
+                  end
+                else
+                  if Task:IsInstanceOf( TASK_A2G_BAI ) then
+                    local TargetSetUnit = self:EvaluateBAI( DetectedItem ) -- Returns a SetUnit if there are targets to be BAIed...
+                    if TargetSetUnit then
+                      Task:SetTargetSetUnit( TargetSetUnit )
+                      Task:SetDetection( Detection, TaskIndex )
+                      Task:UpdateTaskInfo()
+                    else
+                      Task:Cancel()
+                      Task = self:RemoveTask( TaskIndex )
+                    end
+                  else
+                    Task:Cancel()
+                    Task = self:RemoveTask( TaskIndex )
+                  end
+                end
+              end
+            end
+          end
+        end
 
         -- Evaluate SEAD
         if not Task then
           local TargetSetUnit = self:EvaluateSEAD( DetectedItem ) -- Returns a SetUnit if there are targets to be SEADed...
           if TargetSetUnit then
             Task = TASK_A2G_SEAD:New( Mission, self.SetGroup, string.format( "SEAD.%03d", DetectedItemID ), TargetSetUnit )
+            Task:SetDetection( Detection, TaskIndex )
           end
 
           -- Evaluate CAS
@@ -303,6 +354,7 @@ do -- TASK_A2G_DISPATCHER
             local TargetSetUnit = self:EvaluateCAS( DetectedItem ) -- Returns a SetUnit if there are targets to be CASed...
             if TargetSetUnit then
               Task = TASK_A2G_CAS:New( Mission, self.SetGroup, string.format( "CAS.%03d", DetectedItemID ), TargetSetUnit )
+              Task:SetDetection( Detection, TaskIndex )
             end
 
             -- Evaluate BAI
@@ -310,6 +362,7 @@ do -- TASK_A2G_DISPATCHER
               local TargetSetUnit = self:EvaluateBAI( DetectedItem, self.Mission:GetCommandCenter():GetPositionable():GetCoalition() ) -- Returns a SetUnit if there are targets to be BAIed...
               if TargetSetUnit then
                 Task = TASK_A2G_BAI:New( Mission, self.SetGroup, string.format( "BAI.%03d", DetectedItemID ), TargetSetUnit )
+                Task:SetDetection( Detection, TaskIndex )
               end
             end
           end

@@ -328,16 +328,38 @@ do -- TASK_A2A_INTERCEPT
       "Intercept incoming intruders.\n"
     )
 
-    local TargetCoordinate = TargetSetUnit:GetFirst():GetCoordinate()
-    self:SetInfo( "Coordinates", TargetCoordinate, 10 )
-    
-    self:SetInfo( "Threat", "[" .. string.rep(  "■", TargetSetUnit:CalculateThreatLevelA2G() ) .. "]", 11 )
-    local DetectedItemsCount = TargetSetUnit:Count()
-    local DetectedItemsTypes = TargetSetUnit:GetTypeNames()
-    self:SetInfo( "Targets", string.format( "%d of %s", DetectedItemsCount, DetectedItemsTypes ), 0 ) 
+    self:UpdateTaskInfo()
     
     return self
   end
+  
+  function TASK_A2A_INTERCEPT:UpdateTaskInfo()
+  
+    local TargetCoordinate = self.Detection and self.Detection:GetDetectedItemCoordinate( self.DetectedItemIndex ) or self.TargetSetUnit:GetFirst():GetCoordinate() 
+    self:SetInfo( "Coordinates", TargetCoordinate, 0 )
+
+    self:SetInfo( "Threat", "[" .. string.rep(  "■", self.Detection and self.Detection:GetDetectedItemThreatLevel( self.DetectedItemIndex ) or self.TargetSetUnit:CalculateThreatLevelA2G() ) .. "]", 11 )
+
+    if self.Detection then
+      local DetectedItemsCount = self.TargetSetUnit:Count()
+      local ReportTypes = REPORT:New()
+      local TargetTypes = {}
+      for TargetUnitName, TargetUnit in pairs( self.TargetSetUnit:GetSet() ) do
+        local TargetType = self.Detection:GetDetectedUnitTypeName( TargetUnit )
+        if not TargetTypes[TargetType] then
+          TargetTypes[TargetType] = TargetType
+          ReportTypes:Add( TargetType )
+        end
+      end
+      self:SetInfo( "Targets", string.format( "%d of %s", DetectedItemsCount, ReportTypes:Text( ", " ) ), 10 ) 
+    else
+      local DetectedItemsCount = self.TargetSetUnit:Count()
+      local DetectedItemsTypes = self.TargetSetUnit:GetTypeNames()
+      self:SetInfo( "Targets", string.format( "%d of %s", DetectedItemsCount, DetectedItemsTypes ), 10 ) 
+    end
+
+  end
+
   
   --- @param #TASK_A2A_INTERCEPT self
   -- @param Wrapper.Group#GROUP ReportGroup
@@ -461,16 +483,39 @@ do -- TASK_A2A_SWEEP
       "Perform a fighter sweep. Incoming intruders were detected and could be hiding at the location.\n"
     )
 
-    local TargetCoordinate = TargetSetUnit:GetFirst():GetCoordinate()
-    self:SetInfo( "Coordinates", TargetCoordinate, 10 )
-
-    self:SetInfo( "Assumed Threat", "[" .. string.rep(  "■", TargetSetUnit:CalculateThreatLevelA2G() ) .. "]", 11 )
-    local DetectedItemsCount = TargetSetUnit:Count()
-    local DetectedItemsTypes = TargetSetUnit:GetTypeNames()
-    self:SetInfo( "Lost Targets", string.format( "%d of %s", DetectedItemsCount, DetectedItemsTypes ), 0 ) 
-    
+    self:UpdateTaskInfo()
+   
     return self
   end 
+
+
+  function TASK_A2A_SWEEP:UpdateTaskInfo()
+  
+    local TargetCoordinate = self.Detection and self.Detection:GetDetectedItemCoordinate( self.DetectedItemIndex ) or self.TargetSetUnit:GetFirst():GetCoordinate() 
+    self:SetInfo( "Coordinates", TargetCoordinate, 0 )
+
+    self:SetInfo( "Assumed Threat", "[" .. string.rep(  "■", self.Detection and self.Detection:GetDetectedItemThreatLevel( self.DetectedItemIndex ) or self.TargetSetUnit:CalculateThreatLevelA2G() ) .. "]", 11 )
+
+    if self.Detection then
+      local DetectedItemsCount = self.TargetSetUnit:Count()
+      local ReportTypes = REPORT:New()
+      local TargetTypes = {}
+      for TargetUnitName, TargetUnit in pairs( self.TargetSetUnit:GetSet() ) do
+        local TargetType = self.Detection:GetDetectedUnitTypeName( TargetUnit )
+        if not TargetTypes[TargetType] then
+          TargetTypes[TargetType] = TargetType
+          ReportTypes:Add( TargetType )
+        end
+      end
+      self:SetInfo( "Lost Targets", string.format( "%d of %s", DetectedItemsCount, ReportTypes:Text( ", " ) ), 10 ) 
+    else
+      local DetectedItemsCount = self.TargetSetUnit:Count()
+      local DetectedItemsTypes = self.TargetSetUnit:GetTypeNames()
+      self:SetInfo( "Lost Targets", string.format( "%d of %s", DetectedItemsCount, DetectedItemsTypes ), 10 ) 
+    end
+
+  end
+
 
   function TASK_A2A_SWEEP:ReportOrder( ReportGroup ) 
     local Coordinate = self.TaskInfo.Coordinates.TaskInfoText
@@ -587,16 +632,38 @@ do -- TASK_A2A_ENGAGE
       "Bogeys are nearby! Players close by are ordered to ENGAGE the intruders!\n"
     )
 
-    local TargetCoordinate = TargetSetUnit:GetFirst():GetCoordinate()
-    self:SetInfo( "Coordinates", TargetCoordinate, 10 )
-
-    self:SetInfo( "Threat", "[" .. string.rep(  "■", TargetSetUnit:CalculateThreatLevelA2G() ) .. "]", 11 )
-    local DetectedItemsCount = TargetSetUnit:Count()
-    local DetectedItemsTypes = TargetSetUnit:GetTypeNames()
-    self:SetInfo( "Targets", string.format( "%d of %s", DetectedItemsCount, DetectedItemsTypes ), 0 ) 
+    self:UpdateTaskInfo()
     
     return self
   end 
+
+
+  function TASK_A2A_ENGAGE:UpdateTaskInfo()
+  
+    local TargetCoordinate = self.Detection and self.Detection:GetDetectedItemCoordinate( self.DetectedItemIndex ) or self.TargetSetUnit:GetFirst():GetCoordinate() 
+    self:SetInfo( "Coordinates", TargetCoordinate, 0 )
+
+    self:SetInfo( "Threat", "[" .. string.rep(  "■", self.Detection and self.Detection:GetDetectedItemThreatLevel( self.DetectedItemIndex ) or self.TargetSetUnit:CalculateThreatLevelA2G() ) .. "]", 11 )
+
+    if self.Detection then
+      local DetectedItemsCount = self.TargetSetUnit:Count()
+      local ReportTypes = REPORT:New()
+      local TargetTypes = {}
+      for TargetUnitName, TargetUnit in pairs( self.TargetSetUnit:GetSet() ) do
+        local TargetType = self.Detection:GetDetectedUnitTypeName( TargetUnit )
+        if not TargetTypes[TargetType] then
+          TargetTypes[TargetType] = TargetType
+          ReportTypes:Add( TargetType )
+        end
+      end
+      self:SetInfo( "Targets", string.format( "%d of %s", DetectedItemsCount, ReportTypes:Text( ", " ) ), 10 ) 
+    else
+      local DetectedItemsCount = self.TargetSetUnit:Count()
+      local DetectedItemsTypes = self.TargetSetUnit:GetTypeNames()
+      self:SetInfo( "Targets", string.format( "%d of %s", DetectedItemsCount, DetectedItemsTypes ), 10 ) 
+    end
+
+  end
 
   function TASK_A2A_ENGAGE:ReportOrder( ReportGroup ) 
     local Coordinate = self.TaskInfo.Coordinates.TaskInfoText
