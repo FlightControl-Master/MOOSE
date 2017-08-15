@@ -1364,7 +1364,7 @@ do -- DETECTION_BASE
 
   --- Gets a detected unit type name, taking into account the detection results.
   -- @param #DETECTION_BASE self
-  -- @param #Wrapper.Unit#UNIT DetectedUnit
+  -- @param Wrapper.Unit#UNIT DetectedUnit
   -- @return #string The type name
   function DETECTION_BASE:GetDetectedUnitTypeName( DetectedUnit )
     --self:F2( ObjectName )
