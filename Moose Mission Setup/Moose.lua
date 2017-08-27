@@ -1,5 +1,5 @@
 env.info( '*** MOOSE DYNAMIC INCLUDE START *** ' )
-env.info( 'Moose Generation Timestamp: 20170811_0800' )
+env.info( 'Moose Generation Timestamp: 20170811_0800 funkyfranky' )
 
 local base = _G
 
@@ -70,6 +70,7 @@ __Moose.Include( 'AI/AI_Patrol.lua' )
 __Moose.Include( 'AI/AI_Cap.lua' )
 __Moose.Include( 'AI/AI_Cas.lua' )
 __Moose.Include( 'AI/AI_Bai.lua' )
+__Moose.Include( 'AI/AI_RAT.lua' )
 __Moose.Include( 'AI/AI_Formation.lua' )
 __Moose.Include( 'Actions/Act_Assign.lua' )
 __Moose.Include( 'Actions/Act_Route.lua' )
