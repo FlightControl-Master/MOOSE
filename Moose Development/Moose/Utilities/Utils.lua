@@ -305,12 +305,13 @@ UTILS.tostringLL = function( lat, lon, acc, DMS)
     end
 
     local secFrmtStr -- create the formatting string for the seconds place
-    if acc <= 0 then  -- no decimal place.
-      secFrmtStr = '%02d'
-    else
-      local width = 3 + acc  -- 01.310 - that's a width of 6, for example.
-      secFrmtStr = '%0' .. width .. '.' .. acc .. 'f'
-    end
+    secFrmtStr = '%02d'
+--    if acc <= 0 then  -- no decimal place.
+--      secFrmtStr = '%02d'
+--    else
+--      local width = 3 + acc  -- 01.310 - that's a width of 6, for example.
+--      secFrmtStr = '%0' .. width .. '.' .. acc .. 'f'
+--    end
 
     return string.format('%02d', latDeg) .. ' ' .. string.format('%02d', latMin) .. '\' ' .. string.format(secFrmtStr, latSec) .. '"' .. latHemi .. '   '
            .. string.format('%02d', lonDeg) .. ' ' .. string.format('%02d', lonMin) .. '\' ' .. string.format(secFrmtStr, lonSec) .. '"' .. lonHemi
