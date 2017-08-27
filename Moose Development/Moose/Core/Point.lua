@@ -733,16 +733,26 @@ do -- COORDINATE
     return ""
   end
 
-  --- Provides a Lat Lon string
+  --- Provides a Lat Lon string in Degree Minute Second format.
   -- @param #COORDINATE self
   -- @param Core.Settings#SETTINGS Settings (optional) Settings
-  -- @return #string The LL Text
-  function COORDINATE:ToStringLL( Settings ) --R2.1 Fixes issue #424.
+  -- @return #string The LL DMS Text
+  function COORDINATE:ToStringLLDMS( Settings ) 
 
     local LL_Accuracy = Settings and Settings.LL_Accuracy or _SETTINGS.LL_Accuracy
-    local LL_DMS = Settings and Settings.LL_DMS or _SETTINGS.LL_DMS
     local lat, lon = coord.LOtoLL( self:GetVec3() )
-    return "LL, " .. UTILS.tostringLL( lat, lon, LL_Accuracy, LL_DMS )
+    return "LL DMS, " .. UTILS.tostringLL( lat, lon, LL_Accuracy, true )
+  end
+
+  --- Provides a Lat Lon string in Degree Decimal Minute format.
+  -- @param #COORDINATE self
+  -- @param Core.Settings#SETTINGS Settings (optional) Settings
+  -- @return #string The LL DDM Text
+  function COORDINATE:ToStringLLDDM( Settings )
+
+    local LL_Accuracy = Settings and Settings.LL_Accuracy or _SETTINGS.LL_Accuracy
+    local lat, lon = coord.LOtoLL( self:GetVec3() )
+    return "LL DDM, " .. UTILS.tostringLL( lat, lon, LL_Accuracy, false )
   end
 
   --- Provides a MGRS string
@@ -835,8 +845,11 @@ do -- COORDINATE
         local Coalition = Controllable:GetCoalition()
         return self:ToStringBULLS( Coalition, Settings )
       end
-      if Settings:IsA2A_LL()  then
-        return self:ToStringLL( Settings )
+      if Settings:IsA2A_LL_DMS()  then
+        return self:ToStringLLDMS( Settings )
+      end
+      if Settings:IsA2A_LL_DDM()  then
+        return self:ToStringLLDDM( Settings )
       end
       if Settings:IsA2A_MGRS() then
         return self:ToStringMGRS( Settings )
@@ -846,8 +859,11 @@ do -- COORDINATE
         local Coordinate = Controllable:GetCoordinate()
         return Controllable and self:ToStringBR( Coordinate, Settings ) or self:ToStringMGRS( Settings )
       end
-      if Settings:IsA2G_LL()  then
-        return self:ToStringLL( Settings )
+      if Settings:IsA2G_LL_DMS()  then
+        return self:ToStringLLDMS( Settings )
+      end
+      if Settings:IsA2G_LL_DDM()  then
+        return self:ToStringLLDDM( Settings )
       end
       if Settings:IsA2G_MGRS() then
         return self:ToStringMGRS( Settings )
