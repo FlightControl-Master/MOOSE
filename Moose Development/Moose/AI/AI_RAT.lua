@@ -17,10 +17,10 @@ myid="RAT | "
 -- @param #string ClassName Name of class.
 RAT={
   ClassName = "RAT",        -- Name of class: RAT = Random Air Traffic.
-  debug=false,              -- Turn debug messages on or off.
+  debug=true,              -- Turn debug messages on or off.
   prefix=nil,               -- Prefix of the template group defined in the mission editor.
   spawndelay=5,             -- Delay time in seconds before first spawning happens.
-  spawninterval=5,          -- Interval between spawning units/groups. note that we add a randomization of 10%
+  spawninterval=2,          -- Interval between spawning units/groups. Note that we add a randomization of 10%.
   coalition = nil,          -- Coalition of spawn group template.
   category = nil,           -- Category of aircarft: "plane" or "heli".
   friendly = "same",        -- Possible departure/destination airport: all=blue+red+neutral, same=spawn+neutral, spawnonly=spawn, blue=blue+neutral, blueonly=blue, red=red+neutral, redonly=red.
@@ -40,7 +40,7 @@ RAT={
   departure_name="random",  -- Name of the departure airport. Default is "random" for a randomly chosen one of the coalition airports.
   destination_name="random",-- Name of the destination airport. Default is "random" for a randomly chosen one of the coalition airports.
   zones_departure={},       -- Departure zones for air start.
-  zones_radius=5000,        -- Radius of departure zones in meters.
+  Rzone=5000,               -- Radius of departure zones in meters.
   ratcraft={},              -- Array with the spawned RAT aircraft.
 }
 
@@ -99,13 +99,13 @@ function RAT:New(prefix, friendly)
   -- Initialize aircraft parameters based on ME group template.
   self:_InitAircraft(DCSgroup)
   
-  -- Get all airports of this map.
+  -- Get all airports of current map (Caucasus, NTTR, Normandy, ...).
   self:_GetAirportsOfMap()
   
   -- Set the coalition table based on choice of self.coalition and self.friendly.
   self:_SetCoalitionTable()
   
-  -- Get all airports of this map beloning to "our" coalition.
+  -- Get all airports of this map beloning to friendly coalition(s).
   self:_GetAirportsOfCoalition()
    
   return self
@@ -113,7 +113,7 @@ end
 
 --- Initialize basic parameters of the aircraft based on its (template) group in the mission editor.
 -- @param #RAT self
--- @param #DCSgroup DCSgroup Group of the aircraft in  the mission editor.
+-- @param Dcs.DCSWrapper.Group#Group DCSgroup Group of the aircraft in the mission editor.
 function RAT:_InitAircraft(DCSgroup)
 
   local DCSunit=DCSgroup:getUnit(1)
@@ -121,7 +121,7 @@ function RAT:_InitAircraft(DCSgroup)
   local DCScategory=DCSgroup:getCategory()
   local DCStype=DCSunit:getTypeName()
  
-  -- print descriptors table of unit
+  -- Ddescriptors table of unit.
   if self.debug then
     self:E({"DCSdesc", DCSdesc})
   end
@@ -143,6 +143,10 @@ function RAT:_InitAircraft(DCSgroup)
     error(myid.."Group of RAT is neither airplane nor helicopter!")
   end
   
+  -- Define a first departure zone around the point where the group template in the ME was placed.
+  local ZoneTemplate = ZONE_GROUP:New( "Template", GROUP:FindByName(self.prefix), self.Rzone)
+  table.insert(self.zones_departure, ZoneTemplate)
+  
   -- Get type of aircraft.
   self.aircraft.type=DCStype
   
@@ -162,21 +166,21 @@ function RAT:_InitAircraft(DCSgroup)
   self.aircraft.Vmin = self.aircraft.Vmax*0.75
   
   -- actual travel speed (random between ASmin and ASmax)
-  --TODO: this needs to be placed somewhere else!
+  --TODO: This needs to be placed somewhere else! Randomization should not happen here.
   self.aircraft.Vcruise = math.random(self.aircraft.Vmin, self.aircraft.Vmax)
   -- limit travel speed to ~900 km/h
-  self.aircraft.Vcruise = math.min(self.aircraft.Vcruise,self.Vcruisemax)
+  self.aircraft.Vcruise = math.min(self.aircraft.Vcruise, self.Vcruisemax)
     
   -- max climb speed in m/s
   self.aircraft.Vymax=DCSdesc.VyMax
   
-  -- reasonably civil climb speed Vy=1500 ft/min but max aircraft specific climb rate
+  -- Reasonably civil climb speed Vy=1500 ft/min but max aircraft specific climb rate.
   self.aircraft.Vclimb=math.min(self.Vclimb*ft2meter/60, self.aircraft.Vymax)
   
-  -- climb angle
+  -- Climb angle in rad.
   self.aircraft.AlphaClimb=math.asin(self.aircraft.Vclimb/self.aircraft.Vmax)
   
-  -- descent angle 3:1 rule of descent, i.e. 3 miles of travel and 1000 ft of descent.
+  -- Descent angle in rad.
   self.aircraft.AlphaDescent=math.rad(self.AlphaDescent)
   
   -- service ceiling in meters
@@ -184,33 +188,26 @@ function RAT:_InitAircraft(DCSgroup)
   
   -- default flight levels (ASL)
   if self.category=="plane" then
-    --TODO: need to fine tune and text these default parameters (also for different maps)
-    self.aircraft.FLmin=100*FL2m
-    self.aircraft.FLmax=self.aircraft.ceiling*0.9
     self.aircraft.FLcruise=self.FLcruise*FL2m
   else
-    --TODO: need to check these parameters for helos
-    self.aircraft.FLmin=001*FL2m
-    self.aircraft.FLmax=self.aircraft.ceiling*0.9
+    --TODO: need to check these parameters for helos: FL005 = 152 m
     self.aircraft.FLcruise=005*FL2m
   end
 
   -- send debug message
   local text=string.format("Aircraft parameters:\n")
-  text=text..string.format("Category     =   %s\n",           self.category)
-  text=text..string.format("Max Speed    = %6.1f m/s.\n",     self.aircraft.Vmax)
-  text=text..string.format("Cruise Speed     = %6.1f m/s.\n", self.aircraft.Vcruise)
-  text=text..string.format("Climb Speed Max  = %6.1f m/s.\n", self.aircraft.Vymax)
-  text=text..string.format("Climb Speed      = %6.1f m/s.\n", self.aircraft.Vclimb)
+  text=text..string.format("Category         =   %s\n",       self.category)
+  text=text..string.format("Max speed        = %6.1f m/s.\n", self.aircraft.Vmax)
+  text=text..string.format("Max cruise speed = %6.1f m/s.\n", self.aircraft.Vcruise)
+  text=text..string.format("Max climb speed  = %6.1f m/s.\n", self.aircraft.Vymax)
+  text=text..string.format("Climb speed      = %6.1f m/s.\n", self.aircraft.Vclimb)
   text=text..string.format("Angle of climb   = %6.1f Deg.\n", math.deg(self.aircraft.AlphaClimb))
   text=text..string.format("Angle of descent = %6.1f Deg.\n", math.deg(self.aircraft.AlphaDescent))
   text=text..string.format("Initial Fuel     = %6.1f.\n",     self.aircraft.fuel*100)
-  text=text..string.format("Max Range = %6.1f km.\n",         self.aircraft.Rmax/1000)
-  text=text..string.format("Eff Range = %6.1f km.\n",         self.aircraft.Reff/1000)
-  text=text..string.format("Ceiling   = %3.0f = %6.1f km.\n", self.aircraft.ceiling/FL2m, self.aircraft.ceiling/1000)
-  text=text..string.format("FL min    = %3.0f = %6.1f km.\n", self.aircraft.FLmin/FL2m, self.aircraft.FLmin/1000)
-  text=text..string.format("FL max    = %3.0f = %6.1f km.\n", self.aircraft.FLmax/FL2m, self.aircraft.FLmax/1000)
-  text=text..string.format("FL cruise = %3.0f = %6.1f km.",   self.aircraft.FLcruise/FL2m, self.aircraft.FLcruise/1000)
+  text=text..string.format("Max range = %6.1f km.\n",         self.aircraft.Rmax/1000)
+  text=text..string.format("Eff range = %6.1f km.\n",         self.aircraft.Reff/1000)
+  text=text..string.format("Ceiling   = FL%3.0f = %6.1f km.\n", self.aircraft.ceiling/FL2m, self.aircraft.ceiling/1000)
+  text=text..string.format("FL cruise = FL%3.0f = %6.1f km.",   self.aircraft.FLcruise/FL2m, self.aircraft.FLcruise/1000)
   env.info(myid..text)
   if self.debug then
     MESSAGE:New(text, 60):ToAll()
@@ -241,15 +238,18 @@ function RAT:Spawn(naircraft, name)
     MESSAGE:New(text, 60, "Info"):ToAll()
   end
   
-  -- schedule the spawning
-  --TODO: make dt user input self.SpawnInterval
-  --TODO: check the interval is > 180 seconds if spawn at runway is chosen.
-  local tstart=5
-  local dt=5
-  local tstop=tstart+dt*(naircraft-1)
-  SCHEDULER:New(nil, self._SpawnWithRoute, {self}, tstart, dt, 0.1, tstop)
+  -- Schedule spawning of aircraft.
+  --TODO: make self.SpawnInterval and sef.spawndelay user input
+  local Tstart=self.spawndelay
+  local dt=self.spawninterval
+  if self.takeoff:lower()=="takeoff-runway" or self.takeoff:lower()=="runway" then
+    -- Ensure that interval is >= 180 seconds if spawn at runway is chosen. Aircraft need time to takeoff or the runway gets jammed.
+    dt=math.max(dt, 180)
+  end
+  local Tstop=Tstart+dt*(naircraft-1)
+  SCHEDULER:New(nil, self._SpawnWithRoute, {self}, Tstart, dt, 0.1, Tstop)
   
-  -- Status report scheduler
+  -- Status report scheduler.
   SCHEDULER:New(nil, self.Status, {self}, 30, 10, 0.0)
   
 end
@@ -263,7 +263,7 @@ function RAT:_SpawnWithRoute()
   local departure, destination, waypoints = self:_SetRoute()
   
   -- Modify the spawn template to follow the flight plan.
-  self:_ModifySpawnTemplate(departure, waypoints) 
+  self:_ModifySpawnTemplate(waypoints) 
   
   -- Actually spawn the group.
   local group=self:SpawnWithIndex(self.SpawnIndex) -- Core.Group#GROUP
@@ -283,7 +283,7 @@ function RAT:_SpawnWithRoute()
   
   -- Handle events.
   -- TODO: add hit event?
-  self:HandleEvent(EVENTS.Birth,           self._OnBirthDay)
+  self:HandleEvent(EVENTS.Birth,          self._OnBirthDay)
   self:HandleEvent(EVENTS.EngineStartup,  self._EngineStartup)
   self:HandleEvent(EVENTS.Takeoff,        self._OnTakeoff)
   self:HandleEvent(EVENTS.Land,           self._OnLand)
@@ -311,18 +311,22 @@ function RAT:Status()
   end
 end
 
---- Get life of unit.
+--- Get (relative) life of unit.
 -- @param #RAT self
 -- @return #number Life of unit in percent.
 function RAT:_GetLife(group)
+  local life=0.0
   if group then
     local unit=group:GetUnit(1)
-    local life=unit:GetLife()/unit:GetLife0()*100
-    return life
+    if unit then
+      life=unit:GetLife()/unit:GetLife0()*100
+    else
+      error(myid.."Unit does not exists in RAT_Getlife(). Returning zero.")
+    end
   else
-    error("Group does not exists in RAT_Getlife(). Returning zero.")
-    return 0.0
+    error(myid.."Group does not exists in RAT_Getlife(). Returning zero.")
   end
+  return life
 end
 
 --- Set status of group.
@@ -424,7 +428,7 @@ function RAT:_OnDead(EventData)
     self:_SetStatus(SpawnGroup, "dead (died)")
     --MESSAGE:New(text, 180):ToAll()
   else
-    error("Group does not exist in RAT:_OnDedad().")
+    error("Group does not exist in RAT:_OnDead().")
   end
 end
 
@@ -455,6 +459,26 @@ function RAT:SetDeparture(name)
   end
 end
 
+--- Set names of departure zones for spawning the AI aircraft.
+-- @param #RAT self
+-- @param #table zonenames Table of zone names where spawning should happen.
+function RAT:SetDepartureZones(zonenames)
+  self.zones_departure={}
+  local z
+  for _,name in pairs(zonenames) do
+    if name:lower()=="zone template" then
+      z=ZONE_GROUP:New("Zone Template", GROUP:FindByName(self.prefix), self.Rzone)
+    else
+      z=ZONE:New(name)
+    end
+    if z then
+      table.insert(self.zones_departure, z)
+    else
+      error(myid.."A zone with name "..name.." does not exist!")
+    end
+  end
+end
+
 --- Set name of destination airport for the AI aircraft. If no name is given an airport from the coalition is chosen randomly.
 -- @param #RAT self
 -- @param #string name Name of the destination airport or "random" for a randomly chosen one of the coalition.
@@ -469,23 +493,32 @@ end
 
 --- Set the departure airport of the AI. If no airport name is given an airport from the coalition is chosen randomly.
 -- @param #RAT self
--- @return Wrapper.Airbase#AIRBASE Departure airport
+-- @return Wrapper.Airbase#AIRBASE Departure airport if spawning at airport.
 function RAT:_SetDeparture()
-  local departure -- Wrapper.Airbase#AIRBASE
-  if self.departure_name=="random" then
-    -- Get a random departure airport from all friendly coalition airports.
-    departure=self.airports[math.random(1, #self.airports)]
-  elseif AIRBASE:FindByName(self.departure_name) then
-    -- Take the explicit airport provided.
-    departure=AIRBASE:FindByName(self.departure_name)
+  local departure
+  local text
+  if self.takeoff=="air" then
+    if self.departure_name=="random" then
+      departure=self.zones_departure[math.random(1, #self.zones_departure)]
+    else
+      departure=ZONE:FindByName(self.departure_name)
+    end
+    text="Chosen departure zone: "..departure:GetName()
   else
-    -- If nothing else works, we randomly choose from frindly coalition airports.
-    departure=self.airports[math.random(1, #self.airports)]
+    if self.departure_name=="random" then
+      -- Get a random departure airport from all friendly coalition airports.
+      departure=self.airports[math.random(1, #self.airports)]
+    elseif AIRBASE:FindByName(self.departure_name) then
+      -- Take the explicit airport provided.
+      departure=AIRBASE:FindByName(self.departure_name)
+    else
+      -- If nothing else works, we randomly choose from frindly coalition airports.
+      departure=self.airports[math.random(1, #self.airports)]
+    end
+    text="Chosen departure airport: "..departure:GetName().." with ID "..departure:GetID()
   end
-  local text="Chosen departure airport: "..departure:GetName().." with ID "..departure:GetID()
-  self:E(departure:GetDesc())
   env.info(myid..text)
-  MESSAGE:New(text, 60):ToAll()
+  MESSAGE:New(text, 60):ToAll() 
   return departure
 end
 
@@ -614,7 +647,7 @@ end
 -- @param #number Speed Speed in m/s.
 -- @param #number Altitude Altitude in m.
 -- @param Wrapper.Airbase#AIRBASE Airport Airport of object to spawn.
--- @return #list RoutePoint Waypoint for DCS task route.
+-- @return #table Waypoints for DCS task route or spawn template.
 function RAT:Waypoint(Type, Coord, Speed, Altitude, Airport)
 
   -- set altitude to input parameter or take y of 3D-coordinate
@@ -623,30 +656,42 @@ function RAT:Waypoint(Type, Coord, Speed, Altitude, Airport)
   --TODO: _Type should be generalized to Grouptemplate.Type
   --TODO: Only use _alttype="BARO" and add landheight for _alttype="RADIO". Don't know if "BARO" really works atm.
   
+  -- Land height at given coordinate.
+  local Hland=Coord:GetLandHeight()
+  
   -- convert type and action in DCS format
-  local _Action=nil
-  local _AID=nil
-  local _hold=nil
   local _Type=nil
+  local _Action=nil
   local _alttype="RADIO"
+  local _AID=nil
+  
   if Type:lower()=="takeoff-cold" or Type:lower()=="cold" then
     -- take-off with engine off
     _Type="TakeOffParking"
+    _Action="From Parking Area"
     _Altitude = 2
     _alttype="RADIO"
     _AID = Airport:GetID()
   elseif Type:lower()=="takeoff-hot" or Type:lower()=="hot" then
     -- take-off with engine on 
     _Type="TakeOffParkingHot"
-    _AID = Airport:GetID()
+    _Action="From Parking Area"
     _Altitude = 2
     _alttype="RADIO"
+    _AID = Airport:GetID()
   elseif Type:lower()=="takeoff-runway" or Type:lower()=="runway" then
     -- take-off from runway
     _Type="TakeOff"
-    _AID = Airport:GetID()
+    _Action="From Parking Area"  --TODO: Is this correct for a runway start?
     _Altitude = 2
     _alttype="RADIO"
+    _AID = Airport:GetID()
+  elseif Type:lower()=="air" then
+    -- air start
+    _Type="Turning Point"
+    _Action="Turning Point"
+    _Altitude = 5000
+    _alttype="BARO"
   elseif Type:lower()=="climb" or Type:lower()=="cruise" then
     _Type="Turning Point"
     _Action="Turning Point"
@@ -659,13 +704,11 @@ function RAT:Waypoint(Type, Coord, Speed, Altitude, Airport)
     _Type="Turning Point"
     _Action="Fly Over Point"
     _alttype="RADIO"
-    local P1= {x=Coord.x, y=Coord.z}
-    _hold=self:_TaskHolding(P1, Altitude, Speed)
   elseif Type:lower()=="landing" or Type:lower()=="land" then
     _Type="Land"
     _Action="Landing"
-    _alttype="RADIO"
     _Altitude = 2
+    _alttype="RADIO"
     _AID = Airport:GetID()
   else
     error("Unknown waypoint type in RAT:Waypoint function!")
@@ -683,16 +726,20 @@ function RAT:Waypoint(Type, Coord, Speed, Altitude, Airport)
       at="AGL"
     end
     local text=string.format("\nType: %s.\n", Type)
-    if Action then
-      text=text..string.format("Action: %s.\n", tostring(Action))
+    if _Action then
+      text=text..string.format("Action: %s.\n", tostring(_Action))
     end
     text=text..string.format("Coord: x = %6.1f km, y = %6.1f km, alt = %6.1f m.\n", Coord.x/1000, Coord.z/1000, Coord.y)
     text=text..string.format("Speed = %6.1f m/s = %6.1f km/h = %6.1f knots.\n", Speed, Speed*3.6, Speed*1.94384)
-    text=text..string.format("Altitude = %6.1f m "..at..".\n", Altitude)
+    text=text..string.format("Altitude = %6.1f m "..at..".\n", _Altitude)
     if Airport then
-      text=text..string.format("Destination airport = %s with ID %i.", Airport:GetName(), Airport:GetID())
+      if Type:lower() == "air" then
+        text=text..string.format("Zone = %s.", Airport:GetName())
+      else
+        text=text..string.format("Airport = %s with ID %i.", Airport:GetName(), Airport:GetID())
+      end
     else
-      text=text..string.format("No airport specified.")
+      text=text..string.format("No (valid) airport specified.")
     end
     local debugmessage=false
     if debugmessage then
@@ -734,7 +781,7 @@ function RAT:Waypoint(Type, Coord, Speed, Altitude, Airport)
   }
   -- task
   if Type:lower()=="holding" then
-    RoutePoint.task=_hold
+    RoutePoint.task=self:_TaskHolding({x=Coord.x, y=Coord.z}, Altitude, Speed)
   else
     RoutePoint.task = {}
     RoutePoint.task.id = "ComboTask"
@@ -751,7 +798,7 @@ end
 -- @param #RAT self
 -- @param #string type Type can be "takeoff-cold" or "cold", "takeoff-hot" or "hot", "takeoff-runway" or "runway", "air", "random".
 function RAT:SetTakeoff(type)
-  -- all possible types
+  -- All possible types for random selection.
   local types={"takeoff-cold", "takeoff-hot", "takeoff-runway"}
   local _Type
   if type:lower()=="takeoff-cold" or type:lower()=="cold" then
@@ -862,22 +909,29 @@ function RAT:_SetRoute()
   --TODO: Add case where we don't have a departure airport but rather a zone!
 
   -- DEPARTURE AIRPORT  
-  -- set departure airport
-  local departure=self:_SetDeparture() 
+  -- Departure airport or zone.
+  local departure=self:_SetDeparture()
 
   -- coordinates
-  local Pdeparture=departure:GetCoordinate()
+  local Pdeparture
+  if self.takeoff=="air" then
+      -- For an air start, we take a random point within the spawn zone.
+    local vec2=departure:GetRandomVec2()
+    Pdeparture=COORDINATE:New(vec2.x, self.aircraft.FLcruise, vec2.y)
+  else
+    Pdeparture=departure:GetCoordinate()
+  end
   
   -- height ASL if departure
   local H_departure=Pdeparture.y
   
   -- DESTINATION AIRPORT
-  -- get all destination airports in reach and at least 10 km away from departure
-  self:_GetDestinations(Pdeparture, self.mindist, self.range)
+  -- get all destination airports within reach and at least 10 km away from departure
+  self:_GetDestinations(Pdeparture, self.mindist, self.aircraft.Reff)
   local destination=self:_SetDestination()
   
   if destination:GetName()==departure:GetName() then
-    local text="Destination and departure aiport are identical: "..destination:GetName().." with ID "..destination:GetID()
+    local text="Destination and departure airport are identical: "..destination:GetName().." with ID "..destination:GetID()
     MESSAGE:New(text, 120):ToAll()
     error(myid..text)
   end
@@ -905,9 +959,7 @@ function RAT:_SetRoute()
   else
     h_holding=100
   end
-  env.info(myid.."h_holding before = "..h_holding)
   h_holding=self:_Randomize(h_holding, 0.2)
-  env.info(myid.."h_holding after = "..h_holding)
     
   -- distance from holding point to destination
   local d_holding=Pholding:Get2DDistance(Pdestination)
@@ -916,7 +968,7 @@ function RAT:_SetRoute()
   -- heading from departure to holding point of destination
   local heading=self:_Course(Pdeparture, Pholding) -- heading from departure to destination
   
-  -- total distance between departure and holding point + last bit to destination
+  -- total distance between departure and holding point (+last bit to destination)
   local d_total=Pdeparture:Get2DDistance(Pholding)
   
   -- CLIMB and DESCENT angles
@@ -931,9 +983,12 @@ function RAT:_SetRoute()
   if self.category=="plane" then
     -- min cruise alt is above 100 meter above holding point
     FLmin=math.max(H_departure, H_destination+h_holding)
-    -- quick check if the distance between the two airports is large enough to
-    -- actually reach the desired FL and then descent again at the given climb/descent rates.
+    -- Check if the distance between the two airports is large enough to reach the desired FL and descent again at the given climb/descent rates.
+    -- TODO: need to modify this for "air" start.
     FLmax=self:_FLmax(AlphaClimb, AlphaDescent, d_total, H_departure)
+    if self.takeoff=="air" then
+      FLmax=FLmax*2
+    end
     if FLmin>FLmax then
       FLmin=FLmax*0.8
     end
@@ -947,10 +1002,9 @@ function RAT:_SetRoute()
   end
   -- set randomized cruise altitude: default +-50% but limited
   FLcruise=self:_Randomize(FLcruise, 0.5, FLmin, FLmax)
-  -- check that we are not above 90% of serice ceiling
+  -- check that we are not above 90% of service ceiling
   FLcruise=math.min(FLcruise, self.aircraft.ceiling*0.9)
     
-      
   --CLIMB
   -- height of climb relative to ASL height of departure airport
   local h_climb=FLcruise-H_departure
@@ -979,17 +1033,17 @@ function RAT:_SetRoute()
   text=text..string.format("H_departure   = %6.1f m ASL\n", H_departure)
   text=text..string.format("H_destination = %6.1f m ASL\n", H_destination)
   text=text..string.format("h_climb       = %6.1f m AGL\n", h_climb)
+  text=text..string.format("h_descent     = %6.1f m\n",     h_descent)
+  text=text..string.format("h_holding     = %6.1f m AGL\n", h_holding)
   text=text..string.format("Alpha_climb   = %6.1f Deg\n", math.deg(AlphaClimb))
   text=text..string.format("Alpha_descent = %6.1f Deg\n", math.deg(AlphaDescent))
   text=text..string.format("FLmin         = %6.1f m ASL\n", FLmin)
   text=text..string.format("FLmax         = %6.1f m ASL\n", FLmax)
   text=text..string.format("FLcruise      = %6.1f m ASL\n", FLcruise)
-  text=text..string.format("h_descent     = %6.1f m\n",     h_descent)
-  text=text..string.format("h_holding     = %6.1f m AGL\n", h_holding)
   text=text..string.format("Heading = %6.1f Degrees", heading)
   env.info(myid..text)
   if self.debug then
-    MESSAGE:New(text, 180):ToAll()
+    MESSAGE:New(text, 60):ToAll()
   end
   
   -- coordinates of route from depature (0) to cruise (1) to descent (2) to holing (3) to destination (4)
@@ -1046,18 +1100,27 @@ end
 
 
 --- Modifies the template of the group to be spawned.
--- In particular a template can be spawned at an airbase or in the air at a certain point.
--- Also adds the waypoints to the template, which circumvents the DCS "landing bug".
+-- In particular, the waypoints of the group's flight plan are copied into the spawn template.
+-- This allows to spawn at airports and also land at other airports, i.e. circumventing the DCS "landing bug".
 -- @param #RAT self
--- @param Wrapper.Airbase#AIRBASE Airbase The @{Airbase} where to spawn the group.
--- @param #number TakeoffAltitude (optional) The altitude above the ground.
-function RAT:_ModifySpawnTemplate(Airbase, waypoints)
+-- @param #table waypoints The waypoints of the AI flight plan.
+function RAT:_ModifySpawnTemplate(waypoints)
 
   -- point of Airbase
-  local PointVec3 = Airbase:GetPointVec3()
+  --local PointVec3 = Airbase:GetPointVec3()
+  
+  local PointVec3 = {x=waypoints[1].x, y=waypoints[1].alt, z=waypoints[1].y}
 
+  local addheight
+  if self.takeoff=="air" then
+    addheight=5000
+  else
+    addheight=2
+  end
 
-  if self:_GetSpawnIndex( self.SpawnIndex + 1 ) then
+  if self:_GetSpawnIndex(self.SpawnIndex+1) then
+  
+    -- Get copy of spawn template.
     local SpawnTemplate = self.SpawnGroups[self.SpawnIndex].SpawnTemplate
   
     if SpawnTemplate then
@@ -1071,11 +1134,11 @@ function RAT:_ModifySpawnTemplate(Airbase, waypoints)
         local SY = UnitTemplate.y 
         local BX = SpawnTemplate.route.points[1].x
         local BY = SpawnTemplate.route.points[1].y
-        local TX = PointVec3.x + ( SX - BX )
-        local TY = PointVec3.z + ( SY - BY )
+        local TX = PointVec3.x + (SX-BX)
+        local TY = PointVec3.z + (SY-BY)
         SpawnTemplate.units[UnitID].x   = TX
         SpawnTemplate.units[UnitID].y   = TY
-        SpawnTemplate.units[UnitID].alt = PointVec3.y + 2
+        SpawnTemplate.units[UnitID].alt = PointVec3.y + addheight
         self:T( 'After Translation SpawnTemplate.units['..UnitID..'].x = ' .. SpawnTemplate.units[UnitID].x .. ', SpawnTemplate.units['..UnitID..'].y = ' .. SpawnTemplate.units[UnitID].y )
       end
       
@@ -1086,9 +1149,10 @@ function RAT:_ModifySpawnTemplate(Airbase, waypoints)
       end
       
       --TODO: Is this really necessary. Should already be defined in _Waypoints() function
-      SpawnTemplate.route.points[1].x   = PointVec3.x
-      SpawnTemplate.route.points[1].y   = PointVec3.z
-      SpawnTemplate.route.points[1].alt = PointVec3.y + 2
+      --SpawnTemplate.route.points[1].x   = PointVec3.x
+      --SpawnTemplate.route.points[1].y   = PointVec3.z
+      --SpawnTemplate.route.points[1].alt = PointVec3.y + addheight
+      
       --SpawnTemplate.route.points[1].airdromeId = Airbase:GetID()
       --SpawnTemplate.route.points[1].type = GROUPTEMPLATE.Takeoff[Takeoff]
       
@@ -1127,7 +1191,7 @@ function RAT:_SetCoalitionTable()
     self.ctable={self.coalition, coalition.side.NEUTRAL}
   end
   -- debug info
-  self:E({"Coalition table: ", self.ctable})
+  self:T({"Coalition table: ", self.ctable})
 end
 
 
