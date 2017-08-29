@@ -27,7 +27,8 @@ RAT={
   AlphaDescent=3.6,         -- Default angle of descenti in degrees. A value of 3.6 follows the 3:1 rule of 3 miles of travel and 1000 ft descent.
   roe = "hold",             -- ROE of spawned groups, default is weapon hold (this is a peaceful class for civil aircraft or ferry missions).
   takeoff = "hot",          -- Takeoff type: "hot", "cold", "runway", "air", "random".
-  mindist = 5000,           -- Min distance from departure to destination in meters.
+  mindist = 5000,           -- Min distance from departure to destination in meters. Default 5 km.
+  maxdist = 500000,         -- Max distance from departure to destination in meters. Default 5000 km.
   airports_map={},          -- All airports available on current map (Caucasus, Nevada, Normandy, ...).
   airports={},              -- All airports of friedly coalitions.
   airports_departure={},    -- Possible departure airports if unit/group is spawned at airport, spawnpoint=air or spawnpoint=airport.
@@ -37,6 +38,7 @@ RAT={
   zones_departure={},       -- Departure zones for air start.
   Rzone=5000,               -- Radius of departure zones in meters.
   ratcraft={},              -- Array with the spawned RAT aircraft.
+  markerid=0,
 }
 
 --TODO list:
@@ -244,7 +246,7 @@ function RAT:Spawn(naircraft, name)
   SCHEDULER:New(nil, self._SpawnWithRoute, {self}, Tstart, dt, 0.1, Tstop)
   
   -- Status report scheduler.
-  SCHEDULER:New(nil, self.Status, {self}, 30, 10, 0.0)
+  SCHEDULER:New(nil, self.Status, {self}, 30, 30)
   
 end
 
@@ -300,7 +302,7 @@ function RAT:Status()
     local group=self.SpawnGroups[i].Group
     local prefix=self:_GetPrefixFromGroup(group)
     local life=self:_GetLife(group)
-    local text=string.format("Group %s ID %i:", prefix, i) 
+    local text=string.format("Group %s ID %i:\n", prefix, i) 
     text=text..string.format("Life = %3.0f\n", life)
     text=text..string.format("Status = %s\n", self.ratcraft[i].status)
     text=text..string.format("Flying from %s to %s.",self.ratcraft[i].departure:GetName(), self.ratcraft[i].destination:GetName())
@@ -309,12 +311,13 @@ function RAT:Status()
   end
 end
 
---- Get (relative) life of unit.
+--- Get (relative) life of first unit of a group.
 -- @param #RAT self
+-- @param #Group group Group of unit.
 -- @return #number Life of unit in percent.
 function RAT:_GetLife(group)
   local life=0.0
-  if group then
+  if group and group:IsAlive() then
     local unit=group:GetUnit(1)
     if unit then
       life=unit:GetLife()/unit:GetLife0()*100
@@ -322,7 +325,7 @@ function RAT:_GetLife(group)
       error(myid.."Unit does not exists in RAT_Getlife(). Returning zero.")
     end
   else
-    error(myid.."Group does not exists in RAT_Getlife(). Returning zero.")
+    env.info(myid.."Group does not exists in RAT_Getlife(). Returning zero.")
   end
   return life
 end
@@ -360,7 +363,13 @@ function RAT:_EngineStartup(EventData)
     local text="Event: Group "..SpawnGroup:GetName().." started engines. Life="..self:_GetLife(SpawnGroup)
     env.info(myid..text)
     --MESSAGE:New(text, 180):ToAll()
-    self:_SetStatus(SpawnGroup, "taxi (engines started)")
+    local status
+    if SpawnGroup:IsAir() then
+      status="airborn"
+    else
+      status="taxi (engines started)"
+    end
+    self:_SetStatus(SpawnGroup, status)
   else
     error("Group does not exist in RAT:_EngineStartup().")
   end
@@ -518,7 +527,7 @@ function RAT:_SetDeparture()
     text="Chosen departure airport: "..departure:GetName().." with ID "..departure:GetID()
   end
   env.info(myid..text)
-  MESSAGE:New(text, 60):ToAll() 
+  MESSAGE:New(text, 60):ToAll()
   return departure
 end
 
@@ -926,7 +935,7 @@ function RAT:_SetRoute()
   if self.takeoff=="air" then
     -- Departure altitude is 70% of default cruise with 30% variation and limited to 1000 m AGL (50 m for helos). 
     local Hmin
-    if self.category=="pland" then
+    if self.category=="plane" then
       Hmin=1000
     else
       Hmin=50
@@ -1001,7 +1010,8 @@ function RAT:_SetRoute()
     FLmin=math.max(H_departure, H_destination+h_holding)
     -- Check if the distance between the two airports is large enough to reach the desired FL and descent again at the given climb/descent rates.
     if self.takeoff=="air" then
-      -- This is the case where we only descent to the ground at the given descent angle. 
+      -- This is the case where we only descent to the ground at the given descent angle.
+      -- TODO: should this not better be h_holding Pholding.y? 
       FLmax=d_total*math.tan(AlphaDescent)+H_destination
     else
       FLmax=self:_FLmax(AlphaClimb, AlphaDescent, d_total, H_departure)
@@ -1023,6 +1033,10 @@ function RAT:_SetRoute()
   FLcruise=self:_Randomize(FLcruise, 0.5, FLmin, FLmax)
   -- Finally, check that we are not above 90% of service ceiling.
   FLcruise=math.min(FLcruise, self.aircraft.ceiling*0.9)
+  
+  if self.takeoff=="air" then
+    H_departure=math.min(H_departure,FLmax)
+  end
     
   -- CLIMB
   -- Height of climb relative to ASL height of departure airport.
@@ -1034,7 +1048,7 @@ function RAT:_SetRoute()
   
   -- DESCENT
   -- Height difference for descent form cruise alt to holding point.
-  local h_descent=FLcruise-H_destination-h_holding
+  local h_descent=FLcruise-h_holding-Pholding.y
   -- x-distance of descent part
   local d_descent=math.abs(h_descent/math.tan(AlphaDescent))
   
@@ -1055,6 +1069,7 @@ function RAT:_SetRoute()
   text=text..string.format("h_climb       = %6.1f m AGL\n", h_climb)
   text=text..string.format("h_descent     = %6.1f m\n",     h_descent)
   text=text..string.format("h_holding     = %6.1f m AGL\n", h_holding)
+  text=text..string.format("P_holding alt = %6.1f m ASL\n", Pholding.y)
   text=text..string.format("Alpha_climb   = %6.1f Deg\n", math.deg(AlphaClimb))
   text=text..string.format("Alpha_descent = %6.1f Deg\n", math.deg(AlphaDescent))
   text=text..string.format("FLmin         = %6.1f m ASL\n", FLmin)
@@ -1079,12 +1094,18 @@ function RAT:_SetRoute()
   local wp1=self:Waypoint("climb",      c1, self.aircraft.Vmax, FLcruise)
   local wp2=self:Waypoint("cruise",     c2, self.aircraft.Vcruise, FLcruise)
   --TODO: add the possibility for a holing point, i.e. we circle a bit before final approach.
-  local wp3=self:Waypoint("descent",    c3, self.aircraft.Vmin, h_holding)
-  --local wp3=self:Waypoint("holding",    c3, self.aircraft.Vmin, h_holding)
+  --local wp3=self:Waypoint("descent",    c3, self.aircraft.Vmin, h_holding)
+  local wp3=self:Waypoint("holding",    c3, self.aircraft.Vmin, h_holding)
   local wp4=self:Waypoint("landing",    c4, self.aircraft.Vmin, 2, destination)
   
    -- set waypoints
   local waypoints = {wp0, wp1, wp2, wp3, wp4}
+  
+  self:_SetMarker("Takeoff and begin of climb.", c0)
+  self:_SetMarker("End of climb and begin of cruise",   c1)
+  self:_SetMarker("End of Cruise and begin of descent",  c2)
+  self:_SetMarker("Holding Point", c3)
+  self:_SetMarker("Final Destination", c4)
   
   -- some info on the route as message
   self:_Routeinfo(waypoints, "Waypoint info in set_route:")
@@ -1128,6 +1149,10 @@ function RAT:_ModifySpawnTemplate(waypoints)
 
   -- The 3D vector of the first waypoint, i.e. where we actually spawn the template group.
   local PointVec3 = {x=waypoints[1].x, y=waypoints[1].alt, z=waypoints[1].y}
+  
+  -- Heading from first to seconds waypoints
+  local heading = self:_Course(waypoints[1], waypoints[2])
+  env.info(myid.."Heading wp1->wp2: ", heading)
 
   if self:_GetSpawnIndex(self.SpawnIndex+1) then
   
@@ -1150,6 +1175,7 @@ function RAT:_ModifySpawnTemplate(waypoints)
         SpawnTemplate.units[UnitID].x   = TX
         SpawnTemplate.units[UnitID].y   = TY
         SpawnTemplate.units[UnitID].alt = PointVec3.y
+        SpawnTemplate.units[UnitID].heading = heading
         self:T('After Translation SpawnTemplate.units['..UnitID..'].x = '..SpawnTemplate.units[UnitID].x..', SpawnTemplate.units['..UnitID..'].y = '..SpawnTemplate.units[UnitID].y)
       end
       
@@ -1161,6 +1187,7 @@ function RAT:_ModifySpawnTemplate(waypoints)
       -- Also modify x,y of the template. Not sure why.
       SpawnTemplate.x = PointVec3.x
       SpawnTemplate.y = PointVec3.z
+      SpawnTemplate.heading = heading
       
       -- Update modified template for spawn group.
       self.SpawnGroups[self.SpawnIndex].SpawnTemplate=SpawnTemplate
@@ -1248,12 +1275,39 @@ end
 -- @usage _Randomize(100, 0.1) returns a value between 90 and 110, i.e. a plus/minus ten percent variation.
 -- @usage _Randomize(100, 0.5, nil, 120) returns a value between 50 and 120, i.e. a plus/minus fivty percent variation with upper bound 120.
 function RAT:_Randomize(value, fac, lower, upper)
-  local r=math.random(value-value*fac,value+value*fac)
-  if upper and r>upper then
-    r=upper
+  local min
+  if lower then
+    min=math.max(value-value*fac, lower)
+  else
+    min=value-value*fac
   end
-  if lower and r<lower then
-    r=lower
+  local max
+  if upper then
+    max=math.min(value+value*fac, upper)
+  else
+    max=value+value*fac
   end
+  
+  local r=math.random(min, max)
+  local text=string.format("Random: value = %6.2f, fac = %4.2f, min = %6.2f, max = %6.2f, r = %6.2f", value, fac, min, max, r)
+  env.info(myid..text)
+  --local r=math.random(value-value*fac,value+value*fac)
+--  if upper and r>upper then
+--    r=upper
+--  end
+--  if lower and r<lower then
+--    r=lower
+--  end
   return r
+end
+
+--- Set a marker for all on the F10 map.
+-- @param #RAT self
+-- @param #number id Index of marker.
+-- @param #string text Text of maker.
+-- @param #vec3 vec3 Position of marker.
+function RAT:_SetMarker(text, vec3)
+  self.markerid=self.markerid+1
+  env.info(myid.."Placing marker with ID "..self.markerid.." and text "..text)
+  trigger.action.markToAll(self.markerid, text, vec3)
 end
