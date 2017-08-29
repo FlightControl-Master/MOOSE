@@ -164,6 +164,12 @@ each detected set of potential targets can be lased or smoked...</p>
 			<h2><a id="#(DESIGNATE)">Type <code>DESIGNATE</code></a></h2>
 				<table class="function_list">
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DESIGNATE).AddMenuLaserCode">DESIGNATE:AddMenuLaserCode(LaserCode, MenuText)</a></td>
+		<td class="summary">
+<p>Add a specific lase code to the designate lase menu to lase targets with a specific laser code.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DESIGNATE).AttackSet">DESIGNATE.AttackSet</a></td>
 		<td class="summary">
 
@@ -185,6 +191,12 @@ each detected set of potential targets can be lased or smoked...</p>
 		<td class="name" nowrap="nowrap"><a href="##(DESIGNATE).CoordinateLase">DESIGNATE:CoordinateLase()</a></td>
 		<td class="summary">
 <p>Coordinates the Auto Lase.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DESIGNATE).DesignateName">DESIGNATE.DesignateName</a></td>
+		<td class="summary">
+
 </td>
 		</tr>
 		<tr>
@@ -260,7 +272,37 @@ each detected set of potential targets can be lased or smoked...</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DESIGNATE).MarkScheduler">DESIGNATE.MarkScheduler</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DESIGNATE).MaximumDesignations">DESIGNATE.MaximumDesignations</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DESIGNATE).MaximumDistanceAirDesignation">DESIGNATE.MaximumDistanceAirDesignation</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DESIGNATE).MaximumDistanceDesignations">DESIGNATE.MaximumDistanceDesignations</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DESIGNATE).MaximumDistanceGroundDesignation">DESIGNATE.MaximumDistanceGroundDesignation</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DESIGNATE).MaximumMarkings">DESIGNATE.MaximumMarkings</a></td>
 		<td class="summary">
 
 </td>
@@ -296,6 +338,12 @@ each detected set of potential targets can be lased or smoked...</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DESIGNATE).MenuLaseCode">DESIGNATE:MenuLaseCode(Index, Duration, LaserCode)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DESIGNATE).MenuLaseOff">DESIGNATE:MenuLaseOff(Index, Duration)</a></td>
 		<td class="summary">
 
@@ -303,6 +351,12 @@ each detected set of potential targets can be lased or smoked...</p>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DESIGNATE).MenuLaseOn">DESIGNATE:MenuLaseOn(Index, Duration)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DESIGNATE).MenuLaserCodes">DESIGNATE.MenuLaserCodes</a></td>
 		<td class="summary">
 
 </td>
@@ -416,13 +470,19 @@ each detected set of potential targets can be lased or smoked...</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DESIGNATE).RemoveMenuLaserCode">DESIGNATE:RemoveMenuLaserCode(LaserCode)</a></td>
+		<td class="summary">
+<p>Removes a specific lase code from the designate lase menu.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DESIGNATE).SendStatus">DESIGNATE:SendStatus(AttackGroup, Duration, MenuAttackGroup)</a></td>
 		<td class="summary">
 <p>Sends the status to the Attack Groups.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DESIGNATE).SetAutoLase">DESIGNATE:SetAutoLase(AutoLase)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DESIGNATE).SetAutoLase">DESIGNATE:SetAutoLase(AutoLase, Message)</a></td>
 		<td class="summary">
 <p>Set auto lase.</p>
 </td>
@@ -431,6 +491,12 @@ each detected set of potential targets can be lased or smoked...</p>
 		<td class="name" nowrap="nowrap"><a href="##(DESIGNATE).SetDesignateMenu">DESIGNATE:SetDesignateMenu()</a></td>
 		<td class="summary">
 <p>Sets the Designate Menu.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DESIGNATE).SetDesignateName">DESIGNATE:SetDesignateName(DesignateName)</a></td>
+		<td class="summary">
+<p>Set the name of the designation.</p>
 </td>
 		</tr>
 		<tr>
@@ -449,6 +515,30 @@ each detected set of potential targets can be lased or smoked...</p>
 		<td class="name" nowrap="nowrap"><a href="##(DESIGNATE).SetMaximumDesignations">DESIGNATE:SetMaximumDesignations(MaximumDesignations)</a></td>
 		<td class="summary">
 <p>Set the maximum amount of designations.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DESIGNATE).SetMaximumDistanceAirDesignation">DESIGNATE:SetMaximumDistanceAirDesignation(MaximumDistanceAirDesignation)</a></td>
+		<td class="summary">
+<p>Set the maximum air designation distance.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DESIGNATE).SetMaximumDistanceDesignations">DESIGNATE:SetMaximumDistanceDesignations(MaximumDistanceDesignations)</a></td>
+		<td class="summary">
+<p>Set the overall maximum distance when designations can be accepted.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DESIGNATE).SetMaximumDistanceGroundDesignation">DESIGNATE:SetMaximumDistanceGroundDesignation(MaximumDistanceGroundDesignation)</a></td>
+		<td class="summary">
+<p>Set the maximum ground designation distance.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DESIGNATE).SetMaximumMarkings">DESIGNATE:SetMaximumMarkings(MaximumMarkings)</a></td>
+		<td class="summary">
+<p>Set the maximum amount of markings FACs will do, per designated target group.</p>
 </td>
 		</tr>
 		<tr>
@@ -542,13 +632,13 @@ each detected set of potential targets can be lased or smoked...</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DESIGNATE).onafterLaseOn">DESIGNATE:onafterLaseOn(From, Event, To, Index, Duration)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DESIGNATE).onafterLaseOn">DESIGNATE:onafterLaseOn(From, Event, To, Index, Duration, LaserCode)</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DESIGNATE).onafterLasing">DESIGNATE:onafterLasing(From, Event, To, Index, Duration)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DESIGNATE).onafterLasing">DESIGNATE:onafterLasing(From, Event, To, Index, Duration, LaserCodeRequested)</a></td>
 		<td class="summary">
 
 </td>
@@ -685,7 +775,7 @@ Using the menu system, the player can "forget" a designation, so that gradually 
 
 <h2>4. Laser codes</h2>
 
-<h3>4.1 Set possible laser codes</h3>
+<h3>4.1. Set possible laser codes</h3>
 
 <p>An array of laser codes can be provided, that will be used by the DESIGNATE when lasing.
 The laser code is communicated by the Recce when it is lasing a larget.
@@ -705,9 +795,18 @@ One laser code can be given or an sequence of laser codes through an table...</p
 
 <p>The above sets a collection of possible laser codes that can be assigned. <strong>Note the { } notation!</strong></p>
 
-<h3>4.2 Auto generate laser codes</h3>
+<h3>4.2. Auto generate laser codes</h3>
 
 <p>Use the method <a href="##(DESIGNATE).GenerateLaserCodes">DESIGNATE.GenerateLaserCodes</a>() to generate all possible laser codes. Logic implemented and advised by Ciribob!</p>
+
+<h3>4.3. Add specific lase codes to the lase menu</h3>
+
+<p>Certain plane types can only drop laser guided ordonnance when targets are lased with specific laser codes.
+The SU-25T needs targets to be lased using laser code 1113.
+The A-10A needs targets to be lased using laser code 1680.</p>
+
+<p>The method <a href="##(DESIGNATE).AddMenuLaserCode">DESIGNATE.AddMenuLaserCode</a>() to allow a player to lase a target using a specific laser code.
+Remove such a lase menu option using <a href="##(DESIGNATE).RemoveMenuLaserCode">DESIGNATE.RemoveMenuLaserCode</a>().</p>
 
 <h2>5. Autolase to automatically lase detected targets.</h2>
 
@@ -766,6 +865,47 @@ Use the method <a href="##(DESIGNATE).SetMission">DESIGNATE.SetMission</a>() to 
 		<dl class="function">
 <dt>
 
+<a id="#(DESIGNATE).AddMenuLaserCode" >
+<strong>DESIGNATE:AddMenuLaserCode(LaserCode, MenuText)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Add a specific lase code to the designate lase menu to lase targets with a specific laser code.</p>
+
+	
+<p>The MenuText will appear in the lase menu.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number LaserCode </em></code>: 
+The specific laser code to be added to the lase menu.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string MenuText </em></code>: 
+The text to be shown to the player. If you specify a %d in the MenuText, the %d will be replaced with the LaserCode specified.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(DESIGNATE)">#DESIGNATE</a>:</em></p>
+
+
+			<h3>Usage:</h3>
+		<pre class="example"><code>  RecceDesignation:AddMenuLaserCode( 1113, "Lase with %d for Su-25T" )
+  RecceDesignation:AddMenuLaserCode( 1680, "Lase with %d for A-10A" )
+</code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 		<em></em>
 <a id="#(DESIGNATE).AttackSet" >
 <strong>DESIGNATE.AttackSet</strong>
@@ -780,7 +920,6 @@ Use the method <a href="##(DESIGNATE).SetMission">DESIGNATE.SetMission</a>() to 
 		<dl class="function">
 <dt>
 
-		<em></em>
 <a id="#(DESIGNATE).AutoLase" >
 <strong>DESIGNATE.AutoLase</strong>
 </a>
@@ -819,6 +958,19 @@ Use the method <a href="##(DESIGNATE).SetMission">DESIGNATE.SetMission</a>() to 
 		<h3>Return value</h3>
 				
 <p><em><a href="##(DESIGNATE)">#DESIGNATE</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DESIGNATE).DesignateName" >
+<strong>DESIGNATE.DesignateName</strong>
+</a>
+</dt>
+<dd>
+	
 
 
 </dd>
@@ -1006,8 +1158,78 @@ function below will use the range 1-7 just in case</p>
 <dt>
 
 		<em></em>
+<a id="#(DESIGNATE).MarkScheduler" >
+<strong>DESIGNATE.MarkScheduler</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
 <a id="#(DESIGNATE).MaximumDesignations" >
 <strong>DESIGNATE.MaximumDesignations</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(DESIGNATE).MaximumDistanceAirDesignation" >
+<strong>DESIGNATE.MaximumDistanceAirDesignation</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(DESIGNATE).MaximumDistanceDesignations" >
+<strong>DESIGNATE.MaximumDistanceDesignations</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(DESIGNATE).MaximumDistanceGroundDesignation" >
+<strong>DESIGNATE.MaximumDistanceGroundDesignation</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(DESIGNATE).MaximumMarkings" >
+<strong>DESIGNATE.MaximumMarkings</strong>
 </a>
 </dt>
 <dd>
@@ -1121,6 +1343,37 @@ function below will use the range 1-7 just in case</p>
 		<dl class="function">
 <dt>
 
+<a id="#(DESIGNATE).MenuLaseCode" >
+<strong>DESIGNATE:MenuLaseCode(Index, Duration, LaserCode)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> Index </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> Duration </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> LaserCode </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(DESIGNATE).MenuLaseOff" >
 <strong>DESIGNATE:MenuLaseOff(Index, Duration)</strong>
 </a>
@@ -1168,6 +1421,23 @@ function below will use the range 1-7 just in case</p>
 
 				</li>
 		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(DESIGNATE).MenuLaserCodes" >
+<strong>DESIGNATE.MenuLaserCodes</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+	
+<p> This map contains the laser codes that will be shown in the designate menu to lase with specific laser codes.</p>
+
 </dd>
 </dl>
 		<dl class="function">
@@ -1715,6 +1985,37 @@ The Attack collection of GROUP objects to designate and report for.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(DESIGNATE).RemoveMenuLaserCode" >
+<strong>DESIGNATE:RemoveMenuLaserCode(LaserCode)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Removes a specific lase code from the designate lase menu.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number LaserCode </em></code>: 
+The specific laser code that was set to be added to the lase menu.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(DESIGNATE)">#DESIGNATE</a>:</em></p>
+
+
+			<h3>Usage:</h3>
+		<pre class="example"><code>  RecceDesignation:RemoveMenuLaserCode( 1113 )
+  </code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(DESIGNATE).SendStatus" >
 <strong>DESIGNATE:SendStatus(AttackGroup, Duration, MenuAttackGroup)</strong>
 </a>
@@ -1753,7 +2054,7 @@ The time in seconds the report should be visible.</p>
 <dt>
 
 <a id="#(DESIGNATE).SetAutoLase" >
-<strong>DESIGNATE:SetAutoLase(AutoLase)</strong>
+<strong>DESIGNATE:SetAutoLase(AutoLase, Message)</strong>
 </a>
 </dt>
 <dd>
@@ -1763,11 +2064,18 @@ The time in seconds the report should be visible.</p>
 	
 <p>Auto lase will start lasing targets immediately when these are in range.</p>
 
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
-<p><code><em>#boolean AutoLase </em></code>: </p>
+<p><code><em>#boolean AutoLase </em></code>: 
+(optional) true sets autolase on, false off. Default is off.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#boolean Message </em></code>: 
+(optional) true is send message, false or nil won't send a message. Default is no message sent.</p>
 
 				</li>
 		</ul>
@@ -1789,6 +2097,36 @@ The time in seconds the report should be visible.</p>
 	
 <p>Sets the Designate Menu.</p>
 
+		<h3>Return value</h3>
+				
+<p><em><a href="##(DESIGNATE)">#DESIGNATE</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DESIGNATE).SetDesignateName" >
+<strong>DESIGNATE:SetDesignateName(DesignateName)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set the name of the designation.</p>
+
+	
+<p>The name will appear in the menu.
+This method can be used to control different designations for different plane types.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string DesignateName </em></code>: </p>
+
+				</li>
+		</ul>
 		<h3>Return value</h3>
 				
 <p><em><a href="##(DESIGNATE)">#DESIGNATE</a>:</em></p>
@@ -1874,6 +2212,114 @@ number> LaserCodes</p>
 				<li>
 				
 <p><code><em>#number MaximumDesignations </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(DESIGNATE)">#DESIGNATE</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DESIGNATE).SetMaximumDistanceAirDesignation" >
+<strong>DESIGNATE:SetMaximumDistanceAirDesignation(MaximumDistanceAirDesignation)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set the maximum air designation distance.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number MaximumDistanceAirDesignation </em></code>: 
+Maximum air designation distance in meters.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(DESIGNATE)">#DESIGNATE</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DESIGNATE).SetMaximumDistanceDesignations" >
+<strong>DESIGNATE:SetMaximumDistanceDesignations(MaximumDistanceDesignations)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set the overall maximum distance when designations can be accepted.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number MaximumDistanceDesignations </em></code>: 
+Maximum distance in meters to accept designations.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(DESIGNATE)">#DESIGNATE</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DESIGNATE).SetMaximumDistanceGroundDesignation" >
+<strong>DESIGNATE:SetMaximumDistanceGroundDesignation(MaximumDistanceGroundDesignation)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set the maximum ground designation distance.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number MaximumDistanceGroundDesignation </em></code>: 
+Maximum ground designation distance in meters.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(DESIGNATE)">#DESIGNATE</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DESIGNATE).SetMaximumMarkings" >
+<strong>DESIGNATE:SetMaximumMarkings(MaximumMarkings)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set the maximum amount of markings FACs will do, per designated target group.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number MaximumMarkings </em></code>: 
+Maximum markings FACs will do, per designated target group.</p>
 
 				</li>
 		</ul>
@@ -2251,7 +2697,7 @@ The MISSION object.</p>
 <dt>
 
 <a id="#(DESIGNATE).onafterLaseOn" >
-<strong>DESIGNATE:onafterLaseOn(From, Event, To, Index, Duration)</strong>
+<strong>DESIGNATE:onafterLaseOn(From, Event, To, Index, Duration, LaserCode)</strong>
 </a>
 </dt>
 <dd>
@@ -2283,6 +2729,11 @@ The MISSION object.</p>
 				<li>
 				
 <p><code><em> Duration </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> LaserCode </em></code>: </p>
 
 				</li>
 		</ul>
@@ -2292,7 +2743,7 @@ The MISSION object.</p>
 <dt>
 
 <a id="#(DESIGNATE).onafterLasing" >
-<strong>DESIGNATE:onafterLasing(From, Event, To, Index, Duration)</strong>
+<strong>DESIGNATE:onafterLasing(From, Event, To, Index, Duration, LaserCodeRequested)</strong>
 </a>
 </dt>
 <dd>
@@ -2324,6 +2775,11 @@ The MISSION object.</p>
 				<li>
 				
 <p><code><em> Duration </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> LaserCodeRequested </em></code>: </p>
 
 				</li>
 		</ul>

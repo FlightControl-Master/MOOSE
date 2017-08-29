@@ -416,9 +416,15 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).ToStringLL">COORDINATE:ToStringLL(Settings)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).ToStringLLDDM">COORDINATE:ToStringLLDDM(Settings)</a></td>
 		<td class="summary">
-<p>Provides a Lat Lon string</p>
+<p>Provides a Lat Lon string in Degree Decimal Minute format.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).ToStringLLDMS">COORDINATE:ToStringLLDMS(Settings)</a></td>
+		<td class="summary">
+<p>Provides a Lat Lon string in Degree Minute Second format.</p>
 </td>
 		</tr>
 		<tr>
@@ -2111,13 +2117,13 @@ The coordinate Text in the configured coordinate system.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(COORDINATE).ToStringLL" >
-<strong>COORDINATE:ToStringLL(Settings)</strong>
+<a id="#(COORDINATE).ToStringLLDDM" >
+<strong>COORDINATE:ToStringLLDDM(Settings)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Provides a Lat Lon string</p>
+<p>Provides a Lat Lon string in Degree Decimal Minute format.</p>
 
 		<h3>Parameter</h3>
 		<ul>
@@ -2131,7 +2137,34 @@ The coordinate Text in the configured coordinate system.</p>
 		<h3>Return value</h3>
 				
 <p><em>#string:</em>
-The LL Text</p>
+The LL DDM Text</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(COORDINATE).ToStringLLDMS" >
+<strong>COORDINATE:ToStringLLDMS(Settings)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Provides a Lat Lon string in Degree Minute Second format.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Settings.html##(SETTINGS)">Core.Settings#SETTINGS</a> Settings </em></code>: 
+(optional) Settings</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#string:</em>
+The LL DMS Text</p>
 
 </dd>
 </dl>
@@ -2829,7 +2862,6 @@ The y coordinate.</p>
 		<dl class="function">
 <dt>
 
-		<em></em>
 <a id="#(POINT_VEC2).z" >
 <strong>POINT_VEC2.z</strong>
 </a>
