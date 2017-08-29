@@ -386,6 +386,12 @@
 			<h2><a id="#(ZONE_GROUP)">Type <code>ZONE_GROUP</code></a></h2>
 				<table class="function_list">
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_GROUP).GetRandomPointVec2">ZONE_GROUP:GetRandomPointVec2(inner, outer)</a></td>
+		<td class="summary">
+<p>Returns a <a href="Point.html##(POINT_VEC2)">Point#POINT_VEC2</a> object reflecting a random 2D location within the zone.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(ZONE_GROUP).GetRandomVec2">ZONE_GROUP:GetRandomVec2()</a></td>
 		<td class="summary">
 <p>Returns a random location within the zone of the <a href="Group.html">Group</a>.</p>
@@ -1422,6 +1428,39 @@ The smoke color.</p>
 
 			<h2><a id="#(ZONE_GROUP)" >Type <code>ZONE_GROUP</code></a></h2>
 				<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_GROUP).GetRandomPointVec2" >
+<strong>ZONE_GROUP:GetRandomPointVec2(inner, outer)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns a <a href="Point.html##(POINT_VEC2)">Point#POINT_VEC2</a> object reflecting a random 2D location within the zone.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number inner </em></code>: 
+(optional) Minimal distance from the center of the zone. Default is 0.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number outer </em></code>: 
+(optional) Maximal distance from the outer edge of the zone. Default is the radius of the zone.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="Core.Point.html##(POINT_VEC2)">Core.Point#POINT_VEC2</a>:</em>
+The <a href="Point.html##(POINT_VEC2)">Point#POINT_VEC2</a> object reflecting the random 3D location within the zone.</p>
+
+</dd>
+</dl>
 		<dl class="function">
 <dt>
 

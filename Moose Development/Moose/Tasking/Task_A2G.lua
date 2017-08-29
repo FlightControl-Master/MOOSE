@@ -317,7 +317,7 @@ do -- TASK_A2G_SEAD
   -- @param Core.Set#SET_UNIT TargetSetUnit 
   -- @param #string TaskBriefing The briefing of the task.
   -- @return #TASK_A2G_SEAD self
-  function TASK_A2G_SEAD:New( Mission, SetGroup, TaskName, TargetSetUnit, TaskBriefing )
+  function TASK_A2G_SEAD:New( Mission, SetGroup, TaskName, TargetSetUnit, TaskBriefing)
     local self = BASE:Inherit( self, TASK_A2G:New( Mission, SetGroup, TaskName, TargetSetUnit, "SEAD", TaskBriefing ) ) -- #TASK_A2G_SEAD
     self:F()
     
@@ -335,13 +335,29 @@ do -- TASK_A2G_SEAD
 
   function TASK_A2G_SEAD:UpdateTaskInfo() 
 
-    local TargetCoordinate = self.TargetSetUnit:GetFirst():GetCoordinate()
+
+    local TargetCoordinate = self.Detection and self.Detection:GetDetectedItemCoordinate( self.DetectedItemIndex ) or self.TargetSetUnit:GetFirst():GetCoordinate() 
     self:SetInfo( "Coordinates", TargetCoordinate, 0 )
 
-    self:SetInfo( "Threat", "[" .. string.rep(  "■", self.TargetSetUnit:CalculateThreatLevelA2G() ) .. "]", 11 )
-    local DetectedItemsCount = self.TargetSetUnit:Count()
-    local DetectedItemsTypes = self.TargetSetUnit:GetTypeNames()
-    self:SetInfo( "Targets", string.format( "%d of %s", DetectedItemsCount, DetectedItemsTypes ), 10 ) 
+    self:SetInfo( "Threat", "[" .. string.rep(  "■", self.Detection and self.Detection:GetDetectedItemThreatLevel( self.DetectedItemIndex ) or self.TargetSetUnit:CalculateThreatLevelA2G() ) .. "]", 11 )
+
+    if self.Detection then
+      local DetectedItemsCount = self.TargetSetUnit:Count()
+      local ReportTypes = REPORT:New()
+      local TargetTypes = {}
+      for TargetUnitName, TargetUnit in pairs( self.TargetSetUnit:GetSet() ) do
+        local TargetType = self.Detection:GetDetectedUnitTypeName( TargetUnit )
+        if not TargetTypes[TargetType] then
+          TargetTypes[TargetType] = TargetType
+          ReportTypes:Add( TargetType )
+        end
+      end
+      self:SetInfo( "Targets", string.format( "%d of %s", DetectedItemsCount, ReportTypes:Text( ", " ) ), 10 ) 
+    else
+      local DetectedItemsCount = self.TargetSetUnit:Count()
+      local DetectedItemsTypes = self.TargetSetUnit:GetTypeNames()
+      self:SetInfo( "Targets", string.format( "%d of %s", DetectedItemsCount, DetectedItemsTypes ), 10 ) 
+    end
 
   end
     
@@ -462,13 +478,30 @@ do -- TASK_A2G_BAI
   
   function TASK_A2G_BAI:UpdateTaskInfo() 
 
-    local TargetCoordinate = self.TargetSetUnit:GetFirst():GetCoordinate()
+    self:E({self.Detection, self.DetectedItemIndex})
+
+    local TargetCoordinate = self.Detection and self.Detection:GetDetectedItemCoordinate( self.DetectedItemIndex ) or self.TargetSetUnit:GetFirst():GetCoordinate() 
     self:SetInfo( "Coordinates", TargetCoordinate, 0 )
 
-    self:SetInfo( "Threat", "[" .. string.rep(  "■", self.TargetSetUnit:CalculateThreatLevelA2G() ) .. "]", 11 )
-    local DetectedItemsCount = self.TargetSetUnit:Count()
-    local DetectedItemsTypes = self.TargetSetUnit:GetTypeNames()
-    self:SetInfo( "Targets", string.format( "%d of %s", DetectedItemsCount, DetectedItemsTypes ), 10 ) 
+    self:SetInfo( "Threat", "[" .. string.rep(  "■", self.Detection and self.Detection:GetDetectedItemThreatLevel( self.DetectedItemIndex ) or self.TargetSetUnit:CalculateThreatLevelA2G() ) .. "]", 11 )
+
+    if self.Detection then
+      local DetectedItemsCount = self.TargetSetUnit:Count()
+      local ReportTypes = REPORT:New()
+      local TargetTypes = {}
+      for TargetUnitName, TargetUnit in pairs( self.TargetSetUnit:GetSet() ) do
+        local TargetType = self.Detection:GetDetectedUnitTypeName( TargetUnit )
+        if not TargetTypes[TargetType] then
+          TargetTypes[TargetType] = TargetType
+          ReportTypes:Add( TargetType )
+        end
+      end
+      self:SetInfo( "Targets", string.format( "%d of %s", DetectedItemsCount, ReportTypes:Text( ", " ) ), 10 ) 
+    else
+      local DetectedItemsCount = self.TargetSetUnit:Count()
+      local DetectedItemsTypes = self.TargetSetUnit:GetTypeNames()
+      self:SetInfo( "Targets", string.format( "%d of %s", DetectedItemsCount, DetectedItemsTypes ), 10 ) 
+    end
 
   end
 
@@ -590,13 +623,28 @@ do -- TASK_A2G_CAS
   
   function TASK_A2G_CAS:UpdateTaskInfo()
   
-    local TargetCoordinate = self.TargetSetUnit:GetFirst():GetCoordinate()
+    local TargetCoordinate = self.Detection and self.Detection:GetDetectedItemCoordinate( self.DetectedItemIndex ) or self.TargetSetUnit:GetFirst():GetCoordinate() 
     self:SetInfo( "Coordinates", TargetCoordinate, 0 )
 
-    self:SetInfo( "Threat", "[" .. string.rep(  "■", self.TargetSetUnit:CalculateThreatLevelA2G() ) .. "]", 11 )
-    local DetectedItemsCount = self.TargetSetUnit:Count()
-    local DetectedItemsTypes = self.TargetSetUnit:GetTypeNames()
-    self:SetInfo( "Targets", string.format( "%d of %s", DetectedItemsCount, DetectedItemsTypes ), 10 ) 
+    self:SetInfo( "Threat", "[" .. string.rep(  "■", self.Detection and self.Detection:GetDetectedItemThreatLevel( self.DetectedItemIndex ) or self.TargetSetUnit:CalculateThreatLevelA2G() ) .. "]", 11 )
+
+    if self.Detection then
+      local DetectedItemsCount = self.TargetSetUnit:Count()
+      local ReportTypes = REPORT:New()
+      local TargetTypes = {}
+      for TargetUnitName, TargetUnit in pairs( self.TargetSetUnit:GetSet() ) do
+        local TargetType = self.Detection:GetDetectedUnitTypeName( TargetUnit )
+        if not TargetTypes[TargetType] then
+          TargetTypes[TargetType] = TargetType
+          ReportTypes:Add( TargetType )
+        end
+      end
+      self:SetInfo( "Targets", string.format( "%d of %s", DetectedItemsCount, ReportTypes:Text( ", " ) ), 10 ) 
+    else
+      local DetectedItemsCount = self.TargetSetUnit:Count()
+      local DetectedItemsTypes = self.TargetSetUnit:GetTypeNames()
+      self:SetInfo( "Targets", string.format( "%d of %s", DetectedItemsCount, DetectedItemsTypes ), 10 ) 
+    end
 
   end
 

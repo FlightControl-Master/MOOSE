@@ -1163,7 +1163,7 @@ function ESCORT:_ReportTargetsScheduler()
         local ClientEscortTargets = EscortGroupData.Detection
         --local EscortUnit = EscortGroupData:GetUnit( 1 )
 
-        for DetectedItemID, DetectedItem in ipairs( DetectedItems ) do
+        for DetectedItemID, DetectedItem in pairs( DetectedItems ) do
           self:E( { DetectedItemID, DetectedItem } )
           -- Remove the sub menus of the Attack menu of the Escort for the EscortGroup.
   
@@ -1171,10 +1171,13 @@ function ESCORT:_ReportTargetsScheduler()
 
           if ClientEscortGroupName == EscortGroupName then
           
-            DetectedMsgs[#DetectedMsgs+1] = DetectedItemReportSummary:Text("\n")
+            local DetectedMsg = DetectedItemReportSummary:Text("\n")
+            DetectedMsgs[#DetectedMsgs+1] = DetectedMsg
+
+            self:T( DetectedMsg )
   
             MENU_CLIENT_COMMAND:New( self.EscortClient,
-              DetectedItemReportSummary,
+              DetectedMsg,
               self.EscortMenuAttackNearbyTargets,
               ESCORT._AttackTarget,
               self,
@@ -1183,10 +1186,12 @@ function ESCORT:_ReportTargetsScheduler()
           else
             if self.EscortMenuTargetAssistance then
             
-              self:T( DetectedItemReportSummary )
+              local DetectedMsg = DetectedItemReportSummary:Text("\n")
+              self:T( DetectedMsg )
+
               local MenuTargetAssistance = MENU_CLIENT:New( self.EscortClient, EscortGroupData.EscortName, self.EscortMenuTargetAssistance )
               MENU_CLIENT_COMMAND:New( self.EscortClient,
-                DetectedItemReportSummary,
+                DetectedMsg,
                 MenuTargetAssistance,
                 ESCORT._AssistTarget,
                 self,

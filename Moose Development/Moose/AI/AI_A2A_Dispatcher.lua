@@ -1348,11 +1348,12 @@ do -- AI_A2A_DISPATCHER
   
   ---
   -- @param #AI_A2A_DISPATCHER self
-  function AI_A2A_DISPATCHER:SetDefenderTask( Defender, Type, Fsm, Target )
+  function AI_A2A_DISPATCHER:SetDefenderTask( SquadronName, Defender, Type, Fsm, Target )
   
     self.DefenderTasks[Defender] = self.DefenderTasks[Defender] or {}
     self.DefenderTasks[Defender].Type = Type
     self.DefenderTasks[Defender].Fsm = Fsm
+    self.DefenderTasks[Defender].SquadronName = SquadronName
 
     if Target then
       self:SetDefenderTaskTarget( Defender, Target )
@@ -1449,7 +1450,6 @@ do -- AI_A2A_DISPATCHER
   -- @return #AI_A2A_DISPATCHER
   function AI_A2A_DISPATCHER:SetSquadron( SquadronName, AirbaseName, SpawnTemplates, Resources )
   
-    self:E( { SquadronName = SquadronName, AirbaseName = AirbaseName, SpawnTemplates = SpawnTemplates, Resources = Resources } )
   
     self.DefenderSquadrons[SquadronName] = self.DefenderSquadrons[SquadronName] or {} 
 
@@ -1473,6 +1473,8 @@ do -- AI_A2A_DISPATCHER
       end
     end
     DefenderSquadron.Resources = Resources
+
+    self:E( { Squadron = {SquadronName, AirbaseName, SpawnTemplates, Resources } } )
     
     return self
   end
@@ -1537,6 +1539,8 @@ do -- AI_A2A_DISPATCHER
     Cap.AltType = AltType
 
     self:SetSquadronCapInterval( SquadronName, self.DefenderDefault.CapLimit, self.DefenderDefault.CapMinSeconds, self.DefenderDefault.CapMaxSeconds, 1 )
+
+    self:E( { CAP = { SquadronName, Zone, FloorAltitude, CeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, EngageMinSpeed, EngageMaxSpeed, AltType } } )
     
     return self
   end
@@ -1577,14 +1581,15 @@ do -- AI_A2A_DISPATCHER
       local Scheduler = Cap.Scheduler -- Core.Scheduler#SCHEDULER
       local ScheduleID = Cap.ScheduleID
       local Variance = ( Cap.HighInterval - Cap.LowInterval ) / 2
-      local Median = Cap.LowInterval + Variance
-      local Randomization = Variance / Median
+      local Repeat = Cap.LowInterval + Variance
+      local Randomization = Variance / Repeat
+      local Start = math.random( 1, Cap.HighInterval )
       
       if ScheduleID then
         Scheduler:Stop( ScheduleID )
       end
       
-      Cap.ScheduleID = Scheduler:Schedule( self, self.SchedulerCAP, { SquadronName }, Median, Median, Randomization )
+      Cap.ScheduleID = Scheduler:Schedule( self, self.SchedulerCAP, { SquadronName }, Start, Repeat, Randomization )
     else
       error( "This squadron does not exist:" .. SquadronName )
     end
@@ -1627,6 +1632,7 @@ do -- AI_A2A_DISPATCHER
       local Cap = DefenderSquadron.Cap
       if Cap then
         local CapCount = self:CountCapAirborne( SquadronName )
+        self:E( { CapCount = CapCount } )
         if CapCount < Cap.CapLimit then
           local Probability = math.random()
           if Probability <= Cap.Probability then
@@ -1683,6 +1689,8 @@ do -- AI_A2A_DISPATCHER
     Intercept.Name = SquadronName
     Intercept.EngageMinSpeed = EngageMinSpeed
     Intercept.EngageMaxSpeed = EngageMaxSpeed
+    
+    self:E( { GCI = { SquadronName, EngageMinSpeed, EngageMaxSpeed } } )
   end
   
   --- Defines the default amount of extra planes that will take-off as part of the defense system.
@@ -2465,12 +2473,14 @@ do -- AI_A2A_DISPATCHER
     local DefenderSquadron = self.DefenderSquadrons[SquadronName]
     if DefenderSquadron then
       for AIGroup, DefenderTask in pairs( self:GetDefenderTasks() ) do
-        if DefenderTask.Type == "CAP" then
-          if AIGroup:IsAlive() then
-            -- Check if the CAP is patrolling or engaging. If not, this is not a valid CAP, even if it is alive!
-            -- The CAP could be damaged, lost control, or out of fuel!
-            if DefenderTask.Fsm:Is( "Patrolling" ) or DefenderTask.Fsm:Is( "Engaging" ) or DefenderTask.Fsm:Is( "Refuelling" )then
-              CapCount = CapCount + 1
+        if DefenderTask.SquadronName == SquadronName then
+          if DefenderTask.Type == "CAP" then
+            if AIGroup:IsAlive() then
+              -- Check if the CAP is patrolling or engaging. If not, this is not a valid CAP, even if it is alive!
+              -- The CAP could be damaged, lost control, or out of fuel!
+              if DefenderTask.Fsm:Is( "Patrolling" ) or DefenderTask.Fsm:Is( "Engaging" ) or DefenderTask.Fsm:Is( "Refuelling" )then
+                CapCount = CapCount + 1
+              end
             end
           end
         end
@@ -2488,12 +2498,17 @@ do -- AI_A2A_DISPATCHER
     -- First, count the active AIGroups Units, targetting the DetectedSet
     local AIUnitCount = 0
     
+    self:E( "Counting Defenders Engaged for Attacker:" )
+    local DetectedSet = Target.Set
+    DetectedSet:Flush()
+    
     local DefenderTasks = self:GetDefenderTasks()
     for AIGroup, DefenderTask in pairs( DefenderTasks ) do
       local AIGroup = AIGroup -- Wrapper.Group#GROUP
       local DefenderTask = self:GetDefenderTaskTarget( AIGroup )
       if DefenderTask and DefenderTask.Index == Target.Index then
         AIUnitCount = AIUnitCount + AIGroup:GetSize()
+        self:E( "Defender Group Name: " .. AIGroup:GetName() .. ", Size: " .. AIGroup:GetSize() )
       end
     end
 
@@ -2581,7 +2596,7 @@ do -- AI_A2A_DISPATCHER
           Fsm:Start()
           Fsm:__Patrol( 2 )
   
-          self:SetDefenderTask( DefenderCAP, "CAP", Fsm )
+          self:SetDefenderTask( SquadronName, DefenderCAP, "CAP", Fsm )
         end
       end
     end
@@ -2636,6 +2651,8 @@ do -- AI_A2A_DISPATCHER
   -- @param #AI_A2A_DISPATCHER self
   function AI_A2A_DISPATCHER:onafterGCI( From, Event, To, DetectedItem, DefendersMissing, Friendlies )
 
+    self:F( { From, Event, To, DetectedItem.Index, DefendersMissing, Friendlies } )
+
     local AttackerSet = DetectedItem.Set
     local AttackerCount = AttackerSet:Count()
     local DefendersCount = 0
@@ -2658,17 +2675,19 @@ do -- AI_A2A_DISPATCHER
     local BreakLoop = false
     
     while( DefendersCount > 0 and not BreakLoop ) do
-    
+      self:F( { DefenderSquadrons = self.DefenderSquadrons } )
       for SquadronName, DefenderSquadron in pairs( self.DefenderSquadrons or {} ) do
+        self:F( { GCI = DefenderSquadron.Gci } )
         for InterceptID, Intercept in pairs( DefenderSquadron.Gci or {} ) do
     
-          --self:E( { DefenderSquadron } )
+          self:F( { DefenderSquadron } )
           local SpawnCoord = DefenderSquadron.Airbase:GetCoordinate() -- Core.Point#COORDINATE
           --local TargetCoord = AttackerSet:GetFirst():GetCoordinate()
-          local TargetCoord = DetectedItem.InterceptCoord
-          if TargetCoord then
-            local Distance = SpawnCoord:Get2DDistance( TargetCoord )
-              self:F( { Distance = Distance, TargetCoord = TargetCoord } )
+          local InterceptCoord = DetectedItem.InterceptCoord
+          self:F({InterceptCoord = InterceptCoord})
+          if InterceptCoord then
+            local Distance = SpawnCoord:Get2DDistance( InterceptCoord )
+              self:F( { Distance = Distance, InterceptCoord = InterceptCoord } )
             
             if ClosestDistance == 0 or Distance < ClosestDistance then
               
@@ -2732,7 +2751,7 @@ do -- AI_A2A_DISPATCHER
                 Fsm:__Engage( 2, DetectedItem.Set ) -- Engage on the TargetSetUnit
       
         
-                self:SetDefenderTask( DefenderGCI, "GCI", Fsm, DetectedItem )
+                self:SetDefenderTask( ClosestDefenderSquadronName, DefenderGCI, "GCI", Fsm, DetectedItem )
                 
                 
                 function Fsm:onafterRTB( Defender, From, Event, To )
@@ -2865,14 +2884,14 @@ do -- AI_A2A_DISPATCHER
         self:ClearDefenderTask( AIGroup )
       else
         if DefenderTask.Target then
-          local Target = Detection:GetDetectedItem( DefenderTask.Target.Index )
-          if not Target then
+          local AttackerItem = Detection:GetDetectedItem( DefenderTask.Target.Index )
+          if not AttackerItem then
             self:F( { "Removing obsolete Target:", DefenderTask.Target.Index } )
             self:ClearDefenderTaskTarget( AIGroup )
-            
           else
             if DefenderTask.Target.Set then
-              if DefenderTask.Target.Set:Count() == 0 then
+              local AttackerCount = DefenderTask.Target.Set:Count()
+              if AttackerCount == 0 then
                 self:F( { "All Targets destroyed in Target, removing:", DefenderTask.Target.Index } )
                 self:ClearDefenderTaskTarget( AIGroup )
               end
@@ -2958,7 +2977,7 @@ do -- AI_A2A_DISPATCHER
       end
       Report:Add( string.format( "\n - %d Tasks", TaskCount ) )
   
-      self:T( Report:Text( "\n" ) )
+      self:E( Report:Text( "\n" ) )
       trigger.action.outText( Report:Text( "\n" ), 25 )
     end
     
@@ -3454,6 +3473,7 @@ do
     -- Setup squadrons
     
     self:F( { Airbases = AirbaseNames  } )
+    self.Templates:Flush()
     
     for AirbaseID, AirbaseName in pairs( AirbaseNames ) do
       local Airbase = _DATABASE:FindAirbase( AirbaseName ) -- Wrapper.Airbase#AIRBASE
