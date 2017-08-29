@@ -1940,14 +1940,14 @@ do -- DETECTION_UNITS
         end
       end
         
-        --TODO: solve Index reference
-        local DetectedItemCoordinate = self:GetDetectedItemCoordinate( Index )
-        local DetectedItemCoordText = DetectedItemCoordinate:ToString( AttackGroup, Settings )
+      --TODO: solve Index reference
+      local DetectedItemCoordinate = self:GetDetectedItemCoordinate( Index )
+      local DetectedItemCoordText = DetectedItemCoordinate:ToString( AttackGroup, Settings )
  
-        local ThreatLevelA2G = self:GetDetectedItemThreatLevel( DetectedItem )
+      local ThreatLevelA2G = self:GetDetectedItemThreatLevel( Index )
         
-        local Report = REPORT:New()
-        Report:Add(DetectedItemID .. ", " .. DetectedItemCoordText)
+      local Report = REPORT:New()
+      Report:Add(DetectedItemID .. ", " .. DetectedItemCoordText)
       Report:Add( string.format( "Threat: [%s]", string.rep(  "■", ThreatLevelA2G ) ) )
       Report:Add( string.format("Type: %s%s", UnitCategoryText, UnitDistanceText ) )
       return Report
@@ -1968,7 +1968,7 @@ do -- DETECTION_UNITS
       local DetectedItem = DetectedItem -- #DETECTION_BASE.DetectedItem
       local ReportSummary = self:DetectedItemReportSummary( DetectedItemID, AttackGroup )
       Report:SetTitle( "Detected units:" )
-      Report:Add( ReportSummary )
+      Report:Add( ReportSummary:Text() )
     end
     
     local ReportText = Report:Text()
@@ -2198,7 +2198,7 @@ do -- DETECTION_TYPES
       local DetectedItem = DetectedItem -- #DETECTION_BASE.DetectedItem
       local ReportSummary = self:DetectedItemReportSummary( DetectedItemTypeName, AttackGroup )
       Report:SetTitle( "Detected types:" )
-      Report:Add( ReportSummary )
+      Report:Add( ReportSummary:Text() )
     end
     
     local ReportText = Report:Text()
@@ -2352,7 +2352,7 @@ do -- DETECTION_AREAS
       local DetectedItem = DetectedItem -- #DETECTION_BASE.DetectedItem
       local ReportSummary = self:DetectedItemReportSummary( DetectedItemIndex, AttackGroup )
       Report:SetTitle( "Detected areas:" )
-      Report:Add( ReportSummary )
+      Report:Add( ReportSummary:Text() )
     end
     
     local ReportText = Report:Text()
