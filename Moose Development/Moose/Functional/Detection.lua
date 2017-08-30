@@ -1281,9 +1281,10 @@ do -- DETECTION_BASE
           --- @param Wrapper.Unit#UNIT PlayerUnit
           function( PlayerUnitName )
             local PlayerUnit = UNIT:FindByName( PlayerUnitName )
-            local PlayerUnitCategory = PlayerUnit:GetDesc().category
 
             if PlayerUnit and PlayerUnit:IsInZone(DetectionZone) then
+
+              local PlayerUnitCategory = PlayerUnit:GetDesc().category
     
               if ( not self.FriendliesCategory ) or ( self.FriendliesCategory and ( self.FriendliesCategory == PlayerUnitCategory ) ) then
 
