@@ -1140,7 +1140,7 @@ do -- DETECTION_BASE
   
   end
   
-  do -- Threat
+  do -- NearBy calculations
   
     --- Returns if there are friendlies nearby the FAC units ...
     -- @param #DETECTION_BASE self
@@ -1156,6 +1156,15 @@ do -- DETECTION_BASE
     function DETECTION_BASE:GetFriendliesNearBy( DetectedItem )
       
       return DetectedItem.FriendliesNearBy
+    end
+    
+    --- Filters friendly units by unit category.
+    -- @param #DETECTION_BASE self
+    -- @param FriendliesCategory
+    -- @return #DETECTION_BASE
+    function DETECTION_BASE:FilterFriendliesCategory( FriendliesCategory )
+      self.FriendliesCategory = FriendliesCategory
+      return self
     end
   
     --- Returns if there are friendlies nearby the intercept ...
@@ -1245,15 +1254,18 @@ do -- DETECTION_BASE
           --self:F( { "Friendlies search:", FoundUnitName, FoundUnitCoalition, EnemyUnitName, EnemyCoalition, FoundUnitInReportSetGroup } )
           
           if FoundUnitCoalition ~= EnemyCoalition and FoundUnitInReportSetGroup == false then
-            DetectedItem.FriendliesNearBy = DetectedItem.FriendliesNearBy or {}
             local FriendlyUnit = UNIT:Find( FoundDCSUnit )
             local FriendlyUnitName = FriendlyUnit:GetName()
-
-            DetectedItem.FriendliesNearBy[FriendlyUnitName] = FriendlyUnit
+            local FriendlyUnitCategory = FriendlyUnit:GetDesc().category
+            self:T( { FriendlyUnitCategory = FriendlyUnitCategory, FriendliesCategory = self.FriendliesCategory } )
             
-            local Distance = DetectedUnitCoord:Get2DDistance( FriendlyUnit:GetCoordinate() )
-            DetectedItem.FriendliesDistance = DetectedItem.FriendliesDistance or {}
-            DetectedItem.FriendliesDistance[Distance] = FriendlyUnit
+            if ( not self.FriendliesCategory ) or ( self.FriendliesCategory and ( self.FriendliesCategory == FriendlyUnitCategory ) ) then
+              DetectedItem.FriendliesNearBy = DetectedItem.FriendliesNearBy or {}
+              DetectedItem.FriendliesNearBy[FriendlyUnitName] = FriendlyUnit
+              local Distance = DetectedUnitCoord:Get2DDistance( FriendlyUnit:GetCoordinate() )
+              DetectedItem.FriendliesDistance = DetectedItem.FriendliesDistance or {}
+              DetectedItem.FriendliesDistance[Distance] = FriendlyUnit
+            end
             return true
           end
           
@@ -1269,23 +1281,28 @@ do -- DETECTION_BASE
           --- @param Wrapper.Unit#UNIT PlayerUnit
           function( PlayerUnitName )
             local PlayerUnit = UNIT:FindByName( PlayerUnitName )
-    
+            local PlayerUnitCategory = PlayerUnit:GetDesc().category
+
             if PlayerUnit and PlayerUnit:IsInZone(DetectionZone) then
     
-              DetectedItem.FriendliesNearBy = DetectedItem.FriendliesNearBy or {}
-              local PlayerUnitName = PlayerUnit:GetName()
-    
-              DetectedItem.PlayersNearBy = DetectedItem.PlayersNearBy or {}
-              DetectedItem.PlayersNearBy[PlayerUnitName] = PlayerUnit
-    
-              DetectedItem.FriendliesNearBy = DetectedItem.FriendliesNearBy or {}
-              DetectedItem.FriendliesNearBy[PlayerUnitName] = PlayerUnit
-    
-              local CenterCoord = DetectedUnit:GetCoordinate()
+              if ( not self.FriendliesCategory ) or ( self.FriendliesCategory and ( self.FriendliesCategory == PlayerUnitCategory ) ) then
 
-              local Distance = CenterCoord:Get2DDistance( PlayerUnit:GetCoordinate() )
-              DetectedItem.FriendliesDistance = DetectedItem.FriendliesDistance or {}
-              DetectedItem.FriendliesDistance[Distance] = PlayerUnit
+                DetectedItem.FriendliesNearBy = DetectedItem.FriendliesNearBy or {}
+                local PlayerUnitName = PlayerUnit:GetName()
+      
+                DetectedItem.PlayersNearBy = DetectedItem.PlayersNearBy or {}
+                DetectedItem.PlayersNearBy[PlayerUnitName] = PlayerUnit
+      
+                DetectedItem.FriendliesNearBy = DetectedItem.FriendliesNearBy or {}
+                DetectedItem.FriendliesNearBy[PlayerUnitName] = PlayerUnit
+      
+                local CenterCoord = DetectedUnit:GetCoordinate()
+  
+                local Distance = CenterCoord:Get2DDistance( PlayerUnit:GetCoordinate() )
+                DetectedItem.FriendliesDistance = DetectedItem.FriendliesDistance or {}
+                DetectedItem.FriendliesDistance[Distance] = PlayerUnit
+
+              end
             end
           end
         )

@@ -757,13 +757,13 @@ Per one, two, three, four?</p>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_DISPATCHER).SetSquadronCap">AI_A2A_DISPATCHER:SetSquadronCap(SquadronName, Zone, FloorAltitude, CeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, EngageMinSpeed, EngageMaxSpeed, AltType)</a></td>
 		<td class="summary">
-
+<p>Set a CAP for a Squadron.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_DISPATCHER).SetSquadronCapInterval">AI_A2A_DISPATCHER:SetSquadronCapInterval(SquadronName, CapLimit, LowInterval, HighInterval, Probability)</a></td>
 		<td class="summary">
-
+<p>Set the squadron CAP parameters.</p>
 </td>
 		</tr>
 		<tr>
@@ -3293,7 +3293,7 @@ or
 <p>Set the default CAP limit for squadrons, which will be used to determine how many CAP can be airborne at the same time for the squadron.</p>
 
 	
-<p>The default CAP time interval is 1 CAP.</p>
+<p>The default CAP limit is 1 CAP, which means one CAP group being spawned.</p>
 
 		<h3>Parameter</h3>
 		<ul>
@@ -4251,7 +4251,7 @@ If you have only one prefix name for a squadron, you don't need to use the <code
 </dt>
 <dd>
 	
-
+<p>Set a CAP for a Squadron.</p>
 
 		<h3>Parameters</h3>
 		<ul>
@@ -4342,7 +4342,10 @@ The altitude type, which is a string "BARO" defining Barometric or "RADIO" defin
 </dt>
 <dd>
 	
+<p>Set the squadron CAP parameters.</p>
 
+	
+<p> </p>
 
 		<h3>Parameters</h3>
 		<ul>
@@ -4354,22 +4357,26 @@ The squadron name.</p>
 				</li>
 				<li>
 				
-<p><code><em> CapLimit </em></code>: </p>
+<p><code><em>#number CapLimit </em></code>: 
+(optional) The maximum amount of CAP groups to be spawned. Note that a CAP is a group, so can consist out of 1 to 4 airplanes. The default is 1 CAP group.</p>
 
 				</li>
 				<li>
 				
-<p><code><em> LowInterval </em></code>: </p>
+<p><code><em>#number LowInterval </em></code>: 
+(optional) The minimum time boundary in seconds when a new CAP will be spawned. The default is 180 seconds.</p>
 
 				</li>
 				<li>
 				
-<p><code><em> HighInterval </em></code>: </p>
+<p><code><em>#number HighInterval </em></code>: 
+(optional) The maximum time boundary in seconds when a new CAP will be spawned. The default is 600 seconds.</p>
 
 				</li>
 				<li>
 				
-<p><code><em> Probability </em></code>: </p>
+<p><code><em>#number Probability </em></code>: 
+Is not in use, you can skip this parameter.</p>
 
 				</li>
 		</ul>
