@@ -83,15 +83,8 @@ end
 function IDENTIFIABLE:GetName()
   self:F2( self.IdentifiableName )
 
-  local DCSIdentifiable = self:GetDCSObject()
-  
-  if DCSIdentifiable then
-    local IdentifiableName = self.IdentifiableName
-    return IdentifiableName
-  end 
-  
-  self:E( self.ClassName .. " " .. self.IdentifiableName .. " not found!" )
-  return nil
+  local IdentifiableName = self.IdentifiableName
+  return IdentifiableName
 end
 
 

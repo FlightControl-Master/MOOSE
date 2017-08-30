@@ -838,8 +838,12 @@ do -- COORDINATE
 
     if ModeA2A then
       if Settings:IsA2A_BRAA()  then
-        local Coordinate = Controllable:GetCoordinate()
-        return self:ToStringBRA( Coordinate, Settings ) 
+        if Controllable then
+          local Coordinate = Controllable:GetCoordinate()
+          return self:ToStringBRA( Coordinate, Settings ) 
+        else
+          return self:ToStringMGRS( Settings )
+        end
       end
       if Settings:IsA2A_BULLS() then
         local Coalition = Controllable:GetCoalition()
@@ -856,8 +860,13 @@ do -- COORDINATE
       end
     else
       if Settings:IsA2G_BR()  then
-        local Coordinate = Controllable:GetCoordinate()
-        return Controllable and self:ToStringBR( Coordinate, Settings ) or self:ToStringMGRS( Settings )
+        -- If no Controllable is given to calculate the BR from, then MGRS will be used!!!
+        if Controllable then
+          local Coordinate = Controllable:GetCoordinate()
+          return Controllable and self:ToStringBR( Coordinate, Settings ) or self:ToStringMGRS( Settings )
+        else
+          return self:ToStringMGRS( Settings )
+        end
       end
       if Settings:IsA2G_LL_DMS()  then
         return self:ToStringLLDMS( Settings )

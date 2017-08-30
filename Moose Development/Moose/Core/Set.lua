@@ -1784,6 +1784,7 @@ end
 
 --- Calculate the maxium A2G threat level of the SET_UNIT.
 -- @param #SET_UNIT self
+-- @return #number The maximum threatlevel
 function SET_UNIT:CalculateThreatLevelA2G()
   
   local MaxThreatLevelA2G = 0

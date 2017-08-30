@@ -871,9 +871,9 @@ function EVENT:onEvent( Event )
         -- Okay, we got the event from DCS. Now loop the SORTED self.EventSorted[] table for the received Event.id, and for each EventData registered, check if a function needs to be called.
         for EventClass, EventData in pairs( self.Events[Event.id][EventPriority] ) do
 
-          if Event.IniObjectCategory ~= Object.Category.STATIC then
-            self:E( { "Evaluating: ", EventClass:GetClassNameAndID() } )
-          end
+          --if Event.IniObjectCategory ~= Object.Category.STATIC then
+          --  self:E( { "Evaluating: ", EventClass:GetClassNameAndID() } )
+          --end
           
           Event.IniGroup = GROUP:FindByName( Event.IniDCSGroupName )
           Event.TgtGroup = GROUP:FindByName( Event.TgtDCSGroupName )
