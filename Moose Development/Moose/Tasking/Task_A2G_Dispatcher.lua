@@ -59,6 +59,7 @@ do -- TASK_A2G_DISPATCHER
     self.Mission = Mission
     
     self.Detection:FilterCategories( Unit.Category.GROUND_UNIT, Unit.Category.SHIP )
+    self.Detection:FilterFriendliesCategory( Unit.Category.GROUND_UNIT )
     
     self:AddTransition( "Started", "Assign", "Started" )
     
