@@ -440,7 +440,7 @@ function AI_A2A:onafterStatus()
       end
     end
     
-    if self:Is( "Damaged" ) or self:Is( "LostControl" ) then
+    if self:Is( "Fuel" ) or self:Is( "Damaged" ) or self:Is( "LostControl" ) then
       if DistanceFromHomeBase < 5000 then
         self:E( self.Controllable:GetName() .. " is too far from home base, RTB!" )
         self:Home( "Destroy" )
@@ -448,25 +448,27 @@ function AI_A2A:onafterStatus()
     end
     
 
-    local Fuel = self.Controllable:GetFuel()
-    self:F({Fuel=Fuel})
-    if Fuel < self.PatrolFuelThresholdPercentage then
-      if self.TankerName then
-        self:E( self.Controllable:GetName() .. " is out of fuel: " .. Fuel .. " ... Refuelling at Tanker!" )
-        self:Refuel()
+    if not self:Is( "Fuel" ) and not self:Is( "Home" ) then
+      local Fuel = self.Controllable:GetFuel()
+      self:F({Fuel=Fuel})
+      if Fuel < self.PatrolFuelThresholdPercentage then
+        if self.TankerName then
+          self:E( self.Controllable:GetName() .. " is out of fuel: " .. Fuel .. " ... Refuelling at Tanker!" )
+          self:Refuel()
+        else
+          self:E( self.Controllable:GetName() .. " is out of fuel: " .. Fuel .. " ... RTB!" )
+          local OldAIControllable = self.Controllable
+          local AIControllableTemplate = self.Controllable:GetTemplate()
+          
+          local OrbitTask = OldAIControllable:TaskOrbitCircle( math.random( self.PatrolFloorAltitude, self.PatrolCeilingAltitude ), self.PatrolMinSpeed )
+          local TimedOrbitTask = OldAIControllable:TaskControlled( OrbitTask, OldAIControllable:TaskCondition(nil,nil,nil,nil,self.PatrolOutOfFuelOrbitTime,nil ) )
+          OldAIControllable:SetTask( TimedOrbitTask, 10 )
+    
+          self:Fuel()
+          RTB = true
+        end
       else
-        self:E( self.Controllable:GetName() .. " is out of fuel: " .. Fuel .. " ... RTB!" )
-        local OldAIControllable = self.Controllable
-        local AIControllableTemplate = self.Controllable:GetTemplate()
-        
-        local OrbitTask = OldAIControllable:TaskOrbitCircle( math.random( self.PatrolFloorAltitude, self.PatrolCeilingAltitude ), self.PatrolMinSpeed )
-        local TimedOrbitTask = OldAIControllable:TaskControlled( OrbitTask, OldAIControllable:TaskCondition(nil,nil,nil,nil,self.PatrolOutOfFuelOrbitTime,nil ) )
-        OldAIControllable:SetTask( TimedOrbitTask, 10 )
-  
-        self:Fuel()
-        RTB = true
       end
-    else
     end
     
     -- TODO: Check GROUP damage function.
@@ -477,6 +479,7 @@ function AI_A2A:onafterStatus()
       self:E( self.Controllable:GetName() .. " is damaged: " .. Damage .. " ... RTB!" )
       self:Damaged()
       RTB = true
+      self:SetStatusOff()
     end
 
     -- Check if planes went RTB and are out of control.
