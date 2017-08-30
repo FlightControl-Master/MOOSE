@@ -35,26 +35,38 @@ RAT={
   airports_destination={},  -- Possible destination airports if unit does not fly "overseas", destpoint=overseas or destpoint=airport.
   departure_name="random",  -- Name of the departure airport. Default is "random" for a randomly chosen one of the coalition airports.
   destination_name="random",-- Name of the destination airport. Default is "random" for a randomly chosen one of the coalition airports.
+  random_departure=true,    -- By default a random friendly airport is chosen as departure.
+  random_destination=true,  -- By default a random friendly airport is chosen as destination.
+  departure_zones={},       -- Array containing the names of the departure zones. 
+  departure_ports={},       -- Array containing the names of the destination zones.
   zones_departure={},       -- Departure zones for air start.
   Rzone=5000,               -- Radius of departure zones in meters.
   ratcraft={},              -- Array with the spawned RAT aircraft.
   markerid=0,
 }
 
+--- RAT categories.
+-- @field #RAT cat
+RAT.cat={
+  plane="plane",
+  heli="heli"
+}
+
 --TODO list:
---TODO: Add scheduled spawn and corresponding user functions.
---TODO: Add possibility to spawn in air.
---TODO: Add departure zones for air start.
---TODO: Make more functions to adjust/set parameters.
+--DONE: Add scheduled spawn.
+--DONE: Add possibility to spawn in air.
+--DONE: Add departure zones for air start.
+--TODO: Make more functions to adjust/set RAT parameters.
 --TODO: Clean up debug messages.
 --DONE: Improve flight plan. Especially check FL against route length.
 --DONE: Add event handlers.
 --DONE: Respawn units when they have landed.
 --DONE: Change ROE state.
 --TODO: Make ROE state user function
---TODO: Add status reports.
---TODO: Check compatibility with #SPAWN functions.
+--TODO: Improve status reports.
+--TODO: Check compatibility with other #SPAWN functions.
 --TODO: Add possibility to continue journey at destination. Need "place" in event data for that.
+--TODO: Add enumerators and get rid off error prone string comparisons.
 --DONE: Check that FARPS are not used as airbases for planes. Don't know if they appear in list of airports.
 --DONE: Add cases for helicopters.
 
@@ -157,14 +169,14 @@ function RAT:_InitAircraft(DCSgroup)
   self.aircraft.Vmax = DCSdesc.speedMax
   
   -- min cruise airspeed = 75% of max
-  self.aircraft.Vmin = self.aircraft.Vmax*0.75
+  self.aircraft.Vmin = self.aircraft.Vmax*0.60
   
   -- actual travel speed (random between ASmin and ASmax)
   --TODO: This needs to be placed somewhere else! Randomization should not happen here. Otherwise it is not changed for multiple spawns.
   self.aircraft.Vcruise = math.random(self.aircraft.Vmin, self.aircraft.Vmax)
   
   -- Limit travel speed to ~900 km/h for jets.
-  self.aircraft.Vcruise = math.min(self.aircraft.Vcruise, self.Vcruisemax)
+  self.aircraft.Vcruise = math.min(self.aircraft.Vcruise, self.aircraft.Vmax)
     
   -- max climb speed in m/s
   self.aircraft.Vymax=DCSdesc.VyMax
@@ -289,7 +301,8 @@ function RAT:_SpawnWithRoute()
   self:HandleEvent(EVENTS.Land,           self._OnLand)
   self:HandleEvent(EVENTS.EngineShutdown, self._OnEngineShutdown)
   self:HandleEvent(EVENTS.Dead,           self._OnDead)
-  self:HandleEvent(EVENTS.Crash,          self._OnCrash)
+  -- TODO: Crash needs to be handled better. Does it always occur when dead?  
+  --self:HandleEvent(EVENTS.Crash,          self._OnCrash)
 end
 
 
@@ -488,6 +501,59 @@ function RAT:SetDepartureZones(zonenames)
   end
 end
 
+--- Test if an airport exists on the current map.
+-- @param #RAT self
+-- @param #string name
+-- @return #boolean True if airport exsits, false otherwise. 
+function RAT:_AirportExists(name)
+  for _,airport in pairs(self.airports_map) do
+    if airport:GeName()==name then
+      return true
+    end
+  end
+  return false
+end
+
+
+--- Set possible departure ports. This can be an airport or a zone defined in the mission editor.
+-- @param #RAT self
+function RAT:SetDepartureAll(names)
+
+  -- Random departure is deactivated now that user specified departure ports.
+  self.random_departure=false
+  
+  if type(names)=="table" then
+  
+    -- we did get a table of names
+    for _,name in pairs(names) do
+    
+      if self:_AirportExists(name) then
+        -- If an airport with this name exists, we put it in the ports array.
+        table.insert(self.departure_ports,"name")
+      else
+        -- If it is not an airport, we assume it is a zone.
+        table.insert(self.departure_zones,"name")
+      end
+      
+    end
+    
+  elseif type(names)=="string" then
+
+      if self:_AirportExists("names") then
+        -- If an airport with this name exists, we put it in the ports array.
+        table.insert(self.departure_ports, "names")
+      else
+        -- If it is not an airport, we assume it is a zone.
+        table.insert(self.departure_zones, "names")
+      end
+  
+  else
+    -- error message
+    error("Input parameter must be a string or a table!")
+  end
+  
+end
+
 --- Set name of destination airport for the AI aircraft. If no name is given an airport from the coalition is chosen randomly.
 -- @param #RAT self
 -- @param #string name Name of the destination airport or "random" for a randomly chosen one of the coalition.
@@ -500,34 +566,91 @@ function RAT:SetDestination(name)
 end
 
 
---- Set the departure airport of the AI. If no airport name is given an airport from the coalition is chosen randomly.
+--- Set the departure airport of the AI. If no airport name is given explicitly an airport from the coalition is chosen randomly.
+-- If takeoff style is set to "air", we use zones around the airports or the zones specified by user input.
 -- @param #RAT self
 -- @return Wrapper.Airbase#AIRBASE Departure airport if spawning at airport.
 function RAT:_SetDeparture()
+
   local departure
-  local text
+  
+  -- Array containing possible departure airports or zones.
+  local departures={}
+  
   if self.takeoff=="air" then
+  
+    if self.random_departure then
+    
+      -- Air start above a random airport.
+      for _,airport in pairs(self.airports)do
+        table.insert(departures, airport:GetZone())
+      end
+    
+    else
+      
+      -- Put all specified zones in table.
+      for _,name in pairs(self.departure_zones) do
+        table.insert(departures, ZONE:New(name))
+      end
+      -- Put all specified airport zones in table.
+      for _,name in pairs(self.departure_zones) do
+        table.insert(departures, AIRBASE:FindByName("name"):GetZone())
+      end
+      
+    end
+--[[ 
     if self.departure_name=="random" then
-      departure=self.zones_departure[math.random(1, #self.zones_departure)]
+      departure=self.zones_departure[math.random(#self.zones_departure)]
     else
       departure=ZONE:FindByName(self.departure_name)
     end
+    
     text="Chosen departure zone: "..departure:GetName()
+]]
   else
+  
+    if self.random_departure then
+    
+      -- All friendly departure airports. 
+      departures=self.airports
+      
+    else
+        
+      for _,name in pairs(self.departure_ports) do
+        table.insert(departures, AIRBASE:FindByName(name))
+      end
+        
+    end
+  end
+  
+--[[  
     if self.departure_name=="random" then
       -- Get a random departure airport from all friendly coalition airports.
-      departure=self.airports[math.random(1, #self.airports)]
+      departure=self.airports[math.random(#self.airports)]
     elseif AIRBASE:FindByName(self.departure_name) then
       -- Take the explicit airport provided.
       departure=AIRBASE:FindByName(self.departure_name)
     else
-      -- If nothing else works, we randomly choose from frindly coalition airports.
-      departure=self.airports[math.random(1, #self.airports)]
+      -- If nothing else works, we randomly choose from friendly coalition airports.
+      departure=self.airports[math.random(#self.airports)]
     end
+    
     text="Chosen departure airport: "..departure:GetName().." with ID "..departure:GetID()
+  end
+]]
+
+  -- Select departure airport or zone.
+  local departure=departures[math.random(#departures)]
+  
+  local text
+  if self.takeoff=="air" then
+    text="Chosen departure zone: "..departure:GetName()
+  else
+    text="Chosen departure airport: "..departure:GetName().." (ID "..departure:GetID()..")"
   end
   env.info(myid..text)
   MESSAGE:New(text, 60):ToAll()
+  
   return departure
 end
 
@@ -562,11 +685,14 @@ end
 -- @param #number minrange Minimum range to q in meters.
 -- @param #number maxrange Maximum range to q in meters.
 function RAT:_GetDestinations(q, minrange, maxrange)
+
   local absolutemin=5000             -- Absolute minimum is 5 km.
   minrange=minrange or absolutemin   -- Default min is absolute min.
   maxrange=maxrange or 10000000      -- Default max 10,000 km.
+  
   -- Ensure that minrange is always > 10 km to ensure the destination != departure.
-  minrange=math.max(absolutemin, minrange) 
+  minrange=math.max(absolutemin, minrange)
+   
   -- loop over all friendly airports
   for _,airport in pairs(self.airports) do
     local p=airport:GetCoordinate()
@@ -577,6 +703,7 @@ function RAT:_GetDestinations(q, minrange, maxrange)
     end
   end
   env.info(myid.."Number of possible destination airports = "..#self.airports_destination)
+  
   if #self.airports_destination > 1 then
     --- Compare distance of destination airports.
     -- @param Core.Point#COORDINATE a Coordinate of point a.
@@ -589,6 +716,7 @@ function RAT:_GetDestinations(q, minrange, maxrange)
     end
     table.sort(self.airports_destination, compare)
   end
+  
 end
 
 
@@ -1311,3 +1439,27 @@ function RAT:_SetMarker(text, vec3)
   env.info(myid.."Placing marker with ID "..self.markerid.." and text "..text)
   trigger.action.markToAll(self.markerid, text, vec3)
 end
+
+--[[
+--- @type RATPORT
+-- @extends Wrapper.Positionable#POSITIONABLE
+
+--- #RATPORT class, extends @{Positionable#POSITIONABLE}
+-- @field #RATPORT RATPORT
+RATPORT={
+  ClassName="RATPORT",
+}
+
+--- Creates a new RATPORT object.
+-- @param #RATPORT self
+-- @param #string name Name of airport or zone.
+-- @return #RATPORT self
+function RATPORT:New(name)
+  local self = BASE:Inherit(self, POSITIONABLE:New(name)) -- #RATPORT
+  return self
+end
+
+--function RATCRAFT:New(name)
+--  local self = BASE:Inherit(self, GROUP:New(name))
+--end
+]]
