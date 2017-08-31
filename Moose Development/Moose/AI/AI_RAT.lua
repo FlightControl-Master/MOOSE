@@ -13,7 +13,7 @@ myid="RAT | "
 
 --- RAT class 
 -- @type RAT
--- @field #string ClassName Name of the class.
+-- @field #string ClassName
 -- @field #boolean debug
 -- @field #string prefix
 -- @field #number spawndelay
@@ -134,26 +134,28 @@ RAT.unit={
 
 --- Create a new RAT object.
 -- @param #RAT self
--- @param #string prefix Prefix of the (template) group name defined in the mission editor.
--- @param #string friendly Friendly coalitions from which airports can be used.
+-- @param #string groupname Name of the group as defined in the mission editor. This group is serving as a template for all spawned units.
+-- @param #string friendly (Optional) Friendly coalitions from which airports can be used.
 -- "all"=neutral+red+blue, "same"=spawn coalition+neutral, "sameonly"=spawn coalition, "blue"=blue+neutral, "blueonly"=blue, "red"=red+neutral, "redonly"=red, "neutral"=neutral.
 -- Default is "same", so aircraft will use airports of the coalition their spawn template has plus all neutral airports.  
 -- @return #RAT Object of RAT class.
 -- @return #nil Nil if the group does not exists in the mission editor.
-function RAT:New(prefix, friendly)
+-- @usage yak:RAT("RAT_YAK") will create a RAT object called "yak". The template group in the mission editor must have the name "RAT_YAK". By default aircraft will spawn at neutral and red airports if the template group is part of the red coaliton.
+-- @usage yak:RAT("RAT_YAK", "all") will spawn aircraft randomly on airports of any coaliton, i.e. red, blue and neutral. 
+function RAT:New(groupname, friendly)
 
   -- Inherit SPAWN clase.
-  local self=BASE:Inherit(self, SPAWN:New(prefix)) -- #RAT
+  local self=BASE:Inherit(self, SPAWN:New(groupname)) -- #RAT
   
   -- Set prefix.
   --TODO: Replace this by SpawnTemplatePrefix.
-  self.prefix=prefix
+  self.prefix=groupname
   
   -- Set friendly coalitions. Default is "same", i.e. same coalition as template group plus neutrals.
   self.friendly = friendly or "same"
 
   -- Get template group defined in the mission editor.   
-  local DCSgroup=Group.getByName(prefix)
+  local DCSgroup=Group.getByName(groupname)
   
   -- Check the group actually exists.
   if DCSgroup==nil then
@@ -175,6 +177,10 @@ function RAT:New(prefix, friendly)
   
   -- Get all airports of this map beloning to friendly coalition(s).
   self:_GetAirportsOfCoalition()
+  
+  -- Set random seed for reproduction purposes.
+  --math.randomseed(1234)
+  --math.randomseed(os.time())
   
   self.marker0=math.random(1000000)
    
@@ -531,19 +537,21 @@ function RAT:_InitAircraft(DCSgroup)
   end
 
   -- send debug message
-  local text=string.format("Aircraft parameters:\n")
+  local text=string.format("\n\n******************************************************\n")
+  text=text..string.format("Aircraft parameters:\n")
   text=text..string.format("Category         =  %s\n",        self.category)
-  text=text..string.format("Max speed        = %6.1f m/s.\n", self.aircraft.Vmax)
-  text=text..string.format("Max cruise speed = %6.1f m/s.\n", self.aircraft.Vcruise)
-  text=text..string.format("Max climb speed  = %6.1f m/s.\n", self.aircraft.Vymax)
-  text=text..string.format("Climb speed      = %6.1f m/s.\n", self.aircraft.Vclimb)
-  text=text..string.format("Angle of climb   = %6.1f Deg.\n", math.deg(self.aircraft.AlphaClimb))
-  text=text..string.format("Angle of descent = %6.1f Deg.\n", math.deg(self.aircraft.AlphaDescent))
-  text=text..string.format("Initial Fuel     = %6.1f.\n",     self.aircraft.fuel*100)
-  text=text..string.format("Max range = %6.1f km.\n",         self.aircraft.Rmax/1000)
-  text=text..string.format("Eff range = %6.1f km.\n",         self.aircraft.Reff/1000)
-  text=text..string.format("Ceiling   = FL%3.0f = %6.1f km.\n", self.aircraft.ceiling/FL2m, self.aircraft.ceiling/1000)
-  text=text..string.format("FL cruise = FL%3.0f = %6.1f km.",   self.aircraft.FLcruise/FL2m, self.aircraft.FLcruise/1000)
+  text=text..string.format("Max speed        = %6.1f m/s\n", self.aircraft.Vmax)
+  text=text..string.format("Max cruise speed = %6.1f m/s\n", self.aircraft.Vcruise)
+  text=text..string.format("Max climb speed  = %6.1f m/s\n", self.aircraft.Vymax)
+  text=text..string.format("Climb speed      = %6.1f m/s\n", self.aircraft.Vclimb)
+  text=text..string.format("Angle of climb   = %6.1f Deg\n", math.deg(self.aircraft.AlphaClimb))
+  text=text..string.format("Angle of descent = %6.1f Deg\n", math.deg(self.aircraft.AlphaDescent))
+  text=text..string.format("Initial Fuel     = %6.1f\n",     self.aircraft.fuel*100)
+  text=text..string.format("Max range = %6.1f km\n",         self.aircraft.Rmax/1000)
+  text=text..string.format("Eff range = %6.1f km\n",         self.aircraft.Reff/1000)
+  text=text..string.format("Ceiling   = FL%3.0f = %6.1f km\n", self.aircraft.ceiling/FL2m, self.aircraft.ceiling/1000)
+  text=text..string.format("FL cruise = FL%3.0f = %6.1f km\n",   self.aircraft.FLcruise/FL2m, self.aircraft.FLcruise/1000)
+  text=text..string.format("******************************************************\n")
   env.info(myid..text)
   if self.debug then
     MESSAGE:New(text, 60):ToAll()
@@ -708,7 +716,7 @@ function RAT:_SetRoute()
     
       -- This is the case where we only descent to the ground at the given descent angle.
       -- TODO: should this not better be h_holding Pholding.y? 
-      FLmax=d_total*math.tan(AlphaDescent)+H_destination
+      FLmax=d_total*math.tan(AlphaDescent)+h_holding+Pholding.y
       
     else
     
@@ -717,7 +725,7 @@ function RAT:_SetRoute()
     end
     -- If the route is very short we set FLmin a bit lower than FLmax.
     if FLmin>FLmax then
-      FLmin=FLmax*0.8
+      FLmin=FLmax*0.75
     end
     
     -- Again, if the route is too short to climb and descent, we set the default cruise alt at bit lower than the max we can reach.
@@ -747,6 +755,9 @@ function RAT:_SetRoute()
   if self.takeoff=="air" then
     H_departure=math.min(H_departure,FLmax)
   end
+  
+  --FLcruise=4000
+  --H_departure=2000
     
   -- CLIMB
   -- Height of climb relative to ASL height of departure airport.
@@ -758,7 +769,7 @@ function RAT:_SetRoute()
   
   -- DESCENT
   -- Height difference for descent form cruise alt to holding point.
-  local h_descent=FLcruise-h_holding-Pholding.y
+  local h_descent=FLcruise-(h_holding+Pholding.y)
   -- x-distance of descent part
   local d_descent=math.abs(h_descent/math.tan(AlphaDescent))
   
@@ -767,13 +778,14 @@ function RAT:_SetRoute()
   local d_cruise=d_total-d_climb-d_descent
   
   -- debug message
-  local text=string.format("Route distances:\n")
+  local text=string.format("\n\n******************************************************\n")
+  text=text..string.format("Route distances:\n")
   text=text..string.format("d_climb   = %6.1f km\n", d_climb/1000)
   text=text..string.format("d_cruise  = %6.1f km\n", d_cruise/1000)
   text=text..string.format("d_descent = %6.1f km\n", d_descent/1000)
   text=text..string.format("d_holding = %6.1f km\n", d_holding/1000)
   text=text..string.format("d_total   = %6.1f km\n", d_total/1000)
-  text=text..string.format("Route heights:\n")
+  text=text..string.format("\nRoute heights:\n")
   text=text..string.format("H_departure   = %6.1f m ASL\n", H_departure)
   text=text..string.format("H_destination = %6.1f m ASL\n", H_destination)
   text=text..string.format("h_climb       = %6.1f m AGL\n", h_climb)
@@ -785,7 +797,8 @@ function RAT:_SetRoute()
   text=text..string.format("FLmin         = %6.1f m ASL\n", FLmin)
   text=text..string.format("FLmax         = %6.1f m ASL\n", FLmax)
   text=text..string.format("FLcruise      = %6.1f m ASL\n", FLcruise)
-  text=text..string.format("Heading = %6.1f Degrees", heading)
+  text=text..string.format("Heading = %6.1f Degrees\n", heading)
+  text=text..string.format("******************************************************\n")
   env.info(myid..text)
   if self.debug then
     MESSAGE:New(text, 60):ToAll()
@@ -793,30 +806,36 @@ function RAT:_SetRoute()
   
   -- Coordinates of route from departure (0) to cruise (1) to descent (2) to holing (3) to destination (4).
   local c0=Pdeparture
-  local c1=c0:Translate(d_climb,   heading)
-  local c2=c1:Translate(d_cruise,  heading)
-  local c3=c2:Translate(d_descent, heading)
-  local c3=Pholding
-  local c4=Pdestination
+  local c1=c0:Translate(d_climb/2,   heading)
+  local c2=c1:Translate(d_climb/2,   heading)
+  local c3=c2:Translate(d_cruise,    heading)
+  local c4=c3:Translate(d_descent/2, heading)
+  local c5=Pholding
+  local c6=Pdestination
   
   --Convert coordinates into route waypoints.
-  local wp0=self:_Waypoint(self.takeoff, c0, self.aircraft.Vmin, H_departure, departure)
-  local wp1=self:_Waypoint("climb",      c1, self.aircraft.Vmax, FLcruise)
-  local wp2=self:_Waypoint("cruise",     c2, self.aircraft.Vcruise, FLcruise)
-  --TODO: add the possibility for a holing point, i.e. we circle a bit before final approach.
-  --local wp3=self:Waypoint("descent",    c3, self.aircraft.Vmin, h_holding)
-  local wp3=self:_Waypoint("holding",    c3, self.aircraft.Vmin, h_holding)
-  local wp4=self:_Waypoint("landing",    c4, self.aircraft.Vmin, 2, destination)
+  local wp0=self:_Waypoint(self.takeoff, c0, self.aircraft.Vmin,    H_departure, departure)
+  local wp1=self:_Waypoint("climb",      c1, self.aircraft.Vmax,    H_departure+(FLcruise-H_departure)/2)
+  local wp2=self:_Waypoint("climb",      c2, self.aircraft.Vcruise,    FLcruise)
+  local wp3=self:_Waypoint("cruise",     c3, self.aircraft.Vcruise, FLcruise)
+  local wp4=self:_Waypoint("descent",    c4, self.aircraft.Vcruise, FLcruise-(FLcruise-h_holding)/2)
+  local wp5=self:_Waypoint("holding",    c5, self.aircraft.Vmin,    h_holding)
+  local wp6=self:_Waypoint("landing",    c6, self.aircraft.Vmin,    H_destination, destination)
   
    -- set waypoints
-  local waypoints = {wp0, wp1, wp2, wp3, wp4}
+  local waypoints = {wp0, wp1, wp2, wp3, wp4, wp5, wp6}
   
-  self:_SetMarker("Takeoff and begin of climb.", c0)
-  self:_SetMarker("End of climb and begin of cruise",   c1)
-  self:_SetMarker("End of Cruise and begin of descent",  c2)
-  self:_SetMarker("Holding Point", c3)
-  self:_SetMarker("Final Destination", c4)
-  
+  -- Place markers of waypoints on F10 map.
+  if self.placemarkers then
+    self:_SetMarker("Takeoff",         c0)
+    self:_SetMarker("Climb",           c1)
+    self:_SetMarker("Begin of Cruise", c2)
+    self:_SetMarker("End of Cruise",   c3)
+    self:_SetMarker("Descent",         c4)
+    self:_SetMarker("Holding Point",   c5)
+    self:_SetMarker("Destination",     c6)
+  end
+    
   -- some info on the route as message
   self:_Routeinfo(waypoints, "Waypoint info in set_route:")
   
@@ -1275,7 +1294,7 @@ function RAT:_Waypoint(Type, Coord, Speed, Altitude, Airport)
   elseif Type:lower()=="takeoff-runway" or Type:lower()=="runway" then
     -- take-off from runway
     _Type="TakeOff"
-    _Action="From Parking Area"  --TODO: Is this correct for a runway start?
+    _Action="From Parking Area"
     _Altitude = 2
     _alttype="RADIO"
     _AID = Airport:GetID()
@@ -1283,17 +1302,25 @@ function RAT:_Waypoint(Type, Coord, Speed, Altitude, Airport)
     -- air start
     _Type="Turning Point"
     _Action="Turning Point"
-    _alttype="BARO"
-  elseif Type:lower()=="climb" or Type:lower()=="cruise" then
+    _alttype="RADIO"
+  elseif Type:lower()=="climb" then
+      _Type="Turning Point"
+    _Action="Turning Point"
+    _Action="Fly Over Point"
+    _alttype="RADIO"
+  elseif Type:lower()=="cruise" then
     _Type="Turning Point"
     _Action="Turning Point"
-    _alttype="BARO"
+    _Action="Fly Over Point"
+    _alttype="RADIO"
   elseif Type:lower()=="descent" then
     _Type="Turning Point"
+    _Action="Turning Point"
     _Action="Fly Over Point"
     _alttype="RADIO"
   elseif Type:lower()=="holding" then
     _Type="Turning Point"
+    _Action="Turning Point"
     _Action="Fly Over Point"
     _alttype="RADIO"
   elseif Type:lower()=="landing" or Type:lower()=="land" then
@@ -1310,31 +1337,24 @@ function RAT:_Waypoint(Type, Coord, Speed, Altitude, Airport)
   end
   
   -- some debug info about input parameters
-  if self.debug then
-    local at="unknown (oops!)"
-    if _alttype=="BARO" then
-      at="ASL"
-    elseif _alttype=="RADIO" then
-      at="AGL"
-    end
-    local text=string.format("\nType: %s.\n", Type)
-    if _Action then
-      text=text..string.format("Action: %s.\n", tostring(_Action))
-    end
-    text=text..string.format("Coord: x = %6.1f km, y = %6.1f km, alt = %6.1f m.\n", Coord.x/1000, Coord.z/1000, Coord.y)
-    text=text..string.format("Speed = %6.1f m/s = %6.1f km/h = %6.1f knots.\n", Speed, Speed*3.6, Speed*1.94384)
-    text=text..string.format("Altitude = %6.1f m "..at..".\n", _Altitude)
-    if Airport then
-      if Type:lower() == "air" then
-        text=text..string.format("Zone = %s.", Airport:GetName())
-      else
-        text=text..string.format("Airport = %s with ID %i.", Airport:GetName(), Airport:GetID())
-      end
+  local text=string.format("\n\n******************************************************\n")
+  text=text..string.format("Type: %s - %s\n", Type, _Type)
+  text=text..string.format("Action: %s\n", _Action)
+  text=text..string.format("Coord: x = %6.1f km, y = %6.1f km, alt = %6.1f m\n", Coord.x/1000, Coord.z/1000, Coord.y)
+  text=text..string.format("Speed = %6.1f m/s = %6.1f km/h = %6.1f knots\n", Speed, Speed*3.6, Speed*1.94384)
+  text=text..string.format("Land     = %6.1f m ASL\n", Hland)
+  text=text..string.format("Altitude = %6.1f m (%s)\n", _Altitude, _alttype)
+  if Airport then
+    if Type:lower() == "air" then
+      text=text..string.format("Zone = %s\n", Airport:GetName())
     else
-      text=text..string.format("No (valid) airport/zone specified.")
+      text=text..string.format("Airport = %s with ID %i\n", Airport:GetName(), Airport:GetID())
     end
-    env.info(myid..text)
+  else
+    text=text..string.format("No airport/zone specified\n")
   end
+  text=text.."******************************************************\n\n"
+  env.info(myid..text)
   
   -- define waypoint
   local RoutePoint = {}
@@ -1345,15 +1365,14 @@ function RAT:_Waypoint(Type, Coord, Speed, Altitude, Airport)
   -- altitude type: BARO=ASL or RADIO=AGL
   RoutePoint.alt_type = _alttype
   -- type 
-  RoutePoint.type = _Type or nil
-  RoutePoint.action = _Action or nil
+  RoutePoint.type = _Type
+  RoutePoint.action = _Action
   -- speed in m/s
   RoutePoint.speed = Speed
   RoutePoint.speed_locked = true
   -- ETA (not used)
-  --TODO: ETA check if this makes the DCS bug go away
-  --RoutePoint.ETA=nil
-  RoutePoint.ETA_locked=true
+  RoutePoint.ETA=nil
+  RoutePoint.ETA_locked = false
   -- waypoint name (only for the mission editor)
   RoutePoint.name="RAT waypoint"
   if _AID then
