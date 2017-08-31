@@ -1273,20 +1273,20 @@ do -- DETECTION_BASE
           local FoundUnitInReportSetGroup = ReportSetGroup:FindGroup( FoundUnitGroupName ) ~= nil
           self:T( { "Friendlies search:", FoundUnitName, FoundUnitCoalition, EnemyUnitName, EnemyCoalition, FoundUnitInReportSetGroup } )
           
---          if FoundUnitInReportSetGroup == true then
---            -- If the recce was part of the friendlies found, then check if the recce is part of the allowed friendly unit prefixes.
---            for Prefix, PrefixData in pairs( self.FriendlyPrefixes or {} ) do
---              --self:T3( { "FriendlyPrefix:", Prefix } )
---              -- In case a match is found (so a recce unit name is part of the friendly prefixes), then report that recce to be part of the friendlies.
---              -- This is important if CAP planes (so planes using their own radar) to be scanning for targets as part of the EWR network.
---              -- But CAP planes are also attackers, so they need to be considered friendlies too!
---              -- I chose to use prefixes because it is the fastest way to check.
---              if string.find( FoundUnitName, Prefix:gsub ("-", "%%-"), 1 ) then
---                FoundUnitInReportSetGroup = false
---                break
---              end
---            end
---          end
+          if FoundUnitInReportSetGroup == true then
+            -- If the recce was part of the friendlies found, then check if the recce is part of the allowed friendly unit prefixes.
+            for PrefixID, Prefix in pairs( self.FriendlyPrefixes or {} ) do
+              self:F( { "FriendlyPrefix:", Prefix } )
+              -- In case a match is found (so a recce unit name is part of the friendly prefixes), then report that recce to be part of the friendlies.
+              -- This is important if CAP planes (so planes using their own radar) to be scanning for targets as part of the EWR network.
+              -- But CAP planes are also attackers, so they need to be considered friendlies too!
+              -- I chose to use prefixes because it is the fastest way to check.
+              if string.find( FoundUnitName, Prefix:gsub ("-", "%%-"), 1 ) then
+                FoundUnitInReportSetGroup = false
+                break
+              end
+            end
+          end
 
           self:F( { "Friendlies search:", FoundUnitName, FoundUnitCoalition, EnemyUnitName, EnemyCoalition, FoundUnitInReportSetGroup } )
           
