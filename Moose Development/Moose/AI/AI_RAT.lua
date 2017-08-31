@@ -13,10 +13,10 @@ myid="RAT | "
 
 --- RAT class 
 -- @type RAT
--- @field #string ClassName
+-- @field #string ClassName Name of the class.
 -- @field #boolean debug
 -- @field #string prefix
--- @field #number sapwndelay
+-- @field #number spawndelay
 -- @field #number spawninterval
 -- @field #number coalition
 -- @field #string category
@@ -27,24 +27,28 @@ myid="RAT | "
 -- @field #number Vclimb
 -- @field #number AlphaDescent
 -- @field #string roe
+-- @field #string rot
 -- @field #string takeoff
 -- @field #number mindist
 -- @field #number maxdist
 -- @field #table airports_map
 -- @field #table airports
--- @field #table airports_departure
 -- @field #table airports_destination
 -- @field #boolean random_departure
 -- @field #boolean random_destination
 -- @field #table departure_zones
 -- @field #table departure_ports
 -- @field #table destination_ports
--- @field #number Rzone
 -- @field #table ratcraft
+-- @field #boolean reportstatus
+-- @field #number statusinterval
+-- @field #boolean placemarkers
 -- @field #number markerid
 -- @field #number marker0
+-- @field #number FLuser
+-- @field #number Vuser
 -- @field #table RAT
--- @extends #SPAWN
+-- @extends Functional.Spawn#SPAWN
 
 
 --- RAT class
@@ -63,23 +67,27 @@ RAT={
   Vcruisemax=250,           -- Max cruise speed in m/s (250 m/s = 900 km/h = 486 kt).
   Vclimb=1500,              -- Default climb rate in ft/min.
   AlphaDescent=3.6,         -- Default angle of descenti in degrees. A value of 3.6 follows the 3:1 rule of 3 miles of travel and 1000 ft descent.
-  roe = "hold",             -- ROE of spawned groups, default is weapon hold (this is a peaceful class for civil aircraft or ferry missions).
+  roe = "hold",             -- ROE of spawned groups, default is weapon hold (this is a peaceful class for civil aircraft or ferry missions). Possible: "hold", "return", "free".
+  rot = "noreaction",       -- ROT of spawned groups, default is no reaction. Possible: "noreaction", "passive", "evade".
   takeoff = "hot",          -- Takeoff type: "hot", "cold", "runway", "air", "random".
   mindist = 5000,           -- Min distance from departure to destination in meters. Default 5 km.
   maxdist = 500000,         -- Max distance from departure to destination in meters. Default 5000 km.
   airports_map={},          -- All airports available on current map (Caucasus, Nevada, Normandy, ...).
   airports={},              -- All airports of friedly coalitions.
-  airports_departure={},    -- Possible departure airports if unit/group is spawned at airport, spawnpoint=air or spawnpoint=airport.
-  airports_destination={},  -- Possible destination airports if unit does not fly "overseas", destpoint=overseas or destpoint=airport.
+  airports_destination={},  -- Possible destination airports which are in range of the chosen departure airport/zone.
   random_departure=true,    -- By default a random friendly airport is chosen as departure.
   random_destination=true,  -- By default a random friendly airport is chosen as destination.
-  departure_zones={},       -- Array containing the names of the departure zones. 
-  departure_ports={},       -- Array containing the names of the departure zones.
-  destination_ports={},     -- Array containing the names of the destination zones.
-  Rzone=5000,               -- Radius of departure zones in meters.
+  departure_zones={},       -- Array containing the names of the departure zones.
+  departure_ports={},       -- Array containing the names of the departure airports.
+  destination_ports={},     -- Array containing the names of the destination airports.
   ratcraft={},              -- Array with the spawned RAT aircraft.
-  markerid=0,               -- Running number of the ID of markers on the F10 map.
-  marker0=nil,                -- Specific marker ID offset. 
+  reportstatus=false,       -- Aircraft report status.
+  statusinterval=30,        -- Intervall between status reports.
+  placemarkers=false,       -- Place markers of waypoints on F10 map.
+  markerid=0,               -- Running number of the ID of markers.
+  marker0=nil,              -- Specific randomized marker ID offset.
+  FLuser=nil,               -- Flight level set by users explicitly.
+  Vuser=nil,                -- Cruising speed set by user explicitly.
 }
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -92,18 +100,13 @@ RAT.cat={
 }
 --- RAT unit conversions.
 -- @field #RAT unit
+-- @field #number ft2meter
 RAT.unit={
-  meter2feet=1,
-  nm2km=1,
-  FL2m=1,
-  --[[
-  -- unit conversions
-  local ft2meter=0.305
-  local kmh2ms=0.278
-  local FL2m=30.48
-  local nm2km=1.852
-  local nm2m=1852
-  ]]
+  ft2meter=0.305,
+  kmh2ms=0.278,
+  FL2m=30.48,
+  nm2km=1.852,
+  nm2m=1852,
 }
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -112,23 +115,24 @@ RAT.unit={
 --DONE: Add scheduled spawn.
 --DONE: Add possibility to spawn in air.
 --DONE: Add departure zones for air start.
---TODO: Make more functions to adjust/set RAT parameters.
+--DONE: Make more functions to adjust/set RAT parameters.
 --TODO: Clean up debug messages.
 --DONE: Improve flight plan. Especially check FL against route length.
 --DONE: Add event handlers.
 --DONE: Respawn units when they have landed.
 --DONE: Change ROE state.
---TODO: Make ROE state user function
+--DONE: Make ROE state user function
 --TODO: Improve status reports.
 --TODO: Check compatibility with other #SPAWN functions.
 --TODO: Add possibility to continue journey at destination. Need "place" in event data for that.
 --TODO: Add enumerators and get rid off error prone string comparisons.
---DONE: Check that FARPS are not used as airbases for planes. Don't know if they appear in list of airports.
+--DONE: Check that FARPS are not used as airbases for planes.
+--TODO: Add special cases for ships (similar to FARPs).
 --DONE: Add cases for helicopters.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Creates a new RAT object.
+--- Create a new RAT object.
 -- @param #RAT self
 -- @param #string prefix Prefix of the (template) group name defined in the mission editor.
 -- @param #string friendly Friendly coalitions from which airports can be used.
@@ -209,7 +213,6 @@ function RAT:SetTakeoff(type)
   self.takeoff=_Type
 end
 
-
 --- Set possible departure ports. This can be an airport or a zone defined in the mission editor.
 -- @param #RAT self
 -- @param #string names Name or table of names of departure airports or zones.
@@ -279,6 +282,128 @@ function RAT:SetDestination(names)
 
 end
 
+--- Set the delay before first group is spawned. Minimum delay is 0.5 seconds.
+-- @param #RAT self
+-- @param #number delay Delay in seconds.
+function RAT:SetSpawnDelay(delay)
+  self.spawndelay=math.max(0.5, delay)
+end
+
+--- Set the interval between spawnings of the template group. Minimum interval is 0.5 seconds.
+-- @param #RAT self
+-- @param #number interval Interval in seconds.
+function RAT:SetSpawnInterval(interval)
+  self.spawninterval=math.max(0.5, interval)
+end
+
+--- Set the maximum cruise speed of the aircraft.
+-- @param #RAT self
+-- @param #number speed Speed in km/h.
+function RAT:SetMaxCruiseSpeed(speed)
+  self.Vcruisemax=speed/3.6
+end
+
+--- Set the climb rate. Default is 1500 ft/min. This automatically sets the climb angle.
+-- @param #RAT self
+-- @param #number rate Climb rate in ft/min.
+function RAT:SetClimbRate(rate)
+
+  -- Convert from ft/min to m/s.
+  self.Vclimb=rate*RAT.unit.ft2m/60
+  
+  -- Climb rate in m/s. Max is aircraft specific.
+  self.aircraft.Vclimb=math.min(self.Vclimb, self.aircraft.Vymax)
+  
+  -- Climb angle in rad.
+  self.aircraft.AlphaClimb=math.asin(self.aircraft.Vclimb/self.aircraft.Vmax)
+end
+
+--- Set the angle of descent. Default is 3.6 degrees, which corresponds to 3000 ft descent after one mile of travel.
+-- @param #RAT self
+-- @param #number angle Angle of descent in degrees.
+function RAT:SetDescentAngle(angle)
+  -- Convert to rad.
+  self.aircraft.AlphaDescent=math.rad(angle)
+end
+
+--- Set rules of engagement (ROE). Default is weapon hold. This is a peaceful class.
+-- @param #RAT self
+-- @param #string roe "hold" = weapon hold, "return" = return fire, "free" = weapons free.
+function RAT:SetROE(roe)
+  if roe=="hold" or roe=="return" or roe=="free" then
+    self.roe=roe
+  else
+    self.roe="hold"
+  end
+end
+
+--- Set reaction to threat (ROT). Default is no reaction, i.e. aircraft will simply ignore all enemies.
+-- @param #RAT self
+-- @param #string rot "noreaction = no reactino, "passive" = passive defence, "evade" = weapons free.
+function RAT:SetROT(rot)
+  if rot=="noreaction" or rot=="passive" or rot=="evade" then
+    self.rot=rot
+  else
+    self.rot="noreaction"
+  end
+end
+
+--- Set minimum distance between departure and destination. Default is 5 km.
+-- Minimum distance should not be smaller than ~500(?) meters to ensure that departure and destination are different.
+-- @param #RAT self
+-- @param #number dist Distance in km.
+function RAT:SetMinDistance(dist)
+  -- Distance in meters. Absolute minimum is 500 m.
+  self.mindist=math.max(500, dist*1000)
+end
+
+--- Set maximum distance between departure and destination. Default is 5000 km but aircarft range is also taken into account automatically.
+-- @param #RAT self
+-- @param #number dist Distance in km.
+function RAT:SetMaxDistance(dist)
+  -- Distance in meters.
+  self.maxdist=dist*1000
+end
+
+--- Turn debug messages on or off. Default is off.
+-- @param #RAT self
+-- @param #boolean switch true turn messages on, false=off.
+function RAT:_Debug(switch)
+  switch = switch or true
+  self.debug=switch
+end
+
+--- Aircraft report status messages. Default is off.
+-- @param #RAT self
+-- @param #boolean switch true=on, false=off.
+function RAT:StatusReports(switch)
+  switch = switch or true
+  self.reportstatus=switch
+end
+
+--- Place markers of waypoints on the F10 map. Default is off.
+-- @param #RAT self
+-- @param #boolean switch true=yes, false=no.
+function RAT:PlaceMarkers(switch)
+  switch = switch or true
+  self.placemarkers=switch
+end
+
+--- Set flight level. Setting this value will overrule all other logic. Aircraft will try to fly at this height regardless.
+-- @param #RAT self
+-- @param #number height FL in hundrets of feet. E.g. FL200 = 20000 ft ASL.
+function RAT:SetFL(height)
+  self.FLuser=height*RAT.unit.FL2m
+end
+
+--- Set flight level of cruising part. This is still be checked for consitancy with selected route and prone to radomization.
+-- Default is FL200 for planes and FL005 for helicopters.
+-- @param #RAT self
+-- @param #number height FL in hundrets of feet. E.g. FL200 = 20000 ft ASL.
+function RAT:SetFLcruise(height)
+  self.aircraft.FLcruise=height*RAT.unit.FL2m
+end
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Spawn the AI aircraft.
@@ -314,7 +439,9 @@ function RAT:Spawn(naircraft, name)
   SCHEDULER:New(nil, self._SpawnWithRoute, {self}, Tstart, dt, 0.1, Tstop)
   
   -- Status report scheduler.
-  SCHEDULER:New(nil, self.Status, {self}, 30, 30)
+  if self.reportstatus then
+    SCHEDULER:New(nil, self.Status, {self}, self.statusinterval, 30)
+  end
   
 end
 
@@ -367,18 +494,20 @@ function RAT:_InitAircraft(DCSgroup)
   -- max airspeed from group
   self.aircraft.Vmax = DCSdesc.speedMax
   
-  -- min cruise airspeed = 75% of max
+  -- min cruise airspeed = 60% of max speed
   self.aircraft.Vmin = self.aircraft.Vmax*0.60
+      
+  -- max climb speed in m/s
+  self.aircraft.Vymax=DCSdesc.VyMax
   
-  -- actual travel speed (random between ASmin and ASmax)
+  -- TODO: This should all NOT be done here!
+  
+    -- actual travel speed (random between ASmin and ASmax)
   --TODO: This needs to be placed somewhere else! Randomization should not happen here. Otherwise it is not changed for multiple spawns.
   self.aircraft.Vcruise = math.random(self.aircraft.Vmin, self.aircraft.Vmax)
   
   -- Limit travel speed to ~900 km/h for jets.
   self.aircraft.Vcruise = math.min(self.aircraft.Vcruise, self.aircraft.Vmax)
-    
-  -- max climb speed in m/s
-  self.aircraft.Vymax=DCSdesc.VyMax
   
   -- Reasonably civil climb speed Vy=1500 ft/min but max aircraft specific climb rate.
   self.aircraft.Vclimb=math.min(self.Vclimb*ft2meter/60, self.aircraft.Vymax)
@@ -439,15 +568,13 @@ function RAT:_SpawnWithRoute()
   self:_ModifySpawnTemplate(waypoints) 
   
   -- Actually spawn the group.
-  local group=self:SpawnWithIndex(self.SpawnIndex) -- Core.Group#GROUP
+  local group=self:SpawnWithIndex(self.SpawnIndex) -- Wrapper.Group#GROUP
   
   -- set ROE to "weapon hold" and ROT to "no reaction"
-  -- TODO: make user function to set this
-  group:OptionROEReturnFire()
-  --group:OptionROEHoldFire()
-  group:OptionROTNoReaction()
-  --group:OptionROTPassiveDefense()
-  
+  self:_SetROE(group)
+  self:_SetROT(group)
+
+  -- Init ratcraft array.  
   self.ratcraft[self.SpawnIndex]={}
   self.ratcraft[self.SpawnIndex]["group"]=group
   self.ratcraft[self.SpawnIndex]["destination"]=destination
@@ -512,8 +639,8 @@ function RAT:_SetRoute()
   end
   
   -- DESTINATION AIRPORT
-  -- Get all destination airports within reach and at least 10 km away from departure.
-  self:_GetDestinations(Pdeparture, self.mindist, self.aircraft.Reff)
+  -- Get all destination airports within reach and at least a bit away from departure.
+  self:_GetDestinations(Pdeparture, self.mindist, math.min(self.aircraft.Reff, self.maxdist))
   
   -- Pick a destination airport.
   local destination=self:_SetDestination()
@@ -563,8 +690,8 @@ function RAT:_SetRoute()
   
   -- CLIMB and DESCENT angles
   -- TODO: Randomize climb/descent angles. This did not work in rad. Need to convert to deg first.
-  local AlphaClimb=self.aircraft.AlphaClimb    --=self:_Randomize(self.aircraft.AlphaClimb, 0.1)
-  local AlphaDescent=self.aircraft.AlphaDescent --self:_Randomize(self.aircraft.AlphaDescent, 0.1)
+  local AlphaClimb=self.aircraft.AlphaClimb
+  local AlphaDescent=self.aircraft.AlphaDescent
   
   --CRUISE  
   -- Set min/max cruise altitudes.
@@ -572,28 +699,37 @@ function RAT:_SetRoute()
   local FLmin
   local FLcruise=self.aircraft.FLcruise
   if self.category=="plane" then
+  
     -- Min cruise alt is just above holding point at destination or departure height, whatever is larger.
     FLmin=math.max(H_departure, H_destination+h_holding)
+    
     -- Check if the distance between the two airports is large enough to reach the desired FL and descent again at the given climb/descent rates.
     if self.takeoff=="air" then
+    
       -- This is the case where we only descent to the ground at the given descent angle.
       -- TODO: should this not better be h_holding Pholding.y? 
       FLmax=d_total*math.tan(AlphaDescent)+H_destination
+      
     else
+    
       FLmax=self:_FLmax(AlphaClimb, AlphaDescent, d_total, H_departure)
+      
     end
     -- If the route is very short we set FLmin a bit lower than FLmax.
     if FLmin>FLmax then
       FLmin=FLmax*0.8
     end
+    
     -- Again, if the route is too short to climb and descent, we set the default cruise alt at bit lower than the max we can reach.
     if FLcruise>FLmax then
       FLcruise=FLmax*0.9
     end
   else
+  
     -- For helicopters we take cruise alt between 50 to 1000 meters above ground. Default cruise alt is ~150 m.
     FLmin=math.max(H_departure, H_destination)+50
     FLmax=math.max(H_departure, H_destination)+1000
+    
   end
   
   -- Ensure that FLmax not above 90% of service ceiling.
@@ -601,8 +737,13 @@ function RAT:_SetRoute()
   
   -- Set randomized cruise altitude: default +-50% but limited to FLmin and FLmax.
   FLcruise=self:_Randomize(FLcruise, 0.5, FLmin, FLmax)
-
   
+  -- Overrule setting if user specifies a flight level very explicitly.
+  if self.FLuser then
+    FLcruise=self.FLuser
+  end
+
+  -- Ensure that departure height is not above FLmax
   if self.takeoff=="air" then
     H_departure=math.min(H_departure,FLmax)
   end
@@ -799,12 +940,8 @@ end
 -- @param #number maxrange Maximum range to q in meters.
 function RAT:_GetDestinations(q, minrange, maxrange)
 
-  local absolutemin=5000             -- Absolute minimum is 5 km.
-  minrange=minrange or absolutemin   -- Default min is absolute min.
-  maxrange=maxrange or 10000000      -- Default max 10,000 km.
-  
-  -- Ensure that minrange is always > 10 km to ensure the destination != departure.
-  minrange=math.max(absolutemin, minrange)
+  minrange=minrange or self.mindist
+  maxrange=maxrange or self.maxdist
    
   -- loop over all friendly airports
   for _,airport in pairs(self.airports) do
@@ -853,7 +990,7 @@ function RAT:_GetAirportsOfMap()
     local ab=coalition.getAirbases(i)
     
     -- loop over airbases and put them in a table
-    for _,airbase in pairs(ab) do -- loop over airbases
+    for _,airbase in pairs(ab) do
       local _id=airbase:getID()
       local _p=airbase:getPosition().p
       local _name=airbase:getName()
@@ -895,24 +1032,29 @@ end
 --- Report status of RAT groups.
 -- @param #RAT self
 function RAT:Status()
+
   local ngroups=#self.SpawnGroups
   MESSAGE:New("Number of groups spawned = "..ngroups, 60):ToAll()
+  
   for i=1, ngroups do
+  
     local group=self.SpawnGroups[i].Group
     local prefix=self:_GetPrefixFromGroup(group)
     local life=self:_GetLife(group)
+    
     local text=string.format("Group %s ID %i:\n", prefix, i) 
     text=text..string.format("Life = %3.0f\n", life)
     text=text..string.format("Status = %s\n", self.ratcraft[i].status)
     text=text..string.format("Flying from %s to %s.",self.ratcraft[i].departure:GetName(), self.ratcraft[i].destination:GetName())
     MESSAGE:New(text, 60):ToAll()
     env.info(myid..text)
+    
   end
 end
 
 --- Get (relative) life of first unit of a group.
 -- @param #RAT self
--- @param #Group group Group of unit.
+-- @param Wrapper.Group#GROUP group Group of unit.
 -- @return #number Life of unit in percent.
 function RAT:_GetLife(group)
   local life=0.0
@@ -942,15 +1084,18 @@ end
 --- Function is executed when a unit is spawned.
 -- @param #RAT self
 function RAT:_OnBirthDay(EventData)
-  env.info(myid.."It's a birthday")
+
   local SpawnGroup = EventData.IniGroup
+  
   if SpawnGroup then
+  
     local index=self:GetSpawnIndexFromGroup(SpawnGroup)
     local EventPrefix = self:_GetPrefixFromGroup(SpawnGroup)
+    
     local text="Event: Group "..SpawnGroup:GetName().." was born."
     env.info(myid..text)
-    --MESSAGE:New(text, 180):ToAll()
-    self:_SetStatus(SpawnGroup, "starting engines (born)")
+    self:_SetStatus(SpawnGroup, "starting engines (after birth)")
+    
   else
     error("Group does not exist in RAT:_EngineStartup().")
   end
@@ -959,16 +1104,19 @@ end
 --- Function is executed when a unit starts its engines.
 -- @param #RAT self
 function RAT:_EngineStartup(EventData)
-  local SpawnGroup = EventData.IniGroup
+
+  local SpawnGroup = EventData.IniGroup --Wrapper.Group#GROUP
+  
   if SpawnGroup then
+  
     local text="Event: Group "..SpawnGroup:GetName().." started engines. Life="..self:_GetLife(SpawnGroup)
     env.info(myid..text)
-    --MESSAGE:New(text, 180):ToAll()
+    
     local status
-    if SpawnGroup:IsAir() then
+    if SpawnGroup:InAir() then
       status="airborn"
     else
-      status="taxi (engines started)"
+      status="taxi (after engines started)"
     end
     self:_SetStatus(SpawnGroup, status)
   else
@@ -979,12 +1127,15 @@ end
 --- Function is executed when a unit takes off.
 -- @param #RAT self
 function RAT:_OnTakeoff(EventData)
-  local SpawnGroup = EventData.IniGroup
+
+  local SpawnGroup = EventData.IniGroup --Wrapper.Group#GROUP
+  
   if SpawnGroup then
-    local text="Event: Group "..SpawnGroup:GetName().." took off. Life="..self:_GetLife(SpawnGroup)
+  
+    local text="Event: Group "..SpawnGroup:GetName().." is airborn. Life="..self:_GetLife(SpawnGroup)
     env.info(myid..text)
-    --MESSAGE:New(text, 180):ToAll()
-    self:_SetStatus(SpawnGroup, "airborn (took off)")
+    
+    self:_SetStatus(SpawnGroup, "airborn (after takeoff)")
   else
     error("Group does not exist in RAT:_OnTakeoff().")
   end
@@ -993,16 +1144,23 @@ end
 --- Function is executed when a unit lands.
 -- @param #RAT self
 function RAT:_OnLand(EventData)
-  local SpawnGroup = EventData.IniGroup
+
+  local SpawnGroup = EventData.IniGroup --Wrapper.Group#GROUP
+  
   if SpawnGroup then
+  
     local text="Event: Group "..SpawnGroup:GetName().." landed. Life="..self:_GetLife(SpawnGroup)
     env.info(myid..text)
-    --MESSAGE:New(text, 180):ToAll()
-    self:_SetStatus(SpawnGroup, "landed")
+    
+    -- Set status.
+    self:_SetStatus(SpawnGroup, "taxi (after landing)")
+    
+    -- Spawn new group.
+    self:_SpawnWithRoute()
+    
     text="Event: Group "..SpawnGroup:GetName().." will be respawned."
     env.info(myid..text)
-    --MESSAGE:New(text, 180):ToAll()
-    self:_SpawnWithRoute()
+    
   else
     error("Group does not exist in RAT:_OnLand().")
   end
@@ -1011,15 +1169,22 @@ end
 --- Function is executed when a unit shuts down its engines.
 -- @param #RAT self
 function RAT:_OnEngineShutdown(EventData)
-  local SpawnGroup = EventData.IniGroup
+
+  local SpawnGroup = EventData.IniGroup --Wrapper.Group#GROUP
+  
   if SpawnGroup then
+  
     local text="Event: Group "..SpawnGroup:GetName().." shut down its engines. Life="..self:_GetLife(SpawnGroup)
     env.info(myid..text)
-    --MESSAGE:New(text, 180):ToAll()
-    self:_SetStatus(SpawnGroup, "arrived (engines shut down)")
+    
+    -- Set status.
+    self:_SetStatus(SpawnGroup, "parking (after engine shut down)")
+    
     text="Event: Group "..SpawnGroup:GetName().." will be destroyed now."
     env.info(myid..text)
-    --MESSAGE:New(text, 180):ToAll()
+    
+    -- Destroy spawn group.
+    --TODO: Check what happens all the other arrays in #SPAWN and ratcarft. Maybe need to do more here. 
     SpawnGroup:Destroy()
   else
     error("Group does not exist in RAT:_OnEngineShutdown().")
@@ -1029,12 +1194,17 @@ end
 --- Function is executed when a unit is dead.
 -- @param #RAT self
 function RAT:_OnDead(EventData)
-  local SpawnGroup = EventData.IniGroup
+
+  local SpawnGroup = EventData.IniGroup --Wrapper.Group#GROUP
+  
   if SpawnGroup then
+  
     local text="Event: Group "..SpawnGroup:GetName().." was died. Life="..self:_GetLife(SpawnGroup)
     env.info(myid..text)
-    self:_SetStatus(SpawnGroup, "dead (died)")
-    --MESSAGE:New(text, 180):ToAll()
+    
+    -- Set status.
+    self:_SetStatus(SpawnGroup, "destroyed (after dead)")
+
   else
     error("Group does not exist in RAT:_OnDead().")
   end
@@ -1043,13 +1213,19 @@ end
 --- Function is executed when a unit crashes.
 -- @param #RAT self
 function RAT:_OnCrash(EventData)
-  local SpawnGroup = EventData.IniGroup
+
+  local SpawnGroup = EventData.IniGroup --Wrapper.Group#GROUP
+  
   if SpawnGroup then
+  
     local text="Event: Group "..SpawnGroup:GetName().." crashed. Life="..self:_GetLife(SpawnGroup)
     env.info(myid..text)
-    --MESSAGE:New(text, 180):ToAll()
+    
+    -- Set status.
     self:_SetStatus(SpawnGroup, "crashed")
-    --TODO: maybe spawn some people at the crash site and send a distress call. And define them as cargo which can be rescued.
+    
+    --TODO: Maybe spawn some people at the crash site and send a distress call.
+    --      And define them as cargo which can be rescued.
   else
     error("Group does not exist in RAT:_OnCrash().")
   end
@@ -1127,7 +1303,7 @@ function RAT:_Waypoint(Type, Coord, Speed, Altitude, Airport)
     _alttype="RADIO"
     _AID = Airport:GetID()
   else
-    error("Unknown waypoint type in RAT:Waypoint function!")
+    error("Unknown waypoint type in RAT:Waypoint() function!")
     _Type="Turning Point"
     _Action="Turning Point"
     _alttype="RADIO"
@@ -1155,11 +1331,7 @@ function RAT:_Waypoint(Type, Coord, Speed, Altitude, Airport)
         text=text..string.format("Airport = %s with ID %i.", Airport:GetName(), Airport:GetID())
       end
     else
-      text=text..string.format("No (valid) airport specified.")
-    end
-    local debugmessage=false
-    if debugmessage then
-      MESSAGE:New(text, 30, "RAT Waypoint Debug"):ToAll()
+      text=text..string.format("No (valid) airport/zone specified.")
     end
     env.info(myid..text)
   end
@@ -1204,7 +1376,8 @@ function RAT:_Waypoint(Type, Coord, Speed, Altitude, Airport)
     RoutePoint.task.params = {}
     RoutePoint.task.params.tasks = {}
   end
-  -- return the waypoint
+  
+  -- Return waypoint.
   return RoutePoint
 end
 
@@ -1384,6 +1557,34 @@ function RAT:_AirportExists(name)
   return false
 end
 
+--- Set ROE for a group.
+-- @param #RAT self
+-- @param Wrapper.Group#GROUP group Group for which the ROE is set.
+function RAT:_SetROE(group)
+  if self.roe=="return" then
+    group:OptionROEReturnFire()
+  elseif self.roe=="free" then
+    group:OptionROEWeaponFree()
+  else
+    group:OptionROEHoldFire()
+  end
+end
+
+
+--- Set ROT for a group.
+-- @param #RAT self
+-- @param Wrapper.Group#GROUP group Group for which the ROT is set.
+function RAT:_SetROT(group)
+  if self.roe=="passive" then
+    group:OptionROTPassiveDefense()
+  elseif self.roe=="evade" then
+    group:OptionROTEvadeFire()
+  else
+    group:OptionROTNoReaction()
+  end
+end
+
+
 --- Create a table with the valid coalitions for departure and destination airports.
 -- @param #RAT self
 function RAT:_SetCoalitionTable()
@@ -1405,6 +1606,7 @@ function RAT:_SetCoalitionTable()
   elseif self.friendly=="sameonly" then
     self.ctable={self.coalition}
   else
+    error("Unknown friendly coalition in _SetCoalitionTable(). Defaulting to NEUTRAL.")
     self.ctable={self.coalition, coalition.side.NEUTRAL}
   end
   -- debug info
@@ -1475,15 +1677,11 @@ function RAT:_Randomize(value, fac, lower, upper)
   end
   
   local r=math.random(min, max)
+  
+  -- debug info
   local text=string.format("Random: value = %6.2f, fac = %4.2f, min = %6.2f, max = %6.2f, r = %6.2f", value, fac, min, max, r)
   env.info(myid..text)
-  --local r=math.random(value-value*fac,value+value*fac)
---  if upper and r>upper then
---    r=upper
---  end
---  if lower and r<lower then
---    r=lower
---  end
+  
   return r
 end
 
@@ -1492,7 +1690,7 @@ end
 -- @param #RAT self
 -- @param #number id Index of marker.
 -- @param #string text Text of maker.
--- @param #vec3 vec3 Position of marker.
+-- @param Core.Point#COORDINATE vec3 Position of marker.
 function RAT:_SetMarker(text, vec3)
   self.markerid=self.markerid+1
   env.info(myid.."Placing marker with ID "..self.markerid.." and text "..text)
