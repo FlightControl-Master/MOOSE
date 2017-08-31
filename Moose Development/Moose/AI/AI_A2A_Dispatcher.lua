@@ -1418,7 +1418,7 @@ do -- AI_A2A_DISPATCHER
   --    * Nevada or NTTR: @{Airbase#AIRBASE.Nevada}
   --    * Normandy: @{Airbase#AIRBASE.Normandy}
   -- 
-  -- @param #string SpawnTemplates A string or an array of strings specifying the **prefix names of the templates** (not going to explain what is templates here again). 
+  -- @param #string TemplatePrefixes A string or an array of strings specifying the **prefix names of the templates** (not going to explain what is templates here again). 
   -- Examples are `{ "104th", "105th" }` or `"104th"` or `"Template 1"` or `"BLUE PLANES"`. 
   -- Just remember that your template (groups late activated) need to start with the prefix you have specified in your code.
   -- If you have only one prefix name for a squadron, you don't need to use the `{ }`, otherwise you need to use the brackets.
@@ -1452,7 +1452,7 @@ do -- AI_A2A_DISPATCHER
   --   
   --   
   -- @return #AI_A2A_DISPATCHER
-  function AI_A2A_DISPATCHER:SetSquadron( SquadronName, AirbaseName, SpawnTemplates, Resources )
+  function AI_A2A_DISPATCHER:SetSquadron( SquadronName, AirbaseName, TemplatePrefixes, Resources )
   
   
     self.DefenderSquadrons[SquadronName] = self.DefenderSquadrons[SquadronName] or {} 
@@ -1466,19 +1466,20 @@ do -- AI_A2A_DISPATCHER
     end
     
     DefenderSquadron.Spawn = {}
-    if type( SpawnTemplates ) == "string" then
-      local SpawnTemplate = SpawnTemplates
+    if type( TemplatePrefixes ) == "string" then
+      local SpawnTemplate = TemplatePrefixes
       self.DefenderSpawns[SpawnTemplate] = self.DefenderSpawns[SpawnTemplate] or SPAWN:New( SpawnTemplate ) -- :InitCleanUp( 180 )
       DefenderSquadron.Spawn[1] = self.DefenderSpawns[SpawnTemplate]
     else
-      for TemplateID, SpawnTemplate in pairs( SpawnTemplates ) do
+      for TemplateID, SpawnTemplate in pairs( TemplatePrefixes ) do
         self.DefenderSpawns[SpawnTemplate] = self.DefenderSpawns[SpawnTemplate] or SPAWN:New( SpawnTemplate ) -- :InitCleanUp( 180 )
         DefenderSquadron.Spawn[#DefenderSquadron.Spawn+1] = self.DefenderSpawns[SpawnTemplate]
       end
     end
     DefenderSquadron.Resources = Resources
+    DefenderSquadron.TemplatePrefixes = TemplatePrefixes
 
-    self:E( { Squadron = {SquadronName, AirbaseName, SpawnTemplates, Resources } } )
+    self:E( { Squadron = {SquadronName, AirbaseName, TemplatePrefixes, Resources } } )
     
     return self
   end
@@ -1545,6 +1546,13 @@ do -- AI_A2A_DISPATCHER
     self:SetSquadronCapInterval( SquadronName, self.DefenderDefault.CapLimit, self.DefenderDefault.CapMinSeconds, self.DefenderDefault.CapMaxSeconds, 1 )
 
     self:E( { CAP = { SquadronName, Zone, FloorAltitude, CeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, EngageMinSpeed, EngageMaxSpeed, AltType } } )
+   
+    -- Add the CAP to the EWR network.
+    
+    local RecceSet = self.Detection:GetDetectionSetGroup()
+    RecceSet:FilterPrefixes( DefenderSquadron.TemplatePrefixes )
+    
+    self.Detection:SetFriendlyPrefixes( DefenderSquadron.TemplatePrefixes )
     
     return self
   end
