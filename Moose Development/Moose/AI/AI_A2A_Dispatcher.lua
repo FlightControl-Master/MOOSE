@@ -1276,7 +1276,7 @@ do -- AI_A2A_DISPATCHER
   -- @return #number, Core.CommandCenter#REPORT
   function AI_A2A_DISPATCHER:GetAIFriendliesNearBy( DetectedItem )
   
-    local FriendliesNearBy = self.Detection:GetFriendliesNearBy( DetectedItem )
+    local FriendliesNearBy = self.Detection:GetFriendliesDistance( DetectedItem )
     
     return FriendliesNearBy
   end
