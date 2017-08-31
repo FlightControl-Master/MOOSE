@@ -499,35 +499,14 @@ function RAT:_InitAircraft(DCSgroup)
   
   -- max airspeed from group
   self.aircraft.Vmax = DCSdesc.speedMax
-  
-  -- min cruise airspeed = 60% of max speed
-  self.aircraft.Vmin = self.aircraft.Vmax*0.60
       
   -- max climb speed in m/s
   self.aircraft.Vymax=DCSdesc.VyMax
-  
-  -- TODO: This should all NOT be done here!
-  
-    -- actual travel speed (random between ASmin and ASmax)
-  --TODO: This needs to be placed somewhere else! Randomization should not happen here. Otherwise it is not changed for multiple spawns.
-  self.aircraft.Vcruise = math.random(self.aircraft.Vmin, self.aircraft.Vmax)
-  
-  -- Limit travel speed to ~900 km/h for jets.
-  self.aircraft.Vcruise = math.min(self.aircraft.Vcruise, self.aircraft.Vmax)
-  
-  -- Reasonably civil climb speed Vy=1500 ft/min but max aircraft specific climb rate.
-  self.aircraft.Vclimb=math.min(self.Vclimb*ft2meter/60, self.aircraft.Vymax)
-  
-  -- Climb angle in rad.
-  self.aircraft.AlphaClimb=math.asin(self.aircraft.Vclimb/self.aircraft.Vmax)
-  
-  -- Descent angle in rad.
-  self.aircraft.AlphaDescent=math.rad(self.AlphaDescent)
-  
+    
   -- service ceiling in meters
   self.aircraft.ceiling=DCSdesc.Hmax
   
-  -- Default flight level (ASL).
+      -- Default flight level (ASL).
   if self.category=="plane" then
     -- For planes: FL200 = 20000 ft = 6096 m.
     self.aircraft.FLcruise=200*FL2m
@@ -535,17 +514,13 @@ function RAT:_InitAircraft(DCSgroup)
     -- For helos: FL005 = 500 ft = 152 m.
     self.aircraft.FLcruise=005*FL2m
   end
-
+  
   -- send debug message
   local text=string.format("\n\n******************************************************\n")
   text=text..string.format("Aircraft parameters:\n")
   text=text..string.format("Category         =  %s\n",        self.category)
-  text=text..string.format("Max speed        = %6.1f m/s\n", self.aircraft.Vmax)
-  text=text..string.format("Max cruise speed = %6.1f m/s\n", self.aircraft.Vcruise)
+  text=text..string.format("Max air speed    = %6.1f m/s\n", self.aircraft.Vmax)
   text=text..string.format("Max climb speed  = %6.1f m/s\n", self.aircraft.Vymax)
-  text=text..string.format("Climb speed      = %6.1f m/s\n", self.aircraft.Vclimb)
-  text=text..string.format("Angle of climb   = %6.1f Deg\n", math.deg(self.aircraft.AlphaClimb))
-  text=text..string.format("Angle of descent = %6.1f Deg\n", math.deg(self.aircraft.AlphaDescent))
   text=text..string.format("Initial Fuel     = %6.1f\n",     self.aircraft.fuel*100)
   text=text..string.format("Max range = %6.1f km\n",         self.aircraft.Rmax/1000)
   text=text..string.format("Eff range = %6.1f km\n",         self.aircraft.Reff/1000)
@@ -615,6 +590,57 @@ function RAT:_SetRoute()
   local kmh2ms=0.278
   local FL2m=30.48
   local nm2km=1.852
+    
+  
+  -- Min cruise speed 70% of Vmax or 600 km/h whichever is lower.
+  local VxCruiseMin = math.min(self.aircraft.Vmax*0.70, 166)
+  
+  -- Max cruise speed 90% of Vmax or 900 km/h whichever is lower.
+  local VxCruiseMax = math.min(self.aircraft.Vmax*0.90, 250)
+  
+  -- Cruise speed (randomized).
+  local VxCruise = self:_Randomize((VxCruiseMax-VxCruiseMin)/2, 0.3 , VxCruiseMin, VxCruiseMax)
+  
+  -- Climb speed 90% ov Vmax but max 720 km/h.
+  local VxClimb = math.min(self.aircraft.Vmax*0.90, 200)
+  
+  -- Descent speed 50% of Vmax but max 400 km/h.
+  local VxDescent = math.min(self.aircraft.Vmax*0.50, 111)
+  
+  local VxHolding = VxDescent*0.8
+  local VxFinal   = VxHolding*0.8
+  
+--[[
+    -- actual travel speed (random between ASmin and ASmax)
+  --TODO: This needs to be placed somewhere else! Randomization should not happen here. Otherwise it is not changed for multiple spawns.
+  self.aircraft.Vcruise = math.random(self.aircraft.Vmin, self.aircraft.Vmax)
+  
+  -- Limit travel speed to ~900 km/h for jets.
+  self.aircraft.Vcruise = math.min(self.aircraft.Vcruise, self.aircraft.Vmax)
+  
+  -- Reasonably civil climb speed Vy=1500 ft/min but max aircraft specific climb rate.
+  self.aircraft.Vclimb=math.min(self.Vclimb*ft2meter/60, self.aircraft.Vymax)
+  
+  -- Climb angle in rad.
+  self.aircraft.AlphaClimb=math.asin(self.aircraft.Vclimb/self.aircraft.Vmax)
+  
+  -- Descent angle in rad.
+  self.aircraft.AlphaDescent=math.rad(self.AlphaDescent)  
+]]
+
+  -- Reasonably civil climb speed Vy=1500 ft/min but max aircraft specific climb rate.
+  local VyClimb=math.min(self.Vclimb*ft2meter/60, self.aircraft.Vymax)
+  
+  -- CLIMB and DESCENT angles
+  --local AlphaClimb=self.aircraft.AlphaClimb
+  --local AlphaDescent=self.aircraft.AlphaDescent
+  
+  -- Climb angle in rad.
+  local AlphaClimb=math.asin(VyClimb/VxClimb)
+  
+  -- Descent angle in rad.
+  local AlphaDescent=math.rad(self.AlphaDescent)  
+
 
   -- DEPARTURE AIRPORT  
   -- Departure airport or zone.
@@ -695,12 +721,7 @@ function RAT:_SetRoute()
   
   -- total distance between departure and holding point (+last bit to destination)
   local d_total=Pdeparture:Get2DDistance(Pholding)
-  
-  -- CLIMB and DESCENT angles
-  -- TODO: Randomize climb/descent angles. This did not work in rad. Need to convert to deg first.
-  local AlphaClimb=self.aircraft.AlphaClimb
-  local AlphaDescent=self.aircraft.AlphaDescent
-  
+    
   --CRUISE  
   -- Set min/max cruise altitudes.
   local FLmax
@@ -755,23 +776,18 @@ function RAT:_SetRoute()
   if self.takeoff=="air" then
     H_departure=math.min(H_departure,FLmax)
   end
-  
-  --FLcruise=4000
-  --H_departure=2000
     
   -- CLIMB
   -- Height of climb relative to ASL height of departure airport.
   local h_climb=FLcruise-H_departure
   -- x-distance of climb part 
-  local d_climb=math.abs(h_climb/math.tan(AlphaClimb))
-  -- time of climb in seconds
-  local t_climb=h_climb/self.aircraft.Vclimb
+  local d_climb=h_climb/math.tan(AlphaClimb)
   
   -- DESCENT
   -- Height difference for descent form cruise alt to holding point.
   local h_descent=FLcruise-(h_holding+Pholding.y)
   -- x-distance of descent part
-  local d_descent=math.abs(h_descent/math.tan(AlphaDescent))
+  local d_descent=h_descent/math.tan(AlphaDescent)
   
   -- CRUISE
   -- Distance of the cruising part. This should in principle not become negative, but can happen for very short legs.
@@ -792,8 +808,8 @@ function RAT:_SetRoute()
   text=text..string.format("h_descent     = %6.1f m\n",     h_descent)
   text=text..string.format("h_holding     = %6.1f m AGL\n", h_holding)
   text=text..string.format("P_holding alt = %6.1f m ASL\n", Pholding.y)
-  text=text..string.format("Alpha_climb   = %6.1f Deg\n", math.deg(AlphaClimb))
-  text=text..string.format("Alpha_descent = %6.1f Deg\n", math.deg(AlphaDescent))
+  text=text..string.format("Alpha_climb   = %6.1f Deg\n",   math.deg(AlphaClimb))
+  text=text..string.format("Alpha_descent = %6.1f Deg\n",   math.deg(AlphaDescent))
   text=text..string.format("FLmin         = %6.1f m ASL\n", FLmin)
   text=text..string.format("FLmax         = %6.1f m ASL\n", FLmax)
   text=text..string.format("FLcruise      = %6.1f m ASL\n", FLcruise)
@@ -814,13 +830,13 @@ function RAT:_SetRoute()
   local c6=Pdestination
   
   --Convert coordinates into route waypoints.
-  local wp0=self:_Waypoint(self.takeoff, c0, self.aircraft.Vmin,    H_departure, departure)
-  local wp1=self:_Waypoint("climb",      c1, self.aircraft.Vmax,    H_departure+(FLcruise-H_departure)/2)
-  local wp2=self:_Waypoint("climb",      c2, self.aircraft.Vcruise,    FLcruise)
-  local wp3=self:_Waypoint("cruise",     c3, self.aircraft.Vcruise, FLcruise)
-  local wp4=self:_Waypoint("descent",    c4, self.aircraft.Vcruise, FLcruise-(FLcruise-h_holding)/2)
-  local wp5=self:_Waypoint("holding",    c5, self.aircraft.Vmin,    h_holding)
-  local wp6=self:_Waypoint("landing",    c6, self.aircraft.Vmin,    H_destination, destination)
+  local wp0=self:_Waypoint(self.takeoff, c0, VxClimb,   H_departure, departure)
+  local wp1=self:_Waypoint("climb",      c1, VxClimb,   H_departure+(FLcruise-H_departure)/2)
+  local wp2=self:_Waypoint("climb",      c2, VxCruise,  FLcruise)
+  local wp3=self:_Waypoint("cruise",     c3, VxCruise,  FLcruise)
+  local wp4=self:_Waypoint("descent",    c4, VxDescent, FLcruise-(FLcruise-h_holding)/2)
+  local wp5=self:_Waypoint("holding",    c5, VxHolding, h_holding)
+  local wp6=self:_Waypoint("landing",    c6, VxFinal,   H_destination, destination)
   
    -- set waypoints
   local waypoints = {wp0, wp1, wp2, wp3, wp4, wp5, wp6}
@@ -1277,6 +1293,7 @@ function RAT:_Waypoint(Type, Coord, Speed, Altitude, Airport)
   local _alttype="RADIO"
   local _AID=nil
   
+--[[
   if Type:lower()=="takeoff-cold" or Type:lower()=="cold" then
     -- take-off with engine off
     _Type="TakeOffParking"
@@ -1302,27 +1319,79 @@ function RAT:_Waypoint(Type, Coord, Speed, Altitude, Airport)
     -- air start
     _Type="Turning Point"
     _Action="Turning Point"
-    _alttype="RADIO"
-  elseif Type:lower()=="climb" then
-      _Type="Turning Point"
-    _Action="Turning Point"
-    _Action="Fly Over Point"
-    _alttype="RADIO"
-  elseif Type:lower()=="cruise" then
+    _alttype="BARO"
+  elseif Type:lower()=="climb" or Type:lower()=="cruise" then
     _Type="Turning Point"
     _Action="Turning Point"
-    _Action="Fly Over Point"
-    _alttype="RADIO"
+    _alttype="BARO"
   elseif Type:lower()=="descent" then
     _Type="Turning Point"
-    _Action="Turning Point"
     _Action="Fly Over Point"
     _alttype="RADIO"
   elseif Type:lower()=="holding" then
     _Type="Turning Point"
-    _Action="Turning Point"
     _Action="Fly Over Point"
     _alttype="RADIO"
+  elseif Type:lower()=="landing" or Type:lower()=="land" then
+    _Type="Land"
+    _Action="Landing"
+    _Altitude = 2
+    _alttype="RADIO"
+    _AID = Airport:GetID()
+  else
+    error("Unknown waypoint type in RAT:Waypoint function!")
+    _Type="Turning Point"
+    _Action="Turning Point"
+    _alttype="RADIO"
+  end
+]]
+
+  if Type:lower()=="takeoff-cold" or Type:lower()=="cold" then
+    -- take-off with engine off
+    _Type="TakeOffParking"
+    _Action="From Parking Area"
+    _Altitude = 2
+    _alttype="RADIO"
+    _AID = Airport:GetID()
+  elseif Type:lower()=="takeoff-hot" or Type:lower()=="hot" then
+    -- take-off with engine on 
+    _Type="TakeOffParkingHot"
+    _Action="From Parking Area"
+    _Altitude = 2
+    _alttype="RADIO"
+    _AID = Airport:GetID()
+  elseif Type:lower()=="takeoff-runway" or Type:lower()=="runway" then
+    -- take-off from runway
+    _Type="TakeOff"
+    _Action="From Parking Area"
+    _Altitude = 2
+    _alttype="RADIO"
+    _AID = Airport:GetID()
+  elseif Type:lower()=="air" then
+    -- air start
+    _Type="Turning Point"
+    _Action="Turning Point"
+    _alttype="BARO"
+  elseif Type:lower()=="climb" then
+      _Type="Turning Point"
+    _Action="Turning Point"
+    _Action="Fly Over Point"
+    _alttype="BARO"
+  elseif Type:lower()=="cruise" then
+    _Type="Turning Point"
+    _Action="Turning Point"
+    _Action="Fly Over Point"
+    _alttype="BARO"
+  elseif Type:lower()=="descent" then
+    _Type="Turning Point"
+    _Action="Turning Point"
+    _Action="Fly Over Point"
+    _alttype="BARO"
+  elseif Type:lower()=="holding" then
+    _Type="Turning Point"
+    _Action="Turning Point"
+    _Action="Fly Over Point"
+    _alttype="BARO"
   elseif Type:lower()=="landing" or Type:lower()=="land" then
     _Type="Land"
     _Action="Landing"
@@ -1335,7 +1404,7 @@ function RAT:_Waypoint(Type, Coord, Speed, Altitude, Airport)
     _Action="Turning Point"
     _alttype="RADIO"
   end
-  
+
   -- some debug info about input parameters
   local text=string.format("\n\n******************************************************\n")
   text=text..string.format("Type: %s - %s\n", Type, _Type)
@@ -1371,21 +1440,21 @@ function RAT:_Waypoint(Type, Coord, Speed, Altitude, Airport)
   RoutePoint.speed = Speed
   RoutePoint.speed_locked = true
   -- ETA (not used)
-  RoutePoint.ETA=nil
-  RoutePoint.ETA_locked = false
+  RoutePoint.ETA=0
+  RoutePoint.ETA_locked = true
   -- waypoint name (only for the mission editor)
   RoutePoint.name="RAT waypoint"
   if _AID then
     RoutePoint.airdromeId=_AID
   end
   -- properties
-  RoutePoint.properties = {
-    ["vnav"]   = 1,
-    ["scale"]  = 0,
-    ["angle"]  = 0,
-    ["vangle"] = 0,
-    ["steer"]  = 2,
-  }
+--  RoutePoint.properties = {
+--    ["vnav"]   = 1,
+--    ["scale"]  = 0,
+--    ["angle"]  = 0,
+--    ["vangle"] = 0,
+--    ["steer"]  = 2,
+--  }
   -- task
   if Type:lower()=="holding" then
     RoutePoint.task=self:_TaskHolding({x=Coord.x, y=Coord.z}, Altitude, Speed)
