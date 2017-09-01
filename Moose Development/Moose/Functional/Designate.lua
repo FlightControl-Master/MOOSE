@@ -990,6 +990,8 @@ do -- DESIGNATE
   function DESIGNATE:onafterLaseOn( From, Event, To, Index, Duration, LaserCode )
   
     self.Designating[Index] = "Laser"
+    self.LaseStart = timer.getTime()
+    self.LaseDuration = Duration
     self:__Lasing( -1, Index, Duration, LaserCode )
   end
   
@@ -1038,59 +1040,84 @@ do -- DESIGNATE
       end
     end    
     
+    if self.AutoLase or ( not self.AutoLase and ( self.LaseStart + Duration >= timer.getTime() ) ) then
 
-    TargetSetUnit:ForEachUnitPerThreatLevel( 10, 0,
-      --- @param Wrapper.Unit#UNIT SmokeUnit
-      function( TargetUnit )
-      
-        self:F( { TargetUnit = TargetUnit:GetName() } )
-
-        if MarkingCount < self.MaximumMarkings then
-
-          if TargetUnit:IsAlive() then
+      TargetSetUnit:ForEachUnitPerThreatLevel( 10, 0,
+        --- @param Wrapper.Unit#UNIT SmokeUnit
+        function( TargetUnit )
+        
+          self:F( { TargetUnit = TargetUnit:GetName() } )
   
-            local Recce = self.Recces[TargetUnit]
+          if MarkingCount < self.MaximumMarkings then
   
-            if not Recce then
-  
-              self:E( "Lasing..." )
-              self.RecceSet:Flush()
-  
-              for RecceGroupID, RecceGroup in pairs( self.RecceSet:GetSet() ) do
-                for UnitID, UnitData in pairs( RecceGroup:GetUnits() or {} ) do
-  
-                  local RecceUnit = UnitData -- Wrapper.Unit#UNIT
-                  local RecceUnitDesc = RecceUnit:GetDesc()
-                  --self:F( { RecceUnit = RecceUnit:GetName(), RecceDescription = RecceUnitDesc } )
-  
-                  if RecceUnit:IsLasing() == false then
-                    --self:F( { IsDetected = RecceUnit:IsDetected( TargetUnit ), IsLOS = RecceUnit:IsLOS( TargetUnit ) } )
-  
-                    if RecceUnit:IsDetected( TargetUnit ) and RecceUnit:IsLOS( TargetUnit ) then
-  
-                      local LaserCodeIndex = math.random( 1, #self.LaserCodes )
-                      local LaserCode = self.LaserCodes[LaserCodeIndex]
-                      --self:F( { LaserCode = LaserCode, LaserCodeUsed = self.LaserCodesUsed[LaserCode] } )
-  
-                      if LaserCodeRequested and LaserCodeRequested ~= LaserCode then
-                        LaserCode = LaserCodeRequested
-                        LaserCodeRequested = nil
-                      end
-  
-                      if not self.LaserCodesUsed[LaserCode] then
-  
-                        self.LaserCodesUsed[LaserCode] = LaserCodeIndex
-                        local Spot = RecceUnit:LaseUnit( TargetUnit, LaserCode, Duration )
-                        local AttackSet = self.AttackSet
-  
-                        function Spot:OnAfterDestroyed( From, Event, To )
-                          self:E( "Destroyed Message" )
-                          self.Recce:ToSetGroup( "Target " .. TargetUnit:GetTypeName() .. " destroyed. " .. TargetSetUnit:Count() .. " targets left.", 5, AttackSet, self.DesignateName )
+            if TargetUnit:IsAlive() then
+    
+              local Recce = self.Recces[TargetUnit]
+    
+              if not Recce then
+    
+                self:E( "Lasing..." )
+                self.RecceSet:Flush()
+    
+                for RecceGroupID, RecceGroup in pairs( self.RecceSet:GetSet() ) do
+                  for UnitID, UnitData in pairs( RecceGroup:GetUnits() or {} ) do
+    
+                    local RecceUnit = UnitData -- Wrapper.Unit#UNIT
+                    local RecceUnitDesc = RecceUnit:GetDesc()
+                    --self:F( { RecceUnit = RecceUnit:GetName(), RecceDescription = RecceUnitDesc } )
+    
+                    if RecceUnit:IsLasing() == false then
+                      --self:F( { IsDetected = RecceUnit:IsDetected( TargetUnit ), IsLOS = RecceUnit:IsLOS( TargetUnit ) } )
+    
+                      if RecceUnit:IsDetected( TargetUnit ) and RecceUnit:IsLOS( TargetUnit ) then
+    
+                        local LaserCodeIndex = math.random( 1, #self.LaserCodes )
+                        local LaserCode = self.LaserCodes[LaserCodeIndex]
+                        --self:F( { LaserCode = LaserCode, LaserCodeUsed = self.LaserCodesUsed[LaserCode] } )
+    
+                        if LaserCodeRequested and LaserCodeRequested ~= LaserCode then
+                          LaserCode = LaserCodeRequested
+                          LaserCodeRequested = nil
                         end
-  
-                        self.Recces[TargetUnit] = RecceUnit
-                        RecceUnit:MessageToSetGroup( "Marking " .. TargetUnit:GetTypeName() .. " with laser " .. RecceUnit:GetSpot().LaserCode .. " for " .. Duration .. "s.", 5, self.AttackSet, self.DesignateName )
-                        -- OK. We have assigned for the Recce a TargetUnit. We can exit the function.
+    
+                        if not self.LaserCodesUsed[LaserCode] then
+    
+                          self.LaserCodesUsed[LaserCode] = LaserCodeIndex
+                          local Spot = RecceUnit:LaseUnit( TargetUnit, LaserCode, Duration )
+                          local AttackSet = self.AttackSet
+    
+                          function Spot:OnAfterDestroyed( From, Event, To )
+                            self:E( "Destroyed Message" )
+                            self.Recce:ToSetGroup( "Target " .. TargetUnit:GetTypeName() .. " destroyed. " .. TargetSetUnit:Count() .. " targets left.", 5, AttackSet, self.DesignateName )
+                          end
+    
+                          self.Recces[TargetUnit] = RecceUnit
+                          RecceUnit:MessageToSetGroup( "Marking " .. TargetUnit:GetTypeName() .. " with laser " .. RecceUnit:GetSpot().LaserCode .. " for " .. Duration .. "s.", 5, self.AttackSet, self.DesignateName )
+                          -- OK. We have assigned for the Recce a TargetUnit. We can exit the function.
+                          MarkingCount = MarkingCount + 1
+                          local TargetUnitType = TargetUnit:GetTypeName()
+                          if not MarkedTypes[TargetUnitType] then
+                            MarkedTypes[TargetUnitType] = true
+                            ReportTypes:Add(TargetUnitType)
+                          end
+                          ReportLaserCodes:Add(RecceUnit.LaserCode)
+                          return
+                        end
+                      else
+                        --RecceUnit:MessageToSetGroup( "Can't mark " .. TargetUnit:GetTypeName(), 5, self.AttackSet )
+                      end
+                    else
+                      -- The Recce is lasing, but the Target is not detected or within LOS. So stop lasing and send a report.
+    
+                      if not RecceUnit:IsDetected( TargetUnit ) or not RecceUnit:IsLOS( TargetUnit ) then
+    
+                        local Recce = self.Recces[TargetUnit] -- Wrapper.Unit#UNIT
+    
+                        if Recce then
+                          Recce:LaseOff()
+                          Recce:MessageToSetGroup( "Target " .. TargetUnit:GetTypeName() "out of LOS. Cancelling lase!", 5, self.AttackSet, self.DesignateName )
+                        end
+                      else
                         MarkingCount = MarkingCount + 1
                         local TargetUnitType = TargetUnit:GetTypeName()
                         if not MarkedTypes[TargetUnitType] then
@@ -1098,58 +1125,38 @@ do -- DESIGNATE
                           ReportTypes:Add(TargetUnitType)
                         end
                         ReportLaserCodes:Add(RecceUnit.LaserCode)
-                        return
-                      end
-                    else
-                      --RecceUnit:MessageToSetGroup( "Can't mark " .. TargetUnit:GetTypeName(), 5, self.AttackSet )
+                      end  
                     end
-                  else
-                    -- The Recce is lasing, but the Target is not detected or within LOS. So stop lasing and send a report.
-  
-                    if not RecceUnit:IsDetected( TargetUnit ) or not RecceUnit:IsLOS( TargetUnit ) then
-  
-                      local Recce = self.Recces[TargetUnit] -- Wrapper.Unit#UNIT
-  
-                      if Recce then
-                        Recce:LaseOff()
-                        Recce:MessageToSetGroup( "Target " .. TargetUnit:GetTypeName() "out of LOS. Cancelling lase!", 5, self.AttackSet, self.DesignateName )
-                      end
-                    else
-                      MarkingCount = MarkingCount + 1
-                      local TargetUnitType = TargetUnit:GetTypeName()
-                      if not MarkedTypes[TargetUnitType] then
-                        MarkedTypes[TargetUnitType] = true
-                        ReportTypes:Add(TargetUnitType)
-                      end
-                      ReportLaserCodes:Add(RecceUnit.LaserCode)
-                    end  
                   end
                 end
+              else
+                MarkingCount = MarkingCount + 1
+                local TargetUnitType = TargetUnit:GetTypeName()
+                if not MarkedTypes[TargetUnitType] then
+                  MarkedTypes[TargetUnitType] = true
+                  ReportTypes:Add(TargetUnitType)
+                end
+                ReportLaserCodes:Add(Recce.LaserCode)
+                --Recce:MessageToSetGroup( self.DesignateName .. ": Marking " .. TargetUnit:GetTypeName() .. " with laser " .. Recce.LaserCode .. ".", 5, self.AttackSet )
               end
-            else
-              MarkingCount = MarkingCount + 1
-              local TargetUnitType = TargetUnit:GetTypeName()
-              if not MarkedTypes[TargetUnitType] then
-                MarkedTypes[TargetUnitType] = true
-                ReportTypes:Add(TargetUnitType)
-              end
-              ReportLaserCodes:Add(Recce.LaserCode)
-              --Recce:MessageToSetGroup( self.DesignateName .. ": Marking " .. TargetUnit:GetTypeName() .. " with laser " .. Recce.LaserCode .. ".", 5, self.AttackSet )
             end
           end
         end
+      )
+
+      local MarkedTypesText = ReportTypes:Text(', ')
+      local MarkedLaserCodesText = ReportLaserCodes:Text(', ')
+      for MarkedType, MarketCount in pairs( MarkedTypes ) do
+        self.CC:GetPositionable():MessageToSetGroup( "Marking " .. MarkingCount .. " x " .. MarkedTypesText .. " with lasers " .. MarkedLaserCodesText .. ".", 5, self.AttackSet, self.DesignateName )
       end
-    )
+  
+      self:__Lasing( -30, Index, Duration, LaserCodeRequested )
+      
+      self:SetDesignateMenu()
 
-    local MarkedTypesText = ReportTypes:Text(', ')
-    local MarkedLaserCodesText = ReportLaserCodes:Text(', ')
-    for MarkedType, MarketCount in pairs( MarkedTypes ) do
-      self.CC:GetPositionable():MessageToSetGroup( "Marking " .. MarkingCount .. " x " .. MarkedTypesText .. " with lasers " .. MarkedLaserCodesText .. ".", 5, self.AttackSet, self.DesignateName )
+    else
+      self:__LaseOff( 1 )
     end
-
-    self:__Lasing( -30, Index, Duration )
-    
-    self:SetDesignateMenu()
 
   end
     
