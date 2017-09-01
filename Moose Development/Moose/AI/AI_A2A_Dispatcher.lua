@@ -1551,6 +1551,7 @@ do -- AI_A2A_DISPATCHER
     
     local RecceSet = self.Detection:GetDetectionSetGroup()
     RecceSet:FilterPrefixes( DefenderSquadron.TemplatePrefixes )
+    RecceSet:FilterStart()
     
     self.Detection:SetFriendlyPrefixes( DefenderSquadron.TemplatePrefixes )
     
