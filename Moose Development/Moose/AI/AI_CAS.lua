@@ -539,7 +539,7 @@ function AI_CAS_ZONE:onafterEngage( Controllable, From, Event, To,
     Controllable:OptionROEOpenFire()
     Controllable:OptionROTVertical()
     
-    self:SetDetectionInterval( 2 )
+    self:SetRefreshTimeInterval( 2 )
     self:SetDetectionActivated()
     self:__Target( -2 ) -- Start Targetting
   end

@@ -479,12 +479,6 @@ DETECTION uses the in-built detection capabilities of DCS World, but adds new fu
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).DetectionInterval">DETECTION_BASE.DetectionInterval</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).DetectionRange">DETECTION_BASE.DetectionRange</a></td>
 		<td class="summary">
 <p>The range till which targets are accepted to be detected.</p>
@@ -532,13 +526,31 @@ The different values of Unit.Category can be:</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).FilterFriendliesCategory">DETECTION_BASE:FilterFriendliesCategory(FriendliesCategory)</a></td>
+		<td class="summary">
+<p>Filters friendly units by unit category.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).ForgetDetectedUnit">DETECTION_BASE:ForgetDetectedUnit(UnitName)</a></td>
 		<td class="summary">
 <p>Forget a Unit from a DetectionItem</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).FriendliesCategory">DETECTION_BASE.FriendliesCategory</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).FriendliesRange">DETECTION_BASE.FriendliesRange</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).FriendlyPrefixes">DETECTION_BASE.FriendlyPrefixes</a></td>
 		<td class="summary">
 
 </td>
@@ -802,6 +814,12 @@ The different values of Unit.Category can be:</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).RefreshTimeInterval">DETECTION_BASE.RefreshTimeInterval</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).RejectZones">DETECTION_BASE.RejectZones</a></td>
 		<td class="summary">
 
@@ -868,12 +886,6 @@ The different values of Unit.Category can be:</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).SetDetectionInterval">DETECTION_BASE:SetDetectionInterval(DetectionInterval)</a></td>
-		<td class="summary">
-<p>Set the detection interval time in seconds.</p>
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).SetDistanceProbability">DETECTION_BASE:SetDistanceProbability(DistanceProbability)</a></td>
 		<td class="summary">
 <p>Upon a <strong>visual</strong> detection, the further away a detected object is, the less likely it is to be detected properly.</p>
@@ -886,9 +898,21 @@ The different values of Unit.Category can be:</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).SetFriendlyPrefixes">DETECTION_BASE:SetFriendlyPrefixes(FriendlyPrefixes)</a></td>
+		<td class="summary">
+<p>This will allow during friendly search any recce or detection unit to be also considered as a friendly.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).SetIntercept">DETECTION_BASE:SetIntercept(Intercept, IntereptDelay, InterceptDelay)</a></td>
 		<td class="summary">
 <p>Set the parameters to calculate to optimal intercept point.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_BASE).SetRefreshTimeInterval">DETECTION_BASE:SetRefreshTimeInterval(RefreshTimeInterval)</a></td>
+		<td class="summary">
+<p>Set the detection interval time in seconds.</p>
 </td>
 		</tr>
 		<tr>
@@ -2619,20 +2643,6 @@ The group to generate the report for.</p>
 		<dl class="function">
 <dt>
 
-		<em>#number</em>
-<a id="#(DETECTION_BASE).DetectionInterval" >
-<strong>DETECTION_BASE.DetectionInterval</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
 		<em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a></em>
 <a id="#(DETECTION_BASE).DetectionRange" >
 <strong>DETECTION_BASE.DetectionRange</strong>
@@ -2759,6 +2769,32 @@ self</p>
 		<dl class="function">
 <dt>
 
+<a id="#(DETECTION_BASE).FilterFriendliesCategory" >
+<strong>DETECTION_BASE:FilterFriendliesCategory(FriendliesCategory)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Filters friendly units by unit category.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> FriendliesCategory </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(DETECTION_BASE)">#DETECTION_BASE</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(DETECTION_BASE).ForgetDetectedUnit" >
 <strong>DETECTION_BASE:ForgetDetectedUnit(UnitName)</strong>
 </a>
@@ -2787,8 +2823,35 @@ The UnitName that needs to be forgotten from the DetectionItem Sets.</p>
 <dt>
 
 		<em></em>
+<a id="#(DETECTION_BASE).FriendliesCategory" >
+<strong>DETECTION_BASE.FriendliesCategory</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
 <a id="#(DETECTION_BASE).FriendliesRange" >
 <strong>DETECTION_BASE.FriendliesRange</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_BASE).FriendlyPrefixes" >
+<strong>DETECTION_BASE.FriendlyPrefixes</strong>
 </a>
 </dt>
 <dd>
@@ -3468,7 +3531,7 @@ true if already identified.</p>
 		<h3>Return value</h3>
 				
 <p><em>#boolean:</em>
-trhe if there are friendlies nearby </p>
+true if there are friendlies nearby </p>
 
 </dd>
 </dl>
@@ -3992,6 +4055,20 @@ Return false to cancel Transition.</p>
 		<dl class="function">
 <dt>
 
+		<em>#number</em>
+<a id="#(DETECTION_BASE).RefreshTimeInterval" >
+<strong>DETECTION_BASE.RefreshTimeInterval</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 		<em></em>
 <a id="#(DETECTION_BASE).RejectZones" >
 <strong>DETECTION_BASE.RejectZones</strong>
@@ -4278,33 +4355,6 @@ DetectedItem to calculate the threatlevel for.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(DETECTION_BASE).SetDetectionInterval" >
-<strong>DETECTION_BASE:SetDetectionInterval(DetectionInterval)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Set the detection interval time in seconds.</p>
-
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em>#number DetectionInterval </em></code>: 
-Interval in seconds.</p>
-
-				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em><a href="##(DETECTION_BASE)">#DETECTION_BASE</a>:</em>
-self</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
 <a id="#(DETECTION_BASE).SetDistanceProbability" >
 <strong>DETECTION_BASE:SetDistanceProbability(DistanceProbability)</strong>
 </a>
@@ -4365,6 +4415,39 @@ self</p>
 		<dl class="function">
 <dt>
 
+<a id="#(DETECTION_BASE).SetFriendlyPrefixes" >
+<strong>DETECTION_BASE:SetFriendlyPrefixes(FriendlyPrefixes)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>This will allow during friendly search any recce or detection unit to be also considered as a friendly.</p>
+
+	
+<p>By default, recce aren't considered friendly, because that would mean that a recce would be also an attacking friendly,
+and this is wrong.
+However, in a CAP situation, when the CAP is part of an EWR network, the CAP is also an attacker.
+This, this method allows to register for a detection the CAP unit name prefixes to be considered CAP.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string FriendlyPrefixes </em></code>: 
+A string or a list of prefixes.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(DETECTION_BASE)">#DETECTION_BASE</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(DETECTION_BASE).SetIntercept" >
 <strong>DETECTION_BASE:SetIntercept(Intercept, IntereptDelay, InterceptDelay)</strong>
 </a>
@@ -4390,6 +4473,33 @@ If Intercept is true, then InterceptDelay is the average time it takes to get ai
 				<li>
 				
 <p><code><em> InterceptDelay </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(DETECTION_BASE)">#DETECTION_BASE</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DETECTION_BASE).SetRefreshTimeInterval" >
+<strong>DETECTION_BASE:SetRefreshTimeInterval(RefreshTimeInterval)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set the detection interval time in seconds.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number RefreshTimeInterval </em></code>: 
+Interval in seconds.</p>
 
 				</li>
 		</ul>

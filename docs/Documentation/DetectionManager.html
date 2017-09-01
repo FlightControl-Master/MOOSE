@@ -121,7 +121,7 @@ Reportings can be done in several manners, and it is up to the derived classes i
 <h2>1.2) DETECTION_MANAGER reporting:</h2>
 <p>Derived DETECTION_MANAGER classes will reports detected units using the method <a href="DetectionManager.html##(DETECTION_MANAGER).ReportDetected">DetectionManager#DETECTION_MANAGER.ReportDetected</a>(). This method implements polymorphic behaviour.</p>
 
-<p>The time interval in seconds of the reporting can be changed using the methods <a href="DetectionManager.html##(DETECTION_MANAGER).SetReportInterval">DetectionManager#DETECTION_MANAGER.SetReportInterval</a>(). 
+<p>The time interval in seconds of the reporting can be changed using the methods <a href="DetectionManager.html##(DETECTION_MANAGER).SetRefreshTimeInterval">DetectionManager#DETECTION_MANAGER.SetRefreshTimeInterval</a>(). 
 To control how long a reporting message is displayed, use <a href="DetectionManager.html##(DETECTION_MANAGER).SetReportDisplayTime">DetectionManager#DETECTION_MANAGER.SetReportDisplayTime</a>().
 Derived classes need to implement the method <a href="DetectionManager.html##(DETECTION_MANAGER).GetReportDisplayTime">DetectionManager#DETECTION_MANAGER.GetReportDisplayTime</a>() to use the correct display time for displayed messages during a report.</p>
 
@@ -223,15 +223,15 @@ If an ad-hoc report is requested, use the method <a href="DetectionManager.html#
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_MANAGER).SetReportDisplayTime">DETECTION_MANAGER:SetReportDisplayTime(ReportDisplayTime)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_MANAGER).SetRefreshTimeInterval">DETECTION_MANAGER:SetRefreshTimeInterval(RefreshTimeInterval)</a></td>
 		<td class="summary">
-<p>Set the reporting message display time.</p>
+<p>Set the reporting time interval.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_MANAGER).SetReportInterval">DETECTION_MANAGER:SetReportInterval(ReportInterval)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_MANAGER).SetReportDisplayTime">DETECTION_MANAGER:SetReportDisplayTime(ReportDisplayTime)</a></td>
 		<td class="summary">
-<p>Set the reporting time interval.</p>
+<p>Set the reporting message display time.</p>
 </td>
 		</tr>
 		<tr>
@@ -247,13 +247,13 @@ If an ad-hoc report is requested, use the method <a href="DetectionManager.html#
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_MANAGER)._ReportDisplayTime">DETECTION_MANAGER._ReportDisplayTime</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_MANAGER)._RefreshTimeInterval">DETECTION_MANAGER._RefreshTimeInterval</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(DETECTION_MANAGER)._ReportInterval">DETECTION_MANAGER._ReportInterval</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(DETECTION_MANAGER)._ReportDisplayTime">DETECTION_MANAGER._ReportDisplayTime</a></td>
 		<td class="summary">
 
 </td>
@@ -614,6 +614,33 @@ self</p>
 		<dl class="function">
 <dt>
 
+<a id="#(DETECTION_MANAGER).SetRefreshTimeInterval" >
+<strong>DETECTION_MANAGER:SetRefreshTimeInterval(RefreshTimeInterval)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set the reporting time interval.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number RefreshTimeInterval </em></code>: 
+The interval in seconds when a report needs to be done.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(DETECTION_MANAGER)">#DETECTION_MANAGER</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(DETECTION_MANAGER).SetReportDisplayTime" >
 <strong>DETECTION_MANAGER:SetReportDisplayTime(ReportDisplayTime)</strong>
 </a>
@@ -628,33 +655,6 @@ self</p>
 				
 <p><code><em>#number ReportDisplayTime </em></code>: 
 The display time in seconds when a report needs to be done.</p>
-
-				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em><a href="##(DETECTION_MANAGER)">#DETECTION_MANAGER</a>:</em>
-self</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(DETECTION_MANAGER).SetReportInterval" >
-<strong>DETECTION_MANAGER:SetReportInterval(ReportInterval)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Set the reporting time interval.</p>
-
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em>#number ReportInterval </em></code>: 
-The interval in seconds when a report needs to be done.</p>
 
 				</li>
 		</ul>
@@ -695,8 +695,8 @@ self</p>
 <dt>
 
 		<em></em>
-<a id="#(DETECTION_MANAGER)._ReportDisplayTime" >
-<strong>DETECTION_MANAGER._ReportDisplayTime</strong>
+<a id="#(DETECTION_MANAGER)._RefreshTimeInterval" >
+<strong>DETECTION_MANAGER._RefreshTimeInterval</strong>
 </a>
 </dt>
 <dd>
@@ -709,8 +709,8 @@ self</p>
 <dt>
 
 		<em></em>
-<a id="#(DETECTION_MANAGER)._ReportInterval" >
-<strong>DETECTION_MANAGER._ReportInterval</strong>
+<a id="#(DETECTION_MANAGER)._ReportDisplayTime" >
+<strong>DETECTION_MANAGER._ReportDisplayTime</strong>
 </a>
 </dt>
 <dd>

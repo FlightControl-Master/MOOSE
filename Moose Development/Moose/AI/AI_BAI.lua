@@ -612,7 +612,7 @@ function AI_BAI_ZONE:onafterEngage( Controllable, From, Event, To,
     --- NOW ROUTE THE GROUP!
     Controllable:WayPointExecute( 1 )
 
-    self:SetDetectionInterval( 2 )
+    self:SetRefreshTimeInterval( 2 )
     self:SetDetectionActivated()
     self:__Target( -2 ) -- Start Targetting
   end
