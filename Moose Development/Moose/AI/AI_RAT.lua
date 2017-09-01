@@ -430,9 +430,6 @@ function RAT:Spawn(naircraft, name)
   text=text.."Takeoff type: "..self.takeoff.."\n"
   text=text.."Friendly airports: "..self.friendly  
   env.info(myid..text)
-  if self.debug then
-    MESSAGE:New(text, 60, "Info"):ToAll()
-  end
   
   -- Schedule spawning of aircraft.
   local Tstart=self.spawndelay
@@ -528,9 +525,6 @@ function RAT:_InitAircraft(DCSgroup)
   text=text..string.format("FL cruise = FL%3.0f = %6.1f km\n",   self.aircraft.FLcruise/FL2m, self.aircraft.FLcruise/1000)
   text=text..string.format("******************************************************\n")
   env.info(myid..text)
-  if self.debug then
-    MESSAGE:New(text, 60):ToAll()
-  end
 
 end
 
@@ -599,7 +593,7 @@ function RAT:_SetRoute()
   local VxCruiseMax = math.min(self.aircraft.Vmax*0.90, 250)
   
   -- Cruise speed (randomized).
-  local VxCruise = self:_Randomize((VxCruiseMax-VxCruiseMin)/2, 0.3 , VxCruiseMin, VxCruiseMax)
+  local VxCruise = self:_Randomize((VxCruiseMax-VxCruiseMin)/2+VxCruiseMin, 0.3 , VxCruiseMin, VxCruiseMax)
   
   -- Climb speed 90% ov Vmax but max 720 km/h.
   local VxClimb = math.min(self.aircraft.Vmax*0.90, 200)
@@ -610,30 +604,8 @@ function RAT:_SetRoute()
   local VxHolding = VxDescent*0.8
   local VxFinal   = VxHolding*0.8
   
---[[
-    -- actual travel speed (random between ASmin and ASmax)
-  --TODO: This needs to be placed somewhere else! Randomization should not happen here. Otherwise it is not changed for multiple spawns.
-  self.aircraft.Vcruise = math.random(self.aircraft.Vmin, self.aircraft.Vmax)
-  
-  -- Limit travel speed to ~900 km/h for jets.
-  self.aircraft.Vcruise = math.min(self.aircraft.Vcruise, self.aircraft.Vmax)
-  
-  -- Reasonably civil climb speed Vy=1500 ft/min but max aircraft specific climb rate.
-  self.aircraft.Vclimb=math.min(self.Vclimb*ft2meter/60, self.aircraft.Vymax)
-  
-  -- Climb angle in rad.
-  self.aircraft.AlphaClimb=math.asin(self.aircraft.Vclimb/self.aircraft.Vmax)
-  
-  -- Descent angle in rad.
-  self.aircraft.AlphaDescent=math.rad(self.AlphaDescent)  
-]]
-
   -- Reasonably civil climb speed Vy=1500 ft/min but max aircraft specific climb rate.
   local VyClimb=math.min(self.Vclimb*ft2meter/60, self.aircraft.Vymax)
-  
-  -- CLIMB and DESCENT angles
-  --local AlphaClimb=self.aircraft.AlphaClimb
-  --local AlphaDescent=self.aircraft.AlphaDescent
   
   -- Climb angle in rad.
   local AlphaClimb=math.asin(VyClimb/VxClimb)
@@ -649,7 +621,7 @@ function RAT:_SetRoute()
   -- Coordinates of departure point.
   local Pdeparture
   if self.takeoff=="air" then
-      -- For an air start, we take a random point within the spawn zone.
+    -- For an air start, we take a random point within the spawn zone.
     local vec2=departure:GetRandomVec2()
     --Pdeparture=COORDINATE:New(vec2.x, self.aircraft.FLcruise, vec2.y)
     Pdeparture=COORDINATE:NewFromVec2(vec2) 
@@ -712,14 +684,14 @@ function RAT:_SetRoute()
   end
   h_holding=self:_Randomize(h_holding, 0.2)
     
-  -- Distance from holding point to destination.
+  -- Distance from holding point to final destination.
   local d_holding=Pholding:Get2DDistance(Pdestination)
   
   -- GENERAL
-  -- heading from departure to holding point of destination
-  local heading=self:_Course(Pdeparture, Pholding) -- heading from departure to destination
+  -- Heading from departure to holding point of destination.
+  local heading=self:_Course(Pdeparture, Pholding)
   
-  -- total distance between departure and holding point (+last bit to destination)
+  -- Total distance between departure and holding point near destination.
   local d_total=Pdeparture:Get2DDistance(Pholding)
     
   --CRUISE  
@@ -730,7 +702,7 @@ function RAT:_SetRoute()
   if self.category=="plane" then
   
     -- Min cruise alt is just above holding point at destination or departure height, whatever is larger.
-    FLmin=math.max(H_departure, H_destination+h_holding)
+    FLmin=math.max(H_departure, Pholding.y+h_holding)
     
     -- Check if the distance between the two airports is large enough to reach the desired FL and descent again at the given climb/descent rates.
     if self.takeoff=="air" then
@@ -795,30 +767,28 @@ function RAT:_SetRoute()
   
   -- debug message
   local text=string.format("\n\n******************************************************\n")
-  text=text..string.format("Route distances:\n")
-  text=text..string.format("d_climb   = %6.1f km\n", d_climb/1000)
-  text=text..string.format("d_cruise  = %6.1f km\n", d_cruise/1000)
-  text=text..string.format("d_descent = %6.1f km\n", d_descent/1000)
-  text=text..string.format("d_holding = %6.1f km\n", d_holding/1000)
-  text=text..string.format("d_total   = %6.1f km\n", d_total/1000)
-  text=text..string.format("\nRoute heights:\n")
+  text=text..string.format("Distances:\n")
+  text=text..string.format("d_climb       = %6.1f km\n", d_climb/1000)
+  text=text..string.format("d_cruise      = %6.1f km\n", d_cruise/1000)
+  text=text..string.format("d_descent     = %6.1f km\n", d_descent/1000)
+  text=text..string.format("d_holding     = %6.1f km\n", d_holding/1000)
+  text=text..string.format("d_total       = %6.1f km\n", d_total/1000)
+  text=text..string.format("\nHeights:\n")
   text=text..string.format("H_departure   = %6.1f m ASL\n", H_departure)
   text=text..string.format("H_destination = %6.1f m ASL\n", H_destination)
+  text=text..string.format("H_holding     = %6.1f m ASL\n", Pholding.y)
   text=text..string.format("h_climb       = %6.1f m AGL\n", h_climb)
   text=text..string.format("h_descent     = %6.1f m\n",     h_descent)
   text=text..string.format("h_holding     = %6.1f m AGL\n", h_holding)
-  text=text..string.format("P_holding alt = %6.1f m ASL\n", Pholding.y)
-  text=text..string.format("Alpha_climb   = %6.1f Deg\n",   math.deg(AlphaClimb))
-  text=text..string.format("Alpha_descent = %6.1f Deg\n",   math.deg(AlphaDescent))
   text=text..string.format("FLmin         = %6.1f m ASL\n", FLmin)
   text=text..string.format("FLmax         = %6.1f m ASL\n", FLmax)
   text=text..string.format("FLcruise      = %6.1f m ASL\n", FLcruise)
-  text=text..string.format("Heading = %6.1f Degrees\n", heading)
+  text=text..string.format("\nAngles:\n")  
+  text=text..string.format("Alpha_climb   = %6.1f Deg\n",   math.deg(AlphaClimb))
+  text=text..string.format("Alpha_descent = %6.1f Deg\n",   math.deg(AlphaDescent))
+  text=text..string.format("Heading       = %6.1f Deg\n",   heading)
   text=text..string.format("******************************************************\n")
   env.info(myid..text)
-  if self.debug then
-    MESSAGE:New(text, 60):ToAll()
-  end
   
   -- Coordinates of route from departure (0) to cruise (1) to descent (2) to holing (3) to destination (4).
   local c0=Pdeparture
@@ -924,7 +894,7 @@ function RAT:_SetDeparture()
     text="Chosen departure airport: "..departure:GetName().." (ID "..departure:GetID()..")"
   end
   env.info(myid..text)
-  MESSAGE:New(text, 60):ToAll()
+  MESSAGE:New(text, 30):ToAll()
   
   return departure
 end
@@ -958,9 +928,8 @@ function RAT:_SetDestination()
   local destination=destinations[math.random(#destinations)] -- Wrapper.Airbase#AIRBASE
   
   local text="Chosen destination airport: "..destination:GetName().." (ID "..destination:GetID()..")"
-  self:E(destination:GetDesc())  
   env.info(myid..text)
-  MESSAGE:New(text, 60):ToAll()
+  MESSAGE:New(text, 30):ToAll()
   
   return destination
 end
@@ -1473,7 +1442,7 @@ end
 
 --- Provide information about the assigned flightplan.
 -- @param #RAT self
--- @param #list waypoints Waypoints of the flight plan.
+-- @param #table waypoints Waypoints of the flight plan.
 -- @param #string comment Some comment to identify the provided information.
 -- @return #number total Total route length in meters.
 function RAT:_Routeinfo(waypoints, comment)
@@ -1505,10 +1474,7 @@ function RAT:_Routeinfo(waypoints, comment)
   text=text..string.format("Total distance = %6.1f km", total/1000)
   
   -- send message
-  env.info(text)
-  if self.debug then
-    MESSAGE:New(text, 60):ToAll()
-  end
+  env.info(myid..text)
   
   -- return total route length in meters
   return total
@@ -1551,6 +1517,7 @@ function RAT:_ModifySpawnTemplate(waypoints)
         SpawnTemplate.units[UnitID].x   = TX
         SpawnTemplate.units[UnitID].y   = TY
         SpawnTemplate.units[UnitID].alt = PointVec3.y
+        --TODO: Somehow this does not work. Initial heading of the units for air start is not equal to heading specified here.
         SpawnTemplate.units[UnitID].heading = heading
         self:T('After Translation SpawnTemplate.units['..UnitID..'].x = '..SpawnTemplate.units[UnitID].x..', SpawnTemplate.units['..UnitID..'].y = '..SpawnTemplate.units[UnitID].y)
       end
@@ -1563,7 +1530,6 @@ function RAT:_ModifySpawnTemplate(waypoints)
       -- Also modify x,y of the template. Not sure why.
       SpawnTemplate.x = PointVec3.x
       SpawnTemplate.y = PointVec3.z
-      SpawnTemplate.heading = heading
       
       -- Update modified template for spawn group.
       self.SpawnGroups[self.SpawnIndex].SpawnTemplate=SpawnTemplate
@@ -1623,10 +1589,9 @@ function RAT:_FLmax(alpha, beta, d, h0)
   local b=d*math.sin(beta)/math.sin(gamma)
   local h1=b*math.sin(alpha)
   local h2=a*math.sin(beta)
-  local FL2m=30.48
   -- h1 and h2 should be equal.
-  local text=string.format("FLmax = FL%3.0f = %6.1f m.\n", h1/FL2m, h1)
-  text=text..string.format("FLmax = FL%3.0f = %6.1f m.",   h2/FL2m, h2)
+  local text=string.format("FLmax = FL%3.0f = %6.1f m.\n", h1/RAT.unit.FL2m, h1)
+  text=text..string.format("FLmax = FL%3.0f = %6.1f m.",   h2/RAT.unit.FL2m, h2)
   env.info(myid..text)
   return b*math.sin(alpha)+h0
 end
