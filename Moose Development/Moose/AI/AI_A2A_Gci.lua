@@ -360,14 +360,13 @@ function AI_A2A_GCI:onafterEngage( AIGroup, From, Event, To, AttackSetUnit )
   
   local FirstAttackUnit = self.AttackSetUnit:GetFirst()
   
-  if FirstAttackUnit then
+  if FirstAttackUnit and FirstAttackUnit:IsAlive() then
 
     if AIGroup:IsAlive() then
   
       local EngageRoute = {}
       
       local CurrentCoord = AIGroup:GetCoordinate()
-            
   
       --- Calculate the target route point.
       

@@ -391,9 +391,9 @@ function AI_A2A_CAP:onafterEngage( AIGroup, From, Event, To, AttackSetUnit )
 
   self.AttackSetUnit = AttackSetUnit or self.AttackSetUnit -- Core.Set#SET_UNIT
   
-  local FirstAttackUnit = self.AttackSetUnit:GetFirst()
+  local FirstAttackUnit = self.AttackSetUnit:GetFirst() -- Wrapper.Unit#UNIT
   
-  if FirstAttackUnit then
+  if FirstAttackUnit and FirstAttackUnit:IsAlive() then -- If there is no attacker anymore, stop the engagement.
   
     if AIGroup:IsAlive() then
 
