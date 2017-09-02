@@ -1369,14 +1369,14 @@ do -- AI_A2A_DISPATCHER
   ---
   -- @param #AI_A2A_DISPATCHER self
   -- @param Wrapper.Group#GROUP AIGroup
-  function AI_A2A_DISPATCHER:SetDefenderTaskTarget( Defender, Target )
+  function AI_A2A_DISPATCHER:SetDefenderTaskTarget( Defender, AttackerDetection )
     
     local Message = "(" .. self.DefenderTasks[Defender].Type .. ") " 
     Message = Message .. Defender:GetName() 
-    Message = Message .. ( Target and ( " target " .. Target.Index .. " [" .. Target.Set:Count() .. "]" ) ) or ""
-    self:F( { Target = Message } )
-    if Target then
-      self.DefenderTasks[Defender].Target = Target
+    Message = Message .. ( AttackerDetection and ( " target " .. AttackerDetection.Index .. " [" .. AttackerDetection.Set:Count() .. "]" ) ) or ""
+    self:F( { AttackerDetection = Message } )
+    if AttackerDetection then
+      self.DefenderTasks[Defender].Target = AttackerDetection
     end
     return self
   end
@@ -2510,20 +2510,20 @@ do -- AI_A2A_DISPATCHER
   
   ---
   -- @param #AI_A2A_DISPATCHER self
-  function AI_A2A_DISPATCHER:CountDefendersEngaged( Target )
+  function AI_A2A_DISPATCHER:CountDefendersEngaged( AttackerDetection )
 
     -- First, count the active AIGroups Units, targetting the DetectedSet
     local AIUnitCount = 0
     
     self:E( "Counting Defenders Engaged for Attacker:" )
-    local DetectedSet = Target.Set
+    local DetectedSet = AttackerDetection.Set
     DetectedSet:Flush()
     
     local DefenderTasks = self:GetDefenderTasks()
     for AIGroup, DefenderTask in pairs( DefenderTasks ) do
       local AIGroup = AIGroup -- Wrapper.Group#GROUP
       local DefenderTask = self:GetDefenderTaskTarget( AIGroup )
-      if DefenderTask and DefenderTask.Index == Target.Index then
+      if DefenderTask and DefenderTask.Index == AttackerDetection.Index then
         AIUnitCount = AIUnitCount + AIGroup:GetSize()
         self:E( "Defender Group Name: " .. AIGroup:GetName() .. ", Size: " .. AIGroup:GetSize() )
       end
@@ -2534,18 +2534,18 @@ do -- AI_A2A_DISPATCHER
   
   ---
   -- @param #AI_A2A_DISPATCHER self
-  function AI_A2A_DISPATCHER:CountDefendersToBeEngaged( DetectedItem, DefenderCount )
+  function AI_A2A_DISPATCHER:CountDefendersToBeEngaged( AttackerDetection, DefenderCount )
   
     local Friendlies = nil
 
-    local DetectedSet = DetectedItem.Set
-    local DetectedCount = DetectedSet:Count()
+    local AttackerSet = AttackerDetection.Set
+    local AttackerCount = AttackerSet:Count()
 
-    local AIFriendlies = self:GetAIFriendliesNearBy( DetectedItem )
+    local DefenderFriendlies = self:GetAIFriendliesNearBy( AttackerDetection )
     
-    for FriendlyDistance, AIFriendly in UTILS.spairs( AIFriendlies or {} ) do
+    for FriendlyDistance, AIFriendly in UTILS.spairs( DefenderFriendlies or {} ) do
       -- We only allow to ENGAGE targets as long as the Units on both sides are balanced.
-      if DetectedCount > DefenderCount then 
+      if AttackerCount > DefenderCount then 
         local Friendly = AIFriendly:GetGroup() -- Wrapper.Group#GROUP
         if Friendly and Friendly:IsAlive() then
           -- Ok, so we have a friendly near the potential target.
@@ -2554,7 +2554,7 @@ do -- AI_A2A_DISPATCHER
           if DefenderTask then
             -- The Task should be CAP or GCI
             if DefenderTask.Type == "CAP" or DefenderTask.Type == "GCI" then
-              -- If there is no target, then add the AIGroup to the ResultAIGroups for Engagement to the TargetSet
+              -- If there is no target, then add the AIGroup to the ResultAIGroups for Engagement to the AttackerSet
               if DefenderTask.Target == nil then
                 if DefenderTask.Fsm:Is( "Returning" )
                 or DefenderTask.Fsm:Is( "Patrolling" ) then
@@ -2650,16 +2650,16 @@ do -- AI_A2A_DISPATCHER
 
   ---
   -- @param #AI_A2A_DISPATCHER self
-  function AI_A2A_DISPATCHER:onafterENGAGE( From, Event, To, Target, Defenders )
+  function AI_A2A_DISPATCHER:onafterENGAGE( From, Event, To, AttackerDetection, Defenders )
   
     if Defenders then
 
       for DefenderID, Defender in pairs( Defenders ) do
 
         local Fsm = self:GetDefenderTaskFsm( Defender )
-        Fsm:__Engage( 1, Target.Set ) -- Engage on the TargetSetUnit
+        Fsm:__Engage( 1, AttackerDetection.Set ) -- Engage on the TargetSetUnit
         
-        self:SetDefenderTaskTarget( Defender, Target )
+        self:SetDefenderTaskTarget( Defender, AttackerDetection )
 
       end
     end
@@ -2667,164 +2667,169 @@ do -- AI_A2A_DISPATCHER
 
   ---
   -- @param #AI_A2A_DISPATCHER self
-  function AI_A2A_DISPATCHER:onafterGCI( From, Event, To, DetectedItem, DefendersMissing, Friendlies )
+  function AI_A2A_DISPATCHER:onafterGCI( From, Event, To, AttackerDetection, DefendersMissing, DefenderFriendlies )
 
-    self:F( { From, Event, To, DetectedItem.Index, DefendersMissing, Friendlies } )
+    self:F( { From, Event, To, AttackerDetection.Index, DefendersMissing, DefenderFriendlies } )
 
-    local AttackerSet = DetectedItem.Set
-    local AttackerCount = AttackerSet:Count()
-    local DefendersCount = 0
-
-    for DefenderID, AIGroup in pairs( Friendlies or {} ) do
-
-      local Fsm = self:GetDefenderTaskFsm( AIGroup )
-      Fsm:__Engage( 1, AttackerSet ) -- Engage on the TargetSetUnit
+    local AttackerSet = AttackerDetection.Set
+    local AttackerUnit = AttackerSet:GetFirst()
+    
+    if AttackerUnit and AttackerUnit:IsAlive() then
+      local AttackerCount = AttackerSet:Count()
+      local DefenderCount = 0
+  
+      for DefenderID, DefenderGroup in pairs( DefenderFriendlies or {} ) do
+  
+        local Fsm = self:GetDefenderTaskFsm( DefenderGroup )
+        Fsm:__Engage( 1, AttackerSet ) -- Engage on the TargetSetUnit
+        
+        self:SetDefenderTaskTarget( DefenderGroup, AttackerDetection )
+  
+        DefenderCount = DefenderCount + DefenderGroup:GetSize()
+      end
+  
+      DefenderCount = DefendersMissing
+  
+      local ClosestDistance = 0
+      local ClosestDefenderSquadronName = nil
       
-      self:SetDefenderTaskTarget( AIGroup, DetectedItem )
-
-      DefendersCount = DefendersCount + AIGroup:GetSize()
-    end
-
-    DefendersCount = DefendersMissing
-
-    local ClosestDistance = 0
-    local ClosestDefenderSquadronName = nil
-    
-    local BreakLoop = false
-    
-    while( DefendersCount > 0 and not BreakLoop ) do
-      self:F( { DefenderSquadrons = self.DefenderSquadrons } )
-      for SquadronName, DefenderSquadron in pairs( self.DefenderSquadrons or {} ) do
-        self:F( { GCI = DefenderSquadron.Gci } )
-        for InterceptID, Intercept in pairs( DefenderSquadron.Gci or {} ) do
-    
-          self:F( { DefenderSquadron } )
-          local SpawnCoord = DefenderSquadron.Airbase:GetCoordinate() -- Core.Point#COORDINATE
-          --local TargetCoord = AttackerSet:GetFirst():GetCoordinate()
-          local InterceptCoord = DetectedItem.InterceptCoord
-          self:F({InterceptCoord = InterceptCoord})
-          if InterceptCoord then
-            local Distance = SpawnCoord:Get2DDistance( InterceptCoord )
-              self:F( { Distance = Distance, InterceptCoord = InterceptCoord } )
-            
-            if ClosestDistance == 0 or Distance < ClosestDistance then
+      local BreakLoop = false
+      
+      while( DefenderCount > 0 and not BreakLoop ) do
+        self:F( { DefenderSquadrons = self.DefenderSquadrons } )
+        for SquadronName, DefenderSquadron in pairs( self.DefenderSquadrons or {} ) do
+          self:F( { GCI = DefenderSquadron.Gci } )
+          for InterceptID, Intercept in pairs( DefenderSquadron.Gci or {} ) do
+      
+            self:F( { DefenderSquadron } )
+            local SpawnCoord = DefenderSquadron.Airbase:GetCoordinate() -- Core.Point#COORDINATE
+            local AttackerCoord = AttackerUnit:GetCoordinate()
+            local InterceptCoord = AttackerDetection.InterceptCoord
+            self:F({InterceptCoord = InterceptCoord})
+            if InterceptCoord then
+              local InterceptDistance = SpawnCoord:Get2DDistance( InterceptCoord )
+              local AirbaseDistance = SpawnCoord:Get2DDistance( AttackerCoord )
+              self:F( { InterceptDistance = InterceptDistance, AirbaseDistance = AirbaseDistance, InterceptCoord = InterceptCoord } )
               
-              -- Only intercept if the distance to target is smaller or equal to the GciRadius limit.
-              if Distance <= self.GciRadius then
-                ClosestDistance = Distance
-                ClosestDefenderSquadronName = SquadronName
+              if ClosestDistance == 0 or InterceptDistance < ClosestDistance then
+                
+                -- Only intercept if the distance to target is smaller or equal to the GciRadius limit.
+                if AirbaseDistance <= self.GciRadius then
+                  ClosestDistance = InterceptDistance
+                  ClosestDefenderSquadronName = SquadronName
+                end
               end
             end
           end
         end
-      end
-      
-      if ClosestDefenderSquadronName then
-      
-        local DefenderSquadron = self:CanGCI( ClosestDefenderSquadronName )
         
-        if DefenderSquadron then
-
-          local Gci = self.DefenderSquadrons[ClosestDefenderSquadronName].Gci
-          
-          if Gci then
+        if ClosestDefenderSquadronName then
         
-            local DefenderOverhead = DefenderSquadron.Overhead or self.DefenderDefault.Overhead
-            local DefenderGrouping = DefenderSquadron.Grouping or self.DefenderDefault.Grouping
-            local DefendersNeeded = math.ceil( DefendersCount * DefenderOverhead )
-            
-            self:F( { DefaultOverhead = self.DefenderDefault.Overhead, Overhead = DefenderOverhead } )
-            self:F( { DefaultGrouping = self.DefenderDefault.Grouping, Grouping = DefenderGrouping } )
-            self:F( { DefendersCount = DefendersCount, DefendersNeeded = DefendersNeeded } )
-            
-            while ( DefendersNeeded > 0 ) do
+          local DefenderSquadron = self:CanGCI( ClosestDefenderSquadronName )
           
-              local Spawn = DefenderSquadron.Spawn[ math.random( 1, #DefenderSquadron.Spawn ) ] -- Functional.Spawn#SPAWN
-              local DefenderGrouping = ( DefenderGrouping < DefendersNeeded ) and DefenderGrouping or DefendersNeeded
-              if DefenderGrouping then
-                Spawn:InitGrouping( DefenderGrouping )
-              else
-                Spawn:InitGrouping()
-              end
+          if DefenderSquadron then
+  
+            local Gci = self.DefenderSquadrons[ClosestDefenderSquadronName].Gci
+            
+            if Gci then
+          
+              local DefenderOverhead = DefenderSquadron.Overhead or self.DefenderDefault.Overhead
+              local DefenderGrouping = DefenderSquadron.Grouping or self.DefenderDefault.Grouping
+              local DefendersNeeded = math.ceil( DefenderCount * DefenderOverhead )
               
-              local TakeoffMethod = self:GetSquadronTakeoff( ClosestDefenderSquadronName )
-              local DefenderGCI = Spawn:SpawnAtAirbase( DefenderSquadron.Airbase, TakeoffMethod, DefenderSquadron.TakeoffAltitude or self.DefenderDefault.TakeoffAltitude ) -- Wrapper.Group#GROUP
-              self:F( { GCIDefender = DefenderGCI:GetName() } )
-
-              DefendersNeeded = DefendersNeeded - DefenderGrouping
-      
-              self:AddDefenderToSquadron( DefenderSquadron, DefenderGCI, DefenderGrouping )
+              self:F( { DefaultOverhead = self.DefenderDefault.Overhead, Overhead = DefenderOverhead } )
+              self:F( { DefaultGrouping = self.DefenderDefault.Grouping, Grouping = DefenderGrouping } )
+              self:F( { DefendersCount = DefenderCount, DefendersNeeded = DefendersNeeded } )
+              
+              while ( DefendersNeeded > 0 ) do
+            
+                local Spawn = DefenderSquadron.Spawn[ math.random( 1, #DefenderSquadron.Spawn ) ] -- Functional.Spawn#SPAWN
+                local DefenderGrouping = ( DefenderGrouping < DefendersNeeded ) and DefenderGrouping or DefendersNeeded
+                if DefenderGrouping then
+                  Spawn:InitGrouping( DefenderGrouping )
+                else
+                  Spawn:InitGrouping()
+                end
+                
+                local TakeoffMethod = self:GetSquadronTakeoff( ClosestDefenderSquadronName )
+                local DefenderGCI = Spawn:SpawnAtAirbase( DefenderSquadron.Airbase, TakeoffMethod, DefenderSquadron.TakeoffAltitude or self.DefenderDefault.TakeoffAltitude ) -- Wrapper.Group#GROUP
+                self:F( { GCIDefender = DefenderGCI:GetName() } )
+  
+                DefendersNeeded = DefendersNeeded - DefenderGrouping
         
-              if DefenderGCI then
-      
-                DefendersCount = DefendersCount - DefenderGrouping
-                
-                local Fsm = AI_A2A_GCI:New( DefenderGCI, Gci.EngageMinSpeed, Gci.EngageMaxSpeed )
-                Fsm:SetDispatcher( self )
-                Fsm:SetHomeAirbase( DefenderSquadron.Airbase )
-                Fsm:SetFuelThreshold( DefenderSquadron.FuelThreshold or self.DefenderDefault.FuelThreshold, 60 )
-                Fsm:SetDamageThreshold( self.DefenderDefault.DamageThreshold )
-                Fsm:SetDisengageRadius( self.DisengageRadius )
-                Fsm:Start()
-                Fsm:__Engage( 2, DetectedItem.Set ) -- Engage on the TargetSetUnit
-      
+                self:AddDefenderToSquadron( DefenderSquadron, DefenderGCI, DefenderGrouping )
+          
+                if DefenderGCI then
         
-                self:SetDefenderTask( ClosestDefenderSquadronName, DefenderGCI, "GCI", Fsm, DetectedItem )
-                
-                
-                function Fsm:onafterRTB( Defender, From, Event, To )
-                  self:F({"GCI RTB", Defender:GetName()})
-                  self:GetParent(self).onafterRTB( self, Defender, From, Event, To )
+                  DefenderCount = DefenderCount - DefenderGrouping
                   
-                  local Dispatcher = self:GetDispatcher() -- #AI_A2A_DISPATCHER
-                  Dispatcher:ClearDefenderTaskTarget( Defender )
-                end
-
-                --- @param #AI_A2A_DISPATCHER self
-                function Fsm:onafterLostControl( Defender, From, Event, To )
-                  self:F({"GCI LostControl", Defender:GetName()})
-                  self:GetParent(self).onafterHome( self, Defender, From, Event, To )
+                  local Fsm = AI_A2A_GCI:New( DefenderGCI, Gci.EngageMinSpeed, Gci.EngageMaxSpeed )
+                  Fsm:SetDispatcher( self )
+                  Fsm:SetHomeAirbase( DefenderSquadron.Airbase )
+                  Fsm:SetFuelThreshold( DefenderSquadron.FuelThreshold or self.DefenderDefault.FuelThreshold, 60 )
+                  Fsm:SetDamageThreshold( self.DefenderDefault.DamageThreshold )
+                  Fsm:SetDisengageRadius( self.DisengageRadius )
+                  Fsm:Start()
+                  Fsm:__Engage( 2, AttackerDetection.Set ) -- Engage on the TargetSetUnit
+        
+          
+                  self:SetDefenderTask( ClosestDefenderSquadronName, DefenderGCI, "GCI", Fsm, AttackerDetection )
                   
-                  local Dispatcher = Fsm:GetDispatcher() -- #AI_A2A_DISPATCHER
-                  local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
-                  if Defender:IsAboveRunway() then
-                    Dispatcher:RemoveDefenderFromSquadron( Squadron, Defender )
-                    Defender:Destroy()
-                  end
-                end
-                
-                --- @param #AI_A2A_DISPATCHER self
-                function Fsm:onafterHome( Defender, From, Event, To, Action )
-                  self:F({"GCI Home", Defender:GetName()})
-                  self:GetParent(self).onafterHome( self, Defender, From, Event, To )
                   
-                  local Dispatcher = self:GetDispatcher() -- #AI_A2A_DISPATCHER
-                  local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
-
-                  if Action and Action == "Destroy" then
-                    Dispatcher:RemoveDefenderFromSquadron( Squadron, Defender )
-                    Defender:Destroy()
+                  function Fsm:onafterRTB( Defender, From, Event, To )
+                    self:F({"GCI RTB", Defender:GetName()})
+                    self:GetParent(self).onafterRTB( self, Defender, From, Event, To )
+                    
+                    local Dispatcher = self:GetDispatcher() -- #AI_A2A_DISPATCHER
+                    Dispatcher:ClearDefenderTaskTarget( Defender )
                   end
-
-                  if Dispatcher:GetSquadronLanding( Squadron.Name ) == AI_A2A_DISPATCHER.Landing.NearAirbase then
-                    Dispatcher:RemoveDefenderFromSquadron( Squadron, Defender )
-                    Defender:Destroy()
+  
+                  --- @param #AI_A2A_DISPATCHER self
+                  function Fsm:onafterLostControl( Defender, From, Event, To )
+                    self:F({"GCI LostControl", Defender:GetName()})
+                    self:GetParent(self).onafterHome( self, Defender, From, Event, To )
+                    
+                    local Dispatcher = Fsm:GetDispatcher() -- #AI_A2A_DISPATCHER
+                    local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
+                    if Defender:IsAboveRunway() then
+                      Dispatcher:RemoveDefenderFromSquadron( Squadron, Defender )
+                      Defender:Destroy()
+                    end
                   end
-                end
-              end  -- if DefenderGCI then
-            end  -- while ( DefendersNeeded > 0 ) do
+                  
+                  --- @param #AI_A2A_DISPATCHER self
+                  function Fsm:onafterHome( Defender, From, Event, To, Action )
+                    self:F({"GCI Home", Defender:GetName()})
+                    self:GetParent(self).onafterHome( self, Defender, From, Event, To )
+                    
+                    local Dispatcher = self:GetDispatcher() -- #AI_A2A_DISPATCHER
+                    local Squadron = Dispatcher:GetSquadronFromDefender( Defender )
+  
+                    if Action and Action == "Destroy" then
+                      Dispatcher:RemoveDefenderFromSquadron( Squadron, Defender )
+                      Defender:Destroy()
+                    end
+  
+                    if Dispatcher:GetSquadronLanding( Squadron.Name ) == AI_A2A_DISPATCHER.Landing.NearAirbase then
+                      Dispatcher:RemoveDefenderFromSquadron( Squadron, Defender )
+                      Defender:Destroy()
+                    end
+                  end
+                end  -- if DefenderGCI then
+              end  -- while ( DefendersNeeded > 0 ) do
+            end
+          else
+            -- No more resources, try something else.
+            -- Subject for a later enhancement to try to depart from another squadron and disable this one.
+            BreakLoop = true
+            break
           end
         else
-          -- No more resources, try something else.
-          -- Subject for a later enhancement to try to depart from another squadron and disable this one.
-          BreakLoop = true
+          -- There isn't any closest airbase anymore, break the loop.
           break
         end
-      else
-        -- There isn't any closest airbase anymore, break the loop.
-        break
-      end
-    end -- if DefenderSquadron then
+      end -- if DefenderSquadron then
+    end -- if AttackerUnit
   end
 
 
