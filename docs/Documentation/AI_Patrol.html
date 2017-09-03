@@ -488,12 +488,6 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).SetDetectionInterval">AI_PATROL_ZONE:SetDetectionInterval(Seconds)</a></td>
-		<td class="summary">
-<p>Set the interval in seconds between each detection executed by the AI.</p>
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).SetDetectionOff">AI_PATROL_ZONE:SetDetectionOff()</a></td>
 		<td class="summary">
 <p>Set the detection off.</p>
@@ -509,6 +503,12 @@
 		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).SetDetectionZone">AI_PATROL_ZONE:SetDetectionZone(DetectionZone)</a></td>
 		<td class="summary">
 <p>Set the detection zone where the AI is detecting targets.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_PATROL_ZONE).SetRefreshTimeInterval">AI_PATROL_ZONE:SetRefreshTimeInterval(Seconds)</a></td>
+		<td class="summary">
+<p>Set the interval in seconds between each detection executed by the AI.</p>
 </td>
 		</tr>
 		<tr>
@@ -742,7 +742,7 @@ Only put detection on when absolutely necessary, and the frequency of the detect
     <li><a href="##(AI_PATROL_ZONE).SetDetectionOff">AI<em>PATROL</em>ZONE.SetDetectionOff</a>(): Set the detection off, the AI will not detect for targets. The existing target list will NOT be erased.</li>
 </ul>
 
-<p>The detection frequency can be set with <a href="##(AI_PATROL_ZONE).SetDetectionInterval">AI<em>PATROL</em>ZONE.SetDetectionInterval</a>( seconds ), where the amount of seconds specify how much seconds will be waited before the next detection.
+<p>The detection frequency can be set with <a href="##(AI_PATROL_ZONE).SetRefreshTimeInterval">AI<em>PATROL</em>ZONE.SetRefreshTimeInterval</a>( seconds ), where the amount of seconds specify how much seconds will be waited before the next detection.
 Use the method <a href="##(AI_PATROL_ZONE).GetDetectedUnits">AI<em>PATROL</em>ZONE.GetDetectedUnits</a>() to obtain a list of the <a href="Unit.html">Unit</a>s detected by the AI.</p>
 
 <p>The detection can be filtered to potential targets in a specific zone.
@@ -925,6 +925,9 @@ Use the method <a href="##(AI_PATROL_ZONE).ManageDamage">AI<em>PATROL</em>ZONE.M
 <dd>
 	
 
+
+	
+<p> This table contains the targets detected during patrol.</p>
 
 </dd>
 </dl>
@@ -2258,39 +2261,6 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(AI_PATROL_ZONE).SetDetectionInterval" >
-<strong>AI_PATROL_ZONE:SetDetectionInterval(Seconds)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Set the interval in seconds between each detection executed by the AI.</p>
-
-	
-<p>The list of already detected targets will be kept and updated.
-Newly detected targets will be added, but already detected targets that were 
-not detected in this cycle, will NOT be removed!
-The default interval is 30 seconds.</p>
-
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em>#number Seconds </em></code>: 
-The interval in seconds.</p>
-
-				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em><a href="##(AI_PATROL_ZONE)">#AI<em>PATROL</em>ZONE</a>:</em>
-self</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
 <a id="#(AI_PATROL_ZONE).SetDetectionOff" >
 <strong>AI_PATROL_ZONE:SetDetectionOff()</strong>
 </a>
@@ -2348,6 +2318,39 @@ self</p>
 				
 <p><code><em><a href="Core.Zone.html##(ZONE)">Core.Zone#ZONE</a> DetectionZone </em></code>: 
 The zone where to detect targets.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(AI_PATROL_ZONE)">#AI<em>PATROL</em>ZONE</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_PATROL_ZONE).SetRefreshTimeInterval" >
+<strong>AI_PATROL_ZONE:SetRefreshTimeInterval(Seconds)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set the interval in seconds between each detection executed by the AI.</p>
+
+	
+<p>The list of already detected targets will be kept and updated.
+Newly detected targets will be added, but already detected targets that were 
+not detected in this cycle, will NOT be removed!
+The default interval is 30 seconds.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number Seconds </em></code>: 
+The interval in seconds.</p>
 
 				</li>
 		</ul>

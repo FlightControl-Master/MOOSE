@@ -864,7 +864,7 @@ do -- AI_A2A_DISPATCHER
     -- TODO: Check detection through radar.
     self.Detection:FilterCategories( { Unit.Category.AIRPLANE, Unit.Category.HELICOPTER } )
     --self.Detection:InitDetectRadar( true )
-    self.Detection:SetDetectionInterval( 30 )
+    self.Detection:SetRefreshTimeInterval( 30 )
 
     self:SetEngageRadius()
     self:SetGciRadius()
@@ -1276,7 +1276,7 @@ do -- AI_A2A_DISPATCHER
   -- @return #number, Core.CommandCenter#REPORT
   function AI_A2A_DISPATCHER:GetAIFriendliesNearBy( DetectedItem )
   
-    local FriendliesNearBy = self.Detection:GetFriendliesNearBy( DetectedItem )
+    local FriendliesNearBy = self.Detection:GetFriendliesDistance( DetectedItem )
     
     return FriendliesNearBy
   end
@@ -1551,6 +1551,7 @@ do -- AI_A2A_DISPATCHER
     
     local RecceSet = self.Detection:GetDetectionSetGroup()
     RecceSet:FilterPrefixes( DefenderSquadron.TemplatePrefixes )
+    RecceSet:FilterStart()
     
     self.Detection:SetFriendlyPrefixes( DefenderSquadron.TemplatePrefixes )
     

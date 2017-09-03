@@ -128,7 +128,7 @@
 --   * @{#AI_PATROL_ZONE.SetDetectionOn}(): Set the detection on. The AI will detect for targets.
 --   * @{#AI_PATROL_ZONE.SetDetectionOff}(): Set the detection off, the AI will not detect for targets. The existing target list will NOT be erased.
 -- 
--- The detection frequency can be set with @{#AI_PATROL_ZONE.SetDetectionInterval}( seconds ), where the amount of seconds specify how much seconds will be waited before the next detection.
+-- The detection frequency can be set with @{#AI_PATROL_ZONE.SetRefreshTimeInterval}( seconds ), where the amount of seconds specify how much seconds will be waited before the next detection.
 -- Use the method @{#AI_PATROL_ZONE.GetDetectedUnits}() to obtain a list of the @{Unit}s detected by the AI.
 -- 
 -- The detection can be filtered to potential targets in a specific zone.
@@ -187,7 +187,7 @@ function AI_PATROL_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltit
   -- defafult PatrolAltType to "RADIO" if not specified
   self.PatrolAltType = PatrolAltType or "RADIO"
   
-  self:SetDetectionInterval( 30 )
+  self:SetRefreshTimeInterval( 30 )
   
   self.CheckStatus = true
   
@@ -544,7 +544,7 @@ end
 -- @param #AI_PATROL_ZONE self
 -- @param #number Seconds The interval in seconds.
 -- @return #AI_PATROL_ZONE self
-function AI_PATROL_ZONE:SetDetectionInterval( Seconds )
+function AI_PATROL_ZONE:SetRefreshTimeInterval( Seconds )
   self:F2()
 
   if Seconds then  

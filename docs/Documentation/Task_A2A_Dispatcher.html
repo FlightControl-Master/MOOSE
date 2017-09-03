@@ -307,7 +307,7 @@ increasing or decreasing the radar coverage of the Early Warning System.</p>
 
 local EWRDetection = DETECTION_AREAS:New( EWRSet, 6000 )
 EWRDetection:SetFriendliesRange( 10000 )
-EWRDetection:SetDetectionInterval(30)
+EWRDetection:SetRefreshTimeInterval(30)
 
 -- Setup the A2A dispatcher, and initialize it.
 A2ADispatcher = TASK_A2A_DISPATCHER:New( Mission, AttackGroups, EWRDetection )

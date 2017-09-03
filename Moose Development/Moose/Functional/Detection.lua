@@ -322,7 +322,7 @@ do -- DETECTION_BASE
     
     self.DetectionSetGroup = DetectionSetGroup
     
-    self.DetectionInterval = 30
+    self.RefreshTimeInterval = 30
     
     self:InitDetectVisual( nil )
     self:InitDetectOptical( nil )
@@ -507,7 +507,7 @@ do -- DETECTION_BASE
     -- @param #string Event The Event string.
     -- @param #string To The To State string.
     function DETECTION_BASE:onafterStart(From,Event,To)
-      self:__Detect(0.1)
+      self:__Detect( 1 )
     end
 
     --- @param #DETECTION_BASE self
@@ -742,7 +742,7 @@ do -- DETECTION_BASE
           self:CleanDetectionItem( DetectedItem, DetectedItemID ) -- Any DetectionItem that has a Set with zero elements in it, must be removed from the DetectionItems list.
         end
  
-        self:__Detect( self.DetectionInterval )
+        self:__Detect( self.RefreshTimeInterval )
       end
 
     end
@@ -922,12 +922,12 @@ do -- DETECTION_BASE
   
     --- Set the detection interval time in seconds.
     -- @param #DETECTION_BASE self
-    -- @param #number DetectionInterval Interval in seconds.
+    -- @param #number RefreshTimeInterval Interval in seconds.
     -- @return #DETECTION_BASE self
-    function DETECTION_BASE:SetDetectionInterval( DetectionInterval )
+    function DETECTION_BASE:SetRefreshTimeInterval( RefreshTimeInterval )
       self:F2()
     
-      self.DetectionInterval = DetectionInterval
+      self.RefreshTimeInterval = RefreshTimeInterval
       
       return self
     end

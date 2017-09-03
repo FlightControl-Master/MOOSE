@@ -120,7 +120,7 @@
 --   * @{#AI_A2A_PATROL.SetDetectionOn}(): Set the detection on. The AI will detect for targets.
 --   * @{#AI_A2A_PATROL.SetDetectionOff}(): Set the detection off, the AI will not detect for targets. The existing target list will NOT be erased.
 -- 
--- The detection frequency can be set with @{#AI_A2A_PATROL.SetDetectionInterval}( seconds ), where the amount of seconds specify how much seconds will be waited before the next detection.
+-- The detection frequency can be set with @{#AI_A2A_PATROL.SetRefreshTimeInterval}( seconds ), where the amount of seconds specify how much seconds will be waited before the next detection.
 -- Use the method @{#AI_A2A_PATROL.GetDetectedUnits}() to obtain a list of the @{Unit}s detected by the AI.
 -- 
 -- The detection can be filtered to potential targets in a specific zone.

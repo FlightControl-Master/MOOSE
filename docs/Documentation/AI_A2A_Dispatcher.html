@@ -749,7 +749,7 @@ Per one, two, three, four?</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_DISPATCHER).SetSquadron">AI_A2A_DISPATCHER:SetSquadron(SquadronName, AirbaseName, SpawnTemplates, Resources)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_DISPATCHER).SetSquadron">AI_A2A_DISPATCHER:SetSquadron(SquadronName, AirbaseName, TemplatePrefixes, Resources)</a></td>
 		<td class="summary">
 <p>This is the main method to define Squadrons programmatically.</p>
 </td>
@@ -4132,7 +4132,7 @@ when you don't want to let the AI<em>A2A</em>DISPATCHER react immediately when a
 <dt>
 
 <a id="#(AI_A2A_DISPATCHER).SetSquadron" >
-<strong>AI_A2A_DISPATCHER:SetSquadron(SquadronName, AirbaseName, SpawnTemplates, Resources)</strong>
+<strong>AI_A2A_DISPATCHER:SetSquadron(SquadronName, AirbaseName, TemplatePrefixes, Resources)</strong>
 </a>
 </dt>
 <dd>
@@ -4194,7 +4194,7 @@ To ease the airbase naming when using the LDT editor and IntelliSense, the <a hr
 				</li>
 				<li>
 				
-<p><code><em>#string SpawnTemplates </em></code>: 
+<p><code><em>#string TemplatePrefixes </em></code>: 
 A string or an array of strings specifying the <strong>prefix names of the templates</strong> (not going to explain what is templates here again). 
 Examples are <code>{ "104th", "105th" }</code> or <code>"104th"</code> or <code>"Template 1"</code> or <code>"BLUE PLANES"</code>. 
 Just remember that your template (groups late activated) need to start with the prefix you have specified in your code.

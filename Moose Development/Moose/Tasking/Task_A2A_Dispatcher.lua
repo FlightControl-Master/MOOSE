@@ -93,7 +93,7 @@ do -- TASK_A2A_DISPATCHER
   --
   --     local EWRDetection = DETECTION_AREAS:New( EWRSet, 6000 )
   --     EWRDetection:SetFriendliesRange( 10000 )
-  --     EWRDetection:SetDetectionInterval(30)
+  --     EWRDetection:SetRefreshTimeInterval(30)
   --
   --     -- Setup the A2A dispatcher, and initialize it.
   --     A2ADispatcher = TASK_A2A_DISPATCHER:New( Mission, AttackGroups, EWRDetection )
@@ -197,7 +197,7 @@ do -- TASK_A2A_DISPATCHER
     -- TODO: Check detection through radar.
     self.Detection:FilterCategories( Unit.Category.AIRPLANE, Unit.Category.HELICOPTER )
     self.Detection:InitDetectRadar( true )
-    self.Detection:SetDetectionInterval( 30 )
+    self.Detection:SetRefreshTimeInterval( 30 )
     
     self:AddTransition( "Started", "Assign", "Started" )
     
