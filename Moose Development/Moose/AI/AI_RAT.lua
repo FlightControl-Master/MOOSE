@@ -46,6 +46,7 @@
 -- @field #boolean commute
 -- @field #boolean continuejourney
 -- @field #number alive
+-- @field #boolean f10menu
 -- @field #table Menu
 -- @field #table RAT
 -- @extends Functional.Spawn#SPAWN
@@ -89,6 +90,7 @@ RAT={
   commute=false,            -- Aircraft commute between departure and destination, i.e. when respawned the departure airport becomes the new destiation.
   continuejourney=false,    -- Aircraft will continue their journey, i.e. get respawned at their destination with a new random destination.
   alive=0,                  -- Number of groups which are alive.
+  f10menu=true,             -- Add an F10 menu for RAT.
   Menu={},                  -- F10 menu for this RAT object.
 }
 
@@ -142,6 +144,7 @@ myid="RAT | "
 --DONE: Check that FARPS are not used as airbases for planes.
 --DONE: Add special cases for ships (similar to FARPs).
 --DONE: Add cases for helicopters.
+--TODO: Add F10 menu.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -179,13 +182,17 @@ function RAT:New(groupname)
   self:_GetAirportsOfMap()
   
   -- Create F10 main menu if it does not exists yet.
-  if not RAT.MenuF10 then
+  if not RAT.MenuF10 and self.f10menu then
     RAT.MenuF10 = MENU_MISSION:New("RAT")
   end
   
-  -- Crate submenu
-  self.Menu[self.SpawnTemplatePrefix]=MENU_MISSION:New(self.SpawnTemplatePrefix, RAT.MenuF10)
-  MENU_MISSION_COMMAND:New("Status report", self.Menu[self.SpawnTemplatePrefix], self.Status, self, true)
+  -- Craete submenus.
+  if self.f10menu then
+    self.Menu[self.SpawnTemplatePrefix]=MENU_MISSION:New(self.SpawnTemplatePrefix, RAT.MenuF10)
+    self.Menu[self.SpawnTemplatePrefix]["groups"]=MENU_MISSION:New("Groups", self.Menu[self.SpawnTemplatePrefix])
+    MENU_MISSION_COMMAND:New("Status report", self.Menu[self.SpawnTemplatePrefix], self.Status, self, true)
+    MENU_MISSION_COMMAND:New("Spawn new group", self.Menu[self.SpawnTemplatePrefix], self._SpawnWithRoute, self)
+  end
    
   return self
 end
@@ -613,6 +620,12 @@ function RAT:_SpawnWithRoute(_departure, _destination)
   self.ratcraft[self.SpawnIndex]["Pnow"]=group:GetCoordinate()
   self.ratcraft[self.SpawnIndex]["Distance"]=0
   
+  -- Create submenu for this group.
+  if self.f10menu then
+    local name=self.aircraft.type.." ID "..tostring(self.SpawnIndex)
+    self.Menu[self.SpawnTemplatePrefix]["groups"][self.SpawnIndex]=MENU_MISSION:New(name, self.Menu[self.SpawnTemplatePrefix]["groups"])
+  end
+  
 end
 
 --- Respawn a group.
@@ -760,7 +773,7 @@ function RAT:_SetRoute(_departure, _destination)
   -- Holding point altitude. For planes between 1600 and 2400 m AGL. For helos 160 to 240 m AGL.
   local h_holding
   if self.category=="plane" then
-    h_holding=1500
+    h_holding=1200
   else
     h_holding=150
   end
@@ -1512,8 +1525,13 @@ function RAT:_Despawn(group)
   self.ratcraft[index].group:Destroy()
   self.ratcraft[index].group=nil
   
-  -- Decreas group alive counter.
-  self.alive=self.alive+1
+  -- Decrease group alive counter.
+  self.alive=self.alive-1
+  
+    -- Remove submenu for this group.
+  if self.f10menu then
+    self.Menu[self.SpawnTemplatePrefix]["groups"][index]:Remove()
+  end
   
   --TODO: Maybe here could be some more arrays deleted?
 end
