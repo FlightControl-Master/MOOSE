@@ -31,7 +31,6 @@
 -- @field #number maxdist
 -- @field #table airports_map
 -- @field #table airports
--- @field #table airports_destination
 -- @field #boolean random_departure
 -- @field #boolean random_destination
 -- @field #table departure_zones
@@ -75,7 +74,6 @@ RAT={
   maxdist = 500000,         -- Max distance from departure to destination in meters. Default 5000 km.
   airports_map={},          -- All airports available on current map (Caucasus, Nevada, Normandy, ...).
   airports={},              -- All airports of friedly coalitions.
-  airports_destination={},  -- Possible destination airports which are in range of the chosen departure airport/zone.
   random_departure=true,    -- By default a random friendly airport is chosen as departure.
   random_destination=true,  -- By default a random friendly airport is chosen as destination.
   departure_zones={},       -- Array containing the names of the departure zones.
@@ -623,7 +621,8 @@ function RAT:_SpawnWithRoute(_departure, _destination)
   -- Create submenu for this group.
   if self.f10menu then
     local name=self.aircraft.type.." ID "..tostring(self.SpawnIndex)
-    self.Menu[self.SpawnTemplatePrefix]["groups"][self.SpawnIndex]=MENU_MISSION:New(name, self.Menu[self.SpawnTemplatePrefix]["groups"])
+    self.Menu[self.SpawnTemplatePrefix].groups[self.SpawnIndex]=MENU_MISSION:New(name, self.Menu[self.SpawnTemplatePrefix].groups)
+    MENU_MISSION_COMMAND:New("Status report", self.Menu[self.SpawnTemplatePrefix].groups[self.SpawnIndex], self.Status, self, true, self.SpawnIndex)
   end
   
 end
@@ -642,14 +641,20 @@ function RAT:_Respawn(group)
   
   local _departure=nil
   local _destination=nil
+  
+  env.info(myid.."_Respawn: departure   name = "..departure:GetName())
+  env.info(myid.."_Respawn: destination name = "..destination:GetName())
  
   if self.continuejourney then
     -- We continue our journey from the old departure airport.
     _departure=destination:GetName()
+    env.info(myid.."_Respawn: journey, _departure = ".._departure)
   elseif self.commute then
     -- We commute between departure and destination.
     _departure=destination:GetName()
     _destination=departure:GetName()
+    env.info(myid.."_Respawn: commute, _departure   = ".._departure)
+    env.info(myid.."_Respawn: commute, _destination = ".._destination)
   end
     
   -- Spawn new group after 90 seconds.
@@ -667,6 +672,9 @@ end
 -- @return Wrapper.Airport#AIRBASE Destination airbase.
 -- @return #table Table of flight plan waypoints. 
 function RAT:_SetRoute(_departure, _destination)
+
+  env.info(myid.."_SetRoute: commute, _departure   = "..tostring(_departure))
+  env.info(myid.."_SetRoute: commute, _destination = "..tostring(_destination))
   
   -- Min cruise speed 70% of Vmax or 600 km/h whichever is lower.
   local VxCruiseMin = math.min(self.aircraft.Vmax*0.70, 166)
@@ -702,7 +710,7 @@ function RAT:_SetRoute(_departure, _destination)
   if _departure then
     departure=AIRBASE:FindByName(_departure)
   else
-    departure=self:_SetDeparture()
+    departure=self:_PickDeparture()
   end
 
   -- Coordinates of departure point.
@@ -737,10 +745,15 @@ function RAT:_SetRoute(_departure, _destination)
     destination=AIRBASE:FindByName(_destination)
   else
     -- Get all destination airports within reach.
-    self:_GetDestinations(Pdeparture, self.mindist, math.min(self.aircraft.Reff, self.maxdist))
+    local destinations=self:_GetDestinations(Pdeparture, self.mindist, math.min(self.aircraft.Reff, self.maxdist))
+    
+    local random_destination=false
+    if self.continuejourney and _departure then
+      random_destination=true
+    end
   
     -- Pick a destination airport.
-    destination=self:_SetDestination()
+    destination=self:_PickDestination(destinations, random_destination)
   end
   
   -- Check that departure and destination are not the same. Should not happen due to mindist.
@@ -934,7 +947,7 @@ end
 -- If takeoff style is set to "air", we use zones around the airports or the zones specified by user input.
 -- @param #RAT self
 -- @return Wrapper.Airbase#AIRBASE Departure airport if spawning at airport.
-function RAT:_SetDeparture()
+function RAT:_PickDeparture()
 
   -- Array of possible departure airports or zones.
   local departures={}
@@ -1000,21 +1013,26 @@ end
 
 --- Set the destination airport of the AI. If no airport name is given an airport from the coalition is chosen randomly.
 -- @param #RAT self
+-- @param #table destinations Table with destination airports.
+-- @param #boolean _random Optional switch to activate a random selection of airports.
 -- @return Wrapper.Airbase#AIRBASE Destination airport.
-function RAT:_SetDestination()
-
-  -- Array of possible destination airports.
-  local destinations={}
-  
-  if self.random_destination then
+function RAT:_PickDestination(destinations, _random)
+  env.info(myid.."pickdestinations _random = "..tostring(_random))
+  self:E(destinations)
+--[[  
+  if self.random_destination or _random then
   
     -- All airports of friendly coalitons.
-    for _,airport in pairs(self.airports_destination) do
+    for _,airport in pairs(destinations) do
       table.insert(destinations, airport)
     end
   
   else
+]]
   
+  if not (self.random_destination or _random) then
+    destinations=nil
+    destinations={}
     -- All airports specified by user.
     for _,name in pairs(self.destination_ports) do
       table.insert(destinations, AIRBASE:FindByName(name))
@@ -1046,10 +1064,15 @@ end
 -- @param Core.Point#COORDINATE q Coordinate of the departure point.
 -- @param #number minrange Minimum range to q in meters.
 -- @param #number maxrange Maximum range to q in meters.
+-- @return #table Table with possible destination airports.
+-- @return #nil Nil if no airports could be found.
 function RAT:_GetDestinations(q, minrange, maxrange)
 
   minrange=minrange or self.mindist
   maxrange=maxrange or self.maxdist
+  
+  -- Initialize array.
+  local destinations={}
    
   -- loop over all friendly airports
   for _,airport in pairs(self.airports) do
@@ -1057,12 +1080,13 @@ function RAT:_GetDestinations(q, minrange, maxrange)
     local distance=q:Get2DDistance(p)
     -- check if distance form departure to destination is within min/max range
     if distance>=minrange and distance<=maxrange then
-      table.insert(self.airports_destination, airport)
+      table.insert(destinations, airport)
+      env.info("Possible destination = "..airport:GetName())
     end
   end
-  env.info(myid.."Number of possible destination airports = "..#self.airports_destination)
+  env.info(myid.."Number of possible destination airports = "..#destinations)
   
-  if #self.airports_destination > 1 then
+  if #destinations > 1 then
     --- Compare distance of destination airports.
     -- @param Core.Point#COORDINATE a Coordinate of point a.
     -- @param Core.Point#COORDINATE b Coordinate of point b.
@@ -1072,8 +1096,14 @@ function RAT:_GetDestinations(q, minrange, maxrange)
       local qb=q:Get2DDistance(b:GetCoordinate())
       return qa < qb
     end
-    table.sort(self.airports_destination, compare)
+    table.sort(destinations, compare)
+  else
+    env.error(myid.."No possible destination airports found!")
+    destinations=nil
   end
+  
+  -- Return table with destination airports.
+  return destinations
   
 end
 
@@ -1142,9 +1172,12 @@ end
 
 --- Report status of RAT groups.
 -- @param #RAT self
-function RAT:Status(message)
+-- @param #boolean message (Optional) Send message if true.
+-- @param #number forID (Optional) Send message only for this ID.
+function RAT:Status(message, forID)
 
   message=message or false
+  forID=forID or false
 
   -- number of ratcraft spawned.
   local ngroups=#self.ratcraft
@@ -1160,11 +1193,19 @@ function RAT:Status(message)
   
     if self.ratcraft[i].group then
       if self.ratcraft[i].group:IsAlive() then
+      
+        -- Gather some information.
         local group=self.ratcraft[i].group  --Wrapper.Group#GROUP
         local prefix=self:_GetPrefixFromGroup(group)
         local life=self:_GetLife(group)
         local fuel=group:GetFuel()*100.0
         local airborn=group:InAir()
+        local coords=group:GetCoordinate()
+        --local alt=group:GetAltitude()
+        --local vel=group:GetVelocityKMH()
+        local departure=self.ratcraft[i].departure:GetName()
+        local destination=self.ratcraft[i].destination:GetName()
+        local type=self.aircraft.type
         
         -- Monitor time and distance on ground.
         local Tg=0
@@ -1179,43 +1220,52 @@ function RAT:Status(message)
             -- Aircraft was already on ground at last check. Calculate the time on ground.
             Tg=timer.getTime()-self.ratcraft[i]["Tground"]
             -- Distance on ground since first noticed aircraft is on ground.
-            Dg=group:GetCoordinate():Get2DDistance(self.ratcraft[i]["Pground"])
+            Dg=coords:Get2DDistance(self.ratcraft[i]["Pground"])
           else
             -- First time we see that aircraft is on ground. Initialize the time and position.
             self.ratcraft[i]["Tground"]=timer.getTime()
-            self.ratcraft[i]["Pground"]=group:GetCoordinate()
+            self.ratcraft[i]["Pground"]=coords
           end
         end
         
         -- Monitor travelled distance since last check.
-        local Pn=group:GetCoordinate()
+        local Pn=coords
         local Dtravel=Pn:Get2DDistance(self.ratcraft[i]["Pnow"])
         self.ratcraft[i]["Pnow"]=Pn
         
         -- Add up the travelled distance.
         self.ratcraft[i]["Distance"]=self.ratcraft[i]["Distance"]+Dtravel
         
-        -- Distance remaining to destiantion.
+        -- Distance remaining to destination.
         local Ddestination=Pn:Get2DDistance(self.ratcraft[i].destination:GetCoordinate())
      
-        -- Status report.    
-        local text=string.format("Group %s (ID %i) of %s\n", prefix, i, self.aircraft.type)
-        text=text..string.format("Flying from %s to %s.\n",self.ratcraft[i].departure:GetName(), self.ratcraft[i].destination:GetName())
-        text=text..string.format("Status = %s  (airborn %s)\n", self.ratcraft[i].status, tostring(airborn))
-        text=text..string.format("Fuel = %3.0f, life = %3.0f\n", fuel, life)
-        text=text..string.format("Distance travelled      = %6.1f km\n", self.ratcraft[i]["Distance"]/1000)
-        text=text..string.format("Distance to destination = %6.1f km", Ddestination/1000)
-        if not airborn then
-          text=text..string.format("\nTime on ground  = %6.0f seconds\n", Tg)
-          text=text..string.format("Position change = %6.1f m", Dg)
+        -- Status report.
+        if (forID and i==forID) or not forID then
+          local text=string.format("ID %i of group %s\n", i, prefix)
+          text=text..string.format("%s travelling from %s to %s\n", type, departure, destination)
+          text=text..string.format("Status: %s", self.ratcraft[i].status)
+          if airborn then
+            text=text.." (airborn)\n"
+          else
+            text=text.." (on ground)\n"
+          end
+          text=text..string.format("Fuel = %3.0f\n", fuel)
+          text=text..string.format("Life = %3.0f\n", life)
+          --text=text..string.format("FL%d03, v = %i km/h\n", alt/RAT.unit.FL2m, vel)
+          --text=text..string.format("Speed = %i km/h\n", vel)
+          text=text..string.format("Distance travelled = %6.1f km\n", self.ratcraft[i]["Distance"]/1000)
+          text=text..string.format("Distance to destination = %6.1f km", Ddestination/1000)
+          if not airborn then
+            text=text..string.format("\nTime on ground  = %6.0f seconds\n", Tg)
+            text=text..string.format("Position change = %6.1f m since last check.", Dg)
+          end
+          if self.debug then
+            env.info(myid..text)
+          end
+          if self.reportstatus or message then
+            MESSAGE:New(text, 20):ToAll()
+          end
         end
-        if self.debug then
-          env.info(myid..text)
-        end
-        if self.reportstatus or message then
-          MESSAGE:New(text, 20):ToAll()
-        end
-        
         -- Despawn groups if they are on ground and don't move or are damaged.
         if not airborn then
         
@@ -1278,6 +1328,8 @@ end
 --- Function is executed when a unit is spawned.
 -- @param #RAT self
 function RAT:_OnBirthDay(EventData)
+
+  env.info(myid.."It's a birthday!")
 
   local SpawnGroup = EventData.IniGroup --Wrapper.Group#GROUP
   
