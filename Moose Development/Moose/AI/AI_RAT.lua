@@ -69,7 +69,7 @@ RAT={
   AlphaDescent=3.6,         -- Default angle of descenti in degrees. A value of 3.6 follows the 3:1 rule of 3 miles of travel and 1000 ft descent.
   roe = "hold",             -- ROE of spawned groups, default is weapon hold (this is a peaceful class for civil aircraft or ferry missions). Possible: "hold", "return", "free".
   rot = "noreaction",       -- ROT of spawned groups, default is no reaction. Possible: "noreaction", "passive", "evade".
-  takeoff = "hot",          -- Takeoff type: "hot", "cold", "runway", "air", "random".
+  takeoff = 3,              -- Takeoff type.
   mindist = 5000,           -- Min distance from departure to destination in meters. Default 5 km.
   maxdist = 500000,         -- Max distance from departure to destination in meters. Default 5000 km.
   airports_map={},          -- All airports available on current map (Caucasus, Nevada, Normandy, ...).
@@ -158,7 +158,9 @@ myid="RAT | "
 --DONE: Check that FARPS are not used as airbases for planes.
 --DONE: Add special cases for ships (similar to FARPs).
 --DONE: Add cases for helicopters.
---TODO: Add F10 menu.
+--DONE: Add F10 menu.
+--TODO: Add markers to F10 menu.
+--TODO: Add 
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -308,7 +310,6 @@ end
 -- @usage RAT:SetDeparture({"Sochi-Adler", "Gudauta"}) will spawn RAT aircraft radomly at Sochi-Adler or Gudauta airport.
 -- @usage RAT:SetDeparture({"Zone A", "Gudauta"}) will spawn RAT aircraft in air randomly within Zone A, which has to be defined in the mission editor, or within a zone around Gudauta airport. Note that this also requires RAT:takeoff("air") to be set.
 function RAT:SetDeparture(names)
-  self:E({"SetDeparture Names", names})
 
   -- Random departure is deactivated now that user specified departure ports.
   self.random_departure=false
@@ -633,8 +634,7 @@ function RAT:_SpawnWithRoute(_departure, _destination)
     local name=self.aircraft.type.." ID "..tostring(self.SpawnIndex)
     self.Menu[self.SpawnTemplatePrefix].groups[self.SpawnIndex]=MENU_MISSION:New(name, self.Menu[self.SpawnTemplatePrefix].groups)
     MENU_MISSION_COMMAND:New("Status report", self.Menu[self.SpawnTemplatePrefix].groups[self.SpawnIndex], self.Status, self, true, self.SpawnIndex)
-    --TODO: no sure if it works with group as argument.
-    --MENU_MISSION_COMMAND:New("Despawn group", self.Menu[self.SpawnTemplatePrefix].groups[self.SpawnIndex], self._Despawn, self, self.SpawnIndex)
+    MENU_MISSION_COMMAND:New("Place markers", self.Menu[self.SpawnTemplatePrefix].groups[self.SpawnIndex], self._PlaceMarkers, self, waypoints)
     MENU_MISSION_COMMAND:New("Despawn group", self.Menu[self.SpawnTemplatePrefix].groups[self.SpawnIndex], self._Despawn, self, group)
   end
   
@@ -654,25 +654,19 @@ function RAT:_Respawn(group)
   
   local _departure=nil
   local _destination=nil
-  
-  env.info(myid.."_Respawn: departure   name = "..departure:GetName())
-  env.info(myid.."_Respawn: destination name = "..destination:GetName())
  
   if self.continuejourney then
     -- We continue our journey from the old departure airport.
     _departure=destination:GetName()
-    env.info(myid.."_Respawn: journey, _departure = ".._departure)
   elseif self.commute then
     -- We commute between departure and destination.
     _departure=destination:GetName()
     _destination=departure:GetName()
-    env.info(myid.."_Respawn: commute, _departure   = ".._departure)
-    env.info(myid.."_Respawn: commute, _destination = ".._destination)
   end
     
-  -- Spawn new group after 90 seconds.
+  -- Spawn new group after 180 seconds.
   --self:_SpawnWithRoute(_departure, _destination)
-  SCHEDULER:New(nil, self._SpawnWithRoute, {self, _departure, _destination}, 90)
+  SCHEDULER:New(nil, self._SpawnWithRoute, {self, _departure, _destination}, 180)
   
 end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -685,9 +679,6 @@ end
 -- @return Wrapper.Airport#AIRBASE Destination airbase.
 -- @return #table Table of flight plan waypoints. 
 function RAT:_SetRoute(_departure, _destination)
-
-  env.info(myid.."_SetRoute: commute, _departure   = "..tostring(_departure))
-  env.info(myid.."_SetRoute: commute, _destination = "..tostring(_destination))
   
   -- Min cruise speed 70% of Vmax or 600 km/h whichever is lower.
   local VxCruiseMin = math.min(self.aircraft.Vmax*0.70, 166)
@@ -937,13 +928,7 @@ function RAT:_SetRoute(_departure, _destination)
   
   -- Place markers of waypoints on F10 map.
   if self.placemarkers then
-    self:_SetMarker("Takeoff",         c0)
-    self:_SetMarker("Climb",           c1)
-    self:_SetMarker("Begin of Cruise", c2)
-    self:_SetMarker("End of Cruise",   c3)
-    self:_SetMarker("Descent",         c4)
-    self:_SetMarker("Holding Point",   c5)
-    self:_SetMarker("Destination",     c6)
+    self:_PlaceMarkers(waypoints)
   end
     
   -- some info on the route as message
@@ -1030,10 +1015,8 @@ end
 -- @param #boolean _random Optional switch to activate a random selection of airports.
 -- @return Wrapper.Airbase#AIRBASE Destination airport.
 function RAT:_PickDestination(destinations, _random)
-  env.info(myid.."pickdestinations _random = "..tostring(_random))
-  self:E(destinations)
 
-  --   
+  -- Take destinations from user input.   
   if not (self.random_destination or _random) then
     destinations=nil
     destinations={}
@@ -1085,7 +1068,6 @@ function RAT:_GetDestinations(q, minrange, maxrange)
     -- check if distance form departure to destination is within min/max range
     if distance>=minrange and distance<=maxrange then
       table.insert(destinations, airport)
-      env.info("Possible destination = "..airport:GetName())
     end
   end
   env.info(myid.."Number of possible destination airports = "..#destinations)
@@ -1133,16 +1115,21 @@ function RAT:_GetAirportsOfMap()
     
     -- loop over airbases and put them in a table
     for _,airbase in pairs(ab) do
+    
       local _id=airbase:getID()
       local _p=airbase:getPosition().p
       local _name=airbase:getName()
       local _myab=AIRBASE:FindByName(_name)
+      
       table.insert(self.airports_map, _myab)
-      --TODO: check here if MOOSE gives the same ID as the native DCS API
-      local text="Airport ID = ".._myab:GetID().." and Name = ".._myab:GetName()..", Category = ".._myab:GetCategory()..", TypeName = ".._myab:GetTypeName()
+      
+      local text1="Airport ID = ".._myab:GetID().." and Name = ".._myab:GetName()..", Category = ".._myab:GetCategory()..", TypeName = ".._myab:GetTypeName()
+      local text2="Airport ID = "..airbase:getID().." and Name = "..airbase:getName()..", Category = "..airbase:getCategory()..", TypeName = "..airbase:getTypeName()
       if self.debug then
-        env.info(myid..text)
+        env.info(myid..text1)
+        env.info(myid..text2)
       end
+      
     end
     
   end
@@ -1187,12 +1174,11 @@ function RAT:Status(message, forID)
   -- number of ratcraft spawned.
   local ngroups=#self.ratcraft
   
-  local text=string.format("Spawned %i groups of template %s.\n", ngroups, self.SpawnTemplatePrefix)
-  if self.debug then
+  if (message and not forID) or self.reportstatus then
+    local text=string.format("Alive groups of template %s: %d", self.SpawnTemplatePrefix, self.alive)
     env.info(myid..text)
+    MESSAGE:New(text, 20):ToAll()
   end
-  text=string.format("Alive groups of template %s: %d", self.SpawnTemplatePrefix, self.alive)
-  env.info(myid..text)
   
   for i=1, ngroups do
   
@@ -1245,7 +1231,7 @@ function RAT:Status(message, forID)
         local Ddestination=Pn:Get2DDistance(self.ratcraft[i].destination:GetCoordinate())
      
         -- Status report.
-        if (forID and i==forID) or not forID then
+        if (forID and i==forID) or (not forID) then
           local text=string.format("ID %i of group %s\n", i, prefix)
           text=text..string.format("%s travelling from %s to %s\n", type, departure, destination)
           text=text..string.format("Status: %s", self.ratcraft[i].status)
@@ -1627,7 +1613,7 @@ function RAT:_Waypoint(Type, Coord, Speed, Altitude, Airport)
   elseif Type==RAT.waypoint.hot then
     -- take-off with engine on 
     _Type="TakeOffParkingHot"
-    _Action="From Parking Area"
+    _Action="From Parking Area Hot"
     _Altitude = 2
     _alttype="RADIO"
     _AID = Airport:GetID()
@@ -2060,6 +2046,19 @@ function RAT:_Randomize(value, fac, lower, upper)
   return r
 end
 
+--- Place markers of the waypoints
+-- @param #RAT self
+-- @param #table waypoints Table with waypoints.
+function RAT:_PlaceMarkers(waypoints)
+  self:_SetMarker("Takeoff",         waypoints[1])
+  self:_SetMarker("Climb",           waypoints[2])
+  self:_SetMarker("Begin of Cruise", waypoints[3])
+  self:_SetMarker("End of Cruise",   waypoints[4])
+  self:_SetMarker("Descent",         waypoints[5])
+  self:_SetMarker("Holding Point",   waypoints[6])
+  self:_SetMarker("Destination",     waypoints[7])
+end
+
 
 --- Set a marker for all on the F10 map.
 -- @param #RAT self
@@ -2070,7 +2069,8 @@ function RAT:_SetMarker(text, vec3)
   if self.debug then
     env.info(myid.."Placing marker with ID "..RAT.markerid..": "..text)
   end
-  trigger.action.markToAll(RAT.markerid, text, vec3)
+  local vec={x=vec3.x, y=vec3.alt, z=vec3.y}
+  trigger.action.markToAll(RAT.markerid, text, vec)
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
