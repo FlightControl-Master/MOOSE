@@ -1152,11 +1152,12 @@ do -- DETECTION_BASE
     -- @return #DETECTION_BASE 
     function DETECTION_BASE:SetFriendlyPrefixes( FriendlyPrefixes )
 
-      self.FriendlyPrefixes = FriendlyPrefixes or {}
+      self.FriendlyPrefixes = self.FriendlyPrefixes or {}
       if type( FriendlyPrefixes ) ~= "table" then
         FriendlyPrefixes = { FriendlyPrefixes }
       end
       for PrefixID, Prefix in pairs( FriendlyPrefixes ) do
+        self:F( { FriendlyPrefix = Prefix } )
         self.FriendlyPrefixes[Prefix] = Prefix
       end
       return self    
