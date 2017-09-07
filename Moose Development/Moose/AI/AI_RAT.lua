@@ -83,6 +83,8 @@ RAT={
   reportstatus=false,       -- Aircraft report status.
   statusinterval=30,        -- Intervall between status checks (and reports if enabled).
   placemarkers=false,       -- Place markers of waypoints on F10 map.
+  FLminuser=nil,            -- Minimum flight level set by user.
+  FLmaxuser=nil,            -- Minimum flight level set by user.
   FLuser=nil,               -- Flight level set by users explicitly.
   Vuser=nil,                -- Cruising speed set by user explicitly.
   commute=false,            -- Aircraft commute between departure and destination, i.e. when respawned the departure airport becomes the new destiation.
@@ -541,6 +543,20 @@ function RAT:SetFL(height)
   self.FLuser=height*RAT.unit.FL2m
 end
 
+--- Set max flight level. Setting this value will overrule all other logic. Aircraft will try to fly at less than this FL regardless.
+-- @param #RAT self
+-- @param #number height Maximum FL in hundrets of feet.
+function RAT:SetFLmax(height)
+  self.FLmaxuser=height*RAT.unit.FL2m
+end
+
+--- Set min flight level. Setting this value will overrule all other logic. Aircraft will try to fly at higher than this FL regardless.
+-- @param #RAT self
+-- @param #number height Maximum FL in hundrets of feet.
+function RAT:SetFLmin(height)
+  self.FLminuser=height*RAT.unit.FL2m
+end
+
 --- Set flight level of cruising part. This is still be checked for consitancy with selected route and prone to radomization.
 -- Default is FL200 for planes and FL005 for helicopters.
 -- @param #RAT self
@@ -886,8 +902,19 @@ function RAT:_SetRoute(_departure, _destination)
   -- Ensure that FLmax not above 90% its service ceiling.
   FLmax=math.min(FLmax, self.aircraft.ceiling*0.9)
   
+  -- Overrule setting if user specified min/max flight level explicitly.
+  if self.FLminuser then
+    FLmin=self.FLminuser
+    env.info(myid.."FLmin user = "..FLmin)
+  end
+  if self.FLmaxuser then
+    FLmax=self.FLmaxuser
+    env.info(myid.."FLmax user = "..FLmax)
+  end
+  
   -- Set cruise altitude: default with 100% randomization but limited to FLmin and FLmax.
   local FLcruise=self:_Randomize(self.aircraft.FLcruise, 1.0, FLmin, FLmax)
+  env.info(myid.."FLcruise = "..FLcruise)
   
   -- Overrule setting if user specified a flight level explicitly.
   if self.FLuser then
@@ -1290,7 +1317,7 @@ function RAT:Status(message, forID)
           end
           text=text..string.format("Fuel = %3.0f\n", fuel)
           text=text..string.format("Life = %3.0f\n", life)
-          text=text..string.format("FL%d03 = %5.0f m\n", alt/RAT.unit.FL2m, alt)
+          text=text..string.format("FL%03d = %i m\n", alt/RAT.unit.FL2m, alt)
           --text=text..string.format("Speed = %i km/h\n", vel)
           text=text..string.format("Distance travelled = %6.1f km\n", self.ratcraft[i]["Distance"]/1000)
           text=text..string.format("Distance to destination = %6.1f km", Ddestination/1000)
