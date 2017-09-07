@@ -17,9 +17,16 @@
 				<a href="index.html">index</a>
 			</li></ul>
 		<ul>
+					<li><a href="AI_A2A.html">AI_A2A</a></li>
+					<li><a href="AI_A2A_Cap.html">AI_A2A_Cap</a></li>
+					<li><a href="AI_A2A_Dispatcher.html">AI_A2A_Dispatcher</a></li>
+					<li><a href="AI_A2A_GCI.html">AI_A2A_GCI</a></li>
+					<li><a href="AI_A2A_Patrol.html">AI_A2A_Patrol</a></li>
+					<li><a href="AI_Bai.html">AI_Bai</a></li>
 					<li><a href="AI_Balancer.html">AI_Balancer</a></li>
 					<li><a href="AI_Cap.html">AI_Cap</a></li>
 					<li><a href="AI_Cas.html">AI_Cas</a></li>
+					<li><a href="AI_Formation.html">AI_Formation</a></li>
 					<li><a href="AI_Patrol.html">AI_Patrol</a></li>
 					<li><a href="Account.html">Account</a></li>
 					<li><a href="Airbase.html">Airbase</a></li>
@@ -31,7 +38,23 @@
 					<li><a href="Client.html">Client</a></li>
 					<li><a href="CommandCenter.html">CommandCenter</a></li>
 					<li><a href="Controllable.html">Controllable</a></li>
+					<li><a href="DCSAirbase.html">DCSAirbase</a></li>
+					<li><a href="DCSCoalitionObject.html">DCSCoalitionObject</a></li>
+					<li><a href="DCSCommand.html">DCSCommand</a></li>
+					<li><a href="DCSController.html">DCSController</a></li>
+					<li><a href="DCSGroup.html">DCSGroup</a></li>
+					<li><a href="DCSObject.html">DCSObject</a></li>
+					<li><a href="DCSTask.html">DCSTask</a></li>
+					<li><a href="DCSTypes.html">DCSTypes</a></li>
+					<li><a href="DCSUnit.html">DCSUnit</a></li>
+					<li><a href="DCSVec3.html">DCSVec3</a></li>
+					<li><a href="DCSWorld.html">DCSWorld</a></li>
+					<li><a href="DCSZone.html">DCSZone</a></li>
+					<li><a href="DCScountry.html">DCScountry</a></li>
+					<li><a href="DCStimer.html">DCStimer</a></li>
+					<li><a href="DCStrigger.html">DCStrigger</a></li>
 					<li><a href="Database.html">Database</a></li>
+					<li><a href="Designate.html">Designate</a></li>
 					<li><a href="Detection.html">Detection</a></li>
 					<li><a href="DetectionManager.html">DetectionManager</a></li>
 					<li><a href="Escort.html">Escort</a></li>
@@ -57,23 +80,32 @@
 					<li>Scoring</li>
 					<li><a href="Sead.html">Sead</a></li>
 					<li><a href="Set.html">Set</a></li>
+					<li><a href="Settings.html">Settings</a></li>
 					<li><a href="Smoke.html">Smoke</a></li>
 					<li><a href="Spawn.html">Spawn</a></li>
+					<li><a href="SpawnStatic.html">SpawnStatic</a></li>
+					<li><a href="Spot.html">Spot</a></li>
 					<li><a href="Static.html">Static</a></li>
+					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="Task.html">Task</a></li>
+					<li><a href="Task_A2A.html">Task_A2A</a></li>
+					<li><a href="Task_A2A_Dispatcher.html">Task_A2A_Dispatcher</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
 					<li><a href="Task_A2G_Dispatcher.html">Task_A2G_Dispatcher</a></li>
+					<li><a href="Task_Cargo.html">Task_Cargo</a></li>
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
 					<li><a href="Unit.html">Unit</a></li>
 					<li><a href="Utils.html">Utils</a></li>
 					<li><a href="Zone.html">Zone</a></li>
+					<li><a href="env.html">env</a></li>
+					<li><a href="land.html">land</a></li>
 					<li><a href="routines.html">routines</a></li>
 		</ul>
 	</div>
 	<div id="content">
    <h1>Module <code>Scoring</code></h1>
    
-<p>Single-Player:<strong>Yes</strong> / Multi-Player:<strong>Yes</strong> / Core:<strong>Yes</strong> -- <strong>Administer the scoring of player achievements, 
+<p><strong>Functional</strong> -- <strong>Administer the SCORING of player achievements, 
 and create a CSV file logging the scoring events for use at team or squadron websites.</strong></p>
 
 <p><img src="..\Presentations\SCORING\Dia1.JPG" alt="Banner Image"/></p>
@@ -207,6 +239,34 @@ local ScoringSecondMission = SCORING:New( "SecondMission" )
 </code></pre>
 
 <p>The above documents that 2 Scoring objects are created, ScoringFirstMission and ScoringSecondMission. </p>
+
+<h3><em>*IMPORTANT!!!</em></h3>
+<p>In order to allow DCS world to write CSV files, you need to adapt a configuration file in your DCS world installation <strong>on the server</strong>.
+For this, browse to the <strong>missionscripting.lua</strong> file in your DCS world installation folder.
+For me, this installation folder is in <em>D:\Program Files\Eagle Dynamics\DCS World\Scripts</em>.</p>
+
+<p>Edit a few code lines in the MissionScripting.lua file. Comment out the lines <strong>os</strong>, <strong>io</strong> and <strong>lfs</strong>:</p>
+
+<pre><code>   do
+     --sanitizeModule('os')
+     --sanitizeModule('io')
+     --sanitizeModule('lfs')
+     require = nil
+     loadlib = nil
+   end
+</code></pre>
+
+<p>When these lines are not sanitized, functions become available to check the time, and to write files to your system at the above specified location. <br/>
+Note that the MissionScripting.lua file provides a warning. So please beware of this warning as outlined by Eagle Dynamics!</p>
+
+<pre><code>   --Sanitize Mission Scripting environment
+   --This makes unavailable some unsecure functions. 
+   --Mission downloaded from server to client may contain potentialy harmful lua code that may use these functions.
+   --You can remove the code below and make availble these functions at your own risk.
+</code></pre>
+
+<p>The MOOSE designer cannot take any responsibility of any damage inflicted as a result of the de-sanitization.
+That being said, I hope that the SCORING class provides you with a great add-on to score your squad mates achievements.</p>
 
 <h2>1.9) Configure messages.</h2>
 
@@ -352,6 +412,12 @@ Various methods exist to configure:</p>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SCORING).CoalitionChangePenalty">SCORING.CoalitionChangePenalty</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).DisplayMessagePrefix">SCORING.DisplayMessagePrefix</a></td>
 		<td class="summary">
 
 </td>
@@ -582,6 +648,12 @@ Various methods exist to configure:</p>
 		<td class="name" nowrap="nowrap"><a href="##(SCORING).SetCoalitionChangePenalty">SCORING:SetCoalitionChangePenalty(CoalitionChangePenalty)</a></td>
 		<td class="summary">
 <p>When a player changes the coalition, he can receive a penalty score.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).SetDisplayMessagePrefix">SCORING:SetDisplayMessagePrefix(DisplayMessagePrefix)</a></td>
+		<td class="summary">
+<p>Set a prefix string that will be displayed at each scoring message sent.</p>
 </td>
 		</tr>
 		<tr>
@@ -972,6 +1044,19 @@ The Score value.</p>
 		<em></em>
 <a id="#(SCORING).CoalitionChangePenalty" >
 <strong>SCORING.CoalitionChangePenalty</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SCORING).DisplayMessagePrefix" >
+<strong>SCORING.DisplayMessagePrefix</strong>
 </a>
 </dt>
 <dd>
@@ -1821,6 +1906,33 @@ By default, the penalty for changing coalition is the default penalty scale.  </
 				
 <p><code><em>#number CoalitionChangePenalty </em></code>: 
 The amount of penalty that is given. </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SCORING)">#SCORING</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SCORING).SetDisplayMessagePrefix" >
+<strong>SCORING:SetDisplayMessagePrefix(DisplayMessagePrefix)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set a prefix string that will be displayed at each scoring message sent.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string DisplayMessagePrefix </em></code>: 
+(Default="Scoring: ") The scoring prefix string.</p>
 
 				</li>
 		</ul>

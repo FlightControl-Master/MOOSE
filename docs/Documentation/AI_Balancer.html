@@ -17,9 +17,16 @@
 				<a href="index.html">index</a>
 			</li></ul>
 		<ul>
+					<li><a href="AI_A2A.html">AI_A2A</a></li>
+					<li><a href="AI_A2A_Cap.html">AI_A2A_Cap</a></li>
+					<li><a href="AI_A2A_Dispatcher.html">AI_A2A_Dispatcher</a></li>
+					<li><a href="AI_A2A_GCI.html">AI_A2A_GCI</a></li>
+					<li><a href="AI_A2A_Patrol.html">AI_A2A_Patrol</a></li>
+					<li><a href="AI_Bai.html">AI_Bai</a></li>
 					<li>AI_Balancer</li>
 					<li><a href="AI_Cap.html">AI_Cap</a></li>
 					<li><a href="AI_Cas.html">AI_Cas</a></li>
+					<li><a href="AI_Formation.html">AI_Formation</a></li>
 					<li><a href="AI_Patrol.html">AI_Patrol</a></li>
 					<li><a href="Account.html">Account</a></li>
 					<li><a href="Airbase.html">Airbase</a></li>
@@ -31,7 +38,23 @@
 					<li><a href="Client.html">Client</a></li>
 					<li><a href="CommandCenter.html">CommandCenter</a></li>
 					<li><a href="Controllable.html">Controllable</a></li>
+					<li><a href="DCSAirbase.html">DCSAirbase</a></li>
+					<li><a href="DCSCoalitionObject.html">DCSCoalitionObject</a></li>
+					<li><a href="DCSCommand.html">DCSCommand</a></li>
+					<li><a href="DCSController.html">DCSController</a></li>
+					<li><a href="DCSGroup.html">DCSGroup</a></li>
+					<li><a href="DCSObject.html">DCSObject</a></li>
+					<li><a href="DCSTask.html">DCSTask</a></li>
+					<li><a href="DCSTypes.html">DCSTypes</a></li>
+					<li><a href="DCSUnit.html">DCSUnit</a></li>
+					<li><a href="DCSVec3.html">DCSVec3</a></li>
+					<li><a href="DCSWorld.html">DCSWorld</a></li>
+					<li><a href="DCSZone.html">DCSZone</a></li>
+					<li><a href="DCScountry.html">DCScountry</a></li>
+					<li><a href="DCStimer.html">DCStimer</a></li>
+					<li><a href="DCStrigger.html">DCStrigger</a></li>
 					<li><a href="Database.html">Database</a></li>
+					<li><a href="Designate.html">Designate</a></li>
 					<li><a href="Detection.html">Detection</a></li>
 					<li><a href="DetectionManager.html">DetectionManager</a></li>
 					<li><a href="Escort.html">Escort</a></li>
@@ -57,23 +80,32 @@
 					<li><a href="Scoring.html">Scoring</a></li>
 					<li><a href="Sead.html">Sead</a></li>
 					<li><a href="Set.html">Set</a></li>
+					<li><a href="Settings.html">Settings</a></li>
 					<li><a href="Smoke.html">Smoke</a></li>
 					<li><a href="Spawn.html">Spawn</a></li>
+					<li><a href="SpawnStatic.html">SpawnStatic</a></li>
+					<li><a href="Spot.html">Spot</a></li>
 					<li><a href="Static.html">Static</a></li>
+					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="Task.html">Task</a></li>
+					<li><a href="Task_A2A.html">Task_A2A</a></li>
+					<li><a href="Task_A2A_Dispatcher.html">Task_A2A_Dispatcher</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
 					<li><a href="Task_A2G_Dispatcher.html">Task_A2G_Dispatcher</a></li>
+					<li><a href="Task_Cargo.html">Task_Cargo</a></li>
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
 					<li><a href="Unit.html">Unit</a></li>
 					<li><a href="Utils.html">Utils</a></li>
 					<li><a href="Zone.html">Zone</a></li>
+					<li><a href="env.html">env</a></li>
+					<li><a href="land.html">land</a></li>
 					<li><a href="routines.html">routines</a></li>
 		</ul>
 	</div>
 	<div id="content">
    <h1>Module <code>AI_Balancer</code></h1>
    
-<p>Single-Player:<strong>No</strong> / Multi-Player:<strong>Yes</strong> / AI:<strong>Yes</strong> / Human:<strong>No</strong> / Types:<strong>All</strong> -- <strong>AI Balancing will replace in multi player missions 
+<p><strong>AI</strong> -- <strong>AI Balancing will replace in multi player missions 
 non-occupied human slots with AI groups, in order to provide an engaging simulation environment, 
 even when there are hardly any players in the mission.</strong></p>
 
@@ -81,103 +113,33 @@ even when there are hardly any players in the mission.</strong></p>
 
 <hr/>
 
-<h1>1) <a href="AI_Balancer.html##(AI_BALANCER)">AI<em>Balancer#AI</em>BALANCER</a> class, extends <a href="Fsm.html##(FSM_SET)">Fsm#FSM_SET</a></h1>
+<h1>Demo Missions</h1>
 
-<p>The <a href="AI_Balancer.html##(AI_BALANCER)">AI<em>Balancer#AI</em>BALANCER</a> class monitors and manages as many replacement AI groups as there are
-CLIENTS in a SET_CLIENT collection, which are not occupied by human players.</p>
+<h3><a href="https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master-release/AIB%20-%20AI%20Balancing">AI_BALANCER Demo Missions source code</a></h3>
 
-   
-<p>In other words, use AI_BALANCER to simulate human behaviour by spawning in replacement AI in multi player missions.</p>
+<h3><a href="https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/AIB%20-%20AI%20Balancing">AI_BALANCER Demo Missions, only for beta testers</a></h3>
 
-<p>The parent class <a href="Fsm.html##(FSM_SET)">Fsm#FSM_SET</a> manages the functionality to control the Finite State Machine (FSM). 
-The mission designer can tailor the behaviour of the AI_BALANCER, by defining event and state transition methods.
-An explanation about state and event transition methods can be found in the <a href="FSM.html">FSM</a> module documentation.</p>
-
-<p>The mission designer can tailor the AI_BALANCER behaviour, by implementing a state or event handling method for the following:</p>
-
-<ul>
-    <li>**<a href="##(AI_BALANCER).OnAfterSpawned">AI_BALANCER.OnAfterSpawned</a>**( AISet, From, Event, To, AIGroup ): Define to add extra logic when an AI is spawned.</li>
-</ul>
-
-<h2>1.1) AI_BALANCER construction</h2>
-
-<p>Create a new AI_BALANCER object with the <a href="##(AI_BALANCER).New">AI_BALANCER.New</a>() method:</p>
-
-<h2>1.2) AI_BALANCER is a FSM</h2>
-
-<p><img src="..\Presentations\AI_Balancer\Dia13.JPG" alt="Process"/></p>
-
-<h3>1.2.1) AI_BALANCER States</h3>
-
-<ul>
-    <li><strong>Monitoring</strong> ( Set ): Monitoring the Set if all AI is spawned for the Clients.</li>
-    <li><strong>Spawning</strong> ( Set, ClientName ): There is a new AI group spawned with ClientName as the name of reference.</li>
-    <li><strong>Spawned</strong> ( Set, AIGroup ): A new AI has been spawned. You can handle this event to customize the AI behaviour with other AI FSMs or own processes.</li>
-    <li><strong>Destroying</strong> ( Set, AIGroup ): The AI is being destroyed.</li>
-    <li><strong>Returning</strong> ( Set, AIGroup ): The AI is returning to the airbase specified by the ReturnToAirbase methods. Handle this state to customize the return behaviour of the AI, if any.</li>
-</ul>
-
-<h3>1.2.2) AI_BALANCER Events</h3>
-
-<ul>
-    <li><strong>Monitor</strong> ( Set ): Every 10 seconds, the Monitor event is triggered to monitor the Set.</li>
-    <li><strong>Spawn</strong> ( Set, ClientName ): Triggers when there is a new AI group to be spawned with ClientName as the name of reference.</li>
-    <li><strong>Spawned</strong> ( Set, AIGroup ): Triggers when a new AI has been spawned. You can handle this event to customize the AI behaviour with other AI FSMs or own processes.</li>
-    <li><strong>Destroy</strong> ( Set, AIGroup ): The AI is being destroyed.</li>
-    <li><strong>Return</strong> ( Set, AIGroup ): The AI is returning to the airbase specified by the ReturnToAirbase methods.</li>
-</ul>
-
-<h2>1.3) AI_BALANCER spawn interval for replacement AI</h2>
-
-<p>Use the method <a href="##(AI_BALANCER).InitSpawnInterval">AI_BALANCER.InitSpawnInterval</a>() to set the earliest and latest interval in seconds that is waited until a new replacement AI is spawned.</p>
-
-<h2>1.4) AI_BALANCER returns AI to Airbases</h2>
-
-<p>By default, When a human player joins a slot that is AI_BALANCED, the AI group will be destroyed by default. 
-However, there are 2 additional options that you can use to customize the destroy behaviour.
-When a human player joins a slot, you can configure to let the AI return to:</p>
-
-<ul>
-    <li><a href="##(AI_BALANCER).ReturnToHomeAirbase">AI_BALANCER.ReturnToHomeAirbase</a>: Returns the AI to the <strong>home</strong> <a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a>.</li>
-    <li><a href="##(AI_BALANCER).ReturnToNearestAirbases">AI_BALANCER.ReturnToNearestAirbases</a>: Returns the AI to the <strong>nearest friendly</strong> <a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a>.</li>
-</ul>
-
-<p>Note that when AI returns to an airbase, the AI<em>BALANCER will trigger the <strong>Return</strong> event and the AI will return, 
-otherwise the AI</em>BALANCER will trigger a <strong>Destroy</strong> event, and the AI will be destroyed.</p>
+<h3><a href="https://github.com/FlightControl-Master/MOOSE_MISSIONS/releases">ALL Demo Missions pack of the last release</a></h3>
 
 <hr/>
 
-<h1><strong>API CHANGE HISTORY</strong></h1>
+<h1>YouTube Channel</h1>
 
-<p>The underlying change log documents the API changes. Please read this carefully. The following notation is used:</p>
-
-<ul>
-    <li><strong>Added</strong> parts are expressed in bold type face.</li>
-    <li><em>Removed</em> parts are expressed in italic type face.</li>
-</ul>
-
-<p>Hereby the change log:</p>
-
-<p>2017-01-17: There is still a problem with AI being destroyed, but not respawned. Need to check further upon that.</p>
-
-<p>2017-01-08: AI_BALANCER:<strong>InitSpawnInterval( Earliest, Latest )</strong> added.</p>
+<h3><a href="https://www.youtube.com/playlist?list=PL7ZUrU4zZUl2CJVIrL1TdAumuVS8n64B7">AI_BALANCER YouTube Channel</a></h3>
 
 <hr/>
 
-<h1><strong>AUTHORS and CONTRIBUTIONS</strong></h1>
-
+<h3>Author: <strong>Sven Van de Velde (FlightControl)</strong></h3>
 <h3>Contributions:</h3>
 
 <ul>
-    <li><strong><a href="https://forums.eagle.ru/member.php?u=112075">Dutch_Baron</a></strong>: Working together with James has resulted in the creation of the AI_BALANCER class. James has shared his ideas on balancing AI with air units, and together we made a first design which you can use now :-)</li>
-    <li><strong>SNAFU</strong>: Had a couple of mails with the guys to validate, if the same concept in the GCI/CAP script could be reworked within MOOSE. None of the script code has been used however within the new AI_BALANCER moose class.</li>
+    <li><strong><a href="https://forums.eagle.ru/member.php?u=112075">Dutch_Baron</a></strong>: Working together with James has resulted in the creation of the AI_BALANCER class.</li>
 </ul>
 
-<h3>Authors:</h3>
+   
+<p>James has shared his ideas on balancing AI with air units, and together we made a first design which you can use now :-)</p>
 
-<ul>
-    <li>FlightControl: Framework Design &amp;  Programming and Documentation.</li>
-</ul>
+<hr/>
 
 
 	<h2>Global(s)</h2>
@@ -185,24 +147,15 @@ otherwise the AI</em>BALANCER will trigger a <strong>Destroy</strong> event, and
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="#AI_BALANCER">AI_BALANCER</a></td>
 		<td class="summary">
+<h1>AI_BALANCER class, extends <a href="Fsm.html##(FSM_SET)">Fsm#FSM_SET</a></h1>
 
+<p>The AI<em>BALANCER class monitors and manages as many replacement AI groups as there are
+CLIENTS in a SET</em>CLIENT collection, which are not occupied by human players.</p>
 </td>
 		</tr>
 	</table>
 			<h2><a id="#(AI_BALANCER)">Type <code>AI_BALANCER</code></a></h2>
 				<table class="function_list">
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_BALANCER).AIGroups">AI_BALANCER.AIGroups</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_BALANCER).ClassName">AI_BALANCER.ClassName</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(AI_BALANCER).Earliest">AI_BALANCER.Earliest</a></td>
 		<td class="summary">
@@ -228,33 +181,27 @@ otherwise the AI</em>BALANCER will trigger a <strong>Destroy</strong> event, and
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_BALANCER).PatrolZones">AI_BALANCER.PatrolZones</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(AI_BALANCER).ReturnAirbaseSet">AI_BALANCER.ReturnAirbaseSet</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_BALANCER).ReturnToHomeAirbase">AI_BALANCER:ReturnToHomeAirbase(ReturnTresholdRange)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_BALANCER).ReturnThresholdRange">AI_BALANCER.ReturnThresholdRange</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_BALANCER).ReturnToHomeAirbase">AI_BALANCER:ReturnToHomeAirbase(ReturnThresholdRange)</a></td>
 		<td class="summary">
 <p>Returns the AI to the home <a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a>.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_BALANCER).ReturnToNearestAirbases">AI_BALANCER:ReturnToNearestAirbases(ReturnTresholdRange, ReturnAirbaseSet)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_BALANCER).ReturnToNearestAirbases">AI_BALANCER:ReturnToNearestAirbases(ReturnThresholdRange, ReturnAirbaseSet)</a></td>
 		<td class="summary">
 <p>Returns the AI to the nearest friendly <a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a>.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_BALANCER).ReturnTresholdRange">AI_BALANCER.ReturnTresholdRange</a></td>
-		<td class="summary">
-
 </td>
 		</tr>
 		<tr>
@@ -324,6 +271,69 @@ otherwise the AI</em>BALANCER will trigger a <strong>Destroy</strong> event, and
 </dt>
 <dd>
 	
+<h1>AI_BALANCER class, extends <a href="Fsm.html##(FSM_SET)">Fsm#FSM_SET</a></h1>
+
+<p>The AI<em>BALANCER class monitors and manages as many replacement AI groups as there are
+CLIENTS in a SET</em>CLIENT collection, which are not occupied by human players.</p>
+
+	
+<p>In other words, use AI_BALANCER to simulate human behaviour by spawning in replacement AI in multi player missions.</p>
+
+<p>The parent class <a href="Fsm.html##(FSM_SET)">Fsm#FSM_SET</a> manages the functionality to control the Finite State Machine (FSM). 
+The mission designer can tailor the behaviour of the AI_BALANCER, by defining event and state transition methods.
+An explanation about state and event transition methods can be found in the <a href="FSM.html">FSM</a> module documentation.</p>
+
+<p>The mission designer can tailor the AI_BALANCER behaviour, by implementing a state or event handling method for the following:</p>
+
+<ul>
+    <li><a href="##(AI_BALANCER).OnAfterSpawned">AI_BALANCER.OnAfterSpawned</a>( AISet, From, Event, To, AIGroup ): Define to add extra logic when an AI is spawned.</li>
+</ul>
+
+<h2>1. AI_BALANCER construction</h2>
+
+<p>Create a new AI_BALANCER object with the <a href="##(AI_BALANCER).New">AI_BALANCER.New</a>() method:</p>
+
+<h2>2. AI_BALANCER is a FSM</h2>
+
+<p><img src="..\Presentations\AI_Balancer\Dia13.JPG" alt="Process"/></p>
+
+<h3>2.1. AI_BALANCER States</h3>
+
+<ul>
+    <li><strong>Monitoring</strong> ( Set ): Monitoring the Set if all AI is spawned for the Clients.</li>
+    <li><strong>Spawning</strong> ( Set, ClientName ): There is a new AI group spawned with ClientName as the name of reference.</li>
+    <li><strong>Spawned</strong> ( Set, AIGroup ): A new AI has been spawned. You can handle this event to customize the AI behaviour with other AI FSMs or own processes.</li>
+    <li><strong>Destroying</strong> ( Set, AIGroup ): The AI is being destroyed.</li>
+    <li><strong>Returning</strong> ( Set, AIGroup ): The AI is returning to the airbase specified by the ReturnToAirbase methods. Handle this state to customize the return behaviour of the AI, if any.</li>
+</ul>
+
+<h3>2.2. AI_BALANCER Events</h3>
+
+<ul>
+    <li><strong>Monitor</strong> ( Set ): Every 10 seconds, the Monitor event is triggered to monitor the Set.</li>
+    <li><strong>Spawn</strong> ( Set, ClientName ): Triggers when there is a new AI group to be spawned with ClientName as the name of reference.</li>
+    <li><strong>Spawned</strong> ( Set, AIGroup ): Triggers when a new AI has been spawned. You can handle this event to customize the AI behaviour with other AI FSMs or own processes.</li>
+    <li><strong>Destroy</strong> ( Set, AIGroup ): The AI is being destroyed.</li>
+    <li><strong>Return</strong> ( Set, AIGroup ): The AI is returning to the airbase specified by the ReturnToAirbase methods.</li>
+</ul>
+
+<h2>3. AI_BALANCER spawn interval for replacement AI</h2>
+
+<p>Use the method <a href="##(AI_BALANCER).InitSpawnInterval">AI_BALANCER.InitSpawnInterval</a>() to set the earliest and latest interval in seconds that is waited until a new replacement AI is spawned.</p>
+
+<h2>4. AI_BALANCER returns AI to Airbases</h2>
+
+<p>By default, When a human player joins a slot that is AI_BALANCED, the AI group will be destroyed by default. 
+However, there are 2 additional options that you can use to customize the destroy behaviour.
+When a human player joins a slot, you can configure to let the AI return to:</p>
+
+<ul>
+    <li><a href="##(AI_BALANCER).ReturnToHomeAirbase">AI_BALANCER.ReturnToHomeAirbase</a>: Returns the AI to the <strong>home</strong> <a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a>.</li>
+    <li><a href="##(AI_BALANCER).ReturnToNearestAirbases">AI_BALANCER.ReturnToNearestAirbases</a>: Returns the AI to the <strong>nearest friendly</strong> <a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a>.</li>
+</ul>
+
+<p>Note that when AI returns to an airbase, the AI<em>BALANCER will trigger the <strong>Return</strong> event and the AI will return, 
+otherwise the AI</em>BALANCER will trigger a <strong>Destroy</strong> event, and the AI will be destroyed.</p>
 
 
 </dd>
@@ -331,38 +341,7 @@ otherwise the AI</em>BALANCER will trigger a <strong>Destroy</strong> event, and
 	<h2><a id="#(AI_Balancer)" >Type <code>AI_Balancer</code></a></h2>
 	
 			<h2><a id="#(AI_BALANCER)" >Type <code>AI_BALANCER</code></a></h2>
-				
-<p>AI_BALANCER class</p>
-
-	<h3>Field(s)</h3>
-		<dl class="function">
-<dt>
-
-		<em></em>
-<a id="#(AI_BALANCER).AIGroups" >
-<strong>AI_BALANCER.AIGroups</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em>#string</em>
-<a id="#(AI_BALANCER).ClassName" >
-<strong>AI_BALANCER.ClassName</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
+				<h3>Field(s)</h3>
 		<dl class="function">
 <dt>
 
@@ -464,20 +443,6 @@ The default Spawn object to spawn new AI Groups when needed.</p>
 <dt>
 
 		<em></em>
-<a id="#(AI_BALANCER).PatrolZones" >
-<strong>AI_BALANCER.PatrolZones</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em></em>
 <a id="#(AI_BALANCER).ReturnAirbaseSet" >
 <strong>AI_BALANCER.ReturnAirbaseSet</strong>
 </a>
@@ -491,8 +456,22 @@ The default Spawn object to spawn new AI Groups when needed.</p>
 		<dl class="function">
 <dt>
 
+		<em></em>
+<a id="#(AI_BALANCER).ReturnThresholdRange" >
+<strong>AI_BALANCER.ReturnThresholdRange</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(AI_BALANCER).ReturnToHomeAirbase" >
-<strong>AI_BALANCER:ReturnToHomeAirbase(ReturnTresholdRange)</strong>
+<strong>AI_BALANCER:ReturnToHomeAirbase(ReturnThresholdRange)</strong>
 </a>
 </dt>
 <dd>
@@ -503,8 +482,8 @@ The default Spawn object to spawn new AI Groups when needed.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a> ReturnTresholdRange </em></code>: 
-If there is an enemy <a href="Client.html##(CLIENT)">Client#CLIENT</a> within the ReturnTresholdRange given in meters, the AI will not return to the nearest <a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a>.</p>
+<p><code><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a> ReturnThresholdRange </em></code>: 
+If there is an enemy <a href="Client.html##(CLIENT)">Client#CLIENT</a> within the ReturnThresholdRange given in meters, the AI will not return to the nearest <a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a>.</p>
 
 				</li>
 		</ul>
@@ -514,7 +493,7 @@ If there is an enemy <a href="Client.html##(CLIENT)">Client#CLIENT</a> within th
 <dt>
 
 <a id="#(AI_BALANCER).ReturnToNearestAirbases" >
-<strong>AI_BALANCER:ReturnToNearestAirbases(ReturnTresholdRange, ReturnAirbaseSet)</strong>
+<strong>AI_BALANCER:ReturnToNearestAirbases(ReturnThresholdRange, ReturnAirbaseSet)</strong>
 </a>
 </dt>
 <dd>
@@ -525,8 +504,8 @@ If there is an enemy <a href="Client.html##(CLIENT)">Client#CLIENT</a> within th
 		<ul>
 				<li>
 				
-<p><code><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a> ReturnTresholdRange </em></code>: 
-If there is an enemy <a href="Client.html##(CLIENT)">Client#CLIENT</a> within the ReturnTresholdRange given in meters, the AI will not return to the nearest <a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a>.</p>
+<p><code><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a> ReturnThresholdRange </em></code>: 
+If there is an enemy <a href="Client.html##(CLIENT)">Client#CLIENT</a> within the ReturnThresholdRange given in meters, the AI will not return to the nearest <a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a>.</p>
 
 				</li>
 				<li>
@@ -536,20 +515,6 @@ The SET of <a href="Set.html##(SET_AIRBASE)">Set#SET_AIRBASE</a>s to evaluate wh
 
 				</li>
 		</ul>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em></em>
-<a id="#(AI_BALANCER).ReturnTresholdRange" >
-<strong>AI_BALANCER.ReturnTresholdRange</strong>
-</a>
-</dt>
-<dd>
-	
-
-
 </dd>
 </dl>
 		<dl class="function">

@@ -70,19 +70,20 @@ do -- ACT_ACCOUNT
     -- Inherits from BASE
     local self = BASE:Inherit( self, FSM_PROCESS:New() ) -- Core.Fsm#FSM_PROCESS
   
-    self:AddTransition( "Assigned", "Start", "Waiting")
-    self:AddTransition( "*", "Wait", "Waiting")
-    self:AddTransition( "*", "Report", "Report")
-    self:AddTransition( "*", "Event", "Account")
-    self:AddTransition( "Account", "More", "Wait")
-    self:AddTransition( "Account", "NoMore", "Accounted")
-    self:AddTransition( "*", "Fail", "Failed")
+    self:AddTransition( "Assigned", "Start", "Waiting" )
+    self:AddTransition( "*", "Wait", "Waiting" )
+    self:AddTransition( "*", "Report", "Report" )
+    self:AddTransition( "*", "Event", "Account" )
+    self:AddTransition( "Account", "Player", "AccountForPlayer" )
+    self:AddTransition( "Account", "Other", "AccountForOther" )
+    self:AddTransition( { "Account", "AccountForPlayer", "AccountForOther" }, "More", "Wait" )
+    self:AddTransition( { "Account", "AccountForPlayer", "AccountForOther" }, "NoMore", "Accounted" )
+    self:AddTransition( "*", "Fail", "Failed" )
     
-    self:AddEndState( "Accounted" )
     self:AddEndState( "Failed" )
     
     self:SetStartState( "Assigned" ) 
-        
+    
     return self
   end
 
@@ -97,6 +98,8 @@ do -- ACT_ACCOUNT
   function ACT_ACCOUNT:onafterStart( ProcessUnit, From, Event, To )
 
     self:HandleEvent( EVENTS.Dead, self.onfuncEventDead )
+    self:HandleEvent( EVENTS.Crash, self.onfuncEventCrash )
+    self:HandleEvent( EVENTS.Hit )
 
     self:__Wait( 1 )
   end
@@ -152,7 +155,6 @@ do -- ACT_ACCOUNT_DEADS
   -- @extends #ACT_ACCOUNT
   ACT_ACCOUNT_DEADS = { 
     ClassName = "ACT_ACCOUNT_DEADS",
-    TargetSetUnit = nil,
   }
 
 
@@ -160,13 +162,10 @@ do -- ACT_ACCOUNT_DEADS
   -- @param #ACT_ACCOUNT_DEADS self
   -- @param Set#SET_UNIT TargetSetUnit
   -- @param #string TaskName
-  function ACT_ACCOUNT_DEADS:New( TargetSetUnit, TaskName )
+  function ACT_ACCOUNT_DEADS:New()
     -- Inherits from BASE
     local self = BASE:Inherit( self, ACT_ACCOUNT:New() ) -- #ACT_ACCOUNT_DEADS
     
-    self.TargetSetUnit = TargetSetUnit 
-    self.TaskName = TaskName
-      
     self.DisplayInterval = 30
     self.DisplayCount = 30
     self.DisplayMessage = true
@@ -178,8 +177,8 @@ do -- ACT_ACCOUNT_DEADS
   
   function ACT_ACCOUNT_DEADS:Init( FsmAccount )
   
-    self.TargetSetUnit = FsmAccount.TargetSetUnit 
-    self.TaskName = FsmAccount.TaskName
+    self.Task = self:GetTask() 
+    self.TaskName = self.Task:GetName()
   end
 
   --- Process Events
@@ -193,53 +192,109 @@ do -- ACT_ACCOUNT_DEADS
   function ACT_ACCOUNT_DEADS:onenterReport( ProcessUnit, Task, From, Event, To )
     self:E( { ProcessUnit, From, Event, To } )
   
-    self:Message( "Your group with assigned " .. self.TaskName .. " task has " .. self.TargetSetUnit:GetUnitTypesText() .. " targets left to be destroyed." )
+    self:Message( "Your group with assigned " .. self.TaskName .. " task has " .. Task.TargetSetUnit:GetUnitTypesText() .. " targets left to be destroyed." )
   end
   
   
   --- StateMachine callback function
   -- @param #ACT_ACCOUNT_DEADS self
-  -- @param Wrapper.Controllable#CONTROLLABLE ProcessUnit
-  -- @param #string Event
+  -- @param Wrapper.Client#CLIENT ProcessClient
+  -- @param Tasking.Task#TASK Task
   -- @param #string From
+  -- @param #string Event
   -- @param #string To
-  function ACT_ACCOUNT_DEADS:onenterAccount( ProcessUnit, Task, From, Event, To, EventData  )
-    self:T( { ProcessUnit, EventData, From, Event, To } )
+  -- @param Core.Event#EVENTDATA EventData
+  function ACT_ACCOUNT_DEADS:onafterEvent( ProcessClient, Task, From, Event, To, EventData  )
+    self:T( { ProcessClient:GetName(), Task:GetName(), From, Event, To, EventData } )
     
-    self:T({self.Controllable})
-  
-    self.TargetSetUnit:Flush()
-    
-    self:T( { "Before sending Message", EventData.IniUnitName, self.TargetSetUnit:FindUnit( EventData.IniUnitName ) } )
-    if self.TargetSetUnit:FindUnit( EventData.IniUnitName ) then
-      self:T( "Sending Message" )
-      local TaskGroup = ProcessUnit:GetGroup()
-      self.TargetSetUnit:Remove( EventData.IniUnitName )
-      self:Message( "You hit a target. Your group with assigned " .. self.TaskName .. " task has " .. self.TargetSetUnit:Count() .. " targets ( " .. self.TargetSetUnit:GetUnitTypesText() .. " ) left to be destroyed." )
+    if Task.TargetSetUnit:FindUnit( EventData.IniUnitName ) then
+      local PlayerName = ProcessClient:GetPlayerName()
+      local PlayerHit = self.PlayerHits and self.PlayerHits[EventData.IniUnitName]
+      if PlayerHit == PlayerName then
+        self:Player( EventData )
+      else
+        self:Other( EventData )
+      end
     end
-    self:T( { "After sending Message" } )
   end
-  
+
   --- StateMachine callback function
   -- @param #ACT_ACCOUNT_DEADS self
-  -- @param Wrapper.Controllable#CONTROLLABLE ProcessUnit
-  -- @param #string Event
+  -- @param Wrapper.Client#CLIENT ProcessClient
+  -- @param Tasking.Task#TASK Task
   -- @param #string From
+  -- @param #string Event
   -- @param #string To
-  function ACT_ACCOUNT_DEADS:onafterEvent( ProcessUnit, Task, From, Event, To )
-  
-    if self.TargetSetUnit:Count() > 0 then
+  -- @param Core.Event#EVENTDATA EventData
+  function ACT_ACCOUNT_DEADS:onenterAccountForPlayer( ProcessClient, Task, From, Event, To, EventData  )
+    self:T( { ProcessClient:GetName(), Task:GetName(), From, Event, To, EventData } )
+    
+    local TaskGroup = ProcessClient:GetGroup()
+
+    Task.TargetSetUnit:Remove( EventData.IniUnitName )
+    self:Message( "You have destroyed a target.\nYour group assigned with task " .. self.TaskName .. " has\n" .. Task.TargetSetUnit:Count() .. " targets ( " .. Task.TargetSetUnit:GetUnitTypesText() .. " ) left to be destroyed." )
+
+    local PlayerName = ProcessClient:GetPlayerName()
+    Task:AddProgress( PlayerName, "Destroyed " .. EventData.IniTypeName, timer.getTime(), 1 )
+
+    if Task.TargetSetUnit:Count() > 0 then
       self:__More( 1 )
     else
       self:__NoMore( 1 )
     end
   end
+
+  --- StateMachine callback function
+  -- @param #ACT_ACCOUNT_DEADS self
+  -- @param Wrapper.Client#CLIENT ProcessClient
+  -- @param Tasking.Task#TASK Task
+  -- @param #string From
+  -- @param #string Event
+  -- @param #string To
+  -- @param Core.Event#EVENTDATA EventData
+  function ACT_ACCOUNT_DEADS:onenterAccountForOther( ProcessClient, Task, From, Event, To, EventData  )
+    self:T( { ProcessClient:GetName(), Task:GetName(), From, Event, To, EventData } )
+    
+    local TaskGroup = ProcessClient:GetGroup()
+    Task.TargetSetUnit:Remove( EventData.IniUnitName )
+    self:Message( "One of the task targets has been destroyed.\nYour group assigned with task " .. self.TaskName .. " has\n" .. Task.TargetSetUnit:Count() .. " targets ( " .. Task.TargetSetUnit:GetUnitTypesText() .. " ) left to be destroyed." )
+
+    if Task.TargetSetUnit:Count() > 0 then
+      self:__More( 1 )
+    else
+      self:__NoMore( 1 )
+    end
+  end
+
   
   --- DCS Events
   
   --- @param #ACT_ACCOUNT_DEADS self
+  -- @param Core.Event#EVENTDATA EventData
+  function ACT_ACCOUNT_DEADS:OnEventHit( EventData )
+    self:T( { "EventDead", EventData } )
+
+    if EventData.IniPlayerName and EventData.TgtDCSUnitName then
+      self.PlayerHits = self.PlayerHits or {}
+      self.PlayerHits[EventData.TgtDCSUnitName] = EventData.IniPlayerName
+    end
+  end  
+  
+  --- @param #ACT_ACCOUNT_DEADS self
   -- @param Event#EVENTDATA EventData
   function ACT_ACCOUNT_DEADS:onfuncEventDead( EventData )
+    self:T( { "EventDead", EventData } )
+
+    if EventData.IniDCSUnit then
+      self:Event( EventData )
+    end
+  end
+
+  --- DCS Events
+  
+  --- @param #ACT_ACCOUNT_DEADS self
+  -- @param Event#EVENTDATA EventData
+  function ACT_ACCOUNT_DEADS:onfuncEventCrash( EventData )
     self:T( { "EventDead", EventData } )
 
     if EventData.IniDCSUnit then

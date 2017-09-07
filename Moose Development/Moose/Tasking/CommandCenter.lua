@@ -1,50 +1,19 @@
---- A COMMANDCENTER is the owner of multiple missions within MOOSE. 
+--- **Tasking** -- A COMMANDCENTER is the owner of multiple missions within MOOSE. 
 -- A COMMANDCENTER governs multiple missions, the tasking and the reporting.
+-- 
+-- ===
+--  
+-- ### Author: **Sven Van de Velde (FlightControl)**
+-- 
+-- ### Contributions: 
+-- 
+-- ====
+-- 
 -- @module CommandCenter
 
 
 
---- The REPORT class
--- @type REPORT
--- @extends Core.Base#BASE
-REPORT = {
-  ClassName = "REPORT",
-}
 
---- Create a new REPORT.
--- @param #REPORT self
--- @param #string Title
--- @return #REPORT
-function REPORT:New( Title )
-
-  local self = BASE:Inherit( self, BASE:New() )
-
-  self.Report = {}
-  if Title then
-    self.Report[#self.Report+1] = Title  
-  end
-
-  return self
-end
-
---- Add a new line to a REPORT.
--- @param #REPORT self
--- @param #string Text
--- @return #REPORT
-function REPORT:Add( Text )
-  self.Report[#self.Report+1] = Text
-  return self.Report[#self.Report]
-end
-
---- Produces the text of the report, taking into account an optional delimeter, which is \n by default.
--- @param #REPORT self
--- @param #string Delimiter (optional) A delimiter text.
--- @return #string The report text.
-function REPORT:Text( Delimiter )
-  Delimiter = Delimiter or "\n"
-  local ReportText = table.concat( self.Report, Delimiter ) or ""
-  return ReportText
-end
 
 --- The COMMANDCENTER class
 -- @type COMMANDCENTER
@@ -52,13 +21,64 @@ end
 -- @field Dcs.DCSCoalitionWrapper.Object#coalition CommandCenterCoalition
 -- @list<Tasking.Mission#MISSION> Missions
 -- @extends Core.Base#BASE
+
+
+--- # COMMANDCENTER class, extends @{Base#BASE}
+-- 
+--  The COMMANDCENTER class governs multiple missions, the tasking and the reporting.
+--  
+--  The commandcenter communicates important messages between the various groups of human players executing tasks in missions.
+--  
+-- ## COMMANDCENTER constructor
+--
+--   * @{#COMMANDCENTER.New}(): Creates a new COMMANDCENTER object.
+-- 
+-- ## Mission Management
+-- 
+--   * @{#COMMANDCENTER.AddMission}(): Adds a mission to the commandcenter control.
+--   * @{#COMMANDCENTER.RemoveMission}(): Removes a mission to the commandcenter control.
+--   * @{#COMMANDCENTER.GetMissions}(): Retrieves the missions table controlled by the commandcenter.
+-- 
+-- ## Reference Zones
+-- 
+-- Command Centers may be aware of certain Reference Zones within the battleground. These Reference Zones can refer to
+-- known areas, recognizable buildings or sites, or any other point of interest.
+-- Command Centers will use these Reference Zones to help pilots with defining coordinates in terms of navigation
+-- during the WWII era.
+-- The Reference Zones are related to the WWII mode that the Command Center will operate in.
+-- Use the method @{#COMMANDCENTER.SetModeWWII}() to set the mode of communication to the WWII mode.
+-- 
+-- In WWII mode, the Command Center will receive detected targets, and will select for each target the closest
+-- nearby Reference Zone. This allows pilots to navigate easier through the battle field readying for combat.
+-- 
+-- The Reference Zones need to be set by the Mission Designer in the Mission Editor.
+-- Reference Zones are set by normal trigger zones. One can color the zones in a specific color, 
+-- and the radius of the zones doesn't matter, only the point is important. Place the center of these Reference Zones at
+-- specific scenery objects or points of interest (like cities, rivers, hills, crossing etc).
+-- The trigger zones indicating a Reference Zone need to follow a specific syntax.
+-- The name of each trigger zone expressing a Reference Zone need to start with a classification name of the object,
+-- followed by a #, followed by a symbolic name of the Reference Zone.
+-- A few examples:
+-- 
+--   * A church at Tskinvali would be indicated as: *Church#Tskinvali*
+--   * A train station near Kobuleti would be indicated as: *Station#Kobuleti*
+--   
+-- The COMMANDCENTER class contains a method to indicate which trigger zones need to be used as Reference Zones.
+-- This is done by using the method @{#COMMANDCENTER.SetReferenceZones}().
+-- For the moment, only one Reference Zone class can be specified, but in the future, more classes will become possible.
+-- 
+-- @field #COMMANDCENTER
 COMMANDCENTER = {
   ClassName = "COMMANDCENTER",
   CommandCenterName = "",
   CommandCenterCoalition = nil,
   CommandCenterPositionable = nil,
   Name = "",
+  ReferencePoints = {},
+  ReferenceNames = {},
+  CommunicationMode = "80",
 }
+
 --- The constructor takes an IDENTIFIABLE as the HQ command center.
 -- @param #COMMANDCENTER self
 -- @param Wrapper.Positionable#POSITIONABLE CommandCenterPositionable
@@ -81,17 +101,18 @@ function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
       if EventData.IniObjectCategory == 1 then
         local EventGroup = GROUP:Find( EventData.IniDCSGroup )
         if EventGroup and self:HasGroup( EventGroup ) then
-          local MenuReporting = MENU_GROUP:New( EventGroup, "Reporting", self.CommandCenterMenu )
-          local MenuMissionsSummary = MENU_GROUP_COMMAND:New( EventGroup, "Missions Summary Report", MenuReporting, self.ReportSummary, self, EventGroup )
-          local MenuMissionsDetails = MENU_GROUP_COMMAND:New( EventGroup, "Missions Details Report", MenuReporting, self.ReportDetails, self, EventGroup )
+          local MenuReporting = MENU_GROUP:New( EventGroup, "Missions Reports", self.CommandCenterMenu )
+          local MenuMissionsSummary = MENU_GROUP_COMMAND:New( EventGroup, "Missions Status Report", MenuReporting, self.ReportMissionsStatus, self, EventGroup )
+          local MenuMissionsDetails = MENU_GROUP_COMMAND:New( EventGroup, "Missions Players Report", MenuReporting, self.ReportMissionsPlayers, self, EventGroup )
           self:ReportSummary( EventGroup )
-        end
-        local PlayerUnit = EventData.IniUnit
-        for MissionID, Mission in pairs( self:GetMissions() ) do
-          local Mission = Mission -- Tasking.Mission#MISSION
-          local PlayerGroup = EventData.IniGroup -- The GROUP object should be filled!
-          Mission:JoinUnit( PlayerUnit, PlayerGroup )
-          Mission:ReportDetails()
+          local PlayerUnit = EventData.IniUnit
+          for MissionID, Mission in pairs( self:GetMissions() ) do
+            local Mission = Mission -- Tasking.Mission#MISSION
+            local PlayerGroup = EventData.IniGroup -- The GROUP object should be filled!
+            Mission:JoinUnit( PlayerUnit, PlayerGroup )
+          end
+          self:SetMenu()
+         _DATABASE:PlayerSettingsMenu( PlayerUnit ) 
         end
       end
       
@@ -112,7 +133,22 @@ function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
         local Mission = Mission -- Tasking.Mission#MISSION
         local PlayerGroup = EventData.IniGroup -- The GROUP object should be filled!
         Mission:JoinUnit( PlayerUnit, PlayerGroup )
-        Mission:ReportDetails()
+      end
+      self:SetMenu()
+    end
+  )
+
+  -- Handle when a player leaves a slot and goes back to spectators ... 
+  -- The PlayerUnit will be UnAssigned from the Task.
+  -- When there is no Unit left running the Task, the Task goes into Abort...
+  self:HandleEvent( EVENTS.MissionEnd,
+    --- @param #TASK self
+    -- @param Core.Event#EVENTDATA EventData
+    function( self, EventData )
+      local PlayerUnit = EventData.IniUnit
+      for MissionID, Mission in pairs( self:GetMissions() ) do
+        local Mission = Mission -- Tasking.Mission#MISSION
+        Mission:Stop()
       end
     end
   )
@@ -127,7 +163,9 @@ function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
       local PlayerUnit = EventData.IniUnit
       for MissionID, Mission in pairs( self:GetMissions() ) do
         local Mission = Mission -- Tasking.Mission#MISSION
-        Mission:AbortUnit( PlayerUnit )
+        if Mission:IsENGAGED() then
+          Mission:AbortUnit( PlayerUnit )
+        end
       end
     end
   )
@@ -141,10 +179,17 @@ function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
     function( self, EventData )
       local PlayerUnit = EventData.IniUnit
       for MissionID, Mission in pairs( self:GetMissions() ) do
-        Mission:CrashUnit( PlayerUnit )
+        local Mission = Mission -- Tasking.Mission#MISSION
+        if Mission:IsENGAGED() then
+          Mission:CrashUnit( PlayerUnit )
+        end
       end
     end
   )
+  
+  self:SetMenu()
+  
+  _SETTINGS:SetSystemMenu( CommandCenterPositionable )
 	
 	return self
 end
@@ -195,6 +240,66 @@ function COMMANDCENTER:RemoveMission( Mission )
   return Mission
 end
 
+--- Set special Reference Zones known by the Command Center to guide airborne pilots during WWII.
+-- 
+-- These Reference Zones are normal trigger zones, with a special naming.
+-- The Reference Zones need to be set by the Mission Designer in the Mission Editor.
+-- Reference Zones are set by normal trigger zones. One can color the zones in a specific color, 
+-- and the radius of the zones doesn't matter, only the center of the zone is important. Place the center of these Reference Zones at
+-- specific scenery objects or points of interest (like cities, rivers, hills, crossing etc).
+-- The trigger zones indicating a Reference Zone need to follow a specific syntax.
+-- The name of each trigger zone expressing a Reference Zone need to start with a classification name of the object,
+-- followed by a #, followed by a symbolic name of the Reference Zone.
+-- A few examples:
+-- 
+--   * A church at Tskinvali would be indicated as: *Church#Tskinvali*
+--   * A train station near Kobuleti would be indicated as: *Station#Kobuleti*
+-- 
+-- Taking the above example, this is how this method would be used:
+-- 
+--     CC:SetReferenceZones( "Church" )
+--     CC:SetReferenceZones( "Station" )
+-- 
+-- 
+-- @param #COMMANDCENTER self
+-- @param #string ReferenceZonePrefix The name before the #-mark indicating the class of the Reference Zones.
+-- @return #COMMANDCENTER
+function COMMANDCENTER:SetReferenceZones( ReferenceZonePrefix )
+  local MatchPattern = "(.*)#(.*)"
+  self:F( { MatchPattern = MatchPattern } )
+  for ReferenceZoneName in pairs( _DATABASE.ZONENAMES ) do
+    local ZoneName, ReferenceName = string.match( ReferenceZoneName, MatchPattern )
+    self:F( { ZoneName = ZoneName, ReferenceName = ReferenceName } )
+    if ZoneName and ReferenceName and ZoneName == ReferenceZonePrefix then
+      self.ReferencePoints[ReferenceZoneName] = ZONE:New( ReferenceZoneName )
+      self.ReferenceNames[ReferenceZoneName] = ReferenceName
+    end
+  end
+  return self
+end
+
+--- Set the commandcenter operations in WWII mode
+-- This will disable LL, MGRS, BRA, BULLS navigatin messages sent by the Command Center, 
+-- and will be replaced by a navigation using Reference Zones.
+-- It will also disable the settings at the settings menu for these.
+-- @param #COMMANDCENTER self
+-- @return #COMMANDCENTER
+function COMMANDCENTER:SetModeWWII()
+  self.CommunicationMode = "WWII"
+  return self
+end
+
+
+--- Returns if the commandcenter operations is in WWII mode
+-- @param #COMMANDCENTER self
+-- @return #boolean true if in WWII mode.
+function COMMANDCENTER:IsModeWWII()
+  return self.CommunicationMode == "WWII"
+end
+
+
+
+
 --- Sets the menu structure of the Missions governed by the HQ command center.
 -- @param #COMMANDCENTER self
 function COMMANDCENTER:SetMenu()
@@ -203,12 +308,12 @@ function COMMANDCENTER:SetMenu()
   self.CommandCenterMenu = self.CommandCenterMenu or MENU_COALITION:New( self.CommandCenterCoalition, "Command Center (" .. self:GetName() .. ")" )
 
   local MenuTime = timer.getTime()
-  for MissionID, Mission in pairs( self:GetMissions() ) do
+  for MissionID, Mission in pairs( self:GetMissions() or {} ) do
     local Mission = Mission -- Tasking.Mission#MISSION
     Mission:SetMenu( MenuTime )
   end
 
-  for MissionID, Mission in pairs( self:GetMissions() ) do
+  for MissionID, Mission in pairs( self:GetMissions() or {} ) do
     local Mission = Mission -- Tasking.Mission#MISSION
     Mission:RemoveMenu( MenuTime )
   end
@@ -219,7 +324,6 @@ end
 -- @param #COMMANDCENTER self
 -- @return Core.Menu#MENU_COALITION
 function COMMANDCENTER:GetMenu()
-  self:F()
   return self.CommandCenterMenu
 end
 
@@ -255,12 +359,9 @@ end
 -- @param #string Message
 -- @param Wrapper.Group#GROUP TaskGroup
 -- @param #sring Name (optional) The name of the Group used as a prefix for the message to the Group. If not provided, there will be nothing shown.
-function COMMANDCENTER:MessageToGroup( Message, TaskGroup, Name )
+function COMMANDCENTER:MessageToGroup( Message, TaskGroup )
 
-  local Prefix = "@ Group"
-  Prefix = Prefix .. ( Name and " (" .. Name .. "): " or '' )
-  Message = Prefix .. Message 
-  self:GetPositionable():MessageToGroup( Message , 20, TaskGroup, self:GetName() )
+  self:GetPositionable():MessageToGroup( Message , 15, TaskGroup, self:GetName() )
 
 end
 
@@ -270,7 +371,8 @@ function COMMANDCENTER:MessageToCoalition( Message )
 
   local CCCoalition = self:GetPositionable():GetCoalition()
     --TODO: Fix coalition bug!
-    self:GetPositionable():MessageToCoalition( Message, 20, CCCoalition, self:GetName() )
+    
+    self:GetPositionable():MessageToCoalition( Message, 15, CCCoalition )
 
 end
 
@@ -278,18 +380,37 @@ end
 --- Report the status of all MISSIONs to a GROUP.
 -- Each Mission is listed, with an indication how many Tasks are still to be completed.
 -- @param #COMMANDCENTER self
-function COMMANDCENTER:ReportSummary( ReportGroup )
+function COMMANDCENTER:ReportMissionsStatus( ReportGroup )
+  self:E( ReportGroup )
+
+  local Report = REPORT:New()
+
+  Report:Add( "Status report of all missions." )
+  
+  for MissionID, Mission in pairs( self.Missions ) do
+    local Mission = Mission -- Tasking.Mission#MISSION
+    Report:Add( " - " .. Mission:ReportStatus() )
+  end
+  
+  self:MessageToGroup( Report:Text(), ReportGroup )
+end
+
+--- Report the players of all MISSIONs to a GROUP.
+-- Each Mission is listed, with an indication how many Tasks are still to be completed.
+-- @param #COMMANDCENTER self
+function COMMANDCENTER:ReportMissionsPlayers( ReportGroup )
   self:E( ReportGroup )
 
   local Report = REPORT:New()
   
+  Report:Add( "Players active in all missions." )
+
   for MissionID, Mission in pairs( self.Missions ) do
     local Mission = Mission -- Tasking.Mission#MISSION
-    Report:Add( " - " .. Mission:ReportOverview() )
+    Report:Add( " - " .. Mission:ReportPlayers() )
   end
   
-  self:GetPositionable():MessageToGroup( Report:Text(), 30, ReportGroup )
-  
+  self:MessageToGroup( Report:Text(), ReportGroup )
 end
 
 --- Report the status of a Task to a Group.
@@ -305,6 +426,6 @@ function COMMANDCENTER:ReportDetails( ReportGroup, Task )
     Report:Add( " - " .. Mission:ReportDetails() )
   end
   
-  self:GetPositionable():MessageToGroup( Report:Text(), 30, ReportGroup )
+  self:MessageToGroup( Report:Text(), ReportGroup )
 end
 

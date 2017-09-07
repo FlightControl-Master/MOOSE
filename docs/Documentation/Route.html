@@ -17,9 +17,16 @@
 				<a href="index.html">index</a>
 			</li></ul>
 		<ul>
+					<li><a href="AI_A2A.html">AI_A2A</a></li>
+					<li><a href="AI_A2A_Cap.html">AI_A2A_Cap</a></li>
+					<li><a href="AI_A2A_Dispatcher.html">AI_A2A_Dispatcher</a></li>
+					<li><a href="AI_A2A_GCI.html">AI_A2A_GCI</a></li>
+					<li><a href="AI_A2A_Patrol.html">AI_A2A_Patrol</a></li>
+					<li><a href="AI_Bai.html">AI_Bai</a></li>
 					<li><a href="AI_Balancer.html">AI_Balancer</a></li>
 					<li><a href="AI_Cap.html">AI_Cap</a></li>
 					<li><a href="AI_Cas.html">AI_Cas</a></li>
+					<li><a href="AI_Formation.html">AI_Formation</a></li>
 					<li><a href="AI_Patrol.html">AI_Patrol</a></li>
 					<li><a href="Account.html">Account</a></li>
 					<li><a href="Airbase.html">Airbase</a></li>
@@ -31,7 +38,23 @@
 					<li><a href="Client.html">Client</a></li>
 					<li><a href="CommandCenter.html">CommandCenter</a></li>
 					<li><a href="Controllable.html">Controllable</a></li>
+					<li><a href="DCSAirbase.html">DCSAirbase</a></li>
+					<li><a href="DCSCoalitionObject.html">DCSCoalitionObject</a></li>
+					<li><a href="DCSCommand.html">DCSCommand</a></li>
+					<li><a href="DCSController.html">DCSController</a></li>
+					<li><a href="DCSGroup.html">DCSGroup</a></li>
+					<li><a href="DCSObject.html">DCSObject</a></li>
+					<li><a href="DCSTask.html">DCSTask</a></li>
+					<li><a href="DCSTypes.html">DCSTypes</a></li>
+					<li><a href="DCSUnit.html">DCSUnit</a></li>
+					<li><a href="DCSVec3.html">DCSVec3</a></li>
+					<li><a href="DCSWorld.html">DCSWorld</a></li>
+					<li><a href="DCSZone.html">DCSZone</a></li>
+					<li><a href="DCScountry.html">DCScountry</a></li>
+					<li><a href="DCStimer.html">DCStimer</a></li>
+					<li><a href="DCStrigger.html">DCStrigger</a></li>
 					<li><a href="Database.html">Database</a></li>
+					<li><a href="Designate.html">Designate</a></li>
 					<li><a href="Detection.html">Detection</a></li>
 					<li><a href="DetectionManager.html">DetectionManager</a></li>
 					<li><a href="Escort.html">Escort</a></li>
@@ -57,16 +80,25 @@
 					<li><a href="Scoring.html">Scoring</a></li>
 					<li><a href="Sead.html">Sead</a></li>
 					<li><a href="Set.html">Set</a></li>
+					<li><a href="Settings.html">Settings</a></li>
 					<li><a href="Smoke.html">Smoke</a></li>
 					<li><a href="Spawn.html">Spawn</a></li>
+					<li><a href="SpawnStatic.html">SpawnStatic</a></li>
+					<li><a href="Spot.html">Spot</a></li>
 					<li><a href="Static.html">Static</a></li>
+					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="Task.html">Task</a></li>
+					<li><a href="Task_A2A.html">Task_A2A</a></li>
+					<li><a href="Task_A2A_Dispatcher.html">Task_A2A_Dispatcher</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
 					<li><a href="Task_A2G_Dispatcher.html">Task_A2G_Dispatcher</a></li>
+					<li><a href="Task_Cargo.html">Task_Cargo</a></li>
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
 					<li><a href="Unit.html">Unit</a></li>
 					<li><a href="Utils.html">Utils</a></li>
 					<li><a href="Zone.html">Zone</a></li>
+					<li><a href="env.html">env</a></li>
+					<li><a href="land.html">land</a></li>
 					<li><a href="routines.html">routines</a></li>
 		</ul>
 	</div>
@@ -189,7 +221,25 @@ Upon arrival at the zone, a confirmation of arrival is sent, and the process wil
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ROUTE).Coordinate">ACT_ROUTE.Coordinate</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(ACT_ROUTE).DisplayCount">ACT_ROUTE.DisplayCount</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ROUTE).GetRouteText">ACT_ROUTE:GetRouteText(Controllable)</a></td>
+		<td class="summary">
+<p>Get the routing text to be displayed.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ROUTE).MenuCancel">ACT_ROUTE:MenuCancel()</a></td>
 		<td class="summary">
 
 </td>
@@ -204,6 +254,24 @@ Upon arrival at the zone, a confirmation of arrival is sent, and the process wil
 		<td class="name" nowrap="nowrap"><a href="##(ACT_ROUTE).ProcessUnit">ACT_ROUTE.ProcessUnit</a></td>
 		<td class="summary">
 
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ROUTE).RouteMode">ACT_ROUTE.RouteMode</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ROUTE).SetMenuCancel">ACT_ROUTE:SetMenuCancel(MenuGroup, MenuText, ParentMenu, MenuTime)</a></td>
+		<td class="summary">
+<p>Set a Cancel Menu item.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ROUTE).SetRouteMode">ACT_ROUTE:SetRouteMode(RouteMode)</a></td>
+		<td class="summary">
+<p>Set the route mode.</p>
 </td>
 		</tr>
 		<tr>
@@ -247,6 +315,12 @@ Upon arrival at the zone, a confirmation of arrival is sent, and the process wil
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ROUTE_POINT).Coordinate">ACT_ROUTE_POINT.Coordinate</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(ACT_ROUTE_POINT).DisplayCount">ACT_ROUTE_POINT.DisplayCount</a></td>
 		<td class="summary">
 
@@ -271,33 +345,27 @@ Upon arrival at the zone, a confirmation of arrival is sent, and the process wil
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ACT_ROUTE_POINT).GetPointVec2">ACT_ROUTE_POINT:GetPointVec2()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ROUTE_POINT).GetCoordinate">ACT_ROUTE_POINT:GetCoordinate()</a></td>
 		<td class="summary">
-<p>Get PointVec2</p>
+<p>Get Coordinate</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(ACT_ROUTE_POINT).GetRange">ACT_ROUTE_POINT:GetRange()</a></td>
 		<td class="summary">
-<p>Get Range around PointVec2</p>
+<p>Get Range around Coordinate</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(ACT_ROUTE_POINT).Init">ACT_ROUTE_POINT:Init(FsmRoute)</a></td>
 		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ACT_ROUTE_POINT).New">ACT_ROUTE_POINT:New(The, Range, Zone, PointVec2)</a></td>
-		<td class="summary">
 <p>Creates a new routing state machine.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ACT_ROUTE_POINT).PointVec2">ACT_ROUTE_POINT.PointVec2</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ROUTE_POINT).New">ACT_ROUTE_POINT:New(The, Range, Zone, Coordinate)</a></td>
 		<td class="summary">
-
+<p>Creates a new routing state machine.</p>
 </td>
 		</tr>
 		<tr>
@@ -307,15 +375,15 @@ Upon arrival at the zone, a confirmation of arrival is sent, and the process wil
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ACT_ROUTE_POINT).SetPointVec2">ACT_ROUTE_POINT:SetPointVec2(PointVec2)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ROUTE_POINT).SetCoordinate">ACT_ROUTE_POINT:SetCoordinate(Coordinate)</a></td>
 		<td class="summary">
-<p>Set PointVec2</p>
+<p>Set Coordinate</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(ACT_ROUTE_POINT).SetRange">ACT_ROUTE_POINT:SetRange(Range)</a></td>
 		<td class="summary">
-<p>Set Range around PointVec2</p>
+<p>Set Range around Coordinate</p>
 </td>
 		</tr>
 		<tr>
@@ -325,7 +393,7 @@ Upon arrival at the zone, a confirmation of arrival is sent, and the process wil
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ACT_ROUTE_POINT).onenterReporting">ACT_ROUTE_POINT:onenterReporting(ProcessUnit, Event, From, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ROUTE_POINT).onafterReport">ACT_ROUTE_POINT:onafterReport(ProcessUnit, Event, From, To)</a></td>
 		<td class="summary">
 <p>StateMachine callback function</p>
 </td>
@@ -340,6 +408,12 @@ Upon arrival at the zone, a confirmation of arrival is sent, and the process wil
 
 			<h2><a id="#(ACT_ROUTE_ZONE)">Type <code>ACT_ROUTE_ZONE</code></a></h2>
 				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ROUTE_ZONE).Altitude">ACT_ROUTE_ZONE.Altitude</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(ACT_ROUTE_ZONE).ClassName">ACT_ROUTE_ZONE.ClassName</a></td>
 		<td class="summary">
@@ -377,6 +451,12 @@ Upon arrival at the zone, a confirmation of arrival is sent, and the process wil
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ROUTE_ZONE).Heading">ACT_ROUTE_ZONE.Heading</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(ACT_ROUTE_ZONE).Init">ACT_ROUTE_ZONE:Init(FsmRoute)</a></td>
 		<td class="summary">
 
@@ -395,7 +475,7 @@ Upon arrival at the zone, a confirmation of arrival is sent, and the process wil
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ACT_ROUTE_ZONE).SetZone">ACT_ROUTE_ZONE:SetZone(Zone)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ROUTE_ZONE).SetZone">ACT_ROUTE_ZONE:SetZone(Zone, Altitude, Heading)</a></td>
 		<td class="summary">
 <p>Set Zone</p>
 </td>
@@ -413,7 +493,7 @@ Upon arrival at the zone, a confirmation of arrival is sent, and the process wil
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ACT_ROUTE_ZONE).onenterReporting">ACT_ROUTE_ZONE:onenterReporting(ProcessUnit, Event, From, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ROUTE_ZONE).onafterReport">ACT_ROUTE_ZONE:onafterReport(ProcessUnit, Event, From, To)</a></td>
 		<td class="summary">
 <p>StateMachine callback function</p>
 </td>
@@ -493,9 +573,65 @@ Upon arrival at the zone, a confirmation of arrival is sent, and the process wil
 		<dl class="function">
 <dt>
 
+		<em><a href="Core.Point.html##(COORDINATE)">Core.Point#COORDINATE</a></em>
+<a id="#(ACT_ROUTE).Coordinate" >
+<strong>ACT_ROUTE.Coordinate</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 		<em>#number</em>
 <a id="#(ACT_ROUTE).DisplayCount" >
 <strong>ACT_ROUTE.DisplayCount</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ACT_ROUTE).GetRouteText" >
+<strong>ACT_ROUTE:GetRouteText(Controllable)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Get the routing text to be displayed.</p>
+
+	
+<p>The route mode determines the text displayed.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> Controllable </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#string:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ACT_ROUTE).MenuCancel" >
+<strong>ACT_ROUTE:MenuCancel()</strong>
 </a>
 </dt>
 <dd>
@@ -535,6 +671,96 @@ self</p>
 </dt>
 <dd>
 	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(ACT_ROUTE).RouteMode" >
+<strong>ACT_ROUTE.RouteMode</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ACT_ROUTE).SetMenuCancel" >
+<strong>ACT_ROUTE:SetMenuCancel(MenuGroup, MenuText, ParentMenu, MenuTime)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set a Cancel Menu item.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> MenuGroup </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> MenuText </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> ParentMenu </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> MenuTime </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(ACT_ROUTE)">#ACT_ROUTE</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ACT_ROUTE).SetRouteMode" >
+<strong>ACT_ROUTE:SetRouteMode(RouteMode)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set the route mode.</p>
+
+	
+<p>There are 2 route modes supported:</p>
+
+<ul>
+    <li>SetRouteMode( "B" ): Route mode is Bearing and Range.</li>
+    <li>SetRouteMode( "C" ): Route mode is LL or MGRS according coordinate system setup.</li>
+</ul>
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> RouteMode </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(ACT_ROUTE)">#ACT_ROUTE</a>:</em></p>
 
 
 </dd>
@@ -688,6 +914,20 @@ self</p>
 		<dl class="function">
 <dt>
 
+		<em></em>
+<a id="#(ACT_ROUTE_POINT).Coordinate" >
+<strong>ACT_ROUTE_POINT.Coordinate</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 		<em>#number</em>
 <a id="#(ACT_ROUTE_POINT).DisplayCount" >
 <strong>ACT_ROUTE_POINT.DisplayCount</strong>
@@ -747,18 +987,18 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(ACT_ROUTE_POINT).GetPointVec2" >
-<strong>ACT_ROUTE_POINT:GetPointVec2()</strong>
+<a id="#(ACT_ROUTE_POINT).GetCoordinate" >
+<strong>ACT_ROUTE_POINT:GetCoordinate()</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Get PointVec2</p>
+<p>Get Coordinate</p>
 
 		<h3>Return value</h3>
 				
-<p><em><a href="Core.Point.html##(POINT_VEC2)">Core.Point#POINT_VEC2</a>:</em>
-PointVec2 The PointVec2 to route to.</p>
+<p><em><a href="Core.Point.html##(COORDINATE)">Core.Point#COORDINATE</a>:</em>
+Coordinate The Coordinate to route to.</p>
 
 </dd>
 </dl>
@@ -771,7 +1011,7 @@ PointVec2 The PointVec2 to route to.</p>
 </dt>
 <dd>
 	
-<p>Get Range around PointVec2</p>
+<p>Get Range around Coordinate</p>
 
 		<h3>Return value</h3>
 				
@@ -789,7 +1029,10 @@ The Range to consider the arrival. Default is 10000 meters.</p>
 </dt>
 <dd>
 	
+<p>Creates a new routing state machine.</p>
 
+	
+<p>The task will route a controllable to a Coordinate until the controllable is within the Range.</p>
 
 		<h3>Parameter</h3>
 		<ul>
@@ -805,7 +1048,7 @@ The Range to consider the arrival. Default is 10000 meters.</p>
 <dt>
 
 <a id="#(ACT_ROUTE_POINT).New" >
-<strong>ACT_ROUTE_POINT:New(The, Range, Zone, PointVec2)</strong>
+<strong>ACT_ROUTE_POINT:New(The, Range, Zone, Coordinate)</strong>
 </a>
 </dt>
 <dd>
@@ -813,14 +1056,14 @@ The Range to consider the arrival. Default is 10000 meters.</p>
 <p>Creates a new routing state machine.</p>
 
 	
-<p>The task will route a controllable to a PointVec2 until the controllable is within the Range.</p>
+<p>The task will route a controllable to a Coordinate until the controllable is within the Range.</p>
 
 		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Core.Point.html##(POINT_VEC2)">Core.Point#POINT_VEC2</a> The </em></code>: 
-PointVec2 to Target.</p>
+<p><code><em><a href="Core.Point.html##(COORDINATE)">Core.Point#COORDINATE</a> The </em></code>: 
+Coordinate to Target.</p>
 
 				</li>
 				<li>
@@ -836,24 +1079,10 @@ The Distance to Target.</p>
 				</li>
 				<li>
 				
-<p><code><em> PointVec2 </em></code>: </p>
+<p><code><em> Coordinate </em></code>: </p>
 
 				</li>
 		</ul>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em></em>
-<a id="#(ACT_ROUTE_POINT).PointVec2" >
-<strong>ACT_ROUTE_POINT.PointVec2</strong>
-</a>
-</dt>
-<dd>
-	
-
-
 </dd>
 </dl>
 		<dl class="function">
@@ -872,20 +1101,20 @@ The Distance to Target.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(ACT_ROUTE_POINT).SetPointVec2" >
-<strong>ACT_ROUTE_POINT:SetPointVec2(PointVec2)</strong>
+<a id="#(ACT_ROUTE_POINT).SetCoordinate" >
+<strong>ACT_ROUTE_POINT:SetCoordinate(Coordinate)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Set PointVec2</p>
+<p>Set Coordinate</p>
 
 		<h3>Parameter</h3>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Core.Point.html##(POINT_VEC2)">Core.Point#POINT_VEC2</a> PointVec2 </em></code>: 
-The PointVec2 to route to.</p>
+<p><code><em><a href="Core.Point.html##(COORDINATE)">Core.Point#COORDINATE</a> Coordinate </em></code>: 
+The Coordinate to route to.</p>
 
 				</li>
 		</ul>
@@ -900,7 +1129,7 @@ The PointVec2 to route to.</p>
 </dt>
 <dd>
 	
-<p>Set Range around PointVec2</p>
+<p>Set Range around Coordinate</p>
 
 		<h3>Parameter</h3>
 		<ul>
@@ -930,8 +1159,8 @@ The Range to consider the arrival. Default is 10000 meters.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(ACT_ROUTE_POINT).onenterReporting" >
-<strong>ACT_ROUTE_POINT:onenterReporting(ProcessUnit, Event, From, To)</strong>
+<a id="#(ACT_ROUTE_POINT).onafterReport" >
+<strong>ACT_ROUTE_POINT:onafterReport(ProcessUnit, Event, From, To)</strong>
 </a>
 </dt>
 <dd>
@@ -995,6 +1224,20 @@ The Range to consider the arrival. Default is 10000 meters.</p>
 <p>ACT<em>ROUTE</em>ZONE class</p>
 
 	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(ACT_ROUTE_ZONE).Altitude" >
+<strong>ACT_ROUTE_ZONE.Altitude</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
 		<dl class="function">
 <dt>
 
@@ -1089,6 +1332,20 @@ Zone The Zone object where to route to.</p>
 		<dl class="function">
 <dt>
 
+		<em></em>
+<a id="#(ACT_ROUTE_ZONE).Heading" >
+<strong>ACT_ROUTE_ZONE.Heading</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(ACT_ROUTE_ZONE).Init" >
 <strong>ACT_ROUTE_ZONE:Init(FsmRoute)</strong>
 </a>
@@ -1149,19 +1406,29 @@ Zone The Zone object where to route to.</p>
 <dt>
 
 <a id="#(ACT_ROUTE_ZONE).SetZone" >
-<strong>ACT_ROUTE_ZONE:SetZone(Zone)</strong>
+<strong>ACT_ROUTE_ZONE:SetZone(Zone, Altitude, Heading)</strong>
 </a>
 </dt>
 <dd>
 	
 <p>Set Zone</p>
 
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
 <p><code><em><a href="Core.Zone.html##(ZONE_BASE)">Core.Zone#ZONE_BASE</a> Zone </em></code>: 
 The Zone object where to route to.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Altitude </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Heading </em></code>: </p>
 
 				</li>
 		</ul>
@@ -1198,8 +1465,8 @@ The Zone object where to route to.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(ACT_ROUTE_ZONE).onenterReporting" >
-<strong>ACT_ROUTE_ZONE:onenterReporting(ProcessUnit, Event, From, To)</strong>
+<a id="#(ACT_ROUTE_ZONE).onafterReport" >
+<strong>ACT_ROUTE_ZONE:onafterReport(ProcessUnit, Event, From, To)</strong>
 </a>
 </dt>
 <dd>

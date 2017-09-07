@@ -12,46 +12,32 @@
 --   
 -- ====
 -- 
--- # **OPEN ISSUES**
+-- # Demo Missions
 -- 
--- 2017-01-17: When Spawned AI is located at an airbase, it will be routed first back to the airbase after take-off.
+-- ### [AI_PATROL Demo Missions source code](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master-release/PAT%20-%20Patrolling)
 -- 
--- 2016-01-17: 
---   -- Fixed problem with AI returning to base too early and unexpected.
---   -- ReSpawning of AI will reset the AI_PATROL and derived classes.
---   -- Checked the correct workings of SCHEDULER, and it DOES work correctly.
+-- ### [AI_PATROL Demo Missions, only for beta testers](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/PAT%20-%20Patrolling)
+--
+-- ### [ALL Demo Missions pack of the last release](https://github.com/FlightControl-Master/MOOSE_MISSIONS/releases)
 -- 
 -- ====
 -- 
--- # **API CHANGE HISTORY**
+-- # YouTube Channel
 -- 
--- The underlying change log documents the API changes. Please read this carefully. The following notation is used:
+-- ### [AI_PATROL YouTube Channel](https://www.youtube.com/playlist?list=PL7ZUrU4zZUl35HvYZKA6G22WMt7iI3zky)
 -- 
---   * **Added** parts are expressed in bold type face.
---   * _Removed_ parts are expressed in italic type face.
+-- ====
 -- 
--- Hereby the change log:
--- 
--- 2017-01-17: Rename of class: **AI\_PATROL\_ZONE** is the new name for the old _AI\_PATROLZONE_.
--- 
--- 2017-01-15: Complete revision. AI_PATROL_ZONE is the base class for other AI_PATROL like classes.
--- 
--- 2016-09-01: Initial class and API.
--- 
--- ===
--- 
--- # **AUTHORS and CONTRIBUTIONS**
--- 
+-- ### Author: **Sven Van de Velde (FlightControl)**
 -- ### Contributions: 
 -- 
 --   * **[Dutch_Baron](https://forums.eagle.ru/member.php?u=112075)**: Working together with James has resulted in the creation of the AI_BALANCER class. James has shared his ideas on balancing AI with air units, and together we made a first design which you can use now :-)
 --   * **[Pikey](https://forums.eagle.ru/member.php?u=62835)**: Testing and API concept review.
 -- 
--- ### Authors: 
--- 
---   * **FlightControl**: Design & Programming.
+-- ====
 -- 
 -- @module AI_Patrol
+
 
 --- AI_PATROL_ZONE class
 -- @type AI_PATROL_ZONE
@@ -64,9 +50,9 @@
 -- @field Functional.Spawn#SPAWN CoordTest
 -- @extends Core.Fsm#FSM_CONTROLLABLE
 
---- # 1) @{#AI_PATROL_ZONE} class, extends @{Fsm#FSM_CONTROLLABLE}
+--- # AI_PATROL_ZONE class, extends @{Fsm#FSM_CONTROLLABLE}
 -- 
--- The @{#AI_PATROL_ZONE} class implements the core functions to patrol a @{Zone} by an AI @{Controllable} or @{Group}.
+-- The AI_PATROL_ZONE class implements the core functions to patrol a @{Zone} by an AI @{Controllable} or @{Group}.
 -- 
 -- ![Process](..\Presentations\AI_PATROL\Dia3.JPG)
 -- 
@@ -97,15 +83,15 @@
 -- 
 -- ![Process](..\Presentations\AI_PATROL\Dia11.JPG)
 -- 
--- ## 1.1) AI_PATROL_ZONE constructor
+-- ## 1. AI_PATROL_ZONE constructor
 --   
 --   * @{#AI_PATROL_ZONE.New}(): Creates a new AI_PATROL_ZONE object.
 -- 
--- ## 1.2) AI_PATROL_ZONE is a FSM
+-- ## 2. AI_PATROL_ZONE is a FSM
 -- 
 -- ![Process](..\Presentations\AI_PATROL\Dia2.JPG)
 -- 
--- ### 1.2.1) AI_PATROL_ZONE States
+-- ### 2.1. AI_PATROL_ZONE States
 -- 
 --   * **None** ( Group ): The process is not started yet.
 --   * **Patrolling** ( Group ): The AI is patrolling the Patrol Zone.
@@ -113,7 +99,7 @@
 --   * **Stopped** ( Group ): The process is stopped.
 --   * **Crashed** ( Group ): The AI has crashed or is dead.
 -- 
--- ### 1.2.2) AI_PATROL_ZONE Events
+-- ### 2.2. AI_PATROL_ZONE Events
 -- 
 --   * **Start** ( Group ): Start the process.
 --   * **Stop** ( Group ): Stop the process.
@@ -123,17 +109,17 @@
 --   * **Detected** ( Group ): The AI has detected new targets.
 --   * **Status** ( Group ): The AI is checking status (fuel and damage). When the tresholds have been reached, the AI will RTB.
 --    
--- ## 1.3) Set or Get the AI controllable
+-- ## 3. Set or Get the AI controllable
 -- 
 --   * @{#AI_PATROL_ZONE.SetControllable}(): Set the AIControllable.
 --   * @{#AI_PATROL_ZONE.GetControllable}(): Get the AIControllable.
 --
--- ## 1.4) Set the Speed and Altitude boundaries of the AI controllable
+-- ## 4. Set the Speed and Altitude boundaries of the AI controllable
 --
 --   * @{#AI_PATROL_ZONE.SetSpeed}(): Set the patrol speed boundaries of the AI, for the next patrol.
 --   * @{#AI_PATROL_ZONE.SetAltitude}(): Set altitude boundaries of the AI, for the next patrol.
 -- 
--- ## 1.5) Manage the detection process of the AI controllable
+-- ## 5. Manage the detection process of the AI controllable
 -- 
 -- The detection process of the AI controllable can be manipulated.
 -- Detection requires an amount of CPU power, which has an impact on your mission performance.
@@ -142,7 +128,7 @@
 --   * @{#AI_PATROL_ZONE.SetDetectionOn}(): Set the detection on. The AI will detect for targets.
 --   * @{#AI_PATROL_ZONE.SetDetectionOff}(): Set the detection off, the AI will not detect for targets. The existing target list will NOT be erased.
 -- 
--- The detection frequency can be set with @{#AI_PATROL_ZONE.SetDetectionInterval}( seconds ), where the amount of seconds specify how much seconds will be waited before the next detection.
+-- The detection frequency can be set with @{#AI_PATROL_ZONE.SetRefreshTimeInterval}( seconds ), where the amount of seconds specify how much seconds will be waited before the next detection.
 -- Use the method @{#AI_PATROL_ZONE.GetDetectedUnits}() to obtain a list of the @{Unit}s detected by the AI.
 -- 
 -- The detection can be filtered to potential targets in a specific zone.
@@ -150,7 +136,7 @@
 -- Note that when the zone is too far away, or the AI is not heading towards the zone, or the AI is too high, no targets may be detected
 -- according the weather conditions.
 -- 
--- ## 1.6) Manage the "out of fuel" in the AI_PATROL_ZONE
+-- ## 6. Manage the "out of fuel" in the AI_PATROL_ZONE
 -- 
 -- When the AI is out of fuel, it is required that a new AI is started, before the old AI can return to the home base.
 -- Therefore, with a parameter and a calculation of the distance to the home base, the fuel treshold is calculated.
@@ -159,7 +145,7 @@
 -- Once the time is finished, the old AI will return to the base.
 -- Use the method @{#AI_PATROL_ZONE.ManageFuel}() to have this proces in place.
 -- 
--- ## 1.7) Manage "damage" behaviour of the AI in the AI_PATROL_ZONE
+-- ## 7. Manage "damage" behaviour of the AI in the AI_PATROL_ZONE
 -- 
 -- When the AI is damaged, it is required that a new AIControllable is started. However, damage cannon be foreseen early on. 
 -- Therefore, when the damage treshold is reached, the AI will return immediately to the home base (RTB).
@@ -167,8 +153,7 @@
 -- 
 -- ===
 -- 
--- @field #AI_PATROL_ZONE AI_PATROL_ZONE
--- 
+-- @field #AI_PATROL_ZONE
 AI_PATROL_ZONE = {
   ClassName = "AI_PATROL_ZONE",
 }
@@ -202,7 +187,7 @@ function AI_PATROL_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltit
   -- defafult PatrolAltType to "RADIO" if not specified
   self.PatrolAltType = PatrolAltType or "RADIO"
   
-  self:SetDetectionInterval( 30 )
+  self:SetRefreshTimeInterval( 30 )
   
   self.CheckStatus = true
   
@@ -559,7 +544,7 @@ end
 -- @param #AI_PATROL_ZONE self
 -- @param #number Seconds The interval in seconds.
 -- @return #AI_PATROL_ZONE self
-function AI_PATROL_ZONE:SetDetectionInterval( Seconds )
+function AI_PATROL_ZONE:SetRefreshTimeInterval( Seconds )
   self:F2()
 
   if Seconds then  
@@ -606,13 +591,13 @@ end
 -- When the fuel treshold is reached, the AI will continue for a given time its patrol task in orbit, while a new AIControllable is targetted to the AI_PATROL_ZONE.
 -- Once the time is finished, the old AI will return to the base.
 -- @param #AI_PATROL_ZONE self
--- @param #number PatrolFuelTresholdPercentage The treshold in percentage (between 0 and 1) when the AIControllable is considered to get out of fuel.
+-- @param #number PatrolFuelThresholdPercentage The treshold in percentage (between 0 and 1) when the AIControllable is considered to get out of fuel.
 -- @param #number PatrolOutOfFuelOrbitTime The amount of seconds the out of fuel AIControllable will orbit before returning to the base.
 -- @return #AI_PATROL_ZONE self
-function AI_PATROL_ZONE:ManageFuel( PatrolFuelTresholdPercentage, PatrolOutOfFuelOrbitTime )
+function AI_PATROL_ZONE:ManageFuel( PatrolFuelThresholdPercentage, PatrolOutOfFuelOrbitTime )
 
   self.PatrolManageFuel = true
-  self.PatrolFuelTresholdPercentage = PatrolFuelTresholdPercentage
+  self.PatrolFuelThresholdPercentage = PatrolFuelThresholdPercentage
   self.PatrolOutOfFuelOrbitTime = PatrolOutOfFuelOrbitTime
   
   return self
@@ -625,12 +610,12 @@ end
 -- Note that for groups, the average damage of the complete group will be calculated.
 -- So, in a group of 4 airplanes, 2 lost and 2 with damage 0.2, the damage treshold will be 0.25.
 -- @param #AI_PATROL_ZONE self
--- @param #number PatrolDamageTreshold The treshold in percentage (between 0 and 1) when the AI is considered to be damaged.
+-- @param #number PatrolDamageThreshold The treshold in percentage (between 0 and 1) when the AI is considered to be damaged.
 -- @return #AI_PATROL_ZONE self
-function AI_PATROL_ZONE:ManageDamage( PatrolDamageTreshold )
+function AI_PATROL_ZONE:ManageDamage( PatrolDamageThreshold )
 
   self.PatrolManageDamage = true
-  self.PatrolDamageTreshold = PatrolDamageTreshold
+  self.PatrolDamageThreshold = PatrolDamageThreshold
   
   return self
 end
@@ -763,7 +748,7 @@ function AI_PATROL_ZONE:onafterRoute( Controllable, From, Event, To )
       local CurrentAltitude = self.Controllable:GetUnit(1):GetAltitude()
       local CurrentPointVec3 = POINT_VEC3:New( CurrentVec2.x, CurrentAltitude, CurrentVec2.y )
       local ToPatrolZoneSpeed = self.PatrolMaxSpeed
-      local CurrentRoutePoint = CurrentPointVec3:RoutePointAir( 
+      local CurrentRoutePoint = CurrentPointVec3:WaypointAir( 
           self.PatrolAltType, 
           POINT_VEC3.RoutePointType.TakeOffParking, 
           POINT_VEC3.RoutePointAction.FromParkingArea, 
@@ -778,7 +763,7 @@ function AI_PATROL_ZONE:onafterRoute( Controllable, From, Event, To )
       local CurrentAltitude = self.Controllable:GetUnit(1):GetAltitude()
       local CurrentPointVec3 = POINT_VEC3:New( CurrentVec2.x, CurrentAltitude, CurrentVec2.y )
       local ToPatrolZoneSpeed = self.PatrolMaxSpeed
-      local CurrentRoutePoint = CurrentPointVec3:RoutePointAir( 
+      local CurrentRoutePoint = CurrentPointVec3:WaypointAir( 
           self.PatrolAltType, 
           POINT_VEC3.RoutePointType.TurningPoint, 
           POINT_VEC3.RoutePointAction.TurningPoint, 
@@ -804,7 +789,7 @@ function AI_PATROL_ZONE:onafterRoute( Controllable, From, Event, To )
     local ToTargetPointVec3 = POINT_VEC3:New( ToTargetVec2.x, ToTargetAltitude, ToTargetVec2.y )
     
     --- Create a route point of type air.
-    local ToTargetRoutePoint = ToTargetPointVec3:RoutePointAir( 
+    local ToTargetRoutePoint = ToTargetPointVec3:WaypointAir( 
       self.PatrolAltType, 
       POINT_VEC3.RoutePointType.TurningPoint, 
       POINT_VEC3.RoutePointAction.TurningPoint, 
@@ -846,7 +831,7 @@ function AI_PATROL_ZONE:onafterStatus()
     local RTB = false
     
     local Fuel = self.Controllable:GetUnit(1):GetFuel()
-    if Fuel < self.PatrolFuelTresholdPercentage then
+    if Fuel < self.PatrolFuelThresholdPercentage then
       self:E( self.Controllable:GetName() .. " is out of fuel:" .. Fuel .. ", RTB!" )
       local OldAIControllable = self.Controllable
       local AIControllableTemplate = self.Controllable:GetTemplate()
@@ -861,7 +846,7 @@ function AI_PATROL_ZONE:onafterStatus()
     
     -- TODO: Check GROUP damage function.
     local Damage = self.Controllable:GetLife()
-    if Damage <= self.PatrolDamageTreshold then
+    if Damage <= self.PatrolDamageThreshold then
       self:E( self.Controllable:GetName() .. " is damaged:" .. Damage .. ", RTB!" )
       RTB = true
     end
@@ -892,7 +877,7 @@ function AI_PATROL_ZONE:onafterRTB()
     local CurrentAltitude = self.Controllable:GetUnit(1):GetAltitude()
     local CurrentPointVec3 = POINT_VEC3:New( CurrentVec2.x, CurrentAltitude, CurrentVec2.y )
     local ToPatrolZoneSpeed = self.PatrolMaxSpeed
-    local CurrentRoutePoint = CurrentPointVec3:RoutePointAir( 
+    local CurrentRoutePoint = CurrentPointVec3:WaypointAir( 
         self.PatrolAltType, 
         POINT_VEC3.RoutePointType.TurningPoint, 
         POINT_VEC3.RoutePointAction.TurningPoint, 

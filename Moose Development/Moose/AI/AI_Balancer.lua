@@ -1,14 +1,46 @@
---- Single-Player:**No** / Multi-Player:**Yes** / AI:**Yes** / Human:**No** / Types:**All** -- **AI Balancing will replace in multi player missions 
+--- **AI** -- **AI Balancing will replace in multi player missions 
 -- non-occupied human slots with AI groups, in order to provide an engaging simulation environment, 
 -- even when there are hardly any players in the mission.**
 -- 
 -- ![Banner Image](..\Presentations\AI_Balancer\Dia1.JPG)
 --  
--- ===
+-- ====
 -- 
--- # 1) @{AI_Balancer#AI_BALANCER} class, extends @{Fsm#FSM_SET}
+-- # Demo Missions
 -- 
--- The @{AI_Balancer#AI_BALANCER} class monitors and manages as many replacement AI groups as there are
+-- ### [AI_BALANCER Demo Missions source code](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master-release/AIB%20-%20AI%20Balancing)
+-- 
+-- ### [AI_BALANCER Demo Missions, only for beta testers](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/AIB%20-%20AI%20Balancing)
+--
+-- ### [ALL Demo Missions pack of the last release](https://github.com/FlightControl-Master/MOOSE_MISSIONS/releases)
+-- 
+-- ====
+-- 
+-- # YouTube Channel
+-- 
+-- ### [AI_BALANCER YouTube Channel](https://www.youtube.com/playlist?list=PL7ZUrU4zZUl2CJVIrL1TdAumuVS8n64B7)
+-- 
+-- ====
+-- 
+-- ### Author: **Sven Van de Velde (FlightControl)**
+-- ### Contributions: 
+-- 
+--   * **[Dutch_Baron](https://forums.eagle.ru/member.php?u=112075)**: Working together with James has resulted in the creation of the AI_BALANCER class. James has shared his ideas on balancing AI with air units, and together we made a first design which you can use now :-)
+-- 
+-- ====
+-- 
+-- @module AI_Balancer
+
+--- @type AI_BALANCER
+-- @field Core.Set#SET_CLIENT SetClient
+-- @field Functional.Spawn#SPAWN SpawnAI
+-- @field Wrapper.Group#GROUP Test
+-- @extends Core.Fsm#FSM_SET
+
+
+--- # AI_BALANCER class, extends @{Fsm#FSM_SET}
+-- 
+-- The AI_BALANCER class monitors and manages as many replacement AI groups as there are
 -- CLIENTS in a SET_CLIENT collection, which are not occupied by human players. 
 -- In other words, use AI_BALANCER to simulate human behaviour by spawning in replacement AI in multi player missions.
 -- 
@@ -18,17 +50,17 @@
 -- 
 -- The mission designer can tailor the AI_BALANCER behaviour, by implementing a state or event handling method for the following:
 -- 
---   * **@{#AI_BALANCER.OnAfterSpawned}**( AISet, From, Event, To, AIGroup ): Define to add extra logic when an AI is spawned.
+--   * @{#AI_BALANCER.OnAfterSpawned}( AISet, From, Event, To, AIGroup ): Define to add extra logic when an AI is spawned.
 -- 
--- ## 1.1) AI_BALANCER construction
+-- ## 1. AI_BALANCER construction
 -- 
 -- Create a new AI_BALANCER object with the @{#AI_BALANCER.New}() method:
 -- 
--- ## 1.2) AI_BALANCER is a FSM
+-- ## 2. AI_BALANCER is a FSM
 -- 
 -- ![Process](..\Presentations\AI_Balancer\Dia13.JPG)
 -- 
--- ### 1.2.1) AI_BALANCER States
+-- ### 2.1. AI_BALANCER States
 -- 
 --   * **Monitoring** ( Set ): Monitoring the Set if all AI is spawned for the Clients.
 --   * **Spawning** ( Set, ClientName ): There is a new AI group spawned with ClientName as the name of reference.
@@ -36,7 +68,7 @@
 --   * **Destroying** ( Set, AIGroup ): The AI is being destroyed.
 --   * **Returning** ( Set, AIGroup ): The AI is returning to the airbase specified by the ReturnToAirbase methods. Handle this state to customize the return behaviour of the AI, if any.
 -- 
--- ### 1.2.2) AI_BALANCER Events
+-- ### 2.2. AI_BALANCER Events
 -- 
 --   * **Monitor** ( Set ): Every 10 seconds, the Monitor event is triggered to monitor the Set.
 --   * **Spawn** ( Set, ClientName ): Triggers when there is a new AI group to be spawned with ClientName as the name of reference.
@@ -44,11 +76,11 @@
 --   * **Destroy** ( Set, AIGroup ): The AI is being destroyed.
 --   * **Return** ( Set, AIGroup ): The AI is returning to the airbase specified by the ReturnToAirbase methods.
 --    
--- ## 1.3) AI_BALANCER spawn interval for replacement AI
+-- ## 3. AI_BALANCER spawn interval for replacement AI
 -- 
 -- Use the method @{#AI_BALANCER.InitSpawnInterval}() to set the earliest and latest interval in seconds that is waited until a new replacement AI is spawned.
 -- 
--- ## 1.4) AI_BALANCER returns AI to Airbases
+-- ## 4. AI_BALANCER returns AI to Airbases
 -- 
 -- By default, When a human player joins a slot that is AI_BALANCED, the AI group will be destroyed by default. 
 -- However, there are 2 additional options that you can use to customize the destroy behaviour.
@@ -59,43 +91,8 @@
 -- 
 -- Note that when AI returns to an airbase, the AI_BALANCER will trigger the **Return** event and the AI will return, 
 -- otherwise the AI_BALANCER will trigger a **Destroy** event, and the AI will be destroyed.
---    
--- ===
 -- 
--- # **API CHANGE HISTORY**
--- 
--- The underlying change log documents the API changes. Please read this carefully. The following notation is used:
--- 
---   * **Added** parts are expressed in bold type face.
---   * _Removed_ parts are expressed in italic type face.
--- 
--- Hereby the change log:
--- 
--- 2017-01-17: There is still a problem with AI being destroyed, but not respawned. Need to check further upon that.
--- 
--- 2017-01-08: AI_BALANCER:**InitSpawnInterval( Earliest, Latest )** added.
--- 
--- ===
--- 
--- # **AUTHORS and CONTRIBUTIONS**
--- 
--- ### Contributions: 
--- 
---   * **[Dutch_Baron](https://forums.eagle.ru/member.php?u=112075)**: Working together with James has resulted in the creation of the AI_BALANCER class. James has shared his ideas on balancing AI with air units, and together we made a first design which you can use now :-)
---   * **SNAFU**: Had a couple of mails with the guys to validate, if the same concept in the GCI/CAP script could be reworked within MOOSE. None of the script code has been used however within the new AI_BALANCER moose class.
--- 
--- ### Authors: 
--- 
---   * FlightControl: Framework Design &  Programming and Documentation.
--- 
--- @module AI_Balancer
-
---- AI_BALANCER class
--- @type AI_BALANCER
--- @field Core.Set#SET_CLIENT SetClient
--- @field Functional.Spawn#SPAWN SpawnAI
--- @field Wrapper.Group#GROUP Test
--- @extends Core.Fsm#FSM_SET
+-- @field #AI_BALANCER
 AI_BALANCER = {
   ClassName = "AI_BALANCER",
   PatrolZones = {},
@@ -154,22 +151,22 @@ end
 
 --- Returns the AI to the nearest friendly @{Airbase#AIRBASE}.
 -- @param #AI_BALANCER self
--- @param Dcs.DCSTypes#Distance ReturnTresholdRange If there is an enemy @{Client#CLIENT} within the ReturnTresholdRange given in meters, the AI will not return to the nearest @{Airbase#AIRBASE}.
+-- @param Dcs.DCSTypes#Distance ReturnThresholdRange If there is an enemy @{Client#CLIENT} within the ReturnThresholdRange given in meters, the AI will not return to the nearest @{Airbase#AIRBASE}.
 -- @param Core.Set#SET_AIRBASE ReturnAirbaseSet The SET of @{Set#SET_AIRBASE}s to evaluate where to return to.
-function AI_BALANCER:ReturnToNearestAirbases( ReturnTresholdRange, ReturnAirbaseSet )
+function AI_BALANCER:ReturnToNearestAirbases( ReturnThresholdRange, ReturnAirbaseSet )
 
   self.ToNearestAirbase = true
-  self.ReturnTresholdRange = ReturnTresholdRange
+  self.ReturnThresholdRange = ReturnThresholdRange
   self.ReturnAirbaseSet = ReturnAirbaseSet
 end
 
 --- Returns the AI to the home @{Airbase#AIRBASE}.
 -- @param #AI_BALANCER self
--- @param Dcs.DCSTypes#Distance ReturnTresholdRange If there is an enemy @{Client#CLIENT} within the ReturnTresholdRange given in meters, the AI will not return to the nearest @{Airbase#AIRBASE}.
-function AI_BALANCER:ReturnToHomeAirbase( ReturnTresholdRange )
+-- @param Dcs.DCSTypes#Distance ReturnThresholdRange If there is an enemy @{Client#CLIENT} within the ReturnThresholdRange given in meters, the AI will not return to the nearest @{Airbase#AIRBASE}.
+function AI_BALANCER:ReturnToHomeAirbase( ReturnThresholdRange )
 
   self.ToHomeAirbase = true
-  self.ReturnTresholdRange = ReturnTresholdRange
+  self.ReturnThresholdRange = ReturnThresholdRange
 end
 
 --- @param #AI_BALANCER self
@@ -249,12 +246,12 @@ function AI_BALANCER:onenterMonitoring( SetGroup )
           if self.ToNearestAirbase == false and self.ToHomeAirbase == false then
             self:Destroy( Client.UnitName, AIGroup )
           else
-            -- We test if there is no other CLIENT within the self.ReturnTresholdRange of the first unit of the AI group.
+            -- We test if there is no other CLIENT within the self.ReturnThresholdRange of the first unit of the AI group.
             -- If there is a CLIENT, the AI stays engaged and will not return.
-            -- If there is no CLIENT within the self.ReturnTresholdRange, then the unit will return to the Airbase return method selected.
+            -- If there is no CLIENT within the self.ReturnThresholdRange, then the unit will return to the Airbase return method selected.
 
             local PlayerInRange = { Value = false }          
-            local RangeZone = ZONE_RADIUS:New( 'RangeZone', AIGroup:GetVec2(), self.ReturnTresholdRange )
+            local RangeZone = ZONE_RADIUS:New( 'RangeZone', AIGroup:GetVec2(), self.ReturnThresholdRange )
             
             self:T2( RangeZone )
             

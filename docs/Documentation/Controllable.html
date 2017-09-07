@@ -17,9 +17,16 @@
 				<a href="index.html">index</a>
 			</li></ul>
 		<ul>
+					<li><a href="AI_A2A.html">AI_A2A</a></li>
+					<li><a href="AI_A2A_Cap.html">AI_A2A_Cap</a></li>
+					<li><a href="AI_A2A_Dispatcher.html">AI_A2A_Dispatcher</a></li>
+					<li><a href="AI_A2A_GCI.html">AI_A2A_GCI</a></li>
+					<li><a href="AI_A2A_Patrol.html">AI_A2A_Patrol</a></li>
+					<li><a href="AI_Bai.html">AI_Bai</a></li>
 					<li><a href="AI_Balancer.html">AI_Balancer</a></li>
 					<li><a href="AI_Cap.html">AI_Cap</a></li>
 					<li><a href="AI_Cas.html">AI_Cas</a></li>
+					<li><a href="AI_Formation.html">AI_Formation</a></li>
 					<li><a href="AI_Patrol.html">AI_Patrol</a></li>
 					<li><a href="Account.html">Account</a></li>
 					<li><a href="Airbase.html">Airbase</a></li>
@@ -31,7 +38,23 @@
 					<li><a href="Client.html">Client</a></li>
 					<li><a href="CommandCenter.html">CommandCenter</a></li>
 					<li>Controllable</li>
+					<li><a href="DCSAirbase.html">DCSAirbase</a></li>
+					<li><a href="DCSCoalitionObject.html">DCSCoalitionObject</a></li>
+					<li><a href="DCSCommand.html">DCSCommand</a></li>
+					<li><a href="DCSController.html">DCSController</a></li>
+					<li><a href="DCSGroup.html">DCSGroup</a></li>
+					<li><a href="DCSObject.html">DCSObject</a></li>
+					<li><a href="DCSTask.html">DCSTask</a></li>
+					<li><a href="DCSTypes.html">DCSTypes</a></li>
+					<li><a href="DCSUnit.html">DCSUnit</a></li>
+					<li><a href="DCSVec3.html">DCSVec3</a></li>
+					<li><a href="DCSWorld.html">DCSWorld</a></li>
+					<li><a href="DCSZone.html">DCSZone</a></li>
+					<li><a href="DCScountry.html">DCScountry</a></li>
+					<li><a href="DCStimer.html">DCStimer</a></li>
+					<li><a href="DCStrigger.html">DCStrigger</a></li>
 					<li><a href="Database.html">Database</a></li>
+					<li><a href="Designate.html">Designate</a></li>
 					<li><a href="Detection.html">Detection</a></li>
 					<li><a href="DetectionManager.html">DetectionManager</a></li>
 					<li><a href="Escort.html">Escort</a></li>
@@ -57,161 +80,40 @@
 					<li><a href="Scoring.html">Scoring</a></li>
 					<li><a href="Sead.html">Sead</a></li>
 					<li><a href="Set.html">Set</a></li>
+					<li><a href="Settings.html">Settings</a></li>
 					<li><a href="Smoke.html">Smoke</a></li>
 					<li><a href="Spawn.html">Spawn</a></li>
+					<li><a href="SpawnStatic.html">SpawnStatic</a></li>
+					<li><a href="Spot.html">Spot</a></li>
 					<li><a href="Static.html">Static</a></li>
+					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="Task.html">Task</a></li>
+					<li><a href="Task_A2A.html">Task_A2A</a></li>
+					<li><a href="Task_A2A_Dispatcher.html">Task_A2A_Dispatcher</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
 					<li><a href="Task_A2G_Dispatcher.html">Task_A2G_Dispatcher</a></li>
+					<li><a href="Task_Cargo.html">Task_Cargo</a></li>
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
 					<li><a href="Unit.html">Unit</a></li>
 					<li><a href="Utils.html">Utils</a></li>
 					<li><a href="Zone.html">Zone</a></li>
+					<li><a href="env.html">env</a></li>
+					<li><a href="land.html">land</a></li>
 					<li><a href="routines.html">routines</a></li>
 		</ul>
 	</div>
 	<div id="content">
    <h1>Module <code>Controllable</code></h1>
    
-<p>This module contains the CONTROLLABLE class.</p>
+<p><strong>Wrapper</strong> -- CONTROLLABLE is an intermediate class wrapping Group and Unit classes "controllers".</p>
 
    
 
-<h1>1) <a href="Controllable.html##(CONTROLLABLE)">Controllable#CONTROLLABLE</a> class, extends <a href="Positionable.html##(POSITIONABLE)">Positionable#POSITIONABLE</a></h1>
-<p>The <a href="Controllable.html##(CONTROLLABLE)">Controllable#CONTROLLABLE</a> class is a wrapper class to handle the DCS Controllable objects:</p>
+<hr/>
 
-<ul>
-    <li>Support all DCS Controllable APIs.</li>
-    <li>Enhance with Controllable specific APIs not in the DCS Controllable API set.</li>
-    <li>Handle local Controllable Controller.</li>
-    <li>Manage the "state" of the DCS Controllable.</li>
-</ul>
+<h3>Author: <strong>Sven Van de Velde (FlightControl)</strong></h3>
 
-<h2>1.1) CONTROLLABLE constructor</h2>
-<p>The CONTROLLABLE class provides the following functions to construct a CONTROLLABLE instance:</p>
-
-<ul>
-    <li><a href="##(CONTROLLABLE).New">CONTROLLABLE.New</a>(): Create a CONTROLLABLE instance.</li>
-</ul>
-
-<h2>1.2) CONTROLLABLE task methods</h2>
-<p>Several controllable task methods are available that help you to prepare tasks. 
-These methods return a string consisting of the task description, which can then be given to either a <a href="Controllable.html##(CONTROLLABLE).PushTask">Controllable#CONTROLLABLE.PushTask</a> or <a href="Controllable.html##(SetTask)">Controllable#SetTask</a> method to assign the task to the CONTROLLABLE.
-Tasks are specific for the category of the CONTROLLABLE, more specific, for AIR, GROUND or AIR and GROUND. 
-Each task description where applicable indicates for which controllable category the task is valid.
-There are 2 main subdivisions of tasks: Assigned tasks and EnRoute tasks.</p>
-
-<h3>1.2.1) Assigned task methods</h3>
-
-<p>Assigned task methods make the controllable execute the task where the location of the (possible) targets of the task are known before being detected.
-This is different from the EnRoute tasks, where the targets of the task need to be detected before the task can be executed.</p>
-
-<p>Find below a list of the <strong>assigned task</strong> methods:</p>
-
-<ul>
-    <li><a href="##(CONTROLLABLE).TaskAttackGroup">CONTROLLABLE.TaskAttackGroup</a>: (AIR) Attack a Controllable.</li>
-    <li><a href="##(CONTROLLABLE).TaskAttackMapObject">CONTROLLABLE.TaskAttackMapObject</a>: (AIR) Attacking the map object (building, structure, e.t.c).</li>
-    <li><a href="##(CONTROLLABLE).TaskAttackUnit">CONTROLLABLE.TaskAttackUnit</a>: (AIR) Attack the Unit.</li>
-    <li><a href="##(CONTROLLABLE).TaskBombing">CONTROLLABLE.TaskBombing</a>: (AIR) Delivering weapon at the point on the ground.</li>
-    <li><a href="##(CONTROLLABLE).TaskBombingRunway">CONTROLLABLE.TaskBombingRunway</a>: (AIR) Delivering weapon on the runway.</li>
-    <li><a href="##(CONTROLLABLE).TaskEmbarking">CONTROLLABLE.TaskEmbarking</a>: (AIR) Move the controllable to a Vec2 Point, wait for a defined duration and embark a controllable.</li>
-    <li><a href="##(CONTROLLABLE).TaskEmbarkToTransport">CONTROLLABLE.TaskEmbarkToTransport</a>: (GROUND) Embark to a Transport landed at a location.</li>
-    <li><a href="##(CONTROLLABLE).TaskEscort">CONTROLLABLE.TaskEscort</a>: (AIR) Escort another airborne controllable. </li>
-    <li><a href="##(CONTROLLABLE).TaskFAC_AttackGroup">CONTROLLABLE.TaskFAC_AttackGroup</a>: (AIR + GROUND) The task makes the controllable/unit a FAC and orders the FAC to control the target (enemy ground controllable) destruction.</li>
-    <li><a href="##(CONTROLLABLE).TaskFireAtPoint">CONTROLLABLE.TaskFireAtPoint</a>: (GROUND) Fire some or all ammunition at a VEC2 point.</li>
-    <li><a href="##(CONTROLLABLE).TaskFollow">CONTROLLABLE.TaskFollow</a>: (AIR) Following another airborne controllable.</li>
-    <li><a href="##(CONTROLLABLE).TaskHold">CONTROLLABLE.TaskHold</a>: (GROUND) Hold ground controllable from moving.</li>
-    <li><a href="##(CONTROLLABLE).TaskHoldPosition">CONTROLLABLE.TaskHoldPosition</a>: (AIR) Hold position at the current position of the first unit of the controllable.</li>
-    <li><a href="##(CONTROLLABLE).TaskLand">CONTROLLABLE.TaskLand</a>: (AIR HELICOPTER) Landing at the ground. For helicopters only.</li>
-    <li><a href="##(CONTROLLABLE).TaskLandAtZone">CONTROLLABLE.TaskLandAtZone</a>: (AIR) Land the controllable at a <a href="##(CONTROLLABLE).TaskOrbitCircle">CONTROLLABLE.TaskOrbitCircle</a>: (AIR) Orbit at the current position of the first unit of the controllable at a specified alititude.</li>
-    <li><a href="##(CONTROLLABLE).TaskOrbitCircleAtVec2">CONTROLLABLE.TaskOrbitCircleAtVec2</a>: (AIR) Orbit at a specified position at a specified alititude during a specified duration with a specified speed.</li>
-    <li><a href="##(CONTROLLABLE).TaskRefueling">CONTROLLABLE.TaskRefueling</a>: (AIR) Refueling from the nearest tanker. No parameters.</li>
-    <li><a href="##(CONTROLLABLE).TaskRoute">CONTROLLABLE.TaskRoute</a>: (AIR + GROUND) Return a Misson task to follow a given route defined by Points.</li>
-    <li><a href="##(CONTROLLABLE).TaskRouteToVec2">CONTROLLABLE.TaskRouteToVec2</a>: (AIR + GROUND) Make the Controllable move to a given point.</li>
-    <li><a href="##(CONTROLLABLE).TaskRouteToVec3">CONTROLLABLE.TaskRouteToVec3</a>: (AIR + GROUND) Make the Controllable move to a given point.</li>
-    <li><a href="##(CONTROLLABLE).TaskRouteToZone">CONTROLLABLE.TaskRouteToZone</a>: (AIR + GROUND) Route the controllable to a given zone.</li>
-    <li><a href="##(CONTROLLABLE).TaskReturnToBase">CONTROLLABLE.TaskReturnToBase</a>: (AIR) Route the controllable to an airbase.</li>
-</ul>
-
-<h3>1.2.2) EnRoute task methods</h3>
-
-<p>EnRoute tasks require the targets of the task need to be detected by the controllable (using its sensors) before the task can be executed:</p>
-
-<ul>
-    <li><a href="##(CONTROLLABLE).EnRouteTaskAWACS">CONTROLLABLE.EnRouteTaskAWACS</a>: (AIR) Aircraft will act as an AWACS for friendly units (will provide them with information about contacts). No parameters.</li>
-    <li><a href="##(CONTROLLABLE).EnRouteTaskEngageControllable">CONTROLLABLE.EnRouteTaskEngageControllable</a>: (AIR) Engaging a controllable. The task does not assign the target controllable to the unit/controllable to attack now; it just allows the unit/controllable to engage the target controllable as well as other assigned targets.</li>
-    <li><a href="##(CONTROLLABLE).EnRouteTaskEngageTargets">CONTROLLABLE.EnRouteTaskEngageTargets</a>: (AIR) Engaging targets of defined types.</li>
-    <li><a href="##(CONTROLLABLE).EnRouteTaskEWR">CONTROLLABLE.EnRouteTaskEWR</a>: (AIR) Attack the Unit.</li>
-    <li><a href="##(CONTROLLABLE).EnRouteTaskFAC">CONTROLLABLE.EnRouteTaskFAC</a>: (AIR + GROUND) The task makes the controllable/unit a FAC and lets the FAC to choose a targets (enemy ground controllable) around as well as other assigned targets.</li>
-    <li><a href="##(CONTROLLABLE).EnRouteTaskFAC_EngageControllable">CONTROLLABLE.EnRouteTaskFAC_EngageControllable</a>: (AIR + GROUND) The task makes the controllable/unit a FAC and lets the FAC to choose the target (enemy ground controllable) as well as other assigned targets.</li>
-    <li><a href="##(CONTROLLABLE).EnRouteTaskTanker">CONTROLLABLE.EnRouteTaskTanker</a>: (AIR) Aircraft will act as a tanker for friendly units. No parameters.</li>
-</ul>
-
-<h3>1.2.3) Preparation task methods</h3>
-
-<p>There are certain task methods that allow to tailor the task behaviour:</p>
-
-<ul>
-    <li><a href="##(CONTROLLABLE).TaskWrappedAction">CONTROLLABLE.TaskWrappedAction</a>: Return a WrappedAction Task taking a Command.</li>
-    <li><a href="##(CONTROLLABLE).TaskCombo">CONTROLLABLE.TaskCombo</a>: Return a Combo Task taking an array of Tasks.</li>
-    <li><a href="##(CONTROLLABLE).TaskCondition">CONTROLLABLE.TaskCondition</a>: Return a condition section for a controlled task.</li>
-    <li><a href="##(CONTROLLABLE).TaskControlled">CONTROLLABLE.TaskControlled</a>: Return a Controlled Task taking a Task and a TaskCondition.</li>
-</ul>
-
-<h3>1.2.4) Obtain the mission from controllable templates</h3>
-
-<p>Controllable templates contain complete mission descriptions. Sometimes you want to copy a complete mission from a controllable and assign it to another:</p>
-
-<ul>
-    <li><a href="##(CONTROLLABLE).TaskMission">CONTROLLABLE.TaskMission</a>: (AIR + GROUND) Return a mission task from a mission template.</li>
-</ul>
-
-<h2>1.3) CONTROLLABLE Command methods</h2>
-<p>Controllable <strong>command methods</strong> prepare the execution of commands using the <a href="##(CONTROLLABLE).SetCommand">CONTROLLABLE.SetCommand</a> method:</p>
-
-<ul>
-    <li><a href="##(CONTROLLABLE).CommandDoScript">CONTROLLABLE.CommandDoScript</a>: Do Script command.</li>
-    <li><a href="##(CONTROLLABLE).CommandSwitchWayPoint">CONTROLLABLE.CommandSwitchWayPoint</a>: Perform a switch waypoint command.</li>
-</ul>
-
-<h2>1.4) CONTROLLABLE Option methods</h2>
-<p>Controllable <strong>Option methods</strong> change the behaviour of the Controllable while being alive.</p>
-
-<h3>1.4.1) Rule of Engagement:</h3>
-
-<ul>
-    <li><a href="##(CONTROLLABLE).OptionROEWeaponFree">CONTROLLABLE.OptionROEWeaponFree</a> </li>
-    <li><a href="##(CONTROLLABLE).OptionROEOpenFire">CONTROLLABLE.OptionROEOpenFire</a></li>
-    <li><a href="##(CONTROLLABLE).OptionROEReturnFire">CONTROLLABLE.OptionROEReturnFire</a></li>
-    <li><a href="##(CONTROLLABLE).OptionROEEvadeFire">CONTROLLABLE.OptionROEEvadeFire</a></li>
-</ul>
-
-<p>To check whether an ROE option is valid for a specific controllable, use:</p>
-
-<ul>
-    <li><a href="##(CONTROLLABLE).OptionROEWeaponFreePossible">CONTROLLABLE.OptionROEWeaponFreePossible</a> </li>
-    <li><a href="##(CONTROLLABLE).OptionROEOpenFirePossible">CONTROLLABLE.OptionROEOpenFirePossible</a></li>
-    <li><a href="##(CONTROLLABLE).OptionROEReturnFirePossible">CONTROLLABLE.OptionROEReturnFirePossible</a></li>
-    <li><a href="##(CONTROLLABLE).OptionROEEvadeFirePossible">CONTROLLABLE.OptionROEEvadeFirePossible</a></li>
-</ul>
-
-<h3>1.4.2) Rule on thread:</h3>
-
-<ul>
-    <li><a href="##(CONTROLLABLE).OptionROTNoReaction">CONTROLLABLE.OptionROTNoReaction</a></li>
-    <li><a href="##(CONTROLLABLE).OptionROTPassiveDefense">CONTROLLABLE.OptionROTPassiveDefense</a></li>
-    <li><a href="##(CONTROLLABLE).OptionROTEvadeFire">CONTROLLABLE.OptionROTEvadeFire</a></li>
-    <li><a href="##(CONTROLLABLE).OptionROTVertical">CONTROLLABLE.OptionROTVertical</a></li>
-</ul>
-
-<p>To test whether an ROT option is valid for a specific controllable, use:</p>
-
-<ul>
-    <li><a href="##(CONTROLLABLE).OptionROTNoReactionPossible">CONTROLLABLE.OptionROTNoReactionPossible</a></li>
-    <li><a href="##(CONTROLLABLE).OptionROTPassiveDefensePossible">CONTROLLABLE.OptionROTPassiveDefensePossible</a></li>
-    <li><a href="##(CONTROLLABLE).OptionROTEvadeFirePossible">CONTROLLABLE.OptionROTEvadeFirePossible</a></li>
-    <li><a href="##(CONTROLLABLE).OptionROTVerticalPossible">CONTROLLABLE.OptionROTVerticalPossible</a></li>
-</ul>
+<h3>Contributions:</h3>
 
 <hr/>
 
@@ -221,18 +123,18 @@ This is different from the EnRoute tasks, where the targets of the task need to 
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="#CONTROLLABLE">CONTROLLABLE</a></td>
 		<td class="summary">
+<h1>CONTROLLABLE class, extends <a href="Positionable.html##(POSITIONABLE)">Positionable#POSITIONABLE</a></h1>
 
+<p>CONTROLLABLE is a wrapper class to handle the "DCS Controllable objects", which are Groups and Units:</p>
+
+<ul>
+    <li>Support all DCS Controllable APIs.</li>
+</ul>
 </td>
 		</tr>
 	</table>
 			<h2><a id="#(CONTROLLABLE)">Type <code>CONTROLLABLE</code></a></h2>
 				<table class="function_list">
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).ClassName">CONTROLLABLE.ClassName</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).ClearTasks">CONTROLLABLE:ClearTasks()</a></td>
 		<td class="summary">
@@ -300,6 +202,12 @@ This is different from the EnRoute tasks, where the targets of the task need to 
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).EnRouteTaskEngageTargetsInZone">CONTROLLABLE:EnRouteTaskEngageTargetsInZone(Vec2, Radius, TargetTypes, Priority)</a></td>
+		<td class="summary">
+<p>(AIR) Engaging a targets of defined types at circle-shaped zone.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).EnRouteTaskEngageUnit">CONTROLLABLE:EnRouteTaskEngageUnit(EngageUnit, Priority, GroupAttack, WeaponExpend, AttackQty, Direction, Altitude, Visible, ControllableAttack)</a></td>
 		<td class="summary">
 <p>(AIR) Search and attack the Unit.</p>
@@ -330,9 +238,27 @@ This is different from the EnRoute tasks, where the targets of the task need to 
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).GetFuel">CONTROLLABLE:GetFuel()</a></td>
+		<td class="summary">
+<p>Returns relative amount of fuel (from 0.0 to 1.0) the unit has in its internal tanks.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).GetLife">CONTROLLABLE:GetLife()</a></td>
 		<td class="summary">
 <p>Returns the health.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).GetLife0">CONTROLLABLE:GetLife0()</a></td>
+		<td class="summary">
+<p>Returns the initial health.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).GetSize">CONTROLLABLE:GetSize()</a></td>
+		<td class="summary">
+
 </td>
 		</tr>
 		<tr>
@@ -360,7 +286,19 @@ This is different from the EnRoute tasks, where the targets of the task need to 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).IsTargetDetected">CONTROLLABLE:IsTargetDetected(DCSObject)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).HasTask">CONTROLLABLE:HasTask()</a></td>
+		<td class="summary">
+<p>Checking the Task Queue of the controllable.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).IsAirPlane">CONTROLLABLE:IsAirPlane()</a></td>
+		<td class="summary">
+<p>Returns if the Controllable contains AirPlanes.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).IsTargetDetected">CONTROLLABLE:IsTargetDetected(DCSObject, DetectVisual, DetectOptical, DetectRadar, DetectIRST, DetectRWR, DetectDLINK)</a></td>
 		<td class="summary">
 
 </td>
@@ -468,6 +406,18 @@ This is different from the EnRoute tasks, where the targets of the task need to 
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).OptionRTBAmmo">CONTROLLABLE:OptionRTBAmmo(WeaponsFlag)</a></td>
+		<td class="summary">
+<p>Set RTB on ammo.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).OptionRTBBingoFuel">CONTROLLABLE:OptionRTBBingoFuel(RTB)</a></td>
+		<td class="summary">
+<p>Set RTB on bingo fuel.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).PopCurrentTask">CONTROLLABLE:PopCurrentTask()</a></td>
 		<td class="summary">
 <p>Popping current Task from the controllable.</p>
@@ -480,9 +430,21 @@ This is different from the EnRoute tasks, where the targets of the task need to 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).Route">CONTROLLABLE:Route(GoPoints)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).Route">CONTROLLABLE:Route(Route, DelaySeconds)</a></td>
 		<td class="summary">
 <p>Make the controllable to follow a given route.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).RouteAirTo">CONTROLLABLE:RouteAirTo(ToCoordinate, AltType, Type, Action, Speed, DelaySeconds)</a></td>
+		<td class="summary">
+<p>Make the AIR Controllable fly towards a specific point.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).RouteGroundTo">CONTROLLABLE:RouteGroundTo(ToCoordinate, Speed, Formation, DelaySeconds)</a></td>
+		<td class="summary">
+<p>Make the GROUND Controllable to drive towards a specific point.</p>
 </td>
 		</tr>
 		<tr>
@@ -510,13 +472,19 @@ This is different from the EnRoute tasks, where the targets of the task need to 
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).SetTaskWaypoint">CONTROLLABLE:SetTaskWaypoint(Waypoint, Task)</a></td>
+		<td class="summary">
+<p>Set a Task at a Waypoint using a Route list.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).TaskAttackGroup">CONTROLLABLE:TaskAttackGroup(AttackGroup, WeaponType, WeaponExpend, AttackQty, Direction, Altitude, AttackQtyLimit)</a></td>
 		<td class="summary">
 <p>(AIR) Attack a Controllable.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).TaskAttackMapObject">CONTROLLABLE:TaskAttackMapObject(Vec2, WeaponType, WeaponExpend, AttackQty, Direction, ControllableAttack)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).TaskAttackMapObject">CONTROLLABLE:TaskAttackMapObject(Vec2, GroupAttack, WeaponExpend, AttackQty, Direction, Altitude, WeaponType)</a></td>
 		<td class="summary">
 <p>(AIR) Attacking the map object (building, structure, e.t.c).</p>
 </td>
@@ -528,7 +496,7 @@ This is different from the EnRoute tasks, where the targets of the task need to 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).TaskBombing">CONTROLLABLE:TaskBombing(Vec2, WeaponType, WeaponExpend, AttackQty, Direction, ControllableAttack)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).TaskBombing">CONTROLLABLE:TaskBombing(Vec2, GroupAttack, WeaponExpend, AttackQty, Direction, Altitude, WeaponType)</a></td>
 		<td class="summary">
 <p>(AIR) Delivering weapon at the point on the ground. </p>
 </td>
@@ -594,9 +562,9 @@ This is different from the EnRoute tasks, where the targets of the task need to 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).TaskFunction">CONTROLLABLE:TaskFunction(WayPoint, WayPointIndex, FunctionString, FunctionArguments)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).TaskFunction">CONTROLLABLE:TaskFunction(FunctionString, ...)</a></td>
 		<td class="summary">
-
+<p>This creates a Task element, with an action to call a function as part of a Wrapped Task.</p>
 </td>
 		</tr>
 		<tr>
@@ -654,9 +622,21 @@ This is different from the EnRoute tasks, where the targets of the task need to 
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).TaskRouteToVec2">CONTROLLABLE:TaskRouteToVec2(Vec2, Speed, Formation)</a></td>
+		<td class="summary">
+<p>(GROUND) Route the controllable to a given Vec2.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).TaskRouteToZone">CONTROLLABLE:TaskRouteToZone(Zone, Randomize, Speed, Formation)</a></td>
 		<td class="summary">
 <p>(AIR + GROUND) Route the controllable to a given zone.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).TaskScheduler">CONTROLLABLE.TaskScheduler</a></td>
+		<td class="summary">
+
 </td>
 		</tr>
 		<tr>
@@ -675,12 +655,6 @@ This is different from the EnRoute tasks, where the targets of the task need to 
 		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).WayPointFunction">CONTROLLABLE:WayPointFunction(WayPoint, WayPointIndex, WayPointFunction, ...)</a></td>
 		<td class="summary">
 <p>Registers a waypoint function that will be executed when the controllable moves over the WayPoint.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).WayPointFunctions">CONTROLLABLE.WayPointFunctions</a></td>
-		<td class="summary">
-
 </td>
 		</tr>
 		<tr>
@@ -703,6 +677,22 @@ This is different from the EnRoute tasks, where the targets of the task need to 
 		</tr>
 	</table>
 
+			<h2><a id="#(Vec2)">Type <code>Vec2</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Vec2).x">Vec2.x</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(Vec2).y">Vec2.y</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+
 	<h2>Global(s)</h2>
 		<dl class="function">
 <dt>
@@ -714,6 +704,177 @@ This is different from the EnRoute tasks, where the targets of the task need to 
 </dt>
 <dd>
 	
+<h1>CONTROLLABLE class, extends <a href="Positionable.html##(POSITIONABLE)">Positionable#POSITIONABLE</a></h1>
+
+<p>CONTROLLABLE is a wrapper class to handle the "DCS Controllable objects", which are Groups and Units:</p>
+
+<ul>
+    <li>Support all DCS Controllable APIs.</li>
+</ul>
+
+	
+<ul>
+    <li>Enhance with Controllable specific APIs not in the DCS Controllable API set.</li>
+    <li>Handle local Controllable Controller.</li>
+    <li>Manage the "state" of the DCS Controllable.</li>
+</ul>
+
+<h2>CONTROLLABLE constructor</h2>
+
+<p>The CONTROLLABLE class provides the following functions to construct a CONTROLLABLE instance:</p>
+
+<ul>
+    <li><a href="##(CONTROLLABLE).New">CONTROLLABLE.New</a>(): Create a CONTROLLABLE instance.</li>
+</ul>
+
+<h2>CONTROLLABLE Task methods</h2>
+
+<p>Several controllable task methods are available that help you to prepare tasks. 
+These methods return a string consisting of the task description, which can then be given to either a <a href="Controllable.html##(CONTROLLABLE).PushTask">Controllable#CONTROLLABLE.PushTask</a> or <a href="Controllable.html##(SetTask)">Controllable#SetTask</a> method to assign the task to the CONTROLLABLE.
+Tasks are specific for the category of the CONTROLLABLE, more specific, for AIR, GROUND or AIR and GROUND. 
+Each task description where applicable indicates for which controllable category the task is valid.
+There are 2 main subdivisions of tasks: Assigned tasks and EnRoute tasks.</p>
+
+<h3>Task assignment</h3>
+
+<p>Assigned task methods make the controllable execute the task where the location of the (possible) targets of the task are known before being detected.
+This is different from the EnRoute tasks, where the targets of the task need to be detected before the task can be executed.</p>
+
+<p>Find below a list of the <strong>assigned task</strong> methods:</p>
+
+<ul>
+    <li><a href="##(CONTROLLABLE).TaskAttackGroup">CONTROLLABLE.TaskAttackGroup</a>: (AIR) Attack a Controllable.</li>
+    <li><a href="##(CONTROLLABLE).TaskAttackMapObject">CONTROLLABLE.TaskAttackMapObject</a>: (AIR) Attacking the map object (building, structure, e.t.c).</li>
+    <li><a href="##(CONTROLLABLE).TaskAttackUnit">CONTROLLABLE.TaskAttackUnit</a>: (AIR) Attack the Unit.</li>
+    <li><a href="##(CONTROLLABLE).TaskBombing">CONTROLLABLE.TaskBombing</a>: (AIR) Delivering weapon at the point on the ground.</li>
+    <li><a href="##(CONTROLLABLE).TaskBombingRunway">CONTROLLABLE.TaskBombingRunway</a>: (AIR) Delivering weapon on the runway.</li>
+    <li><a href="##(CONTROLLABLE).TaskEmbarking">CONTROLLABLE.TaskEmbarking</a>: (AIR) Move the controllable to a Vec2 Point, wait for a defined duration and embark a controllable.</li>
+    <li><a href="##(CONTROLLABLE).TaskEmbarkToTransport">CONTROLLABLE.TaskEmbarkToTransport</a>: (GROUND) Embark to a Transport landed at a location.</li>
+    <li><a href="##(CONTROLLABLE).TaskEscort">CONTROLLABLE.TaskEscort</a>: (AIR) Escort another airborne controllable. </li>
+    <li><a href="##(CONTROLLABLE).TaskFAC_AttackGroup">CONTROLLABLE.TaskFAC_AttackGroup</a>: (AIR + GROUND) The task makes the controllable/unit a FAC and orders the FAC to control the target (enemy ground controllable) destruction.</li>
+    <li><a href="##(CONTROLLABLE).TaskFireAtPoint">CONTROLLABLE.TaskFireAtPoint</a>: (GROUND) Fire some or all ammunition at a VEC2 point.</li>
+    <li><a href="##(CONTROLLABLE).TaskFollow">CONTROLLABLE.TaskFollow</a>: (AIR) Following another airborne controllable.</li>
+    <li><a href="##(CONTROLLABLE).TaskHold">CONTROLLABLE.TaskHold</a>: (GROUND) Hold ground controllable from moving.</li>
+    <li><a href="##(CONTROLLABLE).TaskHoldPosition">CONTROLLABLE.TaskHoldPosition</a>: (AIR) Hold position at the current position of the first unit of the controllable.</li>
+    <li><a href="##(CONTROLLABLE).TaskLand">CONTROLLABLE.TaskLand</a>: (AIR HELICOPTER) Landing at the ground. For helicopters only.</li>
+    <li><a href="##(CONTROLLABLE).TaskLandAtZone">CONTROLLABLE.TaskLandAtZone</a>: (AIR) Land the controllable at a <a href="##(CONTROLLABLE).TaskOrbitCircle">CONTROLLABLE.TaskOrbitCircle</a>: (AIR) Orbit at the current position of the first unit of the controllable at a specified alititude.</li>
+    <li><a href="##(CONTROLLABLE).TaskOrbitCircleAtVec2">CONTROLLABLE.TaskOrbitCircleAtVec2</a>: (AIR) Orbit at a specified position at a specified alititude during a specified duration with a specified speed.</li>
+    <li><a href="##(CONTROLLABLE).TaskRefueling">CONTROLLABLE.TaskRefueling</a>: (AIR) Refueling from the nearest tanker. No parameters.</li>
+    <li><a href="##(CONTROLLABLE).TaskRoute">CONTROLLABLE.TaskRoute</a>: (AIR + GROUND) Return a Misson task to follow a given route defined by Points.</li>
+    <li><a href="##(CONTROLLABLE).TaskRouteToVec2">CONTROLLABLE.TaskRouteToVec2</a>: (AIR + GROUND) Make the Controllable move to a given point.</li>
+    <li><a href="##(CONTROLLABLE).TaskRouteToVec3">CONTROLLABLE.TaskRouteToVec3</a>: (AIR + GROUND) Make the Controllable move to a given point.</li>
+    <li><a href="##(CONTROLLABLE).TaskRouteToZone">CONTROLLABLE.TaskRouteToZone</a>: (AIR + GROUND) Route the controllable to a given zone.</li>
+    <li><a href="##(CONTROLLABLE).TaskReturnToBase">CONTROLLABLE.TaskReturnToBase</a>: (AIR) Route the controllable to an airbase.</li>
+</ul>
+
+<h3>EnRoute assignment</h3>
+
+<p>EnRoute tasks require the targets of the task need to be detected by the controllable (using its sensors) before the task can be executed:</p>
+
+<ul>
+    <li><a href="##(CONTROLLABLE).EnRouteTaskAWACS">CONTROLLABLE.EnRouteTaskAWACS</a>: (AIR) Aircraft will act as an AWACS for friendly units (will provide them with information about contacts). No parameters.</li>
+    <li><a href="##(CONTROLLABLE).EnRouteTaskEngageControllable">CONTROLLABLE.EnRouteTaskEngageControllable</a>: (AIR) Engaging a controllable. The task does not assign the target controllable to the unit/controllable to attack now; it just allows the unit/controllable to engage the target controllable as well as other assigned targets.</li>
+    <li><a href="##(CONTROLLABLE).EnRouteTaskEngageTargets">CONTROLLABLE.EnRouteTaskEngageTargets</a>: (AIR) Engaging targets of defined types.</li>
+    <li><a href="##(CONTROLLABLE).EnRouteTaskEngageTargetsInZone">CONTROLLABLE.EnRouteTaskEngageTargetsInZone</a>: (AIR) Engaging a targets of defined types at circle-shaped zone.</li>
+    <li><a href="##(CONTROLLABLE).EnRouteTaskEWR">CONTROLLABLE.EnRouteTaskEWR</a>: (AIR) Attack the Unit.</li>
+    <li><a href="##(CONTROLLABLE).EnRouteTaskFAC">CONTROLLABLE.EnRouteTaskFAC</a>: (AIR + GROUND) The task makes the controllable/unit a FAC and lets the FAC to choose a targets (enemy ground controllable) around as well as other assigned targets.</li>
+    <li><a href="##(CONTROLLABLE).EnRouteTaskFAC_EngageControllable">CONTROLLABLE.EnRouteTaskFAC_EngageControllable</a>: (AIR + GROUND) The task makes the controllable/unit a FAC and lets the FAC to choose the target (enemy ground controllable) as well as other assigned targets.</li>
+    <li><a href="##(CONTROLLABLE).EnRouteTaskTanker">CONTROLLABLE.EnRouteTaskTanker</a>: (AIR) Aircraft will act as a tanker for friendly units. No parameters.</li>
+</ul>
+
+<h3>Task preparation</h3>
+
+<p>There are certain task methods that allow to tailor the task behaviour:</p>
+
+<ul>
+    <li><a href="##(CONTROLLABLE).TaskWrappedAction">CONTROLLABLE.TaskWrappedAction</a>: Return a WrappedAction Task taking a Command.</li>
+    <li><a href="##(CONTROLLABLE).TaskCombo">CONTROLLABLE.TaskCombo</a>: Return a Combo Task taking an array of Tasks.</li>
+    <li><a href="##(CONTROLLABLE).TaskCondition">CONTROLLABLE.TaskCondition</a>: Return a condition section for a controlled task.</li>
+    <li><a href="##(CONTROLLABLE).TaskControlled">CONTROLLABLE.TaskControlled</a>: Return a Controlled Task taking a Task and a TaskCondition.</li>
+</ul>
+
+<h3>Call a function as a Task</h3>
+
+<p>A function can be called which is part of a Task. The method <a href="##(CONTROLLABLE).TaskFunction">CONTROLLABLE.TaskFunction</a>() prepares
+a Task that can call a GLOBAL function from within the Controller execution.
+This method can also be used to <strong>embed a function call when a certain waypoint has been reached</strong>.
+See below the <strong>Tasks at Waypoints</strong> section.</p>
+
+<p>Demonstration Mission: <a href="https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/release-2-2-pre/GRP - Group Commands/GRP-502 - Route at waypoint to random point">GRP-502 - Route at waypoint to random point</a></p>
+
+<h3>Tasks at Waypoints</h3>
+
+<p>Special Task methods are available to set tasks at certain waypoints.
+The method <a href="##(CONTROLLABLE).SetTaskAtWaypoint">CONTROLLABLE.SetTaskAtWaypoint</a>() helps preparing a Route, embedding a Task at the Waypoint of the Route.</p>
+
+<p>This creates a Task element, with an action to call a function as part of a Wrapped Task.</p>
+
+<h3>Obtain the mission from controllable templates</h3>
+
+<p>Controllable templates contain complete mission descriptions. Sometimes you want to copy a complete mission from a controllable and assign it to another:</p>
+
+<ul>
+    <li><a href="##(CONTROLLABLE).TaskMission">CONTROLLABLE.TaskMission</a>: (AIR + GROUND) Return a mission task from a mission template.</li>
+</ul>
+
+<h2>CONTROLLABLE Command methods</h2>
+
+<p>Controllable <strong>command methods</strong> prepare the execution of commands using the <a href="##(CONTROLLABLE).SetCommand">CONTROLLABLE.SetCommand</a> method:</p>
+
+<ul>
+    <li><a href="##(CONTROLLABLE).CommandDoScript">CONTROLLABLE.CommandDoScript</a>: Do Script command.</li>
+    <li><a href="##(CONTROLLABLE).CommandSwitchWayPoint">CONTROLLABLE.CommandSwitchWayPoint</a>: Perform a switch waypoint command.</li>
+</ul>
+
+<h2>Routing of Controllables</h2>
+
+<p>Different routing methods exist to route GROUPs and UNITs to different locations:</p>
+
+<ul>
+    <li><a href="##(CONTROLLABLE).Route">CONTROLLABLE.Route</a>(): Make the Controllable to follow a given route.  </li>
+    <li><a href="##(CONTROLLABLE).RouteGroundTo">CONTROLLABLE.RouteGroundTo</a>(): Make the GROUND Controllable to drive towards a specific coordinate.</li>
+    <li><a href="##(CONTROLLABLE).RouteAirTo">CONTROLLABLE.RouteAirTo</a>(): Make the AIR Controllable to fly towards a specific coordinate. </li>
+</ul>
+
+<h2>Option methods</h2>
+
+<p>Controllable <strong>Option methods</strong> change the behaviour of the Controllable while being alive.</p>
+
+<h3>Rule of Engagement:</h3>
+
+<ul>
+    <li><a href="##(CONTROLLABLE).OptionROEWeaponFree">CONTROLLABLE.OptionROEWeaponFree</a> </li>
+    <li><a href="##(CONTROLLABLE).OptionROEOpenFire">CONTROLLABLE.OptionROEOpenFire</a></li>
+    <li><a href="##(CONTROLLABLE).OptionROEReturnFire">CONTROLLABLE.OptionROEReturnFire</a></li>
+    <li><a href="##(CONTROLLABLE).OptionROEEvadeFire">CONTROLLABLE.OptionROEEvadeFire</a></li>
+</ul>
+
+<p>To check whether an ROE option is valid for a specific controllable, use:</p>
+
+<ul>
+    <li><a href="##(CONTROLLABLE).OptionROEWeaponFreePossible">CONTROLLABLE.OptionROEWeaponFreePossible</a> </li>
+    <li><a href="##(CONTROLLABLE).OptionROEOpenFirePossible">CONTROLLABLE.OptionROEOpenFirePossible</a></li>
+    <li><a href="##(CONTROLLABLE).OptionROEReturnFirePossible">CONTROLLABLE.OptionROEReturnFirePossible</a></li>
+    <li><a href="##(CONTROLLABLE).OptionROEEvadeFirePossible">CONTROLLABLE.OptionROEEvadeFirePossible</a></li>
+</ul>
+
+<h3>Rule on thread:</h3>
+
+<ul>
+    <li><a href="##(CONTROLLABLE).OptionROTNoReaction">CONTROLLABLE.OptionROTNoReaction</a></li>
+    <li><a href="##(CONTROLLABLE).OptionROTPassiveDefense">CONTROLLABLE.OptionROTPassiveDefense</a></li>
+    <li><a href="##(CONTROLLABLE).OptionROTEvadeFire">CONTROLLABLE.OptionROTEvadeFire</a></li>
+    <li><a href="##(CONTROLLABLE).OptionROTVertical">CONTROLLABLE.OptionROTVertical</a></li>
+</ul>
+
+<p>To test whether an ROT option is valid for a specific controllable, use:</p>
+
+<ul>
+    <li><a href="##(CONTROLLABLE).OptionROTNoReactionPossible">CONTROLLABLE.OptionROTNoReactionPossible</a></li>
+    <li><a href="##(CONTROLLABLE).OptionROTPassiveDefensePossible">CONTROLLABLE.OptionROTPassiveDefensePossible</a></li>
+    <li><a href="##(CONTROLLABLE).OptionROTEvadeFirePossible">CONTROLLABLE.OptionROTEvadeFirePossible</a></li>
+    <li><a href="##(CONTROLLABLE).OptionROTVerticalPossible">CONTROLLABLE.OptionROTVerticalPossible</a></li>
+</ul>
 
 
 </dd>
@@ -721,24 +882,7 @@ This is different from the EnRoute tasks, where the targets of the task need to 
 	<h2><a id="#(Controllable)" >Type <code>Controllable</code></a></h2>
 	
 			<h2><a id="#(CONTROLLABLE)" >Type <code>CONTROLLABLE</code></a></h2>
-				
-<p>The CONTROLLABLE class</p>
-
-	<h3>Field(s)</h3>
-		<dl class="function">
-<dt>
-
-		<em>#string</em>
-<a id="#(CONTROLLABLE).ClassName" >
-<strong>CONTROLLABLE.ClassName</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
+				<h3>Field(s)</h3>
 		<dl class="function">
 <dt>
 
@@ -1090,6 +1234,51 @@ The DCS task structure.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(CONTROLLABLE).EnRouteTaskEngageTargetsInZone" >
+<strong>CONTROLLABLE:EnRouteTaskEngageTargetsInZone(Vec2, Radius, TargetTypes, Priority)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>(AIR) Engaging a targets of defined types at circle-shaped zone.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a> Vec2 </em></code>: 
+2D-coordinates of the zone. </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a> Radius </em></code>: 
+Radius of the zone. </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSTypes.html##(AttributeNameArray)">Dcs.DCSTypes#AttributeNameArray</a> TargetTypes </em></code>: 
+Array of target categories allowed to engage. </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Priority </em></code>: 
+All en-route tasks have the priority parameter. This is a number (less value - higher priority) that determines actions related to what task will be performed first. </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="Dcs.DCSTasking.Task.html##(Task)">Dcs.DCSTasking.Task#Task</a>:</em>
+The DCS task structure.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(CONTROLLABLE).EnRouteTaskEngageUnit" >
 <strong>CONTROLLABLE:EnRouteTaskEngageUnit(EngageUnit, Priority, GroupAttack, WeaponExpend, AttackQty, Direction, Altitude, Visible, ControllableAttack)</strong>
 </a>
@@ -1339,6 +1528,27 @@ DetectedTargets</p>
 		<dl class="function">
 <dt>
 
+<a id="#(CONTROLLABLE).GetFuel" >
+<strong>CONTROLLABLE:GetFuel()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns relative amount of fuel (from 0.0 to 1.0) the unit has in its internal tanks.</p>
+
+	
+<p>This method returns nil to ensure polymorphic behaviour! This method needs to be overridden by GROUP or UNIT.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#nil:</em>
+The CONTROLLABLE is not existing or alive.  </p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(CONTROLLABLE).GetLife" >
 <strong>CONTROLLABLE:GetLife()</strong>
 </a>
@@ -1365,6 +1575,47 @@ The controllable is not existing or alive.  </p>
 
 				</li>
 			</ol>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CONTROLLABLE).GetLife0" >
+<strong>CONTROLLABLE:GetLife0()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the initial health.</p>
+
+		<h3>Return values</h3>
+			<ol>
+				<li>
+				
+<p><em>#number:</em>
+The controllable health value (unit or group average).</p>
+
+				</li>
+				<li>
+				
+<p><em>#nil:</em>
+The controllable is not existing or alive.  </p>
+
+				</li>
+			</ol>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CONTROLLABLE).GetSize" >
+<strong>CONTROLLABLE:GetSize()</strong>
+</a>
+</dt>
+<dd>
+	
+
+
 </dd>
 </dl>
 		<dl class="function">
@@ -1443,19 +1694,88 @@ WayPoints If WayPoints is given, then return the WayPoints structure.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(CONTROLLABLE).HasTask" >
+<strong>CONTROLLABLE:HasTask()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Checking the Task Queue of the controllable.</p>
+
+	
+<p>Returns false if no task is on the queue. true if there is a task.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CONTROLLABLE).IsAirPlane" >
+<strong>CONTROLLABLE:IsAirPlane()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns if the Controllable contains AirPlanes.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+true if Controllable contains AirPlanes.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(CONTROLLABLE).IsTargetDetected" >
-<strong>CONTROLLABLE:IsTargetDetected(DCSObject)</strong>
+<strong>CONTROLLABLE:IsTargetDetected(DCSObject, DetectVisual, DetectOptical, DetectRadar, DetectIRST, DetectRWR, DetectDLINK)</strong>
 </a>
 </dt>
 <dd>
 	
 
 
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
 <p><code><em> DCSObject </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> DetectVisual </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> DetectOptical </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> DetectRadar </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> DetectIRST </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> DetectRWR </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> DetectDLINK </em></code>: </p>
 
 				</li>
 		</ul>
@@ -1779,6 +2099,61 @@ self</p>
 		<dl class="function">
 <dt>
 
+<a id="#(CONTROLLABLE).OptionRTBAmmo" >
+<strong>CONTROLLABLE:OptionRTBAmmo(WeaponsFlag)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set RTB on ammo.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#boolean WeaponsFlag </em></code>: 
+Weapons.flag enumerator.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(CONTROLLABLE)">#CONTROLLABLE</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CONTROLLABLE).OptionRTBBingoFuel" >
+<strong>CONTROLLABLE:OptionRTBBingoFuel(RTB)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set RTB on bingo fuel.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#boolean RTB </em></code>: 
+true if RTB on bingo fuel (default), false if no RTB on bingo fuel.
+Warning! When you switch this option off, the airborne group will continue to fly until all fuel has been consumed, and will crash.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(CONTROLLABLE)">#CONTROLLABLE</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(CONTROLLABLE).PopCurrentTask" >
 <strong>CONTROLLABLE:PopCurrentTask()</strong>
 </a>
@@ -1829,26 +2204,134 @@ self</p>
 <dt>
 
 <a id="#(CONTROLLABLE).Route" >
-<strong>CONTROLLABLE:Route(GoPoints)</strong>
+<strong>CONTROLLABLE:Route(Route, DelaySeconds)</strong>
 </a>
 </dt>
 <dd>
 	
 <p>Make the controllable to follow a given route.</p>
 
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
-<p><code><em>#table GoPoints </em></code>: 
+<p><code><em>#table Route </em></code>: 
 A table of Route Points.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number DelaySeconds </em></code>: 
+Wait for the specified seconds before executing the Route.</p>
 
 				</li>
 		</ul>
 		<h3>Return value</h3>
 				
 <p><em><a href="##(CONTROLLABLE)">#CONTROLLABLE</a>:</em>
-self</p>
+The CONTROLLABLE.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CONTROLLABLE).RouteAirTo" >
+<strong>CONTROLLABLE:RouteAirTo(ToCoordinate, AltType, Type, Action, Speed, DelaySeconds)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Make the AIR Controllable fly towards a specific point.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Point.html##(COORDINATE)">Core.Point#COORDINATE</a> ToCoordinate </em></code>: 
+A Coordinate to drive to.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Core.Point.html##(COORDINATE.RoutePointAltType)">Core.Point#COORDINATE.RoutePointAltType</a> AltType </em></code>: 
+The altitude type.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Core.Point.html##(COORDINATE.RoutePointType)">Core.Point#COORDINATE.RoutePointType</a> Type </em></code>: 
+The route point type.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Core.Point.html##(COORDINATE.RoutePointAction)">Core.Point#COORDINATE.RoutePointAction</a> Action </em></code>: 
+The route point action.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Speed </em></code>: 
+(optional) Speed in km/h. The default speed is 999 km/h.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number DelaySeconds </em></code>: 
+Wait for the specified seconds before executing the Route.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(CONTROLLABLE)">#CONTROLLABLE</a>:</em>
+The CONTROLLABLE.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CONTROLLABLE).RouteGroundTo" >
+<strong>CONTROLLABLE:RouteGroundTo(ToCoordinate, Speed, Formation, DelaySeconds)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Make the GROUND Controllable to drive towards a specific point.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Point.html##(COORDINATE)">Core.Point#COORDINATE</a> ToCoordinate </em></code>: 
+A Coordinate to drive to.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Speed </em></code>: 
+(optional) Speed in km/h. The default speed is 999 km/h.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Formation </em></code>: 
+(optional) The route point Formation, which is a text string that specifies exactly the Text in the Type of the route point, like "Vee", "Echelon Right".</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number DelaySeconds </em></code>: 
+Wait for the specified seconds before executing the Route.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(CONTROLLABLE)">#CONTROLLABLE</a>:</em>
+The CONTROLLABLE.</p>
 
 </dd>
 </dl>
@@ -1978,6 +2461,39 @@ self</p>
 		<dl class="function">
 <dt>
 
+<a id="#(CONTROLLABLE).SetTaskWaypoint" >
+<strong>CONTROLLABLE:SetTaskWaypoint(Waypoint, Task)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set a Task at a Waypoint using a Route list.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#table Waypoint </em></code>: 
+The Waypoint!</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSTasking.Task.html##(Task)">Dcs.DCSTasking.Task#Task</a> Task </em></code>: 
+The Task structure to be executed!</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="Dcs.DCSTasking.Task.html##(Task)">Dcs.DCSTasking.Task#Task</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(CONTROLLABLE).TaskAttackGroup" >
 <strong>CONTROLLABLE:TaskAttackGroup(AttackGroup, WeaponType, WeaponExpend, AttackQty, Direction, Altitude, AttackQtyLimit)</strong>
 </a>
@@ -2042,7 +2558,7 @@ The DCS task structure.</p>
 <dt>
 
 <a id="#(CONTROLLABLE).TaskAttackMapObject" >
-<strong>CONTROLLABLE:TaskAttackMapObject(Vec2, WeaponType, WeaponExpend, AttackQty, Direction, ControllableAttack)</strong>
+<strong>CONTROLLABLE:TaskAttackMapObject(Vec2, GroupAttack, WeaponExpend, AttackQty, Direction, Altitude, WeaponType)</strong>
 </a>
 </dt>
 <dd>
@@ -2054,13 +2570,13 @@ The DCS task structure.</p>
 				<li>
 				
 <p><code><em><a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a> Vec2 </em></code>: 
-2D-coordinates of the point the map object is closest to. The distance between the point and the map object must not be greater than 2000 meters. Object id is not used here because Mission Editor doesn't support map object identificators.</p>
+2D-coordinates of the point to deliver weapon at.</p>
 
 				</li>
 				<li>
 				
-<p><code><em>#number WeaponType </em></code>: 
-(optional) Bitmask of weapon types those allowed to use. If parameter is not defined that means no limits on weapon usage.</p>
+<p><code><em>#boolean GroupAttack </em></code>: 
+(optional) If true, all units in the group will attack the Unit when found.</p>
 
 				</li>
 				<li>
@@ -2083,8 +2599,14 @@ The DCS task structure.</p>
 				</li>
 				<li>
 				
-<p><code><em>#boolean ControllableAttack </em></code>: 
-(optional) Flag indicates that the target must be engaged by all aircrafts of the controllable. Has effect only if the task is assigned to a controllable, not to a single aircraft.</p>
+<p><code><em>#number Altitude </em></code>: 
+(optional) The altitude from where to attack.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number WeaponType </em></code>: 
+(optional) The WeaponType.</p>
 
 				</li>
 		</ul>
@@ -2168,7 +2690,7 @@ The DCS task structure.</p>
 <dt>
 
 <a id="#(CONTROLLABLE).TaskBombing" >
-<strong>CONTROLLABLE:TaskBombing(Vec2, WeaponType, WeaponExpend, AttackQty, Direction, ControllableAttack)</strong>
+<strong>CONTROLLABLE:TaskBombing(Vec2, GroupAttack, WeaponExpend, AttackQty, Direction, Altitude, WeaponType)</strong>
 </a>
 </dt>
 <dd>
@@ -2185,8 +2707,8 @@ The DCS task structure.</p>
 				</li>
 				<li>
 				
-<p><code><em>#number WeaponType </em></code>: 
-(optional) Bitmask of weapon types those allowed to use. If parameter is not defined that means no limits on weapon usage.</p>
+<p><code><em>#boolean GroupAttack </em></code>: 
+(optional) If true, all units in the group will attack the Unit when found.</p>
 
 				</li>
 				<li>
@@ -2198,7 +2720,7 @@ The DCS task structure.</p>
 				<li>
 				
 <p><code><em>#number AttackQty </em></code>: 
-(optional) Desired quantity of passes. The parameter is not the same in AttackGroup and AttackUnit tasks. </p>
+(optional) This parameter limits maximal quantity of attack. The aicraft/controllable will not make more attack than allowed even if the target controllable not destroyed and the aicraft/controllable still have ammo. If not defined the aircraft/controllable will attack target until it will be destroyed or until the aircraft/controllable will run out of ammo.</p>
 
 				</li>
 				<li>
@@ -2209,8 +2731,14 @@ The DCS task structure.</p>
 				</li>
 				<li>
 				
-<p><code><em>#boolean ControllableAttack </em></code>: 
-(optional) Flag indicates that the target must be engaged by all aircrafts of the controllable. Has effect only if the task is assigned to a controllable, not to a single aircraft.</p>
+<p><code><em>#number Altitude </em></code>: 
+(optional) The altitude from where to attack.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number WeaponType </em></code>: 
+(optional) The WeaponType.</p>
 
 				</li>
 		</ul>
@@ -2655,36 +3183,79 @@ The DCS task structure.</p>
 <dt>
 
 <a id="#(CONTROLLABLE).TaskFunction" >
-<strong>CONTROLLABLE:TaskFunction(WayPoint, WayPointIndex, FunctionString, FunctionArguments)</strong>
+<strong>CONTROLLABLE:TaskFunction(FunctionString, ...)</strong>
 </a>
 </dt>
 <dd>
 	
+<p>This creates a Task element, with an action to call a function as part of a Wrapped Task.</p>
 
+	
+<p>This Task can then be embedded at a Waypoint by calling the method <a href="##(CONTROLLABLE).SetTaskAtWaypoint">CONTROLLABLE.SetTaskAtWaypoint</a>.</p>
 
 		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
-<p><code><em> WayPoint </em></code>: </p>
+<p><code><em>#string FunctionString </em></code>: 
+The function name embedded as a string that will be called.</p>
 
 				</li>
 				<li>
 				
-<p><code><em> WayPointIndex </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em> FunctionString </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em> FunctionArguments </em></code>: </p>
+<p><code><em> ... </em></code>: 
+The variable arguments passed to the function when called! These arguments can be of any type!</p>
 
 				</li>
 		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(CONTROLLABLE)">#CONTROLLABLE</a>:</em></p>
+
+
+			<h3>Usage:</h3>
+		<pre class="example"><code>
+ local ZoneList = { 
+   ZONE:New( "ZONE1" ), 
+   ZONE:New( "ZONE2" ), 
+   ZONE:New( "ZONE3" ), 
+   ZONE:New( "ZONE4" ), 
+   ZONE:New( "ZONE5" ) 
+ }
+ 
+ GroundGroup = GROUP:FindByName( "Vehicle" )
+ 
+ --- @param Wrapper.Group#GROUP GroundGroup
+ function RouteToZone( Vehicle, ZoneRoute )
+ 
+   local Route = {}
+   
+   Vehicle:E( { ZoneRoute = ZoneRoute } )
+   
+   Vehicle:MessageToAll( "Moving to zone " .. ZoneRoute:GetName(), 10 )
+ 
+   -- Get the current coordinate of the Vehicle
+   local FromCoord = Vehicle:GetCoordinate()
+   
+   -- Select a random Zone and get the Coordinate of the new Zone.
+   local RandomZone = ZoneList[ math.random( 1, #ZoneList ) ] -- Core.Zone#ZONE
+   local ToCoord = RandomZone:GetCoordinate()
+   
+   -- Create a "ground route point", which is a "point" structure that can be given as a parameter to a Task
+   Route[#Route+1] = FromCoord:WaypointGround( 72 )
+   Route[#Route+1] = ToCoord:WaypointGround( 60, "Vee" )
+   
+   local TaskRouteToZone = Vehicle:TaskFunction( "RouteToZone", RandomZone )
+   
+   Vehicle:SetTaskAtWaypoint( Route, #Route, TaskRouteToZone ) -- Set for the given Route at Waypoint 2 the TaskRouteToZone.
+ 
+   Vehicle:Route( Route, math.random( 10, 20 ) ) -- Move after a random seconds to the Route. See the Route method for details.
+   
+ end
+   
+   RouteToZone( GroundGroup, ZoneList[1] )
+</code></pre>
+
 </dd>
 </dl>
 		<dl class="function">
@@ -2956,6 +3527,44 @@ A table of route points.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(CONTROLLABLE).TaskRouteToVec2" >
+<strong>CONTROLLABLE:TaskRouteToVec2(Vec2, Speed, Formation)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>(GROUND) Route the controllable to a given Vec2.</p>
+
+	
+<p>A speed can be given in km/h.
+A given formation can be given.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="##(Vec2)">#Vec2</a> Vec2 </em></code>: 
+The Vec2 where to route to.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Speed </em></code>: 
+The speed.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Base.html##(FORMATION)">Base#FORMATION</a> Formation </em></code>: 
+The formation string.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(CONTROLLABLE).TaskRouteToZone" >
 <strong>CONTROLLABLE:TaskRouteToZone(Zone, Randomize, Speed, Formation)</strong>
 </a>
@@ -2996,6 +3605,20 @@ The formation string.</p>
 
 				</li>
 		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(CONTROLLABLE).TaskScheduler" >
+<strong>CONTROLLABLE.TaskScheduler</strong>
+</a>
+</dt>
+<dd>
+	
+
+
 </dd>
 </dl>
 		<dl class="function">
@@ -3113,20 +3736,6 @@ The waypoint function to be called when the controllable moves over the waypoint
 		<dl class="function">
 <dt>
 
-		<em></em>
-<a id="#(CONTROLLABLE).WayPointFunctions" >
-<strong>CONTROLLABLE.WayPointFunctions</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
 <a id="#(CONTROLLABLE).WayPointInitialize" >
 <strong>CONTROLLABLE:WayPointInitialize(WayPoints)</strong>
 </a>
@@ -3193,6 +3802,37 @@ If WayPoints is given, then use the route.</p>
 			
 			<h2><a id="#(DCSStopCondition)" >Type <code>DCSStopCondition</code></a></h2>
 			
+			<h2><a id="#(Vec2)" >Type <code>Vec2</code></a></h2>
+				<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(Vec2).x" >
+<strong>Vec2.x</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(Vec2).y" >
+<strong>Vec2.y</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+
 			<h2><a id="#(list)" >Type <code>list</code></a></h2>
 			
 </div>

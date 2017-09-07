@@ -1,22 +1,31 @@
---- This module contains the SCENERY class.
+--- **Wrapper** -- SCENERY models scenery within the DCS simulator.
 -- 
--- 1) @{Scenery#SCENERY} class, extends @{Positionable#POSITIONABLE}
--- ===============================================================
+-- ====
+-- 
+-- ### Author: **Sven Van de Velde (FlightControl)**
+-- 
+-- ### Contributions: 
+-- 
+-- ====
+-- 
+-- @module Scenery
+
+
+
+--- @type SCENERY
+-- @extends Wrapper.Positionable#POSITIONABLE
+
+
+--- # SCENERY class, extends @{Positionable#POSITIONABLE}
+-- 
 -- Scenery objects are defined on the map.
 -- The @{Scenery#SCENERY} class is a wrapper class to handle the DCS Scenery objects:
 -- 
 --  * Wraps the DCS Scenery objects.
 --  * Support all DCS Scenery APIs.
 --  * Enhance with Scenery specific APIs not in the DCS API set.
--- 
--- @module Scenery
--- @author FlightControl
-
-
-
---- The SCENERY class
--- @type SCENERY
--- @extends Wrapper.Positionable#POSITIONABLE
+--  
+--  @field #SCENERY
 SCENERY = {
 	ClassName = "SCENERY",
 }

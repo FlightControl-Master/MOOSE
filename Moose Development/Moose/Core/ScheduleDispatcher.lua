@@ -1,4 +1,4 @@
---- This module defines the SCHEDULEDISPATCHER class, which is used by a central object called _SCHEDULEDISPATCHER.
+--- **Core** -- SCHEDULEDISPATCHER dispatches the different schedules.
 -- 
 -- ===
 -- 
@@ -24,8 +24,6 @@
 -- The SCHEDULER object therefore keeps a table of "CallID's", which are returned after each planning of a new scheduled function by the SCHEDULEDISPATCHER.
 -- The SCHEDULER object plans new scheduled functions through the @{Scheduler#SCHEDULER.Schedule}() method. 
 -- The Schedule() method returns the CallID that is the reference ID for each planned schedule.
--- 
--- ===
 -- 
 -- ===
 -- 
@@ -57,6 +55,7 @@ function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleAr
   self:F2( { Scheduler, ScheduleFunction, ScheduleArguments, Start, Repeat, Randomize, Stop } )
 
   self.CallID = self.CallID + 1
+  local CallID = self.CallID .. "#" .. ( Scheduler.MasterObject and Scheduler.MasterObject.GetClassNameAndID and Scheduler.MasterObject:GetClassNameAndID() or "" ) or ""
 
   -- Initialize the ObjectSchedulers array, which is a weakly coupled table.
   -- If the object used as the key is nil, then the garbage collector will remove the item from the Functions array.
@@ -64,30 +63,30 @@ function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleAr
 
   -- Initialize the ObjectSchedulers array, which is a weakly coupled table.
   -- If the object used as the key is nil, then the garbage collector will remove the item from the Functions array.
-  self.ObjectSchedulers = self.ObjectSchedulers or setmetatable( {}, { __mode = "v" } ) -- or {}
+  self.ObjectSchedulers = self.ObjectSchedulers or setmetatable( {}, { __mode = "v" } ) 
   
   if Scheduler.MasterObject then
-    self.ObjectSchedulers[self.CallID] = Scheduler
-    self:F3( { CallID = self.CallID, ObjectScheduler = tostring(self.ObjectSchedulers[self.CallID]), MasterObject = tostring(Scheduler.MasterObject) } )
+    self.ObjectSchedulers[CallID] = Scheduler
+    self:F3( { CallID = CallID, ObjectScheduler = tostring(self.ObjectSchedulers[CallID]), MasterObject = tostring(Scheduler.MasterObject) } )
   else
-    self.PersistentSchedulers[self.CallID] = Scheduler
-    self:F3( { CallID = self.CallID, PersistentScheduler = self.PersistentSchedulers[self.CallID] } )
+    self.PersistentSchedulers[CallID] = Scheduler
+    self:F3( { CallID = CallID, PersistentScheduler = self.PersistentSchedulers[CallID] } )
   end
   
   self.Schedule = self.Schedule or setmetatable( {}, { __mode = "k" } )
   self.Schedule[Scheduler] = self.Schedule[Scheduler] or {}
-  self.Schedule[Scheduler][self.CallID] = {}
-  self.Schedule[Scheduler][self.CallID].Function = ScheduleFunction
-  self.Schedule[Scheduler][self.CallID].Arguments = ScheduleArguments
-  self.Schedule[Scheduler][self.CallID].StartTime = timer.getTime() + ( Start or 0 )
-  self.Schedule[Scheduler][self.CallID].Start = Start + .1
-  self.Schedule[Scheduler][self.CallID].Repeat = Repeat
-  self.Schedule[Scheduler][self.CallID].Randomize = Randomize
-  self.Schedule[Scheduler][self.CallID].Stop = Stop
+  self.Schedule[Scheduler][CallID] = {}
+  self.Schedule[Scheduler][CallID].Function = ScheduleFunction
+  self.Schedule[Scheduler][CallID].Arguments = ScheduleArguments
+  self.Schedule[Scheduler][CallID].StartTime = timer.getTime() + ( Start or 0 )
+  self.Schedule[Scheduler][CallID].Start = Start + .1
+  self.Schedule[Scheduler][CallID].Repeat = Repeat or 0
+  self.Schedule[Scheduler][CallID].Randomize = Randomize or 0
+  self.Schedule[Scheduler][CallID].Stop = Stop
 
-  self:T3( self.Schedule[Scheduler][self.CallID] )
+  self:T3( self.Schedule[Scheduler][CallID] )
 
-  self.Schedule[Scheduler][self.CallID].CallHandler = function( CallID )
+  self.Schedule[Scheduler][CallID].CallHandler = function( CallID )
     self:F2( CallID )
 
     local ErrorHandler = function( errmsg )
@@ -102,14 +101,15 @@ function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleAr
     if not Scheduler then
       Scheduler = self.PersistentSchedulers[CallID]
     end
-
-    self:T3( { Scheduler = Scheduler } )
+    
+    --self:T3( { Scheduler = Scheduler } )
     
     if Scheduler then
 
+      local MasterObject = tostring(Scheduler.MasterObject) 
       local Schedule = self.Schedule[Scheduler][CallID]
       
-      self:T3( { Schedule = Schedule } )
+      --self:T3( { Schedule = Schedule } )
 
       local ScheduleObject = Scheduler.SchedulerObject
       --local ScheduleObjectName = Scheduler.SchedulerObject:GetNameAndClassID()
@@ -135,10 +135,13 @@ function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleAr
       end
       
       local CurrentTime = timer.getTime()
-      local StartTime = CurrentTime + Start
+      local StartTime = Schedule.StartTime
+
+      self:F3( { Master = MasterObject, CurrentTime = CurrentTime, StartTime = StartTime, Start = Start, Repeat = Repeat, Randomize = Randomize, Stop = Stop } )
+      
       
       if Status and (( Result == nil ) or ( Result and Result ~= false ) ) then
-        if Repeat ~= 0 and ( Stop == 0 ) or ( Stop ~= 0 and CurrentTime <= StartTime + Stop ) then
+        if Repeat ~= 0 and ( ( Stop == 0 ) or ( Stop ~= 0 and CurrentTime <= StartTime + Stop ) ) then
           local ScheduleTime =
             CurrentTime +
             Repeat +
@@ -147,7 +150,7 @@ function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleAr
               ( Randomize * Repeat  / 2 )
             ) +
             0.01
-          self:T3( { Repeat = CallID, CurrentTime, ScheduleTime, ScheduleArguments } )
+          --self:T3( { Repeat = CallID, CurrentTime, ScheduleTime, ScheduleArguments } )
           return ScheduleTime -- returns the next time the function needs to be called.
         else
           self:Stop( Scheduler, CallID )
@@ -156,15 +159,15 @@ function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleAr
         self:Stop( Scheduler, CallID )
       end
     else
-      self:E( "Scheduled obscolete call for CallID: " .. CallID )
+      self:E( "Scheduled obsolete call for CallID: " .. CallID )
     end
     
     return nil
   end
   
-  self:Start( Scheduler, self.CallID )
+  self:Start( Scheduler, CallID )
   
-  return self.CallID
+  return CallID
 end
 
 function SCHEDULEDISPATCHER:RemoveSchedule( Scheduler, CallID )
@@ -184,14 +187,15 @@ function SCHEDULEDISPATCHER:Start( Scheduler, CallID )
     -- Only start when there is no ScheduleID defined!
     -- This prevents to "Start" the scheduler twice with the same CallID...
     if not Schedule[CallID].ScheduleID then
+      Schedule[CallID].StartTime = timer.getTime()  -- Set the StartTime field to indicate when the scheduler started.
       Schedule[CallID].ScheduleID = timer.scheduleFunction( 
         Schedule[CallID].CallHandler, 
         CallID, 
-        timer.getTime() + Schedule[CallID].Start
+        timer.getTime() + Schedule[CallID].Start 
       )
     end
   else
-    for CallID, Schedule in pairs( self.Schedule[Scheduler] ) do
+    for CallID, Schedule in pairs( self.Schedule[Scheduler] or {} ) do
       self:Start( Scheduler, CallID ) -- Recursive
     end
   end
@@ -209,7 +213,7 @@ function SCHEDULEDISPATCHER:Stop( Scheduler, CallID )
       Schedule[CallID].ScheduleID = nil
     end
   else
-    for CallID, Schedule in pairs( self.Schedule[Scheduler] ) do
+    for CallID, Schedule in pairs( self.Schedule[Scheduler] or {} ) do
       self:Stop( Scheduler, CallID ) -- Recursive
     end
   end
@@ -218,7 +222,7 @@ end
 function SCHEDULEDISPATCHER:Clear( Scheduler )
   self:F2( { Scheduler = Scheduler } )
 
-  for CallID, Schedule in pairs( self.Schedule[Scheduler] ) do
+  for CallID, Schedule in pairs( self.Schedule[Scheduler] or {} ) do
     self:Stop( Scheduler, CallID ) -- Recursive
   end
 end

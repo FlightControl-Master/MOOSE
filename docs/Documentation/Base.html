@@ -17,9 +17,16 @@
 				<a href="index.html">index</a>
 			</li></ul>
 		<ul>
+					<li><a href="AI_A2A.html">AI_A2A</a></li>
+					<li><a href="AI_A2A_Cap.html">AI_A2A_Cap</a></li>
+					<li><a href="AI_A2A_Dispatcher.html">AI_A2A_Dispatcher</a></li>
+					<li><a href="AI_A2A_GCI.html">AI_A2A_GCI</a></li>
+					<li><a href="AI_A2A_Patrol.html">AI_A2A_Patrol</a></li>
+					<li><a href="AI_Bai.html">AI_Bai</a></li>
 					<li><a href="AI_Balancer.html">AI_Balancer</a></li>
 					<li><a href="AI_Cap.html">AI_Cap</a></li>
 					<li><a href="AI_Cas.html">AI_Cas</a></li>
+					<li><a href="AI_Formation.html">AI_Formation</a></li>
 					<li><a href="AI_Patrol.html">AI_Patrol</a></li>
 					<li><a href="Account.html">Account</a></li>
 					<li><a href="Airbase.html">Airbase</a></li>
@@ -31,7 +38,23 @@
 					<li><a href="Client.html">Client</a></li>
 					<li><a href="CommandCenter.html">CommandCenter</a></li>
 					<li><a href="Controllable.html">Controllable</a></li>
+					<li><a href="DCSAirbase.html">DCSAirbase</a></li>
+					<li><a href="DCSCoalitionObject.html">DCSCoalitionObject</a></li>
+					<li><a href="DCSCommand.html">DCSCommand</a></li>
+					<li><a href="DCSController.html">DCSController</a></li>
+					<li><a href="DCSGroup.html">DCSGroup</a></li>
+					<li><a href="DCSObject.html">DCSObject</a></li>
+					<li><a href="DCSTask.html">DCSTask</a></li>
+					<li><a href="DCSTypes.html">DCSTypes</a></li>
+					<li><a href="DCSUnit.html">DCSUnit</a></li>
+					<li><a href="DCSVec3.html">DCSVec3</a></li>
+					<li><a href="DCSWorld.html">DCSWorld</a></li>
+					<li><a href="DCSZone.html">DCSZone</a></li>
+					<li><a href="DCScountry.html">DCScountry</a></li>
+					<li><a href="DCStimer.html">DCStimer</a></li>
+					<li><a href="DCStrigger.html">DCStrigger</a></li>
 					<li><a href="Database.html">Database</a></li>
+					<li><a href="Designate.html">Designate</a></li>
 					<li><a href="Detection.html">Detection</a></li>
 					<li><a href="DetectionManager.html">DetectionManager</a></li>
 					<li><a href="Escort.html">Escort</a></li>
@@ -57,23 +80,32 @@
 					<li><a href="Scoring.html">Scoring</a></li>
 					<li><a href="Sead.html">Sead</a></li>
 					<li><a href="Set.html">Set</a></li>
+					<li><a href="Settings.html">Settings</a></li>
 					<li><a href="Smoke.html">Smoke</a></li>
 					<li><a href="Spawn.html">Spawn</a></li>
+					<li><a href="SpawnStatic.html">SpawnStatic</a></li>
+					<li><a href="Spot.html">Spot</a></li>
 					<li><a href="Static.html">Static</a></li>
+					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="Task.html">Task</a></li>
+					<li><a href="Task_A2A.html">Task_A2A</a></li>
+					<li><a href="Task_A2A_Dispatcher.html">Task_A2A_Dispatcher</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
 					<li><a href="Task_A2G_Dispatcher.html">Task_A2G_Dispatcher</a></li>
+					<li><a href="Task_Cargo.html">Task_Cargo</a></li>
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
 					<li><a href="Unit.html">Unit</a></li>
 					<li><a href="Utils.html">Utils</a></li>
 					<li><a href="Zone.html">Zone</a></li>
+					<li><a href="env.html">env</a></li>
+					<li><a href="land.html">land</a></li>
 					<li><a href="routines.html">routines</a></li>
 		</ul>
 	</div>
 	<div id="content">
    <h1>Module <code>Base</code></h1>
    
-<p><strong>Core</strong> - BASE forms <strong>the basis of the MOOSE framework</strong>.</p>
+<p><strong>Core</strong> -- BASE forms <strong>the basis of the MOOSE framework</strong>.</p>
 
    
 <p>Each class within the MOOSE framework derives from BASE.</p>
@@ -82,39 +114,10 @@
 
 <hr/>
 
-<p>The <a href="##(BASE)">#BASE</a> class is the core root class from where every other class in moose is derived.</p>
-
-<hr/>
-
-<h1><strong>API CHANGE HISTORY</strong></h1>
-
-<p>The underlying change log documents the API changes. Please read this carefully. The following notation is used:</p>
-
-<ul>
-    <li><strong>Added</strong> parts are expressed in bold type face.</li>
-    <li><em>Removed</em> parts are expressed in italic type face.</li>
-</ul>
-
-<p>YYYY-MM-DD: CLASS:<strong>NewFunction</strong>( Params ) replaces CLASS:<em>OldFunction</em>( Params )
-YYYY-MM-DD: CLASS:<strong>NewFunction( Params )</strong> added</p>
-
-<p>Hereby the change log:</p>
-
-<hr/>
-
-<h1><strong>AUTHORS and CONTRIBUTIONS</strong></h1>
-
+<h3>Author: <strong>Sven Van de Velde (FlightControl)</strong></h3>
 <h3>Contributions:</h3>
 
-<ul>
-    <li>None.</li>
-</ul>
-
-<h3>Authors:</h3>
-
-<ul>
-    <li><strong>FlightControl</strong>: Design &amp; Programming</li>
-</ul>
+<hr/>
 
 
 	<h2>Global(s)</h2>
@@ -239,7 +242,7 @@ YYYY-MM-DD: CLASS:<strong>NewFunction( Params )</strong> added</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(BASE).GetState">BASE:GetState(Object, Key, Value)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).GetState">BASE:GetState(Object, Key)</a></td>
 		<td class="summary">
 <p>Get a Value given a Key from the Object.</p>
 </td>
@@ -254,6 +257,12 @@ YYYY-MM-DD: CLASS:<strong>NewFunction( Params )</strong> added</p>
 		<td class="name" nowrap="nowrap"><a href="##(BASE).Inherit">BASE:Inherit(Child, Parent)</a></td>
 		<td class="summary">
 <p>This is the worker method to inherit from a parent class.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).IsInstanceOf">BASE:IsInstanceOf(ClassName)</a></td>
+		<td class="summary">
+<p>This is the worker method to check if an object is an (sub)instance of a class.</p>
 </td>
 		</tr>
 		<tr>
@@ -290,6 +299,12 @@ YYYY-MM-DD: CLASS:<strong>NewFunction( Params )</strong> added</p>
 		<td class="name" nowrap="nowrap"><a href="##(BASE).OnEventCrash">BASE:OnEventCrash(EventData)</a></td>
 		<td class="summary">
 <p>Occurs when any aircraft crashes into the ground and is completely destroyed.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).OnEventDead">BASE:OnEventDead(EventData)</a></td>
+		<td class="summary">
+<p>Occurs when an object is dead.</p>
 </td>
 		</tr>
 		<tr>
@@ -466,27 +481,21 @@ When Moose is loaded statically, (as one file), tracing is switched off by defau
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(BASE)._Destructor">BASE:_Destructor()</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(BASE)._F">BASE:_F(Arguments, DebugInfoCurrentParam, DebugInfoFromParam)</a></td>
 		<td class="summary">
 <p>Trace a function call.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(BASE)._SetDestructor">BASE:_SetDestructor()</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(BASE)._T">BASE:_T(Arguments, DebugInfoCurrentParam, DebugInfoFromParam)</a></td>
 		<td class="summary">
 <p>Trace a function logic.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).__">BASE.__</a></td>
+		<td class="summary">
+
 </td>
 		</tr>
 		<tr>
@@ -503,6 +512,12 @@ When Moose is loaded statically, (as one file), tracing is switched off by defau
 		<td class="name" nowrap="nowrap"><a href="##(FORMATION).Cone">FORMATION.Cone</a></td>
 		<td class="summary">
 <p>A cone formation.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(FORMATION).Vee">FORMATION.Vee</a></td>
+		<td class="summary">
+
 </td>
 		</tr>
 	</table>
@@ -1116,7 +1131,7 @@ is the Child class from which the Parent class needs to be retrieved.</p>
 <dt>
 
 <a id="#(BASE).GetState" >
-<strong>BASE:GetState(Object, Key, Value)</strong>
+<strong>BASE:GetState(Object, Key)</strong>
 </a>
 </dt>
 <dd>
@@ -1138,12 +1153,6 @@ The object that holds the Value set by the Key.</p>
 				
 <p><code><em> Key </em></code>: 
 The key that is used to retrieve the value. Note that the key can be a #string, but it can also be any other type!</p>
-
-				</li>
-				<li>
-				
-<p><code><em> Value </em></code>: 
-The value to is stored in the Object.</p>
 
 				</li>
 		</ul>
@@ -1216,6 +1225,46 @@ is the Parent class that the Child inherits from.</p>
 				
 <p><em><a href="##(BASE)">#BASE</a>:</em>
 Child</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(BASE).IsInstanceOf" >
+<strong>BASE:IsInstanceOf(ClassName)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>This is the worker method to check if an object is an (sub)instance of a class.</p>
+
+	
+
+<h3>Examples:</h3>
+
+<ul>
+    <li><p>ZONE:New( 'some zone' ):IsInstanceOf( ZONE ) will return true</p></li>
+    <li><p>ZONE:New( 'some zone' ):IsInstanceOf( 'ZONE' ) will return true</p></li>
+    <li><p>ZONE:New( 'some zone' ):IsInstanceOf( 'zone' ) will return true</p></li>
+    <li><p>ZONE:New( 'some zone' ):IsInstanceOf( 'BASE' ) will return true</p></li>
+    <li><p>ZONE:New( 'some zone' ):IsInstanceOf( 'GROUP' ) will return false</p></li>
+</ul>
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> ClassName </em></code>: 
+is the name of the class or the class itself to run the check against</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em></p>
+
 
 </dd>
 </dl>
@@ -1355,6 +1404,31 @@ The EventData structure.</p>
 
 	
 <p>initiator : The unit that has crashed </p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Event.html##(EVENTDATA)">Core.Event#EVENTDATA</a> EventData </em></code>: 
+The EventData structure.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(BASE).OnEventDead" >
+<strong>BASE:OnEventDead(EventData)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Occurs when an object is dead.</p>
+
+	
+<p>initiator : The unit that is dead. </p>
 
 		<h3>Parameter</h3>
 		<ul>
@@ -2105,19 +2179,6 @@ BASE:TraceOnOff( false )</code></pre>
 		<dl class="function">
 <dt>
 
-<a id="#(BASE)._Destructor" >
-<strong>BASE:_Destructor()</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
 <a id="#(BASE)._F" >
 <strong>BASE:_F(Arguments, DebugInfoCurrentParam, DebugInfoFromParam)</strong>
 </a>
@@ -2148,22 +2209,6 @@ A #table or any field.</p>
 
 				</li>
 		</ul>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(BASE)._SetDestructor" >
-<strong>BASE:_SetDestructor()</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-	
-<p> THIS IS WHY WE NEED LUA 5.2 ...</p>
-
 </dd>
 </dl>
 		<dl class="function">
@@ -2201,6 +2246,20 @@ A #table or any field.</p>
 		<dl class="function">
 <dt>
 
+		<em><a href="##(BASE.__)">#BASE.__</a></em>
+<a id="#(BASE).__" >
+<strong>BASE.__</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(BASE).onEvent" >
 <strong>BASE:onEvent(event)</strong>
 </a>
@@ -2226,6 +2285,8 @@ A #table or any field.</p>
 </dd>
 </dl>
 
+			<h2><a id="#(BASE.__)" >Type <code>BASE.__</code></a></h2>
+			
 			<h2><a id="#(FORMATION)" >Type <code>FORMATION</code></a></h2>
 				
 <p>The Formation Class</p>
@@ -2241,6 +2302,20 @@ A #table or any field.</p>
 <dd>
 	
 <p>A cone formation.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(FORMATION).Vee" >
+<strong>FORMATION.Vee</strong>
+</a>
+</dt>
+<dd>
+	
+
 
 </dd>
 </dl>

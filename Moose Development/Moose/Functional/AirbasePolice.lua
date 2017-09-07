@@ -1,4 +1,4 @@
---- This module contains the AIRBASEPOLICE classes.
+--- **Functional** -- This module monitors airbases traffic.
 --
 -- ===
 --
