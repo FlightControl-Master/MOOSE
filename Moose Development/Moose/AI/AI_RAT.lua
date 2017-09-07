@@ -47,6 +47,8 @@
 -- @field #number alive
 -- @field #boolean f10menu
 -- @field #table Menu
+-- @field #boolean respawn_after_landing
+-- @field #number respawn_delay
 -- @field #table RAT
 -- @extends Functional.Spawn#SPAWN
 
@@ -92,6 +94,8 @@ RAT={
   alive=0,                  -- Number of groups which are alive.
   f10menu=true,             -- Add an F10 menu for RAT.
   Menu={},                  -- F10 menu for this RAT object.
+  respawn_at_landing=false, -- Respawn aircraft the moment they land rather than at engine shutdown.
+  respawn_delay=nil,        -- Delay in seconds until repawn happens after landing.
 }
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -436,6 +440,15 @@ function RAT:SetSpawnInterval(interval)
   self.spawninterval=math.max(0.5, interval)
 end
 
+--- Make aircraft respawn the moment they land rather than at engine shut down.
+-- @param #RAT self
+-- @param #number delay (Optional) Delay in seconds until respawn happens after landing. Default is 180 seconds.
+function RAT:RespawnAfterLanding(delay)
+  delay = delay or 180
+  self.respawn_after_landing=true
+  self.respawn_delay=delay
+end
+
 --- Set the maximum cruise speed of the aircraft.
 -- @param #RAT self
 -- @param #number speed Speed in km/h.
@@ -451,11 +464,6 @@ function RAT:SetClimbRate(rate)
   -- Convert from ft/min to m/s.
   self.Vclimb=rate --*RAT.unit.ft2m/60
   
-  -- Climb rate in m/s. Max is aircraft specific.
-  --self.aircraft.Vclimb=math.min(self.Vclimb, self.aircraft.Vymax)
-  
-  -- Climb angle in rad.
-  --self.aircraft.AlphaClimb=math.asin(self.aircraft.Vclimb/self.aircraft.Vmax)
 end
 
 --- Set the angle of descent. Default is 3.6 degrees, which corresponds to 3000 ft descent after one mile of travel.
@@ -723,11 +731,15 @@ function RAT:_Respawn(group)
     _destination=departure:GetName()
   end
     
-  -- Spawn new group after 180 seconds.
-  --self:_SpawnWithRoute(_departure, _destination)
-  SCHEDULER:New(nil, self._SpawnWithRoute, {self, _departure, _destination}, 180)
+  -- Spawn new group.
+  if self.respawn_delay then
+    SCHEDULER:New(nil, self._SpawnWithRoute, {self, _departure, _destination}, self.respawn_delay)
+  else
+    self:_SpawnWithRoute(_departure, _destination)
+  end
   
 end
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Set the route of the AI plane. Due to DCS landing bug, this has to be done before the unit is spawned.
@@ -905,16 +917,13 @@ function RAT:_SetRoute(_departure, _destination)
   -- Overrule setting if user specified min/max flight level explicitly.
   if self.FLminuser then
     FLmin=self.FLminuser
-    env.info(myid.."FLmin user = "..FLmin)
   end
   if self.FLmaxuser then
     FLmax=self.FLmaxuser
-    env.info(myid.."FLmax user = "..FLmax)
   end
   
   -- Set cruise altitude: default with 100% randomization but limited to FLmin and FLmax.
   local FLcruise=self:_Randomize(self.aircraft.FLcruise, 1.0, FLmin, FLmax)
-  env.info(myid.."FLcruise = "..FLcruise)
   
   -- Overrule setting if user specified a flight level explicitly.
   if self.FLuser then
@@ -1513,11 +1522,14 @@ function RAT:_OnLand(EventData)
         -- Set status.
         self:_SetStatus(SpawnGroup, "Taxiing (after landing)")
         
-        text="Event: Group "..SpawnGroup:GetName().." will be respawned."
-        env.info(myid..text)
         
-        -- Respawn group.
-        self:_Respawn(SpawnGroup)
+        if self.respawn_after_landing then
+          text="Event: Group "..SpawnGroup:GetName().." will be respawned."
+          env.info(myid..text)
+        
+          -- Respawn group.
+          self:_Respawn(SpawnGroup)
+        end
         
       end
     end
@@ -1550,11 +1562,18 @@ function RAT:_OnEngineShutdown(EventData)
     
         -- Set status.
         self:_SetStatus(SpawnGroup, "Parking (shutting down engines)")
-    
-        text="Event: Group "..SpawnGroup:GetName().." will be destroyed now."
-        env.info(myid..text)
+        
+        if not self.respawn_after_landing then
+          text="Event: Group "..SpawnGroup:GetName().." will be respawned."
+          env.info(myid..text)
+        
+          -- Respawn group.
+          self:_Respawn(SpawnGroup)
+        end
         
         -- Despawn group.
+        text="Event: Group "..SpawnGroup:GetName().." will be destroyed now."
+        env.info(myid..text)
         self:_Despawn(SpawnGroup)
         
       end
