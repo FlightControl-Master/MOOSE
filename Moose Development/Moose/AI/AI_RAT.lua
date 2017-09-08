@@ -13,7 +13,6 @@
 -- @type RAT
 -- @field #string ClassName
 -- @field #boolean debug
--- @field #string templatename
 -- @field #number spawndelay
 -- @field #number spawninterval
 -- @field #number coalition
@@ -41,12 +40,14 @@
 -- @field #number statusinterval
 -- @field #boolean placemarkers
 -- @field #number FLuser
--- @field #number Vuser
+-- @field #number FLminuser
+-- @field #number FLmaxuser
 -- @field #boolean commute
 -- @field #boolean continuejourney
 -- @field #number alive
 -- @field #boolean f10menu
 -- @field #table Menu
+-- @field #string SubMenuName
 -- @field #boolean respawn_after_landing
 -- @field #number respawn_delay
 -- @field #table RAT
@@ -58,7 +59,6 @@
 RAT={
   ClassName = "RAT",        -- Name of class: RAT = Random Air Traffic.
   debug=false,              -- Turn debug messages on or off.
-  templatename=nil,         -- Name of the template group defined in the mission editor.
   spawndelay=5,             -- Delay time in seconds before first spawning happens.
   spawninterval=5,          -- Interval between spawning units/groups. Note that we add a randomization of 50%.
   coalition = nil,          -- Coalition of spawn group template.
@@ -71,7 +71,7 @@ RAT={
   AlphaDescent=3.6,         -- Default angle of descenti in degrees. A value of 3.6 follows the 3:1 rule of 3 miles of travel and 1000 ft descent.
   roe = "hold",             -- ROE of spawned groups, default is weapon hold (this is a peaceful class for civil aircraft or ferry missions). Possible: "hold", "return", "free".
   rot = "noreaction",       -- ROT of spawned groups, default is no reaction. Possible: "noreaction", "passive", "evade".
-  takeoff = 3,              -- Takeoff type. 3=hot.
+  takeoff = 0,              -- Takeoff type. 0=coldorhot.
   mindist = 5000,           -- Min distance from departure to destination in meters. Default 5 km.
   maxdist = 500000,         -- Max distance from departure to destination in meters. Default 5000 km.
   airports_map={},          -- All airports available on current map (Caucasus, Nevada, Normandy, ...).
@@ -88,12 +88,12 @@ RAT={
   FLminuser=nil,            -- Minimum flight level set by user.
   FLmaxuser=nil,            -- Minimum flight level set by user.
   FLuser=nil,               -- Flight level set by users explicitly.
-  Vuser=nil,                -- Cruising speed set by user explicitly.
   commute=false,            -- Aircraft commute between departure and destination, i.e. when respawned the departure airport becomes the new destiation.
   continuejourney=false,    -- Aircraft will continue their journey, i.e. get respawned at their destination with a new random destination.
   alive=0,                  -- Number of groups which are alive.
   f10menu=true,             -- Add an F10 menu for RAT.
-  Menu={},                  -- F10 menu for this RAT object.
+  Menu={},                  -- F10 menu items for this RAT object.
+  SubMenuName=nil,          -- Submenu name for RAT object.
   respawn_at_landing=false, -- Respawn aircraft the moment they land rather than at engine shutdown.
   respawn_delay=nil,        -- Delay in seconds until repawn happens after landing.
 }
@@ -110,7 +110,7 @@ RAT.cat={
 --- RAT takeoff style.
 -- @field #RAT waypoint
 RAT.waypoint={
-  random=0,
+  coldorhot=0,
   air=1,
   runway=2,
   hot=3,
@@ -143,6 +143,22 @@ RAT.unit={
   FL2m=30.48,
   nm2km=1.852,
   nm2m=1852,
+}
+
+--- RAT rules of engagement.
+-- @field #RAT roe
+RAT.roe={
+  weaponhold="hold",
+  weaponfree="free",
+  returnfire="return",
+}
+
+--- RAT reaction to threat.
+-- @field #RAT rot
+RAT.rot{
+  evade="evade",
+  passive="passive",
+  noreaction="noreaction"
 }
 
 --- Running number of placed markers on the F10 map.
@@ -180,7 +196,7 @@ myid="RAT | "
 --DONE: Add F10 menu.
 --DONE: Add markers to F10 menu.
 --TODO: Add respawn limit.
---TODO: Make takeoff method random.
+--DONE: Make takeoff method random between cold and hot start.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -194,9 +210,6 @@ function RAT:New(groupname)
 
   -- Inherit SPAWN clase.
   local self=BASE:Inherit(self, SPAWN:New(groupname)) -- #RAT
-  
-  -- Set template name.
-  self.templatename=groupname
   
   -- Get template group defined in the mission editor.   
   local DCSgroup=Group.getByName(groupname)
@@ -217,18 +230,10 @@ function RAT:New(groupname)
   self:_GetAirportsOfMap()
   
   -- Create F10 main menu if it does not exists yet.
-  if not RAT.MenuF10 and self.f10menu then
+  if self.f10menu and not RAT.MenuF10 then
     RAT.MenuF10 = MENU_MISSION:New("RAT")
   end
-  
-  -- Craete submenus.
-  if self.f10menu then
-    self.Menu[self.SpawnTemplatePrefix]=MENU_MISSION:New(self.SpawnTemplatePrefix, RAT.MenuF10)
-    self.Menu[self.SpawnTemplatePrefix]["groups"]=MENU_MISSION:New("Groups", self.Menu[self.SpawnTemplatePrefix])
-    MENU_MISSION_COMMAND:New("Status report", self.Menu[self.SpawnTemplatePrefix], self.Status, self, true)
-    MENU_MISSION_COMMAND:New("Spawn new group", self.Menu[self.SpawnTemplatePrefix], self._SpawnWithRoute, self)
-  end
-   
+     
   return self
 end
 
@@ -251,14 +256,45 @@ function RAT:Spawn(naircraft)
 
   -- debug message
   local text=string.format("\n******************************************************\n")
-  text=text..string.format("Spawning %i aircraft from template %s of type %s.\n", naircraft, self.templatename, self.aircraft.type)
+  text=text..string.format("Spawning %i aircraft from template %s of type %s.\n", naircraft, self.SpawnTemplatePrefix, self.aircraft.type)
   text=text..string.format("Takeoff type: %i\n", self.takeoff)
   text=text..string.format("Friendly coalitions: %s\n", self.friendly)
+  text=text..string.format("Number of airports on map  : %i\n", #self.airports_map)
   text=text..string.format("Number of friendly airports: %i\n", #self.airports)
-  text=text..string.format("Commuting: %s\n", tostring(self.commute))
-  text=text..string.format("Long Journey: %s\n", tostring(self.continuejourney))
+  text=text..string.format("Commute: %s\n", tostring(self.commute))
+  text=text..string.format("Journey: %s\n", tostring(self.continuejourney))
+  text=text..string.format("Spawn delay: %4.1f\n", self.spawndelay)
+  text=text..string.format("Spawn interval: %4.1f\n", self.spawninterval)
+  text=text..string.format("Category: %s\n", self.category)
+  text=text..string.format("Vcruisemax: %4.1f\n", self.Vcruisemax)
+  text=text..string.format("Vclimb: %4.1f\n", self.Vclimb)
+  text=text..string.format("Vcruisemax: %4.1f\n", self.Vcruisemax)
+  text=text..string.format("AlphaDescent: %4.2f\n", self.AlphaDescent)
+  text=text..string.format("ROE: %s\n", self.roe)
+  text=text..string.format("ROT: %s\n", self.rot)
+  text=text..string.format("Min dist: %4.1f\n", self.mindist)
+  text=text..string.format("Max dist: %4.1f\n", self.maxdist)
+  text=text..string.format("Report status: %s\n", tostring(self.airports))
+  text=text..string.format("Status interval: %4.1f\n", self.statusinterval)
+  text=text..string.format("Place markers: %s\n", tostring(self.placemarkers))
+  text=text..string.format("FLuser: %s\n", tostring(self.Fluser))
+  text=text..string.format("FLminuser: %s\n", tostring(self.Flminuser))
+  text=text..string.format("FLmaxuser: %s\n", tostring(self.Flmaxuser))
+  text=text..string.format("Respawn after landing: %s\n", tostring(self.respawn_after_landing))
+  text=text..string.format("Respawn after landing: %s\n", tostring(self.respawn_delay))
+  -- @field #number FLminuser
   text=text..string.format("******************************************************\n")
   env.info(myid..text)
+  
+  
+  -- Create submenus.
+  if self.f10menu then
+    self.SubMenuName=self.SpawnTemplatePrefix
+    self.Menu[self.SubMenuName]=MENU_MISSION:New(self.SubMenuName, RAT.MenuF10)
+    self.Menu[self.SubMenuName]["groups"]=MENU_MISSION:New("Groups", self.Menu[self.SubMenuName])
+    MENU_MISSION_COMMAND:New("Status report", self.Menu[self.SubMenuName], self.Status, self, true)
+    MENU_MISSION_COMMAND:New("Spawn new group", self.Menu[self.SubMenuName], self._SpawnWithRoute, self)
+  end
   
   -- Schedule spawning of aircraft.
   local Tstart=self.spawndelay
@@ -334,7 +370,7 @@ function RAT:SetTakeoff(type)
   elseif type:lower()=="air" then
     _Type=RAT.waypoint.air
   else
-    _Type=RAT.waypoint.hot
+    _Type=RAT.waypoint.coldorhot
   end
   
   self.takeoff=_Type
@@ -460,10 +496,7 @@ end
 -- @param #RAT self
 -- @param #number rate Climb rate in ft/min.
 function RAT:SetClimbRate(rate)
-
-  -- Convert from ft/min to m/s.
-  self.Vclimb=rate --*RAT.unit.ft2m/60
-  
+  self.Vclimb=rate
 end
 
 --- Set the angle of descent. Default is 3.6 degrees, which corresponds to 3000 ft descent after one mile of travel.
@@ -473,22 +506,16 @@ function RAT:SetDescentAngle(angle)
   self.AlphaDescent=angle
 end
 
---- Set the descent rate.
--- @param #RAT self
--- @param #number rate Descent rate in ft/min.
-function RAT:SetDescentRate(rate)
-  -- Convert to m/s.
-  self.Vdescent=rate*RAT.unit.ft2m/60
-end
-
 --- Set rules of engagement (ROE). Default is weapon hold. This is a peaceful class.
 -- @param #RAT self
 -- @param #string roe "hold" = weapon hold, "return" = return fire, "free" = weapons free.
 function RAT:SetROE(roe)
-  if roe=="hold" or roe=="return" or roe=="free" then
-    self.roe=roe
+  if roe=="return" then 
+    self.roe=RAT.roe.returnfire
+  elseif roe=="free" then
+    self.roe=RAT.roe.weaponfree
   else
-    self.roe="hold"
+    self.roe=RAT.roe.weaponhold
   end
 end
 
@@ -496,10 +523,12 @@ end
 -- @param #RAT self
 -- @param #string rot "noreaction = no reactino, "passive" = passive defence, "evade" = weapons free.
 function RAT:SetROT(rot)
-  if rot=="noreaction" or rot=="passive" or rot=="evade" then
-    self.rot=rot
+  if rot=="passive" then
+    self.rot=RAT.rot.passive
+  elseif rot=="evade" then
+    self.rot=RAT.rot.evade
   else
-    self.rot="noreaction"
+    self.rot=RAT.rot.noreaction
   end
 end
 
@@ -661,10 +690,14 @@ end
 function RAT:_SpawnWithRoute(_departure, _destination)
 
   -- Set takeoff type.
-  --if self.takeoff==""
+  local _takeoff=self.takeoff
+  if self.takeoff==RAT.waypoint.coldorhot then
+    local temp={RAT.waypoint.cold, RAT.waypoint.hot}
+    _takeoff=temp[math.random(2)]
+  end
 
   -- Set flight plan.
-  local departure, destination, waypoints = self:_SetRoute(_departure, _destination)
+  local departure, destination, waypoints = self:_SetRoute(_takeoff, _departure, _destination)
   
   -- Modify the spawn template to follow the flight plan.
   self:_ModifySpawnTemplate(waypoints) 
@@ -673,9 +706,11 @@ function RAT:_SpawnWithRoute(_departure, _destination)
   local group=self:SpawnWithIndex(self.SpawnIndex) -- Wrapper.Group#GROUP
   self.alive=self.alive+1
   
-  -- set ROE to "weapon hold" and ROT to "no reaction"
-  self:_SetROE(group)
-  self:_SetROT(group)
+  -- Set ROE, default is "weapon hold".
+  self:_SetROE(group, self.roe)
+  
+  -- Set ROT, default is "no reaction".
+  self:_SetROT(group, self.rot)
 
   -- Init ratcraft array.  
   self.ratcraft[self.SpawnIndex]={}
@@ -685,6 +720,7 @@ function RAT:_SpawnWithRoute(_departure, _destination)
   self.ratcraft[self.SpawnIndex]["waypoints"]=waypoints
   self.ratcraft[self.SpawnIndex]["status"]="spawned"
   self.ratcraft[self.SpawnIndex]["airborn"]=group:InAir()
+  -- Time and position on ground. For check if aircraft is stuck somewhere.
   if group:InAir() then
     self.ratcraft[self.SpawnIndex]["Tground"]=nil
     self.ratcraft[self.SpawnIndex]["Pground"]=nil
@@ -692,17 +728,34 @@ function RAT:_SpawnWithRoute(_departure, _destination)
     self.ratcraft[self.SpawnIndex]["Tground"]=timer.getTime()
     self.ratcraft[self.SpawnIndex]["Pground"]=group:GetCoordinate()
   end
+  -- Initial and current position. For calculating the travelled distance.
   self.ratcraft[self.SpawnIndex]["P0"]=group:GetCoordinate()
   self.ratcraft[self.SpawnIndex]["Pnow"]=group:GetCoordinate()
   self.ratcraft[self.SpawnIndex]["Distance"]=0
+  -- Each aircraft gets its own takeoff type and randomized route.
+  self.ratcraft[self.SpawnIndex]["takeoff"]=_takeoff
+  self.ratcraft[self.SpawnIndex]["random_departure"]=self.random_departure
+  self.ratcraft[self.SpawnIndex]["random_destination"]=self.random_destination
   
   -- Create submenu for this group.
   if self.f10menu then
     local name=self.aircraft.type.." ID "..tostring(self.SpawnIndex)
-    self.Menu[self.SpawnTemplatePrefix].groups[self.SpawnIndex]=MENU_MISSION:New(name, self.Menu[self.SpawnTemplatePrefix].groups)
-    MENU_MISSION_COMMAND:New("Status report", self.Menu[self.SpawnTemplatePrefix].groups[self.SpawnIndex], self.Status, self, true, self.SpawnIndex)
-    MENU_MISSION_COMMAND:New("Place markers", self.Menu[self.SpawnTemplatePrefix].groups[self.SpawnIndex], self._PlaceMarkers, self, waypoints)
-    MENU_MISSION_COMMAND:New("Despawn group", self.Menu[self.SpawnTemplatePrefix].groups[self.SpawnIndex], self._Despawn, self, group)
+    -- F10/RAT/<templatename>/Group X
+    self.Menu[self.SubMenuName].groups[self.SpawnIndex]=MENU_MISSION:New(name, self.Menu[self.SubMenuName].groups)
+    -- F10/RAT/<templatename>/Group X/ROT
+    self.Menu[self.SubMenuName].groups[self.SpawnIndex].roe=MENU_MISSION:New("Set ROE", self.Menu[self.SubMenuName].groups)
+    MENU_MISSION_COMMAND:New("Weapons hold", self.Menu[self.SubMenuName].groups[self.SpawnIndex].roe, self._SetROE, self, RAT.roe.weaponhold)
+    MENU_MISSION_COMMAND:New("Weapons free", self.Menu[self.SubMenuName].groups[self.SpawnIndex].roe, self._SetROE, self, RAT.roe.weaponfree)
+    MENU_MISSION_COMMAND:New("Return fire",  self.Menu[self.SubMenuName].groups[self.SpawnIndex].roe, self._SetROE, self, RAT.roe.returnfire)
+    -- F10/RAT/<templatename>/Group X/ROT
+    self.Menu[self.SubMenuName].groups[self.SpawnIndex].rot=MENU_MISSION:New("Set ROT", self.Menu[self.SubMenuName].groups)
+    MENU_MISSION_COMMAND:New("Weapons hold", self.Menu[self.SubMenuName].groups[self.SpawnIndex].rot, self._SetROT, self, RAT.rot.noreaction)
+    MENU_MISSION_COMMAND:New("Weapons free", self.Menu[self.SubMenuName].groups[self.SpawnIndex].rot, self._SetROT, self, RAT.rot.passive)
+    MENU_MISSION_COMMAND:New("Return fire",  self.Menu[self.SubMenuName].groups[self.SpawnIndex].rot, self._SetROT, self, RAT.rot.evade)    
+    -- F10/RAT/<templatename>/Group X/
+    MENU_MISSION_COMMAND:New("Status report", self.Menu[self.SubMenuName].groups[self.SpawnIndex], self.Status, self, true, self.SpawnIndex)
+    MENU_MISSION_COMMAND:New("Place markers", self.Menu[self.SubMenuName].groups[self.SpawnIndex], self._PlaceMarkers, self, waypoints)
+    MENU_MISSION_COMMAND:New("Despawn group", self.Menu[self.SubMenuName].groups[self.SpawnIndex], self._Despawn, self, group)
   end
   
 end
@@ -744,12 +797,13 @@ end
 
 --- Set the route of the AI plane. Due to DCS landing bug, this has to be done before the unit is spawned.
 -- @param #RAT self
+-- @param takeoff #RAT.waypoint Takeoff type.
 -- @param Wrapper.Airport#AIRBASE _departure (Optional) Departure airbase.
 -- @param Wrapper.Airport#AIRBASE _destination (Optional) Destination airbase.
 -- @return Wrapper.Airport#AIRBASE Departure airbase.
 -- @return Wrapper.Airport#AIRBASE Destination airbase.
 -- @return #table Table of flight plan waypoints. 
-function RAT:_SetRoute(_departure, _destination)
+function RAT:_SetRoute(takeoff, _departure, _destination)
   
   -- Min cruise speed 70% of Vmax or 600 km/h whichever is lower.
   local VxCruiseMin = math.min(self.aircraft.Vmax*0.70, 166)
@@ -788,12 +842,12 @@ function RAT:_SetRoute(_departure, _destination)
   if _departure then
     departure=AIRBASE:FindByName(_departure)
   else
-    departure=self:_PickDeparture()
+    departure=self:_PickDeparture(takeoff)
   end
 
   -- Coordinates of departure point.
   local Pdeparture
-  if self.takeoff==RAT.waypoint.air then
+  if takeoff==RAT.waypoint.air then
     -- For an air start, we take a random point within the spawn zone.
     local vec2=departure:GetRandomVec2()
     --Pdeparture=COORDINATE:New(vec2.x, self.aircraft.FLcruise, vec2.y)
@@ -804,7 +858,7 @@ function RAT:_SetRoute(_departure, _destination)
   
   -- Height ASL of departure point.
   local H_departure
-  if self.takeoff==RAT.waypoint.air then
+  if takeoff==RAT.waypoint.air then
     -- Departure altitude is 70% of default cruise with 30% variation and limited to 1000 m AGL (50 m for helos). 
     local Hmin
     if self.category==RAT.cat.plane then
@@ -997,7 +1051,7 @@ function RAT:_SetRoute(_departure, _destination)
   local c6=Pdestination
   
   --Convert coordinates into route waypoints.
-  local wp0=self:_Waypoint(self.takeoff,         c0, VxClimb,   H_departure, departure)
+  local wp0=self:_Waypoint(takeoff,              c0, VxClimb,   H_departure, departure)
   local wp1=self:_Waypoint(RAT.waypoint.climb,   c1, VxClimb,   H_departure+(FLcruise-H_departure)/2)
   local wp2=self:_Waypoint(RAT.waypoint.cruise,  c2, VxCruise,  FLcruise)
   local wp3=self:_Waypoint(RAT.waypoint.cruise,  c3, VxCruise,  FLcruise)
@@ -1026,14 +1080,15 @@ end
 --- Set the departure airport of the AI. If no airport name is given explicitly an airport from the coalition is chosen randomly.
 -- If takeoff style is set to "air", we use zones around the airports or the zones specified by user input.
 -- @param #RAT self
+-- @param #number takeoff Takeoff type.
 -- @return Wrapper.Airbase#AIRBASE Departure airport if spawning at airport.
 -- @return Coore.Zone#ZONE Departure zone if spawning in air.
-function RAT:_PickDeparture()
+function RAT:_PickDeparture(takeoff)
 
   -- Array of possible departure airports or zones.
   local departures={}
   
-  if self.takeoff==RAT.waypoint.air then
+  if takeoff==RAT.waypoint.air then
   
     if self.random_departure then
     
@@ -1078,7 +1133,7 @@ function RAT:_PickDeparture()
   local departure=departures[math.random(#departures)]
   
   local text
-  if self.takeoff==RAT.waypoint.air then
+  if takeoff==RAT.waypoint.air then
     text="Chosen departure zone: "..departure:GetName()
   else
     text="Chosen departure airport: "..departure:GetName().." (ID "..departure:GetID()..")"
@@ -2025,10 +2080,11 @@ end
 --- Set ROE for a group.
 -- @param #RAT self
 -- @param Wrapper.Group#GROUP group Group for which the ROE is set.
-function RAT:_SetROE(group)
-  if self.roe=="return" then
+-- @param #string roe ROE of group.
+function RAT:_SetROE(group, roe)
+  if self.roe==RAT.roe.returnfire then
     group:OptionROEReturnFire()
-  elseif self.roe=="free" then
+  elseif self.roe==RAT.roe.weaponfree then
     group:OptionROEWeaponFree()
   else
     group:OptionROEHoldFire()
@@ -2039,10 +2095,11 @@ end
 --- Set ROT for a group.
 -- @param #RAT self
 -- @param Wrapper.Group#GROUP group Group for which the ROT is set.
-function RAT:_SetROT(group)
-  if self.roe=="passive" then
+-- @param #string rot ROT of group.
+function RAT:_SetROT(group, rot)
+  if self.rot==RAT.rot.passive then
     group:OptionROTPassiveDefense()
-  elseif self.roe=="evade" then
+  elseif self.rot==RAT.rot.evade then
     group:OptionROTEvadeFire()
   else
     group:OptionROTNoReaction()
