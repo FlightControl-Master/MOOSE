@@ -2453,13 +2453,15 @@ do -- DETECTION_AREAS
     local DistanceRecce = 1000000000 -- Units are not further than 1000000 km away from an area :-)
     
     for RecceGroupName, RecceGroup in pairs( self.DetectionSetGroup:GetSet() ) do
-      for RecceUnit, RecceUnit in pairs( RecceGroup:GetUnits() ) do
-        if RecceUnit:IsActive() then
-          local RecceUnitCoord = RecceUnit:GetCoordinate()
-          local Distance = RecceUnitCoord:Get2DDistance( self:GetDetectedItemCoordinate( DetectedItem.Index ) )
-          if Distance < DistanceRecce then
-            DistanceRecce = Distance
-            NearestRecce = RecceUnit
+      if RecceGroup and RecceGroup:IsAlive() then
+        for RecceUnit, RecceUnit in pairs( RecceGroup:GetUnits() ) do
+          if RecceUnit:IsActive() then
+            local RecceUnitCoord = RecceUnit:GetCoordinate()
+            local Distance = RecceUnitCoord:Get2DDistance( self:GetDetectedItemCoordinate( DetectedItem.Index ) )
+            if Distance < DistanceRecce then
+              DistanceRecce = Distance
+              NearestRecce = RecceUnit
+            end
           end
         end
       end
