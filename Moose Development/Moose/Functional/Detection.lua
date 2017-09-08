@@ -1239,9 +1239,11 @@ do -- DETECTION_BASE
     
       DetectedItem.FriendliesNearBy = nil
 
-      if DetectedUnit then
+      -- We need to ensure that the DetectedUnit is alive!
+      if DetectedUnit and DetectedUnit:IsAlive() then
       
-        local InterceptCoord = ReportGroupData.InterceptCoord or DetectedUnit:GetCoordinate()
+        local DetectedUnitCoord = DetectedUnit:GetCoordinate()
+        local InterceptCoord = ReportGroupData.InterceptCoord or DetectedUnitCoord
         
         local SphereSearch = {
          id = world.VolumeType.SPHERE,
@@ -1336,9 +1338,7 @@ do -- DETECTION_BASE
                 DetectedItem.FriendliesNearBy = DetectedItem.FriendliesNearBy or {}
                 DetectedItem.FriendliesNearBy[PlayerUnitName] = PlayerUnit
       
-                local CenterCoord = DetectedUnit:GetCoordinate()
-  
-                local Distance = CenterCoord:Get2DDistance( PlayerUnit:GetCoordinate() )
+                local Distance = DetectedUnitCoord:Get2DDistance( PlayerUnit:GetCoordinate() )
                 DetectedItem.FriendliesDistance = DetectedItem.FriendliesDistance or {}
                 DetectedItem.FriendliesDistance[Distance] = PlayerUnit
 
