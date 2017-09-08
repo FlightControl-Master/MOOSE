@@ -368,14 +368,19 @@ function CONTROLLABLE:SetTask( DCSTask, WaitTime )
 
   if DCSControllable then
 
+    local DCSControllableName = self:GetName()
 
     -- When a controllable SPAWNs, it takes about a second to get the controllable in the simulator. Setting tasks to unspawned controllables provides unexpected results.
     -- Therefore we schedule the functions to set the mission and options for the Controllable.
     -- Controller.setTask( Controller, DCSTask )
 
     local function SetTask( Controller, DCSTask )
-      local Controller = self:_GetController()
-      Controller:setTask( DCSTask )
+      if self and self:IsAlive() then
+        local Controller = self:_GetController()
+        Controller:setTask( DCSTask )
+      else
+        BASE:E( DCSControllableName .. " is not alive anymore. Cannot set DCSTask " .. DCSTask )
+      end
     end
 
     if not WaitTime or WaitTime == 0 then

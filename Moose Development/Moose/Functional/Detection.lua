@@ -1239,9 +1239,11 @@ do -- DETECTION_BASE
     
       DetectedItem.FriendliesNearBy = nil
 
-      if DetectedUnit then
+      -- We need to ensure that the DetectedUnit is alive!
+      if DetectedUnit and DetectedUnit:IsAlive() then
       
-        local InterceptCoord = ReportGroupData.InterceptCoord or DetectedUnit:GetCoordinate()
+        local DetectedUnitCoord = DetectedUnit:GetCoordinate()
+        local InterceptCoord = ReportGroupData.InterceptCoord or DetectedUnitCoord
         
         local SphereSearch = {
          id = world.VolumeType.SPHERE,
@@ -1336,9 +1338,7 @@ do -- DETECTION_BASE
                 DetectedItem.FriendliesNearBy = DetectedItem.FriendliesNearBy or {}
                 DetectedItem.FriendliesNearBy[PlayerUnitName] = PlayerUnit
       
-                local CenterCoord = DetectedUnit:GetCoordinate()
-  
-                local Distance = CenterCoord:Get2DDistance( PlayerUnit:GetCoordinate() )
+                local Distance = DetectedUnitCoord:Get2DDistance( PlayerUnit:GetCoordinate() )
                 DetectedItem.FriendliesDistance = DetectedItem.FriendliesDistance or {}
                 DetectedItem.FriendliesDistance[Distance] = PlayerUnit
 
@@ -2453,13 +2453,15 @@ do -- DETECTION_AREAS
     local DistanceRecce = 1000000000 -- Units are not further than 1000000 km away from an area :-)
     
     for RecceGroupName, RecceGroup in pairs( self.DetectionSetGroup:GetSet() ) do
-      for RecceUnit, RecceUnit in pairs( RecceGroup:GetUnits() ) do
-        if RecceUnit:IsActive() then
-          local RecceUnitCoord = RecceUnit:GetCoordinate()
-          local Distance = RecceUnitCoord:Get2DDistance( self:GetDetectedItemCoordinate( DetectedItem.Index ) )
-          if Distance < DistanceRecce then
-            DistanceRecce = Distance
-            NearestRecce = RecceUnit
+      if RecceGroup and RecceGroup:IsAlive() then
+        for RecceUnit, RecceUnit in pairs( RecceGroup:GetUnits() ) do
+          if RecceUnit:IsActive() then
+            local RecceUnitCoord = RecceUnit:GetCoordinate()
+            local Distance = RecceUnitCoord:Get2DDistance( self:GetDetectedItemCoordinate( DetectedItem.Index ) )
+            if Distance < DistanceRecce then
+              DistanceRecce = Distance
+              NearestRecce = RecceUnit
+            end
           end
         end
       end
