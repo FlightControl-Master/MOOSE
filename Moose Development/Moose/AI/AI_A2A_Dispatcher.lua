@@ -1304,6 +1304,12 @@ do -- AI_A2A_DISPATCHER
   function AI_A2A_DISPATCHER:GetDefenderTaskTarget( Defender )
     return self:GetDefenderTask( Defender ).Target
   end
+  
+  ---
+  -- @param #AI_A2A_DISPATCHER self
+  function AI_A2A_DISPATCHER:GetDefenderTaskSquadronName( Defender )
+    return self:GetDefenderTask( Defender ).SquadronName
+  end
 
   ---
   -- @param #AI_A2A_DISPATCHER self
@@ -2513,23 +2519,28 @@ do -- AI_A2A_DISPATCHER
   function AI_A2A_DISPATCHER:CountDefendersEngaged( AttackerDetection )
 
     -- First, count the active AIGroups Units, targetting the DetectedSet
-    local AIUnitCount = 0
+    local DefenderCount = 0
     
     self:E( "Counting Defenders Engaged for Attacker:" )
     local DetectedSet = AttackerDetection.Set
     DetectedSet:Flush()
     
     local DefenderTasks = self:GetDefenderTasks()
-    for AIGroup, DefenderTask in pairs( DefenderTasks ) do
-      local AIGroup = AIGroup -- Wrapper.Group#GROUP
-      local DefenderTask = self:GetDefenderTaskTarget( AIGroup )
-      if DefenderTask and DefenderTask.Index == AttackerDetection.Index then
-        AIUnitCount = AIUnitCount + AIGroup:GetSize()
-        self:E( "Defender Group Name: " .. AIGroup:GetName() .. ", Size: " .. AIGroup:GetSize() )
+    for Defender, DefenderTask in pairs( DefenderTasks ) do
+      local Defender = Defender -- Wrapper.Group#GROUP
+      local DefenderTaskTarget = DefenderTask.Target
+      local DefenderSquadronName = DefenderTask.SquadronName
+      if DefenderTaskTarget and DefenderTaskTarget.Index == AttackerDetection.Index then
+        local Squadron = self:GetSquadron( DefenderSquadronName )
+        local SquadronOverhead = Squadron.Overhead or self.DefenderDefault.Overhead 
+        DefenderCount = DefenderCount + Defender:GetSize() / SquadronOverhead
+        self:E( "Defender Group Name: " .. Defender:GetName() .. ", Size: " .. Defender:GetSize() )
       end
     end
 
-    return AIUnitCount
+    self:F( { DefenderCount = DefenderCount } )
+
+    return DefenderCount
   end
   
   ---
@@ -2766,7 +2777,7 @@ do -- AI_A2A_DISPATCHER
           
                 if DefenderGCI then
 
-                  DefenderCount = DefenderCount - DefenderGrouping
+                  DefenderCount = DefenderCount - DefenderGrouping / DefenderOverhead
         
                   local Fsm = AI_A2A_GCI:New( DefenderGCI, Gci.EngageMinSpeed, Gci.EngageMaxSpeed )
                   Fsm:SetDispatcher( self )
