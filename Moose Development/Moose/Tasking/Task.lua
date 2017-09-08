@@ -746,7 +746,8 @@ function TASK:SetPlannedMenuForGroup( TaskGroup, MenuTime )
   
   if not Mission:IsGroupAssigned( TaskGroup ) then
     self:F( { "Replacing Join Task menu" } )
-    local JoinTaskMenu = MENU_GROUP_COMMAND:New( TaskGroup, string.format( "Join Task" ), TaskTypeMenu, self.MenuAssignToGroup, self, TaskGroup  ):SetTime( MenuTime ):SetTag( "Tasking" ):SetRemoveParent( true )
+    local JoinTaskMenu = MENU_GROUP_COMMAND:New( TaskGroup, string.format( "Join Task" ), TaskTypeMenu, self.MenuAssignToGroup, self, TaskGroup ):SetTime( MenuTime ):SetTag( "Tasking" ):SetRemoveParent( true )
+    local MarkTaskMenu = MENU_GROUP_COMMAND:New( TaskGroup, string.format( "Mark Task on Map" ), TaskTypeMenu, self.MenuMarkToGroup, self, TaskGroup ):SetTime( MenuTime ):SetTag( "Tasking" ):SetRemoveParent( true )
   end
       
   return self
@@ -854,9 +855,26 @@ end
 -- @param Wrapper.Group#GROUP TaskGroup
 function TASK:MenuAssignToGroup( TaskGroup )
 
-  self:E( "Assigned menu selected")
+  self:E( "Join Task menu selected")
   
   self:AssignToGroup( TaskGroup )
+end
+
+--- @param #TASK self
+-- @param Wrapper.Group#GROUP TaskGroup
+function TASK:MenuMarkToGroup( TaskGroup )
+
+  self:E( "Mark Task menu selected")
+
+  self:UpdateTaskInfo()
+
+  local Coordinate = self:GetInfo( "Coordinates" ) -- Core.Point#COORDINATE
+  local Briefing = self:GetTaskBriefing()
+  local GroupID = TaskGroup:GetID()
+  
+  self:F( { Coordinate = Coordinate:GetVec3(), Briefing = Briefing, GroupID = GroupID } )
+  
+  trigger.action.markToGroup( 1, Briefing, Coordinate:GetVec3(), GroupID )  
 end
 
 --- Report the task status.
@@ -1031,6 +1049,17 @@ function TASK:SetInfo( TaskInfo, TaskInfoText, TaskInfoOrder )
   self.TaskInfo[TaskInfo] = self.TaskInfo[TaskInfo] or {}
   self.TaskInfo[TaskInfo].TaskInfoText = TaskInfoText
   self.TaskInfo[TaskInfo].TaskInfoOrder = TaskInfoOrder
+end
+
+--- Gets the Information of the Task
+-- @param #TASK self
+-- @param #string TaskInfo The key and title of the task information.
+-- @return #string TaskInfoText The Task info text.
+function TASK:GetInfo( TaskInfo )
+
+  self.TaskInfo = self.TaskInfo or {}
+  self.TaskInfo[TaskInfo] = self.TaskInfo[TaskInfo] or {}
+  return self.TaskInfo[TaskInfo].TaskInfoText
 end
 
 --- Gets the Type of the Task
