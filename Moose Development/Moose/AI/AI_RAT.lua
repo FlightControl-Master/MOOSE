@@ -50,6 +50,7 @@
 -- @field #string SubMenuName
 -- @field #boolean respawn_after_landing
 -- @field #number respawn_delay
+-- @field #table markerids
 -- @field #table RAT
 -- @extends Functional.Spawn#SPAWN
 
@@ -96,6 +97,7 @@ RAT={
   SubMenuName=nil,          -- Submenu name for RAT object.
   respawn_at_landing=false, -- Respawn aircraft the moment they land rather than at engine shutdown.
   respawn_delay=nil,        -- Delay in seconds until repawn happens after landing.
+  markerids={},             -- Array with marker IDs.
 }
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -146,19 +148,19 @@ RAT.unit={
 }
 
 --- RAT rules of engagement.
--- @field #RAT roe
-RAT.roe={
+-- @field #RAT ROT
+RAT.ROE={
   weaponhold="hold",
   weaponfree="free",
   returnfire="return",
 }
 
 --- RAT reaction to threat.
--- @field #RAT rot
-RAT.rot{
+-- @field #RAT ROT
+RAT.ROT={
   evade="evade",
   passive="passive",
-  noreaction="noreaction"
+  noreaction="noreaction",
 }
 
 --- Running number of placed markers on the F10 map.
@@ -197,6 +199,7 @@ myid="RAT | "
 --DONE: Add markers to F10 menu.
 --TODO: Add respawn limit.
 --DONE: Make takeoff method random between cold and hot start.
+--TODO: Check out uncontrolled spawning.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -207,6 +210,9 @@ myid="RAT | "
 -- @return #nil If the group does not exist in the mission editor.
 -- @usage yak:RAT("RAT_YAK") will create a RAT object called "yak". The template group in the mission editor must have the name "RAT_YAK".
 function RAT:New(groupname)
+
+  -- Welcome message.
+  env.info(myid.."Creating new RAT object from template: "..groupname)
 
   -- Inherit SPAWN clase.
   local self=BASE:Inherit(self, SPAWN:New(groupname)) -- #RAT
@@ -270,18 +276,18 @@ function RAT:Spawn(naircraft)
   text=text..string.format("Vclimb: %4.1f\n", self.Vclimb)
   text=text..string.format("Vcruisemax: %4.1f\n", self.Vcruisemax)
   text=text..string.format("AlphaDescent: %4.2f\n", self.AlphaDescent)
-  text=text..string.format("ROE: %s\n", self.roe)
-  text=text..string.format("ROT: %s\n", self.rot)
+  text=text..string.format("ROE: %s\n", tostring(self.roe))
+  text=text..string.format("ROT: %s\n", tostring(self.rot))
   text=text..string.format("Min dist: %4.1f\n", self.mindist)
   text=text..string.format("Max dist: %4.1f\n", self.maxdist)
-  text=text..string.format("Report status: %s\n", tostring(self.airports))
+  text=text..string.format("Report status: %s\n", tostring(self.reportstatus))
   text=text..string.format("Status interval: %4.1f\n", self.statusinterval)
   text=text..string.format("Place markers: %s\n", tostring(self.placemarkers))
   text=text..string.format("FLuser: %s\n", tostring(self.Fluser))
   text=text..string.format("FLminuser: %s\n", tostring(self.Flminuser))
   text=text..string.format("FLmaxuser: %s\n", tostring(self.Flmaxuser))
   text=text..string.format("Respawn after landing: %s\n", tostring(self.respawn_after_landing))
-  text=text..string.format("Respawn after landing: %s\n", tostring(self.respawn_delay))
+  text=text..string.format("Respawn delay: %s\n", tostring(self.respawn_delay))
   -- @field #number FLminuser
   text=text..string.format("******************************************************\n")
   env.info(myid..text)
@@ -292,8 +298,9 @@ function RAT:Spawn(naircraft)
     self.SubMenuName=self.SpawnTemplatePrefix
     self.Menu[self.SubMenuName]=MENU_MISSION:New(self.SubMenuName, RAT.MenuF10)
     self.Menu[self.SubMenuName]["groups"]=MENU_MISSION:New("Groups", self.Menu[self.SubMenuName])
-    MENU_MISSION_COMMAND:New("Status report", self.Menu[self.SubMenuName], self.Status, self, true)
     MENU_MISSION_COMMAND:New("Spawn new group", self.Menu[self.SubMenuName], self._SpawnWithRoute, self)
+    MENU_MISSION_COMMAND:New("Delete markers", self.Menu[self.SubMenuName], self._DeleteMarkers, self, self.markerids)
+    MENU_MISSION_COMMAND:New("Status report", self.Menu[self.SubMenuName], self.Status, self, true)
   end
   
   -- Schedule spawning of aircraft.
@@ -511,11 +518,11 @@ end
 -- @param #string roe "hold" = weapon hold, "return" = return fire, "free" = weapons free.
 function RAT:SetROE(roe)
   if roe=="return" then 
-    self.roe=RAT.roe.returnfire
+    self.roe=RAT.ROE.returnfire
   elseif roe=="free" then
-    self.roe=RAT.roe.weaponfree
+    self.roe=RAT.ROE.weaponfree
   else
-    self.roe=RAT.roe.weaponhold
+    self.roe=RAT.ROE.weaponhold
   end
 end
 
@@ -524,11 +531,11 @@ end
 -- @param #string rot "noreaction = no reactino, "passive" = passive defence, "evade" = weapons free.
 function RAT:SetROT(rot)
   if rot=="passive" then
-    self.rot=RAT.rot.passive
+    self.rot=RAT.ROT.passive
   elseif rot=="evade" then
-    self.rot=RAT.rot.evade
+    self.rot=RAT.ROT.evade
   else
-    self.rot=RAT.rot.noreaction
+    self.rot=RAT.ROT.noreaction
   end
 end
 
@@ -694,6 +701,7 @@ function RAT:_SpawnWithRoute(_departure, _destination)
   if self.takeoff==RAT.waypoint.coldorhot then
     local temp={RAT.waypoint.cold, RAT.waypoint.hot}
     _takeoff=temp[math.random(2)]
+    env.info(myid.."Random takeoff type: ".._takeoff)
   end
 
   -- Set flight plan.
@@ -743,19 +751,20 @@ function RAT:_SpawnWithRoute(_departure, _destination)
     -- F10/RAT/<templatename>/Group X
     self.Menu[self.SubMenuName].groups[self.SpawnIndex]=MENU_MISSION:New(name, self.Menu[self.SubMenuName].groups)
     -- F10/RAT/<templatename>/Group X/ROT
-    self.Menu[self.SubMenuName].groups[self.SpawnIndex].roe=MENU_MISSION:New("Set ROE", self.Menu[self.SubMenuName].groups)
-    MENU_MISSION_COMMAND:New("Weapons hold", self.Menu[self.SubMenuName].groups[self.SpawnIndex].roe, self._SetROE, self, RAT.roe.weaponhold)
-    MENU_MISSION_COMMAND:New("Weapons free", self.Menu[self.SubMenuName].groups[self.SpawnIndex].roe, self._SetROE, self, RAT.roe.weaponfree)
-    MENU_MISSION_COMMAND:New("Return fire",  self.Menu[self.SubMenuName].groups[self.SpawnIndex].roe, self._SetROE, self, RAT.roe.returnfire)
+    self.Menu[self.SubMenuName].groups[self.SpawnIndex]["roe"]=MENU_MISSION:New("Set ROE", self.Menu[self.SubMenuName].groups[self.SpawnIndex])
+    MENU_MISSION_COMMAND:New("Weapons hold", self.Menu[self.SubMenuName].groups[self.SpawnIndex]["roe"], self._SetROE, self, group, RAT.ROE.weaponhold)
+    MENU_MISSION_COMMAND:New("Weapons free", self.Menu[self.SubMenuName].groups[self.SpawnIndex]["roe"], self._SetROE, self, group, RAT.ROE.weaponfree)
+    MENU_MISSION_COMMAND:New("Return fire",  self.Menu[self.SubMenuName].groups[self.SpawnIndex]["roe"], self._SetROE, self, group, RAT.ROE.returnfire)
     -- F10/RAT/<templatename>/Group X/ROT
-    self.Menu[self.SubMenuName].groups[self.SpawnIndex].rot=MENU_MISSION:New("Set ROT", self.Menu[self.SubMenuName].groups)
-    MENU_MISSION_COMMAND:New("Weapons hold", self.Menu[self.SubMenuName].groups[self.SpawnIndex].rot, self._SetROT, self, RAT.rot.noreaction)
-    MENU_MISSION_COMMAND:New("Weapons free", self.Menu[self.SubMenuName].groups[self.SpawnIndex].rot, self._SetROT, self, RAT.rot.passive)
-    MENU_MISSION_COMMAND:New("Return fire",  self.Menu[self.SubMenuName].groups[self.SpawnIndex].rot, self._SetROT, self, RAT.rot.evade)    
+    self.Menu[self.SubMenuName].groups[self.SpawnIndex]["rot"]=MENU_MISSION:New("Set ROT", self.Menu[self.SubMenuName].groups[self.SpawnIndex])
+    MENU_MISSION_COMMAND:New("No reaction",     self.Menu[self.SubMenuName].groups[self.SpawnIndex]["rot"], self._SetROT, self, group, RAT.ROT.noreaction)
+    MENU_MISSION_COMMAND:New("Passive defense", self.Menu[self.SubMenuName].groups[self.SpawnIndex]["rot"], self._SetROT, self, group, RAT.ROT.passive)
+    MENU_MISSION_COMMAND:New("Evade on fire",   self.Menu[self.SubMenuName].groups[self.SpawnIndex]["rot"], self._SetROT, self, group, RAT.ROT.evade)    
     -- F10/RAT/<templatename>/Group X/
-    MENU_MISSION_COMMAND:New("Status report", self.Menu[self.SubMenuName].groups[self.SpawnIndex], self.Status, self, true, self.SpawnIndex)
-    MENU_MISSION_COMMAND:New("Place markers", self.Menu[self.SubMenuName].groups[self.SpawnIndex], self._PlaceMarkers, self, waypoints)
-    MENU_MISSION_COMMAND:New("Despawn group", self.Menu[self.SubMenuName].groups[self.SpawnIndex], self._Despawn, self, group)
+    MENU_MISSION_COMMAND:New("Despawn group",  self.Menu[self.SubMenuName].groups[self.SpawnIndex], self._Despawn, self, group)
+    MENU_MISSION_COMMAND:New("Place markers",  self.Menu[self.SubMenuName].groups[self.SpawnIndex], self._PlaceMarkers, self, waypoints)
+    --MENU_MISSION_COMMAND:New("Delete markers", self.Menu[self.SubMenuName].groups[self.SpawnIndex], self._DelateMarkers, self, markers)
+    MENU_MISSION_COMMAND:New("Status report",  self.Menu[self.SubMenuName].groups[self.SpawnIndex], self.Status, self, true, self.SpawnIndex)
   end
   
 end
@@ -1025,9 +1034,9 @@ function RAT:_SetRoute(takeoff, _departure, _destination)
   text=text..string.format("h_climb       = %6.1f m\n",     h_climb)
   text=text..string.format("h_descent     = %6.1f m\n",     h_descent)
   text=text..string.format("h_holding     = %6.1f m\n",     h_holding)
-  text=text..string.format("FLmin         = %6.1f m ASL\n", FLmin)
-  text=text..string.format("FLmax         = %6.1f m ASL\n", FLmax)
-  text=text..string.format("FLcruise      = %6.1f m ASL\n", FLcruise)
+  text=text..string.format("FLmin         = %6.1f m ASL = FL%03d\n", FLmin, FLmin/RAT.unit.FL2m)
+  text=text..string.format("FLcruise      = %6.1f m ASL = FL%03d\n", FLcruise, FLcruise/RAT.unit.FL2m)
+  text=text..string.format("FLmax         = %6.1f m ASL = FL%03d\n", FLmax, FLmax/RAT.unit.FL2m)
   text=text..string.format("\nAngles:\n")  
   text=text..string.format("Alpha climb   = %6.1f Deg\n",   math.deg(AlphaClimb))
   text=text..string.format("Alpha descent = %6.1f Deg\n",   math.deg(AlphaDescent))
@@ -1976,6 +1985,7 @@ function RAT:_ModifySpawnTemplate(waypoints)
       -- Also modify x,y of the template. Not sure why.
       SpawnTemplate.x = PointVec3.x
       SpawnTemplate.y = PointVec3.z
+      --SpawnTemplate.uncontrolled=true
       
       -- Update modified template for spawn group.
       self.SpawnGroups[self.SpawnIndex].SpawnTemplate=SpawnTemplate
@@ -2082,12 +2092,16 @@ end
 -- @param Wrapper.Group#GROUP group Group for which the ROE is set.
 -- @param #string roe ROE of group.
 function RAT:_SetROE(group, roe)
-  if self.roe==RAT.roe.returnfire then
+  env.info(myid.."Setting ROE to "..roe.." for group "..group:GetName())
+  if self.roe==RAT.ROE.returnfire then
     group:OptionROEReturnFire()
-  elseif self.roe==RAT.roe.weaponfree then
+    env.info(myid.."ROE return fire")
+  elseif self.roe==RAT.ROE.weaponfree then
     group:OptionROEWeaponFree()
+    env.info(myid.."ROE weapons free")
   else
     group:OptionROEHoldFire()
+    env.info(myid.."ROE hold fire")
   end
 end
 
@@ -2097,9 +2111,10 @@ end
 -- @param Wrapper.Group#GROUP group Group for which the ROT is set.
 -- @param #string rot ROT of group.
 function RAT:_SetROT(group, rot)
-  if self.rot==RAT.rot.passive then
+  env.info(myid.."Setting ROT to "..rot.." for group "..group:GetName())
+  if self.rot==RAT.ROT.passive then
     group:OptionROTPassiveDefense()
-  elseif self.rot==RAT.rot.evade then
+  elseif self.rot==RAT.ROT.evade then
     group:OptionROTEvadeFire()
   else
     group:OptionROTNoReaction()
@@ -2217,6 +2232,7 @@ end
 -- @param #table wp Position of marker coming in as waypoint, i.e. has x, y and alt components.
 function RAT:_SetMarker(text, wp)
   RAT.markerid=RAT.markerid+1
+  table.insert(self.markerids,RAT.markerid)
   if self.debug then
     env.info(myid.."Placing marker with ID "..RAT.markerid..": "..text)
   end
@@ -2224,6 +2240,21 @@ function RAT:_SetMarker(text, wp)
   local vec={x=wp.x, y=wp.alt, z=wp.y}
   -- Place maker visible for all on the F10 map.
   trigger.action.markToAll(RAT.markerid, text, vec)
+end
+
+--- Delete all markers on F10 map.
+-- @param #RAT self
+-- @param #table ids (Optional) Table holding the marker IDs to be deleted.
+function RAT:_DeleteMarkers(ids)
+  if ids then
+    for k,v in pairs(ids) do
+      trigger.action.removeMark(k)
+    end  
+  else
+    for i=1,RAT.markerid do
+      trigger.action.removeMark(i)
+    end
+  end
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
