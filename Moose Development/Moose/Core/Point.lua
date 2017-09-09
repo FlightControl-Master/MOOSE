@@ -798,6 +798,78 @@ do -- COORDINATE
 
   end
 
+  --- Provides a coordinate string of the point, based on the A2G coordinate format system.
+  -- @param #COORDINATE self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable
+  -- @param Core.Settings#SETTINGS Settings
+  -- @return #string The coordinate Text in the configured coordinate system.
+  function COORDINATE:ToStringA2G( Controllable, Settings ) -- R2.2
+  
+    self:F( { Controllable = Controllable and Controllable:GetName() } )
+
+    local Settings = Settings or ( Controllable and _DATABASE:GetPlayerSettings( Controllable:GetPlayerName() ) ) or _SETTINGS
+
+    if Settings:IsA2G_BR()  then
+      -- If no Controllable is given to calculate the BR from, then MGRS will be used!!!
+      if Controllable then
+        local Coordinate = Controllable:GetCoordinate()
+        return Controllable and self:ToStringBR( Coordinate, Settings ) or self:ToStringMGRS( Settings )
+      else
+        return self:ToStringMGRS( Settings )
+      end
+    end
+    if Settings:IsA2G_LL_DMS()  then
+      return self:ToStringLLDMS( Settings )
+    end
+    if Settings:IsA2G_LL_DDM()  then
+      return self:ToStringLLDDM( Settings )
+    end
+    if Settings:IsA2G_MGRS() then
+      return self:ToStringMGRS( Settings )
+    end
+
+    return nil
+
+  end
+
+
+  --- Provides a coordinate string of the point, based on the A2A coordinate format system.
+  -- @param #COORDINATE self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable
+  -- @param Core.Settings#SETTINGS Settings
+  -- @return #string The coordinate Text in the configured coordinate system.
+  function COORDINATE:ToStringA2A( Controllable, Settings ) -- R2.2
+  
+    self:F( { Controllable = Controllable and Controllable:GetName() } )
+
+    local Settings = Settings or ( Controllable and _DATABASE:GetPlayerSettings( Controllable:GetPlayerName() ) ) or _SETTINGS
+
+    if Settings:IsA2A_BRAA()  then
+      if Controllable then
+        local Coordinate = Controllable:GetCoordinate()
+        return self:ToStringBRA( Coordinate, Settings ) 
+      else
+        return self:ToStringMGRS( Settings )
+      end
+    end
+    if Settings:IsA2A_BULLS() then
+      local Coalition = Controllable:GetCoalition()
+      return self:ToStringBULLS( Coalition, Settings )
+    end
+    if Settings:IsA2A_LL_DMS()  then
+      return self:ToStringLLDMS( Settings )
+    end
+    if Settings:IsA2A_LL_DDM()  then
+      return self:ToStringLLDDM( Settings )
+    end
+    if Settings:IsA2A_MGRS() then
+      return self:ToStringMGRS( Settings )
+    end
+
+    return nil
+
+  end
+
   --- Provides a coordinate string of the point, based on a coordinate format system:
   --   * Uses default settings in COORDINATE.
   --   * Can be overridden if for a GROUP containing x clients, a menu was selected to override the default.
@@ -837,46 +909,9 @@ do -- COORDINATE
     
 
     if ModeA2A then
-      if Settings:IsA2A_BRAA()  then
-        if Controllable then
-          local Coordinate = Controllable:GetCoordinate()
-          return self:ToStringBRA( Coordinate, Settings ) 
-        else
-          return self:ToStringMGRS( Settings )
-        end
-      end
-      if Settings:IsA2A_BULLS() then
-        local Coalition = Controllable:GetCoalition()
-        return self:ToStringBULLS( Coalition, Settings )
-      end
-      if Settings:IsA2A_LL_DMS()  then
-        return self:ToStringLLDMS( Settings )
-      end
-      if Settings:IsA2A_LL_DDM()  then
-        return self:ToStringLLDDM( Settings )
-      end
-      if Settings:IsA2A_MGRS() then
-        return self:ToStringMGRS( Settings )
-      end
+      return self:ToStringA2A( Controllable, Settings )
     else
-      if Settings:IsA2G_BR()  then
-        -- If no Controllable is given to calculate the BR from, then MGRS will be used!!!
-        if Controllable then
-          local Coordinate = Controllable:GetCoordinate()
-          return Controllable and self:ToStringBR( Coordinate, Settings ) or self:ToStringMGRS( Settings )
-        else
-          return self:ToStringMGRS( Settings )
-        end
-      end
-      if Settings:IsA2G_LL_DMS()  then
-        return self:ToStringLLDMS( Settings )
-      end
-      if Settings:IsA2G_LL_DDM()  then
-        return self:ToStringLLDDM( Settings )
-      end
-      if Settings:IsA2G_MGRS() then
-        return self:ToStringMGRS( Settings )
-      end
+      return self:ToStringA2G( Controllable, Settings )
     end
     
     return nil
