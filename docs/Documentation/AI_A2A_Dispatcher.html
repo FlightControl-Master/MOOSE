@@ -73,6 +73,7 @@
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
 					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
 					<li><a href="Radio.html">Radio</a></li>
+					<li><a href="Rat.html">Rat</a></li>
 					<li><a href="Route.html">Route</a></li>
 					<li><a href="Scenery.html">Scenery</a></li>
 					<li><a href="ScheduleDispatcher.html">ScheduleDispatcher</a></li>
@@ -341,13 +342,13 @@ Per one, two, three, four?</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_DISPATCHER).CountDefendersEngaged">AI_A2A_DISPATCHER:CountDefendersEngaged(Target)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_DISPATCHER).CountDefendersEngaged">AI_A2A_DISPATCHER:CountDefendersEngaged(AttackerDetection)</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_DISPATCHER).CountDefendersToBeEngaged">AI_A2A_DISPATCHER:CountDefendersToBeEngaged(DetectedItem, DefenderCount)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_DISPATCHER).CountDefendersToBeEngaged">AI_A2A_DISPATCHER:CountDefendersToBeEngaged(AttackerDetection, DefenderCount)</a></td>
 		<td class="summary">
 
 </td>
@@ -719,7 +720,7 @@ Per one, two, three, four?</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_DISPATCHER).SetDefenderTaskTarget">AI_A2A_DISPATCHER:SetDefenderTaskTarget(AIGroup, Defender, Target)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_DISPATCHER).SetDefenderTaskTarget">AI_A2A_DISPATCHER:SetDefenderTaskTarget(AIGroup, Defender, AttackerDetection)</a></td>
 		<td class="summary">
 
 </td>
@@ -905,13 +906,13 @@ Per one, two, three, four?</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_DISPATCHER).onafterENGAGE">AI_A2A_DISPATCHER:onafterENGAGE(From, Event, To, Target, Defenders)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_DISPATCHER).onafterENGAGE">AI_A2A_DISPATCHER:onafterENGAGE(From, Event, To, AttackerDetection, Defenders)</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_DISPATCHER).onafterGCI">AI_A2A_DISPATCHER:onafterGCI(From, Event, To, DetectedItem, DefendersMissing, Friendlies)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_DISPATCHER).onafterGCI">AI_A2A_DISPATCHER:onafterGCI(From, Event, To, AttackerDetection, DefendersMissing, DefenderFriendlies)</a></td>
 		<td class="summary">
 
 </td>
@@ -2104,7 +2105,7 @@ DefenderSquadron</p>
 <dt>
 
 <a id="#(AI_A2A_DISPATCHER).CountDefendersEngaged" >
-<strong>AI_A2A_DISPATCHER:CountDefendersEngaged(Target)</strong>
+<strong>AI_A2A_DISPATCHER:CountDefendersEngaged(AttackerDetection)</strong>
 </a>
 </dt>
 <dd>
@@ -2115,7 +2116,7 @@ DefenderSquadron</p>
 		<ul>
 				<li>
 				
-<p><code><em> Target </em></code>: </p>
+<p><code><em> AttackerDetection </em></code>: </p>
 
 				</li>
 		</ul>
@@ -2125,7 +2126,7 @@ DefenderSquadron</p>
 <dt>
 
 <a id="#(AI_A2A_DISPATCHER).CountDefendersToBeEngaged" >
-<strong>AI_A2A_DISPATCHER:CountDefendersToBeEngaged(DetectedItem, DefenderCount)</strong>
+<strong>AI_A2A_DISPATCHER:CountDefendersToBeEngaged(AttackerDetection, DefenderCount)</strong>
 </a>
 </dt>
 <dd>
@@ -2136,7 +2137,7 @@ DefenderSquadron</p>
 		<ul>
 				<li>
 				
-<p><code><em> DetectedItem </em></code>: </p>
+<p><code><em> AttackerDetection </em></code>: </p>
 
 				</li>
 				<li>
@@ -3936,7 +3937,7 @@ A string defining the group name of the Tanker as defined within the Mission Edi
 <dt>
 
 <a id="#(AI_A2A_DISPATCHER).SetDefenderTaskTarget" >
-<strong>AI_A2A_DISPATCHER:SetDefenderTaskTarget(AIGroup, Defender, Target)</strong>
+<strong>AI_A2A_DISPATCHER:SetDefenderTaskTarget(AIGroup, Defender, AttackerDetection)</strong>
 </a>
 </dt>
 <dd>
@@ -3957,7 +3958,7 @@ A string defining the group name of the Tanker as defined within the Mission Edi
 				</li>
 				<li>
 				
-<p><code><em> Target </em></code>: </p>
+<p><code><em> AttackerDetection </em></code>: </p>
 
 				</li>
 		</ul>
@@ -5222,7 +5223,7 @@ Provide a value of <strong>true</strong> to display every 30 seconds a tactical 
 <dt>
 
 <a id="#(AI_A2A_DISPATCHER).onafterENGAGE" >
-<strong>AI_A2A_DISPATCHER:onafterENGAGE(From, Event, To, Target, Defenders)</strong>
+<strong>AI_A2A_DISPATCHER:onafterENGAGE(From, Event, To, AttackerDetection, Defenders)</strong>
 </a>
 </dt>
 <dd>
@@ -5248,7 +5249,7 @@ Provide a value of <strong>true</strong> to display every 30 seconds a tactical 
 				</li>
 				<li>
 				
-<p><code><em> Target </em></code>: </p>
+<p><code><em> AttackerDetection </em></code>: </p>
 
 				</li>
 				<li>
@@ -5263,7 +5264,7 @@ Provide a value of <strong>true</strong> to display every 30 seconds a tactical 
 <dt>
 
 <a id="#(AI_A2A_DISPATCHER).onafterGCI" >
-<strong>AI_A2A_DISPATCHER:onafterGCI(From, Event, To, DetectedItem, DefendersMissing, Friendlies)</strong>
+<strong>AI_A2A_DISPATCHER:onafterGCI(From, Event, To, AttackerDetection, DefendersMissing, DefenderFriendlies)</strong>
 </a>
 </dt>
 <dd>
@@ -5289,7 +5290,7 @@ Provide a value of <strong>true</strong> to display every 30 seconds a tactical 
 				</li>
 				<li>
 				
-<p><code><em> DetectedItem </em></code>: </p>
+<p><code><em> AttackerDetection </em></code>: </p>
 
 				</li>
 				<li>
@@ -5299,7 +5300,7 @@ Provide a value of <strong>true</strong> to display every 30 seconds a tactical 
 				</li>
 				<li>
 				
-<p><code><em> Friendlies </em></code>: </p>
+<p><code><em> DefenderFriendlies </em></code>: </p>
 
 				</li>
 		</ul>

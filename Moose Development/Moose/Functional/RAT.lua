@@ -1,7 +1,37 @@
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
---- ** AI **
--- @module AI_RAT
+--- **Functional** -- Create random airtraffic in your missions.
+--  
+-- ![Banner Image](..\Presentations\RAT\RAT.png)
+-- 
+-- ====
+-- 
+-- The documentation of the RAT class can be found further in this document.
+-- 
+-- ====
+-- 
+-- # Demo Missions
+-- 
+-- ### [RAT Demo Missions source code](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master-release/SPA%20-%20Spawning)
+-- 
+-- ### [RAT Demo Missions, only for beta testers](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/SPA%20-%20Spawning)
+--
+-- ### [ALL Demo Missions pack of the last release](https://github.com/FlightControl-Master/MOOSE_MISSIONS/releases)
+-- 
+-- ====
+-- 
+-- # YouTube Channel
+-- 
+-- ### [RAT YouTube Channel](https://www.youtube.com/playlist?list=PL7ZUrU4zZUl1jirWIo4t4YxqN-HxjqRkL)
+-- 
+-- ===
+-- ====
+-- 
+-- ### Author: **[funkyfranky](https://forums.eagle.ru/member.php?u=115026)**
+-- 
+-- ### Contributions: **Sven Van de Velde ([FlightControl](https://forums.eagle.ru/member.php?u=89536))**
+-- 
+-- ====
+-- @module Rat
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -11,7 +41,7 @@
 
 --- RAT class 
 -- @type RAT
--- @field #string ClassName
+-- @field #string ClassName Name of the Class
 -- @field #boolean debug
 -- @field #number spawndelay
 -- @field #number spawninterval
@@ -53,6 +83,11 @@
 -- @field #table markerids
 -- @field #table RAT
 -- @extends Functional.Spawn#SPAWN
+
+--- # RAT class, extends @{Spawn#SPAWN}
+-- 
+-- The RAT class allows to easily create random air traffic in your missions.  
+--
 
 
 --- RAT class
@@ -102,16 +137,16 @@ RAT={
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- RAT categories.
+--- Categories of the RAT class. 
 -- @field #RAT cat
 RAT.cat={
   plane="plane",
-  heli="heli"
+  heli="heli",
 }
 
---- RAT takeoff style.
--- @field #RAT waypoint
-RAT.waypoint={
+--- RAT waypoint type.
+-- @field #RAT wp
+RAT.wp={
   coldorhot=0,
   air=1,
   runway=2,
@@ -148,7 +183,7 @@ RAT.unit={
 }
 
 --- RAT rules of engagement.
--- @field #RAT ROT
+-- @field #RAT ROE
 RAT.ROE={
   weaponhold="hold",
   weaponfree="free",
@@ -200,6 +235,12 @@ myid="RAT | "
 --TODO: Add respawn limit.
 --DONE: Make takeoff method random between cold and hot start.
 --TODO: Check out uncontrolled spawning.
+--TODO: Check aircraft spawning in air at Sochi after third aircraft was spawned.
+--TODO: Improve despawn after stationary. Might lead to despawning if many aircraft spawn at the same time.
+--TODO: Check why birth event is not handled.
+--TODO: Improve behaviour when no destination or departure airports were found. Leads to crash, e.g. 1184: attempt to get length of local 'destinations' (a nil value)
+--TODO: Check cases where aircraft get shot down. Respawn?
+--TODO: Handle the case where more than 10 RAT objects are spawned. Likewise, more than 10 groups of one object. Causes problems with the number of menu items!
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -217,7 +258,7 @@ function RAT:New(groupname)
   -- Inherit SPAWN clase.
   local self=BASE:Inherit(self, SPAWN:New(groupname)) -- #RAT
   
-  -- Get template group defined in the mission editor.   
+  -- Get template group defined in the mission editor.
   local DCSgroup=Group.getByName(groupname)
   
   -- Check the group actually exists.
@@ -307,7 +348,7 @@ function RAT:Spawn(naircraft)
   local Tstart=self.spawndelay
   local dt=self.spawninterval
   -- Ensure that interval is >= 180 seconds if spawn at runway is chosen. Aircraft need time to takeoff or the runway gets jammed.
-  if self.takeoff==RAT.waypoint.runway then
+  if self.takeoff==RAT.wp.runway then
     dt=math.max(dt, 180)
   end
   local Tstop=Tstart+dt*(naircraft-1)
@@ -317,7 +358,7 @@ function RAT:Spawn(naircraft)
   SCHEDULER:New(nil, self.Status, {self}, Tstart+1, self.statusinterval)
   
   -- Handle events.
-  self:HandleEvent(EVENTS.Birth,          self._OnBirthDay)
+  self:HandleEvent(EVENTS.Birth,          self._OnBirth)
   self:HandleEvent(EVENTS.EngineStartup,  self._EngineStartup)
   self:HandleEvent(EVENTS.Takeoff,        self._OnTakeoff)
   self:HandleEvent(EVENTS.Land,           self._OnLand)
@@ -369,15 +410,15 @@ function RAT:SetTakeoff(type)
   
   local _Type
   if type:lower()=="takeoff-cold" or type:lower()=="cold" then
-    _Type=RAT.waypoint.cold
+    _Type=RAT.wp.cold
   elseif type:lower()=="takeoff-hot" or type:lower()=="hot" then
-    _Type=RAT.waypoint.hot
+    _Type=RAT.wp.hot
   elseif type:lower()=="takeoff-runway" or type:lower()=="runway" then    
-    _Type=RAT.waypoint.runway
+    _Type=RAT.wp.runway
   elseif type:lower()=="air" then
-    _Type=RAT.waypoint.air
+    _Type=RAT.wp.air
   else
-    _Type=RAT.waypoint.coldorhot
+    _Type=RAT.wp.coldorhot
   end
   
   self.takeoff=_Type
@@ -698,11 +739,12 @@ function RAT:_SpawnWithRoute(_departure, _destination)
 
   -- Set takeoff type.
   local _takeoff=self.takeoff
-  if self.takeoff==RAT.waypoint.coldorhot then
-    local temp={RAT.waypoint.cold, RAT.waypoint.hot}
+  if self.takeoff==RAT.wp.coldorhot then
+    local temp={RAT.wp.cold, RAT.wp.hot}
     _takeoff=temp[math.random(2)]
     env.info(myid.."Random takeoff type: ".._takeoff)
   end
+  env.info(myid.."Takeoff type: ".._takeoff)
 
   -- Set flight plan.
   local departure, destination, waypoints = self:_SetRoute(_takeoff, _departure, _destination)
@@ -750,12 +792,12 @@ function RAT:_SpawnWithRoute(_departure, _destination)
     local name=self.aircraft.type.." ID "..tostring(self.SpawnIndex)
     -- F10/RAT/<templatename>/Group X
     self.Menu[self.SubMenuName].groups[self.SpawnIndex]=MENU_MISSION:New(name, self.Menu[self.SubMenuName].groups)
-    -- F10/RAT/<templatename>/Group X/ROT
+    -- F10/RAT/<templatename>/Group X/Set ROE
     self.Menu[self.SubMenuName].groups[self.SpawnIndex]["roe"]=MENU_MISSION:New("Set ROE", self.Menu[self.SubMenuName].groups[self.SpawnIndex])
     MENU_MISSION_COMMAND:New("Weapons hold", self.Menu[self.SubMenuName].groups[self.SpawnIndex]["roe"], self._SetROE, self, group, RAT.ROE.weaponhold)
     MENU_MISSION_COMMAND:New("Weapons free", self.Menu[self.SubMenuName].groups[self.SpawnIndex]["roe"], self._SetROE, self, group, RAT.ROE.weaponfree)
     MENU_MISSION_COMMAND:New("Return fire",  self.Menu[self.SubMenuName].groups[self.SpawnIndex]["roe"], self._SetROE, self, group, RAT.ROE.returnfire)
-    -- F10/RAT/<templatename>/Group X/ROT
+    -- F10/RAT/<templatename>/Group X/Set ROT
     self.Menu[self.SubMenuName].groups[self.SpawnIndex]["rot"]=MENU_MISSION:New("Set ROT", self.Menu[self.SubMenuName].groups[self.SpawnIndex])
     MENU_MISSION_COMMAND:New("No reaction",     self.Menu[self.SubMenuName].groups[self.SpawnIndex]["rot"], self._SetROT, self, group, RAT.ROT.noreaction)
     MENU_MISSION_COMMAND:New("Passive defense", self.Menu[self.SubMenuName].groups[self.SpawnIndex]["rot"], self._SetROT, self, group, RAT.ROT.passive)
@@ -806,13 +848,15 @@ end
 
 --- Set the route of the AI plane. Due to DCS landing bug, this has to be done before the unit is spawned.
 -- @param #RAT self
--- @param takeoff #RAT.waypoint Takeoff type.
+-- @param takeoff #RAT.wp Takeoff type.
 -- @param Wrapper.Airport#AIRBASE _departure (Optional) Departure airbase.
 -- @param Wrapper.Airport#AIRBASE _destination (Optional) Destination airbase.
 -- @return Wrapper.Airport#AIRBASE Departure airbase.
 -- @return Wrapper.Airport#AIRBASE Destination airbase.
 -- @return #table Table of flight plan waypoints. 
 function RAT:_SetRoute(takeoff, _departure, _destination)
+
+  env.info(myid.."takeoff in _setroute: "..takeoff)
   
   -- Min cruise speed 70% of Vmax or 600 km/h whichever is lower.
   local VxCruiseMin = math.min(self.aircraft.Vmax*0.70, 166)
@@ -856,7 +900,7 @@ function RAT:_SetRoute(takeoff, _departure, _destination)
 
   -- Coordinates of departure point.
   local Pdeparture
-  if takeoff==RAT.waypoint.air then
+  if takeoff==RAT.wp.air then
     -- For an air start, we take a random point within the spawn zone.
     local vec2=departure:GetRandomVec2()
     --Pdeparture=COORDINATE:New(vec2.x, self.aircraft.FLcruise, vec2.y)
@@ -867,7 +911,7 @@ function RAT:_SetRoute(takeoff, _departure, _destination)
   
   -- Height ASL of departure point.
   local H_departure
-  if takeoff==RAT.waypoint.air then
+  if takeoff==RAT.wp.air then
     -- Departure altitude is 70% of default cruise with 30% variation and limited to 1000 m AGL (50 m for helos). 
     local Hmin
     if self.category==RAT.cat.plane then
@@ -1061,12 +1105,12 @@ function RAT:_SetRoute(takeoff, _departure, _destination)
   
   --Convert coordinates into route waypoints.
   local wp0=self:_Waypoint(takeoff,              c0, VxClimb,   H_departure, departure)
-  local wp1=self:_Waypoint(RAT.waypoint.climb,   c1, VxClimb,   H_departure+(FLcruise-H_departure)/2)
-  local wp2=self:_Waypoint(RAT.waypoint.cruise,  c2, VxCruise,  FLcruise)
-  local wp3=self:_Waypoint(RAT.waypoint.cruise,  c3, VxCruise,  FLcruise)
-  local wp4=self:_Waypoint(RAT.waypoint.descent, c4, VxDescent, FLcruise-(FLcruise-(h_holding+H_holding))/2)
-  local wp5=self:_Waypoint(RAT.waypoint.holding, c5, VxHolding, H_holding+h_holding)
-  local wp6=self:_Waypoint(RAT.waypoint.landing, c6, VxFinal,   H_destination, destination)
+  local wp1=self:_Waypoint(RAT.wp.climb,   c1, VxClimb,   H_departure+(FLcruise-H_departure)/2)
+  local wp2=self:_Waypoint(RAT.wp.cruise,  c2, VxCruise,  FLcruise)
+  local wp3=self:_Waypoint(RAT.wp.cruise,  c3, VxCruise,  FLcruise)
+  local wp4=self:_Waypoint(RAT.wp.descent, c4, VxDescent, FLcruise-(FLcruise-(h_holding+H_holding))/2)
+  local wp5=self:_Waypoint(RAT.wp.holding, c5, VxHolding, H_holding+h_holding)
+  local wp6=self:_Waypoint(RAT.wp.landing, c6, VxFinal,   H_destination, destination)
   
    -- set waypoints
   local waypoints = {wp0, wp1, wp2, wp3, wp4, wp5, wp6}
@@ -1097,7 +1141,7 @@ function RAT:_PickDeparture(takeoff)
   -- Array of possible departure airports or zones.
   local departures={}
   
-  if takeoff==RAT.waypoint.air then
+  if takeoff==RAT.wp.air then
   
     if self.random_departure then
     
@@ -1142,7 +1186,7 @@ function RAT:_PickDeparture(takeoff)
   local departure=departures[math.random(#departures)]
   
   local text
-  if takeoff==RAT.waypoint.air then
+  if takeoff==RAT.wp.air then
     text="Chosen departure zone: "..departure:GetName()
   else
     text="Chosen departure airport: "..departure:GetName().." (ID "..departure:GetID()..")"
@@ -1466,7 +1510,7 @@ end
 
 --- Function is executed when a unit is spawned.
 -- @param #RAT self
-function RAT:_OnBirthDay(EventData)
+function RAT:_OnBirth(EventData)
 
   env.info(myid.."It's a birthday!")
 
@@ -1743,13 +1787,15 @@ end
 
 --- Create a waypoint that can be used with the Route command.
 -- @param #RAT self 
--- @param #string Type Type of waypoint. takeoff-cold, takeoff-hot, takeoff-runway, climb, cruise, descent, holding, land, landing.
+-- @param #number Type Type of waypoint.
 -- @param Core.Point#COORDINATE Coord 3D coordinate of the waypoint.
 -- @param #number Speed Speed in m/s.
 -- @param #number Altitude Altitude in m.
 -- @param Wrapper.Airbase#AIRBASE Airport Airport of object to spawn.
 -- @return #table Waypoints for DCS task route or spawn template.
 function RAT:_Waypoint(Type, Coord, Speed, Altitude, Airport)
+
+  env.info(myid.."takeoff in _waypoint: "..Type)
 
   -- Altitude of input parameter or y-component of 3D-coordinate.
   local _Altitude=Altitude or Coord.y
@@ -1763,53 +1809,53 @@ function RAT:_Waypoint(Type, Coord, Speed, Altitude, Airport)
   local _alttype="RADIO"
   local _AID=nil
 
-  if Type==RAT.waypoint.cold then
+  if Type==RAT.wp.cold then
     -- take-off with engine off
     _Type="TakeOffParking"
     _Action="From Parking Area"
     _Altitude = 2
     _alttype="RADIO"
     _AID = Airport:GetID()
-  elseif Type==RAT.waypoint.hot then
+  elseif Type==RAT.wp.hot then
     -- take-off with engine on 
     _Type="TakeOffParkingHot"
     _Action="From Parking Area Hot"
     _Altitude = 2
     _alttype="RADIO"
     _AID = Airport:GetID()
-  elseif Type==RAT.waypoint.runway then
+  elseif Type==RAT.wp.runway then
     -- take-off from runway
     _Type="TakeOff"
     _Action="From Parking Area"
     _Altitude = 2
     _alttype="RADIO"
     _AID = Airport:GetID()
-  elseif Type==RAT.waypoint.air then
+  elseif Type==RAT.wp.air then
     -- air start
     _Type="Turning Point"
     _Action="Turning Point"
     _alttype="BARO"
-  elseif Type==RAT.waypoint.climb then
+  elseif Type==RAT.wp.climb then
     _Type="Turning Point"
     _Action="Turning Point"
     --_Action="Fly Over Point"
     _alttype="BARO"
-  elseif Type==RAT.waypoint.cruise then
+  elseif Type==RAT.wp.cruise then
     _Type="Turning Point"
     _Action="Turning Point"
     --_Action="Fly Over Point"
     _alttype="BARO"
-  elseif Type==RAT.waypoint.descent then
+  elseif Type==RAT.wp.descent then
     _Type="Turning Point"
     _Action="Turning Point"
     --_Action="Fly Over Point"
     _alttype="BARO"
-  elseif Type==RAT.waypoint.holding then
+  elseif Type==RAT.wp.holding then
     _Type="Turning Point"
     _Action="Turning Point"
     --_Action="Fly Over Point"
     _alttype="BARO"
-  elseif Type==RAT.waypoint.landing then
+  elseif Type==RAT.wp.landing then
     _Type="Land"
     _Action="Landing"
     _Altitude = 2
@@ -1832,7 +1878,7 @@ function RAT:_Waypoint(Type, Coord, Speed, Altitude, Airport)
   text=text..string.format("Land     = %6.1f m ASL\n", Hland)
   text=text..string.format("Altitude = %6.1f m (%s)\n", _Altitude, _alttype)
   if Airport then
-    if Type==RAT.waypoint.air then
+    if Type==RAT.wp.air then
       text=text..string.format("Zone = %s\n", Airport:GetName())
     else
       text=text..string.format("Airport = %s with ID %i\n", Airport:GetName(), Airport:GetID())
@@ -1876,7 +1922,7 @@ function RAT:_Waypoint(Type, Coord, Speed, Altitude, Airport)
     ["steer"]  = 2,
   }
   -- task
-  if Type==RAT.waypoint.holding then
+  if Type==RAT.wp.holding then
     -- Duration of holing. Between 10 and 170 seconds. 
     local Duration=self:_Randomize(90,0.9)    
     RoutePoint.task=self:_TaskHolding({x=Coord.x, y=Coord.z}, Altitude, Speed, Duration)
@@ -2233,9 +2279,9 @@ end
 function RAT:_SetMarker(text, wp)
   RAT.markerid=RAT.markerid+1
   table.insert(self.markerids,RAT.markerid)
-  if self.debug then
-    env.info(myid.."Placing marker with ID "..RAT.markerid..": "..text)
-  end
+  --if self.debug then
+    env.info(myid..self.SpawnTemplatePrefix..": placing marker with ID "..RAT.markerid..": "..text)
+  --end
   -- Convert to coordinate.
   local vec={x=wp.x, y=wp.alt, z=wp.y}
   -- Place maker visible for all on the F10 map.
@@ -2248,10 +2294,12 @@ end
 function RAT:_DeleteMarkers(ids)
   if ids then
     for k,v in pairs(ids) do
-      trigger.action.removeMark(k)
+      env.info("Deleting maker id v= "..v)
+      trigger.action.removeMark(v)
     end  
   else
     for i=1,RAT.markerid do
+      env.info("Deleting maker id i= "..i)
       trigger.action.removeMark(i)
     end
   end
