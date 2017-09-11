@@ -301,8 +301,54 @@ do -- COORDINATE
   end
 
 
+  --- Set the heading of the coordinate, if applicable.
+  -- @param #COORDINATE self
   function COORDINATE:SetHeading( Heading )
     self.Heading = Heading
+  end
+  
+  
+  --- Get the heading of the coordinate, if applicable.
+  -- @param #COORDINATE self
+  -- @return #number or nil
+  function COORDINATE:GetHeading()
+    return self.Heading
+  end
+
+  
+  --- Set the velocity of the COORDINATE.
+  -- @param #COORDINATE self
+  -- @param #string Velocity Velocity in meters per second.
+  function COORDINATE:SetVelocity( Velocity )
+    self.Velocity = Velocity
+  end
+
+  
+  --- Return the velocity of the COORDINATE.
+  -- @param #COORDINATE self
+  -- @return #number Velocity in meters per second.
+  function COORDINATE:GetVelocity()
+    local Velocity = self.Velocity
+    return Velocity or 0
+  end
+
+  
+  --- Return velocity text of the COORDINATE.
+  -- @param #COORDINATE self
+  -- @return #string
+  function COORDINATE:GetMovingText( Settings )
+
+    local MovingText = ""  
+
+    local Velocity = self:GetVelocity()
+    
+    if Velocity == 0 then
+      MovingText = MovingText .. "stationary "
+    else
+      MovingText = MovingText .. "moving at " .. self:GetVelocityText( Settings ) .. " " .. self:GetHeadingText( Settings )
+    end
+    
+    return MovingText
   end
 
 
@@ -358,6 +404,7 @@ do -- COORDINATE
     local SourceVec3 = self:GetVec3()
     return ( ( TargetVec3.x - SourceVec3.x ) ^ 2 + ( TargetVec3.z - SourceVec3.z ) ^ 2 ) ^ 0.5
   end
+
 
   --- Return the 3D distance in meters between the target COORDINATE and the COORDINATE.
   -- @param #COORDINATE self
@@ -419,6 +466,39 @@ do -- COORDINATE
       else
         return " at " .. UTILS.Round( UTILS.MetersToFeet( self.y ), -3 ) .. " feet"
       end
+    else
+      return ""
+    end
+  end
+
+
+
+  --- Return the velocity text of the COORDINATE.
+  -- @param #COORDINATE self
+  -- @return #string Velocity text.
+  function COORDINATE:GetVelocityText( Settings )
+    local Velocity = self:GetVelocity()
+    local Settings = Settings or _SETTINGS
+    if Velocity then
+      if Settings:IsMetric() then
+        return UTILS.MpsToKmph( Velocity ) .. " km/h"
+      else
+        return UTILS.MpsToKmph( Velocity ) / 1.852 .. " mph"
+      end
+    else
+      return ""
+    end
+  end
+
+
+  --- Return the heading text of the COORDINATE.
+  -- @param #COORDINATE self
+  -- @return #string Heading text.
+  function COORDINATE:GetHeadingText( Settings )
+    local Heading = self.Heading
+    local Settings = Settings or _SETTINGS
+    if Heading then
+      return Heading .. "°"
     else
       return ""
     end
@@ -723,7 +803,7 @@ do -- COORDINATE
     --   local TargetCoord = TargetGroup:GetCoordinate()
     --   local MarkGroup = GROUP:FindByName( "AttackGroup" )
     --   local MarkID = TargetCoord:MarkToGroup( "This is a target for the attack group", AttackGroup )
-    function COORDINATE:MarkToCoalition( MarkText, MarkGroup )
+    function COORDINATE:MarkToGroup( MarkText, MarkGroup )
       local MarkID = UTILS.GetMarkID()
       trigger.action.markToGroup( MarkID, MarkText, self:GetVec3(), MarkGroup:GetID() )
       return MarkID
