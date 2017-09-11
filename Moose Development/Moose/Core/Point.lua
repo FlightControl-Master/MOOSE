@@ -90,6 +90,18 @@ do -- COORDINATE
   --   * @{#COORDINATE.IlluminationBomb}(): To illuminate the point.
   --
   --
+  -- ## Markings
+  -- 
+  -- Place markers (text boxes with clarifications for briefings, target locations or any other reference point) on the map for all players, coalitions or specific groups:
+  -- 
+  --   * @{#COORDINATE.MarkToAll}(): Place a mark to all players.
+  --   * @{#COORDINATE.MarkToCoalition}(): Place a mark to a coalition.
+  --   * @{#COORDINATE.MarkToCoalitionRed}(): Place a mark to the red coalition.
+  --   * @{#COORDINATE.MarkToCoalitionBlue}(): Place a mark to the blue coalition.
+  --   * @{#COORDINATE.MarkToGroup}(): Place a mark to a group (needs to have a client in it or a CA group (CA group is bugged)).
+  --   * @{#COORDINATE.RemoveMark}(): Removes a mark from the map.
+  --   
+  --
   -- ## 3D calculation methods
   --
   -- Various calculation methods exist to use or manipulate 3D space. Find below a short description of each method:
@@ -289,8 +301,54 @@ do -- COORDINATE
   end
 
 
+  --- Set the heading of the coordinate, if applicable.
+  -- @param #COORDINATE self
   function COORDINATE:SetHeading( Heading )
     self.Heading = Heading
+  end
+  
+  
+  --- Get the heading of the coordinate, if applicable.
+  -- @param #COORDINATE self
+  -- @return #number or nil
+  function COORDINATE:GetHeading()
+    return self.Heading
+  end
+
+  
+  --- Set the velocity of the COORDINATE.
+  -- @param #COORDINATE self
+  -- @param #string Velocity Velocity in meters per second.
+  function COORDINATE:SetVelocity( Velocity )
+    self.Velocity = Velocity
+  end
+
+  
+  --- Return the velocity of the COORDINATE.
+  -- @param #COORDINATE self
+  -- @return #number Velocity in meters per second.
+  function COORDINATE:GetVelocity()
+    local Velocity = self.Velocity
+    return Velocity or 0
+  end
+
+  
+  --- Return velocity text of the COORDINATE.
+  -- @param #COORDINATE self
+  -- @return #string
+  function COORDINATE:GetMovingText( Settings )
+
+    local MovingText = ""  
+
+    local Velocity = self:GetVelocity()
+    
+    if Velocity == 0 then
+      MovingText = MovingText .. "stationary "
+    else
+      MovingText = MovingText .. "moving at " .. self:GetVelocityText( Settings ) .. " " .. self:GetHeadingText( Settings )
+    end
+    
+    return MovingText
   end
 
 
@@ -346,6 +404,7 @@ do -- COORDINATE
     local SourceVec3 = self:GetVec3()
     return ( ( TargetVec3.x - SourceVec3.x ) ^ 2 + ( TargetVec3.z - SourceVec3.z ) ^ 2 ) ^ 0.5
   end
+
 
   --- Return the 3D distance in meters between the target COORDINATE and the COORDINATE.
   -- @param #COORDINATE self
@@ -407,6 +466,39 @@ do -- COORDINATE
       else
         return " at " .. UTILS.Round( UTILS.MetersToFeet( self.y ), -3 ) .. " feet"
       end
+    else
+      return ""
+    end
+  end
+
+
+
+  --- Return the velocity text of the COORDINATE.
+  -- @param #COORDINATE self
+  -- @return #string Velocity text.
+  function COORDINATE:GetVelocityText( Settings )
+    local Velocity = self:GetVelocity()
+    local Settings = Settings or _SETTINGS
+    if Velocity then
+      if Settings:IsMetric() then
+        return UTILS.MpsToKmph( Velocity ) .. " km/h"
+      else
+        return UTILS.MpsToKmph( Velocity ) / 1.852 .. " mph"
+      end
+    else
+      return ""
+    end
+  end
+
+
+  --- Return the heading text of the COORDINATE.
+  -- @param #COORDINATE self
+  -- @return #string Heading text.
+  function COORDINATE:GetHeadingText( Settings )
+    local Heading = self.Heading
+    local Settings = Settings or _SETTINGS
+    if Heading then
+      return Heading .. "°"
     else
       return ""
     end
@@ -650,6 +742,88 @@ do -- COORDINATE
     self:F2( Azimuth )
     self:Flare( FLARECOLOR.Red, Azimuth )
   end
+  
+  do -- Markings
+  
+    --- Mark to All
+    -- @param #COORDINATE self
+    -- @param #string MarkText Free format text that shows the marking clarification.
+    -- @return #number The resulting Mark ID which is a number.
+    -- @usage
+    --   local TargetCoord = TargetGroup:GetCoordinate()
+    --   local MarkID = TargetCoord:MarkToAll( "This is a target for all players" )
+    function COORDINATE:MarkToAll( MarkText )
+      local MarkID = UTILS.GetMarkID()
+      trigger.action.markToAll( MarkID, MarkText, self:GetVec3() )
+      return MarkID
+    end
+
+    --- Mark to Coalition
+    -- @param #COORDINATE self
+    -- @param #string MarkText Free format text that shows the marking clarification.
+    -- @param Coalition
+    -- @return #number The resulting Mark ID which is a number.
+    -- @usage
+    --   local TargetCoord = TargetGroup:GetCoordinate()
+    --   local MarkID = TargetCoord:MarkToCoalition( "This is a target for the red coalition", coalition.side.RED )
+    function COORDINATE:MarkToCoalition( MarkText, Coalition )
+      local MarkID = UTILS.GetMarkID()
+      trigger.action.markToCoalition( MarkID, MarkText, self:GetVec3(), Coalition )
+      return MarkID
+    end
+
+    --- Mark to Red Coalition
+    -- @param #COORDINATE self
+    -- @param #string MarkText Free format text that shows the marking clarification.
+    -- @return #number The resulting Mark ID which is a number.
+    -- @usage
+    --   local TargetCoord = TargetGroup:GetCoordinate()
+    --   local MarkID = TargetCoord:MarkToCoalitionRed( "This is a target for the red coalition" )
+    function COORDINATE:MarkToCoalitionRed( MarkText )
+      return self:MarkToCoalition( MarkText, coalition.side.RED )
+    end
+
+    --- Mark to Blue Coalition
+    -- @param #COORDINATE self
+    -- @param #string MarkText Free format text that shows the marking clarification.
+    -- @return #number The resulting Mark ID which is a number.
+    -- @usage
+    --   local TargetCoord = TargetGroup:GetCoordinate()
+    --   local MarkID = TargetCoord:MarkToCoalitionBlue( "This is a target for the blue coalition" )
+    function COORDINATE:MarkToCoalitionBlue( MarkText )
+      return self:MarkToCoalition( MarkText, coalition.side.BLUE )
+    end
+
+    --- Mark to Group
+    -- @param #COORDINATE self
+    -- @param #string MarkText Free format text that shows the marking clarification.
+    -- @param Wrapper.Group#GROUP MarkGroup The @{Group} that receives the mark.
+    -- @return #number The resulting Mark ID which is a number.
+    -- @usage
+    --   local TargetCoord = TargetGroup:GetCoordinate()
+    --   local MarkGroup = GROUP:FindByName( "AttackGroup" )
+    --   local MarkID = TargetCoord:MarkToGroup( "This is a target for the attack group", AttackGroup )
+    function COORDINATE:MarkToGroup( MarkText, MarkGroup )
+      local MarkID = UTILS.GetMarkID()
+      trigger.action.markToGroup( MarkID, MarkText, self:GetVec3(), MarkGroup:GetID() )
+      return MarkID
+    end
+    
+    --- Remove a mark
+    -- @param #COORDINATE self
+    -- @param #number MarkID The ID of the mark to be removed.
+    -- @usage
+    --   local TargetCoord = TargetGroup:GetCoordinate()
+    --   local MarkGroup = GROUP:FindByName( "AttackGroup" )
+    --   local MarkID = TargetCoord:MarkToGroup( "This is a target for the attack group", AttackGroup )
+    --   <<< logic >>>
+    --   RemoveMark( MarkID ) -- The mark is now removed
+    function COORDINATE:RemoveMark( MarkID )
+      trigger.action.removeMark( MarkID )
+    end
+  
+  end -- Markings
+  
 
   --- Returns if a Coordinate has Line of Sight (LOS) with the ToCoordinate.
   -- @param #COORDINATE self

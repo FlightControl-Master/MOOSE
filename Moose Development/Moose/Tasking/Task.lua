@@ -870,13 +870,11 @@ function TASK:MenuMarkToGroup( TaskGroup )
 
   local Coordinate = self:GetInfo( "Coordinates" ) -- Core.Point#COORDINATE
   local Briefing = self:GetTaskBriefing()
-  local GroupID = TaskGroup:GetID()
-  local Vec3 = Coordinate:GetVec3()
   
-  self:F( { Coordinate = Vec3, Briefing = Briefing, GroupID = GroupID } )
+  self:F( { Briefing = Briefing, Coordinate = Coordinate } )
   
-  trigger.action.markToGroup( 1, Briefing, Vec3, GroupID )  
-  --trigger.action.markToAll( 1, Briefing, Vec3 )
+  Coordinate:MarkToGroup( Briefing, TaskGroup )
+  --Coordinate:MarkToAll( Briefing )
 end
 
 --- Report the task status.

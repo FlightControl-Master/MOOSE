@@ -166,6 +166,7 @@ function POSITIONABLE:GetCoordinate()
     
     local PositionableCoordinate = COORDINATE:NewFromVec3( PositionableVec3 )
     PositionableCoordinate:SetHeading( self:GetHeading() )
+    PositionableCoordinate:SetVelocity( self:GetVelocityMPS() )
   
     self:T2( PositionableCoordinate )
     return PositionableCoordinate
