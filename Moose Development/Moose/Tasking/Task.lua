@@ -873,8 +873,8 @@ function TASK:MenuMarkToGroup( TaskGroup )
   
   self:F( { Briefing = Briefing, Coordinate = Coordinate } )
   
-  --Coordinate:MarkToGroup( Briefing, TaskGroup )
-  Coordinate:MarkToAll( Briefing )
+  Coordinate:MarkToGroup( Briefing, TaskGroup )
+  --Coordinate:MarkToAll( Briefing )
 end
 
 --- Report the task status.
