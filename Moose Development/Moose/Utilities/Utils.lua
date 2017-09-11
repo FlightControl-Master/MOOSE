@@ -31,7 +31,9 @@ FLARECOLOR = trigger.flareColor -- #FLARECOLOR
 
 --- Utilities static class.
 -- @type UTILS
-UTILS = {}
+UTILS = {
+  _MarkID = 0
+}
 
 --- Function to infer instance of an object
 --
@@ -394,4 +396,12 @@ function UTILS.spairs( t, order )
             return keys[i], t[keys[i]]
         end
     end
+end
+
+-- get a new mark ID for markings
+function UTILS.GetMarkID()
+
+  UTILS._MarkID = UTILS._MarkID + 1
+  return UTILS._MarkID
+
 end

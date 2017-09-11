@@ -318,6 +318,30 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).MarkToAll">COORDINATE:MarkToAll(MarkText)</a></td>
+		<td class="summary">
+<p>Mark to All</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).MarkToCoalition">COORDINATE:MarkToCoalition(MarkText, Coalition)</a></td>
+		<td class="summary">
+<p>Mark to Coalition</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).MarkToCoalitionBlue">COORDINATE:MarkToCoalitionBlue(MarkText)</a></td>
+		<td class="summary">
+<p>Mark to Blue Coalition</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).MarkToCoalitionRed">COORDINATE:MarkToCoalitionRed(MarkText)</a></td>
+		<td class="summary">
+<p>Mark to Red Coalition</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).New">COORDINATE:New(x, y, z)</a></td>
 		<td class="summary">
 <p>COORDINATE constructor.</p>
@@ -333,6 +357,12 @@
 		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).NewFromVec3">COORDINATE:NewFromVec3(Vec3)</a></td>
 		<td class="summary">
 <p>Create a new COORDINATE object from  Vec3 coordinates.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).RemoveMark">COORDINATE:RemoveMark(MarkID)</a></td>
+		<td class="summary">
+<p>Remove a mark</p>
 </td>
 		</tr>
 		<tr>
@@ -382,6 +412,18 @@
 		<td class="summary">
 <p>Provides a coordinate string of the point, based on a coordinate format system:
   * Uses default settings in COORDINATE.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).ToStringA2A">COORDINATE:ToStringA2A(Controllable, Settings)</a></td>
+		<td class="summary">
+<p>Provides a coordinate string of the point, based on the A2A coordinate format system.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).ToStringA2G">COORDINATE:ToStringA2G(Controllable, Settings)</a></td>
+		<td class="summary">
+<p>Provides a coordinate string of the point, based on the A2G coordinate format system.</p>
 </td>
 		</tr>
 		<tr>
@@ -847,6 +889,20 @@
 
 <ul>
     <li><a href="##(COORDINATE).IlluminationBomb">COORDINATE.IlluminationBomb</a>(): To illuminate the point.</li>
+</ul>
+
+
+<h2>Markings</h2>
+
+<p>Place markers (text boxes with clarifications for briefings, target locations or any other reference point) on the map for all players, coalitions or specific groups:</p>
+
+<ul>
+    <li><a href="##(COORDINATE).MarkToAll">COORDINATE.MarkToAll</a>(): Place a mark to all players.</li>
+    <li><a href="##(COORDINATE).MarkToCoalition">COORDINATE.MarkToCoalition</a>(): Place a mark to a coalition.</li>
+    <li><a href="##(COORDINATE).MarkToCoalitionRed">COORDINATE.MarkToCoalitionRed</a>(): Place a mark to the red coalition.</li>
+    <li><a href="##(COORDINATE).MarkToCoalitionBlue">COORDINATE.MarkToCoalitionBlue</a>(): Place a mark to the blue coalition.</li>
+    <li><a href="##(COORDINATE).MarkToGroup">COORDINATE.MarkToGroup</a>(): Place a mark to a group (needs to have a client in it or a CA group (CA group is bugged)).</li>
+    <li><a href="##(COORDINATE).RemoveMark">COORDINATE.RemoveMark</a>(): Removes a mark from the map.</li>
 </ul>
 
 
@@ -1688,6 +1744,135 @@ true If the ToCoordinate has LOS with the Coordinate, otherwise false.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(COORDINATE).MarkToAll" >
+<strong>COORDINATE:MarkToAll(MarkText)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Mark to All</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string MarkText </em></code>: 
+Free format text that shows the marking clarification.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#number:</em>
+The resulting Mark ID which is a number.</p>
+
+			<h3>Usage:</h3>
+		<pre class="example"><code>  local TargetCoord = TargetGroup:GetCoordinate()
+  local MarkID = TargetCoord:MarkToAll( "This is a target for all players" )</code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(COORDINATE).MarkToCoalition" >
+<strong>COORDINATE:MarkToCoalition(MarkText, Coalition)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Mark to Coalition</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string MarkText </em></code>: 
+Free format text that shows the marking clarification.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> Coalition </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#number:</em>
+The resulting Mark ID which is a number.</p>
+
+			<h3>Usage:</h3>
+		<pre class="example"><code>  local TargetCoord = TargetGroup:GetCoordinate()
+  local MarkID = TargetCoord:MarkToCoalition( "This is a target for the red coalition", coalition.side.RED )</code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(COORDINATE).MarkToCoalitionBlue" >
+<strong>COORDINATE:MarkToCoalitionBlue(MarkText)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Mark to Blue Coalition</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string MarkText </em></code>: 
+Free format text that shows the marking clarification.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#number:</em>
+The resulting Mark ID which is a number.</p>
+
+			<h3>Usage:</h3>
+		<pre class="example"><code>  local TargetCoord = TargetGroup:GetCoordinate()
+  local MarkID = TargetCoord:MarkToCoalitionBlue( "This is a target for the blue coalition" )</code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(COORDINATE).MarkToCoalitionRed" >
+<strong>COORDINATE:MarkToCoalitionRed(MarkText)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Mark to Red Coalition</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string MarkText </em></code>: 
+Free format text that shows the marking clarification.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#number:</em>
+The resulting Mark ID which is a number.</p>
+
+			<h3>Usage:</h3>
+		<pre class="example"><code>  local TargetCoord = TargetGroup:GetCoordinate()
+  local MarkID = TargetCoord:MarkToCoalitionRed( "This is a target for the red coalition" )</code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(COORDINATE).New" >
 <strong>COORDINATE:New(x, y, z)</strong>
 </a>
@@ -1781,6 +1966,35 @@ The Vec3 point.</p>
 				
 <p><em><a href="##(COORDINATE)">#COORDINATE</a>:</em></p>
 
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(COORDINATE).RemoveMark" >
+<strong>COORDINATE:RemoveMark(MarkID)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Remove a mark</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number MarkID </em></code>: 
+The ID of the mark to be removed.</p>
+
+				</li>
+		</ul>
+			<h3>Usage:</h3>
+		<pre class="example"><code>  local TargetCoord = TargetGroup:GetCoordinate()
+  local MarkGroup = GROUP:FindByName( "AttackGroup" )
+  local MarkID = TargetCoord:MarkToGroup( "This is a target for the attack group", AttackGroup )
+  &lt;&lt;&lt; logic &gt;&gt;&gt;
+  RemoveMark( MarkID ) -- The mark is now removed</code></pre>
 
 </dd>
 </dl>
@@ -1924,6 +2138,68 @@ The Vec3 point.</p>
 				
 <p><code><em><a href="Tasking.Task.html##(TASK)">Tasking.Task#TASK</a> Task </em></code>: 
 The task for which coordinates need to be calculated.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#string:</em>
+The coordinate Text in the configured coordinate system.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(COORDINATE).ToStringA2A" >
+<strong>COORDINATE:ToStringA2A(Controllable, Settings)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Provides a coordinate string of the point, based on the A2A coordinate format system.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> Controllable </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Core.Settings.html##(SETTINGS)">Core.Settings#SETTINGS</a> Settings </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#string:</em>
+The coordinate Text in the configured coordinate system.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(COORDINATE).ToStringA2G" >
+<strong>COORDINATE:ToStringA2G(Controllable, Settings)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Provides a coordinate string of the point, based on the A2G coordinate format system.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> Controllable </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Core.Settings.html##(SETTINGS)">Core.Settings#SETTINGS</a> Settings </em></code>: </p>
 
 				</li>
 		</ul>
@@ -2862,7 +3138,6 @@ The y coordinate.</p>
 		<dl class="function">
 <dt>
 
-		<em></em>
 <a id="#(POINT_VEC2).z" >
 <strong>POINT_VEC2.z</strong>
 </a>

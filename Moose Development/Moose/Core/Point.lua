@@ -90,6 +90,18 @@ do -- COORDINATE
   --   * @{#COORDINATE.IlluminationBomb}(): To illuminate the point.
   --
   --
+  -- ## Markings
+  -- 
+  -- Place markers (text boxes with clarifications for briefings, target locations or any other reference point) on the map for all players, coalitions or specific groups:
+  -- 
+  --   * @{#COORDINATE.MarkToAll}(): Place a mark to all players.
+  --   * @{#COORDINATE.MarkToCoalition}(): Place a mark to a coalition.
+  --   * @{#COORDINATE.MarkToCoalitionRed}(): Place a mark to the red coalition.
+  --   * @{#COORDINATE.MarkToCoalitionBlue}(): Place a mark to the blue coalition.
+  --   * @{#COORDINATE.MarkToGroup}(): Place a mark to a group (needs to have a client in it or a CA group (CA group is bugged)).
+  --   * @{#COORDINATE.RemoveMark}(): Removes a mark from the map.
+  --   
+  --
   -- ## 3D calculation methods
   --
   -- Various calculation methods exist to use or manipulate 3D space. Find below a short description of each method:
@@ -650,6 +662,88 @@ do -- COORDINATE
     self:F2( Azimuth )
     self:Flare( FLARECOLOR.Red, Azimuth )
   end
+  
+  do -- Markings
+  
+    --- Mark to All
+    -- @param #COORDINATE self
+    -- @param #string MarkText Free format text that shows the marking clarification.
+    -- @return #number The resulting Mark ID which is a number.
+    -- @usage
+    --   local TargetCoord = TargetGroup:GetCoordinate()
+    --   local MarkID = TargetCoord:MarkToAll( "This is a target for all players" )
+    function COORDINATE:MarkToAll( MarkText )
+      local MarkID = UTILS.GetMarkID()
+      trigger.action.markToAll( MarkID, MarkText, self:GetVec3() )
+      return MarkID
+    end
+
+    --- Mark to Coalition
+    -- @param #COORDINATE self
+    -- @param #string MarkText Free format text that shows the marking clarification.
+    -- @param Coalition
+    -- @return #number The resulting Mark ID which is a number.
+    -- @usage
+    --   local TargetCoord = TargetGroup:GetCoordinate()
+    --   local MarkID = TargetCoord:MarkToCoalition( "This is a target for the red coalition", coalition.side.RED )
+    function COORDINATE:MarkToCoalition( MarkText, Coalition )
+      local MarkID = UTILS.GetMarkID()
+      trigger.action.markToCoalition( MarkID, MarkText, self:GetVec3(), Coalition )
+      return MarkID
+    end
+
+    --- Mark to Red Coalition
+    -- @param #COORDINATE self
+    -- @param #string MarkText Free format text that shows the marking clarification.
+    -- @return #number The resulting Mark ID which is a number.
+    -- @usage
+    --   local TargetCoord = TargetGroup:GetCoordinate()
+    --   local MarkID = TargetCoord:MarkToCoalitionRed( "This is a target for the red coalition" )
+    function COORDINATE:MarkToCoalitionRed( MarkText )
+      return self:MarkToCoalition( MarkText, coalition.side.RED )
+    end
+
+    --- Mark to Blue Coalition
+    -- @param #COORDINATE self
+    -- @param #string MarkText Free format text that shows the marking clarification.
+    -- @return #number The resulting Mark ID which is a number.
+    -- @usage
+    --   local TargetCoord = TargetGroup:GetCoordinate()
+    --   local MarkID = TargetCoord:MarkToCoalitionBlue( "This is a target for the blue coalition" )
+    function COORDINATE:MarkToCoalitionBlue( MarkText )
+      return self:MarkToCoalition( MarkText, coalition.side.BLUE )
+    end
+
+    --- Mark to Group
+    -- @param #COORDINATE self
+    -- @param #string MarkText Free format text that shows the marking clarification.
+    -- @param Wrapper.Group#GROUP MarkGroup The @{Group} that receives the mark.
+    -- @return #number The resulting Mark ID which is a number.
+    -- @usage
+    --   local TargetCoord = TargetGroup:GetCoordinate()
+    --   local MarkGroup = GROUP:FindByName( "AttackGroup" )
+    --   local MarkID = TargetCoord:MarkToGroup( "This is a target for the attack group", AttackGroup )
+    function COORDINATE:MarkToCoalition( MarkText, MarkGroup )
+      local MarkID = UTILS.GetMarkID()
+      trigger.action.markToGroup( MarkID, MarkText, self:GetVec3(), MarkGroup:GetID() )
+      return MarkID
+    end
+    
+    --- Remove a mark
+    -- @param #COORDINATE self
+    -- @param #number MarkID The ID of the mark to be removed.
+    -- @usage
+    --   local TargetCoord = TargetGroup:GetCoordinate()
+    --   local MarkGroup = GROUP:FindByName( "AttackGroup" )
+    --   local MarkID = TargetCoord:MarkToGroup( "This is a target for the attack group", AttackGroup )
+    --   <<< logic >>>
+    --   RemoveMark( MarkID ) -- The mark is now removed
+    function COORDINATE:RemoveMark( MarkID )
+      trigger.action.removeMark( MarkID )
+    end
+  
+  end -- Markings
+  
 
   --- Returns if a Coordinate has Line of Sight (LOS) with the ToCoordinate.
   -- @param #COORDINATE self
