@@ -1644,7 +1644,7 @@ do -- DETECTION_BASE
         DetectedItem.Coordinate = Coordinate
         DetectedItem.Coordinate:SetHeading( DetectedItemUnit:GetHeading() )
         DetectedItem.Coordinate.y = DetectedItemUnit:GetAltitude()
-        DetectedItem.Coordinate.Speed = DetectedItemUnit:GetVelocityMPS()
+        DetectedItem.Coordinate:SetVelocity( DetectedItemUnit:GetVelocityMPS() )
       end
     end
   end
@@ -1675,7 +1675,7 @@ do -- DETECTION_BASE
     local DetectedSet = DetectedItem.Set
   
     if DetectedItem then
-      DetectedItem.ThreatLevel = DetectedSet:CalculateThreatLevelA2G()
+      DetectedItem.ThreatLevel, DetectedItem.ThreatText = DetectedSet:CalculateThreatLevelA2G()
     end
   end
   
@@ -1691,10 +1691,10 @@ do -- DETECTION_BASE
     local DetectedItem = self:GetDetectedItem( Index )
     
     if DetectedItem then
-      return DetectedItem.ThreatLevel or 0
+      return DetectedItem.ThreatLevel or 0, DetectedItem.ThreatText or ""
     end
     
-    return nil
+    return nil, ""
   end
   
   
@@ -2423,9 +2423,9 @@ do -- DETECTION_AREAS
   -- @param #DETECTION_BASE.DetectedItem DetectedItem
   function DETECTION_AREAS:CalculateIntercept( DetectedItem )
 
-    local DetectedSpeed = DetectedItem.Coordinate.Speed
-    local DetectedHeading = DetectedItem.Coordinate.Heading
     local DetectedCoord = DetectedItem.Coordinate
+    local DetectedSpeed = DetectedCoord:GetVelocity()
+    local DetectedHeading = DetectedCoord:GetHeading()
 
     if self.Intercept then
       local DetectedSet = DetectedItem.Set

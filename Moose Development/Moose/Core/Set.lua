@@ -1788,16 +1788,18 @@ end
 function SET_UNIT:CalculateThreatLevelA2G()
   
   local MaxThreatLevelA2G = 0
+  local MaxThreatText = ""
   for UnitName, UnitData in pairs( self:GetSet() ) do
     local ThreatUnit = UnitData -- Wrapper.Unit#UNIT
-    local ThreatLevelA2G = ThreatUnit:GetThreatLevel()
+    local ThreatLevelA2G, ThreatText = ThreatUnit:GetThreatLevel()
     if ThreatLevelA2G > MaxThreatLevelA2G then
       MaxThreatLevelA2G = ThreatLevelA2G
+      MaxThreatText = ThreatText
     end
   end
 
-  self:T3( MaxThreatLevelA2G )
-  return MaxThreatLevelA2G
+  self:F( { MaxThreatLevelA2G = MaxThreatLevelA2G, MaxThreatText = MaxThreatText } )
+  return MaxThreatLevelA2G, MaxThreatText
   
 end
 

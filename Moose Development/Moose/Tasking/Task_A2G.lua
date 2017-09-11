@@ -323,13 +323,18 @@ do -- TASK_A2G_SEAD
     
     Mission:AddTask( self )
     
-    self:SetBriefing( 
-      TaskBriefing or 
-      "Execute a Suppression of Enemy Air Defenses.\n"
-    )
-
     self:UpdateTaskInfo()
     
+    local ThreatLevel, ThreatText = TargetSetUnit:CalculateThreatLevelA2G()
+    local TargetUnit = TargetSetUnit:GetFirst()
+    local TargetCoord = TargetUnit:GetCoordinate()  -- Core.Point#COORDINATE
+    
+    self:SetBriefing( 
+      TaskBriefing or 
+      "Execute a Suppression of Enemy Air Defenses. " ..
+      ThreatText .. " targets to be expected. Target is " .. TargetCoord:GetMovingText() ..  "."
+    )
+
     return self
   end 
 
@@ -466,12 +471,17 @@ do -- TASK_A2G_BAI
     
     Mission:AddTask( self )
     
+    self:UpdateTaskInfo()
+
+    local ThreatLevel, ThreatText = TargetSetUnit:CalculateThreatLevelA2G()
+    local TargetUnit = TargetSetUnit:GetFirst()
+    local TargetCoord = TargetUnit:GetCoordinate()  -- Core.Point#COORDINATE
+
     self:SetBriefing( 
       TaskBriefing or 
-      "Execute a Battlefield Air Interdiction of a group of enemy targets.\n"
+      "Execute a Battlefield Air Interdiction of a group of enemy targets. " ..
+      ThreatText .. " targets to be expected. Target is " .. TargetCoord:GetMovingText() ..  "."
     )
-
-    self:UpdateTaskInfo()
     
     return self
   end
@@ -610,13 +620,20 @@ do -- TASK_A2G_CAS
     
     Mission:AddTask( self )
     
+    self:UpdateTaskInfo()
+
+    local ThreatLevel, ThreatText = TargetSetUnit:CalculateThreatLevelA2G()
+    local TargetUnit = TargetSetUnit:GetFirst()
+    local TargetCoord = TargetUnit:GetCoordinate()  -- Core.Point#COORDINATE
+
     self:SetBriefing( 
       TaskBriefing or 
-      "Execute a Close Air Support for a group of enemy targets.\n" ..
-      "Beware of friendlies at the vicinity!\n"
+      "Execute a Close Air Support for a group of enemy targets. " ..
+      "Beware of friendlies at the vicinity! " ..
+      ThreatText .. " targets to be expected. Target is " .. TargetCoord:GetMovingText() ..  "."
+      
     )
 
-    self:UpdateTaskInfo()
     
     return self
   end 
@@ -626,7 +643,9 @@ do -- TASK_A2G_CAS
     local TargetCoordinate = self.Detection and self.Detection:GetDetectedItemCoordinate( self.DetectedItemIndex ) or self.TargetSetUnit:GetFirst():GetCoordinate() 
     self:SetInfo( "Coordinates", TargetCoordinate, 0 )
 
-    self:SetInfo( "Threat", "[" .. string.rep(  "■", self.Detection and self.Detection:GetDetectedItemThreatLevel( self.DetectedItemIndex ) or self.TargetSetUnit:CalculateThreatLevelA2G() ) .. "]", 11 )
+    local ThreatLevel = self.Detection and self.Detection:GetDetectedItemThreatLevel( self.DetectedItemIndex ) or self.TargetSetUnit:CalculateThreatLevelA2G()
+
+    self:SetInfo( "Threat", "[" .. string.rep(  "■", ThreatLevel ) .. "]", 11 )
 
     if self.Detection then
       local DetectedItemsCount = self.TargetSetUnit:Count()

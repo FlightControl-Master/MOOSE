@@ -32,7 +32,7 @@ FLARECOLOR = trigger.flareColor -- #FLARECOLOR
 --- Utilities static class.
 -- @type UTILS
 UTILS = {
-  _MarkID = 0
+  _MarkID = 1
 }
 
 --- Function to infer instance of an object
