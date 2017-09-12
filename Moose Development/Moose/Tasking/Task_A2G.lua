@@ -141,9 +141,9 @@ do -- TASK_A2G
       else
         local TargetUnit = Task.TargetSetUnit:GetFirst() -- Wrapper.Unit#UNIT
         if TargetUnit then
-          local Coordinate = TargetUnit:GetCoordinate()
+          local Coordinate = TargetUnit:GetPointVec3()
           self:T( { TargetCoordinate = Coordinate, Coordinate:GetX(), Coordinate:GetY(), Coordinate:GetZ() } )
-          Task:SetTargetCoordinate( TargetUnit:GetCoordinate(), TaskUnit )
+          Task:SetTargetCoordinate( Coordinate, TaskUnit )
         end
         self:__RouteToTargetPoint( 0.1 )
       end
@@ -332,7 +332,7 @@ do -- TASK_A2G_SEAD
     self:SetBriefing( 
       TaskBriefing or 
       "Execute a Suppression of Enemy Air Defenses. " ..
-      ThreatText .. " targets to be expected. Target is " .. TargetCoord:GetMovingText() ..  "."
+      ThreatText .. " targets to be expected. Target is" .. TargetCoord:GetMovingText() ..  "."
     )
 
     return self
@@ -480,7 +480,7 @@ do -- TASK_A2G_BAI
     self:SetBriefing( 
       TaskBriefing or 
       "Execute a Battlefield Air Interdiction of a group of enemy targets. " ..
-      ThreatText .. " targets to be expected. Target is " .. TargetCoord:GetMovingText() ..  "."
+      ThreatText .. " targets to be expected. Target is" .. TargetCoord:GetMovingText() ..  "."
     )
     
     return self
@@ -630,7 +630,7 @@ do -- TASK_A2G_CAS
       TaskBriefing or 
       "Execute a Close Air Support for a group of enemy targets. " ..
       "Beware of friendlies at the vicinity! " ..
-      ThreatText .. " targets to be expected. Target is " .. TargetCoord:GetMovingText() ..  "."
+      ThreatText .. " targets to be expected. Target is" .. TargetCoord:GetMovingText() ..  "."
       
     )
 

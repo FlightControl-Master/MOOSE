@@ -91,7 +91,7 @@ do -- ACT_ACCOUNT
   
   --- StateMachine callback function
   -- @param #ACT_ACCOUNT self
-  -- @param Wrapper.Controllable#CONTROLLABLE ProcessUnit
+  -- @param Wrapper.Unit#UNIT ProcessUnit
   -- @param #string Event
   -- @param #string From
   -- @param #string To
@@ -107,7 +107,7 @@ do -- ACT_ACCOUNT
   
     --- StateMachine callback function
     -- @param #ACT_ACCOUNT self
-    -- @param Wrapper.Controllable#CONTROLLABLE ProcessUnit
+    -- @param Wrapper.Unit#UNIT ProcessUnit
     -- @param #string Event
     -- @param #string From
     -- @param #string To
@@ -125,7 +125,7 @@ do -- ACT_ACCOUNT
   
   --- StateMachine callback function
   -- @param #ACT_ACCOUNT self
-  -- @param Wrapper.Controllable#CONTROLLABLE ProcessUnit
+  -- @param Wrapper.Unit#UNIT ProcessUnit
   -- @param #string Event
   -- @param #string From
   -- @param #string To
@@ -185,30 +185,31 @@ do -- ACT_ACCOUNT_DEADS
   
   --- StateMachine callback function
   -- @param #ACT_ACCOUNT_DEADS self
-  -- @param Wrapper.Controllable#CONTROLLABLE ProcessUnit
+  -- @param Wrapper.Unit#UNIT ProcessUnit
   -- @param #string Event
   -- @param #string From
   -- @param #string To
   function ACT_ACCOUNT_DEADS:onenterReport( ProcessUnit, Task, From, Event, To )
     self:E( { ProcessUnit, From, Event, To } )
   
-    self:Message( "Your group with assigned " .. self.TaskName .. " task has " .. Task.TargetSetUnit:GetUnitTypesText() .. " targets left to be destroyed." )
+    local MessageText = "Your group with assigned " .. self.TaskName .. " task has " .. Task.TargetSetUnit:GetUnitTypesText() .. " targets left to be destroyed."
+    self:GetCommandCenter():MessageTypeToGroup( MessageText, ProcessUnit:GetGroup(), MESSAGE.Type.Information )
   end
   
   
   --- StateMachine callback function
   -- @param #ACT_ACCOUNT_DEADS self
-  -- @param Wrapper.Client#CLIENT ProcessClient
+  -- @param Wrapper.Unit#UNIT ProcessUnit
   -- @param Tasking.Task#TASK Task
   -- @param #string From
   -- @param #string Event
   -- @param #string To
   -- @param Core.Event#EVENTDATA EventData
-  function ACT_ACCOUNT_DEADS:onafterEvent( ProcessClient, Task, From, Event, To, EventData  )
-    self:T( { ProcessClient:GetName(), Task:GetName(), From, Event, To, EventData } )
+  function ACT_ACCOUNT_DEADS:onafterEvent( ProcessUnit, Task, From, Event, To, EventData  )
+    self:T( { ProcessUnit:GetName(), Task:GetName(), From, Event, To, EventData } )
     
     if Task.TargetSetUnit:FindUnit( EventData.IniUnitName ) then
-      local PlayerName = ProcessClient:GetPlayerName()
+      local PlayerName = ProcessUnit:GetPlayerName()
       local PlayerHit = self.PlayerHits and self.PlayerHits[EventData.IniUnitName]
       if PlayerHit == PlayerName then
         self:Player( EventData )
@@ -220,21 +221,23 @@ do -- ACT_ACCOUNT_DEADS
 
   --- StateMachine callback function
   -- @param #ACT_ACCOUNT_DEADS self
-  -- @param Wrapper.Client#CLIENT ProcessClient
+  -- @param Wrapper.Unit#UNIT ProcessUnit
   -- @param Tasking.Task#TASK Task
   -- @param #string From
   -- @param #string Event
   -- @param #string To
   -- @param Core.Event#EVENTDATA EventData
-  function ACT_ACCOUNT_DEADS:onenterAccountForPlayer( ProcessClient, Task, From, Event, To, EventData  )
-    self:T( { ProcessClient:GetName(), Task:GetName(), From, Event, To, EventData } )
+  function ACT_ACCOUNT_DEADS:onenterAccountForPlayer( ProcessUnit, Task, From, Event, To, EventData  )
+    self:T( { ProcessUnit:GetName(), Task:GetName(), From, Event, To, EventData } )
     
-    local TaskGroup = ProcessClient:GetGroup()
+    local TaskGroup = ProcessUnit:GetGroup()
 
     Task.TargetSetUnit:Remove( EventData.IniUnitName )
-    self:Message( "You have destroyed a target.\nYour group assigned with task " .. self.TaskName .. " has\n" .. Task.TargetSetUnit:Count() .. " targets ( " .. Task.TargetSetUnit:GetUnitTypesText() .. " ) left to be destroyed." )
-
-    local PlayerName = ProcessClient:GetPlayerName()
+    
+    local MessageText = "You have destroyed a target.\nYour group assigned with task " .. self.TaskName .. " has\n" .. Task.TargetSetUnit:Count() .. " targets ( " .. Task.TargetSetUnit:GetUnitTypesText() .. " ) left to be destroyed."
+    self:GetCommandCenter():MessageTypeToGroup( MessageText, ProcessUnit:GetGroup(), MESSAGE.Type.Information )
+    
+    local PlayerName = ProcessUnit:GetPlayerName()
     Task:AddProgress( PlayerName, "Destroyed " .. EventData.IniTypeName, timer.getTime(), 1 )
 
     if Task.TargetSetUnit:Count() > 0 then
@@ -246,18 +249,20 @@ do -- ACT_ACCOUNT_DEADS
 
   --- StateMachine callback function
   -- @param #ACT_ACCOUNT_DEADS self
-  -- @param Wrapper.Client#CLIENT ProcessClient
+  -- @param Wrapper.Unit#UNIT ProcessUnit
   -- @param Tasking.Task#TASK Task
   -- @param #string From
   -- @param #string Event
   -- @param #string To
   -- @param Core.Event#EVENTDATA EventData
-  function ACT_ACCOUNT_DEADS:onenterAccountForOther( ProcessClient, Task, From, Event, To, EventData  )
-    self:T( { ProcessClient:GetName(), Task:GetName(), From, Event, To, EventData } )
+  function ACT_ACCOUNT_DEADS:onenterAccountForOther( ProcessUnit, Task, From, Event, To, EventData  )
+    self:T( { ProcessUnit:GetName(), Task:GetName(), From, Event, To, EventData } )
     
-    local TaskGroup = ProcessClient:GetGroup()
+    local TaskGroup = ProcessUnit:GetGroup()
     Task.TargetSetUnit:Remove( EventData.IniUnitName )
-    self:Message( "One of the task targets has been destroyed.\nYour group assigned with task " .. self.TaskName .. " has\n" .. Task.TargetSetUnit:Count() .. " targets ( " .. Task.TargetSetUnit:GetUnitTypesText() .. " ) left to be destroyed." )
+    
+    local MessageText = "One of the task targets has been destroyed.\nYour group assigned with task " .. self.TaskName .. " has\n" .. Task.TargetSetUnit:Count() .. " targets ( " .. Task.TargetSetUnit:GetUnitTypesText() .. " ) left to be destroyed."
+    self:GetCommandCenter():MessageTypeToGroup( MessageText, ProcessUnit:GetGroup(), MESSAGE.Type.Information )
 
     if Task.TargetSetUnit:Count() > 0 then
       self:__More( 1 )

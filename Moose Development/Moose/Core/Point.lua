@@ -338,17 +338,7 @@ do -- COORDINATE
   -- @return #string
   function COORDINATE:GetMovingText( Settings )
 
-    local MovingText = ""  
-
-    local Velocity = self:GetVelocity()
-    
-    if Velocity == 0 then
-      MovingText = MovingText .. "stationary "
-    else
-      MovingText = MovingText .. "moving at " .. self:GetVelocityText( Settings ) .. " " .. self:GetHeadingText( Settings )
-    end
-    
-    return MovingText
+    return self:GetVelocityText( Settings ) .. self:GetHeadingText( Settings )
   end
 
 
@@ -481,12 +471,12 @@ do -- COORDINATE
     local Settings = Settings or _SETTINGS
     if Velocity then
       if Settings:IsMetric() then
-        return UTILS.MpsToKmph( Velocity ) .. " km/h"
+        return string.format( " moving at %d km/h", UTILS.MpsToKmph( Velocity ) )
       else
-        return UTILS.MpsToKmph( Velocity ) / 1.852 .. " mph"
+        return string.format( " moving at %d mi/h", UTILS.MpsToKmph( Velocity ) / 1.852 )
       end
     else
-      return ""
+      return " stationary"
     end
   end
 
@@ -498,7 +488,7 @@ do -- COORDINATE
     local Heading = self.Heading
     local Settings = Settings or _SETTINGS
     if Heading then
-      return Heading .. "°"
+      return string.format( " heading %3.2f °", Heading )
     else
       return ""
     end
