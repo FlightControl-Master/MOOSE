@@ -59,6 +59,11 @@ do -- SETTINGS
       self:SetA2A_BRAA() -- Defaults
       self:SetLL_Accuracy( 3 ) -- Defaults
       self:SetMGRS_Accuracy( 5 ) -- Defaults
+      self:SetMessageTime( MESSAGE.Type.Briefing, 180 )
+      self:SetMessageTime( MESSAGE.Type.Detailed, 60 )
+      self:SetMessageTime( MESSAGE.Type.Information, 30 )
+      self:SetMessageTime( MESSAGE.Type.Overview, 60 )
+      self:SetMessageTime( MESSAGE.Type.Update, 15 )
       return self
     else
       local Settings = _DATABASE:GetPlayerSettings( PlayerName )
@@ -127,8 +132,23 @@ do -- SETTINGS
     return self.MGRS_Accuracy or _SETTINGS:GetMGRS_Accuracy()
   end
   
+  --- Sets the SETTINGS Message Display Timing of a MessageType
+  -- @param #SETTINGS self
+  -- @param Core.Message#MESSAGE MessageType The type of the message.
+  -- @param #number MessageTime The display time duration in seconds of the MessageType.
+  function SETTINGS:SetMessageTime( MessageType, MessageTime )
+    self.MessageTypeTimings = self.MessageTypeTimings or {}
+    self.MessageTypeTimings[MessageType] = MessageTime
+  end
   
-
+  
+  --- Gets the SETTINGS Message Display Timing of a MessageType
+  -- @param #SETTINGS self
+  -- @param Core.Message#MESSAGE MessageType The type of the message.
+  -- @return #number
+  function SETTINGS:GetMessageTime( MessageType )
+    return ( self.MessageTypeTimings and self.MessageTypeTimings[MessageType] ) or _SETTINGS:GetMessageTime( MessageType )
+  end
 
   --- Sets A2G LL DMS
   -- @param #SETTINGS self
@@ -345,6 +365,46 @@ do -- SETTINGS
     if self:IsImperial() then
       MENU_GROUP_COMMAND:New( MenuGroup, "Metric (Kilometers,Meters)", MetricsMenu, self.MenuMWSystem, self, MenuGroup, RootMenu, true ):SetTime( MenuTime )
     end    
+    
+    local MessagesMenu = MENU_GROUP:New( MenuGroup, "Messages and Reports", SettingsMenu ):SetTime( MenuTime )
+
+    local UpdateMessagesMenu = MENU_GROUP:New( MenuGroup, "Update Messages", MessagesMenu ):SetTime( MenuTime )
+    MENU_GROUP_COMMAND:New( MenuGroup, "Off", UpdateMessagesMenu, self.MenuMessageTimingsSystem, self, MenuGroup, RootMenu, MESSAGE.Type.Update, 0 ):SetTime( MenuTime )
+    MENU_GROUP_COMMAND:New( MenuGroup, "5 seconds", UpdateMessagesMenu, self.MenuMessageTimingsSystem, self, MenuGroup, RootMenu, MESSAGE.Type.Update, 5 ):SetTime( MenuTime )
+    MENU_GROUP_COMMAND:New( MenuGroup, "10 seconds", UpdateMessagesMenu, self.MenuMessageTimingsSystem, self, MenuGroup, RootMenu, MESSAGE.Type.Update, 10 ):SetTime( MenuTime )
+    MENU_GROUP_COMMAND:New( MenuGroup, "15 seconds", UpdateMessagesMenu, self.MenuMessageTimingsSystem, self, MenuGroup, RootMenu, MESSAGE.Type.Update, 15 ):SetTime( MenuTime )
+    MENU_GROUP_COMMAND:New( MenuGroup, "30 seconds", UpdateMessagesMenu, self.MenuMessageTimingsSystem, self, MenuGroup, RootMenu, MESSAGE.Type.Update, 30 ):SetTime( MenuTime )
+    MENU_GROUP_COMMAND:New( MenuGroup, "1 minute", UpdateMessagesMenu, self.MenuMessageTimingsSystem, self, MenuGroup, RootMenu, MESSAGE.Type.Update, 60 ):SetTime( MenuTime )
+
+    local InformationMessagesMenu = MENU_GROUP:New( MenuGroup, "Information Messages", MessagesMenu ):SetTime( MenuTime )
+    MENU_GROUP_COMMAND:New( MenuGroup, "5 seconds", InformationMessagesMenu, self.MenuMessageTimingsSystem, self, MenuGroup, RootMenu, MESSAGE.Type.Information, 5 ):SetTime( MenuTime )
+    MENU_GROUP_COMMAND:New( MenuGroup, "10 seconds", InformationMessagesMenu, self.MenuMessageTimingsSystem, self, MenuGroup, RootMenu, MESSAGE.Type.Information, 10 ):SetTime( MenuTime )
+    MENU_GROUP_COMMAND:New( MenuGroup, "15 seconds", InformationMessagesMenu, self.MenuMessageTimingsSystem, self, MenuGroup, RootMenu, MESSAGE.Type.Information, 15 ):SetTime( MenuTime )
+    MENU_GROUP_COMMAND:New( MenuGroup, "30 seconds", InformationMessagesMenu, self.MenuMessageTimingsSystem, self, MenuGroup, RootMenu, MESSAGE.Type.Information, 30 ):SetTime( MenuTime )
+    MENU_GROUP_COMMAND:New( MenuGroup, "1 minute", InformationMessagesMenu, self.MenuMessageTimingsSystem, self, MenuGroup, RootMenu, MESSAGE.Type.Information, 60 ):SetTime( MenuTime )
+    MENU_GROUP_COMMAND:New( MenuGroup, "2 minutes", InformationMessagesMenu, self.MenuMessageTimingsSystem, self, MenuGroup, RootMenu, MESSAGE.Type.Information, 120 ):SetTime( MenuTime )
+
+    local BriefingReportsMenu = MENU_GROUP:New( MenuGroup, "Briefing Reports", MessagesMenu ):SetTime( MenuTime )
+    MENU_GROUP_COMMAND:New( MenuGroup, "15 seconds", BriefingReportsMenu, self.MenuMessageTimingsSystem, self, MenuGroup, RootMenu, MESSAGE.Type.Briefing, 15 ):SetTime( MenuTime )
+    MENU_GROUP_COMMAND:New( MenuGroup, "30 seconds", BriefingReportsMenu, self.MenuMessageTimingsSystem, self, MenuGroup, RootMenu, MESSAGE.Type.Briefing, 30 ):SetTime( MenuTime )
+    MENU_GROUP_COMMAND:New( MenuGroup, "1 minute", BriefingReportsMenu, self.MenuMessageTimingsSystem, self, MenuGroup, RootMenu, MESSAGE.Type.Briefing, 60 ):SetTime( MenuTime )
+    MENU_GROUP_COMMAND:New( MenuGroup, "2 minutes", BriefingReportsMenu, self.MenuMessageTimingsSystem, self, MenuGroup, RootMenu, MESSAGE.Type.Briefing, 120 ):SetTime( MenuTime )
+    MENU_GROUP_COMMAND:New( MenuGroup, "3 minutes", BriefingReportsMenu, self.MenuMessageTimingsSystem, self, MenuGroup, RootMenu, MESSAGE.Type.Briefing, 180 ):SetTime( MenuTime )
+
+    local OverviewReportsMenu = MENU_GROUP:New( MenuGroup, "Overview Reports", MessagesMenu ):SetTime( MenuTime )
+    MENU_GROUP_COMMAND:New( MenuGroup, "15 seconds", OverviewReportsMenu, self.MenuMessageTimingsSystem, self, MenuGroup, RootMenu, MESSAGE.Type.Overview, 15 ):SetTime( MenuTime )
+    MENU_GROUP_COMMAND:New( MenuGroup, "30 seconds", OverviewReportsMenu, self.MenuMessageTimingsSystem, self, MenuGroup, RootMenu, MESSAGE.Type.Overview, 30 ):SetTime( MenuTime )
+    MENU_GROUP_COMMAND:New( MenuGroup, "1 minute", OverviewReportsMenu, self.MenuMessageTimingsSystem, self, MenuGroup, RootMenu, MESSAGE.Type.Overview, 60 ):SetTime( MenuTime )
+    MENU_GROUP_COMMAND:New( MenuGroup, "2 minutes", OverviewReportsMenu, self.MenuMessageTimingsSystem, self, MenuGroup, RootMenu, MESSAGE.Type.Overview, 120 ):SetTime( MenuTime )
+    MENU_GROUP_COMMAND:New( MenuGroup, "3 minutes", OverviewReportsMenu, self.MenuMessageTimingsSystem, self, MenuGroup, RootMenu, MESSAGE.Type.Overview, 180 ):SetTime( MenuTime )
+
+    local DetailedReportsMenu = MENU_GROUP:New( MenuGroup, "Detailed Reports", MessagesMenu ):SetTime( MenuTime )
+    MENU_GROUP_COMMAND:New( MenuGroup, "15 seconds", DetailedReportsMenu, self.MenuMessageTimingsSystem, self, MenuGroup, RootMenu, MESSAGE.Type.DetailedReportsMenu, 15 ):SetTime( MenuTime )
+    MENU_GROUP_COMMAND:New( MenuGroup, "30 seconds", DetailedReportsMenu, self.MenuMessageTimingsSystem, self, MenuGroup, RootMenu, MESSAGE.Type.DetailedReportsMenu, 30 ):SetTime( MenuTime )
+    MENU_GROUP_COMMAND:New( MenuGroup, "1 minute", DetailedReportsMenu, self.MenuMessageTimingsSystem, self, MenuGroup, RootMenu, MESSAGE.Type.DetailedReportsMenu, 60 ):SetTime( MenuTime )
+    MENU_GROUP_COMMAND:New( MenuGroup, "2 minutes", DetailedReportsMenu, self.MenuMessageTimingsSystem, self, MenuGroup, RootMenu, MESSAGE.Type.DetailedReportsMenu, 120 ):SetTime( MenuTime )
+    MENU_GROUP_COMMAND:New( MenuGroup, "3 minutes", DetailedReportsMenu, self.MenuMessageTimingsSystem, self, MenuGroup, RootMenu, MESSAGE.Type.DetailedReportsMenu, 180 ):SetTime( MenuTime )
+    
 
     SettingsMenu:Remove( MenuTime )
     
@@ -444,6 +504,47 @@ do -- SETTINGS
     if self:IsImperial() then
       MENU_GROUP_COMMAND:New( PlayerGroup, "Metric (Kilometers,Meters)", MetricsMenu, self.MenuGroupMWSystem, self, PlayerUnit, PlayerGroup, PlayerName, true )
     end    
+
+
+    local MessagesMenu = MENU_GROUP:New( PlayerGroup, "Messages and Reports", PlayerMenu )
+
+    local UpdateMessagesMenu = MENU_GROUP:New( PlayerGroup, "Update Messages", MessagesMenu )
+    MENU_GROUP_COMMAND:New( PlayerGroup, "Off", UpdateMessagesMenu, self.MenuGroupMessageTimingsSystem, self, PlayerUnit, PlayerGroup, PlayerName, MESSAGE.Type.Update, 0 )
+    MENU_GROUP_COMMAND:New( PlayerGroup, "5 seconds", UpdateMessagesMenu, self.MenuGroupMessageTimingsSystem, self, PlayerUnit, PlayerGroup, PlayerName, MESSAGE.Type.Update, 5 )
+    MENU_GROUP_COMMAND:New( PlayerGroup, "10 seconds", UpdateMessagesMenu, self.MenuGroupMessageTimingsSystem, self, PlayerUnit, PlayerGroup, PlayerName, MESSAGE.Type.Update, 10 )
+    MENU_GROUP_COMMAND:New( PlayerGroup, "15 seconds", UpdateMessagesMenu, self.MenuGroupMessageTimingsSystem, self, PlayerUnit, PlayerGroup, PlayerName, MESSAGE.Type.Update, 15 )
+    MENU_GROUP_COMMAND:New( PlayerGroup, "30 seconds", UpdateMessagesMenu, self.MenuGroupMessageTimingsSystem, self, PlayerUnit, PlayerGroup, PlayerName, MESSAGE.Type.Update, 30 )
+    MENU_GROUP_COMMAND:New( PlayerGroup, "1 minute", UpdateMessagesMenu, self.MenuGroupMessageTimingsSystem, self, PlayerUnit, PlayerGroup, PlayerName, MESSAGE.Type.Update, 60 )
+
+    local InformationMessagesMenu = MENU_GROUP:New( PlayerGroup, "Information Messages", MessagesMenu )
+    MENU_GROUP_COMMAND:New( PlayerGroup, "5 seconds", InformationMessagesMenu, self.MenuGroupMessageTimingsSystem, self, PlayerUnit, PlayerGroup, PlayerName, MESSAGE.Type.Information, 5 )
+    MENU_GROUP_COMMAND:New( PlayerGroup, "10 seconds", InformationMessagesMenu, self.MenuGroupMessageTimingsSystem, self, PlayerUnit, PlayerGroup, PlayerName, MESSAGE.Type.Information, 10 )
+    MENU_GROUP_COMMAND:New( PlayerGroup, "15 seconds", InformationMessagesMenu, self.MenuGroupMessageTimingsSystem, self, PlayerUnit, PlayerGroup, PlayerName, MESSAGE.Type.Information, 15 )
+    MENU_GROUP_COMMAND:New( PlayerGroup, "30 seconds", InformationMessagesMenu, self.MenuGroupMessageTimingsSystem, self, PlayerUnit, PlayerGroup, PlayerName, MESSAGE.Type.Information, 30 )
+    MENU_GROUP_COMMAND:New( PlayerGroup, "1 minute", InformationMessagesMenu, self.MenuGroupMessageTimingsSystem, self, PlayerUnit, PlayerGroup, PlayerName, MESSAGE.Type.Information, 60 )
+    MENU_GROUP_COMMAND:New( PlayerGroup, "2 minutes", InformationMessagesMenu, self.MenuGroupMessageTimingsSystem, self, PlayerUnit, PlayerGroup, PlayerName, MESSAGE.Type.Information, 120 )
+
+    local BriefingReportsMenu = MENU_GROUP:New( PlayerGroup, "Briefing Reports", MessagesMenu )
+    MENU_GROUP_COMMAND:New( PlayerGroup, "15 seconds", BriefingReportsMenu, self.MenuGroupMessageTimingsSystem, self, PlayerUnit, PlayerGroup, PlayerName, MESSAGE.Type.Briefing, 15 )
+    MENU_GROUP_COMMAND:New( PlayerGroup, "30 seconds", BriefingReportsMenu, self.MenuGroupMessageTimingsSystem, self, PlayerUnit, PlayerGroup, PlayerName, MESSAGE.Type.Briefing, 30 )
+    MENU_GROUP_COMMAND:New( PlayerGroup, "1 minute", BriefingReportsMenu, self.MenuGroupMessageTimingsSystem, self, PlayerUnit, PlayerGroup, PlayerName, MESSAGE.Type.Briefing, 60 )
+    MENU_GROUP_COMMAND:New( PlayerGroup, "2 minutes", BriefingReportsMenu, self.MenuGroupMessageTimingsSystem, self, PlayerUnit, PlayerGroup, PlayerName, MESSAGE.Type.Briefing, 120 )
+    MENU_GROUP_COMMAND:New( PlayerGroup, "3 minutes", BriefingReportsMenu, self.MenuGroupMessageTimingsSystem, self, PlayerUnit, PlayerGroup, PlayerName, MESSAGE.Type.Briefing, 180 )
+
+    local OverviewReportsMenu = MENU_GROUP:New( PlayerGroup, "Overview Reports", MessagesMenu )
+    MENU_GROUP_COMMAND:New( PlayerGroup, "15 seconds", OverviewReportsMenu, self.MenuGroupMessageTimingsSystem, self, PlayerUnit, PlayerGroup, PlayerName, MESSAGE.Type.Overview, 15 )
+    MENU_GROUP_COMMAND:New( PlayerGroup, "30 seconds", OverviewReportsMenu, self.MenuGroupMessageTimingsSystem, self, PlayerUnit, PlayerGroup, PlayerName, MESSAGE.Type.Overview, 30 )
+    MENU_GROUP_COMMAND:New( PlayerGroup, "1 minute", OverviewReportsMenu, self.MenuGroupMessageTimingsSystem, self, PlayerUnit, PlayerGroup, PlayerName, MESSAGE.Type.Overview, 60 )
+    MENU_GROUP_COMMAND:New( PlayerGroup, "2 minutes", OverviewReportsMenu, self.MenuGroupMessageTimingsSystem, self, PlayerUnit, PlayerGroup, PlayerName, MESSAGE.Type.Overview, 120 )
+    MENU_GROUP_COMMAND:New( PlayerGroup, "3 minutes", OverviewReportsMenu, self.MenuGroupMessageTimingsSystem, self, PlayerUnit, PlayerGroup, PlayerName, MESSAGE.Type.Overview, 180 )
+
+    local DetailedReportsMenu = MENU_GROUP:New( PlayerGroup, "Detailed Reports", MessagesMenu )
+    MENU_GROUP_COMMAND:New( PlayerGroup, "15 seconds", DetailedReportsMenu, self.MenuGroupMessageTimingsSystem, self, PlayerUnit, PlayerGroup, PlayerName, MESSAGE.Type.DetailedReportsMenu, 15 )
+    MENU_GROUP_COMMAND:New( PlayerGroup, "30 seconds", DetailedReportsMenu, self.MenuGroupMessageTimingsSystem, self, PlayerUnit, PlayerGroup, PlayerName, MESSAGE.Type.DetailedReportsMenu, 30 )
+    MENU_GROUP_COMMAND:New( PlayerGroup, "1 minute", DetailedReportsMenu, self.MenuGroupMessageTimingsSystem, self, PlayerUnit, PlayerGroup, PlayerName, MESSAGE.Type.DetailedReportsMenu, 60 )
+    MENU_GROUP_COMMAND:New( PlayerGroup, "2 minutes", DetailedReportsMenu, self.MenuGroupMessageTimingsSystem, self, PlayerUnit, PlayerGroup, PlayerName, MESSAGE.Type.DetailedReportsMenu, 120 )
+    MENU_GROUP_COMMAND:New( PlayerGroup, "3 minutes", DetailedReportsMenu, self.MenuGroupMessageTimingsSystem, self, PlayerUnit, PlayerGroup, PlayerName, MESSAGE.Type.DetailedReportsMenu, 180 )
+
     
     return self
   end
@@ -465,36 +566,42 @@ do -- SETTINGS
   --- @param #SETTINGS self
   function SETTINGS:A2GMenuSystem( MenuGroup, RootMenu, A2GSystem )
     self.A2GSystem = A2GSystem
-    MESSAGE:New( string.format("Settings: Default A2G coordinate system set to %s for all players!.", A2GSystem ), 5 ):ToAll()
+    MESSAGE:New( string.format("Settings: Default A2G coordinate system set to %s for all players!", A2GSystem ), 5 ):ToAll()
     self:SetSystemMenu( MenuGroup, RootMenu )
   end
 
   --- @param #SETTINGS self
   function SETTINGS:A2AMenuSystem( MenuGroup, RootMenu, A2ASystem )
     self.A2ASystem = A2ASystem
-    MESSAGE:New( string.format("Settings: Default A2A coordinate system set to %s for all players!.", A2ASystem ), 5 ):ToAll()
+    MESSAGE:New( string.format("Settings: Default A2A coordinate system set to %s for all players!", A2ASystem ), 5 ):ToAll()
     self:SetSystemMenu( MenuGroup, RootMenu )
   end
 
   --- @param #SETTINGS self
   function SETTINGS:MenuLL_DDM_Accuracy( MenuGroup, RootMenu, LL_Accuracy )
     self.LL_Accuracy = LL_Accuracy
-    MESSAGE:New( string.format("Settings: Default LL accuracy set to %s for all players!.", LL_Accuracy ), 5 ):ToAll()
+    MESSAGE:New( string.format("Settings: Default LL accuracy set to %s for all players!", LL_Accuracy ), 5 ):ToAll()
     self:SetSystemMenu( MenuGroup, RootMenu )
   end
 
   --- @param #SETTINGS self
   function SETTINGS:MenuMGRS_Accuracy( MenuGroup, RootMenu, MGRS_Accuracy )
     self.MGRS_Accuracy = MGRS_Accuracy
-    MESSAGE:New( string.format("Settings: Default MGRS accuracy set to %s for all players!.", MGRS_Accuracy ), 5 ):ToAll()
+    MESSAGE:New( string.format("Settings: Default MGRS accuracy set to %s for all players!", MGRS_Accuracy ), 5 ):ToAll()
     self:SetSystemMenu( MenuGroup, RootMenu )
   end
 
   --- @param #SETTINGS self
   function SETTINGS:MenuMWSystem( MenuGroup, RootMenu, MW )
     self.Metric = MW
-    MESSAGE:New( string.format("Settings: Default measurement format set to %s for all players!.", MW and "Metric" or "Imperial" ), 5 ):ToAll()
+    MESSAGE:New( string.format("Settings: Default measurement format set to %s for all players!", MW and "Metric" or "Imperial" ), 5 ):ToAll()
     self:SetSystemMenu( MenuGroup, RootMenu )
+  end
+
+  --- @param #SETTINGS self
+  function SETTINGS:MenuMessageTimingsSystem( MenuGroup, RootMenu, MessageType, MessageTime )
+    self:SetMessageTime( MessageType, MessageTime )
+    MESSAGE:New( string.format( "Settings: Default message time set for %s to %d.", MessageType, MessageTime ), 5 ):ToAll()
   end
 
   do
@@ -502,7 +609,7 @@ do -- SETTINGS
     function SETTINGS:MenuGroupA2GSystem( PlayerUnit, PlayerGroup, PlayerName, A2GSystem )
       BASE:E( {self, PlayerUnit:GetName(), A2GSystem} )
       self.A2GSystem = A2GSystem
-      MESSAGE:New( string.format("Settings: A2G format set to %s for player %s.", A2GSystem, PlayerName ), 5 ):ToGroup( PlayerGroup )
+      MESSAGE:New( string.format( "Settings: A2G format set to %s for player %s.", A2GSystem, PlayerName ), 5 ):ToGroup( PlayerGroup )
       self:RemovePlayerMenu(PlayerUnit)
       self:SetPlayerMenu(PlayerUnit)
     end
@@ -510,7 +617,7 @@ do -- SETTINGS
     --- @param #SETTINGS self
     function SETTINGS:MenuGroupA2ASystem( PlayerUnit, PlayerGroup, PlayerName, A2ASystem )
       self.A2ASystem = A2ASystem
-      MESSAGE:New( string.format("Settings: A2A format set to %s for player %s.", A2ASystem, PlayerName ), 5 ):ToGroup( PlayerGroup )
+      MESSAGE:New( string.format( "Settings: A2A format set to %s for player %s.", A2ASystem, PlayerName ), 5 ):ToGroup( PlayerGroup )
       self:RemovePlayerMenu(PlayerUnit)
       self:SetPlayerMenu(PlayerUnit)
     end
@@ -518,7 +625,7 @@ do -- SETTINGS
     --- @param #SETTINGS self
     function SETTINGS:MenuGroupLL_DDM_AccuracySystem( PlayerUnit, PlayerGroup, PlayerName, LL_Accuracy )
       self.LL_Accuracy = LL_Accuracy
-      MESSAGE:New( string.format("Settings: A2G LL format accuracy set to %d for player %s.", LL_Accuracy, PlayerName ), 5 ):ToGroup( PlayerGroup )
+      MESSAGE:New( string.format( "Settings: A2G LL format accuracy set to %d for player %s.", LL_Accuracy, PlayerName ), 5 ):ToGroup( PlayerGroup )
       self:RemovePlayerMenu(PlayerUnit)
       self:SetPlayerMenu(PlayerUnit)
     end
@@ -526,7 +633,7 @@ do -- SETTINGS
     --- @param #SETTINGS self
     function SETTINGS:MenuGroupMGRS_AccuracySystem( PlayerUnit, PlayerGroup, PlayerName, MGRS_Accuracy )
       self.MGRS_Accuracy = MGRS_Accuracy
-      MESSAGE:New( string.format("Settings: A2G MGRS format accuracy set to %d for player %s.", MGRS_Accuracy, PlayerName ), 5 ):ToGroup( PlayerGroup )
+      MESSAGE:New( string.format( "Settings: A2G MGRS format accuracy set to %d for player %s.", MGRS_Accuracy, PlayerName ), 5 ):ToGroup( PlayerGroup )
       self:RemovePlayerMenu(PlayerUnit)
       self:SetPlayerMenu(PlayerUnit)
     end
@@ -534,9 +641,15 @@ do -- SETTINGS
     --- @param #SETTINGS self
     function SETTINGS:MenuGroupMWSystem( PlayerUnit, PlayerGroup, PlayerName, MW )
       self.Metric = MW
-      MESSAGE:New( string.format("Settings: Measurement format set to %s for player %s.", MW and "Metric" or "Imperial", PlayerName ), 5 ):ToGroup( PlayerGroup )
+      MESSAGE:New( string.format( "Settings: Measurement format set to %s for player %s.", MW and "Metric" or "Imperial", PlayerName ), 5 ):ToGroup( PlayerGroup )
       self:RemovePlayerMenu(PlayerUnit)
       self:SetPlayerMenu(PlayerUnit)
+    end
+
+    --- @param #SETTINGS self
+    function SETTINGS:MenuGroupMessageTimingsSystem( PlayerUnit, PlayerGroup, PlayerName, MessageType, MessageTime )
+      self:SetMessageTime( MessageType, MessageTime )
+      MESSAGE:New( string.format( "Settings: Default message time set for %s to %d.", MessageType, MessageTime ), 5 ):ToGroup( PlayerGroup )
     end
   
   end
