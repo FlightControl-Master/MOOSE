@@ -884,7 +884,7 @@ function TASK:MenuTaskStatus( TaskGroup )
   local ReportText = self:ReportDetails( TaskGroup )
   
   self:T( ReportText )
-  self:GetMission():GetCommandCenter():MessageToGroup( ReportText, TaskGroup )
+  self:GetMission():GetCommandCenter():MessageTypeToGroup( ReportText, TaskGroup, MESSAGE.Type.Detailed )
 
 end
 

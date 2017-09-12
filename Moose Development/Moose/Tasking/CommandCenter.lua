@@ -387,6 +387,20 @@ function COMMANDCENTER:MessageToCoalition( Message )
 end
 
 
+--- Send a CC message of a specified type to the coalition of the CC.
+-- @param #COMMANDCENTER self
+-- @param #string Message The message.
+-- @param Core.Message#MESSAGE.MessageType MessageType The type of the message, resulting in automatic time duration and prefix of the message.
+function COMMANDCENTER:MessageTypeToCoalition( Message, MessageType )
+
+  local CCCoalition = self:GetPositionable():GetCoalition()
+    --TODO: Fix coalition bug!
+    
+    self:GetPositionable():MessageTypeToCoalition( Message, MessageType, CCCoalition )
+
+end
+
+
 --- Report the status of all MISSIONs to a GROUP.
 -- Each Mission is listed, with an indication how many Tasks are still to be completed.
 -- @param #COMMANDCENTER self

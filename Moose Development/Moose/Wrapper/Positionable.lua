@@ -502,6 +502,32 @@ function POSITIONABLE:MessageToCoalition( Message, Duration, MessageCoalition )
 end
 
 
+--- Send a message to a coalition.
+-- The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.
+-- @param #POSITIONABLE self
+-- @param #string Message The message text
+-- @param Core.Message#MESSAGE.Type MessageType The message type that determines the duration.
+-- @param Dcs.DCScoalition#coalition MessageCoalition The Coalition receiving the message.
+function POSITIONABLE:MessageTypeToCoalition( Message, MessageType, MessageCoalition )
+  self:F2( { Message, MessageType } )
+
+  local Name = ""
+  
+  local DCSObject = self:GetDCSObject()
+  if DCSObject then
+    if MessageCoalition == coalition.side.BLUE then
+      Name = "Blue coalition"
+    end
+    if MessageCoalition == coalition.side.RED then
+      Name = "Red coalition"
+    end
+    self:GetMessageType( Message, MessageType, Name ):ToCoalition( MessageCoalition )
+  end
+
+  return nil
+end
+
+
 --- Send a message to the red coalition.
 -- The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.
 -- @param #POSITIONABLE self
