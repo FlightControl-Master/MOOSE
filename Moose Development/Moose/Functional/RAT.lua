@@ -391,6 +391,7 @@ RAT.id="RAT | "
 --DONE: Check cases where aircraft get shot down.
 --DONE: Handle the case where more than 10 RAT objects are spawned. Likewise, more than 10 groups of one object. Causes problems with the number of menu items! ==> not now!
 --TODO: Add custom livery choice if possible.
+--TODO: When only a destination is set, it should be checked that the departure is within range. Also, that departure and destination are not the same.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
