@@ -442,6 +442,23 @@ function POSITIONABLE:GetMessage( Message, Duration, Name ) --R2.1 changed calls
   return nil
 end
 
+--- Returns a message of a specified type with the callsign embedded (if there is one).
+-- @param #POSITIONABLE self
+-- @param #string Message The message text
+-- @param Core.Message#MESSAGE MessageType MessageType The message type.
+-- @param #string Name (optional) The Name of the sender. If not provided, the Name is the type of the Positionable.
+-- @return Core.Message#MESSAGE
+function POSITIONABLE:GetMessageType( Message, MessageType, Name ) -- R2.2 changed callsign and name and using GetMessageText
+
+  local DCSObject = self:GetDCSObject()
+  if DCSObject then
+    local MessageText = self:GetMessageText( Message, Name )
+    return MESSAGE:NewType( MessageText, MessageType )
+  end
+
+  return nil
+end
+
 --- Send a message to all coalitions.
 -- The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.
 -- @param #POSITIONABLE self
@@ -479,6 +496,32 @@ function POSITIONABLE:MessageToCoalition( Message, Duration, MessageCoalition )
       Name = "Red coalition"
     end
     self:GetMessage( Message, Duration, Name ):ToCoalition( MessageCoalition )
+  end
+
+  return nil
+end
+
+
+--- Send a message to a coalition.
+-- The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.
+-- @param #POSITIONABLE self
+-- @param #string Message The message text
+-- @param Core.Message#MESSAGE.Type MessageType The message type that determines the duration.
+-- @param Dcs.DCScoalition#coalition MessageCoalition The Coalition receiving the message.
+function POSITIONABLE:MessageTypeToCoalition( Message, MessageType, MessageCoalition )
+  self:F2( { Message, MessageType } )
+
+  local Name = ""
+  
+  local DCSObject = self:GetDCSObject()
+  if DCSObject then
+    if MessageCoalition == coalition.side.BLUE then
+      Name = "Blue coalition"
+    end
+    if MessageCoalition == coalition.side.RED then
+      Name = "Red coalition"
+    end
+    self:GetMessageType( Message, MessageType, Name ):ToCoalition( MessageCoalition )
   end
 
   return nil
@@ -557,6 +600,26 @@ function POSITIONABLE:MessageToGroup( Message, Duration, MessageGroup, Name )
   return nil
 end
 
+--- Send a message of a message type to a @{Group}.
+-- The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.
+-- @param #POSITIONABLE self
+-- @param #string Message The message text
+-- @param Core.Message#MESSAGE.Type MessageType The message type that determines the duration.
+-- @param Wrapper.Group#GROUP MessageGroup The GROUP object receiving the message.
+-- @param #string Name (optional) The Name of the sender. If not provided, the Name is the type of the Positionable.
+function POSITIONABLE:MessageTypeToGroup( Message, MessageType, MessageGroup, Name )
+  self:F2( { Message, MessageType } )
+
+  local DCSObject = self:GetDCSObject()
+  if DCSObject then
+    if DCSObject:isExist() then
+      self:GetMessageType( Message, MessageType, Name ):ToGroup( MessageGroup )
+    end
+  end
+
+  return nil
+end
+
 --- Send a message to a @{Set#SET_GROUP}.
 -- The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.
 -- @param #POSITIONABLE self
@@ -572,7 +635,7 @@ function POSITIONABLE:MessageToSetGroup( Message, Duration, MessageSetGroup, Nam
     if DCSObject:isExist() then
       MessageSetGroup:ForEachGroup(
         function( MessageGroup )
-          self:GetMessage( Message, Duration, Name ):ToGroup( MessageGroup )
+          self:GetMessageType( Message, Duration, Name ):ToGroup( MessageGroup )
         end 
       )
     end

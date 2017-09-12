@@ -358,10 +358,20 @@ end
 -- @param #COMMANDCENTER self
 -- @param #string Message
 -- @param Wrapper.Group#GROUP TaskGroup
--- @param #sring Name (optional) The name of the Group used as a prefix for the message to the Group. If not provided, there will be nothing shown.
 function COMMANDCENTER:MessageToGroup( Message, TaskGroup )
 
-  self:GetPositionable():MessageToGroup( Message , 15, TaskGroup, self:GetName() )
+  self:GetPositionable():MessageToGroup( Message, 15, TaskGroup, self:GetName() )
+
+end
+
+--- Send a CC message of a specified type to a GROUP.
+-- @param #COMMANDCENTER self
+-- @param #string Message
+-- @param Wrapper.Group#GROUP TaskGroup
+-- @param Core.Message#MESSAGE.MessageType MessageType The type of the message, resulting in automatic time duration and prefix of the message.
+function COMMANDCENTER:MessageTypeToGroup( Message, TaskGroup, MessageType )
+
+  self:GetPositionable():MessageTypeToGroup( Message, MessageType, TaskGroup, self:GetName() )
 
 end
 
@@ -373,6 +383,20 @@ function COMMANDCENTER:MessageToCoalition( Message )
     --TODO: Fix coalition bug!
     
     self:GetPositionable():MessageToCoalition( Message, 15, CCCoalition )
+
+end
+
+
+--- Send a CC message of a specified type to the coalition of the CC.
+-- @param #COMMANDCENTER self
+-- @param #string Message The message.
+-- @param Core.Message#MESSAGE.MessageType MessageType The type of the message, resulting in automatic time duration and prefix of the message.
+function COMMANDCENTER:MessageTypeToCoalition( Message, MessageType )
+
+  local CCCoalition = self:GetPositionable():GetCoalition()
+    --TODO: Fix coalition bug!
+    
+    self:GetPositionable():MessageTypeToCoalition( Message, MessageType, CCCoalition )
 
 end
 

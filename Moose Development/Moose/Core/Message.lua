@@ -53,6 +53,16 @@ MESSAGE = {
 	MessageID = 0,
 }
 
+--- Message Types
+-- @type MESSAGE.Type
+MESSAGE.Type = {
+  Update = "Update",
+  Information = "Information",
+  Briefing = "Briefing Report",
+  Overview = "Overview Report",
+  Detailed = "Detailed Report"
+}
+
 
 --- Creates a new MESSAGE object. Note that these MESSAGE objects are not yet displayed on the display panel. You must use the functions @{ToClient} or @{ToCoalition} or @{ToAll} to send these Messages to the respective recipients.
 -- @param self
@@ -74,6 +84,9 @@ function MESSAGE:New( MessageText, MessageDuration, MessageCategory )
 	local self = BASE:Inherit( self, BASE:New() )
 	self:F( { MessageText, MessageDuration, MessageCategory } )
 
+
+  self.MessageType = nil
+  
   -- When no MessageCategory is given, we don't show it as a title...	
 	if MessageCategory and MessageCategory ~= "" then
 	  if MessageCategory:sub(-1) ~= "\n" then
@@ -96,6 +109,37 @@ function MESSAGE:New( MessageText, MessageDuration, MessageCategory )
 	return self
 end
 
+
+--- Creates a new MESSAGE object of a certain type. 
+-- Note that these MESSAGE objects are not yet displayed on the display panel. 
+-- You must use the functions @{ToClient} or @{ToCoalition} or @{ToAll} to send these Messages to the respective recipients.
+-- The message display times are automatically defined based on the timing settings in the @{Settings} menu.
+-- @param self
+-- @param #string MessageText is the text of the Message.
+-- @param #MESSAGE.Type MessageType The type of the message.
+-- @return #MESSAGE
+-- @usage
+--   MessageAll = MESSAGE:NewType( "To all Players: BLUE has won! Each player of BLUE wins 50 points!", MESSAGE.Type.Information )
+--   MessageRED = MESSAGE:NewType( "To the RED Players: You receive a penalty because you've killed one of your own units", MESSAGE.Type.Information )
+--   MessageClient1 = MESSAGE:NewType( "Congratulations, you've just hit a target", MESSAGE.Type.Update )
+--   MessageClient2 = MESSAGE:NewType( "Congratulations, you've just killed a target", MESSAGE.Type.Update )
+function MESSAGE:NewType( MessageText, MessageType )
+
+  local self = BASE:Inherit( self, BASE:New() )
+  self:F( { MessageText } )
+  
+  self.MessageType = MessageType
+
+  self.MessageTime = timer.getTime()
+  self.MessageText = MessageText:gsub("^\n","",1):gsub("\n$","",1)
+  
+  return self
+end
+
+
+
+
+
 --- Sends a MESSAGE to a Client Group. Note that the Group needs to be defined within the ME with the skillset "Client" or "Player".
 -- @param #MESSAGE self
 -- @param Wrapper.Client#CLIENT Client is the Group of the Client.
@@ -115,14 +159,22 @@ end
 -- MessageClient2 = MESSAGE:New( "Congratulations, you've just killed a target", "Score", 25, "Score" )
 -- MessageClient1:ToClient( ClientGroup )
 -- MessageClient2:ToClient( ClientGroup )
-function MESSAGE:ToClient( Client )
+function MESSAGE:ToClient( Client, Settings )
 	self:F( Client )
 
 	if Client and Client:GetClientGroupID() then
 
-		local ClientGroupID = Client:GetClientGroupID()
-		self:T( self.MessageCategory .. self.MessageText:gsub("\n$",""):gsub("\n$","") .. " / " .. self.MessageDuration )
-		trigger.action.outTextForGroup( ClientGroupID, self.MessageCategory .. self.MessageText:gsub("\n$",""):gsub("\n$",""), self.MessageDuration )
+    if self.MessageType then
+      local Settings = Settings or ( Client and _DATABASE:GetPlayerSettings( Client:GetPlayerName() ) ) or _SETTINGS -- Core.Settings#SETTINGS
+      self.MessageDuration = Settings:GetMessageTime( self.MessageType )
+      self.MessageCategory = self.MessageType .. ": "
+    end
+
+    if self.MessageDuration ~= 0 then
+  		local ClientGroupID = Client:GetClientGroupID()
+  		self:T( self.MessageCategory .. self.MessageText:gsub("\n$",""):gsub("\n$","") .. " / " .. self.MessageDuration )
+  		trigger.action.outTextForGroup( ClientGroupID, self.MessageCategory .. self.MessageText:gsub("\n$",""):gsub("\n$",""), self.MessageDuration )
+		end
 	end
 	
 	return self
@@ -132,13 +184,21 @@ end
 -- @param #MESSAGE self
 -- @param Wrapper.Group#GROUP Group is the Group.
 -- @return #MESSAGE
-function MESSAGE:ToGroup( Group )
+function MESSAGE:ToGroup( Group, Settings )
   self:F( Group.GroupName )
 
   if Group then
+    
+    if self.MessageType then
+      local Settings = Settings or ( Group and _DATABASE:GetPlayerSettings( Group:GetPlayerName() ) ) or _SETTINGS -- Core.Settings#SETTINGS
+      self.MessageDuration = Settings:GetMessageTime( self.MessageType )
+      self.MessageCategory = self.MessageType .. ": "
+    end
 
-    self:T( self.MessageCategory .. self.MessageText:gsub("\n$",""):gsub("\n$","") .. " / " .. self.MessageDuration )
-    trigger.action.outTextForGroup( Group:GetID(), self.MessageCategory .. self.MessageText:gsub("\n$",""):gsub("\n$",""), self.MessageDuration )
+    if self.MessageDuration ~= 0 then
+      self:T( self.MessageCategory .. self.MessageText:gsub("\n$",""):gsub("\n$","") .. " / " .. self.MessageDuration )
+      trigger.action.outTextForGroup( Group:GetID(), self.MessageCategory .. self.MessageText:gsub("\n$",""):gsub("\n$",""), self.MessageDuration )
+    end
   end
   
   return self
@@ -193,12 +253,20 @@ end
 -- or
 -- MessageRED = MESSAGE:New( "To the RED Players: You receive a penalty because you've killed one of your own units", "Penalty", 25, "Score" )
 -- MessageRED:ToCoalition( coalition.side.RED )
-function MESSAGE:ToCoalition( CoalitionSide )
+function MESSAGE:ToCoalition( CoalitionSide, Settings )
 	self:F( CoalitionSide )
 
+  if self.MessageType then
+    local Settings = Settings or _SETTINGS -- Core.Settings#SETTINGS
+    self.MessageDuration = Settings:GetMessageTime( self.MessageType )
+    self.MessageCategory = self.MessageType .. ": "
+  end
+
 	if CoalitionSide then
-		self:T( self.MessageCategory .. self.MessageText:gsub("\n$",""):gsub("\n$","") .. " / " .. self.MessageDuration )
-		trigger.action.outTextForCoalition( CoalitionSide, self.MessageCategory .. self.MessageText:gsub("\n$",""):gsub("\n$",""), self.MessageDuration )
+    if self.MessageDuration ~= 0 then
+  		self:T( self.MessageCategory .. self.MessageText:gsub("\n$",""):gsub("\n$","") .. " / " .. self.MessageDuration )
+  		trigger.action.outTextForCoalition( CoalitionSide, self.MessageCategory .. self.MessageText:gsub("\n$",""):gsub("\n$",""), self.MessageDuration )
+    end
 	end
 	
 	return self
@@ -232,8 +300,16 @@ end
 function MESSAGE:ToAll()
   self:F()
 
-  self:ToCoalition( coalition.side.RED )
-  self:ToCoalition( coalition.side.BLUE )
+  if self.MessageType then
+    local Settings = Settings or _SETTINGS -- Core.Settings#SETTINGS
+    self.MessageDuration = Settings:GetMessageTime( self.MessageType )
+    self.MessageCategory = self.MessageType .. ": "
+  end
+
+  if self.MessageDuration ~= 0 then
+    self:T( self.MessageCategory .. self.MessageText:gsub("\n$",""):gsub("\n$","") .. " / " .. self.MessageDuration )
+    trigger.action.outText( self.MessageCategory .. self.MessageText:gsub("\n$",""):gsub("\n$",""), self.MessageDuration )
+  end
 
   return self
 end
@@ -245,8 +321,7 @@ end
 function MESSAGE:ToAllIf( Condition )
 
   if Condition and Condition == true then
-  	self:ToCoalition( coalition.side.RED )
-  	self:ToCoalition( coalition.side.BLUE )
+    self:ToAll()
   end
 
 	return self
