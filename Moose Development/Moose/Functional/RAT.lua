@@ -122,7 +122,7 @@
 -- ### The default behavior can be changed:
 -- 
 -- * A specific departure and/or destination airport can be chosen.
--- * Valid coalitions can be set, e.g. only red, blue or neutral, all three „colours“.
+-- * Valid coalitions can be set, e.g. only red, blue or neutral, all three ï¿½coloursï¿½.
 -- * It is possible to start in air within a zone defined in the mission editor or within a zone above an airport of the map.
 -- 
 -- ## Flight Plan
@@ -151,7 +151,7 @@
 -- * Give the group a good name. In the example above the group is named "RAT_YAK".
 -- * Activate the "LATE ACTIVATION" tick box. Note that this aircraft will not be spawned itself but serves a template for each RAT aircraft spawned when the mission starts. 
 -- 
--- Voilà, your already done!
+-- Voilï¿½, your already done!
 -- 
 -- Optionally, you can set a specific livery for the aircraft or give it some weapons.
 -- However, the aircraft will by default not engage any enemies. Think of them as beeing on a peaceful or ferry mission.
@@ -390,6 +390,7 @@ RAT.id="RAT | "
 --DONE: Improve behaviour when no destination or departure airports were found. Leads to crash, e.g. 1184: attempt to get length of local 'destinations' (a nil value)
 --DONE: Check cases where aircraft get shot down.
 --DONE: Handle the case where more than 10 RAT objects are spawned. Likewise, more than 10 groups of one object. Causes problems with the number of menu items! ==> not now!
+--TODO: Add custom livery choice if possible.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -1074,7 +1075,10 @@ function RAT:_SetRoute(takeoff, _departure, _destination)
   local VxCruiseMin = math.min(VxCruiseMax*0.70, 166)
   
   -- Cruise speed (randomized).
-  local VxCruise = self:_Randomize((VxCruiseMax-VxCruiseMin)/2+VxCruiseMin, 0.3 , VxCruiseMin, VxCruiseMax)
+  --local VxCruise = self:_Randomize((VxCruiseMax-VxCruiseMin)/2+VxCruiseMin, 0.3 , VxCruiseMin, VxCruiseMax)
+  
+  -- Cruise speed (randomized). Expectation value at midpoint between min and max.
+  local VxCruise = self:_Random_Gaussian((VxCruiseMax-VxCruiseMin)/2+VxCruiseMin, (VxCruiseMax-VxCruiseMax)/4, VxCruiseMin, VxCruiseMax)
   
   -- Climb speed 90% ov Vmax but max 720 km/h.
   local VxClimb = math.min(self.aircraft.Vmax*0.90, 200)
@@ -1265,7 +1269,10 @@ function RAT:_SetRoute(takeoff, _departure, _destination)
   end
   
   -- Set cruise altitude: default with 100% randomization but limited to FLmin and FLmax.
-  local FLcruise=self:_Randomize(self.aircraft.FLcruise, 1.0, FLmin, FLmax)
+  --local FLcruise=self:_Randomize(self.aircraft.FLcruise, 1.0, FLmin, FLmax)
+  
+  -- Set cruise altitude. Selected from Gaussian distribution but limited to FLmin and FLmax.
+  local FLcruise=self:_Random_Gaussian(self.aircraft.FLcruise, (FLmax-FLmin)/4, FLmin, FLmax)
   
   -- Overrule setting if user specified a flight level explicitly.
   if self.FLuser then
@@ -2526,6 +2533,37 @@ function RAT:_Randomize(value, fac, lower, upper)
   if self.debug then
     local text=string.format("Random: value = %6.2f, fac = %4.2f, min = %6.2f, max = %6.2f, r = %6.2f", value, fac, min, max, r)
     env.info(RAT.id..text)
+  end
+  
+  return r
+end
+
+--- Generate Gaussian pseudo-random numbers.
+-- @param #number x0 Expectation value of distribution.
+-- @param #number sigma (Optional) Standard deviation. Default 10.
+-- @param #number xmin (Optional) Lower cut-off value.
+-- @param #number xmax (Optional) Upper cut-off value.
+-- @return #number Gaussian random number.
+function RAT:_Random_Gaussian(x0, sigma, xmin, xmax)
+
+  -- Standard deviation. Default 10 if not given.
+  sigma=sigma or 10
+  
+  -- Uniform numbers in [0,1). We need two.
+  local x1=math.random()
+  local x2=math.random()
+  
+  -- Transform to Gaussian exp(-(x-x0)Â²/(2*sigmaÂ²).
+  local r = math.sqrt(-2*sigma*sigma * math.log(x1)) * math.cos(2*math.pi * x2)+x0
+  --local r2 = math.sqrt(-2*sigma*sigma * math.log(x1)) * math.sin(2*math.pi * x2)+x0
+  
+  -- Cut-off distribution at xmin.
+  if xmin then
+    r=math.max(r, xmin)
+  end
+  -- Cut-off distribution at xmax.
+  if xmax then
+    r=math.min(r, xmax)
   end
   
   return r
