@@ -485,12 +485,11 @@ do -- COORDINATE
   -- @param #COORDINATE self
   -- @return #string Heading text.
   function COORDINATE:GetHeadingText( Settings )
-    local Heading = self.Heading
-    local Settings = Settings or _SETTINGS
+    local Heading = self:GetHeading()
     if Heading then
       return string.format( " heading %3.2f °", Heading )
     else
-      return ""
+      return " heading cannot be determined"
     end
   end
 

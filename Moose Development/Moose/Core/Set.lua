@@ -217,7 +217,6 @@ function SET_BASE:Count()
 end
 
 
-
 --- Copies the Filter criteria from a given Set (for rebuilding a new Set based on an existing Set).
 -- @param #SET_BASE self
 -- @param #SET_BASE BaseSet
@@ -1802,6 +1801,111 @@ function SET_UNIT:CalculateThreatLevelA2G()
   return MaxThreatLevelA2G, MaxThreatText
   
 end
+
+--- Get the center coordinate of the SET_UNIT.
+-- @param #SET_UNIT self
+-- @return Core.Point#COORDINATE The center coordinate of all the units in the set, including heading in degrees and speed in mps in case of moving units.
+function SET_UNIT:GetCoordinate()
+
+  local Coordinate = self:GetFirst():GetCoordinate()
+  
+  local x1 = Coordinate.x
+  local x2 = Coordinate.x
+  local y1 = Coordinate.y
+  local y2 = Coordinate.y
+  local z1 = Coordinate.z
+  local z2 = Coordinate.z
+  local MaxVelocity = 0
+  local AvgHeading = nil
+  local MovingCount = 0
+
+  for UnitName, UnitData in pairs( self:GetSet() ) do
+  
+    local Unit = UnitData -- Wrapper.Unit#UNIT
+    local Coordinate = Unit:GetCoordinate()
+
+    x1 = ( Coordinate.x < x1 ) and Coordinate.x or x1
+    x2 = ( Coordinate.x > x2 ) and Coordinate.x or x2
+    y1 = ( Coordinate.y < y1 ) and Coordinate.y or y1
+    y2 = ( Coordinate.y > y2 ) and Coordinate.y or y2
+    z1 = ( Coordinate.y < z1 ) and Coordinate.z or z1
+    z2 = ( Coordinate.y > z2 ) and Coordinate.z or z2
+
+    local Velocity = Coordinate:GetVelocity()
+    if Velocity ~= 0  then
+      MaxVelocity = ( MaxVelocity < Velocity ) and Velocity or MaxVelocity
+      local Heading = Coordinate:GetHeading()
+      AvgHeading = AvgHeading and ( AvgHeading + Heading ) or Heading
+      MovingCount = MovingCount + 1
+    end
+  end
+
+  AvgHeading = AvgHeading and ( AvgHeading / MovingCount )
+  
+  Coordinate.x = ( x2 - x1 ) / 2 + x1
+  Coordinate.y = ( y2 - y1 ) / 2 + y1
+  Coordinate.z = ( z2 - z1 ) / 2 + z1
+  Coordinate:SetHeading( AvgHeading )
+  Coordinate:SetVelocity( MaxVelocity )
+
+  self:F( { Coordinate = Coordinate } )
+  return Coordinate
+
+end
+
+--- Get the maximum velocity of the SET_UNIT.
+-- @param #SET_UNIT self
+-- @return #number The speed in mps in case of moving units.
+function SET_UNIT:GetVelocity()
+
+  local Coordinate = self:GetFirst():GetCoordinate()
+  
+  local MaxVelocity = 0
+
+  for UnitName, UnitData in pairs( self:GetSet() ) do
+  
+    local Unit = UnitData -- Wrapper.Unit#UNIT
+    local Coordinate = Unit:GetCoordinate()
+
+    local Velocity = Coordinate:GetVelocity()
+    if Velocity ~= 0  then
+      MaxVelocity = ( MaxVelocity < Velocity ) and Velocity or MaxVelocity
+    end
+  end
+
+  self:F( { MaxVelocity = MaxVelocity } )
+  return MaxVelocity
+
+end
+
+--- Get the average heading of the SET_UNIT.
+-- @param #SET_UNIT self
+-- @return #number Heading Heading in degrees and speed in mps in case of moving units.
+function SET_UNIT:GetHeading()
+
+  local AvgHeading = nil
+  local MovingCount = 0
+
+  for UnitName, UnitData in pairs( self:GetSet() ) do
+  
+    local Unit = UnitData -- Wrapper.Unit#UNIT
+    local Coordinate = Unit:GetCoordinate()
+
+    local Velocity = Coordinate:GetVelocity()
+    if Velocity ~= 0  then
+      local Heading = Coordinate:GetHeading()
+      AvgHeading = AvgHeading and ( AvgHeading + Heading ) or Heading
+      MovingCount = MovingCount + 1
+    end
+  end
+
+  AvgHeading = AvgHeading and ( AvgHeading / MovingCount )
+  
+  self:F( { AvgHeading = AvgHeading } )
+  return AvgHeading
+
+end
+
 
 
 --- Returns if the @{Set} has targets having a radar (of a given type).

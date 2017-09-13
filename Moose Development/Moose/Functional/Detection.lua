@@ -1436,6 +1436,8 @@ do -- DETECTION_BASE
         else
           return "Unknown"
         end
+      else
+        return "Unknown"
       end
     else
       return "Dead:" .. DetectedUnit:GetName()
