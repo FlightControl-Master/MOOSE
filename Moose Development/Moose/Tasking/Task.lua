@@ -867,13 +867,46 @@ function TASK:MenuMarkToGroup( TaskGroup )
   self:E( "Mark Task menu selected")
 
   self:UpdateTaskInfo()
+  
+  local Report = REPORT:New():SetIndent( 0 )
+
+  -- List the name of the Task.
+  local Name = self:GetName()
+  Report:Add( Name .. ": " .. self:GetTaskBriefing() )
+
+  for TaskInfoID, TaskInfo in pairs( self.TaskInfo, function( t, a, b ) return t[a].TaskInfoOrder < t[b].TaskInfoOrder end ) do
+    
+    local TaskInfoIDText = "" --string.format( "%s: ", TaskInfoID )
+
+    if type( TaskInfo.TaskInfoText ) == "string" then
+      Report:Add( TaskInfoIDText .. TaskInfo.TaskInfoText )
+    elseif type(TaskInfo) == "table" then
+      if TaskInfoID == "Coordinates" then
+        local ToCoordinate = TaskInfo.TaskInfoText -- Core.Point#COORDINATE
+        Report:Add( TaskInfoIDText .. ToCoordinate:ToString() )
+      else
+      end
+    end
+    
+  end
+
+  self:E("ok5")
 
   local Coordinate = self:GetInfo( "Coordinates" ) -- Core.Point#COORDINATE
-  local Briefing = self:GetTaskBriefing()
   
-  self:F( { Briefing = Briefing, Coordinate = Coordinate } )
+  local Velocity = self.TargetSetUnit:GetVelocity()
+  local Heading = self.TargetSetUnit:GetHeading()
   
-  Coordinate:MarkToGroup( Briefing, TaskGroup )
+  Coordinate:SetHeading( Heading )
+  Coordinate:SetVelocity( Velocity )
+  
+  Report:Add( "Targets are" .. Coordinate:GetMovingText() ..  "." )
+
+  local MarkText = Report:Text( ", " ) 
+  
+  self:F( { Coordinate = Coordinate, MarkText = MarkText } )
+  
+  Coordinate:MarkToGroup( MarkText, TaskGroup )
   --Coordinate:MarkToAll( Briefing )
 end
 
