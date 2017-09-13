@@ -680,7 +680,9 @@ end
 -- @param #string skins Name of livery or table of names of liveries.
 function RAT:Livery(skins)
   if type(skins)=="string" then
-    local skins={skins}
+    self.livery={skins}
+  else
+    self.livery=skins
   end
 end
 
@@ -2283,71 +2285,6 @@ end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Modifies the template of the group to be spawned.
--- In particular, the waypoints of the group's flight plan are copied into the spawn template.
--- This allows to spawn at airports and also land at other airports, i.e. circumventing the DCS "landing bug".
--- @param #RAT self
--- @param #table waypoints The waypoints of the AI flight plan.
-function RAT:_ModifySpawnTemplate(waypoints)
-
-  -- The 3D vector of the first waypoint, i.e. where we actually spawn the template group.
-  local PointVec3 = {x=waypoints[1].x, y=waypoints[1].alt, z=waypoints[1].y}
-  
-  -- Heading from first to seconds waypoints to align units in case of air start.
-  local heading = self:_Course(waypoints[1], waypoints[2])
-
-  if self:_GetSpawnIndex(self.SpawnIndex+1) then
-  
-    -- Get copy of spawn template.
-    local SpawnTemplate = self.SpawnGroups[self.SpawnIndex].SpawnTemplate
-  
-    if SpawnTemplate then
-      self:T(SpawnTemplate)
-
-      -- Translate the position of the Group Template to the Vec3.
-      for UnitID = 1, #SpawnTemplate.units do
-        self:T('Before Translation SpawnTemplate.units['..UnitID..'].x = '..SpawnTemplate.units[UnitID].x..', SpawnTemplate.units['..UnitID..'].y = '..SpawnTemplate.units[UnitID].y)
-        local UnitTemplate = SpawnTemplate.units[UnitID]
-        local SX = UnitTemplate.x
-        local SY = UnitTemplate.y 
-        local BX = SpawnTemplate.route.points[1].x
-        local BY = SpawnTemplate.route.points[1].y
-        local TX = PointVec3.x + (SX-BX)
-        local TY = PointVec3.z + (SY-BY)
-        SpawnTemplate.units[UnitID].x   = TX
-        SpawnTemplate.units[UnitID].y   = TY
-        SpawnTemplate.units[UnitID].alt = PointVec3.y
-        SpawnTemplate.units[UnitID].heading = math.rad(heading)
-        -- Set another livery.
-        if self.livery then
-          SpawnTemplate.units[UnitID].livery_id = self.livery[math.random(#self.livery)]
-        end
-        -- Set AI skill.
-        SpawnTemplate.units[UnitID]["skill"] = self.skill
-        -- Onboard number.
-        SpawnTemplate.units[UnitID]["onboard_num"] = self.SpawnIndex
-        -- Parking spot.
-        --SpawnTemplate.units[UnitID]["parking"]=19
-        self:T('After Translation SpawnTemplate.units['..UnitID..'].x = '..SpawnTemplate.units[UnitID].x..', SpawnTemplate.units['..UnitID..'].y = '..SpawnTemplate.units[UnitID].y)
-      end
-      
-      -- Copy waypoints into spawntemplate. By this we avoid the nasty DCS "landing bug" :)
-      for i,wp in ipairs(waypoints) do
-        SpawnTemplate.route.points[i]=wp
-      end
-      
-      -- Also modify x,y of the template. Not sure why.
-      SpawnTemplate.x = PointVec3.x
-      SpawnTemplate.y = PointVec3.z
-      --SpawnTemplate.uncontrolled=true
-      
-      -- Update modified template for spawn group.
-      self.SpawnGroups[self.SpawnIndex].SpawnTemplate=SpawnTemplate
-      
-      self:T(SpawnTemplate)        
-    end
-  end
-end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -2639,4 +2576,165 @@ function RAT:_DeleteMarkers()
   --self:E({"self ids after: ", self.markerids})
 end
 
+--- Utility function which checks if table contains a specific value.
+-- @param #RAT self
+-- @param #table tab Table with elements to check.
+-- @param #string val The value we are looking for.
+-- @return #boolean True if element in the list, false otherwise. 
+function RAT:has_value (tab, val)
+  for _,value in pairs(tab) do
+    if value == val then
+      return true
+    end
+  end
+  return false
+end
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Modifies the template of the group to be spawned.
+-- In particular, the waypoints of the group's flight plan are copied into the spawn template.
+-- This allows to spawn at airports and also land at other airports, i.e. circumventing the DCS "landing bug".
+-- @param #RAT self
+-- @param #table waypoints The waypoints of the AI flight plan.
+function RAT:_ModifySpawnTemplate(waypoints)
+
+  -- The 3D vector of the first waypoint, i.e. where we actually spawn the template group.
+  local PointVec3 = {x=waypoints[1].x, y=waypoints[1].alt, z=waypoints[1].y}
+  
+  -- Heading from first to seconds waypoints to align units in case of air start.
+  local heading = self:_Course(waypoints[1], waypoints[2])
+
+  if self:_GetSpawnIndex(self.SpawnIndex+1) then
+  
+    
+    local scratch=false
+    local SpawnTemplate
+    if not scratch then
+      -- Get copy of spawn template.
+      SpawnTemplate = self.SpawnGroups[self.SpawnIndex].SpawnTemplate
+    else
+      SpawnTemplate=self:_InitSpawnTemplate()
+    end
+  
+    if SpawnTemplate then
+      self:T(SpawnTemplate)
+        
+      -- Translate the position of the Group Template to the Vec3.
+      for UnitID = 1, #SpawnTemplate.units do
+        self:T('Before Translation SpawnTemplate.units['..UnitID..'].x = '..SpawnTemplate.units[UnitID].x..', SpawnTemplate.units['..UnitID..'].y = '..SpawnTemplate.units[UnitID].y)
+        
+        -- Tranlate position.
+        local UnitTemplate = SpawnTemplate.units[UnitID]
+        local SX = UnitTemplate.x
+        local SY = UnitTemplate.y 
+        local BX = SpawnTemplate.route.points[1].x
+        local BY = SpawnTemplate.route.points[1].y
+        local TX = PointVec3.x + (SX-BX)
+        local TY = PointVec3.z + (SY-BY)
+        SpawnTemplate.units[UnitID].x   = TX
+        SpawnTemplate.units[UnitID].y   = TY
+        SpawnTemplate.units[UnitID].alt = PointVec3.y
+        SpawnTemplate.units[UnitID].heading = math.rad(heading)
+        
+        -- Set another livery.
+        env.info("Livery template:"..SpawnTemplate.units[UnitID].livery_id)
+        if self.livery then
+          local skin=self.livery[math.random(#self.livery)]
+          if not (skin:lower()=="default" or skin:lower()=="template") then
+            SpawnTemplate.units[UnitID].livery_id = self.livery[math.random(#self.livery)]
+          end
+          env.info("Livery modified:"..SpawnTemplate.units[UnitID].livery_id)
+        end
+        
+        SpawnTemplate.units[UnitID]["type"] = "Tu-142"
+        
+        -- Set AI skill.
+        SpawnTemplate.units[UnitID]["skill"] = self.skill
+        
+        -- Onboard number.
+        SpawnTemplate.units[UnitID]["onboard_num"] = self.SpawnIndex
+        
+        -- Parking spot.
+        --SpawnTemplate.units[UnitID]["parking"]=19
+        self:T('After Translation SpawnTemplate.units['..UnitID..'].x = '..SpawnTemplate.units[UnitID].x..', SpawnTemplate.units['..UnitID..'].y = '..SpawnTemplate.units[UnitID].y)
+        
+      end
+      
+      -- Copy waypoints into spawntemplate. By this we avoid the nasty DCS "landing bug" :)
+      for i,wp in ipairs(waypoints) do
+        SpawnTemplate.route.points[i]=wp
+      end
+      
+      -- Also modify x,y of the template. Not sure why.
+      SpawnTemplate.x = PointVec3.x
+      SpawnTemplate.y = PointVec3.z
+      --SpawnTemplate.uncontrolled=true
+      
+      -- Update modified template for spawn group.
+      self.SpawnGroups[self.SpawnIndex].SpawnTemplate=SpawnTemplate
+      
+      self:T(SpawnTemplate)        
+    end
+  end
+end
+
+--- Set up the basic spawn template.
+-- @param #RAT self
+function RAT:_InitSpawnTemplate()
+  local template = 
+  {
+    ["modulation"] = 0,
+    ["tasks"] = {},
+    ["task"] = "Transport",
+    ["uncontrolled"] = false,
+    ["route"] = 
+    {
+      ["points"] = {},
+    },
+    ["groupId"] = 1,
+    ["hidden"] = false,
+    ["y"] = 0,
+    ["x"] = 0,
+    ["name"] = "DictKey_GroupName_5",
+    ["communication"] = true,
+    ["start_time"] = 0,
+    ["frequency"] = 251,
+    ["units"] = {}, -- end of ["units"]
+  }
+  return template
+end
+
+--- Initialize a unit of the spawn template.
+-- @param #RAT self
+function RAT:_InitSpawnUnit()
+  local unit = 
+  {
+    ["country"]=country.id.USA,
+    ["name"] = "DictKey_UnitName_6",
+    ["alt"] = 30,
+    ["alt_type"] = "BARO",
+    ["livery_id"] = "Aeroflot",
+    ["skill"] = "High",
+    ["parking"] = "31",
+    ["speed"] = 0,
+    ["type"] = "Yak-40",
+    ["unitId"] = 1,
+    ["psi"] = 0, --3.1270847373636
+    ["parking_id"] = "23",
+    ["x"] = 0,
+    ["y"] = 0,
+    ["heading"] = 0,
+    ["callsign"] = 101,
+    ["onboard_num"] = "010",
+    ["payload"] = 
+    {
+      ["pylons"] = {},
+      ["fuel"] = "3080",
+      ["flare"] = 0,
+      ["chaff"] = 0,
+      ["gun"] = 100,
+    }, -- end of ["payload"]
+  }
+  return unit
+end
