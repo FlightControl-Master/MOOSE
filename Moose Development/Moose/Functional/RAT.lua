@@ -103,6 +103,8 @@
 -- @field #boolean respawn_at_landing Respawn aircraft the moment they land rather than at engine shutdown.
 -- @field #number respawn_delay Delay in seconds until repawn happens after landing.
 -- @field #table markerids Array with marker IDs.
+-- @field #string livery Livery of the aircraft set by user.
+-- @field #string skill Skill of AI.
 -- @extends Functional.Spawn#SPAWN
 
 ---# RAT class, extends @{Spawn#SPAWN}
@@ -122,7 +124,7 @@
 -- ### The default behavior can be changed:
 -- 
 -- * A specific departure and/or destination airport can be chosen.
--- * Valid coalitions can be set, e.g. only red, blue or neutral, all three �colours�.
+-- * Valid coalitions can be set, e.g. only red, blue or neutral, all three "colours".
 -- * It is possible to start in air within a zone defined in the mission editor or within a zone above an airport of the map.
 -- 
 -- ## Flight Plan
@@ -151,7 +153,7 @@
 -- * Give the group a good name. In the example above the group is named "RAT_YAK".
 -- * Activate the "LATE ACTIVATION" tick box. Note that this aircraft will not be spawned itself but serves a template for each RAT aircraft spawned when the mission starts. 
 -- 
--- Voil�, your already done!
+-- Voilà, your already done!
 -- 
 -- Optionally, you can set a specific livery for the aircraft or give it some weapons.
 -- However, the aircraft will by default not engage any enemies. Think of them as beeing on a peaceful or ferry mission.
@@ -280,6 +282,8 @@ RAT={
   respawn_at_landing=false, -- Respawn aircraft the moment they land rather than at engine shutdown.
   respawn_delay=nil,        -- Delay in seconds until repawn happens after landing.
   markerids={},             -- Array with marker IDs.
+  livery=nil,               -- Livery of the aircraft.
+  skill="High",             -- Skill of AI.
 }
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -670,6 +674,16 @@ function RAT:SetDestination(names)
   end
 
 end
+
+--- Set livery of aircraft. If more than one livery is specified in a table, the actually used one is chosen randomly from the selection.
+-- @param #RAT self
+-- @param #string skins Name of livery or table of names of liveries.
+function RAT:Livery(skins)
+  if type(skins)=="string" then
+    local skins={skins}
+  end
+end
+
 
 --- Aircraft will continue their journey from their destination. This means they are respawned at their destination and get a new random destination.
 -- @param #RAT self
@@ -2304,6 +2318,16 @@ function RAT:_ModifySpawnTemplate(waypoints)
         SpawnTemplate.units[UnitID].y   = TY
         SpawnTemplate.units[UnitID].alt = PointVec3.y
         SpawnTemplate.units[UnitID].heading = math.rad(heading)
+        -- Set another livery.
+        if self.livery then
+          SpawnTemplate.units[UnitID].livery_id = self.livery[math.random(#self.livery)]
+        end
+        -- Set AI skill.
+        SpawnTemplate.units[UnitID]["skill"] = self.skill
+        -- Onboard number.
+        SpawnTemplate.units[UnitID]["onboard_num"] = self.SpawnIndex
+        -- Parking spot.
+        --SpawnTemplate.units[UnitID]["parking"]=19
         self:T('After Translation SpawnTemplate.units['..UnitID..'].x = '..SpawnTemplate.units[UnitID].x..', SpawnTemplate.units['..UnitID..'].y = '..SpawnTemplate.units[UnitID].y)
       end
       
