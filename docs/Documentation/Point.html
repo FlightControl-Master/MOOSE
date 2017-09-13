@@ -271,9 +271,27 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).GetHeading">COORDINATE:GetHeading()</a></td>
+		<td class="summary">
+<p>Get the heading of the coordinate, if applicable.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).GetHeadingText">COORDINATE:GetHeadingText(Settings)</a></td>
+		<td class="summary">
+<p>Return the heading text of the COORDINATE.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).GetLandHeight">COORDINATE:GetLandHeight()</a></td>
 		<td class="summary">
 <p>Return the height of the land at the coordinate.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).GetMovingText">COORDINATE:GetMovingText(Settings)</a></td>
+		<td class="summary">
+<p>Return velocity text of the COORDINATE.</p>
 </td>
 		</tr>
 		<tr>
@@ -304,6 +322,24 @@
 		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).GetVec3">COORDINATE:GetVec3()</a></td>
 		<td class="summary">
 <p>Return the coordinates of the COORDINATE in Vec3 format.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).GetVelocity">COORDINATE:GetVelocity()</a></td>
+		<td class="summary">
+<p>Return the velocity of the COORDINATE.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).GetVelocityText">COORDINATE:GetVelocityText(Settings)</a></td>
+		<td class="summary">
+<p>Return the velocity text of the COORDINATE.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).Heading">COORDINATE.Heading</a></td>
+		<td class="summary">
+
 </td>
 		</tr>
 		<tr>
@@ -343,6 +379,12 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).MarkToGroup">COORDINATE:MarkToGroup(MarkText, MarkGroup)</a></td>
+		<td class="summary">
+<p>Mark to Group</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).New">COORDINATE:New(x, y, z)</a></td>
 		<td class="summary">
 <p>COORDINATE constructor.</p>
@@ -369,7 +411,13 @@
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).SetHeading">COORDINATE:SetHeading(Heading)</a></td>
 		<td class="summary">
-
+<p>Set the heading of the coordinate, if applicable.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).SetVelocity">COORDINATE:SetVelocity(Velocity)</a></td>
+		<td class="summary">
+<p>Set the velocity of the COORDINATE.</p>
 </td>
 		</tr>
 		<tr>
@@ -480,6 +528,12 @@
 		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).Translate">COORDINATE:Translate(Distance, Angle)</a></td>
 		<td class="summary">
 <p>Add a Distance in meters from the COORDINATE orthonormal plane, with the given angle, and calculate the new COORDINATE.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).Velocity">COORDINATE.Velocity</a></td>
+		<td class="summary">
+
 </td>
 		</tr>
 		<tr>
@@ -1572,6 +1626,50 @@ The distance text expressed in the units of measurement.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(COORDINATE).GetHeading" >
+<strong>COORDINATE:GetHeading()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Get the heading of the coordinate, if applicable.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#number:</em>
+or nil</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(COORDINATE).GetHeadingText" >
+<strong>COORDINATE:GetHeadingText(Settings)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Return the heading text of the COORDINATE.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> Settings </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#string:</em>
+Heading text.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(COORDINATE).GetLandHeight" >
 <strong>COORDINATE:GetLandHeight()</strong>
 </a>
@@ -1583,6 +1681,32 @@ The distance text expressed in the units of measurement.</p>
 		<h3>Return value</h3>
 				
 <p><em>#number:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(COORDINATE).GetMovingText" >
+<strong>COORDINATE:GetMovingText(Settings)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Return velocity text of the COORDINATE.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> Settings </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#string:</em></p>
 
 
 </dd>
@@ -1700,6 +1824,64 @@ The Vec2 format coordinate.</p>
 				
 <p><em><a href="Dcs.DCSTypes.html##(Vec3)">Dcs.DCSTypes#Vec3</a>:</em>
 The Vec3 format coordinate.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(COORDINATE).GetVelocity" >
+<strong>COORDINATE:GetVelocity()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Return the velocity of the COORDINATE.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#number:</em>
+Velocity in meters per second.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(COORDINATE).GetVelocityText" >
+<strong>COORDINATE:GetVelocityText(Settings)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Return the velocity text of the COORDINATE.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> Settings </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#string:</em>
+Velocity text.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(COORDINATE).Heading" >
+<strong>COORDINATE.Heading</strong>
+</a>
+</dt>
+<dd>
+	
+
 
 </dd>
 </dl>
@@ -1874,6 +2056,44 @@ The resulting Mark ID which is a number.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(COORDINATE).MarkToGroup" >
+<strong>COORDINATE:MarkToGroup(MarkText, MarkGroup)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Mark to Group</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string MarkText </em></code>: 
+Free format text that shows the marking clarification.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> MarkGroup </em></code>: 
+The <a href="Group.html">Group</a> that receives the mark.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#number:</em>
+The resulting Mark ID which is a number.</p>
+
+			<h3>Usage:</h3>
+		<pre class="example"><code>  local TargetCoord = TargetGroup:GetCoordinate()
+  local MarkGroup = GROUP:FindByName( "AttackGroup" )
+  local MarkID = TargetCoord:MarkToGroup( "This is a target for the attack group", AttackGroup )</code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(COORDINATE).New" >
 <strong>COORDINATE:New(x, y, z)</strong>
 </a>
@@ -2008,13 +2228,35 @@ The ID of the mark to be removed.</p>
 </dt>
 <dd>
 	
-
+<p>Set the heading of the coordinate, if applicable.</p>
 
 		<h3>Parameter</h3>
 		<ul>
 				<li>
 				
 <p><code><em> Heading </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(COORDINATE).SetVelocity" >
+<strong>COORDINATE:SetVelocity(Velocity)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set the velocity of the COORDINATE.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Velocity </em></code>: 
+Velocity in meters per second.</p>
 
 				</li>
 		</ul>
@@ -2502,6 +2744,20 @@ The Angle in degrees.</p>
 				
 <p><em><a href="##(COORDINATE)">#COORDINATE</a>:</em>
 The new calculated COORDINATE.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(COORDINATE).Velocity" >
+<strong>COORDINATE.Velocity</strong>
+</a>
+</dt>
+<dd>
+	
+
 
 </dd>
 </dl>

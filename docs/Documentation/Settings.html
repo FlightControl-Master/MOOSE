@@ -185,6 +185,12 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).GetMessageTime">SETTINGS:GetMessageTime(MessageType)</a></td>
+		<td class="summary">
+<p>Gets the SETTINGS Message Display Timing of a MessageType</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).IsA2A_BRAA">SETTINGS:IsA2A_BRAA()</a></td>
 		<td class="summary">
 <p>Is BRA</p>
@@ -299,6 +305,12 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).MenuGroupMessageTimingsSystem">SETTINGS:MenuGroupMessageTimingsSystem(PlayerUnit, PlayerGroup, PlayerName, MessageType, MessageTime)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).MenuLL_DDM_Accuracy">SETTINGS:MenuLL_DDM_Accuracy(MenuGroup, RootMenu, LL_Accuracy)</a></td>
 		<td class="summary">
 
@@ -312,6 +324,18 @@
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).MenuMWSystem">SETTINGS:MenuMWSystem(MenuGroup, RootMenu, MW)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).MenuMessageTimingsSystem">SETTINGS:MenuMessageTimingsSystem(MenuGroup, RootMenu, MessageType, MessageTime)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).MessageTypeTimings">SETTINGS.MessageTypeTimings</a></td>
 		<td class="summary">
 
 </td>
@@ -410,6 +434,12 @@
 		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).SetMGRS_Accuracy">SETTINGS:SetMGRS_Accuracy(MGRS_Accuracy)</a></td>
 		<td class="summary">
 <p>Sets the SETTINGS MGRS accuracy.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).SetMessageTime">SETTINGS:SetMessageTime(MessageType, MessageTime)</a></td>
+		<td class="summary">
+<p>Sets the SETTINGS Message Display Timing of a MessageType</p>
 </td>
 		</tr>
 		<tr>
@@ -571,6 +601,33 @@
 	
 <p>Gets the SETTINGS MGRS accuracy.</p>
 
+		<h3>Return value</h3>
+				
+<p><em>#number:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SETTINGS).GetMessageTime" >
+<strong>SETTINGS:GetMessageTime(MessageType)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Gets the SETTINGS Message Display Timing of a MessageType</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Message.html##(MESSAGE)">Core.Message#MESSAGE</a> MessageType </em></code>: 
+The type of the message.</p>
+
+				</li>
+		</ul>
 		<h3>Return value</h3>
 				
 <p><em>#number:</em></p>
@@ -1001,6 +1058,47 @@ true if metric.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(SETTINGS).MenuGroupMessageTimingsSystem" >
+<strong>SETTINGS:MenuGroupMessageTimingsSystem(PlayerUnit, PlayerGroup, PlayerName, MessageType, MessageTime)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> PlayerUnit </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> PlayerGroup </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> PlayerName </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> MessageType </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> MessageTime </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(SETTINGS).MenuLL_DDM_Accuracy" >
 <strong>SETTINGS:MenuLL_DDM_Accuracy(MenuGroup, RootMenu, LL_Accuracy)</strong>
 </a>
@@ -1094,7 +1192,56 @@ true if metric.</p>
 		<dl class="function">
 <dt>
 
-		<em>#boolean</em>
+<a id="#(SETTINGS).MenuMessageTimingsSystem" >
+<strong>SETTINGS:MenuMessageTimingsSystem(MenuGroup, RootMenu, MessageType, MessageTime)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> MenuGroup </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> RootMenu </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> MessageType </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> MessageTime </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SETTINGS).MessageTypeTimings" >
+<strong>SETTINGS.MessageTypeTimings</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
 <a id="#(SETTINGS).Metric" >
 <strong>SETTINGS.Metric</strong>
 </a>
@@ -1401,6 +1548,34 @@ true if metric.</p>
 <p><em><a href="##(SETTINGS)">#SETTINGS</a>:</em></p>
 
 
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SETTINGS).SetMessageTime" >
+<strong>SETTINGS:SetMessageTime(MessageType, MessageTime)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Sets the SETTINGS Message Display Timing of a MessageType</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Message.html##(MESSAGE)">Core.Message#MESSAGE</a> MessageType </em></code>: 
+The type of the message.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number MessageTime </em></code>: 
+The display time duration in seconds of the MessageType.</p>
+
+				</li>
+		</ul>
 </dd>
 </dl>
 		<dl class="function">

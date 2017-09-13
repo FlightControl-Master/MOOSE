@@ -212,9 +212,21 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(COMMANDCENTER).MessageToGroup">COMMANDCENTER:MessageToGroup(Message, TaskGroup, Name)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(COMMANDCENTER).MessageToGroup">COMMANDCENTER:MessageToGroup(Message, TaskGroup)</a></td>
 		<td class="summary">
 <p>Send a CC message to a GROUP.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(COMMANDCENTER).MessageTypeToCoalition">COMMANDCENTER:MessageTypeToCoalition(Message, MessageType)</a></td>
+		<td class="summary">
+<p>Send a CC message of a specified type to the coalition of the CC.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(COMMANDCENTER).MessageTypeToGroup">COMMANDCENTER:MessageTypeToGroup(Message, TaskGroup, MessageType)</a></td>
+		<td class="summary">
+<p>Send a CC message of a specified type to a GROUP.</p>
 </td>
 		</tr>
 		<tr>
@@ -591,7 +603,7 @@ true if in WWII mode.</p>
 <dt>
 
 <a id="#(COMMANDCENTER).MessageToGroup" >
-<strong>COMMANDCENTER:MessageToGroup(Message, TaskGroup, Name)</strong>
+<strong>COMMANDCENTER:MessageToGroup(Message, TaskGroup)</strong>
 </a>
 </dt>
 <dd>
@@ -610,10 +622,64 @@ true if in WWII mode.</p>
 <p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> TaskGroup </em></code>: </p>
 
 				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(COMMANDCENTER).MessageTypeToCoalition" >
+<strong>COMMANDCENTER:MessageTypeToCoalition(Message, MessageType)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Send a CC message of a specified type to the coalition of the CC.</p>
+
+		<h3>Parameters</h3>
+		<ul>
 				<li>
 				
-<p><code><em><a href="##(sring)">#sring</a> Name </em></code>: 
-(optional) The name of the Group used as a prefix for the message to the Group. If not provided, there will be nothing shown.</p>
+<p><code><em>#string Message </em></code>: 
+The message.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Core.Message.html##(MESSAGE.MessageType)">Core.Message#MESSAGE.MessageType</a> MessageType </em></code>: 
+The type of the message, resulting in automatic time duration and prefix of the message.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(COMMANDCENTER).MessageTypeToGroup" >
+<strong>COMMANDCENTER:MessageTypeToGroup(Message, TaskGroup, MessageType)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Send a CC message of a specified type to a GROUP.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Message </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> TaskGroup </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Core.Message.html##(MESSAGE.MessageType)">Core.Message#MESSAGE.MessageType</a> MessageType </em></code>: 
+The type of the message, resulting in automatic time duration and prefix of the message.</p>
 
 				</li>
 		</ul>
@@ -848,8 +914,6 @@ The name before the #-mark indicating the class of the Reference Zones.</p>
 			<h2><a id="#(TASK)" >Type <code>TASK</code></a></h2>
 			
 			<h2><a id="#(list)" >Type <code>list</code></a></h2>
-			
-			<h2><a id="#(sring)" >Type <code>sring</code></a></h2>
 			
 </div>
 

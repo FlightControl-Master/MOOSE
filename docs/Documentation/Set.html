@@ -1030,9 +1030,21 @@ mission designer to add a dedicated method</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_UNIT).GetCoordinate">SET_UNIT:GetCoordinate()</a></td>
+		<td class="summary">
+<p>Get the center coordinate of the SET_UNIT.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SET_UNIT).GetFirst">SET_UNIT:GetFirst()</a></td>
 		<td class="summary">
 <p>Get the first unit from the set.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_UNIT).GetHeading">SET_UNIT:GetHeading()</a></td>
+		<td class="summary">
+<p>Get the average heading of the SET_UNIT.</p>
 </td>
 		</tr>
 		<tr>
@@ -1057,6 +1069,12 @@ mission designer to add a dedicated method</p>
 		<td class="name" nowrap="nowrap"><a href="##(SET_UNIT).GetUnitTypesText">SET_UNIT:GetUnitTypesText()</a></td>
 		<td class="summary">
 <p>Returns a comma separated string of the unit types with a count in the  <a href="Set.html">Set</a>.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_UNIT).GetVelocity">SET_UNIT:GetVelocity()</a></td>
+		<td class="summary">
+<p>Get the maximum velocity of the SET_UNIT.</p>
 </td>
 		</tr>
 		<tr>
@@ -5022,6 +5040,24 @@ self</p>
 		<dl class="function">
 <dt>
 
+<a id="#(SET_UNIT).GetCoordinate" >
+<strong>SET_UNIT:GetCoordinate()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Get the center coordinate of the SET_UNIT.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="Core.Point.html##(COORDINATE)">Core.Point#COORDINATE</a>:</em>
+The center coordinate of all the units in the set, including heading in degrees and speed in mps in case of moving units.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(SET_UNIT).GetFirst" >
 <strong>SET_UNIT:GetFirst()</strong>
 </a>
@@ -5034,6 +5070,24 @@ self</p>
 				
 <p><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a>:</em>
 The UNIT object.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_UNIT).GetHeading" >
+<strong>SET_UNIT:GetHeading()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Get the average heading of the SET_UNIT.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#number:</em>
+Heading Heading in degrees and speed in mps in case of moving units.</p>
 
 </dd>
 </dl>
@@ -5115,6 +5169,24 @@ The types of the <a href="Unit.html">Unit</a>s delimited.</p>
 				
 <p><em>#string:</em>
 The unit types string</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_UNIT).GetVelocity" >
+<strong>SET_UNIT:GetVelocity()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Get the maximum velocity of the SET_UNIT.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#number:</em>
+The speed in mps in case of moving units.</p>
 
 </dd>
 </dl>
