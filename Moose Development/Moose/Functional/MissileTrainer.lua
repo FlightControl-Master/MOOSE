@@ -216,7 +216,7 @@ function MISSILETRAINER:New( Distance, Briefing )
 
   self.TrackingMissiles = {}
 
-  self.TrackingScheduler = SCHEDULER:New( self, self._TrackMissiles, {}, 0.5, 0.05, 0 )
+  self.TrackingScheduler = SCHEDULER:New( self, self._TrackMissiles, {}, 0.3, 0.01, 0 ) -- increased frequency from 0.05 to 0.01 in order to intercept fast incoming missiles
 
   return self
 end
