@@ -1025,6 +1025,8 @@ function SPAWN:SpawnAtAirbase( Airbase, Takeoff, TakeoffAltitude ) -- R2.2
         else
           SpawnTemplate.units[UnitID].alt = PointVec3.y + 10
         end
+        SpawnTemplate.units[UnitID].parking = nil
+        SpawnTemplate.units[UnitID].parking_id = nil
         self:T( 'After Translation SpawnTemplate.units['..UnitID..'].x = ' .. SpawnTemplate.units[UnitID].x .. ', SpawnTemplate.units['..UnitID..'].y = ' .. SpawnTemplate.units[UnitID].y )
       end
       
@@ -1036,7 +1038,8 @@ function SPAWN:SpawnAtAirbase( Airbase, Takeoff, TakeoffAltitude ) -- R2.2
         SpawnTemplate.route.points[1].alt = PointVec3.y + 10
         SpawnTemplate.route.points[1].airdromeId = Airbase:GetID()
       end
-      SpawnTemplate.route.points[1].type = GROUPTEMPLATE.Takeoff[Takeoff]
+      SpawnTemplate.route.points[1].type = GROUPTEMPLATE.Takeoff[Takeoff][1] -- type
+      SpawnTemplate.route.points[1].action = GROUPTEMPLATE.Takeoff[Takeoff][2] -- action
       
       SpawnTemplate.x = PointVec3.x
       SpawnTemplate.y = PointVec3.z

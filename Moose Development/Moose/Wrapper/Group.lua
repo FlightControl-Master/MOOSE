@@ -104,10 +104,10 @@ GROUP.Takeoff = {
 GROUPTEMPLATE = {}
 
 GROUPTEMPLATE.Takeoff = {
-  [GROUP.Takeoff.Air] =     "Turning Point",
-  [GROUP.Takeoff.Runway] =  "TakeOff",
-  [GROUP.Takeoff.Hot] =     "TakeOffParkingHot",
-  [GROUP.Takeoff.Cold] =    "TakeOffParking",
+  [GROUP.Takeoff.Air] =     { "Turning Point", "Turning Point" },
+  [GROUP.Takeoff.Runway] =  { "TakeOff", "From Runway" },
+  [GROUP.Takeoff.Hot] =     { "TakeOffParkingHot", "From Parking Area Hot" },
+  [GROUP.Takeoff.Cold] =    { "TakeOffParking", "From Parking Area" }
 }
 
 --- Create a new GROUP from a DCSGroup
