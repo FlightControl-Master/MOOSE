@@ -987,15 +987,15 @@ end
 -- Note that each point in the route assigned to the spawning group is reset to the point of the spawn.
 -- You can use the returned group to further define the route to be followed.
 -- @param #SPAWN self
--- @param Wrapper.Airbase#AIRBASE Airbase The @{Airbase} where to spawn the group.
+-- @param Wrapper.Airbase#AIRBASE SpawnAirbase The @{Airbase} where to spawn the group.
 -- @param #SPAWN.Takeoff Takeoff (optional) The location and takeoff method. Default is Hot.
 -- @param #number TakeoffAltitude (optional) The altitude above the ground.
 -- @return Wrapper.Group#GROUP that was spawned.
 -- @return #nil Nothing was spawned.
-function SPAWN:SpawnAtAirbase( Airbase, Takeoff, TakeoffAltitude ) -- R2.2
-  self:E( { self.SpawnTemplatePrefix, Airbase, Takeoff, TakeoffAltitude } )
+function SPAWN:SpawnAtAirbase( SpawnAirbase, Takeoff, TakeoffAltitude ) -- R2.2
+  self:E( { self.SpawnTemplatePrefix, SpawnAirbase, Takeoff, TakeoffAltitude } )
 
-  local PointVec3 = Airbase:GetPointVec3()
+  local PointVec3 = SpawnAirbase:GetPointVec3()
   self:T2(PointVec3)
 
   Takeoff = Takeoff or SPAWN.Takeoff.Hot
@@ -1006,7 +1006,7 @@ function SPAWN:SpawnAtAirbase( Airbase, Takeoff, TakeoffAltitude ) -- R2.2
   
     if SpawnTemplate then
 
-      self:T( { "Current point of ", self.SpawnTemplatePrefix, Airbase } )
+      self:T( { "Current point of ", self.SpawnTemplatePrefix, SpawnAirbase } )
 
       -- Translate the position of the Group Template to the Vec3.
       for UnitID = 1, #SpawnTemplate.units do
@@ -1025,6 +1025,8 @@ function SPAWN:SpawnAtAirbase( Airbase, Takeoff, TakeoffAltitude ) -- R2.2
         else
           SpawnTemplate.units[UnitID].alt = PointVec3.y + 10
         end
+        SpawnTemplate.units[UnitID].parking = nil
+        SpawnTemplate.units[UnitID].parking_id = nil
         self:T( 'After Translation SpawnTemplate.units['..UnitID..'].x = ' .. SpawnTemplate.units[UnitID].x .. ', SpawnTemplate.units['..UnitID..'].y = ' .. SpawnTemplate.units[UnitID].y )
       end
       
@@ -1034,12 +1036,26 @@ function SPAWN:SpawnAtAirbase( Airbase, Takeoff, TakeoffAltitude ) -- R2.2
         SpawnTemplate.route.points[1].alt = PointVec3.y + ( TakeoffAltitude or 200 )
       else
         SpawnTemplate.route.points[1].alt = PointVec3.y + 10
-        SpawnTemplate.route.points[1].airdromeId = Airbase:GetID()
+        SpawnTemplate.route.points[1].airdromeId = SpawnAirbase:GetID()
       end
-      SpawnTemplate.route.points[1].type = GROUPTEMPLATE.Takeoff[Takeoff]
+      SpawnTemplate.route.points[1].type = GROUPTEMPLATE.Takeoff[Takeoff][1] -- type
+      SpawnTemplate.route.points[1].action = GROUPTEMPLATE.Takeoff[Takeoff][2] -- action
       
       SpawnTemplate.x = PointVec3.x
       SpawnTemplate.y = PointVec3.z
+
+      -- test if the airbase is a ship
+      
+      self:F( { AirbaseDesc = SpawnAirbase:GetDesc() } )
+      if SpawnAirbase:GetDesc().category == Airbase.Category.SHIP then
+        SpawnTemplate.route.points[1].linkUnit = SpawnAirbase:GetID()
+        SpawnTemplate.route.points[1].helipadId = SpawnAirbase:GetID()
+        SpawnTemplate.route.points[1].alt = 0
+        SpawnTemplate.units[1].alt = 0
+        SpawnTemplate.route.points[1].airdromeId = nil
+        self:F( { linkUnit = SpawnTemplate.route.points[1].linkUnit, helipadId = SpawnTemplate.route.points[1].helipadId } )
+      end
+        
               
       return self:SpawnWithIndex( self.SpawnIndex )
     end
