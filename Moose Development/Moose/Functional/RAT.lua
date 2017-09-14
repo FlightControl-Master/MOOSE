@@ -86,7 +86,7 @@
 -- @field #table departure_ports Array containing the names of the destination airports.
 -- @field #table destination_ports Array containing the names of the destination airports.
 -- @field #table ratcraft Array with the spawned RAT aircraft.
--- @field #number Tinactive Time in seconds after which inactive units will be destroyed. Default is 180 seconds.
+-- @field #number Tinactive Time in seconds after which inactive units will be destroyed. Default is 300 seconds.
 -- @field #boolean reportstatus Aircraft report status.
 -- @field #number statusinterval Intervall between status checks (and reports if enabled).
 -- @field #boolean placemarkers Place markers of waypoints on F10 map.
@@ -104,7 +104,7 @@
 -- @field #number respawn_delay Delay in seconds until repawn happens after landing.
 -- @field #table markerids Array with marker IDs.
 -- @field #string livery Livery of the aircraft set by user.
--- @field #string skill Skill of AI.
+-- @field #string skill Skill of AI. 
 -- @extends Functional.Spawn#SPAWN
 
 ---# RAT class, extends @{Spawn#SPAWN}
@@ -265,7 +265,7 @@ RAT={
   departure_ports={},       -- Array containing the names of the departure airports.
   destination_ports={},     -- Array containing the names of the destination airports.
   ratcraft={},              -- Array with the spawned RAT aircraft.
-  Tinactive=180,            -- Time in seconds after which inactive units will be destroyed. Default is 180 seconds.
+  Tinactive=300,            -- Time in seconds after which inactive units will be destroyed. Default is 300 seconds.
   reportstatus=false,       -- Aircraft report status.
   statusinterval=30,        -- Intervall between status checks (and reports if enabled).
   placemarkers=false,       -- Place markers of waypoints on F10 map.
@@ -394,7 +394,7 @@ RAT.id="RAT | "
 --DONE: Improve behaviour when no destination or departure airports were found. Leads to crash, e.g. 1184: attempt to get length of local 'destinations' (a nil value)
 --DONE: Check cases where aircraft get shot down.
 --DONE: Handle the case where more than 10 RAT objects are spawned. Likewise, more than 10 groups of one object. Causes problems with the number of menu items! ==> not now!
---TODO: Add custom livery choice if possible.
+--DONE: Add custom livery choice if possible.
 --TODO: When only a destination is set, it should be checked that the departure is within range. Also, that departure and destination are not the same.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -557,9 +557,7 @@ function RAT:SetCoalition(friendly)
   elseif friendly:lower()=="red" then
     self.friendly=RAT.coal.red
   elseif friendly:lower()=="redonly" then
-    self.friendly=RAT.coal.red
-  elseif friendly:lower()=="blue" then
-    self.friendly=RAT.coal.blue
+    self.friendly=RAT.coal.redonly
   elseif friendly:lower()=="neutral" then
     self.friendly=RAT.coal.neutral
   else
@@ -727,7 +725,7 @@ function RAT:RespawnAfterLanding(delay)
   self.respawn_delay=delay
 end
 
---- Set the time after which inactive groups will be destroyed. Default is 180 seconds.
+--- Set the time after which inactive groups will be destroyed. Default is 300 seconds.
 -- @param #RAT self
 -- @param #number time Time in seconds.
 function RAT:TimeDestroyInactive(time)
@@ -844,11 +842,25 @@ function RAT:SetFLmax(height)
   self.FLmaxuser=height*RAT.unit.FL2m
 end
 
+--- Set max cruising altitude above sea level.
+-- @param #RAT self
+-- @param #number alt Altitude ASL in meters.
+function RAT:SetMaCruiseAltitude(alt)
+  self.FLmaxuser=alt
+end
+
 --- Set min flight level. Setting this value will overrule all other logic. Aircraft will try to fly at higher than this FL regardless.
 -- @param #RAT self
 -- @param #number height Maximum FL in hundrets of feet.
 function RAT:SetFLmin(height)
   self.FLminuser=height*RAT.unit.FL2m
+end
+
+--- Set min cruising altitude above sea level.
+-- @param #RAT self
+-- @param #number alt Altitude ASL in meters.
+function RAT:SetMinCruiseAltitude(alt)
+  self.FLminuser=alt
 end
 
 --- Set flight level of cruising part. This is still be checked for consitancy with selected route and prone to radomization.
@@ -857,6 +869,13 @@ end
 -- @param #number height FL in hundrets of feet. E.g. FL200 = 20000 ft ASL.
 function RAT:SetFLcruise(height)
   self.aircraft.FLcruise=height*RAT.unit.FL2m
+end
+
+--- Set cruising altitude. This is still be checked for consitancy with selected route and prone to radomization.
+-- @param #RAT self
+-- @param #number alt Cruising altitude ASL in meters.
+function RAT:SetCruiseAltitude(alt)
+  self.aircraft.FLcruise=alt
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1091,9 +1110,6 @@ function RAT:_SetRoute(takeoff, _departure, _destination)
   -- Min cruise speed 70% of max cruise or 600 km/h whichever is lower.
   local VxCruiseMin = math.min(VxCruiseMax*0.70, 166)
   
-  -- Cruise speed (randomized).
-  --local VxCruise = self:_Randomize((VxCruiseMax-VxCruiseMin)/2+VxCruiseMin, 0.3 , VxCruiseMin, VxCruiseMax)
-  
   -- Cruise speed (randomized). Expectation value at midpoint between min and max.
   local VxCruise = self:_Random_Gaussian((VxCruiseMax-VxCruiseMin)/2+VxCruiseMin, (VxCruiseMax-VxCruiseMax)/4, VxCruiseMin, VxCruiseMax)
   
@@ -1165,6 +1181,13 @@ function RAT:_SetRoute(takeoff, _departure, _destination)
     H_departure=self:_Randomize(self.aircraft.FLcruise*0.7, 0.3, Pdeparture.y+Hmin, self.aircraft.FLcruise)
   else
     H_departure=Pdeparture.y
+  end
+  
+  -- Adjust min distance between departure and destination for user set min flight level.
+  if self.FLminuser then
+    self.mindist=self:_MinDistance(AlphaClimb, AlphaDescent, self.FLminuser-H_departure)
+    local text=string.format("Adjusting min distance to %d km (for given min FL%03d)", self.mindist/1000, self.FLminuser/RAT.unit.FL2m)
+    env.info(RAT.id..text)
   end
   
   -- DESTINATION AIRPORT
@@ -1285,9 +1308,14 @@ function RAT:_SetRoute(takeoff, _departure, _destination)
     FLmax=self.FLmaxuser
   end
   
-  -- Set cruise altitude: default with 100% randomization but limited to FLmin and FLmax.
-  --local FLcruise=self:_Randomize(self.aircraft.FLcruise, 1.0, FLmin, FLmax)
-  
+  -- Adjust FLcruise to be at leat FLmin and at most FLmax
+  if self.aircraft.FLcruise<FLmin then
+    self.aircraft.FLcruise=FLmin
+  end
+  if self.aircraft.FLcruise>FLmax then
+    self.aircraft.FLcruise=FLmax
+  end
+    
   -- Set cruise altitude. Selected from Gaussian distribution but limited to FLmin and FLmax.
   local FLcruise=self:_Random_Gaussian(self.aircraft.FLcruise, (FLmax-FLmin)/4, FLmin, FLmax)
   
@@ -2342,7 +2370,7 @@ end
 -- @param #number d Distance between the two airports [m].
 -- @param #number phi Angle between departure and destination [rad].
 -- @param #number h0 Height [m] of departure airport. Note we implicitly assume that the height difference between departure and destination is negligible.
--- @return #number  Maximal flight level in meters.
+-- @return #number Maximal flight level in meters.
 function RAT:_FLmax(alpha, beta, d, phi, h0)
 -- Solve ASA triangle for one side (d) and two adjacent angles (alpha, beta) given.
   local gamma=math.rad(180)-alpha-beta
@@ -2361,6 +2389,18 @@ function RAT:_FLmax(alpha, beta, d, phi, h0)
     env.info(RAT.id..text)
   end
   return h3+h0
+end
+
+--- Calculate min distance between departure and destination for given minimum flight level and climb/decent rates
+-- @param #RAT self
+-- @param #number alpha Angle of climb [rad].
+-- @param #number beta Angle of descent [rad].
+-- @param #number h min height AGL.
+-- @return #number Minimum distance between departure and destiantion.
+function RAT:_MinDistance(alpha, beta, h)
+  local d1=h/math.tan(alpha)
+  local d2=h/math.tan(beta)
+  return d1+d2
 end
 
 
@@ -2521,11 +2561,23 @@ function RAT:_Random_Gaussian(x0, sigma, xmin, xmax)
   
   -- Cut-off distribution at xmin.
   if xmin then
-    r=math.max(r, xmin)
+    if r<xmin then
+      if xmax then
+        r=math.min(math.max(x0,xmin), xmax)
+      else
+        r=math.max(x0,xmin)
+      end
+    end
   end
   -- Cut-off distribution at xmax.
   if xmax then
-    r=math.min(r, xmax)
+    if r>xmax then
+      if xmin then
+        r=math.max(math.min(x0,xmax),xmin)
+      else
+        r=math.min(x0,xmax)
+      end
+    end
   end
   
   return r
@@ -2607,15 +2659,7 @@ function RAT:_ModifySpawnTemplate(waypoints)
 
   if self:_GetSpawnIndex(self.SpawnIndex+1) then
   
-    
-    local scratch=false
-    local SpawnTemplate
-    if not scratch then
-      -- Get copy of spawn template.
-      SpawnTemplate = self.SpawnGroups[self.SpawnIndex].SpawnTemplate
-    else
-      SpawnTemplate=self:_InitSpawnTemplate()
-    end
+    local SpawnTemplate = self.SpawnGroups[self.SpawnIndex].SpawnTemplate
   
     if SpawnTemplate then
       self:T(SpawnTemplate)
@@ -2637,17 +2681,12 @@ function RAT:_ModifySpawnTemplate(waypoints)
         SpawnTemplate.units[UnitID].alt = PointVec3.y
         SpawnTemplate.units[UnitID].heading = math.rad(heading)
         
-        -- Set another livery.
-        env.info("Livery template:"..SpawnTemplate.units[UnitID].livery_id)
+        -- Set (another) livery.
         if self.livery then
-          local skin=self.livery[math.random(#self.livery)]
-          if not (skin:lower()=="default" or skin:lower()=="template") then
-            SpawnTemplate.units[UnitID].livery_id = self.livery[math.random(#self.livery)]
-          end
-          env.info("Livery modified:"..SpawnTemplate.units[UnitID].livery_id)
+          SpawnTemplate.units[UnitID].livery_id = self.livery[math.random(#self.livery)]
         end
         
-        SpawnTemplate.units[UnitID]["type"] = "Tu-142"
+        --SpawnTemplate.units[UnitID]["type"] = "Tu-142"
         
         -- Set AI skill.
         SpawnTemplate.units[UnitID]["skill"] = self.skill
@@ -2679,62 +2718,4 @@ function RAT:_ModifySpawnTemplate(waypoints)
   end
 end
 
---- Set up the basic spawn template.
--- @param #RAT self
-function RAT:_InitSpawnTemplate()
-  local template = 
-  {
-    ["modulation"] = 0,
-    ["tasks"] = {},
-    ["task"] = "Transport",
-    ["uncontrolled"] = false,
-    ["route"] = 
-    {
-      ["points"] = {},
-    },
-    ["groupId"] = 1,
-    ["hidden"] = false,
-    ["y"] = 0,
-    ["x"] = 0,
-    ["name"] = "DictKey_GroupName_5",
-    ["communication"] = true,
-    ["start_time"] = 0,
-    ["frequency"] = 251,
-    ["units"] = {}, -- end of ["units"]
-  }
-  return template
-end
-
---- Initialize a unit of the spawn template.
--- @param #RAT self
-function RAT:_InitSpawnUnit()
-  local unit = 
-  {
-    ["country"]=country.id.USA,
-    ["name"] = "DictKey_UnitName_6",
-    ["alt"] = 30,
-    ["alt_type"] = "BARO",
-    ["livery_id"] = "Aeroflot",
-    ["skill"] = "High",
-    ["parking"] = "31",
-    ["speed"] = 0,
-    ["type"] = "Yak-40",
-    ["unitId"] = 1,
-    ["psi"] = 0, --3.1270847373636
-    ["parking_id"] = "23",
-    ["x"] = 0,
-    ["y"] = 0,
-    ["heading"] = 0,
-    ["callsign"] = 101,
-    ["onboard_num"] = "010",
-    ["payload"] = 
-    {
-      ["pylons"] = {},
-      ["fuel"] = "3080",
-      ["flare"] = 0,
-      ["chaff"] = 0,
-      ["gun"] = 100,
-    }, -- end of ["payload"]
-  }
-  return unit
-end
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
