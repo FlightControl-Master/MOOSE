@@ -338,7 +338,7 @@ do -- COORDINATE
   -- @return #string
   function COORDINATE:GetMovingText( Settings )
 
-    return self:GetVelocityText( Settings ) .. self:GetHeadingText( Settings )
+    return self:GetVelocityText( Settings ) .. ", " .. self:GetHeadingText( Settings )
   end
 
 
@@ -349,6 +349,7 @@ do -- COORDINATE
   function COORDINATE:GetDirectionVec3( TargetCoordinate )
     return { x = TargetCoordinate.x - self.x, y = TargetCoordinate.y - self.y, z = TargetCoordinate.z - self.z }
   end
+
 
   --- Get a correction in radians of the real magnetic north of the COORDINATE.
   -- @param #COORDINATE self
