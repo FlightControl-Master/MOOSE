@@ -488,9 +488,9 @@ do -- COORDINATE
   function COORDINATE:GetHeadingText( Settings )
     local Heading = self:GetHeading()
     if Heading then
-      return string.format( " heading %3.2f °", Heading )
+      return string.format( " bearing %3d°", Heading )
     else
-      return " heading cannot be determined"
+      return " bearing unknown"
     end
   end
 

@@ -1883,7 +1883,7 @@ end
 -- @return #number Heading Heading in degrees and speed in mps in case of moving units.
 function SET_UNIT:GetHeading()
 
-  local AvgHeading = nil
+  local HeadingSet = nil
   local MovingCount = 0
 
   for UnitName, UnitData in pairs( self:GetSet() ) do
@@ -1894,15 +1894,20 @@ function SET_UNIT:GetHeading()
     local Velocity = Coordinate:GetVelocity()
     if Velocity ~= 0  then
       local Heading = Coordinate:GetHeading()
-      AvgHeading = AvgHeading and ( AvgHeading + Heading ) or Heading
-      MovingCount = MovingCount + 1
+      if HeadingSet == nil then
+        HeadingSet = Heading
+      else
+        local HeadingDiff = ( HeadingSet - Heading + 180 + 360 ) % 360 - 180
+        HeadingDiff = math.abs( HeadingDiff )
+        if HeadingDiff > 5 then
+          HeadingSet = nil
+          break
+        end
+      end        
     end
   end
 
-  AvgHeading = AvgHeading and ( AvgHeading / MovingCount )
-  
-  self:F( { AvgHeading = AvgHeading } )
-  return AvgHeading
+  return HeadingSet
 
 end
 
