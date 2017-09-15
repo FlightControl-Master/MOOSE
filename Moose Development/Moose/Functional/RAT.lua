@@ -2141,21 +2141,21 @@ function RAT:_Waypoint(Type, Coord, Speed, Altitude, Airport)
     -- take-off with engine off
     _Type="TakeOffParking"
     _Action="From Parking Area"
-    _Altitude = 2
+    _Altitude = 0
     _alttype="RADIO"
     _AID = Airport:GetID()
   elseif Type==RAT.wp.hot then
     -- take-off with engine on 
     _Type="TakeOffParkingHot"
     _Action="From Parking Area Hot"
-    _Altitude = 2
+    _Altitude = 0
     _alttype="RADIO"
     _AID = Airport:GetID()
   elseif Type==RAT.wp.runway then
     -- take-off from runway
     _Type="TakeOff"
     _Action="From Parking Area"
-    _Altitude = 2
+    _Altitude = 0
     _alttype="RADIO"
     _AID = Airport:GetID()
   elseif Type==RAT.wp.air then
@@ -2186,7 +2186,7 @@ function RAT:_Waypoint(Type, Coord, Speed, Altitude, Airport)
   elseif Type==RAT.wp.landing then
     _Type="Land"
     _Action="Landing"
-    _Altitude = 2
+    _Altitude = 0
     _alttype="RADIO"
     _AID = Airport:GetID()
   else
@@ -2218,7 +2218,7 @@ function RAT:_Waypoint(Type, Coord, Speed, Altitude, Airport)
   if self.debug then
     env.info(RAT.id..text)
   end
-  
+    
   -- define waypoint
   local RoutePoint = {}
   -- coordinates and altitude
@@ -2238,9 +2238,23 @@ function RAT:_Waypoint(Type, Coord, Speed, Altitude, Airport)
   RoutePoint.ETA_locked = false
   -- waypoint name (only for the mission editor)
   RoutePoint.name="RAT waypoint"
-  if _AID then
-    RoutePoint.airdromeId=_AID
+  
+  if Airport and not Type==RAT.wp.air then
+    local AirbaseID = Airport:GetID()
+    local AirbaseCategory = Airport:GetDesc().category
+    if AirbaseCategory == Airbase.Category.SHIP then
+      RoutePoint.linkUnit = AirbaseID
+      RoutePoint.helipadId = AirbaseID
+    elseif AirbaseCategory == Airbase.Category.HELIPAD then
+      RoutePoint.linkUnit = AirbaseID
+      RoutePoint.helipadId = AirbaseID
+    elseif AirbaseCategory == Airbase.Category.AIRDROME then
+      RoutePoint.airdromeId = AirbaseID
+    end  
   end
+--  if _AID then
+--    RoutePoint.airdromeId=_AID
+--  end
   -- properties
   RoutePoint.properties = {
     ["vnav"]   = 1,
@@ -2550,6 +2564,31 @@ function RAT:_Random_Gaussian(x0, sigma, xmin, xmax)
 
   -- Standard deviation. Default 10 if not given.
   sigma=sigma or 10
+    
+  local r
+  local gotit=false
+  local i=0
+  while not gotit do
+  
+    -- Uniform numbers in [0,1). We need two.
+    local x1=math.random()
+    local x2=math.random()
+  
+    -- Transform to Gaussian exp(-(x-x0)²/(2*sigma²).
+    r = math.sqrt(-2*sigma*sigma * math.log(x1)) * math.cos(2*math.pi * x2) + x0
+    
+    i=i+1
+    if (r>=xmin and r<=xmax) or i>100 then
+      gotit=true
+    end
+  end
+  
+  return r
+
+--old version
+--[[
+  -- Standard deviation. Default 10 if not given.
+  sigma=sigma or 10
   
   -- Uniform numbers in [0,1). We need two.
   local x1=math.random()
@@ -2581,6 +2620,7 @@ function RAT:_Random_Gaussian(x0, sigma, xmin, xmax)
   end
   
   return r
+]]
 end
 
 --- Place markers of the waypoints. Note we assume a very specific number and type of waypoints here.
@@ -2695,7 +2735,12 @@ function RAT:_ModifySpawnTemplate(waypoints)
         SpawnTemplate.units[UnitID]["onboard_num"] = self.SpawnIndex
         
         -- Parking spot.
-        --SpawnTemplate.units[UnitID]["parking"]=19
+        UnitTemplate.parking = nil
+        UnitTemplate.parking_id = nil
+        
+        -- Initial altitude
+        UnitTemplate.alt=PointVec3.y
+        
         self:T('After Translation SpawnTemplate.units['..UnitID..'].x = '..SpawnTemplate.units[UnitID].x..', SpawnTemplate.units['..UnitID..'].y = '..SpawnTemplate.units[UnitID].y)
         
       end
