@@ -200,6 +200,7 @@
 --   * @{#SPAWN.SpawnFromStatic}(): Spawn a new group from a structure, taking the position of a @{Static}.
 --   * @{#SPAWN.SpawnFromUnit}(): Spawn a new group taking the position of a @{Unit}.
 --   * @{#SPAWN.SpawnInZone}(): Spawn a new group in a @{Zone}.
+--   * @{#SPAWN.SpawnAtAirbase}(): Spawn a new group at an @{Airbase}, which can be an airdrome, ship or helipad.
 -- 
 -- Note that @{#SPAWN.Spawn} and @{#SPAWN.ReSpawn} return a @{GROUP#GROUP.New} object, that contains a reference to the DCSGroup object. 
 -- You can use the @{GROUP} object to do further actions with the DCSGroup.
@@ -982,16 +983,49 @@ function SPAWN:OnSpawnGroup( SpawnCallBackFunction, ... )
   return self
 end
 
---- Will spawn a group at an airbase. 
+--- Will spawn a group at an @{Airbase}. 
 -- This method is mostly advisable to be used if you want to simulate spawning units at an airbase.
 -- Note that each point in the route assigned to the spawning group is reset to the point of the spawn.
 -- You can use the returned group to further define the route to be followed.
+-- 
+-- The @{Airbase#AIRBASE} object must refer to a valid airbase known in the sim.
+-- You can use the following enumerations to search for the pre-defined airbases on the current known maps of DCS:
+-- 
+--   * @{Airbase#AIRBASE.Caucasus}: The airbases on the Caucasus map. 
+--   * @{Airbase#AIRBASE.Nevada}: The airbases on the Nevada (NTTR) map. 
+--   * @{Airbase#AIRBASE.Normandy}: The airbases on the Normandy map. 
+-- 
+-- Use the method @{Airbase#AIRBASE.FindByName}() to retrieve the airbase object. 
+-- The known AIRBASE objects are automatically imported at mission start by MOOSE.
+-- Therefore, there isn't any New() constructor defined for AIRBASE objects.
+-- 
+-- Ships and Farps are added within the mission, and are therefore not known.
+-- For these AIRBASE objects, there isn't an @{Airbase#AIRBASE} enumeration defined.
+-- You need to provide the **exact name** of the airbase as the parameter to the @{Airbase#AIRBASE.FindByName}() method!
+-- 
 -- @param #SPAWN self
 -- @param Wrapper.Airbase#AIRBASE SpawnAirbase The @{Airbase} where to spawn the group.
 -- @param #SPAWN.Takeoff Takeoff (optional) The location and takeoff method. Default is Hot.
 -- @param #number TakeoffAltitude (optional) The altitude above the ground.
 -- @return Wrapper.Group#GROUP that was spawned.
 -- @return #nil Nothing was spawned.
+-- @usage
+--   Spawn_Plane = SPAWN:New( "Plane" )
+--   Spawn_Plane:SpawnAtAirbase( AIRBASE:FindByName( AIRBASE.Caucasus.Krymsk ), SPAWN.Takeoff.Cold )
+--   Spawn_Plane:SpawnAtAirbase( AIRBASE:FindByName( AIRBASE.Caucasus.Krymsk ), SPAWN.Takeoff.Hot )
+--   Spawn_Plane:SpawnAtAirbase( AIRBASE:FindByName( AIRBASE.Caucasus.Krymsk ), SPAWN.Takeoff.Runway )
+--   
+--   Spawn_Plane:SpawnAtAirbase( AIRBASE:FindByName( "Carrier" ), SPAWN.Takeoff.Cold )
+--   
+--   Spawn_Heli = SPAWN:New( "Heli")
+--   
+--   Spawn_Heli:SpawnAtAirbase( AIRBASE:FindByName( "FARP Cold" ), SPAWN.Takeoff.Cold )
+--   Spawn_Heli:SpawnAtAirbase( AIRBASE:FindByName( "FARP Hot" ), SPAWN.Takeoff.Hot )
+--   Spawn_Heli:SpawnAtAirbase( AIRBASE:FindByName( "FARP Runway" ), SPAWN.Takeoff.Runway )
+--   Spawn_Heli:SpawnAtAirbase( AIRBASE:FindByName( "FARP Air" ), SPAWN.Takeoff.Air )
+--   
+--   Spawn_Heli:SpawnAtAirbase( AIRBASE:FindByName( "Carrier" ), SPAWN.Takeoff.Cold )
+-- 
 function SPAWN:SpawnAtAirbase( SpawnAirbase, Takeoff, TakeoffAltitude ) -- R2.2
   self:E( { self.SpawnTemplatePrefix, SpawnAirbase, Takeoff, TakeoffAltitude } )
 

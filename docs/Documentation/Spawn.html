@@ -424,9 +424,9 @@ and any spaces before and after the resulting name are removed.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SPAWN).SpawnAtAirbase">SPAWN:SpawnAtAirbase(Airbase, Takeoff, TakeoffAltitude)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN).SpawnAtAirbase">SPAWN:SpawnAtAirbase(SpawnAirbase, Takeoff, TakeoffAltitude)</a></td>
 		<td class="summary">
-<p>Will spawn a group at an airbase.</p>
+<p>Will spawn a group at an <a href="Airbase.html">Airbase</a>.</p>
 </td>
 		</tr>
 		<tr>
@@ -833,16 +833,6 @@ and any spaces before and after the resulting name are removed.</p>
 		</tr>
 	</table>
 
-			<h2><a id="#(SPAWN.Takeoff)">Type <code>SPAWN.Takeoff</code></a></h2>
-				<table class="function_list">
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SPAWN.Takeoff).type">SPAWN.Takeoff.type</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-	</table>
-
 	<h2>Global(s)</h2>
 		<dl class="function">
 <dt>
@@ -1034,6 +1024,7 @@ So in principle, the group list will contain all parameters and configurations a
     <li><a href="##(SPAWN).SpawnFromStatic">SPAWN.SpawnFromStatic</a>(): Spawn a new group from a structure, taking the position of a <a href="Static.html">Static</a>.</li>
     <li><a href="##(SPAWN).SpawnFromUnit">SPAWN.SpawnFromUnit</a>(): Spawn a new group taking the position of a <a href="Unit.html">Unit</a>.</li>
     <li><a href="##(SPAWN).SpawnInZone">SPAWN.SpawnInZone</a>(): Spawn a new group in a <a href="Zone.html">Zone</a>.</li>
+    <li><a href="##(SPAWN).SpawnAtAirbase">SPAWN.SpawnAtAirbase</a>(): Spawn a new group at an <a href="Airbase.html">Airbase</a>, which can be an airdrome, ship or helipad.</li>
 </ul>
 
 <p>Note that <a href="##(SPAWN).Spawn">SPAWN.Spawn</a> and <a href="##(SPAWN).ReSpawn">SPAWN.ReSpawn</a> return a <a href="GROUP.html##(GROUP).New">GROUP#GROUP.New</a> object, that contains a reference to the DCSGroup object. 
@@ -2201,9 +2192,6 @@ The group that was spawned. You can use this group for further actions.</p>
 	
 
 
-	
-<p> Don't repeat the group from Take-Off till Landing and back Take-Off by ReSpawning.</p>
-
 </dd>
 </dl>
 		<dl class="function">
@@ -2273,23 +2261,41 @@ The group that was spawned. You can use this group for further actions.</p>
 <dt>
 
 <a id="#(SPAWN).SpawnAtAirbase" >
-<strong>SPAWN:SpawnAtAirbase(Airbase, Takeoff, TakeoffAltitude)</strong>
+<strong>SPAWN:SpawnAtAirbase(SpawnAirbase, Takeoff, TakeoffAltitude)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Will spawn a group at an airbase.</p>
+<p>Will spawn a group at an <a href="Airbase.html">Airbase</a>.</p>
 
 	
 <p>This method is mostly advisable to be used if you want to simulate spawning units at an airbase.
 Note that each point in the route assigned to the spawning group is reset to the point of the spawn.
 You can use the returned group to further define the route to be followed.</p>
 
+<p>The <a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a> object must refer to a valid airbase known in the sim.
+You can use the following enumerations to search for the pre-defined airbases on the current known maps of DCS:</p>
+
+<ul>
+    <li><a href="Airbase.html##(AIRBASE).Caucasus">Airbase#AIRBASE.Caucasus</a>: The airbases on the Caucasus map. </li>
+    <li><a href="Airbase.html##(AIRBASE).Nevada">Airbase#AIRBASE.Nevada</a>: The airbases on the Nevada (NTTR) map. </li>
+    <li><a href="Airbase.html##(AIRBASE).Normandy">Airbase#AIRBASE.Normandy</a>: The airbases on the Normandy map. </li>
+</ul>
+
+<p>Use the method <a href="Airbase.html##(AIRBASE).FindByName">Airbase#AIRBASE.FindByName</a>() to retrieve the airbase object. 
+The known AIRBASE objects are automatically imported at mission start by MOOSE.
+Therefore, there isn't any New() constructor defined for AIRBASE objects.</p>
+
+<p>Ships and Farps are added within the mission, and are therefore not known.
+For these AIRBASE objects, there isn't an <a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a> enumeration defined.
+You need to provide the <strong>exact name</strong> of the airbase as the parameter to the <a href="Airbase.html##(AIRBASE).FindByName">Airbase#AIRBASE.FindByName</a>() method!</p>
+
+
 		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Wrapper.Airbase.html##(AIRBASE)">Wrapper.Airbase#AIRBASE</a> Airbase </em></code>: 
+<p><code><em><a href="Wrapper.Airbase.html##(AIRBASE)">Wrapper.Airbase#AIRBASE</a> SpawnAirbase </em></code>: 
 The <a href="Airbase.html">Airbase</a> where to spawn the group.</p>
 
 				</li>
@@ -2321,6 +2327,24 @@ Nothing was spawned.</p>
 
 				</li>
 			</ol>
+			<h3>Usage:</h3>
+		<pre class="example"><code>  Spawn_Plane = SPAWN:New( "Plane" )
+  Spawn_Plane:SpawnAtAirbase( AIRBASE:FindByName( AIRBASE.Caucasus.Krymsk ), SPAWN.Takeoff.Cold )
+  Spawn_Plane:SpawnAtAirbase( AIRBASE:FindByName( AIRBASE.Caucasus.Krymsk ), SPAWN.Takeoff.Hot )
+  Spawn_Plane:SpawnAtAirbase( AIRBASE:FindByName( AIRBASE.Caucasus.Krymsk ), SPAWN.Takeoff.Runway )
+  
+  Spawn_Plane:SpawnAtAirbase( AIRBASE:FindByName( "Carrier" ), SPAWN.Takeoff.Cold )
+  
+  Spawn_Heli = SPAWN:New( "Heli")
+  
+  Spawn_Heli:SpawnAtAirbase( AIRBASE:FindByName( "FARP Cold" ), SPAWN.Takeoff.Cold )
+  Spawn_Heli:SpawnAtAirbase( AIRBASE:FindByName( "FARP Hot" ), SPAWN.Takeoff.Hot )
+  Spawn_Heli:SpawnAtAirbase( AIRBASE:FindByName( "FARP Runway" ), SPAWN.Takeoff.Runway )
+  Spawn_Heli:SpawnAtAirbase( AIRBASE:FindByName( "FARP Air" ), SPAWN.Takeoff.Air )
+  
+  Spawn_Heli:SpawnAtAirbase( AIRBASE:FindByName( "Carrier" ), SPAWN.Takeoff.Cold )
+</code></pre>
+
 </dd>
 </dl>
 		<dl class="function">
@@ -2756,9 +2780,6 @@ when nothing was spawned.</p>
 	
 
 
-	
-<p> By default, no InitLimit</p>
-
 </dd>
 </dl>
 		<dl class="function">
@@ -2794,7 +2815,7 @@ when nothing was spawned.</p>
 		<dl class="function">
 <dt>
 
-		<em>#number</em>
+		<em></em>
 <a id="#(SPAWN).SpawnMaxGroups" >
 <strong>SPAWN.SpawnMaxGroups</strong>
 </a>
@@ -2811,7 +2832,7 @@ when nothing was spawned.</p>
 		<dl class="function">
 <dt>
 
-		<em>#number</em>
+		<em></em>
 <a id="#(SPAWN).SpawnMaxUnitsAlive" >
 <strong>SPAWN.SpawnMaxUnitsAlive</strong>
 </a>
@@ -3139,7 +3160,7 @@ Spawn_BE_KA50 = SPAWN:New( 'BE KA-50@RAMP-Ground Defense' ):Schedule( 600, 0.5 )
 		<dl class="function">
 <dt>
 
-		<em>#boolean</em>
+		<em></em>
 <a id="#(SPAWN).SpawnUnControlled" >
 <strong>SPAWN.SpawnUnControlled</strong>
 </a>
@@ -3163,7 +3184,7 @@ Spawn_BE_KA50 = SPAWN:New( 'BE KA-50@RAMP-Ground Defense' ):Schedule( 600, 0.5 )
 
 
 	
-<p> Flag that indicates if all the Groups of the SpawnGroup need to be visible when Spawned.</p>
+<p> When the first Spawn executes, all the Groups need to be made visible before start.</p>
 
 </dd>
 </dl>
@@ -3766,20 +3787,6 @@ True = Continue Scheduler</p>
 				
 <p>Enumerator for spawns at airbases</p>
 
-	<h3>Field(s)</h3>
-		<dl class="function">
-<dt>
-
-<a id="#(SPAWN.Takeoff).type" >
-<strong>SPAWN.Takeoff.type</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
 
 </div>
 
