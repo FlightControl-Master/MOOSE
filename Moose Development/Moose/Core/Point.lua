@@ -1072,7 +1072,7 @@ do -- COORDINATE
     end
     
 
-    if ModeA2A then
+    if ModeA2A == true then
       return self:ToStringA2A( Controllable, Settings )
     else
       return self:ToStringA2G( Controllable, Settings )
