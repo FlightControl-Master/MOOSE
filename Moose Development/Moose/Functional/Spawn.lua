@@ -1008,55 +1008,74 @@ function SPAWN:SpawnAtAirbase( SpawnAirbase, Takeoff, TakeoffAltitude ) -- R2.2
 
       self:T( { "Current point of ", self.SpawnTemplatePrefix, SpawnAirbase } )
 
+      local SpawnPoint = SpawnTemplate.route.points[1] 
+
+      -- These are only for ships.
+      SpawnPoint.linkUnit = nil
+      SpawnPoint.helipadId = nil
+      SpawnPoint.airdromeId = nil
+
+      local AirbaseID = SpawnAirbase:GetID()
+      local AirbaseCategory = SpawnAirbase:GetDesc().category
+      self:F( { AirbaseCategory = AirbaseCategory } )
+      
+      if AirbaseCategory == Airbase.Category.SHIP then
+        SpawnPoint.linkUnit = AirbaseID
+        SpawnPoint.helipadId = AirbaseID
+      elseif AirbaseCategory == Airbase.Category.HELIPAD then
+        SpawnPoint.linkUnit = AirbaseID
+        SpawnPoint.helipadId = AirbaseID
+      elseif AirbaseCategory == Airbase.Category.AIRDROME then
+        SpawnPoint.airdromeId = AirbaseID
+      end
+
+      SpawnPoint.alt = 0
+              
+      SpawnPoint.type = GROUPTEMPLATE.Takeoff[Takeoff][1] -- type
+      SpawnPoint.action = GROUPTEMPLATE.Takeoff[Takeoff][2] -- action
+      
+
       -- Translate the position of the Group Template to the Vec3.
       for UnitID = 1, #SpawnTemplate.units do
         self:T( 'Before Translation SpawnTemplate.units['..UnitID..'].x = ' .. SpawnTemplate.units[UnitID].x .. ', SpawnTemplate.units['..UnitID..'].y = ' .. SpawnTemplate.units[UnitID].y )
+
+        -- These cause a lot of confusion.
         local UnitTemplate = SpawnTemplate.units[UnitID]
+
+        UnitTemplate.parking = nil
+        UnitTemplate.parking_id = nil
+        UnitTemplate.alt = 0
+
         local SX = UnitTemplate.x
         local SY = UnitTemplate.y 
-        local BX = SpawnTemplate.route.points[1].x
-        local BY = SpawnTemplate.route.points[1].y
+        local BX = SpawnPoint.x
+        local BY = SpawnPoint.y
         local TX = PointVec3.x + ( SX - BX )
         local TY = PointVec3.z + ( SY - BY )
-        SpawnTemplate.units[UnitID].x = TX
-        SpawnTemplate.units[UnitID].y = TY
+        
+        UnitTemplate.x = TX
+        UnitTemplate.y = TY
+        
         if Takeoff == GROUP.Takeoff.Air then
-          SpawnTemplate.units[UnitID].alt = PointVec3.y + ( TakeoffAltitude or 200 )
-        else
-          SpawnTemplate.units[UnitID].alt = PointVec3.y + 10
+          UnitTemplate.alt = PointVec3.y + ( TakeoffAltitude or 200 )
+        --else
+        --  UnitTemplate.alt = PointVec3.y + 10
         end
-        SpawnTemplate.units[UnitID].parking = nil
-        SpawnTemplate.units[UnitID].parking_id = nil
-        self:T( 'After Translation SpawnTemplate.units['..UnitID..'].x = ' .. SpawnTemplate.units[UnitID].x .. ', SpawnTemplate.units['..UnitID..'].y = ' .. SpawnTemplate.units[UnitID].y )
+        self:T( 'After Translation SpawnTemplate.units['..UnitID..'].x = ' .. UnitTemplate.x .. ', SpawnTemplate.units['..UnitID..'].y = ' .. UnitTemplate.y )
       end
       
-      SpawnTemplate.route.points[1].x = PointVec3.x
-      SpawnTemplate.route.points[1].y = PointVec3.z
+      SpawnPoint.x = PointVec3.x
+      SpawnPoint.y = PointVec3.z
+      
       if Takeoff == GROUP.Takeoff.Air then
-        SpawnTemplate.route.points[1].alt = PointVec3.y + ( TakeoffAltitude or 200 )
-      else
-        SpawnTemplate.route.points[1].alt = PointVec3.y + 10
-        SpawnTemplate.route.points[1].airdromeId = SpawnAirbase:GetID()
+        SpawnPoint.alt = PointVec3.y + ( TakeoffAltitude or 200 )
+      --else
+      --  SpawnPoint.alt = PointVec3.y + 10
       end
-      SpawnTemplate.route.points[1].type = GROUPTEMPLATE.Takeoff[Takeoff][1] -- type
-      SpawnTemplate.route.points[1].action = GROUPTEMPLATE.Takeoff[Takeoff][2] -- action
-      
+
       SpawnTemplate.x = PointVec3.x
       SpawnTemplate.y = PointVec3.z
 
-      -- test if the airbase is a ship
-      
-      self:F( { AirbaseDesc = SpawnAirbase:GetDesc() } )
-      if SpawnAirbase:GetDesc().category == Airbase.Category.SHIP then
-        SpawnTemplate.route.points[1].linkUnit = SpawnAirbase:GetID()
-        SpawnTemplate.route.points[1].helipadId = SpawnAirbase:GetID()
-        SpawnTemplate.route.points[1].alt = 0
-        SpawnTemplate.units[1].alt = 0
-        SpawnTemplate.route.points[1].airdromeId = nil
-        self:F( { linkUnit = SpawnTemplate.route.points[1].linkUnit, helipadId = SpawnTemplate.route.points[1].helipadId } )
-      end
-        
-              
       return self:SpawnWithIndex( self.SpawnIndex )
     end
   end
