@@ -226,6 +226,12 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RAT).Livery">RAT:Livery(skins)</a></td>
+		<td class="summary">
+<p>Set livery of aircraft.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(RAT).Menu">RAT.Menu</a></td>
 		<td class="summary">
 <p>F10 menu items for this RAT object.</p>
@@ -286,6 +292,12 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RAT).SetCruiseAltitude">RAT:SetCruiseAltitude(alt)</a></td>
+		<td class="summary">
+<p>Set cruising altitude.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(RAT).SetDeparture">RAT:SetDeparture(names)</a></td>
 		<td class="summary">
 <p>Set possible departure ports.</p>
@@ -328,6 +340,12 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RAT).SetMaCruiseAltitude">RAT:SetMaCruiseAltitude(alt)</a></td>
+		<td class="summary">
+<p>Set max cruising altitude above sea level.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(RAT).SetMaxCruiseSpeed">RAT:SetMaxCruiseSpeed(speed)</a></td>
 		<td class="summary">
 <p>Set the maximum cruise speed of the aircraft.</p>
@@ -337,6 +355,12 @@
 		<td class="name" nowrap="nowrap"><a href="##(RAT).SetMaxDistance">RAT:SetMaxDistance(dist)</a></td>
 		<td class="summary">
 <p>Set maximum distance between departure and destination.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RAT).SetMinCruiseAltitude">RAT:SetMinCruiseAltitude(alt)</a></td>
+		<td class="summary">
+<p>Set min cruising altitude above sea level.</p>
 </td>
 		</tr>
 		<tr>
@@ -408,7 +432,7 @@
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(RAT).Tinactive">RAT.Tinactive</a></td>
 		<td class="summary">
-<p>Time in seconds after which inactive units will be destroyed. Default is 180 seconds.</p>
+<p>Time in seconds after which inactive units will be destroyed. Default is 300 seconds.</p>
 </td>
 		</tr>
 		<tr>
@@ -493,6 +517,12 @@
 		<td class="name" nowrap="nowrap"><a href="##(RAT)._InitAircraft">RAT:_InitAircraft(DCSgroup)</a></td>
 		<td class="summary">
 <p>Initialize basic parameters of the aircraft based on its (template) group in the mission editor.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RAT)._MinDistance">RAT:_MinDistance(alpha, beta, h)</a></td>
+		<td class="summary">
+<p>Calculate min distance between departure and destination for given minimum flight level and climb/decent rates</p>
 </td>
 		</tr>
 		<tr>
@@ -742,9 +772,21 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RAT).has_value">RAT:has_value(tab, val)</a></td>
+		<td class="summary">
+<p>Utility function which checks if table contains a specific value.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(RAT).id">RAT.id</a></td>
 		<td class="summary">
 <p>Some ID to identify who we are in output of the DCS.log file.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RAT).livery">RAT.livery</a></td>
+		<td class="summary">
+<p>Livery of the aircraft set by user.</p>
 </td>
 		</tr>
 		<tr>
@@ -775,6 +817,12 @@
 		<td class="name" nowrap="nowrap"><a href="##(RAT).ngroups">RAT.ngroups</a></td>
 		<td class="summary">
 <p>Number of groups to be spawned in total.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RAT).onboard_num">RAT.onboard_num</a></td>
+		<td class="summary">
+
 </td>
 		</tr>
 		<tr>
@@ -829,6 +877,12 @@
 		<td class="name" nowrap="nowrap"><a href="##(RAT).rot">RAT.rot</a></td>
 		<td class="summary">
 <p>ROT of spawned groups, default is no reaction. Possible: "noreaction", "passive", "evade".</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RAT).skill">RAT.skill</a></td>
+		<td class="summary">
+<p>Skill of AI. </p>
 </td>
 		</tr>
 		<tr>
@@ -902,7 +956,7 @@
 
 <ul>
     <li>A specific departure and/or destination airport can be chosen.</li>
-    <li>Valid coalitions can be set, e.g. only red, blue or neutral, all three �colours�.</li>
+    <li>Valid coalitions can be set, e.g. only red, blue or neutral, all three "colours".</li>
     <li>It is possible to start in air within a zone defined in the mission editor or within a zone above an airport of the map.</li>
 </ul>
 
@@ -936,7 +990,7 @@
     <li>Activate the "LATE ACTIVATION" tick box. Note that this aircraft will not be spawned itself but serves a template for each RAT aircraft spawned when the mission starts. </li>
 </ul>
 
-<p>Voil�, your already done!</p>
+<p>Voilà, your already done!</p>
 
 <p>Optionally, you can set a specific livery for the aircraft or give it some weapons.
 However, the aircraft will by default not engage any enemies. Think of them as beeing on a peaceful or ferry mission.</p>
@@ -1158,6 +1212,31 @@ Turn journey on=true or off=false. If no value is given switch=true.</p>
 	
 <p>Flight level set by users explicitly.</p>
 
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(RAT).Livery" >
+<strong>RAT:Livery(skins)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set livery of aircraft.</p>
+
+	
+<p>If more than one livery is specified in a table, the actually used one is chosen randomly from the selection.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string skins </em></code>: 
+Name of livery or table of names of liveries.</p>
+
+				</li>
+		</ul>
 </dd>
 </dl>
 		<dl class="function">
@@ -1394,6 +1473,31 @@ Default is "same", so aircraft will use airports of the coalition their spawn te
 		<dl class="function">
 <dt>
 
+<a id="#(RAT).SetCruiseAltitude" >
+<strong>RAT:SetCruiseAltitude(alt)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set cruising altitude.</p>
+
+	
+<p>This is still be checked for consitancy with selected route and prone to radomization.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number alt </em></code>: 
+Cruising altitude ASL in meters.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(RAT).SetDeparture" >
 <strong>RAT:SetDeparture(names)</strong>
 </a>
@@ -1580,6 +1684,28 @@ Maximum FL in hundrets of feet.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(RAT).SetMaCruiseAltitude" >
+<strong>RAT:SetMaCruiseAltitude(alt)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set max cruising altitude above sea level.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number alt </em></code>: 
+Altitude ASL in meters.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(RAT).SetMaxCruiseSpeed" >
 <strong>RAT:SetMaxCruiseSpeed(speed)</strong>
 </a>
@@ -1619,6 +1745,28 @@ Speed in km/h.</p>
 				
 <p><code><em>#number dist </em></code>: 
 Distance in km.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(RAT).SetMinCruiseAltitude" >
+<strong>RAT:SetMinCruiseAltitude(alt)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set min cruising altitude above sea level.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number alt </em></code>: 
+Altitude ASL in meters.</p>
 
 				</li>
 		</ul>
@@ -1890,7 +2038,7 @@ true=on, false=off.</p>
 <p>Set the time after which inactive groups will be destroyed.</p>
 
 	
-<p>Default is 180 seconds.</p>
+<p>Default is 300 seconds.</p>
 
 		<h3>Parameter</h3>
 		<ul>
@@ -1913,7 +2061,7 @@ Time in seconds.</p>
 </dt>
 <dd>
 	
-<p>Time in seconds after which inactive units will be destroyed. Default is 180 seconds.</p>
+<p>Time in seconds after which inactive units will be destroyed. Default is 300 seconds.</p>
 
 </dd>
 </dl>
@@ -2140,7 +2288,7 @@ Height [m] of departure airport. Note we implicitly assume that the height diffe
 		<h3>Return value</h3>
 				
 <p><em>#number:</em>
- Maximal flight level in meters.</p>
+Maximal flight level in meters.</p>
 
 </dd>
 </dl>
@@ -2269,6 +2417,45 @@ Group of the aircraft in the mission editor.</p>
 
 				</li>
 		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(RAT)._MinDistance" >
+<strong>RAT:_MinDistance(alpha, beta, h)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Calculate min distance between departure and destination for given minimum flight level and climb/decent rates</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number alpha </em></code>: 
+Angle of climb [rad].</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number beta </em></code>: 
+Angle of descent [rad].</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number h </em></code>: 
+min height AGL.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#number:</em>
+Minimum distance between departure and destiantion.</p>
+
 </dd>
 </dl>
 		<dl class="function">
@@ -3258,6 +3445,39 @@ Waypoints for DCS task route or spawn template.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(RAT).has_value" >
+<strong>RAT:has_value(tab, val)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Utility function which checks if table contains a specific value.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#table tab </em></code>: 
+Table with elements to check.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string val </em></code>: 
+The value we are looking for.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+True if element in the list, false otherwise. </p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 		<em>#string</em>
 <a id="#(RAT).id" >
 <strong>RAT.id</strong>
@@ -3266,6 +3486,20 @@ Waypoints for DCS task route or spawn template.</p>
 <dd>
 	
 <p>Some ID to identify who we are in output of the DCS.log file.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(RAT).livery" >
+<strong>RAT.livery</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Livery of the aircraft set by user.</p>
 
 </dd>
 </dl>
@@ -3336,6 +3570,23 @@ Waypoints for DCS task route or spawn template.</p>
 <dd>
 	
 <p>Number of groups to be spawned in total.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(RAT).onboard_num" >
+<strong>RAT.onboard_num</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+	
+<p> Onboard number.</p>
 
 </dd>
 </dl>
@@ -3462,6 +3713,20 @@ Waypoints for DCS task route or spawn template.</p>
 <dd>
 	
 <p>ROT of spawned groups, default is no reaction. Possible: "noreaction", "passive", "evade".</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(RAT).skill" >
+<strong>RAT.skill</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Skill of AI. </p>
 
 </dd>
 </dl>
