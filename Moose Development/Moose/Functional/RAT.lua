@@ -1260,7 +1260,7 @@ function RAT:_SetRoute(takeoff, _departure, _destination)
   local d_holding=Pholding:Get2DDistance(Pdestination)
   
   -- Height difference between departure and holding point.
-  local deltaH=h_holding+H_holding-H_departure
+  local deltaH=math.abs(h_holding+H_holding-H_departure)
   
   -- GENERAL
   -- Heading from departure to holding point of destination.
@@ -2239,17 +2239,22 @@ function RAT:_Waypoint(Type, Coord, Speed, Altitude, Airport)
   -- waypoint name (only for the mission editor)
   RoutePoint.name="RAT waypoint"
   
-  if Airport and not Type==RAT.wp.air then
+  if (Airport~=nil) and Type~=RAT.wp.air then
     local AirbaseID = Airport:GetID()
     local AirbaseCategory = Airport:GetDesc().category
     if AirbaseCategory == Airbase.Category.SHIP then
       RoutePoint.linkUnit = AirbaseID
       RoutePoint.helipadId = AirbaseID
+      env.info(RAT.id.."WP: Ship id = "..AirbaseID)
     elseif AirbaseCategory == Airbase.Category.HELIPAD then
       RoutePoint.linkUnit = AirbaseID
       RoutePoint.helipadId = AirbaseID
+      env.info(RAT.id.."WP: Helipad id = "..AirbaseID)
     elseif AirbaseCategory == Airbase.Category.AIRDROME then
       RoutePoint.airdromeId = AirbaseID
+      env.info(RAT.id.."WP: Airdrome id = "..AirbaseID)
+    else
+      env.error(RAT.id.."Unknown Airport categoryin _Waypoint()!")
     end  
   end
 --  if _AID then
