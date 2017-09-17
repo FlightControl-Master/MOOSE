@@ -1365,6 +1365,7 @@ function RAT:_SetRoute(takeoff, _departure, _destination)
   text=text..string.format("h_climb       = %6.1f m\n",     h_climb)
   text=text..string.format("h_descent     = %6.1f m\n",     h_descent)
   text=text..string.format("h_holding     = %6.1f m\n",     h_holding)
+  text=text..string.format("delta H       = %6.1f m\n",     deltaH)
   text=text..string.format("FLmin         = %6.1f m ASL = FL%03d\n", FLmin, FLmin/RAT.unit.FL2m)
   text=text..string.format("FLcruise      = %6.1f m ASL = FL%03d\n", FLcruise, FLcruise/RAT.unit.FL2m)
   text=text..string.format("FLmax         = %6.1f m ASL = FL%03d\n", FLmax, FLmax/RAT.unit.FL2m)
@@ -1372,6 +1373,8 @@ function RAT:_SetRoute(takeoff, _departure, _destination)
   text=text..string.format("Alpha climb   = %6.1f Deg\n",   math.deg(AlphaClimb))
   text=text..string.format("Alpha descent = %6.1f Deg\n",   math.deg(AlphaDescent))
   text=text..string.format("Phi (slope)   = %6.1f Deg\n",   math.deg(phi))
+  text=text..string.format("Phi climb     = %6.1f Deg\n",   math.deg(PhiClimb))
+  text=text..string.format("Phi descent   = %6.1f Deg\n",   math.deg(PhiDescent))
   text=text..string.format("Heading       = %6.1f Deg\n",   heading)
   text=text..string.format("******************************************************\n")
   env.info(RAT.id..text)
@@ -2245,16 +2248,16 @@ function RAT:_Waypoint(Type, Coord, Speed, Altitude, Airport)
     if AirbaseCategory == Airbase.Category.SHIP then
       RoutePoint.linkUnit = AirbaseID
       RoutePoint.helipadId = AirbaseID
-      env.info(RAT.id.."WP: Ship id = "..AirbaseID)
+      --env.info(RAT.id.."WP: Ship id = "..AirbaseID)
     elseif AirbaseCategory == Airbase.Category.HELIPAD then
       RoutePoint.linkUnit = AirbaseID
       RoutePoint.helipadId = AirbaseID
-      env.info(RAT.id.."WP: Helipad id = "..AirbaseID)
+      --env.info(RAT.id.."WP: Helipad id = "..AirbaseID)
     elseif AirbaseCategory == Airbase.Category.AIRDROME then
       RoutePoint.airdromeId = AirbaseID
-      env.info(RAT.id.."WP: Airdrome id = "..AirbaseID)
+      --env.info(RAT.id.."WP: Airdrome id = "..AirbaseID)
     else
-      env.error(RAT.id.."Unknown Airport categoryin _Waypoint()!")
+      --env.error(RAT.id.."Unknown Airport categoryin _Waypoint()!")
     end  
   end
 --  if _AID then
