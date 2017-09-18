@@ -139,11 +139,24 @@ do -- MENU_COMMAND_BASE
   function MENU_COMMAND_BASE:New( MenuText, ParentMenu, CommandMenuFunction, CommandMenuArguments )
   
   	local self = BASE:Inherit( self, MENU_BASE:New( MenuText, ParentMenu ) ) -- #MENU_COMMAND_BASE
+
+    -- When a menu function goes into error, DCS displays an obscure menu message.
+    -- This error handler catches the menu error and displays the full call stack.
+    local ErrorHandler = function( errmsg )
+      env.info( "MOOSE error in MENU COMMAND function: " .. errmsg )
+      if debug ~= nil then
+        env.info( debug.traceback() )
+      end
+      return errmsg
+    end
   
     self:SetCommandMenuFunction( CommandMenuFunction )
     self:SetCommandMenuArguments( CommandMenuArguments )
     self.MenuCallHandler = function()
-      self.CommandMenuFunction( unpack( self.CommandMenuArguments ) )
+      local function MenuFunction() 
+        return self.CommandMenuFunction( unpack( self.CommandMenuArguments ) )
+      end
+      local Status, Result = xpcall( MenuFunction, ErrorHandler )
     end
   	
   	return self

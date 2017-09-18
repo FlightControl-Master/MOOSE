@@ -366,7 +366,8 @@ do -- TASK_A2G_SEAD
   end
     
   function TASK_A2G_SEAD:ReportOrder( ReportGroup ) 
-    local Coordinate = self.TaskInfo.Coordinates.TaskInfoText
+    local Coordinate = self:GetInfo( "Coordinates" )
+    --local Coordinate = self.TaskInfo.Coordinates.TaskInfoText
     local Distance = ReportGroup:GetCoordinate():Get2DDistance( Coordinate )
     
     return Distance
@@ -515,7 +516,8 @@ do -- TASK_A2G_BAI
 
 
   function TASK_A2G_BAI:ReportOrder( ReportGroup ) 
-    local Coordinate = self.TaskInfo.Coordinates.TaskInfoText
+    local Coordinate = self:GetInfo( "Coordinates" )
+    --local Coordinate = self.TaskInfo.Coordinates.TaskInfoText
     local Distance = ReportGroup:GetCoordinate():Get2DDistance( Coordinate )
     
     return Distance
@@ -630,9 +632,9 @@ do -- TASK_A2G_CAS
   
   function TASK_A2G_CAS:UpdateTaskInfo()
   
-    local TargetCoordinate = self.Detection and self.Detection:GetDetectedItemCoordinate( self.DetectedItemIndex ) or self.TargetSetUnit:GetFirst():GetCoordinate() 
+    local TargetCoordinate = ( self.Detection and self.Detection:GetDetectedItemCoordinate( self.DetectedItemIndex ) ) or self.TargetSetUnit:GetFirst():GetCoordinate() 
     self:SetInfo( "Coordinates", TargetCoordinate, 0 )
-
+    
     local ThreatLevel, ThreatText
     if self.Detection then
       ThreatLevel, ThreatText = self.Detection:GetDetectedItemThreatLevel( self.DetectedItemIndex )
@@ -661,8 +663,10 @@ do -- TASK_A2G_CAS
 
   end
 
-  function TASK_A2G_CAS:ReportOrder( ReportGroup ) 
-    local Coordinate = self.TaskInfo.Coordinates.TaskInfoText
+  --- @param #TASK_A2G_CAS self
+  function TASK_A2G_CAS:ReportOrder( ReportGroup )
+     
+    local Coordinate = self:GetInfo( "Coordinates" )
     local Distance = ReportGroup:GetCoordinate():Get2DDistance( Coordinate )
     
     return Distance

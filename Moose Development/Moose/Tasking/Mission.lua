@@ -888,6 +888,8 @@ end
 -- @return #string
 function MISSION:ReportOverview( ReportGroup, TaskStatus )
 
+  self:F( { TaskStatus = TaskStatus } )
+
   local Report = REPORT:New()
 
   -- List the name of the mission.
