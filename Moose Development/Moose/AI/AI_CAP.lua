@@ -358,15 +358,19 @@ function AI_CAP_ZONE:onafterStart( Controllable, From, Event, To )
 
 end
 
--- todo: need to fix this global function
 
---- @param Wrapper.Controllable#CONTROLLABLE AIControllable
-function _NewEngageCapRoute( AIControllable )
+--- @param AI.AI_CAP#AI_CAP_ZONE 
+-- @param Wrapper.Group#GROUP EngageGroup
+function AI_CAP_ZONE.EngageRoute( EngageGroup, Fsm )
 
-  AIControllable:T( "NewEngageRoute" )
-  local EngageZone = AIControllable:GetState( AIControllable, "EngageZone" ) -- AI.AI_Cap#AI_CAP_ZONE
-  EngageZone:__Engage( 1 )
+  EngageGroup:F( { "AI_CAP_ZONE.EngageRoute:", EngageGroup:GetName() } )
+
+  if EngageGroup:IsAlive() then
+    Fsm:__Engage( 1 )
+  end
 end
+
+
 
 --- @param #AI_CAP_ZONE self
 -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
@@ -503,28 +507,20 @@ function AI_CAP_ZONE:onafterEngage( Controllable, From, Event, To )
       end
     end
 
-    --- Now we're going to do something special, we're going to call a function from a waypoint action at the AIControllable...
-    self.Controllable:WayPointInitialize( EngageRoute )
-    
-    
     if #AttackTasks == 0 then
       self:F("No targets found -> Going back to Patrolling")
       self:__Abort( 1 )
       self:__Route( 1 )
       self:SetDetectionActivated()
     else
+
+      AttackTasks[#AttackTasks+1] = Controllable:TaskFunction( "AI_CAP_ZONE.EngageRoute", self )
       EngageRoute[1].task = Controllable:TaskCombo( AttackTasks )
-      
-      --- Do a trick, link the NewEngageRoute function of the object to the AIControllable in a temporary variable ...
-      self.Controllable:SetState( self.Controllable, "EngageZone", self )
-  
-      self.Controllable:WayPointFunction( #EngageRoute, 1, "_NewEngageCapRoute" )
       
       self:SetDetectionDeactivated()
     end
     
-    --- NOW ROUTE THE GROUP!
-    self.Controllable:WayPointExecute( 1, 2 )
+    Controllable:Route( EngageRoute, 0.5 )
   
   end
 end
