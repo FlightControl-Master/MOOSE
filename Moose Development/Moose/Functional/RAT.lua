@@ -2772,3 +2772,53 @@ function RAT:_ModifySpawnTemplate(waypoints)
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- @module Atc
+-- 
+--- ATC class
+-- @type ATC
+ATC={
+  aircraft={},
+  waypoints={},
+  departures={},
+  destinations={},
+  holding={},
+}
+
+
+function ATC:Add(index, group, wp, departure, destination)
+  self.aircraft[index]=group
+  self.waypoints[index]=wp
+  self.departures[index]=departure
+  self.destinations[index]=destination
+end
+
+function ATC:Status(airports)
+  local function tally(t)
+    local freq = {}
+    for _, v in pairs(t) do
+        freq[v] = (freq[v] or 0) + 1
+    end
+    return freq
+  end
+
+  local _destinations=tally(self.sestinations)
+  for k,v in pairs(_destinations) do
+    local text=string.format("Destination %s: %d",k,v)
+    env.info(text)
+  end
+  
+  for i,aircraft in pairs(self.aircraft) do
+    local hp=self.waypoints[i][5]
+    local hc={hp.x,hp.alt,hp.y}
+    local z=ZONE_RADIUS:New("holding", hc:GetVec2(), 3000)
+    local group=aircraft --Wrapper.Group#GROUP
+    local holding=group:IsCompletelyInZone(z)
+    if holding then
+      table.insert(self.holding[self.destination], group)
+    end
+  end
+  
+end
+
+
+
