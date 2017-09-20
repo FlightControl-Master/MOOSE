@@ -439,6 +439,11 @@ function RAT:New(groupname, alias)
   -- Get all airports of current map (Caucasus, NTTR, Normandy, ...).
   self:_GetAirportsOfMap()
   
+  -- Init RAT ATC if not already done.
+  if not RAT.ATC.init then
+    RAT:ATC_Init(self.airports_map)
+  end
+  
   -- Create F10 main menu if it does not exists yet.
   if self.f10menu and not RAT.MenuF10 then
     RAT.MenuF10 = MENU_MISSION:New("RAT")
@@ -992,6 +997,9 @@ function RAT:_SpawnWithRoute(_departure, _destination)
   -- Actually spawn the group.
   local group=self:SpawnWithIndex(self.SpawnIndex) -- Wrapper.Group#GROUP
   self.alive=self.alive+1
+  
+  -- ATC is monitoring this flight.
+  RAT:ATC_AddAircraft(group:GetName(), destination:GetName())
   
   -- Set ROE, default is "weapon hold".
   self:_SetROE(group, self.roe)
@@ -2772,53 +2780,77 @@ function RAT:_ModifySpawnTemplate(waypoints)
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
--- @module Atc
--- 
---- ATC class
--- @type ATC
-ATC={
-  aircraft={},
-  waypoints={},
-  departures={},
-  destinations={},
-  holding={},
+RAT.ATC={
+  init=false,
+  flight={},
+  airport={},
 }
 
-
-function ATC:Add(index, group, wp, departure, destination)
-  self.aircraft[index]=group
-  self.waypoints[index]=wp
-  self.departures[index]=departure
-  self.destinations[index]=destination
+function RAT:ATC_Init(airports_map)
+  if not RAT.ATC.init then
+    env.info("Starting RAT ATC")
+    RAT.ATC.init=true
+    for _,name in pairs(airports_map) do
+      RAT.ATC.airport[name]={}
+      RAT.ATC.airport[name].busy=false
+    end
+    SCHEDULER:New(nil, RAT.ATC_Status, {self}, 5, 30)
+  end
 end
 
-function ATC:Status(airports)
-  local function tally(t)
-    local freq = {}
-    for _, v in pairs(t) do
-        freq[v] = (freq[v] or 0) + 1
+function RAT:ATC_del(t,entry)
+  --print(dump(t))
+  for k,_ in pairs(t) do
+    if k==entry then
+      t[entry]=nil
     end
-    return freq
   end
+  --print(dump(t))
+end
 
-  local _destinations=tally(self.sestinations)
-  for k,v in pairs(_destinations) do
-    local text=string.format("Destination %s: %d",k,v)
-    env.info(text)
-  end
+function RAT:ATC_AddAircraft(name, dest)
+  env.info(string.format("ATC: Adding flight %s with destination %s.", name, dest))
+  RAT.ATC.flight[name]={}
+  RAT.ATC.flight[name].destination=dest
+  RAT.ATC.flight[name].holding=0
+end
+
+function RAT:ATC_AircraftLanded(name)
+  -- airport is not busy any more.
+  local dest=RAT.ATC.flight[name].destination
   
-  for i,aircraft in pairs(self.aircraft) do
-    local hp=self.waypoints[i][5]
-    local hc={hp.x,hp.alt,hp.y}
-    local z=ZONE_RADIUS:New("holding", hc:GetVec2(), 3000)
-    local group=aircraft --Wrapper.Group#GROUP
-    local holding=group:IsCompletelyInZone(z)
-    if holding then
-      table.insert(self.holding[self.destination], group)
+  env.info(string.format("ATC: Flight %s landed at %s", name, dest))
+  
+  RAT.ATC.airport[dest].busy=false
+  
+  RAT.ATC.del(RAT.ATC.flight, name)
+end
+
+function RAT:ATC_Status()
+
+  for name,_ in pairs(RAT.ATC.flight) do
+
+    local hold=RAT.ATC.flight[name].holding
+    local dest=RAT.ATC.flight[name].destination
+    
+    if hold >= 0 then
+      env.info(string.format("ATC: Flight %s is holding for %d at %s", name, hold, dest))
+      
+      -- check if dest is busy
+      if RAT.ATC.airport[dest].busy then
+        env.info("ATC: Airport is busy, increase holding time and move on. No landing clearance!")
+        RAT.ATC.flight[name].holding=RAT.ATC.flight[name].holding+30
+      else
+        env.info("ATC: Airport is free. Set holding time to -100. Push landing task. Set airport to busy.")
+        RAT.ATC.airport[dest].busy=true
+        RAT.ATC.flight[name].holding=-100
+      end
+      
+    elseif hold==-100 then
+      print(string.format("ATC: Flight %s was cleared for landing at %s. Waiting for landing event.", name, dest))
+    else
+      print(string.format("ATC: Flight %s is not holding %d", name, hold))
     end
   end
   
 end
-
-
-
