@@ -668,7 +668,7 @@ function SCORING:AddGoalScore( PlayerUnit, GoalTag, Text, Score )
     PlayerData.Goals[GoalTag].Score = PlayerData.Goals[GoalTag].Score + Score  
     PlayerData.Score = PlayerData.Score + Score
   
-    MESSAGE:New( self.DisplayMessagePrefix .. Text, 30 ):ToAll()
+    MESSAGE:NewType( self.DisplayMessagePrefix .. Text, MESSAGE.Type.Information ):ToAll()
   
     self:ScoreCSV( PlayerName, "", "GOAL_" .. string.upper( GoalTag ), 1, Score, PlayerUnit:GetName() )
   end
@@ -704,7 +704,7 @@ function SCORING:_AddMissionTaskScore( Mission, PlayerUnit, Text, Score )
     PlayerData.Score = self.Players[PlayerName].Score + Score
     PlayerData.Mission[MissionName].ScoreTask = self.Players[PlayerName].Mission[MissionName].ScoreTask + Score
   
-    MESSAGE:New( self.DisplayMessagePrefix .. MissionName .. " : " .. Text .. " Score: " .. Score, 30 ):ToAll()
+    MESSAGE:NewType( self.DisplayMessagePrefix .. MissionName .. " : " .. Text .. " Score: " .. Score, MESSAGE.Type.Information ):ToAll()
   
     self:ScoreCSV( PlayerName, "", "TASK_" .. MissionName:gsub( ' ', '_' ), 1, Score, PlayerUnit:GetName() )
   end
@@ -732,9 +732,9 @@ function SCORING:_AddMissionScore( Mission, Text, Score )
       PlayerData.Score = PlayerData.Score + Score
       PlayerData.Mission[MissionName].ScoreMission = PlayerData.Mission[MissionName].ScoreMission + Score
 
-      MESSAGE:New( self.DisplayMessagePrefix .. "Player '" .. PlayerName .. "' has " .. Text .. " in Mission '" .. MissionName .. "'. " ..
+      MESSAGE:NewType( self.DisplayMessagePrefix .. "Player '" .. PlayerName .. "' has " .. Text .. " in Mission '" .. MissionName .. "'. " ..
         Score .. " mission score!",
-        60 ):ToAll()
+        MESSAGE.Type.Information ):ToAll()
 
       self:ScoreCSV( PlayerName, "", "MISSION_" .. MissionName:gsub( ' ', '_' ), 1, Score )
     end
@@ -1522,7 +1522,7 @@ function SCORING:ReportScoreGroupSummary( PlayerGroup )
                        PlayerScore, 
                        PlayerPenalty
                      )
-      MESSAGE:New( PlayerMessage, 30, "Player '" .. PlayerName .. "'" ):ToGroup( PlayerGroup )
+      MESSAGE:NewType( PlayerMessage, MESSAGE.Type.Detailed ):ToGroup( PlayerGroup )
     end
   end
 
