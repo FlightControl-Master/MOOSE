@@ -351,6 +351,14 @@ RAT.ROT={
   noreaction="noreaction",
 }
 
+RAT.ATC={
+  init=false,
+  flight={},
+  airport={},
+  unregistered=-1,
+  onfinal=-100,
+}
+
 --- Running number of placed markers on the F10 map.
 -- @field #number markerid
 RAT.markerid=0
@@ -441,7 +449,7 @@ function RAT:New(groupname, alias)
   
   -- Init RAT ATC if not already done.
   if not RAT.ATC.init then
-    RAT:ATC_Init(self.airports_map)
+    RAT:_ATCInit(self.airports_map)
   end
   
   -- Create F10 main menu if it does not exists yet.
@@ -992,14 +1000,14 @@ function RAT:_SpawnWithRoute(_departure, _destination)
   end
   
   -- Modify the spawn template to follow the flight plan.
-  self:_ModifySpawnTemplate(waypoints) 
+  self:_ModifySpawnTemplate(waypoints)
   
   -- Actually spawn the group.
   local group=self:SpawnWithIndex(self.SpawnIndex) -- Wrapper.Group#GROUP
   self.alive=self.alive+1
   
   -- ATC is monitoring this flight.
-  RAT:ATC_AddAircraft(group:GetName(), destination:GetName())
+  RAT:_ATCAddFlight(group:GetName(), destination:GetName())
   
   -- Set ROE, default is "weapon hold".
   self:_SetROE(group, self.roe)
@@ -1051,12 +1059,20 @@ function RAT:_SpawnWithRoute(_departure, _destination)
     MENU_MISSION_COMMAND:New("Evade on fire",   self.Menu[self.SubMenuName].groups[self.SpawnIndex]["rot"], self._SetROT, self, group, RAT.ROT.evade)    
     -- F10/RAT/<templatename>/Group X/
     MENU_MISSION_COMMAND:New("Despawn group",  self.Menu[self.SubMenuName].groups[self.SpawnIndex], self._Despawn, self, group)
+    MENU_MISSION_COMMAND:New("Clear for landing",  self.Menu[self.SubMenuName].groups[self.SpawnIndex], self.ClearForLanding, self, group:GetName())
     MENU_MISSION_COMMAND:New("Place markers",  self.Menu[self.SubMenuName].groups[self.SpawnIndex], self._PlaceMarkers, self, waypoints)
     MENU_MISSION_COMMAND:New("Status report",  self.Menu[self.SubMenuName].groups[self.SpawnIndex], self.Status, self, true, self.SpawnIndex)
   end
   
   return self.SpawnIndex
   
+end
+
+function RAT:ClearForLanding(name)
+  env.info("ATC: setting user flag "..name.." to 1.")
+  trigger.action.setUserFlag(name, 1)
+  local flagvalue=trigger.misc.getUserFlag(name)
+  env.info("ATC: user flag "..name.." ="..flagvalue)
 end
 
 --- Respawn a group.
@@ -1675,6 +1691,9 @@ function RAT:Status(message, forID)
     MESSAGE:New(text, 20):ToAll()
   end
   
+  -- Current time.
+  local Tnow=timer.getTime()
+    
   for i=1, ngroups do
   
     if self.ratcraft[i].group then
@@ -1692,7 +1711,7 @@ function RAT:Status(message, forID)
         local departure=self.ratcraft[i].departure:GetName()
         local destination=self.ratcraft[i].destination:GetName()
         local type=self.aircraft.type
-        local Tnow=timer.getTime()
+        
         
         -- Monitor time and distance on ground.
         local Tg=0
@@ -1749,6 +1768,16 @@ function RAT:Status(message, forID)
         
         -- Distance remaining to destination.
         local Ddestination=Pn:Get2DDistance(self.ratcraft[i].destination:GetCoordinate())
+        
+        -- Distance remaining to holding point, which is waypoint 6
+        local Hp=COORDINATE:New(self.ratcraft[i].waypoints[6].x, self.ratcraft[i].waypoints[6].alt, self.ratcraft[i].waypoints[6].y)
+        local Dholding=Pn:Get2DDistance(Hp)
+        
+        -- If distance to holding point is less then 10 km we register the plane
+        if Dholding<10000 and self.ratcraft[i].status~="Holding" then
+           RAT:_ATCRegisterFlight(group:GetName(), Tnow)
+           self.ratcraft[i].status="Holding"
+        end
      
         -- Status report.
         if (forID and i==forID) or (not forID) then
@@ -1771,7 +1800,8 @@ function RAT:Status(message, forID)
           text=text..string.format("FL%03d = %i m\n", alt/RAT.unit.FL2m, alt)
           --text=text..string.format("Speed = %i km/h\n", vel)
           text=text..string.format("Distance travelled        = %6.1f km\n", self.ratcraft[i]["Distance"]/1000)
-          text=text..string.format("Distance to destination = %6.1f km", Ddestination/1000)
+          text=text..string.format("Distance to destination = %6.1f km\n", Ddestination/1000)
+          text=text..string.format("Distance to holding point = %6.1f km", Dholding/1000)
           if not airborne then
             text=text..string.format("\nTime on ground  = %6.0f seconds\n", Tg)
             text=text..string.format("Position change = %8.1f m since %3.0f seconds.", Dg, dTlast)
@@ -1970,7 +2000,9 @@ function RAT:_OnLand(EventData)
     
         -- Set status.
         self:_SetStatus(SpawnGroup, "Taxiing (after landing)")
-        
+
+        -- ATC plane landed. Take it out of the queue and set runway to free.
+        RAT:_ATCFlightLanded(SpawnGroup:GetName())        
         
         if self.respawn_at_landing then
           text="Event: Group "..SpawnGroup:GetName().." will be respawned."
@@ -2372,7 +2404,8 @@ function RAT:_TaskHolding(P1, Altitude, Speed, Duration)
   local Task = {
     id = 'Orbit',
     params = {
-      pattern = AI.Task.OrbitPattern.RACE_TRACK,
+      --pattern = AI.Task.OrbitPattern.RACE_TRACK,
+      pattern = AI.Task.OrbitPattern.CIRCLE,
       point = P1,
       point2 = P2,
       speed = Speed,
@@ -2384,7 +2417,9 @@ function RAT:_TaskHolding(P1, Altitude, Speed, Duration)
   DCSTask.id="ControlledTask"
   DCSTask.params={}
   DCSTask.params.task=Task
-  DCSTask.params.stopCondition={duration=Duration}
+  local userflagname=string.format("%s#%03d", self.alias, self.SpawnIndex+1)
+  env.info("ATC setting user flag name to "..userflagname)
+  DCSTask.params.stopCondition={userFlag=userflagname, userFlagValue=1, duration=6000}
   
   return DCSTask
 end
@@ -2780,77 +2815,173 @@ function RAT:_ModifySpawnTemplate(waypoints)
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-RAT.ATC={
-  init=false,
-  flight={},
-  airport={},
-}
 
-function RAT:ATC_Init(airports_map)
+function RAT:_ATCInit(airports_map)
   if not RAT.ATC.init then
     env.info("Starting RAT ATC")
     RAT.ATC.init=true
-    for _,name in pairs(airports_map) do
+    for _,ap in pairs(airports_map) do
+      local name=ap:GetName()
       RAT.ATC.airport[name]={}
+      RAT.ATC.airport[name].queue={}
       RAT.ATC.airport[name].busy=false
+      RAT.ATC.airport[name].onfinal=nil
     end
-    SCHEDULER:New(nil, RAT.ATC_Status, {self}, 5, 30)
+    SCHEDULER:New(nil, RAT._ATCCheck, {self}, 5, 60)
+    SCHEDULER:New(nil, RAT._ATCStatus, {self}, 5, 120)
   end
 end
 
-function RAT:ATC_del(t,entry)
-  --print(dump(t))
+function RAT:_ATCDelFlight(t,entry)
   for k,_ in pairs(t) do
     if k==entry then
       t[entry]=nil
     end
   end
-  --print(dump(t))
 end
 
-function RAT:ATC_AddAircraft(name, dest)
+function RAT:_ATCAddFlight(name, dest)
   env.info(string.format("ATC: Adding flight %s with destination %s.", name, dest))
   RAT.ATC.flight[name]={}
   RAT.ATC.flight[name].destination=dest
+  RAT.ATC.flight[name].holding=-1
+end
+
+function RAT:_ATCRegisterFlight(name, time)
+  env.info("ATC: Reg name "..name)
+  env.info("ATC: Reg time "..time)
+  RAT.ATC.flight[name].Tarrive=time
   RAT.ATC.flight[name].holding=0
 end
 
-function RAT:ATC_AircraftLanded(name)
-  -- airport is not busy any more.
+function RAT:_ATCFlightLanded(name)
+
+  -- Destination airport.
   local dest=RAT.ATC.flight[name].destination
   
-  env.info(string.format("ATC: Flight %s landed at %s", name, dest))
-  
+  -- Airport is not busy any more.
   RAT.ATC.airport[dest].busy=false
   
-  RAT.ATC.del(RAT.ATC.flight, name)
+  -- No aircraft on final any more.
+  RAT.ATC.airport[dest].onfinal=nil
+  
+  -- Remove this flight from list of flights.
+  RAT:_ATCDelFlight(RAT.ATC.flight, name)
+  
+  -- Debug info
+  env.info(string.format("ATC: Flight %s landed at %s.", name, dest))
 end
 
-function RAT:ATC_Status()
+function RAT:_ATCClearForLanding(airport, flight)
+  -- Flight is cleared for landing.
+  RAT.ATC.flight[flight].holding=RAT.ATC.onfinal
+  -- Airport runway is busy now.
+  RAT.ATC.airport[airport].busy=true
+  -- Flight which is landing.
+  RAT.ATC.airport[airport].onfinal=flight
+  env.info("ATC: setting user flag "..flight.." to 1.")
+  trigger.action.setUserFlag(flight, 1)
+  local flagvalue=trigger.misc.getUserFlag(flight)
+  env.info("ATC: user flag "..flight.." ="..flagvalue)
+end
 
+function RAT:_ATCStatus()
+   
   for name,_ in pairs(RAT.ATC.flight) do
 
     local hold=RAT.ATC.flight[name].holding
     local dest=RAT.ATC.flight[name].destination
     
     if hold >= 0 then
-      env.info(string.format("ATC: Flight %s is holding for %d at %s", name, hold, dest))
-      
-      -- check if dest is busy
+      -- Some string whether the runway is busy or not.
+      local busy="free"
       if RAT.ATC.airport[dest].busy then
-        env.info("ATC: Airport is busy, increase holding time and move on. No landing clearance!")
-        RAT.ATC.flight[name].holding=RAT.ATC.flight[name].holding+30
-      else
-        env.info("ATC: Airport is free. Set holding time to -100. Push landing task. Set airport to busy.")
-        RAT.ATC.airport[dest].busy=true
-        RAT.ATC.flight[name].holding=-100
+        busy="busy"
       end
-      
-    elseif hold==-100 then
-      print(string.format("ATC: Flight %s was cleared for landing at %s. Waiting for landing event.", name, dest))
+      -- Aircraft is holding.
+      env.info(string.format("%s ATC: Flight %s is holding for %d (runway is %s).",dest, name, hold, busy))
+    elseif hold==RAT.ATC.onfinal then
+      -- Aircarft is on final approach for landing.
+      env.info(string.format("%s ATC: Flight %s was cleared for landing. Waiting for landing event.", dest, name))
+    elseif hold==RAT.ATC.unregistered then
+      -- Aircraft has not arrived at holding point.
+      env.info(string.format("%s ATC: Flight %s is not registered yet (hold %d).", dest, name,hold))
     else
-      print(string.format("ATC: Flight %s is not holding %d", name, hold))
+      env.info("Unknown holding time.")
     end
   end
   
+end
+
+function RAT:_ATCCheck()
+
+  -- Init queue of flights at all airports.
+  RAT:_ATCQueue()
+  
+  local Tnow=timer.getTime()
+  
+  for name,_ in pairs(RAT.ATC.airport) do
+    
+    -- List of finished flights
+    local qw={}
+    
+    for qID,flight in ipairs(RAT.ATC.airport[name].queue) do
+    
+      -- Number of aircraft in queue.
+      local nqueue=#RAT.ATC.airport[name].queue
+    
+      if RAT.ATC.airport[name].busy then
+        --env.info(string.format("%s ATC: Flight %s runway is busy. You are #%d of %d in landing queue.", name, flight,qID, nqueue))
+        RAT.ATC.flight[flight].holding=Tnow-RAT.ATC.flight[flight].Tarrive
+      else
+        --env.info(string.format("%s ATC: Flight %s you are cleared for landing.", name, flight,qID))
+        -- Clear flight for landing
+        RAT:_ATCClearForLanding(name, flight)
+        table.insert(qw, qID)
+      end
+      
+    end
+    
+    -- Remove flight from queue.
+    for _,i in pairs(qw) do
+      table.remove(RAT.ATC.airport[name].queue, i)
+    end
+    
+  end
+end
+
+function RAT:_ATCQueue()
+  --env.info("Queue:")
+  for airport,_ in pairs(RAT.ATC.airport) do
+  
+    -- Local airport queue.
+    local _queue={}
+
+    -- Loop over all flights.
+    for name,_ in pairs(RAT.ATC.flight) do
+  
+      local hold=RAT.ATC.flight[name].holding
+      local dest=RAT.ATC.flight[name].destination
+      
+      -- Flight is holding at this airport.
+      if hold>=0 and airport==dest then
+        _queue[#_queue+1]={name,hold}
+      end
+    end
+    
+    -- Sort queue w.r.t holding time in acending order.
+    local function compare(a,b)
+      return a[2] > b[2]
+    end
+    table.sort(_queue, compare)
+    
+    -- Transfer queue to airport queue.
+    RAT.ATC.airport[airport].queue={}
+    for k,v in ipairs(_queue) do
+      table.insert(RAT.ATC.airport[airport].queue, v[1])
+    end
+    
+    --env.info(airport, dump(RAT.ATC.airport[airport].queue))
+    
+  end
 end
