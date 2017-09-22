@@ -608,6 +608,22 @@ function BASE:CreateEventCrash( EventTime, Initiator )
 	world.onEvent( Event )
 end
 
+--- Creation of a Takeoff Event.
+-- @param #BASE self
+-- @param Dcs.DCSTypes#Time EventTime The time stamp of the event.
+-- @param Dcs.DCSWrapper.Object#Object Initiator The initiating object of the event.
+function BASE:CreateEventTakeoff( EventTime, Initiator )
+  self:F( { EventTime, Initiator } )
+
+  local Event = {
+    id = world.event.S_EVENT_TAKEOFF,
+    time = EventTime,
+    initiator = Initiator,
+    }
+
+  world.onEvent( Event )
+end
+
 -- TODO: Complete Dcs.DCSTypes#Event structure.                       
 --- The main event handling function... This function captures all events generated for the class.
 -- @param #BASE self

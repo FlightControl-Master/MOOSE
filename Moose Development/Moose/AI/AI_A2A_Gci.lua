@@ -134,7 +134,7 @@ function AI_A2A_GCI:New( AIGroup, EngageMinSpeed, EngageMaxSpeed )
   
   self.PatrolAltType = "RADIO"
   
-  self:AddTransition( { "Started", "Engaging", "Returning" }, "Engage", "Engaging" ) -- FSM_CONTROLLABLE Transition for type #AI_A2A_GCI.
+  self:AddTransition( { "Started", "Engaging", "Returning", "Airborne" }, "Engage", "Engaging" ) -- FSM_CONTROLLABLE Transition for type #AI_A2A_GCI.
 
   --- OnBefore Transition Handler for Event Engage.
   -- @function [parent=#AI_A2A_GCI] OnBeforeEngage
@@ -294,6 +294,19 @@ function AI_A2A_GCI:New( AIGroup, EngageMinSpeed, EngageMaxSpeed )
 
   return self
 end
+
+--- onafter State Transition for Event Patrol.
+-- @param #AI_A2A_GCI self
+-- @param Wrapper.Group#GROUP AIGroup The AI Group managed by the FSM.
+-- @param #string From The From State string.
+-- @param #string Event The Event string.
+-- @param #string To The To State string.
+function AI_A2A_GCI:onafterStart( AIGroup, From, Event, To )
+
+  AIGroup:HandleEvent( EVENTS.Takeoff, nil, self )
+
+end
+
 
 
 --- onafter State Transition for Event Patrol.

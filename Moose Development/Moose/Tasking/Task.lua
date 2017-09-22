@@ -1589,8 +1589,9 @@ function TASK:ReportDetails( ReportGroup )
       Report:Add( TaskInfoIDText .. TaskInfo.TaskInfoText )
     elseif type(TaskInfo) == "table" then
       if TaskInfoID == "Coordinates" then
+        local FromCoordinate = ReportGroup:GetUnit(1):GetCoordinate()
         local ToCoordinate = TaskInfo.TaskInfoText -- Core.Point#COORDINATE
-        Report:Add( TaskInfoIDText .. ToCoordinate:ToString() )
+        Report:Add( TaskInfoIDText .. ToCoordinate:ToString( ReportGroup:GetUnit(1), nil, self ) )
       else
       end
     end

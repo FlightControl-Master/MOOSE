@@ -372,6 +372,7 @@ do -- TASK_A2G_DISPATCHER
             self.Tasks[TaskIndex] = Task
             Task:SetTargetZone( DetectedZone )
             Task:SetDispatcher( self )
+            Task:UpdateTaskInfo()
             Mission:AddTask( Task )
     
             TaskReport:Add( Task:GetName() )
