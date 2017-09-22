@@ -1109,8 +1109,18 @@ function SPAWN:SpawnAtAirbase( SpawnAirbase, Takeoff, TakeoffAltitude ) -- R2.2
 
       SpawnTemplate.x = PointVec3.x
       SpawnTemplate.y = PointVec3.z
+      
+      local GroupSpawned = self:SpawnWithIndex( self.SpawnIndex )
+      
+      -- When spawned in the air, we need to generate a Takeoff Event
+      
+      if Takeoff == GROUP.Takeoff.Air then
+        for UnitID, UnitSpawned in pairs( GroupSpawned:GetUnits() ) do
+          SCHEDULER:New( nil, BASE.CreateEventTakeoff, { GroupSpawned, timer.getTime(), UnitSpawned:GetDCSObject() } , 1 )
+        end
+      end
 
-      return self:SpawnWithIndex( self.SpawnIndex )
+      return GroupSpawned
     end
   end
   

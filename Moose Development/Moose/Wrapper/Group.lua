@@ -1161,9 +1161,9 @@ do -- Event Handling
   -- @param Core.Event#EVENTS Event
   -- @param #function EventFunction (optional) The function to be called when the event occurs for the GROUP.
   -- @return #GROUP
-  function GROUP:HandleEvent( Event, EventFunction )
+  function GROUP:HandleEvent( Event, EventFunction, ... )
   
-    self:EventDispatcher():OnEventForGroup( self:GetName(), EventFunction, self, Event )
+    self:EventDispatcher():OnEventForGroup( self:GetName(), EventFunction, self, Event, ... )
     
     return self
   end
