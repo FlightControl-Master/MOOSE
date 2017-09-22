@@ -40,13 +40,15 @@
 -- 
 -- # Demo Missions
 --
+-- ### [RAT Demo Missions](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/Release/RAT%20-%20Random%20Air%20Traffic)
 -- ### [ALL Demo Missions pack of the last release](https://github.com/FlightControl-Master/MOOSE_MISSIONS/releases)
 -- 
 -- ====
 -- 
 -- # YouTube Channel
 -- 
--- ### [RAT YouTube Channel](https://www.youtube.com/playlist?list=PL7ZUrU4zZUl1jirWIo4t4YxqN-HxjqRkL)
+-- ### RAT videos are work in progress.
+-- ### [MOOSE YouTube Channel](https://www.youtube.com/playlist?list=PL7ZUrU4zZUl1jirWIo4t4YxqN-HxjqRkL)
 -- 
 -- ===
 -- 
@@ -104,7 +106,8 @@
 -- @field #number respawn_delay Delay in seconds until repawn happens after landing.
 -- @field #table markerids Array with marker IDs.
 -- @field #string livery Livery of the aircraft set by user.
--- @field #string skill Skill of AI. 
+-- @field #string skill Skill of AI.
+-- @field #boolean ATC Enable ATC. 
 -- @extends Functional.Spawn#SPAWN
 
 ---# RAT class, extends @{Spawn#SPAWN}
@@ -232,11 +235,25 @@
 -- * @{#RAT.SetMinDistance}(100) will cause only random destination airports to be selected which are **at least** 100 km away from the departure airport.
 -- * @{#RAT.SetMaxDistance}(150) will allow only destination airports which are **less than** 150 km away from the departure airport.
 -- 
+-- ![Process](..\Presentations\RAT\RAT_Gaussian.png)
 -- 
--- Certain other options like the flight level can also be specified. However, note that this might not be a good idea for random departures and/or destinations.
--- For example the random route might be too short to reach that altitude, which would result in very high climb and descent rates or strange flight plans.
---
---
+-- By default planes get a cruise altitude of ~20,000 ft ASL. The actual altitude is sampled from a Gaussian distribution. The picture shows this distribution
+-- if one would spawn 1000 planes. As can be seen most planes get a cruising alt of around FL200. Other values are possible but less likely the further away
+-- one gets from the expectation value.
+-- 
+-- The expectation value, i.e. the altitude most aircraft get, can be set with the function @{#RAT.SetFLcruise}().
+-- It is possible to restrict the minimum cruise altitude by @{#RAT.SetFLmin}() and the maximum cruise altitude by @{#RAT.SetFLmax}()
+-- 
+-- The cruise altitude can also be given in meters ASL by the functions @{#RAT.SetCruiseAltitude}(), @{#RAT.SetMinCruiseAltitude}() and @{#RAT.SetMaxCruiseAltitude}().
+-- 
+-- For example:
+-- 
+-- * @{#RAT.SetFLcruise}(300) will cause most planes fly around FL300.
+-- * @{#RAT.SetFLmin}(100) restricts the cruising alt such that no plane will fly below FL100. Note that this automatically changes the minimum distance from departure to destination.
+-- That means that only destinations are possible for which the aircraft has had enought time to reach that flight level and descent again.  
+-- * @{#RAT.SetFLmax}(200) will restrict the cruise alt to maximum FL200, i.e. no aircraft will travel above this height.
+-- 
+-- 
 -- @field #RAT
 RAT={
   ClassName = "RAT",        -- Name of class: RAT = Random Air Traffic.
@@ -284,6 +301,7 @@ RAT={
   markerids={},             -- Array with marker IDs.
   livery=nil,               -- Livery of the aircraft.
   skill="High",             -- Skill of AI.
+  ATC=true,                 -- Enable ATC.
 }
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -448,7 +466,7 @@ function RAT:New(groupname, alias)
   self:_GetAirportsOfMap()
   
   -- Init RAT ATC if not already done.
-  if not RAT.ATC.init then
+  if self.ATC and not RAT.ATC.init then
     RAT:_ATCInit(self.airports_map)
   end
   
@@ -800,6 +818,14 @@ function RAT:MenuName(name)
   self.SubMenuName=tostring(name)
 end
 
+--- Enable ATC, which manages the landing queue for RAT aircraft if they arrive simultaniously at the same airport.
+-- @param #RAT self
+-- @param #boolean switch true=enable ATC, false=disable ATC. 
+function RAT:EnableATC(switch)
+  switch=switch or true
+  self.ATC=switch
+end
+
 --- Set minimum distance between departure and destination. Default is 5 km.
 -- Minimum distance should not be smaller than maybe ~500 meters to ensure that departure and destination are different.
 -- @param #RAT self
@@ -858,7 +884,7 @@ end
 --- Set max cruising altitude above sea level.
 -- @param #RAT self
 -- @param #number alt Altitude ASL in meters.
-function RAT:SetMaCruiseAltitude(alt)
+function RAT:SetMaxCruiseAltitude(alt)
   self.FLmaxuser=alt
 end
 
@@ -1007,7 +1033,9 @@ function RAT:_SpawnWithRoute(_departure, _destination)
   self.alive=self.alive+1
   
   -- ATC is monitoring this flight.
-  RAT:_ATCAddFlight(group:GetName(), destination:GetName())
+  if self.ATC then
+    RAT:_ATCAddFlight(group:GetName(), destination:GetName())
+  end
   
   -- Set ROE, default is "weapon hold".
   self:_SetROE(group, self.roe)
@@ -1774,7 +1802,7 @@ function RAT:Status(message, forID)
         local Dholding=Pn:Get2DDistance(Hp)
         
         -- If distance to holding point is less then 10 km we register the plane
-        if Dholding<10000 and self.ratcraft[i].status~="Holding" then
+        if self.ATC and Dholding<10000 and self.ratcraft[i].status~="Holding" then
            RAT:_ATCRegisterFlight(group:GetName(), Tnow)
            self.ratcraft[i].status="Holding"
         end
@@ -1801,7 +1829,9 @@ function RAT:Status(message, forID)
           --text=text..string.format("Speed = %i km/h\n", vel)
           text=text..string.format("Distance travelled        = %6.1f km\n", self.ratcraft[i]["Distance"]/1000)
           text=text..string.format("Distance to destination = %6.1f km\n", Ddestination/1000)
-          text=text..string.format("Distance to holding point = %6.1f km", Dholding/1000)
+          if self.ATC then
+            text=text..string.format("Distance to holding point = %6.1f km", Dholding/1000)
+          end
           if not airborne then
             text=text..string.format("\nTime on ground  = %6.0f seconds\n", Tg)
             text=text..string.format("Position change = %8.1f m since %3.0f seconds.", Dg, dTlast)
@@ -2002,7 +2032,9 @@ function RAT:_OnLand(EventData)
         self:_SetStatus(SpawnGroup, "Taxiing (after landing)")
 
         -- ATC plane landed. Take it out of the queue and set runway to free.
-        RAT:_ATCFlightLanded(SpawnGroup:GetName())        
+        if self.ATC then
+          RAT:_ATCFlightLanded(SpawnGroup:GetName())
+        end        
         
         if self.respawn_at_landing then
           text="Event: Group "..SpawnGroup:GetName().." will be respawned."
@@ -2816,6 +2848,9 @@ end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+--- Initializes the ATC arrays and starts schedulers.
+-- @param #RAT self
+-- @param #table airports_map List of all airports of the map.
 function RAT:_ATCInit(airports_map)
   if not RAT.ATC.init then
     env.info("Starting RAT ATC")
@@ -2832,6 +2867,11 @@ function RAT:_ATCInit(airports_map)
   end
 end
 
+
+--- Deletes a flight from ATC lists after it landed.
+-- @param #RAT self
+-- @param #table t Table.
+-- @param #string entry Flight name which shall be deleted.
 function RAT:_ATCDelFlight(t,entry)
   for k,_ in pairs(t) do
     if k==entry then
@@ -2840,6 +2880,10 @@ function RAT:_ATCDelFlight(t,entry)
   end
 end
 
+--- Adds andd initializes a new flight after it was spawned.
+-- @param #RAT self
+-- @param #string name Group name of the flight.
+-- @param #string dest Name of the destination airport.
 function RAT:_ATCAddFlight(name, dest)
   env.info(string.format("ATC: Adding flight %s with destination %s.", name, dest))
   RAT.ATC.flight[name]={}
@@ -2847,6 +2891,10 @@ function RAT:_ATCAddFlight(name, dest)
   RAT.ATC.flight[name].holding=-1
 end
 
+--- Registers a flight once it is near its holding point at the final destination.
+-- @param #RAT self
+-- @param #string name Group name of the flight.
+-- @param #number time Time the fight first registered.
 function RAT:_ATCRegisterFlight(name, time)
   env.info("ATC: Reg name "..name)
   env.info("ATC: Reg time "..time)
@@ -2854,6 +2902,9 @@ function RAT:_ATCRegisterFlight(name, time)
   RAT.ATC.flight[name].holding=0
 end
 
+--- Takes care of organisational stuff after a plane has landed.
+-- @param #RAT self
+-- @param #string name Group name of flight.
 function RAT:_ATCFlightLanded(name)
 
   -- Destination airport.
@@ -2872,6 +2923,10 @@ function RAT:_ATCFlightLanded(name)
   env.info(string.format("ATC: Flight %s landed at %s.", name, dest))
 end
 
+--- Giving landing clearance for aircraft by setting user flag.
+-- @param #RAT self
+-- @param #string airport Name of destination airport.
+-- @param #string flight Group name of flight, which gets landing clearence.
 function RAT:_ATCClearForLanding(airport, flight)
   -- Flight is cleared for landing.
   RAT.ATC.flight[flight].holding=RAT.ATC.onfinal
@@ -2879,12 +2934,14 @@ function RAT:_ATCClearForLanding(airport, flight)
   RAT.ATC.airport[airport].busy=true
   -- Flight which is landing.
   RAT.ATC.airport[airport].onfinal=flight
-  env.info("ATC: setting user flag "..flight.." to 1.")
+  -- Set user flag to 1 ==> stop condition for holding.
   trigger.action.setUserFlag(flight, 1)
-  local flagvalue=trigger.misc.getUserFlag(flight)
-  env.info("ATC: user flag "..flight.." ="..flagvalue)
+  --local flagvalue=trigger.misc.getUserFlag(flight)
+  env.info(RAT.id.."ATC: Flight "..flight.."cleared for landing.")
 end
 
+--- ATC status report about flights.
+-- @param #RAT self
 function RAT:_ATCStatus()
    
   for name,_ in pairs(RAT.ATC.flight) do
@@ -2913,6 +2970,8 @@ function RAT:_ATCStatus()
   
 end
 
+--- Main ATC function. Updates the landing queue of all airports and inceases holding time for all flights.
+-- @param #RAT self
 function RAT:_ATCCheck()
 
   -- Init queue of flights at all airports.
@@ -2950,6 +3009,8 @@ function RAT:_ATCCheck()
   end
 end
 
+--- Creates a landing queue for all flights holding at airports. Aircraft with longest holding time gets first permission to land.
+-- @param #RAT self
 function RAT:_ATCQueue()
   --env.info("Queue:")
   for airport,_ in pairs(RAT.ATC.airport) do
