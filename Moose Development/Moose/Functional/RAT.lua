@@ -721,8 +721,8 @@ end
 
 --- Airports, FARPs and ships explicitly excluded as departures and destinations.
 -- @param #RAT self
--- @param #string airports Name or table of names of excluded airports.
-function RAT:Excluded(ports)
+-- @param #string ports Name or table of names of excluded airports.
+function RAT:ExcludedAirports(ports)
   if type(ports)=="string" then
     self.excluded_ports={ports}
   else
@@ -1905,13 +1905,13 @@ function RAT:Status(message, forID)
         -- Range from holding point
         local DRholding 
         if self.category==RAT.cat.plane then
-          DRholding=6000
+          DRholding=8000
         else
-          DRholding=500
+          DRholding=2000
         end
         
         -- If distance to holding point is less then 6 km we register the plane.
-        if self.ATCswitch and Dholding<=DRholding and status=="On journey (after takeoff)" then
+        if self.ATCswitch and Dholding<=DRholding and string.match(status, "On journey") then
            RAT:_ATCRegisterFlight(group:GetName(), Tnow)
            self.ratcraft[i].status="Holding"
         end
@@ -1937,10 +1937,8 @@ function RAT:Status(message, forID)
           text=text..string.format("FL%03d = %i m\n", alt/RAT.unit.FL2m, alt)
           --text=text..string.format("Speed = %i km/h\n", vel)
           text=text..string.format("Distance travelled        = %6.1f km\n", self.ratcraft[i]["Distance"]/1000)
-          text=text..string.format("Distance to destination = %6.1f km\n", Ddestination/1000)
-          if self.ATCswitch then
-            text=text..string.format("Distance to holding point = %6.1f km", Dholding/1000)
-          end
+          --text=text..string.format("Distance to destination = %6.1f km\n", Ddestination/1000)
+          text=text..string.format("Distance to destination = %6.1f km", Dholding/1000)
           if not airborne then
             text=text..string.format("\nTime on ground  = %6.0f seconds\n", Tg)
             text=text..string.format("Position change = %8.1f m since %3.0f seconds.", Dg, dTlast)
@@ -2547,8 +2545,8 @@ function RAT:_TaskHolding(P1, Altitude, Speed, Duration)
   local Task = {
     id = 'Orbit',
     params = {
-      --pattern = AI.Task.OrbitPattern.RACE_TRACK,
-      pattern = AI.Task.OrbitPattern.CIRCLE,
+      pattern = AI.Task.OrbitPattern.RACE_TRACK,
+      --pattern = AI.Task.OrbitPattern.CIRCLE,
       point = P1,
       point2 = P2,
       speed = Speed,
@@ -3035,7 +3033,7 @@ function RAT:_ATCStatus()
       --TODO: Trigger landing for another aircraft when Tfinal > x min?
       -- After five minutes we set the runway to green. ==> Increase the landing frequency a bit.
       if Tfinal>300 then
-        RAT.ATC.airport[dest].busy=false
+        --RAT.ATC.airport[dest].busy=false
       end
       
     elseif hold==RAT.ATC.unregistered then
