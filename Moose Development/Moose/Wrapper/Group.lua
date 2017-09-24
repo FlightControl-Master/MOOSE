@@ -938,9 +938,18 @@ end
 -- @return #table 
 function GROUP:GetTemplate()
   local GroupName = self:GetName()
-  self:E( GroupName )
   return _DATABASE:GetGroupTemplate( GroupName )
 end
+
+--- Returns the group template route.points[] (the waypoints) from the @{DATABASE} (_DATABASE object).
+-- @param #GROUP self
+-- @return #table 
+function GROUP:GetTemplateRoutePoints()
+  local GroupName = self:GetName()
+  return _DATABASE:GetGroupTemplate( GroupName ).route.points
+end
+
+
 
 --- Sets the controlled status in a Template.
 -- @param #GROUP self
