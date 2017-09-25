@@ -40,13 +40,15 @@
 -- 
 -- # Demo Missions
 --
+-- ### [RAT Demo Missions](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/Release/RAT%20-%20Random%20Air%20Traffic)
 -- ### [ALL Demo Missions pack of the last release](https://github.com/FlightControl-Master/MOOSE_MISSIONS/releases)
 -- 
 -- ====
 -- 
 -- # YouTube Channel
 -- 
--- ### [RAT YouTube Channel](https://www.youtube.com/playlist?list=PL7ZUrU4zZUl1jirWIo4t4YxqN-HxjqRkL)
+-- ### RAT videos are work in progress.
+-- ### [MOOSE YouTube Channel](https://www.youtube.com/playlist?list=PL7ZUrU4zZUl1jirWIo4t4YxqN-HxjqRkL)
 -- 
 -- ===
 -- 
@@ -66,6 +68,7 @@
 -- @field #number spawndelay Delay time in seconds before first spawning happens.
 -- @field #number spawninterval Interval between spawning units/groups. Note that we add a randomization of 50%.
 -- @field #number coalition Coalition of spawn group template.
+-- @field #number country Country of spawn group template.
 -- @field #string category Category of aircarft: "plane" or "heli".
 -- @field #string friendly Possible departure/destination airport: all=blue+red+neutral, same=spawn+neutral, spawnonly=spawn, blue=blue+neutral, blueonly=blue, red=red+neutral, redonly=red.
 -- @field #table ctable Table with the valid coalitons from choice self.friendly.
@@ -104,7 +107,8 @@
 -- @field #number respawn_delay Delay in seconds until repawn happens after landing.
 -- @field #table markerids Array with marker IDs.
 -- @field #string livery Livery of the aircraft set by user.
--- @field #string skill Skill of AI. 
+-- @field #string skill Skill of AI.
+-- @field #boolean ATCswitch Enable/disable ATC if set to true/false. 
 -- @extends Functional.Spawn#SPAWN
 
 ---# RAT class, extends @{Spawn#SPAWN}
@@ -232,11 +236,25 @@
 -- * @{#RAT.SetMinDistance}(100) will cause only random destination airports to be selected which are **at least** 100 km away from the departure airport.
 -- * @{#RAT.SetMaxDistance}(150) will allow only destination airports which are **less than** 150 km away from the departure airport.
 -- 
+-- ![Process](..\Presentations\RAT\RAT_Gaussian.png)
 -- 
--- Certain other options like the flight level can also be specified. However, note that this might not be a good idea for random departures and/or destinations.
--- For example the random route might be too short to reach that altitude, which would result in very high climb and descent rates or strange flight plans.
---
---
+-- By default planes get a cruise altitude of ~20,000 ft ASL. The actual altitude is sampled from a Gaussian distribution. The picture shows this distribution
+-- if one would spawn 1000 planes. As can be seen most planes get a cruising alt of around FL200. Other values are possible but less likely the further away
+-- one gets from the expectation value.
+-- 
+-- The expectation value, i.e. the altitude most aircraft get, can be set with the function @{#RAT.SetFLcruise}().
+-- It is possible to restrict the minimum cruise altitude by @{#RAT.SetFLmin}() and the maximum cruise altitude by @{#RAT.SetFLmax}()
+-- 
+-- The cruise altitude can also be given in meters ASL by the functions @{#RAT.SetCruiseAltitude}(), @{#RAT.SetMinCruiseAltitude}() and @{#RAT.SetMaxCruiseAltitude}().
+-- 
+-- For example:
+-- 
+-- * @{#RAT.SetFLcruise}(300) will cause most planes fly around FL300.
+-- * @{#RAT.SetFLmin}(100) restricts the cruising alt such that no plane will fly below FL100. Note that this automatically changes the minimum distance from departure to destination.
+-- That means that only destinations are possible for which the aircraft has had enought time to reach that flight level and descent again.  
+-- * @{#RAT.SetFLmax}(200) will restrict the cruise alt to maximum FL200, i.e. no aircraft will travel above this height.
+-- 
+-- 
 -- @field #RAT
 RAT={
   ClassName = "RAT",        -- Name of class: RAT = Random Air Traffic.
@@ -245,6 +263,7 @@ RAT={
   spawndelay=5,             -- Delay time in seconds before first spawning happens.
   spawninterval=5,          -- Interval between spawning units/groups. Note that we add a randomization of 50%.
   coalition = nil,          -- Coalition of spawn group template.
+  country = nil,            -- Country of the group template.
   category = nil,           -- Category of aircarft: "plane" or "heli".
   friendly = "same",        -- Possible departure/destination airport: all=blue+red+neutral, same=spawn+neutral, spawnonly=spawn, blue=blue+neutral, blueonly=blue, red=red+neutral, redonly=red.
   ctable = {},              -- Table with the valid coalitons from choice self.friendly.
@@ -264,6 +283,7 @@ RAT={
   departure_zones={},       -- Array containing the names of the departure zones.
   departure_ports={},       -- Array containing the names of the departure airports.
   destination_ports={},     -- Array containing the names of the destination airports.
+  excluded_ports={},        -- Array containing the names of explicitly excluded airports.
   ratcraft={},              -- Array with the spawned RAT aircraft.
   Tinactive=300,            -- Time in seconds after which inactive units will be destroyed. Default is 300 seconds.
   reportstatus=false,       -- Aircraft report status.
@@ -284,6 +304,7 @@ RAT={
   markerids={},             -- Array with marker IDs.
   livery=nil,               -- Livery of the aircraft.
   skill="High",             -- Skill of AI.
+  ATCswitch=true,           -- Enable ATC.
 }
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -317,11 +338,6 @@ RAT.wp={
 RAT.coal={
   same="same",
   sameonly="sameonly",
-  all="all",
-  blue="blue",
-  blueonly="blueonly",
-  red="red",
-  redonly="redonly",
   neutral="neutral",
 }
 
@@ -349,6 +365,14 @@ RAT.ROT={
   evade="evade",
   passive="passive",
   noreaction="noreaction",
+}
+
+RAT.ATC={
+  init=false,
+  flight={},
+  airport={},
+  unregistered=-1,
+  onfinal=-100,
 }
 
 --- Running number of placed markers on the F10 map.
@@ -438,11 +462,6 @@ function RAT:New(groupname, alias)
   
   -- Get all airports of current map (Caucasus, NTTR, Normandy, ...).
   self:_GetAirportsOfMap()
-  
-  -- Create F10 main menu if it does not exists yet.
-  if self.f10menu and not RAT.MenuF10 then
-    RAT.MenuF10 = MENU_MISSION:New("RAT")
-  end
      
   return self
 end
@@ -457,6 +476,16 @@ function RAT:Spawn(naircraft)
 
   -- Number of aircraft to spawn. Default is one.
   self.ngroups=naircraft or 1
+  
+  -- Init RAT ATC if not already done.
+  if self.ATCswitch and not RAT.ATC.init then
+    RAT:_ATCInit(self.airports_map)
+  end
+  
+  -- Create F10 main menu if it does not exists yet.
+  if self.f10menu and not RAT.MenuF10 then
+    RAT.MenuF10 = MENU_MISSION:New("RAT")
+  end
   
     -- Set the coalition table based on choice of self.coalition and self.friendly.
   self:_SetCoalitionTable()
@@ -500,6 +529,7 @@ function RAT:Spawn(naircraft)
   text=text..string.format("Time inactive: %4.1f\n", self.Tinactive)
   text=text..string.format("Create F10 menu : %s\n", tostring(self.f10menu))
   text=text..string.format("F10 submenu name: %s\n", self.SubMenuName)
+  text=text..string.format("ATC enabled : %s\n", tostring(self.ATCswitch))
   text=text..string.format("******************************************************\n")
   env.info(RAT.id..text)
   
@@ -539,30 +569,46 @@ end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Set the friendly coalitions from which the airports can be used as departure or destination.
+--- Set the friendly coalitions from which the airports can be used as departure and destination.
 -- @param #RAT self
--- @param #string friendly "same"=own coalition+neutral (default), "all"=neutral+red+blue", "sameonly"=own coalition only, "blue"=blue+neutral, "blueonly"=blue, "red"=red+neutral, "redonly"=red, "neutral"=neutral.
+-- @param #string friendly "same"=own coalition+neutral (default), "sameonly"=own coalition only, "neutral"=all neutral airports.
 -- Default is "same", so aircraft will use airports of the coalition their spawn template has plus all neutral airports.
--- @usage yak:SetCoalition("all") will spawn aircraft randomly on airports of any coaliton, i.e. red, blue and neutral, regardless of its own coalition.
--- @usage yak:SetCoalition("redonly") will spawn aircraft randomly on airports belonging to the red coalition _only_.
+-- @usage yak:SetCoalition("neutral") will spawn aircraft randomly on all neutral airports.
+-- @usage yak:SetCoalition("sameonly") will spawn aircraft randomly on airports belonging to the same coalition only as the template.
 function RAT:SetCoalition(friendly)
-  if friendly:lower()=="all" then
-    self.friendly=RAT.coal.all
-  elseif friendly:lower()=="sameonly" then
+  if friendly:lower()=="sameonly" then
     self.friendly=RAT.coal.sameonly
-  elseif friendly:lower()=="blue" then
-    self.friendly=RAT.coal.blue
-  elseif friendly:lower()=="blueonly" then
-    self.friendly=RAT.coal.blueonly
-  elseif friendly:lower()=="red" then
-    self.friendly=RAT.coal.red
-  elseif friendly:lower()=="redonly" then
-    self.friendly=RAT.coal.redonly
   elseif friendly:lower()=="neutral" then
     self.friendly=RAT.coal.neutral
   else
     self.friendly=RAT.coal.same
   end
+end
+
+--- Set coalition of RAT group. You can make red templates blue and vice versa.
+-- @param #RAT self
+-- @param #string color Color of coalition, i.e. "red" or blue".
+function RAT:SetCoalitionAircraft(color)
+  if color:lower()=="blue" then
+    self.coalition=coalition.side.BLUE
+    if not self.country then
+      self.country=country.id.USA
+    end
+  elseif color:lower()=="red" then
+    self.coalition=coalition.side.RED
+    if not self.country then
+      self.country=country.id.RUSSIA
+    end
+  elseif color:lower()=="neutral" then
+    self.coalition=coalition.side.NEUTRAL
+  end
+end
+
+--- Set country of RAT group. This overrules the coalition settings.
+-- @param #RAT self
+-- @param #number id DCS country enumerator ID. For example country.id.USA or country.id.RUSSIA.
+function RAT:SetCoalition2(id)
+  self.country=id
 end
 
 --- Set takeoff type. Starting cold at airport, starting hot at airport, starting at runway, starting in the air.
@@ -673,6 +719,17 @@ function RAT:SetDestination(names)
 
 end
 
+--- Airports, FARPs and ships explicitly excluded as departures and destinations.
+-- @param #RAT self
+-- @param #string ports Name or table of names of excluded airports.
+function RAT:ExcludedAirports(ports)
+  if type(ports)=="string" then
+    self.excluded_ports={ports}
+  else
+    self.excluded_ports=ports
+  end
+end
+
 --- Set livery of aircraft. If more than one livery is specified in a table, the actually used one is chosen randomly from the selection.
 -- @param #RAT self
 -- @param #string skins Name of livery or table of names of liveries.
@@ -683,7 +740,6 @@ function RAT:Livery(skins)
     self.livery=skins
   end
 end
-
 
 --- Aircraft will continue their journey from their destination. This means they are respawned at their destination and get a new random destination.
 -- @param #RAT self
@@ -787,6 +843,13 @@ function RAT:MenuName(name)
   self.SubMenuName=tostring(name)
 end
 
+--- Enable ATC, which manages the landing queue for RAT aircraft if they arrive simultaniously at the same airport.
+-- @param #RAT self
+-- @param #boolean switch true=enable ATC, false=disable ATC. 
+function RAT:EnableATC(switch)
+  self.ATCswitch=switch
+end
+
 --- Set minimum distance between departure and destination. Default is 5 km.
 -- Minimum distance should not be smaller than maybe ~500 meters to ensure that departure and destination are different.
 -- @param #RAT self
@@ -845,7 +908,7 @@ end
 --- Set max cruising altitude above sea level.
 -- @param #RAT self
 -- @param #number alt Altitude ASL in meters.
-function RAT:SetMaCruiseAltitude(alt)
+function RAT:SetMaxCruiseAltitude(alt)
   self.FLmaxuser=alt
 end
 
@@ -987,11 +1050,16 @@ function RAT:_SpawnWithRoute(_departure, _destination)
   end
   
   -- Modify the spawn template to follow the flight plan.
-  self:_ModifySpawnTemplate(waypoints) 
+  self:_ModifySpawnTemplate(waypoints)
   
   -- Actually spawn the group.
   local group=self:SpawnWithIndex(self.SpawnIndex) -- Wrapper.Group#GROUP
   self.alive=self.alive+1
+  
+  -- ATC is monitoring this flight.
+  if self.ATCswitch then
+    RAT:_ATCAddFlight(group:GetName(), destination:GetName())
+  end
   
   -- Set ROE, default is "weapon hold".
   self:_SetROE(group, self.roe)
@@ -1043,12 +1111,20 @@ function RAT:_SpawnWithRoute(_departure, _destination)
     MENU_MISSION_COMMAND:New("Evade on fire",   self.Menu[self.SubMenuName].groups[self.SpawnIndex]["rot"], self._SetROT, self, group, RAT.ROT.evade)    
     -- F10/RAT/<templatename>/Group X/
     MENU_MISSION_COMMAND:New("Despawn group",  self.Menu[self.SubMenuName].groups[self.SpawnIndex], self._Despawn, self, group)
+    MENU_MISSION_COMMAND:New("Clear for landing",  self.Menu[self.SubMenuName].groups[self.SpawnIndex], self.ClearForLanding, self, group:GetName())
     MENU_MISSION_COMMAND:New("Place markers",  self.Menu[self.SubMenuName].groups[self.SpawnIndex], self._PlaceMarkers, self, waypoints)
     MENU_MISSION_COMMAND:New("Status report",  self.Menu[self.SubMenuName].groups[self.SpawnIndex], self.Status, self, true, self.SpawnIndex)
   end
   
   return self.SpawnIndex
   
+end
+
+function RAT:ClearForLanding(name)
+  env.info("ATC: setting user flag "..name.." to 1.")
+  trigger.action.setUserFlag(name, 1)
+  local flagvalue=trigger.misc.getUserFlag(name)
+  env.info("ATC: user flag "..name.." ="..flagvalue)
 end
 
 --- Respawn a group.
@@ -1193,23 +1269,28 @@ function RAT:_SetRoute(takeoff, _departure, _destination)
   -- DESTINATION AIRPORT
   local destination=nil
   if _destination then
+  
     if self:_AirportExists(_destination) then
       destination=AIRBASE:FindByName(_destination)
     else
       local text=string.format("ERROR: Specified destination airport %s does not exist for %s!", _destination, self.alias)
       env.error(RAT.id..text)
     end
-  else
-    -- Get all destination airports within reach.
-    local destinations=self:_GetDestinations(Pdeparture, self.mindist, math.min(self.aircraft.Reff, self.maxdist))
     
-    local random_destination=false
-    if self.continuejourney and _departure then
-      random_destination=true
+  else
+
+    -- This handes the case where we have a journey and the first flight is done, i.e. _departure is set.
+    -- If a user specified more than two destination airport explicitly, then we will stick to this.
+    -- Otherwise, the route is random from now on.
+    if self.continuejourney and _departure and #self.destination_ports<3 then
+      self.random_destination=true
     end
+  
+    -- Get all destination airports within reach.
+    local destinations=self:_GetDestinations(departure, Pdeparture, self.mindist, math.min(self.aircraft.Reff, self.maxdist))
     
     -- Pick a destination airport.
-    destination=self:_PickDestination(destinations, random_destination)
+    destination=self:_PickDestination(destinations)
   end
     
   -- Return nil if no departure could be found.
@@ -1260,7 +1341,7 @@ function RAT:_SetRoute(takeoff, _departure, _destination)
   local d_holding=Pholding:Get2DDistance(Pdestination)
   
   -- Height difference between departure and holding point.
-  local deltaH=h_holding+H_holding-H_departure
+  local deltaH=math.abs(h_holding+H_holding-H_departure)
   
   -- GENERAL
   -- Heading from departure to holding point of destination.
@@ -1365,6 +1446,7 @@ function RAT:_SetRoute(takeoff, _departure, _destination)
   text=text..string.format("h_climb       = %6.1f m\n",     h_climb)
   text=text..string.format("h_descent     = %6.1f m\n",     h_descent)
   text=text..string.format("h_holding     = %6.1f m\n",     h_holding)
+  text=text..string.format("delta H       = %6.1f m\n",     deltaH)
   text=text..string.format("FLmin         = %6.1f m ASL = FL%03d\n", FLmin, FLmin/RAT.unit.FL2m)
   text=text..string.format("FLcruise      = %6.1f m ASL = FL%03d\n", FLcruise, FLcruise/RAT.unit.FL2m)
   text=text..string.format("FLmax         = %6.1f m ASL = FL%03d\n", FLmax, FLmax/RAT.unit.FL2m)
@@ -1372,6 +1454,8 @@ function RAT:_SetRoute(takeoff, _departure, _destination)
   text=text..string.format("Alpha climb   = %6.1f Deg\n",   math.deg(AlphaClimb))
   text=text..string.format("Alpha descent = %6.1f Deg\n",   math.deg(AlphaDescent))
   text=text..string.format("Phi (slope)   = %6.1f Deg\n",   math.deg(phi))
+  text=text..string.format("Phi climb     = %6.1f Deg\n",   math.deg(PhiClimb))
+  text=text..string.format("Phi descent   = %6.1f Deg\n",   math.deg(PhiDescent))
   text=text..string.format("Heading       = %6.1f Deg\n",   heading)
   text=text..string.format("******************************************************\n")
   env.info(RAT.id..text)
@@ -1422,7 +1506,7 @@ end
 -- @param #RAT self
 -- @param #number takeoff Takeoff type.
 -- @return Wrapper.Airbase#AIRBASE Departure airport if spawning at airport.
--- @return Coore.Zone#ZONE Departure zone if spawning in air.
+-- @return Core.Zone#ZONE Departure zone if spawning in air.
 function RAT:_PickDeparture(takeoff)
 
   -- Array of possible departure airports or zones.
@@ -1433,19 +1517,25 @@ function RAT:_PickDeparture(takeoff)
     if self.random_departure then
     
       -- Air start above a random airport.
-      for _,airport in pairs(self.airports)do
-        table.insert(departures, airport:GetZone())
+      for _,airport in pairs(self.airports) do
+        if not self:_Excluded(airport:GetName()) then
+          table.insert(departures, airport:GetZone())
+        end
       end
     
     else
       
       -- Put all specified zones in table.
       for _,name in pairs(self.departure_zones) do
-        table.insert(departures, ZONE:New(name))
+        if not self:_Excluded(name) then
+          table.insert(departures, ZONE:New(name))
+        end
       end
       -- Put all specified airport zones in table.
       for _,name in pairs(self.departure_ports) do
-        table.insert(departures, AIRBASE:FindByName(name):GetZone())
+        if not self:_Excluded(name) then
+          table.insert(departures, AIRBASE:FindByName(name):GetZone())
+        end
       end
       
     end
@@ -1456,14 +1546,18 @@ function RAT:_PickDeparture(takeoff)
     
       -- All friendly departure airports. 
       for _,airport in pairs(self.airports) do
-        table.insert(departures, airport)
+        if not self:_Excluded(airport:GetName()) then
+          table.insert(departures, airport)
+        end
       end
       
     else
       
       -- All airports specified by user  
       for _,name in pairs(self.departure_ports) do
-        table.insert(departures, AIRBASE:FindByName(name))
+        if not self:_Excluded(name) then
+          table.insert(departures, AIRBASE:FindByName(name))
+        end
       end
         
     end
@@ -1498,27 +1592,37 @@ end
 -- @return Wrapper.Airbase#AIRBASE Destination airport.
 function RAT:_PickDestination(destinations, _random)
 
+  --[[
   -- Take destinations from user input.   
   if not (self.random_destination or _random) then
+  
     destinations=nil
     destinations={}
+    
     -- All airports specified by user.
     for _,name in pairs(self.destination_ports) do
-      table.insert(destinations, AIRBASE:FindByName(name))
+      if not self:_Excluded(name) then
+        table.insert(destinations, AIRBASE:FindByName(name))
+      end
     end
     
   end
+  ]]
   
   -- Randomly select one possible destination.
   local destination=nil
   if destinations and #destinations>0 then
+  
+    -- Random selection.
     destination=destinations[math.random(#destinations)] -- Wrapper.Airbase#AIRBASE
   
+    -- Debug message.
     local text="Chosen destination airport: "..destination:GetName().." (ID "..destination:GetID()..")"
     env.info(RAT.id..text)
     if self.debug then
       MESSAGE:New(text, 30):ToAll()
     end
+    
   else
     env.error(RAT.id.."No destination airport found.")
   end
@@ -1526,36 +1630,58 @@ function RAT:_PickDestination(destinations, _random)
   return destination
 end
 
--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Get all possible destination airports depending on departure position.
 -- The list is sorted w.r.t. distance to departure position.
 -- @param #RAT self
+-- @param Wrapper.Airbase#AIRBASE departure Departure airport or zone.
 -- @param Core.Point#COORDINATE q Coordinate of the departure point.
 -- @param #number minrange Minimum range to q in meters.
 -- @param #number maxrange Maximum range to q in meters.
 -- @return #table Table with possible destination airports.
 -- @return #nil If no airports could be found.
-function RAT:_GetDestinations(q, minrange, maxrange)
+function RAT:_GetDestinations(departure, q, minrange, maxrange)
 
+  -- Min/max range to destination.
   minrange=minrange or self.mindist
   maxrange=maxrange or self.maxdist
+
+  local possible_destinations={}
+  if self.random_destination then
   
-  -- Initialize array.
-  local destinations={}
-   
-  -- loop over all friendly airports
-  for _,airport in pairs(self.airports) do
-    local p=airport:GetCoordinate()
-    local distance=q:Get2DDistance(p)
-    -- check if distance form departure to destination is within min/max range
-    if distance>=minrange and distance<=maxrange then
-      table.insert(destinations, airport)
+    -- Airports of friendly coalitions.
+    for _,airport in pairs(self.airports) do
+      local name=airport:GetName()
+      if self:_IsFriendly(name) and not self:_Excluded(name) and name~=departure:GetName() then
+      
+        -- Distance from departure to possible destination
+        local distance=q:Get2DDistance(airport:GetCoordinate())
+        
+        -- Check if distance form departure to destination is within min/max range.
+        if distance>=minrange and distance<=maxrange then
+          table.insert(possible_destinations, airport)
+        end
+      end
     end
+    
+  else
+    
+    -- Airports specified by user.
+    for _,name in pairs(self.destination_ports) do
+      --if self:_IsFriendly(name) and not self:_Excluded(name) and name~=departure:GetName() then
+      if name~=departure:GetName() then
+        local airport=AIRBASE:FindByName(name)
+        --TODO: Maybe here I should check min/max distance as well? But the user explicitly specified the airports...
+        table.insert(possible_destinations, airport)
+      end
+    end
+    
   end
-  env.info(RAT.id.."Number of possible destination airports = "..#destinations)
   
-  if #destinations > 1 then
+  -- Info message.
+  env.info(RAT.id.."Number of possible destination airports = "..#possible_destinations)
+  
+  if #possible_destinations > 0 then
     --- Compare distance of destination airports.
     -- @param Core.Point#COORDINATE a Coordinate of point a.
     -- @param Core.Point#COORDINATE b Coordinate of point b.
@@ -1565,17 +1691,45 @@ function RAT:_GetDestinations(q, minrange, maxrange)
       local qb=q:Get2DDistance(b:GetCoordinate())
       return qa < qb
     end
-    table.sort(destinations, compare)
+    table.sort(possible_destinations, compare)
   else
     env.error(RAT.id.."No possible destination airports found!")
-    destinations=nil
+    possible_destinations=nil
   end
   
   -- Return table with destination airports.
-  return destinations
+  return possible_destinations
   
 end
 
+--- Check if airport is excluded from possible departures and destinations.
+-- @param #RAT self
+-- @param #string port Name of airport, FARP or ship to check.
+-- @return #boolean true if airport is excluded and false otherwise.
+function RAT:_Excluded(port)
+  for _,name in pairs(self.excluded_ports) do
+    if name==port then
+      return true
+    end
+  end
+  return false
+end
+
+--- Check if airport is friendly, i.e. belongs to the right coalition.
+-- @param #RAT self
+-- @param #string port Name of airport, FARP or ship to check.
+-- @return #boolean true if airport is friendly and false otherwise.
+function RAT:_IsFriendly(port)
+  for _,airport in pairs(self.airports) do
+    local name=airport:GetName()
+    if name==port then
+      return true
+    end
+  end
+  return false
+end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Get all airports of the current map.
 -- @param #RAT self
@@ -1618,7 +1772,6 @@ function RAT:_GetAirportsOfMap()
     
   end
 end
-
 
 --- Get all "friendly" airports of the current map.
 -- @param #RAT self
@@ -1664,6 +1817,9 @@ function RAT:Status(message, forID)
     MESSAGE:New(text, 20):ToAll()
   end
   
+  -- Current time.
+  local Tnow=timer.getTime()
+    
   for i=1, ngroups do
   
     if self.ratcraft[i].group then
@@ -1681,7 +1837,7 @@ function RAT:Status(message, forID)
         local departure=self.ratcraft[i].departure:GetName()
         local destination=self.ratcraft[i].destination:GetName()
         local type=self.aircraft.type
-        local Tnow=timer.getTime()
+        
         
         -- Monitor time and distance on ground.
         local Tg=0
@@ -1738,6 +1894,27 @@ function RAT:Status(message, forID)
         
         -- Distance remaining to destination.
         local Ddestination=Pn:Get2DDistance(self.ratcraft[i].destination:GetCoordinate())
+        
+        -- Distance remaining to holding point, which is waypoint 6
+        local Hp=COORDINATE:New(self.ratcraft[i].waypoints[6].x, self.ratcraft[i].waypoints[6].alt, self.ratcraft[i].waypoints[6].y)
+        local Dholding=Pn:Get2DDistance(Hp)
+        
+        -- Status shortcut.
+        local status=self.ratcraft[i].status
+        
+        -- Range from holding point
+        local DRholding 
+        if self.category==RAT.cat.plane then
+          DRholding=8000
+        else
+          DRholding=2000
+        end
+        
+        -- If distance to holding point is less then 6 km we register the plane.
+        if self.ATCswitch and Dholding<=DRholding and string.match(status, "On journey") then
+           RAT:_ATCRegisterFlight(group:GetName(), Tnow)
+           self.ratcraft[i].status="Holding"
+        end
      
         -- Status report.
         if (forID and i==forID) or (not forID) then
@@ -1760,7 +1937,8 @@ function RAT:Status(message, forID)
           text=text..string.format("FL%03d = %i m\n", alt/RAT.unit.FL2m, alt)
           --text=text..string.format("Speed = %i km/h\n", vel)
           text=text..string.format("Distance travelled        = %6.1f km\n", self.ratcraft[i]["Distance"]/1000)
-          text=text..string.format("Distance to destination = %6.1f km", Ddestination/1000)
+          --text=text..string.format("Distance to destination = %6.1f km\n", Ddestination/1000)
+          text=text..string.format("Distance to destination = %6.1f km", Dholding/1000)
           if not airborne then
             text=text..string.format("\nTime on ground  = %6.0f seconds\n", Tg)
             text=text..string.format("Position change = %8.1f m since %3.0f seconds.", Dg, dTlast)
@@ -1825,7 +2003,7 @@ end
 -- @param #RAT self
 function RAT:_SetStatus(group, status)
   local index=self:GetSpawnIndexFromGroup(group)
-  env.info(RAT.id.."Index for group "..group:GetName().." "..index.." status: "..status)
+  env.info(RAT.id.."Status for group "..group:GetName()..": "..status)
   self.ratcraft[index].status=status
 end
 
@@ -1959,7 +2137,11 @@ function RAT:_OnLand(EventData)
     
         -- Set status.
         self:_SetStatus(SpawnGroup, "Taxiing (after landing)")
-        
+
+        -- ATC plane landed. Take it out of the queue and set runway to free.
+        if self.ATCswitch then
+          RAT:_ATCFlightLanded(SpawnGroup:GetName())
+        end        
         
         if self.respawn_at_landing then
           text="Event: Group "..SpawnGroup:GetName().." will be respawned."
@@ -2062,6 +2244,8 @@ function RAT:_OnCrash(EventData)
 
   local SpawnGroup = EventData.IniGroup --Wrapper.Group#GROUP
   
+  env.info(string.format("%sGroup %s crashed!", RAT.id, SpawnGroup:GetName()))
+  
   if SpawnGroup then
 
     -- Get the template name of the group. This can be nil if this was not a spawned group.
@@ -2141,21 +2325,21 @@ function RAT:_Waypoint(Type, Coord, Speed, Altitude, Airport)
     -- take-off with engine off
     _Type="TakeOffParking"
     _Action="From Parking Area"
-    _Altitude = 2
+    _Altitude = 0
     _alttype="RADIO"
     _AID = Airport:GetID()
   elseif Type==RAT.wp.hot then
     -- take-off with engine on 
     _Type="TakeOffParkingHot"
     _Action="From Parking Area Hot"
-    _Altitude = 2
+    _Altitude = 0
     _alttype="RADIO"
     _AID = Airport:GetID()
   elseif Type==RAT.wp.runway then
     -- take-off from runway
     _Type="TakeOff"
     _Action="From Parking Area"
-    _Altitude = 2
+    _Altitude = 0
     _alttype="RADIO"
     _AID = Airport:GetID()
   elseif Type==RAT.wp.air then
@@ -2186,7 +2370,7 @@ function RAT:_Waypoint(Type, Coord, Speed, Altitude, Airport)
   elseif Type==RAT.wp.landing then
     _Type="Land"
     _Action="Landing"
-    _Altitude = 2
+    _Altitude = 0
     _alttype="RADIO"
     _AID = Airport:GetID()
   else
@@ -2218,7 +2402,7 @@ function RAT:_Waypoint(Type, Coord, Speed, Altitude, Airport)
   if self.debug then
     env.info(RAT.id..text)
   end
-  
+    
   -- define waypoint
   local RoutePoint = {}
   -- coordinates and altitude
@@ -2238,9 +2422,28 @@ function RAT:_Waypoint(Type, Coord, Speed, Altitude, Airport)
   RoutePoint.ETA_locked = false
   -- waypoint name (only for the mission editor)
   RoutePoint.name="RAT waypoint"
-  if _AID then
-    RoutePoint.airdromeId=_AID
+  
+  if (Airport~=nil) and Type~=RAT.wp.air then
+    local AirbaseID = Airport:GetID()
+    local AirbaseCategory = Airport:GetDesc().category
+    if AirbaseCategory == Airbase.Category.SHIP then
+      RoutePoint.linkUnit = AirbaseID
+      RoutePoint.helipadId = AirbaseID
+      --env.info(RAT.id.."WP: Ship id = "..AirbaseID)
+    elseif AirbaseCategory == Airbase.Category.HELIPAD then
+      RoutePoint.linkUnit = AirbaseID
+      RoutePoint.helipadId = AirbaseID
+      --env.info(RAT.id.."WP: Helipad id = "..AirbaseID)
+    elseif AirbaseCategory == Airbase.Category.AIRDROME then
+      RoutePoint.airdromeId = AirbaseID
+      --env.info(RAT.id.."WP: Airdrome id = "..AirbaseID)
+    else
+      --env.error(RAT.id.."Unknown Airport categoryin _Waypoint()!")
+    end  
   end
+--  if _AID then
+--    RoutePoint.airdromeId=_AID
+--  end
   -- properties
   RoutePoint.properties = {
     ["vnav"]   = 1,
@@ -2343,6 +2546,7 @@ function RAT:_TaskHolding(P1, Altitude, Speed, Duration)
     id = 'Orbit',
     params = {
       pattern = AI.Task.OrbitPattern.RACE_TRACK,
+      --pattern = AI.Task.OrbitPattern.CIRCLE,
       point = P1,
       point2 = P2,
       speed = Speed,
@@ -2354,7 +2558,14 @@ function RAT:_TaskHolding(P1, Altitude, Speed, Duration)
   DCSTask.id="ControlledTask"
   DCSTask.params={}
   DCSTask.params.task=Task
-  DCSTask.params.stopCondition={duration=Duration}
+  
+  if self.ATCswitch then
+    -- Set stop condition for holding. Either flag=1 or after max. 30 min holding.
+    local userflagname=string.format("%s#%03d", self.alias, self.SpawnIndex+1)
+    DCSTask.params.stopCondition={userFlag=userflagname, userFlagValue=1, duration=1800}
+  else
+    DCSTask.params.stopCondition={duration=Duration}
+  end
   
   return DCSTask
 end
@@ -2454,17 +2665,7 @@ end
 -- @param #RAT self
 function RAT:_SetCoalitionTable()
   -- get all possible departures/destinations depending on coalition
-  if self.friendly==RAT.coal.all then
-    self.ctable={coalition.side.BLUE, coalition.side.RED, coalition.side.NEUTRAL}
-  elseif self.friendly==RAT.coal.blue then
-    self.ctable={coalition.side.BLUE, coalition.side.NEUTRAL}
-  elseif self.friendly==RAT.coal.blueonly then
-    self.ctable={coalition.side.BLUE}
-  elseif self.friendly==RAT.coal.red then
-    self.ctable={coalition.side.RED, coalition.side.NEUTRAL}
-  elseif self.friendly==RAT.coal.redonly then
-    self.ctable={coalition.side.RED}
-  elseif self.friendly==RAT.coal.neutral then
+  if self.friendly==RAT.coal.neutral then
     self.ctable={coalition.side.NEUTRAL}
   elseif self.friendly==RAT.coal.same then
     self.ctable={self.coalition, coalition.side.NEUTRAL}
@@ -2550,6 +2751,31 @@ function RAT:_Random_Gaussian(x0, sigma, xmin, xmax)
 
   -- Standard deviation. Default 10 if not given.
   sigma=sigma or 10
+    
+  local r
+  local gotit=false
+  local i=0
+  while not gotit do
+  
+    -- Uniform numbers in [0,1). We need two.
+    local x1=math.random()
+    local x2=math.random()
+  
+    -- Transform to Gaussian exp(-(x-x0)²/(2*sigma²).
+    r = math.sqrt(-2*sigma*sigma * math.log(x1)) * math.cos(2*math.pi * x2) + x0
+    
+    i=i+1
+    if (r>=xmin and r<=xmax) or i>100 then
+      gotit=true
+    end
+  end
+  
+  return r
+
+--old version
+--[[
+  -- Standard deviation. Default 10 if not given.
+  sigma=sigma or 10
   
   -- Uniform numbers in [0,1). We need two.
   local x1=math.random()
@@ -2581,6 +2807,7 @@ function RAT:_Random_Gaussian(x0, sigma, xmin, xmax)
   end
   
   return r
+]]
 end
 
 --- Place markers of the waypoints. Note we assume a very specific number and type of waypoints here.
@@ -2610,36 +2837,19 @@ function RAT:_SetMarker(text, wp)
   -- Convert to coordinate.
   local vec={x=wp.x, y=wp.alt, z=wp.y}
   -- Place maker visible for all on the F10 map.
-  trigger.action.markToAll(RAT.markerid, text, vec)
+  local text1=string.format("%s:\n%s", self.alias, text)
+  trigger.action.markToAll(RAT.markerid, text1, vec)
 end
 
 --- Delete all markers on F10 map.
 -- @param #RAT self
 function RAT:_DeleteMarkers()
-  --self:E({"self ids before: ", self.markerids})
   for k,v in ipairs(self.markerids) do
-    --env.info("Deleting marker id v= "..v)
     trigger.action.removeMark(v)
   end
   for k,v in ipairs(self.markerids) do
-    --env.info("Removing marker k= "..k)
     self.markerids[k]=nil
   end
-  --self:E({"self ids after: ", self.markerids})
-end
-
---- Utility function which checks if table contains a specific value.
--- @param #RAT self
--- @param #table tab Table with elements to check.
--- @param #string val The value we are looking for.
--- @return #boolean True if element in the list, false otherwise. 
-function RAT:has_value (tab, val)
-  for _,value in pairs(tab) do
-    if value == val then
-      return true
-    end
-  end
-  return false
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -2694,8 +2904,19 @@ function RAT:_ModifySpawnTemplate(waypoints)
         -- Onboard number.
         SpawnTemplate.units[UnitID]["onboard_num"] = self.SpawnIndex
         
+        -- Modify coaltion and country of template.
+        SpawnTemplate.CoalitionID=self.coalition
+        if self.country then
+          SpawnTemplate.CountryID=self.country
+        end
+        
         -- Parking spot.
-        --SpawnTemplate.units[UnitID]["parking"]=19
+        UnitTemplate.parking = nil
+        UnitTemplate.parking_id = nil
+        
+        -- Initial altitude
+        UnitTemplate.alt=PointVec3.y
+        
         self:T('After Translation SpawnTemplate.units['..UnitID..'].x = '..SpawnTemplate.units[UnitID].x..', SpawnTemplate.units['..UnitID..'].y = '..SpawnTemplate.units[UnitID].y)
         
       end
@@ -2715,6 +2936,260 @@ function RAT:_ModifySpawnTemplate(waypoints)
       
       self:T(SpawnTemplate)        
     end
+  end
+end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Initializes the ATC arrays and starts schedulers.
+-- @param #RAT self
+-- @param #table airports_map List of all airports of the map.
+function RAT:_ATCInit(airports_map)
+  if not RAT.ATC.init then
+    env.info(RAT.id.."Starting RAT ATC.")
+    RAT.ATC.init=true
+    for _,ap in pairs(airports_map) do
+      local name=ap:GetName()
+      RAT.ATC.airport[name]={}
+      RAT.ATC.airport[name].queue={}
+      RAT.ATC.airport[name].busy=false
+      RAT.ATC.airport[name].onfinal=nil
+      RAT.ATC.airport[name].traffic=0
+    end
+    SCHEDULER:New(nil, RAT._ATCCheck, {self}, 5, 15)
+    SCHEDULER:New(nil, RAT._ATCStatus, {self}, 5, 60)
+    RAT.ATC.T0=timer.getTime()
+  end
+end
+
+--- Adds andd initializes a new flight after it was spawned.
+-- @param #RAT self
+-- @param #string name Group name of the flight.
+-- @param #string dest Name of the destination airport.
+function RAT:_ATCAddFlight(name, dest)
+  env.info(string.format("%s%s ATC: Adding flight %s with destination %s.", RAT.id, dest, name, dest))
+  RAT.ATC.flight[name]={}
+  RAT.ATC.flight[name].destination=dest
+  RAT.ATC.flight[name].Tarrive=-1
+  RAT.ATC.flight[name].holding=-1
+  RAT.ATC.flight[name].Tonfinal=-1
+end
+
+--- Deletes a flight from ATC lists after it landed.
+-- @param #RAT self
+-- @param #table t Table.
+-- @param #string entry Flight name which shall be deleted.
+function RAT:_ATCDelFlight(t,entry)
+  for k,_ in pairs(t) do
+    if k==entry then
+      t[entry]=nil
+    end
+  end
+end
+
+--- Registers a flight once it is near its holding point at the final destination.
+-- @param #RAT self
+-- @param #string name Group name of the flight.
+-- @param #number time Time the fight first registered.
+function RAT:_ATCRegisterFlight(name, time)
+  RAT.ATC.flight[name].Tarrive=time
+  RAT.ATC.flight[name].holding=0
+end
+
+
+--- ATC status report about flights.
+-- @param #RAT self
+function RAT:_ATCStatus()
+
+  -- Current time.
+  local Tnow=timer.getTime()
+   
+  for name,_ in pairs(RAT.ATC.flight) do
+
+    local hold=RAT.ATC.flight[name].holding
+    local dest=RAT.ATC.flight[name].destination
+    
+    if hold >= 0 then
+    
+      -- Some string whether the runway is busy or not.
+      local busy="Runway is currently clear"
+      if RAT.ATC.airport[dest].busy then
+        if RAT.ATC.airport[dest].onfinal then
+          busy="Runway is occupied by "..RAT.ATC.airport[dest].onfinal
+        else
+          busy="Runway is occupied"
+        end
+      end
+      
+      -- Aircraft is holding.
+      env.info(string.format("%s%s ATC: Flight %s is holding for %i:%02d. %s.", RAT.id, dest, name, hold/60, hold%60, busy))
+      
+    elseif hold==RAT.ATC.onfinal then
+    
+      -- Aircarft is on final approach for landing.
+      local Tfinal=Tnow-RAT.ATC.flight[name].Tonfinal
+      env.info(string.format("%s%s ATC: Flight %s was cleared for landing. Waiting %i:%02d for landing event.", RAT.id, dest, name, Tfinal/60, Tfinal%60))
+      
+      --TODO: Trigger landing for another aircraft when Tfinal > x min?
+      -- After five minutes we set the runway to green. ==> Increase the landing frequency a bit.
+      if Tfinal>300 then
+        --RAT.ATC.airport[dest].busy=false
+      end
+      
+    elseif hold==RAT.ATC.unregistered then
+    
+      -- Aircraft has not arrived at holding point.
+      --env.info(string.format("%s ATC: Flight %s is not registered yet (hold %d).", dest, name, hold))
+      
+    else
+      env.error(RAT.id.."Unknown holding time in RAT:_ATCStatus().")
+    end
+  end
+  
+end
+
+--- Main ATC function. Updates the landing queue of all airports and inceases holding time for all flights.
+-- @param #RAT self
+function RAT:_ATCCheck()
+
+  -- Init queue of flights at all airports.
+  RAT:_ATCQueue()
+  
+  -- Current time.
+  local Tnow=timer.getTime()
+  
+  for name,_ in pairs(RAT.ATC.airport) do
+  
+    
+    -- List of flights cleared for landing.
+    local qw={}
+    
+    for qID,flight in ipairs(RAT.ATC.airport[name].queue) do
+    
+      -- Number of aircraft in queue.
+      local nqueue=#RAT.ATC.airport[name].queue
+    
+      if RAT.ATC.airport[name].busy then
+      
+        -- Update holding time.
+        RAT.ATC.flight[flight].holding=Tnow-RAT.ATC.flight[flight].Tarrive
+        
+        -- Debug message.
+        local text=string.format("%s ATC: Flight %s runway is busy. You are #%d of %d in landing queue. Your holding time is %i:%02d.", name, flight,qID, nqueue, RAT.ATC.flight[flight].holding/60, RAT.ATC.flight[flight].holding%60)
+        env.info(text)
+        
+      else
+      
+        -- Clear flight for landing.
+        RAT:_ATCClearForLanding(name, flight)
+        table.insert(qw, qID)
+        
+      end
+      
+    end
+    
+    -- Remove cleared flights from queue.
+    for _,i in pairs(qw) do
+      table.remove(RAT.ATC.airport[name].queue, i)
+    end
+    
+  end
+end
+
+--- Giving landing clearance for aircraft by setting user flag.
+-- @param #RAT self
+-- @param #string airport Name of destination airport.
+-- @param #string flight Group name of flight, which gets landing clearence.
+function RAT:_ATCClearForLanding(airport, flight)
+  -- Flight is cleared for landing.
+  RAT.ATC.flight[flight].holding=RAT.ATC.onfinal
+  -- Airport runway is busy now.
+  RAT.ATC.airport[airport].busy=true
+  -- Flight which is landing.
+  RAT.ATC.airport[airport].onfinal=flight
+  -- Current time.
+  RAT.ATC.flight[flight].Tonfinal=timer.getTime()
+  -- Set user flag to 1 ==> stop condition for holding.
+  trigger.action.setUserFlag(flight, 1)
+  local flagvalue=trigger.misc.getUserFlag(flight)
+  
+  -- Debug message.
+  local text1=string.format("%s%s ATC: Flight %s cleared for final approach (flag=%d).", RAT.id, airport, flight, flagvalue)
+  local text2=string.format("%s ATC: Flight %s you are cleared for landing.", airport, flight)
+  env.info(text1)
+  MESSAGE:New(text2, 10):ToAll()
+end
+
+--- Takes care of organisational stuff after a plane has landed.
+-- @param #RAT self
+-- @param #string name Group name of flight.
+function RAT:_ATCFlightLanded(name)
+
+  if RAT.ATC.flight[name] then
+  
+    -- Destination airport.
+    local dest=RAT.ATC.flight[name].destination
+    
+    -- Times for holding and final approach.
+    local Tnow=timer.getTime()
+    local Tfinal=Tnow-RAT.ATC.flight[name].Tonfinal
+    local Thold=RAT.ATC.flight[name].Tonfinal-RAT.ATC.flight[name].Tarrive
+    
+    -- Airport is not busy any more.
+    RAT.ATC.airport[dest].busy=false
+    
+    -- No aircraft on final any more.
+    RAT.ATC.airport[dest].onfinal=nil
+    
+    -- Remove this flight from list of flights.
+    RAT:_ATCDelFlight(RAT.ATC.flight, name)
+    
+    -- Increase landing counter to monitor traffic.
+    RAT.ATC.airport[dest].traffic=RAT.ATC.airport[dest].traffic+1
+    
+    -- Debug info
+    local text1=string.format("%s%s ATC: Flight %s landed. Tholding = %i:%02d, Tfinal = %i:%02d.", RAT.id, dest, name, Thold/60, Thold%60, Tfinal/60, Tfinal%60)
+    local text2=string.format("%s ATC: Flight %s landed. Welcome to %s.", dest, name, dest)
+    env.info(text1)
+    env.info(string.format("%s%s ATC: Number of planes landed in total %d.", RAT.id, dest, RAT.ATC.airport[dest].traffic))
+    MESSAGE:New(text2, 10):ToAll()
+  end
+  
+end
+
+--- Creates a landing queue for all flights holding at airports. Aircraft with longest holding time gets first permission to land.
+-- @param #RAT self
+function RAT:_ATCQueue()
+
+  for airport,_ in pairs(RAT.ATC.airport) do
+  
+    -- Local airport queue.
+    local _queue={}
+
+    -- Loop over all flights.
+    for name,_ in pairs(RAT.ATC.flight) do
+  
+      local hold=RAT.ATC.flight[name].holding
+      local dest=RAT.ATC.flight[name].destination
+      
+      -- Flight is holding at this airport.
+      if hold>=0 and airport==dest then
+        _queue[#_queue+1]={name,hold}
+      end
+    end
+    
+    -- Sort queue w.r.t holding time in acending order.
+    local function compare(a,b)
+      return a[2] > b[2]
+    end
+    table.sort(_queue, compare)
+    
+    -- Transfer queue to airport queue.
+    RAT.ATC.airport[airport].queue={}
+    for k,v in ipairs(_queue) do
+      table.insert(RAT.ATC.airport[airport].queue, v[1])
+    end
+    
   end
 end
 
