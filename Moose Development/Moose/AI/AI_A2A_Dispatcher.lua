@@ -2774,7 +2774,9 @@ do -- AI_A2A_DISPATCHER
               self:F( { Grouping = DefenderGrouping, SquadronGrouping = DefenderSquadron.Grouping, DefaultGrouping = self.DefenderDefault.Grouping } )
               self:F( { DefendersCount = DefenderCount, DefendersNeeded = DefendersNeeded } )
               
-              if DefendersNeeded > DefenderSquadron.Resources then
+              -- DefenderSquadron.Resources can have the value nil, which expresses unlimited resources.
+              -- DefendersNeeded cannot exceed DefenderSquadron.Resources!
+              if DefenderSquadron.Resources and DefendersNeeded > DefenderSquadron.Resources then
                 DefendersNeeded = DefenderSquadron.Resources
                 BreakLoop = true
               end
