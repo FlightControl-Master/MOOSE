@@ -394,6 +394,12 @@ and automatically engage any airborne enemies that are within a certain range or
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).onafterStart">AI_A2A_CAP:onafterStart(AIGroup, From, Event, To)</a></td>
+		<td class="summary">
+<p>onafter State Transition for Event Patrol.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).onbeforeEngage">AI_A2A_CAP:onbeforeEngage(AIGroup, From, Event, To)</a></td>
 		<td class="summary">
 
@@ -1702,6 +1708,46 @@ The To State string.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(AI_A2A_CAP).onafterStart" >
+<strong>AI_A2A_CAP:onafterStart(AIGroup, From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>onafter State Transition for Event Patrol.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> AIGroup </em></code>: 
+The AI Group managed by the FSM.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: 
+The From State string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: 
+The Event string.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: 
+The To State string.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(AI_A2A_CAP).onbeforeEngage" >
 <strong>AI_A2A_CAP:onbeforeEngage(AIGroup, From, Event, To)</strong>
 </a>
@@ -1740,6 +1786,8 @@ The To State string.</p>
 </dd>
 </dl>
 
+			<h2><a id="#(AI_A2A_GCI)" >Type <code>AI_A2A_GCI</code></a></h2>
+			
 </div>
 
 </div>

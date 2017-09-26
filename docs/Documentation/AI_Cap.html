@@ -166,12 +166,6 @@
 and automatically engage any airborne enemies that are within a certain range or within a certain zone.</p>
 </td>
 		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="#_NewEngageCapRoute">_NewEngageCapRoute(AIControllable)</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
 	</table>
 			<h2><a id="#(AI_CAP_ZONE)">Type <code>AI_CAP_ZONE</code></a></h2>
 				<table class="function_list">
@@ -213,6 +207,12 @@ and automatically engage any airborne enemies that are within a certain range or
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(AI_CAP_ZONE).EngageRange">AI_CAP_ZONE.EngageRange</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAP_ZONE).EngageRoute">AI_CAP_ZONE.EngageRoute(AI, EngageGroup, Fsm)</a></td>
 		<td class="summary">
 
 </td>
@@ -514,27 +514,6 @@ Use the method <a href="AI_Cap.html##(AI_CAP_ZONE).SetEngageZone">AI<em>Cap#AI</
 
 </dd>
 </dl>
-		<dl class="function">
-<dt>
-
-<a id="_NewEngageCapRoute" >
-<strong>_NewEngageCapRoute(AIControllable)</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> AIControllable </em></code>: </p>
-
-				</li>
-		</ul>
-</dd>
-</dl>
 	<h2><a id="#(AI_Cap)" >Type <code>AI_Cap</code></a></h2>
 	
 			<h2><a id="#(AI_CAP_ZONE)" >Type <code>AI_CAP_ZONE</code></a></h2>
@@ -631,6 +610,38 @@ Use the method <a href="AI_Cap.html##(AI_CAP_ZONE).SetEngageZone">AI<em>Cap#AI</
 	
 
 
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_CAP_ZONE).EngageRoute" >
+<strong>AI_CAP_ZONE.EngageRoute(AI, EngageGroup, Fsm)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> AI </em></code>: 
+AI<em>CAP#AI</em>CAP_ZONE </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> EngageGroup </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> Fsm </em></code>: </p>
+
+				</li>
+		</ul>
 </dd>
 </dl>
 		<dl class="function">
