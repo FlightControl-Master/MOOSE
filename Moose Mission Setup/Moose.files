@@ -41,6 +41,7 @@ Functional/AirbasePolice.lua
 Functional/Detection.lua
 Functional/Designate.lua
 Functional/RAT.lua
+Functional/Protect.lua
 
 AI/AI_Balancer.lua
 AI/AI_A2A.lua
