@@ -36,6 +36,7 @@ function PROTECT:New( ProtectZone )
 
   self.ProtectZone = ProtectZone
   self.ProtectUnitSet = SET_UNIT:New()
+  self.ProtectStaticSet = SET_STATIC:New()
   self.CaptureUnitSet = SET_UNIT:New()
   
   self:SetStartState( "Idle" )
@@ -60,6 +61,27 @@ end
 -- @param Wrapper.Unit#UNIT ProtectUnit A @{Unit} object to protect.
 function PROTECT:AddProtectUnit( ProtectUnit )
   self.ProtectUnitSet:AddUnit( ProtectUnit )
+end
+
+--- Get the Protect unit Set.
+-- @param #PROTECT self
+-- @return Wrapper.Unit#UNIT The Set of capture units.
+function PROTECT:GetProtectUnitSet()
+  return self.ProtectUnitSet
+end
+
+--- Add a static to the protection.
+-- @param #PROTECT self
+-- @param Wrapper.Unit#UNIT ProtectStatic A @{Static} object to protect.
+function PROTECT:AddProtectStatic( ProtectStatic )
+  self.ProtectStaticSet:AddStatic( ProtectStatic )
+end
+
+--- Get the Protect static Set.
+-- @param #PROTECT self
+-- @return Wrapper.Unit#UNIT The Set of capture statics.
+function PROTECT:GetProtectStaticSet()
+  return self.ProtectStaticSet
 end
 
 --- Add a Capture unit to allow to capture the zone.
@@ -98,25 +120,38 @@ function PROTECT:AreProtectUnitsAlive()
   return IsAlive
 end
 
+--- Check if the statics are still alive.
+-- @param #PROTECT self
+function PROTECT:AreProtectStaticsAlive()
+
+  local IsAlive = false
+  
+  local StaticSet = self.ProtectStaticSet
+  StaticSet:Flush()
+  local StaticList = StaticSet:GetSet()
+  
+  for UnitID, ProtectStatic in pairs( StaticList ) do
+    local IsStaticAlive = ProtectStatic:IsAlive()
+    if IsStaticAlive == true then
+      IsAlive = true
+      break
+    end
+  end
+  
+  return IsAlive
+end
+
+
 --- Check if there is a capture unit in the zone.
 -- @param #PROTECT self
 function PROTECT:IsCaptureUnitInZone()
 
-  local IsInZone = false
-  
   local CaptureUnitSet = self.CaptureUnitSet
   CaptureUnitSet:Flush()
-  local CaptureUnitList = CaptureUnitSet:GetSet()
+
+  local IsInZone = self.CaptureUnitSet:IsPartiallyInZone( self.ProtectZone )
   
-  for UnitID, CaptureUnit in pairs( CaptureUnitList ) do
-    local IsUnitAlive = CaptureUnit:IsAlive()
-    if IsUnitAlive == true then
-      if CaptureUnit:IsInZone( self.ProtectZone ) then
-        IsInZone = true
-        break
-      end
-    end
-  end
+  self:E({IsInZone = IsInZone})
   
   return IsInZone
 end
@@ -136,7 +171,9 @@ end
 
 function PROTECT:onafterCheck()
   
-  if self:AreProtectUnitsAlive() or not self:IsCaptureUnitInZone() then
+  if ( self.ProtectUnitSet and self:AreProtectUnitsAlive() ) or
+     ( self.ProtectStaticSet and self:AreProtectStaticsAlive() ) or
+     self:IsCaptureUnitInZone() == false then
     self:__Check( -1 )
   else
     self:Capture()

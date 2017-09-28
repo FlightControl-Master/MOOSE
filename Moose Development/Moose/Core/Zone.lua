@@ -562,6 +562,39 @@ function ZONE_RADIUS:GetVec3( Height )
 end
 
 
+--- Searches the zone
+-- @param #ZONE_RADIUS self
+-- @param EvaluateFunction
+function ZONE_RADIUS:SearchZone( EvaluateFunction )
+
+  local SearchZoneResult = true
+
+  local ZoneCoord = self:GetCoordinate()
+  local ZoneRadius = self:GetRadius()
+  
+  self:E({ZoneCoord = ZoneCoord, ZoneRadius = ZoneRadius, ZoneCoordLL = ZoneCoord:ToStringLLDMS()})
+
+  local SphereSearch = {
+    id = world.VolumeType.SPHERE,
+      params = {
+      point = ZoneCoord:GetVec3(),
+      radius = ZoneRadius / 2,
+      }
+    }
+
+  local function EvaluateZone( DCSZoneUnit )
+  
+    env.info( DCSZoneUnit:getName() ) 
+  
+    local ZoneUnit = UNIT:Find( DCSZoneUnit )
+
+    return EvaluateFunction( ZoneUnit )
+  end
+
+  world.searchObjects( Object.Category.UNIT, SphereSearch, EvaluateZone )
+
+end
+
 --- Returns if a location is within the zone.
 -- @param #ZONE_RADIUS self
 -- @param Dcs.DCSTypes#Vec2 Vec2 The location to test.

@@ -1271,872 +1271,1616 @@ function SET_GROUP:IsIncludeObject( MooseGroup )
   return MooseGroupInclude
 end
 
---- @type SET_UNIT
--- @extends Core.Set#SET_BASE
 
---- # 3) SET_UNIT class, extends @{Set#SET_BASE}
--- 
--- Mission designers can use the SET_UNIT class to build sets of units belonging to certain:
--- 
---  * Coalitions
---  * Categories
---  * Countries
---  * Unit types
---  * Starting with certain prefix strings.
---  
--- ## 3.1) SET_UNIT constructor
---
--- Create a new SET_UNIT object with the @{#SET_UNIT.New} method:
--- 
---    * @{#SET_UNIT.New}: Creates a new SET_UNIT object.
---   
--- ## 3.2) Add or Remove UNIT(s) from SET_UNIT
---
--- UNITs can be added and removed using the @{Set#SET_UNIT.AddUnitsByName} and @{Set#SET_UNIT.RemoveUnitsByName} respectively. 
--- These methods take a single UNIT name or an array of UNIT names to be added or removed from SET_UNIT.
--- 
--- ## 3.3) SET_UNIT filter criteria
--- 
--- You can set filter criteria to define the set of units within the SET_UNIT.
--- Filter criteria are defined by:
--- 
---    * @{#SET_UNIT.FilterCoalitions}: Builds the SET_UNIT with the units belonging to the coalition(s).
---    * @{#SET_UNIT.FilterCategories}: Builds the SET_UNIT with the units belonging to the category(ies).
---    * @{#SET_UNIT.FilterTypes}: Builds the SET_UNIT with the units belonging to the unit type(s).
---    * @{#SET_UNIT.FilterCountries}: Builds the SET_UNIT with the units belonging to the country(ies).
---    * @{#SET_UNIT.FilterPrefixes}: Builds the SET_UNIT with the units starting with the same prefix string(s).
---   
--- Once the filter criteria have been set for the SET_UNIT, you can start filtering using:
--- 
---   * @{#SET_UNIT.FilterStart}: Starts the filtering of the units within the SET_UNIT.
--- 
--- Planned filter criteria within development are (so these are not yet available):
--- 
---    * @{#SET_UNIT.FilterZones}: Builds the SET_UNIT with the units within a @{Zone#ZONE}.
--- 
--- ## 3.4) SET_UNIT iterators
--- 
--- Once the filters have been defined and the SET_UNIT has been built, you can iterate the SET_UNIT with the available iterator methods.
--- The iterator methods will walk the SET_UNIT set, and call for each element within the set a function that you provide.
--- The following iterator methods are currently available within the SET_UNIT:
--- 
---   * @{#SET_UNIT.ForEachUnit}: Calls a function for each alive unit it finds within the SET_UNIT.
---   * @{#SET_GROUP.ForEachGroupCompletelyInZone}: Iterate the SET_GROUP and call an iterator function for each **alive** GROUP presence completely in a @{Zone}, providing the GROUP and optional parameters to the called function.
---   * @{#SET_GROUP.ForEachGroupNotInZone}: Iterate the SET_GROUP and call an iterator function for each **alive** GROUP presence not in a @{Zone}, providing the GROUP and optional parameters to the called function.
---   
--- Planned iterators methods in development are (so these are not yet available):
--- 
---   * @{#SET_UNIT.ForEachUnitInUnit}: Calls a function for each unit contained within the SET_UNIT.
---   * @{#SET_UNIT.ForEachUnitCompletelyInZone}: Iterate and call an iterator function for each **alive** UNIT presence completely in a @{Zone}, providing the UNIT and optional parameters to the called function.
---   * @{#SET_UNIT.ForEachUnitNotInZone}: Iterate and call an iterator function for each **alive** UNIT presence not in a @{Zone}, providing the UNIT and optional parameters to the called function.
--- 
--- ## 3.5 ) SET_UNIT atomic methods
--- 
--- Various methods exist for a SET_UNIT to perform actions or calculations and retrieve results from the SET_UNIT:
--- 
---   * @{#SET_UNIT.GetTypeNames}(): Retrieve the type names of the @{Unit}s in the SET, delimited by a comma.
--- 
--- ===
--- @field #SET_UNIT SET_UNIT
-SET_UNIT = {
-  ClassName = "SET_UNIT",
-  Units = {},
-  Filter = {
-    Coalitions = nil,
-    Categories = nil,
-    Types = nil,
-    Countries = nil,
-    UnitPrefixes = nil,
-  },
-  FilterMeta = {
-    Coalitions = {
-      red = coalition.side.RED,
-      blue = coalition.side.BLUE,
-      neutral = coalition.side.NEUTRAL,
-    },
-    Categories = {
-      plane = Unit.Category.AIRPLANE,
-      helicopter = Unit.Category.HELICOPTER,
-      ground = Unit.Category.GROUND_UNIT,
-      ship = Unit.Category.SHIP,
-      structure = Unit.Category.STRUCTURE,
-    },
-  },
-}
+do -- SET_UNIT
 
-
---- Get the first unit from the set.
--- @function [parent=#SET_UNIT] GetFirst
--- @param #SET_UNIT self
--- @return Wrapper.Unit#UNIT The UNIT object.
-
---- Creates a new SET_UNIT object, building a set of units belonging to a coalitions, categories, countries, types or with defined prefix names.
--- @param #SET_UNIT self
--- @return #SET_UNIT
--- @usage
--- -- Define a new SET_UNIT Object. This DBObject will contain a reference to all alive Units.
--- DBObject = SET_UNIT:New()
-function SET_UNIT:New()
-
-  -- Inherits from BASE
-  local self = BASE:Inherit( self, SET_BASE:New( _DATABASE.UNITS ) ) -- Core.Set#SET_UNIT
-
-  return self
-end
-
---- Add UNIT(s) to SET_UNIT.
--- @param #SET_UNIT self
--- @param #string AddUnit A single UNIT.
--- @return #SET_UNIT self
-function SET_UNIT:AddUnit( AddUnit )
-  self:F2( AddUnit:GetName() )
-
-  self:Add( AddUnit:GetName(), AddUnit )
-    
-  return self
-end
-
-
---- Add UNIT(s) to SET_UNIT.
--- @param #SET_UNIT self
--- @param #string AddUnitNames A single name or an array of UNIT names.
--- @return #SET_UNIT self
-function SET_UNIT:AddUnitsByName( AddUnitNames )
-
-  local AddUnitNamesArray = ( type( AddUnitNames ) == "table" ) and AddUnitNames or { AddUnitNames }
+  --- @type SET_UNIT
+  -- @extends Core.Set#SET_BASE
   
-  self:T( AddUnitNamesArray )
-  for AddUnitID, AddUnitName in pairs( AddUnitNamesArray ) do
-    self:Add( AddUnitName, UNIT:FindByName( AddUnitName ) )
-  end
-    
-  return self
-end
-
---- Remove UNIT(s) from SET_UNIT.
--- @param Core.Set#SET_UNIT self
--- @param Wrapper.Unit#UNIT RemoveUnitNames A single name or an array of UNIT names.
--- @return self
-function SET_UNIT:RemoveUnitsByName( RemoveUnitNames )
-
-  local RemoveUnitNamesArray = ( type( RemoveUnitNames ) == "table" ) and RemoveUnitNames or { RemoveUnitNames }
+  --- # 3) SET_UNIT class, extends @{Set#SET_BASE}
+  -- 
+  -- Mission designers can use the SET_UNIT class to build sets of units belonging to certain:
+  -- 
+  --  * Coalitions
+  --  * Categories
+  --  * Countries
+  --  * Unit types
+  --  * Starting with certain prefix strings.
+  --  
+  -- ## 3.1) SET_UNIT constructor
+  --
+  -- Create a new SET_UNIT object with the @{#SET_UNIT.New} method:
+  -- 
+  --    * @{#SET_UNIT.New}: Creates a new SET_UNIT object.
+  --   
+  -- ## 3.2) Add or Remove UNIT(s) from SET_UNIT
+  --
+  -- UNITs can be added and removed using the @{Set#SET_UNIT.AddUnitsByName} and @{Set#SET_UNIT.RemoveUnitsByName} respectively. 
+  -- These methods take a single UNIT name or an array of UNIT names to be added or removed from SET_UNIT.
+  -- 
+  -- ## 3.3) SET_UNIT filter criteria
+  -- 
+  -- You can set filter criteria to define the set of units within the SET_UNIT.
+  -- Filter criteria are defined by:
+  -- 
+  --    * @{#SET_UNIT.FilterCoalitions}: Builds the SET_UNIT with the units belonging to the coalition(s).
+  --    * @{#SET_UNIT.FilterCategories}: Builds the SET_UNIT with the units belonging to the category(ies).
+  --    * @{#SET_UNIT.FilterTypes}: Builds the SET_UNIT with the units belonging to the unit type(s).
+  --    * @{#SET_UNIT.FilterCountries}: Builds the SET_UNIT with the units belonging to the country(ies).
+  --    * @{#SET_UNIT.FilterPrefixes}: Builds the SET_UNIT with the units starting with the same prefix string(s).
+  --   
+  -- Once the filter criteria have been set for the SET_UNIT, you can start filtering using:
+  -- 
+  --   * @{#SET_UNIT.FilterStart}: Starts the filtering of the units within the SET_UNIT.
+  -- 
+  -- Planned filter criteria within development are (so these are not yet available):
+  -- 
+  --    * @{#SET_UNIT.FilterZones}: Builds the SET_UNIT with the units within a @{Zone#ZONE}.
+  -- 
+  -- ## 3.4) SET_UNIT iterators
+  -- 
+  -- Once the filters have been defined and the SET_UNIT has been built, you can iterate the SET_UNIT with the available iterator methods.
+  -- The iterator methods will walk the SET_UNIT set, and call for each element within the set a function that you provide.
+  -- The following iterator methods are currently available within the SET_UNIT:
+  -- 
+  --   * @{#SET_UNIT.ForEachUnit}: Calls a function for each alive unit it finds within the SET_UNIT.
+  --   * @{#SET_GROUP.ForEachGroupCompletelyInZone}: Iterate the SET_GROUP and call an iterator function for each **alive** GROUP presence completely in a @{Zone}, providing the GROUP and optional parameters to the called function.
+  --   * @{#SET_GROUP.ForEachGroupNotInZone}: Iterate the SET_GROUP and call an iterator function for each **alive** GROUP presence not in a @{Zone}, providing the GROUP and optional parameters to the called function.
+  --   
+  -- Planned iterators methods in development are (so these are not yet available):
+  -- 
+  --   * @{#SET_UNIT.ForEachUnitInUnit}: Calls a function for each unit contained within the SET_UNIT.
+  --   * @{#SET_UNIT.ForEachUnitCompletelyInZone}: Iterate and call an iterator function for each **alive** UNIT presence completely in a @{Zone}, providing the UNIT and optional parameters to the called function.
+  --   * @{#SET_UNIT.ForEachUnitNotInZone}: Iterate and call an iterator function for each **alive** UNIT presence not in a @{Zone}, providing the UNIT and optional parameters to the called function.
+  -- 
+  -- ## 3.5 ) SET_UNIT atomic methods
+  -- 
+  -- Various methods exist for a SET_UNIT to perform actions or calculations and retrieve results from the SET_UNIT:
+  -- 
+  --   * @{#SET_UNIT.GetTypeNames}(): Retrieve the type names of the @{Unit}s in the SET, delimited by a comma.
+  -- 
+  -- ===
+  -- @field #SET_UNIT SET_UNIT
+  SET_UNIT = {
+    ClassName = "SET_UNIT",
+    Units = {},
+    Filter = {
+      Coalitions = nil,
+      Categories = nil,
+      Types = nil,
+      Countries = nil,
+      UnitPrefixes = nil,
+    },
+    FilterMeta = {
+      Coalitions = {
+        red = coalition.side.RED,
+        blue = coalition.side.BLUE,
+        neutral = coalition.side.NEUTRAL,
+      },
+      Categories = {
+        plane = Unit.Category.AIRPLANE,
+        helicopter = Unit.Category.HELICOPTER,
+        ground = Unit.Category.GROUND_UNIT,
+        ship = Unit.Category.SHIP,
+        structure = Unit.Category.STRUCTURE,
+      },
+    },
+  }
   
-  for RemoveUnitID, RemoveUnitName in pairs( RemoveUnitNamesArray ) do
-    self:Remove( RemoveUnitName )
+  
+  --- Get the first unit from the set.
+  -- @function [parent=#SET_UNIT] GetFirst
+  -- @param #SET_UNIT self
+  -- @return Wrapper.Unit#UNIT The UNIT object.
+  
+  --- Creates a new SET_UNIT object, building a set of units belonging to a coalitions, categories, countries, types or with defined prefix names.
+  -- @param #SET_UNIT self
+  -- @return #SET_UNIT
+  -- @usage
+  -- -- Define a new SET_UNIT Object. This DBObject will contain a reference to all alive Units.
+  -- DBObject = SET_UNIT:New()
+  function SET_UNIT:New()
+  
+    -- Inherits from BASE
+    local self = BASE:Inherit( self, SET_BASE:New( _DATABASE.UNITS ) ) -- Core.Set#SET_UNIT
+  
+    return self
   end
+  
+  --- Add UNIT(s) to SET_UNIT.
+  -- @param #SET_UNIT self
+  -- @param #string AddUnit A single UNIT.
+  -- @return #SET_UNIT self
+  function SET_UNIT:AddUnit( AddUnit )
+    self:F2( AddUnit:GetName() )
+  
+    self:Add( AddUnit:GetName(), AddUnit )
+      
+    return self
+  end
+  
+  
+  --- Add UNIT(s) to SET_UNIT.
+  -- @param #SET_UNIT self
+  -- @param #string AddUnitNames A single name or an array of UNIT names.
+  -- @return #SET_UNIT self
+  function SET_UNIT:AddUnitsByName( AddUnitNames )
+  
+    local AddUnitNamesArray = ( type( AddUnitNames ) == "table" ) and AddUnitNames or { AddUnitNames }
     
-  return self
-end
+    self:T( AddUnitNamesArray )
+    for AddUnitID, AddUnitName in pairs( AddUnitNamesArray ) do
+      self:Add( AddUnitName, UNIT:FindByName( AddUnitName ) )
+    end
+      
+    return self
+  end
+  
+  --- Remove UNIT(s) from SET_UNIT.
+  -- @param Core.Set#SET_UNIT self
+  -- @param Wrapper.Unit#UNIT RemoveUnitNames A single name or an array of UNIT names.
+  -- @return self
+  function SET_UNIT:RemoveUnitsByName( RemoveUnitNames )
+  
+    local RemoveUnitNamesArray = ( type( RemoveUnitNames ) == "table" ) and RemoveUnitNames or { RemoveUnitNames }
+    
+    for RemoveUnitID, RemoveUnitName in pairs( RemoveUnitNamesArray ) do
+      self:Remove( RemoveUnitName )
+    end
+      
+    return self
+  end
+  
+  
+  --- Finds a Unit based on the Unit Name.
+  -- @param #SET_UNIT self
+  -- @param #string UnitName
+  -- @return Wrapper.Unit#UNIT The found Unit.
+  function SET_UNIT:FindUnit( UnitName )
+  
+    local UnitFound = self.Set[UnitName]
+    return UnitFound
+  end
+  
+  
+  
+  --- Builds a set of units of coalitions.
+  -- Possible current coalitions are red, blue and neutral.
+  -- @param #SET_UNIT self
+  -- @param #string Coalitions Can take the following values: "red", "blue", "neutral".
+  -- @return #SET_UNIT self
+  function SET_UNIT:FilterCoalitions( Coalitions )
 
-
---- Finds a Unit based on the Unit Name.
--- @param #SET_UNIT self
--- @param #string UnitName
--- @return Wrapper.Unit#UNIT The found Unit.
-function SET_UNIT:FindUnit( UnitName )
-
-  local UnitFound = self.Set[UnitName]
-  return UnitFound
-end
-
-
-
---- Builds a set of units of coalitions.
--- Possible current coalitions are red, blue and neutral.
--- @param #SET_UNIT self
--- @param #string Coalitions Can take the following values: "red", "blue", "neutral".
--- @return #SET_UNIT self
-function SET_UNIT:FilterCoalitions( Coalitions )
-  if not self.Filter.Coalitions then
     self.Filter.Coalitions = {}
-  end
-  if type( Coalitions ) ~= "table" then
-    Coalitions = { Coalitions }
-  end
-  for CoalitionID, Coalition in pairs( Coalitions ) do
-    self.Filter.Coalitions[Coalition] = Coalition
-  end
-  return self
-end
-
-
---- Builds a set of units out of categories.
--- Possible current categories are plane, helicopter, ground, ship.
--- @param #SET_UNIT self
--- @param #string Categories Can take the following values: "plane", "helicopter", "ground", "ship".
--- @return #SET_UNIT self
-function SET_UNIT:FilterCategories( Categories )
-  if not self.Filter.Categories then
-    self.Filter.Categories = {}
-  end
-  if type( Categories ) ~= "table" then
-    Categories = { Categories }
-  end
-  for CategoryID, Category in pairs( Categories ) do
-    self.Filter.Categories[Category] = Category
-  end
-  return self
-end
-
-
---- Builds a set of units of defined unit types.
--- Possible current types are those types known within DCS world.
--- @param #SET_UNIT self
--- @param #string Types Can take those type strings known within DCS world.
--- @return #SET_UNIT self
-function SET_UNIT:FilterTypes( Types )
-  if not self.Filter.Types then
-    self.Filter.Types = {}
-  end
-  if type( Types ) ~= "table" then
-    Types = { Types }
-  end
-  for TypeID, Type in pairs( Types ) do
-    self.Filter.Types[Type] = Type
-  end
-  return self
-end
-
-
---- Builds a set of units of defined countries.
--- Possible current countries are those known within DCS world.
--- @param #SET_UNIT self
--- @param #string Countries Can take those country strings known within DCS world.
--- @return #SET_UNIT self
-function SET_UNIT:FilterCountries( Countries )
-  if not self.Filter.Countries then
-    self.Filter.Countries = {}
-  end
-  if type( Countries ) ~= "table" then
-    Countries = { Countries }
-  end
-  for CountryID, Country in pairs( Countries ) do
-    self.Filter.Countries[Country] = Country
-  end
-  return self
-end
-
-
---- Builds a set of units of defined unit prefixes.
--- All the units starting with the given prefixes will be included within the set.
--- @param #SET_UNIT self
--- @param #string Prefixes The prefix of which the unit name starts with.
--- @return #SET_UNIT self
-function SET_UNIT:FilterPrefixes( Prefixes )
-  if not self.Filter.UnitPrefixes then
-    self.Filter.UnitPrefixes = {}
-  end
-  if type( Prefixes ) ~= "table" then
-    Prefixes = { Prefixes }
-  end
-  for PrefixID, Prefix in pairs( Prefixes ) do
-    self.Filter.UnitPrefixes[Prefix] = Prefix
-  end
-  return self
-end
-
---- Builds a set of units having a radar of give types.
--- All the units having a radar of a given type will be included within the set.
--- @param #SET_UNIT self
--- @param #table RadarTypes The radar types.
--- @return #SET_UNIT self
-function SET_UNIT:FilterHasRadar( RadarTypes )
-
-  self.Filter.RadarTypes = self.Filter.RadarTypes or {}
-  if type( RadarTypes ) ~= "table" then
-    RadarTypes = { RadarTypes }
-  end
-  for RadarTypeID, RadarType in pairs( RadarTypes ) do
-    self.Filter.RadarTypes[RadarType] = RadarType
-  end
-  return self
-end
-
---- Builds a set of SEADable units.
--- @param #SET_UNIT self
--- @return #SET_UNIT self
-function SET_UNIT:FilterHasSEAD()
-
-  self.Filter.SEAD = true
-  return self
-end
-
-
-
---- Starts the filtering.
--- @param #SET_UNIT self
--- @return #SET_UNIT self
-function SET_UNIT:FilterStart()
-
-  if _DATABASE then
-    self:_FilterStart()
-  end
-  
-  return self
-end
-
---- Handles the Database to check on an event (birth) that the Object was added in the Database.
--- This is required, because sometimes the _DATABASE birth event gets called later than the SET_BASE birth event!
--- @param #SET_UNIT self
--- @param Core.Event#EVENTDATA Event
--- @return #string The name of the UNIT
--- @return #table The UNIT
-function SET_UNIT:AddInDatabase( Event )
-  self:F3( { Event } )
-
-  if Event.IniObjectCategory == 1 then
-    if not self.Database[Event.IniDCSUnitName] then
-      self.Database[Event.IniDCSUnitName] = UNIT:Register( Event.IniDCSUnitName )
-      self:T3( self.Database[Event.IniDCSUnitName] )
+    if type( Coalitions ) ~= "table" then
+      Coalitions = { Coalitions }
     end
+    for CoalitionID, Coalition in pairs( Coalitions ) do
+      self.Filter.Coalitions[Coalition] = Coalition
+    end
+    return self
   end
   
-  return Event.IniDCSUnitName, self.Database[Event.IniDCSUnitName]
-end
-
---- Handles the Database to check on any event that Object exists in the Database.
--- This is required, because sometimes the _DATABASE event gets called later than the SET_BASE event or vise versa!
--- @param #SET_UNIT self
--- @param Core.Event#EVENTDATA Event
--- @return #string The name of the UNIT
--- @return #table The UNIT
-function SET_UNIT:FindInDatabase( Event )
-  self:F2( { Event.IniDCSUnitName, self.Set[Event.IniDCSUnitName], Event } )
-
-
-  return Event.IniDCSUnitName, self.Set[Event.IniDCSUnitName]
-end
-
---- Iterate the SET_UNIT and call an interator function for each **alive** UNIT, providing the UNIT and optional parameters.
--- @param #SET_UNIT self
--- @param #function IteratorFunction The function that will be called when there is an alive UNIT in the SET_UNIT. The function needs to accept a UNIT parameter.
--- @return #SET_UNIT self
-function SET_UNIT:ForEachUnit( IteratorFunction, ... )
-  self:F2( arg )
   
-  self:ForEach( IteratorFunction, arg, self.Set )
-
-  return self
-end
-
---- Iterate the SET_UNIT **sorted *per Threat Level** and call an interator function for each **alive** UNIT, providing the UNIT and optional parameters.
--- 
--- @param #SET_UNIT self
--- @param #number FromThreatLevel The TreatLevel to start the evaluation **From** (this must be a value between 0 and 10).
--- @param #number ToThreatLevel The TreatLevel to stop the evaluation **To** (this must be a value between 0 and 10).
--- @param #function IteratorFunction The function that will be called when there is an alive UNIT in the SET_UNIT. The function needs to accept a UNIT parameter.
--- @return #SET_UNIT self
--- @usage
--- 
---     UnitSet:ForEachUnitPerThreatLevel( 10, 0,
---       -- @param Wrapper.Unit#UNIT UnitObject The UNIT object in the UnitSet, that will be passed to the local function for evaluation.
---       function( UnitObject )
---         .. logic ..
---       end
---     )
--- 
-function SET_UNIT:ForEachUnitPerThreatLevel( FromThreatLevel, ToThreatLevel, IteratorFunction, ... ) --R2.1 Threat Level implementation
-  self:F2( arg )
+  --- Builds a set of units out of categories.
+  -- Possible current categories are plane, helicopter, ground, ship.
+  -- @param #SET_UNIT self
+  -- @param #string Categories Can take the following values: "plane", "helicopter", "ground", "ship".
+  -- @return #SET_UNIT self
+  function SET_UNIT:FilterCategories( Categories )
+    if not self.Filter.Categories then
+      self.Filter.Categories = {}
+    end
+    if type( Categories ) ~= "table" then
+      Categories = { Categories }
+    end
+    for CategoryID, Category in pairs( Categories ) do
+      self.Filter.Categories[Category] = Category
+    end
+    return self
+  end
   
-  local ThreatLevelSet = {}
   
-  if self:Count() ~= 0 then
-    for UnitName, UnitObject in pairs( self.Set ) do
-      local Unit = UnitObject -- Wrapper.Unit#UNIT
-    
-      local ThreatLevel = Unit:GetThreatLevel()
-      ThreatLevelSet[ThreatLevel] = ThreatLevelSet[ThreatLevel] or {}
-      ThreatLevelSet[ThreatLevel].Set = ThreatLevelSet[ThreatLevel].Set or {}
-      ThreatLevelSet[ThreatLevel].Set[UnitName] = UnitObject
-      self:E( { ThreatLevel = ThreatLevel, ThreatLevelSet = ThreatLevelSet[ThreatLevel].Set } )
+  --- Builds a set of units of defined unit types.
+  -- Possible current types are those types known within DCS world.
+  -- @param #SET_UNIT self
+  -- @param #string Types Can take those type strings known within DCS world.
+  -- @return #SET_UNIT self
+  function SET_UNIT:FilterTypes( Types )
+    if not self.Filter.Types then
+      self.Filter.Types = {}
+    end
+    if type( Types ) ~= "table" then
+      Types = { Types }
+    end
+    for TypeID, Type in pairs( Types ) do
+      self.Filter.Types[Type] = Type
+    end
+    return self
+  end
+  
+  
+  --- Builds a set of units of defined countries.
+  -- Possible current countries are those known within DCS world.
+  -- @param #SET_UNIT self
+  -- @param #string Countries Can take those country strings known within DCS world.
+  -- @return #SET_UNIT self
+  function SET_UNIT:FilterCountries( Countries )
+    if not self.Filter.Countries then
+      self.Filter.Countries = {}
+    end
+    if type( Countries ) ~= "table" then
+      Countries = { Countries }
+    end
+    for CountryID, Country in pairs( Countries ) do
+      self.Filter.Countries[Country] = Country
+    end
+    return self
+  end
+  
+  
+  --- Builds a set of units of defined unit prefixes.
+  -- All the units starting with the given prefixes will be included within the set.
+  -- @param #SET_UNIT self
+  -- @param #string Prefixes The prefix of which the unit name starts with.
+  -- @return #SET_UNIT self
+  function SET_UNIT:FilterPrefixes( Prefixes )
+    if not self.Filter.UnitPrefixes then
+      self.Filter.UnitPrefixes = {}
+    end
+    if type( Prefixes ) ~= "table" then
+      Prefixes = { Prefixes }
+    end
+    for PrefixID, Prefix in pairs( Prefixes ) do
+      self.Filter.UnitPrefixes[Prefix] = Prefix
+    end
+    return self
+  end
+  
+  --- Builds a set of units having a radar of give types.
+  -- All the units having a radar of a given type will be included within the set.
+  -- @param #SET_UNIT self
+  -- @param #table RadarTypes The radar types.
+  -- @return #SET_UNIT self
+  function SET_UNIT:FilterHasRadar( RadarTypes )
+  
+    self.Filter.RadarTypes = self.Filter.RadarTypes or {}
+    if type( RadarTypes ) ~= "table" then
+      RadarTypes = { RadarTypes }
+    end
+    for RadarTypeID, RadarType in pairs( RadarTypes ) do
+      self.Filter.RadarTypes[RadarType] = RadarType
+    end
+    return self
+  end
+  
+  --- Builds a set of SEADable units.
+  -- @param #SET_UNIT self
+  -- @return #SET_UNIT self
+  function SET_UNIT:FilterHasSEAD()
+  
+    self.Filter.SEAD = true
+    return self
+  end
+  
+  
+  
+  --- Starts the filtering.
+  -- @param #SET_UNIT self
+  -- @return #SET_UNIT self
+  function SET_UNIT:FilterStart()
+  
+    if _DATABASE then
+      self:_FilterStart()
     end
     
-    local ThreatLevelIncrement = FromThreatLevel <= ToThreatLevel and 1 or -1
+    return self
+  end
+  
+  --- Handles the Database to check on an event (birth) that the Object was added in the Database.
+  -- This is required, because sometimes the _DATABASE birth event gets called later than the SET_BASE birth event!
+  -- @param #SET_UNIT self
+  -- @param Core.Event#EVENTDATA Event
+  -- @return #string The name of the UNIT
+  -- @return #table The UNIT
+  function SET_UNIT:AddInDatabase( Event )
+    self:F3( { Event } )
+  
+    if Event.IniObjectCategory == 1 then
+      if not self.Database[Event.IniDCSUnitName] then
+        self.Database[Event.IniDCSUnitName] = UNIT:Register( Event.IniDCSUnitName )
+        self:T3( self.Database[Event.IniDCSUnitName] )
+      end
+    end
     
-    for ThreatLevel = FromThreatLevel, ToThreatLevel, ThreatLevelIncrement do
-      self:E( { ThreatLevel = ThreatLevel } )
-      local ThreatLevelItem = ThreatLevelSet[ThreatLevel]
-      if ThreatLevelItem then
-        self:ForEach( IteratorFunction, arg, ThreatLevelItem.Set )
-      end
-    end
+    return Event.IniDCSUnitName, self.Database[Event.IniDCSUnitName]
   end
   
-  return self
-end
-
-
-
---- Iterate the SET_UNIT and call an iterator function for each **alive** UNIT presence completely in a @{Zone}, providing the UNIT and optional parameters to the called function.
--- @param #SET_UNIT self
--- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
--- @param #function IteratorFunction The function that will be called when there is an alive UNIT in the SET_UNIT. The function needs to accept a UNIT parameter.
--- @return #SET_UNIT self
-function SET_UNIT:ForEachUnitCompletelyInZone( ZoneObject, IteratorFunction, ... )
-  self:F2( arg )
+  --- Handles the Database to check on any event that Object exists in the Database.
+  -- This is required, because sometimes the _DATABASE event gets called later than the SET_BASE event or vise versa!
+  -- @param #SET_UNIT self
+  -- @param Core.Event#EVENTDATA Event
+  -- @return #string The name of the UNIT
+  -- @return #table The UNIT
+  function SET_UNIT:FindInDatabase( Event )
+    self:F2( { Event.IniDCSUnitName, self.Set[Event.IniDCSUnitName], Event } )
   
-  self:ForEach( IteratorFunction, arg, self.Set,
-    --- @param Core.Zone#ZONE_BASE ZoneObject
-    -- @param Wrapper.Unit#UNIT UnitObject
-    function( ZoneObject, UnitObject )
-      if UnitObject:IsInZone( ZoneObject ) then
-        return true
-      else
-        return false
-      end
-    end, { ZoneObject } )
-
-  return self
-end
-
---- Iterate the SET_UNIT and call an iterator function for each **alive** UNIT presence not in a @{Zone}, providing the UNIT and optional parameters to the called function.
--- @param #SET_UNIT self
--- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
--- @param #function IteratorFunction The function that will be called when there is an alive UNIT in the SET_UNIT. The function needs to accept a UNIT parameter.
--- @return #SET_UNIT self
-function SET_UNIT:ForEachUnitNotInZone( ZoneObject, IteratorFunction, ... )
-  self:F2( arg )
   
-  self:ForEach( IteratorFunction, arg, self.Set,
-    --- @param Core.Zone#ZONE_BASE ZoneObject
-    -- @param Wrapper.Unit#UNIT UnitObject
-    function( ZoneObject, UnitObject )
-      if UnitObject:IsNotInZone( ZoneObject ) then
-        return true
-      else
-        return false
-      end
-    end, { ZoneObject } )
-
-  return self
-end
-
---- Returns map of unit types.
--- @param #SET_UNIT self
--- @return #map<#string,#number> A map of the unit types found. The key is the UnitTypeName and the value is the amount of unit types found.
-function SET_UNIT:GetUnitTypes()
-  self:F2()
-
-  local MT = {} -- Message Text
-  local UnitTypes = {}
-  
-  for UnitID, UnitData in pairs( self:GetSet() ) do
-    local TextUnit = UnitData -- Wrapper.Unit#UNIT
-    if TextUnit:IsAlive() then
-      local UnitType = TextUnit:GetTypeName()
-  
-      if not UnitTypes[UnitType] then
-        UnitTypes[UnitType] = 1
-      else
-        UnitTypes[UnitType] = UnitTypes[UnitType] + 1
-      end
-    end
+    return Event.IniDCSUnitName, self.Set[Event.IniDCSUnitName]
   end
-
-  for UnitTypeID, UnitType in pairs( UnitTypes ) do
-    MT[#MT+1] = UnitType .. " of " .. UnitTypeID
-  end
-
-  return UnitTypes
-end
-
-
---- Returns a comma separated string of the unit types with a count in the  @{Set}.
--- @param #SET_UNIT self
--- @return #string The unit types string
-function SET_UNIT:GetUnitTypesText()
-  self:F2()
-
-  local MT = {} -- Message Text
-  local UnitTypes = self:GetUnitTypes()
   
-  for UnitTypeID, UnitType in pairs( UnitTypes ) do
-    MT[#MT+1] = UnitType .. " of " .. UnitTypeID
-  end
-
-  return table.concat( MT, ", " )
-end
-
---- Returns map of unit threat levels.
--- @param #SET_UNIT self
--- @return #table.
-function SET_UNIT:GetUnitThreatLevels()
-  self:F2()
-
-  local UnitThreatLevels = {}
   
-  for UnitID, UnitData in pairs( self:GetSet() ) do
-    local ThreatUnit = UnitData -- Wrapper.Unit#UNIT
-    if ThreatUnit:IsAlive() then
-      local UnitThreatLevel, UnitThreatLevelText = ThreatUnit:GetThreatLevel()
-      local ThreatUnitName = ThreatUnit:GetName()
+  do -- Is Zone methods
   
-      UnitThreatLevels[UnitThreatLevel] = UnitThreatLevels[UnitThreatLevel] or {}
-      UnitThreatLevels[UnitThreatLevel].UnitThreatLevelText = UnitThreatLevelText
-      UnitThreatLevels[UnitThreatLevel].Units = UnitThreatLevels[UnitThreatLevel].Units or {}
-      UnitThreatLevels[UnitThreatLevel].Units[ThreatUnitName] = ThreatUnit
-    end
-  end
-
-  return UnitThreatLevels
-end
-
---- Calculate the maxium A2G threat level of the SET_UNIT.
--- @param #SET_UNIT self
--- @return #number The maximum threatlevel
-function SET_UNIT:CalculateThreatLevelA2G()
-  
-  local MaxThreatLevelA2G = 0
-  local MaxThreatText = ""
-  for UnitName, UnitData in pairs( self:GetSet() ) do
-    local ThreatUnit = UnitData -- Wrapper.Unit#UNIT
-    local ThreatLevelA2G, ThreatText = ThreatUnit:GetThreatLevel()
-    if ThreatLevelA2G > MaxThreatLevelA2G then
-      MaxThreatLevelA2G = ThreatLevelA2G
-      MaxThreatText = ThreatText
-    end
-  end
-
-  self:F( { MaxThreatLevelA2G = MaxThreatLevelA2G, MaxThreatText = MaxThreatText } )
-  return MaxThreatLevelA2G, MaxThreatText
-  
-end
-
---- Get the center coordinate of the SET_UNIT.
--- @param #SET_UNIT self
--- @return Core.Point#COORDINATE The center coordinate of all the units in the set, including heading in degrees and speed in mps in case of moving units.
-function SET_UNIT:GetCoordinate()
-
-  local Coordinate = self:GetFirst():GetCoordinate()
-  
-  local x1 = Coordinate.x
-  local x2 = Coordinate.x
-  local y1 = Coordinate.y
-  local y2 = Coordinate.y
-  local z1 = Coordinate.z
-  local z2 = Coordinate.z
-  local MaxVelocity = 0
-  local AvgHeading = nil
-  local MovingCount = 0
-
-  for UnitName, UnitData in pairs( self:GetSet() ) do
-  
-    local Unit = UnitData -- Wrapper.Unit#UNIT
-    local Coordinate = Unit:GetCoordinate()
-
-    x1 = ( Coordinate.x < x1 ) and Coordinate.x or x1
-    x2 = ( Coordinate.x > x2 ) and Coordinate.x or x2
-    y1 = ( Coordinate.y < y1 ) and Coordinate.y or y1
-    y2 = ( Coordinate.y > y2 ) and Coordinate.y or y2
-    z1 = ( Coordinate.y < z1 ) and Coordinate.z or z1
-    z2 = ( Coordinate.y > z2 ) and Coordinate.z or z2
-
-    local Velocity = Coordinate:GetVelocity()
-    if Velocity ~= 0  then
-      MaxVelocity = ( MaxVelocity < Velocity ) and Velocity or MaxVelocity
-      local Heading = Coordinate:GetHeading()
-      AvgHeading = AvgHeading and ( AvgHeading + Heading ) or Heading
-      MovingCount = MovingCount + 1
-    end
-  end
-
-  AvgHeading = AvgHeading and ( AvgHeading / MovingCount )
-  
-  Coordinate.x = ( x2 - x1 ) / 2 + x1
-  Coordinate.y = ( y2 - y1 ) / 2 + y1
-  Coordinate.z = ( z2 - z1 ) / 2 + z1
-  Coordinate:SetHeading( AvgHeading )
-  Coordinate:SetVelocity( MaxVelocity )
-
-  self:F( { Coordinate = Coordinate } )
-  return Coordinate
-
-end
-
---- Get the maximum velocity of the SET_UNIT.
--- @param #SET_UNIT self
--- @return #number The speed in mps in case of moving units.
-function SET_UNIT:GetVelocity()
-
-  local Coordinate = self:GetFirst():GetCoordinate()
-  
-  local MaxVelocity = 0
-
-  for UnitName, UnitData in pairs( self:GetSet() ) do
-  
-    local Unit = UnitData -- Wrapper.Unit#UNIT
-    local Coordinate = Unit:GetCoordinate()
-
-    local Velocity = Coordinate:GetVelocity()
-    if Velocity ~= 0  then
-      MaxVelocity = ( MaxVelocity < Velocity ) and Velocity or MaxVelocity
-    end
-  end
-
-  self:F( { MaxVelocity = MaxVelocity } )
-  return MaxVelocity
-
-end
-
---- Get the average heading of the SET_UNIT.
--- @param #SET_UNIT self
--- @return #number Heading Heading in degrees and speed in mps in case of moving units.
-function SET_UNIT:GetHeading()
-
-  local HeadingSet = nil
-  local MovingCount = 0
-
-  for UnitName, UnitData in pairs( self:GetSet() ) do
-  
-    local Unit = UnitData -- Wrapper.Unit#UNIT
-    local Coordinate = Unit:GetCoordinate()
-
-    local Velocity = Coordinate:GetVelocity()
-    if Velocity ~= 0  then
-      local Heading = Coordinate:GetHeading()
-      if HeadingSet == nil then
-        HeadingSet = Heading
-      else
-        local HeadingDiff = ( HeadingSet - Heading + 180 + 360 ) % 360 - 180
-        HeadingDiff = math.abs( HeadingDiff )
-        if HeadingDiff > 5 then
-          HeadingSet = nil
-          break
+    --- Check if minimal one element of the SET_UNIT is in the Zone.
+    -- @param #SET_UNIT self
+    -- @param Core.Zone#ZONE ZoneTest The Zone to be tested for.
+    -- @return #boolean
+    function SET_UNIT:IsPartiallyInZone( ZoneTest )
+      
+      local IsPartiallyInZone = false
+      
+      local function EvaluateZone( ZoneUnit )
+      
+        local ZoneUnitName =  ZoneUnit:GetName()
+        self:E( { ZoneUnitName = ZoneUnitName } )
+        if self:FindUnit( ZoneUnitName ) then
+          IsPartiallyInZone = true
+          self:E( { Found = true } )
+          return false
         end
-      end        
-    end
-  end
-
-  return HeadingSet
-
-end
-
-
-
---- Returns if the @{Set} has targets having a radar (of a given type).
--- @param #SET_UNIT self
--- @param Dcs.DCSWrapper.Unit#Unit.RadarType RadarType
--- @return #number The amount of radars in the Set with the given type
-function SET_UNIT:HasRadar( RadarType )
-  self:F2( RadarType )
-
-  local RadarCount = 0
-  for UnitID, UnitData in pairs( self:GetSet()) do
-    local UnitSensorTest = UnitData -- Wrapper.Unit#UNIT
-    local HasSensors
-    if RadarType then
-      HasSensors = UnitSensorTest:HasSensors( Unit.SensorType.RADAR, RadarType )
-    else
-      HasSensors = UnitSensorTest:HasSensors( Unit.SensorType.RADAR )
-    end
-    self:T3(HasSensors)
-    if HasSensors then
-      RadarCount = RadarCount + 1
-    end
-  end
-
-  return RadarCount
-end
-
---- Returns if the @{Set} has targets that can be SEADed.
--- @param #SET_UNIT self
--- @return #number The amount of SEADable units in the Set
-function SET_UNIT:HasSEAD()
-  self:F2()
-
-  local SEADCount = 0
-  for UnitID, UnitData in pairs( self:GetSet()) do
-    local UnitSEAD = UnitData -- Wrapper.Unit#UNIT
-    if UnitSEAD:IsAlive() then
-      local UnitSEADAttributes = UnitSEAD:GetDesc().attributes
-  
-      local HasSEAD = UnitSEAD:HasSEAD()
-         
-      self:T3(HasSEAD)
-      if HasSEAD then
-        SEADCount = SEADCount + 1
+        
+        return true
       end
+
+      ZoneTest:SearchZone( EvaluateZone )
+      
+      return IsPartiallyInZone
     end
-  end
-
-  return SEADCount
-end
-
---- Returns if the @{Set} has ground targets.
--- @param #SET_UNIT self
--- @return #number The amount of ground targets in the Set.
-function SET_UNIT:HasGroundUnits()
-  self:F2()
-
-  local GroundUnitCount = 0
-  for UnitID, UnitData in pairs( self:GetSet()) do
-    local UnitTest = UnitData -- Wrapper.Unit#UNIT
-    if UnitTest:IsGround() then
-      GroundUnitCount = GroundUnitCount + 1
-    end
-  end
-
-  return GroundUnitCount
-end
-
---- Returns if the @{Set} has friendly ground units.
--- @param #SET_UNIT self
--- @return #number The amount of ground targets in the Set.
-function SET_UNIT:HasFriendlyUnits( FriendlyCoalition )
-  self:F2()
-
-  local FriendlyUnitCount = 0
-  for UnitID, UnitData in pairs( self:GetSet()) do
-    local UnitTest = UnitData -- Wrapper.Unit#UNIT
-    if UnitTest:IsFriendly( FriendlyCoalition ) then
-      FriendlyUnitCount = FriendlyUnitCount + 1
-    end
-  end
-
-  return FriendlyUnitCount
-end
-
-
-
------ Iterate the SET_UNIT and call an interator function for each **alive** player, providing the Unit of the player and optional parameters.
----- @param #SET_UNIT self
----- @param #function IteratorFunction The function that will be called when there is an alive player in the SET_UNIT. The function needs to accept a UNIT parameter.
----- @return #SET_UNIT self
---function SET_UNIT:ForEachPlayer( IteratorFunction, ... )
---  self:F2( arg )
---  
---  self:ForEach( IteratorFunction, arg, self.PlayersAlive )
---  
---  return self
---end
---
---
------ Iterate the SET_UNIT and call an interator function for each client, providing the Client to the function and optional parameters.
----- @param #SET_UNIT self
----- @param #function IteratorFunction The function that will be called when there is an alive player in the SET_UNIT. The function needs to accept a CLIENT parameter.
----- @return #SET_UNIT self
---function SET_UNIT:ForEachClient( IteratorFunction, ... )
---  self:F2( arg )
---  
---  self:ForEach( IteratorFunction, arg, self.Clients )
---
---  return self
---end
-
-
----
--- @param #SET_UNIT self
--- @param Wrapper.Unit#UNIT MUnit
--- @return #SET_UNIT self
-function SET_UNIT:IsIncludeObject( MUnit )
-  self:F2( MUnit )
-  local MUnitInclude = true
-
-  if self.Filter.Coalitions then
-    local MUnitCoalition = false
-    for CoalitionID, CoalitionName in pairs( self.Filter.Coalitions ) do
-      self:T3( { "Coalition:", MUnit:GetCoalition(), self.FilterMeta.Coalitions[CoalitionName], CoalitionName } )
-      if self.FilterMeta.Coalitions[CoalitionName] and self.FilterMeta.Coalitions[CoalitionName] == MUnit:GetCoalition() then
-        MUnitCoalition = true
-      end
-    end
-    MUnitInclude = MUnitInclude and MUnitCoalition
-  end
-  
-  if self.Filter.Categories then
-    local MUnitCategory = false
-    for CategoryID, CategoryName in pairs( self.Filter.Categories ) do
-      self:T3( { "Category:", MUnit:GetDesc().category, self.FilterMeta.Categories[CategoryName], CategoryName } )
-      if self.FilterMeta.Categories[CategoryName] and self.FilterMeta.Categories[CategoryName] == MUnit:GetDesc().category then
-        MUnitCategory = true
-      end
-    end
-    MUnitInclude = MUnitInclude and MUnitCategory
-  end
-  
-  if self.Filter.Types then
-    local MUnitType = false
-    for TypeID, TypeName in pairs( self.Filter.Types ) do
-      self:T3( { "Type:", MUnit:GetTypeName(), TypeName } )
-      if TypeName == MUnit:GetTypeName() then
-        MUnitType = true
-      end
-    end
-    MUnitInclude = MUnitInclude and MUnitType
-  end
-  
-  if self.Filter.Countries then
-    local MUnitCountry = false
-    for CountryID, CountryName in pairs( self.Filter.Countries ) do
-      self:T3( { "Country:", MUnit:GetCountry(), CountryName } )
-      if country.id[CountryName] == MUnit:GetCountry() then
-        MUnitCountry = true
-      end
-    end
-    MUnitInclude = MUnitInclude and MUnitCountry
-  end
-
-  if self.Filter.UnitPrefixes then
-    local MUnitPrefix = false
-    for UnitPrefixId, UnitPrefix in pairs( self.Filter.UnitPrefixes ) do
-      self:T3( { "Prefix:", string.find( MUnit:GetName(), UnitPrefix, 1 ), UnitPrefix } )
-      if string.find( MUnit:GetName(), UnitPrefix, 1 ) then
-        MUnitPrefix = true
-      end
-    end
-    MUnitInclude = MUnitInclude and MUnitPrefix
-  end
-
-  if self.Filter.RadarTypes then
-    local MUnitRadar = false
-    for RadarTypeID, RadarType in pairs( self.Filter.RadarTypes ) do
-      self:T3( { "Radar:", RadarType } )
-      if MUnit:HasSensors( Unit.SensorType.RADAR, RadarType ) == true then
-        if MUnit:GetRadar() == true then -- This call is necessary to evaluate the SEAD capability.
-          self:T3( "RADAR Found" )
-        end
-        MUnitRadar = true
-      end
-    end
-    MUnitInclude = MUnitInclude and MUnitRadar
-  end
-
-  if self.Filter.SEAD then
-    local MUnitSEAD = false
-    if MUnit:HasSEAD() == true then
-      self:T3( "SEAD Found" )
-      MUnitSEAD = true
-    end
-    MUnitInclude = MUnitInclude and MUnitSEAD
-  end
-
-  self:T2( MUnitInclude )
-  return MUnitInclude
-end
-
-
---- Retrieve the type names of the @{Unit}s in the SET, delimited by an optional delimiter.
--- @param #SET_UNIT self
--- @param #string Delimiter (optional) The delimiter, which is default a comma.
--- @return #string The types of the @{Unit}s delimited.
-function SET_UNIT:GetTypeNames( Delimiter )
-
-  Delimiter = Delimiter or ", "
-  local TypeReport = REPORT:New()
-  local Types = {}
-  
-  for UnitName, UnitData in pairs( self:GetSet() ) do
-  
-    local Unit = UnitData -- Wrapper.Unit#UNIT
-    local UnitTypeName = Unit:GetTypeName()
     
-    if not Types[UnitTypeName] then
-      Types[UnitTypeName] = UnitTypeName
-      TypeReport:Add( UnitTypeName )
+    
+    --- Check if no element of the SET_UNIT is in the Zone.
+    -- @param #SET_UNIT self
+    -- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
+    -- @return #boolean
+    function SET_UNIT:IsNotInZone( Zone )
+      
+      local IsNotInZone = true
+      
+      local function EvaluateZone( ZoneUnit )
+      
+        local ZoneUnitName =  ZoneUnit:GetName()
+        if self:FindUnit( ZoneUnitName ) then
+          IsNotInZone = false
+          return false
+        end
+        
+        return true
+      end
+      
+      Zone:SearchZone( EvaluateZone )
+      
+      return IsNotInZone
     end
+    
+  
+    --- Check if minimal one element of the SET_UNIT is in the Zone.
+    -- @param #SET_UNIT self
+    -- @param #function IteratorFunction The function that will be called when there is an alive UNIT in the SET_UNIT. The function needs to accept a UNIT parameter.
+    -- @return #SET_UNIT self
+    function SET_UNIT:ForEachUnitInZone( IteratorFunction, ... )
+      self:F2( arg )
+      
+      self:ForEach( IteratorFunction, arg, self.Set )
+    
+      return self
+    end
+    
+  
   end
   
-  return TypeReport:Text( Delimiter )
+  
+  --- Iterate the SET_UNIT and call an interator function for each **alive** UNIT, providing the UNIT and optional parameters.
+  -- @param #SET_UNIT self
+  -- @param #function IteratorFunction The function that will be called when there is an alive UNIT in the SET_UNIT. The function needs to accept a UNIT parameter.
+  -- @return #SET_UNIT self
+  function SET_UNIT:ForEachUnit( IteratorFunction, ... )
+    self:F2( arg )
+    
+    self:ForEach( IteratorFunction, arg, self.Set )
+  
+    return self
+  end
+  
+  --- Iterate the SET_UNIT **sorted *per Threat Level** and call an interator function for each **alive** UNIT, providing the UNIT and optional parameters.
+  -- 
+  -- @param #SET_UNIT self
+  -- @param #number FromThreatLevel The TreatLevel to start the evaluation **From** (this must be a value between 0 and 10).
+  -- @param #number ToThreatLevel The TreatLevel to stop the evaluation **To** (this must be a value between 0 and 10).
+  -- @param #function IteratorFunction The function that will be called when there is an alive UNIT in the SET_UNIT. The function needs to accept a UNIT parameter.
+  -- @return #SET_UNIT self
+  -- @usage
+  -- 
+  --     UnitSet:ForEachUnitPerThreatLevel( 10, 0,
+  --       -- @param Wrapper.Unit#UNIT UnitObject The UNIT object in the UnitSet, that will be passed to the local function for evaluation.
+  --       function( UnitObject )
+  --         .. logic ..
+  --       end
+  --     )
+  -- 
+  function SET_UNIT:ForEachUnitPerThreatLevel( FromThreatLevel, ToThreatLevel, IteratorFunction, ... ) --R2.1 Threat Level implementation
+    self:F2( arg )
+    
+    local ThreatLevelSet = {}
+    
+    if self:Count() ~= 0 then
+      for UnitName, UnitObject in pairs( self.Set ) do
+        local Unit = UnitObject -- Wrapper.Unit#UNIT
+      
+        local ThreatLevel = Unit:GetThreatLevel()
+        ThreatLevelSet[ThreatLevel] = ThreatLevelSet[ThreatLevel] or {}
+        ThreatLevelSet[ThreatLevel].Set = ThreatLevelSet[ThreatLevel].Set or {}
+        ThreatLevelSet[ThreatLevel].Set[UnitName] = UnitObject
+        self:E( { ThreatLevel = ThreatLevel, ThreatLevelSet = ThreatLevelSet[ThreatLevel].Set } )
+      end
+      
+      local ThreatLevelIncrement = FromThreatLevel <= ToThreatLevel and 1 or -1
+      
+      for ThreatLevel = FromThreatLevel, ToThreatLevel, ThreatLevelIncrement do
+        self:E( { ThreatLevel = ThreatLevel } )
+        local ThreatLevelItem = ThreatLevelSet[ThreatLevel]
+        if ThreatLevelItem then
+          self:ForEach( IteratorFunction, arg, ThreatLevelItem.Set )
+        end
+      end
+    end
+    
+    return self
+  end
+  
+  
+  
+  --- Iterate the SET_UNIT and call an iterator function for each **alive** UNIT presence completely in a @{Zone}, providing the UNIT and optional parameters to the called function.
+  -- @param #SET_UNIT self
+  -- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
+  -- @param #function IteratorFunction The function that will be called when there is an alive UNIT in the SET_UNIT. The function needs to accept a UNIT parameter.
+  -- @return #SET_UNIT self
+  function SET_UNIT:ForEachUnitCompletelyInZone( ZoneObject, IteratorFunction, ... )
+    self:F2( arg )
+    
+    self:ForEach( IteratorFunction, arg, self.Set,
+      --- @param Core.Zone#ZONE_BASE ZoneObject
+      -- @param Wrapper.Unit#UNIT UnitObject
+      function( ZoneObject, UnitObject )
+        if UnitObject:IsInZone( ZoneObject ) then
+          return true
+        else
+          return false
+        end
+      end, { ZoneObject } )
+  
+    return self
+  end
+  
+  --- Iterate the SET_UNIT and call an iterator function for each **alive** UNIT presence not in a @{Zone}, providing the UNIT and optional parameters to the called function.
+  -- @param #SET_UNIT self
+  -- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
+  -- @param #function IteratorFunction The function that will be called when there is an alive UNIT in the SET_UNIT. The function needs to accept a UNIT parameter.
+  -- @return #SET_UNIT self
+  function SET_UNIT:ForEachUnitNotInZone( ZoneObject, IteratorFunction, ... )
+    self:F2( arg )
+    
+    self:ForEach( IteratorFunction, arg, self.Set,
+      --- @param Core.Zone#ZONE_BASE ZoneObject
+      -- @param Wrapper.Unit#UNIT UnitObject
+      function( ZoneObject, UnitObject )
+        if UnitObject:IsNotInZone( ZoneObject ) then
+          return true
+        else
+          return false
+        end
+      end, { ZoneObject } )
+  
+    return self
+  end
+  
+  --- Returns map of unit types.
+  -- @param #SET_UNIT self
+  -- @return #map<#string,#number> A map of the unit types found. The key is the UnitTypeName and the value is the amount of unit types found.
+  function SET_UNIT:GetUnitTypes()
+    self:F2()
+  
+    local MT = {} -- Message Text
+    local UnitTypes = {}
+    
+    for UnitID, UnitData in pairs( self:GetSet() ) do
+      local TextUnit = UnitData -- Wrapper.Unit#UNIT
+      if TextUnit:IsAlive() then
+        local UnitType = TextUnit:GetTypeName()
+    
+        if not UnitTypes[UnitType] then
+          UnitTypes[UnitType] = 1
+        else
+          UnitTypes[UnitType] = UnitTypes[UnitType] + 1
+        end
+      end
+    end
+  
+    for UnitTypeID, UnitType in pairs( UnitTypes ) do
+      MT[#MT+1] = UnitType .. " of " .. UnitTypeID
+    end
+  
+    return UnitTypes
+  end
+  
+  
+  --- Returns a comma separated string of the unit types with a count in the  @{Set}.
+  -- @param #SET_UNIT self
+  -- @return #string The unit types string
+  function SET_UNIT:GetUnitTypesText()
+    self:F2()
+  
+    local MT = {} -- Message Text
+    local UnitTypes = self:GetUnitTypes()
+    
+    for UnitTypeID, UnitType in pairs( UnitTypes ) do
+      MT[#MT+1] = UnitType .. " of " .. UnitTypeID
+    end
+  
+    return table.concat( MT, ", " )
+  end
+  
+  --- Returns map of unit threat levels.
+  -- @param #SET_UNIT self
+  -- @return #table.
+  function SET_UNIT:GetUnitThreatLevels()
+    self:F2()
+  
+    local UnitThreatLevels = {}
+    
+    for UnitID, UnitData in pairs( self:GetSet() ) do
+      local ThreatUnit = UnitData -- Wrapper.Unit#UNIT
+      if ThreatUnit:IsAlive() then
+        local UnitThreatLevel, UnitThreatLevelText = ThreatUnit:GetThreatLevel()
+        local ThreatUnitName = ThreatUnit:GetName()
+    
+        UnitThreatLevels[UnitThreatLevel] = UnitThreatLevels[UnitThreatLevel] or {}
+        UnitThreatLevels[UnitThreatLevel].UnitThreatLevelText = UnitThreatLevelText
+        UnitThreatLevels[UnitThreatLevel].Units = UnitThreatLevels[UnitThreatLevel].Units or {}
+        UnitThreatLevels[UnitThreatLevel].Units[ThreatUnitName] = ThreatUnit
+      end
+    end
+  
+    return UnitThreatLevels
+  end
+  
+  --- Calculate the maxium A2G threat level of the SET_UNIT.
+  -- @param #SET_UNIT self
+  -- @return #number The maximum threatlevel
+  function SET_UNIT:CalculateThreatLevelA2G()
+    
+    local MaxThreatLevelA2G = 0
+    local MaxThreatText = ""
+    for UnitName, UnitData in pairs( self:GetSet() ) do
+      local ThreatUnit = UnitData -- Wrapper.Unit#UNIT
+      local ThreatLevelA2G, ThreatText = ThreatUnit:GetThreatLevel()
+      if ThreatLevelA2G > MaxThreatLevelA2G then
+        MaxThreatLevelA2G = ThreatLevelA2G
+        MaxThreatText = ThreatText
+      end
+    end
+  
+    self:F( { MaxThreatLevelA2G = MaxThreatLevelA2G, MaxThreatText = MaxThreatText } )
+    return MaxThreatLevelA2G, MaxThreatText
+    
+  end
+  
+  --- Get the center coordinate of the SET_UNIT.
+  -- @param #SET_UNIT self
+  -- @return Core.Point#COORDINATE The center coordinate of all the units in the set, including heading in degrees and speed in mps in case of moving units.
+  function SET_UNIT:GetCoordinate()
+  
+    local Coordinate = self:GetFirst():GetCoordinate()
+    
+    local x1 = Coordinate.x
+    local x2 = Coordinate.x
+    local y1 = Coordinate.y
+    local y2 = Coordinate.y
+    local z1 = Coordinate.z
+    local z2 = Coordinate.z
+    local MaxVelocity = 0
+    local AvgHeading = nil
+    local MovingCount = 0
+  
+    for UnitName, UnitData in pairs( self:GetSet() ) do
+    
+      local Unit = UnitData -- Wrapper.Unit#UNIT
+      local Coordinate = Unit:GetCoordinate()
+  
+      x1 = ( Coordinate.x < x1 ) and Coordinate.x or x1
+      x2 = ( Coordinate.x > x2 ) and Coordinate.x or x2
+      y1 = ( Coordinate.y < y1 ) and Coordinate.y or y1
+      y2 = ( Coordinate.y > y2 ) and Coordinate.y or y2
+      z1 = ( Coordinate.y < z1 ) and Coordinate.z or z1
+      z2 = ( Coordinate.y > z2 ) and Coordinate.z or z2
+  
+      local Velocity = Coordinate:GetVelocity()
+      if Velocity ~= 0  then
+        MaxVelocity = ( MaxVelocity < Velocity ) and Velocity or MaxVelocity
+        local Heading = Coordinate:GetHeading()
+        AvgHeading = AvgHeading and ( AvgHeading + Heading ) or Heading
+        MovingCount = MovingCount + 1
+      end
+    end
+  
+    AvgHeading = AvgHeading and ( AvgHeading / MovingCount )
+    
+    Coordinate.x = ( x2 - x1 ) / 2 + x1
+    Coordinate.y = ( y2 - y1 ) / 2 + y1
+    Coordinate.z = ( z2 - z1 ) / 2 + z1
+    Coordinate:SetHeading( AvgHeading )
+    Coordinate:SetVelocity( MaxVelocity )
+  
+    self:F( { Coordinate = Coordinate } )
+    return Coordinate
+  
+  end
+  
+  --- Get the maximum velocity of the SET_UNIT.
+  -- @param #SET_UNIT self
+  -- @return #number The speed in mps in case of moving units.
+  function SET_UNIT:GetVelocity()
+  
+    local Coordinate = self:GetFirst():GetCoordinate()
+    
+    local MaxVelocity = 0
+  
+    for UnitName, UnitData in pairs( self:GetSet() ) do
+    
+      local Unit = UnitData -- Wrapper.Unit#UNIT
+      local Coordinate = Unit:GetCoordinate()
+  
+      local Velocity = Coordinate:GetVelocity()
+      if Velocity ~= 0  then
+        MaxVelocity = ( MaxVelocity < Velocity ) and Velocity or MaxVelocity
+      end
+    end
+  
+    self:F( { MaxVelocity = MaxVelocity } )
+    return MaxVelocity
+  
+  end
+  
+  --- Get the average heading of the SET_UNIT.
+  -- @param #SET_UNIT self
+  -- @return #number Heading Heading in degrees and speed in mps in case of moving units.
+  function SET_UNIT:GetHeading()
+  
+    local HeadingSet = nil
+    local MovingCount = 0
+  
+    for UnitName, UnitData in pairs( self:GetSet() ) do
+    
+      local Unit = UnitData -- Wrapper.Unit#UNIT
+      local Coordinate = Unit:GetCoordinate()
+  
+      local Velocity = Coordinate:GetVelocity()
+      if Velocity ~= 0  then
+        local Heading = Coordinate:GetHeading()
+        if HeadingSet == nil then
+          HeadingSet = Heading
+        else
+          local HeadingDiff = ( HeadingSet - Heading + 180 + 360 ) % 360 - 180
+          HeadingDiff = math.abs( HeadingDiff )
+          if HeadingDiff > 5 then
+            HeadingSet = nil
+            break
+          end
+        end        
+      end
+    end
+  
+    return HeadingSet
+  
+  end
+  
+  
+  
+  --- Returns if the @{Set} has targets having a radar (of a given type).
+  -- @param #SET_UNIT self
+  -- @param Dcs.DCSWrapper.Unit#Unit.RadarType RadarType
+  -- @return #number The amount of radars in the Set with the given type
+  function SET_UNIT:HasRadar( RadarType )
+    self:F2( RadarType )
+  
+    local RadarCount = 0
+    for UnitID, UnitData in pairs( self:GetSet()) do
+      local UnitSensorTest = UnitData -- Wrapper.Unit#UNIT
+      local HasSensors
+      if RadarType then
+        HasSensors = UnitSensorTest:HasSensors( Unit.SensorType.RADAR, RadarType )
+      else
+        HasSensors = UnitSensorTest:HasSensors( Unit.SensorType.RADAR )
+      end
+      self:T3(HasSensors)
+      if HasSensors then
+        RadarCount = RadarCount + 1
+      end
+    end
+  
+    return RadarCount
+  end
+  
+  --- Returns if the @{Set} has targets that can be SEADed.
+  -- @param #SET_UNIT self
+  -- @return #number The amount of SEADable units in the Set
+  function SET_UNIT:HasSEAD()
+    self:F2()
+  
+    local SEADCount = 0
+    for UnitID, UnitData in pairs( self:GetSet()) do
+      local UnitSEAD = UnitData -- Wrapper.Unit#UNIT
+      if UnitSEAD:IsAlive() then
+        local UnitSEADAttributes = UnitSEAD:GetDesc().attributes
+    
+        local HasSEAD = UnitSEAD:HasSEAD()
+           
+        self:T3(HasSEAD)
+        if HasSEAD then
+          SEADCount = SEADCount + 1
+        end
+      end
+    end
+  
+    return SEADCount
+  end
+  
+  --- Returns if the @{Set} has ground targets.
+  -- @param #SET_UNIT self
+  -- @return #number The amount of ground targets in the Set.
+  function SET_UNIT:HasGroundUnits()
+    self:F2()
+  
+    local GroundUnitCount = 0
+    for UnitID, UnitData in pairs( self:GetSet()) do
+      local UnitTest = UnitData -- Wrapper.Unit#UNIT
+      if UnitTest:IsGround() then
+        GroundUnitCount = GroundUnitCount + 1
+      end
+    end
+  
+    return GroundUnitCount
+  end
+  
+  --- Returns if the @{Set} has friendly ground units.
+  -- @param #SET_UNIT self
+  -- @return #number The amount of ground targets in the Set.
+  function SET_UNIT:HasFriendlyUnits( FriendlyCoalition )
+    self:F2()
+  
+    local FriendlyUnitCount = 0
+    for UnitID, UnitData in pairs( self:GetSet()) do
+      local UnitTest = UnitData -- Wrapper.Unit#UNIT
+      if UnitTest:IsFriendly( FriendlyCoalition ) then
+        FriendlyUnitCount = FriendlyUnitCount + 1
+      end
+    end
+  
+    return FriendlyUnitCount
+  end
+  
+  
+  
+  ----- Iterate the SET_UNIT and call an interator function for each **alive** player, providing the Unit of the player and optional parameters.
+  ---- @param #SET_UNIT self
+  ---- @param #function IteratorFunction The function that will be called when there is an alive player in the SET_UNIT. The function needs to accept a UNIT parameter.
+  ---- @return #SET_UNIT self
+  --function SET_UNIT:ForEachPlayer( IteratorFunction, ... )
+  --  self:F2( arg )
+  --  
+  --  self:ForEach( IteratorFunction, arg, self.PlayersAlive )
+  --  
+  --  return self
+  --end
+  --
+  --
+  ----- Iterate the SET_UNIT and call an interator function for each client, providing the Client to the function and optional parameters.
+  ---- @param #SET_UNIT self
+  ---- @param #function IteratorFunction The function that will be called when there is an alive player in the SET_UNIT. The function needs to accept a CLIENT parameter.
+  ---- @return #SET_UNIT self
+  --function SET_UNIT:ForEachClient( IteratorFunction, ... )
+  --  self:F2( arg )
+  --  
+  --  self:ForEach( IteratorFunction, arg, self.Clients )
+  --
+  --  return self
+  --end
+  
+  
+  ---
+  -- @param #SET_UNIT self
+  -- @param Wrapper.Unit#UNIT MUnit
+  -- @return #SET_UNIT self
+  function SET_UNIT:IsIncludeObject( MUnit )
+    self:F2( MUnit )
+    local MUnitInclude = true
+  
+    if self.Filter.Coalitions then
+      local MUnitCoalition = false
+      for CoalitionID, CoalitionName in pairs( self.Filter.Coalitions ) do
+        self:E( { "Coalition:", MUnit:GetCoalition(), self.FilterMeta.Coalitions[CoalitionName], CoalitionName } )
+        if self.FilterMeta.Coalitions[CoalitionName] and self.FilterMeta.Coalitions[CoalitionName] == MUnit:GetCoalition() then
+          MUnitCoalition = true
+        end
+      end
+      MUnitInclude = MUnitInclude and MUnitCoalition
+    end
+    
+    if self.Filter.Categories then
+      local MUnitCategory = false
+      for CategoryID, CategoryName in pairs( self.Filter.Categories ) do
+        self:T3( { "Category:", MUnit:GetDesc().category, self.FilterMeta.Categories[CategoryName], CategoryName } )
+        if self.FilterMeta.Categories[CategoryName] and self.FilterMeta.Categories[CategoryName] == MUnit:GetDesc().category then
+          MUnitCategory = true
+        end
+      end
+      MUnitInclude = MUnitInclude and MUnitCategory
+    end
+    
+    if self.Filter.Types then
+      local MUnitType = false
+      for TypeID, TypeName in pairs( self.Filter.Types ) do
+        self:T3( { "Type:", MUnit:GetTypeName(), TypeName } )
+        if TypeName == MUnit:GetTypeName() then
+          MUnitType = true
+        end
+      end
+      MUnitInclude = MUnitInclude and MUnitType
+    end
+    
+    if self.Filter.Countries then
+      local MUnitCountry = false
+      for CountryID, CountryName in pairs( self.Filter.Countries ) do
+        self:T3( { "Country:", MUnit:GetCountry(), CountryName } )
+        if country.id[CountryName] == MUnit:GetCountry() then
+          MUnitCountry = true
+        end
+      end
+      MUnitInclude = MUnitInclude and MUnitCountry
+    end
+  
+    if self.Filter.UnitPrefixes then
+      local MUnitPrefix = false
+      for UnitPrefixId, UnitPrefix in pairs( self.Filter.UnitPrefixes ) do
+        self:T3( { "Prefix:", string.find( MUnit:GetName(), UnitPrefix, 1 ), UnitPrefix } )
+        if string.find( MUnit:GetName(), UnitPrefix, 1 ) then
+          MUnitPrefix = true
+        end
+      end
+      MUnitInclude = MUnitInclude and MUnitPrefix
+    end
+  
+    if self.Filter.RadarTypes then
+      local MUnitRadar = false
+      for RadarTypeID, RadarType in pairs( self.Filter.RadarTypes ) do
+        self:T3( { "Radar:", RadarType } )
+        if MUnit:HasSensors( Unit.SensorType.RADAR, RadarType ) == true then
+          if MUnit:GetRadar() == true then -- This call is necessary to evaluate the SEAD capability.
+            self:T3( "RADAR Found" )
+          end
+          MUnitRadar = true
+        end
+      end
+      MUnitInclude = MUnitInclude and MUnitRadar
+    end
+  
+    if self.Filter.SEAD then
+      local MUnitSEAD = false
+      if MUnit:HasSEAD() == true then
+        self:T3( "SEAD Found" )
+        MUnitSEAD = true
+      end
+      MUnitInclude = MUnitInclude and MUnitSEAD
+    end
+  
+    self:T2( MUnitInclude )
+    return MUnitInclude
+  end
+  
+  
+  --- Retrieve the type names of the @{Unit}s in the SET, delimited by an optional delimiter.
+  -- @param #SET_UNIT self
+  -- @param #string Delimiter (optional) The delimiter, which is default a comma.
+  -- @return #string The types of the @{Unit}s delimited.
+  function SET_UNIT:GetTypeNames( Delimiter )
+  
+    Delimiter = Delimiter or ", "
+    local TypeReport = REPORT:New()
+    local Types = {}
+    
+    for UnitName, UnitData in pairs( self:GetSet() ) do
+    
+      local Unit = UnitData -- Wrapper.Unit#UNIT
+      local UnitTypeName = Unit:GetTypeName()
+      
+      if not Types[UnitTypeName] then
+        Types[UnitTypeName] = UnitTypeName
+        TypeReport:Add( UnitTypeName )
+      end
+    end
+    
+    return TypeReport:Text( Delimiter )
+  end
+  
+end
+
+do -- SET_STATIC
+
+  --- @type SET_STATIC
+  -- @extends Core.Set#SET_BASE
+  
+  --- # 3) SET_STATIC class, extends @{Set#SET_BASE}
+  -- 
+  -- Mission designers can use the SET_STATIC class to build sets of Statics belonging to certain:
+  -- 
+  --  * Coalitions
+  --  * Categories
+  --  * Countries
+  --  * Static types
+  --  * Starting with certain prefix strings.
+  --  
+  -- ## 3.1) SET_STATIC constructor
+  --
+  -- Create a new SET_STATIC object with the @{#SET_STATIC.New} method:
+  -- 
+  --    * @{#SET_STATIC.New}: Creates a new SET_STATIC object.
+  --   
+  -- ## 3.2) Add or Remove STATIC(s) from SET_STATIC
+  --
+  -- STATICs can be added and removed using the @{Set#SET_STATIC.AddStaticsByName} and @{Set#SET_STATIC.RemoveStaticsByName} respectively. 
+  -- These methods take a single STATIC name or an array of STATIC names to be added or removed from SET_STATIC.
+  -- 
+  -- ## 3.3) SET_STATIC filter criteria
+  -- 
+  -- You can set filter criteria to define the set of units within the SET_STATIC.
+  -- Filter criteria are defined by:
+  -- 
+  --    * @{#SET_STATIC.FilterCoalitions}: Builds the SET_STATIC with the units belonging to the coalition(s).
+  --    * @{#SET_STATIC.FilterCategories}: Builds the SET_STATIC with the units belonging to the category(ies).
+  --    * @{#SET_STATIC.FilterTypes}: Builds the SET_STATIC with the units belonging to the unit type(s).
+  --    * @{#SET_STATIC.FilterCountries}: Builds the SET_STATIC with the units belonging to the country(ies).
+  --    * @{#SET_STATIC.FilterPrefixes}: Builds the SET_STATIC with the units starting with the same prefix string(s).
+  --   
+  -- Once the filter criteria have been set for the SET_STATIC, you can start filtering using:
+  -- 
+  --   * @{#SET_STATIC.FilterStart}: Starts the filtering of the units within the SET_STATIC.
+  -- 
+  -- Planned filter criteria within development are (so these are not yet available):
+  -- 
+  --    * @{#SET_STATIC.FilterZones}: Builds the SET_STATIC with the units within a @{Zone#ZONE}.
+  -- 
+  -- ## 3.4) SET_STATIC iterators
+  -- 
+  -- Once the filters have been defined and the SET_STATIC has been built, you can iterate the SET_STATIC with the available iterator methods.
+  -- The iterator methods will walk the SET_STATIC set, and call for each element within the set a function that you provide.
+  -- The following iterator methods are currently available within the SET_STATIC:
+  -- 
+  --   * @{#SET_STATIC.ForEachStatic}: Calls a function for each alive unit it finds within the SET_STATIC.
+  --   * @{#SET_GROUP.ForEachGroupCompletelyInZone}: Iterate the SET_GROUP and call an iterator function for each **alive** GROUP presence completely in a @{Zone}, providing the GROUP and optional parameters to the called function.
+  --   * @{#SET_GROUP.ForEachGroupNotInZone}: Iterate the SET_GROUP and call an iterator function for each **alive** GROUP presence not in a @{Zone}, providing the GROUP and optional parameters to the called function.
+  --   
+  -- Planned iterators methods in development are (so these are not yet available):
+  -- 
+  --   * @{#SET_STATIC.ForEachStaticInZone}: Calls a function for each unit contained within the SET_STATIC.
+  --   * @{#SET_STATIC.ForEachStaticCompletelyInZone}: Iterate and call an iterator function for each **alive** STATIC presence completely in a @{Zone}, providing the STATIC and optional parameters to the called function.
+  --   * @{#SET_STATIC.ForEachStaticNotInZone}: Iterate and call an iterator function for each **alive** STATIC presence not in a @{Zone}, providing the STATIC and optional parameters to the called function.
+  -- 
+  -- ## 3.5 ) SET_STATIC atomic methods
+  -- 
+  -- Various methods exist for a SET_STATIC to perform actions or calculations and retrieve results from the SET_STATIC:
+  -- 
+  --   * @{#SET_STATIC.GetTypeNames}(): Retrieve the type names of the @{Static}s in the SET, delimited by a comma.
+  -- 
+  -- ===
+  -- @field #SET_STATIC SET_STATIC
+  SET_STATIC = {
+    ClassName = "SET_STATIC",
+    Statics = {},
+    Filter = {
+      Coalitions = nil,
+      Categories = nil,
+      Types = nil,
+      Countries = nil,
+      StaticPrefixes = nil,
+    },
+    FilterMeta = {
+      Coalitions = {
+        red = coalition.side.RED,
+        blue = coalition.side.BLUE,
+        neutral = coalition.side.NEUTRAL,
+      },
+      Categories = {
+        plane = Unit.Category.AIRPLANE,
+        helicopter = Unit.Category.HELICOPTER,
+        ground = Unit.Category.GROUND_STATIC,
+        ship = Unit.Category.SHIP,
+        structure = Unit.Category.STRUCTURE,
+      },
+    },
+  }
+  
+  
+  --- Get the first unit from the set.
+  -- @function [parent=#SET_STATIC] GetFirst
+  -- @param #SET_STATIC self
+  -- @return Wrapper.Static#STATIC The STATIC object.
+  
+  --- Creates a new SET_STATIC object, building a set of units belonging to a coalitions, categories, countries, types or with defined prefix names.
+  -- @param #SET_STATIC self
+  -- @return #SET_STATIC
+  -- @usage
+  -- -- Define a new SET_STATIC Object. This DBObject will contain a reference to all alive Statics.
+  -- DBObject = SET_STATIC:New()
+  function SET_STATIC:New()
+  
+    -- Inherits from BASE
+    local self = BASE:Inherit( self, SET_BASE:New( _DATABASE.STATICS ) ) -- Core.Set#SET_STATIC
+  
+    return self
+  end
+  
+  --- Add STATIC(s) to SET_STATIC.
+  -- @param #SET_STATIC self
+  -- @param #string AddStatic A single STATIC.
+  -- @return #SET_STATIC self
+  function SET_STATIC:AddStatic( AddStatic )
+    self:F2( AddStatic:GetName() )
+  
+    self:Add( AddStatic:GetName(), AddStatic )
+      
+    return self
+  end
+  
+  
+  --- Add STATIC(s) to SET_STATIC.
+  -- @param #SET_STATIC self
+  -- @param #string AddStaticNames A single name or an array of STATIC names.
+  -- @return #SET_STATIC self
+  function SET_STATIC:AddStaticsByName( AddStaticNames )
+  
+    local AddStaticNamesArray = ( type( AddStaticNames ) == "table" ) and AddStaticNames or { AddStaticNames }
+    
+    self:T( AddStaticNamesArray )
+    for AddStaticID, AddStaticName in pairs( AddStaticNamesArray ) do
+      self:Add( AddStaticName, STATIC:FindByName( AddStaticName ) )
+    end
+      
+    return self
+  end
+  
+  --- Remove STATIC(s) from SET_STATIC.
+  -- @param Core.Set#SET_STATIC self
+  -- @param Wrapper.Static#STATIC RemoveStaticNames A single name or an array of STATIC names.
+  -- @return self
+  function SET_STATIC:RemoveStaticsByName( RemoveStaticNames )
+  
+    local RemoveStaticNamesArray = ( type( RemoveStaticNames ) == "table" ) and RemoveStaticNames or { RemoveStaticNames }
+    
+    for RemoveStaticID, RemoveStaticName in pairs( RemoveStaticNamesArray ) do
+      self:Remove( RemoveStaticName )
+    end
+      
+    return self
+  end
+  
+  
+  --- Finds a Static based on the Static Name.
+  -- @param #SET_STATIC self
+  -- @param #string StaticName
+  -- @return Wrapper.Static#STATIC The found Static.
+  function SET_STATIC:FindStatic( StaticName )
+  
+    local StaticFound = self.Set[StaticName]
+    return StaticFound
+  end
+  
+  
+  
+  --- Builds a set of units of coalitions.
+  -- Possible current coalitions are red, blue and neutral.
+  -- @param #SET_STATIC self
+  -- @param #string Coalitions Can take the following values: "red", "blue", "neutral".
+  -- @return #SET_STATIC self
+  function SET_STATIC:FilterCoalitions( Coalitions )
+    if not self.Filter.Coalitions then
+      self.Filter.Coalitions = {}
+    end
+    if type( Coalitions ) ~= "table" then
+      Coalitions = { Coalitions }
+    end
+    for CoalitionID, Coalition in pairs( Coalitions ) do
+      self.Filter.Coalitions[Coalition] = Coalition
+    end
+    return self
+  end
+  
+  
+  --- Builds a set of units out of categories.
+  -- Possible current categories are plane, helicopter, ground, ship.
+  -- @param #SET_STATIC self
+  -- @param #string Categories Can take the following values: "plane", "helicopter", "ground", "ship".
+  -- @return #SET_STATIC self
+  function SET_STATIC:FilterCategories( Categories )
+    if not self.Filter.Categories then
+      self.Filter.Categories = {}
+    end
+    if type( Categories ) ~= "table" then
+      Categories = { Categories }
+    end
+    for CategoryID, Category in pairs( Categories ) do
+      self.Filter.Categories[Category] = Category
+    end
+    return self
+  end
+  
+  
+  --- Builds a set of units of defined unit types.
+  -- Possible current types are those types known within DCS world.
+  -- @param #SET_STATIC self
+  -- @param #string Types Can take those type strings known within DCS world.
+  -- @return #SET_STATIC self
+  function SET_STATIC:FilterTypes( Types )
+    if not self.Filter.Types then
+      self.Filter.Types = {}
+    end
+    if type( Types ) ~= "table" then
+      Types = { Types }
+    end
+    for TypeID, Type in pairs( Types ) do
+      self.Filter.Types[Type] = Type
+    end
+    return self
+  end
+  
+  
+  --- Builds a set of units of defined countries.
+  -- Possible current countries are those known within DCS world.
+  -- @param #SET_STATIC self
+  -- @param #string Countries Can take those country strings known within DCS world.
+  -- @return #SET_STATIC self
+  function SET_STATIC:FilterCountries( Countries )
+    if not self.Filter.Countries then
+      self.Filter.Countries = {}
+    end
+    if type( Countries ) ~= "table" then
+      Countries = { Countries }
+    end
+    for CountryID, Country in pairs( Countries ) do
+      self.Filter.Countries[Country] = Country
+    end
+    return self
+  end
+  
+  
+  --- Builds a set of units of defined unit prefixes.
+  -- All the units starting with the given prefixes will be included within the set.
+  -- @param #SET_STATIC self
+  -- @param #string Prefixes The prefix of which the unit name starts with.
+  -- @return #SET_STATIC self
+  function SET_STATIC:FilterPrefixes( Prefixes )
+    if not self.Filter.StaticPrefixes then
+      self.Filter.StaticPrefixes = {}
+    end
+    if type( Prefixes ) ~= "table" then
+      Prefixes = { Prefixes }
+    end
+    for PrefixID, Prefix in pairs( Prefixes ) do
+      self.Filter.StaticPrefixes[Prefix] = Prefix
+    end
+    return self
+  end
+  
+  
+  --- Starts the filtering.
+  -- @param #SET_STATIC self
+  -- @return #SET_STATIC self
+  function SET_STATIC:FilterStart()
+  
+    if _DATABASE then
+      self:_FilterStart()
+    end
+    
+    return self
+  end
+  
+  --- Handles the Database to check on an event (birth) that the Object was added in the Database.
+  -- This is required, because sometimes the _DATABASE birth event gets called later than the SET_BASE birth event!
+  -- @param #SET_STATIC self
+  -- @param Core.Event#EVENTDATA Event
+  -- @return #string The name of the STATIC
+  -- @return #table The STATIC
+  function SET_STATIC:AddInDatabase( Event )
+    self:F3( { Event } )
+  
+    if Event.IniObjectCategory == 1 then
+      if not self.Database[Event.IniDCSStaticName] then
+        self.Database[Event.IniDCSStaticName] = STATIC:Register( Event.IniDCSStaticName )
+        self:T3( self.Database[Event.IniDCSStaticName] )
+      end
+    end
+    
+    return Event.IniDCSStaticName, self.Database[Event.IniDCSStaticName]
+  end
+  
+  --- Handles the Database to check on any event that Object exists in the Database.
+  -- This is required, because sometimes the _DATABASE event gets called later than the SET_BASE event or vise versa!
+  -- @param #SET_STATIC self
+  -- @param Core.Event#EVENTDATA Event
+  -- @return #string The name of the STATIC
+  -- @return #table The STATIC
+  function SET_STATIC:FindInDatabase( Event )
+    self:F2( { Event.IniDCSStaticName, self.Set[Event.IniDCSStaticName], Event } )
+  
+  
+    return Event.IniDCSStaticName, self.Set[Event.IniDCSStaticName]
+  end
+  
+  
+  do -- Is Zone methods
+  
+    --- Check if minimal one element of the SET_STATIC is in the Zone.
+    -- @param #SET_STATIC self
+    -- @param Core.Zone#ZONE Zone The Zone to be tested for.
+    -- @return #boolean
+    function SET_STATIC:IsPatriallyInZone( Zone )
+      
+      local IsPartiallyInZone = false
+      
+      local function EvaluateZone( ZoneStatic )
+      
+        local ZoneStaticName =  ZoneStatic:GetName()
+        if self:FindStatic( ZoneStaticName ) then
+          IsPartiallyInZone = true
+          return false
+        end
+        
+        return true
+      end
+      
+      return IsPartiallyInZone
+    end
+    
+    
+    --- Check if no element of the SET_STATIC is in the Zone.
+    -- @param #SET_STATIC self
+    -- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
+    -- @return #boolean
+    function SET_STATIC:IsNotInZone( Zone )
+      
+      local IsNotInZone = true
+      
+      local function EvaluateZone( ZoneStatic )
+      
+        local ZoneStaticName =  ZoneStatic:GetName()
+        if self:FindStatic( ZoneStaticName ) then
+          IsNotInZone = false
+          return false
+        end
+        
+        return true
+      end
+      
+      Zone:Search( EvaluateZone )
+      
+      return IsNotInZone
+    end
+    
+  
+    --- Check if minimal one element of the SET_STATIC is in the Zone.
+    -- @param #SET_STATIC self
+    -- @param #function IteratorFunction The function that will be called when there is an alive STATIC in the SET_STATIC. The function needs to accept a STATIC parameter.
+    -- @return #SET_STATIC self
+    function SET_STATIC:ForEachStaticInZone( IteratorFunction, ... )
+      self:F2( arg )
+      
+      self:ForEach( IteratorFunction, arg, self.Set )
+    
+      return self
+    end
+    
+  
+  end
+  
+  
+  --- Iterate the SET_STATIC and call an interator function for each **alive** STATIC, providing the STATIC and optional parameters.
+  -- @param #SET_STATIC self
+  -- @param #function IteratorFunction The function that will be called when there is an alive STATIC in the SET_STATIC. The function needs to accept a STATIC parameter.
+  -- @return #SET_STATIC self
+  function SET_STATIC:ForEachStatic( IteratorFunction, ... )
+    self:F2( arg )
+    
+    self:ForEach( IteratorFunction, arg, self.Set )
+  
+    return self
+  end
+  
+  
+  --- Iterate the SET_STATIC and call an iterator function for each **alive** STATIC presence completely in a @{Zone}, providing the STATIC and optional parameters to the called function.
+  -- @param #SET_STATIC self
+  -- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
+  -- @param #function IteratorFunction The function that will be called when there is an alive STATIC in the SET_STATIC. The function needs to accept a STATIC parameter.
+  -- @return #SET_STATIC self
+  function SET_STATIC:ForEachStaticCompletelyInZone( ZoneObject, IteratorFunction, ... )
+    self:F2( arg )
+    
+    self:ForEach( IteratorFunction, arg, self.Set,
+      --- @param Core.Zone#ZONE_BASE ZoneObject
+      -- @param Wrapper.Static#STATIC StaticObject
+      function( ZoneObject, StaticObject )
+        if StaticObject:IsInZone( ZoneObject ) then
+          return true
+        else
+          return false
+        end
+      end, { ZoneObject } )
+  
+    return self
+  end
+  
+  --- Iterate the SET_STATIC and call an iterator function for each **alive** STATIC presence not in a @{Zone}, providing the STATIC and optional parameters to the called function.
+  -- @param #SET_STATIC self
+  -- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
+  -- @param #function IteratorFunction The function that will be called when there is an alive STATIC in the SET_STATIC. The function needs to accept a STATIC parameter.
+  -- @return #SET_STATIC self
+  function SET_STATIC:ForEachStaticNotInZone( ZoneObject, IteratorFunction, ... )
+    self:F2( arg )
+    
+    self:ForEach( IteratorFunction, arg, self.Set,
+      --- @param Core.Zone#ZONE_BASE ZoneObject
+      -- @param Wrapper.Static#STATIC StaticObject
+      function( ZoneObject, StaticObject )
+        if StaticObject:IsNotInZone( ZoneObject ) then
+          return true
+        else
+          return false
+        end
+      end, { ZoneObject } )
+  
+    return self
+  end
+  
+  --- Returns map of unit types.
+  -- @param #SET_STATIC self
+  -- @return #map<#string,#number> A map of the unit types found. The key is the StaticTypeName and the value is the amount of unit types found.
+  function SET_STATIC:GetStaticTypes()
+    self:F2()
+  
+    local MT = {} -- Message Text
+    local StaticTypes = {}
+    
+    for StaticID, StaticData in pairs( self:GetSet() ) do
+      local TextStatic = StaticData -- Wrapper.Static#STATIC
+      if TextStatic:IsAlive() then
+        local StaticType = TextStatic:GetTypeName()
+    
+        if not StaticTypes[StaticType] then
+          StaticTypes[StaticType] = 1
+        else
+          StaticTypes[StaticType] = StaticTypes[StaticType] + 1
+        end
+      end
+    end
+  
+    for StaticTypeID, StaticType in pairs( StaticTypes ) do
+      MT[#MT+1] = StaticType .. " of " .. StaticTypeID
+    end
+  
+    return StaticTypes
+  end
+  
+  
+  --- Returns a comma separated string of the unit types with a count in the  @{Set}.
+  -- @param #SET_STATIC self
+  -- @return #string The unit types string
+  function SET_STATIC:GetStaticTypesText()
+    self:F2()
+  
+    local MT = {} -- Message Text
+    local StaticTypes = self:GetStaticTypes()
+    
+    for StaticTypeID, StaticType in pairs( StaticTypes ) do
+      MT[#MT+1] = StaticType .. " of " .. StaticTypeID
+    end
+  
+    return table.concat( MT, ", " )
+  end
+  
+  --- Get the center coordinate of the SET_STATIC.
+  -- @param #SET_STATIC self
+  -- @return Core.Point#COORDINATE The center coordinate of all the units in the set, including heading in degrees and speed in mps in case of moving units.
+  function SET_STATIC:GetCoordinate()
+  
+    local Coordinate = self:GetFirst():GetCoordinate()
+    
+    local x1 = Coordinate.x
+    local x2 = Coordinate.x
+    local y1 = Coordinate.y
+    local y2 = Coordinate.y
+    local z1 = Coordinate.z
+    local z2 = Coordinate.z
+    local MaxVelocity = 0
+    local AvgHeading = nil
+    local MovingCount = 0
+  
+    for StaticName, StaticData in pairs( self:GetSet() ) do
+    
+      local Static = StaticData -- Wrapper.Static#STATIC
+      local Coordinate = Static:GetCoordinate()
+  
+      x1 = ( Coordinate.x < x1 ) and Coordinate.x or x1
+      x2 = ( Coordinate.x > x2 ) and Coordinate.x or x2
+      y1 = ( Coordinate.y < y1 ) and Coordinate.y or y1
+      y2 = ( Coordinate.y > y2 ) and Coordinate.y or y2
+      z1 = ( Coordinate.y < z1 ) and Coordinate.z or z1
+      z2 = ( Coordinate.y > z2 ) and Coordinate.z or z2
+  
+      local Velocity = Coordinate:GetVelocity()
+      if Velocity ~= 0  then
+        MaxVelocity = ( MaxVelocity < Velocity ) and Velocity or MaxVelocity
+        local Heading = Coordinate:GetHeading()
+        AvgHeading = AvgHeading and ( AvgHeading + Heading ) or Heading
+        MovingCount = MovingCount + 1
+      end
+    end
+  
+    AvgHeading = AvgHeading and ( AvgHeading / MovingCount )
+    
+    Coordinate.x = ( x2 - x1 ) / 2 + x1
+    Coordinate.y = ( y2 - y1 ) / 2 + y1
+    Coordinate.z = ( z2 - z1 ) / 2 + z1
+    Coordinate:SetHeading( AvgHeading )
+    Coordinate:SetVelocity( MaxVelocity )
+  
+    self:F( { Coordinate = Coordinate } )
+    return Coordinate
+  
+  end
+  
+  --- Get the maximum velocity of the SET_STATIC.
+  -- @param #SET_STATIC self
+  -- @return #number The speed in mps in case of moving units.
+  function SET_STATIC:GetVelocity()
+  
+    return 0
+  
+  end
+  
+  --- Get the average heading of the SET_STATIC.
+  -- @param #SET_STATIC self
+  -- @return #number Heading Heading in degrees and speed in mps in case of moving units.
+  function SET_STATIC:GetHeading()
+  
+    local HeadingSet = nil
+    local MovingCount = 0
+  
+    for StaticName, StaticData in pairs( self:GetSet() ) do
+    
+      local Static = StaticData -- Wrapper.Static#STATIC
+      local Coordinate = Static:GetCoordinate()
+  
+      local Velocity = Coordinate:GetVelocity()
+      if Velocity ~= 0  then
+        local Heading = Coordinate:GetHeading()
+        if HeadingSet == nil then
+          HeadingSet = Heading
+        else
+          local HeadingDiff = ( HeadingSet - Heading + 180 + 360 ) % 360 - 180
+          HeadingDiff = math.abs( HeadingDiff )
+          if HeadingDiff > 5 then
+            HeadingSet = nil
+            break
+          end
+        end        
+      end
+    end
+  
+    return HeadingSet
+  
+  end
+  
+  
+  ---
+  -- @param #SET_STATIC self
+  -- @param Wrapper.Static#STATIC MStatic
+  -- @return #SET_STATIC self
+  function SET_STATIC:IsIncludeObject( MStatic )
+    self:F2( MStatic )
+    local MStaticInclude = true
+  
+    if self.Filter.Coalitions then
+      local MStaticCoalition = false
+      for CoalitionID, CoalitionName in pairs( self.Filter.Coalitions ) do
+        self:T3( { "Coalition:", MStatic:GetCoalition(), self.FilterMeta.Coalitions[CoalitionName], CoalitionName } )
+        if self.FilterMeta.Coalitions[CoalitionName] and self.FilterMeta.Coalitions[CoalitionName] == MStatic:GetCoalition() then
+          MStaticCoalition = true
+        end
+      end
+      MStaticInclude = MStaticInclude and MStaticCoalition
+    end
+    
+    if self.Filter.Categories then
+      local MStaticCategory = false
+      for CategoryID, CategoryName in pairs( self.Filter.Categories ) do
+        self:T3( { "Category:", MStatic:GetDesc().category, self.FilterMeta.Categories[CategoryName], CategoryName } )
+        if self.FilterMeta.Categories[CategoryName] and self.FilterMeta.Categories[CategoryName] == MStatic:GetDesc().category then
+          MStaticCategory = true
+        end
+      end
+      MStaticInclude = MStaticInclude and MStaticCategory
+    end
+    
+    if self.Filter.Types then
+      local MStaticType = false
+      for TypeID, TypeName in pairs( self.Filter.Types ) do
+        self:T3( { "Type:", MStatic:GetTypeName(), TypeName } )
+        if TypeName == MStatic:GetTypeName() then
+          MStaticType = true
+        end
+      end
+      MStaticInclude = MStaticInclude and MStaticType
+    end
+    
+    if self.Filter.Countries then
+      local MStaticCountry = false
+      for CountryID, CountryName in pairs( self.Filter.Countries ) do
+        self:T3( { "Country:", MStatic:GetCountry(), CountryName } )
+        if country.id[CountryName] == MStatic:GetCountry() then
+          MStaticCountry = true
+        end
+      end
+      MStaticInclude = MStaticInclude and MStaticCountry
+    end
+  
+    if self.Filter.StaticPrefixes then
+      local MStaticPrefix = false
+      for StaticPrefixId, StaticPrefix in pairs( self.Filter.StaticPrefixes ) do
+        self:T3( { "Prefix:", string.find( MStatic:GetName(), StaticPrefix, 1 ), StaticPrefix } )
+        if string.find( MStatic:GetName(), StaticPrefix, 1 ) then
+          MStaticPrefix = true
+        end
+      end
+      MStaticInclude = MStaticInclude and MStaticPrefix
+    end
+  
+    self:T2( MStaticInclude )
+    return MStaticInclude
+  end
+  
+  
+  --- Retrieve the type names of the @{Static}s in the SET, delimited by an optional delimiter.
+  -- @param #SET_STATIC self
+  -- @param #string Delimiter (optional) The delimiter, which is default a comma.
+  -- @return #string The types of the @{Static}s delimited.
+  function SET_STATIC:GetTypeNames( Delimiter )
+  
+    Delimiter = Delimiter or ", "
+    local TypeReport = REPORT:New()
+    local Types = {}
+    
+    for StaticName, StaticData in pairs( self:GetSet() ) do
+    
+      local Static = StaticData -- Wrapper.Static#STATIC
+      local StaticTypeName = Static:GetTypeName()
+      
+      if not Types[StaticTypeName] then
+        Types[StaticTypeName] = StaticTypeName
+        TypeReport:Add( StaticTypeName )
+      end
+    end
+    
+    return TypeReport:Text( Delimiter )
+  end
+  
 end
 
 
