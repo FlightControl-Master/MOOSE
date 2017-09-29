@@ -42,19 +42,16 @@ function PROTECT:New( ProtectZone, Coalition )
   
   self:SetStartState( "-" )
   
-  self:AddTransition( { "-", "Protected", "Captured" }, "Protected", "Protected" )
+  self:AddTransition( "-", "Start", "Protected" )
   
-  self:AddTransition( { "Protected", "Attacked", "Empty" }, "Empty", "Empty" )
+  self:AddTransition( { "Captured", "Attacked", "Empty" }, "Protected", "Protected" )
   
-  self:AddTransition( { "Protected", "Empty", "Attacked" }, "Attacked", "Attacked" )
+  self:AddTransition( { "Protected", "Attacked" }, "Empty", "Empty" )
+  
+  self:AddTransition( { "Protected", "Empty" }, "Attacked", "Attacked" )
 
   self:AddTransition( { "Protected", "Attacked", "Empty" }, "Captured", "Captured" )
   
-  self:ScheduleRepeat( 15, 15, 0.1, nil, self.StatusCoalition, self )
-  
-  self:ScheduleRepeat( 15, 15, 0.1, nil, self.StatusZone, self )
-  
-  self:ScheduleRepeat( 5, 300, 0, nil, self.StatusSmoke, self )
   
   self:SetCoalition( Coalition )
   
@@ -232,7 +229,6 @@ end
 -- @param #SMOKECOLOR.Color SmokeColor
 function PROTECT:Smoke( SmokeColor )
 
-  local CurrentTime = timer.getTime()
   self.SmokeColor = SmokeColor
 end
   
@@ -247,13 +243,27 @@ end
 
 --- Bound.
 -- @param #PROTECT self
-function PROTECT:onafterProtected()
+function PROTECT:onafterStart()
+
+  self:E()
+
+  self:ScheduleRepeat( 5, 15, 0.1, nil, self.StatusCoalition, self )
+  
+  self:ScheduleRepeat( 5, 15, 0.1, nil, self.StatusZone, self )
+  
+  self:ScheduleRepeat( 10, 15, 0, nil, self.StatusSmoke, self )
+  
+end
+
+--- Bound.
+-- @param #PROTECT self
+function PROTECT:onenterProtected()
 
 
   if self.Coalition == coalition.side.BLUE then
-    self.ProtectZone:BoundZone( 12, country.id.USA )
+    --elf.ProtectZone:BoundZone( 12, country.id.USA )
   else
-    self.ProtectZone:BoundZone( 12, country.id.RUSSIA )
+    --self.ProtectZone:BoundZone( 12, country.id.RUSSIA )
   end
 end
 
@@ -307,7 +317,7 @@ function PROTECT:StatusSmoke()
   if self.SmokeTime == nil or self.SmokeTime + 300 <= CurrentTime then
     if self.SmokeColor then
       self.ProtectZone:GetCoordinate():Smoke( self.SmokeColor )
-      self.SmokeColor = nil
+      --self.SmokeColor = nil
       self.SmokeTime = CurrentTime
     end
   end
