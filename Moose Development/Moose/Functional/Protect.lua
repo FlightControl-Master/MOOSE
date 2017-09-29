@@ -167,6 +167,7 @@ function PROTECT:IsEmpty()
   return IsEmpty
 end
 
+
 --- Check if the units are still alive.
 -- @param #PROTECT self
 function PROTECT:AreProtectUnitsAlive()
@@ -241,18 +242,37 @@ function PROTECT:Flare( FlareColor )
 end
   
 
+--- Mark.
+-- @param #PROTECT self
+function PROTECT:Mark()
+
+  local Coord = self.ProtectZone:GetCoordinate()
+  local ZoneName = self:GetProtectZoneName()
+  local State = self:GetState()
+  
+  if self.MarkRed and self.MarkBlue then
+    self:E( { MarkRed = self.MarkRed, MarkBlue = self.MarkBlue } )
+    Coord:RemoveMark( self.MarkRed )
+    Coord:RemoveMark( self.MarkBlue )
+  end
+  
+  if self.Coalition == coalition.side.BLUE then
+    self.MarkBlue = Coord:MarkToCoalitionBlue( "Protect Zone: " .. ZoneName .. "\nStatus: " .. State )  
+    self.MarkRed = Coord:MarkToCoalitionRed( "Capture Zone: " .. ZoneName .. "\nStatus: " .. State )  
+  else
+    self.MarkRed = Coord:MarkToCoalitionRed( "Protect Zone: " .. ZoneName .. "\nStatus: " .. State )  
+    self.MarkBlue = Coord:MarkToCoalitionBlue( "Capture Zone: " .. ZoneName .. "\nStatus: " .. State )  
+  end
+end
+
+
 --- Bound.
 -- @param #PROTECT self
 function PROTECT:onafterStart()
 
-  self:E()
-
   self:ScheduleRepeat( 5, 15, 0.1, nil, self.StatusCoalition, self )
-  
   self:ScheduleRepeat( 5, 15, 0.1, nil, self.StatusZone, self )
-  
   self:ScheduleRepeat( 10, 15, 0, nil, self.StatusSmoke, self )
-  
 end
 
 --- Bound.
@@ -265,6 +285,9 @@ function PROTECT:onenterProtected()
   else
     --self.ProtectZone:BoundZone( 12, country.id.RUSSIA )
   end
+  
+  self:Mark()
+  
 end
 
 function PROTECT:onenterCaptured()
@@ -272,7 +295,22 @@ function PROTECT:onenterCaptured()
   local NewCoalition = self.ProtectZone:GetCoalition()
   self:E( { NewCoalition = NewCoalition } )
   self:SetCoalition( NewCoalition )
+
+  self:Mark()
 end
+
+
+function PROTECT:onenterEmpty()
+
+  self:Mark()
+end
+
+
+function PROTECT:onenterAttacked()
+
+  self:Mark()
+end
+
 
 --- Check status Coalition ownership.
 -- @param #PROTECT self
