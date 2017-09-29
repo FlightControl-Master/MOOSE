@@ -415,9 +415,9 @@ function POSITIONABLE:GetMessageText( Message, Name ) --R2.1 added
 
   local DCSObject = self:GetDCSObject()
   if DCSObject then
-    Name = Name and ( " (" .. Name .. ")" ) or ""
-    local Callsign = string.format( "[%s]", self:GetCallsign() ~= "" and self:GetCallsign() or self:GetName() )
-    local MessageText = Callsign .. Name .. ": " .. Message
+    Name = Name and ( " => " .. Name ) or ""
+    local Callsign = string.format( "%s", self:GetCallsign() ~= "" and self:GetCallsign() or self:GetName() )
+    local MessageText = string.format("[%s%s]: %s", Callsign, Name, Message )
     return MessageText
   end
 

@@ -10,7 +10,7 @@
 -- @module Protect
 
 --- @type PROTECT.__ Methods which are not intended for mission designers, but which are used interally by the moose designer :-)
--- @extends Core.Base#BASE
+-- @extends Core.Fsm#FSM
 
 --- @type PROTECT
 -- @extends #PROTECT.__
@@ -35,7 +35,7 @@ function PROTECT:New( ProtectZone, Coalition )
 
   local self = BASE:Inherit( self, FSM:New() ) -- #PROTECT
 
-  self.ProtectZone = ProtectZone
+  self.ProtectZone = ProtectZone -- Core.Zone#ZONE
   self.ProtectUnitSet = SET_UNIT:New()
   self.ProtectStaticSet = SET_STATIC:New()
   self.CaptureUnitSet = SET_UNIT:New()
@@ -44,21 +44,42 @@ function PROTECT:New( ProtectZone, Coalition )
   
   self:AddTransition( { "-", "Protected", "Captured" }, "Protected", "Protected" )
   
-  self:AddTransition( { "Protected", "Attacked" }, "Destroyed", "Destroyed" )
+  self:AddTransition( { "Protected", "Attacked", "Empty" }, "Empty", "Empty" )
   
-  self:AddTransition( { "Protected", "Destroyed" }, "Attacked", "Attacked" )
+  self:AddTransition( { "Protected", "Empty", "Attacked" }, "Attacked", "Attacked" )
 
-  self:AddTransition( { "Protected", "Attacked", "Destroyed" }, "Captured", "Captured" )
+  self:AddTransition( { "Protected", "Attacked", "Empty" }, "Captured", "Captured" )
   
-  self:ScheduleRepeat( 60, 60, 0, nil, self.Status, self )
+  self:ScheduleRepeat( 15, 15, 0.1, nil, self.StatusCoalition, self )
+  
+  self:ScheduleRepeat( 15, 15, 0.1, nil, self.StatusZone, self )
+  
+  self:ScheduleRepeat( 5, 300, 0, nil, self.StatusSmoke, self )
   
   self:SetCoalition( Coalition )
   
-  self:__Protected( 5 )
+  self.SmokeTime = nil
   
   return self
 
 end  
+
+
+--- Get the ProtectZone
+-- @param #PROTECT self
+-- @return Core.Zone#ZONE_BASE
+function PROTECT:GetProtectZone()
+  return self.ProtectZone
+end
+
+
+--- Get the name of the ProtectZone
+-- @param #PROTECT self
+-- @return #string
+function PROTECT:GetProtectZoneName()
+  return self.ProtectZone:GetName()
+end
+
 
 --- Set the owning coalition of the zone.
 -- @param #PROTECT self
@@ -121,9 +142,9 @@ end
 
 function PROTECT:IsProtected()
 
-  local IsAllCoalition = self.ProtectZone:IsAllInZoneOfCoalition( self.Coalition )
-  self:E( { IsAllCoalition = IsAllCoalition } )
-  return IsAllCoalition
+  local IsProtected = self.ProtectZone:IsAllInZoneOfCoalition( self.Coalition )
+  self:E( { IsProtected = IsProtected } )
+  return IsProtected
 end
 
 function PROTECT:IsCaptured()
@@ -136,12 +157,18 @@ end
 
 function PROTECT:IsAttacked()
 
-  local IsSomeCoalition = self.ProtectZone:IsSomeInZoneOfCoalition( self.Coalition )
-  self:E( { IsSomeCoalition = IsSomeCoalition } )
-  return IsSomeCoalition
+  local IsAttacked = self.ProtectZone:IsSomeInZoneOfCoalition( self.Coalition )
+  self:E( { IsAttacked = IsAttacked } )
+  return IsAttacked
 end
 
 
+function PROTECT:IsEmpty()
+
+  local IsEmpty = self.ProtectZone:IsNoneInZone()
+  self:E( { IsEmpty = IsEmpty } )
+  return IsEmpty
+end
 
 --- Check if the units are still alive.
 -- @param #PROTECT self
@@ -204,9 +231,31 @@ end
 -- @param #PROTECT self
 -- @param #SMOKECOLOR.Color SmokeColor
 function PROTECT:Smoke( SmokeColor )
-  self.ProtectZone:GetCoordinate():Smoke( SmokeColor )
+
+  local CurrentTime = timer.getTime()
+  self.SmokeColor = SmokeColor
 end
   
+
+--- Flare.
+-- @param #PROTECT self
+-- @param #SMOKECOLOR.Color FlareColor
+function PROTECT:Flare( FlareColor )
+  self.ProtectZone:FlareZone( FlareColor, math.random( 1, 360 ) )
+end
+  
+
+--- Bound.
+-- @param #PROTECT self
+function PROTECT:onafterProtected()
+
+
+  if self.Coalition == coalition.side.BLUE then
+    self.ProtectZone:BoundZone( 12, country.id.USA )
+  else
+    self.ProtectZone:BoundZone( 12, country.id.RUSSIA )
+  end
+end
 
 function PROTECT:onenterCaptured()
 
@@ -215,23 +264,54 @@ function PROTECT:onenterCaptured()
   self:SetCoalition( NewCoalition )
 end
 
---- Check status ProtectZone.
+--- Check status Coalition ownership.
 -- @param #PROTECT self
-function PROTECT:Status()
+function PROTECT:StatusCoalition()
+
+  self:E( { State = self:GetState() } )
   
   self.ProtectZone:Scan()
 
   if self:IsProtected() then
     self:Protected()
   else
-    if self:IsAttacked() then
-      self:Attacked()
-    else
-      if self:IsCaptured() then  
-        self:Captured()
-      end
+    if self:IsCaptured() then  
+      self:Captured()
     end
   end
 end
+
+--- Check status Zone.
+-- @param #PROTECT self
+function PROTECT:StatusZone()
+  
+  self:E( { State = self:GetState() } )
+
+  self.ProtectZone:Scan()
+
+  if self:IsAttacked() then
+    self:Attacked()
+  else
+    if self:IsEmpty() then  
+      self:Empty()
+    end
+  end
+end
+
+--- Check status Smoke.
+-- @param #PROTECT self
+function PROTECT:StatusSmoke()
+  
+  local CurrentTime = timer.getTime()
+
+  if self.SmokeTime == nil or self.SmokeTime + 300 <= CurrentTime then
+    if self.SmokeColor then
+      self.ProtectZone:GetCoordinate():Smoke( self.SmokeColor )
+      self.SmokeColor = nil
+      self.SmokeTime = CurrentTime
+    end
+  end
+end
+
 
 

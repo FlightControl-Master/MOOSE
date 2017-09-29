@@ -50,6 +50,8 @@
 -- ## Each zone has a name:
 -- 
 --   * @{#ZONE_BASE.GetName}(): Returns the name of the zone.
+--   * @{#ZONE_BASE.SetName}(): Sets the name of the zone.
+--   
 -- 
 -- ## Each zone implements two polymorphic functions defined in @{Zone#ZONE_BASE}:
 -- 
@@ -119,6 +121,17 @@ function ZONE_BASE:GetName()
   self:F2()
 
   return self.ZoneName
+end
+
+
+--- Sets the name of the zone.
+-- @param #ZONE_BASE self
+-- @param #string ZoneName The name of the zone.
+-- @return #ZONE_BASE
+function ZONE_BASE:SetName( ZoneName )
+  self:F2()
+
+  self.ZoneName = ZoneName
 end
 
 --- Returns if a Vec2 is within the zone.
@@ -648,6 +661,15 @@ end
 function ZONE_RADIUS:IsNoneInZoneOfCoalition( Coalition )
 
   return self.Coalitions[Coalition] == nil
+end
+
+
+--- Is None in Zone?
+-- @param #ZONE_RADIUS self
+-- @return #boolean
+function ZONE_RADIUS:IsNoneInZone()
+
+  return self:CountCoalitions() == 0
 end
 
 
