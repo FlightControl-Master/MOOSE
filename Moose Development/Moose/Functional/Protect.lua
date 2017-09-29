@@ -25,12 +25,13 @@ PROTECT = {
 --- PROTECT constructor.
 -- @param #PROTECT self
 -- @param Core.Zone#ZONE ProtectZone A @{Zone} object to protect.
+-- @param DCSCoalition.DCSCoalition#coalition Coalition The initial coalition owning the zone.
 -- @return #PROTECT
 -- @usage
 --  -- Protect the zone
 -- ProtectZone = PROTECT:New( ZONE:New( "Zone" ) )
 -- 
-function PROTECT:New( ProtectZone )
+function PROTECT:New( ProtectZone, Coalition )
 
   local self = BASE:Inherit( self, FSM:New() ) -- #PROTECT
 
@@ -39,21 +40,40 @@ function PROTECT:New( ProtectZone )
   self.ProtectStaticSet = SET_STATIC:New()
   self.CaptureUnitSet = SET_UNIT:New()
   
-  self:SetStartState( "Idle" )
+  self:SetStartState( "-" )
   
-  self:AddTransition( { "Idle", "Captured" }, "Protect", "Protecting" )
+  self:AddTransition( { "-", "Protected", "Captured" }, "Protected", "Protected" )
   
-  self:AddTransition( "Protecting", "Check", "Protecting" )
+  self:AddTransition( { "Protected", "Attacked" }, "Destroyed", "Destroyed" )
   
-  self:AddTransition( "Protecting", "Capture", "Captured" )
+  self:AddTransition( { "Protected", "Destroyed" }, "Attacked", "Attacked" )
+
+  self:AddTransition( { "Protected", "Attacked", "Destroyed" }, "Captured", "Captured" )
   
-  self:AddTransition( { "Protecting", "Captured" }, "Leave", "Idle" )
+  self:ScheduleRepeat( 60, 60, 0, nil, self.Status, self )
   
-  --self:ScheduleRepeat( 1, 5, 0, nil, self.CheckScheduler, self )
+  self:SetCoalition( Coalition )
+  
+  self:__Protected( 5 )
   
   return self
 
 end  
+
+--- Set the owning coalition of the zone.
+-- @param #PROTECT self
+-- @param DCSCoalition.DCSCoalition#coalition Coalition
+function PROTECT:SetCoalition( Coalition )
+  self.Coalition = Coalition
+end
+
+
+--- Get the owning coalition of the zone.
+-- @param #PROTECT self
+-- @return DCSCoalition.DCSCoalition#coalition Coalition
+function PROTECT:GetCoalition()
+  return self.Coalition
+end
 
 
 --- Add a unit to the protection.
@@ -97,6 +117,30 @@ end
 function PROTECT:GetCaptureUnitSet()
   return self.CaptureUnitSet
 end
+
+
+function PROTECT:IsProtected()
+
+  local IsAllCoalition = self.ProtectZone:IsAllInZoneOfCoalition( self.Coalition )
+  self:E( { IsAllCoalition = IsAllCoalition } )
+  return IsAllCoalition
+end
+
+function PROTECT:IsCaptured()
+
+  local IsCaptured = self.ProtectZone:IsAllInZoneOfOtherCoalition( self.Coalition )
+  self:E( { IsCaptured = IsCaptured } )
+  return IsCaptured
+end
+
+
+function PROTECT:IsAttacked()
+
+  local IsSomeCoalition = self.ProtectZone:IsSomeInZoneOfCoalition( self.Coalition )
+  self:E( { IsSomeCoalition = IsSomeCoalition } )
+  return IsSomeCoalition
+end
+
 
 
 --- Check if the units are still alive.
@@ -164,21 +208,30 @@ function PROTECT:Smoke( SmokeColor )
 end
   
 
-function PROTECT:onafterProtect()
+function PROTECT:onenterCaptured()
 
-  self:Check()
+  local NewCoalition = self.ProtectZone:GetCoalition()
+  self:E( { NewCoalition = NewCoalition } )
+  self:SetCoalition( NewCoalition )
 end
 
-function PROTECT:onafterCheck()
+--- Check status ProtectZone.
+-- @param #PROTECT self
+function PROTECT:Status()
   
-  if ( self.ProtectUnitSet and self:AreProtectUnitsAlive() ) or
-     ( self.ProtectStaticSet and self:AreProtectStaticsAlive() ) or
-     self:IsCaptureUnitInZone() == false then
-    self:__Check( -1 )
+  self.ProtectZone:Scan()
+
+  if self:IsProtected() then
+    self:Protected()
   else
-    self:Capture()
+    if self:IsAttacked() then
+      self:Attacked()
+    else
+      if self:IsCaptured() then  
+        self:Captured()
+      end
+    end
   end
-  
 end
 
 

@@ -2502,7 +2502,7 @@ do -- SET_STATIC
   function SET_STATIC:AddInDatabase( Event )
     self:F3( { Event } )
   
-    if Event.IniObjectCategory == 1 then
+    if Event.IniObjectCategory == Object.Category.STATIC then
       if not self.Database[Event.IniDCSStaticName] then
         self.Database[Event.IniDCSStaticName] = STATIC:Register( Event.IniDCSStaticName )
         self:T3( self.Database[Event.IniDCSStaticName] )
