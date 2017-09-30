@@ -42,16 +42,137 @@ function PROTECT:New( ProtectZone, Coalition )
   
   self:SetStartState( "-" )
   
-  self:AddTransition( "-", "Start", "Protected" )
+  self:AddTransition( "-", "Start", "Guarded" )
   
-  self:AddTransition( { "Captured", "Attacked", "Empty" }, "Protected", "Protected" )
+  --- Start Handler OnBefore for PROTECT
+  -- @function [parent=#PROTECT] OnBeforeStart
+  -- @param #PROTECT self
+  -- @param #string From
+  -- @param #string Event
+  -- @param #string To
+  -- @return #boolean
   
-  self:AddTransition( { "Protected", "Attacked" }, "Empty", "Empty" )
+  --- Start Handler OnAfter for PROTECT
+  -- @function [parent=#PROTECT] OnAfterStart
+  -- @param #PROTECT self
+  -- @param #string From
+  -- @param #string Event
+  -- @param #string To
   
-  self:AddTransition( { "Protected", "Empty" }, "Attacked", "Attacked" )
+  --- Start Trigger for PROTECT
+  -- @function [parent=#PROTECT] Start
+  -- @param #PROTECT self
+  
+  --- Start Asynchronous Trigger for PROTECT
+  -- @function [parent=#PROTECT] __Start
+  -- @param #PROTECT self
+  -- @param #number Delay
+  
+  self:AddTransition( { "Captured", "Attacked", "Empty" }, "Guard", "Guarded" )
+  
+  --- Guard Handler OnBefore for PROTECT
+  -- @function [parent=#PROTECT] OnBeforeGuard
+  -- @param #PROTECT self
+  -- @param #string From
+  -- @param #string Event
+  -- @param #string To
+  -- @return #boolean
+  
+  --- Guard Handler OnAfter for PROTECT
+  -- @function [parent=#PROTECT] OnAfterGuard
+  -- @param #PROTECT self
+  -- @param #string From
+  -- @param #string Event
+  -- @param #string To
+  
+  --- Guard Trigger for PROTECT
+  -- @function [parent=#PROTECT] Guard
+  -- @param #PROTECT self
+  
+  --- Guard Asynchronous Trigger for PROTECT
+  -- @function [parent=#PROTECT] __Guard
+  -- @param #PROTECT self
+  -- @param #number Delay
+  
+  self:AddTransition( { "Guarded", "Attacked" }, "Empty", "Empty" )
+  
+  --- Empty Handler OnBefore for PROTECT
+  -- @function [parent=#PROTECT] OnBeforeEmpty
+  -- @param #PROTECT self
+  -- @param #string From
+  -- @param #string Event
+  -- @param #string To
+  -- @return #boolean
+  
+  --- Empty Handler OnAfter for PROTECT
+  -- @function [parent=#PROTECT] OnAfterEmpty
+  -- @param #PROTECT self
+  -- @param #string From
+  -- @param #string Event
+  -- @param #string To
+  
+  --- Empty Trigger for PROTECT
+  -- @function [parent=#PROTECT] Empty
+  -- @param #PROTECT self
+  
+  --- Empty Asynchronous Trigger for PROTECT
+  -- @function [parent=#PROTECT] __Empty
+  -- @param #PROTECT self
+  -- @param #number Delay
+  
+  self:AddTransition( { "Guarded", "Empty" }, "Attack", "Attacked" )
 
-  self:AddTransition( { "Protected", "Attacked", "Empty" }, "Captured", "Captured" )
+  --- Attack Handler OnBefore for PROTECT
+  -- @function [parent=#PROTECT] OnBeforeAttack
+  -- @param #PROTECT self
+  -- @param #string From
+  -- @param #string Event
+  -- @param #string To
+  -- @return #boolean
   
+  --- Attack Handler OnAfter for PROTECT
+  -- @function [parent=#PROTECT] OnAfterAttack
+  -- @param #PROTECT self
+  -- @param #string From
+  -- @param #string Event
+  -- @param #string To
+  
+  --- Attack Trigger for PROTECT
+  -- @function [parent=#PROTECT] Attack
+  -- @param #PROTECT self
+  
+  --- Attack Asynchronous Trigger for PROTECT
+  -- @function [parent=#PROTECT] __Attack
+  -- @param #PROTECT self
+  -- @param #number Delay
+  
+  self:AddTransition( { "Guarded", "Attacked", "Empty" }, "Capture", "Captured" )
+ 
+  --- Capture Handler OnBefore for PROTECT
+  -- @function [parent=#PROTECT] OnBeforeCapture
+  -- @param #PROTECT self
+  -- @param #string From
+  -- @param #string Event
+  -- @param #string To
+  -- @return #boolean
+  
+  --- Capture Handler OnAfter for PROTECT
+  -- @function [parent=#PROTECT] OnAfterCapture
+  -- @param #PROTECT self
+  -- @param #string From
+  -- @param #string Event
+  -- @param #string To
+  
+  --- Capture Trigger for PROTECT
+  -- @function [parent=#PROTECT] Capture
+  -- @param #PROTECT self
+  
+  --- Capture Asynchronous Trigger for PROTECT
+  -- @function [parent=#PROTECT] __Capture
+  -- @param #PROTECT self
+  -- @param #number Delay
+  
+   
   
   self:SetCoalition( Coalition )
   
@@ -137,11 +258,11 @@ function PROTECT:GetCaptureUnitSet()
 end
 
 
-function PROTECT:IsProtected()
+function PROTECT:IsGuarded()
 
-  local IsProtected = self.ProtectZone:IsAllInZoneOfCoalition( self.Coalition )
-  self:E( { IsProtected = IsProtected } )
-  return IsProtected
+  local IsGuarded = self.ProtectZone:IsAllInZoneOfCoalition( self.Coalition )
+  self:E( { IsGuarded = IsGuarded } )
+  return IsGuarded
 end
 
 function PROTECT:IsCaptured()
@@ -257,10 +378,10 @@ function PROTECT:Mark()
   end
   
   if self.Coalition == coalition.side.BLUE then
-    self.MarkBlue = Coord:MarkToCoalitionBlue( "Protect Zone: " .. ZoneName .. "\nStatus: " .. State )  
+    self.MarkBlue = Coord:MarkToCoalitionBlue( "Guard Zone: " .. ZoneName .. "\nStatus: " .. State )  
     self.MarkRed = Coord:MarkToCoalitionRed( "Capture Zone: " .. ZoneName .. "\nStatus: " .. State )  
   else
-    self.MarkRed = Coord:MarkToCoalitionRed( "Protect Zone: " .. ZoneName .. "\nStatus: " .. State )  
+    self.MarkRed = Coord:MarkToCoalitionRed( "Guard Zone: " .. ZoneName .. "\nStatus: " .. State )  
     self.MarkBlue = Coord:MarkToCoalitionBlue( "Capture Zone: " .. ZoneName .. "\nStatus: " .. State )  
   end
 end
@@ -277,7 +398,7 @@ end
 
 --- Bound.
 -- @param #PROTECT self
-function PROTECT:onenterProtected()
+function PROTECT:onenterGuarded()
 
 
   if self.Coalition == coalition.side.BLUE then
@@ -320,11 +441,11 @@ function PROTECT:StatusCoalition()
   
   self.ProtectZone:Scan()
 
-  if self:IsProtected() then
-    self:Protected()
+  if self:IsGuarded() then
+    self:Guard()
   else
     if self:IsCaptured() then  
-      self:Captured()
+      self:Capture()
     end
   end
 end
@@ -338,7 +459,7 @@ function PROTECT:StatusZone()
   self.ProtectZone:Scan()
 
   if self:IsAttacked() then
-    self:Attacked()
+    self:Attack()
   else
     if self:IsEmpty() then  
       self:Empty()
@@ -360,6 +481,8 @@ function PROTECT:StatusSmoke()
     end
   end
 end
+
+
 
 
 
