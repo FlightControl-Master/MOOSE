@@ -61,7 +61,7 @@ do -- TASK_PROTECT
     Fsm:AddProcess   ( "Planned", "Accept", ACT_ASSIGN_ACCEPT:New( self.TaskBriefing ), { Assigned = "ProtectZone", Rejected = "Reject" }  )
     
     Fsm:AddTransition( "Assigned", "ProtectZone", "Protecting" )
-    Fsm:AddProcess   ( "Protecting", "Protect", "Protecting", {} )
+    Fsm:AddTransition( "Protecting", "Protect", "Protecting", {} )
     Fsm:AddTransition( "Protecting", "RouteToTarget", "Protecting" )
     Fsm:AddProcess( "Protecting", "RouteToTargetZone", ACT_ROUTE_ZONE:New(), {} )
     
