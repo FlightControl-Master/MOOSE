@@ -14,7 +14,7 @@ do -- TASK_PROTECT
 
   --- The TASK_PROTECT class
   -- @type TASK_PROTECT
-  -- @field Zone#ZONE_BASE ProtectZone
+  -- @field Functional.Protect#PROTECT Protect
   -- @extends Tasking.Task#TASK
 
   --- # TASK_PROTECT class, extends @{Task#TASK}
@@ -58,68 +58,37 @@ do -- TASK_PROTECT
     local Fsm = self:GetUnitProcess()
     
 
-    Fsm:AddProcess   ( "Planned", "Accept", ACT_ASSIGN_ACCEPT:New( self.TaskBriefing ), { Assigned = "RouteToRendezVous", Rejected = "Reject" }  )
+    Fsm:AddProcess   ( "Planned", "Accept", ACT_ASSIGN_ACCEPT:New( self.TaskBriefing ), { Assigned = "ProtectZone", Rejected = "Reject" }  )
     
-    Fsm:AddTransition( "Assigned", "RouteToRendezVous", "RoutingToRendezVous" )
-    Fsm:AddProcess   ( "RoutingToRendezVous", "RouteToRendezVousPoint", ACT_ROUTE_POINT:New(), { Arrived = "ArriveAtRendezVous" } )
-    Fsm:AddProcess   ( "RoutingToRendezVous", "RouteToRendezVousZone", ACT_ROUTE_ZONE:New(), { Arrived = "ArriveAtRendezVous" } )
-    
-    Fsm:AddTransition( { "Arrived", "RoutingToRendezVous" }, "ArriveAtRendezVous", "ArrivedAtRendezVous" )
-    
-    Fsm:AddTransition( { "ArrivedAtRendezVous", "HoldingAtRendezVous" }, "Engage", "Engaging" )
-    Fsm:AddTransition( { "ArrivedAtRendezVous", "HoldingAtRendezVous" }, "HoldAtRendezVous", "HoldingAtRendezVous" )
-     
-    Fsm:AddProcess   ( "Engaging", "Account", ACT_ACCOUNT_DEADS:New(), {} )
-    Fsm:AddTransition( "Engaging", "RouteToTarget", "Engaging" )
-    Fsm:AddProcess( "Engaging", "RouteToTargetZone", ACT_ROUTE_ZONE:New(), {} )
-    Fsm:AddProcess( "Engaging", "RouteToTargetPoint", ACT_ROUTE_POINT:New(), {} )
-    Fsm:AddTransition( "Engaging", "RouteToTargets", "Engaging" )
+    Fsm:AddTransition( "Assigned", "ProtectZone", "Protecting" )
+    Fsm:AddProcess   ( "Protecting", "Protect", "Protecting", {} )
+    Fsm:AddTransition( "Protecting", "RouteToTarget", "Protecting" )
+    Fsm:AddProcess( "Protecting", "RouteToTargetZone", ACT_ROUTE_ZONE:New(), {} )
     
     --Fsm:AddTransition( "Accounted", "DestroyedAll", "Accounted" )
     --Fsm:AddTransition( "Accounted", "Success", "Success" )
     Fsm:AddTransition( "Rejected", "Reject", "Aborted" )
     Fsm:AddTransition( "Failed", "Fail", "Failed" )
     
-    
-    --- Test 
-    -- @param #FSM_PROCESS self
-    -- @param Wrapper.Unit#UNIT TaskUnit
-    -- @param Tasking.Task_A2G#TASK_PROTECT Task
-    function Fsm:onafterRouteToRendezVous( TaskUnit, Task )
-      self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
-      -- Determine the first Unit from the self.RendezVousSetUnit
-      
-      if Task:GetRendezVousZone( TaskUnit ) then
-        self:__RouteToRendezVousZone( 0.1 )
-      else
-        if Task:GetRendezVousCoordinate( TaskUnit ) then
-          self:__RouteToRendezVousPoint( 0.1 )
-        else
-          self:__ArriveAtRendezVous( 0.1 )
-        end
-      end
-    end
-
-    --- Test 
-    -- @param #FSM_PROCESS self
-    -- @param Wrapper.Unit#UNIT TaskUnit
-    -- @param Tasking.Task#TASK_PROTECT Task
-    function Fsm:OnAfterArriveAtRendezVous( TaskUnit, Task )
-      self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
-      -- Determine the first Unit from the self.TargetSetUnit
-      
-      self:__Engage( 0.1 )      
-    end
+    self:SetTargetZone( self.Protect:GetProtectZone() )
     
     --- Test 
     -- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
     -- @param Tasking.Task#TASK_PROTECT Task
-    function Fsm:onafterEngage( TaskUnit, Task )
+    function Fsm:onafterProtectZone( TaskUnit, Task )
       self:E( { self } )
-      self:__Account( 0.1 )
-      self:__RouteToTarget(0.1 )
-      self:__RouteToTargets( -10 )
+      self:__Protect( 0.1 )
+      self:__RouteToTarget( 0.1 )
+    end
+    
+    --- Protect Loop
+    -- @param #FSM_PROCESS self
+    -- @param Wrapper.Unit#UNIT TaskUnit
+    -- @param Tasking.Task#TASK_PROTECT Task
+    function Fsm:onafterProtect( TaskUnit, Task )
+      self:E( { self } )
+      self:__Protect( 15 )
     end
     
     --- Test 
@@ -132,28 +101,7 @@ do -- TASK_PROTECT
       
       if Task:GetTargetZone( TaskUnit ) then
         self:__RouteToTargetZone( 0.1 )
-      else
-        local TargetUnit = Task.TargetSetUnit:GetFirst() -- Wrapper.Unit#UNIT
-        if TargetUnit then
-          local Coordinate = TargetUnit:GetPointVec3()
-          self:T( { TargetCoordinate = Coordinate, Coordinate:GetX(), Coordinate:GetY(), Coordinate:GetZ() } )
-          Task:SetTargetCoordinate( Coordinate, TaskUnit )
-        end
-        self:__RouteToTargetPoint( 0.1 )
       end
-    end
-    
-    --- Test 
-    -- @param #FSM_PROCESS self
-    -- @param Wrapper.Unit#UNIT TaskUnit
-    -- @param Tasking.Task_A2G#TASK_PROTECT Task
-    function Fsm:onafterRouteToTargets( TaskUnit, Task )
-      self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
-      local TargetUnit = Task.TargetSetUnit:GetFirst() -- Wrapper.Unit#UNIT
-      if TargetUnit then
-        Task:SetTargetCoordinate( TargetUnit:GetCoordinate(), TaskUnit )
-      end
-      self:__RouteToTargets( -10 )
     end
     
     return self
@@ -161,92 +109,20 @@ do -- TASK_PROTECT
   end
 
   --- @param #TASK_PROTECT self
-  -- @param Core.Set#SET_UNIT TargetSetUnit The set of targets.
-  function TASK_PROTECT:SetTargetSetUnit( TargetSetUnit )
+  -- @param Functional.Protect#PROTECT Protect The Protect Engine.
+  function TASK_PROTECT:SetProtect( Protect )
   
-    self.TargetSetUnit = TargetSetUnit
+    self.Protect = Protect -- Functional.Protect#PROTECT
   end
    
 
   
   --- @param #TASK_PROTECT self
   function TASK_PROTECT:GetPlannedMenuText()
-    return self:GetStateString() .. " - " .. self:GetTaskName() .. " ( " .. self.TargetSetUnit:GetUnitTypesText() .. " )"
+    return self:GetStateString() .. " - " .. self:GetTaskName() .. " ( " .. self.Protect:GetProtectZoneName() .. " )"
   end
 
-  --- @param #TASK_PROTECT self
-  -- @param Core.Point#COORDINATE RendezVousCoordinate The Coordinate object referencing to the 2D point where the RendezVous point is located on the map.
-  -- @param #number RendezVousRange The RendezVousRange that defines when the player is considered to have arrived at the RendezVous point.
-  -- @param Wrapper.Unit#UNIT TaskUnit
-  function TASK_PROTECT:SetRendezVousCoordinate( RendezVousCoordinate, RendezVousRange, TaskUnit  )
   
-    local ProcessUnit = self:GetUnitProcess( TaskUnit )
-  
-    local ActRouteRendezVous = ProcessUnit:GetProcess( "RoutingToRendezVous", "RouteToRendezVousPoint" ) -- Actions.Act_Route#ACT_ROUTE_POINT
-    ActRouteRendezVous:SetCoordinate( RendezVousCoordinate )
-    ActRouteRendezVous:SetRange( RendezVousRange )
-  end
-  
-  --- @param #TASK_PROTECT self
-  -- @param Wrapper.Unit#UNIT TaskUnit
-  -- @return Core.Point#COORDINATE The Coordinate object referencing to the 2D point where the RendezVous point is located on the map.
-  -- @return #number The RendezVousRange that defines when the player is considered to have arrived at the RendezVous point.
-  function TASK_PROTECT:GetRendezVousCoordinate( TaskUnit )
-  
-    local ProcessUnit = self:GetUnitProcess( TaskUnit )
-
-    local ActRouteRendezVous = ProcessUnit:GetProcess( "RoutingToRendezVous", "RouteToRendezVousPoint" ) -- Actions.Act_Route#ACT_ROUTE_POINT
-    return ActRouteRendezVous:GetCoordinate(), ActRouteRendezVous:GetRange()
-  end
-  
-  
-  
-  --- @param #TASK_PROTECT self
-  -- @param Core.Zone#ZONE_BASE RendezVousZone The Zone object where the RendezVous is located on the map.
-  -- @param Wrapper.Unit#UNIT TaskUnit
-  function TASK_PROTECT:SetRendezVousZone( RendezVousZone, TaskUnit )
-  
-    local ProcessUnit = self:GetUnitProcess( TaskUnit )
-
-    local ActRouteRendezVous = ProcessUnit:GetProcess( "RoutingToRendezVous", "RouteToRendezVousZone" ) -- Actions.Act_Route#ACT_ROUTE_ZONE
-    ActRouteRendezVous:SetZone( RendezVousZone )
-  end
-
-  --- @param #TASK_PROTECT self
-  -- @param Wrapper.Unit#UNIT TaskUnit
-  -- @return Core.Zone#ZONE_BASE The Zone object where the RendezVous is located on the map.
-  function TASK_PROTECT:GetRendezVousZone( TaskUnit )
-
-    local ProcessUnit = self:GetUnitProcess( TaskUnit )
-
-    local ActRouteRendezVous = ProcessUnit:GetProcess( "RoutingToRendezVous", "RouteToRendezVousZone" ) -- Actions.Act_Route#ACT_ROUTE_ZONE
-    return ActRouteRendezVous:GetZone()
-  end
-  
-  --- @param #TASK_PROTECT self
-  -- @param Core.Point#COORDINATE TargetCoordinate The Coordinate object where the Target is located on the map.
-  -- @param Wrapper.Unit#UNIT TaskUnit
-  function TASK_PROTECT:SetTargetCoordinate( TargetCoordinate, TaskUnit )
-  
-    local ProcessUnit = self:GetUnitProcess( TaskUnit )
-
-    local ActRouteTarget = ProcessUnit:GetProcess( "Engaging", "RouteToTargetPoint" ) -- Actions.Act_Route#ACT_ROUTE_POINT
-    ActRouteTarget:SetCoordinate( TargetCoordinate )
-  end
-   
-
-  --- @param #TASK_PROTECT self
-  -- @param Wrapper.Unit#UNIT TaskUnit
-  -- @return Core.Point#COORDINATE The Coordinate object where the Target is located on the map.
-  function TASK_PROTECT:GetTargetCoordinate( TaskUnit )
-
-    local ProcessUnit = self:GetUnitProcess( TaskUnit )
-
-    local ActRouteTarget = ProcessUnit:GetProcess( "Engaging", "RouteToTargetPoint" ) -- Actions.Act_Route#ACT_ROUTE_POINT
-    return ActRouteTarget:GetCoordinate()
-  end
-
-
   --- @param #TASK_PROTECT self
   -- @param Core.Zone#ZONE_BASE TargetZone The Zone object where the Target is located on the map.
   -- @param Wrapper.Unit#UNIT TaskUnit
@@ -254,8 +130,8 @@ do -- TASK_PROTECT
   
     local ProcessUnit = self:GetUnitProcess( TaskUnit )
 
-    local ActRouteTarget = ProcessUnit:GetProcess( "Engaging", "RouteToTargetZone" ) -- Actions.Act_Route#ACT_ROUTE_ZONE
-    ActRouteTarget:SetZone( TargetZone )
+    local ActRouteProtectZone = ProcessUnit:GetProcess( "Protecting", "RouteToTargetZone" ) -- Actions.Act_Route#ACT_ROUTE_ZONE
+    ActRouteProtectZone:SetZone( TargetZone )
   end
    
 
@@ -266,13 +142,13 @@ do -- TASK_PROTECT
 
     local ProcessUnit = self:GetUnitProcess( TaskUnit )
 
-    local ActRouteTarget = ProcessUnit:GetProcess( "Engaging", "RouteToTargetZone" ) -- Actions.Act_Route#ACT_ROUTE_ZONE
-    return ActRouteTarget:GetZone()
+    local ActRouteProtectZone = ProcessUnit:GetProcess( "Protecting", "RouteToTargetZone" ) -- Actions.Act_Route#ACT_ROUTE_ZONE
+    return ActRouteProtectZone:GetZone()
   end
 
   function TASK_PROTECT:SetGoalTotal()
   
-    self.GoalTotal = self.TargetSetUnit:Count()
+    self.GoalTotal = 1
   end
 
   function TASK_PROTECT:GetGoalTotal()
@@ -283,83 +159,59 @@ do -- TASK_PROTECT
 end 
 
 
-do -- TASK_A2G_SEAD
+do -- TASK_CAPTURE_ZONE
 
-  --- The TASK_A2G_SEAD class
-  -- @type TASK_A2G_SEAD
+  --- The TASK_CAPTURE_ZONE class
+  -- @type TASK_CAPTURE_ZONE
   -- @field Set#SET_UNIT TargetSetUnit
-  -- @extends Tasking.Task#TASK
+  -- @extends Tasking.Task_Protect#TASK_PROTECT
 
-  --- # TASK_A2G_SEAD class, extends @{Task_A2G#TASK_PROTECT}
+  --- # TASK_CAPTURE_ZONE class, extends @{Task_A2G#TASK_PROTECT}
   -- 
-  -- The TASK_A2G_SEAD class defines an Suppression or Extermination of Air Defenses task for a human player to be executed.
+  -- The TASK_CAPTURE_ZONE class defines an Suppression or Extermination of Air Defenses task for a human player to be executed.
   -- These tasks are important to be executed as they will help to achieve air superiority at the vicinity.
   -- 
-  -- The TASK_A2G_SEAD is used by the @{Task_A2G_Dispatcher#TASK_A2G_DISPATCHER} to automatically create SEAD tasks 
+  -- The TASK_CAPTURE_ZONE is used by the @{Task_A2G_Dispatcher#TASK_A2G_DISPATCHER} to automatically create SEAD tasks 
   -- based on detected enemy ground targets.
   -- 
-  -- @field #TASK_A2G_SEAD
-  TASK_A2G_SEAD = {
-    ClassName = "TASK_A2G_SEAD",
+  -- @field #TASK_CAPTURE_ZONE
+  TASK_CAPTURE_ZONE = {
+    ClassName = "TASK_CAPTURE_ZONE",
   }
   
-  --- Instantiates a new TASK_A2G_SEAD.
-  -- @param #TASK_A2G_SEAD self
+  --- Instantiates a new TASK_CAPTURE_ZONE.
+  -- @param #TASK_CAPTURE_ZONE self
   -- @param Tasking.Mission#MISSION Mission
   -- @param Core.Set#SET_GROUP SetGroup The set of groups for which the Task can be assigned.
   -- @param #string TaskName The name of the Task.
-  -- @param Core.Set#SET_UNIT TargetSetUnit 
+  -- @param Functional.Protect#PROTECT Protect
   -- @param #string TaskBriefing The briefing of the task.
-  -- @return #TASK_A2G_SEAD self
-  function TASK_A2G_SEAD:New( Mission, SetGroup, TaskName, TargetSetUnit, TaskBriefing)
-    local self = BASE:Inherit( self, TASK_PROTECT:New( Mission, SetGroup, TaskName, TargetSetUnit, "SEAD", TaskBriefing ) ) -- #TASK_A2G_SEAD
+  -- @return #TASK_CAPTURE_ZONE self
+  function TASK_CAPTURE_ZONE:New( Mission, SetGroup, TaskName, Protect, TaskBriefing)
+    local self = BASE:Inherit( self, TASK_PROTECT:New( Mission, SetGroup, TaskName, Protect, "CAPTURE", TaskBriefing ) ) -- #TASK_CAPTURE_ZONE
     self:F()
     
     Mission:AddTask( self )
     
     self:SetBriefing( 
       TaskBriefing or 
-      "Execute a Suppression of Enemy Air Defenses." 
+      "Capture zone " .. self.Protect:GetProtectZoneName() .. "."
     )
 
     return self
   end 
 
-  function TASK_A2G_SEAD:UpdateTaskInfo() 
+  --- Instantiates a new TASK_CAPTURE_ZONE.
+  -- @param #TASK_CAPTURE_ZONE self
+  function TASK_CAPTURE_ZONE:UpdateTaskInfo() 
 
 
-    local TargetCoordinate = self.Detection and self.Detection:GetDetectedItemCoordinate( self.DetectedItemIndex ) or self.TargetSetUnit:GetFirst():GetCoordinate() 
-    self:SetInfo( "Coordinates", TargetCoordinate, 0 )
-
-    local ThreatLevel, ThreatText
-    if self.Detection then
-      ThreatLevel, ThreatText = self.Detection:GetDetectedItemThreatLevel( self.DetectedItemIndex )
-    else
-      ThreatLevel, ThreatText = self.TargetSetUnit:CalculateThreatLevelA2G()
-    end
-    self:SetInfo( "Threat", ThreatText .. " [" .. string.rep(  "■", ThreatLevel ) .. "]", 11 )
-
-    if self.Detection then
-      local DetectedItemsCount = self.TargetSetUnit:Count()
-      local ReportTypes = REPORT:New()
-      local TargetTypes = {}
-      for TargetUnitName, TargetUnit in pairs( self.TargetSetUnit:GetSet() ) do
-        local TargetType = self.Detection:GetDetectedUnitTypeName( TargetUnit )
-        if not TargetTypes[TargetType] then
-          TargetTypes[TargetType] = TargetType
-          ReportTypes:Add( TargetType )
-        end
-      end
-      self:SetInfo( "Targets", string.format( "%d of %s", DetectedItemsCount, ReportTypes:Text( ", " ) ), 10 ) 
-    else
-      local DetectedItemsCount = self.TargetSetUnit:Count()
-      local DetectedItemsTypes = self.TargetSetUnit:GetTypeNames()
-      self:SetInfo( "Targets", string.format( "%d of %s", DetectedItemsCount, DetectedItemsTypes ), 10 ) 
-    end
+    local ZoneCoordinate = self.Protect:GetProtectZone():GetCoordinate() 
+    self:SetInfo( "Coordinates", ZoneCoordinate, 0 )
 
   end
     
-  function TASK_A2G_SEAD:ReportOrder( ReportGroup ) 
+  function TASK_CAPTURE_ZONE:ReportOrder( ReportGroup ) 
     local Coordinate = self:GetInfo( "Coordinates" )
     --local Coordinate = self.TaskInfo.Coordinates.TaskInfoText
     local Distance = ReportGroup:GetCoordinate():Get2DDistance( Coordinate )
@@ -368,11 +220,10 @@ do -- TASK_A2G_SEAD
   end
   
   
-  --- @param #TASK_A2G_SEAD self
-  function TASK_A2G_SEAD:onafterGoal( TaskUnit, From, Event, To )
-    local TargetSetUnit = self.TargetSetUnit -- Core.Set#SET_UNIT
+  --- @param #TASK_CAPTURE_ZONE self
+  function TASK_CAPTURE_ZONE:onafterGoal( TaskUnit, From, Event, To )
     
-    if TargetSetUnit:Count() == 0 then
+    if self.Protect:IsState( "Captured" ) then
       self:Success()
     end
     
@@ -380,49 +231,49 @@ do -- TASK_A2G_SEAD
   end
 
   --- Set a score when a target in scope of the A2G attack, has been destroyed .
-  -- @param #TASK_A2G_SEAD self
+  -- @param #TASK_CAPTURE_ZONE self
   -- @param #string PlayerName The name of the player.
   -- @param #number Score The score in points to be granted when task process has been achieved.
   -- @param Wrapper.Unit#UNIT TaskUnit
-  -- @return #TASK_A2G_SEAD
-  function TASK_A2G_SEAD:SetScoreOnProgress( PlayerName, Score, TaskUnit )
+  -- @return #TASK_CAPTURE_ZONE
+  function TASK_CAPTURE_ZONE:SetScoreOnProgress( PlayerName, Score, TaskUnit )
     self:F( { PlayerName, Score, TaskUnit } )
 
     local ProcessUnit = self:GetUnitProcess( TaskUnit )
 
-    ProcessUnit:AddScoreProcess( "Engaging", "Account", "AccountForPlayer", "Player " .. PlayerName .. " has SEADed a target.", Score )
+    --ProcessUnit:AddScoreProcess( "Protecting", "Protect", "Captured", "Player " .. PlayerName .. " has SEADed a target.", Score )
     
     return self
   end
 
   --- Set a score when all the targets in scope of the A2G attack, have been destroyed.
-  -- @param #TASK_A2G_SEAD self
+  -- @param #TASK_CAPTURE_ZONE self
   -- @param #string PlayerName The name of the player.
   -- @param #number Score The score in points.
   -- @param Wrapper.Unit#UNIT TaskUnit
-  -- @return #TASK_A2G_SEAD
-  function TASK_A2G_SEAD:SetScoreOnSuccess( PlayerName, Score, TaskUnit )
+  -- @return #TASK_CAPTURE_ZONE
+  function TASK_CAPTURE_ZONE:SetScoreOnSuccess( PlayerName, Score, TaskUnit )
     self:F( { PlayerName, Score, TaskUnit } )
 
     local ProcessUnit = self:GetUnitProcess( TaskUnit )
 
-    ProcessUnit:AddScore( "Success", "All radar emitting targets have been successfully SEADed!", Score )
+    ProcessUnit:AddScore( "Success", "The zone has been captured!", Score )
     
     return self
   end
 
   --- Set a penalty when the A2G attack has failed.
-  -- @param #TASK_A2G_SEAD self
+  -- @param #TASK_CAPTURE_ZONE self
   -- @param #string PlayerName The name of the player.
   -- @param #number Penalty The penalty in points, must be a negative value!
   -- @param Wrapper.Unit#UNIT TaskUnit
-  -- @return #TASK_A2G_SEAD
-  function TASK_A2G_SEAD:SetScoreOnFail( PlayerName, Penalty, TaskUnit )
+  -- @return #TASK_CAPTURE_ZONE
+  function TASK_CAPTURE_ZONE:SetScoreOnFail( PlayerName, Penalty, TaskUnit )
     self:F( { PlayerName, Penalty, TaskUnit } )
 
     local ProcessUnit = self:GetUnitProcess( TaskUnit )
 
-    ProcessUnit:AddScore( "Failed", "The SEADing has failed!", Penalty )
+    ProcessUnit:AddScore( "Failed", "The zone has been lost!", Penalty )
     
     return self
   end
@@ -430,301 +281,3 @@ do -- TASK_A2G_SEAD
 
 end
 
-do -- TASK_A2G_BAI
-
-  --- The TASK_A2G_BAI class
-  -- @type TASK_A2G_BAI
-  -- @field Set#SET_UNIT TargetSetUnit
-  -- @extends Tasking.Task#TASK
-
-  --- # TASK_A2G_BAI class, extends @{Task_A2G#TASK_PROTECT}
-  -- 
-  -- The TASK_A2G_BAI class defines an Battlefield Air Interdiction task for a human player to be executed.
-  -- These tasks are more strategic in nature and are most of the time further away from friendly forces.
-  -- BAI tasks can also be used to express the abscence of friendly forces near the vicinity.
-  -- 
-  -- The TASK_A2G_BAI is used by the @{Task_A2G_Dispatcher#TASK_A2G_DISPATCHER} to automatically create BAI tasks 
-  -- based on detected enemy ground targets.
-  -- 
-  -- @field #TASK_A2G_BAI
-  TASK_A2G_BAI = {
-    ClassName = "TASK_A2G_BAI",
-  }
-  
-  --- Instantiates a new TASK_A2G_BAI.
-  -- @param #TASK_A2G_BAI self
-  -- @param Tasking.Mission#MISSION Mission
-  -- @param Core.Set#SET_GROUP SetGroup The set of groups for which the Task can be assigned.
-  -- @param #string TaskName The name of the Task.
-  -- @param Core.Set#SET_UNIT TargetSetUnit 
-  -- @param #string TaskBriefing The briefing of the task.
-  -- @return #TASK_A2G_BAI self
-  function TASK_A2G_BAI:New( Mission, SetGroup, TaskName, TargetSetUnit, TaskBriefing )
-    local self = BASE:Inherit( self, TASK_PROTECT:New( Mission, SetGroup, TaskName, TargetSetUnit, "BAI", TaskBriefing ) ) -- #TASK_A2G_BAI
-    self:F()
-    
-    Mission:AddTask( self )
-    
-    self:SetBriefing( 
-      TaskBriefing or 
-      "Execute a Battlefield Air Interdiction of a group of enemy targets."
-    )
-    
-    return self
-  end
-  
-  function TASK_A2G_BAI:UpdateTaskInfo() 
-
-    self:E({self.Detection, self.DetectedItemIndex})
-
-    local TargetCoordinate = self.Detection and self.Detection:GetDetectedItemCoordinate( self.DetectedItemIndex ) or self.TargetSetUnit:GetFirst():GetCoordinate() 
-    self:SetInfo( "Coordinates", TargetCoordinate, 0 )
-
-    local ThreatLevel, ThreatText
-    if self.Detection then
-      ThreatLevel, ThreatText = self.Detection:GetDetectedItemThreatLevel( self.DetectedItemIndex )
-    else
-      ThreatLevel, ThreatText = self.TargetSetUnit:CalculateThreatLevelA2G()
-    end
-    self:SetInfo( "Threat", ThreatText .. " [" .. string.rep(  "■", ThreatLevel ) .. "]", 11 )
-
-    if self.Detection then
-      local DetectedItemsCount = self.TargetSetUnit:Count()
-      local ReportTypes = REPORT:New()
-      local TargetTypes = {}
-      for TargetUnitName, TargetUnit in pairs( self.TargetSetUnit:GetSet() ) do
-        local TargetType = self.Detection:GetDetectedUnitTypeName( TargetUnit )
-        if not TargetTypes[TargetType] then
-          TargetTypes[TargetType] = TargetType
-          ReportTypes:Add( TargetType )
-        end
-      end
-      self:SetInfo( "Targets", string.format( "%d of %s", DetectedItemsCount, ReportTypes:Text( ", " ) ), 10 ) 
-    else
-      local DetectedItemsCount = self.TargetSetUnit:Count()
-      local DetectedItemsTypes = self.TargetSetUnit:GetTypeNames()
-      self:SetInfo( "Targets", string.format( "%d of %s", DetectedItemsCount, DetectedItemsTypes ), 10 ) 
-    end
-
-  end
-
-
-  function TASK_A2G_BAI:ReportOrder( ReportGroup ) 
-    local Coordinate = self:GetInfo( "Coordinates" )
-    --local Coordinate = self.TaskInfo.Coordinates.TaskInfoText
-    local Distance = ReportGroup:GetCoordinate():Get2DDistance( Coordinate )
-    
-    return Distance
-  end
-
-
-  --- @param #TASK_A2G_BAI self
-  function TASK_A2G_BAI:onafterGoal( TaskUnit, From, Event, To )
-    local TargetSetUnit = self.TargetSetUnit -- Core.Set#SET_UNIT
-    
-    if TargetSetUnit:Count() == 0 then
-      self:Success()
-    end
-    
-    self:__Goal( -10 )
-  end
-
-  --- Set a score when a target in scope of the A2G attack, has been destroyed .
-  -- @param #TASK_A2G_BAI self
-  -- @param #string PlayerName The name of the player.
-  -- @param #number Score The score in points to be granted when task process has been achieved.
-  -- @param Wrapper.Unit#UNIT TaskUnit
-  -- @return #TASK_A2G_BAI
-  function TASK_A2G_BAI:SetScoreOnProgress( PlayerName, Score, TaskUnit )
-    self:F( { PlayerName, Score, TaskUnit } )
-
-    local ProcessUnit = self:GetUnitProcess( TaskUnit )
-
-    ProcessUnit:AddScoreProcess( "Engaging", "Account", "AccountForPlayer", "Player " .. PlayerName .. " has destroyed a target in Battlefield Air Interdiction (BAI).", Score )
-    
-    return self
-  end
-
-  --- Set a score when all the targets in scope of the A2G attack, have been destroyed.
-  -- @param #TASK_A2G_BAI self
-  -- @param #string PlayerName The name of the player.
-  -- @param #number Score The score in points.
-  -- @param Wrapper.Unit#UNIT TaskUnit
-  -- @return #TASK_A2G_BAI
-  function TASK_A2G_BAI:SetScoreOnSuccess( PlayerName, Score, TaskUnit )
-    self:F( { PlayerName, Score, TaskUnit } )
-
-    local ProcessUnit = self:GetUnitProcess( TaskUnit )
-
-    ProcessUnit:AddScore( "Success", "All targets have been successfully destroyed! The Battlefield Air Interdiction (BAI) is a success!", Score )
-    
-    return self
-  end
-
-  --- Set a penalty when the A2G attack has failed.
-  -- @param #TASK_A2G_BAI self
-  -- @param #string PlayerName The name of the player.
-  -- @param #number Penalty The penalty in points, must be a negative value!
-  -- @param Wrapper.Unit#UNIT TaskUnit
-  -- @return #TASK_A2G_BAI
-  function TASK_A2G_BAI:SetScoreOnFail( PlayerName, Penalty, TaskUnit )
-    self:F( { PlayerName, Penalty, TaskUnit } )
-
-    local ProcessUnit = self:GetUnitProcess( TaskUnit )
-
-    ProcessUnit:AddScore( "Failed", "The Battlefield Air Interdiction (BAI) has failed!", Penalty )
-    
-    return self
-  end
-
-
-end
-
-do -- TASK_A2G_CAS
-
-  --- The TASK_A2G_CAS class
-  -- @type TASK_A2G_CAS
-  -- @field Set#SET_UNIT TargetSetUnit
-  -- @extends Tasking.Task#TASK
-
-  --- # TASK_A2G_CAS class, extends @{Task_A2G#TASK_PROTECT}
-  -- 
-  -- The TASK_A2G_CAS class defines an Close Air Support task for a human player to be executed.
-  -- Friendly forces will be in the vicinity within 6km from the enemy.
-  -- 
-  -- The TASK_A2G_CAS is used by the @{Task_A2G_Dispatcher#TASK_A2G_DISPATCHER} to automatically create CAS tasks 
-  -- based on detected enemy ground targets.
-  -- 
-  -- @field #TASK_A2G_CAS
-  TASK_A2G_CAS = {
-    ClassName = "TASK_A2G_CAS",
-  }
-  
-  --- Instantiates a new TASK_A2G_CAS.
-  -- @param #TASK_A2G_CAS self
-  -- @param Tasking.Mission#MISSION Mission
-  -- @param Core.Set#SET_GROUP SetGroup The set of groups for which the Task can be assigned.
-  -- @param #string TaskName The name of the Task.
-  -- @param Core.Set#SET_UNIT TargetSetUnit 
-  -- @param #string TaskBriefing The briefing of the task.
-  -- @return #TASK_A2G_CAS self
-  function TASK_A2G_CAS:New( Mission, SetGroup, TaskName, TargetSetUnit, TaskBriefing )
-    local self = BASE:Inherit( self, TASK_PROTECT:New( Mission, SetGroup, TaskName, TargetSetUnit, "CAS", TaskBriefing ) ) -- #TASK_A2G_CAS
-    self:F()
-    
-    Mission:AddTask( self )
-    
-    self:SetBriefing( 
-      TaskBriefing or 
-      "Execute a Close Air Support for a group of enemy targets. " ..
-      "Beware of friendlies at the vicinity! "
-    )
-
-    
-    return self
-  end 
-  
-  function TASK_A2G_CAS:UpdateTaskInfo()
-  
-    local TargetCoordinate = ( self.Detection and self.Detection:GetDetectedItemCoordinate( self.DetectedItemIndex ) ) or self.TargetSetUnit:GetFirst():GetCoordinate() 
-    self:SetInfo( "Coordinates", TargetCoordinate, 0 )
-    
-    local ThreatLevel, ThreatText
-    if self.Detection then
-      ThreatLevel, ThreatText = self.Detection:GetDetectedItemThreatLevel( self.DetectedItemIndex )
-    else
-      ThreatLevel, ThreatText = self.TargetSetUnit:CalculateThreatLevelA2G()
-    end
-    self:SetInfo( "Threat", ThreatText .. " [" .. string.rep(  "■", ThreatLevel ) .. "]", 11 )
-
-    if self.Detection then
-      local DetectedItemsCount = self.TargetSetUnit:Count()
-      local ReportTypes = REPORT:New()
-      local TargetTypes = {}
-      for TargetUnitName, TargetUnit in pairs( self.TargetSetUnit:GetSet() ) do
-        local TargetType = self.Detection:GetDetectedUnitTypeName( TargetUnit )
-        if not TargetTypes[TargetType] then
-          TargetTypes[TargetType] = TargetType
-          ReportTypes:Add( TargetType )
-        end
-      end
-      self:SetInfo( "Targets", string.format( "%d of %s", DetectedItemsCount, ReportTypes:Text( ", " ) ), 10 ) 
-    else
-      local DetectedItemsCount = self.TargetSetUnit:Count()
-      local DetectedItemsTypes = self.TargetSetUnit:GetTypeNames()
-      self:SetInfo( "Targets", string.format( "%d of %s", DetectedItemsCount, DetectedItemsTypes ), 10 ) 
-    end
-
-  end
-
-  --- @param #TASK_A2G_CAS self
-  function TASK_A2G_CAS:ReportOrder( ReportGroup )
-     
-    local Coordinate = self:GetInfo( "Coordinates" )
-    local Distance = ReportGroup:GetCoordinate():Get2DDistance( Coordinate )
-    
-    return Distance
-  end
-
-
-  --- @param #TASK_A2G_CAS self
-  function TASK_A2G_CAS:onafterGoal( TaskUnit, From, Event, To )
-    local TargetSetUnit = self.TargetSetUnit -- Core.Set#SET_UNIT
-    
-    if TargetSetUnit:Count() == 0 then
-      self:Success()
-    end
-    
-    self:__Goal( -10 )
-  end
-
-  --- Set a score when a target in scope of the A2G attack, has been destroyed .
-  -- @param #TASK_A2G_CAS self
-  -- @param #string PlayerName The name of the player.
-  -- @param #number Score The score in points to be granted when task process has been achieved.
-  -- @param Wrapper.Unit#UNIT TaskUnit
-  -- @return #TASK_A2G_CAS
-  function TASK_A2G_CAS:SetScoreOnProgress( PlayerName, Score, TaskUnit )
-    self:F( { PlayerName, Score, TaskUnit } )
-
-    local ProcessUnit = self:GetUnitProcess( TaskUnit )
-
-    ProcessUnit:AddScoreProcess( "Engaging", "Account", "AccountForPlayer", "Player " .. PlayerName .. " has destroyed a target in Close Air Support (CAS).", Score )
-    
-    return self
-  end
-
-  --- Set a score when all the targets in scope of the A2G attack, have been destroyed.
-  -- @param #TASK_A2G_CAS self
-  -- @param #string PlayerName The name of the player.
-  -- @param #number Score The score in points.
-  -- @param Wrapper.Unit#UNIT TaskUnit
-  -- @return #TASK_A2G_CAS
-  function TASK_A2G_CAS:SetScoreOnSuccess( PlayerName, Score, TaskUnit )
-    self:F( { PlayerName, Score, TaskUnit } )
-
-    local ProcessUnit = self:GetUnitProcess( TaskUnit )
-
-    ProcessUnit:AddScore( "Success", "All targets have been successfully destroyed! The Close Air Support (CAS) was a success!", Score )
-    
-    return self
-  end
-
-  --- Set a penalty when the A2G attack has failed.
-  -- @param #TASK_A2G_CAS self
-  -- @param #string PlayerName The name of the player.
-  -- @param #number Penalty The penalty in points, must be a negative value!
-  -- @param Wrapper.Unit#UNIT TaskUnit
-  -- @return #TASK_A2G_CAS
-  function TASK_A2G_CAS:SetScoreOnFail( PlayerName, Penalty, TaskUnit )
-    self:F( { PlayerName, Penalty, TaskUnit } )
-
-    local ProcessUnit = self:GetUnitProcess( TaskUnit )
-
-    ProcessUnit:AddScore( "Failed", "The Close Air Support (CAS) has failed!", Penalty )
-    
-    return self
-  end
-
-
-end
