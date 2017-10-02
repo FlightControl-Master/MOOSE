@@ -22,167 +22,6 @@ PROTECT = {
   ClassName = "PROTECT",
 }
 
---- PROTECT constructor.
--- @param #PROTECT self
--- @param Core.Zone#ZONE ProtectZone A @{Zone} object to protect.
--- @param DCSCoalition.DCSCoalition#coalition Coalition The initial coalition owning the zone.
--- @return #PROTECT
--- @usage
---  -- Protect the zone
--- ProtectZone = PROTECT:New( ZONE:New( "Zone" ) )
--- 
-function PROTECT:New( ProtectZone, Coalition )
-
-  local self = BASE:Inherit( self, FSM:New() ) -- #PROTECT
-
-  self.ProtectZone = ProtectZone -- Core.Zone#ZONE
-  self.ProtectUnitSet = SET_UNIT:New()
-  self.ProtectStaticSet = SET_STATIC:New()
-  self.CaptureUnitSet = SET_UNIT:New()
-  
-  self:SetStartState( "-" )
-  
-  self:AddTransition( "-", "Start", "Guarded" )
-  
-  --- Start Handler OnBefore for PROTECT
-  -- @function [parent=#PROTECT] OnBeforeStart
-  -- @param #PROTECT self
-  -- @param #string From
-  -- @param #string Event
-  -- @param #string To
-  -- @return #boolean
-  
-  --- Start Handler OnAfter for PROTECT
-  -- @function [parent=#PROTECT] OnAfterStart
-  -- @param #PROTECT self
-  -- @param #string From
-  -- @param #string Event
-  -- @param #string To
-  
-  --- Start Trigger for PROTECT
-  -- @function [parent=#PROTECT] Start
-  -- @param #PROTECT self
-  
-  --- Start Asynchronous Trigger for PROTECT
-  -- @function [parent=#PROTECT] __Start
-  -- @param #PROTECT self
-  -- @param #number Delay
-  
-  self:AddTransition( { "Captured", "Attacked", "Empty" }, "Guard", "Guarded" )
-  
-  --- Guard Handler OnBefore for PROTECT
-  -- @function [parent=#PROTECT] OnBeforeGuard
-  -- @param #PROTECT self
-  -- @param #string From
-  -- @param #string Event
-  -- @param #string To
-  -- @return #boolean
-  
-  --- Guard Handler OnAfter for PROTECT
-  -- @function [parent=#PROTECT] OnAfterGuard
-  -- @param #PROTECT self
-  -- @param #string From
-  -- @param #string Event
-  -- @param #string To
-  
-  --- Guard Trigger for PROTECT
-  -- @function [parent=#PROTECT] Guard
-  -- @param #PROTECT self
-  
-  --- Guard Asynchronous Trigger for PROTECT
-  -- @function [parent=#PROTECT] __Guard
-  -- @param #PROTECT self
-  -- @param #number Delay
-  
-  self:AddTransition( { "Guarded", "Attacked" }, "Empty", "Empty" )
-  
-  --- Empty Handler OnBefore for PROTECT
-  -- @function [parent=#PROTECT] OnBeforeEmpty
-  -- @param #PROTECT self
-  -- @param #string From
-  -- @param #string Event
-  -- @param #string To
-  -- @return #boolean
-  
-  --- Empty Handler OnAfter for PROTECT
-  -- @function [parent=#PROTECT] OnAfterEmpty
-  -- @param #PROTECT self
-  -- @param #string From
-  -- @param #string Event
-  -- @param #string To
-  
-  --- Empty Trigger for PROTECT
-  -- @function [parent=#PROTECT] Empty
-  -- @param #PROTECT self
-  
-  --- Empty Asynchronous Trigger for PROTECT
-  -- @function [parent=#PROTECT] __Empty
-  -- @param #PROTECT self
-  -- @param #number Delay
-  
-  self:AddTransition( { "Guarded", "Empty" }, "Attack", "Attacked" )
-
-  --- Attack Handler OnBefore for PROTECT
-  -- @function [parent=#PROTECT] OnBeforeAttack
-  -- @param #PROTECT self
-  -- @param #string From
-  -- @param #string Event
-  -- @param #string To
-  -- @return #boolean
-  
-  --- Attack Handler OnAfter for PROTECT
-  -- @function [parent=#PROTECT] OnAfterAttack
-  -- @param #PROTECT self
-  -- @param #string From
-  -- @param #string Event
-  -- @param #string To
-  
-  --- Attack Trigger for PROTECT
-  -- @function [parent=#PROTECT] Attack
-  -- @param #PROTECT self
-  
-  --- Attack Asynchronous Trigger for PROTECT
-  -- @function [parent=#PROTECT] __Attack
-  -- @param #PROTECT self
-  -- @param #number Delay
-  
-  self:AddTransition( { "Guarded", "Attacked", "Empty" }, "Capture", "Captured" )
- 
-  --- Capture Handler OnBefore for PROTECT
-  -- @function [parent=#PROTECT] OnBeforeCapture
-  -- @param #PROTECT self
-  -- @param #string From
-  -- @param #string Event
-  -- @param #string To
-  -- @return #boolean
-  
-  --- Capture Handler OnAfter for PROTECT
-  -- @function [parent=#PROTECT] OnAfterCapture
-  -- @param #PROTECT self
-  -- @param #string From
-  -- @param #string Event
-  -- @param #string To
-  
-  --- Capture Trigger for PROTECT
-  -- @function [parent=#PROTECT] Capture
-  -- @param #PROTECT self
-  
-  --- Capture Asynchronous Trigger for PROTECT
-  -- @function [parent=#PROTECT] __Capture
-  -- @param #PROTECT self
-  -- @param #number Delay
-  
-   
-  
-  self:SetCoalition( Coalition )
-  
-  self.SmokeTime = nil
-  
-  return self
-
-end  
-
-
 --- Get the ProtectZone
 -- @param #PROTECT self
 -- @return Core.Zone#ZONE_BASE
@@ -209,52 +48,30 @@ end
 
 --- Get the owning coalition of the zone.
 -- @param #PROTECT self
--- @return DCSCoalition.DCSCoalition#coalition Coalition
+-- @return DCSCoalition.DCSCoalition#coalition Coalition.
 function PROTECT:GetCoalition()
   return self.Coalition
 end
 
 
---- Add a unit to the protection.
+--- Get the owning coalition name of the zone.
 -- @param #PROTECT self
--- @param Wrapper.Unit#UNIT ProtectUnit A @{Unit} object to protect.
-function PROTECT:AddProtectUnit( ProtectUnit )
-  self.ProtectUnitSet:AddUnit( ProtectUnit )
-end
+-- @return #string Coalition name.
+function PROTECT:GetCoalitionName()
 
---- Get the Protect unit Set.
--- @param #PROTECT self
--- @return Wrapper.Unit#UNIT The Set of capture units.
-function PROTECT:GetProtectUnitSet()
-  return self.ProtectUnitSet
-end
-
---- Add a static to the protection.
--- @param #PROTECT self
--- @param Wrapper.Unit#UNIT ProtectStatic A @{Static} object to protect.
-function PROTECT:AddProtectStatic( ProtectStatic )
-  self.ProtectStaticSet:AddStatic( ProtectStatic )
-end
-
---- Get the Protect static Set.
--- @param #PROTECT self
--- @return Wrapper.Unit#UNIT The Set of capture statics.
-function PROTECT:GetProtectStaticSet()
-  return self.ProtectStaticSet
-end
-
---- Add a Capture unit to allow to capture the zone.
--- @param #PROTECT self
--- @param Wrapper.Unit#UNIT CaptureUnit A @{Unit} object to allow a capturing.
-function PROTECT:AddCaptureUnit( CaptureUnit )
-  self.CaptureUnitSet:AddUnit( CaptureUnit )
-end
-
---- Get the Capture unit Set.
--- @param #PROTECT self
--- @return Wrapper.Unit#UNIT The Set of capture units.
-function PROTECT:GetCaptureUnitSet()
-  return self.CaptureUnitSet
+  if self.Coalition == coalition.side.BLUE then
+    return "Blue"
+  end
+  
+  if self.Coalition == coalition.side.RED then
+    return "Red"
+  end
+  
+  if self.Coalition == coalition.side.NEUTRAL then
+    return "Neutral"
+  end
+  
+  return ""
 end
 
 

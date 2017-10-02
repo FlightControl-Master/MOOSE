@@ -175,28 +175,34 @@ function TASK:New( Mission, SetGroupAssign, TaskName, TaskType, TaskBriefing )
   --- Goal Handler OnBefore for TASK
   -- @function [parent=#TASK] OnBeforeGoal
   -- @param #TASK self
-  -- @param Wrapper.Controllable#CONTROLLABLE Controllable
   -- @param #string From
   -- @param #string Event
   -- @param #string To
+  -- @param Wrapper.Unit#UNIT PlayerUnit The @{Unit} of the player.
+  -- @param #string PlayerName The name of the player.
   -- @return #boolean
   
   --- Goal Handler OnAfter for TASK
   -- @function [parent=#TASK] OnAfterGoal
   -- @param #TASK self
-  -- @param Wrapper.Controllable#CONTROLLABLE Controllable
   -- @param #string From
   -- @param #string Event
   -- @param #string To
+  -- @param Wrapper.Unit#UNIT PlayerUnit The @{Unit} of the player.
+  -- @param #string PlayerName The name of the player.
   
   --- Goal Trigger for TASK
   -- @function [parent=#TASK] Goal
   -- @param #TASK self
+  -- @param Wrapper.Unit#UNIT PlayerUnit The @{Unit} of the player.
+  -- @param #string PlayerName The name of the player.
   
   --- Goal Asynchronous Trigger for TASK
   -- @function [parent=#TASK] __Goal
   -- @param #TASK self
   -- @param #number Delay
+  -- @param Wrapper.Unit#UNIT PlayerUnit The @{Unit} of the player.
+  -- @param #string PlayerName The name of the player.
   
   
   
@@ -1274,7 +1280,7 @@ function TASK:onenterAssigned( From, Event, To, PlayerUnit, PlayerName )
     self:GetMission():__Start( 1 )
     
     -- When the task is assigned, the task goal needs to be checked of the derived classes.
-    self:__Goal( -10 )  -- Polymorphic
+    self:__Goal( -10, PlayerUnit, PlayerName )  -- Polymorphic
      
     self:SetMenu()
   end

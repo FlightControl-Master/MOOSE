@@ -193,10 +193,16 @@ do -- TASK_CAPTURE_ZONE
     
     Mission:AddTask( self )
     
+    self.TaskCoalition = Protect:GetCoalition()
+    self.TaskCoalitionName = Protect:GetCoalitionName()
+    self.TaskZoneName = self.Protect:GetProtectZoneName()
+    
     self:SetBriefing( 
       TaskBriefing or 
-      "Capture zone " .. self.Protect:GetProtectZoneName() .. "."
+      "Capture zone " .. self.TaskZoneName .. "."
     )
+    
+    self:UpdateTaskInfo()
 
     return self
   end 
@@ -208,7 +214,8 @@ do -- TASK_CAPTURE_ZONE
 
     local ZoneCoordinate = self.Protect:GetProtectZone():GetCoordinate() 
     self:SetInfo( "Coordinates", ZoneCoordinate, 0 )
-
+    self:SetInfo( "Zone Name", self.TaskZoneName, 10 )
+    self:SetInfo( "Zone Coalition", self.TaskCoalitionName, 11 )
   end
     
   function TASK_CAPTURE_ZONE:ReportOrder( ReportGroup ) 
@@ -221,13 +228,23 @@ do -- TASK_CAPTURE_ZONE
   
   
   --- @param #TASK_CAPTURE_ZONE self
-  function TASK_CAPTURE_ZONE:onafterGoal( TaskUnit, From, Event, To )
+  -- @param Wrapper.Unit#UNIT TaskUnit
+  function TASK_CAPTURE_ZONE:OnAfterGoal( From, Event, To, PlayerUnit, PlayerName )
+  
+    self:E( { PlayerUnit = PlayerUnit } )
     
-    if self.Protect:IsState( "Captured" ) then
-      self:Success()
+    if self.Protect then
+      local ProtectCoalition = self.Protect:GetCoalition()
+      local TaskCoalition = self.Coalition
+      
+      self:E( { ProtectCoalition = ProtectCoalition, TaskCoalition = TaskCoalition } )
+      
+      if ProtectCoalition ~= TaskCoalition then
+        self:Success()
+      end
     end
     
-    self:__Goal( -10 )
+    self:__Goal( -10, PlayerUnit, PlayerName )
   end
 
   --- Set a score when a target in scope of the A2G attack, has been destroyed .
@@ -277,7 +294,6 @@ do -- TASK_CAPTURE_ZONE
     
     return self
   end
-
-
+  
 end
 
