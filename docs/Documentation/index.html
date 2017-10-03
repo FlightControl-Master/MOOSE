@@ -60,6 +60,7 @@
 					<li><a href="Escort.html">Escort</a></li>
 					<li><a href="Event.html">Event</a></li>
 					<li><a href="Fsm.html">Fsm</a></li>
+					<li><a href="Goal.html">Goal</a></li>
 					<li><a href="Group.html">Group</a></li>
 					<li><a href="Identifiable.html">Identifiable</a></li>
 					<li><a href="Menu.html">Menu</a></li>
@@ -72,6 +73,7 @@
 					<li><a href="Positionable.html">Positionable</a></li>
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
 					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
+					<li><a href="Protect.html">Protect</a></li>
 					<li><a href="Radio.html">Radio</a></li>
 					<li><a href="Rat.html">Rat</a></li>
 					<li><a href="Route.html">Route</a></li>
@@ -95,9 +97,13 @@
 					<li><a href="Task_A2G_Dispatcher.html">Task_A2G_Dispatcher</a></li>
 					<li><a href="Task_Cargo.html">Task_Cargo</a></li>
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
+					<li><a href="Task_Protect.html">Task_Protect</a></li>
 					<li><a href="Unit.html">Unit</a></li>
 					<li><a href="Utils.html">Utils</a></li>
 					<li><a href="Zone.html">Zone</a></li>
+					<li><a href="ZoneCaptureCoalition.html">ZoneCaptureCoalition</a></li>
+					<li><a href="ZoneGoal.html">ZoneGoal</a></li>
+					<li><a href="ZoneGoalCoalition.html">ZoneGoalCoalition</a></li>
 					<li><a href="env.html">env</a></li>
 					<li><a href="land.html">land</a></li>
 					<li><a href="routines.html">routines</a></li>
@@ -446,6 +452,12 @@ are design patterns allowing efficient (long-lasting) processes and workflows.</
 </td>
 			</tr>
 			<tr>
+			<td class="name" nowrap="nowrap"><a href="Goal.html">Goal</a></td>
+			<td class="summary">
+<p><strong>Core</strong> -- Base class that models processes to achieve goals.</p>
+</td>
+			</tr>
+			<tr>
 			<td class="name" nowrap="nowrap"><a href="Group.html">Group</a></td>
 			<td class="summary">
 <p><strong>Wrapper</strong> -- GROUP wraps the DCS Class Group objects.</p>
@@ -515,6 +527,12 @@ are design patterns allowing efficient (long-lasting) processes and workflows.</
 			<td class="name" nowrap="nowrap"><a href="Process_Pickup.html">Process_Pickup</a></td>
 			<td class="summary">
 
+</td>
+			</tr>
+			<tr>
+			<td class="name" nowrap="nowrap"><a href="Protect.html">Protect</a></td>
+			<td class="summary">
+<p><strong>Functional</strong> -- The PROTECT class handles the protection of objects, which can be zones, units, scenery.</p>
 </td>
 			</tr>
 			<tr>
@@ -666,6 +684,12 @@ and creates a CSV file logging the scoring events and results for use at team or
 </td>
 			</tr>
 			<tr>
+			<td class="name" nowrap="nowrap"><a href="Task_Protect.html">Task_Protect</a></td>
+			<td class="summary">
+<p><strong>Tasking</strong> - The TASK_Protect models tasks for players to protect or capture specific zones.</p>
+</td>
+			</tr>
+			<tr>
 			<td class="name" nowrap="nowrap"><a href="Unit.html">Unit</a></td>
 			<td class="summary">
 <p><strong>Wrapper</strong> - UNIT is a wrapper class for the DCS Class Unit.</p>
@@ -682,6 +706,24 @@ which are excellent tools to be reused in an OO environment!.</p>
 			<td class="name" nowrap="nowrap"><a href="Zone.html">Zone</a></td>
 			<td class="summary">
 <p><strong>Core</strong> -- ZONE classes define <strong>zones</strong> within your mission of <strong>various forms</strong>, with <strong>various capabilities</strong>.</p>
+</td>
+			</tr>
+			<tr>
+			<td class="name" nowrap="nowrap"><a href="ZoneCaptureCoalition.html">ZoneCaptureCoalition</a></td>
+			<td class="summary">
+<p><strong>Core</strong> -- Base class that models processes to capture a Zone for a Coalition, guarded by another Coalition.</p>
+</td>
+			</tr>
+			<tr>
+			<td class="name" nowrap="nowrap"><a href="ZoneGoal.html">ZoneGoal</a></td>
+			<td class="summary">
+<p><strong>Core</strong> -- Base class that models processes to achieve goals involving a Zone.</p>
+</td>
+			</tr>
+			<tr>
+			<td class="name" nowrap="nowrap"><a href="ZoneGoalCoalition.html">ZoneGoalCoalition</a></td>
+			<td class="summary">
+<p><strong>Core</strong> -- Base class that models processes to achieve goals involving a Zone for a Coalition.</p>
 </td>
 			</tr>
 			<tr>

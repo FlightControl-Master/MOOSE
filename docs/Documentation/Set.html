@@ -60,6 +60,7 @@
 					<li><a href="Escort.html">Escort</a></li>
 					<li><a href="Event.html">Event</a></li>
 					<li><a href="Fsm.html">Fsm</a></li>
+					<li><a href="Goal.html">Goal</a></li>
 					<li><a href="Group.html">Group</a></li>
 					<li><a href="Identifiable.html">Identifiable</a></li>
 					<li><a href="Menu.html">Menu</a></li>
@@ -72,6 +73,7 @@
 					<li><a href="Positionable.html">Positionable</a></li>
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
 					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
+					<li><a href="Protect.html">Protect</a></li>
 					<li><a href="Radio.html">Radio</a></li>
 					<li><a href="Rat.html">Rat</a></li>
 					<li><a href="Route.html">Route</a></li>
@@ -95,9 +97,13 @@
 					<li><a href="Task_A2G_Dispatcher.html">Task_A2G_Dispatcher</a></li>
 					<li><a href="Task_Cargo.html">Task_Cargo</a></li>
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
+					<li><a href="Task_Protect.html">Task_Protect</a></li>
 					<li><a href="Unit.html">Unit</a></li>
 					<li><a href="Utils.html">Utils</a></li>
 					<li><a href="Zone.html">Zone</a></li>
+					<li><a href="ZoneCaptureCoalition.html">ZoneCaptureCoalition</a></li>
+					<li><a href="ZoneGoal.html">ZoneGoal</a></li>
+					<li><a href="ZoneGoalCoalition.html">ZoneGoalCoalition</a></li>
 					<li><a href="env.html">env</a></li>
 					<li><a href="land.html">land</a></li>
 					<li><a href="routines.html">routines</a></li>
@@ -225,6 +231,22 @@
     <li>Coalitions</li>
     <li>Categories</li>
     <li>Countries</li>
+    <li>Starting with certain prefix strings.</li>
+</ul>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#SET_STATIC">SET_STATIC</a></td>
+		<td class="summary">
+<h1>3) SET_STATIC class, extends <a href="Set.html##(SET_BASE)">Set#SET_BASE</a></h1>
+
+<p>Mission designers can use the SET_STATIC class to build sets of Statics belonging to certain:</p>
+
+<ul>
+    <li>Coalitions</li>
+    <li>Categories</li>
+    <li>Countries</li>
+    <li>Static types</li>
     <li>Starting with certain prefix strings.</li>
 </ul>
 </td>
@@ -918,6 +940,172 @@ mission designer to add a dedicated method</p>
 		</tr>
 	</table>
 
+			<h2><a id="#(SET_STATIC)">Type <code>SET_STATIC</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_STATIC).AddInDatabase">SET_STATIC:AddInDatabase(Event)</a></td>
+		<td class="summary">
+<p>Handles the Database to check on an event (birth) that the Object was added in the Database.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_STATIC).AddStatic">SET_STATIC:AddStatic(AddStatic)</a></td>
+		<td class="summary">
+<p>Add STATIC(s) to SET_STATIC.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_STATIC).AddStaticsByName">SET_STATIC:AddStaticsByName(AddStaticNames)</a></td>
+		<td class="summary">
+<p>Add STATIC(s) to SET_STATIC.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_STATIC).FilterCategories">SET_STATIC:FilterCategories(Categories)</a></td>
+		<td class="summary">
+<p>Builds a set of units out of categories.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_STATIC).FilterCoalitions">SET_STATIC:FilterCoalitions(Coalitions)</a></td>
+		<td class="summary">
+<p>Builds a set of units of coalitions.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_STATIC).FilterCountries">SET_STATIC:FilterCountries(Countries)</a></td>
+		<td class="summary">
+<p>Builds a set of units of defined countries.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_STATIC).FilterPrefixes">SET_STATIC:FilterPrefixes(Prefixes)</a></td>
+		<td class="summary">
+<p>Builds a set of units of defined unit prefixes.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_STATIC).FilterStart">SET_STATIC:FilterStart()</a></td>
+		<td class="summary">
+<p>Starts the filtering.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_STATIC).FilterTypes">SET_STATIC:FilterTypes(Types)</a></td>
+		<td class="summary">
+<p>Builds a set of units of defined unit types.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_STATIC).FindInDatabase">SET_STATIC:FindInDatabase(Event)</a></td>
+		<td class="summary">
+<p>Handles the Database to check on any event that Object exists in the Database.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_STATIC).FindStatic">SET_STATIC:FindStatic(StaticName)</a></td>
+		<td class="summary">
+<p>Finds a Static based on the Static Name.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_STATIC).ForEachStatic">SET_STATIC:ForEachStatic(IteratorFunction, ...)</a></td>
+		<td class="summary">
+<p>Iterate the SET_STATIC and call an interator function for each <strong>alive</strong> STATIC, providing the STATIC and optional parameters.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_STATIC).ForEachStaticCompletelyInZone">SET_STATIC:ForEachStaticCompletelyInZone(ZoneObject, IteratorFunction, ...)</a></td>
+		<td class="summary">
+<p>Iterate the SET_STATIC and call an iterator function for each <strong>alive</strong> STATIC presence completely in a <a href="Zone.html">Zone</a>, providing the STATIC and optional parameters to the called function.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_STATIC).ForEachStaticInZone">SET_STATIC:ForEachStaticInZone(IteratorFunction, ...)</a></td>
+		<td class="summary">
+<p>Check if minimal one element of the SET_STATIC is in the Zone.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_STATIC).ForEachStaticNotInZone">SET_STATIC:ForEachStaticNotInZone(ZoneObject, IteratorFunction, ...)</a></td>
+		<td class="summary">
+<p>Iterate the SET_STATIC and call an iterator function for each <strong>alive</strong> STATIC presence not in a <a href="Zone.html">Zone</a>, providing the STATIC and optional parameters to the called function.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_STATIC).GetCoordinate">SET_STATIC:GetCoordinate()</a></td>
+		<td class="summary">
+<p>Get the center coordinate of the SET_STATIC.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_STATIC).GetFirst">SET_STATIC:GetFirst()</a></td>
+		<td class="summary">
+<p>Get the first unit from the set.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_STATIC).GetHeading">SET_STATIC:GetHeading()</a></td>
+		<td class="summary">
+<p>Get the average heading of the SET_STATIC.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_STATIC).GetStaticTypes">SET_STATIC:GetStaticTypes()</a></td>
+		<td class="summary">
+<p>Returns map of unit types.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_STATIC).GetStaticTypesText">SET_STATIC:GetStaticTypesText()</a></td>
+		<td class="summary">
+<p>Returns a comma separated string of the unit types with a count in the  <a href="Set.html">Set</a>.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_STATIC).GetTypeNames">SET_STATIC:GetTypeNames(Delimiter)</a></td>
+		<td class="summary">
+<p>Retrieve the type names of the <a href="Static.html">Static</a>s in the SET, delimited by an optional delimiter.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_STATIC).GetVelocity">SET_STATIC:GetVelocity()</a></td>
+		<td class="summary">
+<p>Get the maximum velocity of the SET_STATIC.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_STATIC).IsIncludeObject">SET_STATIC:IsIncludeObject(MStatic)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_STATIC).IsNotInZone">SET_STATIC:IsNotInZone(ZoneObject, Zone)</a></td>
+		<td class="summary">
+<p>Check if no element of the SET_STATIC is in the Zone.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_STATIC).IsPatriallyInZone">SET_STATIC:IsPatriallyInZone(Zone)</a></td>
+		<td class="summary">
+<p>Check if minimal one element of the SET_STATIC is in the Zone.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_STATIC).New">SET_STATIC:New()</a></td>
+		<td class="summary">
+<p>Creates a new SET_STATIC object, building a set of units belonging to a coalitions, categories, countries, types or with defined prefix names.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_STATIC).RemoveStaticsByName">SET_STATIC:RemoveStaticsByName(RemoveStaticNames)</a></td>
+		<td class="summary">
+<p>Remove STATIC(s) from SET_STATIC.</p>
+</td>
+		</tr>
+	</table>
+
 			<h2><a id="#(SET_UNIT)">Type <code>SET_UNIT</code></a></h2>
 				<table class="function_list">
 		<tr>
@@ -1017,6 +1205,12 @@ mission designer to add a dedicated method</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_UNIT).ForEachUnitInZone">SET_UNIT:ForEachUnitInZone(IteratorFunction, ...)</a></td>
+		<td class="summary">
+<p>Check if minimal one element of the SET_UNIT is in the Zone.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SET_UNIT).ForEachUnitNotInZone">SET_UNIT:ForEachUnitNotInZone(ZoneObject, IteratorFunction, ...)</a></td>
 		<td class="summary">
 <p>Iterate the SET_UNIT and call an iterator function for each <strong>alive</strong> UNIT presence not in a <a href="Zone.html">Zone</a>, providing the UNIT and optional parameters to the called function.</p>
@@ -1105,6 +1299,18 @@ mission designer to add a dedicated method</p>
 		<td class="name" nowrap="nowrap"><a href="##(SET_UNIT).IsIncludeObject">SET_UNIT:IsIncludeObject(MUnit)</a></td>
 		<td class="summary">
 
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_UNIT).IsNotInZone">SET_UNIT:IsNotInZone(ZoneObject, Zone)</a></td>
+		<td class="summary">
+<p>Check if no element of the SET_UNIT is in the Zone.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_UNIT).IsPartiallyInZone">SET_UNIT:IsPartiallyInZone(ZoneTest)</a></td>
+		<td class="summary">
+<p>Check if minimal one element of the SET_UNIT is in the Zone.</p>
 </td>
 		</tr>
 		<tr>
@@ -1439,6 +1645,100 @@ The following iterator methods are currently available within the SET</em>GROUP:
     <li><a href="##(SET_GROUP).ForEachGroupCompletelyInZone">SET_GROUP.ForEachGroupCompletelyInZone</a>: Iterate the SET_GROUP and call an iterator function for each <strong>alive</strong> GROUP presence completely in a <a href="Zone.html">Zone</a>, providing the GROUP and optional parameters to the called function.</li>
     <li><a href="##(SET_GROUP).ForEachGroupPartlyInZone">SET_GROUP.ForEachGroupPartlyInZone</a>: Iterate the SET_GROUP and call an iterator function for each <strong>alive</strong> GROUP presence partly in a <a href="Zone.html">Zone</a>, providing the GROUP and optional parameters to the called function.</li>
     <li><a href="##(SET_GROUP).ForEachGroupNotInZone">SET_GROUP.ForEachGroupNotInZone</a>: Iterate the SET_GROUP and call an iterator function for each <strong>alive</strong> GROUP presence not in a <a href="Zone.html">Zone</a>, providing the GROUP and optional parameters to the called function.</li>
+</ul>
+
+<hr/>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(SET_STATIC)">#SET_STATIC</a></em>
+<a id="SET_STATIC" >
+<strong>SET_STATIC</strong>
+</a>
+</dt>
+<dd>
+	
+<h1>3) SET_STATIC class, extends <a href="Set.html##(SET_BASE)">Set#SET_BASE</a></h1>
+
+<p>Mission designers can use the SET_STATIC class to build sets of Statics belonging to certain:</p>
+
+<ul>
+    <li>Coalitions</li>
+    <li>Categories</li>
+    <li>Countries</li>
+    <li>Static types</li>
+    <li>Starting with certain prefix strings.</li>
+</ul>
+
+	
+<p> </p>
+<h2>3.1) SET_STATIC constructor</h2>
+
+<p>Create a new SET_STATIC object with the <a href="##(SET_STATIC).New">SET_STATIC.New</a> method:</p>
+
+<ul>
+    <li><a href="##(SET_STATIC).New">SET_STATIC.New</a>: Creates a new SET_STATIC object.</li>
+</ul>
+
+<h2>3.2) Add or Remove STATIC(s) from SET_STATIC</h2>
+
+<p>STATICs can be added and removed using the <a href="Set.html##(SET_STATIC).AddStaticsByName">Set#SET_STATIC.AddStaticsByName</a> and <a href="Set.html##(SET_STATIC).RemoveStaticsByName">Set#SET_STATIC.RemoveStaticsByName</a> respectively. 
+These methods take a single STATIC name or an array of STATIC names to be added or removed from SET_STATIC.</p>
+
+<h2>3.3) SET_STATIC filter criteria</h2>
+
+<p>You can set filter criteria to define the set of units within the SET_STATIC.
+Filter criteria are defined by:</p>
+
+<ul>
+    <li><a href="##(SET_STATIC).FilterCoalitions">SET_STATIC.FilterCoalitions</a>: Builds the SET_STATIC with the units belonging to the coalition(s).</li>
+    <li><a href="##(SET_STATIC).FilterCategories">SET_STATIC.FilterCategories</a>: Builds the SET_STATIC with the units belonging to the category(ies).</li>
+    <li><a href="##(SET_STATIC).FilterTypes">SET_STATIC.FilterTypes</a>: Builds the SET_STATIC with the units belonging to the unit type(s).</li>
+    <li><a href="##(SET_STATIC).FilterCountries">SET_STATIC.FilterCountries</a>: Builds the SET_STATIC with the units belonging to the country(ies).</li>
+    <li><a href="##(SET_STATIC).FilterPrefixes">SET_STATIC.FilterPrefixes</a>: Builds the SET_STATIC with the units starting with the same prefix string(s).</li>
+</ul>
+
+<p>Once the filter criteria have been set for the SET_STATIC, you can start filtering using:</p>
+
+<ul>
+    <li><a href="##(SET_STATIC).FilterStart">SET_STATIC.FilterStart</a>: Starts the filtering of the units within the SET_STATIC.</li>
+</ul>
+
+<p>Planned filter criteria within development are (so these are not yet available):</p>
+
+<ul>
+    <li><a href="##(SET_STATIC).FilterZones">SET_STATIC.FilterZones</a>: Builds the SET_STATIC with the units within a <a href="Zone.html##(ZONE)">Zone#ZONE</a>.</li>
+</ul>
+
+<h2>3.4) SET_STATIC iterators</h2>
+
+<p>Once the filters have been defined and the SET<em>STATIC has been built, you can iterate the SET</em>STATIC with the available iterator methods.
+The iterator methods will walk the SET<em>STATIC set, and call for each element within the set a function that you provide.
+The following iterator methods are currently available within the SET</em>STATIC:</p>
+
+<ul>
+    <li><a href="##(SET_STATIC).ForEachStatic">SET_STATIC.ForEachStatic</a>: Calls a function for each alive unit it finds within the SET_STATIC.</li>
+    <li><a href="##(SET_GROUP).ForEachGroupCompletelyInZone">SET_GROUP.ForEachGroupCompletelyInZone</a>: Iterate the SET_GROUP and call an iterator function for each <strong>alive</strong> GROUP presence completely in a <a href="Zone.html">Zone</a>, providing the GROUP and optional parameters to the called function.</li>
+    <li><a href="##(SET_GROUP).ForEachGroupNotInZone">SET_GROUP.ForEachGroupNotInZone</a>: Iterate the SET_GROUP and call an iterator function for each <strong>alive</strong> GROUP presence not in a <a href="Zone.html">Zone</a>, providing the GROUP and optional parameters to the called function.</li>
+</ul>
+
+<p>Planned iterators methods in development are (so these are not yet available):</p>
+
+<ul>
+    <li><a href="##(SET_STATIC).ForEachStaticInZone">SET_STATIC.ForEachStaticInZone</a>: Calls a function for each unit contained within the SET_STATIC.</li>
+    <li><a href="##(SET_STATIC).ForEachStaticCompletelyInZone">SET_STATIC.ForEachStaticCompletelyInZone</a>: Iterate and call an iterator function for each <strong>alive</strong> STATIC presence completely in a <a href="Zone.html">Zone</a>, providing the STATIC and optional parameters to the called function.</li>
+    <li><a href="##(SET_STATIC).ForEachStaticNotInZone">SET_STATIC.ForEachStaticNotInZone</a>: Iterate and call an iterator function for each <strong>alive</strong> STATIC presence not in a <a href="Zone.html">Zone</a>, providing the STATIC and optional parameters to the called function.</li>
+</ul>
+
+<h2>3.5 ) SET_STATIC atomic methods</h2>
+
+<p>Various methods exist for a SET<em>STATIC to perform actions or calculations and retrieve results from the SET</em>STATIC:</p>
+
+<ul>
+    <li><a href="##(SET_STATIC).GetTypeNames">SET_STATIC.GetTypeNames</a>(): Retrieve the type names of the <a href="Static.html">Static</a>s in the SET, delimited by a comma.</li>
 </ul>
 
 <hr/>
@@ -4480,6 +4780,744 @@ A single name or an array of GROUP names.</p>
 </dd>
 </dl>
 
+			<h2><a id="#(SET_STATIC)" >Type <code>SET_STATIC</code></a></h2>
+				<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_STATIC).AddInDatabase" >
+<strong>SET_STATIC:AddInDatabase(Event)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Handles the Database to check on an event (birth) that the Object was added in the Database.</p>
+
+	
+<p>This is required, because sometimes the <em>DATABASE birth event gets called later than the SET</em>BASE birth event!</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Event.html##(EVENTDATA)">Core.Event#EVENTDATA</a> Event </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return values</h3>
+			<ol>
+				<li>
+				
+<p><em>#string:</em>
+The name of the STATIC</p>
+
+				</li>
+				<li>
+				
+<p><em>#table:</em>
+The STATIC</p>
+
+				</li>
+			</ol>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_STATIC).AddStatic" >
+<strong>SET_STATIC:AddStatic(AddStatic)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Add STATIC(s) to SET_STATIC.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string AddStatic </em></code>: 
+A single STATIC.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET_STATIC)">#SET_STATIC</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_STATIC).AddStaticsByName" >
+<strong>SET_STATIC:AddStaticsByName(AddStaticNames)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Add STATIC(s) to SET_STATIC.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string AddStaticNames </em></code>: 
+A single name or an array of STATIC names.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET_STATIC)">#SET_STATIC</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_STATIC).FilterCategories" >
+<strong>SET_STATIC:FilterCategories(Categories)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Builds a set of units out of categories.</p>
+
+	
+<p>Possible current categories are plane, helicopter, ground, ship.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Categories </em></code>: 
+Can take the following values: "plane", "helicopter", "ground", "ship".</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET_STATIC)">#SET_STATIC</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_STATIC).FilterCoalitions" >
+<strong>SET_STATIC:FilterCoalitions(Coalitions)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Builds a set of units of coalitions.</p>
+
+	
+<p>Possible current coalitions are red, blue and neutral.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Coalitions </em></code>: 
+Can take the following values: "red", "blue", "neutral".</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET_STATIC)">#SET_STATIC</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_STATIC).FilterCountries" >
+<strong>SET_STATIC:FilterCountries(Countries)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Builds a set of units of defined countries.</p>
+
+	
+<p>Possible current countries are those known within DCS world.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Countries </em></code>: 
+Can take those country strings known within DCS world.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET_STATIC)">#SET_STATIC</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_STATIC).FilterPrefixes" >
+<strong>SET_STATIC:FilterPrefixes(Prefixes)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Builds a set of units of defined unit prefixes.</p>
+
+	
+<p>All the units starting with the given prefixes will be included within the set.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Prefixes </em></code>: 
+The prefix of which the unit name starts with.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET_STATIC)">#SET_STATIC</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_STATIC).FilterStart" >
+<strong>SET_STATIC:FilterStart()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Starts the filtering.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET_STATIC)">#SET_STATIC</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_STATIC).FilterTypes" >
+<strong>SET_STATIC:FilterTypes(Types)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Builds a set of units of defined unit types.</p>
+
+	
+<p>Possible current types are those types known within DCS world.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Types </em></code>: 
+Can take those type strings known within DCS world.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET_STATIC)">#SET_STATIC</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_STATIC).FindInDatabase" >
+<strong>SET_STATIC:FindInDatabase(Event)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Handles the Database to check on any event that Object exists in the Database.</p>
+
+	
+<p>This is required, because sometimes the <em>DATABASE event gets called later than the SET</em>BASE event or vise versa!</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Event.html##(EVENTDATA)">Core.Event#EVENTDATA</a> Event </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return values</h3>
+			<ol>
+				<li>
+				
+<p><em>#string:</em>
+The name of the STATIC</p>
+
+				</li>
+				<li>
+				
+<p><em>#table:</em>
+The STATIC</p>
+
+				</li>
+			</ol>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_STATIC).FindStatic" >
+<strong>SET_STATIC:FindStatic(StaticName)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Finds a Static based on the Static Name.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string StaticName </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="Wrapper.Static.html##(STATIC)">Wrapper.Static#STATIC</a>:</em>
+The found Static.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_STATIC).ForEachStatic" >
+<strong>SET_STATIC:ForEachStatic(IteratorFunction, ...)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Iterate the SET_STATIC and call an interator function for each <strong>alive</strong> STATIC, providing the STATIC and optional parameters.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#function IteratorFunction </em></code>: 
+The function that will be called when there is an alive STATIC in the SET_STATIC. The function needs to accept a STATIC parameter.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> ... </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET_STATIC)">#SET_STATIC</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_STATIC).ForEachStaticCompletelyInZone" >
+<strong>SET_STATIC:ForEachStaticCompletelyInZone(ZoneObject, IteratorFunction, ...)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Iterate the SET_STATIC and call an iterator function for each <strong>alive</strong> STATIC presence completely in a <a href="Zone.html">Zone</a>, providing the STATIC and optional parameters to the called function.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Zone.html##(ZONE)">Core.Zone#ZONE</a> ZoneObject </em></code>: 
+The Zone to be tested for.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#function IteratorFunction </em></code>: 
+The function that will be called when there is an alive STATIC in the SET_STATIC. The function needs to accept a STATIC parameter.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> ... </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET_STATIC)">#SET_STATIC</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_STATIC).ForEachStaticInZone" >
+<strong>SET_STATIC:ForEachStaticInZone(IteratorFunction, ...)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Check if minimal one element of the SET_STATIC is in the Zone.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#function IteratorFunction </em></code>: 
+The function that will be called when there is an alive STATIC in the SET_STATIC. The function needs to accept a STATIC parameter.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> ... </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET_STATIC)">#SET_STATIC</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_STATIC).ForEachStaticNotInZone" >
+<strong>SET_STATIC:ForEachStaticNotInZone(ZoneObject, IteratorFunction, ...)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Iterate the SET_STATIC and call an iterator function for each <strong>alive</strong> STATIC presence not in a <a href="Zone.html">Zone</a>, providing the STATIC and optional parameters to the called function.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Zone.html##(ZONE)">Core.Zone#ZONE</a> ZoneObject </em></code>: 
+The Zone to be tested for.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#function IteratorFunction </em></code>: 
+The function that will be called when there is an alive STATIC in the SET_STATIC. The function needs to accept a STATIC parameter.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> ... </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET_STATIC)">#SET_STATIC</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_STATIC).GetCoordinate" >
+<strong>SET_STATIC:GetCoordinate()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Get the center coordinate of the SET_STATIC.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="Core.Point.html##(COORDINATE)">Core.Point#COORDINATE</a>:</em>
+The center coordinate of all the units in the set, including heading in degrees and speed in mps in case of moving units.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_STATIC).GetFirst" >
+<strong>SET_STATIC:GetFirst()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Get the first unit from the set.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="Wrapper.Static.html##(STATIC)">Wrapper.Static#STATIC</a>:</em>
+The STATIC object.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_STATIC).GetHeading" >
+<strong>SET_STATIC:GetHeading()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Get the average heading of the SET_STATIC.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#number:</em>
+Heading Heading in degrees and speed in mps in case of moving units.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_STATIC).GetStaticTypes" >
+<strong>SET_STATIC:GetStaticTypes()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns map of unit types.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(map)">#map</a>:</em></p>
+<h1>string,#number> A map of the unit types found. The key is the StaticTypeName and the value is the amount of unit types found.</h1>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_STATIC).GetStaticTypesText" >
+<strong>SET_STATIC:GetStaticTypesText()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns a comma separated string of the unit types with a count in the  <a href="Set.html">Set</a>.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#string:</em>
+The unit types string</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_STATIC).GetTypeNames" >
+<strong>SET_STATIC:GetTypeNames(Delimiter)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Retrieve the type names of the <a href="Static.html">Static</a>s in the SET, delimited by an optional delimiter.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Delimiter </em></code>: 
+(optional) The delimiter, which is default a comma.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#string:</em>
+The types of the <a href="Static.html">Static</a>s delimited.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_STATIC).GetVelocity" >
+<strong>SET_STATIC:GetVelocity()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Get the maximum velocity of the SET_STATIC.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#number:</em>
+The speed in mps in case of moving units.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_STATIC).IsIncludeObject" >
+<strong>SET_STATIC:IsIncludeObject(MStatic)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Static.html##(STATIC)">Wrapper.Static#STATIC</a> MStatic </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET_STATIC)">#SET_STATIC</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_STATIC).IsNotInZone" >
+<strong>SET_STATIC:IsNotInZone(ZoneObject, Zone)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Check if no element of the SET_STATIC is in the Zone.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Zone.html##(ZONE)">Core.Zone#ZONE</a> ZoneObject </em></code>: 
+The Zone to be tested for.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> Zone </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_STATIC).IsPatriallyInZone" >
+<strong>SET_STATIC:IsPatriallyInZone(Zone)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Check if minimal one element of the SET_STATIC is in the Zone.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Zone.html##(ZONE)">Core.Zone#ZONE</a> Zone </em></code>: 
+The Zone to be tested for.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_STATIC).New" >
+<strong>SET_STATIC:New()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Creates a new SET_STATIC object, building a set of units belonging to a coalitions, categories, countries, types or with defined prefix names.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET_STATIC)">#SET_STATIC</a>:</em></p>
+
+
+			<h3>Usage:</h3>
+		<pre class="example"><code>-- Define a new SET_STATIC Object. This DBObject will contain a reference to all alive Statics.
+DBObject = SET_STATIC:New()</code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_STATIC).RemoveStaticsByName" >
+<strong>SET_STATIC:RemoveStaticsByName(RemoveStaticNames)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Remove STATIC(s) from SET_STATIC.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Static.html##(STATIC)">Wrapper.Static#STATIC</a> RemoveStaticNames </em></code>: 
+A single name or an array of STATIC names.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+
+<p>self</p>
+
+</dd>
+</dl>
+
 			<h2><a id="#(SET_UNIT)" >Type <code>SET_UNIT</code></a></h2>
 				<h3>Field(s)</h3>
 		<dl class="function">
@@ -4947,6 +5985,38 @@ self</p>
 		<dl class="function">
 <dt>
 
+<a id="#(SET_UNIT).ForEachUnitInZone" >
+<strong>SET_UNIT:ForEachUnitInZone(IteratorFunction, ...)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Check if minimal one element of the SET_UNIT is in the Zone.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#function IteratorFunction </em></code>: 
+The function that will be called when there is an alive UNIT in the SET_UNIT. The function needs to accept a UNIT parameter.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> ... </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET_UNIT)">#SET_UNIT</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(SET_UNIT).ForEachUnitNotInZone" >
 <strong>SET_UNIT:ForEachUnitNotInZone(ZoneObject, IteratorFunction, ...)</strong>
 </a>
@@ -5301,6 +6371,65 @@ The amount of SEADable units in the Set</p>
 				
 <p><em><a href="##(SET_UNIT)">#SET_UNIT</a>:</em>
 self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_UNIT).IsNotInZone" >
+<strong>SET_UNIT:IsNotInZone(ZoneObject, Zone)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Check if no element of the SET_UNIT is in the Zone.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Zone.html##(ZONE)">Core.Zone#ZONE</a> ZoneObject </em></code>: 
+The Zone to be tested for.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> Zone </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_UNIT).IsPartiallyInZone" >
+<strong>SET_UNIT:IsPartiallyInZone(ZoneTest)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Check if minimal one element of the SET_UNIT is in the Zone.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Zone.html##(ZONE)">Core.Zone#ZONE</a> ZoneTest </em></code>: 
+The Zone to be tested for.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em></p>
+
 
 </dd>
 </dl>

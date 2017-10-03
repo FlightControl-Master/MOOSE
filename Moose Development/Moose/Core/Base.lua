@@ -269,6 +269,19 @@ function BASE:Inherit( Child, Parent )
 	return Child
 end
 
+
+local function getParent( Child )
+  local Parent = nil
+  
+  if rawget( Child, "__" ) then
+    Parent = getmetatable( Child.__ ).__index
+  else
+    Parent = getmetatable( Child ).__index
+  end 
+  return Parent
+end
+
+
 --- This is the worker method to retrieve the Parent class.  
 -- Note that the Parent class must be passed to call the parent class method.
 -- 
@@ -278,17 +291,27 @@ end
 -- @param #BASE self
 -- @param #BASE Child is the Child class from which the Parent class needs to be retrieved.
 -- @return #BASE
-function BASE:GetParent( Child )
+function BASE:GetParent( Child, FromClass )
+
+
   local Parent
   -- BASE class has no parent
   if Child.ClassName == 'BASE' then
     Parent = nil
-  elseif rawget( Child, "__" ) then
-	  Parent = getmetatable( Child.__ ).__index
-	else
-	  Parent = getmetatable( Child ).__index
-	end 
-	return Parent
+  else
+  
+    self:E({FromClass = FromClass})
+    self:E({Child = Child.ClassName})
+    if FromClass then
+      while( Child.ClassName ~= FromClass.ClassName ) do
+        Child = getParent( Child )
+        self:E({Child.ClassName})
+      end
+    end  
+    Parent = getParent( Child )
+  end
+  self:E({Parent.ClassName})
+  return Parent
 end
 
 --- This is the worker method to check if an object is an (sub)instance of a class.
@@ -334,7 +357,7 @@ function BASE:IsInstanceOf( ClassName )
     return true
   end
 
-  local Parent = self:GetParent(self)
+  local Parent = getParent(self)
 
   while Parent do
 
@@ -342,7 +365,7 @@ function BASE:IsInstanceOf( ClassName )
       return true
     end
 
-    Parent = Parent:GetParent(Parent)
+    Parent = getParent(Parent)
 
   end
 

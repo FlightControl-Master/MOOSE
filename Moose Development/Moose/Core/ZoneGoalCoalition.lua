@@ -2,7 +2,8 @@
 --
 -- ====
 -- 
--- ZONE_GOAL_COALITION models processes that have an objective with a defined achievement involving a Zone. Derived classes implement the ways how the achievements can be realized.
+-- ZONE_GOAL_COALITION models processes that have a Goal with a defined achievement involving a Zone for a Coalition.  
+-- Derived classes implement the ways how the achievements can be realized.
 -- 
 -- ====
 -- 
@@ -10,17 +11,18 @@
 -- 
 -- ====
 -- 
--- @module ZoneGoal
+-- @module ZoneGoalCoalition
 
 do -- ZoneGoal
 
   --- @type ZONE_GOAL_COALITION
-  -- @extends Core.Goal#ZONE_GOAL_COALITION
+  -- @extends Core.ZoneGoal#ZONE_GOAL
 
 
-  --- # ZONE_GOAL_COALITION class, extends @{Goal#GOAL}
+  --- # ZONE_GOAL_COALITION class, extends @{ZoneGoal#ZONE_GOAL}
   -- 
-  -- ZONE_GOAL_COALITION models processes that have an objective with a defined achievement involving a Zone. Derived classes implement the ways how the achievements can be realized.
+  -- ZONE_GOAL_COALITION models processes that have a Goal with a defined achievement involving a Zone for a Coalition.  
+  -- Derived classes implement the ways how the achievements can be realized.
   -- 
   -- ## 1. ZONE_GOAL_COALITION constructor
   --   
@@ -29,16 +31,26 @@ do -- ZoneGoal
   -- ## 2. ZONE_GOAL_COALITION is a finite state machine (FSM).
   -- 
   -- ### 2.1 ZONE_GOAL_COALITION States
-  -- 
-  --   * **Off**: The goal is not timely measured.
-  --   * **On**: The goal is timely being measured.
-  --   * **Achieved**: The objective is achieved.
+  --  
+  --   * **Captured**: The Zone has been captured by an other coalition.
+  --   * **Attacked**: The Zone is currently intruded by an other coalition. There are units of the owning coalition and an other coalition in the Zone.
+  --   * **Guarded**: The Zone is guarded by the owning coalition. There is no other unit of an other coalition in the Zone.
+  --   * **Empty**: The Zone is empty. There is not valid unit in the Zone.
   -- 
   -- ### 2.2 ZONE_GOAL_COALITION Events
   -- 
-  --   * **@{#ZONE_GOAL_COALITION.Start}()**: Start Measuring the Goal.
-  --   * **@{#ZONE_GOAL_COALITION.Stop}()**: Stop Measuring the Goal.
-  --   * **@{#ZONE_GOAL_COALITION.IsAchieved}()**: Check if the Goal is Achieved.
+  --   * **Capture**: The Zone has been captured by an other coalition.
+  --   * **Attack**: The Zone is currently intruded by an other coalition. There are units of the owning coalition and an other coalition in the Zone.
+  --   * **Guard**: The Zone is guarded by the owning coalition. There is no other unit of an other coalition in the Zone.
+  --   * **Empty**: The Zone is empty. There is not valid unit in the Zone.
+  --   
+  -- ### 2.3 ZONE_GOAL_COALITION State Machine
+  -- 
+  --   
+  --   
+  -- Hello | World
+  -- ------|------
+  -- Test|Test2
   -- 
   -- @field #ZONE_GOAL_COALITION
   ZONE_GOAL_COALITION = {
@@ -77,8 +89,6 @@ do -- ZoneGoal
       -- @param #string Event
       -- @param #string To
   
-      ZONE_GOAL_COALITION.States.Captured = "Captured"
-    
     end
   
   
@@ -99,13 +109,13 @@ do -- ZoneGoal
       -- @param #string Event
       -- @param #string To
   
-      ZONE_GOAL_COALITION.States.Attacked = "Attacked"
-    
     end
+    
+    self:E( { Guarded = "Guarded" } )
   
   
     
-    self:AddTransition( {  ZONE_GOAL_COALITION.States.Guarded, ZONE_GOAL_COALITION.States.Empty }, "Attack", ZONE_GOAL_COALITION.States.Attacked )
+    self:AddTransition( {  "Guarded", "Empty" }, "Attack", "Attacked" )
   
     --- Attack Handler OnBefore for ZONE_GOAL_COALITION
     -- @function [parent=#ZONE_GOAL_COALITION] OnBeforeAttack
@@ -131,7 +141,7 @@ do -- ZoneGoal
     -- @param #ZONE_GOAL_COALITION self
     -- @param #number Delay
     
-    self:AddTransition( { ZONE_GOAL_COALITION.States.Guarded, ZONE_GOAL_COALITION.States.Attacked, ZONE_GOAL_COALITION.States.Empty }, "Capture", ZONE_GOAL_COALITION.States.Captured )
+    self:AddTransition( { "Guarded", "Attacked", "Empty" }, "Capture", "Captured" )
    
     --- Capture Handler OnBefore for ZONE_GOAL_COALITION
     -- @function [parent=#ZONE_GOAL_COALITION] OnBeforeCapture
@@ -265,7 +275,7 @@ do -- ZoneGoal
   
     --self:GetParent( self ):onenterCaptured()
 
-    local NewCoalition = self.ProtectZone:GetCoalition()
+    local NewCoalition = self.Zone:GetCoalition()
     self:E( { NewCoalition = NewCoalition } )
     self:SetCoalition( NewCoalition )
   
@@ -324,15 +334,16 @@ do -- ZoneGoal
   -- @param #ZONE_GOAL_COALITION self
   function ZONE_GOAL_COALITION:StatusZone()
   
+    local State = self:GetState()
     self:E( { State = self:GetState() } )
     
-    self:GetParent( self ):StatusZone()
+    self:GetParent( self, ZONE_GOAL_COALITION ).StatusZone( self )
     
-    if self:IsAttacked() then
+    if State ~= "Attacked" and self:IsAttacked() then
       self:Attack()
     end
     
-    if self:IsCaptured() then  
+    if State ~= "Captured" and self:IsCaptured() then  
       self:Capture()
     end
     

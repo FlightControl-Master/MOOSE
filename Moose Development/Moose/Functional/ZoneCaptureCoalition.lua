@@ -18,7 +18,7 @@ do -- ZoneGoal
   -- @extends Core.ZoneGoalCoalition#ZONE_GOAL_COALITION
 
 
-  --- # ZONE_CAPTURE_COALITION class, extends @{Goal#GOAL}
+  --- # ZONE_CAPTURE_COALITION class, extends @{ZoneGoalCoalition#ZONE_GOAL_COALITION}
   -- 
   -- ZONE_CAPTURE_COALITION models processes that have an objective with a defined achievement involving a Zone. Derived classes implement the ways how the achievements can be realized.
   -- 
@@ -50,7 +50,7 @@ do -- ZoneGoal
     local self = BASE:Inherit( self, ZONE_GOAL_COALITION:New( Zone, Coalition ) ) -- #ZONE_CAPTURE_COALITION
 
     self:F( { Zone = Zone, Coalition  = Coalition } )
-
+    
     return self
   end
   

@@ -10,15 +10,15 @@
 -- 
 -- ====
 -- 
--- @module Zone
+-- @module ZoneGoal
 
 do -- Zone
 
   --- @type ZONE_GOAL
-  -- @extends Core.Goal#GOAL
+  -- @extends Core.Fsm#FSM
 
 
-  --- # ZONE_GOAL class, extends @{Goal#GOAL}
+  --- # ZONE_GOAL class, extends @{Fsm#FSM}
   -- 
   -- ZONE_GOAL models processes that have an objective with a defined achievement involving a Zone. Derived classes implement the ways how the achievements can be realized.
   -- 
@@ -56,7 +56,8 @@ do -- Zone
     self:F( { Zone = Zone } )
 
     self.Zone = Zone -- Core.Zone#ZONE_BASE
-    self.Goal = GOAL:New():Start()
+    self.Goal = GOAL:New()
+    self.Goal:Start()
 
     do 
     
@@ -75,8 +76,6 @@ do -- Zone
       -- @param #string Event
       -- @param #string To
   
-      ZONE_GOAL.States.Guarded = "Guarded"
-    
     end
   
 
@@ -97,12 +96,10 @@ do -- Zone
       -- @param #string Event
       -- @param #string To
   
-      ZONE_GOAL.States.Empty = "Empty"
-    
     end
   
 
-    self:AddTransition( "*", "Guard", ZONE_GOAL.States.Guarded )
+    self:AddTransition( "*", "Guard", "Guarded" )
     
     --- Guard Handler OnBefore for ZONE_GOAL
     -- @function [parent=#ZONE_GOAL] OnBeforeGuard
@@ -128,7 +125,7 @@ do -- Zone
     -- @param #ZONE_GOAL self
     -- @param #number Delay
     
-    self:AddTransition( "*", "Empty", ZONE_GOAL.States.Empty )
+    self:AddTransition( "*", "Empty", "Empty" )
     
     --- Empty Handler OnBefore for ZONE_GOAL
     -- @function [parent=#ZONE_GOAL] OnBeforeEmpty
@@ -228,15 +225,16 @@ do -- Zone
   -- @param #ZONE_GOAL self
   function ZONE_GOAL:StatusZone()
     
+    local State = self:GetState()
     self:E( { State = self:GetState() } )
   
     self.Zone:Scan()
   
-    if self:IsGuarded() then
+    if State ~= "Guarded" and self:IsGuarded() then
       self:Guard()
     end
     
-    if self:IsEmpty() then  
+    if State ~= "Empty" and self:IsEmpty() then  
       self:Empty()
     end
     

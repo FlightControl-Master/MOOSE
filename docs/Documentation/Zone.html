@@ -60,6 +60,7 @@
 					<li><a href="Escort.html">Escort</a></li>
 					<li><a href="Event.html">Event</a></li>
 					<li><a href="Fsm.html">Fsm</a></li>
+					<li><a href="Goal.html">Goal</a></li>
 					<li><a href="Group.html">Group</a></li>
 					<li><a href="Identifiable.html">Identifiable</a></li>
 					<li><a href="Menu.html">Menu</a></li>
@@ -72,6 +73,7 @@
 					<li><a href="Positionable.html">Positionable</a></li>
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
 					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
+					<li><a href="Protect.html">Protect</a></li>
 					<li><a href="Radio.html">Radio</a></li>
 					<li><a href="Rat.html">Rat</a></li>
 					<li><a href="Route.html">Route</a></li>
@@ -95,9 +97,13 @@
 					<li><a href="Task_A2G_Dispatcher.html">Task_A2G_Dispatcher</a></li>
 					<li><a href="Task_Cargo.html">Task_Cargo</a></li>
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
+					<li><a href="Task_Protect.html">Task_Protect</a></li>
 					<li><a href="Unit.html">Unit</a></li>
 					<li><a href="Utils.html">Utils</a></li>
 					<li>Zone</li>
+					<li><a href="ZoneCaptureCoalition.html">ZoneCaptureCoalition</a></li>
+					<li><a href="ZoneGoal.html">ZoneGoal</a></li>
+					<li><a href="ZoneGoalCoalition.html">ZoneGoalCoalition</a></li>
 					<li><a href="env.html">env</a></li>
 					<li><a href="land.html">land</a></li>
 					<li><a href="routines.html">routines</a></li>
@@ -331,6 +337,12 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_BASE).SetName">ZONE_BASE:SetName(ZoneName)</a></td>
+		<td class="summary">
+<p>Sets the name of the zone.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(ZONE_BASE).SetZoneProbability">ZONE_BASE:SetZoneProbability(ZoneProbability)</a></td>
 		<td class="summary">
 <p>Set the randomization probability of a zone to be selected.</p>
@@ -501,9 +513,27 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).Coalitions">ZONE_RADIUS.Coalitions</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).CountCoalitions">ZONE_RADIUS:CountCoalitions()</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).FlareZone">ZONE_RADIUS:FlareZone(FlareColor, Points, Azimuth)</a></td>
 		<td class="summary">
 <p>Flares the zone boundaries in a color.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).GetCoalition">ZONE_RADIUS:GetCoalition()</a></td>
+		<td class="summary">
+<p>Get the Zone Coalitions.</p>
 </td>
 		</tr>
 		<tr>
@@ -549,6 +579,36 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).IsAllInZoneOfCoalition">ZONE_RADIUS:IsAllInZoneOfCoalition(Coalition)</a></td>
+		<td class="summary">
+<p>Is All in Zone of Coalition?</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).IsAllInZoneOfOtherCoalition">ZONE_RADIUS:IsAllInZoneOfOtherCoalition(Coalition)</a></td>
+		<td class="summary">
+<p>Is All in Zone of Other Coalition?</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).IsNoneInZone">ZONE_RADIUS:IsNoneInZone()</a></td>
+		<td class="summary">
+<p>Is None in Zone?</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).IsNoneInZoneOfCoalition">ZONE_RADIUS:IsNoneInZoneOfCoalition(Coalition)</a></td>
+		<td class="summary">
+<p>Is None in Zone of Coalition?</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).IsSomeInZoneOfCoalition">ZONE_RADIUS:IsSomeInZoneOfCoalition(Coalition)</a></td>
+		<td class="summary">
+<p>Is Some in Zone of Coalition?</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).IsVec2InZone">ZONE_RADIUS:IsVec2InZone(Vec2)</a></td>
 		<td class="summary">
 <p>Returns if a location is within the zone.</p>
@@ -570,6 +630,18 @@
 		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).Radius">ZONE_RADIUS.Radius</a></td>
 		<td class="summary">
 <p>The radius of the zone.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).Scan">ZONE_RADIUS:Scan(Coalition)</a></td>
+		<td class="summary">
+<p>Scan the zone</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).SearchZone">ZONE_RADIUS:SearchZone(EvaluateFunction)</a></td>
+		<td class="summary">
+<p>Searches the zone</p>
 </td>
 		</tr>
 		<tr>
@@ -679,7 +751,9 @@
 
 <ul>
     <li><a href="##(ZONE_BASE).GetName">ZONE_BASE.GetName</a>(): Returns the name of the zone.</li>
+    <li><a href="##(ZONE_BASE).SetName">ZONE_BASE.SetName</a>(): Sets the name of the zone.</li>
 </ul>
+
 
 <h2>Each zone implements two polymorphic functions defined in <a href="Zone.html##(ZONE_BASE)">Zone#ZONE_BASE</a>:</h2>
 
@@ -1307,6 +1381,33 @@ self</p>
 		<dl class="function">
 <dt>
 
+<a id="#(ZONE_BASE).SetName" >
+<strong>ZONE_BASE:SetName(ZoneName)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Sets the name of the zone.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string ZoneName </em></code>: 
+The name of the zone.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(ZONE_BASE)">#ZONE_BASE</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(ZONE_BASE).SetZoneProbability" >
 <strong>ZONE_BASE:SetZoneProbability(ZoneProbability)</strong>
 </a>
@@ -1891,6 +1992,33 @@ self</p>
 		<dl class="function">
 <dt>
 
+		<em></em>
+<a id="#(ZONE_RADIUS).Coalitions" >
+<strong>ZONE_RADIUS.Coalitions</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_RADIUS).CountCoalitions" >
+<strong>ZONE_RADIUS:CountCoalitions()</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(ZONE_RADIUS).FlareZone" >
 <strong>ZONE_RADIUS:FlareZone(FlareColor, Points, Azimuth)</strong>
 </a>
@@ -1924,6 +2052,27 @@ The flare color.</p>
 				
 <p><em><a href="##(ZONE_RADIUS)">#ZONE_RADIUS</a>:</em>
 self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_RADIUS).GetCoalition" >
+<strong>ZONE_RADIUS:GetCoalition()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Get the Zone Coalitions.</p>
+
+	
+<p>Returns nil if there are none ot two coalitions in the zone!</p>
+
+		<h3>Return value</h3>
+				
+
+<p>Coalitions</p>
 
 </dd>
 </dl>
@@ -2125,6 +2274,128 @@ The point of the zone.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(ZONE_RADIUS).IsAllInZoneOfCoalition" >
+<strong>ZONE_RADIUS:IsAllInZoneOfCoalition(Coalition)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Is All in Zone of Coalition?</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> Coalition </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_RADIUS).IsAllInZoneOfOtherCoalition" >
+<strong>ZONE_RADIUS:IsAllInZoneOfOtherCoalition(Coalition)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Is All in Zone of Other Coalition?</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> Coalition </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_RADIUS).IsNoneInZone" >
+<strong>ZONE_RADIUS:IsNoneInZone()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Is None in Zone?</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_RADIUS).IsNoneInZoneOfCoalition" >
+<strong>ZONE_RADIUS:IsNoneInZoneOfCoalition(Coalition)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Is None in Zone of Coalition?</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> Coalition </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_RADIUS).IsSomeInZoneOfCoalition" >
+<strong>ZONE_RADIUS:IsSomeInZoneOfCoalition(Coalition)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Is Some in Zone of Coalition?</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> Coalition </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(ZONE_RADIUS).IsVec2InZone" >
 <strong>ZONE_RADIUS:IsVec2InZone(Vec2)</strong>
 </a>
@@ -2227,6 +2498,48 @@ self</p>
 	
 <p>The radius of the zone.</p>
 
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_RADIUS).Scan" >
+<strong>ZONE_RADIUS:Scan(Coalition)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Scan the zone</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> Coalition </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_RADIUS).SearchZone" >
+<strong>ZONE_RADIUS:SearchZone(EvaluateFunction)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Searches the zone</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> EvaluateFunction </em></code>: </p>
+
+				</li>
+		</ul>
 </dd>
 </dl>
 		<dl class="function">

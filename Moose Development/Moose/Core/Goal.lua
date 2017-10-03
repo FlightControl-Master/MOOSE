@@ -77,8 +77,6 @@ do -- Goal
       -- @param #string Event
       -- @param #string To
 
-      GOAL.States.On = "On"
-    
     end
 
     do
@@ -101,13 +99,10 @@ do -- Goal
       -- @param #string Event
       -- @param #string To
 
-      GOAL.States.Off = "Off"
-  
     end
 
     --- Achieved State for GOAL
     -- @field GOAL.Achieved
-    GOAL.States.Achieved = "Achieved"
 
     --- Achieved State Handler OnLeave for GOAL
     -- @function [parent=#GOAL] OnLeaveAchieved
@@ -125,8 +120,8 @@ do -- Goal
     -- @param #string To
     
     
-    self:SetStartState( GOAL.States.Off )
-    self:AddTransition( GOAL.States.Off, "Start", GOAL.States.On )
+    self:SetStartState( "Idle" )
+    self:AddTransition( "Idle", "Start", "On" )
     
     --- Start Handler OnBefore for GOAL
     -- @function [parent=#GOAL] OnBeforeStart
@@ -152,7 +147,7 @@ do -- Goal
     -- @param #GOAL self
     -- @param #number Delay
 
-    self:AddTransition( GOAL.States.On, "Stop", GOAL.States.Off )
+    self:AddTransition( "On", "Stop", "Idle" )
     
     --- Stop Handler OnBefore for GOAL
     -- @function [parent=#GOAL] OnBeforeStop
@@ -179,7 +174,7 @@ do -- Goal
     -- @param #number Delay
     
     
-    self:AddTransition( GOAL.States.On,  "IsAchieved", GOAL.States.On )
+    self:AddTransition( "On",  "IsAchieved", "On" )
     
     --- IsAchieved Handler OnBefore for GOAL
     -- @function [parent=#GOAL] OnBeforeIsAchieved
@@ -205,7 +200,7 @@ do -- Goal
     -- @param #GOAL self
     -- @param #number Delay
     
-    self:AddTransition( GOAL.States.On,  "Achieved", GOAL.States.Achieved )
+    self:AddTransition( "On",  "Achieved", "Achieved" )
     
     --- Achieved Handler OnBefore for GOAL
     -- @function [parent=#GOAL] OnBeforeAchieved
