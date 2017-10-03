@@ -1,0 +1,34 @@
+rock_manifest = {
+   doc = {
+      ["README-compiler.md"] = "292523d759247d210d32fb2f6153e0f4",
+      ["README-parser.md"] = "b44e3673d96dd296f2c0e92a6c87ee18",
+      ["README.md"] = "20bfb490cddef9e101e44688791abcda"
+   },
+   lua = {
+      metalua = {
+         compiler = {
+            parser = {
+               annot = {
+                  ["generator.lua"] = "d86f7507d66ba6a3692a6f8611e9939b",
+                  ["grammar.lua"] = "7d195bde7992efd9923771751b67b18f"
+               },
+               ["expr.lua"] = "3a0b1984a6f92280e2e63b074fdcec10",
+               ["ext.lua"] = "a99e31a07bc390b826f6653bcc47d89b",
+               ["lexer.lua"] = "eac0f9d475d9dae4ea5a2724014cebec",
+               ["meta.lua"] = "12870bceda6395695020b739196e2a92",
+               ["misc.lua"] = "49d59f4fc1bfb77b36f78d4f87ae258f",
+               ["stat.lua"] = "83f10ac899be12ca4df58bbe8645299f",
+               ["table.lua"] = "5d2389e89603b7f78c731e6918aa1a9b"
+            },
+            ["parser.lua"] = "e6ae68ce200de8071bb0fefad97f9b79"
+         },
+         ["compiler.lua"] = "ca65ee9a3053581f4315821a31d0c1fd",
+         grammar = {
+            ["generator.lua"] = "b8a29e817d6798c12f40a230a0f6d0af",
+            ["lexer.lua"] = "7cb7c835479a9be884130eaacb9be60a"
+         },
+         ["pprint.lua"] = "0b9bd8757b45c2d4be30106abcbd45b2"
+      }
+   },
+   ["metalua-parser-0.7.3-2.rockspec"] = "a56680900b0b51701db7cd7abf49af92"
+}

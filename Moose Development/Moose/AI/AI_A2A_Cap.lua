@@ -141,7 +141,7 @@ function AI_A2A_CAP:New( AIGroup, PatrolZone, PatrolFloorAltitude, PatrolCeiling
   self.EngageMinSpeed = EngageMinSpeed
   self.EngageMaxSpeed = EngageMaxSpeed
   
-  self:AddTransition( { "Patrolling", "Engaging", "Returning" }, "Engage", "Engaging" ) -- FSM_CONTROLLABLE Transition for type #AI_A2A_CAP.
+  self:AddTransition( { "Patrolling", "Engaging", "Returning", "Airborne" }, "Engage", "Engaging" ) -- FSM_CONTROLLABLE Transition for type #AI_A2A_CAP.
 
   --- OnBefore Transition Handler for Event Engage.
   -- @function [parent=#AI_A2A_CAP] OnBeforeEngage
@@ -302,6 +302,17 @@ function AI_A2A_CAP:New( AIGroup, PatrolZone, PatrolFloorAltitude, PatrolCeiling
   return self
 end
 
+--- onafter State Transition for Event Patrol.
+-- @param #AI_A2A_GCI self
+-- @param Wrapper.Group#GROUP AIGroup The AI Group managed by the FSM.
+-- @param #string From The From State string.
+-- @param #string Event The Event string.
+-- @param #string To The To State string.
+function AI_A2A_CAP:onafterStart( AIGroup, From, Event, To )
+
+  AIGroup:HandleEvent( EVENTS.Takeoff, nil, self )
+
+end
 
 --- Set the Engage Zone which defines where the AI will engage bogies. 
 -- @param #AI_A2A_CAP self

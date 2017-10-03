@@ -90,6 +90,18 @@ do -- COORDINATE
   --   * @{#COORDINATE.IlluminationBomb}(): To illuminate the point.
   --
   --
+  -- ## Markings
+  -- 
+  -- Place markers (text boxes with clarifications for briefings, target locations or any other reference point) on the map for all players, coalitions or specific groups:
+  -- 
+  --   * @{#COORDINATE.MarkToAll}(): Place a mark to all players.
+  --   * @{#COORDINATE.MarkToCoalition}(): Place a mark to a coalition.
+  --   * @{#COORDINATE.MarkToCoalitionRed}(): Place a mark to the red coalition.
+  --   * @{#COORDINATE.MarkToCoalitionBlue}(): Place a mark to the blue coalition.
+  --   * @{#COORDINATE.MarkToGroup}(): Place a mark to a group (needs to have a client in it or a CA group (CA group is bugged)).
+  --   * @{#COORDINATE.RemoveMark}(): Removes a mark from the map.
+  --   
+  --
   -- ## 3D calculation methods
   --
   -- Various calculation methods exist to use or manipulate 3D space. Find below a short description of each method:
@@ -289,8 +301,44 @@ do -- COORDINATE
   end
 
 
+  --- Set the heading of the coordinate, if applicable.
+  -- @param #COORDINATE self
   function COORDINATE:SetHeading( Heading )
     self.Heading = Heading
+  end
+  
+  
+  --- Get the heading of the coordinate, if applicable.
+  -- @param #COORDINATE self
+  -- @return #number or nil
+  function COORDINATE:GetHeading()
+    return self.Heading
+  end
+
+  
+  --- Set the velocity of the COORDINATE.
+  -- @param #COORDINATE self
+  -- @param #string Velocity Velocity in meters per second.
+  function COORDINATE:SetVelocity( Velocity )
+    self.Velocity = Velocity
+  end
+
+  
+  --- Return the velocity of the COORDINATE.
+  -- @param #COORDINATE self
+  -- @return #number Velocity in meters per second.
+  function COORDINATE:GetVelocity()
+    local Velocity = self.Velocity
+    return Velocity or 0
+  end
+
+  
+  --- Return velocity text of the COORDINATE.
+  -- @param #COORDINATE self
+  -- @return #string
+  function COORDINATE:GetMovingText( Settings )
+
+    return self:GetVelocityText( Settings ) .. ", " .. self:GetHeadingText( Settings )
   end
 
 
@@ -301,6 +349,7 @@ do -- COORDINATE
   function COORDINATE:GetDirectionVec3( TargetCoordinate )
     return { x = TargetCoordinate.x - self.x, y = TargetCoordinate.y - self.y, z = TargetCoordinate.z - self.z }
   end
+
 
   --- Get a correction in radians of the real magnetic north of the COORDINATE.
   -- @param #COORDINATE self
@@ -346,6 +395,7 @@ do -- COORDINATE
     local SourceVec3 = self:GetVec3()
     return ( ( TargetVec3.x - SourceVec3.x ) ^ 2 + ( TargetVec3.z - SourceVec3.z ) ^ 2 ) ^ 0.5
   end
+
 
   --- Return the 3D distance in meters between the target COORDINATE and the COORDINATE.
   -- @param #COORDINATE self
@@ -409,6 +459,38 @@ do -- COORDINATE
       end
     else
       return ""
+    end
+  end
+
+
+
+  --- Return the velocity text of the COORDINATE.
+  -- @param #COORDINATE self
+  -- @return #string Velocity text.
+  function COORDINATE:GetVelocityText( Settings )
+    local Velocity = self:GetVelocity()
+    local Settings = Settings or _SETTINGS
+    if Velocity then
+      if Settings:IsMetric() then
+        return string.format( " moving at %d km/h", UTILS.MpsToKmph( Velocity ) )
+      else
+        return string.format( " moving at %d mi/h", UTILS.MpsToKmph( Velocity ) / 1.852 )
+      end
+    else
+      return " stationary"
+    end
+  end
+
+
+  --- Return the heading text of the COORDINATE.
+  -- @param #COORDINATE self
+  -- @return #string Heading text.
+  function COORDINATE:GetHeadingText( Settings )
+    local Heading = self:GetHeading()
+    if Heading then
+      return string.format( " bearing %3d°", Heading )
+    else
+      return " bearing unknown"
     end
   end
 
@@ -650,6 +732,88 @@ do -- COORDINATE
     self:F2( Azimuth )
     self:Flare( FLARECOLOR.Red, Azimuth )
   end
+  
+  do -- Markings
+  
+    --- Mark to All
+    -- @param #COORDINATE self
+    -- @param #string MarkText Free format text that shows the marking clarification.
+    -- @return #number The resulting Mark ID which is a number.
+    -- @usage
+    --   local TargetCoord = TargetGroup:GetCoordinate()
+    --   local MarkID = TargetCoord:MarkToAll( "This is a target for all players" )
+    function COORDINATE:MarkToAll( MarkText )
+      local MarkID = UTILS.GetMarkID()
+      trigger.action.markToAll( MarkID, MarkText, self:GetVec3() )
+      return MarkID
+    end
+
+    --- Mark to Coalition
+    -- @param #COORDINATE self
+    -- @param #string MarkText Free format text that shows the marking clarification.
+    -- @param Coalition
+    -- @return #number The resulting Mark ID which is a number.
+    -- @usage
+    --   local TargetCoord = TargetGroup:GetCoordinate()
+    --   local MarkID = TargetCoord:MarkToCoalition( "This is a target for the red coalition", coalition.side.RED )
+    function COORDINATE:MarkToCoalition( MarkText, Coalition )
+      local MarkID = UTILS.GetMarkID()
+      trigger.action.markToCoalition( MarkID, MarkText, self:GetVec3(), Coalition )
+      return MarkID
+    end
+
+    --- Mark to Red Coalition
+    -- @param #COORDINATE self
+    -- @param #string MarkText Free format text that shows the marking clarification.
+    -- @return #number The resulting Mark ID which is a number.
+    -- @usage
+    --   local TargetCoord = TargetGroup:GetCoordinate()
+    --   local MarkID = TargetCoord:MarkToCoalitionRed( "This is a target for the red coalition" )
+    function COORDINATE:MarkToCoalitionRed( MarkText )
+      return self:MarkToCoalition( MarkText, coalition.side.RED )
+    end
+
+    --- Mark to Blue Coalition
+    -- @param #COORDINATE self
+    -- @param #string MarkText Free format text that shows the marking clarification.
+    -- @return #number The resulting Mark ID which is a number.
+    -- @usage
+    --   local TargetCoord = TargetGroup:GetCoordinate()
+    --   local MarkID = TargetCoord:MarkToCoalitionBlue( "This is a target for the blue coalition" )
+    function COORDINATE:MarkToCoalitionBlue( MarkText )
+      return self:MarkToCoalition( MarkText, coalition.side.BLUE )
+    end
+
+    --- Mark to Group
+    -- @param #COORDINATE self
+    -- @param #string MarkText Free format text that shows the marking clarification.
+    -- @param Wrapper.Group#GROUP MarkGroup The @{Group} that receives the mark.
+    -- @return #number The resulting Mark ID which is a number.
+    -- @usage
+    --   local TargetCoord = TargetGroup:GetCoordinate()
+    --   local MarkGroup = GROUP:FindByName( "AttackGroup" )
+    --   local MarkID = TargetCoord:MarkToGroup( "This is a target for the attack group", AttackGroup )
+    function COORDINATE:MarkToGroup( MarkText, MarkGroup )
+      local MarkID = UTILS.GetMarkID()
+      trigger.action.markToGroup( MarkID, MarkText, self:GetVec3(), MarkGroup:GetID() )
+      return MarkID
+    end
+    
+    --- Remove a mark
+    -- @param #COORDINATE self
+    -- @param #number MarkID The ID of the mark to be removed.
+    -- @usage
+    --   local TargetCoord = TargetGroup:GetCoordinate()
+    --   local MarkGroup = GROUP:FindByName( "AttackGroup" )
+    --   local MarkID = TargetCoord:MarkToGroup( "This is a target for the attack group", AttackGroup )
+    --   <<< logic >>>
+    --   RemoveMark( MarkID ) -- The mark is now removed
+    function COORDINATE:RemoveMark( MarkID )
+      trigger.action.removeMark( MarkID )
+    end
+  
+  end -- Markings
+  
 
   --- Returns if a Coordinate has Line of Sight (LOS) with the ToCoordinate.
   -- @param #COORDINATE self
@@ -667,6 +831,39 @@ do -- COORDINATE
     local IsLOS = land.isVisible( FromVec3, ToVec3 )
 
     return IsLOS
+  end
+
+
+  --- Returns if a Coordinate is in a certain Radius of this Coordinate in 2D plane using the X and Z axis.
+  -- @param #COORDINATE self
+  -- @param #COORDINATE ToCoordinate The coordinate that will be tested if it is in the radius of this coordinate.
+  -- @param #number Radius The radius of the circle on the 2D plane around this coordinate.
+  -- @return #boolean true if in the Radius.
+  function COORDINATE:IsInRadius( Coordinate, Radius )
+
+    local InVec2 = self:GetVec2()
+    local Vec2 = Coordinate:GetVec2()
+    
+    local InRadius = UTILS.IsInRadius( InVec2, Vec2, Radius)
+
+    return InRadius
+  end
+
+
+  --- Returns if a Coordinate is in a certain radius of this Coordinate in 3D space using the X, Y and Z axis.
+  -- So Radius defines the radius of the a Sphere in 3D space around this coordinate.
+  -- @param #COORDINATE self
+  -- @param #COORDINATE ToCoordinate The coordinate that will be tested if it is in the radius of this coordinate.
+  -- @param #number Radius The radius of the sphere in the 3D space around this coordinate.
+  -- @return #boolean true if in the Sphere.
+  function COORDINATE:IsInSphere( Coordinate, Radius )
+
+    local InVec3 = self:GetVec3()
+    local Vec3 = Coordinate:GetVec3()
+    
+    local InSphere = UTILS.IsInSphere( InVec3, Vec3, Radius)
+
+    return InSphere
   end
 
 
@@ -798,6 +995,78 @@ do -- COORDINATE
 
   end
 
+  --- Provides a coordinate string of the point, based on the A2G coordinate format system.
+  -- @param #COORDINATE self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable
+  -- @param Core.Settings#SETTINGS Settings
+  -- @return #string The coordinate Text in the configured coordinate system.
+  function COORDINATE:ToStringA2G( Controllable, Settings ) -- R2.2
+  
+    self:F( { Controllable = Controllable and Controllable:GetName() } )
+
+    local Settings = Settings or ( Controllable and _DATABASE:GetPlayerSettings( Controllable:GetPlayerName() ) ) or _SETTINGS
+
+    if Settings:IsA2G_BR()  then
+      -- If no Controllable is given to calculate the BR from, then MGRS will be used!!!
+      if Controllable then
+        local Coordinate = Controllable:GetCoordinate()
+        return Controllable and self:ToStringBR( Coordinate, Settings ) or self:ToStringMGRS( Settings )
+      else
+        return self:ToStringMGRS( Settings )
+      end
+    end
+    if Settings:IsA2G_LL_DMS()  then
+      return self:ToStringLLDMS( Settings )
+    end
+    if Settings:IsA2G_LL_DDM()  then
+      return self:ToStringLLDDM( Settings )
+    end
+    if Settings:IsA2G_MGRS() then
+      return self:ToStringMGRS( Settings )
+    end
+
+    return nil
+
+  end
+
+
+  --- Provides a coordinate string of the point, based on the A2A coordinate format system.
+  -- @param #COORDINATE self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable
+  -- @param Core.Settings#SETTINGS Settings
+  -- @return #string The coordinate Text in the configured coordinate system.
+  function COORDINATE:ToStringA2A( Controllable, Settings ) -- R2.2
+  
+    self:F( { Controllable = Controllable and Controllable:GetName() } )
+
+    local Settings = Settings or ( Controllable and _DATABASE:GetPlayerSettings( Controllable:GetPlayerName() ) ) or _SETTINGS
+
+    if Settings:IsA2A_BRAA()  then
+      if Controllable then
+        local Coordinate = Controllable:GetCoordinate()
+        return self:ToStringBRA( Coordinate, Settings ) 
+      else
+        return self:ToStringMGRS( Settings )
+      end
+    end
+    if Settings:IsA2A_BULLS() then
+      local Coalition = Controllable:GetCoalition()
+      return self:ToStringBULLS( Coalition, Settings )
+    end
+    if Settings:IsA2A_LL_DMS()  then
+      return self:ToStringLLDMS( Settings )
+    end
+    if Settings:IsA2A_LL_DDM()  then
+      return self:ToStringLLDDM( Settings )
+    end
+    if Settings:IsA2A_MGRS() then
+      return self:ToStringMGRS( Settings )
+    end
+
+    return nil
+
+  end
+
   --- Provides a coordinate string of the point, based on a coordinate format system:
   --   * Uses default settings in COORDINATE.
   --   * Can be overridden if for a GROUP containing x clients, a menu was selected to override the default.
@@ -836,47 +1105,10 @@ do -- COORDINATE
     end
     
 
-    if ModeA2A then
-      if Settings:IsA2A_BRAA()  then
-        if Controllable then
-          local Coordinate = Controllable:GetCoordinate()
-          return self:ToStringBRA( Coordinate, Settings ) 
-        else
-          return self:ToStringMGRS( Settings )
-        end
-      end
-      if Settings:IsA2A_BULLS() then
-        local Coalition = Controllable:GetCoalition()
-        return self:ToStringBULLS( Coalition, Settings )
-      end
-      if Settings:IsA2A_LL_DMS()  then
-        return self:ToStringLLDMS( Settings )
-      end
-      if Settings:IsA2A_LL_DDM()  then
-        return self:ToStringLLDDM( Settings )
-      end
-      if Settings:IsA2A_MGRS() then
-        return self:ToStringMGRS( Settings )
-      end
+    if ModeA2A == true then
+      return self:ToStringA2A( Controllable, Settings )
     else
-      if Settings:IsA2G_BR()  then
-        -- If no Controllable is given to calculate the BR from, then MGRS will be used!!!
-        if Controllable then
-          local Coordinate = Controllable:GetCoordinate()
-          return Controllable and self:ToStringBR( Coordinate, Settings ) or self:ToStringMGRS( Settings )
-        else
-          return self:ToStringMGRS( Settings )
-        end
-      end
-      if Settings:IsA2G_LL_DMS()  then
-        return self:ToStringLLDMS( Settings )
-      end
-      if Settings:IsA2G_LL_DDM()  then
-        return self:ToStringLLDDM( Settings )
-      end
-      if Settings:IsA2G_MGRS() then
-        return self:ToStringMGRS( Settings )
-      end
+      return self:ToStringA2G( Controllable, Settings )
     end
     
     return nil

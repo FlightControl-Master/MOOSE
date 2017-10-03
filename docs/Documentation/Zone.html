@@ -73,6 +73,7 @@
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
 					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
 					<li><a href="Radio.html">Radio</a></li>
+					<li><a href="Rat.html">Rat</a></li>
 					<li><a href="Route.html">Route</a></li>
 					<li><a href="Scenery.html">Scenery</a></li>
 					<li><a href="ScheduleDispatcher.html">ScheduleDispatcher</a></li>
@@ -442,6 +443,12 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_POLYGON_BASE).GetRandomCoordinate">ZONE_POLYGON_BASE:GetRandomCoordinate()</a></td>
+		<td class="summary">
+<p>Return a <a href="Point.html##(COORDINATE)">Point#COORDINATE</a> object representing a random 3D point at landheight within the zone.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(ZONE_POLYGON_BASE).GetRandomPointVec2">ZONE_POLYGON_BASE:GetRandomPointVec2()</a></td>
 		<td class="summary">
 <p>Return a <a href="Point.html##(POINT_VEC2)">Point#POINT_VEC2</a> object representing a random 2D point at landheight within the zone.</p>
@@ -503,6 +510,12 @@
 		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).GetRadius">ZONE_RADIUS:GetRadius()</a></td>
 		<td class="summary">
 <p>Returns the radius of the zone.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).GetRandomCoordinate">ZONE_RADIUS:GetRandomCoordinate(inner, outer)</a></td>
+		<td class="summary">
+<p>Returns a <a href="Point.html##(COORDINATE)">Point#COORDINATE</a> object reflecting a random 3D location within the zone.</p>
 </td>
 		</tr>
 		<tr>
@@ -1644,6 +1657,24 @@ The bounding square.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(ZONE_POLYGON_BASE).GetRandomCoordinate" >
+<strong>ZONE_POLYGON_BASE:GetRandomCoordinate()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Return a <a href="Point.html##(COORDINATE)">Point#COORDINATE</a> object representing a random 3D point at landheight within the zone.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="Core.Point.html##(COORDINATE)">Core.Point#COORDINATE</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(ZONE_POLYGON_BASE).GetRandomPointVec2" >
 <strong>ZONE_POLYGON_BASE:GetRandomPointVec2()</strong>
 </a>
@@ -1911,6 +1942,39 @@ self</p>
 				
 <p><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a>:</em>
 The radius of the zone.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_RADIUS).GetRandomCoordinate" >
+<strong>ZONE_RADIUS:GetRandomCoordinate(inner, outer)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns a <a href="Point.html##(COORDINATE)">Point#COORDINATE</a> object reflecting a random 3D location within the zone.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number inner </em></code>: 
+(optional) Minimal distance from the center of the zone. Default is 0.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number outer </em></code>: 
+(optional) Maximal distance from the outer edge of the zone. Default is the radius of the zone.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="Core.Point.html##(COORDINATE)">Core.Point#COORDINATE</a>:</em></p>
+
 
 </dd>
 </dl>

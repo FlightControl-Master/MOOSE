@@ -248,6 +248,7 @@ function AI_A2A:New( AIGroup )
   -- @param #AI_A2A self
   -- @param #number Delay
 
+  self:AddTransition( "*", "Takeoff", "Airborne" )
   self:AddTransition( "*", "Return", "Returning" )
   self:AddTransition( "*", "Hold", "Holding" )
   self:AddTransition( "*", "Home", "Home" )
@@ -261,6 +262,13 @@ function AI_A2A:New( AIGroup )
   self.IdleCount = 0
   
   return self
+end
+
+--- @param Wrapper.Group#GROUP self
+-- @param Core.Event#EVENTDATA EventData
+function GROUP:OnEventTakeoff( EventData, Fsm )
+  Fsm:Takeoff()
+  self:UnHandleEvent( EVENTS.Takeoff )
 end
 
 function AI_A2A:SetDispatcher( Dispatcher )
@@ -458,7 +466,6 @@ function AI_A2A:onafterStatus()
         else
           self:E( self.Controllable:GetName() .. " is out of fuel: " .. Fuel .. " ... RTB!" )
           local OldAIControllable = self.Controllable
-          local AIControllableTemplate = self.Controllable:GetTemplate()
           
           local OrbitTask = OldAIControllable:TaskOrbitCircle( math.random( self.PatrolFloorAltitude, self.PatrolCeilingAltitude ), self.PatrolMinSpeed )
           local TimedOrbitTask = OldAIControllable:TaskControlled( OrbitTask, OldAIControllable:TaskCondition(nil,nil,nil,nil,self.PatrolOutOfFuelOrbitTime,nil ) )

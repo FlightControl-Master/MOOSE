@@ -853,7 +853,7 @@ do -- DESIGNATE
           
             local Coord = self.Detection:GetDetectedItemCoordinate( DesignateIndex )
             local ID = self.Detection:GetDetectedItemID( DesignateIndex )
-            local MenuText = ID .. ", " .. Coord:ToString( AttackGroup )
+            local MenuText = ID .. ", " .. Coord:ToStringA2G( AttackGroup )
             
             if Designating == "" then
               MenuText = "(-) " .. MenuText
@@ -862,7 +862,7 @@ do -- DESIGNATE
               for LaserCode, MenuText in pairs( self.MenuLaserCodes ) do
                 MENU_GROUP_COMMAND:New( AttackGroup, string.format( MenuText, LaserCode ), DetectedMenu, self.MenuLaseCode, self, DesignateIndex, 60, LaserCode ):SetTime( MenuTime ):SetTag( self.DesignateName )
               end
-              MENU_GROUP_COMMAND:New( AttackGroup, "Lase targets", DetectedMenu, self.MenuLaseOn, self, DesignateIndex, 60 ):SetTime( MenuTime ):SetTag( self.DesignateName )
+              MENU_GROUP_COMMAND:New( AttackGroup, "Lase with random laser code(s)", DetectedMenu, self.MenuLaseOn, self, DesignateIndex, 60 ):SetTime( MenuTime ):SetTag( self.DesignateName )
               MENU_GROUP_COMMAND:New( AttackGroup, "Smoke red", DetectedMenu, self.MenuSmoke, self, DesignateIndex, SMOKECOLOR.Red ):SetTime( MenuTime ):SetTag( self.DesignateName )
               MENU_GROUP_COMMAND:New( AttackGroup, "Smoke blue", DetectedMenu, self.MenuSmoke, self, DesignateIndex, SMOKECOLOR.Blue ):SetTime( MenuTime ):SetTag( self.DesignateName )
               MENU_GROUP_COMMAND:New( AttackGroup, "Smoke green", DetectedMenu, self.MenuSmoke, self, DesignateIndex, SMOKECOLOR.Green ):SetTime( MenuTime ):SetTag( self.DesignateName )

@@ -73,6 +73,7 @@
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
 					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
 					<li><a href="Radio.html">Radio</a></li>
+					<li><a href="Rat.html">Rat</a></li>
 					<li><a href="Route.html">Route</a></li>
 					<li><a href="Scenery.html">Scenery</a></li>
 					<li><a href="ScheduleDispatcher.html">ScheduleDispatcher</a></li>
@@ -248,6 +249,12 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POSITIONABLE).GetMessageType">POSITIONABLE:GetMessageType(Message, MessageType, Name)</a></td>
+		<td class="summary">
+<p>Returns a message of a specified type with the callsign embedded (if there is one).</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(POSITIONABLE).GetPointVec2">POSITIONABLE:GetPointVec2()</a></td>
 		<td class="summary">
 <p>Returns a POINT_VEC2 object indicating the point in 2D of the POSITIONABLE within the mission.</p>
@@ -401,6 +408,18 @@
 		<td class="name" nowrap="nowrap"><a href="##(POSITIONABLE).MessageToSetGroup">POSITIONABLE:MessageToSetGroup(Message, Duration, MessageSetGroup, Name)</a></td>
 		<td class="summary">
 <p>Send a message to a <a href="Set.html##(SET_GROUP)">Set#SET_GROUP</a>.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POSITIONABLE).MessageTypeToCoalition">POSITIONABLE:MessageTypeToCoalition(Message, MessageType, MessageCoalition)</a></td>
+		<td class="summary">
+<p>Send a message to a coalition.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POSITIONABLE).MessageTypeToGroup">POSITIONABLE:MessageTypeToGroup(Message, MessageType, MessageGroup, Name)</a></td>
+		<td class="summary">
+<p>Send a message of a message type to a <a href="Group.html">Group</a>.</p>
 </td>
 		</tr>
 		<tr>
@@ -910,6 +929,45 @@ The message text</p>
 				
 <p><em>#string:</em>
 The message text</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(POSITIONABLE).GetMessageType" >
+<strong>POSITIONABLE:GetMessageType(Message, MessageType, Name)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns a message of a specified type with the callsign embedded (if there is one).</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Message </em></code>: 
+The message text</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Core.Message.html##(MESSAGE)">Core.Message#MESSAGE</a> MessageType </em></code>: 
+MessageType The message type.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Name </em></code>: 
+(optional) The Name of the sender. If not provided, the Name is the type of the Positionable.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="Core.Message.html##(MESSAGE)">Core.Message#MESSAGE</a>:</em></p>
+
 
 </dd>
 </dl>
@@ -1684,6 +1742,86 @@ The SET_GROUP collection receiving the message.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(POSITIONABLE).MessageTypeToCoalition" >
+<strong>POSITIONABLE:MessageTypeToCoalition(Message, MessageType, MessageCoalition)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Send a message to a coalition.</p>
+
+	
+<p>The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Message </em></code>: 
+The message text</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Core.Message.html##(MESSAGE.Type)">Core.Message#MESSAGE.Type</a> MessageType </em></code>: 
+The message type that determines the duration.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Dcs.DCScoalition.html##(coalition)">Dcs.DCScoalition#coalition</a> MessageCoalition </em></code>: 
+The Coalition receiving the message.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(POSITIONABLE).MessageTypeToGroup" >
+<strong>POSITIONABLE:MessageTypeToGroup(Message, MessageType, MessageGroup, Name)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Send a message of a message type to a <a href="Group.html">Group</a>.</p>
+
+	
+<p>The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Message </em></code>: 
+The message text</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Core.Message.html##(MESSAGE.Type)">Core.Message#MESSAGE.Type</a> MessageType </em></code>: 
+The message type that determines the duration.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> MessageGroup </em></code>: 
+The GROUP object receiving the message.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Name </em></code>: 
+(optional) The Name of the sender. If not provided, the Name is the type of the Positionable.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(POSITIONABLE).New" >
 <strong>POSITIONABLE:New(PositionableName)</strong>
 </a>
@@ -1836,7 +1974,6 @@ The height in meters to add to the altitude of the positionable.</p>
 		<dl class="function">
 <dt>
 
-		<em><a href="Core.Spot.html##(SPOT)">Core.Spot#SPOT</a></em>
 <a id="#(POSITIONABLE).Spot" >
 <strong>POSITIONABLE.Spot</strong>
 </a>

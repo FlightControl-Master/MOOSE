@@ -561,12 +561,13 @@ end
 -- @param Core.Base#BASE EventClass The self instance of the class for which the event is.
 -- @param EventID
 -- @return #EVENT
-function EVENT:OnEventForGroup( GroupName, EventFunction, EventClass, EventID )
-  self:F2( GroupName )
+function EVENT:OnEventForGroup( GroupName, EventFunction, EventClass, EventID, ... )
+  self:E( GroupName )
 
   local Event = self:Init( EventID, EventClass )
   Event.EventGroup = true
   Event.EventFunction = EventFunction
+  Event.Params = arg
   return self
 end
 
@@ -950,7 +951,7 @@ function EVENT:onEvent( Event )
                                       
                     local Result, Value = xpcall( 
                       function() 
-                        return EventData.EventFunction( EventClass, Event ) 
+                        return EventData.EventFunction( EventClass, Event, unpack( EventData.Params ) ) 
                       end, ErrorHandler )
       
                   else
@@ -966,14 +967,14 @@ function EVENT:onEvent( Event )
                                           
                       local Result, Value = xpcall( 
                         function() 
-                          return EventFunction( EventClass, Event ) 
+                          return EventFunction( EventClass, Event, unpack( EventData.Params ) ) 
                         end, ErrorHandler )
                     end
                   end
                 end
               else
                 -- The EventClass is not alive anymore, we remove it from the EventHandlers...
-                self:RemoveEvent( EventClass, Event.id )  
+                --self:RemoveEvent( EventClass, Event.id )  
               end
             else
           

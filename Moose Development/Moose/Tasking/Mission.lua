@@ -264,14 +264,14 @@ function MISSION:New( CommandCenter, MissionName, MissionPriority, MissionBriefi
 end
 
 
--- FSM function for a MISSION
+--- FSM function for a MISSION
 -- @param #MISSION self
 -- @param #string From
 -- @param #string Event
 -- @param #string To
 function MISSION:onenterCOMPLETED( From, Event, To )
 
-  self:GetCommandCenter():MessageToCoalition( self:GetName() .. " has been completed! Good job guys!" )
+  self:GetCommandCenter():MessageTypeToCoalition( self:GetName() .. " has been completed! Good job guys!", MESSAGE.Type.Information )
 end
 
 --- Gets the mission name.
@@ -888,6 +888,8 @@ end
 -- @return #string
 function MISSION:ReportOverview( ReportGroup, TaskStatus )
 
+  self:F( { TaskStatus = TaskStatus } )
+
   local Report = REPORT:New()
 
   -- List the name of the mission.
@@ -958,7 +960,7 @@ function MISSION:MenuReportBriefing( ReportGroup )
 
   local Report = self:ReportBriefing()
   
-  self:GetCommandCenter():MessageToGroup( Report, ReportGroup )
+  self:GetCommandCenter():MessageTypeToGroup( Report, ReportGroup, MESSAGE.Type.Briefing )
 end
 
 
@@ -970,7 +972,7 @@ function MISSION:MenuReportTasksSummary( ReportGroup )
 
   local Report = self:ReportSummary( ReportGroup )
   
-  self:GetCommandCenter():MessageToGroup( Report, ReportGroup )
+  self:GetCommandCenter():MessageTypeToGroup( Report, ReportGroup, MESSAGE.Type.Overview )
 end
 
 
@@ -983,7 +985,7 @@ function MISSION:MenuReportTasksPerStatus( ReportGroup, TaskStatus )
 
   local Report = self:ReportOverview( ReportGroup, TaskStatus )
   
-  self:GetCommandCenter():MessageToGroup( Report, ReportGroup )
+  self:GetCommandCenter():MessageTypeToGroup( Report, ReportGroup, MESSAGE.Type.Overview )
 end
 
 
@@ -993,7 +995,7 @@ function MISSION:MenuReportPlayersPerTask( ReportGroup )
 
   local Report = self:ReportPlayersPerTask()
   
-  self:GetCommandCenter():MessageToGroup( Report, ReportGroup )
+  self:GetCommandCenter():MessageTypeToGroup( Report, ReportGroup, MESSAGE.Type.Overview )
 end
 
 --- @param #MISSION self
@@ -1002,7 +1004,7 @@ function MISSION:MenuReportPlayersProgress( ReportGroup )
 
   local Report = self:ReportPlayersProgress()
   
-  self:GetCommandCenter():MessageToGroup( Report, ReportGroup )
+  self:GetCommandCenter():MessageTypeToGroup( Report, ReportGroup, MESSAGE.Type.Overview )
 end
 
 

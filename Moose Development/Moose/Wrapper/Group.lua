@@ -104,10 +104,10 @@ GROUP.Takeoff = {
 GROUPTEMPLATE = {}
 
 GROUPTEMPLATE.Takeoff = {
-  [GROUP.Takeoff.Air] =     "Turning Point",
-  [GROUP.Takeoff.Runway] =  "TakeOff",
-  [GROUP.Takeoff.Hot] =     "TakeOffParkingHot",
-  [GROUP.Takeoff.Cold] =    "TakeOffParking",
+  [GROUP.Takeoff.Air] =     { "Turning Point", "Turning Point" },
+  [GROUP.Takeoff.Runway] =  { "TakeOff", "From Runway" },
+  [GROUP.Takeoff.Hot] =     { "TakeOffParkingHot", "From Parking Area Hot" },
+  [GROUP.Takeoff.Cold] =    { "TakeOffParking", "From Parking Area" }
 }
 
 --- Create a new GROUP from a DCSGroup
@@ -938,9 +938,18 @@ end
 -- @return #table 
 function GROUP:GetTemplate()
   local GroupName = self:GetName()
-  self:E( GroupName )
-  return _DATABASE:GetGroupTemplate( GroupName )
+  return UTILS.DeepCopy( _DATABASE:GetGroupTemplate( GroupName ) )
 end
+
+--- Returns the group template route.points[] (the waypoints) from the @{DATABASE} (_DATABASE object).
+-- @param #GROUP self
+-- @return #table 
+function GROUP:GetTemplateRoutePoints()
+  local GroupName = self:GetName()
+  return UTILS.DeepCopy( _DATABASE:GetGroupTemplate( GroupName ).route.points )
+end
+
+
 
 --- Sets the controlled status in a Template.
 -- @param #GROUP self
@@ -1161,9 +1170,9 @@ do -- Event Handling
   -- @param Core.Event#EVENTS Event
   -- @param #function EventFunction (optional) The function to be called when the event occurs for the GROUP.
   -- @return #GROUP
-  function GROUP:HandleEvent( Event, EventFunction )
+  function GROUP:HandleEvent( Event, EventFunction, ... )
   
-    self:EventDispatcher():OnEventForGroup( self:GetName(), EventFunction, self, Event )
+    self:EventDispatcher():OnEventForGroup( self:GetName(), EventFunction, self, Event, ... )
     
     return self
   end

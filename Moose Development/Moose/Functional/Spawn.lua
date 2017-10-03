@@ -200,6 +200,7 @@
 --   * @{#SPAWN.SpawnFromStatic}(): Spawn a new group from a structure, taking the position of a @{Static}.
 --   * @{#SPAWN.SpawnFromUnit}(): Spawn a new group taking the position of a @{Unit}.
 --   * @{#SPAWN.SpawnInZone}(): Spawn a new group in a @{Zone}.
+--   * @{#SPAWN.SpawnAtAirbase}(): Spawn a new group at an @{Airbase}, which can be an airdrome, ship or helipad.
 -- 
 -- Note that @{#SPAWN.Spawn} and @{#SPAWN.ReSpawn} return a @{GROUP#GROUP.New} object, that contains a reference to the DCSGroup object. 
 -- You can use the @{GROUP} object to do further actions with the DCSGroup.
@@ -982,20 +983,53 @@ function SPAWN:OnSpawnGroup( SpawnCallBackFunction, ... )
   return self
 end
 
---- Will spawn a group at an airbase. 
+--- Will spawn a group at an @{Airbase}. 
 -- This method is mostly advisable to be used if you want to simulate spawning units at an airbase.
 -- Note that each point in the route assigned to the spawning group is reset to the point of the spawn.
 -- You can use the returned group to further define the route to be followed.
+-- 
+-- The @{Airbase#AIRBASE} object must refer to a valid airbase known in the sim.
+-- You can use the following enumerations to search for the pre-defined airbases on the current known maps of DCS:
+-- 
+--   * @{Airbase#AIRBASE.Caucasus}: The airbases on the Caucasus map. 
+--   * @{Airbase#AIRBASE.Nevada}: The airbases on the Nevada (NTTR) map. 
+--   * @{Airbase#AIRBASE.Normandy}: The airbases on the Normandy map. 
+-- 
+-- Use the method @{Airbase#AIRBASE.FindByName}() to retrieve the airbase object. 
+-- The known AIRBASE objects are automatically imported at mission start by MOOSE.
+-- Therefore, there isn't any New() constructor defined for AIRBASE objects.
+-- 
+-- Ships and Farps are added within the mission, and are therefore not known.
+-- For these AIRBASE objects, there isn't an @{Airbase#AIRBASE} enumeration defined.
+-- You need to provide the **exact name** of the airbase as the parameter to the @{Airbase#AIRBASE.FindByName}() method!
+-- 
 -- @param #SPAWN self
--- @param Wrapper.Airbase#AIRBASE Airbase The @{Airbase} where to spawn the group.
+-- @param Wrapper.Airbase#AIRBASE SpawnAirbase The @{Airbase} where to spawn the group.
 -- @param #SPAWN.Takeoff Takeoff (optional) The location and takeoff method. Default is Hot.
 -- @param #number TakeoffAltitude (optional) The altitude above the ground.
 -- @return Wrapper.Group#GROUP that was spawned.
 -- @return #nil Nothing was spawned.
-function SPAWN:SpawnAtAirbase( Airbase, Takeoff, TakeoffAltitude ) -- R2.2
-  self:E( { self.SpawnTemplatePrefix, Airbase, Takeoff, TakeoffAltitude } )
+-- @usage
+--   Spawn_Plane = SPAWN:New( "Plane" )
+--   Spawn_Plane:SpawnAtAirbase( AIRBASE:FindByName( AIRBASE.Caucasus.Krymsk ), SPAWN.Takeoff.Cold )
+--   Spawn_Plane:SpawnAtAirbase( AIRBASE:FindByName( AIRBASE.Caucasus.Krymsk ), SPAWN.Takeoff.Hot )
+--   Spawn_Plane:SpawnAtAirbase( AIRBASE:FindByName( AIRBASE.Caucasus.Krymsk ), SPAWN.Takeoff.Runway )
+--   
+--   Spawn_Plane:SpawnAtAirbase( AIRBASE:FindByName( "Carrier" ), SPAWN.Takeoff.Cold )
+--   
+--   Spawn_Heli = SPAWN:New( "Heli")
+--   
+--   Spawn_Heli:SpawnAtAirbase( AIRBASE:FindByName( "FARP Cold" ), SPAWN.Takeoff.Cold )
+--   Spawn_Heli:SpawnAtAirbase( AIRBASE:FindByName( "FARP Hot" ), SPAWN.Takeoff.Hot )
+--   Spawn_Heli:SpawnAtAirbase( AIRBASE:FindByName( "FARP Runway" ), SPAWN.Takeoff.Runway )
+--   Spawn_Heli:SpawnAtAirbase( AIRBASE:FindByName( "FARP Air" ), SPAWN.Takeoff.Air )
+--   
+--   Spawn_Heli:SpawnAtAirbase( AIRBASE:FindByName( "Carrier" ), SPAWN.Takeoff.Cold )
+-- 
+function SPAWN:SpawnAtAirbase( SpawnAirbase, Takeoff, TakeoffAltitude ) -- R2.2
+  self:E( { self.SpawnTemplatePrefix, SpawnAirbase, Takeoff, TakeoffAltitude } )
 
-  local PointVec3 = Airbase:GetPointVec3()
+  local PointVec3 = SpawnAirbase:GetPointVec3()
   self:T2(PointVec3)
 
   Takeoff = Takeoff or SPAWN.Takeoff.Hot
@@ -1006,42 +1040,87 @@ function SPAWN:SpawnAtAirbase( Airbase, Takeoff, TakeoffAltitude ) -- R2.2
   
     if SpawnTemplate then
 
-      self:T( { "Current point of ", self.SpawnTemplatePrefix, Airbase } )
+      self:T( { "Current point of ", self.SpawnTemplatePrefix, SpawnAirbase } )
+
+      local SpawnPoint = SpawnTemplate.route.points[1] 
+
+      -- These are only for ships.
+      SpawnPoint.linkUnit = nil
+      SpawnPoint.helipadId = nil
+      SpawnPoint.airdromeId = nil
+
+      local AirbaseID = SpawnAirbase:GetID()
+      local AirbaseCategory = SpawnAirbase:GetDesc().category
+      self:F( { AirbaseCategory = AirbaseCategory } )
+      
+      if AirbaseCategory == Airbase.Category.SHIP then
+        SpawnPoint.linkUnit = AirbaseID
+        SpawnPoint.helipadId = AirbaseID
+      elseif AirbaseCategory == Airbase.Category.HELIPAD then
+        SpawnPoint.linkUnit = AirbaseID
+        SpawnPoint.helipadId = AirbaseID
+      elseif AirbaseCategory == Airbase.Category.AIRDROME then
+        SpawnPoint.airdromeId = AirbaseID
+      end
+
+      SpawnPoint.alt = 0
+              
+      SpawnPoint.type = GROUPTEMPLATE.Takeoff[Takeoff][1] -- type
+      SpawnPoint.action = GROUPTEMPLATE.Takeoff[Takeoff][2] -- action
+      
 
       -- Translate the position of the Group Template to the Vec3.
       for UnitID = 1, #SpawnTemplate.units do
         self:T( 'Before Translation SpawnTemplate.units['..UnitID..'].x = ' .. SpawnTemplate.units[UnitID].x .. ', SpawnTemplate.units['..UnitID..'].y = ' .. SpawnTemplate.units[UnitID].y )
+
+        -- These cause a lot of confusion.
         local UnitTemplate = SpawnTemplate.units[UnitID]
+
+        UnitTemplate.parking = nil
+        UnitTemplate.parking_id = nil
+        UnitTemplate.alt = 0
+
         local SX = UnitTemplate.x
         local SY = UnitTemplate.y 
-        local BX = SpawnTemplate.route.points[1].x
-        local BY = SpawnTemplate.route.points[1].y
+        local BX = SpawnPoint.x
+        local BY = SpawnPoint.y
         local TX = PointVec3.x + ( SX - BX )
         local TY = PointVec3.z + ( SY - BY )
-        SpawnTemplate.units[UnitID].x = TX
-        SpawnTemplate.units[UnitID].y = TY
+        
+        UnitTemplate.x = TX
+        UnitTemplate.y = TY
+        
         if Takeoff == GROUP.Takeoff.Air then
-          SpawnTemplate.units[UnitID].alt = PointVec3.y + ( TakeoffAltitude or 200 )
-        else
-          SpawnTemplate.units[UnitID].alt = PointVec3.y + 10
+          UnitTemplate.alt = PointVec3.y + ( TakeoffAltitude or 200 )
+        --else
+        --  UnitTemplate.alt = PointVec3.y + 10
         end
-        self:T( 'After Translation SpawnTemplate.units['..UnitID..'].x = ' .. SpawnTemplate.units[UnitID].x .. ', SpawnTemplate.units['..UnitID..'].y = ' .. SpawnTemplate.units[UnitID].y )
+        self:T( 'After Translation SpawnTemplate.units['..UnitID..'].x = ' .. UnitTemplate.x .. ', SpawnTemplate.units['..UnitID..'].y = ' .. UnitTemplate.y )
       end
       
-      SpawnTemplate.route.points[1].x = PointVec3.x
-      SpawnTemplate.route.points[1].y = PointVec3.z
+      SpawnPoint.x = PointVec3.x
+      SpawnPoint.y = PointVec3.z
+      
       if Takeoff == GROUP.Takeoff.Air then
-        SpawnTemplate.route.points[1].alt = PointVec3.y + ( TakeoffAltitude or 200 )
-      else
-        SpawnTemplate.route.points[1].alt = PointVec3.y + 10
-        SpawnTemplate.route.points[1].airdromeId = Airbase:GetID()
+        SpawnPoint.alt = PointVec3.y + ( TakeoffAltitude or 200 )
+      --else
+      --  SpawnPoint.alt = PointVec3.y + 10
       end
-      SpawnTemplate.route.points[1].type = GROUPTEMPLATE.Takeoff[Takeoff]
-      
+
       SpawnTemplate.x = PointVec3.x
       SpawnTemplate.y = PointVec3.z
-              
-      return self:SpawnWithIndex( self.SpawnIndex )
+      
+      local GroupSpawned = self:SpawnWithIndex( self.SpawnIndex )
+      
+      -- When spawned in the air, we need to generate a Takeoff Event
+      
+      if Takeoff == GROUP.Takeoff.Air then
+        for UnitID, UnitSpawned in pairs( GroupSpawned:GetUnits() ) do
+          SCHEDULER:New( nil, BASE.CreateEventTakeoff, { GroupSpawned, timer.getTime(), UnitSpawned:GetDCSObject() } , 1 )
+        end
+      end
+
+      return GroupSpawned
     end
   end
   

@@ -107,7 +107,7 @@
 -- ### Tasks at Waypoints
 -- 
 -- Special Task methods are available to set tasks at certain waypoints.
--- The method @{#CONTROLLABLE.SetTaskAtWaypoint}() helps preparing a Route, embedding a Task at the Waypoint of the Route.
+-- The method @{#CONTROLLABLE.SetTaskWaypoint}() helps preparing a Route, embedding a Task at the Waypoint of the Route.
 -- 
 -- This creates a Task element, with an action to call a function as part of a Wrapped Task.
 -- 
@@ -368,18 +368,23 @@ function CONTROLLABLE:SetTask( DCSTask, WaitTime )
 
   if DCSControllable then
 
+    local DCSControllableName = self:GetName()
 
     -- When a controllable SPAWNs, it takes about a second to get the controllable in the simulator. Setting tasks to unspawned controllables provides unexpected results.
     -- Therefore we schedule the functions to set the mission and options for the Controllable.
     -- Controller.setTask( Controller, DCSTask )
 
     local function SetTask( Controller, DCSTask )
-      local Controller = self:_GetController()
-      Controller:setTask( DCSTask )
+      if self and self:IsAlive() then
+        local Controller = self:_GetController()
+        Controller:setTask( DCSTask )
+      else
+        BASE:E( DCSControllableName .. " is not alive anymore. Cannot set DCSTask " .. DCSTask )
+      end
     end
 
     if not WaitTime or WaitTime == 0 then
-      SetTask( DCSTask )
+      SetTask( self, DCSTask )
     else
       self.TaskScheduler:Schedule( self, SetTask, { DCSTask }, WaitTime )
     end
@@ -1535,7 +1540,7 @@ function CONTROLLABLE:TaskEmbarkToTransport( Point, Radius )
 end
 
 --- This creates a Task element, with an action to call a function as part of a Wrapped Task.
--- This Task can then be embedded at a Waypoint by calling the method @{#CONTROLLABLE.SetTaskAtWaypoint}.
+-- This Task can then be embedded at a Waypoint by calling the method @{#CONTROLLABLE.SetTaskWaypoint}.
 -- @param #CONTROLLABLE self
 -- @param #string FunctionString The function name embedded as a string that will be called.
 -- @param ... The variable arguments passed to the function when called! These arguments can be of any type!
@@ -1574,7 +1579,7 @@ end
 --    
 --    local TaskRouteToZone = Vehicle:TaskFunction( "RouteToZone", RandomZone )
 --    
---    Vehicle:SetTaskAtWaypoint( Route, #Route, TaskRouteToZone ) -- Set for the given Route at Waypoint 2 the TaskRouteToZone.
+--    Vehicle:SetTaskWaypoint( Route, #Route, TaskRouteToZone ) -- Set for the given Route at Waypoint 2 the TaskRouteToZone.
 --  
 --    Vehicle:Route( Route, math.random( 10, 20 ) ) -- Move after a random seconds to the Route. See the Route method for details.
 --    
@@ -1627,6 +1632,140 @@ function CONTROLLABLE:TaskMission( TaskMission )
   self:T3( { DCSTask } )
   return DCSTask
 end
+
+
+do -- Patrol methods
+
+  --- (GROUND) Patrol iteratively using the waypoints the for the (parent) group.
+  -- @param #CONTROLLABLE self
+  -- @return #CONTROLLABLE
+  function CONTROLLABLE:PatrolRoute()
+  
+    local PatrolGroup = self -- Wrapper.Group#GROUP
+    
+    if not self:IsInstanceOf( "GROUP" ) then
+      PatrolGroup = self:GetGroup() -- Wrapper.Group#GROUP
+    end
+    
+    self:E( { PatrolGroup = PatrolGroup:GetName() } )
+    
+    if PatrolGroup:IsGround() or PatrolGroup:IsShip() then
+    
+      local Waypoints = PatrolGroup:GetTemplateRoutePoints()
+      
+      -- Calculate the new Route.
+      local FromCoord = PatrolGroup:GetCoordinate()
+      local From = FromCoord:WaypointGround( 120 )
+      
+      table.insert( Waypoints, 1, From )
+
+      local TaskRoute = PatrolGroup:TaskFunction( "CONTROLLABLE.PatrolRoute" )
+      
+      self:E({Waypoints = Waypoints})
+      local Waypoint = Waypoints[#Waypoints]
+      PatrolGroup:SetTaskWaypoint( Waypoint, TaskRoute ) -- Set for the given Route at Waypoint 2 the TaskRouteToZone.
+    
+      PatrolGroup:Route( Waypoints ) -- Move after a random seconds to the Route. See the Route method for details.
+    end
+  end
+
+  --- (GROUND) Patrol randomly to the waypoints the for the (parent) group.
+  -- A random waypoint will be picked and the group will move towards that point.
+  -- @param #CONTROLLABLE self
+  -- @return #CONTROLLABLE
+  function CONTROLLABLE:PatrolRouteRandom( Speed, Formation, ToWaypoint )
+  
+    local PatrolGroup = self -- Wrapper.Group#GROUP
+    
+    if not self:IsInstanceOf( "GROUP" ) then
+      PatrolGroup = self:GetGroup() -- Wrapper.Group#GROUP
+    end
+
+    self:E( { PatrolGroup = PatrolGroup:GetName() } )
+    
+    if PatrolGroup:IsGround() or PatrolGroup:IsShip() then
+    
+      local Waypoints = PatrolGroup:GetTemplateRoutePoints()
+      
+      -- Calculate the new Route.
+      local FromCoord = PatrolGroup:GetCoordinate()
+      local FromWaypoint = 1
+      if ToWaypoint then
+        FromWaypoint = ToWaypoint
+      end
+      
+      -- Loop until a waypoint has been found that is not the same as the current waypoint.
+      -- Otherwise the object zon't move or drive in circles and the algorithm would not do exactly
+      -- what it is supposed to do, which is making groups drive around.
+      local ToWaypoint
+      repeat      
+        -- Select a random waypoint and check if it is not the same waypoint as where the object is about.
+        ToWaypoint = math.random( 1, #Waypoints )
+      until( ToWaypoint ~= FromWaypoint )
+      self:E( { FromWaypoint = FromWaypoint, ToWaypoint = ToWaypoint } )
+
+      local  Waypoint = Waypoints[ToWaypoint] -- Select random waypoint.
+      local ToCoord = COORDINATE:NewFromVec2( { x = Waypoint.x, y = Waypoint.y } )
+      -- Create a "ground route point", which is a "point" structure that can be given as a parameter to a Task
+      local Route = {}
+      Route[#Route+1] = FromCoord:WaypointGround( 0 )
+      Route[#Route+1] = ToCoord:WaypointGround( Speed, Formation )
+      
+      
+      local TaskRouteToZone = PatrolGroup:TaskFunction( "CONTROLLABLE.PatrolRouteRandom", Speed, Formation, ToWaypoint )
+      
+      PatrolGroup:SetTaskWaypoint( Route[#Route], TaskRouteToZone ) -- Set for the given Route at Waypoint 2 the TaskRouteToZone.
+    
+      PatrolGroup:Route( Route, 1 ) -- Move after a random seconds to the Route. See the Route method for details.
+    end
+  end
+
+  --- (GROUND) Patrol randomly to the waypoints the for the (parent) group.
+  -- A random waypoint will be picked and the group will move towards that point.
+  -- @param #CONTROLLABLE self
+  -- @return #CONTROLLABLE
+  function CONTROLLABLE:PatrolZones( ZoneList, Speed, Formation )
+  
+    if not type( ZoneList ) == "table" then
+      ZoneList = { ZoneList }
+    end
+  
+    local PatrolGroup = self -- Wrapper.Group#GROUP
+    
+    if not self:IsInstanceOf( "GROUP" ) then
+      PatrolGroup = self:GetGroup() -- Wrapper.Group#GROUP
+    end
+
+    self:E( { PatrolGroup = PatrolGroup:GetName() } )
+    
+    if PatrolGroup:IsGround() or PatrolGroup:IsShip() then
+    
+      local Waypoints = PatrolGroup:GetTemplateRoutePoints()
+      local Waypoint = Waypoints[math.random( 1, #Waypoints )] -- Select random waypoint.
+      
+      -- Calculate the new Route.
+      local FromCoord = PatrolGroup:GetCoordinate()
+      
+      -- Select a random Zone and get the Coordinate of the new Zone.
+      local RandomZone = ZoneList[ math.random( 1, #ZoneList ) ] -- Core.Zone#ZONE
+      local ToCoord = RandomZone:GetRandomCoordinate( 10 )
+      
+      -- Create a "ground route point", which is a "point" structure that can be given as a parameter to a Task
+      local Route = {}
+      Route[#Route+1] = FromCoord:WaypointGround( 120 )
+      Route[#Route+1] = ToCoord:WaypointGround( Speed, Formation )
+      
+      
+      local TaskRouteToZone = PatrolGroup:TaskFunction( "CONTROLLABLE.PatrolZones", ZoneList, Speed, Formation )
+      
+      PatrolGroup:SetTaskWaypoint( Route[#Route], TaskRouteToZone ) -- Set for the given Route at Waypoint 2 the TaskRouteToZone.
+    
+      PatrolGroup:Route( Route, 1 ) -- Move after a random seconds to the Route. See the Route method for details.
+    end
+  end
+
+end
+
 
 --- Return a Misson task to follow a given route defined by Points.
 -- @param #CONTROLLABLE self

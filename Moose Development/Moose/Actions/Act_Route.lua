@@ -154,7 +154,7 @@ do -- ACT_ROUTE
   --- Get the routing text to be displayed.
   -- The route mode determines the text displayed.
   -- @param #ACT_ROUTE self
-  -- @param Wrapper.Controllable#CONTROLLABLE Controllable
+  -- @param Wrapper.Unit#UNIT Controllable
   -- @return #string
   function ACT_ROUTE:GetRouteText( Controllable )
     
@@ -215,7 +215,7 @@ do -- ACT_ROUTE
 
   --- StateMachine callback function
   -- @param #ACT_ROUTE self
-  -- @param Wrapper.Controllable#CONTROLLABLE ProcessUnit
+  -- @param Wrapper.Unit#UNIT ProcessUnit
   -- @param #string Event
   -- @param #string From
   -- @param #string To
@@ -227,7 +227,7 @@ do -- ACT_ROUTE
   
   --- Check if the controllable has arrived.
   -- @param #ACT_ROUTE self
-  -- @param Wrapper.Controllable#CONTROLLABLE ProcessUnit
+  -- @param Wrapper.Unit#UNIT ProcessUnit
   -- @return #boolean
   function ACT_ROUTE:onfuncHasArrived( ProcessUnit )
     return false
@@ -235,7 +235,7 @@ do -- ACT_ROUTE
   
   --- StateMachine callback function
   -- @param #ACT_ROUTE self
-  -- @param Wrapper.Controllable#CONTROLLABLE ProcessUnit
+  -- @param Wrapper.Unit#UNIT ProcessUnit
   -- @param #string Event
   -- @param #string From
   -- @param #string To
@@ -352,7 +352,7 @@ do -- ACT_ROUTE_POINT
   
   --- Method override to check if the controllable has arrived.
   -- @param #ACT_ROUTE_POINT self
-  -- @param Wrapper.Controllable#CONTROLLABLE ProcessUnit
+  -- @param Wrapper.Unit#UNIT ProcessUnit
   -- @return #boolean
   function ACT_ROUTE_POINT:onfuncHasArrived( ProcessUnit )
 
@@ -361,7 +361,7 @@ do -- ACT_ROUTE_POINT
       
       if Distance <= self.Range then
         local RouteText = "You have arrived."
-        self:Message( RouteText )
+        self:GetCommandCenter():MessageTypeToGroup( RouteText, ProcessUnit:GetGroup(), MESSAGE.Type.Information )
         return true
       end
     end
@@ -373,14 +373,15 @@ do -- ACT_ROUTE_POINT
   
   --- StateMachine callback function
   -- @param #ACT_ROUTE_POINT self
-  -- @param Wrapper.Controllable#CONTROLLABLE ProcessUnit
+  -- @param Wrapper.Unit#UNIT ProcessUnit
   -- @param #string Event
   -- @param #string From
   -- @param #string To
   function ACT_ROUTE_POINT:onafterReport( ProcessUnit, From, Event, To )
   
     local RouteText = self:GetRouteText( ProcessUnit )
-    self:Message( RouteText )
+    
+    self:GetCommandCenter():MessageTypeToGroup( RouteText, ProcessUnit:GetGroup(), MESSAGE.Type.Update )
   end
 
 end -- ACT_ROUTE_POINT
@@ -445,13 +446,13 @@ do -- ACT_ROUTE_ZONE
 
   --- Method override to check if the controllable has arrived.
   -- @param #ACT_ROUTE self
-  -- @param Wrapper.Controllable#CONTROLLABLE ProcessUnit
+  -- @param Wrapper.Unit#UNIT ProcessUnit
   -- @return #boolean
   function ACT_ROUTE_ZONE:onfuncHasArrived( ProcessUnit )
 
     if ProcessUnit:IsInZone( self.Zone ) then
       local RouteText = "You have arrived within the zone."
-      self:Message( RouteText )
+      self:GetCommandCenter():MessageTypeToGroup( RouteText, ProcessUnit:GetGroup(), MESSAGE.Type.Information )
     end
 
     return ProcessUnit:IsInZone( self.Zone )
@@ -461,7 +462,7 @@ do -- ACT_ROUTE_ZONE
   
   --- StateMachine callback function
   -- @param #ACT_ROUTE_ZONE self
-  -- @param Wrapper.Controllable#CONTROLLABLE ProcessUnit
+  -- @param Wrapper.Unit#UNIT ProcessUnit
   -- @param #string Event
   -- @param #string From
   -- @param #string To
@@ -469,7 +470,7 @@ do -- ACT_ROUTE_ZONE
     self:E( { ProcessUnit = ProcessUnit } )
   
     local RouteText = self:GetRouteText( ProcessUnit )
-    self:Message( RouteText )
+    self:GetCommandCenter():MessageTypeToGroup( RouteText, ProcessUnit:GetGroup(), MESSAGE.Type.Update )
   end
 
 end -- ACT_ROUTE_ZONE

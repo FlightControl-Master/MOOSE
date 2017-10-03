@@ -442,7 +442,7 @@ function MISSILETRAINER._MenuMessages( MenuParameters )
 
   if MenuParameters.Distance ~= nil then
     self.Distance = MenuParameters.Distance
-    MESSAGE:New( "Hit detection distance set to " .. self.Distance * 1000 .. " meters", 15, "Menu" ):ToAll()
+    MESSAGE:New( "Hit detection distance set to " .. ( self.Distance * 1000 ) .. " meters", 15, "Menu" ):ToAll()
   end
 
 end

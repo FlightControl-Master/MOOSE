@@ -73,6 +73,7 @@
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
 					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
 					<li><a href="Radio.html">Radio</a></li>
+					<li><a href="Rat.html">Rat</a></li>
 					<li><a href="Route.html">Route</a></li>
 					<li><a href="Scenery.html">Scenery</a></li>
 					<li><a href="ScheduleDispatcher.html">ScheduleDispatcher</a></li>
@@ -244,19 +245,19 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ACT_ACCOUNT_DEADS).onafterEvent">ACT_ACCOUNT_DEADS:onafterEvent(ProcessClient, Task, From, Event, To, EventData)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ACCOUNT_DEADS).onafterEvent">ACT_ACCOUNT_DEADS:onafterEvent(ProcessUnit, Task, From, Event, To, EventData)</a></td>
 		<td class="summary">
 <p>StateMachine callback function</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ACT_ACCOUNT_DEADS).onenterAccountForOther">ACT_ACCOUNT_DEADS:onenterAccountForOther(ProcessClient, Task, From, Event, To, EventData)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ACCOUNT_DEADS).onenterAccountForOther">ACT_ACCOUNT_DEADS:onenterAccountForOther(ProcessUnit, Task, From, Event, To, EventData)</a></td>
 		<td class="summary">
 <p>StateMachine callback function</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ACT_ACCOUNT_DEADS).onenterAccountForPlayer">ACT_ACCOUNT_DEADS:onenterAccountForPlayer(ProcessClient, Task, From, Event, To, EventData)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(ACT_ACCOUNT_DEADS).onenterAccountForPlayer">ACT_ACCOUNT_DEADS:onenterAccountForPlayer(ProcessUnit, Task, From, Event, To, EventData)</a></td>
 		<td class="summary">
 <p>StateMachine callback function</p>
 </td>
@@ -443,7 +444,7 @@ There are 2 moments when state transition methods will be called by the state ma
 		<ul>
 				<li>
 				
-<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> ProcessUnit </em></code>: </p>
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> ProcessUnit </em></code>: </p>
 
 				</li>
 				<li>
@@ -479,7 +480,7 @@ There are 2 moments when state transition methods will be called by the state ma
 		<ul>
 				<li>
 				
-<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> ProcessUnit </em></code>: </p>
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> ProcessUnit </em></code>: </p>
 
 				</li>
 				<li>
@@ -515,7 +516,7 @@ There are 2 moments when state transition methods will be called by the state ma
 		<ul>
 				<li>
 				
-<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> ProcessUnit </em></code>: </p>
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> ProcessUnit </em></code>: </p>
 
 				</li>
 				<li>
@@ -746,7 +747,7 @@ Each successful dead will trigger an Account state transition that can be scored
 <dt>
 
 <a id="#(ACT_ACCOUNT_DEADS).onafterEvent" >
-<strong>ACT_ACCOUNT_DEADS:onafterEvent(ProcessClient, Task, From, Event, To, EventData)</strong>
+<strong>ACT_ACCOUNT_DEADS:onafterEvent(ProcessUnit, Task, From, Event, To, EventData)</strong>
 </a>
 </dt>
 <dd>
@@ -757,7 +758,7 @@ Each successful dead will trigger an Account state transition that can be scored
 		<ul>
 				<li>
 				
-<p><code><em><a href="Wrapper.Client.html##(CLIENT)">Wrapper.Client#CLIENT</a> ProcessClient </em></code>: </p>
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> ProcessUnit </em></code>: </p>
 
 				</li>
 				<li>
@@ -792,7 +793,7 @@ Each successful dead will trigger an Account state transition that can be scored
 <dt>
 
 <a id="#(ACT_ACCOUNT_DEADS).onenterAccountForOther" >
-<strong>ACT_ACCOUNT_DEADS:onenterAccountForOther(ProcessClient, Task, From, Event, To, EventData)</strong>
+<strong>ACT_ACCOUNT_DEADS:onenterAccountForOther(ProcessUnit, Task, From, Event, To, EventData)</strong>
 </a>
 </dt>
 <dd>
@@ -803,7 +804,7 @@ Each successful dead will trigger an Account state transition that can be scored
 		<ul>
 				<li>
 				
-<p><code><em><a href="Wrapper.Client.html##(CLIENT)">Wrapper.Client#CLIENT</a> ProcessClient </em></code>: </p>
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> ProcessUnit </em></code>: </p>
 
 				</li>
 				<li>
@@ -838,7 +839,7 @@ Each successful dead will trigger an Account state transition that can be scored
 <dt>
 
 <a id="#(ACT_ACCOUNT_DEADS).onenterAccountForPlayer" >
-<strong>ACT_ACCOUNT_DEADS:onenterAccountForPlayer(ProcessClient, Task, From, Event, To, EventData)</strong>
+<strong>ACT_ACCOUNT_DEADS:onenterAccountForPlayer(ProcessUnit, Task, From, Event, To, EventData)</strong>
 </a>
 </dt>
 <dd>
@@ -849,7 +850,7 @@ Each successful dead will trigger an Account state transition that can be scored
 		<ul>
 				<li>
 				
-<p><code><em><a href="Wrapper.Client.html##(CLIENT)">Wrapper.Client#CLIENT</a> ProcessClient </em></code>: </p>
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> ProcessUnit </em></code>: </p>
 
 				</li>
 				<li>
@@ -895,7 +896,7 @@ Each successful dead will trigger an Account state transition that can be scored
 		<ul>
 				<li>
 				
-<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> ProcessUnit </em></code>: </p>
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> ProcessUnit </em></code>: </p>
 
 				</li>
 				<li>

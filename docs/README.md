@@ -118,6 +118,7 @@ MOOSE Functional Classes provide various functions that are useful in mission de
 
 * [CLEANUP\_AIRBASE](Documentation/CleanUp.html): Keeps the airbases clean from clutter. (Only partly functional due to a bug in DCS, destroyed objects cannot be removed).
 
+* [RAT](Documentation/Rat.html): Random Air Traffic engine developed by FunkyFranky, use the available airspace!
 
 ## 2.4. MOOSE Wrapper Classes
 

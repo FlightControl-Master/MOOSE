@@ -1239,9 +1239,11 @@ do -- DETECTION_BASE
     
       DetectedItem.FriendliesNearBy = nil
 
-      if DetectedUnit then
+      -- We need to ensure that the DetectedUnit is alive!
+      if DetectedUnit and DetectedUnit:IsAlive() then
       
-        local InterceptCoord = ReportGroupData.InterceptCoord or DetectedUnit:GetCoordinate()
+        local DetectedUnitCoord = DetectedUnit:GetCoordinate()
+        local InterceptCoord = ReportGroupData.InterceptCoord or DetectedUnitCoord
         
         local SphereSearch = {
          id = world.VolumeType.SPHERE,
@@ -1336,9 +1338,7 @@ do -- DETECTION_BASE
                 DetectedItem.FriendliesNearBy = DetectedItem.FriendliesNearBy or {}
                 DetectedItem.FriendliesNearBy[PlayerUnitName] = PlayerUnit
       
-                local CenterCoord = DetectedUnit:GetCoordinate()
-  
-                local Distance = CenterCoord:Get2DDistance( PlayerUnit:GetCoordinate() )
+                local Distance = DetectedUnitCoord:Get2DDistance( PlayerUnit:GetCoordinate() )
                 DetectedItem.FriendliesDistance = DetectedItem.FriendliesDistance or {}
                 DetectedItem.FriendliesDistance[Distance] = PlayerUnit
 
@@ -1436,6 +1436,8 @@ do -- DETECTION_BASE
         else
           return "Unknown"
         end
+      else
+        return "Unknown"
       end
     else
       return "Dead:" .. DetectedUnit:GetName()
@@ -1644,7 +1646,7 @@ do -- DETECTION_BASE
         DetectedItem.Coordinate = Coordinate
         DetectedItem.Coordinate:SetHeading( DetectedItemUnit:GetHeading() )
         DetectedItem.Coordinate.y = DetectedItemUnit:GetAltitude()
-        DetectedItem.Coordinate.Speed = DetectedItemUnit:GetVelocityMPS()
+        DetectedItem.Coordinate:SetVelocity( DetectedItemUnit:GetVelocityMPS() )
       end
     end
   end
@@ -1675,7 +1677,7 @@ do -- DETECTION_BASE
     local DetectedSet = DetectedItem.Set
   
     if DetectedItem then
-      DetectedItem.ThreatLevel = DetectedSet:CalculateThreatLevelA2G()
+      DetectedItem.ThreatLevel, DetectedItem.ThreatText = DetectedSet:CalculateThreatLevelA2G()
     end
   end
   
@@ -1691,10 +1693,10 @@ do -- DETECTION_BASE
     local DetectedItem = self:GetDetectedItem( Index )
     
     if DetectedItem then
-      return DetectedItem.ThreatLevel or 0
+      return DetectedItem.ThreatLevel or 0, DetectedItem.ThreatText or ""
     end
     
-    return nil
+    return nil, ""
   end
   
   
@@ -2423,9 +2425,9 @@ do -- DETECTION_AREAS
   -- @param #DETECTION_BASE.DetectedItem DetectedItem
   function DETECTION_AREAS:CalculateIntercept( DetectedItem )
 
-    local DetectedSpeed = DetectedItem.Coordinate.Speed
-    local DetectedHeading = DetectedItem.Coordinate.Heading
     local DetectedCoord = DetectedItem.Coordinate
+    local DetectedSpeed = DetectedCoord:GetVelocity()
+    local DetectedHeading = DetectedCoord:GetHeading()
 
     if self.Intercept then
       local DetectedSet = DetectedItem.Set
@@ -2453,13 +2455,15 @@ do -- DETECTION_AREAS
     local DistanceRecce = 1000000000 -- Units are not further than 1000000 km away from an area :-)
     
     for RecceGroupName, RecceGroup in pairs( self.DetectionSetGroup:GetSet() ) do
-      for RecceUnit, RecceUnit in pairs( RecceGroup:GetUnits() ) do
-        if RecceUnit:IsActive() then
-          local RecceUnitCoord = RecceUnit:GetCoordinate()
-          local Distance = RecceUnitCoord:Get2DDistance( self:GetDetectedItemCoordinate( DetectedItem.Index ) )
-          if Distance < DistanceRecce then
-            DistanceRecce = Distance
-            NearestRecce = RecceUnit
+      if RecceGroup and RecceGroup:IsAlive() then
+        for RecceUnit, RecceUnit in pairs( RecceGroup:GetUnits() ) do
+          if RecceUnit:IsActive() then
+            local RecceUnitCoord = RecceUnit:GetCoordinate()
+            local Distance = RecceUnitCoord:Get2DDistance( self:GetDetectedItemCoordinate( DetectedItem.Index ) )
+            if Distance < DistanceRecce then
+              DistanceRecce = Distance
+              NearestRecce = RecceUnit
+            end
           end
         end
       end

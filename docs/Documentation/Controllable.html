@@ -73,6 +73,7 @@
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
 					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
 					<li><a href="Radio.html">Radio</a></li>
+					<li><a href="Rat.html">Rat</a></li>
 					<li><a href="Route.html">Route</a></li>
 					<li><a href="Scenery.html">Scenery</a></li>
 					<li><a href="ScheduleDispatcher.html">ScheduleDispatcher</a></li>
@@ -415,6 +416,24 @@
 		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).OptionRTBBingoFuel">CONTROLLABLE:OptionRTBBingoFuel(RTB)</a></td>
 		<td class="summary">
 <p>Set RTB on bingo fuel.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).PatrolRoute">CONTROLLABLE:PatrolRoute()</a></td>
+		<td class="summary">
+<p>(GROUND) Patrol iteratively using the waypoints the for the (parent) group.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).PatrolRouteRandom">CONTROLLABLE:PatrolRouteRandom(Speed, Formation, ToWaypoint)</a></td>
+		<td class="summary">
+<p>(GROUND) Patrol randomly to the waypoints the for the (parent) group.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).PatrolZones">CONTROLLABLE:PatrolZones(ZoneList, Speed, Formation)</a></td>
+		<td class="summary">
+<p>(GROUND) Patrol randomly to the waypoints the for the (parent) group.</p>
 </td>
 		</tr>
 		<tr>
@@ -805,7 +824,7 @@ See below the <strong>Tasks at Waypoints</strong> section.</p>
 <h3>Tasks at Waypoints</h3>
 
 <p>Special Task methods are available to set tasks at certain waypoints.
-The method <a href="##(CONTROLLABLE).SetTaskAtWaypoint">CONTROLLABLE.SetTaskAtWaypoint</a>() helps preparing a Route, embedding a Task at the Waypoint of the Route.</p>
+The method <a href="##(CONTROLLABLE).SetTaskWaypoint">CONTROLLABLE.SetTaskWaypoint</a>() helps preparing a Route, embedding a Task at the Waypoint of the Route.</p>
 
 <p>This creates a Task element, with an action to call a function as part of a Wrapped Task.</p>
 
@@ -2154,6 +2173,102 @@ self</p>
 		<dl class="function">
 <dt>
 
+<a id="#(CONTROLLABLE).PatrolRoute" >
+<strong>CONTROLLABLE:PatrolRoute()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>(GROUND) Patrol iteratively using the waypoints the for the (parent) group.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(CONTROLLABLE)">#CONTROLLABLE</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CONTROLLABLE).PatrolRouteRandom" >
+<strong>CONTROLLABLE:PatrolRouteRandom(Speed, Formation, ToWaypoint)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>(GROUND) Patrol randomly to the waypoints the for the (parent) group.</p>
+
+	
+<p>A random waypoint will be picked and the group will move towards that point.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> Speed </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> Formation </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> ToWaypoint </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(CONTROLLABLE)">#CONTROLLABLE</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CONTROLLABLE).PatrolZones" >
+<strong>CONTROLLABLE:PatrolZones(ZoneList, Speed, Formation)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>(GROUND) Patrol randomly to the waypoints the for the (parent) group.</p>
+
+	
+<p>A random waypoint will be picked and the group will move towards that point.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> ZoneList </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> Speed </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> Formation </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(CONTROLLABLE)">#CONTROLLABLE</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(CONTROLLABLE).PopCurrentTask" >
 <strong>CONTROLLABLE:PopCurrentTask()</strong>
 </a>
@@ -3191,7 +3306,7 @@ The DCS task structure.</p>
 <p>This creates a Task element, with an action to call a function as part of a Wrapped Task.</p>
 
 	
-<p>This Task can then be embedded at a Waypoint by calling the method <a href="##(CONTROLLABLE).SetTaskAtWaypoint">CONTROLLABLE.SetTaskAtWaypoint</a>.</p>
+<p>This Task can then be embedded at a Waypoint by calling the method <a href="##(CONTROLLABLE).SetTaskWaypoint">CONTROLLABLE.SetTaskWaypoint</a>.</p>
 
 		<h3>Parameters</h3>
 		<ul>
@@ -3247,7 +3362,7 @@ The variable arguments passed to the function when called! These arguments can b
    
    local TaskRouteToZone = Vehicle:TaskFunction( "RouteToZone", RandomZone )
    
-   Vehicle:SetTaskAtWaypoint( Route, #Route, TaskRouteToZone ) -- Set for the given Route at Waypoint 2 the TaskRouteToZone.
+   Vehicle:SetTaskWaypoint( Route, #Route, TaskRouteToZone ) -- Set for the given Route at Waypoint 2 the TaskRouteToZone.
  
    Vehicle:Route( Route, math.random( 10, 20 ) ) -- Move after a random seconds to the Route. See the Route method for details.
    

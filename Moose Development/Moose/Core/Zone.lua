@@ -645,6 +645,22 @@ function ZONE_RADIUS:GetRandomPointVec3( inner, outer )
 end
 
 
+--- Returns a @{Point#COORDINATE} object reflecting a random 3D location within the zone.
+-- @param #ZONE_RADIUS self
+-- @param #number inner (optional) Minimal distance from the center of the zone. Default is 0.
+-- @param #number outer (optional) Maximal distance from the outer edge of the zone. Default is the radius of the zone.
+-- @return Core.Point#COORDINATE
+function ZONE_RADIUS:GetRandomCoordinate( inner, outer )
+  self:F( self.ZoneName, inner, outer )
+
+  local Coordinate = COORDINATE:NewFromVec2( self:GetRandomVec2() )
+
+  self:T3( { Coordinate = Coordinate } )
+  
+  return Coordinate
+end
+
+
 
 --- @type ZONE
 -- @extends #ZONE_RADIUS
@@ -1088,6 +1104,20 @@ function ZONE_POLYGON_BASE:GetRandomPointVec3()
   self:T2( PointVec3 )
 
   return PointVec3
+end
+
+
+--- Return a @{Point#COORDINATE} object representing a random 3D point at landheight within the zone.
+-- @param #ZONE_POLYGON_BASE self
+-- @return Core.Point#COORDINATE
+function ZONE_POLYGON_BASE:GetRandomCoordinate()
+  self:F2()
+
+  local Coordinate = COORDINATE:NewFromVec2( self:GetRandomVec2() )
+  
+  self:T2( Coordinate )
+
+  return Coordinate
 end
 
 
