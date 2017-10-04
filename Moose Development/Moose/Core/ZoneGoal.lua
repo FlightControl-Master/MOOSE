@@ -57,7 +57,6 @@ do -- Zone
 
     self.Zone = Zone -- Core.Zone#ZONE_BASE
     self.Goal = GOAL:New()
-    self.Goal:Start()
 
     do 
     

@@ -58,7 +58,7 @@ do -- ZoneGoal
   --- @param #ZONE_CAPTURE_COALITION self
   function ZONE_CAPTURE_COALITION:onenterCaptured()
   
-    self:GetParent( self ):onenterCaptured()
+    self:GetParent( self, ZONE_CAPTURE_COALITION ).onenterCaptured( self )
     
     self.Goal:Achieved()
   end

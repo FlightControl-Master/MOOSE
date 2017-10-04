@@ -70,6 +70,8 @@ DATABASE = {
   NavPoints = {},
   PLAYERSETTINGS = {},
   ZONENAMES = {},
+  HITS = {},
+  DESTROYS = {},
 }
 
 local _DATABASECoalition =
@@ -104,6 +106,7 @@ function DATABASE:New()
   self:HandleEvent( EVENTS.Birth, self._EventOnBirth )
   self:HandleEvent( EVENTS.Dead, self._EventOnDeadOrCrash )
   self:HandleEvent( EVENTS.Crash, self._EventOnDeadOrCrash )
+  self:HandleEvent( EVENTS.Hit, self.AccountHits )
   self:HandleEvent( EVENTS.NewCargo )
   self:HandleEvent( EVENTS.DeleteCargo )
   
@@ -722,6 +725,8 @@ function DATABASE:_EventOnDeadOrCrash( Event )
       end
     end
   end
+  
+  self:AccountDestroys( Event )
 end
 
 
@@ -1053,6 +1058,120 @@ function DATABASE:_RegisterTemplates()
   return self
 end
 
+  --- Account the Hits of the Players.
+  -- @param #DATABASE self
+  -- @param Core.Event#EVENTDATA Event
+  function DATABASE:AccountHits( Event )
+    self:F( { Event } )
+  
+    if Event.IniPlayerName ~= nil then -- It is a player that is hitting something
+      self:T( "Hitting Something" )
+      
+      -- What is he hitting?
+      if Event.TgtCategory then
+  
+        -- A target got hit
+        self.HITS[Event.TgtUnitName] = self.HITS[Event.TgtUnitName] or {}
+        local Hit = self.HITS[Event.TgtUnitName]
+        
+        Hit.Players = Hit.Players or {}
+        Hit.Players[Event.IniPlayerName] = true
+      end
+    end
+    
+    -- It is a weapon initiated by a player, that is hitting something
+    -- This seems to occur only with scenery and static objects.
+    if Event.WeaponPlayerName ~= nil then 
+        self:T( "Hitting Scenery" )
+      
+      -- What is he hitting?
+      if Event.TgtCategory then
+  
+        if Event.IniCoalition then -- A coalition object was hit, probably a static.
+          -- A target got hit
+          self.HITS[Event.TgtUnitName] = self.HITS[Event.TgtUnitName] or {}
+          local Hit = self.HITS[Event.TgtUnitName]
+          
+          Hit.Players = Hit.Players or {}
+          Hit.Players[Event.WeaponPlayerName] = true
+        else -- A scenery object was hit.
+        end
+      end
+    end
+  end
+  
+  --- Account the destroys.
+  -- @param #DATABASE self
+  -- @param Core.Event#EVENTDATA Event
+  function DATABASE:AccountDestroys( Event )
+    self:F( { Event } )
+  
+    local TargetUnit = nil
+    local TargetGroup = nil
+    local TargetUnitName = ""
+    local TargetGroupName = ""
+    local TargetPlayerName = ""
+    local TargetCoalition = nil
+    local TargetCategory = nil
+    local TargetType = nil
+    local TargetUnitCoalition = nil
+    local TargetUnitCategory = nil
+    local TargetUnitType = nil
+  
+    if Event.IniDCSUnit then
+  
+      TargetUnit = Event.IniUnit
+      TargetUnitName = Event.IniDCSUnitName
+      TargetGroup = Event.IniDCSGroup
+      TargetGroupName = Event.IniDCSGroupName
+      TargetPlayerName = Event.IniPlayerName
+  
+      TargetCoalition = Event.IniCoalition
+      --TargetCategory = TargetUnit:getCategory()
+      --TargetCategory = TargetUnit:getDesc().category  -- Workaround
+      TargetCategory = Event.IniCategory
+      TargetType = Event.IniTypeName
+  
+      TargetUnitCoalition = _SCORINGCoalition[TargetCoalition]
+      TargetUnitCategory = _SCORINGCategory[TargetCategory]
+      TargetUnitType = TargetType
+  
+      self:T( { TargetUnitName, TargetGroupName, TargetPlayerName, TargetCoalition, TargetCategory, TargetType } )
+    end
+  
+    -- Player contains the score and reference data for the player.
+    for PlayerName, Player in pairs( self.Players ) do
+      if Player then -- This should normally not happen, but i'll test it anyway.
+        self:T( "Something got destroyed" )
+  
+        -- Some variables
+        local InitUnitName = Player.UnitName
+        local InitUnitType = Player.UnitType
+        local InitCoalition = Player.UnitCoalition
+        local InitCategory = Player.UnitCategory
+        local InitUnitCoalition = _SCORINGCoalition[InitCoalition]
+        local InitUnitCategory = _SCORINGCategory[InitCategory]
+  
+        self:T( { InitUnitName, InitUnitType, InitUnitCoalition, InitCoalition, InitUnitCategory, InitCategory } )
+  
+        local Destroyed = false
+  
+        -- What is the player destroying?
+        if self.HITS[TargetUnitName] then -- Was there a hit for this unit for this player before registered???
+          
+
+          self.DESTROYS[Event.TgtUnitName] = self.DESTROYS[Event.TgtUnitName] or {}
+          
+          local PlayerDestroys = self.DESTROYS[Event.TgtUnitName]
+  
+          if TargetCoalition then
+            PlayerDestroys = PlayerDestroys or {}
+            PlayerDestroys[PlayerName] = true
+          end
+        end
+      end
+    end
+  end
 
 
 

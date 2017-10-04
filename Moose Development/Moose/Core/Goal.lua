@@ -200,7 +200,7 @@ do -- Goal
     -- @param #GOAL self
     -- @param #number Delay
     
-    self:AddTransition( "On",  "Achieved", "Achieved" )
+    self:AddTransition( "*",  "Achieved", "Achieved" )
     
     --- Achieved Handler OnBefore for GOAL
     -- @function [parent=#GOAL] OnBeforeAchieved
@@ -230,9 +230,10 @@ do -- Goal
     self.AchievedScheduler = nil
   
     self:SetEventPriority( 5 )
-    
+
     return self
   end
+  
   
   --- @param #GOAL self
   -- @param From
