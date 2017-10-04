@@ -834,6 +834,39 @@ do -- COORDINATE
   end
 
 
+  --- Returns if a Coordinate is in a certain Radius of this Coordinate in 2D plane using the X and Z axis.
+  -- @param #COORDINATE self
+  -- @param #COORDINATE ToCoordinate The coordinate that will be tested if it is in the radius of this coordinate.
+  -- @param #number Radius The radius of the circle on the 2D plane around this coordinate.
+  -- @return #boolean true if in the Radius.
+  function COORDINATE:IsInRadius( Coordinate, Radius )
+
+    local InVec2 = self:GetVec2()
+    local Vec2 = Coordinate:GetVec2()
+    
+    local InRadius = UTILS.IsInRadius( InVec2, Vec2, Radius)
+
+    return InRadius
+  end
+
+
+  --- Returns if a Coordinate is in a certain radius of this Coordinate in 3D space using the X, Y and Z axis.
+  -- So Radius defines the radius of the a Sphere in 3D space around this coordinate.
+  -- @param #COORDINATE self
+  -- @param #COORDINATE ToCoordinate The coordinate that will be tested if it is in the radius of this coordinate.
+  -- @param #number Radius The radius of the sphere in the 3D space around this coordinate.
+  -- @return #boolean true if in the Sphere.
+  function COORDINATE:IsInSphere( Coordinate, Radius )
+
+    local InVec3 = self:GetVec3()
+    local Vec3 = Coordinate:GetVec3()
+    
+    local InSphere = UTILS.IsInSphere( InVec3, Vec3, Radius)
+
+    return InSphere
+  end
+
+
   --- Return a BR string from a COORDINATE to the COORDINATE.
   -- @param #COORDINATE self
   -- @param #COORDINATE TargetCoordinate The target COORDINATE.

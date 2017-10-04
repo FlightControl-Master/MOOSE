@@ -352,6 +352,12 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).GetTemplateRoutePoints">GROUP:GetTemplateRoutePoints()</a></td>
+		<td class="summary">
+<p>Returns the group template route.points[] (the waypoints) from the <a href="DATABASE.html">DATABASE</a> (_DATABASE object).</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(GROUP).GetTypeName">GROUP:GetTypeName()</a></td>
 		<td class="summary">
 <p>Gets the type name of the group.</p>
@@ -382,7 +388,7 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(GROUP).HandleEvent">GROUP:HandleEvent(Event, EventFunction)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).HandleEvent">GROUP:HandleEvent(Event, EventFunction, ...)</a></td>
 		<td class="summary">
 <p>Subscribe to a DCS Event.</p>
 </td>
@@ -1385,6 +1391,24 @@ The mission route defined by points.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(GROUP).GetTemplateRoutePoints" >
+<strong>GROUP:GetTemplateRoutePoints()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the group template route.points[] (the waypoints) from the <a href="DATABASE.html">DATABASE</a> (_DATABASE object).</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#table:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(GROUP).GetTypeName" >
 <strong>GROUP:GetTypeName()</strong>
 </a>
@@ -1484,7 +1508,7 @@ Current Vec3 of the first DCS Unit of the GROUP.</p>
 <dt>
 
 <a id="#(GROUP).HandleEvent" >
-<strong>GROUP:HandleEvent(Event, EventFunction)</strong>
+<strong>GROUP:HandleEvent(Event, EventFunction, ...)</strong>
 </a>
 </dt>
 <dd>
@@ -1502,6 +1526,11 @@ Current Vec3 of the first DCS Unit of the GROUP.</p>
 				
 <p><code><em>#function EventFunction </em></code>: 
 (optional) The function to be called when the event occurs for the GROUP.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> ... </em></code>: </p>
 
 				</li>
 		</ul>

@@ -405,3 +405,20 @@ function UTILS.GetMarkID()
   return UTILS._MarkID
 
 end
+
+
+-- Test if a Vec2 is in a radius of another Vec2
+function UTILS.IsInRadius( InVec2, Vec2, Radius )
+
+  local InRadius = ( ( InVec2.x - Vec2.x ) ^2 + ( InVec2.y - Vec2.y ) ^2 ) ^ 0.5 <= Radius
+
+  return InRadius
+end
+
+-- Test if a Vec3 is in the sphere of another Vec3
+function UTILS.IsInSphere( InVec3, Vec3, Radius )
+
+  local InSphere = ( ( InVec3.x - Vec3.x ) ^2 + ( InVec3.y - Vec3.y ) ^2 + ( InVec3.z - Vec3.z ) ^2 ) ^ 0.5 <= Radius
+
+  return InSphere
+end

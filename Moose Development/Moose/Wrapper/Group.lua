@@ -938,7 +938,7 @@ end
 -- @return #table 
 function GROUP:GetTemplate()
   local GroupName = self:GetName()
-  return _DATABASE:GetGroupTemplate( GroupName )
+  return UTILS.DeepCopy( _DATABASE:GetGroupTemplate( GroupName ) )
 end
 
 --- Returns the group template route.points[] (the waypoints) from the @{DATABASE} (_DATABASE object).
@@ -946,7 +946,7 @@ end
 -- @return #table 
 function GROUP:GetTemplateRoutePoints()
   local GroupName = self:GetName()
-  return _DATABASE:GetGroupTemplate( GroupName ).route.points
+  return UTILS.DeepCopy( _DATABASE:GetGroupTemplate( GroupName ).route.points )
 end
 
 

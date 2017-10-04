@@ -384,7 +384,7 @@ function CONTROLLABLE:SetTask( DCSTask, WaitTime )
     end
 
     if not WaitTime or WaitTime == 0 then
-      SetTask( DCSTask )
+      SetTask( self, DCSTask )
     else
       self.TaskScheduler:Schedule( self, SetTask, { DCSTask }, WaitTime )
     end
@@ -1649,7 +1649,7 @@ do -- Patrol methods
     
     self:E( { PatrolGroup = PatrolGroup:GetName() } )
     
-    if PatrolGroup:IsGround() then
+    if PatrolGroup:IsGround() or PatrolGroup:IsShip() then
     
       local Waypoints = PatrolGroup:GetTemplateRoutePoints()
       
@@ -1673,7 +1673,7 @@ do -- Patrol methods
   -- A random waypoint will be picked and the group will move towards that point.
   -- @param #CONTROLLABLE self
   -- @return #CONTROLLABLE
-  function CONTROLLABLE:PatrolRouteRandom( Speed, Formation )
+  function CONTROLLABLE:PatrolRouteRandom( Speed, Formation, ToWaypoint )
   
     local PatrolGroup = self -- Wrapper.Group#GROUP
     
@@ -1683,30 +1683,40 @@ do -- Patrol methods
 
     self:E( { PatrolGroup = PatrolGroup:GetName() } )
     
-    if PatrolGroup:IsGround() then
+    if PatrolGroup:IsGround() or PatrolGroup:IsShip() then
     
       local Waypoints = PatrolGroup:GetTemplateRoutePoints()
-      local WaypointNumber = math.random( 1, #Waypoints )
-      self:E( { WaypointNumber = WaypointNumber } )
-      local Waypoint = Waypoints[WaypointNumber] -- Select random waypoint.
       
       -- Calculate the new Route.
       local FromCoord = PatrolGroup:GetCoordinate()
+      local FromWaypoint = 1
+      if ToWaypoint then
+        FromWaypoint = ToWaypoint
+      end
       
-      -- Select a random Zone and get the Coordinate of the new Zone.
-      local ToCoord = COORDINATE:NewFromVec2( { x = Waypoint.x + 10, y = Waypoint.y + 10 } )
-      
+      -- Loop until a waypoint has been found that is not the same as the current waypoint.
+      -- Otherwise the object zon't move or drive in circles and the algorithm would not do exactly
+      -- what it is supposed to do, which is making groups drive around.
+      local ToWaypoint
+      repeat      
+        -- Select a random waypoint and check if it is not the same waypoint as where the object is about.
+        ToWaypoint = math.random( 1, #Waypoints )
+      until( ToWaypoint ~= FromWaypoint )
+      self:E( { FromWaypoint = FromWaypoint, ToWaypoint = ToWaypoint } )
+
+      local  Waypoint = Waypoints[ToWaypoint] -- Select random waypoint.
+      local ToCoord = COORDINATE:NewFromVec2( { x = Waypoint.x, y = Waypoint.y } )
       -- Create a "ground route point", which is a "point" structure that can be given as a parameter to a Task
       local Route = {}
       Route[#Route+1] = FromCoord:WaypointGround( 0 )
       Route[#Route+1] = ToCoord:WaypointGround( Speed, Formation )
       
       
-      local TaskRouteToZone = PatrolGroup:TaskFunction( "CONTROLLABLE.PatrolRouteRandom", Speed, Formation )
+      local TaskRouteToZone = PatrolGroup:TaskFunction( "CONTROLLABLE.PatrolRouteRandom", Speed, Formation, ToWaypoint )
       
       PatrolGroup:SetTaskWaypoint( Route[#Route], TaskRouteToZone ) -- Set for the given Route at Waypoint 2 the TaskRouteToZone.
     
-      PatrolGroup:Route( Route, 2 ) -- Move after a random seconds to the Route. See the Route method for details.
+      PatrolGroup:Route( Route, 1 ) -- Move after a random seconds to the Route. See the Route method for details.
     end
   end
 
@@ -1728,7 +1738,7 @@ do -- Patrol methods
 
     self:E( { PatrolGroup = PatrolGroup:GetName() } )
     
-    if PatrolGroup:IsGround() then
+    if PatrolGroup:IsGround() or PatrolGroup:IsShip() then
     
       local Waypoints = PatrolGroup:GetTemplateRoutePoints()
       local Waypoint = Waypoints[math.random( 1, #Waypoints )] -- Select random waypoint.
@@ -1750,7 +1760,7 @@ do -- Patrol methods
       
       PatrolGroup:SetTaskWaypoint( Route[#Route], TaskRouteToZone ) -- Set for the given Route at Waypoint 2 the TaskRouteToZone.
     
-      PatrolGroup:Route( Route, 2 ) -- Move after a random seconds to the Route. See the Route method for details.
+      PatrolGroup:Route( Route, 1 ) -- Move after a random seconds to the Route. See the Route method for details.
     end
   end
 
