@@ -510,7 +510,6 @@ function RAT:Spawn(naircraft)
     self.destination_ports=self:_GetAirportsInZone(self.destination_Azone)
   end
   
-
   -- debug message
   local text=string.format("\n******************************************************\n")
   text=text..string.format("Spawning %i aircraft from template %s of type %s.\n", self.ngroups, self.SpawnTemplatePrefix, self.aircraft.type)
@@ -732,16 +731,27 @@ function RAT:SetDestination(names)
 
 end
 
---- Airports, FARPs and ships explicitly excluded as departures and destinations.
+--- Include all airports which lie in a zone as possible destinations.
 -- @param #RAT self
--- @param #string ports Name or table of names of excluded airports.
-function RAT:SetDestinationFromZone(zone)
+-- @param Core.Zone#ZONE zone Zone in which the airports lie.
+function RAT:SetDestinationsFromZone(zone)
 
   -- Random departure is deactivated now that user specified departure ports.
   self.random_destination=false
   
   self.destination_Azone=zone
 end
+
+--- Include all airports which lie in a zone as possible destinations.
+-- @param #RAT self
+-- @param Core.Zone#ZONE zone Zone in which the airports lie.
+function RAT:SetDeparturesFromZone(zone)
+  -- Random departure is deactivated now that user specified departure ports.
+  self.random_departure=false
+
+  self.departure_Azone=zone
+end
+
 
 --- Airports, FARPs and ships explicitly excluded as departures and destinations.
 -- @param #RAT self
@@ -1715,7 +1725,7 @@ end
 -- @return #list Table with airport names that lie within the zone.
 function RAT:_GetAirportsInZone(zone)
   local airports={}
-  for _,airport in self.airports do
+  for _,airport in pairs(self.airports) do
     local name=airport:GetName()
     local coord=airport:GetCoordinate()
     
