@@ -8,7 +8,7 @@
 -- 
 -- ====
 --   
--- @module Task_Protect
+-- @module TaskZoneCapture
 
 do -- TASK_ZONE_GOAL
 
@@ -78,7 +78,7 @@ do -- TASK_ZONE_GOAL
     -- @param Tasking.Task#TASK_ZONE_GOAL Task
     function Fsm:onafterStartMonitoring( TaskUnit, Task )
       self:E( { self } )
-      self:__Protect( 0.1 )
+      self:__Monitor( 0.1 )
       self:__RouteToTarget( 0.1 )
     end
     
@@ -88,7 +88,7 @@ do -- TASK_ZONE_GOAL
     -- @param Tasking.Task#TASK_ZONE_GOAL Task
     function Fsm:onafterMonitor( TaskUnit, Task )
       self:E( { self } )
-      self:__Protect( 15 )
+      self:__Monitor( 15 )
     end
     
     --- Test 
@@ -146,9 +146,9 @@ do -- TASK_ZONE_GOAL
     return ActRouteZone:GetZone()
   end
 
-  function TASK_ZONE_GOAL:SetGoalTotal()
+  function TASK_ZONE_GOAL:SetGoalTotal( GoalTotal )
   
-    self.GoalTotal = 1
+    self.GoalTotal = GoalTotal
   end
 
   function TASK_ZONE_GOAL:GetGoalTotal()
@@ -164,7 +164,7 @@ do -- TASK_CAPTURE_ZONE
   --- The TASK_CAPTURE_ZONE class
   -- @type TASK_CAPTURE_ZONE
   -- @field Set#SET_UNIT TargetSetUnit
-  -- @extends Tasking.TaskZoneGoal#TASK_ZONE_GOAL
+  -- @extends #TASK_ZONE_GOAL
 
   --- # TASK_CAPTURE_ZONE class, extends @{TaskZoneGoal#TASK_ZONE_GOAL}
   -- 
@@ -184,18 +184,18 @@ do -- TASK_CAPTURE_ZONE
   -- @param Tasking.Mission#MISSION Mission
   -- @param Core.Set#SET_GROUP SetGroup The set of groups for which the Task can be assigned.
   -- @param #string TaskName The name of the Task.
-  -- @param Core.ZoneGoal#ZONE_GOAL ZoneGoal
+  -- @param Core.ZoneGoalCoalition#ZONE_GOAL_COALITION ZoneGoalCoalition
   -- @param #string TaskBriefing The briefing of the task.
   -- @return #TASK_CAPTURE_ZONE self
-  function TASK_CAPTURE_ZONE:New( Mission, SetGroup, TaskName, ZoneGoal, TaskBriefing)
-    local self = BASE:Inherit( self, TASK_ZONE_GOAL:New( Mission, SetGroup, TaskName, ZoneGoal, "CAPTURE", TaskBriefing ) ) -- #TASK_CAPTURE_ZONE
+  function TASK_CAPTURE_ZONE:New( Mission, SetGroup, TaskName, ZoneGoalCoalition, TaskBriefing)
+    local self = BASE:Inherit( self, TASK_ZONE_GOAL:New( Mission, SetGroup, TaskName, ZoneGoalCoalition, "CAPTURE", TaskBriefing ) ) -- #TASK_CAPTURE_ZONE
     self:F()
     
     Mission:AddTask( self )
     
-    self.TaskCoalition = ZoneGoal:GetCoalition()
-    self.TaskCoalitionName = ZoneGoal:GetCoalitionName()
-    self.TaskZoneName = self.ZoneGoal:GetZoneName()
+    self.TaskCoalition = ZoneGoalCoalition:GetCoalition()
+    self.TaskCoalitionName = ZoneGoalCoalition:GetCoalitionName()
+    self.TaskZoneName = ZoneGoalCoalition:GetZoneName()
     
     self:SetBriefing( 
       TaskBriefing or 
@@ -234,66 +234,21 @@ do -- TASK_CAPTURE_ZONE
     self:E( { PlayerUnit = PlayerUnit } )
     
     if self.ZoneGoal then
-      local ProtectCoalition = self.ZoneGoal:GetCoalition()
-      local TaskCoalition = self.Coalition
-      
-      self:E( { ProtectCoalition = ProtectCoalition, TaskCoalition = TaskCoalition } )
-      
-      if ProtectCoalition ~= TaskCoalition then
+      if self.ZoneGoal.Goal:IsAchieved() then
         self:Success()
+        local TotalContributions = self.ZoneGoal.Goal:GetTotalContributions()
+        for PlayerName, PlayerContribution in pairs( self.ZoneGoal.Goal:GetPlayerContributions() ) do
+           local Task = self.Task
+           local Scoring = Task:GetScoring()
+           if Scoring then
+             Scoring:_AddMissionGoalScore( Task.Mission, PlayerName, "Captured Zone", PlayerContribution * 200 / TotalContributions )
+           end
+        end
       end
     end
     
     self:__Goal( -10, PlayerUnit, PlayerName )
   end
 
-  --- Set a score when a target in scope of the A2G attack, has been destroyed .
-  -- @param #TASK_CAPTURE_ZONE self
-  -- @param #string PlayerName The name of the player.
-  -- @param #number Score The score in points to be granted when task process has been achieved.
-  -- @param Wrapper.Unit#UNIT TaskUnit
-  -- @return #TASK_CAPTURE_ZONE
-  function TASK_CAPTURE_ZONE:SetScoreOnProgress( PlayerName, Score, TaskUnit )
-    self:F( { PlayerName, Score, TaskUnit } )
-
-    local ProcessUnit = self:GetUnitProcess( TaskUnit )
-
-    --ProcessUnit:AddScoreProcess( "Protecting", "ZoneGoal", "Captured", "Player " .. PlayerName .. " has SEADed a target.", Score )
-    
-    return self
-  end
-
-  --- Set a score when all the targets in scope of the A2G attack, have been destroyed.
-  -- @param #TASK_CAPTURE_ZONE self
-  -- @param #string PlayerName The name of the player.
-  -- @param #number Score The score in points.
-  -- @param Wrapper.Unit#UNIT TaskUnit
-  -- @return #TASK_CAPTURE_ZONE
-  function TASK_CAPTURE_ZONE:SetScoreOnSuccess( PlayerName, Score, TaskUnit )
-    self:F( { PlayerName, Score, TaskUnit } )
-
-    local ProcessUnit = self:GetUnitProcess( TaskUnit )
-
-    ProcessUnit:AddScore( "Success", "The zone has been captured!", Score )
-    
-    return self
-  end
-
-  --- Set a penalty when the A2G attack has failed.
-  -- @param #TASK_CAPTURE_ZONE self
-  -- @param #string PlayerName The name of the player.
-  -- @param #number Penalty The penalty in points, must be a negative value!
-  -- @param Wrapper.Unit#UNIT TaskUnit
-  -- @return #TASK_CAPTURE_ZONE
-  function TASK_CAPTURE_ZONE:SetScoreOnFail( PlayerName, Penalty, TaskUnit )
-    self:F( { PlayerName, Penalty, TaskUnit } )
-
-    local ProcessUnit = self:GetUnitProcess( TaskUnit )
-
-    ProcessUnit:AddScore( "Failed", "The zone has been lost!", Penalty )
-    
-    return self
-  end
-  
 end
 

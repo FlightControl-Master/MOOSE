@@ -45,8 +45,11 @@ do -- Goal
     ClassName = "GOAL",
   }
   
-  --- @field #table GOAL.States
-  GOAL.States = {}
+  --- @field #table GOAL.Players
+  GOAL.Players = {}
+
+  --- @field #number GOAL.TotalContributions
+  GOAL.TotalContributions = 0
   
   --- GOAL Constructor.
   -- @param #GOAL self
@@ -55,51 +58,6 @@ do -- Goal
   
     local self = BASE:Inherit( self, FSM:New() ) -- #GOAL
     self:F( {} )
-
-
-    do 
-    
-      --- On State for GOAL
-      -- @field GOAL.On
-
-      --- On State Handler OnLeave for GOAL
-      -- @function [parent=#GOAL] OnLeaveOn
-      -- @param #GOAL self
-      -- @param #string From
-      -- @param #string Event
-      -- @param #string To
-      -- @return #boolean
-  
-      --- On State Handler OnEnter for GOAL
-      -- @function [parent=#GOAL] OnEnterOn
-      -- @param #GOAL self
-      -- @param #string From
-      -- @param #string Event
-      -- @param #string To
-
-    end
-
-    do
-
-      --- Off State for GOAL
-      -- @field GOAL.Off
-
-      --- Off State Handler OnLeave for GOAL
-      -- @function [parent=#GOAL] OnLeaveOff
-      -- @param #GOAL self
-      -- @param #string From
-      -- @param #string Event
-      -- @param #string To
-      -- @return #boolean
-  
-      --- Off State Handler OnEnter for GOAL
-      -- @function [parent=#GOAL] OnEnterOff
-      -- @param #GOAL self
-      -- @param #string From
-      -- @param #string Event
-      -- @param #string To
-
-    end
 
     --- Achieved State for GOAL
     -- @field GOAL.Achieved
@@ -120,86 +78,7 @@ do -- Goal
     -- @param #string To
     
     
-    self:SetStartState( "Idle" )
-    self:AddTransition( "Idle", "Start", "On" )
-    
-    --- Start Handler OnBefore for GOAL
-    -- @function [parent=#GOAL] OnBeforeStart
-    -- @param #GOAL self
-    -- @param #string From
-    -- @param #string Event
-    -- @param #string To
-    -- @return #boolean
-    
-    --- Start Handler OnAfter for GOAL
-    -- @function [parent=#GOAL] OnAfterStart
-    -- @param #GOAL self
-    -- @param #string From
-    -- @param #string Event
-    -- @param #string To
-    
-    --- Start Trigger for GOAL
-    -- @function [parent=#GOAL] Start
-    -- @param #GOAL self
-    
-    --- Start Asynchronous Trigger for GOAL
-    -- @function [parent=#GOAL] __Start
-    -- @param #GOAL self
-    -- @param #number Delay
-
-    self:AddTransition( "On", "Stop", "Idle" )
-    
-    --- Stop Handler OnBefore for GOAL
-    -- @function [parent=#GOAL] OnBeforeStop
-    -- @param #GOAL self
-    -- @param #string From
-    -- @param #string Event
-    -- @param #string To
-    -- @return #boolean
-    
-    --- Stop Handler OnAfter for GOAL
-    -- @function [parent=#GOAL] OnAfterStop
-    -- @param #GOAL self
-    -- @param #string From
-    -- @param #string Event
-    -- @param #string To
-    
-    --- Stop Trigger for GOAL
-    -- @function [parent=#GOAL] Stop
-    -- @param #GOAL self
-    
-    --- Stop Asynchronous Trigger for GOAL
-    -- @function [parent=#GOAL] __Stop
-    -- @param #GOAL self
-    -- @param #number Delay
-    
-    
-    self:AddTransition( "On",  "IsAchieved", "On" )
-    
-    --- IsAchieved Handler OnBefore for GOAL
-    -- @function [parent=#GOAL] OnBeforeIsAchieved
-    -- @param #GOAL self
-    -- @param #string From
-    -- @param #string Event
-    -- @param #string To
-    -- @return #boolean
-    
-    --- IsAchieved Handler OnAfter for GOAL
-    -- @function [parent=#GOAL] OnAfterIsAchieved
-    -- @param #GOAL self
-    -- @param #string From
-    -- @param #string Event
-    -- @param #string To
-    
-    --- IsAchieved Trigger for GOAL
-    -- @function [parent=#GOAL] IsAchieved
-    -- @param #GOAL self
-    
-    --- IsAchieved Asynchronous Trigger for GOAL
-    -- @function [parent=#GOAL] __IsAchieved
-    -- @param #GOAL self
-    -- @param #number Delay
-    
+    self:SetStartState( "Pending" )
     self:AddTransition( "*",  "Achieved", "Achieved" )
     
     --- Achieved Handler OnBefore for GOAL
@@ -226,9 +105,6 @@ do -- Goal
     -- @param #GOAL self
     -- @param #number Delay
     
-  
-    self.AchievedScheduler = nil
-  
     self:SetEventPriority( 5 )
 
     return self
@@ -236,30 +112,38 @@ do -- Goal
   
   
   --- @param #GOAL self
-  -- @param From
-  -- @param Event
-  -- @param To
-  function GOAL:onafterOn( From, Event, To )
-    if not self.AchievedScheduler then
-      self.AchievedScheduler = self:ScheduleRepeat( 15, 15, 0, nil, self.CheckAchieved, self )
-    end
+  -- @param #string PlayerName
+  function GOAL:AddPlayerContribution( PlayerName )
+    self.Players[PlayerName] = self.Players[PlayerName] or 0
+    self.Players[PlayerName] = self.Players[PlayerName] + 1
+    self.TotalContributions = self.TotalContributions + 1
+  end
+  
+  
+  --- @param #GOAL self
+  -- @param #number Player contribution.
+  function GOAL:GetPlayerContribution( PlayerName )
+    return self.Players[PlayerName] or 0 
   end
 
+  
   --- @param #GOAL self
-  -- @param From
-  -- @param Event
-  -- @param To
-  function GOAL:onafterOff( From, Event, To )
-    self:ScheduleStop( self.CheckAchieved )
-    self.ArchievedScheduler = nil
+  function GOAL:GetPlayerContributions()
+    return self.Players or {}
   end
 
+  
   --- @param #GOAL self
-  -- @param From
-  -- @param Event
-  -- @param To
-  function GOAL:CheckAchieved( From, Event, To )
-    self:IsAchieved()
+  function GOAL:GetTotalContributions()
+    return self.TotalContributions or 0
+  end
+  
+  
+  
+  --- @param #GOAL self
+  -- @return #boolean true if the goal is Achieved
+  function GOAL:IsAchieved()
+    return self:Is( "Achieved" )
   end
 
 end

@@ -16,10 +16,10 @@
 do -- ZoneGoal
 
   --- @type ZONE_GOAL_COALITION
-  -- @extends Core.ZoneGoal#ZONE_GOAL
+  -- @extends Core.ZoneGoal#ZONE_GOAL_COALITION
 
 
-  --- # ZONE_GOAL_COALITION class, extends @{ZoneGoal#ZONE_GOAL}
+  --- # ZONE_GOAL_COALITION class, extends @{ZoneGoal#ZONE_GOAL_COALITION}
   -- 
   -- ZONE_GOAL_COALITION models processes that have a Goal with a defined achievement involving a Zone for a Coalition.  
   -- Derived classes implement the ways how the achievements can be realized.
@@ -67,7 +67,7 @@ do -- ZoneGoal
   -- @return #ZONE_GOAL_COALITION
   function ZONE_GOAL_COALITION:New( Zone, Coalition )
   
-    local self = BASE:Inherit( self, ZONE_GOAL:New( Zone ) ) -- #ZONE_GOAL_COALITION
+    local self = BASE:Inherit( self, ZONE_GOAL_COALITION:New( Zone ) ) -- #ZONE_GOAL_COALITION
     self:F( { Zone = Zone, Coalition  = Coalition  } )
 
     self:SetCoalition( Coalition )
@@ -110,10 +110,98 @@ do -- ZoneGoal
       -- @param #string To
   
     end
+
+    do 
     
-    self:E( { Guarded = "Guarded" } )
+      --- Guarded State Handler OnLeave for ZONE_GOAL_COALITION
+      -- @function [parent=#ZONE_GOAL_COALITION] OnLeaveGuarded
+      -- @param #ZONE_GOAL_COALITION self
+      -- @param #string From
+      -- @param #string Event
+      -- @param #string To
+      -- @return #boolean
   
+      --- Guarded State Handler OnEnter for ZONE_GOAL_COALITION
+      -- @function [parent=#ZONE_GOAL_COALITION] OnEnterGuarded
+      -- @param #ZONE_GOAL_COALITION self
+      -- @param #string From
+      -- @param #string Event
+      -- @param #string To
   
+    end
+  
+
+    do 
+    
+      --- Empty State Handler OnLeave for ZONE_GOAL_COALITION
+      -- @function [parent=#ZONE_GOAL_COALITION] OnLeaveEmpty
+      -- @param #ZONE_GOAL_COALITION self
+      -- @param #string From
+      -- @param #string Event
+      -- @param #string To
+      -- @return #boolean
+  
+      --- Empty State Handler OnEnter for ZONE_GOAL_COALITION
+      -- @function [parent=#ZONE_GOAL_COALITION] OnEnterEmpty
+      -- @param #ZONE_GOAL_COALITION self
+      -- @param #string From
+      -- @param #string Event
+      -- @param #string To
+  
+    end
+  
+    self:AddTransition( "*", "Guard", "Guarded" )
+    
+    --- Guard Handler OnBefore for ZONE_GOAL_COALITION
+    -- @function [parent=#ZONE_GOAL_COALITION] OnBeforeGuard
+    -- @param #ZONE_GOAL_COALITION self
+    -- @param #string From
+    -- @param #string Event
+    -- @param #string To
+    -- @return #boolean
+    
+    --- Guard Handler OnAfter for ZONE_GOAL_COALITION
+    -- @function [parent=#ZONE_GOAL_COALITION] OnAfterGuard
+    -- @param #ZONE_GOAL_COALITION self
+    -- @param #string From
+    -- @param #string Event
+    -- @param #string To
+    
+    --- Guard Trigger for ZONE_GOAL_COALITION
+    -- @function [parent=#ZONE_GOAL_COALITION] Guard
+    -- @param #ZONE_GOAL_COALITION self
+    
+    --- Guard Asynchronous Trigger for ZONE_GOAL_COALITION
+    -- @function [parent=#ZONE_GOAL_COALITION] __Guard
+    -- @param #ZONE_GOAL_COALITION self
+    -- @param #number Delay
+    
+    self:AddTransition( "*", "Empty", "Empty" )
+    
+    --- Empty Handler OnBefore for ZONE_GOAL_COALITION
+    -- @function [parent=#ZONE_GOAL_COALITION] OnBeforeEmpty
+    -- @param #ZONE_GOAL_COALITION self
+    -- @param #string From
+    -- @param #string Event
+    -- @param #string To
+    -- @return #boolean
+    
+    --- Empty Handler OnAfter for ZONE_GOAL_COALITION
+    -- @function [parent=#ZONE_GOAL_COALITION] OnAfterEmpty
+    -- @param #ZONE_GOAL_COALITION self
+    -- @param #string From
+    -- @param #string Event
+    -- @param #string To
+    
+    --- Empty Trigger for ZONE_GOAL_COALITION
+    -- @function [parent=#ZONE_GOAL_COALITION] Empty
+    -- @param #ZONE_GOAL_COALITION self
+    
+    --- Empty Asynchronous Trigger for ZONE_GOAL_COALITION
+    -- @function [parent=#ZONE_GOAL_COALITION] __Empty
+    -- @param #ZONE_GOAL_COALITION self
+    -- @param #number Delay
+    
     
     self:AddTransition( {  "Guarded", "Empty" }, "Attack", "Attacked" )
   
@@ -214,7 +302,16 @@ do -- ZoneGoal
     self:E( { IsGuarded = IsGuarded } )
     return IsGuarded
   end
+
+
+  function ZONE_GOAL_COALITION:IsEmpty()
   
+    local IsEmpty = self.Zone:IsNoneInZone()
+    self:E( { IsEmpty = IsEmpty } )
+    return IsEmpty
+  end
+
+
   function ZONE_GOAL_COALITION:IsCaptured()
   
     local IsCaptured = self.Zone:IsAllInZoneOfOtherCoalition( self.Coalition )
@@ -300,7 +397,7 @@ do -- ZoneGoal
 
 
   --- When started, check the Coalition status.
-  -- @param #ZONE_GOAL self
+  -- @param #ZONE_GOAL_COALITION self
   function ZONE_GOAL_COALITION:onafterGuard()
   
     --self:E({BASE:GetParent( self )})
@@ -334,11 +431,21 @@ do -- ZoneGoal
   -- @param #ZONE_GOAL_COALITION self
   function ZONE_GOAL_COALITION:StatusZone()
   
-    local State = self:GetState()
-    self:E( { State = self:GetState() } )
-    
     self:GetParent( self, ZONE_GOAL_COALITION ).StatusZone( self )
     
+    local State = self:GetState()
+    self:E( { State = self:GetState() } )
+  
+    self.Zone:Scan()
+  
+    if State ~= "Guarded" and self:IsGuarded() then
+      self:Guard()
+    end
+    
+    if State ~= "Empty" and self:IsEmpty() then  
+      self:Empty()
+    end
+
     if State ~= "Attacked" and self:IsAttacked() then
       self:Attack()
     end

@@ -43,9 +43,6 @@ do -- Zone
     ClassName = "ZONE_GOAL",
   }
   
-  --- @field #table ZONE_GOAL.States
-  ZONE_GOAL.States = {}
-  
   --- ZONE_GOAL Constructor.
   -- @param #ZONE_GOAL self
   -- @param Core.Zone#ZONE_BASE Zone A @{Zone} object with the goal to be achieved.
@@ -58,100 +55,19 @@ do -- Zone
     self.Zone = Zone -- Core.Zone#ZONE_BASE
     self.Goal = GOAL:New()
 
-    do 
-    
-      --- Guarded State Handler OnLeave for ZONE_GOAL
-      -- @function [parent=#ZONE_GOAL] OnLeaveGuarded
-      -- @param #ZONE_GOAL self
-      -- @param #string From
-      -- @param #string Event
-      -- @param #string To
-      -- @return #boolean
-  
-      --- Guarded State Handler OnEnter for ZONE_GOAL
-      -- @function [parent=#ZONE_GOAL] OnEnterGuarded
-      -- @param #ZONE_GOAL self
-      -- @param #string From
-      -- @param #string Event
-      -- @param #string To
-  
-    end
-  
-
-    do 
-    
-      --- Empty State Handler OnLeave for ZONE_GOAL
-      -- @function [parent=#ZONE_GOAL] OnLeaveEmpty
-      -- @param #ZONE_GOAL self
-      -- @param #string From
-      -- @param #string Event
-      -- @param #string To
-      -- @return #boolean
-  
-      --- Empty State Handler OnEnter for ZONE_GOAL
-      -- @function [parent=#ZONE_GOAL] OnEnterEmpty
-      -- @param #ZONE_GOAL self
-      -- @param #string From
-      -- @param #string Event
-      -- @param #string To
-  
-    end
-  
-
-    self:AddTransition( "*", "Guard", "Guarded" )
-    
-    --- Guard Handler OnBefore for ZONE_GOAL
-    -- @function [parent=#ZONE_GOAL] OnBeforeGuard
-    -- @param #ZONE_GOAL self
-    -- @param #string From
-    -- @param #string Event
-    -- @param #string To
-    -- @return #boolean
-    
-    --- Guard Handler OnAfter for ZONE_GOAL
-    -- @function [parent=#ZONE_GOAL] OnAfterGuard
-    -- @param #ZONE_GOAL self
-    -- @param #string From
-    -- @param #string Event
-    -- @param #string To
-    
-    --- Guard Trigger for ZONE_GOAL
-    -- @function [parent=#ZONE_GOAL] Guard
-    -- @param #ZONE_GOAL self
-    
-    --- Guard Asynchronous Trigger for ZONE_GOAL
-    -- @function [parent=#ZONE_GOAL] __Guard
-    -- @param #ZONE_GOAL self
-    -- @param #number Delay
-    
-    self:AddTransition( "*", "Empty", "Empty" )
-    
-    --- Empty Handler OnBefore for ZONE_GOAL
-    -- @function [parent=#ZONE_GOAL] OnBeforeEmpty
-    -- @param #ZONE_GOAL self
-    -- @param #string From
-    -- @param #string Event
-    -- @param #string To
-    -- @return #boolean
-    
-    --- Empty Handler OnAfter for ZONE_GOAL
-    -- @function [parent=#ZONE_GOAL] OnAfterEmpty
-    -- @param #ZONE_GOAL self
-    -- @param #string From
-    -- @param #string Event
-    -- @param #string To
-    
-    --- Empty Trigger for ZONE_GOAL
-    -- @function [parent=#ZONE_GOAL] Empty
-    -- @param #ZONE_GOAL self
-    
-    --- Empty Asynchronous Trigger for ZONE_GOAL
-    -- @function [parent=#ZONE_GOAL] __Empty
-    -- @param #ZONE_GOAL self
-    -- @param #number Delay
-    
-
     self.SmokeTime = nil
+
+
+    self:AddTransition( "*", "DestroyedUnit", "*" )
+  
+    --- DestroyedUnit Handler OnAfter for ZONE_GOAL
+    -- @function [parent=#ZONE_GOAL] OnAfterDestroyedUnit
+    -- @param #ZONE_GOAL self
+    -- @param #string From
+    -- @param #string Event
+    -- @param #string To
+    -- @param Wrapper.Unit#UNIT DestroyedUnit The destroyed unit.
+    -- @param #string PlayerName The name of the player.
 
     return self
   end
@@ -170,6 +86,7 @@ do -- Zone
   function ZONE_GOAL:GetZoneName()
     return self.Zone:GetName()
   end
+
 
   --- Smoke the center of theh zone.
   -- @param #ZONE_GOAL self
@@ -204,41 +121,7 @@ do -- Zone
     end
   end
 
-  function ZONE_GOAL:IsGuarded()
-  
-    local IsGuarded = self.Zone:IsAllInZoneOfCoalition( self.Coalition )
-    self:E( { IsGuarded = IsGuarded } )
-    return IsGuarded
-  end
 
-
-  function ZONE_GOAL:IsEmpty()
-  
-    local IsEmpty = self.Zone:IsNoneInZone()
-    self:E( { IsEmpty = IsEmpty } )
-    return IsEmpty
-  end
-
-
-  --- Check status Zone.
-  -- @param #ZONE_GOAL self
-  function ZONE_GOAL:StatusZone()
-    
-    local State = self:GetState()
-    self:E( { State = self:GetState() } )
-  
-    self.Zone:Scan()
-  
-    if State ~= "Guarded" and self:IsGuarded() then
-      self:Guard()
-    end
-    
-    if State ~= "Empty" and self:IsEmpty() then  
-      self:Empty()
-    end
-    
-  end
-  
   --- Check status Smoke.
   -- @param #ZONE_GOAL self
   function ZONE_GOAL:StatusSmoke()
@@ -254,6 +137,35 @@ do -- Zone
         self.SmokeTime = CurrentTime
       end
     end
+  end
+
+
+  --- @param #ZONE_GOAL self
+  -- @param Event#EVENTDATA EventData
+  function ZONE_GOAL:__Destroyed( EventData )
+    self:T( { "EventDead", EventData } )
+
+    if EventData.IniDCSUnit then
+      if EventData.IniUnit:IsInZone( self:GetZone() ) then
+        local PlayerHits = _DATABASE.HITS[EventData.IniUnitName]
+        if PlayerHits then
+          for PlayerName, PlayerHit in pairs( PlayerHits ) do
+            self.Goal:AddPlayerContribution( PlayerName )
+            self:DestroyedUnit( EventData.IniUnitName, PlayerName )
+          end
+        end
+      end
+    end
+  end
+  
+  
+  --- Activate the event UnitDestroyed to be fired when a unit is destroyed in the zone.
+  -- @param #ZONE_GOAL self
+  function ZONE_GOAL:MonitorDestroyedUnits()
+
+    self:HandleEvent( EVENTS.Dead,  self.__Destroyed )
+    self:HandleEvent( EVENTS.Crash, self.__Destroyed )
+  
   end
   
 end
