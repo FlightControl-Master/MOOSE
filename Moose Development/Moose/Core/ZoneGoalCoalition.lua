@@ -16,10 +16,10 @@
 do -- ZoneGoal
 
   --- @type ZONE_GOAL_COALITION
-  -- @extends Core.ZoneGoal#ZONE_GOAL_COALITION
+  -- @extends Core.ZoneGoal#ZONE_GOAL
 
 
-  --- # ZONE_GOAL_COALITION class, extends @{ZoneGoal#ZONE_GOAL_COALITION}
+  --- # ZONE_GOAL_COALITION class, extends @{ZoneGoal#ZONE_GOAL}
   -- 
   -- ZONE_GOAL_COALITION models processes that have a Goal with a defined achievement involving a Zone for a Coalition.  
   -- Derived classes implement the ways how the achievements can be realized.
@@ -67,7 +67,7 @@ do -- ZoneGoal
   -- @return #ZONE_GOAL_COALITION
   function ZONE_GOAL_COALITION:New( Zone, Coalition )
   
-    local self = BASE:Inherit( self, ZONE_GOAL_COALITION:New( Zone ) ) -- #ZONE_GOAL_COALITION
+    local self = BASE:Inherit( self, ZONE_GOAL:New( Zone ) ) -- #ZONE_GOAL_COALITION
     self:F( { Zone = Zone, Coalition  = Coalition  } )
 
     self:SetCoalition( Coalition )
@@ -431,8 +431,6 @@ do -- ZoneGoal
   -- @param #ZONE_GOAL_COALITION self
   function ZONE_GOAL_COALITION:StatusZone()
   
-    self:GetParent( self, ZONE_GOAL_COALITION ).StatusZone( self )
-    
     local State = self:GetState()
     self:E( { State = self:GetState() } )
   

@@ -141,15 +141,22 @@ do -- Zone
 
 
   --- @param #ZONE_GOAL self
-  -- @param Event#EVENTDATA EventData
+  -- @param Core.Event#EVENTDATA EventData
   function ZONE_GOAL:__Destroyed( EventData )
-    self:T( { "EventDead", EventData } )
+    self:E( { "EventDead", EventData } )
+
+    self:E( { EventData.IniUnit } )
+    
+    local Vec3 = EventData.IniDCSUnit:getPosition().p
+    self:E( { Vec3 = Vec3 } )
+    local ZoneGoal = self:GetZone()
+    self:E({ZoneGoal})
 
     if EventData.IniDCSUnit then
-      if EventData.IniUnit:IsInZone( self:GetZone() ) then
+      if ZoneGoal:IsVec3InZone(Vec3)  then
         local PlayerHits = _DATABASE.HITS[EventData.IniUnitName]
         if PlayerHits then
-          for PlayerName, PlayerHit in pairs( PlayerHits ) do
+          for PlayerName, PlayerHit in pairs( PlayerHits.Players or {} ) do
             self.Goal:AddPlayerContribution( PlayerName )
             self:DestroyedUnit( EventData.IniUnitName, PlayerName )
           end

@@ -1132,44 +1132,23 @@ end
       TargetCategory = Event.IniCategory
       TargetType = Event.IniTypeName
   
-      TargetUnitCoalition = _SCORINGCoalition[TargetCoalition]
-      TargetUnitCategory = _SCORINGCategory[TargetCategory]
       TargetUnitType = TargetType
   
       self:T( { TargetUnitName, TargetGroupName, TargetPlayerName, TargetCoalition, TargetCategory, TargetType } )
     end
   
-    -- Player contains the score and reference data for the player.
-    for PlayerName, Player in pairs( self.Players ) do
-      if Player then -- This should normally not happen, but i'll test it anyway.
-        self:T( "Something got destroyed" )
-  
-        -- Some variables
-        local InitUnitName = Player.UnitName
-        local InitUnitType = Player.UnitType
-        local InitCoalition = Player.UnitCoalition
-        local InitCategory = Player.UnitCategory
-        local InitUnitCoalition = _SCORINGCoalition[InitCoalition]
-        local InitUnitCategory = _SCORINGCategory[InitCategory]
-  
-        self:T( { InitUnitName, InitUnitType, InitUnitCoalition, InitCoalition, InitUnitCategory, InitCategory } )
-  
-        local Destroyed = false
-  
-        -- What is the player destroying?
-        if self.HITS[TargetUnitName] then -- Was there a hit for this unit for this player before registered???
-          
+    self:T( "Something got destroyed" )
 
-          self.DESTROYS[Event.TgtUnitName] = self.DESTROYS[Event.TgtUnitName] or {}
-          
-          local PlayerDestroys = self.DESTROYS[Event.TgtUnitName]
-  
-          if TargetCoalition then
-            PlayerDestroys = PlayerDestroys or {}
-            PlayerDestroys[PlayerName] = true
-          end
-        end
-      end
+    local Destroyed = false
+
+    -- What is the player destroying?
+    if self.HITS[Event.IniUnitName] then -- Was there a hit for this unit for this player before registered???
+      
+
+      self.DESTROYS[Event.IniUnitName] = self.DESTROYS[Event.IniUnitName] or {}
+      
+      self.DESTROYS[Event.IniUnitName] = true
+
     end
   end
 

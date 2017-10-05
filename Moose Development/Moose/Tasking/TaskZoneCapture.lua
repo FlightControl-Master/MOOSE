@@ -62,7 +62,7 @@ do -- TASK_ZONE_GOAL
     
     Fsm:AddTransition( "Assigned", "StartMonitoring", "Monitoring" )
     Fsm:AddTransition( "Monitoring", "Monitor", "Monitoring", {} )
-    Fsm:AddTransition( "Monitoring", "RouteToTarget", "Monitoring" )
+    Fsm:AddTransition( "Monitoring", "RouteTo", "Monitoring" )
     Fsm:AddProcess( "Monitoring", "RouteToZone", ACT_ROUTE_ZONE:New(), {} )
     
     --Fsm:AddTransition( "Accounted", "DestroyedAll", "Accounted" )
@@ -79,7 +79,7 @@ do -- TASK_ZONE_GOAL
     function Fsm:onafterStartMonitoring( TaskUnit, Task )
       self:E( { self } )
       self:__Monitor( 0.1 )
-      self:__RouteToTarget( 0.1 )
+      self:__RouteTo( 0.1 )
     end
     
     --- Monitor Loop
@@ -95,12 +95,12 @@ do -- TASK_ZONE_GOAL
     -- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
     -- @param Tasking.Task_A2G#TASK_ZONE_GOAL Task
-    function Fsm:onafterRouteToTarget( TaskUnit, Task )
+    function Fsm:onafterRouteTo( TaskUnit, Task )
       self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
       -- Determine the first Unit from the self.TargetSetUnit
       
       if Task:GetTargetZone( TaskUnit ) then
-        self:__RouteToTargetZone( 0.1 )
+        self:__RouteTo( 0.1 )
       end
     end
     
@@ -159,36 +159,36 @@ do -- TASK_ZONE_GOAL
 end 
 
 
-do -- TASK_CAPTURE_ZONE
+do -- TASK_ZONE_CAPTURE
 
-  --- The TASK_CAPTURE_ZONE class
-  -- @type TASK_CAPTURE_ZONE
+  --- The TASK_ZONE_CAPTURE class
+  -- @type TASK_ZONE_CAPTURE
   -- @field Set#SET_UNIT TargetSetUnit
   -- @extends #TASK_ZONE_GOAL
 
-  --- # TASK_CAPTURE_ZONE class, extends @{TaskZoneGoal#TASK_ZONE_GOAL}
+  --- # TASK_ZONE_CAPTURE class, extends @{TaskZoneGoal#TASK_ZONE_GOAL}
   -- 
-  -- The TASK_CAPTURE_ZONE class defines an Suppression or Extermination of Air Defenses task for a human player to be executed.
+  -- The TASK_ZONE_CAPTURE class defines an Suppression or Extermination of Air Defenses task for a human player to be executed.
   -- These tasks are important to be executed as they will help to achieve air superiority at the vicinity.
   -- 
-  -- The TASK_CAPTURE_ZONE is used by the @{Task_A2G_Dispatcher#TASK_A2G_DISPATCHER} to automatically create SEAD tasks 
+  -- The TASK_ZONE_CAPTURE is used by the @{Task_A2G_Dispatcher#TASK_A2G_DISPATCHER} to automatically create SEAD tasks 
   -- based on detected enemy ground targets.
   -- 
-  -- @field #TASK_CAPTURE_ZONE
-  TASK_CAPTURE_ZONE = {
-    ClassName = "TASK_CAPTURE_ZONE",
+  -- @field #TASK_ZONE_CAPTURE
+  TASK_ZONE_CAPTURE = {
+    ClassName = "TASK_ZONE_CAPTURE",
   }
   
-  --- Instantiates a new TASK_CAPTURE_ZONE.
-  -- @param #TASK_CAPTURE_ZONE self
+  --- Instantiates a new TASK_ZONE_CAPTURE.
+  -- @param #TASK_ZONE_CAPTURE self
   -- @param Tasking.Mission#MISSION Mission
   -- @param Core.Set#SET_GROUP SetGroup The set of groups for which the Task can be assigned.
   -- @param #string TaskName The name of the Task.
   -- @param Core.ZoneGoalCoalition#ZONE_GOAL_COALITION ZoneGoalCoalition
   -- @param #string TaskBriefing The briefing of the task.
-  -- @return #TASK_CAPTURE_ZONE self
-  function TASK_CAPTURE_ZONE:New( Mission, SetGroup, TaskName, ZoneGoalCoalition, TaskBriefing)
-    local self = BASE:Inherit( self, TASK_ZONE_GOAL:New( Mission, SetGroup, TaskName, ZoneGoalCoalition, "CAPTURE", TaskBriefing ) ) -- #TASK_CAPTURE_ZONE
+  -- @return #TASK_ZONE_CAPTURE self
+  function TASK_ZONE_CAPTURE:New( Mission, SetGroup, TaskName, ZoneGoalCoalition, TaskBriefing)
+    local self = BASE:Inherit( self, TASK_ZONE_GOAL:New( Mission, SetGroup, TaskName, ZoneGoalCoalition, "CAPTURE", TaskBriefing ) ) -- #TASK_ZONE_CAPTURE
     self:F()
     
     Mission:AddTask( self )
@@ -207,9 +207,9 @@ do -- TASK_CAPTURE_ZONE
     return self
   end 
 
-  --- Instantiates a new TASK_CAPTURE_ZONE.
-  -- @param #TASK_CAPTURE_ZONE self
-  function TASK_CAPTURE_ZONE:UpdateTaskInfo() 
+  --- Instantiates a new TASK_ZONE_CAPTURE.
+  -- @param #TASK_ZONE_CAPTURE self
+  function TASK_ZONE_CAPTURE:UpdateTaskInfo() 
 
 
     local ZoneCoordinate = self.ZoneGoal:GetZone():GetCoordinate() 
@@ -218,7 +218,7 @@ do -- TASK_CAPTURE_ZONE
     self:SetInfo( "Zone Coalition", self.TaskCoalitionName, 11 )
   end
     
-  function TASK_CAPTURE_ZONE:ReportOrder( ReportGroup ) 
+  function TASK_ZONE_CAPTURE:ReportOrder( ReportGroup ) 
     local Coordinate = self:GetInfo( "Coordinates" )
     --local Coordinate = self.TaskInfo.Coordinates.TaskInfoText
     local Distance = ReportGroup:GetCoordinate():Get2DDistance( Coordinate )
@@ -227,9 +227,9 @@ do -- TASK_CAPTURE_ZONE
   end
   
   
-  --- @param #TASK_CAPTURE_ZONE self
+  --- @param #TASK_ZONE_CAPTURE self
   -- @param Wrapper.Unit#UNIT TaskUnit
-  function TASK_CAPTURE_ZONE:OnAfterGoal( From, Event, To, PlayerUnit, PlayerName )
+  function TASK_ZONE_CAPTURE:OnAfterGoal( From, Event, To, PlayerUnit, PlayerName )
   
     self:E( { PlayerUnit = PlayerUnit } )
     
@@ -237,11 +237,12 @@ do -- TASK_CAPTURE_ZONE
       if self.ZoneGoal.Goal:IsAchieved() then
         self:Success()
         local TotalContributions = self.ZoneGoal.Goal:GetTotalContributions()
-        for PlayerName, PlayerContribution in pairs( self.ZoneGoal.Goal:GetPlayerContributions() ) do
-           local Task = self.Task
-           local Scoring = Task:GetScoring()
+        local PlayerContributions = self.ZoneGoal.Goal:GetPlayerContributions()
+        self:E( { TotalContributions = TotalContributions, PlayerContributions = PlayerContributions } )
+        for PlayerName, PlayerContribution in pairs( PlayerContributions ) do
+           local Scoring = self:GetScoring()
            if Scoring then
-             Scoring:_AddMissionGoalScore( Task.Mission, PlayerName, "Captured Zone", PlayerContribution * 200 / TotalContributions )
+             Scoring:_AddMissionGoalScore( self.Mission, PlayerName, "Zone " .. self.ZoneGoal:GetZoneName() .." captured", PlayerContribution * 200 / TotalContributions )
            end
         end
       end
