@@ -176,7 +176,7 @@ do -- TASK_ZONE_GOAL
       if TaskInfoID == "Coordinate" then
         local FromCoordinate = ReportGroup:GetUnit(1):GetCoordinate()
         local ToCoordinate = TaskInfo.TaskInfoText -- Core.Point#COORDINATE
-        return string.format( " - %s: %s", TaskInfoID, ToCoordinate:ToString( ReportGroup:GetUnit(1), nil, self ) )
+        return string.format( " - %s: %s", TaskInfoID, ToCoordinate:ToString( ReportGroup:GetUnit( 1 ), nil, self ) )
       else
       end
     end
