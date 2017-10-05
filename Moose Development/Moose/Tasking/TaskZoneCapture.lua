@@ -197,6 +197,8 @@ do -- TASK_ZONE_CAPTURE
     self.TaskCoalitionName = ZoneGoalCoalition:GetCoalitionName()
     self.TaskZoneName = ZoneGoalCoalition:GetZoneName()
     
+    ZoneGoalCoalition:MonitorDestroyedUnits()
+    
     self:SetBriefing( 
       TaskBriefing or 
       "Capture zone " .. self.TaskZoneName .. "."
