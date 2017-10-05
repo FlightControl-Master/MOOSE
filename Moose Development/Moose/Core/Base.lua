@@ -273,11 +273,15 @@ end
 local function getParent( Child )
   local Parent = nil
   
-  if rawget( Child, "__" ) then
-    Parent = getmetatable( Child.__ ).__index
+  if Child.ClassName == 'BASE' then
+    Parent = nil
   else
-    Parent = getmetatable( Child ).__index
-  end 
+    if rawget( Child, "__" ) then
+      Parent = getmetatable( Child.__ ).__index
+    else
+      Parent = getmetatable( Child ).__index
+    end 
+  end
   return Parent
 end
 
@@ -303,12 +307,16 @@ function BASE:GetParent( Child, FromClass )
     self:E({FromClass = FromClass})
     self:E({Child = Child.ClassName})
     if FromClass then
-      while( Child.ClassName ~= FromClass.ClassName ) do
+      while( Child.ClassName ~= "BASE" and Child.ClassName ~= FromClass.ClassName ) do
         Child = getParent( Child )
         self:E({Child.ClassName})
       end
     end  
-    Parent = getParent( Child )
+    if Child.ClassName == 'BASE' then
+      Parent = nil
+    else
+      Parent = getParent( Child )
+    end
   end
   self:E({Parent.ClassName})
   return Parent
@@ -365,7 +373,7 @@ function BASE:IsInstanceOf( ClassName )
       return true
     end
 
-    Parent = getParent(Parent)
+    Parent = getParent( Parent )
 
   end
 

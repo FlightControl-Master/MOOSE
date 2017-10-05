@@ -103,7 +103,7 @@ do -- TASK_ZONE_GOAL
         self:__RouteTo( 0.1 )
       end
     end
-    
+
     return self
  
   end
@@ -156,6 +156,33 @@ do -- TASK_ZONE_GOAL
     return self.GoalTotal
   end
 
+  function TASK_ZONE_GOAL:GetMarkInfo( TaskInfoID, TaskInfo )
+
+    if type( TaskInfo.TaskInfoText ) == "string" then
+      return string.format( "%s: %s", TaskInfoID, TaskInfo.TaskInfoText )
+    elseif type( TaskInfo ) == "table" then
+      if TaskInfoID == "Coordinate" then
+      end
+    end
+  
+    return nil
+  end
+
+  function TASK_ZONE_GOAL:GetReportDetail( ReportGroup, TaskInfoID, TaskInfo )
+  
+    if type( TaskInfo.TaskInfoText ) == "string" then
+      return string.format( " - %s: %s", TaskInfoID, TaskInfo.TaskInfoText )
+    elseif type(TaskInfo) == "table" then
+      if TaskInfoID == "Coordinate" then
+        local FromCoordinate = ReportGroup:GetUnit(1):GetCoordinate()
+        local ToCoordinate = TaskInfo.TaskInfoText -- Core.Point#COORDINATE
+        return string.format( " - %s: %s", TaskInfoID, ToCoordinate:ToString( ReportGroup:GetUnit(1), nil, self ) )
+      else
+      end
+    end
+  end
+
+
 end 
 
 
@@ -163,7 +190,7 @@ do -- TASK_ZONE_CAPTURE
 
   --- The TASK_ZONE_CAPTURE class
   -- @type TASK_ZONE_CAPTURE
-  -- @field Set#SET_UNIT TargetSetUnit
+  -- @field Core.ZoneGoalCoalition#ZONE_GOAL_COALITION ZoneGoal
   -- @extends #TASK_ZONE_GOAL
 
   --- # TASK_ZONE_CAPTURE class, extends @{TaskZoneGoal#TASK_ZONE_GOAL}
@@ -201,7 +228,7 @@ do -- TASK_ZONE_CAPTURE
     
     self:SetBriefing( 
       TaskBriefing or 
-      "Capture zone " .. self.TaskZoneName .. "."
+      "Capture Zone " .. self.TaskZoneName
     )
     
     self:UpdateTaskInfo()
@@ -215,13 +242,13 @@ do -- TASK_ZONE_CAPTURE
 
 
     local ZoneCoordinate = self.ZoneGoal:GetZone():GetCoordinate() 
-    self:SetInfo( "Coordinates", ZoneCoordinate, 0 )
-    self:SetInfo( "Zone Name", self.TaskZoneName, 10 )
-    self:SetInfo( "Zone Coalition", self.TaskCoalitionName, 11 )
+    self:SetInfo( "Coordinate", ZoneCoordinate, 0 )
+    self:SetInfo( "Zone Name", self.ZoneGoal:GetZoneName(), 10 )
+    self:SetInfo( "Zone Coalition", self.ZoneGoal:GetCoalitionName(), 11 )
   end
     
   function TASK_ZONE_CAPTURE:ReportOrder( ReportGroup ) 
-    local Coordinate = self:GetInfo( "Coordinates" )
+    local Coordinate = self:GetInfo( "Coordinate" )
     --local Coordinate = self.TaskInfo.Coordinates.TaskInfoText
     local Distance = ReportGroup:GetCoordinate():Get2DDistance( Coordinate )
     
