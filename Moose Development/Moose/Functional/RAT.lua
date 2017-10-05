@@ -88,6 +88,9 @@
 -- @field #table departure_zones Array containing the names of the departure zones.
 -- @field #table departure_ports Array containing the names of the destination airports.
 -- @field #table destination_ports Array containing the names of the destination airports.
+-- @field #table excluded_ports Array containing the names of explicitly excluded airports.
+-- @field Core.Zone#ZONE departure_Azone Zone containing the departure airports.
+-- @field Core.Zone#ZONE destination_Azone Zone containing the destination airports.
 -- @field #table ratcraft Array with the spawned RAT aircraft.
 -- @field #number Tinactive Time in seconds after which inactive units will be destroyed. Default is 300 seconds.
 -- @field #boolean reportstatus Aircraft report status.
@@ -619,7 +622,7 @@ end
 --- Set country of RAT group. This overrules the coalition settings.
 -- @param #RAT self
 -- @param #number id DCS country enumerator ID. For example country.id.USA or country.id.RUSSIA.
-function RAT:SetCoalition2(id)
+function RAT:SetCountry(id)
   self.country=id
 end
 
