@@ -1,5 +1,5 @@
 env.info('*** MOOSE STATIC INCLUDE START *** ')
-env.info('Moose Generation Timestamp: 20171003_1351')
+env.info('Moose Generation Timestamp: 20171006_1228')
 env.setErrorMessageBoxEnabled(false)
 routines={}
 routines.majorVersion=3
@@ -20452,8 +20452,8 @@ end
 AI_A2A_PATROL={
 ClassName="AI_A2A_PATROL",
 }
-function AI_A2A_PATROL:New(AIGroup,PatrolZone,PatrolFloorAltitude,PatrolCeilingAltitude,PatrolMinSpeed,PatrolMaxSpeed,PatrolAltType)
-local self=BASE:Inherit(self,AI_A2A:New(AIGroup))
+function AI_A2A_PATROL:New(AIPatrol,PatrolZone,PatrolFloorAltitude,PatrolCeilingAltitude,PatrolMinSpeed,PatrolMaxSpeed,PatrolAltType)
+local self=BASE:Inherit(self,AI_A2A:New(AIPatrol))
 self.PatrolZone=PatrolZone
 self.PatrolFloorAltitude=PatrolFloorAltitude
 self.PatrolCeilingAltitude=PatrolCeilingAltitude
@@ -20475,11 +20475,11 @@ self:F2({PatrolFloorAltitude,PatrolCeilingAltitude})
 self.PatrolFloorAltitude=PatrolFloorAltitude
 self.PatrolCeilingAltitude=PatrolCeilingAltitude
 end
-function AI_A2A_PATROL:onafterPatrol(Controllable,From,Event,To)
+function AI_A2A_PATROL:onafterPatrol(AIPatrol,From,Event,To)
 self:F2()
 self:ClearTargetDistance()
 self:__Route(1)
-self.Controllable:OnReSpawn(
+self.AIPatrol:OnReSpawn(
 function(PatrolGroup)
 self:E("ReSpawn")
 self:__Reset(1)
@@ -20487,20 +20487,20 @@ self:__Route(5)
 end
 )
 end
-function AI_A2A_PATROL.PatrolRoute(AIGroup,Fsm)
-AIGroup:F({"AI_A2A_PATROL.PatrolRoute:",AIGroup:GetName()})
-if AIGroup:IsAlive()then
+function AI_A2A_PATROL.PatrolRoute(AIPatrol,Fsm)
+AIPatrol:F({"AI_A2A_PATROL.PatrolRoute:",AIPatrol:GetName()})
+if AIPatrol:IsAlive()then
 Fsm:Route()
 end
 end
-function AI_A2A_PATROL:onafterRoute(AIGroup,From,Event,To)
+function AI_A2A_PATROL:onafterRoute(AIPatrol,From,Event,To)
 self:F2()
 if From=="RTB"then
 return
 end
-if AIGroup:IsAlive()then
+if AIPatrol:IsAlive()then
 local PatrolRoute={}
-local CurrentCoord=AIGroup:GetCoordinate()
+local CurrentCoord=AIPatrol:GetCoordinate()
 local ToTargetCoord=self.PatrolZone:GetRandomPointVec2()
 ToTargetCoord:SetAlt(math.random(self.PatrolFloorAltitude,self.PatrolCeilingAltitude))
 self:SetTargetDistance(ToTargetCoord)
@@ -20515,17 +20515,17 @@ true
 PatrolRoute[#PatrolRoute+1]=ToPatrolRoutePoint
 PatrolRoute[#PatrolRoute+1]=ToPatrolRoutePoint
 local Tasks={}
-Tasks[#Tasks+1]=AIGroup:TaskFunction("AI_A2A_PATROL.PatrolRoute",self)
-PatrolRoute[#PatrolRoute].task=AIGroup:TaskCombo(Tasks)
-AIGroup:OptionROEReturnFire()
-AIGroup:OptionROTPassiveDefense()
-AIGroup:Route(PatrolRoute,0.5)
+Tasks[#Tasks+1]=AIPatrol:TaskFunction("AI_A2A_PATROL.PatrolRoute",self)
+PatrolRoute[#PatrolRoute].task=AIPatrol:TaskCombo(Tasks)
+AIPatrol:OptionROEReturnFire()
+AIPatrol:OptionROTEvadeFire()
+AIPatrol:Route(PatrolRoute,0.5)
 end
 end
-function AI_A2A_PATROL.Resume(AIGroup)
-AIGroup:F({"AI_A2A_PATROL.Resume:",AIGroup:GetName()})
-if AIGroup:IsAlive()then
-local _AI_A2A=AIGroup:GetState(AIGroup,"AI_A2A")
+function AI_A2A_PATROL.Resume(AIPatrol)
+AIPatrol:F({"AI_A2A_PATROL.Resume:",AIPatrol:GetName()})
+if AIPatrol:IsAlive()then
+local _AI_A2A=AIPatrol:GetState(AIPatrol,"AI_A2A")
 _AI_A2A:__Reset(1)
 _AI_A2A:__Route(5)
 end
@@ -20533,8 +20533,8 @@ end
 AI_A2A_CAP={
 ClassName="AI_A2A_CAP",
 }
-function AI_A2A_CAP:New(AIGroup,PatrolZone,PatrolFloorAltitude,PatrolCeilingAltitude,PatrolMinSpeed,PatrolMaxSpeed,EngageMinSpeed,EngageMaxSpeed,PatrolAltType)
-local self=BASE:Inherit(self,AI_A2A_PATROL:New(AIGroup,PatrolZone,PatrolFloorAltitude,PatrolCeilingAltitude,PatrolMinSpeed,PatrolMaxSpeed,PatrolAltType))
+function AI_A2A_CAP:New(AICap,PatrolZone,PatrolFloorAltitude,PatrolCeilingAltitude,PatrolMinSpeed,PatrolMaxSpeed,EngageMinSpeed,EngageMaxSpeed,PatrolAltType)
+local self=BASE:Inherit(self,AI_A2A_PATROL:New(AICap,PatrolZone,PatrolFloorAltitude,PatrolCeilingAltitude,PatrolMinSpeed,PatrolMaxSpeed,PatrolAltType))
 self.Accomplished=false
 self.Engaging=false
 self.EngageMinSpeed=EngageMinSpeed
@@ -20546,8 +20546,8 @@ self:AddTransition("Engaging","Abort","Patrolling")
 self:AddTransition("Engaging","Accomplish","Patrolling")
 return self
 end
-function AI_A2A_CAP:onafterStart(AIGroup,From,Event,To)
-AIGroup:HandleEvent(EVENTS.Takeoff,nil,self)
+function AI_A2A_CAP:onafterStart(AICap,From,Event,To)
+AICap:HandleEvent(EVENTS.Takeoff,nil,self)
 end
 function AI_A2A_CAP:SetEngageZone(EngageZone)
 self:F2()
@@ -20565,33 +20565,33 @@ else
 self.EngageRange=nil
 end
 end
-function AI_A2A_CAP:onafterPatrol(AIGroup,From,Event,To)
-self:GetParent(self).onafterPatrol(self,AIGroup,From,Event,To)
+function AI_A2A_CAP:onafterPatrol(AICap,From,Event,To)
+self:GetParent(self).onafterPatrol(self,AICap,From,Event,To)
 self:HandleEvent(EVENTS.Dead)
 end
-function AI_A2A_CAP.AttackRoute(AIGroup,Fsm)
-AIGroup:F({"AI_A2A_CAP.AttackRoute:",AIGroup:GetName()})
-if AIGroup:IsAlive()then
+function AI_A2A_CAP.AttackRoute(AICap,Fsm)
+AICap:F({"AI_A2A_CAP.AttackRoute:",AICap:GetName()})
+if AICap:IsAlive()then
 Fsm:__Engage(0.5)
 end
 end
-function AI_A2A_CAP:onbeforeEngage(AIGroup,From,Event,To)
+function AI_A2A_CAP:onbeforeEngage(AICap,From,Event,To)
 if self.Accomplished==true then
 return false
 end
 end
-function AI_A2A_CAP:onafterAbort(AIGroup,From,Event,To)
-AIGroup:ClearTasks()
+function AI_A2A_CAP:onafterAbort(AICap,From,Event,To)
+AICap:ClearTasks()
 self:__Route(0.5)
 end
-function AI_A2A_CAP:onafterEngage(AIGroup,From,Event,To,AttackSetUnit)
-self:F({AIGroup,From,Event,To,AttackSetUnit})
+function AI_A2A_CAP:onafterEngage(AICap,From,Event,To,AttackSetUnit)
+self:F({AICap,From,Event,To,AttackSetUnit})
 self.AttackSetUnit=AttackSetUnit or self.AttackSetUnit
 local FirstAttackUnit=self.AttackSetUnit:GetFirst()
 if FirstAttackUnit and FirstAttackUnit:IsAlive()then
-if AIGroup:IsAlive()then
+if AICap:IsAlive()then
 local EngageRoute={}
-local CurrentCoord=AIGroup:GetCoordinate()
+local CurrentCoord=AICap:GetCoordinate()
 local ToTargetCoord=self.AttackSetUnit:GetFirst():GetCoordinate()
 local ToTargetSpeed=math.random(self.EngageMinSpeed,self.EngageMaxSpeed)
 local ToInterceptAngle=CurrentCoord:GetAngleDegrees(CurrentCoord:GetDirectionVec3(ToTargetCoord))
@@ -20611,30 +20611,30 @@ for AttackUnitID,AttackUnit in pairs(self.AttackSetUnit:GetSet())do
 local AttackUnit=AttackUnit
 self:T({"Attacking Unit:",AttackUnit:GetName(),AttackUnit:IsAlive(),AttackUnit:IsAir()})
 if AttackUnit:IsAlive()and AttackUnit:IsAir()then
-AttackTasks[#AttackTasks+1]=AIGroup:TaskAttackUnit(AttackUnit)
+AttackTasks[#AttackTasks+1]=AICap:TaskAttackUnit(AttackUnit)
 end
 end
 if#AttackTasks==0 then
 self:E("No targets found -> Going back to Patrolling")
 self:__Abort(0.5)
 else
-AIGroup:OptionROEOpenFire()
-AIGroup:OptionROTPassiveDefense()
-AttackTasks[#AttackTasks+1]=AIGroup:TaskFunction("AI_A2A_CAP.AttackRoute",self)
-EngageRoute[#EngageRoute].task=AIGroup:TaskCombo(AttackTasks)
+AICap:OptionROEOpenFire()
+AICap:OptionROTEvadeFire()
+AttackTasks[#AttackTasks+1]=AICap:TaskFunction("AI_A2A_CAP.AttackRoute",self)
+EngageRoute[#EngageRoute].task=AICap:TaskCombo(AttackTasks)
 end
-AIGroup:Route(EngageRoute,0.5)
+AICap:Route(EngageRoute,0.5)
 end
 else
 self:E("No targets found -> Going back to Patrolling")
 self:__Abort(0.5)
 end
 end
-function AI_A2A_CAP:onafterAccomplish(Controllable,From,Event,To)
+function AI_A2A_CAP:onafterAccomplish(AICap,From,Event,To)
 self.Accomplished=true
 self:SetDetectionOff()
 end
-function AI_A2A_CAP:onafterDestroy(Controllable,From,Event,To,EventData)
+function AI_A2A_CAP:onafterDestroy(AICap,From,Event,To,EventData)
 if EventData.IniUnit then
 self.AttackUnits[EventData.IniUnit]=nil
 end
@@ -20647,10 +20647,10 @@ self:__Destroy(1,EventData)
 end
 end
 end
-function AI_A2A_CAP.Resume(AIGroup)
-AIGroup:F({"AI_A2A_CAP.Resume:",AIGroup:GetName()})
-if AIGroup:IsAlive()then
-local _AI_A2A=AIGroup:GetState(AIGroup,"AI_A2A")
+function AI_A2A_CAP.Resume(AICap)
+AICap:F({"AI_A2A_CAP.Resume:",AICap:GetName()})
+if AICap:IsAlive()then
+local _AI_A2A=AICap:GetState(AICap,"AI_A2A")
 _AI_A2A:__Reset(1)
 _AI_A2A:__Route(5)
 end
@@ -20658,8 +20658,8 @@ end
 AI_A2A_GCI={
 ClassName="AI_A2A_GCI",
 }
-function AI_A2A_GCI:New(AIGroup,EngageMinSpeed,EngageMaxSpeed)
-local self=BASE:Inherit(self,AI_A2A:New(AIGroup))
+function AI_A2A_GCI:New(AIIntercept,EngageMinSpeed,EngageMaxSpeed)
+local self=BASE:Inherit(self,AI_A2A:New(AIIntercept))
 self.Accomplished=false
 self.Engaging=false
 self.EngageMinSpeed=EngageMinSpeed
@@ -20674,37 +20674,37 @@ self:AddTransition("Engaging","Abort","Patrolling")
 self:AddTransition("Engaging","Accomplish","Patrolling")
 return self
 end
-function AI_A2A_GCI:onafterStart(AIGroup,From,Event,To)
-AIGroup:HandleEvent(EVENTS.Takeoff,nil,self)
+function AI_A2A_GCI:onafterStart(AIIntercept,From,Event,To)
+AIIntercept:HandleEvent(EVENTS.Takeoff,nil,self)
 end
-function AI_A2A_GCI:onafterEngage(AIGroup,From,Event,To)
+function AI_A2A_GCI:onafterEngage(AIIntercept,From,Event,To)
 self:HandleEvent(EVENTS.Dead)
 end
-function AI_A2A_GCI.InterceptRoute(AIGroup,Fsm)
-AIGroup:F({"AI_A2A_GCI.InterceptRoute:",AIGroup:GetName()})
-if AIGroup:IsAlive()then
+function AI_A2A_GCI.InterceptRoute(AIIntercept,Fsm)
+AIIntercept:F({"AI_A2A_GCI.InterceptRoute:",AIIntercept:GetName()})
+if AIIntercept:IsAlive()then
 Fsm:__Engage(0.5)
 end
 end
-function AI_A2A_GCI:onbeforeEngage(AIGroup,From,Event,To)
+function AI_A2A_GCI:onbeforeEngage(AIIntercept,From,Event,To)
 if self.Accomplished==true then
 return false
 end
 end
-function AI_A2A_GCI:onafterAbort(AIGroup,From,Event,To)
-AIGroup:ClearTasks()
+function AI_A2A_GCI:onafterAbort(AIIntercept,From,Event,To)
+AIIntercept:ClearTasks()
 self:Return()
 self:__RTB(0.5)
 end
-function AI_A2A_GCI:onafterEngage(AIGroup,From,Event,To,AttackSetUnit)
-self:F({AIGroup,From,Event,To,AttackSetUnit})
+function AI_A2A_GCI:onafterEngage(AIIntercept,From,Event,To,AttackSetUnit)
+self:F({AIIntercept,From,Event,To,AttackSetUnit})
 self.AttackSetUnit=AttackSetUnit or self.AttackSetUnit
 local FirstAttackUnit=self.AttackSetUnit:GetFirst()
 if FirstAttackUnit and FirstAttackUnit:IsAlive()then
-if AIGroup:IsAlive()then
+if AIIntercept:IsAlive()then
 local EngageRoute={}
-local CurrentCoord=AIGroup:GetCoordinate()
-local CurrentCoord=AIGroup:GetCoordinate()
+local CurrentCoord=AIIntercept:GetCoordinate()
+local CurrentCoord=AIIntercept:GetCoordinate()
 local ToTargetCoord=self.AttackSetUnit:GetFirst():GetCoordinate()
 self:SetTargetDistance(ToTargetCoord)
 local ToTargetSpeed=math.random(self.EngageMinSpeed,self.EngageMaxSpeed)
@@ -20725,7 +20725,7 @@ for AttackUnitID,AttackUnit in pairs(self.AttackSetUnit:GetSet())do
 local AttackUnit=AttackUnit
 if AttackUnit:IsAlive()and AttackUnit:IsAir()then
 self:T({"Intercepting Unit:",AttackUnit:GetName(),AttackUnit:IsAlive(),AttackUnit:IsAir()})
-AttackTasks[#AttackTasks+1]=AIGroup:TaskAttackUnit(AttackUnit)
+AttackTasks[#AttackTasks+1]=AIIntercept:TaskAttackUnit(AttackUnit)
 end
 end
 if#AttackTasks==0 then
@@ -20733,12 +20733,12 @@ self:E("No targets found -> Going RTB")
 self:Return()
 self:__RTB(0.5)
 else
-AIGroup:OptionROEOpenFire()
-AIGroup:OptionROTPassiveDefense()
-AttackTasks[#AttackTasks+1]=AIGroup:TaskFunction("AI_A2A_GCI.InterceptRoute",self)
-EngageRoute[#EngageRoute].task=AIGroup:TaskCombo(AttackTasks)
+AIIntercept:OptionROEOpenFire()
+AIIntercept:OptionROTEvadeFire()
+AttackTasks[#AttackTasks+1]=AIIntercept:TaskFunction("AI_A2A_GCI.InterceptRoute",self)
+EngageRoute[#EngageRoute].task=AIIntercept:TaskCombo(AttackTasks)
 end
-AIGroup:Route(EngageRoute,0.5)
+AIIntercept:Route(EngageRoute,0.5)
 end
 else
 self:E("No targets found -> Going RTB")
@@ -20746,11 +20746,11 @@ self:Return()
 self:__RTB(0.5)
 end
 end
-function AI_A2A_GCI:onafterAccomplish(AIGroup,From,Event,To)
+function AI_A2A_GCI:onafterAccomplish(AIIntercept,From,Event,To)
 self.Accomplished=true
 self:SetDetectionOff()
 end
-function AI_A2A_GCI:onafterDestroy(AIGroup,From,Event,To,EventData)
+function AI_A2A_GCI:onafterDestroy(AIIntercept,From,Event,To,EventData)
 if EventData.IniUnit then
 self.AttackUnits[EventData.IniUnit]=nil
 end
@@ -22192,7 +22192,7 @@ true
 )
 EngageRoute[#EngageRoute+1]=ToPatrolRoutePoint
 Controllable:OptionROEOpenFire()
-Controllable:OptionROTPassiveDefense()
+Controllable:OptionROTEvadeFire()
 local AttackTasks={}
 for DetectedUnit,Detected in pairs(self.DetectedUnits)do
 local DetectedUnit=DetectedUnit
@@ -22732,7 +22732,7 @@ ClientUnit:SetState(self,"CV1",CV2)
 end
 FollowGroupSet:ForEachGroup(
 function(FollowGroup,Formation,ClientUnit,CT1,CV1,CT2,CV2)
-FollowGroup:OptionROTPassiveDefense()
+FollowGroup:OptionROTEvadeFire()
 FollowGroup:OptionROEReturnFire()
 local GroupUnit=FollowGroup:GetUnit(1)
 local FollowFormation=FollowGroup:GetState(self,"FormationVec3")

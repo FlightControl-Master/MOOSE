@@ -479,7 +479,7 @@ function AI_CAP_ZONE:onafterEngage( Controllable, From, Event, To )
     EngageRoute[#EngageRoute+1] = ToPatrolRoutePoint
 
     Controllable:OptionROEOpenFire()
-    Controllable:OptionROTPassiveDefense()
+    Controllable:OptionROTEvadeFire()
 
     local AttackTasks = {}
 
