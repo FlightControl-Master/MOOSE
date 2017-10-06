@@ -958,7 +958,7 @@ function AI_FORMATION:onenterFollowing( FollowGroupSet ) --R2.1
       -- @param Wrapper.Unit#UNIT ClientUnit
       function( FollowGroup, Formation, ClientUnit, CT1, CV1, CT2, CV2 )
         
-        FollowGroup:OptionROTPassiveDefense()
+        FollowGroup:OptionROTEvadeFire()
         FollowGroup:OptionROEReturnFire()
 
         local GroupUnit = FollowGroup:GetUnit( 1 )

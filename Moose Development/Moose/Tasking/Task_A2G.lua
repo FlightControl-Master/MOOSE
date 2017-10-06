@@ -285,6 +285,36 @@ do -- TASK_A2G
   
     return self.GoalTotal
   end
+  
+  function TASK_A2G:GetMarkInfo( TaskInfoID, TaskInfo )
+
+    if type( TaskInfo.TaskInfoText ) == "string" then
+      if TaskInfoID == "Targets" then
+      else
+        return string.format( "%s: %s", TaskInfoID, TaskInfo.TaskInfoText )
+      end
+    elseif type( TaskInfo ) == "table" then
+      if TaskInfoID == "Coordinate" then
+      end
+    end
+  
+    return nil
+  end
+  
+
+  function TASK_A2G:GetReportDetail( ReportGroup, TaskInfoID, TaskInfo )
+  
+    if type( TaskInfo.TaskInfoText ) == "string" then
+      return string.format( "%s: %s", TaskInfoID, TaskInfo.TaskInfoText )
+    elseif type(TaskInfo) == "table" then
+      if TaskInfoID == "Coordinate" then
+        local FromCoordinate = ReportGroup:GetUnit(1):GetCoordinate()
+        local ToCoordinate = TaskInfo.TaskInfoText -- Core.Point#COORDINATE
+        return string.format( " - %s: %s", TaskInfoID, ToCoordinate:ToString( ReportGroup:GetUnit(1), nil, self ) )
+      else
+      end
+    end
+  end
 
 end 
 
@@ -335,7 +365,7 @@ do -- TASK_A2G_SEAD
 
 
     local TargetCoordinate = self.Detection and self.Detection:GetDetectedItemCoordinate( self.DetectedItemIndex ) or self.TargetSetUnit:GetFirst():GetCoordinate() 
-    self:SetInfo( "Coordinates", TargetCoordinate, 0 )
+    self:SetInfo( "Coordinate", TargetCoordinate, 0 )
 
     local ThreatLevel, ThreatText
     if self.Detection then
@@ -366,7 +396,7 @@ do -- TASK_A2G_SEAD
   end
     
   function TASK_A2G_SEAD:ReportOrder( ReportGroup ) 
-    local Coordinate = self:GetInfo( "Coordinates" )
+    local Coordinate = self:GetInfo( "Coordinate" )
     --local Coordinate = self.TaskInfo.Coordinates.TaskInfoText
     local Distance = ReportGroup:GetCoordinate():Get2DDistance( Coordinate )
     
@@ -484,7 +514,7 @@ do -- TASK_A2G_BAI
     self:E({self.Detection, self.DetectedItemIndex})
 
     local TargetCoordinate = self.Detection and self.Detection:GetDetectedItemCoordinate( self.DetectedItemIndex ) or self.TargetSetUnit:GetFirst():GetCoordinate() 
-    self:SetInfo( "Coordinates", TargetCoordinate, 0 )
+    self:SetInfo( "Coordinate", TargetCoordinate, 0 )
 
     local ThreatLevel, ThreatText
     if self.Detection then
@@ -512,11 +542,21 @@ do -- TASK_A2G_BAI
       self:SetInfo( "Targets", string.format( "%d of %s", DetectedItemsCount, DetectedItemsTypes ), 10 ) 
     end
 
+    local TargetCoordinate = self:GetInfo( "Coordinate" ) -- Core.Point#COORDINATE
+    
+    local Velocity = self.TargetSetUnit:GetVelocity()
+    local Heading = self.TargetSetUnit:GetHeading()
+    
+    TargetCoordinate:SetHeading( Heading )
+    TargetCoordinate:SetVelocity( Velocity )
+
+    self:SetInfo( "Position", "Targets are" .. TargetCoordinate:GetMovingText() ..  ".", 12 ) 
+    
   end
 
 
   function TASK_A2G_BAI:ReportOrder( ReportGroup ) 
-    local Coordinate = self:GetInfo( "Coordinates" )
+    local Coordinate = self:GetInfo( "Coordinate" )
     --local Coordinate = self.TaskInfo.Coordinates.TaskInfoText
     local Distance = ReportGroup:GetCoordinate():Get2DDistance( Coordinate )
     
@@ -633,7 +673,7 @@ do -- TASK_A2G_CAS
   function TASK_A2G_CAS:UpdateTaskInfo()
   
     local TargetCoordinate = ( self.Detection and self.Detection:GetDetectedItemCoordinate( self.DetectedItemIndex ) ) or self.TargetSetUnit:GetFirst():GetCoordinate() 
-    self:SetInfo( "Coordinates", TargetCoordinate, 0 )
+    self:SetInfo( "Coordinate", TargetCoordinate, 0 )
     
     local ThreatLevel, ThreatText
     if self.Detection then
@@ -666,7 +706,7 @@ do -- TASK_A2G_CAS
   --- @param #TASK_A2G_CAS self
   function TASK_A2G_CAS:ReportOrder( ReportGroup )
      
-    local Coordinate = self:GetInfo( "Coordinates" )
+    local Coordinate = self:GetInfo( "Coordinate" )
     local Distance = ReportGroup:GetCoordinate():Get2DDistance( Coordinate )
     
     return Distance

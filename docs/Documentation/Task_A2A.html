@@ -60,6 +60,7 @@
 					<li><a href="Escort.html">Escort</a></li>
 					<li><a href="Event.html">Event</a></li>
 					<li><a href="Fsm.html">Fsm</a></li>
+					<li><a href="Goal.html">Goal</a></li>
 					<li><a href="Group.html">Group</a></li>
 					<li><a href="Identifiable.html">Identifiable</a></li>
 					<li><a href="Menu.html">Menu</a></li>
@@ -72,6 +73,7 @@
 					<li><a href="Positionable.html">Positionable</a></li>
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
 					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
+					<li><a href="Protect.html">Protect</a></li>
 					<li><a href="Radio.html">Radio</a></li>
 					<li><a href="Rat.html">Rat</a></li>
 					<li><a href="Route.html">Route</a></li>
@@ -89,6 +91,7 @@
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="Task.html">Task</a></li>
+					<li><a href="TaskZoneCapture.html">TaskZoneCapture</a></li>
 					<li>Task_A2A</li>
 					<li><a href="Task_A2A_Dispatcher.html">Task_A2A_Dispatcher</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
@@ -98,6 +101,9 @@
 					<li><a href="Unit.html">Unit</a></li>
 					<li><a href="Utils.html">Utils</a></li>
 					<li><a href="Zone.html">Zone</a></li>
+					<li><a href="ZoneCaptureCoalition.html">ZoneCaptureCoalition</a></li>
+					<li><a href="ZoneGoal.html">ZoneGoal</a></li>
+					<li><a href="ZoneGoalCoalition.html">ZoneGoalCoalition</a></li>
 					<li><a href="env.html">env</a></li>
 					<li><a href="land.html">land</a></li>
 					<li><a href="routines.html">routines</a></li>
@@ -166,6 +172,12 @@ based on the tasking capabilities defined in <a href="Task.html##(TASK)">Task#TA
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_A2A).GetMarkInfo">TASK_A2A:GetMarkInfo(TaskInfoID, TaskInfo)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(TASK_A2A).GetPlannedMenuText">TASK_A2A:GetPlannedMenuText()</a></td>
 		<td class="summary">
 
@@ -179,6 +191,12 @@ based on the tasking capabilities defined in <a href="Task.html##(TASK)">Task#TA
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(TASK_A2A).GetRendezVousZone">TASK_A2A:GetRendezVousZone(TaskUnit)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_A2A).GetReportDetail">TASK_A2A:GetReportDetail(ReportGroup, TaskInfoID, TaskInfo)</a></td>
 		<td class="summary">
 
 </td>
@@ -540,6 +558,32 @@ The task is given a name and a briefing, that is used in the menu structure and 
 		<dl class="function">
 <dt>
 
+<a id="#(TASK_A2A).GetMarkInfo" >
+<strong>TASK_A2A:GetMarkInfo(TaskInfoID, TaskInfo)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> TaskInfoID </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> TaskInfo </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(TASK_A2A).GetPlannedMenuText" >
 <strong>TASK_A2A:GetPlannedMenuText()</strong>
 </a>
@@ -610,6 +654,37 @@ The RendezVousRange that defines when the player is considered to have arrived a
 <p><em><a href="Core.Zone.html##(ZONE_BASE)">Core.Zone#ZONE_BASE</a>:</em>
 The Zone object where the RendezVous is located on the map.</p>
 
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_A2A).GetReportDetail" >
+<strong>TASK_A2A:GetReportDetail(ReportGroup, TaskInfoID, TaskInfo)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> ReportGroup </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> TaskInfoID </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> TaskInfo </em></code>: </p>
+
+				</li>
+		</ul>
 </dd>
 </dl>
 		<dl class="function">

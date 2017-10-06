@@ -1081,7 +1081,7 @@ do -- COORDINATE
 
     local Settings = Settings or ( Controllable and _DATABASE:GetPlayerSettings( Controllable:GetPlayerName() ) ) or _SETTINGS
 
-    local ModeA2A = true
+    local ModeA2A = false
     
     if Task then
       if Task:IsInstanceOf( TASK_A2A ) then
@@ -1091,6 +1091,8 @@ do -- COORDINATE
           ModeA2A = false
         else
           if Task:IsInstanceOf( TASK_CARGO ) then
+            ModeA2A = false
+          else
             ModeA2A = false
           end
         end

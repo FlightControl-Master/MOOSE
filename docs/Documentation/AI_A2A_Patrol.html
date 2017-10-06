@@ -60,6 +60,7 @@
 					<li><a href="Escort.html">Escort</a></li>
 					<li><a href="Event.html">Event</a></li>
 					<li><a href="Fsm.html">Fsm</a></li>
+					<li><a href="Goal.html">Goal</a></li>
 					<li><a href="Group.html">Group</a></li>
 					<li><a href="Identifiable.html">Identifiable</a></li>
 					<li><a href="Menu.html">Menu</a></li>
@@ -72,6 +73,7 @@
 					<li><a href="Positionable.html">Positionable</a></li>
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
 					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
+					<li><a href="Protect.html">Protect</a></li>
 					<li><a href="Radio.html">Radio</a></li>
 					<li><a href="Rat.html">Rat</a></li>
 					<li><a href="Route.html">Route</a></li>
@@ -89,6 +91,7 @@
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="Task.html">Task</a></li>
+					<li><a href="TaskZoneCapture.html">TaskZoneCapture</a></li>
 					<li><a href="Task_A2A.html">Task_A2A</a></li>
 					<li><a href="Task_A2A_Dispatcher.html">Task_A2A_Dispatcher</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
@@ -98,6 +101,9 @@
 					<li><a href="Unit.html">Unit</a></li>
 					<li><a href="Utils.html">Utils</a></li>
 					<li><a href="Zone.html">Zone</a></li>
+					<li><a href="ZoneCaptureCoalition.html">ZoneCaptureCoalition</a></li>
+					<li><a href="ZoneGoal.html">ZoneGoal</a></li>
+					<li><a href="ZoneGoalCoalition.html">ZoneGoalCoalition</a></li>
 					<li><a href="env.html">env</a></li>
 					<li><a href="land.html">land</a></li>
 					<li><a href="routines.html">routines</a></li>
@@ -112,7 +118,7 @@
 
 <hr/>
 
-<p>AI PATROL classes makes AI Controllables execute an Patrol.</p>
+<p>AI PATROL classes makes AI Groups execute an Patrol.</p>
 
    
 
@@ -158,50 +164,50 @@
 		<td class="summary">
 <h1>AI<em>A2A</em>PATROL class, extends <a href="Fsm.html##(FSM_CONTROLLABLE)">Fsm#FSM_CONTROLLABLE</a></h1>
 
-<p>The AI<em>A2A</em>PATROL class implements the core functions to patrol a <a href="Zone.html">Zone</a> by an AI <a href="Controllable.html">Controllable</a> or <a href="Group.html">Group</a>.</p>
+<p>The AI<em>A2A</em>PATROL class implements the core functions to patrol a <a href="Zone.html">Zone</a> by an AI <a href="Group.html">Group</a> or <a href="Group.html">Group</a>.</p>
 </td>
 		</tr>
 	</table>
 			<h2><a id="#(AI_A2A_PATROL)">Type <code>AI_A2A_PATROL</code></a></h2>
 				<table class="function_list">
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_PATROL).New">AI_A2A_PATROL:New(AIGroup, PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, PatrolAltType)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_PATROL).New">AI_A2A_PATROL:New(AIPatrol, PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, PatrolAltType)</a></td>
 		<td class="summary">
 <p>Creates a new AI<em>A2A</em>PATROL object</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_PATROL).OnAfterPatrol">AI_A2A_PATROL:OnAfterPatrol(Controllable, From, Event, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_PATROL).OnAfterPatrol">AI_A2A_PATROL:OnAfterPatrol(AIPatrol, From, Event, To)</a></td>
 		<td class="summary">
 <p>OnAfter Transition Handler for Event Patrol.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_PATROL).OnAfterRoute">AI_A2A_PATROL:OnAfterRoute(Controllable, From, Event, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_PATROL).OnAfterRoute">AI_A2A_PATROL:OnAfterRoute(AIPatrol, From, Event, To)</a></td>
 		<td class="summary">
 <p>OnAfter Transition Handler for Event Route.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_PATROL).OnBeforePatrol">AI_A2A_PATROL:OnBeforePatrol(Controllable, From, Event, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_PATROL).OnBeforePatrol">AI_A2A_PATROL:OnBeforePatrol(AIPatrol, From, Event, To)</a></td>
 		<td class="summary">
 <p>OnBefore Transition Handler for Event Patrol.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_PATROL).OnBeforeRoute">AI_A2A_PATROL:OnBeforeRoute(Controllable, From, Event, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_PATROL).OnBeforeRoute">AI_A2A_PATROL:OnBeforeRoute(AIPatrol, From, Event, To)</a></td>
 		<td class="summary">
 <p>OnBefore Transition Handler for Event Route.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_PATROL).OnEnterPatrolling">AI_A2A_PATROL:OnEnterPatrolling(Controllable, From, Event, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_PATROL).OnEnterPatrolling">AI_A2A_PATROL:OnEnterPatrolling(AIPatrol, From, Event, To)</a></td>
 		<td class="summary">
 <p>OnEnter Transition Handler for State Patrolling.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_PATROL).OnLeavePatrolling">AI_A2A_PATROL:OnLeavePatrolling(Controllable, From, Event, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_PATROL).OnLeavePatrolling">AI_A2A_PATROL:OnLeavePatrolling(AIPatrol, From, Event, To)</a></td>
 		<td class="summary">
 <p>OnLeave Transition Handler for State Patrolling.</p>
 </td>
@@ -243,7 +249,7 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_PATROL).PatrolRoute">AI_A2A_PATROL.PatrolRoute(AIGroup, Fsm)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_PATROL).PatrolRoute">AI_A2A_PATROL.PatrolRoute(AIPatrol, Fsm)</a></td>
 		<td class="summary">
 
 </td>
@@ -255,7 +261,7 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_PATROL).Resume">AI_A2A_PATROL.Resume(AIGroup)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_PATROL).Resume">AI_A2A_PATROL.Resume(AIPatrol)</a></td>
 		<td class="summary">
 
 </td>
@@ -291,13 +297,13 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_PATROL).onafterPatrol">AI_A2A_PATROL:onafterPatrol(Controllable, From, Event, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_PATROL).onafterPatrol">AI_A2A_PATROL:onafterPatrol(AIPatrol, From, Event, To)</a></td>
 		<td class="summary">
 <p>Defines a new patrol route using the <a href="Process_PatrolZone.html">Process_PatrolZone</a> parameters and settings.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_PATROL).onafterRoute">AI_A2A_PATROL:onafterRoute(AIGroup, From, Event, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_PATROL).onafterRoute">AI_A2A_PATROL:onafterRoute(AIPatrol, From, Event, To)</a></td>
 		<td class="summary">
 <p>Defines a new patrol route using the <a href="Process_PatrolZone.html">Process_PatrolZone</a> parameters and settings.</p>
 </td>
@@ -317,7 +323,7 @@
 	
 <h1>AI<em>A2A</em>PATROL class, extends <a href="Fsm.html##(FSM_CONTROLLABLE)">Fsm#FSM_CONTROLLABLE</a></h1>
 
-<p>The AI<em>A2A</em>PATROL class implements the core functions to patrol a <a href="Zone.html">Zone</a> by an AI <a href="Controllable.html">Controllable</a> or <a href="Group.html">Group</a>.</p>
+<p>The AI<em>A2A</em>PATROL class implements the core functions to patrol a <a href="Zone.html">Zone</a> by an AI <a href="Group.html">Group</a> or <a href="Group.html">Group</a>.</p>
 
 	
 
@@ -426,7 +432,7 @@ Use the method <a href="##(AI_A2A_PATROL).ManageFuel">AI<em>A2A</em>PATROL.Manag
 
 <h2>7. Manage "damage" behaviour of the AI in the AI<em>A2A</em>PATROL</h2>
 
-<p>When the AI is damaged, it is required that a new AIControllable is started. However, damage cannon be foreseen early on. 
+<p>When the AI is damaged, it is required that a new Patrol is started. However, damage cannon be foreseen early on. 
 Therefore, when the damage treshold is reached, the AI will return immediately to the home base (RTB).
 Use the method <a href="##(AI_A2A_PATROL).ManageDamage">AI<em>A2A</em>PATROL.ManageDamage</a>() to have this proces in place.</p>
 
@@ -445,7 +451,7 @@ Use the method <a href="##(AI_A2A_PATROL).ManageDamage">AI<em>A2A</em>PATROL.Man
 <dt>
 
 <a id="#(AI_A2A_PATROL).New" >
-<strong>AI_A2A_PATROL:New(AIGroup, PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, PatrolAltType)</strong>
+<strong>AI_A2A_PATROL:New(AIPatrol, PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, PatrolAltType)</strong>
 </a>
 </dt>
 <dd>
@@ -456,7 +462,7 @@ Use the method <a href="##(AI_A2A_PATROL).ManageDamage">AI<em>A2A</em>PATROL.Man
 		<ul>
 				<li>
 				
-<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> AIGroup </em></code>: </p>
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> AIPatrol </em></code>: </p>
 
 				</li>
 				<li>
@@ -480,13 +486,13 @@ The highest altitude in meters where to execute the patrol.</p>
 				<li>
 				
 <p><code><em><a href="Dcs.DCSTypes.html##(Speed)">Dcs.DCSTypes#Speed</a> PatrolMinSpeed </em></code>: 
-The minimum speed of the <a href="Controllable.html">Controllable</a> in km/h.</p>
+The minimum speed of the <a href="Group.html">Group</a> in km/h.</p>
 
 				</li>
 				<li>
 				
 <p><code><em><a href="Dcs.DCSTypes.html##(Speed)">Dcs.DCSTypes#Speed</a> PatrolMaxSpeed </em></code>: 
-The maximum speed of the <a href="Controllable.html">Controllable</a> in km/h.</p>
+The maximum speed of the <a href="Group.html">Group</a> in km/h.</p>
 
 				</li>
 				<li>
@@ -502,7 +508,7 @@ The altitude type ("RADIO"=="AGL", "BARO"=="ASL"). Defaults to RADIO</p>
 self</p>
 
 			<h3>Usage:</h3>
-		<pre class="example"><code>-- Define a new AI_A2A_PATROL Object. This PatrolArea will patrol an AIControllable within PatrolZone between 3000 and 6000 meters, with a variying speed between 600 and 900 km/h.
+		<pre class="example"><code>-- Define a new AI_A2A_PATROL Object. This PatrolArea will patrol a Group within PatrolZone between 3000 and 6000 meters, with a variying speed between 600 and 900 km/h.
 PatrolZone = ZONE:New( 'PatrolZone' )
 PatrolSpawn = SPAWN:New( 'Patrol Group' )
 PatrolArea = AI_A2A_PATROL:New( PatrolZone, 3000, 6000, 600, 900 )</code></pre>
@@ -513,7 +519,7 @@ PatrolArea = AI_A2A_PATROL:New( PatrolZone, 3000, 6000, 600, 900 )</code></pre>
 <dt>
 
 <a id="#(AI_A2A_PATROL).OnAfterPatrol" >
-<strong>AI_A2A_PATROL:OnAfterPatrol(Controllable, From, Event, To)</strong>
+<strong>AI_A2A_PATROL:OnAfterPatrol(AIPatrol, From, Event, To)</strong>
 </a>
 </dt>
 <dd>
@@ -524,8 +530,8 @@ PatrolArea = AI_A2A_PATROL:New( PatrolZone, 3000, 6000, 600, 900 )</code></pre>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> Controllable </em></code>: 
-The Controllable Object managed by the FSM.</p>
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> AIPatrol </em></code>: 
+The Group Object managed by the FSM.</p>
 
 				</li>
 				<li>
@@ -553,7 +559,7 @@ The To State string.</p>
 <dt>
 
 <a id="#(AI_A2A_PATROL).OnAfterRoute" >
-<strong>AI_A2A_PATROL:OnAfterRoute(Controllable, From, Event, To)</strong>
+<strong>AI_A2A_PATROL:OnAfterRoute(AIPatrol, From, Event, To)</strong>
 </a>
 </dt>
 <dd>
@@ -564,8 +570,8 @@ The To State string.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> Controllable </em></code>: 
-The Controllable Object managed by the FSM.</p>
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> AIPatrol </em></code>: 
+The Group Object managed by the FSM.</p>
 
 				</li>
 				<li>
@@ -593,7 +599,7 @@ The To State string.</p>
 <dt>
 
 <a id="#(AI_A2A_PATROL).OnBeforePatrol" >
-<strong>AI_A2A_PATROL:OnBeforePatrol(Controllable, From, Event, To)</strong>
+<strong>AI_A2A_PATROL:OnBeforePatrol(AIPatrol, From, Event, To)</strong>
 </a>
 </dt>
 <dd>
@@ -604,8 +610,8 @@ The To State string.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> Controllable </em></code>: 
-The Controllable Object managed by the FSM.</p>
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> AIPatrol </em></code>: 
+The Group Object managed by the FSM.</p>
 
 				</li>
 				<li>
@@ -638,7 +644,7 @@ Return false to cancel Transition.</p>
 <dt>
 
 <a id="#(AI_A2A_PATROL).OnBeforeRoute" >
-<strong>AI_A2A_PATROL:OnBeforeRoute(Controllable, From, Event, To)</strong>
+<strong>AI_A2A_PATROL:OnBeforeRoute(AIPatrol, From, Event, To)</strong>
 </a>
 </dt>
 <dd>
@@ -649,8 +655,8 @@ Return false to cancel Transition.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> Controllable </em></code>: 
-The Controllable Object managed by the FSM.</p>
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> AIPatrol </em></code>: 
+The Group Object managed by the FSM.</p>
 
 				</li>
 				<li>
@@ -683,7 +689,7 @@ Return false to cancel Transition.</p>
 <dt>
 
 <a id="#(AI_A2A_PATROL).OnEnterPatrolling" >
-<strong>AI_A2A_PATROL:OnEnterPatrolling(Controllable, From, Event, To)</strong>
+<strong>AI_A2A_PATROL:OnEnterPatrolling(AIPatrol, From, Event, To)</strong>
 </a>
 </dt>
 <dd>
@@ -694,8 +700,8 @@ Return false to cancel Transition.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> Controllable </em></code>: 
-The Controllable Object managed by the FSM.</p>
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> AIPatrol </em></code>: 
+The Group Object managed by the FSM.</p>
 
 				</li>
 				<li>
@@ -723,7 +729,7 @@ The To State string.</p>
 <dt>
 
 <a id="#(AI_A2A_PATROL).OnLeavePatrolling" >
-<strong>AI_A2A_PATROL:OnLeavePatrolling(Controllable, From, Event, To)</strong>
+<strong>AI_A2A_PATROL:OnLeavePatrolling(AIPatrol, From, Event, To)</strong>
 </a>
 </dt>
 <dd>
@@ -734,8 +740,8 @@ The To State string.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> Controllable </em></code>: 
-The Controllable Object managed by the FSM.</p>
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> AIPatrol </em></code>: 
+The Group Object managed by the FSM.</p>
 
 				</li>
 				<li>
@@ -853,7 +859,7 @@ Return false to cancel Transition.</p>
 <dt>
 
 <a id="#(AI_A2A_PATROL).PatrolRoute" >
-<strong>AI_A2A_PATROL.PatrolRoute(AIGroup, Fsm)</strong>
+<strong>AI_A2A_PATROL.PatrolRoute(AIPatrol, Fsm)</strong>
 </a>
 </dt>
 <dd>
@@ -864,9 +870,9 @@ Return false to cancel Transition.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> AIGroup </em></code>: 
-This statis method is called from the route path within the last task at the last waaypoint of the Controllable.
-Note that this method is required, as triggers the next route when patrolling for the Controllable.</p>
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> AIPatrol </em></code>: 
+This statis method is called from the route path within the last task at the last waaypoint of the AIPatrol.
+Note that this method is required, as triggers the next route when patrolling for the AIPatrol.</p>
 
 				</li>
 				<li>
@@ -895,7 +901,7 @@ Note that this method is required, as triggers the next route when patrolling fo
 <dt>
 
 <a id="#(AI_A2A_PATROL).Resume" >
-<strong>AI_A2A_PATROL.Resume(AIGroup)</strong>
+<strong>AI_A2A_PATROL.Resume(AIPatrol)</strong>
 </a>
 </dt>
 <dd>
@@ -906,7 +912,7 @@ Note that this method is required, as triggers the next route when patrolling fo
 		<ul>
 				<li>
 				
-<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> AIGroup </em></code>: </p>
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> AIPatrol </em></code>: </p>
 
 				</li>
 		</ul>
@@ -974,13 +980,13 @@ self</p>
 				<li>
 				
 <p><code><em><a href="Dcs.DCSTypes.html##(Speed)">Dcs.DCSTypes#Speed</a> PatrolMinSpeed </em></code>: 
-The minimum speed of the <a href="Controllable.html">Controllable</a> in km/h.</p>
+The minimum speed of the <a href="Group.html">Group</a> in km/h.</p>
 
 				</li>
 				<li>
 				
 <p><code><em><a href="Dcs.DCSTypes.html##(Speed)">Dcs.DCSTypes#Speed</a> PatrolMaxSpeed </em></code>: 
-The maximum speed of the <a href="Controllable.html">Controllable</a> in km/h.</p>
+The maximum speed of the <a href="Group.html">Group</a> in km/h.</p>
 
 				</li>
 		</ul>
@@ -1039,7 +1045,7 @@ The delay in seconds.</p>
 <dt>
 
 <a id="#(AI_A2A_PATROL).onafterPatrol" >
-<strong>AI_A2A_PATROL:onafterPatrol(Controllable, From, Event, To)</strong>
+<strong>AI_A2A_PATROL:onafterPatrol(AIPatrol, From, Event, To)</strong>
 </a>
 </dt>
 <dd>
@@ -1050,8 +1056,8 @@ The delay in seconds.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> Controllable </em></code>: 
-The Controllable Object managed by the FSM.</p>
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> AIPatrol </em></code>: 
+The Group Object managed by the FSM.</p>
 
 				</li>
 				<li>
@@ -1084,7 +1090,7 @@ self</p>
 <dt>
 
 <a id="#(AI_A2A_PATROL).onafterRoute" >
-<strong>AI_A2A_PATROL:onafterRoute(AIGroup, From, Event, To)</strong>
+<strong>AI_A2A_PATROL:onafterRoute(AIPatrol, From, Event, To)</strong>
 </a>
 </dt>
 <dd>
@@ -1095,8 +1101,8 @@ self</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> AIGroup </em></code>: 
-The AIGroup managed by the FSM.</p>
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> AIPatrol </em></code>: 
+The Group managed by the FSM.</p>
 
 				</li>
 				<li>
