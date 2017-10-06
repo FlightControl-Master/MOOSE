@@ -1,4 +1,4 @@
---- **Core** -- Base class that models processes to achieve goals involving a Zone for a Coalition.
+--- **Functional** -- Base class that models processes to achieve goals involving a Zone for a Coalition.
 --
 -- ====
 -- 
@@ -16,7 +16,7 @@
 do -- ZoneGoal
 
   --- @type ZONE_GOAL_COALITION
-  -- @extends Core.ZoneGoal#ZONE_GOAL
+  -- @extends Functional.ZoneGoal#ZONE_GOAL
 
 
   --- # ZONE_GOAL_COALITION class, extends @{ZoneGoal#ZONE_GOAL}

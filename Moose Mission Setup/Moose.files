@@ -17,8 +17,6 @@ Core/Fsm.lua
 Core/Radio.lua
 Core/SpawnStatic.lua
 Core/Goal.lua
-Core/ZoneGoal.lua
-Core/ZoneGoalCoalition.lua
 Core/Cargo.lua
 Core/Spot.lua
 
@@ -44,6 +42,8 @@ Functional/AirbasePolice.lua
 Functional/Detection.lua
 Functional/Designate.lua
 Functional/RAT.lua
+Functional/ZoneGoal.lua
+Functional/ZoneGoalCoalition.lua
 Functional/ZoneCaptureCoalition.lua
 
 AI/AI_Balancer.lua

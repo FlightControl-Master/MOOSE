@@ -1,4 +1,4 @@
---- **Core** -- Base class that models processes to capture a Zone for a Coalition, guarded by another Coalition.
+--- **Functional** -- Base class that models processes to capture a Zone for a Coalition, guarded by another Coalition.
 --
 -- ====
 -- 
@@ -15,7 +15,7 @@
 do -- ZoneGoal
 
   --- @type ZONE_CAPTURE_COALITION
-  -- @extends Core.ZoneGoalCoalition#ZONE_GOAL_COALITION
+  -- @extends Functional.ZoneGoalCoalition#ZONE_GOAL_COALITION
 
 
   --- # ZONE_CAPTURE_COALITION class, extends @{ZoneGoalCoalition#ZONE_GOAL_COALITION}
