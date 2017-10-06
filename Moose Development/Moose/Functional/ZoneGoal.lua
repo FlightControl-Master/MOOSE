@@ -1,8 +1,9 @@
---- **Functional** -- Base class that models processes to achieve goals involving a Zone.
+--- **Functional (WIP)** -- Base class that models processes to achieve goals involving a Zone.
 --
 -- ====
 -- 
--- ZONE_GOAL models processes that have an objective with a defined achievement involving a Zone. Derived classes implement the ways how the achievements can be realized.
+-- ZONE_GOAL models processes that have a Goal with a defined achievement involving a Zone. 
+-- Derived classes implement the ways how the achievements can be realized.
 -- 
 -- ====
 -- 
@@ -20,7 +21,8 @@ do -- Zone
 
   --- # ZONE_GOAL class, extends @{Fsm#FSM}
   -- 
-  -- ZONE_GOAL models processes that have an objective with a defined achievement involving a Zone. Derived classes implement the ways how the achievements can be realized.
+  -- ZONE_GOAL models processes that have a Goal with a defined achievement involving a Zone. 
+  -- Derived classes implement the ways how the achievements can be realized.
   -- 
   -- ## 1. ZONE_GOAL constructor
   --   
@@ -30,13 +32,11 @@ do -- Zone
   -- 
   -- ### 2.1 ZONE_GOAL States
   -- 
-  --   * **Empty**: The Zone is Empty.
-  --   * **Guarded**: The Zone is Guarded.
+  --  * None: Initial State
   -- 
   -- ### 2.2 ZONE_GOAL Events
   -- 
-  --   * **@{#ZONE_GOAL.Guard}()**: Set the Zone to Guarded.
-  --   * **@{#ZONE_GOAL.Empty}()**: Set the Zone to Empty.
+  --   * DestroyedUnit: A @{Unit} is destroyed in the Zone. The event will only get triggered if the method @{#ZONE_GOAL.MonitorDestroyedUnits}() is used.
   -- 
   -- @field #ZONE_GOAL
   ZONE_GOAL = {
@@ -56,7 +56,6 @@ do -- Zone
     self.Goal = GOAL:New()
 
     self.SmokeTime = nil
-
 
     self:AddTransition( "*", "DestroyedUnit", "*" )
   

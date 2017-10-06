@@ -91,13 +91,13 @@
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="Task.html">Task</a></li>
+					<li><a href="TaskZoneCapture.html">TaskZoneCapture</a></li>
 					<li><a href="Task_A2A.html">Task_A2A</a></li>
 					<li><a href="Task_A2A_Dispatcher.html">Task_A2A_Dispatcher</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
 					<li><a href="Task_A2G_Dispatcher.html">Task_A2G_Dispatcher</a></li>
 					<li><a href="Task_Cargo.html">Task_Cargo</a></li>
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
-					<li><a href="Task_Protect.html">Task_Protect</a></li>
 					<li><a href="Unit.html">Unit</a></li>
 					<li><a href="Utils.html">Utils</a></li>
 					<li><a href="Zone.html">Zone</a></li>
@@ -136,7 +136,7 @@
 
 <hr/>
 
-<p>AI CAP classes makes AI Controllables execute a Combat Air Patrol.</p>
+<p>AI CAP classes makes AI Groups execute a Combat Air Patrol.</p>
 </td>
 			</tr>
 			<tr>
@@ -166,7 +166,7 @@
 
 <hr/>
 
-<p>AI PATROL classes makes AI Controllables execute an Patrol.</p>
+<p>AI PATROL classes makes AI Groups execute an Patrol.</p>
 </td>
 			</tr>
 			<tr>
@@ -454,7 +454,7 @@ are design patterns allowing efficient (long-lasting) processes and workflows.</
 			<tr>
 			<td class="name" nowrap="nowrap"><a href="Goal.html">Goal</a></td>
 			<td class="summary">
-<p><strong>Core</strong> -- Base class that models processes to achieve goals.</p>
+<p><strong>Core (WIP)</strong> -- Base class to allow the modeling of processes to achieve Goals.</p>
 </td>
 			</tr>
 			<tr>
@@ -648,6 +648,12 @@ and creates a CSV file logging the scoring events and results for use at team or
 </td>
 			</tr>
 			<tr>
+			<td class="name" nowrap="nowrap"><a href="TaskZoneCapture.html">TaskZoneCapture</a></td>
+			<td class="summary">
+<p><strong>Tasking</strong> - The TASK_Protect models tasks for players to protect or capture specific zones.</p>
+</td>
+			</tr>
+			<tr>
 			<td class="name" nowrap="nowrap"><a href="Task_A2A.html">Task_A2A</a></td>
 			<td class="summary">
 <p><strong>Tasking</strong> - The TASK_A2A models tasks for players in Air to Air engagements.</p>
@@ -684,12 +690,6 @@ and creates a CSV file logging the scoring events and results for use at team or
 </td>
 			</tr>
 			<tr>
-			<td class="name" nowrap="nowrap"><a href="Task_Protect.html">Task_Protect</a></td>
-			<td class="summary">
-<p><strong>Tasking</strong> - The TASK_Protect models tasks for players to protect or capture specific zones.</p>
-</td>
-			</tr>
-			<tr>
 			<td class="name" nowrap="nowrap"><a href="Unit.html">Unit</a></td>
 			<td class="summary">
 <p><strong>Wrapper</strong> - UNIT is a wrapper class for the DCS Class Unit.</p>
@@ -711,19 +711,19 @@ which are excellent tools to be reused in an OO environment!.</p>
 			<tr>
 			<td class="name" nowrap="nowrap"><a href="ZoneCaptureCoalition.html">ZoneCaptureCoalition</a></td>
 			<td class="summary">
-<p><strong>Core</strong> -- Base class that models processes to capture a Zone for a Coalition, guarded by another Coalition.</p>
+<p><strong>Functional (wIP)</strong> -- Base class that models processes to capture a Zone for a Coalition, guarded by another Coalition.</p>
 </td>
 			</tr>
 			<tr>
 			<td class="name" nowrap="nowrap"><a href="ZoneGoal.html">ZoneGoal</a></td>
 			<td class="summary">
-<p><strong>Core</strong> -- Base class that models processes to achieve goals involving a Zone.</p>
+<p><strong>Functional (WIP)</strong> -- Base class that models processes to achieve goals involving a Zone.</p>
 </td>
 			</tr>
 			<tr>
 			<td class="name" nowrap="nowrap"><a href="ZoneGoalCoalition.html">ZoneGoalCoalition</a></td>
 			<td class="summary">
-<p><strong>Core</strong> -- Base class that models processes to achieve goals involving a Zone for a Coalition.</p>
+<p><strong>Functional (WIP)</strong> -- Base class that models processes to achieve goals involving a Zone for a Coalition.</p>
 </td>
 			</tr>
 			<tr>

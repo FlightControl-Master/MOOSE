@@ -91,13 +91,13 @@
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="Task.html">Task</a></li>
+					<li>TaskZoneCapture</li>
 					<li><a href="Task_A2A.html">Task_A2A</a></li>
 					<li><a href="Task_A2A_Dispatcher.html">Task_A2A_Dispatcher</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
 					<li><a href="Task_A2G_Dispatcher.html">Task_A2G_Dispatcher</a></li>
 					<li><a href="Task_Cargo.html">Task_Cargo</a></li>
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
-					<li>Task_Protect</li>
 					<li><a href="Unit.html">Unit</a></li>
 					<li><a href="Utils.html">Utils</a></li>
 					<li><a href="Zone.html">Zone</a></li>
@@ -110,7 +110,7 @@
 		</ul>
 	</div>
 	<div id="content">
-   <h1>Module <code>Task_Protect</code></h1>
+   <h1>Module <code>TaskZoneCapture</code></h1>
    
 <p><strong>Tasking</strong> - The TASK_Protect models tasks for players to protect or capture specific zones.</p>
 
@@ -128,144 +128,138 @@
 	<h2>Global(s)</h2>
 	<table class="function_list">
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="#TASK_CAPTURE_ZONE">TASK_CAPTURE_ZONE</a></td>
+		<td class="name" nowrap="nowrap"><a href="#TASK_ZONE_CAPTURE">TASK_ZONE_CAPTURE</a></td>
 		<td class="summary">
-<h1>TASK<em>CAPTURE</em>ZONE class, extends <a href="Task_A2G.html##(TASK_PROTECT)">Task<em>A2G#TASK</em>PROTECT</a></h1>
+<h1>TASK<em>ZONE</em>CAPTURE class, extends <a href="TaskZoneGoal.html##(TASK_ZONE_GOAL)">TaskZoneGoal#TASK<em>ZONE</em>GOAL</a></h1>
 
-<p>The TASK<em>CAPTURE</em>ZONE class defines an Suppression or Extermination of Air Defenses task for a human player to be executed.</p>
+<p>The TASK<em>ZONE</em>CAPTURE class defines an Suppression or Extermination of Air Defenses task for a human player to be executed.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="#TASK_PROTECT">TASK_PROTECT</a></td>
+		<td class="name" nowrap="nowrap"><a href="#TASK_ZONE_GOAL">TASK_ZONE_GOAL</a></td>
 		<td class="summary">
-<h1>TASK_PROTECT class, extends <a href="Task.html##(TASK)">Task#TASK</a></h1>
+<h1>TASK<em>ZONE</em>GOAL class, extends <a href="Task.html##(TASK)">Task#TASK</a></h1>
 
-<p>The TASK_PROTECT class defines the task to protect or capture a protection zone.</p>
+<p>The TASK<em>ZONE</em>GOAL class defines the task to protect or capture a protection zone.</p>
 </td>
 		</tr>
 	</table>
-			<h2><a id="#(TASK_CAPTURE_ZONE)">Type <code>TASK_CAPTURE_ZONE</code></a></h2>
+			<h2><a id="#(TASK_ZONE_CAPTURE)">Type <code>TASK_ZONE_CAPTURE</code></a></h2>
 				<table class="function_list">
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_CAPTURE_ZONE).New">TASK_CAPTURE_ZONE:New(Mission, SetGroup, TaskName, Protect, TaskBriefing)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_ZONE_CAPTURE).New">TASK_ZONE_CAPTURE:New(Mission, SetGroup, TaskName, ZoneGoalCoalition, TaskBriefing)</a></td>
 		<td class="summary">
-<p>Instantiates a new TASK<em>CAPTURE</em>ZONE.</p>
+<p>Instantiates a new TASK<em>ZONE</em>CAPTURE.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_CAPTURE_ZONE).OnAfterGoal">TASK_CAPTURE_ZONE:OnAfterGoal(TaskUnit, From, Event, To, PlayerUnit, PlayerName)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_ZONE_CAPTURE).OnAfterGoal">TASK_ZONE_CAPTURE:OnAfterGoal(TaskUnit, From, Event, To, PlayerUnit, PlayerName)</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_CAPTURE_ZONE).ReportOrder">TASK_CAPTURE_ZONE:ReportOrder(ReportGroup)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_ZONE_CAPTURE).ReportOrder">TASK_ZONE_CAPTURE:ReportOrder(ReportGroup)</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_CAPTURE_ZONE).SetScoreOnFail">TASK_CAPTURE_ZONE:SetScoreOnFail(PlayerName, Penalty, TaskUnit)</a></td>
-		<td class="summary">
-<p>Set a penalty when the A2G attack has failed.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_CAPTURE_ZONE).SetScoreOnProgress">TASK_CAPTURE_ZONE:SetScoreOnProgress(PlayerName, Score, TaskUnit)</a></td>
-		<td class="summary">
-<p>Set a score when a target in scope of the A2G attack, has been destroyed .</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_CAPTURE_ZONE).SetScoreOnSuccess">TASK_CAPTURE_ZONE:SetScoreOnSuccess(PlayerName, Score, TaskUnit)</a></td>
-		<td class="summary">
-<p>Set a score when all the targets in scope of the A2G attack, have been destroyed.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_CAPTURE_ZONE).TargetSetUnit">TASK_CAPTURE_ZONE.TargetSetUnit</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_ZONE_CAPTURE).TaskCoalition">TASK_ZONE_CAPTURE.TaskCoalition</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_CAPTURE_ZONE).TaskCoalition">TASK_CAPTURE_ZONE.TaskCoalition</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_ZONE_CAPTURE).TaskCoalitionName">TASK_ZONE_CAPTURE.TaskCoalitionName</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_CAPTURE_ZONE).TaskCoalitionName">TASK_CAPTURE_ZONE.TaskCoalitionName</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_ZONE_CAPTURE).TaskZoneName">TASK_ZONE_CAPTURE.TaskZoneName</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_CAPTURE_ZONE).TaskZoneName">TASK_CAPTURE_ZONE.TaskZoneName</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_ZONE_CAPTURE).UpdateTaskInfo">TASK_ZONE_CAPTURE:UpdateTaskInfo()</a></td>
 		<td class="summary">
-
+<p>Instantiates a new TASK<em>ZONE</em>CAPTURE.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_CAPTURE_ZONE).UpdateTaskInfo">TASK_CAPTURE_ZONE:UpdateTaskInfo()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_ZONE_CAPTURE).ZoneGoal">TASK_ZONE_CAPTURE.ZoneGoal</a></td>
 		<td class="summary">
-<p>Instantiates a new TASK<em>CAPTURE</em>ZONE.</p>
+
 </td>
 		</tr>
 	</table>
 
-			<h2><a id="#(TASK_PROTECT)">Type <code>TASK_PROTECT</code></a></h2>
+			<h2><a id="#(TASK_ZONE_GOAL)">Type <code>TASK_ZONE_GOAL</code></a></h2>
 				<table class="function_list">
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_PROTECT).GetGoalTotal">TASK_PROTECT:GetGoalTotal()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_ZONE_GOAL).GetGoalTotal">TASK_ZONE_GOAL:GetGoalTotal()</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_PROTECT).GetPlannedMenuText">TASK_PROTECT:GetPlannedMenuText()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_ZONE_GOAL).GetMarkInfo">TASK_ZONE_GOAL:GetMarkInfo(TaskInfoID, TaskInfo)</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_PROTECT).GetTargetZone">TASK_PROTECT:GetTargetZone(TaskUnit)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_ZONE_GOAL).GetPlannedMenuText">TASK_ZONE_GOAL:GetPlannedMenuText()</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_PROTECT).New">TASK_PROTECT:New(Mission, SetGroup, TaskName, Protect, TaskType, TaskBriefing)</a></td>
-		<td class="summary">
-<p>Instantiates a new TASK_PROTECT.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_PROTECT).Protect">TASK_PROTECT.Protect</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_ZONE_GOAL).GetReportDetail">TASK_ZONE_GOAL:GetReportDetail(ReportGroup, TaskInfoID, TaskInfo)</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_PROTECT).SetGoalTotal">TASK_PROTECT:SetGoalTotal()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_ZONE_GOAL).GetTargetZone">TASK_ZONE_GOAL:GetTargetZone(TaskUnit)</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_PROTECT).SetProtect">TASK_PROTECT:SetProtect(Protect)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_ZONE_GOAL).New">TASK_ZONE_GOAL:New(Mission, SetGroup, TaskName, ZoneGoal, TaskType, TaskBriefing)</a></td>
+		<td class="summary">
+<p>Instantiates a new TASK<em>ZONE</em>GOAL.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_ZONE_GOAL).SetGoalTotal">TASK_ZONE_GOAL:SetGoalTotal(GoalTotal)</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_PROTECT).SetTargetZone">TASK_PROTECT:SetTargetZone(TargetZone, TaskUnit)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_ZONE_GOAL).SetProtect">TASK_ZONE_GOAL:SetProtect(ZoneGoal)</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_PROTECT).TaskType">TASK_PROTECT.TaskType</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_ZONE_GOAL).SetTargetZone">TASK_ZONE_GOAL:SetTargetZone(TargetZone, TaskUnit)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_ZONE_GOAL).TaskType">TASK_ZONE_GOAL.TaskType</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_ZONE_GOAL).ZoneGoal">TASK_ZONE_GOAL.ZoneGoal</a></td>
 		<td class="summary">
 
 </td>
@@ -276,21 +270,21 @@
 		<dl class="function">
 <dt>
 
-		<em><a href="##(TASK_CAPTURE_ZONE)">#TASK_CAPTURE_ZONE</a></em>
-<a id="TASK_CAPTURE_ZONE" >
-<strong>TASK_CAPTURE_ZONE</strong>
+		<em><a href="##(TASK_ZONE_CAPTURE)">#TASK_ZONE_CAPTURE</a></em>
+<a id="TASK_ZONE_CAPTURE" >
+<strong>TASK_ZONE_CAPTURE</strong>
 </a>
 </dt>
 <dd>
 	
-<h1>TASK<em>CAPTURE</em>ZONE class, extends <a href="Task_A2G.html##(TASK_PROTECT)">Task<em>A2G#TASK</em>PROTECT</a></h1>
+<h1>TASK<em>ZONE</em>CAPTURE class, extends <a href="TaskZoneGoal.html##(TASK_ZONE_GOAL)">TaskZoneGoal#TASK<em>ZONE</em>GOAL</a></h1>
 
-<p>The TASK<em>CAPTURE</em>ZONE class defines an Suppression or Extermination of Air Defenses task for a human player to be executed.</p>
+<p>The TASK<em>ZONE</em>CAPTURE class defines an Suppression or Extermination of Air Defenses task for a human player to be executed.</p>
 
 	
 <p>These tasks are important to be executed as they will help to achieve air superiority at the vicinity.</p>
 
-<p>The TASK<em>CAPTURE</em>ZONE is used by the <a href="Task_A2G_Dispatcher.html##(TASK_A2G_DISPATCHER)">Task<em>A2G</em>Dispatcher#TASK<em>A2G</em>DISPATCHER</a> to automatically create SEAD tasks 
+<p>The TASK<em>ZONE</em>CAPTURE is used by the <a href="Task_A2G_Dispatcher.html##(TASK_A2G_DISPATCHER)">Task<em>A2G</em>Dispatcher#TASK<em>A2G</em>DISPATCHER</a> to automatically create SEAD tasks 
 based on detected enemy ground targets.</p>
 
 
@@ -299,19 +293,19 @@ based on detected enemy ground targets.</p>
 		<dl class="function">
 <dt>
 
-		<em><a href="##(TASK_PROTECT)">#TASK_PROTECT</a></em>
-<a id="TASK_PROTECT" >
-<strong>TASK_PROTECT</strong>
+		<em><a href="##(TASK_ZONE_GOAL)">#TASK_ZONE_GOAL</a></em>
+<a id="TASK_ZONE_GOAL" >
+<strong>TASK_ZONE_GOAL</strong>
 </a>
 </dt>
 <dd>
 	
-<h1>TASK_PROTECT class, extends <a href="Task.html##(TASK)">Task#TASK</a></h1>
+<h1>TASK<em>ZONE</em>GOAL class, extends <a href="Task.html##(TASK)">Task#TASK</a></h1>
 
-<p>The TASK_PROTECT class defines the task to protect or capture a protection zone.</p>
+<p>The TASK<em>ZONE</em>GOAL class defines the task to protect or capture a protection zone.</p>
 
 	
-<p>The TASK_PROTECT is implemented using a <a href="Fsm.html##(FSM_TASK)">Fsm#FSM_TASK</a>, and has the following statuses:</p>
+<p>The TASK<em>ZONE</em>GOAL is implemented using a <a href="Fsm.html##(FSM_TASK)">Fsm#FSM_TASK</a>, and has the following statuses:</p>
 
 <ul>
     <li><strong>None</strong>: Start of the process</li>
@@ -326,33 +320,33 @@ based on detected enemy ground targets.</p>
 <p>Scoring or penalties can be given in the following circumstances:</p>
 
 <ul>
-    <li><a href="##(TASK_PROTECT).SetScoreOnDestroy">TASK_PROTECT.SetScoreOnDestroy</a>(): Set a score when a target in scope of the A2G attack, has been destroyed.</li>
-    <li><a href="##(TASK_PROTECT).SetScoreOnSuccess">TASK_PROTECT.SetScoreOnSuccess</a>(): Set a score when all the targets in scope of the A2G attack, have been destroyed.</li>
-    <li><a href="##(TASK_PROTECT).SetPenaltyOnFailed">TASK_PROTECT.SetPenaltyOnFailed</a>(): Set a penalty when the A2G attack has failed.</li>
+    <li><a href="##(TASK_ZONE_GOAL).SetScoreOnDestroy">TASK<em>ZONE</em>GOAL.SetScoreOnDestroy</a>(): Set a score when a target in scope of the A2G attack, has been destroyed.</li>
+    <li><a href="##(TASK_ZONE_GOAL).SetScoreOnSuccess">TASK<em>ZONE</em>GOAL.SetScoreOnSuccess</a>(): Set a score when all the targets in scope of the A2G attack, have been destroyed.</li>
+    <li><a href="##(TASK_ZONE_GOAL).SetPenaltyOnFailed">TASK<em>ZONE</em>GOAL.SetPenaltyOnFailed</a>(): Set a penalty when the A2G attack has failed.</li>
 </ul>
 
 
 </dd>
 </dl>
-	<h2><a id="#(Task_Protect)" >Type <code>Task_Protect</code></a></h2>
+	<h2><a id="#(TaskZoneCapture)" >Type <code>TaskZoneCapture</code></a></h2>
 	
 			<h2><a id="#(FSM_PROCESS)" >Type <code>FSM_PROCESS</code></a></h2>
 			
-			<h2><a id="#(TASK_CAPTURE_ZONE)" >Type <code>TASK_CAPTURE_ZONE</code></a></h2>
+			<h2><a id="#(TASK_ZONE_CAPTURE)" >Type <code>TASK_ZONE_CAPTURE</code></a></h2>
 				
-<p>The TASK<em>CAPTURE</em>ZONE class</p>
+<p>The TASK<em>ZONE</em>CAPTURE class</p>
 
 	<h3>Field(s)</h3>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_CAPTURE_ZONE).New" >
-<strong>TASK_CAPTURE_ZONE:New(Mission, SetGroup, TaskName, Protect, TaskBriefing)</strong>
+<a id="#(TASK_ZONE_CAPTURE).New" >
+<strong>TASK_ZONE_CAPTURE:New(Mission, SetGroup, TaskName, ZoneGoalCoalition, TaskBriefing)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Instantiates a new TASK<em>CAPTURE</em>ZONE.</p>
+<p>Instantiates a new TASK<em>ZONE</em>CAPTURE.</p>
 
 		<h3>Parameters</h3>
 		<ul>
@@ -375,7 +369,7 @@ The name of the Task.</p>
 				</li>
 				<li>
 				
-<p><code><em><a href="Functional.Protect.html##(PROTECT)">Functional.Protect#PROTECT</a> Protect </em></code>: </p>
+<p><code><em><a href="Core.ZoneGoalCoalition.html##(ZONE_GOAL_COALITION)">Core.ZoneGoalCoalition#ZONE<em>GOAL</em>COALITION</a> ZoneGoalCoalition </em></code>: </p>
 
 				</li>
 				<li>
@@ -387,7 +381,7 @@ The briefing of the task.</p>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="##(TASK_CAPTURE_ZONE)">#TASK<em>CAPTURE</em>ZONE</a>:</em>
+<p><em><a href="##(TASK_ZONE_CAPTURE)">#TASK<em>ZONE</em>CAPTURE</a>:</em>
 self</p>
 
 </dd>
@@ -395,8 +389,8 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_CAPTURE_ZONE).OnAfterGoal" >
-<strong>TASK_CAPTURE_ZONE:OnAfterGoal(TaskUnit, From, Event, To, PlayerUnit, PlayerName)</strong>
+<a id="#(TASK_ZONE_CAPTURE).OnAfterGoal" >
+<strong>TASK_ZONE_CAPTURE:OnAfterGoal(TaskUnit, From, Event, To, PlayerUnit, PlayerName)</strong>
 </a>
 </dt>
 <dd>
@@ -441,8 +435,8 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_CAPTURE_ZONE).ReportOrder" >
-<strong>TASK_CAPTURE_ZONE:ReportOrder(ReportGroup)</strong>
+<a id="#(TASK_ZONE_CAPTURE).ReportOrder" >
+<strong>TASK_ZONE_CAPTURE:ReportOrder(ReportGroup)</strong>
 </a>
 </dt>
 <dd>
@@ -462,123 +456,9 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_CAPTURE_ZONE).SetScoreOnFail" >
-<strong>TASK_CAPTURE_ZONE:SetScoreOnFail(PlayerName, Penalty, TaskUnit)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Set a penalty when the A2G attack has failed.</p>
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em>#string PlayerName </em></code>: 
-The name of the player.</p>
-
-				</li>
-				<li>
-				
-<p><code><em>#number Penalty </em></code>: 
-The penalty in points, must be a negative value!</p>
-
-				</li>
-				<li>
-				
-<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> TaskUnit </em></code>: </p>
-
-				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em><a href="##(TASK_CAPTURE_ZONE)">#TASK<em>CAPTURE</em>ZONE</a>:</em></p>
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(TASK_CAPTURE_ZONE).SetScoreOnProgress" >
-<strong>TASK_CAPTURE_ZONE:SetScoreOnProgress(PlayerName, Score, TaskUnit)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Set a score when a target in scope of the A2G attack, has been destroyed .</p>
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em>#string PlayerName </em></code>: 
-The name of the player.</p>
-
-				</li>
-				<li>
-				
-<p><code><em>#number Score </em></code>: 
-The score in points to be granted when task process has been achieved.</p>
-
-				</li>
-				<li>
-				
-<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> TaskUnit </em></code>: </p>
-
-				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em><a href="##(TASK_CAPTURE_ZONE)">#TASK<em>CAPTURE</em>ZONE</a>:</em></p>
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(TASK_CAPTURE_ZONE).SetScoreOnSuccess" >
-<strong>TASK_CAPTURE_ZONE:SetScoreOnSuccess(PlayerName, Score, TaskUnit)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Set a score when all the targets in scope of the A2G attack, have been destroyed.</p>
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em>#string PlayerName </em></code>: 
-The name of the player.</p>
-
-				</li>
-				<li>
-				
-<p><code><em>#number Score </em></code>: 
-The score in points.</p>
-
-				</li>
-				<li>
-				
-<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> TaskUnit </em></code>: </p>
-
-				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em><a href="##(TASK_CAPTURE_ZONE)">#TASK<em>CAPTURE</em>ZONE</a>:</em></p>
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em><a href="Set.html##(SET_UNIT)">Set#SET_UNIT</a></em>
-<a id="#(TASK_CAPTURE_ZONE).TargetSetUnit" >
-<strong>TASK_CAPTURE_ZONE.TargetSetUnit</strong>
+		<em></em>
+<a id="#(TASK_ZONE_CAPTURE).TaskCoalition" >
+<strong>TASK_ZONE_CAPTURE.TaskCoalition</strong>
 </a>
 </dt>
 <dd>
@@ -591,8 +471,8 @@ The score in points.</p>
 <dt>
 
 		<em></em>
-<a id="#(TASK_CAPTURE_ZONE).TaskCoalition" >
-<strong>TASK_CAPTURE_ZONE.TaskCoalition</strong>
+<a id="#(TASK_ZONE_CAPTURE).TaskCoalitionName" >
+<strong>TASK_ZONE_CAPTURE.TaskCoalitionName</strong>
 </a>
 </dt>
 <dd>
@@ -605,8 +485,8 @@ The score in points.</p>
 <dt>
 
 		<em></em>
-<a id="#(TASK_CAPTURE_ZONE).TaskCoalitionName" >
-<strong>TASK_CAPTURE_ZONE.TaskCoalitionName</strong>
+<a id="#(TASK_ZONE_CAPTURE).TaskZoneName" >
+<strong>TASK_ZONE_CAPTURE.TaskZoneName</strong>
 </a>
 </dt>
 <dd>
@@ -618,41 +498,41 @@ The score in points.</p>
 		<dl class="function">
 <dt>
 
-		<em></em>
-<a id="#(TASK_CAPTURE_ZONE).TaskZoneName" >
-<strong>TASK_CAPTURE_ZONE.TaskZoneName</strong>
+<a id="#(TASK_ZONE_CAPTURE).UpdateTaskInfo" >
+<strong>TASK_ZONE_CAPTURE:UpdateTaskInfo()</strong>
 </a>
 </dt>
 <dd>
 	
-
+<p>Instantiates a new TASK<em>ZONE</em>CAPTURE.</p>
 
 </dd>
 </dl>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_CAPTURE_ZONE).UpdateTaskInfo" >
-<strong>TASK_CAPTURE_ZONE:UpdateTaskInfo()</strong>
+		<em><a href="Core.ZoneGoalCoalition.html##(ZONE_GOAL_COALITION)">Core.ZoneGoalCoalition#ZONE_GOAL_COALITION</a></em>
+<a id="#(TASK_ZONE_CAPTURE).ZoneGoal" >
+<strong>TASK_ZONE_CAPTURE.ZoneGoal</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Instantiates a new TASK<em>CAPTURE</em>ZONE.</p>
+
 
 </dd>
 </dl>
 
-			<h2><a id="#(TASK_PROTECT)" >Type <code>TASK_PROTECT</code></a></h2>
+			<h2><a id="#(TASK_ZONE_GOAL)" >Type <code>TASK_ZONE_GOAL</code></a></h2>
 				
-<p>The TASK_PROTECT class</p>
+<p>The TASK<em>ZONE</em>GOAL class</p>
 
 	<h3>Field(s)</h3>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_PROTECT).GetGoalTotal" >
-<strong>TASK_PROTECT:GetGoalTotal()</strong>
+<a id="#(TASK_ZONE_GOAL).GetGoalTotal" >
+<strong>TASK_ZONE_GOAL:GetGoalTotal()</strong>
 </a>
 </dt>
 <dd>
@@ -664,8 +544,34 @@ The score in points.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_PROTECT).GetPlannedMenuText" >
-<strong>TASK_PROTECT:GetPlannedMenuText()</strong>
+<a id="#(TASK_ZONE_GOAL).GetMarkInfo" >
+<strong>TASK_ZONE_GOAL:GetMarkInfo(TaskInfoID, TaskInfo)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> TaskInfoID </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> TaskInfo </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_ZONE_GOAL).GetPlannedMenuText" >
+<strong>TASK_ZONE_GOAL:GetPlannedMenuText()</strong>
 </a>
 </dt>
 <dd>
@@ -677,8 +583,39 @@ The score in points.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_PROTECT).GetTargetZone" >
-<strong>TASK_PROTECT:GetTargetZone(TaskUnit)</strong>
+<a id="#(TASK_ZONE_GOAL).GetReportDetail" >
+<strong>TASK_ZONE_GOAL:GetReportDetail(ReportGroup, TaskInfoID, TaskInfo)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> ReportGroup </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> TaskInfoID </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> TaskInfo </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_ZONE_GOAL).GetTargetZone" >
+<strong>TASK_ZONE_GOAL:GetTargetZone(TaskUnit)</strong>
 </a>
 </dt>
 <dd>
@@ -703,13 +640,13 @@ The Zone object where the Target is located on the map.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_PROTECT).New" >
-<strong>TASK_PROTECT:New(Mission, SetGroup, TaskName, Protect, TaskType, TaskBriefing)</strong>
+<a id="#(TASK_ZONE_GOAL).New" >
+<strong>TASK_ZONE_GOAL:New(Mission, SetGroup, TaskName, ZoneGoal, TaskType, TaskBriefing)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Instantiates a new TASK_PROTECT.</p>
+<p>Instantiates a new TASK<em>ZONE</em>GOAL.</p>
 
 		<h3>Parameters</h3>
 		<ul>
@@ -732,7 +669,7 @@ The name of the Task.</p>
 				</li>
 				<li>
 				
-<p><code><em><a href="Functional.Protect.html##(PROTECT)">Functional.Protect#PROTECT</a> Protect </em></code>: </p>
+<p><code><em><a href="Core.ZoneGoal.html##(ZONE_GOAL)">Core.ZoneGoal#ZONE_GOAL</a> ZoneGoal </em></code>: </p>
 
 				</li>
 				<li>
@@ -748,7 +685,7 @@ The name of the Task.</p>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="##(TASK_PROTECT)">#TASK_PROTECT</a>:</em>
+<p><em><a href="##(TASK_ZONE_GOAL)">#TASK<em>ZONE</em>GOAL</a>:</em>
 self</p>
 
 </dd>
@@ -756,35 +693,8 @@ self</p>
 		<dl class="function">
 <dt>
 
-		<em><a href="Functional.Protect.html##(PROTECT)">Functional.Protect#PROTECT</a></em>
-<a id="#(TASK_PROTECT).Protect" >
-<strong>TASK_PROTECT.Protect</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(TASK_PROTECT).SetGoalTotal" >
-<strong>TASK_PROTECT:SetGoalTotal()</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(TASK_PROTECT).SetProtect" >
-<strong>TASK_PROTECT:SetProtect(Protect)</strong>
+<a id="#(TASK_ZONE_GOAL).SetGoalTotal" >
+<strong>TASK_ZONE_GOAL:SetGoalTotal(GoalTotal)</strong>
 </a>
 </dt>
 <dd>
@@ -795,8 +705,7 @@ self</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Functional.Protect.html##(PROTECT)">Functional.Protect#PROTECT</a> Protect </em></code>: 
-The Protect Engine.</p>
+<p><code><em> GoalTotal </em></code>: </p>
 
 				</li>
 		</ul>
@@ -805,8 +714,30 @@ The Protect Engine.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(TASK_PROTECT).SetTargetZone" >
-<strong>TASK_PROTECT:SetTargetZone(TargetZone, TaskUnit)</strong>
+<a id="#(TASK_ZONE_GOAL).SetProtect" >
+<strong>TASK_ZONE_GOAL:SetProtect(ZoneGoal)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.ZoneGoal.html##(ZONE_GOAL)">Core.ZoneGoal#ZONE_GOAL</a> ZoneGoal </em></code>: 
+The ZoneGoal Engine.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_ZONE_GOAL).SetTargetZone" >
+<strong>TASK_ZONE_GOAL:SetTargetZone(TargetZone, TaskUnit)</strong>
 </a>
 </dt>
 <dd>
@@ -833,8 +764,22 @@ The Zone object where the Target is located on the map.</p>
 <dt>
 
 		<em></em>
-<a id="#(TASK_PROTECT).TaskType" >
-<strong>TASK_PROTECT.TaskType</strong>
+<a id="#(TASK_ZONE_GOAL).TaskType" >
+<strong>TASK_ZONE_GOAL.TaskType</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="Core.ZoneGoal.html##(ZONE_GOAL)">Core.ZoneGoal#ZONE_GOAL</a></em>
+<a id="#(TASK_ZONE_GOAL).ZoneGoal" >
+<strong>TASK_ZONE_GOAL.ZoneGoal</strong>
 </a>
 </dt>
 <dd>

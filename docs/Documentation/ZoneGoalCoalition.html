@@ -91,13 +91,13 @@
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="Task.html">Task</a></li>
+					<li><a href="TaskZoneCapture.html">TaskZoneCapture</a></li>
 					<li><a href="Task_A2A.html">Task_A2A</a></li>
 					<li><a href="Task_A2A_Dispatcher.html">Task_A2A_Dispatcher</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
 					<li><a href="Task_A2G_Dispatcher.html">Task_A2G_Dispatcher</a></li>
 					<li><a href="Task_Cargo.html">Task_Cargo</a></li>
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
-					<li><a href="Task_Protect.html">Task_Protect</a></li>
 					<li><a href="Unit.html">Unit</a></li>
 					<li><a href="Utils.html">Utils</a></li>
 					<li><a href="Zone.html">Zone</a></li>
@@ -112,7 +112,7 @@
 	<div id="content">
    <h1>Module <code>ZoneGoalCoalition</code></h1>
    
-<p><strong>Core</strong> -- Base class that models processes to achieve goals involving a Zone for a Coalition.</p>
+<p><strong>Functional (WIP)</strong> -- Base class that models processes to achieve goals involving a Zone for a Coalition.</p>
 
    
 
@@ -139,22 +139,6 @@ Derived classes implement the ways how the achievements can be realized.</p>
 </td>
 		</tr>
 	</table>
-			<h2><a id="#(ZONE_GOAL)">Type <code>ZONE_GOAL</code></a></h2>
-				<table class="function_list">
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ZONE_GOAL).ScheduleStatusZone">ZONE_GOAL.ScheduleStatusZone</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ZONE_GOAL).SmokeScheduler">ZONE_GOAL.SmokeScheduler</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-	</table>
-
 			<h2><a id="#(ZONE_GOAL_COALITION)">Type <code>ZONE_GOAL_COALITION</code></a></h2>
 				<table class="function_list">
 		<tr>
@@ -176,15 +160,9 @@ Derived classes implement the ways how the achievements can be realized.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ZONE_GOAL_COALITION).FsmStateAttacked">ZONE_GOAL_COALITION.FsmStateAttacked</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_GOAL_COALITION).Empty">ZONE_GOAL_COALITION:Empty()</a></td>
 		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ZONE_GOAL_COALITION).FsmStateCaptured">ZONE_GOAL_COALITION.FsmStateCaptured</a></td>
-		<td class="summary">
-
+<p>Empty Trigger for ZONE<em>GOAL</em>COALITION</p>
 </td>
 		</tr>
 		<tr>
@@ -200,6 +178,12 @@ Derived classes implement the ways how the achievements can be realized.</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_GOAL_COALITION).Guard">ZONE_GOAL_COALITION:Guard()</a></td>
+		<td class="summary">
+<p>Guard Trigger for ZONE<em>GOAL</em>COALITION</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(ZONE_GOAL_COALITION).IsAttacked">ZONE_GOAL_COALITION:IsAttacked()</a></td>
 		<td class="summary">
 
@@ -207,6 +191,12 @@ Derived classes implement the ways how the achievements can be realized.</p>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(ZONE_GOAL_COALITION).IsCaptured">ZONE_GOAL_COALITION:IsCaptured()</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_GOAL_COALITION).IsEmpty">ZONE_GOAL_COALITION:IsEmpty()</a></td>
 		<td class="summary">
 
 </td>
@@ -254,6 +244,18 @@ Derived classes implement the ways how the achievements can be realized.</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_GOAL_COALITION).OnAfterEmpty">ZONE_GOAL_COALITION:OnAfterEmpty(From, Event, To)</a></td>
+		<td class="summary">
+<p>Empty Handler OnAfter for ZONE<em>GOAL</em>COALITION</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_GOAL_COALITION).OnAfterGuard">ZONE_GOAL_COALITION:OnAfterGuard(From, Event, To)</a></td>
+		<td class="summary">
+<p>Guard Handler OnAfter for ZONE<em>GOAL</em>COALITION</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(ZONE_GOAL_COALITION).OnBeforeAttack">ZONE_GOAL_COALITION:OnBeforeAttack(From, Event, To)</a></td>
 		<td class="summary">
 <p>Attack Handler OnBefore for ZONE<em>GOAL</em>COALITION</p>
@@ -266,33 +268,33 @@ Derived classes implement the ways how the achievements can be realized.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ZONE_GOAL_COALITION).OnEnterAttacked">ZONE_GOAL_COALITION:OnEnterAttacked(From, Event, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_GOAL_COALITION).OnBeforeEmpty">ZONE_GOAL_COALITION:OnBeforeEmpty(From, Event, To)</a></td>
 		<td class="summary">
-<p>Attacked State Handler OnEnter for ZONE<em>GOAL</em>COALITION</p>
+<p>Empty Handler OnBefore for ZONE<em>GOAL</em>COALITION</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ZONE_GOAL_COALITION).OnEnterCaptured">ZONE_GOAL_COALITION:OnEnterCaptured(From, Event, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_GOAL_COALITION).OnBeforeGuard">ZONE_GOAL_COALITION:OnBeforeGuard(From, Event, To)</a></td>
 		<td class="summary">
-<p>Captured State Handler OnEnter for ZONE<em>GOAL</em>COALITION</p>
+<p>Guard Handler OnBefore for ZONE<em>GOAL</em>COALITION</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ZONE_GOAL_COALITION).OnLeaveAttacked">ZONE_GOAL_COALITION:OnLeaveAttacked(From, Event, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_GOAL_COALITION).ScheduleStatusZone">ZONE_GOAL_COALITION.ScheduleStatusZone</a></td>
 		<td class="summary">
-<p>Attacked State Handler OnLeave for ZONE<em>GOAL</em>COALITION</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ZONE_GOAL_COALITION).OnLeaveCaptured">ZONE_GOAL_COALITION:OnLeaveCaptured(From, Event, To)</a></td>
-		<td class="summary">
-<p>Captured State Handler OnLeave for ZONE<em>GOAL</em>COALITION</p>
+
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(ZONE_GOAL_COALITION).SetCoalition">ZONE_GOAL_COALITION:SetCoalition(Coalition)</a></td>
 		<td class="summary">
 <p>Set the owning coalition of the zone.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_GOAL_COALITION).SmokeScheduler">ZONE_GOAL_COALITION.SmokeScheduler</a></td>
+		<td class="summary">
+
 </td>
 		</tr>
 		<tr>
@@ -317,6 +319,18 @@ Derived classes implement the ways how the achievements can be realized.</p>
 		<td class="name" nowrap="nowrap"><a href="##(ZONE_GOAL_COALITION).__Capture">ZONE_GOAL_COALITION:__Capture(Delay)</a></td>
 		<td class="summary">
 <p>Capture Asynchronous Trigger for ZONE<em>GOAL</em>COALITION</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_GOAL_COALITION).__Empty">ZONE_GOAL_COALITION:__Empty(Delay)</a></td>
+		<td class="summary">
+<p>Empty Asynchronous Trigger for ZONE<em>GOAL</em>COALITION</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_GOAL_COALITION).__Guard">ZONE_GOAL_COALITION:__Guard(Delay)</a></td>
+		<td class="summary">
+<p>Guard Asynchronous Trigger for ZONE<em>GOAL</em>COALITION</p>
 </td>
 		</tr>
 		<tr>
@@ -398,47 +412,10 @@ Derived classes implement the ways how the achievements can be realized.</p>
 <h3>2.3 ZONE<em>GOAL</em>COALITION State Machine</h3>
 
 
-
-<p>Hello | World
-------|------
-Test|Test2</p>
-
-
 </dd>
 </dl>
 	<h2><a id="#(ZoneGoalCoalition)" >Type <code>ZoneGoalCoalition</code></a></h2>
 	
-			<h2><a id="#(ZONE_GOAL)" >Type <code>ZONE_GOAL</code></a></h2>
-				<h3>Field(s)</h3>
-		<dl class="function">
-<dt>
-
-		<em></em>
-<a id="#(ZONE_GOAL).ScheduleStatusZone" >
-<strong>ZONE_GOAL.ScheduleStatusZone</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em></em>
-<a id="#(ZONE_GOAL).SmokeScheduler" >
-<strong>ZONE_GOAL.SmokeScheduler</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-
 			<h2><a id="#(ZONE_GOAL_COALITION)" >Type <code>ZONE_GOAL_COALITION</code></a></h2>
 				<h3>Field(s)</h3>
 		<dl class="function">
@@ -484,28 +461,13 @@ Test|Test2</p>
 		<dl class="function">
 <dt>
 
-		<em>#string</em>
-<a id="#(ZONE_GOAL_COALITION).FsmStateAttacked" >
-<strong>ZONE_GOAL_COALITION.FsmStateAttacked</strong>
+<a id="#(ZONE_GOAL_COALITION).Empty" >
+<strong>ZONE_GOAL_COALITION:Empty()</strong>
 </a>
 </dt>
 <dd>
 	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em>#string</em>
-<a id="#(ZONE_GOAL_COALITION).FsmStateCaptured" >
-<strong>ZONE_GOAL_COALITION.FsmStateCaptured</strong>
-</a>
-</dt>
-<dd>
-	
-
+<p>Empty Trigger for ZONE<em>GOAL</em>COALITION</p>
 
 </dd>
 </dl>
@@ -548,6 +510,19 @@ Coalition name.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(ZONE_GOAL_COALITION).Guard" >
+<strong>ZONE_GOAL_COALITION:Guard()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Guard Trigger for ZONE<em>GOAL</em>COALITION</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(ZONE_GOAL_COALITION).IsAttacked" >
 <strong>ZONE_GOAL_COALITION:IsAttacked()</strong>
 </a>
@@ -563,6 +538,19 @@ Coalition name.</p>
 
 <a id="#(ZONE_GOAL_COALITION).IsCaptured" >
 <strong>ZONE_GOAL_COALITION:IsCaptured()</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_GOAL_COALITION).IsEmpty" >
+<strong>ZONE_GOAL_COALITION:IsEmpty()</strong>
 </a>
 </dt>
 <dd>
@@ -723,6 +711,68 @@ The initial coalition owning the zone.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(ZONE_GOAL_COALITION).OnAfterEmpty" >
+<strong>ZONE_GOAL_COALITION:OnAfterEmpty(From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Empty Handler OnAfter for ZONE<em>GOAL</em>COALITION</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_GOAL_COALITION).OnAfterGuard" >
+<strong>ZONE_GOAL_COALITION:OnAfterGuard(From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Guard Handler OnAfter for ZONE<em>GOAL</em>COALITION</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(ZONE_GOAL_COALITION).OnBeforeAttack" >
 <strong>ZONE_GOAL_COALITION:OnBeforeAttack(From, Event, To)</strong>
 </a>
@@ -795,75 +845,13 @@ The initial coalition owning the zone.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(ZONE_GOAL_COALITION).OnEnterAttacked" >
-<strong>ZONE_GOAL_COALITION:OnEnterAttacked(From, Event, To)</strong>
+<a id="#(ZONE_GOAL_COALITION).OnBeforeEmpty" >
+<strong>ZONE_GOAL_COALITION:OnBeforeEmpty(From, Event, To)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Attacked State Handler OnEnter for ZONE<em>GOAL</em>COALITION</p>
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em>#string From </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string Event </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string To </em></code>: </p>
-
-				</li>
-		</ul>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(ZONE_GOAL_COALITION).OnEnterCaptured" >
-<strong>ZONE_GOAL_COALITION:OnEnterCaptured(From, Event, To)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Captured State Handler OnEnter for ZONE<em>GOAL</em>COALITION</p>
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em>#string From </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string Event </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string To </em></code>: </p>
-
-				</li>
-		</ul>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(ZONE_GOAL_COALITION).OnLeaveAttacked" >
-<strong>ZONE_GOAL_COALITION:OnLeaveAttacked(From, Event, To)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Attacked State Handler OnLeave for ZONE<em>GOAL</em>COALITION</p>
+<p>Empty Handler OnBefore for ZONE<em>GOAL</em>COALITION</p>
 
 		<h3>Parameters</h3>
 		<ul>
@@ -893,13 +881,13 @@ The initial coalition owning the zone.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(ZONE_GOAL_COALITION).OnLeaveCaptured" >
-<strong>ZONE_GOAL_COALITION:OnLeaveCaptured(From, Event, To)</strong>
+<a id="#(ZONE_GOAL_COALITION).OnBeforeGuard" >
+<strong>ZONE_GOAL_COALITION:OnBeforeGuard(From, Event, To)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Captured State Handler OnLeave for ZONE<em>GOAL</em>COALITION</p>
+<p>Guard Handler OnBefore for ZONE<em>GOAL</em>COALITION</p>
 
 		<h3>Parameters</h3>
 		<ul>
@@ -922,6 +910,20 @@ The initial coalition owning the zone.</p>
 		<h3>Return value</h3>
 				
 <p><em>#boolean:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(ZONE_GOAL_COALITION).ScheduleStatusZone" >
+<strong>ZONE_GOAL_COALITION.ScheduleStatusZone</strong>
+</a>
+</dt>
+<dd>
+	
 
 
 </dd>
@@ -945,6 +947,20 @@ The initial coalition owning the zone.</p>
 
 				</li>
 		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(ZONE_GOAL_COALITION).SmokeScheduler" >
+<strong>ZONE_GOAL_COALITION.SmokeScheduler</strong>
+</a>
+</dt>
+<dd>
+	
+
+
 </dd>
 </dl>
 		<dl class="function">
@@ -1005,6 +1021,48 @@ The initial coalition owning the zone.</p>
 <dd>
 	
 <p>Capture Asynchronous Trigger for ZONE<em>GOAL</em>COALITION</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number Delay </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_GOAL_COALITION).__Empty" >
+<strong>ZONE_GOAL_COALITION:__Empty(Delay)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Empty Asynchronous Trigger for ZONE<em>GOAL</em>COALITION</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number Delay </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_GOAL_COALITION).__Guard" >
+<strong>ZONE_GOAL_COALITION:__Guard(Delay)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Guard Asynchronous Trigger for ZONE<em>GOAL</em>COALITION</p>
 
 		<h3>Parameter</h3>
 		<ul>

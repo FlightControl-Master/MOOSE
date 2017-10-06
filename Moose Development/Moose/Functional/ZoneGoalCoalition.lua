@@ -1,4 +1,4 @@
---- **Functional** -- Base class that models processes to achieve goals involving a Zone for a Coalition.
+--- **Functional (WIP)** -- Base class that models processes to achieve goals involving a Zone for a Coalition.
 --
 -- ====
 -- 
@@ -45,12 +45,6 @@ do -- ZoneGoal
   --   * **Empty**: The Zone is empty. There is not valid unit in the Zone.
   --   
   -- ### 2.3 ZONE_GOAL_COALITION State Machine
-  -- 
-  --   
-  --   
-  -- Hello | World
-  -- ------|------
-  -- Test|Test2
   -- 
   -- @field #ZONE_GOAL_COALITION
   ZONE_GOAL_COALITION = {

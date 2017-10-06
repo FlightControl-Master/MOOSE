@@ -1,4 +1,4 @@
---- **Core** -- Base class that models processes to achieve goals.
+--- **Core (WIP)** -- Base class to allow the modeling of processes to achieve Goals.
 --
 -- ====
 -- 
@@ -30,15 +30,12 @@ do -- Goal
   -- 
   -- ### 2.1 GOAL States
   -- 
-  --   * **Off**: The goal is not timely measured.
-  --   * **On**: The goal is timely being measured.
-  --   * **Achieved**: The objective is achieved.
+  --   * **Pending**: The goal object is in progress.
+  --   * **Achieved**: The goal objective is Achieved.
   -- 
   -- ### 2.2 GOAL Events
   -- 
-  --   * **@{#GOAL.Start}()**: Start Measuring the Goal.
-  --   * **@{#GOAL.Stop}()**: Stop Measuring the Goal.
-  --   * **@{#GOAL.IsAchieved}()**: Check if the Goal is Achieved.
+  --   * **Achieved**: Set the goal objective to Achieved.
   -- 
   -- @field #GOAL
   GOAL = {

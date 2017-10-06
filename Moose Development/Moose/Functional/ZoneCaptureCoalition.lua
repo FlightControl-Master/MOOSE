@@ -1,4 +1,4 @@
---- **Functional** -- Base class that models processes to capture a Zone for a Coalition, guarded by another Coalition.
+--- **Functional (wIP)** -- Base class that models processes to capture a Zone for a Coalition, guarded by another Coalition.
 --
 -- ====
 -- 

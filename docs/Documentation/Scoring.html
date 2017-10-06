@@ -91,13 +91,13 @@
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="Task.html">Task</a></li>
+					<li><a href="TaskZoneCapture.html">TaskZoneCapture</a></li>
 					<li><a href="Task_A2A.html">Task_A2A</a></li>
 					<li><a href="Task_A2A_Dispatcher.html">Task_A2A_Dispatcher</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
 					<li><a href="Task_A2G_Dispatcher.html">Task_A2G_Dispatcher</a></li>
 					<li><a href="Task_Cargo.html">Task_Cargo</a></li>
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
-					<li><a href="Task_Protect.html">Task_Protect</a></li>
 					<li><a href="Unit.html">Unit</a></li>
 					<li><a href="Utils.html">Utils</a></li>
 					<li><a href="Zone.html">Zone</a></li>
@@ -715,6 +715,12 @@ Various methods exist to configure:</p>
 		<td class="name" nowrap="nowrap"><a href="##(SCORING).SetScaleDestroyScore">SCORING:SetScaleDestroyScore(Scale)</a></td>
 		<td class="summary">
 <p>Set the scale for scoring valid destroys (enemy destroys).</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING)._AddMissionGoalScore">SCORING:_AddMissionGoalScore(Mission, PlayerName, Text, Score)</a></td>
+		<td class="summary">
+<p>Registers Scores the players completing a Mission Task.</p>
 </td>
 		</tr>
 		<tr>
@@ -2177,6 +2183,42 @@ The scale magnifies the scores given to the players.</p>
 				
 <p><code><em>#number Scale </em></code>: 
 The scale of the score given.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SCORING)._AddMissionGoalScore" >
+<strong>SCORING:_AddMissionGoalScore(Mission, PlayerName, Text, Score)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Registers Scores the players completing a Mission Task.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Tasking.Mission.html##(MISSION)">Tasking.Mission#MISSION</a> Mission </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string PlayerName </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Text </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Score </em></code>: </p>
 
 				</li>
 		</ul>

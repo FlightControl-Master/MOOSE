@@ -91,13 +91,13 @@
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="Task.html">Task</a></li>
+					<li><a href="TaskZoneCapture.html">TaskZoneCapture</a></li>
 					<li><a href="Task_A2A.html">Task_A2A</a></li>
 					<li><a href="Task_A2A_Dispatcher.html">Task_A2A_Dispatcher</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
 					<li><a href="Task_A2G_Dispatcher.html">Task_A2G_Dispatcher</a></li>
 					<li><a href="Task_Cargo.html">Task_Cargo</a></li>
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
-					<li><a href="Task_Protect.html">Task_Protect</a></li>
 					<li><a href="Unit.html">Unit</a></li>
 					<li><a href="Utils.html">Utils</a></li>
 					<li><a href="Zone.html">Zone</a></li>
@@ -249,7 +249,7 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(BASE).GetParent">BASE:GetParent(Child)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).GetParent">BASE:GetParent(Child, FromClass)</a></td>
 		<td class="summary">
 <p>This is the worker method to retrieve the Parent class.</p>
 </td>
@@ -1167,7 +1167,7 @@ The <a href="Event.html">Event</a> processing Priority.</p>
 <dt>
 
 <a id="#(BASE).GetParent" >
-<strong>BASE:GetParent(Child)</strong>
+<strong>BASE:GetParent(Child, FromClass)</strong>
 </a>
 </dt>
 <dd>
@@ -1182,12 +1182,17 @@ The <a href="Event.html">Event</a> processing Priority.</p>
 
 </code></pre>
 
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
 <p><code><em><a href="##(BASE)">#BASE</a> Child </em></code>: 
 is the Child class from which the Parent class needs to be retrieved.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> FromClass </em></code>: </p>
 
 				</li>
 		</ul>

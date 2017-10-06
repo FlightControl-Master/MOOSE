@@ -91,13 +91,13 @@
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="Task.html">Task</a></li>
+					<li><a href="TaskZoneCapture.html">TaskZoneCapture</a></li>
 					<li><a href="Task_A2A.html">Task_A2A</a></li>
 					<li><a href="Task_A2A_Dispatcher.html">Task_A2A_Dispatcher</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
 					<li><a href="Task_A2G_Dispatcher.html">Task_A2G_Dispatcher</a></li>
 					<li><a href="Task_Cargo.html">Task_Cargo</a></li>
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
-					<li><a href="Task_Protect.html">Task_Protect</a></li>
 					<li><a href="Unit.html">Unit</a></li>
 					<li><a href="Utils.html">Utils</a></li>
 					<li><a href="Zone.html">Zone</a></li>
@@ -112,13 +112,14 @@
 	<div id="content">
    <h1>Module <code>ZoneGoal</code></h1>
    
-<p><strong>Core</strong> -- Base class that models processes to achieve goals involving a Zone.</p>
+<p><strong>Functional (WIP)</strong> -- Base class that models processes to achieve goals involving a Zone.</p>
 
    
 
 <hr/>
 
-<p>ZONE_GOAL models processes that have an objective with a defined achievement involving a Zone. Derived classes implement the ways how the achievements can be realized.</p>
+<p>ZONE_GOAL models processes that have a Goal with a defined achievement involving a Zone. 
+Derived classes implement the ways how the achievements can be realized.</p>
 
 <hr/>
 
@@ -134,34 +135,16 @@
 		<td class="summary">
 <h1>ZONE_GOAL class, extends <a href="Fsm.html##(FSM)">Fsm#FSM</a></h1>
 
-<p>ZONE_GOAL models processes that have an objective with a defined achievement involving a Zone.</p>
+<p>ZONE_GOAL models processes that have a Goal with a defined achievement involving a Zone.</p>
 </td>
 		</tr>
 	</table>
 			<h2><a id="#(ZONE_GOAL)">Type <code>ZONE_GOAL</code></a></h2>
 				<table class="function_list">
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ZONE_GOAL).Empty">ZONE_GOAL:Empty()</a></td>
-		<td class="summary">
-<p>Empty Trigger for ZONE_GOAL</p>
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(ZONE_GOAL).Flare">ZONE_GOAL:Flare(FlareColor)</a></td>
 		<td class="summary">
 <p>Flare the center of the zone.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ZONE_GOAL).FsmStateEmpty">ZONE_GOAL.FsmStateEmpty</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ZONE_GOAL).FsmStateGuarded">ZONE_GOAL.FsmStateGuarded</a></td>
-		<td class="summary">
-
 </td>
 		</tr>
 		<tr>
@@ -183,21 +166,9 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ZONE_GOAL).Guard">ZONE_GOAL:Guard()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_GOAL).MonitorDestroyedUnits">ZONE_GOAL:MonitorDestroyedUnits()</a></td>
 		<td class="summary">
-<p>Guard Trigger for ZONE_GOAL</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ZONE_GOAL).IsEmpty">ZONE_GOAL:IsEmpty()</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ZONE_GOAL).IsGuarded">ZONE_GOAL:IsGuarded()</a></td>
-		<td class="summary">
-
+<p>Activate the event UnitDestroyed to be fired when a unit is destroyed in the zone.</p>
 </td>
 		</tr>
 		<tr>
@@ -207,51 +178,9 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ZONE_GOAL).OnAfterEmpty">ZONE_GOAL:OnAfterEmpty(From, Event, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_GOAL).OnAfterDestroyedUnit">ZONE_GOAL:OnAfterDestroyedUnit(From, Event, To, DestroyedUnit, PlayerName)</a></td>
 		<td class="summary">
-<p>Empty Handler OnAfter for ZONE_GOAL</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ZONE_GOAL).OnAfterGuard">ZONE_GOAL:OnAfterGuard(From, Event, To)</a></td>
-		<td class="summary">
-<p>Guard Handler OnAfter for ZONE_GOAL</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ZONE_GOAL).OnBeforeEmpty">ZONE_GOAL:OnBeforeEmpty(From, Event, To)</a></td>
-		<td class="summary">
-<p>Empty Handler OnBefore for ZONE_GOAL</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ZONE_GOAL).OnBeforeGuard">ZONE_GOAL:OnBeforeGuard(From, Event, To)</a></td>
-		<td class="summary">
-<p>Guard Handler OnBefore for ZONE_GOAL</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ZONE_GOAL).OnEnterEmpty">ZONE_GOAL:OnEnterEmpty(From, Event, To)</a></td>
-		<td class="summary">
-<p>Empty State Handler OnEnter for ZONE_GOAL</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ZONE_GOAL).OnEnterGuarded">ZONE_GOAL:OnEnterGuarded(From, Event, To)</a></td>
-		<td class="summary">
-<p>Guarded State Handler OnEnter for ZONE_GOAL</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ZONE_GOAL).OnLeaveEmpty">ZONE_GOAL:OnLeaveEmpty(From, Event, To)</a></td>
-		<td class="summary">
-<p>Empty State Handler OnLeave for ZONE_GOAL</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ZONE_GOAL).OnLeaveGuarded">ZONE_GOAL:OnLeaveGuarded(From, Event, To)</a></td>
-		<td class="summary">
-<p>Guarded State Handler OnLeave for ZONE_GOAL</p>
+<p>DestroyedUnit Handler OnAfter for ZONE_GOAL</p>
 </td>
 		</tr>
 		<tr>
@@ -279,21 +208,9 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ZONE_GOAL).States">ZONE_GOAL.States</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(ZONE_GOAL).StatusSmoke">ZONE_GOAL:StatusSmoke()</a></td>
 		<td class="summary">
 <p>Check status Smoke.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ZONE_GOAL).StatusZone">ZONE_GOAL:StatusZone()</a></td>
-		<td class="summary">
-<p>Check status Zone.</p>
 </td>
 		</tr>
 		<tr>
@@ -303,15 +220,9 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ZONE_GOAL).__Empty">ZONE_GOAL:__Empty(Delay)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_GOAL).__Destroyed">ZONE_GOAL:__Destroyed(EventData)</a></td>
 		<td class="summary">
-<p>Empty Asynchronous Trigger for ZONE_GOAL</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ZONE_GOAL).__Guard">ZONE_GOAL:__Guard(Delay)</a></td>
-		<td class="summary">
-<p>Guard Asynchronous Trigger for ZONE_GOAL</p>
+
 </td>
 		</tr>
 		<tr>
@@ -335,7 +246,7 @@
 	
 <h1>ZONE_GOAL class, extends <a href="Fsm.html##(FSM)">Fsm#FSM</a></h1>
 
-<p>ZONE_GOAL models processes that have an objective with a defined achievement involving a Zone.</p>
+<p>ZONE_GOAL models processes that have a Goal with a defined achievement involving a Zone.</p>
 
 	
 <p>Derived classes implement the ways how the achievements can be realized.</p>
@@ -351,15 +262,13 @@
 <h3>2.1 ZONE_GOAL States</h3>
 
 <ul>
-    <li><strong>Empty</strong>: The Zone is Empty.</li>
-    <li><strong>Guarded</strong>: The Zone is Guarded.</li>
+    <li>None: Initial State</li>
 </ul>
 
 <h3>2.2 ZONE_GOAL Events</h3>
 
 <ul>
-    <li>**<a href="##(ZONE_GOAL).Guard">ZONE_GOAL.Guard</a>()**: Set the Zone to Guarded.</li>
-    <li>**<a href="##(ZONE_GOAL).Empty">ZONE_GOAL.Empty</a>()**: Set the Zone to Empty.</li>
+    <li>DestroyedUnit: A <a href="Unit.html">Unit</a> is destroyed in the Zone. The event will only get triggered if the method <a href="##(ZONE_GOAL).MonitorDestroyedUnits">ZONE_GOAL.MonitorDestroyedUnits</a>() is used.</li>
 </ul>
 
 
@@ -371,19 +280,6 @@
 			
 			<h2><a id="#(ZONE_GOAL)" >Type <code>ZONE_GOAL</code></a></h2>
 				<h3>Field(s)</h3>
-		<dl class="function">
-<dt>
-
-<a id="#(ZONE_GOAL).Empty" >
-<strong>ZONE_GOAL:Empty()</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Empty Trigger for ZONE_GOAL</p>
-
-</dd>
-</dl>
 		<dl class="function">
 <dt>
 
@@ -403,34 +299,6 @@
 
 				</li>
 		</ul>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em>#string</em>
-<a id="#(ZONE_GOAL).FsmStateEmpty" >
-<strong>ZONE_GOAL.FsmStateEmpty</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em>#string</em>
-<a id="#(ZONE_GOAL).FsmStateGuarded" >
-<strong>ZONE_GOAL.FsmStateGuarded</strong>
-</a>
-</dt>
-<dd>
-	
-
-
 </dd>
 </dl>
 		<dl class="function">
@@ -486,39 +354,13 @@
 		<dl class="function">
 <dt>
 
-<a id="#(ZONE_GOAL).Guard" >
-<strong>ZONE_GOAL:Guard()</strong>
+<a id="#(ZONE_GOAL).MonitorDestroyedUnits" >
+<strong>ZONE_GOAL:MonitorDestroyedUnits()</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Guard Trigger for ZONE_GOAL</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(ZONE_GOAL).IsEmpty" >
-<strong>ZONE_GOAL:IsEmpty()</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(ZONE_GOAL).IsGuarded" >
-<strong>ZONE_GOAL:IsGuarded()</strong>
-</a>
-</dt>
-<dd>
-	
-
+<p>Activate the event UnitDestroyed to be fired when a unit is destroyed in the zone.</p>
 
 </dd>
 </dl>
@@ -552,13 +394,13 @@ A <a href="Zone.html">Zone</a> object with the goal to be achieved.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(ZONE_GOAL).OnAfterEmpty" >
-<strong>ZONE_GOAL:OnAfterEmpty(From, Event, To)</strong>
+<a id="#(ZONE_GOAL).OnAfterDestroyedUnit" >
+<strong>ZONE_GOAL:OnAfterDestroyedUnit(From, Event, To, DestroyedUnit, PlayerName)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Empty Handler OnAfter for ZONE_GOAL</p>
+<p>DestroyedUnit Handler OnAfter for ZONE_GOAL</p>
 
 		<h3>Parameters</h3>
 		<ul>
@@ -577,244 +419,19 @@ A <a href="Zone.html">Zone</a> object with the goal to be achieved.</p>
 <p><code><em>#string To </em></code>: </p>
 
 				</li>
-		</ul>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(ZONE_GOAL).OnAfterGuard" >
-<strong>ZONE_GOAL:OnAfterGuard(From, Event, To)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Guard Handler OnAfter for ZONE_GOAL</p>
-
-		<h3>Parameters</h3>
-		<ul>
 				<li>
 				
-<p><code><em>#string From </em></code>: </p>
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> DestroyedUnit </em></code>: 
+The destroyed unit.</p>
 
 				</li>
 				<li>
 				
-<p><code><em>#string Event </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string To </em></code>: </p>
+<p><code><em>#string PlayerName </em></code>: 
+The name of the player.</p>
 
 				</li>
 		</ul>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(ZONE_GOAL).OnBeforeEmpty" >
-<strong>ZONE_GOAL:OnBeforeEmpty(From, Event, To)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Empty Handler OnBefore for ZONE_GOAL</p>
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em>#string From </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string Event </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string To </em></code>: </p>
-
-				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em>#boolean:</em></p>
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(ZONE_GOAL).OnBeforeGuard" >
-<strong>ZONE_GOAL:OnBeforeGuard(From, Event, To)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Guard Handler OnBefore for ZONE_GOAL</p>
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em>#string From </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string Event </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string To </em></code>: </p>
-
-				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em>#boolean:</em></p>
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(ZONE_GOAL).OnEnterEmpty" >
-<strong>ZONE_GOAL:OnEnterEmpty(From, Event, To)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Empty State Handler OnEnter for ZONE_GOAL</p>
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em>#string From </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string Event </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string To </em></code>: </p>
-
-				</li>
-		</ul>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(ZONE_GOAL).OnEnterGuarded" >
-<strong>ZONE_GOAL:OnEnterGuarded(From, Event, To)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Guarded State Handler OnEnter for ZONE_GOAL</p>
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em>#string From </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string Event </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string To </em></code>: </p>
-
-				</li>
-		</ul>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(ZONE_GOAL).OnLeaveEmpty" >
-<strong>ZONE_GOAL:OnLeaveEmpty(From, Event, To)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Empty State Handler OnLeave for ZONE_GOAL</p>
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em>#string From </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string Event </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string To </em></code>: </p>
-
-				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em>#boolean:</em></p>
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(ZONE_GOAL).OnLeaveGuarded" >
-<strong>ZONE_GOAL:OnLeaveGuarded(From, Event, To)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Guarded State Handler OnLeave for ZONE_GOAL</p>
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em>#string From </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string Event </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string To </em></code>: </p>
-
-				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em>#boolean:</em></p>
-
-
 </dd>
 </dl>
 		<dl class="function">
@@ -869,26 +486,8 @@ A <a href="Zone.html">Zone</a> object with the goal to be achieved.</p>
 		<dl class="function">
 <dt>
 
-		<em></em>
 <a id="#(ZONE_GOAL).SmokeTime" >
 <strong>ZONE_GOAL.SmokeTime</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-	
-<p>self.SmokeColor = nil</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em></em>
-<a id="#(ZONE_GOAL).States" >
-<strong>ZONE_GOAL.States</strong>
 </a>
 </dt>
 <dd>
@@ -913,19 +512,6 @@ A <a href="Zone.html">Zone</a> object with the goal to be achieved.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(ZONE_GOAL).StatusZone" >
-<strong>ZONE_GOAL:StatusZone()</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Check status Zone.</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
 		<em><a href="Core.Zone.html##(ZONE_BASE)">Core.Zone#ZONE_BASE</a></em>
 <a id="#(ZONE_GOAL).Zone" >
 <strong>ZONE_GOAL.Zone</strong>
@@ -940,40 +526,19 @@ A <a href="Zone.html">Zone</a> object with the goal to be achieved.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(ZONE_GOAL).__Empty" >
-<strong>ZONE_GOAL:__Empty(Delay)</strong>
+<a id="#(ZONE_GOAL).__Destroyed" >
+<strong>ZONE_GOAL:__Destroyed(EventData)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Empty Asynchronous Trigger for ZONE_GOAL</p>
+
 
 		<h3>Parameter</h3>
 		<ul>
 				<li>
 				
-<p><code><em>#number Delay </em></code>: </p>
-
-				</li>
-		</ul>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(ZONE_GOAL).__Guard" >
-<strong>ZONE_GOAL:__Guard(Delay)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Guard Asynchronous Trigger for ZONE_GOAL</p>
-
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em>#number Delay </em></code>: </p>
+<p><code><em><a href="Core.Event.html##(EVENTDATA)">Core.Event#EVENTDATA</a> EventData </em></code>: </p>
 
 				</li>
 		</ul>
