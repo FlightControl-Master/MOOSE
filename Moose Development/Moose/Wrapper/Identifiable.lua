@@ -159,6 +159,36 @@ function IDENTIFIABLE:GetCoalition()
   return nil
 end
 
+--- Returns the name of the coalition of the Identifiable.
+-- @param #IDENTIFIABLE self
+-- @return #string The name of the coalition.
+-- @return #nil The DCS Identifiable is not existing or alive.  
+function IDENTIFIABLE:GetCoalitionName()
+  self:F2( self.IdentifiableName )
+
+  local DCSIdentifiable = self:GetDCSObject()
+  
+  if DCSIdentifiable then
+    local IdentifiableCoalition = DCSIdentifiable:getCoalition()
+    self:T3( IdentifiableCoalition )
+    
+    if IdentifiableCoalition == coalition.side.BLUE then
+      return "Blue"
+    end
+    
+    if IdentifiableCoalition == coalition.side.RED then
+      return "Red"
+    end
+    
+    if IdentifiableCoalition == coalition.side.NEUTRAL then
+      return "Neutral"
+    end
+  end 
+  
+  self:E( self.ClassName .. " " .. self.IdentifiableName .. " not found!" )
+  return nil
+end
+
 --- Returns country of the Identifiable.
 -- @param #IDENTIFIABLE self
 -- @return Dcs.DCScountry#country.id The country identifier.

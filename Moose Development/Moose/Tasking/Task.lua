@@ -175,28 +175,34 @@ function TASK:New( Mission, SetGroupAssign, TaskName, TaskType, TaskBriefing )
   --- Goal Handler OnBefore for TASK
   -- @function [parent=#TASK] OnBeforeGoal
   -- @param #TASK self
-  -- @param Wrapper.Controllable#CONTROLLABLE Controllable
   -- @param #string From
   -- @param #string Event
   -- @param #string To
+  -- @param Wrapper.Unit#UNIT PlayerUnit The @{Unit} of the player.
+  -- @param #string PlayerName The name of the player.
   -- @return #boolean
   
   --- Goal Handler OnAfter for TASK
   -- @function [parent=#TASK] OnAfterGoal
   -- @param #TASK self
-  -- @param Wrapper.Controllable#CONTROLLABLE Controllable
   -- @param #string From
   -- @param #string Event
   -- @param #string To
+  -- @param Wrapper.Unit#UNIT PlayerUnit The @{Unit} of the player.
+  -- @param #string PlayerName The name of the player.
   
   --- Goal Trigger for TASK
   -- @function [parent=#TASK] Goal
   -- @param #TASK self
+  -- @param Wrapper.Unit#UNIT PlayerUnit The @{Unit} of the player.
+  -- @param #string PlayerName The name of the player.
   
   --- Goal Asynchronous Trigger for TASK
   -- @function [parent=#TASK] __Goal
   -- @param #TASK self
   -- @param #number Delay
+  -- @param Wrapper.Unit#UNIT PlayerUnit The @{Unit} of the player.
+  -- @param #string PlayerName The name of the player.
   
   
   
@@ -872,42 +878,20 @@ function TASK:MenuMarkToGroup( TaskGroup )
 
   -- List the name of the Task.
   local Name = self:GetName()
-  Report:Add( Name .. ": " .. self:GetTaskBriefing() )
+  Report:Add( "Task " .. Name .. ": " .. self:GetTaskBriefing() .. "\n" )
 
   for TaskInfoID, TaskInfo in pairs( self.TaskInfo, function( t, a, b ) return t[a].TaskInfoOrder < t[b].TaskInfoOrder end ) do
-    
-    local TaskInfoIDText = "" --string.format( "%s: ", TaskInfoID )
 
-    if type( TaskInfo.TaskInfoText ) == "string" then
-      if TaskInfoID == "Targets" then
-      else
-        Report:Add( TaskInfoIDText .. TaskInfo.TaskInfoText )
-      end
-    elseif type( TaskInfo ) == "table" then
-      if TaskInfoID == "Coordinates" then
-        --local ToCoordinate = TaskInfo.TaskInfoText -- Core.Point#COORDINATE
-        --Report:Add( TaskInfoIDText .. ToCoordinate:ToString() )
-      else
-      end
+    local ReportText = self:GetMarkInfo( TaskInfoID, TaskInfo )
+    if ReportText then
+      Report:Add( ReportText )
     end
-    
   end
 
-  local Coordinate = self:GetInfo( "Coordinates" ) -- Core.Point#COORDINATE
-  
-  local Velocity = self.TargetSetUnit:GetVelocity()
-  local Heading = self.TargetSetUnit:GetHeading()
-  
-  Coordinate:SetHeading( Heading )
-  Coordinate:SetVelocity( Velocity )
-  
-  Report:Add( "Targets are" .. Coordinate:GetMovingText() ..  "." )
-
+  local TargetCoordinate = self:GetInfo( "Coordinate" ) -- Core.Point#COORDINATE
   local MarkText = Report:Text( ", " ) 
-  
-  self:F( { Coordinate = Coordinate, MarkText = MarkText } )
-  
-  Coordinate:MarkToGroup( MarkText, TaskGroup )
+  self:F( { Coordinate = TargetCoordinate, MarkText = MarkText } )
+  TargetCoordinate:MarkToGroup( MarkText, TaskGroup )
   --Coordinate:MarkToAll( Briefing )
 end
 
@@ -1274,7 +1258,7 @@ function TASK:onenterAssigned( From, Event, To, PlayerUnit, PlayerName )
     self:GetMission():__Start( 1 )
     
     -- When the task is assigned, the task goal needs to be checked of the derived classes.
-    self:__Goal( -10 )  -- Polymorphic
+    self:__Goal( -10, PlayerUnit, PlayerName )  -- Polymorphic
      
     self:SetMenu()
   end
@@ -1443,14 +1427,14 @@ function TASK:ReportSummary( ReportGroup )
   local Report = REPORT:New()
   
   -- List the name of the Task.
-  Report:Add( self:GetName() )
+  Report:Add( "Task " .. self:GetName() )
   
   -- Determine the status of the Task.
   Report:Add( "State: <" .. self:GetState() .. ">" )
   
-  if self.TaskInfo["Coordinates"] then
+  if self.TaskInfo["Coordinate"] then
     local TaskInfoIDText = string.format( "%s: ", "Coordinate" )
-    local TaskCoord = self.TaskInfo["Coordinates"].TaskInfoText -- Core.Point#COORDINATE
+    local TaskCoord = self.TaskInfo["Coordinate"].TaskInfoText -- Core.Point#COORDINATE
     Report:Add( TaskInfoIDText .. TaskCoord:ToString( ReportGroup, nil, self ) )
   end
   
@@ -1480,7 +1464,7 @@ function TASK:ReportOverview( ReportGroup )
       if Line ~= 0 then
         Report:AddIndent( LineReport:Text( ", " ) )
       else
-        Report:Add( TaskName .. ", " .. LineReport:Text( ", " ) )
+        Report:Add( "Task " .. TaskName .. ", " .. LineReport:Text( ", " ) )
       end
       LineReport = REPORT:New()
       Line = math.floor( TaskInfo.TaskInfoOrder / 10 )
@@ -1491,7 +1475,7 @@ function TASK:ReportOverview( ReportGroup )
     if type( TaskInfo.TaskInfoText ) == "string" then
       LineReport:Add( TaskInfoIDText .. TaskInfo.TaskInfoText )
     elseif type(TaskInfo) == "table" then
-      if TaskInfoID == "Coordinates" then
+      if TaskInfoID == "Coordinate" then
         local ToCoordinate = TaskInfo.TaskInfoText -- Core.Point#COORDINATE
         --Report:Add( TaskInfoIDText )
         LineReport:Add( TaskInfoIDText .. ToCoordinate:ToString( ReportGroup, nil, self ) )
@@ -1565,7 +1549,7 @@ function TASK:ReportDetails( ReportGroup )
   -- Determine the status of the Task.
   local Status = "<" .. self:GetState() .. ">"
 
-  Report:Add( "Task: " .. Name .. " - " .. Status .. " - Detailed Report" )
+  Report:Add( "Task " .. Name .. " - " .. Status .. " - Detailed Report" )
 
   -- Loop each Unit active in the Task, and find Player Names.
   local PlayerNames = self:GetPlayerNames()
@@ -1583,30 +1567,12 @@ function TASK:ReportDetails( ReportGroup )
   
   for TaskInfoID, TaskInfo in pairs( self.TaskInfo, function( t, a, b ) return t[a].TaskInfoOrder < t[b].TaskInfoOrder end ) do
     
-    local TaskInfoIDText = string.format( " - %s: ", TaskInfoID )
-
-    if type( TaskInfo.TaskInfoText ) == "string" then
-      Report:Add( TaskInfoIDText .. TaskInfo.TaskInfoText )
-    elseif type(TaskInfo) == "table" then
-      if TaskInfoID == "Coordinates" then
-        local FromCoordinate = ReportGroup:GetUnit(1):GetCoordinate()
-        local ToCoordinate = TaskInfo.TaskInfoText -- Core.Point#COORDINATE
-        Report:Add( TaskInfoIDText .. ToCoordinate:ToString( ReportGroup:GetUnit(1), nil, self ) )
-      else
-      end
+    local ReportText = self:GetReportDetail( ReportGroup, TaskInfoID, TaskInfo )
+    if ReportText then
+      Report:Add( ReportText )
     end
     
   end
-
-  local Coordinate = self:GetInfo( "Coordinates" ) -- Core.Point#COORDINATE
-  
-  local Velocity = self.TargetSetUnit:GetVelocity()
-  local Heading = self.TargetSetUnit:GetHeading()
-  
-  Coordinate:SetHeading( Heading )
-  Coordinate:SetVelocity( Velocity )
-  
-  Report:Add( "Targets are" .. Coordinate:GetMovingText() ..  "." )
 
   return Report:Text()
 end

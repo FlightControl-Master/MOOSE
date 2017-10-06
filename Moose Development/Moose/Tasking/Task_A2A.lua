@@ -277,6 +277,35 @@ do -- TASK_A2A
     return self.GoalTotal
   end
 
+  function TASK_A2A:GetMarkInfo( TaskInfoID, TaskInfo )
+
+    if type( TaskInfo.TaskInfoText ) == "string" then
+      if TaskInfoID == "Targets" then
+      else
+        return string.format( "%s: %s", TaskInfoID, TaskInfo.TaskInfoText )
+      end
+    elseif type( TaskInfo ) == "table" then
+      if TaskInfoID == "Coordinate" then
+      end
+    end
+  
+    return nil
+  end
+  
+  function TASK_A2A:GetReportDetail( ReportGroup, TaskInfoID, TaskInfo )
+  
+    if type( TaskInfo.TaskInfoText ) == "string" then
+      return string.format( "%s: %s", TaskInfoID, TaskInfo.TaskInfoText )
+    elseif type(TaskInfo) == "table" then
+      if TaskInfoID == "Coordinate" then
+        local FromCoordinate = ReportGroup:GetUnit(1):GetCoordinate()
+        local ToCoordinate = TaskInfo.TaskInfoText -- Core.Point#COORDINATE
+        return string.format( " - %s: %s", TaskInfoID, ToCoordinate:ToString( ReportGroup:GetUnit(1), nil, self ) )
+      else
+      end
+    end
+  end
+
 
   
 end 
@@ -336,7 +365,7 @@ do -- TASK_A2A_INTERCEPT
   function TASK_A2A_INTERCEPT:UpdateTaskInfo()
   
     local TargetCoordinate = self.Detection and self.Detection:GetDetectedItemCoordinate( self.DetectedItemIndex ) or self.TargetSetUnit:GetFirst():GetCoordinate() 
-    self:SetInfo( "Coordinates", TargetCoordinate, 0 )
+    self:SetInfo( "Coordinate", TargetCoordinate, 0 )
 
     self:SetInfo( "Threat", "[" .. string.rep(  "■", self.Detection and self.Detection:GetDetectedItemThreatLevel( self.DetectedItemIndex ) or self.TargetSetUnit:CalculateThreatLevelA2G() ) .. "]", 11 )
 
@@ -492,7 +521,7 @@ do -- TASK_A2A_SWEEP
   function TASK_A2A_SWEEP:UpdateTaskInfo()
   
     local TargetCoordinate = self.Detection and self.Detection:GetDetectedItemCoordinate( self.DetectedItemIndex ) or self.TargetSetUnit:GetFirst():GetCoordinate() 
-    self:SetInfo( "Coordinates", TargetCoordinate, 0 )
+    self:SetInfo( "Coordinate", TargetCoordinate, 0 )
 
     self:SetInfo( "Assumed Threat", "[" .. string.rep(  "■", self.Detection and self.Detection:GetDetectedItemThreatLevel( self.DetectedItemIndex ) or self.TargetSetUnit:CalculateThreatLevelA2G() ) .. "]", 11 )
 
@@ -641,7 +670,7 @@ do -- TASK_A2A_ENGAGE
   function TASK_A2A_ENGAGE:UpdateTaskInfo()
   
     local TargetCoordinate = self.Detection and self.Detection:GetDetectedItemCoordinate( self.DetectedItemIndex ) or self.TargetSetUnit:GetFirst():GetCoordinate() 
-    self:SetInfo( "Coordinates", TargetCoordinate, 0 )
+    self:SetInfo( "Coordinate", TargetCoordinate, 0 )
 
     self:SetInfo( "Threat", "[" .. string.rep(  "■", self.Detection and self.Detection:GetDetectedItemThreatLevel( self.DetectedItemIndex ) or self.TargetSetUnit:CalculateThreatLevelA2G() ) .. "]", 11 )
 

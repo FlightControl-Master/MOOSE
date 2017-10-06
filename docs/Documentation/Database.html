@@ -60,6 +60,7 @@
 					<li><a href="Escort.html">Escort</a></li>
 					<li><a href="Event.html">Event</a></li>
 					<li><a href="Fsm.html">Fsm</a></li>
+					<li><a href="Goal.html">Goal</a></li>
 					<li><a href="Group.html">Group</a></li>
 					<li><a href="Identifiable.html">Identifiable</a></li>
 					<li><a href="Menu.html">Menu</a></li>
@@ -72,6 +73,7 @@
 					<li><a href="Positionable.html">Positionable</a></li>
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
 					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
+					<li><a href="Protect.html">Protect</a></li>
 					<li><a href="Radio.html">Radio</a></li>
 					<li><a href="Rat.html">Rat</a></li>
 					<li><a href="Route.html">Route</a></li>
@@ -89,6 +91,7 @@
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="Task.html">Task</a></li>
+					<li><a href="TaskZoneCapture.html">TaskZoneCapture</a></li>
 					<li><a href="Task_A2A.html">Task_A2A</a></li>
 					<li><a href="Task_A2A_Dispatcher.html">Task_A2A_Dispatcher</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
@@ -98,6 +101,9 @@
 					<li><a href="Unit.html">Unit</a></li>
 					<li><a href="Utils.html">Utils</a></li>
 					<li><a href="Zone.html">Zone</a></li>
+					<li><a href="ZoneCaptureCoalition.html">ZoneCaptureCoalition</a></li>
+					<li><a href="ZoneGoal.html">ZoneGoal</a></li>
+					<li><a href="ZoneGoalCoalition.html">ZoneGoalCoalition</a></li>
 					<li><a href="env.html">env</a></li>
 					<li><a href="land.html">land</a></li>
 					<li><a href="routines.html">routines</a></li>
@@ -177,6 +183,18 @@ The following iterator methods are currently available within the DATABASE:</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).AccountDestroys">DATABASE:AccountDestroys(Event)</a></td>
+		<td class="summary">
+<p>Account the destroys.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).AccountHits">DATABASE:AccountHits(Event)</a></td>
+		<td class="summary">
+<p>Account the Hits of the Players.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DATABASE).AddAirbase">DATABASE:AddAirbase(AirbaseName)</a></td>
 		<td class="summary">
 <p>Adds a Airbase based on the Airbase Name in the DATABASE.</p>
@@ -244,6 +262,12 @@ The following iterator methods are currently available within the DATABASE:</p>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(DATABASE).ClassName">DATABASE.ClassName</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).DESTROYS">DATABASE.DESTROYS</a></td>
 		<td class="summary">
 
 </td>
@@ -438,6 +462,12 @@ The following iterator methods are currently available within the DATABASE:</p>
 		<td class="name" nowrap="nowrap"><a href="##(DATABASE).GetStatusGroup">DATABASE:GetStatusGroup(GroupName)</a></td>
 		<td class="summary">
 <p>Get a status to a Group within the Database, this to check crossing events for example.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(DATABASE).HITS">DATABASE.HITS</a></td>
+		<td class="summary">
+
 </td>
 		</tr>
 		<tr>
@@ -675,6 +705,48 @@ The following iterator methods are currently available within the DATABASE:</p>
 		<dl class="function">
 <dt>
 
+<a id="#(DATABASE).AccountDestroys" >
+<strong>DATABASE:AccountDestroys(Event)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Account the destroys.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Event.html##(EVENTDATA)">Core.Event#EVENTDATA</a> Event </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(DATABASE).AccountHits" >
+<strong>DATABASE:AccountHits(Event)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Account the Hits of the Players.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Event.html##(EVENTDATA)">Core.Event#EVENTDATA</a> Event </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(DATABASE).AddAirbase" >
 <strong>DATABASE:AddAirbase(AirbaseName)</strong>
 </a>
@@ -893,6 +965,20 @@ The name of the airbase</p>
 		<em>#string</em>
 <a id="#(DATABASE).ClassName" >
 <strong>DATABASE.ClassName</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(DATABASE).DESTROYS" >
+<strong>DATABASE.DESTROYS</strong>
 </a>
 </dt>
 <dd>
@@ -1745,6 +1831,20 @@ self</p>
 
 				</li>
 		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(DATABASE).HITS" >
+<strong>DATABASE.HITS</strong>
+</a>
+</dt>
+<dd>
+	
+
+
 </dd>
 </dl>
 		<dl class="function">

@@ -167,7 +167,7 @@ function MESSAGE:ToClient( Client, Settings )
     if self.MessageType then
       local Settings = Settings or ( Client and _DATABASE:GetPlayerSettings( Client:GetPlayerName() ) ) or _SETTINGS -- Core.Settings#SETTINGS
       self.MessageDuration = Settings:GetMessageTime( self.MessageType )
-      self.MessageCategory = self.MessageType .. ": "
+      self.MessageCategory = "" -- self.MessageType .. ": "
     end
 
     if self.MessageDuration ~= 0 then
@@ -192,7 +192,7 @@ function MESSAGE:ToGroup( Group, Settings )
     if self.MessageType then
       local Settings = Settings or ( Group and _DATABASE:GetPlayerSettings( Group:GetPlayerName() ) ) or _SETTINGS -- Core.Settings#SETTINGS
       self.MessageDuration = Settings:GetMessageTime( self.MessageType )
-      self.MessageCategory = self.MessageType .. ": "
+      self.MessageCategory = "" -- self.MessageType .. ": "
     end
 
     if self.MessageDuration ~= 0 then
@@ -259,7 +259,7 @@ function MESSAGE:ToCoalition( CoalitionSide, Settings )
   if self.MessageType then
     local Settings = Settings or _SETTINGS -- Core.Settings#SETTINGS
     self.MessageDuration = Settings:GetMessageTime( self.MessageType )
-    self.MessageCategory = self.MessageType .. ": "
+    self.MessageCategory = "" -- self.MessageType .. ": "
   end
 
 	if CoalitionSide then
@@ -303,7 +303,7 @@ function MESSAGE:ToAll()
   if self.MessageType then
     local Settings = Settings or _SETTINGS -- Core.Settings#SETTINGS
     self.MessageDuration = Settings:GetMessageTime( self.MessageType )
-    self.MessageCategory = self.MessageType .. ": "
+    self.MessageCategory = "" -- self.MessageType .. ": "
   end
 
   if self.MessageDuration ~= 0 then
