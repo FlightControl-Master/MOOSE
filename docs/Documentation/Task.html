@@ -60,6 +60,7 @@
 					<li><a href="Escort.html">Escort</a></li>
 					<li><a href="Event.html">Event</a></li>
 					<li><a href="Fsm.html">Fsm</a></li>
+					<li><a href="Goal.html">Goal</a></li>
 					<li><a href="Group.html">Group</a></li>
 					<li><a href="Identifiable.html">Identifiable</a></li>
 					<li><a href="Menu.html">Menu</a></li>
@@ -72,6 +73,7 @@
 					<li><a href="Positionable.html">Positionable</a></li>
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
 					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
+					<li><a href="Protect.html">Protect</a></li>
 					<li><a href="Radio.html">Radio</a></li>
 					<li><a href="Rat.html">Rat</a></li>
 					<li><a href="Route.html">Route</a></li>
@@ -89,6 +91,7 @@
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li>Task</li>
+					<li><a href="TaskZoneCapture.html">TaskZoneCapture</a></li>
 					<li><a href="Task_A2A.html">Task_A2A</a></li>
 					<li><a href="Task_A2A_Dispatcher.html">Task_A2A_Dispatcher</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
@@ -98,6 +101,9 @@
 					<li><a href="Unit.html">Unit</a></li>
 					<li><a href="Utils.html">Utils</a></li>
 					<li><a href="Zone.html">Zone</a></li>
+					<li><a href="ZoneCaptureCoalition.html">ZoneCaptureCoalition</a></li>
+					<li><a href="ZoneGoal.html">ZoneGoal</a></li>
+					<li><a href="ZoneGoalCoalition.html">ZoneGoalCoalition</a></li>
 					<li><a href="env.html">env</a></li>
 					<li><a href="land.html">land</a></li>
 					<li><a href="routines.html">routines</a></li>
@@ -331,7 +337,7 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK).Goal">TASK:Goal()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).Goal">TASK:Goal(PlayerUnit, PlayerName)</a></td>
 		<td class="summary">
 <p>Goal Trigger for TASK</p>
 </td>
@@ -469,7 +475,7 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK).OnAfterGoal">TASK:OnAfterGoal(Controllable, From, Event, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).OnAfterGoal">TASK:OnAfterGoal(From, Event, To, PlayerUnit, PlayerName)</a></td>
 		<td class="summary">
 <p>Goal Handler OnAfter for TASK</p>
 </td>
@@ -493,7 +499,7 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK).OnBeforeGoal">TASK:OnBeforeGoal(Controllable, From, Event, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).OnBeforeGoal">TASK:OnBeforeGoal(From, Event, To, PlayerUnit, PlayerName)</a></td>
 		<td class="summary">
 <p>Goal Handler OnBefore for TASK</p>
 </td>
@@ -805,7 +811,7 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK).__Goal">TASK:__Goal(Delay)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).__Goal">TASK:__Goal(Delay, PlayerUnit, PlayerName)</a></td>
 		<td class="summary">
 <p>Goal Asynchronous Trigger for TASK</p>
 </td>
@@ -1648,13 +1654,28 @@ TaskType</p>
 <dt>
 
 <a id="#(TASK).Goal" >
-<strong>TASK:Goal()</strong>
+<strong>TASK:Goal(PlayerUnit, PlayerName)</strong>
 </a>
 </dt>
 <dd>
 	
 <p>Goal Trigger for TASK</p>
 
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> PlayerUnit </em></code>: 
+The <a href="Unit.html">Unit</a> of the player.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string PlayerName </em></code>: 
+The name of the player.</p>
+
+				</li>
+		</ul>
 </dd>
 </dl>
 		<dl class="function">
@@ -2097,7 +2118,7 @@ self</p>
 <dt>
 
 <a id="#(TASK).OnAfterGoal" >
-<strong>TASK:OnAfterGoal(Controllable, From, Event, To)</strong>
+<strong>TASK:OnAfterGoal(From, Event, To, PlayerUnit, PlayerName)</strong>
 </a>
 </dt>
 <dd>
@@ -2106,11 +2127,6 @@ self</p>
 
 		<h3>Parameters</h3>
 		<ul>
-				<li>
-				
-<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> Controllable </em></code>: </p>
-
-				</li>
 				<li>
 				
 <p><code><em>#string From </em></code>: </p>
@@ -2124,6 +2140,18 @@ self</p>
 				<li>
 				
 <p><code><em>#string To </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> PlayerUnit </em></code>: 
+The <a href="Unit.html">Unit</a> of the player.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string PlayerName </em></code>: 
+The name of the player.</p>
 
 				</li>
 		</ul>
@@ -2217,7 +2245,7 @@ The name of the Player.</p>
 <dt>
 
 <a id="#(TASK).OnBeforeGoal" >
-<strong>TASK:OnBeforeGoal(Controllable, From, Event, To)</strong>
+<strong>TASK:OnBeforeGoal(From, Event, To, PlayerUnit, PlayerName)</strong>
 </a>
 </dt>
 <dd>
@@ -2226,11 +2254,6 @@ The name of the Player.</p>
 
 		<h3>Parameters</h3>
 		<ul>
-				<li>
-				
-<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> Controllable </em></code>: </p>
-
-				</li>
 				<li>
 				
 <p><code><em>#string From </em></code>: </p>
@@ -2244,6 +2267,18 @@ The name of the Player.</p>
 				<li>
 				
 <p><code><em>#string To </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> PlayerUnit </em></code>: 
+The <a href="Unit.html">Unit</a> of the player.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string PlayerName </em></code>: 
+The name of the player.</p>
 
 				</li>
 		</ul>
@@ -3378,18 +3413,30 @@ self</p>
 <dt>
 
 <a id="#(TASK).__Goal" >
-<strong>TASK:__Goal(Delay)</strong>
+<strong>TASK:__Goal(Delay, PlayerUnit, PlayerName)</strong>
 </a>
 </dt>
 <dd>
 	
 <p>Goal Asynchronous Trigger for TASK</p>
 
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
 <p><code><em>#number Delay </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> PlayerUnit </em></code>: 
+The <a href="Unit.html">Unit</a> of the player.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string PlayerName </em></code>: 
+The name of the player.</p>
 
 				</li>
 		</ul>

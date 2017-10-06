@@ -50,6 +50,8 @@
 -- ## Each zone has a name:
 -- 
 --   * @{#ZONE_BASE.GetName}(): Returns the name of the zone.
+--   * @{#ZONE_BASE.SetName}(): Sets the name of the zone.
+--   
 -- 
 -- ## Each zone implements two polymorphic functions defined in @{Zone#ZONE_BASE}:
 -- 
@@ -119,6 +121,17 @@ function ZONE_BASE:GetName()
   self:F2()
 
   return self.ZoneName
+end
+
+
+--- Sets the name of the zone.
+-- @param #ZONE_BASE self
+-- @param #string ZoneName The name of the zone.
+-- @return #ZONE_BASE
+function ZONE_BASE:SetName( ZoneName )
+  self:F2()
+
+  self.ZoneName = ZoneName
 end
 
 --- Returns if a Vec2 is within the zone.
@@ -561,6 +574,160 @@ function ZONE_RADIUS:GetVec3( Height )
   return Vec3  
 end
 
+
+--- Scan the zone
+-- @param #ZONE_RADIUS self
+-- @param Coalition
+function ZONE_RADIUS:Scan()
+
+  self.Coalitions = {}
+
+  local ZoneCoord = self:GetCoordinate()
+  local ZoneRadius = self:GetRadius()
+  
+  self:E({ZoneCoord = ZoneCoord, ZoneRadius = ZoneRadius, ZoneCoordLL = ZoneCoord:ToStringLLDMS()})
+
+  local SphereSearch = {
+    id = world.VolumeType.SPHERE,
+      params = {
+      point = ZoneCoord:GetVec3(),
+      radius = ZoneRadius,
+      }
+    }
+
+  local function EvaluateZone( ZoneDCSUnit )
+    if ZoneDCSUnit:isExist() then
+      local CategoryDCSUnit = ZoneDCSUnit:getCategory()
+      if ( CategoryDCSUnit == Object.Category.UNIT and ZoneDCSUnit:isActive() ) or 
+         CategoryDCSUnit == Object.Category.STATIC then
+        local CoalitionDCSUnit = ZoneDCSUnit:getCoalition()
+        self.Coalitions[CoalitionDCSUnit] = true
+        self:E( { Name = ZoneDCSUnit:getName(), Coalition = CoalitionDCSUnit } )
+      end
+    end
+    return true
+  end
+
+  world.searchObjects( { Object.Category.UNIT, Object.Category.STATIC }, SphereSearch, EvaluateZone )
+  
+end
+
+
+function ZONE_RADIUS:CountCoalitions()
+
+  local Count = 0
+  
+  for CoalitionID, Coalition in pairs( self.Coalitions ) do
+    Count = Count + 1
+  end
+  return Count
+end
+
+--- Is All in Zone of Coalition?
+-- @param #ZONE_RADIUS self
+-- @param Coalition
+-- @return #boolean
+function ZONE_RADIUS:IsAllInZoneOfCoalition( Coalition )
+
+  return self:CountCoalitions() == 1 and self.Coalitions[Coalition] == true
+end
+
+
+--- Is All in Zone of Other Coalition?
+-- @param #ZONE_RADIUS self
+-- @param Coalition
+-- @return #boolean
+function ZONE_RADIUS:IsAllInZoneOfOtherCoalition( Coalition )
+
+  self:E( { Coalitions = self.Coalitions, Count = self:CountCoalitions() } )
+  return self:CountCoalitions() == 1 and self.Coalitions[Coalition] == nil
+end
+
+
+--- Is Some in Zone of Coalition?
+-- @param #ZONE_RADIUS self
+-- @param Coalition
+-- @return #boolean
+function ZONE_RADIUS:IsSomeInZoneOfCoalition( Coalition )
+
+  return self:CountCoalitions() > 1 and self.Coalitions[Coalition] == true
+end
+
+
+--- Is None in Zone of Coalition?
+-- @param #ZONE_RADIUS self
+-- @param Coalition
+-- @return #boolean
+function ZONE_RADIUS:IsNoneInZoneOfCoalition( Coalition )
+
+  return self.Coalitions[Coalition] == nil
+end
+
+
+--- Is None in Zone?
+-- @param #ZONE_RADIUS self
+-- @return #boolean
+function ZONE_RADIUS:IsNoneInZone()
+
+  return self:CountCoalitions() == 0
+end
+
+
+--- Get the Zone Coalitions.
+-- Returns nil if there are none ot two coalitions in the zone!
+-- @param #ZONE_RADIUS self
+-- @return Coalitions
+function ZONE_RADIUS:GetCoalition()
+
+  local Count = 0
+  local ReturnCoalition = nil
+  
+  for CoalitionID, Coalition in pairs( self.Coalitions ) do
+    Count = Count + 1
+    ReturnCoalition = CoalitionID
+  end
+  
+  if Count ~= 1 then
+    ReturnCoalition = nil
+  end
+  
+  return ReturnCoalition
+end
+
+
+
+--- Searches the zone
+-- @param #ZONE_RADIUS self
+-- @param EvaluateFunction
+function ZONE_RADIUS:SearchZone( EvaluateFunction )
+
+  local SearchZoneResult = true
+
+  local ZoneCoord = self:GetCoordinate()
+  local ZoneRadius = self:GetRadius()
+  
+  self:E({ZoneCoord = ZoneCoord, ZoneRadius = ZoneRadius, ZoneCoordLL = ZoneCoord:ToStringLLDMS()})
+
+  local SphereSearch = {
+    id = world.VolumeType.SPHERE,
+      params = {
+      point = ZoneCoord:GetVec3(),
+      radius = ZoneRadius / 2,
+      }
+    }
+
+  local function EvaluateZone( ZoneDCSUnit )
+  
+    env.info( ZoneDCSUnit:getName() ) 
+  
+    local ZoneUnit = UNIT:Find( ZoneDCSUnit )
+
+    return EvaluateFunction( ZoneUnit )
+  end
+
+  world.searchObjects( Object.Category.UNIT, SphereSearch, EvaluateZone )
+
+end
 
 --- Returns if a location is within the zone.
 -- @param #ZONE_RADIUS self

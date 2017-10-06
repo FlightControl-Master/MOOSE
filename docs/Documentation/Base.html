@@ -60,6 +60,7 @@
 					<li><a href="Escort.html">Escort</a></li>
 					<li><a href="Event.html">Event</a></li>
 					<li><a href="Fsm.html">Fsm</a></li>
+					<li><a href="Goal.html">Goal</a></li>
 					<li><a href="Group.html">Group</a></li>
 					<li><a href="Identifiable.html">Identifiable</a></li>
 					<li><a href="Menu.html">Menu</a></li>
@@ -72,6 +73,7 @@
 					<li><a href="Positionable.html">Positionable</a></li>
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
 					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
+					<li><a href="Protect.html">Protect</a></li>
 					<li><a href="Radio.html">Radio</a></li>
 					<li><a href="Rat.html">Rat</a></li>
 					<li><a href="Route.html">Route</a></li>
@@ -89,6 +91,7 @@
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="Task.html">Task</a></li>
+					<li><a href="TaskZoneCapture.html">TaskZoneCapture</a></li>
 					<li><a href="Task_A2A.html">Task_A2A</a></li>
 					<li><a href="Task_A2A_Dispatcher.html">Task_A2A_Dispatcher</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
@@ -98,6 +101,9 @@
 					<li><a href="Unit.html">Unit</a></li>
 					<li><a href="Utils.html">Utils</a></li>
 					<li><a href="Zone.html">Zone</a></li>
+					<li><a href="ZoneCaptureCoalition.html">ZoneCaptureCoalition</a></li>
+					<li><a href="ZoneGoal.html">ZoneGoal</a></li>
+					<li><a href="ZoneGoalCoalition.html">ZoneGoalCoalition</a></li>
 					<li><a href="env.html">env</a></li>
 					<li><a href="land.html">land</a></li>
 					<li><a href="routines.html">routines</a></li>
@@ -243,7 +249,7 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(BASE).GetParent">BASE:GetParent(Child)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).GetParent">BASE:GetParent(Child, FromClass)</a></td>
 		<td class="summary">
 <p>This is the worker method to retrieve the Parent class.</p>
 </td>
@@ -420,6 +426,30 @@ place: Object that the unit landed on.</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).ScheduleOnce">BASE:ScheduleOnce(Start, SchedulerFunction, ...)</a></td>
+		<td class="summary">
+<p>Schedule a new time event.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).ScheduleRepeat">BASE:ScheduleRepeat(Start, Repeat, RandomizeFactor, Stop, SchedulerFunction, ...)</a></td>
+		<td class="summary">
+<p>Schedule a new time event.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).ScheduleStop">BASE:ScheduleStop(SchedulerFunction)</a></td>
+		<td class="summary">
+<p>Stops the Schedule.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).SchedulerObject">BASE.SchedulerObject</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(BASE).SetEventPriority">BASE:SetEventPriority(EventPriority)</a></td>
 		<td class="summary">
 <p>Set the Class <a href="Event.html">Event</a> processing Priority.</p>
@@ -485,6 +515,12 @@ When Moose is loaded statically, (as one file), tracing is switched off by defau
 		<td class="name" nowrap="nowrap"><a href="##(BASE).UnHandleEvent">BASE:UnHandleEvent(Event)</a></td>
 		<td class="summary">
 <p>UnSubscribe to a DCS event.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BASE)._">BASE._</a></td>
+		<td class="summary">
+
 </td>
 		</tr>
 		<tr>
@@ -1131,7 +1167,7 @@ The <a href="Event.html">Event</a> processing Priority.</p>
 <dt>
 
 <a id="#(BASE).GetParent" >
-<strong>BASE:GetParent(Child)</strong>
+<strong>BASE:GetParent(Child, FromClass)</strong>
 </a>
 </dt>
 <dd>
@@ -1146,12 +1182,17 @@ The <a href="Event.html">Event</a> processing Priority.</p>
 
 </code></pre>
 
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
 <p><code><em><a href="##(BASE)">#BASE</a> Child </em></code>: 
 is the Child class from which the Parent class needs to be retrieved.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> FromClass </em></code>: </p>
 
 				</li>
 		</ul>
@@ -1905,6 +1946,144 @@ The EventData structure.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(BASE).ScheduleOnce" >
+<strong>BASE:ScheduleOnce(Start, SchedulerFunction, ...)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Schedule a new time event.</p>
+
+	
+<p>Note that the schedule will only take place if the scheduler is <em>started</em>. Even for a single schedule event, the scheduler needs to be started also.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number Start </em></code>: 
+Specifies the amount of seconds that will be waited before the scheduling is started, and the event function is called.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#function SchedulerFunction </em></code>: 
+The event function to be called when a timer event occurs. The event function needs to accept the parameters specified in SchedulerArguments.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#table ... </em></code>: 
+Optional arguments that can be given as part of scheduler. The arguments need to be given as a table { param1, param 2, ... }.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#number:</em>
+The ScheduleID of the planned schedule.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(BASE).ScheduleRepeat" >
+<strong>BASE:ScheduleRepeat(Start, Repeat, RandomizeFactor, Stop, SchedulerFunction, ...)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Schedule a new time event.</p>
+
+	
+<p>Note that the schedule will only take place if the scheduler is <em>started</em>. Even for a single schedule event, the scheduler needs to be started also.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number Start </em></code>: 
+Specifies the amount of seconds that will be waited before the scheduling is started, and the event function is called.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Repeat </em></code>: 
+Specifies the interval in seconds when the scheduler will call the event function.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number RandomizeFactor </em></code>: 
+Specifies a randomization factor between 0 and 1 to randomize the Repeat.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Stop </em></code>: 
+Specifies the amount of seconds when the scheduler will be stopped.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#function SchedulerFunction </em></code>: 
+The event function to be called when a timer event occurs. The event function needs to accept the parameters specified in SchedulerArguments.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#table ... </em></code>: 
+Optional arguments that can be given as part of scheduler. The arguments need to be given as a table { param1, param 2, ... }.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#number:</em>
+The ScheduleID of the planned schedule.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(BASE).ScheduleStop" >
+<strong>BASE:ScheduleStop(SchedulerFunction)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Stops the Schedule.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#function SchedulerFunction </em></code>: 
+The event function to be called when a timer event occurs. The event function needs to accept the parameters specified in SchedulerArguments.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(BASE).SchedulerObject" >
+<strong>BASE.SchedulerObject</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(BASE).SetEventPriority" >
 <strong>BASE:SetEventPriority(EventPriority)</strong>
 </a>
@@ -2214,6 +2393,20 @@ BASE:TraceOnOff( false )</code></pre>
 		<dl class="function">
 <dt>
 
+		<em><a href="##(BASE._)">#BASE._</a></em>
+<a id="#(BASE)._" >
+<strong>BASE._</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(BASE)._F" >
 <strong>BASE:_F(Arguments, DebugInfoCurrentParam, DebugInfoFromParam)</strong>
 </a>
@@ -2320,6 +2513,8 @@ A #table or any field.</p>
 </dd>
 </dl>
 
+			<h2><a id="#(BASE._)" >Type <code>BASE._</code></a></h2>
+			
 			<h2><a id="#(BASE.__)" >Type <code>BASE.__</code></a></h2>
 			
 			<h2><a id="#(FORMATION)" >Type <code>FORMATION</code></a></h2>

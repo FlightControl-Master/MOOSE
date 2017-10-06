@@ -710,6 +710,39 @@ function SCORING:_AddMissionTaskScore( Mission, PlayerUnit, Text, Score )
   end
 end
 
+--- Registers Scores the players completing a Mission Task.
+-- @param #SCORING self
+-- @param Tasking.Mission#MISSION Mission
+-- @param #string PlayerName
+-- @param #string Text
+-- @param #number Score
+function SCORING:_AddMissionGoalScore( Mission, PlayerName, Text, Score )
+
+  local MissionName = Mission:GetName()
+
+  self:E( { Mission:GetName(), PlayerName, Text, Score } )
+
+  -- PlayerName can be nil, if the Unit with the player crashed or due to another reason.
+  if PlayerName then 
+    local PlayerData = self.Players[PlayerName]
+  
+    if not PlayerData.Mission[MissionName] then
+      PlayerData.Mission[MissionName] = {}
+      PlayerData.Mission[MissionName].ScoreTask = 0
+      PlayerData.Mission[MissionName].ScoreMission = 0
+    end
+  
+    self:T( PlayerName )
+    self:T( PlayerData.Mission[MissionName] )
+  
+    PlayerData.Score = self.Players[PlayerName].Score + Score
+    PlayerData.Mission[MissionName].ScoreTask = self.Players[PlayerName].Mission[MissionName].ScoreTask + Score
+  
+    MESSAGE:NewType( string.format( "%s%s: %s! Player %s receives %d score!", self.DisplayMessagePrefix, MissionName, Text, PlayerName, Score ), MESSAGE.Type.Information ):ToAll()
+
+    self:ScoreCSV( PlayerName, "", "TASK_" .. MissionName:gsub( ' ', '_' ), 1, Score )
+  end
+end
 
 --- Registers Mission Scores for possible multiple players that contributed in the Mission.
 -- @param #SCORING self
