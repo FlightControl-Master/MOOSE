@@ -1,5 +1,9 @@
 env.info( '*** MOOSE DYNAMIC INCLUDE START *** ' )
+<<<<<<< HEAD
 env.info( 'Moose Generation Timestamp: 20171006_1917' )
+=======
+env.info( 'Moose Generation Timestamp: 20171007_2213' )
+>>>>>>> master
 
 local base = _G
 
