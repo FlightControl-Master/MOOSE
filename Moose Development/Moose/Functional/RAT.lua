@@ -88,6 +88,9 @@
 -- @field #table departure_zones Array containing the names of the departure zones.
 -- @field #table departure_ports Array containing the names of the destination airports.
 -- @field #table destination_ports Array containing the names of the destination airports.
+-- @field #table excluded_ports Array containing the names of explicitly excluded airports.
+-- @field Core.Zone#ZONE departure_Azone Zone containing the departure airports.
+-- @field Core.Zone#ZONE destination_Azone Zone containing the destination airports.
 -- @field #table ratcraft Array with the spawned RAT aircraft.
 -- @field #number Tinactive Time in seconds after which inactive units will be destroyed. Default is 300 seconds.
 -- @field #boolean reportstatus Aircraft report status.
@@ -284,6 +287,8 @@ RAT={
   departure_ports={},       -- Array containing the names of the departure airports.
   destination_ports={},     -- Array containing the names of the destination airports.
   excluded_ports={},        -- Array containing the names of explicitly excluded airports.
+  departure_Azone=nil,      -- Zone containing the departure airports.
+  destination_Azone=nil,    -- Zone containing the destination airports.
   ratcraft={},              -- Array with the spawned RAT aircraft.
   Tinactive=300,            -- Time in seconds after which inactive units will be destroyed. Default is 300 seconds.
   reportstatus=false,       -- Aircraft report status.
@@ -498,6 +503,16 @@ function RAT:Spawn(naircraft)
     self.SubMenuName=self.alias
   end
 
+  -- Get all departure airports inside a Moose zone.  
+  if self.departure_Azone~=nil then
+    self.departure_ports=self:_GetAirportsInZone(self.departure_Azone)
+  end
+  
+  -- Get all destination airports inside a Moose zone.  
+  if self.destination_Azone~=nil then
+    self.destination_ports=self:_GetAirportsInZone(self.destination_Azone)
+  end
+  
   -- debug message
   local text=string.format("\n******************************************************\n")
   text=text..string.format("Spawning %i aircraft from template %s of type %s.\n", self.ngroups, self.SpawnTemplatePrefix, self.aircraft.type)
@@ -607,7 +622,7 @@ end
 --- Set country of RAT group. This overrules the coalition settings.
 -- @param #RAT self
 -- @param #number id DCS country enumerator ID. For example country.id.USA or country.id.RUSSIA.
-function RAT:SetCoalition2(id)
+function RAT:SetCountry(id)
   self.country=id
 end
 
@@ -718,6 +733,28 @@ function RAT:SetDestination(names)
   end
 
 end
+
+--- Include all airports which lie in a zone as possible destinations.
+-- @param #RAT self
+-- @param Core.Zone#ZONE zone Zone in which the airports lie.
+function RAT:SetDestinationsFromZone(zone)
+
+  -- Random departure is deactivated now that user specified departure ports.
+  self.random_destination=false
+  
+  self.destination_Azone=zone
+end
+
+--- Include all airports which lie in a zone as possible destinations.
+-- @param #RAT self
+-- @param Core.Zone#ZONE zone Zone in which the airports lie.
+function RAT:SetDeparturesFromZone(zone)
+  -- Random departure is deactivated now that user specified departure ports.
+  self.random_departure=false
+
+  self.departure_Azone=zone
+end
+
 
 --- Airports, FARPs and ships explicitly excluded as departures and destinations.
 -- @param #RAT self
@@ -1555,7 +1592,7 @@ function RAT:_PickDeparture(takeoff)
       
       -- All airports specified by user  
       for _,name in pairs(self.departure_ports) do
-        if not self:_Excluded(name) then
+        if self:_IsFriendly(name) and not self:_Excluded(name) then
           table.insert(departures, AIRBASE:FindByName(name))
         end
       end
@@ -1591,23 +1628,6 @@ end
 -- @param #boolean _random (Optional) Switch to activate a random selection of airports.
 -- @return Wrapper.Airbase#AIRBASE Destination airport.
 function RAT:_PickDestination(destinations, _random)
-
-  --[[
-  -- Take destinations from user input.   
-  if not (self.random_destination or _random) then
-  
-    destinations=nil
-    destinations={}
-    
-    -- All airports specified by user.
-    for _,name in pairs(self.destination_ports) do
-      if not self:_Excluded(name) then
-        table.insert(destinations, AIRBASE:FindByName(name))
-      end
-    end
-    
-  end
-  ]]
   
   -- Randomly select one possible destination.
   local destination=nil
@@ -1700,6 +1720,23 @@ function RAT:_GetDestinations(departure, q, minrange, maxrange)
   -- Return table with destination airports.
   return possible_destinations
   
+end
+
+--- Find airports within a zone.
+-- @param #RAT self
+-- @param Core.Zone#ZONE zone
+-- @return #list Table with airport names that lie within the zone.
+function RAT:_GetAirportsInZone(zone)
+  local airports={}
+  for _,airport in pairs(self.airports) do
+    local name=airport:GetName()
+    local coord=airport:GetCoordinate()
+    
+    if zone:IsPointVec3InZone(coord) then
+      table.insert(airports, name)
+    end
+  end
+  return airports
 end
 
 --- Check if airport is excluded from possible departures and destinations.
