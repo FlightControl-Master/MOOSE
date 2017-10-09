@@ -1,5 +1,5 @@
 env.info('*** MOOSE STATIC INCLUDE START *** ')
-env.info('Moose Generation Timestamp: 20171006_1228')
+env.info('Moose Generation Timestamp: 20171009_1307')
 env.setErrorMessageBoxEnabled(false)
 routines={}
 routines.majorVersion=3
@@ -12344,7 +12344,7 @@ end
 self.ScoringObjects={}
 self.ScoringZones={}
 self:SetMessagesToAll()
-self:SetMessagesHit(true)
+self:SetMessagesHit(false)
 self:SetMessagesDestroy(true)
 self:SetMessagesScore(true)
 self:SetMessagesZone(true)
@@ -12507,20 +12507,6 @@ self.Players[PlayerName].UnitType=UnitTypeName
 self.Players[PlayerName].UNIT=UnitData
 self.Players[PlayerName].ThreatLevel=UnitThreatLevel
 self.Players[PlayerName].ThreatType=UnitThreatType
-if self.Players[PlayerName].Penalty>self.Fratricide*0.50 then
-if self.Players[PlayerName].PenaltyWarning<1 then
-MESSAGE:NewType(self.DisplayMessagePrefix.."Player '"..PlayerName.."': WARNING! If you continue to commit FRATRICIDE and have a PENALTY score higher than "..self.Fratricide..", you will be COURT MARTIALED and DISMISSED from this mission! \nYour total penalty is: "..self.Players[PlayerName].Penalty,
-MESSAGE.Type.Information
-):ToAll()
-self.Players[PlayerName].PenaltyWarning=self.Players[PlayerName].PenaltyWarning+1
-end
-end
-if self.Players[PlayerName].Penalty>self.Fratricide then
-MESSAGE:NewType(self.DisplayMessagePrefix.."Player '"..PlayerName.."' committed FRATRICIDE, he will be COURT MARTIALED and is DISMISSED from this mission!",
-MESSAGE.Type.Information
-):ToAll()
-UnitData:GetGroup():Destroy()
-end
 end
 end
 function SCORING:AddGoalScore(PlayerUnit,GoalTag,Text,Score)

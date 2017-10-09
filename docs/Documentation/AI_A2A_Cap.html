@@ -112,7 +112,7 @@
 
 <hr/>
 
-<p>AI CAP classes makes AI Controllables execute a Combat Air Patrol.</p>
+<p>AI CAP classes makes AI Groups execute a Combat Air Patrol.</p>
 
    
 
@@ -146,7 +146,7 @@
 		<td class="summary">
 <h1>AI<em>A2A</em>CAP class, extends <a href="AI_CAP.html##(AI_PATROL_ZONE)">AI<em>CAP#AI</em>PATROL_ZONE</a></h1>
 
-<p>The AI<em>A2A</em>CAP class implements the core functions to patrol a <a href="Zone.html">Zone</a> by an AI <a href="Controllable.html">Controllable</a> or <a href="Group.html">Group</a> 
+<p>The AI<em>A2A</em>CAP class implements the core functions to patrol a <a href="Zone.html">Zone</a> by an AI <a href="Group.html">Group</a> or <a href="Group.html">Group</a> 
 and automatically engage any airborne enemies that are within a certain range or within a certain zone.</p>
 </td>
 		</tr>
@@ -172,7 +172,7 @@ and automatically engage any airborne enemies that are within a certain range or
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).AttackRoute">AI_A2A_CAP.AttackRoute(AIGroup, Fsm)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).AttackRoute">AI_A2A_CAP.AttackRoute(AICap, Fsm)</a></td>
 		<td class="summary">
 
 </td>
@@ -232,73 +232,73 @@ and automatically engage any airborne enemies that are within a certain range or
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).New">AI_A2A_CAP:New(AIGroup, PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, EngageMinSpeed, EngageMaxSpeed, PatrolAltType)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).New">AI_A2A_CAP:New(AICap, PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, EngageMinSpeed, EngageMaxSpeed, PatrolAltType)</a></td>
 		<td class="summary">
 <p>Creates a new AI<em>A2A</em>CAP object</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).OnAfterAbort">AI_A2A_CAP:OnAfterAbort(Controllable, From, Event, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).OnAfterAbort">AI_A2A_CAP:OnAfterAbort(AICap, From, Event, To)</a></td>
 		<td class="summary">
 <p>OnAfter Transition Handler for Event Abort.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).OnAfterAccomplish">AI_A2A_CAP:OnAfterAccomplish(Controllable, From, Event, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).OnAfterAccomplish">AI_A2A_CAP:OnAfterAccomplish(AICap, From, Event, To)</a></td>
 		<td class="summary">
 <p>OnAfter Transition Handler for Event Accomplish.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).OnAfterDestroy">AI_A2A_CAP:OnAfterDestroy(Controllable, From, Event, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).OnAfterDestroy">AI_A2A_CAP:OnAfterDestroy(AICap, From, Event, To)</a></td>
 		<td class="summary">
 <p>OnAfter Transition Handler for Event Destroy.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).OnAfterEngage">AI_A2A_CAP:OnAfterEngage(Controllable, From, Event, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).OnAfterEngage">AI_A2A_CAP:OnAfterEngage(AICap, From, Event, To)</a></td>
 		<td class="summary">
 <p>OnAfter Transition Handler for Event Engage.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).OnAfterFired">AI_A2A_CAP:OnAfterFired(Controllable, From, Event, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).OnAfterFired">AI_A2A_CAP:OnAfterFired(AICap, From, Event, To)</a></td>
 		<td class="summary">
 <p>OnAfter Transition Handler for Event Fired.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).OnBeforeAbort">AI_A2A_CAP:OnBeforeAbort(Controllable, From, Event, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).OnBeforeAbort">AI_A2A_CAP:OnBeforeAbort(AICap, From, Event, To)</a></td>
 		<td class="summary">
 <p>OnBefore Transition Handler for Event Abort.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).OnBeforeAccomplish">AI_A2A_CAP:OnBeforeAccomplish(Controllable, From, Event, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).OnBeforeAccomplish">AI_A2A_CAP:OnBeforeAccomplish(AICap, From, Event, To)</a></td>
 		<td class="summary">
 <p>OnBefore Transition Handler for Event Accomplish.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).OnBeforeDestroy">AI_A2A_CAP:OnBeforeDestroy(Controllable, From, Event, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).OnBeforeDestroy">AI_A2A_CAP:OnBeforeDestroy(AICap, From, Event, To)</a></td>
 		<td class="summary">
 <p>OnBefore Transition Handler for Event Destroy.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).OnBeforeEngage">AI_A2A_CAP:OnBeforeEngage(Controllable, From, Event, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).OnBeforeEngage">AI_A2A_CAP:OnBeforeEngage(AICap, From, Event, To)</a></td>
 		<td class="summary">
 <p>OnBefore Transition Handler for Event Engage.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).OnBeforeFired">AI_A2A_CAP:OnBeforeFired(Controllable, From, Event, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).OnBeforeFired">AI_A2A_CAP:OnBeforeFired(AICap, From, Event, To)</a></td>
 		<td class="summary">
 <p>OnBefore Transition Handler for Event Fired.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).OnEnterEngaging">AI_A2A_CAP:OnEnterEngaging(Controllable, From, Event, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).OnEnterEngaging">AI_A2A_CAP:OnEnterEngaging(AICap, From, Event, To)</a></td>
 		<td class="summary">
 <p>OnEnter Transition Handler for State Engaging.</p>
 </td>
@@ -310,13 +310,13 @@ and automatically engage any airborne enemies that are within a certain range or
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).OnLeaveEngaging">AI_A2A_CAP:OnLeaveEngaging(Controllable, From, Event, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).OnLeaveEngaging">AI_A2A_CAP:OnLeaveEngaging(AICap, From, Event, To)</a></td>
 		<td class="summary">
 <p>OnLeave Transition Handler for State Engaging.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).Resume">AI_A2A_CAP.Resume(AIGroup)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).Resume">AI_A2A_CAP.Resume(AICap)</a></td>
 		<td class="summary">
 
 </td>
@@ -364,43 +364,43 @@ and automatically engage any airborne enemies that are within a certain range or
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).onafterAbort">AI_A2A_CAP:onafterAbort(AIGroup, From, Event, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).onafterAbort">AI_A2A_CAP:onafterAbort(AICap, From, Event, To)</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).onafterAccomplish">AI_A2A_CAP:onafterAccomplish(Controllable, From, Event, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).onafterAccomplish">AI_A2A_CAP:onafterAccomplish(AICap, From, Event, To)</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).onafterDestroy">AI_A2A_CAP:onafterDestroy(Controllable, From, Event, To, EventData)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).onafterDestroy">AI_A2A_CAP:onafterDestroy(AICap, From, Event, To, EventData)</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).onafterEngage">AI_A2A_CAP:onafterEngage(AIGroup, From, Event, To, AttackSetUnit)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).onafterEngage">AI_A2A_CAP:onafterEngage(AICap, From, Event, To, AttackSetUnit)</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).onafterPatrol">AI_A2A_CAP:onafterPatrol(AIGroup, From, Event, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).onafterPatrol">AI_A2A_CAP:onafterPatrol(AICap, From, Event, To)</a></td>
 		<td class="summary">
 <p>onafter State Transition for Event Patrol.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).onafterStart">AI_A2A_CAP:onafterStart(AIGroup, From, Event, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).onafterStart">AI_A2A_CAP:onafterStart(AICap, From, Event, To)</a></td>
 		<td class="summary">
 <p>onafter State Transition for Event Patrol.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).onbeforeEngage">AI_A2A_CAP:onbeforeEngage(AIGroup, From, Event, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_A2A_CAP).onbeforeEngage">AI_A2A_CAP:onbeforeEngage(AICap, From, Event, To)</a></td>
 		<td class="summary">
 
 </td>
@@ -420,7 +420,7 @@ and automatically engage any airborne enemies that are within a certain range or
 	
 <h1>AI<em>A2A</em>CAP class, extends <a href="AI_CAP.html##(AI_PATROL_ZONE)">AI<em>CAP#AI</em>PATROL_ZONE</a></h1>
 
-<p>The AI<em>A2A</em>CAP class implements the core functions to patrol a <a href="Zone.html">Zone</a> by an AI <a href="Controllable.html">Controllable</a> or <a href="Group.html">Group</a> 
+<p>The AI<em>A2A</em>CAP class implements the core functions to patrol a <a href="Zone.html">Zone</a> by an AI <a href="Group.html">Group</a> or <a href="Group.html">Group</a> 
 and automatically engage any airborne enemies that are within a certain range or within a certain zone.</p>
 
 	
@@ -560,7 +560,7 @@ Use the method <a href="AI_Cap.html##(AI_A2A_CAP).SetEngageZone">AI<em>Cap#AI</e
 <dt>
 
 <a id="#(AI_A2A_CAP).AttackRoute" >
-<strong>AI_A2A_CAP.AttackRoute(AIGroup, Fsm)</strong>
+<strong>AI_A2A_CAP.AttackRoute(AICap, Fsm)</strong>
 </a>
 </dt>
 <dd>
@@ -571,7 +571,7 @@ Use the method <a href="AI_Cap.html##(AI_A2A_CAP).SetEngageZone">AI<em>Cap#AI</e
 		<ul>
 				<li>
 				
-<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> AIGroup </em></code>: </p>
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> AICap </em></code>: </p>
 
 				</li>
 				<li>
@@ -709,7 +709,7 @@ Use the method <a href="AI_Cap.html##(AI_A2A_CAP).SetEngageZone">AI<em>Cap#AI</e
 <dt>
 
 <a id="#(AI_A2A_CAP).New" >
-<strong>AI_A2A_CAP:New(AIGroup, PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, EngageMinSpeed, EngageMaxSpeed, PatrolAltType)</strong>
+<strong>AI_A2A_CAP:New(AICap, PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, EngageMinSpeed, EngageMaxSpeed, PatrolAltType)</strong>
 </a>
 </dt>
 <dd>
@@ -720,7 +720,7 @@ Use the method <a href="AI_Cap.html##(AI_A2A_CAP).SetEngageZone">AI<em>Cap#AI</e
 		<ul>
 				<li>
 				
-<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> AIGroup </em></code>: </p>
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> AICap </em></code>: </p>
 
 				</li>
 				<li>
@@ -744,25 +744,25 @@ The highest altitude in meters where to execute the patrol.</p>
 				<li>
 				
 <p><code><em><a href="Dcs.DCSTypes.html##(Speed)">Dcs.DCSTypes#Speed</a> PatrolMinSpeed </em></code>: 
-The minimum speed of the <a href="Controllable.html">Controllable</a> in km/h.</p>
+The minimum speed of the <a href="Group.html">Group</a> in km/h.</p>
 
 				</li>
 				<li>
 				
 <p><code><em><a href="Dcs.DCSTypes.html##(Speed)">Dcs.DCSTypes#Speed</a> PatrolMaxSpeed </em></code>: 
-The maximum speed of the <a href="Controllable.html">Controllable</a> in km/h.</p>
+The maximum speed of the <a href="Group.html">Group</a> in km/h.</p>
 
 				</li>
 				<li>
 				
 <p><code><em><a href="Dcs.DCSTypes.html##(Speed)">Dcs.DCSTypes#Speed</a> EngageMinSpeed </em></code>: 
-The minimum speed of the <a href="Controllable.html">Controllable</a> in km/h when engaging a target.</p>
+The minimum speed of the <a href="Group.html">Group</a> in km/h when engaging a target.</p>
 
 				</li>
 				<li>
 				
 <p><code><em><a href="Dcs.DCSTypes.html##(Speed)">Dcs.DCSTypes#Speed</a> EngageMaxSpeed </em></code>: 
-The maximum speed of the <a href="Controllable.html">Controllable</a> in km/h when engaging a target.</p>
+The maximum speed of the <a href="Group.html">Group</a> in km/h when engaging a target.</p>
 
 				</li>
 				<li>
@@ -783,7 +783,7 @@ The altitude type ("RADIO"=="AGL", "BARO"=="ASL"). Defaults to RADIO</p>
 <dt>
 
 <a id="#(AI_A2A_CAP).OnAfterAbort" >
-<strong>AI_A2A_CAP:OnAfterAbort(Controllable, From, Event, To)</strong>
+<strong>AI_A2A_CAP:OnAfterAbort(AICap, From, Event, To)</strong>
 </a>
 </dt>
 <dd>
@@ -794,8 +794,8 @@ The altitude type ("RADIO"=="AGL", "BARO"=="ASL"). Defaults to RADIO</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> Controllable </em></code>: 
-The Controllable Object managed by the FSM.</p>
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> AICap </em></code>: 
+The Group Object managed by the FSM.</p>
 
 				</li>
 				<li>
@@ -823,7 +823,7 @@ The To State string.</p>
 <dt>
 
 <a id="#(AI_A2A_CAP).OnAfterAccomplish" >
-<strong>AI_A2A_CAP:OnAfterAccomplish(Controllable, From, Event, To)</strong>
+<strong>AI_A2A_CAP:OnAfterAccomplish(AICap, From, Event, To)</strong>
 </a>
 </dt>
 <dd>
@@ -834,8 +834,8 @@ The To State string.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> Controllable </em></code>: 
-The Controllable Object managed by the FSM.</p>
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> AICap </em></code>: 
+The Group Object managed by the FSM.</p>
 
 				</li>
 				<li>
@@ -863,7 +863,7 @@ The To State string.</p>
 <dt>
 
 <a id="#(AI_A2A_CAP).OnAfterDestroy" >
-<strong>AI_A2A_CAP:OnAfterDestroy(Controllable, From, Event, To)</strong>
+<strong>AI_A2A_CAP:OnAfterDestroy(AICap, From, Event, To)</strong>
 </a>
 </dt>
 <dd>
@@ -874,8 +874,8 @@ The To State string.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> Controllable </em></code>: 
-The Controllable Object managed by the FSM.</p>
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> AICap </em></code>: 
+The Group Object managed by the FSM.</p>
 
 				</li>
 				<li>
@@ -903,7 +903,7 @@ The To State string.</p>
 <dt>
 
 <a id="#(AI_A2A_CAP).OnAfterEngage" >
-<strong>AI_A2A_CAP:OnAfterEngage(Controllable, From, Event, To)</strong>
+<strong>AI_A2A_CAP:OnAfterEngage(AICap, From, Event, To)</strong>
 </a>
 </dt>
 <dd>
@@ -914,8 +914,8 @@ The To State string.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> Controllable </em></code>: 
-The Controllable Object managed by the FSM.</p>
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> AICap </em></code>: 
+The Group Object managed by the FSM.</p>
 
 				</li>
 				<li>
@@ -943,7 +943,7 @@ The To State string.</p>
 <dt>
 
 <a id="#(AI_A2A_CAP).OnAfterFired" >
-<strong>AI_A2A_CAP:OnAfterFired(Controllable, From, Event, To)</strong>
+<strong>AI_A2A_CAP:OnAfterFired(AICap, From, Event, To)</strong>
 </a>
 </dt>
 <dd>
@@ -954,8 +954,8 @@ The To State string.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> Controllable </em></code>: 
-The Controllable Object managed by the FSM.</p>
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> AICap </em></code>: 
+The Group Object managed by the FSM.</p>
 
 				</li>
 				<li>
@@ -983,7 +983,7 @@ The To State string.</p>
 <dt>
 
 <a id="#(AI_A2A_CAP).OnBeforeAbort" >
-<strong>AI_A2A_CAP:OnBeforeAbort(Controllable, From, Event, To)</strong>
+<strong>AI_A2A_CAP:OnBeforeAbort(AICap, From, Event, To)</strong>
 </a>
 </dt>
 <dd>
@@ -994,8 +994,8 @@ The To State string.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> Controllable </em></code>: 
-The Controllable Object managed by the FSM.</p>
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> AICap </em></code>: 
+The Group Object managed by the FSM.</p>
 
 				</li>
 				<li>
@@ -1028,7 +1028,7 @@ Return false to cancel Transition.</p>
 <dt>
 
 <a id="#(AI_A2A_CAP).OnBeforeAccomplish" >
-<strong>AI_A2A_CAP:OnBeforeAccomplish(Controllable, From, Event, To)</strong>
+<strong>AI_A2A_CAP:OnBeforeAccomplish(AICap, From, Event, To)</strong>
 </a>
 </dt>
 <dd>
@@ -1039,8 +1039,8 @@ Return false to cancel Transition.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> Controllable </em></code>: 
-The Controllable Object managed by the FSM.</p>
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> AICap </em></code>: 
+The Group Object managed by the FSM.</p>
 
 				</li>
 				<li>
@@ -1073,7 +1073,7 @@ Return false to cancel Transition.</p>
 <dt>
 
 <a id="#(AI_A2A_CAP).OnBeforeDestroy" >
-<strong>AI_A2A_CAP:OnBeforeDestroy(Controllable, From, Event, To)</strong>
+<strong>AI_A2A_CAP:OnBeforeDestroy(AICap, From, Event, To)</strong>
 </a>
 </dt>
 <dd>
@@ -1084,8 +1084,8 @@ Return false to cancel Transition.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> Controllable </em></code>: 
-The Controllable Object managed by the FSM.</p>
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> AICap </em></code>: 
+The Group Object managed by the FSM.</p>
 
 				</li>
 				<li>
@@ -1118,7 +1118,7 @@ Return false to cancel Transition.</p>
 <dt>
 
 <a id="#(AI_A2A_CAP).OnBeforeEngage" >
-<strong>AI_A2A_CAP:OnBeforeEngage(Controllable, From, Event, To)</strong>
+<strong>AI_A2A_CAP:OnBeforeEngage(AICap, From, Event, To)</strong>
 </a>
 </dt>
 <dd>
@@ -1129,8 +1129,8 @@ Return false to cancel Transition.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> Controllable </em></code>: 
-The Controllable Object managed by the FSM.</p>
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> AICap </em></code>: 
+The Group Object managed by the FSM.</p>
 
 				</li>
 				<li>
@@ -1163,7 +1163,7 @@ Return false to cancel Transition.</p>
 <dt>
 
 <a id="#(AI_A2A_CAP).OnBeforeFired" >
-<strong>AI_A2A_CAP:OnBeforeFired(Controllable, From, Event, To)</strong>
+<strong>AI_A2A_CAP:OnBeforeFired(AICap, From, Event, To)</strong>
 </a>
 </dt>
 <dd>
@@ -1174,8 +1174,8 @@ Return false to cancel Transition.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> Controllable </em></code>: 
-The Controllable Object managed by the FSM.</p>
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> AICap </em></code>: 
+The Group Object managed by the FSM.</p>
 
 				</li>
 				<li>
@@ -1208,7 +1208,7 @@ Return false to cancel Transition.</p>
 <dt>
 
 <a id="#(AI_A2A_CAP).OnEnterEngaging" >
-<strong>AI_A2A_CAP:OnEnterEngaging(Controllable, From, Event, To)</strong>
+<strong>AI_A2A_CAP:OnEnterEngaging(AICap, From, Event, To)</strong>
 </a>
 </dt>
 <dd>
@@ -1219,8 +1219,8 @@ Return false to cancel Transition.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> Controllable </em></code>: 
-The Controllable Object managed by the FSM.</p>
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> AICap </em></code>: 
+The Group Object managed by the FSM.</p>
 
 				</li>
 				<li>
@@ -1269,7 +1269,7 @@ The To State string.</p>
 <dt>
 
 <a id="#(AI_A2A_CAP).OnLeaveEngaging" >
-<strong>AI_A2A_CAP:OnLeaveEngaging(Controllable, From, Event, To)</strong>
+<strong>AI_A2A_CAP:OnLeaveEngaging(AICap, From, Event, To)</strong>
 </a>
 </dt>
 <dd>
@@ -1280,8 +1280,8 @@ The To State string.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> Controllable </em></code>: 
-The Controllable Object managed by the FSM.</p>
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> AICap </em></code>: 
+The Group Object managed by the FSM.</p>
 
 				</li>
 				<li>
@@ -1314,7 +1314,7 @@ Return false to cancel Transition.</p>
 <dt>
 
 <a id="#(AI_A2A_CAP).Resume" >
-<strong>AI_A2A_CAP.Resume(AIGroup)</strong>
+<strong>AI_A2A_CAP.Resume(AICap)</strong>
 </a>
 </dt>
 <dd>
@@ -1325,7 +1325,7 @@ Return false to cancel Transition.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> AIGroup </em></code>: </p>
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> AICap </em></code>: </p>
 
 				</li>
 		</ul>
@@ -1499,7 +1499,7 @@ The delay in seconds.</p>
 <dt>
 
 <a id="#(AI_A2A_CAP).onafterAbort" >
-<strong>AI_A2A_CAP:onafterAbort(AIGroup, From, Event, To)</strong>
+<strong>AI_A2A_CAP:onafterAbort(AICap, From, Event, To)</strong>
 </a>
 </dt>
 <dd>
@@ -1510,7 +1510,7 @@ The delay in seconds.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> AIGroup </em></code>: 
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> AICap </em></code>: 
 The AI Group managed by the FSM.</p>
 
 				</li>
@@ -1539,7 +1539,7 @@ The To State string.</p>
 <dt>
 
 <a id="#(AI_A2A_CAP).onafterAccomplish" >
-<strong>AI_A2A_CAP:onafterAccomplish(Controllable, From, Event, To)</strong>
+<strong>AI_A2A_CAP:onafterAccomplish(AICap, From, Event, To)</strong>
 </a>
 </dt>
 <dd>
@@ -1550,8 +1550,8 @@ The To State string.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> Controllable </em></code>: 
-The Controllable Object managed by the FSM.</p>
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> AICap </em></code>: 
+The Group Object managed by the FSM.</p>
 
 				</li>
 				<li>
@@ -1579,7 +1579,7 @@ The To State string.</p>
 <dt>
 
 <a id="#(AI_A2A_CAP).onafterDestroy" >
-<strong>AI_A2A_CAP:onafterDestroy(Controllable, From, Event, To, EventData)</strong>
+<strong>AI_A2A_CAP:onafterDestroy(AICap, From, Event, To, EventData)</strong>
 </a>
 </dt>
 <dd>
@@ -1590,8 +1590,8 @@ The To State string.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> Controllable </em></code>: 
-The Controllable Object managed by the FSM.</p>
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> AICap </em></code>: 
+The Group Object managed by the FSM.</p>
 
 				</li>
 				<li>
@@ -1624,7 +1624,7 @@ The To State string.</p>
 <dt>
 
 <a id="#(AI_A2A_CAP).onafterEngage" >
-<strong>AI_A2A_CAP:onafterEngage(AIGroup, From, Event, To, AttackSetUnit)</strong>
+<strong>AI_A2A_CAP:onafterEngage(AICap, From, Event, To, AttackSetUnit)</strong>
 </a>
 </dt>
 <dd>
@@ -1635,8 +1635,8 @@ The To State string.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> AIGroup </em></code>: 
-The Controllable Object managed by the FSM.</p>
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> AICap </em></code>: 
+The AICap Object managed by the FSM.</p>
 
 				</li>
 				<li>
@@ -1669,7 +1669,7 @@ The To State string.</p>
 <dt>
 
 <a id="#(AI_A2A_CAP).onafterPatrol" >
-<strong>AI_A2A_CAP:onafterPatrol(AIGroup, From, Event, To)</strong>
+<strong>AI_A2A_CAP:onafterPatrol(AICap, From, Event, To)</strong>
 </a>
 </dt>
 <dd>
@@ -1680,7 +1680,7 @@ The To State string.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> AIGroup </em></code>: 
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> AICap </em></code>: 
 The AI Group managed by the FSM.</p>
 
 				</li>
@@ -1709,7 +1709,7 @@ The To State string.</p>
 <dt>
 
 <a id="#(AI_A2A_CAP).onafterStart" >
-<strong>AI_A2A_CAP:onafterStart(AIGroup, From, Event, To)</strong>
+<strong>AI_A2A_CAP:onafterStart(AICap, From, Event, To)</strong>
 </a>
 </dt>
 <dd>
@@ -1720,7 +1720,7 @@ The To State string.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> AIGroup </em></code>: 
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> AICap </em></code>: 
 The AI Group managed by the FSM.</p>
 
 				</li>
@@ -1749,7 +1749,7 @@ The To State string.</p>
 <dt>
 
 <a id="#(AI_A2A_CAP).onbeforeEngage" >
-<strong>AI_A2A_CAP:onbeforeEngage(AIGroup, From, Event, To)</strong>
+<strong>AI_A2A_CAP:onbeforeEngage(AICap, From, Event, To)</strong>
 </a>
 </dt>
 <dd>
@@ -1760,8 +1760,8 @@ The To State string.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> AIGroup </em></code>: 
-The Controllable Object managed by the FSM.</p>
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> AICap </em></code>: 
+The Group Object managed by the FSM.</p>
 
 				</li>
 				<li>

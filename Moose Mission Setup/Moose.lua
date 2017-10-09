@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' )
-env.info( 'Moose Generation Timestamp: 20171006_1228' )
+env.info( 'Moose Generation Timestamp: 20171009_1307' )
 
 --- Various routines
 -- @module routines
@@ -25532,7 +25532,9 @@ end
 -- A mission has goals and achievements. The scoring system provides an API to set additional scores when a goal or achievement event happens.
 -- Use the method @{#SCORING.AddGoalScore}() to add a score for a Player at any time in your mission.
 -- 
--- ## 1.5) Configure fratricide level.
+-- ## 1.5) (Decommissioned) Configure fratricide level.
+-- 
+-- **This functionality is decomissioned until the DCS bug concerning Unit:destroy() not being functional in multi player for player units has been fixed by ED**.
 -- 
 -- When a player commits too much damage to friendlies, his penalty score will reach a certain level.
 -- Use the method @{#SCORING.SetFratricide}() to define the level when a player gets kicked.  
@@ -25688,7 +25690,7 @@ function SCORING:New( GameName )
 
   -- Configure Messages
   self:SetMessagesToAll()
-  self:SetMessagesHit( true )
+  self:SetMessagesHit( false )
   self:SetMessagesDestroy( true )
   self:SetMessagesScore( true )
   self:SetMessagesZone( true )
@@ -26046,6 +26048,7 @@ function SCORING:_AddPlayerFromUnit( UnitData )
           UnitName, _SCORINGCoalition[UnitCoalition], _SCORINGCategory[UnitCategory], UnitData:GetTypeName() )
       end
     end
+    
     self.Players[PlayerName].UnitName = UnitName
     self.Players[PlayerName].UnitCoalition = UnitCoalition
     self.Players[PlayerName].UnitCategory = UnitCategory
@@ -26054,6 +26057,8 @@ function SCORING:_AddPlayerFromUnit( UnitData )
     self.Players[PlayerName].ThreatLevel = UnitThreatLevel
     self.Players[PlayerName].ThreatType = UnitThreatType
 
+    -- TODO: DCS bug concerning Units with skill level client don't get destroyed in multi player. This logic is deactivated until this bug gets fixed.
+    --[[
     if self.Players[PlayerName].Penalty > self.Fratricide * 0.50 then
       if self.Players[PlayerName].PenaltyWarning < 1 then
         MESSAGE:NewType( self.DisplayMessagePrefix .. "Player '" .. PlayerName .. "': WARNING! If you continue to commit FRATRICIDE and have a PENALTY score higher than " .. self.Fratricide .. ", you will be COURT MARTIALED and DISMISSED from this mission! \nYour total penalty is: " .. self.Players[PlayerName].Penalty,
@@ -26069,6 +26074,7 @@ function SCORING:_AddPlayerFromUnit( UnitData )
       ):ToAll()
       UnitData:GetGroup():Destroy()
     end
+    --]]
 
   end
 end

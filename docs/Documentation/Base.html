@@ -420,6 +420,30 @@ place: Object that the unit landed on.</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).ScheduleOnce">BASE:ScheduleOnce(Start, SchedulerFunction, ...)</a></td>
+		<td class="summary">
+<p>Schedule a new time event.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).ScheduleRepeat">BASE:ScheduleRepeat(Start, Repeat, RandomizeFactor, Stop, SchedulerFunction, ...)</a></td>
+		<td class="summary">
+<p>Schedule a new time event.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).ScheduleStop">BASE:ScheduleStop(SchedulerFunction)</a></td>
+		<td class="summary">
+<p>Stops the Schedule.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).SchedulerObject">BASE.SchedulerObject</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(BASE).SetEventPriority">BASE:SetEventPriority(EventPriority)</a></td>
 		<td class="summary">
 <p>Set the Class <a href="Event.html">Event</a> processing Priority.</p>
@@ -485,6 +509,12 @@ When Moose is loaded statically, (as one file), tracing is switched off by defau
 		<td class="name" nowrap="nowrap"><a href="##(BASE).UnHandleEvent">BASE:UnHandleEvent(Event)</a></td>
 		<td class="summary">
 <p>UnSubscribe to a DCS event.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BASE)._">BASE._</a></td>
+		<td class="summary">
+
 </td>
 		</tr>
 		<tr>
@@ -1905,6 +1935,144 @@ The EventData structure.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(BASE).ScheduleOnce" >
+<strong>BASE:ScheduleOnce(Start, SchedulerFunction, ...)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Schedule a new time event.</p>
+
+	
+<p>Note that the schedule will only take place if the scheduler is <em>started</em>. Even for a single schedule event, the scheduler needs to be started also.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number Start </em></code>: 
+Specifies the amount of seconds that will be waited before the scheduling is started, and the event function is called.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#function SchedulerFunction </em></code>: 
+The event function to be called when a timer event occurs. The event function needs to accept the parameters specified in SchedulerArguments.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#table ... </em></code>: 
+Optional arguments that can be given as part of scheduler. The arguments need to be given as a table { param1, param 2, ... }.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#number:</em>
+The ScheduleID of the planned schedule.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(BASE).ScheduleRepeat" >
+<strong>BASE:ScheduleRepeat(Start, Repeat, RandomizeFactor, Stop, SchedulerFunction, ...)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Schedule a new time event.</p>
+
+	
+<p>Note that the schedule will only take place if the scheduler is <em>started</em>. Even for a single schedule event, the scheduler needs to be started also.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number Start </em></code>: 
+Specifies the amount of seconds that will be waited before the scheduling is started, and the event function is called.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Repeat </em></code>: 
+Specifies the interval in seconds when the scheduler will call the event function.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number RandomizeFactor </em></code>: 
+Specifies a randomization factor between 0 and 1 to randomize the Repeat.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Stop </em></code>: 
+Specifies the amount of seconds when the scheduler will be stopped.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#function SchedulerFunction </em></code>: 
+The event function to be called when a timer event occurs. The event function needs to accept the parameters specified in SchedulerArguments.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#table ... </em></code>: 
+Optional arguments that can be given as part of scheduler. The arguments need to be given as a table { param1, param 2, ... }.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#number:</em>
+The ScheduleID of the planned schedule.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(BASE).ScheduleStop" >
+<strong>BASE:ScheduleStop(SchedulerFunction)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Stops the Schedule.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#function SchedulerFunction </em></code>: 
+The event function to be called when a timer event occurs. The event function needs to accept the parameters specified in SchedulerArguments.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(BASE).SchedulerObject" >
+<strong>BASE.SchedulerObject</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(BASE).SetEventPriority" >
 <strong>BASE:SetEventPriority(EventPriority)</strong>
 </a>
@@ -2214,6 +2382,20 @@ BASE:TraceOnOff( false )</code></pre>
 		<dl class="function">
 <dt>
 
+		<em><a href="##(BASE._)">#BASE._</a></em>
+<a id="#(BASE)._" >
+<strong>BASE._</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(BASE)._F" >
 <strong>BASE:_F(Arguments, DebugInfoCurrentParam, DebugInfoFromParam)</strong>
 </a>
@@ -2320,6 +2502,8 @@ A #table or any field.</p>
 </dd>
 </dl>
 
+			<h2><a id="#(BASE._)" >Type <code>BASE._</code></a></h2>
+			
 			<h2><a id="#(BASE.__)" >Type <code>BASE.__</code></a></h2>
 			
 			<h2><a id="#(FORMATION)" >Type <code>FORMATION</code></a></h2>
