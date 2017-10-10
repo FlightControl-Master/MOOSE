@@ -100,81 +100,86 @@
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
 					<li><a href="Unit.html">Unit</a></li>
 					<li><a href="UserFlag.html">UserFlag</a></li>
-					<li><a href="UserSound.html">UserSound</a></li>
+					<li>UserSound</li>
 					<li><a href="Utils.html">Utils</a></li>
 					<li><a href="Zone.html">Zone</a></li>
 					<li><a href="ZoneCaptureCoalition.html">ZoneCaptureCoalition</a></li>
 					<li><a href="ZoneGoal.html">ZoneGoal</a></li>
 					<li><a href="ZoneGoalCoalition.html">ZoneGoalCoalition</a></li>
 					<li><a href="env.html">env</a></li>
-					<li>land</li>
+					<li><a href="land.html">land</a></li>
 					<li><a href="routines.html">routines</a></li>
 		</ul>
 	</div>
 	<div id="content">
-   <h1>Module <code>land</code></h1>
+   <h1>Module <code>UserSound</code></h1>
    
+<p><strong>Core (WIP)</strong> -- Manage user sound.</p>
+
+   
+
+<hr/>
+
+<p>Management of DCS User Sound.</p>
+
+<hr/>
+
+<h3>Author: <strong>Sven Van de Velde (FlightControl)</strong></h3>
+
+<hr/>
 
 
 	<h2>Global(s)</h2>
 	<table class="function_list">
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="#land">land</a></td>
+		<td class="name" nowrap="nowrap"><a href="#USERSOUND">USERSOUND</a></td>
 		<td class="summary">
+<h1>USERSOUND class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
 
+<p>Management of DCS User Sound.</p>
 </td>
 		</tr>
 	</table>
-	<h2><a id="#(land)" >Type <code>land</code></a></h2>
-		<table class="function_list">
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(land).SurfaceType">land.SurfaceType</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(land).getHeight">land.getHeight(point)</a></td>
-		<td class="summary">
-<p>Returns altitude MSL of the point.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(land).getSurfaceType">land.getSurfaceType(point)</a></td>
-		<td class="summary">
-<p>returns surface type at the given point.</p>
-</td>
-		</tr>
-	</table>
-
-			<h2><a id="#(land.SurfaceType)">Type <code>land.SurfaceType</code></a></h2>
+			<h2><a id="#(USERSOUND)">Type <code>USERSOUND</code></a></h2>
 				<table class="function_list">
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(land.SurfaceType).LAND">land.SurfaceType.LAND</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(USERSOUND).New">USERSOUND:New(UserSoundFileName)</a></td>
 		<td class="summary">
-
+<p>USERSOUND Constructor.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(land.SurfaceType).ROAD">land.SurfaceType.ROAD</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(USERSOUND).SetFileName">USERSOUND:SetFileName(UserSoundFileName)</a></td>
 		<td class="summary">
-
+<p>Set usersound filename.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(land.SurfaceType).RUNWAY">land.SurfaceType.RUNWAY</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(USERSOUND).ToAll">USERSOUND:ToAll()</a></td>
 		<td class="summary">
-
+<p>Play the usersound to all players.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(land.SurfaceType).SHALLOW_WATER">land.SurfaceType.SHALLOW_WATER</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(USERSOUND).ToCoalition">USERSOUND:ToCoalition(Coalition)</a></td>
 		<td class="summary">
-
+<p>Play the usersound to the given coalition.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(land.SurfaceType).WATER">land.SurfaceType.WATER</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(USERSOUND).ToCountry">USERSOUND:ToCountry(Country)</a></td>
+		<td class="summary">
+<p>Play the usersound to the given country.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(USERSOUND).ToGroup">USERSOUND:ToGroup(Group)</a></td>
+		<td class="summary">
+<p>Play the usersound to the given <a href="Group.html">Group</a>.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(USERSOUND).UserSoundFileName">USERSOUND.UserSoundFileName</a></td>
 		<td class="summary">
 
 </td>
@@ -185,101 +190,55 @@
 		<dl class="function">
 <dt>
 
-		<em><a href="##(land)">#land</a></em>
-<a id="land" >
-<strong>land</strong>
+		<em><a href="##(USERSOUND)">#USERSOUND</a></em>
+<a id="USERSOUND" >
+<strong>USERSOUND</strong>
 </a>
 </dt>
 <dd>
 	
+<h1>USERSOUND class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
 
+<p>Management of DCS User Sound.</p>
 
-</dd>
-</dl>
-	<h2><a id="#(land)" >Type <code>land</code></a></h2>
-		<h3>Field(s)</h3>
-		<dl class="function">
-<dt>
-
-		<em><a href="##(land.SurfaceType)">#land.SurfaceType</a></em>
-<a id="#(land).SurfaceType" >
-<strong>land.SurfaceType</strong>
-</a>
-</dt>
-<dd>
 	
 
+<h2>1. USERSOUND constructor</h2>
+
+<ul>
+    <li><a href="##(USERSOUND).New">USERSOUND.New</a>(): Creates a new USERSOUND object.</li>
+</ul>
+
 
 </dd>
 </dl>
-		<dl class="function">
-<dt>
-
-<a id="#(land).getHeight" >
-<strong>land.getHeight(point)</strong>
-</a>
-</dt>
-<dd>
+	<h2><a id="#(UserSound)" >Type <code>UserSound</code></a></h2>
 	
-<p>Returns altitude MSL of the point.</p>
-
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="##(Vec2)">#Vec2</a> point </em></code>: 
-point on the ground. </p>
-
-				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a>:</em></p>
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(land).getSurfaceType" >
-<strong>land.getSurfaceType(point)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>returns surface type at the given point.</p>
-
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="##(Vec2)">#Vec2</a> point </em></code>: 
-Point on the land. </p>
-
-				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em><a href="##(land.SurfaceType)">#land.SurfaceType</a>:</em></p>
-
-
-</dd>
-</dl>
-
-			<h2><a id="#(Vec2)" >Type <code>Vec2</code></a></h2>
-			
-			<h2><a id="#(land.SurfaceType)" >Type <code>land.SurfaceType</code></a></h2>
+			<h2><a id="#(USERSOUND)" >Type <code>USERSOUND</code></a></h2>
 				<h3>Field(s)</h3>
 		<dl class="function">
 <dt>
 
-<a id="#(land.SurfaceType).LAND" >
-<strong>land.SurfaceType.LAND</strong>
+<a id="#(USERSOUND).New" >
+<strong>USERSOUND:New(UserSoundFileName)</strong>
 </a>
 </dt>
 <dd>
 	
+<p>USERSOUND Constructor.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string UserSoundFileName </em></code>: 
+The filename of the usersound.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(USERSOUND)">#USERSOUND</a>:</em></p>
 
 
 </dd>
@@ -287,47 +246,161 @@ Point on the land. </p>
 		<dl class="function">
 <dt>
 
-<a id="#(land.SurfaceType).ROAD" >
-<strong>land.SurfaceType.ROAD</strong>
+<a id="#(USERSOUND).SetFileName" >
+<strong>USERSOUND:SetFileName(UserSoundFileName)</strong>
 </a>
 </dt>
 <dd>
 	
+<p>Set usersound filename.</p>
 
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string UserSoundFileName </em></code>: 
+The filename of the usersound.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(USERSOUND)">#USERSOUND</a>:</em>
+The usersound instance.</p>
+
+			<h3>Usage:</h3>
+		<pre class="example"><code>  local BlueVictory = USERSOUND:New( "BlueVictory.ogg" )
+  BlueVictory:SetFileName( "BlueVictoryLoud.ogg" ) -- Set the BlueVictory to change the file name to play a louder sound.
+  </code></pre>
 
 </dd>
 </dl>
 		<dl class="function">
 <dt>
 
-<a id="#(land.SurfaceType).RUNWAY" >
-<strong>land.SurfaceType.RUNWAY</strong>
+<a id="#(USERSOUND).ToAll" >
+<strong>USERSOUND:ToAll()</strong>
 </a>
 </dt>
 <dd>
 	
+<p>Play the usersound to all players.</p>
 
+		<h3>Return value</h3>
+				
+<p><em><a href="##(USERSOUND)">#USERSOUND</a>:</em>
+The usersound instance.</p>
+
+			<h3>Usage:</h3>
+		<pre class="example"><code>  local BlueVictory = USERSOUND:New( "BlueVictory.ogg" )
+  BlueVictory:ToAll() -- Play the sound that Blue has won.
+  </code></pre>
 
 </dd>
 </dl>
 		<dl class="function">
 <dt>
 
-<a id="#(land.SurfaceType).SHALLOW_WATER" >
-<strong>land.SurfaceType.SHALLOW_WATER</strong>
+<a id="#(USERSOUND).ToCoalition" >
+<strong>USERSOUND:ToCoalition(Coalition)</strong>
 </a>
 </dt>
 <dd>
 	
+<p>Play the usersound to the given coalition.</p>
 
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Dcs.DCScoalition.html##(coalition)">Dcs.DCScoalition#coalition</a> Coalition </em></code>: 
+The coalition to play the usersound to.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(USERSOUND)">#USERSOUND</a>:</em>
+The usersound instance.</p>
+
+			<h3>Usage:</h3>
+		<pre class="example"><code>  local BlueVictory = USERSOUND:New( "BlueVictory.ogg" )
+  BlueVictory:ToCoalition( coalition.side.BLUE ) -- Play the sound that Blue has won to the blue coalition.
+  </code></pre>
 
 </dd>
 </dl>
 		<dl class="function">
 <dt>
 
-<a id="#(land.SurfaceType).WATER" >
-<strong>land.SurfaceType.WATER</strong>
+<a id="#(USERSOUND).ToCountry" >
+<strong>USERSOUND:ToCountry(Country)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Play the usersound to the given country.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Dcs.DCScountry.html##(country)">Dcs.DCScountry#country</a> Country </em></code>: 
+The country to play the usersound to.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(USERSOUND)">#USERSOUND</a>:</em>
+The usersound instance.</p>
+
+			<h3>Usage:</h3>
+		<pre class="example"><code>  local BlueVictory = USERSOUND:New( "BlueVictory.ogg" )
+  BlueVictory:ToCountry( country.id.USA ) -- Play the sound that Blue has won to the USA country.
+  </code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(USERSOUND).ToGroup" >
+<strong>USERSOUND:ToGroup(Group)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Play the usersound to the given <a href="Group.html">Group</a>.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> Group </em></code>: 
+The <a href="Group.html">Group</a> to play the usersound to.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(USERSOUND)">#USERSOUND</a>:</em>
+The usersound instance.</p>
+
+			<h3>Usage:</h3>
+		<pre class="example"><code>  local BlueVictory = USERSOUND:New( "BlueVictory.ogg" )
+  local PlayerGroup = GROUP:FindByName( "PlayerGroup" ) -- Search for the active group named "PlayerGroup", that contains a human player.
+  BlueVictory:ToGroup( PlayerGroup ) -- Play the sound that Blue has won to the player group.
+  </code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(USERSOUND).UserSoundFileName" >
+<strong>USERSOUND.UserSoundFileName</strong>
 </a>
 </dt>
 <dd>

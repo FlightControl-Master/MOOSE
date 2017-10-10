@@ -99,6 +99,8 @@
 					<li><a href="Task_Cargo.html">Task_Cargo</a></li>
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
 					<li><a href="Unit.html">Unit</a></li>
+					<li><a href="UserFlag.html">UserFlag</a></li>
+					<li><a href="UserSound.html">UserSound</a></li>
 					<li><a href="Utils.html">Utils</a></li>
 					<li><a href="Zone.html">Zone</a></li>
 					<li><a href="ZoneCaptureCoalition.html">ZoneCaptureCoalition</a></li>
@@ -2192,9 +2194,6 @@ The group that was spawned. You can use this group for further actions.</p>
 	
 
 
-	
-<p> Don't repeat the group from Take-Off till Landing and back Take-Off by ReSpawning.</p>
-
 </dd>
 </dl>
 		<dl class="function">
@@ -2769,9 +2768,6 @@ when nothing was spawned.</p>
 	
 
 
-	
-<p> Overwrite unit names by default with group name.</p>
-
 </dd>
 </dl>
 		<dl class="function">
@@ -2785,6 +2781,9 @@ when nothing was spawned.</p>
 <dd>
 	
 
+
+	
+<p> By default, no InitLimit</p>
 
 </dd>
 </dl>
@@ -2821,7 +2820,7 @@ when nothing was spawned.</p>
 		<dl class="function">
 <dt>
 
-		<em></em>
+		<em>#number</em>
 <a id="#(SPAWN).SpawnMaxGroups" >
 <strong>SPAWN.SpawnMaxGroups</strong>
 </a>
@@ -2838,7 +2837,7 @@ when nothing was spawned.</p>
 		<dl class="function">
 <dt>
 
-		<em></em>
+		<em>#number</em>
 <a id="#(SPAWN).SpawnMaxUnitsAlive" >
 <strong>SPAWN.SpawnMaxUnitsAlive</strong>
 </a>
@@ -3190,7 +3189,7 @@ Spawn_BE_KA50 = SPAWN:New( 'BE KA-50@RAMP-Ground Defense' ):Schedule( 600, 0.5 )
 
 
 	
-<p> When the first Spawn executes, all the Groups need to be made visible before start.</p>
+<p> Flag that indicates if all the Groups of the SpawnGroup need to be visible when Spawned.</p>
 
 </dd>
 </dl>

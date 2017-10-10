@@ -99,6 +99,8 @@
 					<li><a href="Task_Cargo.html">Task_Cargo</a></li>
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
 					<li><a href="Unit.html">Unit</a></li>
+					<li><a href="UserFlag.html">UserFlag</a></li>
+					<li><a href="UserSound.html">UserSound</a></li>
 					<li><a href="Utils.html">Utils</a></li>
 					<li><a href="Zone.html">Zone</a></li>
 					<li><a href="ZoneCaptureCoalition.html">ZoneCaptureCoalition</a></li>
@@ -330,15 +332,15 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(RAT).SetCoalition2">RAT:SetCoalition2(id)</a></td>
-		<td class="summary">
-<p>Set country of RAT group.</p>
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(RAT).SetCoalitionAircraft">RAT:SetCoalitionAircraft(color)</a></td>
 		<td class="summary">
 <p>Set coalition of RAT group.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RAT).SetCountry">RAT:SetCountry(id)</a></td>
+		<td class="summary">
+<p>Set country of RAT group.</p>
 </td>
 		</tr>
 		<tr>
@@ -354,6 +356,12 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RAT).SetDeparturesFromZone">RAT:SetDeparturesFromZone(zone)</a></td>
+		<td class="summary">
+<p>Include all airports which lie in a zone as possible destinations.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(RAT).SetDescentAngle">RAT:SetDescentAngle(angle)</a></td>
 		<td class="summary">
 <p>Set the angle of descent.</p>
@@ -363,6 +371,12 @@
 		<td class="name" nowrap="nowrap"><a href="##(RAT).SetDestination">RAT:SetDestination(names)</a></td>
 		<td class="summary">
 <p>Set name of destination airport for the AI aircraft.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RAT).SetDestinationsFromZone">RAT:SetDestinationsFromZone(zone)</a></td>
+		<td class="summary">
+<p>Include all airports which lie in a zone as possible destinations.</p>
 </td>
 		</tr>
 		<tr>
@@ -597,6 +611,12 @@
 		<td class="name" nowrap="nowrap"><a href="##(RAT)._FLmax">RAT:_FLmax(alpha, beta, d, phi, h0)</a></td>
 		<td class="summary">
 <p>Calculate the max flight level for a given distance and fixed climb and descent rates.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RAT)._GetAirportsInZone">RAT:_GetAirportsInZone(zone)</a></td>
+		<td class="summary">
+<p>Find airports within a zone.</p>
 </td>
 		</tr>
 		<tr>
@@ -864,6 +884,12 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RAT).departure_Azone">RAT.departure_Azone</a></td>
+		<td class="summary">
+<p>Zone containing the departure airports.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(RAT).departure_ports">RAT.departure_ports</a></td>
 		<td class="summary">
 <p>Array containing the names of the destination airports.</p>
@@ -876,6 +902,12 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RAT).destination_Azone">RAT.destination_Azone</a></td>
+		<td class="summary">
+<p>Zone containing the destination airports.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(RAT).destination_ports">RAT.destination_ports</a></td>
 		<td class="summary">
 <p>Array containing the names of the destination airports.</p>
@@ -884,7 +916,7 @@
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(RAT).excluded_ports">RAT.excluded_ports</a></td>
 		<td class="summary">
-
+<p>Array containing the names of explicitly excluded airports.</p>
 </td>
 		</tr>
 		<tr>
@@ -1704,31 +1736,6 @@ Default is "same", so aircraft will use airports of the coalition their spawn te
 		<dl class="function">
 <dt>
 
-<a id="#(RAT).SetCoalition2" >
-<strong>RAT:SetCoalition2(id)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Set country of RAT group.</p>
-
-	
-<p>This overrules the coalition settings.</p>
-
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em>#number id </em></code>: 
-DCS country enumerator ID. For example country.id.USA or country.id.RUSSIA.</p>
-
-				</li>
-		</ul>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
 <a id="#(RAT).SetCoalitionAircraft" >
 <strong>RAT:SetCoalitionAircraft(color)</strong>
 </a>
@@ -1746,6 +1753,31 @@ DCS country enumerator ID. For example country.id.USA or country.id.RUSSIA.</p>
 				
 <p><code><em>#string color </em></code>: 
 Color of coalition, i.e. "red" or blue".</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(RAT).SetCountry" >
+<strong>RAT:SetCountry(id)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set country of RAT group.</p>
+
+	
+<p>This overrules the coalition settings.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number id </em></code>: 
+DCS country enumerator ID. For example country.id.USA or country.id.RUSSIA.</p>
 
 				</li>
 		</ul>
@@ -1811,6 +1843,28 @@ Name or table of names of departure airports or zones.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(RAT).SetDeparturesFromZone" >
+<strong>RAT:SetDeparturesFromZone(zone)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Include all airports which lie in a zone as possible destinations.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Zone.html##(ZONE)">Core.Zone#ZONE</a> zone </em></code>: 
+Zone in which the airports lie.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(RAT).SetDescentAngle" >
 <strong>RAT:SetDescentAngle(angle)</strong>
 </a>
@@ -1859,6 +1913,28 @@ Name of the destination airport or table of destination airports.</p>
 			<h3>Usage:</h3>
 		<pre class="example"><code>RAT:SetDestination("Krymsk") makes all aircraft of this RAT oject fly to Krymsk airport.</code></pre>
 
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(RAT).SetDestinationsFromZone" >
+<strong>RAT:SetDestinationsFromZone(zone)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Include all airports which lie in a zone as possible destinations.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Zone.html##(ZONE)">Core.Zone#ZONE</a> zone </em></code>: 
+Zone in which the airports lie.</p>
+
+				</li>
+		</ul>
 </dd>
 </dl>
 		<dl class="function">
@@ -2798,6 +2874,32 @@ Height [m] of departure airport. Note we implicitly assume that the height diffe
 				
 <p><em>#number:</em>
 Maximal flight level in meters.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(RAT)._GetAirportsInZone" >
+<strong>RAT:_GetAirportsInZone(zone)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Find airports within a zone.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Zone.html##(ZONE)">Core.Zone#ZONE</a> zone </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(list)">#list</a>:</em>
+Table with airport names that lie within the zone.</p>
 
 </dd>
 </dl>
@@ -3934,6 +4036,20 @@ Waypoints for DCS task route or spawn template.</p>
 		<dl class="function">
 <dt>
 
+		<em><a href="Core.Zone.html##(ZONE)">Core.Zone#ZONE</a></em>
+<a id="#(RAT).departure_Azone" >
+<strong>RAT.departure_Azone</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Zone containing the departure airports.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 		<em>#table</em>
 <a id="#(RAT).departure_ports" >
 <strong>RAT.departure_ports</strong>
@@ -3962,6 +4078,20 @@ Waypoints for DCS task route or spawn template.</p>
 		<dl class="function">
 <dt>
 
+		<em><a href="Core.Zone.html##(ZONE)">Core.Zone#ZONE</a></em>
+<a id="#(RAT).destination_Azone" >
+<strong>RAT.destination_Azone</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Zone containing the destination airports.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 		<em>#table</em>
 <a id="#(RAT).destination_ports" >
 <strong>RAT.destination_ports</strong>
@@ -3976,14 +4106,14 @@ Waypoints for DCS task route or spawn template.</p>
 		<dl class="function">
 <dt>
 
-		<em></em>
+		<em>#table</em>
 <a id="#(RAT).excluded_ports" >
 <strong>RAT.excluded_ports</strong>
 </a>
 </dt>
 <dd>
 	
-
+<p>Array containing the names of explicitly excluded airports.</p>
 
 </dd>
 </dl>
