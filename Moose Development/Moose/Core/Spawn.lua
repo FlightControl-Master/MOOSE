@@ -275,8 +275,12 @@ SPAWN = {
 -- @extends Wrapper.Group#GROUP.Takeoff
 
 --- @field #SPAWN.Takeoff Takeoff
-SPAWN.Takeoff = GROUP.Takeoff
-
+SPAWN.Takeoff = {
+  Air = 1,
+  Runway = 2,
+  Hot = 3,
+  Cold = 4,
+}
 
 --- @type SPAWN.SpawnZoneTable
 -- @list <Core.Zone#ZONE_BASE> SpawnZone
