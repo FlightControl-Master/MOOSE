@@ -526,7 +526,7 @@ function SPAWN:InitRandomizeTemplate( SpawnTemplatePrefixTable )
 end
 
 
---- Randomize templates to be used as the unit representatives for the Spawned group.
+--- Randomize templates to be used as the unit representatives for the Spawned group, defined using a SET_GROUP object.
 -- This method becomes useful when you need to spawn groups with random templates of groups defined within the mission editor, 
 -- but they will all follow the same Template route and have the same prefix name.
 -- In other words, this method randomizes between a defined set of groups the template to be used for each new spawn of a group.
@@ -548,7 +548,7 @@ end
 -- Spawn_US_Platoon_Left = SPAWN:New( 'US Tank Platoon Left' ):InitLimit( 12, 150 ):Schedule( 200, 0.4 ):InitRandomizeTemplateSet( Spawn_US_PlatoonSet ):InitRandomizeRoute( 3, 3, 2000 )
 -- Spawn_US_Platoon_Middle = SPAWN:New( 'US Tank Platoon Middle' ):InitLimit( 12, 150 ):Schedule( 200, 0.4 ):InitRandomizeTemplateSet( Spawn_US_PlatoonSet ):InitRandomizeRoute( 3, 3, 2000 )
 -- Spawn_US_Platoon_Right = SPAWN:New( 'US Tank Platoon Right' ):InitLimit( 12, 150 ):Schedule( 200, 0.4 ):InitRandomizeTemplateSet( Spawn_US_PlatoonSet ):InitRandomizeRoute( 3, 3, 2000 )
-function SPAWN:InitRandomizeTemplateSet( SpawnTemplateSet )
+function SPAWN:InitRandomizeTemplateSet( SpawnTemplateSet ) -- R2.3
   self:F( { self.SpawnTemplatePrefix } )
 
   self.SpawnTemplatePrefixTable = SpawnTemplateSet:GetSetNames()
@@ -557,6 +557,36 @@ function SPAWN:InitRandomizeTemplateSet( SpawnTemplateSet )
   for SpawnGroupID = 1, self.SpawnMaxGroups do
     self:_RandomizeTemplate( SpawnGroupID )
   end
+  
+  return self
+end
+
+
+--- Randomize templates to be used as the unit representatives for the Spawned group, defined by specifying the prefix names.
+-- This method becomes useful when you need to spawn groups with random templates of groups defined within the mission editor, 
+-- but they will all follow the same Template route and have the same prefix name.
+-- In other words, this method randomizes between a defined set of groups the template to be used for each new spawn of a group.
+-- @param #SPAWN self
+-- @param #string SpawnTemplatePrefixes A string or a list of string that contains the prefixes of the groups that are possible unit representatives of the group to be spawned. 
+-- @return #SPAWN
+-- @usage
+-- -- NATO Tank Platoons invading Gori.
+-- 
+-- -- Choose between different 'US Tank Platoon Templates' configurations to be spawned for the 
+-- -- 'US Tank Platoon Left', 'US Tank Platoon Middle' and 'US Tank Platoon Right' SPAWN objects.
+-- 
+-- -- Each new SPAWN will randomize the route, with a defined time interval of 200 seconds with 40% time variation (randomization) and 
+-- -- with a limit set of maximum 12 Units alive simulteneously  and 150 Groups to be spawned during the whole mission.
+-- 
+-- Spawn_US_Platoon_Left = SPAWN:New( 'US Tank Platoon Left' ):InitLimit( 12, 150 ):Schedule( 200, 0.4 ):InitRandomizeTemplatePrefixes( "US Tank Platoon Templates" ):InitRandomizeRoute( 3, 3, 2000 )
+-- Spawn_US_Platoon_Middle = SPAWN:New( 'US Tank Platoon Middle' ):InitLimit( 12, 150 ):Schedule( 200, 0.4 ):InitRandomizeTemplatePrefixes( "US Tank Platoon Templates" ):InitRandomizeRoute( 3, 3, 2000 )
+-- Spawn_US_Platoon_Right = SPAWN:New( 'US Tank Platoon Right' ):InitLimit( 12, 150 ):Schedule( 200, 0.4 ):InitRandomizeTemplatePrefixes( "US Tank Platoon Templates" ):InitRandomizeRoute( 3, 3, 2000 )
+function SPAWN:InitRandomizeTemplatePrefixes( SpawnTemplatePrefixes ) --R2.3
+  self:F( { self.SpawnTemplatePrefix } )
+
+  local SpawnTemplateSet = SET_GROUP:New():FilterPrefixes( SpawnTemplatePrefixes ):FilterOnce()
+
+  self:InitRandomizeTemplateSet( SpawnTemplateSet )
   
   return self
 end
