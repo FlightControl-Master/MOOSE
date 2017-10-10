@@ -308,11 +308,11 @@ do -- ZoneGoal
     end
     
     if self.Coalition == coalition.side.BLUE then
-      self.MarkBlue = Coord:MarkToCoalitionBlue( "Guard Zone: " .. ZoneName .. "\nStatus: " .. State )  
-      self.MarkRed = Coord:MarkToCoalitionRed( "Capture Zone: " .. ZoneName .. "\nStatus: " .. State )  
+      self.MarkBlue = Coord:MarkToCoalitionBlue( "Coalition: Blue\nGuard Zone: " .. ZoneName .. "\nStatus: " .. State )  
+      self.MarkRed = Coord:MarkToCoalitionRed( "Coalition: Blue\nCapture Zone: " .. ZoneName .. "\nStatus: " .. State )
     else
-      self.MarkRed = Coord:MarkToCoalitionRed( "Guard Zone: " .. ZoneName .. "\nStatus: " .. State )  
-      self.MarkBlue = Coord:MarkToCoalitionBlue( "Capture Zone: " .. ZoneName .. "\nStatus: " .. State )  
+      self.MarkRed = Coord:MarkToCoalitionRed( "Coalition: Red\nGuard Zone: " .. ZoneName .. "\nStatus: " .. State )  
+      self.MarkBlue = Coord:MarkToCoalitionBlue( "Coalition: Red\nCapture Zone: " .. ZoneName .. "\nStatus: " .. State )  
     end
   end
 
@@ -336,7 +336,7 @@ do -- ZoneGoal
   
     --self:GetParent( self ):onenterCaptured()
 
-    local NewCoalition = self.Zone:GetCoalition()
+    local NewCoalition = self.Zone:GetScannedCoalition()
     self:E( { NewCoalition = NewCoalition } )
     self:SetCoalition( NewCoalition )
   

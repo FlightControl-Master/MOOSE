@@ -113,6 +113,38 @@ function SET_BASE:GetSet()
   return self.Set
 end
 
+--- Gets a list of the Names of the Objects in the Set.
+-- @param #SET_BASE self
+-- @return #SET_BASE self
+function SET_BASE:GetSetNames()  -- R2.3
+  self:F2()
+  
+  local Names = {}
+  
+  for Name, Object in pairs( self.Set ) do
+    table.insert( Names, Name )
+  end
+  
+  return Names
+end
+
+
+--- Gets a list of the Objects in the Set.
+-- @param #SET_BASE self
+-- @return #SET_BASE self
+function SET_BASE:GetSetObjects()  -- R2.3
+  self:F2()
+  
+  local Objects = {}
+  
+  for Name, Object in pairs( self.Set ) do
+    table.insert( Objects, Object )
+  end
+  
+  return Objects
+end
+
+
 --- Adds a @{Base#BASE} object in the @{Set#SET_BASE}, using a given ObjectName as the index.
 -- @param #SET_BASE self
 -- @param #string ObjectName
