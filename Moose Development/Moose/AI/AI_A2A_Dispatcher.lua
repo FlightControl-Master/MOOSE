@@ -2610,7 +2610,7 @@ do -- AI_A2A_DISPATCHER
     
       if Cap then
     
-        local Spawn = DefenderSquadron.Spawn[ math.random( 1, #DefenderSquadron.Spawn ) ] -- Functional.Spawn#SPAWN
+        local Spawn = DefenderSquadron.Spawn[ math.random( 1, #DefenderSquadron.Spawn ) ] -- Core.Spawn#SPAWN
         local DefenderGrouping = DefenderSquadron.Grouping or self.DefenderDefault.Grouping
         Spawn:InitGrouping( DefenderGrouping )
 
@@ -2783,7 +2783,7 @@ do -- AI_A2A_DISPATCHER
               
               while ( DefendersNeeded > 0 ) do
             
-                local Spawn = DefenderSquadron.Spawn[ math.random( 1, #DefenderSquadron.Spawn ) ] -- Functional.Spawn#SPAWN
+                local Spawn = DefenderSquadron.Spawn[ math.random( 1, #DefenderSquadron.Spawn ) ] -- Core.Spawn#SPAWN
                 local DefenderGrouping = ( DefenderGrouping < DefendersNeeded ) and DefenderGrouping or DefendersNeeded
                 if DefenderGrouping then
                   Spawn:InitGrouping( DefenderGrouping )

@@ -17,6 +17,7 @@ Core/Point.lua
 Core/Message.lua
 Core/Fsm.lua
 Core/Radio.lua
+Core/Spawn.lua
 Core/SpawnStatic.lua
 Core/Goal.lua
 Core/Cargo.lua
@@ -35,7 +36,6 @@ Wrapper/Scenery.lua
 
 Functional/Scoring.lua
 Functional/CleanUp.lua
-Functional/Spawn.lua
 Functional/Movement.lua
 Functional/Sead.lua
 Functional/Escort.lua

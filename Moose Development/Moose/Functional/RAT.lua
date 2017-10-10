@@ -112,7 +112,7 @@
 -- @field #string livery Livery of the aircraft set by user.
 -- @field #string skill Skill of AI.
 -- @field #boolean ATCswitch Enable/disable ATC if set to true/false. 
--- @extends Functional.Spawn#SPAWN
+-- @extends Core.Spawn#SPAWN
 
 ---# RAT class, extends @{Spawn#SPAWN}
 -- The RAT class implements an easy to use way to randomly fill your map with AI aircraft.
