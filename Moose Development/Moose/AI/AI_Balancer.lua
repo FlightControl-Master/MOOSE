@@ -33,7 +33,7 @@
 
 --- @type AI_BALANCER
 -- @field Core.Set#SET_CLIENT SetClient
--- @field Functional.Spawn#SPAWN SpawnAI
+-- @field Core.Spawn#SPAWN SpawnAI
 -- @field Wrapper.Group#GROUP Test
 -- @extends Core.Fsm#FSM_SET
 
@@ -106,7 +106,7 @@ AI_BALANCER = {
 --- Creates a new AI_BALANCER object
 -- @param #AI_BALANCER self
 -- @param Core.Set#SET_CLIENT SetClient A SET\_CLIENT object that will contain the CLIENT objects to be monitored if they are alive or not (joined by a player).
--- @param Functional.Spawn#SPAWN SpawnAI The default Spawn object to spawn new AI Groups when needed.
+-- @param Core.Spawn#SPAWN SpawnAI The default Spawn object to spawn new AI Groups when needed.
 -- @return #AI_BALANCER
 function AI_BALANCER:New( SetClient, SpawnAI )
   

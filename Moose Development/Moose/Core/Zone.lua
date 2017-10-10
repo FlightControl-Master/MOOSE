@@ -1354,13 +1354,32 @@ ZONE_POLYGON = {
   ClassName="ZONE_POLYGON",
   }
 
---- Constructor to create a ZONE_POLYGON instance, taking the zone name and the name of the @{Group#GROUP} defined within the Mission Editor.
+--- Constructor to create a ZONE_POLYGON instance, taking the zone name and the @{Group#GROUP} defined within the Mission Editor.
 -- The @{Group#GROUP} waypoints define the polygon corners. The first and the last point are automatically connected by ZONE_POLYGON.
 -- @param #ZONE_POLYGON self
 -- @param #string ZoneName Name of the zone.
 -- @param Wrapper.Group#GROUP ZoneGroup The GROUP waypoints as defined within the Mission Editor define the polygon shape.
 -- @return #ZONE_POLYGON self
 function ZONE_POLYGON:New( ZoneName, ZoneGroup )
+
+  local GroupPoints = ZoneGroup:GetTaskRoute()
+
+  local self = BASE:Inherit( self, ZONE_POLYGON_BASE:New( ZoneName, GroupPoints ) )
+  self:F( { ZoneName, ZoneGroup, self._.Polygon } )
+
+  return self
+end
+
+
+--- Constructor to create a ZONE_POLYGON instance, taking the zone name and the **name** of the @{Group#GROUP} defined within the Mission Editor.
+-- The @{Group#GROUP} waypoints define the polygon corners. The first and the last point are automatically connected by ZONE_POLYGON.
+-- @param #ZONE_POLYGON self
+-- @param #string ZoneName Name of the zone.
+-- @param #string GroupName The group name of the GROUP defining the waypoints within the Mission Editor to define the polygon shape.
+-- @return #ZONE_POLYGON self
+function ZONE_POLYGON:NewFromGroupName( ZoneName, GroupName )
+
+  local ZoneGroup = GROUP:FindByName( GroupName )
 
   local GroupPoints = ZoneGroup:GetTaskRoute()
 

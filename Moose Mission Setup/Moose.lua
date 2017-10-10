@@ -1,5 +1,5 @@
 env.info( '*** MOOSE DYNAMIC INCLUDE START *** ' )
-env.info( 'Moose Generation Timestamp: 20171010_1107' )
+env.info( 'Moose Generation Timestamp: 20171010_2132' )
 
 local base = _G
 
@@ -39,6 +39,7 @@ __Moose.Include( 'Core/Point.lua' )
 __Moose.Include( 'Core/Message.lua' )
 __Moose.Include( 'Core/Fsm.lua' )
 __Moose.Include( 'Core/Radio.lua' )
+__Moose.Include( 'Core/Spawn.lua' )
 __Moose.Include( 'Core/SpawnStatic.lua' )
 __Moose.Include( 'Core/Goal.lua' )
 __Moose.Include( 'Core/Cargo.lua' )
@@ -55,7 +56,6 @@ __Moose.Include( 'Wrapper/Airbase.lua' )
 __Moose.Include( 'Wrapper/Scenery.lua' )
 __Moose.Include( 'Functional/Scoring.lua' )
 __Moose.Include( 'Functional/CleanUp.lua' )
-__Moose.Include( 'Functional/Spawn.lua' )
 __Moose.Include( 'Functional/Movement.lua' )
 __Moose.Include( 'Functional/Sead.lua' )
 __Moose.Include( 'Functional/Escort.lua' )
