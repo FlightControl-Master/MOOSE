@@ -634,8 +634,31 @@ function ZONE_RADIUS:CountScannedCoalitions()
 end
 
 
+--- Get Coalitions of the units in the Zone, or Check if there are units of the given Coalition in the Zone.
+-- Returns nil if there are none ot two Coalitions in the zone!
+-- Returns one Coalition if there are only Units of one Coalition in the Zone.
+-- Returns the Coalition for the given Coalition if there are units of the Coalition in the Zone
+-- @param #ZONE_RADIUS self
+-- @return #table
 function ZONE_RADIUS:GetScannedCoalition( Coalition )
-  return self.ScanData.Coalitions[Coalition]
+
+  if Coalition then
+    return self.ScanData.Coalitions[Coalition]
+  else
+    local Count = 0
+    local ReturnCoalition = nil
+    
+    for CoalitionID, Coalition in pairs( self.ScanData.Coalitions ) do
+      Count = Count + 1
+      ReturnCoalition = CoalitionID
+    end
+    
+    if Count ~= 1 then
+      ReturnCoalition = nil
+    end
+    
+    return ReturnCoalition
+  end
 end
 
 
@@ -699,26 +722,6 @@ function ZONE_RADIUS:IsNoneInZone()
 end
 
 
---- Get the Zone Coalitions.
--- Returns nil if there are none ot two coalitions in the zone!
--- @param #ZONE_RADIUS self
--- @return Coalitions
-function ZONE_RADIUS:GetCoalition()
-
-  local Count = 0
-  local ReturnCoalition = nil
-  
-  for CoalitionID, Coalition in pairs( self.Coalitions ) do
-    Count = Count + 1
-    ReturnCoalition = CoalitionID
-  end
-  
-  if Count ~= 1 then
-    ReturnCoalition = nil
-  end
-  
-  return ReturnCoalition
-end
 
 
 --- Searches the zone

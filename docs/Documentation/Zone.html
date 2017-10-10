@@ -99,6 +99,8 @@
 					<li><a href="Task_Cargo.html">Task_Cargo</a></li>
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
 					<li><a href="Unit.html">Unit</a></li>
+					<li><a href="UserFlag.html">UserFlag</a></li>
+					<li><a href="UserSound.html">UserSound</a></li>
 					<li><a href="Utils.html">Utils</a></li>
 					<li>Zone</li>
 					<li><a href="ZoneCaptureCoalition.html">ZoneCaptureCoalition</a></li>
@@ -513,13 +515,7 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).Coalitions">ZONE_RADIUS.Coalitions</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).CountCoalitions">ZONE_RADIUS:CountCoalitions()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).CountScannedCoalitions">ZONE_RADIUS:CountScannedCoalitions()</a></td>
 		<td class="summary">
 
 </td>
@@ -528,12 +524,6 @@
 		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).FlareZone">ZONE_RADIUS:FlareZone(FlareColor, Points, Azimuth)</a></td>
 		<td class="summary">
 <p>Flares the zone boundaries in a color.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).GetCoalition">ZONE_RADIUS:GetCoalition()</a></td>
-		<td class="summary">
-<p>Get the Zone Coalitions.</p>
 </td>
 		</tr>
 		<tr>
@@ -564,6 +554,24 @@
 		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).GetRandomVec2">ZONE_RADIUS:GetRandomVec2(inner, outer)</a></td>
 		<td class="summary">
 <p>Returns a random Vec2 location within the zone.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).GetScannedCoalition">ZONE_RADIUS:GetScannedCoalition(Coalition)</a></td>
+		<td class="summary">
+<p>Get Coalitions of the units in the Zone, or Check if there are units of the given Coalition in the Zone.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).GetScannedScenery">ZONE_RADIUS:GetScannedScenery()</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).GetScannedSceneryType">ZONE_RADIUS:GetScannedSceneryType(SceneryType)</a></td>
+		<td class="summary">
+
 </td>
 		</tr>
 		<tr>
@@ -633,13 +641,19 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).Scan">ZONE_RADIUS:Scan(Coalition)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).Scan">ZONE_RADIUS:Scan(ObjectCategories, Coalition)</a></td>
 		<td class="summary">
 <p>Scan the zone</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).SearchZone">ZONE_RADIUS:SearchZone(EvaluateFunction)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).ScanData">ZONE_RADIUS.ScanData</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).SearchZone">ZONE_RADIUS:SearchZone(ObjectCategories, EvaluateFunction)</a></td>
 		<td class="summary">
 <p>Searches the zone</p>
 </td>
@@ -1992,22 +2006,8 @@ self</p>
 		<dl class="function">
 <dt>
 
-		<em></em>
-<a id="#(ZONE_RADIUS).Coalitions" >
-<strong>ZONE_RADIUS.Coalitions</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(ZONE_RADIUS).CountCoalitions" >
-<strong>ZONE_RADIUS:CountCoalitions()</strong>
+<a id="#(ZONE_RADIUS).CountScannedCoalitions" >
+<strong>ZONE_RADIUS:CountScannedCoalitions()</strong>
 </a>
 </dt>
 <dd>
@@ -2052,27 +2052,6 @@ The flare color.</p>
 				
 <p><em><a href="##(ZONE_RADIUS)">#ZONE_RADIUS</a>:</em>
 self</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(ZONE_RADIUS).GetCoalition" >
-<strong>ZONE_RADIUS:GetCoalition()</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Get the Zone Coalitions.</p>
-
-	
-<p>Returns nil if there are none ot two coalitions in the zone!</p>
-
-		<h3>Return value</h3>
-				
-
-<p>Coalitions</p>
 
 </dd>
 </dl>
@@ -2224,6 +2203,71 @@ The <a href="Point.html##(POINT_VEC3)">Point#POINT_VEC3</a> object reflecting th
 <p><em><a href="Dcs.DCSTypes.html##(Vec2)">Dcs.DCSTypes#Vec2</a>:</em>
 The random location within the zone.</p>
 
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_RADIUS).GetScannedCoalition" >
+<strong>ZONE_RADIUS:GetScannedCoalition(Coalition)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Get Coalitions of the units in the Zone, or Check if there are units of the given Coalition in the Zone.</p>
+
+	
+<p>Returns nil if there are none ot two Coalitions in the zone!
+Returns one Coalition if there are only Units of one Coalition in the Zone.
+Returns the Coalition for the given Coalition if there are units of the Coalition in the Zone</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> Coalition </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#table:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_RADIUS).GetScannedScenery" >
+<strong>ZONE_RADIUS:GetScannedScenery()</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_RADIUS).GetScannedSceneryType" >
+<strong>ZONE_RADIUS:GetScannedSceneryType(SceneryType)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> SceneryType </em></code>: </p>
+
+				</li>
+		</ul>
 </dd>
 </dl>
 		<dl class="function">
@@ -2504,15 +2548,20 @@ self</p>
 <dt>
 
 <a id="#(ZONE_RADIUS).Scan" >
-<strong>ZONE_RADIUS:Scan(Coalition)</strong>
+<strong>ZONE_RADIUS:Scan(ObjectCategories, Coalition)</strong>
 </a>
 </dt>
 <dd>
 	
 <p>Scan the zone</p>
 
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
+				<li>
+				
+<p><code><em> ObjectCategories </em></code>: </p>
+
+				</li>
 				<li>
 				
 <p><code><em> Coalition </em></code>: </p>
@@ -2524,16 +2573,36 @@ self</p>
 		<dl class="function">
 <dt>
 
+		<em></em>
+<a id="#(ZONE_RADIUS).ScanData" >
+<strong>ZONE_RADIUS.ScanData</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(ZONE_RADIUS).SearchZone" >
-<strong>ZONE_RADIUS:SearchZone(EvaluateFunction)</strong>
+<strong>ZONE_RADIUS:SearchZone(ObjectCategories, EvaluateFunction)</strong>
 </a>
 </dt>
 <dd>
 	
 <p>Searches the zone</p>
 
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
+				<li>
+				
+<p><code><em> ObjectCategories </em></code>: 
+A list of categories, which are members of Object.Category</p>
+
+				</li>
 				<li>
 				
 <p><code><em> EvaluateFunction </em></code>: </p>

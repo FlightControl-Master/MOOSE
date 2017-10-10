@@ -99,6 +99,8 @@
 					<li><a href="Task_Cargo.html">Task_Cargo</a></li>
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
 					<li><a href="Unit.html">Unit</a></li>
+					<li><a href="UserFlag.html">UserFlag</a></li>
+					<li><a href="UserSound.html">UserSound</a></li>
 					<li><a href="Utils.html">Utils</a></li>
 					<li><a href="Zone.html">Zone</a></li>
 					<li><a href="ZoneCaptureCoalition.html">ZoneCaptureCoalition</a></li>
@@ -175,6 +177,12 @@
 		<td class="name" nowrap="nowrap"><a href="##(SPAWNSTATIC).NewFromType">SPAWNSTATIC:NewFromType(SpawnTypeName, SpawnShapeName, SpawnCategory, CountryID)</a></td>
 		<td class="summary">
 <p>Creates the main object to spawn a <a href="Static.html">Static</a> based on a type name.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWNSTATIC).Spawn">SPAWNSTATIC:Spawn(Heading, (, NewName)</a></td>
+		<td class="summary">
+<p>Creates a new <a href="Static.html">Static</a> at the original position.</p>
 </td>
 		</tr>
 		<tr>
@@ -342,6 +350,44 @@ is the name of the type.</p>
 				<li>
 				
 <p><code><em> CountryID </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SPAWNSTATIC)">#SPAWNSTATIC</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SPAWNSTATIC).Spawn" >
+<strong>SPAWNSTATIC:Spawn(Heading, (, NewName)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Creates a new <a href="Static.html">Static</a> at the original position.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number Heading </em></code>: 
+The heading of the static, which is a number in degrees from 0 to 360.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string ( </em></code>: 
+ptional) The name of the new static.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> NewName </em></code>: </p>
 
 				</li>
 		</ul>

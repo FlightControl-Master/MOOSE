@@ -265,7 +265,7 @@ function MESSAGE:ToCoalition( CoalitionSide, Settings )
 	if CoalitionSide then
     if self.MessageDuration ~= 0 then
   		self:T( self.MessageCategory .. self.MessageText:gsub("\n$",""):gsub("\n$","") .. " / " .. self.MessageDuration )
-  		trigger.action.outTextForCoalition( CoalitionSide, self.MessageCategory .. self.MessageText:gsub("\n$",""):gsub("\n$",""), self.MessageDuration )
+  		trigger.action.outTextForCoalition( CoalitionSide, self.MessageText:gsub("\n$",""):gsub("\n$",""), self.MessageDuration )
     end
 	end
 	

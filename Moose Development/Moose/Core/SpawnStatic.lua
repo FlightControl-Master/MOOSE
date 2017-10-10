@@ -116,6 +116,33 @@ function SPAWNSTATIC:NewFromType( SpawnTypeName, SpawnShapeName, SpawnCategory, 
   return self
 end
 
+--- Creates a new @{Static} at the original position.
+-- @param #SPAWNSTATIC self
+-- @param #number Heading The heading of the static, which is a number in degrees from 0 to 360.
+-- @param #string (optional) The name of the new static.
+-- @return #SPAWNSTATIC
+function SPAWNSTATIC:Spawn( Heading, NewName ) --R2.3
+  self:F( { Heading, NewName  } )
+  
+  local CountryName = _DATABASE.COUNTRY_NAME[self.CountryID]
+  
+  local StaticTemplate = _DATABASE:GetStaticUnitTemplate( self.SpawnTemplatePrefix )
+  
+  StaticTemplate.name = NewName or string.format("%s#%05d", self.SpawnTemplatePrefix, self.SpawnIndex )
+  StaticTemplate.heading = ( Heading / 180 ) * math.pi
+  
+  StaticTemplate.CountryID = nil
+  StaticTemplate.CoalitionID = nil
+  StaticTemplate.CategoryID = nil
+  
+  local Static = coalition.addStaticObject( self.CountryID, StaticTemplate )
+  
+  self.SpawnIndex = self.SpawnIndex + 1
+
+  return Static
+end
+
+
 
 --- Creates a new @{Static} from a POINT_VEC2.
 -- @param #SPAWNSTATIC self

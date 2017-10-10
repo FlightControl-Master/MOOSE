@@ -651,6 +651,36 @@ end
 
 
 --- Add a goal score for a player.
+-- The method takes the Player name for which the Goal score needs to be set.
+-- The GoalTag is a string or identifier that is taken into the CSV file scoring log to identify the goal.
+-- A free text can be given that is shown to the players.
+-- The Score can be both positive and negative.
+-- @param #SCORING self
+-- @param #string PlayerName The name of the Player.
+-- @param #string GoalTag The string or identifier that is used in the CSV file to identify the goal (sort or group later in Excel).
+-- @param #string Text A free text that is shown to the players.
+-- @param #number Score The score can be both positive or negative ( Penalty ).
+function SCORING:AddGoalScorePlayer( PlayerName, GoalTag, Text, Score )
+
+  self:E( { PlayerName, PlayerName, GoalTag, Text, Score } )
+
+  -- PlayerName can be nil, if the Unit with the player crashed or due to another reason.
+  if PlayerName then 
+    local PlayerData = self.Players[PlayerName]
+
+    PlayerData.Goals[GoalTag] = PlayerData.Goals[GoalTag] or { Score = 0 }
+    PlayerData.Goals[GoalTag].Score = PlayerData.Goals[GoalTag].Score + Score  
+    PlayerData.Score = PlayerData.Score + Score
+  
+    MESSAGE:NewType( self.DisplayMessagePrefix .. Text, MESSAGE.Type.Information ):ToAll()
+  
+    self:ScoreCSV( PlayerName, "", "GOAL_" .. string.upper( GoalTag ), 1, Score, nil )
+  end
+end
+
+
+
+--- Add a goal score for a player.
 -- The method takes the PlayerUnit for which the Goal score needs to be set.
 -- The GoalTag is a string or identifier that is taken into the CSV file scoring log to identify the goal.
 -- A free text can be given that is shown to the players.

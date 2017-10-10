@@ -1,5 +1,5 @@
 env.info('*** MOOSE DYNAMIC INCLUDE START *** ')
-env.info('Moose Generation Timestamp: 20171009_1446')
+env.info('Moose Generation Timestamp: 20171010_1107')
 local base=_G
 __Moose={}
 __Moose.Include=function(IncludeFile)
@@ -19,6 +19,8 @@ __Moose.Includes={}
 __Moose.Include('Utilities/Routines.lua')
 __Moose.Include('Utilities/Utils.lua')
 __Moose.Include('Core/Base.lua')
+__Moose.Include('Core/UserFlag.lua')
+__Moose.Include('Core/UserSound.lua')
 __Moose.Include('Core/Report.lua')
 __Moose.Include('Core/Scheduler.lua')
 __Moose.Include('Core/ScheduleDispatcher.lua')
