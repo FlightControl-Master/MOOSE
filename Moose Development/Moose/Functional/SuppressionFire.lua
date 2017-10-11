@@ -26,9 +26,10 @@
 -- ### Contributions: **Sven van de Velde ([FlightControl](https://forums.eagle.ru/member.php?u=89536))**
 -- 
 -- ====
--- @module AI_Suppression
+-- @module ai_suppression
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 --- AI_Suppression class
 -- @type AI_Suppression
 -- @field #string ClassName Name of the class.
@@ -48,7 +49,7 @@
 -- 
 -- ## Some Example...
 -- 
--- @field AI_Suppression
+-- @field #AI_Suppression
 AI_Suppression={
   ClassName = "AI_Suppression",
   Tsuppress_min = 5,
@@ -66,7 +67,7 @@ AI_Suppression.id="SFX | "
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---TODO: Figure out who was shooting and move away from him <== not possible.
+--TODO: Figure out who was shooting and move away from him <== Not possible!
 --TODO: Move behind a scenery building if there is one nearby.
 --TODO: Retreat to a given zone or point.
 
@@ -77,9 +78,16 @@ AI_Suppression.id="SFX | "
 -- @param Wrapper.Group#GROUP Group The GROUP object for which suppression should be applied.
 -- @return #AI_Suppression
 function AI_Suppression:New(Group)
-  env.info("Suppression fire for group "..Group:GetName())
+
+  -- Check that group is present.
+  if Group then
+    env.info("Suppression fire for group "..Group:GetName())
+  else
+    env.info("Suppression fire: Group does not exist!")
+    return nil
+  end
   
-  -- Check that we actually have a ground group.
+  -- Check that we actually have a GROUND group.
   if Group:IsGround()==false then
     env.error("Suppression fire group "..Group:GetName().." has to be a GROUND group!")
     return nil
@@ -104,7 +112,7 @@ function AI_Suppression:New(Group)
   self:AddTransition("Suppressed", "Recovered", "CombatReady")
   
   -- Transition from "Suppressed" to "TakeCover" after event "Hit".
-  --self:AddTransition("Suppressed", "Hit", "TakeCover")
+  --self:AddTransition("Suppressed", "TakeCover", "Hiding")
   
   -- Transition from anything to "Retreating" after e.g. being severely damaged.
   self:AddTransition("*", "Retreat", "Retreating")
@@ -149,27 +157,29 @@ end
 
 --- Before "Hit" event. (Of course, this is not really before the group got hit.)
 -- @param #AI_Suppression self
-function AI_Suppression:OnBeforeHit(From, Event, To)
-  env.info(AI_Suppression.id..string.format("OnBeforeHit: From %s, Event %s, To %s", From, Event, To))
+function AI_Suppression:OnBeforeHit(Controlable, From, Event, To)
+  env.info(AI_Suppression.id..string.format("OnBeforeHit: %s event %s from %s to %s", Controlable:GetName(), Event, From, To))
+  
   -- Increase Hit counter.
   self.Nhit=self.Nhit+1
+  
+  -- Info on hit times.
   env.info(AI_Suppression.id..string.format("Group has just been hit %d times.", self.Nhit))
 end
 
 --- After "Hit" event.
 -- @param #AI_Suppression self
-function AI_Suppression:OnAfterHit(From, Event, To)
-  env.info(AI_Suppression.id..string.format("OnAfterHit: From %s, Event %s, To %s", From, Event, To))
-  
+function AI_Suppression:OnAfterHit(Controlable, From, Event, To)
+  env.info(AI_Suppression.id..string.format("OnAfterHit: %s event %s from %s to %s", Controlable:GetName(), Event, From, To))
+    
   -- Nothing to do yet. Just monitoring the event.
-  -- This should go into Suppressed state.
 end
 
 
 --- Before "Recovered" event.
 -- @param #AI_Suppression self
-function AI_Suppression:OnBeforeRecovered(From, Event, To)
-  env.info(AI_Suppression.id..string.format("OnBeforeRecovered: From %s, Event %s, To %s", From, Event, To))
+function AI_Suppression:OnBeforeRecovered(Controlable, From, Event, To)
+  env.info(AI_Suppression.id..string.format("OnBeforeRecovered: %s event %s from %s to %s", Controlable:GetName(), Event, From, To))
   
   -- Current time.
   local Tnow=timer.getTime()
@@ -180,7 +190,7 @@ function AI_Suppression:OnBeforeRecovered(From, Event, To)
   -- Only after a unit has not been hit for X seconds.
   -- We can return false if the recovery should not be executed!
   
-  env.info(AI_Suppression.id..string.format("OnBeforeRecover: Time: %d  - Time over: %d", Tnow, self.TsuppressionOver))
+  env.info(AI_Suppression.id..string.format("OnBeforeRecovered: Time: %d  - Time over: %d", Tnow, self.TsuppressionOver))
   
   -- Recovery is only possible if enough time since the last hit has passed.
   if Tnow > self.TsuppressionOver then
@@ -193,22 +203,27 @@ end
 
 --- After "Recovered" event.
 -- @param #AI_Suppression self
-function AI_Suppression:OnAfterRecovered(From, Event, To)
-  env.info(AI_Suppression.id..string.format("OnAfterRecovered: From %s, Event %s, To %s", From, Event, To))
-  MESSAGE:New("Group has recovered.", 30):ToAll()
+function AI_Suppression:OnAfterRecovered(Controlable, From, Event, To)
+  env.info(AI_Suppression.id..string.format("OnAfterRecovered: %s event %s from %s to %s", Controlable:GetName(), Event, From, To))
+  
+  -- Send message.
+  MESSAGE:New(string.format("Group %s has recovered.", Controlable:GetName()), 30):ToAll()
+  
   -- Nothing to do yet. Just monitoring the event.
 end
 
 
 --- Before "Retreat" event.
 -- @param #AI_Suppression self
-function AI_Suppression:OnBeforeRetreat(From, Event, To)
-  env.info(AI_Suppression.id..string.format("OnBeforeRetreat: From %s, Event %s, To %s", From, Event, To))
-  
+function AI_Suppression:OnBeforeRetreat(Controlable, From, Event, To)
+  env.info(AI_Suppression.id..string.format("OnBeforeRetreat: %s event %s from %s to %s", Controlable:GetName(), Event, From, To))
+    
   -- Retreat is only possible if a zone has been defined by the user.
   if self.Zone_Retreat==nil then
+    env.info("SFX: Retreat NOT possible! No Zone specified.")
     return false
   else
+    env.info("SFX: Retreat possible, zone specified.")
     return true
   end
   
@@ -216,9 +231,11 @@ end
 
 --- After "Retreat" event.
 -- @param #AI_Suppression self
-function AI_Suppression:OnAfterRetreat(From, Event, To)
-  env.info(AI_Suppression.id..string.format("OnAfterHit: From %s, Event %s, To %s", From, Event, To))
-  local text=string.format("Group %s is retreating to zone %s.", self.Controllable:GetName(), self.Zone_Retreat:GetName())
+function AI_Suppression:OnAfterRetreat(Controlable, From, Event, To)
+  env.info(AI_Suppression.id..string.format("OnAfterRetreat: %s event %s from %s to %s", Controlable:GetName(), Event, From, To))
+  
+  -- Message.
+  local text=string.format("Group %s is retreating to zone %s.", Controlable:GetName(), self.Zone_Retreat:GetName())
   MESSAGE:New(text, 30):ToAll()
 end
 
@@ -226,8 +243,8 @@ end
 
 --- Entering "CombatReady" state. The group will be able to fight back.
 -- @param #AI_Suppression self
-function AI_Suppression:OnEnterCombatReady(From, Event, To)
-  env.info(AI_Suppression.id..string.format("OnEnterCombatReady: From %s, Event %s, To %s", From, Event, To))
+function AI_Suppression:OnEnterCombatReady(Controlable, From, Event, To)
+  env.info(AI_Suppression.id..string.format("OnEnterCombatReady: %s event %s from %s to %s", Controlable:GetName(), Event, From, To))
 
   -- Group can fight again.
   self.Controllable:OptionROEOpenFire()
@@ -236,8 +253,8 @@ end
 
 --- Leaving "CombatReady" state.
 -- @param #AI_Suppression self
-function AI_Suppression:OnLeaveCombatReady(From, Event, To)
-  env.info(AI_Suppression.id..string.format("OnLeaveCombatReady: From %s, Event %s, To %s", From, Event, To))
+function AI_Suppression:OnLeaveCombatReady(Controlable, From, Event, To)
+  env.info(AI_Suppression.id..string.format("OnLeaveCombatReady: %s event %s from %s to %s", Controlable:GetName(), Event, From, To))
 
   -- Nothing to do yet. Just monitoring the event
 end
@@ -245,14 +262,14 @@ end
 
 --- Entering "Suppressed" state. Group will not fight but hold their weapons.
 -- @param #AI_Suppression self
-function AI_Suppression:OnEnterSuppressed(From, Event, To)
-  env.info(AI_Suppression.id..string.format("OnEnterSuppressed: From %s, Event %s, To %s", From, Event, To))
+function AI_Suppression:OnEnterSuppressed(Controlable, From, Event, To)
+  env.info(AI_Suppression.id..string.format("OnEnterSuppression: %s event %s from %s to %s", Controlable:GetName(), Event, From, To))
 
   -- Current time.
   local Tnow=timer.getTime()
   
   -- Group will hold their weapons.
-  self.Controllable:OptionROEHoldFire()
+  Controlable:OptionROEHoldFire()
   
   -- Get randomized time the unit is suppressed.
   self.Tsuppress=math.random(self.Tsuppress_min, self.Tsuppress_max)
@@ -261,13 +278,13 @@ function AI_Suppression:OnEnterSuppressed(From, Event, To)
   self.TsuppressionOver=Tnow+self.Tsuppress
   
   -- Recovery event will be called in Tsuppress seconds. (We add one second to be sure the time has really passed when recovery is checked.)
-  self:__Recover(self.Tsuppress+1)
+  self:__Recovered(self.Tsuppress+1)
   
   -- Get life of group in %.
-  self.life=self:_GetLife(self.Controllable)
+  local life_min, life_max, life_ave=self:_GetLife()
   
-  -- If life is below threshold, the group is ordered to retreat (if a zone has been specified).
-  if self.life < self.LifeMin then
+  -- If life of one unit is below threshold, the group is ordered to retreat (if a zone has been specified).
+  if life_min < self.LifeMin then
     self:Retreat()
   end
     
@@ -276,22 +293,27 @@ end
 
 --- Entering "Retreating" state. Group will be send to a zone.
 -- @param #AI_Suppression self
-function AI_Suppression:OnEnterRetreating(From, Event, To)
-  env.info(AI_Suppression.id..string.format("OnEnterRetreating: From %s, Event %s, To %s", From, Event, To))
+-- @param Wrapper.Controllable#CONTROLLABLE Controlable Controllable of the AI group.
+function AI_Suppression:OnEnterRetreating(Controlable, From, Event, To)
+  env.info(AI_Suppression.id..string.format("OnEnterRetreating: %s event %s from %s to %s", Controlable:GetName(), Event, From, To))
 
-  --TODO: Here we need to set the ALARM STATE to GREEN. Then the unit can move even if it is  under fire.
-  --self.Controllable:OptionROEOpenFire()
+  -- Set the ALARM STATE to GREEN. Then the unit can move even if it is under fire.
+  Controlable:OptionAlarmStateGreen()
   
   --TODO: Route the group to a zone.
-  
+  MESSAGE:New(string.format("Group %s would be(!) retreating to retreat zone!", Controlable:GetName()), 30):ToAll()
+  self:_Retreat(self.Zone_Retreat, 50, "Vee")
+    
 end
 
 --- Leaving "Retreating" state.
 -- @param #AI_Suppression self
-function AI_Suppression:OnLeaveRetreating(From, Event, To)
-  env.info(AI_Suppression.id..string.format("OnLeaveRetreating: From %s, Event %s, To %s", From, Event, To))
+-- @param Wrapper.Controllable#CONTROLLABLE Controlable Controllable of the AI group.
+function AI_Suppression:OnLeaveRetreating(Controlable, From, Event, To)
+  env.info(AI_Suppression.id..string.format("OnLeveRetreating: %s event %s from %s to %s", Controlable:GetName(), Event, From, To))
 
-  -- TODO: Here we need to set the ALARM STATE back to AUTO.
+  -- Set the ALARM STATE back to AUTO.
+  Controlable:OptionAlarmStateAuto()
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -304,7 +326,6 @@ function AI_Suppression:OnEventHit(EventData)
   env.info("Hitevent")
 
   if EventData.IniDCSUnit then
-  
     -- Call "Hit" event.
     self:Hit()
     
@@ -328,15 +349,53 @@ end
 -- @param #AI_Suppression self
 -- @param Wrapper.Group#GROUP group Group of unit.
 -- @return #number Life of unit in percent.
-function AI_Suppression:_GetLife(group)
-  local life=0.0
+function AI_Suppression:_GetLife()
+  local group=self.Controllable
   if group and group:IsAlive() then
-    local unit=group:GetUnit(1)
-    if unit then
-      life=unit:GetLife()/unit:GetLife0()*100
+    local life_min=100
+    local life_max=0
+    local life_ave=0
+    local n=0
+    local units=group:GetUnits()
+    for _,unit in pairs(units) do
+      if unit then
+        n=n+1
+        local life=unit:GetLife()/unit:GetLife0()*100
+        if life < life_min then
+          life_min=life
+        end
+        if life > life_max then
+          life_max=life
+        end
+        life_ave=life_ave+life
+      end
     end
+    life_ave=life_ave/n
+    return life_min, life_max, life_ave
+  else
+    return 0, 0, 0
   end
-  return life
+end
+
+
+--- Retreat to a zone.
+-- @param #AI_Suppression self
+-- @param Core.Zone#ZONE zone Zone to which the group retreats.
+-- @param #number speed Speed of the group. Default max speed the specific group can do.
+-- @param #string formation Formation of the Group. Default "Vee".
+function AI_Suppression:_Retreat(zone, speed, formation)
+
+  -- Set zone, speed and formation if they are not given
+  zone=zone or self.Zone_Retreat
+  speed = speed or 999
+  formation = formation or "Vee"
+
+  -- Get a random point in the retreat zone.
+  local ZonePoint=zone:GetRandomPointVec2()
+  
+  -- Set task to go to zone.
+  self.Controllable:TaskRouteToVec2(ZonePoint, speed, formation)
+
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
