@@ -79,7 +79,8 @@ function OBJECT:Destroy()
   local DCSObject = self:GetDCSObject()
   
   if DCSObject then
-  
+    USERFLAG:New( self:GetGroup():GetName() ):Set( 100 )
+    --BASE:CreateEventCrash( timer.getTime(), DCSObject )
     DCSObject:destroy()
   end
 
