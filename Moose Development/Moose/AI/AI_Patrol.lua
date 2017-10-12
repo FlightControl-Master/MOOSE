@@ -47,7 +47,7 @@
 -- @field Dcs.DCSTypes#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
 -- @field Dcs.DCSTypes#Speed  PatrolMinSpeed The minimum speed of the @{Controllable} in km/h.
 -- @field Dcs.DCSTypes#Speed  PatrolMaxSpeed The maximum speed of the @{Controllable} in km/h.
--- @field Functional.Spawn#SPAWN CoordTest
+-- @field Core.Spawn#SPAWN CoordTest
 -- @extends Core.Fsm#FSM_CONTROLLABLE
 
 --- # AI_PATROL_ZONE class, extends @{Fsm#FSM_CONTROLLABLE}

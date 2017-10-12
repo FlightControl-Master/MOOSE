@@ -102,7 +102,9 @@
 -- A mission has goals and achievements. The scoring system provides an API to set additional scores when a goal or achievement event happens.
 -- Use the method @{#SCORING.AddGoalScore}() to add a score for a Player at any time in your mission.
 -- 
--- ## 1.5) Configure fratricide level.
+-- ## 1.5) (Decommissioned) Configure fratricide level.
+-- 
+-- **This functionality is decomissioned until the DCS bug concerning Unit:destroy() not being functional in multi player for player units has been fixed by ED**.
 -- 
 -- When a player commits too much damage to friendlies, his penalty score will reach a certain level.
 -- Use the method @{#SCORING.SetFratricide}() to define the level when a player gets kicked.  
@@ -258,7 +260,7 @@ function SCORING:New( GameName )
 
   -- Configure Messages
   self:SetMessagesToAll()
-  self:SetMessagesHit( true )
+  self:SetMessagesHit( false )
   self:SetMessagesDestroy( true )
   self:SetMessagesScore( true )
   self:SetMessagesZone( true )
@@ -616,6 +618,7 @@ function SCORING:_AddPlayerFromUnit( UnitData )
           UnitName, _SCORINGCoalition[UnitCoalition], _SCORINGCategory[UnitCategory], UnitData:GetTypeName() )
       end
     end
+    
     self.Players[PlayerName].UnitName = UnitName
     self.Players[PlayerName].UnitCoalition = UnitCoalition
     self.Players[PlayerName].UnitCategory = UnitCategory
@@ -624,6 +627,8 @@ function SCORING:_AddPlayerFromUnit( UnitData )
     self.Players[PlayerName].ThreatLevel = UnitThreatLevel
     self.Players[PlayerName].ThreatType = UnitThreatType
 
+    -- TODO: DCS bug concerning Units with skill level client don't get destroyed in multi player. This logic is deactivated until this bug gets fixed.
+    --[[
     if self.Players[PlayerName].Penalty > self.Fratricide * 0.50 then
       if self.Players[PlayerName].PenaltyWarning < 1 then
         MESSAGE:NewType( self.DisplayMessagePrefix .. "Player '" .. PlayerName .. "': WARNING! If you continue to commit FRATRICIDE and have a PENALTY score higher than " .. self.Fratricide .. ", you will be COURT MARTIALED and DISMISSED from this mission! \nYour total penalty is: " .. self.Players[PlayerName].Penalty,
@@ -639,9 +644,40 @@ function SCORING:_AddPlayerFromUnit( UnitData )
       ):ToAll()
       UnitData:GetGroup():Destroy()
     end
+    --]]
 
   end
 end
+
+
+--- Add a goal score for a player.
+-- The method takes the Player name for which the Goal score needs to be set.
+-- The GoalTag is a string or identifier that is taken into the CSV file scoring log to identify the goal.
+-- A free text can be given that is shown to the players.
+-- The Score can be both positive and negative.
+-- @param #SCORING self
+-- @param #string PlayerName The name of the Player.
+-- @param #string GoalTag The string or identifier that is used in the CSV file to identify the goal (sort or group later in Excel).
+-- @param #string Text A free text that is shown to the players.
+-- @param #number Score The score can be both positive or negative ( Penalty ).
+function SCORING:AddGoalScorePlayer( PlayerName, GoalTag, Text, Score )
+
+  self:E( { PlayerName, PlayerName, GoalTag, Text, Score } )
+
+  -- PlayerName can be nil, if the Unit with the player crashed or due to another reason.
+  if PlayerName then 
+    local PlayerData = self.Players[PlayerName]
+
+    PlayerData.Goals[GoalTag] = PlayerData.Goals[GoalTag] or { Score = 0 }
+    PlayerData.Goals[GoalTag].Score = PlayerData.Goals[GoalTag].Score + Score  
+    PlayerData.Score = PlayerData.Score + Score
+  
+    MESSAGE:NewType( self.DisplayMessagePrefix .. Text, MESSAGE.Type.Information ):ToAll()
+  
+    self:ScoreCSV( PlayerName, "", "GOAL_" .. string.upper( GoalTag ), 1, Score, nil )
+  end
+end
+
 
 
 --- Add a goal score for a player.

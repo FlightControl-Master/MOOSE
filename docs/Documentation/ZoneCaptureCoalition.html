@@ -99,6 +99,8 @@
 					<li><a href="Task_Cargo.html">Task_Cargo</a></li>
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
 					<li><a href="Unit.html">Unit</a></li>
+					<li><a href="UserFlag.html">UserFlag</a></li>
+					<li><a href="UserSound.html">UserSound</a></li>
 					<li><a href="Utils.html">Utils</a></li>
 					<li><a href="Zone.html">Zone</a></li>
 					<li>ZoneCaptureCoalition</li>
@@ -112,13 +114,9 @@
 	<div id="content">
    <h1>Module <code>ZoneCaptureCoalition</code></h1>
    
-<p><strong>Functional (wIP)</strong> -- Base class that models processes to capture a Zone for a Coalition, guarded by another Coalition.</p>
+<p><strong>Functional (wIP)</strong> -- Models the process to capture a Zone for a Coalition, which is guarded by another Coalition.</p>
 
    
-
-<hr/>
-
-<p>ZONE<em>CAPTURE</em>COALITION models processes that have an objective with a defined achievement involving a Zone. Derived classes implement the ways how the achievements can be realized.</p>
 
 <hr/>
 
@@ -134,16 +132,142 @@
 		<td class="summary">
 <h1>ZONE<em>CAPTURE</em>COALITION class, extends <a href="ZoneGoalCoalition.html##(ZONE_GOAL_COALITION)">ZoneGoalCoalition#ZONE<em>GOAL</em>COALITION</a></h1>
 
-<p>ZONE<em>CAPTURE</em>COALITION models processes that have an objective with a defined achievement involving a Zone.</p>
+<p>Models the process to capture a Zone for a Coalition, which is guarded by another Coalition.</p>
 </td>
 		</tr>
 	</table>
 			<h2><a id="#(ZONE_CAPTURE_COALITION)">Type <code>ZONE_CAPTURE_COALITION</code></a></h2>
 				<table class="function_list">
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_CAPTURE_COALITION).Attack">ZONE_CAPTURE_COALITION:Attack()</a></td>
+		<td class="summary">
+<p>Attack Trigger for ZONE<em>CAPTURE</em>COALITION</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_CAPTURE_COALITION).Capture">ZONE_CAPTURE_COALITION:Capture()</a></td>
+		<td class="summary">
+<p>Capture Trigger for ZONE<em>CAPTURE</em>COALITION</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_CAPTURE_COALITION).Empty">ZONE_CAPTURE_COALITION:Empty()</a></td>
+		<td class="summary">
+<p>Empty Trigger for ZONE<em>CAPTURE</em>COALITION</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_CAPTURE_COALITION).Guard">ZONE_CAPTURE_COALITION:Guard()</a></td>
+		<td class="summary">
+<p>Guard Trigger for ZONE<em>CAPTURE</em>COALITION</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_CAPTURE_COALITION).IsAttacked">ZONE_CAPTURE_COALITION:IsAttacked()</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_CAPTURE_COALITION).IsCaptured">ZONE_CAPTURE_COALITION:IsCaptured()</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_CAPTURE_COALITION).IsEmpty">ZONE_CAPTURE_COALITION:IsEmpty()</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_CAPTURE_COALITION).IsGuarded">ZONE_CAPTURE_COALITION:IsGuarded()</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_CAPTURE_COALITION).Mark">ZONE_CAPTURE_COALITION:Mark()</a></td>
+		<td class="summary">
+<p>Mark.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_CAPTURE_COALITION).MarkBlue">ZONE_CAPTURE_COALITION.MarkBlue</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_CAPTURE_COALITION).MarkRed">ZONE_CAPTURE_COALITION.MarkRed</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(ZONE_CAPTURE_COALITION).New">ZONE_CAPTURE_COALITION:New(Zone, Coalition)</a></td>
 		<td class="summary">
 <p>ZONE<em>CAPTURE</em>COALITION Constructor.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_CAPTURE_COALITION).OnAfterAttack">ZONE_CAPTURE_COALITION:OnAfterAttack(From, Event, To)</a></td>
+		<td class="summary">
+<p>Attack Handler OnAfter for ZONE<em>CAPTURE</em>COALITION</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_CAPTURE_COALITION).OnAfterCapture">ZONE_CAPTURE_COALITION:OnAfterCapture(From, Event, To)</a></td>
+		<td class="summary">
+<p>Capture Handler OnAfter for ZONE<em>CAPTURE</em>COALITION</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_CAPTURE_COALITION).OnAfterEmpty">ZONE_CAPTURE_COALITION:OnAfterEmpty(From, Event, To)</a></td>
+		<td class="summary">
+<p>Empty Handler OnAfter for ZONE<em>CAPTURE</em>COALITION</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_CAPTURE_COALITION).OnAfterGuard">ZONE_CAPTURE_COALITION:OnAfterGuard(From, Event, To)</a></td>
+		<td class="summary">
+<p>Guard Handler OnAfter for ZONE<em>CAPTURE</em>COALITION</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_CAPTURE_COALITION).OnBeforeAttack">ZONE_CAPTURE_COALITION:OnBeforeAttack(From, Event, To)</a></td>
+		<td class="summary">
+<p>Attack Handler OnBefore for ZONE<em>CAPTURE</em>COALITION</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_CAPTURE_COALITION).OnBeforeCapture">ZONE_CAPTURE_COALITION:OnBeforeCapture(From, Event, To)</a></td>
+		<td class="summary">
+<p>Capture Handler OnBefore for ZONE<em>CAPTURE</em>COALITION</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_CAPTURE_COALITION).OnBeforeEmpty">ZONE_CAPTURE_COALITION:OnBeforeEmpty(From, Event, To)</a></td>
+		<td class="summary">
+<p>Empty Handler OnBefore for ZONE<em>CAPTURE</em>COALITION</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_CAPTURE_COALITION).OnBeforeGuard">ZONE_CAPTURE_COALITION:OnBeforeGuard(From, Event, To)</a></td>
+		<td class="summary">
+<p>Guard Handler OnBefore for ZONE<em>CAPTURE</em>COALITION</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_CAPTURE_COALITION).ScheduleStatusZone">ZONE_CAPTURE_COALITION.ScheduleStatusZone</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_CAPTURE_COALITION).SmokeScheduler">ZONE_CAPTURE_COALITION.SmokeScheduler</a></td>
+		<td class="summary">
+
 </td>
 		</tr>
 		<tr>
@@ -153,9 +277,63 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_CAPTURE_COALITION).StatusZone">ZONE_CAPTURE_COALITION:StatusZone()</a></td>
+		<td class="summary">
+<p>Check status Coalition ownership.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_CAPTURE_COALITION).__Attack">ZONE_CAPTURE_COALITION:__Attack(Delay)</a></td>
+		<td class="summary">
+<p>Attack Asynchronous Trigger for ZONE<em>CAPTURE</em>COALITION</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_CAPTURE_COALITION).__Capture">ZONE_CAPTURE_COALITION:__Capture(Delay)</a></td>
+		<td class="summary">
+<p>Capture Asynchronous Trigger for ZONE<em>CAPTURE</em>COALITION</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_CAPTURE_COALITION).__Empty">ZONE_CAPTURE_COALITION:__Empty(Delay)</a></td>
+		<td class="summary">
+<p>Empty Asynchronous Trigger for ZONE<em>CAPTURE</em>COALITION</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_CAPTURE_COALITION).__Guard">ZONE_CAPTURE_COALITION:__Guard(Delay)</a></td>
+		<td class="summary">
+<p>Guard Asynchronous Trigger for ZONE<em>CAPTURE</em>COALITION</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_CAPTURE_COALITION).onafterGuard">ZONE_CAPTURE_COALITION:onafterGuard()</a></td>
+		<td class="summary">
+<p>When started, check the Coalition status.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_CAPTURE_COALITION).onenterAttacked">ZONE_CAPTURE_COALITION:onenterAttacked()</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(ZONE_CAPTURE_COALITION).onenterCaptured">ZONE_CAPTURE_COALITION:onenterCaptured()</a></td>
 		<td class="summary">
 
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_CAPTURE_COALITION).onenterEmpty">ZONE_CAPTURE_COALITION:onenterEmpty()</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_CAPTURE_COALITION).onenterGuarded">ZONE_CAPTURE_COALITION:onenterGuarded()</a></td>
+		<td class="summary">
+<p>Bound.</p>
 </td>
 		</tr>
 	</table>
@@ -173,10 +351,16 @@
 	
 <h1>ZONE<em>CAPTURE</em>COALITION class, extends <a href="ZoneGoalCoalition.html##(ZONE_GOAL_COALITION)">ZoneGoalCoalition#ZONE<em>GOAL</em>COALITION</a></h1>
 
-<p>ZONE<em>CAPTURE</em>COALITION models processes that have an objective with a defined achievement involving a Zone.</p>
+<p>Models the process to capture a Zone for a Coalition, which is guarded by another Coalition.</p>
 
 	
-<p>Derived classes implement the ways how the achievements can be realized.</p>
+
+<p>The Zone is initially <strong>Guarded</strong> by the <strong>owning coalition</strong>, which is the coalition that initially occupies the zone with units of its coalition.
+Once units of an other coalition are entering the Zone, the state will change to <strong>Attacked</strong>. As long as these units remain in the zone, the state keeps set to Attacked.
+When all units are destroyed in the Zone, the state will change to <strong>Empty</strong>, which expresses that the Zone is empty, and can be captured.
+When units of the other coalition are in the Zone, and no other units of the owning coalition is in the Zone, the Zone is captured, and its state will change to <strong>Captured</strong>.</p>
+
+<p>Event handlers can be defined by the mission designer to action on the state transitions.</p>
 
 <h2>1. ZONE<em>CAPTURE</em>COALITION constructor</h2>
 
@@ -188,8 +372,22 @@
 
 <h3>2.1 ZONE<em>CAPTURE</em>COALITION States</h3>
 
+<ul>
+    <li><strong>Captured</strong>: The Zone has been captured by an other coalition.</li>
+    <li><strong>Attacked</strong>: The Zone is currently intruded by an other coalition. There are units of the owning coalition and an other coalition in the Zone.</li>
+    <li><strong>Guarded</strong>: The Zone is guarded by the owning coalition. There is no other unit of an other coalition in the Zone.</li>
+    <li><strong>Empty</strong>: The Zone is empty. There is not valid unit in the Zone.</li>
+</ul>
+
 <h3>2.2 ZONE<em>CAPTURE</em>COALITION Events</h3>
 
+<ul>
+    <li><strong>Capture</strong>: The Zone has been captured by an other coalition.</li>
+    <li><strong>Attack</strong>: The Zone is currently intruded by an other coalition. There are units of the owning coalition and an other coalition in the Zone.</li>
+    <li><strong>Guard</strong>: The Zone is guarded by the owning coalition. There is no other unit of an other coalition in the Zone.</li>
+    <li><strong>Empty</strong>: The Zone is empty. There is not valid unit in the Zone.
+    </li>
+</ul>
 
 </dd>
 </dl>
@@ -197,6 +395,151 @@
 	
 			<h2><a id="#(ZONE_CAPTURE_COALITION)" >Type <code>ZONE_CAPTURE_COALITION</code></a></h2>
 				<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_CAPTURE_COALITION).Attack" >
+<strong>ZONE_CAPTURE_COALITION:Attack()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Attack Trigger for ZONE<em>CAPTURE</em>COALITION</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_CAPTURE_COALITION).Capture" >
+<strong>ZONE_CAPTURE_COALITION:Capture()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Capture Trigger for ZONE<em>CAPTURE</em>COALITION</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_CAPTURE_COALITION).Empty" >
+<strong>ZONE_CAPTURE_COALITION:Empty()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Empty Trigger for ZONE<em>CAPTURE</em>COALITION</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_CAPTURE_COALITION).Guard" >
+<strong>ZONE_CAPTURE_COALITION:Guard()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Guard Trigger for ZONE<em>CAPTURE</em>COALITION</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_CAPTURE_COALITION).IsAttacked" >
+<strong>ZONE_CAPTURE_COALITION:IsAttacked()</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_CAPTURE_COALITION).IsCaptured" >
+<strong>ZONE_CAPTURE_COALITION:IsCaptured()</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_CAPTURE_COALITION).IsEmpty" >
+<strong>ZONE_CAPTURE_COALITION:IsEmpty()</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_CAPTURE_COALITION).IsGuarded" >
+<strong>ZONE_CAPTURE_COALITION:IsGuarded()</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_CAPTURE_COALITION).Mark" >
+<strong>ZONE_CAPTURE_COALITION:Mark()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Mark.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(ZONE_CAPTURE_COALITION).MarkBlue" >
+<strong>ZONE_CAPTURE_COALITION.MarkBlue</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(ZONE_CAPTURE_COALITION).MarkRed" >
+<strong>ZONE_CAPTURE_COALITION.MarkRed</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
 		<dl class="function">
 <dt>
 
@@ -233,9 +576,428 @@ The initial coalition owning the zone.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(ZONE_CAPTURE_COALITION).OnAfterAttack" >
+<strong>ZONE_CAPTURE_COALITION:OnAfterAttack(From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Attack Handler OnAfter for ZONE<em>CAPTURE</em>COALITION</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_CAPTURE_COALITION).OnAfterCapture" >
+<strong>ZONE_CAPTURE_COALITION:OnAfterCapture(From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Capture Handler OnAfter for ZONE<em>CAPTURE</em>COALITION</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_CAPTURE_COALITION).OnAfterEmpty" >
+<strong>ZONE_CAPTURE_COALITION:OnAfterEmpty(From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Empty Handler OnAfter for ZONE<em>CAPTURE</em>COALITION</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_CAPTURE_COALITION).OnAfterGuard" >
+<strong>ZONE_CAPTURE_COALITION:OnAfterGuard(From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Guard Handler OnAfter for ZONE<em>CAPTURE</em>COALITION</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_CAPTURE_COALITION).OnBeforeAttack" >
+<strong>ZONE_CAPTURE_COALITION:OnBeforeAttack(From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Attack Handler OnBefore for ZONE<em>CAPTURE</em>COALITION</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_CAPTURE_COALITION).OnBeforeCapture" >
+<strong>ZONE_CAPTURE_COALITION:OnBeforeCapture(From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Capture Handler OnBefore for ZONE<em>CAPTURE</em>COALITION</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_CAPTURE_COALITION).OnBeforeEmpty" >
+<strong>ZONE_CAPTURE_COALITION:OnBeforeEmpty(From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Empty Handler OnBefore for ZONE<em>CAPTURE</em>COALITION</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_CAPTURE_COALITION).OnBeforeGuard" >
+<strong>ZONE_CAPTURE_COALITION:OnBeforeGuard(From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Guard Handler OnBefore for ZONE<em>CAPTURE</em>COALITION</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(ZONE_CAPTURE_COALITION).ScheduleStatusZone" >
+<strong>ZONE_CAPTURE_COALITION.ScheduleStatusZone</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(ZONE_CAPTURE_COALITION).SmokeScheduler" >
+<strong>ZONE_CAPTURE_COALITION.SmokeScheduler</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 		<em></em>
 <a id="#(ZONE_CAPTURE_COALITION).States" >
 <strong>ZONE_CAPTURE_COALITION.States</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_CAPTURE_COALITION).StatusZone" >
+<strong>ZONE_CAPTURE_COALITION:StatusZone()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Check status Coalition ownership.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_CAPTURE_COALITION).__Attack" >
+<strong>ZONE_CAPTURE_COALITION:__Attack(Delay)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Attack Asynchronous Trigger for ZONE<em>CAPTURE</em>COALITION</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number Delay </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_CAPTURE_COALITION).__Capture" >
+<strong>ZONE_CAPTURE_COALITION:__Capture(Delay)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Capture Asynchronous Trigger for ZONE<em>CAPTURE</em>COALITION</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number Delay </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_CAPTURE_COALITION).__Empty" >
+<strong>ZONE_CAPTURE_COALITION:__Empty(Delay)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Empty Asynchronous Trigger for ZONE<em>CAPTURE</em>COALITION</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number Delay </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_CAPTURE_COALITION).__Guard" >
+<strong>ZONE_CAPTURE_COALITION:__Guard(Delay)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Guard Asynchronous Trigger for ZONE<em>CAPTURE</em>COALITION</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number Delay </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_CAPTURE_COALITION).onafterGuard" >
+<strong>ZONE_CAPTURE_COALITION:onafterGuard()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>When started, check the Coalition status.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_CAPTURE_COALITION).onenterAttacked" >
+<strong>ZONE_CAPTURE_COALITION:onenterAttacked()</strong>
 </a>
 </dt>
 <dd>
@@ -254,6 +1016,32 @@ The initial coalition owning the zone.</p>
 <dd>
 	
 
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_CAPTURE_COALITION).onenterEmpty" >
+<strong>ZONE_CAPTURE_COALITION:onenterEmpty()</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_CAPTURE_COALITION).onenterGuarded" >
+<strong>ZONE_CAPTURE_COALITION:onenterGuarded()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Bound.</p>
 
 </dd>
 </dl>

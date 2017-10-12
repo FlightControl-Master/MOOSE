@@ -486,7 +486,8 @@ end
 function CARGO:IsNear( PointVec2, NearRadius )
   self:F( { PointVec2, NearRadius } )
 
-  local Distance = PointVec2:DistanceFromPointVec2( self.CargoObject:GetPointVec2() )
+  --local Distance = PointVec2:DistanceFromPointVec2( self.CargoObject:GetPointVec2() )
+  local Distance = PointVec2:Get2DDistance( self.CargoObject:GetPointVec2() )
   self:T( Distance )
   
   if Distance <= NearRadius then
@@ -869,9 +870,9 @@ function CARGO_UNIT:onenterUnLoaded( From, Event, To, ToPointVec2 )
     local StartPointVec2 = self.CargoCarrier:GetPointVec2()
     local CargoCarrierHeading = self.CargoCarrier:GetHeading() -- Get Heading of object in degrees.
     local CargoDeployHeading = ( ( CargoCarrierHeading + Angle ) >= 360 ) and ( CargoCarrierHeading + Angle - 360 ) or ( CargoCarrierHeading + Angle )
-    local CargoDeployPointVec2 = StartPointVec2:Translate( Distance, CargoDeployHeading )
+    local CargoDeployCoord = StartPointVec2:Translate( Distance, CargoDeployHeading )
 
-    ToPointVec2 = ToPointVec2 or POINT_VEC2:New( CargoDeployPointVec2:GetX(), CargoDeployPointVec2:GetY() )
+    ToPointVec2 = ToPointVec2 or POINT_VEC2:New( CargoDeployCoord.x, CargoDeployCoord.z )
 
     -- Respawn the group...
     if self.CargoObject then

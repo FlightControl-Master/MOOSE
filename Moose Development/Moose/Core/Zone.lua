@@ -577,10 +577,13 @@ end
 
 --- Scan the zone
 -- @param #ZONE_RADIUS self
+-- @param ObjectCategories
 -- @param Coalition
-function ZONE_RADIUS:Scan()
+function ZONE_RADIUS:Scan( ObjectCategories )
 
-  self.Coalitions = {}
+  self.ScanData = {}
+  self.ScanData.Coalitions = {}
+  self.ScanData.Scenery = {}
 
   local ZoneCoord = self:GetCoordinate()
   local ZoneRadius = self:GetRadius()
@@ -595,33 +598,79 @@ function ZONE_RADIUS:Scan()
       }
     }
 
-  local function EvaluateZone( ZoneDCSUnit )
-    if ZoneDCSUnit:isExist() then
-      local CategoryDCSUnit = ZoneDCSUnit:getCategory()
-      if ( CategoryDCSUnit == Object.Category.UNIT and ZoneDCSUnit:isActive() ) or 
-         CategoryDCSUnit == Object.Category.STATIC then
-        local CoalitionDCSUnit = ZoneDCSUnit:getCoalition()
-        self.Coalitions[CoalitionDCSUnit] = true
-        self:E( { Name = ZoneDCSUnit:getName(), Coalition = CoalitionDCSUnit } )
+  local function EvaluateZone( ZoneObject )
+    if ZoneObject:isExist() then
+      local ObjectCategory = ZoneObject:getCategory()
+      if ( ObjectCategory == Object.Category.UNIT and ZoneObject:isActive() ) or 
+         ObjectCategory == Object.Category.STATIC then
+        local CoalitionDCSUnit = ZoneObject:getCoalition()
+        self.ScanData.Coalitions[CoalitionDCSUnit] = true
+        self:E( { Name = ZoneObject:getName(), Coalition = CoalitionDCSUnit } )
+      end
+      if ObjectCategory == Object.Category.SCENERY then
+        local SceneryType = ZoneObject:getTypeName()
+        local SceneryName = ZoneObject:getName()
+        self.ScanData.Scenery[SceneryType] = self.ScanData.Scenery[SceneryType] or {}
+        self.ScanData.Scenery[SceneryType][SceneryName] = SCENERY:Register( SceneryName, ZoneObject )
+        self:E( { SCENERY =  self.ScanData.Scenery[SceneryType][SceneryName] } )
       end
     end
     return true
   end
 
-  world.searchObjects( { Object.Category.UNIT, Object.Category.STATIC }, SphereSearch, EvaluateZone )
+  world.searchObjects( ObjectCategories, SphereSearch, EvaluateZone )
   
 end
 
 
-function ZONE_RADIUS:CountCoalitions()
+function ZONE_RADIUS:CountScannedCoalitions()
 
   local Count = 0
   
-  for CoalitionID, Coalition in pairs( self.Coalitions ) do
+  for CoalitionID, Coalition in pairs( self.ScanData.Coalitions ) do
     Count = Count + 1
   end
   return Count
 end
+
+
+--- Get Coalitions of the units in the Zone, or Check if there are units of the given Coalition in the Zone.
+-- Returns nil if there are none ot two Coalitions in the zone!
+-- Returns one Coalition if there are only Units of one Coalition in the Zone.
+-- Returns the Coalition for the given Coalition if there are units of the Coalition in the Zone
+-- @param #ZONE_RADIUS self
+-- @return #table
+function ZONE_RADIUS:GetScannedCoalition( Coalition )
+
+  if Coalition then
+    return self.ScanData.Coalitions[Coalition]
+  else
+    local Count = 0
+    local ReturnCoalition = nil
+    
+    for CoalitionID, Coalition in pairs( self.ScanData.Coalitions ) do
+      Count = Count + 1
+      ReturnCoalition = CoalitionID
+    end
+    
+    if Count ~= 1 then
+      ReturnCoalition = nil
+    end
+    
+    return ReturnCoalition
+  end
+end
+
+
+function ZONE_RADIUS:GetScannedSceneryType( SceneryType )
+  return self.ScanData.Scenery[SceneryType]
+end
+
+
+function ZONE_RADIUS:GetScannedScenery()
+  return self.ScanData.Scenery
+end
+
 
 --- Is All in Zone of Coalition?
 -- @param #ZONE_RADIUS self
@@ -629,7 +678,7 @@ end
 -- @return #boolean
 function ZONE_RADIUS:IsAllInZoneOfCoalition( Coalition )
 
-  return self:CountCoalitions() == 1 and self.Coalitions[Coalition] == true
+  return self:CountScannedCoalitions() == 1 and self:GetScannedCoalition( Coalition ) == true
 end
 
 
@@ -639,8 +688,8 @@ end
 -- @return #boolean
 function ZONE_RADIUS:IsAllInZoneOfOtherCoalition( Coalition )
 
-  self:E( { Coalitions = self.Coalitions, Count = self:CountCoalitions() } )
-  return self:CountCoalitions() == 1 and self.Coalitions[Coalition] == nil
+  self:E( { Coalitions = self.Coalitions, Count = self:CountScannedCoalitions() } )
+  return self:CountScannedCoalitions() == 1 and self:GetScannedCoalition( Coalition ) == nil
 end
 
 
@@ -650,7 +699,7 @@ end
 -- @return #boolean
 function ZONE_RADIUS:IsSomeInZoneOfCoalition( Coalition )
 
-  return self:CountCoalitions() > 1 and self.Coalitions[Coalition] == true
+  return self:CountScannedCoalitions() > 1 and self:GetScannedCoalition( Coalition ) == true
 end
 
 
@@ -660,7 +709,7 @@ end
 -- @return #boolean
 function ZONE_RADIUS:IsNoneInZoneOfCoalition( Coalition )
 
-  return self.Coalitions[Coalition] == nil
+  return self:GetScannedCoalition( Coalition ) == nil
 end
 
 
@@ -669,37 +718,17 @@ end
 -- @return #boolean
 function ZONE_RADIUS:IsNoneInZone()
 
-  return self:CountCoalitions() == 0
+  return self:CountScannedCoalitions() == 0
 end
 
-
---- Get the Zone Coalitions.
--- Returns nil if there are none ot two coalitions in the zone!
--- @param #ZONE_RADIUS self
--- @return Coalitions
-function ZONE_RADIUS:GetCoalition()
-
-  local Count = 0
-  local ReturnCoalition = nil
-  
-  for CoalitionID, Coalition in pairs( self.Coalitions ) do
-    Count = Count + 1
-    ReturnCoalition = CoalitionID
-  end
-  
-  if Count ~= 1 then
-    ReturnCoalition = nil
-  end
-  
-  return ReturnCoalition
-end
 
 
 
 --- Searches the zone
 -- @param #ZONE_RADIUS self
+-- @param ObjectCategories A list of categories, which are members of Object.Category
 -- @param EvaluateFunction
-function ZONE_RADIUS:SearchZone( EvaluateFunction )
+function ZONE_RADIUS:SearchZone( EvaluateFunction, ObjectCategories )
 
   local SearchZoneResult = true
 
@@ -1325,13 +1354,32 @@ ZONE_POLYGON = {
   ClassName="ZONE_POLYGON",
   }
 
---- Constructor to create a ZONE_POLYGON instance, taking the zone name and the name of the @{Group#GROUP} defined within the Mission Editor.
+--- Constructor to create a ZONE_POLYGON instance, taking the zone name and the @{Group#GROUP} defined within the Mission Editor.
 -- The @{Group#GROUP} waypoints define the polygon corners. The first and the last point are automatically connected by ZONE_POLYGON.
 -- @param #ZONE_POLYGON self
 -- @param #string ZoneName Name of the zone.
 -- @param Wrapper.Group#GROUP ZoneGroup The GROUP waypoints as defined within the Mission Editor define the polygon shape.
 -- @return #ZONE_POLYGON self
 function ZONE_POLYGON:New( ZoneName, ZoneGroup )
+
+  local GroupPoints = ZoneGroup:GetTaskRoute()
+
+  local self = BASE:Inherit( self, ZONE_POLYGON_BASE:New( ZoneName, GroupPoints ) )
+  self:F( { ZoneName, ZoneGroup, self._.Polygon } )
+
+  return self
+end
+
+
+--- Constructor to create a ZONE_POLYGON instance, taking the zone name and the **name** of the @{Group#GROUP} defined within the Mission Editor.
+-- The @{Group#GROUP} waypoints define the polygon corners. The first and the last point are automatically connected by ZONE_POLYGON.
+-- @param #ZONE_POLYGON self
+-- @param #string ZoneName Name of the zone.
+-- @param #string GroupName The group name of the GROUP defining the waypoints within the Mission Editor to define the polygon shape.
+-- @return #ZONE_POLYGON self
+function ZONE_POLYGON:NewFromGroupName( ZoneName, GroupName )
+
+  local ZoneGroup = GROUP:FindByName( GroupName )
 
   local GroupPoints = ZoneGroup:GetTaskRoute()
 

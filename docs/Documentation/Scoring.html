@@ -99,6 +99,8 @@
 					<li><a href="Task_Cargo.html">Task_Cargo</a></li>
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
 					<li><a href="Unit.html">Unit</a></li>
+					<li><a href="UserFlag.html">UserFlag</a></li>
+					<li><a href="UserSound.html">UserSound</a></li>
 					<li><a href="Utils.html">Utils</a></li>
 					<li><a href="Zone.html">Zone</a></li>
 					<li><a href="ZoneCaptureCoalition.html">ZoneCaptureCoalition</a></li>
@@ -223,7 +225,9 @@ just large enough around that building.</p>
 <p>A mission has goals and achievements. The scoring system provides an API to set additional scores when a goal or achievement event happens.
 Use the method <a href="##(SCORING).AddGoalScore">SCORING.AddGoalScore</a>() to add a score for a Player at any time in your mission.</p>
 
-<h2>1.5) Configure fratricide level.</h2>
+<h2>1.5) (Decommissioned) Configure fratricide level.</h2>
+
+<p><strong>This functionality is decomissioned until the DCS bug concerning Unit:destroy() not being functional in multi player for player units has been fixed by ED</strong>.</p>
 
 <p>When a player commits too much damage to friendlies, his penalty score will reach a certain level.
 Use the method <a href="##(SCORING).SetFratricide">SCORING.SetFratricide</a>() to define the level when a player gets kicked. <br/>
@@ -371,6 +375,12 @@ Various methods exist to configure:</p>
 				<table class="function_list">
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SCORING).AddGoalScore">SCORING:AddGoalScore(PlayerUnit, GoalTag, Text, Score)</a></td>
+		<td class="summary">
+<p>Add a goal score for a player.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SCORING).AddGoalScorePlayer">SCORING:AddGoalScorePlayer(PlayerName, GoalTag, Text, Score)</a></td>
 		<td class="summary">
 <p>Add a goal score for a player.</p>
 </td>
@@ -842,6 +852,52 @@ The Score can be both positive and negative.</p>
 				
 <p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> PlayerUnit </em></code>: 
 The <a href="Unit.html">Unit</a> of the Player. Other Properties for the scoring are taken from this PlayerUnit, like coalition, type etc. </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string GoalTag </em></code>: 
+The string or identifier that is used in the CSV file to identify the goal (sort or group later in Excel).</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Text </em></code>: 
+A free text that is shown to the players.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Score </em></code>: 
+The score can be both positive or negative ( Penalty ).</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SCORING).AddGoalScorePlayer" >
+<strong>SCORING:AddGoalScorePlayer(PlayerName, GoalTag, Text, Score)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Add a goal score for a player.</p>
+
+	
+<p>The method takes the Player name for which the Goal score needs to be set.
+The GoalTag is a string or identifier that is taken into the CSV file scoring log to identify the goal.
+A free text can be given that is shown to the players.
+The Score can be both positive and negative.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string PlayerName </em></code>: 
+The name of the Player.</p>
 
 				</li>
 				<li>

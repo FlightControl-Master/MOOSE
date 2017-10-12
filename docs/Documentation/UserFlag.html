@@ -99,7 +99,7 @@
 					<li><a href="Task_Cargo.html">Task_Cargo</a></li>
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
 					<li><a href="Unit.html">Unit</a></li>
-					<li><a href="UserFlag.html">UserFlag</a></li>
+					<li>UserFlag</li>
 					<li><a href="UserSound.html">UserSound</a></li>
 					<li><a href="Utils.html">Utils</a></li>
 					<li><a href="Zone.html">Zone</a></li>
@@ -107,74 +107,61 @@
 					<li><a href="ZoneGoal.html">ZoneGoal</a></li>
 					<li><a href="ZoneGoalCoalition.html">ZoneGoalCoalition</a></li>
 					<li><a href="env.html">env</a></li>
-					<li>land</li>
+					<li><a href="land.html">land</a></li>
 					<li><a href="routines.html">routines</a></li>
 		</ul>
 	</div>
 	<div id="content">
-   <h1>Module <code>land</code></h1>
+   <h1>Module <code>UserFlag</code></h1>
    
+<p><strong>Core (WIP)</strong> -- Manage user flags.</p>
+
+   
+
+<hr/>
+
+<p>Management of DCS User Flags.</p>
+
+<hr/>
+
+<h3>Author: <strong>Sven Van de Velde (FlightControl)</strong></h3>
+
+<hr/>
 
 
 	<h2>Global(s)</h2>
 	<table class="function_list">
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="#land">land</a></td>
+		<td class="name" nowrap="nowrap"><a href="#USERFLAG">USERFLAG</a></td>
 		<td class="summary">
+<h1>USERFLAG class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
 
+<p>Management of DCS User Flags.</p>
 </td>
 		</tr>
 	</table>
-	<h2><a id="#(land)" >Type <code>land</code></a></h2>
-		<table class="function_list">
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(land).SurfaceType">land.SurfaceType</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(land).getHeight">land.getHeight(point)</a></td>
-		<td class="summary">
-<p>Returns altitude MSL of the point.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(land).getSurfaceType">land.getSurfaceType(point)</a></td>
-		<td class="summary">
-<p>returns surface type at the given point.</p>
-</td>
-		</tr>
-	</table>
-
-			<h2><a id="#(land.SurfaceType)">Type <code>land.SurfaceType</code></a></h2>
+			<h2><a id="#(USERFLAG)">Type <code>USERFLAG</code></a></h2>
 				<table class="function_list">
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(land.SurfaceType).LAND">land.SurfaceType.LAND</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(USERFLAG).Is">USERFLAG:Is(Number)</a></td>
 		<td class="summary">
-
+<p>Check if the userflag has a value of Number.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(land.SurfaceType).ROAD">land.SurfaceType.ROAD</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(USERFLAG).New">USERFLAG:New(UserFlagName)</a></td>
 		<td class="summary">
-
+<p>USERFLAG Constructor.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(land.SurfaceType).RUNWAY">land.SurfaceType.RUNWAY</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(USERFLAG).Set">USERFLAG:Set(Number)</a></td>
 		<td class="summary">
-
+<p>Set the userflag to a given Number.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(land.SurfaceType).SHALLOW_WATER">land.SurfaceType.SHALLOW_WATER</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(land.SurfaceType).WATER">land.SurfaceType.WATER</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(USERFLAG).UserFlagName">USERFLAG.UserFlagName</a></td>
 		<td class="summary">
 
 </td>
@@ -185,101 +172,88 @@
 		<dl class="function">
 <dt>
 
-		<em><a href="##(land)">#land</a></em>
-<a id="land" >
-<strong>land</strong>
+		<em><a href="##(USERFLAG)">#USERFLAG</a></em>
+<a id="USERFLAG" >
+<strong>USERFLAG</strong>
 </a>
 </dt>
 <dd>
 	
+<h1>USERFLAG class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
 
+<p>Management of DCS User Flags.</p>
 
-</dd>
-</dl>
-	<h2><a id="#(land)" >Type <code>land</code></a></h2>
-		<h3>Field(s)</h3>
-		<dl class="function">
-<dt>
-
-		<em><a href="##(land.SurfaceType)">#land.SurfaceType</a></em>
-<a id="#(land).SurfaceType" >
-<strong>land.SurfaceType</strong>
-</a>
-</dt>
-<dd>
 	
 
+<h2>1. USERFLAG constructor</h2>
+
+<ul>
+    <li><a href="##(USERFLAG).New">USERFLAG.New</a>(): Creates a new USERFLAG object.</li>
+</ul>
+
 
 </dd>
 </dl>
-		<dl class="function">
-<dt>
-
-<a id="#(land).getHeight" >
-<strong>land.getHeight(point)</strong>
-</a>
-</dt>
-<dd>
+	<h2><a id="#(UserFlag)" >Type <code>UserFlag</code></a></h2>
 	
-<p>Returns altitude MSL of the point.</p>
-
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="##(Vec2)">#Vec2</a> point </em></code>: 
-point on the ground. </p>
-
-				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a>:</em></p>
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(land).getSurfaceType" >
-<strong>land.getSurfaceType(point)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>returns surface type at the given point.</p>
-
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="##(Vec2)">#Vec2</a> point </em></code>: 
-Point on the land. </p>
-
-				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em><a href="##(land.SurfaceType)">#land.SurfaceType</a>:</em></p>
-
-
-</dd>
-</dl>
-
-			<h2><a id="#(Vec2)" >Type <code>Vec2</code></a></h2>
-			
-			<h2><a id="#(land.SurfaceType)" >Type <code>land.SurfaceType</code></a></h2>
+			<h2><a id="#(USERFLAG)" >Type <code>USERFLAG</code></a></h2>
 				<h3>Field(s)</h3>
 		<dl class="function">
 <dt>
 
-<a id="#(land.SurfaceType).LAND" >
-<strong>land.SurfaceType.LAND</strong>
+<a id="#(USERFLAG).Is" >
+<strong>USERFLAG:Is(Number)</strong>
 </a>
 </dt>
 <dd>
 	
+<p>Check if the userflag has a value of Number.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number Number </em></code>: 
+The number value to be checked if it is the same as the userflag.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+true if the Number is the value of the userflag.</p>
+
+			<h3>Usage:</h3>
+		<pre class="example"><code>  local BlueVictory = USERFLAG:New( "VictoryBlue" )
+  if BlueVictory:Is( 1 ) then
+    return "Blue has won"
+  end</code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(USERFLAG).New" >
+<strong>USERFLAG:New(UserFlagName)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>USERFLAG Constructor.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string UserFlagName </em></code>: 
+The name of the userflag, which is a free text string.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(USERFLAG)">#USERFLAG</a>:</em></p>
 
 
 </dd>
@@ -287,47 +261,41 @@ Point on the land. </p>
 		<dl class="function">
 <dt>
 
-<a id="#(land.SurfaceType).ROAD" >
-<strong>land.SurfaceType.ROAD</strong>
+<a id="#(USERFLAG).Set" >
+<strong>USERFLAG:Set(Number)</strong>
 </a>
 </dt>
 <dd>
 	
+<p>Set the userflag to a given Number.</p>
 
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number Number </em></code>: 
+The number value to be checked if it is the same as the userflag.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(USERFLAG)">#USERFLAG</a>:</em>
+The userflag instance.</p>
+
+			<h3>Usage:</h3>
+		<pre class="example"><code>  local BlueVictory = USERFLAG:New( "VictoryBlue" )
+  BlueVictory:Set( 100 ) -- Set the UserFlag VictoryBlue to 100.
+  </code></pre>
 
 </dd>
 </dl>
 		<dl class="function">
 <dt>
 
-<a id="#(land.SurfaceType).RUNWAY" >
-<strong>land.SurfaceType.RUNWAY</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(land.SurfaceType).SHALLOW_WATER" >
-<strong>land.SurfaceType.SHALLOW_WATER</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(land.SurfaceType).WATER" >
-<strong>land.SurfaceType.WATER</strong>
+		<em></em>
+<a id="#(USERFLAG).UserFlagName" >
+<strong>USERFLAG.UserFlagName</strong>
 </a>
 </dt>
 <dd>

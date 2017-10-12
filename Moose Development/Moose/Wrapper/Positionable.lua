@@ -415,7 +415,7 @@ function POSITIONABLE:GetMessageText( Message, Name ) --R2.1 added
 
   local DCSObject = self:GetDCSObject()
   if DCSObject then
-    Name = Name and ( " => " .. Name ) or ""
+    Name = Name and ( " (" .. Name .. ")" ) or ""
     local Callsign = string.format( "%s", self:GetCallsign() ~= "" and self:GetCallsign() or self:GetName() )
     local MessageText = string.format("[%s%s]: %s", Callsign, Name, Message )
     return MessageText
@@ -489,12 +489,6 @@ function POSITIONABLE:MessageToCoalition( Message, Duration, MessageCoalition )
   
   local DCSObject = self:GetDCSObject()
   if DCSObject then
-    if MessageCoalition == coalition.side.BLUE then
-      Name = "Blue coalition"
-    end
-    if MessageCoalition == coalition.side.RED then
-      Name = "Red coalition"
-    end
     self:GetMessage( Message, Duration, Name ):ToCoalition( MessageCoalition )
   end
 
@@ -515,12 +509,6 @@ function POSITIONABLE:MessageTypeToCoalition( Message, MessageType, MessageCoali
   
   local DCSObject = self:GetDCSObject()
   if DCSObject then
-    if MessageCoalition == coalition.side.BLUE then
-      Name = "Blue coalition"
-    end
-    if MessageCoalition == coalition.side.RED then
-      Name = "Red coalition"
-    end
     self:GetMessageType( Message, MessageType, Name ):ToCoalition( MessageCoalition )
   end
 
