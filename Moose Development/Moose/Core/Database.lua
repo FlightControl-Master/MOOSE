@@ -522,7 +522,7 @@ function DATABASE:_RegisterStaticTemplate( StaticTemplate, CoalitionID, Category
 
   
   TraceTable[#TraceTable+1] = "Static"
-  TraceTable[#TraceTable+1] = self.Templates.Statics[StaticTemplateName].GroupName
+  TraceTable[#TraceTable+1] = self.Templates.Statics[StaticTemplateName].StaticName
 
   TraceTable[#TraceTable+1] = "Coalition"
   TraceTable[#TraceTable+1] = self.Templates.Statics[StaticTemplateName].CoalitionID
@@ -649,6 +649,7 @@ end
 function DATABASE:_RegisterStatics()
 
   local CoalitionsData = { GroupsRed = coalition.getStaticObjects( coalition.side.RED ), GroupsBlue = coalition.getStaticObjects( coalition.side.BLUE ) }
+  self:E( { Statics = CoalitionsData } )
   for CoalitionId, CoalitionData in pairs( CoalitionsData ) do
     for DCSStaticId, DCSStatic in pairs( CoalitionData ) do
 
