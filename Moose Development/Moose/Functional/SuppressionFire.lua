@@ -58,7 +58,7 @@ AI_Suppression={
   Thit = nil,
   Nhit = 0,
   Zone_Retreat = nil,
-  LifeMin = 10,
+  LifeMin = 25,
 }
 
 --- Some ID to identify who we are in output of the DCS.log file.
@@ -111,15 +111,18 @@ function AI_Suppression:New(Group)
   -- Transition from "Suppressed" back to "CombatReady after the unit had time to recover.
   self:AddTransition("Suppressed", "Recovered", "CombatReady")
   
-  -- Transition from "Suppressed" to "TakeCover" after event "Hit".
-  --self:AddTransition("Suppressed", "TakeCover", "Hiding")
+  -- Transition from "Suppressed" to "Hiding" after event "Hit".
+  self:AddTransition("Suppressed", "TakeCover", "Hiding")
   
   -- Transition from anything to "Retreating" after e.g. being severely damaged.
   self:AddTransition("*", "Retreat", "Retreating")
   
   -- Transition from anything to "Dead" after group died.
   self:AddTransition("*", "Died", "Dead")
-
+  
+  -- Check status of the group.
+  self:AddTransition("*", "Status", "*")
+  
   
   -- Handle DCS event hit.
   self:HandleEvent(EVENTS.Hit, self.OnEventHit)
@@ -139,7 +142,7 @@ end
 -- @param #number Tmin Minimum time in seconds.
 -- @param #number Tmax (Optional) Maximum suppression time. If no value is given, the is set to Tmin.
 function AI_Suppression:SetSuppressionTime(Tmin, Tmax)
-  self.Tsuppress_min=Tmin
+  self.Tsuppress_min=Tmin or 1
   self.Tsuppress_max=Tmax or Tmin
   env.info(AI_Suppression.id..string.format("Min suppression time %d seconds.", self.Tsuppress_min))
   env.info(AI_Suppression.id..string.format("Max suppression time %d seconds.", self.Tsuppress_max))
@@ -154,6 +157,23 @@ function AI_Suppression:SetRetreatZone(zone)
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Before "Status" event.
+-- @param #AI_Suppression self
+function AI_Suppression:OnBeforeStatus(Controlable, From, Event, To)
+  env.info(AI_Suppression.id..string.format("OnBeforeStatus: %s event %s from %s to %s", Controlable:GetName(), Event, From, To))
+  local text=string.format("Group %s is in state %s.", Controlable:GetName(), self:GetState())
+  MESSAGE:New(text, 10):ToAll()
+end
+
+--- After "Status" event.
+-- @param #AI_Suppression self
+function AI_Suppression:OnAfterStatus(Controlable, From, Event, To)
+  env.info(AI_Suppression.id..string.format("OnAfterStatus: %s event %s from %s to %s", Controlable:GetName(), Event, From, To))
+  -- Get new status in 30 sec.
+  self:__Status(30)
+end
+
 
 --- Before "Hit" event. (Of course, this is not really before the group got hit.)
 -- @param #AI_Suppression self
@@ -239,6 +259,40 @@ function AI_Suppression:OnAfterRetreat(Controlable, From, Event, To)
   MESSAGE:New(text, 30):ToAll()
 end
 
+--- Before "TakeCover" event.
+-- @param #AI_Suppression self
+function AI_Suppression:OnBeforeTakeCover(Controlable, From, Event, To)
+  env.info(AI_Suppression.id..string.format("OnBeforeTakeCover: %s event %s from %s to %s", Controlable:GetName(), Event, From, To))
+  
+  -- We search objects in a zone with radius 100 m around the group.
+  -- TODO: Maybe make the zone radius larger for vehicles.
+  local Zone = ZONE_GROUP:New("Zone_Hiding", Controlable, 100)
+
+  -- Scan for Scenery objects to run/drive to.
+  Zone:Scan( Object.Category.SCENERY )
+
+  local gothideout=false
+  for SceneryTypeName, SceneryData in pairs( Zone:GetScannedScenery() ) do
+    for SceneryName, SceneryObject in pairs( SceneryData ) do
+      local SceneryObject = SceneryObject -- Wrapper.Scenery#SCENERY
+      MESSAGE:NewType( "Scenery: " .. SceneryObject:GetTypeName() .. ", Coord LL DMS: " .. SceneryObject:GetCoordinate():ToStringLLDMS(), MESSAGE.Type.Information ):ToAll()
+      -- TODO: Add check if scenery name matches a specific type like tree or building. This might be tricky though!
+    end
+  end  
+  
+  -- Only take cover if we found a hideout.
+  return gothideout
+  
+end
+
+--- After "TakeCover" event.
+-- @param #AI_Suppression self
+function AI_Suppression:OnBeforeTakeCover(Controlable, From, Event, To)
+  env.info(AI_Suppression.id..string.format("OnAfterTakeCover: %s event %s from %s to %s", Controlable:GetName(), Event, From, To))
+  local text=string.format("Group %s is taking cover!", Controlable:GetName())
+  MESSAGE:New(text, 30):ToAll()
+end
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Entering "CombatReady" state. The group will be able to fight back.
@@ -297,12 +351,12 @@ end
 function AI_Suppression:OnEnterRetreating(Controlable, From, Event, To)
   env.info(AI_Suppression.id..string.format("OnEnterRetreating: %s event %s from %s to %s", Controlable:GetName(), Event, From, To))
 
-  -- Set the ALARM STATE to GREEN. Then the unit can move even if it is under fire.
+  -- Set the ALARM STATE to GREEN. Then the unit will move even if it is under fire.
   Controlable:OptionAlarmStateGreen()
   
-  --TODO: Route the group to a zone.
-  MESSAGE:New(string.format("Group %s would be(!) retreating to retreat zone!", Controlable:GetName()), 30):ToAll()
-  self:_Retreat(self.Zone_Retreat, 50, "Vee")
+  -- Route the group to a zone.
+  MESSAGE:New(string.format("Group %s is retreating!", Controlable:GetName()), 30):ToAll()
+  self:_RetreatToZone(self.Zone_Retreat, 50, "Vee")
     
 end
 
@@ -311,6 +365,33 @@ end
 -- @param Wrapper.Controllable#CONTROLLABLE Controlable Controllable of the AI group.
 function AI_Suppression:OnLeaveRetreating(Controlable, From, Event, To)
   env.info(AI_Suppression.id..string.format("OnLeveRetreating: %s event %s from %s to %s", Controlable:GetName(), Event, From, To))
+
+  -- Set the ALARM STATE back to AUTO.
+  Controlable:OptionAlarmStateAuto()
+end
+
+
+--- Entering "Hiding" state. Group will try to take cover at neargy scenery objects.
+-- @param #AI_Suppression self
+-- @param Wrapper.Controllable#CONTROLLABLE Controlable Controllable of the AI group.
+function AI_Suppression:OnEnterHiding(Controlable, From, Event, To)
+  env.info(AI_Suppression.id..string.format("OnEnterHiding: %s event %s from %s to %s", Controlable:GetName(), Event, From, To))
+
+  -- Set the ALARM STATE to GREEN. Then the unit will move even if it is under fire.
+  Controlable:OptionAlarmStateGreen()
+  
+  -- Route the group to a zone.
+  MESSAGE:New(string.format("Group %s would be(!) hiding now!", Controlable:GetName()), 30):ToAll()
+  
+  --TODO: Search place to hide. For each unit (disperse) or same for all?
+    
+end
+
+--- Leaving "Hiding" state.
+-- @param #AI_Suppression self
+-- @param Wrapper.Controllable#CONTROLLABLE Controlable Controllable of the AI group.
+function AI_Suppression:OnLeaveHiding(Controlable, From, Event, To)
+  env.info(AI_Suppression.id..string.format("OnLeveHiding: %s event %s from %s to %s", Controlable:GetName(), Event, From, To))
 
   -- Set the ALARM STATE back to AUTO.
   Controlable:OptionAlarmStateAuto()
@@ -345,10 +426,12 @@ end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Get (relative) life of first unit of a group.
+--- Get (relative) life in percent of a group. Function returns the value of the units with the smallest and largest life. Also the average value of all groups is returned.
 -- @param #AI_Suppression self
 -- @param Wrapper.Group#GROUP group Group of unit.
--- @return #number Life of unit in percent.
+-- @return #number Smallest life value of all units.
+-- @return #number Largest life value of all units.
+-- @return #number Average life value.
 function AI_Suppression:_GetLife()
   local group=self.Controllable
   if group and group:IsAlive() then
@@ -378,12 +461,12 @@ function AI_Suppression:_GetLife()
 end
 
 
---- Retreat to a zone.
+--- Retreat to a random point within a zone.
 -- @param #AI_Suppression self
 -- @param Core.Zone#ZONE zone Zone to which the group retreats.
 -- @param #number speed Speed of the group. Default max speed the specific group can do.
 -- @param #string formation Formation of the Group. Default "Vee".
-function AI_Suppression:_Retreat(zone, speed, formation)
+function AI_Suppression:_RetreatToZone(zone, speed, formation)
 
   -- Set zone, speed and formation if they are not given
   zone=zone or self.Zone_Retreat
