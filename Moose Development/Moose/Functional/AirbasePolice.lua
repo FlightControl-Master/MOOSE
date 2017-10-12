@@ -183,7 +183,7 @@ function AIRBASEPOLICE_BASE:_AirbaseMonitor()
                       Client:Message( "You are speeding on the taxiway! Slow down or you will be removed from this airbase! Your current velocity is " .. string.format( "%2.0f km/h", Velocity ), 5, "Warning " .. SpeedingWarnings .. " / 3" )
                       Client:SetState( self, "Warnings", SpeedingWarnings + 1 )
                     else
-                      MESSAGE:New( "Player " .. Client:GetPlayerName() .. " is being damaged at the airbase, due to a speeding violation ...", 10, "Airbase Police" ):ToAll()
+                      MESSAGE:New( "Player " .. Client:GetPlayerName() .. " is being kicked from the airbase, due to a speeding violation ...", 10, "Airbase Police" ):ToAll()
                       --- @param Wrapper.Client#CLIENT Client
                       Client:Destroy()
                       Client:SetState( self, "Speeding", false )

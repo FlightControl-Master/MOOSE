@@ -206,6 +206,7 @@ do -- TASK_ZONE_CAPTURE
     ClassName = "TASK_ZONE_CAPTURE",
   }
   
+
   --- Instantiates a new TASK_ZONE_CAPTURE.
   -- @param #TASK_ZONE_CAPTURE self
   -- @param Tasking.Mission#MISSION Mission
@@ -236,6 +237,7 @@ do -- TASK_ZONE_CAPTURE
     return self
   end 
 
+
   --- Instantiates a new TASK_ZONE_CAPTURE.
   -- @param #TASK_ZONE_CAPTURE self
   function TASK_ZONE_CAPTURE:UpdateTaskInfo() 
@@ -247,6 +249,7 @@ do -- TASK_ZONE_CAPTURE
     self:SetInfo( "Zone Coalition", self.ZoneGoal:GetCoalitionName(), 11 )
   end
     
+
   function TASK_ZONE_CAPTURE:ReportOrder( ReportGroup ) 
     local Coordinate = self:GetInfo( "Coordinate" )
     --local Coordinate = self.TaskInfo.Coordinates.TaskInfoText

@@ -529,7 +529,7 @@ do -- CARGO_REPRESENTABLE
   -- @extends #CARGO
   -- @field test
 
-  ---
+  --- Models CARGO that is representable by a Unit.
   -- @field #CARGO_REPRESENTABLE CARGO_REPRESENTABLE
   CARGO_REPRESENTABLE = {
     ClassName = "CARGO_REPRESENTABLE"
@@ -546,6 +546,18 @@ do -- CARGO_REPRESENTABLE
   function CARGO_REPRESENTABLE:New( CargoObject, Type, Name, Weight, ReportRadius, NearRadius )
     local self = BASE:Inherit( self, CARGO:New( Type, Name, Weight, ReportRadius, NearRadius ) ) -- #CARGO_REPRESENTABLE
     self:F( { Type, Name, Weight, ReportRadius, NearRadius } )
+  
+    return self
+  end
+
+  --- CARGO_REPRESENTABLE Destructor.
+  -- @param #CARGO_REPRESENTABLE self
+  -- @return #CARGO_REPRESENTABLE
+  function CARGO_REPRESENTABLE:Destroy()
+  
+    -- Cargo objects are deleted from the _DATABASE and SET_CARGO objects.
+    self:F( { CargoName = self:GetName() } )
+    _EVENTDISPATCHER:CreateEventDeleteCargo( self )
   
     return self
   end
@@ -678,7 +690,7 @@ end
 
 do -- CARGO_UNIT
 
-  --- Hello 
+  --- Models CARGO in the form of units, which can be boarded, unboarded, loaded, unloaded. 
   -- @type CARGO_UNIT
   -- @extends #CARGO_REPRESENTABLE
   
@@ -695,345 +707,424 @@ do -- CARGO_UNIT
     ClassName = "CARGO_UNIT"
   }
 
---- CARGO_UNIT Constructor.
--- @param #CARGO_UNIT self
--- @param Wrapper.Unit#UNIT CargoUnit
--- @param #string Type
--- @param #string Name
--- @param #number Weight
--- @param #number ReportRadius (optional)
--- @param #number NearRadius (optional)
--- @return #CARGO_UNIT
-function CARGO_UNIT:New( CargoUnit, Type, Name, Weight, NearRadius )
-  local self = BASE:Inherit( self, CARGO_REPRESENTABLE:New( CargoUnit, Type, Name, Weight, NearRadius ) ) -- #CARGO_UNIT
-  self:F( { Type, Name, Weight, NearRadius } )
-
-  self:T( CargoUnit )
-  self.CargoObject = CargoUnit
-
-  self:T( self.ClassName )
-
---  self:HandleEvent( EVENTS.Dead,
---    --- @param #CARGO Cargo
---    -- @param Core.Event#EVENTDATA EventData 
---    function( Cargo, EventData )
---      if Cargo:GetObjectName() == EventData.IniUnit:GetName() then
---        self:E( { "Cargo destroyed", Cargo } )
---        Cargo:Destroyed()
---      end
---    end
---  )
-
-  self:SetEventPriority( 5 )
-
-  return self
-end
-
---- CARGO_UNIT Destructor.
--- @param #CARGO_UNIT self
--- @return #CARGO_UNIT
-function CARGO_UNIT:Destroy()
-
-  -- Cargo objects are deleted from the _DATABASE and SET_CARGO objects.
-  self:F( { CargoName = self:GetName() } )
-  _EVENTDISPATCHER:CreateEventDeleteCargo( self )
-
-  return self
-end
-
---- Enter UnBoarding State.
--- @param #CARGO_UNIT self
--- @param #string Event
--- @param #string From
--- @param #string To
--- @param Core.Point#POINT_VEC2 ToPointVec2
-function CARGO_UNIT:onenterUnBoarding( From, Event, To, ToPointVec2, NearRadius )
-  self:F( { From, Event, To, ToPointVec2, NearRadius } )
-
-  NearRadius = NearRadius or 25
-
-  local Angle = 180
-  local Speed = 60
-  local DeployDistance = 9
-  local RouteDistance = 60
-
-  if From == "Loaded" then
-
-    local CargoCarrier = self.CargoCarrier -- Wrapper.Controllable#CONTROLLABLE
-
-    local CargoCarrierPointVec2 = CargoCarrier:GetPointVec2()
-    local CargoCarrierHeading = self.CargoCarrier:GetHeading() -- Get Heading of object in degrees.
-    local CargoDeployHeading = ( ( CargoCarrierHeading + Angle ) >= 360 ) and ( CargoCarrierHeading + Angle - 360 ) or ( CargoCarrierHeading + Angle )
-
-
-    local CargoRoutePointVec2 = CargoCarrierPointVec2:Translate( RouteDistance, CargoDeployHeading )
-    
-    
-    -- if there is no ToPointVec2 given, then use the CargoRoutePointVec2
-    ToPointVec2 = ToPointVec2 or CargoRoutePointVec2
-    local DirectionVec3 = CargoCarrierPointVec2:GetDirectionVec3(ToPointVec2)
-    local Angle = CargoCarrierPointVec2:GetAngleDegrees(DirectionVec3)
-
-    local CargoDeployPointVec2 = CargoCarrierPointVec2:Translate( DeployDistance, Angle )
-    
-    local FromPointVec2 = CargoCarrierPointVec2
-
-    -- Respawn the group...
-    if self.CargoObject then
-      self.CargoObject:ReSpawn( CargoDeployPointVec2:GetVec3(), CargoDeployHeading )
-      self:F( { "CargoUnits:", self.CargoObject:GetGroup():GetName() } )
-      self.CargoCarrier = nil
-
-      local Points = {}
-      Points[#Points+1] = CargoCarrierPointVec2:WaypointGround( Speed )
-      
-      Points[#Points+1] = ToPointVec2:WaypointGround( Speed )
+  --- CARGO_UNIT Constructor.
+  -- @param #CARGO_UNIT self
+  -- @param Wrapper.Unit#UNIT CargoUnit
+  -- @param #string Type
+  -- @param #string Name
+  -- @param #number Weight
+  -- @param #number ReportRadius (optional)
+  -- @param #number NearRadius (optional)
+  -- @return #CARGO_UNIT
+  function CARGO_UNIT:New( CargoUnit, Type, Name, Weight, NearRadius )
+    local self = BASE:Inherit( self, CARGO_REPRESENTABLE:New( CargoUnit, Type, Name, Weight, NearRadius ) ) -- #CARGO_UNIT
+    self:F( { Type, Name, Weight, NearRadius } )
   
-      local TaskRoute = self.CargoObject:TaskRoute( Points )
-      self.CargoObject:SetTask( TaskRoute, 1 )
-
-      
-      self:__UnBoarding( 1, ToPointVec2, NearRadius )
-    end
-  end
-
-end
-
---- Leave UnBoarding State.
--- @param #CARGO_UNIT self
--- @param #string Event
--- @param #string From
--- @param #string To
--- @param Core.Point#POINT_VEC2 ToPointVec2
-function CARGO_UNIT:onleaveUnBoarding( From, Event, To, ToPointVec2, NearRadius )
-  self:F( { From, Event, To, ToPointVec2, NearRadius } )
-
-  NearRadius = NearRadius or 25
-
-  local Angle = 180
-  local Speed = 10
-  local Distance = 5
-
-  if From == "UnBoarding" then
-    if self:IsNear( ToPointVec2, NearRadius ) then
-      return true
-    else
-      
-      self:__UnBoarding( 1, ToPointVec2, NearRadius )
-    end
-    return false
-  end
-
-end
-
---- UnBoard Event.
--- @param #CARGO_UNIT self
--- @param #string Event
--- @param #string From
--- @param #string To
--- @param Core.Point#POINT_VEC2 ToPointVec2
-function CARGO_UNIT:onafterUnBoarding( From, Event, To, ToPointVec2, NearRadius )
-  self:F( { From, Event, To, ToPointVec2, NearRadius } )
-
-  NearRadius = NearRadius or 25
-
-  self.CargoInAir = self.CargoObject:InAir()
-
-  self:T( self.CargoInAir )
-
-  -- Only unboard the cargo when the carrier is not in the air.
-  -- (eg. cargo can be on a oil derrick, moving the cargo on the oil derrick will drop the cargo on the sea).
-  if not self.CargoInAir then
-
-  end
-
-  self:__UnLoad( 1, ToPointVec2, NearRadius )
-
-end
-
-
-
---- Enter UnLoaded State.
--- @param #CARGO_UNIT self
--- @param #string Event
--- @param #string From
--- @param #string To
--- @param Core.Point#POINT_VEC2
-function CARGO_UNIT:onenterUnLoaded( From, Event, To, ToPointVec2 )
-  self:F( { ToPointVec2, From, Event, To } )
-
-  local Angle = 180
-  local Speed = 10
-  local Distance = 5
-
-  if From == "Loaded" then
-    local StartPointVec2 = self.CargoCarrier:GetPointVec2()
-    local CargoCarrierHeading = self.CargoCarrier:GetHeading() -- Get Heading of object in degrees.
-    local CargoDeployHeading = ( ( CargoCarrierHeading + Angle ) >= 360 ) and ( CargoCarrierHeading + Angle - 360 ) or ( CargoCarrierHeading + Angle )
-    local CargoDeployCoord = StartPointVec2:Translate( Distance, CargoDeployHeading )
-
-    ToPointVec2 = ToPointVec2 or POINT_VEC2:New( CargoDeployCoord.x, CargoDeployCoord.z )
-
-    -- Respawn the group...
-    if self.CargoObject then
-      self.CargoObject:ReSpawn( ToPointVec2:GetVec3(), 0 )
-      self.CargoCarrier = nil
-    end
-    
-  end
-
-  if self.OnUnLoadedCallBack then
-    self.OnUnLoadedCallBack( self, unpack( self.OnUnLoadedParameters ) )
-    self.OnUnLoadedCallBack = nil
-  end
-
-end
-
---- Board Event.
--- @param #CARGO_UNIT self
--- @param #string Event
--- @param #string From
--- @param #string To
-function CARGO_UNIT:onafterBoard( From, Event, To, CargoCarrier, NearRadius, ... )
-  self:F( { From, Event, To, CargoCarrier, NearRadius } )
-
-  local NearRadius = NearRadius or 25
+    self:T( CargoUnit )
+    self.CargoObject = CargoUnit
   
-  self.CargoInAir = self.CargoObject:InAir()
-
-  self:T( self.CargoInAir )
-
-  -- Only move the group to the carrier when the cargo is not in the air
-  -- (eg. cargo can be on a oil derrick, moving the cargo on the oil derrick will drop the cargo on the sea).
-  if not self.CargoInAir then
-    if self:IsNear( CargoCarrier:GetPointVec2(), NearRadius ) then
-      self:Load( CargoCarrier, NearRadius, ... )
-    else
-      local Speed = 90
-      local Angle = 180
-      local Distance = 5
-      
-      NearRadius = NearRadius or 25
-    
+    self:T( self.ClassName )
+  
+    self:SetEventPriority( 5 )
+  
+    return self
+  end
+  
+  --- Enter UnBoarding State.
+  -- @param #CARGO_UNIT self
+  -- @param #string Event
+  -- @param #string From
+  -- @param #string To
+  -- @param Core.Point#POINT_VEC2 ToPointVec2
+  function CARGO_UNIT:onenterUnBoarding( From, Event, To, ToPointVec2, NearRadius )
+    self:F( { From, Event, To, ToPointVec2, NearRadius } )
+  
+    NearRadius = NearRadius or 25
+  
+    local Angle = 180
+    local Speed = 60
+    local DeployDistance = 9
+    local RouteDistance = 60
+  
+    if From == "Loaded" then
+  
+      local CargoCarrier = self.CargoCarrier -- Wrapper.Controllable#CONTROLLABLE
+  
       local CargoCarrierPointVec2 = CargoCarrier:GetPointVec2()
-      local CargoCarrierHeading = CargoCarrier:GetHeading() -- Get Heading of object in degrees.
+      local CargoCarrierHeading = self.CargoCarrier:GetHeading() -- Get Heading of object in degrees.
       local CargoDeployHeading = ( ( CargoCarrierHeading + Angle ) >= 360 ) and ( CargoCarrierHeading + Angle - 360 ) or ( CargoCarrierHeading + Angle )
-      local CargoDeployPointVec2 = CargoCarrierPointVec2:Translate( Distance, CargoDeployHeading )
+  
+  
+      local CargoRoutePointVec2 = CargoCarrierPointVec2:Translate( RouteDistance, CargoDeployHeading )
+      
+      
+      -- if there is no ToPointVec2 given, then use the CargoRoutePointVec2
+      ToPointVec2 = ToPointVec2 or CargoRoutePointVec2
+      local DirectionVec3 = CargoCarrierPointVec2:GetDirectionVec3(ToPointVec2)
+      local Angle = CargoCarrierPointVec2:GetAngleDegrees(DirectionVec3)
+  
+      local CargoDeployPointVec2 = CargoCarrierPointVec2:Translate( DeployDistance, Angle )
+      
+      local FromPointVec2 = CargoCarrierPointVec2
+  
+      -- Respawn the group...
+      if self.CargoObject then
+        self.CargoObject:ReSpawn( CargoDeployPointVec2:GetVec3(), CargoDeployHeading )
+        self:F( { "CargoUnits:", self.CargoObject:GetGroup():GetName() } )
+        self.CargoCarrier = nil
+  
+        local Points = {}
+        Points[#Points+1] = CargoCarrierPointVec2:WaypointGround( Speed )
+        
+        Points[#Points+1] = ToPointVec2:WaypointGround( Speed )
     
-      local Points = {}
-    
-      local PointStartVec2 = self.CargoObject:GetPointVec2()
-    
-      Points[#Points+1] = PointStartVec2:WaypointGround( Speed )
-      Points[#Points+1] = CargoDeployPointVec2:WaypointGround( Speed )
-    
-      local TaskRoute = self.CargoObject:TaskRoute( Points )
-      self.CargoObject:SetTask( TaskRoute, 2 )
-      self:__Boarding( -1, CargoCarrier, NearRadius )
-      self.RunCount = 0
+        local TaskRoute = self.CargoObject:TaskRoute( Points )
+        self.CargoObject:SetTask( TaskRoute, 1 )
+  
+        
+        self:__UnBoarding( 1, ToPointVec2, NearRadius )
+      end
     end
+  
   end
   
-end
-
-
---- Boarding Event.
--- @param #CARGO_UNIT self
--- @param #string Event
--- @param #string From
--- @param #string To
--- @param Wrapper.Unit#UNIT CargoCarrier
--- @param #number NearRadius
-function CARGO_UNIT:onafterBoarding( From, Event, To, CargoCarrier, NearRadius, ... )
-  self:F( { From, Event, To, CargoCarrier.UnitName, NearRadius } )
+  --- Leave UnBoarding State.
+  -- @param #CARGO_UNIT self
+  -- @param #string Event
+  -- @param #string From
+  -- @param #string To
+  -- @param Core.Point#POINT_VEC2 ToPointVec2
+  function CARGO_UNIT:onleaveUnBoarding( From, Event, To, ToPointVec2, NearRadius )
+    self:F( { From, Event, To, ToPointVec2, NearRadius } )
   
+    NearRadius = NearRadius or 25
   
-  if CargoCarrier and CargoCarrier:IsAlive() then 
-    if CargoCarrier:InAir() == false then
-      if self:IsNear( CargoCarrier:GetPointVec2(), NearRadius ) then
-        self:__Load( 1, CargoCarrier, ... )
+    local Angle = 180
+    local Speed = 10
+    local Distance = 5
+  
+    if From == "UnBoarding" then
+      if self:IsNear( ToPointVec2, NearRadius ) then
+        return true
       else
-        self:__Boarding( -1, CargoCarrier, NearRadius, ... )
-        self.RunCount = self.RunCount + 1
-        if self.RunCount >= 20 then
-          self.RunCount = 0
-          local Speed = 90
-          local Angle = 180
-          local Distance = 5
+        
+        self:__UnBoarding( 1, ToPointVec2, NearRadius )
+      end
+      return false
+    end
+  
+  end
+  
+  --- UnBoard Event.
+  -- @param #CARGO_UNIT self
+  -- @param #string Event
+  -- @param #string From
+  -- @param #string To
+  -- @param Core.Point#POINT_VEC2 ToPointVec2
+  function CARGO_UNIT:onafterUnBoarding( From, Event, To, ToPointVec2, NearRadius )
+    self:F( { From, Event, To, ToPointVec2, NearRadius } )
+  
+    NearRadius = NearRadius or 25
+  
+    self.CargoInAir = self.CargoObject:InAir()
+  
+    self:T( self.CargoInAir )
+  
+    -- Only unboard the cargo when the carrier is not in the air.
+    -- (eg. cargo can be on a oil derrick, moving the cargo on the oil derrick will drop the cargo on the sea).
+    if not self.CargoInAir then
+  
+    end
+  
+    self:__UnLoad( 1, ToPointVec2, NearRadius )
+  
+  end
+  
+  
+  
+  --- Enter UnLoaded State.
+  -- @param #CARGO_UNIT self
+  -- @param #string Event
+  -- @param #string From
+  -- @param #string To
+  -- @param Core.Point#POINT_VEC2
+  function CARGO_UNIT:onenterUnLoaded( From, Event, To, ToPointVec2 )
+    self:F( { ToPointVec2, From, Event, To } )
+  
+    local Angle = 180
+    local Speed = 10
+    local Distance = 5
+  
+    if From == "Loaded" then
+      local StartPointVec2 = self.CargoCarrier:GetPointVec2()
+      local CargoCarrierHeading = self.CargoCarrier:GetHeading() -- Get Heading of object in degrees.
+      local CargoDeployHeading = ( ( CargoCarrierHeading + Angle ) >= 360 ) and ( CargoCarrierHeading + Angle - 360 ) or ( CargoCarrierHeading + Angle )
+      local CargoDeployCoord = StartPointVec2:Translate( Distance, CargoDeployHeading )
+  
+      ToPointVec2 = ToPointVec2 or COORDINATE:New( CargoDeployCoord.x, CargoDeployCoord.z )
+  
+      -- Respawn the group...
+      if self.CargoObject then
+        self.CargoObject:ReSpawn( ToPointVec2:GetVec3(), 0 )
+        self.CargoCarrier = nil
+      end
+      
+    end
+  
+    if self.OnUnLoadedCallBack then
+      self.OnUnLoadedCallBack( self, unpack( self.OnUnLoadedParameters ) )
+      self.OnUnLoadedCallBack = nil
+    end
+  
+  end
+  
+  --- Board Event.
+  -- @param #CARGO_UNIT self
+  -- @param #string Event
+  -- @param #string From
+  -- @param #string To
+  function CARGO_UNIT:onafterBoard( From, Event, To, CargoCarrier, NearRadius, ... )
+    self:F( { From, Event, To, CargoCarrier, NearRadius } )
+  
+    local NearRadius = NearRadius or 25
+    
+    self.CargoInAir = self.CargoObject:InAir()
+  
+    self:T( self.CargoInAir )
+  
+    -- Only move the group to the carrier when the cargo is not in the air
+    -- (eg. cargo can be on a oil derrick, moving the cargo on the oil derrick will drop the cargo on the sea).
+    if not self.CargoInAir then
+      if self:IsNear( CargoCarrier:GetPointVec2(), NearRadius ) then
+        self:Load( CargoCarrier, NearRadius, ... )
+      else
+        local Speed = 90
+        local Angle = 180
+        local Distance = 5
+        
+        NearRadius = NearRadius or 25
+      
+        local CargoCarrierPointVec2 = CargoCarrier:GetPointVec2()
+        local CargoCarrierHeading = CargoCarrier:GetHeading() -- Get Heading of object in degrees.
+        local CargoDeployHeading = ( ( CargoCarrierHeading + Angle ) >= 360 ) and ( CargoCarrierHeading + Angle - 360 ) or ( CargoCarrierHeading + Angle )
+        local CargoDeployPointVec2 = CargoCarrierPointVec2:Translate( Distance, CargoDeployHeading )
+      
+        local Points = {}
+      
+        local PointStartVec2 = self.CargoObject:GetPointVec2()
+      
+        Points[#Points+1] = PointStartVec2:WaypointGround( Speed )
+        Points[#Points+1] = CargoDeployPointVec2:WaypointGround( Speed )
+      
+        local TaskRoute = self.CargoObject:TaskRoute( Points )
+        self.CargoObject:SetTask( TaskRoute, 2 )
+        self:__Boarding( -1, CargoCarrier, NearRadius )
+        self.RunCount = 0
+      end
+    end
+    
+  end
+  
+  
+  --- Boarding Event.
+  -- @param #CARGO_UNIT self
+  -- @param #string Event
+  -- @param #string From
+  -- @param #string To
+  -- @param Wrapper.Unit#UNIT CargoCarrier
+  -- @param #number NearRadius
+  function CARGO_UNIT:onafterBoarding( From, Event, To, CargoCarrier, NearRadius, ... )
+    self:F( { From, Event, To, CargoCarrier.UnitName, NearRadius } )
+    
+    
+    if CargoCarrier and CargoCarrier:IsAlive() then 
+      if CargoCarrier:InAir() == false then
+        if self:IsNear( CargoCarrier:GetPointVec2(), NearRadius ) then
+          self:__Load( 1, CargoCarrier, ... )
+        else
+          self:__Boarding( -1, CargoCarrier, NearRadius, ... )
+          self.RunCount = self.RunCount + 1
+          if self.RunCount >= 20 then
+            self.RunCount = 0
+            local Speed = 90
+            local Angle = 180
+            local Distance = 5
+            
+            NearRadius = NearRadius or 25
           
-          NearRadius = NearRadius or 25
-        
-          local CargoCarrierPointVec2 = CargoCarrier:GetPointVec2()
-          local CargoCarrierHeading = CargoCarrier:GetHeading() -- Get Heading of object in degrees.
-          local CargoDeployHeading = ( ( CargoCarrierHeading + Angle ) >= 360 ) and ( CargoCarrierHeading + Angle - 360 ) or ( CargoCarrierHeading + Angle )
-          local CargoDeployPointVec2 = CargoCarrierPointVec2:Translate( Distance, CargoDeployHeading )
-        
-          local Points = {}
-        
-          local PointStartVec2 = self.CargoObject:GetPointVec2()
-        
-          Points[#Points+1] = PointStartVec2:WaypointGround( Speed )
-          Points[#Points+1] = CargoDeployPointVec2:WaypointGround( Speed )
-        
-          local TaskRoute = self.CargoObject:TaskRoute( Points )
-          self.CargoObject:SetTask( TaskRoute, 0.2 )
+            local CargoCarrierPointVec2 = CargoCarrier:GetPointVec2()
+            local CargoCarrierHeading = CargoCarrier:GetHeading() -- Get Heading of object in degrees.
+            local CargoDeployHeading = ( ( CargoCarrierHeading + Angle ) >= 360 ) and ( CargoCarrierHeading + Angle - 360 ) or ( CargoCarrierHeading + Angle )
+            local CargoDeployPointVec2 = CargoCarrierPointVec2:Translate( Distance, CargoDeployHeading )
+          
+            local Points = {}
+          
+            local PointStartVec2 = self.CargoObject:GetPointVec2()
+          
+            Points[#Points+1] = PointStartVec2:WaypointGround( Speed )
+            Points[#Points+1] = CargoDeployPointVec2:WaypointGround( Speed )
+          
+            local TaskRoute = self.CargoObject:TaskRoute( Points )
+            self.CargoObject:SetTask( TaskRoute, 0.2 )
+          end
         end
+      else
+        self.CargoObject:MessageToGroup( "Cancelling Boarding... Get back on the ground!", 5, CargoCarrier:GetGroup(), self:GetName() )
+        self:CancelBoarding( CargoCarrier, NearRadius, ... )
+        self.CargoObject:SetCommand( self.CargoObject:CommandStopRoute( true ) )
       end
     else
-      self.CargoObject:MessageToGroup( "Cancelling Boarding... Get back on the ground!", 5, CargoCarrier:GetGroup(), self:GetName() )
-      self:CancelBoarding( CargoCarrier, NearRadius, ... )
-      self.CargoObject:SetCommand( self.CargoObject:CommandStopRoute( true ) )
+      self:E("Something is wrong")
     end
-  else
-    self:E("Something is wrong")
+    
   end
   
-end
-
-
---- Enter Boarding State.
--- @param #CARGO_UNIT self
--- @param #string Event
--- @param #string From
--- @param #string To
--- @param Wrapper.Unit#UNIT CargoCarrier
-function CARGO_UNIT:onenterBoarding( From, Event, To, CargoCarrier, NearRadius, ... )
-  self:F( { From, Event, To, CargoCarrier.UnitName, NearRadius } )
   
-  local Speed = 90
-  local Angle = 180
-  local Distance = 5
+  --- Enter Boarding State.
+  -- @param #CARGO_UNIT self
+  -- @param #string Event
+  -- @param #string From
+  -- @param #string To
+  -- @param Wrapper.Unit#UNIT CargoCarrier
+  function CARGO_UNIT:onenterBoarding( From, Event, To, CargoCarrier, NearRadius, ... )
+    self:F( { From, Event, To, CargoCarrier.UnitName, NearRadius } )
+    
+    local Speed = 90
+    local Angle = 180
+    local Distance = 5
+    
+    local NearRadius = NearRadius or 25
   
-  local NearRadius = NearRadius or 25
-
-  if From == "UnLoaded" or From == "Boarding" then
-  
+    if From == "UnLoaded" or From == "Boarding" then
+    
+    end
+    
   end
   
-end
-
---- Loaded State.
--- @param #CARGO_UNIT self
--- @param #string Event
--- @param #string From
--- @param #string To
--- @param Wrapper.Unit#UNIT CargoCarrier
-function CARGO_UNIT:onenterLoaded( From, Event, To, CargoCarrier )
-  self:F( { From, Event, To, CargoCarrier } )
-
-  self.CargoCarrier = CargoCarrier
+  --- Loaded State.
+  -- @param #CARGO_UNIT self
+  -- @param #string Event
+  -- @param #string From
+  -- @param #string To
+  -- @param Wrapper.Unit#UNIT CargoCarrier
+  function CARGO_UNIT:onenterLoaded( From, Event, To, CargoCarrier )
+    self:F( { From, Event, To, CargoCarrier } )
   
-  -- Only destroy the CargoObject is if there is a CargoObject (packages don't have CargoObjects).
-  if self.CargoObject then
-    self:T("Destroying")
-    self.CargoObject:Destroy()
+    self.CargoCarrier = CargoCarrier
+    
+    -- Only destroy the CargoObject is if there is a CargoObject (packages don't have CargoObjects).
+    if self.CargoObject then
+      self:T("Destroying")
+      self.CargoObject:Destroy()
+    end
   end
-end
+
+end -- CARGO_UNIT
+
+
+do -- CARGO_CRATE
+
+  --- Models the behaviour of cargo crates, which can be slingloaded and boarded on helicopters using the DCS menus. 
+  -- @type CARGO_CRATE
+  -- @extends #CARGO_REPRESENTABLE
+  
+  --- # CARGO\_CRATE class, extends @{#CARGO_REPRESENTABLE}
+  -- 
+  -- The CARGO\_CRATE class defines a cargo that is represented by a UNIT object within the simulator, and can be transported by a carrier.
+  -- Use the event functions as described above to Load, UnLoad, Board, UnBoard the CARGO\_CRATE objects to and from carriers.
+  -- 
+  -- ===
+  -- 
+  -- @field #CARGO_CRATE
+  CARGO_CRATE = {
+    ClassName = "CARGO_CRATE"
+  }
+  
+  --- CARGO_CRATE Constructor.
+  -- @param #CARGO_CRATE self
+  -- @param #string CrateName
+  -- @param #string Type
+  -- @param #string Name
+  -- @param #number Weight
+  -- @param #number ReportRadius (optional)
+  -- @param #number NearRadius (optional)
+  -- @return #CARGO_CRATE
+  function CARGO_CRATE:New( CargoCrateName, Type, Name, NearRadius )
+    local self = BASE:Inherit( self, CARGO_REPRESENTABLE:New( CargoCrateName, Type, Name, nil, NearRadius ) ) -- #CARGO_CRATE
+    self:F( { Type, Name, NearRadius } )
+  
+    self:T( CargoCrateName )
+    _DATABASE:AddStatic( CargoCrateName )
+    
+    self.CargoObject = STATIC:FindByName( CargoCrateName )
+  
+    self:T( self.ClassName )
+  
+    self:SetEventPriority( 5 )
+  
+    return self
+  end
+  
+  
+  
+  --- Enter UnLoaded State.
+  -- @param #CARGO_CRATE self
+  -- @param #string Event
+  -- @param #string From
+  -- @param #string To
+  -- @param Core.Point#POINT_VEC2
+  function CARGO_CRATE:onenterUnLoaded( From, Event, To, ToPointVec2 )
+    self:F( { ToPointVec2, From, Event, To } )
+  
+    local Angle = 180
+    local Speed = 10
+    local Distance = 10
+  
+    if From == "Loaded" then
+      local StartCoordinate = self.CargoCarrier:GetCoordinate()
+      local CargoCarrierHeading = self.CargoCarrier:GetHeading() -- Get Heading of object in degrees.
+      local CargoDeployHeading = ( ( CargoCarrierHeading + Angle ) >= 360 ) and ( CargoCarrierHeading + Angle - 360 ) or ( CargoCarrierHeading + Angle )
+      local CargoDeployCoord = StartCoordinate:Translate( Distance, CargoDeployHeading )
+  
+      ToPointVec2 = ToPointVec2 or COORDINATE:NewFromVec2( { x= CargoDeployCoord.x, y = CargoDeployCoord.z } )
+  
+      -- Respawn the group...
+      if self.CargoObject then
+        self.CargoObject:ReSpawn( ToPointVec2, 0 )
+        self.CargoCarrier = nil
+      end
+      
+    end
+  
+    if self.OnUnLoadedCallBack then
+      self.OnUnLoadedCallBack( self, unpack( self.OnUnLoadedParameters ) )
+      self.OnUnLoadedCallBack = nil
+    end
+  
+  end
+
+  
+  --- Loaded State.
+  -- @param #CARGO_CRATE self
+  -- @param #string Event
+  -- @param #string From
+  -- @param #string To
+  -- @param Wrapper.Unit#UNIT CargoCarrier
+  function CARGO_CRATE:onenterLoaded( From, Event, To, CargoCarrier )
+    self:F( { From, Event, To, CargoCarrier } )
+  
+    self.CargoCarrier = CargoCarrier
+    
+    -- Only destroy the CargoObject is if there is a CargoObject (packages don't have CargoObjects).
+    if self.CargoObject then
+      self:T("Destroying")
+      self.CargoObject:Destroy()
+    end
+  end
 
 
 
 end
-
 
 do -- CARGO_GROUP
 
