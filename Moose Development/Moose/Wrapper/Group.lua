@@ -224,12 +224,14 @@ function GROUP:Destroy()
     for Index, UnitData in pairs( DCSGroup:getUnits() ) do
       self:CreateEventCrash( timer.getTime(), UnitData )
     end
+    USERFLAG:New( self:GetName() ):Set( 100 )
     DCSGroup:destroy()
     DCSGroup = nil
   end
 
   return nil
 end
+
 
 --- Returns category of the DCS Group.
 -- @param #GROUP self

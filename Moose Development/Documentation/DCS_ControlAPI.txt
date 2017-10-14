@@ -1,0 +1,565 @@
+DCS Simulation Control User Scripts
+====================================
+
+The behaviour of the DCS can be altered using the *GameGUI.lua scripts.
+You define the hooks to the DCS events, and then do what you want using the provided API.
+===================================================================================================
+
+When loading, DCS searches for Saved Games\DCS\Scripts\*GameGUI.lua files,
+sorts them by name and then loads into the GUI Lua-state.
+Each user script is loaded into an isolated environment, so the only
+thing they share is the state of the simulator.
+
+Each script defines a set of callbacks to the DCS events and sets them with the call
+    DCS.setUserCallbacks(cb_table)
+For each callback type the hooks of all user scripts will be called in order of loading.
+
+For callbacks which are supposed to returning a value, currently there are 3 of them:
+    onPlayerTryConnect
+    onPlayerTrySendChat
+    onPlayerTryChangeSlot
+returning a value means breaking the hook call chain.
+Returning nothing (or nil) means continuing the hook chain, which ends with the default allow-all handlers.
+ 
+The example user script 'testGameGUI.lua':
+----------------------------------------------------------------------------------------------
+local test = {}
+
+function test.onPlayerTryConnect(ipaddr, name, ucid, playerID)
+    print('onPlayerTryConnect(%s, %s, %s, %d)', ipaddr, name, ucid, playerID)
+    -- if you want to gently intercept the call, allowing other user scripts to get it,
+    -- you better return nothing here
+    return true -- allow the player to connect
+end
+
+function test.onSimulationStart()
+    print('Current mission is '..DCS.getMissionName())
+end
+
+DCS.setUserCallbacks(test)  -- here we set our callbacks
+----------------------------------------------------------------------------------------------
+
+
+The available API are documented below.
+The full list of the callbacks is at the end of this document.
+
+In addition, all standard lua 5.1 libraries are available as well, namely:
+base api, like print, etc,
+math.*
+table.*
+string.*
+io.*
+os.*
+debug.*
+
+===================================================================================================
+
+
+
+Lua File System (lfs) API
+-------------------------------
+lfs.currentdir() -> string
+    Returns the path of the DCS install folder
+
+lfs.writedir() -> string
+    Returns the path of the current 'Saved Games\DCS' folder.
+
+lfs.tempdir() -> string
+    Returns the pat of the DCS Temp folder (AppData\Local\Temp\DCS).
+
+lfs.mkdir()
+lfs.rmdir()
+lfs.attributes()
+lfs.dir()
+lfs.normpath()
+lfs.realpath()
+
+
+
+DCS Control API, table 'DCS.*'
+-------------------------------
+
+DCS.setPause(bool)
+    Pauses/resumes the simulation. Server-side only.
+
+DCS.getPause() -> bool
+    true if simulation is paused
+
+DCS.stopMission()
+    stops current mission
+
+DCS.exitProcess()
+    Exits the DCS process.
+
+DCS.isMultiplayer() -> bool
+    True when running in the multiplayer mode.
+
+DCS.isServer() -> bool
+    True when running as a server or in the single-player mode.
+
+DCS.getModelTime() -> number
+    returns current DCS simulation time in seconds.
+
+DCS.getRealTime() -> number
+    returns current DCS real time in seconds relative to the DCS start time.
+
+DCS.getMissionOptions() -> table
+   Returns the value of 'mission.options'
+
+DCS.getMissionDescription() -> string
+   translated mission.descriptionText string
+
+DCS.getAvailableCoalitions() -> table {
+ [coalition_id] = { name = "coalition name", }
+ ...
+}
+   Returns a list of coalitions which have available slots.
+
+DCS.getAvailableSlots(coalitionID) -> array of {unitId, type, role, callsign, groupName, country}
+   Returns the list of available slots.
+   NOTE: the returned unitID is actually a slotID, which for multi-seat units is 'unitID_seatID'
+
+DCS.getCurrentMission() -> table with the currently loaded mission
+   NOTE: to get valid mission.options use DCS.getMissionOptions()
+
+DCS.getMissionName() -> string
+    Returns the name of the current mission
+	
+DCS.getMissionFilename() -> string
+    Returns the file name of the current mission (returns nil when acting as a multiplayer client).
+	
+DCS.getMissionResult(string side) -> integer [0, 100]
+    Gets missin result for either 'red' or 'blue'
+
+DCS.getUnitProperty(missionId, propertyId) -> string
+   propertyId:
+    DCS.UNIT_RUNTIME_ID, // unique within runtime mission. int
+    DCS.UNIT_MISSION_ID, // unique within mission file. int>0
+    DCS.UNIT_NAME, // unit name, as assigned by mission designer.
+    DCS.UNIT_TYPE, // unit type (Ural, ZU-23, etc)
+    DCS.UNIT_CATEGORY,
+    DCS.UNIT_GROUP_MISSION_ID, // group ID, unique within mission file. int>0
+    DCS.UNIT_GROUPNAME, // group name, as assigned by mission designer.
+    DCS.UNIT_GROUPCATEGORY,
+    DCS.UNIT_CALLSIGN,
+    DCS.UNIT_HIDDEN,// ME hiding  
+    DCS.UNIT_COALITION,// "blue", "red" or "unknown" 
+    DCS.UNIT_COUNTRY_ID,
+    DCS.UNIT_TASK, //"unit.group.task"
+    DCS.UNIT_PLAYER_NAME, // valid for network "humanable" units
+    DCS.UNIT_ROLE,//"artillery_commander", "instructor", etc
+    DCS.UNIT_INVISIBLE_MAP_ICON,//ME invisible map icon
+
+DCS.getUnitType(missionId) -> typeId
+    a shortcut for DCS.getUnitProperty(missionId, DCS.UNIT_TYPE)
+
+DCS.getUnitTypeAttribute(typeId, attr) -> string
+    Returns a value from Database: Objects[typeId][attr],
+    for example DCS.getUnitTypeAttribute("Ural", "DisplayName")
+	
+DCS.writeDebriefing(str)
+    Writes a custom string to the debriefing file
+
+DCS.setUserCallbacks(cb_table)
+    Hooks the callbacks using the handlers from the provided table.
+    See: "GameGUI scripts" section.
+   
+
+	
+Logging API 'log.*'
+------------------------
+Logging works as follows:
+a) each log message is accompanied with 2 attributes: a subsystem, and level.
+b) after each messages gets into a logger it passes (asynchronously) through
+   a series of output filters which decide where the message will be written to.
+   
+Writing to log is done by:
+
+log.write(SUBSYSTEM_NAME, LOG_LEVEL, message, ...)
+  if there are any arguments after 'message',
+  the actual string is formed as string.format(message, ...)
+
+  SUBSYSTEM_NAME is a string
+  LOG_LEVEL is one of the values, listed below
+  see log.set_output()
+
+log.set_output(log_file_name_wo_ext, rule_subsystem_name, rule_level_mask, rule_output_mode)
+
+   the args:
+    log_file_name_wo_ext: resulting log will be written to $WRITE_DIR/Logs/<log_file_name_wo_ext>.log
+	
+    rule_subsytem_name: the name of the subsystem whose messages to write or empty string to match all subsystems
+	
+    rule_level_mask: a sum of log-level bit flags to match messages
+        valid flags are:
+            log.ALERT
+            log.ERROR
+            log.WARNING
+            log.INFO
+            log.DEBUG
+            log.ALL - includes all of the above
+            log.TRACE - a special level which is excluded from dcs.log file
+
+    rule_output_mode: a sum of output flags:
+        log.MESSAGE
+        log.TIME
+        log.MODULE - this is a 'subsystem', not a dlc
+        log.LEVEL
+        log.FULL - all of the above
+
+So, in order to save net.trace(msg) messages to a file, you should issue a call:
+   log.set_output('lua-net', 'LuaNET', log.TRACE, log.MESSAGE + log.TIME)
+   
+   This will write to a Logs/lua-net.log file
+
+Or, to save everything lua-network-related:
+   log.set_output('lua-net', 'LuaNET', log.TRACE + log.ALL, log.MESSAGE + log.TIME + log.LEVEL)
+
+To close the log file, you must use
+   log.set_output('lua-net', '', 0, 0)
+
+log.* API is available in the 'Saved Games\DCS\Config\autoexec.cfg' file as well so you can control log output in you local machine.
+
+
+
+Network specific API, available through the table 'net.'
+----------------------------------------------------------------
+
+net.log(msg) -- equivalent to log.write('LuaNET', log.INFO, msg)
+net.trace(msg) -- equivalent to log.write('LuaNET', log.TRACE, msg)
+
+What is the difference: log() always writes to dcs.log, but may lose messages if the output rate is too high.
+trace() output never appears in the dcs.log file, it must be explicitly directed to a log file.
+It never loses messages when there's an active output, but it may block if output rate is higher than writing to the log file.
+To control logger output you can use $WRITE_DIR/Config/autoexec.cfg file, or call this from your network script
+(log.* API, see above)
+
+
+net.dostring_in(state, string) -> string
+   Executes a lua-string in a given internal lua-state and returns a string result
+   Valid state names are:
+       'config': the state in which $INSTALL_DIR/Config/main.cfg is executed, as well as $WRITE_DIR/Config/autoexec.cfg
+                 used for configuration settings
+       'mission': holds current mission
+       'export': runs $WRITE_DIR/Scripts/Export.lua and the relevant export API
+
+net.send_chat(string message, bool all)
+    Send chat message. If not all, then send to my coalition (side) only.
+	
+net.send_chat_to(string message, playerID to)
+    Send direct chat message to a player
+	Server-side only:
+	net.send_chat_to(string message, playerID to[, playerID from])
+
+net.recv_chat(message[, int from=0])
+    Receive chat message locally[, pretending it was sent by another player].
+	from = 0 means from the system
+
+net.load_mission(miz_filename)
+    Loads a specified mission, temporarily overriding the server mission list.
+	SERVER ONLY
+
+net.load_next_mission() -> bool
+    Load the next mission from the server mission list. Returns false if list end is reached
+	SERVER ONLY
+
+net.get_player_list() -> array of playerID
+    Returns the list of currently connected players
+
+net.get_my_player_id() -> playerID
+    Returns the playerID of the local player. Currently always 1 for the server.
+	
+net.get_server_id() -> playerID
+    Returns playerID of the server. Currently, always 1.
+
+net.get_player_info(playerID) -> table
+    Returns a table of all player attributes or nil if playerID is invalid
+
+net.get_player_info(playerID, attrName) -> value
+    Returns a value of a given attribute for the playerID.
+
+    Currently defined attributes are:
+        'id': playerID
+        'name': player name
+        'side': 0 - spectators, 1 - red, 2 - blue
+        'slot': slotID of the player or ''
+        'ping': ping of the player in ms
+        'ipaddr': IP address of the player, SERVER ONLY
+        'ucid': Unique Client Identifier, SERVER ONLY
+
+net.kick(id, message)
+    Kick a player.
+
+net.get_stat(playerID, statID) -> integer
+    Get statistics for player. statIDs are:
+        net.PS_PING  (0) - ping (in ms)
+        net.PS_CRASH (1) - number of crashes
+        net.PS_CAR   (2) - number of destroyed vehicles
+        net.PS_PLANE (3) - ... planes/helicopters
+        net.PS_SHIP  (4) - ... ships
+        net.PS_SCORE (5) - total score
+        net.PS_LAND  (6) - number of landings
+        net.PS_EJECT (7) - of ejects
+
+
+net.get_name(playerID) -> string
+    The same as net.get_player_info(playerID, 'name')
+    FIXME: implement in ServMan_compat.lua ?
+
+net.get_slot(playerID) -> sideID, slotID
+    The same as:
+        net.get_player_info(playerID, 'side'), net.get_player_info(playerID, 'slot')
+    FIXME: implement in ServMan_compat.lua ?
+
+
+
+net.set_slot(sideID, slotID)
+    Try to set the local player's slot. Empty slotID ('') puts the player into spectators.
+	
+net.force_player_slot(playerID, sideID, slotID) -> boolean
+    Forces a player to occupy a set slot. Slot '' means no slot (moves player to spectators)
+	SideID: 0 - spectators, 1 - red, 2 - blue
+
+net.set_name(playerID, name) -- OBSOLETE, works only locally
+
+
+net.lua2json(value) -> string
+    Convert a Lua value to JSON string
+
+net.json2lua(json_string) -> value
+    Convert JSON string to a Lua value
+
+
+LuaExport API 'Export.Lo*'
+----------------------------------------------------------------
+See Scripts/Export.lua for the documentation. Note that all export
+API functions are available here in the Export. namespace, not the global one.
+In multiplayer the availability of the API on clients depends on the server setting.
+
+The calls to check export capabilities:
+    Export.LoIsObjectExportAllowed()  -- returns the value of server.advanced.allow_object_export
+    Export.LoIsSensorExportAllowed()  -- returns the value of server.advanced.allow_sensor_export
+    Export.LoIsOwnshipExportAllowed() -- returns the value of  server.advanced.allow_ownship_export
+
+These calls are only available on clients when LoIsObjectExportAllowed() is true:
+    Export.LoGetObjectById
+    Export.LoGetWorldObjects
+
+These calls are only available on clients when LoIsSensorExportAllowed() is true:
+    Export.LoGetTWSInfo
+    Export.LoGetTargetInformation
+    Export.LoGetLockedTargetInformation
+    Export.LoGetF15_TWS_Contacts
+    Export.LoGetSightingSystemInfo
+    Export.LoGetWingTargets
+
+These calls are only available on clients when LoIsOwnshipExportAllowed() is true:
+    Export.LoGetPlayerPlaneId
+    Export.LoGetIndicatedAirSpeed
+    Export.LoGetAngleOfAttack
+    Export.LoGetAngleOfSideSlip
+    Export.LoGetAccelerationUnits
+    Export.LoGetVerticalVelocity
+    Export.LoGetADIPitchBankYaw
+    Export.LoGetTrueAirSpeed
+    Export.LoGetAltitudeAboveSeaLevel
+    Export.LoGetAltitudeAboveGroundLevel
+    Export.LoGetMachNumber
+    Export.LoGetRadarAltimeter
+    Export.LoGetMagneticYaw
+    Export.LoGetGlideDeviation
+    Export.LoGetSideDeviation
+    Export.LoGetSlipBallPosition
+    Export.LoGetBasicAtmospherePressure
+    Export.LoGetControlPanel_HSI
+    Export.LoGetEngineInfo
+    Export.LoGetSelfData
+    Export.LoGetCameraPosition
+    Export.LoSetCameraPosition
+    Export.LoSetCommand
+    Export.LoGetMCPState
+    Export.LoGetRoute
+    Export.LoGetNavigationInfo
+    Export.LoGetPayloadInfo
+    Export.LoGetWingInfo
+    Export.LoGetMechInfo
+    Export.LoGetRadioBeaconsStatus
+    Export.LoGetVectorVelocity
+    Export.LoGetVectorWindVelocity
+    Export.LoGetSnares
+    Export.LoGetAngularVelocity
+    Export.LoGetHeightWithObjects
+    Export.LoGetFMData
+
+These functions are always available:
+    Export.LoGetPilotName
+    Export.LoGetAltitude
+    Export.LoGetNameByType
+    Export.LoGeoCoordinatesToLoCoordinates
+    Export.LoCoordinatesToGeoCoordinates
+    Export.LoGetVersionInfo
+    Export.LoGetWindAtPoint
+    Export.LoGetModelTime
+    Export.LoGetMissionStartTime
+
+These are not available in the *GameGUI state:
+--    Export.LoSetSharedTexture
+--    Export.LoRemoveSharedTexture
+--    Export.LoUpdateSharedTexture
+
+
+-------------------------------------------------------------------------------------------
+--- The Callbacks.
+-------------------------------------------------------------------------------------------
+
+function onMissionLoadBegin()
+end
+
+function onMissionLoadProgress(progress, message)
+end
+
+function onMissionLoadEnd()
+end
+
+
+function onSimulationStart()
+end
+
+function onSimulationStop()
+end
+
+function onSimulationFrame()
+end 
+
+function onSimulationPause()
+end
+
+function onSimulationResume()
+end
+
+
+function onGameEvent(eventName,arg1,arg2,arg3,arg4) 
+--"friendly_fire", playerID, weaponName, victimPlayerID
+--"mission_end", winner, msg
+--"kill", killerPlayerID, killerUnitType, killerSide, victimPlayerID, victimUnitType, victimSide, weaponName
+--"self_kill", playerID
+--"change_slot", playerID, slotID, prevSide
+--"connect", playerID, name
+--"disconnect", playerID, name, playerSide, reason_code
+--"crash", playerID, unit_missionID
+--"eject", playerID, unit_missionID
+--"takeoff", playerID, unit_missionID, airdromeName
+--"landing", playerID, unit_missionID, airdromeName
+--"pilot_death", playerID, unit_missionID
+end
+
+function onNetConnect(localPlayerID)
+end
+
+function onNetMissionChanged(newMissionName)
+end
+
+function onNetDisconnect(reason_msg, err_code)
+end
+
+-- disconnect reason codes:
+  net.ERR_INVALID_ADDRESS
+  net.ERR_CONNECT_FAILED
+  net.ERR_WRONG_VERSION
+  net.ERR_PROTOCOL_ERROR
+  net.ERR_TAINTED_CLIENT
+  net.ERR_INVALID_PASSWORD
+  net.ERR_BANNED
+  net.ERR_BAD_CALLSIGN
+
+  net.ERR_TIMEOUT
+  net.ERR_KICKED
+
+
+function onPlayerConnect(id)
+end
+
+function onPlayerDisconnect(id, err_code)
+  -- this is never called for local playerID
+end
+
+function onPlayerStart(id)
+ -- a player entered the simulation
+  -- this is never called for local playerID
+end
+
+function onPlayerStop(id)
+  -- a player left the simulation (happens right before a disconnect, if player exited by desire)
+  -- this is never called for local playerID
+end
+
+function onPlayerChangeSlot(id)
+ -- a player successfully changed the slot
+ -- this will also come as onGameEvent('change_slot', playerID, slotID),
+ -- if allowed by server.advanced.event_Connect setting
+end
+
+
+--- These 3 functions are different from the rest:
+--- 1. they are called directly from the network code, so try to make them as fast as possible
+--- 2. they return a result
+-- The code shows the default implementations.
+
+function onPlayerTryConnect(addr, name, ucid, playerID) --> true | false, "disconnect reason"
+    return true
+end
+
+function onPlayerTrySendChat(playerID, msg, all) -- -> filteredMessage | "" - empty string drops the message
+    return msg
+end
+
+function onPlayerTryChangeSlot(playerID, side, slotID) -- -> true | false
+    return true
+end
+
+
+
+-- GUI callbacks
+function onChatMessage(message, from)
+  -- this one may be useful for chat archiving
+end
+
+function onShowRadioMenu(a_h)
+end
+
+function onShowPool()
+end
+
+function onShowGameMenu()
+end
+
+function onShowBriefing()
+end
+
+function onShowChatAll()
+end
+
+function onShowChatTeam()
+end
+
+function onShowChatRead()
+end
+
+function onShowMessage(a_text, a_duration)
+end
+
+function onTriggerMessage(message, duration, clearView)
+end
+
+function onRadioMessage(message, duration)
+end
+
+function onRadioCommand(command_message)
+end
+
+===================================================================================================
+
+Happy hacking!
+
+Sincerely,
+dsb at eagle dot ru

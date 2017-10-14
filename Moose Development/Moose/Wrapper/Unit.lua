@@ -159,6 +159,24 @@ function UNIT:GetDCSObject()
   return nil
 end
 
+--- Destroys the UNIT.
+-- @param #UNIT self
+-- @return #nil The DCS Unit is not existing or alive.  
+function UNIT:Destroy()
+  self:F2( self.ObjectName )
+
+  local DCSObject = self:GetDCSObject()
+  
+  if DCSObject then
+    USERFLAG:New( self:GetGroup():GetName() ):Set( 100 )
+    --BASE:CreateEventCrash( timer.getTime(), DCSObject )
+    DCSObject:destroy()
+  end
+
+  return nil
+end
+
+
 --- Respawn the @{Unit} using a (tweaked) template of the parent Group.
 -- 
 -- This function will:

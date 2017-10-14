@@ -157,8 +157,13 @@ function SPAWNSTATIC:SpawnFromPointVec2( PointVec2, Heading, NewName ) --R2.1
   
   local StaticTemplate = _DATABASE:GetStaticUnitTemplate( self.SpawnTemplatePrefix )
   
-  StaticTemplate.x = PointVec2:GetLat()
-  StaticTemplate.y = PointVec2:GetLon()
+  StaticTemplate.x = PointVec2.x
+  StaticTemplate.y = PointVec2.z
+
+  StaticTemplate.units = nil
+  StaticTemplate.route = nil
+  StaticTemplate.groupId = nil
+    
   
   StaticTemplate.name = NewName or string.format("%s#%05d", self.SpawnTemplatePrefix, self.SpawnIndex )
   StaticTemplate.heading = ( Heading / 180 ) * math.pi

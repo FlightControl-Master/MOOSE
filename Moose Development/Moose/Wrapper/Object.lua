@@ -79,7 +79,7 @@ function OBJECT:Destroy()
   local DCSObject = self:GetDCSObject()
   
   if DCSObject then
-  
+    --BASE:CreateEventCrash( timer.getTime(), DCSObject )
     DCSObject:destroy()
   end
 

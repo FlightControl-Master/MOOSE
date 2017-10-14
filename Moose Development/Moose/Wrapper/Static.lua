@@ -61,7 +61,6 @@ function STATIC:FindByName( StaticName, RaiseError )
   
   if StaticFound then
     StaticFound:F3( { StaticName } )
-
   	return StaticFound
   end
 
@@ -93,3 +92,17 @@ function STATIC:GetThreatLevel()
 
   return 1, "Static"
 end
+
+--- Respawn the @{Unit} using a (tweaked) template of the parent Group.
+-- @param #UNIT self
+-- @param Core.Point#COORDINATE Coordinate The coordinate where to spawn the new Static.
+-- @param #number Heading The heading of the unit respawn.
+function STATIC:ReSpawn( Coordinate, Heading )
+
+
+  -- todo: need to fix country
+  local SpawnStatic = SPAWNSTATIC:NewFromStatic( self.StaticName, country.id.USA )
+  
+  SpawnStatic:SpawnFromPointVec2( Coordinate, Heading, self.StaticName )
+end
+
