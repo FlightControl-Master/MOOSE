@@ -64,6 +64,7 @@
 -- @type RAT
 -- @field #string ClassName Name of the Class.
 -- @field #boolean debug Turn debug messages on or off.
+-- @field Core.Group#GROUP templategroup Group serving as template for the RAT aircraft.
 -- @field #string alias Alias for spawned group.
 -- @field #number spawndelay Delay time in seconds before first spawning happens.
 -- @field #number spawninterval Interval between spawning units/groups. Note that we add a randomization of 50%.
@@ -89,6 +90,8 @@
 -- @field #table departure_ports Array containing the names of the destination airports.
 -- @field #table destination_ports Array containing the names of the destination airports.
 -- @field #table excluded_ports Array containing the names of explicitly excluded airports.
+-- @field #table destination_zones Array containing the names of the destination zones.
+-- @field #boolean destinationzone Destination is a zone and not an airport.
 -- @field Core.Zone#ZONE departure_Azone Zone containing the departure airports.
 -- @field Core.Zone#ZONE destination_Azone Zone containing the destination airports.
 -- @field #table ratcraft Array with the spawned RAT aircraft.
@@ -107,6 +110,8 @@
 -- @field #table Menu F10 menu items for this RAT object.
 -- @field #string SubMenuName Submenu name for RAT object.
 -- @field #boolean respawn_at_landing Respawn aircraft the moment they land rather than at engine shutdown.
+-- @field #boolean norespawn Aircraft will not be respawned after they have finished their route.
+-- @field #boolean respawn_after_takeoff Aircraft will be respawned directly after take-off.
 -- @field #number respawn_delay Delay in seconds until repawn happens after landing.
 -- @field #table markerids Array with marker IDs.
 -- @field #string livery Livery of the aircraft set by user.
@@ -262,6 +267,7 @@
 RAT={
   ClassName = "RAT",        -- Name of class: RAT = Random Air Traffic.
   debug=false,              -- Turn debug messages on or off.
+  templategroup=nil,        -- Template group for the RAT aircraft.
   alias=nil,                -- Alias for spawned group.
   spawndelay=5,             -- Delay time in seconds before first spawning happens.
   spawninterval=5,          -- Interval between spawning units/groups. Note that we add a randomization of 50%.
@@ -286,6 +292,8 @@ RAT={
   departure_zones={},       -- Array containing the names of the departure zones.
   departure_ports={},       -- Array containing the names of the departure airports.
   destination_ports={},     -- Array containing the names of the destination airports.
+  destination_zones={},     -- Array containing the names of destination zones.
+  destinationzone=false,    -- Destination is a zone and not an airport.
   excluded_ports={},        -- Array containing the names of explicitly excluded airports.
   departure_Azone=nil,      -- Zone containing the departure airports.
   destination_Azone=nil,    -- Zone containing the destination airports.
@@ -305,11 +313,16 @@ RAT={
   Menu={},                  -- F10 menu items for this RAT object.
   SubMenuName=nil,          -- Submenu name for RAT object.
   respawn_at_landing=false, -- Respawn aircraft the moment they land rather than at engine shutdown.
+  norespawn=false,          -- Aircraft will not get respawned.
+  respawn_after_takeoff=false, -- Aircraft will be respawned directly after takeoff.
   respawn_delay=nil,        -- Delay in seconds until repawn happens after landing.
   markerids={},             -- Array with marker IDs.
   livery=nil,               -- Livery of the aircraft.
   skill="High",             -- Skill of AI.
   ATCswitch=true,           -- Enable ATC.
+  parking_id=nil,
+  argkey=nil,
+  arg={},
 }
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -336,6 +349,7 @@ RAT.wp={
   descent=7,
   holding=8,
   landing=9,
+  finalwp=10,
 }
 
 --- RAT friendly coalitions.
@@ -458,6 +472,9 @@ function RAT:New(groupname, alias)
     env.error("Group with name "..groupname.." does not exist in the mission editor!")
     return nil
   end
+  
+  -- Store template group.
+  self.templategroup=GROUP:FindByName(groupname)
 
   -- Set own coalition.
   self.coalition=DCSgroup:getCoalition()
@@ -529,6 +546,8 @@ function RAT:Spawn(naircraft)
   text=text..string.format("Spawn delay: %4.1f\n", self.spawndelay)
   text=text..string.format("Spawn interval: %4.1f\n", self.spawninterval)
   text=text..string.format("Respawn after landing: %s\n", tostring(self.respawn_at_landing))
+  text=text..string.format("Respawning off: %s\n", tostring(self.norespawn))
+  text=text..string.format("Respawn after take-off: %s\n", tostring(self.respawn_after_takeoff))
   text=text..string.format("Respawn delay: %s\n", tostring(self.respawn_delay))
   text=text..string.format("ROE: %s\n", tostring(self.roe))
   text=text..string.format("ROT: %s\n", tostring(self.rot))
@@ -577,7 +596,7 @@ function RAT:Spawn(naircraft)
   self:HandleEvent(EVENTS.Land,           self._OnLand)
   self:HandleEvent(EVENTS.EngineShutdown, self._OnEngineShutdown)
   self:HandleEvent(EVENTS.Dead,           self._OnDead)
-  self:HandleEvent(EVENTS.Crash,          self._OnCrash)
+  --self:HandleEvent(EVENTS.Crash,          self._OnCrash)
   -- TODO: add hit event?
   
 end
@@ -734,6 +753,36 @@ function RAT:SetDestination(names)
 
 end
 
+--- Set name of destination zones for the AI aircraft. If multiple names are given as a table, one zone is picked randomly as destination.
+-- @param #RAT self
+-- @param #string names Name or table of names of zones defined in the mission editor.
+function RAT:SetDestinationZone(names)
+
+  -- Random destination is deactivated now that user specified destination zone(s).
+  self.random_destination=false
+  -- Destination is a zone. Needs special care.
+  self.destinationzone=true
+  -- No ATC required.
+  self.ATCswitch=false
+  
+  if type(names)=="table" then
+  
+    for _,name in pairs(names) do
+      table.insert(self.destination_zones, ZONE:New(name))
+    end
+  
+  elseif type(names)=="string" then
+  
+    table.insert(self.destination_zones, ZONE:New(names))
+      
+  else
+    -- Error message.
+    env.error("Input parameter must be a string or a table!")
+  end
+
+end
+
+
 --- Include all airports which lie in a zone as possible destinations.
 -- @param #RAT self
 -- @param Core.Zone#ZONE zone Zone in which the airports lie.
@@ -816,6 +865,26 @@ function RAT:RespawnAfterLanding(delay)
   delay = delay or 180
   self.respawn_at_landing=true
   self.respawn_delay=delay
+end
+
+--- Aircraft will not get respawned when they finished their route.
+-- @param #RAT self
+function RAT:NoRespawn()
+  self.norespawn=true
+end
+
+--- Aircraft will be respawned directly after take-off.
+-- @param #RAT self
+function RAT:RespawnAfterTakeoff()
+  self.respawn_after_takeoff=true
+end
+
+--- Set parking id of aircraft.
+-- @param #RAT self
+-- @param #string id Parking ID of the aircraft.
+function RAT:SetParkingID(id)
+  self.parking_id=id
+  env.info(RAT.id.."Setting parking ID to "..self.parking_id)
 end
 
 --- Set the time after which inactive groups will be destroyed. Default is 300 seconds.
@@ -1098,6 +1167,13 @@ function RAT:_SpawnWithRoute(_departure, _destination)
     RAT:_ATCAddFlight(group:GetName(), destination:GetName())
   end
   
+  if self.destinationzone then
+--    env.info(RAT.id.." setstate")
+--    self:E(self.argkey)
+--    self:E(self.arg)
+--    group:SetState(group, self.argkey, self.arg )
+  end
+  
   -- Set ROE, default is "weapon hold".
   self:_SetROE(group, self.roe)
   
@@ -1148,11 +1224,14 @@ function RAT:_SpawnWithRoute(_departure, _destination)
     MENU_MISSION_COMMAND:New("Evade on fire",   self.Menu[self.SubMenuName].groups[self.SpawnIndex]["rot"], self._SetROT, self, group, RAT.ROT.evade)    
     -- F10/RAT/<templatename>/Group X/
     MENU_MISSION_COMMAND:New("Despawn group",  self.Menu[self.SubMenuName].groups[self.SpawnIndex], self._Despawn, self, group)
-    MENU_MISSION_COMMAND:New("Clear for landing",  self.Menu[self.SubMenuName].groups[self.SpawnIndex], self.ClearForLanding, self, group:GetName())
+    if self.ATCswitch then
+      MENU_MISSION_COMMAND:New("Clear for landing",  self.Menu[self.SubMenuName].groups[self.SpawnIndex], self.ClearForLanding, self, group:GetName())
+    end
     MENU_MISSION_COMMAND:New("Place markers",  self.Menu[self.SubMenuName].groups[self.SpawnIndex], self._PlaceMarkers, self, waypoints)
     MENU_MISSION_COMMAND:New("Status report",  self.Menu[self.SubMenuName].groups[self.SpawnIndex], self.Status, self, true, self.SpawnIndex)
   end
   
+  env.info("RAT debug before end of _SpawnWithRoute")
   return self.SpawnIndex
   
 end
@@ -1502,26 +1581,46 @@ function RAT:_SetRoute(takeoff, _departure, _destination)
     d_cruise=100
   end
   
-  -- Coordinates of route from departure (0) to cruise (1) to descent (2) to holing (3) to destination (4).
-  local c0=Pdeparture
-  local c1=c0:Translate(d_climb/2,   heading)
-  local c2=c1:Translate(d_climb/2,   heading)
-  local c3=c2:Translate(d_cruise,    heading)
-  local c4=c3:Translate(d_descent/2, heading)
-  local c5=Pholding
-  local c6=Pdestination
+  local waypoints
+  if not self.destinationzone then
   
-  --Convert coordinates into route waypoints.
-  local wp0=self:_Waypoint(takeoff,        c0, VxClimb,   H_departure, departure)
-  local wp1=self:_Waypoint(RAT.wp.climb,   c1, VxClimb,   H_departure+(FLcruise-H_departure)/2)
-  local wp2=self:_Waypoint(RAT.wp.cruise,  c2, VxCruise,  FLcruise)
-  local wp3=self:_Waypoint(RAT.wp.cruise,  c3, VxCruise,  FLcruise)
-  local wp4=self:_Waypoint(RAT.wp.descent, c4, VxDescent, FLcruise-(FLcruise-(h_holding+H_holding))/2)
-  local wp5=self:_Waypoint(RAT.wp.holding, c5, VxHolding, H_holding+h_holding)
-  local wp6=self:_Waypoint(RAT.wp.landing, c6, VxFinal,   H_destination, destination)
+    -- Coordinates of route from departure (0) to cruise (1) to descent (2) to holing (3) to destination (4).
+    local c0=Pdeparture
+    local c1=c0:Translate(d_climb/2,   heading)
+    local c2=c1:Translate(d_climb/2,   heading)
+    local c3=c2:Translate(d_cruise,    heading)
+    local c4=c3:Translate(d_descent/2, heading)
+    local c5=Pholding
+    local c6=Pdestination
+    
+    --Convert coordinates into route waypoints.
+    local wp0=self:_Waypoint(takeoff,        c0, VxClimb,   H_departure, departure)
+    local wp1=self:_Waypoint(RAT.wp.climb,   c1, VxClimb,   H_departure+(FLcruise-H_departure)/2)
+    local wp2=self:_Waypoint(RAT.wp.cruise,  c2, VxCruise,  FLcruise)
+    local wp3=self:_Waypoint(RAT.wp.cruise,  c3, VxCruise,  FLcruise)
+    local wp4=self:_Waypoint(RAT.wp.descent, c4, VxDescent, FLcruise-(FLcruise-(h_holding+H_holding))/2)
+    local wp5=self:_Waypoint(RAT.wp.holding, c5, VxHolding, H_holding+h_holding)
+    local wp6=self:_Waypoint(RAT.wp.landing, c6, VxFinal,   H_destination, destination)
+    
+     -- set waypoints
+    waypoints = {wp0, wp1, wp2, wp3, wp4, wp5, wp6}
+    
+  else
   
-   -- set waypoints
-  local waypoints = {wp0, wp1, wp2, wp3, wp4, wp5, wp6}
+    local c0=Pdeparture
+    local c1=c0:Translate(d_climb/2,   heading)
+    local c2=c1:Translate(d_climb/2,   heading)
+    local c3=Pdestination
+
+    local wp0=self:_Waypoint(takeoff,        c0, VxClimb,   H_departure, departure)
+    local wp1=self:_Waypoint(RAT.wp.climb,   c1, VxClimb,   H_departure+(FLcruise-H_departure)/2)
+    local wp2=self:_Waypoint(RAT.wp.cruise,  c2, VxCruise,  FLcruise)
+    local wp3=self:_Waypoint(RAT.wp.finalwp, c3, VxCruise,  FLcruise)
+    
+         -- set waypoints
+    waypoints = {wp0, wp1, wp2, wp3}
+    
+  end
   
   -- Place markers of waypoints on F10 map.
   if self.placemarkers then
@@ -1637,7 +1736,12 @@ function RAT:_PickDestination(destinations, _random)
     destination=destinations[math.random(#destinations)] -- Wrapper.Airbase#AIRBASE
   
     -- Debug message.
-    local text="Chosen destination airport: "..destination:GetName().." (ID "..destination:GetID()..")"
+    local text
+    if self.destinationzone then
+      text="Chosen destination zone: "..destination:GetName()
+    else
+      text="Chosen destination airport: "..destination:GetName().." (ID "..destination:GetID()..")"
+    end
     env.info(RAT.id..text)
     if self.debug then
       MESSAGE:New(text, 30):ToAll()
@@ -1686,13 +1790,23 @@ function RAT:_GetDestinations(departure, q, minrange, maxrange)
     
   else
     
-    -- Airports specified by user.
-    for _,name in pairs(self.destination_ports) do
-      --if self:_IsFriendly(name) and not self:_Excluded(name) and name~=departure:GetName() then
-      if name~=departure:GetName() then
-        local airport=AIRBASE:FindByName(name)
-        --TODO: Maybe here I should check min/max distance as well? But the user explicitly specified the airports...
-        table.insert(possible_destinations, airport)
+    if self.destinationzone then
+    
+      -- Zones specified by user.
+      for _,zone in pairs(self.destination_zones) do
+        table.insert(possible_destinations, zone)
+      end
+    
+    else
+        
+      -- Airports specified by user.
+      for _,name in pairs(self.destination_ports) do
+        --if self:_IsFriendly(name) and not self:_Excluded(name) and name~=departure:GetName() then
+        if name~=departure:GetName() then
+          local airport=AIRBASE:FindByName(name)
+          --TODO: Maybe here I should check min/max distance as well? But the user explicitly specified the airports...
+          table.insert(possible_destinations, airport)
+        end
       end
     end
     
@@ -1713,7 +1827,7 @@ function RAT:_GetDestinations(departure, q, minrange, maxrange)
     end
     table.sort(possible_destinations, compare)
   else
-    env.error(RAT.id.."No possible destination airports found!")
+    env.error(RAT.id.."No possible destinations found!")
     possible_destinations=nil
   end
   
@@ -1933,7 +2047,11 @@ function RAT:Status(message, forID)
         local Ddestination=Pn:Get2DDistance(self.ratcraft[i].destination:GetCoordinate())
         
         -- Distance remaining to holding point, which is waypoint 6
-        local Hp=COORDINATE:New(self.ratcraft[i].waypoints[6].x, self.ratcraft[i].waypoints[6].alt, self.ratcraft[i].waypoints[6].y)
+        local idx=6
+        if self.destinationzone then
+          idx=4
+        end
+        local Hp=COORDINATE:New(self.ratcraft[i].waypoints[idx].x, self.ratcraft[i].waypoints[idx].alt, self.ratcraft[i].waypoints[idx].y)
         local Dholding=Pn:Get2DDistance(Hp)
         
         -- Status shortcut.
@@ -2143,6 +2261,14 @@ function RAT:_OnTakeoff(EventData)
         -- Set status.
         self:_SetStatus(SpawnGroup, "On journey (after takeoff)")
         
+        if self.respawn_after_takeoff then
+          text="Event: Group "..SpawnGroup:GetName().." will be respawned."
+          env.info(RAT.id..text)
+        
+          -- Respawn group.
+          self:_Respawn(SpawnGroup)
+        end
+        
       end
     end
     
@@ -2180,7 +2306,7 @@ function RAT:_OnLand(EventData)
           RAT:_ATCFlightLanded(SpawnGroup:GetName())
         end        
         
-        if self.respawn_at_landing then
+        if self.respawn_at_landing and not self.norespawn then
           text="Event: Group "..SpawnGroup:GetName().." will be respawned."
           env.info(RAT.id..text)
         
@@ -2220,7 +2346,7 @@ function RAT:_OnEngineShutdown(EventData)
         -- Set status.
         self:_SetStatus(SpawnGroup, "Parking (shutting down engines)")
         
-        if not self.respawn_at_landing then
+        if not self.respawn_at_landing and not self.norespawn then
           text="Event: Group "..SpawnGroup:GetName().." will be respawned."
           env.info(RAT.id..text)
         
@@ -2281,9 +2407,9 @@ function RAT:_OnCrash(EventData)
 
   local SpawnGroup = EventData.IniGroup --Wrapper.Group#GROUP
   
-  env.info(string.format("%sGroup %s crashed!", RAT.id, SpawnGroup:GetName()))
-  
   if SpawnGroup then
+  
+    env.info(string.format("%sGroup %s crashed!", RAT.id, SpawnGroup:GetName()))
 
     -- Get the template name of the group. This can be nil if this was not a spawned group.
     local EventPrefix = self:_GetPrefixFromGroup(SpawnGroup)
@@ -2319,10 +2445,13 @@ end
 -- @param Wrapper.Group#GROUP group Group to be despawned.
 function RAT:_Despawn(group)
 
+  env.info("RAT debug _despawn 0")
+
   local index=self:GetSpawnIndexFromGroup(group)
+  env.info("RAT debug index = "..index)
   self.ratcraft[index].group:Destroy()
   self.ratcraft[index].group=nil
-  
+  env.info("RAT debug _despawn 1")
   -- Decrease group alive counter.
   self.alive=self.alive-1
   
@@ -2330,7 +2459,7 @@ function RAT:_Despawn(group)
   if self.f10menu then
     self.Menu[self.SubMenuName]["groups"][index]:Remove()
   end
-  
+  env.info("RAT debug _despawn 2")
   --TODO: Maybe here could be some more arrays deleted?
 end
 
@@ -2410,6 +2539,10 @@ function RAT:_Waypoint(Type, Coord, Speed, Altitude, Airport)
     _Altitude = 0
     _alttype="RADIO"
     _AID = Airport:GetID()
+  elseif Type==RAT.wp.finalwp then
+    _Type="Turning Point"
+    _Action="Fly Over Point"
+    _alttype="BARO"
   else
     env.error("Unknown waypoint type in RAT:Waypoint() function!")
     _Type="Turning Point"
@@ -2478,9 +2611,6 @@ function RAT:_Waypoint(Type, Coord, Speed, Altitude, Airport)
       --env.error(RAT.id.."Unknown Airport categoryin _Waypoint()!")
     end  
   end
---  if _AID then
---    RoutePoint.airdromeId=_AID
---  end
   -- properties
   RoutePoint.properties = {
     ["vnav"]   = 1,
@@ -2494,6 +2624,16 @@ function RAT:_Waypoint(Type, Coord, Speed, Altitude, Airport)
     -- Duration of holing. Between 10 and 170 seconds. 
     local Duration=self:_Randomize(90,0.9)    
     RoutePoint.task=self:_TaskHolding({x=Coord.x, y=Coord.z}, Altitude, Speed, Duration)
+  elseif Type==RAT.wp.finalwp then
+    local TaskRespawn, argkey, arg = self:_TaskFunction("RAT._FinalWaypoint", self)
+    self.argkey=argkey
+    self.arg=arg
+    local TaskCombo = {TaskRespawn}
+    RoutePoint.task = {}
+    RoutePoint.task.id = "ComboTask"
+    RoutePoint.task.params = {}
+    RoutePoint.task.params.tasks = TaskCombo
+    self:E(TaskRespawn)
   else
     RoutePoint.task = {}
     RoutePoint.task.id = "ComboTask"
@@ -2553,9 +2693,6 @@ end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-
--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
 --- Orbit at a specified position at a specified alititude with a specified speed.
 -- @param #RAT self
 -- @param Dcs.DCSTypes#Vec2 P1 The point to hold the position.
@@ -2605,6 +2742,68 @@ function RAT:_TaskHolding(P1, Altitude, Speed, Duration)
   end
   
   return DCSTask
+end
+
+
+--- Function called if aircraft reached its final waypoint. Aircraft gets destroyed and respawned.
+-- @param Core.Group#GROUP group Group of aircraft.
+-- @param #RAT rat RAT object.
+function RAT._FinalWaypoint(group, rat)
+  env.info(RAT.id.."FinalWaypoint:")
+  BASE:E(group)
+  BASE:E(rat)
+  
+  -- Spawn new group.
+  rat:_Respawn(group)
+  
+  -- Despawn old group.
+  rat:_Despawn(group)
+end
+
+--- Orbit at a specified position at a specified alititude with a specified speed.
+-- @param #RAT self
+-- @param #string FunctionString Name of the function to be called.
+function RAT:_TaskFunction(FunctionString, ... )
+  self:F2({FunctionString, arg})
+  
+  local DCSTask
+  local ArgumentKey
+  
+  local templatename=self.templategroup:GetName()
+  local groupname=self:_AnticipatedGroupName()
+  
+  env.info(RAT.id.."template name "..templatename)
+  env.info(RAT.id.."anticipated name "..groupname)
+  
+  local DCSScript = {}
+  --DCSScript[#DCSScript+1] = "local MissionControllable = GROUP:Find( ... ) "
+  DCSScript[#DCSScript+1] = "env.info(\"RAT blabla\") "
+  DCSScript[#DCSScript+1] = "local MissionControllable = GROUP:FindByName(\""..groupname.."\") "
+  DCSScript[#DCSScript+1] = "local RATtemplateControllable = GROUP:FindByName(\""..templatename.."\") "
+
+  if arg and arg.n > 0 then
+    ArgumentKey = '_' .. tostring(arg):match("table: (.*)")
+    env.info(RAT.id.."Argumentkey: "..ArgumentKey)
+    self.templategroup:SetState(self.templategroup, ArgumentKey, arg)
+    DCSScript[#DCSScript+1] = "local Arguments = RATtemplateControllable:GetState(RATtemplateControllable, '" .. ArgumentKey .. "' ) "
+    DCSScript[#DCSScript+1] = FunctionString .. "( MissionControllable, unpack( Arguments ) )"
+  else
+    DCSScript[#DCSScript+1] = FunctionString .. "( MissionControllable )"
+  end
+  
+  DCSTask = self.templategroup:TaskWrappedAction(self.templategroup:CommandDoScript(table.concat(DCSScript)))
+
+  env.info(RAT.id.."Taskfunction:")
+  self:E( DCSTask )
+
+  return DCSTask, ArgumentKey, arg
+end
+
+--- Anticipated group name from alias and spawn index.
+-- @param #RAT self
+-- @return #string Name the group will get after it is spawned.
+function RAT:_AnticipatedGroupName()
+  return string.format("%s#%03d", self.alias, self.SpawnIndex+1)
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -2855,9 +3054,11 @@ function RAT:_PlaceMarkers(waypoints)
   self:_SetMarker("Climb",           waypoints[2])
   self:_SetMarker("Begin of Cruise", waypoints[3])
   self:_SetMarker("End of Cruise",   waypoints[4])
-  self:_SetMarker("Descent",         waypoints[5])
-  self:_SetMarker("Holding Point",   waypoints[6])
-  self:_SetMarker("Destination",     waypoints[7])
+  if #waypoints>4 then
+    self:_SetMarker("Descent",         waypoints[5])
+    self:_SetMarker("Holding Point",   waypoints[6])
+    self:_SetMarker("Destination",     waypoints[7])
+  end
 end
 
 
@@ -2949,7 +3150,8 @@ function RAT:_ModifySpawnTemplate(waypoints)
         
         -- Parking spot.
         UnitTemplate.parking = nil
-        UnitTemplate.parking_id = nil
+        UnitTemplate.parking_id = self.parking_id
+        --env.info(RAT.id.."Parking ID "..tostring(self.parking_id))
         
         -- Initial altitude
         UnitTemplate.alt=PointVec3.y
@@ -2969,7 +3171,7 @@ function RAT:_ModifySpawnTemplate(waypoints)
       --SpawnTemplate.uncontrolled=true
       
       -- Update modified template for spawn group.
-      self.SpawnGroups[self.SpawnIndex].SpawnTemplate=SpawnTemplate
+      --self.SpawnGroups[self.SpawnIndex].SpawnTemplate=SpawnTemplate
       
       self:T(SpawnTemplate)        
     end
