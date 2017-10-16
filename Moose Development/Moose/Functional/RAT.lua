@@ -1456,9 +1456,6 @@ function RAT:_SetRoute(takeoff, _departure, _destination)
   -- Distance from holding point to final destination.
   local d_holding=Pholding:Get2DDistance(Pdestination)
   
-  -- Height difference between departure and holding point.
-  local deltaH=math.abs(h_holding+H_holding-H_departure)
-  
   -- GENERAL
   -- Heading from departure to holding point of destination.
   local heading=self:_Course(Pdeparture, Pholding)
@@ -1466,19 +1463,67 @@ function RAT:_SetRoute(takeoff, _departure, _destination)
   -- Total distance between departure and holding point near destination.
   local d_total=Pdeparture:Get2DDistance(Pholding)
   
-  -- Climb/descent angle from departure to holding point
-  local phi=math.atan(deltaH/d_total)
+  -- max height if we only would descent to holding point for the given distance
+  if takeoff==RAT.wp.air then
+    local H_departure_max = d_total * math.tan(AlphaDescent) + H_holding + h_holding
+    H_departure=math.min(H_departure, H_departure_max)
+  end
   
-  -- Corrected climb angle.
-  local PhiClimb=AlphaClimb+phi
+  --------------------------------------------
+  local deltaH=H_departure-h_holding-H_holding
   
-  -- Corrected descent angle.
-  local PhiDescent=AlphaDescent-phi
+  -- Slope between departure and destination.
+  local phi = math.atan(deltaH/d_total)
+  
+  -- attation with the sign!
+  local phi_climb
+  local phi_descent
+  if (H_departure > H_holding+h_holding) then
+    phi_climb=AlphaClimb+phi
+    phi_descent=AlphaDescent-phi
+  else
+    phi_climb=AlphaClimb-phi
+    phi_descent=AlphaDescent+phi
+  end
 
+  -- Total distance including slope.
+  local D_total = math.sqrt(deltaH*deltaH+d_total*d_total)
+  --local D_total2 =d_total/math.cos(phi)
+  --local D_total3 = deltaH/math.sin(phi)
+  
+  -- SSA triangle for sloped case.
+  local gamma=math.rad(180)-phi_climb-phi_descent
+  local a = D_total*math.sin(phi_climb)/math.sin(gamma)
+  local b = D_total*math.sin(phi_descent)/math.sin(gamma)
+  local hphi_max  = b*math.sin(phi_climb)
+  local hphi_max2 = a*math.sin(phi_descent)
+  
+  -- Max height
+  local h_max1 = b*math.sin(AlphaClimb)
+  local h_max2 = a*math.sin(AlphaDescent)
+  
+  local h_max
+  if (H_departure > H_holding+h_holding) then
+    h_max=math.min(h_max1, h_max2)
+  else
+    h_max=math.max(h_max1, h_max2)
+  end
+  
+  -- Max flight level aircraft can reach for given angles and distance.
+  local FLmax = h_max+H_departure
+    
+  -- Max heights and distances
+  local h_climb_max   = FLmax-H_departure
+  local h_descent_max = FLmax - (H_holding+h_holding)  
+  local d_climb_max   = h_climb_max/math.tan(AlphaClimb) 
+  local d_descent_max = h_descent_max/math.tan(AlphaDescent)
+  local d_cruise_max  = d_total-d_climb_max-d_descent_max
+  local d_total_max   = d_climb_max + d_cruise_max + d_descent_max
+  
   --CRUISE  
 
   -- Max flight level the aircraft can reach if it only climbs and immidiately descents again (i.e. no cruising part).
-  local FLmax=self:_FLmax(AlphaClimb, AlphaDescent, d_total, phi, H_departure)
+  --local FLmax=self:_FLmax(AlphaClimb, AlphaDescent, d_total, phi, H_departure)
   
   -- Min cruise alt is just above holding point at destination or departure height, whatever is larger.
   local FLmin=math.max(H_departure, H_holding+h_holding)
@@ -1520,22 +1565,22 @@ function RAT:_SetRoute(takeoff, _departure, _destination)
   if self.FLuser then
     FLcruise=self.FLuser
   end
-    
-  -- CLIMB
-  -- Height of climb relative to ASL height of departure airport.
-  local h_climb=FLcruise-H_departure
-  -- x-distance of climb part 
-  local d_climb=h_climb/math.tan(PhiClimb)
   
-  -- DESCENT
-  -- Height difference for descent form cruise alt to holding point.
-  local h_descent=FLcruise-(H_holding+h_holding)
-  -- x-distance of descent part
-  local d_descent=h_descent/math.tan(PhiDescent)
+  -- Cruise alt should not be below departure alt
+  --FLcruise = math.max(FLcruise, H_departure)
   
-  -- CRUISE
-  -- Distance of the cruising part. This should in principle not become negative, but can happen for very short legs.
-  local d_cruise=d_total-d_climb-d_descent
+  -- Cruise alt should not be above max FL
+  --FLcruise  = math.min(FLcruise, FLmax)
+
+  -- actual heits
+  local h_climb = (FLcruise-H_departure)  --math.abs ?
+  local h_descent = FLcruise - (H_holding+h_holding)
+  -- actual distances
+  local d_climb   = h_climb/math.tan(AlphaClimb)
+  local d_descent = h_descent/math.tan(AlphaDescent)
+  local d_cruise  = d_total-d_climb-d_descent
+  local d_total_cruise = d_climb + d_cruise + d_descent
+  --------------------------------------------
   
   -- debug message
   local text=string.format("\n******************************************************\n")
@@ -1570,8 +1615,8 @@ function RAT:_SetRoute(takeoff, _departure, _destination)
   text=text..string.format("Alpha climb   = %6.1f Deg\n",   math.deg(AlphaClimb))
   text=text..string.format("Alpha descent = %6.1f Deg\n",   math.deg(AlphaDescent))
   text=text..string.format("Phi (slope)   = %6.1f Deg\n",   math.deg(phi))
-  text=text..string.format("Phi climb     = %6.1f Deg\n",   math.deg(PhiClimb))
-  text=text..string.format("Phi descent   = %6.1f Deg\n",   math.deg(PhiDescent))
+  text=text..string.format("Phi climb     = %6.1f Deg\n",   math.deg(phi_climb))
+  text=text..string.format("Phi descent   = %6.1f Deg\n",   math.deg(phi_descent))
   text=text..string.format("Heading       = %6.1f Deg\n",   heading)
   text=text..string.format("******************************************************\n")
   env.info(RAT.id..text)
@@ -3272,7 +3317,7 @@ function RAT:_ATCStatus()
       --TODO: Trigger landing for another aircraft when Tfinal > x min?
       -- After five minutes we set the runway to green. ==> Increase the landing frequency a bit.
       if Tfinal>300 then
-        --RAT.ATC.airport[dest].busy=false
+        RAT.ATC.airport[dest].busy=false
       end
       
     elseif hold==RAT.ATC.unregistered then
