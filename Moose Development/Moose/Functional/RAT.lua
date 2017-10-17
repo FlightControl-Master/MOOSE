@@ -1651,31 +1651,67 @@ function RAT:_SetRoute(takeoff, _departure, _destination)
     wp[4]=self:_Waypoint(RAT.wp.finalwp, c3, VxCruise,  FLcruise)
     self.waypointdescriptions[4]="Final Destination"
     
+    -- Index of the holing point for registering aircraft at ATC.
+    self.wp_final_index=4      
+    
+    
   else
   
     if takeoff==RAT.wp.air then
     
-      -- Airstart, simplify climb waypoints.
-      local c0=Pdeparture
-      local c1=c0:Translate(d_climb,     heading)
-      local c2=c1:Translate(d_cruise,    heading)
-      local c3=c2:Translate(d_descent/2, heading)
-      local c4=Pholding
-      local c5=Pdestination
+      if d_climb < 1000 or d_cruise < 1000 then
       
-      -- Waypoints
-      wp[1]=self:_Waypoint(takeoff,        c0, VxClimb,   H_departure, departure)
-      self.waypointdescriptions[1]="Departure (air)"
-      wp[2]=self:_Waypoint(RAT.wp.cruise,  c1, VxCruise,  FLcruise)
-      self.waypointdescriptions[2]="Begin of Cruise"
-      wp[3]=self:_Waypoint(RAT.wp.cruise,  c2, VxCruise,  FLcruise)
-      self.waypointdescriptions[3]="End of Cruise"
-      wp[4]=self:_Waypoint(RAT.wp.descent, c3, VxDescent, FLcruise-(FLcruise-(h_holding+H_holding))/2)
-      self.waypointdescriptions[4]="Descent"
-      wp[5]=self:_Waypoint(RAT.wp.holding, c4, VxHolding, H_holding+h_holding)
-      self.waypointdescriptions[5]="Holding Point"
-      wp[6]=self:_Waypoint(RAT.wp.landing, c5, VxFinal,   H_destination, destination)
-      self.waypointdescriptions[6]="Destination"
+        -- Airstart, simplify climb waypoints.
+        local c0=Pdeparture
+        local c1=c0:Translate(d_climb+d_cruise, heading)
+        local c2=c1:Translate(d_descent/2, heading)
+        local c3=Pholding
+        local c4=Pdestination
+        
+        -- Waypoints
+        wp[1]=self:_Waypoint(takeoff,        c0, VxClimb,   H_departure, departure)
+        self.waypointdescriptions[1]="Departure (air)"
+        wp[2]=self:_Waypoint(RAT.wp.cruise,  c1, VxCruise,  FLcruise)
+        self.waypointdescriptions[2]="Cruise"
+        wp[3]=self:_Waypoint(RAT.wp.descent, c2, VxDescent, FLcruise-(FLcruise-(h_holding+H_holding))/2)
+        self.waypointdescriptions[3]="Descent"
+        wp[4]=self:_Waypoint(RAT.wp.holding, c3, VxHolding, H_holding+h_holding)
+        self.waypointdescriptions[4]="Holding Point"
+        wp[5]=self:_Waypoint(RAT.wp.landing, c4, VxFinal,   H_destination, destination)
+        self.waypointdescriptions[5]="Destination"
+        
+        -- Index of the holing point for registering aircraft at ATC.
+        self.wp_final_index=4      
+      
+      else
+      
+        -- Airstart, simplify climb waypoints.
+        local c0=Pdeparture
+        local c1=c0:Translate(d_climb,     heading)
+        local c2=c1:Translate(d_cruise,    heading)
+        local c3=c2:Translate(d_descent/2, heading)
+        local c4=Pholding
+        local c5=Pdestination
+        
+        -- Waypoints
+        wp[1]=self:_Waypoint(takeoff,        c0, VxClimb,   H_departure, departure)
+        self.waypointdescriptions[1]="Departure (air)"
+        wp[2]=self:_Waypoint(RAT.wp.cruise,  c1, VxCruise,  FLcruise)
+        self.waypointdescriptions[2]="Begin of Cruise"
+        wp[3]=self:_Waypoint(RAT.wp.cruise,  c2, VxCruise,  FLcruise)
+        self.waypointdescriptions[3]="End of Cruise"
+        wp[4]=self:_Waypoint(RAT.wp.descent, c3, VxDescent, FLcruise-(FLcruise-(h_holding+H_holding))/2)
+        self.waypointdescriptions[4]="Descent"
+        wp[5]=self:_Waypoint(RAT.wp.holding, c4, VxHolding, H_holding+h_holding)
+        self.waypointdescriptions[5]="Holding Point"
+        wp[6]=self:_Waypoint(RAT.wp.landing, c5, VxFinal,   H_destination, destination)
+        self.waypointdescriptions[6]="Destination"
+        
+        -- Index of the holing point for registering aircraft at ATC.
+        self.wp_final_index=5      
+        
+        
+      end
     
     else
   
@@ -1703,6 +1739,10 @@ function RAT:_SetRoute(takeoff, _departure, _destination)
       self.waypointdescriptions[6]="Holding Point"
       wp[7]=self:_Waypoint(RAT.wp.landing, c6, VxFinal,   H_destination, destination)
       self.waypointdescriptions[7]="Destination"
+      
+      -- Index of the holing point for registering aircraft at ATC.
+      self.wp_final_index=6      
+      
     end
     
   end
@@ -2138,16 +2178,7 @@ function RAT:Status(message, forID)
         local Ddestination=Pn:Get2DDistance(self.ratcraft[i].destination:GetCoordinate())
         
         -- Distance remaining to holding point or final waypoint
-        local idx
-        if self.destinationzone then
-          idx=4  --final waypoint for destination zone is 4
-        else
-          if self.takeoff==RAT.wp.air then
-            idx=5 -- holing waypoint for air start is 5
-          else
-            idx=6 -- holing waypoint for normal start is 5
-          end
-        end
+        local idx=self.wp_final_index
         local Hp=COORDINATE:New(self.ratcraft[i].waypoints[idx].x, self.ratcraft[i].waypoints[idx].alt, self.ratcraft[i].waypoints[idx].y)
         local Dholding=Pn:Get2DDistance(Hp)
         
@@ -3335,7 +3366,8 @@ function RAT:_ATCStatus()
       --TODO: Trigger landing for another aircraft when Tfinal > x min?
       -- After five minutes we set the runway to green. ==> Increase the landing frequency a bit.
       if Tfinal>300 then
-        RAT.ATC.airport[dest].busy=false
+        --RAT.ATC.airport[dest].busy=false
+        --self:_ATCCheck()
       end
       
     elseif hold==RAT.ATC.unregistered then
@@ -3458,7 +3490,7 @@ function RAT:_ATCFlightLanded(name)
     
     -- Debug info
     local text1=string.format("ATC %s: Flight %s landed. Tholding = %i:%02d, Tfinal = %i:%02d.", dest, name, Thold/60, Thold%60, Tfinal/60, Tfinal%60)
-    local text2=string.format("ATC %s: Number of flights still on final %d.", RAT.ATC.airport[dest].Nonfinal)
+    local text2=string.format("ATC %s: Number of flights still on final %d.", dest, RAT.ATC.airport[dest].Nonfinal)
     local text3=string.format("ATC %s: Traffic report: Number of planes landed in total %d. Flighs / hour = %3.2f.", dest, RAT.ATC.airport[dest].traffic, TrafficPerHour)
     local text4=string.format("ATC %s: Flight %s landed. Welcome to %s.", dest, name, dest)
     env.info(RAT.id..text1)
