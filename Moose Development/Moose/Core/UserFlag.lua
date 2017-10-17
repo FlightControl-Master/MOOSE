@@ -55,7 +55,7 @@ do -- UserFlag
   --   
   function USERFLAG:Set( Number ) --R2.3
     
-    trigger.misc.setUserFlag( self.UserFlagName )
+    trigger.misc.setUserFlag( self.UserFlagName, Number )
     
     return self
   end  
