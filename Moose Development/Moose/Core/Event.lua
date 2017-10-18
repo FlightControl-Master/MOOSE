@@ -744,13 +744,15 @@ function EVENT:onEvent( Event )
 
   local EventMeta = _EVENTMETA[Event.id]
 
+  --self:E( { EventMeta.Text, Event } )  -- Activate the see all incoming events ...
+
   if self and 
      self.Events and 
      self.Events[Event.id] and
      ( Event.initiator ~= nil or ( Event.initiator == nil and Event.id ~= EVENTS.PlayerLeaveUnit ) ) then
 
     if Event.initiator then    
-
+      
       Event.IniObjectCategory = Event.initiator:getCategory()
 
       if Event.IniObjectCategory == Object.Category.UNIT then
