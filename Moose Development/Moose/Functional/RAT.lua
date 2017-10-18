@@ -120,6 +120,9 @@
 -- @field #boolean ATCswitch Enable/disable ATC if set to true/false.
 -- @field #string parking_id String with a special parking ID for the aircraft.
 -- @field #number wp_final_index Index of the holding or final waypoint.
+-- @field #boolean radio If true/false disables radio messages from the RAT groups.
+-- @field #number frequency Radio frequency used by the RAT groups.
+-- @field #string modulation Ratio modulation. Either "FM" or "AM". 
 -- @extends Core.Spawn#SPAWN
 
 ---# RAT class, extends @{Spawn#SPAWN}
@@ -326,6 +329,9 @@ RAT={
   ATCswitch=true,           -- Enable ATC.
   parking_id=nil,           -- Specific parking ID when aircraft are spawned at airports.
   wp_final_index=nil,       -- Index of the holding for final waypoint.
+  radio=nil,                -- If true/false disables radio messages from the RAT groups.
+  frequency=nil,            -- Radio frequency used by the RAT groups.
+  modulation=nil,           -- Ratio modulation. Either "FM" or "AM". 
 }
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -395,6 +401,8 @@ RAT.ATC={
   airport={},
   unregistered=-1,
   onfinal=-100,
+  Nclearance=2,
+  delay=180,
 }
 
 --- Running number of placed markers on the F10 map.
@@ -567,6 +575,9 @@ function RAT:Spawn(naircraft)
   text=text..string.format("Create F10 menu : %s\n", tostring(self.f10menu))
   text=text..string.format("F10 submenu name: %s\n", self.SubMenuName)
   text=text..string.format("ATC enabled : %s\n", tostring(self.ATCswitch))
+  text=text..string.format("Radio comms      : %s\n", tostring(self.radio))
+  text=text..string.format("Radio frequency  : %s\n", tostring(self.frequency))
+  text=text..string.format("Radio modulation : %s\n", tostring(self.frequency))
   text=text..string.format("******************************************************\n")
   env.info(RAT.id..text)
   
@@ -821,7 +832,7 @@ end
 
 --- Set livery of aircraft. If more than one livery is specified in a table, the actually used one is chosen randomly from the selection.
 -- @param #RAT self
--- @param #string skins Name of livery or table of names of liveries.
+-- @param #table skins Name of livery or table of names of liveries.
 function RAT:Livery(skins)
   if type(skins)=="string" then
     self.livery={skins}
@@ -890,6 +901,40 @@ function RAT:SetParkingID(id)
   env.info(RAT.id.."Setting parking ID to "..self.parking_id)
 end
 
+--- Enable Radio. Overrules the ME setting.
+-- @param #RAT self
+function RAT:RadioON()
+  self.radio=true
+end
+
+--- Disable Radio. Overrules the ME setting.
+-- @param #RAT self
+function RAT:RadioOFF()
+  self.radio=false
+end
+
+--- Set radio frequency.
+-- @param #RAT self
+-- @param #number frequency Radio frequency.
+function RAT:RadioFrequency(frequency)
+  self.frequency=frequency
+end
+
+--- Set radio modulation. Default is AM.
+-- @param #RAT self
+-- @param #string modulation Either "FM" or "AM". If no value is given, modulation is set to AM.
+function RAT:RadioFrequency(modulation)
+  if modulation=="AM" then
+    self.modulation=radio.modulation.AM
+  elseif modulation=="FM" then
+    self.modulation=radio.modulation.FM
+  else
+    self.modulation=radio.modulation.AM
+  end
+end
+
+
+
 --- Set the time after which inactive groups will be destroyed. Default is 300 seconds.
 -- @param #RAT self
 -- @param #number time Time in seconds.
@@ -957,6 +1002,20 @@ end
 -- @param #boolean switch true=enable ATC, false=disable ATC. 
 function RAT:EnableATC(switch)
   self.ATCswitch=switch
+end
+
+--- Max number of planes that get landing clearance of the RAT ATC. This setting effects all RAT objects and groups! 
+-- @param #RAT self
+-- @param #number n Number of aircraft that are allowed to land simultaniously. Default is 1.
+function RAT:ATC_Clearance(n)
+  RAT.ATC.Nclearance=n
+end
+
+--- Delay between granting landing clearance for simultanious landings. This setting effects all RAT objects and groups! 
+-- @param #RAT self
+-- @param #number time Delay time when the next aircraft will get landing clearance event if the previous one did not land yet.
+function RAT:ATC_Delay(time)
+  RAT.ATC.delay=time
 end
 
 --- Set minimum distance between departure and destination. Default is 5 km.
@@ -3224,7 +3283,12 @@ function RAT:_ModifySpawnTemplate(waypoints)
         
         -- Set (another) livery.
         if self.livery then
-          SpawnTemplate.units[UnitID].livery_id = self.livery[math.random(#self.livery)]
+          for _, skin in pairs(self.livery) do
+            env.info(RAT.id.."Possible livery: "..skin.." for group "..self:_AnticipatedGroupName())
+          end
+          local skin=self.livery[math.random(#self.livery)]
+          env.info(RAT.id.."Chosen livery: "..skin.." for group "..self:_AnticipatedGroupName())
+          SpawnTemplate.units[UnitID].livery_id = skin
         end
         
         --SpawnTemplate.units[UnitID]["type"] = "Tu-142"
@@ -3261,6 +3325,20 @@ function RAT:_ModifySpawnTemplate(waypoints)
       -- Also modify x,y of the template. Not sure why.
       SpawnTemplate.x = PointVec3.x
       SpawnTemplate.y = PointVec3.z
+      
+      -- Enable/disable radio. Same as checking the COMM box in the ME
+      if self.radio then
+        SpawnTemplate.communication=self.radio
+      end
+      
+      -- Set radio frequency and modulation.
+      if self.frequency then
+        SpawnTemplate.frequency=self.frequency
+      end
+      if self.modulation then
+        SpawnTemplate.modulation=self.modulation
+      end
+      
       --SpawnTemplate.uncontrolled=true
       
       -- Update modified template for spawn group.
@@ -3279,8 +3357,10 @@ end
 function RAT:_ATCInit(airports_map)
   if not RAT.ATC.init then
     env.info(RAT.id.."Starting RAT ATC.")
+    env.info(RAT.id.."Simultanious = "..RAT.ATC.Nclearance)
+    env.info(RAT.id.."Delay        = "..RAT.ATC.delay)
     RAT.ATC.init=true
-    for _,name in pairs(airports_map) do
+    for _,ap in pairs(airports_map) do
       local name=ap:GetName()
       RAT.ATC.airport[name]={}
       RAT.ATC.airport[name].queue={}
@@ -3399,7 +3479,7 @@ function RAT:_ATCCheck()
       local landing1
       if RAT.ATC.airport[name].Tlastclearance then
         -- Landing if time is enough and less then two planes are on final.
-        landing1=(Tnow-RAT.ATC.airport[name].Tlastclearance>90) and RAT.ATC.airport[name].Nonfinal<2
+        landing1=(Tnow-RAT.ATC.airport[name].Tlastclearance > RAT.ATC.delay) and RAT.ATC.airport[name].Nonfinal < RAT.ATC.Nclearance
       else
         landing1=false
       end
