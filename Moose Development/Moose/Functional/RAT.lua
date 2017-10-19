@@ -3108,10 +3108,6 @@ function RAT._WaypointFunction(group, rat, wp)
     end
   end
   
-  if wp==2 then
-    rat._Despawn(rat, group)
-  end
-  
   if wp==rat.wp_final then
     local text="Final waypoint reached!"
     env.info(RAT.id..text)
