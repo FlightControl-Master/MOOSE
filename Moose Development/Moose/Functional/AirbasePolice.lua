@@ -992,7 +992,7 @@ end
 
 
 --- @type AIRBASEPOLICE_NEVADA
--- @extends Functional.AirbasePolice#AIRBASEPOLICE_BASE
+-- @extends #AIRBASEPOLICE_BASE
 
 
 --- # AIRBASEPOLICE_NEVADA, extends @{#AIRBASEPOLICE_BASE}
@@ -1047,7 +1047,7 @@ end
 --     AllClientsSet = SET_CLIENT:New():FilterStart()
 --     
 --     -- Monitor for these clients the airbases.
---     AirbasePoliceCaucasus = AIRBASEPOLICE_NEVADA:New( AllClientsSet )
+--     AirbasePoliceNevada = AIRBASEPOLICE_NEVADA:New( AllClientsSet )
 -- 
 -- @field #AIRBASEPOLICE_NEVADA
 AIRBASEPOLICE_NEVADA = {
