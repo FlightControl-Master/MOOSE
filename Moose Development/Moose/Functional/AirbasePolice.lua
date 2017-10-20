@@ -1,67 +1,21 @@
---- **Functional** -- This module monitors airbases traffic.
+--- **Functional** -- The AIRBASEPOLICE classes monitor airbase traffic and regulate speed while taxiing.
 --
 -- ===
---
--- 1) @{AirbasePolice#AIRBASEPOLICE_BASE} class, extends @{Base#BASE}
--- ==================================================================
--- The @{AirbasePolice#AIRBASEPOLICE_BASE} class provides the main methods to monitor CLIENT behaviour at airbases.
--- CLIENTS should not be allowed to:
---
---   * Don't taxi faster than 40 km/h.
---   * Don't take-off on taxiways.
---   * Avoid to hit other planes on the airbase.
---   * Obey ground control orders.
---
--- 2) @{AirbasePolice#AIRBASEPOLICE_CAUCASUS} class, extends @{AirbasePolice#AIRBASEPOLICE_BASE}
--- =============================================================================================
--- All the airbases on the caucasus map can be monitored using this class.
--- If you want to monitor specific airbases, you need to use the @{#AIRBASEPOLICE_BASE.Monitor}() method, which takes a table or airbase names.
--- The following names can be given:
---   * AnapaVityazevo
---   * Batumi
---   * Beslan
---   * Gelendzhik
---   * Gudauta
---   * Kobuleti
---   * KrasnodarCenter
---   * KrasnodarPashkovsky
---   * Krymsk
---   * Kutaisi
---   * MaykopKhanskaya
---   * MineralnyeVody
---   * Mozdok
---   * Nalchik
---   * Novorossiysk
---   * SenakiKolkhi
---   * SochiAdler
---   * Soganlug
---   * SukhumiBabushara
---   * TbilisiLochini
---   * Vaziani
---
--- 3) @{AirbasePolice#AIRBASEPOLICE_NEVADA} class, extends @{AirbasePolice#AIRBASEPOLICE_BASE}
--- =============================================================================================
--- All the airbases on the NEVADA map can be monitored using this class.
--- If you want to monitor specific airbases, you need to use the @{#AIRBASEPOLICE_BASE.Monitor}() method, which takes a table or airbase names.
--- The following names can be given:
---   * Nellis
---   * McCarran
---   * Creech
---   * Groom Lake
 --
 -- ### Contributions: Dutch Baron - Concept & Testing
 -- ### Author: FlightControl - Framework Design &  Programming
 --
+-- ===
+-- 
 -- @module AirbasePolice
-
-
-
 
 
 --- @type AIRBASEPOLICE_BASE
 -- @field Core.Set#SET_CLIENT SetClient
 -- @extends Core.Base#BASE
 
+--- Base class for AIRBASEPOLICE implementations.
+-- @field #AIRBASEPOLICE_BASE
 AIRBASEPOLICE_BASE = {
   ClassName = "AIRBASEPOLICE_BASE",
   SetClient = nil,
@@ -224,9 +178,82 @@ end
 
 
 --- @type AIRBASEPOLICE_CAUCASUS
--- @field Core.Set#SET_CLIENT SetClient
 -- @extends #AIRBASEPOLICE_BASE
 
+--- # AIRBASEPOLICE_CAUCASUS, extends @{#AIRBASEPOLICE_BASE}
+-- 
+-- ![Banner Image](..\Presentations\AIRBASEPOLICE\Dia1.JPG)
+-- 
+-- The AIRBASEPOLICE_CAUCASUS class monitors the speed of the airplanes at the airbase during taxi.
+-- The pilots may not drive faster than the maximum speed for the airbase, or they will be despawned.
+-- 
+-- The maximum speed for the airbases at Caucasus is **50 km/h**.
+-- 
+-- The pilot will receive 3 times a warning during speeding. After the 3rd warning, if the pilot is still driving
+-- faster than the maximum allowed speed, the pilot will be kicked.
+-- 
+-- Different airbases have different maximum speeds, according safety regulations.
+-- 
+-- # Airbases monitored
+-- 
+-- The following airbases are monitored at the Caucasus region:
+-- 
+--   * Anapa Vityazevo
+--   * Batumi
+--   * Beslan
+--   * Gelendzhik
+--   * Gudauta
+--   * Kobuleti
+--   * Krasnodar Center
+--   * Krasnodar Pashkovsky
+--   * Krymsk
+--   * Kutaisi
+--   * Maykop Khanskaya
+--   * Mineralnye Vody
+--   * Mozdok
+--   * Nalchik
+--   * Novorossiysk
+--   * Senaki Kolkhi
+--   * Sochi Adler
+--   * Soganlug
+--   * Sukhumi Babushara
+--   * Tbilisi Lochini
+--   * Vaziani
+--
+-- 
+-- # Installation
+-- 
+-- ## In Single Player Missions
+-- 
+-- AIRBASEPOLICE is fully functional in single player.
+-- 
+-- ## In Multi Player Missions
+-- 
+-- AIRBASEPOLICE is NOT functional in multi player, for client machines connecting to the server, running the mission.
+-- Due to a bug in DCS since release 1.5, the despawning of clients are not anymore working in multi player.
+-- To work around this problem, a much better solution has been made, using the slot blocker script designed
+-- by Ciribob. With the help of __Ciribob__, this script has been extended to also kick client players while in flight.
+-- AIRBASEPOLICE is communicating with this modified script to kick players!
+-- 
+-- Install the file **SimpleSlotBlockGameGUI.lua** on the server, following the installation instructions described by Ciribob.
+-- 
+-- [Simple Slot Blocker from Ciribob & FlightControl](https://github.com/ciribob/DCS-SimpleSlotBlock)
+-- 
+-- # Script it!
+-- 
+-- ## 1. AIRBASEPOLICE_CAUCASUS Constructor
+-- 
+-- Creates a new AIRBASEPOLICE_CAUCASUS object that will monitor pilots taxiing behaviour.
+-- 
+--     -- This creates a new AIRBASEPOLICE_CAUCASUS object.
+-- 
+--     -- Create a set of all clients in the mission.
+--     AllClientsSet = SET_CLIENT:New():FilterStart()
+--     
+--     -- Monitor for these clients the airbases.
+--     AirbasePoliceCaucasus = AIRBASEPOLICE_CAUCASUS:New( AllClientsSet )
+-- 
+-- @field #AIRBASEPOLICE_CAUCASUS
 AIRBASEPOLICE_CAUCASUS = {
   ClassName = "AIRBASEPOLICE_CAUCASUS",
   Airbases = {
@@ -966,6 +993,63 @@ end
 
 --- @type AIRBASEPOLICE_NEVADA
 -- @extends Functional.AirbasePolice#AIRBASEPOLICE_BASE
+
+
+--- # AIRBASEPOLICE_NEVADA, extends @{#AIRBASEPOLICE_BASE}
+-- 
+-- ![Banner Image](..\Presentations\AIRBASEPOLICE\Dia1.JPG)
+-- 
+-- The AIRBASEPOLICE_NEVADA class monitors the speed of the airplanes at the airbase during taxi.
+-- The pilots may not drive faster than the maximum speed for the airbase, or they will be despawned.
+-- 
+-- The pilot will receive 3 times a warning during speeding. After the 3rd warning, if the pilot is still driving
+-- faster than the maximum allowed speed, the pilot will be kicked.
+-- 
+-- Different airbases have different maximum speeds, according safety regulations.
+-- 
+-- # Airbases monitored
+-- 
+-- The following airbases are monitored at the Caucasus region:
+-- 
+--   * Nellis
+--   * McCarran
+--   * Creech
+--   * GroomLake
+--
+--
+-- # Installation
+-- 
+-- ## In Single Player Missions
+-- 
+-- AIRBASEPOLICE is fully functional in single player.
+-- 
+-- ## In Multi Player Missions
+-- 
+-- AIRBASEPOLICE is NOT functional in multi player, for client machines connecting to the server, running the mission.
+-- Due to a bug in DCS since release 1.5, the despawning of clients are not anymore working in multi player.
+-- To work around this problem, a much better solution has been made, using the slot blocker script designed
+-- by Ciribob. With the help of Ciribob, this script has been extended to also kick client players while in flight.
+-- AIRBASEPOLICE is communicating with this modified script to kick players!
+-- 
+-- Install the file **SimpleSlotBlockGameGUI.lua** on the server, following the installation instructions described by Ciribob.
+-- 
+-- [Simple Slot Blocker from Ciribob & FlightControl](https://github.com/ciribob/DCS-SimpleSlotBlock)
+-- 
+-- # Script it!
+-- 
+-- ## 1. AIRBASEPOLICE_NEVADA Constructor
+-- 
+-- Creates a new AIRBASEPOLICE_NEVADA object that will monitor pilots taxiing behaviour.
+-- 
+--     -- This creates a new AIRBASEPOLICE_NEVADA object.
+-- 
+--     -- Create a set of all clients in the mission.
+--     AllClientsSet = SET_CLIENT:New():FilterStart()
+--     
+--     -- Monitor for these clients the airbases.
+--     AirbasePoliceCaucasus = AIRBASEPOLICE_NEVADA:New( AllClientsSet )
+-- 
+-- @field #AIRBASEPOLICE_NEVADA
 AIRBASEPOLICE_NEVADA = {
   ClassName = "AIRBASEPOLICE_NEVADA",
   Airbases = {
