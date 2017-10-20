@@ -105,6 +105,7 @@
 					<li><a href="Zone.html">Zone</a></li>
 					<li><a href="ZoneCaptureCoalition.html">ZoneCaptureCoalition</a></li>
 					<li><a href="ZoneGoal.html">ZoneGoal</a></li>
+					<li><a href="ZoneGoalCargo.html">ZoneGoalCargo</a></li>
 					<li><a href="ZoneGoalCoalition.html">ZoneGoalCoalition</a></li>
 					<li><a href="env.html">env</a></li>
 					<li><a href="land.html">land</a></li>
@@ -172,6 +173,14 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="#CARGO_CRATE">CARGO_CRATE</a></td>
+		<td class="summary">
+<h1>CARGO_CRATE class, extends <a href="##(CARGO_REPRESENTABLE)">#CARGO_REPRESENTABLE</a></h1>
+
+<p>The CARGO_CRATE class defines a cargo that is represented by a UNIT object within the simulator, and can be transported by a carrier.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="#CARGO_GROUP">CARGO_GROUP</a></td>
 		<td class="summary">
 <h1>CARGO_GROUP class</h1>
@@ -194,7 +203,7 @@
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="#CARGO_REPRESENTABLE">CARGO_REPRESENTABLE</a></td>
 		<td class="summary">
-
+<p>Models CARGO that is representable by a Unit.</p>
 </td>
 		</tr>
 		<tr>
@@ -546,6 +555,46 @@
 		</tr>
 	</table>
 
+			<h2><a id="#(CARGO_CRATE)">Type <code>CARGO_CRATE</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_CRATE).CargoCarrier">CARGO_CRATE.CargoCarrier</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_CRATE).CargoObject">CARGO_CRATE.CargoObject</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_CRATE).New">CARGO_CRATE:New(CrateName, Type, Name, Weight, ReportRadius, NearRadius, CargoCrateName)</a></td>
+		<td class="summary">
+<p>CARGO_CRATE Constructor.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_CRATE).OnUnLoadedCallBack">CARGO_CRATE.OnUnLoadedCallBack</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_CRATE).onenterLoaded">CARGO_CRATE:onenterLoaded(Event, From, To, CargoCarrier)</a></td>
+		<td class="summary">
+<p>Loaded State.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_CRATE).onenterUnLoaded">CARGO_CRATE:onenterUnLoaded(Event, From, To, Core, ToPointVec2)</a></td>
+		<td class="summary">
+<p>Enter UnLoaded State.</p>
+</td>
+		</tr>
+	</table>
+
 			<h2><a id="#(CARGO_GROUP)">Type <code>CARGO_GROUP</code></a></h2>
 				<table class="function_list">
 		<tr>
@@ -771,6 +820,12 @@
 			<h2><a id="#(CARGO_REPRESENTABLE)">Type <code>CARGO_REPRESENTABLE</code></a></h2>
 				<table class="function_list">
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_REPRESENTABLE).Destroy">CARGO_REPRESENTABLE:Destroy()</a></td>
+		<td class="summary">
+<p>CARGO_REPRESENTABLE Destructor.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(CARGO_REPRESENTABLE).New">CARGO_REPRESENTABLE:New(Type, Name, Weight, ReportRadius, NearRadius, CargoObject)</a></td>
 		<td class="summary">
 <p>CARGO_REPRESENTABLE Constructor.</p>
@@ -808,12 +863,6 @@
 		<td class="name" nowrap="nowrap"><a href="##(CARGO_UNIT).CargoObject">CARGO_UNIT.CargoObject</a></td>
 		<td class="summary">
 
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CARGO_UNIT).Destroy">CARGO_UNIT:Destroy()</a></td>
-		<td class="summary">
-<p>CARGO_UNIT Destructor.</p>
 </td>
 		</tr>
 		<tr>
@@ -962,6 +1011,28 @@ There are 2 moments when state transition methods will be called by the state ma
 		<dl class="function">
 <dt>
 
+		<em><a href="##(CARGO_CRATE)">#CARGO_CRATE</a></em>
+<a id="CARGO_CRATE" >
+<strong>CARGO_CRATE</strong>
+</a>
+</dt>
+<dd>
+	
+<h1>CARGO_CRATE class, extends <a href="##(CARGO_REPRESENTABLE)">#CARGO_REPRESENTABLE</a></h1>
+
+<p>The CARGO_CRATE class defines a cargo that is represented by a UNIT object within the simulator, and can be transported by a carrier.</p>
+
+	
+<p>Use the event functions as described above to Load, UnLoad, Board, UnBoard the CARGO_CRATE objects to and from carriers.</p>
+
+<hr/>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 		<em><a href="##(CARGO_GROUP)">#CARGO_GROUP</a></em>
 <a id="CARGO_GROUP" >
 <strong>CARGO_GROUP</strong>
@@ -1017,7 +1088,7 @@ There are 2 moments when state transition methods will be called by the state ma
 </dt>
 <dd>
 	
-
+<p>Models CARGO that is representable by a Unit.</p>
 
 </dd>
 </dl>
@@ -2190,6 +2261,188 @@ The amount of seconds to delay the action.</p>
 
 			<h2><a id="#(CARGO.CargoObjects)" >Type <code>CARGO.CargoObjects</code></a></h2>
 			
+			<h2><a id="#(CARGO_CRATE)" >Type <code>CARGO_CRATE</code></a></h2>
+				
+<p>Models the behaviour of cargo crates, which can be slingloaded and boarded on helicopters using the DCS menus. </p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO_CRATE).CargoCarrier" >
+<strong>CARGO_CRATE.CargoCarrier</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(CARGO_CRATE).CargoObject" >
+<strong>CARGO_CRATE.CargoObject</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO_CRATE).New" >
+<strong>CARGO_CRATE:New(CrateName, Type, Name, Weight, ReportRadius, NearRadius, CargoCrateName)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>CARGO_CRATE Constructor.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string CrateName </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Type </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Name </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Weight </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number ReportRadius </em></code>: 
+(optional)</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number NearRadius </em></code>: 
+(optional)</p>
+
+				</li>
+				<li>
+				
+<p><code><em> CargoCrateName </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(CARGO_CRATE)">#CARGO_CRATE</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO_CRATE).OnUnLoadedCallBack" >
+<strong>CARGO_CRATE.OnUnLoadedCallBack</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO_CRATE).onenterLoaded" >
+<strong>CARGO_CRATE:onenterLoaded(Event, From, To, CargoCarrier)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Loaded State.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> CargoCarrier </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO_CRATE).onenterUnLoaded" >
+<strong>CARGO_CRATE:onenterUnLoaded(Event, From, To, Core, ToPointVec2)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Enter UnLoaded State.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> Core </em></code>: 
+Point#POINT_VEC2</p>
+
+				</li>
+				<li>
+				
+<p><code><em> ToPointVec2 </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+
 			<h2><a id="#(CARGO_GROUP)" >Type <code>CARGO_GROUP</code></a></h2>
 				<h3>Field(s)</h3>
 		<dl class="function">
@@ -3323,6 +3576,24 @@ The range till cargo will board.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(CARGO_REPRESENTABLE).Destroy" >
+<strong>CARGO_REPRESENTABLE:Destroy()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>CARGO_REPRESENTABLE Destructor.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(CARGO_REPRESENTABLE)">#CARGO_REPRESENTABLE</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(CARGO_REPRESENTABLE).New" >
 <strong>CARGO_REPRESENTABLE:New(Type, Name, Weight, ReportRadius, NearRadius, CargoObject)</strong>
 </a>
@@ -3420,7 +3691,7 @@ The range till cargo will board.</p>
 
 			<h2><a id="#(CARGO_UNIT)" >Type <code>CARGO_UNIT</code></a></h2>
 				
-<p>Hello </p>
+<p>Models CARGO in the form of units, which can be boarded, unboarded, loaded, unloaded. </p>
 
 	<h3>Field(s)</h3>
 		<dl class="function">
@@ -3460,24 +3731,6 @@ The range till cargo will board.</p>
 </dt>
 <dd>
 	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(CARGO_UNIT).Destroy" >
-<strong>CARGO_UNIT:Destroy()</strong>
-</a>
-</dt>
-<dd>
-	
-<p>CARGO_UNIT Destructor.</p>
-
-		<h3>Return value</h3>
-				
-<p><em><a href="##(CARGO_UNIT)">#CARGO_UNIT</a>:</em></p>
 
 
 </dd>

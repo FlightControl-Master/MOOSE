@@ -105,6 +105,7 @@
 					<li>Zone</li>
 					<li><a href="ZoneCaptureCoalition.html">ZoneCaptureCoalition</a></li>
 					<li><a href="ZoneGoal.html">ZoneGoal</a></li>
+					<li><a href="ZoneGoalCargo.html">ZoneGoalCargo</a></li>
 					<li><a href="ZoneGoalCoalition.html">ZoneGoalCoalition</a></li>
 					<li><a href="env.html">env</a></li>
 					<li><a href="land.html">land</a></li>
@@ -431,7 +432,13 @@
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(ZONE_POLYGON).New">ZONE_POLYGON:New(ZoneName, ZoneGroup)</a></td>
 		<td class="summary">
-<p>Constructor to create a ZONE_POLYGON instance, taking the zone name and the name of the <a href="Group.html##(GROUP)">Group#GROUP</a> defined within the Mission Editor.</p>
+<p>Constructor to create a ZONE_POLYGON instance, taking the zone name and the <a href="Group.html##(GROUP)">Group#GROUP</a> defined within the Mission Editor.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_POLYGON).NewFromGroupName">ZONE_POLYGON:NewFromGroupName(ZoneName, GroupName)</a></td>
+		<td class="summary">
+<p>Constructor to create a ZONE_POLYGON instance, taking the zone name and the <strong>name</strong> of the <a href="Group.html##(GROUP)">Group#GROUP</a> defined within the Mission Editor.</p>
 </td>
 		</tr>
 	</table>
@@ -1676,7 +1683,7 @@ self</p>
 </dt>
 <dd>
 	
-<p>Constructor to create a ZONE_POLYGON instance, taking the zone name and the name of the <a href="Group.html##(GROUP)">Group#GROUP</a> defined within the Mission Editor.</p>
+<p>Constructor to create a ZONE_POLYGON instance, taking the zone name and the <a href="Group.html##(GROUP)">Group#GROUP</a> defined within the Mission Editor.</p>
 
 	
 <p>The <a href="Group.html##(GROUP)">Group#GROUP</a> waypoints define the polygon corners. The first and the last point are automatically connected by ZONE_POLYGON.</p>
@@ -1693,6 +1700,42 @@ Name of the zone.</p>
 				
 <p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> ZoneGroup </em></code>: 
 The GROUP waypoints as defined within the Mission Editor define the polygon shape.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(ZONE_POLYGON)">#ZONE_POLYGON</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_POLYGON).NewFromGroupName" >
+<strong>ZONE_POLYGON:NewFromGroupName(ZoneName, GroupName)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Constructor to create a ZONE_POLYGON instance, taking the zone name and the <strong>name</strong> of the <a href="Group.html##(GROUP)">Group#GROUP</a> defined within the Mission Editor.</p>
+
+	
+<p>The <a href="Group.html##(GROUP)">Group#GROUP</a> waypoints define the polygon corners. The first and the last point are automatically connected by ZONE_POLYGON.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string ZoneName </em></code>: 
+Name of the zone.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string GroupName </em></code>: 
+The group name of the GROUP defining the waypoints within the Mission Editor to define the polygon shape.</p>
 
 				</li>
 		</ul>

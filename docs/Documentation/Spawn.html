@@ -105,6 +105,7 @@
 					<li><a href="Zone.html">Zone</a></li>
 					<li><a href="ZoneCaptureCoalition.html">ZoneCaptureCoalition</a></li>
 					<li><a href="ZoneGoal.html">ZoneGoal</a></li>
+					<li><a href="ZoneGoalCargo.html">ZoneGoalCargo</a></li>
 					<li><a href="ZoneGoalCoalition.html">ZoneGoalCoalition</a></li>
 					<li><a href="env.html">env</a></li>
 					<li><a href="land.html">land</a></li>
@@ -114,7 +115,7 @@
 	<div id="content">
    <h1>Module <code>Spawn</code></h1>
    
-<p><strong>Functional</strong> -- Spawn dynamically new GROUPs in your missions.</p>
+<p><strong>Core</strong> -- SPAWN class dynamically spawns new groups of units in your missions.</p>
 
    
 <p> 
@@ -164,6 +165,10 @@
 		<td class="name" nowrap="nowrap"><a href="#SPAWN">SPAWN</a></td>
 		<td class="summary">
 <h1>SPAWN class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
+
+<p>-- <img src="..\Presentations\SPAWN\SPAWN.JPG" alt="Banner Image"/></p>
+
+<hr/>
 
 <p>The SPAWN class allows to spawn dynamically new groups.</p>
 </td>
@@ -327,6 +332,18 @@ and any spaces before and after the resulting name are removed.</p>
 		<td class="name" nowrap="nowrap"><a href="##(SPAWN).InitRandomizeTemplate">SPAWN:InitRandomizeTemplate(SpawnTemplatePrefixTable)</a></td>
 		<td class="summary">
 <p>This method is rather complicated to understand.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN).InitRandomizeTemplatePrefixes">SPAWN:InitRandomizeTemplatePrefixes(SpawnTemplatePrefixes)</a></td>
+		<td class="summary">
+<p>Randomize templates to be used as the unit representatives for the Spawned group, defined by specifying the prefix names.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN).InitRandomizeTemplateSet">SPAWN:InitRandomizeTemplateSet(SpawnTemplateSet)</a></td>
+		<td class="summary">
+<p>Randomize templates to be used as the unit representatives for the Spawned group, defined using a SET_GROUP object.</p>
 </td>
 		</tr>
 		<tr>
@@ -833,6 +850,12 @@ and any spaces before and after the resulting name are removed.</p>
 
 </td>
 		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN).uncontrolled">SPAWN.uncontrolled</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
 	</table>
 
 	<h2>Global(s)</h2>
@@ -848,10 +871,14 @@ and any spaces before and after the resulting name are removed.</p>
 	
 <h1>SPAWN class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
 
+<p>-- <img src="..\Presentations\SPAWN\SPAWN.JPG" alt="Banner Image"/></p>
+
+<hr/>
+
 <p>The SPAWN class allows to spawn dynamically new groups.</p>
 
 	
-<p>Each SPAWN object needs to be have a related <strong>template group</strong> setup in the Mission Editor (ME),
+<p>Each SPAWN object needs to be have related <strong>template groups</strong> setup in the Mission Editor (ME),
 which is a normal group with the <strong>Late Activation</strong> flag set. 
 This template group will never be activated in your mission. <br/>
 SPAWN uses that <strong>template group</strong> to reference to all the characteristics 
@@ -1819,6 +1846,99 @@ Spawn_US_Platoon = { 'US Tank Platoon 1', 'US Tank Platoon 2', 'US Tank Platoon 
 Spawn_US_Platoon_Left = SPAWN:New( 'US Tank Platoon Left' ):InitLimit( 12, 150 ):Schedule( 200, 0.4 ):InitRandomizeTemplate( Spawn_US_Platoon ):InitRandomizeRoute( 3, 3, 2000 )
 Spawn_US_Platoon_Middle = SPAWN:New( 'US Tank Platoon Middle' ):InitLimit( 12, 150 ):Schedule( 200, 0.4 ):InitRandomizeTemplate( Spawn_US_Platoon ):InitRandomizeRoute( 3, 3, 2000 )
 Spawn_US_Platoon_Right = SPAWN:New( 'US Tank Platoon Right' ):InitLimit( 12, 150 ):Schedule( 200, 0.4 ):InitRandomizeTemplate( Spawn_US_Platoon ):InitRandomizeRoute( 3, 3, 2000 )</code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SPAWN).InitRandomizeTemplatePrefixes" >
+<strong>SPAWN:InitRandomizeTemplatePrefixes(SpawnTemplatePrefixes)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Randomize templates to be used as the unit representatives for the Spawned group, defined by specifying the prefix names.</p>
+
+	
+<p>This method becomes useful when you need to spawn groups with random templates of groups defined within the mission editor, 
+but they will all follow the same Template route and have the same prefix name.
+In other words, this method randomizes between a defined set of groups the template to be used for each new spawn of a group.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string SpawnTemplatePrefixes </em></code>: 
+A string or a list of string that contains the prefixes of the groups that are possible unit representatives of the group to be spawned. </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SPAWN)">#SPAWN</a>:</em></p>
+
+
+			<h3>Usage:</h3>
+		<pre class="example"><code>-- NATO Tank Platoons invading Gori.
+
+-- Choose between different 'US Tank Platoon Templates' configurations to be spawned for the 
+-- 'US Tank Platoon Left', 'US Tank Platoon Middle' and 'US Tank Platoon Right' SPAWN objects.
+
+-- Each new SPAWN will randomize the route, with a defined time interval of 200 seconds with 40% time variation (randomization) and 
+-- with a limit set of maximum 12 Units alive simulteneously  and 150 Groups to be spawned during the whole mission.
+
+Spawn_US_Platoon_Left = SPAWN:New( 'US Tank Platoon Left' ):InitLimit( 12, 150 ):Schedule( 200, 0.4 ):InitRandomizeTemplatePrefixes( "US Tank Platoon Templates" ):InitRandomizeRoute( 3, 3, 2000 )
+Spawn_US_Platoon_Middle = SPAWN:New( 'US Tank Platoon Middle' ):InitLimit( 12, 150 ):Schedule( 200, 0.4 ):InitRandomizeTemplatePrefixes( "US Tank Platoon Templates" ):InitRandomizeRoute( 3, 3, 2000 )
+Spawn_US_Platoon_Right = SPAWN:New( 'US Tank Platoon Right' ):InitLimit( 12, 150 ):Schedule( 200, 0.4 ):InitRandomizeTemplatePrefixes( "US Tank Platoon Templates" ):InitRandomizeRoute( 3, 3, 2000 )</code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SPAWN).InitRandomizeTemplateSet" >
+<strong>SPAWN:InitRandomizeTemplateSet(SpawnTemplateSet)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Randomize templates to be used as the unit representatives for the Spawned group, defined using a SET_GROUP object.</p>
+
+	
+<p>This method becomes useful when you need to spawn groups with random templates of groups defined within the mission editor, 
+but they will all follow the same Template route and have the same prefix name.
+In other words, this method randomizes between a defined set of groups the template to be used for each new spawn of a group.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Set.html##(SET_GROUP)">Core.Set#SET_GROUP</a> SpawnTemplateSet </em></code>: 
+A SET_GROUP object set, that contains the groups that are possible unit representatives of the group to be spawned. </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SPAWN)">#SPAWN</a>:</em></p>
+
+
+			<h3>Usage:</h3>
+		<pre class="example"><code>-- NATO Tank Platoons invading Gori.
+
+-- Choose between different 'US Tank Platoon Template' configurations to be spawned for the 
+-- 'US Tank Platoon Left', 'US Tank Platoon Middle' and 'US Tank Platoon Right' SPAWN objects.
+
+-- Each new SPAWN will randomize the route, with a defined time interval of 200 seconds with 40% time variation (randomization) and 
+-- with a limit set of maximum 12 Units alive simulteneously  and 150 Groups to be spawned during the whole mission.
+
+Spawn_US_PlatoonSet = SET_GROUP:New():FilterPrefixes( "US Tank Platoon Templates" ):FilterOnce()
+
+--- Now use the Spawn_US_PlatoonSet to define the templates using InitRandomizeTemplateSet.
+Spawn_US_Platoon_Left = SPAWN:New( 'US Tank Platoon Left' ):InitLimit( 12, 150 ):Schedule( 200, 0.4 ):InitRandomizeTemplateSet( Spawn_US_PlatoonSet ):InitRandomizeRoute( 3, 3, 2000 )
+Spawn_US_Platoon_Middle = SPAWN:New( 'US Tank Platoon Middle' ):InitLimit( 12, 150 ):Schedule( 200, 0.4 ):InitRandomizeTemplateSet( Spawn_US_PlatoonSet ):InitRandomizeRoute( 3, 3, 2000 )
+Spawn_US_Platoon_Right = SPAWN:New( 'US Tank Platoon Right' ):InitLimit( 12, 150 ):Schedule( 200, 0.4 ):InitRandomizeTemplateSet( Spawn_US_PlatoonSet ):InitRandomizeRoute( 3, 3, 2000 )</code></pre>
 
 </dd>
 </dl>
@@ -3165,7 +3285,7 @@ Spawn_BE_KA50 = SPAWN:New( 'BE KA-50@RAMP-Ground Defense' ):Schedule( 600, 0.5 )
 		<dl class="function">
 <dt>
 
-		<em>#boolean</em>
+		<em></em>
 <a id="#(SPAWN).SpawnUnControlled" >
 <strong>SPAWN.SpawnUnControlled</strong>
 </a>
@@ -3189,7 +3309,7 @@ Spawn_BE_KA50 = SPAWN:New( 'BE KA-50@RAMP-Ground Defense' ):Schedule( 600, 0.5 )
 
 
 	
-<p> Flag that indicates if all the Groups of the SpawnGroup need to be visible when Spawned.</p>
+<p> When the first Spawn executes, all the Groups need to be made visible before start.</p>
 
 </dd>
 </dl>
@@ -3769,6 +3889,20 @@ True = Continue Scheduler</p>
 
 				</li>
 		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(SPAWN).uncontrolled" >
+<strong>SPAWN.uncontrolled</strong>
+</a>
+</dt>
+<dd>
+	
+
+
 </dd>
 </dl>
 

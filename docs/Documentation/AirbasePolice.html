@@ -105,6 +105,7 @@
 					<li><a href="Zone.html">Zone</a></li>
 					<li><a href="ZoneCaptureCoalition.html">ZoneCaptureCoalition</a></li>
 					<li><a href="ZoneGoal.html">ZoneGoal</a></li>
+					<li><a href="ZoneGoalCargo.html">ZoneGoalCargo</a></li>
 					<li><a href="ZoneGoalCoalition.html">ZoneGoalCoalition</a></li>
 					<li><a href="env.html">env</a></li>
 					<li><a href="land.html">land</a></li>
@@ -114,60 +115,16 @@
 	<div id="content">
    <h1>Module <code>AirbasePolice</code></h1>
    
-<p><strong>Functional</strong> -- This module monitors airbases traffic.</p>
+<p><strong>Functional</strong> -- The AIRBASEPOLICE classes monitor airbase traffic and regulate speed while taxiing.</p>
 
    
 
 <hr/>
 
-<h1>1) <a href="AirbasePolice.html##(AIRBASEPOLICE_BASE)">AirbasePolice#AIRBASEPOLICE_BASE</a> class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
-<p>The <a href="AirbasePolice.html##(AIRBASEPOLICE_BASE)">AirbasePolice#AIRBASEPOLICE_BASE</a> class provides the main methods to monitor CLIENT behaviour at airbases.
-CLIENTS should not be allowed to:</p>
-
-<ul>
-    <li>Don't taxi faster than 40 km/h.</li>
-    <li>Don't take-off on taxiways.</li>
-    <li>Avoid to hit other planes on the airbase.</li>
-    <li>Obey ground control orders.</li>
-</ul>
-
-<h1>2) <a href="AirbasePolice.html##(AIRBASEPOLICE_CAUCASUS)">AirbasePolice#AIRBASEPOLICE_CAUCASUS</a> class, extends <a href="AirbasePolice.html##(AIRBASEPOLICE_BASE)">AirbasePolice#AIRBASEPOLICE_BASE</a></h1>
-<p>All the airbases on the caucasus map can be monitored using this class.
-If you want to monitor specific airbases, you need to use the <a href="##(AIRBASEPOLICE_BASE).Monitor">AIRBASEPOLICE_BASE.Monitor</a>() method, which takes a table or airbase names.
-The following names can be given:
-  * AnapaVityazevo
-  * Batumi
-  * Beslan
-  * Gelendzhik
-  * Gudauta
-  * Kobuleti
-  * KrasnodarCenter
-  * KrasnodarPashkovsky
-  * Krymsk
-  * Kutaisi
-  * MaykopKhanskaya
-  * MineralnyeVody
-  * Mozdok
-  * Nalchik
-  * Novorossiysk
-  * SenakiKolkhi
-  * SochiAdler
-  * Soganlug
-  * SukhumiBabushara
-  * TbilisiLochini
-  * Vaziani</p>
-
-<h1>3) <a href="AirbasePolice.html##(AIRBASEPOLICE_NEVADA)">AirbasePolice#AIRBASEPOLICE_NEVADA</a> class, extends <a href="AirbasePolice.html##(AIRBASEPOLICE_BASE)">AirbasePolice#AIRBASEPOLICE_BASE</a></h1>
-<p>All the airbases on the NEVADA map can be monitored using this class.
-If you want to monitor specific airbases, you need to use the <a href="##(AIRBASEPOLICE_BASE).Monitor">AIRBASEPOLICE_BASE.Monitor</a>() method, which takes a table or airbase names.
-The following names can be given:
-  * Nellis
-  * McCarran
-  * Creech
-  * Groom Lake</p>
-
 <h3>Contributions: Dutch Baron - Concept &amp; Testing</h3>
 <h3>Author: FlightControl - Framework Design &amp;  Programming</h3>
+
+<hr/>
 
 
 	<h2>Global(s)</h2>
@@ -175,17 +132,31 @@ The following names can be given:
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="#AIRBASEPOLICE_BASE">AIRBASEPOLICE_BASE</a></td>
 		<td class="summary">
-
+<p>Base class for AIRBASEPOLICE implementations.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="#AIRBASEPOLICE_CAUCASUS">AIRBASEPOLICE_CAUCASUS</a></td>
 		<td class="summary">
+<h1>AIRBASEPOLICE_CAUCASUS, extends <a href="##(AIRBASEPOLICE_BASE)">#AIRBASEPOLICE_BASE</a></h1>
 
+<p><img src="..\Presentations\AIRBASEPOLICE\Dia1.JPG" alt="Banner Image"/></p>
+
+<p>The AIRBASEPOLICE_CAUCASUS class monitors the speed of the airplanes at the airbase during taxi.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="#AIRBASEPOLICE_NEVADA">AIRBASEPOLICE_NEVADA</a></td>
+		<td class="summary">
+<h1>AIRBASEPOLICE_NEVADA, extends <a href="##(AIRBASEPOLICE_BASE)">#AIRBASEPOLICE_BASE</a></h1>
+
+<p><img src="..\Presentations\AIRBASEPOLICE\Dia1.JPG" alt="Banner Image"/></p>
+
+<p>The AIRBASEPOLICE_NEVADA class monitors the speed of the airplanes at the airbase during taxi.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#SSB">SSB</a></td>
 		<td class="summary">
 
 </td>
@@ -200,7 +171,25 @@ The following names can be given:
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AIRBASEPOLICE_BASE).Monitor">AIRBASEPOLICE_BASE:Monitor(AirbaseNames)</a></td>
+		<td class="summary">
+<p>Monitor a table of airbase names.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AIRBASEPOLICE_BASE).New">AIRBASEPOLICE_BASE:New(SetClient, Airbases)</a></td>
+		<td class="summary">
+<p>Creates a new AIRBASEPOLICE_BASE object.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(AIRBASEPOLICE_BASE).SetClient">AIRBASEPOLICE_BASE.SetClient</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AIRBASEPOLICE_BASE)._AirbaseMonitor">AIRBASEPOLICE_BASE:_AirbaseMonitor()</a></td>
 		<td class="summary">
 
 </td>
@@ -210,27 +199,15 @@ The following names can be given:
 			<h2><a id="#(AIRBASEPOLICE_CAUCASUS)">Type <code>AIRBASEPOLICE_CAUCASUS</code></a></h2>
 				<table class="function_list">
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AIRBASEPOLICE_CAUCASUS).SetClient">AIRBASEPOLICE_CAUCASUS.SetClient</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AIRBASEPOLICE_CAUCASUS).New">AIRBASEPOLICE_CAUCASUS:New(SetClient)</a></td>
 		<td class="summary">
-
+<p>Creates a new AIRBASEPOLICE_CAUCASUS object.</p>
 </td>
 		</tr>
 	</table>
 
 			<h2><a id="#(AIRBASEPOLICE_NEVADA)">Type <code>AIRBASEPOLICE_NEVADA</code></a></h2>
 				<table class="function_list">
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AIRBASEPOLICE_NEVADA).Airbases">AIRBASEPOLICE_NEVADA.Airbases</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AIRBASEPOLICE_NEVADA).ClassName">AIRBASEPOLICE_NEVADA.ClassName</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(AIRBASEPOLICE_NEVADA).New">AIRBASEPOLICE_NEVADA:New(SetClient)</a></td>
 		<td class="summary">
@@ -243,27 +220,104 @@ The following names can be given:
 		<dl class="function">
 <dt>
 
-		<em></em>
+		<em><a href="##(AIRBASEPOLICE_BASE)">#AIRBASEPOLICE_BASE</a></em>
 <a id="AIRBASEPOLICE_BASE" >
 <strong>AIRBASEPOLICE_BASE</strong>
 </a>
 </dt>
 <dd>
 	
-
+<p>Base class for AIRBASEPOLICE implementations.</p>
 
 </dd>
 </dl>
 		<dl class="function">
 <dt>
 
-		<em></em>
+		<em><a href="##(AIRBASEPOLICE_CAUCASUS)">#AIRBASEPOLICE_CAUCASUS</a></em>
 <a id="AIRBASEPOLICE_CAUCASUS" >
 <strong>AIRBASEPOLICE_CAUCASUS</strong>
 </a>
 </dt>
 <dd>
 	
+<h1>AIRBASEPOLICE_CAUCASUS, extends <a href="##(AIRBASEPOLICE_BASE)">#AIRBASEPOLICE_BASE</a></h1>
+
+<p><img src="..\Presentations\AIRBASEPOLICE\Dia1.JPG" alt="Banner Image"/></p>
+
+<p>The AIRBASEPOLICE_CAUCASUS class monitors the speed of the airplanes at the airbase during taxi.</p>
+
+	
+<p>The pilots may not drive faster than the maximum speed for the airbase, or they will be despawned.</p>
+
+<p>The maximum speed for the airbases at Caucasus is <strong>50 km/h</strong>.</p>
+
+<p>The pilot will receive 3 times a warning during speeding. After the 3rd warning, if the pilot is still driving
+faster than the maximum allowed speed, the pilot will be kicked.</p>
+
+<p>Different airbases have different maximum speeds, according safety regulations.</p>
+
+<h1>Airbases monitored</h1>
+
+<p>The following airbases are monitored at the Caucasus region:</p>
+
+<ul>
+    <li>Anapa Vityazevo</li>
+    <li>Batumi</li>
+    <li>Beslan</li>
+    <li>Gelendzhik</li>
+    <li>Gudauta</li>
+    <li>Kobuleti</li>
+    <li>Krasnodar Center</li>
+    <li>Krasnodar Pashkovsky</li>
+    <li>Krymsk</li>
+    <li>Kutaisi</li>
+    <li>Maykop Khanskaya</li>
+    <li>Mineralnye Vody</li>
+    <li>Mozdok</li>
+    <li>Nalchik</li>
+    <li>Novorossiysk</li>
+    <li>Senaki Kolkhi</li>
+    <li>Sochi Adler</li>
+    <li>Soganlug</li>
+    <li>Sukhumi Babushara</li>
+    <li>Tbilisi Lochini</li>
+    <li>Vaziani</li>
+</ul>
+
+
+<h1>Installation</h1>
+
+<h2>In Single Player Missions</h2>
+
+<p>AIRBASEPOLICE is fully functional in single player.</p>
+
+<h2>In Multi Player Missions</h2>
+
+<p>AIRBASEPOLICE is NOT functional in multi player, for client machines connecting to the server, running the mission.
+Due to a bug in DCS since release 1.5, the despawning of clients are not anymore working in multi player.
+To work around this problem, a much better solution has been made, using the slot blocker script designed
+by Ciribob. With the help of <strong>Ciribob</strong>, this script has been extended to also kick client players while in flight.
+AIRBASEPOLICE is communicating with this modified script to kick players!</p>
+
+<p>Install the file <strong>SimpleSlotBlockGameGUI.lua</strong> on the server, following the installation instructions described by Ciribob.</p>
+
+<p><a href="https://github.com/ciribob/DCS-SimpleSlotBlock">Simple Slot Blocker from Ciribob &amp; FlightControl</a></p>
+
+<h1>Script it!</h1>
+
+<h2>1. AIRBASEPOLICE_CAUCASUS Constructor</h2>
+
+<p>Creates a new AIRBASEPOLICE_CAUCASUS object that will monitor pilots taxiing behaviour.</p>
+
+<pre><code>-- This creates a new AIRBASEPOLICE_CAUCASUS object.
+
+-- Create a set of all clients in the mission.
+AllClientsSet = SET_CLIENT:New():FilterStart()
+
+-- Monitor for these clients the airbases.
+AirbasePoliceCaucasus = AIRBASEPOLICE_CAUCASUS:New( AllClientsSet )
+</code></pre>
 
 
 </dd>
@@ -278,7 +332,82 @@ The following names can be given:
 </dt>
 <dd>
 	
+<h1>AIRBASEPOLICE_NEVADA, extends <a href="##(AIRBASEPOLICE_BASE)">#AIRBASEPOLICE_BASE</a></h1>
 
+<p><img src="..\Presentations\AIRBASEPOLICE\Dia1.JPG" alt="Banner Image"/></p>
+
+<p>The AIRBASEPOLICE_NEVADA class monitors the speed of the airplanes at the airbase during taxi.</p>
+
+	
+<p>The pilots may not drive faster than the maximum speed for the airbase, or they will be despawned.</p>
+
+<p>The pilot will receive 3 times a warning during speeding. After the 3rd warning, if the pilot is still driving
+faster than the maximum allowed speed, the pilot will be kicked.</p>
+
+<p>Different airbases have different maximum speeds, according safety regulations.</p>
+
+<h1>Airbases monitored</h1>
+
+<p>The following airbases are monitored at the Caucasus region:</p>
+
+<ul>
+    <li>Nellis</li>
+    <li>McCarran</li>
+    <li>Creech</li>
+    <li>GroomLake</li>
+</ul>
+
+
+<h1>Installation</h1>
+
+<h2>In Single Player Missions</h2>
+
+<p>AIRBASEPOLICE is fully functional in single player.</p>
+
+<h2>In Multi Player Missions</h2>
+
+<p>AIRBASEPOLICE is NOT functional in multi player, for client machines connecting to the server, running the mission.
+Due to a bug in DCS since release 1.5, the despawning of clients are not anymore working in multi player.
+To work around this problem, a much better solution has been made, using the slot blocker script designed
+by Ciribob. With the help of Ciribob, this script has been extended to also kick client players while in flight.
+AIRBASEPOLICE is communicating with this modified script to kick players!</p>
+
+<p>Install the file <strong>SimpleSlotBlockGameGUI.lua</strong> on the server, following the installation instructions described by Ciribob.</p>
+
+<p><a href="https://github.com/ciribob/DCS-SimpleSlotBlock">Simple Slot Blocker from Ciribob &amp; FlightControl</a></p>
+
+<h1>Script it!</h1>
+
+<h2>1. AIRBASEPOLICE_NEVADA Constructor</h2>
+
+<p>Creates a new AIRBASEPOLICE_NEVADA object that will monitor pilots taxiing behaviour.</p>
+
+<pre><code>-- This creates a new AIRBASEPOLICE_NEVADA object.
+
+-- Create a set of all clients in the mission.
+AllClientsSet = SET_CLIENT:New():FilterStart()
+
+-- Monitor for these clients the airbases.
+AirbasePoliceCaucasus = AIRBASEPOLICE_NEVADA:New( AllClientsSet )
+</code></pre>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="SSB" >
+<strong>SSB</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+	
+<p> This is simple slot blocker is used on the server.  </p>
 
 </dd>
 </dl>
@@ -303,9 +432,82 @@ The following names can be given:
 		<dl class="function">
 <dt>
 
+<a id="#(AIRBASEPOLICE_BASE).Monitor" >
+<strong>AIRBASEPOLICE_BASE:Monitor(AirbaseNames)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Monitor a table of airbase names.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="##(AIRBASEPOLICE_BASE.AirbaseNames)">#AIRBASEPOLICE_BASE.AirbaseNames</a> AirbaseNames </em></code>: 
+A list of AirbaseNames to monitor. If this parameters is nil, then all airbases will be monitored.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(AIRBASEPOLICE_BASE)">#AIRBASEPOLICE_BASE</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AIRBASEPOLICE_BASE).New" >
+<strong>AIRBASEPOLICE_BASE:New(SetClient, Airbases)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Creates a new AIRBASEPOLICE_BASE object.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> SetClient </em></code>: 
+A SET_CLIENT object that will contain the CLIENT objects to be monitored if they follow the rules of the airbase.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> Airbases </em></code>: 
+A table of Airbase Names.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(AIRBASEPOLICE_BASE)">#AIRBASEPOLICE_BASE</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 		<em><a href="Core.Set.html##(SET_CLIENT)">Core.Set#SET_CLIENT</a></em>
 <a id="#(AIRBASEPOLICE_BASE).SetClient" >
 <strong>AIRBASEPOLICE_BASE.SetClient</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AIRBASEPOLICE_BASE)._AirbaseMonitor" >
+<strong>AIRBASEPOLICE_BASE:_AirbaseMonitor()</strong>
 </a>
 </dt>
 <dd>
@@ -322,48 +524,33 @@ The following names can be given:
 		<dl class="function">
 <dt>
 
-		<em><a href="Core.Set.html##(SET_CLIENT)">Core.Set#SET_CLIENT</a></em>
-<a id="#(AIRBASEPOLICE_CAUCASUS).SetClient" >
-<strong>AIRBASEPOLICE_CAUCASUS.SetClient</strong>
+<a id="#(AIRBASEPOLICE_CAUCASUS).New" >
+<strong>AIRBASEPOLICE_CAUCASUS:New(SetClient)</strong>
 </a>
 </dt>
 <dd>
 	
+<p>Creates a new AIRBASEPOLICE_CAUCASUS object.</p>
 
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> SetClient </em></code>: 
+A SET_CLIENT object that will contain the CLIENT objects to be monitored if they follow the rules of the airbase.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(AIRBASEPOLICE_CAUCASUS)">#AIRBASEPOLICE_CAUCASUS</a>:</em>
+self</p>
 
 </dd>
 </dl>
 
 			<h2><a id="#(AIRBASEPOLICE_NEVADA)" >Type <code>AIRBASEPOLICE_NEVADA</code></a></h2>
 				<h3>Field(s)</h3>
-		<dl class="function">
-<dt>
-
-		<em></em>
-<a id="#(AIRBASEPOLICE_NEVADA).Airbases" >
-<strong>AIRBASEPOLICE_NEVADA.Airbases</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em>#string</em>
-<a id="#(AIRBASEPOLICE_NEVADA).ClassName" >
-<strong>AIRBASEPOLICE_NEVADA.ClassName</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
 		<dl class="function">
 <dt>
 

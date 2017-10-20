@@ -105,6 +105,7 @@
 					<li><a href="Zone.html">Zone</a></li>
 					<li><a href="ZoneCaptureCoalition.html">ZoneCaptureCoalition</a></li>
 					<li><a href="ZoneGoal.html">ZoneGoal</a></li>
+					<li><a href="ZoneGoalCargo.html">ZoneGoalCargo</a></li>
 					<li><a href="ZoneGoalCoalition.html">ZoneGoalCoalition</a></li>
 					<li><a href="env.html">env</a></li>
 					<li><a href="land.html">land</a></li>
@@ -142,6 +143,12 @@
 	</table>
 			<h2><a id="#(USERFLAG)">Type <code>USERFLAG</code></a></h2>
 				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(USERFLAG).Get">USERFLAG:Get(Number)</a></td>
+		<td class="summary">
+<p>Get the userflag Number.</p>
+</td>
+		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(USERFLAG).Is">USERFLAG:Is(Number)</a></td>
 		<td class="summary">
@@ -198,6 +205,37 @@
 	
 			<h2><a id="#(USERFLAG)" >Type <code>USERFLAG</code></a></h2>
 				<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+<a id="#(USERFLAG).Get" >
+<strong>USERFLAG:Get(Number)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Get the userflag Number.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> Number </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#number:</em>
+Number The number value to be checked if it is the same as the userflag.</p>
+
+			<h3>Usage:</h3>
+		<pre class="example"><code>  local BlueVictory = USERFLAG:New( "VictoryBlue" )
+  local BlueVictoryValue = BlueVictory:Get() -- Get the UserFlag VictoryBlue value.
+  </code></pre>
+
+</dd>
+</dl>
 		<dl class="function">
 <dt>
 
