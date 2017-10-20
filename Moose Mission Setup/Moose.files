@@ -47,7 +47,7 @@ Functional/RAT.lua
 Functional/ZoneGoal.lua
 Functional/ZoneGoalCoalition.lua
 Functional/ZoneCaptureCoalition.lua
-Functional/SuppressionFire.lua
+Functional/SuppressiveFire.lua
 
 AI/AI_Balancer.lua
 AI/AI_A2A.lua
