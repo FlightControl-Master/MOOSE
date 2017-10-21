@@ -298,7 +298,7 @@ function SPAWN:New( SpawnTemplatePrefix )
 	local self = BASE:Inherit( self, BASE:New() ) -- #SPAWN
 	self:F( { SpawnTemplatePrefix } )
   
-	local TemplateGroup = Group.getByName( SpawnTemplatePrefix )
+	local TemplateGroup = GROUP:FindByName( SpawnTemplatePrefix )
 	if TemplateGroup then
 		self.SpawnTemplatePrefix = SpawnTemplatePrefix
 		self.SpawnIndex = 0
@@ -342,7 +342,7 @@ function SPAWN:NewWithAlias( SpawnTemplatePrefix, SpawnAliasPrefix )
 	local self = BASE:Inherit( self, BASE:New() )
 	self:F( { SpawnTemplatePrefix, SpawnAliasPrefix } )
   
-	local TemplateGroup = Group.getByName( SpawnTemplatePrefix )
+	local TemplateGroup = GROUP:FindByName( SpawnTemplatePrefix )
 	if TemplateGroup then
 		self.SpawnTemplatePrefix = SpawnTemplatePrefix
 		self.SpawnAliasPrefix = SpawnAliasPrefix
@@ -1244,14 +1244,18 @@ function SPAWN:SpawnFromVec3( Vec3, SpawnIndex )
         local TY = Vec3.z + ( SY - BY )
         SpawnTemplate.units[UnitID].x = TX
         SpawnTemplate.units[UnitID].y = TY
-        SpawnTemplate.units[UnitID].alt = Vec3.y
+        if SpawnTemplate.CategoryID ~= Group.Category.SHIP then
+          SpawnTemplate.units[UnitID].alt = Vec3.y
+        end
         self:T( 'After Translation SpawnTemplate.units['..UnitID..'].x = ' .. SpawnTemplate.units[UnitID].x .. ', SpawnTemplate.units['..UnitID..'].y = ' .. SpawnTemplate.units[UnitID].y )
       end
       
       SpawnTemplate.route.points[1].x = Vec3.x
       SpawnTemplate.route.points[1].y = Vec3.z
-      SpawnTemplate.route.points[1].alt = Vec3.y
-      
+      if SpawnTemplate.CategoryID ~= Group.Category.SHIP then
+        SpawnTemplate.route.points[1].alt = Vec3.y
+      end
+    
       SpawnTemplate.x = Vec3.x
       SpawnTemplate.y = Vec3.z
               
