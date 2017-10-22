@@ -165,19 +165,7 @@
 			<h2><a id="#(AIRBASEPOLICE_BASE)">Type <code>AIRBASEPOLICE_BASE</code></a></h2>
 				<table class="function_list">
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AIRBASEPOLICE_BASE).AirbaseNames">AIRBASEPOLICE_BASE.AirbaseNames</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AIRBASEPOLICE_BASE).Monitor">AIRBASEPOLICE_BASE:Monitor(AirbaseNames)</a></td>
-		<td class="summary">
-<p>Monitor a table of airbase names.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AIRBASEPOLICE_BASE).New">AIRBASEPOLICE_BASE:New(SetClient, Airbases)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AIRBASEPOLICE_BASE).New">AIRBASEPOLICE_BASE:New(SetClient, Airbases, AirbaseList)</a></td>
 		<td class="summary">
 <p>Creates a new AIRBASEPOLICE_BASE object.</p>
 </td>
@@ -186,6 +174,12 @@
 		<td class="name" nowrap="nowrap"><a href="##(AIRBASEPOLICE_BASE).SetClient">AIRBASEPOLICE_BASE.SetClient</a></td>
 		<td class="summary">
 
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AIRBASEPOLICE_BASE).SmokeRunways">AIRBASEPOLICE_BASE:SmokeRunways(SmokeColor)</a></td>
+		<td class="summary">
+<p>Smoke the airbases runways.</p>
 </td>
 		</tr>
 		<tr>
@@ -199,7 +193,7 @@
 			<h2><a id="#(AIRBASEPOLICE_CAUCASUS)">Type <code>AIRBASEPOLICE_CAUCASUS</code></a></h2>
 				<table class="function_list">
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AIRBASEPOLICE_CAUCASUS).New">AIRBASEPOLICE_CAUCASUS:New(SetClient)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AIRBASEPOLICE_CAUCASUS).New">AIRBASEPOLICE_CAUCASUS:New(SetClient, AirbaseNames)</a></td>
 		<td class="summary">
 <p>Creates a new AIRBASEPOLICE_CAUCASUS object.</p>
 </td>
@@ -209,7 +203,7 @@
 			<h2><a id="#(AIRBASEPOLICE_NEVADA)">Type <code>AIRBASEPOLICE_NEVADA</code></a></h2>
 				<table class="function_list">
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AIRBASEPOLICE_NEVADA).New">AIRBASEPOLICE_NEVADA:New(SetClient)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AIRBASEPOLICE_NEVADA).New">AIRBASEPOLICE_NEVADA:New(SetClient, AirbaseNames)</a></td>
 		<td class="summary">
 <p>Creates a new AIRBASEPOLICE_NEVADA object.</p>
 </td>
@@ -418,49 +412,8 @@ AirbasePoliceNevada = AIRBASEPOLICE_NEVADA:New( AllClientsSet )
 		<dl class="function">
 <dt>
 
-		<em></em>
-<a id="#(AIRBASEPOLICE_BASE).AirbaseNames" >
-<strong>AIRBASEPOLICE_BASE.AirbaseNames</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(AIRBASEPOLICE_BASE).Monitor" >
-<strong>AIRBASEPOLICE_BASE:Monitor(AirbaseNames)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Monitor a table of airbase names.</p>
-
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="##(AIRBASEPOLICE_BASE.AirbaseNames)">#AIRBASEPOLICE_BASE.AirbaseNames</a> AirbaseNames </em></code>: 
-A list of AirbaseNames to monitor. If this parameters is nil, then all airbases will be monitored.</p>
-
-				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em><a href="##(AIRBASEPOLICE_BASE)">#AIRBASEPOLICE_BASE</a>:</em>
-self</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
 <a id="#(AIRBASEPOLICE_BASE).New" >
-<strong>AIRBASEPOLICE_BASE:New(SetClient, Airbases)</strong>
+<strong>AIRBASEPOLICE_BASE:New(SetClient, Airbases, AirbaseList)</strong>
 </a>
 </dt>
 <dd>
@@ -479,6 +432,11 @@ A SET_CLIENT object that will contain the CLIENT objects to be monitored if they
 				
 <p><code><em> Airbases </em></code>: 
 A table of Airbase Names.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> AirbaseList </em></code>: </p>
 
 				</li>
 		</ul>
@@ -506,6 +464,33 @@ self</p>
 		<dl class="function">
 <dt>
 
+<a id="#(AIRBASEPOLICE_BASE).SmokeRunways" >
+<strong>AIRBASEPOLICE_BASE:SmokeRunways(SmokeColor)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Smoke the airbases runways.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Utilities.Utils.html##(SMOKECOLOR)">Utilities.Utils#SMOKECOLOR</a> SmokeColor </em></code>: 
+The color of the smoke around the runways.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(AIRBASEPOLICE_BASE)">#AIRBASEPOLICE_BASE</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(AIRBASEPOLICE_BASE)._AirbaseMonitor" >
 <strong>AIRBASEPOLICE_BASE:_AirbaseMonitor()</strong>
 </a>
@@ -525,19 +510,25 @@ self</p>
 <dt>
 
 <a id="#(AIRBASEPOLICE_CAUCASUS).New" >
-<strong>AIRBASEPOLICE_CAUCASUS:New(SetClient)</strong>
+<strong>AIRBASEPOLICE_CAUCASUS:New(SetClient, AirbaseNames)</strong>
 </a>
 </dt>
 <dd>
 	
 <p>Creates a new AIRBASEPOLICE_CAUCASUS object.</p>
 
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
 <p><code><em> SetClient </em></code>: 
 A SET_CLIENT object that will contain the CLIENT objects to be monitored if they follow the rules of the airbase.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> AirbaseNames </em></code>: 
+A list {} of airbase names (Use AIRBASE.Caucasus enumerator).</p>
 
 				</li>
 		</ul>
@@ -555,19 +546,25 @@ self</p>
 <dt>
 
 <a id="#(AIRBASEPOLICE_NEVADA).New" >
-<strong>AIRBASEPOLICE_NEVADA:New(SetClient)</strong>
+<strong>AIRBASEPOLICE_NEVADA:New(SetClient, AirbaseNames)</strong>
 </a>
 </dt>
 <dd>
 	
 <p>Creates a new AIRBASEPOLICE_NEVADA object.</p>
 
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
 <p><code><em> SetClient </em></code>: 
 A SET_CLIENT object that will contain the CLIENT objects to be monitored if they follow the rules of the airbase.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> AirbaseNames </em></code>: 
+A list {} of airbase names (Use AIRBASE.Nevada enumerator).</p>
 
 				</li>
 		</ul>

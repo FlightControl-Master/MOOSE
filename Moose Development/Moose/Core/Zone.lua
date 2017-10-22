@@ -458,12 +458,17 @@ end
 -- @param #ZONE_RADIUS self
 -- @param Utilities.Utils#SMOKECOLOR SmokeColor The smoke color.
 -- @param #number Points (optional) The amount of points in the circle.
+-- @param #number AddHeight (optional) The height to be added for the smoke.
+-- @param #number AddOffSet (optional) The angle to be added for the smoking start position.
 -- @return #ZONE_RADIUS self
-function ZONE_RADIUS:SmokeZone( SmokeColor, Points )
+function ZONE_RADIUS:SmokeZone( SmokeColor, Points, AddHeight, AngleOffset )
   self:F2( SmokeColor )
 
   local Point = {}
   local Vec2 = self:GetVec2()
+  
+  AddHeight = AddHeight or 0
+  AngleOffset = AngleOffset or 0
 
   Points = Points and Points or 360
 
@@ -471,10 +476,10 @@ function ZONE_RADIUS:SmokeZone( SmokeColor, Points )
   local RadialBase = math.pi*2
   
   for Angle = 0, 360, 360 / Points do
-    local Radial = Angle * RadialBase / 360
+    local Radial = ( Angle + AngleOffset ) * RadialBase / 360
     Point.x = Vec2.x + math.cos( Radial ) * self:GetRadius()
     Point.y = Vec2.y + math.sin( Radial ) * self:GetRadius()
-    POINT_VEC2:New( Point.x, Point.y ):Smoke( SmokeColor )
+    POINT_VEC2:New( Point.x, Point.y, AddHeight ):Smoke( SmokeColor )
   end
 
   return self
@@ -486,13 +491,16 @@ end
 -- @param Utilities.Utils#FLARECOLOR FlareColor The flare color.
 -- @param #number Points (optional) The amount of points in the circle.
 -- @param Dcs.DCSTypes#Azimuth Azimuth (optional) Azimuth The azimuth of the flare.
+-- @param #number AddHeight (optional) The height to be added for the smoke.
 -- @return #ZONE_RADIUS self
-function ZONE_RADIUS:FlareZone( FlareColor, Points, Azimuth )
+function ZONE_RADIUS:FlareZone( FlareColor, Points, Azimuth, AddHeight )
   self:F2( { FlareColor, Azimuth } )
 
   local Point = {}
   local Vec2 = self:GetVec2()
   
+  AddHeight = AddHeight or 0
+
   Points = Points and Points or 360
 
   local Angle
@@ -502,7 +510,7 @@ function ZONE_RADIUS:FlareZone( FlareColor, Points, Azimuth )
     local Radial = Angle * RadialBase / 360
     Point.x = Vec2.x + math.cos( Radial ) * self:GetRadius()
     Point.y = Vec2.y + math.sin( Radial ) * self:GetRadius()
-    POINT_VEC2:New( Point.x, Point.y ):Flare( FlareColor, Azimuth )
+    POINT_VEC2:New( Point.x, Point.y, AddHeight ):Flare( FlareColor, Azimuth )
   end
 
   return self

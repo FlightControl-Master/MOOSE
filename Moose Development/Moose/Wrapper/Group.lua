@@ -110,9 +110,33 @@ GROUPTEMPLATE.Takeoff = {
   [GROUP.Takeoff.Cold] =    { "TakeOffParking", "From Parking Area" }
 }
 
---- Create a new GROUP from a DCSGroup
+--- Create a new GROUP from a given GroupTemplate as a parameter.
+-- Note that the GroupTemplate is NOT spawned into the mission.
+-- It is merely added to the @{Database}.
 -- @param #GROUP self
--- @param Dcs.DCSWrapper.Group#Group GroupName The DCS Group name
+-- @param #table GroupTemplate The GroupTemplate Structure exactly as defined within the mission editor.
+-- @param Dcs.DCScoalition#coalition.side CoalitionSide The coalition.side of the group.
+-- @param Dcs.DCSGroup#Group.Category CategoryID The Group.Category of the group.
+-- @param Dcs.DCScountry#country.id CountryID the country.id of the group.
+-- @return #GROUP self
+function GROUP:NewTemplate( GroupTemplate, CoalitionSide, CategoryID, CountryID )
+  local GroupName = GroupTemplate.name
+  _DATABASE:_RegisterGroupTemplate( GroupTemplate, CategoryID, CountryID, CoalitionSide, GroupName )
+  self = BASE:Inherit( self, CONTROLLABLE:New( GroupName ) )
+  self:F2( GroupName )
+  self.GroupName = GroupName
+  
+  _DATABASE:AddGroup( GroupName )
+  
+  self:SetEventPriority( 4 )
+  return self
+end
+
+
+
+--- Create a new GROUP from an existing Group in the Mission.
+-- @param #GROUP self
+-- @param #string GroupName The Group name
 -- @return #GROUP self
 function GROUP:Register( GroupName )
   self = BASE:Inherit( self, CONTROLLABLE:New( GroupName ) )
