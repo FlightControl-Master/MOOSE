@@ -1,5 +1,5 @@
 env.info( '*** MOOSE DYNAMIC INCLUDE START *** ' )
-env.info( 'Moose Generation Timestamp: 20171010_2216' )
+env.info( 'Moose Generation Timestamp: 20171021_1218' )
 
 local base = _G
 
@@ -67,7 +67,6 @@ __Moose.Include( 'Functional/RAT.lua' )
 __Moose.Include( 'Functional/ZoneGoal.lua' )
 __Moose.Include( 'Functional/ZoneGoalCoalition.lua' )
 __Moose.Include( 'Functional/ZoneCaptureCoalition.lua' )
-__Moose.Include( 'Functional/SuppressionFire.lua' )
 __Moose.Include( 'AI/AI_Balancer.lua' )
 __Moose.Include( 'AI/AI_A2A.lua' )
 __Moose.Include( 'AI/AI_A2A_Patrol.lua' )
