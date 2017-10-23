@@ -463,6 +463,12 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).NewTemplate">GROUP:NewTemplate(GroupTemplate, CoalitionSide, CategoryID, CountryID)</a></td>
+		<td class="summary">
+<p>Create a new GROUP from a given GroupTemplate as a parameter.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(GROUP).OnReSpawn">GROUP:OnReSpawn(ReSpawnFunction)</a></td>
 		<td class="summary">
 
@@ -471,7 +477,7 @@
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(GROUP).Register">GROUP:Register(GroupName)</a></td>
 		<td class="summary">
-<p>Create a new GROUP from a DCSGroup</p>
+<p>Create a new GROUP from an existing Group in the Mission.</p>
 </td>
 		</tr>
 		<tr>
@@ -1801,6 +1807,55 @@ true if DCS Group contains Ships.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(GROUP).NewTemplate" >
+<strong>GROUP:NewTemplate(GroupTemplate, CoalitionSide, CategoryID, CountryID)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Create a new GROUP from a given GroupTemplate as a parameter.</p>
+
+	
+<p>Note that the GroupTemplate is NOT spawned into the mission.
+It is merely added to the <a href="Database.html">Database</a>.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#table GroupTemplate </em></code>: 
+The GroupTemplate Structure exactly as defined within the mission editor.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Dcs.DCScoalition.html##(coalition.side)">Dcs.DCScoalition#coalition.side</a> CoalitionSide </em></code>: 
+The coalition.side of the group.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSGroup.html##(Group.Category)">Dcs.DCSGroup#Group.Category</a> CategoryID </em></code>: 
+The Group.Category of the group.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Dcs.DCScountry.html##(country.id)">Dcs.DCScountry#country.id</a> CountryID </em></code>: 
+the country.id of the group.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(GROUP)">#GROUP</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(GROUP).OnReSpawn" >
 <strong>GROUP:OnReSpawn(ReSpawnFunction)</strong>
 </a>
@@ -1828,14 +1883,14 @@ true if DCS Group contains Ships.</p>
 </dt>
 <dd>
 	
-<p>Create a new GROUP from a DCSGroup</p>
+<p>Create a new GROUP from an existing Group in the Mission.</p>
 
 		<h3>Parameter</h3>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Dcs.DCSWrapper.Group.html##(Group)">Dcs.DCSWrapper.Group#Group</a> GroupName </em></code>: 
-The DCS Group name</p>
+<p><code><em>#string GroupName </em></code>: 
+The Group name</p>
 
 				</li>
 		</ul>

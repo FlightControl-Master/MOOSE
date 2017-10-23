@@ -528,7 +528,7 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).FlareZone">ZONE_RADIUS:FlareZone(FlareColor, Points, Azimuth)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).FlareZone">ZONE_RADIUS:FlareZone(FlareColor, Points, Azimuth, AddHeight)</a></td>
 		<td class="summary">
 <p>Flares the zone boundaries in a color.</p>
 </td>
@@ -678,7 +678,7 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).SmokeZone">ZONE_RADIUS:SmokeZone(SmokeColor, Points)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).SmokeZone">ZONE_RADIUS:SmokeZone(SmokeColor, Points, AddHeight, AddOffSet, AngleOffset)</a></td>
 		<td class="summary">
 <p>Smokes the zone boundaries in a color.</p>
 </td>
@@ -2063,7 +2063,7 @@ self</p>
 <dt>
 
 <a id="#(ZONE_RADIUS).FlareZone" >
-<strong>ZONE_RADIUS:FlareZone(FlareColor, Points, Azimuth)</strong>
+<strong>ZONE_RADIUS:FlareZone(FlareColor, Points, Azimuth, AddHeight)</strong>
 </a>
 </dt>
 <dd>
@@ -2088,6 +2088,12 @@ The flare color.</p>
 				
 <p><code><em><a href="Dcs.DCSTypes.html##(Azimuth)">Dcs.DCSTypes#Azimuth</a> Azimuth </em></code>: 
 (optional) Azimuth The azimuth of the flare.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number AddHeight </em></code>: 
+(optional) The height to be added for the smoke.</p>
 
 				</li>
 		</ul>
@@ -2712,7 +2718,7 @@ The new location of the zone.</p>
 <dt>
 
 <a id="#(ZONE_RADIUS).SmokeZone" >
-<strong>ZONE_RADIUS:SmokeZone(SmokeColor, Points)</strong>
+<strong>ZONE_RADIUS:SmokeZone(SmokeColor, Points, AddHeight, AddOffSet, AngleOffset)</strong>
 </a>
 </dt>
 <dd>
@@ -2731,6 +2737,23 @@ The smoke color.</p>
 				
 <p><code><em>#number Points </em></code>: 
 (optional) The amount of points in the circle.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number AddHeight </em></code>: 
+(optional) The height to be added for the smoke.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number AddOffSet </em></code>: 
+(optional) The angle to be added for the smoking start position.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> AngleOffset </em></code>: </p>
 
 				</li>
 		</ul>
