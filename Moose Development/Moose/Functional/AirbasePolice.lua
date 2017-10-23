@@ -29,19 +29,19 @@ AIRBASEPOLICE_BASE = {
 
 --- Creates a new AIRBASEPOLICE_BASE object.
 -- @param #AIRBASEPOLICE_BASE self
--- @param SetClient A SET_CLIENT object that will contain the CLIENT objects to be monitored if they follow the rules of the airbase.
 -- @param Airbases A table of Airbase Names.
 -- @return #AIRBASEPOLICE_BASE self
-function AIRBASEPOLICE_BASE:New( SetClient, Airbases, AirbaseList )
+function AIRBASEPOLICE_BASE:New( Airbases, AirbaseList )
 
   -- Inherits from BASE
-  local self = BASE:Inherit( self, BASE:New() )
-  self:E( { self.ClassName, SetClient, Airbases } )
+  local self = BASE:Inherit( self, BASE:New() ) -- #AIRBASEPOLICE_BASE
+  self:E( { self.ClassName, Airbases } )
 
-  self.SetClient = SetClient
   self.Airbases = Airbases
-  
   self.AirbaseList = AirbaseList
+  
+  self.SetClient = SET_CLIENT:New():FilterCategories( "plane" ):FilterStart()
+  
 
   for AirbaseID, Airbase in pairs( self.Airbases ) do
     Airbase.ZoneBoundary = _DATABASE:FindAirbase( AirbaseID ):GetZone()
@@ -69,15 +69,19 @@ function AIRBASEPOLICE_BASE:New( SetClient, Airbases, AirbaseList )
     function( Client )
       Client:SetState( self, "Speeding", false )
       Client:SetState( self, "Warnings", 0)
+      Client:SetState( self, "IsOffRunway", false )
+      Client:SetState( self, "OffRunwayWarnings", 0 )
       Client:SetState( self, "Taxi", false )
     end
   )
 
-  self.AirbaseMonitor = SCHEDULER:New( self, self._AirbaseMonitor, {}, 0, 2, 0.05 )
+  self.AirbaseMonitor = SCHEDULER:New( self, self._AirbaseMonitor, {self }, 0, 2, 0.05 )
 
   -- This is simple slot blocker is used on the server.  
   SSB = USERFLAG:New( "SSB" )
   SSB:Set( 100 )
+  
+  self:SetKickSpeedKmph( 100 )
 
   return self
 end
@@ -97,14 +101,36 @@ function AIRBASEPOLICE_BASE:SmokeRunways( SmokeColor )
 end
 
 
+--- Set the maximum speed in Kmph until the player gets kicked.
+-- @param #AIRBASEPOLICE_BASE self
+-- @param #number KickSpeed Set the maximum speed in Kmph until the player gets kicked.
+-- @return #AIRBASEPOLICE_BASE self
+function AIRBASEPOLICE_BASE:SetKickSpeedKmph( KickSpeed )
+
+  self.KickSpeed = UTILS.KmphToMps( KickSpeed )
+end
+
+--- Set the maximum speed in Miph until the player gets kicked.
+-- @param #AIRBASEPOLICE_BASE self
+-- @param #number KickSpeedMiph Set the maximum speed in Mph until the player gets kicked.
+-- @return #AIRBASEPOLICE_BASE self
+function AIRBASEPOLICE_BASE:SetKickSpeedMiph( KickSpeedMiph )
+
+  self.KickSpeed = UTILS.MiphToMps( KickSpeedMiph )
+end
+
+
+
 --- @param #AIRBASEPOLICE_BASE self
 function AIRBASEPOLICE_BASE:_AirbaseMonitor()
+
+  self:E( "In Scheduler")
 
   for AirbaseID, AirbaseMeta in pairs( self.Airbases ) do
 
     if AirbaseMeta.Monitor == true then
 
-      self:E( AirbaseID )
+      self:E( AirbaseID, AirbaseMeta.MaximumSpeed )
 
       self.SetClient:ForEachClientInZone( AirbaseMeta.ZoneBoundary,
 
@@ -112,32 +138,40 @@ function AIRBASEPOLICE_BASE:_AirbaseMonitor()
         function( Client )
 
           self:E( Client.UnitName )
-          if Client:IsAlive() then
+          if Client and Client:IsAlive() then
             local NotInRunwayZone = true
             for ZoneRunwayID, ZoneRunway in pairs( AirbaseMeta.ZoneRunways ) do
               NotInRunwayZone = ( Client:IsNotInZone( ZoneRunway ) == true ) and NotInRunwayZone or false
             end
 
             if NotInRunwayZone then
-              local Taxi = self:GetState( self, "Taxi" )
+              local Taxi = Client:GetState( self, "Taxi" )
               self:E( Taxi )
               if Taxi == false then
-                Client:Message( "Welcome at " .. AirbaseID .. ". The maximum taxiing speed is " .. AirbaseMeta.MaximumSpeed " km/h.", 20, "ATC" )
-                self:SetState( self, "Taxi", true )
+                Client:Message( "Welcome at " .. AirbaseID .. ". The maximum taxiing speed is " .. AirbaseMeta.MaximumSpeed .. " km/h.", 20, "ATC" )
+                Client:SetState( self, "Taxi", true )
               end
 
               -- TODO: GetVelocityKMH function usage
-              local VelocityVec3 = Client:GetVelocity()
-              local Velocity = ( VelocityVec3.x ^ 2 + VelocityVec3.y ^ 2 + VelocityVec3.z ^ 2 ) ^ 0.5 -- in meters / sec
-              local Velocity = Velocity * 3.6 -- now it is in km/h.
-              -- MESSAGE:New( "Velocity = " .. Velocity, 1 ):ToAll()
+              local Velocity = VELOCITY_POSITIONABLE:New( Client )
+              --MESSAGE:New( "Velocity = " .. Velocity:ToString(), 1 ):ToAll()
               local IsAboveRunway = Client:IsAboveRunway()
               local IsOnGround = Client:InAir() == false
               self:T( IsAboveRunway, IsOnGround )
 
-              if IsAboveRunway and IsOnGround then
+              if IsOnGround then
+                if Velocity:Get() > self.KickSpeed then
+                  MESSAGE:New( "Penalty! Player " .. Client:GetPlayerName() .. " is kicked, due to a severe airbase traffic rule violation ...", 10, "ATC" ):ToAll()
+                  Client:Destroy()
+                  Client:SetState( self, "Speeding", false )
+                  Client:SetState( self, "Warnings", 0 )
+                end
+              end                  
+                
 
-                if Velocity > AirbaseMeta.MaximumSpeed then
+              if IsOnGround then
+
+                if Velocity:GetKmph() > AirbaseMeta.MaximumSpeed then
                   local IsSpeeding = Client:GetState( self, "Speeding" )
 
                   if IsSpeeding == true then
@@ -146,7 +180,7 @@ function AIRBASEPOLICE_BASE:_AirbaseMonitor()
 
                     if SpeedingWarnings <= 3 then
                       Client:Message( "Warning " .. SpeedingWarnings .. "/3! Airbase traffic rule violation! Slow down now! Your speed is " .. 
-                                      string.format( "%2.0f km/h", Velocity ), 5, "ATC" )
+                                      string.format( "%s", Velocity:ToString() ), 5, "ATC" )
                       Client:SetState( self, "Warnings", SpeedingWarnings + 1 )
                     else
                       MESSAGE:New( "Penalty! Player " .. Client:GetPlayerName() .. " is kicked, due to a severe airbase traffic rule violation ...", 10, "ATC" ):ToAll()
@@ -157,7 +191,7 @@ function AIRBASEPOLICE_BASE:_AirbaseMonitor()
                     end
 
                   else
-                    Client:Message( "Attention! You are speeding on the taxiway, slow down! Your speed is " .. string.format( "%2.0f km/h", Velocity ), 5, "ATC" )
+                    Client:Message( "Attention! You are speeding on the taxiway, slow down! Your speed is " .. string.format( "%s", Velocity:ToString() ), 5, "ATC" )
                     Client:SetState( self, "Speeding", true )
                     Client:SetState( self, "Warnings", 1 )
                   end
@@ -168,13 +202,45 @@ function AIRBASEPOLICE_BASE:_AirbaseMonitor()
                 end
               end
 
+              if IsOnGround and not IsAboveRunway then
+
+                local IsOffRunway = Client:GetState( self, "IsOffRunway" )
+
+                if IsOffRunway == true then
+                  local OffRunwayWarnings = Client:GetState( self, "OffRunwayWarnings" )
+                  self:T( OffRunwayWarnings )
+
+                  if OffRunwayWarnings <= 3 then
+                    Client:Message( "Warning " .. OffRunwayWarnings .. "/3! Airbase traffic rule violation! Get back on the taxi immediately!", 5, "ATC" )
+                    Client:SetState( self, "OffRunwayWarnings", OffRunwayWarnings + 1 )
+                  else
+                    MESSAGE:New( "Penalty! Player " .. Client:GetPlayerName() .. " is kicked, due to a severe airbase traffic rule violation ...", 10, "ATC" ):ToAll()
+                    --- @param Wrapper.Client#CLIENT Client
+                    Client:Destroy()
+                    Client:SetState( self, "IsOffRunway", false )
+                    Client:SetState( self, "OffRunwayWarnings", 0 )
+                  end
+                else
+                  Client:Message( "Attention! You are off the taxiway. Get back on the taxiway immediately!", 5, "ATC" )
+                  Client:SetState( self, "IsOffRunway", true )
+                  Client:SetState( self, "OffRunwayWarnings", 1 )
+                end
+
+              else
+                Client:SetState( self, "IsOffRunway", false )
+                Client:SetState( self, "OffRunwayWarnings", 0 )
+              end
+
+
             else
               Client:SetState( self, "Speeding", false )
               Client:SetState( self, "Warnings", 0 )
-              local Taxi = self:GetState( self, "Taxi" )
+              Client:SetState( self, "IsOffRunway", false )
+              Client:SetState( self, "OffRunwayWarnings", 0 )
+              local Taxi = Client:GetState( self, "Taxi" )
               if Taxi == true then
                 Client:Message( "You have progressed to the runway ... Await take-off clearance ...", 20, "ATC" )
-                self:SetState( self, "Taxi", false )
+                Client:SetState( self, "Taxi", false )
               end
             end
           end
@@ -257,11 +323,8 @@ end
 -- 
 --     -- This creates a new AIRBASEPOLICE_CAUCASUS object.
 -- 
---     -- Create a set of all clients in the mission.
---     AllClientsSet = SET_CLIENT:New():FilterStart()
---     
 --     -- Monitor for these clients the airbases.
---     AirbasePoliceCaucasus = AIRBASEPOLICE_CAUCASUS:New( AllClientsSet )
+--     AirbasePoliceCaucasus = AIRBASEPOLICE_CAUCASUS:New()
 -- 
 -- @field #AIRBASEPOLICE_CAUCASUS
 AIRBASEPOLICE_CAUCASUS = {
@@ -554,13 +617,12 @@ AIRBASEPOLICE_CAUCASUS = {
 
 --- Creates a new AIRBASEPOLICE_CAUCASUS object.
 -- @param #AIRBASEPOLICE_CAUCASUS self
--- @param SetClient A SET_CLIENT object that will contain the CLIENT objects to be monitored if they follow the rules of the airbase.
 -- @param AirbaseNames A list {} of airbase names (Use AIRBASE.Caucasus enumerator).
 -- @return #AIRBASEPOLICE_CAUCASUS self
-function AIRBASEPOLICE_CAUCASUS:New( SetClient, AirbaseNames )
+function AIRBASEPOLICE_CAUCASUS:New( AirbaseNames )
 
   -- Inherits from BASE
-  local self = BASE:Inherit( self, AIRBASEPOLICE_BASE:New( SetClient, self.Airbases, AirbaseNames ) )
+  local self = BASE:Inherit( self, AIRBASEPOLICE_BASE:New( self.Airbases, AirbaseNames ) )
 
 
 
@@ -828,16 +890,25 @@ end
 -- 
 --     -- This creates a new AIRBASEPOLICE_NEVADA object.
 -- 
---     -- Create a set of all clients in the mission.
---     AllClientsSet = SET_CLIENT:New():FilterStart()
---     
 --     -- Monitor for these clients the airbases.
---     AirbasePoliceNevada = AIRBASEPOLICE_NEVADA:New( AllClientsSet )
+--     AirbasePoliceCaucasus = AIRBASEPOLICE_NEVADA:New()
 -- 
 -- @field #AIRBASEPOLICE_NEVADA
 AIRBASEPOLICE_NEVADA = {
   ClassName = "AIRBASEPOLICE_NEVADA",
   Airbases = {
+
+    [AIRBASE.Nevada.Beatty_Airport] = {
+      PointsRunways = {
+        [1] = {
+          [1]={["y"]=-174950.05857143,["x"]=-329679.65,},
+          [2]={["y"]=-174946.53828571,["x"]=-331394.03885715,},
+          [3]={["y"]=-174967.10971429,["x"]=-331394.32457143,},
+          [4]={["y"]=-174971.01828571,["x"]=-329682.59171429,},
+        },
+      },
+      MaximumSpeed = 50,
+    },  
     [AIRBASE.Nevada.Boulder_City_Airport] = {
       PointsRunways = {
         [1] = {
@@ -947,6 +1018,17 @@ AIRBASEPOLICE_NEVADA = {
           [2] = {["y"]=28453.728285714,["x"]=-518170.78885714,},
           [3] = {["y"]=28370.788285714,["x"]=-518176.25742857,},
           [4] = {["y"]=28138.022857143,["x"]=-515573.07514286,},
+        },
+      },
+      MaximumSpeed = 50,
+    },
+    [AIRBASE.Nevada.Lincoln_County] = {
+      PointsRunways = {
+        [1] = {
+          [1]={["y"]=33222.34171429,["x"]=-223959.40171429,},
+          [2]={["y"]=33200.040000004,["x"]=-225369.36828572,},
+          [3]={["y"]=33177.634571428,["x"]=-225369.21485715,},
+          [4]={["y"]=33201.198857147,["x"]=-223960.54457143,},
         },
       },
       MaximumSpeed = 50,
@@ -1085,13 +1167,12 @@ AIRBASEPOLICE_NEVADA = {
 
 --- Creates a new AIRBASEPOLICE_NEVADA object.
 -- @param #AIRBASEPOLICE_NEVADA self
--- @param SetClient A SET_CLIENT object that will contain the CLIENT objects to be monitored if they follow the rules of the airbase.
 -- @param AirbaseNames A list {} of airbase names (Use AIRBASE.Nevada enumerator).
 -- @return #AIRBASEPOLICE_NEVADA self
-function AIRBASEPOLICE_NEVADA:New( SetClient, AirbaseNames )
+function AIRBASEPOLICE_NEVADA:New( AirbaseNames )
 
   -- Inherits from BASE
-  local self = BASE:Inherit( self, AIRBASEPOLICE_BASE:New( SetClient, self.Airbases, AirbaseNames ) )
+  local self = BASE:Inherit( self, AIRBASEPOLICE_BASE:New( self.Airbases, AirbaseNames ) )
 
 
   
@@ -1106,6 +1187,13 @@ function AIRBASEPOLICE_NEVADA:New( SetClient, AirbaseNames )
   -- So, this needs to stay commented normally once a map has been finished.
 
   --[[
+  
+  -- Beatty
+  do 
+    local VillagePrefix = "Beatty" 
+    local Runway1 = GROUP:FindByName( VillagePrefix .. " 1" )
+    local Zone1 = ZONE_POLYGON:New( VillagePrefix .. " 1", Runway1 ):SmokeZone(SMOKECOLOR.Red):Flush()
+  end
   
   -- Boulder
   do 
@@ -1168,7 +1256,7 @@ function AIRBASEPOLICE_NEVADA:New( SetClient, AirbaseNames )
   
   -- Lincoln
   do 
-    local VillagePrefix = "Laughlin" 
+    local VillagePrefix = "Lincoln" 
     local Runway1 = GROUP:FindByName( VillagePrefix .. " 1" )
     local Zone1 = ZONE_POLYGON:New( VillagePrefix .. " 1", Runway1 ):SmokeZone(SMOKECOLOR.Red):Flush()
   end
@@ -1299,11 +1387,8 @@ end
 -- 
 --     -- This creates a new AIRBASEPOLICE_NORMANDY object.
 -- 
---     -- Create a set of all clients in the mission.
---     AllClientsSet = SET_CLIENT:New():FilterStart()
---     
 --     -- Monitor for these clients the airbases.
---     AirbasePoliceCaucasus = AIRBASEPOLICE_NORMANDY:New( AllClientsSet )
+--     AirbasePoliceCaucasus = AIRBASEPOLICE_NORMANDY:New()
 -- 
 -- @field #AIRBASEPOLICE_NORMANDY
 AIRBASEPOLICE_NORMANDY = {
@@ -1701,13 +1786,12 @@ AIRBASEPOLICE_NORMANDY = {
 
 --- Creates a new AIRBASEPOLICE_NORMANDY object.
 -- @param #AIRBASEPOLICE_NORMANDY self
--- @param SetClient A SET_CLIENT object that will contain the CLIENT objects to be monitored if they follow the rules of the airbase.
 -- @param AirbaseNames A list {} of airbase names (Use AIRBASE.Normandy enumerator).
 -- @return #AIRBASEPOLICE_NORMANDY self
-function AIRBASEPOLICE_NORMANDY:New( SetClient, AirbaseNames )
+function AIRBASEPOLICE_NORMANDY:New( AirbaseNames )
 
   -- Inherits from BASE
-  local self = BASE:Inherit( self, AIRBASEPOLICE_BASE:New( SetClient, self.Airbases, AirbaseNames ) )
+  local self = BASE:Inherit( self, AIRBASEPOLICE_BASE:New( self.Airbases, AirbaseNames ) )
 
   -- These lines here are for the demonstration mission.
   -- They create in the dcs.log the coordinates of the runway polygons, that are then

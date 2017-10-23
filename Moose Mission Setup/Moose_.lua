@@ -1,5 +1,5 @@
 env.info('*** MOOSE DYNAMIC INCLUDE START *** ')
-env.info('Moose Generation Timestamp: 20171021_1203')
+env.info('Moose Generation Timestamp: 20171023_1007')
 local base=_G
 __Moose={}
 __Moose.Include=function(IncludeFile)
@@ -31,6 +31,7 @@ __Moose.Include('Core/Zone.lua')
 __Moose.Include('Core/Database.lua')
 __Moose.Include('Core/Set.lua')
 __Moose.Include('Core/Point.lua')
+__Moose.Include('Core/Velocity.lua')
 __Moose.Include('Core/Message.lua')
 __Moose.Include('Core/Fsm.lua')
 __Moose.Include('Core/Radio.lua')

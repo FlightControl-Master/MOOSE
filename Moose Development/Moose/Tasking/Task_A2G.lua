@@ -544,7 +544,7 @@ do -- TASK_A2G_BAI
 
     local TargetCoordinate = self:GetInfo( "Coordinate" ) -- Core.Point#COORDINATE
     
-    local Velocity = self.TargetSetUnit:GetVelocity()
+    local Velocity = self.TargetSetUnit:GetVelocityVec3()
     local Heading = self.TargetSetUnit:GetHeading()
     
     TargetCoordinate:SetHeading( Heading )
