@@ -80,7 +80,8 @@
 -- @field #number AlphaDescent Default angle of descenti in degrees. A value of 3.6 follows the 3:1 rule of 3 miles of travel and 1000 ft descent.
 -- @field #string roe ROE of spawned groups, default is weapon hold (this is a peaceful class for civil aircraft or ferry missions). Possible: "hold", "return", "free".
 -- @field #string rot ROT of spawned groups, default is no reaction. Possible: "noreaction", "passive", "evade".
--- @field #string takeoff Takeoff type. 0=coldorhot.
+-- @field #number takeoff Takeoff type. 0=coldorhot.
+-- @field #number landing Landing type. Determines if we actually land at an airport or treat it as zone.
 -- @field #number mindist Min distance from departure to destination in meters. Default 5 km.
 -- @field #number maxdist Max distance from departure to destination in meters. Default 5000 km.
 -- @field #table airports_map All airports available on current map (Caucasus, Nevada, Normandy, ...).
@@ -286,7 +287,7 @@ RAT={
   coalition = nil,          -- Coalition of spawn group template.
   country = nil,            -- Country of the group template.
   category = nil,           -- Category of aircarft: "plane" or "heli".
-  friendly = "same",        -- Possible departure/destination airport: all=blue+red+neutral, same=spawn+neutral, spawnonly=spawn, blue=blue+neutral, blueonly=blue, red=red+neutral, redonly=red.
+  friendly = "same",        -- Possible departure/destination airport: same=spawn+neutral, spawnonly=spawn, blue=blue+neutral, blueonly=blue, red=red+neutral, redonly=red, neutral.
   ctable = {},              -- Table with the valid coalitons from choice self.friendly.
   aircraft = {},            -- Table which holds the basic aircraft properties (speed, range, ...).
   Vcruisemax=nil,           -- Max cruise speed in set by user.
@@ -295,6 +296,7 @@ RAT={
   roe = "hold",             -- ROE of spawned groups, default is weapon hold (this is a peaceful class for civil aircraft or ferry missions). Possible: "hold", "return", "free".
   rot = "noreaction",       -- ROT of spawned groups, default is no reaction. Possible: "noreaction", "passive", "evade".
   takeoff = 0,              -- Takeoff type. 0=coldorhot.
+  landing = 9,              -- Landing type. 9=landing.
   mindist = 5000,           -- Min distance from departure to destination in meters. Default 5 km.
   maxdist = 500000,         -- Max distance from departure to destination in meters. Default 5000 km.
   airports_map={},          -- All airports available on current map (Caucasus, Nevada, Normandy, ...).
@@ -386,12 +388,12 @@ RAT.status={
   Destination="Arrived at destination",
   -- Event states.
   EventBirthAir="Born in air",
-  EventBirth="Born on ground",
+  EventBirth="Ready and starting engines",
   EventEngineStartAir="Started engines (in air)",
-  EventEngineStart="Started engines",
-  EventTakeoff="Took off",
-  EventLand="Landed",
-  EventEngineShutdown="Engines shut down",
+  EventEngineStart="Started engines and taxiing",
+  EventTakeoff="Airborn after take-off",
+  EventLand="Landed and taxiing",
+  EventEngineShutdown="Engines off",
   EventDead="Dead",
   EventCrash="Crashed",
 }
@@ -547,7 +549,7 @@ function RAT:Spawn(naircraft)
     env.error("Spawn function should only be called once per RAT object! Exiting and returning nil.")
     return nil
   else
-    self.spawninitialized=false
+    self.spawninitialized=true
   end
 
   -- Number of aircraft to spawn. Default is one.
@@ -591,23 +593,24 @@ function RAT:Spawn(naircraft)
     env.error(RAT.id.."Destination zone _and_ return to zone not possible! Disabling return to zone.")
     self.returnzone=false
   end
-  -- Return zone should not be used together with air start. Why actually?
+  -- If returning to a zone, we set the landing type to the takeoff type. Default landing is ground.
+  -- But if we start in air we want to end in air.
   if self.returnzone and self.takeoff==RAT.wp.air then
-    env.error(RAT.id.."Combination return zone _and_ air start not possible! Falling back to destination zone instead.")
-    self.returnzone=false
-    self.destinationzone=true
+    self.landing=self.takeoff
   end
-  -- Return zone and commute does not make sense.  
+  -- Return zone and commute does not make sense.
+  -- TODO: Actually it makes sense if the departure airport should stay the same.
+  --       We could achive the same by setting only one departure or destination but this is generally not the case!  
   if self.returnzone and self.continuejourney then
-    env.error(RAT.id.."Combination return zone _and_ commute does not make sense! Disabling commute.")
-    self.commute=false
+    --env.error(RAT.id.."Combination return zone _and_ commute does not make sense! Disabling commute.")
+    --self.commute=false
   end
   
   -- Return zone and commute does not make sense.  
---  if self.returnzone and self.commute then
+  if self.returnzone and self.commute then
 --    env.error(RAT.id.."Combination return zone _and_ commute does not make sense! Disabling commute.")
 --    self.commute=false  
---  end
+  end
   
   
   -- Settings info
@@ -621,6 +624,7 @@ function RAT:Spawn(naircraft)
   text=text..string.format("Min dist to destination: %4.1f\n", self.mindist)
   text=text..string.format("Max dist to destination: %4.1f\n", self.maxdist)
   text=text..string.format("Takeoff type: %i\n", self.takeoff)
+  text=text..string.format("Landing type: %i\n", self.landing)
   text=text..string.format("Commute: %s\n", tostring(self.commute))
   text=text..string.format("Journey: %s\n", tostring(self.continuejourney))
   text=text..string.format("Destination Zone: %s\n", tostring(self.destinationzone))
@@ -757,173 +761,108 @@ end
 
 --- Set possible departure ports. This can be an airport or a zone defined in the mission editor.
 -- @param #RAT self
--- @param #string names Name or table of names of departure airports or zones.
+-- @param #string departurenames Name or table of names of departure airports or zones.
 -- @usage RAT:SetDeparture("Sochi-Adler") will spawn RAT objects at Sochi-Adler airport.
 -- @usage RAT:SetDeparture({"Sochi-Adler", "Gudauta"}) will spawn RAT aircraft radomly at Sochi-Adler or Gudauta airport.
 -- @usage RAT:SetDeparture({"Zone A", "Gudauta"}) will spawn RAT aircraft in air randomly within Zone A, which has to be defined in the mission editor, or within a zone around Gudauta airport. Note that this also requires RAT:takeoff("air") to be set.
-function RAT:SetDeparture(names)
+function RAT:SetDeparture(departurenames)
 
   -- Random departure is deactivated now that user specified departure ports.
   self.random_departure=false
   
-  if type(names)=="table" then
-  
-    -- we did get a table of names
-    for _,name in pairs(names) do
-    
-      if self:_AirportExists(name) then
-        -- If an airport with this name exists, we put it in the ports array.
-        table.insert(self.departure_ports, name)
-      else
-        -- If it is not an airport, we assume it is a zone.
-        -- We need the DCS call to determine if it's really a zone. Otherwise code will crash at some point. 
-        local z=trigger.misc.getZone(name)
-        if z then
-          table.insert(self.departure_zones, name)
-        end
-      end
-      
-    end
-    
-  elseif type(names)=="string" then
-
-      if self:_AirportExists(names) then
-        -- If an airport with this name exists, we put it in the ports array.
-        table.insert(self.departure_ports, names)
-      else
-        -- If it is not an airport, we assume it is a zone.
-        table.insert(self.departure_zones, names)
-      end
-  
+  -- Convert input to table.
+  local names
+  if type(departurenames)=="table" then
+    names=departurenames   
+  elseif type(departurenames)=="string" then
+    names={departurenames}
   else
     -- error message
     env.error("Input parameter must be a string or a table!")
   end
   
+  -- Put names into arrays.
+  for _,name in pairs(names) do
+  
+    if self:_AirportExists(name) then
+      -- If an airport with this name exists, we put it in the ports array.
+      table.insert(self.departure_ports, name)
+    elseif self:_ZoneExists(name) then
+      -- If it is not an airport, we assume it is a zone.
+      table.insert(self.departure_zones, name)
+     else
+      env.error(RAT.id.."ERROR! No departure airport or zone found with name "..name)
+    end
+    
+  end
+  
 end
 
---- Set name of destination airport for the AI aircraft. If no name is given an airport from the friendly coalition(s) is chosen randomly.
+--- Set name of destination airports or zones for the AI aircraft.
 -- @param #RAT self
--- @param #string names Name of the destination airport or table of destination airports.
+-- @param #string destinationnames Name of the destination airport or table of destination airports.
 -- @usage RAT:SetDestination("Krymsk") makes all aircraft of this RAT oject fly to Krymsk airport.
-function RAT:SetDestination(names)
+function RAT:SetDestination(destinationnames)
 
   -- Random departure is deactivated now that user specified departure ports.
   self.random_destination=false
   
-  if type(names)=="table" then
-  
-    for _,name in pairs(names) do
-      if self:_AirportExists(name) then
-        table.insert(self.destination_ports, name)
-      else
-        local text=string.format("Airport %s does not exist on map!", name)
-        env.error(text)
-      end
-    end
-  
-  elseif type(names)=="string" then
-  
-    if self:_AirportExists(names) then
-      self.destination_ports={names}
-    else
-      local text=string.format("Airport %s does not exist on map!", names)
-      env.error(text)
-    end
-    
+  -- Convert input to table
+  local names
+  if type(destinationnames)=="table" then
+    names=destinationnames
+  elseif type(destinationnames)=="string" then
+    names={destinationnames}
   else
     -- Error message.
     env.error("Input parameter must be a string or a table!")
   end
+  
+  -- Put names into arrays.
+  for _,name in pairs(names) do
+  
+    if self:_AirportExists(name) then
+      -- If an airport with this name exists, we put it in the ports array.
+      table.insert(self.destination_ports, name)
+    elseif self:_ZoneExists(name) then
+      -- If it is not an airport, we assume it is a zone.
+      table.insert(self.destination_ports, name)
+    else
+      env.error(RAT.id.."ERROR! No destination airport or zone found with name "..name)
+    end
+    
+  end
 
 end
 
---- Set name of destination zones for the AI aircraft. If multiple names are given as a table, one zone is picked randomly as destination.
+--- Destinations are treated as zones. Aircraft will not land but rather be despawned when they reach a random point in the zone.
 -- @param #RAT self
--- @param #string zonenames Name or table of names of zones defined in the mission editor or names of airports on the map.
-function RAT:SetDestinationZone(zonenames)
+function RAT:DestinationZone()
 
   -- Random destination is deactivated now that user specified destination zone(s).
   self.random_destination=false
+  
   -- Destination is a zone. Needs special care.
   self.destinationzone=true
+  
+  -- Landing type is "air" because we don't actually land at the airport
+  self.landing=RAT.wp.air
+  
   -- No ATC required.
   self.ATCswitch=false
   
-  local names
-  if type(zonenames)=="table" then
-    names=zonenames
-  elseif type(zonenames)=="string" then
-    names={zonenames}
-  else
-    -- Error message.
-    env.error("Input parameter must be a string or a table!")
-  end
-  
-  for _,name in pairs(names) do
-    if self:_AirportExists(name) then
-      -- Take airport as zone.
-      local airportzone=AIRBASE:FindByName(name):GetZone()
-      table.insert(self.destination_zones, airportzone)
-    else
-      -- If it is not an airport, we assume it is a zone.
-      -- We need the DCS call to determine if it's really a zone. Otherwise code will crash at some point. 
-      local z=trigger.misc.getZone(name)
-      if z then            
-        table.insert(self.destination_zones, ZONE:New(name))
-      end
-    end
-  end
-
 end
 
---- Set name of "return" zones for the AI aircraft. If multiple names are given as a table, one zone is picked randomly as destination.
+--- Aircraft will fly to a random point within a zone and then return to its departure airport or zone.
 -- @param #RAT self
--- @param #string zonenames Name or table of names of zones defined in the mission editor.
-function RAT:SetReturnZone(zonenames)
+function RAT:ReturnZone()
 
   -- Random destination is deactivated now that user specified destination zone(s).
   self.random_destination=false
+  
   -- Destination is a zone. Needs special care.
   self.returnzone=true
-
---[[
-  if type(names)=="table" then
   
-    for _,name in pairs(names) do
-      table.insert(self.destination_zones, ZONE:New(name))
-    end
-  
-  elseif type(names)=="string" then
-  
-    table.insert(self.destination_zones, ZONE:New(names))
-      
-  else
-    -- Error message.
-    env.error("Input parameter must be a string or a table!")
-  end
-]]
-  
-  local names
-  if type(zonenames)=="table" then
-    names=zonenames
-  elseif type(zonenames)=="string" then
-    names={zonenames}
-  else
-    -- Error message.
-    env.error("Input parameter must be a string or a table!")
-  end
-  
-  for _,name in pairs(names) do
-    if self:_AirportExists(name) then
-      table.insert(self.destination_zones, AIRBASE:FindByName(name):GetZone())
-    elseif self:_ZoneExists(name) then
-      table.insert(self.destination_zones, ZONE:New(name))
-    else
-      env.error(RAT.id.."Specified airport or zone "..name.." does not exist in mission editor!")
-    end
-  end
-
 end
 
 
@@ -1331,20 +1270,28 @@ end
 -- @param #string _departure (Optional) Name of departure airbase.
 -- @param #string _destination (Optional) Name of destination airbase.
 -- @param #number _takeoff Takeoff type id.
-function RAT:_SpawnWithRoute(_departure, _destination, _takeoff)
+function RAT:_SpawnWithRoute(_departure, _destination, _takeoff, _landing)
 
   -- Set takeoff type.
   local takeoff=self.takeoff
+  local landing=self.landing
+  
+  -- Random choice between cold and hot.
   if self.takeoff==RAT.wp.coldorhot then
     local temp={RAT.wp.cold, RAT.wp.hot}
     takeoff=temp[math.random(2)]
   end
+  
+  -- Overrule takeoff/landing by what comes in.
   if _takeoff then
     takeoff=_takeoff
   end
+  if _landing then
+    landing=_landing
+  end
 
   -- Set flight plan.
-  local departure, destination, waypoints = self:_SetRoute(takeoff, _departure, _destination)
+  local departure, destination, waypoints = self:_SetRoute(takeoff, landing, _departure, _destination)
   
   -- Return nil if we could not find a departure destination or waypoints
   if not (departure and destination and waypoints) then
@@ -1358,9 +1305,13 @@ function RAT:_SpawnWithRoute(_departure, _destination, _takeoff)
   local group=self:SpawnWithIndex(self.SpawnIndex) -- Wrapper.Group#GROUP
   self.alive=self.alive+1
   
-  -- ATC is monitoring this flight.
-  if self.ATCswitch then
-    RAT:_ATCAddFlight(group:GetName(), destination:GetName())
+  -- ATC is monitoring this flight (if it supposed to land).
+  if self.ATCswitch and landing==RAT.wp.landing then
+    if self.returnzone then
+      RAT:_ATCAddFlight(group:GetName(), departure:GetName())
+    else
+      RAT:_ATCAddFlight(group:GetName(), destination:GetName())
+    end
   end
   
   -- Set ROE, default is "weapon hold".
@@ -1392,8 +1343,11 @@ function RAT:_SpawnWithRoute(_departure, _destination, _takeoff)
   self.ratcraft[self.SpawnIndex]["Pnow"]=group:GetCoordinate()
   self.ratcraft[self.SpawnIndex]["Distance"]=0
   
-  -- Each aircraft gets its own takeoff type. unused?
-  self.ratcraft[self.SpawnIndex]["takeoff"]=_takeoff
+  -- Each aircraft gets its own takeoff type.
+  self.ratcraft[self.SpawnIndex].takeoff=takeoff
+  self.ratcraft[self.SpawnIndex].landing=landing
+  
+  -- If this switch is set to true, the aircraft will be despawned the next time the status function is called.
   self.ratcraft[self.SpawnIndex].despawnme=false
 
   
@@ -1443,28 +1397,97 @@ function RAT:_Respawn(group)
   -- Get departure and destination from previous journey.
   local departure=self.ratcraft[index].departure
   local destination=self.ratcraft[index].destination
+  local takeoff=self.ratcraft[index].takeoff
+  local landing=self.ratcraft[index].landing
   
   local _departure=nil
   local _destination=nil
   local _takeoff=nil
+  local _landing=nil
  
   if self.continuejourney then
+  
     -- We continue our journey from the old departure airport.
     _departure=destination:GetName()
+    
     if self.destinationzone then
+      
+      -- Case: X --> Zone --> Zone --> Zone
       _takeoff=RAT.wp.air
+      
+      -- We should also take case that the destination is set correctly
+    
+    elseif self.returnzone then
+    
+      -- Case: X --> Zone --> X,  X --> Zone --> X
+      -- We flew to a zone and back. Takeoff type does not 
+      _takeoff=self.takeoff
+      _landing=self.takeoff
+      
+      -- Departure stays the same.
+      _departure=departure:GetName()
+      
+    else
+      
+      _takeoff=self.takeoff
+      _landing=self.landing
+    
     end
+    
   elseif self.commute then
+  
     -- We commute between departure and destination.
     _departure=destination:GetName()
     _destination=departure:GetName()
-  end
     
+    -- Handle takeoff type.
+    if self.destinationzone then
+      -- self.takeoff is either RAT.wp.air or RAT.wp.cold
+      -- self.landing is RAT.wp.Air
+    
+      if self.takeoff==RAT.wp.air then
+      
+        -- Case: Zone <--> Zone (both have takeoff air)
+        _takeoff=RAT.wp.air  -- = self.takeoff
+        _landing=RAT.wp.air  -- = self.landing
+        
+      else
+      
+        -- Case: Airport <--> Zone
+        if takeoff==RAT.wp.air then
+          -- Last takeoff was air so we are at the airport now, takeoff is from ground.
+          _takeoff=self.takeoff   -- must be either hot/cold/runway/hotcold
+          _landing=self.landing   -- must be air
+        else
+          -- Last takeoff was on ground so we are at a zone now ==> takeoff in air, landing at zone.
+          _takeoff=RAT.wp.air
+          _landing=RAT.wp.landing
+        end
+        
+      end
+      
+    elseif self.returnzone then
+    
+      -- We flew to a zone and back. No need to swap departure and destination.
+      _departure=departure:GetName()
+      _destination=destination:GetName()
+      
+      -- Takeoff and landing should also not change.
+      _takeoff=self.takeoff
+      _landing=self.landing
+      
+    end   
+    
+  end
+  
+  env.info(RAT.id..string.format("self.takeoff, takeoff, _takeoff = %d, %d, %d", self.takeoff, takeoff, _takeoff))
+  env.info(RAT.id..string.format("self.landing, landing, _landing = %d, %d, %d", self.landing, landing, _landing))
+      
   -- Spawn new group.
   if self.respawn_delay then
-    SCHEDULER:New(nil, self._SpawnWithRoute, {self, _departure, _destination, _takeoff}, self.respawn_delay)
+    SCHEDULER:New(nil, self._SpawnWithRoute, {self, _departure, _destination, _takeoff, _landing}, self.respawn_delay)
   else
-    self:_SpawnWithRoute(_departure, _destination, _takeoff)
+    self:_SpawnWithRoute(_departure, _destination, _takeoff, _landing)
   end
   
 end
@@ -1473,14 +1496,15 @@ end
 
 --- Set the route of the AI plane. Due to DCS landing bug, this has to be done before the unit is spawned.
 -- @param #RAT self
--- @param takeoff #RAT.wp Takeoff type.
+-- @param takeoff #RAT.wp Takeoff type. Could also be air start.
+-- @param landing #RAT.wp Landing type. Could also be a destination in air.
 -- @param Wrapper.Airport#AIRBASE _departure (Optional) Departure airbase.
 -- @param Wrapper.Airport#AIRBASE _destination (Optional) Destination airbase.
 -- @return Wrapper.Airport#AIRBASE Departure airbase.
 -- @return Wrapper.Airport#AIRBASE Destination airbase.
 -- @return #table Table of flight plan waypoints.
 -- @return #nil If no valid departure or destination airport could be found.
-function RAT:_SetRoute(takeoff, _departure, _destination)
+function RAT:_SetRoute(takeoff, landing, _departure, _destination)
     
   -- Max cruise speed.
   local VxCruiseMax
@@ -1531,36 +1555,17 @@ function RAT:_SetRoute(takeoff, _departure, _destination)
     if self:_AirportExists(_departure) then
       -- Check if new departure is an airport.
       departure=AIRBASE:FindByName(_departure)
+      -- If we spawn in air, we convert departure to a zone.
+      if takeoff == RAT.wp.air then
+        departure=departure:GetZone()
+      end
     elseif self:_ZoneExists(_departure) then
       -- If it's not an airport, check whether it's a zone.
       departure=ZONE:New(_departure)
     else
       local text=string.format("ERROR: Specified departure airport %s does not exist for %s!", _departure, self.alias)
       env.error(RAT.id..text)
-    end
-    
-    if self.commute then
-      if returnzone then
-        -- should not be a problem because we flew back to the departure. Departure=destination ==> nothing really changes.
-        -- Just that the next departure is not random but the same airport we started first.
-      elseif destinationzone then
-        -- We initially flew to a zone.
-        if self.takeoff==RAT.wp.air then
-          -- We initially came from a zone, i.e. airstart.
-          if takeoff==RAT.wp.air then
-            -- Now we also fly to zone.
-          else
-            -- Now we fly to an airport where we land
-          end
-        else
-          -- We initally 
-        end  
-      end
-    elseif self.continuejourney then
-    
-      departure=departure:GetZone()
-    end
-    
+    end    
     
   else
     departure=self:_PickDeparture(takeoff)
@@ -1611,15 +1616,14 @@ function RAT:_SetRoute(takeoff, _departure, _destination)
   if _destination then
   
     if self:_AirportExists(_destination) then
+    
       destination=AIRBASE:FindByName(_destination)
-      if self.destinationzone then
+      if landing==RAT.wp.air or self.returnzone then
         destination=destination:GetZone()
       end
+      
     elseif self:_ZoneExists(_destination) then
       destination=ZONE:New(_destination)
-      if not self.returnzone then
-        self.destinationzone=true
-      end
     else
       local text=string.format("ERROR: Specified destination airport/zone %s does not exist for %s!", _destination, self.alias)
       env.error(RAT.id..text)
@@ -1627,15 +1631,24 @@ function RAT:_SetRoute(takeoff, _departure, _destination)
     
   else
 
-    -- This handes the case where we have a journey and the first flight is done, i.e. _departure is set.
+    -- This handles the case where we have a journey and the first flight is done, i.e. _departure is set.
     -- If a user specified more than two destination airport explicitly, then we will stick to this.
     -- Otherwise, the route is random from now on.
+    local random=self.random_destination
     if self.continuejourney and _departure and #self.destination_ports<3 then
-      self.random_destination=true
+      random=true
+    end
+    
+    -- In case of a returnzone the destination (i.e. return point) is always a zone.
+    local mylanding
+    if self.returnzone then
+      mylanding=RAT.wp.air
+    else
+      mylanding=landing
     end
   
     -- Get all destination airports within reach.
-    local destinations=self:_GetDestinations(departure, Pdeparture, self.mindist, math.min(self.aircraft.Reff, self.maxdist))
+    local destinations=self:_GetDestinations(departure, Pdeparture, self.mindist, math.min(self.aircraft.Reff, self.maxdist), random, mylanding)
     
     -- Pick a destination airport.
     destination=self:_PickDestination(destinations)
@@ -1651,11 +1664,12 @@ function RAT:_SetRoute(takeoff, _departure, _destination)
   
   -- Check that departure and destination are not the same. Should not happen due to mindist.
   if destination:GetName()==departure:GetName() then
-    local text=string.format("%s: Destination and departure airport are identical. Airport %s.", self.alias, destination:GetName())
+    local text=string.format("%s: Destination and departure are identical. Airport/zone %s.", self.alias, destination:GetName())
     MESSAGE:New(text, 30):ToAll()
     env.error(RAT.id..text)
   end
   
+  --[[
   -- Coordinates of destination airport.
   local Pdestination
   local Preturn
@@ -1666,13 +1680,40 @@ function RAT:_SetRoute(takeoff, _departure, _destination)
   elseif self.returnzone then
     -- We fly to a random point within a zone and back to the departure airport.
     Pdestination=departure:GetCoordinate()
+    -- Get a random point inside zone return zone.
     local vec2=destination:GetRandomVec2()
     Preturn=COORDINATE:NewFromVec2(vec2)
+    -- Set departure to destination.
     destination=departure
   else 
     Pdestination=destination:GetCoordinate()
   end
-  -- Height ASL of destination airport.
+  ]]
+  
+  -- Get a random point inside zone return zone.
+  local Preturn
+  local destination_returnzone
+  if self.returnzone then
+    -- Get a random point inside zone return zone.
+    local vec2=destination:GetRandomVec2()
+    Preturn=COORDINATE:NewFromVec2(vec2)
+    destination_returnzone=destination
+    env.info(RAT.id.."Destination r zone = "..destination_returnzone:GetName())
+    -- Set departure to destination.
+    destination=departure
+    env.info(RAT.id.."Destination r zone = "..destination_returnzone:GetName())
+  end
+  
+  -- Get destination coordinate. Either in a zone or exactly at the airport.
+  local Pdestination
+  if landing==RAT.wp.air then
+    local vec2=destination:GetRandomVec2()
+    Pdestination=COORDINATE:NewFromVec2(vec2)
+  else
+    Pdestination=destination:GetCoordinate()
+  end
+  
+  -- Height ASL of destination airport/zone.
   local H_destination=Pdestination.y
     
   -- DESCENT/HOLDING POINT
@@ -1723,11 +1764,11 @@ function RAT:_SetRoute(takeoff, _departure, _destination)
     d_total=Pdeparture:Get2DDistance(Pholding)
   end
   
-  -- max height if we only would descent to holding point for the given distance
+  -- Max height if we only would descent to holding point for the given distance.
   -- TODO: Add case for destination zone. We could allow a higher max because no descent is necessary. 
   if takeoff==RAT.wp.air then
     local H_departure_max
-    if self.destinationzone then
+    if landing==RAT.wp.air then
       H_departure_max = H_departure
     else
       H_departure_max = d_total * math.tan(AlphaDescent) + H_holding + h_holding
@@ -1924,7 +1965,7 @@ function RAT:_SetRoute(takeoff, _departure, _destination)
   if takeoff==RAT.wp.air then
   
     -- Air start.
-    if d_climb < 1000 or d_cruise < 1000 then
+    if d_climb < 20000 or d_cruise < 20000 then
       -- We omit the climb phase completely and add it to the cruise part.
       d_cruise=d_cruise+d_climb
     else      
@@ -1953,23 +1994,28 @@ function RAT:_SetRoute(takeoff, _departure, _destination)
   end
   
   -- Cruise
-  if self.destinationzone then
+  
+  -- First add the little bit from begin of cruise to the return point.
+  if self.returnzone then    
+    c[#c+1]=Preturn    
+    wp[#wp+1]=self:_Waypoint(#wp+1, RAT.wp.cruise, c[#wp+1], VxCruise, FLcruise)
+    self.waypointdescriptions[#wp]="Return Zone"
+    self.waypointstatus[#wp]=RAT.status.Uturn
+  end
+  
+  if landing==RAT.wp.air then
   
     -- Next waypoint is already the final destination.
     c[#c+1]=Pdestination
+    --TODO: change RAT.wp.finalwp to "landing"
     wp[#wp+1]=self:_Waypoint(#wp+1, RAT.wp.finalwp, c[#wp+1], VxCruise,  FLcruise)
     self.waypointdescriptions[#wp]="Final Destination"
     self.waypointstatus[#wp]=RAT.status.Destination
   
   elseif self.returnzone then
   
-    c[#c+1]=Preturn
-    c[#c+1]=c[#c]:Translate(d_cruise/2, heading-180)
-    
-    wp[#wp+1]=self:_Waypoint(#wp+1, RAT.wp.cruise, c[#wp+1], VxCruise, FLcruise)
-    self.waypointdescriptions[#wp]="Return Zone"
-    self.waypointstatus[#wp]=RAT.status.Uturn
-    
+    -- The little bit back to end of cruise.  
+    c[#c+1]=c[#c]:Translate(d_cruise/2, heading-180)    
     wp[#wp+1]=self:_Waypoint(#wp+1, RAT.wp.cruise, c[#wp+1], VxCruise,  FLcruise)
     self.waypointdescriptions[#wp]="End of Cruise"
     self.waypointstatus[#wp]=RAT.status.Descent
@@ -1980,38 +2026,40 @@ function RAT:_SetRoute(takeoff, _departure, _destination)
     wp[#wp+1]=self:_Waypoint(#wp+1, RAT.wp.cruise, c[#wp+1], VxCruise,  FLcruise)
     self.waypointdescriptions[#wp]="End of Cruise"
     self.waypointstatus[#wp]=RAT.status.Descent
+    
   end
   
-  -- Descent
-  if self.destinationzone then
-    -- Nothing to do.
-  elseif self.returnzone then
-    c[#c+1]=c[#c]:Translate(d_descent/2, heading-180)
-    wp[#wp+1]=self:_Waypoint(#wp+1, RAT.wp.descent, c[#wp+1], VxDescent, FLcruise-(FLcruise-(h_holding+H_holding))/2)
-    self.waypointdescriptions[#wp]="Descent"
-    self.waypointstatus[#wp]=RAT.status.DescentHolding
-  else
-    c[#c+1]=c[#c]:Translate(d_descent/2, heading)
-    wp[#wp+1]=self:_Waypoint(#wp+1, RAT.wp.descent, c[#wp+1], VxDescent, FLcruise-(FLcruise-(h_holding+H_holding))/2)
-    self.waypointdescriptions[#wp]="Descent"
-    self.waypointstatus[#wp]=RAT.status.DescentHolding
+  -- Descent (only if we acually want to land)
+  if landing==RAT.wp.landing then
+    if self.returnzone then
+      c[#c+1]=c[#c]:Translate(d_descent/2, heading-180)
+      wp[#wp+1]=self:_Waypoint(#wp+1, RAT.wp.descent, c[#wp+1], VxDescent, FLcruise-(FLcruise-(h_holding+H_holding))/2)
+      self.waypointdescriptions[#wp]="Descent"
+      self.waypointstatus[#wp]=RAT.status.DescentHolding
+    else
+      c[#c+1]=c[#c]:Translate(d_descent/2, heading)
+      wp[#wp+1]=self:_Waypoint(#wp+1, RAT.wp.descent, c[#wp+1], VxDescent, FLcruise-(FLcruise-(h_holding+H_holding))/2)
+      self.waypointdescriptions[#wp]="Descent"
+      self.waypointstatus[#wp]=RAT.status.DescentHolding
+    end
   end
   
   -- Holding and final destination.
-  if self.destinationzone then
-    -- Nothing to do.
-  else
-    c[#c+1]=Pholding
-    c[#c+1]=Pdestination
-    
+  if landing==RAT.wp.landing then
+
+    -- Holding point
+    c[#c+1]=Pholding  
     wp[#wp+1]=self:_Waypoint(#wp+1, RAT.wp.holding, c[#wp+1], VxHolding, H_holding+h_holding)
     self.waypointdescriptions[#wp]="Holding Point"
     self.waypointstatus[#wp]=RAT.status.Holding
     self.wp_holding=#wp
-    
-    wp[#wp+1]=self:_Waypoint(#wp+1, RAT.wp.landing, c[#wp+1], VxFinal, H_destination, destination)
+
+    -- Final destination.
+    c[#c+1]=Pdestination    
+    wp[#wp+1]=self:_Waypoint(#wp+1, landing, c[#wp+1], VxFinal, H_destination, destination)
     self.waypointdescriptions[#wp]="Destination"
     self.waypointstatus[#wp]=RAT.status.Destination
+    
   end
   
   -- Final Waypoint
@@ -2032,7 +2080,12 @@ function RAT:_SetRoute(takeoff, _departure, _destination)
   self:_Routeinfo(waypoints, "Waypoint info in set_route:")
   
   -- return departure, destination and waypoints
-  return departure, destination, waypoints
+  if self.returnzone then
+    -- We return the actual zone here because returning the departure leads to problems with commute.
+    return departure, destination_returnzone, waypoints    
+  else
+    return departure, destination, waypoints
+  end
   
 end
 
@@ -2125,9 +2178,8 @@ end
 --- Pick destination airport. If no airport name is given an airport from the coalition is chosen randomly.
 -- @param #RAT self
 -- @param #table destinations Table with destination airports.
--- @param #boolean _random (Optional) Switch to activate a random selection of airports.
 -- @return Wrapper.Airbase#AIRBASE Destination airport.
-function RAT:_PickDestination(destinations, _random)
+function RAT:_PickDestination(destinations)
   
   -- Randomly select one possible destination.
   local destination=nil
@@ -2163,16 +2215,17 @@ end
 -- @param Core.Point#COORDINATE q Coordinate of the departure point.
 -- @param #number minrange Minimum range to q in meters.
 -- @param #number maxrange Maximum range to q in meters.
--- @return #table Table with possible destination airports.
--- @return #nil If no airports could be found.
-function RAT:_GetDestinations(departure, q, minrange, maxrange)
+-- @param #booleean random Destination is randomly selected from friendly airport (true) or from destinations specified by user input (false).
+-- @param #number Number indicating whether we land at a destination or return a zone object.
+-- @return #table Table with possible destination airports or zones.
+function RAT:_GetDestinations(departure, q, minrange, maxrange, random, landing)
 
   -- Min/max range to destination.
   minrange=minrange or self.mindist
   maxrange=maxrange or self.maxdist
 
   local possible_destinations={}
-  if self.random_destination then
+  if random then
   
     -- Airports of friendly coalitions.
     for _,airport in pairs(self.airports) do
@@ -2184,49 +2237,48 @@ function RAT:_GetDestinations(departure, q, minrange, maxrange)
         
         -- Check if distance form departure to destination is within min/max range.
         if distance>=minrange and distance<=maxrange then
-          table.insert(possible_destinations, airport)
+          if landing==RAT.wp.air then
+            table.insert(possible_destinations, airport:GetZone())  -- insert zone object.
+          else
+            table.insert(possible_destinations, airport)            -- insert airport object.
+          end
         end
       end
     end
     
   else
-    
-    if self.destinationzone or self.returnzone then
-    
-      -- Destination or return zones specified by user.
-      for _,zone in pairs(self.destination_zones) do
-        if zone:GetName() ~= departure:GetName() then
+ 
+    -- Destination airports or zones specified by user.
+    for _,name in pairs(self.destination_ports) do
         
-          -- Distance from departure to possible destination
-          local distance=q:Get2DDistance(zone:GetCoordinate())
-          
-          -- Add as possible destination if zone is within range.
-          if distance>=minrange and distance<=maxrange then
-            table.insert(possible_destinations, zone)
+      -- Make sure departure and destination are not identical.
+      if name ~= departure:GetName() then
+      
+        local dest
+        if self:_AirportExists(name) then
+          if landing==RAT.wp.air then
+            dest=AIRBASE:FindByName(name):GetZone()
+          else
+            dest=AIRBASE:FindByName(name)
           end
+        elseif self:_ZoneExists(name) then
+          dest=ZONE:New(name)
+        else
+          env.error(RAT.id.."No airport or zone found with name "..name)
         end
-      end
-          
-    else
         
-      -- Airports specified by user.
-      for _,name in pairs(self.destination_ports) do
-        --if self:_IsFriendly(name) and not self:_Excluded(name) and name~=departure:GetName() then
-        if name~=departure:GetName() then
-          local airport=AIRBASE:FindByName(name)
+        -- Distance from departure to possible destination
+        local distance=q:Get2DDistance(dest:GetCoordinate())
           
-          -- Distance from departure to possible destination
-          local distance=q:Get2DDistance(airport:GetCoordinate())
-          
-          -- Add as possible destination if airport is within range.
-          if distance>=minrange and distance<=maxrange then
-            table.insert(possible_destinations, airport)
-          end
-          
+        -- Add as possible destination if zone is within range.
+        if distance>=minrange and distance<=maxrange then
+          table.insert(possible_destinations, dest)
         end
+        
       end
-    end
+    end 
     
+
   end
   
   -- Info message.
@@ -3018,9 +3070,7 @@ function RAT:_Waypoint(index, Type, Coord, Speed, Altitude, Airport)
   -- waypoint name (only for the mission editor)
   RoutePoint.name="RAT waypoint"
   
-  if (Airport~=nil) and Type~=RAT.wp.air then
-    env.info(RAT.id.."Airport = "..Airport:GetName())
-    env.info(RAT.id.."Type    = "..Type)
+  if (Airport~=nil) and (Type~=RAT.wp.air) then
     local AirbaseID = Airport:GetID()
     local AirbaseCategory = Airport:GetDesc().category
     if AirbaseCategory == Airbase.Category.SHIP then
@@ -3179,6 +3229,7 @@ function RAT._WaypointFunction(group, rat, wp)
   -- Departure and destination names.
   local departure=rat.ratcraft[sdx].departure:GetName()
   local destination=rat.ratcraft[sdx].destination:GetName()
+  local landing=rat.ratcraft[sdx].landing
   
   -- For messages
   local text
@@ -3211,7 +3262,7 @@ function RAT._WaypointFunction(group, rat, wp)
     MESSAGE:New(text, 10):ToAllIf(rat.reportstatus)
     env.info(RAT.id..text)
   
-    if rat.destinationzone then
+    if landing==RAT.wp.air then
       text=string.format("Activating despawn switch for flight %s! Group will be detroyed soon.", group:GetName())
       MESSAGE:New(text, 30):ToAllIf(rat.debug)
       env.info(RAT.id..text)
@@ -3923,3 +3974,5 @@ function RAT:_ATCQueue()
   end
 end
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
