@@ -14,6 +14,7 @@ Core/Zone.lua
 Core/Database.lua
 Core/Set.lua
 Core/Point.lua
+Core/Velocity.lua
 Core/Message.lua
 Core/Fsm.lua
 Core/Radio.lua

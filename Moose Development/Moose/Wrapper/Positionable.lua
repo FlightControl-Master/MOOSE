@@ -326,12 +326,31 @@ function POSITIONABLE:InAir()
   return nil
 end
 
- 
---- Returns the POSITIONABLE velocity vector.
+
+--- Returns the a @{Velocity} object from the positionable.
 -- @param Wrapper.Positionable#POSITIONABLE self
--- @return Dcs.DCSTypes#Vec3 The velocity vector
+-- @return Core.Velocity#VELOCITY Velocity The Velocity object.
 -- @return #nil The POSITIONABLE is not existing or alive.  
 function POSITIONABLE:GetVelocity()
+  self:F2( self.PositionableName )
+
+  local DCSPositionable = self:GetDCSObject()
+  
+  if DCSPositionable then
+    local Velocity = VELOCITY:New( self )
+    return Velocity
+  end
+  
+  return nil
+end
+
+
+ 
+--- Returns the POSITIONABLE velocity Vec3 vector.
+-- @param Wrapper.Positionable#POSITIONABLE self
+-- @return Dcs.DCSTypes#Vec3 The velocity Vec3 vector
+-- @return #nil The POSITIONABLE is not existing or alive.  
+function POSITIONABLE:GetVelocityVec3()
   self:F2( self.PositionableName )
 
   local DCSPositionable = self:GetDCSObject()
@@ -377,7 +396,7 @@ function POSITIONABLE:GetVelocityKMH()
   local DCSPositionable = self:GetDCSObject()
   
   if DCSPositionable then
-    local VelocityVec3 = self:GetVelocity()
+    local VelocityVec3 = self:GetVelocityVec3()
     local Velocity = ( VelocityVec3.x ^ 2 + VelocityVec3.y ^ 2 + VelocityVec3.z ^ 2 ) ^ 0.5 -- in meters / sec
     local Velocity = Velocity * 3.6 -- now it is in km/h.
     self:T3( Velocity )
@@ -396,7 +415,7 @@ function POSITIONABLE:GetVelocityMPS()
   local DCSPositionable = self:GetDCSObject()
   
   if DCSPositionable then
-    local VelocityVec3 = self:GetVelocity()
+    local VelocityVec3 = self:GetVelocityVec3()
     local Velocity = ( VelocityVec3.x ^ 2 + VelocityVec3.y ^ 2 + VelocityVec3.z ^ 2 ) ^ 0.5 -- in meters / sec
     self:T3( Velocity )
     return Velocity
