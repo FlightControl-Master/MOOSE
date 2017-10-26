@@ -1029,7 +1029,7 @@ end
 --- Set radio modulation. Default is AM.
 -- @param #RAT self
 -- @param #string modulation Either "FM" or "AM". If no value is given, modulation is set to AM.
-function RAT:RadioFrequency(modulation)
+function RAT:RadioModulation(modulation)
   if modulation=="AM" then
     self.modulation=radio.modulation.AM
   elseif modulation=="FM" then
@@ -1379,7 +1379,7 @@ function RAT:_SpawnWithRoute(_departure, _destination, _takeoff, _landing, _live
   
   -- Place markers of waypoints on F10 map.
   if self.placemarkers then
-    self:_PlaceMarkers(waypoints)
+    self:_PlaceMarkers(waypoints, self.SpawnIndex)
   end
   
   -- Set ROE, default is "weapon hold".
@@ -1439,7 +1439,7 @@ function RAT:_SpawnWithRoute(_departure, _destination, _takeoff, _landing, _live
     MENU_MISSION_COMMAND:New("Evade on fire",   self.Menu[self.SubMenuName].groups[self.SpawnIndex]["rot"], self._SetROT, self, group, RAT.ROT.evade)    
     -- F10/RAT/<templatename>/Group X/
     MENU_MISSION_COMMAND:New("Despawn group",  self.Menu[self.SubMenuName].groups[self.SpawnIndex], self._Despawn, self, group)
-    MENU_MISSION_COMMAND:New("Place markers",  self.Menu[self.SubMenuName].groups[self.SpawnIndex], self._PlaceMarkers, self, waypoints)
+    MENU_MISSION_COMMAND:New("Place markers",  self.Menu[self.SubMenuName].groups[self.SpawnIndex], self._PlaceMarkers, self, waypoints, self.SpawnIndex)
     MENU_MISSION_COMMAND:New("Status report",  self.Menu[self.SubMenuName].groups[self.SpawnIndex], self.Status, self, true, self.SpawnIndex)
   end
   
@@ -3649,9 +3649,10 @@ end
 --- Place markers of the waypoints. Note we assume a very specific number and type of waypoints here.
 -- @param #RAT self
 -- @param #table waypoints Table with waypoints.
-function RAT:_PlaceMarkers(waypoints)
+-- @param #number index Spawn index of group.
+function RAT:_PlaceMarkers(waypoints, index)
   for i=1,#waypoints do
-    self:_SetMarker(self.waypointdescriptions[i], waypoints[i])
+    self:_SetMarker(self.waypointdescriptions[i], waypoints[i], index)
   end
 end
 
@@ -3660,7 +3661,8 @@ end
 -- @param #RAT self
 -- @param #string text Info text displayed at maker.
 -- @param #table wp Position of marker coming in as waypoint, i.e. has x, y and alt components.
-function RAT:_SetMarker(text, wp)
+-- @param #number index Spawn index of group. 
+function RAT:_SetMarker(text, wp, index)
   RAT.markerid=RAT.markerid+1
   self.markerids[#self.markerids+1]=RAT.markerid
   if self.debug then
@@ -3668,7 +3670,7 @@ function RAT:_SetMarker(text, wp)
   end
   -- Convert to coordinate.
   local vec={x=wp.x, y=wp.alt, z=wp.y}
-  local flight=self:GetGroupFromIndex(self.SpawnIndex):GetName()
+  local flight=self:GetGroupFromIndex(index):GetName()
   -- Place maker visible for all on the F10 map.
   local text1=string.format("%s:\n%s", flight, text)
   trigger.action.markToAll(RAT.markerid, text1, vec)
