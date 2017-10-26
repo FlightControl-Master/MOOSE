@@ -1378,19 +1378,19 @@ end
 --   local SpawnZone = ZONE:New( ZoneName )
 -- 
 --   -- Spawn at the zone center position at the height specified in the ME of the group template!
---   SpawnAirplanes:SpawnFromZone( SpawnZone )  
+--   SpawnAirplanes:SpawnInZone( SpawnZone )  
 --   
 --   -- Spawn in the zone at a random position at the height specified in the Me of the group template.
---   SpawnAirplanes:SpawnFromZone( SpawnZone, true )  
+--   SpawnAirplanes:SpawnInZone( SpawnZone, true )  
 --   
 --   -- Spawn in the zone at a random position at the height randomized between 2000 and 4000 meters.
---   SpawnAirplanes:SpawnFromUnit( SpawnZone, true, 2000, 4000 )  
+--   SpawnAirplanes:SpawnInZone( SpawnZone, true, 2000, 4000 )  
 -- 
 --   -- Spawn at the zone center position at the height randomized between 2000 and 4000 meters.
---   SpawnAirplanes:SpawnFromUnit( SpawnZone, false, 2000, 4000 )  
+--   SpawnAirplanes:SpawnInZone( SpawnZone, false, 2000, 4000 )  
 --   
 --   -- Spawn at the zone center position at the height randomized between 2000 and 4000 meters.
---   SpawnAirplanes:SpawnFromUnit( SpawnZone, nil, 2000, 4000 )  
+--   SpawnAirplanes:SpawnInZone( SpawnZone, nil, 2000, 4000 )  
 --   
 function SPAWN:SpawnInZone( Zone, RandomizeGroup, MinHeight, MaxHeight, SpawnIndex )
 	self:F( { self.SpawnTemplatePrefix, Zone, RandomizeGroup, MinHeight, MaxHeight, SpawnIndex } )

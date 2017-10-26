@@ -2946,19 +2946,19 @@ when nothing was spawned.</p>
   local SpawnZone = ZONE:New( ZoneName )
 
   -- Spawn at the zone center position at the height specified in the ME of the group template!
-  SpawnAirplanes:SpawnFromZone( SpawnZone )  
+  SpawnAirplanes:SpawnInZone( SpawnZone )  
   
   -- Spawn in the zone at a random position at the height specified in the Me of the group template.
-  SpawnAirplanes:SpawnFromZone( SpawnZone, true )  
+  SpawnAirplanes:SpawnInZone( SpawnZone, true )  
   
   -- Spawn in the zone at a random position at the height randomized between 2000 and 4000 meters.
-  SpawnAirplanes:SpawnFromUnit( SpawnZone, true, 2000, 4000 )  
+  SpawnAirplanes:SpawnInZone( SpawnZone, true, 2000, 4000 )  
 
   -- Spawn at the zone center position at the height randomized between 2000 and 4000 meters.
-  SpawnAirplanes:SpawnFromUnit( SpawnZone, false, 2000, 4000 )  
+  SpawnAirplanes:SpawnInZone( SpawnZone, false, 2000, 4000 )  
   
   -- Spawn at the zone center position at the height randomized between 2000 and 4000 meters.
-  SpawnAirplanes:SpawnFromUnit( SpawnZone, nil, 2000, 4000 )  
+  SpawnAirplanes:SpawnInZone( SpawnZone, nil, 2000, 4000 )  
   </code></pre>
 
 </dd>
@@ -3003,6 +3003,9 @@ when nothing was spawned.</p>
 	
 
 
+	
+<p> By default, no InitLimit</p>
+
 </dd>
 </dl>
 		<dl class="function">
@@ -3038,7 +3041,7 @@ when nothing was spawned.</p>
 		<dl class="function">
 <dt>
 
-		<em></em>
+		<em>#number</em>
 <a id="#(SPAWN).SpawnMaxGroups" >
 <strong>SPAWN.SpawnMaxGroups</strong>
 </a>
@@ -3055,7 +3058,7 @@ when nothing was spawned.</p>
 		<dl class="function">
 <dt>
 
-		<em></em>
+		<em>#number</em>
 <a id="#(SPAWN).SpawnMaxUnitsAlive" >
 <strong>SPAWN.SpawnMaxUnitsAlive</strong>
 </a>
@@ -3383,7 +3386,7 @@ Spawn_BE_KA50 = SPAWN:New( 'BE KA-50@RAMP-Ground Defense' ):Schedule( 600, 0.5 )
 		<dl class="function">
 <dt>
 
-		<em></em>
+		<em>#boolean</em>
 <a id="#(SPAWN).SpawnUnControlled" >
 <strong>SPAWN.SpawnUnControlled</strong>
 </a>
