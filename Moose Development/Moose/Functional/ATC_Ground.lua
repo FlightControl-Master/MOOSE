@@ -1,4 +1,4 @@
---- **Functional** -- The AIRBASEPOLICE classes monitor airbase traffic and regulate speed while taxiing.
+--- **Functional** -- The ATC_GROUND classes monitor airbase traffic and regulate speed while taxiing.
 --
 -- ===
 --
@@ -7,34 +7,34 @@
 --
 -- ===
 -- 
--- @module AirbasePolice
+-- @module ATC_Ground
 
 
---- @type AIRBASEPOLICE_BASE
+--- @type ATC_GROUND
 -- @field Core.Set#SET_CLIENT SetClient
 -- @extends Core.Base#BASE
 
---- Base class for AIRBASEPOLICE implementations.
--- @field #AIRBASEPOLICE_BASE
-AIRBASEPOLICE_BASE = {
-  ClassName = "AIRBASEPOLICE_BASE",
+--- Base class for ATC_GROUND implementations.
+-- @field #ATC_GROUND
+ATC_GROUND = {
+  ClassName = "ATC_GROUND",
   SetClient = nil,
   Airbases = nil,
   AirbaseNames = nil,
 }
 
---- @type AIRBASEPOLICE_BASE.AirbaseNames
+--- @type ATC_GROUND.AirbaseNames
 -- @list <#string>
 
 
---- Creates a new AIRBASEPOLICE_BASE object.
--- @param #AIRBASEPOLICE_BASE self
+--- Creates a new ATC_GROUND object.
+-- @param #ATC_GROUND self
 -- @param Airbases A table of Airbase Names.
--- @return #AIRBASEPOLICE_BASE self
-function AIRBASEPOLICE_BASE:New( Airbases, AirbaseList )
+-- @return #ATC_GROUND self
+function ATC_GROUND:New( Airbases, AirbaseList )
 
   -- Inherits from BASE
-  local self = BASE:Inherit( self, BASE:New() ) -- #AIRBASEPOLICE_BASE
+  local self = BASE:Inherit( self, BASE:New() ) -- #ATC_GROUND
   self:E( { self.ClassName, Airbases } )
 
   self.Airbases = Airbases
@@ -88,10 +88,10 @@ end
 
 
 --- Smoke the airbases runways.
--- @param #AIRBASEPOLICE_BASE self
+-- @param #ATC_GROUND self
 -- @param Utilities.Utils#SMOKECOLOR SmokeColor The color of the smoke around the runways.
--- @return #AIRBASEPOLICE_BASE self
-function AIRBASEPOLICE_BASE:SmokeRunways( SmokeColor )
+-- @return #ATC_GROUND self
+function ATC_GROUND:SmokeRunways( SmokeColor )
 
   for AirbaseID, Airbase in pairs( self.Airbases ) do
     for PointsRunwayID, PointsRunway in pairs( Airbase.PointsRunways ) do
@@ -102,27 +102,27 @@ end
 
 
 --- Set the maximum speed in Kmph until the player gets kicked.
--- @param #AIRBASEPOLICE_BASE self
+-- @param #ATC_GROUND self
 -- @param #number KickSpeed Set the maximum speed in Kmph until the player gets kicked.
--- @return #AIRBASEPOLICE_BASE self
-function AIRBASEPOLICE_BASE:SetKickSpeedKmph( KickSpeed )
+-- @return #ATC_GROUND self
+function ATC_GROUND:SetKickSpeedKmph( KickSpeed )
 
   self.KickSpeed = UTILS.KmphToMps( KickSpeed )
 end
 
 --- Set the maximum speed in Miph until the player gets kicked.
--- @param #AIRBASEPOLICE_BASE self
+-- @param #ATC_GROUND self
 -- @param #number KickSpeedMiph Set the maximum speed in Mph until the player gets kicked.
--- @return #AIRBASEPOLICE_BASE self
-function AIRBASEPOLICE_BASE:SetKickSpeedMiph( KickSpeedMiph )
+-- @return #ATC_GROUND self
+function ATC_GROUND:SetKickSpeedMiph( KickSpeedMiph )
 
   self.KickSpeed = UTILS.MiphToMps( KickSpeedMiph )
 end
 
 
 
---- @param #AIRBASEPOLICE_BASE self
-function AIRBASEPOLICE_BASE:_AirbaseMonitor()
+--- @param #ATC_GROUND self
+function ATC_GROUND:_AirbaseMonitor()
 
   self:E( "In Scheduler")
 
@@ -144,94 +144,96 @@ function AIRBASEPOLICE_BASE:_AirbaseMonitor()
               NotInRunwayZone = ( Client:IsNotInZone( ZoneRunway ) == true ) and NotInRunwayZone or false
             end
 
+            local IsOnGround = Client:InAir() == false
+
             if NotInRunwayZone then
-              local Taxi = Client:GetState( self, "Taxi" )
-              self:E( Taxi )
-              if Taxi == false then
-                Client:Message( "Welcome at " .. AirbaseID .. ". The maximum taxiing speed is " .. AirbaseMeta.MaximumSpeed .. " km/h.", 20, "ATC" )
-                Client:SetState( self, "Taxi", true )
-              end
-
-              -- TODO: GetVelocityKMH function usage
-              local Velocity = VELOCITY_POSITIONABLE:New( Client )
-              --MESSAGE:New( "Velocity = " .. Velocity:ToString(), 1 ):ToAll()
-              local IsAboveRunway = Client:IsAboveRunway()
-              local IsOnGround = Client:InAir() == false
-              self:T( IsAboveRunway, IsOnGround )
-
+              
               if IsOnGround then
-                if Velocity:Get() > self.KickSpeed then
-                  MESSAGE:New( "Penalty! Player " .. Client:GetPlayerName() .. " is kicked, due to a severe airbase traffic rule violation ...", 10, "ATC" ):ToAll()
-                  Client:Destroy()
-                  Client:SetState( self, "Speeding", false )
-                  Client:SetState( self, "Warnings", 0 )
+                local Taxi = Client:GetState( self, "Taxi" )
+                self:E( Taxi )
+                if Taxi == false then
+                  Client:Message( "Welcome at " .. AirbaseID .. ". The maximum taxiing speed is " .. AirbaseMeta.MaximumSpeed .. " km/h.", 20, "ATC" )
+                  Client:SetState( self, "Taxi", true )
                 end
-              end                  
-                
+  
+                -- TODO: GetVelocityKMH function usage
+                local Velocity = VELOCITY_POSITIONABLE:New( Client )
+                --MESSAGE:New( "Velocity = " .. Velocity:ToString(), 1 ):ToAll()
+                local IsAboveRunway = Client:IsAboveRunway()
+                self:T( IsAboveRunway, IsOnGround )
+  
+                if IsOnGround then
+                  if Velocity:Get() > self.KickSpeed then
+                    MESSAGE:New( "Penalty! Player " .. Client:GetPlayerName() .. " is kicked, due to a severe airbase traffic rule violation ...", 10, "ATC" ):ToAll()
+                    Client:Destroy()
+                    Client:SetState( self, "Speeding", false )
+                    Client:SetState( self, "Warnings", 0 )
+                  end
+                end                  
+                  
+  
+                if IsOnGround then
+  
+                  if Velocity:GetKmph() > AirbaseMeta.MaximumSpeed then
+                    local IsSpeeding = Client:GetState( self, "Speeding" )
+  
+                    if IsSpeeding == true then
+                      local SpeedingWarnings = Client:GetState( self, "Warnings" )
+                      self:T( SpeedingWarnings )
+  
+                      if SpeedingWarnings <= 3 then
+                        Client:Message( "Warning " .. SpeedingWarnings .. "/3! Airbase traffic rule violation! Slow down now! Your speed is " .. 
+                                        string.format( "%s", Velocity:ToString() ), 5, "ATC" )
+                        Client:SetState( self, "Warnings", SpeedingWarnings + 1 )
+                      else
+                        MESSAGE:New( "Penalty! Player " .. Client:GetPlayerName() .. " is kicked, due to a severe airbase traffic rule violation ...", 10, "ATC" ):ToAll()
+                        --- @param Wrapper.Client#CLIENT Client
+                        Client:Destroy()
+                        Client:SetState( self, "Speeding", false )
+                        Client:SetState( self, "Warnings", 0 )
+                      end
+  
+                    else
+                      Client:Message( "Attention! You are speeding on the taxiway, slow down! Your speed is " .. string.format( "%s", Velocity:ToString() ), 5, "ATC" )
+                      Client:SetState( self, "Speeding", true )
+                      Client:SetState( self, "Warnings", 1 )
+                    end
+  
+                  else
+                    Client:SetState( self, "Speeding", false )
+                    Client:SetState( self, "Warnings", 0 )
+                  end
+                end
 
-              if IsOnGround then
-
-                if Velocity:GetKmph() > AirbaseMeta.MaximumSpeed then
-                  local IsSpeeding = Client:GetState( self, "Speeding" )
-
-                  if IsSpeeding == true then
-                    local SpeedingWarnings = Client:GetState( self, "Warnings" )
-                    self:T( SpeedingWarnings )
-
-                    if SpeedingWarnings <= 3 then
-                      Client:Message( "Warning " .. SpeedingWarnings .. "/3! Airbase traffic rule violation! Slow down now! Your speed is " .. 
-                                      string.format( "%s", Velocity:ToString() ), 5, "ATC" )
-                      Client:SetState( self, "Warnings", SpeedingWarnings + 1 )
+                if IsOnGround and not IsAboveRunway then
+  
+                  local IsOffRunway = Client:GetState( self, "IsOffRunway" )
+  
+                  if IsOffRunway == true then
+                    local OffRunwayWarnings = Client:GetState( self, "OffRunwayWarnings" )
+                    self:T( OffRunwayWarnings )
+  
+                    if OffRunwayWarnings <= 3 then
+                      Client:Message( "Warning " .. OffRunwayWarnings .. "/3! Airbase traffic rule violation! Get back on the taxi immediately!", 5, "ATC" )
+                      Client:SetState( self, "OffRunwayWarnings", OffRunwayWarnings + 1 )
                     else
                       MESSAGE:New( "Penalty! Player " .. Client:GetPlayerName() .. " is kicked, due to a severe airbase traffic rule violation ...", 10, "ATC" ):ToAll()
                       --- @param Wrapper.Client#CLIENT Client
                       Client:Destroy()
-                      Client:SetState( self, "Speeding", false )
-                      Client:SetState( self, "Warnings", 0 )
+                      Client:SetState( self, "IsOffRunway", false )
+                      Client:SetState( self, "OffRunwayWarnings", 0 )
                     end
-
                   else
-                    Client:Message( "Attention! You are speeding on the taxiway, slow down! Your speed is " .. string.format( "%s", Velocity:ToString() ), 5, "ATC" )
-                    Client:SetState( self, "Speeding", true )
-                    Client:SetState( self, "Warnings", 1 )
+                    Client:Message( "Attention! You are off the taxiway. Get back on the taxiway immediately!", 5, "ATC" )
+                    Client:SetState( self, "IsOffRunway", true )
+                    Client:SetState( self, "OffRunwayWarnings", 1 )
                   end
-
+  
                 else
-                  Client:SetState( self, "Speeding", false )
-                  Client:SetState( self, "Warnings", 0 )
+                  Client:SetState( self, "IsOffRunway", false )
+                  Client:SetState( self, "OffRunwayWarnings", 0 )
                 end
               end
-
-              if IsOnGround and not IsAboveRunway then
-
-                local IsOffRunway = Client:GetState( self, "IsOffRunway" )
-
-                if IsOffRunway == true then
-                  local OffRunwayWarnings = Client:GetState( self, "OffRunwayWarnings" )
-                  self:T( OffRunwayWarnings )
-
-                  if OffRunwayWarnings <= 3 then
-                    Client:Message( "Warning " .. OffRunwayWarnings .. "/3! Airbase traffic rule violation! Get back on the taxi immediately!", 5, "ATC" )
-                    Client:SetState( self, "OffRunwayWarnings", OffRunwayWarnings + 1 )
-                  else
-                    MESSAGE:New( "Penalty! Player " .. Client:GetPlayerName() .. " is kicked, due to a severe airbase traffic rule violation ...", 10, "ATC" ):ToAll()
-                    --- @param Wrapper.Client#CLIENT Client
-                    Client:Destroy()
-                    Client:SetState( self, "IsOffRunway", false )
-                    Client:SetState( self, "OffRunwayWarnings", 0 )
-                  end
-                else
-                  Client:Message( "Attention! You are off the taxiway. Get back on the taxiway immediately!", 5, "ATC" )
-                  Client:SetState( self, "IsOffRunway", true )
-                  Client:SetState( self, "OffRunwayWarnings", 1 )
-                end
-
-              else
-                Client:SetState( self, "IsOffRunway", false )
-                Client:SetState( self, "OffRunwayWarnings", 0 )
-              end
-
-
             else
               Client:SetState( self, "Speeding", false )
               Client:SetState( self, "Warnings", 0 )
@@ -243,6 +245,8 @@ function AIRBASEPOLICE_BASE:_AirbaseMonitor()
                 Client:SetState( self, "Taxi", false )
               end
             end
+          else
+            Client:SetState( self, "Taxi", false )
           end
         end
       )
@@ -253,14 +257,14 @@ function AIRBASEPOLICE_BASE:_AirbaseMonitor()
 end
 
 
---- @type AIRBASEPOLICE_CAUCASUS
--- @extends #AIRBASEPOLICE_BASE
+--- @type ATC_GROUND_CAUCASUS
+-- @extends #ATC_GROUND
 
---- # AIRBASEPOLICE_CAUCASUS, extends @{#AIRBASEPOLICE_BASE}
+--- # ATC_GROUND_CAUCASUS, extends @{#ATC_GROUND}
 -- 
--- ![Banner Image](..\Presentations\AIRBASEPOLICE\Dia1.JPG)
+-- ![Banner Image](..\Presentations\ATC_GROUND\Dia1.JPG)
 -- 
--- The AIRBASEPOLICE_CAUCASUS class monitors the speed of the airplanes at the airbase during taxi.
+-- The ATC_GROUND_CAUCASUS class monitors the speed of the airplanes at the airbase during taxi.
 -- The pilots may not drive faster than the maximum speed for the airbase, or they will be despawned.
 -- 
 -- The maximum speed for the airbases at Caucasus is **50 km/h**.
@@ -272,44 +276,45 @@ end
 -- 
 -- # Airbases monitored
 -- 
--- The following airbases are monitored at the Caucasus region:
+-- The following airbases are monitored at the Caucasus region.
+-- Use the AIRBASE.Caucasus enumeration to select the airbases to be monitored.
 -- 
---   * Anapa Vityazevo
---   * Batumi
---   * Beslan
---   * Gelendzhik
---   * Gudauta
---   * Kobuleti
---   * Krasnodar Center
---   * Krasnodar Pashkovsky
---   * Krymsk
---   * Kutaisi
---   * Maykop Khanskaya
---   * Mineralnye Vody
---   * Mozdok
---   * Nalchik
---   * Novorossiysk
---   * Senaki Kolkhi
---   * Sochi Adler
---   * Soganlug
---   * Sukhumi Babushara
---   * Tbilisi Lochini
---   * Vaziani
+--   * ´AIRBASE.Caucasus.Anapa_Vityazevo´
+--   * ´AIRBASE.Caucasus.Batumi´
+--   * ´AIRBASE.Caucasus.Beslan´
+--   * ´AIRBASE.Caucasus.Gelendzhik´
+--   * ´AIRBASE.Caucasus.Gudauta´
+--   * ´AIRBASE.Caucasus.Kobuleti´
+--   * ´AIRBASE.Caucasus.Krasnodar_Center´
+--   * ´AIRBASE.Caucasus.Krasnodar_Pashkovsky´
+--   * ´AIRBASE.Caucasus.Krymsk´
+--   * ´AIRBASE.Caucasus.Kutaisi´
+--   * ´AIRBASE.Caucasus.Maykop_Khanskaya´
+--   * ´AIRBASE.Caucasus.Mineralnye_Vody´
+--   * ´AIRBASE.Caucasus.Mozdok´
+--   * ´AIRBASE.Caucasus.Nalchik´
+--   * ´AIRBASE.Caucasus.Novorossiysk´
+--   * ´AIRBASE.Caucasus.Senaki_Kolkhi´
+--   * ´AIRBASE.Caucasus.Sochi_Adler´
+--   * ´AIRBASE.Caucasus.Soganlug´
+--   * ´AIRBASE.Caucasus.Sukhumi_Babushara´
+--   * ´AIRBASE.Caucasus.Tbilisi_Lochini´
+--   * ´AIRBASE.Caucasus.Vaziani´
 --
 -- 
 -- # Installation
 -- 
 -- ## In Single Player Missions
 -- 
--- AIRBASEPOLICE is fully functional in single player.
+-- ATC_GROUND is fully functional in single player.
 -- 
 -- ## In Multi Player Missions
 -- 
--- AIRBASEPOLICE is NOT functional in multi player, for client machines connecting to the server, running the mission.
+-- ATC_GROUND is NOT functional in multi player, for client machines connecting to the server, running the mission.
 -- Due to a bug in DCS since release 1.5, the despawning of clients are not anymore working in multi player.
 -- To work around this problem, a much better solution has been made, using the slot blocker script designed
 -- by Ciribob. With the help of __Ciribob__, this script has been extended to also kick client players while in flight.
--- AIRBASEPOLICE is communicating with this modified script to kick players!
+-- ATC_GROUND is communicating with this modified script to kick players!
 -- 
 -- Install the file **SimpleSlotBlockGameGUI.lua** on the server, following the installation instructions described by Ciribob.
 -- 
@@ -317,18 +322,26 @@ end
 -- 
 -- # Script it!
 -- 
--- ## 1. AIRBASEPOLICE_CAUCASUS Constructor
+-- ## 1. ATC_GROUND_CAUCASUS Constructor
 -- 
--- Creates a new AIRBASEPOLICE_CAUCASUS object that will monitor pilots taxiing behaviour.
+-- Creates a new ATC_GROUND_CAUCASUS object that will monitor pilots taxiing behaviour.
 -- 
---     -- This creates a new AIRBASEPOLICE_CAUCASUS object.
+--     -- This creates a new ATC_GROUND_CAUCASUS object.
 -- 
---     -- Monitor for these clients the airbases.
---     AirbasePoliceCaucasus = AIRBASEPOLICE_CAUCASUS:New()
+--     -- Monitor all the airbases.
+--     AirbasePoliceCaucasus = ATC_GROUND_CAUCASUS:New()
+--     
+--     -- Monitor specific airbases only.
 -- 
--- @field #AIRBASEPOLICE_CAUCASUS
-AIRBASEPOLICE_CAUCASUS = {
-  ClassName = "AIRBASEPOLICE_CAUCASUS",
+--     ATC_Ground = ATC_GROUND_CAUCASUS:New(
+--       { AIRBASE.Caucasus.Gelendzhik,     
+--         AIRBASE.Caucasus.Krymsk          
+--       }                                  
+--     )                                    
+--     
+-- @field #ATC_GROUND_CAUCASUS
+ATC_GROUND_CAUCASUS = {
+  ClassName = "ATC_GROUND_CAUCASUS",
   Airbases = {
     [AIRBASE.Caucasus.Anapa_Vityazevo] = {
       PointsRunways = {
@@ -615,14 +628,14 @@ AIRBASEPOLICE_CAUCASUS = {
   },
 }
 
---- Creates a new AIRBASEPOLICE_CAUCASUS object.
--- @param #AIRBASEPOLICE_CAUCASUS self
+--- Creates a new ATC_GROUND_CAUCASUS object.
+-- @param #ATC_GROUND_CAUCASUS self
 -- @param AirbaseNames A list {} of airbase names (Use AIRBASE.Caucasus enumerator).
--- @return #AIRBASEPOLICE_CAUCASUS self
-function AIRBASEPOLICE_CAUCASUS:New( AirbaseNames )
+-- @return #ATC_GROUND_CAUCASUS self
+function ATC_GROUND_CAUCASUS:New( AirbaseNames )
 
   -- Inherits from BASE
-  local self = BASE:Inherit( self, AIRBASEPOLICE_BASE:New( self.Airbases, AirbaseNames ) )
+  local self = BASE:Inherit( self, ATC_GROUND:New( self.Airbases, AirbaseNames ) )
 
 
 
@@ -838,15 +851,15 @@ end
 
 
 
---- @type AIRBASEPOLICE_NEVADA
--- @extends #AIRBASEPOLICE_BASE
+--- @type ATC_GROUND_NEVADA
+-- @extends #ATC_GROUND
 
 
---- # AIRBASEPOLICE_NEVADA, extends @{#AIRBASEPOLICE_BASE}
+--- # ATC_GROUND_NEVADA, extends @{#ATC_GROUND}
 -- 
--- ![Banner Image](..\Presentations\AIRBASEPOLICE\Dia1.JPG)
+-- ![Banner Image](..\Presentations\ATC_GROUND\Dia1.JPG)
 -- 
--- The AIRBASEPOLICE_NEVADA class monitors the speed of the airplanes at the airbase during taxi.
+-- The ATC_GROUND_NEVADA class monitors the speed of the airplanes at the airbase during taxi.
 -- The pilots may not drive faster than the maximum speed for the airbase, or they will be despawned.
 -- 
 -- The pilot will receive 3 times a warning during speeding. After the 3rd warning, if the pilot is still driving
@@ -856,27 +869,41 @@ end
 -- 
 -- # Airbases monitored
 -- 
--- The following airbases are monitored at the Caucasus region:
+-- The following airbases are monitored at the Nevada region.
+-- Use the AIRBASE.Nevada enumeration to select the airbases to be monitored.
 -- 
---   * Nellis
---   * McCarran
---   * Creech
---   * GroomLake
---
+--    * `AIRBASE.Nevada.Beatty_Airport`
+--    * `AIRBASE.Nevada.Boulder_City_Airport`
+--    * `AIRBASE.Nevada.Creech_AFB`
+--    * `AIRBASE.Nevada.Echo_Bay`
+--    * `AIRBASE.Nevada.Groom_Lake_AFB`
+--    * `AIRBASE.Nevada.Henderson_Executive_Airport`
+--    * `AIRBASE.Nevada.Jean_Airport`
+--    * `AIRBASE.Nevada.Laughlin_Airport`
+--    * `AIRBASE.Nevada.Lincoln_County`
+--    * `AIRBASE.Nevada.McCarran_International_Airport`
+--    * `AIRBASE.Nevada.Mellan_Airstrip`
+--    * `AIRBASE.Nevada.Mesquite`
+--    * `AIRBASE.Nevada.Mina_Airport_3Q0`
+--    * `AIRBASE.Nevada.Nellis_AFB`
+--    * `AIRBASE.Nevada.North_Las_Vegas`
+--    * `AIRBASE.Nevada.Pahute_Mesa_Airstrip`
+--    * `AIRBASE.Nevada.Tonopah_Airport`
+--    * `AIRBASE.Nevada.Tonopah_Test_Range_Airfield`
 --
 -- # Installation
 -- 
 -- ## In Single Player Missions
 -- 
--- AIRBASEPOLICE is fully functional in single player.
+-- ATC_GROUND is fully functional in single player.
 -- 
 -- ## In Multi Player Missions
 -- 
--- AIRBASEPOLICE is NOT functional in multi player, for client machines connecting to the server, running the mission.
+-- ATC_GROUND is NOT functional in multi player, for client machines connecting to the server, running the mission.
 -- Due to a bug in DCS since release 1.5, the despawning of clients are not anymore working in multi player.
 -- To work around this problem, a much better solution has been made, using the slot blocker script designed
 -- by Ciribob. With the help of Ciribob, this script has been extended to also kick client players while in flight.
--- AIRBASEPOLICE is communicating with this modified script to kick players!
+-- ATC_GROUND is communicating with this modified script to kick players!
 -- 
 -- Install the file **SimpleSlotBlockGameGUI.lua** on the server, following the installation instructions described by Ciribob.
 -- 
@@ -884,18 +911,29 @@ end
 -- 
 -- # Script it!
 -- 
--- ## 1. AIRBASEPOLICE_NEVADA Constructor
+-- ## 1. ATC_GROUND_NEVADA Constructor
 -- 
--- Creates a new AIRBASEPOLICE_NEVADA object that will monitor pilots taxiing behaviour.
+-- Creates a new ATC_GROUND_NEVADA object that will monitor pilots taxiing behaviour.
 -- 
---     -- This creates a new AIRBASEPOLICE_NEVADA object.
+--     -- This creates a new ATC_GROUND_NEVADA object.
 -- 
---     -- Monitor for these clients the airbases.
---     AirbasePoliceCaucasus = AIRBASEPOLICE_NEVADA:New()
+--     -- Monitor all the airbases.
+--     AirbasePoliceCaucasus = ATC_GROUND_NEVADA:New()
 -- 
--- @field #AIRBASEPOLICE_NEVADA
-AIRBASEPOLICE_NEVADA = {
-  ClassName = "AIRBASEPOLICE_NEVADA",
+--    
+--     -- Monitor specific airbases.
+--     ATC_Ground = ATC_GROUND_NEVADA:New(              
+--       { AIRBASE.Nevada.Laughlin_Airport,             
+--         AIRBASE.Nevada.Mellan_Airstrip,              
+--         AIRBASE.Nevada.Lincoln_County,               
+--         AIRBASE.Nevada.North_Las_Vegas,              
+--         AIRBASE.Nevada.McCarran_International_Airport
+--       }                                              
+--     )                                                
+-- 
+-- @field #ATC_GROUND_NEVADA
+ATC_GROUND_NEVADA = {
+  ClassName = "ATC_GROUND_NEVADA",
   Airbases = {
 
     [AIRBASE.Nevada.Beatty_Airport] = {
@@ -1165,14 +1203,14 @@ AIRBASEPOLICE_NEVADA = {
   },
 }
 
---- Creates a new AIRBASEPOLICE_NEVADA object.
--- @param #AIRBASEPOLICE_NEVADA self
+--- Creates a new ATC_GROUND_NEVADA object.
+-- @param #ATC_GROUND_NEVADA self
 -- @param AirbaseNames A list {} of airbase names (Use AIRBASE.Nevada enumerator).
--- @return #AIRBASEPOLICE_NEVADA self
-function AIRBASEPOLICE_NEVADA:New( AirbaseNames )
+-- @return #ATC_GROUND_NEVADA self
+function ATC_GROUND_NEVADA:New( AirbaseNames )
 
   -- Inherits from BASE
-  local self = BASE:Inherit( self, AIRBASEPOLICE_BASE:New( self.Airbases, AirbaseNames ) )
+  local self = BASE:Inherit( self, ATC_GROUND:New( self.Airbases, AirbaseNames ) )
 
 
   
@@ -1335,15 +1373,15 @@ function AIRBASEPOLICE_NEVADA:New( AirbaseNames )
   
 end
 
---- @type AIRBASEPOLICE_NORMANDY
--- @extends Functional.AirbasePolice#AIRBASEPOLICE_BASE
+--- @type ATC_GROUND_NORMANDY
+-- @extends #ATC_GROUND
 
 
---- # AIRBASEPOLICE_NORMANDY, extends @{#AIRBASEPOLICE_BASE}
+--- # ATC_GROUND_NORMANDY, extends @{#ATC_GROUND}
 -- 
--- ![Banner Image](..\Presentations\AIRBASEPOLICE\Dia1.JPG)
+-- ![Banner Image](..\Presentations\ATC_GROUND\Dia1.JPG)
 -- 
--- The AIRBASEPOLICE_NORMANDY class monitors the speed of the airplanes at the airbase during taxi.
+-- The ATC_GROUND_NORMANDY class monitors the speed of the airplanes at the airbase during taxi.
 -- The pilots may not drive faster than the maximum speed for the airbase, or they will be despawned.
 -- 
 -- The pilot will receive 3 times a warning during speeding. After the 3rd warning, if the pilot is still driving
@@ -1353,27 +1391,54 @@ end
 -- 
 -- # Airbases monitored
 -- 
--- The following airbases are monitored at the Caucasus region:
+-- The following airbases are monitored at the Normandy region.
+-- Use the AIRBASE.Normandy enumeration to select the airbases to be monitored.
 -- 
---   * Nellis
---   * McCarran
---   * Creech
---   * GroomLake
---
+--   * ´AIRBASE.Normandy.Azeville´
+--   * ´AIRBASE.Normandy.Bazenville´
+--   * ´AIRBASE.Normandy.Beny_sur_Mer´
+--   * ´AIRBASE.Normandy.Beuzeville´
+--   * ´AIRBASE.Normandy.Biniville´
+--   * ´AIRBASE.Normandy.Brucheville´
+--   * ´AIRBASE.Normandy.Cardonville´
+--   * ´AIRBASE.Normandy.Carpiquet´
+--   * ´AIRBASE.Normandy.Chailey´
+--   * ´AIRBASE.Normandy.Chippelle´
+--   * ´AIRBASE.Normandy.Cretteville´
+--   * ´AIRBASE.Normandy.Cricqueville_en_Bessin´
+--   * ´AIRBASE.Normandy.Deux_Jumeaux´
+--   * ´AIRBASE.Normandy.Evreux´
+--   * ´AIRBASE.Normandy.Ford´
+--   * ´AIRBASE.Normandy.Funtington´
+--   * ´AIRBASE.Normandy.Lantheuil´
+--   * ´AIRBASE.Normandy.Le_Molay´
+--   * ´AIRBASE.Normandy.Lessay´
+--   * ´AIRBASE.Normandy.Lignerolles´
+--   * ´AIRBASE.Normandy.Longues_sur_Mer´
+--   * ´AIRBASE.Normandy.Maupertus´
+--   * ´AIRBASE.Normandy.Meautis´
+--   * ´AIRBASE.Normandy.Needs_Oar_Point´
+--   * ´AIRBASE.Normandy.Picauville´
+--   * ´AIRBASE.Normandy.Rucqueville´
+--   * ´AIRBASE.Normandy.Saint_Pierre_du_Mont´
+--   * ´AIRBASE.Normandy.Sainte_Croix_sur_Mer´
+--   * ´AIRBASE.Normandy.Sainte_Laurent_sur_Mer´
+--   * ´AIRBASE.Normandy.Sommervieu´
+--   * ´AIRBASE.Normandy.Tangmere´
 --
 -- # Installation
 -- 
 -- ## In Single Player Missions
 -- 
--- AIRBASEPOLICE is fully functional in single player.
+-- ATC_GROUND is fully functional in single player.
 -- 
 -- ## In Multi Player Missions
 -- 
--- AIRBASEPOLICE is NOT functional in multi player, for client machines connecting to the server, running the mission.
+-- ATC_GROUND is NOT functional in multi player, for client machines connecting to the server, running the mission.
 -- Due to a bug in DCS since release 1.5, the despawning of clients are not anymore working in multi player.
 -- To work around this problem, a much better solution has been made, using the slot blocker script designed
 -- by Ciribob. With the help of Ciribob, this script has been extended to also kick client players while in flight.
--- AIRBASEPOLICE is communicating with this modified script to kick players!
+-- ATC_GROUND is communicating with this modified script to kick players!
 -- 
 -- Install the file **SimpleSlotBlockGameGUI.lua** on the server, following the installation instructions described by Ciribob.
 -- 
@@ -1381,18 +1446,25 @@ end
 -- 
 -- # Script it!
 -- 
--- ## 1. AIRBASEPOLICE_NORMANDY Constructor
+-- ## 1. ATC_GROUND_NORMANDY Constructor
 -- 
--- Creates a new AIRBASEPOLICE_NORMANDY object that will monitor pilots taxiing behaviour.
+-- Creates a new ATC_GROUND_NORMANDY object that will monitor pilots taxiing behaviour.
 -- 
---     -- This creates a new AIRBASEPOLICE_NORMANDY object.
+--     -- This creates a new ATC_GROUND_NORMANDY object.
 -- 
 --     -- Monitor for these clients the airbases.
---     AirbasePoliceCaucasus = AIRBASEPOLICE_NORMANDY:New()
+--     AirbasePoliceCaucasus = ATC_GROUND_NORMANDY:New()
+--     
+--     ATC_Ground = ATC_GROUND_NORMANDY:New( 
+--       { AIRBASE.Normandy.Chippelle,
+--         AIRBASE.Normandy.Beuzeville 
+--       } 
+--     )
+--     
 -- 
--- @field #AIRBASEPOLICE_NORMANDY
-AIRBASEPOLICE_NORMANDY = {
-  ClassName = "AIRBASEPOLICE_NORMANDY",
+-- @field #ATC_GROUND_NORMANDY
+ATC_GROUND_NORMANDY = {
+  ClassName = "ATC_GROUND_NORMANDY",
   Airbases = {
     [AIRBASE.Normandy.Azeville] = {
       PointsRunways = {
@@ -1784,14 +1856,14 @@ AIRBASEPOLICE_NORMANDY = {
 }
 
 
---- Creates a new AIRBASEPOLICE_NORMANDY object.
--- @param #AIRBASEPOLICE_NORMANDY self
+--- Creates a new ATC_GROUND_NORMANDY object.
+-- @param #ATC_GROUND_NORMANDY self
 -- @param AirbaseNames A list {} of airbase names (Use AIRBASE.Normandy enumerator).
--- @return #AIRBASEPOLICE_NORMANDY self
-function AIRBASEPOLICE_NORMANDY:New( AirbaseNames )
+-- @return #ATC_GROUND_NORMANDY self
+function ATC_GROUND_NORMANDY:New( AirbaseNames )
 
   -- Inherits from BASE
-  local self = BASE:Inherit( self, AIRBASEPOLICE_BASE:New( self.Airbases, AirbaseNames ) )
+  local self = BASE:Inherit( self, ATC_GROUND:New( self.Airbases, AirbaseNames ) )
 
   -- These lines here are for the demonstration mission.
   -- They create in the dcs.log the coordinates of the runway polygons, that are then
