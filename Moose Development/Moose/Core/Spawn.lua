@@ -1231,6 +1231,8 @@ function SPAWN:SpawnFromVec3( Vec3, SpawnIndex )
     if SpawnTemplate then
 
       self:T( { "Current point of ", self.SpawnTemplatePrefix, Vec3 } )
+      
+      local TemplateHeight = SpawnTemplate.route.points[1].alt
 
       -- Translate the position of the Group Template to the Vec3.
       for UnitID = 1, #SpawnTemplate.units do
@@ -1245,7 +1247,7 @@ function SPAWN:SpawnFromVec3( Vec3, SpawnIndex )
         SpawnTemplate.units[UnitID].x = TX
         SpawnTemplate.units[UnitID].y = TY
         if SpawnTemplate.CategoryID ~= Group.Category.SHIP then
-          SpawnTemplate.units[UnitID].alt = Vec3.y
+          SpawnTemplate.units[UnitID].alt = Vec3.y or TemplateHeight
         end
         self:T( 'After Translation SpawnTemplate.units['..UnitID..'].x = ' .. SpawnTemplate.units[UnitID].x .. ', SpawnTemplate.units['..UnitID..'].y = ' .. SpawnTemplate.units[UnitID].y )
       end
@@ -1253,11 +1255,11 @@ function SPAWN:SpawnFromVec3( Vec3, SpawnIndex )
       SpawnTemplate.route.points[1].x = Vec3.x
       SpawnTemplate.route.points[1].y = Vec3.z
       if SpawnTemplate.CategoryID ~= Group.Category.SHIP then
-        SpawnTemplate.route.points[1].alt = Vec3.y
+        SpawnTemplate.route.points[1].alt = Vec3.y or TemplateHeight
       end
-    
       SpawnTemplate.x = Vec3.x
       SpawnTemplate.y = Vec3.z
+      SpawnTemplate.alt = Vec3.y or TemplateHeight
               
       return self:SpawnWithIndex( self.SpawnIndex )
     end
@@ -1272,14 +1274,31 @@ end
 -- You can use the returned group to further define the route to be followed.
 -- @param #SPAWN self
 -- @param Dcs.DCSTypes#Vec2 Vec2 The Vec2 coordinates where to spawn the group.
+-- @param #number MinHeight (optional) The minimum height to spawn an airborne group into the zone.
+-- @param #number MaxHeight (optional) The maximum height to spawn an airborne group into the zone.
 -- @param #number SpawnIndex (optional) The index which group to spawn within the given zone.
 -- @return Wrapper.Group#GROUP that was spawned.
 -- @return #nil Nothing was spawned.
-function SPAWN:SpawnFromVec2( Vec2, SpawnIndex )
-  self:F( { self.SpawnTemplatePrefix, Vec2, SpawnIndex } )
+-- @usage
+-- 
+--   local SpawnVec2 = ZONE:New( ZoneName ):GetVec2()
+-- 
+--   -- Spawn at the zone center position at the height specified in the ME of the group template!
+--   SpawnAirplanes:SpawnFromVec2( SpawnVec2 )  
+--   
+--   -- Spawn from the static position at the height randomized between 2000 and 4000 meters.
+--   SpawnAirplanes:SpawnFromVec2( SpawnVec2, 2000, 4000 )  
+-- 
+function SPAWN:SpawnFromVec2( Vec2, MinHeight, MaxHeight, SpawnIndex )
+  self:F( { self.SpawnTemplatePrefix, self.SpawnIndex, Vec2, MinHeight, MaxHeight, SpawnIndex } )
 
-  local PointVec2 = POINT_VEC2:NewFromVec2( Vec2 )
-  return self:SpawnFromVec3( PointVec2:GetVec3(), SpawnIndex )
+  local Height = nil
+
+  if MinHeight and MaxHeight then
+    Height = math.random( MinHeight, MaxHeight)
+  end
+  
+  return self:SpawnFromVec3( { x = Vec2.x, y = Height, z = Vec2.y }, SpawnIndex ) -- y can be nil. In this case, spawn on the ground for vehicles, and in the template altitude for air.
 end
 
 
@@ -1288,14 +1307,26 @@ end
 -- You can use the returned group to further define the route to be followed.
 -- @param #SPAWN self
 -- @param Wrapper.Unit#UNIT HostUnit The air or ground unit dropping or unloading the group.
+-- @param #number MinHeight (optional) The minimum height to spawn an airborne group into the zone.
+-- @param #number MaxHeight (optional) The maximum height to spawn an airborne group into the zone.
 -- @param #number SpawnIndex (optional) The index which group to spawn within the given zone.
 -- @return Wrapper.Group#GROUP that was spawned.
 -- @return #nil Nothing was spawned.
-function SPAWN:SpawnFromUnit( HostUnit, SpawnIndex )
-	self:F( { self.SpawnTemplatePrefix, HostUnit, SpawnIndex } )
+-- @usage
+-- 
+--   local SpawnStatic = STATIC:FindByName( StaticName )
+-- 
+--   -- Spawn from the static position at the height specified in the ME of the group template!
+--   SpawnAirplanes:SpawnFromUnit( SpawnStatic )  
+--   
+--   -- Spawn from the static position at the height randomized between 2000 and 4000 meters.
+--   SpawnAirplanes:SpawnFromUnit( SpawnStatic, 2000, 4000 )  
+-- 
+function SPAWN:SpawnFromUnit( HostUnit, MinHeight, MaxHeight, SpawnIndex )
+	self:F( { self.SpawnTemplatePrefix, HostUnit, MinHeight, MaxHeight, SpawnIndex } )
 
   if HostUnit and HostUnit:IsAlive() ~= nil then -- and HostUnit:getUnit(1):inAir() == false then
-    return self:SpawnFromVec3( HostUnit:GetVec3(), SpawnIndex )
+    return self:SpawnFromVec2( HostUnit:GetVec2(), MinHeight, MaxHeight, SpawnIndex )
   end
   
   return nil
@@ -1305,14 +1336,26 @@ end
 -- You can use the returned group to further define the route to be followed.
 -- @param #SPAWN self
 -- @param Wrapper.Static#STATIC HostStatic The static dropping or unloading the group.
+-- @param #number MinHeight (optional) The minimum height to spawn an airborne group into the zone.
+-- @param #number MaxHeight (optional) The maximum height to spawn an airborne group into the zone.
 -- @param #number SpawnIndex (optional) The index which group to spawn within the given zone.
 -- @return Wrapper.Group#GROUP that was spawned.
 -- @return #nil Nothing was spawned.
-function SPAWN:SpawnFromStatic( HostStatic, SpawnIndex )
-  self:F( { self.SpawnTemplatePrefix, HostStatic, SpawnIndex } )
+-- @usage
+-- 
+--   local SpawnStatic = STATIC:FindByName( StaticName )
+-- 
+--   -- Spawn from the static position at the height specified in the ME of the group template!
+--   SpawnAirplanes:SpawnFromStatic( SpawnStatic )  
+--   
+--   -- Spawn from the static position at the height randomized between 2000 and 4000 meters.
+--   SpawnAirplanes:SpawnFromStatic( SpawnStatic, 2000, 4000 )  
+-- 
+function SPAWN:SpawnFromStatic( HostStatic, MinHeight, MaxHeight, SpawnIndex )
+  self:F( { self.SpawnTemplatePrefix, HostStatic, MinHeight, MaxHeight, SpawnIndex } )
 
   if HostStatic and HostStatic:IsAlive() then
-    return self:SpawnFromVec3( HostStatic:GetVec3(), SpawnIndex )
+    return self:SpawnFromVec2( HostStatic:GetVec2(), MinHeight, MaxHeight, SpawnIndex )
   end
   
   return nil
@@ -1325,17 +1368,38 @@ end
 -- @param #SPAWN self
 -- @param Core.Zone#ZONE Zone The zone where the group is to be spawned.
 -- @param #boolean RandomizeGroup (optional) Randomization of the @{Group} position in the zone.
+-- @param #number MinHeight (optional) The minimum height to spawn an airborne group into the zone.
+-- @param #number MaxHeight (optional) The maximum height to spawn an airborne group into the zone.
 -- @param #number SpawnIndex (optional) The index which group to spawn within the given zone.
 -- @return Wrapper.Group#GROUP that was spawned.
 -- @return #nil when nothing was spawned.
-function SPAWN:SpawnInZone( Zone, RandomizeGroup, SpawnIndex )
-	self:F( { self.SpawnTemplatePrefix, Zone, RandomizeGroup, SpawnIndex } )
+-- @usage
+-- 
+--   local SpawnZone = ZONE:New( ZoneName )
+-- 
+--   -- Spawn at the zone center position at the height specified in the ME of the group template!
+--   SpawnAirplanes:SpawnFromZone( SpawnZone )  
+--   
+--   -- Spawn in the zone at a random position at the height specified in the Me of the group template.
+--   SpawnAirplanes:SpawnFromZone( SpawnZone, true )  
+--   
+--   -- Spawn in the zone at a random position at the height randomized between 2000 and 4000 meters.
+--   SpawnAirplanes:SpawnFromUnit( SpawnZone, true, 2000, 4000 )  
+-- 
+--   -- Spawn at the zone center position at the height randomized between 2000 and 4000 meters.
+--   SpawnAirplanes:SpawnFromUnit( SpawnZone, false, 2000, 4000 )  
+--   
+--   -- Spawn at the zone center position at the height randomized between 2000 and 4000 meters.
+--   SpawnAirplanes:SpawnFromUnit( SpawnZone, nil, 2000, 4000 )  
+--   
+function SPAWN:SpawnInZone( Zone, RandomizeGroup, MinHeight, MaxHeight, SpawnIndex )
+	self:F( { self.SpawnTemplatePrefix, Zone, RandomizeGroup, MinHeight, MaxHeight, SpawnIndex } )
   
   if Zone then
     if RandomizeGroup then
-      return self:SpawnFromVec2( Zone:GetRandomVec2(), SpawnIndex )
+      return self:SpawnFromVec2( Zone:GetRandomVec2(), MinHeight, MaxHeight, SpawnIndex )
     else
-      return self:SpawnFromVec2( Zone:GetVec2(), SpawnIndex )
+      return self:SpawnFromVec2( Zone:GetVec2(), MinHeight, MaxHeight, SpawnIndex )
     end
   end
   
