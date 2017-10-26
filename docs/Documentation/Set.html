@@ -239,6 +239,22 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="#SET_PLAYER">SET_PLAYER</a></td>
+		<td class="summary">
+<h1>4) SET_PLAYER class, extends <a href="Set.html##(SET_BASE)">Set#SET_BASE</a></h1>
+
+<p>Mission designers can use the <a href="Set.html##(SET_PLAYER)">Set#SET_PLAYER</a> class to build sets of units belonging to alive players:</p>
+
+<h2>4.1) SET_PLAYER constructor</h2>
+
+<p>Create a new SET_PLAYER object with the <a href="##(SET_PLAYER).New">SET_PLAYER.New</a> method:</p>
+
+<ul>
+    <li><a href="##(SET_PLAYER).New">SET_PLAYER.New</a>: Creates a new SET_PLAYER object.</li>
+</ul>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="#SET_STATIC">SET_STATIC</a></td>
 		<td class="summary">
 <h1>3) SET_STATIC class, extends <a href="Set.html##(SET_BASE)">Set#SET_BASE</a></h1>
@@ -955,6 +971,106 @@ mission designer to add a dedicated method</p>
 		</tr>
 	</table>
 
+			<h2><a id="#(SET_PLAYER)">Type <code>SET_PLAYER</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_PLAYER).AddClientsByName">SET_PLAYER:AddClientsByName(AddClientNames)</a></td>
+		<td class="summary">
+<p>Add CLIENT(s) to SET_PLAYER.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_PLAYER).AddInDatabase">SET_PLAYER:AddInDatabase(Event)</a></td>
+		<td class="summary">
+<p>Handles the Database to check on an event (birth) that the Object was added in the Database.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_PLAYER).FilterCategories">SET_PLAYER:FilterCategories(Categories)</a></td>
+		<td class="summary">
+<p>Builds a set of clients out of categories joined by players.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_PLAYER).FilterCoalitions">SET_PLAYER:FilterCoalitions(Coalitions)</a></td>
+		<td class="summary">
+<p>Builds a set of clients of coalitions joined by specific players.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_PLAYER).FilterCountries">SET_PLAYER:FilterCountries(Countries)</a></td>
+		<td class="summary">
+<p>Builds a set of clients of defined countries.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_PLAYER).FilterPrefixes">SET_PLAYER:FilterPrefixes(Prefixes)</a></td>
+		<td class="summary">
+<p>Builds a set of clients of defined client prefixes.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_PLAYER).FilterStart">SET_PLAYER:FilterStart()</a></td>
+		<td class="summary">
+<p>Starts the filtering.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_PLAYER).FilterTypes">SET_PLAYER:FilterTypes(Types)</a></td>
+		<td class="summary">
+<p>Builds a set of clients of defined client types joined by players.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_PLAYER).FindClient">SET_PLAYER:FindClient(PlayerName)</a></td>
+		<td class="summary">
+<p>Finds a Client based on the Player Name.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_PLAYER).FindInDatabase">SET_PLAYER:FindInDatabase(Event)</a></td>
+		<td class="summary">
+<p>Handles the Database to check on any event that Object exists in the Database.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_PLAYER).ForEachPlayer">SET_PLAYER:ForEachPlayer(IteratorFunction, ...)</a></td>
+		<td class="summary">
+<p>Iterate the SET_PLAYER and call an interator function for each <strong>alive</strong> CLIENT, providing the CLIENT and optional parameters.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_PLAYER).ForEachPlayerInZone">SET_PLAYER:ForEachPlayerInZone(ZoneObject, IteratorFunction, ...)</a></td>
+		<td class="summary">
+<p>Iterate the SET_PLAYER and call an iterator function for each <strong>alive</strong> CLIENT presence completely in a <a href="Zone.html">Zone</a>, providing the CLIENT and optional parameters to the called function.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_PLAYER).ForEachPlayerNotInZone">SET_PLAYER:ForEachPlayerNotInZone(ZoneObject, IteratorFunction, ...)</a></td>
+		<td class="summary">
+<p>Iterate the SET_PLAYER and call an iterator function for each <strong>alive</strong> CLIENT presence not in a <a href="Zone.html">Zone</a>, providing the CLIENT and optional parameters to the called function.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_PLAYER).IsIncludeObject">SET_PLAYER:IsIncludeObject(MClient)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_PLAYER).New">SET_PLAYER:New()</a></td>
+		<td class="summary">
+<p>Creates a new SET_PLAYER object, building a set of clients belonging to a coalitions, categories, countries, types or with defined prefix names.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_PLAYER).RemoveClientsByName">SET_PLAYER:RemoveClientsByName(RemoveClientNames)</a></td>
+		<td class="summary">
+<p>Remove CLIENT(s) from SET_PLAYER.</p>
+</td>
+		</tr>
+	</table>
+
 			<h2><a id="#(SET_STATIC)">Type <code>SET_STATIC</code></a></h2>
 				<table class="function_list">
 		<tr>
@@ -1660,6 +1776,69 @@ The following iterator methods are currently available within the SET</em>GROUP:
     <li><a href="##(SET_GROUP).ForEachGroupCompletelyInZone">SET_GROUP.ForEachGroupCompletelyInZone</a>: Iterate the SET_GROUP and call an iterator function for each <strong>alive</strong> GROUP presence completely in a <a href="Zone.html">Zone</a>, providing the GROUP and optional parameters to the called function.</li>
     <li><a href="##(SET_GROUP).ForEachGroupPartlyInZone">SET_GROUP.ForEachGroupPartlyInZone</a>: Iterate the SET_GROUP and call an iterator function for each <strong>alive</strong> GROUP presence partly in a <a href="Zone.html">Zone</a>, providing the GROUP and optional parameters to the called function.</li>
     <li><a href="##(SET_GROUP).ForEachGroupNotInZone">SET_GROUP.ForEachGroupNotInZone</a>: Iterate the SET_GROUP and call an iterator function for each <strong>alive</strong> GROUP presence not in a <a href="Zone.html">Zone</a>, providing the GROUP and optional parameters to the called function.</li>
+</ul>
+
+<hr/>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(SET_PLAYER)">#SET_PLAYER</a></em>
+<a id="SET_PLAYER" >
+<strong>SET_PLAYER</strong>
+</a>
+</dt>
+<dd>
+	
+<h1>4) SET_PLAYER class, extends <a href="Set.html##(SET_BASE)">Set#SET_BASE</a></h1>
+
+<p>Mission designers can use the <a href="Set.html##(SET_PLAYER)">Set#SET_PLAYER</a> class to build sets of units belonging to alive players:</p>
+
+<h2>4.1) SET_PLAYER constructor</h2>
+
+<p>Create a new SET_PLAYER object with the <a href="##(SET_PLAYER).New">SET_PLAYER.New</a> method:</p>
+
+<ul>
+    <li><a href="##(SET_PLAYER).New">SET_PLAYER.New</a>: Creates a new SET_PLAYER object.</li>
+</ul>
+
+	
+<p>  </p>
+<h2>4.3) SET_PLAYER filter criteria</h2>
+
+<p>You can set filter criteria to define the set of clients within the SET_PLAYER.
+Filter criteria are defined by:</p>
+
+<ul>
+    <li><a href="##(SET_PLAYER).FilterCoalitions">SET_PLAYER.FilterCoalitions</a>: Builds the SET_PLAYER with the clients belonging to the coalition(s).</li>
+    <li><a href="##(SET_PLAYER).FilterCategories">SET_PLAYER.FilterCategories</a>: Builds the SET_PLAYER with the clients belonging to the category(ies).</li>
+    <li><a href="##(SET_PLAYER).FilterTypes">SET_PLAYER.FilterTypes</a>: Builds the SET_PLAYER with the clients belonging to the client type(s).</li>
+    <li><a href="##(SET_PLAYER).FilterCountries">SET_PLAYER.FilterCountries</a>: Builds the SET_PLAYER with the clients belonging to the country(ies).</li>
+    <li><a href="##(SET_PLAYER).FilterPrefixes">SET_PLAYER.FilterPrefixes</a>: Builds the SET_PLAYER with the clients starting with the same prefix string(s).</li>
+</ul>
+
+<p>Once the filter criteria have been set for the SET_PLAYER, you can start filtering using:</p>
+
+<ul>
+    <li><a href="##(SET_PLAYER).FilterStart">SET_PLAYER.FilterStart</a>: Starts the filtering of the clients within the SET_PLAYER.</li>
+</ul>
+
+<p>Planned filter criteria within development are (so these are not yet available):</p>
+
+<ul>
+    <li><a href="##(SET_PLAYER).FilterZones">SET_PLAYER.FilterZones</a>: Builds the SET_PLAYER with the clients within a <a href="Zone.html##(ZONE)">Zone#ZONE</a>.</li>
+</ul>
+
+<h2>4.4) SET_PLAYER iterators</h2>
+
+<p>Once the filters have been defined and the SET<em>PLAYER has been built, you can iterate the SET</em>PLAYER with the available iterator methods.
+The iterator methods will walk the SET<em>PLAYER set, and call for each element within the set a function that you provide.
+The following iterator methods are currently available within the SET</em>PLAYER:</p>
+
+<ul>
+    <li><a href="##(SET_PLAYER).ForEachClient">SET_PLAYER.ForEachClient</a>: Calls a function for each alive client it finds within the SET_PLAYER.</li>
 </ul>
 
 <hr/>
@@ -4828,6 +5007,491 @@ A single name or an array of GROUP names.</p>
 
 				</li>
 		</ul>
+</dd>
+</dl>
+
+			<h2><a id="#(SET_PLAYER)" >Type <code>SET_PLAYER</code></a></h2>
+				<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_PLAYER).AddClientsByName" >
+<strong>SET_PLAYER:AddClientsByName(AddClientNames)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Add CLIENT(s) to SET_PLAYER.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string AddClientNames </em></code>: 
+A single name or an array of CLIENT names.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+
+<p>self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_PLAYER).AddInDatabase" >
+<strong>SET_PLAYER:AddInDatabase(Event)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Handles the Database to check on an event (birth) that the Object was added in the Database.</p>
+
+	
+<p>This is required, because sometimes the <em>DATABASE birth event gets called later than the SET</em>BASE birth event!</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Event.html##(EVENTDATA)">Core.Event#EVENTDATA</a> Event </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return values</h3>
+			<ol>
+				<li>
+				
+<p><em>#string:</em>
+The name of the CLIENT</p>
+
+				</li>
+				<li>
+				
+<p><em>#table:</em>
+The CLIENT</p>
+
+				</li>
+			</ol>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_PLAYER).FilterCategories" >
+<strong>SET_PLAYER:FilterCategories(Categories)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Builds a set of clients out of categories joined by players.</p>
+
+	
+<p>Possible current categories are plane, helicopter, ground, ship.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Categories </em></code>: 
+Can take the following values: "plane", "helicopter", "ground", "ship".</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET_PLAYER)">#SET_PLAYER</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_PLAYER).FilterCoalitions" >
+<strong>SET_PLAYER:FilterCoalitions(Coalitions)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Builds a set of clients of coalitions joined by specific players.</p>
+
+	
+<p>Possible current coalitions are red, blue and neutral.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Coalitions </em></code>: 
+Can take the following values: "red", "blue", "neutral".</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET_PLAYER)">#SET_PLAYER</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_PLAYER).FilterCountries" >
+<strong>SET_PLAYER:FilterCountries(Countries)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Builds a set of clients of defined countries.</p>
+
+	
+<p>Possible current countries are those known within DCS world.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Countries </em></code>: 
+Can take those country strings known within DCS world.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET_PLAYER)">#SET_PLAYER</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_PLAYER).FilterPrefixes" >
+<strong>SET_PLAYER:FilterPrefixes(Prefixes)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Builds a set of clients of defined client prefixes.</p>
+
+	
+<p>All the clients starting with the given prefixes will be included within the set.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Prefixes </em></code>: 
+The prefix of which the client name starts with.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET_PLAYER)">#SET_PLAYER</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_PLAYER).FilterStart" >
+<strong>SET_PLAYER:FilterStart()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Starts the filtering.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET_PLAYER)">#SET_PLAYER</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_PLAYER).FilterTypes" >
+<strong>SET_PLAYER:FilterTypes(Types)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Builds a set of clients of defined client types joined by players.</p>
+
+	
+<p>Possible current types are those types known within DCS world.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Types </em></code>: 
+Can take those type strings known within DCS world.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET_PLAYER)">#SET_PLAYER</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_PLAYER).FindClient" >
+<strong>SET_PLAYER:FindClient(PlayerName)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Finds a Client based on the Player Name.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string PlayerName </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="Wrapper.Client.html##(CLIENT)">Wrapper.Client#CLIENT</a>:</em>
+The found Client.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_PLAYER).FindInDatabase" >
+<strong>SET_PLAYER:FindInDatabase(Event)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Handles the Database to check on any event that Object exists in the Database.</p>
+
+	
+<p>This is required, because sometimes the <em>DATABASE event gets called later than the SET</em>BASE event or vise versa!</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Event.html##(EVENTDATA)">Core.Event#EVENTDATA</a> Event </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return values</h3>
+			<ol>
+				<li>
+				
+<p><em>#string:</em>
+The name of the CLIENT</p>
+
+				</li>
+				<li>
+				
+<p><em>#table:</em>
+The CLIENT</p>
+
+				</li>
+			</ol>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_PLAYER).ForEachPlayer" >
+<strong>SET_PLAYER:ForEachPlayer(IteratorFunction, ...)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Iterate the SET_PLAYER and call an interator function for each <strong>alive</strong> CLIENT, providing the CLIENT and optional parameters.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#function IteratorFunction </em></code>: 
+The function that will be called when there is an alive CLIENT in the SET_PLAYER. The function needs to accept a CLIENT parameter.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> ... </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET_PLAYER)">#SET_PLAYER</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_PLAYER).ForEachPlayerInZone" >
+<strong>SET_PLAYER:ForEachPlayerInZone(ZoneObject, IteratorFunction, ...)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Iterate the SET_PLAYER and call an iterator function for each <strong>alive</strong> CLIENT presence completely in a <a href="Zone.html">Zone</a>, providing the CLIENT and optional parameters to the called function.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Zone.html##(ZONE)">Core.Zone#ZONE</a> ZoneObject </em></code>: 
+The Zone to be tested for.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#function IteratorFunction </em></code>: 
+The function that will be called when there is an alive CLIENT in the SET_PLAYER. The function needs to accept a CLIENT parameter.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> ... </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET_PLAYER)">#SET_PLAYER</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_PLAYER).ForEachPlayerNotInZone" >
+<strong>SET_PLAYER:ForEachPlayerNotInZone(ZoneObject, IteratorFunction, ...)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Iterate the SET_PLAYER and call an iterator function for each <strong>alive</strong> CLIENT presence not in a <a href="Zone.html">Zone</a>, providing the CLIENT and optional parameters to the called function.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Zone.html##(ZONE)">Core.Zone#ZONE</a> ZoneObject </em></code>: 
+The Zone to be tested for.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#function IteratorFunction </em></code>: 
+The function that will be called when there is an alive CLIENT in the SET_PLAYER. The function needs to accept a CLIENT parameter.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> ... </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET_PLAYER)">#SET_PLAYER</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_PLAYER).IsIncludeObject" >
+<strong>SET_PLAYER:IsIncludeObject(MClient)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Client.html##(CLIENT)">Wrapper.Client#CLIENT</a> MClient </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET_PLAYER)">#SET_PLAYER</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_PLAYER).New" >
+<strong>SET_PLAYER:New()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Creates a new SET_PLAYER object, building a set of clients belonging to a coalitions, categories, countries, types or with defined prefix names.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET_PLAYER)">#SET_PLAYER</a>:</em></p>
+
+
+			<h3>Usage:</h3>
+		<pre class="example"><code>-- Define a new SET_PLAYER Object. This DBObject will contain a reference to all Clients.
+DBObject = SET_PLAYER:New()</code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_PLAYER).RemoveClientsByName" >
+<strong>SET_PLAYER:RemoveClientsByName(RemoveClientNames)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Remove CLIENT(s) from SET_PLAYER.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Client.html##(CLIENT)">Wrapper.Client#CLIENT</a> RemoveClientNames </em></code>: 
+A single name or an array of CLIENT names.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+
+<p>self</p>
+
 </dd>
 </dl>
 
