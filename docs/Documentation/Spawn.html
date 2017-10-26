@@ -473,19 +473,19 @@ and any spaces before and after the resulting name are removed.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SPAWN).SpawnFromStatic">SPAWN:SpawnFromStatic(HostStatic, SpawnIndex)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN).SpawnFromStatic">SPAWN:SpawnFromStatic(HostStatic, MinHeight, MaxHeight, SpawnIndex)</a></td>
 		<td class="summary">
 <p>Will spawn a group from a hosting static.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SPAWN).SpawnFromUnit">SPAWN:SpawnFromUnit(HostUnit, SpawnIndex)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN).SpawnFromUnit">SPAWN:SpawnFromUnit(HostUnit, MinHeight, MaxHeight, SpawnIndex)</a></td>
 		<td class="summary">
 <p>Will spawn a group from a hosting unit.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SPAWN).SpawnFromVec2">SPAWN:SpawnFromVec2(Vec2, SpawnIndex)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN).SpawnFromVec2">SPAWN:SpawnFromVec2(Vec2, MinHeight, MaxHeight, SpawnIndex)</a></td>
 		<td class="summary">
 <p>Will spawn a group from a Vec2 in 3D space.</p>
 </td>
@@ -533,7 +533,7 @@ and any spaces before and after the resulting name are removed.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SPAWN).SpawnInZone">SPAWN:SpawnInZone(Zone, RandomizeGroup, SpawnIndex)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN).SpawnInZone">SPAWN:SpawnInZone(Zone, RandomizeGroup, MinHeight, MaxHeight, SpawnIndex)</a></td>
 		<td class="summary">
 <p>Will spawn a Group within a given <a href="Zone.html">Zone</a>.</p>
 </td>
@@ -846,6 +846,12 @@ and any spaces before and after the resulting name are removed.</p>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SPAWN)._TranslateRotate">SPAWN:_TranslateRotate(SpawnIndex, SpawnRootX, SpawnRootY, SpawnX, SpawnY, SpawnAngle)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN).uncontrolled">SPAWN.uncontrolled</a></td>
 		<td class="summary">
 
 </td>
@@ -2512,7 +2518,7 @@ Nothing was spawned.</p>
 <dt>
 
 <a id="#(SPAWN).SpawnFromStatic" >
-<strong>SPAWN:SpawnFromStatic(HostStatic, SpawnIndex)</strong>
+<strong>SPAWN:SpawnFromStatic(HostStatic, MinHeight, MaxHeight, SpawnIndex)</strong>
 </a>
 </dt>
 <dd>
@@ -2529,6 +2535,18 @@ You can use the returned group to further define the route to be followed.</p>
 				
 <p><code><em><a href="Wrapper.Static.html##(STATIC)">Wrapper.Static#STATIC</a> HostStatic </em></code>: 
 The static dropping or unloading the group.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number MinHeight </em></code>: 
+(optional) The minimum height to spawn an airborne group into the zone.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number MaxHeight </em></code>: 
+(optional) The maximum height to spawn an airborne group into the zone.</p>
 
 				</li>
 				<li>
@@ -2553,13 +2571,24 @@ Nothing was spawned.</p>
 
 				</li>
 			</ol>
+			<h3>Usage:</h3>
+		<pre class="example"><code>
+  local SpawnStatic = STATIC:FindByName( StaticName )
+
+  -- Spawn from the static position at the height specified in the ME of the group template!
+  SpawnAirplanes:SpawnFromStatic( SpawnStatic )  
+  
+  -- Spawn from the static position at the height randomized between 2000 and 4000 meters.
+  SpawnAirplanes:SpawnFromStatic( SpawnStatic, 2000, 4000 )  
+</code></pre>
+
 </dd>
 </dl>
 		<dl class="function">
 <dt>
 
 <a id="#(SPAWN).SpawnFromUnit" >
-<strong>SPAWN:SpawnFromUnit(HostUnit, SpawnIndex)</strong>
+<strong>SPAWN:SpawnFromUnit(HostUnit, MinHeight, MaxHeight, SpawnIndex)</strong>
 </a>
 </dt>
 <dd>
@@ -2581,6 +2610,18 @@ The air or ground unit dropping or unloading the group.</p>
 				</li>
 				<li>
 				
+<p><code><em>#number MinHeight </em></code>: 
+(optional) The minimum height to spawn an airborne group into the zone.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number MaxHeight </em></code>: 
+(optional) The maximum height to spawn an airborne group into the zone.</p>
+
+				</li>
+				<li>
+				
 <p><code><em>#number SpawnIndex </em></code>: 
 (optional) The index which group to spawn within the given zone.</p>
 
@@ -2601,13 +2642,24 @@ Nothing was spawned.</p>
 
 				</li>
 			</ol>
+			<h3>Usage:</h3>
+		<pre class="example"><code>
+  local SpawnStatic = STATIC:FindByName( StaticName )
+
+  -- Spawn from the static position at the height specified in the ME of the group template!
+  SpawnAirplanes:SpawnFromUnit( SpawnStatic )  
+  
+  -- Spawn from the static position at the height randomized between 2000 and 4000 meters.
+  SpawnAirplanes:SpawnFromUnit( SpawnStatic, 2000, 4000 )  
+</code></pre>
+
 </dd>
 </dl>
 		<dl class="function">
 <dt>
 
 <a id="#(SPAWN).SpawnFromVec2" >
-<strong>SPAWN:SpawnFromVec2(Vec2, SpawnIndex)</strong>
+<strong>SPAWN:SpawnFromVec2(Vec2, MinHeight, MaxHeight, SpawnIndex)</strong>
 </a>
 </dt>
 <dd>
@@ -2629,6 +2681,18 @@ The Vec2 coordinates where to spawn the group.</p>
 				</li>
 				<li>
 				
+<p><code><em>#number MinHeight </em></code>: 
+(optional) The minimum height to spawn an airborne group into the zone.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number MaxHeight </em></code>: 
+(optional) The maximum height to spawn an airborne group into the zone.</p>
+
+				</li>
+				<li>
+				
 <p><code><em>#number SpawnIndex </em></code>: 
 (optional) The index which group to spawn within the given zone.</p>
 
@@ -2649,6 +2713,17 @@ Nothing was spawned.</p>
 
 				</li>
 			</ol>
+			<h3>Usage:</h3>
+		<pre class="example"><code>
+  local SpawnVec2 = ZONE:New( ZoneName ):GetVec2()
+
+  -- Spawn at the zone center position at the height specified in the ME of the group template!
+  SpawnAirplanes:SpawnFromVec2( SpawnVec2 )  
+  
+  -- Spawn from the static position at the height randomized between 2000 and 4000 meters.
+  SpawnAirplanes:SpawnFromVec2( SpawnVec2, 2000, 4000 )  
+</code></pre>
+
 </dd>
 </dl>
 		<dl class="function">
@@ -2806,7 +2881,7 @@ SpawnGroupName</p>
 <dt>
 
 <a id="#(SPAWN).SpawnInZone" >
-<strong>SPAWN:SpawnInZone(Zone, RandomizeGroup, SpawnIndex)</strong>
+<strong>SPAWN:SpawnInZone(Zone, RandomizeGroup, MinHeight, MaxHeight, SpawnIndex)</strong>
 </a>
 </dt>
 <dd>
@@ -2834,6 +2909,18 @@ The zone where the group is to be spawned.</p>
 				</li>
 				<li>
 				
+<p><code><em>#number MinHeight </em></code>: 
+(optional) The minimum height to spawn an airborne group into the zone.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number MaxHeight </em></code>: 
+(optional) The maximum height to spawn an airborne group into the zone.</p>
+
+				</li>
+				<li>
+				
 <p><code><em>#number SpawnIndex </em></code>: 
 (optional) The index which group to spawn within the given zone.</p>
 
@@ -2854,6 +2941,26 @@ when nothing was spawned.</p>
 
 				</li>
 			</ol>
+			<h3>Usage:</h3>
+		<pre class="example"><code>
+  local SpawnZone = ZONE:New( ZoneName )
+
+  -- Spawn at the zone center position at the height specified in the ME of the group template!
+  SpawnAirplanes:SpawnFromZone( SpawnZone )  
+  
+  -- Spawn in the zone at a random position at the height specified in the Me of the group template.
+  SpawnAirplanes:SpawnFromZone( SpawnZone, true )  
+  
+  -- Spawn in the zone at a random position at the height randomized between 2000 and 4000 meters.
+  SpawnAirplanes:SpawnFromUnit( SpawnZone, true, 2000, 4000 )  
+
+  -- Spawn at the zone center position at the height randomized between 2000 and 4000 meters.
+  SpawnAirplanes:SpawnFromUnit( SpawnZone, false, 2000, 4000 )  
+  
+  -- Spawn at the zone center position at the height randomized between 2000 and 4000 meters.
+  SpawnAirplanes:SpawnFromUnit( SpawnZone, nil, 2000, 4000 )  
+  </code></pre>
+
 </dd>
 </dl>
 		<dl class="function">
@@ -3276,7 +3383,7 @@ Spawn_BE_KA50 = SPAWN:New( 'BE KA-50@RAMP-Ground Defense' ):Schedule( 600, 0.5 )
 		<dl class="function">
 <dt>
 
-		<em>#boolean</em>
+		<em></em>
 <a id="#(SPAWN).SpawnUnControlled" >
 <strong>SPAWN.SpawnUnControlled</strong>
 </a>
@@ -3880,6 +3987,20 @@ True = Continue Scheduler</p>
 
 				</li>
 		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(SPAWN).uncontrolled" >
+<strong>SPAWN.uncontrolled</strong>
+</a>
+</dt>
+<dd>
+	
+
+
 </dd>
 </dl>
 
