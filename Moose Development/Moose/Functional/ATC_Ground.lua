@@ -124,27 +124,23 @@ end
 --- @param #ATC_GROUND self
 function ATC_GROUND:_AirbaseMonitor()
 
-  self:E( "In Scheduler")
+  self.SetClient:ForEachClient(
+    --- @param Wrapper.Client#CLIENT Client
+    function( Client )
 
-  for AirbaseID, AirbaseMeta in pairs( self.Airbases ) do
+      if Client:IsAlive() then
 
-    if AirbaseMeta.Monitor == true then
+        local IsOnGround = Client:InAir() == false
 
-      self:E( AirbaseID, AirbaseMeta.MaximumSpeed )
+        for AirbaseID, AirbaseMeta in pairs( self.Airbases ) do
+          self:E( AirbaseID, AirbaseMeta.MaximumSpeed )
+  
+          if AirbaseMeta.Monitor == true and Client:IsInZone( AirbaseMeta.ZoneBoundary )  then
 
-      self.SetClient:ForEachClientInZone( AirbaseMeta.ZoneBoundary,
-
-        --- @param Wrapper.Client#CLIENT Client
-        function( Client )
-
-          self:E( Client.UnitName )
-          if Client and Client:IsAlive() then
             local NotInRunwayZone = true
             for ZoneRunwayID, ZoneRunway in pairs( AirbaseMeta.ZoneRunways ) do
               NotInRunwayZone = ( Client:IsNotInZone( ZoneRunway ) == true ) and NotInRunwayZone or false
             end
-
-            local IsOnGround = Client:InAir() == false
 
             if NotInRunwayZone then
               
@@ -245,13 +241,13 @@ function ATC_GROUND:_AirbaseMonitor()
                 Client:SetState( self, "Taxi", false )
               end
             end
-          else
-            Client:SetState( self, "Taxi", false )
           end
         end
-      )
+      else
+        Client:SetState( self, "Taxi", false )
+      end
     end
-  end
+  )
 
   return true
 end
