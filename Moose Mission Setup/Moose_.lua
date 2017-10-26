@@ -1,5 +1,5 @@
 env.info('*** MOOSE STATIC INCLUDE START *** ')
-env.info('Moose Generation Timestamp: 20171010_1153')
+env.info('Moose Generation Timestamp: 20171026_1856')
 env.setErrorMessageBoxEnabled(false)
 routines={}
 routines.majorVersion=3
@@ -13942,6 +13942,7 @@ if self:_GetSpawnIndex(SpawnIndex)then
 local SpawnTemplate=self.SpawnGroups[self.SpawnIndex].SpawnTemplate
 if SpawnTemplate then
 self:T({"Current point of ",self.SpawnTemplatePrefix,Vec3})
+local TemplateHeight=SpawnTemplate.route.points[1].alt
 for UnitID=1,#SpawnTemplate.units do
 self:T('Before Translation SpawnTemplate.units['..UnitID..'].x = '..SpawnTemplate.units[UnitID].x..', SpawnTemplate.units['..UnitID..'].y = '..SpawnTemplate.units[UnitID].y)
 local UnitTemplate=SpawnTemplate.units[UnitID]
@@ -13953,45 +13954,49 @@ local TX=Vec3.x+(SX-BX)
 local TY=Vec3.z+(SY-BY)
 SpawnTemplate.units[UnitID].x=TX
 SpawnTemplate.units[UnitID].y=TY
-SpawnTemplate.units[UnitID].alt=Vec3.y
+SpawnTemplate.units[UnitID].alt=Vec3.y or TemplateHeight
 self:T('After Translation SpawnTemplate.units['..UnitID..'].x = '..SpawnTemplate.units[UnitID].x..', SpawnTemplate.units['..UnitID..'].y = '..SpawnTemplate.units[UnitID].y)
 end
 SpawnTemplate.route.points[1].x=Vec3.x
 SpawnTemplate.route.points[1].y=Vec3.z
-SpawnTemplate.route.points[1].alt=Vec3.y
+SpawnTemplate.route.points[1].alt=Vec3.y or TemplateHeight
 SpawnTemplate.x=Vec3.x
 SpawnTemplate.y=Vec3.z
+SpawnTemplate.alt=Vec3.y or TemplateHeight
 return self:SpawnWithIndex(self.SpawnIndex)
 end
 end
 return nil
 end
-function SPAWN:SpawnFromVec2(Vec2,SpawnIndex)
-self:F({self.SpawnTemplatePrefix,Vec2,SpawnIndex})
-local PointVec2=POINT_VEC2:NewFromVec2(Vec2)
-return self:SpawnFromVec3(PointVec2:GetVec3(),SpawnIndex)
+function SPAWN:SpawnFromVec2(Vec2,MinHeight,MaxHeight,SpawnIndex)
+self:F({self.SpawnTemplatePrefix,self.SpawnIndex,Vec2,MinHeight,MaxHeight,SpawnIndex})
+local Height=nil
+if MinHeight and MaxHeight then
+Height=math.random(MinHeight,MaxHeight)
 end
-function SPAWN:SpawnFromUnit(HostUnit,SpawnIndex)
-self:F({self.SpawnTemplatePrefix,HostUnit,SpawnIndex})
+return self:SpawnFromVec3({x=Vec2.x,y=Height,z=Vec2.y},SpawnIndex)
+end
+function SPAWN:SpawnFromUnit(HostUnit,MinHeight,MaxHeight,SpawnIndex)
+self:F({self.SpawnTemplatePrefix,HostUnit,MinHeight,MaxHeight,SpawnIndex})
 if HostUnit and HostUnit:IsAlive()~=nil then
-return self:SpawnFromVec3(HostUnit:GetVec3(),SpawnIndex)
+return self:SpawnFromVec2(HostUnit:GetVec2(),MinHeight,MaxHeight,SpawnIndex)
 end
 return nil
 end
-function SPAWN:SpawnFromStatic(HostStatic,SpawnIndex)
-self:F({self.SpawnTemplatePrefix,HostStatic,SpawnIndex})
+function SPAWN:SpawnFromStatic(HostStatic,MinHeight,MaxHeight,SpawnIndex)
+self:F({self.SpawnTemplatePrefix,HostStatic,MinHeight,MaxHeight,SpawnIndex})
 if HostStatic and HostStatic:IsAlive()then
-return self:SpawnFromVec3(HostStatic:GetVec3(),SpawnIndex)
+return self:SpawnFromVec2(HostStatic:GetVec2(),MinHeight,MaxHeight,SpawnIndex)
 end
 return nil
 end
-function SPAWN:SpawnInZone(Zone,RandomizeGroup,SpawnIndex)
-self:F({self.SpawnTemplatePrefix,Zone,RandomizeGroup,SpawnIndex})
+function SPAWN:SpawnInZone(Zone,RandomizeGroup,MinHeight,MaxHeight,SpawnIndex)
+self:F({self.SpawnTemplatePrefix,Zone,RandomizeGroup,MinHeight,MaxHeight,SpawnIndex})
 if Zone then
 if RandomizeGroup then
-return self:SpawnFromVec2(Zone:GetRandomVec2(),SpawnIndex)
+return self:SpawnFromVec2(Zone:GetRandomVec2(),MinHeight,MaxHeight,SpawnIndex)
 else
-return self:SpawnFromVec2(Zone:GetVec2(),SpawnIndex)
+return self:SpawnFromVec2(Zone:GetVec2(),MinHeight,MaxHeight,SpawnIndex)
 end
 end
 return nil
