@@ -1,5 +1,9 @@
 env.info( '*** MOOSE DYNAMIC INCLUDE START *** ' )
+<<<<<<< HEAD
 env.info( 'Moose Generation Timestamp: 20171027_1946' )
+=======
+env.info( 'Moose Generation Timestamp: 20171026_1116' )
+>>>>>>> master
 
 local base = _G
 
@@ -61,7 +65,7 @@ __Moose.Include( 'Functional/Movement.lua' )
 __Moose.Include( 'Functional/Sead.lua' )
 __Moose.Include( 'Functional/Escort.lua' )
 __Moose.Include( 'Functional/MissileTrainer.lua' )
-__Moose.Include( 'Functional/AirbasePolice.lua' )
+__Moose.Include( 'Functional/ATC_Ground.lua' )
 __Moose.Include( 'Functional/Detection.lua' )
 __Moose.Include( 'Functional/Designate.lua' )
 __Moose.Include( 'Functional/RAT.lua' )

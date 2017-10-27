@@ -57,7 +57,33 @@ AIRBASE = {
     },
   }
 
---- @field Caucasus
+--- Enumeration to identify the airbases in the Caucasus region.
+-- 
+-- These are all airbases of Caucasus:
+-- 
+--   * AIRBASE.Caucasus.Gelendzhik
+--   * AIRBASE.Caucasus.Krasnodar_Pashkovsky
+--   * AIRBASE.Caucasus.Sukhumi_Babushara
+--   * AIRBASE.Caucasus.Gudauta
+--   * AIRBASE.Caucasus.Batumi
+--   * AIRBASE.Caucasus.Senaki_Kolkhi
+--   * AIRBASE.Caucasus.Kobuleti
+--   * AIRBASE.Caucasus.Kutaisi
+--   * AIRBASE.Caucasus.Tbilisi_Lochini
+--   * AIRBASE.Caucasus.Soganlug
+--   * AIRBASE.Caucasus.Vaziani
+--   * AIRBASE.Caucasus.Anapa_Vityazevo
+--   * AIRBASE.Caucasus.Krasnodar_Center
+--   * AIRBASE.Caucasus.Novorossiysk
+--   * AIRBASE.Caucasus.Krymsk
+--   * AIRBASE.Caucasus.Maykop_Khanskaya
+--   * AIRBASE.Caucasus.Sochi_Adler
+--   * AIRBASE.Caucasus.Mineralnye_Vody
+--   * AIRBASE.Caucasus.Nalchik
+--   * AIRBASE.Caucasus.Mozdok
+--   * AIRBASE.Caucasus.Beslan
+--   
+-- @field Caucasus
 AIRBASE.Caucasus = {
   ["Gelendzhik"] = "Gelendzhik",
   ["Krasnodar_Pashkovsky"] = "Krasnodar-Pashkovsky",
@@ -83,6 +109,28 @@ AIRBASE.Caucasus = {
   }
   
 --- @field Nevada
+-- 
+-- These are all airbases of Nevada:
+-- 
+--   * AIRBASE.Nevada.Creech_AFB
+--   * AIRBASE.Nevada.Groom_Lake_AFB
+--   * AIRBASE.Nevada.McCarran_International_Airport
+--   * AIRBASE.Nevada.Nellis_AFB
+--   * AIRBASE.Nevada.Beatty_Airport
+--   * AIRBASE.Nevada.Boulder_City_Airport
+--   * AIRBASE.Nevada.Echo_Bay
+--   * AIRBASE.Nevada.Henderson_Executive_Airport
+--   * AIRBASE.Nevada.Jean_Airport
+--   * AIRBASE.Nevada.Laughlin_Airport
+--   * AIRBASE.Nevada.Lincoln_County
+--   * AIRBASE.Nevada.Mellan_Airstrip
+--   * AIRBASE.Nevada.Mesquite
+--   * AIRBASE.Nevada.Mina_Airport_3Q0
+--   * AIRBASE.Nevada.North_Las_Vegas
+--   * AIRBASE.Nevada.Pahute_Mesa_Airstrip
+--   * AIRBASE.Nevada.Tonopah_Airport
+--   * AIRBASE.Nevada.Tonopah_Test_Range_Airfield
+--   
 AIRBASE.Nevada = {
   ["Creech_AFB"] = "Creech AFB",
   ["Groom_Lake_AFB"] = "Groom Lake AFB",
@@ -105,6 +153,40 @@ AIRBASE.Nevada = {
   }
 
 --- @field Normandy
+-- 
+-- These are all airbases of Normandy:
+-- 
+--   * AIRBASE.Normandy.Saint_Pierre_du_Mont
+--   * AIRBASE.Normandy.Lignerolles
+--   * AIRBASE.Normandy.Cretteville
+--   * AIRBASE.Normandy.Maupertus
+--   * AIRBASE.Normandy.Brucheville
+--   * AIRBASE.Normandy.Meautis
+--   * AIRBASE.Normandy.Cricqueville_en_Bessin
+--   * AIRBASE.Normandy.Lessay
+--   * AIRBASE.Normandy.Sainte_Laurent_sur_Mer
+--   * AIRBASE.Normandy.Biniville
+--   * AIRBASE.Normandy.Cardonville
+--   * AIRBASE.Normandy.Deux_Jumeaux
+--   * AIRBASE.Normandy.Chippelle
+--   * AIRBASE.Normandy.Beuzeville
+--   * AIRBASE.Normandy.Azeville
+--   * AIRBASE.Normandy.Picauville
+--   * AIRBASE.Normandy.Le_Molay
+--   * AIRBASE.Normandy.Longues_sur_Mer
+--   * AIRBASE.Normandy.Carpiquet
+--   * AIRBASE.Normandy.Bazenville
+--   * AIRBASE.Normandy.Sainte_Croix_sur_Mer
+--   * AIRBASE.Normandy.Beny_sur_Mer
+--   * AIRBASE.Normandy.Rucqueville
+--   * AIRBASE.Normandy.Sommervieu
+--   * AIRBASE.Normandy.Lantheuil
+--   * AIRBASE.Normandy.Evreux
+--   * AIRBASE.Normandy.Chailey
+--   * AIRBASE.Normandy.Needs_Oar_Point
+--   * AIRBASE.Normandy.Funtington
+--   * AIRBASE.Normandy.Tangmere
+--   * AIRBASE.Normandy.Ford
 AIRBASE.Normandy = {
   ["Saint_Pierre_du_Mont"] = "Saint Pierre du Mont",
   ["Lignerolles"] = "Lignerolles",
@@ -149,7 +231,7 @@ function AIRBASE:Register( AirbaseName )
 
   local self = BASE:Inherit( self, POSITIONABLE:New( AirbaseName ) )
   self.AirbaseName = AirbaseName
-  self.AirbaseZone = ZONE_RADIUS:New( AirbaseName, self:GetVec2(), 8000 )
+  self.AirbaseZone = ZONE_RADIUS:New( AirbaseName, self:GetVec2(), 2500 )
   return self
 end
 
