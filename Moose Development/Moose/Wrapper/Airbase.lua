@@ -58,6 +58,31 @@ AIRBASE = {
   }
 
 --- @field Caucasus
+-- 
+-- These are the airbase names that can be specified with AIRBASE.Caucasus:
+-- 
+--   * AIRBASE.Caucasus.Gelendzhik
+--   * AIRBASE.Caucasus.Krasnodar_Pashkovsky
+--   * AIRBASE.Caucasus.Sukhumi_Babushara
+--   * AIRBASE.Caucasus.Gudauta
+--   * AIRBASE.Caucasus.Batumi
+--   * AIRBASE.Caucasus.Senaki_Kolkhi
+--   * AIRBASE.Caucasus.Kobuleti
+--   * AIRBASE.Caucasus.Kutaisi
+--   * AIRBASE.Caucasus.Tbilisi_Lochini
+--   * AIRBASE.Caucasus.Soganlug
+--   * AIRBASE.Caucasus.Vaziani
+--   * AIRBASE.Caucasus.Anapa_Vityazevo
+--   * AIRBASE.Caucasus.Krasnodar_Center
+--   * AIRBASE.Caucasus.Novorossiysk
+--   * AIRBASE.Caucasus.Krymsk
+--   * AIRBASE.Caucasus.Maykop_Khanskaya
+--   * AIRBASE.Caucasus.Sochi_Adler
+--   * AIRBASE.Caucasus.Mineralnye_Vody
+--   * AIRBASE.Caucasus.Nalchik
+--   * AIRBASE.Caucasus.Mozdok
+--   * AIRBASE.Caucasus.Beslan
+--   
 AIRBASE.Caucasus = {
   ["Gelendzhik"] = "Gelendzhik",
   ["Krasnodar_Pashkovsky"] = "Krasnodar-Pashkovsky",
