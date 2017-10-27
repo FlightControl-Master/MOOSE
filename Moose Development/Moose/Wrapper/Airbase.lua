@@ -59,7 +59,7 @@ AIRBASE = {
 
 --- Enumeration to identify the airbases in the Caucasus region.
 -- 
--- These are all airbases:
+-- These are all airbases of Caucasus:
 -- 
 --   * AIRBASE.Caucasus.Gelendzhik
 --   * AIRBASE.Caucasus.Krasnodar_Pashkovsky
@@ -109,6 +109,28 @@ AIRBASE.Caucasus = {
   }
   
 --- @field Nevada
+-- 
+-- These are all airbases of Nevada:
+-- 
+--   * AIRBASE.Nevada.Creech_AFB
+--   * AIRBASE.Nevada.Groom_Lake_AFB
+--   * AIRBASE.Nevada.McCarran_International_Airport
+--   * AIRBASE.Nevada.Nellis_AFB
+--   * AIRBASE.Nevada.Beatty_Airport
+--   * AIRBASE.Nevada.Boulder_City_Airport
+--   * AIRBASE.Nevada.Echo_Bay
+--   * AIRBASE.Nevada.Henderson_Executive_Airport
+--   * AIRBASE.Nevada.Jean_Airport
+--   * AIRBASE.Nevada.Laughlin_Airport
+--   * AIRBASE.Nevada.Lincoln_County
+--   * AIRBASE.Nevada.Mellan_Airstrip
+--   * AIRBASE.Nevada.Mesquite
+--   * AIRBASE.Nevada.Mina_Airport_3Q0
+--   * AIRBASE.Nevada.North_Las_Vegas
+--   * AIRBASE.Nevada.Pahute_Mesa_Airstrip
+--   * AIRBASE.Nevada.Tonopah_Airport
+--   * AIRBASE.Nevada.Tonopah_Test_Range_Airfield
+--   
 AIRBASE.Nevada = {
   ["Creech_AFB"] = "Creech AFB",
   ["Groom_Lake_AFB"] = "Groom Lake AFB",
@@ -131,6 +153,40 @@ AIRBASE.Nevada = {
   }
 
 --- @field Normandy
+-- 
+-- These are all airbases of Normandy:
+-- 
+--   * AIRBASE.Normandy.Saint_Pierre_du_Mont
+--   * AIRBASE.Normandy.Lignerolles
+--   * AIRBASE.Normandy.Cretteville
+--   * AIRBASE.Normandy.Maupertus
+--   * AIRBASE.Normandy.Brucheville
+--   * AIRBASE.Normandy.Meautis
+--   * AIRBASE.Normandy.Cricqueville_en_Bessin
+--   * AIRBASE.Normandy.Lessay
+--   * AIRBASE.Normandy.Sainte_Laurent_sur_Mer
+--   * AIRBASE.Normandy.Biniville
+--   * AIRBASE.Normandy.Cardonville
+--   * AIRBASE.Normandy.Deux_Jumeaux
+--   * AIRBASE.Normandy.Chippelle
+--   * AIRBASE.Normandy.Beuzeville
+--   * AIRBASE.Normandy.Azeville
+--   * AIRBASE.Normandy.Picauville
+--   * AIRBASE.Normandy.Le_Molay
+--   * AIRBASE.Normandy.Longues_sur_Mer
+--   * AIRBASE.Normandy.Carpiquet
+--   * AIRBASE.Normandy.Bazenville
+--   * AIRBASE.Normandy.Sainte_Croix_sur_Mer
+--   * AIRBASE.Normandy.Beny_sur_Mer
+--   * AIRBASE.Normandy.Rucqueville
+--   * AIRBASE.Normandy.Sommervieu
+--   * AIRBASE.Normandy.Lantheuil
+--   * AIRBASE.Normandy.Evreux
+--   * AIRBASE.Normandy.Chailey
+--   * AIRBASE.Normandy.Needs_Oar_Point
+--   * AIRBASE.Normandy.Funtington
+--   * AIRBASE.Normandy.Tangmere
+--   * AIRBASE.Normandy.Ford
 AIRBASE.Normandy = {
   ["Saint_Pierre_du_Mont"] = "Saint Pierre du Mont",
   ["Lignerolles"] = "Lignerolles",
