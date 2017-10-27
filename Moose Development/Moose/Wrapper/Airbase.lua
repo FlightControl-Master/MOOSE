@@ -57,9 +57,9 @@ AIRBASE = {
     },
   }
 
---- @field Caucasus
+--- Enumeration to identify the airbases in the Caucasus region.
 -- 
--- These are the airbase names that can be specified with AIRBASE.Caucasus:
+-- These are all airbases:
 -- 
 --   * AIRBASE.Caucasus.Gelendzhik
 --   * AIRBASE.Caucasus.Krasnodar_Pashkovsky
@@ -83,6 +83,7 @@ AIRBASE = {
 --   * AIRBASE.Caucasus.Mozdok
 --   * AIRBASE.Caucasus.Beslan
 --   
+-- @field Caucasus
 AIRBASE.Caucasus = {
   ["Gelendzhik"] = "Gelendzhik",
   ["Krasnodar_Pashkovsky"] = "Krasnodar-Pashkovsky",
