@@ -88,14 +88,20 @@
 -- @field #table airports All airports of friedly coalitions.
 -- @field #boolean random_departure By default a random friendly airport is chosen as departure.
 -- @field #boolean random_destination By default a random friendly airport is chosen as destination.
--- @field #table departure_ports Array containing the names of the destination airports.
--- @field #table destination_ports Array containing the names of the destination airports.
+-- @field #table departure_ports Array containing the names of the destination airports or zones.
+-- @field #table destination_ports Array containing the names of the destination airports or zones.
+-- @field #number Ndestination_Airports Number of destination airports set via SetDestination().
+-- @field #number Ndestination_Zones Number of destination zones set via SetDestination().
+-- @field #number Ndeparture_Airports Number of departure airports set via SetDeparture().
+-- @field #number Ndeparture_Zones Number of departure zones set via SetDeparture.
 -- @field #table excluded_ports Array containing the names of explicitly excluded airports.
 -- @field #boolean destinationzone Destination is a zone and not an airport.
 -- @field #table return_zones Array containing the names of the return zones.
 -- @field #boolean returnzone Zone where aircraft will fly to before returning to their departure airport.
 -- @field Core.Zone#ZONE departure_Azone Zone containing the departure airports.
 -- @field Core.Zone#ZONE destination_Azone Zone containing the destination airports.
+-- @field #boolean addfriendlydepartures Add all friendly airports to departures.
+-- @field #boolean addfriendlydestinations Add all friendly airports to destinations.
 -- @field #table ratcraft Array with the spawned RAT aircraft.
 -- @field #number Tinactive Time in seconds after which inactive units will be destroyed. Default is 300 seconds.
 -- @field #boolean reportstatus Aircraft report status.
@@ -302,14 +308,20 @@ RAT={
   airports={},              -- All airports of friedly coalitions.
   random_departure=true,    -- By default a random friendly airport is chosen as departure.
   random_destination=true,  -- By default a random friendly airport is chosen as destination.
-  departure_ports={},       -- Array containing the names of the departure airports.
-  destination_ports={},     -- Array containing the names of the destination airports.
+  departure_ports={},       -- Array containing the names of the departure airports or zones.
+  destination_ports={},     -- Array containing the names of the destination airports or zones.
+  Ndestination_Airports=0,  -- Number of destination airports set via SetDestination().
+  Ndestination_Zones=0,     -- Number of destination zones set via SetDestination().
+  Ndeparture_Airports=0,    -- Number of departure airports set via SetDeparture().
+  Ndeparture_Zones=0,       -- Number of departure zones set via SetDeparture.
   destinationzone=false,    -- Destination is a zone and not an airport.
   return_zones={},          -- Array containing the names of return zones.
   returnzone=false,         -- Aircraft will fly to a zone and back.
   excluded_ports={},        -- Array containing the names of explicitly excluded airports.
   departure_Azone=nil,      -- Zone containing the departure airports.
   destination_Azone=nil,    -- Zone containing the destination airports.
+  addfriendlydepartures=false,   -- Add all friendly airports to departures.
+  addfriendlydestinations=false, -- Add all friendly airports to destinations.
   ratcraft={},              -- Array with the spawned RAT aircraft.
   Tinactive=600,            -- Time in seconds after which inactive units will be destroyed. Default is 600 seconds.
   reportstatus=false,       -- Aircraft report status.
@@ -452,6 +464,10 @@ RAT.MenuF10=nil
 -- @field #string id
 RAT.id="RAT | "
 
+--- RAT version.
+-- @field #string version
+RAT.version="1.0.0"
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --TODO list:
@@ -499,6 +515,9 @@ RAT.id="RAT | "
 -- @usage yak1:RAT("RAT_YAK") will create a RAT object called "yak1". The template group in the mission editor must have the name "RAT_YAK".
 -- @usage yak2:RAT("RAT_YAK", "Yak2") will create a RAT object "yak2". The template group in the mission editor must have the name "RAT_YAK" but the group will be called "Yak2" in e.g. the F10 menu.
 function RAT:New(groupname, alias)
+
+  -- Version info.
+  env.info(RAT.id.."Version "..RAT.version)
 
   -- Welcome message.
   env.info(RAT.id.."Creating new RAT object from template: "..groupname)
@@ -586,6 +605,14 @@ function RAT:Spawn(naircraft)
     self.destination_ports=self:_GetAirportsInZone(self.destination_Azone)
   end
   
+  -- Add all friendly airports to possible departures/destinations
+  if self.addfriendlydepartures then
+    self:_AddFriendlyAirports(self.departure_ports)
+  end
+  if self.addfriendlydestinations then
+    self:_AddFriendlyAirports(self.destination_ports)
+  end  
+  
   -- Setting and possibly correction min/max/cruise flight levels.
   if self.FLcruise==nil then
     -- Default flight level (ASL).
@@ -598,54 +625,9 @@ function RAT:Spawn(naircraft)
     end
   end
   
-  -- Consistancy checks
+  -- Run consistency checks.
+  self:_CheckConsistency()
 
-  -- Destination zone and return zone should not be used together.
-  if self.destinationzone and self.returnzone then
-    env.error(RAT.id.."Destination zone _and_ return to zone not possible! Disabling return to zone.")
-    self.returnzone=false
-  end
-  -- If returning to a zone, we set the landing type to "air" if takeoff is in air. 
-  -- Because if we start in air we want to end in air. But default landing is ground.
-  if self.returnzone and self.takeoff==RAT.wp.air then
-    self.landing=RAT.wp.air
-  end
-  
-  -- Ensure that neither FLmin nor FLmax are above the aircrafts service ceiling.
-  if self.FLminuser then
-    self.FLminuser=math.min(self.FLminuser, self.aircraft.ceiling)
-  end
-  if self.FLmaxuser then
-    self.FLmaxuser=math.min(self.FLmaxuser, self.aircraft.ceiling)
-  end
-  if self.FLcruise then
-    self.FLcruise=math.min(self.FLcruise, self.aircraft.ceiling)
-  end
-  
-  -- FL min > FL max case ==> spaw values
-  if self.FLminuser and self.FLmaxuser then
-    if self.FLminuser > self.FLmaxuser then
-      local min=self.FLminuser
-      local max=self.FLmaxuser
-      self.FLminuser=max
-      self.FLmaxuser=min    
-    end
-  end
-    
-  -- Cruise alt < FL min
-  if self.FLminuser and self.FLcruise<self.FLminuser then
-    -- Here we have two possibilities.
-    -- 1) Set cruise alt to min FL, i.e. shift cruise alt up.
-    -- 2) Set min FL to cruise alt, i.e. shift min FL down.
-    self.FLcruise=self.FLminuser
-  end
-  
-  -- Cruise alt > FL max
-  if self.FLmaxuser and self.FLcruise>self.FLmaxuser then
-    self.FLcruise=self.FLmaxuser
-  end  
-  
-  
   -- Settings info
   local text=string.format("\n******************************************************\n")
   text=text..string.format("Spawning %i aircraft from template %s of type %s.\n", self.ngroups, self.SpawnTemplatePrefix, self.aircraft.type)
@@ -654,6 +636,16 @@ function RAT:Spawn(naircraft)
   text=text..string.format("Friendly coalitions: %s\n", self.friendly)
   text=text..string.format("Number of airports on map  : %i\n", #self.airports_map)
   text=text..string.format("Number of friendly airports: %i\n", #self.airports)
+  text=text..string.format("Totally random departure: %s\n", tostring(self.random_departure))
+  if not self.random_departure then
+    text=text..string.format("Number of departure airports: %d\n", self.Ndeparture_Airports)
+    text=text..string.format("Number of departure zones   : %d\n", self.Ndeparture_Zones)
+  end
+  text=text..string.format("Totally random destination: %s\n", tostring(self.random_destination))
+  if not self.random_destination then
+    text=text..string.format("Number of destination airports: %d\n", self.Ndestination_Airports)
+    text=text..string.format("Number of destination zones   : %d\n", self.Ndestination_Zones)
+  end
   text=text..string.format("Min dist to destination: %4.1f\n", self.mindist)
   text=text..string.format("Max dist to destination: %4.1f\n", self.maxdist)
   text=text..string.format("Takeoff type: %i\n", self.takeoff)
@@ -731,6 +723,110 @@ function RAT:Spawn(naircraft)
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Function checks consistency of user input and automatically adjusts parameters if necessary.
+-- @param #RAT self
+function RAT:_CheckConsistency()
+
+  -- User has used SetDeparture()
+  if not self.random_departure then
+  
+    -- Count departure airports and zones.
+    for _,name in pairs(self.departure_ports) do
+      if self:_AirportExists(name) then
+        self.Ndeparture_Airports=self.Ndeparture_Airports+1
+      elseif self:_ZoneExists(name) then
+        self.Ndeparture_Zones=self.Ndeparture_Zones+1
+      end
+    end
+
+    -- Count destination airports and zones.
+    for _,name in pairs(self.destination_ports) do
+      if self:_AirportExists(name) then
+        self.Ndestination_Airports=self.Ndestination_Airports+1
+      elseif self:_ZoneExists(name) then
+        self.Ndestination_Zones=self.Ndestination_Zones+1
+      end
+    end  
+  
+    -- What can go wrong?
+    -- Only zones but not takeoff air == > Enable takeoff air.
+    if self.Ndeparture_Airports==0 and self.takeoff~=RAT.wp.air then
+      self.takeoff=RAT.wp.air
+      env.error(RAT.id.."Only zones (no airports) defined as departure and takeoff is NOT set to air. Enabling air start!")
+    end
+    -- No airport and no zone specified.
+    if self.Ndeparture_Airports==0 and self.Ndeparture_Zone==0 then
+      self.random_departure=true
+      local text="No airports or zones found given in SetDeparture(). Enabling random departure airports!"
+      env.error(RAT.id..text)
+      MESSAGE:New(text, 30):ToAll()
+    end
+  end
+
+  -- User has used SetDestination()
+  if not self.random_destination then
+    -- Only zones in list but not landing air ==> Enable destination zone.
+    -- This does not apply to return zone because the destination is the zone and not the final destination which can be an airport. 
+    if self.Ndestination_Airports==0 and self.landing~=RAT.wp.air and not self.returnzone then
+      self.landing=RAT.wp.air
+      self.destinationzone=true
+      env.error(RAT.id.."Only zones (no airports) defined as destination and landing is NOT set to air. Enabling destination zone!")
+    end
+    -- No specified airport and no zone found at all.
+    if self.Ndestination_Airports==0 and self.Ndestination_Zones==0 then
+      self.random_destination=true
+      local text="No airports or zones found given in SetDestination(). Enabling random destination airports!"
+      env.error(RAT.id..text)
+      MESSAGE:New(text, 30):ToAll()
+    end
+  end  
+    
+  -- Destination zone and return zone should not be used together.
+  if self.destinationzone and self.returnzone then
+    env.error(RAT.id.."Destination zone _and_ return to zone not possible! Disabling return to zone.")
+    self.returnzone=false
+  end
+  -- If returning to a zone, we set the landing type to "air" if takeoff is in air. 
+  -- Because if we start in air we want to end in air. But default landing is ground.
+  if self.returnzone and self.takeoff==RAT.wp.air then
+    self.landing=RAT.wp.air
+  end
+    
+  -- Ensure that neither FLmin nor FLmax are above the aircrafts service ceiling.
+  if self.FLminuser then
+    self.FLminuser=math.min(self.FLminuser, self.aircraft.ceiling)
+  end
+  if self.FLmaxuser then
+    self.FLmaxuser=math.min(self.FLmaxuser, self.aircraft.ceiling)
+  end
+  if self.FLcruise then
+    self.FLcruise=math.min(self.FLcruise, self.aircraft.ceiling)
+  end
+  
+  -- FL min > FL max case ==> spaw values
+  if self.FLminuser and self.FLmaxuser then
+    if self.FLminuser > self.FLmaxuser then
+      local min=self.FLminuser
+      local max=self.FLmaxuser
+      self.FLminuser=max
+      self.FLmaxuser=min    
+    end
+  end
+    
+  -- Cruise alt < FL min
+  if self.FLminuser and self.FLcruise<self.FLminuser then
+    -- Here we have two possibilities.
+    -- 1) Set cruise alt to min FL, i.e. shift cruise alt up.
+    -- 2) Set min FL to cruise alt, i.e. shift min FL down.
+    self.FLcruise=self.FLminuser
+  end
+  
+  -- Cruise alt > FL max
+  if self.FLmaxuser and self.FLcruise>self.FLmaxuser then
+    self.FLcruise=self.FLmaxuser
+  end  
+end
 
 --- Set the friendly coalitions from which the airports can be used as departure and destination.
 -- @param #RAT self
@@ -916,6 +1012,17 @@ function RAT:SetDeparturesFromZone(zone)
   self.departure_Azone=zone
 end
 
+--- Add all friendly airports to the list of possible departures.
+-- @param #RAT self
+function RAT:AddFriendlyAirportsToDepartures()
+  self.addfriendlydepartures=true
+end
+
+--- Add all friendly airports to the list of possible destinations
+-- @param #RAT self
+function RAT:AddFriendlyAirportsToDestinations()
+  self.addfriendlydestinations=true
+end
 
 --- Airports, FARPs and ships explicitly excluded as departures and destinations.
 -- @param #RAT self
@@ -925,6 +1032,23 @@ function RAT:ExcludedAirports(ports)
     self.excluded_ports={ports}
   else
     self.excluded_ports=ports
+  end
+end
+
+--- Set skill of AI aircraft. Default is "High". 
+-- @param #RAT self
+-- @param #string skill Skill, options are "Average", "Good", "High", "Excellent" and "Random". Parameter is case insensitive.
+function RAT:SetAISkill(skill)
+  if skill:lower()=="average" then
+    self.skill="Average"
+  elseif skill:lower()=="good" then
+    self.skill="Good"
+  elseif skill:lower()=="excellent" then
+    self.skill="Excellent"
+  elseif skill:lower()=="random" then
+    self.skill="Random"
+  else
+    self.skill="High"
   end
 end
 
@@ -2351,8 +2475,6 @@ function RAT:_PickDestination(departure, q, minrange, maxrange, random, landing)
         
       end
     end 
-    
-
   end
   
   -- Info message.
@@ -3114,7 +3236,8 @@ function RAT:_Waypoint(index, Type, Coord, Speed, Altitude, Airport)
     _alttype="RADIO"
   elseif Type==RAT.wp.finalwp then
     _Type="Turning Point"
-    _Action="Fly Over Point"
+    --_Action="Fly Over Point"
+    _Action="Turning Point"
     _alttype="BARO"
   else
     env.error("Unknown waypoint type in RAT:Waypoint() function!")
@@ -3246,7 +3369,7 @@ function RAT:_Routeinfo(waypoints, comment)
     local d=math.sqrt((x1-x2)^2 + (y1-y2)^2)
     local heading=self:_Course(point1, point2)
     total=total+d
-    text=text..string.format("Distance from WP %i-->%i = %6.1f km. Heading = %03d:  %s - %s\n", i-1, i, d/1000, heading, self.waypointdescriptions[i], self.waypointdescriptions[i+1])
+    text=text..string.format("Distance from WP %i-->%i = %6.1f km. Heading = %03d :  %s - %s\n", i-1, i, d/1000, heading, self.waypointdescriptions[i], self.waypointdescriptions[i+1])
   end
   text=text..string.format("Total distance = %6.1f km\n", total/1000)
   text=text..string.format("******************************************************\n")
@@ -3459,6 +3582,31 @@ function RAT:_MinDistance(alpha, beta, ha, hb)
   local d1=ha/math.tan(alpha)
   local d2=hb/math.tan(beta)
   return d1, d2, d1+d2
+end
+
+
+--- Add names of all friendly airports to possible departure or destination airports if they are not already in the list. 
+-- @param #RAT self
+-- @param #table ports List of departure or destination airports/zones that will be added.
+function RAT:_AddFriendlyAirports(ports)
+  for _,airport in pairs(self.airports) do
+    if not self:_NameInList(ports, airport:GetName()) then
+      table.insert(ports, airport:GetName())
+    end
+  end
+end
+
+--- Check if a name/string is in a list or not.
+-- @param #RAT self
+-- @param #table liste List of names to be checked.
+-- @param #string name Name to be checked for.
+function RAT:_NameInList(liste, name)
+  for _,item in pairs(liste) do
+    if item==name then
+      return true
+    end
+  end
+  return false
 end
 
 
@@ -4083,6 +4231,4 @@ function RAT:_ATCQueue()
   end
 end
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-
 
