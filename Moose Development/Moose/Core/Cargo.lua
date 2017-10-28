@@ -1422,7 +1422,9 @@ function CARGO_GROUP:onenterUnLoaded( From, Event, To, ToPointVec2, ... )
     -- For each Cargo object within the CARGO_GROUP, route each object to the CargoLoadPointVec2
     self.CargoSet:ForEach(
       function( Cargo )
-        Cargo:UnLoad( ToPointVec2 )
+        --Cargo:UnLoad( ToPointVec2 )
+        local RandomVec2=ToPointVec2:GetRandomPointVec2InRadius(10)
+        Cargo:UnLoad( RandomVec2 )
       end
     )
 
