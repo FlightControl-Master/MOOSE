@@ -1,6 +1,10 @@
 --- **Functional** -- The ATC_GROUND classes monitor airbase traffic and regulate speed while taxiing.
 --
 -- ===
+-- 
+-- ![Banner Image](..\Presentations\ATC_GROUND\Dia1.JPG)
+-- 
+-- ===
 --
 -- ### Contributions: Dutch Baron - Concept & Testing
 -- ### Author: FlightControl - Framework Design &  Programming
@@ -256,13 +260,17 @@ end
 --- @type ATC_GROUND_CAUCASUS
 -- @extends #ATC_GROUND
 
---- # ATC_GROUND_CAUCASUS, extends @{#ATC_GROUND}
+--- # ATC\_GROUND\_CAUCASUS, extends @{#ATC_GROUND}
 -- 
--- ![Banner Image](..\Presentations\ATC_GROUND\Dia1.JPG)
--- 
--- The ATC_GROUND_CAUCASUS class monitors the speed of the airplanes at the airbase during taxi.
+-- The ATC\_GROUND\_CAUCASUS class monitors the speed of the airplanes at the airbase during taxi.
 -- The pilots may not drive faster than the maximum speed for the airbase, or they will be despawned.
 -- 
+-- ---
+--
+-- ![Banner Image](..\Presentations\ATC_GROUND\Dia1.JPG)
+--
+-- ---
+--  
 -- The maximum speed for the airbases at Caucasus is **50 km/h**.
 -- 
 -- The pilot will receive 3 times a warning during speeding. After the 3rd warning, if the pilot is still driving
@@ -273,29 +281,29 @@ end
 -- # Airbases monitored
 -- 
 -- The following airbases are monitored at the Caucasus region.
--- Use the AIRBASE.Caucasus enumeration to select the airbases to be monitored.
+-- Use the @{Airbase#AIRBASE.Caucasus} enumeration to select the airbases to be monitored.
 -- 
---   * ´AIRBASE.Caucasus.Anapa_Vityazevo´
---   * ´AIRBASE.Caucasus.Batumi´
---   * ´AIRBASE.Caucasus.Beslan´
---   * ´AIRBASE.Caucasus.Gelendzhik´
---   * ´AIRBASE.Caucasus.Gudauta´
---   * ´AIRBASE.Caucasus.Kobuleti´
---   * ´AIRBASE.Caucasus.Krasnodar_Center´
---   * ´AIRBASE.Caucasus.Krasnodar_Pashkovsky´
---   * ´AIRBASE.Caucasus.Krymsk´
---   * ´AIRBASE.Caucasus.Kutaisi´
---   * ´AIRBASE.Caucasus.Maykop_Khanskaya´
---   * ´AIRBASE.Caucasus.Mineralnye_Vody´
---   * ´AIRBASE.Caucasus.Mozdok´
---   * ´AIRBASE.Caucasus.Nalchik´
---   * ´AIRBASE.Caucasus.Novorossiysk´
---   * ´AIRBASE.Caucasus.Senaki_Kolkhi´
---   * ´AIRBASE.Caucasus.Sochi_Adler´
---   * ´AIRBASE.Caucasus.Soganlug´
---   * ´AIRBASE.Caucasus.Sukhumi_Babushara´
---   * ´AIRBASE.Caucasus.Tbilisi_Lochini´
---   * ´AIRBASE.Caucasus.Vaziani´
+--   * `AIRBASE.Caucasus.Anapa_Vityazevo`
+--   * `AIRBASE.Caucasus.Batumi`
+--   * `AIRBASE.Caucasus.Beslan`
+--   * `AIRBASE.Caucasus.Gelendzhik`
+--   * `AIRBASE.Caucasus.Gudauta`
+--   * `AIRBASE.Caucasus.Kobuleti`
+--   * `AIRBASE.Caucasus.Krasnodar_Center`
+--   * `AIRBASE.Caucasus.Krasnodar_Pashkovsky`
+--   * `AIRBASE.Caucasus.Krymsk`
+--   * `AIRBASE.Caucasus.Kutaisi`
+--   * `AIRBASE.Caucasus.Maykop_Khanskaya`
+--   * `AIRBASE.Caucasus.Mineralnye_Vody`
+--   * `AIRBASE.Caucasus.Mozdok`
+--   * `AIRBASE.Caucasus.Nalchik`
+--   * `AIRBASE.Caucasus.Novorossiysk`
+--   * `AIRBASE.Caucasus.Senaki_Kolkhi`
+--   * `AIRBASE.Caucasus.Sochi_Adler`
+--   * `AIRBASE.Caucasus.Soganlug`
+--   * `AIRBASE.Caucasus.Sukhumi_Babushara`
+--   * `AIRBASE.Caucasus.Tbilisi_Lochini`
+--   * `AIRBASE.Caucasus.Vaziani`
 --
 -- 
 -- # Installation
@@ -318,7 +326,7 @@ end
 -- 
 -- # Script it!
 -- 
--- ## 1. ATC_GROUND_CAUCASUS Constructor
+-- ## 1. ATC\_GROUND\_CAUCASUS Constructor
 -- 
 -- Creates a new ATC_GROUND_CAUCASUS object that will monitor pilots taxiing behaviour.
 -- 
@@ -841,7 +849,6 @@ function ATC_GROUND_CAUCASUS:New( AirbaseNames )
   --    self.Airbases.Template.ZoneRunways[1] = ZONE_POLYGON:New( "Template Runway 1", TemplateRunway1 ):SmokeZone(SMOKECOLOR.Red):Flush()
 
   return self
-
 end
 
 
@@ -851,11 +858,18 @@ end
 -- @extends #ATC_GROUND
 
 
---- # ATC_GROUND_NEVADA, extends @{#ATC_GROUND}
+--- # ATC\_GROUND\_NEVADA, extends @{#ATC_GROUND}
 -- 
+-- The ATC\_GROUND\_NEVADA class monitors the speed of the airplanes at the airbase during taxi.
+-- The pilots may not drive faster than the maximum speed for the airbase, or they will be despawned.
+-- 
+-- ---
+--
 -- ![Banner Image](..\Presentations\ATC_GROUND\Dia1.JPG)
 -- 
--- The ATC_GROUND_NEVADA class monitors the speed of the airplanes at the airbase during taxi.
+-- ---
+-- 
+-- The ATC\_GROUND\_NEVADA class monitors the speed of the airplanes at the airbase during taxi.
 -- The pilots may not drive faster than the maximum speed for the airbase, or they will be despawned.
 -- 
 -- The pilot will receive 3 times a warning during speeding. After the 3rd warning, if the pilot is still driving
@@ -866,7 +880,7 @@ end
 -- # Airbases monitored
 -- 
 -- The following airbases are monitored at the Nevada region.
--- Use the AIRBASE.Nevada enumeration to select the airbases to be monitored.
+-- Use the @{Airbase#AIRBASE.Nevada} enumeration to select the airbases to be monitored.
 -- 
 --    * `AIRBASE.Nevada.Beatty_Airport`
 --    * `AIRBASE.Nevada.Boulder_City_Airport`
@@ -1367,17 +1381,25 @@ function ATC_GROUND_NEVADA:New( AirbaseNames )
   
   --]]
   
+  return self
 end
 
 --- @type ATC_GROUND_NORMANDY
 -- @extends #ATC_GROUND
 
 
---- # ATC_GROUND_NORMANDY, extends @{#ATC_GROUND}
+--- # ATC\_GROUND\_NORMANDY, extends @{#ATC_GROUND}
+-- 
+-- The ATC\_GROUND\_NORMANDY class monitors the speed of the airplanes at the airbase during taxi.
+-- The pilots may not drive faster than the maximum speed for the airbase, or they will be despawned.
+-- 
+-- ---
 -- 
 -- ![Banner Image](..\Presentations\ATC_GROUND\Dia1.JPG)
 -- 
--- The ATC_GROUND_NORMANDY class monitors the speed of the airplanes at the airbase during taxi.
+-- ---
+-- 
+-- The ATC\_GROUND\_NORMANDY class monitors the speed of the airplanes at the airbase during taxi.
 -- The pilots may not drive faster than the maximum speed for the airbase, or they will be despawned.
 -- 
 -- The pilot will receive 3 times a warning during speeding. After the 3rd warning, if the pilot is still driving
@@ -1388,39 +1410,39 @@ end
 -- # Airbases monitored
 -- 
 -- The following airbases are monitored at the Normandy region.
--- Use the AIRBASE.Normandy enumeration to select the airbases to be monitored.
+-- Use the @{Airbase#AIRBASE.Normandy} enumeration to select the airbases to be monitored.
 -- 
---   * ´AIRBASE.Normandy.Azeville´
---   * ´AIRBASE.Normandy.Bazenville´
---   * ´AIRBASE.Normandy.Beny_sur_Mer´
---   * ´AIRBASE.Normandy.Beuzeville´
---   * ´AIRBASE.Normandy.Biniville´
---   * ´AIRBASE.Normandy.Brucheville´
---   * ´AIRBASE.Normandy.Cardonville´
---   * ´AIRBASE.Normandy.Carpiquet´
---   * ´AIRBASE.Normandy.Chailey´
---   * ´AIRBASE.Normandy.Chippelle´
---   * ´AIRBASE.Normandy.Cretteville´
---   * ´AIRBASE.Normandy.Cricqueville_en_Bessin´
---   * ´AIRBASE.Normandy.Deux_Jumeaux´
---   * ´AIRBASE.Normandy.Evreux´
---   * ´AIRBASE.Normandy.Ford´
---   * ´AIRBASE.Normandy.Funtington´
---   * ´AIRBASE.Normandy.Lantheuil´
---   * ´AIRBASE.Normandy.Le_Molay´
---   * ´AIRBASE.Normandy.Lessay´
---   * ´AIRBASE.Normandy.Lignerolles´
---   * ´AIRBASE.Normandy.Longues_sur_Mer´
---   * ´AIRBASE.Normandy.Maupertus´
---   * ´AIRBASE.Normandy.Meautis´
---   * ´AIRBASE.Normandy.Needs_Oar_Point´
---   * ´AIRBASE.Normandy.Picauville´
---   * ´AIRBASE.Normandy.Rucqueville´
---   * ´AIRBASE.Normandy.Saint_Pierre_du_Mont´
---   * ´AIRBASE.Normandy.Sainte_Croix_sur_Mer´
---   * ´AIRBASE.Normandy.Sainte_Laurent_sur_Mer´
---   * ´AIRBASE.Normandy.Sommervieu´
---   * ´AIRBASE.Normandy.Tangmere´
+--   * `AIRBASE.Normandy.Azeville`
+--   * `AIRBASE.Normandy.Bazenville`
+--   * `AIRBASE.Normandy.Beny_sur_Mer`
+--   * `AIRBASE.Normandy.Beuzeville`
+--   * `AIRBASE.Normandy.Biniville`
+--   * `AIRBASE.Normandy.Brucheville`
+--   * `AIRBASE.Normandy.Cardonville`
+--   * `AIRBASE.Normandy.Carpiquet`
+--   * `AIRBASE.Normandy.Chailey`
+--   * `AIRBASE.Normandy.Chippelle`
+--   * `AIRBASE.Normandy.Cretteville`
+--   * `AIRBASE.Normandy.Cricqueville_en_Bessin`
+--   * `AIRBASE.Normandy.Deux_Jumeaux`
+--   * `AIRBASE.Normandy.Evreux`
+--   * `AIRBASE.Normandy.Ford`
+--   * `AIRBASE.Normandy.Funtington`
+--   * `AIRBASE.Normandy.Lantheuil`
+--   * `AIRBASE.Normandy.Le_Molay`
+--   * `AIRBASE.Normandy.Lessay`
+--   * `AIRBASE.Normandy.Lignerolles`
+--   * `AIRBASE.Normandy.Longues_sur_Mer`
+--   * `AIRBASE.Normandy.Maupertus`
+--   * `AIRBASE.Normandy.Meautis`
+--   * `AIRBASE.Normandy.Needs_Oar_Point`
+--   * `AIRBASE.Normandy.Picauville`
+--   * `AIRBASE.Normandy.Rucqueville`
+--   * `AIRBASE.Normandy.Saint_Pierre_du_Mont`
+--   * `AIRBASE.Normandy.Sainte_Croix_sur_Mer`
+--   * `AIRBASE.Normandy.Sainte_Laurent_sur_Mer`
+--   * `AIRBASE.Normandy.Sommervieu`
+--   * `AIRBASE.Normandy.Tangmere`
 --
 -- # Installation
 -- 
@@ -2136,6 +2158,7 @@ function ATC_GROUND_NORMANDY:New( AirbaseNames )
   
   --]]
   
+  return self
 end
 
      
