@@ -133,7 +133,8 @@
 -- @field #number wp_holding Index of the holding waypoint.
 -- @field #boolean radio If true/false disables radio messages from the RAT groups.
 -- @field #number frequency Radio frequency used by the RAT groups.
--- @field #string modulation Ratio modulation. Either "FM" or "AM". 
+-- @field #string modulation Ratio modulation. Either "FM" or "AM".
+-- @field #boolean uncontrolled If true aircraft are spawned in uncontrolled state and will only sit on their parking spots. 
 -- @extends Core.Spawn#SPAWN
 
 ---# RAT class, extends @{Spawn#SPAWN}
@@ -303,7 +304,7 @@ RAT={
   takeoff = 0,              -- Takeoff type. 0=coldorhot.
   landing = 9,              -- Landing type. 9=landing.
   mindist = 5000,           -- Min distance from departure to destination in meters. Default 5 km.
-  maxdist = 500000,         -- Max distance from departure to destination in meters. Default 5000 km.
+  maxdist = 5000000,        -- Max distance from departure to destination in meters. Default 5000 km.
   airports_map={},          -- All airports available on current map (Caucasus, Nevada, Normandy, ...).
   airports={},              -- All airports of friedly coalitions.
   random_departure=true,    -- By default a random friendly airport is chosen as departure.
@@ -355,6 +356,7 @@ RAT={
   frequency=nil,            -- Radio frequency used by the RAT groups.
   modulation=nil,           -- Ratio modulation. Either "FM" or "AM".
   actype=nil,               -- Aircraft type set by user. Changes the type of the template group.
+  uncontrolled=false,       -- Spawn uncontrolled aircraft.
 }
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -448,7 +450,7 @@ RAT.ATC={
   airport={},
   unregistered=-1,
   onfinal=-100,
-  Nclearance=1,
+  Nclearance=2,
   delay=240,
 }
 
@@ -654,6 +656,7 @@ function RAT:Spawn(naircraft)
   text=text..string.format("Journey: %s\n", tostring(self.continuejourney))
   text=text..string.format("Destination Zone: %s\n", tostring(self.destinationzone))
   text=text..string.format("Return Zone: %s\n", tostring(self.returnzone))
+  text=text..string.format("Uncontrolled: %s\n", tostring(self.uncontrolled))
   text=text..string.format("Spawn delay: %4.1f\n", self.spawndelay)
   text=text..string.format("Spawn interval: %4.1f\n", self.spawninterval)
   text=text..string.format("Respawn after landing: %s\n", tostring(self.respawn_at_landing))
@@ -766,12 +769,12 @@ function RAT:_CheckConsistency()
 
   -- User has used SetDestination()
   if not self.random_destination then
-    -- Only zones in list but not landing air ==> Enable destination zone.
+    -- One zone specified as destination ==> Enable destination zone.
     -- This does not apply to return zone because the destination is the zone and not the final destination which can be an airport. 
-    if self.Ndestination_Airports==0 and self.landing~=RAT.wp.air and not self.returnzone then
+    if self.Ndestination_Zones>0 and self.landing~=RAT.wp.air and not self.returnzone then
       self.landing=RAT.wp.air
       self.destinationzone=true
-      env.error(RAT.id.."Only zones (no airports) defined as destination and landing is NOT set to air. Enabling destination zone!")
+      env.error(RAT.id.."At least one zone defined as destination and landing is NOT set to air. Enabling destination zone!")
     end
     -- No specified airport and no zone found at all.
     if self.Ndestination_Airports==0 and self.Ndestination_Zones==0 then
@@ -825,7 +828,13 @@ function RAT:_CheckConsistency()
   -- Cruise alt > FL max
   if self.FLmaxuser and self.FLcruise>self.FLmaxuser then
     self.FLcruise=self.FLmaxuser
-  end  
+  end
+  
+  -- Uncontrolled aircraft must start with engines off.
+  if self.uncontrolled then
+    -- TODO: Strangly, it does not work with RAT.wp.cold only with RAT.wp.hot! 
+    self.takeoff=RAT.wp.hot
+  end
 end
 
 --- Set the friendly coalitions from which the airports can be used as departure and destination.
@@ -1150,6 +1159,12 @@ function RAT:RadioFrequency(frequency)
   self.frequency=frequency
 end
 
+--- Spawn aircraft in uncontolled state. Aircraft will only sit at their parking spots. Only for populating airfields. 
+-- @param #RAT self
+function RAT:Uncontrolled()
+  self.uncontrolled=true
+end
+
 --- Set radio modulation. Default is AM.
 -- @param #RAT self
 -- @param #string modulation Either "FM" or "AM". If no value is given, modulation is set to AM.
@@ -1245,14 +1260,14 @@ end
 
 --- Max number of planes that get landing clearance of the RAT ATC. This setting effects all RAT objects and groups! 
 -- @param #RAT self
--- @param #number n Number of aircraft that are allowed to land simultaniously. Default is 1.
+-- @param #number n Number of aircraft that are allowed to land simultaniously. Default is 2.
 function RAT:ATC_Clearance(n)
-  RAT.ATC.Nclearance=n or 1
+  RAT.ATC.Nclearance=n or 2
 end
 
 --- Delay between granting landing clearance for simultanious landings. This setting effects all RAT objects and groups! 
 -- @param #RAT self
--- @param #number time Delay time when the next aircraft will get landing clearance event if the previous one did not land yet. Default is  240 sec.
+-- @param #number time Delay time when the next aircraft will get landing clearance event if the previous one did not land yet. Default is 240 sec.
 function RAT:ATC_Delay(time)
   RAT.ATC.delay=time or 240
 end
@@ -1945,8 +1960,8 @@ function RAT:_SetRoute(takeoff, landing, _departure, _destination, _waypoint)
     
   -- DESCENT/HOLDING POINT
   -- Get a random point between 5 and 10 km away from the destination.
-  local Rhmin=5000
-  local Rhmax=10000
+  local Rhmin=8000
+  local Rhmax=20000
   if self.category==RAT.cat.heli then
     -- For helos we set a distance between 500 to 1000 m.
     Rhmin=500
@@ -2447,8 +2462,8 @@ function RAT:_PickDestination(departure, q, minrange, maxrange, random, landing)
         
       -- Make sure departure and destination are not identical.
       if name ~= departure:GetName() then
-      
-        local dest
+
+        local dest=nil
         if self:_AirportExists(name) then
           if landing==RAT.wp.air then
             dest=AIRBASE:FindByName(name):GetZone()
@@ -2465,12 +2480,17 @@ function RAT:_PickDestination(departure, q, minrange, maxrange, random, landing)
           env.error(RAT.id.."No airport or zone found with name "..name)
         end
         
-        -- Distance from departure to possible destination
-        local distance=q:Get2DDistance(dest:GetCoordinate())
-          
-        -- Add as possible destination if zone is within range.
-        if distance>=minrange and distance<=maxrange then
-          table.insert(destinations, dest)
+        if dest then
+          -- Distance from departure to possible destination
+          local distance=q:Get2DDistance(dest:GetCoordinate())
+            
+          -- Add as possible destination if zone is within range.
+          if distance>=minrange and distance<=maxrange then
+            table.insert(destinations, dest)
+          else
+            local text=string.format("Destination %s is ouside range. Distance = %5.1f km, min = %5.1f km, max = %5.1f km.", name, distance, minrange, maxrange)
+            env.info(RAT.id..text)
+          end
         end
         
       end
@@ -2701,7 +2721,7 @@ function RAT:Status(message, forID)
               -- If aircraft did not move more than 50 m since last check, we call it stationary and despawn it.
               --TODO: add case that the aircraft are currently starting their engines. This should not count as being stationary.
               --local starting_engines=self.ratcraft[i].status==""
-              if Dg<50 then
+              if Dg<50 and not self.uncontrolled then
                 stationary=true
               end
               
@@ -2731,6 +2751,11 @@ function RAT:Status(message, forID)
         
         -- Status shortcut.
         local status=self.ratcraft[i].status
+        
+        -- Uncontrolled aircraft.
+        if self.uncontrolled then
+          status="Uncontrolled"
+        end
      
         -- Status report.
         if (forID and i==forID) or (not forID) then
@@ -2742,7 +2767,7 @@ function RAT:Status(message, forID)
           else
             text=text..string.format("%s travelling from %s to %s\n", type, departure, destination)
           end
-          text=text..string.format("Status: %s", self.ratcraft[i].status)
+          text=text..string.format("Status: %s", status)
           if airborne then
             text=text.." [airborne]\n"
           else
@@ -3226,8 +3251,8 @@ function RAT:_Waypoint(index, Type, Coord, Speed, Altitude, Airport)
     _alttype="BARO"
   elseif Type==RAT.wp.holding then
     _Type="Turning Point"
-    --_Action="Turning Point"
-    _Action="Fly Over Point"
+    _Action="Turning Point"
+    --_Action="Fly Over Point"
     _alttype="BARO"
   elseif Type==RAT.wp.landing then
     _Type="Land"
@@ -3427,9 +3452,10 @@ function RAT:_TaskHolding(P1, Altitude, Speed, Duration)
   DCSTask.params.task=Task
   
   if self.ATCswitch then
-    -- Set stop condition for holding. Either flag=1 or after max. 50 min holding.
+    -- Set stop condition for holding. Either flag=1 or after max. X min holding.
     local userflagname=string.format("%s#%03d", self.alias, self.SpawnIndex+1)
-    DCSTask.params.stopCondition={userFlag=userflagname, userFlagValue=1, duration=3000}
+    local maxholdingduration=60*120
+    DCSTask.params.stopCondition={userFlag=userflagname, userFlagValue=1, duration=maxholdingduration}
   else
     DCSTask.params.stopCondition={duration=Duration}
   end
@@ -3801,6 +3827,10 @@ end
 function RAT:_PlaceMarkers(waypoints, index)
   for i=1,#waypoints do
     self:_SetMarker(self.waypointdescriptions[i], waypoints[i], index)
+    if self.debug then
+      local text=string.format("Marker at waypoint #%d: %s for flight #%d", i, self.waypointdescriptions[i], index)
+      env.info(RAT.id..text)
+    end
   end
 end
 
@@ -3858,6 +3888,11 @@ function RAT:_ModifySpawnTemplate(waypoints, livery)
   
     if SpawnTemplate then
       self:T(SpawnTemplate)
+      
+      -- Spawn aircraft in uncontolled state.
+      if self.uncontrolled then
+        SpawnTemplate.uncontrolled=true
+      end
         
       -- Translate the position of the Group Template to the Vec3.
       for UnitID = 1, #SpawnTemplate.units do
@@ -3933,7 +3968,7 @@ function RAT:_ModifySpawnTemplate(waypoints, livery)
         SpawnTemplate.modulation=self.modulation
       end
       
-      --SpawnTemplate.uncontrolled=true
+
       
       -- Update modified template for spawn group.
       --self.SpawnGroups[self.SpawnIndex].SpawnTemplate=SpawnTemplate
@@ -4030,7 +4065,7 @@ function RAT:_ATCStatus()
       end
       
       -- Aircraft is holding.
-      local text=string.format("STATUS: ATC %s: Flight %s is holding for %i:%02d. %s.", dest, name, hold/60, hold%60, busy)
+      local text=string.format("ATC %s: Flight %s is holding for %i:%02d. %s.", dest, name, hold/60, hold%60, busy)
       env.info(RAT.id..text)
       
     elseif hold==RAT.ATC.onfinal then
@@ -4038,7 +4073,7 @@ function RAT:_ATCStatus()
       -- Aircarft is on final approach for landing.
       local Tfinal=Tnow-RAT.ATC.flight[name].Tonfinal
       
-      local text=string.format("STATUS: ATC %s: Flight %s is on final. Waiting %i:%02d for landing event.", dest, name, Tfinal/60, Tfinal%60)
+      local text=string.format("ATC %s: Flight %s is on final. Waiting %i:%02d for landing event.", dest, name, Tfinal/60, Tfinal%60)
       env.info(RAT.id..text)
       
     elseif hold==RAT.ATC.unregistered then
@@ -4088,12 +4123,12 @@ function RAT:_ATCCheck()
         RAT.ATC.flight[flight].holding=Tnow-RAT.ATC.flight[flight].Tarrive
         
         -- Debug message.
-        local text=string.format("CHECK: ATC %s: Flight %s runway is busy. You are #%d of %d in landing queue. Your holding time is %i:%02d.", name, flight,qID, nqueue, RAT.ATC.flight[flight].holding/60, RAT.ATC.flight[flight].holding%60)
+        local text=string.format("ATC %s: Flight %s runway is busy. You are #%d of %d in landing queue. Your holding time is %i:%02d.", name, flight,qID, nqueue, RAT.ATC.flight[flight].holding/60, RAT.ATC.flight[flight].holding%60)
         env.info(RAT.id..text)
         
       else
       
-        local text=string.format("CHECK: ATC %s: Flight %s was cleared for landing. Your holding time was %i:%02d.", name, flight, RAT.ATC.flight[flight].holding/60, RAT.ATC.flight[flight].holding%60)
+        local text=string.format("ATC %s: Flight %s was cleared for landing. Your holding time was %i:%02d.", name, flight, RAT.ATC.flight[flight].holding/60, RAT.ATC.flight[flight].holding%60)
         env.info(RAT.id..text)
       
         -- Clear flight for landing.
