@@ -1,5 +1,5 @@
 env.info( '*** MOOSE STATIC INCLUDE START *** ' )
-env.info( 'Moose Generation Timestamp: 20171029_1522' )
+env.info( 'Moose Generation Timestamp: 20171029_1717' )
 
 --- Various routines
 -- @module routines
@@ -38070,9 +38070,9 @@ function RAT:_CheckConsistency()
   
     -- What can go wrong?
     -- Only zones but not takeoff air == > Enable takeoff air.
-    if self.Ndeparture_Airports==0 and self.takeoff~=RAT.wp.air then
+    if self.Ndeparture_Zones>0 and self.takeoff~=RAT.wp.air then
       self.takeoff=RAT.wp.air
-      env.error(RAT.id.."Only zones (no airports) defined as departure and takeoff is NOT set to air. Enabling air start!")
+      env.error(RAT.id.."At least one zone defined as departure and takeoff is NOT set to air. Enabling air start!")
     end
     -- No airport and no zone specified.
     if self.Ndeparture_Airports==0 and self.Ndeparture_Zone==0 then
