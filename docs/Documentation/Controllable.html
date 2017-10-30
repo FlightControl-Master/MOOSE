@@ -102,6 +102,7 @@
 					<li><a href="UserFlag.html">UserFlag</a></li>
 					<li><a href="UserSound.html">UserSound</a></li>
 					<li><a href="Utils.html">Utils</a></li>
+					<li><a href="Velocity.html">Velocity</a></li>
 					<li><a href="Zone.html">Zone</a></li>
 					<li><a href="ZoneCaptureCoalition.html">ZoneCaptureCoalition</a></li>
 					<li><a href="ZoneGoal.html">ZoneGoal</a></li>
@@ -317,6 +318,24 @@
 		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).New">CONTROLLABLE:New(ControllableName)</a></td>
 		<td class="summary">
 <p>Create a new CONTROLLABLE from a DCSControllable</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).OptionAlarmStateAuto">CONTROLLABLE:OptionAlarmStateAuto()</a></td>
+		<td class="summary">
+<p>Alarm state to Auto: AI will automatically switch alarm states based on the presence of threats.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).OptionAlarmStateGreen">CONTROLLABLE:OptionAlarmStateGreen()</a></td>
+		<td class="summary">
+<p>Alarm state to Green: Group is not combat ready.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).OptionAlarmStateRed">CONTROLLABLE:OptionAlarmStateRed()</a></td>
+		<td class="summary">
+<p>Alarm state to Red: Group is combat ready and actively searching for targets.</p>
 </td>
 		</tr>
 		<tr>
@@ -1829,6 +1848,66 @@ The DCS Controllable name</p>
 
 				</li>
 		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(CONTROLLABLE)">#CONTROLLABLE</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CONTROLLABLE).OptionAlarmStateAuto" >
+<strong>CONTROLLABLE:OptionAlarmStateAuto()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Alarm state to Auto: AI will automatically switch alarm states based on the presence of threats.</p>
+
+	
+<p>The AI kind of cheats in this regard.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(CONTROLLABLE)">#CONTROLLABLE</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CONTROLLABLE).OptionAlarmStateGreen" >
+<strong>CONTROLLABLE:OptionAlarmStateGreen()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Alarm state to Green: Group is not combat ready.</p>
+
+	
+<p>Sensors are stowed if possible.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(CONTROLLABLE)">#CONTROLLABLE</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CONTROLLABLE).OptionAlarmStateRed" >
+<strong>CONTROLLABLE:OptionAlarmStateRed()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Alarm state to Red: Group is combat ready and actively searching for targets.</p>
+
 		<h3>Return value</h3>
 				
 <p><em><a href="##(CONTROLLABLE)">#CONTROLLABLE</a>:</em>

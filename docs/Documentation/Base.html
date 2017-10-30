@@ -102,6 +102,7 @@
 					<li><a href="UserFlag.html">UserFlag</a></li>
 					<li><a href="UserSound.html">UserSound</a></li>
 					<li><a href="Utils.html">Utils</a></li>
+					<li><a href="Velocity.html">Velocity</a></li>
 					<li><a href="Zone.html">Zone</a></li>
 					<li><a href="ZoneCaptureCoalition.html">ZoneCaptureCoalition</a></li>
 					<li><a href="ZoneGoal.html">ZoneGoal</a></li>
@@ -115,9 +116,12 @@
 	<div id="content">
    <h1>Module <code>Base</code></h1>
    
-<p><strong>Core</strong> -- VELOCITY models a speed, which can be expressed in various formats according the Settings.</p>
+<p><strong>Core</strong> -- BASE forms <strong>the basis of the MOOSE framework</strong>.</p>
 
    
+<p>Each class within the MOOSE framework derives from BASE.</p>
+
+<p><img src="..\Presentations\BASE\Dia1.JPG" alt="Banner Image"/></p>
 
 <hr/>
 
@@ -130,126 +134,435 @@
 	<h2>Global(s)</h2>
 	<table class="function_list">
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="#VELOCITY">VELOCITY</a></td>
+		<td class="name" nowrap="nowrap"><a href="#BASE">BASE</a></td>
 		<td class="summary">
-<h1>VELOCITY class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
+<h1>1) #BASE class</h1>
 
-<p>VELOCITY models a speed, which can be expressed in various formats according the Settings.</p>
+<p>All classes within the MOOSE framework are derived from the BASE class.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="#VELOCITY_POSITIONABLE">VELOCITY_POSITIONABLE</a></td>
-		<td class="summary">
-<h1>VELOCITY_POSITIONABLE class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
-
-<p>VELOCITY_POSITIONABLE monitors the speed of an <a href="Positionable.html">Positionable</a> in the simulation, which can be expressed in various formats according the Settings.</p>
-</td>
-		</tr>
-	</table>
-			<h2><a id="#(VELOCITY)">Type <code>VELOCITY</code></a></h2>
-				<table class="function_list">
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(VELOCITY).Get">VELOCITY:Get()</a></td>
-		<td class="summary">
-<p>Get the velocity in Mps (meters per second).</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(VELOCITY).GetKmph">VELOCITY:GetKmph()</a></td>
-		<td class="summary">
-<p>Get the velocity in Kmph (kilometers per hour).</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(VELOCITY).GetMiph">VELOCITY:GetMiph()</a></td>
-		<td class="summary">
-<p>Get the velocity in Miph (miles per hour).</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(VELOCITY).GetText">VELOCITY:GetText(Settings)</a></td>
-		<td class="summary">
-<p>Get the velocity in text, according the player <a href="Settings.html">Settings</a>.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(VELOCITY).New">VELOCITY:New(VelocityMps)</a></td>
-		<td class="summary">
-<p>VELOCITY Constructor.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(VELOCITY).Set">VELOCITY:Set(VelocityMps)</a></td>
-		<td class="summary">
-<p>Set the velocity in Mps (meters per second).</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(VELOCITY).SetKmph">VELOCITY:SetKmph(VelocityKmph)</a></td>
-		<td class="summary">
-<p>Set the velocity in Kmph (kilometers per hour).</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(VELOCITY).SetMiph">VELOCITY:SetMiph(VelocityMiph)</a></td>
-		<td class="summary">
-<p>Set the velocity in Miph (miles per hour).</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(VELOCITY).ToString">VELOCITY:ToString(Controllable, Settings, VelocityGroup)</a></td>
-		<td class="summary">
-<p>Get the velocity in text, according the player or default <a href="Settings.html">Settings</a>.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(VELOCITY).Velocity">VELOCITY.Velocity</a></td>
+		<td class="name" nowrap="nowrap"><a href="#FORMATION">FORMATION</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 	</table>
-
-			<h2><a id="#(VELOCITY_POSITIONABLE)">Type <code>VELOCITY_POSITIONABLE</code></a></h2>
+			<h2><a id="#(BASE)">Type <code>BASE</code></a></h2>
 				<table class="function_list">
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(VELOCITY_POSITIONABLE).Get">VELOCITY_POSITIONABLE:Get()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).ClassID">BASE.ClassID</a></td>
 		<td class="summary">
-<p>Get the velocity in Mps (meters per second).</p>
+<p>The ID number of the class.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(VELOCITY_POSITIONABLE).GetKmph">VELOCITY_POSITIONABLE:GetKmph()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).ClassName">BASE.ClassName</a></td>
 		<td class="summary">
-<p>Get the velocity in Kmph (kilometers per hour).</p>
+<p>The name of the class.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(VELOCITY_POSITIONABLE).GetMiph">VELOCITY_POSITIONABLE:GetMiph()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).ClassNameAndID">BASE.ClassNameAndID</a></td>
 		<td class="summary">
-<p>Get the velocity in Miph (miles per hour).</p>
+<p>The name of the class concatenated with the ID number of the class.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(VELOCITY_POSITIONABLE).New">VELOCITY_POSITIONABLE:New(Positionable)</a></td>
-		<td class="summary">
-<p>VELOCITY_POSITIONABLE Constructor.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(VELOCITY_POSITIONABLE).Positionable">VELOCITY_POSITIONABLE.Positionable</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).ClearState">BASE:ClearState(Object, StateName)</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(VELOCITY_POSITIONABLE).ToString">VELOCITY_POSITIONABLE:ToString()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).CreateEventBirth">BASE:CreateEventBirth(EventTime, Initiator, IniUnitName, place, subplace)</a></td>
 		<td class="summary">
-<p>Get the velocity in text, according the player or default <a href="Settings.html">Settings</a>.</p>
+<p>Creation of a Birth Event.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(VELOCITY_POSITIONABLE).Velocity">VELOCITY_POSITIONABLE.Velocity</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).CreateEventCrash">BASE:CreateEventCrash(EventTime, Initiator)</a></td>
+		<td class="summary">
+<p>Creation of a Crash Event.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).CreateEventTakeoff">BASE:CreateEventTakeoff(EventTime, Initiator)</a></td>
+		<td class="summary">
+<p>Creation of a Takeoff Event.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).E">BASE:E(Arguments)</a></td>
+		<td class="summary">
+<p>Log an exception which will be traced always.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).EventDispatcher">BASE:EventDispatcher()</a></td>
+		<td class="summary">
+<p>Returns the event dispatcher</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).EventRemoveAll">BASE:EventRemoveAll()</a></td>
+		<td class="summary">
+<p>Remove all subscribed events</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).F">BASE:F(Arguments)</a></td>
+		<td class="summary">
+<p>Trace a function call.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).F2">BASE:F2(Arguments)</a></td>
+		<td class="summary">
+<p>Trace a function call level 2.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).F3">BASE:F3(Arguments)</a></td>
+		<td class="summary">
+<p>Trace a function call level 3.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).GetClassID">BASE:GetClassID()</a></td>
+		<td class="summary">
+<p>Get the ClassID of the class instance.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).GetClassName">BASE:GetClassName()</a></td>
+		<td class="summary">
+<p>Get the ClassName of the class instance.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).GetClassNameAndID">BASE:GetClassNameAndID()</a></td>
+		<td class="summary">
+<p>Get the ClassName + ClassID of the class instance.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).GetEventPriority">BASE:GetEventPriority()</a></td>
+		<td class="summary">
+<p>Get the Class <a href="Event.html">Event</a> processing Priority.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).GetParent">BASE:GetParent(Child, FromClass)</a></td>
+		<td class="summary">
+<p>This is the worker method to retrieve the Parent class.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).GetState">BASE:GetState(Object, Key)</a></td>
+		<td class="summary">
+<p>Get a Value given a Key from the Object.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).HandleEvent">BASE:HandleEvent(Event, EventFunction)</a></td>
+		<td class="summary">
+<p>Subscribe to a DCS Event.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).Inherit">BASE:Inherit(Child, Parent)</a></td>
+		<td class="summary">
+<p>This is the worker method to inherit from a parent class.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).IsInstanceOf">BASE:IsInstanceOf(ClassName)</a></td>
+		<td class="summary">
+<p>This is the worker method to check if an object is an (sub)instance of a class.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).IsTrace">BASE:IsTrace()</a></td>
+		<td class="summary">
+<p>Enquires if tracing is on (for the class).</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).New">BASE:New()</a></td>
+		<td class="summary">
+<p>BASE constructor.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).OnEvent">BASE:OnEvent(EventData)</a></td>
+		<td class="summary">
+<p>Occurs when an object is completely destroyed.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).OnEventBaseCaptured">BASE:OnEventBaseCaptured(EventData)</a></td>
+		<td class="summary">
+<p>Occurs when a ground unit captures either an airbase or a farp.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).OnEventBirth">BASE:OnEventBirth(EventData)</a></td>
+		<td class="summary">
+<p>Occurs when any object is spawned into the mission.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).OnEventCrash">BASE:OnEventCrash(EventData)</a></td>
+		<td class="summary">
+<p>Occurs when any aircraft crashes into the ground and is completely destroyed.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).OnEventDead">BASE:OnEventDead(EventData)</a></td>
+		<td class="summary">
+<p>Occurs when an object is dead.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).OnEventEjection">BASE:OnEventEjection(EventData)</a></td>
+		<td class="summary">
+<p>Occurs when a pilot ejects from an aircraft
+initiator : The unit that has ejected </p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).OnEventEngineShutdown">BASE:OnEventEngineShutdown(EventData)</a></td>
+		<td class="summary">
+<p>Occurs when any aircraft shuts down its engines.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).OnEventEngineStartup">BASE:OnEventEngineStartup(EventData)</a></td>
+		<td class="summary">
+<p>Occurs when any aircraft starts its engines.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).OnEventHit">BASE:OnEventHit(EventData)</a></td>
+		<td class="summary">
+<p>Occurs whenever an object is hit by a weapon.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).OnEventHumanFailure">BASE:OnEventHumanFailure(EventData)</a></td>
+		<td class="summary">
+<p>Occurs when any system fails on a human controlled aircraft.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).OnEventLand">BASE:OnEventLand(EventData)</a></td>
+		<td class="summary">
+<p>Occurs when an aircraft lands at an airbase, farp or ship
+initiator : The unit that has landed
+place: Object that the unit landed on.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).OnEventMissionEnd">BASE:OnEventMissionEnd(EventData)</a></td>
+		<td class="summary">
+<p>Occurs when a mission ends</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).OnEventMissionStart">BASE:OnEventMissionStart(EventData)</a></td>
+		<td class="summary">
+<p>Occurs when a mission starts </p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).OnEventPilotDead">BASE:OnEventPilotDead(EventData)</a></td>
+		<td class="summary">
+<p>Occurs when the pilot of an aircraft is killed.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).OnEventPlayerEnterUnit">BASE:OnEventPlayerEnterUnit(EventData)</a></td>
+		<td class="summary">
+<p>Occurs when any player assumes direct control of a unit.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).OnEventPlayerLeaveUnit">BASE:OnEventPlayerLeaveUnit(EventData)</a></td>
+		<td class="summary">
+<p>Occurs when any player relieves control of a unit to the AI.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).OnEventRefueling">BASE:OnEventRefueling(EventData)</a></td>
+		<td class="summary">
+<p>Occurs when an aircraft connects with a tanker and begins taking on fuel.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).OnEventRefuelingStop">BASE:OnEventRefuelingStop(EventData)</a></td>
+		<td class="summary">
+<p>Occurs when an aircraft is finished taking fuel.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).OnEventShootingEnd">BASE:OnEventShootingEnd(EventData)</a></td>
+		<td class="summary">
+<p>Occurs when any unit stops firing its weapon.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).OnEventShootingStart">BASE:OnEventShootingStart(EventData)</a></td>
+		<td class="summary">
+<p>Occurs when any unit begins firing a weapon that has a high rate of fire.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).OnEventShot">BASE:OnEventShot(EventData)</a></td>
+		<td class="summary">
+<p>Occurs whenever any unit in a mission fires a weapon.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).OnEventTakeoff">BASE:OnEventTakeoff(EventData)</a></td>
+		<td class="summary">
+<p>Occurs when an aircraft takes off from an airbase, farp, or ship.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).ScheduleOnce">BASE:ScheduleOnce(Start, SchedulerFunction, ...)</a></td>
+		<td class="summary">
+<p>Schedule a new time event.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).ScheduleRepeat">BASE:ScheduleRepeat(Start, Repeat, RandomizeFactor, Stop, SchedulerFunction, ...)</a></td>
+		<td class="summary">
+<p>Schedule a new time event.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).ScheduleStop">BASE:ScheduleStop(SchedulerFunction)</a></td>
+		<td class="summary">
+<p>Stops the Schedule.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).SchedulerObject">BASE.SchedulerObject</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).SetEventPriority">BASE:SetEventPriority(EventPriority)</a></td>
+		<td class="summary">
+<p>Set the Class <a href="Event.html">Event</a> processing Priority.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).SetState">BASE:SetState(Object, Key, Value)</a></td>
+		<td class="summary">
+<p>Set a state or property of the Object given a Key and a Value.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).T">BASE:T(Arguments)</a></td>
+		<td class="summary">
+<p>Trace a function logic level 1.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).T2">BASE:T2(Arguments)</a></td>
+		<td class="summary">
+<p>Trace a function logic level 2.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).T3">BASE:T3(Arguments)</a></td>
+		<td class="summary">
+<p>Trace a function logic level 3.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).TraceAll">BASE:TraceAll(TraceAll)</a></td>
+		<td class="summary">
+<p>Trace all methods in MOOSE</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).TraceClass">BASE:TraceClass(Class)</a></td>
+		<td class="summary">
+<p>Set tracing for a class</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).TraceClassMethod">BASE:TraceClassMethod(Class, Method)</a></td>
+		<td class="summary">
+<p>Set tracing for a specific method of  class</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).TraceLevel">BASE:TraceLevel(Level)</a></td>
+		<td class="summary">
+<p>Set trace level</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).TraceOnOff">BASE:TraceOnOff(TraceOnOff)</a></td>
+		<td class="summary">
+<p>Set trace on or off
+Note that when trace is off, no debug statement is performed, increasing performance!
+When Moose is loaded statically, (as one file), tracing is switched off by default.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).UnHandleEvent">BASE:UnHandleEvent(Event)</a></td>
+		<td class="summary">
+<p>UnSubscribe to a DCS event.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BASE)._">BASE._</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BASE)._F">BASE:_F(Arguments, DebugInfoCurrentParam, DebugInfoFromParam)</a></td>
+		<td class="summary">
+<p>Trace a function call.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BASE)._T">BASE:_T(Arguments, DebugInfoCurrentParam, DebugInfoFromParam)</a></td>
+		<td class="summary">
+<p>Trace a function logic.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).__">BASE.__</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(BASE).onEvent">BASE:onEvent(event)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(FORMATION)">Type <code>FORMATION</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(FORMATION).Cone">FORMATION.Cone</a></td>
+		<td class="summary">
+<p>A cone formation.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(FORMATION).Vee">FORMATION.Vee</a></td>
 		<td class="summary">
 
 </td>
@@ -260,24 +573,198 @@
 		<dl class="function">
 <dt>
 
-		<em><a href="##(VELOCITY)">#VELOCITY</a></em>
-<a id="VELOCITY" >
-<strong>VELOCITY</strong>
+		<em><a href="##(BASE)">#BASE</a></em>
+<a id="BASE" >
+<strong>BASE</strong>
 </a>
 </dt>
 <dd>
 	
-<h1>VELOCITY class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
+<h1>1) #BASE class</h1>
 
-<p>VELOCITY models a speed, which can be expressed in various formats according the Settings.</p>
+<p>All classes within the MOOSE framework are derived from the BASE class.</p>
 
 	
-
-<h2>1. VELOCITY constructor</h2>
+<p> 
+BASE provides facilities for :</p>
 
 <ul>
-    <li><a href="##(VELOCITY).New">VELOCITY.New</a>(): Creates a new VELOCITY object.</li>
+    <li>The construction and inheritance of MOOSE classes.</li>
+    <li>The class naming and numbering system.</li>
+    <li>The class hierarchy search system.</li>
+    <li>The tracing of information or objects during mission execution for debuggin purposes.</li>
+    <li>The subscription to DCS events for event handling in MOOSE objects.</li>
 </ul>
+
+<p>Note: The BASE class is an abstract class and is not meant to be used directly.</p>
+
+<h2>1.1) BASE constructor</h2>
+
+<p>Any class derived from BASE, will use the <a href="Base.html##(BASE).New">Base#BASE.New</a> constructor embedded in the <a href="Base.html##(BASE).Inherit">Base#BASE.Inherit</a> method. 
+See an example at the <a href="Base.html##(BASE).New">Base#BASE.New</a> method how this is done.</p>
+
+<h2>1.2) Trace information for debugging</h2>
+
+<p>The BASE class contains trace methods to trace progress within a mission execution of a certain object.
+These trace methods are inherited by each MOOSE class interiting BASE, soeach object created from derived class from BASE can use the tracing methods to trace its execution.</p>
+
+<p>Any type of information can be passed to these tracing methods. See the following examples:</p>
+
+<pre><code>self:E( "Hello" )
+</code></pre>
+
+<p>Result in the word "Hello" in the dcs.log.</p>
+
+<pre><code>local Array = { 1, nil, "h", { "a","b" }, "x" }
+self:E( Array )
+</code></pre>
+
+<p>Results with the text [1]=1,[3]="h",[4]={[1]="a",[2]="b"},[5]="x"} in the dcs.log.   </p>
+
+<pre><code>local Object1 = "Object1"
+local Object2 = 3
+local Object3 = { Object 1, Object 2 }
+self:E( { Object1, Object2, Object3 } )
+</code></pre>
+
+<p>Results with the text [1]={[1]="Object",[2]=3,[3]={[1]="Object",[2]=3}} in the dcs.log.</p>
+
+<pre><code>local SpawnObject = SPAWN:New( "Plane" )
+local GroupObject = GROUP:FindByName( "Group" )
+self:E( { Spawn = SpawnObject, Group = GroupObject } )
+</code></pre>
+
+<p>Results with the text [1]={Spawn={....),Group={...}} in the dcs.log.  </p>
+
+<p>Below a more detailed explanation of the different method types for tracing.</p>
+
+<h3>1.2.1) Tracing methods categories</h3>
+
+<p>There are basically 3 types of tracing methods available:</p>
+
+<ul>
+    <li><a href="##(BASE).F">BASE.F</a>: Used to trace the entrance of a function and its given parameters. An F is indicated at column 44 in the DCS.log file.</li>
+    <li><a href="##(BASE).T">BASE.T</a>: Used to trace further logic within a function giving optional variables or parameters. A T is indicated at column 44 in the DCS.log file.</li>
+    <li><a href="##(BASE).E">BASE.E</a>: Used to always trace information giving optional variables or parameters. An E is indicated at column 44 in the DCS.log file.</li>
+</ul>
+
+<h3>1.2.2) Tracing levels</h3>
+
+<p>There are 3 tracing levels within MOOSE. <br/>
+These tracing levels were defined to avoid bulks of tracing to be generated by lots of objects.</p>
+
+<p>As such, the F and T methods have additional variants to trace level 2 and 3 respectively:</p>
+
+<ul>
+    <li><a href="##(BASE).F2">BASE.F2</a>: Trace the beginning of a function and its given parameters with tracing level 2.</li>
+    <li><a href="##(BASE).F3">BASE.F3</a>: Trace the beginning of a function and its given parameters with tracing level 3.</li>
+    <li><a href="##(BASE).T2">BASE.T2</a>: Trace further logic within a function giving optional variables or parameters with tracing level 2.</li>
+    <li><a href="##(BASE).T3">BASE.T3</a>: Trace further logic within a function giving optional variables or parameters with tracing level 3.</li>
+</ul>
+
+<h3>1.2.3) Trace activation.</h3>
+
+<p>Tracing can be activated in several ways:</p>
+
+<ul>
+    <li>Switch tracing on or off through the <a href="##(BASE).TraceOnOff">BASE.TraceOnOff</a>() method.</li>
+    <li>Activate all tracing through the <a href="##(BASE).TraceAll">BASE.TraceAll</a>() method.</li>
+    <li>Activate only the tracing of a certain class (name) through the <a href="##(BASE).TraceClass">BASE.TraceClass</a>() method.</li>
+    <li>Activate only the tracing of a certain method of a certain class through the <a href="##(BASE).TraceClassMethod">BASE.TraceClassMethod</a>() method.</li>
+    <li>Activate only the tracing of a certain level through the <a href="##(BASE).TraceLevel">BASE.TraceLevel</a>() method.</li>
+</ul>
+
+<h3>1.2.4) Check if tracing is on.</h3>
+
+<p>The method <a href="##(BASE).IsTrace">BASE.IsTrace</a>() will validate if tracing is activated or not.</p>
+
+<h2>1.3 DCS simulator Event Handling</h2>
+
+<p>The BASE class provides methods to catch DCS Events. These are events that are triggered from within the DCS simulator, 
+and handled through lua scripting. MOOSE provides an encapsulation to handle these events more efficiently.</p>
+
+<h3>1.3.1 Subscribe / Unsubscribe to DCS Events</h3>
+
+<p>At first, the mission designer will need to <strong>Subscribe</strong> to a specific DCS event for the class.
+So, when the DCS event occurs, the class will be notified of that event.
+There are two methods which you use to subscribe to or unsubscribe from an event.</p>
+
+<ul>
+    <li><a href="##(BASE).HandleEvent">BASE.HandleEvent</a>(): Subscribe to a DCS Event.</li>
+    <li><a href="##(BASE).UnHandleEvent">BASE.UnHandleEvent</a>(): Unsubscribe from a DCS Event.</li>
+</ul>
+
+<h3>1.3.2 Event Handling of DCS Events</h3>
+
+<p>Once the class is subscribed to the event, an <strong>Event Handling</strong> method on the object or class needs to be written that will be called
+when the DCS event occurs. The Event Handling method receives an <a href="Event.html##(EVENTDATA)">Event#EVENTDATA</a> structure, which contains a lot of information
+about the event that occurred.</p>
+
+<p>Find below an example of the prototype how to write an event handling function for two units: </p>
+
+<pre><code> local Tank1 = UNIT:FindByName( "Tank A" )
+ local Tank2 = UNIT:FindByName( "Tank B" )
+
+ -- Here we subscribe to the Dead events. So, if one of these tanks dies, the Tank1 or Tank2 objects will be notified.
+ Tank1:HandleEvent( EVENTS.Dead )
+ Tank2:HandleEvent( EVENTS.Dead )
+
+ --- This function is an Event Handling function that will be called when Tank1 is Dead.
+ -- @param Wrapper.Unit#UNIT self 
+ -- @param Core.Event#EVENTDATA EventData
+ function Tank1:OnEventDead( EventData )
+
+   self:SmokeGreen()
+ end
+
+ --- This function is an Event Handling function that will be called when Tank2 is Dead.
+ -- @param Wrapper.Unit#UNIT self 
+ -- @param Core.Event#EVENTDATA EventData
+ function Tank2:OnEventDead( EventData )
+
+   self:SmokeBlue()
+ end
+</code></pre>
+
+
+
+<p>See the <a href="Event.html">Event</a> module for more information about event handling.</p>
+
+<h2>1.4) Class identification methods</h2>
+
+<p>BASE provides methods to get more information of each object:</p>
+
+<ul>
+    <li><a href="##(BASE).GetClassID">BASE.GetClassID</a>(): Gets the ID (number) of the object. Each object created is assigned a number, that is incremented by one.</li>
+    <li><a href="##(BASE).GetClassName">BASE.GetClassName</a>(): Gets the name of the object, which is the name of the class the object was instantiated from.</li>
+    <li><a href="##(BASE).GetClassNameAndID">BASE.GetClassNameAndID</a>(): Gets the name and ID of the object.</li>
+</ul>
+
+<h2>1.5) All objects derived from BASE can have "States"</h2>
+
+<p>A mechanism is in place in MOOSE, that allows to let the objects administer <strong>states</strong>. <br/>
+States are essentially properties of objects, which are identified by a <strong>Key</strong> and a <strong>Value</strong>.  </p>
+
+<p>The method <a href="##(BASE).SetState">BASE.SetState</a>() can be used to set a Value with a reference Key to the object. <br/>
+To <strong>read or retrieve</strong> a state Value based on a Key, use the <a href="##(BASE).GetState">BASE.GetState</a> method.  </p>
+
+<p>These two methods provide a very handy way to keep state at long lasting processes.
+Values can be stored within the objects, and later retrieved or changed when needed.
+There is one other important thing to note, the <a href="##(BASE).SetState">BASE.SetState</a>() and <a href="##(BASE).GetState">BASE.GetState</a> methods
+receive as the <strong>first parameter the object for which the state needs to be set</strong>.
+Thus, if the state is to be set for the same object as the object for which the method is used, then provide the same
+object name to the method.</p>
+
+<h2>1.10) Inheritance</h2>
+
+<p>The following methods are available to implement inheritance</p>
+
+<ul>
+    <li><a href="##(BASE).Inherit">BASE.Inherit</a>: Inherits from a class.</li>
+    <li><a href="##(BASE).GetParent">BASE.GetParent</a>: Returns the parent object from the object it is handling, or nil if there is no parent object.</li>
+</ul>
+
+<hr/>
 
 
 </dd>
@@ -285,350 +772,437 @@
 		<dl class="function">
 <dt>
 
-		<em><a href="##(VELOCITY_POSITIONABLE)">#VELOCITY_POSITIONABLE</a></em>
-<a id="VELOCITY_POSITIONABLE" >
-<strong>VELOCITY_POSITIONABLE</strong>
+		<em><a href="##(FORMATION)">#FORMATION</a></em>
+<a id="FORMATION" >
+<strong>FORMATION</strong>
 </a>
 </dt>
 <dd>
 	
-<h1>VELOCITY_POSITIONABLE class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
-
-<p>VELOCITY_POSITIONABLE monitors the speed of an <a href="Positionable.html">Positionable</a> in the simulation, which can be expressed in various formats according the Settings.</p>
-
-	
-
-<h2>1. VELOCITY_POSITIONABLE constructor</h2>
-
-<ul>
-    <li><a href="##(VELOCITY_POSITIONABLE).New">VELOCITY_POSITIONABLE.New</a>(): Creates a new VELOCITY_POSITIONABLE object.</li>
-</ul>
 
 
 </dd>
 </dl>
 	<h2><a id="#(Base)" >Type <code>Base</code></a></h2>
 	
-			<h2><a id="#(VELOCITY)" >Type <code>VELOCITY</code></a></h2>
+			<h2><a id="#(BASE)" >Type <code>BASE</code></a></h2>
 				<h3>Field(s)</h3>
 		<dl class="function">
 <dt>
 
-<a id="#(VELOCITY).Get" >
-<strong>VELOCITY:Get()</strong>
+<a id="#(BASE).ClassID" >
+<strong>BASE.ClassID</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Get the velocity in Mps (meters per second).</p>
-
-		<h3>Return value</h3>
-				
-<p><em>#number:</em>
-The velocity in meters per second. </p>
+<p>The ID number of the class.</p>
 
 </dd>
 </dl>
 		<dl class="function">
 <dt>
 
-<a id="#(VELOCITY).GetKmph" >
-<strong>VELOCITY:GetKmph()</strong>
+<a id="#(BASE).ClassName" >
+<strong>BASE.ClassName</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Get the velocity in Kmph (kilometers per hour).</p>
-
-		<h3>Return value</h3>
-				
-<p><em>#number:</em>
-The velocity in kilometers per hour. </p>
+<p>The name of the class.</p>
 
 </dd>
 </dl>
 		<dl class="function">
 <dt>
 
-<a id="#(VELOCITY).GetMiph" >
-<strong>VELOCITY:GetMiph()</strong>
+<a id="#(BASE).ClassNameAndID" >
+<strong>BASE.ClassNameAndID</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Get the velocity in Miph (miles per hour).</p>
-
-		<h3>Return value</h3>
-				
-<p><em>#number:</em>
-The velocity in miles per hour. </p>
+<p>The name of the class concatenated with the ID number of the class.</p>
 
 </dd>
 </dl>
 		<dl class="function">
 <dt>
 
-<a id="#(VELOCITY).GetText" >
-<strong>VELOCITY:GetText(Settings)</strong>
+<a id="#(BASE).ClearState" >
+<strong>BASE:ClearState(Object, StateName)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Get the velocity in text, according the player <a href="Settings.html">Settings</a>.</p>
 
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="Core.Settings.html##(SETTINGS)">Core.Settings#SETTINGS</a> Settings </em></code>: </p>
-
-				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em>#string:</em>
-The velocity in text. </p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(VELOCITY).New" >
-<strong>VELOCITY:New(VelocityMps)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>VELOCITY Constructor.</p>
-
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em>#number VelocityMps </em></code>: 
-The velocity in meters per second. </p>
-
-				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em><a href="##(VELOCITY)">#VELOCITY</a>:</em></p>
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(VELOCITY).Set" >
-<strong>VELOCITY:Set(VelocityMps)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Set the velocity in Mps (meters per second).</p>
-
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em>#number VelocityMps </em></code>: 
-The velocity in meters per second. </p>
-
-				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em><a href="##(VELOCITY)">#VELOCITY</a>:</em></p>
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(VELOCITY).SetKmph" >
-<strong>VELOCITY:SetKmph(VelocityKmph)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Set the velocity in Kmph (kilometers per hour).</p>
-
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em>#number VelocityKmph </em></code>: 
-The velocity in kilometers per hour. </p>
-
-				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em><a href="##(VELOCITY)">#VELOCITY</a>:</em></p>
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(VELOCITY).SetMiph" >
-<strong>VELOCITY:SetMiph(VelocityMiph)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Set the velocity in Miph (miles per hour).</p>
-
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em>#number VelocityMiph </em></code>: 
-The velocity in miles per hour. </p>
-
-				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em><a href="##(VELOCITY)">#VELOCITY</a>:</em></p>
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(VELOCITY).ToString" >
-<strong>VELOCITY:ToString(Controllable, Settings, VelocityGroup)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Get the velocity in text, according the player or default <a href="Settings.html">Settings</a>.</p>
 
 		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> Controllable </em></code>: </p>
+<p><code><em> Object </em></code>: </p>
 
 				</li>
 				<li>
 				
-<p><code><em><a href="Core.Settings.html##(SETTINGS)">Core.Settings#SETTINGS</a> Settings </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em> VelocityGroup </em></code>: </p>
+<p><code><em> StateName </em></code>: </p>
 
 				</li>
 		</ul>
-		<h3>Return value</h3>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(BASE).CreateEventBirth" >
+<strong>BASE:CreateEventBirth(EventTime, Initiator, IniUnitName, place, subplace)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Creation of a Birth Event.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
 				
-<p><em>#string:</em>
-The velocity in text according the player or default <a href="Settings.html">Settings</a></p>
+<p><code><em><a href="Dcs.DCSTypes.html##(Time)">Dcs.DCSTypes#Time</a> EventTime </em></code>: 
+The time stamp of the event.</p>
 
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em></em>
-<a id="#(VELOCITY).Velocity" >
-<strong>VELOCITY.Velocity</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-
-			<h2><a id="#(VELOCITY_POSITIONABLE)" >Type <code>VELOCITY_POSITIONABLE</code></a></h2>
-				<h3>Field(s)</h3>
-		<dl class="function">
-<dt>
-
-<a id="#(VELOCITY_POSITIONABLE).Get" >
-<strong>VELOCITY_POSITIONABLE:Get()</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Get the velocity in Mps (meters per second).</p>
-
-		<h3>Return value</h3>
+				</li>
+				<li>
 				
-<p><em>#number:</em>
-The velocity in meters per second. </p>
+<p><code><em><a href="Dcs.DCSWrapper.Object.html##(Object)">Dcs.DCSWrapper.Object#Object</a> Initiator </em></code>: 
+The initiating object of the event.</p>
 
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(VELOCITY_POSITIONABLE).GetKmph" >
-<strong>VELOCITY_POSITIONABLE:GetKmph()</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Get the velocity in Kmph (kilometers per hour).</p>
-
-		<h3>Return value</h3>
+				</li>
+				<li>
 				
-<p><em>#number:</em>
-The velocity in kilometers per hour. </p>
+<p><code><em>#string IniUnitName </em></code>: 
+The initiating unit name.</p>
 
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(VELOCITY_POSITIONABLE).GetMiph" >
-<strong>VELOCITY_POSITIONABLE:GetMiph()</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Get the velocity in Miph (miles per hour).</p>
-
-		<h3>Return value</h3>
+				</li>
+				<li>
 				
-<p><em>#number:</em>
-The velocity in miles per hour. </p>
+<p><code><em> place </em></code>: </p>
 
+				</li>
+				<li>
+				
+<p><code><em> subplace </em></code>: </p>
+
+				</li>
+		</ul>
 </dd>
 </dl>
 		<dl class="function">
 <dt>
 
-<a id="#(VELOCITY_POSITIONABLE).New" >
-<strong>VELOCITY_POSITIONABLE:New(Positionable)</strong>
+<a id="#(BASE).CreateEventCrash" >
+<strong>BASE:CreateEventCrash(EventTime, Initiator)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>VELOCITY_POSITIONABLE Constructor.</p>
+<p>Creation of a Crash Event.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSTypes.html##(Time)">Dcs.DCSTypes#Time</a> EventTime </em></code>: 
+The time stamp of the event.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSWrapper.Object.html##(Object)">Dcs.DCSWrapper.Object#Object</a> Initiator </em></code>: 
+The initiating object of the event.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(BASE).CreateEventTakeoff" >
+<strong>BASE:CreateEventTakeoff(EventTime, Initiator)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Creation of a Takeoff Event.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSTypes.html##(Time)">Dcs.DCSTypes#Time</a> EventTime </em></code>: 
+The time stamp of the event.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSWrapper.Object.html##(Object)">Dcs.DCSWrapper.Object#Object</a> Initiator </em></code>: 
+The initiating object of the event.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(BASE).E" >
+<strong>BASE:E(Arguments)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Log an exception which will be traced always.</p>
+
+	
+<p>Can be anywhere within the function logic.</p>
 
 		<h3>Parameter</h3>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Wrapper.Positionable.html##(POSITIONABLE)">Wrapper.Positionable#POSITIONABLE</a> Positionable </em></code>: 
-The Positionable to monitor the speed. </p>
+<p><code><em> Arguments </em></code>: 
+A #table or any field.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(BASE).EventDispatcher" >
+<strong>BASE:EventDispatcher()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the event dispatcher</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="Core.Event.html##(EVENT)">Core.Event#EVENT</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(BASE).EventRemoveAll" >
+<strong>BASE:EventRemoveAll()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Remove all subscribed events</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(BASE)">#BASE</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(BASE).F" >
+<strong>BASE:F(Arguments)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Trace a function call.</p>
+
+	
+<p>Must be at the beginning of the function logic.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> Arguments </em></code>: 
+A #table or any field.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(BASE).F2" >
+<strong>BASE:F2(Arguments)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Trace a function call level 2.</p>
+
+	
+<p>Must be at the beginning of the function logic.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> Arguments </em></code>: 
+A #table or any field.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(BASE).F3" >
+<strong>BASE:F3(Arguments)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Trace a function call level 3.</p>
+
+	
+<p>Must be at the beginning of the function logic.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> Arguments </em></code>: 
+A #table or any field.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(BASE).GetClassID" >
+<strong>BASE:GetClassID()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Get the ClassID of the class instance.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#string:</em>
+The ClassID of the class instance.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(BASE).GetClassName" >
+<strong>BASE:GetClassName()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Get the ClassName of the class instance.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#string:</em>
+The ClassName of the class instance.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(BASE).GetClassNameAndID" >
+<strong>BASE:GetClassNameAndID()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Get the ClassName + ClassID of the class instance.</p>
+
+	
+<p>The ClassName + ClassID is formatted as '%s#%09d'. </p>
+
+		<h3>Return value</h3>
+				
+<p><em>#string:</em>
+The ClassName + ClassID of the class instance.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(BASE).GetEventPriority" >
+<strong>BASE:GetEventPriority()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Get the Class <a href="Event.html">Event</a> processing Priority.</p>
+
+	
+<p>The Event processing Priority is a number from 1 to 10, 
+reflecting the order of the classes subscribed to the Event to be processed.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#number:</em>
+The <a href="Event.html">Event</a> processing Priority.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(BASE).GetParent" >
+<strong>BASE:GetParent(Child, FromClass)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>This is the worker method to retrieve the Parent class.</p>
+
+	
+<p>Note that the Parent class must be passed to call the parent class method.</p>
+
+<pre><code>self:GetParent(self):ParentMethod()
+
+
+</code></pre>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="##(BASE)">#BASE</a> Child </em></code>: 
+is the Child class from which the Parent class needs to be retrieved.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> FromClass </em></code>: </p>
 
 				</li>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="##(VELOCITY_POSITIONABLE)">#VELOCITY_POSITIONABLE</a>:</em></p>
+<p><em><a href="##(BASE)">#BASE</a>:</em></p>
 
 
 </dd>
@@ -636,13 +1210,67 @@ The Positionable to monitor the speed. </p>
 		<dl class="function">
 <dt>
 
-		<em></em>
-<a id="#(VELOCITY_POSITIONABLE).Positionable" >
-<strong>VELOCITY_POSITIONABLE.Positionable</strong>
+<a id="#(BASE).GetState" >
+<strong>BASE:GetState(Object, Key)</strong>
 </a>
 </dt>
 <dd>
 	
+<p>Get a Value given a Key from the Object.</p>
+
+	
+<p>Note that if the Object is destroyed, nillified or garbage collected, then the Values and Keys will also be gone.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> Object </em></code>: 
+The object that holds the Value set by the Key.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> Key </em></code>: 
+The key that is used to retrieve the value. Note that the key can be a #string, but it can also be any other type!</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+
+<p>The Value retrieved.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(BASE).HandleEvent" >
+<strong>BASE:HandleEvent(Event, EventFunction)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Subscribe to a DCS Event.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Event.html##(EVENTS)">Core.Event#EVENTS</a> Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#function EventFunction </em></code>: 
+(optional) The function to be called when the event occurs for the unit.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(BASE)">#BASE</a>:</em></p>
 
 
 </dd>
@@ -650,27 +1278,1273 @@ The Positionable to monitor the speed. </p>
 		<dl class="function">
 <dt>
 
-<a id="#(VELOCITY_POSITIONABLE).ToString" >
-<strong>VELOCITY_POSITIONABLE:ToString()</strong>
+<a id="#(BASE).Inherit" >
+<strong>BASE:Inherit(Child, Parent)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Get the velocity in text, according the player or default <a href="Settings.html">Settings</a>.</p>
+<p>This is the worker method to inherit from a parent class.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> Child </em></code>: 
+is the Child class that inherits.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="##(BASE)">#BASE</a> Parent </em></code>: 
+is the Parent class that the Child inherits from.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(BASE)">#BASE</a>:</em>
+Child</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(BASE).IsInstanceOf" >
+<strong>BASE:IsInstanceOf(ClassName)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>This is the worker method to check if an object is an (sub)instance of a class.</p>
+
+	
+
+<h3>Examples:</h3>
+
+<ul>
+    <li><p>ZONE:New( 'some zone' ):IsInstanceOf( ZONE ) will return true</p></li>
+    <li><p>ZONE:New( 'some zone' ):IsInstanceOf( 'ZONE' ) will return true</p></li>
+    <li><p>ZONE:New( 'some zone' ):IsInstanceOf( 'zone' ) will return true</p></li>
+    <li><p>ZONE:New( 'some zone' ):IsInstanceOf( 'BASE' ) will return true</p></li>
+    <li><p>ZONE:New( 'some zone' ):IsInstanceOf( 'GROUP' ) will return false</p></li>
+</ul>
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> ClassName </em></code>: 
+is the name of the class or the class itself to run the check against</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(BASE).IsTrace" >
+<strong>BASE:IsTrace()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Enquires if tracing is on (for the class).</p>
 
 		<h3>Return value</h3>
 				
-<p><em>#string:</em>
-The velocity in text according the player or default <a href="Settings.html">Settings</a></p>
+<p><em>#boolean:</em></p>
+
 
 </dd>
 </dl>
 		<dl class="function">
 <dt>
 
+<a id="#(BASE).New" >
+<strong>BASE:New()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>BASE constructor.</p>
+
+	
+
+<p>This is an example how to use the BASE:New() constructor in a new class definition when inheriting from BASE.</p>
+
+<pre><code>function EVENT:New()
+  local self = BASE:Inherit( self, BASE:New() ) -- #EVENT
+  return self
+end
+  
+</code></pre>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(BASE)">#BASE</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(BASE).OnEvent" >
+<strong>BASE:OnEvent(EventData)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Occurs when an object is completely destroyed.</p>
+
+	
+<p>initiator : The unit that is was destroyed. </p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Event.html##(EVENTDATA)">Core.Event#EVENTDATA</a> EventData </em></code>: 
+The EventData structure.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(BASE).OnEventBaseCaptured" >
+<strong>BASE:OnEventBaseCaptured(EventData)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Occurs when a ground unit captures either an airbase or a farp.</p>
+
+	
+<p>initiator : The unit that captured the base
+place: The airbase that was captured, can be a FARP or Airbase. When calling place:getCoalition() the faction will already be the new owning faction. </p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Event.html##(EVENTDATA)">Core.Event#EVENTDATA</a> EventData </em></code>: 
+The EventData structure.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(BASE).OnEventBirth" >
+<strong>BASE:OnEventBirth(EventData)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Occurs when any object is spawned into the mission.</p>
+
+	
+<p>initiator : The unit that was spawned </p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Event.html##(EVENTDATA)">Core.Event#EVENTDATA</a> EventData </em></code>: 
+The EventData structure.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(BASE).OnEventCrash" >
+<strong>BASE:OnEventCrash(EventData)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Occurs when any aircraft crashes into the ground and is completely destroyed.</p>
+
+	
+<p>initiator : The unit that has crashed </p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Event.html##(EVENTDATA)">Core.Event#EVENTDATA</a> EventData </em></code>: 
+The EventData structure.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(BASE).OnEventDead" >
+<strong>BASE:OnEventDead(EventData)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Occurs when an object is dead.</p>
+
+	
+<p>initiator : The unit that is dead. </p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Event.html##(EVENTDATA)">Core.Event#EVENTDATA</a> EventData </em></code>: 
+The EventData structure.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(BASE).OnEventEjection" >
+<strong>BASE:OnEventEjection(EventData)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Occurs when a pilot ejects from an aircraft
+initiator : The unit that has ejected </p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Event.html##(EVENTDATA)">Core.Event#EVENTDATA</a> EventData </em></code>: 
+The EventData structure.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(BASE).OnEventEngineShutdown" >
+<strong>BASE:OnEventEngineShutdown(EventData)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Occurs when any aircraft shuts down its engines.</p>
+
+	
+<p>initiator : The unit that is stopping its engines. </p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Event.html##(EVENTDATA)">Core.Event#EVENTDATA</a> EventData </em></code>: 
+The EventData structure.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(BASE).OnEventEngineStartup" >
+<strong>BASE:OnEventEngineStartup(EventData)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Occurs when any aircraft starts its engines.</p>
+
+	
+<p>initiator : The unit that is starting its engines. </p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Event.html##(EVENTDATA)">Core.Event#EVENTDATA</a> EventData </em></code>: 
+The EventData structure.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(BASE).OnEventHit" >
+<strong>BASE:OnEventHit(EventData)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Occurs whenever an object is hit by a weapon.</p>
+
+	
+<p>initiator : The unit object the fired the weapon
+weapon: Weapon object that hit the target
+target: The Object that was hit. </p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Event.html##(EVENTDATA)">Core.Event#EVENTDATA</a> EventData </em></code>: 
+The EventData structure.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(BASE).OnEventHumanFailure" >
+<strong>BASE:OnEventHumanFailure(EventData)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Occurs when any system fails on a human controlled aircraft.</p>
+
+	
+<p>initiator : The unit that had the failure </p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Event.html##(EVENTDATA)">Core.Event#EVENTDATA</a> EventData </em></code>: 
+The EventData structure.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(BASE).OnEventLand" >
+<strong>BASE:OnEventLand(EventData)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Occurs when an aircraft lands at an airbase, farp or ship
+initiator : The unit that has landed
+place: Object that the unit landed on.</p>
+
+	
+<p>Can be an Airbase Object, FARP, or Ships </p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Event.html##(EVENTDATA)">Core.Event#EVENTDATA</a> EventData </em></code>: 
+The EventData structure.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(BASE).OnEventMissionEnd" >
+<strong>BASE:OnEventMissionEnd(EventData)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Occurs when a mission ends</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Event.html##(EVENTDATA)">Core.Event#EVENTDATA</a> EventData </em></code>: 
+The EventData structure.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(BASE).OnEventMissionStart" >
+<strong>BASE:OnEventMissionStart(EventData)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Occurs when a mission starts </p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Event.html##(EVENTDATA)">Core.Event#EVENTDATA</a> EventData </em></code>: 
+The EventData structure.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(BASE).OnEventPilotDead" >
+<strong>BASE:OnEventPilotDead(EventData)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Occurs when the pilot of an aircraft is killed.</p>
+
+	
+<p>Can occur either if the player is alive and crashes or if a weapon kills the pilot without completely destroying the plane.
+initiator : The unit that the pilot has died in. </p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Event.html##(EVENTDATA)">Core.Event#EVENTDATA</a> EventData </em></code>: 
+The EventData structure.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(BASE).OnEventPlayerEnterUnit" >
+<strong>BASE:OnEventPlayerEnterUnit(EventData)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Occurs when any player assumes direct control of a unit.</p>
+
+	
+<p>initiator : The unit that is being taken control of. </p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Event.html##(EVENTDATA)">Core.Event#EVENTDATA</a> EventData </em></code>: 
+The EventData structure.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(BASE).OnEventPlayerLeaveUnit" >
+<strong>BASE:OnEventPlayerLeaveUnit(EventData)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Occurs when any player relieves control of a unit to the AI.</p>
+
+	
+<p>initiator : The unit that the player left. </p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Event.html##(EVENTDATA)">Core.Event#EVENTDATA</a> EventData </em></code>: 
+The EventData structure.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(BASE).OnEventRefueling" >
+<strong>BASE:OnEventRefueling(EventData)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Occurs when an aircraft connects with a tanker and begins taking on fuel.</p>
+
+	
+<p>initiator : The unit that is receiving fuel. </p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Event.html##(EVENTDATA)">Core.Event#EVENTDATA</a> EventData </em></code>: 
+The EventData structure.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(BASE).OnEventRefuelingStop" >
+<strong>BASE:OnEventRefuelingStop(EventData)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Occurs when an aircraft is finished taking fuel.</p>
+
+	
+<p>initiator : The unit that was receiving fuel. </p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Event.html##(EVENTDATA)">Core.Event#EVENTDATA</a> EventData </em></code>: 
+The EventData structure.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(BASE).OnEventShootingEnd" >
+<strong>BASE:OnEventShootingEnd(EventData)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Occurs when any unit stops firing its weapon.</p>
+
+	
+<p>Event will always correspond with a shooting start event.
+initiator : The unit that was doing the shooing. </p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Event.html##(EVENTDATA)">Core.Event#EVENTDATA</a> EventData </em></code>: 
+The EventData structure.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(BASE).OnEventShootingStart" >
+<strong>BASE:OnEventShootingStart(EventData)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Occurs when any unit begins firing a weapon that has a high rate of fire.</p>
+
+	
+<p>Most common with aircraft cannons (GAU-8), autocannons, and machine guns.
+initiator : The unit that is doing the shooing.
+target: The unit that is being targeted. </p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Event.html##(EVENTDATA)">Core.Event#EVENTDATA</a> EventData </em></code>: 
+The EventData structure.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(BASE).OnEventShot" >
+<strong>BASE:OnEventShot(EventData)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Occurs whenever any unit in a mission fires a weapon.</p>
+
+	
+<p>But not any machine gun or autocannon based weapon, those are handled by EVENT.ShootingStart.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Event.html##(EVENTDATA)">Core.Event#EVENTDATA</a> EventData </em></code>: 
+The EventData structure.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(BASE).OnEventTakeoff" >
+<strong>BASE:OnEventTakeoff(EventData)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Occurs when an aircraft takes off from an airbase, farp, or ship.</p>
+
+	
+<p>initiator : The unit that tookoff
+place: Object from where the AI took-off from. Can be an Airbase Object, FARP, or Ships </p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Event.html##(EVENTDATA)">Core.Event#EVENTDATA</a> EventData </em></code>: 
+The EventData structure.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(BASE).ScheduleOnce" >
+<strong>BASE:ScheduleOnce(Start, SchedulerFunction, ...)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Schedule a new time event.</p>
+
+	
+<p>Note that the schedule will only take place if the scheduler is <em>started</em>. Even for a single schedule event, the scheduler needs to be started also.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number Start </em></code>: 
+Specifies the amount of seconds that will be waited before the scheduling is started, and the event function is called.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#function SchedulerFunction </em></code>: 
+The event function to be called when a timer event occurs. The event function needs to accept the parameters specified in SchedulerArguments.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#table ... </em></code>: 
+Optional arguments that can be given as part of scheduler. The arguments need to be given as a table { param1, param 2, ... }.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#number:</em>
+The ScheduleID of the planned schedule.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(BASE).ScheduleRepeat" >
+<strong>BASE:ScheduleRepeat(Start, Repeat, RandomizeFactor, Stop, SchedulerFunction, ...)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Schedule a new time event.</p>
+
+	
+<p>Note that the schedule will only take place if the scheduler is <em>started</em>. Even for a single schedule event, the scheduler needs to be started also.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number Start </em></code>: 
+Specifies the amount of seconds that will be waited before the scheduling is started, and the event function is called.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Repeat </em></code>: 
+Specifies the interval in seconds when the scheduler will call the event function.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number RandomizeFactor </em></code>: 
+Specifies a randomization factor between 0 and 1 to randomize the Repeat.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Stop </em></code>: 
+Specifies the amount of seconds when the scheduler will be stopped.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#function SchedulerFunction </em></code>: 
+The event function to be called when a timer event occurs. The event function needs to accept the parameters specified in SchedulerArguments.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#table ... </em></code>: 
+Optional arguments that can be given as part of scheduler. The arguments need to be given as a table { param1, param 2, ... }.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#number:</em>
+The ScheduleID of the planned schedule.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(BASE).ScheduleStop" >
+<strong>BASE:ScheduleStop(SchedulerFunction)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Stops the Schedule.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#function SchedulerFunction </em></code>: 
+The event function to be called when a timer event occurs. The event function needs to accept the parameters specified in SchedulerArguments.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 		<em></em>
-<a id="#(VELOCITY_POSITIONABLE).Velocity" >
-<strong>VELOCITY_POSITIONABLE.Velocity</strong>
+<a id="#(BASE).SchedulerObject" >
+<strong>BASE.SchedulerObject</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(BASE).SetEventPriority" >
+<strong>BASE:SetEventPriority(EventPriority)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set the Class <a href="Event.html">Event</a> processing Priority.</p>
+
+	
+<p>The Event processing Priority is a number from 1 to 10, 
+reflecting the order of the classes subscribed to the Event to be processed.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number EventPriority </em></code>: 
+The <a href="Event.html">Event</a> processing Priority.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+
+<p>self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(BASE).SetState" >
+<strong>BASE:SetState(Object, Key, Value)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set a state or property of the Object given a Key and a Value.</p>
+
+	
+<p>Note that if the Object is destroyed, nillified or garbage collected, then the Values and Keys will also be gone.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> Object </em></code>: 
+The object that will hold the Value set by the Key.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> Key </em></code>: 
+The key that is used as a reference of the value. Note that the key can be a #string, but it can also be any other type!</p>
+
+				</li>
+				<li>
+				
+<p><code><em> Value </em></code>: 
+The value to is stored in the object.</p>
+
+				</li>
+		</ul>
+		<h3>Return values</h3>
+			<ol>
+				<li>
+				
+
+<p>The Value set.</p>
+
+				</li>
+				<li>
+				
+<p><em>#nil:</em>
+The Key was not found and thus the Value could not be retrieved.</p>
+
+				</li>
+			</ol>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(BASE).T" >
+<strong>BASE:T(Arguments)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Trace a function logic level 1.</p>
+
+	
+<p>Can be anywhere within the function logic.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> Arguments </em></code>: 
+A #table or any field.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(BASE).T2" >
+<strong>BASE:T2(Arguments)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Trace a function logic level 2.</p>
+
+	
+<p>Can be anywhere within the function logic.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> Arguments </em></code>: 
+A #table or any field.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(BASE).T3" >
+<strong>BASE:T3(Arguments)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Trace a function logic level 3.</p>
+
+	
+<p>Can be anywhere within the function logic.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> Arguments </em></code>: 
+A #table or any field.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(BASE).TraceAll" >
+<strong>BASE:TraceAll(TraceAll)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Trace all methods in MOOSE</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#boolean TraceAll </em></code>: 
+true = trace all methods in MOOSE.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(BASE).TraceClass" >
+<strong>BASE:TraceClass(Class)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set tracing for a class</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Class </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(BASE).TraceClassMethod" >
+<strong>BASE:TraceClassMethod(Class, Method)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set tracing for a specific method of  class</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Class </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Method </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(BASE).TraceLevel" >
+<strong>BASE:TraceLevel(Level)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set trace level</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number Level </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(BASE).TraceOnOff" >
+<strong>BASE:TraceOnOff(TraceOnOff)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set trace on or off
+Note that when trace is off, no debug statement is performed, increasing performance!
+When Moose is loaded statically, (as one file), tracing is switched off by default.</p>
+
+	
+<p>So tracing must be switched on manually in your mission if you are using Moose statically.
+When moose is loading dynamically (for moose class development), tracing is switched on by default.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#boolean TraceOnOff </em></code>: 
+Switch the tracing on or off.</p>
+
+				</li>
+		</ul>
+			<h3>Usage:</h3>
+		<pre class="example"><code>-- Switch the tracing On
+BASE:TraceOnOff( true )
+
+-- Switch the tracing Off
+BASE:TraceOnOff( false )</code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(BASE).UnHandleEvent" >
+<strong>BASE:UnHandleEvent(Event)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>UnSubscribe to a DCS event.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Event.html##(EVENTS)">Core.Event#EVENTS</a> Event </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(BASE)">#BASE</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(BASE._)">#BASE._</a></em>
+<a id="#(BASE)._" >
+<strong>BASE._</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(BASE)._F" >
+<strong>BASE:_F(Arguments, DebugInfoCurrentParam, DebugInfoFromParam)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Trace a function call.</p>
+
+	
+<p>This function is private.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> Arguments </em></code>: 
+A #table or any field.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> DebugInfoCurrentParam </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> DebugInfoFromParam </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(BASE)._T" >
+<strong>BASE:_T(Arguments, DebugInfoCurrentParam, DebugInfoFromParam)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Trace a function logic.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> Arguments </em></code>: 
+A #table or any field.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> DebugInfoCurrentParam </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> DebugInfoFromParam </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(BASE.__)">#BASE.__</a></em>
+<a id="#(BASE).__" >
+<strong>BASE.__</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(BASE).onEvent" >
+<strong>BASE:onEvent(event)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+	
+<p> TODO: Complete Dcs.DCSTypes#Event structure. <br/>
+- The main event handling function... This function captures all events generated for the class.
+ @param #BASE self
+ @param Dcs.DCSTypes#Event event</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> event </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+
+			<h2><a id="#(BASE._)" >Type <code>BASE._</code></a></h2>
+			
+			<h2><a id="#(BASE.__)" >Type <code>BASE.__</code></a></h2>
+			
+			<h2><a id="#(FORMATION)" >Type <code>FORMATION</code></a></h2>
+				
+<p>The Formation Class</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+<a id="#(FORMATION).Cone" >
+<strong>FORMATION.Cone</strong>
+</a>
+</dt>
+<dd>
+	
+<p>A cone formation.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(FORMATION).Vee" >
+<strong>FORMATION.Vee</strong>
 </a>
 </dt>
 <dd>

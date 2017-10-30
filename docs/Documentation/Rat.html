@@ -102,6 +102,7 @@
 					<li><a href="UserFlag.html">UserFlag</a></li>
 					<li><a href="UserSound.html">UserSound</a></li>
 					<li><a href="Utils.html">Utils</a></li>
+					<li><a href="Velocity.html">Velocity</a></li>
 					<li><a href="Zone.html">Zone</a></li>
 					<li><a href="ZoneCaptureCoalition.html">ZoneCaptureCoalition</a></li>
 					<li><a href="ZoneGoal.html">ZoneGoal</a></li>
@@ -201,15 +202,45 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RAT).ATC_Clearance">RAT:ATC_Clearance(n)</a></td>
+		<td class="summary">
+<p>Max number of planes that get landing clearance of the RAT ATC.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RAT).ATC_Delay">RAT:ATC_Delay(time)</a></td>
+		<td class="summary">
+<p>Delay between granting landing clearance for simultanious landings.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(RAT).ATCswitch">RAT.ATCswitch</a></td>
 		<td class="summary">
-<p>Enable/disable ATC if set to true/false. </p>
+<p>Enable/disable ATC if set to true/false.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RAT).AddFriendlyAirportsToDepartures">RAT:AddFriendlyAirportsToDepartures()</a></td>
+		<td class="summary">
+<p>Add all friendly airports to the list of possible departures.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RAT).AddFriendlyAirportsToDestinations">RAT:AddFriendlyAirportsToDestinations()</a></td>
+		<td class="summary">
+<p>Add all friendly airports to the list of possible destinations</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(RAT).AlphaDescent">RAT.AlphaDescent</a></td>
 		<td class="summary">
 <p>Default angle of descenti in degrees. A value of 3.6 follows the 3:1 rule of 3 miles of travel and 1000 ft descent.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RAT).ChangeAircraft">RAT:ChangeAircraft(actype)</a></td>
+		<td class="summary">
+<p>Change aircraft type.</p>
 </td>
 		</tr>
 		<tr>
@@ -221,19 +252,25 @@
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(RAT).ClearForLanding">RAT:ClearForLanding(name)</a></td>
 		<td class="summary">
-
+<p>Clear flight for landing.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(RAT).Commute">RAT:Commute(switch)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(RAT).Commute">RAT:Commute()</a></td>
 		<td class="summary">
-<p>Aircraft will commute between their departure and destination airports.</p>
+<p>Aircraft will commute between their departure and destination airports or zones.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(RAT).ContinueJourney">RAT:ContinueJourney(switch)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(RAT).ContinueJourney">RAT:ContinueJourney()</a></td>
 		<td class="summary">
 <p>Aircraft will continue their journey from their destination.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RAT).DestinationZone">RAT:DestinationZone()</a></td>
+		<td class="summary">
+<p>Destinations are treated as zones.</p>
 </td>
 		</tr>
 		<tr>
@@ -246,6 +283,12 @@
 		<td class="name" nowrap="nowrap"><a href="##(RAT).ExcludedAirports">RAT:ExcludedAirports(ports)</a></td>
 		<td class="summary">
 <p>Airports, FARPs and ships explicitly excluded as departures and destinations.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RAT).FLcruise">RAT.FLcruise</a></td>
+		<td class="summary">
+<p>Cruise altitude of aircraft. Default FL200 for planes and F005 for helos.</p>
 </td>
 		</tr>
 		<tr>
@@ -291,9 +334,39 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RAT).Ndeparture_Airports">RAT.Ndeparture_Airports</a></td>
+		<td class="summary">
+<p>Number of departure airports set via SetDeparture().</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RAT).Ndeparture_Zones">RAT.Ndeparture_Zones</a></td>
+		<td class="summary">
+<p>Number of departure zones set via SetDeparture.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RAT).Ndestination_Airports">RAT.Ndestination_Airports</a></td>
+		<td class="summary">
+<p>Number of destination airports set via SetDestination().</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RAT).Ndestination_Zones">RAT.Ndestination_Zones</a></td>
+		<td class="summary">
+<p>Number of destination zones set via SetDestination().</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(RAT).New">RAT:New(groupname, alias)</a></td>
 		<td class="summary">
 <p>Create a new RAT object.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RAT).NoRespawn">RAT:NoRespawn()</a></td>
+		<td class="summary">
+<p>Aircraft will not get respawned when they finished their route.</p>
 </td>
 		</tr>
 		<tr>
@@ -315,9 +388,51 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RAT).RadioFrequency">RAT:RadioFrequency(frequency)</a></td>
+		<td class="summary">
+<p>Set radio frequency.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RAT).RadioModulation">RAT:RadioModulation(modulation)</a></td>
+		<td class="summary">
+<p>Set radio modulation.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RAT).RadioOFF">RAT:RadioOFF()</a></td>
+		<td class="summary">
+<p>Disable Radio.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RAT).RadioON">RAT:RadioON()</a></td>
+		<td class="summary">
+<p>Enable Radio.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(RAT).RespawnAfterLanding">RAT:RespawnAfterLanding(delay)</a></td>
 		<td class="summary">
 <p>Make aircraft respawn the moment they land rather than at engine shut down.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RAT).RespawnAfterTakeoff">RAT:RespawnAfterTakeoff()</a></td>
+		<td class="summary">
+<p>Aircraft will be respawned directly after take-off.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RAT).ReturnZone">RAT:ReturnZone()</a></td>
+		<td class="summary">
+<p>Aircraft will fly to a random point within a zone and then return to its departure airport or zone.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RAT).SetAISkill">RAT:SetAISkill(skill)</a></td>
+		<td class="summary">
+<p>Set skill of AI aircraft.</p>
 </td>
 		</tr>
 		<tr>
@@ -351,7 +466,7 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(RAT).SetDeparture">RAT:SetDeparture(names)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(RAT).SetDeparture">RAT:SetDeparture(departurenames)</a></td>
 		<td class="summary">
 <p>Set possible departure ports.</p>
 </td>
@@ -369,9 +484,9 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(RAT).SetDestination">RAT:SetDestination(names)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(RAT).SetDestination">RAT:SetDestination(destinationnames)</a></td>
 		<td class="summary">
-<p>Set name of destination airport for the AI aircraft.</p>
+<p>Set name of destination airports or zones for the AI aircraft.</p>
 </td>
 		</tr>
 		<tr>
@@ -381,25 +496,25 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(RAT).SetFL">RAT:SetFL(height)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(RAT).SetFL">RAT:SetFL(FL)</a></td>
 		<td class="summary">
 <p>Set flight level.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(RAT).SetFLcruise">RAT:SetFLcruise(height)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(RAT).SetFLcruise">RAT:SetFLcruise(FL)</a></td>
 		<td class="summary">
 <p>Set flight level of cruising part.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(RAT).SetFLmax">RAT:SetFLmax(height)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(RAT).SetFLmax">RAT:SetFLmax(FL)</a></td>
 		<td class="summary">
 <p>Set max flight level.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(RAT).SetFLmin">RAT:SetFLmin(height)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(RAT).SetFLmin">RAT:SetFLmin(FL)</a></td>
 		<td class="summary">
 <p>Set min flight level.</p>
 </td>
@@ -435,6 +550,12 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RAT).SetParkingID">RAT:SetParkingID(id)</a></td>
+		<td class="summary">
+<p>Set parking id of aircraft.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(RAT).SetROE">RAT:SetROE(roe)</a></td>
 		<td class="summary">
 <p>Set rules of engagement (ROE).</p>
@@ -449,7 +570,7 @@
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(RAT).SetSpawnDelay">RAT:SetSpawnDelay(delay)</a></td>
 		<td class="summary">
-<p>Set the delay before first group is spawned.</p>
+<p>Set the delay before first group is spawned. </p>
 </td>
 		</tr>
 		<tr>
@@ -479,7 +600,7 @@
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(RAT).StatusReports">RAT:StatusReports(switch)</a></td>
 		<td class="summary">
-<p>Aircraft report status messages.</p>
+<p>Aircraft report status update messages along the route.</p>
 </td>
 		</tr>
 		<tr>
@@ -491,13 +612,19 @@
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(RAT).TimeDestroyInactive">RAT:TimeDestroyInactive(time)</a></td>
 		<td class="summary">
-<p>Set the time after which inactive groups will be destroyed.</p>
+<p>Set the time after which inactive groups will be destroyed. </p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(RAT).Tinactive">RAT.Tinactive</a></td>
 		<td class="summary">
 <p>Time in seconds after which inactive units will be destroyed. Default is 300 seconds.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RAT).Uncontrolled">RAT:Uncontrolled()</a></td>
+		<td class="summary">
+<p>Spawn aircraft in uncontolled state.</p>
 </td>
 		</tr>
 		<tr>
@@ -567,9 +694,27 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RAT)._AddFriendlyAirports">RAT:_AddFriendlyAirports(ports)</a></td>
+		<td class="summary">
+<p>Add names of all friendly airports to possible departure or destination airports if they are not already in the list. </p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(RAT)._AirportExists">RAT:_AirportExists(name)</a></td>
 		<td class="summary">
 <p>Test if an airport exists on the current map.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RAT)._AnticipatedGroupName">RAT:_AnticipatedGroupName(index)</a></td>
+		<td class="summary">
+<p>Anticipated group name from alias and spawn index.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RAT)._CheckConsistency">RAT:_CheckConsistency()</a></td>
+		<td class="summary">
+<p>Function checks consistency of user input and automatically adjusts parameters if necessary.</p>
 </td>
 		</tr>
 		<tr>
@@ -633,15 +778,15 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(RAT)._GetDestinations">RAT:_GetDestinations(departure, q, minrange, maxrange)</a></td>
-		<td class="summary">
-<p>Get all possible destination airports depending on departure position.</p>
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(RAT)._GetLife">RAT:_GetLife(group)</a></td>
 		<td class="summary">
 <p>Get (relative) life of first unit of a group.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RAT)._Heading">RAT:_Heading(course)</a></td>
+		<td class="summary">
+<p>Determine the heading for an aircraft to be entered in the route template.</p>
 </td>
 		</tr>
 		<tr>
@@ -657,15 +802,21 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(RAT)._MinDistance">RAT:_MinDistance(alpha, beta, h)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(RAT)._MinDistance">RAT:_MinDistance(alpha, beta, ha, hb)</a></td>
 		<td class="summary">
-<p>Calculate min distance between departure and destination for given minimum flight level and climb/decent rates</p>
+<p>Calculate minimum distance between departure and destination for given minimum flight level and climb/decent rates.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(RAT)._ModifySpawnTemplate">RAT:_ModifySpawnTemplate(waypoints)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(RAT)._ModifySpawnTemplate">RAT:_ModifySpawnTemplate(waypoints, livery)</a></td>
 		<td class="summary">
 <p>Modifies the template of the group to be spawned.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RAT)._NameInList">RAT:_NameInList(liste, name)</a></td>
+		<td class="summary">
+<p>Check if a name/string is in a list or not.</p>
 </td>
 		</tr>
 		<tr>
@@ -711,13 +862,13 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(RAT)._PickDestination">RAT:_PickDestination(destinations, _random)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(RAT)._PickDestination">RAT:_PickDestination(departure, q, minrange, maxrange, random, landing)</a></td>
 		<td class="summary">
-<p>Pick destination airport.</p>
+<p>Pick destination airport or zone depending on departure position.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(RAT)._PlaceMarkers">RAT:_PlaceMarkers(waypoints)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(RAT)._PlaceMarkers">RAT:_PlaceMarkers(waypoints, index)</a></td>
 		<td class="summary">
 <p>Place markers of the waypoints.</p>
 </td>
@@ -753,7 +904,7 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(RAT)._SetMarker">RAT:_SetMarker(text, wp)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(RAT)._SetMarker">RAT:_SetMarker(text, wp, index)</a></td>
 		<td class="summary">
 <p>Set a marker visible for all on the F10 map.</p>
 </td>
@@ -771,7 +922,7 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(RAT)._SetRoute">RAT:_SetRoute(Takeoff, _departure, _destination, takeoff)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(RAT)._SetRoute">RAT:_SetRoute(Takeoff, Landing, _departure, _destination, takeoff, landing, _waypoint)</a></td>
 		<td class="summary">
 <p>Set the route of the AI plane.</p>
 </td>
@@ -783,9 +934,15 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(RAT)._SpawnWithRoute">RAT:_SpawnWithRoute(_departure, _destination)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(RAT)._SpawnWithRoute">RAT:_SpawnWithRoute(_departure, _destination, _takeoff, _landing, _livery, _waypoint)</a></td>
 		<td class="summary">
 <p>Spawn the AI aircraft with a route.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RAT)._TaskFunction">RAT:_TaskFunction(FunctionString, ...)</a></td>
+		<td class="summary">
+<p>Task function.</p>
 </td>
 		</tr>
 		<tr>
@@ -795,9 +952,39 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(RAT)._Waypoint">RAT:_Waypoint(Type, Coord, Speed, Altitude, Airport)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(RAT)._Waypoint">RAT:_Waypoint(Running, Type, Coord, Speed, Altitude, Airport, index)</a></td>
 		<td class="summary">
 <p>Create a waypoint that can be used with the Route command.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RAT)._WaypointFunction">RAT._WaypointFunction(group, rat, wp)</a></td>
+		<td class="summary">
+<p>Function which is called after passing every waypoint.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RAT)._ZoneExists">RAT:_ZoneExists(name)</a></td>
+		<td class="summary">
+<p>Test if a trigger zone defined in the mission editor exists.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RAT).actype">RAT.actype</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RAT).addfriendlydepartures">RAT.addfriendlydepartures</a></td>
+		<td class="summary">
+<p>Add all friendly airports to departures.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RAT).addfriendlydestinations">RAT.addfriendlydestinations</a></td>
+		<td class="summary">
+<p>Add all friendly airports to destinations.</p>
 </td>
 		</tr>
 		<tr>
@@ -893,13 +1080,7 @@
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(RAT).departure_ports">RAT.departure_ports</a></td>
 		<td class="summary">
-<p>Array containing the names of the destination airports.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(RAT).departure_zones">RAT.departure_zones</a></td>
-		<td class="summary">
-<p>Array containing the names of the departure zones.</p>
+<p>Array containing the names of the destination airports or zones.</p>
 </td>
 		</tr>
 		<tr>
@@ -911,7 +1092,13 @@
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(RAT).destination_ports">RAT.destination_ports</a></td>
 		<td class="summary">
-<p>Array containing the names of the destination airports.</p>
+<p>Array containing the names of the destination airports or zones.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RAT).destinationzone">RAT.destinationzone</a></td>
+		<td class="summary">
+<p>Destination is a zone and not an airport.</p>
 </td>
 		</tr>
 		<tr>
@@ -927,6 +1114,12 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RAT).frequency">RAT.frequency</a></td>
+		<td class="summary">
+<p>Radio frequency used by the RAT groups.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(RAT).friendly">RAT.friendly</a></td>
 		<td class="summary">
 <p>Possible departure/destination airport: all=blue+red+neutral, same=spawn+neutral, spawnonly=spawn, blue=blue+neutral, blueonly=blue, red=red+neutral, redonly=red.</p>
@@ -936,6 +1129,12 @@
 		<td class="name" nowrap="nowrap"><a href="##(RAT).id">RAT.id</a></td>
 		<td class="summary">
 <p>Some ID to identify who we are in output of the DCS.log file.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RAT).landing">RAT.landing</a></td>
+		<td class="summary">
+<p>Landing type. Determines if we actually land at an airport or treat it as zone.</p>
 </td>
 		</tr>
 		<tr>
@@ -969,9 +1168,21 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RAT).modulation">RAT.modulation</a></td>
+		<td class="summary">
+<p>Ratio modulation. Either "FM" or "AM".</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(RAT).ngroups">RAT.ngroups</a></td>
 		<td class="summary">
 <p>Number of groups to be spawned in total.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RAT).norespawn">RAT.norespawn</a></td>
+		<td class="summary">
+<p>Aircraft will not be respawned after they have finished their route.</p>
 </td>
 		</tr>
 		<tr>
@@ -981,9 +1192,21 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RAT).parking_id">RAT.parking_id</a></td>
+		<td class="summary">
+<p>String with a special parking ID for the aircraft.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(RAT).placemarkers">RAT.placemarkers</a></td>
 		<td class="summary">
 <p>Place markers of waypoints on F10 map.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RAT).radio">RAT.radio</a></td>
+		<td class="summary">
+<p>If true/false disables radio messages from the RAT groups.</p>
 </td>
 		</tr>
 		<tr>
@@ -1011,6 +1234,12 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RAT).respawn_after_takeoff">RAT.respawn_after_takeoff</a></td>
+		<td class="summary">
+<p>Aircraft will be respawned directly after take-off.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(RAT).respawn_at_landing">RAT.respawn_at_landing</a></td>
 		<td class="summary">
 <p>Respawn aircraft the moment they land rather than at engine shutdown.</p>
@@ -1020,6 +1249,18 @@
 		<td class="name" nowrap="nowrap"><a href="##(RAT).respawn_delay">RAT.respawn_delay</a></td>
 		<td class="summary">
 <p>Delay in seconds until repawn happens after landing.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RAT).return_zones">RAT.return_zones</a></td>
+		<td class="summary">
+<p>Array containing the names of the return zones.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RAT).returnzone">RAT.returnzone</a></td>
+		<td class="summary">
+<p>Zone where aircraft will fly to before returning to their departure airport.</p>
 </td>
 		</tr>
 		<tr>
@@ -1047,9 +1288,21 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RAT).spawninitialized">RAT.spawninitialized</a></td>
+		<td class="summary">
+<p>If RAT:Spawn() was already called this RAT object is set to true to prevent users to call it again.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(RAT).spawninterval">RAT.spawninterval</a></td>
 		<td class="summary">
 <p>Interval between spawning units/groups. Note that we add a randomization of 50%.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RAT).status">RAT.status</a></td>
+		<td class="summary">
+<p>RAT aircraft status.</p>
 </td>
 		</tr>
 		<tr>
@@ -1065,15 +1318,63 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RAT).templategroup">RAT.templategroup</a></td>
+		<td class="summary">
+<p>Group serving as template for the RAT aircraft.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RAT).type">RAT.type</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RAT).uncontrolled">RAT.uncontrolled</a></td>
+		<td class="summary">
+<p>If true aircraft are spawned in uncontrolled state and will only sit on their parking spots. </p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(RAT).unit">RAT.unit</a></td>
 		<td class="summary">
 <p>RAT unit conversions.</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RAT).version">RAT.version</a></td>
+		<td class="summary">
+<p>RAT version.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RAT).waypointdescriptions">RAT.waypointdescriptions</a></td>
+		<td class="summary">
+<p>Table with strings for waypoint descriptions of markers.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RAT).waypointstatus">RAT.waypointstatus</a></td>
+		<td class="summary">
+<p>Table with strings of waypoint status.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(RAT).wp">RAT.wp</a></td>
 		<td class="summary">
 <p>RAT waypoint type.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RAT).wp_final">RAT.wp_final</a></td>
+		<td class="summary">
+<p>Index of the final waypoint.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(RAT).wp_holding">RAT.wp_holding</a></td>
+		<td class="summary">
+<p>Index of the holding waypoint.</p>
 </td>
 		</tr>
 	</table>
@@ -1282,6 +1583,56 @@ It is possible to restrict the minimum cruise altitude by <a href="##(RAT).SetFL
 		<dl class="function">
 <dt>
 
+<a id="#(RAT).ATC_Clearance" >
+<strong>RAT:ATC_Clearance(n)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Max number of planes that get landing clearance of the RAT ATC.</p>
+
+	
+<p>This setting effects all RAT objects and groups! </p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number n </em></code>: 
+Number of aircraft that are allowed to land simultaniously. Default is 2.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(RAT).ATC_Delay" >
+<strong>RAT:ATC_Delay(time)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Delay between granting landing clearance for simultanious landings.</p>
+
+	
+<p>This setting effects all RAT objects and groups! </p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number time </em></code>: 
+Delay time when the next aircraft will get landing clearance event if the previous one did not land yet. Default is 240 sec.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 		<em>#boolean</em>
 <a id="#(RAT).ATCswitch" >
 <strong>RAT.ATCswitch</strong>
@@ -1289,7 +1640,33 @@ It is possible to restrict the minimum cruise altitude by <a href="##(RAT).SetFL
 </dt>
 <dd>
 	
-<p>Enable/disable ATC if set to true/false. </p>
+<p>Enable/disable ATC if set to true/false.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(RAT).AddFriendlyAirportsToDepartures" >
+<strong>RAT:AddFriendlyAirportsToDepartures()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Add all friendly airports to the list of possible departures.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(RAT).AddFriendlyAirportsToDestinations" >
+<strong>RAT:AddFriendlyAirportsToDestinations()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Add all friendly airports to the list of possible destinations</p>
 
 </dd>
 </dl>
@@ -1305,6 +1682,32 @@ It is possible to restrict the minimum cruise altitude by <a href="##(RAT).SetFL
 	
 <p>Default angle of descenti in degrees. A value of 3.6 follows the 3:1 rule of 3 miles of travel and 1000 ft descent.</p>
 
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(RAT).ChangeAircraft" >
+<strong>RAT:ChangeAircraft(actype)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Change aircraft type.</p>
+
+	
+<p>This is a dirty hack which allows to change the aircraft type of the template group.
+Note that all parameters like cruise speed, climb rate, range etc are still taken from the template group which likely leads to strange behaviour.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string actype </em></code>: 
+Type of aircraft which is spawned independent of the template group. Use with care and expect problems!</p>
+
+				</li>
+		</ul>
 </dd>
 </dl>
 		<dl class="function">
@@ -1330,13 +1733,17 @@ It is possible to restrict the minimum cruise altitude by <a href="##(RAT).SetFL
 </dt>
 <dd>
 	
+<p>Clear flight for landing.</p>
 
+	
+<p>Sets tigger value to 1.</p>
 
 		<h3>Parameter</h3>
 		<ul>
 				<li>
 				
-<p><code><em> name </em></code>: </p>
+<p><code><em>#string name </em></code>: 
+Name of flight to be cleared for landing.</p>
 
 				</li>
 		</ul>
@@ -1346,32 +1753,20 @@ It is possible to restrict the minimum cruise altitude by <a href="##(RAT).SetFL
 <dt>
 
 <a id="#(RAT).Commute" >
-<strong>RAT:Commute(switch)</strong>
+<strong>RAT:Commute()</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Aircraft will commute between their departure and destination airports.</p>
+<p>Aircraft will commute between their departure and destination airports or zones.</p>
 
-	
-<p>Note, this option is not available if aircraft are spawned in air since they don't have a valid departure airport to fly back to.</p>
-
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em>#boolean switch </em></code>: 
-Turn commute on=true or off=false. If no value is given switch=true.</p>
-
-				</li>
-		</ul>
 </dd>
 </dl>
 		<dl class="function">
 <dt>
 
 <a id="#(RAT).ContinueJourney" >
-<strong>RAT:ContinueJourney(switch)</strong>
+<strong>RAT:ContinueJourney()</strong>
 </a>
 </dt>
 <dd>
@@ -1381,15 +1776,22 @@ Turn commute on=true or off=false. If no value is given switch=true.</p>
 	
 <p>This means they are respawned at their destination and get a new random destination.</p>
 
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em>#boolean switch </em></code>: 
-Turn journey on=true or off=false. If no value is given switch=true.</p>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
 
-				</li>
-		</ul>
+<a id="#(RAT).DestinationZone" >
+<strong>RAT:DestinationZone()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Destinations are treated as zones.</p>
+
+	
+<p>Aircraft will not land but rather be despawned when they reach a random point in the zone.</p>
+
 </dd>
 </dl>
 		<dl class="function">
@@ -1408,7 +1810,7 @@ Turn journey on=true or off=false. If no value is given switch=true.</p>
 				<li>
 				
 <p><code><em>#boolean switch </em></code>: 
-true=enable ATC, false=disable ATC. </p>
+Enable ATC (true) or Disable ATC (false). No argument means ATC enabled. </p>
 
 				</li>
 		</ul>
@@ -1434,6 +1836,20 @@ Name or table of names of excluded airports.</p>
 
 				</li>
 		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#number</em>
+<a id="#(RAT).FLcruise" >
+<strong>RAT.FLcruise</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Cruise altitude of aircraft. Default FL200 for planes and F005 for helos.</p>
+
 </dd>
 </dl>
 		<dl class="function">
@@ -1496,7 +1912,7 @@ Name or table of names of excluded airports.</p>
 		<ul>
 				<li>
 				
-<p><code><em>#string skins </em></code>: 
+<p><code><em>#table skins </em></code>: 
 Name of livery or table of names of liveries.</p>
 
 				</li>
@@ -1559,6 +1975,62 @@ Submenu name.</p>
 		<dl class="function">
 <dt>
 
+		<em>#number</em>
+<a id="#(RAT).Ndeparture_Airports" >
+<strong>RAT.Ndeparture_Airports</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Number of departure airports set via SetDeparture().</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#number</em>
+<a id="#(RAT).Ndeparture_Zones" >
+<strong>RAT.Ndeparture_Zones</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Number of departure zones set via SetDeparture.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#number</em>
+<a id="#(RAT).Ndestination_Airports" >
+<strong>RAT.Ndestination_Airports</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Number of destination airports set via SetDestination().</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#number</em>
+<a id="#(RAT).Ndestination_Zones" >
+<strong>RAT.Ndestination_Zones</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Number of destination zones set via SetDestination().</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(RAT).New" >
 <strong>RAT:New(groupname, alias)</strong>
 </a>
@@ -1602,6 +2074,19 @@ If the group does not exist in the mission editor.</p>
 			<li><pre class="example"><code>yak1:RAT("RAT_YAK") will create a RAT object called "yak1". The template group in the mission editor must have the name "RAT_YAK".</code></pre></li>
 			<li><pre class="example"><code>yak2:RAT("RAT_YAK", "Yak2") will create a RAT object "yak2". The template group in the mission editor must have the name "RAT_YAK" but the group will be called "Yak2" in e.g. the F10 menu.</code></pre></li>
 		</ul>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(RAT).NoRespawn" >
+<strong>RAT:NoRespawn()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Aircraft will not get respawned when they finished their route.</p>
 
 </dd>
 </dl>
@@ -1661,6 +2146,85 @@ true=yes, false=no.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(RAT).RadioFrequency" >
+<strong>RAT:RadioFrequency(frequency)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set radio frequency.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number frequency </em></code>: 
+Radio frequency.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(RAT).RadioModulation" >
+<strong>RAT:RadioModulation(modulation)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set radio modulation.</p>
+
+	
+<p>Default is AM.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string modulation </em></code>: 
+Either "FM" or "AM". If no value is given, modulation is set to AM.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(RAT).RadioOFF" >
+<strong>RAT:RadioOFF()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Disable Radio.</p>
+
+	
+<p>Overrules the ME setting.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(RAT).RadioON" >
+<strong>RAT:RadioON()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Enable Radio.</p>
+
+	
+<p>Overrules the ME setting.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(RAT).RespawnAfterLanding" >
 <strong>RAT:RespawnAfterLanding(delay)</strong>
 </a>
@@ -1674,7 +2238,58 @@ true=yes, false=no.</p>
 				<li>
 				
 <p><code><em>#number delay </em></code>: 
-(Optional) Delay in seconds until respawn happens after landing. Default is 180 seconds.</p>
+(Optional) Delay in seconds until respawn happens after landing. Default is 180 seconds. Minimum is 0.5 seconds.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(RAT).RespawnAfterTakeoff" >
+<strong>RAT:RespawnAfterTakeoff()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Aircraft will be respawned directly after take-off.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(RAT).ReturnZone" >
+<strong>RAT:ReturnZone()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Aircraft will fly to a random point within a zone and then return to its departure airport or zone.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(RAT).SetAISkill" >
+<strong>RAT:SetAISkill(skill)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set skill of AI aircraft.</p>
+
+	
+<p>Default is "High". </p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string skill </em></code>: 
+Skill, options are "Average", "Good", "High", "Excellent" and "Random". Parameter is case insensitive.</p>
 
 				</li>
 		</ul>
@@ -1692,14 +2307,14 @@ true=yes, false=no.</p>
 <p>Set the climb rate.</p>
 
 	
-<p>Default is 1500 ft/min. This automatically sets the climb angle.</p>
+<p>This automatically sets the climb angle.</p>
 
 		<h3>Parameter</h3>
 		<ul>
 				<li>
 				
 <p><code><em>#number rate </em></code>: 
-Climb rate in ft/min.</p>
+Climb rate in ft/min. Default is 1500 ft/min. Minimum is 100 ft/min. Maximum is 15,000 ft/min.</p>
 
 				</li>
 		</ul>
@@ -1813,7 +2428,7 @@ Cruising altitude ASL in meters.</p>
 <dt>
 
 <a id="#(RAT).SetDeparture" >
-<strong>RAT:SetDeparture(names)</strong>
+<strong>RAT:SetDeparture(departurenames)</strong>
 </a>
 </dt>
 <dd>
@@ -1827,7 +2442,7 @@ Cruising altitude ASL in meters.</p>
 		<ul>
 				<li>
 				
-<p><code><em>#string names </em></code>: 
+<p><code><em>#string departurenames </em></code>: 
 Name or table of names of departure airports or zones.</p>
 
 				</li>
@@ -1857,7 +2472,7 @@ Name or table of names of departure airports or zones.</p>
 				<li>
 				
 <p><code><em><a href="Core.Zone.html##(ZONE)">Core.Zone#ZONE</a> zone </em></code>: 
-Zone in which the airports lie.</p>
+Zone in which the destination airports lie. Has to be a MOOSE zone.</p>
 
 				</li>
 		</ul>
@@ -1882,7 +2497,7 @@ Zone in which the airports lie.</p>
 				<li>
 				
 <p><code><em>#number angle </em></code>: 
-Angle of descent in degrees.</p>
+Angle of descent in degrees. Minimum is 0.5 deg. Maximum 50 deg.</p>
 
 				</li>
 		</ul>
@@ -1892,21 +2507,18 @@ Angle of descent in degrees.</p>
 <dt>
 
 <a id="#(RAT).SetDestination" >
-<strong>RAT:SetDestination(names)</strong>
+<strong>RAT:SetDestination(destinationnames)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Set name of destination airport for the AI aircraft.</p>
-
-	
-<p>If no name is given an airport from the friendly coalition(s) is chosen randomly.</p>
+<p>Set name of destination airports or zones for the AI aircraft.</p>
 
 		<h3>Parameter</h3>
 		<ul>
 				<li>
 				
-<p><code><em>#string names </em></code>: 
+<p><code><em>#string destinationnames </em></code>: 
 Name of the destination airport or table of destination airports.</p>
 
 				</li>
@@ -1932,7 +2544,7 @@ Name of the destination airport or table of destination airports.</p>
 				<li>
 				
 <p><code><em><a href="Core.Zone.html##(ZONE)">Core.Zone#ZONE</a> zone </em></code>: 
-Zone in which the airports lie.</p>
+Zone in which the departure airports lie. Has to be a MOOSE zone.</p>
 
 				</li>
 		</ul>
@@ -1942,7 +2554,7 @@ Zone in which the airports lie.</p>
 <dt>
 
 <a id="#(RAT).SetFL" >
-<strong>RAT:SetFL(height)</strong>
+<strong>RAT:SetFL(FL)</strong>
 </a>
 </dt>
 <dd>
@@ -1956,8 +2568,8 @@ Zone in which the airports lie.</p>
 		<ul>
 				<li>
 				
-<p><code><em>#number height </em></code>: 
-FL in hundrets of feet. E.g. FL200 = 20000 ft ASL.</p>
+<p><code><em>#number FL </em></code>: 
+Fight Level in hundrets of feet. E.g. FL200 = 20000 ft ASL.</p>
 
 				</li>
 		</ul>
@@ -1967,7 +2579,7 @@ FL in hundrets of feet. E.g. FL200 = 20000 ft ASL.</p>
 <dt>
 
 <a id="#(RAT).SetFLcruise" >
-<strong>RAT:SetFLcruise(height)</strong>
+<strong>RAT:SetFLcruise(FL)</strong>
 </a>
 </dt>
 <dd>
@@ -1982,8 +2594,8 @@ Default is FL200 for planes and FL005 for helicopters.</p>
 		<ul>
 				<li>
 				
-<p><code><em>#number height </em></code>: 
-FL in hundrets of feet. E.g. FL200 = 20000 ft ASL.</p>
+<p><code><em>#number FL </em></code>: 
+Flight level in hundrets of feet. E.g. FL200 = 20000 ft ASL.</p>
 
 				</li>
 		</ul>
@@ -1993,7 +2605,7 @@ FL in hundrets of feet. E.g. FL200 = 20000 ft ASL.</p>
 <dt>
 
 <a id="#(RAT).SetFLmax" >
-<strong>RAT:SetFLmax(height)</strong>
+<strong>RAT:SetFLmax(FL)</strong>
 </a>
 </dt>
 <dd>
@@ -2007,8 +2619,8 @@ FL in hundrets of feet. E.g. FL200 = 20000 ft ASL.</p>
 		<ul>
 				<li>
 				
-<p><code><em>#number height </em></code>: 
-Maximum FL in hundrets of feet.</p>
+<p><code><em>#number FL </em></code>: 
+Maximum Fight Level in hundrets of feet.</p>
 
 				</li>
 		</ul>
@@ -2018,7 +2630,7 @@ Maximum FL in hundrets of feet.</p>
 <dt>
 
 <a id="#(RAT).SetFLmin" >
-<strong>RAT:SetFLmin(height)</strong>
+<strong>RAT:SetFLmin(FL)</strong>
 </a>
 </dt>
 <dd>
@@ -2032,8 +2644,8 @@ Maximum FL in hundrets of feet.</p>
 		<ul>
 				<li>
 				
-<p><code><em>#number height </em></code>: 
-Maximum FL in hundrets of feet.</p>
+<p><code><em>#number FL </em></code>: 
+Maximum Fight Level in hundrets of feet.</p>
 
 				</li>
 		</ul>
@@ -2159,6 +2771,28 @@ Distance in km.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(RAT).SetParkingID" >
+<strong>RAT:SetParkingID(id)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set parking id of aircraft.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string id </em></code>: 
+Parking ID of the aircraft.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(RAT).SetROE" >
 <strong>RAT:SetROE(roe)</strong>
 </a>
@@ -2215,17 +2849,14 @@ Distance in km.</p>
 </dt>
 <dd>
 	
-<p>Set the delay before first group is spawned.</p>
-
-	
-<p>Minimum delay is 0.5 seconds.</p>
+<p>Set the delay before first group is spawned. </p>
 
 		<h3>Parameter</h3>
 		<ul>
 				<li>
 				
 <p><code><em>#number delay </em></code>: 
-Delay in seconds.</p>
+Delay in seconds. Default is 5 seconds. Minimum delay is 0.5 seconds.</p>
 
 				</li>
 		</ul>
@@ -2242,15 +2873,12 @@ Delay in seconds.</p>
 	
 <p>Set the interval between spawnings of the template group.</p>
 
-	
-<p>Minimum interval is 0.5 seconds.</p>
-
 		<h3>Parameter</h3>
 		<ul>
 				<li>
 				
 <p><code><em>#number interval </em></code>: 
-Interval in seconds.</p>
+Interval in seconds. Default is 5 seconds. Minimum is 0.5 seconds.</p>
 
 				</li>
 		</ul>
@@ -2354,17 +2982,14 @@ Type can be "takeoff-cold" or "cold", "takeoff-hot" or "hot", "takeoff-runway" o
 </dt>
 <dd>
 	
-<p>Aircraft report status messages.</p>
-
-	
-<p>Default is off.</p>
+<p>Aircraft report status update messages along the route.</p>
 
 		<h3>Parameter</h3>
 		<ul>
 				<li>
 				
 <p><code><em>#boolean switch </em></code>: 
-true=on, false=off.</p>
+Swtich reports on (true) or off (false). No argument is on.</p>
 
 				</li>
 		</ul>
@@ -2393,17 +3018,14 @@ true=on, false=off.</p>
 </dt>
 <dd>
 	
-<p>Set the time after which inactive groups will be destroyed.</p>
-
-	
-<p>Default is 300 seconds.</p>
+<p>Set the time after which inactive groups will be destroyed. </p>
 
 		<h3>Parameter</h3>
 		<ul>
 				<li>
 				
 <p><code><em>#number time </em></code>: 
-Time in seconds.</p>
+Time in seconds. Default is 600 seconds = 10 minutes. Minimum is 60 seconds.</p>
 
 				</li>
 		</ul>
@@ -2420,6 +3042,22 @@ Time in seconds.</p>
 <dd>
 	
 <p>Time in seconds after which inactive units will be destroyed. Default is 300 seconds.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(RAT).Uncontrolled" >
+<strong>RAT:Uncontrolled()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Spawn aircraft in uncontolled state.</p>
+
+	
+<p>Aircraft will only sit at their parking spots. Only for populating airfields. </p>
 
 </dd>
 </dl>
@@ -2655,6 +3293,28 @@ Time the fight first registered.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(RAT)._AddFriendlyAirports" >
+<strong>RAT:_AddFriendlyAirports(ports)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Add names of all friendly airports to possible departure or destination airports if they are not already in the list. </p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#table ports </em></code>: 
+List of departure or destination airports/zones that will be added.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(RAT)._AirportExists" >
 <strong>RAT:_AirportExists(name)</strong>
 </a>
@@ -2675,6 +3335,46 @@ Time the fight first registered.</p>
 				
 <p><em>#boolean:</em>
 True if airport exsits, false otherwise. </p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(RAT)._AnticipatedGroupName" >
+<strong>RAT:_AnticipatedGroupName(index)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Anticipated group name from alias and spawn index.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number index </em></code>: 
+Spawnindex of group if given or self.SpawnIndex+1 by default.  </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#string:</em>
+Name the group will get after it is spawned.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(RAT)._CheckConsistency" >
+<strong>RAT:_CheckConsistency()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Function checks consistency of user input and automatically adjusts parameters if necessary.</p>
 
 </dd>
 </dl>
@@ -2730,7 +3430,7 @@ Heading/angle in degrees. </p>
 				<li>
 				
 <p><code><em>#boolean switch </em></code>: 
-true turn messages on, false=off.</p>
+Turn debug on=true or off=false. No argument means on.</p>
 
 				</li>
 		</ul>
@@ -2933,64 +3633,6 @@ Table with airport names that lie within the zone.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(RAT)._GetDestinations" >
-<strong>RAT:_GetDestinations(departure, q, minrange, maxrange)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Get all possible destination airports depending on departure position.</p>
-
-	
-<p>The list is sorted w.r.t. distance to departure position.</p>
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="Wrapper.Airbase.html##(AIRBASE)">Wrapper.Airbase#AIRBASE</a> departure </em></code>: 
-Departure airport or zone.</p>
-
-				</li>
-				<li>
-				
-<p><code><em><a href="Core.Point.html##(COORDINATE)">Core.Point#COORDINATE</a> q </em></code>: 
-Coordinate of the departure point.</p>
-
-				</li>
-				<li>
-				
-<p><code><em>#number minrange </em></code>: 
-Minimum range to q in meters.</p>
-
-				</li>
-				<li>
-				
-<p><code><em>#number maxrange </em></code>: 
-Maximum range to q in meters.</p>
-
-				</li>
-		</ul>
-		<h3>Return values</h3>
-			<ol>
-				<li>
-				
-<p><em>#table:</em>
-Table with possible destination airports.</p>
-
-				</li>
-				<li>
-				
-<p><em>#nil:</em>
-If no airports could be found.</p>
-
-				</li>
-			</ol>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
 <a id="#(RAT)._GetLife" >
 <strong>RAT:_GetLife(group)</strong>
 </a>
@@ -3012,6 +3654,33 @@ Group of unit.</p>
 				
 <p><em>#number:</em>
 Life of unit in percent.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(RAT)._Heading" >
+<strong>RAT:_Heading(course)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Determine the heading for an aircraft to be entered in the route template.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number course </em></code>: 
+The course between two points in degrees.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#number:</em>
+heading Heading in rad.</p>
 
 </dd>
 </dl>
@@ -3071,12 +3740,12 @@ true if airport is friendly and false otherwise.</p>
 <dt>
 
 <a id="#(RAT)._MinDistance" >
-<strong>RAT:_MinDistance(alpha, beta, h)</strong>
+<strong>RAT:_MinDistance(alpha, beta, ha, hb)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Calculate min distance between departure and destination for given minimum flight level and climb/decent rates</p>
+<p>Calculate minimum distance between departure and destination for given minimum flight level and climb/decent rates.</p>
 
 		<h3>Parameters</h3>
 		<ul>
@@ -3094,23 +3763,45 @@ Angle of descent [rad].</p>
 				</li>
 				<li>
 				
-<p><code><em>#number h </em></code>: 
-min height AGL.</p>
+<p><code><em>#number ha </em></code>: 
+Height difference between departure and cruise altiude. </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number hb </em></code>: 
+Height difference between cruise altitude and destination.</p>
 
 				</li>
 		</ul>
-		<h3>Return value</h3>
+		<h3>Return values</h3>
+			<ol>
+				<li>
 				
 <p><em>#number:</em>
-Minimum distance between departure and destiantion.</p>
+d1 Minimum distance for climb phase to reach cruise altitude.</p>
 
+				</li>
+				<li>
+				
+<p><em>#number:</em>
+d2 Minimum distance for descent phase to reach destination height.</p>
+
+				</li>
+				<li>
+				
+<p><em>#number:</em>
+dtot Minimum total distance to climb and descent.</p>
+
+				</li>
+			</ol>
 </dd>
 </dl>
 		<dl class="function">
 <dt>
 
 <a id="#(RAT)._ModifySpawnTemplate" >
-<strong>RAT:_ModifySpawnTemplate(waypoints)</strong>
+<strong>RAT:_ModifySpawnTemplate(waypoints, livery)</strong>
 </a>
 </dt>
 <dd>
@@ -3121,12 +3812,46 @@ Minimum distance between departure and destiantion.</p>
 <p>In particular, the waypoints of the group's flight plan are copied into the spawn template.
 This allows to spawn at airports and also land at other airports, i.e. circumventing the DCS "landing bug".</p>
 
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
 <p><code><em>#table waypoints </em></code>: 
 The waypoints of the AI flight plan.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string livery </em></code>: 
+(Optional) Livery of the aircraft. All members of a flight will get the same livery.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(RAT)._NameInList" >
+<strong>RAT:_NameInList(liste, name)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Check if a name/string is in a list or not.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#table liste </em></code>: 
+List of names to be checked.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string name </em></code>: 
+Name to be checked for.</p>
 
 				</li>
 		</ul>
@@ -3303,35 +4028,56 @@ Departure zone if spawning in air.</p>
 <dt>
 
 <a id="#(RAT)._PickDestination" >
-<strong>RAT:_PickDestination(destinations, _random)</strong>
+<strong>RAT:_PickDestination(departure, q, minrange, maxrange, random, landing)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Pick destination airport.</p>
-
-	
-<p>If no airport name is given an airport from the coalition is chosen randomly.</p>
+<p>Pick destination airport or zone depending on departure position.</p>
 
 		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
-<p><code><em>#table destinations </em></code>: 
-Table with destination airports.</p>
+<p><code><em><a href="Wrapper.Airbase.html##(AIRBASE)">Wrapper.Airbase#AIRBASE</a> departure </em></code>: 
+Departure airport or zone.</p>
 
 				</li>
 				<li>
 				
-<p><code><em>#boolean _random </em></code>: 
-(Optional) Switch to activate a random selection of airports.</p>
+<p><code><em><a href="Core.Point.html##(COORDINATE)">Core.Point#COORDINATE</a> q </em></code>: 
+Coordinate of the departure point.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number minrange </em></code>: 
+Minimum range to q in meters.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number maxrange </em></code>: 
+Maximum range to q in meters.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#boolean random </em></code>: 
+Destination is randomly selected from friendly airport (true) or from destinations specified by user input (false).</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number landing </em></code>: 
+Number indicating whether we land at a destination airport or fly to a zone object.</p>
 
 				</li>
 		</ul>
 		<h3>Return value</h3>
 				
 <p><em><a href="Wrapper.Airbase.html##(AIRBASE)">Wrapper.Airbase#AIRBASE</a>:</em>
-Destination airport.</p>
+destination Destination airport or zone.</p>
 
 </dd>
 </dl>
@@ -3339,7 +4085,7 @@ Destination airport.</p>
 <dt>
 
 <a id="#(RAT)._PlaceMarkers" >
-<strong>RAT:_PlaceMarkers(waypoints)</strong>
+<strong>RAT:_PlaceMarkers(waypoints, index)</strong>
 </a>
 </dt>
 <dd>
@@ -3349,12 +4095,18 @@ Destination airport.</p>
 	
 <p>Note we assume a very specific number and type of waypoints here.</p>
 
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
 <p><code><em>#table waypoints </em></code>: 
 Table with waypoints.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number index </em></code>: 
+Spawn index of group.</p>
 
 				</li>
 		</ul>
@@ -3533,7 +4285,7 @@ total Total route length in meters.</p>
 <dt>
 
 <a id="#(RAT)._SetMarker" >
-<strong>RAT:_SetMarker(text, wp)</strong>
+<strong>RAT:_SetMarker(text, wp, index)</strong>
 </a>
 </dt>
 <dd>
@@ -3552,6 +4304,12 @@ Info text displayed at maker.</p>
 				
 <p><code><em>#table wp </em></code>: 
 Position of marker coming in as waypoint, i.e. has x, y and alt components.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number index </em></code>: 
+Spawn index of group. </p>
 
 				</li>
 		</ul>
@@ -3617,7 +4375,7 @@ ROT of group.</p>
 <dt>
 
 <a id="#(RAT)._SetRoute" >
-<strong>RAT:_SetRoute(Takeoff, _departure, _destination, takeoff)</strong>
+<strong>RAT:_SetRoute(Takeoff, Landing, _departure, _destination, takeoff, landing, _waypoint)</strong>
 </a>
 </dt>
 <dd>
@@ -3632,7 +4390,13 @@ ROT of group.</p>
 				<li>
 				
 <p><code><em><a href="takeoff.html##(RAT.wp)">takeoff#RAT.wp</a> Takeoff </em></code>: 
-type.</p>
+type. Could also be air start.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="landing.html##(RAT.wp)">landing#RAT.wp</a> Landing </em></code>: 
+type. Could also be a destination in air.</p>
 
 				</li>
 				<li>
@@ -3650,6 +4414,16 @@ type.</p>
 				<li>
 				
 <p><code><em> takeoff </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> landing </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> _waypoint </em></code>: </p>
 
 				</li>
 		</ul>
@@ -3712,7 +4486,7 @@ If no valid departure or destination airport could be found.</p>
 <dt>
 
 <a id="#(RAT)._SpawnWithRoute" >
-<strong>RAT:_SpawnWithRoute(_departure, _destination)</strong>
+<strong>RAT:_SpawnWithRoute(_departure, _destination, _takeoff, _landing, _livery, _waypoint)</strong>
 </a>
 </dt>
 <dd>
@@ -3737,6 +4511,54 @@ Initializes the ratcraft array and group menu.</p>
 				
 <p><code><em>#string _destination </em></code>: 
 (Optional) Name of destination airbase.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number _takeoff </em></code>: 
+Takeoff type id.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> _landing </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> _livery </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> _waypoint </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(RAT)._TaskFunction" >
+<strong>RAT:_TaskFunction(FunctionString, ...)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Task function.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string FunctionString </em></code>: 
+Name of the function to be called.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> ... </em></code>: </p>
 
 				</li>
 		</ul>
@@ -3791,7 +4613,7 @@ DCSTask</p>
 <dt>
 
 <a id="#(RAT)._Waypoint" >
-<strong>RAT:_Waypoint(Type, Coord, Speed, Altitude, Airport)</strong>
+<strong>RAT:_Waypoint(Running, Type, Coord, Speed, Altitude, Airport, index)</strong>
 </a>
 </dt>
 <dd>
@@ -3800,6 +4622,12 @@ DCSTask</p>
 
 		<h3>Parameters</h3>
 		<ul>
+				<li>
+				
+<p><code><em>#number Running </em></code>: 
+index of waypoints. Starts with 1 which is normally departure/spawn waypoint.</p>
+
+				</li>
 				<li>
 				
 <p><code><em>#number Type </em></code>: 
@@ -3830,11 +4658,121 @@ Altitude in m.</p>
 Airport of object to spawn.</p>
 
 				</li>
+				<li>
+				
+<p><code><em> index </em></code>: </p>
+
+				</li>
 		</ul>
 		<h3>Return value</h3>
 				
 <p><em>#table:</em>
 Waypoints for DCS task route or spawn template.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(RAT)._WaypointFunction" >
+<strong>RAT._WaypointFunction(group, rat, wp)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Function which is called after passing every waypoint.</p>
+
+	
+<p>Info on waypoint is given and special functions are executed.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Group.html##(GROUP)">Core.Group#GROUP</a> group </em></code>: 
+Group of aircraft.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="##(RAT)">#RAT</a> rat </em></code>: 
+RAT object.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number wp </em></code>: 
+Waypoint index. Running number of the waypoints. Determines the actions to be executed.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(RAT)._ZoneExists" >
+<strong>RAT:_ZoneExists(name)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Test if a trigger zone defined in the mission editor exists.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string name </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+True if zone exsits, false otherwise. </p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(RAT).actype" >
+<strong>RAT.actype</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#boolean</em>
+<a id="#(RAT).addfriendlydepartures" >
+<strong>RAT.addfriendlydepartures</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Add all friendly airports to departures.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#boolean</em>
+<a id="#(RAT).addfriendlydestinations" >
+<strong>RAT.addfriendlydestinations</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Add all friendly airports to destinations.</p>
 
 </dd>
 </dl>
@@ -4058,21 +4996,7 @@ Waypoints for DCS task route or spawn template.</p>
 </dt>
 <dd>
 	
-<p>Array containing the names of the destination airports.</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em>#table</em>
-<a id="#(RAT).departure_zones" >
-<strong>RAT.departure_zones</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Array containing the names of the departure zones.</p>
+<p>Array containing the names of the destination airports or zones.</p>
 
 </dd>
 </dl>
@@ -4100,7 +5024,21 @@ Waypoints for DCS task route or spawn template.</p>
 </dt>
 <dd>
 	
-<p>Array containing the names of the destination airports.</p>
+<p>Array containing the names of the destination airports or zones.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#boolean</em>
+<a id="#(RAT).destinationzone" >
+<strong>RAT.destinationzone</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Destination is a zone and not an airport.</p>
 
 </dd>
 </dl>
@@ -4135,6 +5073,20 @@ Waypoints for DCS task route or spawn template.</p>
 		<dl class="function">
 <dt>
 
+		<em>#number</em>
+<a id="#(RAT).frequency" >
+<strong>RAT.frequency</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Radio frequency used by the RAT groups.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 		<em>#string</em>
 <a id="#(RAT).friendly" >
 <strong>RAT.friendly</strong>
@@ -4157,6 +5109,20 @@ Waypoints for DCS task route or spawn template.</p>
 <dd>
 	
 <p>Some ID to identify who we are in output of the DCS.log file.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#number</em>
+<a id="#(RAT).landing" >
+<strong>RAT.landing</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Landing type. Determines if we actually land at an airport or treat it as zone.</p>
 
 </dd>
 </dl>
@@ -4233,6 +5199,20 @@ Waypoints for DCS task route or spawn template.</p>
 		<dl class="function">
 <dt>
 
+		<em>#string</em>
+<a id="#(RAT).modulation" >
+<strong>RAT.modulation</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Ratio modulation. Either "FM" or "AM".</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 		<em>#number</em>
 <a id="#(RAT).ngroups" >
 <strong>RAT.ngroups</strong>
@@ -4241,6 +5221,20 @@ Waypoints for DCS task route or spawn template.</p>
 <dd>
 	
 <p>Number of groups to be spawned in total.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#boolean</em>
+<a id="#(RAT).norespawn" >
+<strong>RAT.norespawn</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Aircraft will not be respawned after they have finished their route.</p>
 
 </dd>
 </dl>
@@ -4264,6 +5258,20 @@ Waypoints for DCS task route or spawn template.</p>
 		<dl class="function">
 <dt>
 
+		<em>#string</em>
+<a id="#(RAT).parking_id" >
+<strong>RAT.parking_id</strong>
+</a>
+</dt>
+<dd>
+	
+<p>String with a special parking ID for the aircraft.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 		<em>#boolean</em>
 <a id="#(RAT).placemarkers" >
 <strong>RAT.placemarkers</strong>
@@ -4272,6 +5280,20 @@ Waypoints for DCS task route or spawn template.</p>
 <dd>
 	
 <p>Place markers of waypoints on F10 map.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#boolean</em>
+<a id="#(RAT).radio" >
+<strong>RAT.radio</strong>
+</a>
+</dt>
+<dd>
+	
+<p>If true/false disables radio messages from the RAT groups.</p>
 
 </dd>
 </dl>
@@ -4335,6 +5357,20 @@ Waypoints for DCS task route or spawn template.</p>
 <dt>
 
 		<em>#boolean</em>
+<a id="#(RAT).respawn_after_takeoff" >
+<strong>RAT.respawn_after_takeoff</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Aircraft will be respawned directly after take-off.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#boolean</em>
 <a id="#(RAT).respawn_at_landing" >
 <strong>RAT.respawn_at_landing</strong>
 </a>
@@ -4356,6 +5392,34 @@ Waypoints for DCS task route or spawn template.</p>
 <dd>
 	
 <p>Delay in seconds until repawn happens after landing.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#table</em>
+<a id="#(RAT).return_zones" >
+<strong>RAT.return_zones</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Array containing the names of the return zones.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#boolean</em>
+<a id="#(RAT).returnzone" >
+<strong>RAT.returnzone</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Zone where aircraft will fly to before returning to their departure airport.</p>
 
 </dd>
 </dl>
@@ -4418,6 +5482,20 @@ Waypoints for DCS task route or spawn template.</p>
 		<dl class="function">
 <dt>
 
+		<em>#boolean</em>
+<a id="#(RAT).spawninitialized" >
+<strong>RAT.spawninitialized</strong>
+</a>
+</dt>
+<dd>
+	
+<p>If RAT:Spawn() was already called this RAT object is set to true to prevent users to call it again.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 		<em>#number</em>
 <a id="#(RAT).spawninterval" >
 <strong>RAT.spawninterval</strong>
@@ -4426,6 +5504,20 @@ Waypoints for DCS task route or spawn template.</p>
 <dd>
 	
 <p>Interval between spawning units/groups. Note that we add a randomization of 50%.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(RAT).status" >
+<strong>RAT.status</strong>
+</a>
+</dt>
+<dd>
+	
+<p>RAT aircraft status.</p>
 
 </dd>
 </dl>
@@ -4446,7 +5538,7 @@ Waypoints for DCS task route or spawn template.</p>
 		<dl class="function">
 <dt>
 
-		<em>#string</em>
+		<em>#number</em>
 <a id="#(RAT).takeoff" >
 <strong>RAT.takeoff</strong>
 </a>
@@ -4454,6 +5546,48 @@ Waypoints for DCS task route or spawn template.</p>
 <dd>
 	
 <p>Takeoff type. 0=coldorhot.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="Core.Group.html##(GROUP)">Core.Group#GROUP</a></em>
+<a id="#(RAT).templategroup" >
+<strong>RAT.templategroup</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Group serving as template for the RAT aircraft.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(RAT).type" >
+<strong>RAT.type</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#boolean</em>
+<a id="#(RAT).uncontrolled" >
+<strong>RAT.uncontrolled</strong>
+</a>
+</dt>
+<dd>
+	
+<p>If true aircraft are spawned in uncontrolled state and will only sit on their parking spots. </p>
 
 </dd>
 </dl>
@@ -4474,6 +5608,48 @@ Waypoints for DCS task route or spawn template.</p>
 		<dl class="function">
 <dt>
 
+		<em>#string</em>
+<a id="#(RAT).version" >
+<strong>RAT.version</strong>
+</a>
+</dt>
+<dd>
+	
+<p>RAT version.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#table</em>
+<a id="#(RAT).waypointdescriptions" >
+<strong>RAT.waypointdescriptions</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Table with strings for waypoint descriptions of markers.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#table</em>
+<a id="#(RAT).waypointstatus" >
+<strong>RAT.waypointstatus</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Table with strings of waypoint status.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 		<em></em>
 <a id="#(RAT).wp" >
 <strong>RAT.wp</strong>
@@ -4482,6 +5658,34 @@ Waypoints for DCS task route or spawn template.</p>
 <dd>
 	
 <p>RAT waypoint type.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#number</em>
+<a id="#(RAT).wp_final" >
+<strong>RAT.wp_final</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Index of the final waypoint.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#number</em>
+<a id="#(RAT).wp_holding" >
+<strong>RAT.wp_holding</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Index of the holding waypoint.</p>
 
 </dd>
 </dl>
