@@ -1021,7 +1021,7 @@ function EVENT:onEvent( Event )
       end
     end
   else
-    self:E( { EventMeta.Text, Event } )    
+    self:T( { EventMeta.Text, Event } )    
   end
   
   Event = nil
