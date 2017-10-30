@@ -468,7 +468,7 @@ RAT.id="RAT | "
 
 --- RAT version.
 -- @field #string version
-RAT.version="2.0.0"
+RAT.version="2.0.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -742,15 +742,6 @@ function RAT:_CheckConsistency()
         self.Ndeparture_Zones=self.Ndeparture_Zones+1
       end
     end
-
-    -- Count destination airports and zones.
-    for _,name in pairs(self.destination_ports) do
-      if self:_AirportExists(name) then
-        self.Ndestination_Airports=self.Ndestination_Airports+1
-      elseif self:_ZoneExists(name) then
-        self.Ndestination_Zones=self.Ndestination_Zones+1
-      end
-    end  
   
     -- What can go wrong?
     -- Only zones but not takeoff air == > Enable takeoff air.
@@ -769,6 +760,16 @@ function RAT:_CheckConsistency()
 
   -- User has used SetDestination()
   if not self.random_destination then
+  
+    -- Count destination airports and zones.
+    for _,name in pairs(self.destination_ports) do
+      if self:_AirportExists(name) then
+        self.Ndestination_Airports=self.Ndestination_Airports+1
+      elseif self:_ZoneExists(name) then
+        self.Ndestination_Zones=self.Ndestination_Zones+1
+      end
+    end  
+  
     -- One zone specified as destination ==> Enable destination zone.
     -- This does not apply to return zone because the destination is the zone and not the final destination which can be an airport. 
     if self.Ndestination_Zones>0 and self.landing~=RAT.wp.air and not self.returnzone then
@@ -1453,19 +1454,19 @@ function RAT:_SpawnWithRoute(_departure, _destination, _takeoff, _landing, _live
   -- Set takeoff type.
   local takeoff=self.takeoff
   local landing=self.landing
-  
-  -- Random choice between cold and hot.
-  if self.takeoff==RAT.wp.coldorhot then
-    local temp={RAT.wp.cold, RAT.wp.hot}
-    takeoff=temp[math.random(2)]
-  end
-  
+    
   -- Overrule takeoff/landing by what comes in.
   if _takeoff then
     takeoff=_takeoff
   end
   if _landing then
     landing=_landing
+  end
+  
+  -- Random choice between cold and hot.
+  if takeoff==RAT.wp.coldorhot then
+    local temp={RAT.wp.cold, RAT.wp.hot}
+    takeoff=temp[math.random(2)]
   end
 
   -- Set flight plan.
@@ -1784,7 +1785,6 @@ function RAT:_SetRoute(takeoff, landing, _departure, _destination, _waypoint)
   -- Departure airport or zone.
   local departure=nil
   if _departure then
-  
     if self:_AirportExists(_departure) then
       -- Check if new departure is an airport.
       departure=AIRBASE:FindByName(_departure)
