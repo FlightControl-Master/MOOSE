@@ -1,4 +1,4 @@
---- **Functional** -- The ATC_GROUND classes monitor airbase traffic and regulate speed while taxiing.
+--- **Functional** -- The ATC\_GROUND classes monitor airbase traffic and regulate speed while taxiing.
 --
 -- ===
 -- 
@@ -18,20 +18,21 @@
 -- @field Core.Set#SET_CLIENT SetClient
 -- @extends Core.Base#BASE
 
---- Base class for ATC_GROUND implementations.
+--- Base class for ATC\_GROUND implementations.
 -- @field #ATC_GROUND
 ATC_GROUND = {
   ClassName = "ATC_GROUND",
   SetClient = nil,
   Airbases = nil,
   AirbaseNames = nil,
+  --KickSpeed = nil, -- The maximum speed in meters per second for all airbases until a player gets kicked. This is overridden at each derived class.
 }
 
 --- @type ATC_GROUND.AirbaseNames
 -- @list <#string>
 
 
---- Creates a new ATC_GROUND object.
+--- Creates a new ATC\_GROUND object.
 -- @param #ATC_GROUND self
 -- @param Airbases A table of Airbase Names.
 -- @return #ATC_GROUND self
@@ -79,14 +80,10 @@ function ATC_GROUND:New( Airbases, AirbaseList )
     end
   )
 
-  self.AirbaseMonitor = SCHEDULER:New( self, self._AirbaseMonitor, {self }, 0, 2, 0.05 )
-
   -- This is simple slot blocker is used on the server.  
   SSB = USERFLAG:New( "SSB" )
   SSB:Set( 100 )
   
-  self:SetKickSpeedKmph( 100 )
-
   return self
 end
 
@@ -105,24 +102,137 @@ function ATC_GROUND:SmokeRunways( SmokeColor )
 end
 
 
+--- Set the maximum speed in meters per second (Mps) until the player gets kicked.
+-- An airbase can be specified to set the kick speed for.
+-- @param #ATC_GROUND self
+-- @param #number KickSpeed The speed in Mps.
+-- @param Wrapper.Airbase#AIRBASE Airbase (optional) The airbase to set the kick speed for.
+-- @return #ATC_GROUND self
+-- @usage
+-- 
+--   -- Declare Atc_Ground using one of those, depending on the map.
+-- 
+--   Atc_Ground = ATC_GROUND_CAUCAUS:New()
+--   Atc_Ground = ATC_GROUND_NEVADA:New()
+--   Atc_Ground = ATC_GROUND_NORMANDY:New()
+--   
+--   -- Then use one of these methods...
+-- 
+--   Atc_Ground:SetKickSpeed( UTILS.KmphToMps( 80 ) ) -- Kick the players at 80 kilometers per hour
+-- 
+--   Atc_Ground:SetKickSpeed( UTILS.MiphToMps( 100 ) ) -- Kick the players at 100 miles per hour
+-- 
+--   Atc_Ground:SetKickSpeed( 24 ) -- Kick the players at 24 meters per second ( 24 * 3.6 = 86.4 kilometers per hour )
+-- 
+function ATC_GROUND:SetKickSpeed( KickSpeed, Airbase )
+
+  if not Airbase then
+    self.KickSpeed = KickSpeed
+  else
+    self.Airbases[Airbase].KickSpeed = KickSpeed
+  end
+  
+  return self
+end
+
 --- Set the maximum speed in Kmph until the player gets kicked.
 -- @param #ATC_GROUND self
--- @param #number KickSpeed Set the maximum speed in Kmph until the player gets kicked.
+-- @param #number KickSpeed Set the speed in Kmph.
+-- @param Wrapper.Airbase#AIRBASE Airbase (optional) The airbase to set the kick speed for.
 -- @return #ATC_GROUND self
-function ATC_GROUND:SetKickSpeedKmph( KickSpeed )
+-- 
+--   Atc_Ground:SetKickSpeedKmph( 80 ) -- Kick the players at 80 kilometers per hour
+-- 
+function ATC_GROUND:SetKickSpeedKmph( KickSpeed, Airbase )
 
-  self.KickSpeed = UTILS.KmphToMps( KickSpeed )
+  self:SetKickSpeed( UTILS.KmphToMps( KickSpeed ), Airbase )
+  
+  return self
 end
 
 --- Set the maximum speed in Miph until the player gets kicked.
 -- @param #ATC_GROUND self
--- @param #number KickSpeedMiph Set the maximum speed in Mph until the player gets kicked.
+-- @param #number KickSpeedMiph Set the speed in Mph.
+-- @param Wrapper.Airbase#AIRBASE Airbase (optional) The airbase to set the kick speed for.
 -- @return #ATC_GROUND self
-function ATC_GROUND:SetKickSpeedMiph( KickSpeedMiph )
+-- 
+--   Atc_Ground:SetKickSpeedMiph( 100 ) -- Kick the players at 100 miles per hour
+-- 
+function ATC_GROUND:SetKickSpeedMiph( KickSpeedMiph, Airbase )
 
-  self.KickSpeed = UTILS.MiphToMps( KickSpeedMiph )
+  self:SetKickSpeed( UTILS.MiphToMps( KickSpeedMiph ), Airbase )
+  
+  return self
 end
 
+
+--- Set the maximum kick speed in meters per second (Mps) until the player gets kicked.
+-- There are no warnings given if this speed is reached, and is to prevent players to take off from the airbase!
+-- An airbase can be specified to set the maximum kick speed for.
+-- @param #ATC_GROUND self
+-- @param #number MaximumKickSpeed The speed in Mps.
+-- @param Wrapper.Airbase#AIRBASE Airbase (optional) The airbase to set the kick speed for.
+-- @return #ATC_GROUND self
+-- @usage
+-- 
+--   -- Declare Atc_Ground using one of those, depending on the map.
+-- 
+--   Atc_Ground = ATC_GROUND_CAUCAUS:New()
+--   Atc_Ground = ATC_GROUND_NEVADA:New()
+--   Atc_Ground = ATC_GROUND_NORMANDY:New()
+--   
+--   -- Then use one of these methods...
+-- 
+--   Atc_Ground:SetMaximumKickSpeed( UTILS.KmphToMps( 80 ) ) -- Kick the players at 80 kilometers per hour
+-- 
+--   Atc_Ground:SetMaximumKickSpeed( UTILS.MiphToMps( 100 ) ) -- Kick the players at 100 miles per hour
+-- 
+--   Atc_Ground:SetMaximumKickSpeed( 24 ) -- Kick the players at 24 meters per second ( 24 * 3.6 = 86.4 kilometers per hour )
+-- 
+function ATC_GROUND:SetMaximumKickSpeed( MaximumKickSpeed, Airbase )
+
+  if not Airbase then
+    self.MaximumKickSpeed = MaximumKickSpeed
+  else
+    self.Airbases[Airbase].MaximumKickSpeed = MaximumKickSpeed
+  end
+  
+  return self
+end
+
+--- Set the maximum kick speed in kilometers per hour (Kmph) until the player gets kicked.
+-- There are no warnings given if this speed is reached, and is to prevent players to take off from the airbase!
+-- An airbase can be specified to set the maximum kick speed for.
+-- @param #ATC_GROUND self
+-- @param #number MaximumKickSpeed Set the speed in Kmph.
+-- @param Wrapper.Airbase#AIRBASE Airbase (optional) The airbase to set the kick speed for.
+-- @return #ATC_GROUND self
+-- 
+--   Atc_Ground:SetMaximumKickSpeedKmph( 150 ) -- Kick the players at 150 kilometers per hour
+-- 
+function ATC_GROUND:SetMaximumKickSpeedKmph( MaximumKickSpeed, Airbase )
+
+  self:SetMaximumKickSpeed( UTILS.KmphToMps( MaximumKickSpeed ), Airbase )
+  
+  return self
+end
+
+--- Set the maximum kick speed in miles per hour (Miph) until the player gets kicked.
+-- There are no warnings given if this speed is reached, and is to prevent players to take off from the airbase!
+-- An airbase can be specified to set the maximum kick speed for.
+-- @param #ATC_GROUND self
+-- @param #number MaximumKickSpeedMiph Set the speed in Mph.
+-- @param Wrapper.Airbase#AIRBASE Airbase (optional) The airbase to set the kick speed for.
+-- @return #ATC_GROUND self
+-- 
+--   Atc_Ground:SetMaximumKickSpeedMiph( 100 ) -- Kick the players at 100 miles per hour
+-- 
+function ATC_GROUND:SetMaximumKickSpeedMiph( MaximumKickSpeedMiph, Airbase )
+
+  self:SetMaximumKickSpeed( UTILS.MiphToMps( MaximumKickSpeedMiph ), Airbase )
+  
+  return self
+end
 
 
 --- @param #ATC_GROUND self
@@ -137,7 +247,7 @@ function ATC_GROUND:_AirbaseMonitor()
         local IsOnGround = Client:InAir() == false
 
         for AirbaseID, AirbaseMeta in pairs( self.Airbases ) do
-          self:E( AirbaseID, AirbaseMeta.MaximumSpeed )
+          self:E( AirbaseID, AirbaseMeta.KickSpeed )
   
           if AirbaseMeta.Monitor == true and Client:IsInZone( AirbaseMeta.ZoneBoundary )  then
 
@@ -152,7 +262,9 @@ function ATC_GROUND:_AirbaseMonitor()
                 local Taxi = Client:GetState( self, "Taxi" )
                 self:E( Taxi )
                 if Taxi == false then
-                  Client:Message( "Welcome at " .. AirbaseID .. ". The maximum taxiing speed is " .. AirbaseMeta.MaximumSpeed .. " km/h.", 20, "ATC" )
+                  local Velocity = VELOCITY:New( AirbaseMeta.KickSpeed or self.KickSpeed )
+                  Client:Message( "Welcome at " .. AirbaseID .. ". The maximum taxiing speed is " .. 
+                                  Velocity:ToString() , 20, "ATC" )
                   Client:SetState( self, "Taxi", true )
                 end
   
@@ -163,8 +275,19 @@ function ATC_GROUND:_AirbaseMonitor()
                 self:T( IsAboveRunway, IsOnGround )
   
                 if IsOnGround then
-                  if Velocity:Get() > self.KickSpeed then
-                    MESSAGE:New( "Penalty! Player " .. Client:GetPlayerName() .. " is kicked, due to a severe airbase traffic rule violation ...", 10, "ATC" ):ToAll()
+                  local Speeding = false
+                  if AirbaseMeta.MaximumKickSpeed then 
+                    if Velocity:Get() > AirbaseMeta.MaximumKickSpeed then
+                      Speeding = true
+                    end
+                  else
+                    if Velocity:Get() > self.MaximumKickSpeed then
+                      Speeding = true
+                    end
+                  end
+                  if Speeding == true then
+                    MESSAGE:New( "Penalty! Player " .. Client:GetPlayerName() .. 
+                                 " is kicked, due to a severe airbase traffic rule violation ...", 10, "ATC" ):ToAll()
                     Client:Destroy()
                     Client:SetState( self, "Speeding", false )
                     Client:SetState( self, "Warnings", 0 )
@@ -174,7 +297,17 @@ function ATC_GROUND:_AirbaseMonitor()
   
                 if IsOnGround then
   
-                  if Velocity:GetKmph() > AirbaseMeta.MaximumSpeed then
+                  local Speeding = false
+                  if AirbaseMeta.KickSpeed then -- If there is a speed defined for the airbase, use that only.
+                    if Velocity:Get() > AirbaseMeta.KickSpeed then
+                      Speeding = true
+                    end
+                  else
+                    if Velocity:Get() > self.KickSpeed then
+                      Speeding = true
+                    end
+                  end
+                  if Speeding == true then  
                     local IsSpeeding = Client:GetState( self, "Speeding" )
   
                     if IsSpeeding == true then
@@ -183,7 +316,7 @@ function ATC_GROUND:_AirbaseMonitor()
   
                       if SpeedingWarnings <= 3 then
                         Client:Message( "Warning " .. SpeedingWarnings .. "/3! Airbase traffic rule violation! Slow down now! Your speed is " .. 
-                                        string.format( "%s", Velocity:ToString() ), 5, "ATC" )
+                                        Velocity:ToString(), 5, "ATC" )
                         Client:SetState( self, "Warnings", SpeedingWarnings + 1 )
                       else
                         MESSAGE:New( "Penalty! Player " .. Client:GetPlayerName() .. " is kicked, due to a severe airbase traffic rule violation ...", 10, "ATC" ):ToAll()
@@ -194,7 +327,8 @@ function ATC_GROUND:_AirbaseMonitor()
                       end
   
                     else
-                      Client:Message( "Attention! You are speeding on the taxiway, slow down! Your speed is " .. string.format( "%s", Velocity:ToString() ), 5, "ATC" )
+                      Client:Message( "Attention! You are speeding on the taxiway, slow down! Your speed is " .. 
+                                      Velocity:ToString(), 5, "ATC" )
                       Client:SetState( self, "Speeding", true )
                       Client:SetState( self, "Warnings", 1 )
                     end
@@ -271,7 +405,9 @@ end
 --
 -- ---
 --  
--- The maximum speed for the airbases at Caucasus is **50 km/h**.
+-- The default maximum speed for the airbases at Caucasus is **50 km/h**. Warnings are given if this speed limit is trespassed.
+-- Players will be immediately kicked when driving faster than **150 km/h** on the taxi way.
+-- 
 -- 
 -- The pilot will receive 3 times a warning during speeding. After the 3rd warning, if the pilot is still driving
 -- faster than the maximum allowed speed, the pilot will be kicked.
@@ -310,15 +446,18 @@ end
 -- 
 -- ## In Single Player Missions
 -- 
--- ATC_GROUND is fully functional in single player.
+-- ATC\_GROUND is fully functional in single player.
 -- 
 -- ## In Multi Player Missions
 -- 
--- ATC_GROUND is NOT functional in multi player, for client machines connecting to the server, running the mission.
+-- ATC\_GROUND is functional in multi player, however ...
+-- 
 -- Due to a bug in DCS since release 1.5, the despawning of clients are not anymore working in multi player.
--- To work around this problem, a much better solution has been made, using the slot blocker script designed
--- by Ciribob. With the help of __Ciribob__, this script has been extended to also kick client players while in flight.
--- ATC_GROUND is communicating with this modified script to kick players!
+-- To **work around this problem**, a much better solution has been made, using the **slot blocker** script designed
+-- by Ciribob. 
+-- 
+-- With the help of __Ciribob__, this script has been extended to also kick client players while in flight.
+-- ATC\_GROUND is communicating with this modified script to kick players!
 -- 
 -- Install the file **SimpleSlotBlockGameGUI.lua** on the server, following the installation instructions described by Ciribob.
 -- 
@@ -333,7 +472,7 @@ end
 --     -- This creates a new ATC_GROUND_CAUCASUS object.
 -- 
 --     -- Monitor all the airbases.
---     AirbasePoliceCaucasus = ATC_GROUND_CAUCASUS:New()
+--     ATC_Ground = ATC_GROUND_CAUCASUS:New()
 --     
 --     -- Monitor specific airbases only.
 -- 
@@ -342,7 +481,24 @@ end
 --         AIRBASE.Caucasus.Krymsk          
 --       }                                  
 --     )                                    
---     
+-- 
+-- ## 2. Set various options
+-- 
+-- There are various methods that you can use to tweak the behaviour of the ATC\_GROUND classes.
+-- 
+-- ### 2.1 Speed limit at an airbase.
+-- 
+--   * @{#ATC_GROUND.SetKickSpeed}(): Set the speed limit allowed at an airbase in meters per second.
+--   * @{#ATC_GROUND.SetKickSpeedKmph}(): Set the speed limit allowed at an airbase in kilometers per hour.
+--   * @{#ATC_GROUND.SetKickSpeedMiph}(): Set the speed limit allowed at an airbase in miles per hour.
+--   
+-- ### 2.2 Prevent Takeoff at an airbase. Players will be kicked immediately.
+-- 
+--   * @{#ATC_GROUND.SetMaximumKickSpeed}(): Set the maximum speed allowed at an airbase in meters per second. 
+--   * @{#ATC_GROUND.SetMaximumKickSpeedKmph}(): Set the maximum speed allowed at an airbase in kilometers per hour.
+--   * @{#ATC_GROUND.SetMaximumKickSpeedMiph}(): Set the maximum speed allowed at an airbase in miles per hour.
+--   
+-- 
 -- @field #ATC_GROUND_CAUCASUS
 ATC_GROUND_CAUCASUS = {
   ClassName = "ATC_GROUND_CAUCASUS",
@@ -357,7 +513,6 @@ ATC_GROUND_CAUCASUS = {
           [5]={["y"]=242140.57142858,["x"]=-6480.0000000011,}
         },
       },
-      MaximumSpeed = 50,
     },
     [AIRBASE.Caucasus.Batumi] = {
       PointsRunways = {
@@ -378,7 +533,6 @@ ATC_GROUND_CAUCASUS = {
           [14]={["y"]=616441.42857142,["x"]=-355092.57142858,},
         },
       },
-      MaximumSpeed = 50,
     },
     [AIRBASE.Caucasus.Beslan] = {
       PointsRunways = {
@@ -390,7 +544,6 @@ ATC_GROUND_CAUCASUS = {
           [5]={["y"]=842104,["x"]=-148460.28571429,},
         },
       },
-      MaximumSpeed = 50,
     },
     [AIRBASE.Caucasus.Gelendzhik] = {
       PointsRunways = {
@@ -402,7 +555,6 @@ ATC_GROUND_CAUCASUS = {
           [5]={["y"]=297835.14285715,["x"]=-51107.714285715,},
         },
       },
-      MaximumSpeed = 50,
     },
     [AIRBASE.Caucasus.Gudauta] = {
       PointsRunways = {
@@ -414,7 +566,6 @@ ATC_GROUND_CAUCASUS = {
           [5]={["y"]=517097.99999999,["x"]=-197807.42857143,},
         },
       },
-      MaximumSpeed = 50,
     },
     [AIRBASE.Caucasus.Kobuleti] = {
       PointsRunways = {
@@ -426,7 +577,6 @@ ATC_GROUND_CAUCASUS = {
           [5]={["y"]=634510.28571429,["x"]=-318339.71428572,},
         },
       },
-      MaximumSpeed = 50,
     },
     [AIRBASE.Caucasus.Krasnodar_Center] = {
       PointsRunways = {
@@ -438,7 +588,6 @@ ATC_GROUND_CAUCASUS = {
           [5]={["y"]=369208.85714286,["x"]=11788.57142857,},
         },
       },
-      MaximumSpeed = 50,
     },
     [AIRBASE.Caucasus.Krasnodar_Pashkovsky] = {
       PointsRunways = {
@@ -457,7 +606,6 @@ ATC_GROUND_CAUCASUS = {
           [5]={["y"]=386714.57142858,["x"]=6674.5714285703,},
         },
       },
-      MaximumSpeed = 50,
     },
     [AIRBASE.Caucasus.Krymsk] = {
       PointsRunways = {
@@ -469,7 +617,6 @@ ATC_GROUND_CAUCASUS = {
           [5]={["y"]=293523.14285715,["x"]=-7568.2857142868,},
         },
       },
-      MaximumSpeed = 50,
     },
     [AIRBASE.Caucasus.Kutaisi] = {
       PointsRunways = {
@@ -481,7 +628,6 @@ ATC_GROUND_CAUCASUS = {
           [5]={["y"]=682638.28571429,["x"]=-285202.85714286,},
         },
       },
-      MaximumSpeed = 50,
     },
     [AIRBASE.Caucasus.Maykop_Khanskaya] = {
       PointsRunways = {
@@ -493,7 +639,6 @@ ATC_GROUND_CAUCASUS = {
           [5]={["y"]=457004.57142857,["x"]=-27669.714285715,},
         },
       },
-      MaximumSpeed = 50,
     },
     [AIRBASE.Caucasus.Mineralnye_Vody] = {
       PointsRunways = {
@@ -505,7 +650,6 @@ ATC_GROUND_CAUCASUS = {
           [5]={["y"]=703902,["x"]=-50352.000000002,},
         },
       },
-      MaximumSpeed = 50,
     },
     [AIRBASE.Caucasus.Mozdok] = {
       PointsRunways = {
@@ -517,7 +661,6 @@ ATC_GROUND_CAUCASUS = {
           [5]={["y"]=832200.57142857,["x"]=-83700.000000002,},
         },
       },
-      MaximumSpeed = 50,
     },
     [AIRBASE.Caucasus.Nalchik] = {
       PointsRunways = {
@@ -529,7 +672,6 @@ ATC_GROUND_CAUCASUS = {
           [5]={["y"]=759456,["x"]=-125552.57142857,},
         },
       },
-      MaximumSpeed = 50,
     },
     [AIRBASE.Caucasus.Novorossiysk] = {
       PointsRunways = {
@@ -541,7 +683,6 @@ ATC_GROUND_CAUCASUS = {
           [5]={["y"]=278672.00000001,["x"]=-41614.857142858,},
         },
       },
-      MaximumSpeed = 50,
     },
     [AIRBASE.Caucasus.Senaki_Kolkhi] = {
       PointsRunways = {
@@ -553,7 +694,6 @@ ATC_GROUND_CAUCASUS = {
           [5]={["y"]=646063.71428571,["x"]=-281738.85714286,},
         },
       },
-      MaximumSpeed = 50,
     },
     [AIRBASE.Caucasus.Sochi_Adler] = {
       PointsRunways = {
@@ -572,7 +712,6 @@ ATC_GROUND_CAUCASUS = {
           [5]={["y"]=460831.42857143,["x"]=-165177.14285714,},
         },
       },
-      MaximumSpeed = 50,
     },
     [AIRBASE.Caucasus.Soganlug] = {
       PointsRunways = {
@@ -584,7 +723,6 @@ ATC_GROUND_CAUCASUS = {
           [5]={["y"]=894524.57142857,["x"]=-316963.71428571,},
         },
       },
-      MaximumSpeed = 50,
     },
     [AIRBASE.Caucasus.Sukhumi_Babushara] = {
       PointsRunways = {
@@ -596,7 +734,6 @@ ATC_GROUND_CAUCASUS = {
           [5]={["y"]=562684.57142857,["x"]=-219782.57142857,},
         },
       },
-      MaximumSpeed = 50,
     },
     [AIRBASE.Caucasus.Tbilisi_Lochini] = {
       PointsRunways = {
@@ -615,7 +752,6 @@ ATC_GROUND_CAUCASUS = {
           [5]={["y"]=895606,["x"]=-314724.85714286,}
         },
       },
-      MaximumSpeed = 50,
     },
     [AIRBASE.Caucasus.Vaziani] = {
       PointsRunways = {
@@ -627,7 +763,6 @@ ATC_GROUND_CAUCASUS = {
           [5]={["y"]=902247.71428571,["x"]=-318190.85714286,},
         },
       },
-      MaximumSpeed = 50,
     },
   },
 }
@@ -641,7 +776,10 @@ function ATC_GROUND_CAUCASUS:New( AirbaseNames )
   -- Inherits from BASE
   local self = BASE:Inherit( self, ATC_GROUND:New( self.Airbases, AirbaseNames ) )
 
+  self.AirbaseMonitor = SCHEDULER:New( self, self._AirbaseMonitor, { self }, 0, 2, 0.05 )
 
+  self:SetKickSpeedKmph( 50 )
+  self:SetMaximumKickSpeedKmph( 150 )
 
   --    -- AnapaVityazevo
   --    local AnapaVityazevoBoundary = GROUP:FindByName( "AnapaVityazevo Boundary" )
@@ -869,6 +1007,9 @@ end
 -- 
 -- ---
 -- 
+-- The default maximum speed for the airbases at Nevada is **50 km/h**. Warnings are given if this speed limit is trespassed.
+-- Players will be immediately kicked when driving faster than **150 km/h** on the taxi way.
+-- 
 -- The ATC\_GROUND\_NEVADA class monitors the speed of the airplanes at the airbase during taxi.
 -- The pilots may not drive faster than the maximum speed for the airbase, or they will be despawned.
 -- 
@@ -905,15 +1046,18 @@ end
 -- 
 -- ## In Single Player Missions
 -- 
--- ATC_GROUND is fully functional in single player.
+-- ATC\_GROUND is fully functional in single player.
 -- 
 -- ## In Multi Player Missions
 -- 
--- ATC_GROUND is NOT functional in multi player, for client machines connecting to the server, running the mission.
+-- ATC\_GROUND is functional in multi player, however ...
+-- 
 -- Due to a bug in DCS since release 1.5, the despawning of clients are not anymore working in multi player.
--- To work around this problem, a much better solution has been made, using the slot blocker script designed
--- by Ciribob. With the help of Ciribob, this script has been extended to also kick client players while in flight.
--- ATC_GROUND is communicating with this modified script to kick players!
+-- To **work around this problem**, a much better solution has been made, using the **slot blocker** script designed
+-- by Ciribob. 
+-- 
+-- With the help of __Ciribob__, this script has been extended to also kick client players while in flight.
+-- ATC\_GROUND is communicating with this modified script to kick players!
 -- 
 -- Install the file **SimpleSlotBlockGameGUI.lua** on the server, following the installation instructions described by Ciribob.
 -- 
@@ -928,7 +1072,7 @@ end
 --     -- This creates a new ATC_GROUND_NEVADA object.
 -- 
 --     -- Monitor all the airbases.
---     AirbasePoliceCaucasus = ATC_GROUND_NEVADA:New()
+--     ATC_Ground = ATC_GROUND_NEVADA:New()
 -- 
 --    
 --     -- Monitor specific airbases.
@@ -941,6 +1085,23 @@ end
 --       }                                              
 --     )                                                
 -- 
+-- ## 2. Set various options
+-- 
+-- There are various methods that you can use to tweak the behaviour of the ATC\_GROUND classes.
+-- 
+-- ### 2.1 Speed limit at an airbase.
+-- 
+--   * @{#ATC_GROUND.SetKickSpeed}(): Set the speed limit allowed at an airbase in meters per second.
+--   * @{#ATC_GROUND.SetKickSpeedKmph}(): Set the speed limit allowed at an airbase in kilometers per hour.
+--   * @{#ATC_GROUND.SetKickSpeedMiph}(): Set the speed limit allowed at an airbase in miles per hour.
+--   
+-- ### 2.2 Prevent Takeoff at an airbase. Players will be kicked immediately.
+-- 
+--   * @{#ATC_GROUND.SetMaximumKickSpeed}(): Set the maximum speed allowed at an airbase in meters per second. 
+--   * @{#ATC_GROUND.SetMaximumKickSpeedKmph}(): Set the maximum speed allowed at an airbase in kilometers per hour.
+--   * @{#ATC_GROUND.SetMaximumKickSpeedMiph}(): Set the maximum speed allowed at an airbase in miles per hour.
+-- 
+--   
 -- @field #ATC_GROUND_NEVADA
 ATC_GROUND_NEVADA = {
   ClassName = "ATC_GROUND_NEVADA",
@@ -955,7 +1116,6 @@ ATC_GROUND_NEVADA = {
           [4]={["y"]=-174971.01828571,["x"]=-329682.59171429,},
         },
       },
-      MaximumSpeed = 50,
     },  
     [AIRBASE.Nevada.Boulder_City_Airport] = {
       PointsRunways = {
@@ -972,7 +1132,6 @@ ATC_GROUND_NEVADA = {
           [4] = {["y"]=-1883.955714286,["x"]=-429807.83742856,},
         },
       },
-      MaximumSpeed = 50,
     },
     [AIRBASE.Nevada.Creech_AFB] = {
       PointsRunways = {
@@ -989,7 +1148,6 @@ ATC_GROUND_NEVADA = {
           [4] = {["y"]=-75734.142857144,["x"]=-359023.14285714,},
         },
       },
-      MaximumSpeed = 50,
     },
     [AIRBASE.Nevada.Echo_Bay] = {
       PointsRunways = {
@@ -1000,7 +1158,6 @@ ATC_GROUND_NEVADA = {
           [4] = {["y"]=33185.422285715,["x"]=-388717.82228571,},
         },
       },
-      MaximumSpeed = 50,
     },
     [AIRBASE.Nevada.Groom_Lake_AFB] = {
       PointsRunways = {
@@ -1017,7 +1174,6 @@ ATC_GROUND_NEVADA = {
           [4] = {["y"]=-86799.623714285,["x"]=-290374.16771428,},
         },
       },
-      MaximumSpeed = 50,
     },
     [AIRBASE.Nevada.Henderson_Executive_Airport] = {
       PointsRunways = {
@@ -1034,7 +1190,6 @@ ATC_GROUND_NEVADA = {
           [4] = {["y"]=-25708.296285714,["x"]=-426515.15114285,},
         },
       },
-      MaximumSpeed = 50,
     },
     [AIRBASE.Nevada.Jean_Airport] = {
       PointsRunways = {
@@ -1051,7 +1206,6 @@ ATC_GROUND_NEVADA = {
           [4] = {["y"]=-42609.216571429,["x"]=-449891.28628571,},
         },
       },
-      MaximumSpeed = 50,
     },
     [AIRBASE.Nevada.Laughlin_Airport] = {
       PointsRunways = {
@@ -1068,7 +1222,6 @@ ATC_GROUND_NEVADA = {
           [4] = {["y"]=28138.022857143,["x"]=-515573.07514286,},
         },
       },
-      MaximumSpeed = 50,
     },
     [AIRBASE.Nevada.Lincoln_County] = {
       PointsRunways = {
@@ -1079,7 +1232,6 @@ ATC_GROUND_NEVADA = {
           [4]={["y"]=33201.198857147,["x"]=-223960.54457143,},
         },
       },
-      MaximumSpeed = 50,
     },
     [AIRBASE.Nevada.McCarran_International_Airport] = {
       PointsRunways = {
@@ -1108,7 +1260,6 @@ ATC_GROUND_NEVADA = {
           [4] = {["y"]=-29073.000000001,["x"]=-416386.85714284,},
         },
       },
-      MaximumSpeed = 50,
     },
     [AIRBASE.Nevada.Mesquite] = {
       PointsRunways = {
@@ -1129,7 +1280,6 @@ ATC_GROUND_NEVADA = {
           [4] = {["y"]=-290104.69085714,["x"]=-160956.19457143,},
         },
       },
-      MaximumSpeed = 50,
     },
     [AIRBASE.Nevada.Nellis_AFB] = {
       PointsRunways = {
@@ -1146,7 +1296,6 @@ ATC_GROUND_NEVADA = {
           [4] = {["y"]=-18451.571428572,["x"]=-399580.85714285,},
         },
       },
-      MaximumSpeed = 50,
     },
     [AIRBASE.Nevada.Pahute_Mesa_Airstrip] = {
       PointsRunways = {
@@ -1157,7 +1306,6 @@ ATC_GROUND_NEVADA = {
           [4] = {["y"]=-132759.988,["x"]=-302723.326,},
         },
       },
-      MaximumSpeed = 50,
     },
     [AIRBASE.Nevada.Tonopah_Test_Range_Airfield] = {
       PointsRunways = {
@@ -1168,7 +1316,6 @@ ATC_GROUND_NEVADA = {
           [4] = {["y"]=-175452.38685714,["x"]=-224806.84200001,},
         },
       },
-      MaximumSpeed = 50,
     },
     [AIRBASE.Nevada.Tonopah_Airport] = {
       PointsRunways = {
@@ -1185,7 +1332,6 @@ ATC_GROUND_NEVADA = {
           [4] = {["y"]=-202097.14314285,["x"]=-196739.16514286,},
         },
       },
-      MaximumSpeed = 50,
     },
     [AIRBASE.Nevada.North_Las_Vegas] = {
       PointsRunways = {
@@ -1208,7 +1354,6 @@ ATC_GROUND_NEVADA = {
           [4] = {["y"]=-31884.969142858,["x"]=-401020.59771429,},
         },
       },
-      MaximumSpeed = 50,
     },
   },
 }
@@ -1222,8 +1367,11 @@ function ATC_GROUND_NEVADA:New( AirbaseNames )
   -- Inherits from BASE
   local self = BASE:Inherit( self, ATC_GROUND:New( self.Airbases, AirbaseNames ) )
 
+  self.AirbaseMonitor = SCHEDULER:New( self, self._AirbaseMonitor, { self }, 0, 2, 0.05 )
 
-  
+  self:SetKickSpeedKmph( 50 )
+  self:SetMaximumKickSpeedKmph( 150 )
+
   -- These lines here are for the demonstration mission.
   -- They create in the dcs.log the coordinates of the runway polygons, that are then
   -- taken by the moose designer from the dcs.log and reworked to define the
@@ -1399,6 +1547,9 @@ end
 -- 
 -- ---
 -- 
+-- The default maximum speed for the airbases at Caucasus is **40 km/h**. Warnings are given if this speed limit is trespassed.
+-- Players will be immediately kicked when driving faster than **100 km/h** on the taxi way.
+-- 
 -- The ATC\_GROUND\_NORMANDY class monitors the speed of the airplanes at the airbase during taxi.
 -- The pilots may not drive faster than the maximum speed for the airbase, or they will be despawned.
 -- 
@@ -1448,15 +1599,18 @@ end
 -- 
 -- ## In Single Player Missions
 -- 
--- ATC_GROUND is fully functional in single player.
+-- ATC\_GROUND is fully functional in single player.
 -- 
 -- ## In Multi Player Missions
 -- 
--- ATC_GROUND is NOT functional in multi player, for client machines connecting to the server, running the mission.
+-- ATC\_GROUND is functional in multi player, however ...
+-- 
 -- Due to a bug in DCS since release 1.5, the despawning of clients are not anymore working in multi player.
--- To work around this problem, a much better solution has been made, using the slot blocker script designed
--- by Ciribob. With the help of Ciribob, this script has been extended to also kick client players while in flight.
--- ATC_GROUND is communicating with this modified script to kick players!
+-- To **work around this problem**, a much better solution has been made, using the **slot blocker** script designed
+-- by Ciribob. 
+-- 
+-- With the help of __Ciribob__, this script has been extended to also kick client players while in flight.
+-- ATC\_GROUND is communicating with this modified script to kick players!
 -- 
 -- Install the file **SimpleSlotBlockGameGUI.lua** on the server, following the installation instructions described by Ciribob.
 -- 
@@ -1478,8 +1632,24 @@ end
 --         AIRBASE.Normandy.Beuzeville 
 --       } 
 --     )
---     
 -- 
+--     
+-- ## 2. Set various options
+-- 
+-- There are various methods that you can use to tweak the behaviour of the ATC\_GROUND classes.
+-- 
+-- ### 2.1 Speed limit at an airbase.
+-- 
+--   * @{#ATC_GROUND.SetKickSpeed}(): Set the speed limit allowed at an airbase in meters per second.
+--   * @{#ATC_GROUND.SetKickSpeedKmph}(): Set the speed limit allowed at an airbase in kilometers per hour.
+--   * @{#ATC_GROUND.SetKickSpeedMiph}(): Set the speed limit allowed at an airbase in miles per hour.
+--   
+-- ### 2.2 Prevent Takeoff at an airbase. Players will be kicked immediately.
+-- 
+--   * @{#ATC_GROUND.SetMaximumKickSpeed}(): Set the maximum speed allowed at an airbase in meters per second. 
+--   * @{#ATC_GROUND.SetMaximumKickSpeedKmph}(): Set the maximum speed allowed at an airbase in kilometers per hour.
+--   * @{#ATC_GROUND.SetMaximumKickSpeedMiph}(): Set the maximum speed allowed at an airbase in miles per hour.
+--   
 -- @field #ATC_GROUND_NORMANDY
 ATC_GROUND_NORMANDY = {
   ClassName = "ATC_GROUND_NORMANDY",
@@ -1493,7 +1663,6 @@ ATC_GROUND_NORMANDY = {
           [4]={["y"]=-74176.959142857,["x"]=-2741.997142857,},
         },
       },
-      MaximumSpeed = 40,
     },
     [AIRBASE.Normandy.Bazenville] = {
       PointsRunways = {
@@ -1504,7 +1673,6 @@ ATC_GROUND_NORMANDY = {
           [4]={["y"]=-19217.791999999,["x"]=-21283.597714285,},
         },
       },
-      MaximumSpeed = 40,
     },
     [AIRBASE.Normandy.Beny_sur_Mer] = {
       PointsRunways = {
@@ -1515,7 +1683,6 @@ ATC_GROUND_NORMANDY = {
           [4]={["y"]=-8451.0482857133,["x"]=-20368.87542857,},
         },
       },
-      MaximumSpeed = 40,
     },
     [AIRBASE.Normandy.Beuzeville] = {
       PointsRunways = {
@@ -1526,7 +1693,6 @@ ATC_GROUND_NORMANDY = {
           [4]={["y"]=-71585.849428571,["x"]=-8709.9648571426,},
         },
       },
-      MaximumSpeed = 40,
     },
     [AIRBASE.Normandy.Biniville] = {
       PointsRunways = {
@@ -1537,7 +1703,6 @@ ATC_GROUND_NORMANDY = {
           [4]={["y"]=-84784.969714286,["x"]=-7402.0588571427,},
         },
       },
-      MaximumSpeed = 40,
     },
     [AIRBASE.Normandy.Brucheville] = {
       PointsRunways = {
@@ -1548,7 +1713,6 @@ ATC_GROUND_NORMANDY = {
           [4]={["y"]=-65528.393714285,["x"]=-14657.995714286,},
         },
       },
-      MaximumSpeed = 40,
     },
     [AIRBASE.Normandy.Cardonville] = {
       PointsRunways = {
@@ -1559,7 +1723,6 @@ ATC_GROUND_NORMANDY = {
           [4]={["y"]=-54323.354571428,["x"]=-15855.004,},
         },
       },
-      MaximumSpeed = 40,
     },
     [AIRBASE.Normandy.Carpiquet] = {
       PointsRunways = {
@@ -1570,7 +1733,6 @@ ATC_GROUND_NORMANDY = {
           [4]={["y"]=-10794.90942857,["x"]=-34287.041428571,},
         },
       },
-      MaximumSpeed = 40,
     },
     [AIRBASE.Normandy.Chailey] = {
       PointsRunways = {
@@ -1588,7 +1750,6 @@ ATC_GROUND_NORMANDY = {
           [4]={["y"]=11726.973428578,["x"]=164489.94257143,},
         },
       },
-      MaximumSpeed = 40,
     },
     [AIRBASE.Normandy.Chippelle] = {
       PointsRunways = {
@@ -1599,7 +1760,6 @@ ATC_GROUND_NORMANDY = {
           [4]={["y"]=-48555.657714285,["x"]=-28839.90142857,},
         },
       },
-      MaximumSpeed = 40,
     },
     [AIRBASE.Normandy.Cretteville] = {
       PointsRunways = {
@@ -1610,7 +1770,6 @@ ATC_GROUND_NORMANDY = {
           [4]={["y"]=-78380.008857143,["x"]=-18208.011142857,},
         },
       },
-      MaximumSpeed = 40,
     },
     [AIRBASE.Normandy.Cricqueville_en_Bessin] = {
       PointsRunways = {
@@ -1621,7 +1780,6 @@ ATC_GROUND_NORMANDY = {
           [4]={["y"]=-50910.569428571,["x"]=-14327.562857142,},
         },
       },
-      MaximumSpeed = 40,
     },
     [AIRBASE.Normandy.Deux_Jumeaux] = {
       PointsRunways = {
@@ -1632,7 +1790,6 @@ ATC_GROUND_NORMANDY = {
           [4]={["y"]=-49584.839428571,["x"]=-16617.732571428,},
         },
       },
-      MaximumSpeed = 40,
     },
     [AIRBASE.Normandy.Evreux] = {
       PointsRunways = {
@@ -1649,7 +1806,6 @@ ATC_GROUND_NORMANDY = {
           [4]={["y"]=111966.03657143,["x"]=-45112.604285713,},
         },
       },
-      MaximumSpeed = 40,
     },
     [AIRBASE.Normandy.Ford] = {
       PointsRunways = {
@@ -1666,7 +1822,6 @@ ATC_GROUND_NORMANDY = {
           [4]={["y"]=-25252.357999994,["x"]=148448.64457143,},
         },
       },
-      MaximumSpeed = 40,
     },
     [AIRBASE.Normandy.Funtington] = {
       PointsRunways = {
@@ -1684,7 +1839,6 @@ ATC_GROUND_NORMANDY = {
           [4]={["y"]=-45871.25971428,["x"]=153136.82714286,},
         },
       },
-      MaximumSpeed = 40,
     },
     [AIRBASE.Normandy.Lantheuil] = {
       PointsRunways = {
@@ -1695,7 +1849,6 @@ ATC_GROUND_NORMANDY = {
           [4]={["y"]=-17090.734857142,["x"]=-24673.248,},
         },
       },
-      MaximumSpeed = 40,
     },
     [AIRBASE.Normandy.Lessay] = {
       PointsRunways = {
@@ -1712,7 +1865,6 @@ ATC_GROUND_NORMANDY = {
           [4]={["y"]=-87087.688571429,["x"]=-34258.272285715,},
         },
       },
-      MaximumSpeed = 40,
     },
     [AIRBASE.Normandy.Lignerolles] = {
       PointsRunways = {
@@ -1723,7 +1875,6 @@ ATC_GROUND_NORMANDY = {
           [4]={["y"]=-35263.548285713,["x"]=-35192.75542857,},
         },
       },
-      MaximumSpeed = 40,
     },
     [AIRBASE.Normandy.Longues_sur_Mer] = {
       PointsRunways = {
@@ -1734,7 +1885,6 @@ ATC_GROUND_NORMANDY = {
           [4]={["y"]=-29529.616285713,["x"]=-16477.766571428,},
         },
       },
-      MaximumSpeed = 40,
     },
     [AIRBASE.Normandy.Maupertus] = {
       PointsRunways = {
@@ -1745,7 +1895,6 @@ ATC_GROUND_NORMANDY = {
           [4]={["y"]=-85613.626571429,["x"]=16132.410571429,},
         },
       },
-      MaximumSpeed = 40,
     },
     [AIRBASE.Normandy.Meautis] = {
       PointsRunways = {
@@ -1756,7 +1905,6 @@ ATC_GROUND_NORMANDY = {
           [4]={["y"]=-72631.715714286,["x"]=-24639.966857143,},
         },
       },
-      MaximumSpeed = 40,
     },
     [AIRBASE.Normandy.Le_Molay] = {
       PointsRunways = {
@@ -1767,7 +1915,6 @@ ATC_GROUND_NORMANDY = {
           [4]={["y"]=-41913.638285713,["x"]=-26665.137999999,},
         },
       },
-      MaximumSpeed = 40,
     },
     [AIRBASE.Normandy.Needs_Oar_Point] = {
       PointsRunways = {
@@ -1785,7 +1932,6 @@ ATC_GROUND_NORMANDY = {
           [4]={["y"]=-84605.051428566,["x"]=141966.01428572,},
         },
       },
-      MaximumSpeed = 40,
     },
     [AIRBASE.Normandy.Picauville] = {
       PointsRunways = {
@@ -1796,7 +1942,6 @@ ATC_GROUND_NORMANDY = {
           [4]={["y"]=-80827.815142857,["x"]=-11901.835142857,},
         },
       },
-      MaximumSpeed = 40,
     },
     [AIRBASE.Normandy.Rucqueville] = {
       PointsRunways = {
@@ -1807,7 +1952,6 @@ ATC_GROUND_NORMANDY = {
           [4]={["y"]=-20022.218857141,["x"]=-26608.505428571,},
         },
       },
-      MaximumSpeed = 40,
     },
     [AIRBASE.Normandy.Saint_Pierre_du_Mont] = {
       PointsRunways = {
@@ -1818,7 +1962,6 @@ ATC_GROUND_NORMANDY = {
           [4]={["y"]=-48016.837142856,["x"]=-11929.371142857,},
         },
       },
-      MaximumSpeed = 40,
     },
     [AIRBASE.Normandy.Sainte_Croix_sur_Mer] = {
       PointsRunways = {
@@ -1829,7 +1972,6 @@ ATC_GROUND_NORMANDY = {
           [4]={["y"]=-15878.229142856,["x"]=-18764.071428571,},
         },
       },
-      MaximumSpeed = 40,
     },
     [AIRBASE.Normandy.Sainte_Laurent_sur_Mer] = {
       PointsRunways = {
@@ -1840,7 +1982,6 @@ ATC_GROUND_NORMANDY = {
           [4]={["y"]=-41687.120571427,["x"]=-14509.680857142,},
         },
       },
-      MaximumSpeed = 40,
     },
     [AIRBASE.Normandy.Sommervieu] = {
       PointsRunways = {
@@ -1851,7 +1992,6 @@ ATC_GROUND_NORMANDY = {
           [4]={["y"]=-26818.002285713,["x"]=-21440.532857142,},
         },
       },
-      MaximumSpeed = 40,
     },
     [AIRBASE.Normandy.Tangmere] = {
       PointsRunways = {
@@ -1868,7 +2008,6 @@ ATC_GROUND_NORMANDY = {
           [4]={["y"]=-33176.545999994,["x"]=150870.22542857,},
         },
       },
-      MaximumSpeed = 40,
     },
   },
 }
@@ -1881,7 +2020,12 @@ ATC_GROUND_NORMANDY = {
 function ATC_GROUND_NORMANDY:New( AirbaseNames )
 
   -- Inherits from BASE
-  local self = BASE:Inherit( self, ATC_GROUND:New( self.Airbases, AirbaseNames ) )
+  local self = BASE:Inherit( self, ATC_GROUND:New( self.Airbases, AirbaseNames ) ) -- #ATC_GROUND_NORMANDY
+
+  self.AirbaseMonitor = SCHEDULER:New( self, self._AirbaseMonitor, { self }, 0, 2, 0.05 )
+  
+  self:SetKickSpeedKmph( 40 )
+  self:SetMaximumKickSpeedKmph( 100 )
 
   -- These lines here are for the demonstration mission.
   -- They create in the dcs.log the coordinates of the runway polygons, that are then
