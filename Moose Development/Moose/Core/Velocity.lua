@@ -7,7 +7,7 @@
 -- 
 -- ====
 -- 
--- @module Base
+-- @module Velocity
 
 do -- Velocity
 

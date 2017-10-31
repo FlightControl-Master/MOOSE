@@ -102,6 +102,7 @@
 					<li><a href="UserFlag.html">UserFlag</a></li>
 					<li><a href="UserSound.html">UserSound</a></li>
 					<li><a href="Utils.html">Utils</a></li>
+					<li><a href="Velocity.html">Velocity</a></li>
 					<li><a href="Zone.html">Zone</a></li>
 					<li><a href="ZoneCaptureCoalition.html">ZoneCaptureCoalition</a></li>
 					<li><a href="ZoneGoal.html">ZoneGoal</a></li>
@@ -179,12 +180,6 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ATC_GROUND).AirbaseMonitor">ATC_GROUND.AirbaseMonitor</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(ATC_GROUND).Airbases">ATC_GROUND.Airbases</a></td>
 		<td class="summary">
 
@@ -192,6 +187,12 @@
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(ATC_GROUND).KickSpeed">ATC_GROUND.KickSpeed</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ATC_GROUND).MaximumKickSpeed">ATC_GROUND.MaximumKickSpeed</a></td>
 		<td class="summary">
 
 </td>
@@ -209,15 +210,39 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ATC_GROUND).SetKickSpeedKmph">ATC_GROUND:SetKickSpeedKmph(KickSpeed)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(ATC_GROUND).SetKickSpeed">ATC_GROUND:SetKickSpeed(KickSpeed, Airbase)</a></td>
+		<td class="summary">
+<p>Set the maximum speed in meters per second (Mps) until the player gets kicked.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ATC_GROUND).SetKickSpeedKmph">ATC_GROUND:SetKickSpeedKmph(KickSpeed, Airbase)</a></td>
 		<td class="summary">
 <p>Set the maximum speed in Kmph until the player gets kicked.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ATC_GROUND).SetKickSpeedMiph">ATC_GROUND:SetKickSpeedMiph(KickSpeedMiph)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(ATC_GROUND).SetKickSpeedMiph">ATC_GROUND:SetKickSpeedMiph(KickSpeedMiph, Airbase)</a></td>
 		<td class="summary">
 <p>Set the maximum speed in Miph until the player gets kicked.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ATC_GROUND).SetMaximumKickSpeed">ATC_GROUND:SetMaximumKickSpeed(MaximumKickSpeed, Airbase)</a></td>
+		<td class="summary">
+<p>Set the maximum kick speed in meters per second (Mps) until the player gets kicked.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ATC_GROUND).SetMaximumKickSpeedKmph">ATC_GROUND:SetMaximumKickSpeedKmph(MaximumKickSpeed, Airbase)</a></td>
+		<td class="summary">
+<p>Set the maximum kick speed in kilometers per hour (Kmph) until the player gets kicked.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ATC_GROUND).SetMaximumKickSpeedMiph">ATC_GROUND:SetMaximumKickSpeedMiph(MaximumKickSpeedMiph, Airbase)</a></td>
+		<td class="summary">
+<p>Set the maximum kick speed in miles per hour (Miph) until the player gets kicked.</p>
 </td>
 		</tr>
 		<tr>
@@ -256,6 +281,12 @@
 
 			<h2><a id="#(ATC_GROUND_NORMANDY)">Type <code>ATC_GROUND_NORMANDY</code></a></h2>
 				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ATC_GROUND_NORMANDY).AirbaseMonitor">ATC_GROUND_NORMANDY.AirbaseMonitor</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(ATC_GROUND_NORMANDY).New">ATC_GROUND_NORMANDY:New(AirbaseNames)</a></td>
 		<td class="summary">
@@ -302,7 +333,9 @@
 
 <hr/>
 
-<p>The maximum speed for the airbases at Caucasus is <strong>50 km/h</strong>.</p>
+<p>The default maximum speed for the airbases at Caucasus is <strong>50 km/h</strong>. Warnings are given if this speed limit is trespassed.
+Players will be immediately kicked when driving faster than <strong>150 km/h</strong> on the taxi way.</p>
+
 
 <p>The pilot will receive 3 times a warning during speeding. After the 3rd warning, if the pilot is still driving
 faster than the maximum allowed speed, the pilot will be kicked.</p>
@@ -347,11 +380,14 @@ Use the <a href="Airbase.html##(AIRBASE).Caucasus">Airbase#AIRBASE.Caucasus</a> 
 
 <h2>In Multi Player Missions</h2>
 
-<p>ATC<em>GROUND is NOT functional in multi player, for client machines connecting to the server, running the mission.
-Due to a bug in DCS since release 1.5, the despawning of clients are not anymore working in multi player.
-To work around this problem, a much better solution has been made, using the slot blocker script designed
-by Ciribob. With the help of <strong>Ciribob</strong>, this script has been extended to also kick client players while in flight.
-ATC</em>GROUND is communicating with this modified script to kick players!</p>
+<p>ATC_GROUND is functional in multi player, however ...</p>
+
+<p>Due to a bug in DCS since release 1.5, the despawning of clients are not anymore working in multi player.
+To <strong>work around this problem</strong>, a much better solution has been made, using the <strong>slot blocker</strong> script designed
+by Ciribob. </p>
+
+<p>With the help of <strong>Ciribob</strong>, this script has been extended to also kick client players while in flight.
+ATC_GROUND is communicating with this modified script to kick players!</p>
 
 <p>Install the file <strong>SimpleSlotBlockGameGUI.lua</strong> on the server, following the installation instructions described by Ciribob.</p>
 
@@ -366,7 +402,7 @@ ATC</em>GROUND is communicating with this modified script to kick players!</p>
 <pre><code>-- This creates a new ATC_GROUND_CAUCASUS object.
 
 -- Monitor all the airbases.
-AirbasePoliceCaucasus = ATC_GROUND_CAUCASUS:New()
+ATC_Ground = ATC_GROUND_CAUCASUS:New()
 
 -- Monitor specific airbases only.
 
@@ -375,8 +411,29 @@ ATC_Ground = ATC_GROUND_CAUCASUS:New(
     AIRBASE.Caucasus.Krymsk          
   }                                  
 )                                    
-
 </code></pre>
+
+<h2>2. Set various options</h2>
+
+<p>There are various methods that you can use to tweak the behaviour of the ATC_GROUND classes.</p>
+
+<h3>2.1 Speed limit at an airbase.</h3>
+
+<ul>
+    <li><a href="##(ATC_GROUND).SetKickSpeed">ATC_GROUND.SetKickSpeed</a>(): Set the speed limit allowed at an airbase in meters per second.</li>
+    <li><a href="##(ATC_GROUND).SetKickSpeedKmph">ATC_GROUND.SetKickSpeedKmph</a>(): Set the speed limit allowed at an airbase in kilometers per hour.</li>
+    <li><a href="##(ATC_GROUND).SetKickSpeedMiph">ATC_GROUND.SetKickSpeedMiph</a>(): Set the speed limit allowed at an airbase in miles per hour.</li>
+</ul>
+
+<h3>2.2 Prevent Takeoff at an airbase. Players will be kicked immediately.</h3>
+
+<ul>
+    <li><a href="##(ATC_GROUND).SetMaximumKickSpeed">ATC_GROUND.SetMaximumKickSpeed</a>(): Set the maximum speed allowed at an airbase in meters per second. </li>
+    <li><a href="##(ATC_GROUND).SetMaximumKickSpeedKmph">ATC_GROUND.SetMaximumKickSpeedKmph</a>(): Set the maximum speed allowed at an airbase in kilometers per hour.</li>
+    <li><a href="##(ATC_GROUND).SetMaximumKickSpeedMiph">ATC_GROUND.SetMaximumKickSpeedMiph</a>(): Set the maximum speed allowed at an airbase in miles per hour.</li>
+</ul>
+
+
 
 </dd>
 </dl>
@@ -402,6 +459,9 @@ ATC_Ground = ATC_GROUND_CAUCASUS:New(
 <p><img src="..\Presentations\ATC_GROUND\Dia1.JPG" alt="Banner Image"/></p>
 
 <hr/>
+
+<p>The default maximum speed for the airbases at Nevada is <strong>50 km/h</strong>. Warnings are given if this speed limit is trespassed.
+Players will be immediately kicked when driving faster than <strong>150 km/h</strong> on the taxi way.</p>
 
 <p>The ATC_GROUND_NEVADA class monitors the speed of the airplanes at the airbase during taxi.
 The pilots may not drive faster than the maximum speed for the airbase, or they will be despawned.</p>
@@ -445,11 +505,14 @@ Use the <a href="Airbase.html##(AIRBASE).Nevada">Airbase#AIRBASE.Nevada</a> enum
 
 <h2>In Multi Player Missions</h2>
 
-<p>ATC<em>GROUND is NOT functional in multi player, for client machines connecting to the server, running the mission.
-Due to a bug in DCS since release 1.5, the despawning of clients are not anymore working in multi player.
-To work around this problem, a much better solution has been made, using the slot blocker script designed
-by Ciribob. With the help of Ciribob, this script has been extended to also kick client players while in flight.
-ATC</em>GROUND is communicating with this modified script to kick players!</p>
+<p>ATC_GROUND is functional in multi player, however ...</p>
+
+<p>Due to a bug in DCS since release 1.5, the despawning of clients are not anymore working in multi player.
+To <strong>work around this problem</strong>, a much better solution has been made, using the <strong>slot blocker</strong> script designed
+by Ciribob. </p>
+
+<p>With the help of <strong>Ciribob</strong>, this script has been extended to also kick client players while in flight.
+ATC_GROUND is communicating with this modified script to kick players!</p>
 
 <p>Install the file <strong>SimpleSlotBlockGameGUI.lua</strong> on the server, following the installation instructions described by Ciribob.</p>
 
@@ -464,7 +527,7 @@ ATC</em>GROUND is communicating with this modified script to kick players!</p>
 <pre><code>-- This creates a new ATC_GROUND_NEVADA object.
 
 -- Monitor all the airbases.
-AirbasePoliceCaucasus = ATC_GROUND_NEVADA:New()
+ATC_Ground = ATC_GROUND_NEVADA:New()
 
 
 -- Monitor specific airbases.
@@ -478,6 +541,27 @@ ATC_Ground = ATC_GROUND_NEVADA:New(
 )                                                
 </code></pre>
 
+<h2>2. Set various options</h2>
+
+<p>There are various methods that you can use to tweak the behaviour of the ATC_GROUND classes.</p>
+
+<h3>2.1 Speed limit at an airbase.</h3>
+
+<ul>
+    <li><a href="##(ATC_GROUND).SetKickSpeed">ATC_GROUND.SetKickSpeed</a>(): Set the speed limit allowed at an airbase in meters per second.</li>
+    <li><a href="##(ATC_GROUND).SetKickSpeedKmph">ATC_GROUND.SetKickSpeedKmph</a>(): Set the speed limit allowed at an airbase in kilometers per hour.</li>
+    <li><a href="##(ATC_GROUND).SetKickSpeedMiph">ATC_GROUND.SetKickSpeedMiph</a>(): Set the speed limit allowed at an airbase in miles per hour.</li>
+</ul>
+
+<h3>2.2 Prevent Takeoff at an airbase. Players will be kicked immediately.</h3>
+
+<ul>
+    <li><a href="##(ATC_GROUND).SetMaximumKickSpeed">ATC_GROUND.SetMaximumKickSpeed</a>(): Set the maximum speed allowed at an airbase in meters per second. </li>
+    <li><a href="##(ATC_GROUND).SetMaximumKickSpeedKmph">ATC_GROUND.SetMaximumKickSpeedKmph</a>(): Set the maximum speed allowed at an airbase in kilometers per hour.</li>
+    <li><a href="##(ATC_GROUND).SetMaximumKickSpeedMiph">ATC_GROUND.SetMaximumKickSpeedMiph</a>(): Set the maximum speed allowed at an airbase in miles per hour.</li>
+</ul>
+
+<p>  </p>
 
 </dd>
 </dl>
@@ -503,6 +587,9 @@ ATC_Ground = ATC_GROUND_NEVADA:New(
 <p><img src="..\Presentations\ATC_GROUND\Dia1.JPG" alt="Banner Image"/></p>
 
 <hr/>
+
+<p>The default maximum speed for the airbases at Caucasus is <strong>40 km/h</strong>. Warnings are given if this speed limit is trespassed.
+Players will be immediately kicked when driving faster than <strong>100 km/h</strong> on the taxi way.</p>
 
 <p>The ATC_GROUND_NORMANDY class monitors the speed of the airplanes at the airbase during taxi.
 The pilots may not drive faster than the maximum speed for the airbase, or they will be despawned.</p>
@@ -559,11 +646,14 @@ Use the <a href="Airbase.html##(AIRBASE).Normandy">Airbase#AIRBASE.Normandy</a> 
 
 <h2>In Multi Player Missions</h2>
 
-<p>ATC<em>GROUND is NOT functional in multi player, for client machines connecting to the server, running the mission.
-Due to a bug in DCS since release 1.5, the despawning of clients are not anymore working in multi player.
-To work around this problem, a much better solution has been made, using the slot blocker script designed
-by Ciribob. With the help of Ciribob, this script has been extended to also kick client players while in flight.
-ATC</em>GROUND is communicating with this modified script to kick players!</p>
+<p>ATC_GROUND is functional in multi player, however ...</p>
+
+<p>Due to a bug in DCS since release 1.5, the despawning of clients are not anymore working in multi player.
+To <strong>work around this problem</strong>, a much better solution has been made, using the <strong>slot blocker</strong> script designed
+by Ciribob. </p>
+
+<p>With the help of <strong>Ciribob</strong>, this script has been extended to also kick client players while in flight.
+ATC_GROUND is communicating with this modified script to kick players!</p>
 
 <p>Install the file <strong>SimpleSlotBlockGameGUI.lua</strong> on the server, following the installation instructions described by Ciribob.</p>
 
@@ -588,6 +678,26 @@ ATC_Ground = ATC_GROUND_NORMANDY:New(
 </code></pre>
 
 
+<h2>2. Set various options</h2>
+
+<p>There are various methods that you can use to tweak the behaviour of the ATC_GROUND classes.</p>
+
+<h3>2.1 Speed limit at an airbase.</h3>
+
+<ul>
+    <li><a href="##(ATC_GROUND).SetKickSpeed">ATC_GROUND.SetKickSpeed</a>(): Set the speed limit allowed at an airbase in meters per second.</li>
+    <li><a href="##(ATC_GROUND).SetKickSpeedKmph">ATC_GROUND.SetKickSpeedKmph</a>(): Set the speed limit allowed at an airbase in kilometers per hour.</li>
+    <li><a href="##(ATC_GROUND).SetKickSpeedMiph">ATC_GROUND.SetKickSpeedMiph</a>(): Set the speed limit allowed at an airbase in miles per hour.</li>
+</ul>
+
+<h3>2.2 Prevent Takeoff at an airbase. Players will be kicked immediately.</h3>
+
+<ul>
+    <li><a href="##(ATC_GROUND).SetMaximumKickSpeed">ATC_GROUND.SetMaximumKickSpeed</a>(): Set the maximum speed allowed at an airbase in meters per second. </li>
+    <li><a href="##(ATC_GROUND).SetMaximumKickSpeedKmph">ATC_GROUND.SetMaximumKickSpeedKmph</a>(): Set the maximum speed allowed at an airbase in kilometers per hour.</li>
+    <li><a href="##(ATC_GROUND).SetMaximumKickSpeedMiph">ATC_GROUND.SetMaximumKickSpeedMiph</a>(): Set the maximum speed allowed at an airbase in miles per hour.
+    </li>
+</ul>
 
 </dd>
 </dl>
@@ -630,20 +740,6 @@ ATC_Ground = ATC_GROUND_NORMANDY:New(
 <dt>
 
 		<em></em>
-<a id="#(ATC_GROUND).AirbaseMonitor" >
-<strong>ATC_GROUND.AirbaseMonitor</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em></em>
 <a id="#(ATC_GROUND).Airbases" >
 <strong>ATC_GROUND.Airbases</strong>
 </a>
@@ -660,6 +756,20 @@ ATC_Ground = ATC_GROUND_NORMANDY:New(
 		<em></em>
 <a id="#(ATC_GROUND).KickSpeed" >
 <strong>ATC_GROUND.KickSpeed</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(ATC_GROUND).MaximumKickSpeed" >
+<strong>ATC_GROUND.MaximumKickSpeed</strong>
 </a>
 </dt>
 <dd>
@@ -717,20 +827,29 @@ self</p>
 		<dl class="function">
 <dt>
 
-<a id="#(ATC_GROUND).SetKickSpeedKmph" >
-<strong>ATC_GROUND:SetKickSpeedKmph(KickSpeed)</strong>
+<a id="#(ATC_GROUND).SetKickSpeed" >
+<strong>ATC_GROUND:SetKickSpeed(KickSpeed, Airbase)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Set the maximum speed in Kmph until the player gets kicked.</p>
+<p>Set the maximum speed in meters per second (Mps) until the player gets kicked.</p>
 
-		<h3>Parameter</h3>
+	
+<p>An airbase can be specified to set the kick speed for.</p>
+
+		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
 <p><code><em>#number KickSpeed </em></code>: 
-Set the maximum speed in Kmph until the player gets kicked.</p>
+The speed in Mps.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Wrapper.Airbase.html##(AIRBASE)">Wrapper.Airbase#AIRBASE</a> Airbase </em></code>: 
+(optional) The airbase to set the kick speed for.</p>
 
 				</li>
 		</ul>
@@ -738,6 +857,59 @@ Set the maximum speed in Kmph until the player gets kicked.</p>
 				
 <p><em><a href="##(ATC_GROUND)">#ATC_GROUND</a>:</em>
 self</p>
+
+			<h3>Usage:</h3>
+		<pre class="example"><code>
+  -- Declare Atc_Ground using one of those, depending on the map.
+
+  Atc_Ground = ATC_GROUND_CAUCAUS:New()
+  Atc_Ground = ATC_GROUND_NEVADA:New()
+  Atc_Ground = ATC_GROUND_NORMANDY:New()
+  
+  -- Then use one of these methods...
+
+  Atc_Ground:SetKickSpeed( UTILS.KmphToMps( 80 ) ) -- Kick the players at 80 kilometers per hour
+
+  Atc_Ground:SetKickSpeed( UTILS.MiphToMps( 100 ) ) -- Kick the players at 100 miles per hour
+
+  Atc_Ground:SetKickSpeed( 24 ) -- Kick the players at 24 meters per second ( 24 * 3.6 = 86.4 kilometers per hour )
+</code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ATC_GROUND).SetKickSpeedKmph" >
+<strong>ATC_GROUND:SetKickSpeedKmph(KickSpeed, Airbase)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set the maximum speed in Kmph until the player gets kicked.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number KickSpeed </em></code>: 
+Set the speed in Kmph.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Wrapper.Airbase.html##(AIRBASE)">Wrapper.Airbase#AIRBASE</a> Airbase </em></code>: 
+(optional) The airbase to set the kick speed for.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(ATC_GROUND)">#ATC_GROUND</a>:</em>
+self</p>
+
+<p>  Atc_Ground:SetKickSpeedKmph( 80 ) -- Kick the players at 80 kilometers per hour</p>
+
 
 </dd>
 </dl>
@@ -745,19 +917,25 @@ self</p>
 <dt>
 
 <a id="#(ATC_GROUND).SetKickSpeedMiph" >
-<strong>ATC_GROUND:SetKickSpeedMiph(KickSpeedMiph)</strong>
+<strong>ATC_GROUND:SetKickSpeedMiph(KickSpeedMiph, Airbase)</strong>
 </a>
 </dt>
 <dd>
 	
 <p>Set the maximum speed in Miph until the player gets kicked.</p>
 
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
 <p><code><em>#number KickSpeedMiph </em></code>: 
-Set the maximum speed in Mph until the player gets kicked.</p>
+Set the speed in Mph.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Wrapper.Airbase.html##(AIRBASE)">Wrapper.Airbase#AIRBASE</a> Airbase </em></code>: 
+(optional) The airbase to set the kick speed for.</p>
 
 				</li>
 		</ul>
@@ -765,6 +943,143 @@ Set the maximum speed in Mph until the player gets kicked.</p>
 				
 <p><em><a href="##(ATC_GROUND)">#ATC_GROUND</a>:</em>
 self</p>
+
+<p>  Atc_Ground:SetKickSpeedMiph( 100 ) -- Kick the players at 100 miles per hour</p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ATC_GROUND).SetMaximumKickSpeed" >
+<strong>ATC_GROUND:SetMaximumKickSpeed(MaximumKickSpeed, Airbase)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set the maximum kick speed in meters per second (Mps) until the player gets kicked.</p>
+
+	
+<p>There are no warnings given if this speed is reached, and is to prevent players to take off from the airbase!
+An airbase can be specified to set the maximum kick speed for.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number MaximumKickSpeed </em></code>: 
+The speed in Mps.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Wrapper.Airbase.html##(AIRBASE)">Wrapper.Airbase#AIRBASE</a> Airbase </em></code>: 
+(optional) The airbase to set the kick speed for.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(ATC_GROUND)">#ATC_GROUND</a>:</em>
+self</p>
+
+			<h3>Usage:</h3>
+		<pre class="example"><code>
+  -- Declare Atc_Ground using one of those, depending on the map.
+
+  Atc_Ground = ATC_GROUND_CAUCAUS:New()
+  Atc_Ground = ATC_GROUND_NEVADA:New()
+  Atc_Ground = ATC_GROUND_NORMANDY:New()
+  
+  -- Then use one of these methods...
+
+  Atc_Ground:SetMaximumKickSpeed( UTILS.KmphToMps( 80 ) ) -- Kick the players at 80 kilometers per hour
+
+  Atc_Ground:SetMaximumKickSpeed( UTILS.MiphToMps( 100 ) ) -- Kick the players at 100 miles per hour
+
+  Atc_Ground:SetMaximumKickSpeed( 24 ) -- Kick the players at 24 meters per second ( 24 * 3.6 = 86.4 kilometers per hour )
+</code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ATC_GROUND).SetMaximumKickSpeedKmph" >
+<strong>ATC_GROUND:SetMaximumKickSpeedKmph(MaximumKickSpeed, Airbase)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set the maximum kick speed in kilometers per hour (Kmph) until the player gets kicked.</p>
+
+	
+<p>There are no warnings given if this speed is reached, and is to prevent players to take off from the airbase!
+An airbase can be specified to set the maximum kick speed for.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number MaximumKickSpeed </em></code>: 
+Set the speed in Kmph.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Wrapper.Airbase.html##(AIRBASE)">Wrapper.Airbase#AIRBASE</a> Airbase </em></code>: 
+(optional) The airbase to set the kick speed for.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(ATC_GROUND)">#ATC_GROUND</a>:</em>
+self</p>
+
+<p>  Atc_Ground:SetMaximumKickSpeedKmph( 150 ) -- Kick the players at 150 kilometers per hour</p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ATC_GROUND).SetMaximumKickSpeedMiph" >
+<strong>ATC_GROUND:SetMaximumKickSpeedMiph(MaximumKickSpeedMiph, Airbase)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set the maximum kick speed in miles per hour (Miph) until the player gets kicked.</p>
+
+	
+<p>There are no warnings given if this speed is reached, and is to prevent players to take off from the airbase!
+An airbase can be specified to set the maximum kick speed for.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number MaximumKickSpeedMiph </em></code>: 
+Set the speed in Mph.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Wrapper.Airbase.html##(AIRBASE)">Wrapper.Airbase#AIRBASE</a> Airbase </em></code>: 
+(optional) The airbase to set the kick speed for.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(ATC_GROUND)">#ATC_GROUND</a>:</em>
+self</p>
+
+<p>  Atc_Ground:SetMaximumKickSpeedMiph( 100 ) -- Kick the players at 100 miles per hour</p>
+
 
 </dd>
 </dl>
@@ -873,6 +1188,20 @@ self</p>
 
 			<h2><a id="#(ATC_GROUND_NORMANDY)" >Type <code>ATC_GROUND_NORMANDY</code></a></h2>
 				<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(ATC_GROUND_NORMANDY).AirbaseMonitor" >
+<strong>ATC_GROUND_NORMANDY.AirbaseMonitor</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
 		<dl class="function">
 <dt>
 
