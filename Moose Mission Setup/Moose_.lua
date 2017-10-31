@@ -1,5 +1,5 @@
 env.info('*** MOOSE STATIC INCLUDE START *** ')
-env.info('Moose Generation Timestamp: 20171029_1956')
+env.info('Moose Generation Timestamp: 20171031_1115')
 env.setErrorMessageBoxEnabled(false)
 routines={}
 routines.majorVersion=3
@@ -18423,8 +18423,6 @@ livery=nil,
 skill="High",
 ATCswitch=true,
 parking_id=nil,
-wp_final=nil,
-wp_holding=nil,
 radio=nil,
 frequency=nil,
 modulation=nil,
@@ -18501,7 +18499,7 @@ delay=240,
 RAT.markerid=0
 RAT.MenuF10=nil
 RAT.id="RAT | "
-RAT.version="2.0.0"
+RAT.version="2.0.1"
 function RAT:New(groupname,alias)
 env.info(RAT.id.."Version "..RAT.version)
 env.info(RAT.id.."Creating new RAT object from template: "..groupname)
@@ -18649,13 +18647,6 @@ elseif self:_ZoneExists(name)then
 self.Ndeparture_Zones=self.Ndeparture_Zones+1
 end
 end
-for _,name in pairs(self.destination_ports)do
-if self:_AirportExists(name)then
-self.Ndestination_Airports=self.Ndestination_Airports+1
-elseif self:_ZoneExists(name)then
-self.Ndestination_Zones=self.Ndestination_Zones+1
-end
-end
 if self.Ndeparture_Zones>0 and self.takeoff~=RAT.wp.air then
 self.takeoff=RAT.wp.air
 env.error(RAT.id.."At least one zone defined as departure and takeoff is NOT set to air. Enabling air start!")
@@ -18668,6 +18659,13 @@ MESSAGE:New(text,30):ToAll()
 end
 end
 if not self.random_destination then
+for _,name in pairs(self.destination_ports)do
+if self:_AirportExists(name)then
+self.Ndestination_Airports=self.Ndestination_Airports+1
+elseif self:_ZoneExists(name)then
+self.Ndestination_Zones=self.Ndestination_Zones+1
+end
+end
 if self.Ndestination_Zones>0 and self.landing~=RAT.wp.air and not self.returnzone then
 self.landing=RAT.wp.air
 self.destinationzone=true
@@ -19041,17 +19039,17 @@ end
 function RAT:_SpawnWithRoute(_departure,_destination,_takeoff,_landing,_livery,_waypoint)
 local takeoff=self.takeoff
 local landing=self.landing
-if self.takeoff==RAT.wp.coldorhot then
-local temp={RAT.wp.cold,RAT.wp.hot}
-takeoff=temp[math.random(2)]
-end
 if _takeoff then
 takeoff=_takeoff
 end
 if _landing then
 landing=_landing
 end
-local departure,destination,waypoints=self:_SetRoute(takeoff,landing,_departure,_destination,_waypoint)
+if takeoff==RAT.wp.coldorhot then
+local temp={RAT.wp.cold,RAT.wp.hot}
+takeoff=temp[math.random(2)]
+end
+local departure,destination,waypoints,WPholding,WPfinal=self:_SetRoute(takeoff,landing,_departure,_destination,_waypoint)
 if not(departure and destination and waypoints)then
 return nil
 end
@@ -19101,6 +19099,8 @@ self.ratcraft[self.SpawnIndex]["Pnow"]=group:GetCoordinate()
 self.ratcraft[self.SpawnIndex]["Distance"]=0
 self.ratcraft[self.SpawnIndex].takeoff=takeoff
 self.ratcraft[self.SpawnIndex].landing=landing
+self.ratcraft[self.SpawnIndex].wpholding=WPholding
+self.ratcraft[self.SpawnIndex].wpfinal=WPfinal
 self.ratcraft[self.SpawnIndex].livery=livery
 self.ratcraft[self.SpawnIndex].despawnme=false
 if self.f10menu then
@@ -19502,6 +19502,8 @@ d_cruise=100
 end
 local wp={}
 local c={}
+local wpholding=nil
+local wpfinal=nil
 c[#c+1]=Pdeparture
 wp[#wp+1]=self:_Waypoint(#wp+1,takeoff,c[#wp+1],VxClimb,H_departure,departure)
 self.waypointdescriptions[#wp]="Departure"
@@ -19565,22 +19567,22 @@ c[#c+1]=Pholding
 wp[#wp+1]=self:_Waypoint(#wp+1,RAT.wp.holding,c[#wp+1],VxHolding,H_holding+h_holding)
 self.waypointdescriptions[#wp]="Holding Point"
 self.waypointstatus[#wp]=RAT.status.Holding
-self.wp_holding=#wp
+wpholding=#wp
 c[#c+1]=Pdestination
 wp[#wp+1]=self:_Waypoint(#wp+1,landing,c[#wp+1],VxFinal,H_destination,destination)
 self.waypointdescriptions[#wp]="Destination"
 self.waypointstatus[#wp]=RAT.status.Destination
 end
-self.wp_final=#wp
+wpfinal=#wp
 local waypoints={}
 for _,p in ipairs(wp)do
 table.insert(waypoints,p)
 end
 self:_Routeinfo(waypoints,"Waypoint info in set_route:")
 if self.returnzone then
-return departure,destination_returnzone,waypoints
+return departure,destination_returnzone,waypoints,wpholding,wpfinal
 else
-return departure,destination,waypoints
+return departure,destination,waypoints,wpholding,wpfinal
 end
 end
 function RAT:_PickDeparture(takeoff)
@@ -20298,12 +20300,14 @@ local sdx=rat:GetSpawnIndexFromGroup(group)
 local departure=rat.ratcraft[sdx].departure:GetName()
 local destination=rat.ratcraft[sdx].destination:GetName()
 local landing=rat.ratcraft[sdx].landing
+local WPholding=rat.ratcraft[sdx].wpholding
+local WPfinal=rat.ratcraft[sdx].wpfinal
 local text
 text=string.format("Flight %s passing waypoint #%d %s.",group:GetName(),wp,rat.waypointdescriptions[wp])
 env.info(RAT.id..text)
 local status=rat.waypointstatus[wp]
 rat:_SetStatus(group,status)
-if wp==rat.wp_holding then
+if wp==WPholding then
 text=string.format("Flight %s to %s ATC: Holding and awaiting landing clearance.",group:GetName(),destination)
 MESSAGE:New(text,10):ToAllIf(rat.reportstatus)
 if rat.ATCswitch then
@@ -20311,7 +20315,7 @@ MENU_MISSION_COMMAND:New("Clear for landing",rat.Menu[rat.SubMenuName].groups[sd
 rat:_ATCRegisterFlight(group:GetName(),Tnow)
 end
 end
-if wp==rat.wp_final then
+if wp==WPfinal then
 text=string.format("Flight %s arrived at final destination %s.",group:GetName(),destination)
 MESSAGE:New(text,10):ToAllIf(rat.reportstatus)
 env.info(RAT.id..text)
