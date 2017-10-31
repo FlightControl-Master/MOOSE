@@ -129,8 +129,6 @@
 -- @field #string skill Skill of AI.
 -- @field #boolean ATCswitch Enable/disable ATC if set to true/false.
 -- @field #string parking_id String with a special parking ID for the aircraft.
--- @field #number wp_final Index of the final waypoint.
--- @field #number wp_holding Index of the holding waypoint.
 -- @field #boolean radio If true/false disables radio messages from the RAT groups.
 -- @field #number frequency Radio frequency used by the RAT groups.
 -- @field #string modulation Ratio modulation. Either "FM" or "AM".
@@ -350,8 +348,6 @@ RAT={
   skill="High",             -- Skill of AI.
   ATCswitch=true,           -- Enable ATC.
   parking_id=nil,           -- Specific parking ID when aircraft are spawned at airports.
-  wp_final=nil,             -- Index of the final waypoint.
-  wp_holding=nil,           -- Index of the holding waypoint.
   radio=nil,                -- If true/false disables radio messages from the RAT groups.
   frequency=nil,            -- Radio frequency used by the RAT groups.
   modulation=nil,           -- Ratio modulation. Either "FM" or "AM".
@@ -468,7 +464,7 @@ RAT.id="RAT | "
 
 --- RAT version.
 -- @field #string version
-RAT.version="2.0.0"
+RAT.version="2.0.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -742,15 +738,6 @@ function RAT:_CheckConsistency()
         self.Ndeparture_Zones=self.Ndeparture_Zones+1
       end
     end
-
-    -- Count destination airports and zones.
-    for _,name in pairs(self.destination_ports) do
-      if self:_AirportExists(name) then
-        self.Ndestination_Airports=self.Ndestination_Airports+1
-      elseif self:_ZoneExists(name) then
-        self.Ndestination_Zones=self.Ndestination_Zones+1
-      end
-    end  
   
     -- What can go wrong?
     -- Only zones but not takeoff air == > Enable takeoff air.
@@ -769,6 +756,16 @@ function RAT:_CheckConsistency()
 
   -- User has used SetDestination()
   if not self.random_destination then
+  
+    -- Count destination airports and zones.
+    for _,name in pairs(self.destination_ports) do
+      if self:_AirportExists(name) then
+        self.Ndestination_Airports=self.Ndestination_Airports+1
+      elseif self:_ZoneExists(name) then
+        self.Ndestination_Zones=self.Ndestination_Zones+1
+      end
+    end  
+  
     -- One zone specified as destination ==> Enable destination zone.
     -- This does not apply to return zone because the destination is the zone and not the final destination which can be an airport. 
     if self.Ndestination_Zones>0 and self.landing~=RAT.wp.air and not self.returnzone then
@@ -1453,13 +1450,7 @@ function RAT:_SpawnWithRoute(_departure, _destination, _takeoff, _landing, _live
   -- Set takeoff type.
   local takeoff=self.takeoff
   local landing=self.landing
-  
-  -- Random choice between cold and hot.
-  if self.takeoff==RAT.wp.coldorhot then
-    local temp={RAT.wp.cold, RAT.wp.hot}
-    takeoff=temp[math.random(2)]
-  end
-  
+    
   -- Overrule takeoff/landing by what comes in.
   if _takeoff then
     takeoff=_takeoff
@@ -1467,9 +1458,15 @@ function RAT:_SpawnWithRoute(_departure, _destination, _takeoff, _landing, _live
   if _landing then
     landing=_landing
   end
+  
+  -- Random choice between cold and hot.
+  if takeoff==RAT.wp.coldorhot then
+    local temp={RAT.wp.cold, RAT.wp.hot}
+    takeoff=temp[math.random(2)]
+  end
 
   -- Set flight plan.
-  local departure, destination, waypoints = self:_SetRoute(takeoff, landing, _departure, _destination, _waypoint)
+  local departure, destination, waypoints, WPholding, WPfinal = self:_SetRoute(takeoff, landing, _departure, _destination, _waypoint)
   
   -- Return nil if we could not find a departure destination or waypoints
   if not (departure and destination and waypoints) then
@@ -1553,6 +1550,8 @@ function RAT:_SpawnWithRoute(_departure, _destination, _takeoff, _landing, _live
   -- Each aircraft gets its own takeoff type.
   self.ratcraft[self.SpawnIndex].takeoff=takeoff
   self.ratcraft[self.SpawnIndex].landing=landing
+  self.ratcraft[self.SpawnIndex].wpholding=WPholding
+  self.ratcraft[self.SpawnIndex].wpfinal=WPfinal
   
   -- Livery
   self.ratcraft[self.SpawnIndex].livery=livery
@@ -1784,7 +1783,6 @@ function RAT:_SetRoute(takeoff, landing, _departure, _destination, _waypoint)
   -- Departure airport or zone.
   local departure=nil
   if _departure then
-  
     if self:_AirportExists(_departure) then
       -- Check if new departure is an airport.
       departure=AIRBASE:FindByName(_departure)
@@ -2202,6 +2200,8 @@ function RAT:_SetRoute(takeoff, landing, _departure, _destination, _waypoint)
   -- Waypoints and coordinates
   local wp={}
   local c={}
+  local wpholding=nil
+  local wpfinal=nil
   
   -- Departure/Take-off
   c[#c+1]=Pdeparture
@@ -2299,7 +2299,7 @@ function RAT:_SetRoute(takeoff, landing, _departure, _destination, _waypoint)
     wp[#wp+1]=self:_Waypoint(#wp+1, RAT.wp.holding, c[#wp+1], VxHolding, H_holding+h_holding)
     self.waypointdescriptions[#wp]="Holding Point"
     self.waypointstatus[#wp]=RAT.status.Holding
-    self.wp_holding=#wp
+    wpholding=#wp
 
     -- Final destination.
     c[#c+1]=Pdestination    
@@ -2310,7 +2310,7 @@ function RAT:_SetRoute(takeoff, landing, _departure, _destination, _waypoint)
   end
   
   -- Final Waypoint
-  self.wp_final=#wp
+  wpfinal=#wp
   
   -- Fill table with waypoints.
   local waypoints={}
@@ -2324,9 +2324,9 @@ function RAT:_SetRoute(takeoff, landing, _departure, _destination, _waypoint)
   -- Return departure, destination and waypoints.
   if self.returnzone then
     -- We return the actual zone here because returning the departure leads to problems with commute.
-    return departure, destination_returnzone, waypoints    
+    return departure, destination_returnzone, waypoints, wpholding, wpfinal    
   else
-    return departure, destination, waypoints
+    return departure, destination, waypoints, wpholding, wpfinal
   end
   
 end
@@ -3477,6 +3477,9 @@ function RAT._WaypointFunction(group, rat, wp)
   local departure=rat.ratcraft[sdx].departure:GetName()
   local destination=rat.ratcraft[sdx].destination:GetName()
   local landing=rat.ratcraft[sdx].landing
+  local WPholding=rat.ratcraft[sdx].wpholding
+  local WPfinal=rat.ratcraft[sdx].wpfinal
+  
   
   -- For messages
   local text
@@ -3491,7 +3494,7 @@ function RAT._WaypointFunction(group, rat, wp)
   --rat.ratcraft[sdx].status=status
   rat:_SetStatus(group, status)
     
-  if wp==rat.wp_holding then
+  if wp==WPholding then
   
     -- Aircraft arrived at holding point
     text=string.format("Flight %s to %s ATC: Holding and awaiting landing clearance.", group:GetName(), destination)
@@ -3504,7 +3507,7 @@ function RAT._WaypointFunction(group, rat, wp)
     end
   end
   
-  if wp==rat.wp_final then
+  if wp==WPfinal then
     text=string.format("Flight %s arrived at final destination %s.", group:GetName(), destination)
     MESSAGE:New(text, 10):ToAllIf(rat.reportstatus)
     env.info(RAT.id..text)
