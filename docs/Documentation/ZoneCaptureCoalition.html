@@ -573,6 +573,14 @@ The initial coalition owning the zone.</p>
 <p><em><a href="##(ZONE_CAPTURE_COALITION)">#ZONE<em>CAPTURE</em>COALITION</a>:</em></p>
 
 
+			<h3>Usage:</h3>
+		<pre class="example"><code>
+ AttackZone = ZONE:New( "AttackZone" )
+
+ ZoneCaptureCoalition = ZONE_CAPTURE_COALITION:New( AttackZone, coalition.side.RED ) -- Create a new ZONE_CAPTURE_COALITION object of zone AttackZone with ownership RED coalition.
+ ZoneCaptureCoalition:__Guard( 1 ) -- Start the Guarding of the AttackZone.
+ </code></pre>
+
 </dd>
 </dl>
 		<dl class="function">

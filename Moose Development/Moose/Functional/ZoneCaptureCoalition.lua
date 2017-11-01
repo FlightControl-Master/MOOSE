@@ -58,6 +58,13 @@ do -- ZoneGoal
   -- @param Core.Zone#ZONE Zone A @{Zone} object with the goal to be achieved.
   -- @param DCSCoalition.DCSCoalition#coalition Coalition The initial coalition owning the zone.
   -- @return #ZONE_CAPTURE_COALITION
+  -- @usage
+  -- 
+  --  AttackZone = ZONE:New( "AttackZone" )
+  --
+  --  ZoneCaptureCoalition = ZONE_CAPTURE_COALITION:New( AttackZone, coalition.side.RED ) -- Create a new ZONE_CAPTURE_COALITION object of zone AttackZone with ownership RED coalition.
+  --  ZoneCaptureCoalition:__Guard( 1 ) -- Start the Guarding of the AttackZone.
+  --  
   function ZONE_CAPTURE_COALITION:New( Zone, Coalition )
   
     local self = BASE:Inherit( self, ZONE_GOAL_COALITION:New( Zone, Coalition ) ) -- #ZONE_CAPTURE_COALITION
@@ -247,6 +254,10 @@ do -- ZoneGoal
     -- @param #ZONE_CAPTURE_COALITION self
     -- @param #number Delay
 
+    if not self.ScheduleStatusZone then
+      self.ScheduleStatusZone = self:ScheduleRepeat( 15, 15, 0.1, nil, self.StatusZone, self )
+    end
+
     return self
   end
   
@@ -369,9 +380,6 @@ do -- ZoneGoal
   
     if not self.SmokeScheduler then
       self.SmokeScheduler = self:ScheduleRepeat( 1, 1, 0.1, nil, self.StatusSmoke, self )
-    end
-    if not self.ScheduleStatusZone then
-      self.ScheduleStatusZone = self:ScheduleRepeat( 15, 15, 0.1, nil, self.StatusZone, self )
     end
   end
 
