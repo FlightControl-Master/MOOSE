@@ -150,6 +150,31 @@ do -- COORDINATE
     ClassName = "COORDINATE",
   }
 
+  --- @field COORDINATE.WaypointAltType 
+  COORDINATE.WaypointAltType = {
+    BARO = "BARO",
+    RADIO = "RADIO",
+  }
+  
+  --- @field COORDINATE.WaypointAction 
+  COORDINATE.WaypointAction = {
+    TurningPoint = "Turning Point",
+    FlyoverPoint = "Fly Over Point",
+    FromParkingArea = "From Parking Area",
+    FromParkingAreaHot = "From Parking Area Hot",
+    FromRunway = "From Runway",
+    Landing = "Landing",
+  }
+
+  --- @field COORDINATE.WaypointType 
+  COORDINATE.WaypointType = {
+    TakeOffParking = "TakeOffParking",
+    TakeOffParkingHot = "TakeOffParkingHot",
+    TakeOff = "TakeOffParkingHot",
+    TurningPoint = "Turning Point",
+    Land = "Land",
+  }
+
 
   --- COORDINATE constructor.
   -- @param #COORDINATE self
@@ -553,9 +578,9 @@ do -- COORDINATE
 
   --- Build an air type route point.
   -- @param #COORDINATE self
-  -- @param #COORDINATE.RoutePointAltType AltType The altitude type.
-  -- @param #COORDINATE.RoutePointType Type The route point type.
-  -- @param #COORDINATE.RoutePointAction Action The route point action.
+  -- @param #COORDINATE.WaypointAltType AltType The altitude type.
+  -- @param #COORDINATE.WaypointType Type The route point type.
+  -- @param #COORDINATE.WaypointAction Action The route point action.
   -- @param Dcs.DCSTypes#Speed Speed Airspeed in km/h.
   -- @param #boolean SpeedLocked true means the speed is locked.
   -- @return #table The route point.
@@ -595,6 +620,75 @@ do -- COORDINATE
     return RoutePoint
   end
 
+
+  --- Build a Waypoint Air "Turning Point".
+  -- @param #COORDINATE self
+  -- @param #COORDINATE.WaypointAltType AltType The altitude type.
+  -- @param Dcs.DCSTypes#Speed Speed Airspeed in km/h.
+  -- @return #table The route point.
+  function COORDINATE:WaypointAirTurningPoint( AltType, Speed )
+    return self:WaypointAir( AltType, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, Speed )
+  end
+
+  
+  --- Build a Waypoint Air "Fly Over Point".
+  -- @param #COORDINATE self
+  -- @param #COORDINATE.WaypointAltType AltType The altitude type.
+  -- @param Dcs.DCSTypes#Speed Speed Airspeed in km/h.
+  -- @return #table The route point.
+  function COORDINATE:WaypointAirFlyOverPoint( AltType, Speed )
+    return self:WaypointAir( AltType, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.FlyoverPoint, Speed )
+  end
+  
+  
+  --- Build a Waypoint Air "Take Off Parking Hot".
+  -- @param #COORDINATE self
+  -- @param #COORDINATE.WaypointAltType AltType The altitude type.
+  -- @param Dcs.DCSTypes#Speed Speed Airspeed in km/h.
+  -- @return #table The route point.
+  function COORDINATE:WaypointAirTakeOffParkingHot( AltType, Speed )
+    return self:WaypointAir( AltType, COORDINATE.WaypointType.TakeOffParkingHot, COORDINATE.WaypointAction.FromParkingAreaHot, Speed )
+  end
+  
+
+  --- Build a Waypoint Air "Take Off Parking".
+  -- @param #COORDINATE self
+  -- @param #COORDINATE.WaypointAltType AltType The altitude type.
+  -- @param Dcs.DCSTypes#Speed Speed Airspeed in km/h.
+  -- @return #table The route point.
+  function COORDINATE:WaypointAirTakeOffParking( AltType, Speed )
+    return self:WaypointAir( AltType, COORDINATE.WaypointType.TakeOffParking, COORDINATE.WaypointAction.FromParkingArea, Speed )
+  end
+  
+  
+  --- Build a Waypoint Air "Take Off Runway".
+  -- @param #COORDINATE self
+  -- @param #COORDINATE.WaypointAltType AltType The altitude type.
+  -- @param Dcs.DCSTypes#Speed Speed Airspeed in km/h.
+  -- @return #table The route point.
+  function COORDINATE:WaypointAirTakeOffRunway( AltType, Speed )
+    return self:WaypointAir( AltType, COORDINATE.WaypointType.TakeOff, COORDINATE.WaypointAction.FromRunway, Speed )
+  end
+  
+  
+  --- Build a Waypoint Air "Landing".
+  -- @param #COORDINATE self
+  -- @param Dcs.DCSTypes#Speed Speed Airspeed in km/h.
+  -- @return #table The route point.
+  -- @usage
+  -- 
+  --    LandingZone = ZONE:New( "LandingZone" )
+  --    LandingCoord = LandingZone:GetCoordinate()
+  --    LandingWaypoint = LandingCoord:WaypointAirLanding( 60 )
+  --    HeliGroup:Route( { LandWaypoint }, 1 ) -- Start landing the helicopter in one second.
+  -- 
+  function COORDINATE:WaypointAirLanding( Speed )
+    return self:WaypointAir( nil, COORDINATE.WaypointType.Land, COORDINATE.WaypointAction.Landing, Speed )
+  end
+  
+  
+  
+  
   --- Build an ground type route point.
   -- @param #COORDINATE self
   -- @param #number Speed (optional) Speed in km/h. The default speed is 999 km/h.
