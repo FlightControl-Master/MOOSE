@@ -2750,7 +2750,7 @@ end
 --     Sierra Wireless - initial API and implementation
 -------------------------------------------------------------------------------
 
-local DBGP_CLIENT_VERSION = "1.4.0"
+local DBGP_CLIENT_VERSION = "1.4.1"
 DBGP_CLIENT_LUA_VERSION = os.getenv "LUA_VERSION" or _VERSION
 if DBGP_CLIENT_LUA_VERSION ~= "Lua 5.1" and DBGP_CLIENT_LUA_VERSION ~= "Lua 5.2" then
   print(DBGP_CLIENT_LUA_VERSION .. " is not supported. As fallback, debugger will behave as if it runs on Lua 5.2 vm. You could also try to force it to behave as a Lua 5.1 vm by setting the LUA_VERSION environment variable to 'Lua 5.1'")
