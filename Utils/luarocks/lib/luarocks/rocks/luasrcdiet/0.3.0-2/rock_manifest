@@ -1,0 +1,28 @@
+rock_manifest = {
+   bin = {
+      luasrcdiet = "6c318685d57f827cf5baf7037a5d6072"
+   },
+   doc = {
+      ["features-and-usage.adoc"] = "157587c27a0c340d9d1dd06af9b339b5",
+      ["performance-stats.adoc"] = "cf5f96a86e021a3a584089fafcabd056",
+      ["tech-notes.adoc"] = "075bc34e667a0055e659e656baa2365a"
+   },
+   lua = {
+      luasrcdiet = {
+         ["equiv.lua"] = "967a6b17573d229e326dbb740ad7fe8c",
+         ["fs.lua"] = "53db7dfc50d026b683fad68ed70ead0f",
+         ["init.lua"] = "c6f368e6cf311f3257067fed0fbcd06a",
+         ["llex.lua"] = "ede897af261fc362a82d87fbad91ea2b",
+         ["lparser.lua"] = "c1e1f04d412b79a040fd1c2b74112953",
+         ["optlex.lua"] = "7c986da991a338494c36770b4a30fa9f",
+         ["optparser.lua"] = "b125a271ac1c691dec68b63019b1b5da",
+         plugin = {
+            ["example.lua"] = "86b5c1e9dc7959db6b221d6d5a0db3d1",
+            ["html.lua"] = "c0d3336a133f0c8663f395ee98d54f6a",
+            ["sloc.lua"] = "fb1a91b18b701ab83f21c87733be470a"
+         },
+         ["utils.lua"] = "bd6c1e85c6a9bf3383d336a4797fb292"
+      }
+   },
+   ["luasrcdiet-0.3.0-2.rockspec"] = "da70047e1b0cbdc1ff08d060327fa110"
+}

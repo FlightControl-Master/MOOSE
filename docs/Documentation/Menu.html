@@ -28,9 +28,9 @@
 					<li><a href="AI_Cas.html">AI_Cas</a></li>
 					<li><a href="AI_Formation.html">AI_Formation</a></li>
 					<li><a href="AI_Patrol.html">AI_Patrol</a></li>
+					<li><a href="ATC_Ground.html">ATC_Ground</a></li>
 					<li><a href="Account.html">Account</a></li>
 					<li><a href="Airbase.html">Airbase</a></li>
-					<li><a href="AirbasePolice.html">AirbasePolice</a></li>
 					<li><a href="Assign.html">Assign</a></li>
 					<li><a href="Base.html">Base</a></li>
 					<li><a href="Cargo.html">Cargo</a></li>
@@ -60,6 +60,7 @@
 					<li><a href="Escort.html">Escort</a></li>
 					<li><a href="Event.html">Event</a></li>
 					<li><a href="Fsm.html">Fsm</a></li>
+					<li><a href="Goal.html">Goal</a></li>
 					<li><a href="Group.html">Group</a></li>
 					<li><a href="Identifiable.html">Identifiable</a></li>
 					<li>Menu</li>
@@ -72,7 +73,9 @@
 					<li><a href="Positionable.html">Positionable</a></li>
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
 					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
+					<li><a href="Protect.html">Protect</a></li>
 					<li><a href="Radio.html">Radio</a></li>
+					<li><a href="Rat.html">Rat</a></li>
 					<li><a href="Route.html">Route</a></li>
 					<li><a href="Scenery.html">Scenery</a></li>
 					<li><a href="ScheduleDispatcher.html">ScheduleDispatcher</a></li>
@@ -88,6 +91,7 @@
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="Task.html">Task</a></li>
+					<li><a href="TaskZoneCapture.html">TaskZoneCapture</a></li>
 					<li><a href="Task_A2A.html">Task_A2A</a></li>
 					<li><a href="Task_A2A_Dispatcher.html">Task_A2A_Dispatcher</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
@@ -95,8 +99,15 @@
 					<li><a href="Task_Cargo.html">Task_Cargo</a></li>
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
 					<li><a href="Unit.html">Unit</a></li>
+					<li><a href="UserFlag.html">UserFlag</a></li>
+					<li><a href="UserSound.html">UserSound</a></li>
 					<li><a href="Utils.html">Utils</a></li>
+					<li><a href="Velocity.html">Velocity</a></li>
 					<li><a href="Zone.html">Zone</a></li>
+					<li><a href="ZoneCaptureCoalition.html">ZoneCaptureCoalition</a></li>
+					<li><a href="ZoneGoal.html">ZoneGoal</a></li>
+					<li><a href="ZoneGoalCargo.html">ZoneGoalCargo</a></li>
+					<li><a href="ZoneGoalCoalition.html">ZoneGoalCoalition</a></li>
 					<li><a href="env.html">env</a></li>
 					<li><a href="land.html">land</a></li>
 					<li><a href="routines.html">routines</a></li>
@@ -194,6 +205,7 @@ On top, MOOSE implements <strong>variable parameter</strong> passing for command
 <hr/>
 <p>The MENU<em>COMMAND</em>BASE class defines the main MENU class where other MENU COMMAND_ 
 classes are derived from, in order to set commands.</p>
+
 </td>
 		</tr>
 		<tr>
@@ -244,6 +256,12 @@ classes are derived from, in order to set commands.</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MENU_BASE).MenuTag">MENU_BASE.MenuTag</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(MENU_BASE).MenuTime">MENU_BASE.MenuTime</a></td>
 		<td class="summary">
 
@@ -259,6 +277,12 @@ classes are derived from, in order to set commands.</p>
 		<td class="name" nowrap="nowrap"><a href="##(MENU_BASE).SetRemoveParent">MENU_BASE:SetRemoveParent(RemoveParent)</a></td>
 		<td class="summary">
 <p>Sets a <a href="Menu.html">Menu</a> to remove automatically the parent menu when the menu removed is the last child menu of that parent <a href="Menu.html">Menu</a>.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MENU_BASE).SetTag">MENU_BASE:SetTag(MenuTag)</a></td>
+		<td class="summary">
+<p>Sets a tag for later selection of menu refresh.</p>
 </td>
 		</tr>
 		<tr>
@@ -359,6 +383,24 @@ classes are derived from, in order to set commands.</p>
 <p>Constructor</p>
 </td>
 		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MENU_COMMAND_BASE).SetCommandMenuArguments">MENU_COMMAND_BASE.SetCommandMenuArguments(#, self, CommandMenuArguments)</a></td>
+		<td class="summary">
+<p>This sets the new command arguments of a menu, 
+so that if a menu is regenerated, or if command arguments change,
+that the arguments set for the menu are loosely coupled with the menu itself!!!
+If the arguments change, no new menu needs to be generated if the menu text is the same!!!</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MENU_COMMAND_BASE).SetCommandMenuFunction">MENU_COMMAND_BASE.SetCommandMenuFunction(#, self, CommandMenuFunction)</a></td>
+		<td class="summary">
+<p>This sets the new command function of a menu, 
+so that if a menu is regenerated, or if command function changes,
+that the function set for the menu is loosely coupled with the menu itself!!!
+If the function changes, no new menu needs to be generated if the menu text is the same!!!</p>
+</td>
+		</tr>
 	</table>
 
 			<h2><a id="#(MENU_GROUP)">Type <code>MENU_GROUP</code></a></h2>
@@ -406,13 +448,13 @@ classes are derived from, in order to set commands.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MENU_GROUP).Remove">MENU_GROUP:Remove(MenuTime)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(MENU_GROUP).Remove">MENU_GROUP:Remove(MenuTime, MenuTag)</a></td>
 		<td class="summary">
 <p>Removes the main menu and sub menus recursively of this MENU_GROUP.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MENU_GROUP).RemoveSubMenus">MENU_GROUP:RemoveSubMenus(MenuTime)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(MENU_GROUP).RemoveSubMenus">MENU_GROUP:RemoveSubMenus(MenuTime, MenuTag)</a></td>
 		<td class="summary">
 <p>Removes the sub menus recursively of this MENU_GROUP.</p>
 </td>
@@ -464,7 +506,7 @@ classes are derived from, in order to set commands.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MENU_GROUP_COMMAND).Remove">MENU_GROUP_COMMAND:Remove(MenuTime)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(MENU_GROUP_COMMAND).Remove">MENU_GROUP_COMMAND:Remove(MenuTime, MenuTag)</a></td>
 		<td class="summary">
 <p>Removes a menu structure for a group.</p>
 </td>
@@ -717,6 +759,7 @@ Using this object reference, you can then remove ALL the menus and submenus unde
 <p>The MENU<em>COMMAND</em>BASE class defines the main MENU class where other MENU COMMAND_ 
 classes are derived from, in order to set commands.</p>
 
+
 </dd>
 </dl>
 		<dl class="function">
@@ -902,6 +945,20 @@ The text of the child menu.</p>
 <dt>
 
 		<em></em>
+<a id="#(MENU_BASE).MenuTag" >
+<strong>MENU_BASE.MenuTag</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
 <a id="#(MENU_BASE).MenuTime" >
 <strong>MENU_BASE.MenuTime</strong>
 </a>
@@ -971,6 +1028,33 @@ ENU_BASE</p>
 				
 <p><code><em>#boolean RemoveParent </em></code>: 
 If true, the parent menu is automatically removed when this menu is the last child menu of that parent <a href="Menu.html">Menu</a>.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(MENU_BASE)">#MENU_BASE</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(MENU_BASE).SetTag" >
+<strong>MENU_BASE:SetTag(MenuTag)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Sets a tag for later selection of menu refresh.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string MenuTag </em></code>: 
+A Tag or Key that will filter only menu items set with this key.</p>
 
 				</li>
 		</ul>
@@ -1401,6 +1485,86 @@ ENU<em>COMMAND</em>BASE</p>
 
 </dd>
 </dl>
+		<dl class="function">
+<dt>
+
+<a id="#(MENU_COMMAND_BASE).SetCommandMenuArguments" >
+<strong>MENU_COMMAND_BASE.SetCommandMenuArguments(#, self, CommandMenuArguments)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>This sets the new command arguments of a menu, 
+so that if a menu is regenerated, or if command arguments change,
+that the arguments set for the menu are loosely coupled with the menu itself!!!
+If the arguments change, no new menu needs to be generated if the menu text is the same!!!</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> # </em></code>: 
+ENU<em>COMMAND</em>BASE</p>
+
+				</li>
+				<li>
+				
+<p><code><em> self </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> CommandMenuArguments </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(MENU_COMMAND_BASE)">#MENU<em>COMMAND</em>BASE</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(MENU_COMMAND_BASE).SetCommandMenuFunction" >
+<strong>MENU_COMMAND_BASE.SetCommandMenuFunction(#, self, CommandMenuFunction)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>This sets the new command function of a menu, 
+so that if a menu is regenerated, or if command function changes,
+that the function set for the menu is loosely coupled with the menu itself!!!
+If the function changes, no new menu needs to be generated if the menu text is the same!!!</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> # </em></code>: 
+ENU<em>COMMAND</em>BASE</p>
+
+				</li>
+				<li>
+				
+<p><code><em> self </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> CommandMenuFunction </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(MENU_COMMAND_BASE)">#MENU<em>COMMAND</em>BASE</a>:</em></p>
+
+
+</dd>
+</dl>
 
 			<h2><a id="#(MENU_GROUP)" >Type <code>MENU_GROUP</code></a></h2>
 				<h3>Field(s)</h3>
@@ -1534,18 +1698,24 @@ self</p>
 <dt>
 
 <a id="#(MENU_GROUP).Remove" >
-<strong>MENU_GROUP:Remove(MenuTime)</strong>
+<strong>MENU_GROUP:Remove(MenuTime, MenuTag)</strong>
 </a>
 </dt>
 <dd>
 	
 <p>Removes the main menu and sub menus recursively of this MENU_GROUP.</p>
 
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
 <p><code><em> MenuTime </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> MenuTag </em></code>: 
+A Tag or Key to filter the menus to be refreshed with the Tag set.</p>
 
 				</li>
 		</ul>
@@ -1560,18 +1730,24 @@ self</p>
 <dt>
 
 <a id="#(MENU_GROUP).RemoveSubMenus" >
-<strong>MENU_GROUP:RemoveSubMenus(MenuTime)</strong>
+<strong>MENU_GROUP:RemoveSubMenus(MenuTime, MenuTag)</strong>
 </a>
 </dt>
 <dd>
 	
 <p>Removes the sub menus recursively of this MENU_GROUP.</p>
 
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
 <p><code><em> MenuTime </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> MenuTag </em></code>: 
+A Tag or Key to filter the menus to be refreshed with the Tag set.</p>
 
 				</li>
 		</ul>
@@ -1723,24 +1899,33 @@ An argument for the function.</p>
 	
 
 
+	
+<p>self:E({Path=Path}) </p>
+
 </dd>
 </dl>
 		<dl class="function">
 <dt>
 
 <a id="#(MENU_GROUP_COMMAND).Remove" >
-<strong>MENU_GROUP_COMMAND:Remove(MenuTime)</strong>
+<strong>MENU_GROUP_COMMAND:Remove(MenuTime, MenuTag)</strong>
 </a>
 </dt>
 <dd>
 	
 <p>Removes a menu structure for a group.</p>
 
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
 <p><code><em> MenuTime </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> MenuTag </em></code>: 
+A Tag or Key to filter the menus to be refreshed with the Tag set.</p>
 
 				</li>
 		</ul>

@@ -229,14 +229,14 @@ do -- ACT_ASSIGN_MENU_ACCEPT
   
   --- StateMachine callback function
   -- @param #ACT_ASSIGN_MENU_ACCEPT self
-  -- @param Wrapper.Controllable#CONTROLLABLE ProcessUnit
+  -- @param Wrapper.Unit#UNIT ProcessUnit
   -- @param #string Event
   -- @param #string From
   -- @param #string To
   function ACT_ASSIGN_MENU_ACCEPT:onafterStart( ProcessUnit, From, Event, To )
     self:E( { ProcessUnit, From, Event, To } )
 
-    self:Message( "Access the radio menu to accept the task. You have 30 seconds or the assignment will be cancelled." )  
+    self:GetCommandCenter():MessageTypeToGroup( "Access the radio menu to accept the task. You have 30 seconds or the assignment will be cancelled.", ProcessUnit:GetGroup(), MESSAGE.Type.Information )
    
     local ProcessGroup = ProcessUnit:GetGroup() 
     
@@ -263,7 +263,7 @@ do -- ACT_ASSIGN_MENU_ACCEPT
   
   --- StateMachine callback function
   -- @param #ACT_ASSIGN_MENU_ACCEPT self
-  -- @param Wrapper.Controllable#CONTROLLABLE ProcessUnit
+  -- @param Wrapper.Unit#UNIT ProcessUnit
   -- @param #string Event
   -- @param #string From
   -- @param #string To
@@ -275,7 +275,7 @@ do -- ACT_ASSIGN_MENU_ACCEPT
   
   --- StateMachine callback function
   -- @param #ACT_ASSIGN_MENU_ACCEPT self
-  -- @param Wrapper.Controllable#CONTROLLABLE ProcessUnit
+  -- @param Wrapper.Unit#UNIT ProcessUnit
   -- @param #string Event
   -- @param #string From
   -- @param #string To

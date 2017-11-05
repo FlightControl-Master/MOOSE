@@ -1,0 +1,39 @@
+rock_manifest = {
+   bin = {
+      luadocumentor = "bc5cc07f56db2cf1dbe80f0827332873"
+   },
+   doc = {
+      LICENSE = "52a21f73ac77fd790dc40dc5acda0fc2",
+      ["README.md"] = "fcef1f43c69f3559b347d854b2626deb"
+   },
+   lua = {
+      ["defaultcss.lua"] = "dd9b2b89e5080972bbb52056247c0c65",
+      ["docgenerator.lua"] = "92d0a3947d88226340014d2f033be37f",
+      ["extractors.lua"] = "74191695e5217706ee355925e5ca40fa",
+      fs = {
+         ["lfs.lua"] = "4d00f9bc942b02a86ccea16544d3e85d"
+      },
+      ["lddextractor.lua"] = "56edde775a5d57818aa0a07b4f723536",
+      models = {
+         ["apimodel.lua"] = "3c401de18691b1222b0ad253958260ee",
+         ["apimodelbuilder.lua"] = "4c4a3c0b48b404973542dd99f994eb2c",
+         ["internalmodel.lua"] = "a1a21e50af8db0f0a0b9d164ccc08853",
+         ["internalmodelbuilder.mlua"] = "ff95dfca573ccc1c19a79434e96a492d",
+         ["ldparser.lua"] = "538904a3adbfff4ff83deda029847323"
+      },
+      template = {
+         ["file.lua"] = "41f095bc049ef161060d8e3b4ac9de63",
+         index = {
+            ["recordtypedef.lua"] = "0977ff0048a837389c2ac10285eb1ce1"
+         },
+         ["index.lua"] = "5a3b3cface3b1fd9cb2d56f1edd5487b",
+         ["item.lua"] = "5d5a6d9bffd8935c4ed283105ede331b",
+         ["page.lua"] = "351f4a7215272f7e448faeece4945bc0",
+         ["recordtypedef.lua"] = "69938e1d60e94eed7f95b0999f1386ca",
+         ["usage.lua"] = "979503deb84877cb221130a5be7c1535",
+         ["utils.lua"] = "ad97fb4e3de9fb6480b25cdd877b50d9"
+      },
+      ["templateengine.lua"] = "09bfc6350e14f4ab509d14fb0fb295c0"
+   },
+   ["luadocumentor-0.1.5-1.rockspec"] = "4ba1b88898dce89e7fd8fb6a700496a4"
+}

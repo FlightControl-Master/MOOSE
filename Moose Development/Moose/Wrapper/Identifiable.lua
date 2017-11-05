@@ -83,15 +83,8 @@ end
 function IDENTIFIABLE:GetName()
   self:F2( self.IdentifiableName )
 
-  local DCSIdentifiable = self:GetDCSObject()
-  
-  if DCSIdentifiable then
-    local IdentifiableName = self.IdentifiableName
-    return IdentifiableName
-  end 
-  
-  self:E( self.ClassName .. " " .. self.IdentifiableName .. " not found!" )
-  return nil
+  local IdentifiableName = self.IdentifiableName
+  return IdentifiableName
 end
 
 
@@ -160,6 +153,36 @@ function IDENTIFIABLE:GetCoalition()
     local IdentifiableCoalition = DCSIdentifiable:getCoalition()
     self:T3( IdentifiableCoalition )
     return IdentifiableCoalition
+  end 
+  
+  self:E( self.ClassName .. " " .. self.IdentifiableName .. " not found!" )
+  return nil
+end
+
+--- Returns the name of the coalition of the Identifiable.
+-- @param #IDENTIFIABLE self
+-- @return #string The name of the coalition.
+-- @return #nil The DCS Identifiable is not existing or alive.  
+function IDENTIFIABLE:GetCoalitionName()
+  self:F2( self.IdentifiableName )
+
+  local DCSIdentifiable = self:GetDCSObject()
+  
+  if DCSIdentifiable then
+    local IdentifiableCoalition = DCSIdentifiable:getCoalition()
+    self:T3( IdentifiableCoalition )
+    
+    if IdentifiableCoalition == coalition.side.BLUE then
+      return "Blue"
+    end
+    
+    if IdentifiableCoalition == coalition.side.RED then
+      return "Red"
+    end
+    
+    if IdentifiableCoalition == coalition.side.NEUTRAL then
+      return "Neutral"
+    end
   end 
   
   self:E( self.ClassName .. " " .. self.IdentifiableName .. " not found!" )

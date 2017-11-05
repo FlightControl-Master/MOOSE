@@ -95,6 +95,22 @@
 --   * @{#CONTROLLABLE.TaskCondition}: Return a condition section for a controlled task.
 --   * @{#CONTROLLABLE.TaskControlled}: Return a Controlled Task taking a Task and a TaskCondition.
 -- 
+-- ### Call a function as a Task
+-- 
+-- A function can be called which is part of a Task. The method @{#CONTROLLABLE.TaskFunction}() prepares
+-- a Task that can call a GLOBAL function from within the Controller execution.
+-- This method can also be used to **embed a function call when a certain waypoint has been reached**.
+-- See below the **Tasks at Waypoints** section.
+-- 
+-- Demonstration Mission: [GRP-502 - Route at waypoint to random point](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/release-2-2-pre/GRP - Group Commands/GRP-502 - Route at waypoint to random point)
+-- 
+-- ### Tasks at Waypoints
+-- 
+-- Special Task methods are available to set tasks at certain waypoints.
+-- The method @{#CONTROLLABLE.SetTaskWaypoint}() helps preparing a Route, embedding a Task at the Waypoint of the Route.
+-- 
+-- This creates a Task element, with an action to call a function as part of a Wrapped Task.
+-- 
 -- ### Obtain the mission from controllable templates
 -- 
 -- Controllable templates contain complete mission descriptions. Sometimes you want to copy a complete mission from a controllable and assign it to another:
@@ -108,7 +124,15 @@
 --   * @{#CONTROLLABLE.CommandDoScript}: Do Script command.
 --   * @{#CONTROLLABLE.CommandSwitchWayPoint}: Perform a switch waypoint command.
 -- 
--- ## CONTROLLABLE Option methods
+-- ## Routing of Controllables
+-- 
+-- Different routing methods exist to route GROUPs and UNITs to different locations:
+--   
+--   * @{#CONTROLLABLE.Route}(): Make the Controllable to follow a given route.  
+--   * @{#CONTROLLABLE.RouteGroundTo}(): Make the GROUND Controllable to drive towards a specific coordinate.
+--   * @{#CONTROLLABLE.RouteAirTo}(): Make the AIR Controllable to fly towards a specific coordinate. 
+-- 
+-- ## Option methods
 -- 
 -- Controllable **Option methods** change the behaviour of the Controllable while being alive.
 -- 
@@ -257,6 +281,16 @@ function CONTROLLABLE:GetLife0()
   return nil
 end
 
+--- Returns relative amount of fuel (from 0.0 to 1.0) the unit has in its internal tanks.
+-- This method returns nil to ensure polymorphic behaviour! This method needs to be overridden by GROUP or UNIT.
+-- @param #CONTROLLABLE self
+-- @return #nil The CONTROLLABLE is not existing or alive.  
+function CONTROLLABLE:GetFuel()
+  self:F( self.ControllableName )
+
+  return nil
+end
+
 
 
 
@@ -334,16 +368,25 @@ function CONTROLLABLE:SetTask( DCSTask, WaitTime )
 
   if DCSControllable then
 
-    local Controller = self:_GetController()
+    local DCSControllableName = self:GetName()
 
     -- When a controllable SPAWNs, it takes about a second to get the controllable in the simulator. Setting tasks to unspawned controllables provides unexpected results.
     -- Therefore we schedule the functions to set the mission and options for the Controllable.
     -- Controller.setTask( Controller, DCSTask )
 
-    if not WaitTime then
-      Controller:setTask( DCSTask )
+    local function SetTask( Controller, DCSTask )
+      if self and self:IsAlive() then
+        local Controller = self:_GetController()
+        Controller:setTask( DCSTask )
+      else
+        BASE:E( DCSControllableName .. " is not alive anymore. Cannot set DCSTask " .. DCSTask )
+      end
+    end
+
+    if not WaitTime or WaitTime == 0 then
+      SetTask( self, DCSTask )
     else
-      self.TaskScheduler:Schedule( Controller, Controller.setTask, { DCSTask }, WaitTime )
+      self.TaskScheduler:Schedule( self, SetTask, { DCSTask }, WaitTime )
     end
 
     return self
@@ -449,11 +492,11 @@ function CONTROLLABLE:TaskWrappedAction( DCSCommand, Index )
   self:F2( { DCSCommand } )
 
   local DCSTaskWrappedAction
-
+  
   DCSTaskWrappedAction = {
     id = "WrappedAction",
     enabled = true,
-    number = Index,
+    number = Index or 1,
     auto = false,
     params = {
       action = DCSCommand,
@@ -463,6 +506,22 @@ function CONTROLLABLE:TaskWrappedAction( DCSCommand, Index )
   self:T3( { DCSTaskWrappedAction } )
   return DCSTaskWrappedAction
 end
+
+--- Set a Task at a Waypoint using a Route list.
+-- @param #CONTROLLABLE self
+-- @param #table Waypoint The Waypoint!
+-- @param Dcs.DCSTasking.Task#Task Task The Task structure to be executed!
+-- @return Dcs.DCSTasking.Task#Task
+function CONTROLLABLE:SetTaskWaypoint( Waypoint, Task )
+
+  Waypoint.task = self:TaskCombo( { Task } )
+
+  self:T3( { Waypoint.task } )
+  return Waypoint.task
+end
+
+
+
 
 --- Executes a command action
 -- @param #CONTROLLABLE self
@@ -1480,6 +1539,84 @@ function CONTROLLABLE:TaskEmbarkToTransport( Point, Radius )
   return DCSTask
 end
 
+--- This creates a Task element, with an action to call a function as part of a Wrapped Task.
+-- This Task can then be embedded at a Waypoint by calling the method @{#CONTROLLABLE.SetTaskWaypoint}.
+-- @param #CONTROLLABLE self
+-- @param #string FunctionString The function name embedded as a string that will be called.
+-- @param ... The variable arguments passed to the function when called! These arguments can be of any type!
+-- @return #CONTROLLABLE
+-- @usage
+-- 
+--  local ZoneList = { 
+--    ZONE:New( "ZONE1" ), 
+--    ZONE:New( "ZONE2" ), 
+--    ZONE:New( "ZONE3" ), 
+--    ZONE:New( "ZONE4" ), 
+--    ZONE:New( "ZONE5" ) 
+--  }
+--  
+--  GroundGroup = GROUP:FindByName( "Vehicle" )
+--  
+--  --- @param Wrapper.Group#GROUP GroundGroup
+--  function RouteToZone( Vehicle, ZoneRoute )
+--  
+--    local Route = {}
+--    
+--    Vehicle:E( { ZoneRoute = ZoneRoute } )
+--    
+--    Vehicle:MessageToAll( "Moving to zone " .. ZoneRoute:GetName(), 10 )
+--  
+--    -- Get the current coordinate of the Vehicle
+--    local FromCoord = Vehicle:GetCoordinate()
+--    
+--    -- Select a random Zone and get the Coordinate of the new Zone.
+--    local RandomZone = ZoneList[ math.random( 1, #ZoneList ) ] -- Core.Zone#ZONE
+--    local ToCoord = RandomZone:GetCoordinate()
+--    
+--    -- Create a "ground route point", which is a "point" structure that can be given as a parameter to a Task
+--    Route[#Route+1] = FromCoord:WaypointGround( 72 )
+--    Route[#Route+1] = ToCoord:WaypointGround( 60, "Vee" )
+--    
+--    local TaskRouteToZone = Vehicle:TaskFunction( "RouteToZone", RandomZone )
+--    
+--    Vehicle:SetTaskWaypoint( Route, #Route, TaskRouteToZone ) -- Set for the given Route at Waypoint 2 the TaskRouteToZone.
+--  
+--    Vehicle:Route( Route, math.random( 10, 20 ) ) -- Move after a random seconds to the Route. See the Route method for details.
+--    
+--  end
+--    
+--    RouteToZone( GroundGroup, ZoneList[1] )
+-- 
+function CONTROLLABLE:TaskFunction( FunctionString, ... )
+  self:F2( { FunctionString, arg } )
+
+  local DCSTask
+
+  local DCSScript = {}
+  DCSScript[#DCSScript+1] = "local MissionControllable = GROUP:Find( ... ) "
+
+  if arg and arg.n > 0 then
+    local ArgumentKey = '_' .. tostring( arg ):match("table: (.*)")
+    self:SetState( self, ArgumentKey, arg )
+    DCSScript[#DCSScript+1] = "local Arguments = MissionControllable:GetState( MissionControllable, '" .. ArgumentKey .. "' ) "
+    --DCSScript[#DCSScript+1] = "MissionControllable:ClearState( MissionControllable, '" .. ArgumentKey .. "' ) "
+    DCSScript[#DCSScript+1] = FunctionString .. "( MissionControllable, unpack( Arguments ) )"
+  else
+    DCSScript[#DCSScript+1] = FunctionString .. "( MissionControllable )"
+  end
+
+  DCSTask = self:TaskWrappedAction(
+    self:CommandDoScript(
+      table.concat( DCSScript )
+    )
+  )
+
+  self:T( DCSTask )
+
+  return DCSTask
+
+end
+
 
 
 --- (AIR + GROUND) Return a mission task from a mission template.
@@ -1495,6 +1632,140 @@ function CONTROLLABLE:TaskMission( TaskMission )
   self:T3( { DCSTask } )
   return DCSTask
 end
+
+
+do -- Patrol methods
+
+  --- (GROUND) Patrol iteratively using the waypoints the for the (parent) group.
+  -- @param #CONTROLLABLE self
+  -- @return #CONTROLLABLE
+  function CONTROLLABLE:PatrolRoute()
+  
+    local PatrolGroup = self -- Wrapper.Group#GROUP
+    
+    if not self:IsInstanceOf( "GROUP" ) then
+      PatrolGroup = self:GetGroup() -- Wrapper.Group#GROUP
+    end
+    
+    self:E( { PatrolGroup = PatrolGroup:GetName() } )
+    
+    if PatrolGroup:IsGround() or PatrolGroup:IsShip() then
+    
+      local Waypoints = PatrolGroup:GetTemplateRoutePoints()
+      
+      -- Calculate the new Route.
+      local FromCoord = PatrolGroup:GetCoordinate()
+      local From = FromCoord:WaypointGround( 120 )
+      
+      table.insert( Waypoints, 1, From )
+
+      local TaskRoute = PatrolGroup:TaskFunction( "CONTROLLABLE.PatrolRoute" )
+      
+      self:E({Waypoints = Waypoints})
+      local Waypoint = Waypoints[#Waypoints]
+      PatrolGroup:SetTaskWaypoint( Waypoint, TaskRoute ) -- Set for the given Route at Waypoint 2 the TaskRouteToZone.
+    
+      PatrolGroup:Route( Waypoints ) -- Move after a random seconds to the Route. See the Route method for details.
+    end
+  end
+
+  --- (GROUND) Patrol randomly to the waypoints the for the (parent) group.
+  -- A random waypoint will be picked and the group will move towards that point.
+  -- @param #CONTROLLABLE self
+  -- @return #CONTROLLABLE
+  function CONTROLLABLE:PatrolRouteRandom( Speed, Formation, ToWaypoint )
+  
+    local PatrolGroup = self -- Wrapper.Group#GROUP
+    
+    if not self:IsInstanceOf( "GROUP" ) then
+      PatrolGroup = self:GetGroup() -- Wrapper.Group#GROUP
+    end
+
+    self:E( { PatrolGroup = PatrolGroup:GetName() } )
+    
+    if PatrolGroup:IsGround() or PatrolGroup:IsShip() then
+    
+      local Waypoints = PatrolGroup:GetTemplateRoutePoints()
+      
+      -- Calculate the new Route.
+      local FromCoord = PatrolGroup:GetCoordinate()
+      local FromWaypoint = 1
+      if ToWaypoint then
+        FromWaypoint = ToWaypoint
+      end
+      
+      -- Loop until a waypoint has been found that is not the same as the current waypoint.
+      -- Otherwise the object zon't move or drive in circles and the algorithm would not do exactly
+      -- what it is supposed to do, which is making groups drive around.
+      local ToWaypoint
+      repeat      
+        -- Select a random waypoint and check if it is not the same waypoint as where the object is about.
+        ToWaypoint = math.random( 1, #Waypoints )
+      until( ToWaypoint ~= FromWaypoint )
+      self:E( { FromWaypoint = FromWaypoint, ToWaypoint = ToWaypoint } )
+
+      local  Waypoint = Waypoints[ToWaypoint] -- Select random waypoint.
+      local ToCoord = COORDINATE:NewFromVec2( { x = Waypoint.x, y = Waypoint.y } )
+      -- Create a "ground route point", which is a "point" structure that can be given as a parameter to a Task
+      local Route = {}
+      Route[#Route+1] = FromCoord:WaypointGround( 0 )
+      Route[#Route+1] = ToCoord:WaypointGround( Speed, Formation )
+      
+      
+      local TaskRouteToZone = PatrolGroup:TaskFunction( "CONTROLLABLE.PatrolRouteRandom", Speed, Formation, ToWaypoint )
+      
+      PatrolGroup:SetTaskWaypoint( Route[#Route], TaskRouteToZone ) -- Set for the given Route at Waypoint 2 the TaskRouteToZone.
+    
+      PatrolGroup:Route( Route, 1 ) -- Move after a random seconds to the Route. See the Route method for details.
+    end
+  end
+
+  --- (GROUND) Patrol randomly to the waypoints the for the (parent) group.
+  -- A random waypoint will be picked and the group will move towards that point.
+  -- @param #CONTROLLABLE self
+  -- @return #CONTROLLABLE
+  function CONTROLLABLE:PatrolZones( ZoneList, Speed, Formation )
+  
+    if not type( ZoneList ) == "table" then
+      ZoneList = { ZoneList }
+    end
+  
+    local PatrolGroup = self -- Wrapper.Group#GROUP
+    
+    if not self:IsInstanceOf( "GROUP" ) then
+      PatrolGroup = self:GetGroup() -- Wrapper.Group#GROUP
+    end
+
+    self:E( { PatrolGroup = PatrolGroup:GetName() } )
+    
+    if PatrolGroup:IsGround() or PatrolGroup:IsShip() then
+    
+      local Waypoints = PatrolGroup:GetTemplateRoutePoints()
+      local Waypoint = Waypoints[math.random( 1, #Waypoints )] -- Select random waypoint.
+      
+      -- Calculate the new Route.
+      local FromCoord = PatrolGroup:GetCoordinate()
+      
+      -- Select a random Zone and get the Coordinate of the new Zone.
+      local RandomZone = ZoneList[ math.random( 1, #ZoneList ) ] -- Core.Zone#ZONE
+      local ToCoord = RandomZone:GetRandomCoordinate( 10 )
+      
+      -- Create a "ground route point", which is a "point" structure that can be given as a parameter to a Task
+      local Route = {}
+      Route[#Route+1] = FromCoord:WaypointGround( 120 )
+      Route[#Route+1] = ToCoord:WaypointGround( Speed, Formation )
+      
+      
+      local TaskRouteToZone = PatrolGroup:TaskFunction( "CONTROLLABLE.PatrolZones", ZoneList, Speed, Formation )
+      
+      PatrolGroup:SetTaskWaypoint( Route[#Route], TaskRouteToZone ) -- Set for the given Route at Waypoint 2 the TaskRouteToZone.
+    
+      PatrolGroup:Route( Route, 1 ) -- Move after a random seconds to the Route. See the Route method for details.
+    end
+  end
+
+end
+
 
 --- Return a Misson task to follow a given route defined by Points.
 -- @param #CONTROLLABLE self
@@ -1620,25 +1891,63 @@ end
 
 --- Make the controllable to follow a given route.
 -- @param #CONTROLLABLE self
--- @param #table GoPoints A table of Route Points.
--- @return #CONTROLLABLE self
-function CONTROLLABLE:Route( GoPoints )
-  self:F2( GoPoints )
+-- @param #table Route A table of Route Points.
+-- @param #number DelaySeconds Wait for the specified seconds before executing the Route.
+-- @return #CONTROLLABLE The CONTROLLABLE.
+function CONTROLLABLE:Route( Route, DelaySeconds )
+  self:F2( Route )
 
   local DCSControllable = self:GetDCSObject()
-
   if DCSControllable then
-    local Points = routines.utils.deepCopy( GoPoints )
-    local MissionTask = { id = 'Mission', params = { route = { points = Points, }, }, }
-    local Controller = self:_GetController()
-    --Controller.setTask( Controller, MissionTask )
-    self.TaskScheduler:Schedule( Controller, Controller.setTask, { MissionTask }, 1 )
+    local RouteTask = self:TaskRoute( Route ) -- Create a RouteTask, that will route the CONTROLLABLE to the Route.
+    self:SetTask( RouteTask, DelaySeconds or 1 ) -- Execute the RouteTask after the specified seconds (default is 1).
     return self
   end
 
   return nil
 end
 
+
+--- Make the GROUND Controllable to drive towards a specific point.
+-- @param #CONTROLLABLE self
+-- @param Core.Point#COORDINATE ToCoordinate A Coordinate to drive to.
+-- @param #number Speed (optional) Speed in km/h. The default speed is 999 km/h.
+-- @param #string Formation (optional) The route point Formation, which is a text string that specifies exactly the Text in the Type of the route point, like "Vee", "Echelon Right".
+-- @param #number DelaySeconds Wait for the specified seconds before executing the Route.
+-- @return #CONTROLLABLE The CONTROLLABLE.
+function CONTROLLABLE:RouteGroundTo( ToCoordinate, Speed, Formation, DelaySeconds )
+
+  local FromCoordinate = self:GetCoordinate()
+  
+  local FromWP = FromCoordinate:WaypointGround()
+  local ToWP = ToCoordinate:WaypointGround( Speed, Formation )
+
+  self:Route( { FromWP, ToWP }, DelaySeconds )
+
+  return self
+end
+
+
+--- Make the AIR Controllable fly towards a specific point.
+-- @param #CONTROLLABLE self
+-- @param Core.Point#COORDINATE ToCoordinate A Coordinate to drive to.
+-- @param Core.Point#COORDINATE.RoutePointAltType AltType The altitude type.
+-- @param Core.Point#COORDINATE.RoutePointType Type The route point type.
+-- @param Core.Point#COORDINATE.RoutePointAction Action The route point action.
+-- @param #number Speed (optional) Speed in km/h. The default speed is 999 km/h.
+-- @param #number DelaySeconds Wait for the specified seconds before executing the Route.
+-- @return #CONTROLLABLE The CONTROLLABLE.
+function CONTROLLABLE:RouteAirTo( ToCoordinate, AltType, Type, Action, Speed, DelaySeconds )
+
+  local FromCoordinate = self:GetCoordinate()
+  local FromWP = FromCoordinate:WaypointAir()
+
+  local ToWP = ToCoordinate:WaypointAir( AltType, Type, Action, Speed )
+
+  self:Route( { FromWP, ToWP }, DelaySeconds )
+
+  return self
+end
 
 
 --- (AIR + GROUND) Route the controllable to a given zone.
@@ -2228,6 +2537,72 @@ function CONTROLLABLE:OptionROTVertical()
   return nil
 end
 
+--- Alarm state to Auto: AI will automatically switch alarm states based on the presence of threats. The AI kind of cheats in this regard.
+-- @param #CONTROLLABLE self
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:OptionAlarmStateAuto()
+  self:F2( { self.ControllableName } )
+
+  local DCSControllable = self:GetDCSObject()
+  if DCSControllable then
+    local Controller = self:_GetController()
+
+    if self:IsGround() then
+      Controller:setOption(AI.Option.Ground.id.ALARM_STATE, AI.Option.Ground.val.ALARM_STATE.AUTO)
+    elseif self:IsShip() then 
+      Controller:setOption(AI.Option.Naval.id.ALARM_STATE, AI.Option.Naval.val.ALARM_STATE.AUTO)
+    end
+
+    return self
+  end
+
+  return nil
+end
+
+--- Alarm state to Green: Group is not combat ready. Sensors are stowed if possible.
+-- @param #CONTROLLABLE self
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:OptionAlarmStateGreen()
+  self:F2( { self.ControllableName } )
+
+  local DCSControllable = self:GetDCSObject()
+  if DCSControllable then
+    local Controller = self:_GetController()
+
+    if self:IsGround() then
+      Controller:setOption(AI.Option.Ground.id.ALARM_STATE, AI.Option.Ground.val.ALARM_STATE.GREEN)
+    elseif self:IsShip() then 
+      Controller:setOption(AI.Option.Naval.id.ALARM_STATE, AI.Option.Naval.val.ALARM_STATE.GREEN)
+    end
+
+    return self
+  end
+
+  return nil
+end
+
+--- Alarm state to Red: Group is combat ready and actively searching for targets.
+-- @param #CONTROLLABLE self
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:OptionAlarmStateRed()
+  self:F2( { self.ControllableName } )
+
+  local DCSControllable = self:GetDCSObject()
+  if DCSControllable then
+    local Controller = self:_GetController()
+
+    if self:IsGround() then
+      Controller:setOption(AI.Option.Ground.id.ALARM_STATE, AI.Option.Ground.val.ALARM_STATE.RED)
+    elseif self:IsShip() then 
+      Controller:setOption(AI.Option.Naval.id.ALARM_STATE, AI.Option.Naval.val.ALARM_STATE.RED)
+    end
+
+    return self
+  end
+
+  return nil
+end
+
 
 --- Set RTB on bingo fuel.
 -- @param #CONTROLLABLE self
@@ -2321,36 +2696,10 @@ function CONTROLLABLE:WayPointFunction( WayPoint, WayPointIndex, WayPointFunctio
   self:F2( { WayPoint, WayPointIndex, WayPointFunction } )
 
   table.insert( self.WayPoints[WayPoint].task.params.tasks, WayPointIndex )
-  self.WayPoints[WayPoint].task.params.tasks[WayPointIndex] = self:TaskFunction( WayPoint, WayPointIndex, WayPointFunction, arg )
+  self.WayPoints[WayPoint].task.params.tasks[WayPointIndex] = self:TaskFunction( WayPointFunction, arg )
   return self
 end
 
-
-function CONTROLLABLE:TaskFunction( WayPoint, WayPointIndex, FunctionString, FunctionArguments )
-  self:F2( { WayPoint, WayPointIndex, FunctionString, FunctionArguments } )
-
-  local DCSTask
-
-  local DCSScript = {}
-  DCSScript[#DCSScript+1] = "local MissionControllable = GROUP:Find( ... ) "
-
-  if FunctionArguments and #FunctionArguments > 0 then
-    DCSScript[#DCSScript+1] = FunctionString .. "( MissionControllable, " .. table.concat( FunctionArguments, "," ) .. ")"
-  else
-    DCSScript[#DCSScript+1] = FunctionString .. "( MissionControllable )"
-  end
-
-  DCSTask = self:TaskWrappedAction(
-    self:CommandDoScript(
-      table.concat( DCSScript )
-    ), WayPointIndex
-  )
-
-  self:T( DCSTask )
-
-  return DCSTask
-
-end
 
 --- Executes the WayPoint plan.
 -- The function gets a WayPoint parameter, that you can use to restart the mission at a specific WayPoint.
@@ -2388,11 +2737,21 @@ function CONTROLLABLE:IsAirPlane()
 
   if DCSObject then
     local Category = DCSObject:getDesc().category
-    self:T( Category )
     return Category == Unit.Category.AIRPLANE
   end
 
   return nil
+end
+
+function CONTROLLABLE:GetSize()
+
+  local DCSObject = self:GetDCSObject()
+
+  if DCSObject then
+    return 1
+  else
+    return 0
+  end
 end
 
 

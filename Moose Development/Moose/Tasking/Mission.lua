@@ -264,14 +264,14 @@ function MISSION:New( CommandCenter, MissionName, MissionPriority, MissionBriefi
 end
 
 
--- FSM function for a MISSION
+--- FSM function for a MISSION
 -- @param #MISSION self
 -- @param #string From
 -- @param #string Event
 -- @param #string To
 function MISSION:onenterCOMPLETED( From, Event, To )
 
-  self:GetCommandCenter():MessageToCoalition( self:GetName() .. " has been completed! Good job guys!" )
+  self:GetCommandCenter():MessageTypeToCoalition( self:GetName() .. " has been completed! Good job guys!", MESSAGE.Type.Information )
 end
 
 --- Gets the mission name.
@@ -450,7 +450,7 @@ do -- Group Assignment
     local MissionGroupName = MissionGroup:GetName()
   
     self.AssignedGroups[MissionGroupName] = nil
-    self:E( string.format( "Mission %s is unassigned to %s", MissionName, MissionGroupName ) )
+    --self:E( string.format( "Mission %s is unassigned to %s", MissionName, MissionGroupName ) )
     
     return self
   end
@@ -475,7 +475,23 @@ function MISSION:RemoveTaskMenu( Task )
 end
 
 
---- Gets the mission menu for the coalition.
+--- Gets the root mission menu for the TaskGroup.
+-- @param #MISSION self
+-- @return Core.Menu#MENU_COALITION self
+function MISSION:GetRootMenu( TaskGroup ) -- R2.2
+
+  local CommandCenter = self:GetCommandCenter()
+  local CommandCenterMenu = CommandCenter:GetMenu()
+
+  local MissionName = self:GetName()
+  --local MissionMenu = CommandCenterMenu:GetMenu( MissionName )
+  
+  self.MissionMenu = self.MissionMenu or MENU_COALITION:New( self.MissionCoalition, self:GetName(), CommandCenterMenu )
+
+  return self.MissionMenu
+end
+
+--- Gets the mission menu for the TaskGroup.
 -- @param #MISSION self
 -- @return Core.Menu#MENU_COALITION self
 function MISSION:GetMenu( TaskGroup ) -- R2.1 -- Changed Menu Structure
@@ -486,27 +502,28 @@ function MISSION:GetMenu( TaskGroup ) -- R2.1 -- Changed Menu Structure
   local MissionName = self:GetName()
   --local MissionMenu = CommandCenterMenu:GetMenu( MissionName )
   
-  self.MissionMenu = self.MissionMenu or {}
-  self.MissionMenu[TaskGroup] = self.MissionMenu[TaskGroup] or {}
+  self.MissionGroupMenu = self.MissionGroupMenu or {}
+  self.MissionGroupMenu[TaskGroup] = self.MissionGroupMenu[TaskGroup] or {}
   
-  local Menu = self.MissionMenu[TaskGroup]
+  local GroupMenu = self.MissionGroupMenu[TaskGroup]
   
-  Menu.MainMenu = Menu.MainMenu or MENU_GROUP:New( TaskGroup, self:GetName(), CommandCenterMenu )
-  Menu.BriefingMenu = Menu.BriefingMenu or MENU_GROUP_COMMAND:New( TaskGroup, "Mission Briefing", Menu.MainMenu, self.MenuReportBriefing, self, TaskGroup )
+  self.MissionMenu = self.MissionMenu or MENU_COALITION:New( self.MissionCoalition, self:GetName(), CommandCenterMenu )
+  
+  GroupMenu.BriefingMenu = GroupMenu.BriefingMenu or MENU_GROUP_COMMAND:New( TaskGroup, "Mission Briefing", self.MissionMenu, self.MenuReportBriefing, self, TaskGroup )
 
-  Menu.TaskReportsMenu = Menu.TaskReportsMenu or                      MENU_GROUP:New( TaskGroup, "Task Reports", Menu.MainMenu )
-  Menu.ReportTasksMenu = Menu.ReportTasksMenu or                      MENU_GROUP_COMMAND:New( TaskGroup, "Report Tasks", Menu.TaskReportsMenu, self.MenuReportTasksSummary, self, TaskGroup )
-  Menu.ReportPlannedTasksMenu = Menu.ReportPlannedTasksMenu or        MENU_GROUP_COMMAND:New( TaskGroup, "Report Planned Tasks", Menu.TaskReportsMenu, self.MenuReportTasksPerStatus, self, TaskGroup, "Planned" )
-  Menu.ReportAssignedTasksMenu = Menu.ReportAssignedTasksMenu or      MENU_GROUP_COMMAND:New( TaskGroup, "Report Assigned Tasks", Menu.TaskReportsMenu, self.MenuReportTasksPerStatus, self, TaskGroup, "Assigned" )
-  Menu.ReportSuccessTasksMenu = Menu.ReportSuccessTasksMenu or        MENU_GROUP_COMMAND:New( TaskGroup, "Report Successful Tasks", Menu.TaskReportsMenu, self.MenuReportTasksPerStatus, self, TaskGroup, "Success" )
-  Menu.ReportFailedTasksMenu = Menu.ReportFailedTasksMenu or          MENU_GROUP_COMMAND:New( TaskGroup, "Report Failed Tasks", Menu.TaskReportsMenu, self.MenuReportTasksPerStatus, self, TaskGroup, "Failed" )
-  Menu.ReportHeldTasksMenu = Menu.ReportHeldTasksMenu or              MENU_GROUP_COMMAND:New( TaskGroup, "Report Held Tasks", Menu.TaskReportsMenu, self.MenuReportTasksPerStatus, self, TaskGroup, "Hold" )
+  GroupMenu.TaskReportsMenu = GroupMenu.TaskReportsMenu or                      MENU_GROUP:New( TaskGroup, "Task Reports", self.MissionMenu )
+  GroupMenu.ReportTasksMenu = GroupMenu.ReportTasksMenu or                      MENU_GROUP_COMMAND:New( TaskGroup, "Report Tasks", GroupMenu.TaskReportsMenu, self.MenuReportTasksSummary, self, TaskGroup )
+  GroupMenu.ReportPlannedTasksMenu = GroupMenu.ReportPlannedTasksMenu or        MENU_GROUP_COMMAND:New( TaskGroup, "Report Planned Tasks", GroupMenu.TaskReportsMenu, self.MenuReportTasksPerStatus, self, TaskGroup, "Planned" )
+  GroupMenu.ReportAssignedTasksMenu = GroupMenu.ReportAssignedTasksMenu or      MENU_GROUP_COMMAND:New( TaskGroup, "Report Assigned Tasks", GroupMenu.TaskReportsMenu, self.MenuReportTasksPerStatus, self, TaskGroup, "Assigned" )
+  GroupMenu.ReportSuccessTasksMenu = GroupMenu.ReportSuccessTasksMenu or        MENU_GROUP_COMMAND:New( TaskGroup, "Report Successful Tasks", GroupMenu.TaskReportsMenu, self.MenuReportTasksPerStatus, self, TaskGroup, "Success" )
+  GroupMenu.ReportFailedTasksMenu = GroupMenu.ReportFailedTasksMenu or          MENU_GROUP_COMMAND:New( TaskGroup, "Report Failed Tasks", GroupMenu.TaskReportsMenu, self.MenuReportTasksPerStatus, self, TaskGroup, "Failed" )
+  GroupMenu.ReportHeldTasksMenu = GroupMenu.ReportHeldTasksMenu or              MENU_GROUP_COMMAND:New( TaskGroup, "Report Held Tasks", GroupMenu.TaskReportsMenu, self.MenuReportTasksPerStatus, self, TaskGroup, "Hold" )
   
-  Menu.PlayerReportsMenu = Menu.PlayerReportsMenu or                  MENU_GROUP:New( TaskGroup, "Statistics Reports", Menu.MainMenu )
-  Menu.ReportMissionHistory = Menu.ReportPlayersHistory or            MENU_GROUP_COMMAND:New( TaskGroup, "Report Mission Progress", Menu.PlayerReportsMenu, self.MenuReportPlayersProgress, self, TaskGroup )
-  Menu.ReportPlayersPerTaskMenu = Menu.ReportPlayersPerTaskMenu or    MENU_GROUP_COMMAND:New( TaskGroup, "Report Players per Task", Menu.PlayerReportsMenu, self.MenuReportPlayersPerTask, self, TaskGroup )
+  GroupMenu.PlayerReportsMenu = GroupMenu.PlayerReportsMenu or                  MENU_GROUP:New( TaskGroup, "Statistics Reports", self.MissionMenu )
+  GroupMenu.ReportMissionHistory = GroupMenu.ReportPlayersHistory or            MENU_GROUP_COMMAND:New( TaskGroup, "Report Mission Progress", GroupMenu.PlayerReportsMenu, self.MenuReportPlayersProgress, self, TaskGroup )
+  GroupMenu.ReportPlayersPerTaskMenu = GroupMenu.ReportPlayersPerTaskMenu or    MENU_GROUP_COMMAND:New( TaskGroup, "Report Players per Task", GroupMenu.PlayerReportsMenu, self.MenuReportPlayersPerTask, self, TaskGroup )
   
-  return Menu.MainMenu
+  return self.MissionMenu
 end
 
 
@@ -843,8 +860,9 @@ end
 
 --- Create a summary report of the Mission (one line).
 -- @param #MISSION self
+-- @param Wrapper.Group#GROUP ReportGroup
 -- @return #string
-function MISSION:ReportSummary()
+function MISSION:ReportSummary( ReportGroup )
 
   local Report = REPORT:New()
 
@@ -857,9 +875,9 @@ function MISSION:ReportSummary()
   Report:Add( string.format( '%s - %s - Task Overview Report', Name, Status ) )
 
   -- Determine how many tasks are remaining.
-  for TaskID, Task in pairs( self:GetTasks() ) do
+  for TaskID, Task in UTILS.spairs( self:GetTasks(), function( t, a, b ) return t[a]:ReportOrder( ReportGroup ) <  t[b]:ReportOrder( ReportGroup ) end  ) do
     local Task = Task -- Tasking.Task#TASK
-    Report:Add( "- " .. Task:ReportSummary() )
+    Report:Add( "- " .. Task:ReportSummary( ReportGroup ) )
   end
   
   return Report:Text()
@@ -869,6 +887,8 @@ end
 -- @param #MISSION self
 -- @return #string
 function MISSION:ReportOverview( ReportGroup, TaskStatus )
+
+  self:F( { TaskStatus = TaskStatus } )
 
   local Report = REPORT:New()
 
@@ -881,11 +901,16 @@ function MISSION:ReportOverview( ReportGroup, TaskStatus )
   Report:Add( string.format( '%s - %s - %s Tasks Report', Name, Status, TaskStatus ) )
   
   -- Determine how many tasks are remaining.
-  local TasksRemaining = 0
-  for TaskID, Task in pairs( self:GetTasks() ) do
+  local Tasks = 0
+  for TaskID, Task in UTILS.spairs( self:GetTasks(), function( t, a, b ) return t[a]:ReportOrder( ReportGroup ) <  t[b]:ReportOrder( ReportGroup ) end  ) do
     local Task = Task -- Tasking.Task#TASK
     if Task:Is( TaskStatus ) then
+      Report:Add( string.rep( "-", 140 ) )
       Report:Add( " - " .. Task:ReportOverview( ReportGroup ) )
+    end
+    Tasks = Tasks + 1
+    if Tasks >= 8 then
+      break
     end
   end
 
@@ -935,7 +960,7 @@ function MISSION:MenuReportBriefing( ReportGroup )
 
   local Report = self:ReportBriefing()
   
-  self:GetCommandCenter():MessageToGroup( Report, ReportGroup )
+  self:GetCommandCenter():MessageTypeToGroup( Report, ReportGroup, MESSAGE.Type.Briefing )
 end
 
 
@@ -945,9 +970,9 @@ end
 -- @param Wrapper.Group#GROUP ReportGroup
 function MISSION:MenuReportTasksSummary( ReportGroup )
 
-  local Report = self:ReportSummary()
+  local Report = self:ReportSummary( ReportGroup )
   
-  self:GetCommandCenter():MessageToGroup( Report, ReportGroup )
+  self:GetCommandCenter():MessageTypeToGroup( Report, ReportGroup, MESSAGE.Type.Overview )
 end
 
 
@@ -960,7 +985,7 @@ function MISSION:MenuReportTasksPerStatus( ReportGroup, TaskStatus )
 
   local Report = self:ReportOverview( ReportGroup, TaskStatus )
   
-  self:GetCommandCenter():MessageToGroup( Report, ReportGroup )
+  self:GetCommandCenter():MessageTypeToGroup( Report, ReportGroup, MESSAGE.Type.Overview )
 end
 
 
@@ -970,7 +995,7 @@ function MISSION:MenuReportPlayersPerTask( ReportGroup )
 
   local Report = self:ReportPlayersPerTask()
   
-  self:GetCommandCenter():MessageToGroup( Report, ReportGroup )
+  self:GetCommandCenter():MessageTypeToGroup( Report, ReportGroup, MESSAGE.Type.Overview )
 end
 
 --- @param #MISSION self
@@ -979,7 +1004,7 @@ function MISSION:MenuReportPlayersProgress( ReportGroup )
 
   local Report = self:ReportPlayersProgress()
   
-  self:GetCommandCenter():MessageToGroup( Report, ReportGroup )
+  self:GetCommandCenter():MessageTypeToGroup( Report, ReportGroup, MESSAGE.Type.Overview )
 end
 
 

@@ -13,80 +13,7 @@
 
 
 
---- The REPORT class
--- @type REPORT
--- @extends Core.Base#BASE
-REPORT = {
-  ClassName = "REPORT",
-  Title = "",
-}
 
---- Create a new REPORT.
--- @param #REPORT self
--- @param #string Title
--- @return #REPORT
-function REPORT:New( Title )
-
-  local self = BASE:Inherit( self, BASE:New() ) -- #REPORT
-
-  self.Report = {}
-  
-  Title = Title or ""
-  if Title then
-    self.Title = Title  
-  end
-  
-  self:SetIndent( 3 )
-
-  return self
-end
-
---- Has the REPORT Text?
--- @param #REPORT self
--- @return #boolean
-function REPORT:HasText() --R2.1
-  
-  return #self.Report > 0
-end
-
-
---- Set indent of a REPORT.
--- @param #REPORT self
--- @param #number Indent
--- @return #REPORT
-function REPORT:SetIndent( Indent ) --R2.1
-  self.Indent = Indent
-  return self
-end
-
-
---- Add a new line to a REPORT.
--- @param #REPORT self
--- @param #string Text
--- @return #REPORT
-function REPORT:Add( Text )
-  self.Report[#self.Report+1] = Text
-  return self
-end
-
---- Add a new line to a REPORT.
--- @param #REPORT self
--- @param #string Text
--- @return #REPORT
-function REPORT:AddIndent( Text ) --R2.1
-  self.Report[#self.Report+1] = string.rep(" ", self.Indent ) .. Text:gsub("\n","\n"..string.rep( " ", self.Indent ) )
-  return self
-end
-
---- Produces the text of the report, taking into account an optional delimeter, which is \n by default.
--- @param #REPORT self
--- @param #string Delimiter (optional) A delimiter text.
--- @return #string The report text.
-function REPORT:Text( Delimiter )
-  Delimiter = Delimiter or "\n"
-  local ReportText = ( self.Title ~= "" and self.Title .. Delimiter or self.Title ) .. table.concat( self.Report, Delimiter ) or ""
-  return ReportText
-end
 
 --- The COMMANDCENTER class
 -- @type COMMANDCENTER
@@ -207,6 +134,7 @@ function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
         local PlayerGroup = EventData.IniGroup -- The GROUP object should be filled!
         Mission:JoinUnit( PlayerUnit, PlayerGroup )
       end
+      self:SetMenu()
     end
   )
 
@@ -260,6 +188,8 @@ function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
   )
   
   self:SetMenu()
+  
+  _SETTINGS:SetSystemMenu( CommandCenterPositionable )
 	
 	return self
 end
@@ -428,10 +358,20 @@ end
 -- @param #COMMANDCENTER self
 -- @param #string Message
 -- @param Wrapper.Group#GROUP TaskGroup
--- @param #sring Name (optional) The name of the Group used as a prefix for the message to the Group. If not provided, there will be nothing shown.
 function COMMANDCENTER:MessageToGroup( Message, TaskGroup )
 
-  self:GetPositionable():MessageToGroup( Message , 15, TaskGroup, self:GetName() )
+  self:GetPositionable():MessageToGroup( Message, 15, TaskGroup, self:GetName() )
+
+end
+
+--- Send a CC message of a specified type to a GROUP.
+-- @param #COMMANDCENTER self
+-- @param #string Message
+-- @param Wrapper.Group#GROUP TaskGroup
+-- @param Core.Message#MESSAGE.MessageType MessageType The type of the message, resulting in automatic time duration and prefix of the message.
+function COMMANDCENTER:MessageTypeToGroup( Message, TaskGroup, MessageType )
+
+  self:GetPositionable():MessageTypeToGroup( Message, MessageType, TaskGroup, self:GetName() )
 
 end
 
@@ -443,6 +383,20 @@ function COMMANDCENTER:MessageToCoalition( Message )
     --TODO: Fix coalition bug!
     
     self:GetPositionable():MessageToCoalition( Message, 15, CCCoalition )
+
+end
+
+
+--- Send a CC message of a specified type to the coalition of the CC.
+-- @param #COMMANDCENTER self
+-- @param #string Message The message.
+-- @param Core.Message#MESSAGE.MessageType MessageType The type of the message, resulting in automatic time duration and prefix of the message.
+function COMMANDCENTER:MessageTypeToCoalition( Message, MessageType )
+
+  local CCCoalition = self:GetPositionable():GetCoalition()
+    --TODO: Fix coalition bug!
+    
+    self:GetPositionable():MessageTypeToCoalition( Message, MessageType, CCCoalition )
 
 end
 

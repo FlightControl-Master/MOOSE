@@ -4,7 +4,7 @@
 -- 
 -- ===
 -- 
--- AI PATROL classes makes AI Controllables execute an Patrol.
+-- AI PATROL classes makes AI Groups execute an Patrol.
 -- 
 -- There are the following types of PATROL classes defined:
 -- 
@@ -44,7 +44,7 @@
 
 --- # AI_A2A_PATROL class, extends @{Fsm#FSM_CONTROLLABLE}
 -- 
--- The AI_A2A_PATROL class implements the core functions to patrol a @{Zone} by an AI @{Controllable} or @{Group}.
+-- The AI_A2A_PATROL class implements the core functions to patrol a @{Zone} by an AI @{Group} or @{Group}.
 -- 
 -- ![Process](..\Presentations\AI_PATROL\Dia3.JPG)
 -- 
@@ -120,7 +120,7 @@
 --   * @{#AI_A2A_PATROL.SetDetectionOn}(): Set the detection on. The AI will detect for targets.
 --   * @{#AI_A2A_PATROL.SetDetectionOff}(): Set the detection off, the AI will not detect for targets. The existing target list will NOT be erased.
 -- 
--- The detection frequency can be set with @{#AI_A2A_PATROL.SetDetectionInterval}( seconds ), where the amount of seconds specify how much seconds will be waited before the next detection.
+-- The detection frequency can be set with @{#AI_A2A_PATROL.SetRefreshTimeInterval}( seconds ), where the amount of seconds specify how much seconds will be waited before the next detection.
 -- Use the method @{#AI_A2A_PATROL.GetDetectedUnits}() to obtain a list of the @{Unit}s detected by the AI.
 -- 
 -- The detection can be filtered to potential targets in a specific zone.
@@ -139,7 +139,7 @@
 -- 
 -- ## 7. Manage "damage" behaviour of the AI in the AI_A2A_PATROL
 -- 
--- When the AI is damaged, it is required that a new AIControllable is started. However, damage cannon be foreseen early on. 
+-- When the AI is damaged, it is required that a new Patrol is started. However, damage cannon be foreseen early on. 
 -- Therefore, when the damage treshold is reached, the AI will return immediately to the home base (RTB).
 -- Use the method @{#AI_A2A_PATROL.ManageDamage}() to have this proces in place.
 -- 
@@ -152,23 +152,23 @@ AI_A2A_PATROL = {
 
 --- Creates a new AI_A2A_PATROL object
 -- @param #AI_A2A_PATROL self
--- @param Wrapper.Group#GROUP AIGroup
+-- @param Wrapper.Group#GROUP AIPatrol
 -- @param Core.Zone#ZONE_BASE PatrolZone The @{Zone} where the patrol needs to be executed.
 -- @param Dcs.DCSTypes#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
 -- @param Dcs.DCSTypes#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
--- @param Dcs.DCSTypes#Speed  PatrolMinSpeed The minimum speed of the @{Controllable} in km/h.
--- @param Dcs.DCSTypes#Speed  PatrolMaxSpeed The maximum speed of the @{Controllable} in km/h.
+-- @param Dcs.DCSTypes#Speed  PatrolMinSpeed The minimum speed of the @{Group} in km/h.
+-- @param Dcs.DCSTypes#Speed  PatrolMaxSpeed The maximum speed of the @{Group} in km/h.
 -- @param Dcs.DCSTypes#AltitudeType PatrolAltType The altitude type ("RADIO"=="AGL", "BARO"=="ASL"). Defaults to RADIO
 -- @return #AI_A2A_PATROL self
 -- @usage
--- -- Define a new AI_A2A_PATROL Object. This PatrolArea will patrol an AIControllable within PatrolZone between 3000 and 6000 meters, with a variying speed between 600 and 900 km/h.
+-- -- Define a new AI_A2A_PATROL Object. This PatrolArea will patrol a Group within PatrolZone between 3000 and 6000 meters, with a variying speed between 600 and 900 km/h.
 -- PatrolZone = ZONE:New( 'PatrolZone' )
 -- PatrolSpawn = SPAWN:New( 'Patrol Group' )
 -- PatrolArea = AI_A2A_PATROL:New( PatrolZone, 3000, 6000, 600, 900 )
-function AI_A2A_PATROL:New( AIGroup, PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, PatrolAltType )
+function AI_A2A_PATROL:New( AIPatrol, PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, PatrolAltType )
 
   -- Inherits from BASE
-  local self = BASE:Inherit( self, AI_A2A:New( AIGroup ) ) -- #AI_A2A_PATROL
+  local self = BASE:Inherit( self, AI_A2A:New( AIPatrol ) ) -- #AI_A2A_PATROL
   
   self.PatrolZone = PatrolZone
   self.PatrolFloorAltitude = PatrolFloorAltitude
@@ -179,12 +179,12 @@ function AI_A2A_PATROL:New( AIGroup, PatrolZone, PatrolFloorAltitude, PatrolCeil
   -- defafult PatrolAltType to "RADIO" if not specified
   self.PatrolAltType = PatrolAltType or "RADIO"
   
-  self:AddTransition( "Started", "Patrol", "Patrolling" )
+  self:AddTransition( { "Started", "Airborne", "Refuelling" }, "Patrol", "Patrolling" )
 
 --- OnBefore Transition Handler for Event Patrol.
 -- @function [parent=#AI_A2A_PATROL] OnBeforePatrol
 -- @param #AI_A2A_PATROL self
--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+-- @param Wrapper.Group#GROUP AIPatrol The Group Object managed by the FSM.
 -- @param #string From The From State string.
 -- @param #string Event The Event string.
 -- @param #string To The To State string.
@@ -193,7 +193,7 @@ function AI_A2A_PATROL:New( AIGroup, PatrolZone, PatrolFloorAltitude, PatrolCeil
 --- OnAfter Transition Handler for Event Patrol.
 -- @function [parent=#AI_A2A_PATROL] OnAfterPatrol
 -- @param #AI_A2A_PATROL self
--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+-- @param Wrapper.Group#GROUP AIPatrol The Group Object managed by the FSM.
 -- @param #string From The From State string.
 -- @param #string Event The Event string.
 -- @param #string To The To State string.
@@ -210,7 +210,7 @@ function AI_A2A_PATROL:New( AIGroup, PatrolZone, PatrolFloorAltitude, PatrolCeil
 --- OnLeave Transition Handler for State Patrolling.
 -- @function [parent=#AI_A2A_PATROL] OnLeavePatrolling
 -- @param #AI_A2A_PATROL self
--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+-- @param Wrapper.Group#GROUP AIPatrol The Group Object managed by the FSM.
 -- @param #string From The From State string.
 -- @param #string Event The Event string.
 -- @param #string To The To State string.
@@ -219,7 +219,7 @@ function AI_A2A_PATROL:New( AIGroup, PatrolZone, PatrolFloorAltitude, PatrolCeil
 --- OnEnter Transition Handler for State Patrolling.
 -- @function [parent=#AI_A2A_PATROL] OnEnterPatrolling
 -- @param #AI_A2A_PATROL self
--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+-- @param Wrapper.Group#GROUP AIPatrol The Group Object managed by the FSM.
 -- @param #string From The From State string.
 -- @param #string Event The Event string.
 -- @param #string To The To State string.
@@ -229,7 +229,7 @@ function AI_A2A_PATROL:New( AIGroup, PatrolZone, PatrolFloorAltitude, PatrolCeil
 --- OnBefore Transition Handler for Event Route.
 -- @function [parent=#AI_A2A_PATROL] OnBeforeRoute
 -- @param #AI_A2A_PATROL self
--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+-- @param Wrapper.Group#GROUP AIPatrol The Group Object managed by the FSM.
 -- @param #string From The From State string.
 -- @param #string Event The Event string.
 -- @param #string To The To State string.
@@ -238,7 +238,7 @@ function AI_A2A_PATROL:New( AIGroup, PatrolZone, PatrolFloorAltitude, PatrolCeil
 --- OnAfter Transition Handler for Event Route.
 -- @function [parent=#AI_A2A_PATROL] OnAfterRoute
 -- @param #AI_A2A_PATROL self
--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+-- @param Wrapper.Group#GROUP AIPatrol The Group Object managed by the FSM.
 -- @param #string From The From State string.
 -- @param #string Event The Event string.
 -- @param #string To The To State string.
@@ -252,6 +252,8 @@ function AI_A2A_PATROL:New( AIGroup, PatrolZone, PatrolFloorAltitude, PatrolCeil
 -- @param #AI_A2A_PATROL self
 -- @param #number Delay The delay in seconds.
 
+
+
   self:AddTransition( "*", "Reset", "Patrolling" ) -- FSM_CONTROLLABLE Transition for type #AI_A2A_PATROL.
   
   return self
@@ -262,8 +264,8 @@ end
 
 --- Sets (modifies) the minimum and maximum speed of the patrol.
 -- @param #AI_A2A_PATROL self
--- @param Dcs.DCSTypes#Speed  PatrolMinSpeed The minimum speed of the @{Controllable} in km/h.
--- @param Dcs.DCSTypes#Speed  PatrolMaxSpeed The maximum speed of the @{Controllable} in km/h.
+-- @param Dcs.DCSTypes#Speed  PatrolMinSpeed The minimum speed of the @{Group} in km/h.
+-- @param Dcs.DCSTypes#Speed  PatrolMaxSpeed The maximum speed of the @{Group} in km/h.
 -- @return #AI_A2A_PATROL self
 function AI_A2A_PATROL:SetSpeed( PatrolMinSpeed, PatrolMaxSpeed )
   self:F2( { PatrolMinSpeed, PatrolMaxSpeed } )
@@ -290,18 +292,18 @@ end
 --- Defines a new patrol route using the @{Process_PatrolZone} parameters and settings.
 -- @param #AI_A2A_PATROL self
 -- @return #AI_A2A_PATROL self
--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+-- @param Wrapper.Group#GROUP AIPatrol The Group Object managed by the FSM.
 -- @param #string From The From State string.
 -- @param #string Event The Event string.
 -- @param #string To The To State string.
-function AI_A2A_PATROL:onafterPatrol( Controllable, From, Event, To )
+function AI_A2A_PATROL:onafterPatrol( AIPatrol, From, Event, To )
   self:F2()
 
   self:ClearTargetDistance()
 
   self:__Route( 1 )
   
-  self.Controllable:OnReSpawn(
+  AIPatrol:OnReSpawn(
     function( PatrolGroup )
       self:E( "ReSpawn" )
       self:__Reset( 1 )
@@ -312,23 +314,27 @@ end
 
 
 
---- @param Wrapper.Group#GROUP AIGroup
--- This statis method is called from the route path within the last task at the last waaypoint of the Controllable.
--- Note that this method is required, as triggers the next route when patrolling for the Controllable.
-function AI_A2A_PATROL.PatrolRoute( AIGroup )
+--- @param Wrapper.Group#GROUP AIPatrol
+-- This statis method is called from the route path within the last task at the last waaypoint of the AIPatrol.
+-- Note that this method is required, as triggers the next route when patrolling for the AIPatrol.
+function AI_A2A_PATROL.PatrolRoute( AIPatrol, Fsm )
 
-  local _AI_A2A_Patrol = AIGroup:GetState( AIGroup, "AI_A2A_PATROL" ) -- #AI_A2A_PATROL
-  _AI_A2A_Patrol:Route()
+  AIPatrol:F( { "AI_A2A_PATROL.PatrolRoute:", AIPatrol:GetName() } )
+
+  if AIPatrol:IsAlive() then
+    Fsm:Route()
+  end
+  
 end
 
 
 --- Defines a new patrol route using the @{Process_PatrolZone} parameters and settings.
 -- @param #AI_A2A_PATROL self
--- @param Wrapper.Group#GROUP AIGroup The AIGroup managed by the FSM.
+-- @param Wrapper.Group#GROUP AIPatrol The Group managed by the FSM.
 -- @param #string From The From State string.
 -- @param #string Event The Event string.
 -- @param #string To The To State string.
-function AI_A2A_PATROL:onafterRoute( AIGroup, From, Event, To )
+function AI_A2A_PATROL:onafterRoute( AIPatrol, From, Event, To )
 
   self:F2()
 
@@ -338,22 +344,22 @@ function AI_A2A_PATROL:onafterRoute( AIGroup, From, Event, To )
   end
 
   
-  if AIGroup:IsAlive() then
+  if AIPatrol:IsAlive() then
     
     local PatrolRoute = {}
 
     --- Calculate the target route point.
     
-    local CurrentCoord = AIGroup:GetCoordinate()
+    local CurrentCoord = AIPatrol:GetCoordinate()
     
     local ToTargetCoord = self.PatrolZone:GetRandomPointVec2()
-    ToTargetCoord:SetAlt(math.random( self.PatrolFloorAltitude,self.PatrolCeilingAltitude ) )
+    ToTargetCoord:SetAlt( math.random( self.PatrolFloorAltitude, self.PatrolCeilingAltitude ) )
     self:SetTargetDistance( ToTargetCoord ) -- For RTB status check
     
     local ToTargetSpeed = math.random( self.PatrolMinSpeed, self.PatrolMaxSpeed )
     
     --- Create a route point of type air.
-    local ToPatrolRoutePoint = ToTargetCoord:RoutePointAir( 
+    local ToPatrolRoutePoint = ToTargetCoord:WaypointAir( 
       self.PatrolAltType, 
       POINT_VEC3.RoutePointType.TurningPoint, 
       POINT_VEC3.RoutePointAction.TurningPoint, 
@@ -362,21 +368,28 @@ function AI_A2A_PATROL:onafterRoute( AIGroup, From, Event, To )
     )
 
     PatrolRoute[#PatrolRoute+1] = ToPatrolRoutePoint
+    PatrolRoute[#PatrolRoute+1] = ToPatrolRoutePoint
     
-    --- Now we're going to do something special, we're going to call a function from a waypoint action at the AIControllable...
-    AIGroup:WayPointInitialize( PatrolRoute )
-
     local Tasks = {}
-    Tasks[#Tasks+1] = AIGroup:TaskFunction( 1, 1, "AI_A2A_PATROL.PatrolRoute" )
+    Tasks[#Tasks+1] = AIPatrol:TaskFunction( "AI_A2A_PATROL.PatrolRoute", self )
+    PatrolRoute[#PatrolRoute].task = AIPatrol:TaskCombo( Tasks )
     
-    PatrolRoute[1].task = AIGroup:TaskCombo( Tasks )
-    
-    --- Do a trick, link the NewPatrolRoute function of the PATROLGROUP object to the AIControllable in a temporary variable ...
-    AIGroup:SetState( AIGroup, "AI_A2A_PATROL", self )
+    AIPatrol:OptionROEReturnFire()
+    AIPatrol:OptionROTEvadeFire()
 
-    --- NOW ROUTE THE GROUP!
-    AIGroup:WayPointExecute( 1, 2 )
+    AIPatrol:Route( PatrolRoute, 0.5 )
   end
 
 end
 
+--- @param Wrapper.Group#GROUP AIPatrol
+function AI_A2A_PATROL.Resume( AIPatrol )
+
+  AIPatrol:F( { "AI_A2A_PATROL.Resume:", AIPatrol:GetName() } )
+  if AIPatrol:IsAlive() then
+    local _AI_A2A = AIPatrol:GetState( AIPatrol, "AI_A2A" ) -- #AI_A2A
+      _AI_A2A:__Reset( 1 )
+      _AI_A2A:__Route( 5 )
+  end
+  
+end

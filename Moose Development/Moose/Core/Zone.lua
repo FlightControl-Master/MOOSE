@@ -50,6 +50,8 @@
 -- ## Each zone has a name:
 -- 
 --   * @{#ZONE_BASE.GetName}(): Returns the name of the zone.
+--   * @{#ZONE_BASE.SetName}(): Sets the name of the zone.
+--   
 -- 
 -- ## Each zone implements two polymorphic functions defined in @{Zone#ZONE_BASE}:
 -- 
@@ -119,6 +121,17 @@ function ZONE_BASE:GetName()
   self:F2()
 
   return self.ZoneName
+end
+
+
+--- Sets the name of the zone.
+-- @param #ZONE_BASE self
+-- @param #string ZoneName The name of the zone.
+-- @return #ZONE_BASE
+function ZONE_BASE:SetName( ZoneName )
+  self:F2()
+
+  self.ZoneName = ZoneName
 end
 
 --- Returns if a Vec2 is within the zone.
@@ -445,12 +458,17 @@ end
 -- @param #ZONE_RADIUS self
 -- @param Utilities.Utils#SMOKECOLOR SmokeColor The smoke color.
 -- @param #number Points (optional) The amount of points in the circle.
+-- @param #number AddHeight (optional) The height to be added for the smoke.
+-- @param #number AddOffSet (optional) The angle to be added for the smoking start position.
 -- @return #ZONE_RADIUS self
-function ZONE_RADIUS:SmokeZone( SmokeColor, Points )
+function ZONE_RADIUS:SmokeZone( SmokeColor, Points, AddHeight, AngleOffset )
   self:F2( SmokeColor )
 
   local Point = {}
   local Vec2 = self:GetVec2()
+  
+  AddHeight = AddHeight or 0
+  AngleOffset = AngleOffset or 0
 
   Points = Points and Points or 360
 
@@ -458,10 +476,10 @@ function ZONE_RADIUS:SmokeZone( SmokeColor, Points )
   local RadialBase = math.pi*2
   
   for Angle = 0, 360, 360 / Points do
-    local Radial = Angle * RadialBase / 360
+    local Radial = ( Angle + AngleOffset ) * RadialBase / 360
     Point.x = Vec2.x + math.cos( Radial ) * self:GetRadius()
     Point.y = Vec2.y + math.sin( Radial ) * self:GetRadius()
-    POINT_VEC2:New( Point.x, Point.y ):Smoke( SmokeColor )
+    POINT_VEC2:New( Point.x, Point.y, AddHeight ):Smoke( SmokeColor )
   end
 
   return self
@@ -473,13 +491,16 @@ end
 -- @param Utilities.Utils#FLARECOLOR FlareColor The flare color.
 -- @param #number Points (optional) The amount of points in the circle.
 -- @param Dcs.DCSTypes#Azimuth Azimuth (optional) Azimuth The azimuth of the flare.
+-- @param #number AddHeight (optional) The height to be added for the smoke.
 -- @return #ZONE_RADIUS self
-function ZONE_RADIUS:FlareZone( FlareColor, Points, Azimuth )
+function ZONE_RADIUS:FlareZone( FlareColor, Points, Azimuth, AddHeight )
   self:F2( { FlareColor, Azimuth } )
 
   local Point = {}
   local Vec2 = self:GetVec2()
   
+  AddHeight = AddHeight or 0
+
   Points = Points and Points or 360
 
   local Angle
@@ -489,7 +510,7 @@ function ZONE_RADIUS:FlareZone( FlareColor, Points, Azimuth )
     local Radial = Angle * RadialBase / 360
     Point.x = Vec2.x + math.cos( Radial ) * self:GetRadius()
     Point.y = Vec2.y + math.sin( Radial ) * self:GetRadius()
-    POINT_VEC2:New( Point.x, Point.y ):Flare( FlareColor, Azimuth )
+    POINT_VEC2:New( Point.x, Point.y, AddHeight ):Flare( FlareColor, Azimuth )
   end
 
   return self
@@ -561,6 +582,189 @@ function ZONE_RADIUS:GetVec3( Height )
   return Vec3  
 end
 
+
+--- Scan the zone
+-- @param #ZONE_RADIUS self
+-- @param ObjectCategories
+-- @param Coalition
+function ZONE_RADIUS:Scan( ObjectCategories )
+
+  self.ScanData = {}
+  self.ScanData.Coalitions = {}
+  self.ScanData.Scenery = {}
+
+  local ZoneCoord = self:GetCoordinate()
+  local ZoneRadius = self:GetRadius()
+  
+  self:E({ZoneCoord = ZoneCoord, ZoneRadius = ZoneRadius, ZoneCoordLL = ZoneCoord:ToStringLLDMS()})
+
+  local SphereSearch = {
+    id = world.VolumeType.SPHERE,
+      params = {
+      point = ZoneCoord:GetVec3(),
+      radius = ZoneRadius,
+      }
+    }
+
+  local function EvaluateZone( ZoneObject )
+    if ZoneObject:isExist() then
+      local ObjectCategory = ZoneObject:getCategory()
+      if ( ObjectCategory == Object.Category.UNIT and ZoneObject:isActive() ) or 
+         ObjectCategory == Object.Category.STATIC then
+        local CoalitionDCSUnit = ZoneObject:getCoalition()
+        self.ScanData.Coalitions[CoalitionDCSUnit] = true
+        self:E( { Name = ZoneObject:getName(), Coalition = CoalitionDCSUnit } )
+      end
+      if ObjectCategory == Object.Category.SCENERY then
+        local SceneryType = ZoneObject:getTypeName()
+        local SceneryName = ZoneObject:getName()
+        self.ScanData.Scenery[SceneryType] = self.ScanData.Scenery[SceneryType] or {}
+        self.ScanData.Scenery[SceneryType][SceneryName] = SCENERY:Register( SceneryName, ZoneObject )
+        self:E( { SCENERY =  self.ScanData.Scenery[SceneryType][SceneryName] } )
+      end
+    end
+    return true
+  end
+
+  world.searchObjects( ObjectCategories, SphereSearch, EvaluateZone )
+  
+end
+
+
+function ZONE_RADIUS:CountScannedCoalitions()
+
+  local Count = 0
+  
+  for CoalitionID, Coalition in pairs( self.ScanData.Coalitions ) do
+    Count = Count + 1
+  end
+  return Count
+end
+
+
+--- Get Coalitions of the units in the Zone, or Check if there are units of the given Coalition in the Zone.
+-- Returns nil if there are none ot two Coalitions in the zone!
+-- Returns one Coalition if there are only Units of one Coalition in the Zone.
+-- Returns the Coalition for the given Coalition if there are units of the Coalition in the Zone
+-- @param #ZONE_RADIUS self
+-- @return #table
+function ZONE_RADIUS:GetScannedCoalition( Coalition )
+
+  if Coalition then
+    return self.ScanData.Coalitions[Coalition]
+  else
+    local Count = 0
+    local ReturnCoalition = nil
+    
+    for CoalitionID, Coalition in pairs( self.ScanData.Coalitions ) do
+      Count = Count + 1
+      ReturnCoalition = CoalitionID
+    end
+    
+    if Count ~= 1 then
+      ReturnCoalition = nil
+    end
+    
+    return ReturnCoalition
+  end
+end
+
+
+function ZONE_RADIUS:GetScannedSceneryType( SceneryType )
+  return self.ScanData.Scenery[SceneryType]
+end
+
+
+function ZONE_RADIUS:GetScannedScenery()
+  return self.ScanData.Scenery
+end
+
+
+--- Is All in Zone of Coalition?
+-- @param #ZONE_RADIUS self
+-- @param Coalition
+-- @return #boolean
+function ZONE_RADIUS:IsAllInZoneOfCoalition( Coalition )
+
+  return self:CountScannedCoalitions() == 1 and self:GetScannedCoalition( Coalition ) == true
+end
+
+
+--- Is All in Zone of Other Coalition?
+-- @param #ZONE_RADIUS self
+-- @param Coalition
+-- @return #boolean
+function ZONE_RADIUS:IsAllInZoneOfOtherCoalition( Coalition )
+
+  self:E( { Coalitions = self.Coalitions, Count = self:CountScannedCoalitions() } )
+  return self:CountScannedCoalitions() == 1 and self:GetScannedCoalition( Coalition ) == nil
+end
+
+
+--- Is Some in Zone of Coalition?
+-- @param #ZONE_RADIUS self
+-- @param Coalition
+-- @return #boolean
+function ZONE_RADIUS:IsSomeInZoneOfCoalition( Coalition )
+
+  return self:CountScannedCoalitions() > 1 and self:GetScannedCoalition( Coalition ) == true
+end
+
+
+--- Is None in Zone of Coalition?
+-- @param #ZONE_RADIUS self
+-- @param Coalition
+-- @return #boolean
+function ZONE_RADIUS:IsNoneInZoneOfCoalition( Coalition )
+
+  return self:GetScannedCoalition( Coalition ) == nil
+end
+
+
+--- Is None in Zone?
+-- @param #ZONE_RADIUS self
+-- @return #boolean
+function ZONE_RADIUS:IsNoneInZone()
+
+  return self:CountScannedCoalitions() == 0
+end
+
+
+
+
+--- Searches the zone
+-- @param #ZONE_RADIUS self
+-- @param ObjectCategories A list of categories, which are members of Object.Category
+-- @param EvaluateFunction
+function ZONE_RADIUS:SearchZone( EvaluateFunction, ObjectCategories )
+
+  local SearchZoneResult = true
+
+  local ZoneCoord = self:GetCoordinate()
+  local ZoneRadius = self:GetRadius()
+  
+  self:E({ZoneCoord = ZoneCoord, ZoneRadius = ZoneRadius, ZoneCoordLL = ZoneCoord:ToStringLLDMS()})
+
+  local SphereSearch = {
+    id = world.VolumeType.SPHERE,
+      params = {
+      point = ZoneCoord:GetVec3(),
+      radius = ZoneRadius / 2,
+      }
+    }
+
+  local function EvaluateZone( ZoneDCSUnit )
+  
+    env.info( ZoneDCSUnit:getName() ) 
+  
+    local ZoneUnit = UNIT:Find( ZoneDCSUnit )
+
+    return EvaluateFunction( ZoneUnit )
+  end
+
+  world.searchObjects( Object.Category.UNIT, SphereSearch, EvaluateZone )
+
+end
 
 --- Returns if a location is within the zone.
 -- @param #ZONE_RADIUS self
@@ -642,6 +846,22 @@ function ZONE_RADIUS:GetRandomPointVec3( inner, outer )
   self:T3( { PointVec3 } )
   
   return PointVec3
+end
+
+
+--- Returns a @{Point#COORDINATE} object reflecting a random 3D location within the zone.
+-- @param #ZONE_RADIUS self
+-- @param #number inner (optional) Minimal distance from the center of the zone. Default is 0.
+-- @param #number outer (optional) Maximal distance from the outer edge of the zone. Default is the radius of the zone.
+-- @return Core.Point#COORDINATE
+function ZONE_RADIUS:GetRandomCoordinate( inner, outer )
+  self:F( self.ZoneName, inner, outer )
+
+  local Coordinate = COORDINATE:NewFromVec2( self:GetRandomVec2() )
+
+  self:T3( { Coordinate = Coordinate } )
+  
+  return Coordinate
 end
 
 
@@ -834,6 +1054,20 @@ function ZONE_GROUP:GetRandomVec2()
   return Point
 end
 
+--- Returns a @{Point#POINT_VEC2} object reflecting a random 2D location within the zone.
+-- @param #ZONE_GROUP self
+-- @param #number inner (optional) Minimal distance from the center of the zone. Default is 0.
+-- @param #number outer (optional) Maximal distance from the outer edge of the zone. Default is the radius of the zone.
+-- @return Core.Point#POINT_VEC2 The @{Point#POINT_VEC2} object reflecting the random 3D location within the zone.
+function ZONE_GROUP:GetRandomPointVec2( inner, outer )
+  self:F( self.ZoneName, inner, outer )
+
+  local PointVec2 = POINT_VEC2:NewFromVec2( self:GetRandomVec2() )
+
+  self:T3( { PointVec2 } )
+  
+  return PointVec2
+end
 
 
 --- @type ZONE_POLYGON_BASE
@@ -1077,6 +1311,20 @@ function ZONE_POLYGON_BASE:GetRandomPointVec3()
 end
 
 
+--- Return a @{Point#COORDINATE} object representing a random 3D point at landheight within the zone.
+-- @param #ZONE_POLYGON_BASE self
+-- @return Core.Point#COORDINATE
+function ZONE_POLYGON_BASE:GetRandomCoordinate()
+  self:F2()
+
+  local Coordinate = COORDINATE:NewFromVec2( self:GetRandomVec2() )
+  
+  self:T2( Coordinate )
+
+  return Coordinate
+end
+
+
 --- Get the bounding square the zone.
 -- @param #ZONE_POLYGON_BASE self
 -- @return #ZONE_POLYGON_BASE.BoundingSquare The bounding square.
@@ -1114,13 +1362,32 @@ ZONE_POLYGON = {
   ClassName="ZONE_POLYGON",
   }
 
---- Constructor to create a ZONE_POLYGON instance, taking the zone name and the name of the @{Group#GROUP} defined within the Mission Editor.
+--- Constructor to create a ZONE_POLYGON instance, taking the zone name and the @{Group#GROUP} defined within the Mission Editor.
 -- The @{Group#GROUP} waypoints define the polygon corners. The first and the last point are automatically connected by ZONE_POLYGON.
 -- @param #ZONE_POLYGON self
 -- @param #string ZoneName Name of the zone.
 -- @param Wrapper.Group#GROUP ZoneGroup The GROUP waypoints as defined within the Mission Editor define the polygon shape.
 -- @return #ZONE_POLYGON self
 function ZONE_POLYGON:New( ZoneName, ZoneGroup )
+
+  local GroupPoints = ZoneGroup:GetTaskRoute()
+
+  local self = BASE:Inherit( self, ZONE_POLYGON_BASE:New( ZoneName, GroupPoints ) )
+  self:F( { ZoneName, ZoneGroup, self._.Polygon } )
+
+  return self
+end
+
+
+--- Constructor to create a ZONE_POLYGON instance, taking the zone name and the **name** of the @{Group#GROUP} defined within the Mission Editor.
+-- The @{Group#GROUP} waypoints define the polygon corners. The first and the last point are automatically connected by ZONE_POLYGON.
+-- @param #ZONE_POLYGON self
+-- @param #string ZoneName Name of the zone.
+-- @param #string GroupName The group name of the GROUP defining the waypoints within the Mission Editor to define the polygon shape.
+-- @return #ZONE_POLYGON self
+function ZONE_POLYGON:NewFromGroupName( ZoneName, GroupName )
+
+  local ZoneGroup = GROUP:FindByName( GroupName )
 
   local GroupPoints = ZoneGroup:GetTaskRoute()
 

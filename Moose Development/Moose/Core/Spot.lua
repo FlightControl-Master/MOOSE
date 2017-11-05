@@ -222,7 +222,7 @@ do
     
     self:HandleEvent( EVENTS.Dead )
     
-    self:__Lasing( -0.2 )
+    self:__Lasing( -1 )
   end
 
   --- @param #SPOT self

@@ -28,9 +28,9 @@
 					<li>AI_Cas</li>
 					<li><a href="AI_Formation.html">AI_Formation</a></li>
 					<li><a href="AI_Patrol.html">AI_Patrol</a></li>
+					<li><a href="ATC_Ground.html">ATC_Ground</a></li>
 					<li><a href="Account.html">Account</a></li>
 					<li><a href="Airbase.html">Airbase</a></li>
-					<li><a href="AirbasePolice.html">AirbasePolice</a></li>
 					<li><a href="Assign.html">Assign</a></li>
 					<li><a href="Base.html">Base</a></li>
 					<li><a href="Cargo.html">Cargo</a></li>
@@ -60,6 +60,7 @@
 					<li><a href="Escort.html">Escort</a></li>
 					<li><a href="Event.html">Event</a></li>
 					<li><a href="Fsm.html">Fsm</a></li>
+					<li><a href="Goal.html">Goal</a></li>
 					<li><a href="Group.html">Group</a></li>
 					<li><a href="Identifiable.html">Identifiable</a></li>
 					<li><a href="Menu.html">Menu</a></li>
@@ -72,7 +73,9 @@
 					<li><a href="Positionable.html">Positionable</a></li>
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
 					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
+					<li><a href="Protect.html">Protect</a></li>
 					<li><a href="Radio.html">Radio</a></li>
+					<li><a href="Rat.html">Rat</a></li>
 					<li><a href="Route.html">Route</a></li>
 					<li><a href="Scenery.html">Scenery</a></li>
 					<li><a href="ScheduleDispatcher.html">ScheduleDispatcher</a></li>
@@ -88,6 +91,7 @@
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="Task.html">Task</a></li>
+					<li><a href="TaskZoneCapture.html">TaskZoneCapture</a></li>
 					<li><a href="Task_A2A.html">Task_A2A</a></li>
 					<li><a href="Task_A2A_Dispatcher.html">Task_A2A_Dispatcher</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
@@ -95,8 +99,15 @@
 					<li><a href="Task_Cargo.html">Task_Cargo</a></li>
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
 					<li><a href="Unit.html">Unit</a></li>
+					<li><a href="UserFlag.html">UserFlag</a></li>
+					<li><a href="UserSound.html">UserSound</a></li>
 					<li><a href="Utils.html">Utils</a></li>
+					<li><a href="Velocity.html">Velocity</a></li>
 					<li><a href="Zone.html">Zone</a></li>
+					<li><a href="ZoneCaptureCoalition.html">ZoneCaptureCoalition</a></li>
+					<li><a href="ZoneGoal.html">ZoneGoal</a></li>
+					<li><a href="ZoneGoalCargo.html">ZoneGoalCargo</a></li>
+					<li><a href="ZoneGoalCoalition.html">ZoneGoalCoalition</a></li>
 					<li><a href="env.html">env</a></li>
 					<li><a href="land.html">land</a></li>
 					<li><a href="routines.html">routines</a></li>
@@ -163,12 +174,6 @@
 <p>AI<em>CAS</em>ZONE derives from the <a href="AI_Patrol.html##(AI_PATROL_ZONE)">AI<em>Patrol#AI</em>PATROL_ZONE</a>, inheriting its methods and behaviour.</p>
 </td>
 		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="#_NewEngageRoute">_NewEngageRoute(AIControllable)</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
 	</table>
 			<h2><a id="#(AI_CAS_ZONE)">Type <code>AI_CAS_ZONE</code></a></h2>
 				<table class="function_list">
@@ -222,6 +227,12 @@
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).EngageDirection">AI_CAS_ZONE.EngageDirection</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_CAS_ZONE).EngageRoute">AI_CAS_ZONE.EngageRoute(AI, EngageGroup, Fsm)</a></td>
 		<td class="summary">
 
 </td>
@@ -532,27 +543,6 @@ It can be notified to go RTB through the <strong>RTB</strong> event.</p>
 
 </dd>
 </dl>
-		<dl class="function">
-<dt>
-
-<a id="_NewEngageRoute" >
-<strong>_NewEngageRoute(AIControllable)</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> AIControllable </em></code>: </p>
-
-				</li>
-		</ul>
-</dd>
-</dl>
 	<h2><a id="#(AI_Cas)" >Type <code>AI_Cas</code></a></h2>
 	
 			<h2><a id="#(AI_CAS_ZONE)" >Type <code>AI_CAS_ZONE</code></a></h2>
@@ -714,6 +704,38 @@ Use the structure <a href="DCSTypes.html##(AI.Task).WeaponExpend">DCSTypes#AI.Ta
 	
 
 
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(AI_CAS_ZONE).EngageRoute" >
+<strong>AI_CAS_ZONE.EngageRoute(AI, EngageGroup, Fsm)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> AI </em></code>: 
+AI<em>CAS#AI</em>CAS_ZONE </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> EngageGroup </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> Fsm </em></code>: </p>
+
+				</li>
+		</ul>
 </dd>
 </dl>
 		<dl class="function">

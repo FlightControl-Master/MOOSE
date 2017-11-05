@@ -28,9 +28,9 @@
 					<li><a href="AI_Cas.html">AI_Cas</a></li>
 					<li><a href="AI_Formation.html">AI_Formation</a></li>
 					<li><a href="AI_Patrol.html">AI_Patrol</a></li>
+					<li><a href="ATC_Ground.html">ATC_Ground</a></li>
 					<li><a href="Account.html">Account</a></li>
 					<li><a href="Airbase.html">Airbase</a></li>
-					<li><a href="AirbasePolice.html">AirbasePolice</a></li>
 					<li><a href="Assign.html">Assign</a></li>
 					<li><a href="Base.html">Base</a></li>
 					<li><a href="Cargo.html">Cargo</a></li>
@@ -60,6 +60,7 @@
 					<li><a href="Escort.html">Escort</a></li>
 					<li><a href="Event.html">Event</a></li>
 					<li><a href="Fsm.html">Fsm</a></li>
+					<li><a href="Goal.html">Goal</a></li>
 					<li><a href="Group.html">Group</a></li>
 					<li><a href="Identifiable.html">Identifiable</a></li>
 					<li><a href="Menu.html">Menu</a></li>
@@ -72,7 +73,9 @@
 					<li><a href="Positionable.html">Positionable</a></li>
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
 					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
+					<li><a href="Protect.html">Protect</a></li>
 					<li><a href="Radio.html">Radio</a></li>
+					<li><a href="Rat.html">Rat</a></li>
 					<li><a href="Route.html">Route</a></li>
 					<li><a href="Scenery.html">Scenery</a></li>
 					<li><a href="ScheduleDispatcher.html">ScheduleDispatcher</a></li>
@@ -88,6 +91,7 @@
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="Task.html">Task</a></li>
+					<li><a href="TaskZoneCapture.html">TaskZoneCapture</a></li>
 					<li><a href="Task_A2A.html">Task_A2A</a></li>
 					<li><a href="Task_A2A_Dispatcher.html">Task_A2A_Dispatcher</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
@@ -95,8 +99,15 @@
 					<li><a href="Task_Cargo.html">Task_Cargo</a></li>
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
 					<li>Unit</li>
+					<li><a href="UserFlag.html">UserFlag</a></li>
+					<li><a href="UserSound.html">UserSound</a></li>
 					<li><a href="Utils.html">Utils</a></li>
+					<li><a href="Velocity.html">Velocity</a></li>
 					<li><a href="Zone.html">Zone</a></li>
+					<li><a href="ZoneCaptureCoalition.html">ZoneCaptureCoalition</a></li>
+					<li><a href="ZoneGoal.html">ZoneGoal</a></li>
+					<li><a href="ZoneGoalCargo.html">ZoneGoalCargo</a></li>
+					<li><a href="ZoneGoalCoalition.html">ZoneGoalCoalition</a></li>
 					<li><a href="env.html">env</a></li>
 					<li><a href="land.html">land</a></li>
 					<li><a href="routines.html">routines</a></li>
@@ -143,6 +154,12 @@
 			<h2><a id="#(UNIT)">Type <code>UNIT</code></a></h2>
 				<table class="function_list">
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(UNIT).Destroy">UNIT:Destroy()</a></td>
+		<td class="summary">
+<p>Destroys the UNIT.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(UNIT).Find">UNIT:Find(DCSUnit)</a></td>
 		<td class="summary">
 <p>Finds a UNIT from the _DATABASE using a DCSUnit object.</p>
@@ -152,36 +169,6 @@
 		<td class="name" nowrap="nowrap"><a href="##(UNIT).FindByName">UNIT:FindByName(UnitName)</a></td>
 		<td class="summary">
 <p>Find a UNIT in the _DATABASE using the name of an existing DCS Unit.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(UNIT).Flare">UNIT:Flare(FlareColor)</a></td>
-		<td class="summary">
-<p>Signal a flare at the position of the UNIT.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(UNIT).FlareGreen">UNIT:FlareGreen()</a></td>
-		<td class="summary">
-<p>Signal a green flare at the position of the UNIT.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(UNIT).FlareRed">UNIT:FlareRed()</a></td>
-		<td class="summary">
-<p>Signal a red flare at the position of the UNIT.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(UNIT).FlareWhite">UNIT:FlareWhite()</a></td>
-		<td class="summary">
-<p>Signal a white flare at the position of the UNIT.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(UNIT).FlareYellow">UNIT:FlareYellow()</a></td>
-		<td class="summary">
-<p>Signal a yellow flare at the position of the UNIT.</p>
 </td>
 		</tr>
 		<tr>
@@ -211,7 +198,7 @@
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(UNIT).GetFuel">UNIT:GetFuel()</a></td>
 		<td class="summary">
-<p>Returns relative amount of fuel (from 0.0 to 1.0) the unit has in its internal tanks.</p>
+<p>Returns relative amount of fuel (from 0.0 to 1.0) the UNIT has in its internal tanks.</p>
 </td>
 		</tr>
 		<tr>
@@ -393,42 +380,6 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(UNIT).Smoke">UNIT:Smoke(SmokeColor, Range)</a></td>
-		<td class="summary">
-<p>Smoke the UNIT.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(UNIT).SmokeBlue">UNIT:SmokeBlue()</a></td>
-		<td class="summary">
-<p>Smoke the UNIT Blue.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(UNIT).SmokeGreen">UNIT:SmokeGreen()</a></td>
-		<td class="summary">
-<p>Smoke the UNIT Green.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(UNIT).SmokeOrange">UNIT:SmokeOrange()</a></td>
-		<td class="summary">
-<p>Smoke the UNIT Orange.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(UNIT).SmokeRed">UNIT:SmokeRed()</a></td>
-		<td class="summary">
-<p>Smoke the UNIT Red.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(UNIT).SmokeWhite">UNIT:SmokeWhite()</a></td>
-		<td class="summary">
-<p>Smoke the UNIT White.</p>
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(UNIT).UnHandleEvent">UNIT:UnHandleEvent(Event)</a></td>
 		<td class="summary">
 <p>UnSubscribe to a DCS event.</p>
@@ -555,6 +506,24 @@ If you want to obtain the complete <strong>3D position</strong> including ori�
 		<dl class="function">
 <dt>
 
+<a id="#(UNIT).Destroy" >
+<strong>UNIT:Destroy()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Destroys the UNIT.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#nil:</em>
+The DCS Unit is not existing or alive.  </p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(UNIT).Find" >
 <strong>UNIT:Find(DCSUnit)</strong>
 </a>
@@ -603,79 +572,6 @@ The Unit Name.</p>
 				
 <p><em><a href="##(UNIT)">#UNIT</a>:</em>
 self</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(UNIT).Flare" >
-<strong>UNIT:Flare(FlareColor)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Signal a flare at the position of the UNIT.</p>
-
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="Utilities.Utils.html##(FLARECOLOR)">Utilities.Utils#FLARECOLOR</a> FlareColor </em></code>: </p>
-
-				</li>
-		</ul>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(UNIT).FlareGreen" >
-<strong>UNIT:FlareGreen()</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Signal a green flare at the position of the UNIT.</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(UNIT).FlareRed" >
-<strong>UNIT:FlareRed()</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Signal a red flare at the position of the UNIT.</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(UNIT).FlareWhite" >
-<strong>UNIT:FlareWhite()</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Signal a white flare at the position of the UNIT.</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(UNIT).FlareYellow" >
-<strong>UNIT:FlareYellow()</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Signal a yellow flare at the position of the UNIT.</p>
 
 </dd>
 </dl>
@@ -780,7 +676,7 @@ Category name = Helicopter, Airplane, Ground Unit, Ship</p>
 </dt>
 <dd>
 	
-<p>Returns relative amount of fuel (from 0.0 to 1.0) the unit has in its internal tanks.</p>
+<p>Returns relative amount of fuel (from 0.0 to 1.0) the UNIT has in its internal tanks.</p>
 
 	
 <p>If there are additional fuel tanks the value may be greater than 1.0.</p>
@@ -1630,97 +1526,6 @@ The name of the DCS unit.</p>
 				
 <p><em><a href="##(UNIT)">#UNIT</a>:</em></p>
 
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(UNIT).Smoke" >
-<strong>UNIT:Smoke(SmokeColor, Range)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Smoke the UNIT.</p>
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em> SmokeColor </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em> Range </em></code>: </p>
-
-				</li>
-		</ul>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(UNIT).SmokeBlue" >
-<strong>UNIT:SmokeBlue()</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Smoke the UNIT Blue.</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(UNIT).SmokeGreen" >
-<strong>UNIT:SmokeGreen()</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Smoke the UNIT Green.</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(UNIT).SmokeOrange" >
-<strong>UNIT:SmokeOrange()</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Smoke the UNIT Orange.</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(UNIT).SmokeRed" >
-<strong>UNIT:SmokeRed()</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Smoke the UNIT Red.</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(UNIT).SmokeWhite" >
-<strong>UNIT:SmokeWhite()</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Smoke the UNIT White.</p>
 
 </dd>
 </dl>

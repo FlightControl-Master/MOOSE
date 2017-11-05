@@ -33,7 +33,7 @@
 
 --- @type AI_BALANCER
 -- @field Core.Set#SET_CLIENT SetClient
--- @field Functional.Spawn#SPAWN SpawnAI
+-- @field Core.Spawn#SPAWN SpawnAI
 -- @field Wrapper.Group#GROUP Test
 -- @extends Core.Fsm#FSM_SET
 
@@ -106,7 +106,7 @@ AI_BALANCER = {
 --- Creates a new AI_BALANCER object
 -- @param #AI_BALANCER self
 -- @param Core.Set#SET_CLIENT SetClient A SET\_CLIENT object that will contain the CLIENT objects to be monitored if they are alive or not (joined by a player).
--- @param Functional.Spawn#SPAWN SpawnAI The default Spawn object to spawn new AI Groups when needed.
+-- @param Core.Spawn#SPAWN SpawnAI The default Spawn object to spawn new AI Groups when needed.
 -- @return #AI_BALANCER
 function AI_BALANCER:New( SetClient, SpawnAI )
   
@@ -151,22 +151,22 @@ end
 
 --- Returns the AI to the nearest friendly @{Airbase#AIRBASE}.
 -- @param #AI_BALANCER self
--- @param Dcs.DCSTypes#Distance ReturnTresholdRange If there is an enemy @{Client#CLIENT} within the ReturnTresholdRange given in meters, the AI will not return to the nearest @{Airbase#AIRBASE}.
+-- @param Dcs.DCSTypes#Distance ReturnThresholdRange If there is an enemy @{Client#CLIENT} within the ReturnThresholdRange given in meters, the AI will not return to the nearest @{Airbase#AIRBASE}.
 -- @param Core.Set#SET_AIRBASE ReturnAirbaseSet The SET of @{Set#SET_AIRBASE}s to evaluate where to return to.
-function AI_BALANCER:ReturnToNearestAirbases( ReturnTresholdRange, ReturnAirbaseSet )
+function AI_BALANCER:ReturnToNearestAirbases( ReturnThresholdRange, ReturnAirbaseSet )
 
   self.ToNearestAirbase = true
-  self.ReturnTresholdRange = ReturnTresholdRange
+  self.ReturnThresholdRange = ReturnThresholdRange
   self.ReturnAirbaseSet = ReturnAirbaseSet
 end
 
 --- Returns the AI to the home @{Airbase#AIRBASE}.
 -- @param #AI_BALANCER self
--- @param Dcs.DCSTypes#Distance ReturnTresholdRange If there is an enemy @{Client#CLIENT} within the ReturnTresholdRange given in meters, the AI will not return to the nearest @{Airbase#AIRBASE}.
-function AI_BALANCER:ReturnToHomeAirbase( ReturnTresholdRange )
+-- @param Dcs.DCSTypes#Distance ReturnThresholdRange If there is an enemy @{Client#CLIENT} within the ReturnThresholdRange given in meters, the AI will not return to the nearest @{Airbase#AIRBASE}.
+function AI_BALANCER:ReturnToHomeAirbase( ReturnThresholdRange )
 
   self.ToHomeAirbase = true
-  self.ReturnTresholdRange = ReturnTresholdRange
+  self.ReturnThresholdRange = ReturnThresholdRange
 end
 
 --- @param #AI_BALANCER self
@@ -246,12 +246,12 @@ function AI_BALANCER:onenterMonitoring( SetGroup )
           if self.ToNearestAirbase == false and self.ToHomeAirbase == false then
             self:Destroy( Client.UnitName, AIGroup )
           else
-            -- We test if there is no other CLIENT within the self.ReturnTresholdRange of the first unit of the AI group.
+            -- We test if there is no other CLIENT within the self.ReturnThresholdRange of the first unit of the AI group.
             -- If there is a CLIENT, the AI stays engaged and will not return.
-            -- If there is no CLIENT within the self.ReturnTresholdRange, then the unit will return to the Airbase return method selected.
+            -- If there is no CLIENT within the self.ReturnThresholdRange, then the unit will return to the Airbase return method selected.
 
             local PlayerInRange = { Value = false }          
-            local RangeZone = ZONE_RADIUS:New( 'RangeZone', AIGroup:GetVec2(), self.ReturnTresholdRange )
+            local RangeZone = ZONE_RADIUS:New( 'RangeZone', AIGroup:GetVec2(), self.ReturnThresholdRange )
             
             self:T2( RangeZone )
             

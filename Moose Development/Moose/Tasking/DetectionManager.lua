@@ -15,7 +15,7 @@
 -- ---------------------------------
 -- Derived DETECTION_MANAGER classes will reports detected units using the method @{DetectionManager#DETECTION_MANAGER.ReportDetected}(). This method implements polymorphic behaviour.
 -- 
--- The time interval in seconds of the reporting can be changed using the methods @{DetectionManager#DETECTION_MANAGER.SetReportInterval}(). 
+-- The time interval in seconds of the reporting can be changed using the methods @{DetectionManager#DETECTION_MANAGER.SetRefreshTimeInterval}(). 
 -- To control how long a reporting message is displayed, use @{DetectionManager#DETECTION_MANAGER.SetReportDisplayTime}().
 -- Derived classes need to implement the method @{DetectionManager#DETECTION_MANAGER.GetReportDisplayTime}() to use the correct display time for displayed messages during a report.
 -- 
@@ -126,7 +126,7 @@ do -- DETECTION MANAGER
 
     self:AddTransition( "Started", "Report", "Started" )
     
-    self:SetReportInterval( 30 )
+    self:SetRefreshTimeInterval( 30 )
     self:SetReportDisplayTime( 25 )
   
     self:E( { Detection = Detection } )
@@ -143,19 +143,19 @@ do -- DETECTION MANAGER
 
     self:E( "onafterReport" )
 
-    self:__Report( -self._ReportInterval )
+    self:__Report( -self._RefreshTimeInterval )
     
     self:ProcessDetected( self.Detection )
   end
   
   --- Set the reporting time interval.
   -- @param #DETECTION_MANAGER self
-  -- @param #number ReportInterval The interval in seconds when a report needs to be done.
+  -- @param #number RefreshTimeInterval The interval in seconds when a report needs to be done.
   -- @return #DETECTION_MANAGER self
-  function DETECTION_MANAGER:SetReportInterval( ReportInterval )
+  function DETECTION_MANAGER:SetRefreshTimeInterval( RefreshTimeInterval )
     self:F2()
   
-    self._ReportInterval = ReportInterval
+    self._RefreshTimeInterval = RefreshTimeInterval
   end
   
   

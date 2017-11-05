@@ -28,9 +28,9 @@
 					<li><a href="AI_Cas.html">AI_Cas</a></li>
 					<li><a href="AI_Formation.html">AI_Formation</a></li>
 					<li><a href="AI_Patrol.html">AI_Patrol</a></li>
+					<li><a href="ATC_Ground.html">ATC_Ground</a></li>
 					<li><a href="Account.html">Account</a></li>
 					<li><a href="Airbase.html">Airbase</a></li>
-					<li><a href="AirbasePolice.html">AirbasePolice</a></li>
 					<li><a href="Assign.html">Assign</a></li>
 					<li><a href="Base.html">Base</a></li>
 					<li><a href="Cargo.html">Cargo</a></li>
@@ -60,6 +60,7 @@
 					<li><a href="Escort.html">Escort</a></li>
 					<li><a href="Event.html">Event</a></li>
 					<li><a href="Fsm.html">Fsm</a></li>
+					<li><a href="Goal.html">Goal</a></li>
 					<li><a href="Group.html">Group</a></li>
 					<li><a href="Identifiable.html">Identifiable</a></li>
 					<li><a href="Menu.html">Menu</a></li>
@@ -72,7 +73,9 @@
 					<li><a href="Positionable.html">Positionable</a></li>
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
 					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
+					<li><a href="Protect.html">Protect</a></li>
 					<li><a href="Radio.html">Radio</a></li>
+					<li><a href="Rat.html">Rat</a></li>
 					<li><a href="Route.html">Route</a></li>
 					<li><a href="Scenery.html">Scenery</a></li>
 					<li><a href="ScheduleDispatcher.html">ScheduleDispatcher</a></li>
@@ -88,6 +91,7 @@
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="Task.html">Task</a></li>
+					<li><a href="TaskZoneCapture.html">TaskZoneCapture</a></li>
 					<li><a href="Task_A2A.html">Task_A2A</a></li>
 					<li><a href="Task_A2A_Dispatcher.html">Task_A2A_Dispatcher</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
@@ -95,8 +99,15 @@
 					<li><a href="Task_Cargo.html">Task_Cargo</a></li>
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
 					<li><a href="Unit.html">Unit</a></li>
+					<li><a href="UserFlag.html">UserFlag</a></li>
+					<li><a href="UserSound.html">UserSound</a></li>
 					<li><a href="Utils.html">Utils</a></li>
+					<li><a href="Velocity.html">Velocity</a></li>
 					<li><a href="Zone.html">Zone</a></li>
+					<li><a href="ZoneCaptureCoalition.html">ZoneCaptureCoalition</a></li>
+					<li><a href="ZoneGoal.html">ZoneGoal</a></li>
+					<li><a href="ZoneGoalCargo.html">ZoneGoalCargo</a></li>
+					<li><a href="ZoneGoalCoalition.html">ZoneGoalCoalition</a></li>
 					<li><a href="env.html">env</a></li>
 					<li><a href="land.html">land</a></li>
 					<li><a href="routines.html">routines</a></li>
@@ -238,6 +249,12 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).GetFuel">CONTROLLABLE:GetFuel()</a></td>
+		<td class="summary">
+<p>Returns relative amount of fuel (from 0.0 to 1.0) the unit has in its internal tanks.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).GetLife">CONTROLLABLE:GetLife()</a></td>
 		<td class="summary">
 <p>Returns the health.</p>
@@ -247,6 +264,12 @@
 		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).GetLife0">CONTROLLABLE:GetLife0()</a></td>
 		<td class="summary">
 <p>Returns the initial health.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).GetSize">CONTROLLABLE:GetSize()</a></td>
+		<td class="summary">
+
 </td>
 		</tr>
 		<tr>
@@ -295,6 +318,24 @@
 		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).New">CONTROLLABLE:New(ControllableName)</a></td>
 		<td class="summary">
 <p>Create a new CONTROLLABLE from a DCSControllable</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).OptionAlarmStateAuto">CONTROLLABLE:OptionAlarmStateAuto()</a></td>
+		<td class="summary">
+<p>Alarm state to Auto: AI will automatically switch alarm states based on the presence of threats.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).OptionAlarmStateGreen">CONTROLLABLE:OptionAlarmStateGreen()</a></td>
+		<td class="summary">
+<p>Alarm state to Green: Group is not combat ready.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).OptionAlarmStateRed">CONTROLLABLE:OptionAlarmStateRed()</a></td>
+		<td class="summary">
+<p>Alarm state to Red: Group is combat ready and actively searching for targets.</p>
 </td>
 		</tr>
 		<tr>
@@ -406,6 +447,24 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).PatrolRoute">CONTROLLABLE:PatrolRoute()</a></td>
+		<td class="summary">
+<p>(GROUND) Patrol iteratively using the waypoints the for the (parent) group.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).PatrolRouteRandom">CONTROLLABLE:PatrolRouteRandom(Speed, Formation, ToWaypoint)</a></td>
+		<td class="summary">
+<p>(GROUND) Patrol randomly to the waypoints the for the (parent) group.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).PatrolZones">CONTROLLABLE:PatrolZones(ZoneList, Speed, Formation)</a></td>
+		<td class="summary">
+<p>(GROUND) Patrol randomly to the waypoints the for the (parent) group.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).PopCurrentTask">CONTROLLABLE:PopCurrentTask()</a></td>
 		<td class="summary">
 <p>Popping current Task from the controllable.</p>
@@ -418,9 +477,21 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).Route">CONTROLLABLE:Route(GoPoints)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).Route">CONTROLLABLE:Route(Route, DelaySeconds)</a></td>
 		<td class="summary">
 <p>Make the controllable to follow a given route.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).RouteAirTo">CONTROLLABLE:RouteAirTo(ToCoordinate, AltType, Type, Action, Speed, DelaySeconds)</a></td>
+		<td class="summary">
+<p>Make the AIR Controllable fly towards a specific point.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).RouteGroundTo">CONTROLLABLE:RouteGroundTo(ToCoordinate, Speed, Formation, DelaySeconds)</a></td>
+		<td class="summary">
+<p>Make the GROUND Controllable to drive towards a specific point.</p>
 </td>
 		</tr>
 		<tr>
@@ -445,6 +516,12 @@
 		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).SetTask">CONTROLLABLE:SetTask(DCSTask, WaitTime)</a></td>
 		<td class="summary">
 <p>Clearing the Task Queue and Setting the Task on the queue from the controllable.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).SetTaskWaypoint">CONTROLLABLE:SetTaskWaypoint(Waypoint, Task)</a></td>
+		<td class="summary">
+<p>Set a Task at a Waypoint using a Route list.</p>
 </td>
 		</tr>
 		<tr>
@@ -532,9 +609,9 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).TaskFunction">CONTROLLABLE:TaskFunction(WayPoint, WayPointIndex, FunctionString, FunctionArguments)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(CONTROLLABLE).TaskFunction">CONTROLLABLE:TaskFunction(FunctionString, ...)</a></td>
 		<td class="summary">
-
+<p>This creates a Task element, with an action to call a function as part of a Wrapped Task.</p>
 </td>
 		</tr>
 		<tr>
@@ -763,6 +840,22 @@ This is different from the EnRoute tasks, where the targets of the task need to 
     <li><a href="##(CONTROLLABLE).TaskControlled">CONTROLLABLE.TaskControlled</a>: Return a Controlled Task taking a Task and a TaskCondition.</li>
 </ul>
 
+<h3>Call a function as a Task</h3>
+
+<p>A function can be called which is part of a Task. The method <a href="##(CONTROLLABLE).TaskFunction">CONTROLLABLE.TaskFunction</a>() prepares
+a Task that can call a GLOBAL function from within the Controller execution.
+This method can also be used to <strong>embed a function call when a certain waypoint has been reached</strong>.
+See below the <strong>Tasks at Waypoints</strong> section.</p>
+
+<p>Demonstration Mission: <a href="https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/release-2-2-pre/GRP - Group Commands/GRP-502 - Route at waypoint to random point">GRP-502 - Route at waypoint to random point</a></p>
+
+<h3>Tasks at Waypoints</h3>
+
+<p>Special Task methods are available to set tasks at certain waypoints.
+The method <a href="##(CONTROLLABLE).SetTaskWaypoint">CONTROLLABLE.SetTaskWaypoint</a>() helps preparing a Route, embedding a Task at the Waypoint of the Route.</p>
+
+<p>This creates a Task element, with an action to call a function as part of a Wrapped Task.</p>
+
 <h3>Obtain the mission from controllable templates</h3>
 
 <p>Controllable templates contain complete mission descriptions. Sometimes you want to copy a complete mission from a controllable and assign it to another:</p>
@@ -780,7 +873,17 @@ This is different from the EnRoute tasks, where the targets of the task need to 
     <li><a href="##(CONTROLLABLE).CommandSwitchWayPoint">CONTROLLABLE.CommandSwitchWayPoint</a>: Perform a switch waypoint command.</li>
 </ul>
 
-<h2>CONTROLLABLE Option methods</h2>
+<h2>Routing of Controllables</h2>
+
+<p>Different routing methods exist to route GROUPs and UNITs to different locations:</p>
+
+<ul>
+    <li><a href="##(CONTROLLABLE).Route">CONTROLLABLE.Route</a>(): Make the Controllable to follow a given route.  </li>
+    <li><a href="##(CONTROLLABLE).RouteGroundTo">CONTROLLABLE.RouteGroundTo</a>(): Make the GROUND Controllable to drive towards a specific coordinate.</li>
+    <li><a href="##(CONTROLLABLE).RouteAirTo">CONTROLLABLE.RouteAirTo</a>(): Make the AIR Controllable to fly towards a specific coordinate. </li>
+</ul>
+
+<h2>Option methods</h2>
 
 <p>Controllable <strong>Option methods</strong> change the behaviour of the Controllable while being alive.</p>
 
@@ -1472,6 +1575,27 @@ DetectedTargets</p>
 		<dl class="function">
 <dt>
 
+<a id="#(CONTROLLABLE).GetFuel" >
+<strong>CONTROLLABLE:GetFuel()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns relative amount of fuel (from 0.0 to 1.0) the unit has in its internal tanks.</p>
+
+	
+<p>This method returns nil to ensure polymorphic behaviour! This method needs to be overridden by GROUP or UNIT.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#nil:</em>
+The CONTROLLABLE is not existing or alive.  </p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(CONTROLLABLE).GetLife" >
 <strong>CONTROLLABLE:GetLife()</strong>
 </a>
@@ -1526,6 +1650,19 @@ The controllable is not existing or alive.  </p>
 
 				</li>
 			</ol>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CONTROLLABLE).GetSize" >
+<strong>CONTROLLABLE:GetSize()</strong>
+</a>
+</dt>
+<dd>
+	
+
+
 </dd>
 </dl>
 		<dl class="function">
@@ -1711,6 +1848,66 @@ The DCS Controllable name</p>
 
 				</li>
 		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(CONTROLLABLE)">#CONTROLLABLE</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CONTROLLABLE).OptionAlarmStateAuto" >
+<strong>CONTROLLABLE:OptionAlarmStateAuto()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Alarm state to Auto: AI will automatically switch alarm states based on the presence of threats.</p>
+
+	
+<p>The AI kind of cheats in this regard.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(CONTROLLABLE)">#CONTROLLABLE</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CONTROLLABLE).OptionAlarmStateGreen" >
+<strong>CONTROLLABLE:OptionAlarmStateGreen()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Alarm state to Green: Group is not combat ready.</p>
+
+	
+<p>Sensors are stowed if possible.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(CONTROLLABLE)">#CONTROLLABLE</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CONTROLLABLE).OptionAlarmStateRed" >
+<strong>CONTROLLABLE:OptionAlarmStateRed()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Alarm state to Red: Group is combat ready and actively searching for targets.</p>
+
 		<h3>Return value</h3>
 				
 <p><em><a href="##(CONTROLLABLE)">#CONTROLLABLE</a>:</em>
@@ -2064,6 +2261,102 @@ self</p>
 		<dl class="function">
 <dt>
 
+<a id="#(CONTROLLABLE).PatrolRoute" >
+<strong>CONTROLLABLE:PatrolRoute()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>(GROUND) Patrol iteratively using the waypoints the for the (parent) group.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(CONTROLLABLE)">#CONTROLLABLE</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CONTROLLABLE).PatrolRouteRandom" >
+<strong>CONTROLLABLE:PatrolRouteRandom(Speed, Formation, ToWaypoint)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>(GROUND) Patrol randomly to the waypoints the for the (parent) group.</p>
+
+	
+<p>A random waypoint will be picked and the group will move towards that point.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> Speed </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> Formation </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> ToWaypoint </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(CONTROLLABLE)">#CONTROLLABLE</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CONTROLLABLE).PatrolZones" >
+<strong>CONTROLLABLE:PatrolZones(ZoneList, Speed, Formation)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>(GROUND) Patrol randomly to the waypoints the for the (parent) group.</p>
+
+	
+<p>A random waypoint will be picked and the group will move towards that point.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> ZoneList </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> Speed </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> Formation </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(CONTROLLABLE)">#CONTROLLABLE</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(CONTROLLABLE).PopCurrentTask" >
 <strong>CONTROLLABLE:PopCurrentTask()</strong>
 </a>
@@ -2114,26 +2407,134 @@ self</p>
 <dt>
 
 <a id="#(CONTROLLABLE).Route" >
-<strong>CONTROLLABLE:Route(GoPoints)</strong>
+<strong>CONTROLLABLE:Route(Route, DelaySeconds)</strong>
 </a>
 </dt>
 <dd>
 	
 <p>Make the controllable to follow a given route.</p>
 
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
-<p><code><em>#table GoPoints </em></code>: 
+<p><code><em>#table Route </em></code>: 
 A table of Route Points.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number DelaySeconds </em></code>: 
+Wait for the specified seconds before executing the Route.</p>
 
 				</li>
 		</ul>
 		<h3>Return value</h3>
 				
 <p><em><a href="##(CONTROLLABLE)">#CONTROLLABLE</a>:</em>
-self</p>
+The CONTROLLABLE.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CONTROLLABLE).RouteAirTo" >
+<strong>CONTROLLABLE:RouteAirTo(ToCoordinate, AltType, Type, Action, Speed, DelaySeconds)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Make the AIR Controllable fly towards a specific point.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Point.html##(COORDINATE)">Core.Point#COORDINATE</a> ToCoordinate </em></code>: 
+A Coordinate to drive to.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Core.Point.html##(COORDINATE.RoutePointAltType)">Core.Point#COORDINATE.RoutePointAltType</a> AltType </em></code>: 
+The altitude type.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Core.Point.html##(COORDINATE.RoutePointType)">Core.Point#COORDINATE.RoutePointType</a> Type </em></code>: 
+The route point type.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Core.Point.html##(COORDINATE.RoutePointAction)">Core.Point#COORDINATE.RoutePointAction</a> Action </em></code>: 
+The route point action.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Speed </em></code>: 
+(optional) Speed in km/h. The default speed is 999 km/h.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number DelaySeconds </em></code>: 
+Wait for the specified seconds before executing the Route.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(CONTROLLABLE)">#CONTROLLABLE</a>:</em>
+The CONTROLLABLE.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CONTROLLABLE).RouteGroundTo" >
+<strong>CONTROLLABLE:RouteGroundTo(ToCoordinate, Speed, Formation, DelaySeconds)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Make the GROUND Controllable to drive towards a specific point.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Point.html##(COORDINATE)">Core.Point#COORDINATE</a> ToCoordinate </em></code>: 
+A Coordinate to drive to.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Speed </em></code>: 
+(optional) Speed in km/h. The default speed is 999 km/h.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Formation </em></code>: 
+(optional) The route point Formation, which is a text string that specifies exactly the Text in the Type of the route point, like "Vee", "Echelon Right".</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number DelaySeconds </em></code>: 
+Wait for the specified seconds before executing the Route.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(CONTROLLABLE)">#CONTROLLABLE</a>:</em>
+The CONTROLLABLE.</p>
 
 </dd>
 </dl>
@@ -2257,6 +2658,39 @@ self</p>
 				
 <p><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a>:</em>
 self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CONTROLLABLE).SetTaskWaypoint" >
+<strong>CONTROLLABLE:SetTaskWaypoint(Waypoint, Task)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set a Task at a Waypoint using a Route list.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#table Waypoint </em></code>: 
+The Waypoint!</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSTasking.Task.html##(Task)">Dcs.DCSTasking.Task#Task</a> Task </em></code>: 
+The Task structure to be executed!</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="Dcs.DCSTasking.Task.html##(Task)">Dcs.DCSTasking.Task#Task</a>:</em></p>
+
 
 </dd>
 </dl>
@@ -2952,36 +3386,79 @@ The DCS task structure.</p>
 <dt>
 
 <a id="#(CONTROLLABLE).TaskFunction" >
-<strong>CONTROLLABLE:TaskFunction(WayPoint, WayPointIndex, FunctionString, FunctionArguments)</strong>
+<strong>CONTROLLABLE:TaskFunction(FunctionString, ...)</strong>
 </a>
 </dt>
 <dd>
 	
+<p>This creates a Task element, with an action to call a function as part of a Wrapped Task.</p>
 
+	
+<p>This Task can then be embedded at a Waypoint by calling the method <a href="##(CONTROLLABLE).SetTaskWaypoint">CONTROLLABLE.SetTaskWaypoint</a>.</p>
 
 		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
-<p><code><em> WayPoint </em></code>: </p>
+<p><code><em>#string FunctionString </em></code>: 
+The function name embedded as a string that will be called.</p>
 
 				</li>
 				<li>
 				
-<p><code><em> WayPointIndex </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em> FunctionString </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em> FunctionArguments </em></code>: </p>
+<p><code><em> ... </em></code>: 
+The variable arguments passed to the function when called! These arguments can be of any type!</p>
 
 				</li>
 		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(CONTROLLABLE)">#CONTROLLABLE</a>:</em></p>
+
+
+			<h3>Usage:</h3>
+		<pre class="example"><code>
+ local ZoneList = { 
+   ZONE:New( "ZONE1" ), 
+   ZONE:New( "ZONE2" ), 
+   ZONE:New( "ZONE3" ), 
+   ZONE:New( "ZONE4" ), 
+   ZONE:New( "ZONE5" ) 
+ }
+ 
+ GroundGroup = GROUP:FindByName( "Vehicle" )
+ 
+ --- @param Wrapper.Group#GROUP GroundGroup
+ function RouteToZone( Vehicle, ZoneRoute )
+ 
+   local Route = {}
+   
+   Vehicle:E( { ZoneRoute = ZoneRoute } )
+   
+   Vehicle:MessageToAll( "Moving to zone " .. ZoneRoute:GetName(), 10 )
+ 
+   -- Get the current coordinate of the Vehicle
+   local FromCoord = Vehicle:GetCoordinate()
+   
+   -- Select a random Zone and get the Coordinate of the new Zone.
+   local RandomZone = ZoneList[ math.random( 1, #ZoneList ) ] -- Core.Zone#ZONE
+   local ToCoord = RandomZone:GetCoordinate()
+   
+   -- Create a "ground route point", which is a "point" structure that can be given as a parameter to a Task
+   Route[#Route+1] = FromCoord:WaypointGround( 72 )
+   Route[#Route+1] = ToCoord:WaypointGround( 60, "Vee" )
+   
+   local TaskRouteToZone = Vehicle:TaskFunction( "RouteToZone", RandomZone )
+   
+   Vehicle:SetTaskWaypoint( Route, #Route, TaskRouteToZone ) -- Set for the given Route at Waypoint 2 the TaskRouteToZone.
+ 
+   Vehicle:Route( Route, math.random( 10, 20 ) ) -- Move after a random seconds to the Route. See the Route method for details.
+   
+ end
+   
+   RouteToZone( GroundGroup, ZoneList[1] )
+</code></pre>
+
 </dd>
 </dl>
 		<dl class="function">

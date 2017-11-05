@@ -28,9 +28,9 @@
 					<li><a href="AI_Cas.html">AI_Cas</a></li>
 					<li><a href="AI_Formation.html">AI_Formation</a></li>
 					<li><a href="AI_Patrol.html">AI_Patrol</a></li>
+					<li><a href="ATC_Ground.html">ATC_Ground</a></li>
 					<li><a href="Account.html">Account</a></li>
 					<li><a href="Airbase.html">Airbase</a></li>
-					<li><a href="AirbasePolice.html">AirbasePolice</a></li>
 					<li><a href="Assign.html">Assign</a></li>
 					<li><a href="Base.html">Base</a></li>
 					<li><a href="Cargo.html">Cargo</a></li>
@@ -60,6 +60,7 @@
 					<li><a href="Escort.html">Escort</a></li>
 					<li><a href="Event.html">Event</a></li>
 					<li><a href="Fsm.html">Fsm</a></li>
+					<li><a href="Goal.html">Goal</a></li>
 					<li><a href="Group.html">Group</a></li>
 					<li><a href="Identifiable.html">Identifiable</a></li>
 					<li><a href="Menu.html">Menu</a></li>
@@ -72,7 +73,9 @@
 					<li><a href="Positionable.html">Positionable</a></li>
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
 					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
+					<li><a href="Protect.html">Protect</a></li>
 					<li><a href="Radio.html">Radio</a></li>
+					<li><a href="Rat.html">Rat</a></li>
 					<li><a href="Route.html">Route</a></li>
 					<li><a href="Scenery.html">Scenery</a></li>
 					<li><a href="ScheduleDispatcher.html">ScheduleDispatcher</a></li>
@@ -88,6 +91,7 @@
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="Task.html">Task</a></li>
+					<li><a href="TaskZoneCapture.html">TaskZoneCapture</a></li>
 					<li><a href="Task_A2A.html">Task_A2A</a></li>
 					<li><a href="Task_A2A_Dispatcher.html">Task_A2A_Dispatcher</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
@@ -95,8 +99,15 @@
 					<li><a href="Task_Cargo.html">Task_Cargo</a></li>
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
 					<li><a href="Unit.html">Unit</a></li>
+					<li><a href="UserFlag.html">UserFlag</a></li>
+					<li><a href="UserSound.html">UserSound</a></li>
 					<li><a href="Utils.html">Utils</a></li>
+					<li><a href="Velocity.html">Velocity</a></li>
 					<li><a href="Zone.html">Zone</a></li>
+					<li><a href="ZoneCaptureCoalition.html">ZoneCaptureCoalition</a></li>
+					<li><a href="ZoneGoal.html">ZoneGoal</a></li>
+					<li><a href="ZoneGoalCargo.html">ZoneGoalCargo</a></li>
+					<li><a href="ZoneGoalCoalition.html">ZoneGoalCoalition</a></li>
 					<li><a href="env.html">env</a></li>
 					<li><a href="land.html">land</a></li>
 					<li><a href="routines.html">routines</a></li>
@@ -148,7 +159,7 @@
 			<h2><a id="#(SETTINGS)">Type <code>SETTINGS</code></a></h2>
 				<table class="function_list">
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).A2AMenuSystem">SETTINGS:A2AMenuSystem(A2ASystem)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).A2AMenuSystem">SETTINGS:A2AMenuSystem(MenuGroup, RootMenu, A2ASystem)</a></td>
 		<td class="summary">
 
 </td>
@@ -160,7 +171,7 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).A2GMenuSystem">SETTINGS:A2GMenuSystem(A2GSystem)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).A2GMenuSystem">SETTINGS:A2GMenuSystem(MenuGroup, RootMenu, A2GSystem)</a></td>
 		<td class="summary">
 
 </td>
@@ -172,21 +183,9 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).DefaultMenu">SETTINGS.DefaultMenu</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).GetLL_Accuracy">SETTINGS:GetLL_Accuracy()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).GetLL_DDM_Accuracy">SETTINGS:GetLL_DDM_Accuracy()</a></td>
 		<td class="summary">
 <p>Gets the SETTINGS LL accuracy.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).GetLL_DMS">SETTINGS:GetLL_DMS()</a></td>
-		<td class="summary">
-<p>Gets the SETTINGS LL DMS.</p>
 </td>
 		</tr>
 		<tr>
@@ -196,7 +195,13 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).IsA2A_BRA">SETTINGS:IsA2A_BRA()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).GetMessageTime">SETTINGS:GetMessageTime(MessageType)</a></td>
+		<td class="summary">
+<p>Gets the SETTINGS Message Display Timing of a MessageType</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).IsA2A_BRAA">SETTINGS:IsA2A_BRAA()</a></td>
 		<td class="summary">
 <p>Is BRA</p>
 </td>
@@ -208,15 +213,39 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).IsA2G_BRA">SETTINGS:IsA2G_BRA()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).IsA2A_LL_DDM">SETTINGS:IsA2A_LL_DDM()</a></td>
+		<td class="summary">
+<p>Is LL DDM</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).IsA2A_LL_DMS">SETTINGS:IsA2A_LL_DMS()</a></td>
+		<td class="summary">
+<p>Is LL DMS</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).IsA2A_MGRS">SETTINGS:IsA2A_MGRS()</a></td>
+		<td class="summary">
+<p>Is MGRS</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).IsA2G_BR">SETTINGS:IsA2G_BR()</a></td>
 		<td class="summary">
 <p>Is BRA</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).IsA2G_LL">SETTINGS:IsA2G_LL()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).IsA2G_LL_DDM">SETTINGS:IsA2G_LL_DDM()</a></td>
 		<td class="summary">
-<p>Is LL</p>
+<p>Is LL DDM</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).IsA2G_LL_DMS">SETTINGS:IsA2G_LL_DMS()</a></td>
+		<td class="summary">
+<p>Is LL DMS</p>
 </td>
 		</tr>
 		<tr>
@@ -268,13 +297,7 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).MenuGroupLL_AccuracySystem">SETTINGS:MenuGroupLL_AccuracySystem(PlayerUnit, PlayerGroup, PlayerName, LL_Accuracy)</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).MenuGroupLL_DMSSystem">SETTINGS:MenuGroupLL_DMSSystem(PlayerUnit, PlayerGroup, PlayerName, LL_DMS)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).MenuGroupLL_DDM_AccuracySystem">SETTINGS:MenuGroupLL_DDM_AccuracySystem(PlayerUnit, PlayerGroup, PlayerName, LL_Accuracy)</a></td>
 		<td class="summary">
 
 </td>
@@ -292,43 +315,43 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).MenuLL_Accuracy">SETTINGS:MenuLL_Accuracy(LL_Accuracy)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).MenuGroupMessageTimingsSystem">SETTINGS:MenuGroupMessageTimingsSystem(PlayerUnit, PlayerGroup, PlayerName, MessageType, MessageTime)</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).MenuLL_DMS">SETTINGS:MenuLL_DMS(LL_DMS)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).MenuLL_DDM_Accuracy">SETTINGS:MenuLL_DDM_Accuracy(MenuGroup, RootMenu, LL_Accuracy)</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).MenuMGRS_Accuracy">SETTINGS:MenuMGRS_Accuracy(MGRS_Accuracy)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).MenuMGRS_Accuracy">SETTINGS:MenuMGRS_Accuracy(MenuGroup, RootMenu, MGRS_Accuracy)</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).MenuMWSystem">SETTINGS:MenuMWSystem(MW)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).MenuMWSystem">SETTINGS:MenuMWSystem(MenuGroup, RootMenu, MW)</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).MenuText">SETTINGS.MenuText</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).MenuMessageTimingsSystem">SETTINGS:MenuMessageTimingsSystem(MenuGroup, RootMenu, MessageType, MessageTime)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).MessageTypeTimings">SETTINGS.MessageTypeTimings</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).Metric">SETTINGS.Metric</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).Metrics">SETTINGS.Metrics</a></td>
 		<td class="summary">
 
 </td>
@@ -352,7 +375,7 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).SetA2A_BRA">SETTINGS:SetA2A_BRA()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).SetA2A_BRAA">SETTINGS:SetA2A_BRAA()</a></td>
 		<td class="summary">
 <p>Sets A2A BRA</p>
 </td>
@@ -364,15 +387,39 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).SetA2G_BRA">SETTINGS:SetA2G_BRA()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).SetA2A_LL_DDM">SETTINGS:SetA2A_LL_DDM()</a></td>
+		<td class="summary">
+<p>Sets A2A LL DDM</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).SetA2A_LL_DMS">SETTINGS:SetA2A_LL_DMS()</a></td>
+		<td class="summary">
+<p>Sets A2A LL DMS</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).SetA2A_MGRS">SETTINGS:SetA2A_MGRS()</a></td>
+		<td class="summary">
+<p>Sets A2A MGRS</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).SetA2G_BR">SETTINGS:SetA2G_BR()</a></td>
 		<td class="summary">
 <p>Sets A2G BRA</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).SetA2G_LL">SETTINGS:SetA2G_LL()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).SetA2G_LL_DDM">SETTINGS:SetA2G_LL_DDM()</a></td>
 		<td class="summary">
-<p>Sets A2G LL</p>
+<p>Sets A2G LL DDM</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).SetA2G_LL_DMS">SETTINGS:SetA2G_LL_DMS()</a></td>
+		<td class="summary">
+<p>Sets A2G LL DMS</p>
 </td>
 		</tr>
 		<tr>
@@ -394,15 +441,15 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).SetLL_DMS">SETTINGS:SetLL_DMS(LL_DMS)</a></td>
-		<td class="summary">
-<p>Sets the SETTINGS LL DMS.</p>
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).SetMGRS_Accuracy">SETTINGS:SetMGRS_Accuracy(MGRS_Accuracy)</a></td>
 		<td class="summary">
 <p>Sets the SETTINGS MGRS accuracy.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).SetMessageTime">SETTINGS:SetMessageTime(MessageType, MessageTime)</a></td>
+		<td class="summary">
+<p>Sets the SETTINGS Message Display Timing of a MessageType</p>
 </td>
 		</tr>
 		<tr>
@@ -418,13 +465,7 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).SetSystemMenu">SETTINGS:SetSystemMenu(RootMenu, MenuText)</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).SettingsMenu">SETTINGS.SettingsMenu</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SETTINGS).SetSystemMenu">SETTINGS:SetSystemMenu(MenuGroup, RootMenu)</a></td>
 		<td class="summary">
 
 </td>
@@ -455,15 +496,25 @@
 <dt>
 
 <a id="#(SETTINGS).A2AMenuSystem" >
-<strong>SETTINGS:A2AMenuSystem(A2ASystem)</strong>
+<strong>SETTINGS:A2AMenuSystem(MenuGroup, RootMenu, A2ASystem)</strong>
 </a>
 </dt>
 <dd>
 	
 
 
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
+				<li>
+				
+<p><code><em> MenuGroup </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> RootMenu </em></code>: </p>
+
+				</li>
 				<li>
 				
 <p><code><em> A2ASystem </em></code>: </p>
@@ -490,15 +541,25 @@
 <dt>
 
 <a id="#(SETTINGS).A2GMenuSystem" >
-<strong>SETTINGS:A2GMenuSystem(A2GSystem)</strong>
+<strong>SETTINGS:A2GMenuSystem(MenuGroup, RootMenu, A2GSystem)</strong>
 </a>
 </dt>
 <dd>
 	
 
 
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
+				<li>
+				
+<p><code><em> MenuGroup </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> RootMenu </em></code>: </p>
+
+				</li>
 				<li>
 				
 <p><code><em> A2GSystem </em></code>: </p>
@@ -524,44 +585,13 @@
 		<dl class="function">
 <dt>
 
-<a id="#(SETTINGS).DefaultMenu" >
-<strong>SETTINGS.DefaultMenu</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(SETTINGS).GetLL_Accuracy" >
-<strong>SETTINGS:GetLL_Accuracy()</strong>
+<a id="#(SETTINGS).GetLL_DDM_Accuracy" >
+<strong>SETTINGS:GetLL_DDM_Accuracy()</strong>
 </a>
 </dt>
 <dd>
 	
 <p>Gets the SETTINGS LL accuracy.</p>
-
-		<h3>Return value</h3>
-				
-<p><em>#number:</em></p>
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(SETTINGS).GetLL_DMS" >
-<strong>SETTINGS:GetLL_DMS()</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Gets the SETTINGS LL DMS.</p>
 
 		<h3>Return value</h3>
 				
@@ -591,8 +621,35 @@
 		<dl class="function">
 <dt>
 
-<a id="#(SETTINGS).IsA2A_BRA" >
-<strong>SETTINGS:IsA2A_BRA()</strong>
+<a id="#(SETTINGS).GetMessageTime" >
+<strong>SETTINGS:GetMessageTime(MessageType)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Gets the SETTINGS Message Display Timing of a MessageType</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Message.html##(MESSAGE)">Core.Message#MESSAGE</a> MessageType </em></code>: 
+The type of the message.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#number:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SETTINGS).IsA2A_BRAA" >
+<strong>SETTINGS:IsA2A_BRAA()</strong>
 </a>
 </dt>
 <dd>
@@ -627,8 +684,62 @@ true if BULLS</p>
 		<dl class="function">
 <dt>
 
-<a id="#(SETTINGS).IsA2G_BRA" >
-<strong>SETTINGS:IsA2G_BRA()</strong>
+<a id="#(SETTINGS).IsA2A_LL_DDM" >
+<strong>SETTINGS:IsA2A_LL_DDM()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Is LL DDM</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+true if LL DDM</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SETTINGS).IsA2A_LL_DMS" >
+<strong>SETTINGS:IsA2A_LL_DMS()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Is LL DMS</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+true if LL DMS</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SETTINGS).IsA2A_MGRS" >
+<strong>SETTINGS:IsA2A_MGRS()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Is MGRS</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+true if MGRS</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SETTINGS).IsA2G_BR" >
+<strong>SETTINGS:IsA2G_BR()</strong>
 </a>
 </dt>
 <dd>
@@ -645,18 +756,36 @@ true if BRA</p>
 		<dl class="function">
 <dt>
 
-<a id="#(SETTINGS).IsA2G_LL" >
-<strong>SETTINGS:IsA2G_LL()</strong>
+<a id="#(SETTINGS).IsA2G_LL_DDM" >
+<strong>SETTINGS:IsA2G_LL_DDM()</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Is LL</p>
+<p>Is LL DDM</p>
 
 		<h3>Return value</h3>
 				
 <p><em>#boolean:</em>
-true if LL</p>
+true if LL DDM</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SETTINGS).IsA2G_LL_DMS" >
+<strong>SETTINGS:IsA2G_LL_DMS()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Is LL DMS</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+true if LL DMS</p>
 
 </dd>
 </dl>
@@ -831,8 +960,8 @@ true if metric.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(SETTINGS).MenuGroupLL_AccuracySystem" >
-<strong>SETTINGS:MenuGroupLL_AccuracySystem(PlayerUnit, PlayerGroup, PlayerName, LL_Accuracy)</strong>
+<a id="#(SETTINGS).MenuGroupLL_DDM_AccuracySystem" >
+<strong>SETTINGS:MenuGroupLL_DDM_AccuracySystem(PlayerUnit, PlayerGroup, PlayerName, LL_Accuracy)</strong>
 </a>
 </dt>
 <dd>
@@ -859,42 +988,6 @@ true if metric.</p>
 				<li>
 				
 <p><code><em> LL_Accuracy </em></code>: </p>
-
-				</li>
-		</ul>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(SETTINGS).MenuGroupLL_DMSSystem" >
-<strong>SETTINGS:MenuGroupLL_DMSSystem(PlayerUnit, PlayerGroup, PlayerName, LL_DMS)</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em> PlayerUnit </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em> PlayerGroup </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em> PlayerName </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em> LL_DMS </em></code>: </p>
 
 				</li>
 		</ul>
@@ -975,16 +1068,67 @@ true if metric.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(SETTINGS).MenuLL_Accuracy" >
-<strong>SETTINGS:MenuLL_Accuracy(LL_Accuracy)</strong>
+<a id="#(SETTINGS).MenuGroupMessageTimingsSystem" >
+<strong>SETTINGS:MenuGroupMessageTimingsSystem(PlayerUnit, PlayerGroup, PlayerName, MessageType, MessageTime)</strong>
 </a>
 </dt>
 <dd>
 	
 
 
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
+				<li>
+				
+<p><code><em> PlayerUnit </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> PlayerGroup </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> PlayerName </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> MessageType </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> MessageTime </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SETTINGS).MenuLL_DDM_Accuracy" >
+<strong>SETTINGS:MenuLL_DDM_Accuracy(MenuGroup, RootMenu, LL_Accuracy)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> MenuGroup </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> RootMenu </em></code>: </p>
+
+				</li>
 				<li>
 				
 <p><code><em> LL_Accuracy </em></code>: </p>
@@ -996,37 +1140,26 @@ true if metric.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(SETTINGS).MenuLL_DMS" >
-<strong>SETTINGS:MenuLL_DMS(LL_DMS)</strong>
+<a id="#(SETTINGS).MenuMGRS_Accuracy" >
+<strong>SETTINGS:MenuMGRS_Accuracy(MenuGroup, RootMenu, MGRS_Accuracy)</strong>
 </a>
 </dt>
 <dd>
 	
 
 
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
-<p><code><em> LL_DMS </em></code>: </p>
+<p><code><em> MenuGroup </em></code>: </p>
 
 				</li>
-		</ul>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
+				<li>
+				
+<p><code><em> RootMenu </em></code>: </p>
 
-<a id="#(SETTINGS).MenuMGRS_Accuracy" >
-<strong>SETTINGS:MenuMGRS_Accuracy(MGRS_Accuracy)</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-		<h3>Parameter</h3>
-		<ul>
+				</li>
 				<li>
 				
 <p><code><em> MGRS_Accuracy </em></code>: </p>
@@ -1039,15 +1172,25 @@ true if metric.</p>
 <dt>
 
 <a id="#(SETTINGS).MenuMWSystem" >
-<strong>SETTINGS:MenuMWSystem(MW)</strong>
+<strong>SETTINGS:MenuMWSystem(MenuGroup, RootMenu, MW)</strong>
 </a>
 </dt>
 <dd>
 	
 
 
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
+				<li>
+				
+<p><code><em> MenuGroup </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> RootMenu </em></code>: </p>
+
+				</li>
 				<li>
 				
 <p><code><em> MW </em></code>: </p>
@@ -1059,9 +1202,44 @@ true if metric.</p>
 		<dl class="function">
 <dt>
 
-		<em></em>
-<a id="#(SETTINGS).MenuText" >
-<strong>SETTINGS.MenuText</strong>
+<a id="#(SETTINGS).MenuMessageTimingsSystem" >
+<strong>SETTINGS:MenuMessageTimingsSystem(MenuGroup, RootMenu, MessageType, MessageTime)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> MenuGroup </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> RootMenu </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> MessageType </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> MessageTime </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SETTINGS).MessageTypeTimings" >
+<strong>SETTINGS.MessageTypeTimings</strong>
 </a>
 </dt>
 <dd>
@@ -1076,20 +1254,6 @@ true if metric.</p>
 		<em>#boolean</em>
 <a id="#(SETTINGS).Metric" >
 <strong>SETTINGS.Metric</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em></em>
-<a id="#(SETTINGS).Metrics" >
-<strong>SETTINGS.Metrics</strong>
 </a>
 </dt>
 <dd>
@@ -1172,8 +1336,8 @@ true if metric.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(SETTINGS).SetA2A_BRA" >
-<strong>SETTINGS:SetA2A_BRA()</strong>
+<a id="#(SETTINGS).SetA2A_BRAA" >
+<strong>SETTINGS:SetA2A_BRAA()</strong>
 </a>
 </dt>
 <dd>
@@ -1208,8 +1372,62 @@ true if metric.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(SETTINGS).SetA2G_BRA" >
-<strong>SETTINGS:SetA2G_BRA()</strong>
+<a id="#(SETTINGS).SetA2A_LL_DDM" >
+<strong>SETTINGS:SetA2A_LL_DDM()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Sets A2A LL DDM</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SETTINGS)">#SETTINGS</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SETTINGS).SetA2A_LL_DMS" >
+<strong>SETTINGS:SetA2A_LL_DMS()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Sets A2A LL DMS</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SETTINGS)">#SETTINGS</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SETTINGS).SetA2A_MGRS" >
+<strong>SETTINGS:SetA2A_MGRS()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Sets A2A MGRS</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SETTINGS)">#SETTINGS</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SETTINGS).SetA2G_BR" >
+<strong>SETTINGS:SetA2G_BR()</strong>
 </a>
 </dt>
 <dd>
@@ -1226,13 +1444,31 @@ true if metric.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(SETTINGS).SetA2G_LL" >
-<strong>SETTINGS:SetA2G_LL()</strong>
+<a id="#(SETTINGS).SetA2G_LL_DDM" >
+<strong>SETTINGS:SetA2G_LL_DDM()</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Sets A2G LL</p>
+<p>Sets A2G LL DDM</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SETTINGS)">#SETTINGS</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SETTINGS).SetA2G_LL_DMS" >
+<strong>SETTINGS:SetA2G_LL_DMS()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Sets A2G LL DMS</p>
 
 		<h3>Return value</h3>
 				
@@ -1301,32 +1537,6 @@ true if metric.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(SETTINGS).SetLL_DMS" >
-<strong>SETTINGS:SetLL_DMS(LL_DMS)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Sets the SETTINGS LL DMS.</p>
-
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em>#number LL_DMS </em></code>: </p>
-
-				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em><a href="##(SETTINGS)">#SETTINGS</a>:</em></p>
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
 <a id="#(SETTINGS).SetMGRS_Accuracy" >
 <strong>SETTINGS:SetMGRS_Accuracy(MGRS_Accuracy)</strong>
 </a>
@@ -1348,6 +1558,34 @@ true if metric.</p>
 <p><em><a href="##(SETTINGS)">#SETTINGS</a>:</em></p>
 
 
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SETTINGS).SetMessageTime" >
+<strong>SETTINGS:SetMessageTime(MessageType, MessageTime)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Sets the SETTINGS Message Display Timing of a MessageType</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Message.html##(MESSAGE)">Core.Message#MESSAGE</a> MessageType </em></code>: 
+The type of the message.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number MessageTime </em></code>: 
+The display time duration in seconds of the MessageType.</p>
+
+				</li>
+		</ul>
 </dd>
 </dl>
 		<dl class="function">
@@ -1403,7 +1641,7 @@ true if metric.</p>
 <dt>
 
 <a id="#(SETTINGS).SetSystemMenu" >
-<strong>SETTINGS:SetSystemMenu(RootMenu, MenuText)</strong>
+<strong>SETTINGS:SetSystemMenu(MenuGroup, RootMenu)</strong>
 </a>
 </dt>
 <dd>
@@ -1414,32 +1652,18 @@ true if metric.</p>
 		<ul>
 				<li>
 				
-<p><code><em> RootMenu </em></code>: </p>
+<p><code><em> MenuGroup </em></code>: </p>
 
 				</li>
 				<li>
 				
-<p><code><em> MenuText </em></code>: </p>
+<p><code><em> RootMenu </em></code>: </p>
 
 				</li>
 		</ul>
 		<h3>Return value</h3>
 				
 <p><em><a href="##(SETTINGS)">#SETTINGS</a>:</em></p>
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em></em>
-<a id="#(SETTINGS).SettingsMenu" >
-<strong>SETTINGS.SettingsMenu</strong>
-</a>
-</dt>
-<dd>
-	
 
 
 </dd>

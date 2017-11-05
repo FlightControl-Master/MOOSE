@@ -2,6 +2,9 @@ Utilities/Routines.lua
 Utilities/Utils.lua
 
 Core/Base.lua
+Core/UserFlag.lua
+Core/UserSound.lua
+Core/Report.lua
 Core/Scheduler.lua
 Core/ScheduleDispatcher.lua
 Core/Event.lua
@@ -11,10 +14,13 @@ Core/Zone.lua
 Core/Database.lua
 Core/Set.lua
 Core/Point.lua
+Core/Velocity.lua
 Core/Message.lua
 Core/Fsm.lua
 Core/Radio.lua
+Core/Spawn.lua
 Core/SpawnStatic.lua
+Core/Goal.lua
 Core/Cargo.lua
 Core/Spot.lua
 
@@ -31,14 +37,17 @@ Wrapper/Scenery.lua
 
 Functional/Scoring.lua
 Functional/CleanUp.lua
-Functional/Spawn.lua
 Functional/Movement.lua
 Functional/Sead.lua
 Functional/Escort.lua
 Functional/MissileTrainer.lua
-Functional/AirbasePolice.lua
+Functional/ATC_Ground.lua
 Functional/Detection.lua
 Functional/Designate.lua
+Functional/RAT.lua
+Functional/ZoneGoal.lua
+Functional/ZoneGoalCoalition.lua
+Functional/ZoneCaptureCoalition.lua
 
 AI/AI_Balancer.lua
 AI/AI_A2A.lua
@@ -66,6 +75,7 @@ Tasking/Task_A2G.lua
 Tasking/Task_A2A_Dispatcher.lua
 Tasking/Task_A2A.lua
 Tasking/Task_Cargo.lua
+Tasking/TaskZoneCapture.lua
 
 Moose.lua
 Mission.lua

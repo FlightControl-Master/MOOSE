@@ -28,9 +28,9 @@
 					<li><a href="AI_Cas.html">AI_Cas</a></li>
 					<li><a href="AI_Formation.html">AI_Formation</a></li>
 					<li><a href="AI_Patrol.html">AI_Patrol</a></li>
+					<li><a href="ATC_Ground.html">ATC_Ground</a></li>
 					<li><a href="Account.html">Account</a></li>
 					<li><a href="Airbase.html">Airbase</a></li>
-					<li><a href="AirbasePolice.html">AirbasePolice</a></li>
 					<li><a href="Assign.html">Assign</a></li>
 					<li><a href="Base.html">Base</a></li>
 					<li><a href="Cargo.html">Cargo</a></li>
@@ -60,6 +60,7 @@
 					<li><a href="Escort.html">Escort</a></li>
 					<li><a href="Event.html">Event</a></li>
 					<li><a href="Fsm.html">Fsm</a></li>
+					<li><a href="Goal.html">Goal</a></li>
 					<li><a href="Group.html">Group</a></li>
 					<li><a href="Identifiable.html">Identifiable</a></li>
 					<li><a href="Menu.html">Menu</a></li>
@@ -72,7 +73,9 @@
 					<li><a href="Positionable.html">Positionable</a></li>
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
 					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
+					<li><a href="Protect.html">Protect</a></li>
 					<li><a href="Radio.html">Radio</a></li>
+					<li><a href="Rat.html">Rat</a></li>
 					<li><a href="Route.html">Route</a></li>
 					<li><a href="Scenery.html">Scenery</a></li>
 					<li><a href="ScheduleDispatcher.html">ScheduleDispatcher</a></li>
@@ -88,6 +91,7 @@
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="Task.html">Task</a></li>
+					<li><a href="TaskZoneCapture.html">TaskZoneCapture</a></li>
 					<li><a href="Task_A2A.html">Task_A2A</a></li>
 					<li><a href="Task_A2A_Dispatcher.html">Task_A2A_Dispatcher</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
@@ -95,8 +99,15 @@
 					<li><a href="Task_Cargo.html">Task_Cargo</a></li>
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
 					<li><a href="Unit.html">Unit</a></li>
+					<li><a href="UserFlag.html">UserFlag</a></li>
+					<li><a href="UserSound.html">UserSound</a></li>
 					<li><a href="Utils.html">Utils</a></li>
+					<li><a href="Velocity.html">Velocity</a></li>
 					<li><a href="Zone.html">Zone</a></li>
+					<li><a href="ZoneCaptureCoalition.html">ZoneCaptureCoalition</a></li>
+					<li><a href="ZoneGoal.html">ZoneGoal</a></li>
+					<li><a href="ZoneGoalCargo.html">ZoneGoalCargo</a></li>
+					<li><a href="ZoneGoalCoalition.html">ZoneGoalCoalition</a></li>
 					<li><a href="env.html">env</a></li>
 					<li><a href="land.html">land</a></li>
 					<li><a href="routines.html">routines</a></li>
@@ -270,6 +281,30 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).GetHeading">COORDINATE:GetHeading()</a></td>
+		<td class="summary">
+<p>Get the heading of the coordinate, if applicable.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).GetHeadingText">COORDINATE:GetHeadingText(Settings)</a></td>
+		<td class="summary">
+<p>Return the heading text of the COORDINATE.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).GetLandHeight">COORDINATE:GetLandHeight()</a></td>
+		<td class="summary">
+<p>Return the height of the land at the coordinate.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).GetMovingText">COORDINATE:GetMovingText(Settings)</a></td>
+		<td class="summary">
+<p>Return velocity text of the COORDINATE.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).GetNorthCorrectionRadians">COORDINATE:GetNorthCorrectionRadians()</a></td>
 		<td class="summary">
 <p>Get a correction in radians of the real magnetic north of the COORDINATE.</p>
@@ -300,15 +335,75 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).GetVelocity">COORDINATE:GetVelocity()</a></td>
+		<td class="summary">
+<p>Return the velocity of the COORDINATE.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).GetVelocityText">COORDINATE:GetVelocityText(Settings)</a></td>
+		<td class="summary">
+<p>Return the velocity text of the COORDINATE.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).Heading">COORDINATE.Heading</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).IlluminationBomb">COORDINATE:IlluminationBomb()</a></td>
 		<td class="summary">
 <p>Creates an illumination bomb at the point.</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).IsInRadius">COORDINATE:IsInRadius(ToCoordinate, Radius, Coordinate)</a></td>
+		<td class="summary">
+<p>Returns if a Coordinate is in a certain Radius of this Coordinate in 2D plane using the X and Z axis.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).IsInSphere">COORDINATE:IsInSphere(ToCoordinate, Radius, Coordinate)</a></td>
+		<td class="summary">
+<p>Returns if a Coordinate is in a certain radius of this Coordinate in 3D space using the X, Y and Z axis.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).IsLOS">COORDINATE:IsLOS(ToCoordinate)</a></td>
 		<td class="summary">
 <p>Returns if a Coordinate has Line of Sight (LOS) with the ToCoordinate.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).MarkToAll">COORDINATE:MarkToAll(MarkText)</a></td>
+		<td class="summary">
+<p>Mark to All</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).MarkToCoalition">COORDINATE:MarkToCoalition(MarkText, Coalition)</a></td>
+		<td class="summary">
+<p>Mark to Coalition</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).MarkToCoalitionBlue">COORDINATE:MarkToCoalitionBlue(MarkText)</a></td>
+		<td class="summary">
+<p>Mark to Blue Coalition</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).MarkToCoalitionRed">COORDINATE:MarkToCoalitionRed(MarkText)</a></td>
+		<td class="summary">
+<p>Mark to Red Coalition</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).MarkToGroup">COORDINATE:MarkToGroup(MarkText, MarkGroup)</a></td>
+		<td class="summary">
+<p>Mark to Group</p>
 </td>
 		</tr>
 		<tr>
@@ -330,21 +425,21 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).RoutePointAir">COORDINATE:RoutePointAir(AltType, Type, Action, Speed, SpeedLocked)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).RemoveMark">COORDINATE:RemoveMark(MarkID)</a></td>
 		<td class="summary">
-<p>Build an air type route point.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).RoutePointGround">COORDINATE:RoutePointGround(Speed, Formation)</a></td>
-		<td class="summary">
-<p>Build an ground type route point.</p>
+<p>Remove a mark</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).SetHeading">COORDINATE:SetHeading(Heading)</a></td>
 		<td class="summary">
-
+<p>Set the heading of the coordinate, if applicable.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).SetVelocity">COORDINATE:SetVelocity(Velocity)</a></td>
+		<td class="summary">
+<p>Set the velocity of the COORDINATE.</p>
 </td>
 		</tr>
 		<tr>
@@ -384,10 +479,22 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).ToString">COORDINATE:ToString(Controllable, Settings)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).ToString">COORDINATE:ToString(Controllable, Settings, Task)</a></td>
 		<td class="summary">
 <p>Provides a coordinate string of the point, based on a coordinate format system:
   * Uses default settings in COORDINATE.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).ToStringA2A">COORDINATE:ToStringA2A(Controllable, Settings)</a></td>
+		<td class="summary">
+<p>Provides a coordinate string of the point, based on the A2A coordinate format system.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).ToStringA2G">COORDINATE:ToStringA2G(Controllable, Settings)</a></td>
+		<td class="summary">
+<p>Provides a coordinate string of the point, based on the A2G coordinate format system.</p>
 </td>
 		</tr>
 		<tr>
@@ -422,9 +529,15 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).ToStringLL">COORDINATE:ToStringLL(Settings)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).ToStringLLDDM">COORDINATE:ToStringLLDDM(Settings)</a></td>
 		<td class="summary">
-<p>Provides a Lat Lon string</p>
+<p>Provides a Lat Lon string in Degree Decimal Minute format.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).ToStringLLDMS">COORDINATE:ToStringLLDMS(Settings)</a></td>
+		<td class="summary">
+<p>Provides a Lat Lon string in Degree Minute Second format.</p>
 </td>
 		</tr>
 		<tr>
@@ -437,6 +550,78 @@
 		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).Translate">COORDINATE:Translate(Distance, Angle)</a></td>
 		<td class="summary">
 <p>Add a Distance in meters from the COORDINATE orthonormal plane, with the given angle, and calculate the new COORDINATE.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).Velocity">COORDINATE.Velocity</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).WaypointAction">COORDINATE.WaypointAction</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).WaypointAir">COORDINATE:WaypointAir(AltType, Type, Action, Speed, SpeedLocked)</a></td>
+		<td class="summary">
+<p>Build an air type route point.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).WaypointAirFlyOverPoint">COORDINATE:WaypointAirFlyOverPoint(AltType, Speed)</a></td>
+		<td class="summary">
+<p>Build a Waypoint Air "Fly Over Point".</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).WaypointAirLanding">COORDINATE:WaypointAirLanding(Speed)</a></td>
+		<td class="summary">
+<p>Build a Waypoint Air "Landing".</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).WaypointAirTakeOffParking">COORDINATE:WaypointAirTakeOffParking(AltType, Speed)</a></td>
+		<td class="summary">
+<p>Build a Waypoint Air "Take Off Parking".</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).WaypointAirTakeOffParkingHot">COORDINATE:WaypointAirTakeOffParkingHot(AltType, Speed)</a></td>
+		<td class="summary">
+<p>Build a Waypoint Air "Take Off Parking Hot".</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).WaypointAirTakeOffRunway">COORDINATE:WaypointAirTakeOffRunway(AltType, Speed)</a></td>
+		<td class="summary">
+<p>Build a Waypoint Air "Take Off Runway".</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).WaypointAirTurningPoint">COORDINATE:WaypointAirTurningPoint(AltType, Speed)</a></td>
+		<td class="summary">
+<p>Build a Waypoint Air "Turning Point".</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).WaypointAltType">COORDINATE.WaypointAltType</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).WaypointGround">COORDINATE:WaypointGround(Speed, Formation)</a></td>
+		<td class="summary">
+<p>Build an ground type route point.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(COORDINATE).WaypointType">COORDINATE.WaypointType</a></td>
+		<td class="summary">
+
 </td>
 		</tr>
 		<tr>
@@ -793,8 +978,8 @@
 <p>A COORDINATE can prepare waypoints for Ground and Air groups to be embedded into a Route.</p>
 
 <ul>
-    <li><a href="##(COORDINATE).RoutePointAir">COORDINATE.RoutePointAir</a>(): Build an air route point.</li>
-    <li><a href="##(COORDINATE).RoutePointGround">COORDINATE.RoutePointGround</a>(): Build a ground route point.</li>
+    <li><a href="##(COORDINATE).WaypointAir">COORDINATE.WaypointAir</a>(): Build an air route point.</li>
+    <li><a href="##(COORDINATE).WaypointGround">COORDINATE.WaypointGround</a>(): Build a ground route point.</li>
 </ul>
 
 <p>Route points can be used in the Route methods of the <a href="Group.html##(GROUP)">Group#GROUP</a> class.</p>
@@ -835,6 +1020,20 @@
 
 <ul>
     <li><a href="##(COORDINATE).IlluminationBomb">COORDINATE.IlluminationBomb</a>(): To illuminate the point.</li>
+</ul>
+
+
+<h2>Markings</h2>
+
+<p>Place markers (text boxes with clarifications for briefings, target locations or any other reference point) on the map for all players, coalitions or specific groups:</p>
+
+<ul>
+    <li><a href="##(COORDINATE).MarkToAll">COORDINATE.MarkToAll</a>(): Place a mark to all players.</li>
+    <li><a href="##(COORDINATE).MarkToCoalition">COORDINATE.MarkToCoalition</a>(): Place a mark to a coalition.</li>
+    <li><a href="##(COORDINATE).MarkToCoalitionRed">COORDINATE.MarkToCoalitionRed</a>(): Place a mark to the red coalition.</li>
+    <li><a href="##(COORDINATE).MarkToCoalitionBlue">COORDINATE.MarkToCoalitionBlue</a>(): Place a mark to the blue coalition.</li>
+    <li><a href="##(COORDINATE).MarkToGroup">COORDINATE.MarkToGroup</a>(): Place a mark to a group (needs to have a client in it or a CA group (CA group is bugged)).</li>
+    <li><a href="##(COORDINATE).RemoveMark">COORDINATE.RemoveMark</a>(): Removes a mark from the map.</li>
 </ul>
 
 
@@ -1503,6 +1702,94 @@ The distance text expressed in the units of measurement.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(COORDINATE).GetHeading" >
+<strong>COORDINATE:GetHeading()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Get the heading of the coordinate, if applicable.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#number:</em>
+or nil</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(COORDINATE).GetHeadingText" >
+<strong>COORDINATE:GetHeadingText(Settings)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Return the heading text of the COORDINATE.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> Settings </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#string:</em>
+Heading text.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(COORDINATE).GetLandHeight" >
+<strong>COORDINATE:GetLandHeight()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Return the height of the land at the coordinate.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#number:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(COORDINATE).GetMovingText" >
+<strong>COORDINATE:GetMovingText(Settings)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Return velocity text of the COORDINATE.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> Settings </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#string:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(COORDINATE).GetNorthCorrectionRadians" >
 <strong>COORDINATE:GetNorthCorrectionRadians()</strong>
 </a>
@@ -1619,6 +1906,64 @@ The Vec3 format coordinate.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(COORDINATE).GetVelocity" >
+<strong>COORDINATE:GetVelocity()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Return the velocity of the COORDINATE.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#number:</em>
+Velocity in meters per second.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(COORDINATE).GetVelocityText" >
+<strong>COORDINATE:GetVelocityText(Settings)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Return the velocity text of the COORDINATE.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> Settings </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#string:</em>
+Velocity text.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(COORDINATE).Heading" >
+<strong>COORDINATE.Heading</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(COORDINATE).IlluminationBomb" >
 <strong>COORDINATE:IlluminationBomb()</strong>
 </a>
@@ -1626,6 +1971,85 @@ The Vec3 format coordinate.</p>
 <dd>
 	
 <p>Creates an illumination bomb at the point.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(COORDINATE).IsInRadius" >
+<strong>COORDINATE:IsInRadius(ToCoordinate, Radius, Coordinate)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns if a Coordinate is in a certain Radius of this Coordinate in 2D plane using the X and Z axis.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="##(COORDINATE)">#COORDINATE</a> ToCoordinate </em></code>: 
+The coordinate that will be tested if it is in the radius of this coordinate.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Radius </em></code>: 
+The radius of the circle on the 2D plane around this coordinate.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> Coordinate </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+true if in the Radius.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(COORDINATE).IsInSphere" >
+<strong>COORDINATE:IsInSphere(ToCoordinate, Radius, Coordinate)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns if a Coordinate is in a certain radius of this Coordinate in 3D space using the X, Y and Z axis.</p>
+
+	
+<p>So Radius defines the radius of the a Sphere in 3D space around this coordinate.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="##(COORDINATE)">#COORDINATE</a> ToCoordinate </em></code>: 
+The coordinate that will be tested if it is in the radius of this coordinate.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Radius </em></code>: 
+The radius of the sphere in the 3D space around this coordinate.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> Coordinate </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+true if in the Sphere.</p>
 
 </dd>
 </dl>
@@ -1652,6 +2076,173 @@ The Vec3 format coordinate.</p>
 				
 <p><em>#boolean:</em>
 true If the ToCoordinate has LOS with the Coordinate, otherwise false.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(COORDINATE).MarkToAll" >
+<strong>COORDINATE:MarkToAll(MarkText)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Mark to All</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string MarkText </em></code>: 
+Free format text that shows the marking clarification.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#number:</em>
+The resulting Mark ID which is a number.</p>
+
+			<h3>Usage:</h3>
+		<pre class="example"><code>  local TargetCoord = TargetGroup:GetCoordinate()
+  local MarkID = TargetCoord:MarkToAll( "This is a target for all players" )</code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(COORDINATE).MarkToCoalition" >
+<strong>COORDINATE:MarkToCoalition(MarkText, Coalition)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Mark to Coalition</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string MarkText </em></code>: 
+Free format text that shows the marking clarification.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> Coalition </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#number:</em>
+The resulting Mark ID which is a number.</p>
+
+			<h3>Usage:</h3>
+		<pre class="example"><code>  local TargetCoord = TargetGroup:GetCoordinate()
+  local MarkID = TargetCoord:MarkToCoalition( "This is a target for the red coalition", coalition.side.RED )</code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(COORDINATE).MarkToCoalitionBlue" >
+<strong>COORDINATE:MarkToCoalitionBlue(MarkText)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Mark to Blue Coalition</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string MarkText </em></code>: 
+Free format text that shows the marking clarification.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#number:</em>
+The resulting Mark ID which is a number.</p>
+
+			<h3>Usage:</h3>
+		<pre class="example"><code>  local TargetCoord = TargetGroup:GetCoordinate()
+  local MarkID = TargetCoord:MarkToCoalitionBlue( "This is a target for the blue coalition" )</code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(COORDINATE).MarkToCoalitionRed" >
+<strong>COORDINATE:MarkToCoalitionRed(MarkText)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Mark to Red Coalition</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string MarkText </em></code>: 
+Free format text that shows the marking clarification.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#number:</em>
+The resulting Mark ID which is a number.</p>
+
+			<h3>Usage:</h3>
+		<pre class="example"><code>  local TargetCoord = TargetGroup:GetCoordinate()
+  local MarkID = TargetCoord:MarkToCoalitionRed( "This is a target for the red coalition" )</code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(COORDINATE).MarkToGroup" >
+<strong>COORDINATE:MarkToGroup(MarkText, MarkGroup)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Mark to Group</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string MarkText </em></code>: 
+Free format text that shows the marking clarification.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> MarkGroup </em></code>: 
+The <a href="Group.html">Group</a> that receives the mark.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#number:</em>
+The resulting Mark ID which is a number.</p>
+
+			<h3>Usage:</h3>
+		<pre class="example"><code>  local TargetCoord = TargetGroup:GetCoordinate()
+  local MarkGroup = GROUP:FindByName( "AttackGroup" )
+  local MarkID = TargetCoord:MarkToGroup( "This is a target for the attack group", AttackGroup )</code></pre>
 
 </dd>
 </dl>
@@ -1757,84 +2348,29 @@ The Vec3 point.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(COORDINATE).RoutePointAir" >
-<strong>COORDINATE:RoutePointAir(AltType, Type, Action, Speed, SpeedLocked)</strong>
+<a id="#(COORDINATE).RemoveMark" >
+<strong>COORDINATE:RemoveMark(MarkID)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Build an air type route point.</p>
+<p>Remove a mark</p>
 
-		<h3>Parameters</h3>
+		<h3>Parameter</h3>
 		<ul>
 				<li>
 				
-<p><code><em><a href="##(COORDINATE.RoutePointAltType)">#COORDINATE.RoutePointAltType</a> AltType </em></code>: 
-The altitude type.</p>
-
-				</li>
-				<li>
-				
-<p><code><em><a href="##(COORDINATE.RoutePointType)">#COORDINATE.RoutePointType</a> Type </em></code>: 
-The route point type.</p>
-
-				</li>
-				<li>
-				
-<p><code><em><a href="##(COORDINATE.RoutePointAction)">#COORDINATE.RoutePointAction</a> Action </em></code>: 
-The route point action.</p>
-
-				</li>
-				<li>
-				
-<p><code><em><a href="Dcs.DCSTypes.html##(Speed)">Dcs.DCSTypes#Speed</a> Speed </em></code>: 
-Airspeed in km/h.</p>
-
-				</li>
-				<li>
-				
-<p><code><em>#boolean SpeedLocked </em></code>: 
-true means the speed is locked.</p>
+<p><code><em>#number MarkID </em></code>: 
+The ID of the mark to be removed.</p>
 
 				</li>
 		</ul>
-		<h3>Return value</h3>
-				
-<p><em>#table:</em>
-The route point.</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(COORDINATE).RoutePointGround" >
-<strong>COORDINATE:RoutePointGround(Speed, Formation)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Build an ground type route point.</p>
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="Dcs.DCSTypes.html##(Speed)">Dcs.DCSTypes#Speed</a> Speed </em></code>: 
-Speed in km/h.</p>
-
-				</li>
-				<li>
-				
-<p><code><em><a href="##(COORDINATE.RoutePointAction)">#COORDINATE.RoutePointAction</a> Formation </em></code>: 
-The route point Formation.</p>
-
-				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em>#table:</em>
-The route point.</p>
+			<h3>Usage:</h3>
+		<pre class="example"><code>  local TargetCoord = TargetGroup:GetCoordinate()
+  local MarkGroup = GROUP:FindByName( "AttackGroup" )
+  local MarkID = TargetCoord:MarkToGroup( "This is a target for the attack group", AttackGroup )
+  &lt;&lt;&lt; logic &gt;&gt;&gt;
+  RemoveMark( MarkID ) -- The mark is now removed</code></pre>
 
 </dd>
 </dl>
@@ -1847,13 +2383,35 @@ The route point.</p>
 </dt>
 <dd>
 	
-
+<p>Set the heading of the coordinate, if applicable.</p>
 
 		<h3>Parameter</h3>
 		<ul>
 				<li>
 				
 <p><code><em> Heading </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(COORDINATE).SetVelocity" >
+<strong>COORDINATE:SetVelocity(Velocity)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set the velocity of the COORDINATE.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Velocity </em></code>: 
+Velocity in meters per second.</p>
 
 				</li>
 		</ul>
@@ -1949,7 +2507,7 @@ The route point.</p>
 <dt>
 
 <a id="#(COORDINATE).ToString" >
-<strong>COORDINATE:ToString(Controllable, Settings)</strong>
+<strong>COORDINATE:ToString(Controllable, Settings, Task)</strong>
 </a>
 </dt>
 <dd>
@@ -1961,6 +2519,74 @@ The route point.</p>
 <ul>
     <li>Can be overridden if for a GROUP containing x clients, a menu was selected to override the default.</li>
 </ul>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> Controllable </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Core.Settings.html##(SETTINGS)">Core.Settings#SETTINGS</a> Settings </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Tasking.Task.html##(TASK)">Tasking.Task#TASK</a> Task </em></code>: 
+The task for which coordinates need to be calculated.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#string:</em>
+The coordinate Text in the configured coordinate system.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(COORDINATE).ToStringA2A" >
+<strong>COORDINATE:ToStringA2A(Controllable, Settings)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Provides a coordinate string of the point, based on the A2A coordinate format system.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> Controllable </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Core.Settings.html##(SETTINGS)">Core.Settings#SETTINGS</a> Settings </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#string:</em>
+The coordinate Text in the configured coordinate system.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(COORDINATE).ToStringA2G" >
+<strong>COORDINATE:ToStringA2G(Controllable, Settings)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Provides a coordinate string of the point, based on the A2G coordinate format system.</p>
 
 		<h3>Parameters</h3>
 		<ul>
@@ -2165,13 +2791,13 @@ The coordinate Text in the configured coordinate system.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(COORDINATE).ToStringLL" >
-<strong>COORDINATE:ToStringLL(Settings)</strong>
+<a id="#(COORDINATE).ToStringLLDDM" >
+<strong>COORDINATE:ToStringLLDDM(Settings)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Provides a Lat Lon string</p>
+<p>Provides a Lat Lon string in Degree Decimal Minute format.</p>
 
 		<h3>Parameter</h3>
 		<ul>
@@ -2185,7 +2811,34 @@ The coordinate Text in the configured coordinate system.</p>
 		<h3>Return value</h3>
 				
 <p><em>#string:</em>
-The LL Text</p>
+The LL DDM Text</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(COORDINATE).ToStringLLDMS" >
+<strong>COORDINATE:ToStringLLDMS(Settings)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Provides a Lat Lon string in Degree Minute Second format.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Settings.html##(SETTINGS)">Core.Settings#SETTINGS</a> Settings </em></code>: 
+(optional) Settings</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#string:</em>
+The LL DMS Text</p>
 
 </dd>
 </dl>
@@ -2253,6 +2906,346 @@ The new calculated COORDINATE.</p>
 <dt>
 
 		<em></em>
+<a id="#(COORDINATE).Velocity" >
+<strong>COORDINATE.Velocity</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(COORDINATE).WaypointAction" >
+<strong>COORDINATE.WaypointAction</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(COORDINATE).WaypointAir" >
+<strong>COORDINATE:WaypointAir(AltType, Type, Action, Speed, SpeedLocked)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Build an air type route point.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="##(COORDINATE.WaypointAltType)">#COORDINATE.WaypointAltType</a> AltType </em></code>: 
+The altitude type.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="##(COORDINATE.WaypointType)">#COORDINATE.WaypointType</a> Type </em></code>: 
+The route point type.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="##(COORDINATE.WaypointAction)">#COORDINATE.WaypointAction</a> Action </em></code>: 
+The route point action.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSTypes.html##(Speed)">Dcs.DCSTypes#Speed</a> Speed </em></code>: 
+Airspeed in km/h.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#boolean SpeedLocked </em></code>: 
+true means the speed is locked.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#table:</em>
+The route point.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(COORDINATE).WaypointAirFlyOverPoint" >
+<strong>COORDINATE:WaypointAirFlyOverPoint(AltType, Speed)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Build a Waypoint Air "Fly Over Point".</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="##(COORDINATE.WaypointAltType)">#COORDINATE.WaypointAltType</a> AltType </em></code>: 
+The altitude type.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSTypes.html##(Speed)">Dcs.DCSTypes#Speed</a> Speed </em></code>: 
+Airspeed in km/h.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#table:</em>
+The route point.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(COORDINATE).WaypointAirLanding" >
+<strong>COORDINATE:WaypointAirLanding(Speed)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Build a Waypoint Air "Landing".</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSTypes.html##(Speed)">Dcs.DCSTypes#Speed</a> Speed </em></code>: 
+Airspeed in km/h.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#table:</em>
+The route point.</p>
+
+			<h3>Usage:</h3>
+		<pre class="example"><code>
+   LandingZone = ZONE:New( "LandingZone" )
+   LandingCoord = LandingZone:GetCoordinate()
+   LandingWaypoint = LandingCoord:WaypointAirLanding( 60 )
+   HeliGroup:Route( { LandWaypoint }, 1 ) -- Start landing the helicopter in one second.
+</code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(COORDINATE).WaypointAirTakeOffParking" >
+<strong>COORDINATE:WaypointAirTakeOffParking(AltType, Speed)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Build a Waypoint Air "Take Off Parking".</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="##(COORDINATE.WaypointAltType)">#COORDINATE.WaypointAltType</a> AltType </em></code>: 
+The altitude type.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSTypes.html##(Speed)">Dcs.DCSTypes#Speed</a> Speed </em></code>: 
+Airspeed in km/h.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#table:</em>
+The route point.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(COORDINATE).WaypointAirTakeOffParkingHot" >
+<strong>COORDINATE:WaypointAirTakeOffParkingHot(AltType, Speed)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Build a Waypoint Air "Take Off Parking Hot".</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="##(COORDINATE.WaypointAltType)">#COORDINATE.WaypointAltType</a> AltType </em></code>: 
+The altitude type.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSTypes.html##(Speed)">Dcs.DCSTypes#Speed</a> Speed </em></code>: 
+Airspeed in km/h.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#table:</em>
+The route point.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(COORDINATE).WaypointAirTakeOffRunway" >
+<strong>COORDINATE:WaypointAirTakeOffRunway(AltType, Speed)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Build a Waypoint Air "Take Off Runway".</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="##(COORDINATE.WaypointAltType)">#COORDINATE.WaypointAltType</a> AltType </em></code>: 
+The altitude type.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSTypes.html##(Speed)">Dcs.DCSTypes#Speed</a> Speed </em></code>: 
+Airspeed in km/h.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#table:</em>
+The route point.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(COORDINATE).WaypointAirTurningPoint" >
+<strong>COORDINATE:WaypointAirTurningPoint(AltType, Speed)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Build a Waypoint Air "Turning Point".</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="##(COORDINATE.WaypointAltType)">#COORDINATE.WaypointAltType</a> AltType </em></code>: 
+The altitude type.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSTypes.html##(Speed)">Dcs.DCSTypes#Speed</a> Speed </em></code>: 
+Airspeed in km/h.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#table:</em>
+The route point.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(COORDINATE).WaypointAltType" >
+<strong>COORDINATE.WaypointAltType</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(COORDINATE).WaypointGround" >
+<strong>COORDINATE:WaypointGround(Speed, Formation)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Build an ground type route point.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number Speed </em></code>: 
+(optional) Speed in km/h. The default speed is 999 km/h.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Formation </em></code>: 
+(optional) The route point Formation, which is a text string that specifies exactly the Text in the Type of the route point, like "Vee", "Echelon Right".</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#table:</em>
+The route point.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(COORDINATE).WaypointType" >
+<strong>COORDINATE.WaypointType</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
 <a id="#(COORDINATE).x" >
 <strong>COORDINATE.x</strong>
 </a>
@@ -2292,11 +3285,11 @@ The new calculated COORDINATE.</p>
 </dd>
 </dl>
 
-			<h2><a id="#(COORDINATE.RoutePointAction)" >Type <code>COORDINATE.RoutePointAction</code></a></h2>
+			<h2><a id="#(COORDINATE.WaypointAction)" >Type <code>COORDINATE.WaypointAction</code></a></h2>
 			
-			<h2><a id="#(COORDINATE.RoutePointAltType)" >Type <code>COORDINATE.RoutePointAltType</code></a></h2>
+			<h2><a id="#(COORDINATE.WaypointAltType)" >Type <code>COORDINATE.WaypointAltType</code></a></h2>
 			
-			<h2><a id="#(COORDINATE.RoutePointType)" >Type <code>COORDINATE.RoutePointType</code></a></h2>
+			<h2><a id="#(COORDINATE.WaypointType)" >Type <code>COORDINATE.WaypointType</code></a></h2>
 			
 			<h2><a id="#(POINT_VEC2)" >Type <code>POINT_VEC2</code></a></h2>
 				<h3>Field(s)</h3>

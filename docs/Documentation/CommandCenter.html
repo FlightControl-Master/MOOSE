@@ -28,9 +28,9 @@
 					<li><a href="AI_Cas.html">AI_Cas</a></li>
 					<li><a href="AI_Formation.html">AI_Formation</a></li>
 					<li><a href="AI_Patrol.html">AI_Patrol</a></li>
+					<li><a href="ATC_Ground.html">ATC_Ground</a></li>
 					<li><a href="Account.html">Account</a></li>
 					<li><a href="Airbase.html">Airbase</a></li>
-					<li><a href="AirbasePolice.html">AirbasePolice</a></li>
 					<li><a href="Assign.html">Assign</a></li>
 					<li><a href="Base.html">Base</a></li>
 					<li><a href="Cargo.html">Cargo</a></li>
@@ -60,6 +60,7 @@
 					<li><a href="Escort.html">Escort</a></li>
 					<li><a href="Event.html">Event</a></li>
 					<li><a href="Fsm.html">Fsm</a></li>
+					<li><a href="Goal.html">Goal</a></li>
 					<li><a href="Group.html">Group</a></li>
 					<li><a href="Identifiable.html">Identifiable</a></li>
 					<li><a href="Menu.html">Menu</a></li>
@@ -72,7 +73,9 @@
 					<li><a href="Positionable.html">Positionable</a></li>
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
 					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
+					<li><a href="Protect.html">Protect</a></li>
 					<li><a href="Radio.html">Radio</a></li>
+					<li><a href="Rat.html">Rat</a></li>
 					<li><a href="Route.html">Route</a></li>
 					<li><a href="Scenery.html">Scenery</a></li>
 					<li><a href="ScheduleDispatcher.html">ScheduleDispatcher</a></li>
@@ -88,6 +91,7 @@
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="Task.html">Task</a></li>
+					<li><a href="TaskZoneCapture.html">TaskZoneCapture</a></li>
 					<li><a href="Task_A2A.html">Task_A2A</a></li>
 					<li><a href="Task_A2A_Dispatcher.html">Task_A2A_Dispatcher</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
@@ -95,8 +99,15 @@
 					<li><a href="Task_Cargo.html">Task_Cargo</a></li>
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
 					<li><a href="Unit.html">Unit</a></li>
+					<li><a href="UserFlag.html">UserFlag</a></li>
+					<li><a href="UserSound.html">UserSound</a></li>
 					<li><a href="Utils.html">Utils</a></li>
+					<li><a href="Velocity.html">Velocity</a></li>
 					<li><a href="Zone.html">Zone</a></li>
+					<li><a href="ZoneCaptureCoalition.html">ZoneCaptureCoalition</a></li>
+					<li><a href="ZoneGoal.html">ZoneGoal</a></li>
+					<li><a href="ZoneGoalCargo.html">ZoneGoalCargo</a></li>
+					<li><a href="ZoneGoalCoalition.html">ZoneGoalCoalition</a></li>
 					<li><a href="env.html">env</a></li>
 					<li><a href="land.html">land</a></li>
 					<li><a href="routines.html">routines</a></li>
@@ -127,12 +138,6 @@
 <h1>COMMANDCENTER class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
 
 <p> The COMMANDCENTER class governs multiple missions, the tasking and the reporting.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="#REPORT">REPORT</a></td>
-		<td class="summary">
-
 </td>
 		</tr>
 	</table>
@@ -217,9 +222,21 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(COMMANDCENTER).MessageToGroup">COMMANDCENTER:MessageToGroup(Message, TaskGroup, Name)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(COMMANDCENTER).MessageToGroup">COMMANDCENTER:MessageToGroup(Message, TaskGroup)</a></td>
 		<td class="summary">
 <p>Send a CC message to a GROUP.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(COMMANDCENTER).MessageTypeToCoalition">COMMANDCENTER:MessageTypeToCoalition(Message, MessageType)</a></td>
+		<td class="summary">
+<p>Send a CC message of a specified type to the coalition of the CC.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(COMMANDCENTER).MessageTypeToGroup">COMMANDCENTER:MessageTypeToGroup(Message, TaskGroup, MessageType)</a></td>
+		<td class="summary">
+<p>Send a CC message of a specified type to a GROUP.</p>
 </td>
 		</tr>
 		<tr>
@@ -270,70 +287,6 @@ and will be replaced by a navigation using Reference Zones.</p>
 		<td class="name" nowrap="nowrap"><a href="##(COMMANDCENTER).SetReferenceZones">COMMANDCENTER:SetReferenceZones(ReferenceZonePrefix)</a></td>
 		<td class="summary">
 <p>Set special Reference Zones known by the Command Center to guide airborne pilots during WWII.</p>
-</td>
-		</tr>
-	</table>
-
-			<h2><a id="#(REPORT)">Type <code>REPORT</code></a></h2>
-				<table class="function_list">
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(REPORT).Add">REPORT:Add(Text)</a></td>
-		<td class="summary">
-<p>Add a new line to a REPORT.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(REPORT).AddIndent">REPORT:AddIndent(Text)</a></td>
-		<td class="summary">
-<p>Add a new line to a REPORT.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(REPORT).ClassName">REPORT.ClassName</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(REPORT).HasText">REPORT:HasText()</a></td>
-		<td class="summary">
-<p>Has the REPORT Text?</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(REPORT).Indent">REPORT.Indent</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(REPORT).New">REPORT:New(Title)</a></td>
-		<td class="summary">
-<p>Create a new REPORT.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(REPORT).Report">REPORT.Report</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(REPORT).SetIndent">REPORT:SetIndent(Indent)</a></td>
-		<td class="summary">
-<p>Set indent of a REPORT.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(REPORT).Text">REPORT:Text(Delimiter)</a></td>
-		<td class="summary">
-<p>Produces the text of the report, taking into account an optional delimeter, which is \n by default.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(REPORT).Title">REPORT.Title</a></td>
-		<td class="summary">
-
 </td>
 		</tr>
 	</table>
@@ -400,20 +353,6 @@ A few examples:</p>
 <p>The COMMANDCENTER class contains a method to indicate which trigger zones need to be used as Reference Zones.
 This is done by using the method <a href="##(COMMANDCENTER).SetReferenceZones">COMMANDCENTER.SetReferenceZones</a>().
 For the moment, only one Reference Zone class can be specified, but in the future, more classes will become possible.</p>
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em><a href="##(REPORT)">#REPORT</a></em>
-<a id="REPORT" >
-<strong>REPORT</strong>
-</a>
-</dt>
-<dd>
-	
 
 
 </dd>
@@ -674,7 +613,7 @@ true if in WWII mode.</p>
 <dt>
 
 <a id="#(COMMANDCENTER).MessageToGroup" >
-<strong>COMMANDCENTER:MessageToGroup(Message, TaskGroup, Name)</strong>
+<strong>COMMANDCENTER:MessageToGroup(Message, TaskGroup)</strong>
 </a>
 </dt>
 <dd>
@@ -693,10 +632,64 @@ true if in WWII mode.</p>
 <p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> TaskGroup </em></code>: </p>
 
 				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(COMMANDCENTER).MessageTypeToCoalition" >
+<strong>COMMANDCENTER:MessageTypeToCoalition(Message, MessageType)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Send a CC message of a specified type to the coalition of the CC.</p>
+
+		<h3>Parameters</h3>
+		<ul>
 				<li>
 				
-<p><code><em><a href="##(sring)">#sring</a> Name </em></code>: 
-(optional) The name of the Group used as a prefix for the message to the Group. If not provided, there will be nothing shown.</p>
+<p><code><em>#string Message </em></code>: 
+The message.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Core.Message.html##(MESSAGE.MessageType)">Core.Message#MESSAGE.MessageType</a> MessageType </em></code>: 
+The type of the message, resulting in automatic time duration and prefix of the message.</p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(COMMANDCENTER).MessageTypeToGroup" >
+<strong>COMMANDCENTER:MessageTypeToGroup(Message, TaskGroup, MessageType)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Send a CC message of a specified type to a GROUP.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Message </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> TaskGroup </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Core.Message.html##(MESSAGE.MessageType)">Core.Message#MESSAGE.MessageType</a> MessageType </em></code>: 
+The type of the message, resulting in automatic time duration and prefix of the message.</p>
 
 				</li>
 		</ul>
@@ -928,222 +921,9 @@ The name before the #-mark indicating the class of the Reference Zones.</p>
 </dd>
 </dl>
 
-			<h2><a id="#(REPORT)" >Type <code>REPORT</code></a></h2>
-				
-<p>The REPORT class</p>
-
-	<h3>Field(s)</h3>
-		<dl class="function">
-<dt>
-
-<a id="#(REPORT).Add" >
-<strong>REPORT:Add(Text)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Add a new line to a REPORT.</p>
-
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em>#string Text </em></code>: </p>
-
-				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em><a href="##(REPORT)">#REPORT</a>:</em></p>
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(REPORT).AddIndent" >
-<strong>REPORT:AddIndent(Text)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Add a new line to a REPORT.</p>
-
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em>#string Text </em></code>: </p>
-
-				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em><a href="##(REPORT)">#REPORT</a>:</em></p>
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em>#string</em>
-<a id="#(REPORT).ClassName" >
-<strong>REPORT.ClassName</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(REPORT).HasText" >
-<strong>REPORT:HasText()</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Has the REPORT Text?</p>
-
-		<h3>Return value</h3>
-				
-<p><em>#boolean:</em></p>
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em></em>
-<a id="#(REPORT).Indent" >
-<strong>REPORT.Indent</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(REPORT).New" >
-<strong>REPORT:New(Title)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Create a new REPORT.</p>
-
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em>#string Title </em></code>: </p>
-
-				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em><a href="##(REPORT)">#REPORT</a>:</em></p>
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em></em>
-<a id="#(REPORT).Report" >
-<strong>REPORT.Report</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(REPORT).SetIndent" >
-<strong>REPORT:SetIndent(Indent)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Set indent of a REPORT.</p>
-
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em>#number Indent </em></code>: </p>
-
-				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em><a href="##(REPORT)">#REPORT</a>:</em></p>
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(REPORT).Text" >
-<strong>REPORT:Text(Delimiter)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Produces the text of the report, taking into account an optional delimeter, which is \n by default.</p>
-
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em>#string Delimiter </em></code>: 
-(optional) A delimiter text.</p>
-
-				</li>
-		</ul>
-		<h3>Return value</h3>
-				
-<p><em>#string:</em>
-The report text.</p>
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em></em>
-<a id="#(REPORT).Title" >
-<strong>REPORT.Title</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-
 			<h2><a id="#(TASK)" >Type <code>TASK</code></a></h2>
 			
 			<h2><a id="#(list)" >Type <code>list</code></a></h2>
-			
-			<h2><a id="#(sring)" >Type <code>sring</code></a></h2>
 			
 </div>
 

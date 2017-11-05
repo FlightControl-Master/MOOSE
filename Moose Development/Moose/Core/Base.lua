@@ -4,10 +4,6 @@
 -- 
 -- ===
 -- 
--- The @{#BASE} class is the core root class from where every other class in moose is derived.
--- 
--- ===
--- 
 -- ### Author: **Sven Van de Velde (FlightControl)**
 -- ### Contributions: 
 -- 
@@ -202,7 +198,15 @@ BASE = {
   ClassID = 0,
   Events = {},
   States = {},
-  _ = {},
+}
+
+
+--- @field #BASE.__
+BASE.__ = {}
+
+--- @field #BASE._
+BASE._ = {
+  Schedules = {} --- Contains the Schedulers Active
 }
 
 --- The Formation Class
@@ -228,45 +232,17 @@ FORMATION = {
 -- @return #BASE
 function BASE:New()
   local self = routines.utils.deepCopy( self ) -- Create a new self instance
-	local MetaTable = {}
-	setmetatable( self, MetaTable )
-	self.__index = self
+
 	_ClassID = _ClassID + 1
 	self.ClassID = _ClassID
-
+	
+	-- This is for "private" methods...
+	-- When a __ is passed to a method as "self", the __index will search for the method on the public method list too!
+--  if rawget( self, "__" ) then
+    --setmetatable( self, { __index = self.__ } )
+--  end
 	
 	return self
-end
-
-function BASE:_Destructor()
-  --self:E("_Destructor")
-
-  --self:EventRemoveAll()
-end
-
-
--- THIS IS WHY WE NEED LUA 5.2 ...
-function BASE:_SetDestructor()
-
-  -- TODO: Okay, this is really technical...
-  -- When you set a proxy to a table to catch __gc, weak tables don't behave like weak...
-  -- Therefore, I am parking this logic until I've properly discussed all this with the community.
-
-  local proxy = newproxy(true)
-  local proxyMeta = getmetatable(proxy)
-
-  proxyMeta.__gc = function ()
-    env.info("In __gc for " .. self:GetClassNameAndID() )
-    if self._Destructor then
-        self:_Destructor()
-    end
-  end
-
-  -- keep the userdata from newproxy reachable until the object
-  -- table is about to be garbage-collected - then the __gc hook
-  -- will be invoked and the destructor called
-  rawset( self, '__proxy', proxy )
-  
 end
 
 --- This is the worker method to inherit from a parent class.
@@ -276,17 +252,39 @@ end
 -- @return #BASE Child
 function BASE:Inherit( Child, Parent )
 	local Child = routines.utils.deepCopy( Child )
-	--local Parent = routines.utils.deepCopy( Parent )
-  --local Parent = Parent
+
 	if Child ~= nil then
-		setmetatable( Child, Parent )
-		Child.__index = Child
-		
+
+  -- This is for "private" methods...
+  -- When a __ is passed to a method as "self", the __index will search for the method on the public method list of the same object too!
+    if rawget( Child, "__" ) then
+      setmetatable( Child, { __index = Child.__  } )
+      setmetatable( Child.__, { __index = Parent } )
+    else
+      setmetatable( Child, { __index = Parent } )
+    end
+    
 		--Child:_SetDestructor()
 	end
-	--self:T( 'Inherited from ' .. Parent.ClassName ) 
 	return Child
 end
+
+
+local function getParent( Child )
+  local Parent = nil
+  
+  if Child.ClassName == 'BASE' then
+    Parent = nil
+  else
+    if rawget( Child, "__" ) then
+      Parent = getmetatable( Child.__ ).__index
+    else
+      Parent = getmetatable( Child ).__index
+    end 
+  end
+  return Parent
+end
+
 
 --- This is the worker method to retrieve the Parent class.  
 -- Note that the Parent class must be passed to call the parent class method.
@@ -297,12 +295,91 @@ end
 -- @param #BASE self
 -- @param #BASE Child is the Child class from which the Parent class needs to be retrieved.
 -- @return #BASE
-function BASE:GetParent( Child )
-	local Parent = getmetatable( Child )
---	env.info('Inherited class of ' .. Child.ClassName .. ' is ' .. Parent.ClassName )
-	return Parent
+function BASE:GetParent( Child, FromClass )
+
+
+  local Parent
+  -- BASE class has no parent
+  if Child.ClassName == 'BASE' then
+    Parent = nil
+  else
+  
+    self:E({FromClass = FromClass})
+    self:E({Child = Child.ClassName})
+    if FromClass then
+      while( Child.ClassName ~= "BASE" and Child.ClassName ~= FromClass.ClassName ) do
+        Child = getParent( Child )
+        self:E({Child.ClassName})
+      end
+    end  
+    if Child.ClassName == 'BASE' then
+      Parent = nil
+    else
+      Parent = getParent( Child )
+    end
+  end
+  self:E({Parent.ClassName})
+  return Parent
 end
 
+--- This is the worker method to check if an object is an (sub)instance of a class.
+--
+-- ### Examples:
+--
+--    * ZONE:New( 'some zone' ):IsInstanceOf( ZONE ) will return true
+--    * ZONE:New( 'some zone' ):IsInstanceOf( 'ZONE' ) will return true
+--    * ZONE:New( 'some zone' ):IsInstanceOf( 'zone' ) will return true
+--    * ZONE:New( 'some zone' ):IsInstanceOf( 'BASE' ) will return true
+--
+--    * ZONE:New( 'some zone' ):IsInstanceOf( 'GROUP' ) will return false
+-- 
+-- @param #BASE self
+-- @param ClassName is the name of the class or the class itself to run the check against
+-- @return #boolean
+function BASE:IsInstanceOf( ClassName )
+
+  -- Is className NOT a string ?
+  if type( ClassName ) ~= 'string' then
+  
+    -- Is className a Moose class ?
+    if type( ClassName ) == 'table' and ClassName.ClassName ~= nil then
+    
+      -- Get the name of the Moose class as a string
+      ClassName = ClassName.ClassName
+      
+    -- className is neither a string nor a Moose class, throw an error
+    else
+    
+      -- I'm not sure if this should take advantage of MOOSE logging function, or throw an error for pcall
+      local err_str = 'className parameter should be a string; parameter received: '..type( ClassName )
+      self:E( err_str )
+      -- error( err_str )
+      return false
+      
+    end
+  end
+  
+  ClassName = string.upper( ClassName )
+
+  if string.upper( self.ClassName ) == ClassName then
+    return true
+  end
+
+  local Parent = getParent(self)
+
+  while Parent do
+
+    if string.upper( Parent.ClassName ) == ClassName then
+      return true
+    end
+
+    Parent = getParent( Parent )
+
+  end
+
+  return false
+
+end
 --- Get the ClassName + ClassID of the class instance.
 -- The ClassName + ClassID is formatted as '%s#%09d'. 
 -- @param #BASE self
@@ -383,7 +460,7 @@ do -- Event Handling
   -- @return #BASE
   function BASE:UnHandleEvent( Event )
   
-    self:EventDispatcher():Remove( self, Event )
+    self:EventDispatcher():RemoveEvent( self, Event )
     
     return self
   end
@@ -566,6 +643,22 @@ function BASE:CreateEventCrash( EventTime, Initiator )
 	world.onEvent( Event )
 end
 
+--- Creation of a Takeoff Event.
+-- @param #BASE self
+-- @param Dcs.DCSTypes#Time EventTime The time stamp of the event.
+-- @param Dcs.DCSWrapper.Object#Object Initiator The initiating object of the event.
+function BASE:CreateEventTakeoff( EventTime, Initiator )
+  self:F( { EventTime, Initiator } )
+
+  local Event = {
+    id = world.event.S_EVENT_TAKEOFF,
+    time = EventTime,
+    initiator = Initiator,
+    }
+
+  world.onEvent( Event )
+end
+
 -- TODO: Complete Dcs.DCSTypes#Event structure.                       
 --- The main event handling function... This function captures all events generated for the class.
 -- @param #BASE self
@@ -596,6 +689,86 @@ function BASE:onEvent(event)
 	end
 end
 
+do -- Scheduling
+
+  --- Schedule a new time event. Note that the schedule will only take place if the scheduler is *started*. Even for a single schedule event, the scheduler needs to be started also.
+  -- @param #BASE self
+  -- @param #number Start Specifies the amount of seconds that will be waited before the scheduling is started, and the event function is called.
+  -- @param #function SchedulerFunction The event function to be called when a timer event occurs. The event function needs to accept the parameters specified in SchedulerArguments.
+  -- @param #table ... Optional arguments that can be given as part of scheduler. The arguments need to be given as a table { param1, param 2, ... }.
+  -- @return #number The ScheduleID of the planned schedule.
+  function BASE:ScheduleOnce( Start, SchedulerFunction, ... )
+    self:F2( { Start } )
+    self:T3( { ... } )
+  
+    local ObjectName = "-"
+    ObjectName = self.ClassName .. self.ClassID
+    
+    self:F3( { "ScheduleOnce: ", ObjectName,  Start } )
+    self.SchedulerObject = self
+    
+    local ScheduleID = _SCHEDULEDISPATCHER:AddSchedule( 
+      self, 
+      SchedulerFunction,
+      { ... },
+      Start,
+      nil,
+      nil,
+      nil
+    )
+    
+    self._.Schedules[#self.Schedules+1] = ScheduleID
+  
+    return self._.Schedules
+  end
+
+  --- Schedule a new time event. Note that the schedule will only take place if the scheduler is *started*. Even for a single schedule event, the scheduler needs to be started also.
+  -- @param #BASE self
+  -- @param #number Start Specifies the amount of seconds that will be waited before the scheduling is started, and the event function is called.
+  -- @param #number Repeat Specifies the interval in seconds when the scheduler will call the event function.
+  -- @param #number RandomizeFactor Specifies a randomization factor between 0 and 1 to randomize the Repeat.
+  -- @param #number Stop Specifies the amount of seconds when the scheduler will be stopped.
+  -- @param #function SchedulerFunction The event function to be called when a timer event occurs. The event function needs to accept the parameters specified in SchedulerArguments.
+  -- @param #table ... Optional arguments that can be given as part of scheduler. The arguments need to be given as a table { param1, param 2, ... }.
+  -- @return #number The ScheduleID of the planned schedule.
+  function BASE:ScheduleRepeat( Start, Repeat, RandomizeFactor, Stop, SchedulerFunction, ... )
+    self:F2( { Start } )
+    self:T3( { ... } )
+  
+    local ObjectName = "-"
+    ObjectName = self.ClassName .. self.ClassID
+    
+    self:F3( { "ScheduleRepeat: ", ObjectName, Start, Repeat, RandomizeFactor, Stop } )
+    self.SchedulerObject = self
+    
+    local ScheduleID = _SCHEDULEDISPATCHER:AddSchedule( 
+      self, 
+      SchedulerFunction,
+      { ... },
+      Start,
+      Repeat,
+      RandomizeFactor,
+      Stop
+    )
+    
+    self._.Schedules[SchedulerFunction] = ScheduleID
+  
+    return self._.Schedules
+  end
+
+  --- Stops the Schedule.
+  -- @param #BASE self
+  -- @param #function SchedulerFunction The event function to be called when a timer event occurs. The event function needs to accept the parameters specified in SchedulerArguments.
+  function BASE:ScheduleStop( SchedulerFunction )
+  
+    self:F3( { "ScheduleStop:" } )
+    
+  _SCHEDULEDISPATCHER:Stop( self, self._.Schedules[SchedulerFunction] )
+  end
+
+end
+
+
 --- Set a state or property of the Object given a Key and a Value.
 -- Note that if the Object is destroyed, nillified or garbage collected, then the Values and Keys will also be gone.
 -- @param #BASE self
@@ -610,7 +783,6 @@ function BASE:SetState( Object, Key, Value )
 
   self.States[ClassNameAndID] = self.States[ClassNameAndID] or {}
   self.States[ClassNameAndID][Key] = Value
-  self:T2( { ClassNameAndID, Key, Value } )
   
   return self.States[ClassNameAndID][Key]
 end
@@ -628,7 +800,6 @@ function BASE:GetState( Object, Key )
 
   if self.States[ClassNameAndID] then
     local Value = self.States[ClassNameAndID][Key] or false
-    self:T2( { ClassNameAndID, Key, Value } )
     return Value
   end
   
@@ -899,3 +1070,35 @@ end
 
 
 
+--- old stuff
+
+--function BASE:_Destructor()
+--  --self:E("_Destructor")
+--
+--  --self:EventRemoveAll()
+--end
+
+
+-- THIS IS WHY WE NEED LUA 5.2 ...
+--function BASE:_SetDestructor()
+--
+--  -- TODO: Okay, this is really technical...
+--  -- When you set a proxy to a table to catch __gc, weak tables don't behave like weak...
+--  -- Therefore, I am parking this logic until I've properly discussed all this with the community.
+--
+--  local proxy = newproxy(true)
+--  local proxyMeta = getmetatable(proxy)
+--
+--  proxyMeta.__gc = function ()
+--    env.info("In __gc for " .. self:GetClassNameAndID() )
+--    if self._Destructor then
+--        self:_Destructor()
+--    end
+--  end
+--
+--  -- keep the userdata from newproxy reachable until the object
+--  -- table is about to be garbage-collected - then the __gc hook
+--  -- will be invoked and the destructor called
+--  rawset( self, '__proxy', proxy )
+--  
+--end

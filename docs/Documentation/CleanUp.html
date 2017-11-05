@@ -28,9 +28,9 @@
 					<li><a href="AI_Cas.html">AI_Cas</a></li>
 					<li><a href="AI_Formation.html">AI_Formation</a></li>
 					<li><a href="AI_Patrol.html">AI_Patrol</a></li>
+					<li><a href="ATC_Ground.html">ATC_Ground</a></li>
 					<li><a href="Account.html">Account</a></li>
 					<li><a href="Airbase.html">Airbase</a></li>
-					<li><a href="AirbasePolice.html">AirbasePolice</a></li>
 					<li><a href="Assign.html">Assign</a></li>
 					<li><a href="Base.html">Base</a></li>
 					<li><a href="Cargo.html">Cargo</a></li>
@@ -60,6 +60,7 @@
 					<li><a href="Escort.html">Escort</a></li>
 					<li><a href="Event.html">Event</a></li>
 					<li><a href="Fsm.html">Fsm</a></li>
+					<li><a href="Goal.html">Goal</a></li>
 					<li><a href="Group.html">Group</a></li>
 					<li><a href="Identifiable.html">Identifiable</a></li>
 					<li><a href="Menu.html">Menu</a></li>
@@ -72,7 +73,9 @@
 					<li><a href="Positionable.html">Positionable</a></li>
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
 					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
+					<li><a href="Protect.html">Protect</a></li>
 					<li><a href="Radio.html">Radio</a></li>
+					<li><a href="Rat.html">Rat</a></li>
 					<li><a href="Route.html">Route</a></li>
 					<li><a href="Scenery.html">Scenery</a></li>
 					<li><a href="ScheduleDispatcher.html">ScheduleDispatcher</a></li>
@@ -88,6 +91,7 @@
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="Task.html">Task</a></li>
+					<li><a href="TaskZoneCapture.html">TaskZoneCapture</a></li>
 					<li><a href="Task_A2A.html">Task_A2A</a></li>
 					<li><a href="Task_A2A_Dispatcher.html">Task_A2A_Dispatcher</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
@@ -95,8 +99,15 @@
 					<li><a href="Task_Cargo.html">Task_Cargo</a></li>
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
 					<li><a href="Unit.html">Unit</a></li>
+					<li><a href="UserFlag.html">UserFlag</a></li>
+					<li><a href="UserSound.html">UserSound</a></li>
 					<li><a href="Utils.html">Utils</a></li>
+					<li><a href="Velocity.html">Velocity</a></li>
 					<li><a href="Zone.html">Zone</a></li>
+					<li><a href="ZoneCaptureCoalition.html">ZoneCaptureCoalition</a></li>
+					<li><a href="ZoneGoal.html">ZoneGoal</a></li>
+					<li><a href="ZoneGoalCargo.html">ZoneGoalCargo</a></li>
+					<li><a href="ZoneGoalCoalition.html">ZoneGoalCoalition</a></li>
 					<li><a href="env.html">env</a></li>
 					<li><a href="land.html">land</a></li>
 					<li><a href="routines.html">routines</a></li>
@@ -105,118 +116,72 @@
 	<div id="content">
    <h1>Module <code>CleanUp</code></h1>
    
-<p><strong>Functional</strong> -- The CLEANUP class keeps an area clean of crashing or colliding airplanes.</p>
+<p><strong>Functional</strong> -- The CLEANUP_AIRBASE class keeps an area clean of crashing or colliding airplanes.</p>
 
    
 <p>It also prevents airplanes from firing within this area.</p>
 
 <hr/>
 
+<h3>Author: <strong>Sven Van de Velde (FlightControl)</strong></h3>
+<h3>Contributions:</h3>
+
+<hr/>
+
+
 	<h2>Global(s)</h2>
 	<table class="function_list">
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="#CLEANUP">CLEANUP</a></td>
+		<td class="name" nowrap="nowrap"><a href="#CLEANUP_AIRBASE">CLEANUP_AIRBASE</a></td>
 		<td class="summary">
+<h1>CLEANUP_AIRBASE, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
 
+<p><img src="..\Presentations\CLEANUP_AIRBASE\Dia1.JPG" alt="Banner Image"/></p>
+
+<p>The CLEANUP_AIRBASE class keeps airbases clean, and tries to guarantee continuous airbase operations, even under combat.</p>
 </td>
 		</tr>
 	</table>
-			<h2><a id="#(CLEANUP)">Type <code>CLEANUP</code></a></h2>
+			<h2><a id="#(CLEANUP_AIRBASE)">Type <code>CLEANUP_AIRBASE</code></a></h2>
 				<table class="function_list">
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CLEANUP).ClassName">CLEANUP.ClassName</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(CLEANUP_AIRBASE).AddAirbase">CLEANUP_AIRBASE:AddAirbase(AirbaseName)</a></td>
 		<td class="summary">
-
+<p>Adds an airbase to the airbase validation list.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CLEANUP).CleanUpList">CLEANUP.CleanUpList</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CLEANUP).CleanUpScheduler">CLEANUP.CleanUpScheduler</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CLEANUP).New">CLEANUP:New(ZoneNames, TimeInterval)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(CLEANUP_AIRBASE).New">CLEANUP_AIRBASE:New(<, AirbaseNames)</a></td>
 		<td class="summary">
 <p>Creates the main object which is handling the cleaning of the debris within the given Zone Names.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CLEANUP).TimeInterval">CLEANUP.TimeInterval</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(CLEANUP_AIRBASE).RemoveAirbase">CLEANUP_AIRBASE:RemoveAirbase(AirbaseName)</a></td>
+		<td class="summary">
+<p>Removes an airbase from the airbase validation list.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CLEANUP_AIRBASE).SetCleanMissiles">CLEANUP_AIRBASE:SetCleanMissiles(CleanMissiles)</a></td>
+		<td class="summary">
+<p>Enables or disables the cleaning of missiles within the airbase zones.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CLEANUP_AIRBASE).__">CLEANUP_AIRBASE.__</a></td>
 		<td class="summary">
 
 </td>
 		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CLEANUP).ZoneNames">CLEANUP.ZoneNames</a></td>
-		<td class="summary">
+	</table>
 
-</td>
-		</tr>
+			<h2><a id="#(CLEANUP_AIRBASE.__)">Type <code>CLEANUP_AIRBASE.__</code></a></h2>
+				<table class="function_list">
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CLEANUP)._AddForCleanUp">CLEANUP:_AddForCleanUp(CleanUpUnit, CleanUpUnitName)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(CLEANUP_AIRBASE.__).<">CLEANUP_AIRBASE.__.<</a></td>
 		<td class="summary">
-<p>Add the <a href="DCSWrapper.Unit.html##(Unit)">DCSWrapper.Unit#Unit</a> to the CleanUpList for CleanUp.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CLEANUP)._CleanUpScheduler">CLEANUP:_CleanUpScheduler()</a></td>
-		<td class="summary">
-<p>At the defined time interval, CleanUp the Groups within the CleanUpList.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CLEANUP)._DestroyGroup">CLEANUP:_DestroyGroup(GroupObject, CleanUpGroupName)</a></td>
-		<td class="summary">
-<p>Destroys a group from the simulator, but checks first if it is still existing!</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CLEANUP)._DestroyMissile">CLEANUP:_DestroyMissile(MissileObject)</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CLEANUP)._DestroyUnit">CLEANUP:_DestroyUnit(CleanUpUnit, CleanUpUnitName)</a></td>
-		<td class="summary">
-<p>Destroys a <a href="DCSWrapper.Unit.html##(Unit)">DCSWrapper.Unit#Unit</a> from the simulator, but checks first if it is still existing!</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CLEANUP)._EventAddForCleanUp">CLEANUP:_EventAddForCleanUp(event, Event)</a></td>
-		<td class="summary">
-<p>Detects if the Unit has an S<em>EVENT</em>ENGINE<em>SHUTDOWN or an S</em>EVENT_HIT within the given ZoneNames.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CLEANUP)._EventCrash">CLEANUP:_EventCrash(event, Event)</a></td>
-		<td class="summary">
-<p>Detects if a crash event occurs.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CLEANUP)._EventHitCleanUp">CLEANUP:_EventHitCleanUp(event, Event)</a></td>
-		<td class="summary">
-<p>Detects if the Unit has an S<em>EVENT</em>HIT within the given ZoneNames.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CLEANUP)._EventShot">CLEANUP:_EventShot(event, Event)</a></td>
-		<td class="summary">
-<p>Detects if a unit shoots a missile.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CLEANUP)._OnEventBirth">CLEANUP:_OnEventBirth(EventData)</a></td>
-		<td class="summary">
-
+<p>string,Wrapper.Airbase#AIRBASE> Airbases Map of Airbases.</p>
 </td>
 		</tr>
 	</table>
@@ -225,34 +190,100 @@
 		<dl class="function">
 <dt>
 
-		<em><a href="##(CLEANUP)">#CLEANUP</a></em>
-<a id="CLEANUP" >
-<strong>CLEANUP</strong>
+		<em><a href="##(CLEANUP_AIRBASE)">#CLEANUP_AIRBASE</a></em>
+<a id="CLEANUP_AIRBASE" >
+<strong>CLEANUP_AIRBASE</strong>
 </a>
 </dt>
 <dd>
 	
+<h1>CLEANUP_AIRBASE, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
+
+<p><img src="..\Presentations\CLEANUP_AIRBASE\Dia1.JPG" alt="Banner Image"/></p>
+
+<p>The CLEANUP_AIRBASE class keeps airbases clean, and tries to guarantee continuous airbase operations, even under combat.</p>
+
+	
+<p>Specific airbases need to be provided that need to be guarded. Each airbase registered, will be guarded within a zone of 8 km around the airbase.
+Any unit that fires a missile, or shoots within the zone of an airbase, will be monitored by CLEANUP_AIRBASE.
+Within the 8km zone, units cannot fire any missile, which prevents the airbase runway to receive missile or bomb hits. 
+Any airborne or ground unit that is on the runway below 30 meters (default value) will be automatically removed if it is damaged.</p>
+
+<p>This is not a full 100% secure implementation. It is still possible that CLEANUP_AIRBASE cannot prevent (in-time) to keep the airbase clean.
+The following situations may happen that will still stop the runway of an airbase:</p>
+
+<ul>
+    <li>A damaged unit is not removed on time when above the runway, and crashes on the runway.</li>
+    <li>A bomb or missile is still able to dropped on the runway.</li>
+    <li>Units collide on the airbase, and could not be removed on time.</li>
+</ul>
+
+<p>When a unit is within the airbase zone and needs to be monitored,
+its status will be checked every 0.25 seconds! This is required to ensure that the airbase is kept clean.
+But as a result, there is more CPU overload.</p>
+
+<p>So as an advise, I suggest you use the CLEANUP_AIRBASE class with care:</p>
+
+<ul>
+    <li>Only monitor airbases that really need to be monitored!</li>
+    <li>Try not to monitor airbases that are likely to be invaded by enemy troops.
+    For these airbases, there is little use to keep them clean, as they will be invaded anyway...</li>
+</ul>
+
+<p>By following the above guidelines, you can add airbase cleanup with acceptable CPU overhead.</p>
+
+<h2>1. CLEANUP_AIRBASE Constructor</h2>
+
+<p>Creates the main object which is preventing the airbase to get polluted with debris on the runway, which halts the airbase.</p>
+
+<pre><code> -- Clean these Zones.
+ CleanUpAirports = CLEANUP_AIRBASE:New( { AIRBASE.Caucasus.Tbilisi, AIRBASE.Caucasus.Kutaisi )
+
+ -- or
+ CleanUpTbilisi = CLEANUP_AIRBASE:New( AIRBASE.Caucasus.Tbilisi )
+ CleanUpKutaisi = CLEANUP_AIRBASE:New( AIRBASE.Caucasus.Kutaisi )
+</code></pre>
+
+<h2>2. Add or Remove airbases</h2>
+
+<p>The method <a href="##(CLEANUP_AIRBASE).AddAirbase">CLEANUP_AIRBASE.AddAirbase</a>() to add an airbase to the cleanup validation process.
+The method <a href="##(CLEANUP_AIRBASE).RemoveAirbase">CLEANUP_AIRBASE.RemoveAirbase</a>() removes an airbase from the cleanup validation process.</p>
+
+<h2>3. Clean missiles and bombs within the airbase zone.</h2>
+
+<p>When missiles or bombs hit the runway, the airbase operations stop.
+Use the method <a href="##(CLEANUP_AIRBASE).SetCleanMissiles">CLEANUP_AIRBASE.SetCleanMissiles</a>() to control the cleaning of missiles, which will prevent airbases to stop.
+Note that this method will not allow anymore airbases to be attacked, so there is a trade-off here to do.</p>
 
 
 </dd>
 </dl>
 	<h2><a id="#(CleanUp)" >Type <code>CleanUp</code></a></h2>
 	
-			<h2><a id="#(CLEANUP)" >Type <code>CLEANUP</code></a></h2>
+			<h2><a id="#(CLEANUP_AIRBASE)" >Type <code>CLEANUP_AIRBASE</code></a></h2>
+				<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+<a id="#(CLEANUP_AIRBASE).AddAirbase" >
+<strong>CLEANUP_AIRBASE:AddAirbase(AirbaseName)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Adds an airbase to the airbase validation list.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
 				
-<p>The CLEANUP class.</p>
+<p><code><em>#string AirbaseName </em></code>: </p>
 
-	<h3>Field(s)</h3>
-		<dl class="function">
-<dt>
-
-		<em>#string</em>
-<a id="#(CLEANUP).ClassName" >
-<strong>CLEANUP.ClassName</strong>
-</a>
-</dt>
-<dd>
-	
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(CLEANUP_AIRBASE)">#CLEANUP_AIRBASE</a>:</em></p>
 
 
 </dd>
@@ -260,36 +291,8 @@
 		<dl class="function">
 <dt>
 
-		<em></em>
-<a id="#(CLEANUP).CleanUpList" >
-<strong>CLEANUP.CleanUpList</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em></em>
-<a id="#(CLEANUP).CleanUpScheduler" >
-<strong>CLEANUP.CleanUpScheduler</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(CLEANUP).New" >
-<strong>CLEANUP:New(ZoneNames, TimeInterval)</strong>
+<a id="#(CLEANUP_AIRBASE).New" >
+<strong>CLEANUP_AIRBASE:New(<, AirbaseNames)</strong>
 </a>
 </dt>
 <dd>
@@ -300,28 +303,88 @@
 		<ul>
 				<li>
 				
-<p><code><em>#table ZoneNames </em></code>: 
-Is a table of zone names where the debris should be cleaned. Also a single string can be passed with one zone name.</p>
+<p><code><em><a href="##(list)">#list</a> &lt; </em></code>: 
+string> AirbaseNames Is a table of airbase names where the debris should be cleaned. Also a single string can be passed with one airbase name.</p>
 
 				</li>
 				<li>
 				
-<p><code><em>#number TimeInterval </em></code>: 
-The interval in seconds when the clean activity takes place. The default is 300 seconds, thus every 5 minutes.</p>
+<p><code><em> AirbaseNames </em></code>: </p>
 
 				</li>
 		</ul>
 		<h3>Return value</h3>
 				
-<p><em><a href="##(CLEANUP)">#CLEANUP</a>:</em></p>
+<p><em><a href="##(CLEANUP_AIRBASE)">#CLEANUP_AIRBASE</a>:</em></p>
 
 
 			<h3>Usage:</h3>
 		<pre class="example"><code> -- Clean these Zones.
-CleanUpAirports = CLEANUP:New( { 'CLEAN Tbilisi', 'CLEAN Kutaisi' }, 150 )
+CleanUpAirports = CLEANUP_AIRBASE:New( { AIRBASE.Caucasus.Tbilisi, AIRBASE.Caucasus.Kutaisi )
 or
-CleanUpTbilisi = CLEANUP:New( 'CLEAN Tbilisi', 150 )
-CleanUpKutaisi = CLEANUP:New( 'CLEAN Kutaisi', 600 )</code></pre>
+CleanUpTbilisi = CLEANUP_AIRBASE:New( AIRBASE.Caucasus.Tbilisi )
+CleanUpKutaisi = CLEANUP_AIRBASE:New( AIRBASE.Caucasus.Kutaisi )</code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CLEANUP_AIRBASE).RemoveAirbase" >
+<strong>CLEANUP_AIRBASE:RemoveAirbase(AirbaseName)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Removes an airbase from the airbase validation list.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string AirbaseName </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(CLEANUP_AIRBASE)">#CLEANUP_AIRBASE</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CLEANUP_AIRBASE).SetCleanMissiles" >
+<strong>CLEANUP_AIRBASE:SetCleanMissiles(CleanMissiles)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Enables or disables the cleaning of missiles within the airbase zones.</p>
+
+	
+<p>Airbase operations stop when a missile or bomb is dropped at a runway.
+Note that when this method is used, the airbase operations won't stop if
+the missile or bomb was cleaned within the airbase zone, which is 8km from the center of the airbase.
+However, there is a trade-off to make. Attacks on airbases won't be possible anymore if this method is used.
+Note, one can also use the method <a href="##(CLEANUP_AIRBASE).RemoveAirbase">CLEANUP_AIRBASE.RemoveAirbase</a>() to remove the airbase from the control process as a whole,
+when an enemy unit is near. That is also an option...</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string CleanMissiles </em></code>: 
+(Default=true) If true, missiles fired are immediately destroyed. If false missiles are not controlled.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(CLEANUP_AIRBASE)">#CLEANUP_AIRBASE</a>:</em></p>
+
 
 </dd>
 </dl>
@@ -329,290 +392,43 @@ CleanUpKutaisi = CLEANUP:New( 'CLEAN Kutaisi', 600 )</code></pre>
 <dt>
 
 		<em></em>
-<a id="#(CLEANUP).TimeInterval" >
-<strong>CLEANUP.TimeInterval</strong>
+<a id="#(CLEANUP_AIRBASE).__" >
+<strong>CLEANUP_AIRBASE.__</strong>
 </a>
 </dt>
 <dd>
 	
 
 
+	
+<p> @field #CLEANUP<em>AIRBASE.</em>_</p>
+
 </dd>
 </dl>
+
+			<h2><a id="#(CLEANUP_AIRBASE.__)" >Type <code>CLEANUP_AIRBASE.__</code></a></h2>
+				<h3>Field(s)</h3>
 		<dl class="function">
 <dt>
 
-		<em></em>
-<a id="#(CLEANUP).ZoneNames" >
-<strong>CLEANUP.ZoneNames</strong>
+		<em><a href="##(map)">#map</a></em>
+<a id="#(CLEANUP_AIRBASE.__).<" >
+<strong>CLEANUP_AIRBASE.__.<</strong>
 </a>
 </dt>
 <dd>
 	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(CLEANUP)._AddForCleanUp" >
-<strong>CLEANUP:_AddForCleanUp(CleanUpUnit, CleanUpUnitName)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Add the <a href="DCSWrapper.Unit.html##(Unit)">DCSWrapper.Unit#Unit</a> to the CleanUpList for CleanUp.</p>
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em> CleanUpUnit </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em> CleanUpUnitName </em></code>: </p>
-
-				</li>
-		</ul>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(CLEANUP)._CleanUpScheduler" >
-<strong>CLEANUP:_CleanUpScheduler()</strong>
-</a>
-</dt>
-<dd>
-	
-<p>At the defined time interval, CleanUp the Groups within the CleanUpList.</p>
+<p>string,Wrapper.Airbase#AIRBASE> Airbases Map of Airbases.</p>
 
 </dd>
 </dl>
-		<dl class="function">
-<dt>
 
-<a id="#(CLEANUP)._DestroyGroup" >
-<strong>CLEANUP:_DestroyGroup(GroupObject, CleanUpGroupName)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Destroys a group from the simulator, but checks first if it is still existing!</p>
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="Dcs.DCSWrapper.Group.html##(Group)">Dcs.DCSWrapper.Group#Group</a> GroupObject </em></code>: 
-The object to be destroyed.</p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string CleanUpGroupName </em></code>: 
-The groupname...</p>
-
-				</li>
-		</ul>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(CLEANUP)._DestroyMissile" >
-<strong>CLEANUP:_DestroyMissile(MissileObject)</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-	
-<p> TODO check Dcs.DCSTypes#Weapon
-- Destroys a missile from the simulator, but checks first if it is still existing!
- @param #CLEANUP self
- @param Dcs.DCSTypes#Weapon MissileObject</p>
-
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em> MissileObject </em></code>: </p>
-
-				</li>
-		</ul>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(CLEANUP)._DestroyUnit" >
-<strong>CLEANUP:_DestroyUnit(CleanUpUnit, CleanUpUnitName)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Destroys a <a href="DCSWrapper.Unit.html##(Unit)">DCSWrapper.Unit#Unit</a> from the simulator, but checks first if it is still existing!</p>
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="Dcs.DCSWrapper.Unit.html##(Unit)">Dcs.DCSWrapper.Unit#Unit</a> CleanUpUnit </em></code>: 
-The object to be destroyed.</p>
-
-				</li>
-				<li>
-				
-<p><code><em>#string CleanUpUnitName </em></code>: 
-The Unit name ...</p>
-
-				</li>
-		</ul>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(CLEANUP)._EventAddForCleanUp" >
-<strong>CLEANUP:_EventAddForCleanUp(event, Event)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Detects if the Unit has an S<em>EVENT</em>ENGINE<em>SHUTDOWN or an S</em>EVENT_HIT within the given ZoneNames.</p>
-
-	
-<p>If this is the case, add the Group to the CLEANUP List.</p>
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="Dcs.DCSTypes.html##(Event)">Dcs.DCSTypes#Event</a> event </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em> Event </em></code>: </p>
-
-				</li>
-		</ul>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(CLEANUP)._EventCrash" >
-<strong>CLEANUP:_EventCrash(event, Event)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Detects if a crash event occurs.</p>
-
-	
-<p>Crashed units go into a CleanUpList for removal.</p>
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="Dcs.DCSTypes.html##(Event)">Dcs.DCSTypes#Event</a> event </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em> Event </em></code>: </p>
-
-				</li>
-		</ul>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(CLEANUP)._EventHitCleanUp" >
-<strong>CLEANUP:_EventHitCleanUp(event, Event)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Detects if the Unit has an S<em>EVENT</em>HIT within the given ZoneNames.</p>
-
-	
-<p>If this is the case, destroy the unit.</p>
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="Dcs.DCSTypes.html##(Event)">Dcs.DCSTypes#Event</a> event </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em> Event </em></code>: </p>
-
-				</li>
-		</ul>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(CLEANUP)._EventShot" >
-<strong>CLEANUP:_EventShot(event, Event)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Detects if a unit shoots a missile.</p>
-
-	
-<p>If this occurs within one of the zones, then the weapon used must be destroyed.</p>
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="Dcs.DCSTypes.html##(Event)">Dcs.DCSTypes#Event</a> event </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em> Event </em></code>: </p>
-
-				</li>
-		</ul>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(CLEANUP)._OnEventBirth" >
-<strong>CLEANUP:_OnEventBirth(EventData)</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="Core.Event.html##(EVENTDATA)">Core.Event#EVENTDATA</a> EventData </em></code>: </p>
-
-				</li>
-		</ul>
-</dd>
-</dl>
-
+			<h2><a id="#(CLEANUP_AIRBASE.__.Airbases)" >Type <code>CLEANUP_AIRBASE.__.Airbases</code></a></h2>
+			
+			<h2><a id="#(list)" >Type <code>list</code></a></h2>
+			
+			<h2><a id="#(map)" >Type <code>map</code></a></h2>
+			
 </div>
 
 </div>

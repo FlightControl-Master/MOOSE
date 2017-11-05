@@ -1,4 +1,4 @@
---- **Functional** -- Management of target **Designation**.
+--- **Functional** -- Management of target **Designation**. Lase, smoke and illuminate targets.
 --
 -- --![Banner Image](..\Presentations\DESIGNATE\Dia1.JPG)
 --
@@ -70,10 +70,14 @@ do -- DESIGNATE
   -- The RecceSet is continuously detecting for potential Targets, executing its task as part of the DetectionObject.
   -- Once Targets have been detected, the DesignateObject will trigger the **Detect Event**.
   -- 
+  -- In order to prevent an overflow in the DesignateObject of detected targets, there is a maximum
+  -- amount of DetectionItems that can be put in **scope** of the DesignateObject.
+  -- We call this the **MaximumDesignations** term.
+  -- 
   -- As part of the Detect Event, the DetectionItems list is used by the DesignateObject to provide the Players with:
   -- 
   --   * The RecceGroups are reporting to each AttackGroup, sending **Messages** containing the Threat Level and the TargetSet composition.
-  --   * **Menu options** are created and updated for each AttackGroup, containing the Threat Level and the TargetSet composition.
+  --   * **Menu options** are created and updated for each AttackGroup, containing the Detection ID and the Coordinates.
   -- 
   -- A Player can then select an action from the Designate Menu. 
   -- 
@@ -109,7 +113,7 @@ do -- DESIGNATE
   -- 
   -- ### 2.1 DESIGNATE States
   -- 
-  --   * **Designating** ( Group ): The process is not started yet.
+  --   * **Designating** ( Group ): The designation process.
   -- 
   -- ### 2.2 DESIGNATE Events
   -- 
@@ -119,9 +123,17 @@ do -- DESIGNATE
   --   * **@{#DESIGNATE.Smoke}**: Smoke the targets with the specified Index.
   --   * **@{#DESIGNATE.Status}**: Report designation status.
   -- 
-  -- ## 3. Laser codes
+  -- ## 3. Maximum Designations
   -- 
-  -- ### 3.1 Set possible laser codes
+  -- In order to prevent an overflow of designations due to many Detected Targets, there is a 
+  -- Maximum Designations scope that is set in the DesignationObject.
+  -- 
+  -- The method @{#DESIGNATE.SetMaximumDesignations}() will put a limit on the amount of designations put in scope of the DesignationObject.
+  -- Using the menu system, the player can "forget" a designation, so that gradually a new designation can be put in scope when detected.
+  -- 
+  -- ## 4. Laser codes
+  -- 
+  -- ### 4.1. Set possible laser codes
   -- 
   -- An array of laser codes can be provided, that will be used by the DESIGNATE when lasing.
   -- The laser code is communicated by the Recce when it is lasing a larget.
@@ -139,11 +151,20 @@ do -- DESIGNATE
   --     
   -- The above sets a collection of possible laser codes that can be assigned. **Note the { } notation!**
   -- 
-  -- ### 3.2 Auto generate laser codes
+  -- ### 4.2. Auto generate laser codes
   -- 
   -- Use the method @{#DESIGNATE.GenerateLaserCodes}() to generate all possible laser codes. Logic implemented and advised by Ciribob!
   -- 
-  -- ## 4. Autolase to automatically lase detected targets.
+  -- ### 4.3. Add specific lase codes to the lase menu
+  -- 
+  -- Certain plane types can only drop laser guided ordonnance when targets are lased with specific laser codes.
+  -- The SU-25T needs targets to be lased using laser code 1113.
+  -- The A-10A needs targets to be lased using laser code 1680.
+  -- 
+  -- The method @{#DESIGNATE.AddMenuLaserCode}() to allow a player to lase a target using a specific laser code.
+  -- Remove such a lase menu option using @{#DESIGNATE.RemoveMenuLaserCode}().
+  -- 
+  -- ## 5. Autolase to automatically lase detected targets.
   -- 
   -- DetectionItems can be auto lased once detected by Recces. As such, there is almost no action required from the Players using the Designate Menu.
   -- The **auto lase** function can be activated through the Designation Menu.
@@ -154,7 +175,7 @@ do -- DESIGNATE
   -- 
   -- Activate the auto lasing.
   -- 
-  -- ## 5. Target prioritization on threat level
+  -- ## 6. Target prioritization on threat level
   -- 
   -- Targets can be detected of different types in one DetectionItem. Depending on the type of the Target, a different threat level applies in an Air to Ground combat context.
   -- SAMs are of a higher threat than normal tanks. So, if the Target type was recognized, the Recces will select those targets that form the biggest threat first,
@@ -167,7 +188,12 @@ do -- DESIGNATE
   --     
   -- The example will activate the threat level prioritization for this the Designate object. Threats will be marked based on the threat level of the Target.
   -- 
-  -- ## 6. Status Report
+  -- ## 6. Designate Menu Location for a Mission
+  -- 
+  -- You can make DESIGNATE work for a @{Mission#MISSION} object. In this way, the designate menu will not appear in the root of the radio menu, but in the menu of the Mission.
+  -- Use the method @{#DESIGNATE.SetMission}() to set the @{Mission} object for the designate function.
+  -- 
+  -- ## 7. Status Report
   -- 
   -- A status report is available that displays the current Targets detected, grouped per DetectionItem, and a list of which Targets are currently being marked.
   -- 
@@ -182,7 +208,6 @@ do -- DESIGNATE
   -- The example will activate the flashing of the status menu for this Designate object.
   -- 
   -- @field #DESIGNATE
-  -- 
   DESIGNATE = {
     ClassName = "DESIGNATE",
   }
@@ -192,8 +217,9 @@ do -- DESIGNATE
   -- @param Tasking.CommandCenter#COMMANDCENTER CC
   -- @param Functional.Detection#DETECTION_BASE Detection
   -- @param Core.Set#SET_GROUP AttackSet The Attack collection of GROUP objects to designate and report for.
+  -- @param Tasking.Mission#MISSION Mission (Optional) The Mission where the menu needs to be attached.
   -- @return #DESIGNATE
-  function DESIGNATE:New( CC, Detection, AttackSet )
+  function DESIGNATE:New( CC, Detection, AttackSet, Mission )
   
     local self = BASE:Inherit( self, FSM:New() ) -- #DESIGNATE
     self:F( { Detection } )
@@ -360,21 +386,32 @@ do -- DESIGNATE
     self.RecceSet = Detection:GetDetectionSetGroup()
     self.Recces = {}
     self.Designating = {}
+    self:SetDesignateName()
     
     self.LaseDuration = 60
     
     self:SetFlashStatusMenu( false )
-    self:SetDesignateMenu()
+    self:SetMission( Mission )
     
-    self:SetLaserCodes( 1688 ) -- set self.LaserCodes
-    self:SetAutoLase( false ) -- set self.Autolase
+    self:SetLaserCodes( { 1688, 1130, 4785, 6547, 1465, 4578 } ) -- set self.LaserCodes
+    self:SetAutoLase( false, false ) -- set self.Autolase and don't send message.
     
     self:SetThreatLevelPrioritization( false ) -- self.ThreatLevelPrioritization, default is threat level priorization off
+    self:SetMaximumDesignations( 5 ) -- Sets the maximum designations. The default is 5 designations.
+    self:SetMaximumDistanceDesignations( 12000 )  -- Sets the maximum distance on which designations can be accepted. The default is 8000 meters.
+    self:SetMaximumMarkings( 2 ) -- Per target group, a maximum of 2 markings will be made by default.
+
+    self:SetDesignateMenu()
     
     self.LaserCodesUsed = {}
     
-    
+    self.MenuLaserCodes = {} -- This map contains the laser codes that will be shown in the designate menu to lase with specific laser codes.
+        
     self.Detection:__Start( 2 )
+    
+    self:__Detect( -15 )
+    
+    self.MarkScheduler = SCHEDULER:New( self )
     
     return self
   end
@@ -399,6 +436,56 @@ do -- DESIGNATE
   end
 
 
+  --- Set the maximum amount of designations.
+  -- @param #DESIGNATE self
+  -- @param #number MaximumDesignations
+  -- @return #DESIGNATE
+  function DESIGNATE:SetMaximumDesignations( MaximumDesignations )
+    self.MaximumDesignations = MaximumDesignations
+    return self
+  end
+  
+
+  --- Set the maximum ground designation distance.
+  -- @param #DESIGNATE self
+  -- @param #number MaximumDistanceGroundDesignation Maximum ground designation distance in meters.
+  -- @return #DESIGNATE
+  function DESIGNATE:SetMaximumDistanceGroundDesignation( MaximumDistanceGroundDesignation )
+    self.MaximumDistanceGroundDesignation = MaximumDistanceGroundDesignation
+    return self
+  end
+  
+  
+  --- Set the maximum air designation distance.
+  -- @param #DESIGNATE self
+  -- @param #number MaximumDistanceAirDesignation Maximum air designation distance in meters.
+  -- @return #DESIGNATE
+  function DESIGNATE:SetMaximumDistanceAirDesignation( MaximumDistanceAirDesignation )
+    self.MaximumDistanceAirDesignation = MaximumDistanceAirDesignation
+    return self
+  end
+  
+  
+  --- Set the overall maximum distance when designations can be accepted.
+  -- @param #DESIGNATE self
+  -- @param #number MaximumDistanceDesignations Maximum distance in meters to accept designations.
+  -- @return #DESIGNATE
+  function DESIGNATE:SetMaximumDistanceDesignations( MaximumDistanceDesignations )
+    self.MaximumDistanceDesignations = MaximumDistanceDesignations
+    return self
+  end
+  
+  
+  --- Set the maximum amount of markings FACs will do, per designated target group.
+  -- @param #DESIGNATE self
+  -- @param #number MaximumMarkings Maximum markings FACs will do, per designated target group.
+  -- @return #DESIGNATE
+  function DESIGNATE:SetMaximumMarkings( MaximumMarkings )
+    self.MaximumMarkings = MaximumMarkings
+    return self
+  end
+  
+  
   --- Set an array of possible laser codes.
   -- Each new lase will select a code from this table.
   -- @param #DESIGNATE self
@@ -407,13 +494,64 @@ do -- DESIGNATE
   function DESIGNATE:SetLaserCodes( LaserCodes ) --R2.1
 
     self.LaserCodes = ( type( LaserCodes ) == "table" ) and LaserCodes or { LaserCodes }
-    self:E(self.LaserCodes)
+    self:E( { LaserCodes = self.LaserCodes } )
     
     self.LaserCodesUsed = {}
 
     return self
   end
   
+
+  --- Add a specific lase code to the designate lase menu to lase targets with a specific laser code.
+  -- The MenuText will appear in the lase menu.
+  -- @param #DESIGNATE self
+  -- @param #number LaserCode The specific laser code to be added to the lase menu.
+  -- @param #string MenuText The text to be shown to the player. If you specify a %d in the MenuText, the %d will be replaced with the LaserCode specified.
+  -- @return #DESIGNATE
+  -- @usage
+  --   RecceDesignation:AddMenuLaserCode( 1113, "Lase with %d for Su-25T" )
+  --   RecceDesignation:AddMenuLaserCode( 1680, "Lase with %d for A-10A" )
+  -- 
+  function DESIGNATE:AddMenuLaserCode( LaserCode, MenuText )
+
+    self.MenuLaserCodes[LaserCode] = MenuText
+    self:SetDesignateMenu()
+    
+    return self
+  end
+  
+  
+  --- Removes a specific lase code from the designate lase menu.
+  -- @param #DESIGNATE self
+  -- @param #number LaserCode The specific laser code that was set to be added to the lase menu.
+  -- @return #DESIGNATE
+  -- @usage
+  --   RecceDesignation:RemoveMenuLaserCode( 1113 )
+  --   
+  function DESIGNATE:RemoveMenuLaserCode( LaserCode )
+
+    self.MenuLaserCodes[LaserCode] = nil
+    self:SetDesignateMenu()
+
+    return self
+  end
+  
+  
+  
+
+  --- Set the name of the designation. The name will appear in the menu.
+  -- This method can be used to control different designations for different plane types.
+  -- @param #DESIGNATE self
+  -- @param #string DesignateName
+  -- @return #DESIGNATE
+  function DESIGNATE:SetDesignateName( DesignateName ) 
+
+    self.DesignateName = "Designation" .. ( DesignateName and ( " for " .. DesignateName ) or "" )
+
+    return self
+  end
+  
+
   --- Generate an array of possible laser codes.
   -- Each new lase will select a code from this table.
   -- The entered value can range from 1111 - 1788,
@@ -470,21 +608,22 @@ do -- DESIGNATE
   --- Set auto lase.
   -- Auto lase will start lasing targets immediately when these are in range.
   -- @param #DESIGNATE self
-  -- @param #boolean AutoLase
+  -- @param #boolean AutoLase (optional) true sets autolase on, false off. Default is off.
+  -- @param #boolean Message (optional) true is send message, false or nil won't send a message. Default is no message sent.
   -- @return #DESIGNATE
-  function DESIGNATE:SetAutoLase( AutoLase ) --R2.1
+  function DESIGNATE:SetAutoLase( AutoLase, Message )
 
-    self.AutoLase = AutoLase
+    self.AutoLase = AutoLase or false
     
-    local AutoLaseOnOff = ( AutoLase == true ) and "On" or "Off"
-
-    local CC = self.CC:GetPositionable()
-    
-    if CC then
-      CC:MessageToSetGroup( "Auto Lase " .. AutoLaseOnOff .. ".", 15, self.AttackSet )
+    if Message then
+      local AutoLaseOnOff = ( self.AutoLase == true ) and "On" or "Off"
+      local CC = self.CC:GetPositionable()
+      if CC then
+        CC:MessageToSetGroup( self.DesignateName .. ": Auto Lase " .. AutoLaseOnOff .. ".", 15, self.AttackSet )
+      end
     end
 
-    self:ActivateAutoLase()
+    self:CoordinateLase()
     self:SetDesignateMenu()      
 
     return self
@@ -501,6 +640,17 @@ do -- DESIGNATE
     return self
   end
   
+  --- Set the MISSION object for which designate will function.
+  -- When a MISSION object is assigned, the menu for the designation will be located at the Mission Menu.
+  -- @param #DESIGNATE self
+  -- @param Tasking.Mission#MISSION Mission The MISSION object.
+  -- @return #DESIGNATE
+  function DESIGNATE:SetMission( Mission ) --R2.2
+
+    self.Mission = Mission
+
+    return self
+  end
   
 
   --- 
@@ -508,14 +658,95 @@ do -- DESIGNATE
   -- @return #DESIGNATE
   function DESIGNATE:onafterDetect()
     
-    self:__Detect( -60 )
+    self:__Detect( -math.random( 60 ) )
     
-    self:ActivateAutoLase()
+    self:DesignationScope()
+    self:CoordinateLase()
     self:SendStatus()
     self:SetDesignateMenu()      
   
     return self
   end
+
+
+  --- Adapt the designation scope according the detected items.
+  -- @param #DESIGNATE self
+  -- @return #DESIGNATE
+  function DESIGNATE:DesignationScope()
+
+    local DetectedItems = self.Detection:GetDetectedItems()
+    
+    local DetectedItemCount = 0
+    
+    for DesignateIndex, Designating in pairs( self.Designating ) do
+      local DetectedItem = DetectedItems[DesignateIndex]
+      if DetectedItem then
+        -- Check LOS...
+        local IsDetected = self.Detection:IsDetectedItemDetected( DetectedItem )
+        self:F({IsDetected = IsDetected, DetectedItem })
+        if IsDetected == false then
+          self:F("Removing")
+          -- This Detection is obsolete, remove from the designate scope
+          self.Designating[DesignateIndex] = nil
+          self.AttackSet:ForEachGroup(
+            function( AttackGroup )
+              local DetectionText = self.Detection:DetectedItemReportSummary( DesignateIndex, AttackGroup ):Text( ", " )
+              self.CC:GetPositionable():MessageToGroup( "Targets out of LOS\n" .. DetectionText, 10, AttackGroup, self.DesignateName )
+            end
+          )
+        else
+          DetectedItemCount = DetectedItemCount + 1
+        end
+      else
+        -- This Detection is obsolete, remove from the designate scope
+        self.Designating[DesignateIndex] = nil
+      end
+    end
+    
+    if DetectedItemCount < 5 then
+      for DesignateIndex, DetectedItem in pairs( DetectedItems ) do
+        local IsDetected = self.Detection:IsDetectedItemDetected( DetectedItem )
+        if IsDetected == true then
+          self:F( { DistanceRecce = DetectedItem.DistanceRecce } )
+          if DetectedItem.DistanceRecce <= self.MaximumDistanceDesignations then
+            if self.Designating[DesignateIndex] == nil then
+              -- ok, we added one item to the designate scope.
+              self.AttackSet:ForEachGroup(
+                function( AttackGroup )
+                  local DetectionText = self.Detection:DetectedItemReportSummary( DesignateIndex, AttackGroup ):Text( ", " )
+                  self.CC:GetPositionable():MessageToGroup( "Targets detected at \n" .. DetectionText, 10, AttackGroup, self.DesignateName )
+                end
+              )
+              self.Designating[DesignateIndex] = ""
+              break
+            end
+          end
+        end
+      end
+    end
+    
+    return self
+  end
+
+  --- Coordinates the Auto Lase.
+  -- @param #DESIGNATE self
+  -- @return #DESIGNATE
+  function DESIGNATE:CoordinateLase()
+
+    local DetectedItems = self.Detection:GetDetectedItems()
+    
+    for DesignateIndex, Designating in pairs( self.Designating ) do
+      local DetectedItem = DetectedItems[DesignateIndex]
+      if DetectedItem then
+        if self.AutoLase then
+          self:LaseOn( DesignateIndex, self.LaseDuration )
+        end
+      end
+    end 
+    
+    return self
+  end
+
 
   --- Sends the status to the Attack Groups.
   -- @param #DESIGNATE self
@@ -533,20 +764,23 @@ do -- DESIGNATE
       
         if self.FlashStatusMenu[AttackGroup] or ( MenuAttackGroup and ( AttackGroup:GetName() == MenuAttackGroup:GetName() ) ) then
 
-          local DetectedReport = REPORT:New( "Targets designated:\n" )
+          local DetectedReport = REPORT:New( "Targets ready for Designation:" )
           local DetectedItems = self.Detection:GetDetectedItems()
           
-          for Index, DetectedItemData in pairs( DetectedItems ) do
-            
-            local Report = self.Detection:DetectedItemReportSummary( Index, AttackGroup )
-            DetectedReport:Add(" - " .. Report)
+          for DesignateIndex, Designating in pairs( self.Designating ) do
+            local DetectedItem = DetectedItems[DesignateIndex]
+            if DetectedItem then
+              local Report = self.Detection:DetectedItemReportSummary( DesignateIndex, AttackGroup ):Text( ", " )
+              DetectedReport:Add( string.rep( "-", 140 ) )
+              DetectedReport:Add( " - " .. Report )
+            end
           end
           
           local CC = self.CC:GetPositionable()
       
-          CC:MessageToGroup( DetectedReport:Text( "\n" ), Duration, AttackGroup )
+          CC:MessageToGroup( DetectedReport:Text( "\n" ), Duration, AttackGroup, self.DesignateName )
           
-          local DesignationReport = REPORT:New( "Targets marked:\n" )
+          local DesignationReport = REPORT:New( "Marking Targets:\n" )
       
           self.RecceSet:ForEachGroup(
             function( RecceGroup )
@@ -560,34 +794,7 @@ do -- DESIGNATE
             end
           )
       
-          CC:MessageToGroup( DesignationReport:Text(), Duration, AttackGroup )
-        end
-      end
-    )
-    
-    return self
-  end
-
-  --- Coordinates the Auto Lase.
-  -- @param #DESIGNATE self
-  -- @return #DESIGNATE
-  function DESIGNATE:ActivateAutoLase()
-
-    self.AttackSet:Flush()
-
-    self.AttackSet:ForEachGroup(
-    
-      --- @param Wrapper.Group#GROUP GroupReport
-      function( AttackGroup )
-
-        local DetectedItems = self.Detection:GetDetectedItems()
-        
-        for Index, DetectedItemData in pairs( DetectedItems ) do
-          if self.AutoLase then
-            if not self.Designating[Index] then
-              self:LaseOn( Index, self.LaseDuration ) 
-            end
-          end
+          CC:MessageToGroup( DesignationReport:Text(), Duration, AttackGroup, self.DesignateName )
         end
       end
     )
@@ -606,66 +813,79 @@ do -- DESIGNATE
     
       --- @param Wrapper.Group#GROUP GroupReport
       function( AttackGroup )
-        local DesignateMenu = AttackGroup:GetState( AttackGroup, "DesignateMenu" ) -- Core.Menu#MENU_GROUP
-        if DesignateMenu then
-          DesignateMenu:Remove()
-          DesignateMenu = nil
-          self:E("Remove Menu")
-        end
-        DesignateMenu = MENU_GROUP:New( AttackGroup, "Designate" )
-        self:E(DesignateMenu)
-        AttackGroup:SetState( AttackGroup, "DesignateMenu", DesignateMenu )
+        self.MenuDesignate = self.MenuDesignate or {}
         
+        local MissionMenu = nil
+        
+        if self.Mission then
+          MissionMenu = self.Mission:GetRootMenu( AttackGroup )
+        end
+        
+        local MenuTime = timer.getTime()
+        
+        self.MenuDesignate[AttackGroup] = MENU_GROUP:New( AttackGroup, self.DesignateName, MissionMenu ):SetTime( MenuTime ):SetTag( self.DesignateName ) 
+        local MenuDesignate = self.MenuDesignate[AttackGroup] -- Core.Menu#MENU_GROUP
+
         -- Set Menu option for auto lase
 
         if self.AutoLase then        
-          MENU_GROUP_COMMAND:New( AttackGroup, "Auto Lase Off", DesignateMenu, self.MenuAutoLase, self, false )
+          MENU_GROUP_COMMAND:New( AttackGroup, "Auto Lase Off", MenuDesignate, self.MenuAutoLase, self, false ):SetTime( MenuTime ):SetTag( self.DesignateName )
         else
-          MENU_GROUP_COMMAND:New( AttackGroup, "Auto Lase On", DesignateMenu, self.MenuAutoLase, self, true )
+          MENU_GROUP_COMMAND:New( AttackGroup, "Auto Lase On", MenuDesignate, self.MenuAutoLase, self, true ):SetTime( MenuTime ):SetTag( self.DesignateName )
         end        
 
-        local StatusMenu = MENU_GROUP:New( AttackGroup, "Status", DesignateMenu )
-        MENU_GROUP_COMMAND:New( AttackGroup, "Report Status 15s", StatusMenu, self.MenuStatus, self, AttackGroup, 15 )
-        MENU_GROUP_COMMAND:New( AttackGroup, "Report Status 30s", StatusMenu, self.MenuStatus, self, AttackGroup, 30 )
-        MENU_GROUP_COMMAND:New( AttackGroup, "Report Status 60s", StatusMenu, self.MenuStatus, self, AttackGroup, 60 )
+        local StatusMenu = MENU_GROUP:New( AttackGroup, "Status", MenuDesignate ):SetTime( MenuTime ):SetTag( self.DesignateName )
+        MENU_GROUP_COMMAND:New( AttackGroup, "Report Status 15s", StatusMenu, self.MenuStatus, self, AttackGroup, 15 ):SetTime( MenuTime ):SetTag( self.DesignateName )
+        MENU_GROUP_COMMAND:New( AttackGroup, "Report Status 30s", StatusMenu, self.MenuStatus, self, AttackGroup, 30 ):SetTime( MenuTime ):SetTag( self.DesignateName )
+        MENU_GROUP_COMMAND:New( AttackGroup, "Report Status 60s", StatusMenu, self.MenuStatus, self, AttackGroup, 60 ):SetTime( MenuTime ):SetTag( self.DesignateName )
         
         if self.FlashStatusMenu[AttackGroup] then
-          MENU_GROUP_COMMAND:New( AttackGroup, "Flash Status Report Off", StatusMenu, self.MenuFlashStatus, self, AttackGroup, false )
+          MENU_GROUP_COMMAND:New( AttackGroup, "Flash Status Report Off", StatusMenu, self.MenuFlashStatus, self, AttackGroup, false ):SetTime( MenuTime ):SetTag( self.DesignateName )
         else
-           MENU_GROUP_COMMAND:New( AttackGroup, "Flash Status Report On", StatusMenu, self.MenuFlashStatus, self, AttackGroup, true )
+           MENU_GROUP_COMMAND:New( AttackGroup, "Flash Status Report On", StatusMenu, self.MenuFlashStatus, self, AttackGroup, true ):SetTime( MenuTime ):SetTag( self.DesignateName )
         end        
       
-        local DetectedItems = self.Detection:GetDetectedItems()
-        
-        for Index, DetectedItemData in pairs( DetectedItems ) do
+        for DesignateIndex, Designating in pairs( self.Designating ) do
+
+          local DetectedItem = self.Detection:GetDetectedItem( DesignateIndex )
+
+          if DetectedItem then
           
-          local Report = self.Detection:DetectedItemMenu( Index, AttackGroup )
-          
-          if not self.Designating[Index] then
-            local DetectedMenu = MENU_GROUP:New( AttackGroup, Report, DesignateMenu )
-            MENU_GROUP_COMMAND:New( AttackGroup, "Lase target 60 secs", DetectedMenu, self.MenuLaseOn, self, Index, 60 )
-            MENU_GROUP_COMMAND:New( AttackGroup, "Lase target 120 secs", DetectedMenu, self.MenuLaseOn, self, Index, 120 )
-            MENU_GROUP_COMMAND:New( AttackGroup, "Smoke red", DetectedMenu, self.MenuSmoke, self, Index, SMOKECOLOR.Red )
-            MENU_GROUP_COMMAND:New( AttackGroup, "Smoke blue", DetectedMenu, self.MenuSmoke, self, Index, SMOKECOLOR.Blue )
-            MENU_GROUP_COMMAND:New( AttackGroup, "Smoke green", DetectedMenu, self.MenuSmoke, self, Index, SMOKECOLOR.Green )
-            MENU_GROUP_COMMAND:New( AttackGroup, "Smoke white", DetectedMenu, self.MenuSmoke, self, Index, SMOKECOLOR.White )
-            MENU_GROUP_COMMAND:New( AttackGroup, "Smoke orange", DetectedMenu, self.MenuSmoke, self, Index, SMOKECOLOR.Orange )
-            MENU_GROUP_COMMAND:New( AttackGroup, "Illuminate", DetectedMenu, self.MenuIlluminate, self, Index )
-          else
-            if self.Designating[Index] == "Laser" then
-              Report = "Lasing " .. Report
-            elseif self.Designating[Index] == "Smoke" then
-              Report = "Smoking " .. Report
-            elseif self.Designating[Index] == "Illuminate" then
-              Report = "Illuminating " .. Report
-            end
-            local DetectedMenu = MENU_GROUP:New( AttackGroup, Report, DesignateMenu )
-            if self.Designating[Index] == "Laser" then
-              MENU_GROUP_COMMAND:New( AttackGroup, "Stop lasing", DetectedMenu, self.MenuLaseOff, self, Index )
+            local Coord = self.Detection:GetDetectedItemCoordinate( DesignateIndex )
+            local ID = self.Detection:GetDetectedItemID( DesignateIndex )
+            local MenuText = ID .. ", " .. Coord:ToStringA2G( AttackGroup )
+            
+            if Designating == "" then
+              MenuText = "(-) " .. MenuText
+              local DetectedMenu = MENU_GROUP:New( AttackGroup, MenuText, MenuDesignate ):SetTime( MenuTime ):SetTag( self.DesignateName )
+              MENU_GROUP_COMMAND:New( AttackGroup, "Search other target", DetectedMenu, self.MenuForget, self, DesignateIndex ):SetTime( MenuTime ):SetTag( self.DesignateName )
+              for LaserCode, MenuText in pairs( self.MenuLaserCodes ) do
+                MENU_GROUP_COMMAND:New( AttackGroup, string.format( MenuText, LaserCode ), DetectedMenu, self.MenuLaseCode, self, DesignateIndex, 60, LaserCode ):SetTime( MenuTime ):SetTag( self.DesignateName )
+              end
+              MENU_GROUP_COMMAND:New( AttackGroup, "Lase with random laser code(s)", DetectedMenu, self.MenuLaseOn, self, DesignateIndex, 60 ):SetTime( MenuTime ):SetTag( self.DesignateName )
+              MENU_GROUP_COMMAND:New( AttackGroup, "Smoke red", DetectedMenu, self.MenuSmoke, self, DesignateIndex, SMOKECOLOR.Red ):SetTime( MenuTime ):SetTag( self.DesignateName )
+              MENU_GROUP_COMMAND:New( AttackGroup, "Smoke blue", DetectedMenu, self.MenuSmoke, self, DesignateIndex, SMOKECOLOR.Blue ):SetTime( MenuTime ):SetTag( self.DesignateName )
+              MENU_GROUP_COMMAND:New( AttackGroup, "Smoke green", DetectedMenu, self.MenuSmoke, self, DesignateIndex, SMOKECOLOR.Green ):SetTime( MenuTime ):SetTag( self.DesignateName )
+              MENU_GROUP_COMMAND:New( AttackGroup, "Smoke white", DetectedMenu, self.MenuSmoke, self, DesignateIndex, SMOKECOLOR.White ):SetTime( MenuTime ):SetTag( self.DesignateName )
+              MENU_GROUP_COMMAND:New( AttackGroup, "Smoke orange", DetectedMenu, self.MenuSmoke, self, DesignateIndex, SMOKECOLOR.Orange ):SetTime( MenuTime ):SetTag( self.DesignateName )
+              MENU_GROUP_COMMAND:New( AttackGroup, "Illuminate", DetectedMenu, self.MenuIlluminate, self, DesignateIndex ):SetTime( MenuTime ):SetTag( self.DesignateName )
             else
+              if Designating == "Laser" then
+                MenuText = "(L) " .. MenuText
+              elseif Designating == "Smoke" then
+                MenuText = "(S) " .. MenuText
+              elseif Designating == "Illuminate" then
+                MenuText = "(I) " .. MenuText
+              end
+              local DetectedMenu = MENU_GROUP:New( AttackGroup, MenuText, MenuDesignate ):SetTime( MenuTime ):SetTag( self.DesignateName )
+              if Designating == "Laser" then
+                MENU_GROUP_COMMAND:New( AttackGroup, "Stop lasing", DetectedMenu, self.MenuLaseOff, self, DesignateIndex ):SetTime( MenuTime ):SetTag( self.DesignateName )
+              else
+              end
             end
           end
         end
+        MenuDesignate:Remove( MenuTime, self.DesignateName )
       end
     )
     
@@ -694,11 +914,21 @@ do -- DESIGNATE
   
   --- 
   -- @param #DESIGNATE self
+  function DESIGNATE:MenuForget( Index )
+
+    self:E("Forget")
+
+    self.Designating[Index] = nil
+    self:SetDesignateMenu()
+  end
+
+  --- 
+  -- @param #DESIGNATE self
   function DESIGNATE:MenuAutoLase( AutoLase )
 
     self:E("AutoLase")
 
-    self:SetAutoLase( AutoLase )
+    self:SetAutoLase( AutoLase, true )
   end
 
   --- 
@@ -708,7 +938,7 @@ do -- DESIGNATE
     self:E("Designate through Smoke")
 
     self.Designating[Index] = "Smoke"
-    self:__Smoke( 1, Index, Color )    
+    self:Smoke( Index, Color )    
   end
 
   --- 
@@ -729,7 +959,20 @@ do -- DESIGNATE
     self:E("Designate through Lase")
     
     self:__LaseOn( 1, Index, Duration ) 
+    self:SetDesignateMenu()
   end
+
+
+  --- 
+  -- @param #DESIGNATE self
+  function DESIGNATE:MenuLaseCode( Index, Duration, LaserCode )
+
+    self:E( "Designate through Lase using " .. LaserCode )
+    
+    self:__LaseOn( 1, Index, Duration, LaserCode ) 
+    self:SetDesignateMenu()
+  end
+
 
   --- 
   -- @param #DESIGNATE self
@@ -737,88 +980,183 @@ do -- DESIGNATE
 
     self:E("Lasing off")
 
-    self.Designating[Index] = nil
+    self.Designating[Index] = ""
     self:__LaseOff( 1, Index ) 
+    self:SetDesignateMenu()
   end
 
   --- 
   -- @param #DESIGNATE self
-  function DESIGNATE:onafterLaseOn( From, Event, To, Index, Duration )
+  function DESIGNATE:onafterLaseOn( From, Event, To, Index, Duration, LaserCode )
   
     self.Designating[Index] = "Laser"
-    self:Lasing( Index, Duration )
+    self.LaseStart = timer.getTime()
+    self.LaseDuration = Duration
+    self:__Lasing( -1, Index, Duration, LaserCode )
   end
   
 
   --- 
   -- @param #DESIGNATE self
   -- @return #DESIGNATE
-  function DESIGNATE:onafterLasing( From, Event, To, Index, Duration )
+  function DESIGNATE:onafterLasing( From, Event, To, Index, Duration, LaserCodeRequested )
+  
   
     local TargetSetUnit = self.Detection:GetDetectedSet( Index )
+
+    local MarkingCount = 0
+    local MarkedTypes = {}
+    local ReportTypes = REPORT:New()
+    local ReportLaserCodes = REPORT:New()
     
     TargetSetUnit:Flush()
 
+    --self:F( { Recces = self.Recces } ) 
     for TargetUnit, RecceData in pairs( self.Recces ) do
       local Recce = RecceData -- Wrapper.Unit#UNIT
+      self:F( { TargetUnit = TargetUnit, Recce = Recce:GetName() } )
       if not Recce:IsLasing() then
-        local LaserCode = Recce:GetLaserCode() --(Not deleted when stopping with lasing).
+        local LaserCode = Recce:GetLaserCode() -- (Not deleted when stopping with lasing).
+        self:F( { ClearingLaserCode = LaserCode } )
         self.LaserCodesUsed[LaserCode] = nil
         self.Recces[TargetUnit] = nil
       end
     end
-
-    TargetSetUnit:ForEachUnitPerThreatLevel( 10, 0,
-      --- @param Wrapper.Unit#UNIT SmokeUnit
-      function( TargetUnit )
-        self:E("In procedure")
-        if TargetUnit:IsAlive() then
-          local Recce = self.Recces[TargetUnit]
-          if not Recce then
-            for RecceGroupID, RecceGroup in pairs( self.RecceSet:GetSet() ) do
-              for UnitID, UnitData in pairs( RecceGroup:GetUnits() or {} ) do
-                local RecceUnit = UnitData -- Wrapper.Unit#UNIT
-                if RecceUnit:IsLasing() == false then
-                  if RecceUnit:IsDetected( TargetUnit ) and RecceUnit:IsLOS( TargetUnit ) then
-                    local LaserCodeIndex = math.random( 1, #self.LaserCodes )
-                    local LaserCode = self.LaserCodes[LaserCodeIndex]
-                    if not self.LaserCodesUsed[LaserCode] then
-                      self.LaserCodesUsed[LaserCode] = LaserCodeIndex
-                      local Spot = RecceUnit:LaseUnit( TargetUnit, LaserCode, Duration )
-                      local AttackSet = self.AttackSet
-                      function Spot:OnAfterDestroyed( From, Event, To )
-                        self:E( "Destroyed Message" )
-                        self.Recce:MessageToSetGroup( "Target " .. TargetUnit:GetTypeName() .. " destroyed. " .. TargetSetUnit:Count() .. " targets left.", 5, AttackSet )
-                      end
-                      self.Recces[TargetUnit] = RecceUnit
-                      RecceUnit:MessageToSetGroup( "Marking " .. TargetUnit:GetTypeName() .. " with laser " .. RecceUnit:GetSpot().LaserCode .. " for " .. Duration .. "s.", 5, self.AttackSet )
-                      break
-                    end
-                  else
-                    RecceUnit:MessageToSetGroup( "Can't mark " .. TargetUnit:GetTypeName(), 5, self.AttackSet )
-                  end
-                else
-                  -- The Recce is lasing, but the Target is not detected or within LOS. So stop lasing and send a report.
-                  if not RecceUnit:IsDetected( TargetUnit ) or not RecceUnit:IsLOS( TargetUnit ) then
-                    local Recce = self.Recces[TargetUnit] -- Wrapper.Unit#UNIT
-                    if Recce then
-                      Recce:LaseOff()
-                      Recce:MessageToGroup( "Target " .. TargetUnit:GetTypeName() "out of LOS. Cancelling lase!", 5, self.AttackSet )
-                    end
-                  end  
-                end
-              end
-            end
-          else
-            Recce:MessageToSetGroup( "Marking " .. TargetUnit:GetTypeName() .. " with laser " .. Recce.LaserCode .. ".", 5, self.AttackSet )
-          end
+    
+    -- If a specific lasercode is requested, we disable one active lase!
+    if LaserCodeRequested then
+      for TargetUnit, RecceData in pairs( self.Recces ) do -- We break after the first has been processed.
+        local Recce = RecceData -- Wrapper.Unit#UNIT
+        self:F( { TargetUnit = TargetUnit, Recce = Recce:GetName() } )
+        if Recce:IsLasing() then
+          -- When a Recce is lasing, we switch the lasing off, and clear the references to the lasing in the DESIGNATE class.
+          Recce:LaseOff() -- Switch off the lasing.
+          local LaserCode = Recce:GetLaserCode() -- (Not deleted when stopping with lasing).
+          self:F( { ClearingLaserCode = LaserCode } )
+          self.LaserCodesUsed[LaserCode] = nil
+          self.Recces[TargetUnit] = nil
+          break
         end
       end
-    )
-
-    self:__Lasing( 15, Index, Duration )
+    end    
     
-    self:SetDesignateMenu()
+    if self.AutoLase or ( not self.AutoLase and ( self.LaseStart + Duration >= timer.getTime() ) ) then
+
+      TargetSetUnit:ForEachUnitPerThreatLevel( 10, 0,
+        --- @param Wrapper.Unit#UNIT SmokeUnit
+        function( TargetUnit )
+        
+          self:F( { TargetUnit = TargetUnit:GetName() } )
+  
+          if MarkingCount < self.MaximumMarkings then
+  
+            if TargetUnit:IsAlive() then
+    
+              local Recce = self.Recces[TargetUnit]
+    
+              if not Recce then
+    
+                self:E( "Lasing..." )
+                self.RecceSet:Flush()
+    
+                for RecceGroupID, RecceGroup in pairs( self.RecceSet:GetSet() ) do
+                  for UnitID, UnitData in pairs( RecceGroup:GetUnits() or {} ) do
+    
+                    local RecceUnit = UnitData -- Wrapper.Unit#UNIT
+                    local RecceUnitDesc = RecceUnit:GetDesc()
+                    --self:F( { RecceUnit = RecceUnit:GetName(), RecceDescription = RecceUnitDesc } )
+    
+                    if RecceUnit:IsLasing() == false then
+                      --self:F( { IsDetected = RecceUnit:IsDetected( TargetUnit ), IsLOS = RecceUnit:IsLOS( TargetUnit ) } )
+    
+                      if RecceUnit:IsDetected( TargetUnit ) and RecceUnit:IsLOS( TargetUnit ) then
+    
+                        local LaserCodeIndex = math.random( 1, #self.LaserCodes )
+                        local LaserCode = self.LaserCodes[LaserCodeIndex]
+                        --self:F( { LaserCode = LaserCode, LaserCodeUsed = self.LaserCodesUsed[LaserCode] } )
+    
+                        if LaserCodeRequested and LaserCodeRequested ~= LaserCode then
+                          LaserCode = LaserCodeRequested
+                          LaserCodeRequested = nil
+                        end
+    
+                        if not self.LaserCodesUsed[LaserCode] then
+    
+                          self.LaserCodesUsed[LaserCode] = LaserCodeIndex
+                          local Spot = RecceUnit:LaseUnit( TargetUnit, LaserCode, Duration )
+                          local AttackSet = self.AttackSet
+    
+                          function Spot:OnAfterDestroyed( From, Event, To )
+                            self:E( "Destroyed Message" )
+                            self.Recce:ToSetGroup( "Target " .. TargetUnit:GetTypeName() .. " destroyed. " .. TargetSetUnit:Count() .. " targets left.", 5, AttackSet, self.DesignateName )
+                          end
+    
+                          self.Recces[TargetUnit] = RecceUnit
+                          RecceUnit:MessageToSetGroup( "Marking " .. TargetUnit:GetTypeName() .. " with laser " .. RecceUnit:GetSpot().LaserCode .. " for " .. Duration .. "s.", 5, self.AttackSet, self.DesignateName )
+                          -- OK. We have assigned for the Recce a TargetUnit. We can exit the function.
+                          MarkingCount = MarkingCount + 1
+                          local TargetUnitType = TargetUnit:GetTypeName()
+                          if not MarkedTypes[TargetUnitType] then
+                            MarkedTypes[TargetUnitType] = true
+                            ReportTypes:Add(TargetUnitType)
+                          end
+                          ReportLaserCodes:Add(RecceUnit.LaserCode)
+                          return
+                        end
+                      else
+                        --RecceUnit:MessageToSetGroup( "Can't mark " .. TargetUnit:GetTypeName(), 5, self.AttackSet )
+                      end
+                    else
+                      -- The Recce is lasing, but the Target is not detected or within LOS. So stop lasing and send a report.
+    
+                      if not RecceUnit:IsDetected( TargetUnit ) or not RecceUnit:IsLOS( TargetUnit ) then
+    
+                        local Recce = self.Recces[TargetUnit] -- Wrapper.Unit#UNIT
+    
+                        if Recce then
+                          Recce:LaseOff()
+                          Recce:MessageToSetGroup( "Target " .. TargetUnit:GetTypeName() "out of LOS. Cancelling lase!", 5, self.AttackSet, self.DesignateName )
+                        end
+                      else
+                        MarkingCount = MarkingCount + 1
+                        local TargetUnitType = TargetUnit:GetTypeName()
+                        if not MarkedTypes[TargetUnitType] then
+                          MarkedTypes[TargetUnitType] = true
+                          ReportTypes:Add(TargetUnitType)
+                        end
+                        ReportLaserCodes:Add(RecceUnit.LaserCode)
+                      end  
+                    end
+                  end
+                end
+              else
+                MarkingCount = MarkingCount + 1
+                local TargetUnitType = TargetUnit:GetTypeName()
+                if not MarkedTypes[TargetUnitType] then
+                  MarkedTypes[TargetUnitType] = true
+                  ReportTypes:Add(TargetUnitType)
+                end
+                ReportLaserCodes:Add(Recce.LaserCode)
+                --Recce:MessageToSetGroup( self.DesignateName .. ": Marking " .. TargetUnit:GetTypeName() .. " with laser " .. Recce.LaserCode .. ".", 5, self.AttackSet )
+              end
+            end
+          end
+        end
+      )
+
+      local MarkedTypesText = ReportTypes:Text(', ')
+      local MarkedLaserCodesText = ReportLaserCodes:Text(', ')
+      for MarkedType, MarketCount in pairs( MarkedTypes ) do
+        self.CC:GetPositionable():MessageToSetGroup( "Marking " .. MarkingCount .. " x " .. MarkedTypesText .. " with lasers " .. MarkedLaserCodesText .. ".", 5, self.AttackSet, self.DesignateName )
+      end
+  
+      self:__Lasing( -30, Index, Duration, LaserCodeRequested )
+      
+      self:SetDesignateMenu()
+
+    else
+      self:__LaseOff( 1 )
+    end
 
   end
     
@@ -830,7 +1168,7 @@ do -- DESIGNATE
     local CC = self.CC:GetPositionable()
     
     if CC then 
-      CC:MessageToSetGroup( "Stopped lasing.", 5, self.AttackSet )
+      CC:MessageToSetGroup( "Stopped lasing.", 5, self.AttackSet, self.DesignateName )
     end
     
     local TargetSetUnit = self.Detection:GetDetectedSet( Index )
@@ -839,7 +1177,7 @@ do -- DESIGNATE
     
     for TargetID, RecceData in pairs( Recces ) do
       local Recce = RecceData -- Wrapper.Unit#UNIT
-      Recce:MessageToSetGroup( "Stopped lasing " .. Recce:GetSpot().Target:GetTypeName() .. ".", 5, self.AttackSet )
+      Recce:MessageToSetGroup( "Stopped lasing " .. Recce:GetSpot().Target:GetTypeName() .. ".", 5, self.AttackSet, self.DesignateName )
       Recce:LaseOff()
     end
     
@@ -859,19 +1197,29 @@ do -- DESIGNATE
     local TargetSetUnit = self.Detection:GetDetectedSet( Index )
     local TargetSetUnitCount = TargetSetUnit:Count()
   
-    TargetSetUnit:ForEachUnit(
+    local MarkedCount = 0
+  
+    TargetSetUnit:ForEachUnitPerThreatLevel( 10, 0,
       --- @param Wrapper.Unit#UNIT SmokeUnit
       function( SmokeUnit )
-        self:E("In procedure")
-        if math.random( 1, TargetSetUnitCount ) == math.random( 1, TargetSetUnitCount ) then
+
+        if MarkedCount < self.MaximumMarkings then
+      
+          MarkedCount = MarkedCount + 1        
+      
+          self:E( "Smoking ..." )
+
           local RecceGroup = self.RecceSet:FindNearestGroupFromPointVec2(SmokeUnit:GetPointVec2())
           local RecceUnit = RecceGroup:GetUnit( 1 )
+
           if RecceUnit then
-            RecceUnit:MessageToSetGroup( "Smoking " .. SmokeUnit:GetTypeName() .. ".", 5, self.AttackSet )
-            SCHEDULER:New( self,
+
+            RecceUnit:MessageToSetGroup( "Smoking " .. SmokeUnit:GetTypeName() .. ".", 5, self.AttackSet, self.DesignateName )
+
+            self.MarkScheduler:Schedule( self,
               function()
                 if SmokeUnit:IsAlive() then
-                  SmokeUnit:Smoke( Color, 150 )
+                  SmokeUnit:Smoke( Color, 50, 2 )
                 end
               self:Done( Index )
               end, {}, math.random( 5, 20 ) 
@@ -896,8 +1244,8 @@ do -- DESIGNATE
       local RecceGroup = self.RecceSet:FindNearestGroupFromPointVec2(TargetUnit:GetPointVec2())
       local RecceUnit = RecceGroup:GetUnit( 1 )
       if RecceUnit then
-        RecceUnit:MessageToSetGroup( "Illuminating " .. TargetUnit:GetTypeName() .. ".", 5, self.AttackSet )
-        SCHEDULER:New( self,
+        RecceUnit:MessageToSetGroup( "Illuminating " .. TargetUnit:GetTypeName() .. ".", 5, self.AttackSet, self.DesignateName )
+        self.MarkScheduler:Schedule( self,
           function()
             if TargetUnit:IsAlive() then
               TargetUnit:GetPointVec3():AddY(300):IlluminationBomb()

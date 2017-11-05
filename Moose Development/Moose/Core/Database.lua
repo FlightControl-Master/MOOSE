@@ -2,8 +2,19 @@
 -- 
 -- ====
 -- 
--- 1) @{#DATABASE} class, extends @{Base#BASE}
--- ===================================================
+-- ### Author: **Sven Van de Velde (FlightControl)**
+-- ### Contributions: 
+-- 
+-- ====
+-- 
+-- @module Database
+
+
+--- @type DATABASE
+-- @extends Core.Base#BASE
+
+--- # DATABASE class, extends @{Base#BASE}
+-- 
 -- Mission designers can use the DATABASE class to refer to:
 -- 
 --  * STATICS
@@ -17,35 +28,10 @@
 --  
 -- On top, for internal MOOSE administration purposes, the DATBASE administers the Unit and Group TEMPLATES as defined within the Mission Editor.
 -- 
--- Moose will automatically create one instance of the DATABASE class into the **global** object _DATABASE.
--- Moose refers to _DATABASE within the framework extensively, but you can also refer to the _DATABASE object within your missions if required.
+-- The singleton object **_DATABASE** is automatically created by MOOSE, that administers all objects within the mission.
+-- Moose refers to **_DATABASE** within the framework extensively, but you can also refer to the _DATABASE object within your missions if required.
 -- 
--- 1.1) DATABASE iterators
--- -----------------------
--- You can iterate the database with the available iterator methods.
--- The iterator methods will walk the DATABASE set, and call for each element within the set a function that you provide.
--- The following iterator methods are currently available within the DATABASE:
--- 
---   * @{#DATABASE.ForEachUnit}: Calls a function for each @{UNIT} it finds within the DATABASE.
---   * @{#DATABASE.ForEachGroup}: Calls a function for each @{GROUP} it finds within the DATABASE.
---   * @{#DATABASE.ForEachPlayer}: Calls a function for each alive player it finds within the DATABASE.
---   * @{#DATABASE.ForEachPlayerJoined}: Calls a function for each joined player it finds within the DATABASE.
---   * @{#DATABASE.ForEachClient}: Calls a function for each @{CLIENT} it finds within the DATABASE.
---   * @{#DATABASE.ForEachClientAlive}: Calls a function for each alive @{CLIENT} it finds within the DATABASE.
--- 
--- ===
--- 
--- 
--- ### Author: **Sven Van de Velde (FlightControl)**
--- ### Contributions: 
--- 
--- ====
--- @module Database
-
-
---- DATABASE class
--- @type DATABASE
--- @extends Core.Base#BASE
+-- @field #DATABASE
 DATABASE = {
   ClassName = "DATABASE",
   Templates = {
@@ -70,6 +56,8 @@ DATABASE = {
   NavPoints = {},
   PLAYERSETTINGS = {},
   ZONENAMES = {},
+  HITS = {},
+  DESTROYS = {},
 }
 
 local _DATABASECoalition =
@@ -104,6 +92,7 @@ function DATABASE:New()
   self:HandleEvent( EVENTS.Birth, self._EventOnBirth )
   self:HandleEvent( EVENTS.Dead, self._EventOnDeadOrCrash )
   self:HandleEvent( EVENTS.Crash, self._EventOnDeadOrCrash )
+  self:HandleEvent( EVENTS.Hit, self.AccountHits )
   self:HandleEvent( EVENTS.NewCargo )
   self:HandleEvent( EVENTS.DeleteCargo )
   
@@ -212,6 +201,16 @@ function DATABASE:FindStatic( StaticName )
 
   local StaticFound = self.STATICS[StaticName]
   return StaticFound
+end
+
+--- Finds a AIRBASE based on the AirbaseName.
+-- @param #DATABASE self
+-- @param #string AirbaseName
+-- @return Wrapper.Airbase#AIRBASE The found AIRBASE.
+function DATABASE:FindAirbase( AirbaseName )
+
+  local AirbaseFound = self.AIRBASES[AirbaseName]
+  return AirbaseFound
 end
 
 --- Adds a Airbase based on the Airbase Name in the DATABASE.
@@ -375,7 +374,12 @@ function DATABASE:Spawn( SpawnTemplate )
   SpawnTemplate.CountryID = SpawnCountryID
   SpawnTemplate.CategoryID = SpawnCategoryID
 
+  -- Ensure that for the spawned group and its units, there are GROUP and UNIT objects created in the DATABASE.
   local SpawnGroup = self:AddGroup( SpawnTemplate.name )
+  for UnitID, UnitData in pairs( SpawnTemplate.units ) do
+    self:AddUnit( UnitData.name )
+  end
+  
   return SpawnGroup
 end
 
@@ -400,10 +404,13 @@ end
 --- Private method that registers new Group Templates within the DATABASE Object.
 -- @param #DATABASE self
 -- @param #table GroupTemplate
+-- @param Dcs.DCScoalition#coalition.side CoalitionSide The coalition.side of the object.
+-- @param Dcs.DCSObject#Object.Category CategoryID The Object.category of the object.
+-- @param Dcs.DCScountry#country.id CountryID the country.id of the object
 -- @return #DATABASE self
-function DATABASE:_RegisterGroupTemplate( GroupTemplate, CoalitionID, CategoryID, CountryID )
+function DATABASE:_RegisterGroupTemplate( GroupTemplate, CoalitionSide, CategoryID, CountryID, GroupName )
 
-  local GroupTemplateName = env.getValueDictByKey(GroupTemplate.name)
+  local GroupTemplateName = GroupName or env.getValueDictByKey( GroupTemplate.name )
   
   local TraceTable = {}
 
@@ -418,7 +425,7 @@ function DATABASE:_RegisterGroupTemplate( GroupTemplate, CoalitionID, CategoryID
   end
   
   GroupTemplate.CategoryID = CategoryID
-  GroupTemplate.CoalitionID = CoalitionID
+  GroupTemplate.CoalitionID = CoalitionSide
   GroupTemplate.CountryID = CountryID
   
   self.Templates.Groups[GroupTemplateName].GroupName = GroupTemplateName
@@ -427,7 +434,7 @@ function DATABASE:_RegisterGroupTemplate( GroupTemplate, CoalitionID, CategoryID
   self.Templates.Groups[GroupTemplateName].UnitCount = #GroupTemplate.units
   self.Templates.Groups[GroupTemplateName].Units = GroupTemplate.units
   self.Templates.Groups[GroupTemplateName].CategoryID = CategoryID
-  self.Templates.Groups[GroupTemplateName].CoalitionID = CoalitionID
+  self.Templates.Groups[GroupTemplateName].CoalitionID = CoalitionSide
   self.Templates.Groups[GroupTemplateName].CountryID = CountryID
 
   
@@ -454,13 +461,13 @@ function DATABASE:_RegisterGroupTemplate( GroupTemplate, CoalitionID, CategoryID
     self.Templates.Units[UnitTemplate.name].GroupTemplate = GroupTemplate
     self.Templates.Units[UnitTemplate.name].GroupId = GroupTemplate.groupId
     self.Templates.Units[UnitTemplate.name].CategoryID = CategoryID
-    self.Templates.Units[UnitTemplate.name].CoalitionID = CoalitionID
+    self.Templates.Units[UnitTemplate.name].CoalitionID = CoalitionSide
     self.Templates.Units[UnitTemplate.name].CountryID = CountryID
 
     if UnitTemplate.skill and (UnitTemplate.skill == "Client" or UnitTemplate.skill == "Player") then
       self.Templates.ClientsByName[UnitTemplate.name] = UnitTemplate
       self.Templates.ClientsByName[UnitTemplate.name].CategoryID = CategoryID
-      self.Templates.ClientsByName[UnitTemplate.name].CoalitionID = CoalitionID
+      self.Templates.ClientsByName[UnitTemplate.name].CoalitionID = CoalitionSide
       self.Templates.ClientsByName[UnitTemplate.name].CountryID = CountryID
       self.Templates.ClientsByID[UnitTemplate.unitId] = UnitTemplate
     end
@@ -504,7 +511,7 @@ function DATABASE:_RegisterStaticTemplate( StaticTemplate, CoalitionID, Category
 
   
   TraceTable[#TraceTable+1] = "Static"
-  TraceTable[#TraceTable+1] = self.Templates.Statics[StaticTemplateName].GroupName
+  TraceTable[#TraceTable+1] = self.Templates.Statics[StaticTemplateName].StaticName
 
   TraceTable[#TraceTable+1] = "Coalition"
   TraceTable[#TraceTable+1] = self.Templates.Statics[StaticTemplateName].CoalitionID
@@ -631,6 +638,7 @@ end
 function DATABASE:_RegisterStatics()
 
   local CoalitionsData = { GroupsRed = coalition.getStaticObjects( coalition.side.RED ), GroupsBlue = coalition.getStaticObjects( coalition.side.BLUE ) }
+  self:E( { Statics = CoalitionsData } )
   for CoalitionId, CoalitionData in pairs( CoalitionsData ) do
     for DCSStaticId, DCSStatic in pairs( CoalitionData ) do
 
@@ -707,6 +715,8 @@ function DATABASE:_EventOnDeadOrCrash( Event )
       end
     end
   end
+  
+  self:AccountDestroys( Event )
 end
 
 
@@ -929,7 +939,7 @@ end
 -- @param #string PlayerName
 -- @return Core.Settings#SETTINGS
 function DATABASE:GetPlayerSettings( PlayerName )
-  self:E({PlayerName})
+  self:F2( { PlayerName } )
   return self.PLAYERSETTINGS[PlayerName]
 end
 
@@ -940,7 +950,7 @@ end
 -- @param Core.Settings#SETTINGS Settings
 -- @return Core.Settings#SETTINGS
 function DATABASE:SetPlayerSettings( PlayerName, Settings )
-  self:E({PlayerName, Settings})
+  self:F2( { PlayerName, Settings } )
   self.PLAYERSETTINGS[PlayerName] = Settings
 end
 
@@ -1037,6 +1047,101 @@ function DATABASE:_RegisterTemplates()
 
   return self
 end
+
+  --- Account the Hits of the Players.
+  -- @param #DATABASE self
+  -- @param Core.Event#EVENTDATA Event
+  function DATABASE:AccountHits( Event )
+    self:F( { Event } )
+  
+    if Event.IniPlayerName ~= nil then -- It is a player that is hitting something
+      self:T( "Hitting Something" )
+      
+      -- What is he hitting?
+      if Event.TgtCategory then
+  
+        -- A target got hit
+        self.HITS[Event.TgtUnitName] = self.HITS[Event.TgtUnitName] or {}
+        local Hit = self.HITS[Event.TgtUnitName]
+        
+        Hit.Players = Hit.Players or {}
+        Hit.Players[Event.IniPlayerName] = true
+      end
+    end
+    
+    -- It is a weapon initiated by a player, that is hitting something
+    -- This seems to occur only with scenery and static objects.
+    if Event.WeaponPlayerName ~= nil then 
+        self:T( "Hitting Scenery" )
+      
+      -- What is he hitting?
+      if Event.TgtCategory then
+  
+        if Event.IniCoalition then -- A coalition object was hit, probably a static.
+          -- A target got hit
+          self.HITS[Event.TgtUnitName] = self.HITS[Event.TgtUnitName] or {}
+          local Hit = self.HITS[Event.TgtUnitName]
+          
+          Hit.Players = Hit.Players or {}
+          Hit.Players[Event.WeaponPlayerName] = true
+        else -- A scenery object was hit.
+        end
+      end
+    end
+  end
+  
+  --- Account the destroys.
+  -- @param #DATABASE self
+  -- @param Core.Event#EVENTDATA Event
+  function DATABASE:AccountDestroys( Event )
+    self:F( { Event } )
+  
+    local TargetUnit = nil
+    local TargetGroup = nil
+    local TargetUnitName = ""
+    local TargetGroupName = ""
+    local TargetPlayerName = ""
+    local TargetCoalition = nil
+    local TargetCategory = nil
+    local TargetType = nil
+    local TargetUnitCoalition = nil
+    local TargetUnitCategory = nil
+    local TargetUnitType = nil
+  
+    if Event.IniDCSUnit then
+  
+      TargetUnit = Event.IniUnit
+      TargetUnitName = Event.IniDCSUnitName
+      TargetGroup = Event.IniDCSGroup
+      TargetGroupName = Event.IniDCSGroupName
+      TargetPlayerName = Event.IniPlayerName
+  
+      TargetCoalition = Event.IniCoalition
+      --TargetCategory = TargetUnit:getCategory()
+      --TargetCategory = TargetUnit:getDesc().category  -- Workaround
+      TargetCategory = Event.IniCategory
+      TargetType = Event.IniTypeName
+  
+      TargetUnitType = TargetType
+  
+      self:T( { TargetUnitName, TargetGroupName, TargetPlayerName, TargetCoalition, TargetCategory, TargetType } )
+    end
+  
+    self:T( "Something got destroyed" )
+
+    local Destroyed = false
+
+    -- What is the player destroying?
+    if self.HITS[Event.IniUnitName] then -- Was there a hit for this unit for this player before registered???
+      
+
+      self.DESTROYS[Event.IniUnitName] = self.DESTROYS[Event.IniUnitName] or {}
+      
+      self.DESTROYS[Event.IniUnitName] = true
+
+    end
+  end
+
 
 
 

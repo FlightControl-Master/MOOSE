@@ -1,0 +1,128 @@
+= Performance Statistics
+Kein-Hong Man
+2011-09-13
+
+
+== Size Comparisons
+
+The following is the result of processing `llex.lua` from LuaSrcDiet 0.11.0 using various optimization options:
+
+|===
+| LuaSrcDiet Option   | Size (bytes)
+
+| Original            | 12,421
+| Empty lines only    | 12,395
+| Whitespace only     | 9,372
+| Local rename only   | 11,794
+| _--basic_ setting   | 3,835
+| Program default     | 3,208
+| _--maximum_ setting | 3,130
+|===
+
+The program’s default settings does not remove all unnecessary EOLs.
+The _--basic_ setting is more conservative than the default settings, it disables optimization of strings and numbers and renaming of locals.
+
+For version 0.12.0, the following is the result of processing `LuaSrcDiet.lua` using various optimization options:
+
+|===
+| LuaSrcDiet Option   | Size (bytes)
+
+| Original            | 160,796
+| _--basic_ setting   | 60,219
+| Program default     | 43,650
+| _--maximum_ setting | 42,453
+| max + experimental  | 42,248
+|===
+
+The above best size can go a lot lower with simple `local` keyword removal and user directed name replacement, which will be the subject of the next release of LuaSrcDiet.
+
+
+== Compression and luac
+
+File sizes of LuaSrcDiet 0.11.0 main files in various forms:
+
+[cols="m,5*d", options="header,footer"]
+|===
+| Source File    | Original Size (bytes) | `luac` normal (bytes) | `luac` stripped (bytes) | LuaSrcDiet _--basic_ (bytes) | LuaSrcDiet _--maximum_ (bytes)
+
+| LuaSrcDiet.lua | 21,961  | 20,952 | 11,000 | 11,005 | 8,159
+| llex.lua       | 12,421  | 8,613  | 4,247  | 3,835  | 3,130
+| lparser.lua    | 41,757  | 27,215 | 12,506 | 11,755 | 7,666
+| optlex.lua     | 31,009  | 16,992 | 8,021  | 9,129  | 6,858
+| optparser.lua  | 16,511  | 9,021  | 3,520  | 5,087  | 2,999
+
+| Total          | 123,659 | 82,793 | 39,294 | 40,811 | 28,812
+|===
+
+* “LuaSrcDiet --maximum” has the smallest total file size.
+* The ratio of “Original Size” to “LuaSrcDiet --maximum” is *4.3*.
+* The ratio of “Original Size” to “luac stripped” is *3.1*.
+* The ratio of “luac stripped” to “LuaSrcDiet --maximum” is *1.4*.
+
+Compressibility of LuaSrcDiet 0.11.0 main files in various forms:
+
+|===
+| Compression Method     | Original Size | `luac` normal | `luac` stripped | LuaSrcDiet _--basic_ | LuaSrcDiet _--maximum_
+
+| Uncompressed originals | 123,659 | 82,793 | 39,294 | 40,811 | 28,812
+| gzip -9                | 28,288  | 29,210 | 17,732 | 12,041 | 10,451
+| bzip2 -9               | 24,407  | 27,232 | 16,856 | 11,480 | 9,815
+| lzma (7-zip max)       | 25,530  | 23,908 | 15,741 | 11,241 | 9,685
+|===
+
+* “LuaSrcDiet --maximum” has the smallest total file size (but a binary chunk loads faster and works with a smaller Lua executable).
+* The ratio of “Original size” to “Original size + bzip2” is *5.1*.
+* The ratio of “Original size” to “LuaSrcDiet --maximum + bzip2” is *12.6*.
+* The ratio of “LuaSrcDiet --maximum” to “LuaSrcDiet --maximum + bzip2” is *2.9*.
+* The ratio of “Original size” to “luac stripped + bzip2” is *7.3*.
+* The ratio of “luac stripped” to “luac stripped + bzip2” is *2.3*.
+* The ratio of “luac stripped + bzip2” to “LuaSrcDiet --maximum + bzip2” is *1.7*.
+
+So, squeezed source code are smaller than stripped binary chunks and compresses better than stripped binary chunks, at a ratio of 2.9 for squeezed source code versus 2.3 for stripped binary chunks.
+Compressed binary chunks is still a very efficient way of storing Lua scripts, because using only binary chunks allow for the parts of Lua needed to compile from sources to be omitted (`llex.o`, `lparser.o`, `lcode.o`, `ldump.o`), saving over 24KB in the process.
+
+Note that LuaSrcDiet _does not_ answer the question of whether embedding source code is better or embedding binary chunks is better.
+It is simply a utility for producing smaller source code files and an exercise in processing Lua source code using a Lua-based lexer and parser skeleton.
+
+
+== Compile Speed
+
+The following is a primitive attempt to analyze in-memory Lua script loading performance (using the `loadstring` function in Lua).
+
+The LuaSrcDiet 0.11.0 files (original, squeezed with _--maximum_ and stripped binary chunks versions) are loaded into memory first before a loop runs to repeatedly load the script files for 10 seconds.
+A null loop is also performed (processing empty strings) and the time taken per null iteration is subtracted as a form of null adjustment.
+Then, various performance parameters are calculated.
+Note that `LuaSrcDiet.lua` was slightly modified (`#!` line removed) to let the `loadstring` function run.
+The results below were obtained with a Lua 5.1.3 executable compiled using `make generic` on Cygwin/Windows XP SP2 on a Sempron 3000+ (1.8GHz).
+The LuaSrcDiet 0.11.0 source files have 11,180 “real” tokens in total.
+
+[cols="<h,4*d", options="header"]
+|===
+| | Null loop | Stripped binary chunk | Original Sources | Squeezed Sources
+
+| Total Size (bytes)                      | 0       | 39,294 | 123,640 | 28,793
+| Iterations                              | 312,155 | 9,680  | 1306    | 1,592
+| Duration (sec)                          | 10      | 10     | 10      | 10
+| Time/iteration (msec)                   | 0.032   | 1.033  | 7.657   | 6.281
+| _Time/iteration, null adjusted (msec)_  | –       | 1.001  | 7.625   | 6.249
+| _Load rate (MiB/sec)_                   | –       | 37.44  | 15.46   | 4.39
+| Load time per byte (ns)                 | –       | 25.5   | 61.7    | 217.0
+| Load time per token (ns)                | –       | –      | 682     | 559
+| Source time vs binary chunk time ratio  | –       | 1.00   | 7.62    | 6.24
+| Binary chunk rate vs. source rate ratio | –       | 1.00   | 2.42    | 8.53
+|===
+
+The above shows that stripped binary chunks is still, in many ways, the highest-performance form of fixed Lua scripts.
+On a very average machine, scripts load at over 37 MiB/sec (in memory).
+This is very comparable to the burst speeds of common desktop hard disks of 2008.
+If instant response is paramount, stripped binary chunks has little competition.
+
+By contrast, source code that is squeezed to the maximum using LuaSrcDiet can only muster an in-memory load rate of 4.4 MiB/sec.
+The original sources load at about 15.5 MiB/sec, but most of the speed is from the lexer scanning over comments and whitespace.
+A quick calculation indicates that the speed of the lexer over comments and whitespace can be as much as 65 MiB/sec, but note that the speed is all for naught.
+What really matters are the real tokens, and the squeezed source code manages to load faster than the original sources by 18 %.
+
+So, the loading of stripped binary chunks is faster than squeezed source code by a bit over 6×.
+The 4.4 MiB/sec speed for squeezed source code is still quite respectable.
+When an application considers the time taken to load data from the disk and perhaps the time taken to decompress, loading source code may be perfectly fine in terms of performance.
+For programs that already embed source code, using LuaSrcDiet to squeeze the source code probably speeds loading up by a tiny bit in addition to making programs smaller.

@@ -358,15 +358,19 @@ function AI_CAP_ZONE:onafterStart( Controllable, From, Event, To )
 
 end
 
--- todo: need to fix this global function
 
---- @param Wrapper.Controllable#CONTROLLABLE AIControllable
-function _NewEngageCapRoute( AIControllable )
+--- @param AI.AI_CAP#AI_CAP_ZONE 
+-- @param Wrapper.Group#GROUP EngageGroup
+function AI_CAP_ZONE.EngageRoute( EngageGroup, Fsm )
 
-  AIControllable:T( "NewEngageRoute" )
-  local EngageZone = AIControllable:GetState( AIControllable, "EngageZone" ) -- AI.AI_Cap#AI_CAP_ZONE
-  EngageZone:__Engage( 1 )
+  EngageGroup:F( { "AI_CAP_ZONE.EngageRoute:", EngageGroup:GetName() } )
+
+  if EngageGroup:IsAlive() then
+    Fsm:__Engage( 1 )
+  end
 end
+
+
 
 --- @param #AI_CAP_ZONE self
 -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
@@ -402,7 +406,7 @@ function AI_CAP_ZONE:onafterDetected( Controllable, From, Event, To )
     end
   
     if Engage == true then
-      self:E( 'Detected -> Engaging' )
+      self:F( 'Detected -> Engaging' )
       self:__Engage( 1 )
     end
   end
@@ -440,7 +444,7 @@ function AI_CAP_ZONE:onafterEngage( Controllable, From, Event, To )
     local CurrentAltitude = self.Controllable:GetUnit(1):GetAltitude()
     local CurrentPointVec3 = POINT_VEC3:New( CurrentVec2.x, CurrentAltitude, CurrentVec2.y )
     local ToEngageZoneSpeed = self.PatrolMaxSpeed
-    local CurrentRoutePoint = CurrentPointVec3:RoutePointAir( 
+    local CurrentRoutePoint = CurrentPointVec3:WaypointAir( 
         self.PatrolAltType, 
         POINT_VEC3.RoutePointType.TurningPoint, 
         POINT_VEC3.RoutePointAction.TurningPoint, 
@@ -464,7 +468,7 @@ function AI_CAP_ZONE:onafterEngage( Controllable, From, Event, To )
     local ToTargetPointVec3 = POINT_VEC3:New( ToTargetVec2.x, ToTargetAltitude, ToTargetVec2.y )
     
     --- Create a route point of type air.
-    local ToPatrolRoutePoint = ToTargetPointVec3:RoutePointAir( 
+    local ToPatrolRoutePoint = ToTargetPointVec3:WaypointAir( 
       self.PatrolAltType, 
       POINT_VEC3.RoutePointType.TurningPoint, 
       POINT_VEC3.RoutePointAction.TurningPoint, 
@@ -475,7 +479,7 @@ function AI_CAP_ZONE:onafterEngage( Controllable, From, Event, To )
     EngageRoute[#EngageRoute+1] = ToPatrolRoutePoint
 
     Controllable:OptionROEOpenFire()
-    Controllable:OptionROTPassiveDefense()
+    Controllable:OptionROTEvadeFire()
 
     local AttackTasks = {}
 
@@ -485,13 +489,13 @@ function AI_CAP_ZONE:onafterEngage( Controllable, From, Event, To )
       if DetectedUnit:IsAlive() and DetectedUnit:IsAir() then
         if self.EngageZone then
           if DetectedUnit:IsInZone( self.EngageZone ) then
-            self:E( {"Within Zone and Engaging ", DetectedUnit } )
+            self:F( {"Within Zone and Engaging ", DetectedUnit } )
             AttackTasks[#AttackTasks+1] = Controllable:TaskAttackUnit( DetectedUnit )
           end
         else        
           if self.EngageRange then
             if DetectedUnit:GetPointVec3():Get2DDistance(Controllable:GetPointVec3() ) <= self.EngageRange then
-              self:E( {"Within Range and Engaging", DetectedUnit } )
+              self:F( {"Within Range and Engaging", DetectedUnit } )
               AttackTasks[#AttackTasks+1] = Controllable:TaskAttackUnit( DetectedUnit )
             end
           else
@@ -503,28 +507,20 @@ function AI_CAP_ZONE:onafterEngage( Controllable, From, Event, To )
       end
     end
 
-    --- Now we're going to do something special, we're going to call a function from a waypoint action at the AIControllable...
-    self.Controllable:WayPointInitialize( EngageRoute )
-    
-    
     if #AttackTasks == 0 then
-      self:E("No targets found -> Going back to Patrolling")
+      self:F("No targets found -> Going back to Patrolling")
       self:__Abort( 1 )
       self:__Route( 1 )
       self:SetDetectionActivated()
     else
+
+      AttackTasks[#AttackTasks+1] = Controllable:TaskFunction( "AI_CAP_ZONE.EngageRoute", self )
       EngageRoute[1].task = Controllable:TaskCombo( AttackTasks )
-      
-      --- Do a trick, link the NewEngageRoute function of the object to the AIControllable in a temporary variable ...
-      self.Controllable:SetState( self.Controllable, "EngageZone", self )
-  
-      self.Controllable:WayPointFunction( #EngageRoute, 1, "_NewEngageCapRoute" )
       
       self:SetDetectionDeactivated()
     end
     
-    --- NOW ROUTE THE GROUP!
-    self.Controllable:WayPointExecute( 1, 2 )
+    Controllable:Route( EngageRoute, 0.5 )
   
   end
 end

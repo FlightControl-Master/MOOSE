@@ -210,7 +210,8 @@ SCHEDULER = {
 -- @return #SCHEDULER self.
 -- @return #number The ScheduleID of the planned schedule.
 function SCHEDULER:New( SchedulerObject, SchedulerFunction, SchedulerArguments, Start, Repeat, RandomizeFactor, Stop )
-  local self = BASE:Inherit( self, BASE:New() )
+  
+  local self = BASE:Inherit( self, BASE:New() ) -- #SCHEDULER
   self:F2( { Start, Repeat, RandomizeFactor, Stop } )
 
   local ScheduleID = nil

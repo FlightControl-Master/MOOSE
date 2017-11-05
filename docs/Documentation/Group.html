@@ -28,9 +28,9 @@
 					<li><a href="AI_Cas.html">AI_Cas</a></li>
 					<li><a href="AI_Formation.html">AI_Formation</a></li>
 					<li><a href="AI_Patrol.html">AI_Patrol</a></li>
+					<li><a href="ATC_Ground.html">ATC_Ground</a></li>
 					<li><a href="Account.html">Account</a></li>
 					<li><a href="Airbase.html">Airbase</a></li>
-					<li><a href="AirbasePolice.html">AirbasePolice</a></li>
 					<li><a href="Assign.html">Assign</a></li>
 					<li><a href="Base.html">Base</a></li>
 					<li><a href="Cargo.html">Cargo</a></li>
@@ -60,6 +60,7 @@
 					<li><a href="Escort.html">Escort</a></li>
 					<li><a href="Event.html">Event</a></li>
 					<li><a href="Fsm.html">Fsm</a></li>
+					<li><a href="Goal.html">Goal</a></li>
 					<li>Group</li>
 					<li><a href="Identifiable.html">Identifiable</a></li>
 					<li><a href="Menu.html">Menu</a></li>
@@ -72,7 +73,9 @@
 					<li><a href="Positionable.html">Positionable</a></li>
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
 					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
+					<li><a href="Protect.html">Protect</a></li>
 					<li><a href="Radio.html">Radio</a></li>
+					<li><a href="Rat.html">Rat</a></li>
 					<li><a href="Route.html">Route</a></li>
 					<li><a href="Scenery.html">Scenery</a></li>
 					<li><a href="ScheduleDispatcher.html">ScheduleDispatcher</a></li>
@@ -88,6 +91,7 @@
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="Task.html">Task</a></li>
+					<li><a href="TaskZoneCapture.html">TaskZoneCapture</a></li>
 					<li><a href="Task_A2A.html">Task_A2A</a></li>
 					<li><a href="Task_A2A_Dispatcher.html">Task_A2A_Dispatcher</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
@@ -95,8 +99,15 @@
 					<li><a href="Task_Cargo.html">Task_Cargo</a></li>
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
 					<li><a href="Unit.html">Unit</a></li>
+					<li><a href="UserFlag.html">UserFlag</a></li>
+					<li><a href="UserSound.html">UserSound</a></li>
 					<li><a href="Utils.html">Utils</a></li>
+					<li><a href="Velocity.html">Velocity</a></li>
 					<li><a href="Zone.html">Zone</a></li>
+					<li><a href="ZoneCaptureCoalition.html">ZoneCaptureCoalition</a></li>
+					<li><a href="ZoneGoal.html">ZoneGoal</a></li>
+					<li><a href="ZoneGoalCargo.html">ZoneGoalCargo</a></li>
+					<li><a href="ZoneGoalCoalition.html">ZoneGoalCoalition</a></li>
 					<li><a href="env.html">env</a></li>
 					<li><a href="land.html">land</a></li>
 					<li><a href="routines.html">routines</a></li>
@@ -259,6 +270,12 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).GetFuel">GROUP:GetFuel()</a></td>
+		<td class="summary">
+<p>Returns relative amount of fuel (from 0.0 to 1.0) the group has in its internal tanks.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(GROUP).GetHeading">GROUP:GetHeading()</a></td>
 		<td class="summary">
 <p>Returns the mean heading of every UNIT in the GROUP in degrees</p>
@@ -345,6 +362,12 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).GetTemplateRoutePoints">GROUP:GetTemplateRoutePoints()</a></td>
+		<td class="summary">
+<p>Returns the group template route.points[] (the waypoints) from the <a href="DATABASE.html">DATABASE</a> (_DATABASE object).</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(GROUP).GetTypeName">GROUP:GetTypeName()</a></td>
 		<td class="summary">
 <p>Gets the type name of the group.</p>
@@ -375,7 +398,7 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(GROUP).HandleEvent">GROUP:HandleEvent(Event, EventFunction)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).HandleEvent">GROUP:HandleEvent(Event, EventFunction, ...)</a></td>
 		<td class="summary">
 <p>Subscribe to a DCS Event.</p>
 </td>
@@ -441,6 +464,12 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(GROUP).NewTemplate">GROUP:NewTemplate(GroupTemplate, CoalitionSide, CategoryID, CountryID)</a></td>
+		<td class="summary">
+<p>Create a new GROUP from a given GroupTemplate as a parameter.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(GROUP).OnReSpawn">GROUP:OnReSpawn(ReSpawnFunction)</a></td>
 		<td class="summary">
 
@@ -449,7 +478,7 @@
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(GROUP).Register">GROUP:Register(GroupName)</a></td>
 		<td class="summary">
-<p>Create a new GROUP from a DCSGroup</p>
+<p>Create a new GROUP from an existing Group in the Mission.</p>
 </td>
 		</tr>
 		<tr>
@@ -912,21 +941,11 @@ The coalition side of the DCS Group.</p>
 	
 <p>Returns a COORDINATE object indicating the point of the first UNIT of the GROUP within the mission.</p>
 
-		<h3>Return values</h3>
-			<ol>
-				<li>
+		<h3>Return value</h3>
 				
 <p><em><a href="Core.Point.html##(COORDINATE)">Core.Point#COORDINATE</a>:</em>
 The COORDINATE of the GROUP.</p>
 
-				</li>
-				<li>
-				
-<p><em>#nil:</em>
-The POSITIONABLE is not existing or alive.  </p>
-
-				</li>
-			</ol>
 </dd>
 </dl>
 		<dl class="function">
@@ -1021,6 +1040,37 @@ The DCS Unit.</p>
 <p><em>#table:</em>
 The DCS Units.</p>
 
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(GROUP).GetFuel" >
+<strong>GROUP:GetFuel()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns relative amount of fuel (from 0.0 to 1.0) the group has in its internal tanks.</p>
+
+	
+<p>If there are additional fuel tanks the value may be greater than 1.0.</p>
+
+		<h3>Return values</h3>
+			<ol>
+				<li>
+				
+<p><em>#number:</em>
+The relative amount of fuel (from 0.0 to 1.0).</p>
+
+				</li>
+				<li>
+				
+<p><em>#nil:</em>
+The GROUP is not existing or alive.  </p>
+
+				</li>
+			</ol>
 </dd>
 </dl>
 		<dl class="function">
@@ -1357,6 +1407,24 @@ The mission route defined by points.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(GROUP).GetTemplateRoutePoints" >
+<strong>GROUP:GetTemplateRoutePoints()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the group template route.points[] (the waypoints) from the <a href="DATABASE.html">DATABASE</a> (_DATABASE object).</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#table:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(GROUP).GetTypeName" >
 <strong>GROUP:GetTypeName()</strong>
 </a>
@@ -1456,7 +1524,7 @@ Current Vec3 of the first DCS Unit of the GROUP.</p>
 <dt>
 
 <a id="#(GROUP).HandleEvent" >
-<strong>GROUP:HandleEvent(Event, EventFunction)</strong>
+<strong>GROUP:HandleEvent(Event, EventFunction, ...)</strong>
 </a>
 </dt>
 <dd>
@@ -1474,6 +1542,11 @@ Current Vec3 of the first DCS Unit of the GROUP.</p>
 				
 <p><code><em>#function EventFunction </em></code>: 
 (optional) The function to be called when the event occurs for the GROUP.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> ... </em></code>: </p>
 
 				</li>
 		</ul>
@@ -1735,6 +1808,55 @@ true if DCS Group contains Ships.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(GROUP).NewTemplate" >
+<strong>GROUP:NewTemplate(GroupTemplate, CoalitionSide, CategoryID, CountryID)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Create a new GROUP from a given GroupTemplate as a parameter.</p>
+
+	
+<p>Note that the GroupTemplate is NOT spawned into the mission.
+It is merely added to the <a href="Database.html">Database</a>.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#table GroupTemplate </em></code>: 
+The GroupTemplate Structure exactly as defined within the mission editor.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Dcs.DCScoalition.html##(coalition.side)">Dcs.DCScoalition#coalition.side</a> CoalitionSide </em></code>: 
+The coalition.side of the group.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Dcs.DCSGroup.html##(Group.Category)">Dcs.DCSGroup#Group.Category</a> CategoryID </em></code>: 
+The Group.Category of the group.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Dcs.DCScountry.html##(country.id)">Dcs.DCScountry#country.id</a> CountryID </em></code>: 
+the country.id of the group.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(GROUP)">#GROUP</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(GROUP).OnReSpawn" >
 <strong>GROUP:OnReSpawn(ReSpawnFunction)</strong>
 </a>
@@ -1762,14 +1884,14 @@ true if DCS Group contains Ships.</p>
 </dt>
 <dd>
 	
-<p>Create a new GROUP from a DCSGroup</p>
+<p>Create a new GROUP from an existing Group in the Mission.</p>
 
 		<h3>Parameter</h3>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Dcs.DCSWrapper.Group.html##(Group)">Dcs.DCSWrapper.Group#Group</a> GroupName </em></code>: 
-The DCS Group name</p>
+<p><code><em>#string GroupName </em></code>: 
+The Group name</p>
 
 				</li>
 		</ul>

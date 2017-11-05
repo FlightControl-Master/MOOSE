@@ -28,9 +28,9 @@
 					<li><a href="AI_Cas.html">AI_Cas</a></li>
 					<li><a href="AI_Formation.html">AI_Formation</a></li>
 					<li><a href="AI_Patrol.html">AI_Patrol</a></li>
+					<li><a href="ATC_Ground.html">ATC_Ground</a></li>
 					<li><a href="Account.html">Account</a></li>
 					<li><a href="Airbase.html">Airbase</a></li>
-					<li><a href="AirbasePolice.html">AirbasePolice</a></li>
 					<li><a href="Assign.html">Assign</a></li>
 					<li><a href="Base.html">Base</a></li>
 					<li><a href="Cargo.html">Cargo</a></li>
@@ -60,6 +60,7 @@
 					<li><a href="Escort.html">Escort</a></li>
 					<li>Event</li>
 					<li><a href="Fsm.html">Fsm</a></li>
+					<li><a href="Goal.html">Goal</a></li>
 					<li><a href="Group.html">Group</a></li>
 					<li><a href="Identifiable.html">Identifiable</a></li>
 					<li><a href="Menu.html">Menu</a></li>
@@ -72,7 +73,9 @@
 					<li><a href="Positionable.html">Positionable</a></li>
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
 					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
+					<li><a href="Protect.html">Protect</a></li>
 					<li><a href="Radio.html">Radio</a></li>
+					<li><a href="Rat.html">Rat</a></li>
 					<li><a href="Route.html">Route</a></li>
 					<li><a href="Scenery.html">Scenery</a></li>
 					<li><a href="ScheduleDispatcher.html">ScheduleDispatcher</a></li>
@@ -88,6 +91,7 @@
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="Task.html">Task</a></li>
+					<li><a href="TaskZoneCapture.html">TaskZoneCapture</a></li>
 					<li><a href="Task_A2A.html">Task_A2A</a></li>
 					<li><a href="Task_A2A_Dispatcher.html">Task_A2A_Dispatcher</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
@@ -95,8 +99,15 @@
 					<li><a href="Task_Cargo.html">Task_Cargo</a></li>
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
 					<li><a href="Unit.html">Unit</a></li>
+					<li><a href="UserFlag.html">UserFlag</a></li>
+					<li><a href="UserSound.html">UserSound</a></li>
 					<li><a href="Utils.html">Utils</a></li>
+					<li><a href="Velocity.html">Velocity</a></li>
 					<li><a href="Zone.html">Zone</a></li>
+					<li><a href="ZoneCaptureCoalition.html">ZoneCaptureCoalition</a></li>
+					<li><a href="ZoneGoal.html">ZoneGoal</a></li>
+					<li><a href="ZoneGoalCargo.html">ZoneGoalCargo</a></li>
+					<li><a href="ZoneGoalCoalition.html">ZoneGoalCoalition</a></li>
 					<li><a href="env.html">env</a></li>
 					<li><a href="land.html">land</a></li>
 					<li><a href="routines.html">routines</a></li>
@@ -342,12 +353,6 @@ Example code snippet:</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(EVENT).EventsDead">EVENT.EventsDead</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(EVENT).Init">EVENT:Init(EventID, EventClass)</a></td>
 		<td class="summary">
 <p>Initializes the Events structure for the event</p>
@@ -384,7 +389,7 @@ Example code snippet:</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnEventForGroup">EVENT:OnEventForGroup(GroupName, EventFunction, EventClass, EventID)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(EVENT).OnEventForGroup">EVENT:OnEventForGroup(GroupName, EventFunction, EventClass, EventID, ...)</a></td>
 		<td class="summary">
 <p>Set a new listener for an S<em>EVENT</em>X event for a GROUP.</p>
 </td>
@@ -420,15 +425,15 @@ Example code snippet:</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(EVENT).Remove">EVENT:Remove(EventClass, EventID)</a></td>
-		<td class="summary">
-<p>Removes a subscription</p>
-</td>
-		</tr>
-		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(EVENT).RemoveAll">EVENT:RemoveAll(EventObject)</a></td>
 		<td class="summary">
 <p>Clears all event subscriptions for a <a href="Base.html##(BASE)">Base#BASE</a> derived object.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(EVENT).RemoveEvent">EVENT:RemoveEvent(EventClass, EventID)</a></td>
+		<td class="summary">
+<p>Removes a subscription</p>
 </td>
 		</tr>
 		<tr>
@@ -1038,19 +1043,6 @@ The Cargo created.</p>
 		<dl class="function">
 <dt>
 
-<a id="#(EVENT).EventsDead" >
-<strong>EVENT.EventsDead</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
 <a id="#(EVENT).Init" >
 <strong>EVENT:Init(EventID, EventClass)</strong>
 </a>
@@ -1263,7 +1255,7 @@ The self instance of the class for which the event is.</p>
 <dt>
 
 <a id="#(EVENT).OnEventForGroup" >
-<strong>EVENT:OnEventForGroup(GroupName, EventFunction, EventClass, EventID)</strong>
+<strong>EVENT:OnEventForGroup(GroupName, EventFunction, EventClass, EventID, ...)</strong>
 </a>
 </dt>
 <dd>
@@ -1293,6 +1285,11 @@ The self instance of the class for which the event is.</p>
 				<li>
 				
 <p><code><em> EventID </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> ... </em></code>: </p>
 
 				</li>
 		</ul>
@@ -1498,8 +1495,29 @@ The self instance of the class for which the event is captured. When the event h
 		<dl class="function">
 <dt>
 
-<a id="#(EVENT).Remove" >
-<strong>EVENT:Remove(EventClass, EventID)</strong>
+<a id="#(EVENT).RemoveAll" >
+<strong>EVENT:RemoveAll(EventObject)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Clears all event subscriptions for a <a href="Base.html##(BASE)">Base#BASE</a> derived object.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Base.html##(BASE)">Core.Base#BASE</a> EventObject </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(EVENT).RemoveEvent" >
+<strong>EVENT:RemoveEvent(EventClass, EventID)</strong>
 </a>
 </dt>
 <dd>
@@ -1525,27 +1543,6 @@ The self instance of the class for which the event is.</p>
 <p><em><a href="##(EVENT.Events)">#EVENT.Events</a>:</em></p>
 
 
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(EVENT).RemoveAll" >
-<strong>EVENT:RemoveAll(EventObject)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Clears all event subscriptions for a <a href="Base.html##(BASE)">Base#BASE</a> derived object.</p>
-
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="Core.Base.html##(BASE)">Core.Base#BASE</a> EventObject </em></code>: </p>
-
-				</li>
-		</ul>
 </dd>
 </dl>
 		<dl class="function">

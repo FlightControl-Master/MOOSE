@@ -28,9 +28,9 @@
 					<li><a href="AI_Cas.html">AI_Cas</a></li>
 					<li><a href="AI_Formation.html">AI_Formation</a></li>
 					<li><a href="AI_Patrol.html">AI_Patrol</a></li>
+					<li><a href="ATC_Ground.html">ATC_Ground</a></li>
 					<li><a href="Account.html">Account</a></li>
 					<li><a href="Airbase.html">Airbase</a></li>
-					<li><a href="AirbasePolice.html">AirbasePolice</a></li>
 					<li><a href="Assign.html">Assign</a></li>
 					<li><a href="Base.html">Base</a></li>
 					<li>Cargo</li>
@@ -60,6 +60,7 @@
 					<li><a href="Escort.html">Escort</a></li>
 					<li><a href="Event.html">Event</a></li>
 					<li><a href="Fsm.html">Fsm</a></li>
+					<li><a href="Goal.html">Goal</a></li>
 					<li><a href="Group.html">Group</a></li>
 					<li><a href="Identifiable.html">Identifiable</a></li>
 					<li><a href="Menu.html">Menu</a></li>
@@ -72,7 +73,9 @@
 					<li><a href="Positionable.html">Positionable</a></li>
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
 					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
+					<li><a href="Protect.html">Protect</a></li>
 					<li><a href="Radio.html">Radio</a></li>
+					<li><a href="Rat.html">Rat</a></li>
 					<li><a href="Route.html">Route</a></li>
 					<li><a href="Scenery.html">Scenery</a></li>
 					<li><a href="ScheduleDispatcher.html">ScheduleDispatcher</a></li>
@@ -88,6 +91,7 @@
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="Task.html">Task</a></li>
+					<li><a href="TaskZoneCapture.html">TaskZoneCapture</a></li>
 					<li><a href="Task_A2A.html">Task_A2A</a></li>
 					<li><a href="Task_A2A_Dispatcher.html">Task_A2A_Dispatcher</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
@@ -95,8 +99,15 @@
 					<li><a href="Task_Cargo.html">Task_Cargo</a></li>
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
 					<li><a href="Unit.html">Unit</a></li>
+					<li><a href="UserFlag.html">UserFlag</a></li>
+					<li><a href="UserSound.html">UserSound</a></li>
 					<li><a href="Utils.html">Utils</a></li>
+					<li><a href="Velocity.html">Velocity</a></li>
 					<li><a href="Zone.html">Zone</a></li>
+					<li><a href="ZoneCaptureCoalition.html">ZoneCaptureCoalition</a></li>
+					<li><a href="ZoneGoal.html">ZoneGoal</a></li>
+					<li><a href="ZoneGoalCargo.html">ZoneGoalCargo</a></li>
+					<li><a href="ZoneGoalCoalition.html">ZoneGoalCoalition</a></li>
 					<li><a href="env.html">env</a></li>
 					<li><a href="land.html">land</a></li>
 					<li><a href="routines.html">routines</a></li>
@@ -163,6 +174,14 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="#CARGO_CRATE">CARGO_CRATE</a></td>
+		<td class="summary">
+<h1>CARGO_CRATE class, extends <a href="##(CARGO_REPRESENTABLE)">#CARGO_REPRESENTABLE</a></h1>
+
+<p>The CARGO_CRATE class defines a cargo that is represented by a UNIT object within the simulator, and can be transported by a carrier.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="#CARGO_GROUP">CARGO_GROUP</a></td>
 		<td class="summary">
 <h1>CARGO_GROUP class</h1>
@@ -185,7 +204,7 @@
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="#CARGO_REPRESENTABLE">CARGO_REPRESENTABLE</a></td>
 		<td class="summary">
-
+<p>Models CARGO that is representable by a Unit.</p>
 </td>
 		</tr>
 		<tr>
@@ -230,6 +249,48 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO).Deployed">CARGO.Deployed</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO).Destroy">CARGO:Destroy()</a></td>
+		<td class="summary">
+<p>Destroy the cargo.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO).Flare">CARGO:Flare(FlareColor)</a></td>
+		<td class="summary">
+<p>Signal a flare at the position of the CARGO.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO).FlareGreen">CARGO:FlareGreen()</a></td>
+		<td class="summary">
+<p>Signal a green flare at the position of the CARGO.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO).FlareRed">CARGO:FlareRed()</a></td>
+		<td class="summary">
+<p>Signal a red flare at the position of the CARGO.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO).FlareWhite">CARGO:FlareWhite()</a></td>
+		<td class="summary">
+<p>Signal a white flare at the position of the CARGO.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO).FlareYellow">CARGO:FlareYellow()</a></td>
+		<td class="summary">
+<p>Signal a yellow flare at the position of the CARGO.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(CARGO).GetCoordinate">CARGO:GetCoordinate()</a></td>
 		<td class="summary">
 <p>Get the current coordinates of the Cargo.</p>
@@ -263,6 +324,18 @@
 		<td class="name" nowrap="nowrap"><a href="##(CARGO).IsAlive">CARGO:IsAlive()</a></td>
 		<td class="summary">
 <p>Check if cargo is alive.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO).IsDeployed">CARGO:IsDeployed()</a></td>
+		<td class="summary">
+<p>Is the cargo deployed</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO).IsDestroyed">CARGO:IsDestroyed()</a></td>
+		<td class="summary">
+<p>Check if cargo is destroyed.</p>
 </td>
 		</tr>
 		<tr>
@@ -374,6 +447,12 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO).SetDeployed">CARGO:SetDeployed(Deployed)</a></td>
+		<td class="summary">
+<p>Set the cargo as deployed</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(CARGO).SetWeight">CARGO:SetWeight(Weight)</a></td>
 		<td class="summary">
 <p>Set the weight of the cargo.</p>
@@ -383,6 +462,42 @@
 		<td class="name" nowrap="nowrap"><a href="##(CARGO).Slingloadable">CARGO.Slingloadable</a></td>
 		<td class="summary">
 <p>This flag defines if the cargo can be slingloaded.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO).Smoke">CARGO:Smoke(SmokeColor, Range)</a></td>
+		<td class="summary">
+<p>Smoke the CARGO.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO).SmokeBlue">CARGO:SmokeBlue()</a></td>
+		<td class="summary">
+<p>Smoke the CARGO Blue.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO).SmokeGreen">CARGO:SmokeGreen()</a></td>
+		<td class="summary">
+<p>Smoke the CARGO Green.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO).SmokeOrange">CARGO:SmokeOrange()</a></td>
+		<td class="summary">
+<p>Smoke the CARGO Orange.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO).SmokeRed">CARGO:SmokeRed()</a></td>
+		<td class="summary">
+<p>Smoke the CARGO Red.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO).SmokeWhite">CARGO:SmokeWhite()</a></td>
+		<td class="summary">
+<p>Smoke the CARGO White.</p>
 </td>
 		</tr>
 		<tr>
@@ -441,10 +556,56 @@
 		</tr>
 	</table>
 
+			<h2><a id="#(CARGO_CRATE)">Type <code>CARGO_CRATE</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_CRATE).CargoCarrier">CARGO_CRATE.CargoCarrier</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_CRATE).CargoObject">CARGO_CRATE.CargoObject</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_CRATE).New">CARGO_CRATE:New(CrateName, Type, Name, Weight, ReportRadius, NearRadius, CargoCrateName)</a></td>
+		<td class="summary">
+<p>CARGO_CRATE Constructor.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_CRATE).OnUnLoadedCallBack">CARGO_CRATE.OnUnLoadedCallBack</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_CRATE).onenterLoaded">CARGO_CRATE:onenterLoaded(Event, From, To, CargoCarrier)</a></td>
+		<td class="summary">
+<p>Loaded State.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_CRATE).onenterUnLoaded">CARGO_CRATE:onenterUnLoaded(Event, From, To, Core, ToPointVec2)</a></td>
+		<td class="summary">
+<p>Enter UnLoaded State.</p>
+</td>
+		</tr>
+	</table>
+
 			<h2><a id="#(CARGO_GROUP)">Type <code>CARGO_GROUP</code></a></h2>
 				<table class="function_list">
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(CARGO_GROUP).CargoCarrier">CARGO_GROUP.CargoCarrier</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_GROUP).CargoGroup">CARGO_GROUP.CargoGroup</a></td>
 		<td class="summary">
 
 </td>
@@ -456,15 +617,27 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CARGO_GROUP).CargoSet">CARGO_GROUP.CargoSet</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_GROUP).GetCount">CARGO_GROUP:GetCount()</a></td>
 		<td class="summary">
-
+<p>Get the amount of cargo units in the group.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(CARGO_GROUP).New">CARGO_GROUP:New(CargoGroup, Type, Name, ReportRadius, NearRadius)</a></td>
 		<td class="summary">
 <p>CARGO_GROUP constructor.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_GROUP).OnEventCargoDead">CARGO_GROUP:OnEventCargoDead(EventData)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_GROUP).RespawnOnDestroyed">CARGO_GROUP:RespawnOnDestroyed(RespawnDestroyed)</a></td>
+		<td class="summary">
+<p>Respawn the cargo when destroyed</p>
 </td>
 		</tr>
 		<tr>
@@ -483,6 +656,12 @@
 		<td class="name" nowrap="nowrap"><a href="##(CARGO_GROUP).onenterBoarding">CARGO_GROUP:onenterBoarding(CargoCarrier, Event, From, To, NearRadius, ...)</a></td>
 		<td class="summary">
 <p>Enter Boarding State.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_GROUP).onenterDestroyed">CARGO_GROUP:onenterDestroyed()</a></td>
+		<td class="summary">
+
 </td>
 		</tr>
 		<tr>
@@ -590,6 +769,12 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_REPORTABLE).CargoSet">CARGO_REPORTABLE.CargoSet</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(CARGO_REPORTABLE).ClassName">CARGO_REPORTABLE.ClassName</a></td>
 		<td class="summary">
 
@@ -625,10 +810,22 @@
 
 </td>
 		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_REPORTABLE).Respawn">CARGO_REPORTABLE:Respawn()</a></td>
+		<td class="summary">
+<p>Respawn the cargo.</p>
+</td>
+		</tr>
 	</table>
 
 			<h2><a id="#(CARGO_REPRESENTABLE)">Type <code>CARGO_REPRESENTABLE</code></a></h2>
 				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(CARGO_REPRESENTABLE).Destroy">CARGO_REPRESENTABLE:Destroy()</a></td>
+		<td class="summary">
+<p>CARGO_REPRESENTABLE Destructor.</p>
+</td>
+		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(CARGO_REPRESENTABLE).New">CARGO_REPRESENTABLE:New(Type, Name, Weight, ReportRadius, NearRadius, CargoObject)</a></td>
 		<td class="summary">
@@ -667,12 +864,6 @@
 		<td class="name" nowrap="nowrap"><a href="##(CARGO_UNIT).CargoObject">CARGO_UNIT.CargoObject</a></td>
 		<td class="summary">
 
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(CARGO_UNIT).Destroy">CARGO_UNIT:Destroy()</a></td>
-		<td class="summary">
-<p>CARGO_UNIT Destructor.</p>
 </td>
 		</tr>
 		<tr>
@@ -821,6 +1012,28 @@ There are 2 moments when state transition methods will be called by the state ma
 		<dl class="function">
 <dt>
 
+		<em><a href="##(CARGO_CRATE)">#CARGO_CRATE</a></em>
+<a id="CARGO_CRATE" >
+<strong>CARGO_CRATE</strong>
+</a>
+</dt>
+<dd>
+	
+<h1>CARGO_CRATE class, extends <a href="##(CARGO_REPRESENTABLE)">#CARGO_REPRESENTABLE</a></h1>
+
+<p>The CARGO_CRATE class defines a cargo that is represented by a UNIT object within the simulator, and can be transported by a carrier.</p>
+
+	
+<p>Use the event functions as described above to Load, UnLoad, Board, UnBoard the CARGO_CRATE objects to and from carriers.</p>
+
+<hr/>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 		<em><a href="##(CARGO_GROUP)">#CARGO_GROUP</a></em>
 <a id="CARGO_GROUP" >
 <strong>CARGO_GROUP</strong>
@@ -876,7 +1089,7 @@ There are 2 moments when state transition methods will be called by the state ma
 </dt>
 <dd>
 	
-
+<p>Models CARGO that is representable by a Unit.</p>
 
 </dd>
 </dl>
@@ -941,7 +1154,7 @@ The radius when the cargo will board the Carrier (to avoid collision).</p>
 		<dl class="function">
 <dt>
 
-		<em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a></em>
+		<em><a href="Wrapper.Client.html##(CLIENT)">Wrapper.Client#CLIENT</a></em>
 <a id="#(CARGO).CargoCarrier" >
 <strong>CARGO.CargoCarrier</strong>
 </a>
@@ -991,6 +1204,106 @@ The radius when the cargo will board the Carrier (to avoid collision).</p>
 <dd>
 	
 <p>This flag defines if the cargo can be contained within a DCS Unit.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(CARGO).Deployed" >
+<strong>CARGO.Deployed</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO).Destroy" >
+<strong>CARGO:Destroy()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Destroy the cargo.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO).Flare" >
+<strong>CARGO:Flare(FlareColor)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Signal a flare at the position of the CARGO.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Utilities.Utils.html##(FLARECOLOR)">Utilities.Utils#FLARECOLOR</a> FlareColor </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO).FlareGreen" >
+<strong>CARGO:FlareGreen()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Signal a green flare at the position of the CARGO.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO).FlareRed" >
+<strong>CARGO:FlareRed()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Signal a red flare at the position of the CARGO.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO).FlareWhite" >
+<strong>CARGO:FlareWhite()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Signal a white flare at the position of the CARGO.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO).FlareYellow" >
+<strong>CARGO:FlareYellow()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Signal a yellow flare at the position of the CARGO.</p>
 
 </dd>
 </dl>
@@ -1099,6 +1412,42 @@ The type of the Cargo.</p>
 				
 <p><em>#boolean:</em>
 true if unloaded</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO).IsDeployed" >
+<strong>CARGO:IsDeployed()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Is the cargo deployed</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO).IsDestroyed" >
+<strong>CARGO:IsDestroyed()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Check if cargo is destroyed.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em>
+true if destroyed</p>
 
 </dd>
 </dl>
@@ -1520,6 +1869,27 @@ The radius when the cargo will board the Carrier (to avoid collision).</p>
 		<dl class="function">
 <dt>
 
+<a id="#(CARGO).SetDeployed" >
+<strong>CARGO:SetDeployed(Deployed)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set the cargo as deployed</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> Deployed </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(CARGO).SetWeight" >
 <strong>CARGO:SetWeight(Weight)</strong>
 </a>
@@ -1555,6 +1925,97 @@ The weight in kg.</p>
 <dd>
 	
 <p>This flag defines if the cargo can be slingloaded.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO).Smoke" >
+<strong>CARGO:Smoke(SmokeColor, Range)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Smoke the CARGO.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> SmokeColor </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> Range </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO).SmokeBlue" >
+<strong>CARGO:SmokeBlue()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Smoke the CARGO Blue.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO).SmokeGreen" >
+<strong>CARGO:SmokeGreen()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Smoke the CARGO Green.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO).SmokeOrange" >
+<strong>CARGO:SmokeOrange()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Smoke the CARGO Orange.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO).SmokeRed" >
+<strong>CARGO:SmokeRed()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Smoke the CARGO Red.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO).SmokeWhite" >
+<strong>CARGO:SmokeWhite()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Smoke the CARGO White.</p>
 
 </dd>
 </dl>
@@ -1801,6 +2262,189 @@ The amount of seconds to delay the action.</p>
 
 			<h2><a id="#(CARGO.CargoObjects)" >Type <code>CARGO.CargoObjects</code></a></h2>
 			
+			<h2><a id="#(CARGO_CRATE)" >Type <code>CARGO_CRATE</code></a></h2>
+				
+<p>Models the behaviour of cargo crates, which can be slingloaded and boarded on helicopters using the DCS menus. </p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(CARGO_CRATE).CargoCarrier" >
+<strong>CARGO_CRATE.CargoCarrier</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(CARGO_CRATE).CargoObject" >
+<strong>CARGO_CRATE.CargoObject</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO_CRATE).New" >
+<strong>CARGO_CRATE:New(CrateName, Type, Name, Weight, ReportRadius, NearRadius, CargoCrateName)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>CARGO_CRATE Constructor.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string CrateName </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Type </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Name </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number Weight </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number ReportRadius </em></code>: 
+(optional)</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number NearRadius </em></code>: 
+(optional)</p>
+
+				</li>
+				<li>
+				
+<p><code><em> CargoCrateName </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(CARGO_CRATE)">#CARGO_CRATE</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO_CRATE).OnUnLoadedCallBack" >
+<strong>CARGO_CRATE.OnUnLoadedCallBack</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO_CRATE).onenterLoaded" >
+<strong>CARGO_CRATE:onenterLoaded(Event, From, To, CargoCarrier)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Loaded State.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> CargoCarrier </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO_CRATE).onenterUnLoaded" >
+<strong>CARGO_CRATE:onenterUnLoaded(Event, From, To, Core, ToPointVec2)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Enter UnLoaded State.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> Core </em></code>: 
+Point#POINT_VEC2</p>
+
+				</li>
+				<li>
+				
+<p><code><em> ToPointVec2 </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+
 			<h2><a id="#(CARGO_GROUP)" >Type <code>CARGO_GROUP</code></a></h2>
 				<h3>Field(s)</h3>
 		<dl class="function">
@@ -1809,6 +2453,23 @@ The amount of seconds to delay the action.</p>
 		<em></em>
 <a id="#(CARGO_GROUP).CargoCarrier" >
 <strong>CARGO_GROUP.CargoCarrier</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+	
+<p>self.CargoObject:Destroy()</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(CARGO_GROUP).CargoGroup" >
+<strong>CARGO_GROUP.CargoGroup</strong>
 </a>
 </dt>
 <dd>
@@ -1834,13 +2495,17 @@ The amount of seconds to delay the action.</p>
 		<dl class="function">
 <dt>
 
-		<em></em>
-<a id="#(CARGO_GROUP).CargoSet" >
-<strong>CARGO_GROUP.CargoSet</strong>
+<a id="#(CARGO_GROUP).GetCount" >
+<strong>CARGO_GROUP:GetCount()</strong>
 </a>
 </dt>
 <dd>
 	
+<p>Get the amount of cargo units in the group.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(CARGO_GROUP)">#CARGO_GROUP</a>:</em></p>
 
 
 </dd>
@@ -1891,6 +2556,48 @@ The amount of seconds to delay the action.</p>
 <p><em><a href="##(CARGO_GROUP)">#CARGO_GROUP</a>:</em></p>
 
 
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO_GROUP).OnEventCargoDead" >
+<strong>CARGO_GROUP:OnEventCargoDead(EventData)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Event.html##(EVENTDATA)">Core.Event#EVENTDATA</a> EventData </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO_GROUP).RespawnOnDestroyed" >
+<strong>CARGO_GROUP:RespawnOnDestroyed(RespawnDestroyed)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Respawn the cargo when destroyed</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#boolean RespawnDestroyed </em></code>: </p>
+
+				</li>
+		</ul>
 </dd>
 </dl>
 		<dl class="function">
@@ -2029,6 +2736,19 @@ The amount of seconds to delay the action.</p>
 
 				</li>
 		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO_GROUP).onenterDestroyed" >
+<strong>CARGO_GROUP:onenterDestroyed()</strong>
+</a>
+</dt>
+<dd>
+	
+
+
 </dd>
 </dl>
 		<dl class="function">
@@ -2672,6 +3392,20 @@ The UNIT carrying the package.</p>
 		<dl class="function">
 <dt>
 
+		<em><a href="Core.Set.html##(SET_CARGO)">Core.Set#SET_CARGO</a></em>
+<a id="#(CARGO_REPORTABLE).CargoSet" >
+<strong>CARGO_REPORTABLE.CargoSet</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 		<em>#string</em>
 <a id="#(CARGO_REPORTABLE).ClassName" >
 <strong>CARGO_REPORTABLE.ClassName</strong>
@@ -2825,9 +3559,40 @@ The range till cargo will board.</p>
 
 </dd>
 </dl>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO_REPORTABLE).Respawn" >
+<strong>CARGO_REPORTABLE:Respawn()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Respawn the cargo.</p>
+
+</dd>
+</dl>
 
 			<h2><a id="#(CARGO_REPRESENTABLE)" >Type <code>CARGO_REPRESENTABLE</code></a></h2>
 				<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+<a id="#(CARGO_REPRESENTABLE).Destroy" >
+<strong>CARGO_REPRESENTABLE:Destroy()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>CARGO_REPRESENTABLE Destructor.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(CARGO_REPRESENTABLE)">#CARGO_REPRESENTABLE</a>:</em></p>
+
+
+</dd>
+</dl>
 		<dl class="function">
 <dt>
 
@@ -2928,7 +3693,7 @@ The range till cargo will board.</p>
 
 			<h2><a id="#(CARGO_UNIT)" >Type <code>CARGO_UNIT</code></a></h2>
 				
-<p>Hello </p>
+<p>Models CARGO in the form of units, which can be boarded, unboarded, loaded, unloaded. </p>
 
 	<h3>Field(s)</h3>
 		<dl class="function">
@@ -2968,24 +3733,6 @@ The range till cargo will board.</p>
 </dt>
 <dd>
 	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(CARGO_UNIT).Destroy" >
-<strong>CARGO_UNIT:Destroy()</strong>
-</a>
-</dt>
-<dd>
-	
-<p>CARGO_UNIT Destructor.</p>
-
-		<h3>Return value</h3>
-				
-<p><em><a href="##(CARGO_UNIT)">#CARGO_UNIT</a>:</em></p>
 
 
 </dd>
@@ -3059,7 +3806,6 @@ The range till cargo will board.</p>
 		<dl class="function">
 <dt>
 
-		<em>#number</em>
 <a id="#(CARGO_UNIT).RunCount" >
 <strong>CARGO_UNIT.RunCount</strong>
 </a>
@@ -3410,8 +4156,6 @@ Point#POINT_VEC2</p>
 </dd>
 </dl>
 
-			<h2><a id="#(COMMANDCENTER)" >Type <code>COMMANDCENTER</code></a></h2>
-			
 			<h2><a id="#(sring)" >Type <code>sring</code></a></h2>
 			
 </div>

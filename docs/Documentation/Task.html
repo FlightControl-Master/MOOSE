@@ -28,9 +28,9 @@
 					<li><a href="AI_Cas.html">AI_Cas</a></li>
 					<li><a href="AI_Formation.html">AI_Formation</a></li>
 					<li><a href="AI_Patrol.html">AI_Patrol</a></li>
+					<li><a href="ATC_Ground.html">ATC_Ground</a></li>
 					<li><a href="Account.html">Account</a></li>
 					<li><a href="Airbase.html">Airbase</a></li>
-					<li><a href="AirbasePolice.html">AirbasePolice</a></li>
 					<li><a href="Assign.html">Assign</a></li>
 					<li><a href="Base.html">Base</a></li>
 					<li><a href="Cargo.html">Cargo</a></li>
@@ -60,6 +60,7 @@
 					<li><a href="Escort.html">Escort</a></li>
 					<li><a href="Event.html">Event</a></li>
 					<li><a href="Fsm.html">Fsm</a></li>
+					<li><a href="Goal.html">Goal</a></li>
 					<li><a href="Group.html">Group</a></li>
 					<li><a href="Identifiable.html">Identifiable</a></li>
 					<li><a href="Menu.html">Menu</a></li>
@@ -72,7 +73,9 @@
 					<li><a href="Positionable.html">Positionable</a></li>
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
 					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
+					<li><a href="Protect.html">Protect</a></li>
 					<li><a href="Radio.html">Radio</a></li>
+					<li><a href="Rat.html">Rat</a></li>
 					<li><a href="Route.html">Route</a></li>
 					<li><a href="Scenery.html">Scenery</a></li>
 					<li><a href="ScheduleDispatcher.html">ScheduleDispatcher</a></li>
@@ -88,6 +91,7 @@
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li>Task</li>
+					<li><a href="TaskZoneCapture.html">TaskZoneCapture</a></li>
 					<li><a href="Task_A2A.html">Task_A2A</a></li>
 					<li><a href="Task_A2A_Dispatcher.html">Task_A2A_Dispatcher</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
@@ -95,8 +99,15 @@
 					<li><a href="Task_Cargo.html">Task_Cargo</a></li>
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
 					<li><a href="Unit.html">Unit</a></li>
+					<li><a href="UserFlag.html">UserFlag</a></li>
+					<li><a href="UserSound.html">UserSound</a></li>
 					<li><a href="Utils.html">Utils</a></li>
+					<li><a href="Velocity.html">Velocity</a></li>
 					<li><a href="Zone.html">Zone</a></li>
+					<li><a href="ZoneCaptureCoalition.html">ZoneCaptureCoalition</a></li>
+					<li><a href="ZoneGoal.html">ZoneGoal</a></li>
+					<li><a href="ZoneGoalCargo.html">ZoneGoalCargo</a></li>
+					<li><a href="ZoneGoalCoalition.html">ZoneGoalCoalition</a></li>
 					<li><a href="env.html">env</a></li>
 					<li><a href="land.html">land</a></li>
 					<li><a href="routines.html">routines</a></li>
@@ -186,6 +197,18 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).DetectedItemIndex">TASK.DetectedItemIndex</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).Detection">TASK.Detection</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(TASK).Dispatcher">TASK.Dispatcher</a></td>
 		<td class="summary">
 
@@ -228,6 +251,12 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).GetInfo">TASK:GetInfo(TaskInfo)</a></td>
+		<td class="summary">
+<p>Gets the Information of the Task</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(TASK).GetMission">TASK:GetMission()</a></td>
 		<td class="summary">
 <p>Gets the Mission to where the TASK belongs.</p>
@@ -249,6 +278,12 @@
 		<td class="name" nowrap="nowrap"><a href="##(TASK).GetPlayerNames">TASK:GetPlayerNames()</a></td>
 		<td class="summary">
 <p>Create a list of the players in the Task.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).GetPlayerProgress">TASK:GetPlayerProgress(PlayerName)</a></td>
+		<td class="summary">
+
 </td>
 		</tr>
 		<tr>
@@ -306,7 +341,7 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK).Goal">TASK:Goal()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).Goal">TASK:Goal(PlayerUnit, PlayerName)</a></td>
 		<td class="summary">
 <p>Goal Trigger for TASK</p>
 </td>
@@ -390,7 +425,25 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK).MenuAssignToGroup">TASK.MenuAssignToGroup(MenuParam)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).MenuAssignToGroup">TASK:MenuAssignToGroup(TaskGroup)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).MenuAssigned">TASK.MenuAssigned</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).MenuMarkToGroup">TASK:MenuMarkToGroup(TaskGroup)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).MenuPlanned">TASK.MenuPlanned</a></td>
 		<td class="summary">
 
 </td>
@@ -426,7 +479,7 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK).OnAfterGoal">TASK:OnAfterGoal(Controllable, From, Event, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).OnAfterGoal">TASK:OnAfterGoal(From, Event, To, PlayerUnit, PlayerName)</a></td>
 		<td class="summary">
 <p>Goal Handler OnAfter for TASK</p>
 </td>
@@ -450,7 +503,7 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK).OnBeforeGoal">TASK:OnBeforeGoal(Controllable, From, Event, To)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).OnBeforeGoal">TASK:OnBeforeGoal(From, Event, To, PlayerUnit, PlayerName)</a></td>
 		<td class="summary">
 <p>Goal Handler OnBefore for TASK</p>
 </td>
@@ -498,7 +551,7 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK).ReportSummary">TASK:ReportSummary()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).ReportSummary">TASK:ReportSummary(ReportGroup)</a></td>
 		<td class="summary">
 <p>Create a summary report of the Task.</p>
 </td>
@@ -519,6 +572,12 @@
 		<td class="name" nowrap="nowrap"><a href="##(TASK).SetBriefing">TASK:SetBriefing(TaskBriefing)</a></td>
 		<td class="summary">
 <p>Sets a <a href="Task.html">Task</a> briefing.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).SetDetection">TASK:SetDetection(Detection, DetectedItemIndex)</a></td>
+		<td class="summary">
+<p>Set detection of a task</p>
 </td>
 		</tr>
 		<tr>
@@ -546,7 +605,7 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK).SetInfo">TASK:SetInfo(TaskInfo, TaskInfoText)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).SetInfo">TASK:SetInfo(TaskInfo, TaskInfoText, TaskInfoOrder)</a></td>
 		<td class="summary">
 <p>Sets the Information on the Task</p>
 </td>
@@ -684,6 +743,12 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).TaskInfo">TASK.TaskInfo</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(TASK).TaskName">TASK.TaskName</a></td>
 		<td class="summary">
 
@@ -750,7 +815,7 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK).__Goal">TASK:__Goal(Delay)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).__Goal">TASK:__Goal(Delay, PlayerUnit, PlayerName)</a></td>
 		<td class="summary">
 <p>Goal Asynchronous Trigger for TASK</p>
 </td>
@@ -787,6 +852,12 @@
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(TASK).onenterAssigned">TASK:onenterAssigned(Event, From, To, PlayerUnit, PlayerName)</a></td>
+		<td class="summary">
+<p>FSM function for a TASK</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK).onenterCancelled">TASK:onenterCancelled(From, Event, To)</a></td>
 		<td class="summary">
 <p>FSM function for a TASK</p>
 </td>
@@ -1132,6 +1203,34 @@ The CLIENT or UNIT of the Player aborting the Task.</p>
 <dt>
 
 		<em></em>
+<a id="#(TASK).DetectedItemIndex" >
+<strong>TASK.DetectedItemIndex</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(TASK).Detection" >
+<strong>TASK.Detection</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
 <a id="#(TASK).Dispatcher" >
 <strong>TASK.Dispatcher</strong>
 </a>
@@ -1257,6 +1356,33 @@ TaskID</p>
 		<dl class="function">
 <dt>
 
+<a id="#(TASK).GetInfo" >
+<strong>TASK:GetInfo(TaskInfo)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Gets the Information of the Task</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string TaskInfo </em></code>: 
+The key and title of the task information.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#string:</em>
+TaskInfoText The Task info text.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(TASK).GetMission" >
 <strong>TASK:GetMission()</strong>
 </a>
@@ -1324,6 +1450,27 @@ The total number of players in the task.</p>
 <p><em><a href="##(map)">#map</a>:</em></p>
 <h1>string,Wrapper.Group#GROUP> A map of the players</h1>
 
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).GetPlayerProgress" >
+<strong>TASK:GetPlayerProgress(PlayerName)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> PlayerName </em></code>: </p>
+
+				</li>
+		</ul>
 </dd>
 </dl>
 		<dl class="function">
@@ -1511,13 +1658,28 @@ TaskType</p>
 <dt>
 
 <a id="#(TASK).Goal" >
-<strong>TASK:Goal()</strong>
+<strong>TASK:Goal(PlayerUnit, PlayerName)</strong>
 </a>
 </dt>
 <dd>
 	
 <p>Goal Trigger for TASK</p>
 
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> PlayerUnit </em></code>: 
+The <a href="Unit.html">Unit</a> of the player.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string PlayerName </em></code>: 
+The name of the player.</p>
+
+				</li>
+		</ul>
 </dd>
 </dl>
 		<dl class="function">
@@ -1762,7 +1924,7 @@ true if Unit is part of the Task.</p>
 <dt>
 
 <a id="#(TASK).MenuAssignToGroup" >
-<strong>TASK.MenuAssignToGroup(MenuParam)</strong>
+<strong>TASK:MenuAssignToGroup(TaskGroup)</strong>
 </a>
 </dt>
 <dd>
@@ -1773,10 +1935,57 @@ true if Unit is part of the Task.</p>
 		<ul>
 				<li>
 				
-<p><code><em> MenuParam </em></code>: </p>
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> TaskGroup </em></code>: </p>
 
 				</li>
 		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).MenuAssigned" >
+<strong>TASK.MenuAssigned</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).MenuMarkToGroup" >
+<strong>TASK:MenuMarkToGroup(TaskGroup)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> TaskGroup </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).MenuPlanned" >
+<strong>TASK.MenuPlanned</strong>
+</a>
+</dt>
+<dd>
+	
+
+
 </dd>
 </dl>
 		<dl class="function">
@@ -1913,7 +2122,7 @@ self</p>
 <dt>
 
 <a id="#(TASK).OnAfterGoal" >
-<strong>TASK:OnAfterGoal(Controllable, From, Event, To)</strong>
+<strong>TASK:OnAfterGoal(From, Event, To, PlayerUnit, PlayerName)</strong>
 </a>
 </dt>
 <dd>
@@ -1922,11 +2131,6 @@ self</p>
 
 		<h3>Parameters</h3>
 		<ul>
-				<li>
-				
-<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> Controllable </em></code>: </p>
-
-				</li>
 				<li>
 				
 <p><code><em>#string From </em></code>: </p>
@@ -1940,6 +2144,18 @@ self</p>
 				<li>
 				
 <p><code><em>#string To </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> PlayerUnit </em></code>: 
+The <a href="Unit.html">Unit</a> of the player.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string PlayerName </em></code>: 
+The name of the player.</p>
 
 				</li>
 		</ul>
@@ -2033,7 +2249,7 @@ The name of the Player.</p>
 <dt>
 
 <a id="#(TASK).OnBeforeGoal" >
-<strong>TASK:OnBeforeGoal(Controllable, From, Event, To)</strong>
+<strong>TASK:OnBeforeGoal(From, Event, To, PlayerUnit, PlayerName)</strong>
 </a>
 </dt>
 <dd>
@@ -2042,11 +2258,6 @@ The name of the Player.</p>
 
 		<h3>Parameters</h3>
 		<ul>
-				<li>
-				
-<p><code><em><a href="Wrapper.Controllable.html##(CONTROLLABLE)">Wrapper.Controllable#CONTROLLABLE</a> Controllable </em></code>: </p>
-
-				</li>
 				<li>
 				
 <p><code><em>#string From </em></code>: </p>
@@ -2060,6 +2271,18 @@ The name of the Player.</p>
 				<li>
 				
 <p><code><em>#string To </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> PlayerUnit </em></code>: 
+The <a href="Unit.html">Unit</a> of the player.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string PlayerName </em></code>: 
+The name of the player.</p>
 
 				</li>
 		</ul>
@@ -2267,7 +2490,7 @@ self</p>
 <dt>
 
 <a id="#(TASK).ReportSummary" >
-<strong>TASK:ReportSummary()</strong>
+<strong>TASK:ReportSummary(ReportGroup)</strong>
 </a>
 </dt>
 <dd>
@@ -2277,6 +2500,14 @@ self</p>
 	
 <p>List the Task Name and Status</p>
 
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> ReportGroup </em></code>: </p>
+
+				</li>
+		</ul>
 		<h3>Return value</h3>
 				
 <p><em>#string:</em></p>
@@ -2351,6 +2582,37 @@ self</p>
 				
 <p><em><a href="##(TASK)">#TASK</a>:</em>
 self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).SetDetection" >
+<strong>TASK:SetDetection(Detection, DetectedItemIndex)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Set detection of a task</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Function.Detection.html##(DETECTION_BASE)">Function.Detection#DETECTION_BASE</a> Detection </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number DetectedItemIndex </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(TASK)">#TASK</a>:</em></p>
+
 
 </dd>
 </dl>
@@ -2445,7 +2707,7 @@ self</p>
 <dt>
 
 <a id="#(TASK).SetInfo" >
-<strong>TASK:SetInfo(TaskInfo, TaskInfoText)</strong>
+<strong>TASK:SetInfo(TaskInfo, TaskInfoText, TaskInfoOrder)</strong>
 </a>
 </dt>
 <dd>
@@ -2456,12 +2718,20 @@ self</p>
 		<ul>
 				<li>
 				
-<p><code><em>#string TaskInfo </em></code>: </p>
+<p><code><em>#string TaskInfo </em></code>: 
+The key and title of the task information.</p>
 
 				</li>
 				<li>
 				
-<p><code><em> TaskInfoText </em></code>: </p>
+<p><code><em>#string TaskInfoText </em></code>: 
+The Task info text.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number TaskInfoOrder </em></code>: 
+The ordering, a number between 0 and 99.</p>
 
 				</li>
 		</ul>
@@ -2956,6 +3226,19 @@ Fsm#FSM_PROCESS</p>
 		<dl class="function">
 <dt>
 
+<a id="#(TASK).TaskInfo" >
+<strong>TASK.TaskInfo</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 		<em></em>
 <a id="#(TASK).TaskName" >
 <strong>TASK.TaskName</strong>
@@ -3037,7 +3320,7 @@ Fsm#FSM_PROCESS</p>
 		<ul>
 				<li>
 				
-<p><code><em> TaskGroup </em></code>: </p>
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> TaskGroup </em></code>: </p>
 
 				</li>
 		</ul>
@@ -3134,18 +3417,30 @@ self</p>
 <dt>
 
 <a id="#(TASK).__Goal" >
-<strong>TASK:__Goal(Delay)</strong>
+<strong>TASK:__Goal(Delay, PlayerUnit, PlayerName)</strong>
 </a>
 </dt>
 <dd>
 	
 <p>Goal Asynchronous Trigger for TASK</p>
 
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
 <p><code><em>#number Delay </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a> PlayerUnit </em></code>: 
+The <a href="Unit.html">Unit</a> of the player.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string PlayerName </em></code>: 
+The name of the player.</p>
 
 				</li>
 		</ul>
@@ -3312,6 +3607,37 @@ self</p>
 				<li>
 				
 <p><code><em> PlayerName </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK).onenterCancelled" >
+<strong>TASK:onenterCancelled(From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>FSM function for a TASK</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string To </em></code>: </p>
 
 				</li>
 		</ul>

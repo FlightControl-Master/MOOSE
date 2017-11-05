@@ -28,9 +28,9 @@
 					<li><a href="AI_Cas.html">AI_Cas</a></li>
 					<li><a href="AI_Formation.html">AI_Formation</a></li>
 					<li><a href="AI_Patrol.html">AI_Patrol</a></li>
+					<li><a href="ATC_Ground.html">ATC_Ground</a></li>
 					<li><a href="Account.html">Account</a></li>
 					<li><a href="Airbase.html">Airbase</a></li>
-					<li><a href="AirbasePolice.html">AirbasePolice</a></li>
 					<li><a href="Assign.html">Assign</a></li>
 					<li><a href="Base.html">Base</a></li>
 					<li><a href="Cargo.html">Cargo</a></li>
@@ -60,6 +60,7 @@
 					<li><a href="Escort.html">Escort</a></li>
 					<li><a href="Event.html">Event</a></li>
 					<li><a href="Fsm.html">Fsm</a></li>
+					<li><a href="Goal.html">Goal</a></li>
 					<li><a href="Group.html">Group</a></li>
 					<li><a href="Identifiable.html">Identifiable</a></li>
 					<li><a href="Menu.html">Menu</a></li>
@@ -72,7 +73,9 @@
 					<li><a href="Positionable.html">Positionable</a></li>
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
 					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
+					<li><a href="Protect.html">Protect</a></li>
 					<li><a href="Radio.html">Radio</a></li>
+					<li><a href="Rat.html">Rat</a></li>
 					<li><a href="Route.html">Route</a></li>
 					<li><a href="Scenery.html">Scenery</a></li>
 					<li><a href="ScheduleDispatcher.html">ScheduleDispatcher</a></li>
@@ -88,6 +91,7 @@
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="Task.html">Task</a></li>
+					<li><a href="TaskZoneCapture.html">TaskZoneCapture</a></li>
 					<li><a href="Task_A2A.html">Task_A2A</a></li>
 					<li><a href="Task_A2A_Dispatcher.html">Task_A2A_Dispatcher</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
@@ -95,8 +99,15 @@
 					<li><a href="Task_Cargo.html">Task_Cargo</a></li>
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
 					<li><a href="Unit.html">Unit</a></li>
+					<li><a href="UserFlag.html">UserFlag</a></li>
+					<li><a href="UserSound.html">UserSound</a></li>
 					<li><a href="Utils.html">Utils</a></li>
+					<li><a href="Velocity.html">Velocity</a></li>
 					<li><a href="Zone.html">Zone</a></li>
+					<li><a href="ZoneCaptureCoalition.html">ZoneCaptureCoalition</a></li>
+					<li><a href="ZoneGoal.html">ZoneGoal</a></li>
+					<li><a href="ZoneGoalCargo.html">ZoneGoalCargo</a></li>
+					<li><a href="ZoneGoalCoalition.html">ZoneGoalCoalition</a></li>
 					<li><a href="env.html">env</a></li>
 					<li><a href="land.html">land</a></li>
 					<li><a href="routines.html">routines</a></li>
@@ -187,21 +198,21 @@ CLIENTS in a SET</em>CLIENT collection, which are not occupied by human players.
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_BALANCER).ReturnToHomeAirbase">AI_BALANCER:ReturnToHomeAirbase(ReturnTresholdRange)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_BALANCER).ReturnThresholdRange">AI_BALANCER.ReturnThresholdRange</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(AI_BALANCER).ReturnToHomeAirbase">AI_BALANCER:ReturnToHomeAirbase(ReturnThresholdRange)</a></td>
 		<td class="summary">
 <p>Returns the AI to the home <a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a>.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_BALANCER).ReturnToNearestAirbases">AI_BALANCER:ReturnToNearestAirbases(ReturnTresholdRange, ReturnAirbaseSet)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(AI_BALANCER).ReturnToNearestAirbases">AI_BALANCER:ReturnToNearestAirbases(ReturnThresholdRange, ReturnAirbaseSet)</a></td>
 		<td class="summary">
 <p>Returns the AI to the nearest friendly <a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a>.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(AI_BALANCER).ReturnTresholdRange">AI_BALANCER.ReturnTresholdRange</a></td>
-		<td class="summary">
-
 </td>
 		</tr>
 		<tr>
@@ -427,7 +438,7 @@ A SET_CLIENT object that will contain the CLIENT objects to be monitored if they
 				</li>
 				<li>
 				
-<p><code><em><a href="Functional.Spawn.html##(SPAWN)">Functional.Spawn#SPAWN</a> SpawnAI </em></code>: 
+<p><code><em><a href="Core.Spawn.html##(SPAWN)">Core.Spawn#SPAWN</a> SpawnAI </em></code>: 
 The default Spawn object to spawn new AI Groups when needed.</p>
 
 				</li>
@@ -456,8 +467,22 @@ The default Spawn object to spawn new AI Groups when needed.</p>
 		<dl class="function">
 <dt>
 
+		<em></em>
+<a id="#(AI_BALANCER).ReturnThresholdRange" >
+<strong>AI_BALANCER.ReturnThresholdRange</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(AI_BALANCER).ReturnToHomeAirbase" >
-<strong>AI_BALANCER:ReturnToHomeAirbase(ReturnTresholdRange)</strong>
+<strong>AI_BALANCER:ReturnToHomeAirbase(ReturnThresholdRange)</strong>
 </a>
 </dt>
 <dd>
@@ -468,8 +493,8 @@ The default Spawn object to spawn new AI Groups when needed.</p>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a> ReturnTresholdRange </em></code>: 
-If there is an enemy <a href="Client.html##(CLIENT)">Client#CLIENT</a> within the ReturnTresholdRange given in meters, the AI will not return to the nearest <a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a>.</p>
+<p><code><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a> ReturnThresholdRange </em></code>: 
+If there is an enemy <a href="Client.html##(CLIENT)">Client#CLIENT</a> within the ReturnThresholdRange given in meters, the AI will not return to the nearest <a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a>.</p>
 
 				</li>
 		</ul>
@@ -479,7 +504,7 @@ If there is an enemy <a href="Client.html##(CLIENT)">Client#CLIENT</a> within th
 <dt>
 
 <a id="#(AI_BALANCER).ReturnToNearestAirbases" >
-<strong>AI_BALANCER:ReturnToNearestAirbases(ReturnTresholdRange, ReturnAirbaseSet)</strong>
+<strong>AI_BALANCER:ReturnToNearestAirbases(ReturnThresholdRange, ReturnAirbaseSet)</strong>
 </a>
 </dt>
 <dd>
@@ -490,8 +515,8 @@ If there is an enemy <a href="Client.html##(CLIENT)">Client#CLIENT</a> within th
 		<ul>
 				<li>
 				
-<p><code><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a> ReturnTresholdRange </em></code>: 
-If there is an enemy <a href="Client.html##(CLIENT)">Client#CLIENT</a> within the ReturnTresholdRange given in meters, the AI will not return to the nearest <a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a>.</p>
+<p><code><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a> ReturnThresholdRange </em></code>: 
+If there is an enemy <a href="Client.html##(CLIENT)">Client#CLIENT</a> within the ReturnThresholdRange given in meters, the AI will not return to the nearest <a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a>.</p>
 
 				</li>
 				<li>
@@ -501,20 +526,6 @@ The SET of <a href="Set.html##(SET_AIRBASE)">Set#SET_AIRBASE</a>s to evaluate wh
 
 				</li>
 		</ul>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-		<em></em>
-<a id="#(AI_BALANCER).ReturnTresholdRange" >
-<strong>AI_BALANCER.ReturnTresholdRange</strong>
-</a>
-</dt>
-<dd>
-	
-
-
 </dd>
 </dl>
 		<dl class="function">
@@ -534,7 +545,7 @@ The SET of <a href="Set.html##(SET_AIRBASE)">Set#SET_AIRBASE</a>s to evaluate wh
 		<dl class="function">
 <dt>
 
-		<em><a href="Functional.Spawn.html##(SPAWN)">Functional.Spawn#SPAWN</a></em>
+		<em><a href="Core.Spawn.html##(SPAWN)">Core.Spawn#SPAWN</a></em>
 <a id="#(AI_BALANCER).SpawnAI" >
 <strong>AI_BALANCER.SpawnAI</strong>
 </a>

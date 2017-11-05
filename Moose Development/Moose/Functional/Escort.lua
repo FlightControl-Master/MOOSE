@@ -875,7 +875,7 @@ function ESCORT:_AttackTarget( DetectedItemID )
       end, Tasks
     )    
 
-    Tasks[#Tasks+1] = EscortGroup:TaskFunction( 1, 2, "_Resume", { "''" } )
+    Tasks[#Tasks+1] = EscortGroup:TaskFunction( "_Resume", { "''" } )
     
     EscortGroup:SetTask( 
       EscortGroup:TaskCombo(
@@ -1161,19 +1161,23 @@ function ESCORT:_ReportTargetsScheduler()
       for ClientEscortGroupName, EscortGroupData in pairs( self.EscortClient._EscortGroups ) do
 
         local ClientEscortTargets = EscortGroupData.Detection
+        --local EscortUnit = EscortGroupData:GetUnit( 1 )
 
-        for DetectedItemID, DetectedItem in ipairs( DetectedItems ) do
+        for DetectedItemID, DetectedItem in pairs( DetectedItems ) do
           self:E( { DetectedItemID, DetectedItem } )
           -- Remove the sub menus of the Attack menu of the Escort for the EscortGroup.
   
-          local DetectedItemReportSummary = self.Detection:DetectedItemReportSummary( DetectedItemID, EscortGroupData )
+          local DetectedItemReportSummary = self.Detection:DetectedItemReportSummary( DetectedItemID, EscortGroupData.EscortGroup, _DATABASE:GetPlayerSettings( self.EscortClient:GetPlayerName() ) )
 
           if ClientEscortGroupName == EscortGroupName then
           
-            DetectedMsgs[#DetectedMsgs+1] = DetectedItemReportSummary
+            local DetectedMsg = DetectedItemReportSummary:Text("\n")
+            DetectedMsgs[#DetectedMsgs+1] = DetectedMsg
+
+            self:T( DetectedMsg )
   
             MENU_CLIENT_COMMAND:New( self.EscortClient,
-              DetectedItemReportSummary,
+              DetectedMsg,
               self.EscortMenuAttackNearbyTargets,
               ESCORT._AttackTarget,
               self,
@@ -1182,10 +1186,12 @@ function ESCORT:_ReportTargetsScheduler()
           else
             if self.EscortMenuTargetAssistance then
             
-              self:T( DetectedItemReportSummary )
+              local DetectedMsg = DetectedItemReportSummary:Text("\n")
+              self:T( DetectedMsg )
+
               local MenuTargetAssistance = MENU_CLIENT:New( self.EscortClient, EscortGroupData.EscortName, self.EscortMenuTargetAssistance )
               MENU_CLIENT_COMMAND:New( self.EscortClient,
-                DetectedItemReportSummary,
+                DetectedMsg,
                 MenuTargetAssistance,
                 ESCORT._AssistTarget,
                 self,
@@ -1201,7 +1207,7 @@ function ESCORT:_ReportTargetsScheduler()
       end
       self:E( DetectedMsgs )
       if DetectedTargets then
-        self.EscortGroup:MessageToClient( "Detected targets:\n" .. table.concat( DetectedMsgs, "\n" ), 20, self.EscortClient )
+        self.EscortGroup:MessageToClient( "Reporting detected targets:\n" .. table.concat( DetectedMsgs, "\n" ), 20, self.EscortClient )
       else
         self.EscortGroup:MessageToClient( "No targets detected.", 10, self.EscortClient )
       end

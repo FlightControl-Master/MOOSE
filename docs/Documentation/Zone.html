@@ -28,9 +28,9 @@
 					<li><a href="AI_Cas.html">AI_Cas</a></li>
 					<li><a href="AI_Formation.html">AI_Formation</a></li>
 					<li><a href="AI_Patrol.html">AI_Patrol</a></li>
+					<li><a href="ATC_Ground.html">ATC_Ground</a></li>
 					<li><a href="Account.html">Account</a></li>
 					<li><a href="Airbase.html">Airbase</a></li>
-					<li><a href="AirbasePolice.html">AirbasePolice</a></li>
 					<li><a href="Assign.html">Assign</a></li>
 					<li><a href="Base.html">Base</a></li>
 					<li><a href="Cargo.html">Cargo</a></li>
@@ -60,6 +60,7 @@
 					<li><a href="Escort.html">Escort</a></li>
 					<li><a href="Event.html">Event</a></li>
 					<li><a href="Fsm.html">Fsm</a></li>
+					<li><a href="Goal.html">Goal</a></li>
 					<li><a href="Group.html">Group</a></li>
 					<li><a href="Identifiable.html">Identifiable</a></li>
 					<li><a href="Menu.html">Menu</a></li>
@@ -72,7 +73,9 @@
 					<li><a href="Positionable.html">Positionable</a></li>
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
 					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
+					<li><a href="Protect.html">Protect</a></li>
 					<li><a href="Radio.html">Radio</a></li>
+					<li><a href="Rat.html">Rat</a></li>
 					<li><a href="Route.html">Route</a></li>
 					<li><a href="Scenery.html">Scenery</a></li>
 					<li><a href="ScheduleDispatcher.html">ScheduleDispatcher</a></li>
@@ -88,6 +91,7 @@
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="Task.html">Task</a></li>
+					<li><a href="TaskZoneCapture.html">TaskZoneCapture</a></li>
 					<li><a href="Task_A2A.html">Task_A2A</a></li>
 					<li><a href="Task_A2A_Dispatcher.html">Task_A2A_Dispatcher</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
@@ -95,8 +99,15 @@
 					<li><a href="Task_Cargo.html">Task_Cargo</a></li>
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
 					<li><a href="Unit.html">Unit</a></li>
+					<li><a href="UserFlag.html">UserFlag</a></li>
+					<li><a href="UserSound.html">UserSound</a></li>
 					<li><a href="Utils.html">Utils</a></li>
+					<li><a href="Velocity.html">Velocity</a></li>
 					<li>Zone</li>
+					<li><a href="ZoneCaptureCoalition.html">ZoneCaptureCoalition</a></li>
+					<li><a href="ZoneGoal.html">ZoneGoal</a></li>
+					<li><a href="ZoneGoalCargo.html">ZoneGoalCargo</a></li>
+					<li><a href="ZoneGoalCoalition.html">ZoneGoalCoalition</a></li>
 					<li><a href="env.html">env</a></li>
 					<li><a href="land.html">land</a></li>
 					<li><a href="routines.html">routines</a></li>
@@ -330,6 +341,12 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_BASE).SetName">ZONE_BASE:SetName(ZoneName)</a></td>
+		<td class="summary">
+<p>Sets the name of the zone.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(ZONE_BASE).SetZoneProbability">ZONE_BASE:SetZoneProbability(ZoneProbability)</a></td>
 		<td class="summary">
 <p>Set the randomization probability of a zone to be selected.</p>
@@ -386,6 +403,12 @@
 			<h2><a id="#(ZONE_GROUP)">Type <code>ZONE_GROUP</code></a></h2>
 				<table class="function_list">
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_GROUP).GetRandomPointVec2">ZONE_GROUP:GetRandomPointVec2(inner, outer)</a></td>
+		<td class="summary">
+<p>Returns a <a href="Point.html##(POINT_VEC2)">Point#POINT_VEC2</a> object reflecting a random 2D location within the zone.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(ZONE_GROUP).GetRandomVec2">ZONE_GROUP:GetRandomVec2()</a></td>
 		<td class="summary">
 <p>Returns a random location within the zone of the <a href="Group.html">Group</a>.</p>
@@ -410,7 +433,13 @@
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(ZONE_POLYGON).New">ZONE_POLYGON:New(ZoneName, ZoneGroup)</a></td>
 		<td class="summary">
-<p>Constructor to create a ZONE_POLYGON instance, taking the zone name and the name of the <a href="Group.html##(GROUP)">Group#GROUP</a> defined within the Mission Editor.</p>
+<p>Constructor to create a ZONE_POLYGON instance, taking the zone name and the <a href="Group.html##(GROUP)">Group#GROUP</a> defined within the Mission Editor.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_POLYGON).NewFromGroupName">ZONE_POLYGON:NewFromGroupName(ZoneName, GroupName)</a></td>
+		<td class="summary">
+<p>Constructor to create a ZONE_POLYGON instance, taking the zone name and the <strong>name</strong> of the <a href="Group.html##(GROUP)">Group#GROUP</a> defined within the Mission Editor.</p>
 </td>
 		</tr>
 	</table>
@@ -433,6 +462,12 @@
 		<td class="name" nowrap="nowrap"><a href="##(ZONE_POLYGON_BASE).GetBoundingSquare">ZONE_POLYGON_BASE:GetBoundingSquare()</a></td>
 		<td class="summary">
 <p>Get the bounding square the zone.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_POLYGON_BASE).GetRandomCoordinate">ZONE_POLYGON_BASE:GetRandomCoordinate()</a></td>
+		<td class="summary">
+<p>Return a <a href="Point.html##(COORDINATE)">Point#COORDINATE</a> object representing a random 3D point at landheight within the zone.</p>
 </td>
 		</tr>
 		<tr>
@@ -488,7 +523,13 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).FlareZone">ZONE_RADIUS:FlareZone(FlareColor, Points, Azimuth)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).CountScannedCoalitions">ZONE_RADIUS:CountScannedCoalitions()</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).FlareZone">ZONE_RADIUS:FlareZone(FlareColor, Points, Azimuth, AddHeight)</a></td>
 		<td class="summary">
 <p>Flares the zone boundaries in a color.</p>
 </td>
@@ -497,6 +538,12 @@
 		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).GetRadius">ZONE_RADIUS:GetRadius()</a></td>
 		<td class="summary">
 <p>Returns the radius of the zone.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).GetRandomCoordinate">ZONE_RADIUS:GetRandomCoordinate(inner, outer)</a></td>
+		<td class="summary">
+<p>Returns a <a href="Point.html##(COORDINATE)">Point#COORDINATE</a> object reflecting a random 3D location within the zone.</p>
 </td>
 		</tr>
 		<tr>
@@ -518,6 +565,24 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).GetScannedCoalition">ZONE_RADIUS:GetScannedCoalition(Coalition)</a></td>
+		<td class="summary">
+<p>Get Coalitions of the units in the Zone, or Check if there are units of the given Coalition in the Zone.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).GetScannedScenery">ZONE_RADIUS:GetScannedScenery()</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).GetScannedSceneryType">ZONE_RADIUS:GetScannedSceneryType(SceneryType)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).GetVec2">ZONE_RADIUS:GetVec2()</a></td>
 		<td class="summary">
 <p>Returns the <a href="DCSTypes.html##(Vec2)">DCSTypes#Vec2</a> of the zone.</p>
@@ -527,6 +592,36 @@
 		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).GetVec3">ZONE_RADIUS:GetVec3(Height)</a></td>
 		<td class="summary">
 <p>Returns the <a href="DCSTypes.html##(Vec3)">DCSTypes#Vec3</a> of the ZONE_RADIUS.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).IsAllInZoneOfCoalition">ZONE_RADIUS:IsAllInZoneOfCoalition(Coalition)</a></td>
+		<td class="summary">
+<p>Is All in Zone of Coalition?</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).IsAllInZoneOfOtherCoalition">ZONE_RADIUS:IsAllInZoneOfOtherCoalition(Coalition)</a></td>
+		<td class="summary">
+<p>Is All in Zone of Other Coalition?</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).IsNoneInZone">ZONE_RADIUS:IsNoneInZone()</a></td>
+		<td class="summary">
+<p>Is None in Zone?</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).IsNoneInZoneOfCoalition">ZONE_RADIUS:IsNoneInZoneOfCoalition(Coalition)</a></td>
+		<td class="summary">
+<p>Is None in Zone of Coalition?</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).IsSomeInZoneOfCoalition">ZONE_RADIUS:IsSomeInZoneOfCoalition(Coalition)</a></td>
+		<td class="summary">
+<p>Is Some in Zone of Coalition?</p>
 </td>
 		</tr>
 		<tr>
@@ -554,6 +649,24 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).Scan">ZONE_RADIUS:Scan(ObjectCategories, Coalition)</a></td>
+		<td class="summary">
+<p>Scan the zone</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).ScanData">ZONE_RADIUS.ScanData</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).SearchZone">ZONE_RADIUS:SearchZone(ObjectCategories, EvaluateFunction)</a></td>
+		<td class="summary">
+<p>Searches the zone</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).SetRadius">ZONE_RADIUS:SetRadius(Radius)</a></td>
 		<td class="summary">
 <p>Sets the radius of the zone.</p>
@@ -566,7 +679,7 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).SmokeZone">ZONE_RADIUS:SmokeZone(SmokeColor, Points)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).SmokeZone">ZONE_RADIUS:SmokeZone(SmokeColor, Points, AddHeight, AddOffSet, AngleOffset)</a></td>
 		<td class="summary">
 <p>Smokes the zone boundaries in a color.</p>
 </td>
@@ -660,7 +773,9 @@
 
 <ul>
     <li><a href="##(ZONE_BASE).GetName">ZONE_BASE.GetName</a>(): Returns the name of the zone.</li>
+    <li><a href="##(ZONE_BASE).SetName">ZONE_BASE.SetName</a>(): Sets the name of the zone.</li>
 </ul>
+
 
 <h2>Each zone implements two polymorphic functions defined in <a href="Zone.html##(ZONE_BASE)">Zone#ZONE_BASE</a>:</h2>
 
@@ -1288,6 +1403,33 @@ self</p>
 		<dl class="function">
 <dt>
 
+<a id="#(ZONE_BASE).SetName" >
+<strong>ZONE_BASE:SetName(ZoneName)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Sets the name of the zone.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string ZoneName </em></code>: 
+The name of the zone.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(ZONE_BASE)">#ZONE_BASE</a>:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(ZONE_BASE).SetZoneProbability" >
 <strong>ZONE_BASE:SetZoneProbability(ZoneProbability)</strong>
 </a>
@@ -1425,6 +1567,39 @@ The smoke color.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(ZONE_GROUP).GetRandomPointVec2" >
+<strong>ZONE_GROUP:GetRandomPointVec2(inner, outer)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns a <a href="Point.html##(POINT_VEC2)">Point#POINT_VEC2</a> object reflecting a random 2D location within the zone.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number inner </em></code>: 
+(optional) Minimal distance from the center of the zone. Default is 0.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number outer </em></code>: 
+(optional) Maximal distance from the outer edge of the zone. Default is the radius of the zone.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="Core.Point.html##(POINT_VEC2)">Core.Point#POINT_VEC2</a>:</em>
+The <a href="Point.html##(POINT_VEC2)">Point#POINT_VEC2</a> object reflecting the random 3D location within the zone.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(ZONE_GROUP).GetRandomVec2" >
 <strong>ZONE_GROUP:GetRandomVec2()</strong>
 </a>
@@ -1509,7 +1684,7 @@ self</p>
 </dt>
 <dd>
 	
-<p>Constructor to create a ZONE_POLYGON instance, taking the zone name and the name of the <a href="Group.html##(GROUP)">Group#GROUP</a> defined within the Mission Editor.</p>
+<p>Constructor to create a ZONE_POLYGON instance, taking the zone name and the <a href="Group.html##(GROUP)">Group#GROUP</a> defined within the Mission Editor.</p>
 
 	
 <p>The <a href="Group.html##(GROUP)">Group#GROUP</a> waypoints define the polygon corners. The first and the last point are automatically connected by ZONE_POLYGON.</p>
@@ -1526,6 +1701,42 @@ Name of the zone.</p>
 				
 <p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> ZoneGroup </em></code>: 
 The GROUP waypoints as defined within the Mission Editor define the polygon shape.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(ZONE_POLYGON)">#ZONE_POLYGON</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_POLYGON).NewFromGroupName" >
+<strong>ZONE_POLYGON:NewFromGroupName(ZoneName, GroupName)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Constructor to create a ZONE_POLYGON instance, taking the zone name and the <strong>name</strong> of the <a href="Group.html##(GROUP)">Group#GROUP</a> defined within the Mission Editor.</p>
+
+	
+<p>The <a href="Group.html##(GROUP)">Group#GROUP</a> waypoints define the polygon corners. The first and the last point are automatically connected by ZONE_POLYGON.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string ZoneName </em></code>: 
+Name of the zone.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string GroupName </em></code>: 
+The group name of the GROUP defining the waypoints within the Mission Editor to define the polygon shape.</p>
 
 				</li>
 		</ul>
@@ -1599,6 +1810,24 @@ self</p>
 				
 <p><em><a href="##(ZONE_POLYGON_BASE.BoundingSquare)">#ZONE<em>POLYGON</em>BASE.BoundingSquare</a>:</em>
 The bounding square.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_POLYGON_BASE).GetRandomCoordinate" >
+<strong>ZONE_POLYGON_BASE:GetRandomCoordinate()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Return a <a href="Point.html##(COORDINATE)">Point#COORDINATE</a> object representing a random 3D point at landheight within the zone.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="Core.Point.html##(COORDINATE)">Core.Point#COORDINATE</a>:</em></p>
+
 
 </dd>
 </dl>
@@ -1821,8 +2050,21 @@ self</p>
 		<dl class="function">
 <dt>
 
+<a id="#(ZONE_RADIUS).CountScannedCoalitions" >
+<strong>ZONE_RADIUS:CountScannedCoalitions()</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(ZONE_RADIUS).FlareZone" >
-<strong>ZONE_RADIUS:FlareZone(FlareColor, Points, Azimuth)</strong>
+<strong>ZONE_RADIUS:FlareZone(FlareColor, Points, Azimuth, AddHeight)</strong>
 </a>
 </dt>
 <dd>
@@ -1849,6 +2091,12 @@ The flare color.</p>
 (optional) Azimuth The azimuth of the flare.</p>
 
 				</li>
+				<li>
+				
+<p><code><em>#number AddHeight </em></code>: 
+(optional) The height to be added for the smoke.</p>
+
+				</li>
 		</ul>
 		<h3>Return value</h3>
 				
@@ -1872,6 +2120,39 @@ self</p>
 				
 <p><em><a href="Dcs.DCSTypes.html##(Distance)">Dcs.DCSTypes#Distance</a>:</em>
 The radius of the zone.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_RADIUS).GetRandomCoordinate" >
+<strong>ZONE_RADIUS:GetRandomCoordinate(inner, outer)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns a <a href="Point.html##(COORDINATE)">Point#COORDINATE</a> object reflecting a random 3D location within the zone.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#number inner </em></code>: 
+(optional) Minimal distance from the center of the zone. Default is 0.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number outer </em></code>: 
+(optional) Maximal distance from the outer edge of the zone. Default is the radius of the zone.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="Core.Point.html##(COORDINATE)">Core.Point#COORDINATE</a>:</em></p>
+
 
 </dd>
 </dl>
@@ -1977,6 +2258,71 @@ The random location within the zone.</p>
 		<dl class="function">
 <dt>
 
+<a id="#(ZONE_RADIUS).GetScannedCoalition" >
+<strong>ZONE_RADIUS:GetScannedCoalition(Coalition)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Get Coalitions of the units in the Zone, or Check if there are units of the given Coalition in the Zone.</p>
+
+	
+<p>Returns nil if there are none ot two Coalitions in the zone!
+Returns one Coalition if there are only Units of one Coalition in the Zone.
+Returns the Coalition for the given Coalition if there are units of the Coalition in the Zone</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> Coalition </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#table:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_RADIUS).GetScannedScenery" >
+<strong>ZONE_RADIUS:GetScannedScenery()</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_RADIUS).GetScannedSceneryType" >
+<strong>ZONE_RADIUS:GetScannedSceneryType(SceneryType)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> SceneryType </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(ZONE_RADIUS).GetVec2" >
 <strong>ZONE_RADIUS:GetVec2()</strong>
 </a>
@@ -2016,6 +2362,128 @@ The height to add to the land height where the center of the zone is located.</p
 				
 <p><em><a href="Dcs.DCSTypes.html##(Vec3)">Dcs.DCSTypes#Vec3</a>:</em>
 The point of the zone.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_RADIUS).IsAllInZoneOfCoalition" >
+<strong>ZONE_RADIUS:IsAllInZoneOfCoalition(Coalition)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Is All in Zone of Coalition?</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> Coalition </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_RADIUS).IsAllInZoneOfOtherCoalition" >
+<strong>ZONE_RADIUS:IsAllInZoneOfOtherCoalition(Coalition)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Is All in Zone of Other Coalition?</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> Coalition </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_RADIUS).IsNoneInZone" >
+<strong>ZONE_RADIUS:IsNoneInZone()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Is None in Zone?</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_RADIUS).IsNoneInZoneOfCoalition" >
+<strong>ZONE_RADIUS:IsNoneInZoneOfCoalition(Coalition)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Is None in Zone of Coalition?</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> Coalition </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_RADIUS).IsSomeInZoneOfCoalition" >
+<strong>ZONE_RADIUS:IsSomeInZoneOfCoalition(Coalition)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Is Some in Zone of Coalition?</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> Coalition </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em></p>
+
 
 </dd>
 </dl>
@@ -2129,6 +2597,73 @@ self</p>
 		<dl class="function">
 <dt>
 
+<a id="#(ZONE_RADIUS).Scan" >
+<strong>ZONE_RADIUS:Scan(ObjectCategories, Coalition)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Scan the zone</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> ObjectCategories </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> Coalition </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(ZONE_RADIUS).ScanData" >
+<strong>ZONE_RADIUS.ScanData</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_RADIUS).SearchZone" >
+<strong>ZONE_RADIUS:SearchZone(ObjectCategories, EvaluateFunction)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Searches the zone</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> ObjectCategories </em></code>: 
+A list of categories, which are members of Object.Category</p>
+
+				</li>
+				<li>
+				
+<p><code><em> EvaluateFunction </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(ZONE_RADIUS).SetRadius" >
 <strong>ZONE_RADIUS:SetRadius(Radius)</strong>
 </a>
@@ -2184,7 +2719,7 @@ The new location of the zone.</p>
 <dt>
 
 <a id="#(ZONE_RADIUS).SmokeZone" >
-<strong>ZONE_RADIUS:SmokeZone(SmokeColor, Points)</strong>
+<strong>ZONE_RADIUS:SmokeZone(SmokeColor, Points, AddHeight, AddOffSet, AngleOffset)</strong>
 </a>
 </dt>
 <dd>
@@ -2203,6 +2738,23 @@ The smoke color.</p>
 				
 <p><code><em>#number Points </em></code>: 
 (optional) The amount of points in the circle.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number AddHeight </em></code>: 
+(optional) The height to be added for the smoke.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number AddOffSet </em></code>: 
+(optional) The angle to be added for the smoking start position.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> AngleOffset </em></code>: </p>
 
 				</li>
 		</ul>

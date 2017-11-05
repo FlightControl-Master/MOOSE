@@ -28,9 +28,9 @@
 					<li><a href="AI_Cas.html">AI_Cas</a></li>
 					<li><a href="AI_Formation.html">AI_Formation</a></li>
 					<li><a href="AI_Patrol.html">AI_Patrol</a></li>
+					<li><a href="ATC_Ground.html">ATC_Ground</a></li>
 					<li><a href="Account.html">Account</a></li>
 					<li><a href="Airbase.html">Airbase</a></li>
-					<li><a href="AirbasePolice.html">AirbasePolice</a></li>
 					<li><a href="Assign.html">Assign</a></li>
 					<li><a href="Base.html">Base</a></li>
 					<li><a href="Cargo.html">Cargo</a></li>
@@ -60,6 +60,7 @@
 					<li><a href="Escort.html">Escort</a></li>
 					<li><a href="Event.html">Event</a></li>
 					<li><a href="Fsm.html">Fsm</a></li>
+					<li><a href="Goal.html">Goal</a></li>
 					<li><a href="Group.html">Group</a></li>
 					<li><a href="Identifiable.html">Identifiable</a></li>
 					<li><a href="Menu.html">Menu</a></li>
@@ -72,7 +73,9 @@
 					<li><a href="Positionable.html">Positionable</a></li>
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
 					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
+					<li><a href="Protect.html">Protect</a></li>
 					<li><a href="Radio.html">Radio</a></li>
+					<li><a href="Rat.html">Rat</a></li>
 					<li><a href="Route.html">Route</a></li>
 					<li><a href="Scenery.html">Scenery</a></li>
 					<li><a href="ScheduleDispatcher.html">ScheduleDispatcher</a></li>
@@ -88,6 +91,7 @@
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="Task.html">Task</a></li>
+					<li><a href="TaskZoneCapture.html">TaskZoneCapture</a></li>
 					<li><a href="Task_A2A.html">Task_A2A</a></li>
 					<li><a href="Task_A2A_Dispatcher.html">Task_A2A_Dispatcher</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
@@ -95,8 +99,15 @@
 					<li><a href="Task_Cargo.html">Task_Cargo</a></li>
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
 					<li><a href="Unit.html">Unit</a></li>
+					<li><a href="UserFlag.html">UserFlag</a></li>
+					<li><a href="UserSound.html">UserSound</a></li>
 					<li><a href="Utils.html">Utils</a></li>
+					<li><a href="Velocity.html">Velocity</a></li>
 					<li><a href="Zone.html">Zone</a></li>
+					<li><a href="ZoneCaptureCoalition.html">ZoneCaptureCoalition</a></li>
+					<li><a href="ZoneGoal.html">ZoneGoal</a></li>
+					<li><a href="ZoneGoalCargo.html">ZoneGoalCargo</a></li>
+					<li><a href="ZoneGoalCoalition.html">ZoneGoalCoalition</a></li>
 					<li><a href="env.html">env</a></li>
 					<li><a href="land.html">land</a></li>
 					<li><a href="routines.html">routines</a></li>
@@ -224,6 +235,38 @@
     <li>Coalitions</li>
     <li>Categories</li>
     <li>Countries</li>
+    <li>Starting with certain prefix strings.</li>
+</ul>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#SET_PLAYER">SET_PLAYER</a></td>
+		<td class="summary">
+<h1>4) SET_PLAYER class, extends <a href="Set.html##(SET_BASE)">Set#SET_BASE</a></h1>
+
+<p>Mission designers can use the <a href="Set.html##(SET_PLAYER)">Set#SET_PLAYER</a> class to build sets of units belonging to alive players:</p>
+
+<h2>4.1) SET_PLAYER constructor</h2>
+
+<p>Create a new SET_PLAYER object with the <a href="##(SET_PLAYER).New">SET_PLAYER.New</a> method:</p>
+
+<ul>
+    <li><a href="##(SET_PLAYER).New">SET_PLAYER.New</a>: Creates a new SET_PLAYER object.</li>
+</ul>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="#SET_STATIC">SET_STATIC</a></td>
+		<td class="summary">
+<h1>3) SET_STATIC class, extends <a href="Set.html##(SET_BASE)">Set#SET_BASE</a></h1>
+
+<p>Mission designers can use the SET_STATIC class to build sets of Statics belonging to certain:</p>
+
+<ul>
+    <li>Coalitions</li>
+    <li>Categories</li>
+    <li>Countries</li>
+    <li>Static types</li>
     <li>Starting with certain prefix strings.</li>
 </ul>
 </td>
@@ -438,6 +481,18 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_BASE).GetSetNames">SET_BASE:GetSetNames()</a></td>
+		<td class="summary">
+<p>Gets a list of the Names of the Objects in the Set.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_BASE).GetSetObjects">SET_BASE:GetSetObjects()</a></td>
+		<td class="summary">
+<p>Gets a list of the Objects in the Set.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SET_BASE).IsIncludeObject">SET_BASE:IsIncludeObject(Object)</a></td>
 		<td class="summary">
 <p>Decides whether to include the Object</p>
@@ -501,18 +556,6 @@
 		<td class="name" nowrap="nowrap"><a href="##(SET_BASE)._EventOnDeadOrCrash">SET_BASE:_EventOnDeadOrCrash(Event)</a></td>
 		<td class="summary">
 <p>Handles the OnDead or OnCrash event for alive units set.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SET_BASE)._EventOnPlayerEnterUnit">SET_BASE:_EventOnPlayerEnterUnit(Event)</a></td>
-		<td class="summary">
-<p>Handles the OnPlayerEnterUnit event to fill the active players table (with the unit filter applied).</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SET_BASE)._EventOnPlayerLeaveUnit">SET_BASE:_EventOnPlayerLeaveUnit(Event)</a></td>
-		<td class="summary">
-<p>Handles the OnPlayerLeaveUnit event to clean the active players table.</p>
 </td>
 		</tr>
 		<tr>
@@ -909,6 +952,278 @@ mission designer to add a dedicated method</p>
 <p>Remove GROUP(s) from SET_GROUP.</p>
 </td>
 		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_GROUP)._EventOnDeadOrCrash">SET_GROUP:_EventOnDeadOrCrash(Event)</a></td>
+		<td class="summary">
+<p>Handles the OnDead or OnCrash event for alive groups set.</p>
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(SET_PLAYER)">Type <code>SET_PLAYER</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_PLAYER).AddClientsByName">SET_PLAYER:AddClientsByName(AddClientNames)</a></td>
+		<td class="summary">
+<p>Add CLIENT(s) to SET_PLAYER.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_PLAYER).AddInDatabase">SET_PLAYER:AddInDatabase(Event)</a></td>
+		<td class="summary">
+<p>Handles the Database to check on an event (birth) that the Object was added in the Database.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_PLAYER).FilterCategories">SET_PLAYER:FilterCategories(Categories)</a></td>
+		<td class="summary">
+<p>Builds a set of clients out of categories joined by players.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_PLAYER).FilterCoalitions">SET_PLAYER:FilterCoalitions(Coalitions)</a></td>
+		<td class="summary">
+<p>Builds a set of clients of coalitions joined by specific players.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_PLAYER).FilterCountries">SET_PLAYER:FilterCountries(Countries)</a></td>
+		<td class="summary">
+<p>Builds a set of clients of defined countries.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_PLAYER).FilterPrefixes">SET_PLAYER:FilterPrefixes(Prefixes)</a></td>
+		<td class="summary">
+<p>Builds a set of clients of defined client prefixes.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_PLAYER).FilterStart">SET_PLAYER:FilterStart()</a></td>
+		<td class="summary">
+<p>Starts the filtering.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_PLAYER).FilterTypes">SET_PLAYER:FilterTypes(Types)</a></td>
+		<td class="summary">
+<p>Builds a set of clients of defined client types joined by players.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_PLAYER).FindClient">SET_PLAYER:FindClient(PlayerName)</a></td>
+		<td class="summary">
+<p>Finds a Client based on the Player Name.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_PLAYER).FindInDatabase">SET_PLAYER:FindInDatabase(Event)</a></td>
+		<td class="summary">
+<p>Handles the Database to check on any event that Object exists in the Database.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_PLAYER).ForEachPlayer">SET_PLAYER:ForEachPlayer(IteratorFunction, ...)</a></td>
+		<td class="summary">
+<p>Iterate the SET_PLAYER and call an interator function for each <strong>alive</strong> CLIENT, providing the CLIENT and optional parameters.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_PLAYER).ForEachPlayerInZone">SET_PLAYER:ForEachPlayerInZone(ZoneObject, IteratorFunction, ...)</a></td>
+		<td class="summary">
+<p>Iterate the SET_PLAYER and call an iterator function for each <strong>alive</strong> CLIENT presence completely in a <a href="Zone.html">Zone</a>, providing the CLIENT and optional parameters to the called function.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_PLAYER).ForEachPlayerNotInZone">SET_PLAYER:ForEachPlayerNotInZone(ZoneObject, IteratorFunction, ...)</a></td>
+		<td class="summary">
+<p>Iterate the SET_PLAYER and call an iterator function for each <strong>alive</strong> CLIENT presence not in a <a href="Zone.html">Zone</a>, providing the CLIENT and optional parameters to the called function.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_PLAYER).IsIncludeObject">SET_PLAYER:IsIncludeObject(MClient)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_PLAYER).New">SET_PLAYER:New()</a></td>
+		<td class="summary">
+<p>Creates a new SET_PLAYER object, building a set of clients belonging to a coalitions, categories, countries, types or with defined prefix names.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_PLAYER).RemoveClientsByName">SET_PLAYER:RemoveClientsByName(RemoveClientNames)</a></td>
+		<td class="summary">
+<p>Remove CLIENT(s) from SET_PLAYER.</p>
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(SET_STATIC)">Type <code>SET_STATIC</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_STATIC).AddInDatabase">SET_STATIC:AddInDatabase(Event)</a></td>
+		<td class="summary">
+<p>Handles the Database to check on an event (birth) that the Object was added in the Database.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_STATIC).AddStatic">SET_STATIC:AddStatic(AddStatic)</a></td>
+		<td class="summary">
+<p>Add STATIC(s) to SET_STATIC.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_STATIC).AddStaticsByName">SET_STATIC:AddStaticsByName(AddStaticNames)</a></td>
+		<td class="summary">
+<p>Add STATIC(s) to SET_STATIC.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_STATIC).FilterCategories">SET_STATIC:FilterCategories(Categories)</a></td>
+		<td class="summary">
+<p>Builds a set of units out of categories.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_STATIC).FilterCoalitions">SET_STATIC:FilterCoalitions(Coalitions)</a></td>
+		<td class="summary">
+<p>Builds a set of units of coalitions.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_STATIC).FilterCountries">SET_STATIC:FilterCountries(Countries)</a></td>
+		<td class="summary">
+<p>Builds a set of units of defined countries.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_STATIC).FilterPrefixes">SET_STATIC:FilterPrefixes(Prefixes)</a></td>
+		<td class="summary">
+<p>Builds a set of units of defined unit prefixes.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_STATIC).FilterStart">SET_STATIC:FilterStart()</a></td>
+		<td class="summary">
+<p>Starts the filtering.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_STATIC).FilterTypes">SET_STATIC:FilterTypes(Types)</a></td>
+		<td class="summary">
+<p>Builds a set of units of defined unit types.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_STATIC).FindInDatabase">SET_STATIC:FindInDatabase(Event)</a></td>
+		<td class="summary">
+<p>Handles the Database to check on any event that Object exists in the Database.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_STATIC).FindStatic">SET_STATIC:FindStatic(StaticName)</a></td>
+		<td class="summary">
+<p>Finds a Static based on the Static Name.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_STATIC).ForEachStatic">SET_STATIC:ForEachStatic(IteratorFunction, ...)</a></td>
+		<td class="summary">
+<p>Iterate the SET_STATIC and call an interator function for each <strong>alive</strong> STATIC, providing the STATIC and optional parameters.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_STATIC).ForEachStaticCompletelyInZone">SET_STATIC:ForEachStaticCompletelyInZone(ZoneObject, IteratorFunction, ...)</a></td>
+		<td class="summary">
+<p>Iterate the SET_STATIC and call an iterator function for each <strong>alive</strong> STATIC presence completely in a <a href="Zone.html">Zone</a>, providing the STATIC and optional parameters to the called function.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_STATIC).ForEachStaticInZone">SET_STATIC:ForEachStaticInZone(IteratorFunction, ...)</a></td>
+		<td class="summary">
+<p>Check if minimal one element of the SET_STATIC is in the Zone.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_STATIC).ForEachStaticNotInZone">SET_STATIC:ForEachStaticNotInZone(ZoneObject, IteratorFunction, ...)</a></td>
+		<td class="summary">
+<p>Iterate the SET_STATIC and call an iterator function for each <strong>alive</strong> STATIC presence not in a <a href="Zone.html">Zone</a>, providing the STATIC and optional parameters to the called function.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_STATIC).GetCoordinate">SET_STATIC:GetCoordinate()</a></td>
+		<td class="summary">
+<p>Get the center coordinate of the SET_STATIC.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_STATIC).GetFirst">SET_STATIC:GetFirst()</a></td>
+		<td class="summary">
+<p>Get the first unit from the set.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_STATIC).GetHeading">SET_STATIC:GetHeading()</a></td>
+		<td class="summary">
+<p>Get the average heading of the SET_STATIC.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_STATIC).GetStaticTypes">SET_STATIC:GetStaticTypes()</a></td>
+		<td class="summary">
+<p>Returns map of unit types.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_STATIC).GetStaticTypesText">SET_STATIC:GetStaticTypesText()</a></td>
+		<td class="summary">
+<p>Returns a comma separated string of the unit types with a count in the  <a href="Set.html">Set</a>.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_STATIC).GetTypeNames">SET_STATIC:GetTypeNames(Delimiter)</a></td>
+		<td class="summary">
+<p>Retrieve the type names of the <a href="Static.html">Static</a>s in the SET, delimited by an optional delimiter.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_STATIC).GetVelocity">SET_STATIC:GetVelocity()</a></td>
+		<td class="summary">
+<p>Get the maximum velocity of the SET_STATIC.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_STATIC).IsIncludeObject">SET_STATIC:IsIncludeObject(MStatic)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_STATIC).IsNotInZone">SET_STATIC:IsNotInZone(ZoneObject, Zone)</a></td>
+		<td class="summary">
+<p>Check if no element of the SET_STATIC is in the Zone.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_STATIC).IsPatriallyInZone">SET_STATIC:IsPatriallyInZone(Zone)</a></td>
+		<td class="summary">
+<p>Check if minimal one element of the SET_STATIC is in the Zone.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_STATIC).New">SET_STATIC:New()</a></td>
+		<td class="summary">
+<p>Creates a new SET_STATIC object, building a set of units belonging to a coalitions, categories, countries, types or with defined prefix names.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_STATIC).RemoveStaticsByName">SET_STATIC:RemoveStaticsByName(RemoveStaticNames)</a></td>
+		<td class="summary">
+<p>Remove STATIC(s) from SET_STATIC.</p>
+</td>
+		</tr>
 	</table>
 
 			<h2><a id="#(SET_UNIT)">Type <code>SET_UNIT</code></a></h2>
@@ -1010,6 +1325,12 @@ mission designer to add a dedicated method</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_UNIT).ForEachUnitInZone">SET_UNIT:ForEachUnitInZone(IteratorFunction, ...)</a></td>
+		<td class="summary">
+<p>Check if minimal one element of the SET_UNIT is in the Zone.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SET_UNIT).ForEachUnitNotInZone">SET_UNIT:ForEachUnitNotInZone(ZoneObject, IteratorFunction, ...)</a></td>
 		<td class="summary">
 <p>Iterate the SET_UNIT and call an iterator function for each <strong>alive</strong> UNIT presence not in a <a href="Zone.html">Zone</a>, providing the UNIT and optional parameters to the called function.</p>
@@ -1023,9 +1344,21 @@ mission designer to add a dedicated method</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_UNIT).GetCoordinate">SET_UNIT:GetCoordinate()</a></td>
+		<td class="summary">
+<p>Get the center coordinate of the SET_UNIT.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SET_UNIT).GetFirst">SET_UNIT:GetFirst()</a></td>
 		<td class="summary">
 <p>Get the first unit from the set.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_UNIT).GetHeading">SET_UNIT:GetHeading()</a></td>
+		<td class="summary">
+<p>Get the average heading of the SET_UNIT.</p>
 </td>
 		</tr>
 		<tr>
@@ -1050,6 +1383,12 @@ mission designer to add a dedicated method</p>
 		<td class="name" nowrap="nowrap"><a href="##(SET_UNIT).GetUnitTypesText">SET_UNIT:GetUnitTypesText()</a></td>
 		<td class="summary">
 <p>Returns a comma separated string of the unit types with a count in the  <a href="Set.html">Set</a>.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_UNIT).GetVelocity">SET_UNIT:GetVelocity()</a></td>
+		<td class="summary">
+<p>Get the maximum velocity of the SET_UNIT.</p>
 </td>
 		</tr>
 		<tr>
@@ -1080,6 +1419,18 @@ mission designer to add a dedicated method</p>
 		<td class="name" nowrap="nowrap"><a href="##(SET_UNIT).IsIncludeObject">SET_UNIT:IsIncludeObject(MUnit)</a></td>
 		<td class="summary">
 
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_UNIT).IsNotInZone">SET_UNIT:IsNotInZone(ZoneObject, Zone)</a></td>
+		<td class="summary">
+<p>Check if no element of the SET_UNIT is in the Zone.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SET_UNIT).IsPartiallyInZone">SET_UNIT:IsPartiallyInZone(ZoneTest)</a></td>
+		<td class="summary">
+<p>Check if minimal one element of the SET_UNIT is in the Zone.</p>
 </td>
 		</tr>
 		<tr>
@@ -1414,6 +1765,163 @@ The following iterator methods are currently available within the SET</em>GROUP:
     <li><a href="##(SET_GROUP).ForEachGroupCompletelyInZone">SET_GROUP.ForEachGroupCompletelyInZone</a>: Iterate the SET_GROUP and call an iterator function for each <strong>alive</strong> GROUP presence completely in a <a href="Zone.html">Zone</a>, providing the GROUP and optional parameters to the called function.</li>
     <li><a href="##(SET_GROUP).ForEachGroupPartlyInZone">SET_GROUP.ForEachGroupPartlyInZone</a>: Iterate the SET_GROUP and call an iterator function for each <strong>alive</strong> GROUP presence partly in a <a href="Zone.html">Zone</a>, providing the GROUP and optional parameters to the called function.</li>
     <li><a href="##(SET_GROUP).ForEachGroupNotInZone">SET_GROUP.ForEachGroupNotInZone</a>: Iterate the SET_GROUP and call an iterator function for each <strong>alive</strong> GROUP presence not in a <a href="Zone.html">Zone</a>, providing the GROUP and optional parameters to the called function.</li>
+</ul>
+
+<hr/>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(SET_PLAYER)">#SET_PLAYER</a></em>
+<a id="SET_PLAYER" >
+<strong>SET_PLAYER</strong>
+</a>
+</dt>
+<dd>
+	
+<h1>4) SET_PLAYER class, extends <a href="Set.html##(SET_BASE)">Set#SET_BASE</a></h1>
+
+<p>Mission designers can use the <a href="Set.html##(SET_PLAYER)">Set#SET_PLAYER</a> class to build sets of units belonging to alive players:</p>
+
+<h2>4.1) SET_PLAYER constructor</h2>
+
+<p>Create a new SET_PLAYER object with the <a href="##(SET_PLAYER).New">SET_PLAYER.New</a> method:</p>
+
+<ul>
+    <li><a href="##(SET_PLAYER).New">SET_PLAYER.New</a>: Creates a new SET_PLAYER object.</li>
+</ul>
+
+	
+<p>  </p>
+<h2>4.3) SET_PLAYER filter criteria</h2>
+
+<p>You can set filter criteria to define the set of clients within the SET_PLAYER.
+Filter criteria are defined by:</p>
+
+<ul>
+    <li><a href="##(SET_PLAYER).FilterCoalitions">SET_PLAYER.FilterCoalitions</a>: Builds the SET_PLAYER with the clients belonging to the coalition(s).</li>
+    <li><a href="##(SET_PLAYER).FilterCategories">SET_PLAYER.FilterCategories</a>: Builds the SET_PLAYER with the clients belonging to the category(ies).</li>
+    <li><a href="##(SET_PLAYER).FilterTypes">SET_PLAYER.FilterTypes</a>: Builds the SET_PLAYER with the clients belonging to the client type(s).</li>
+    <li><a href="##(SET_PLAYER).FilterCountries">SET_PLAYER.FilterCountries</a>: Builds the SET_PLAYER with the clients belonging to the country(ies).</li>
+    <li><a href="##(SET_PLAYER).FilterPrefixes">SET_PLAYER.FilterPrefixes</a>: Builds the SET_PLAYER with the clients starting with the same prefix string(s).</li>
+</ul>
+
+<p>Once the filter criteria have been set for the SET_PLAYER, you can start filtering using:</p>
+
+<ul>
+    <li><a href="##(SET_PLAYER).FilterStart">SET_PLAYER.FilterStart</a>: Starts the filtering of the clients within the SET_PLAYER.</li>
+</ul>
+
+<p>Planned filter criteria within development are (so these are not yet available):</p>
+
+<ul>
+    <li><a href="##(SET_PLAYER).FilterZones">SET_PLAYER.FilterZones</a>: Builds the SET_PLAYER with the clients within a <a href="Zone.html##(ZONE)">Zone#ZONE</a>.</li>
+</ul>
+
+<h2>4.4) SET_PLAYER iterators</h2>
+
+<p>Once the filters have been defined and the SET<em>PLAYER has been built, you can iterate the SET</em>PLAYER with the available iterator methods.
+The iterator methods will walk the SET<em>PLAYER set, and call for each element within the set a function that you provide.
+The following iterator methods are currently available within the SET</em>PLAYER:</p>
+
+<ul>
+    <li><a href="##(SET_PLAYER).ForEachClient">SET_PLAYER.ForEachClient</a>: Calls a function for each alive client it finds within the SET_PLAYER.</li>
+</ul>
+
+<hr/>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(SET_STATIC)">#SET_STATIC</a></em>
+<a id="SET_STATIC" >
+<strong>SET_STATIC</strong>
+</a>
+</dt>
+<dd>
+	
+<h1>3) SET_STATIC class, extends <a href="Set.html##(SET_BASE)">Set#SET_BASE</a></h1>
+
+<p>Mission designers can use the SET_STATIC class to build sets of Statics belonging to certain:</p>
+
+<ul>
+    <li>Coalitions</li>
+    <li>Categories</li>
+    <li>Countries</li>
+    <li>Static types</li>
+    <li>Starting with certain prefix strings.</li>
+</ul>
+
+	
+<p> </p>
+<h2>3.1) SET_STATIC constructor</h2>
+
+<p>Create a new SET_STATIC object with the <a href="##(SET_STATIC).New">SET_STATIC.New</a> method:</p>
+
+<ul>
+    <li><a href="##(SET_STATIC).New">SET_STATIC.New</a>: Creates a new SET_STATIC object.</li>
+</ul>
+
+<h2>3.2) Add or Remove STATIC(s) from SET_STATIC</h2>
+
+<p>STATICs can be added and removed using the <a href="Set.html##(SET_STATIC).AddStaticsByName">Set#SET_STATIC.AddStaticsByName</a> and <a href="Set.html##(SET_STATIC).RemoveStaticsByName">Set#SET_STATIC.RemoveStaticsByName</a> respectively. 
+These methods take a single STATIC name or an array of STATIC names to be added or removed from SET_STATIC.</p>
+
+<h2>3.3) SET_STATIC filter criteria</h2>
+
+<p>You can set filter criteria to define the set of units within the SET_STATIC.
+Filter criteria are defined by:</p>
+
+<ul>
+    <li><a href="##(SET_STATIC).FilterCoalitions">SET_STATIC.FilterCoalitions</a>: Builds the SET_STATIC with the units belonging to the coalition(s).</li>
+    <li><a href="##(SET_STATIC).FilterCategories">SET_STATIC.FilterCategories</a>: Builds the SET_STATIC with the units belonging to the category(ies).</li>
+    <li><a href="##(SET_STATIC).FilterTypes">SET_STATIC.FilterTypes</a>: Builds the SET_STATIC with the units belonging to the unit type(s).</li>
+    <li><a href="##(SET_STATIC).FilterCountries">SET_STATIC.FilterCountries</a>: Builds the SET_STATIC with the units belonging to the country(ies).</li>
+    <li><a href="##(SET_STATIC).FilterPrefixes">SET_STATIC.FilterPrefixes</a>: Builds the SET_STATIC with the units starting with the same prefix string(s).</li>
+</ul>
+
+<p>Once the filter criteria have been set for the SET_STATIC, you can start filtering using:</p>
+
+<ul>
+    <li><a href="##(SET_STATIC).FilterStart">SET_STATIC.FilterStart</a>: Starts the filtering of the units within the SET_STATIC.</li>
+</ul>
+
+<p>Planned filter criteria within development are (so these are not yet available):</p>
+
+<ul>
+    <li><a href="##(SET_STATIC).FilterZones">SET_STATIC.FilterZones</a>: Builds the SET_STATIC with the units within a <a href="Zone.html##(ZONE)">Zone#ZONE</a>.</li>
+</ul>
+
+<h2>3.4) SET_STATIC iterators</h2>
+
+<p>Once the filters have been defined and the SET<em>STATIC has been built, you can iterate the SET</em>STATIC with the available iterator methods.
+The iterator methods will walk the SET<em>STATIC set, and call for each element within the set a function that you provide.
+The following iterator methods are currently available within the SET</em>STATIC:</p>
+
+<ul>
+    <li><a href="##(SET_STATIC).ForEachStatic">SET_STATIC.ForEachStatic</a>: Calls a function for each alive unit it finds within the SET_STATIC.</li>
+    <li><a href="##(SET_GROUP).ForEachGroupCompletelyInZone">SET_GROUP.ForEachGroupCompletelyInZone</a>: Iterate the SET_GROUP and call an iterator function for each <strong>alive</strong> GROUP presence completely in a <a href="Zone.html">Zone</a>, providing the GROUP and optional parameters to the called function.</li>
+    <li><a href="##(SET_GROUP).ForEachGroupNotInZone">SET_GROUP.ForEachGroupNotInZone</a>: Iterate the SET_GROUP and call an iterator function for each <strong>alive</strong> GROUP presence not in a <a href="Zone.html">Zone</a>, providing the GROUP and optional parameters to the called function.</li>
+</ul>
+
+<p>Planned iterators methods in development are (so these are not yet available):</p>
+
+<ul>
+    <li><a href="##(SET_STATIC).ForEachStaticInZone">SET_STATIC.ForEachStaticInZone</a>: Calls a function for each unit contained within the SET_STATIC.</li>
+    <li><a href="##(SET_STATIC).ForEachStaticCompletelyInZone">SET_STATIC.ForEachStaticCompletelyInZone</a>: Iterate and call an iterator function for each <strong>alive</strong> STATIC presence completely in a <a href="Zone.html">Zone</a>, providing the STATIC and optional parameters to the called function.</li>
+    <li><a href="##(SET_STATIC).ForEachStaticNotInZone">SET_STATIC.ForEachStaticNotInZone</a>: Iterate and call an iterator function for each <strong>alive</strong> STATIC presence not in a <a href="Zone.html">Zone</a>, providing the STATIC and optional parameters to the called function.</li>
+</ul>
+
+<h2>3.5 ) SET_STATIC atomic methods</h2>
+
+<p>Various methods exist for a SET<em>STATIC to perform actions or calculations and retrieve results from the SET</em>STATIC:</p>
+
+<ul>
+    <li><a href="##(SET_STATIC).GetTypeNames">SET_STATIC.GetTypeNames</a>(): Retrieve the type names of the <a href="Static.html">Static</a>s in the SET, delimited by a comma.</li>
 </ul>
 
 <hr/>
@@ -2270,6 +2778,42 @@ self</p>
 		<dl class="function">
 <dt>
 
+<a id="#(SET_BASE).GetSetNames" >
+<strong>SET_BASE:GetSetNames()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Gets a list of the Names of the Objects in the Set.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET_BASE)">#SET_BASE</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_BASE).GetSetObjects" >
+<strong>SET_BASE:GetSetObjects()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Gets a list of the Objects in the Set.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET_BASE)">#SET_BASE</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(SET_BASE).IsIncludeObject" >
 <strong>SET_BASE:IsIncludeObject(Object)</strong>
 </a>
@@ -2490,48 +3034,6 @@ self</p>
 <dd>
 	
 <p>Handles the OnDead or OnCrash event for alive units set.</p>
-
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="Core.Event.html##(EVENTDATA)">Core.Event#EVENTDATA</a> Event </em></code>: </p>
-
-				</li>
-		</ul>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(SET_BASE)._EventOnPlayerEnterUnit" >
-<strong>SET_BASE:_EventOnPlayerEnterUnit(Event)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Handles the OnPlayerEnterUnit event to fill the active players table (with the unit filter applied).</p>
-
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em><a href="Core.Event.html##(EVENTDATA)">Core.Event#EVENTDATA</a> Event </em></code>: </p>
-
-				</li>
-		</ul>
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(SET_BASE)._EventOnPlayerLeaveUnit" >
-<strong>SET_BASE:_EventOnPlayerLeaveUnit(Event)</strong>
-</a>
-</dt>
-<dd>
-	
-<p>Handles the OnPlayerLeaveUnit event to clean the active players table.</p>
 
 		<h3>Parameter</h3>
 		<ul>
@@ -2957,8 +3459,8 @@ self</p>
 
 		<h3>Return value</h3>
 				
-<p><em><a href="##(SET_CARGO)">#SET_CARGO</a>:</em>
-self</p>
+<p><em><a href="##(SET_CARGO)">#SET_CARGO</a>:</em></p>
+
 
 			<h3>Usage:</h3>
 		<pre class="example"><code>-- Define a new SET_CARGO Object. The DatabaseSet will contain a reference to all Cargos.
@@ -4430,6 +4932,1253 @@ A single name or an array of GROUP names.</p>
 
 </dd>
 </dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_GROUP)._EventOnDeadOrCrash" >
+<strong>SET_GROUP:_EventOnDeadOrCrash(Event)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Handles the OnDead or OnCrash event for alive groups set.</p>
+
+	
+<p>Note: The GROUP object in the SET_GROUP collection will only be removed if the last unit is destroyed of the GROUP.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Event.html##(EVENTDATA)">Core.Event#EVENTDATA</a> Event </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+
+			<h2><a id="#(SET_PLAYER)" >Type <code>SET_PLAYER</code></a></h2>
+				<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_PLAYER).AddClientsByName" >
+<strong>SET_PLAYER:AddClientsByName(AddClientNames)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Add CLIENT(s) to SET_PLAYER.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string AddClientNames </em></code>: 
+A single name or an array of CLIENT names.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+
+<p>self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_PLAYER).AddInDatabase" >
+<strong>SET_PLAYER:AddInDatabase(Event)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Handles the Database to check on an event (birth) that the Object was added in the Database.</p>
+
+	
+<p>This is required, because sometimes the <em>DATABASE birth event gets called later than the SET</em>BASE birth event!</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Event.html##(EVENTDATA)">Core.Event#EVENTDATA</a> Event </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return values</h3>
+			<ol>
+				<li>
+				
+<p><em>#string:</em>
+The name of the CLIENT</p>
+
+				</li>
+				<li>
+				
+<p><em>#table:</em>
+The CLIENT</p>
+
+				</li>
+			</ol>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_PLAYER).FilterCategories" >
+<strong>SET_PLAYER:FilterCategories(Categories)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Builds a set of clients out of categories joined by players.</p>
+
+	
+<p>Possible current categories are plane, helicopter, ground, ship.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Categories </em></code>: 
+Can take the following values: "plane", "helicopter", "ground", "ship".</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET_PLAYER)">#SET_PLAYER</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_PLAYER).FilterCoalitions" >
+<strong>SET_PLAYER:FilterCoalitions(Coalitions)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Builds a set of clients of coalitions joined by specific players.</p>
+
+	
+<p>Possible current coalitions are red, blue and neutral.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Coalitions </em></code>: 
+Can take the following values: "red", "blue", "neutral".</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET_PLAYER)">#SET_PLAYER</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_PLAYER).FilterCountries" >
+<strong>SET_PLAYER:FilterCountries(Countries)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Builds a set of clients of defined countries.</p>
+
+	
+<p>Possible current countries are those known within DCS world.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Countries </em></code>: 
+Can take those country strings known within DCS world.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET_PLAYER)">#SET_PLAYER</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_PLAYER).FilterPrefixes" >
+<strong>SET_PLAYER:FilterPrefixes(Prefixes)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Builds a set of clients of defined client prefixes.</p>
+
+	
+<p>All the clients starting with the given prefixes will be included within the set.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Prefixes </em></code>: 
+The prefix of which the client name starts with.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET_PLAYER)">#SET_PLAYER</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_PLAYER).FilterStart" >
+<strong>SET_PLAYER:FilterStart()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Starts the filtering.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET_PLAYER)">#SET_PLAYER</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_PLAYER).FilterTypes" >
+<strong>SET_PLAYER:FilterTypes(Types)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Builds a set of clients of defined client types joined by players.</p>
+
+	
+<p>Possible current types are those types known within DCS world.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Types </em></code>: 
+Can take those type strings known within DCS world.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET_PLAYER)">#SET_PLAYER</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_PLAYER).FindClient" >
+<strong>SET_PLAYER:FindClient(PlayerName)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Finds a Client based on the Player Name.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string PlayerName </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="Wrapper.Client.html##(CLIENT)">Wrapper.Client#CLIENT</a>:</em>
+The found Client.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_PLAYER).FindInDatabase" >
+<strong>SET_PLAYER:FindInDatabase(Event)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Handles the Database to check on any event that Object exists in the Database.</p>
+
+	
+<p>This is required, because sometimes the <em>DATABASE event gets called later than the SET</em>BASE event or vise versa!</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Event.html##(EVENTDATA)">Core.Event#EVENTDATA</a> Event </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return values</h3>
+			<ol>
+				<li>
+				
+<p><em>#string:</em>
+The name of the CLIENT</p>
+
+				</li>
+				<li>
+				
+<p><em>#table:</em>
+The CLIENT</p>
+
+				</li>
+			</ol>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_PLAYER).ForEachPlayer" >
+<strong>SET_PLAYER:ForEachPlayer(IteratorFunction, ...)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Iterate the SET_PLAYER and call an interator function for each <strong>alive</strong> CLIENT, providing the CLIENT and optional parameters.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#function IteratorFunction </em></code>: 
+The function that will be called when there is an alive CLIENT in the SET_PLAYER. The function needs to accept a CLIENT parameter.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> ... </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET_PLAYER)">#SET_PLAYER</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_PLAYER).ForEachPlayerInZone" >
+<strong>SET_PLAYER:ForEachPlayerInZone(ZoneObject, IteratorFunction, ...)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Iterate the SET_PLAYER and call an iterator function for each <strong>alive</strong> CLIENT presence completely in a <a href="Zone.html">Zone</a>, providing the CLIENT and optional parameters to the called function.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Zone.html##(ZONE)">Core.Zone#ZONE</a> ZoneObject </em></code>: 
+The Zone to be tested for.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#function IteratorFunction </em></code>: 
+The function that will be called when there is an alive CLIENT in the SET_PLAYER. The function needs to accept a CLIENT parameter.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> ... </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET_PLAYER)">#SET_PLAYER</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_PLAYER).ForEachPlayerNotInZone" >
+<strong>SET_PLAYER:ForEachPlayerNotInZone(ZoneObject, IteratorFunction, ...)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Iterate the SET_PLAYER and call an iterator function for each <strong>alive</strong> CLIENT presence not in a <a href="Zone.html">Zone</a>, providing the CLIENT and optional parameters to the called function.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Zone.html##(ZONE)">Core.Zone#ZONE</a> ZoneObject </em></code>: 
+The Zone to be tested for.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#function IteratorFunction </em></code>: 
+The function that will be called when there is an alive CLIENT in the SET_PLAYER. The function needs to accept a CLIENT parameter.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> ... </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET_PLAYER)">#SET_PLAYER</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_PLAYER).IsIncludeObject" >
+<strong>SET_PLAYER:IsIncludeObject(MClient)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Client.html##(CLIENT)">Wrapper.Client#CLIENT</a> MClient </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET_PLAYER)">#SET_PLAYER</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_PLAYER).New" >
+<strong>SET_PLAYER:New()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Creates a new SET_PLAYER object, building a set of clients belonging to a coalitions, categories, countries, types or with defined prefix names.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET_PLAYER)">#SET_PLAYER</a>:</em></p>
+
+
+			<h3>Usage:</h3>
+		<pre class="example"><code>-- Define a new SET_PLAYER Object. This DBObject will contain a reference to all Clients.
+DBObject = SET_PLAYER:New()</code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_PLAYER).RemoveClientsByName" >
+<strong>SET_PLAYER:RemoveClientsByName(RemoveClientNames)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Remove CLIENT(s) from SET_PLAYER.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Client.html##(CLIENT)">Wrapper.Client#CLIENT</a> RemoveClientNames </em></code>: 
+A single name or an array of CLIENT names.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+
+<p>self</p>
+
+</dd>
+</dl>
+
+			<h2><a id="#(SET_STATIC)" >Type <code>SET_STATIC</code></a></h2>
+				<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_STATIC).AddInDatabase" >
+<strong>SET_STATIC:AddInDatabase(Event)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Handles the Database to check on an event (birth) that the Object was added in the Database.</p>
+
+	
+<p>This is required, because sometimes the <em>DATABASE birth event gets called later than the SET</em>BASE birth event!</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Event.html##(EVENTDATA)">Core.Event#EVENTDATA</a> Event </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return values</h3>
+			<ol>
+				<li>
+				
+<p><em>#string:</em>
+The name of the STATIC</p>
+
+				</li>
+				<li>
+				
+<p><em>#table:</em>
+The STATIC</p>
+
+				</li>
+			</ol>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_STATIC).AddStatic" >
+<strong>SET_STATIC:AddStatic(AddStatic)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Add STATIC(s) to SET_STATIC.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string AddStatic </em></code>: 
+A single STATIC.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET_STATIC)">#SET_STATIC</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_STATIC).AddStaticsByName" >
+<strong>SET_STATIC:AddStaticsByName(AddStaticNames)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Add STATIC(s) to SET_STATIC.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string AddStaticNames </em></code>: 
+A single name or an array of STATIC names.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET_STATIC)">#SET_STATIC</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_STATIC).FilterCategories" >
+<strong>SET_STATIC:FilterCategories(Categories)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Builds a set of units out of categories.</p>
+
+	
+<p>Possible current categories are plane, helicopter, ground, ship.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Categories </em></code>: 
+Can take the following values: "plane", "helicopter", "ground", "ship".</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET_STATIC)">#SET_STATIC</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_STATIC).FilterCoalitions" >
+<strong>SET_STATIC:FilterCoalitions(Coalitions)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Builds a set of units of coalitions.</p>
+
+	
+<p>Possible current coalitions are red, blue and neutral.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Coalitions </em></code>: 
+Can take the following values: "red", "blue", "neutral".</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET_STATIC)">#SET_STATIC</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_STATIC).FilterCountries" >
+<strong>SET_STATIC:FilterCountries(Countries)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Builds a set of units of defined countries.</p>
+
+	
+<p>Possible current countries are those known within DCS world.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Countries </em></code>: 
+Can take those country strings known within DCS world.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET_STATIC)">#SET_STATIC</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_STATIC).FilterPrefixes" >
+<strong>SET_STATIC:FilterPrefixes(Prefixes)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Builds a set of units of defined unit prefixes.</p>
+
+	
+<p>All the units starting with the given prefixes will be included within the set.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Prefixes </em></code>: 
+The prefix of which the unit name starts with.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET_STATIC)">#SET_STATIC</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_STATIC).FilterStart" >
+<strong>SET_STATIC:FilterStart()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Starts the filtering.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET_STATIC)">#SET_STATIC</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_STATIC).FilterTypes" >
+<strong>SET_STATIC:FilterTypes(Types)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Builds a set of units of defined unit types.</p>
+
+	
+<p>Possible current types are those types known within DCS world.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Types </em></code>: 
+Can take those type strings known within DCS world.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET_STATIC)">#SET_STATIC</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_STATIC).FindInDatabase" >
+<strong>SET_STATIC:FindInDatabase(Event)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Handles the Database to check on any event that Object exists in the Database.</p>
+
+	
+<p>This is required, because sometimes the <em>DATABASE event gets called later than the SET</em>BASE event or vise versa!</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Event.html##(EVENTDATA)">Core.Event#EVENTDATA</a> Event </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return values</h3>
+			<ol>
+				<li>
+				
+<p><em>#string:</em>
+The name of the STATIC</p>
+
+				</li>
+				<li>
+				
+<p><em>#table:</em>
+The STATIC</p>
+
+				</li>
+			</ol>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_STATIC).FindStatic" >
+<strong>SET_STATIC:FindStatic(StaticName)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Finds a Static based on the Static Name.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string StaticName </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="Wrapper.Static.html##(STATIC)">Wrapper.Static#STATIC</a>:</em>
+The found Static.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_STATIC).ForEachStatic" >
+<strong>SET_STATIC:ForEachStatic(IteratorFunction, ...)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Iterate the SET_STATIC and call an interator function for each <strong>alive</strong> STATIC, providing the STATIC and optional parameters.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#function IteratorFunction </em></code>: 
+The function that will be called when there is an alive STATIC in the SET_STATIC. The function needs to accept a STATIC parameter.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> ... </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET_STATIC)">#SET_STATIC</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_STATIC).ForEachStaticCompletelyInZone" >
+<strong>SET_STATIC:ForEachStaticCompletelyInZone(ZoneObject, IteratorFunction, ...)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Iterate the SET_STATIC and call an iterator function for each <strong>alive</strong> STATIC presence completely in a <a href="Zone.html">Zone</a>, providing the STATIC and optional parameters to the called function.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Zone.html##(ZONE)">Core.Zone#ZONE</a> ZoneObject </em></code>: 
+The Zone to be tested for.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#function IteratorFunction </em></code>: 
+The function that will be called when there is an alive STATIC in the SET_STATIC. The function needs to accept a STATIC parameter.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> ... </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET_STATIC)">#SET_STATIC</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_STATIC).ForEachStaticInZone" >
+<strong>SET_STATIC:ForEachStaticInZone(IteratorFunction, ...)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Check if minimal one element of the SET_STATIC is in the Zone.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#function IteratorFunction </em></code>: 
+The function that will be called when there is an alive STATIC in the SET_STATIC. The function needs to accept a STATIC parameter.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> ... </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET_STATIC)">#SET_STATIC</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_STATIC).ForEachStaticNotInZone" >
+<strong>SET_STATIC:ForEachStaticNotInZone(ZoneObject, IteratorFunction, ...)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Iterate the SET_STATIC and call an iterator function for each <strong>alive</strong> STATIC presence not in a <a href="Zone.html">Zone</a>, providing the STATIC and optional parameters to the called function.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Zone.html##(ZONE)">Core.Zone#ZONE</a> ZoneObject </em></code>: 
+The Zone to be tested for.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#function IteratorFunction </em></code>: 
+The function that will be called when there is an alive STATIC in the SET_STATIC. The function needs to accept a STATIC parameter.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> ... </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET_STATIC)">#SET_STATIC</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_STATIC).GetCoordinate" >
+<strong>SET_STATIC:GetCoordinate()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Get the center coordinate of the SET_STATIC.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="Core.Point.html##(COORDINATE)">Core.Point#COORDINATE</a>:</em>
+The center coordinate of all the units in the set, including heading in degrees and speed in mps in case of moving units.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_STATIC).GetFirst" >
+<strong>SET_STATIC:GetFirst()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Get the first unit from the set.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="Wrapper.Static.html##(STATIC)">Wrapper.Static#STATIC</a>:</em>
+The STATIC object.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_STATIC).GetHeading" >
+<strong>SET_STATIC:GetHeading()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Get the average heading of the SET_STATIC.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#number:</em>
+Heading Heading in degrees and speed in mps in case of moving units.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_STATIC).GetStaticTypes" >
+<strong>SET_STATIC:GetStaticTypes()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns map of unit types.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(map)">#map</a>:</em></p>
+<h1>string,#number> A map of the unit types found. The key is the StaticTypeName and the value is the amount of unit types found.</h1>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_STATIC).GetStaticTypesText" >
+<strong>SET_STATIC:GetStaticTypesText()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns a comma separated string of the unit types with a count in the  <a href="Set.html">Set</a>.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#string:</em>
+The unit types string</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_STATIC).GetTypeNames" >
+<strong>SET_STATIC:GetTypeNames(Delimiter)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Retrieve the type names of the <a href="Static.html">Static</a>s in the SET, delimited by an optional delimiter.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string Delimiter </em></code>: 
+(optional) The delimiter, which is default a comma.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#string:</em>
+The types of the <a href="Static.html">Static</a>s delimited.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_STATIC).GetVelocity" >
+<strong>SET_STATIC:GetVelocity()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Get the maximum velocity of the SET_STATIC.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#number:</em>
+The speed in mps in case of moving units.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_STATIC).IsIncludeObject" >
+<strong>SET_STATIC:IsIncludeObject(MStatic)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Static.html##(STATIC)">Wrapper.Static#STATIC</a> MStatic </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET_STATIC)">#SET_STATIC</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_STATIC).IsNotInZone" >
+<strong>SET_STATIC:IsNotInZone(ZoneObject, Zone)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Check if no element of the SET_STATIC is in the Zone.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Zone.html##(ZONE)">Core.Zone#ZONE</a> ZoneObject </em></code>: 
+The Zone to be tested for.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> Zone </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_STATIC).IsPatriallyInZone" >
+<strong>SET_STATIC:IsPatriallyInZone(Zone)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Check if minimal one element of the SET_STATIC is in the Zone.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Zone.html##(ZONE)">Core.Zone#ZONE</a> Zone </em></code>: 
+The Zone to be tested for.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_STATIC).New" >
+<strong>SET_STATIC:New()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Creates a new SET_STATIC object, building a set of units belonging to a coalitions, categories, countries, types or with defined prefix names.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET_STATIC)">#SET_STATIC</a>:</em></p>
+
+
+			<h3>Usage:</h3>
+		<pre class="example"><code>-- Define a new SET_STATIC Object. This DBObject will contain a reference to all alive Statics.
+DBObject = SET_STATIC:New()</code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_STATIC).RemoveStaticsByName" >
+<strong>SET_STATIC:RemoveStaticsByName(RemoveStaticNames)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Remove STATIC(s) from SET_STATIC.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Static.html##(STATIC)">Wrapper.Static#STATIC</a> RemoveStaticNames </em></code>: 
+A single name or an array of STATIC names.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+
+<p>self</p>
+
+</dd>
+</dl>
 
 			<h2><a id="#(SET_UNIT)" >Type <code>SET_UNIT</code></a></h2>
 				<h3>Field(s)</h3>
@@ -4536,6 +6285,11 @@ self</p>
 <dd>
 	
 <p>Calculate the maxium A2G threat level of the SET_UNIT.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#number:</em>
+The maximum threatlevel</p>
 
 </dd>
 </dl>
@@ -4893,6 +6647,38 @@ self</p>
 		<dl class="function">
 <dt>
 
+<a id="#(SET_UNIT).ForEachUnitInZone" >
+<strong>SET_UNIT:ForEachUnitInZone(IteratorFunction, ...)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Check if minimal one element of the SET_UNIT is in the Zone.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#function IteratorFunction </em></code>: 
+The function that will be called when there is an alive UNIT in the SET_UNIT. The function needs to accept a UNIT parameter.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> ... </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SET_UNIT)">#SET_UNIT</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(SET_UNIT).ForEachUnitNotInZone" >
 <strong>SET_UNIT:ForEachUnitNotInZone(ZoneObject, IteratorFunction, ...)</strong>
 </a>
@@ -4986,6 +6772,24 @@ self</p>
 		<dl class="function">
 <dt>
 
+<a id="#(SET_UNIT).GetCoordinate" >
+<strong>SET_UNIT:GetCoordinate()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Get the center coordinate of the SET_UNIT.</p>
+
+		<h3>Return value</h3>
+				
+<p><em><a href="Core.Point.html##(COORDINATE)">Core.Point#COORDINATE</a>:</em>
+The center coordinate of all the units in the set, including heading in degrees and speed in mps in case of moving units.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(SET_UNIT).GetFirst" >
 <strong>SET_UNIT:GetFirst()</strong>
 </a>
@@ -4998,6 +6802,24 @@ self</p>
 				
 <p><em><a href="Wrapper.Unit.html##(UNIT)">Wrapper.Unit#UNIT</a>:</em>
 The UNIT object.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_UNIT).GetHeading" >
+<strong>SET_UNIT:GetHeading()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Get the average heading of the SET_UNIT.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#number:</em>
+Heading Heading in degrees and speed in mps in case of moving units.</p>
 
 </dd>
 </dl>
@@ -5079,6 +6901,24 @@ The types of the <a href="Unit.html">Unit</a>s delimited.</p>
 				
 <p><em>#string:</em>
 The unit types string</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_UNIT).GetVelocity" >
+<strong>SET_UNIT:GetVelocity()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Get the maximum velocity of the SET_UNIT.</p>
+
+		<h3>Return value</h3>
+				
+<p><em>#number:</em>
+The speed in mps in case of moving units.</p>
 
 </dd>
 </dl>
@@ -5193,6 +7033,65 @@ The amount of SEADable units in the Set</p>
 				
 <p><em><a href="##(SET_UNIT)">#SET_UNIT</a>:</em>
 self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_UNIT).IsNotInZone" >
+<strong>SET_UNIT:IsNotInZone(ZoneObject, Zone)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Check if no element of the SET_UNIT is in the Zone.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Zone.html##(ZONE)">Core.Zone#ZONE</a> ZoneObject </em></code>: 
+The Zone to be tested for.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> Zone </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SET_UNIT).IsPartiallyInZone" >
+<strong>SET_UNIT:IsPartiallyInZone(ZoneTest)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Check if minimal one element of the SET_UNIT is in the Zone.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Zone.html##(ZONE)">Core.Zone#ZONE</a> ZoneTest </em></code>: 
+The Zone to be tested for.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#boolean:</em></p>
+
 
 </dd>
 </dl>

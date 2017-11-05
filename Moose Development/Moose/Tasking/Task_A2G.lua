@@ -75,7 +75,7 @@ do -- TASK_A2G
     Fsm:AddTransition( { "ArrivedAtRendezVous", "HoldingAtRendezVous" }, "Engage", "Engaging" )
     Fsm:AddTransition( { "ArrivedAtRendezVous", "HoldingAtRendezVous" }, "HoldAtRendezVous", "HoldingAtRendezVous" )
      
-    Fsm:AddProcess   ( "Engaging", "Account", ACT_ACCOUNT_DEADS:New( self.TargetSetUnit, self.TaskType ), {} )
+    Fsm:AddProcess   ( "Engaging", "Account", ACT_ACCOUNT_DEADS:New(), {} )
     Fsm:AddTransition( "Engaging", "RouteToTarget", "Engaging" )
     Fsm:AddProcess( "Engaging", "RouteToTargetZone", ACT_ROUTE_ZONE:New(), {} )
     Fsm:AddProcess( "Engaging", "RouteToTargetPoint", ACT_ROUTE_POINT:New(), {} )
@@ -141,9 +141,9 @@ do -- TASK_A2G
       else
         local TargetUnit = Task.TargetSetUnit:GetFirst() -- Wrapper.Unit#UNIT
         if TargetUnit then
-          local Coordinate = TargetUnit:GetCoordinate()
+          local Coordinate = TargetUnit:GetPointVec3()
           self:T( { TargetCoordinate = Coordinate, Coordinate:GetX(), Coordinate:GetY(), Coordinate:GetZ() } )
-          Task:SetTargetCoordinate( TargetUnit:GetCoordinate(), TaskUnit )
+          Task:SetTargetCoordinate( Coordinate, TaskUnit )
         end
         self:__RouteToTargetPoint( 0.1 )
       end
@@ -165,6 +165,15 @@ do -- TASK_A2G
     return self
  
   end
+
+  --- @param #TASK_A2G self
+  -- @param Core.Set#SET_UNIT TargetSetUnit The set of targets.
+  function TASK_A2G:SetTargetSetUnit( TargetSetUnit )
+  
+    self.TargetSetUnit = TargetSetUnit
+  end
+   
+
   
   --- @param #TASK_A2G self
   function TASK_A2G:GetPlannedMenuText()
@@ -276,6 +285,36 @@ do -- TASK_A2G
   
     return self.GoalTotal
   end
+  
+  function TASK_A2G:GetMarkInfo( TaskInfoID, TaskInfo )
+
+    if type( TaskInfo.TaskInfoText ) == "string" then
+      if TaskInfoID == "Targets" then
+      else
+        return string.format( "%s: %s", TaskInfoID, TaskInfo.TaskInfoText )
+      end
+    elseif type( TaskInfo ) == "table" then
+      if TaskInfoID == "Coordinate" then
+      end
+    end
+  
+    return nil
+  end
+  
+
+  function TASK_A2G:GetReportDetail( ReportGroup, TaskInfoID, TaskInfo )
+  
+    if type( TaskInfo.TaskInfoText ) == "string" then
+      return string.format( "%s: %s", TaskInfoID, TaskInfo.TaskInfoText )
+    elseif type(TaskInfo) == "table" then
+      if TaskInfoID == "Coordinate" then
+        local FromCoordinate = ReportGroup:GetUnit(1):GetCoordinate()
+        local ToCoordinate = TaskInfo.TaskInfoText -- Core.Point#COORDINATE
+        return string.format( " - %s: %s", TaskInfoID, ToCoordinate:ToString( ReportGroup:GetUnit(1), nil, self ) )
+      else
+      end
+    end
+  end
 
 end 
 
@@ -308,7 +347,7 @@ do -- TASK_A2G_SEAD
   -- @param Core.Set#SET_UNIT TargetSetUnit 
   -- @param #string TaskBriefing The briefing of the task.
   -- @return #TASK_A2G_SEAD self
-  function TASK_A2G_SEAD:New( Mission, SetGroup, TaskName, TargetSetUnit, TaskBriefing )
+  function TASK_A2G_SEAD:New( Mission, SetGroup, TaskName, TargetSetUnit, TaskBriefing)
     local self = BASE:Inherit( self, TASK_A2G:New( Mission, SetGroup, TaskName, TargetSetUnit, "SEAD", TaskBriefing ) ) -- #TASK_A2G_SEAD
     self:F()
     
@@ -316,20 +355,55 @@ do -- TASK_A2G_SEAD
     
     self:SetBriefing( 
       TaskBriefing or 
-      "Execute a Suppression of Enemy Air Defenses.\n"
+      "Execute a Suppression of Enemy Air Defenses." 
     )
-
-    local TargetCoordinate = TargetSetUnit:GetFirst():GetCoordinate()
-    self:SetInfo( "Coordinates", TargetCoordinate )
-
-    self:SetInfo( "Threat", "[" .. string.rep(  "■", TargetSetUnit:CalculateThreatLevelA2G() ) .. "]" )
-    local DetectedItemsCount = TargetSetUnit:Count()
-    local DetectedItemsTypes = TargetSetUnit:GetTypeNames()
-    self:SetInfo( "Targets", string.format( "%d of %s", DetectedItemsCount, DetectedItemsTypes ) ) 
 
     return self
   end 
 
+  function TASK_A2G_SEAD:UpdateTaskInfo() 
+
+
+    local TargetCoordinate = self.Detection and self.Detection:GetDetectedItemCoordinate( self.DetectedItemIndex ) or self.TargetSetUnit:GetFirst():GetCoordinate() 
+    self:SetInfo( "Coordinate", TargetCoordinate, 0 )
+
+    local ThreatLevel, ThreatText
+    if self.Detection then
+      ThreatLevel, ThreatText = self.Detection:GetDetectedItemThreatLevel( self.DetectedItemIndex )
+    else
+      ThreatLevel, ThreatText = self.TargetSetUnit:CalculateThreatLevelA2G()
+    end
+    self:SetInfo( "Threat", ThreatText .. " [" .. string.rep(  "■", ThreatLevel ) .. "]", 11 )
+
+    if self.Detection then
+      local DetectedItemsCount = self.TargetSetUnit:Count()
+      local ReportTypes = REPORT:New()
+      local TargetTypes = {}
+      for TargetUnitName, TargetUnit in pairs( self.TargetSetUnit:GetSet() ) do
+        local TargetType = self.Detection:GetDetectedUnitTypeName( TargetUnit )
+        if not TargetTypes[TargetType] then
+          TargetTypes[TargetType] = TargetType
+          ReportTypes:Add( TargetType )
+        end
+      end
+      self:SetInfo( "Targets", string.format( "%d of %s", DetectedItemsCount, ReportTypes:Text( ", " ) ), 10 ) 
+    else
+      local DetectedItemsCount = self.TargetSetUnit:Count()
+      local DetectedItemsTypes = self.TargetSetUnit:GetTypeNames()
+      self:SetInfo( "Targets", string.format( "%d of %s", DetectedItemsCount, DetectedItemsTypes ), 10 ) 
+    end
+
+  end
+    
+  function TASK_A2G_SEAD:ReportOrder( ReportGroup ) 
+    local Coordinate = self:GetInfo( "Coordinate" )
+    --local Coordinate = self.TaskInfo.Coordinates.TaskInfoText
+    local Distance = ReportGroup:GetCoordinate():Get2DDistance( Coordinate )
+    
+    return Distance
+  end
+  
+  
   --- @param #TASK_A2G_SEAD self
   function TASK_A2G_SEAD:onafterGoal( TaskUnit, From, Event, To )
     local TargetSetUnit = self.TargetSetUnit -- Core.Set#SET_UNIT
@@ -341,7 +415,7 @@ do -- TASK_A2G_SEAD
     self:__Goal( -10 )
   end
 
-  --- Set a score when a target in scope of the A2A attack, has been destroyed .
+  --- Set a score when a target in scope of the A2G attack, has been destroyed .
   -- @param #TASK_A2G_SEAD self
   -- @param #string PlayerName The name of the player.
   -- @param #number Score The score in points to be granted when task process has been achieved.
@@ -357,7 +431,7 @@ do -- TASK_A2G_SEAD
     return self
   end
 
-  --- Set a score when all the targets in scope of the A2A attack, have been destroyed.
+  --- Set a score when all the targets in scope of the A2G attack, have been destroyed.
   -- @param #TASK_A2G_SEAD self
   -- @param #string PlayerName The name of the player.
   -- @param #number Score The score in points.
@@ -373,7 +447,7 @@ do -- TASK_A2G_SEAD
     return self
   end
 
-  --- Set a penalty when the A2A attack has failed.
+  --- Set a penalty when the A2G attack has failed.
   -- @param #TASK_A2G_SEAD self
   -- @param #string PlayerName The name of the player.
   -- @param #number Penalty The penalty in points, must be a negative value!
@@ -429,19 +503,66 @@ do -- TASK_A2G_BAI
     
     self:SetBriefing( 
       TaskBriefing or 
-      "Execute a Battlefield Air Interdiction of a group of enemy targets.\n"
+      "Execute a Battlefield Air Interdiction of a group of enemy targets."
     )
-
-    local TargetCoordinate = TargetSetUnit:GetFirst():GetCoordinate()
-    self:SetInfo( "Coordinates", TargetCoordinate )
-
-    self:SetInfo( "Threat", "[" .. string.rep(  "■", TargetSetUnit:CalculateThreatLevelA2G() ) .. "]" )
-    local DetectedItemsCount = TargetSetUnit:Count()
-    local DetectedItemsTypes = TargetSetUnit:GetTypeNames()
-    self:SetInfo( "Targets", string.format( "%d of %s", DetectedItemsCount, DetectedItemsTypes ) ) 
-
+    
     return self
-  end 
+  end
+  
+  function TASK_A2G_BAI:UpdateTaskInfo() 
+
+    self:E({self.Detection, self.DetectedItemIndex})
+
+    local TargetCoordinate = self.Detection and self.Detection:GetDetectedItemCoordinate( self.DetectedItemIndex ) or self.TargetSetUnit:GetFirst():GetCoordinate() 
+    self:SetInfo( "Coordinate", TargetCoordinate, 0 )
+
+    local ThreatLevel, ThreatText
+    if self.Detection then
+      ThreatLevel, ThreatText = self.Detection:GetDetectedItemThreatLevel( self.DetectedItemIndex )
+    else
+      ThreatLevel, ThreatText = self.TargetSetUnit:CalculateThreatLevelA2G()
+    end
+    self:SetInfo( "Threat", ThreatText .. " [" .. string.rep(  "■", ThreatLevel ) .. "]", 11 )
+
+    if self.Detection then
+      local DetectedItemsCount = self.TargetSetUnit:Count()
+      local ReportTypes = REPORT:New()
+      local TargetTypes = {}
+      for TargetUnitName, TargetUnit in pairs( self.TargetSetUnit:GetSet() ) do
+        local TargetType = self.Detection:GetDetectedUnitTypeName( TargetUnit )
+        if not TargetTypes[TargetType] then
+          TargetTypes[TargetType] = TargetType
+          ReportTypes:Add( TargetType )
+        end
+      end
+      self:SetInfo( "Targets", string.format( "%d of %s", DetectedItemsCount, ReportTypes:Text( ", " ) ), 10 ) 
+    else
+      local DetectedItemsCount = self.TargetSetUnit:Count()
+      local DetectedItemsTypes = self.TargetSetUnit:GetTypeNames()
+      self:SetInfo( "Targets", string.format( "%d of %s", DetectedItemsCount, DetectedItemsTypes ), 10 ) 
+    end
+
+    local TargetCoordinate = self:GetInfo( "Coordinate" ) -- Core.Point#COORDINATE
+    
+    local Velocity = self.TargetSetUnit:GetVelocityVec3()
+    local Heading = self.TargetSetUnit:GetHeading()
+    
+    TargetCoordinate:SetHeading( Heading )
+    TargetCoordinate:SetVelocity( Velocity )
+
+    self:SetInfo( "Position", "Targets are" .. TargetCoordinate:GetMovingText() ..  ".", 12 ) 
+    
+  end
+
+
+  function TASK_A2G_BAI:ReportOrder( ReportGroup ) 
+    local Coordinate = self:GetInfo( "Coordinate" )
+    --local Coordinate = self.TaskInfo.Coordinates.TaskInfoText
+    local Distance = ReportGroup:GetCoordinate():Get2DDistance( Coordinate )
+    
+    return Distance
+  end
+
 
   --- @param #TASK_A2G_BAI self
   function TASK_A2G_BAI:onafterGoal( TaskUnit, From, Event, To )
@@ -454,7 +575,7 @@ do -- TASK_A2G_BAI
     self:__Goal( -10 )
   end
 
-  --- Set a score when a target in scope of the A2A attack, has been destroyed .
+  --- Set a score when a target in scope of the A2G attack, has been destroyed .
   -- @param #TASK_A2G_BAI self
   -- @param #string PlayerName The name of the player.
   -- @param #number Score The score in points to be granted when task process has been achieved.
@@ -470,7 +591,7 @@ do -- TASK_A2G_BAI
     return self
   end
 
-  --- Set a score when all the targets in scope of the A2A attack, have been destroyed.
+  --- Set a score when all the targets in scope of the A2G attack, have been destroyed.
   -- @param #TASK_A2G_BAI self
   -- @param #string PlayerName The name of the player.
   -- @param #number Score The score in points.
@@ -486,7 +607,7 @@ do -- TASK_A2G_BAI
     return self
   end
 
-  --- Set a penalty when the A2A attack has failed.
+  --- Set a penalty when the A2G attack has failed.
   -- @param #TASK_A2G_BAI self
   -- @param #string PlayerName The name of the player.
   -- @param #number Penalty The penalty in points, must be a negative value!
@@ -541,20 +662,56 @@ do -- TASK_A2G_CAS
     
     self:SetBriefing( 
       TaskBriefing or 
-      "Execute a Close Air Support for a group of enemy targets.\n" ..
-      "Beware of friendlies at the vicinity!\n"
+      "Execute a Close Air Support for a group of enemy targets. " ..
+      "Beware of friendlies at the vicinity! "
     )
 
-    local TargetCoordinate = TargetSetUnit:GetFirst():GetCoordinate()
-    self:SetInfo( "Coordinates", TargetCoordinate )
-
-    self:SetInfo( "Threat", "[" .. string.rep(  "■", TargetSetUnit:CalculateThreatLevelA2G() ) .. "]" )
-    local DetectedItemsCount = TargetSetUnit:Count()
-    local DetectedItemsTypes = TargetSetUnit:GetTypeNames()
-    self:SetInfo( "Targets", string.format( "%d of %s", DetectedItemsCount, DetectedItemsTypes ) ) 
-
+    
     return self
   end 
+  
+  function TASK_A2G_CAS:UpdateTaskInfo()
+  
+    local TargetCoordinate = ( self.Detection and self.Detection:GetDetectedItemCoordinate( self.DetectedItemIndex ) ) or self.TargetSetUnit:GetFirst():GetCoordinate() 
+    self:SetInfo( "Coordinate", TargetCoordinate, 0 )
+    
+    local ThreatLevel, ThreatText
+    if self.Detection then
+      ThreatLevel, ThreatText = self.Detection:GetDetectedItemThreatLevel( self.DetectedItemIndex )
+    else
+      ThreatLevel, ThreatText = self.TargetSetUnit:CalculateThreatLevelA2G()
+    end
+    self:SetInfo( "Threat", ThreatText .. " [" .. string.rep(  "■", ThreatLevel ) .. "]", 11 )
+
+    if self.Detection then
+      local DetectedItemsCount = self.TargetSetUnit:Count()
+      local ReportTypes = REPORT:New()
+      local TargetTypes = {}
+      for TargetUnitName, TargetUnit in pairs( self.TargetSetUnit:GetSet() ) do
+        local TargetType = self.Detection:GetDetectedUnitTypeName( TargetUnit )
+        if not TargetTypes[TargetType] then
+          TargetTypes[TargetType] = TargetType
+          ReportTypes:Add( TargetType )
+        end
+      end
+      self:SetInfo( "Targets", string.format( "%d of %s", DetectedItemsCount, ReportTypes:Text( ", " ) ), 10 ) 
+    else
+      local DetectedItemsCount = self.TargetSetUnit:Count()
+      local DetectedItemsTypes = self.TargetSetUnit:GetTypeNames()
+      self:SetInfo( "Targets", string.format( "%d of %s", DetectedItemsCount, DetectedItemsTypes ), 10 ) 
+    end
+
+  end
+
+  --- @param #TASK_A2G_CAS self
+  function TASK_A2G_CAS:ReportOrder( ReportGroup )
+     
+    local Coordinate = self:GetInfo( "Coordinate" )
+    local Distance = ReportGroup:GetCoordinate():Get2DDistance( Coordinate )
+    
+    return Distance
+  end
+
 
   --- @param #TASK_A2G_CAS self
   function TASK_A2G_CAS:onafterGoal( TaskUnit, From, Event, To )
@@ -567,7 +724,7 @@ do -- TASK_A2G_CAS
     self:__Goal( -10 )
   end
 
-  --- Set a score when a target in scope of the A2A attack, has been destroyed .
+  --- Set a score when a target in scope of the A2G attack, has been destroyed .
   -- @param #TASK_A2G_CAS self
   -- @param #string PlayerName The name of the player.
   -- @param #number Score The score in points to be granted when task process has been achieved.
@@ -583,7 +740,7 @@ do -- TASK_A2G_CAS
     return self
   end
 
-  --- Set a score when all the targets in scope of the A2A attack, have been destroyed.
+  --- Set a score when all the targets in scope of the A2G attack, have been destroyed.
   -- @param #TASK_A2G_CAS self
   -- @param #string PlayerName The name of the player.
   -- @param #number Score The score in points.
@@ -599,7 +756,7 @@ do -- TASK_A2G_CAS
     return self
   end
 
-  --- Set a penalty when the A2A attack has failed.
+  --- Set a penalty when the A2G attack has failed.
   -- @param #TASK_A2G_CAS self
   -- @param #string PlayerName The name of the player.
   -- @param #number Penalty The penalty in points, must be a negative value!

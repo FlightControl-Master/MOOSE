@@ -11,15 +11,21 @@ It is free for download and usage, since it is released under the GNU 3.0 open s
 Although the MOOSE contributors and tester are using the GitHub service to enforces a structured approval process, release and change management, and a communicative distribution and deployment, you, as a mission designer, don't need to mess with it. Still, if you are interrested intesting the latest features of MOOSE of in adding your own, you can read the [relevant](http://flightcontrol-master.github.io/MOOSE/Beta_Test_Guide.html) [guides](http://flightcontrol-master.github.io/MOOSE/Contribution_Guide.html) and/or contact FlightControl 
 The MOOSE framework development is an open source project, and as such, contributors are welcome and encouraged to contribute on the development.Some key users have already started with this process.
 
+## 1.2) MOOSE using a normal editor
+
+You can use the MOOSE framework with a normal editor. This is perfectly okay.
+But you won't have IntelliSense enabled, which allows you to quickly search for the correct methods per class.
 
 ## 1.2) Eclipse LDT
 
-MOOSE utilizes the Eclipse Lua Development Tools. As a result, the MOOSE framework is documented using the luadocumentor standard.
+The LDT environment or "Eclipse Lua Development Tools" is a fully integrated development environment for LUA developers. 
+It is recommended to use the LDT as your mission design editor using MOOSE. The MOOSE framework is documented using the luadocumentor standard.
 Every class, method and variable is documented within the source, and mission designers can write mission script lua code that is **intellisense**(-ed) ...
 What that means is that while you are coding your mission, your object and variables (derived from MOOSE classes) will list the methods and properties of that class interactively while coding ...
 
 ![Intellisense](Usage/Intellisense.JPG)
 
+This highly increases the quality and the speed of your scripting.
 
 ## 1.3) LUA training
 

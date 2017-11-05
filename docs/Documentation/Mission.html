@@ -28,9 +28,9 @@
 					<li><a href="AI_Cas.html">AI_Cas</a></li>
 					<li><a href="AI_Formation.html">AI_Formation</a></li>
 					<li><a href="AI_Patrol.html">AI_Patrol</a></li>
+					<li><a href="ATC_Ground.html">ATC_Ground</a></li>
 					<li><a href="Account.html">Account</a></li>
 					<li><a href="Airbase.html">Airbase</a></li>
-					<li><a href="AirbasePolice.html">AirbasePolice</a></li>
 					<li><a href="Assign.html">Assign</a></li>
 					<li><a href="Base.html">Base</a></li>
 					<li><a href="Cargo.html">Cargo</a></li>
@@ -60,6 +60,7 @@
 					<li><a href="Escort.html">Escort</a></li>
 					<li><a href="Event.html">Event</a></li>
 					<li><a href="Fsm.html">Fsm</a></li>
+					<li><a href="Goal.html">Goal</a></li>
 					<li><a href="Group.html">Group</a></li>
 					<li><a href="Identifiable.html">Identifiable</a></li>
 					<li><a href="Menu.html">Menu</a></li>
@@ -72,7 +73,9 @@
 					<li><a href="Positionable.html">Positionable</a></li>
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
 					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
+					<li><a href="Protect.html">Protect</a></li>
 					<li><a href="Radio.html">Radio</a></li>
+					<li><a href="Rat.html">Rat</a></li>
 					<li><a href="Route.html">Route</a></li>
 					<li><a href="Scenery.html">Scenery</a></li>
 					<li><a href="ScheduleDispatcher.html">ScheduleDispatcher</a></li>
@@ -88,6 +91,7 @@
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="Task.html">Task</a></li>
+					<li><a href="TaskZoneCapture.html">TaskZoneCapture</a></li>
 					<li><a href="Task_A2A.html">Task_A2A</a></li>
 					<li><a href="Task_A2A_Dispatcher.html">Task_A2A_Dispatcher</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
@@ -95,8 +99,15 @@
 					<li><a href="Task_Cargo.html">Task_Cargo</a></li>
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
 					<li><a href="Unit.html">Unit</a></li>
+					<li><a href="UserFlag.html">UserFlag</a></li>
+					<li><a href="UserSound.html">UserSound</a></li>
 					<li><a href="Utils.html">Utils</a></li>
+					<li><a href="Velocity.html">Velocity</a></li>
 					<li><a href="Zone.html">Zone</a></li>
+					<li><a href="ZoneCaptureCoalition.html">ZoneCaptureCoalition</a></li>
+					<li><a href="ZoneGoal.html">ZoneGoal</a></li>
+					<li><a href="ZoneGoalCargo.html">ZoneGoalCargo</a></li>
+					<li><a href="ZoneGoalCoalition.html">ZoneGoalCoalition</a></li>
 					<li><a href="env.html">env</a></li>
 					<li><a href="land.html">land</a></li>
 					<li><a href="routines.html">routines</a></li>
@@ -133,6 +144,12 @@
 		<td class="name" nowrap="nowrap"><a href="##(MISSION).AbortUnit">MISSION:AbortUnit(PlayerUnit)</a></td>
 		<td class="summary">
 <p>Aborts a PlayerUnit from the Mission.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MISSION).AddPlayerName">MISSION:AddPlayerName(PlayerName)</a></td>
+		<td class="summary">
+
 </td>
 		</tr>
 		<tr>
@@ -198,7 +215,7 @@
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(MISSION).GetMenu">MISSION:GetMenu(TaskGroup)</a></td>
 		<td class="summary">
-<p>Gets the mission menu for the coalition.</p>
+<p>Gets the mission menu for the TaskGroup.</p>
 </td>
 		</tr>
 		<tr>
@@ -211,6 +228,18 @@
 		<td class="name" nowrap="nowrap"><a href="##(MISSION).GetNextTaskID">MISSION:GetNextTaskID(Task)</a></td>
 		<td class="summary">
 <p>Return the next <a href="Task.html">Task</a> ID to be completed within the <a href="Mission.html">Mission</a>. </p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MISSION).GetPlayerNames">MISSION:GetPlayerNames()</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MISSION).GetRootMenu">MISSION:GetRootMenu(TaskGroup)</a></td>
+		<td class="summary">
+<p>Gets the root mission menu for the TaskGroup.</p>
 </td>
 		</tr>
 		<tr>
@@ -294,11 +323,17 @@
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(MISSION).MenuReportBriefing">MISSION:MenuReportBriefing(ReportGroup)</a></td>
 		<td class="summary">
-
+<p>Reports the briefing.</p>
 </td>
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(MISSION).MenuReportPlayersPerTask">MISSION:MenuReportPlayersPerTask(ReportGroup)</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MISSION).MenuReportPlayersProgress">MISSION:MenuReportPlayersProgress(ReportGroup)</a></td>
 		<td class="summary">
 
 </td>
@@ -312,7 +347,7 @@
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(MISSION).MenuReportTasksSummary">MISSION:MenuReportTasksSummary(ReportGroup)</a></td>
 		<td class="summary">
-
+<p>Report the task summary.</p>
 </td>
 		</tr>
 		<tr>
@@ -325,6 +360,12 @@
 		<td class="name" nowrap="nowrap"><a href="##(MISSION).MissionGoals">MISSION:MissionGoals()</a></td>
 		<td class="summary">
 <p>MissionGoals Trigger for MISSION</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MISSION).MissionGroupMenu">MISSION.MissionGroupMenu</a></td>
+		<td class="summary">
+
 </td>
 		</tr>
 		<tr>
@@ -502,13 +543,19 @@
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MISSION).ReportPlayersProgress">MISSION:ReportPlayersProgress(ReportGroup)</a></td>
+		<td class="summary">
+<p>Create an Mission Progress report of the Mission.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(MISSION).ReportStatus">MISSION:ReportStatus()</a></td>
 		<td class="summary">
 <p>Create a status report of the Mission.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MISSION).ReportSummary">MISSION:ReportSummary()</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(MISSION).ReportSummary">MISSION:ReportSummary(ReportGroup)</a></td>
 		<td class="summary">
 <p>Create a summary report of the Mission (one line).</p>
 </td>
@@ -582,7 +629,7 @@
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(MISSION).onenterCOMPLETED">MISSION:onenterCOMPLETED(From, Event, To)</a></td>
 		<td class="summary">
-
+<p>FSM function for a MISSION</p>
 </td>
 		</tr>
 	</table>
@@ -639,6 +686,27 @@ The CLIENT or UNIT of the Player joining the Mission.</p>
 <p><em><a href="##(MISSION)">#MISSION</a>:</em></p>
 
 
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(MISSION).AddPlayerName" >
+<strong>MISSION:AddPlayerName(PlayerName)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> PlayerName </em></code>: </p>
+
+				</li>
+		</ul>
 </dd>
 </dl>
 		<dl class="function">
@@ -855,7 +923,7 @@ The CLIENT or UNIT of the Player crashing.</p>
 </dt>
 <dd>
 	
-<p>Gets the mission menu for the coalition.</p>
+<p>Gets the mission menu for the TaskGroup.</p>
 
 		<h3>Parameter</h3>
 		<ul>
@@ -914,6 +982,45 @@ is the <a href="Task.html">Task</a> object.</p>
 				
 <p><em><a href="Tasking.Task.html##(TASK)">Tasking.Task#TASK</a>:</em>
 The task added.</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(MISSION).GetPlayerNames" >
+<strong>MISSION:GetPlayerNames()</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(MISSION).GetRootMenu" >
+<strong>MISSION:GetRootMenu(TaskGroup)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Gets the root mission menu for the TaskGroup.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> TaskGroup </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="Core.Menu.html##(MENU_COALITION)">Core.Menu#MENU_COALITION</a>:</em>
+self</p>
 
 </dd>
 </dl>
@@ -1242,13 +1349,14 @@ true if Unit is part of a Task in the Mission.</p>
 </dt>
 <dd>
 	
-
+<p>Reports the briefing.</p>
 
 		<h3>Parameter</h3>
 		<ul>
 				<li>
 				
-<p><code><em> ReportGroup </em></code>: </p>
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> ReportGroup </em></code>: 
+The group to which the report needs to be sent.</p>
 
 				</li>
 		</ul>
@@ -1259,6 +1367,27 @@ true if Unit is part of a Task in the Mission.</p>
 
 <a id="#(MISSION).MenuReportPlayersPerTask" >
 <strong>MISSION:MenuReportPlayersPerTask(ReportGroup)</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> ReportGroup </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(MISSION).MenuReportPlayersProgress" >
+<strong>MISSION:MenuReportPlayersProgress(ReportGroup)</strong>
 </a>
 </dt>
 <dd>
@@ -1311,7 +1440,7 @@ The status</p>
 </dt>
 <dd>
 	
-
+<p>Report the task summary.</p>
 
 		<h3>Parameter</h3>
 		<ul>
@@ -1347,6 +1476,19 @@ The status</p>
 <dd>
 	
 <p>MissionGoals Trigger for MISSION</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(MISSION).MissionGroupMenu" >
+<strong>MISSION.MissionGroupMenu</strong>
+</a>
+</dt>
+<dd>
+	
+
 
 </dd>
 </dl>
@@ -2288,6 +2430,42 @@ self</p>
 		<dl class="function">
 <dt>
 
+<a id="#(MISSION).ReportPlayersProgress" >
+<strong>MISSION:ReportPlayersProgress(ReportGroup)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Create an Mission Progress report of the Mission.</p>
+
+	
+<p>This reports provides a one liner per player of the mission achievements per task.</p>
+
+<pre><code>Mission "&lt;MissionName&gt;" - &lt;MissionStatus&gt; - Active Players Report
+ - Player &lt;PlayerName&gt;: Task &lt;TaskName&gt; &lt;TaskStatus&gt;: &lt;Progress&gt;
+ - Player &lt;PlayerName&gt;: Task &lt;TaskName&gt; &lt;TaskStatus&gt;: &lt;Progress&gt;
+ - ..
+</code></pre>
+
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> ReportGroup </em></code>: </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em>#string:</em></p>
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(MISSION).ReportStatus" >
 <strong>MISSION:ReportStatus()</strong>
 </a>
@@ -2322,13 +2500,21 @@ self</p>
 <dt>
 
 <a id="#(MISSION).ReportSummary" >
-<strong>MISSION:ReportSummary()</strong>
+<strong>MISSION:ReportSummary(ReportGroup)</strong>
 </a>
 </dt>
 <dd>
 	
 <p>Create a summary report of the Mission (one line).</p>
 
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> ReportGroup </em></code>: </p>
+
+				</li>
+		</ul>
 		<h3>Return value</h3>
 				
 <p><em>#string:</em></p>
@@ -2555,30 +2741,23 @@ The delay in seconds.</p>
 </dt>
 <dd>
 	
-
-
-	
-<p> FSM function for a MISSION
- @param #MISSION self
- @param #string From
- @param #string Event
- @param #string To</p>
+<p>FSM function for a MISSION</p>
 
 		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
-<p><code><em> From </em></code>: </p>
+<p><code><em>#string From </em></code>: </p>
 
 				</li>
 				<li>
 				
-<p><code><em> Event </em></code>: </p>
+<p><code><em>#string Event </em></code>: </p>
 
 				</li>
 				<li>
 				
-<p><code><em> To </em></code>: </p>
+<p><code><em>#string To </em></code>: </p>
 
 				</li>
 		</ul>

@@ -31,7 +31,72 @@ FLARECOLOR = trigger.flareColor -- #FLARECOLOR
 
 --- Utilities static class.
 -- @type UTILS
-UTILS = {}
+UTILS = {
+  _MarkID = 1
+}
+
+--- Function to infer instance of an object
+--
+-- ### Examples:
+--
+--    * UTILS.IsInstanceOf( 'some text', 'string' ) will return true
+--    * UTILS.IsInstanceOf( some_function, 'function' ) will return true
+--    * UTILS.IsInstanceOf( 10, 'number' ) will return true
+--    * UTILS.IsInstanceOf( false, 'boolean' ) will return true
+--    * UTILS.IsInstanceOf( nil, 'nil' ) will return true
+--
+--    * UTILS.IsInstanceOf( ZONE:New( 'some zone', ZONE ) will return true
+--    * UTILS.IsInstanceOf( ZONE:New( 'some zone', 'ZONE' ) will return true
+--    * UTILS.IsInstanceOf( ZONE:New( 'some zone', 'zone' ) will return true
+--    * UTILS.IsInstanceOf( ZONE:New( 'some zone', 'BASE' ) will return true
+--
+--    * UTILS.IsInstanceOf( ZONE:New( 'some zone', 'GROUP' ) will return false
+--
+--
+-- @param object is the object to be evaluated
+-- @param className is the name of the class to evaluate (can be either a string or a Moose class)
+-- @return #boolean
+UTILS.IsInstanceOf = function( object, className )
+  -- Is className NOT a string ?
+  if not type( className ) == 'string' then
+  
+    -- Is className a Moose class ?
+    if type( className ) == 'table' and className.IsInstanceOf ~= nil then
+    
+      -- Get the name of the Moose class as a string
+      className = className.ClassName
+      
+    -- className is neither a string nor a Moose class, throw an error
+    else
+    
+      -- I'm not sure if this should take advantage of MOOSE logging function, or throw an error for pcall
+      local err_str = 'className parameter should be a string; parameter received: '..type( className )
+      self:E( err_str )
+      return false
+      -- error( err_str )
+      
+    end
+  end
+  
+  -- Is the object a Moose class instance ?
+  if type( object ) == 'table' and object.IsInstanceOf ~= nil then
+  
+    -- Use the IsInstanceOf method of the BASE class
+    return object:IsInstanceOf( className )
+  else
+  
+    -- If the object is not an instance of a Moose class, evaluate against lua basic data types
+    local basicDataTypes = { 'string', 'number', 'function', 'boolean', 'nil', 'table' }
+    for _, basicDataType in ipairs( basicDataTypes ) do
+      if className == basicDataType then
+        return type( object ) == basicDataType
+      end
+    end
+  end
+  
+  -- Check failed
+  return false
+end
 
 
 --from http://lua-users.org/wiki/CopyTable
@@ -171,21 +236,35 @@ UTILS.FeetToMeters = function(feet)
   return feet*0.3048
 end
 
-UTILS.MpsToKnots = function(mps)
-  return mps*3600/1852
+UTILS.KnotsToKmph = function(knots)
+  return knots* 1.852
 end
 
-UTILS.MpsToKmph = function(mps)
-  return mps*3.6
+UTILS.KmphToMps = function( kmph )
+  return kmph / 3.6
 end
 
-UTILS.KnotsToMps = function(knots)
-  return knots*1852/3600
+UTILS.MpsToKmph = function( mps )
+  return mps * 3.6
 end
 
-UTILS.KmphToMps = function(kmph)
-  return kmph/3.6
+UTILS.MiphToMps = function( miph )
+  return miph * 0.44704
 end
+
+UTILS.MpsToMiph = function( mps )
+  return mps / 0.44704
+end
+
+UTILS.MpsToKnots = function( mps )
+  return mps * 3600 / 1852
+end
+
+UTILS.KnotsToMps = function( knots )
+  return knots * 1852 / 3600
+end
+
+
 
 --[[acc:
 in DM: decimal point of minutes.
@@ -238,12 +317,13 @@ UTILS.tostringLL = function( lat, lon, acc, DMS)
     end
 
     local secFrmtStr -- create the formatting string for the seconds place
-    if acc <= 0 then  -- no decimal place.
-      secFrmtStr = '%02d'
-    else
-      local width = 3 + acc  -- 01.310 - that's a width of 6, for example.
-      secFrmtStr = '%0' .. width .. '.' .. acc .. 'f'
-    end
+    secFrmtStr = '%02d'
+--    if acc <= 0 then  -- no decimal place.
+--      secFrmtStr = '%02d'
+--    else
+--      local width = 3 + acc  -- 01.310 - that's a width of 6, for example.
+--      secFrmtStr = '%0' .. width .. '.' .. acc .. 'f'
+--    end
 
     return string.format('%02d', latDeg) .. ' ' .. string.format('%02d', latMin) .. '\' ' .. string.format(secFrmtStr, latSec) .. '"' .. latHemi .. '   '
            .. string.format('%02d', lonDeg) .. ' ' .. string.format('%02d', lonMin) .. '\' ' .. string.format(secFrmtStr, lonSec) .. '"' .. lonHemi
@@ -326,4 +406,29 @@ function UTILS.spairs( t, order )
             return keys[i], t[keys[i]]
         end
     end
+end
+
+-- get a new mark ID for markings
+function UTILS.GetMarkID()
+
+  UTILS._MarkID = UTILS._MarkID + 1
+  return UTILS._MarkID
+
+end
+
+
+-- Test if a Vec2 is in a radius of another Vec2
+function UTILS.IsInRadius( InVec2, Vec2, Radius )
+
+  local InRadius = ( ( InVec2.x - Vec2.x ) ^2 + ( InVec2.y - Vec2.y ) ^2 ) ^ 0.5 <= Radius
+
+  return InRadius
+end
+
+-- Test if a Vec3 is in the sphere of another Vec3
+function UTILS.IsInSphere( InVec3, Vec3, Radius )
+
+  local InSphere = ( ( InVec3.x - Vec3.x ) ^2 + ( InVec3.y - Vec3.y ) ^2 + ( InVec3.z - Vec3.z ) ^2 ) ^ 0.5 <= Radius
+
+  return InSphere
 end

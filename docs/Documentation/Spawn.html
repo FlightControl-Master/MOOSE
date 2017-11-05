@@ -28,9 +28,9 @@
 					<li><a href="AI_Cas.html">AI_Cas</a></li>
 					<li><a href="AI_Formation.html">AI_Formation</a></li>
 					<li><a href="AI_Patrol.html">AI_Patrol</a></li>
+					<li><a href="ATC_Ground.html">ATC_Ground</a></li>
 					<li><a href="Account.html">Account</a></li>
 					<li><a href="Airbase.html">Airbase</a></li>
-					<li><a href="AirbasePolice.html">AirbasePolice</a></li>
 					<li><a href="Assign.html">Assign</a></li>
 					<li><a href="Base.html">Base</a></li>
 					<li><a href="Cargo.html">Cargo</a></li>
@@ -60,6 +60,7 @@
 					<li><a href="Escort.html">Escort</a></li>
 					<li><a href="Event.html">Event</a></li>
 					<li><a href="Fsm.html">Fsm</a></li>
+					<li><a href="Goal.html">Goal</a></li>
 					<li><a href="Group.html">Group</a></li>
 					<li><a href="Identifiable.html">Identifiable</a></li>
 					<li><a href="Menu.html">Menu</a></li>
@@ -72,7 +73,9 @@
 					<li><a href="Positionable.html">Positionable</a></li>
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
 					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
+					<li><a href="Protect.html">Protect</a></li>
 					<li><a href="Radio.html">Radio</a></li>
+					<li><a href="Rat.html">Rat</a></li>
 					<li><a href="Route.html">Route</a></li>
 					<li><a href="Scenery.html">Scenery</a></li>
 					<li><a href="ScheduleDispatcher.html">ScheduleDispatcher</a></li>
@@ -88,6 +91,7 @@
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="Task.html">Task</a></li>
+					<li><a href="TaskZoneCapture.html">TaskZoneCapture</a></li>
 					<li><a href="Task_A2A.html">Task_A2A</a></li>
 					<li><a href="Task_A2A_Dispatcher.html">Task_A2A_Dispatcher</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
@@ -95,8 +99,15 @@
 					<li><a href="Task_Cargo.html">Task_Cargo</a></li>
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
 					<li><a href="Unit.html">Unit</a></li>
+					<li><a href="UserFlag.html">UserFlag</a></li>
+					<li><a href="UserSound.html">UserSound</a></li>
 					<li><a href="Utils.html">Utils</a></li>
+					<li><a href="Velocity.html">Velocity</a></li>
 					<li><a href="Zone.html">Zone</a></li>
+					<li><a href="ZoneCaptureCoalition.html">ZoneCaptureCoalition</a></li>
+					<li><a href="ZoneGoal.html">ZoneGoal</a></li>
+					<li><a href="ZoneGoalCargo.html">ZoneGoalCargo</a></li>
+					<li><a href="ZoneGoalCoalition.html">ZoneGoalCoalition</a></li>
 					<li><a href="env.html">env</a></li>
 					<li><a href="land.html">land</a></li>
 					<li><a href="routines.html">routines</a></li>
@@ -105,7 +116,7 @@
 	<div id="content">
    <h1>Module <code>Spawn</code></h1>
    
-<p><strong>Functional</strong> -- Spawn dynamically new GROUPs in your missions.</p>
+<p><strong>Core</strong> -- SPAWN class dynamically spawns new groups of units in your missions.</p>
 
    
 <p> 
@@ -155,6 +166,10 @@
 		<td class="name" nowrap="nowrap"><a href="#SPAWN">SPAWN</a></td>
 		<td class="summary">
 <h1>SPAWN class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
+
+<p>-- <img src="..\Presentations\SPAWN\SPAWN.JPG" alt="Banner Image"/></p>
+
+<hr/>
 
 <p>The SPAWN class allows to spawn dynamically new groups.</p>
 </td>
@@ -321,6 +336,18 @@ and any spaces before and after the resulting name are removed.</p>
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN).InitRandomizeTemplatePrefixes">SPAWN:InitRandomizeTemplatePrefixes(SpawnTemplatePrefixes)</a></td>
+		<td class="summary">
+<p>Randomize templates to be used as the unit representatives for the Spawned group, defined by specifying the prefix names.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN).InitRandomizeTemplateSet">SPAWN:InitRandomizeTemplateSet(SpawnTemplateSet)</a></td>
+		<td class="summary">
+<p>Randomize templates to be used as the unit representatives for the Spawned group, defined using a SET_GROUP object.</p>
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(SPAWN).InitRandomizeUnits">SPAWN:InitRandomizeUnits(RandomizeUnits, OuterRadius, InnerRadius)</a></td>
 		<td class="summary">
 <p>Randomizes the UNITs that are spawned within a radius band given an Outer and Inner radius.</p>
@@ -423,9 +450,9 @@ and any spaces before and after the resulting name are removed.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SPAWN).SpawnAtAirbase">SPAWN:SpawnAtAirbase(Airbase, Takeoff)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN).SpawnAtAirbase">SPAWN:SpawnAtAirbase(SpawnAirbase, Takeoff, TakeoffAltitude)</a></td>
 		<td class="summary">
-<p>Will spawn a group at an airbase.</p>
+<p>Will spawn a group at an <a href="Airbase.html">Airbase</a>.</p>
 </td>
 		</tr>
 		<tr>
@@ -447,19 +474,19 @@ and any spaces before and after the resulting name are removed.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SPAWN).SpawnFromStatic">SPAWN:SpawnFromStatic(HostStatic, SpawnIndex)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN).SpawnFromStatic">SPAWN:SpawnFromStatic(HostStatic, MinHeight, MaxHeight, SpawnIndex)</a></td>
 		<td class="summary">
 <p>Will spawn a group from a hosting static.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SPAWN).SpawnFromUnit">SPAWN:SpawnFromUnit(HostUnit, SpawnIndex)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN).SpawnFromUnit">SPAWN:SpawnFromUnit(HostUnit, MinHeight, MaxHeight, SpawnIndex)</a></td>
 		<td class="summary">
 <p>Will spawn a group from a hosting unit.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SPAWN).SpawnFromVec2">SPAWN:SpawnFromVec2(Vec2, SpawnIndex)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN).SpawnFromVec2">SPAWN:SpawnFromVec2(Vec2, MinHeight, MaxHeight, SpawnIndex)</a></td>
 		<td class="summary">
 <p>Will spawn a group from a Vec2 in 3D space.</p>
 </td>
@@ -507,7 +534,7 @@ and any spaces before and after the resulting name are removed.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SPAWN).SpawnInZone">SPAWN:SpawnInZone(Zone, RandomizeGroup, SpawnIndex)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(SPAWN).SpawnInZone">SPAWN:SpawnInZone(Zone, RandomizeGroup, MinHeight, MaxHeight, SpawnIndex)</a></td>
 		<td class="summary">
 <p>Will spawn a Group within a given <a href="Zone.html">Zone</a>.</p>
 </td>
@@ -826,16 +853,6 @@ and any spaces before and after the resulting name are removed.</p>
 		</tr>
 	</table>
 
-			<h2><a id="#(SPAWN.Takeoff)">Type <code>SPAWN.Takeoff</code></a></h2>
-				<table class="function_list">
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(SPAWN.Takeoff).type">SPAWN.Takeoff.type</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-	</table>
-
 	<h2>Global(s)</h2>
 		<dl class="function">
 <dt>
@@ -849,10 +866,14 @@ and any spaces before and after the resulting name are removed.</p>
 	
 <h1>SPAWN class, extends <a href="Base.html##(BASE)">Base#BASE</a></h1>
 
+<p>-- <img src="..\Presentations\SPAWN\SPAWN.JPG" alt="Banner Image"/></p>
+
+<hr/>
+
 <p>The SPAWN class allows to spawn dynamically new groups.</p>
 
 	
-<p>Each SPAWN object needs to be have a related <strong>template group</strong> setup in the Mission Editor (ME),
+<p>Each SPAWN object needs to be have related <strong>template groups</strong> setup in the Mission Editor (ME),
 which is a normal group with the <strong>Late Activation</strong> flag set. 
 This template group will never be activated in your mission. <br/>
 SPAWN uses that <strong>template group</strong> to reference to all the characteristics 
@@ -1027,6 +1048,7 @@ So in principle, the group list will contain all parameters and configurations a
     <li><a href="##(SPAWN).SpawnFromStatic">SPAWN.SpawnFromStatic</a>(): Spawn a new group from a structure, taking the position of a <a href="Static.html">Static</a>.</li>
     <li><a href="##(SPAWN).SpawnFromUnit">SPAWN.SpawnFromUnit</a>(): Spawn a new group taking the position of a <a href="Unit.html">Unit</a>.</li>
     <li><a href="##(SPAWN).SpawnInZone">SPAWN.SpawnInZone</a>(): Spawn a new group in a <a href="Zone.html">Zone</a>.</li>
+    <li><a href="##(SPAWN).SpawnAtAirbase">SPAWN.SpawnAtAirbase</a>(): Spawn a new group at an <a href="Airbase.html">Airbase</a>, which can be an airdrome, ship or helipad.</li>
 </ul>
 
 <p>Note that <a href="##(SPAWN).Spawn">SPAWN.Spawn</a> and <a href="##(SPAWN).ReSpawn">SPAWN.ReSpawn</a> return a <a href="GROUP.html##(GROUP).New">GROUP#GROUP.New</a> object, that contains a reference to the DCSGroup object. 
@@ -1825,6 +1847,99 @@ Spawn_US_Platoon_Right = SPAWN:New( 'US Tank Platoon Right' ):InitLimit( 12, 150
 		<dl class="function">
 <dt>
 
+<a id="#(SPAWN).InitRandomizeTemplatePrefixes" >
+<strong>SPAWN:InitRandomizeTemplatePrefixes(SpawnTemplatePrefixes)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Randomize templates to be used as the unit representatives for the Spawned group, defined by specifying the prefix names.</p>
+
+	
+<p>This method becomes useful when you need to spawn groups with random templates of groups defined within the mission editor, 
+but they will all follow the same Template route and have the same prefix name.
+In other words, this method randomizes between a defined set of groups the template to be used for each new spawn of a group.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string SpawnTemplatePrefixes </em></code>: 
+A string or a list of string that contains the prefixes of the groups that are possible unit representatives of the group to be spawned. </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SPAWN)">#SPAWN</a>:</em></p>
+
+
+			<h3>Usage:</h3>
+		<pre class="example"><code>-- NATO Tank Platoons invading Gori.
+
+-- Choose between different 'US Tank Platoon Templates' configurations to be spawned for the 
+-- 'US Tank Platoon Left', 'US Tank Platoon Middle' and 'US Tank Platoon Right' SPAWN objects.
+
+-- Each new SPAWN will randomize the route, with a defined time interval of 200 seconds with 40% time variation (randomization) and 
+-- with a limit set of maximum 12 Units alive simulteneously  and 150 Groups to be spawned during the whole mission.
+
+Spawn_US_Platoon_Left = SPAWN:New( 'US Tank Platoon Left' ):InitLimit( 12, 150 ):Schedule( 200, 0.4 ):InitRandomizeTemplatePrefixes( "US Tank Platoon Templates" ):InitRandomizeRoute( 3, 3, 2000 )
+Spawn_US_Platoon_Middle = SPAWN:New( 'US Tank Platoon Middle' ):InitLimit( 12, 150 ):Schedule( 200, 0.4 ):InitRandomizeTemplatePrefixes( "US Tank Platoon Templates" ):InitRandomizeRoute( 3, 3, 2000 )
+Spawn_US_Platoon_Right = SPAWN:New( 'US Tank Platoon Right' ):InitLimit( 12, 150 ):Schedule( 200, 0.4 ):InitRandomizeTemplatePrefixes( "US Tank Platoon Templates" ):InitRandomizeRoute( 3, 3, 2000 )</code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(SPAWN).InitRandomizeTemplateSet" >
+<strong>SPAWN:InitRandomizeTemplateSet(SpawnTemplateSet)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Randomize templates to be used as the unit representatives for the Spawned group, defined using a SET_GROUP object.</p>
+
+	
+<p>This method becomes useful when you need to spawn groups with random templates of groups defined within the mission editor, 
+but they will all follow the same Template route and have the same prefix name.
+In other words, this method randomizes between a defined set of groups the template to be used for each new spawn of a group.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em><a href="Core.Set.html##(SET_GROUP)">Core.Set#SET_GROUP</a> SpawnTemplateSet </em></code>: 
+A SET_GROUP object set, that contains the groups that are possible unit representatives of the group to be spawned. </p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(SPAWN)">#SPAWN</a>:</em></p>
+
+
+			<h3>Usage:</h3>
+		<pre class="example"><code>-- NATO Tank Platoons invading Gori.
+
+-- Choose between different 'US Tank Platoon Template' configurations to be spawned for the 
+-- 'US Tank Platoon Left', 'US Tank Platoon Middle' and 'US Tank Platoon Right' SPAWN objects.
+
+-- Each new SPAWN will randomize the route, with a defined time interval of 200 seconds with 40% time variation (randomization) and 
+-- with a limit set of maximum 12 Units alive simulteneously  and 150 Groups to be spawned during the whole mission.
+
+Spawn_US_PlatoonSet = SET_GROUP:New():FilterPrefixes( "US Tank Platoon Templates" ):FilterOnce()
+
+--- Now use the Spawn_US_PlatoonSet to define the templates using InitRandomizeTemplateSet.
+Spawn_US_Platoon_Left = SPAWN:New( 'US Tank Platoon Left' ):InitLimit( 12, 150 ):Schedule( 200, 0.4 ):InitRandomizeTemplateSet( Spawn_US_PlatoonSet ):InitRandomizeRoute( 3, 3, 2000 )
+Spawn_US_Platoon_Middle = SPAWN:New( 'US Tank Platoon Middle' ):InitLimit( 12, 150 ):Schedule( 200, 0.4 ):InitRandomizeTemplateSet( Spawn_US_PlatoonSet ):InitRandomizeRoute( 3, 3, 2000 )
+Spawn_US_Platoon_Right = SPAWN:New( 'US Tank Platoon Right' ):InitLimit( 12, 150 ):Schedule( 200, 0.4 ):InitRandomizeTemplateSet( Spawn_US_PlatoonSet ):InitRandomizeRoute( 3, 3, 2000 )</code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(SPAWN).InitRandomizeUnits" >
 <strong>SPAWN:InitRandomizeUnits(RandomizeUnits, OuterRadius, InnerRadius)</strong>
 </a>
@@ -2194,6 +2309,9 @@ The group that was spawned. You can use this group for further actions.</p>
 	
 
 
+	
+<p> Don't repeat the group from Take-Off till Landing and back Take-Off by ReSpawning.</p>
+
 </dd>
 </dl>
 		<dl class="function">
@@ -2263,23 +2381,41 @@ The group that was spawned. You can use this group for further actions.</p>
 <dt>
 
 <a id="#(SPAWN).SpawnAtAirbase" >
-<strong>SPAWN:SpawnAtAirbase(Airbase, Takeoff)</strong>
+<strong>SPAWN:SpawnAtAirbase(SpawnAirbase, Takeoff, TakeoffAltitude)</strong>
 </a>
 </dt>
 <dd>
 	
-<p>Will spawn a group at an airbase.</p>
+<p>Will spawn a group at an <a href="Airbase.html">Airbase</a>.</p>
 
 	
 <p>This method is mostly advisable to be used if you want to simulate spawning units at an airbase.
 Note that each point in the route assigned to the spawning group is reset to the point of the spawn.
 You can use the returned group to further define the route to be followed.</p>
 
+<p>The <a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a> object must refer to a valid airbase known in the sim.
+You can use the following enumerations to search for the pre-defined airbases on the current known maps of DCS:</p>
+
+<ul>
+    <li><a href="Airbase.html##(AIRBASE).Caucasus">Airbase#AIRBASE.Caucasus</a>: The airbases on the Caucasus map. </li>
+    <li><a href="Airbase.html##(AIRBASE).Nevada">Airbase#AIRBASE.Nevada</a>: The airbases on the Nevada (NTTR) map. </li>
+    <li><a href="Airbase.html##(AIRBASE).Normandy">Airbase#AIRBASE.Normandy</a>: The airbases on the Normandy map. </li>
+</ul>
+
+<p>Use the method <a href="Airbase.html##(AIRBASE).FindByName">Airbase#AIRBASE.FindByName</a>() to retrieve the airbase object. 
+The known AIRBASE objects are automatically imported at mission start by MOOSE.
+Therefore, there isn't any New() constructor defined for AIRBASE objects.</p>
+
+<p>Ships and Farps are added within the mission, and are therefore not known.
+For these AIRBASE objects, there isn't an <a href="Airbase.html##(AIRBASE)">Airbase#AIRBASE</a> enumeration defined.
+You need to provide the <strong>exact name</strong> of the airbase as the parameter to the <a href="Airbase.html##(AIRBASE).FindByName">Airbase#AIRBASE.FindByName</a>() method!</p>
+
+
 		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
-<p><code><em><a href="Wrapper.Airbase.html##(AIRBASE)">Wrapper.Airbase#AIRBASE</a> Airbase </em></code>: 
+<p><code><em><a href="Wrapper.Airbase.html##(AIRBASE)">Wrapper.Airbase#AIRBASE</a> SpawnAirbase </em></code>: 
 The <a href="Airbase.html">Airbase</a> where to spawn the group.</p>
 
 				</li>
@@ -2287,6 +2423,12 @@ The <a href="Airbase.html">Airbase</a> where to spawn the group.</p>
 				
 <p><code><em><a href="##(SPAWN.Takeoff)">#SPAWN.Takeoff</a> Takeoff </em></code>: 
 (optional) The location and takeoff method. Default is Hot.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number TakeoffAltitude </em></code>: 
+(optional) The altitude above the ground.</p>
 
 				</li>
 		</ul>
@@ -2305,6 +2447,24 @@ Nothing was spawned.</p>
 
 				</li>
 			</ol>
+			<h3>Usage:</h3>
+		<pre class="example"><code>  Spawn_Plane = SPAWN:New( "Plane" )
+  Spawn_Plane:SpawnAtAirbase( AIRBASE:FindByName( AIRBASE.Caucasus.Krymsk ), SPAWN.Takeoff.Cold )
+  Spawn_Plane:SpawnAtAirbase( AIRBASE:FindByName( AIRBASE.Caucasus.Krymsk ), SPAWN.Takeoff.Hot )
+  Spawn_Plane:SpawnAtAirbase( AIRBASE:FindByName( AIRBASE.Caucasus.Krymsk ), SPAWN.Takeoff.Runway )
+  
+  Spawn_Plane:SpawnAtAirbase( AIRBASE:FindByName( "Carrier" ), SPAWN.Takeoff.Cold )
+  
+  Spawn_Heli = SPAWN:New( "Heli")
+  
+  Spawn_Heli:SpawnAtAirbase( AIRBASE:FindByName( "FARP Cold" ), SPAWN.Takeoff.Cold )
+  Spawn_Heli:SpawnAtAirbase( AIRBASE:FindByName( "FARP Hot" ), SPAWN.Takeoff.Hot )
+  Spawn_Heli:SpawnAtAirbase( AIRBASE:FindByName( "FARP Runway" ), SPAWN.Takeoff.Runway )
+  Spawn_Heli:SpawnAtAirbase( AIRBASE:FindByName( "FARP Air" ), SPAWN.Takeoff.Air )
+  
+  Spawn_Heli:SpawnAtAirbase( AIRBASE:FindByName( "Carrier" ), SPAWN.Takeoff.Cold )
+</code></pre>
+
 </dd>
 </dl>
 		<dl class="function">
@@ -2356,7 +2516,7 @@ Nothing was spawned.</p>
 <dt>
 
 <a id="#(SPAWN).SpawnFromStatic" >
-<strong>SPAWN:SpawnFromStatic(HostStatic, SpawnIndex)</strong>
+<strong>SPAWN:SpawnFromStatic(HostStatic, MinHeight, MaxHeight, SpawnIndex)</strong>
 </a>
 </dt>
 <dd>
@@ -2373,6 +2533,18 @@ You can use the returned group to further define the route to be followed.</p>
 				
 <p><code><em><a href="Wrapper.Static.html##(STATIC)">Wrapper.Static#STATIC</a> HostStatic </em></code>: 
 The static dropping or unloading the group.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number MinHeight </em></code>: 
+(optional) The minimum height to spawn an airborne group into the zone.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number MaxHeight </em></code>: 
+(optional) The maximum height to spawn an airborne group into the zone.</p>
 
 				</li>
 				<li>
@@ -2397,13 +2569,24 @@ Nothing was spawned.</p>
 
 				</li>
 			</ol>
+			<h3>Usage:</h3>
+		<pre class="example"><code>
+  local SpawnStatic = STATIC:FindByName( StaticName )
+
+  -- Spawn from the static position at the height specified in the ME of the group template!
+  SpawnAirplanes:SpawnFromStatic( SpawnStatic )  
+  
+  -- Spawn from the static position at the height randomized between 2000 and 4000 meters.
+  SpawnAirplanes:SpawnFromStatic( SpawnStatic, 2000, 4000 )  
+</code></pre>
+
 </dd>
 </dl>
 		<dl class="function">
 <dt>
 
 <a id="#(SPAWN).SpawnFromUnit" >
-<strong>SPAWN:SpawnFromUnit(HostUnit, SpawnIndex)</strong>
+<strong>SPAWN:SpawnFromUnit(HostUnit, MinHeight, MaxHeight, SpawnIndex)</strong>
 </a>
 </dt>
 <dd>
@@ -2425,6 +2608,18 @@ The air or ground unit dropping or unloading the group.</p>
 				</li>
 				<li>
 				
+<p><code><em>#number MinHeight </em></code>: 
+(optional) The minimum height to spawn an airborne group into the zone.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number MaxHeight </em></code>: 
+(optional) The maximum height to spawn an airborne group into the zone.</p>
+
+				</li>
+				<li>
+				
 <p><code><em>#number SpawnIndex </em></code>: 
 (optional) The index which group to spawn within the given zone.</p>
 
@@ -2445,13 +2640,24 @@ Nothing was spawned.</p>
 
 				</li>
 			</ol>
+			<h3>Usage:</h3>
+		<pre class="example"><code>
+  local SpawnStatic = STATIC:FindByName( StaticName )
+
+  -- Spawn from the static position at the height specified in the ME of the group template!
+  SpawnAirplanes:SpawnFromUnit( SpawnStatic )  
+  
+  -- Spawn from the static position at the height randomized between 2000 and 4000 meters.
+  SpawnAirplanes:SpawnFromUnit( SpawnStatic, 2000, 4000 )  
+</code></pre>
+
 </dd>
 </dl>
 		<dl class="function">
 <dt>
 
 <a id="#(SPAWN).SpawnFromVec2" >
-<strong>SPAWN:SpawnFromVec2(Vec2, SpawnIndex)</strong>
+<strong>SPAWN:SpawnFromVec2(Vec2, MinHeight, MaxHeight, SpawnIndex)</strong>
 </a>
 </dt>
 <dd>
@@ -2473,6 +2679,18 @@ The Vec2 coordinates where to spawn the group.</p>
 				</li>
 				<li>
 				
+<p><code><em>#number MinHeight </em></code>: 
+(optional) The minimum height to spawn an airborne group into the zone.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number MaxHeight </em></code>: 
+(optional) The maximum height to spawn an airborne group into the zone.</p>
+
+				</li>
+				<li>
+				
 <p><code><em>#number SpawnIndex </em></code>: 
 (optional) The index which group to spawn within the given zone.</p>
 
@@ -2493,6 +2711,17 @@ Nothing was spawned.</p>
 
 				</li>
 			</ol>
+			<h3>Usage:</h3>
+		<pre class="example"><code>
+  local SpawnVec2 = ZONE:New( ZoneName ):GetVec2()
+
+  -- Spawn at the zone center position at the height specified in the ME of the group template!
+  SpawnAirplanes:SpawnFromVec2( SpawnVec2 )  
+  
+  -- Spawn from the static position at the height randomized between 2000 and 4000 meters.
+  SpawnAirplanes:SpawnFromVec2( SpawnVec2, 2000, 4000 )  
+</code></pre>
+
 </dd>
 </dl>
 		<dl class="function">
@@ -2650,7 +2879,7 @@ SpawnGroupName</p>
 <dt>
 
 <a id="#(SPAWN).SpawnInZone" >
-<strong>SPAWN:SpawnInZone(Zone, RandomizeGroup, SpawnIndex)</strong>
+<strong>SPAWN:SpawnInZone(Zone, RandomizeGroup, MinHeight, MaxHeight, SpawnIndex)</strong>
 </a>
 </dt>
 <dd>
@@ -2678,6 +2907,18 @@ The zone where the group is to be spawned.</p>
 				</li>
 				<li>
 				
+<p><code><em>#number MinHeight </em></code>: 
+(optional) The minimum height to spawn an airborne group into the zone.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number MaxHeight </em></code>: 
+(optional) The maximum height to spawn an airborne group into the zone.</p>
+
+				</li>
+				<li>
+				
 <p><code><em>#number SpawnIndex </em></code>: 
 (optional) The index which group to spawn within the given zone.</p>
 
@@ -2698,6 +2939,26 @@ when nothing was spawned.</p>
 
 				</li>
 			</ol>
+			<h3>Usage:</h3>
+		<pre class="example"><code>
+  local SpawnZone = ZONE:New( ZoneName )
+
+  -- Spawn at the zone center position at the height specified in the ME of the group template!
+  SpawnAirplanes:SpawnInZone( SpawnZone )  
+  
+  -- Spawn in the zone at a random position at the height specified in the Me of the group template.
+  SpawnAirplanes:SpawnInZone( SpawnZone, true )  
+  
+  -- Spawn in the zone at a random position at the height randomized between 2000 and 4000 meters.
+  SpawnAirplanes:SpawnInZone( SpawnZone, true, 2000, 4000 )  
+
+  -- Spawn at the zone center position at the height randomized between 2000 and 4000 meters.
+  SpawnAirplanes:SpawnInZone( SpawnZone, false, 2000, 4000 )  
+  
+  -- Spawn at the zone center position at the height randomized between 2000 and 4000 meters.
+  SpawnAirplanes:SpawnInZone( SpawnZone, nil, 2000, 4000 )  
+  </code></pre>
+
 </dd>
 </dl>
 		<dl class="function">
@@ -2743,6 +3004,9 @@ when nothing was spawned.</p>
 	
 
 
+	
+<p> By default, no InitLimit</p>
+
 </dd>
 </dl>
 		<dl class="function">
@@ -2778,7 +3042,7 @@ when nothing was spawned.</p>
 		<dl class="function">
 <dt>
 
-		<em></em>
+		<em>#number</em>
 <a id="#(SPAWN).SpawnMaxGroups" >
 <strong>SPAWN.SpawnMaxGroups</strong>
 </a>
@@ -2795,7 +3059,7 @@ when nothing was spawned.</p>
 		<dl class="function">
 <dt>
 
-		<em></em>
+		<em>#number</em>
 <a id="#(SPAWN).SpawnMaxUnitsAlive" >
 <strong>SPAWN.SpawnMaxUnitsAlive</strong>
 </a>
@@ -3123,7 +3387,7 @@ Spawn_BE_KA50 = SPAWN:New( 'BE KA-50@RAMP-Ground Defense' ):Schedule( 600, 0.5 )
 		<dl class="function">
 <dt>
 
-		<em></em>
+		<em>#boolean</em>
 <a id="#(SPAWN).SpawnUnControlled" >
 <strong>SPAWN.SpawnUnControlled</strong>
 </a>
@@ -3736,20 +4000,6 @@ True = Continue Scheduler</p>
 				
 <p>Enumerator for spawns at airbases</p>
 
-	<h3>Field(s)</h3>
-		<dl class="function">
-<dt>
-
-<a id="#(SPAWN.Takeoff).type" >
-<strong>SPAWN.Takeoff.type</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
 
 </div>
 

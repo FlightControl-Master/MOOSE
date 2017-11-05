@@ -117,12 +117,12 @@ AI_A2A_GCI = {
 
 --- Creates a new AI_A2A_GCI object
 -- @param #AI_A2A_GCI self
--- @param Wrapper.Group#GROUP AIGroup
+-- @param Wrapper.Group#GROUP AIIntercept
 -- @return #AI_A2A_GCI
-function AI_A2A_GCI:New( AIGroup, EngageMinSpeed, EngageMaxSpeed )
+function AI_A2A_GCI:New( AIIntercept, EngageMinSpeed, EngageMaxSpeed )
 
   -- Inherits from BASE
-  local self = BASE:Inherit( self, AI_A2A:New( AIGroup ) ) -- #AI_A2A_GCI
+  local self = BASE:Inherit( self, AI_A2A:New( AIIntercept ) ) -- #AI_A2A_GCI
 
   self.Accomplished = false
   self.Engaging = false
@@ -134,12 +134,12 @@ function AI_A2A_GCI:New( AIGroup, EngageMinSpeed, EngageMaxSpeed )
   
   self.PatrolAltType = "RADIO"
   
-  self:AddTransition( { "Started", "Engaging", "Returning" }, "Engage", "Engaging" ) -- FSM_CONTROLLABLE Transition for type #AI_A2A_GCI.
+  self:AddTransition( { "Started", "Engaging", "Returning", "Airborne" }, "Engage", "Engaging" ) -- FSM_CONTROLLABLE Transition for type #AI_A2A_GCI.
 
   --- OnBefore Transition Handler for Event Engage.
   -- @function [parent=#AI_A2A_GCI] OnBeforeEngage
   -- @param #AI_A2A_GCI self
-  -- @param Wrapper.Group#GROUP AIGroup The AIGroup Object managed by the FSM.
+  -- @param Wrapper.Group#GROUP AIIntercept The Group Object managed by the FSM.
   -- @param #string From The From State string.
   -- @param #string Event The Event string.
   -- @param #string To The To State string.
@@ -148,7 +148,7 @@ function AI_A2A_GCI:New( AIGroup, EngageMinSpeed, EngageMaxSpeed )
   --- OnAfter Transition Handler for Event Engage.
   -- @function [parent=#AI_A2A_GCI] OnAfterEngage
   -- @param #AI_A2A_GCI self
-  -- @param Wrapper.Group#GROUP AIGroup The AIGroup Object managed by the FSM.
+  -- @param Wrapper.Group#GROUP AIIntercept The Group Object managed by the FSM.
   -- @param #string From The From State string.
   -- @param #string Event The Event string.
   -- @param #string To The To State string.
@@ -165,7 +165,7 @@ function AI_A2A_GCI:New( AIGroup, EngageMinSpeed, EngageMaxSpeed )
 --- OnLeave Transition Handler for State Engaging.
 -- @function [parent=#AI_A2A_GCI] OnLeaveEngaging
 -- @param #AI_A2A_GCI self
--- @param Wrapper.Group#GROUP AIGroup The AIGroup Object managed by the FSM.
+-- @param Wrapper.Group#GROUP AIIntercept The Group Object managed by the FSM.
 -- @param #string From The From State string.
 -- @param #string Event The Event string.
 -- @param #string To The To State string.
@@ -174,7 +174,7 @@ function AI_A2A_GCI:New( AIGroup, EngageMinSpeed, EngageMaxSpeed )
 --- OnEnter Transition Handler for State Engaging.
 -- @function [parent=#AI_A2A_GCI] OnEnterEngaging
 -- @param #AI_A2A_GCI self
--- @param Wrapper.Group#GROUP AIGroup The AIGroup Object managed by the FSM.
+-- @param Wrapper.Group#GROUP AIIntercept The Group Object managed by the FSM.
 -- @param #string From The From State string.
 -- @param #string Event The Event string.
 -- @param #string To The To State string.
@@ -184,7 +184,7 @@ function AI_A2A_GCI:New( AIGroup, EngageMinSpeed, EngageMaxSpeed )
   --- OnBefore Transition Handler for Event Fired.
   -- @function [parent=#AI_A2A_GCI] OnBeforeFired
   -- @param #AI_A2A_GCI self
-  -- @param Wrapper.Group#GROUP AIGroup The AIGroup Object managed by the FSM.
+  -- @param Wrapper.Group#GROUP AIIntercept The Group Object managed by the FSM.
   -- @param #string From The From State string.
   -- @param #string Event The Event string.
   -- @param #string To The To State string.
@@ -193,7 +193,7 @@ function AI_A2A_GCI:New( AIGroup, EngageMinSpeed, EngageMaxSpeed )
   --- OnAfter Transition Handler for Event Fired.
   -- @function [parent=#AI_A2A_GCI] OnAfterFired
   -- @param #AI_A2A_GCI self
-  -- @param Wrapper.Group#GROUP AIGroup The AIGroup Object managed by the FSM.
+  -- @param Wrapper.Group#GROUP AIIntercept The Group Object managed by the FSM.
   -- @param #string From The From State string.
   -- @param #string Event The Event string.
   -- @param #string To The To State string.
@@ -212,7 +212,7 @@ function AI_A2A_GCI:New( AIGroup, EngageMinSpeed, EngageMaxSpeed )
   --- OnBefore Transition Handler for Event Destroy.
   -- @function [parent=#AI_A2A_GCI] OnBeforeDestroy
   -- @param #AI_A2A_GCI self
-  -- @param Wrapper.Group#GROUP AIGroup The AIGroup Object managed by the FSM.
+  -- @param Wrapper.Group#GROUP AIIntercept The Group Object managed by the FSM.
   -- @param #string From The From State string.
   -- @param #string Event The Event string.
   -- @param #string To The To State string.
@@ -221,7 +221,7 @@ function AI_A2A_GCI:New( AIGroup, EngageMinSpeed, EngageMaxSpeed )
   --- OnAfter Transition Handler for Event Destroy.
   -- @function [parent=#AI_A2A_GCI] OnAfterDestroy
   -- @param #AI_A2A_GCI self
-  -- @param Wrapper.Group#GROUP AIGroup The AIGroup Object managed by the FSM.
+  -- @param Wrapper.Group#GROUP AIIntercept The Group Object managed by the FSM.
   -- @param #string From The From State string.
   -- @param #string Event The Event string.
   -- @param #string To The To State string.
@@ -241,7 +241,7 @@ function AI_A2A_GCI:New( AIGroup, EngageMinSpeed, EngageMaxSpeed )
   --- OnBefore Transition Handler for Event Abort.
   -- @function [parent=#AI_A2A_GCI] OnBeforeAbort
   -- @param #AI_A2A_GCI self
-  -- @param Wrapper.Group#GROUP AIGroup The AIGroup Object managed by the FSM.
+  -- @param Wrapper.Group#GROUP AIIntercept The Group Object managed by the FSM.
   -- @param #string From The From State string.
   -- @param #string Event The Event string.
   -- @param #string To The To State string.
@@ -250,7 +250,7 @@ function AI_A2A_GCI:New( AIGroup, EngageMinSpeed, EngageMaxSpeed )
   --- OnAfter Transition Handler for Event Abort.
   -- @function [parent=#AI_A2A_GCI] OnAfterAbort
   -- @param #AI_A2A_GCI self
-  -- @param Wrapper.Group#GROUP AIGroup The AIGroup Object managed by the FSM.
+  -- @param Wrapper.Group#GROUP AIIntercept The Group Object managed by the FSM.
   -- @param #string From The From State string.
   -- @param #string Event The Event string.
   -- @param #string To The To State string.
@@ -269,7 +269,7 @@ function AI_A2A_GCI:New( AIGroup, EngageMinSpeed, EngageMaxSpeed )
   --- OnBefore Transition Handler for Event Accomplish.
   -- @function [parent=#AI_A2A_GCI] OnBeforeAccomplish
   -- @param #AI_A2A_GCI self
-  -- @param Wrapper.Group#GROUP AIGroup The AIGroup Object managed by the FSM.
+  -- @param Wrapper.Group#GROUP AIIntercept The Group Object managed by the FSM.
   -- @param #string From The From State string.
   -- @param #string Event The Event string.
   -- @param #string To The To State string.
@@ -278,7 +278,7 @@ function AI_A2A_GCI:New( AIGroup, EngageMinSpeed, EngageMaxSpeed )
   --- OnAfter Transition Handler for Event Accomplish.
   -- @function [parent=#AI_A2A_GCI] OnAfterAccomplish
   -- @param #AI_A2A_GCI self
-  -- @param Wrapper.Group#GROUP AIGroup The AIGroup Object managed by the FSM.
+  -- @param Wrapper.Group#GROUP AIIntercept The Group Object managed by the FSM.
   -- @param #string From The From State string.
   -- @param #string Event The Event string.
   -- @param #string To The To State string.
@@ -295,14 +295,27 @@ function AI_A2A_GCI:New( AIGroup, EngageMinSpeed, EngageMaxSpeed )
   return self
 end
 
-
 --- onafter State Transition for Event Patrol.
 -- @param #AI_A2A_GCI self
--- @param Wrapper.Group#GROUP AIGroup The AI Group managed by the FSM.
+-- @param Wrapper.Group#GROUP AIIntercept The AI Group managed by the FSM.
 -- @param #string From The From State string.
 -- @param #string Event The Event string.
 -- @param #string To The To State string.
-function AI_A2A_GCI:onafterEngage( AIGroup, From, Event, To )
+function AI_A2A_GCI:onafterStart( AIIntercept, From, Event, To )
+
+  AIIntercept:HandleEvent( EVENTS.Takeoff, nil, self )
+
+end
+
+
+
+--- onafter State Transition for Event Patrol.
+-- @param #AI_A2A_GCI self
+-- @param Wrapper.Group#GROUP AIIntercept The AI Group managed by the FSM.
+-- @param #string From The From State string.
+-- @param #string Event The Event string.
+-- @param #string To The To State string.
+function AI_A2A_GCI:onafterEngage( AIIntercept, From, Event, To )
 
   self:HandleEvent( EVENTS.Dead )
 
@@ -311,19 +324,24 @@ end
 -- todo: need to fix this global function
 
 --- @param Wrapper.Group#GROUP AIControllable
-function AI_A2A_GCI.InterceptRoute( AIControllable )
+function AI_A2A_GCI.InterceptRoute( AIIntercept, Fsm )
 
-  AIControllable:T( "NewEngageRoute" )
-  local EngageZone = AIControllable:GetState( AIControllable, "EngageZone" ) -- AI.AI_Cap#AI_A2A_GCI
-  EngageZone:__Engage( 0.5 )
+  AIIntercept:F( { "AI_A2A_GCI.InterceptRoute:", AIIntercept:GetName() } )
+  
+  if AIIntercept:IsAlive() then
+    Fsm:__Engage( 0.5 )
+  
+    --local Task = AIIntercept:TaskOrbitCircle( 4000, 400 )
+    --AIIntercept:SetTask( Task )
+  end
 end
 
 --- @param #AI_A2A_GCI self
--- @param Wrapper.Group#GROUP AIGroup The AIGroup Object managed by the FSM.
+-- @param Wrapper.Group#GROUP AIIntercept The Group Object managed by the FSM.
 -- @param #string From The From State string.
 -- @param #string Event The Event string.
 -- @param #string To The To State string.
-function AI_A2A_GCI:onbeforeEngage( AIGroup, From, Event, To )
+function AI_A2A_GCI:onbeforeEngage( AIIntercept, From, Event, To )
   
   if self.Accomplished == true then
     return false
@@ -331,39 +349,41 @@ function AI_A2A_GCI:onbeforeEngage( AIGroup, From, Event, To )
 end
 
 --- @param #AI_A2A_GCI self
--- @param Wrapper.Group#GROUP AIGroup The AI Group managed by the FSM.
+-- @param Wrapper.Group#GROUP AIIntercept The AI Group managed by the FSM.
 -- @param #string From The From State string.
 -- @param #string Event The Event string.
 -- @param #string To The To State string.
-function AI_A2A_GCI:onafterAbort( AIGroup, From, Event, To )
-  AIGroup:ClearTasks()
+function AI_A2A_GCI:onafterAbort( AIIntercept, From, Event, To )
+  AIIntercept:ClearTasks()
   self:Return()
   self:__RTB( 0.5 )
 end
 
 
 --- @param #AI_A2A_GCI self
--- @param Wrapper.Group#GROUP AIGroup The AIGroup Object managed by the FSM.
+-- @param Wrapper.Group#GROUP AIIntercept The GroupGroup managed by the FSM.
 -- @param #string From The From State string.
 -- @param #string Event The Event string.
 -- @param #string To The To State string.
-function AI_A2A_GCI:onafterEngage( AIGroup, From, Event, To, AttackSetUnit )
+function AI_A2A_GCI:onafterEngage( AIIntercept, From, Event, To, AttackSetUnit )
 
-  self:F( { AIGroup, From, Event, To, AttackSetUnit} )
+  self:F( { AIIntercept, From, Event, To, AttackSetUnit} )
 
   self.AttackSetUnit = AttackSetUnit or self.AttackSetUnit -- Core.Set#SET_UNIT
   
   local FirstAttackUnit = self.AttackSetUnit:GetFirst()
   
-  if FirstAttackUnit then
+  if FirstAttackUnit and FirstAttackUnit:IsAlive() then
 
-    if AIGroup:IsAlive() then
+    if AIIntercept:IsAlive() then
   
       local EngageRoute = {}
+      
+      local CurrentCoord = AIIntercept:GetCoordinate()
   
       --- Calculate the target route point.
       
-      local CurrentCoord = AIGroup:GetCoordinate()
+      local CurrentCoord = AIIntercept:GetCoordinate()
       
       local ToTargetCoord = self.AttackSetUnit:GetFirst():GetCoordinate()
       self:SetTargetDistance( ToTargetCoord ) -- For RTB status check
@@ -372,7 +392,7 @@ function AI_A2A_GCI:onafterEngage( AIGroup, From, Event, To, AttackSetUnit )
       local ToInterceptAngle = CurrentCoord:GetAngleDegrees( CurrentCoord:GetDirectionVec3( ToTargetCoord ) )
       
       --- Create a route point of type air.
-      local ToPatrolRoutePoint = CurrentCoord:Translate( 5000, ToInterceptAngle ):RoutePointAir( 
+      local ToPatrolRoutePoint = CurrentCoord:Translate( 15000, ToInterceptAngle ):WaypointAir( 
         self.PatrolAltType, 
         POINT_VEC3.RoutePointType.TurningPoint, 
         POINT_VEC3.RoutePointAction.TurningPoint, 
@@ -381,42 +401,34 @@ function AI_A2A_GCI:onafterEngage( AIGroup, From, Event, To, AttackSetUnit )
       )
   
       self:F( { Angle = ToInterceptAngle, ToTargetSpeed = ToTargetSpeed } )
-      self:T2( { self.EngageMinSpeed, self.EngageMaxSpeed, ToTargetSpeed } )
+      self:F( { self.EngageMinSpeed, self.EngageMaxSpeed, ToTargetSpeed } )
       
       EngageRoute[#EngageRoute+1] = ToPatrolRoutePoint
+      EngageRoute[#EngageRoute+1] = ToPatrolRoutePoint
       
-      AIGroup:OptionROEOpenFire()
-      AIGroup:OptionROTPassiveDefense()
-  
       local AttackTasks = {}
   
       for AttackUnitID, AttackUnit in pairs( self.AttackSetUnit:GetSet() ) do
         local AttackUnit = AttackUnit -- Wrapper.Unit#UNIT
-        self:T( { "Intercepting Unit:", AttackUnit:GetName(), AttackUnit:IsAlive(), AttackUnit:IsAir() } )
         if AttackUnit:IsAlive() and AttackUnit:IsAir() then
-          AttackTasks[#AttackTasks+1] = AIGroup:TaskAttackUnit( AttackUnit )
+          self:T( { "Intercepting Unit:", AttackUnit:GetName(), AttackUnit:IsAlive(), AttackUnit:IsAir() } )
+          AttackTasks[#AttackTasks+1] = AIIntercept:TaskAttackUnit( AttackUnit )
         end
       end
-  
-      --- Now we're going to do something special, we're going to call a function from a waypoint action at the AIControllable...
-      AIGroup:WayPointInitialize( EngageRoute )
-      
-      
+        
       if #AttackTasks == 0 then
         self:E("No targets found -> Going RTB")
         self:Return()
         self:__RTB( 0.5 )
       else
-        AttackTasks[#AttackTasks+1] = AIGroup:TaskFunction( 1, #AttackTasks, "AI_A2A_GCI.InterceptRoute" )
-        AttackTasks[#AttackTasks+1] = AIGroup:TaskOrbitCircle( 4000, self.EngageMinSpeed )
-        EngageRoute[1].task = AIGroup:TaskCombo( AttackTasks )
-        
-        --- Do a trick, link the NewEngageRoute function of the object to the AIControllable in a temporary variable ...
-        AIGroup:SetState( AIGroup, "EngageZone", self )
+        AIIntercept:OptionROEOpenFire()
+        AIIntercept:OptionROTEvadeFire()
+
+        AttackTasks[#AttackTasks+1] = AIIntercept:TaskFunction( "AI_A2A_GCI.InterceptRoute", self )
+        EngageRoute[#EngageRoute].task = AIIntercept:TaskCombo( AttackTasks )
       end
       
-      --- NOW ROUTE THE GROUP!
-      AIGroup:WayPointExecute( 1, 0 )
+      AIIntercept:Route( EngageRoute, 0.5 )
     
     end
   else
@@ -427,22 +439,22 @@ function AI_A2A_GCI:onafterEngage( AIGroup, From, Event, To, AttackSetUnit )
 end
 
 --- @param #AI_A2A_GCI self
--- @param Wrapper.Group#GROUP AIGroup The AIGroup Object managed by the FSM.
+-- @param Wrapper.Group#GROUP AIIntercept The Group Object managed by the FSM.
 -- @param #string From The From State string.
 -- @param #string Event The Event string.
 -- @param #string To The To State string.
-function AI_A2A_GCI:onafterAccomplish( AIGroup, From, Event, To )
+function AI_A2A_GCI:onafterAccomplish( AIIntercept, From, Event, To )
   self.Accomplished = true
   self:SetDetectionOff()
 end
 
 --- @param #AI_A2A_GCI self
--- @param Wrapper.Group#GROUP AIGroup The AIGroup Object managed by the FSM.
+-- @param Wrapper.Group#GROUP AIIntercept The Group Object managed by the FSM.
 -- @param #string From The From State string.
 -- @param #string Event The Event string.
 -- @param #string To The To State string.
 -- @param Core.Event#EVENTDATA EventData
-function AI_A2A_GCI:onafterDestroy( AIGroup, From, Event, To, EventData )
+function AI_A2A_GCI:onafterDestroy( AIIntercept, From, Event, To, EventData )
 
   if EventData.IniUnit then
     self.AttackUnits[EventData.IniUnit] = nil

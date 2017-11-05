@@ -4,7 +4,7 @@
 -- 
 -- ===
 -- 
--- AI CAP classes makes AI Controllables execute a Combat Air Patrol.
+-- AI CAP classes makes AI Groups execute a Combat Air Patrol.
 -- 
 -- There are the following types of CAP classes defined:
 -- 
@@ -34,7 +34,7 @@
 
 --- # AI_A2A_CAP class, extends @{AI_CAP#AI_PATROL_ZONE}
 -- 
--- The AI_A2A_CAP class implements the core functions to patrol a @{Zone} by an AI @{Controllable} or @{Group} 
+-- The AI_A2A_CAP class implements the core functions to patrol a @{Zone} by an AI @{Group} or @{Group} 
 -- and automatically engage any airborne enemies that are within a certain range or within a certain zone.
 -- 
 -- ![Process](..\Presentations\AI_CAP\Dia3.JPG)
@@ -120,20 +120,20 @@ AI_A2A_CAP = {
 
 --- Creates a new AI_A2A_CAP object
 -- @param #AI_A2A_CAP self
--- @param Wrapper.Group#GROUP AIGroup
+-- @param Wrapper.Group#GROUP AICap
 -- @param Core.Zone#ZONE_BASE PatrolZone The @{Zone} where the patrol needs to be executed.
 -- @param Dcs.DCSTypes#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
 -- @param Dcs.DCSTypes#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
--- @param Dcs.DCSTypes#Speed  PatrolMinSpeed The minimum speed of the @{Controllable} in km/h.
--- @param Dcs.DCSTypes#Speed  PatrolMaxSpeed The maximum speed of the @{Controllable} in km/h.
--- @param Dcs.DCSTypes#Speed  EngageMinSpeed The minimum speed of the @{Controllable} in km/h when engaging a target.
--- @param Dcs.DCSTypes#Speed  EngageMaxSpeed The maximum speed of the @{Controllable} in km/h when engaging a target.
+-- @param Dcs.DCSTypes#Speed  PatrolMinSpeed The minimum speed of the @{Group} in km/h.
+-- @param Dcs.DCSTypes#Speed  PatrolMaxSpeed The maximum speed of the @{Group} in km/h.
+-- @param Dcs.DCSTypes#Speed  EngageMinSpeed The minimum speed of the @{Group} in km/h when engaging a target.
+-- @param Dcs.DCSTypes#Speed  EngageMaxSpeed The maximum speed of the @{Group} in km/h when engaging a target.
 -- @param Dcs.DCSTypes#AltitudeType PatrolAltType The altitude type ("RADIO"=="AGL", "BARO"=="ASL"). Defaults to RADIO
 -- @return #AI_A2A_CAP
-function AI_A2A_CAP:New( AIGroup, PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, EngageMinSpeed, EngageMaxSpeed, PatrolAltType )
+function AI_A2A_CAP:New( AICap, PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, EngageMinSpeed, EngageMaxSpeed, PatrolAltType )
 
   -- Inherits from BASE
-  local self = BASE:Inherit( self, AI_A2A_PATROL:New( AIGroup, PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, PatrolAltType ) ) -- #AI_A2A_CAP
+  local self = BASE:Inherit( self, AI_A2A_PATROL:New( AICap, PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, PatrolAltType ) ) -- #AI_A2A_CAP
 
   self.Accomplished = false
   self.Engaging = false
@@ -141,12 +141,12 @@ function AI_A2A_CAP:New( AIGroup, PatrolZone, PatrolFloorAltitude, PatrolCeiling
   self.EngageMinSpeed = EngageMinSpeed
   self.EngageMaxSpeed = EngageMaxSpeed
   
-  self:AddTransition( { "Patrolling", "Engaging", "Returning" }, "Engage", "Engaging" ) -- FSM_CONTROLLABLE Transition for type #AI_A2A_CAP.
+  self:AddTransition( { "Patrolling", "Engaging", "Returning", "Airborne" }, "Engage", "Engaging" ) -- FSM_CONTROLLABLE Transition for type #AI_A2A_CAP.
 
   --- OnBefore Transition Handler for Event Engage.
   -- @function [parent=#AI_A2A_CAP] OnBeforeEngage
   -- @param #AI_A2A_CAP self
-  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param Wrapper.Group#GROUP AICap The Group Object managed by the FSM.
   -- @param #string From The From State string.
   -- @param #string Event The Event string.
   -- @param #string To The To State string.
@@ -155,7 +155,7 @@ function AI_A2A_CAP:New( AIGroup, PatrolZone, PatrolFloorAltitude, PatrolCeiling
   --- OnAfter Transition Handler for Event Engage.
   -- @function [parent=#AI_A2A_CAP] OnAfterEngage
   -- @param #AI_A2A_CAP self
-  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param Wrapper.Group#GROUP AICap The Group Object managed by the FSM.
   -- @param #string From The From State string.
   -- @param #string Event The Event string.
   -- @param #string To The To State string.
@@ -172,7 +172,7 @@ function AI_A2A_CAP:New( AIGroup, PatrolZone, PatrolFloorAltitude, PatrolCeiling
 --- OnLeave Transition Handler for State Engaging.
 -- @function [parent=#AI_A2A_CAP] OnLeaveEngaging
 -- @param #AI_A2A_CAP self
--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+-- @param Wrapper.Group#GROUP AICap The Group Object managed by the FSM.
 -- @param #string From The From State string.
 -- @param #string Event The Event string.
 -- @param #string To The To State string.
@@ -181,7 +181,7 @@ function AI_A2A_CAP:New( AIGroup, PatrolZone, PatrolFloorAltitude, PatrolCeiling
 --- OnEnter Transition Handler for State Engaging.
 -- @function [parent=#AI_A2A_CAP] OnEnterEngaging
 -- @param #AI_A2A_CAP self
--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+-- @param Wrapper.Group#GROUP AICap The Group Object managed by the FSM.
 -- @param #string From The From State string.
 -- @param #string Event The Event string.
 -- @param #string To The To State string.
@@ -191,7 +191,7 @@ function AI_A2A_CAP:New( AIGroup, PatrolZone, PatrolFloorAltitude, PatrolCeiling
   --- OnBefore Transition Handler for Event Fired.
   -- @function [parent=#AI_A2A_CAP] OnBeforeFired
   -- @param #AI_A2A_CAP self
-  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param Wrapper.Group#GROUP AICap The Group Object managed by the FSM.
   -- @param #string From The From State string.
   -- @param #string Event The Event string.
   -- @param #string To The To State string.
@@ -200,7 +200,7 @@ function AI_A2A_CAP:New( AIGroup, PatrolZone, PatrolFloorAltitude, PatrolCeiling
   --- OnAfter Transition Handler for Event Fired.
   -- @function [parent=#AI_A2A_CAP] OnAfterFired
   -- @param #AI_A2A_CAP self
-  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param Wrapper.Group#GROUP AICap The Group Object managed by the FSM.
   -- @param #string From The From State string.
   -- @param #string Event The Event string.
   -- @param #string To The To State string.
@@ -219,7 +219,7 @@ function AI_A2A_CAP:New( AIGroup, PatrolZone, PatrolFloorAltitude, PatrolCeiling
   --- OnBefore Transition Handler for Event Destroy.
   -- @function [parent=#AI_A2A_CAP] OnBeforeDestroy
   -- @param #AI_A2A_CAP self
-  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param Wrapper.Group#GROUP AICap The Group Object managed by the FSM.
   -- @param #string From The From State string.
   -- @param #string Event The Event string.
   -- @param #string To The To State string.
@@ -228,7 +228,7 @@ function AI_A2A_CAP:New( AIGroup, PatrolZone, PatrolFloorAltitude, PatrolCeiling
   --- OnAfter Transition Handler for Event Destroy.
   -- @function [parent=#AI_A2A_CAP] OnAfterDestroy
   -- @param #AI_A2A_CAP self
-  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param Wrapper.Group#GROUP AICap The Group Object managed by the FSM.
   -- @param #string From The From State string.
   -- @param #string Event The Event string.
   -- @param #string To The To State string.
@@ -248,7 +248,7 @@ function AI_A2A_CAP:New( AIGroup, PatrolZone, PatrolFloorAltitude, PatrolCeiling
   --- OnBefore Transition Handler for Event Abort.
   -- @function [parent=#AI_A2A_CAP] OnBeforeAbort
   -- @param #AI_A2A_CAP self
-  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param Wrapper.Group#GROUP AICap The Group Object managed by the FSM.
   -- @param #string From The From State string.
   -- @param #string Event The Event string.
   -- @param #string To The To State string.
@@ -257,7 +257,7 @@ function AI_A2A_CAP:New( AIGroup, PatrolZone, PatrolFloorAltitude, PatrolCeiling
   --- OnAfter Transition Handler for Event Abort.
   -- @function [parent=#AI_A2A_CAP] OnAfterAbort
   -- @param #AI_A2A_CAP self
-  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param Wrapper.Group#GROUP AICap The Group Object managed by the FSM.
   -- @param #string From The From State string.
   -- @param #string Event The Event string.
   -- @param #string To The To State string.
@@ -276,7 +276,7 @@ function AI_A2A_CAP:New( AIGroup, PatrolZone, PatrolFloorAltitude, PatrolCeiling
   --- OnBefore Transition Handler for Event Accomplish.
   -- @function [parent=#AI_A2A_CAP] OnBeforeAccomplish
   -- @param #AI_A2A_CAP self
-  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param Wrapper.Group#GROUP AICap The Group Object managed by the FSM.
   -- @param #string From The From State string.
   -- @param #string Event The Event string.
   -- @param #string To The To State string.
@@ -285,7 +285,7 @@ function AI_A2A_CAP:New( AIGroup, PatrolZone, PatrolFloorAltitude, PatrolCeiling
   --- OnAfter Transition Handler for Event Accomplish.
   -- @function [parent=#AI_A2A_CAP] OnAfterAccomplish
   -- @param #AI_A2A_CAP self
-  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+  -- @param Wrapper.Group#GROUP AICap The Group Object managed by the FSM.
   -- @param #string From The From State string.
   -- @param #string Event The Event string.
   -- @param #string To The To State string.
@@ -302,6 +302,17 @@ function AI_A2A_CAP:New( AIGroup, PatrolZone, PatrolFloorAltitude, PatrolCeiling
   return self
 end
 
+--- onafter State Transition for Event Patrol.
+-- @param #AI_A2A_GCI self
+-- @param Wrapper.Group#GROUP AICap The AI Group managed by the FSM.
+-- @param #string From The From State string.
+-- @param #string Event The Event string.
+-- @param #string To The To State string.
+function AI_A2A_CAP:onafterStart( AICap, From, Event, To )
+
+  AICap:HandleEvent( EVENTS.Takeoff, nil, self )
+
+end
 
 --- Set the Engage Zone which defines where the AI will engage bogies. 
 -- @param #AI_A2A_CAP self
@@ -333,33 +344,36 @@ end
 
 --- onafter State Transition for Event Patrol.
 -- @param #AI_A2A_CAP self
--- @param Wrapper.Controllable#CONTROLLABLE AIGroup The AI Group managed by the FSM.
+-- @param Wrapper.Group#GROUP AICap The AI Group managed by the FSM.
 -- @param #string From The From State string.
 -- @param #string Event The Event string.
 -- @param #string To The To State string.
-function AI_A2A_CAP:onafterPatrol( AIGroup, From, Event, To )
+function AI_A2A_CAP:onafterPatrol( AICap, From, Event, To )
 
   -- Call the parent Start event handler
-  self:GetParent(self).onafterPatrol( self, AIGroup, From, Event, To )
+  self:GetParent(self).onafterPatrol( self, AICap, From, Event, To )
   self:HandleEvent( EVENTS.Dead )
 
 end
 
 -- todo: need to fix this global function
 
---- @param Wrapper.Group#GROUP AIGroup
-function AI_A2A_CAP.AttackRoute( AIGroup )
+--- @param Wrapper.Group#GROUP AICap
+function AI_A2A_CAP.AttackRoute( AICap, Fsm )
 
-  local EngageZone = AIGroup:GetState( AIGroup, "AI_A2A_CAP" ) -- AI.AI_Cap#AI_A2A_CAP
-  EngageZone:__Engage( 0.5 )
+  AICap:F( { "AI_A2A_CAP.AttackRoute:", AICap:GetName() } )
+
+  if AICap:IsAlive() then
+    Fsm:__Engage( 0.5 )
+  end
 end
 
 --- @param #AI_A2A_CAP self
--- @param Wrapper.Controllable#CONTROLLABLE AIGroup The Controllable Object managed by the FSM.
+-- @param Wrapper.Group#GROUP AICap The Group Object managed by the FSM.
 -- @param #string From The From State string.
 -- @param #string Event The Event string.
 -- @param #string To The To State string.
-function AI_A2A_CAP:onbeforeEngage( AIGroup, From, Event, To )
+function AI_A2A_CAP:onbeforeEngage( AICap, From, Event, To )
   
   if self.Accomplished == true then
     return false
@@ -367,43 +381,43 @@ function AI_A2A_CAP:onbeforeEngage( AIGroup, From, Event, To )
 end
 
 --- @param #AI_A2A_CAP self
--- @param Wrapper.Controllable#CONTROLLABLE AIGroup The AI Group managed by the FSM.
+-- @param Wrapper.Group#GROUP AICap The AI Group managed by the FSM.
 -- @param #string From The From State string.
 -- @param #string Event The Event string.
 -- @param #string To The To State string.
-function AI_A2A_CAP:onafterAbort( AIGroup, From, Event, To )
-  AIGroup:ClearTasks()
+function AI_A2A_CAP:onafterAbort( AICap, From, Event, To )
+  AICap:ClearTasks()
   self:__Route( 0.5 )
 end
 
 
 --- @param #AI_A2A_CAP self
--- @param Wrapper.Controllable#CONTROLLABLE AIGroup The Controllable Object managed by the FSM.
+-- @param Wrapper.Group#GROUP AICap The AICap Object managed by the FSM.
 -- @param #string From The From State string.
 -- @param #string Event The Event string.
 -- @param #string To The To State string.
-function AI_A2A_CAP:onafterEngage( AIGroup, From, Event, To, AttackSetUnit )
+function AI_A2A_CAP:onafterEngage( AICap, From, Event, To, AttackSetUnit )
 
-  self:F( { AIGroup, From, Event, To, AttackSetUnit} )
+  self:F( { AICap, From, Event, To, AttackSetUnit} )
 
   self.AttackSetUnit = AttackSetUnit or self.AttackSetUnit -- Core.Set#SET_UNIT
   
-  local FirstAttackUnit = self.AttackSetUnit:GetFirst()
+  local FirstAttackUnit = self.AttackSetUnit:GetFirst() -- Wrapper.Unit#UNIT
   
-  if FirstAttackUnit then
+  if FirstAttackUnit and FirstAttackUnit:IsAlive() then -- If there is no attacker anymore, stop the engagement.
   
-    if AIGroup:IsAlive() then
+    if AICap:IsAlive() then
 
       local EngageRoute = {}
 
       --- Calculate the target route point.
-      local CurrentCoord = AIGroup:GetCoordinate()
+      local CurrentCoord = AICap:GetCoordinate()
       local ToTargetCoord = self.AttackSetUnit:GetFirst():GetCoordinate()
       local ToTargetSpeed = math.random( self.EngageMinSpeed, self.EngageMaxSpeed )
       local ToInterceptAngle = CurrentCoord:GetAngleDegrees( CurrentCoord:GetDirectionVec3( ToTargetCoord ) )
       
       --- Create a route point of type air.
-      local ToPatrolRoutePoint = CurrentCoord:Translate( 5000, ToInterceptAngle ):RoutePointAir( 
+      local ToPatrolRoutePoint = CurrentCoord:Translate( 5000, ToInterceptAngle ):WaypointAir( 
         self.PatrolAltType, 
         POINT_VEC3.RoutePointType.TurningPoint, 
         POINT_VEC3.RoutePointAction.TurningPoint, 
@@ -415,39 +429,30 @@ function AI_A2A_CAP:onafterEngage( AIGroup, From, Event, To, AttackSetUnit )
       self:T2( { self.MinSpeed, self.MaxSpeed, ToTargetSpeed } )
       
       EngageRoute[#EngageRoute+1] = ToPatrolRoutePoint
+      EngageRoute[#EngageRoute+1] = ToPatrolRoutePoint
 
-      AIGroup:OptionROEOpenFire()
-      AIGroup:OptionROTPassiveDefense()
-  
       local AttackTasks = {}
   
       for AttackUnitID, AttackUnit in pairs( self.AttackSetUnit:GetSet() ) do
         local AttackUnit = AttackUnit -- Wrapper.Unit#UNIT
         self:T( { "Attacking Unit:", AttackUnit:GetName(), AttackUnit:IsAlive(), AttackUnit:IsAir() } )
         if AttackUnit:IsAlive() and AttackUnit:IsAir() then
-          AttackTasks[#AttackTasks+1] = AIGroup:TaskAttackUnit( AttackUnit )
+          AttackTasks[#AttackTasks+1] = AICap:TaskAttackUnit( AttackUnit )
         end
       end
   
-      --- Now we're going to do something special, we're going to call a function from a waypoint action at the AIControllable...
-      self.Controllable:WayPointInitialize( EngageRoute )
-      
-      
       if #AttackTasks == 0 then
         self:E("No targets found -> Going back to Patrolling")
         self:__Abort( 0.5 )
       else
-        AttackTasks[#AttackTasks+1] = AIGroup:TaskFunction( 1, #AttackTasks, "AI_A2A_CAP.AttackRoute" )
-        AttackTasks[#AttackTasks+1] = AIGroup:TaskOrbitCircle( 4000, self.PatrolMinSpeed )
-        
-        EngageRoute[1].task = AIGroup:TaskCombo( AttackTasks )
-        
-        --- Do a trick, link the NewEngageRoute function of the object to the AIControllable in a temporary variable ...
-        AIGroup:SetState( AIGroup, "AI_A2A_CAP", self )
+        AICap:OptionROEOpenFire()
+        AICap:OptionROTEvadeFire()
+
+        AttackTasks[#AttackTasks+1] = AICap:TaskFunction( "AI_A2A_CAP.AttackRoute", self )
+        EngageRoute[#EngageRoute].task = AICap:TaskCombo( AttackTasks )
       end
       
-      --- NOW ROUTE THE GROUP!
-      AIGroup:WayPointExecute( 1, 0 )
+      AICap:Route( EngageRoute, 0.5 )
     end
   else
     self:E("No targets found -> Going back to Patrolling")
@@ -456,22 +461,22 @@ function AI_A2A_CAP:onafterEngage( AIGroup, From, Event, To, AttackSetUnit )
 end
 
 --- @param #AI_A2A_CAP self
--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+-- @param Wrapper.Group#GROUP AICap The Group Object managed by the FSM.
 -- @param #string From The From State string.
 -- @param #string Event The Event string.
 -- @param #string To The To State string.
-function AI_A2A_CAP:onafterAccomplish( Controllable, From, Event, To )
+function AI_A2A_CAP:onafterAccomplish( AICap, From, Event, To )
   self.Accomplished = true
   self:SetDetectionOff()
 end
 
 --- @param #AI_A2A_CAP self
--- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
+-- @param Wrapper.Group#GROUP AICap The Group Object managed by the FSM.
 -- @param #string From The From State string.
 -- @param #string Event The Event string.
 -- @param #string To The To State string.
 -- @param Core.Event#EVENTDATA EventData
-function AI_A2A_CAP:onafterDestroy( Controllable, From, Event, To, EventData )
+function AI_A2A_CAP:onafterDestroy( AICap, From, Event, To, EventData )
 
   if EventData.IniUnit then
     self.AttackUnits[EventData.IniUnit] = nil
@@ -488,4 +493,16 @@ function AI_A2A_CAP:OnEventDead( EventData )
       self:__Destroy( 1, EventData )
     end
   end  
+end
+
+--- @param Wrapper.Group#GROUP AICap
+function AI_A2A_CAP.Resume( AICap )
+
+  AICap:F( { "AI_A2A_CAP.Resume:", AICap:GetName() } )
+  if AICap:IsAlive() then
+    local _AI_A2A = AICap:GetState( AICap, "AI_A2A" ) -- #AI_A2A
+      _AI_A2A:__Reset( 1 )
+      _AI_A2A:__Route( 5 )
+  end
+  
 end

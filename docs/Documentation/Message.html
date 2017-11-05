@@ -28,9 +28,9 @@
 					<li><a href="AI_Cas.html">AI_Cas</a></li>
 					<li><a href="AI_Formation.html">AI_Formation</a></li>
 					<li><a href="AI_Patrol.html">AI_Patrol</a></li>
+					<li><a href="ATC_Ground.html">ATC_Ground</a></li>
 					<li><a href="Account.html">Account</a></li>
 					<li><a href="Airbase.html">Airbase</a></li>
-					<li><a href="AirbasePolice.html">AirbasePolice</a></li>
 					<li><a href="Assign.html">Assign</a></li>
 					<li><a href="Base.html">Base</a></li>
 					<li><a href="Cargo.html">Cargo</a></li>
@@ -60,6 +60,7 @@
 					<li><a href="Escort.html">Escort</a></li>
 					<li><a href="Event.html">Event</a></li>
 					<li><a href="Fsm.html">Fsm</a></li>
+					<li><a href="Goal.html">Goal</a></li>
 					<li><a href="Group.html">Group</a></li>
 					<li><a href="Identifiable.html">Identifiable</a></li>
 					<li><a href="Menu.html">Menu</a></li>
@@ -72,7 +73,9 @@
 					<li><a href="Positionable.html">Positionable</a></li>
 					<li><a href="Process_JTAC.html">Process_JTAC</a></li>
 					<li><a href="Process_Pickup.html">Process_Pickup</a></li>
+					<li><a href="Protect.html">Protect</a></li>
 					<li><a href="Radio.html">Radio</a></li>
+					<li><a href="Rat.html">Rat</a></li>
 					<li><a href="Route.html">Route</a></li>
 					<li><a href="Scenery.html">Scenery</a></li>
 					<li><a href="ScheduleDispatcher.html">ScheduleDispatcher</a></li>
@@ -88,6 +91,7 @@
 					<li><a href="Static.html">Static</a></li>
 					<li><a href="StaticObject.html">StaticObject</a></li>
 					<li><a href="Task.html">Task</a></li>
+					<li><a href="TaskZoneCapture.html">TaskZoneCapture</a></li>
 					<li><a href="Task_A2A.html">Task_A2A</a></li>
 					<li><a href="Task_A2A_Dispatcher.html">Task_A2A_Dispatcher</a></li>
 					<li><a href="Task_A2G.html">Task_A2G</a></li>
@@ -95,8 +99,15 @@
 					<li><a href="Task_Cargo.html">Task_Cargo</a></li>
 					<li><a href="Task_PICKUP.html">Task_PICKUP</a></li>
 					<li><a href="Unit.html">Unit</a></li>
+					<li><a href="UserFlag.html">UserFlag</a></li>
+					<li><a href="UserSound.html">UserSound</a></li>
 					<li><a href="Utils.html">Utils</a></li>
+					<li><a href="Velocity.html">Velocity</a></li>
 					<li><a href="Zone.html">Zone</a></li>
+					<li><a href="ZoneCaptureCoalition.html">ZoneCaptureCoalition</a></li>
+					<li><a href="ZoneGoal.html">ZoneGoal</a></li>
+					<li><a href="ZoneGoalCargo.html">ZoneGoalCargo</a></li>
+					<li><a href="ZoneGoalCoalition.html">ZoneGoalCoalition</a></li>
 					<li><a href="env.html">env</a></li>
 					<li><a href="land.html">land</a></li>
 					<li><a href="routines.html">routines</a></li>
@@ -128,9 +139,27 @@
 			<h2><a id="#(MESSAGE)">Type <code>MESSAGE</code></a></h2>
 				<table class="function_list">
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MESSAGE).MessageCategory">MESSAGE.MessageCategory</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MESSAGE).MessageDuration">MESSAGE.MessageDuration</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(MESSAGE).New">MESSAGE:New(MessageText, MessageDuration, MessageCategory)</a></td>
 		<td class="summary">
 <p>Creates a new MESSAGE object.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MESSAGE).NewType">MESSAGE:NewType(MessageText, MessageType)</a></td>
+		<td class="summary">
+<p>Creates a new MESSAGE object of a certain type.</p>
 </td>
 		</tr>
 		<tr>
@@ -152,13 +181,13 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MESSAGE).ToClient">MESSAGE:ToClient(Client)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(MESSAGE).ToClient">MESSAGE:ToClient(Client, Settings)</a></td>
 		<td class="summary">
 <p>Sends a MESSAGE to a Client Group.</p>
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MESSAGE).ToCoalition">MESSAGE:ToCoalition(CoalitionSide)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(MESSAGE).ToCoalition">MESSAGE:ToCoalition(CoalitionSide, Settings)</a></td>
 		<td class="summary">
 <p>Sends a MESSAGE to a Coalition. </p>
 </td>
@@ -170,7 +199,7 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(MESSAGE).ToGroup">MESSAGE:ToGroup(Group)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(MESSAGE).ToGroup">MESSAGE:ToGroup(Group, Settings)</a></td>
 		<td class="summary">
 <p>Sends a MESSAGE to a Group. </p>
 </td>
@@ -179,6 +208,46 @@
 		<td class="name" nowrap="nowrap"><a href="##(MESSAGE).ToRed">MESSAGE:ToRed()</a></td>
 		<td class="summary">
 <p>Sends a MESSAGE to the Red Coalition. </p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MESSAGE).Type">MESSAGE.Type</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+	</table>
+
+			<h2><a id="#(MESSAGE.Type)">Type <code>MESSAGE.Type</code></a></h2>
+				<table class="function_list">
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MESSAGE.Type).Briefing">MESSAGE.Type.Briefing</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MESSAGE.Type).Detailed">MESSAGE.Type.Detailed</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MESSAGE.Type).Information">MESSAGE.Type.Information</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MESSAGE.Type).Overview">MESSAGE.Type.Overview</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(MESSAGE.Type).Update">MESSAGE.Type.Update</a></td>
+		<td class="summary">
+
 </td>
 		</tr>
 	</table>
@@ -249,6 +318,37 @@ To send messages, you need to use the To functions.</p>
 		<dl class="function">
 <dt>
 
+		<em>#string</em>
+<a id="#(MESSAGE).MessageCategory" >
+<strong>MESSAGE.MessageCategory</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+	
+<p> self.MessageType .. ": "</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(MESSAGE).MessageDuration" >
+<strong>MESSAGE.MessageDuration</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(MESSAGE).New" >
 <strong>MESSAGE:New(MessageText, MessageDuration, MessageCategory)</strong>
 </a>
@@ -296,6 +396,50 @@ MessageAll = MESSAGE:New( "To all Players: BLUE has won! Each player of BLUE win
 MessageRED = MESSAGE:New( "To the RED Players: You receive a penalty because you've killed one of your own units", 25, "Penalty" )
 MessageClient1 = MESSAGE:New( "Congratulations, you've just hit a target",  25, "Score" )
 MessageClient2 = MESSAGE:New( "Congratulations, you've just killed a target", 25, "Score")</code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(MESSAGE).NewType" >
+<strong>MESSAGE:NewType(MessageText, MessageType)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Creates a new MESSAGE object of a certain type.</p>
+
+	
+<p>Note that these MESSAGE objects are not yet displayed on the display panel. 
+You must use the functions <a href="ToClient.html">ToClient</a> or <a href="ToCoalition.html">ToCoalition</a> or <a href="ToAll.html">ToAll</a> to send these Messages to the respective recipients.
+The message display times are automatically defined based on the timing settings in the <a href="Settings.html">Settings</a> menu.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string MessageText </em></code>: 
+is the text of the Message.</p>
+
+				</li>
+				<li>
+				
+<p><code><em><a href="##(MESSAGE.Type)">#MESSAGE.Type</a> MessageType </em></code>: 
+The type of the message.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(MESSAGE)">#MESSAGE</a>:</em></p>
+
+
+			<h3>Usage:</h3>
+		<pre class="example"><code>  MessageAll = MESSAGE:NewType( "To all Players: BLUE has won! Each player of BLUE wins 50 points!", MESSAGE.Type.Information )
+  MessageRED = MESSAGE:NewType( "To the RED Players: You receive a penalty because you've killed one of your own units", MESSAGE.Type.Information )
+  MessageClient1 = MESSAGE:NewType( "Congratulations, you've just hit a target", MESSAGE.Type.Update )
+  MessageClient2 = MESSAGE:NewType( "Congratulations, you've just killed a target", MESSAGE.Type.Update )</code></pre>
 
 </dd>
 </dl>
@@ -383,7 +527,7 @@ MessageBLUE:ToBlue()</code></pre>
 <dt>
 
 <a id="#(MESSAGE).ToClient" >
-<strong>MESSAGE:ToClient(Client)</strong>
+<strong>MESSAGE:ToClient(Client, Settings)</strong>
 </a>
 </dt>
 <dd>
@@ -393,12 +537,17 @@ MessageBLUE:ToBlue()</code></pre>
 	
 <p>Note that the Group needs to be defined within the ME with the skillset "Client" or "Player".</p>
 
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
 <p><code><em><a href="Wrapper.Client.html##(CLIENT)">Wrapper.Client#CLIENT</a> Client </em></code>: 
 is the Group of the Client.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> Settings </em></code>: </p>
 
 				</li>
 		</ul>
@@ -429,19 +578,24 @@ MessageClient2:ToClient( ClientGroup )</code></pre>
 <dt>
 
 <a id="#(MESSAGE).ToCoalition" >
-<strong>MESSAGE:ToCoalition(CoalitionSide)</strong>
+<strong>MESSAGE:ToCoalition(CoalitionSide, Settings)</strong>
 </a>
 </dt>
 <dd>
 	
 <p>Sends a MESSAGE to a Coalition. </p>
 
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
 <p><code><em> CoalitionSide </em></code>: 
 needs to be filled out by the defined structure of the standard scripting engine <a href="coalition.side.html">coalition.side</a>. </p>
+
+				</li>
+				<li>
+				
+<p><code><em> Settings </em></code>: </p>
 
 				</li>
 		</ul>
@@ -497,19 +651,24 @@ needs to be filled out by the defined structure of the standard scripting engine
 <dt>
 
 <a id="#(MESSAGE).ToGroup" >
-<strong>MESSAGE:ToGroup(Group)</strong>
+<strong>MESSAGE:ToGroup(Group, Settings)</strong>
 </a>
 </dt>
 <dd>
 	
 <p>Sends a MESSAGE to a Group. </p>
 
-		<h3>Parameter</h3>
+		<h3>Parameters</h3>
 		<ul>
 				<li>
 				
 <p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> Group </em></code>: 
 is the Group.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> Settings </em></code>: </p>
 
 				</li>
 		</ul>
@@ -544,6 +703,96 @@ MESSAGE:New( "To the RED Players: You receive a penalty because you've killed on
 or
 MessageRED = MESSAGE:New( "To the RED Players: You receive a penalty because you've killed one of your own units", "Penalty", 25, "Score" )
 MessageRED:ToRed()</code></pre>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em><a href="##(MESSAGE.Type)">#MESSAGE.Type</a></em>
+<a id="#(MESSAGE).Type" >
+<strong>MESSAGE.Type</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+
+			<h2><a id="#(MESSAGE.Type)" >Type <code>MESSAGE.Type</code></a></h2>
+				
+<p>Message Types</p>
+
+	<h3>Field(s)</h3>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(MESSAGE.Type).Briefing" >
+<strong>MESSAGE.Type.Briefing</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(MESSAGE.Type).Detailed" >
+<strong>MESSAGE.Type.Detailed</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(MESSAGE.Type).Information" >
+<strong>MESSAGE.Type.Information</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(MESSAGE.Type).Overview" >
+<strong>MESSAGE.Type.Overview</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em>#string</em>
+<a id="#(MESSAGE.Type).Update" >
+<strong>MESSAGE.Type.Update</strong>
+</a>
+</dt>
+<dd>
+	
+
 
 </dd>
 </dl>

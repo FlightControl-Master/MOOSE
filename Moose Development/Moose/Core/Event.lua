@@ -450,16 +450,16 @@ end
 -- @param Core.Base#BASE EventClass The self instance of the class for which the event is.
 -- @param Dcs.DCSWorld#world.event EventID
 -- @return #EVENT.Events
-function EVENT:Remove( EventClass, EventID  )
+function EVENT:RemoveEvent( EventClass, EventID  )
 
-  self:E( { "Removing subscription for class: ", EventClass:GetClassNameAndID() } )
+  self:F2( { "Removing subscription for class: ", EventClass:GetClassNameAndID() } )
 
   local EventPriority = EventClass:GetEventPriority()
 
-  self.EventsDead = self.EventsDead or {}
-  self.EventsDead[EventID] = self.EventsDead[EventID] or {}
-  self.EventsDead[EventID][EventPriority] = self.EventsDead[EventID][EventPriority] or {}  
-  self.EventsDead[EventID][EventPriority][EventClass] = self.Events[EventID][EventPriority][EventClass]
+  self.Events = self.Events or {}
+  self.Events[EventID] = self.Events[EventID] or {}
+  self.Events[EventID][EventPriority] = self.Events[EventID][EventPriority] or {}  
+  self.Events[EventID][EventPriority][EventClass] = self.Events[EventID][EventPriority][EventClass]
     
   self.Events[EventID][EventPriority][EventClass] = nil
   
@@ -561,12 +561,13 @@ end
 -- @param Core.Base#BASE EventClass The self instance of the class for which the event is.
 -- @param EventID
 -- @return #EVENT
-function EVENT:OnEventForGroup( GroupName, EventFunction, EventClass, EventID )
-  self:F2( GroupName )
+function EVENT:OnEventForGroup( GroupName, EventFunction, EventClass, EventID, ... )
+  self:E( GroupName )
 
   local Event = self:Init( EventID, EventClass )
   Event.EventGroup = true
   Event.EventFunction = EventFunction
+  Event.Params = arg
   return self
 end
 
@@ -743,10 +744,15 @@ function EVENT:onEvent( Event )
 
   local EventMeta = _EVENTMETA[Event.id]
 
-  if self and self.Events and self.Events[Event.id] then
+  --self:E( { EventMeta.Text, Event } )  -- Activate the see all incoming events ...
+
+  if self and 
+     self.Events and 
+     self.Events[Event.id] and
+     ( Event.initiator ~= nil or ( Event.initiator == nil and Event.id ~= EVENTS.PlayerLeaveUnit ) ) then
 
     if Event.initiator then    
-
+      
       Event.IniObjectCategory = Event.initiator:getCategory()
 
       if Event.IniObjectCategory == Object.Category.UNIT then
@@ -868,9 +874,9 @@ function EVENT:onEvent( Event )
         -- Okay, we got the event from DCS. Now loop the SORTED self.EventSorted[] table for the received Event.id, and for each EventData registered, check if a function needs to be called.
         for EventClass, EventData in pairs( self.Events[Event.id][EventPriority] ) do
 
-          if Event.IniObjectCategory ~= Object.Category.STATIC then
-            --self:E( { "Evaluating: ", EventClass:GetClassNameAndID() } )
-          end
+          --if Event.IniObjectCategory ~= Object.Category.STATIC then
+          --  self:E( { "Evaluating: ", EventClass:GetClassNameAndID() } )
+          --end
           
           Event.IniGroup = GROUP:FindByName( Event.IniDCSGroupName )
           Event.TgtGroup = GROUP:FindByName( Event.TgtDCSGroupName )
@@ -920,7 +926,7 @@ function EVENT:onEvent( Event )
               end
             else
               -- The EventClass is not alive anymore, we remove it from the EventHandlers...
-              self:Remove( EventClass, Event.id )
+              self:RemoveEvent( EventClass, Event.id )
             end                      
           else
 
@@ -947,7 +953,7 @@ function EVENT:onEvent( Event )
                                       
                     local Result, Value = xpcall( 
                       function() 
-                        return EventData.EventFunction( EventClass, Event ) 
+                        return EventData.EventFunction( EventClass, Event, unpack( EventData.Params ) ) 
                       end, ErrorHandler )
       
                   else
@@ -963,14 +969,14 @@ function EVENT:onEvent( Event )
                                           
                       local Result, Value = xpcall( 
                         function() 
-                          return EventFunction( EventClass, Event ) 
+                          return EventFunction( EventClass, Event, unpack( EventData.Params ) ) 
                         end, ErrorHandler )
                     end
                   end
                 end
               else
                 -- The EventClass is not alive anymore, we remove it from the EventHandlers...
-                self:Remove( EventClass, Event.id )  
+                --self:RemoveEvent( EventClass, Event.id )  
               end
             else
           
@@ -1015,7 +1021,7 @@ function EVENT:onEvent( Event )
       end
     end
   else
-    self:E( { EventMeta.Text, Event } )    
+    self:T( { EventMeta.Text, Event } )    
   end
   
   Event = nil
