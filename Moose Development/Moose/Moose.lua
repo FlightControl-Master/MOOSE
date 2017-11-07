@@ -11,9 +11,7 @@ _DATABASE = DATABASE:New() -- Core.Database#DATABASE
 
 _SETTINGS = SETTINGS:Set()
 
-package.path  = package.path..";D:\\GitHub\\MOOSE_MISSIONS\\SPA - Spawning\\DEBUG test\\?.lua;"
-
-
+package.path  = package.path..";.\\LuaSocket\\?.lua;"
 
 local initconnection = require("debugger")
 initconnection( "127.0.0.1", 10000, "dcsserver", nil, "win", "C:/Users/svenv/AppData/Local/Temp/DCS/Mission/l10n/DEFAULT" )
