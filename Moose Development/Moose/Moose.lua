@@ -11,7 +11,11 @@ _DATABASE = DATABASE:New() -- Core.Database#DATABASE
 
 _SETTINGS = SETTINGS:Set()
 
-local initconnection = require("debugger")
-initconnection( "127.0.0.1", 10000, "dcsserver", nil, nil, "C:\Program Files\Eagle Dynamics\DCS World" )
+package.path  = package.path..";D:\\GitHub\\MOOSE_MISSIONS\\SPA - Spawning\\DEBUG test\\?.lua;"
 
-print("hello")
+
+
+local initconnection = require("debugger")
+initconnection( "127.0.0.1", 10000, "dcsserver", nil, "win", "C:/Users/svenv/AppData/Local/Temp/DCS/Mission/l10n/DEFAULT" )
+
+print("Debugger is configured!")

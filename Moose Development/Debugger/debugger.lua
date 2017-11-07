@@ -2120,6 +2120,8 @@ function M.get_uri (source)
   else
     uri =  get_abs_file_uri (source)
   end
+  
+  BASE:E( { uri=uri } )
 
   uri_cache[source] = uri
   return uri
@@ -2157,6 +2159,9 @@ function M.init(executionplatform,workingdirectory)
   -- define current platform
   --------------------------
   -- check parameter
+  
+  BASE:E({executionplatform=executionplatform, workingdirectory=workingdirectory})
+  
   if executionplatform and executionplatform ~= "unix" and executionplatform ~="win" then
     error("Unable to initialize platform module : execution platform should be 'unix' or 'win'.")
   end
@@ -2213,7 +2218,10 @@ function M.init(executionplatform,workingdirectory)
     M.to_path = function (parsed_url) return url.unescape(parsed_url.path):gsub("^/", "") end
 
     local unixnormalize = M.normalize
-    M.normalize = function(path) return unixnormalize(path:gsub("\\","/"):lower()) end
+    M.normalize = function(path) 
+    local unixnormalpath = unixnormalize(path:gsub("\\","/"):lower())
+    return unixnormalpath
+    end
 
     -- determine base dir
     local function getworkingdirectory()
@@ -2221,6 +2229,7 @@ function M.init(executionplatform,workingdirectory)
       if p then
         local res = p:read("*l")
         p:close()
+        BASE:E( { res = res } )
         return M.normalize(res)
       end
     end
@@ -2414,7 +2423,7 @@ end
 function M.log(level, msg, ...)
   if (LEVELS[level] or -1) > LOG_LEVEL then return end
   if select("#", ...) > 0 then msg = msg:format(...) end
-  io.base.stderr:write(string.format("DEBUGGER\t%s\t%s\n", level, msg))
+  env.info(string.format("DEBUGGER\t%s\t%s\n", level, msg))
 end
 
 return M
@@ -2922,7 +2931,10 @@ do
 	BASE:E( { "File", file, "Line", line } )
 
     local bps = file_mapping[file] and file_mapping[file][line]
+  BASE:E( { "Debug", file_mapping[file], bps } )
     if not bps then return nil end
+    
+    BASE:E("matched debug")
 
     local do_break = false
     for _, bp in pairs(bps) do
@@ -3065,6 +3077,7 @@ end
 local function debugger_loop(self, async_packet)
   self.skt:settimeout(nil) -- set socket blocking
 
+  BASE:E( "in debugger loop" )
   -- in async mode, the debugger does not wait for another command before continuing and does not modify previous_context
   local async_mode = async_packet ~= nil
 
@@ -3092,7 +3105,9 @@ local function debugger_loop(self, async_packet)
     -- invoke function
     local func = commands[cmd]
     if func then
+      BASE:E( "before call" )
       local ok, cont = xpcall(function() return func(self, args, data) end, debug.traceback)
+      BASE:E( { "after call", ok } )
       if not ok then -- internal exception
         local code, msg, attr
         if type(cont) == "table" and getmetatable(cont) == dbgp.DBGP_ERR_METATABLE then
@@ -3132,8 +3147,13 @@ end
 local function line_hook(line)
   local do_break, packet = nil, nil
   local info = active_session.coro:getinfo(0, "S")
-  local uri = platform.get_uri(info.source)
-  --BASE:E( { "Source", info.source, debugger_uri } )
+  
+  local ModifiedSource = info.source
+  ModifiedSource = ModifiedSource:match( '^Scripts/Moose/(.*)' ) or ModifiedSource
+  ModifiedSource = "@"..ModifiedSource
+  
+  local uri = platform.get_uri(ModifiedSource)
+  BASE:E( { "Source", info.source, ModifiedSource, uri, debugger_uri } )
   if uri and uri ~= debugger_uri and uri ~= transportmodule_uri then -- the debugger does not break if the source is not known
     do_break = core.breakpoints.at(uri, line) or core.events.does_match()
     if do_break then
@@ -3162,7 +3182,6 @@ end)
 
 local function debugger_hook(event, line)
   local thread = corunning() or "main"
-  env.info( "running" )
   if event == "call" then
     stack_levels[thread] = stack_levels[thread] + 1
   elseif event == "tail call" then
@@ -3185,7 +3204,6 @@ end
 if rawget(_G, "jit") then
   debugger_hook = function(event, line)
     local thread = corunning() or "main"
-    env.info( "running" )
     if event == "call" then
       if debug.getinfo(2, "S").what == "C" then return end
       stack_levels[thread] = stack_levels[thread] + 1

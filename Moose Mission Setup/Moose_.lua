@@ -1,5 +1,5 @@
 env.info('*** MOOSE DYNAMIC INCLUDE START *** ')
-env.info('Moose Generation Timestamp: 20171105_0627')
+env.info('Moose Generation Timestamp: 20171107_1722')
 local base=_G
 __Moose={}
 __Moose.Include=function(LuaPath,IncludeFile)
@@ -9,7 +9,7 @@ local f=assert(base.loadfile(LuaPath..IncludeFile))
 if f==nil then
 error("Moose: Could not load Moose file "..IncludeFile)
 else
-env.info("Moose: "..IncludeFile.." dynamically loaded from "..__Moose.ProgramPath)
+env.info("Moose: "..IncludeFile.." dynamically loaded from "..LuaPath)
 return f()
 end
 end
@@ -89,6 +89,5 @@ __Moose.Include(__Moose.ProgramPath,'Tasking/Task_A2A.lua')
 __Moose.Include(__Moose.ProgramPath,'Tasking/Task_Cargo.lua')
 __Moose.Include(__Moose.ProgramPath,'Tasking/TaskZoneCapture.lua')
 __Moose.Include(__Moose.ProgramPath,'Moose.lua')
-__Moose.Include(__Moose.ProgramPath,'Mission.lua')
 BASE:TraceOnOff(true)
 env.info('*** MOOSE INCLUDE END *** ')
