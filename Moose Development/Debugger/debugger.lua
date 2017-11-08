@@ -724,6 +724,7 @@ end
 --TODO dynamic code handling
 -- The DBGp specification is not clear about the line number meaning, this implementation is 1-based and numbers are inclusive
 function M.source(self, args)
+  BASE:E( { self = self, args  = args } )
   local path
   if args.f then
     path = platform.get_path(args.f)
@@ -732,11 +733,17 @@ function M.source(self, args)
     assert(path:sub(1,1) == "@")
     path = path:sub(2)
   end
+  BASE:E( { path = path } )
   local file, err = io.open(path)
-  if not file then dbgp.error(100, err, { success = 0 }) end
+  if not file then 
+    BASE:E( { "Not found" } )
+    dbgp.error(100, err, { success = 0 }) 
+  end
+  BASE:E( { "Found" } )
   -- Try to identify compiled files
-  if file:read(1) == "\033" then dbgp.error(100, args.f.." is bytecode", { success = 0 }) end
-  file:seek("set", 0)
+  --if file:read(1) == "\033" then dbgp.error(100, args.f.." is bytecode", { success = 0 }) end
+  BASE:E( { file = file } )
+  --file:seek("set", 0)
 
 
   local srclines = { }
@@ -2113,7 +2120,12 @@ end
 
 function M.get_uri (source)
   -- search in cache
+  if string.sub(1,1) ~= "@" then
+    source = "@" .. source
+  end
+  BASE:E( { source=source, uri_cache = uri_cache } )
   local uri = uri_cache[source]
+  BASE:E( { uri=uri } )
   if uri ~= nil then return uri end
 
   -- not found, create uri
@@ -3152,8 +3164,8 @@ local function line_hook(line)
   local info = active_session.coro:getinfo(0, "S")
   
   local ModifiedSource = info.source
-  ModifiedSource = ModifiedSource:match( '^Scripts/Moose/(.*)' ) or ModifiedSource
-  ModifiedSource = "@"..ModifiedSource
+  --ModifiedSource = ModifiedSource:match( '^Scripts/Moose/(.*)' ) or ModifiedSource
+  --ModifiedSource = ModifiedSource
   
   local uri = platform.get_uri(ModifiedSource)
   BASE:E( { "Source", info.source, ModifiedSource, uri, debugger_uri } )

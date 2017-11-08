@@ -14,6 +14,6 @@ _SETTINGS = SETTINGS:Set()
 package.path  = package.path..";.\\LuaSocket\\?.lua;"
 
 local initconnection = require("debugger")
-initconnection( "127.0.0.1", 10000, "dcsserver", nil, "win", "C:/Users/svenv/AppData/Local/Temp/DCS/Mission/l10n/DEFAULT" )
+initconnection( "127.0.0.1", 10000, "dcsserver", nil, "win", "" )
 
 print("Debugger is configured!")
