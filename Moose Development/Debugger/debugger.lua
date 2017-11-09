@@ -724,7 +724,6 @@ end
 --TODO dynamic code handling
 -- The DBGp specification is not clear about the line number meaning, this implementation is 1-based and numbers are inclusive
 function M.source(self, args)
-  BASE:E( { self = self, args  = args } )
   local path
   if args.f then
     path = platform.get_path(args.f)
@@ -733,16 +732,13 @@ function M.source(self, args)
     assert(path:sub(1,1) == "@")
     path = path:sub(2)
   end
-  BASE:E( { path = path } )
   local file, err = io.open(path)
   if not file then 
-    BASE:E( { "Not found" } )
     dbgp.error(100, err, { success = 0 }) 
   end
-  BASE:E( { "Found" } )
+  -- Commented out by FlightControl. Not working in DCS.
   -- Try to identify compiled files
   --if file:read(1) == "\033" then dbgp.error(100, args.f.." is bytecode", { success = 0 }) end
-  BASE:E( { file = file } )
   --file:seek("set", 0)
 
 
@@ -2178,9 +2174,7 @@ function M.init(executionplatform,workingdirectory)
   -- define current platform
   --------------------------
   -- check parameter
-  
-  BASE:E({executionplatform=executionplatform, workingdirectory=workingdirectory})
-  
+    
   if executionplatform and executionplatform ~= "unix" and executionplatform ~="win" then
     error("Unable to initialize platform module : execution platform should be 'unix' or 'win'.")
   end
@@ -2248,7 +2242,6 @@ function M.init(executionplatform,workingdirectory)
       if p then
         local res = p:read("*l")
         p:close()
-        BASE:E( { res = res } )
         return M.normalize(res)
       end
     end
@@ -2787,6 +2780,8 @@ end
 
 local debug = require "debug"
 
+local io = io
+
 -- To avoid cyclic dependency, internal state of the debugger that must be accessed
 -- elsewhere (in commands most likely) will be stored in a fake module "debugger.core"
 local core = { }
@@ -3089,7 +3084,6 @@ end
 local function debugger_loop(self, async_packet)
   self.skt:settimeout(nil) -- set socket blocking
 
-  BASE:E( "in debugger loop" )
   -- in async mode, the debugger does not wait for another command before continuing and does not modify previous_context
   local async_mode = async_packet ~= nil
 
@@ -3117,9 +3111,7 @@ local function debugger_loop(self, async_packet)
     -- invoke function
     local func = commands[cmd]
     if func then
-      BASE:E( "before call" )
       local ok, cont = xpcall(function() return func(self, args, data) end, debug.traceback)
-      BASE:E( { "after call", ok } )
       if not ok then -- internal exception
         local code, msg, attr
         if type(cont) == "table" and getmetatable(cont) == dbgp.DBGP_ERR_METATABLE then
