@@ -2121,25 +2121,29 @@ end
 function M.get_uri (source)
   -- search in cache
   if string.sub(1,1) ~= "@" then
-    source = "@" .. source
-  end
-  BASE:E( { source=source, uri_cache = uri_cache } )
-  local uri = uri_cache[source]
-  BASE:E( { uri=uri } )
-  if uri ~= nil then return uri end
-
-  -- not found, create uri
-  if util.features.uri == "module" then
-    uri = get_module_uri(source)
-    if not uri then uri = get_abs_file_uri (source) end
-  else
-    uri =  get_abs_file_uri (source)
+    source = source:match( "(.*\.lua)$")
+    if source then
+      source = "@" .. source
+    end
   end
   
-  BASE:E( { uri=uri } )
 
-  uri_cache[source] = uri
-  return uri
+  if source then
+    local uri = uri_cache[source]
+    if uri ~= nil then return uri end
+  
+    -- not found, create uri
+    if util.features.uri == "module" then
+      uri = get_module_uri(source)
+      if not uri then uri = get_abs_file_uri (source) end
+    else
+      uri =  get_abs_file_uri (source)
+    end
+    uri_cache[source] = uri
+    return uri
+  else
+    return nil
+  end
 end
 
 -- get path file from uri
@@ -2931,8 +2935,6 @@ do
       filereg[bp.lineno] = linereg
     end
 
-	BASE:E( { "Breakpoint", bp } )
-	
     table.insert(linereg, bp)
 
     id_mapping[bpid] = bp
@@ -2943,14 +2945,9 @@ do
   -- and returns whether a breakpoint has matched (boolean)
   function core.breakpoints.at(file, line)
   
-	BASE:E( { "File", file, "Line", line } )
-
     local bps = file_mapping[file] and file_mapping[file][line]
-  BASE:E( { "Debug", file_mapping[file], bps } )
     if not bps then return nil end
     
-    BASE:E("matched debug")
-
     local do_break = false
     for _, bp in pairs(bps) do
       if bp.state == "enabled" then
@@ -3168,7 +3165,6 @@ local function line_hook(line)
   --ModifiedSource = ModifiedSource
   
   local uri = platform.get_uri(ModifiedSource)
-  BASE:E( { "Source", info.source, ModifiedSource, uri, debugger_uri } )
   if uri and uri ~= debugger_uri and uri ~= transportmodule_uri then -- the debugger does not break if the source is not known
     do_break = core.breakpoints.at(uri, line) or core.events.does_match()
     if do_break then
