@@ -67,11 +67,14 @@ This is the meaning of each field:
 
   * Project: The name of the project that you are debugging within your workspace. You need to have a project registered here!
   * IDE key: this string is used connect the **debug client** to the **debug listener**.
-  * Timeout: the amount of seconds you want DCS World to wait for the **debug listener** to be connecting.
+  * Timeout: the amount of miliseconds you want DCS World to wait for the **debug listener** to be connecting.
   * Source mapping: Select the option "Local Resolution". All the sources are loaded locally from your PC automatically when debugging.
   
-Thats it on the LDT side.
-
+For the IDE key, this key will be the "link" to the debug connection on the client side!
+As will be explained a bit further,  `initconnection( "127.0.0.1", 10000, "dcsserver", nil, "win", "" )` will make a connection on the **debug client**.
+Ensure that the IDE key specified matches up in the **debug listener** and the **debug client**. 
+So in this example, `"dcsserver"` is the IDE key and should match in the debug Configuration panel and the `initconnection` parameters!
+  
 
 
 ## 3. Setup your **debug client** and attach it to DCS World mission runtime.
@@ -109,10 +112,16 @@ But for clarity reasons, I've also attached my version of the MissionScripting.l
 
 Take the MissionScripting.lua from the folder, and copy / paste (overwrite) the version in your DCS World installation directory under the Scripts folder.
 If you want, you can first rename the existing MissionScripting.lua file to MissionScripting_old.lua
-Don't mistake yourself, a lot of mods/tools modify this file during installation. (like slmod etc).
+Don't mistake yourself, a lot of mods/tools modify this file during installation. 
 
-Once you've overwritten the MissionScripting.lua file, check if the contents are changed.
-It should contain the following:
+Tools like **slmod** etc also change the MissionScripting.lua file (during installation).
+So beware that when copying over the file there may be unwanted changes.
+If you are using a mod, it is better to do the change manually according the direction in the READ.ME file!
+
+And a validation needs to be done. Once you've modified/overwritten the MissionScripting.lua file, check if the contents are indeed changed!
+Sometimes it seems that the file is saved, but the contents aren't updated due to lack of administration rights and extra security done by windows.
+
+MissionScripting.lua should contain (at least) the following:
 
 ```
 --Initialization script for the Mission lua Environment (SSE)
@@ -127,12 +136,11 @@ local initconnection = require("debugger")
 
 -- Now make the connection..
 -- "127.0.0.1" is the localhost.
--- 10000 is the port. If you wanna use another port in LDT, change this number too!
--- "dcsserver" is the name of the server. If you wanna use another name, change the name here too!
+-- 1000 is the timeout in ms on IP level. 
+-- "dcsserver" is the name of the server. Ensure the same name is used at the Debug Configuration panel!
 -- nil (is for transport protocol, but not using this)
 -- "win" don't touch. But is important to indicate that we are in a windows environment to the debugger script. 
 initconnection( "127.0.0.1", 10000, "dcsserver", nil, "win", "" )
-
 
 --Sanitize Mission Scripting environment
 --This makes unavailable some unsecure functions. 

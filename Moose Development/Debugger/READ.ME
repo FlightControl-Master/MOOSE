@@ -1,6 +1,6 @@
 
--- If you want to use the debugger, move these 3 lines into MissionScripting.lua of DCS world.
-
+-- If you want to use the debugger, add 3 lines of extra code into MissionScripting.lua of DCS world.
+-- De-sanitize the io module. The debugger needs it.
 
 
 ---------------------------------------------------------------------------------------------------------------------------
@@ -49,7 +49,7 @@ local initconnection = require("debugger")
 -- Now make the connection..
 -- "127.0.0.1" is the localhost.
 -- 10000 is the port. If you wanna use another port in LDT, change this number too!
--- "dcsserver" is the name of the server. If you wanna use another name, change the name here too!
+-- "dcsserver" is the name of the server. Ensure the same name is used at the Debug Configuration panel!
 -- nil (is for transport protocol, but not using this)
 -- "win" don't touch. But is important to indicate that we are in a windows environment to the debugger script. 
 initconnection( "127.0.0.1", 10000, "dcsserver", nil, "win", "" )
