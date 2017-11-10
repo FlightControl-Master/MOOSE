@@ -239,6 +239,11 @@ Those people who have experience in lua development or are excited to contribute
 Please consult the **[Contribution Guide](Contribution_Guide.html)** for more information.
   
 
+## 3.4. Debug your code interactively using LDT
+
+Have a look at the **[Interactive Debug Guide](Interactive_Debug_Guide.html)** to setup your system so you can debug your mission code.
+
+
 
 # 4. MOOSE Support Channels
 
