@@ -78,10 +78,16 @@ Thats it on the LDT side.
 
 This process is essential.
 
-Within the MOOSE repository, there are two files that you need to consider.
-These files are located 
+Within the MOOSE repository, there are two important files that you need to consider.
+These files are located in the MOOSE repository [here](https://github.com/FlightControl-Master/MOOSE/tree/master/Moose%20Development/Debugger).
 
+Download the MOOSE repository or the files on your disk, and read further ...
 
+You should have at least on your disk:
+
+  * debugger.lua
+  * READ.ME
+  * MissionScripting.lua
 
 ### 3.1. debugger.lua.
 
@@ -90,11 +96,11 @@ You need to copy this file to the root directory of your DCS World installation 
 
 ![](Debugging/DEBUG_debugger.JPG)
 
-The location of debugger.lua is here on my DCS World installation.
+By example, the location of debugger.lua is here on my DCS World installation PC.
 
 ### 3.2. Modify the MissionScripting.lua file.
 
-The connect.lua file is a file that contains an explanation of how to modify the MissionScripting.lua.
+The READ.ME file is a file that contains an explanation of how to modify the MissionScripting.lua.
 
 But for clarity reasons, I've also attached my version of the MissionScripting.lua.
 
@@ -158,7 +164,7 @@ The io module has been de-sanitized because the debugger.lua needs to use the io
 When you run a mission in single player in DCS World, a couple of things are happening.
 
   1. The .miz (mission) file that was selected to run, is unzipped in a temp folder on your drive.
-  2. Each lua file that is included in a DO SCRIPT FILE, is **RENAMED** to a file structure like ~mis__nnnnn___.lua.
+  2. Each lua file that is included in a DO SCRIPT FILE, is **RENAMED** to a file structure like ~mis__nnnnn__.lua.
      This is very bad. Because this prevents you from settings breakpoints at the source file and ensure that the debugger
      recognizes the source during run and the location of the breakpoint!
 
