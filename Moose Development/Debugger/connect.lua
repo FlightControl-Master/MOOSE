@@ -27,7 +27,7 @@
 --    
 --    do
 --      sanitizeModule('os')
---      sanitizeModule('io')
+--      --sanitizeModule('io')
 --      sanitizeModule('lfs')
 --      require = nil
 --      loadlib = nil
@@ -52,5 +52,5 @@ local initconnection = require("debugger")
 -- "dcsserver" is the name of the server. If you wanna use another name, change the name here too!
 -- nil (is for transport protocol, but not using this)
 -- "win" don't touch. But is important to indicate that we are in a windows environment to the debugger script. 
-initconnection( "127.0.0.1", 10000, "dcsserver", nil, "win" )
+initconnection( "127.0.0.1", 10000, "dcsserver", nil, "win", "" )
 
