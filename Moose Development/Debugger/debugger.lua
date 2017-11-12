@@ -2279,7 +2279,7 @@ local M = { }
 
 -- log system
 local LEVELS = { ERROR = 0, WARNING = 1, INFO = 2, DETAIL = 3, DEBUG = 4 }
-local LOG_LEVEL = LEVELS.WARNING
+local LOG_LEVEL = LEVELS.INFO
 
 -- Debugger features handling. Any feature can be get like any regular table, setting features result in
 -- error for unknown or read-only features.
@@ -2436,6 +2436,108 @@ function M.log(level, msg, ...)
   if (LEVELS[level] or -1) > LOG_LEVEL then return end
   if select("#", ...) > 0 then msg = msg:format(...) end
   env.info(string.format("DEBUGGER\t%s\t%s\n", level, msg))
+end
+
+function M.ser(level, ...)
+  local msg = ""
+  if (LEVELS[level] or -1) > LOG_LEVEL then return end
+  if select("#", ...) > 0 then msg = M.serialize(...) end
+  env.info(string.format("DEBUGGER\t%s\t%s\n", level, msg))
+end
+
+-- porting in Slmod's serialize_slmod2
+function M.serialize(tbl)  -- serialization of a table all on a single line, no comments, made to replace old get_table_string function
+
+  lookup_table = {}
+  
+  local function _Serialize( tbl )
+
+    if type(tbl) == 'table' then --function only works for tables!
+    
+      if lookup_table[tbl] then
+        return lookup_table[object]
+      end
+
+      local tbl_str = {}
+      
+      lookup_table[tbl] = tbl_str
+      
+      tbl_str[#tbl_str + 1] = '{'
+
+      for ind,val in pairs(tbl) do -- serialize its fields
+        local ind_str = {}
+        if type(ind) == "number" then
+          ind_str[#ind_str + 1] = '['
+          ind_str[#ind_str + 1] = tostring(ind)
+          ind_str[#ind_str + 1] = ']='
+        else --must be a string
+          ind_str[#ind_str + 1] = '['
+          ind_str[#ind_str + 1] = M.basicserialize(ind)
+          ind_str[#ind_str + 1] = ']='
+        end
+
+        local val_str = {}
+        if ((type(val) == 'number') or (type(val) == 'boolean')) then
+          val_str[#val_str + 1] = tostring(val)
+          val_str[#val_str + 1] = ','
+          tbl_str[#tbl_str + 1] = table.concat(ind_str)
+          tbl_str[#tbl_str + 1] = table.concat(val_str)
+      elseif type(val) == 'string' then
+          val_str[#val_str + 1] = M.basicserialize(val)
+          val_str[#val_str + 1] = ','
+          tbl_str[#tbl_str + 1] = table.concat(ind_str)
+          tbl_str[#tbl_str + 1] = table.concat(val_str)
+        elseif type(val) == 'nil' then -- won't ever happen, right?
+          val_str[#val_str + 1] = 'nil,'
+          tbl_str[#tbl_str + 1] = table.concat(ind_str)
+          tbl_str[#tbl_str + 1] = table.concat(val_str)
+        elseif type(val) == 'table' then
+          if ind == "__index" then
+          --  tbl_str[#tbl_str + 1] = "__index"
+          --  tbl_str[#tbl_str + 1] = ','   --I think this is right, I just added it
+          else
+
+            val_str[#val_str + 1] = _Serialize(val)
+            val_str[#val_str + 1] = ','   --I think this is right, I just added it
+            tbl_str[#tbl_str + 1] = table.concat(ind_str)
+            tbl_str[#tbl_str + 1] = table.concat(val_str)
+          end
+        elseif type(val) == 'function' then
+        --  tbl_str[#tbl_str + 1] = "function " .. tostring(ind)
+        --  tbl_str[#tbl_str + 1] = ','   --I think this is right, I just added it
+        else
+--          env.info('unable to serialize value type ' .. routines.utils.basicSerialize(type(val)) .. ' at index ' .. tostring(ind))
+--          env.info( debug.traceback() )
+        end
+  
+      end
+      tbl_str[#tbl_str + 1] = '}'
+      return table.concat(tbl_str)
+    else
+      if type(tbl) == 'string' then
+        return tbl
+      else
+      return tostring(tbl)
+      end
+    end
+  end
+  
+  local objectreturn = _Serialize(tbl)
+  return objectreturn
+end
+
+--porting in Slmod's "safestring" basic serialize
+function M.basicserialize(s)
+  if s == nil then
+    return "\"\""
+  else
+    if ((type(s) == 'number') or (type(s) == 'boolean') or (type(s) == 'function') or (type(s) == 'table') or (type(s) == 'userdata') ) then
+      return tostring(s)
+    elseif type(s) == 'string' then
+      s = string.format('%s', s:gsub( "%%", "%%%%" ) )
+      return s
+    end
+  end
 end
 
 return M
@@ -2795,7 +2897,7 @@ local context = require "debugger.context"
 local url = require "debugger.url"
 
 local log = util.log
-
+local ser = util.ser
 
 -- TODO complete the stdlib access
 local corunning, cocreate, cowrap, coyield, coresume, costatus = coroutine.running, coroutine.create, coroutine.wrap, coroutine.yield, coroutine.resume, coroutine.status
@@ -2929,6 +3031,8 @@ do
       linereg = {}
       filereg[bp.lineno] = linereg
     end
+
+    ser( "INFO", { bp=bp } )
 
     table.insert(linereg, bp)
 
@@ -3157,6 +3261,7 @@ local function line_hook(line)
   --ModifiedSource = ModifiedSource
   
   local uri = platform.get_uri(ModifiedSource)
+  ser( "INFO", {uri=uri} )
   if uri and uri ~= debugger_uri and uri ~= transportmodule_uri then -- the debugger does not break if the source is not known
     do_break = core.breakpoints.at(uri, line) or core.events.does_match()
     if do_break then

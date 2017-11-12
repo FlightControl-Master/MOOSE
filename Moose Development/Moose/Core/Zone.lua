@@ -1385,14 +1385,14 @@ end
 -- @param #string ZoneName Name of the zone.
 -- @param #string GroupName The group name of the GROUP defining the waypoints within the Mission Editor to define the polygon shape.
 -- @return #ZONE_POLYGON self
-function ZONE_POLYGON:NewFromGroupName( ZoneName, GroupName )
+function ZONE_POLYGON:NewFromGroupName( GroupName )
 
   local ZoneGroup = GROUP:FindByName( GroupName )
 
   local GroupPoints = ZoneGroup:GetTaskRoute()
 
-  local self = BASE:Inherit( self, ZONE_POLYGON_BASE:New( ZoneName, GroupPoints ) )
-  self:F( { ZoneName, ZoneGroup, self._.Polygon } )
+  local self = BASE:Inherit( self, ZONE_POLYGON_BASE:New( GroupName, GroupPoints ) )
+  self:F( { GroupName, ZoneGroup, self._.Polygon } )
 
   return self
 end
