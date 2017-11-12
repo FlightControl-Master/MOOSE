@@ -2117,8 +2117,10 @@ end
 function M.get_uri (source)
   -- search in cache
   if string.sub(1,1) ~= "@" then
+    source = source:lower()
     source = source:match( "(.*\.lua)$")
     if source then
+      source = source:match( "scripts/(.*)") or source
       source = "@" .. source
     end
   end
@@ -3260,6 +3262,7 @@ local function line_hook(line)
   --ModifiedSource = ModifiedSource:match( '^Scripts/Moose/(.*)' ) or ModifiedSource
   --ModifiedSource = ModifiedSource
   
+  ser( "INFO", { source = ModifiedSource } )
   local uri = platform.get_uri(ModifiedSource)
   ser( "INFO", {uri=uri} )
   if uri and uri ~= debugger_uri and uri ~= transportmodule_uri then -- the debugger does not break if the source is not known
