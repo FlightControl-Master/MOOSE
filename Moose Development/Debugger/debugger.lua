@@ -3034,7 +3034,7 @@ do
       filereg[bp.lineno] = linereg
     end
 
-    ser( "INFO", { bp=bp } )
+    --ser( "INFO", { bp=bp } )
 
     table.insert(linereg, bp)
 
@@ -3262,9 +3262,9 @@ local function line_hook(line)
   --ModifiedSource = ModifiedSource:match( '^Scripts/Moose/(.*)' ) or ModifiedSource
   --ModifiedSource = ModifiedSource
   
-  ser( "INFO", { source = ModifiedSource } )
+  --ser( "INFO", { source = ModifiedSource } )
   local uri = platform.get_uri(ModifiedSource)
-  ser( "INFO", {uri=uri} )
+  --ser( "INFO", {uri=uri} )
   if uri and uri ~= debugger_uri and uri ~= transportmodule_uri then -- the debugger does not break if the source is not known
     do_break = core.breakpoints.at(uri, line) or core.events.does_match()
     if do_break then
