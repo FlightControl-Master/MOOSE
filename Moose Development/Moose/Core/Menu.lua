@@ -16,14 +16,12 @@
 --   * @{Menu#MENU_MISSION}: Manages main menus for whole mission file.
 --   * @{Menu#MENU_COALITION}: Manages main menus for whole coalition.
 --   * @{Menu#MENU_GROUP}: Manages main menus for GROUPs.
---   * @{Menu#MENU_CLIENT}: Manages main menus for CLIENTs. This manages menus for units with the skill level "Client".
 --   
 -- ### To manage **command menus**, which are menus that allow the player to issue **functions**, the classes begin with **MENU_COMMAND_**:
 --   
 --   * @{Menu#MENU_MISSION_COMMAND}: Manages command menus for whole mission file.
 --   * @{Menu#MENU_COALITION_COMMAND}: Manages command menus for whole coalition.
 --   * @{Menu#MENU_GROUP_COMMAND}: Manages command menus for GROUPs.
---   * @{Menu#MENU_CLIENT_COMMAND}: Manages command menus for CLIENTs. This manages menus for units with the skill level "Client".
 -- 
 -- ===
 --- 
@@ -33,6 +31,124 @@
 -- ====
 --   
 -- @module Menu
+
+
+MENU_INDEX = {}
+MENU_INDEX.MenuMission = {}
+MENU_INDEX.MenuMission.Menus = {}
+MENU_INDEX.Coalition = {}
+MENU_INDEX.Coalition[coalition.side.BLUE] = {}
+MENU_INDEX.Coalition[coalition.side.BLUE].Menus = {}
+MENU_INDEX.Coalition[coalition.side.RED] = {}
+MENU_INDEX.Coalition[coalition.side.RED].Menus = {}
+MENU_INDEX.Group = {}
+
+
+
+function MENU_INDEX:ParentPath( ParentMenu, MenuText )
+
+  local Path = ParentMenu and "@" .. table.concat( ParentMenu.MenuPath or {}, "@" ) or ""
+  if ParentMenu then 
+    if BASE:IsInstanceOf( "MENU_GROUP" ) or BASE:IsInstanceOf( "MENU_GROUP_COMMAND" ) then
+      local GroupName = ParentMenu.Group:GetName()
+      if not self.Group[GroupName].Menus[Path] then
+        BASE:E( { Path = Path, GroupName = GroupName } ) 
+        error( "Parent path not found in menu index for group menu" )
+        return nil
+      end
+    elseif BASE:IsInstanceOf( "MENU_COALITION" ) or BASE:IsInstanceOf( "MENU_COALITION_COMMAND" ) then
+      local Coalition = ParentMenu.Coalition
+      if not self.Coalition[Coalition].Menus[Path] then
+        BASE:E( { Path = Path, Coalition = Coalition } ) 
+        error( "Parent path not found in menu index for coalition menu" )
+        return nil
+      end
+    elseif BASE:IsInstanceOf( "MENU_MISSION" ) or BASE:IsInstanceOf( "MENU_MISSION_COMMAND" ) then
+      if not self.MenuMission.Menus[Path] then
+        BASE:E( { Path = Path } )
+        error( "Parent path not found in menu index for mission menu" )
+        return nil
+      end
+    end
+  end
+  
+  Path = Path .. "@" .. MenuText
+  return Path
+
+end
+
+
+function MENU_INDEX:PrepareMission()
+    self.MenuMission.Menus = self.MenuMission.Menus or {}
+end
+
+
+function MENU_INDEX:PrepareCoalition( CoalitionSide )
+    self.Coalition[CoalitionSide] = self.Coalition[CoalitionSide] or {}
+    self.Coalition[CoalitionSide].Menus = self.Coalition[CoalitionSide].Menus or {}
+end
+
+
+function MENU_INDEX:PrepareGroup( Group )
+    local GroupName = Group:GetName()
+    self.Group[GroupName] = self.Group[GroupName] or {}
+    self.Group[GroupName].Menus = self.Group[GroupName].Menus or {}
+end
+
+
+
+function MENU_INDEX:HasMissionMenu( Path )
+
+  return self.MenuMission.Menus[Path]
+end
+
+function MENU_INDEX:SetMissionMenu( Path, Menu )
+
+  self.MenuMission.Menus[Path] = Menu
+end
+
+function MENU_INDEX:ClearMissionMenu( Path )
+
+  self.MenuMission.Menus[Path] = nil
+end
+
+
+
+function MENU_INDEX:HasCoalitionMenu( Coalition, Path )
+
+  return self.Coalition[Coalition].Menus[Path]
+end
+
+function MENU_INDEX:SetCoalitionMenu( Coalition, Path, Menu )
+
+  self.Coalition[Coalition].Menus[Path] = Menu
+end
+
+function MENU_INDEX:ClearCoalitionMenu( Coalition, Path )
+
+  self.Coalition[Coalition].Menus[Path] = nil
+end
+
+
+
+function MENU_INDEX:HasGroupMenu( Group, Path )
+
+  local MenuGroupName = Group:GetName()
+  return self.Group[MenuGroupName].Menus[Path]
+end
+
+function MENU_INDEX:SetGroupMenu( Group, Path, Menu )
+
+  local MenuGroupName = Group:GetName()
+  self.Group[MenuGroupName].Menus[Path] = Menu
+end
+
+function MENU_INDEX:ClearGroupMenu( Group, Path )
+
+  local MenuGroupName = Group:GetName()
+  self.Group[MenuGroupName].Menus[Path] = nil
+end
+
 
 
 do -- MENU_BASE
@@ -65,13 +181,32 @@ do -- MENU_BASE
   
   	self.MenuPath = nil 
   	self.MenuText = MenuText
+  	self.ParentMenu = ParentMenu
   	self.MenuParentPath = MenuParentPath
+  	self.Path = ( self.ParentMenu and "@" .. table.concat( self.MenuParentPath or {}, "@" ) or "" ) .. "@" .. self.MenuText
     self.Menus = {}
     self.MenuCount = 0
-    self.MenuRemoveParent = false
     self.MenuTime = timer.getTime()
   	
+    if self.ParentMenu then
+      self.ParentMenu.Menus = self.ParentMenu.Menus or {}
+      self.ParentMenu.Menus[MenuText] = self
+    end
+  	
   	return self
+  end
+
+  function MENU_BASE:SetParentMenu( MenuText, Menu )
+    if self.ParentMenu then
+      self.ParentMenu.Menus = self.ParentMenu.Menus or {}
+      self.ParentMenu.Menus[MenuText] = Menu
+    end
+  end
+
+  function MENU_BASE:ClearParentMenu( MenuText )
+    if self.ParentMenu and self.ParentMenu.Menus[MenuText] then
+      self.ParentMenu.Menus[MenuText] = nil
+    end
   end
   
   --- Gets a @{Menu} from a parent @{Menu}
@@ -79,20 +214,8 @@ do -- MENU_BASE
   -- @param #string MenuText The text of the child menu.
   -- @return #MENU_BASE
   function MENU_BASE:GetMenu( MenuText )
-    self:F2( { Menu = self.Menus[MenuText] } )
     return self.Menus[MenuText]
   end
-  
-  --- Sets a @{Menu} to remove automatically the parent menu when the menu removed is the last child menu of that parent @{Menu}.
-  -- @param #MENU_BASE self
-  -- @param #boolean RemoveParent If true, the parent menu is automatically removed when this menu is the last child menu of that parent @{Menu}.
-  -- @return #MENU_BASE
-  function MENU_BASE:SetRemoveParent( RemoveParent )
-    self:F2( { RemoveParent } )
-    self.MenuRemoveParent = RemoveParent
-    return self
-  end
-  
   
   --- Sets a time stamp for later prevention of menu removal.
   -- @param #MENU_BASE self
@@ -158,7 +281,7 @@ do -- MENU_COMMAND_BASE
       end
       local Status, Result = xpcall( MenuFunction, ErrorHandler )
     end
-  	
+    
   	return self
   end
   
@@ -209,54 +332,61 @@ do -- MENU_MISSION
   -- @return #MENU_MISSION
   function MENU_MISSION:New( MenuText, ParentMenu )
   
-    local self = BASE:Inherit( self, MENU_BASE:New( MenuText, ParentMenu ) )
-    
-    self:F( { MenuText, ParentMenu } )
-  
-    self.MenuText = MenuText
-    self.ParentMenu = ParentMenu
-    
-    self.Menus = {}
-  
-    self:T( { MenuText } )
-  
-    self.MenuPath = missionCommands.addSubMenu( MenuText, self.MenuParentPath )
-  
-    self:T( { self.MenuPath } )
-  
-    if ParentMenu and ParentMenu.Menus then
-      ParentMenu.Menus[self.MenuPath] = self
-    end
+    MENU_INDEX:PrepareMission()
+    local Path = MENU_INDEX:ParentPath( ParentMenu, MenuText )
+    local MissionMenu = MENU_INDEX:HasMissionMenu( Path )   
 
-    return self
+    if MissionMenu then
+      return MissionMenu
+    else
+      local self = BASE:Inherit( self, MENU_BASE:New( MenuText, ParentMenu ) )
+      MENU_INDEX:SetMissionMenu( Path, self )
+      
+      self.MenuPath = missionCommands.addSubMenu( MenuText, self.MenuParentPath )
+      self:SetParentMenu( self.MenuText, self )
+      return self
+    end
+  
   end
   
   --- Removes the sub menus recursively of this MENU_MISSION. Note that the main menu is kept!
   -- @param #MENU_MISSION self
   -- @return #MENU_MISSION
   function MENU_MISSION:RemoveSubMenus()
-    self:F( self.MenuPath )
   
-    for MenuID, Menu in pairs( self.Menus ) do
+    for MenuID, Menu in pairs( self.Menus or {} ) do
       Menu:Remove()
     end
+    
+    self.Menus = nil
   
   end
   
   --- Removes the main menu and the sub menus recursively of this MENU_MISSION.
   -- @param #MENU_MISSION self
   -- @return #nil
-  function MENU_MISSION:Remove()
-    self:F( self.MenuPath )
+  function MENU_MISSION:Remove( MenuTime, MenuTag )
   
-    self:RemoveSubMenus()
-    missionCommands.removeItem( self.MenuPath )
-    if self.ParentMenu then
-      self.ParentMenu.Menus[self.MenuPath] = nil
+    MENU_INDEX:PrepareMission()
+    local Path = MENU_INDEX:ParentPath( self.ParentMenu, self.MenuText )
+    local MissionMenu = MENU_INDEX:HasMissionMenu( Path )   
+
+    if MissionMenu == self then
+      self:RemoveSubMenus()
+      if not MenuTime or self.MenuTime ~= MenuTime then
+        if ( not MenuTag ) or ( MenuTag and self.MenuTag and MenuTag == self.MenuTag ) then
+          missionCommands.removeItem( self.MenuPath )
+          MENU_INDEX:ClearMissionMenu( self.Path )
+          self:ClearParentMenu( self.MenuText )
+          return nil
+        end
+      end
     end
   
-    return nil
+    return self
   end
+
+
 
 end
 
@@ -285,32 +415,45 @@ do -- MENU_MISSION_COMMAND
   -- @return #MENU_MISSION_COMMAND self
   function MENU_MISSION_COMMAND:New( MenuText, ParentMenu, CommandMenuFunction, ... )
   
-    local self = BASE:Inherit( self, MENU_COMMAND_BASE:New( MenuText, ParentMenu, CommandMenuFunction, arg ) )
-    
-    self.MenuText = MenuText
-    self.ParentMenu = ParentMenu
-  
-    self:T( { MenuText, CommandMenuFunction, arg } )
-    
-  
-    self.MenuPath = missionCommands.addCommand( MenuText, self.MenuParentPath, self.MenuCallHandler )
-   
-    ParentMenu.Menus[self.MenuPath] = self
-    
-    return self
+    MENU_INDEX:PrepareMission()
+    local Path = MENU_INDEX:ParentPath( ParentMenu, MenuText )
+    local MissionMenu = MENU_INDEX:HasMissionMenu( Path )   
+
+    if MissionMenu then
+      MissionMenu:SetCommandMenuFunction( CommandMenuFunction )
+      MissionMenu:SetCommandMenuArguments( arg )
+      return MissionMenu
+    else
+      local self = BASE:Inherit( self, MENU_COMMAND_BASE:New( MenuText, ParentMenu, CommandMenuFunction, arg ) )
+      MENU_INDEX:SetMissionMenu( Path, self )
+      
+      self.MenuPath = missionCommands.addCommand( MenuText, self.MenuParentPath, self.MenuCallHandler )
+      self:SetParentMenu( self.MenuText, self )
+      return self
+    end
   end
   
   --- Removes a radio command item for a coalition
   -- @param #MENU_MISSION_COMMAND self
   -- @return #nil
   function MENU_MISSION_COMMAND:Remove()
-    self:F( self.MenuPath )
   
-    missionCommands.removeItem( self.MenuPath )
-    if self.ParentMenu then
-      self.ParentMenu.Menus[self.MenuPath] = nil
+    MENU_INDEX:PrepareMission()
+    local Path = MENU_INDEX:ParentPath( self.ParentMenu, self.MenuText )
+    local MissionMenu = MENU_INDEX:HasMissionMenu( Path )   
+
+    if MissionMenu == self then
+      if not MenuTime or self.MenuTime ~= MenuTime then
+        if ( not MenuTag ) or ( MenuTag and self.MenuTag and MenuTag == self.MenuTag ) then
+          missionCommands.removeItem( self.MenuPath )
+          MENU_INDEX:ClearMissionMenu( self.Path )
+          self:ClearParentMenu( self.MenuText )
+          return nil
+        end
+      end
     end
-    return nil
+  
+    return self
   end
 
 end
@@ -378,58 +521,65 @@ do -- MENU_COALITION
   -- @param #table ParentMenu The parent menu. This parameter can be ignored if you want the menu to be located at the perent menu of DCS world (under F10 other).
   -- @return #MENU_COALITION self
   function MENU_COALITION:New( Coalition, MenuText, ParentMenu )
-  
-    local self = BASE:Inherit( self, MENU_BASE:New( MenuText, ParentMenu ) )
-    
-    self:F( { Coalition, MenuText, ParentMenu } )
-  
-    self.Coalition = Coalition
-    self.MenuText = MenuText
-    self.ParentMenu = ParentMenu
-    
-    self.Menus = {}
-  
-    self:T( { MenuText } )
-  
-    self.MenuPath = missionCommands.addSubMenuForCoalition( Coalition, MenuText, self.MenuParentPath )
-  
-    self:T( { self.MenuPath } )
-  
-    if ParentMenu and ParentMenu.Menus then
-      ParentMenu.Menus[self.MenuPath] = self
-    end
 
-    return self
+    MENU_INDEX:PrepareCoalition( Coalition )
+    local Path = MENU_INDEX:ParentPath( ParentMenu, MenuText )
+    local CoalitionMenu = MENU_INDEX:HasCoalitionMenu( Coalition, Path )   
+
+    if CoalitionMenu then
+      return CoalitionMenu
+    else
+
+      local self = BASE:Inherit( self, MENU_BASE:New( MenuText, ParentMenu ) )
+      MENU_INDEX:SetCoalitionMenu( Coalition, Path, self )
+      
+      self.Coalition = Coalition
+    
+      self.MenuPath = missionCommands.addSubMenuForCoalition( Coalition, MenuText, self.MenuParentPath )
+      self:SetParentMenu( self.MenuText, self )
+      return self
+    end
   end
   
   --- Removes the sub menus recursively of this MENU_COALITION. Note that the main menu is kept!
   -- @param #MENU_COALITION self
   -- @return #MENU_COALITION
   function MENU_COALITION:RemoveSubMenus()
-    self:F( self.MenuPath )
   
-    for MenuID, Menu in pairs( self.Menus ) do
+    for MenuID, Menu in pairs( self.Menus or {} ) do
       Menu:Remove()
     end
-  
+    
+    self.Menus = nil
   end
   
   --- Removes the main menu and the sub menus recursively of this MENU_COALITION.
   -- @param #MENU_COALITION self
   -- @return #nil
-  function MENU_COALITION:Remove()
-    self:F( self.MenuPath )
+  function MENU_COALITION:Remove( MenuTime, MenuTag )
   
-    self:RemoveSubMenus()
-    missionCommands.removeItemForCoalition( self.Coalition, self.MenuPath )
-    if self.ParentMenu then
-      self.ParentMenu.Menus[self.MenuPath] = nil
+    MENU_INDEX:PrepareCoalition( self.Coalition )
+    local Path = MENU_INDEX:ParentPath( self.ParentMenu, self.MenuText )
+    local CoalitionMenu = MENU_INDEX:HasCoalitionMenu( self.Coalition, Path )   
+
+    if CoalitionMenu == self then
+      self:RemoveSubMenus()
+      if not MenuTime or self.MenuTime ~= MenuTime then
+        if ( not MenuTag ) or ( MenuTag and self.MenuTag and MenuTag == self.MenuTag ) then
+          missionCommands.removeItemForCoalition( self.Coalition, self.MenuPath )
+          MENU_INDEX:ClearCoalitionMenu( self.Coalition, Path )
+          self:ClearParentMenu( self.MenuText )
+          return nil
+        end
+      end
     end
   
-    return nil
+    return self
   end
 
 end
+
+
 
 do -- MENU_COALITION_COMMAND
   
@@ -457,279 +607,53 @@ do -- MENU_COALITION_COMMAND
   -- @return #MENU_COALITION_COMMAND
   function MENU_COALITION_COMMAND:New( Coalition, MenuText, ParentMenu, CommandMenuFunction, ... )
   
-    local self = BASE:Inherit( self, MENU_COMMAND_BASE:New( MenuText, ParentMenu, CommandMenuFunction, arg ) )
-    
-    self.MenuCoalition = Coalition
-    self.MenuText = MenuText
-    self.ParentMenu = ParentMenu
+    MENU_INDEX:PrepareCoalition( Coalition )
+    local Path = MENU_INDEX:ParentPath( ParentMenu, MenuText )
+    local CoalitionMenu = MENU_INDEX:HasCoalitionMenu( Coalition, Path )   
+
+    if CoalitionMenu then
+      CoalitionMenu:SetCommandMenuFunction( CommandMenuFunction )
+      CoalitionMenu:SetCommandMenuArguments( arg )
+      return CoalitionMenu
+    else
   
-    self:T( { MenuText, CommandMenuFunction, arg } )
-    
-  
-    self.MenuPath = missionCommands.addCommandForCoalition( self.MenuCoalition, MenuText, self.MenuParentPath, self.MenuCallHandler )
-   
-    ParentMenu.Menus[self.MenuPath] = self
-    
-    return self
+      local self = BASE:Inherit( self, MENU_COMMAND_BASE:New( MenuText, ParentMenu, CommandMenuFunction, arg ) )
+      MENU_INDEX:SetCoalitionMenu( Coalition, Path, self )
+      
+      self.Coalition = Coalition
+      self.MenuPath = missionCommands.addCommandForCoalition( self.Coalition, MenuText, self.MenuParentPath, self.MenuCallHandler )
+      self:SetParentMenu( self.MenuText, self )
+      return self
+    end
+
   end
   
   --- Removes a radio command item for a coalition
   -- @param #MENU_COALITION_COMMAND self
   -- @return #nil
-  function MENU_COALITION_COMMAND:Remove()
-    self:F( self.MenuPath )
+  function MENU_COALITION_COMMAND:Remove( MenuTime, MenuTag )
   
-    missionCommands.removeItemForCoalition( self.MenuCoalition, self.MenuPath )
-    if self.ParentMenu then
-      self.ParentMenu.Menus[self.MenuPath] = nil
+    MENU_INDEX:PrepareCoalition( self.Coalition )
+    local Path = MENU_INDEX:ParentPath( self.ParentMenu, self.MenuText )
+    local CoalitionMenu = MENU_INDEX:HasCoalitionMenu( self.Coalition, Path )   
+
+    if CoalitionMenu == self then
+      self:RemoveSubMenus()
+      if not MenuTime or self.MenuTime ~= MenuTime then
+        if ( not MenuTag ) or ( MenuTag and self.MenuTag and MenuTag == self.MenuTag ) then
+          missionCommands.removeItemForCoalition( self.Coalition, self.MenuPath )
+          MENU_INDEX:ClearCoalitionMenu( self.Coalition, Path )
+          self:ClearParentMenu( self.MenuText )
+          return nil
+        end
+      end
     end
-    return nil
+  
+    return self
   end
 
 end
 
-do -- MENU_CLIENT
-
-  -- This local variable is used to cache the menus registered under clients.
-  -- Menus don't dissapear when clients are destroyed and restarted.
-  -- So every menu for a client created must be tracked so that program logic accidentally does not create
-  -- the same menus twice during initialization logic.
-  -- These menu classes are handling this logic with this variable.
-  local _MENUCLIENTS = {}
-  
-  --- MENU_COALITION constructor. Creates a new radio command item for a coalition, which can invoke a function with parameters.
-  -- @type MENU_CLIENT
-  -- @extends Core.Menu#MENU_BASE
-
-
-  --- # MENU_CLIENT class, extends @{Menu#MENU_BASE}
-  -- 
-  -- The MENU_CLIENT class manages the main menus for coalitions.  
-  -- You can add menus with the @{#MENU_CLIENT.New} method, which constructs a MENU_CLIENT object and returns you the object reference.
-  -- Using this object reference, you can then remove ALL the menus and submenus underlying automatically with @{#MENU_CLIENT.Remove}.
-  -- 
-  -- @usage
-  --  -- This demo creates a menu structure for the two clients of planes.
-  --  -- Each client will receive a different menu structure.
-  --  -- To test, join the planes, then look at the other radio menus (Option F10).
-  --  -- Then switch planes and check if the menu is still there.
-  --  -- And play with the Add and Remove menu options.
-  --  
-  --  -- Note that in multi player, this will only work after the DCS clients bug is solved.
-  --
-  --  local function ShowStatus( PlaneClient, StatusText, Coalition )
-  --
-  --    MESSAGE:New( Coalition, 15 ):ToRed()
-  --    PlaneClient:Message( StatusText, 15 )
-  --  end
-  --
-  --  local MenuStatus = {}
-  --
-  --  local function RemoveStatusMenu( MenuClient )
-  --    local MenuClientName = MenuClient:GetName()
-  --    MenuStatus[MenuClientName]:Remove()
-  --  end
-  --
-  --  --- @param Wrapper.Client#CLIENT MenuClient
-  --  local function AddStatusMenu( MenuClient )
-  --    local MenuClientName = MenuClient:GetName()
-  --    -- This would create a menu for the red coalition under the MenuCoalitionRed menu object.
-  --    MenuStatus[MenuClientName] = MENU_CLIENT:New( MenuClient, "Status for Planes" )
-  --    MENU_CLIENT_COMMAND:New( MenuClient, "Show Status", MenuStatus[MenuClientName], ShowStatus, MenuClient, "Status of planes is ok!", "Message to Red Coalition" )
-  --  end
-  --
-  --  SCHEDULER:New( nil,
-  --    function()
-  --      local PlaneClient = CLIENT:FindByName( "Plane 1" )
-  --      if PlaneClient and PlaneClient:IsAlive() then
-  --        local MenuManage = MENU_CLIENT:New( PlaneClient, "Manage Menus" )
-  --        MENU_CLIENT_COMMAND:New( PlaneClient, "Add Status Menu Plane 1", MenuManage, AddStatusMenu, PlaneClient )
-  --        MENU_CLIENT_COMMAND:New( PlaneClient, "Remove Status Menu Plane 1", MenuManage, RemoveStatusMenu, PlaneClient )
-  --      end
-  --    end, {}, 10, 10 )
-  --
-  --  SCHEDULER:New( nil,
-  --    function()
-  --      local PlaneClient = CLIENT:FindByName( "Plane 2" )
-  --      if PlaneClient and PlaneClient:IsAlive() then
-  --        local MenuManage = MENU_CLIENT:New( PlaneClient, "Manage Menus" )
-  --        MENU_CLIENT_COMMAND:New( PlaneClient, "Add Status Menu Plane 2", MenuManage, AddStatusMenu, PlaneClient )
-  --        MENU_CLIENT_COMMAND:New( PlaneClient, "Remove Status Menu Plane 2", MenuManage, RemoveStatusMenu, PlaneClient )
-  --      end
-  --    end, {}, 10, 10 )
-  --    
-  -- @field #MENU_CLIENT
-  MENU_CLIENT = {
-    ClassName = "MENU_CLIENT"
-  }
-  
-  --- MENU_CLIENT constructor. Creates a new radio menu item for a client.
-  -- @param #MENU_CLIENT self
-  -- @param Wrapper.Client#CLIENT Client The Client owning the menu.
-  -- @param #string MenuText The text for the menu.
-  -- @param #table ParentMenu The parent menu.
-  -- @return #MENU_CLIENT self
-  function MENU_CLIENT:New( Client, MenuText, ParentMenu )
-  
-  	-- Arrange meta tables
-  	local MenuParentPath = {}
-  	if ParentMenu ~= nil then
-  	  MenuParentPath = ParentMenu.MenuPath
-  	end
-  
-  	local self = BASE:Inherit( self, MENU_BASE:New( MenuText, MenuParentPath ) )
-  	self:F( { Client, MenuText, ParentMenu } )
-  
-    self.MenuClient = Client
-    self.MenuClientGroupID = Client:GetClientGroupID()
-    self.MenuParentPath = MenuParentPath
-    self.MenuText = MenuText
-    self.ParentMenu = ParentMenu
-    
-    self.Menus = {}
-  
-    if not _MENUCLIENTS[self.MenuClientGroupID] then
-      _MENUCLIENTS[self.MenuClientGroupID] = {}
-    end
-    
-    local MenuPath = _MENUCLIENTS[self.MenuClientGroupID]
-  
-    self:T( { Client:GetClientGroupName(), MenuPath[table.concat(MenuParentPath)], MenuParentPath, MenuText } )
-  
-    local MenuPathID = table.concat(MenuParentPath) .. "/" .. MenuText
-    if MenuPath[MenuPathID] then
-      missionCommands.removeItemForGroup( self.MenuClient:GetClientGroupID(), MenuPath[MenuPathID] )
-    end
-  
-  	self.MenuPath = missionCommands.addSubMenuForGroup( self.MenuClient:GetClientGroupID(), MenuText, MenuParentPath )
-  	MenuPath[MenuPathID] = self.MenuPath
-  
-    self:T( { Client:GetClientGroupName(), self.MenuPath } )
-  
-    if ParentMenu and ParentMenu.Menus then
-      ParentMenu.Menus[self.MenuPath] = self
-    end
-  	return self
-  end
-  
-  --- Removes the sub menus recursively of this @{#MENU_CLIENT}.
-  -- @param #MENU_CLIENT self
-  -- @return #MENU_CLIENT self
-  function MENU_CLIENT:RemoveSubMenus()
-    self:F( self.MenuPath )
-  
-    for MenuID, Menu in pairs( self.Menus ) do
-      Menu:Remove()
-    end
-  
-  end
-  
-  --- Removes the sub menus recursively of this MENU_CLIENT.
-  -- @param #MENU_CLIENT self
-  -- @return #nil
-  function MENU_CLIENT:Remove()
-    self:F( self.MenuPath )
-  
-    self:RemoveSubMenus()
-  
-    if not _MENUCLIENTS[self.MenuClientGroupID] then
-      _MENUCLIENTS[self.MenuClientGroupID] = {}
-    end
-    
-    local MenuPath = _MENUCLIENTS[self.MenuClientGroupID]
-  
-    if MenuPath[table.concat(self.MenuParentPath) .. "/" .. self.MenuText] then
-      MenuPath[table.concat(self.MenuParentPath) .. "/" .. self.MenuText] = nil
-    end
-    
-    missionCommands.removeItemForGroup( self.MenuClient:GetClientGroupID(), self.MenuPath )
-    self.ParentMenu.Menus[self.MenuPath] = nil
-    return nil
-  end
-  
-  
-  --- @type MENU_CLIENT_COMMAND
-  -- @extends Core.Menu#MENU_COMMAND
-
-  --- # MENU_CLIENT_COMMAND class, extends @{Menu#MENU_COMMAND_BASE}
-  --
-  -- The MENU_CLIENT_COMMAND class manages the command menus for coalitions, which allow players to execute functions during mission execution.  
-  -- You can add menus with the @{#MENU_CLIENT_COMMAND.New} method, which constructs a MENU_CLIENT_COMMAND object and returns you the object reference.
-  -- Using this object reference, you can then remove ALL the menus and submenus underlying automatically with @{#MENU_CLIENT_COMMAND.Remove}.
-  -- 
-  -- @field #MENU_CLIENT_COMMAND
-  MENU_CLIENT_COMMAND = {
-    ClassName = "MENU_CLIENT_COMMAND"
-  }
-  
-  --- MENU_CLIENT_COMMAND constructor. Creates a new radio command item for a client, which can invoke a function with parameters.
-  -- @param #MENU_CLIENT_COMMAND self
-  -- @param Wrapper.Client#CLIENT Client The Client owning the menu.
-  -- @param #string MenuText The text for the menu.
-  -- @param #MENU_BASE ParentMenu The parent menu.
-  -- @param CommandMenuFunction A function that is called when the menu key is pressed.
-  -- @return Menu#MENU_CLIENT_COMMAND self
-  function MENU_CLIENT_COMMAND:New( Client, MenuText, ParentMenu, CommandMenuFunction, ... )
-  
-  	-- Arrange meta tables
-  	
-  	local MenuParentPath = {}
-  	if ParentMenu ~= nil then
-  		MenuParentPath = ParentMenu.MenuPath
-  	end
-  
-  	local self = BASE:Inherit( self, MENU_COMMAND_BASE:New( MenuText, MenuParentPath, CommandMenuFunction, arg ) ) -- Menu#MENU_CLIENT_COMMAND
-  	
-    self.MenuClient = Client
-    self.MenuClientGroupID = Client:GetClientGroupID()
-    self.MenuParentPath = MenuParentPath
-    self.MenuText = MenuText
-    self.ParentMenu = ParentMenu
-  
-    if not _MENUCLIENTS[self.MenuClientGroupID] then
-      _MENUCLIENTS[self.MenuClientGroupID] = {}
-    end
-    
-    local MenuPath = _MENUCLIENTS[self.MenuClientGroupID]
-  
-    self:T( { Client:GetClientGroupName(), MenuPath[table.concat(MenuParentPath)], MenuParentPath, MenuText, CommandMenuFunction, arg } )
-  
-    local MenuPathID = table.concat(MenuParentPath) .. "/" .. MenuText
-    if MenuPath[MenuPathID] then
-      missionCommands.removeItemForGroup( self.MenuClient:GetClientGroupID(), MenuPath[MenuPathID] )
-    end
-    
-  	self.MenuPath = missionCommands.addCommandForGroup( self.MenuClient:GetClientGroupID(), MenuText, MenuParentPath, self.MenuCallHandler )
-    MenuPath[MenuPathID] = self.MenuPath
-   
-    if ParentMenu and ParentMenu.Menus then
-    	ParentMenu.Menus[self.MenuPath] = self
-    end
-  	
-  	return self
-  end
-  
-  --- Removes a menu structure for a client.
-  -- @param #MENU_CLIENT_COMMAND self
-  -- @return #nil
-  function MENU_CLIENT_COMMAND:Remove()
-    self:F( self.MenuPath )
-  
-    if not _MENUCLIENTS[self.MenuClientGroupID] then
-      _MENUCLIENTS[self.MenuClientGroupID] = {}
-    end
-    
-    local MenuPath = _MENUCLIENTS[self.MenuClientGroupID]
-  
-    if MenuPath[table.concat(self.MenuParentPath) .. "/" .. self.MenuText] then
-      MenuPath[table.concat(self.MenuParentPath) .. "/" .. self.MenuText] = nil
-    end
-    
-    missionCommands.removeItemForGroup( self.MenuClient:GetClientGroupID(), self.MenuPath )
-    self.ParentMenu.Menus[self.MenuPath] = nil
-    return nil
-  end
-end
 
 --- MENU_GROUP
 
@@ -808,44 +732,30 @@ do
   
   --- MENU_GROUP constructor. Creates a new radio menu item for a group.
   -- @param #MENU_GROUP self
-  -- @param Wrapper.Group#GROUP MenuGroup The Group owning the menu.
+  -- @param Wrapper.Group#GROUP Group The Group owning the menu.
   -- @param #string MenuText The text for the menu.
   -- @param #table ParentMenu The parent menu.
   -- @return #MENU_GROUP self
-  function MENU_GROUP:New( MenuGroup, MenuText, ParentMenu )
+  function MENU_GROUP:New( Group, MenuText, ParentMenu )
   
-    -- Determine if the menu was not already created and already visible at the group.
-    -- If it is visible, then return the cached self, otherwise, create self and cache it.
-    
-    MenuGroup._Menus = MenuGroup._Menus or {}
-    local Path = ( ParentMenu and ( table.concat( ParentMenu.MenuPath or {}, "@" ) .. "@" .. MenuText ) ) or MenuText 
-    if MenuGroup._Menus[Path] then
-      self = MenuGroup._Menus[Path]
+    MENU_INDEX:PrepareGroup( Group )
+    local Path = MENU_INDEX:ParentPath( ParentMenu, MenuText )
+    local GroupMenu = MENU_INDEX:HasGroupMenu( Group, Path )   
+
+    if GroupMenu then
+      return GroupMenu
     else
       self = BASE:Inherit( self, MENU_BASE:New( MenuText, ParentMenu ) )
-      --if MenuGroup:IsAlive() then
-        MenuGroup._Menus[Path] = self
-      --end
+      MENU_INDEX:SetGroupMenu( Group, Path, self )
 
-      self.MenuGroup = MenuGroup
-      self.Path = Path
-      self.MenuGroupID = MenuGroup:GetID()
-      self.MenuText = MenuText
-      self.ParentMenu = ParentMenu
+      self.Group = Group
+      self.GroupID = Group:GetID()
 
-      self:T( { "Adding Menu ", MenuText, self.MenuParentPath } )
-      self.MenuPath = missionCommands.addSubMenuForGroup( self.MenuGroupID, MenuText, self.MenuParentPath )
-
-      if self.ParentMenu and self.ParentMenu.Menus then
-        self.ParentMenu.Menus[MenuText] = self
-        self:F( { self.ParentMenu.Menus, MenuText } )
-        self.ParentMenu.MenuCount = self.ParentMenu.MenuCount + 1
-      end
+      self.MenuPath = missionCommands.addSubMenuForGroup( self.GroupID, MenuText, self.MenuParentPath )
+      self:SetParentMenu( self.MenuText, self )
+      return self
     end
     
-    --self:F( { MenuGroup:GetName(), MenuText, ParentMenu.MenuPath } )
-
-    return self
   end
   
   --- Removes the sub menus recursively of this MENU_GROUP.
@@ -854,12 +764,12 @@ do
   -- @param MenuTag A Tag or Key to filter the menus to be refreshed with the Tag set.
   -- @return #MENU_GROUP self
   function MENU_GROUP:RemoveSubMenus( MenuTime, MenuTag )
-    --self:F2( { self.MenuPath, MenuTime, self.MenuTime } )
-  
-    self:T( { "Removing Group SubMenus:", MenuTime, MenuTag, self.MenuGroup:GetName(), self.MenuPath } )
-    for MenuText, Menu in pairs( self.Menus ) do
+
+    for MenuText, Menu in pairs( self.Menus or {} ) do
       Menu:Remove( MenuTime, MenuTag )
     end
+    
+    self.Menus = nil
   
   end
 
@@ -870,34 +780,27 @@ do
   -- @param MenuTag A Tag or Key to filter the menus to be refreshed with the Tag set.
   -- @return #nil
   function MENU_GROUP:Remove( MenuTime, MenuTag )
-    --self:F2( { self.MenuGroupID, self.MenuPath, MenuTime, self.MenuTime } )
-  
-    self:RemoveSubMenus( MenuTime, MenuTag )
-    
-    if not MenuTime or self.MenuTime ~= MenuTime then
-      if ( not MenuTag ) or ( MenuTag and self.MenuTag and MenuTag == self.MenuTag ) then
-        if self.MenuGroup._Menus[self.Path] then
-          self = self.MenuGroup._Menus[self.Path]
-        
-          missionCommands.removeItemForGroup( self.MenuGroupID, self.MenuPath )
-          if self.ParentMenu then
-            self.ParentMenu.Menus[self.MenuText] = nil
-            self.ParentMenu.MenuCount = self.ParentMenu.MenuCount - 1
-            if self.ParentMenu.MenuCount == 0 then
-              if self.MenuRemoveParent == true then
-                self:T2( "Removing Parent Menu " )
-                self.ParentMenu:Remove()
-              end
-            end
-          end
+
+    MENU_INDEX:PrepareGroup( self.Group )
+    local Path = MENU_INDEX:ParentPath( self.ParentMenu, self.MenuText )
+    local GroupMenu = MENU_INDEX:HasGroupMenu( self.Group, Path )   
+
+    if GroupMenu == self then
+      self:RemoveSubMenus( MenuTime, MenuTag )
+      if not MenuTime or self.MenuTime ~= MenuTime then
+        if ( not MenuTag ) or ( MenuTag and self.MenuTag and MenuTag == self.MenuTag ) then
+          missionCommands.removeItemForGroup( self.GroupID, self.MenuPath )
+          MENU_INDEX:ClearGroupMenu( self.Group, Path )
+          self:ClearParentMenu( self.MenuText )
+          return nil
         end
-        self:T( { "Removing Group Menu:", MenuGroup = self.MenuGroup:GetName() } )
-        self.MenuGroup._Menus[self.Path] = nil
-        self = nil
       end
+    else
+      error( "Remove: Not a correct path" )
+      return nil
     end
   
-    return nil
+    return self
   end
   
   
@@ -917,48 +820,36 @@ do
   
   --- Creates a new radio command item for a group
   -- @param #MENU_GROUP_COMMAND self
-  -- @param Wrapper.Group#GROUP MenuGroup The Group owning the menu.
+  -- @param Wrapper.Group#GROUP Group The Group owning the menu.
   -- @param MenuText The text for the menu.
   -- @param ParentMenu The parent menu.
   -- @param CommandMenuFunction A function that is called when the menu key is pressed.
   -- @param CommandMenuArgument An argument for the function.
   -- @return #MENU_GROUP_COMMAND
-  function MENU_GROUP_COMMAND:New( MenuGroup, MenuText, ParentMenu, CommandMenuFunction, ... )
-   
-    MenuGroup._Menus = MenuGroup._Menus or {}
-    local Path = ( ParentMenu and ( table.concat( ParentMenu.MenuPath or {}, "@" ) .. "@" .. MenuText ) ) or MenuText
-    if MenuGroup._Menus[Path] then
-      self = MenuGroup._Menus[Path]
-      --self:E( { Path=Path } ) 
-      --self:E( { self.MenuTag, self.MenuTime, "Re-using Group Command Menu:", MenuGroup:GetName(), MenuText } )
-      self:SetCommandMenuFunction( CommandMenuFunction )
-      self:SetCommandMenuArguments( arg )
+  function MENU_GROUP_COMMAND:New( Group, MenuText, ParentMenu, CommandMenuFunction, ... )
+
+    MENU_INDEX:PrepareGroup( Group )
+    local Path = MENU_INDEX:ParentPath( ParentMenu, MenuText )
+    local GroupMenu = MENU_INDEX:HasGroupMenu( Group, Path )   
+
+    if GroupMenu then
+      GroupMenu:SetCommandMenuFunction( CommandMenuFunction )
+      GroupMenu:SetCommandMenuArguments( arg )
+      return GroupMenu
+    else
+      self = BASE:Inherit( self, MENU_COMMAND_BASE:New( MenuText, ParentMenu, CommandMenuFunction, arg ) )
+
+      MENU_INDEX:SetGroupMenu( Group, Path, self )
+  
+      self.Group = Group
+      self.GroupID = Group:GetID()
+  
+      self.MenuPath = missionCommands.addCommandForGroup( self.GroupID, MenuText, self.MenuParentPath, self.MenuCallHandler )
+      
+      self:SetParentMenu( self.MenuText, self )
       return self
     end
-    self = BASE:Inherit( self, MENU_COMMAND_BASE:New( MenuText, ParentMenu, CommandMenuFunction, arg ) )
-    
-    --if MenuGroup:IsAlive() then
-      MenuGroup._Menus[Path] = self
-    --end
 
-    --self:E({Path=Path}) 
-    self.Path = Path
-    self.MenuGroup = MenuGroup
-    self.MenuGroupID = MenuGroup:GetID()
-    self.MenuText = MenuText
-    self.ParentMenu = ParentMenu
-
-    self:F( { "Adding Group Command Menu:", MenuGroup = MenuGroup:GetName(), MenuText = MenuText, MenuPath = self.MenuParentPath } )
-    self.MenuPath = missionCommands.addCommandForGroup( self.MenuGroupID, MenuText, self.MenuParentPath, self.MenuCallHandler )
-
-    if self.ParentMenu and self.ParentMenu.Menus then
-      self.ParentMenu.Menus[MenuText] = self
-      self.ParentMenu.MenuCount = self.ParentMenu.MenuCount + 1
-      self:F2( { ParentMenu.Menus, MenuText } )
-    end
---    end
-
-    return self
   end
   
   --- Removes a menu structure for a group.
@@ -967,33 +858,23 @@ do
   -- @param MenuTag A Tag or Key to filter the menus to be refreshed with the Tag set.
   -- @return #nil
   function MENU_GROUP_COMMAND:Remove( MenuTime, MenuTag )
-    --self:F2( { self.MenuGroupID, self.MenuPath, MenuTime, self.MenuTime } )
 
-    --self:E( { MenuTag = MenuTag, MenuTime = self.MenuTime, Path = self.Path } )
-    if not MenuTime or self.MenuTime ~= MenuTime then
-      if ( not MenuTag ) or ( MenuTag and self.MenuTag and MenuTag == self.MenuTag ) then
-        if self.MenuGroup._Menus[self.Path] then
-          self = self.MenuGroup._Menus[self.Path]
-      
-          missionCommands.removeItemForGroup( self.MenuGroupID, self.MenuPath )
-          --self:E( { "Removing Group Command Menu:", MenuGroup = self.MenuGroup:GetName(), MenuText = self.MenuText, MenuPath = self.Path } )
-  
-          self.ParentMenu.Menus[self.MenuText] = nil
-          self.ParentMenu.MenuCount = self.ParentMenu.MenuCount - 1
-          if self.ParentMenu.MenuCount == 0 then
-            if self.MenuRemoveParent == true then
-              self:T2( "Removing Parent Menu " )
-              self.ParentMenu:Remove()
-            end
-          end
-  
-          self.MenuGroup._Menus[self.Path] = nil
-          self = nil
+    MENU_INDEX:PrepareGroup( self.Group )
+    local Path = MENU_INDEX:ParentPath( self.ParentMenu, self.MenuText )
+    local GroupMenu = MENU_INDEX:HasGroupMenu( self.Group, Path )   
+
+    if GroupMenu == self then
+      if not MenuTime or self.MenuTime ~= MenuTime then
+        if ( not MenuTag ) or ( MenuTag and self.MenuTag and MenuTag == self.MenuTag ) then
+          missionCommands.removeItemForGroup( self.GroupID, self.MenuPath )
+          MENU_INDEX:ClearGroupMenu( self.Group, Path )
+          self:ClearParentMenu( self.MenuText )
+          return nil
         end
       end
     end
     
-    return nil
+    return self
   end
 
 end

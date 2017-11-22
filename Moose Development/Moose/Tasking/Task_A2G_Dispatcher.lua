@@ -238,7 +238,7 @@ do -- TASK_A2G_DISPATCHER
         --DetectedSet:Flush()
         
         local DetectedItemID = DetectedItem.ID
-        local TaskIndex = DetectedItem.Index
+        local TaskIndex = DetectedItem.ID
         local DetectedItemChanged = DetectedItem.Changed
         
         self:E( { DetectedItemChanged = DetectedItemChanged, DetectedItemID = DetectedItemID, TaskIndex = TaskIndex } )

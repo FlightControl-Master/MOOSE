@@ -1,5 +1,5 @@
 env.info('*** MOOSE DYNAMIC INCLUDE START *** ')
-env.info('Moose Generation Timestamp: 20171110_1045')
+env.info('Moose Generation Timestamp: 20171122_0612')
 local base=_G
 MOOSE={}
 MOOSE.Include=function(LuaPath,IncludeFile)

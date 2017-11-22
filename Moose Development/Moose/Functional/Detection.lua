@@ -1356,12 +1356,10 @@ do -- DETECTION_BASE
   -- @param #DETECTION_BASE.DetectedObject DetectedObject
   -- @return #boolean true if already identified.
   function DETECTION_BASE:IsDetectedObjectIdentified( DetectedObject )
-    --self:F3( DetectedObject.Name )
   
     local DetectedObjectName = DetectedObject.Name
     if DetectedObjectName then
       local DetectedObjectIdentified = self.DetectedObjectsIdentified[DetectedObjectName] == true
-      self:T3( DetectedObjectIdentified )
       return DetectedObjectIdentified
     else
       return nil
@@ -1463,11 +1461,11 @@ do -- DETECTION_BASE
     if DetectedItemIndex then
       self.DetectedItems[DetectedItemIndex] = DetectedItem
     else
-      self.DetectedItems[self.DetectedItemCount] = DetectedItem
+      self.DetectedItems[self.DetectedItemMax] = DetectedItem
     end
     
     DetectedItem.Set = Set or SET_UNIT:New():FilterDeads():FilterCrashes()
-    DetectedItem.Index = DetectedItemIndex or self.DetectedItemCount
+    DetectedItem.Index = DetectedItemIndex or self.DetectedItemMax
     DetectedItem.ItemID = ItemPrefix .. "." .. self.DetectedItemMax
     DetectedItem.ID = self.DetectedItemMax
     DetectedItem.Removed = false
@@ -2674,7 +2672,8 @@ do -- DETECTION_AREAS
                 
                 -- Yes, the DetectedUnit is within the DetectedItem.Zone, no changes, DetectedUnit can be kept within the Set.
                 self:IdentifyDetectedObject( DetectedObject )
-  
+                DetectedSet:AddUnit( DetectedUnit )
+
               else
                 -- No, the DetectedUnit is not within the DetectedItem.Zone, remove DetectedUnit from the Set.
                 DetectedSet:Remove( DetectedUnitName )

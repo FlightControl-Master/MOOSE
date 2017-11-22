@@ -316,6 +316,77 @@ do -- TASK_A2G
     end
   end
 
+
+  --- Return the relative distance to the target vicinity from the player, in order to sort the targets in the reports per distance from the threats.
+  -- @param #TASK_A2G self
+  function TASK_A2G:ReportOrder( ReportGroup ) 
+    local Coordinate = self:GetInfo( "Coordinate" )
+    local Distance = ReportGroup:GetCoordinate():Get2DDistance( Coordinate )
+    
+    return Distance
+  end
+  
+  
+  --- This method checks every 10 seconds if the goal has been reached of the task.
+  -- @param #TASK_A2G self
+  function TASK_A2G:onafterGoal( TaskUnit, From, Event, To )
+    local TargetSetUnit = self.TargetSetUnit -- Core.Set#SET_UNIT
+    
+    if TargetSetUnit:Count() == 0 then
+      self:Success()
+    end
+    
+    self:__Goal( -10 )
+  end
+
+
+  --- @param #TASK_A2G self
+  function TASK_A2G:UpdateTaskInfo()
+  
+    if self:IsStatePlanned() or self:IsStateAssigned() then
+      local TargetCoordinate = self.Detection and self.Detection:GetDetectedItemCoordinate( self.DetectedItemIndex ) or self.TargetSetUnit:GetFirst():GetCoordinate() 
+      self:SetInfo( "Coordinate", TargetCoordinate, 0 )
+      
+      local ThreatLevel, ThreatText
+      if self.Detection then
+        ThreatLevel, ThreatText = self.Detection:GetDetectedItemThreatLevel( self.DetectedItemIndex )
+      else
+        ThreatLevel, ThreatText = self.TargetSetUnit:CalculateThreatLevelA2G()
+      end
+      self:SetInfo( "Threat", ThreatText .. " [" .. string.rep(  "■", ThreatLevel ) .. "]", 11 )
+  
+      if self.Detection then
+        local DetectedItemsCount = self.TargetSetUnit:Count()
+        local ReportTypes = REPORT:New()
+        local TargetTypes = {}
+        for TargetUnitName, TargetUnit in pairs( self.TargetSetUnit:GetSet() ) do
+          local TargetType = self.Detection:GetDetectedUnitTypeName( TargetUnit )
+          if not TargetTypes[TargetType] then
+            TargetTypes[TargetType] = TargetType
+            ReportTypes:Add( TargetType )
+          end
+        end
+        self:SetInfo( "Targets", string.format( "%d of %s", DetectedItemsCount, ReportTypes:Text( ", " ) ), 10 ) 
+      else
+        local DetectedItemsCount = self.TargetSetUnit:Count()
+        local DetectedItemsTypes = self.TargetSetUnit:GetTypeNames()
+        self:SetInfo( "Targets", string.format( "%d of %s", DetectedItemsCount, DetectedItemsTypes ), 10 ) 
+      end
+    end
+    
+    --- Keep Threat and Targets of a task is planned for later use when the task is completed.
+    if self:IsStatePlanned() then
+      self.InitialThreat = self:GetInfo( "Threat" )
+      self.InitialTargets = self:GetInfo( "Targets" )
+    end
+    
+    if not self:IsStatePlanned() and not self:IsStateAssigned() then
+      self:SetInfo( "Targets", self.InitialTargets, 10 ) 
+      self:SetInfo( "Threat", self.InitialThreat, 10 )
+    end
+
+  end
+
 end 
 
 
@@ -360,60 +431,6 @@ do -- TASK_A2G_SEAD
 
     return self
   end 
-
-  function TASK_A2G_SEAD:UpdateTaskInfo() 
-
-
-    local TargetCoordinate = self.Detection and self.Detection:GetDetectedItemCoordinate( self.DetectedItemIndex ) or self.TargetSetUnit:GetFirst():GetCoordinate() 
-    self:SetInfo( "Coordinate", TargetCoordinate, 0 )
-
-    local ThreatLevel, ThreatText
-    if self.Detection then
-      ThreatLevel, ThreatText = self.Detection:GetDetectedItemThreatLevel( self.DetectedItemIndex )
-    else
-      ThreatLevel, ThreatText = self.TargetSetUnit:CalculateThreatLevelA2G()
-    end
-    self:SetInfo( "Threat", ThreatText .. " [" .. string.rep(  "■", ThreatLevel ) .. "]", 11 )
-
-    if self.Detection then
-      local DetectedItemsCount = self.TargetSetUnit:Count()
-      local ReportTypes = REPORT:New()
-      local TargetTypes = {}
-      for TargetUnitName, TargetUnit in pairs( self.TargetSetUnit:GetSet() ) do
-        local TargetType = self.Detection:GetDetectedUnitTypeName( TargetUnit )
-        if not TargetTypes[TargetType] then
-          TargetTypes[TargetType] = TargetType
-          ReportTypes:Add( TargetType )
-        end
-      end
-      self:SetInfo( "Targets", string.format( "%d of %s", DetectedItemsCount, ReportTypes:Text( ", " ) ), 10 ) 
-    else
-      local DetectedItemsCount = self.TargetSetUnit:Count()
-      local DetectedItemsTypes = self.TargetSetUnit:GetTypeNames()
-      self:SetInfo( "Targets", string.format( "%d of %s", DetectedItemsCount, DetectedItemsTypes ), 10 ) 
-    end
-
-  end
-    
-  function TASK_A2G_SEAD:ReportOrder( ReportGroup ) 
-    local Coordinate = self:GetInfo( "Coordinate" )
-    --local Coordinate = self.TaskInfo.Coordinates.TaskInfoText
-    local Distance = ReportGroup:GetCoordinate():Get2DDistance( Coordinate )
-    
-    return Distance
-  end
-  
-  
-  --- @param #TASK_A2G_SEAD self
-  function TASK_A2G_SEAD:onafterGoal( TaskUnit, From, Event, To )
-    local TargetSetUnit = self.TargetSetUnit -- Core.Set#SET_UNIT
-    
-    if TargetSetUnit:Count() == 0 then
-      self:Success()
-    end
-    
-    self:__Goal( -10 )
-  end
 
   --- Set a score when a target in scope of the A2G attack, has been destroyed .
   -- @param #TASK_A2G_SEAD self
@@ -508,72 +525,6 @@ do -- TASK_A2G_BAI
     
     return self
   end
-  
-  function TASK_A2G_BAI:UpdateTaskInfo() 
-
-    self:E({self.Detection, self.DetectedItemIndex})
-
-    local TargetCoordinate = self.Detection and self.Detection:GetDetectedItemCoordinate( self.DetectedItemIndex ) or self.TargetSetUnit:GetFirst():GetCoordinate() 
-    self:SetInfo( "Coordinate", TargetCoordinate, 0 )
-
-    local ThreatLevel, ThreatText
-    if self.Detection then
-      ThreatLevel, ThreatText = self.Detection:GetDetectedItemThreatLevel( self.DetectedItemIndex )
-    else
-      ThreatLevel, ThreatText = self.TargetSetUnit:CalculateThreatLevelA2G()
-    end
-    self:SetInfo( "Threat", ThreatText .. " [" .. string.rep(  "■", ThreatLevel ) .. "]", 11 )
-
-    if self.Detection then
-      local DetectedItemsCount = self.TargetSetUnit:Count()
-      local ReportTypes = REPORT:New()
-      local TargetTypes = {}
-      for TargetUnitName, TargetUnit in pairs( self.TargetSetUnit:GetSet() ) do
-        local TargetType = self.Detection:GetDetectedUnitTypeName( TargetUnit )
-        if not TargetTypes[TargetType] then
-          TargetTypes[TargetType] = TargetType
-          ReportTypes:Add( TargetType )
-        end
-      end
-      self:SetInfo( "Targets", string.format( "%d of %s", DetectedItemsCount, ReportTypes:Text( ", " ) ), 10 ) 
-    else
-      local DetectedItemsCount = self.TargetSetUnit:Count()
-      local DetectedItemsTypes = self.TargetSetUnit:GetTypeNames()
-      self:SetInfo( "Targets", string.format( "%d of %s", DetectedItemsCount, DetectedItemsTypes ), 10 ) 
-    end
-
-    local TargetCoordinate = self:GetInfo( "Coordinate" ) -- Core.Point#COORDINATE
-    
-    local Velocity = self.TargetSetUnit:GetVelocityVec3()
-    local Heading = self.TargetSetUnit:GetHeading()
-    
-    TargetCoordinate:SetHeading( Heading )
-    TargetCoordinate:SetVelocity( Velocity )
-
-    self:SetInfo( "Position", "Targets are" .. TargetCoordinate:GetMovingText() ..  ".", 12 ) 
-    
-  end
-
-
-  function TASK_A2G_BAI:ReportOrder( ReportGroup ) 
-    local Coordinate = self:GetInfo( "Coordinate" )
-    --local Coordinate = self.TaskInfo.Coordinates.TaskInfoText
-    local Distance = ReportGroup:GetCoordinate():Get2DDistance( Coordinate )
-    
-    return Distance
-  end
-
-
-  --- @param #TASK_A2G_BAI self
-  function TASK_A2G_BAI:onafterGoal( TaskUnit, From, Event, To )
-    local TargetSetUnit = self.TargetSetUnit -- Core.Set#SET_UNIT
-    
-    if TargetSetUnit:Count() == 0 then
-      self:Success()
-    end
-    
-    self:__Goal( -10 )
-  end
 
   --- Set a score when a target in scope of the A2G attack, has been destroyed .
   -- @param #TASK_A2G_BAI self
@@ -623,8 +574,10 @@ do -- TASK_A2G_BAI
     return self
   end
 
-
 end
+
+
+
 
 do -- TASK_A2G_CAS
 
@@ -670,59 +623,6 @@ do -- TASK_A2G_CAS
     return self
   end 
   
-  function TASK_A2G_CAS:UpdateTaskInfo()
-  
-    local TargetCoordinate = ( self.Detection and self.Detection:GetDetectedItemCoordinate( self.DetectedItemIndex ) ) or self.TargetSetUnit:GetFirst():GetCoordinate() 
-    self:SetInfo( "Coordinate", TargetCoordinate, 0 )
-    
-    local ThreatLevel, ThreatText
-    if self.Detection then
-      ThreatLevel, ThreatText = self.Detection:GetDetectedItemThreatLevel( self.DetectedItemIndex )
-    else
-      ThreatLevel, ThreatText = self.TargetSetUnit:CalculateThreatLevelA2G()
-    end
-    self:SetInfo( "Threat", ThreatText .. " [" .. string.rep(  "■", ThreatLevel ) .. "]", 11 )
-
-    if self.Detection then
-      local DetectedItemsCount = self.TargetSetUnit:Count()
-      local ReportTypes = REPORT:New()
-      local TargetTypes = {}
-      for TargetUnitName, TargetUnit in pairs( self.TargetSetUnit:GetSet() ) do
-        local TargetType = self.Detection:GetDetectedUnitTypeName( TargetUnit )
-        if not TargetTypes[TargetType] then
-          TargetTypes[TargetType] = TargetType
-          ReportTypes:Add( TargetType )
-        end
-      end
-      self:SetInfo( "Targets", string.format( "%d of %s", DetectedItemsCount, ReportTypes:Text( ", " ) ), 10 ) 
-    else
-      local DetectedItemsCount = self.TargetSetUnit:Count()
-      local DetectedItemsTypes = self.TargetSetUnit:GetTypeNames()
-      self:SetInfo( "Targets", string.format( "%d of %s", DetectedItemsCount, DetectedItemsTypes ), 10 ) 
-    end
-
-  end
-
-  --- @param #TASK_A2G_CAS self
-  function TASK_A2G_CAS:ReportOrder( ReportGroup )
-     
-    local Coordinate = self:GetInfo( "Coordinate" )
-    local Distance = ReportGroup:GetCoordinate():Get2DDistance( Coordinate )
-    
-    return Distance
-  end
-
-
-  --- @param #TASK_A2G_CAS self
-  function TASK_A2G_CAS:onafterGoal( TaskUnit, From, Event, To )
-    local TargetSetUnit = self.TargetSetUnit -- Core.Set#SET_UNIT
-    
-    if TargetSetUnit:Count() == 0 then
-      self:Success()
-    end
-    
-    self:__Goal( -10 )
-  end
 
   --- Set a score when a target in scope of the A2G attack, has been destroyed .
   -- @param #TASK_A2G_CAS self
