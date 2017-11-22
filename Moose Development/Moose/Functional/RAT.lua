@@ -323,7 +323,8 @@ RAT={
   addfriendlydestinations=false, -- Add all friendly airports to destinations.
   ratcraft={},              -- Array with the spawned RAT aircraft.
   Tinactive=600,            -- Time in seconds after which inactive units will be destroyed. Default is 600 seconds.
-  reportstatus=false,       -- Aircraft report status.
+  reportstatus=false,       -- Aircraft report status via in-game messages.
+  reporterrors=false,       -- Report RAT errors via in-game messages.
   statusinterval=30,        -- Intervall between status checks (and reports if enabled).
   placemarkers=false,       -- Place markers of waypoints on F10 map.
   FLcruise=nil,             -- Cruise altitude of aircraft. Default FL200 for planes and F005 for helos.
@@ -670,6 +671,7 @@ function RAT:Spawn(naircraft)
   text=text..string.format("FLmaxuser: %s\n", tostring(self.FLmaxuser))
   text=text..string.format("Place markers: %s\n", tostring(self.placemarkers))
   text=text..string.format("Report status: %s\n", tostring(self.reportstatus))
+  text=text..string.format("Report errors: %s\n", tostring(self.reporterrors))
   text=text..string.format("Status interval: %4.1f\n", self.statusinterval)
   text=text..string.format("Time inactive: %4.1f\n", self.Tinactive)
   text=text..string.format("Create F10 menu : %s\n", tostring(self.f10menu))
@@ -750,7 +752,7 @@ function RAT:_CheckConsistency()
       self.random_departure=true
       local text="No airports or zones found given in SetDeparture(). Enabling random departure airports!"
       env.error(RAT.id..text)
-      MESSAGE:New(text, 30):ToAll()
+      MESSAGE:New(text, 30):ToAllIf(self.reporterrors)
     end
   end
 
@@ -778,7 +780,7 @@ function RAT:_CheckConsistency()
       self.random_destination=true
       local text="No airports or zones found given in SetDestination(). Enabling random destination airports!"
       env.error(RAT.id..text)
-      MESSAGE:New(text, 30):ToAll()
+      MESSAGE:New(text, 30):ToAllIf(self.reporterrors)
     end
   end  
     
@@ -1298,12 +1300,22 @@ end
 
 --- Aircraft report status update messages along the route.
 -- @param #RAT self
--- @param #boolean switch Swtich reports on (true) or off (false). No argument is on.
+-- @param #boolean switch Switch reports on (true) or off (false). No argument is on.
 function RAT:StatusReports(switch)
   if switch==nil then
     switch=true
   end
   self.reportstatus=switch
+end
+
+--- Shows RAT errors via in-game messages.
+-- @param #RAT self
+-- @param #boolean switch Switch reports on (true) or off (false). No argument is on.
+function RAT:ErrorReports(switch)
+  if switch==nil then
+    switch=true
+  end
+  self.reporterrors=switch
 end
 
 --- Place markers of waypoints on the F10 map. Default is off.
@@ -1805,7 +1817,7 @@ function RAT:_SetRoute(takeoff, landing, _departure, _destination, _waypoint)
   -- Return nil if no departure could be found.
   if not departure then
     local text=string.format("No valid departure airport could be found for %s.", self.alias)
-    MESSAGE:New(text, 60):ToAll()
+    MESSAGE:New(text, 60):ToAllIf(self.reporterrors)
     env.error(RAT.id..text)
     return nil
   end
@@ -1919,7 +1931,7 @@ function RAT:_SetRoute(takeoff, landing, _departure, _destination, _waypoint)
   -- Return nil if no departure could be found.
   if not destination then
     local text=string.format("No valid destination airport could be found for %s!", self.alias)
-    MESSAGE:New(text, 60):ToAll()
+    MESSAGE:New(text, 60):ToAllIf(self.reporterrors)
     env.error(RAT.id..text)
     return nil
   end
@@ -1927,7 +1939,7 @@ function RAT:_SetRoute(takeoff, landing, _departure, _destination, _waypoint)
   -- Check that departure and destination are not the same. Should not happen due to mindist.
   if destination:GetName()==departure:GetName() then
     local text=string.format("%s: Destination and departure are identical. Airport/zone %s.", self.alias, destination:GetName())
-    MESSAGE:New(text, 30):ToAll()
+    MESSAGE:New(text, 30):ToAllIf(self.reporterrors)
     env.error(RAT.id..text)
   end
   
@@ -2405,9 +2417,7 @@ function RAT:_PickDeparture(takeoff)
       text="Chosen departure airport: "..departure:GetName().." (ID "..departure:GetID()..")"
     end
     env.info(RAT.id..text)
-    if self.debug then
-      MESSAGE:New(text, 30):ToAll()
-    end
+    MESSAGE:New(text, 30):ToAllIf(self.debug)
   else
     env.error(RAT.id.."No departure airport or zone found.")
     departure=nil
@@ -2531,9 +2541,7 @@ function RAT:_PickDestination(departure, q, minrange, maxrange, random, landing)
       text=string.format("Chosen destination airport: %s (ID %d).", destination:GetName(), destination:GetID())
     end
     env.info(RAT.id..text)
-    if self.debug then
-      MESSAGE:New(text, 30):ToAll()
-    end
+    MESSAGE:New(text, 30):ToAllIf(self.debug)
     
   else
     env.error(RAT.id.."No destination airport or zone found.")
@@ -2652,7 +2660,7 @@ function RAT:_GetAirportsOfCoalition()
     
   if #self.airports==0 then
     local text="No possible departure/destination airports found!"
-    MESSAGE:New(text, 60):ToAll()
+    MESSAGE:New(text, 60):ToAllIf(self.reporterrors)
     env.error(RAT.id..text)
   end
 end
@@ -2787,7 +2795,7 @@ function RAT:Status(message, forID)
             env.info(RAT.id..text)
           end
           if message then
-            MESSAGE:New(text, 20):ToAll()
+            MESSAGE:New(text, 20):ToAllIf(self.reportstatus)
           end
         end
         
@@ -2826,7 +2834,7 @@ function RAT:Status(message, forID)
   if (message and not forID) then
     local text=string.format("Alive groups of %s: %d", self.alias, self.alive)
     env.info(RAT.id..text)
-    MESSAGE:New(text, 20):ToAll()
+    MESSAGE:New(text, 20):ToAllIf(self.reportstatus)
   end  
   
 end
@@ -3498,7 +3506,7 @@ function RAT._WaypointFunction(group, rat, wp)
   
     -- Aircraft arrived at holding point
     text=string.format("Flight %s to %s ATC: Holding and awaiting landing clearance.", group:GetName(), destination)
-    MESSAGE:New(text, 10):ToAllIf(rat.reportstatus)
+    MESSAGE:New(text, 10):ToAllIf(self.reportstatus)
      
     -- Register aircraft at ATC.
     if rat.ATCswitch then
@@ -3509,12 +3517,12 @@ function RAT._WaypointFunction(group, rat, wp)
   
   if wp==WPfinal then
     text=string.format("Flight %s arrived at final destination %s.", group:GetName(), destination)
-    MESSAGE:New(text, 10):ToAllIf(rat.reportstatus)
+    MESSAGE:New(text, 10):ToAllIf(self.reportstatus)
     env.info(RAT.id..text)
   
     if landing==RAT.wp.air then
       text=string.format("Activating despawn switch for flight %s! Group will be detroyed soon.", group:GetName())
-      MESSAGE:New(text, 30):ToAllIf(rat.debug)
+      MESSAGE:New(text, 30):ToAllIf(self.debug)
       env.info(RAT.id..text)
       -- Enable despawn switch. Next time the status function is called, the aircraft will be despawned.
       rat.ratcraft[sdx].despawnme=true
@@ -4173,7 +4181,7 @@ function RAT:_ATCClearForLanding(airport, flight)
   local text1=string.format("ATC %s: Flight %s cleared for landing (flag=%d).", airport, flight, flagvalue)
   local text2=string.format("ATC %s: Flight %s you are cleared for landing.", airport, flight)
   env.info( RAT.id..text1)
-  MESSAGE:New(text2, 10):ToAll()
+  MESSAGE:New(text2, 10):ToAllIf(self.reportstatus)
 end
 
 --- Takes care of organisational stuff after a plane has landed.
@@ -4217,7 +4225,7 @@ function RAT:_ATCFlightLanded(name)
     env.info(RAT.id..text1)
     env.info(RAT.id..text2)
     env.info(RAT.id..text3)
-    MESSAGE:New(text4, 10):ToAll()
+    MESSAGE:New(text4, 10):ToAllIf(self.reportstatus)
   end
   
 end
@@ -4269,4 +4277,3 @@ function RAT:_ATCQueue()
   end
 end
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
