@@ -2430,9 +2430,7 @@ function RAT:_PickDeparture(takeoff)
       text="Chosen departure airport: "..departure:GetName().." (ID "..departure:GetID()..")"
     end
     self:T(RAT.id..text)
-    if self.Debug then
-      MESSAGE:New(text, 30):ToAll()
-    end
+    MESSAGE:New(text, 30):ToAllIf(self.Debug)
   else
     self:E(RAT.id.."ERROR: No departure airport or zone found.")
     departure=nil
@@ -2556,9 +2554,7 @@ function RAT:_PickDestination(departure, q, minrange, maxrange, random, landing)
       text=string.format("Chosen destination airport: %s (ID %d).", destination:GetName(), destination:GetID())
     end
     self:T(RAT.id..text)
-    if self.Debug then
-      MESSAGE:New(text, 30):ToAll()
-    end
+    MESSAGE:New(text, 30):ToAllIf(self.Debug)
     
   else
     self:E(RAT.id.."ERROR: No destination airport or zone found.")
