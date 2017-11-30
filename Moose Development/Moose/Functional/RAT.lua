@@ -3520,7 +3520,7 @@ function RAT._WaypointFunction(group, rat, wp)
   
     -- Aircraft arrived at holding point
     text=string.format("Flight %s to %s ATC: Holding and awaiting landing clearance.", group:GetName(), destination)
-    MESSAGE:New(text, 10):ToAllIf(self.reportstatus)
+    MESSAGE:New(text, 10):ToAllIf(RAT.ATC.messages)
      
     -- Register aircraft at ATC.
     if rat.ATCswitch then
