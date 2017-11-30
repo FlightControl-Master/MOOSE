@@ -325,7 +325,7 @@ function DATABASE:AddPlayer( UnitName, PlayerName )
   if PlayerName then
     self:E( { "Add player for unit:", UnitName, PlayerName } )
     self.PLAYERS[PlayerName] = UnitName
-    self.PLAYERUNITS[UnitName] = PlayerName
+    self.PLAYERUNITS[PlayerName] = self:FindUnit( UnitName )
     self.PLAYERSJOINED[PlayerName] = PlayerName
   end
 end
@@ -337,8 +337,46 @@ function DATABASE:DeletePlayer( UnitName, PlayerName )
   if PlayerName then
     self:E( { "Clean player:", PlayerName } )
     self.PLAYERS[PlayerName] = nil
-    self.PLAYERUNITS[UnitName] = PlayerName
+    self.PLAYERUNITS[PlayerName] = nil
   end
+end
+
+--- Get the player table from the DATABASE.
+-- The player table contains all unit names with the key the name of the player (PlayerName).
+-- @param #DATABASE self
+-- @usage
+--   local Players = _DATABASE:GetPlayers()
+--   for PlayerName, UnitName in pairs( Players ) do
+--     ..
+--   end
+function DATABASE:GetPlayers()
+  return self.PLAYERS
+end
+
+
+--- Get the player table from the DATABASE, which contains all UNIT objects.
+-- The player table contains all UNIT objects of the player with the key the name of the player (PlayerName).
+-- @param #DATABASE self
+-- @usage
+--   local PlayerUnits = _DATABASE:GetPlayerUnits()
+--   for PlayerName, PlayerUnit in pairs( PlayerUnits ) do
+--     ..
+--   end
+function DATABASE:GetPlayerUnits()
+  return self.PLAYERUNITS
+end
+
+
+--- Get the player table from the DATABASE which have joined in the mission historically.
+-- The player table contains all UNIT objects with the key the name of the player (PlayerName).
+-- @param #DATABASE self
+-- @usage
+--   local PlayersJoined = _DATABASE:GetPlayersJoined()
+--   for PlayerName, PlayerUnit in pairs( PlayersJoined ) do
+--     ..
+--   end
+function DATABASE:GetPlayersJoined()
+  return self.PLAYERSJOINED
 end
 
 

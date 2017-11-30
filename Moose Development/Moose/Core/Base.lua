@@ -718,9 +718,9 @@ do -- Scheduling
       nil
     )
     
-    self._.Schedules[#self.Schedules+1] = ScheduleID
+    self._.Schedules[#self._.Schedules+1] = ScheduleID
   
-    return self._.Schedules
+    return self._.Schedules[#self._.Schedules]
   end
 
   --- Schedule a new time event. Note that the schedule will only take place if the scheduler is *started*. Even for a single schedule event, the scheduler needs to be started also.
@@ -752,9 +752,9 @@ do -- Scheduling
       Stop
     )
     
-    self._.Schedules[SchedulerFunction] = ScheduleID
+    self._.Schedules[#self._.Schedules+1] = ScheduleID
   
-    return self._.Schedules
+    return self._.Schedules[#self._.Schedules]
   end
 
   --- Stops the Schedule.
