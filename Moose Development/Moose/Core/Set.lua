@@ -153,8 +153,10 @@ end
 function SET_BASE:Add( ObjectName, Object )
   self:F( ObjectName )
 
-  self.Set[ObjectName] = Object
-  table.insert( self.Index, ObjectName )
+  if not self.Set[ObjectName] then
+    self.Set[ObjectName] = Object
+    table.insert( self.Index, ObjectName )
+  end
 end
 
 --- Adds a @{Base#BASE} object in the @{Set#SET_BASE}, using the Object Name as the index.

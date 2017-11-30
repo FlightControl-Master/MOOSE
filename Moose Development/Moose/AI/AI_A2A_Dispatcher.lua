@@ -3007,7 +3007,7 @@ do -- AI_A2A_DISPATCHER
 
       do
         local DefendersMissing, Friendlies = self:EvaluateGCI( DetectedItem )
-        if DefendersMissing then
+        if DefendersMissing and DefendersMissing > 0 then
           self:F( { DefendersMissing = DefendersMissing } )
           self:GCI( DetectedItem, DefendersMissing, Friendlies )
         end
