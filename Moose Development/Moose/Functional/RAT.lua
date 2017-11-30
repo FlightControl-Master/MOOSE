@@ -104,7 +104,8 @@
 -- @field #boolean addfriendlydestinations Add all friendly airports to destinations.
 -- @field #table ratcraft Array with the spawned RAT aircraft.
 -- @field #number Tinactive Time in seconds after which inactive units will be destroyed. Default is 300 seconds.
--- @field #boolean reportstatus Aircraft report status.
+-- @field #boolean reportstatus Aircraft report status via in-game messages (defaults to false).
+-- @field #boolean reporterrors Errors are reported via in-game messages (defaults to false).
 -- @field #number statusinterval Intervall between status checks (and reports if enabled).
 -- @field #boolean placemarkers Place markers of waypoints on F10 map.
 -- @field #number FLcruise Cruise altitude of aircraft. Default FL200 for planes and F005 for helos.
@@ -324,7 +325,7 @@ RAT={
   ratcraft={},              -- Array with the spawned RAT aircraft.
   Tinactive=600,            -- Time in seconds after which inactive units will be destroyed. Default is 600 seconds.
   reportstatus=false,       -- Aircraft report status via in-game messages.
-  reporterrors=false,       -- Report RAT errors via in-game messages.
+  reporterrors=true,        -- Report RAT errors via in-game messages.
   statusinterval=30,        -- Intervall between status checks (and reports if enabled).
   placemarkers=false,       -- Place markers of waypoints on F10 map.
   FLcruise=nil,             -- Cruise altitude of aircraft. Default FL200 for planes and F005 for helos.
@@ -753,7 +754,7 @@ function RAT:_CheckConsistency()
       self.random_departure=true
       local text="No airports or zones found given in SetDeparture(). Enabling random departure airports!"
       self:E(RAT.id.."ERROR: "..text)
-      MESSAGE:New(text, 30):ToAll()
+      MESSAGE:New(text, 30):ToAllIf(self.reporterrors)
     end
   end
 
@@ -781,7 +782,7 @@ function RAT:_CheckConsistency()
       self.random_destination=true
       local text="No airports or zones found given in SetDestination(). Enabling random destination airports!"
       self:E(RAT.id.."ERROR: "..text)
-      MESSAGE:New(text, 30):ToAll()
+      MESSAGE:New(text, 30):ToAllIf(self.reporterrors)
     end
   end  
     
@@ -1829,7 +1830,7 @@ function RAT:_SetRoute(takeoff, landing, _departure, _destination, _waypoint)
   -- Return nil if no departure could be found.
   if not departure then
     local text=string.format("No valid departure airport could be found for %s.", self.alias)
-    MESSAGE:New(text, 60):ToAll()
+    MESSAGE:New(text, 60):ToAllIf(self.reporterrors)
     self:E(RAT.id.."ERROR: "..text)
     return nil
   end
@@ -1943,7 +1944,7 @@ function RAT:_SetRoute(takeoff, landing, _departure, _destination, _waypoint)
   -- Return nil if no departure could be found.
   if not destination then
     local text=string.format("No valid destination airport could be found for %s!", self.alias)
-    MESSAGE:New(text, 60):ToAll()
+    MESSAGE:New(text, 60):ToAllIf(self.reporterrors)
     self:E(RAT.id.."ERROR: "..text)
     return nil
   end
@@ -1951,7 +1952,7 @@ function RAT:_SetRoute(takeoff, landing, _departure, _destination, _waypoint)
   -- Check that departure and destination are not the same. Should not happen due to mindist.
   if destination:GetName()==departure:GetName() then
     local text=string.format("%s: Destination and departure are identical. Airport/zone %s.", self.alias, destination:GetName())
-    MESSAGE:New(text, 30):ToAll()
+    MESSAGE:New(text, 30):ToAllIf(self.reporterrors)
     self:E(RAT.id.."ERROR: "..text)
   end
   
@@ -2676,7 +2677,7 @@ function RAT:_GetAirportsOfCoalition()
     
   if #self.airports==0 then
     local text="No possible departure/destination airports found!"
-    MESSAGE:New(text, 60):ToAll()
+    MESSAGE:New(text, 60):ToAllIf(self.reporterrors)
     self:E(RAT.id.."ERROR: "..text)
   end
 end
@@ -2848,9 +2849,10 @@ function RAT:Status(message, forID)
   end
   
   if (message and not forID) then
+    -- Shoud this be an error ?
     local text=string.format("Alive groups of %s: %d", self.alias, self.alive)
     self:T(RAT.id..text)
-    MESSAGE:New(text, 20):ToAll()
+    MESSAGE:New(text, 20):ToAllIf(self.reportstatus)
   end  
   
 end
