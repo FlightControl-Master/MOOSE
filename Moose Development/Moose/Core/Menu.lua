@@ -149,6 +149,32 @@ function MENU_INDEX:ClearGroupMenu( Group, Path )
   self.Group[MenuGroupName].Menus[Path] = nil
 end
 
+function MENU_INDEX:Refresh( Group )
+
+    for MenuID, Menu in pairs( self.MenuMission.Menus ) do
+      Menu:Refresh()  
+    end 
+
+    for MenuID, Menu in pairs( self.Coalition[coalition.side.BLUE].Menus ) do
+      Menu:Refresh()  
+    end 
+
+    for MenuID, Menu in pairs( self.Coalition[coalition.side.RED].Menus ) do
+      Menu:Refresh()  
+    end 
+
+    local GroupName = Group:GetName()
+    for MenuID, Menu in pairs( self.Group[GroupName].Menus ) do
+      Menu:Refresh()  
+    end 
+
+end
+
+
+
+
+
+
 
 
 do -- MENU_BASE
@@ -267,8 +293,8 @@ do -- MENU_COMMAND_BASE
     -- This error handler catches the menu error and displays the full call stack.
     local ErrorHandler = function( errmsg )
       env.info( "MOOSE error in MENU COMMAND function: " .. errmsg )
-      if debug ~= nil then
-        env.info( debug.traceback() )
+      if BASE.Debug ~= nil then
+        env.info( BASE.Debug.traceback() )
       end
       return errmsg
     end
@@ -342,11 +368,23 @@ do -- MENU_MISSION
       local self = BASE:Inherit( self, MENU_BASE:New( MenuText, ParentMenu ) )
       MENU_INDEX:SetMissionMenu( Path, self )
       
-      self.MenuPath = missionCommands.addSubMenu( MenuText, self.MenuParentPath )
+      self.MenuPath = missionCommands.addSubMenu( self.MenuText, self.MenuParentPath )
       self:SetParentMenu( self.MenuText, self )
       return self
     end
   
+  end
+
+  --- Refreshes a radio item for a mission
+  -- @param #MENU_MISSION self
+  -- @return #MENU_MISSION
+  function MENU_MISSION:Refresh()
+
+    do
+      missionCommands.removeItem( self.MenuPath )
+      self.MenuPath = missionCommands.addSubMenu( self.MenuText, self.MenuParentPath )
+    end
+
   end
   
   --- Removes the sub menus recursively of this MENU_MISSION. Note that the main menu is kept!
@@ -375,7 +413,10 @@ do -- MENU_MISSION
       self:RemoveSubMenus()
       if not MenuTime or self.MenuTime ~= MenuTime then
         if ( not MenuTag ) or ( MenuTag and self.MenuTag and MenuTag == self.MenuTag ) then
-          missionCommands.removeItem( self.MenuPath )
+          self:E( { Text = self.MenuText, Path = self.MenuPath } )
+          if self.MenuPath ~= nil then
+            missionCommands.removeItem( self.MenuPath )
+          end
           MENU_INDEX:ClearMissionMenu( self.Path )
           self:ClearParentMenu( self.MenuText )
           return nil
@@ -432,6 +473,18 @@ do -- MENU_MISSION_COMMAND
       return self
     end
   end
+
+  --- Refreshes a radio item for a mission
+  -- @param #MENU_MISSION_COMMAND self
+  -- @return #MENU_MISSION_COMMAND
+  function MENU_MISSION_COMMAND:Refresh()
+
+    do
+      missionCommands.removeItem( self.MenuPath )
+      missionCommands.addCommand( self.MenuText, self.MenuParentPath, self.MenuCallHandler )
+    end
+
+  end
   
   --- Removes a radio command item for a coalition
   -- @param #MENU_MISSION_COMMAND self
@@ -445,7 +498,10 @@ do -- MENU_MISSION_COMMAND
     if MissionMenu == self then
       if not MenuTime or self.MenuTime ~= MenuTime then
         if ( not MenuTag ) or ( MenuTag and self.MenuTag and MenuTag == self.MenuTag ) then
-          missionCommands.removeItem( self.MenuPath )
+          self:E( { Text = self.MenuText, Path = self.MenuPath } )
+          if self.MenuPath ~= nil then
+            missionCommands.removeItem( self.MenuPath )
+          end
           MENU_INDEX:ClearMissionMenu( self.Path )
           self:ClearParentMenu( self.MenuText )
           return nil
@@ -540,6 +596,18 @@ do -- MENU_COALITION
       return self
     end
   end
+
+  --- Refreshes a radio item for a coalition
+  -- @param #MENU_COALITION self
+  -- @return #MENU_COALITION
+  function MENU_COALITION:Refresh()
+
+    do
+      missionCommands.removeItemForCoalition( self.Coalition, self.MenuPath )
+      missionCommands.addSubMenuForCoalition( self.Coalition, self.MenuText, self.MenuParentPath )
+    end
+
+  end
   
   --- Removes the sub menus recursively of this MENU_COALITION. Note that the main menu is kept!
   -- @param #MENU_COALITION self
@@ -566,7 +634,10 @@ do -- MENU_COALITION
       self:RemoveSubMenus()
       if not MenuTime or self.MenuTime ~= MenuTime then
         if ( not MenuTag ) or ( MenuTag and self.MenuTag and MenuTag == self.MenuTag ) then
-          missionCommands.removeItemForCoalition( self.Coalition, self.MenuPath )
+          self:E( { Coalition = self.Coalition, Text = self.MenuText, Path = self.MenuPath } )
+          if self.MenuPath ~= nil then
+            missionCommands.removeItemForCoalition( self.Coalition, self.MenuPath )
+          end
           MENU_INDEX:ClearCoalitionMenu( self.Coalition, Path )
           self:ClearParentMenu( self.MenuText )
           return nil
@@ -627,6 +698,19 @@ do -- MENU_COALITION_COMMAND
     end
 
   end
+
+
+  --- Refreshes a radio item for a coalition
+  -- @param #MENU_COALITION_COMMAND self
+  -- @return #MENU_COALITION_COMMAND
+  function MENU_COALITION_COMMAND:Refresh()
+
+    do
+      missionCommands.removeItemForCoalition( self.Coalition, self.MenuPath )
+      missionCommands.addCommandForCoalition( self.Coalition, self.MenuText, self.MenuParentPath, self.MenuCallHandler )
+    end
+
+  end
   
   --- Removes a radio command item for a coalition
   -- @param #MENU_COALITION_COMMAND self
@@ -638,10 +722,12 @@ do -- MENU_COALITION_COMMAND
     local CoalitionMenu = MENU_INDEX:HasCoalitionMenu( self.Coalition, Path )   
 
     if CoalitionMenu == self then
-      self:RemoveSubMenus()
       if not MenuTime or self.MenuTime ~= MenuTime then
         if ( not MenuTag ) or ( MenuTag and self.MenuTag and MenuTag == self.MenuTag ) then
-          missionCommands.removeItemForCoalition( self.Coalition, self.MenuPath )
+          self:E( { Coalition = self.Coalition, Text = self.MenuText, Path = self.MenuPath } )
+          if self.MenuPath ~= nil then
+            missionCommands.removeItemForCoalition( self.Coalition, self.MenuPath )
+          end
           MENU_INDEX:ClearCoalitionMenu( self.Coalition, Path )
           self:ClearParentMenu( self.MenuText )
           return nil
@@ -740,7 +826,7 @@ do
   
     MENU_INDEX:PrepareGroup( Group )
     local Path = MENU_INDEX:ParentPath( ParentMenu, MenuText )
-    local GroupMenu = MENU_INDEX:HasGroupMenu( Group, Path )   
+    local GroupMenu = MENU_INDEX:HasGroupMenu( Group, Path )
 
     if GroupMenu then
       return GroupMenu
@@ -756,6 +842,22 @@ do
       return self
     end
     
+  end
+
+  --- Refreshes a new radio item for a group and submenus
+  -- @param #MENU_GROUP self
+  -- @return #MENU_GROUP
+  function MENU_GROUP:Refresh()
+
+    do
+      missionCommands.removeItemForGroup( self.GroupID, self.MenuPath )
+      missionCommands.addSubMenuForGroup( self.GroupID, self.MenuText, self.MenuParentPath )
+      
+      for MenuText, Menu in pairs( self.Menus or {} ) do
+        Menu:Refresh()
+      end
+    end
+
   end
   
   --- Removes the sub menus recursively of this MENU_GROUP.
@@ -789,7 +891,10 @@ do
       self:RemoveSubMenus( MenuTime, MenuTag )
       if not MenuTime or self.MenuTime ~= MenuTime then
         if ( not MenuTag ) or ( MenuTag and self.MenuTag and MenuTag == self.MenuTag ) then
-          missionCommands.removeItemForGroup( self.GroupID, self.MenuPath )
+          self:E( { Group = self.GroupID, Text = self.MenuText, Path = self.MenuPath } )
+          if self.MenuPath ~= nil then
+            missionCommands.removeItemForGroup( self.GroupID, self.MenuPath )
+          end
           MENU_INDEX:ClearGroupMenu( self.Group, Path )
           self:ClearParentMenu( self.MenuText )
           return nil
@@ -851,6 +956,18 @@ do
     end
 
   end
+
+  --- Refreshes a radio item for a group
+  -- @param #MENU_GROUP_COMMAND self
+  -- @return #MENU_GROUP_COMMAND
+  function MENU_GROUP_COMMAND:Refresh()
+
+    do
+      missionCommands.removeItemForGroup( self.GroupID, self.MenuPath )
+      missionCommands.addCommandForGroup( self.GroupID, self.MenuText, self.MenuParentPath, self.MenuCallHandler )
+    end
+
+  end
   
   --- Removes a menu structure for a group.
   -- @param #MENU_GROUP_COMMAND self
@@ -866,7 +983,10 @@ do
     if GroupMenu == self then
       if not MenuTime or self.MenuTime ~= MenuTime then
         if ( not MenuTag ) or ( MenuTag and self.MenuTag and MenuTag == self.MenuTag ) then
-          missionCommands.removeItemForGroup( self.GroupID, self.MenuPath )
+          self:E( { Group = self.GroupID, Text = self.MenuText, Path = self.MenuPath } )
+          if self.MenuPath ~= nil then
+            missionCommands.removeItemForGroup( self.GroupID, self.MenuPath )
+          end
           MENU_INDEX:ClearGroupMenu( self.Group, Path )
           self:ClearParentMenu( self.MenuText )
           return nil

@@ -281,8 +281,22 @@ function SCORING:New( GameName )
   self:HandleEvent( EVENTS.Dead, self._EventOnDeadOrCrash )
   self:HandleEvent( EVENTS.Crash, self._EventOnDeadOrCrash )
   self:HandleEvent( EVENTS.Hit, self._EventOnHit )
+  self:HandleEvent( EVENTS.Birth )
   self:HandleEvent( EVENTS.PlayerEnterUnit )
   self:HandleEvent( EVENTS.PlayerLeaveUnit )
+  
+  -- During mission startup, especially for single player, 
+  -- iterate the database for the player that has joined, and add him to the scoring, and set the menu.
+  -- But this can only be started one second after the mission has started, so i need to schedule this ...
+  self.ScoringPlayerScan = BASE:ScheduleOnce( 1, 
+    function()
+      for PlayerName, PlayerUnit in pairs( _DATABASE:GetPlayerUnits() ) do 
+        self:_AddPlayerFromUnit( PlayerUnit )
+        self:SetScoringMenu( PlayerUnit:GetGroup() )
+      end
+    end
+  )
+  
 
   -- Create the CSV file.
   self:OpenCSV( GameName )
@@ -569,6 +583,19 @@ function SCORING:SetCoalitionChangePenalty( CoalitionChangePenalty )
 end
 
 
+--- Sets the scoring menu.
+-- @param #SCORING self
+-- @return #SCORING
+function SCORING:SetScoringMenu( ScoringGroup )
+    local Menu = MENU_GROUP:New( ScoringGroup, 'Scoring' )
+    local ReportGroupSummary = MENU_GROUP_COMMAND:New( ScoringGroup, 'Summary report players in group', Menu, SCORING.ReportScoreGroupSummary, self, ScoringGroup )
+    local ReportGroupDetailed = MENU_GROUP_COMMAND:New( ScoringGroup, 'Detailed report players in group', Menu, SCORING.ReportScoreGroupDetailed, self, ScoringGroup )
+    local ReportToAllSummary = MENU_GROUP_COMMAND:New( ScoringGroup, 'Summary report all players', Menu, SCORING.ReportScoreAllSummary, self, ScoringGroup )
+    self:SetState( ScoringGroup, "ScoringMenu", Menu )
+  return self
+end
+
+
 --- Add a new player entering a Unit.
 -- @param #SCORING self
 -- @param Wrapper.Unit#UNIT UnitData
@@ -811,17 +838,14 @@ function SCORING:_AddMissionScore( Mission, Text, Score )
 end
 
 
+
 --- Handles the OnPlayerEnterUnit event for the scoring.
 -- @param #SCORING self
 -- @param Core.Event#EVENTDATA Event
 function SCORING:OnEventPlayerEnterUnit( Event )
   if Event.IniUnit then
     self:_AddPlayerFromUnit( Event.IniUnit )
-    local Menu = MENU_GROUP:New( Event.IniGroup, 'Scoring' )
-    local ReportGroupSummary = MENU_GROUP_COMMAND:New( Event.IniGroup, 'Summary report players in group', Menu, SCORING.ReportScoreGroupSummary, self, Event.IniGroup )
-    local ReportGroupDetailed = MENU_GROUP_COMMAND:New( Event.IniGroup, 'Detailed report players in group', Menu, SCORING.ReportScoreGroupDetailed, self, Event.IniGroup )
-    local ReportToAllSummary = MENU_GROUP_COMMAND:New( Event.IniGroup, 'Summary report all players', Menu, SCORING.ReportScoreAllSummary, self, Event.IniGroup )
-    self:SetState( Event.IniUnit, "ScoringMenu", Menu )
+    self:SetScoringMenu( Event.IniGroup )
   end
 end
 
@@ -830,7 +854,7 @@ end
 -- @param Core.Event#EVENTDATA Event
 function SCORING:OnEventPlayerLeaveUnit( Event )
   if Event.IniUnit then
-    local Menu = self:GetState( Event.IniUnit, "ScoringMenu" ) -- Core.Menu#MENU_GROUP
+    local Menu = self:GetState( Event.IniUnit:GetGroup(), "ScoringMenu" ) -- Core.Menu#MENU_GROUP
     if Menu then
       -- TODO: Check if this fixes #281.
       --Menu:Remove()
@@ -1661,9 +1685,11 @@ function SCORING:ReportScoreAllSummary( PlayerGroup )
 
   local PlayerMessage = ""
 
-  self:T( "Report Score All Players" )
+  self:T( { "Summary Score Report of All Players", Players = self.Players } )
 
   for PlayerName, PlayerData in pairs( self.Players ) do
+  
+    self:T( { PlayerName = PlayerName, PlayerGroup = PlayerGroup } )
     
     if PlayerName then
     
