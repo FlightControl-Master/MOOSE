@@ -4001,7 +4001,7 @@ end
 function RAT:_ATCInit(airports_map)
   if not RAT.ATC.init then
     local text
-	text="Starting RAT ATC.\nSimultanious = "..RAT.ATC.Nclearance.."\n".."Delay        = "..RAT.ATC.delay)
+	text="Starting RAT ATC.\nSimultanious = "..RAT.ATC.Nclearance.."\n".."Delay        = "..RAT.ATC.delay
 	self:T(RAT.id..text)
     RAT.ATC.init=true
     for _,ap in pairs(airports_map) do
