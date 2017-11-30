@@ -293,8 +293,8 @@ do -- MENU_COMMAND_BASE
     -- This error handler catches the menu error and displays the full call stack.
     local ErrorHandler = function( errmsg )
       env.info( "MOOSE error in MENU COMMAND function: " .. errmsg )
-      if debug ~= nil then
-        env.info( debug.traceback() )
+      if BASE.Debug ~= nil then
+        env.info( BASE.Debug.traceback() )
       end
       return errmsg
     end
@@ -413,7 +413,10 @@ do -- MENU_MISSION
       self:RemoveSubMenus()
       if not MenuTime or self.MenuTime ~= MenuTime then
         if ( not MenuTag ) or ( MenuTag and self.MenuTag and MenuTag == self.MenuTag ) then
-          missionCommands.removeItem( self.MenuPath )
+          self:E( { Text = self.MenuText, Path = self.MenuPath } )
+          if self.MenuPath ~= nil then
+            missionCommands.removeItem( self.MenuPath )
+          end
           MENU_INDEX:ClearMissionMenu( self.Path )
           self:ClearParentMenu( self.MenuText )
           return nil
@@ -495,7 +498,10 @@ do -- MENU_MISSION_COMMAND
     if MissionMenu == self then
       if not MenuTime or self.MenuTime ~= MenuTime then
         if ( not MenuTag ) or ( MenuTag and self.MenuTag and MenuTag == self.MenuTag ) then
-          missionCommands.removeItem( self.MenuPath )
+          self:E( { Text = self.MenuText, Path = self.MenuPath } )
+          if self.MenuPath ~= nil then
+            missionCommands.removeItem( self.MenuPath )
+          end
           MENU_INDEX:ClearMissionMenu( self.Path )
           self:ClearParentMenu( self.MenuText )
           return nil
@@ -628,7 +634,10 @@ do -- MENU_COALITION
       self:RemoveSubMenus()
       if not MenuTime or self.MenuTime ~= MenuTime then
         if ( not MenuTag ) or ( MenuTag and self.MenuTag and MenuTag == self.MenuTag ) then
-          missionCommands.removeItemForCoalition( self.Coalition, self.MenuPath )
+          self:E( { Coalition = self.Coalition, Text = self.MenuText, Path = self.MenuPath } )
+          if self.MenuPath ~= nil then
+            missionCommands.removeItemForCoalition( self.Coalition, self.MenuPath )
+          end
           MENU_INDEX:ClearCoalitionMenu( self.Coalition, Path )
           self:ClearParentMenu( self.MenuText )
           return nil
@@ -713,10 +722,12 @@ do -- MENU_COALITION_COMMAND
     local CoalitionMenu = MENU_INDEX:HasCoalitionMenu( self.Coalition, Path )   
 
     if CoalitionMenu == self then
-      self:RemoveSubMenus()
       if not MenuTime or self.MenuTime ~= MenuTime then
         if ( not MenuTag ) or ( MenuTag and self.MenuTag and MenuTag == self.MenuTag ) then
-          missionCommands.removeItemForCoalition( self.Coalition, self.MenuPath )
+          self:E( { Coalition = self.Coalition, Text = self.MenuText, Path = self.MenuPath } )
+          if self.MenuPath ~= nil then
+            missionCommands.removeItemForCoalition( self.Coalition, self.MenuPath )
+          end
           MENU_INDEX:ClearCoalitionMenu( self.Coalition, Path )
           self:ClearParentMenu( self.MenuText )
           return nil
@@ -880,7 +891,10 @@ do
       self:RemoveSubMenus( MenuTime, MenuTag )
       if not MenuTime or self.MenuTime ~= MenuTime then
         if ( not MenuTag ) or ( MenuTag and self.MenuTag and MenuTag == self.MenuTag ) then
-          missionCommands.removeItemForGroup( self.GroupID, self.MenuPath )
+          self:E( { Group = self.GroupID, Text = self.MenuText, Path = self.MenuPath } )
+          if self.MenuPath ~= nil then
+            missionCommands.removeItemForGroup( self.GroupID, self.MenuPath )
+          end
           MENU_INDEX:ClearGroupMenu( self.Group, Path )
           self:ClearParentMenu( self.MenuText )
           return nil
@@ -969,7 +983,10 @@ do
     if GroupMenu == self then
       if not MenuTime or self.MenuTime ~= MenuTime then
         if ( not MenuTag ) or ( MenuTag and self.MenuTag and MenuTag == self.MenuTag ) then
-          missionCommands.removeItemForGroup( self.GroupID, self.MenuPath )
+          self:E( { Group = self.GroupID, Text = self.MenuText, Path = self.MenuPath } )
+          if self.MenuPath ~= nil then
+            missionCommands.removeItemForGroup( self.GroupID, self.MenuPath )
+          end
           MENU_INDEX:ClearGroupMenu( self.Group, Path )
           self:ClearParentMenu( self.MenuText )
           return nil
@@ -979,8 +996,6 @@ do
     
     return self
   end
-  
-  
 
 end
 

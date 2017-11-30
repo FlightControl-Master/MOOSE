@@ -562,8 +562,8 @@ do -- FSM
     local ErrorHandler = function( errmsg )
   
       env.info( "Error in SCHEDULER function:" .. errmsg )
-      if debug ~= nil then
-        env.info( debug.traceback() )
+      if BASE.Debug ~= nil then
+        env.info( BASE.Debug.traceback() )
       end
       
       return errmsg
@@ -860,8 +860,8 @@ do -- FSM_CONTROLLABLE
     local ErrorHandler = function( errmsg )
   
       env.info( "Error in SCHEDULER function:" .. errmsg )
-      if debug ~= nil then
-        env.info( debug.traceback() )
+      if BASE.Debug ~= nil then
+        env.info( BASE.Debug.traceback() )
       end
       
       return errmsg
@@ -920,8 +920,8 @@ do -- FSM_PROCESS
     local ErrorHandler = function( errmsg )
   
       env.info( "Error in FSM_PROCESS call handler:" .. errmsg )
-      if debug ~= nil then
-        env.info( debug.traceback() )
+      if BASE.Debug ~= nil then
+        env.info( BASE.Debug.traceback() )
       end
       
       return errmsg

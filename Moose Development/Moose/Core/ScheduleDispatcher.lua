@@ -91,8 +91,8 @@ function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleAr
 
     local ErrorHandler = function( errmsg )
       env.info( "Error in timer function: " .. errmsg )
-      if debug ~= nil then
-        env.info( debug.traceback() )
+      if BASE.Debug ~= nil then
+        env.info( BASE.Debug.traceback() )
       end
       return errmsg
     end

@@ -1085,14 +1085,16 @@ do -- DESIGNATE
                           self.LaserCodesUsed[LaserCode] = LaserCodeIndex
                           local Spot = RecceUnit:LaseUnit( TargetUnit, LaserCode, Duration )
                           local AttackSet = self.AttackSet
+                          local DesignateName = self.DesignateName
     
                           function Spot:OnAfterDestroyed( From, Event, To )
-                            self:E( "Destroyed Message" )
-                            self.Recce:ToSetGroup( "Target " .. TargetUnit:GetTypeName() .. " destroyed. " .. TargetSetUnit:Count() .. " targets left.", 5, AttackSet, self.DesignateName )
+                            self.Recce:MessageToSetGroup( "Target " .. TargetUnit:GetTypeName() .. " destroyed. " .. TargetSetUnit:Count() .. " targets left.", 
+                                                          5, AttackSet, self.DesignateName )
                           end
     
                           self.Recces[TargetUnit] = RecceUnit
-                          RecceUnit:MessageToSetGroup( "Marking " .. TargetUnit:GetTypeName() .. " with laser " .. RecceUnit:GetSpot().LaserCode .. " for " .. Duration .. "s.", 5, self.AttackSet, self.DesignateName )
+                          RecceUnit:MessageToSetGroup( "Marking " .. TargetUnit:GetTypeName() .. " with laser " .. RecceUnit:GetSpot().LaserCode .. " for " .. Duration .. "s.", 
+                                                       5, self.AttackSet, DesignateName )
                           -- OK. We have assigned for the Recce a TargetUnit. We can exit the function.
                           MarkingCount = MarkingCount + 1
                           local TargetUnitType = TargetUnit:GetTypeName()
