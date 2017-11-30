@@ -63,7 +63,7 @@
 --- RAT class
 -- @type RAT
 -- @field #string ClassName Name of the Class.
--- @field #boolean debug Turn debug messages on or off.
+-- @field #boolean Debug Turn debug messages on or off.
 -- @field Core.Group#GROUP templategroup Group serving as template for the RAT aircraft.
 -- @field #string alias Alias for spawned group.
 -- @field #boolean spawninitialized If RAT:Spawn() was already called this RAT object is set to true to prevent users to call it again.
@@ -282,7 +282,7 @@
 -- @field #RAT
 RAT={
   ClassName = "RAT",        -- Name of class: RAT = Random Air Traffic.
-  debug=false,              -- Turn debug messages on or off.
+  Debug=false,              -- Turn debug messages on or off.
   templategroup=nil,        -- Template group for the RAT aircraft.
   alias=nil,                -- Alias for spawned group.
   spawninitialized=false,   -- If RAT:Spawn() was already called this is set to true to prevent users to call it again.
@@ -448,6 +448,7 @@ RAT.ATC={
   onfinal=-100,
   Nclearance=2,
   delay=240,
+  messages=true,
 }
 
 --- Running number of placed markers on the F10 map.
@@ -464,7 +465,7 @@ RAT.id="RAT | "
 
 --- RAT version.
 -- @field #string version
-RAT.version="2.0.1"
+RAT.version="2.0.2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -1255,6 +1256,16 @@ function RAT:EnableATC(switch)
   self.ATCswitch=switch
 end
 
+--- Turn messages from ATC on or off. Default is on. This setting effects all RAT objects and groups!
+-- @param #RAT self
+-- @param #boolean switch Enable (true) or disable (false) messages from ATC. 
+function RAT:ATC_Messages(switch)
+  if switch==nil then
+    switch=true
+  end
+  RAT.ATC.messages=switch
+end
+
 --- Max number of planes that get landing clearance of the RAT ATC. This setting effects all RAT objects and groups! 
 -- @param #RAT self
 -- @param #number n Number of aircraft that are allowed to land simultaniously. Default is 2.
@@ -1293,7 +1304,7 @@ function RAT:_Debug(switch)
   if switch==nil then
     switch=true
   end
-  self.debug=switch
+  self.Debug=switch
 end
 
 --- Aircraft report status update messages along the route.
@@ -1381,7 +1392,7 @@ function RAT:_InitAircraft(DCSgroup)
   local DCStype=DCSunit:getTypeName()
  
   -- Descriptors table of unit.
-  if self.debug then
+  if self.Debug then
     self:E({"DCSdesc", DCSdesc})
   end
   
@@ -1710,8 +1721,7 @@ function RAT:_Respawn(group)
     _lastwp=lastwp
   end
   
-  if self.debug then
-    local text
+  if self.Debug then
 	text=string.format("self.takeoff, takeoff, _takeoff = %s, %s, %s", tostring(self.takeoff), tostring(takeoff), tostring(_takeoff))
 	text=text.."\n"..string.format("self.landing, landing, _landing = %s, %s, %s", tostring(self.landing), tostring(landing), tostring(_landing))
 	self:T(RAT.id..text)
@@ -2166,7 +2176,7 @@ function RAT:_SetRoute(takeoff, landing, _departure, _destination, _waypoint)
   text=text..string.format("Phi (slope)   = %6.2f Deg\n",   math.deg(phi))
   text=text..string.format("Phi climb     = %6.2f Deg\n",   math.deg(phi_climb))
   text=text..string.format("Phi descent   = %6.2f Deg\n",   math.deg(phi_descent))
-  if self.debug then
+  if self.Debug then
     -- Max heights and distances if we would travel at FLmax.
     local h_climb_max   = FLmax - H_departure
     local h_descent_max = FLmax - Hh_holding
@@ -2407,7 +2417,7 @@ function RAT:_PickDeparture(takeoff)
       text="Chosen departure airport: "..departure:GetName().." (ID "..departure:GetID()..")"
     end
     self:T(RAT.id..text)
-    if self.debug then
+    if self.Debug then
       MESSAGE:New(text, 30):ToAll()
     end
   else
@@ -2533,7 +2543,7 @@ function RAT:_PickDestination(departure, q, minrange, maxrange, random, landing)
       text=string.format("Chosen destination airport: %s (ID %d).", destination:GetName(), destination:GetID())
     end
     self:T(RAT.id..text)
-    if self.debug then
+    if self.Debug then
       MESSAGE:New(text, 30):ToAll()
     end
     
@@ -2623,7 +2633,7 @@ function RAT:_GetAirportsOfMap()
       -- Add airport to table.
       table.insert(self.airports_map, _myab)
       
-      if self.debug then
+      if self.Debug then
         local text1="MOOSE: Airport ID = ".._myab:GetID().." and Name = ".._myab:GetName()..", Category = ".._myab:GetCategory()..", TypeName = ".._myab:GetTypeName()
         --local text2="DCS  : Airport ID = "..airbase:getID().." and Name = "..airbase:getName()..", Category = "..airbase:getCategory()..", TypeName = "..airbase:getTypeName()
         self:T(RAT.id..text1)
@@ -2785,7 +2795,7 @@ function RAT:Status(message, forID)
             text=text..string.format("\nTime on ground  = %6.0f seconds\n", Tg)
             text=text..string.format("Position change = %8.1f m since %3.0f seconds.", Dg, dTlast)
           end
-          if self.debug then
+          if self.Debug then
             self:T(RAT.id..text)
           end
           if message then
@@ -2818,7 +2828,7 @@ function RAT:Status(message, forID)
         end
       end       
     else
-      if self.debug then
+      if self.Debug then
         local text=string.format("Group %i does not exist.", i)
         self:T(RAT.id..text)
       end
@@ -2844,12 +2854,12 @@ function RAT:_GetLife(group)
     if unit then
       life=unit:GetLife()/unit:GetLife0()*100
     else
-      if self.debug then
+      if self.Debug then
         self:E(RAT.id.."ERROR: Unit does not exist in RAT_Getlife(). Returning zero.")
       end
     end
   else
-    if self.debug then
+    if self.Debug then
       self:E(RAT.id.."ERROR: Group does not exist in RAT_Getlife(). Returning zero.")
     end
   end
@@ -2915,7 +2925,7 @@ function RAT:_OnBirth(EventData)
       end
     end
   else
-    if self.debug then
+    if self.Debug then
       self:E(RAT.id.."ERROR: Group does not exist in RAT:_OnBirthDay().")
     end
   end
@@ -2954,7 +2964,7 @@ function RAT:_EngineStartup(EventData)
     end
     
   else
-    if self.debug then
+    if self.Debug then
       self:E(RAT.id.."ERROR: Group does not exist in RAT:_EngineStartup().")
     end
   end
@@ -2996,7 +3006,7 @@ function RAT:_OnTakeoff(EventData)
     end
     
   else
-    if self.debug then
+    if self.Debug then
       self:E(RAT.id.."ERROR: Group does not exist in RAT:_OnTakeoff().")
     end
   end
@@ -3043,7 +3053,7 @@ function RAT:_OnLand(EventData)
     end
     
   else
-    if self.debug then
+    if self.Debug then
       self:E(RAT.id.."ERROR: Group does not exist in RAT:_OnLand().")
     end
   end
@@ -3090,7 +3100,7 @@ function RAT:_OnEngineShutdown(EventData)
     end
     
   else
-    if self.debug then
+    if self.Debug then
       self:E(RAT.id.."ERROR: Group does not exist in RAT:_OnEngineShutdown().")
     end
   end
@@ -3124,7 +3134,7 @@ function RAT:_OnDead(EventData)
     end
 
   else
-    if self.debug then
+    if self.Debug then
       self:E(RAT.id.."ERROR: Group does not exist in RAT:_OnDead().")
     end
   end
@@ -3164,7 +3174,7 @@ function RAT:_OnCrash(EventData)
     end
     
   else
-    if self.debug then
+    if self.Debug then
       self:E(RAT.id.."ERROR: Group does not exist in RAT:_OnCrash().")
     end
   end
@@ -3295,7 +3305,7 @@ function RAT:_Waypoint(index, Type, Coord, Speed, Altitude, Airport)
     text=text..string.format("No airport/zone specified\n")
   end
   text=text.."******************************************************\n"
-  if self.debug then
+  if self.Debug then
     self:T(RAT.id..text)
   end
     
@@ -3402,7 +3412,7 @@ function RAT:_Routeinfo(waypoints, comment)
   text=text..string.format("******************************************************\n")
   
   -- send message
-  if self.debug then
+  if self.Debug then
     --self:T(RAT.id..text)
   end
   self:T(RAT.id..text)
@@ -3516,7 +3526,7 @@ function RAT._WaypointFunction(group, rat, wp)
   
     if landing==RAT.wp.air then
       text=string.format("Activating despawn switch for flight %s! Group will be detroyed soon.", group:GetName())
-      MESSAGE:New(text, 30):ToAllIf(rat.debug)
+      MESSAGE:New(text, 30):ToAllIf(rat.Debug)
       self:T(RAT.id..text)
       -- Enable despawn switch. Next time the status function is called, the aircraft will be despawned.
       rat.ratcraft[sdx].despawnme=true
@@ -3594,7 +3604,7 @@ function RAT:_FLmax(alpha, beta, d, phi, h0)
   local text=string.format("\nFLmax = FL%3.0f = %6.1f m.\n", h1/RAT.unit.FL2m, h1)
   text=text..string.format(  "FLmax = FL%3.0f = %6.1f m.\n", h2/RAT.unit.FL2m, h2)
   text=text..string.format(  "FLmax = FL%3.0f = %6.1f m.",   h3/RAT.unit.FL2m, h3)
-  if self.debug then
+  if self.Debug then
     self:T(RAT.id..text)
   end
   return h3+h0
@@ -3784,7 +3794,7 @@ function RAT:_Randomize(value, fac, lower, upper)
   local r=math.random(min, max)
   
   -- debug info
-  if self.debug then
+  if self.Debug then
     local text=string.format("Random: value = %6.2f, fac = %4.2f, min = %6.2f, max = %6.2f, r = %6.2f", value, fac, min, max, r)
     self:T(RAT.id..text)
   end
@@ -3832,7 +3842,7 @@ end
 function RAT:_PlaceMarkers(waypoints, index)
   for i=1,#waypoints do
     self:_SetMarker(self.waypointdescriptions[i], waypoints[i], index)
-    if self.debug then
+    if self.Debug then
       local text=string.format("Marker at waypoint #%d: %s for flight #%d", i, self.waypointdescriptions[i], index)
       self:T(RAT.id..text)
     end
@@ -3848,7 +3858,7 @@ end
 function RAT:_SetMarker(text, wp, index)
   RAT.markerid=RAT.markerid+1
   self.markerids[#self.markerids+1]=RAT.markerid
-  if self.debug then
+  if self.Debug then
     self:T(RAT.id..self.SpawnTemplatePrefix..": placing marker with ID "..RAT.markerid..": "..text)
   end
   -- Convert to coordinate.
@@ -4175,7 +4185,7 @@ function RAT:_ATCClearForLanding(airport, flight)
   local text1=string.format("ATC %s: Flight %s cleared for landing (flag=%d).", airport, flight, flagvalue)
   local text2=string.format("ATC %s: Flight %s you are cleared for landing.", airport, flight)
   self:T( RAT.id..text1)
-  MESSAGE:New(text2, 10):ToAll()
+  MESSAGE:New(text2, 10):ToAllIf(RAT.ATC.messages)
 end
 
 --- Takes care of organisational stuff after a plane has landed.
@@ -4219,7 +4229,7 @@ function RAT:_ATCFlightLanded(name)
     self:T(RAT.id..text1)
     self:T(RAT.id..text2)
     self:T(RAT.id..text3)
-    MESSAGE:New(text4, 10):ToAll()
+    MESSAGE:New(text4, 10):ToAllIf(RAT.ATC.messages)
   end
   
 end
