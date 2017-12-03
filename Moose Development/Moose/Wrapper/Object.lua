@@ -58,7 +58,6 @@ end
 -- @return Dcs.DCSWrapper.Object#Object.ID ObjectID
 -- @return #nil The DCS Object is not existing or alive.  
 function OBJECT:GetID()
-  self:F2( self.ObjectName )
 
   local DCSObject = self:GetDCSObject()
   
@@ -67,6 +66,8 @@ function OBJECT:GetID()
     return ObjectID
   end 
 
+  BASE:E( { "Cannot GetID", Name = self.ObjectName, Class = self:GetClassName() } )
+
   return nil
 end
 
@@ -74,7 +75,6 @@ end
 -- @param #OBJECT self
 -- @return #nil The DCS Unit is not existing or alive.  
 function OBJECT:Destroy()
-  self:F2( self.ObjectName )
 
   local DCSObject = self:GetDCSObject()
   
@@ -82,6 +82,8 @@ function OBJECT:Destroy()
     --BASE:CreateEventCrash( timer.getTime(), DCSObject )
     DCSObject:destroy()
   end
+
+  BASE:E( { "Cannot Destroy", Name = self.ObjectName, Class = self:GetClassName() } )
 
   return nil
 end

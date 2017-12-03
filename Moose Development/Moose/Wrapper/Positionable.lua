@@ -600,9 +600,16 @@ function POSITIONABLE:MessageToGroup( Message, Duration, MessageGroup, Name )
   local DCSObject = self:GetDCSObject()
   if DCSObject then
     if DCSObject:isExist() then
-      self:GetMessage( Message, Duration, Name ):ToGroup( MessageGroup )
+      if MessageGroup:IsAlive() then
+        self:GetMessage( Message, Duration, Name ):ToGroup( MessageGroup )
+      else
+        BASE:E( { "Message not sent to Group; Group is not alive...", Message = Message, MessageGroup = MessageGroup } )
+      end
+    else
+      BASE:E( { "Message not sent to Group; Positionable is not alive ...", Message = Message, Positionable = self, MessageGroup = MessageGroup } )
     end
   end
+  
 
   return nil
 end
