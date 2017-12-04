@@ -422,6 +422,8 @@ do -- MENU_MISSION
           return nil
         end
       end
+    else
+      BASE:E( { "Cannot Remove MENU_MISSION", Path = Path, ParentMenu = self.ParentMenu, MenuText = self.MenuText } )
     end
   
     return self
@@ -507,6 +509,8 @@ do -- MENU_MISSION_COMMAND
           return nil
         end
       end
+    else
+      BASE:E( { "Cannot Remove MENU_MISSION_COMMAND", Path = Path, ParentMenu = self.ParentMenu, MenuText = self.MenuText } )
     end
   
     return self
@@ -643,6 +647,8 @@ do -- MENU_COALITION
           return nil
         end
       end
+    else
+      BASE:E( { "Cannot Remove MENU_COALITION", Path = Path, ParentMenu = self.ParentMenu, MenuText = self.MenuText, Coalition = self.Coalition } )
     end
   
     return self
@@ -733,6 +739,8 @@ do -- MENU_COALITION_COMMAND
           return nil
         end
       end
+    else
+      BASE:E( { "Cannot Remove MENU_COALITION_COMMAND", Path = Path, ParentMenu = self.ParentMenu, MenuText = self.MenuText, Coalition = self.Coalition } )
     end
   
     return self
@@ -901,7 +909,7 @@ do
         end
       end
     else
-      error( "Remove: Not a correct path" )
+      BASE:E( { "Cannot Remove MENU_GROUP", Path = Path, ParentMenu = self.ParentMenu, MenuText = self.MenuText, Group = self.Group } )
       return nil
     end
   
@@ -992,6 +1000,8 @@ do
           return nil
         end
       end
+    else
+      BASE:E( { "Cannot Remove MENU_GROUP_COMMAND", Path = Path, ParentMenu = self.ParentMenu, MenuText = self.MenuText, Group = self.Group } )
     end
     
     return self

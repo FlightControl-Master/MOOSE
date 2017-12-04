@@ -689,8 +689,9 @@ do -- DESIGNATE
           -- This Detection is obsolete, remove from the designate scope
           self.Designating[DesignateIndex] = nil
           self.AttackSet:ForEachGroup(
+            --- @param Wrapper.Group#GROUP AttackGroup
             function( AttackGroup )
-              if AttackGroup:IsAlive() then
+              if AttackGroup:IsAlive() == true then
                 local DetectionText = self.Detection:DetectedItemReportSummary( DesignateIndex, AttackGroup ):Text( ", " )
                 self.CC:GetPositionable():MessageToGroup( "Targets out of LOS\n" .. DetectionText, 10, AttackGroup, self.DesignateName )
               end

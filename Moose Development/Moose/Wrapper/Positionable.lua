@@ -85,6 +85,8 @@ function POSITIONABLE:GetPositionVec3()
     return PositionablePosition
   end
   
+  BASE:E( { "Cannot GetPositionVec3", Positionable = self, Alive = self:IsAlive() } )
+
   return nil
 end
 
@@ -108,6 +110,8 @@ function POSITIONABLE:GetVec2()
     return PositionableVec2
   end
   
+  BASE:E( { "Cannot GetVec2", Positionable = self, Alive = self:IsAlive() } )
+
   return nil
 end
 
@@ -129,6 +133,8 @@ function POSITIONABLE:GetPointVec2()
     return PositionablePointVec2
   end
   
+  BASE:E( { "Cannot GetPointVec2", Positionable = self, Alive = self:IsAlive() } )
+
   return nil
 end
 
@@ -149,6 +155,8 @@ function POSITIONABLE:GetPointVec3()
     self:T2( PositionablePointVec3 )
     return PositionablePointVec3
   end
+
+  BASE:E( { "Cannot GetPointVec3", Positionable = self, Alive = self:IsAlive() } )
   
   return nil
 end
@@ -171,6 +179,8 @@ function POSITIONABLE:GetCoordinate()
     self:T2( PositionableCoordinate )
     return PositionableCoordinate
   end
+  
+  BASE:E( { "Cannot GetCoordinate", Positionable = self, Alive = self:IsAlive() } )
   
   return nil
 end
@@ -206,6 +216,8 @@ function POSITIONABLE:GetRandomVec3( Radius )
     end
   end
   
+  BASE:E( { "Cannot GetRandomVec3", Positionable = self, Alive = self:IsAlive() } )
+
   return nil
 end
 
@@ -224,6 +236,8 @@ function POSITIONABLE:GetVec3()
     return PositionableVec3
   end
   
+  BASE:E( { "Cannot GetVec3", Positionable = self, Alive = self:IsAlive() } )
+
   return nil
 end
 
@@ -245,6 +259,8 @@ function POSITIONABLE:GetBoundingBox() --R2.1
     end
   end
   
+  BASE:E( { "Cannot GetBoundingBox", Positionable = self, Alive = self:IsAlive() } )
+
   return nil
 end
 
@@ -263,6 +279,8 @@ function POSITIONABLE:GetAltitude()
     return PositionablePointVec3.y
   end
   
+  BASE:E( { "Cannot GetAltitude", Positionable = self, Alive = self:IsAlive() } )
+
   return nil
 end 
 
@@ -284,6 +302,8 @@ function POSITIONABLE:IsAboveRunway()
     self:T2( IsAboveRunway )
     return IsAboveRunway
   end
+
+  BASE:E( { "Cannot IsAboveRunway", Positionable = self, Alive = self:IsAlive() } )
 
   return nil
 end
@@ -311,6 +331,8 @@ function POSITIONABLE:GetHeading()
     end
   end
   
+  BASE:E( { "Cannot GetHeading", Positionable = self, Alive = self:IsAlive() } )
+
   return nil
 end
 
@@ -341,6 +363,8 @@ function POSITIONABLE:GetVelocity()
     return Velocity
   end
   
+  BASE:E( { "Cannot GetVelocity", Positionable = self, Alive = self:IsAlive() } )
+
   return nil
 end
 
@@ -361,6 +385,8 @@ function POSITIONABLE:GetVelocityVec3()
     return PositionableVelocityVec3
   end
   
+  BASE:E( { "Cannot GetVelocityVec3", Positionable = self, Alive = self:IsAlive() } )
+
   return nil
 end
 

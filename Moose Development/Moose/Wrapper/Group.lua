@@ -485,6 +485,8 @@ function GROUP:GetCallsign()
     return GroupCallSign
   end
 
+  BASE:E( { "Cannot GetCallsign", Positionable = self, Alive = self:IsAlive() } )
+
   return nil
 end
 
@@ -527,6 +529,8 @@ function GROUP:GetPointVec2()
     return FirstUnitPointVec2
   end
   
+  BASE:E( { "Cannot GetPointVec2", Group = self, Alive = self:IsAlive() } )
+
   return nil
 end
 
@@ -544,6 +548,8 @@ function GROUP:GetCoordinate()
     return FirstUnitCoordinate
   end
   
+  BASE:E( { "Cannot GetCoordinate", Group = self, Alive = self:IsAlive() } )
+
   return nil
 end
 
@@ -566,6 +572,8 @@ function GROUP:GetRandomVec3(Radius)
     return FirstUnitRandomPointVec3
   end
   
+  BASE:E( { "Cannot GetRandomVec3", Group = self, Alive = self:IsAlive() } )
+
   return nil
 end
 
@@ -586,6 +594,8 @@ function GROUP:GetHeading()
     return math.floor(HeadingAccumulator / GroupSize)
   end
   
+  BASE:E( { "Cannot GetHeading", Group = self, Alive = self:IsAlive() } )
+
   return nil
   
 end
@@ -612,6 +622,8 @@ function GROUP:GetFuel()
     return GroupFuel
   end
   
+  BASE:E( { "Cannot GetFuel", Group = self, Alive = self:IsAlive() } )
+
   return 0
 end
 

@@ -716,6 +716,25 @@ function SET_GROUP:New()
   return self
 end
 
+--- Gets the Set.
+-- @param #SET_GROUP self
+-- @return #SET_GROUP self
+function SET_BASE:GetSet()
+  self:F2()
+  
+  -- Clean the Set before returning with only the alive Groups.
+  for GroupName, GroupObject in pairs( self.Set ) do
+    if GroupObject then
+      if not GroupObject:IsAlive() then
+        self:Remove( GroupName )
+      end
+    end
+  end
+  
+  return self.Set
+end
+
+
 --- Add GROUP(s) to SET_GROUP.
 -- @param Core.Set#SET_GROUP self
 -- @param #string AddGroupNames A single name or an array of GROUP names.
@@ -972,7 +991,7 @@ end
 function SET_GROUP:ForEachGroup( IteratorFunction, ... )
   self:F2( arg )
   
-  self:ForEach( IteratorFunction, arg, self.Set )
+  self:ForEach( IteratorFunction, arg, self:GetSet() )
 
   return self
 end
@@ -985,7 +1004,7 @@ end
 function SET_GROUP:ForEachGroupCompletelyInZone( ZoneObject, IteratorFunction, ... )
   self:F2( arg )
   
-  self:ForEach( IteratorFunction, arg, self.Set,
+  self:ForEach( IteratorFunction, arg, self:GetSet(),
     --- @param Core.Zone#ZONE_BASE ZoneObject
     -- @param Wrapper.Group#GROUP GroupObject
     function( ZoneObject, GroupObject )
@@ -1007,7 +1026,7 @@ end
 function SET_GROUP:ForEachGroupPartlyInZone( ZoneObject, IteratorFunction, ... )
   self:F2( arg )
   
-  self:ForEach( IteratorFunction, arg, self.Set,
+  self:ForEach( IteratorFunction, arg, self:GetSet(),
     --- @param Core.Zone#ZONE_BASE ZoneObject
     -- @param Wrapper.Group#GROUP GroupObject
     function( ZoneObject, GroupObject )
@@ -1029,7 +1048,7 @@ end
 function SET_GROUP:ForEachGroupNotInZone( ZoneObject, IteratorFunction, ... )
   self:F2( arg )
   
-  self:ForEach( IteratorFunction, arg, self.Set,
+  self:ForEach( IteratorFunction, arg, self:GetSet(),
     --- @param Core.Zone#ZONE_BASE ZoneObject
     -- @param Wrapper.Group#GROUP GroupObject
     function( ZoneObject, GroupObject )
@@ -1705,7 +1724,7 @@ do -- SET_UNIT
     function SET_UNIT:ForEachUnitInZone( IteratorFunction, ... )
       self:F2( arg )
       
-      self:ForEach( IteratorFunction, arg, self.Set )
+      self:ForEach( IteratorFunction, arg, self:GetSet() )
     
       return self
     end
@@ -1721,7 +1740,7 @@ do -- SET_UNIT
   function SET_UNIT:ForEachUnit( IteratorFunction, ... )
     self:F2( arg )
     
-    self:ForEach( IteratorFunction, arg, self.Set )
+    self:ForEach( IteratorFunction, arg, self:GetSet() )
   
     return self
   end
@@ -1764,7 +1783,7 @@ do -- SET_UNIT
         self:E( { ThreatLevel = ThreatLevel } )
         local ThreatLevelItem = ThreatLevelSet[ThreatLevel]
         if ThreatLevelItem then
-          self:ForEach( IteratorFunction, arg, ThreatLevelItem.Set )
+          self:ForEach( IteratorFunction, arg, ThreatLevelItem:GetSet() )
         end
       end
     end
@@ -1782,7 +1801,7 @@ do -- SET_UNIT
   function SET_UNIT:ForEachUnitCompletelyInZone( ZoneObject, IteratorFunction, ... )
     self:F2( arg )
     
-    self:ForEach( IteratorFunction, arg, self.Set,
+    self:ForEach( IteratorFunction, arg, self:GetSet(),
       --- @param Core.Zone#ZONE_BASE ZoneObject
       -- @param Wrapper.Unit#UNIT UnitObject
       function( ZoneObject, UnitObject )
@@ -1804,7 +1823,7 @@ do -- SET_UNIT
   function SET_UNIT:ForEachUnitNotInZone( ZoneObject, IteratorFunction, ... )
     self:F2( arg )
     
-    self:ForEach( IteratorFunction, arg, self.Set,
+    self:ForEach( IteratorFunction, arg, self:GetSet(),
       --- @param Core.Zone#ZONE_BASE ZoneObject
       -- @param Wrapper.Unit#UNIT UnitObject
       function( ZoneObject, UnitObject )
@@ -2617,7 +2636,7 @@ do -- SET_STATIC
     function SET_STATIC:ForEachStaticInZone( IteratorFunction, ... )
       self:F2( arg )
       
-      self:ForEach( IteratorFunction, arg, self.Set )
+      self:ForEach( IteratorFunction, arg, self:GetSet() )
     
       return self
     end
@@ -2633,7 +2652,7 @@ do -- SET_STATIC
   function SET_STATIC:ForEachStatic( IteratorFunction, ... )
     self:F2( arg )
     
-    self:ForEach( IteratorFunction, arg, self.Set )
+    self:ForEach( IteratorFunction, arg, self:GetSet() )
   
     return self
   end
@@ -2647,7 +2666,7 @@ do -- SET_STATIC
   function SET_STATIC:ForEachStaticCompletelyInZone( ZoneObject, IteratorFunction, ... )
     self:F2( arg )
     
-    self:ForEach( IteratorFunction, arg, self.Set,
+    self:ForEach( IteratorFunction, arg, self:GetSet(),
       --- @param Core.Zone#ZONE_BASE ZoneObject
       -- @param Wrapper.Static#STATIC StaticObject
       function( ZoneObject, StaticObject )
@@ -2669,7 +2688,7 @@ do -- SET_STATIC
   function SET_STATIC:ForEachStaticNotInZone( ZoneObject, IteratorFunction, ... )
     self:F2( arg )
     
-    self:ForEach( IteratorFunction, arg, self.Set,
+    self:ForEach( IteratorFunction, arg, self:GetSet(),
       --- @param Core.Zone#ZONE_BASE ZoneObject
       -- @param Wrapper.Static#STATIC StaticObject
       function( ZoneObject, StaticObject )
@@ -3199,7 +3218,7 @@ end
 function SET_CLIENT:ForEachClient( IteratorFunction, ... )
   self:F2( arg )
   
-  self:ForEach( IteratorFunction, arg, self.Set )
+  self:ForEach( IteratorFunction, arg, self:GetSet() )
 
   return self
 end
@@ -3212,7 +3231,7 @@ end
 function SET_CLIENT:ForEachClientInZone( ZoneObject, IteratorFunction, ... )
   self:F2( arg )
   
-  self:ForEach( IteratorFunction, arg, self.Set,
+  self:ForEach( IteratorFunction, arg, self:GetSet(),
     --- @param Core.Zone#ZONE_BASE ZoneObject
     -- @param Wrapper.Client#CLIENT ClientObject
     function( ZoneObject, ClientObject )
@@ -3234,7 +3253,7 @@ end
 function SET_CLIENT:ForEachClientNotInZone( ZoneObject, IteratorFunction, ... )
   self:F2( arg )
   
-  self:ForEach( IteratorFunction, arg, self.Set,
+  self:ForEach( IteratorFunction, arg, self:GetSet(),
     --- @param Core.Zone#ZONE_BASE ZoneObject
     -- @param Wrapper.Client#CLIENT ClientObject
     function( ZoneObject, ClientObject )
@@ -3598,7 +3617,7 @@ end
 function SET_PLAYER:ForEachPlayer( IteratorFunction, ... )
   self:F2( arg )
   
-  self:ForEach( IteratorFunction, arg, self.Set )
+  self:ForEach( IteratorFunction, arg, self:GetSet() )
 
   return self
 end
@@ -3611,7 +3630,7 @@ end
 function SET_PLAYER:ForEachPlayerInZone( ZoneObject, IteratorFunction, ... )
   self:F2( arg )
   
-  self:ForEach( IteratorFunction, arg, self.Set,
+  self:ForEach( IteratorFunction, arg, self:GetSet(),
     --- @param Core.Zone#ZONE_BASE ZoneObject
     -- @param Wrapper.Client#CLIENT ClientObject
     function( ZoneObject, ClientObject )
@@ -3633,7 +3652,7 @@ end
 function SET_PLAYER:ForEachPlayerNotInZone( ZoneObject, IteratorFunction, ... )
   self:F2( arg )
   
-  self:ForEach( IteratorFunction, arg, self.Set,
+  self:ForEach( IteratorFunction, arg, self:GetSet(),
     --- @param Core.Zone#ZONE_BASE ZoneObject
     -- @param Wrapper.Client#CLIENT ClientObject
     function( ZoneObject, ClientObject )
@@ -3926,7 +3945,7 @@ end
 function SET_AIRBASE:ForEachAirbase( IteratorFunction, ... )
   self:F2( arg )
   
-  self:ForEach( IteratorFunction, arg, self.Set )
+  self:ForEach( IteratorFunction, arg, self:GetSet() )
 
   return self
 end
@@ -4231,7 +4250,7 @@ end
 function SET_CARGO:ForEachCargo( IteratorFunction, ... ) --R2.1
   self:F2( arg )
   
-  self:ForEach( IteratorFunction, arg, self.Set )
+  self:ForEach( IteratorFunction, arg, self:GetSet() )
 
   return self
 end

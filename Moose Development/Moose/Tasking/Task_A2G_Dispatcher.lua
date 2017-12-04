@@ -222,8 +222,6 @@ do -- TASK_A2G_DISPATCHER
               Mission:GetCommandCenter():MessageToGroup( string.format( "Obsolete A2G task %s for %s removed.", TaskText, Mission:GetName() ), TaskGroup )
             end
             Task = self:RemoveTask( TaskIndex )
-            Mission:RemoveTask( Task )
-            self.Tasks[TaskIndex] = nil
           end
         end
       end
