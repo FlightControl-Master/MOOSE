@@ -1136,8 +1136,7 @@ do -- DETECTION_BASE
     
       return self
     end
-    
-  
+      
   end
   
   do -- Friendly calculations
@@ -1168,6 +1167,7 @@ do -- DETECTION_BASE
     -- @return #boolean true if there are friendlies nearby 
     function DETECTION_BASE:IsFriendliesNearBy( DetectedItem )
       
+      self:F( { "FriendliesNearBy Test", DetectedItem.FriendliesNearBy } )
       return DetectedItem.FriendliesNearBy ~= nil or false
     end
   
@@ -1230,11 +1230,11 @@ do -- DETECTION_BASE
   
     --- Background worker function to determine if there are friendlies nearby ...
     -- @param #DETECTION_BASE self
-    function DETECTION_BASE:ReportFriendliesNearBy( ReportGroupData )
-      self:F2()
+    function DETECTION_BASE:ReportFriendliesNearBy( TargetData )
+      self:F( { "Search Friendlies", DetectedItem = TargetData.DetectedItem } )
       
-      local DetectedItem = ReportGroupData.DetectedItem  -- Functional.Detection#DETECTION_BASE.DetectedItem    
-      local DetectedSet = ReportGroupData.DetectedItem.Set
+      local DetectedItem = TargetData.DetectedItem  -- Functional.Detection#DETECTION_BASE.DetectedItem    
+      local DetectedSet = TargetData.DetectedItem.Set
       local DetectedUnit = DetectedSet:GetFirst() -- Wrapper.Unit#UNIT
     
       DetectedItem.FriendliesNearBy = nil
@@ -1243,7 +1243,7 @@ do -- DETECTION_BASE
       if DetectedUnit and DetectedUnit:IsAlive() then
       
         local DetectedUnitCoord = DetectedUnit:GetCoordinate()
-        local InterceptCoord = ReportGroupData.InterceptCoord or DetectedUnitCoord
+        local InterceptCoord = TargetData.InterceptCoord or DetectedUnitCoord
         
         local SphereSearch = {
          id = world.VolumeType.SPHERE,
@@ -1274,12 +1274,12 @@ do -- DETECTION_BASE
           local EnemyUnitName = DetectedUnit:GetName()
 
           local FoundUnitInReportSetGroup = ReportSetGroup:FindGroup( FoundUnitGroupName ) ~= nil
-          self:T( { "Friendlies search:", FoundUnitName, FoundUnitCoalition, EnemyUnitName, EnemyCoalition, FoundUnitInReportSetGroup } )
+          --self:T( { "Friendlies search:", FoundUnitName, FoundUnitCoalition, EnemyUnitName, EnemyCoalition, FoundUnitInReportSetGroup } )
           
           if FoundUnitInReportSetGroup == true then
             -- If the recce was part of the friendlies found, then check if the recce is part of the allowed friendly unit prefixes.
             for PrefixID, Prefix in pairs( self.FriendlyPrefixes or {} ) do
-              self:F( { "FriendlyPrefix:", Prefix } )
+              self:F( { "Friendly Prefix:", Prefix = Prefix } )
               -- In case a match is found (so a recce unit name is part of the friendly prefixes), then report that recce to be part of the friendlies.
               -- This is important if CAP planes (so planes using their own radar) to be scanning for targets as part of the EWR network.
               -- But CAP planes are also attackers, so they need to be considered friendlies too!
@@ -1291,13 +1291,12 @@ do -- DETECTION_BASE
             end
           end
 
-          self:F( { "Friendlies search:", FoundUnitName, FoundUnitCoalition, EnemyUnitName, EnemyCoalition, FoundUnitInReportSetGroup } )
+          self:F( { "Friendlies near Target:", FoundUnitName, FoundUnitCoalition, EnemyUnitName, EnemyCoalition, FoundUnitInReportSetGroup } )
           
           if FoundUnitCoalition ~= EnemyCoalition and FoundUnitInReportSetGroup == false then
             local FriendlyUnit = UNIT:Find( FoundDCSUnit )
             local FriendlyUnitName = FriendlyUnit:GetName()
             local FriendlyUnitCategory = FriendlyUnit:GetDesc().category
-            self:T( { FriendlyUnitCategory = FriendlyUnitCategory, FriendliesCategory = self.FriendliesCategory } )
             
             --if ( not self.FriendliesCategory ) or ( self.FriendliesCategory and ( self.FriendliesCategory == FriendlyUnitCategory ) ) then
               DetectedItem.FriendliesNearBy = DetectedItem.FriendliesNearBy or {}
@@ -1305,7 +1304,7 @@ do -- DETECTION_BASE
               local Distance = DetectedUnitCoord:Get2DDistance( FriendlyUnit:GetCoordinate() )
               DetectedItem.FriendliesDistance = DetectedItem.FriendliesDistance or {}
               DetectedItem.FriendliesDistance[Distance] = FriendlyUnit
-              self:T( { FriendlyUnitName = FriendlyUnitName, Distance = Distance } )
+              self:T( { "Friendlies Found:", FriendlyUnitName = FriendlyUnitName, Distance = Distance, FriendlyUnitCategory = FriendlyUnitCategory, FriendliesCategory = self.FriendliesCategory } )
             --end
             return true
           end
@@ -1313,7 +1312,7 @@ do -- DETECTION_BASE
           return true
         end
         
-        world.searchObjects( Object.Category.UNIT, SphereSearch, FindNearByFriendlies, ReportGroupData )
+        world.searchObjects( Object.Category.UNIT, SphereSearch, FindNearByFriendlies, TargetData )
 
         DetectedItem.PlayersNearBy = nil
         local DetectionZone = ZONE_UNIT:New( "DetectionPlayers", DetectedUnit, self.FriendliesRange )
@@ -2763,7 +2762,17 @@ do -- DETECTION_AREAS
       
       self:CalculateIntercept( DetectedItem )
   
+      -- We search for friendlies nearby.
+      -- If there weren't any friendlies nearby, and now there are friendlies nearby, we flag the area as "changed".
+      -- If there were friendlies nearby, and now there aren't any friendlies nearby, we flag the area as "changed".
+      -- This is for the A2G dispatcher to detect if there is a change in the tactical situation.
+      local OldFriendliesNearby = self:IsFriendliesNearBy( DetectedItem )
       self:ReportFriendliesNearBy( { DetectedItem = DetectedItem, ReportSetGroup = self.DetectionSetGroup } ) -- Fill the Friendlies table
+      local NewFriendliesNearby = self:IsFriendliesNearBy( DetectedItem )
+      if OldFriendliesNearby ~= NewFriendliesNearby then
+        DetectedItem.Changed = true
+      end
+
       self:SetDetectedItemThreatLevel( DetectedItem )  -- Calculate A2G threat level
       self:NearestFAC( DetectedItem )
 
