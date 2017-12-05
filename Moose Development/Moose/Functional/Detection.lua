@@ -612,7 +612,7 @@ do -- DETECTION_BASE
 --              end
 --            end
     
-            if self.AcceptRange and Distance > self.AcceptRange then
+            if self.AcceptRange and Distance * 1000 > self.AcceptRange then
               DetectionAccepted = false
             end
             
