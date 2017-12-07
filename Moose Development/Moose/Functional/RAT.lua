@@ -516,7 +516,7 @@ RAT.version="2.0.2"
 function RAT:New(groupname, alias)
 
   -- Inherit SPAWN class.
-  local self=BASE:Inherit(self, SPAWN:NewWithAlias(groupname, alias)) -- #RAT
+  self=BASE:Inherit(self, SPAWN:NewWithAlias(groupname, alias)) -- #RAT
 
   -- Version info.
   self:F(RAT.id.."Version "..RAT.version)
@@ -575,7 +575,7 @@ function RAT:Spawn(naircraft)
   
   -- Init RAT ATC if not already done.
   if self.ATCswitch and not RAT.ATC.init then
-    RAT:_ATCInit(self.airports_map)
+    self:_ATCInit(self.airports_map)
   end
   
   -- Create F10 main menu if it does not exists yet.
@@ -1518,9 +1518,9 @@ function RAT:_SpawnWithRoute(_departure, _destination, _takeoff, _landing, _live
   -- ATC is monitoring this flight (if it supposed to land).
   if self.ATCswitch and landing==RAT.wp.landing then
     if self.returnzone then
-      RAT:_ATCAddFlight(group:GetName(), departure:GetName())
+      self:_ATCAddFlight(group:GetName(), departure:GetName())
     else
-      RAT:_ATCAddFlight(group:GetName(), destination:GetName())
+      self:_ATCAddFlight(group:GetName(), destination:GetName())
     end
   end
   
@@ -3498,7 +3498,7 @@ function RAT._WaypointFunction(group, rat, wp)
   
   -- Info on passing waypoint.
   text=string.format("Flight %s passing waypoint #%d %s.", group:GetName(), wp, rat.waypointdescriptions[wp])
-  self:T(RAT.id..text)
+  BASE.T(rat, RAT.id..text)
     
   -- New status.
   local status=rat.waypointstatus[wp]
@@ -3515,7 +3515,7 @@ function RAT._WaypointFunction(group, rat, wp)
     -- Register aircraft at ATC.
     if rat.ATCswitch then
        MENU_MISSION_COMMAND:New("Clear for landing", rat.Menu[rat.SubMenuName].groups[sdx], rat.ClearForLanding, rat, group:GetName())
-       rat:_ATCRegisterFlight(group:GetName(), Tnow)
+       rat._ATCRegisterFlight(rat, group:GetName(), Tnow)
     end
   end
   
@@ -4001,8 +4001,8 @@ end
 function RAT:_ATCInit(airports_map)
   if not RAT.ATC.init then
     local text
-	text="Starting RAT ATC.\nSimultanious = "..RAT.ATC.Nclearance.."\n".."Delay        = "..RAT.ATC.delay
-	self:T(RAT.id..text)
+    text="Starting RAT ATC.\nSimultanious = "..RAT.ATC.Nclearance.."\n".."Delay        = "..RAT.ATC.delay
+	  self:T(RAT.id..text)
     RAT.ATC.init=true
     for _,ap in pairs(airports_map) do
       local name=ap:GetName()
