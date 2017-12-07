@@ -734,7 +734,7 @@ function EVENT:onEvent( Event )
   local ErrorHandler = function( errmsg )
 
     env.info( "Error in SCHEDULER function:" .. errmsg )
-    if debug ~= nil then
+    if BASE.Debug ~= nil then
       env.info( debug.traceback() )
     end
     
