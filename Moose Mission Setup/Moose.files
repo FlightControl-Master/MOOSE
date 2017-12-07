@@ -14,6 +14,7 @@ Core/Zone.lua
 Core/Database.lua
 Core/Set.lua
 Core/Point.lua
+Core/Velocity.lua
 Core/Message.lua
 Core/Fsm.lua
 Core/Radio.lua
@@ -40,7 +41,7 @@ Functional/Movement.lua
 Functional/Sead.lua
 Functional/Escort.lua
 Functional/MissileTrainer.lua
-Functional/AirbasePolice.lua
+Functional/ATC_Ground.lua
 Functional/Detection.lua
 Functional/Designate.lua
 Functional/RAT.lua
@@ -77,3 +78,4 @@ Tasking/Task_Cargo.lua
 Tasking/TaskZoneCapture.lua
 
 Moose.lua
+

@@ -28,9 +28,9 @@
 					<li><a href="AI_Cas.html">AI_Cas</a></li>
 					<li><a href="AI_Formation.html">AI_Formation</a></li>
 					<li><a href="AI_Patrol.html">AI_Patrol</a></li>
+					<li><a href="ATC_Ground.html">ATC_Ground</a></li>
 					<li><a href="Account.html">Account</a></li>
 					<li><a href="Airbase.html">Airbase</a></li>
-					<li><a href="AirbasePolice.html">AirbasePolice</a></li>
 					<li><a href="Assign.html">Assign</a></li>
 					<li><a href="Base.html">Base</a></li>
 					<li><a href="Cargo.html">Cargo</a></li>
@@ -102,9 +102,11 @@
 					<li><a href="UserFlag.html">UserFlag</a></li>
 					<li><a href="UserSound.html">UserSound</a></li>
 					<li><a href="Utils.html">Utils</a></li>
+					<li><a href="Velocity.html">Velocity</a></li>
 					<li><a href="Zone.html">Zone</a></li>
 					<li><a href="ZoneCaptureCoalition.html">ZoneCaptureCoalition</a></li>
 					<li><a href="ZoneGoal.html">ZoneGoal</a></li>
+					<li><a href="ZoneGoalCargo.html">ZoneGoalCargo</a></li>
 					<li><a href="ZoneGoalCoalition.html">ZoneGoalCoalition</a></li>
 					<li><a href="env.html">env</a></li>
 					<li><a href="land.html">land</a></li>
@@ -313,7 +315,7 @@
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(POSITIONABLE).GetVelocity">POSITIONABLE:GetVelocity()</a></td>
 		<td class="summary">
-<p>Returns the POSITIONABLE velocity vector.</p>
+<p>Returns the a <a href="Velocity.html">Velocity</a> object from the positionable.</p>
 </td>
 		</tr>
 		<tr>
@@ -326,6 +328,12 @@
 		<td class="name" nowrap="nowrap"><a href="##(POSITIONABLE).GetVelocityMPS">POSITIONABLE:GetVelocityMPS()</a></td>
 		<td class="summary">
 <p>Returns the POSITIONABLE velocity in meters per second.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(POSITIONABLE).GetVelocityVec3">POSITIONABLE:GetVelocityVec3()</a></td>
+		<td class="summary">
+<p>Returns the POSITIONABLE velocity Vec3 vector.</p>
 </td>
 		</tr>
 		<tr>
@@ -1207,14 +1215,14 @@ The POSITIONABLE is not existing or alive.  </p>
 </dt>
 <dd>
 	
-<p>Returns the POSITIONABLE velocity vector.</p>
+<p>Returns the a <a href="Velocity.html">Velocity</a> object from the positionable.</p>
 
 		<h3>Return values</h3>
 			<ol>
 				<li>
 				
-<p><em><a href="Dcs.DCSTypes.html##(Vec3)">Dcs.DCSTypes#Vec3</a>:</em>
-The velocity vector</p>
+<p><em><a href="Core.Velocity.html##(VELOCITY)">Core.Velocity#VELOCITY</a>:</em>
+Velocity The Velocity object.</p>
 
 				</li>
 				<li>
@@ -1260,6 +1268,34 @@ The velocity in km/h</p>
 <p><em>#number:</em>
 The velocity in meters per second.</p>
 
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(POSITIONABLE).GetVelocityVec3" >
+<strong>POSITIONABLE:GetVelocityVec3()</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Returns the POSITIONABLE velocity Vec3 vector.</p>
+
+		<h3>Return values</h3>
+			<ol>
+				<li>
+				
+<p><em><a href="Dcs.DCSTypes.html##(Vec3)">Dcs.DCSTypes#Vec3</a>:</em>
+The velocity Vec3 vector</p>
+
+				</li>
+				<li>
+				
+<p><em>#nil:</em>
+The POSITIONABLE is not existing or alive.  </p>
+
+				</li>
+			</ol>
 </dd>
 </dl>
 		<dl class="function">

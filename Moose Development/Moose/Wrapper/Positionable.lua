@@ -85,6 +85,8 @@ function POSITIONABLE:GetPositionVec3()
     return PositionablePosition
   end
   
+  BASE:E( { "Cannot GetPositionVec3", Positionable = self, Alive = self:IsAlive() } )
+
   return nil
 end
 
@@ -108,6 +110,8 @@ function POSITIONABLE:GetVec2()
     return PositionableVec2
   end
   
+  BASE:E( { "Cannot GetVec2", Positionable = self, Alive = self:IsAlive() } )
+
   return nil
 end
 
@@ -129,6 +133,8 @@ function POSITIONABLE:GetPointVec2()
     return PositionablePointVec2
   end
   
+  BASE:E( { "Cannot GetPointVec2", Positionable = self, Alive = self:IsAlive() } )
+
   return nil
 end
 
@@ -149,6 +155,8 @@ function POSITIONABLE:GetPointVec3()
     self:T2( PositionablePointVec3 )
     return PositionablePointVec3
   end
+
+  BASE:E( { "Cannot GetPointVec3", Positionable = self, Alive = self:IsAlive() } )
   
   return nil
 end
@@ -171,6 +179,8 @@ function POSITIONABLE:GetCoordinate()
     self:T2( PositionableCoordinate )
     return PositionableCoordinate
   end
+  
+  BASE:E( { "Cannot GetCoordinate", Positionable = self, Alive = self:IsAlive() } )
   
   return nil
 end
@@ -206,6 +216,8 @@ function POSITIONABLE:GetRandomVec3( Radius )
     end
   end
   
+  BASE:E( { "Cannot GetRandomVec3", Positionable = self, Alive = self:IsAlive() } )
+
   return nil
 end
 
@@ -224,6 +236,8 @@ function POSITIONABLE:GetVec3()
     return PositionableVec3
   end
   
+  BASE:E( { "Cannot GetVec3", Positionable = self, Alive = self:IsAlive() } )
+
   return nil
 end
 
@@ -245,6 +259,8 @@ function POSITIONABLE:GetBoundingBox() --R2.1
     end
   end
   
+  BASE:E( { "Cannot GetBoundingBox", Positionable = self, Alive = self:IsAlive() } )
+
   return nil
 end
 
@@ -263,6 +279,8 @@ function POSITIONABLE:GetAltitude()
     return PositionablePointVec3.y
   end
   
+  BASE:E( { "Cannot GetAltitude", Positionable = self, Alive = self:IsAlive() } )
+
   return nil
 end 
 
@@ -284,6 +302,8 @@ function POSITIONABLE:IsAboveRunway()
     self:T2( IsAboveRunway )
     return IsAboveRunway
   end
+
+  BASE:E( { "Cannot IsAboveRunway", Positionable = self, Alive = self:IsAlive() } )
 
   return nil
 end
@@ -311,6 +331,8 @@ function POSITIONABLE:GetHeading()
     end
   end
   
+  BASE:E( { "Cannot GetHeading", Positionable = self, Alive = self:IsAlive() } )
+
   return nil
 end
 
@@ -326,12 +348,33 @@ function POSITIONABLE:InAir()
   return nil
 end
 
- 
---- Returns the POSITIONABLE velocity vector.
+
+--- Returns the a @{Velocity} object from the positionable.
 -- @param Wrapper.Positionable#POSITIONABLE self
--- @return Dcs.DCSTypes#Vec3 The velocity vector
+-- @return Core.Velocity#VELOCITY Velocity The Velocity object.
 -- @return #nil The POSITIONABLE is not existing or alive.  
 function POSITIONABLE:GetVelocity()
+  self:F2( self.PositionableName )
+
+  local DCSPositionable = self:GetDCSObject()
+  
+  if DCSPositionable then
+    local Velocity = VELOCITY:New( self )
+    return Velocity
+  end
+  
+  BASE:E( { "Cannot GetVelocity", Positionable = self, Alive = self:IsAlive() } )
+
+  return nil
+end
+
+
+ 
+--- Returns the POSITIONABLE velocity Vec3 vector.
+-- @param Wrapper.Positionable#POSITIONABLE self
+-- @return Dcs.DCSTypes#Vec3 The velocity Vec3 vector
+-- @return #nil The POSITIONABLE is not existing or alive.  
+function POSITIONABLE:GetVelocityVec3()
   self:F2( self.PositionableName )
 
   local DCSPositionable = self:GetDCSObject()
@@ -342,6 +385,8 @@ function POSITIONABLE:GetVelocity()
     return PositionableVelocityVec3
   end
   
+  BASE:E( { "Cannot GetVelocityVec3", Positionable = self, Alive = self:IsAlive() } )
+
   return nil
 end
 
@@ -377,7 +422,7 @@ function POSITIONABLE:GetVelocityKMH()
   local DCSPositionable = self:GetDCSObject()
   
   if DCSPositionable then
-    local VelocityVec3 = self:GetVelocity()
+    local VelocityVec3 = self:GetVelocityVec3()
     local Velocity = ( VelocityVec3.x ^ 2 + VelocityVec3.y ^ 2 + VelocityVec3.z ^ 2 ) ^ 0.5 -- in meters / sec
     local Velocity = Velocity * 3.6 -- now it is in km/h.
     self:T3( Velocity )
@@ -396,7 +441,7 @@ function POSITIONABLE:GetVelocityMPS()
   local DCSPositionable = self:GetDCSObject()
   
   if DCSPositionable then
-    local VelocityVec3 = self:GetVelocity()
+    local VelocityVec3 = self:GetVelocityVec3()
     local Velocity = ( VelocityVec3.x ^ 2 + VelocityVec3.y ^ 2 + VelocityVec3.z ^ 2 ) ^ 0.5 -- in meters / sec
     self:T3( Velocity )
     return Velocity
@@ -581,9 +626,16 @@ function POSITIONABLE:MessageToGroup( Message, Duration, MessageGroup, Name )
   local DCSObject = self:GetDCSObject()
   if DCSObject then
     if DCSObject:isExist() then
-      self:GetMessage( Message, Duration, Name ):ToGroup( MessageGroup )
+      if MessageGroup:IsAlive() then
+        self:GetMessage( Message, Duration, Name ):ToGroup( MessageGroup )
+      else
+        BASE:E( { "Message not sent to Group; Group is not alive...", Message = Message, MessageGroup = MessageGroup } )
+      end
+    else
+      BASE:E( { "Message not sent to Group; Positionable is not alive ...", Message = Message, Positionable = self, MessageGroup = MessageGroup } )
     end
   end
+  
 
   return nil
 end

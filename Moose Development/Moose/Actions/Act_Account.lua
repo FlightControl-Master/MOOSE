@@ -285,5 +285,26 @@ do -- ACT_ACCOUNT_DEADS
     end
   end  
   
+  --- @param #ACT_ACCOUNT_DEADS self
+  -- @param Event#EVENTDATA EventData
+  function ACT_ACCOUNT_DEADS:onfuncEventDead( EventData )
+    self:T( { "EventDead", EventData } )
+
+    if EventData.IniDCSUnit then
+      self:Event( EventData )
+    end
+  end
+
+  --- DCS Events
+  
+  --- @param #ACT_ACCOUNT_DEADS self
+  -- @param Event#EVENTDATA EventData
+  function ACT_ACCOUNT_DEADS:onfuncEventCrash( EventData )
+    self:T( { "EventDead", EventData } )
+
+    if EventData.IniDCSUnit then
+      self:Event( EventData )
+    end
+  end
 
 end -- ACT_ACCOUNT DEADS

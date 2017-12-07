@@ -28,9 +28,9 @@
 					<li><a href="AI_Cas.html">AI_Cas</a></li>
 					<li><a href="AI_Formation.html">AI_Formation</a></li>
 					<li><a href="AI_Patrol.html">AI_Patrol</a></li>
+					<li><a href="ATC_Ground.html">ATC_Ground</a></li>
 					<li><a href="Account.html">Account</a></li>
 					<li><a href="Airbase.html">Airbase</a></li>
-					<li><a href="AirbasePolice.html">AirbasePolice</a></li>
 					<li><a href="Assign.html">Assign</a></li>
 					<li><a href="Base.html">Base</a></li>
 					<li><a href="Cargo.html">Cargo</a></li>
@@ -102,9 +102,11 @@
 					<li><a href="UserFlag.html">UserFlag</a></li>
 					<li><a href="UserSound.html">UserSound</a></li>
 					<li><a href="Utils.html">Utils</a></li>
+					<li><a href="Velocity.html">Velocity</a></li>
 					<li>Zone</li>
 					<li><a href="ZoneCaptureCoalition.html">ZoneCaptureCoalition</a></li>
 					<li><a href="ZoneGoal.html">ZoneGoal</a></li>
+					<li><a href="ZoneGoalCargo.html">ZoneGoalCargo</a></li>
 					<li><a href="ZoneGoalCoalition.html">ZoneGoalCoalition</a></li>
 					<li><a href="env.html">env</a></li>
 					<li><a href="land.html">land</a></li>
@@ -431,7 +433,13 @@
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(ZONE_POLYGON).New">ZONE_POLYGON:New(ZoneName, ZoneGroup)</a></td>
 		<td class="summary">
-<p>Constructor to create a ZONE_POLYGON instance, taking the zone name and the name of the <a href="Group.html##(GROUP)">Group#GROUP</a> defined within the Mission Editor.</p>
+<p>Constructor to create a ZONE_POLYGON instance, taking the zone name and the <a href="Group.html##(GROUP)">Group#GROUP</a> defined within the Mission Editor.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_POLYGON).NewFromGroupName">ZONE_POLYGON:NewFromGroupName(ZoneName, GroupName)</a></td>
+		<td class="summary">
+<p>Constructor to create a ZONE_POLYGON instance, taking the zone name and the <strong>name</strong> of the <a href="Group.html##(GROUP)">Group#GROUP</a> defined within the Mission Editor.</p>
 </td>
 		</tr>
 	</table>
@@ -521,7 +529,7 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).FlareZone">ZONE_RADIUS:FlareZone(FlareColor, Points, Azimuth)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).FlareZone">ZONE_RADIUS:FlareZone(FlareColor, Points, Azimuth, AddHeight)</a></td>
 		<td class="summary">
 <p>Flares the zone boundaries in a color.</p>
 </td>
@@ -671,7 +679,7 @@
 </td>
 		</tr>
 		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).SmokeZone">ZONE_RADIUS:SmokeZone(SmokeColor, Points)</a></td>
+		<td class="name" nowrap="nowrap"><a href="##(ZONE_RADIUS).SmokeZone">ZONE_RADIUS:SmokeZone(SmokeColor, Points, AddHeight, AddOffSet, AngleOffset)</a></td>
 		<td class="summary">
 <p>Smokes the zone boundaries in a color.</p>
 </td>
@@ -1676,7 +1684,7 @@ self</p>
 </dt>
 <dd>
 	
-<p>Constructor to create a ZONE_POLYGON instance, taking the zone name and the name of the <a href="Group.html##(GROUP)">Group#GROUP</a> defined within the Mission Editor.</p>
+<p>Constructor to create a ZONE_POLYGON instance, taking the zone name and the <a href="Group.html##(GROUP)">Group#GROUP</a> defined within the Mission Editor.</p>
 
 	
 <p>The <a href="Group.html##(GROUP)">Group#GROUP</a> waypoints define the polygon corners. The first and the last point are automatically connected by ZONE_POLYGON.</p>
@@ -1693,6 +1701,42 @@ Name of the zone.</p>
 				
 <p><code><em><a href="Wrapper.Group.html##(GROUP)">Wrapper.Group#GROUP</a> ZoneGroup </em></code>: 
 The GROUP waypoints as defined within the Mission Editor define the polygon shape.</p>
+
+				</li>
+		</ul>
+		<h3>Return value</h3>
+				
+<p><em><a href="##(ZONE_POLYGON)">#ZONE_POLYGON</a>:</em>
+self</p>
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(ZONE_POLYGON).NewFromGroupName" >
+<strong>ZONE_POLYGON:NewFromGroupName(ZoneName, GroupName)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Constructor to create a ZONE_POLYGON instance, taking the zone name and the <strong>name</strong> of the <a href="Group.html##(GROUP)">Group#GROUP</a> defined within the Mission Editor.</p>
+
+	
+<p>The <a href="Group.html##(GROUP)">Group#GROUP</a> waypoints define the polygon corners. The first and the last point are automatically connected by ZONE_POLYGON.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em>#string ZoneName </em></code>: 
+Name of the zone.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#string GroupName </em></code>: 
+The group name of the GROUP defining the waypoints within the Mission Editor to define the polygon shape.</p>
 
 				</li>
 		</ul>
@@ -2020,7 +2064,7 @@ self</p>
 <dt>
 
 <a id="#(ZONE_RADIUS).FlareZone" >
-<strong>ZONE_RADIUS:FlareZone(FlareColor, Points, Azimuth)</strong>
+<strong>ZONE_RADIUS:FlareZone(FlareColor, Points, Azimuth, AddHeight)</strong>
 </a>
 </dt>
 <dd>
@@ -2045,6 +2089,12 @@ The flare color.</p>
 				
 <p><code><em><a href="Dcs.DCSTypes.html##(Azimuth)">Dcs.DCSTypes#Azimuth</a> Azimuth </em></code>: 
 (optional) Azimuth The azimuth of the flare.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number AddHeight </em></code>: 
+(optional) The height to be added for the smoke.</p>
 
 				</li>
 		</ul>
@@ -2669,7 +2719,7 @@ The new location of the zone.</p>
 <dt>
 
 <a id="#(ZONE_RADIUS).SmokeZone" >
-<strong>ZONE_RADIUS:SmokeZone(SmokeColor, Points)</strong>
+<strong>ZONE_RADIUS:SmokeZone(SmokeColor, Points, AddHeight, AddOffSet, AngleOffset)</strong>
 </a>
 </dt>
 <dd>
@@ -2688,6 +2738,23 @@ The smoke color.</p>
 				
 <p><code><em>#number Points </em></code>: 
 (optional) The amount of points in the circle.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number AddHeight </em></code>: 
+(optional) The height to be added for the smoke.</p>
+
+				</li>
+				<li>
+				
+<p><code><em>#number AddOffSet </em></code>: 
+(optional) The angle to be added for the smoking start position.</p>
+
+				</li>
+				<li>
+				
+<p><code><em> AngleOffset </em></code>: </p>
 
 				</li>
 		</ul>

@@ -66,7 +66,6 @@
 -- @field #boolean ReportTargets If true, nearby targets are reported.
 -- @Field DCSTypes#AI.Option.Air.val.ROE OptionROE Which ROE is set to the FollowGroup.
 -- @field DCSTypes#AI.Option.Air.val.REACTION_ON_THREAT OptionReactionOnThreat Which REACTION_ON_THREAT is set to the FollowGroup.
--- @field Menu#MENU_CLIENT FollowMenuResumeMission
 
 
 --- # AI_FORMATION class, extends @{Fsm#FSM_SET}

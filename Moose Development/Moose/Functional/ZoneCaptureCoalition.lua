@@ -1,23 +1,34 @@
---- **Functional (wIP)** -- Models the process to capture a Zone for a Coalition, which is guarded by another Coalition.
+--- **Functional** -- (WIP R2.3) Models the process to capture a Zone for a Coalition, which is guarded by another Coalition.
 --
 -- ====
 -- 
+-- ![Banner Image](..\Presentations\ZONE_CAPTURE_COALITION\Dia1.JPG)
+-- 
+-- ===
+-- 
+-- ### Contributions: **Millertime**: Concept
 -- ### Author: **Sven Van de Velde (FlightControl)**
 -- 
 -- ====
 -- 
 -- @module ZoneCaptureCoalition
 
-do -- ZoneGoal
+do -- ZONE_CAPTURE_COALITION
 
   --- @type ZONE_CAPTURE_COALITION
   -- @extends Functional.ZoneGoalCoalition#ZONE_GOAL_COALITION
 
 
-  --- # ZONE_CAPTURE_COALITION class, extends @{ZoneGoalCoalition#ZONE_GOAL_COALITION}
+  --- # ZONE\_CAPTURE\_COALITION class, extends @{ZoneGoalCoalition#ZONE_GOAL_COALITION}
   -- 
   -- Models the process to capture a Zone for a Coalition, which is guarded by another Coalition.
   -- 
+  -- ---
+  --
+  -- ![Banner Image](..\Presentations\ZONE_CAPTURE_COALITION\Dia1.JPG)
+  --
+  -- ---
+  --  
   -- The Zone is initially **Guarded** by the __owning coalition__, which is the coalition that initially occupies the zone with units of its coalition.
   -- Once units of an other coalition are entering the Zone, the state will change to **Attacked**. As long as these units remain in the zone, the state keeps set to Attacked.
   -- When all units are destroyed in the Zone, the state will change to **Empty**, which expresses that the Zone is empty, and can be captured.
@@ -25,20 +36,20 @@ do -- ZoneGoal
   -- 
   -- Event handlers can be defined by the mission designer to action on the state transitions.
   -- 
-  -- ## 1. ZONE_CAPTURE_COALITION constructor
+  -- ## 1. ZONE\_CAPTURE\_COALITION constructor
   --   
-  --   * @{#ZONE_CAPTURE_COALITION.New}(): Creates a new ZONE_CAPTURE_COALITION object.
+  --   * @{#ZONE_CAPTURE_COALITION.New}(): Creates a new ZONE\_CAPTURE\_COALITION object.
   -- 
-  -- ## 2. ZONE_CAPTURE_COALITION is a finite state machine (FSM).
+  -- ## 2. ZONE\_CAPTURE\_COALITION is a finite state machine (FSM).
   -- 
-  -- ### 2.1 ZONE_CAPTURE_COALITION States
+  -- ### 2.1 ZONE\_CAPTURE\_COALITION States
   -- 
   --   * **Captured**: The Zone has been captured by an other coalition.
   --   * **Attacked**: The Zone is currently intruded by an other coalition. There are units of the owning coalition and an other coalition in the Zone.
   --   * **Guarded**: The Zone is guarded by the owning coalition. There is no other unit of an other coalition in the Zone.
   --   * **Empty**: The Zone is empty. There is not valid unit in the Zone.
   --   
-  -- ### 2.2 ZONE_CAPTURE_COALITION Events
+  -- ### 2.2 ZONE\_CAPTURE\_COALITION Events
   -- 
   --   * **Capture**: The Zone has been captured by an other coalition.
   --   * **Attack**: The Zone is currently intruded by an other coalition. There are units of the owning coalition and an other coalition in the Zone.
@@ -58,6 +69,13 @@ do -- ZoneGoal
   -- @param Core.Zone#ZONE Zone A @{Zone} object with the goal to be achieved.
   -- @param DCSCoalition.DCSCoalition#coalition Coalition The initial coalition owning the zone.
   -- @return #ZONE_CAPTURE_COALITION
+  -- @usage
+  -- 
+  --  AttackZone = ZONE:New( "AttackZone" )
+  --
+  --  ZoneCaptureCoalition = ZONE_CAPTURE_COALITION:New( AttackZone, coalition.side.RED ) -- Create a new ZONE_CAPTURE_COALITION object of zone AttackZone with ownership RED coalition.
+  --  ZoneCaptureCoalition:__Guard( 1 ) -- Start the Guarding of the AttackZone.
+  --  
   function ZONE_CAPTURE_COALITION:New( Zone, Coalition )
   
     local self = BASE:Inherit( self, ZONE_GOAL_COALITION:New( Zone, Coalition ) ) -- #ZONE_CAPTURE_COALITION
@@ -66,7 +84,7 @@ do -- ZoneGoal
 
     do 
     
-      --- Captured State Handler OnLeave for ZONE_CAPTURE_COALITION
+      --- Captured State Handler OnLeave for ZONE\_CAPTURE\_COALITION
       -- @function [parent=#ZONE_CAPTURE_COALITION] OnLeaveCaptured
       -- @param #ZONE_CAPTURE_COALITION self
       -- @param #string From
@@ -74,7 +92,7 @@ do -- ZoneGoal
       -- @param #string To
       -- @return #boolean
   
-      --- Captured State Handler OnEnter for ZONE_CAPTURE_COALITION
+      --- Captured State Handler OnEnter for ZONE\_CAPTURE\_COALITION
       -- @function [parent=#ZONE_CAPTURE_COALITION] OnEnterCaptured
       -- @param #ZONE_CAPTURE_COALITION self
       -- @param #string From
@@ -86,7 +104,7 @@ do -- ZoneGoal
   
     do 
     
-      --- Attacked State Handler OnLeave for ZONE_CAPTURE_COALITION
+      --- Attacked State Handler OnLeave for ZONE\_CAPTURE\_COALITION
       -- @function [parent=#ZONE_CAPTURE_COALITION] OnLeaveAttacked
       -- @param #ZONE_CAPTURE_COALITION self
       -- @param #string From
@@ -94,7 +112,7 @@ do -- ZoneGoal
       -- @param #string To
       -- @return #boolean
   
-      --- Attacked State Handler OnEnter for ZONE_CAPTURE_COALITION
+      --- Attacked State Handler OnEnter for ZONE\_CAPTURE\_COALITION
       -- @function [parent=#ZONE_CAPTURE_COALITION] OnEnterAttacked
       -- @param #ZONE_CAPTURE_COALITION self
       -- @param #string From
@@ -105,7 +123,7 @@ do -- ZoneGoal
 
     do 
     
-      --- Guarded State Handler OnLeave for ZONE_CAPTURE_COALITION
+      --- Guarded State Handler OnLeave for ZONE\_CAPTURE\_COALITION
       -- @function [parent=#ZONE_CAPTURE_COALITION] OnLeaveGuarded
       -- @param #ZONE_CAPTURE_COALITION self
       -- @param #string From
@@ -113,7 +131,7 @@ do -- ZoneGoal
       -- @param #string To
       -- @return #boolean
   
-      --- Guarded State Handler OnEnter for ZONE_CAPTURE_COALITION
+      --- Guarded State Handler OnEnter for ZONE\_CAPTURE\_COALITION
       -- @function [parent=#ZONE_CAPTURE_COALITION] OnEnterGuarded
       -- @param #ZONE_CAPTURE_COALITION self
       -- @param #string From
@@ -125,7 +143,7 @@ do -- ZoneGoal
 
     do 
     
-      --- Empty State Handler OnLeave for ZONE_CAPTURE_COALITION
+      --- Empty State Handler OnLeave for ZONE\_CAPTURE\_COALITION
       -- @function [parent=#ZONE_CAPTURE_COALITION] OnLeaveEmpty
       -- @param #ZONE_CAPTURE_COALITION self
       -- @param #string From
@@ -133,7 +151,7 @@ do -- ZoneGoal
       -- @param #string To
       -- @return #boolean
   
-      --- Empty State Handler OnEnter for ZONE_CAPTURE_COALITION
+      --- Empty State Handler OnEnter for ZONE\_CAPTURE\_COALITION
       -- @function [parent=#ZONE_CAPTURE_COALITION] OnEnterEmpty
       -- @param #ZONE_CAPTURE_COALITION self
       -- @param #string From
@@ -144,7 +162,7 @@ do -- ZoneGoal
   
     self:AddTransition( "*", "Guard", "Guarded" )
     
-    --- Guard Handler OnBefore for ZONE_CAPTURE_COALITION
+    --- Guard Handler OnBefore for ZONE\_CAPTURE\_COALITION
     -- @function [parent=#ZONE_CAPTURE_COALITION] OnBeforeGuard
     -- @param #ZONE_CAPTURE_COALITION self
     -- @param #string From
@@ -152,25 +170,25 @@ do -- ZoneGoal
     -- @param #string To
     -- @return #boolean
     
-    --- Guard Handler OnAfter for ZONE_CAPTURE_COALITION
+    --- Guard Handler OnAfter for ZONE\_CAPTURE\_COALITION
     -- @function [parent=#ZONE_CAPTURE_COALITION] OnAfterGuard
     -- @param #ZONE_CAPTURE_COALITION self
     -- @param #string From
     -- @param #string Event
     -- @param #string To
     
-    --- Guard Trigger for ZONE_CAPTURE_COALITION
+    --- Guard Trigger for ZONE\_CAPTURE\_COALITION
     -- @function [parent=#ZONE_CAPTURE_COALITION] Guard
     -- @param #ZONE_CAPTURE_COALITION self
     
-    --- Guard Asynchronous Trigger for ZONE_CAPTURE_COALITION
+    --- Guard Asynchronous Trigger for ZONE\_CAPTURE\_COALITION
     -- @function [parent=#ZONE_CAPTURE_COALITION] __Guard
     -- @param #ZONE_CAPTURE_COALITION self
     -- @param #number Delay
     
     self:AddTransition( "*", "Empty", "Empty" )
     
-    --- Empty Handler OnBefore for ZONE_CAPTURE_COALITION
+    --- Empty Handler OnBefore for ZONE\_CAPTURE\_COALITION
     -- @function [parent=#ZONE_CAPTURE_COALITION] OnBeforeEmpty
     -- @param #ZONE_CAPTURE_COALITION self
     -- @param #string From
@@ -178,18 +196,18 @@ do -- ZoneGoal
     -- @param #string To
     -- @return #boolean
     
-    --- Empty Handler OnAfter for ZONE_CAPTURE_COALITION
+    --- Empty Handler OnAfter for ZONE\_CAPTURE\_COALITION
     -- @function [parent=#ZONE_CAPTURE_COALITION] OnAfterEmpty
     -- @param #ZONE_CAPTURE_COALITION self
     -- @param #string From
     -- @param #string Event
     -- @param #string To
     
-    --- Empty Trigger for ZONE_CAPTURE_COALITION
+    --- Empty Trigger for ZONE\_CAPTURE\_COALITION
     -- @function [parent=#ZONE_CAPTURE_COALITION] Empty
     -- @param #ZONE_CAPTURE_COALITION self
     
-    --- Empty Asynchronous Trigger for ZONE_CAPTURE_COALITION
+    --- Empty Asynchronous Trigger for ZONE\_CAPTURE\_COALITION
     -- @function [parent=#ZONE_CAPTURE_COALITION] __Empty
     -- @param #ZONE_CAPTURE_COALITION self
     -- @param #number Delay
@@ -197,7 +215,7 @@ do -- ZoneGoal
     
     self:AddTransition( {  "Guarded", "Empty" }, "Attack", "Attacked" )
   
-    --- Attack Handler OnBefore for ZONE_CAPTURE_COALITION
+    --- Attack Handler OnBefore for ZONE\_CAPTURE\_COALITION
     -- @function [parent=#ZONE_CAPTURE_COALITION] OnBeforeAttack
     -- @param #ZONE_CAPTURE_COALITION self
     -- @param #string From
@@ -205,25 +223,25 @@ do -- ZoneGoal
     -- @param #string To
     -- @return #boolean
     
-    --- Attack Handler OnAfter for ZONE_CAPTURE_COALITION
+    --- Attack Handler OnAfter for ZONE\_CAPTURE\_COALITION
     -- @function [parent=#ZONE_CAPTURE_COALITION] OnAfterAttack
     -- @param #ZONE_CAPTURE_COALITION self
     -- @param #string From
     -- @param #string Event
     -- @param #string To
     
-    --- Attack Trigger for ZONE_CAPTURE_COALITION
+    --- Attack Trigger for ZONE\_CAPTURE\_COALITION
     -- @function [parent=#ZONE_CAPTURE_COALITION] Attack
     -- @param #ZONE_CAPTURE_COALITION self
     
-    --- Attack Asynchronous Trigger for ZONE_CAPTURE_COALITION
+    --- Attack Asynchronous Trigger for ZONE\_CAPTURE\_COALITION
     -- @function [parent=#ZONE_CAPTURE_COALITION] __Attack
     -- @param #ZONE_CAPTURE_COALITION self
     -- @param #number Delay
     
     self:AddTransition( { "Guarded", "Attacked", "Empty" }, "Capture", "Captured" )
    
-    --- Capture Handler OnBefore for ZONE_CAPTURE_COALITION
+    --- Capture Handler OnBefore for ZONE\_CAPTURE\_COALITION
     -- @function [parent=#ZONE_CAPTURE_COALITION] OnBeforeCapture
     -- @param #ZONE_CAPTURE_COALITION self
     -- @param #string From
@@ -231,21 +249,25 @@ do -- ZoneGoal
     -- @param #string To
     -- @return #boolean
     
-    --- Capture Handler OnAfter for ZONE_CAPTURE_COALITION
+    --- Capture Handler OnAfter for ZONE\_CAPTURE\_COALITION
     -- @function [parent=#ZONE_CAPTURE_COALITION] OnAfterCapture
     -- @param #ZONE_CAPTURE_COALITION self
     -- @param #string From
     -- @param #string Event
     -- @param #string To
     
-    --- Capture Trigger for ZONE_CAPTURE_COALITION
+    --- Capture Trigger for ZONE\_CAPTURE\_COALITION
     -- @function [parent=#ZONE_CAPTURE_COALITION] Capture
     -- @param #ZONE_CAPTURE_COALITION self
     
-    --- Capture Asynchronous Trigger for ZONE_CAPTURE_COALITION
+    --- Capture Asynchronous Trigger for ZONE\_CAPTURE\_COALITION
     -- @function [parent=#ZONE_CAPTURE_COALITION] __Capture
     -- @param #ZONE_CAPTURE_COALITION self
     -- @param #number Delay
+
+    if not self.ScheduleStatusZone then
+      self.ScheduleStatusZone = self:ScheduleRepeat( 15, 15, 0.1, nil, self.StatusZone, self )
+    end
 
     return self
   end
@@ -369,9 +391,6 @@ do -- ZoneGoal
   
     if not self.SmokeScheduler then
       self.SmokeScheduler = self:ScheduleRepeat( 1, 1, 0.1, nil, self.StatusSmoke, self )
-    end
-    if not self.ScheduleStatusZone then
-      self.ScheduleStatusZone = self:ScheduleRepeat( 15, 15, 0.1, nil, self.StatusZone, self )
     end
   end
 

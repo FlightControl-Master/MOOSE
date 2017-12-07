@@ -111,7 +111,11 @@ routines.utils.oneLineSerialize = function(tbl)  -- serialization of a table all
 			tbl_str[#tbl_str + 1] = '}'
 			return table.concat(tbl_str)
 		else
+		  if type(tbl) == 'string' then
+		    return tbl
+		  else
 			return tostring(tbl)
+			end
 		end
 	end
 	
@@ -127,7 +131,7 @@ routines.utils.basicSerialize = function(s)
 		if ((type(s) == 'number') or (type(s) == 'boolean') or (type(s) == 'function') or (type(s) == 'table') or (type(s) == 'userdata') ) then
 			return tostring(s)
 		elseif type(s) == 'string' then
-			s = string.format('%q', s)
+			s = string.format('%s', s:gsub( "%%", "%%%%" ) )
 			return s
 		end
 	end

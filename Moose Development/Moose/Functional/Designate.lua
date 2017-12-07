@@ -689,9 +689,12 @@ do -- DESIGNATE
           -- This Detection is obsolete, remove from the designate scope
           self.Designating[DesignateIndex] = nil
           self.AttackSet:ForEachGroup(
+            --- @param Wrapper.Group#GROUP AttackGroup
             function( AttackGroup )
-              local DetectionText = self.Detection:DetectedItemReportSummary( DesignateIndex, AttackGroup ):Text( ", " )
-              self.CC:GetPositionable():MessageToGroup( "Targets out of LOS\n" .. DetectionText, 10, AttackGroup, self.DesignateName )
+              if AttackGroup:IsAlive() == true then
+                local DetectionText = self.Detection:DetectedItemReportSummary( DesignateIndex, AttackGroup ):Text( ", " )
+                self.CC:GetPositionable():MessageToGroup( "Targets out of LOS\n" .. DetectionText, 10, AttackGroup, self.DesignateName )
+              end
             end
           )
         else
@@ -1085,14 +1088,16 @@ do -- DESIGNATE
                           self.LaserCodesUsed[LaserCode] = LaserCodeIndex
                           local Spot = RecceUnit:LaseUnit( TargetUnit, LaserCode, Duration )
                           local AttackSet = self.AttackSet
+                          local DesignateName = self.DesignateName
     
                           function Spot:OnAfterDestroyed( From, Event, To )
-                            self:E( "Destroyed Message" )
-                            self.Recce:ToSetGroup( "Target " .. TargetUnit:GetTypeName() .. " destroyed. " .. TargetSetUnit:Count() .. " targets left.", 5, AttackSet, self.DesignateName )
+                            self.Recce:MessageToSetGroup( "Target " .. TargetUnit:GetTypeName() .. " destroyed. " .. TargetSetUnit:Count() .. " targets left.", 
+                                                          5, AttackSet, self.DesignateName )
                           end
     
                           self.Recces[TargetUnit] = RecceUnit
-                          RecceUnit:MessageToSetGroup( "Marking " .. TargetUnit:GetTypeName() .. " with laser " .. RecceUnit:GetSpot().LaserCode .. " for " .. Duration .. "s.", 5, self.AttackSet, self.DesignateName )
+                          RecceUnit:MessageToSetGroup( "Marking " .. TargetUnit:GetTypeName() .. " with laser " .. RecceUnit:GetSpot().LaserCode .. " for " .. Duration .. "s.", 
+                                                       5, self.AttackSet, DesignateName )
                           -- OK. We have assigned for the Recce a TargetUnit. We can exit the function.
                           MarkingCount = MarkingCount + 1
                           local TargetUnitType = TargetUnit:GetTypeName()

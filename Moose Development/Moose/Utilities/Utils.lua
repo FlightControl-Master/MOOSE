@@ -236,25 +236,35 @@ UTILS.FeetToMeters = function(feet)
   return feet*0.3048
 end
 
-UTILS.MpsToKnots = function(mps)
-  return mps*3600/1852
-end
-
-UTILS.MpsToKmph = function(mps)
-  return mps*3.6
-end
-
-UTILS.KnotsToMps = function(knots)
-  return knots*1852/3600
-end
-
 UTILS.KnotsToKmph = function(knots)
   return knots* 1.852
 end
 
-UTILS.KmphToMps = function(kmph)
-  return kmph/3.6
+UTILS.KmphToMps = function( kmph )
+  return kmph / 3.6
 end
+
+UTILS.MpsToKmph = function( mps )
+  return mps * 3.6
+end
+
+UTILS.MiphToMps = function( miph )
+  return miph * 0.44704
+end
+
+UTILS.MpsToMiph = function( mps )
+  return mps / 0.44704
+end
+
+UTILS.MpsToKnots = function( mps )
+  return mps * 3600 / 1852
+end
+
+UTILS.KnotsToMps = function( knots )
+  return knots * 1852 / 3600
+end
+
+
 
 --[[acc:
 in DM: decimal point of minutes.

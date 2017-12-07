@@ -1,21 +1,21 @@
 
 local base = _G
 
-__Moose = {}
+MOOSE = {}
 
-__Moose.Include = function( IncludeFile )
-	if not __Moose.Includes[ IncludeFile ] then
-		__Moose.Includes[IncludeFile] = IncludeFile
-		local f = assert( base.loadfile( __Moose.ProgramPath .. IncludeFile ) )
+MOOSE.Include = function( LuaPath, IncludeFile )
+	if not MOOSE.Includes[ IncludeFile ] then
+		MOOSE.Includes[IncludeFile] = IncludeFile
+		local f = assert( base.loadfile( LuaPath .. IncludeFile ) )
 		if f == nil then
-			error ("Moose: Could not load Moose file " .. IncludeFile )
+			error ("MOOSE: Could not load Moose file " .. IncludeFile )
 		else
-			env.info( "Moose: " .. IncludeFile .. " dynamically loaded from " .. __Moose.ProgramPath )
+			env.info( "MOOSE: " .. IncludeFile .. " dynamically loaded from " .. LuaPath )
 			return f()
 		end
 	end
 end
 
-__Moose.ProgramPath = "Scripts/Moose/"
+MOOSE.ProgramPath = "Scripts/Moose/"
 
-__Moose.Includes = {}
+MOOSE.Includes = {}

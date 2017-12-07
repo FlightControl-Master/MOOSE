@@ -50,7 +50,7 @@ while( MooseSource ) do
     local MooseFilePath = MooseDevelopmentPath .. "/" .. MooseSource
     if MooseDynamicStatic == "D" then
       print( "Load dynamic: " .. MooseSource )
-      MooseFile:write( "__Moose.Include( '" .. MooseSource .. "' )\n" )
+      MooseFile:write( "MOOSE.Include( MOOSE.ProgramPath, '" .. MooseSource .. "' )\n" )
     end
     if MooseDynamicStatic == "S" then
       print( "Load static: " .. MooseSource )

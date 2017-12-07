@@ -153,8 +153,10 @@ end
 function SET_BASE:Add( ObjectName, Object )
   self:F( ObjectName )
 
-  self.Set[ObjectName] = Object
-  table.insert( self.Index, ObjectName )
+  if not self.Set[ObjectName] then
+    self.Set[ObjectName] = Object
+    table.insert( self.Index, ObjectName )
+  end
 end
 
 --- Adds a @{Base#BASE} object in the @{Set#SET_BASE}, using the Object Name as the index.
@@ -437,44 +439,44 @@ end
 --- Handles the OnPlayerEnterUnit event to fill the active players table (with the unit filter applied).
 -- @param #SET_BASE self
 -- @param Core.Event#EVENTDATA Event
-function SET_BASE:_EventOnPlayerEnterUnit( Event )
-  self:F3( { Event } )
-
-  if Event.IniDCSUnit then
-    local ObjectName, Object = self:AddInDatabase( Event )
-    self:T3( ObjectName, Object )
-    if self:IsIncludeObject( Object ) then
-      self:Add( ObjectName, Object )
-      --self:_EventOnPlayerEnterUnit( Event )
-    end
-  end
-end
+--function SET_BASE:_EventOnPlayerEnterUnit( Event )
+--  self:F3( { Event } )
+--
+--  if Event.IniDCSUnit then
+--    local ObjectName, Object = self:AddInDatabase( Event )
+--    self:T3( ObjectName, Object )
+--    if self:IsIncludeObject( Object ) then
+--      self:Add( ObjectName, Object )
+--      --self:_EventOnPlayerEnterUnit( Event )
+--    end
+--  end
+--end
 
 --- Handles the OnPlayerLeaveUnit event to clean the active players table.
 -- @param #SET_BASE self
 -- @param Core.Event#EVENTDATA Event
-function SET_BASE:_EventOnPlayerLeaveUnit( Event )
-  self:F3( { Event } )
-
-  local ObjectName = Event.IniDCSUnit
-  if Event.IniDCSUnit then
-    if Event.IniDCSGroup then
-      local GroupUnits = Event.IniDCSGroup:getUnits()
-      local PlayerCount = 0
-      for _, DCSUnit in pairs( GroupUnits ) do
-        if DCSUnit ~= Event.IniDCSUnit then
-          if DCSUnit:getPlayerName() ~= nil then
-            PlayerCount = PlayerCount + 1
-          end
-        end
-      end
-      self:E(PlayerCount)
-      if PlayerCount == 0 then
-        self:Remove( Event.IniDCSGroupName )
-      end
-    end
-  end
-end
+--function SET_BASE:_EventOnPlayerLeaveUnit( Event )
+--  self:F3( { Event } )
+--
+--  local ObjectName = Event.IniDCSUnit
+--  if Event.IniDCSUnit then
+--    if Event.IniDCSGroup then
+--      local GroupUnits = Event.IniDCSGroup:getUnits()
+--      local PlayerCount = 0
+--      for _, DCSUnit in pairs( GroupUnits ) do
+--        if DCSUnit ~= Event.IniDCSUnit then
+--          if DCSUnit:getPlayerName() ~= nil then
+--            PlayerCount = PlayerCount + 1
+--          end
+--        end
+--      end
+--      self:E(PlayerCount)
+--      if PlayerCount == 0 then
+--        self:Remove( Event.IniDCSGroupName )
+--      end
+--    end
+--  end
+--end
 
 -- Iterators
 
@@ -713,6 +715,25 @@ function SET_GROUP:New()
 
   return self
 end
+
+--- Gets the Set.
+-- @param #SET_GROUP self
+-- @return #SET_GROUP self
+function SET_BASE:GetSet()
+  self:F2()
+  
+  -- Clean the Set before returning with only the alive Groups.
+  for GroupName, GroupObject in pairs( self.Set ) do
+    if GroupObject then
+      if not GroupObject:IsAlive() then
+        self:Remove( GroupName )
+      end
+    end
+  end
+  
+  return self.Set
+end
+
 
 --- Add GROUP(s) to SET_GROUP.
 -- @param Core.Set#SET_GROUP self
@@ -970,7 +991,7 @@ end
 function SET_GROUP:ForEachGroup( IteratorFunction, ... )
   self:F2( arg )
   
-  self:ForEach( IteratorFunction, arg, self.Set )
+  self:ForEach( IteratorFunction, arg, self:GetSet() )
 
   return self
 end
@@ -983,7 +1004,7 @@ end
 function SET_GROUP:ForEachGroupCompletelyInZone( ZoneObject, IteratorFunction, ... )
   self:F2( arg )
   
-  self:ForEach( IteratorFunction, arg, self.Set,
+  self:ForEach( IteratorFunction, arg, self:GetSet(),
     --- @param Core.Zone#ZONE_BASE ZoneObject
     -- @param Wrapper.Group#GROUP GroupObject
     function( ZoneObject, GroupObject )
@@ -1005,7 +1026,7 @@ end
 function SET_GROUP:ForEachGroupPartlyInZone( ZoneObject, IteratorFunction, ... )
   self:F2( arg )
   
-  self:ForEach( IteratorFunction, arg, self.Set,
+  self:ForEach( IteratorFunction, arg, self:GetSet(),
     --- @param Core.Zone#ZONE_BASE ZoneObject
     -- @param Wrapper.Group#GROUP GroupObject
     function( ZoneObject, GroupObject )
@@ -1027,7 +1048,7 @@ end
 function SET_GROUP:ForEachGroupNotInZone( ZoneObject, IteratorFunction, ... )
   self:F2( arg )
   
-  self:ForEach( IteratorFunction, arg, self.Set,
+  self:ForEach( IteratorFunction, arg, self:GetSet(),
     --- @param Core.Zone#ZONE_BASE ZoneObject
     -- @param Wrapper.Group#GROUP GroupObject
     function( ZoneObject, GroupObject )
@@ -1703,7 +1724,7 @@ do -- SET_UNIT
     function SET_UNIT:ForEachUnitInZone( IteratorFunction, ... )
       self:F2( arg )
       
-      self:ForEach( IteratorFunction, arg, self.Set )
+      self:ForEach( IteratorFunction, arg, self:GetSet() )
     
       return self
     end
@@ -1719,7 +1740,7 @@ do -- SET_UNIT
   function SET_UNIT:ForEachUnit( IteratorFunction, ... )
     self:F2( arg )
     
-    self:ForEach( IteratorFunction, arg, self.Set )
+    self:ForEach( IteratorFunction, arg, self:GetSet() )
   
     return self
   end
@@ -1762,7 +1783,7 @@ do -- SET_UNIT
         self:E( { ThreatLevel = ThreatLevel } )
         local ThreatLevelItem = ThreatLevelSet[ThreatLevel]
         if ThreatLevelItem then
-          self:ForEach( IteratorFunction, arg, ThreatLevelItem.Set )
+          self:ForEach( IteratorFunction, arg, ThreatLevelItem:GetSet() )
         end
       end
     end
@@ -1780,7 +1801,7 @@ do -- SET_UNIT
   function SET_UNIT:ForEachUnitCompletelyInZone( ZoneObject, IteratorFunction, ... )
     self:F2( arg )
     
-    self:ForEach( IteratorFunction, arg, self.Set,
+    self:ForEach( IteratorFunction, arg, self:GetSet(),
       --- @param Core.Zone#ZONE_BASE ZoneObject
       -- @param Wrapper.Unit#UNIT UnitObject
       function( ZoneObject, UnitObject )
@@ -1802,7 +1823,7 @@ do -- SET_UNIT
   function SET_UNIT:ForEachUnitNotInZone( ZoneObject, IteratorFunction, ... )
     self:F2( arg )
     
-    self:ForEach( IteratorFunction, arg, self.Set,
+    self:ForEach( IteratorFunction, arg, self:GetSet(),
       --- @param Core.Zone#ZONE_BASE ZoneObject
       -- @param Wrapper.Unit#UNIT UnitObject
       function( ZoneObject, UnitObject )
@@ -2615,7 +2636,7 @@ do -- SET_STATIC
     function SET_STATIC:ForEachStaticInZone( IteratorFunction, ... )
       self:F2( arg )
       
-      self:ForEach( IteratorFunction, arg, self.Set )
+      self:ForEach( IteratorFunction, arg, self:GetSet() )
     
       return self
     end
@@ -2631,7 +2652,7 @@ do -- SET_STATIC
   function SET_STATIC:ForEachStatic( IteratorFunction, ... )
     self:F2( arg )
     
-    self:ForEach( IteratorFunction, arg, self.Set )
+    self:ForEach( IteratorFunction, arg, self:GetSet() )
   
     return self
   end
@@ -2645,7 +2666,7 @@ do -- SET_STATIC
   function SET_STATIC:ForEachStaticCompletelyInZone( ZoneObject, IteratorFunction, ... )
     self:F2( arg )
     
-    self:ForEach( IteratorFunction, arg, self.Set,
+    self:ForEach( IteratorFunction, arg, self:GetSet(),
       --- @param Core.Zone#ZONE_BASE ZoneObject
       -- @param Wrapper.Static#STATIC StaticObject
       function( ZoneObject, StaticObject )
@@ -2667,7 +2688,7 @@ do -- SET_STATIC
   function SET_STATIC:ForEachStaticNotInZone( ZoneObject, IteratorFunction, ... )
     self:F2( arg )
     
-    self:ForEach( IteratorFunction, arg, self.Set,
+    self:ForEach( IteratorFunction, arg, self:GetSet(),
       --- @param Core.Zone#ZONE_BASE ZoneObject
       -- @param Wrapper.Static#STATIC StaticObject
       function( ZoneObject, StaticObject )
@@ -3197,7 +3218,7 @@ end
 function SET_CLIENT:ForEachClient( IteratorFunction, ... )
   self:F2( arg )
   
-  self:ForEach( IteratorFunction, arg, self.Set )
+  self:ForEach( IteratorFunction, arg, self:GetSet() )
 
   return self
 end
@@ -3210,7 +3231,7 @@ end
 function SET_CLIENT:ForEachClientInZone( ZoneObject, IteratorFunction, ... )
   self:F2( arg )
   
-  self:ForEach( IteratorFunction, arg, self.Set,
+  self:ForEach( IteratorFunction, arg, self:GetSet(),
     --- @param Core.Zone#ZONE_BASE ZoneObject
     -- @param Wrapper.Client#CLIENT ClientObject
     function( ZoneObject, ClientObject )
@@ -3232,7 +3253,7 @@ end
 function SET_CLIENT:ForEachClientNotInZone( ZoneObject, IteratorFunction, ... )
   self:F2( arg )
   
-  self:ForEach( IteratorFunction, arg, self.Set,
+  self:ForEach( IteratorFunction, arg, self:GetSet(),
     --- @param Core.Zone#ZONE_BASE ZoneObject
     -- @param Wrapper.Client#CLIENT ClientObject
     function( ZoneObject, ClientObject )
@@ -3251,6 +3272,405 @@ end
 -- @param Wrapper.Client#CLIENT MClient
 -- @return #SET_CLIENT self
 function SET_CLIENT:IsIncludeObject( MClient )
+  self:F2( MClient )
+
+  local MClientInclude = true
+
+  if MClient then
+    local MClientName = MClient.UnitName
+  
+    if self.Filter.Coalitions then
+      local MClientCoalition = false
+      for CoalitionID, CoalitionName in pairs( self.Filter.Coalitions ) do
+        local ClientCoalitionID = _DATABASE:GetCoalitionFromClientTemplate( MClientName )
+        self:T3( { "Coalition:", ClientCoalitionID, self.FilterMeta.Coalitions[CoalitionName], CoalitionName } )
+        if self.FilterMeta.Coalitions[CoalitionName] and self.FilterMeta.Coalitions[CoalitionName] == ClientCoalitionID then
+          MClientCoalition = true
+        end
+      end
+      self:T( { "Evaluated Coalition", MClientCoalition } )
+      MClientInclude = MClientInclude and MClientCoalition
+    end
+    
+    if self.Filter.Categories then
+      local MClientCategory = false
+      for CategoryID, CategoryName in pairs( self.Filter.Categories ) do
+        local ClientCategoryID = _DATABASE:GetCategoryFromClientTemplate( MClientName )
+        self:T3( { "Category:", ClientCategoryID, self.FilterMeta.Categories[CategoryName], CategoryName } )
+        if self.FilterMeta.Categories[CategoryName] and self.FilterMeta.Categories[CategoryName] == ClientCategoryID then
+          MClientCategory = true
+        end
+      end
+      self:T( { "Evaluated Category", MClientCategory } )
+      MClientInclude = MClientInclude and MClientCategory
+    end
+    
+    if self.Filter.Types then
+      local MClientType = false
+      for TypeID, TypeName in pairs( self.Filter.Types ) do
+        self:T3( { "Type:", MClient:GetTypeName(), TypeName } )
+        if TypeName == MClient:GetTypeName() then
+          MClientType = true
+        end
+      end
+      self:T( { "Evaluated Type", MClientType } )
+      MClientInclude = MClientInclude and MClientType
+    end
+    
+    if self.Filter.Countries then
+      local MClientCountry = false
+      for CountryID, CountryName in pairs( self.Filter.Countries ) do
+        local ClientCountryID = _DATABASE:GetCountryFromClientTemplate(MClientName)
+        self:T3( { "Country:", ClientCountryID, country.id[CountryName], CountryName } )
+        if country.id[CountryName] and country.id[CountryName] == ClientCountryID then
+          MClientCountry = true
+        end
+      end
+      self:T( { "Evaluated Country", MClientCountry } )
+      MClientInclude = MClientInclude and MClientCountry
+    end
+  
+    if self.Filter.ClientPrefixes then
+      local MClientPrefix = false
+      for ClientPrefixId, ClientPrefix in pairs( self.Filter.ClientPrefixes ) do
+        self:T3( { "Prefix:", string.find( MClient.UnitName, ClientPrefix, 1 ), ClientPrefix } )
+        if string.find( MClient.UnitName, ClientPrefix, 1 ) then
+          MClientPrefix = true
+        end
+      end
+      self:T( { "Evaluated Prefix", MClientPrefix } )
+      MClientInclude = MClientInclude and MClientPrefix
+    end
+  end
+  
+  self:T2( MClientInclude )
+  return MClientInclude
+end
+
+--- SET_PLAYER
+
+
+--- @type SET_PLAYER
+-- @extends Core.Set#SET_BASE
+
+
+
+--- # 4) SET_PLAYER class, extends @{Set#SET_BASE}
+-- 
+-- Mission designers can use the @{Set#SET_PLAYER} class to build sets of units belonging to alive players:
+-- 
+-- ## 4.1) SET_PLAYER constructor
+-- 
+-- Create a new SET_PLAYER object with the @{#SET_PLAYER.New} method:
+-- 
+--    * @{#SET_PLAYER.New}: Creates a new SET_PLAYER object.
+--   
+-- ## 4.3) SET_PLAYER filter criteria
+-- 
+-- You can set filter criteria to define the set of clients within the SET_PLAYER.
+-- Filter criteria are defined by:
+-- 
+--    * @{#SET_PLAYER.FilterCoalitions}: Builds the SET_PLAYER with the clients belonging to the coalition(s).
+--    * @{#SET_PLAYER.FilterCategories}: Builds the SET_PLAYER with the clients belonging to the category(ies).
+--    * @{#SET_PLAYER.FilterTypes}: Builds the SET_PLAYER with the clients belonging to the client type(s).
+--    * @{#SET_PLAYER.FilterCountries}: Builds the SET_PLAYER with the clients belonging to the country(ies).
+--    * @{#SET_PLAYER.FilterPrefixes}: Builds the SET_PLAYER with the clients starting with the same prefix string(s).
+--   
+-- Once the filter criteria have been set for the SET_PLAYER, you can start filtering using:
+-- 
+--   * @{#SET_PLAYER.FilterStart}: Starts the filtering of the clients within the SET_PLAYER.
+-- 
+-- Planned filter criteria within development are (so these are not yet available):
+-- 
+--    * @{#SET_PLAYER.FilterZones}: Builds the SET_PLAYER with the clients within a @{Zone#ZONE}.
+-- 
+-- ## 4.4) SET_PLAYER iterators
+-- 
+-- Once the filters have been defined and the SET_PLAYER has been built, you can iterate the SET_PLAYER with the available iterator methods.
+-- The iterator methods will walk the SET_PLAYER set, and call for each element within the set a function that you provide.
+-- The following iterator methods are currently available within the SET_PLAYER:
+-- 
+--   * @{#SET_PLAYER.ForEachClient}: Calls a function for each alive client it finds within the SET_PLAYER.
+-- 
+-- ===
+-- @field #SET_PLAYER SET_PLAYER 
+SET_PLAYER = {
+  ClassName = "SET_PLAYER",
+  Clients = {},
+  Filter = {
+    Coalitions = nil,
+    Categories = nil,
+    Types = nil,
+    Countries = nil,
+    ClientPrefixes = nil,
+  },
+  FilterMeta = {
+    Coalitions = {
+      red = coalition.side.RED,
+      blue = coalition.side.BLUE,
+      neutral = coalition.side.NEUTRAL,
+    },
+    Categories = {
+      plane = Unit.Category.AIRPLANE,
+      helicopter = Unit.Category.HELICOPTER,
+      ground = Unit.Category.GROUND_UNIT,
+      ship = Unit.Category.SHIP,
+      structure = Unit.Category.STRUCTURE,
+    },
+  },
+}
+
+
+--- Creates a new SET_PLAYER object, building a set of clients belonging to a coalitions, categories, countries, types or with defined prefix names.
+-- @param #SET_PLAYER self
+-- @return #SET_PLAYER
+-- @usage
+-- -- Define a new SET_PLAYER Object. This DBObject will contain a reference to all Clients.
+-- DBObject = SET_PLAYER:New()
+function SET_PLAYER:New()
+  -- Inherits from BASE
+  local self = BASE:Inherit( self, SET_BASE:New( _DATABASE.PLAYERS ) )
+
+  return self
+end
+
+--- Add CLIENT(s) to SET_PLAYER.
+-- @param Core.Set#SET_PLAYER self
+-- @param #string AddClientNames A single name or an array of CLIENT names.
+-- @return self
+function SET_PLAYER:AddClientsByName( AddClientNames )
+
+  local AddClientNamesArray = ( type( AddClientNames ) == "table" ) and AddClientNames or { AddClientNames }
+  
+  for AddClientID, AddClientName in pairs( AddClientNamesArray ) do
+    self:Add( AddClientName, CLIENT:FindByName( AddClientName ) )
+  end
+    
+  return self
+end
+
+--- Remove CLIENT(s) from SET_PLAYER.
+-- @param Core.Set#SET_PLAYER self
+-- @param Wrapper.Client#CLIENT RemoveClientNames A single name or an array of CLIENT names.
+-- @return self
+function SET_PLAYER:RemoveClientsByName( RemoveClientNames )
+
+  local RemoveClientNamesArray = ( type( RemoveClientNames ) == "table" ) and RemoveClientNames or { RemoveClientNames }
+  
+  for RemoveClientID, RemoveClientName in pairs( RemoveClientNamesArray ) do
+    self:Remove( RemoveClientName.ClientName )
+  end
+    
+  return self
+end
+
+
+--- Finds a Client based on the Player Name.
+-- @param #SET_PLAYER self
+-- @param #string PlayerName
+-- @return Wrapper.Client#CLIENT The found Client.
+function SET_PLAYER:FindClient( PlayerName )
+
+  local ClientFound = self.Set[PlayerName]
+  return ClientFound
+end
+
+
+
+--- Builds a set of clients of coalitions joined by specific players.
+-- Possible current coalitions are red, blue and neutral.
+-- @param #SET_PLAYER self
+-- @param #string Coalitions Can take the following values: "red", "blue", "neutral".
+-- @return #SET_PLAYER self
+function SET_PLAYER:FilterCoalitions( Coalitions )
+  if not self.Filter.Coalitions then
+    self.Filter.Coalitions = {}
+  end
+  if type( Coalitions ) ~= "table" then
+    Coalitions = { Coalitions }
+  end
+  for CoalitionID, Coalition in pairs( Coalitions ) do
+    self.Filter.Coalitions[Coalition] = Coalition
+  end
+  return self
+end
+
+
+--- Builds a set of clients out of categories joined by players.
+-- Possible current categories are plane, helicopter, ground, ship.
+-- @param #SET_PLAYER self
+-- @param #string Categories Can take the following values: "plane", "helicopter", "ground", "ship".
+-- @return #SET_PLAYER self
+function SET_PLAYER:FilterCategories( Categories )
+  if not self.Filter.Categories then
+    self.Filter.Categories = {}
+  end
+  if type( Categories ) ~= "table" then
+    Categories = { Categories }
+  end
+  for CategoryID, Category in pairs( Categories ) do
+    self.Filter.Categories[Category] = Category
+  end
+  return self
+end
+
+
+--- Builds a set of clients of defined client types joined by players.
+-- Possible current types are those types known within DCS world.
+-- @param #SET_PLAYER self
+-- @param #string Types Can take those type strings known within DCS world.
+-- @return #SET_PLAYER self
+function SET_PLAYER:FilterTypes( Types )
+  if not self.Filter.Types then
+    self.Filter.Types = {}
+  end
+  if type( Types ) ~= "table" then
+    Types = { Types }
+  end
+  for TypeID, Type in pairs( Types ) do
+    self.Filter.Types[Type] = Type
+  end
+  return self
+end
+
+
+--- Builds a set of clients of defined countries.
+-- Possible current countries are those known within DCS world.
+-- @param #SET_PLAYER self
+-- @param #string Countries Can take those country strings known within DCS world.
+-- @return #SET_PLAYER self
+function SET_PLAYER:FilterCountries( Countries )
+  if not self.Filter.Countries then
+    self.Filter.Countries = {}
+  end
+  if type( Countries ) ~= "table" then
+    Countries = { Countries }
+  end
+  for CountryID, Country in pairs( Countries ) do
+    self.Filter.Countries[Country] = Country
+  end
+  return self
+end
+
+
+--- Builds a set of clients of defined client prefixes.
+-- All the clients starting with the given prefixes will be included within the set.
+-- @param #SET_PLAYER self
+-- @param #string Prefixes The prefix of which the client name starts with.
+-- @return #SET_PLAYER self
+function SET_PLAYER:FilterPrefixes( Prefixes )
+  if not self.Filter.ClientPrefixes then
+    self.Filter.ClientPrefixes = {}
+  end
+  if type( Prefixes ) ~= "table" then
+    Prefixes = { Prefixes }
+  end
+  for PrefixID, Prefix in pairs( Prefixes ) do
+    self.Filter.ClientPrefixes[Prefix] = Prefix
+  end
+  return self
+end
+
+
+
+
+--- Starts the filtering.
+-- @param #SET_PLAYER self
+-- @return #SET_PLAYER self
+function SET_PLAYER:FilterStart()
+
+  if _DATABASE then
+    self:_FilterStart()
+  end
+  
+  return self
+end
+
+--- Handles the Database to check on an event (birth) that the Object was added in the Database.
+-- This is required, because sometimes the _DATABASE birth event gets called later than the SET_BASE birth event!
+-- @param #SET_PLAYER self
+-- @param Core.Event#EVENTDATA Event
+-- @return #string The name of the CLIENT
+-- @return #table The CLIENT
+function SET_PLAYER:AddInDatabase( Event )
+  self:F3( { Event } )
+
+  return Event.IniDCSUnitName, self.Database[Event.IniDCSUnitName]
+end
+
+--- Handles the Database to check on any event that Object exists in the Database.
+-- This is required, because sometimes the _DATABASE event gets called later than the SET_BASE event or vise versa!
+-- @param #SET_PLAYER self
+-- @param Core.Event#EVENTDATA Event
+-- @return #string The name of the CLIENT
+-- @return #table The CLIENT
+function SET_PLAYER:FindInDatabase( Event )
+  self:F3( { Event } )
+
+  return Event.IniDCSUnitName, self.Database[Event.IniDCSUnitName]
+end
+
+--- Iterate the SET_PLAYER and call an interator function for each **alive** CLIENT, providing the CLIENT and optional parameters.
+-- @param #SET_PLAYER self
+-- @param #function IteratorFunction The function that will be called when there is an alive CLIENT in the SET_PLAYER. The function needs to accept a CLIENT parameter.
+-- @return #SET_PLAYER self
+function SET_PLAYER:ForEachPlayer( IteratorFunction, ... )
+  self:F2( arg )
+  
+  self:ForEach( IteratorFunction, arg, self:GetSet() )
+
+  return self
+end
+
+--- Iterate the SET_PLAYER and call an iterator function for each **alive** CLIENT presence completely in a @{Zone}, providing the CLIENT and optional parameters to the called function.
+-- @param #SET_PLAYER self
+-- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
+-- @param #function IteratorFunction The function that will be called when there is an alive CLIENT in the SET_PLAYER. The function needs to accept a CLIENT parameter.
+-- @return #SET_PLAYER self
+function SET_PLAYER:ForEachPlayerInZone( ZoneObject, IteratorFunction, ... )
+  self:F2( arg )
+  
+  self:ForEach( IteratorFunction, arg, self:GetSet(),
+    --- @param Core.Zone#ZONE_BASE ZoneObject
+    -- @param Wrapper.Client#CLIENT ClientObject
+    function( ZoneObject, ClientObject )
+      if ClientObject:IsInZone( ZoneObject ) then
+        return true
+      else
+        return false
+      end
+    end, { ZoneObject } )
+
+  return self
+end
+
+--- Iterate the SET_PLAYER and call an iterator function for each **alive** CLIENT presence not in a @{Zone}, providing the CLIENT and optional parameters to the called function.
+-- @param #SET_PLAYER self
+-- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
+-- @param #function IteratorFunction The function that will be called when there is an alive CLIENT in the SET_PLAYER. The function needs to accept a CLIENT parameter.
+-- @return #SET_PLAYER self
+function SET_PLAYER:ForEachPlayerNotInZone( ZoneObject, IteratorFunction, ... )
+  self:F2( arg )
+  
+  self:ForEach( IteratorFunction, arg, self:GetSet(),
+    --- @param Core.Zone#ZONE_BASE ZoneObject
+    -- @param Wrapper.Client#CLIENT ClientObject
+    function( ZoneObject, ClientObject )
+      if ClientObject:IsNotInZone( ZoneObject ) then
+        return true
+      else
+        return false
+      end
+    end, { ZoneObject } )
+
+  return self
+end
+
+---
+-- @param #SET_PLAYER self
+-- @param Wrapper.Client#CLIENT MClient
+-- @return #SET_PLAYER self
+function SET_PLAYER:IsIncludeObject( MClient )
   self:F2( MClient )
 
   local MClientInclude = true
@@ -3525,7 +3945,7 @@ end
 function SET_AIRBASE:ForEachAirbase( IteratorFunction, ... )
   self:F2( arg )
   
-  self:ForEach( IteratorFunction, arg, self.Set )
+  self:ForEach( IteratorFunction, arg, self:GetSet() )
 
   return self
 end
@@ -3830,7 +4250,7 @@ end
 function SET_CARGO:ForEachCargo( IteratorFunction, ... ) --R2.1
   self:F2( arg )
   
-  self:ForEach( IteratorFunction, arg, self.Set )
+  self:ForEach( IteratorFunction, arg, self:GetSet() )
 
   return self
 end

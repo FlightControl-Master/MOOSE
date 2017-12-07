@@ -28,9 +28,9 @@
 					<li><a href="AI_Cas.html">AI_Cas</a></li>
 					<li><a href="AI_Formation.html">AI_Formation</a></li>
 					<li><a href="AI_Patrol.html">AI_Patrol</a></li>
+					<li><a href="ATC_Ground.html">ATC_Ground</a></li>
 					<li><a href="Account.html">Account</a></li>
 					<li><a href="Airbase.html">Airbase</a></li>
-					<li><a href="AirbasePolice.html">AirbasePolice</a></li>
 					<li><a href="Assign.html">Assign</a></li>
 					<li><a href="Base.html">Base</a></li>
 					<li><a href="Cargo.html">Cargo</a></li>
@@ -102,9 +102,11 @@
 					<li><a href="UserFlag.html">UserFlag</a></li>
 					<li><a href="UserSound.html">UserSound</a></li>
 					<li><a href="Utils.html">Utils</a></li>
+					<li><a href="Velocity.html">Velocity</a></li>
 					<li><a href="Zone.html">Zone</a></li>
 					<li><a href="ZoneCaptureCoalition.html">ZoneCaptureCoalition</a></li>
 					<li><a href="ZoneGoal.html">ZoneGoal</a></li>
+					<li><a href="ZoneGoalCargo.html">ZoneGoalCargo</a></li>
 					<li><a href="ZoneGoalCoalition.html">ZoneGoalCoalition</a></li>
 					<li><a href="env.html">env</a></li>
 					<li><a href="land.html">land</a></li>
@@ -216,9 +218,27 @@ based on the tasking capabilities defined in <a href="Task.html##(TASK)">Task#TA
 </td>
 		</tr>
 		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G).InitialTargets">TASK_A2G.InitialTargets</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G).InitialThreat">TASK_A2G.InitialThreat</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G).New">TASK_A2G:New(Mission, SetGroup, TaskName, UnitSetTargets, TargetDistance, TargetZone, TargetSetUnit, TaskType, TaskBriefing)</a></td>
 		<td class="summary">
 <p>Instantiates a new TASK_A2G.</p>
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G).ReportOrder">TASK_A2G:ReportOrder(ReportGroup)</a></td>
+		<td class="summary">
+<p>Return the relative distance to the target vicinity from the player, in order to sort the targets in the reports per distance from the threats.</p>
 </td>
 		</tr>
 		<tr>
@@ -263,6 +283,18 @@ based on the tasking capabilities defined in <a href="Task.html##(TASK)">Task#TA
 
 </td>
 		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G).UpdateTaskInfo">TASK_A2G:UpdateTaskInfo()</a></td>
+		<td class="summary">
+
+</td>
+		</tr>
+		<tr>
+		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G).onafterGoal">TASK_A2G:onafterGoal(TaskUnit, From, Event, To)</a></td>
+		<td class="summary">
+<p>This method checks every 10 seconds if the goal has been reached of the task.</p>
+</td>
+		</tr>
 	</table>
 
 			<h2><a id="#(TASK_A2G_BAI)">Type <code>TASK_A2G_BAI</code></a></h2>
@@ -271,12 +303,6 @@ based on the tasking capabilities defined in <a href="Task.html##(TASK)">Task#TA
 		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G_BAI).New">TASK_A2G_BAI:New(Mission, SetGroup, TaskName, TargetSetUnit, TaskBriefing)</a></td>
 		<td class="summary">
 <p>Instantiates a new TASK<em>A2G</em>BAI.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G_BAI).ReportOrder">TASK_A2G_BAI:ReportOrder(ReportGroup)</a></td>
-		<td class="summary">
-
 </td>
 		</tr>
 		<tr>
@@ -303,18 +329,6 @@ based on the tasking capabilities defined in <a href="Task.html##(TASK)">Task#TA
 
 </td>
 		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G_BAI).UpdateTaskInfo">TASK_A2G_BAI:UpdateTaskInfo()</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G_BAI).onafterGoal">TASK_A2G_BAI:onafterGoal(TaskUnit, From, Event, To)</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
 	</table>
 
 			<h2><a id="#(TASK_A2G_CAS)">Type <code>TASK_A2G_CAS</code></a></h2>
@@ -323,12 +337,6 @@ based on the tasking capabilities defined in <a href="Task.html##(TASK)">Task#TA
 		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G_CAS).New">TASK_A2G_CAS:New(Mission, SetGroup, TaskName, TargetSetUnit, TaskBriefing)</a></td>
 		<td class="summary">
 <p>Instantiates a new TASK<em>A2G</em>CAS.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G_CAS).ReportOrder">TASK_A2G_CAS:ReportOrder(ReportGroup)</a></td>
-		<td class="summary">
-
 </td>
 		</tr>
 		<tr>
@@ -355,18 +363,6 @@ based on the tasking capabilities defined in <a href="Task.html##(TASK)">Task#TA
 
 </td>
 		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G_CAS).UpdateTaskInfo">TASK_A2G_CAS:UpdateTaskInfo()</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G_CAS).onafterGoal">TASK_A2G_CAS:onafterGoal(TaskUnit, From, Event, To)</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
 	</table>
 
 			<h2><a id="#(TASK_A2G_SEAD)">Type <code>TASK_A2G_SEAD</code></a></h2>
@@ -375,12 +371,6 @@ based on the tasking capabilities defined in <a href="Task.html##(TASK)">Task#TA
 		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G_SEAD).New">TASK_A2G_SEAD:New(Mission, SetGroup, TaskName, TargetSetUnit, TaskBriefing)</a></td>
 		<td class="summary">
 <p>Instantiates a new TASK<em>A2G</em>SEAD.</p>
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G_SEAD).ReportOrder">TASK_A2G_SEAD:ReportOrder(ReportGroup)</a></td>
-		<td class="summary">
-
 </td>
 		</tr>
 		<tr>
@@ -403,18 +393,6 @@ based on the tasking capabilities defined in <a href="Task.html##(TASK)">Task#TA
 		</tr>
 		<tr>
 		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G_SEAD).TargetSetUnit">TASK_A2G_SEAD.TargetSetUnit</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G_SEAD).UpdateTaskInfo">TASK_A2G_SEAD:UpdateTaskInfo()</a></td>
-		<td class="summary">
-
-</td>
-		</tr>
-		<tr>
-		<td class="name" nowrap="nowrap"><a href="##(TASK_A2G_SEAD).onafterGoal">TASK_A2G_SEAD:onafterGoal(TaskUnit, From, Event, To)</a></td>
 		<td class="summary">
 
 </td>
@@ -740,6 +718,34 @@ The Zone object where the Target is located on the map.</p>
 		<dl class="function">
 <dt>
 
+		<em></em>
+<a id="#(TASK_A2G).InitialTargets" >
+<strong>TASK_A2G.InitialTargets</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+		<em></em>
+<a id="#(TASK_A2G).InitialThreat" >
+<strong>TASK_A2G.InitialThreat</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
 <a id="#(TASK_A2G).New" >
 <strong>TASK_A2G:New(Mission, SetGroup, TaskName, UnitSetTargets, TargetDistance, TargetZone, TargetSetUnit, TaskType, TaskBriefing)</strong>
 </a>
@@ -806,6 +812,27 @@ If the TargetZone parameter is specified, the player will be routed to the cente
 <p><em><a href="##(TASK_A2G)">#TASK_A2G</a>:</em>
 self</p>
 
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_A2G).ReportOrder" >
+<strong>TASK_A2G:ReportOrder(ReportGroup)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>Return the relative distance to the target vicinity from the player, in order to sort the targets in the reports per distance from the threats.</p>
+
+		<h3>Parameter</h3>
+		<ul>
+				<li>
+				
+<p><code><em> ReportGroup </em></code>: </p>
+
+				</li>
+		</ul>
 </dd>
 </dl>
 		<dl class="function">
@@ -971,6 +998,55 @@ The Zone object where the Target is located on the map.</p>
 
 </dd>
 </dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_A2G).UpdateTaskInfo" >
+<strong>TASK_A2G:UpdateTaskInfo()</strong>
+</a>
+</dt>
+<dd>
+	
+
+
+</dd>
+</dl>
+		<dl class="function">
+<dt>
+
+<a id="#(TASK_A2G).onafterGoal" >
+<strong>TASK_A2G:onafterGoal(TaskUnit, From, Event, To)</strong>
+</a>
+</dt>
+<dd>
+	
+<p>This method checks every 10 seconds if the goal has been reached of the task.</p>
+
+		<h3>Parameters</h3>
+		<ul>
+				<li>
+				
+<p><code><em> TaskUnit </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> From </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> Event </em></code>: </p>
+
+				</li>
+				<li>
+				
+<p><code><em> To </em></code>: </p>
+
+				</li>
+		</ul>
+</dd>
+</dl>
 
 			<h2><a id="#(TASK_A2G_BAI)" >Type <code>TASK_A2G_BAI</code></a></h2>
 				
@@ -1024,27 +1100,6 @@ The briefing of the task.</p>
 <p><em><a href="##(TASK_A2G_BAI)">#TASK<em>A2G</em>BAI</a>:</em>
 self</p>
 
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(TASK_A2G_BAI).ReportOrder" >
-<strong>TASK_A2G_BAI:ReportOrder(ReportGroup)</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em> ReportGroup </em></code>: </p>
-
-				</li>
-		</ul>
 </dd>
 </dl>
 		<dl class="function">
@@ -1175,55 +1230,6 @@ The score in points.</p>
 
 </dd>
 </dl>
-		<dl class="function">
-<dt>
-
-<a id="#(TASK_A2G_BAI).UpdateTaskInfo" >
-<strong>TASK_A2G_BAI:UpdateTaskInfo()</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(TASK_A2G_BAI).onafterGoal" >
-<strong>TASK_A2G_BAI:onafterGoal(TaskUnit, From, Event, To)</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em> TaskUnit </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em> From </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em> Event </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em> To </em></code>: </p>
-
-				</li>
-		</ul>
-</dd>
-</dl>
 
 			<h2><a id="#(TASK_A2G_CAS)" >Type <code>TASK_A2G_CAS</code></a></h2>
 				
@@ -1277,27 +1283,6 @@ The briefing of the task.</p>
 <p><em><a href="##(TASK_A2G_CAS)">#TASK<em>A2G</em>CAS</a>:</em>
 self</p>
 
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(TASK_A2G_CAS).ReportOrder" >
-<strong>TASK_A2G_CAS:ReportOrder(ReportGroup)</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em> ReportGroup </em></code>: </p>
-
-				</li>
-		</ul>
 </dd>
 </dl>
 		<dl class="function">
@@ -1428,55 +1413,6 @@ The score in points.</p>
 
 </dd>
 </dl>
-		<dl class="function">
-<dt>
-
-<a id="#(TASK_A2G_CAS).UpdateTaskInfo" >
-<strong>TASK_A2G_CAS:UpdateTaskInfo()</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(TASK_A2G_CAS).onafterGoal" >
-<strong>TASK_A2G_CAS:onafterGoal(TaskUnit, From, Event, To)</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em> TaskUnit </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em> From </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em> Event </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em> To </em></code>: </p>
-
-				</li>
-		</ul>
-</dd>
-</dl>
 
 			<h2><a id="#(TASK_A2G_SEAD)" >Type <code>TASK_A2G_SEAD</code></a></h2>
 				
@@ -1530,27 +1466,6 @@ The briefing of the task.</p>
 <p><em><a href="##(TASK_A2G_SEAD)">#TASK<em>A2G</em>SEAD</a>:</em>
 self</p>
 
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(TASK_A2G_SEAD).ReportOrder" >
-<strong>TASK_A2G_SEAD:ReportOrder(ReportGroup)</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-		<h3>Parameter</h3>
-		<ul>
-				<li>
-				
-<p><code><em> ReportGroup </em></code>: </p>
-
-				</li>
-		</ul>
 </dd>
 </dl>
 		<dl class="function">
@@ -1679,55 +1594,6 @@ The score in points.</p>
 	
 
 
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(TASK_A2G_SEAD).UpdateTaskInfo" >
-<strong>TASK_A2G_SEAD:UpdateTaskInfo()</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-</dd>
-</dl>
-		<dl class="function">
-<dt>
-
-<a id="#(TASK_A2G_SEAD).onafterGoal" >
-<strong>TASK_A2G_SEAD:onafterGoal(TaskUnit, From, Event, To)</strong>
-</a>
-</dt>
-<dd>
-	
-
-
-		<h3>Parameters</h3>
-		<ul>
-				<li>
-				
-<p><code><em> TaskUnit </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em> From </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em> Event </em></code>: </p>
-
-				</li>
-				<li>
-				
-<p><code><em> To </em></code>: </p>
-
-				</li>
-		</ul>
 </dd>
 </dl>
 

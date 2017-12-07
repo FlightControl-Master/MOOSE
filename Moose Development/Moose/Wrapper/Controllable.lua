@@ -2537,6 +2537,72 @@ function CONTROLLABLE:OptionROTVertical()
   return nil
 end
 
+--- Alarm state to Auto: AI will automatically switch alarm states based on the presence of threats. The AI kind of cheats in this regard.
+-- @param #CONTROLLABLE self
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:OptionAlarmStateAuto()
+  self:F2( { self.ControllableName } )
+
+  local DCSControllable = self:GetDCSObject()
+  if DCSControllable then
+    local Controller = self:_GetController()
+
+    if self:IsGround() then
+      Controller:setOption(AI.Option.Ground.id.ALARM_STATE, AI.Option.Ground.val.ALARM_STATE.AUTO)
+    elseif self:IsShip() then 
+      Controller:setOption(AI.Option.Naval.id.ALARM_STATE, AI.Option.Naval.val.ALARM_STATE.AUTO)
+    end
+
+    return self
+  end
+
+  return nil
+end
+
+--- Alarm state to Green: Group is not combat ready. Sensors are stowed if possible.
+-- @param #CONTROLLABLE self
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:OptionAlarmStateGreen()
+  self:F2( { self.ControllableName } )
+
+  local DCSControllable = self:GetDCSObject()
+  if DCSControllable then
+    local Controller = self:_GetController()
+
+    if self:IsGround() then
+      Controller:setOption(AI.Option.Ground.id.ALARM_STATE, AI.Option.Ground.val.ALARM_STATE.GREEN)
+    elseif self:IsShip() then 
+      Controller:setOption(AI.Option.Naval.id.ALARM_STATE, AI.Option.Naval.val.ALARM_STATE.GREEN)
+    end
+
+    return self
+  end
+
+  return nil
+end
+
+--- Alarm state to Red: Group is combat ready and actively searching for targets.
+-- @param #CONTROLLABLE self
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:OptionAlarmStateRed()
+  self:F2( { self.ControllableName } )
+
+  local DCSControllable = self:GetDCSObject()
+  if DCSControllable then
+    local Controller = self:_GetController()
+
+    if self:IsGround() then
+      Controller:setOption(AI.Option.Ground.id.ALARM_STATE, AI.Option.Ground.val.ALARM_STATE.RED)
+    elseif self:IsShip() then 
+      Controller:setOption(AI.Option.Naval.id.ALARM_STATE, AI.Option.Naval.val.ALARM_STATE.RED)
+    end
+
+    return self
+  end
+
+  return nil
+end
+
 
 --- Set RTB on bingo fuel.
 -- @param #CONTROLLABLE self
