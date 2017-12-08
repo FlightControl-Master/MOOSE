@@ -177,7 +177,7 @@ CONTROLLABLE = {
 -- @return #CONTROLLABLE self
 function CONTROLLABLE:New( ControllableName )
   local self = BASE:Inherit( self, POSITIONABLE:New( ControllableName ) ) -- #CONTROLLABLE
-  self:F2( ControllableName )
+  --self:F( ControllableName )
   self.ControllableName = ControllableName
   
   self.TaskScheduler = SCHEDULER:New( self )
