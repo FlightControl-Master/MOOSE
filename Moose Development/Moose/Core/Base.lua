@@ -199,6 +199,7 @@ BASE = {
   Events = {},
   States = {},
   Debug = debug,
+  Scheduler = nil,
 }
 
 
@@ -706,10 +707,15 @@ do -- Scheduling
     ObjectName = self.ClassName .. self.ClassID
     
     self:F3( { "ScheduleOnce: ", ObjectName,  Start } )
-    self.SchedulerObject = self
+    
+    if not self.Scheduler then
+      self.Scheduler = SCHEDULER:New( self )
+    end
+    
+    self.Scheduler.SchedulerObject = self.Scheduler
     
     local ScheduleID = _SCHEDULEDISPATCHER:AddSchedule( 
-      self, 
+      self.Scheduler, 
       SchedulerFunction,
       { ... },
       Start,
@@ -740,10 +746,15 @@ do -- Scheduling
     ObjectName = self.ClassName .. self.ClassID
     
     self:F3( { "ScheduleRepeat: ", ObjectName, Start, Repeat, RandomizeFactor, Stop } )
-    self.SchedulerObject = self
+
+    if not self.Scheduler then
+      self.Scheduler = SCHEDULER:New( self )
+    end
+    
+    self.Scheduler.SchedulerObject = self.Scheduler
     
     local ScheduleID = _SCHEDULEDISPATCHER:AddSchedule( 
-      self, 
+      self.Scheduler, 
       SchedulerFunction,
       { ... },
       Start,
@@ -764,7 +775,7 @@ do -- Scheduling
   
     self:F3( { "ScheduleStop:" } )
     
-  _SCHEDULEDISPATCHER:Stop( self, self._.Schedules[SchedulerFunction] )
+  _SCHEDULEDISPATCHER:Stop( self.Scheduler, self._.Schedules[SchedulerFunction] )
   end
 
 end
