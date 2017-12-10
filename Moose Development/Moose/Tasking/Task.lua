@@ -687,7 +687,7 @@ function TASK:SetMenu( MenuTime ) --R2.1 Mission Reports and Task Reports added.
   --self.SetGroup:Flush()
   for TaskGroupID, TaskGroupData in pairs( self.SetGroup:GetSet() ) do
     local TaskGroup = TaskGroupData -- Wrapper.Group#GROUP
-    if TaskGroup:IsAlive() and TaskGroup:GetPlayerNames() then
+    if TaskGroup:IsAlive() == true and TaskGroup:GetPlayerNames() then
     
       -- Set Mission Menus
       
@@ -801,7 +801,9 @@ function TASK:RemoveMenu( MenuTime )
 
   for TaskGroupID, TaskGroup in pairs( self.SetGroup:GetSet() ) do
     local TaskGroup = TaskGroup -- Wrapper.Group#GROUP 
-    self:RefreshMenus( TaskGroup, MenuTime )
+    if TaskGroup:IsAlive() == true and TaskGroup:GetPlayerNames() then
+      self:RefreshMenus( TaskGroup, MenuTime )
+    end
   end
 end
 
