@@ -715,7 +715,7 @@ do -- Scheduling
     self.Scheduler.SchedulerObject = self.Scheduler
     
     local ScheduleID = _SCHEDULEDISPATCHER:AddSchedule( 
-      self.Scheduler, 
+      self, 
       SchedulerFunction,
       { ... },
       Start,
@@ -754,7 +754,7 @@ do -- Scheduling
     self.Scheduler.SchedulerObject = self.Scheduler
     
     local ScheduleID = _SCHEDULEDISPATCHER:AddSchedule( 
-      self.Scheduler, 
+      self, 
       SchedulerFunction,
       { ... },
       Start,
