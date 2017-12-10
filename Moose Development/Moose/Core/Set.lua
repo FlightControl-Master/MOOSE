@@ -719,20 +719,20 @@ end
 --- Gets the Set.
 -- @param #SET_GROUP self
 -- @return #SET_GROUP self
-function SET_BASE:GetSet()
-  self:F2()
-  
-  -- Clean the Set before returning with only the alive Groups.
-  for GroupName, GroupObject in pairs( self.Set ) do
-    if GroupObject then
-      if not GroupObject:IsAlive() then
-        self:Remove( GroupName )
-      end
-    end
-  end
-  
-  return self.Set
-end
+--function SET_BASE:GetSet()
+--  self:F2()
+--  
+--  -- Clean the Set before returning with only the alive Groups.
+--  for GroupName, GroupObject in pairs( self.Set ) do
+--    if GroupObject then
+--      if not GroupObject:IsAlive() then
+--        self:Remove( GroupName )
+--      end
+--    end
+--  end
+--  
+--  return self.Set
+--end
 
 
 --- Add GROUP(s) to SET_GROUP.
