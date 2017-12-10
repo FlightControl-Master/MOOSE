@@ -2570,9 +2570,9 @@ function CONTROLLABLE:OptionAlarmStateGreen()
     local Controller = self:_GetController()
 
     if self:IsGround() then
-      Controller:setOption(AI.Option.Ground.id.ALARM_STATE, AI.Option.Ground.val.ALARM_STATE.GREEN)
+      Controller:setOption( AI.Option.Ground.id.ALARM_STATE, AI.Option.Ground.val.ALARM_STATE.GREEN )
     elseif self:IsShip() then 
-      Controller:setOption(AI.Option.Naval.id.ALARM_STATE, AI.Option.Naval.val.ALARM_STATE.GREEN)
+      Controller:setOption( AI.Option.Naval.id.ALARM_STATE, AI.Option.Naval.val.ALARM_STATE.GREEN )
     end
 
     return self

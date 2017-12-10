@@ -587,7 +587,7 @@ end
 -- @param #SCORING self
 -- @return #SCORING
 function SCORING:SetScoringMenu( ScoringGroup )
-    local Menu = MENU_GROUP:New( ScoringGroup, 'Scoring' )
+    local Menu = MENU_GROUP:New( ScoringGroup, 'Scoring and Statistics' )
     local ReportGroupSummary = MENU_GROUP_COMMAND:New( ScoringGroup, 'Summary report players in group', Menu, SCORING.ReportScoreGroupSummary, self, ScoringGroup )
     local ReportGroupDetailed = MENU_GROUP_COMMAND:New( ScoringGroup, 'Detailed report players in group', Menu, SCORING.ReportScoreGroupDetailed, self, ScoringGroup )
     local ReportToAllSummary = MENU_GROUP_COMMAND:New( ScoringGroup, 'Summary report all players', Menu, SCORING.ReportScoreAllSummary, self, ScoringGroup )
