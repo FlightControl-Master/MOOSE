@@ -583,10 +583,21 @@ function ZONE_RADIUS:GetVec3( Height )
 end
 
 
---- Scan the zone
+--- Scan the zone for the presence of units of the given ObjectCategories.
+-- Note that after a zone has been scanned, the zone can be evaluated by:
+-- 
+--   * @{ZONE_RADIUS.IsAllInZoneOfCoalition}(): Scan the presence of units in the zone of a coalition.
+--   * @{ZONE_RADIUS.IsAllInZoneOfOtherCoalition}(): Scan the presence of units in the zone of an other coalition.
+--   * @{ZONE_RADIUS.IsSomeInZoneOfCoalition}(): Scan if there is some presence of units in the zone of the given coalition.
+--   * @{ZONE_RADIUS.IsNoneInZoneOfCoalition}(): Scan if there isn't any presence of units in the zone of an other coalition than the given one.
+--   * @{ZONE_RADIUS.IsNoneInZone}(): Scan if the zone is empty.
+-- @{#ZONE_RADIUS.
 -- @param #ZONE_RADIUS self
 -- @param ObjectCategories
 -- @param Coalition
+-- @usage
+--    self.Zone:Scan()
+--    local IsAttacked = self.Zone:IsSomeInZoneOfCoalition( self.Coalition )
 function ZONE_RADIUS:Scan( ObjectCategories )
 
   self.ScanData = {}
@@ -684,27 +695,41 @@ end
 -- @param #ZONE_RADIUS self
 -- @param Coalition
 -- @return #boolean
+-- @usage
+--    self.Zone:Scan()
+--    local IsGuarded = self.Zone:IsAllInZoneOfCoalition( self.Coalition )
 function ZONE_RADIUS:IsAllInZoneOfCoalition( Coalition )
 
+  --self:E( { Coalitions = self.Coalitions, Count = self:CountScannedCoalitions() } )
   return self:CountScannedCoalitions() == 1 and self:GetScannedCoalition( Coalition ) == true
 end
 
 
 --- Is All in Zone of Other Coalition?
+-- You first need to use the @{#ZONE_RADIUS.Scan} method to scan the zone before it can be evaluated!
+-- Note that once a zone has been scanned, multiple evaluations can be done on the scan result set.
 -- @param #ZONE_RADIUS self
 -- @param Coalition
 -- @return #boolean
+-- @usage
+--    self.Zone:Scan()
+--    local IsCaptured = self.Zone:IsAllInZoneOfOtherCoalition( self.Coalition )
 function ZONE_RADIUS:IsAllInZoneOfOtherCoalition( Coalition )
 
-  self:E( { Coalitions = self.Coalitions, Count = self:CountScannedCoalitions() } )
+  --self:E( { Coalitions = self.Coalitions, Count = self:CountScannedCoalitions() } )
   return self:CountScannedCoalitions() == 1 and self:GetScannedCoalition( Coalition ) == nil
 end
 
 
 --- Is Some in Zone of Coalition?
+-- You first need to use the @{#ZONE_RADIUS.Scan} method to scan the zone before it can be evaluated!
+-- Note that once a zone has been scanned, multiple evaluations can be done on the scan result set.
 -- @param #ZONE_RADIUS self
 -- @param Coalition
 -- @return #boolean
+-- @usage
+--    self.Zone:Scan()
+--    local IsAttacked = self.Zone:IsSomeInZoneOfCoalition( self.Coalition )
 function ZONE_RADIUS:IsSomeInZoneOfCoalition( Coalition )
 
   return self:CountScannedCoalitions() > 1 and self:GetScannedCoalition( Coalition ) == true
@@ -712,9 +737,14 @@ end
 
 
 --- Is None in Zone of Coalition?
+-- You first need to use the @{#ZONE_RADIUS.Scan} method to scan the zone before it can be evaluated!
+-- Note that once a zone has been scanned, multiple evaluations can be done on the scan result set.
 -- @param #ZONE_RADIUS self
 -- @param Coalition
 -- @return #boolean
+-- @usage
+--    self.Zone:Scan()
+--    local IsOccupied = self.Zone:IsNoneInZoneOfCoalition( self.Coalition )
 function ZONE_RADIUS:IsNoneInZoneOfCoalition( Coalition )
 
   return self:GetScannedCoalition( Coalition ) == nil
@@ -722,8 +752,13 @@ end
 
 
 --- Is None in Zone?
+-- You first need to use the @{#ZONE_RADIUS.Scan} method to scan the zone before it can be evaluated!
+-- Note that once a zone has been scanned, multiple evaluations can be done on the scan result set.
 -- @param #ZONE_RADIUS self
 -- @return #boolean
+-- @usage
+--    self.Zone:Scan()
+--    local IsEmpty = self.Zone:IsNoneInZone()
 function ZONE_RADIUS:IsNoneInZone()
 
   return self:CountScannedCoalitions() == 0
