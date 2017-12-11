@@ -1109,7 +1109,7 @@ do -- DETECTION_BASE
       DetectedItem.Changes[ChangeCode].ID = ID
       DetectedItem.Changes[ChangeCode].ItemUnitType = ItemUnitType
     
-      self:E( { "Change on Detection Item:", DetectedItem.ID, ChangeCode, ItemUnitType } )
+      self:E( { "Change on Detected Item:", DetectedItemID = DetectedItem.ID, ChangeCode = ChangeCode, ItemUnitType = ItemUnitType } )
      
       return self
     end
@@ -1132,7 +1132,7 @@ do -- DETECTION_BASE
       DetectedItem.Changes[ChangeCode][ChangeUnitType] = DetectedItem.Changes[ChangeCode][ChangeUnitType] + 1
       DetectedItem.Changes[ChangeCode].ID = ID
       
-      self:E( { "Change on Detection Item:", DetectedItem.ID, ChangeCode, ChangeUnitType } )
+      self:E( { "Change on Detected Unit:", DetectedItemID = DetectedItem.ID, ChangeCode = ChangeCode, ChangeUnitType = ChangeUnitType } )
     
       return self
     end

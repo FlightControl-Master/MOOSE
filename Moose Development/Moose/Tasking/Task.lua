@@ -871,8 +871,7 @@ end
 --- @param #TASK self
 -- @param Wrapper.Group#GROUP TaskGroup
 function TASK:MenuMarkToGroup( TaskGroup )
-
-  self:E( "Mark Task menu selected")
+  self:F()
 
   self:UpdateTaskInfo()
   

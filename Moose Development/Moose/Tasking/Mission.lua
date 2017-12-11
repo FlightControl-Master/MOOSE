@@ -550,7 +550,7 @@ end
 function MISSION:AddTask( Task )
 
   local TaskName = Task:GetTaskName()
-  self:F( TaskName )
+  self:E( { "==> Adding TASK ", MissionName = self:GetName(), TaskName = TaskName } )
 
   self.Tasks[TaskName] = self.Tasks[TaskName] or { n = 0 }
 
@@ -570,6 +570,7 @@ end
 function MISSION:RemoveTask( Task )
 
   local TaskName = Task:GetTaskName()
+  self:E( { "<== Removing TASK ", MissionName = self:GetName(), TaskName = TaskName } )
 
   self:F( TaskName )
   self.Tasks[TaskName] = self.Tasks[TaskName] or { n = 0 }

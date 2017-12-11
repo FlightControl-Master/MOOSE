@@ -2524,9 +2524,8 @@ do -- AI_A2A_DISPATCHER
     -- First, count the active AIGroups Units, targetting the DetectedSet
     local DefenderCount = 0
     
-    self:E( "Counting Defenders Engaged for Attacker:" )
     local DetectedSet = AttackerDetection.Set
-    DetectedSet:Flush()
+    --DetectedSet:Flush()
     
     local DefenderTasks = self:GetDefenderTasks()
     for DefenderGroup, DefenderTask in pairs( DefenderTasks ) do
