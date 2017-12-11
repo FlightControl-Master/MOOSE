@@ -619,7 +619,7 @@ function TASK:MessageToGroups( Message )
   local Mission = self:GetMission()
   local CC = Mission:GetCommandCenter()
   
-  for TaskGroupName, TaskGroup in pairs( self.SetGroup:GetSet() ) do
+  for TaskGroupName, TaskGroup in pairs( self.SetGroup:GetAliveSet() ) do
     local TaskGroup = TaskGroup -- Wrapper.Group#GROUP
     CC:MessageToGroup( Message, TaskGroup, TaskGroup:GetName() )
   end
@@ -631,7 +631,7 @@ end
 function TASK:SendBriefingToAssignedGroups()
   self:F2()
   
-  for TaskGroupName, TaskGroup in pairs( self.SetGroup:GetSet() ) do
+  for TaskGroupName, TaskGroup in pairs( self.SetGroup:GetAliveSet() ) do
 
     if self:IsGroupAssigned( TaskGroup ) then    
       TaskGroup:Message( self.TaskBriefing, 60 )
@@ -645,7 +645,7 @@ end
 function TASK:UnAssignFromGroups()
   self:F2()
   
-  for TaskGroupName, TaskGroup in pairs( self.SetGroup:GetSet() ) do
+  for TaskGroupName, TaskGroup in pairs( self.SetGroup:GetAliveSet() ) do
     if self:IsGroupAssigned(TaskGroup) then
       self:UnAssignFromGroup( TaskGroup )
     end
@@ -660,7 +660,7 @@ end
 function TASK:HasAliveUnits()
   self:F()
   
-  for TaskGroupID, TaskGroup in pairs( self.SetGroup:GetSet() ) do
+  for TaskGroupID, TaskGroup in pairs( self.SetGroup:GetAliveSet() ) do
     if self:IsStateAssigned() then
       if self:IsGroupAssigned( TaskGroup ) then
         for TaskUnitID, TaskUnit in pairs( TaskGroup:GetUnits() ) do
@@ -685,7 +685,7 @@ function TASK:SetMenu( MenuTime ) --R2.1 Mission Reports and Task Reports added.
   self:F( { self:GetName(), MenuTime } )
 
   --self.SetGroup:Flush()
-  for TaskGroupID, TaskGroupData in pairs( self.SetGroup:GetSet() ) do
+  for TaskGroupID, TaskGroupData in pairs( self.SetGroup:GetAliveSet() ) do
     local TaskGroup = TaskGroupData -- Wrapper.Group#GROUP
     if TaskGroup:IsAlive() == true and TaskGroup:GetPlayerNames() then
     
@@ -799,7 +799,7 @@ end
 function TASK:RemoveMenu( MenuTime )
   self:F( { self:GetName(), MenuTime } )
 
-  for TaskGroupID, TaskGroup in pairs( self.SetGroup:GetSet() ) do
+  for TaskGroupID, TaskGroup in pairs( self.SetGroup:GetAliveSet() ) do
     local TaskGroup = TaskGroup -- Wrapper.Group#GROUP 
     if TaskGroup:IsAlive() == true and TaskGroup:GetPlayerNames() then
       self:RefreshMenus( TaskGroup, MenuTime )
@@ -1508,7 +1508,7 @@ function TASK:GetPlayerCount() --R2.1 Get a count of the players.
   local PlayerCount = 0
 
   -- Loop each Unit active in the Task, and find Player Names.
-  for TaskGroupID, PlayerGroup in pairs( self:GetGroups():GetSet() ) do
+  for TaskGroupID, PlayerGroup in pairs( self:GetGroups():GetAliveSet() ) do
     local PlayerGroup = PlayerGroup -- Wrapper.Group#GROUP
     if self:IsGroupAssigned( PlayerGroup ) then
       local PlayerNames = PlayerGroup:GetPlayerNames()
@@ -1528,7 +1528,7 @@ function TASK:GetPlayerNames() --R2.1 Get a map of the players.
   local PlayerNameMap = {}
 
   -- Loop each Unit active in the Task, and find Player Names.
-  for TaskGroupID, PlayerGroup in pairs( self:GetGroups():GetSet() ) do
+  for TaskGroupID, PlayerGroup in pairs( self:GetGroups():GetAliveSet() ) do
     local PlayerGroup = PlayerGroup -- Wrapper.Group#GROUP
     if self:IsGroupAssigned( PlayerGroup ) then
       local PlayerNames = PlayerGroup:GetPlayerNames()

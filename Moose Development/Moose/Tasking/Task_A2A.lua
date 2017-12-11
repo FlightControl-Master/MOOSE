@@ -367,7 +367,8 @@ do -- TASK_A2A_INTERCEPT
     local TargetCoordinate = self.Detection and self.Detection:GetDetectedItemCoordinate( self.DetectedItemIndex ) or self.TargetSetUnit:GetFirst():GetCoordinate() 
     self:SetInfo( "Coordinate", TargetCoordinate, 0 )
 
-    self:SetInfo( "Threat", "[" .. string.rep(  "■", self.Detection and self.Detection:GetDetectedItemThreatLevel( self.DetectedItemIndex ) or self.TargetSetUnit:CalculateThreatLevelA2G() ) .. "]", 11 )
+    local ThreatLevel = self.Detection and self.Detection:GetDetectedItemThreatLevel( self.DetectedItemIndex ) or self.TargetSetUnit:CalculateThreatLevelA2G()
+    self:SetInfo( "Threat", "[" .. string.rep(  "■", ThreatLevel ) .. string.rep( "□", 10 - ThreatLevel ) .. "]", 11 )
 
     if self.Detection then
       local DetectedItemsCount = self.TargetSetUnit:Count()
@@ -523,7 +524,8 @@ do -- TASK_A2A_SWEEP
     local TargetCoordinate = self.Detection and self.Detection:GetDetectedItemCoordinate( self.DetectedItemIndex ) or self.TargetSetUnit:GetFirst():GetCoordinate() 
     self:SetInfo( "Coordinate", TargetCoordinate, 0 )
 
-    self:SetInfo( "Assumed Threat", "[" .. string.rep(  "■", self.Detection and self.Detection:GetDetectedItemThreatLevel( self.DetectedItemIndex ) or self.TargetSetUnit:CalculateThreatLevelA2G() ) .. "]", 11 )
+    local ThreatLevel = self.Detection and self.Detection:GetDetectedItemThreatLevel( self.DetectedItemIndex ) or self.TargetSetUnit:CalculateThreatLevelA2G()
+    self:SetInfo( "Assumed Threat", "[" .. string.rep(  "■", ThreatLevel ) .. string.rep(  "□", 10 - ThreatLevel ) .. "]", 11 )
 
     if self.Detection then
       local DetectedItemsCount = self.TargetSetUnit:Count()
@@ -672,7 +674,8 @@ do -- TASK_A2A_ENGAGE
     local TargetCoordinate = self.Detection and self.Detection:GetDetectedItemCoordinate( self.DetectedItemIndex ) or self.TargetSetUnit:GetFirst():GetCoordinate() 
     self:SetInfo( "Coordinate", TargetCoordinate, 0 )
 
-    self:SetInfo( "Threat", "[" .. string.rep(  "■", self.Detection and self.Detection:GetDetectedItemThreatLevel( self.DetectedItemIndex ) or self.TargetSetUnit:CalculateThreatLevelA2G() ) .. "]", 11 )
+    local ThreatLevel = self.Detection and self.Detection:GetDetectedItemThreatLevel( self.DetectedItemIndex ) or self.TargetSetUnit:CalculateThreatLevelA2G()
+    self:SetInfo( "Threat", "[" .. string.rep(  "■", ThreatLevel ) .. string.rep(  "□", 10 - ThreatLevel ) .. "]", 11 )
 
     if self.Detection then
       local DetectedItemsCount = self.TargetSetUnit:Count()

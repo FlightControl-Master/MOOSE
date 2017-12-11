@@ -424,7 +424,7 @@ do -- DESIGNATE
 
     self.FlashStatusMenu = {}
 
-    self.AttackSet:ForEachGroup(
+    self.AttackSet:ForEachGroupAlive(
     
       --- @param Wrapper.Group#GROUP GroupReport
       function( AttackGroup )
@@ -688,7 +688,7 @@ do -- DESIGNATE
           self:F("Removing")
           -- This Detection is obsolete, remove from the designate scope
           self.Designating[DesignateIndex] = nil
-          self.AttackSet:ForEachGroup(
+          self.AttackSet:ForEachGroupAlive(
             --- @param Wrapper.Group#GROUP AttackGroup
             function( AttackGroup )
               if AttackGroup:IsAlive() == true then
@@ -714,7 +714,7 @@ do -- DESIGNATE
           if DetectedItem.DistanceRecce <= self.MaximumDistanceDesignations then
             if self.Designating[DesignateIndex] == nil then
               -- ok, we added one item to the designate scope.
-              self.AttackSet:ForEachGroup(
+              self.AttackSet:ForEachGroupAlive(
                 function( AttackGroup )
                   local DetectionText = self.Detection:DetectedItemReportSummary( DesignateIndex, AttackGroup ):Text( ", " )
                   self.CC:GetPositionable():MessageToGroup( "Targets detected at \n" .. DetectionText, 10, AttackGroup, self.DesignateName )
@@ -760,7 +760,7 @@ do -- DESIGNATE
 
     Duration = Duration or 10
     
-    self.AttackSet:ForEachGroup(
+    self.AttackSet:ForEachGroupAlive(
     
       --- @param Wrapper.Group#GROUP GroupReport
       function( AttackGroup )
@@ -785,7 +785,7 @@ do -- DESIGNATE
           
           local DesignationReport = REPORT:New( "Marking Targets:\n" )
       
-          self.RecceSet:ForEachGroup(
+          self.RecceSet:ForEachGroupAlive(
             function( RecceGroup )
               local RecceUnits = RecceGroup:GetUnits()
               for UnitID, RecceData in pairs( RecceUnits ) do
@@ -812,7 +812,7 @@ do -- DESIGNATE
 
     self.AttackSet:Flush()
 
-    self.AttackSet:ForEachGroup(
+    self.AttackSet:ForEachGroupAlive(
     
       --- @param Wrapper.Group#GROUP GroupReport
       function( AttackGroup )

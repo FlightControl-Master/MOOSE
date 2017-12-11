@@ -353,7 +353,7 @@ do -- TASK_A2G
       else
         ThreatLevel, ThreatText = self.TargetSetUnit:CalculateThreatLevelA2G()
       end
-      self:SetInfo( "Threat", ThreatText .. " [" .. string.rep(  "■", ThreatLevel ) .. "]", 11 )
+      self:SetInfo( "Threat", ThreatText .. " [" .. string.rep(  "■", ThreatLevel ) .. string.rep(  "□", 10 - ThreatLevel ) .. "]", 11 )
   
       if self.Detection then
         local DetectedItemsCount = self.TargetSetUnit:Count()

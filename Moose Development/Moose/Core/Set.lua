@@ -719,20 +719,22 @@ end
 --- Gets the Set.
 -- @param #SET_GROUP self
 -- @return #SET_GROUP self
---function SET_BASE:GetSet()
---  self:F2()
---  
---  -- Clean the Set before returning with only the alive Groups.
---  for GroupName, GroupObject in pairs( self.Set ) do
---    if GroupObject then
---      if not GroupObject:IsAlive() then
---        self:Remove( GroupName )
---      end
---    end
---  end
---  
---  return self.Set
---end
+function SET_GROUP:GetAliveSet()
+  self:F2()
+  
+  local AliveSet = SET_GROUP:New()
+  
+  -- Clean the Set before returning with only the alive Groups.
+  for GroupName, GroupObject in pairs( self.Set ) do
+    if GroupObject then
+      if GroupObject:IsAlive() then
+        AliveSet:Add( GroupName, GroupObject )
+      end
+    end
+  end
+  
+  return AliveSet
+end
 
 
 --- Add GROUP(s) to SET_GROUP.
@@ -984,7 +986,7 @@ function SET_GROUP:FindInDatabase( Event )
   return Event.IniDCSGroupName, self.Database[Event.IniDCSGroupName]
 end
 
---- Iterate the SET_GROUP and call an iterator function for each **alive** GROUP, providing the GROUP and optional parameters.
+--- Iterate the SET_GROUP and call an iterator function for each GROUP object, providing the GROUP and optional parameters.
 -- @param #SET_GROUP self
 -- @param #function IteratorFunction The function that will be called when there is an alive GROUP in the SET_GROUP. The function needs to accept a GROUP parameter.
 -- @return #SET_GROUP self
@@ -992,6 +994,18 @@ function SET_GROUP:ForEachGroup( IteratorFunction, ... )
   self:F2( arg )
   
   self:ForEach( IteratorFunction, arg, self:GetSet() )
+
+  return self
+end
+
+--- Iterate the SET_GROUP and call an iterator function for each **alive** GROUP object, providing the GROUP and optional parameters.
+-- @param #SET_GROUP self
+-- @param #function IteratorFunction The function that will be called when there is an alive GROUP in the SET_GROUP. The function needs to accept a GROUP parameter.
+-- @return #SET_GROUP self
+function SET_GROUP:ForEachGroupAlive( IteratorFunction, ... )
+  self:F2( arg )
+  
+  self:ForEach( IteratorFunction, arg, self:GetAliveSet() )
 
   return self
 end

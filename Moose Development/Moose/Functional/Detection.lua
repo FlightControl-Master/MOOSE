@@ -2004,7 +2004,7 @@ do -- DETECTION_UNITS
         
       local Report = REPORT:New()
       Report:Add(DetectedItemID .. ", " .. DetectedItemCoordText)
-      Report:Add( string.format( "Threat: [%s]", string.rep(  "■", ThreatLevelA2G ) ) )
+      Report:Add( string.format( "Threat: [%s]", string.rep(  "■", ThreatLevelA2G ), string.rep(  "□", 10-ThreatLevelA2G ) ) )
       Report:Add( string.format("Type: %s%s", UnitCategoryText, UnitDistanceText ) )
       return Report
     end
@@ -2236,7 +2236,7 @@ do -- DETECTION_TYPES
 
       local Report = REPORT:New()
       Report:Add(DetectedItemID .. ", " .. DetectedItemCoordText)
-      Report:Add( string.format( "Threat: [%s]", string.rep(  "■", ThreatLevelA2G ) ) )
+      Report:Add( string.format( "Threat: [%s%s]", string.rep(  "■", ThreatLevelA2G ), string.rep(  "□", 10-ThreatLevelA2G ) ) )
       Report:Add( string.format("Type: %2d of %s", DetectedItemsCount, DetectedItemType ) )
       return Report
     end
@@ -2387,7 +2387,7 @@ do -- DETECTION_AREAS
       
       local Report = REPORT:New()
       Report:Add(DetectedItemID .. ", " .. DetectedItemCoordText)
-      Report:Add( string.format( "Threat: [%s]", string.rep(  "■", ThreatLevelA2G ) ) )
+      Report:Add( string.format( "Threat: [%s]", string.rep(  "■", ThreatLevelA2G ), string.rep(  "□", 10-ThreatLevelA2G ) ) )
       Report:Add( string.format("Type: %2d of %s", DetectedItemsCount, DetectedItemsTypes ) )
       
       return Report
