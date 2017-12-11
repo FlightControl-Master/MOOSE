@@ -733,7 +733,7 @@ function SET_GROUP:GetAliveSet()
     end
   end
   
-  return AliveSet
+  return AliveSet.Set or {}
 end
 
 
