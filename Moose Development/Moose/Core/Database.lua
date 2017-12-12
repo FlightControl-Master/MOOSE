@@ -790,7 +790,7 @@ function DATABASE:_EventOnPlayerLeaveUnit( Event )
       local PlayerName = Event.IniUnit:GetPlayerName()
       if self.PLAYERS[PlayerName] then
         local Settings = SETTINGS:Set( PlayerName )
-        Settings:RemovePlayerMenu( Event.IniUnit )
+        --Settings:RemovePlayerMenu( Event.IniUnit )
         self:DeletePlayer( Event.IniUnit, PlayerName )
       end
     end
