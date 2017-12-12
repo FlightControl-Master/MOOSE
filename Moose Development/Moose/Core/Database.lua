@@ -97,8 +97,7 @@ function DATABASE:New()
   self:HandleEvent( EVENTS.DeleteCargo )
   
   -- Follow alive players and clients
-  --self:HandleEvent( EVENTS.PlayerEnterUnit, self._EventOnPlayerEnterUnit ) -- This is not working anymore!
-  self:HandleEvent( EVENTS.Birth, self._EventBirth )
+  self:HandleEvent( EVENTS.PlayerEnterUnit, self._EventOnPlayerEnterUnit ) -- This is not working anymore!, handling this through the birth event.
   self:HandleEvent( EVENTS.PlayerLeaveUnit, self._EventOnPlayerLeaveUnit )
   
   self:_RegisterTemplates()
@@ -730,7 +729,19 @@ function DATABASE:_EventOnBirth( Event )
         self:AddGroup( Event.IniDCSGroupName )
       end
     end
-    --self:_EventOnPlayerEnterUnit( Event )
+    if Event.IniObjectCategory == 1 then
+      Event.IniUnit = self:FindUnit( Event.IniDCSUnitName )
+      local PlayerName = Event.IniUnit:GetPlayerName()
+      self:E( { "PlayerName:", PlayerName } )
+      if PlayerName ~= "" then
+        self:E( { "Player Joined:", PlayerName } )
+        if not self.PLAYERS[PlayerName] then
+          self:AddPlayer( Event.IniUnitName, PlayerName )
+        end
+        local Settings = SETTINGS:Set( PlayerName )
+        Settings:SetPlayerMenu( Event.IniUnit )
+      end
+    end
   end
 end
 
@@ -765,39 +776,17 @@ end
 function DATABASE:_EventOnPlayerEnterUnit( Event )
   self:F2( { Event } )
 
-  if Event.IniUnit then
+  if Event.IniDCSUnit then
     if Event.IniObjectCategory == 1 then
       self:AddUnit( Event.IniDCSUnitName )
+      Event.IniUnit = self:FindUnit( Event.IniDCSUnitName )
       self:AddGroup( Event.IniDCSGroupName )
-      local PlayerName = Event.IniUnit:GetPlayerName()
+      local PlayerName = Event.IniDCSUnit:getPlayerName()
       if not self.PLAYERS[PlayerName] then
-        self:AddPlayer( Event.IniUnitName, PlayerName )
+        self:AddPlayer( Event.IniDCSUnitName, PlayerName )
       end
       local Settings = SETTINGS:Set( PlayerName )
       Settings:SetPlayerMenu( Event.IniUnit )
-    end
-  end
-end
-
---- Handles the Birth event to update the active players table.
--- @param #DATABASE self
--- @param Core.Event#EVENTDATA Event
-function DATABASE:_EventBirth( Event )
-  self:F2( { Event } )
-
-  if Event.IniUnit then
-    if Event.IniObjectCategory == 1 then
-      self:AddUnit( Event.IniDCSUnitName )
-      self:AddGroup( Event.IniDCSGroupName )
-      local PlayerName = Event.IniUnit:GetPlayerName()
-      if PlayerName ~= "" then
-        self:E( { "Player Joined:", PlayerName } )
-        if not self.PLAYERS[PlayerName] then
-          self:AddPlayer( Event.IniUnitName, PlayerName )
-        end
-        local Settings = SETTINGS:Set( PlayerName )
-        Settings:SetPlayerMenu( Event.IniUnit )
-      end
     end
   end
 end
