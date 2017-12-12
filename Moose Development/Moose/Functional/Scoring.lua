@@ -282,7 +282,7 @@ function SCORING:New( GameName )
   self:HandleEvent( EVENTS.Crash, self._EventOnDeadOrCrash )
   self:HandleEvent( EVENTS.Hit, self._EventOnHit )
   self:HandleEvent( EVENTS.Birth )
-  self:HandleEvent( EVENTS.PlayerEnterUnit )
+  --self:HandleEvent( EVENTS.PlayerEnterUnit )
   self:HandleEvent( EVENTS.PlayerLeaveUnit )
   
   -- During mission startup, especially for single player, 
@@ -842,10 +842,26 @@ end
 --- Handles the OnPlayerEnterUnit event for the scoring.
 -- @param #SCORING self
 -- @param Core.Event#EVENTDATA Event
-function SCORING:OnEventPlayerEnterUnit( Event )
+--function SCORING:OnEventPlayerEnterUnit( Event )
+--  if Event.IniUnit then
+--    self:_AddPlayerFromUnit( Event.IniUnit )
+--    self:SetScoringMenu( Event.IniGroup )
+--  end
+--end
+
+--- Handles the OnBirth event for the scoring.
+-- @param #SCORING self
+-- @param Core.Event#EVENTDATA Event
+function SCORING:OnEventBirth( Event )
+  
   if Event.IniUnit then
-    self:_AddPlayerFromUnit( Event.IniUnit )
-    self:SetScoringMenu( Event.IniGroup )
+    if Event.IniObjectCategory == 1 then
+      local PlayerName = Event.IniUnit:GetPlayerName()
+      if PlayerName ~= "" then
+        self:_AddPlayerFromUnit( Event.IniUnit )
+        self:SetScoringMenu( Event.IniGroup )
+      end
+    end
   end
 end
 
