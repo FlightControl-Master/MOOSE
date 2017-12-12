@@ -97,7 +97,8 @@ function DATABASE:New()
   self:HandleEvent( EVENTS.DeleteCargo )
   
   -- Follow alive players and clients
-  self:HandleEvent( EVENTS.PlayerEnterUnit, self._EventOnPlayerEnterUnit )
+  --self:HandleEvent( EVENTS.PlayerEnterUnit, self._EventOnPlayerEnterUnit ) -- This is not working anymore!
+  self:HandleEvent( EVENTS.Birth, self._EventBirth )
   self:HandleEvent( EVENTS.PlayerLeaveUnit, self._EventOnPlayerLeaveUnit )
   
   self:_RegisterTemplates()
@@ -137,8 +138,8 @@ function DATABASE:New()
     end
   end
   
-  self:E( "Scheduling" )
-  PlayerCheckSchedule = SCHEDULER:New( nil, CheckPlayers, { self }, 1, 1 )
+  --self:E( "Scheduling" )
+  --PlayerCheckSchedule = SCHEDULER:New( nil, CheckPlayers, { self }, 1, 1 )
   
   return self
 end
@@ -778,6 +779,29 @@ function DATABASE:_EventOnPlayerEnterUnit( Event )
   end
 end
 
+--- Handles the Birth event to update the active players table.
+-- @param #DATABASE self
+-- @param Core.Event#EVENTDATA Event
+function DATABASE:_EventBirth( Event )
+  self:F2( { Event } )
+
+  if Event.IniUnit then
+    if Event.IniObjectCategory == 1 then
+      self:AddUnit( Event.IniDCSUnitName )
+      self:AddGroup( Event.IniDCSGroupName )
+      local PlayerName = Event.IniUnit:GetPlayerName()
+      if PlayerName ~= "" then
+        self:E( { "Player Joined:", PlayerName } )
+        if not self.PLAYERS[PlayerName] then
+          self:AddPlayer( Event.IniUnitName, PlayerName )
+        end
+        local Settings = SETTINGS:Set( PlayerName )
+        Settings:SetPlayerMenu( Event.IniUnit )
+      end
+    end
+  end
+end
+
 
 --- Handles the OnPlayerLeaveUnit event to clean the active players table.
 -- @param #DATABASE self
@@ -789,6 +813,7 @@ function DATABASE:_EventOnPlayerLeaveUnit( Event )
     if Event.IniObjectCategory == 1 then
       local PlayerName = Event.IniUnit:GetPlayerName()
       if self.PLAYERS[PlayerName] then
+        self:E( { "Player Left:", PlayerName } )
         local Settings = SETTINGS:Set( PlayerName )
         --Settings:RemovePlayerMenu( Event.IniUnit )
         self:DeletePlayer( Event.IniUnit, PlayerName )
