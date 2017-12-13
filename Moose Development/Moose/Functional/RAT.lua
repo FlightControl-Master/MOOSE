@@ -3197,7 +3197,7 @@ function RAT:_Despawn(group)
       self.alive=self.alive-1
 
       -- Remove submenu for this group.
-      if self.f10menu ~= nil and self.SubMenuName =~ nil then
+      if self.f10menu ~= nil and self.SubMenuName ~= nil then
         self.Menu[self.SubMenuName]["groups"][index]:Remove()
       end
     end
