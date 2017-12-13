@@ -3185,18 +3185,22 @@ end
 -- @param #RAT self
 -- @param Wrapper.Group#GROUP group Group to be despawned.
 function RAT:_Despawn(group)
+  if group ~= nil then
 
-  local index=self:GetSpawnIndexFromGroup(group)
-  --self.ratcraft[index].group:Destroy()
-  self.ratcraft[index].group=nil
-  group:Destroy()
+    local index=self:GetSpawnIndexFromGroup(group)
+    if index ~= nil then
+      --self.ratcraft[index].group:Destroy()
+      self.ratcraft[index].group=nil
+      group:Destroy()
 
-  -- Decrease group alive counter.
-  self.alive=self.alive-1
-  
-    -- Remove submenu for this group.
-  if self.f10menu then
-    self.Menu[self.SubMenuName]["groups"][index]:Remove()
+      -- Decrease group alive counter.
+      self.alive=self.alive-1
+
+      -- Remove submenu for this group.
+      if self.f10menu ~= nil and self.SubMenuName =~ nil then
+        self.Menu[self.SubMenuName]["groups"][index]:Remove()
+      end
+    end
   end
 
   --TODO: Maybe here could be some more arrays deleted?
