@@ -49,21 +49,21 @@ function MENU_INDEX:ParentPath( ParentMenu, MenuText )
 
   local Path = ParentMenu and "@" .. table.concat( ParentMenu.MenuPath or {}, "@" ) or ""
   if ParentMenu then 
-    if BASE:IsInstanceOf( "MENU_GROUP" ) or BASE:IsInstanceOf( "MENU_GROUP_COMMAND" ) then
+    if ParentMenu:IsInstanceOf( "MENU_GROUP" ) or ParentMenu:IsInstanceOf( "MENU_GROUP_COMMAND" ) then
       local GroupName = ParentMenu.Group:GetName()
       if not self.Group[GroupName].Menus[Path] then
         BASE:E( { Path = Path, GroupName = GroupName } ) 
         error( "Parent path not found in menu index for group menu" )
         return nil
       end
-    elseif BASE:IsInstanceOf( "MENU_COALITION" ) or BASE:IsInstanceOf( "MENU_COALITION_COMMAND" ) then
+    elseif ParentMenu:IsInstanceOf( "MENU_COALITION" ) or ParentMenu:IsInstanceOf( "MENU_COALITION_COMMAND" ) then
       local Coalition = ParentMenu.Coalition
       if not self.Coalition[Coalition].Menus[Path] then
         BASE:E( { Path = Path, Coalition = Coalition } ) 
         error( "Parent path not found in menu index for coalition menu" )
         return nil
       end
-    elseif BASE:IsInstanceOf( "MENU_MISSION" ) or BASE:IsInstanceOf( "MENU_MISSION_COMMAND" ) then
+    elseif ParentMenu:IsInstanceOf( "MENU_MISSION" ) or ParentMenu:IsInstanceOf( "MENU_MISSION_COMMAND" ) then
       if not self.MenuMission.Menus[Path] then
         BASE:E( { Path = Path } )
         error( "Parent path not found in menu index for mission menu" )
