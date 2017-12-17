@@ -1797,7 +1797,7 @@ do -- SET_UNIT
         self:E( { ThreatLevel = ThreatLevel } )
         local ThreatLevelItem = ThreatLevelSet[ThreatLevel]
         if ThreatLevelItem then
-          self:ForEach( IteratorFunction, arg, ThreatLevelItem:GetSet() )
+          self:ForEach( IteratorFunction, arg, ThreatLevelItem.Set )
         end
       end
     end
