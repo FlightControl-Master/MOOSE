@@ -178,9 +178,10 @@ function AI_BALANCER:onenterSpawning( SetGroup, From, Event, To, ClientName )
   -- OK, Spawn a new group from the default SpawnAI object provided.
   local AIGroup = self.SpawnAI:Spawn() -- Wrapper.Group#GROUP
   if AIGroup then
-    AIGroup:E( "Spawning new AIGroup" )
+    AIGroup:T( { "Spawning new AIGroup", ClientName = ClientName } )
     --TODO: need to rework UnitName thing ...
     
+    SetGroup:Remove( ClientName ) -- Ensure that the previously allocated AIGroup to ClientName is removed in the Set.
     SetGroup:Add( ClientName, AIGroup )
     self.SpawnQueue[ClientName] = nil
     
@@ -239,7 +240,8 @@ function AI_BALANCER:onenterMonitoring( SetGroup )
       self:T3(Client.ClientName)
 
       local AIGroup = self.Set:Get( Client.UnitName ) -- Wrapper.Group#GROUP
-      if Client:IsAlive() then
+      if AIGroup then self:T( { AIGroup = AIGroup:GetName(), IsAlive = AIGroup:IsAlive() } ) end
+      if Client:IsAlive() == true then
 
         if AIGroup and AIGroup:IsAlive() == true then
 
@@ -284,11 +286,12 @@ function AI_BALANCER:onenterMonitoring( SetGroup )
       else
         if not AIGroup or not AIGroup:IsAlive() == true then
           self:T( "Client " .. Client.UnitName .. " not alive." )
+          self:T( { Queue = self.SpawnQueue[Client.UnitName] } )
           if not self.SpawnQueue[Client.UnitName] then
             -- Spawn a new AI taking into account the spawn interval Earliest, Latest
             self:__Spawn( math.random( self.Earliest, self.Latest ), Client.UnitName )
             self.SpawnQueue[Client.UnitName] = true
-            self:E( "New AI Spawned for Client " .. Client.UnitName )
+            self:T( "New AI Spawned for Client " .. Client.UnitName )
           end
         end
       end

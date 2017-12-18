@@ -145,35 +145,6 @@ function SET_BASE:GetSetObjects()  -- R2.3
 end
 
 
---- Adds a @{Base#BASE} object in the @{Set#SET_BASE}, using a given ObjectName as the index.
--- @param #SET_BASE self
--- @param #string ObjectName
--- @param Core.Base#BASE Object
--- @return Core.Base#BASE The added BASE Object.
-function SET_BASE:Add( ObjectName, Object )
-  self:F( ObjectName )
-
-  if not self.Set[ObjectName] then
-    self.Set[ObjectName] = Object
-    table.insert( self.Index, ObjectName )
-  end
-end
-
---- Adds a @{Base#BASE} object in the @{Set#SET_BASE}, using the Object Name as the index.
--- @param #SET_BASE self
--- @param Wrapper.Object#OBJECT Object
--- @return Core.Base#BASE The added BASE Object.
-function SET_BASE:AddObject( Object )
-  self:F2( Object.ObjectName )
-  
-  self:T( Object.UnitName )
-  self:T( Object.ObjectName )
-  self:Add( Object.ObjectName, Object )
-  
-end
-
-
-
 --- Removes a @{Base#BASE} object from the @{Set#SET_BASE} and derived classes, based on the Object Name.
 -- @param #SET_BASE self
 -- @param #string ObjectName
@@ -195,6 +166,39 @@ function SET_BASE:Remove( ObjectName )
   end
   
 end
+
+
+--- Adds a @{Base#BASE} object in the @{Set#SET_BASE}, using a given ObjectName as the index.
+-- @param #SET_BASE self
+-- @param #string ObjectName
+-- @param Core.Base#BASE Object
+-- @return Core.Base#BASE The added BASE Object.
+function SET_BASE:Add( ObjectName, Object )
+  self:F( ObjectName )
+
+  -- Ensure that the existing element is removed from the Set before a new one is inserted to the Set
+  if self.Set[ObjectName] then
+    self:Remove( ObjectName )
+  end
+  self.Set[ObjectName] = Object
+  table.insert( self.Index, ObjectName )
+end
+
+--- Adds a @{Base#BASE} object in the @{Set#SET_BASE}, using the Object Name as the index.
+-- @param #SET_BASE self
+-- @param Wrapper.Object#OBJECT Object
+-- @return Core.Base#BASE The added BASE Object.
+function SET_BASE:AddObject( Object )
+  self:F2( Object.ObjectName )
+  
+  self:T( Object.UnitName )
+  self:T( Object.ObjectName )
+  self:Add( Object.ObjectName, Object )
+  
+end
+
+
+
 
 --- Gets a @{Base#BASE} object from the @{Set#SET_BASE} and derived classes, based on the Object Name.
 -- @param #SET_BASE self
