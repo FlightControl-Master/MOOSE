@@ -385,9 +385,16 @@ end
 function MISSION:SetMenu( MenuTime )
   self:F( { self:GetName(), MenuTime } )
   
-  for _, TaskData in pairs( self:GetTasks() ) do
-    local Task = TaskData -- Tasking.Task#TASK
-    Task:SetMenu( MenuTime )  
+  local MenuCount = {}
+  for TaskID, Task in UTILS.spairs( self:GetTasks(), function( t, a, b ) return t[a]:ReportOrder( ReportGroup ) <  t[b]:ReportOrder( ReportGroup ) end  ) do
+  -- in pairs( self:GetTasks() ) do
+    local Task = Task -- Tasking.Task#TASK
+    local TaskType = Task:GetType()
+    MenuCount[TaskType] = MenuCount[TaskType] or 1
+    if MenuCount[TaskType] <= 5 then
+      Task:SetMenu( MenuTime )
+      MenuCount[TaskType] = MenuCount[TaskType] + 1
+    end
   end
 end
 
