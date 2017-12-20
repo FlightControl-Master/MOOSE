@@ -1162,6 +1162,26 @@ do -- DETECTION_BASE
       return self    
     end
   
+    --- This will allow during friendly search only units of the specified list of categories.
+    -- @param #DETECTION_BASE self
+    -- @param #string FriendlyCategories A list of unit categories.
+    -- @return #DETECTION_BASE 
+    -- @usage
+    --    -- Only allow Ships and Vehicles to be part of the friendly team.
+    --    Detection:SetFriendlyCategories( { Unit.Category.SHIP, Unit.Category.GROUND_UNIT } )
+    function DETECTION_BASE:FilterFriendlyCategories( FriendlyCategories )
+
+      self.FriendlyCategories = self.FriendlyCategories or {}
+      if type( FriendlyCategories ) ~= "table" then
+        FriendlyCategories = { FriendlyCategories }
+      end
+      for ID, FriendlyCategory in pairs( FriendlyCategories ) do
+        self:F( { FriendlyCategory = FriendlyCategory } )
+        self.FriendlyCategories[FriendlyCategory] = FriendlyCategory
+      end
+      return self    
+    end
+  
     --- Returns if there are friendlies nearby the FAC units ...
     -- @param #DETECTION_BASE self
     -- @return #boolean true if there are friendlies nearby 
@@ -1179,15 +1199,6 @@ do -- DETECTION_BASE
       return DetectedItem.FriendliesNearBy
     end
     
-    --- Filters friendly units by unit category.
-    -- @param #DETECTION_BASE self
-    -- @param FriendliesCategory
-    -- @return #DETECTION_BASE
-    function DETECTION_BASE:FilterFriendliesCategory( FriendliesCategory )
-      self.FriendliesCategory = FriendliesCategory
-      return self
-    end
-  
     --- Returns if there are friendlies nearby the intercept ...
     -- @param #DETECTION_BASE self
     -- @return #boolean trhe if there are friendlies near the intercept.
@@ -1269,6 +1280,7 @@ do -- DETECTION_BASE
           local EnemyCoalition = DetectedUnit:GetCoalition()
           
           local FoundUnitCoalition = FoundDCSUnit:getCoalition()
+          local FoundUnitCategory = FoundDCSUnit:getDesc().category
           local FoundUnitName = FoundDCSUnit:getName()
           local FoundUnitGroupName = FoundDCSUnit:getGroup():getName()
           local EnemyUnitName = DetectedUnit:GetName()
@@ -1290,22 +1302,33 @@ do -- DETECTION_BASE
               end
             end
           end
+          
+          local FoundUnitOfOtherCategory = false
+          
+          if FoundUnitOfOtherCategory == false then
+            -- Now we check if the found unit is one of the allowed friendly categories.
+            for ID, FriendlyCategory in pairs( self.FriendlyCategories or {} ) do
+              self:F( { "Friendly Category:", FriendlyCategory = FriendlyCategory, FoundUnitCategory = FoundUnitCategory } )
+              if FriendlyCategory ~= FoundUnitCategory then
+                FoundUnitOfOtherCategory = true
+                break
+              end
+            end
+          end
 
           self:F( { "Friendlies near Target:", FoundUnitName, FoundUnitCoalition, EnemyUnitName, EnemyCoalition, FoundUnitInReportSetGroup } )
           
-          if FoundUnitCoalition ~= EnemyCoalition and FoundUnitInReportSetGroup == false then
+          if FoundUnitCoalition ~= EnemyCoalition and FoundUnitInReportSetGroup == false and FoundUnitOfOtherCategory == false then
             local FriendlyUnit = UNIT:Find( FoundDCSUnit )
             local FriendlyUnitName = FriendlyUnit:GetName()
             local FriendlyUnitCategory = FriendlyUnit:GetDesc().category
             
-            --if ( not self.FriendliesCategory ) or ( self.FriendliesCategory and ( self.FriendliesCategory == FriendlyUnitCategory ) ) then
-              DetectedItem.FriendliesNearBy = DetectedItem.FriendliesNearBy or {}
-              DetectedItem.FriendliesNearBy[FriendlyUnitName] = FriendlyUnit
-              local Distance = DetectedUnitCoord:Get2DDistance( FriendlyUnit:GetCoordinate() )
-              DetectedItem.FriendliesDistance = DetectedItem.FriendliesDistance or {}
-              DetectedItem.FriendliesDistance[Distance] = FriendlyUnit
-              self:T( { "Friendlies Found:", FriendlyUnitName = FriendlyUnitName, Distance = Distance, FriendlyUnitCategory = FriendlyUnitCategory, FriendliesCategory = self.FriendliesCategory } )
-            --end
+            DetectedItem.FriendliesNearBy = DetectedItem.FriendliesNearBy or {}
+            DetectedItem.FriendliesNearBy[FriendlyUnitName] = FriendlyUnit
+            local Distance = DetectedUnitCoord:Get2DDistance( FriendlyUnit:GetCoordinate() )
+            DetectedItem.FriendliesDistance = DetectedItem.FriendliesDistance or {}
+            DetectedItem.FriendliesDistance[Distance] = FriendlyUnit
+            self:T( { "Friendlies Found:", FriendlyUnitName = FriendlyUnitName, Distance = Distance, FriendlyUnitCategory = FriendlyUnitCategory, FriendliesCategory = self.FriendliesCategory } )
             return true
           end
           
