@@ -386,8 +386,8 @@ function MISSION:SetMenu( MenuTime )
   self:F( { self:GetName(), MenuTime } )
   
   local MenuCount = {}
-  for TaskID, Task in UTILS.spairs( self:GetTasks(), function( t, a, b ) return t[a]:ReportOrder( ReportGroup ) <  t[b]:ReportOrder( ReportGroup ) end  ) do
-  -- in pairs( self:GetTasks() ) do
+  --for TaskID, Task in UTILS.spairs( self:GetTasks(), function( t, a, b ) return t[a]:ReportOrder( ReportGroup ) <  t[b]:ReportOrder( ReportGroup ) end  ) do
+  for TaskID, Task in pairs( self:GetTasks() ) do
     local Task = Task -- Tasking.Task#TASK
     local TaskType = Task:GetType()
     MenuCount[TaskType] = MenuCount[TaskType] or 1
