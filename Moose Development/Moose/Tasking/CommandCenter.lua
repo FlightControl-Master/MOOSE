@@ -305,7 +305,7 @@ end
 function COMMANDCENTER:SetMenu()
   self:F()
 
-  self.CommandCenterMenu = self.CommandCenterMenu or MENU_COALITION:New( self.CommandCenterCoalition, "Command Center (" .. self:GetName() .. ")" )
+  self.CommandCenterMenu = MENU_COALITION:New( self.CommandCenterCoalition, "Command Center (" .. self:GetName() .. ")" )
 
   local MenuTime = timer.getTime()
   for MissionID, Mission in pairs( self:GetMissions() or {} ) do
