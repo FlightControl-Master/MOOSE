@@ -846,6 +846,7 @@ do
       self.GroupID = Group:GetID()
 
       self.MenuPath = missionCommands.addSubMenuForGroup( self.GroupID, MenuText, self.MenuParentPath )
+      
       self:SetParentMenu( self.MenuText, self )
       return self
     end
@@ -1002,6 +1003,258 @@ do
       end
     else
       BASE:E( { "Cannot Remove MENU_GROUP_COMMAND", Path = Path, ParentMenu = self.ParentMenu, MenuText = self.MenuText, Group = self.Group } )
+    end
+    
+    return self
+  end
+
+end
+
+--- MENU_GROUP_DELAYED
+
+do
+
+  --- @type MENU_GROUP_DELAYED
+  -- @extends Core.Menu#MENU_BASE
+  
+  
+  --- #MENU_GROUP_DELAYED class, extends @{Menu#MENU_BASE}
+  -- 
+  -- The MENU_GROUP_DELAYED class manages the main menus for groups.  
+  -- You can add menus with the @{#MENU_GROUP.New} method, which constructs a MENU_GROUP object and returns you the object reference.
+  -- Using this object reference, you can then remove ALL the menus and submenus underlying automatically with @{#MENU_GROUP.Remove}.
+  -- The creation of the menu item is delayed however, and must be created using the @{#MENU_GROUP.Set} method.
+  -- This method is most of the time called after the "old" menu items have been removed from the sub menu.
+  -- 
+  --
+  -- @field #MENU_GROUP_DELAYED
+  MENU_GROUP_DELAYED = {
+    ClassName = "MENU_GROUP_DELAYED"
+  }
+  
+  --- MENU_GROUP_DELAYED constructor. Creates a new radio menu item for a group.
+  -- @param #MENU_GROUP_DELAYED self
+  -- @param Wrapper.Group#GROUP Group The Group owning the menu.
+  -- @param #string MenuText The text for the menu.
+  -- @param #table ParentMenu The parent menu.
+  -- @return #MENU_GROUP_DELAYED self
+  function MENU_GROUP_DELAYED:New( Group, MenuText, ParentMenu )
+  
+    MENU_INDEX:PrepareGroup( Group )
+    local Path = MENU_INDEX:ParentPath( ParentMenu, MenuText )
+    local GroupMenu = MENU_INDEX:HasGroupMenu( Group, Path )
+
+    if GroupMenu then
+      return GroupMenu
+    else
+      self = BASE:Inherit( self, MENU_BASE:New( MenuText, ParentMenu ) )
+      MENU_INDEX:SetGroupMenu( Group, Path, self )
+
+      self.Group = Group
+      self.GroupID = Group:GetID()
+
+      if self.MenuParentPath then
+        self.MenuPath = UTILS.DeepCopy( self.MenuParentPath )
+      else
+        self.MenuPath = {}
+      end
+      table.insert( self.MenuPath, self.MenuText )
+      
+      self:SetParentMenu( self.MenuText, self )
+      return self
+    end
+    
+  end
+
+
+  --- Refreshes a new radio item for a group and submenus
+  -- @param #MENU_GROUP_DELAYED self
+  -- @return #MENU_GROUP_DELAYED
+  function MENU_GROUP_DELAYED:Set()
+
+    do
+      if not self.MenuSet then
+        missionCommands.addSubMenuForGroup( self.GroupID, self.MenuText, self.MenuParentPath )
+        self.MenuSet = true
+      end
+      
+      for MenuText, Menu in pairs( self.Menus or {} ) do
+        Menu:Set()
+      end
+    end
+
+  end
+
+
+  --- Refreshes a new radio item for a group and submenus
+  -- @param #MENU_GROUP_DELAYED self
+  -- @return #MENU_GROUP_DELAYED
+  function MENU_GROUP_DELAYED:Refresh()
+
+    do
+      missionCommands.removeItemForGroup( self.GroupID, self.MenuPath )
+      missionCommands.addSubMenuForGroup( self.GroupID, self.MenuText, self.MenuParentPath )
+      
+      for MenuText, Menu in pairs( self.Menus or {} ) do
+        Menu:Refresh()
+      end
+    end
+
+  end
+  
+  --- Removes the sub menus recursively of this MENU_GROUP_DELAYED.
+  -- @param #MENU_GROUP_DELAYED self
+  -- @param MenuTime
+  -- @param MenuTag A Tag or Key to filter the menus to be refreshed with the Tag set.
+  -- @return #MENU_GROUP_DELAYED self
+  function MENU_GROUP_DELAYED:RemoveSubMenus( MenuTime, MenuTag )
+
+    for MenuText, Menu in pairs( self.Menus or {} ) do
+      Menu:Remove( MenuTime, MenuTag )
+    end
+    
+    self.Menus = nil
+  
+  end
+
+
+  --- Removes the main menu and sub menus recursively of this MENU_GROUP.
+  -- @param #MENU_GROUP_DELAYED self
+  -- @param MenuTime
+  -- @param MenuTag A Tag or Key to filter the menus to be refreshed with the Tag set.
+  -- @return #nil
+  function MENU_GROUP_DELAYED:Remove( MenuTime, MenuTag )
+
+    MENU_INDEX:PrepareGroup( self.Group )
+    local Path = MENU_INDEX:ParentPath( self.ParentMenu, self.MenuText )
+    local GroupMenu = MENU_INDEX:HasGroupMenu( self.Group, Path )   
+
+    if GroupMenu == self then
+      self:RemoveSubMenus( MenuTime, MenuTag )
+      if not MenuTime or self.MenuTime ~= MenuTime then
+        if ( not MenuTag ) or ( MenuTag and self.MenuTag and MenuTag == self.MenuTag ) then
+          self:E( { Group = self.GroupID, Text = self.MenuText, Path = self.MenuPath } )
+          if self.MenuPath ~= nil then
+            missionCommands.removeItemForGroup( self.GroupID, self.MenuPath )
+          end
+          MENU_INDEX:ClearGroupMenu( self.Group, Path )
+          self:ClearParentMenu( self.MenuText )
+          return nil
+        end
+      end
+    else
+      BASE:E( { "Cannot Remove MENU_GROUP_DELAYED", Path = Path, ParentMenu = self.ParentMenu, MenuText = self.MenuText, Group = self.Group } )
+      return nil
+    end
+  
+    return self
+  end
+  
+  
+  --- @type MENU_GROUP_COMMAND_DELAYED
+  -- @extends Core.Menu#MENU_COMMAND_BASE
+  
+  --- # MENU_GROUP_COMMAND_DELAYED class, extends @{Menu#MENU_COMMAND_BASE}
+  -- 
+  -- The @{Menu#MENU_GROUP_COMMAND_DELAYED} class manages the command menus for coalitions, which allow players to execute functions during mission execution.  
+  -- You can add menus with the @{#MENU_GROUP_COMMAND_DELAYED.New} method, which constructs a MENU_GROUP_COMMAND_DELAYED object and returns you the object reference.
+  -- Using this object reference, you can then remove ALL the menus and submenus underlying automatically with @{#MENU_GROUP_COMMAND_DELAYED.Remove}.
+  --
+  -- @field #MENU_GROUP_COMMAND_DELAYED
+  MENU_GROUP_COMMAND_DELAYED = {
+    ClassName = "MENU_GROUP_COMMAND_DELAYED"
+  }
+  
+  --- Creates a new radio command item for a group
+  -- @param #MENU_GROUP_COMMAND_DELAYED self
+  -- @param Wrapper.Group#GROUP Group The Group owning the menu.
+  -- @param MenuText The text for the menu.
+  -- @param ParentMenu The parent menu.
+  -- @param CommandMenuFunction A function that is called when the menu key is pressed.
+  -- @param CommandMenuArgument An argument for the function.
+  -- @return #MENU_GROUP_COMMAND_DELAYED
+  function MENU_GROUP_COMMAND_DELAYED:New( Group, MenuText, ParentMenu, CommandMenuFunction, ... )
+
+    MENU_INDEX:PrepareGroup( Group )
+    local Path = MENU_INDEX:ParentPath( ParentMenu, MenuText )
+    local GroupMenu = MENU_INDEX:HasGroupMenu( Group, Path )   
+
+    if GroupMenu then
+      GroupMenu:SetCommandMenuFunction( CommandMenuFunction )
+      GroupMenu:SetCommandMenuArguments( arg )
+      return GroupMenu
+    else
+      self = BASE:Inherit( self, MENU_COMMAND_BASE:New( MenuText, ParentMenu, CommandMenuFunction, arg ) )
+
+      MENU_INDEX:SetGroupMenu( Group, Path, self )
+  
+      self.Group = Group
+      self.GroupID = Group:GetID()
+      
+      if self.MenuParentPath then
+        self.MenuPath = UTILS.DeepCopy( self.MenuParentPath )
+      else
+        self.MenuPath = {}
+      end
+      table.insert( self.MenuPath, self.MenuText )
+  
+      self:SetParentMenu( self.MenuText, self )
+      return self
+    end
+
+  end
+
+  --- Refreshes a radio item for a group
+  -- @param #MENU_GROUP_COMMAND_DELAYED self
+  -- @return #MENU_GROUP_COMMAND_DELAYED
+  function MENU_GROUP_COMMAND_DELAYED:Set()
+
+    do
+      if not self.MenuSet then
+        self.MenuPath = missionCommands.addCommandForGroup( self.GroupID, self.MenuText, self.MenuParentPath, self.MenuCallHandler )
+        self.MenuSet = true
+      end
+    end
+
+  end
+  
+  --- Refreshes a radio item for a group
+  -- @param #MENU_GROUP_COMMAND_DELAYED self
+  -- @return #MENU_GROUP_COMMAND_DELAYED
+  function MENU_GROUP_COMMAND_DELAYED:Refresh()
+
+    do
+      missionCommands.removeItemForGroup( self.GroupID, self.MenuPath )
+      missionCommands.addCommandForGroup( self.GroupID, self.MenuText, self.MenuParentPath, self.MenuCallHandler )
+    end
+
+  end
+  
+  --- Removes a menu structure for a group.
+  -- @param #MENU_GROUP_COMMAND_DELAYED self
+  -- @param MenuTime
+  -- @param MenuTag A Tag or Key to filter the menus to be refreshed with the Tag set.
+  -- @return #nil
+  function MENU_GROUP_COMMAND_DELAYED:Remove( MenuTime, MenuTag )
+
+    MENU_INDEX:PrepareGroup( self.Group )
+    local Path = MENU_INDEX:ParentPath( self.ParentMenu, self.MenuText )
+    local GroupMenu = MENU_INDEX:HasGroupMenu( self.Group, Path )   
+
+    if GroupMenu == self then
+      if not MenuTime or self.MenuTime ~= MenuTime then
+        if ( not MenuTag ) or ( MenuTag and self.MenuTag and MenuTag == self.MenuTag ) then
+          self:E( { Group = self.GroupID, Text = self.MenuText, Path = self.MenuPath } )
+          if self.MenuPath ~= nil then
+            missionCommands.removeItemForGroup( self.GroupID, self.MenuPath )
+          end
+          MENU_INDEX:ClearGroupMenu( self.Group, Path )
+          self:ClearParentMenu( self.MenuText )
+          return nil
+        end
+      end
+    else
+      BASE:E( { "Cannot Remove MENU_GROUP_COMMAND_DELAYED", Path = Path, ParentMenu = self.ParentMenu, MenuText = self.MenuText, Group = self.Group } )
     end
     
     return self
