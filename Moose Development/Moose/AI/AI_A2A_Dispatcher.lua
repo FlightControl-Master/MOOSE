@@ -2504,7 +2504,8 @@ do -- AI_A2A_DISPATCHER
             if AIGroup:IsAlive() then
               -- Check if the CAP is patrolling or engaging. If not, this is not a valid CAP, even if it is alive!
               -- The CAP could be damaged, lost control, or out of fuel!
-              if DefenderTask.Fsm:Is( "Patrolling" ) or DefenderTask.Fsm:Is( "Engaging" ) or DefenderTask.Fsm:Is( "Refuelling" )then
+              if DefenderTask.Fsm:Is( "Patrolling" ) or DefenderTask.Fsm:Is( "Engaging" ) or DefenderTask.Fsm:Is( "Refuelling" )
+                    or DefenderTask.Fsm:Is( "Starting" ) then
                 CapCount = CapCount + 1
               end
             end
