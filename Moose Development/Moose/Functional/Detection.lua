@@ -617,11 +617,15 @@ do -- DETECTION_BASE
             end
             
             if self.AcceptZones then
+              local AnyZoneDetection = false
               for AcceptZoneID, AcceptZone in pairs( self.AcceptZones ) do
                 local AcceptZone = AcceptZone -- Core.Zone#ZONE_BASE
-                if AcceptZone:IsVec2InZone( DetectedObjectVec2 ) == false then
-                  DetectionAccepted = false
+                if AcceptZone:IsVec2InZone( DetectedObjectVec2 ) then
+                  AnyZoneDetection = true
                 end
+              end
+              if not AnyZoneDetection then
+                DetectionAccepted = false            
               end
             end
 
