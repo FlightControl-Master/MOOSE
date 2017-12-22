@@ -391,7 +391,7 @@ function MISSION:SetMenu( MenuTime )
     local Task = Task -- Tasking.Task#TASK
     local TaskType = Task:GetType()
     MenuCount[TaskType] = MenuCount[TaskType] or 1
-    if MenuCount[TaskType] <= 5 then
+    if MenuCount[TaskType] <= 10 then
       Task:SetMenu( MenuTime )
       MenuCount[TaskType] = MenuCount[TaskType] + 1
     end
@@ -514,7 +514,9 @@ function MISSION:GetMenu( TaskGroup ) -- R2.1 -- Changed Menu Structure
   
   local GroupMenu = self.MissionGroupMenu[TaskGroup]
   
-  self.MissionMenu = MENU_COALITION:New( self.MissionCoalition, self:GetName(), CommandCenterMenu )
+  CommandCenterMenu = MENU_GROUP:New( TaskGroup, "Command Center (" .. CommandCenter:GetName() .. ")" )
+  
+  self.MissionMenu = MENU_GROUP:New( TaskGroup, self:GetName(), CommandCenterMenu )
   
   GroupMenu.BriefingMenu = MENU_GROUP_COMMAND:New( TaskGroup, "Mission Briefing", self.MissionMenu, self.MenuReportBriefing, self, TaskGroup )
 
