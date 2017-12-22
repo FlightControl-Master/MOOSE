@@ -97,7 +97,7 @@ function DATABASE:New()
   self:HandleEvent( EVENTS.DeleteCargo )
   
   -- Follow alive players and clients
-  self:HandleEvent( EVENTS.PlayerEnterUnit, self._EventOnPlayerEnterUnit ) -- This is not working anymore!, handling this through the birth event.
+  --self:HandleEvent( EVENTS.PlayerEnterUnit, self._EventOnPlayerEnterUnit ) -- This is not working anymore!, handling this through the birth event.
   self:HandleEvent( EVENTS.PlayerLeaveUnit, self._EventOnPlayerLeaveUnit )
   
   self:_RegisterTemplates()
@@ -740,7 +740,7 @@ function DATABASE:_EventOnBirth( Event )
           self:AddPlayer( Event.IniUnitName, PlayerName )
         end
         local Settings = SETTINGS:Set( PlayerName )
-        Settings:SetPlayerMenu( Event.IniUnit )
+        --Settings:SetPlayerMenu( Event.IniUnit )
         --MENU_INDEX:Refresh( Event.IniGroup )
       end
     end
