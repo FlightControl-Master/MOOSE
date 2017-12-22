@@ -740,7 +740,7 @@ function DATABASE:_EventOnBirth( Event )
           self:AddPlayer( Event.IniUnitName, PlayerName )
         end
         local Settings = SETTINGS:Set( PlayerName )
-        --Settings:SetPlayerMenu( Event.IniUnit )
+        Settings:SetPlayerMenu( Event.IniUnit )
         --MENU_INDEX:Refresh( Event.IniGroup )
       end
     end
