@@ -391,7 +391,7 @@ function MISSION:SetMenu( MenuTime )
     local Task = Task -- Tasking.Task#TASK
     local TaskType = Task:GetType()
     MenuCount[TaskType] = MenuCount[TaskType] or 1
-    if MenuCount[TaskType] <= 5 then
+    if MenuCount[TaskType] <= 10 then
       Task:SetMenu( MenuTime )
       MenuCount[TaskType] = MenuCount[TaskType] + 1
     end
