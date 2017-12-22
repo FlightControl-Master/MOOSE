@@ -119,24 +119,24 @@ function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
     end
     )
   
-  -- When a player enters a client or a unit, the CommandCenter will check for each Mission and each Task in the Mission if the player has things to do.
-  -- For these elements, it will=
-  -- - Set the correct menu.
-  -- - Assign the PlayerUnit to the Task if required.
-  -- - Send a message to the other players in the group that this player has joined.
-  self:HandleEvent( EVENTS.PlayerEnterUnit,
-    --- @param #COMMANDCENTER self
-    -- @param Core.Event#EVENTDATA EventData
-    function( self, EventData )
-      local PlayerUnit = EventData.IniUnit
-      for MissionID, Mission in pairs( self:GetMissions() ) do
-        local Mission = Mission -- Tasking.Mission#MISSION
-        local PlayerGroup = EventData.IniGroup -- The GROUP object should be filled!
-        Mission:JoinUnit( PlayerUnit, PlayerGroup )
-      end
-      self:SetMenu()
-    end
-  )
+--  -- When a player enters a client or a unit, the CommandCenter will check for each Mission and each Task in the Mission if the player has things to do.
+--  -- For these elements, it will=
+--  -- - Set the correct menu.
+--  -- - Assign the PlayerUnit to the Task if required.
+--  -- - Send a message to the other players in the group that this player has joined.
+--  self:HandleEvent( EVENTS.PlayerEnterUnit,
+--    --- @param #COMMANDCENTER self
+--    -- @param Core.Event#EVENTDATA EventData
+--    function( self, EventData )
+--      local PlayerUnit = EventData.IniUnit
+--      for MissionID, Mission in pairs( self:GetMissions() ) do
+--        local Mission = Mission -- Tasking.Mission#MISSION
+--        local PlayerGroup = EventData.IniGroup -- The GROUP object should be filled!
+--        Mission:JoinUnit( PlayerUnit, PlayerGroup )
+--      end
+--      self:SetMenu()
+--    end
+--  )
 
   -- Handle when a player leaves a slot and goes back to spectators ... 
   -- The PlayerUnit will be UnAssigned from the Task.
@@ -153,22 +153,22 @@ function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
     end
   )
 
-  -- Handle when a player leaves a slot and goes back to spectators ... 
-  -- The PlayerUnit will be UnAssigned from the Task.
-  -- When there is no Unit left running the Task, the Task goes into Abort...
-  self:HandleEvent( EVENTS.PlayerLeaveUnit,
-    --- @param #TASK self
-    -- @param Core.Event#EVENTDATA EventData
-    function( self, EventData )
-      local PlayerUnit = EventData.IniUnit
-      for MissionID, Mission in pairs( self:GetMissions() ) do
-        local Mission = Mission -- Tasking.Mission#MISSION
-        if Mission:IsENGAGED() then
-          Mission:AbortUnit( PlayerUnit )
-        end
-      end
-    end
-  )
+--  -- Handle when a player leaves a slot and goes back to spectators ... 
+--  -- The PlayerUnit will be UnAssigned from the Task.
+--  -- When there is no Unit left running the Task, the Task goes into Abort...
+--  self:HandleEvent( EVENTS.PlayerLeaveUnit,
+--    --- @param #TASK self
+--    -- @param Core.Event#EVENTDATA EventData
+--    function( self, EventData )
+--      local PlayerUnit = EventData.IniUnit
+--      for MissionID, Mission in pairs( self:GetMissions() ) do
+--        local Mission = Mission -- Tasking.Mission#MISSION
+--        if Mission:IsENGAGED() then
+--          Mission:AbortUnit( PlayerUnit )
+--        end
+--      end
+--    end
+--  )
 
   -- Handle when a player leaves a slot and goes back to spectators ... 
   -- The PlayerUnit will be UnAssigned from the Task.
@@ -304,8 +304,6 @@ end
 -- @param #COMMANDCENTER self
 function COMMANDCENTER:SetMenu()
   self:F()
-
-  self.CommandCenterMenu = MENU_COALITION:New( self.CommandCenterCoalition, "Command Center (" .. self:GetName() .. ")" )
 
   local MenuTime = timer.getTime()
   for MissionID, Mission in pairs( self:GetMissions() or {} ) do

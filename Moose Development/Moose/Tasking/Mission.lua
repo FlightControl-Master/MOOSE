@@ -514,7 +514,9 @@ function MISSION:GetMenu( TaskGroup ) -- R2.1 -- Changed Menu Structure
   
   local GroupMenu = self.MissionGroupMenu[TaskGroup]
   
-  self.MissionMenu = MENU_COALITION:New( self.MissionCoalition, self:GetName(), CommandCenterMenu )
+  self.CommandCenterMenu = MENU_GROUP:New( TaskGroup, "Command Center (" .. CommandCenter:GetName() .. ")" )
+  
+  self.MissionMenu = MENU_GROUP:New( TaskGroup, self:GetName(), self.CommandCenterMenu )
   
   GroupMenu.BriefingMenu = MENU_GROUP_COMMAND:New( TaskGroup, "Mission Briefing", self.MissionMenu, self.MenuReportBriefing, self, TaskGroup )
 
