@@ -4188,7 +4188,7 @@ function RAT:_ATCClearForLanding(airport, flight)
   -- Debug message.
   local text1=string.format("ATC %s: Flight %s cleared for landing (flag=%d).", airport, flight, flagvalue)
   local text2=string.format("ATC %s: Flight %s you are cleared for landing.", airport, flight)
-  self:T( RAT.id..text1)
+  BASE:T( RAT.id..text1)
   MESSAGE:New(text2, 10):ToAllIf(RAT.ATC.messages)
 end
 
@@ -4230,9 +4230,9 @@ function RAT:_ATCFlightLanded(name)
     local text2=string.format("ATC %s: Number of flights still on final %d.", dest, RAT.ATC.airport[dest].Nonfinal)
     local text3=string.format("ATC %s: Traffic report: Number of planes landed in total %d. Flights/hour = %3.2f.", dest, RAT.ATC.airport[dest].traffic, TrafficPerHour)
     local text4=string.format("ATC %s: Flight %s landed. Welcome to %s.", dest, name, dest)
-    self:T(RAT.id..text1)
-    self:T(RAT.id..text2)
-    self:T(RAT.id..text3)
+    BASE:T(RAT.id..text1)
+    BASE:T(RAT.id..text2)
+    BASE:T(RAT.id..text3)
     MESSAGE:New(text4, 10):ToAllIf(RAT.ATC.messages)
   end
   
