@@ -465,7 +465,7 @@ RAT.id="RAT | "
 
 --- RAT version.
 -- @field #string version
-RAT.version="2.0.2"
+RAT.version="2.0.3"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -3526,12 +3526,12 @@ function RAT._WaypointFunction(group, rat, wp)
   if wp==WPfinal then
     text=string.format("Flight %s arrived at final destination %s.", group:GetName(), destination)
     MESSAGE:New(text, 10):ToAllIf(rat.reportstatus)
-    self:T(RAT.id..text)
+    BASE.T(rat, RAT.id..text)
   
     if landing==RAT.wp.air then
       text=string.format("Activating despawn switch for flight %s! Group will be detroyed soon.", group:GetName())
       MESSAGE:New(text, 30):ToAllIf(rat.Debug)
-      self:T(RAT.id..text)
+      BASE.T(rat, RAT.id..text)
       -- Enable despawn switch. Next time the status function is called, the aircraft will be despawned.
       rat.ratcraft[sdx].despawnme=true
     end
