@@ -465,7 +465,7 @@ RAT.id="RAT | "
 
 --- RAT version.
 -- @field #string version
-RAT.version="2.0.2"
+RAT.version="2.0.3"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -3526,12 +3526,12 @@ function RAT._WaypointFunction(group, rat, wp)
   if wp==WPfinal then
     text=string.format("Flight %s arrived at final destination %s.", group:GetName(), destination)
     MESSAGE:New(text, 10):ToAllIf(rat.reportstatus)
-    self:T(RAT.id..text)
+    BASE.T(rat, RAT.id..text)
   
     if landing==RAT.wp.air then
       text=string.format("Activating despawn switch for flight %s! Group will be detroyed soon.", group:GetName())
       MESSAGE:New(text, 30):ToAllIf(rat.Debug)
-      self:T(RAT.id..text)
+      BASE.T(rat, RAT.id..text)
       -- Enable despawn switch. Next time the status function is called, the aircraft will be despawned.
       rat.ratcraft[sdx].despawnme=true
     end
@@ -4188,7 +4188,7 @@ function RAT:_ATCClearForLanding(airport, flight)
   -- Debug message.
   local text1=string.format("ATC %s: Flight %s cleared for landing (flag=%d).", airport, flight, flagvalue)
   local text2=string.format("ATC %s: Flight %s you are cleared for landing.", airport, flight)
-  self:T( RAT.id..text1)
+  BASE:T( RAT.id..text1)
   MESSAGE:New(text2, 10):ToAllIf(RAT.ATC.messages)
 end
 
@@ -4230,9 +4230,9 @@ function RAT:_ATCFlightLanded(name)
     local text2=string.format("ATC %s: Number of flights still on final %d.", dest, RAT.ATC.airport[dest].Nonfinal)
     local text3=string.format("ATC %s: Traffic report: Number of planes landed in total %d. Flights/hour = %3.2f.", dest, RAT.ATC.airport[dest].traffic, TrafficPerHour)
     local text4=string.format("ATC %s: Flight %s landed. Welcome to %s.", dest, name, dest)
-    self:T(RAT.id..text1)
-    self:T(RAT.id..text2)
-    self:T(RAT.id..text3)
+    BASE:T(RAT.id..text1)
+    BASE:T(RAT.id..text2)
+    BASE:T(RAT.id..text3)
     MESSAGE:New(text4, 10):ToAllIf(RAT.ATC.messages)
   end
   
