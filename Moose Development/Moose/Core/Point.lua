@@ -838,7 +838,7 @@ do -- COORDINATE
     --   local MarkID = TargetCoord:MarkToAll( "This is a target for all players" )
     function COORDINATE:MarkToAll( MarkText )
       local MarkID = UTILS.GetMarkID()
-      trigger.action.markToAll( MarkID, MarkText, self:GetVec3() )
+      trigger.action.markToAll( MarkID, MarkText, self:GetVec3(), false, "" )
       return MarkID
     end
 
@@ -852,7 +852,7 @@ do -- COORDINATE
     --   local MarkID = TargetCoord:MarkToCoalition( "This is a target for the red coalition", coalition.side.RED )
     function COORDINATE:MarkToCoalition( MarkText, Coalition )
       local MarkID = UTILS.GetMarkID()
-      trigger.action.markToCoalition( MarkID, MarkText, self:GetVec3(), Coalition )
+      trigger.action.markToCoalition( MarkID, MarkText, self:GetVec3(), Coalition, false, "" )
       return MarkID
     end
 
@@ -889,7 +889,7 @@ do -- COORDINATE
     --   local MarkID = TargetCoord:MarkToGroup( "This is a target for the attack group", AttackGroup )
     function COORDINATE:MarkToGroup( MarkText, MarkGroup )
       local MarkID = UTILS.GetMarkID()
-      trigger.action.markToGroup( MarkID, MarkText, self:GetVec3(), MarkGroup:GetID() )
+      trigger.action.markToGroup( MarkID, MarkText, self:GetVec3(), MarkGroup:GetID(), false, "" )
       return MarkID
     end
     
