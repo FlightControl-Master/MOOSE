@@ -132,7 +132,9 @@
 -- @field #boolean radio If true/false disables radio messages from the RAT groups.
 -- @field #number frequency Radio frequency used by the RAT groups.
 -- @field #string modulation Ratio modulation. Either "FM" or "AM".
--- @field #boolean uncontrolled If true aircraft are spawned in uncontrolled state and will only sit on their parking spots. 
+-- @field #boolean uncontrolled If true aircraft are spawned in uncontrolled state and will only sit on their parking spots.
+-- @field #string onboardnum Sets the onboard number prefix. Same as setting "TAIL #" in the mission editor.
+-- @field #number onboardnum0 (Optional) Starting value of the automatically appended numbering of aircraft within a flight. Default is one.
 -- @extends Core.Spawn#SPAWN
 
 ---# RAT class, extends @{Spawn#SPAWN}
@@ -353,6 +355,8 @@ RAT={
   modulation=nil,           -- Ratio modulation. Either "FM" or "AM".
   actype=nil,               -- Aircraft type set by user. Changes the type of the template group.
   uncontrolled=false,       -- Spawn uncontrolled aircraft.
+  onboardnum=nil,           -- Tail number.
+  onboardnum0=1,            -- (Optional) Starting value of the automatically appended numbering of aircraft within a flight. Default is one.
 }
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -440,6 +444,8 @@ RAT.ROT={
   noreaction="noreaction",
 }
 
+--- RAT ATC.
+-- @list ATC
 RAT.ATC={
   init=false,
   flight={},
@@ -464,8 +470,11 @@ RAT.MenuF10=nil
 RAT.id="RAT | "
 
 --- RAT version.
--- @field #string version
-RAT.version="2.0.3"
+-- @field #list
+RAT.version={
+  version = "2.1.0",
+  print = true,
+}
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -519,7 +528,10 @@ function RAT:New(groupname, alias)
   self=BASE:Inherit(self, SPAWN:NewWithAlias(groupname, alias)) -- #RAT
 
   -- Version info.
-  self:F(RAT.id.."Version "..RAT.version)
+  if RAT.version.print then
+    env.info(RAT.id.."Version "..RAT.version.version)
+    RAT.version.print=false
+  end
 
   -- Welcome message.
   self:F(RAT.id.."Creating new RAT object from template: "..groupname)
@@ -679,6 +691,7 @@ function RAT:Spawn(naircraft)
   text=text..string.format("Radio comms      : %s\n", tostring(self.radio))
   text=text..string.format("Radio frequency  : %s\n", tostring(self.frequency))
   text=text..string.format("Radio modulation : %s\n", tostring(self.frequency))
+  text=text..string.format("Tail # prefix    : %s\n", tostring(self.onboardnum))
   if self.livery then
     text=text..string.format("Available liveries:\n")
     for _,livery in pairs(self.livery) do
@@ -1379,6 +1392,17 @@ function RAT:SetCruiseAltitude(alt)
   self.FLcruise=alt
 end
 
+--- Set onboard number prefix. Same as setting "TAIL #" in the mission editor. Note that if you dont use this function, the values defined in the template group of the ME are taken.
+-- @param #RAT self
+-- @param #string tailnumprefix String of the tail number prefix. If flight consists of more than one aircraft, two digits are appended automatically, i.e. <tailnumprefix>001, <tailnumprefix>002, ... 
+-- @param #number zero (Optional) Starting value of the automatically appended numbering of aircraft within a flight. Default is 0.
+function RAT:SetOnboardNum(tailnumprefix, zero)
+  self.onboardnum=tailnumprefix
+  if zero ~= nil then
+    self.onboardnum0=zero
+  end
+end
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Initialize basic parameters of the aircraft based on its (template) group in the mission editor.
@@ -1722,9 +1746,9 @@ function RAT:_Respawn(group)
   end
   
   if self.Debug then
-	text=string.format("self.takeoff, takeoff, _takeoff = %s, %s, %s", tostring(self.takeoff), tostring(takeoff), tostring(_takeoff))
-	text=text.."\n"..string.format("self.landing, landing, _landing = %s, %s, %s", tostring(self.landing), tostring(landing), tostring(_landing))
-	self:T(RAT.id..text)
+	 local text=string.format("self.takeoff, takeoff, _takeoff = %s, %s, %s", tostring(self.takeoff), tostring(takeoff), tostring(_takeoff))
+	 text=text.."\n"..string.format("self.landing, landing, _landing = %s, %s, %s", tostring(self.landing), tostring(landing), tostring(_landing))
+	 self:T(RAT.id..text)
   end
       
   -- Spawn new group.
@@ -2217,7 +2241,7 @@ function RAT:_SetRoute(takeoff, landing, _departure, _destination, _waypoint)
   
   -- Departure/Take-off
   c[#c+1]=Pdeparture
-  wp[#wp+1]=self:_Waypoint(#wp+1, takeoff, c[#wp+1], VxClimb, H_departure, departure)
+  wp[#wp+1]=self:_Waypoint(#wp+1, "Departure", takeoff, c[#wp+1], VxClimb, H_departure, departure)
   self.waypointdescriptions[#wp]="Departure"
   self.waypointstatus[#wp]=RAT.status.Departure
   
@@ -2232,7 +2256,7 @@ function RAT:_SetRoute(takeoff, landing, _departure, _destination, _waypoint)
       -- Only one waypoint at the end of climb = begin of cruise.
       c[#c+1]=c[#c]:Translate(d_climb, heading)
             
-      wp[#wp+1]=self:_Waypoint(#wp+1, RAT.wp.cruise, c[#wp+1], VxCruise, FLcruise)
+      wp[#wp+1]=self:_Waypoint(#wp+1, "Begin of Cruise", RAT.wp.cruise, c[#wp+1], VxCruise, FLcruise)
       self.waypointdescriptions[#wp]="Begin of Cruise"
       self.waypointstatus[#wp]=RAT.status.Cruise
     end
@@ -2243,11 +2267,11 @@ function RAT:_SetRoute(takeoff, landing, _departure, _destination, _waypoint)
     c[#c+1]=c[#c]:Translate(d_climb/2, heading)
     c[#c+1]=c[#c]:Translate(d_climb/2, heading)
     
-    wp[#wp+1]=self:_Waypoint(#wp+1, RAT.wp.climb,  c[#wp+1], VxClimb, H_departure+(FLcruise-H_departure)/2)
+    wp[#wp+1]=self:_Waypoint(#wp+1, "Climb", RAT.wp.climb,  c[#wp+1], VxClimb, H_departure+(FLcruise-H_departure)/2)
     self.waypointdescriptions[#wp]="Climb"
     self.waypointstatus[#wp]=RAT.status.Climb
     
-    wp[#wp+1]=self:_Waypoint(#wp+1, RAT.wp.cruise, c[#wp+1], VxCruise, FLcruise)
+    wp[#wp+1]=self:_Waypoint(#wp+1, "Begin of Cruise", RAT.wp.cruise, c[#wp+1], VxCruise, FLcruise)
     self.waypointdescriptions[#wp]="Begin of Cruise"
     self.waypointstatus[#wp]=RAT.status.Cruise
  
@@ -2258,7 +2282,7 @@ function RAT:_SetRoute(takeoff, landing, _departure, _destination, _waypoint)
   -- First add the little bit from begin of cruise to the return point.
   if self.returnzone then    
     c[#c+1]=Preturn    
-    wp[#wp+1]=self:_Waypoint(#wp+1, RAT.wp.cruise, c[#wp+1], VxCruise, FLcruise)
+    wp[#wp+1]=self:_Waypoint(#wp+1, "Return Zone", RAT.wp.cruise, c[#wp+1], VxCruise, FLcruise)
     self.waypointdescriptions[#wp]="Return Zone"
     self.waypointstatus[#wp]=RAT.status.Uturn
   end
@@ -2267,7 +2291,7 @@ function RAT:_SetRoute(takeoff, landing, _departure, _destination, _waypoint)
   
     -- Next waypoint is already the final destination.
     c[#c+1]=Pdestination
-    wp[#wp+1]=self:_Waypoint(#wp+1, RAT.wp.finalwp, c[#wp+1], VxCruise,  FLcruise)
+    wp[#wp+1]=self:_Waypoint(#wp+1, "Final Destination", RAT.wp.finalwp, c[#wp+1], VxCruise,  FLcruise)
     self.waypointdescriptions[#wp]="Final Destination"
     self.waypointstatus[#wp]=RAT.status.Destination
   
@@ -2275,14 +2299,14 @@ function RAT:_SetRoute(takeoff, landing, _departure, _destination, _waypoint)
   
     -- The little bit back to end of cruise.  
     c[#c+1]=c[#c]:Translate(d_cruise/2, heading-180)    
-    wp[#wp+1]=self:_Waypoint(#wp+1, RAT.wp.cruise, c[#wp+1], VxCruise,  FLcruise)
+    wp[#wp+1]=self:_Waypoint(#wp+1, "End of Cruise", RAT.wp.cruise, c[#wp+1], VxCruise,  FLcruise)
     self.waypointdescriptions[#wp]="End of Cruise"
     self.waypointstatus[#wp]=RAT.status.Descent
     
   else
   
     c[#c+1]=c[#c]:Translate(d_cruise, heading)
-    wp[#wp+1]=self:_Waypoint(#wp+1, RAT.wp.cruise, c[#wp+1], VxCruise,  FLcruise)
+    wp[#wp+1]=self:_Waypoint(#wp+1, "End of Cruise", RAT.wp.cruise, c[#wp+1], VxCruise,  FLcruise)
     self.waypointdescriptions[#wp]="End of Cruise"
     self.waypointstatus[#wp]=RAT.status.Descent
     
@@ -2292,12 +2316,12 @@ function RAT:_SetRoute(takeoff, landing, _departure, _destination, _waypoint)
   if landing==RAT.wp.landing then
     if self.returnzone then
       c[#c+1]=c[#c]:Translate(d_descent/2, heading-180)
-      wp[#wp+1]=self:_Waypoint(#wp+1, RAT.wp.descent, c[#wp+1], VxDescent, FLcruise-(FLcruise-(h_holding+H_holding))/2)
+      wp[#wp+1]=self:_Waypoint(#wp+1, "Descent", RAT.wp.descent, c[#wp+1], VxDescent, FLcruise-(FLcruise-(h_holding+H_holding))/2)
       self.waypointdescriptions[#wp]="Descent"
       self.waypointstatus[#wp]=RAT.status.DescentHolding
     else
       c[#c+1]=c[#c]:Translate(d_descent/2, heading)
-      wp[#wp+1]=self:_Waypoint(#wp+1, RAT.wp.descent, c[#wp+1], VxDescent, FLcruise-(FLcruise-(h_holding+H_holding))/2)
+      wp[#wp+1]=self:_Waypoint(#wp+1, "Descent", RAT.wp.descent, c[#wp+1], VxDescent, FLcruise-(FLcruise-(h_holding+H_holding))/2)
       self.waypointdescriptions[#wp]="Descent"
       self.waypointstatus[#wp]=RAT.status.DescentHolding
     end
@@ -2308,15 +2332,15 @@ function RAT:_SetRoute(takeoff, landing, _departure, _destination, _waypoint)
 
     -- Holding point
     c[#c+1]=Pholding  
-    wp[#wp+1]=self:_Waypoint(#wp+1, RAT.wp.holding, c[#wp+1], VxHolding, H_holding+h_holding)
+    wp[#wp+1]=self:_Waypoint(#wp+1, "Holding Point", RAT.wp.holding, c[#wp+1], VxHolding, H_holding+h_holding)
     self.waypointdescriptions[#wp]="Holding Point"
     self.waypointstatus[#wp]=RAT.status.Holding
     wpholding=#wp
 
     -- Final destination.
     c[#c+1]=Pdestination    
-    wp[#wp+1]=self:_Waypoint(#wp+1, landing, c[#wp+1], VxFinal, H_destination, destination)
-    self.waypointdescriptions[#wp]="Destination"
+    wp[#wp+1]=self:_Waypoint(#wp+1, "Final Destination", landing, c[#wp+1], VxFinal, H_destination, destination)
+    self.waypointdescriptions[#wp]="Final Destination"
     self.waypointstatus[#wp]=RAT.status.Destination
     
   end
@@ -3197,7 +3221,7 @@ function RAT:_Despawn(group)
       self.alive=self.alive-1
 
       -- Remove submenu for this group.
-      if self.f10menu ~= nil and self.SubMenuName ~= nil then
+      if self.f10menu and self.SubMenuName ~= nil then
         self.Menu[self.SubMenuName]["groups"][index]:Remove()
       end
     end
@@ -3210,14 +3234,15 @@ end
 
 --- Create a waypoint that can be used with the Route command.
 -- @param #RAT self
--- @param #number Running index of waypoints. Starts with 1 which is normally departure/spawn waypoint.
+-- @param #number index Running index of waypoints. Starts with 1 which is normally departure/spawn waypoint.
+-- @param #string description Descrition of Waypoint.
 -- @param #number Type Type of waypoint.
 -- @param Core.Point#COORDINATE Coord 3D coordinate of the waypoint.
 -- @param #number Speed Speed in m/s.
 -- @param #number Altitude Altitude in m.
 -- @param Wrapper.Airbase#AIRBASE Airport Airport of object to spawn.
 -- @return #table Waypoints for DCS task route or spawn template.
-function RAT:_Waypoint(index, Type, Coord, Speed, Altitude, Airport)
+function RAT:_Waypoint(index, description, Type, Coord, Speed, Altitude, Airport)
 
   -- Altitude of input parameter or y-component of 3D-coordinate.
   local _Altitude=Altitude or Coord.y
@@ -3330,8 +3355,8 @@ function RAT:_Waypoint(index, Type, Coord, Speed, Altitude, Airport)
   -- ETA (not used)
   RoutePoint.ETA=nil
   RoutePoint.ETA_locked = false
-  -- waypoint name (only for the mission editor)
-  RoutePoint.name="RAT waypoint"
+  -- waypoint description
+  RoutePoint.name=description
   
   if (Airport~=nil) and (Type~=RAT.wp.air) then
     local AirbaseID = Airport:GetID()
@@ -3518,8 +3543,10 @@ function RAT._WaypointFunction(group, rat, wp)
      
     -- Register aircraft at ATC.
     if rat.ATCswitch then
-       MENU_MISSION_COMMAND:New("Clear for landing", rat.Menu[rat.SubMenuName].groups[sdx], rat.ClearForLanding, rat, group:GetName())
-       rat._ATCRegisterFlight(rat, group:GetName(), Tnow)
+      if rat.f10menu then
+        MENU_MISSION_COMMAND:New("Clear for landing", rat.Menu[rat.SubMenuName].groups[sdx], rat.ClearForLanding, rat, group:GetName())
+      end
+      rat._ATCRegisterFlight(rat, group:GetName(), Tnow)
     end
   end
   
@@ -3870,7 +3897,7 @@ function RAT:_SetMarker(text, wp, index)
   local flight=self:GetGroupFromIndex(index):GetName()
   -- Place maker visible for all on the F10 map.
   local text1=string.format("%s:\n%s", flight, text)
-  trigger.action.markToAll(RAT.markerid, text1, vec)
+  trigger.action.markToAll(RAT.markerid, text1, vec, false, "")
 end
 
 --- Delete all markers on F10 map.
@@ -3945,7 +3972,9 @@ function RAT:_ModifySpawnTemplate(waypoints, livery)
         SpawnTemplate.units[UnitID]["skill"] = self.skill
         
         -- Onboard number.
-        SpawnTemplate.units[UnitID]["onboard_num"] = self.SpawnIndex
+        if self.onboardnum then
+          SpawnTemplate.units[UnitID]["onboard_num"] = string.format("%s%d%02d", self.onboardnum, (self.SpawnIndex-1)%10, (self.onboardnum0-1)+UnitID)
+        end
         
         -- Modify coaltion and country of template.
         SpawnTemplate.CoalitionID=self.coalition
@@ -3987,11 +4016,7 @@ function RAT:_ModifySpawnTemplate(waypoints, livery)
         SpawnTemplate.modulation=self.modulation
       end
       
-
-      
-      -- Update modified template for spawn group.
-      --self.SpawnGroups[self.SpawnIndex].SpawnTemplate=SpawnTemplate
-      
+      -- Debug output.
       self:T(SpawnTemplate)        
     end
   end
