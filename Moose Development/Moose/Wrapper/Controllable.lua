@@ -1953,6 +1953,12 @@ function CONTROLLABLE:RouteGroundOnRoad( ToCoordinate, Speed, DelaySeconds )
     table.insert(route, coord:WaypointGround(Speed, Formation))
   end
   
+  -- Add the final coordinate because the final coordinate in path is last point on road.
+  local dist=ToCoordinate:Get2DDistance(path[#path])
+  if dist>10 then
+    table.insert(route, ToCoordinate:WaypointGround(Speed, "Vee"))
+  end
+  
   -- Route controllable to destination.
   self:Route(route, DelaySeconds)
 
