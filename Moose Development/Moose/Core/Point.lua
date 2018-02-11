@@ -727,6 +727,30 @@ do -- COORDINATE
 
     return RoutePoint
   end
+  
+  --- Gets the nearest coordinate to a road.
+  -- @param #COORDINATE self
+  -- @return #COORDINATE Coordinate of the nearest road.
+  function COORDINATE:GetClosestPointToRoad()
+   local x,y = land.getClosestPointOnRoads("roads", self.x, self.z)
+   local vec2={ x = x, y = y }
+   return COORDINATE:NewFromVec2(vec2)
+  end
+
+  --- Returns a table of coordinates to a destination.
+  -- @param #COORDINATE self
+  -- @param #COORDINATE ToCoord Coordinate of destination.
+  -- @return #table Table of coordinates on road.
+  function COORDINATE:GetPathOnRoad(ToCoord)
+    local Path={}
+    local path = land.findPathOnRoads("roads", self.x, self.z, ToCoord.x, ToCoord.z)
+    for i, v in ipairs(path) do
+      --self:E(v)
+      local coord=COORDINATE:NewFromVec2(v)
+      Path[#Path+1]=COORDINATE:NewFromVec2(v)
+    end
+    return Path
+  end
 
   --- Creates an explosion at the point of a certain intensity.
   -- @param #COORDINATE self

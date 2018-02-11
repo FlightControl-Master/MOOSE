@@ -1927,6 +1927,38 @@ function CONTROLLABLE:RouteGroundTo( ToCoordinate, Speed, Formation, DelaySecond
   return self
 end
 
+--- Make the GROUND Controllable to drive towards a specific point using (only) roads.
+-- @param #CONTROLLABLE self
+-- @param Core.Point#COORDINATE ToCoordinate A Coordinate to drive to.
+-- @param #number Speed (optional) Speed in km/h. The default speed is 999 km/h.
+-- @param #number DelaySeconds Wait for the specified seconds before executing the Route.
+-- @return #CONTROLLABLE The CONTROLLABLE.
+function CONTROLLABLE:RouteGroundOnRoad( ToCoordinate, Speed, DelaySeconds )
+
+  -- Current coordinate.
+  local FromCoordinate = self:GetCoordinate()
+  
+  -- Formation is set to on road.
+  local Formation="On Road"
+ 
+  -- Path on road from current position to destination coordinate.
+  local path=FromCoordinate:GetPathOnRoad(ToCoordinate)
+  
+  -- Route, ground waypoints along roads.
+  local route={}
+  table.insert(route, FromCoordinate:WaypointGround(Speed, Formation))
+  
+  -- Convert coordinates to ground waypoints and insert into table.
+  for _, coord in ipairs(path) do
+    table.insert(route, coord:WaypointGround(Speed, Formation))
+  end
+  
+  -- Route controllable to destination.
+  self:Route(route, DelaySeconds)
+
+  return self
+end
+
 
 --- Make the AIR Controllable fly towards a specific point.
 -- @param #CONTROLLABLE self
