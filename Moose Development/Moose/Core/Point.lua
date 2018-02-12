@@ -420,6 +420,57 @@ do -- COORDINATE
     local SourceVec3 = self:GetVec3()
     return ( ( TargetVec3.x - SourceVec3.x ) ^ 2 + ( TargetVec3.z - SourceVec3.z ) ^ 2 ) ^ 0.5
   end
+  
+  --- Returns the temperature in Degrees Celsius.
+  -- @param #COORDINATE self
+  -- @param height (Optional) parameter specifying the height ASL.
+  -- @return Temperature in Degrees Celsius.
+  function COORDINATE:GetTemperature(height)
+    local y=height or self.y
+    env.info("FF height = "..y)
+    local point={x=self.x, y=height or self.y, z=self.z}
+    -- get temperature [K] and pressure [Pa] at point
+    local T,P=atmosphere.getTemperatureAndPressure(point)
+    -- Return Temperature in Deg C
+    return T-273.15
+  end
+
+  --- Returns the pressure in hPa.
+  -- @param #COORDINATE self
+  -- @param height (Optional) parameter specifying the height ASL. E.g. set height=0 for QNH.
+  -- @return Pressure in hPa.
+  function COORDINATE:GetPressure(height)
+    local point={x=self.x, y=height or self.y, z=self.z}
+    -- get temperature [K] and pressure [Pa] at point
+    local T,P=atmosphere.getTemperatureAndPressure(point)
+    -- Return Pressure in hPa.
+    return P/100
+  end
+  
+  --- Returns the wind direction (from) and strength.
+  -- @param #COORDINATE self
+  -- @param height (Optional) parameter specifying the height ASL. The minimum height will be always be the land height since the wind is zero below the ground.
+  -- @return Direction the wind is blowing from in degrees.
+  -- @return Wind strength in m/s.
+  function COORDINATE:GetWind(height)
+    local landheight=self:GetLandHeight()+0.1 -- we at 0.1 meters to be sure to be above ground since wind is zero below ground level.
+    local point={x=self.x, y=math.max(height or self.y, landheight), z=self.z}
+    -- get wind velocity vector
+    local wind = atmosphere.getWind(point)    
+    local direction = math.deg(math.atan2(wind.z, wind.x))
+    if direction < 0 then
+      direction = 360 + direction
+    end
+    -- Convert to direction to from direction 
+    if direction > 180 then
+      direction = direction-180
+    else
+      direction = direction+180
+    end
+    local strength=math.sqrt((wind.x)^2+(wind.z)^2)
+    -- Return wind direction and strength km/h.
+    return direction, strength
+  end
 
 
   --- Return the 3D distance in meters between the target COORDINATE and the COORDINATE.
