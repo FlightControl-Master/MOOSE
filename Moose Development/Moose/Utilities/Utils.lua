@@ -432,3 +432,50 @@ function UTILS.IsInSphere( InVec3, Vec3, Radius )
 
   return InSphere
 end
+
+-- Beaufort scale: returns Beaufort number and wind description as a function of wind speed in m/s.
+function UTILS.BeaufortScale(speed)
+  local bn=nil
+  local bd=nil
+  if speed<0.51 then
+    bn=0
+    bd="Calm"
+  elseif speed<2.06 then
+    bn=1
+    bd="Light Air"
+  elseif speed<3.60 then
+    bn=2
+    bd="Light Breeze"
+  elseif speed<5.66 then
+    bn=3
+    bd="Gentle Breeze"
+  elseif speed<8.23 then
+    bn=4
+    bd="Moderate Breeze"
+  elseif speed<11.32 then
+    bn=5
+    bd="Fresh Breeze"
+  elseif speed<14.40 then
+    bn=6
+    bd="Strong Breeze"
+  elseif speed<17.49 then
+    bn=7
+    bd="Moderate Gale"
+  elseif speed<21.09 then
+    bn=8
+    bd="Fresh Gale"
+  elseif speed<24.69 then
+    bn=9
+    bd="Strong Gale"
+  elseif speed<28.81 then
+    bn=10
+    bd="Storm"
+  elseif speed<32.92 then
+    bn=11
+    bd="Violent Storm"
+  else
+    bn=12
+    bd="Hurricane"
+  end
+  return bn,bd
+end

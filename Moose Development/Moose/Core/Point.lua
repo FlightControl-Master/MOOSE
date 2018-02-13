@@ -420,6 +420,57 @@ do -- COORDINATE
     local SourceVec3 = self:GetVec3()
     return ( ( TargetVec3.x - SourceVec3.x ) ^ 2 + ( TargetVec3.z - SourceVec3.z ) ^ 2 ) ^ 0.5
   end
+  
+  --- Returns the temperature in Degrees Celsius.
+  -- @param #COORDINATE self
+  -- @param height (Optional) parameter specifying the height ASL.
+  -- @return Temperature in Degrees Celsius.
+  function COORDINATE:GetTemperature(height)
+    local y=height or self.y
+    env.info("FF height = "..y)
+    local point={x=self.x, y=height or self.y, z=self.z}
+    -- get temperature [K] and pressure [Pa] at point
+    local T,P=atmosphere.getTemperatureAndPressure(point)
+    -- Return Temperature in Deg C
+    return T-273.15
+  end
+
+  --- Returns the pressure in hPa.
+  -- @param #COORDINATE self
+  -- @param height (Optional) parameter specifying the height ASL. E.g. set height=0 for QNH.
+  -- @return Pressure in hPa.
+  function COORDINATE:GetPressure(height)
+    local point={x=self.x, y=height or self.y, z=self.z}
+    -- get temperature [K] and pressure [Pa] at point
+    local T,P=atmosphere.getTemperatureAndPressure(point)
+    -- Return Pressure in hPa.
+    return P/100
+  end
+  
+  --- Returns the wind direction (from) and strength.
+  -- @param #COORDINATE self
+  -- @param height (Optional) parameter specifying the height ASL. The minimum height will be always be the land height since the wind is zero below the ground.
+  -- @return Direction the wind is blowing from in degrees.
+  -- @return Wind strength in m/s.
+  function COORDINATE:GetWind(height)
+    local landheight=self:GetLandHeight()+0.1 -- we at 0.1 meters to be sure to be above ground since wind is zero below ground level.
+    local point={x=self.x, y=math.max(height or self.y, landheight), z=self.z}
+    -- get wind velocity vector
+    local wind = atmosphere.getWind(point)    
+    local direction = math.deg(math.atan2(wind.z, wind.x))
+    if direction < 0 then
+      direction = 360 + direction
+    end
+    -- Convert to direction to from direction 
+    if direction > 180 then
+      direction = direction-180
+    else
+      direction = direction+180
+    end
+    local strength=math.sqrt((wind.x)^2+(wind.z)^2)
+    -- Return wind direction and strength km/h.
+    return direction, strength
+  end
 
 
   --- Return the 3D distance in meters between the target COORDINATE and the COORDINATE.
@@ -727,6 +778,30 @@ do -- COORDINATE
 
     return RoutePoint
   end
+  
+  --- Gets the nearest coordinate to a road.
+  -- @param #COORDINATE self
+  -- @return #COORDINATE Coordinate of the nearest road.
+  function COORDINATE:GetClosestPointToRoad()
+   local x,y = land.getClosestPointOnRoads("roads", self.x, self.z)
+   local vec2={ x = x, y = y }
+   return COORDINATE:NewFromVec2(vec2)
+  end
+
+  --- Returns a table of coordinates to a destination.
+  -- @param #COORDINATE self
+  -- @param #COORDINATE ToCoord Coordinate of destination.
+  -- @return #table Table of coordinates on road.
+  function COORDINATE:GetPathOnRoad(ToCoord)
+    local Path={}
+    local path = land.findPathOnRoads("roads", self.x, self.z, ToCoord.x, ToCoord.z)
+    for i, v in ipairs(path) do
+      --self:E(v)
+      local coord=COORDINATE:NewFromVec2(v)
+      Path[#Path+1]=COORDINATE:NewFromVec2(v)
+    end
+    return Path
+  end
 
   --- Creates an explosion at the point of a certain intensity.
   -- @param #COORDINATE self
@@ -838,7 +913,7 @@ do -- COORDINATE
     --   local MarkID = TargetCoord:MarkToAll( "This is a target for all players" )
     function COORDINATE:MarkToAll( MarkText )
       local MarkID = UTILS.GetMarkID()
-      trigger.action.markToAll( MarkID, MarkText, self:GetVec3() )
+      trigger.action.markToAll( MarkID, MarkText, self:GetVec3(), false, "" )
       return MarkID
     end
 
@@ -852,7 +927,7 @@ do -- COORDINATE
     --   local MarkID = TargetCoord:MarkToCoalition( "This is a target for the red coalition", coalition.side.RED )
     function COORDINATE:MarkToCoalition( MarkText, Coalition )
       local MarkID = UTILS.GetMarkID()
-      trigger.action.markToCoalition( MarkID, MarkText, self:GetVec3(), Coalition )
+      trigger.action.markToCoalition( MarkID, MarkText, self:GetVec3(), Coalition, false, "" )
       return MarkID
     end
 
@@ -889,7 +964,7 @@ do -- COORDINATE
     --   local MarkID = TargetCoord:MarkToGroup( "This is a target for the attack group", AttackGroup )
     function COORDINATE:MarkToGroup( MarkText, MarkGroup )
       local MarkID = UTILS.GetMarkID()
-      trigger.action.markToGroup( MarkID, MarkText, self:GetVec3(), MarkGroup:GetID() )
+      trigger.action.markToGroup( MarkID, MarkText, self:GetVec3(), MarkGroup:GetID(), false, "" )
       return MarkID
     end
     
