@@ -25,8 +25,6 @@ MOOSE comes with [demonstration missions](https://github.com/FlightControl-Maste
 
 MOOSE has a [broadcast and training channel on YouTube](https://www.youtube.com/channel/UCjrA9j5LQoWsG4SpS8i79Qg) with various channels that you can watch.
 
-## MOOSE on [Slack.Com](https://flightcontrol.slack.com)
+## MOOSE on [Discord](https://discord.gg/yBPfxC6)
 
-MOOSE has a living (chat and video) community of users, beta testers and contributors. The gathering point is a service provided by slack.com.
-If you want to join this community, send an email to flightcontrol_moose@outlook.com. You'll receive the invitation from slack, follow the process
-and you'll be on board in no time.
+MOOSE has a living (chat and video) community of users, beta testers and contributors. The gathering point is a service provided by discord.com. If you want to join this community, just click Discord and you'll be on board in no time.
