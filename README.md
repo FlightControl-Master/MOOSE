@@ -12,6 +12,21 @@ MOOSE is not a one-man show, it is a collaborative effort and meant to evolve wi
 Within the community, key users will start supporting, documenting, explaining and even creating new classes for the framework.
 It is the ambition to grow this framework as a de-facto standard for mission designers to use.
 
+## MOOSE Include Files
+
+Moose.lua is the include file to be used within your DCS World missions, containing all the MOOSE code.
+There are **two locations** where you can find the latest Moose.lua files, but with a different purpose!
+
+### On the **Release Page on GITHUB**
+
+For **all mission designers**, the Moose.lua being the latest release can be downloaded from the [MOOSE Release Page on GITHUB](https://github.com/FlightControl-Master/MOOSE/releases).
+
+
+### As **Artefacts on AppVeyor**
+
+For **beta testers**, the Moose.lua being the latest version on the master branch, can be downloaded on the [Artefacts Page on AppVeyor](https://ci.appveyor.com/project/FC/MOOSE/build/artifacts).
+
+
 ## MOOSE Main Site
 
 [Click on this link to browse to the MOOSE main web page.](http://flightcontrol-master.github.io/MOOSE_DOCS)
