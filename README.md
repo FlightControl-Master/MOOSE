@@ -14,7 +14,7 @@ It is the ambition to grow this framework as a de-facto standard for mission des
 
 ## MOOSE Main Site
 
-[Click on this link to browse to the MOOSE main web page.](http://flightcontrol-master.github.io/MOOSE)
+[Click on this link to browse to the MOOSE main web page.](http://flightcontrol-master.github.io/MOOSE_DOCS)
 Documentation on the MOOSE class hierarchy, usage guides and background information can be found here for normal users, beta testers and contributors.
 
 ## MOOSE Missions
