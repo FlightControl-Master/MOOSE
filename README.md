@@ -16,7 +16,8 @@ It is the ambition to grow this framework as a de-facto standard for mission des
 
 If you appreciate this development, please support to extend the framework. The development of this framework takes a lot of time.
 A small gift would help me to buy a new small laptop that I can use to extend this framework while commuting to and from work ...
-Also, your donations will be saved and spent wisely to the advantage of the community!
+Also, your donations will be saved and spent wisely to the advantage of the community! 
+
 If everyone helps with a small amount, it would be really great!
 
 <a class="dbox-donation-button" href="https://donorbox.org/fund-github-subscriptionfor-moose" style="background:#2d81c5 url(https://d1iczxrky3cnb2.cloudfront.net/red_logo.png) no-repeat 37px center; color: #fff;text-decoration: none;font-family: Verdana,sans-serif;display: inline-block;font-size: 16px;padding: 15px 38px 15px 75px; -webkit-border-radius: 2px; -moz-border-radius: 2px; border-radius: 2px; box-shadow: 0 1px 0 0 #1f5a89; text-shadow: 0 1px rgba(0, 0, 0, 0.3);" >Donate</a>
