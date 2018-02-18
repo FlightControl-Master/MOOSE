@@ -12,19 +12,32 @@ MOOSE is not a one-man show, it is a collaborative effort and meant to evolve wi
 Within the community, key users will start supporting, documenting, explaining and even creating new classes for the framework.
 It is the ambition to grow this framework as a de-facto standard for mission designers to use.
 
+## Please Donate ...
+
+If you appreciate this development, please support to extend the framework. The development of this framework takes a lot of time.
+A small gift would help me to buy a new small laptop that I can use to extend this framework while commuting to and from work ...
+Also, your donations will be saved and spent wisely to the advantage of the community!
+If everyone helps with a small amount, it would be really great!
+
+<a href="https://donorbox.org/fund-github-subscriptionfor-moose" target="_blank">Donate ...</a>
+
+kind regards,
+FC
+
 ## MOOSE Include Files
 
 Moose.lua is the include file to be used within your DCS World missions, containing all the MOOSE code.
 There are **two locations** where you can find the latest Moose.lua files, but with a different purpose!
 
-### On the **Release Page on GITHUB**
+### The **Latest Release** on the **Release Page on GITHUB**
 
-For **all mission designers**, the Moose.lua being the latest release can be downloaded from the [MOOSE Release Page on GITHUB](https://github.com/FlightControl-Master/MOOSE/releases).
+For **all mission designers**, the Moose.lua being **the latest release** can be downloaded from the [MOOSE Release Page on GITHUB](https://github.com/FlightControl-Master/MOOSE/releases).
 
 
-### As **Artefacts on AppVeyor**
+### The **Alpha Release** on the **master branch** as **Artefacts on AppVeyor**
 
-For **beta testers**, the Moose.lua being the latest version on the master branch, can be downloaded on the [Artefacts Page on AppVeyor](https://ci.appveyor.com/project/FC/MOOSE/build/artifacts).
+For **beta testers**, the Moose.lua being **the latest version on the master branch**, can be downloaded on the [Artefacts Page on AppVeyor](https://ci.appveyor.com/project/FC/MOOSE/build/artifacts).
+This version will have all cutting edge features included.
 
 
 ## MOOSE Main Site
