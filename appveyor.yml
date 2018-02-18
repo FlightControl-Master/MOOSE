@@ -65,6 +65,28 @@ build_script:
          # get project with last build details
          $project = Invoke-RestMethod -method Post -Uri "$apiUrl/builds" -Headers $headers -Body $RequestBody
        }
+   - ps: |
+       if( $env:appveyor_repo_branch -eq 'master' )     
+       {
+         git clone -q https://github.com/FlightControl-Master/MOOSE_INCLUDE.git c:\Projects\Moose_Include
+         md c:\Projects\Moose_Include\Moose_Include_Static
+         md c:\Projects\Moose_Include\Moose_Include_Dynamic
+         cp Moose_Include_Static\*.lua c:\Projects\Moose_Include\Moose_Include_Static
+         cp Moose_Include_Dynamic\*.lua c:\Projects\Moose_Include\Moose_Include_Dynamic
+         cd c:\Projects\Moose_Include
+         dir
+         echo "Commit the Moose.lua include files to the MOOSE_INCLUDE repository"
+         git config --global credential.helper store  
+         Add-Content "$env:USERPROFILE\.git-credentials" "https://$($env:access_token_documentation):x-oauth-basic@github.com`n" 
+         git config --global user.email "sven.van.de.velde@telenet.be" 
+         git config --global user.name "FlightControl-User" 
+         git add .
+         git commit -m "MOOSE Commit Hash ID $env:APPVEYOR_REPO_COMMIT [skip ci]" 2>&1 
+         git push origin master 2>&1
+         dir
+       }
+
+
 #   ps : >- 
 #       if( $env:appveyor_repo_branch -eq 'master' )     
 #       {  
