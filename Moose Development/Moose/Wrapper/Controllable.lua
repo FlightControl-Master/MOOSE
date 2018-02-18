@@ -1579,7 +1579,7 @@ end
 --    
 --    local TaskRouteToZone = Vehicle:TaskFunction( "RouteToZone", RandomZone )
 --    
---    Vehicle:SetTaskWaypoint( Route, #Route, TaskRouteToZone ) -- Set for the given Route at Waypoint 2 the TaskRouteToZone.
+--    Vehicle:SetTaskWaypoint( Route[#Route], TaskRouteToZone ) -- Set for the given Route at Waypoint 2 the TaskRouteToZone.
 --  
 --    Vehicle:Route( Route, math.random( 10, 20 ) ) -- Move after a random seconds to the Route. See the Route method for details.
 --    
