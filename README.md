@@ -1,8 +1,7 @@
 # MOOSE framework
 
-MOOSE is a **M**ission **O**bject **O**riented **S**cripting **E**nvironment, and is meant for mission designers and mission hosters.
+MOOSE is a **M**ission **O**bject **O**riented **S**cripting **E**nvironment, and is meant for mission designers in DCS World.
 It allows to quickly setup complex missions using pre-scripted scenarios using the available classes within the MOOSE Framework.
-MOOSE works with DCS world 1.5. and 2.0.
   
   
 ##  MOOSE Framework Goal
