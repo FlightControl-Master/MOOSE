@@ -24,23 +24,48 @@ If everyone helps with a small amount, it would be really great!
 
 kind regards,
 FC
+  
+  
+  
+## MOOSE Repositories
 
-## MOOSE Include Files
+The underlying picture documents the different repositories in the MOOSE framework. The white ones are edited and are the source of the framework.
+The red ones contain generated artefacts. See further the explanation for each repository.
 
-Moose.lua is the include file to be used within your DCS World missions, containing all the MOOSE code.
-There are **two locations** where you can find the latest Moose.lua files, but with a different purpose!
+[https://github.com/FlightControl-Master/MOOSE_DOCS/blob/master/Configuration/Master.png]
+ 
+  
+### MOOSE (Edit)
 
-### The **Latest Release** on the **Release Page on GITHUB**
+This repository contains the source lua code of the MOOSE framework.
+  
+  
+### MOOSE_INCLUDE (Generated)
 
-For **all mission designers**, the Moose.lua being **the latest release** can be downloaded from the [MOOSE Release Page on GITHUB](https://github.com/FlightControl-Master/MOOSE/releases).
+This repository contains the Moose.lua file to be included within your missions.
+  
+  
+### MOOSE_DOCS (Generated)
 
+This repository contains the generated documentation and pictures and other references. The generated documentation is reflected in html and is published at: https://flightcontrol-master.github.io/MOOSE_DOCS/
+  
+  
+### MOOSE_MISSIONS_UNPACKED (Edit)
 
-### The **Alpha Release** on the **master branch** as **Artefacts on AppVeyor**
+This repository contains all the demonstration missions in unpacked format. That means that there is no .miz file included, but all the .miz contents are unpacked.
+  
+  
+### MOOSE_MISSIONS (Generated)
 
-For **beta testers**, the Moose.lua being **the latest version on the master branch**, can be downloaded on the [Artefacts Page on AppVeyor](https://ci.appveyor.com/project/FC/MOOSE/build/artifacts).
-This version will have all cutting edge features included.
+This repository contains all the demonstration missions in packed format (*.miz), and can be used without any further setup in DCS WORLD.
+  
+  
+### MOOSE_MISSIONS (Generated)
 
-
+This repository contains all the demonstration missions in packed format (*.miz), but MOOSE is dynamically loaded from your disk! These missions are to be used by beta testers of the MOOSE framework and are not for end uers!!!!
+  
+  
+  
 ## MOOSE Main Site
 
 [Click on this link to browse to the MOOSE main web page.](http://flightcontrol-master.github.io/MOOSE_DOCS)
