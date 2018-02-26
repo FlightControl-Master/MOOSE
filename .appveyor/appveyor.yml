@@ -31,18 +31,18 @@ install:
 #  - call choco install luarocks
 #  - call refreshenv
 #  - call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat"
-  - cmd: PATH = %PATH%;C:\ProgramData\chocolatey\lib\luarocks\luarocks-2.4.3-win32\systree\bin
-  - cmd: set LUA_PATH = %LUA_PATH%;C:\ProgramData\chocolatey\lib\luarocks\luarocks-2.4.3-win32\systree\share\lua\5.1\?.lua;C:\ProgramData\chocolatey\lib\luarocks\luarocks-2.4.3-win32\systree\share\lua\5.1\?\init.lua
-  - cmd: set LUA_CPATH = %LUA_CPATH%;C:\ProgramData\chocolatey\lib\luarocks\luarocks-2.4.3-win32\systree\lib\lua\5.1\?.dll 
+#  - cmd: PATH = %PATH%;C:\ProgramData\chocolatey\lib\luarocks\luarocks-2.4.3-win32\systree\bin
+#  - cmd: set LUA_PATH = %LUA_PATH%;C:\ProgramData\chocolatey\lib\luarocks\luarocks-2.4.3-win32\systree\share\lua\5.1\?.lua;C:\ProgramData\chocolatey\lib\luarocks\luarocks-2.4.3-win32\systree\share\lua\5.1\?\init.lua
+#  - cmd: set LUA_CPATH = %LUA_CPATH%;C:\ProgramData\chocolatey\lib\luarocks\luarocks-2.4.3-win32\systree\lib\lua\5.1\?.dll 
 #  - call luarocks install luasrcdiet
 #  - call luarocks install checks
 #  - call luarocks install luadocumentor
 #  - call luarocks install luacheck
 
 
-cache:
-  - C:\ProgramData\chocolatey\lib
-  - C:\ProgramData\chocolatey\bin
+#cache:
+#  - C:\ProgramData\chocolatey\lib
+#  - C:\ProgramData\chocolatey\bin
   
 
 
@@ -80,9 +80,6 @@ test: off
 # test_script:
 #   - cmd: luacheck "Moose Development\Moose\moose.lua" "Moose Mission Setup\moose.lua"
 
-
-#  - path: 'MOOSE_MISSIONS-Release\*.miz'
-#    name: miz
 
 on_finish:
 #  - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
