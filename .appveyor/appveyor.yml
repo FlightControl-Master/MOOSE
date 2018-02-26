@@ -56,7 +56,7 @@ build_script:
            "Authorization" = "Bearer $token"
            "Content-type" = "application/json"
            }
-         $RequestBody = @{ accountName = 'FlightControl-Master'; projectSlug = 'moose-docs'; branch = 'master'; environmentVariables = @{} } | ConvertTo-Json
+         $RequestBody = @{ accountName = 'FlightControl-Master'; projectSlug = 'moose-include'; branch = 'master'; environmentVariables = @{} } | ConvertTo-Json
          # get project with last build details
          $project = Invoke-RestMethod -method Post -Uri "$apiUrl/builds" -Headers $headers -Body $RequestBody
        }
@@ -69,7 +69,7 @@ build_script:
            "Authorization" = "Bearer $token"
            "Content-type" = "application/json"
            }
-         $RequestBody = @{ accountName = 'FlightControl-Master'; projectSlug = 'moose-include'; branch = 'master'; environmentVariables = @{} } | ConvertTo-Json
+         $RequestBody = @{ accountName = 'FlightControl-Master'; projectSlug = 'moose-docs'; branch = 'master'; environmentVariables = @{} } | ConvertTo-Json
          # get project with last build details
          $project = Invoke-RestMethod -method Post -Uri "$apiUrl/builds" -Headers $headers -Body $RequestBody
        }
