@@ -41,6 +41,7 @@
 -- @field #SETTINGS
 SETTINGS = {
   ClassName = "SETTINGS",
+  ShowPlayerMenu = true,
 }
 
 
@@ -411,152 +412,171 @@ do -- SETTINGS
     return self
   end
 
-  --- @param #SETTINGS self
-  -- @param RootMenu
+  --- Sets the player menus on, so that they will show to the players.
+  -- @param #SETTINGS self
+  -- @return #SETTINGS
+  function SETTINGS:SetPlayerMenuOn()
+    self.ShowPlayerMenu = true
+  end
+
+  --- Sets the player menus off, so that they will hide from the players.
+  -- @param #SETTINGS self
+  -- @return #SETTINGS
+  function SETTINGS:SetPlayerMenuOff()
+    self.ShowPlayerMenu = false
+  end
+
+
+
+  --- Updates the menu of the player seated in the PlayerUnit.
+  -- @param #SETTINGS self
   -- @param Wrapper.Client#CLIENT PlayerUnit
-  -- @param #string MenuText
   -- @return #SETTINGS
   function SETTINGS:SetPlayerMenu( PlayerUnit )
 
-    local PlayerGroup = PlayerUnit:GetGroup()
-    local PlayerName = PlayerUnit:GetPlayerName()
-    local PlayerNames = PlayerGroup:GetPlayerNames()
-
-    local PlayerMenu = MENU_GROUP:New( PlayerGroup, 'Settings "' .. PlayerName .. '"' )
+    if _SETTINGS.ShowPlayerMenu == true then
     
-    self.PlayerMenu = PlayerMenu
-
-    local A2GCoordinateMenu = MENU_GROUP:New( PlayerGroup, "A2G Coordinate System", PlayerMenu )
+      local PlayerGroup = PlayerUnit:GetGroup()
+      local PlayerName = PlayerUnit:GetPlayerName()
+      local PlayerNames = PlayerGroup:GetPlayerNames()
   
-    if not self:IsA2G_LL_DMS() then
-      MENU_GROUP_COMMAND:New( PlayerGroup, "Lat/Lon Degree Min Sec (LL DMS)", A2GCoordinateMenu, self.MenuGroupA2GSystem, self, PlayerUnit, PlayerGroup, PlayerName, "LL DMS" )
-    end
+      local PlayerMenu = MENU_GROUP:New( PlayerGroup, 'Settings "' .. PlayerName .. '"' )
+      
+      self.PlayerMenu = PlayerMenu
   
-    if not self:IsA2G_LL_DDM() then
-      MENU_GROUP_COMMAND:New( PlayerGroup, "Lat/Lon Degree Dec Min (LL DDM)", A2GCoordinateMenu, self.MenuGroupA2GSystem, self, PlayerUnit, PlayerGroup, PlayerName, "LL DDM" )
-    end
+      local A2GCoordinateMenu = MENU_GROUP:New( PlayerGroup, "A2G Coordinate System", PlayerMenu )
+    
+      if not self:IsA2G_LL_DMS() then
+        MENU_GROUP_COMMAND:New( PlayerGroup, "Lat/Lon Degree Min Sec (LL DMS)", A2GCoordinateMenu, self.MenuGroupA2GSystem, self, PlayerUnit, PlayerGroup, PlayerName, "LL DMS" )
+      end
+    
+      if not self:IsA2G_LL_DDM() then
+        MENU_GROUP_COMMAND:New( PlayerGroup, "Lat/Lon Degree Dec Min (LL DDM)", A2GCoordinateMenu, self.MenuGroupA2GSystem, self, PlayerUnit, PlayerGroup, PlayerName, "LL DDM" )
+      end
+    
+      if self:IsA2G_LL_DDM() then
+        MENU_GROUP_COMMAND:New( PlayerGroup, "LL DDM Accuracy 1", A2GCoordinateMenu, self.MenuGroupLL_DDM_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 1 )
+        MENU_GROUP_COMMAND:New( PlayerGroup, "LL DDM Accuracy 2", A2GCoordinateMenu, self.MenuGroupLL_DDM_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 2 )
+        MENU_GROUP_COMMAND:New( PlayerGroup, "LL DDM Accuracy 3", A2GCoordinateMenu, self.MenuGroupLL_DDM_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 3 )
+      end
+      
+      if not self:IsA2G_BR() then
+        MENU_GROUP_COMMAND:New( PlayerGroup, "Bearing, Range (BR)", A2GCoordinateMenu, self.MenuGroupA2GSystem, self, PlayerUnit, PlayerGroup, PlayerName, "BR" )
+      end
+      
+      if not self:IsA2G_MGRS() then
+        MENU_GROUP_COMMAND:New( PlayerGroup, "Military Grid (MGRS)", A2GCoordinateMenu, self.MenuGroupA2GSystem, self, PlayerUnit, PlayerGroup, PlayerName, "MGRS" )
+      end    
   
-    if self:IsA2G_LL_DDM() then
-      MENU_GROUP_COMMAND:New( PlayerGroup, "LL DDM Accuracy 1", A2GCoordinateMenu, self.MenuGroupLL_DDM_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 1 )
-      MENU_GROUP_COMMAND:New( PlayerGroup, "LL DDM Accuracy 2", A2GCoordinateMenu, self.MenuGroupLL_DDM_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 2 )
-      MENU_GROUP_COMMAND:New( PlayerGroup, "LL DDM Accuracy 3", A2GCoordinateMenu, self.MenuGroupLL_DDM_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 3 )
-    end
-    
-    if not self:IsA2G_BR() then
-      MENU_GROUP_COMMAND:New( PlayerGroup, "Bearing, Range (BR)", A2GCoordinateMenu, self.MenuGroupA2GSystem, self, PlayerUnit, PlayerGroup, PlayerName, "BR" )
-    end
-    
-    if not self:IsA2G_MGRS() then
-      MENU_GROUP_COMMAND:New( PlayerGroup, "Military Grid (MGRS)", A2GCoordinateMenu, self.MenuGroupA2GSystem, self, PlayerUnit, PlayerGroup, PlayerName, "MGRS" )
-    end    
-
-    if self:IsA2G_MGRS() then
-      MENU_GROUP_COMMAND:New( PlayerGroup, "MGRS Accuracy 1", A2GCoordinateMenu, self.MenuGroupMGRS_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 1 )
-      MENU_GROUP_COMMAND:New( PlayerGroup, "MGRS Accuracy 2", A2GCoordinateMenu, self.MenuGroupMGRS_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 2 )
-      MENU_GROUP_COMMAND:New( PlayerGroup, "MGRS Accuracy 3", A2GCoordinateMenu, self.MenuGroupMGRS_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 3 )
-      MENU_GROUP_COMMAND:New( PlayerGroup, "MGRS Accuracy 4", A2GCoordinateMenu, self.MenuGroupMGRS_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 4 )
-      MENU_GROUP_COMMAND:New( PlayerGroup, "MGRS Accuracy 5", A2GCoordinateMenu, self.MenuGroupMGRS_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 5 )
-    end
-
-    local A2ACoordinateMenu = MENU_GROUP:New( PlayerGroup, "A2A Coordinate System", PlayerMenu )
-
-
-    if not self:IsA2A_LL_DMS() then
-      MENU_GROUP_COMMAND:New( PlayerGroup, "Lat/Lon Degree Min Sec (LL DMS)", A2GCoordinateMenu, self.MenuGroupA2GSystem, self, PlayerUnit, PlayerGroup, PlayerName, "LL DMS" )
-    end
+      if self:IsA2G_MGRS() then
+        MENU_GROUP_COMMAND:New( PlayerGroup, "MGRS Accuracy 1", A2GCoordinateMenu, self.MenuGroupMGRS_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 1 )
+        MENU_GROUP_COMMAND:New( PlayerGroup, "MGRS Accuracy 2", A2GCoordinateMenu, self.MenuGroupMGRS_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 2 )
+        MENU_GROUP_COMMAND:New( PlayerGroup, "MGRS Accuracy 3", A2GCoordinateMenu, self.MenuGroupMGRS_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 3 )
+        MENU_GROUP_COMMAND:New( PlayerGroup, "MGRS Accuracy 4", A2GCoordinateMenu, self.MenuGroupMGRS_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 4 )
+        MENU_GROUP_COMMAND:New( PlayerGroup, "MGRS Accuracy 5", A2GCoordinateMenu, self.MenuGroupMGRS_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 5 )
+      end
   
-    if not self:IsA2A_LL_DDM() then
-      MENU_GROUP_COMMAND:New( PlayerGroup, "Lat/Lon Degree Dec Min (LL DDM)", A2GCoordinateMenu, self.MenuGroupA2GSystem, self, PlayerUnit, PlayerGroup, PlayerName, "LL DDM" )
-    end
+      local A2ACoordinateMenu = MENU_GROUP:New( PlayerGroup, "A2A Coordinate System", PlayerMenu )
   
-    if self:IsA2A_LL_DDM() then
-      MENU_GROUP_COMMAND:New( PlayerGroup, "LL DDM Accuracy 1", A2GCoordinateMenu, self.MenuGroupLL_DDM_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 1 )
-      MENU_GROUP_COMMAND:New( PlayerGroup, "LL DDM Accuracy 2", A2GCoordinateMenu, self.MenuGroupLL_DDM_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 2 )
-      MENU_GROUP_COMMAND:New( PlayerGroup, "LL DDM Accuracy 3", A2GCoordinateMenu, self.MenuGroupLL_DDM_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 3 )
-    end
-
-    if not self:IsA2A_BULLS() then
-      MENU_GROUP_COMMAND:New( PlayerGroup, "Bullseye (BULLS)", A2ACoordinateMenu, self.MenuGroupA2ASystem, self, PlayerUnit, PlayerGroup, PlayerName, "BULLS" )
-    end
+  
+      if not self:IsA2A_LL_DMS() then
+        MENU_GROUP_COMMAND:New( PlayerGroup, "Lat/Lon Degree Min Sec (LL DMS)", A2GCoordinateMenu, self.MenuGroupA2GSystem, self, PlayerUnit, PlayerGroup, PlayerName, "LL DMS" )
+      end
     
-    if not self:IsA2A_BRAA() then
-      MENU_GROUP_COMMAND:New( PlayerGroup, "Bearing Range Altitude Aspect (BRAA)", A2ACoordinateMenu, self.MenuGroupA2ASystem, self, PlayerUnit, PlayerGroup, PlayerName, "BRAA" )
-    end
+      if not self:IsA2A_LL_DDM() then
+        MENU_GROUP_COMMAND:New( PlayerGroup, "Lat/Lon Degree Dec Min (LL DDM)", A2GCoordinateMenu, self.MenuGroupA2GSystem, self, PlayerUnit, PlayerGroup, PlayerName, "LL DDM" )
+      end
     
-    if not self:IsA2A_MGRS() then
-      MENU_GROUP_COMMAND:New( PlayerGroup, "Military Grid (MGRS)", A2ACoordinateMenu, self.MenuGroupA2ASystem, self, PlayerUnit, PlayerGroup, PlayerName, "MGRS" )
-    end
+      if self:IsA2A_LL_DDM() then
+        MENU_GROUP_COMMAND:New( PlayerGroup, "LL DDM Accuracy 1", A2GCoordinateMenu, self.MenuGroupLL_DDM_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 1 )
+        MENU_GROUP_COMMAND:New( PlayerGroup, "LL DDM Accuracy 2", A2GCoordinateMenu, self.MenuGroupLL_DDM_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 2 )
+        MENU_GROUP_COMMAND:New( PlayerGroup, "LL DDM Accuracy 3", A2GCoordinateMenu, self.MenuGroupLL_DDM_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 3 )
+      end
+  
+      if not self:IsA2A_BULLS() then
+        MENU_GROUP_COMMAND:New( PlayerGroup, "Bullseye (BULLS)", A2ACoordinateMenu, self.MenuGroupA2ASystem, self, PlayerUnit, PlayerGroup, PlayerName, "BULLS" )
+      end
+      
+      if not self:IsA2A_BRAA() then
+        MENU_GROUP_COMMAND:New( PlayerGroup, "Bearing Range Altitude Aspect (BRAA)", A2ACoordinateMenu, self.MenuGroupA2ASystem, self, PlayerUnit, PlayerGroup, PlayerName, "BRAA" )
+      end
+      
+      if not self:IsA2A_MGRS() then
+        MENU_GROUP_COMMAND:New( PlayerGroup, "Military Grid (MGRS)", A2ACoordinateMenu, self.MenuGroupA2ASystem, self, PlayerUnit, PlayerGroup, PlayerName, "MGRS" )
+      end
+      
+      if self:IsA2A_MGRS() then
+        MENU_GROUP_COMMAND:New( PlayerGroup, "Military Grid (MGRS) Accuracy 1", A2ACoordinateMenu, self.MenuGroupMGRS_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 1 )
+        MENU_GROUP_COMMAND:New( PlayerGroup, "Military Grid (MGRS) Accuracy 2", A2ACoordinateMenu, self.MenuGroupMGRS_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 2 )
+        MENU_GROUP_COMMAND:New( PlayerGroup, "Military Grid (MGRS) Accuracy 3", A2ACoordinateMenu, self.MenuGroupMGRS_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 3 )
+        MENU_GROUP_COMMAND:New( PlayerGroup, "Military Grid (MGRS) Accuracy 4", A2ACoordinateMenu, self.MenuGroupMGRS_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 4 )
+        MENU_GROUP_COMMAND:New( PlayerGroup, "Military Grid (MGRS) Accuracy 5", A2ACoordinateMenu, self.MenuGroupMGRS_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 5 )
+      end    
+  
+      local MetricsMenu = MENU_GROUP:New( PlayerGroup, "Measures and Weights System", PlayerMenu )
+      
+      if self:IsMetric() then
+        MENU_GROUP_COMMAND:New( PlayerGroup, "Imperial (Miles,Feet)", MetricsMenu, self.MenuGroupMWSystem, self, PlayerUnit, PlayerGroup, PlayerName, false )
+      end
+      
+      if self:IsImperial() then
+        MENU_GROUP_COMMAND:New( PlayerGroup, "Metric (Kilometers,Meters)", MetricsMenu, self.MenuGroupMWSystem, self, PlayerUnit, PlayerGroup, PlayerName, true )
+      end    
+  
+  
+      local MessagesMenu = MENU_GROUP:New( PlayerGroup, "Messages and Reports", PlayerMenu )
+  
+      local UpdateMessagesMenu = MENU_GROUP:New( PlayerGroup, "Update Messages", MessagesMenu )
+      MENU_GROUP_COMMAND:New( PlayerGroup, "Off", UpdateMessagesMenu, self.MenuGroupMessageTimingsSystem, self, PlayerUnit, PlayerGroup, PlayerName, MESSAGE.Type.Update, 0 )
+      MENU_GROUP_COMMAND:New( PlayerGroup, "5 seconds", UpdateMessagesMenu, self.MenuGroupMessageTimingsSystem, self, PlayerUnit, PlayerGroup, PlayerName, MESSAGE.Type.Update, 5 )
+      MENU_GROUP_COMMAND:New( PlayerGroup, "10 seconds", UpdateMessagesMenu, self.MenuGroupMessageTimingsSystem, self, PlayerUnit, PlayerGroup, PlayerName, MESSAGE.Type.Update, 10 )
+      MENU_GROUP_COMMAND:New( PlayerGroup, "15 seconds", UpdateMessagesMenu, self.MenuGroupMessageTimingsSystem, self, PlayerUnit, PlayerGroup, PlayerName, MESSAGE.Type.Update, 15 )
+      MENU_GROUP_COMMAND:New( PlayerGroup, "30 seconds", UpdateMessagesMenu, self.MenuGroupMessageTimingsSystem, self, PlayerUnit, PlayerGroup, PlayerName, MESSAGE.Type.Update, 30 )
+      MENU_GROUP_COMMAND:New( PlayerGroup, "1 minute", UpdateMessagesMenu, self.MenuGroupMessageTimingsSystem, self, PlayerUnit, PlayerGroup, PlayerName, MESSAGE.Type.Update, 60 )
+  
+      local InformationMessagesMenu = MENU_GROUP:New( PlayerGroup, "Information Messages", MessagesMenu )
+      MENU_GROUP_COMMAND:New( PlayerGroup, "5 seconds", InformationMessagesMenu, self.MenuGroupMessageTimingsSystem, self, PlayerUnit, PlayerGroup, PlayerName, MESSAGE.Type.Information, 5 )
+      MENU_GROUP_COMMAND:New( PlayerGroup, "10 seconds", InformationMessagesMenu, self.MenuGroupMessageTimingsSystem, self, PlayerUnit, PlayerGroup, PlayerName, MESSAGE.Type.Information, 10 )
+      MENU_GROUP_COMMAND:New( PlayerGroup, "15 seconds", InformationMessagesMenu, self.MenuGroupMessageTimingsSystem, self, PlayerUnit, PlayerGroup, PlayerName, MESSAGE.Type.Information, 15 )
+      MENU_GROUP_COMMAND:New( PlayerGroup, "30 seconds", InformationMessagesMenu, self.MenuGroupMessageTimingsSystem, self, PlayerUnit, PlayerGroup, PlayerName, MESSAGE.Type.Information, 30 )
+      MENU_GROUP_COMMAND:New( PlayerGroup, "1 minute", InformationMessagesMenu, self.MenuGroupMessageTimingsSystem, self, PlayerUnit, PlayerGroup, PlayerName, MESSAGE.Type.Information, 60 )
+      MENU_GROUP_COMMAND:New( PlayerGroup, "2 minutes", InformationMessagesMenu, self.MenuGroupMessageTimingsSystem, self, PlayerUnit, PlayerGroup, PlayerName, MESSAGE.Type.Information, 120 )
+  
+      local BriefingReportsMenu = MENU_GROUP:New( PlayerGroup, "Briefing Reports", MessagesMenu )
+      MENU_GROUP_COMMAND:New( PlayerGroup, "15 seconds", BriefingReportsMenu, self.MenuGroupMessageTimingsSystem, self, PlayerUnit, PlayerGroup, PlayerName, MESSAGE.Type.Briefing, 15 )
+      MENU_GROUP_COMMAND:New( PlayerGroup, "30 seconds", BriefingReportsMenu, self.MenuGroupMessageTimingsSystem, self, PlayerUnit, PlayerGroup, PlayerName, MESSAGE.Type.Briefing, 30 )
+      MENU_GROUP_COMMAND:New( PlayerGroup, "1 minute", BriefingReportsMenu, self.MenuGroupMessageTimingsSystem, self, PlayerUnit, PlayerGroup, PlayerName, MESSAGE.Type.Briefing, 60 )
+      MENU_GROUP_COMMAND:New( PlayerGroup, "2 minutes", BriefingReportsMenu, self.MenuGroupMessageTimingsSystem, self, PlayerUnit, PlayerGroup, PlayerName, MESSAGE.Type.Briefing, 120 )
+      MENU_GROUP_COMMAND:New( PlayerGroup, "3 minutes", BriefingReportsMenu, self.MenuGroupMessageTimingsSystem, self, PlayerUnit, PlayerGroup, PlayerName, MESSAGE.Type.Briefing, 180 )
+  
+      local OverviewReportsMenu = MENU_GROUP:New( PlayerGroup, "Overview Reports", MessagesMenu )
+      MENU_GROUP_COMMAND:New( PlayerGroup, "15 seconds", OverviewReportsMenu, self.MenuGroupMessageTimingsSystem, self, PlayerUnit, PlayerGroup, PlayerName, MESSAGE.Type.Overview, 15 )
+      MENU_GROUP_COMMAND:New( PlayerGroup, "30 seconds", OverviewReportsMenu, self.MenuGroupMessageTimingsSystem, self, PlayerUnit, PlayerGroup, PlayerName, MESSAGE.Type.Overview, 30 )
+      MENU_GROUP_COMMAND:New( PlayerGroup, "1 minute", OverviewReportsMenu, self.MenuGroupMessageTimingsSystem, self, PlayerUnit, PlayerGroup, PlayerName, MESSAGE.Type.Overview, 60 )
+      MENU_GROUP_COMMAND:New( PlayerGroup, "2 minutes", OverviewReportsMenu, self.MenuGroupMessageTimingsSystem, self, PlayerUnit, PlayerGroup, PlayerName, MESSAGE.Type.Overview, 120 )
+      MENU_GROUP_COMMAND:New( PlayerGroup, "3 minutes", OverviewReportsMenu, self.MenuGroupMessageTimingsSystem, self, PlayerUnit, PlayerGroup, PlayerName, MESSAGE.Type.Overview, 180 )
+  
+      local DetailedReportsMenu = MENU_GROUP:New( PlayerGroup, "Detailed Reports", MessagesMenu )
+      MENU_GROUP_COMMAND:New( PlayerGroup, "15 seconds", DetailedReportsMenu, self.MenuGroupMessageTimingsSystem, self, PlayerUnit, PlayerGroup, PlayerName, MESSAGE.Type.DetailedReportsMenu, 15 )
+      MENU_GROUP_COMMAND:New( PlayerGroup, "30 seconds", DetailedReportsMenu, self.MenuGroupMessageTimingsSystem, self, PlayerUnit, PlayerGroup, PlayerName, MESSAGE.Type.DetailedReportsMenu, 30 )
+      MENU_GROUP_COMMAND:New( PlayerGroup, "1 minute", DetailedReportsMenu, self.MenuGroupMessageTimingsSystem, self, PlayerUnit, PlayerGroup, PlayerName, MESSAGE.Type.DetailedReportsMenu, 60 )
+      MENU_GROUP_COMMAND:New( PlayerGroup, "2 minutes", DetailedReportsMenu, self.MenuGroupMessageTimingsSystem, self, PlayerUnit, PlayerGroup, PlayerName, MESSAGE.Type.DetailedReportsMenu, 120 )
+      MENU_GROUP_COMMAND:New( PlayerGroup, "3 minutes", DetailedReportsMenu, self.MenuGroupMessageTimingsSystem, self, PlayerUnit, PlayerGroup, PlayerName, MESSAGE.Type.DetailedReportsMenu, 180 )
     
-    if self:IsA2A_MGRS() then
-      MENU_GROUP_COMMAND:New( PlayerGroup, "Military Grid (MGRS) Accuracy 1", A2ACoordinateMenu, self.MenuGroupMGRS_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 1 )
-      MENU_GROUP_COMMAND:New( PlayerGroup, "Military Grid (MGRS) Accuracy 2", A2ACoordinateMenu, self.MenuGroupMGRS_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 2 )
-      MENU_GROUP_COMMAND:New( PlayerGroup, "Military Grid (MGRS) Accuracy 3", A2ACoordinateMenu, self.MenuGroupMGRS_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 3 )
-      MENU_GROUP_COMMAND:New( PlayerGroup, "Military Grid (MGRS) Accuracy 4", A2ACoordinateMenu, self.MenuGroupMGRS_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 4 )
-      MENU_GROUP_COMMAND:New( PlayerGroup, "Military Grid (MGRS) Accuracy 5", A2ACoordinateMenu, self.MenuGroupMGRS_AccuracySystem, self, PlayerUnit, PlayerGroup, PlayerName, 5 )
-    end    
-
-    local MetricsMenu = MENU_GROUP:New( PlayerGroup, "Measures and Weights System", PlayerMenu )
-    
-    if self:IsMetric() then
-      MENU_GROUP_COMMAND:New( PlayerGroup, "Imperial (Miles,Feet)", MetricsMenu, self.MenuGroupMWSystem, self, PlayerUnit, PlayerGroup, PlayerName, false )
-    end
-    
-    if self:IsImperial() then
-      MENU_GROUP_COMMAND:New( PlayerGroup, "Metric (Kilometers,Meters)", MetricsMenu, self.MenuGroupMWSystem, self, PlayerUnit, PlayerGroup, PlayerName, true )
-    end    
-
-
-    local MessagesMenu = MENU_GROUP:New( PlayerGroup, "Messages and Reports", PlayerMenu )
-
-    local UpdateMessagesMenu = MENU_GROUP:New( PlayerGroup, "Update Messages", MessagesMenu )
-    MENU_GROUP_COMMAND:New( PlayerGroup, "Off", UpdateMessagesMenu, self.MenuGroupMessageTimingsSystem, self, PlayerUnit, PlayerGroup, PlayerName, MESSAGE.Type.Update, 0 )
-    MENU_GROUP_COMMAND:New( PlayerGroup, "5 seconds", UpdateMessagesMenu, self.MenuGroupMessageTimingsSystem, self, PlayerUnit, PlayerGroup, PlayerName, MESSAGE.Type.Update, 5 )
-    MENU_GROUP_COMMAND:New( PlayerGroup, "10 seconds", UpdateMessagesMenu, self.MenuGroupMessageTimingsSystem, self, PlayerUnit, PlayerGroup, PlayerName, MESSAGE.Type.Update, 10 )
-    MENU_GROUP_COMMAND:New( PlayerGroup, "15 seconds", UpdateMessagesMenu, self.MenuGroupMessageTimingsSystem, self, PlayerUnit, PlayerGroup, PlayerName, MESSAGE.Type.Update, 15 )
-    MENU_GROUP_COMMAND:New( PlayerGroup, "30 seconds", UpdateMessagesMenu, self.MenuGroupMessageTimingsSystem, self, PlayerUnit, PlayerGroup, PlayerName, MESSAGE.Type.Update, 30 )
-    MENU_GROUP_COMMAND:New( PlayerGroup, "1 minute", UpdateMessagesMenu, self.MenuGroupMessageTimingsSystem, self, PlayerUnit, PlayerGroup, PlayerName, MESSAGE.Type.Update, 60 )
-
-    local InformationMessagesMenu = MENU_GROUP:New( PlayerGroup, "Information Messages", MessagesMenu )
-    MENU_GROUP_COMMAND:New( PlayerGroup, "5 seconds", InformationMessagesMenu, self.MenuGroupMessageTimingsSystem, self, PlayerUnit, PlayerGroup, PlayerName, MESSAGE.Type.Information, 5 )
-    MENU_GROUP_COMMAND:New( PlayerGroup, "10 seconds", InformationMessagesMenu, self.MenuGroupMessageTimingsSystem, self, PlayerUnit, PlayerGroup, PlayerName, MESSAGE.Type.Information, 10 )
-    MENU_GROUP_COMMAND:New( PlayerGroup, "15 seconds", InformationMessagesMenu, self.MenuGroupMessageTimingsSystem, self, PlayerUnit, PlayerGroup, PlayerName, MESSAGE.Type.Information, 15 )
-    MENU_GROUP_COMMAND:New( PlayerGroup, "30 seconds", InformationMessagesMenu, self.MenuGroupMessageTimingsSystem, self, PlayerUnit, PlayerGroup, PlayerName, MESSAGE.Type.Information, 30 )
-    MENU_GROUP_COMMAND:New( PlayerGroup, "1 minute", InformationMessagesMenu, self.MenuGroupMessageTimingsSystem, self, PlayerUnit, PlayerGroup, PlayerName, MESSAGE.Type.Information, 60 )
-    MENU_GROUP_COMMAND:New( PlayerGroup, "2 minutes", InformationMessagesMenu, self.MenuGroupMessageTimingsSystem, self, PlayerUnit, PlayerGroup, PlayerName, MESSAGE.Type.Information, 120 )
-
-    local BriefingReportsMenu = MENU_GROUP:New( PlayerGroup, "Briefing Reports", MessagesMenu )
-    MENU_GROUP_COMMAND:New( PlayerGroup, "15 seconds", BriefingReportsMenu, self.MenuGroupMessageTimingsSystem, self, PlayerUnit, PlayerGroup, PlayerName, MESSAGE.Type.Briefing, 15 )
-    MENU_GROUP_COMMAND:New( PlayerGroup, "30 seconds", BriefingReportsMenu, self.MenuGroupMessageTimingsSystem, self, PlayerUnit, PlayerGroup, PlayerName, MESSAGE.Type.Briefing, 30 )
-    MENU_GROUP_COMMAND:New( PlayerGroup, "1 minute", BriefingReportsMenu, self.MenuGroupMessageTimingsSystem, self, PlayerUnit, PlayerGroup, PlayerName, MESSAGE.Type.Briefing, 60 )
-    MENU_GROUP_COMMAND:New( PlayerGroup, "2 minutes", BriefingReportsMenu, self.MenuGroupMessageTimingsSystem, self, PlayerUnit, PlayerGroup, PlayerName, MESSAGE.Type.Briefing, 120 )
-    MENU_GROUP_COMMAND:New( PlayerGroup, "3 minutes", BriefingReportsMenu, self.MenuGroupMessageTimingsSystem, self, PlayerUnit, PlayerGroup, PlayerName, MESSAGE.Type.Briefing, 180 )
-
-    local OverviewReportsMenu = MENU_GROUP:New( PlayerGroup, "Overview Reports", MessagesMenu )
-    MENU_GROUP_COMMAND:New( PlayerGroup, "15 seconds", OverviewReportsMenu, self.MenuGroupMessageTimingsSystem, self, PlayerUnit, PlayerGroup, PlayerName, MESSAGE.Type.Overview, 15 )
-    MENU_GROUP_COMMAND:New( PlayerGroup, "30 seconds", OverviewReportsMenu, self.MenuGroupMessageTimingsSystem, self, PlayerUnit, PlayerGroup, PlayerName, MESSAGE.Type.Overview, 30 )
-    MENU_GROUP_COMMAND:New( PlayerGroup, "1 minute", OverviewReportsMenu, self.MenuGroupMessageTimingsSystem, self, PlayerUnit, PlayerGroup, PlayerName, MESSAGE.Type.Overview, 60 )
-    MENU_GROUP_COMMAND:New( PlayerGroup, "2 minutes", OverviewReportsMenu, self.MenuGroupMessageTimingsSystem, self, PlayerUnit, PlayerGroup, PlayerName, MESSAGE.Type.Overview, 120 )
-    MENU_GROUP_COMMAND:New( PlayerGroup, "3 minutes", OverviewReportsMenu, self.MenuGroupMessageTimingsSystem, self, PlayerUnit, PlayerGroup, PlayerName, MESSAGE.Type.Overview, 180 )
-
-    local DetailedReportsMenu = MENU_GROUP:New( PlayerGroup, "Detailed Reports", MessagesMenu )
-    MENU_GROUP_COMMAND:New( PlayerGroup, "15 seconds", DetailedReportsMenu, self.MenuGroupMessageTimingsSystem, self, PlayerUnit, PlayerGroup, PlayerName, MESSAGE.Type.DetailedReportsMenu, 15 )
-    MENU_GROUP_COMMAND:New( PlayerGroup, "30 seconds", DetailedReportsMenu, self.MenuGroupMessageTimingsSystem, self, PlayerUnit, PlayerGroup, PlayerName, MESSAGE.Type.DetailedReportsMenu, 30 )
-    MENU_GROUP_COMMAND:New( PlayerGroup, "1 minute", DetailedReportsMenu, self.MenuGroupMessageTimingsSystem, self, PlayerUnit, PlayerGroup, PlayerName, MESSAGE.Type.DetailedReportsMenu, 60 )
-    MENU_GROUP_COMMAND:New( PlayerGroup, "2 minutes", DetailedReportsMenu, self.MenuGroupMessageTimingsSystem, self, PlayerUnit, PlayerGroup, PlayerName, MESSAGE.Type.DetailedReportsMenu, 120 )
-    MENU_GROUP_COMMAND:New( PlayerGroup, "3 minutes", DetailedReportsMenu, self.MenuGroupMessageTimingsSystem, self, PlayerUnit, PlayerGroup, PlayerName, MESSAGE.Type.DetailedReportsMenu, 180 )
-
+    end  
     
     return self
   end
 
+  --- Removes the player menu from the PlayerUnit.
   --- @param #SETTINGS self
-  -- @param RootMenu
   -- @param Wrapper.Client#CLIENT PlayerUnit
   -- @return #SETTINGS
   function SETTINGS:RemovePlayerMenu( PlayerUnit )
 
     if self.PlayerMenu then
       self.PlayerMenu:Remove()
+      self.PlayerMenu = nil
     end
     
     return self
