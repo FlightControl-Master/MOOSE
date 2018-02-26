@@ -58,7 +58,7 @@ This repository contains all the demonstration missions in unpacked format. That
 
 Documentation on the MOOSE class hierarchy, usage guides and background information can be found here for normal users, beta testers and contributors.
 
-![Click on this link to browse to the MOOSE main web page.](https://raw.githubusercontent.com/FlightControl-Master/MOOSE_DOCS/master/Configuration/WebSite.png)
+![Click on this link to browse to the MOOSE main web page.](https://raw.githubusercontent.com/FlightControl-Master/MOOSE_DOCS/master/Configuration/Site.png)
   
   
   
