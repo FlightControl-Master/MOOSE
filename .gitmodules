@@ -1,4 +1,0 @@
-[submodule "Moose Development/Moose/Dcs"]
-	path = Moose Development/Moose/Dcs
-	url = https://github.com/FlightControl-Master/DCS-API.git
-	branch = master
