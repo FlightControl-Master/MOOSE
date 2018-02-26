@@ -7,7 +7,6 @@
 -- @module Account
 
 
-
 do -- ACT_ACCOUNT
   
   --- # @{#ACT_ACCOUNT} FSM class, extends @{Fsm#FSM_PROCESS}
