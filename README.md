@@ -35,34 +35,35 @@ The red ones contain generated artefacts. See further the explanation for each r
 ![Graphic](https://raw.githubusercontent.com/FlightControl-Master/MOOSE_DOCS/master/Configuration/Master.png)
  
   
-### MOOSE (Edit)
+### [MOOSE](https://github.com/FlightControl-Master/MOOSE) - For edit and development
 
 This repository contains the source lua code of the MOOSE framework.
   
   
-### MOOSE_INCLUDE (Generated)
+### [MOOSE_INCLUDE](https://github.com/FlightControl-Master/MOOSE_INCLUDE) - For use and generated 
 
 This repository contains the Moose.lua file to be included within your missions.
   
-  
-### MOOSE_DOCS (Generated)
+ 
+### [MOOSE_DOCS](https://github.com/FlightControl-Master/MOOSE_DOCS) - Not for use
 
 This repository contains the generated documentation and pictures and other references. The generated documentation is reflected in html and is published at: https://flightcontrol-master.github.io/MOOSE_DOCS/
   
   
-### MOOSE_MISSIONS_UNPACKED (Edit)
-
-This repository contains all the demonstration missions in unpacked format. That means that there is no .miz file included, but all the .miz contents are unpacked.
-  
-  
-### MOOSE_MISSIONS (Generated)
+### [MOOSE_MISSIONS](https://github.com/FlightControl-Master/MOOSE_MISSIONS) - For use and generated
 
 This repository contains all the demonstration missions in packed format (*.miz), and can be used without any further setup in DCS WORLD.
   
   
-### MOOSE_MISSIONS (Generated)
+### [MOOSE_MISSIONS_DYNAMIC](https://github.com/FlightControl-Master/MOOSE_MISSIONS_DYNAMIC) - For use and generated
 
 This repository contains all the demonstration missions in packed format (*.miz), but MOOSE is dynamically loaded from your disk! These missions are to be used by beta testers of the MOOSE framework and are not for end uers!!!!
+ 
+    
+### [MOOSE_MISSIONS_UNPACKED](https://github.com/FlightControl-Master/MOOSE_MISSIONS_UNPACKED) - For edit and development
+
+This repository contains all the demonstration missions in unpacked format. That means that there is no .miz file included, but all the .miz contents are unpacked.
+
   
   
   
