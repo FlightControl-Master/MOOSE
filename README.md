@@ -32,7 +32,7 @@ FC
 The underlying picture documents the different repositories in the MOOSE framework. The white ones are edited and are the source of the framework.
 The red ones contain generated artefacts. See further the explanation for each repository.
 
-[Graphic](https://raw.githubusercontent.com/FlightControl-Master/MOOSE_DOCS/master/Configuration/Master.png)
+![Graphic](https://raw.githubusercontent.com/FlightControl-Master/MOOSE_DOCS/master/Configuration/Master.png)
  
   
 ### MOOSE (Edit)
