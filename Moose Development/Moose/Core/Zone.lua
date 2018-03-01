@@ -861,12 +861,28 @@ end
 function ZONE_RADIUS:GetRandomPointVec2( inner, outer )
   self:F( self.ZoneName, inner, outer )
 
-  local PointVec2 = POINT_VEC2:NewFromVec2( self:GetRandomVec2() )
+  local PointVec2 = POINT_VEC2:NewFromVec2( self:GetRandomVec2( inner, outer ) )
 
   self:T3( { PointVec2 } )
   
   return PointVec2
 end
+
+--- Returns Returns a random Vec3 location within the zone.
+-- @param #ZONE_RADIUS self
+-- @param #number inner (optional) Minimal distance from the center of the zone. Default is 0.
+-- @param #number outer (optional) Maximal distance from the outer edge of the zone. Default is the radius of the zone.
+-- @return Dcs.DCSTypes#Vec3 The random location within the zone.
+function ZONE_RADIUS:GetRandomVec3( inner, outer )
+  self:F( self.ZoneName, inner, outer )
+
+  local Vec2 = self:GetRandomVec2( inner, outer )
+
+  self:T3( { x = Vec2.x, y = self.y, z = Vec2.y } )
+  
+  return { x = Vec2.x, y = self.y, z = Vec2.y }
+end
+
 
 --- Returns a @{Point#POINT_VEC3} object reflecting a random 3D location within the zone.
 -- @param #ZONE_RADIUS self
@@ -876,7 +892,7 @@ end
 function ZONE_RADIUS:GetRandomPointVec3( inner, outer )
   self:F( self.ZoneName, inner, outer )
 
-  local PointVec3 = POINT_VEC3:NewFromVec2( self:GetRandomVec2() )
+  local PointVec3 = POINT_VEC3:NewFromVec2( self:GetRandomVec2( inner, outer ) )
 
   self:T3( { PointVec3 } )
   
