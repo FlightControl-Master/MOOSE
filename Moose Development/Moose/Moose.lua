@@ -1,5 +1,6 @@
 -- The order of the declarations is important here. Don't touch it.
 
+
 --- Declare the event dispatcher based on the EVENT class
 _EVENTDISPATCHER = EVENT:New() -- Core.Event#EVENT
 
