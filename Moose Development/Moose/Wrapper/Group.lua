@@ -917,59 +917,7 @@ function GROUP:GetMaxHeight()
 
 end
 
--- SPAWNING
-
---- Respawn the @{GROUP} using a (tweaked) template of the Group.
--- The template must be retrieved with the @{Group#GROUP.GetTemplate}() function.
--- The template contains all the definitions as declared within the mission file.
--- To understand templates, do the following: 
--- 
---   * unpack your .miz file into a directory using 7-zip.
---   * browse in the directory created to the file **mission**.
---   * open the file and search for the country group definitions.
---   
--- Your group template will contain the fields as described within the mission file.
--- 
--- This function will:
--- 
---  * Get the current position and heading of the group.
---  * When the group is alive, it will tweak the template x, y and heading coordinates of the group and the embedded units to the current units positions.
---  * Then it will destroy the current alive group.
---  * And it will respawn the group using your new template definition.
--- @param Wrapper.Group#GROUP self
--- @param #table Template The template of the Group retrieved with GROUP:GetTemplate()
-function GROUP:Respawn( Template )
-
-  if self:IsAlive() then
-    local Vec3 = self:GetVec3()
-    Template.x = Vec3.x
-    Template.y = Vec3.z
-    --Template.x = nil
-    --Template.y = nil
-    
-    self:E( #Template.units )
-    for UnitID, UnitData in pairs( self:GetUnits() ) do
-      local GroupUnit = UnitData -- Wrapper.Unit#UNIT
-      self:E( GroupUnit:GetName() )
-      if GroupUnit:IsAlive() then
-        local GroupUnitVec3 = GroupUnit:GetVec3()
-        local GroupUnitHeading = GroupUnit:GetHeading()
-        Template.units[UnitID].alt = GroupUnitVec3.y
-        Template.units[UnitID].x = GroupUnitVec3.x
-        Template.units[UnitID].y = GroupUnitVec3.z
-        Template.units[UnitID].heading = GroupUnitHeading
-        self:E( { UnitID, Template.units[UnitID], Template.units[UnitID] } )
-      end
-    end
-    
-  end
-  
-  self:Destroy()
-  _DATABASE:Spawn( Template )
-  
-  self:ResetEvents()
-  
-end
+-- RESPAWNING
 
 --- Returns the group template from the @{DATABASE} (_DATABASE object).
 -- @param #GROUP self
@@ -1015,6 +963,114 @@ function GROUP:SetTemplateCoalition( Template, CoalitionID )
   Template.CoalitionID = CoalitionID
   return Template
 end
+
+
+--- Set the heading for the units in degrees within the respawned group.
+-- @param #GROUP self
+-- @param #number Heading The heading in meters.
+-- @return #GROUP self
+function GROUP:InitHeading( Heading )
+  self.InitRespawnHeading = Heading
+  return self
+end
+
+
+--- Set the height for the units in meters for the respawned group. (This is applicable for air units).
+-- @param #GROUP self
+-- @param #number Height The height in meters.
+-- @return #GROUP self
+function GROUP:InitHeight( Height )
+  self.InitRespawnHeight = Height
+  return self
+end
+
+
+--- Set the respawn @{Zone} for the respawned group.
+-- @param #GROUP self
+-- @param Core.Zone#ZONE Zone The zone in meters.
+-- @return #GROUP self
+function GROUP:InitZone( Zone )
+  self.InitRespawnZone = Zone
+  return self
+end
+
+
+--- Randomize the unit positions for the units of the respawned group.
+-- @param #GROUP self
+-- @param #boolean Positions true will randomize the positions.
+-- @return #GROUP self
+function GROUP:InitRandomizePositions( Positions )
+  self.InitRespawnRandomizePositions = Positions
+  return self
+end
+
+
+--- Respawn the @{Group} at a @{Point}.
+-- The method will setup the new group template according the Init(Respawn) settings provided for the group.
+-- These settings can be provided by calling the relevant Init...() methods of the Group.
+-- 
+--   - @{#GROUP.InitHeading}: Set the heading for the units in degrees within the respawned group.
+--   - @{#GROUP.InitHeight}: Set the height for the units in meters for the respawned group. (This is applicable for air units).
+--   - @{#GROUP.InitRandomizeHeading}: Randomize the headings for the units within the respawned group.
+--   - @{#GROUP.InitZone}: Set the respawn @{Zone} for the respawned group.
+--   - @{#GROUP.InitRandomizeZones}: Randomize the respawn @{Zone} between one of the @{Zone}s given for the respawned group.
+--   - @{#GROUP.InitRandomizePositions}: Randomize the unit positions for the units of the respawned group.
+--   - @{#GROUP.InitRandomizeTemplates}: Randomize the Template for the respawned group.
+-- 
+-- 
+-- Notes:
+-- 
+--   - When InitZone or InitRandomizeZones is not used, the position of the respawned group will be its current position.
+--   - The current alive group will always be destroyed and respawned using the template definition. 
+-- 
+-- @param Wrapper.Group#GROUP self
+-- @param #table Template (optional) The template of the Group retrieved with GROUP:GetTemplate(). If the template is not provided, the template will be retrieved of the group itself.
+function GROUP:Respawn( Template )
+
+  if not Template then
+    Template = self:GetTemplate()
+  end
+
+  if self:IsAlive() then
+    local Zone = self.InitRespawnZone -- Core.Zone#ZONE
+    local Vec3 = Zone and Zone:GetVec3() or self:GetVec3()
+    local From = { x = Template.x, y = Template.y }
+    Template.x = Vec3.x
+    Template.y = Vec3.z
+    --Template.x = nil
+    --Template.y = nil
+    
+    self:E( #Template.units )
+    for UnitID, UnitData in pairs( self:GetUnits() ) do
+      local GroupUnit = UnitData -- Wrapper.Unit#UNIT
+      self:E( GroupUnit:GetName() )
+      if GroupUnit:IsAlive() then
+        local GroupUnitVec3 = GroupUnit:GetVec3() 
+        if Zone then
+          if self.InitRespawnRandomizePositions then
+            GroupUnitVec3 = Zone:GetRandomVec3()
+          else
+            GroupUnitVec3 = Zone:GetVec3()
+          end
+        end
+        
+        Template.units[UnitID].alt = self.InitRespawnHeight and self.InitRespawnHeight or GroupUnitVec3.y
+        Template.units[UnitID].x = ( Template.units[UnitID].x - From.x ) + GroupUnitVec3.x -- Keep the original x position of the template and translate to the new position.
+        Template.units[UnitID].y = ( Template.units[UnitID].y - From.y ) + GroupUnitVec3.z -- Keep the original z position of the template and translate to the new position.
+        Template.units[UnitID].heading = self.InitRespawnHeading and self.InitRespawnHeading or GroupUnit:GetHeading()
+        self:E( { UnitID, Template.units[UnitID], Template.units[UnitID] } )
+      end
+    end
+    
+  end
+  
+  self:Destroy()
+  _DATABASE:Spawn( Template )
+  
+  self:ResetEvents()
+  
+end
+
 
 
 
