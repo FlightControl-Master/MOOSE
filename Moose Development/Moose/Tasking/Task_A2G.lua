@@ -367,6 +367,9 @@ do -- TASK_A2G
           end
         end
         self:SetInfo( "Targets", string.format( "%d of %s", DetectedItemsCount, ReportTypes:Text( ", " ) ), 10 ) 
+        self:SetInfo( "QFE", string.format( "%d", TargetCoordinate:GetPressure() ), 12 )
+        self:SetInfo( "°C", string.format( "%d", TargetCoordinate:GetTemperature() ), 12 )
+        self:SetInfo( "Wind", string.format( "%d", TargetCoordinate:GetWind() ), 12 )
       else
         local DetectedItemsCount = self.TargetSetUnit:Count()
         local DetectedItemsTypes = self.TargetSetUnit:GetTypeNames()
