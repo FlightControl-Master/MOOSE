@@ -1059,15 +1059,15 @@ do -- COORDINATE
     return "BRA, " .. self:GetBRAText( AngleRadians, Distance, Settings )
   end
 
-  --- Return a BULLS string from a COORDINATE to the BULLS of the coalition.
+  --- Return a BULLS string out of the BULLS of the coalition to the COORDINATE.
   -- @param #COORDINATE self
   -- @param Dcs.DCSCoalition#coalition.side Coalition The coalition.
   -- @return #string The BR text.
   function COORDINATE:ToStringBULLS( Coalition, Settings )
-    local TargetCoordinate = COORDINATE:NewFromVec3( coalition.getMainRefPoint( Coalition ) )
-    local DirectionVec3 = self:GetDirectionVec3( TargetCoordinate )
+    local BullsCoordinate = COORDINATE:NewFromVec3( coalition.getMainRefPoint( Coalition ) )
+    local DirectionVec3 = BullsCoordinate:GetDirectionVec3( self )
     local AngleRadians =  self:GetAngleRadians( DirectionVec3 )
-    local Distance = self:Get2DDistance( TargetCoordinate )
+    local Distance = self:Get2DDistance( BullsCoordinate )
     local Altitude = self:GetAltitudeText()
     return "BULLS, " .. self:GetBRText( AngleRadians, Distance, Settings )
   end
