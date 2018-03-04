@@ -54,8 +54,8 @@ end
 -- @param #REPORT self
 -- @param #string Text
 -- @return #REPORT
-function REPORT:AddIndent( Text ) --R2.1
-  self.Report[#self.Report+1] = string.rep(" ", self.Indent ) .. Text:gsub("\n","\n"..string.rep( " ", self.Indent ) )
+function REPORT:AddIndent( Text, Separator ) --R2.1
+  self.Report[#self.Report+1] = ( ( Separator and Separator .. string.rep( " ", self.Indent - 1 ) ) or string.rep(" ", self.Indent ) ) .. Text:gsub("\n","\n"..string.rep( " ", self.Indent ) )
   return self
 end
 

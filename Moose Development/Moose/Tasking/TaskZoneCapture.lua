@@ -156,33 +156,6 @@ do -- TASK_ZONE_GOAL
     return self.GoalTotal
   end
 
-  function TASK_ZONE_GOAL:GetMarkInfo( TaskInfoID, TaskInfo )
-
-    if type( TaskInfo.TaskInfoText ) == "string" then
-      return string.format( "%s: %s", TaskInfoID, TaskInfo.TaskInfoText )
-    elseif type( TaskInfo ) == "table" then
-      if TaskInfoID == "Coordinate" then
-      end
-    end
-  
-    return nil
-  end
-
-  function TASK_ZONE_GOAL:GetReportDetail( ReportGroup, TaskInfoID, TaskInfo )
-  
-    if type( TaskInfo.TaskInfoText ) == "string" then
-      return string.format( " - %s: %s", TaskInfoID, TaskInfo.TaskInfoText )
-    elseif type(TaskInfo) == "table" then
-      if TaskInfoID == "Coordinate" then
-        local FromCoordinate = ReportGroup:GetUnit(1):GetCoordinate()
-        local ToCoordinate = TaskInfo.TaskInfoText -- Core.Point#COORDINATE
-        return string.format( " - %s: %s", TaskInfoID, ToCoordinate:ToString( ReportGroup:GetUnit( 1 ), nil, self ) )
-      else
-      end
-    end
-  end
-
-
 end 
 
 
@@ -244,14 +217,14 @@ do -- TASK_ZONE_CAPTURE
 
 
     local ZoneCoordinate = self.ZoneGoal:GetZone():GetCoordinate() 
-    self:SetInfo( "Coordinate", ZoneCoordinate, 0 )
-    self:SetInfo( "Zone Name", self.ZoneGoal:GetZoneName(), 10 )
-    self:SetInfo( "Zone Coalition", self.ZoneGoal:GetCoalitionName(), 11 )
+    self.TaskInfo:AddCoordinate( ZoneCoordinate, 0, "SOD" )
+    self.TaskInfo:AddText( "Zone Name", self.ZoneGoal:GetZoneName(), 10, "MOD" )
+    self.TaskInfo:AddText( "Zone Coalition", self.ZoneGoal:GetCoalitionName(), 11, "MOD" )
   end
     
 
   function TASK_ZONE_CAPTURE:ReportOrder( ReportGroup ) 
-    local Coordinate = self:GetInfo( "Coordinate" )
+    local Coordinate = self:GetData( "Coordinate" )
     --local Coordinate = self.TaskInfo.Coordinates.TaskInfoText
     local Distance = ReportGroup:GetCoordinate():Get2DDistance( Coordinate )
     

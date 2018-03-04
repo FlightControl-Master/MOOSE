@@ -69,6 +69,7 @@ Actions/Act_Assist.lua
 Tasking/CommandCenter.lua
 Tasking/Mission.lua
 Tasking/Task.lua
+Tasking/TaskInfo.lua
 Tasking/DetectionManager.lua
 Tasking/Task_A2G_Dispatcher.lua
 Tasking/Task_A2G.lua

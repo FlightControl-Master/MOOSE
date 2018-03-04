@@ -277,37 +277,6 @@ do -- TASK_A2A
     return self.GoalTotal
   end
 
-  function TASK_A2A:GetMarkInfo( TaskInfoID, TaskInfo )
-
-    if type( TaskInfo.TaskInfoText ) == "string" then
-      if TaskInfoID == "Targets" then
-      else
-        return string.format( "%s: %s", TaskInfoID, TaskInfo.TaskInfoText )
-      end
-    elseif type( TaskInfo ) == "table" then
-      if TaskInfoID == "Coordinate" then
-      end
-    end
-  
-    return nil
-  end
-  
-  function TASK_A2A:GetReportDetail( ReportGroup, TaskInfoID, TaskInfo )
-  
-    if type( TaskInfo.TaskInfoText ) == "string" then
-      return string.format( "%s: %s", TaskInfoID, TaskInfo.TaskInfoText )
-    elseif type(TaskInfo) == "table" then
-      if TaskInfoID == "Coordinate" then
-        local FromCoordinate = ReportGroup:GetUnit(1):GetCoordinate()
-        local ToCoordinate = TaskInfo.TaskInfoText -- Core.Point#COORDINATE
-        return string.format( " - %s: %s", TaskInfoID, ToCoordinate:ToString( ReportGroup:GetUnit(1), nil, self ) )
-      else
-      end
-    end
-  end
-
-
-  
 end 
 
 

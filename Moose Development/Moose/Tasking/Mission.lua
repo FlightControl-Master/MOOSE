@@ -943,7 +943,7 @@ function MISSION:ReportOverview( ReportGroup, TaskStatus )
     local Task = Task -- Tasking.Task#TASK
     if Task:Is( TaskStatus ) then
       Report:Add( string.rep( "-", 140 ) )
-      Report:Add( " - " .. Task:ReportOverview( ReportGroup ) )
+      Report:Add( Task:ReportOverview( ReportGroup ) )
     end
     Tasks = Tasks + 1
     if Tasks >= 8 then
@@ -973,6 +973,7 @@ function MISSION:ReportDetails( ReportGroup )
   local TasksRemaining = 0
   for TaskID, Task in pairs( self:GetTasks() ) do
     local Task = Task -- Tasking.Task#TASK
+    Report:Add( string.rep( "-", 140 ) )
     Report:Add( Task:ReportDetails( ReportGroup ) )
   end
 
