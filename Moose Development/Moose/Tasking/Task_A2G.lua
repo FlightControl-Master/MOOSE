@@ -286,41 +286,10 @@ do -- TASK_A2G
     return self.GoalTotal
   end
   
-  function TASK_A2G:GetMarkInfo( TaskInfoID, TaskInfo )
-
-    if type( TaskInfo.TaskInfoText ) == "string" then
-      if TaskInfoID == "Targets" then
-      else
-        return string.format( "%s: %s", TaskInfoID, TaskInfo.TaskInfoText )
-      end
-    elseif type( TaskInfo ) == "table" then
-      if TaskInfoID == "Coordinate" then
-      end
-    end
-  
-    return nil
-  end
-  
-
-  function TASK_A2G:GetReportDetail( ReportGroup, TaskInfoID, TaskInfo )
-  
-    if type( TaskInfo.TaskInfoText ) == "string" then
-      return string.format( "%s: %s", TaskInfoID, TaskInfo.TaskInfoText )
-    elseif type(TaskInfo) == "table" then
-      if TaskInfoID == "Coordinate" then
-        local FromCoordinate = ReportGroup:GetUnit(1):GetCoordinate()
-        local ToCoordinate = TaskInfo.TaskInfoText -- Core.Point#COORDINATE
-        return string.format( " - %s: %s", TaskInfoID, ToCoordinate:ToString( ReportGroup:GetUnit(1), nil, self ) )
-      else
-      end
-    end
-  end
-
-
   --- Return the relative distance to the target vicinity from the player, in order to sort the targets in the reports per distance from the threats.
   -- @param #TASK_A2G self
   function TASK_A2G:ReportOrder( ReportGroup ) 
-    local Coordinate = self:GetInfo( "Coordinate" )
+    local Coordinate = self:GetData( "Coordinate" )
     local Distance = ReportGroup:GetCoordinate():Get2DDistance( Coordinate )
     
     return Distance
@@ -339,13 +308,13 @@ do -- TASK_A2G
     self:__Goal( -10 )
   end
 
-
   --- @param #TASK_A2G self
   function TASK_A2G:UpdateTaskInfo()
   
     if self:IsStatePlanned() or self:IsStateAssigned() then
       local TargetCoordinate = self.Detection and self.Detection:GetDetectedItemCoordinate( self.DetectedItemIndex ) or self.TargetSetUnit:GetFirst():GetCoordinate() 
-      self:SetInfo( "Coordinate", TargetCoordinate, 0 )
+      self.TaskInfo:AddTaskName( 0, "MSOD" )
+      self.TaskInfo:AddCoordinate( TargetCoordinate, 1, "SOD" )
       
       local ThreatLevel, ThreatText
       if self.Detection then
@@ -353,7 +322,7 @@ do -- TASK_A2G
       else
         ThreatLevel, ThreatText = self.TargetSetUnit:CalculateThreatLevelA2G()
       end
-      self:SetInfo( "Threat", ThreatText .. " [" .. string.rep(  "■", ThreatLevel ) .. string.rep(  "□", 10 - ThreatLevel ) .. "]", 11 )
+      self.TaskInfo:AddThreat( ThreatText, ThreatLevel, 10, "MOD", true )
   
       if self.Detection then
         local DetectedItemsCount = self.TargetSetUnit:Count()
@@ -366,28 +335,19 @@ do -- TASK_A2G
             ReportTypes:Add( TargetType )
           end
         end
-        self:SetInfo( "Targets", string.format( "%d of %s", DetectedItemsCount, ReportTypes:Text( ", " ) ), 10 ) 
-        self:SetInfo( "QFE", string.format( "%d", TargetCoordinate:GetPressure() ), 12 )
-        self:SetInfo( "°C", string.format( "%d", TargetCoordinate:GetTemperature() ), 12 )
-        self:SetInfo( "Wind", string.format( "%d", TargetCoordinate:GetWind() ), 12 )
+        self.TaskInfo:AddTargetCount( DetectedItemsCount, 11, "O", true )
+        self.TaskInfo:AddTargets( DetectedItemsCount, ReportTypes:Text( ", " ), 20, "D", true ) 
+        self.TaskInfo:AddQFEAtCoordinate( TargetCoordinate, 30, "MOD" )
+        self.TaskInfo:AddTemperatureAtCoordinate( TargetCoordinate, 31, "MD" )
+        self.TaskInfo:AddWindAtCoordinate( TargetCoordinate, 32, "MD" )
       else
         local DetectedItemsCount = self.TargetSetUnit:Count()
         local DetectedItemsTypes = self.TargetSetUnit:GetTypeNames()
-        self:SetInfo( "Targets", string.format( "%d of %s", DetectedItemsCount, DetectedItemsTypes ), 10 ) 
+        self.TaskInfo:AddTargetCount( DetectedItemsCount, 11, "O", true )
+        self.TaskInfo:AddTargets( string.format( "%d of %s", DetectedItemsCount, DetectedItemsTypes ), 20, "D", true ) 
       end
     end
     
-    --- Keep Threat and Targets of a task is planned for later use when the task is completed.
-    if self:IsStatePlanned() then
-      self.InitialThreat = self:GetInfo( "Threat" )
-      self.InitialTargets = self:GetInfo( "Targets" )
-    end
-    
-    if not self:IsStatePlanned() and not self:IsStateAssigned() then
-      self:SetInfo( "Targets", self.InitialTargets, 10 ) 
-      self:SetInfo( "Threat", self.InitialThreat, 10 )
-    end
-
   end
 
 end 

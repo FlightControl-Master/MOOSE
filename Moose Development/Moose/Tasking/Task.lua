@@ -17,6 +17,7 @@
 -- @field Core.Fsm#FSM_PROCESS FsmTemplate
 -- @field Tasking.Mission#MISSION Mission
 -- @field Tasking.CommandCenter#COMMANDCENTER CommandCenter
+-- @field Tasking.TaskInfo#TASKINFO TaskInfo
 -- @extends Core.Fsm#FSM_TASK
 
 --- 
@@ -230,7 +231,7 @@ function TASK:New( Mission, SetGroupAssign, TaskName, TaskType, TaskBriefing )
   
   self.FsmTemplate = self.FsmTemplate or FSM_PROCESS:New()
   
-  self.TaskInfo = {}
+  self.TaskInfo = TASKINFO:New( self )
   
   self.TaskProgress = {}
   
@@ -732,8 +733,6 @@ function TASK:SetPlannedMenuForGroup( TaskGroup, MenuTime )
   local CommandCenterMenu = CommandCenter:GetMenu()
 
   local TaskType = self:GetType()
---  local TaskThreatLevel = self.TaskInfo["ThreatLevel"]
---  local TaskThreatLevelString = TaskThreatLevel and " [" .. string.rep( "■", TaskThreatLevel ) .. "]" or " []" 
   local TaskPlayerCount = self:GetPlayerCount()
   local TaskPlayerString = string.format( " (%dp)", TaskPlayerCount )
 --  local TaskText = string.format( "%s%s", self:GetName(), TaskPlayerString ) --, TaskThreatLevelString )
@@ -774,8 +773,6 @@ function TASK:SetAssignedMenuForGroup( TaskGroup, MenuTime )
   local CommandCenterMenu = CommandCenter:GetMenu()
 
   local TaskType = self:GetType()
---  local TaskThreatLevel = self.TaskInfo["ThreatLevel"]
---  local TaskThreatLevelString = TaskThreatLevel and " [" .. string.rep( "■", TaskThreatLevel ) .. "]" or " []" 
   local TaskPlayerCount = self:GetPlayerCount()
   local TaskPlayerString = string.format( " (%dp)", TaskPlayerCount )
   local TaskText = string.format( "%s%s", self:GetName(), TaskPlayerString ) --, TaskThreatLevelString )
@@ -881,19 +878,9 @@ function TASK:MenuMarkToGroup( TaskGroup )
   
   local Report = REPORT:New():SetIndent( 0 )
 
-  -- List the name of the Task.
-  local Name = self:GetName()
-  Report:Add( "Task " .. Name .. ": " .. self:GetTaskBriefing() .. "\n" )
+  self.TaskInfo:Report( Report, "M", TaskGroup )
 
-  for TaskInfoID, TaskInfo in pairs( self.TaskInfo, function( t, a, b ) return t[a].TaskInfoOrder < t[b].TaskInfoOrder end ) do
-
-    local ReportText = self:GetMarkInfo( TaskInfoID, TaskInfo )
-    if ReportText then
-      Report:Add( ReportText )
-    end
-  end
-
-  local TargetCoordinate = self:GetInfo( "Coordinate" ) -- Core.Point#COORDINATE
+  local TargetCoordinate = self.TaskInfo:Get( "Coordinate" ).Data -- Core.Point#COORDINATE
   local MarkText = Report:Text( ", " ) 
   self:F( { Coordinate = TargetCoordinate, MarkText = MarkText } )
   TargetCoordinate:MarkToGroup( MarkText, TaskGroup )
@@ -1059,30 +1046,6 @@ end
 -- @param #string TaskType
 function TASK:SetType( TaskType )
   self.TaskType = TaskType
-end
-
---- Sets the Information on the Task
--- @param #TASK self
--- @param #string TaskInfo The key and title of the task information.
--- @param #string TaskInfoText The Task info text.
--- @param #number TaskInfoOrder The ordering, a number between 0 and 99.
-function TASK:SetInfo( TaskInfo, TaskInfoText, TaskInfoOrder )
-
-  self.TaskInfo = self.TaskInfo or {}
-  self.TaskInfo[TaskInfo] = self.TaskInfo[TaskInfo] or {}
-  self.TaskInfo[TaskInfo].TaskInfoText = TaskInfoText
-  self.TaskInfo[TaskInfo].TaskInfoOrder = TaskInfoOrder
-end
-
---- Gets the Information of the Task
--- @param #TASK self
--- @param #string TaskInfo The key and title of the task information.
--- @return #string TaskInfoText The Task info text.
-function TASK:GetInfo( TaskInfo )
-
-  self.TaskInfo = self.TaskInfo or {}
-  self.TaskInfo[TaskInfo] = self.TaskInfo[TaskInfo] or {}
-  return self.TaskInfo[TaskInfo].TaskInfoText
 end
 
 --- Gets the Type of the Task
@@ -1445,11 +1408,7 @@ function TASK:ReportSummary( ReportGroup )
   -- Determine the status of the Task.
   Report:Add( "State: <" .. self:GetState() .. ">" )
   
-  if self.TaskInfo["Coordinate"] then
-    local TaskInfoIDText = string.format( "%s: ", "Coordinate" )
-    local TaskCoord = self.TaskInfo["Coordinate"].TaskInfoText -- Core.Point#COORDINATE
-    Report:Add( TaskInfoIDText .. TaskCoord:ToString( ReportGroup, nil, self ) )
-  end
+  self.TaskInfo:Report( Report, "S", ReportGroup )
   
   return Report:Text( ', ' )
 end
@@ -1465,40 +1424,8 @@ function TASK:ReportOverview( ReportGroup )
   -- List the name of the Task.
   local TaskName = self:GetName()
   local Report = REPORT:New()
-
-  local Line = 0
-  local LineReport = REPORT:New()
   
-  for TaskInfoID, TaskInfo in UTILS.spairs( self.TaskInfo, function( t, a, b ) return t[a].TaskInfoOrder < t[b].TaskInfoOrder end ) do
-
-    self:F( { TaskInfo = TaskInfo } )
-
-    if Line < math.floor( TaskInfo.TaskInfoOrder / 10 ) then
-      if Line ~= 0 then
-        Report:AddIndent( LineReport:Text( ", " ) )
-      else
-        Report:Add( "Task " .. TaskName .. ", " .. LineReport:Text( ", " ) )
-      end
-      LineReport = REPORT:New()
-      Line = math.floor( TaskInfo.TaskInfoOrder / 10 )
-    end
-
-    local TaskInfoIDText = string.format( "%s: ", TaskInfoID )
-    
-    if type( TaskInfo.TaskInfoText ) == "string" then
-      LineReport:Add( TaskInfoIDText .. TaskInfo.TaskInfoText )
-    elseif type(TaskInfo) == "table" then
-      if TaskInfoID == "Coordinate" then
-        local ToCoordinate = TaskInfo.TaskInfoText -- Core.Point#COORDINATE
-        --Report:Add( TaskInfoIDText )
-        LineReport:Add( TaskInfoIDText .. ToCoordinate:ToString( ReportGroup, nil, self ) )
-        --Report:AddIndent( ToCoordinate:ToStringBULLS( ReportGroup:GetCoalition() ) )
-      else
-      end
-    end
-  end
-
-  Report:AddIndent( LineReport:Text( ", " ) )
+  self.TaskInfo:Report( Report, "O", ReportGroup )
   
   return Report:Text()
 end
@@ -1574,19 +1501,12 @@ function TASK:ReportDetails( ReportGroup )
   local Players = PlayerReport:Text()
   
   if Players ~= "" then
-    Report:Add( " - Players assigned:" )
+    Report:AddIndent( "Players assigned:", "-" )
     Report:AddIndent( Players )
   end
   
-  for TaskInfoID, TaskInfo in pairs( self.TaskInfo, function( t, a, b ) return t[a].TaskInfoOrder < t[b].TaskInfoOrder end ) do
-    
-    local ReportText = self:GetReportDetail( ReportGroup, TaskInfoID, TaskInfo )
-    if ReportText then
-      Report:Add( ReportText )
-    end
-    
-  end
-
+  self.TaskInfo:Report( Report, "D", ReportGroup )
+  
   return Report:Text()
 end
 

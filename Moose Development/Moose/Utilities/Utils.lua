@@ -264,6 +264,10 @@ UTILS.KnotsToMps = function( knots )
   return knots * 1852 / 3600
 end
 
+UTILS.CelciusToFarenheit = function( Celcius )
+  return Celcius * 9/5 + 32 
+end
+
 
 
 --[[acc:

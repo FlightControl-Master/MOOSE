@@ -435,6 +435,40 @@ do -- COORDINATE
     return T-273.15
   end
 
+  --- Returns a text of the temperature according the measurement system @{Settings}.
+  -- The text will reflect the temperature like this:
+  -- 
+  --   - For Russian and European aircraft using the metric system - Degrees Celcius (°C)
+  --   - For Americain aircraft we link to the imperial system - Degrees Farenheit (°F)
+  -- 
+  -- A text containing a pressure will look like this: 
+  -- 
+  --   - `Temperature: %n.d °C`  
+  --   - `Temperature: %n.d °F`
+  --   
+   -- @param #COORDINATE self
+  -- @param height (Optional) parameter specifying the height ASL.
+  -- @return #string Temperature according the measurement system @{Settings}.
+  function COORDINATE:GetTemperatureText( height, Settings )
+  
+    local DegreesCelcius = self:GetTemperature( height )
+    
+    local Settings = Settings or _SETTINGS
+
+    if DegreesCelcius then
+      if Settings:IsMetric() then
+        return string.format( " %-2.2f °C", DegreesCelcius )
+      else
+        return string.format( " %-2.2f °F", UTILS.CelciusToFarenheit( DegreesCelcius ) )
+      end
+    else
+      return " no temperature"
+    end
+    
+    return nil
+  end
+
+
   --- Returns the pressure in hPa.
   -- @param #COORDINATE self
   -- @param height (Optional) parameter specifying the height ASL. E.g. set height=0 for QNH.
@@ -445,6 +479,41 @@ do -- COORDINATE
     local T,P=atmosphere.getTemperatureAndPressure(point)
     -- Return Pressure in hPa.
     return P/100
+  end
+  
+  --- Returns a text of the pressure according the measurement system @{Settings}.
+  -- The text will contain always the pressure in hPa and:
+  -- 
+  --   - For Russian and European aircraft using the metric system - hPa and mmHg
+  --   - For Americain and European aircraft we link to the imperial system - hPa and inHg
+  -- 
+  -- A text containing a pressure will look like this: 
+  -- 
+  --   - `QFE: x hPa (y mmHg)`  
+  --   - `QFE: x hPa (y inHg)`
+  -- 
+  -- @param #COORDINATE self
+  -- @param height (Optional) parameter specifying the height ASL. E.g. set height=0 for QNH.
+  -- @return #string Pressure in hPa and mmHg or inHg depending on the measurement system @{Settings}.
+  function COORDINATE:GetPressureText( height, Settings )
+
+    local Pressure_hPa = self:GetPressure( height )
+    local Pressure_mmHg = Pressure_hPa * 0.0295299830714
+    local Pressure_inHg = Pressure_hPa * 0.7500615613030
+    
+    local Settings = Settings or _SETTINGS
+
+    if Pressure_hPa then
+      if Settings:IsMetric() then
+        return string.format( " %d hPa (%3.4f mmHg)", Pressure_hPa, Pressure_mmHg )
+      else
+        return string.format( " %d hPa (%3.4f inHg)", Pressure_hPa, Pressure_inHg )
+      end
+    else
+      return " no pressure"
+    end
+    
+    return nil
   end
   
   --- Returns the wind direction (from) and strength.
@@ -472,6 +541,39 @@ do -- COORDINATE
     return direction, strength
   end
 
+
+  --- Returns a text documenting the wind direction (from) and strength according the measurement system @{Settings}.
+  -- The text will reflect the wind like this:
+  -- 
+  --   - For Russian and European aircraft using the metric system - Wind direction in degrees (°) and wind speed in meters per second (mps).
+  --   - For Americain aircraft we link to the imperial system - Wind direction in degrees (°) and wind speed in knots per second (kps).
+  -- 
+  -- A text containing a pressure will look like this: 
+  -- 
+  --   - `Wind: %n ° at n.d mps`  
+  --   - `Wind: %n ° at n.d kps`
+  --   
+  -- @param #COORDINATE self
+  -- @param height (Optional) parameter specifying the height ASL. The minimum height will be always be the land height since the wind is zero below the ground.
+  -- @return #string Wind direction and strength according the measurement system @{Settings}.
+  function COORDINATE:GetWindText( height, Settings )
+
+    local Direction, Strength = self:GetWind( height )
+
+    local Settings = Settings or _SETTINGS
+
+    if Direction and Strength then
+      if Settings:IsMetric() then
+        return string.format( " %d ° at %3.2f mps", Direction, UTILS.MpsToKmph( Strength ) )
+      else
+        return string.format( " %d ° at %3.2f kps", Direction, UTILS.MpsToKnots( Strength ) )
+      end
+    else
+      return " no wind"
+    end
+    
+    return nil
+  end
 
   --- Return the 3D distance in meters between the target COORDINATE and the COORDINATE.
   -- @param #COORDINATE self
@@ -1284,6 +1386,54 @@ do -- COORDINATE
     
     return nil
 
+  end
+
+  --- Provides a pressure string of the point, based on a measurement system:
+  --   * Uses default settings in COORDINATE.
+  --   * Can be overridden if for a GROUP containing x clients, a menu was selected to override the default.
+  -- @param #COORDINATE self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable
+  -- @param Core.Settings#SETTINGS Settings
+  -- @return #string The pressure text in the configured measurement system.
+  function COORDINATE:ToStringPressure( Controllable, Settings ) -- R2.3
+  
+    self:F( { Controllable = Controllable and Controllable:GetName() } )
+
+    local Settings = Settings or ( Controllable and _DATABASE:GetPlayerSettings( Controllable:GetPlayerName() ) ) or _SETTINGS
+
+    return self:GetPressureText( nil, Settings )
+  end
+
+  --- Provides a wind string of the point, based on a measurement system:
+  --   * Uses default settings in COORDINATE.
+  --   * Can be overridden if for a GROUP containing x clients, a menu was selected to override the default.
+  -- @param #COORDINATE self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable
+  -- @param Core.Settings#SETTINGS Settings
+  -- @return #string The wind text in the configured measurement system.
+  function COORDINATE:ToStringWind( Controllable, Settings ) -- R2.3
+  
+    self:F( { Controllable = Controllable and Controllable:GetName() } )
+
+    local Settings = Settings or ( Controllable and _DATABASE:GetPlayerSettings( Controllable:GetPlayerName() ) ) or _SETTINGS
+
+    return self:GetWindText( nil, Settings )
+  end
+
+  --- Provides a temperature string of the point, based on a measurement system:
+  --   * Uses default settings in COORDINATE.
+  --   * Can be overridden if for a GROUP containing x clients, a menu was selected to override the default.
+  -- @param #COORDINATE self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable
+  -- @param Core.Settings#SETTINGS Settings
+  -- @return #string The temperature text in the configured measurement system.
+  function COORDINATE:ToStringTemperature( Controllable, Settings ) -- R2.3
+  
+    self:F( { Controllable = Controllable and Controllable:GetName() } )
+
+    local Settings = Settings or ( Controllable and _DATABASE:GetPlayerSettings( Controllable:GetPlayerName() ) ) or _SETTINGS
+
+    return self:GetTemperatureText( nil, Settings )
   end
 
 end
