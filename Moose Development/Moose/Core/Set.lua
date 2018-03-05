@@ -174,7 +174,7 @@ end
 -- @param Core.Base#BASE Object
 -- @return Core.Base#BASE The added BASE Object.
 function SET_BASE:Add( ObjectName, Object )
-  self:F( ObjectName )
+  self:F3( { ObjectName = ObjectName, Object = Object } )
 
   -- Ensure that the existing element is removed from the Set before a new one is inserted to the Set
   if self.Set[ObjectName] then

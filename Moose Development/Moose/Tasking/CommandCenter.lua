@@ -100,8 +100,11 @@ function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
     function( self, EventData )
       if EventData.IniObjectCategory == 1 then
         local EventGroup = GROUP:Find( EventData.IniDCSGroup )
+        self:E( { CommandCenter = self:GetName(), EventGroup = EventGroup, HasGroup = self:HasGroup( EventGroup ), EventData = EventData } )
+        self:E( { GROUPS = _DATABASE.GROUPS } )
         if EventGroup and self:HasGroup( EventGroup ) then
-          local MenuReporting = MENU_GROUP:New( EventGroup, "Missions Reports", self.CommandCenterMenu )
+          local CommandCenterMenu = MENU_GROUP:New( EventGroup, "Command Center (" .. self:GetName() .. ")" )
+          local MenuReporting = MENU_GROUP:New( EventGroup, "Missions Reports", CommandCenterMenu )
           local MenuMissionsSummary = MENU_GROUP_COMMAND:New( EventGroup, "Missions Status Report", MenuReporting, self.ReportMissionsStatus, self, EventGroup )
           local MenuMissionsDetails = MENU_GROUP_COMMAND:New( EventGroup, "Missions Players Report", MenuReporting, self.ReportMissionsPlayers, self, EventGroup )
           self:ReportSummary( EventGroup )
@@ -112,7 +115,6 @@ function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
             Mission:JoinUnit( PlayerUnit, PlayerGroup )
           end
           self:SetMenu()
-         _DATABASE:PlayerSettingsMenu( PlayerUnit ) 
         end
       end
       
@@ -402,16 +404,18 @@ end
 --- Report the status of all MISSIONs to a GROUP.
 -- Each Mission is listed, with an indication how many Tasks are still to be completed.
 -- @param #COMMANDCENTER self
-function COMMANDCENTER:ReportMissionsStatus( ReportGroup )
+function COMMANDCENTER:ReportSummary( ReportGroup )
   self:E( ReportGroup )
 
   local Report = REPORT:New()
 
-  Report:Add( "Status report of all missions." )
+  -- List the name of the mission.
+  local Name = self:GetName()
+  Report:Add( string.format( '%s - Report Summary Missions', Name ) )
   
   for MissionID, Mission in pairs( self.Missions ) do
     local Mission = Mission -- Tasking.Mission#MISSION
-    Report:Add( " - " .. Mission:ReportStatus() )
+    Report:Add( " - " .. Mission:ReportSummary() )
   end
   
   self:MessageToGroup( Report:Text(), ReportGroup )
