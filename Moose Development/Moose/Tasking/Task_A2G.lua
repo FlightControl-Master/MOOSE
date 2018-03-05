@@ -344,7 +344,7 @@ do -- TASK_A2G
         local DetectedItemsCount = self.TargetSetUnit:Count()
         local DetectedItemsTypes = self.TargetSetUnit:GetTypeNames()
         self.TaskInfo:AddTargetCount( DetectedItemsCount, 11, "O", true )
-        self.TaskInfo:AddTargets( string.format( "%d of %s", DetectedItemsCount, DetectedItemsTypes ), 20, "D", true ) 
+        self.TaskInfo:AddTargets( DetectedItemsCount, DetectedItemsTypes, 20, "D", true ) 
       end
     end
     

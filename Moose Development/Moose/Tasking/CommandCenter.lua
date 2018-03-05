@@ -100,11 +100,14 @@ function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
     function( self, EventData )
       if EventData.IniObjectCategory == 1 then
         local EventGroup = GROUP:Find( EventData.IniDCSGroup )
+        self:E( { CommandCenter = self:GetName(), EventGroup = EventGroup, HasGroup = self:HasGroup( EventGroup ), EventData = EventData } )
+        self:E( { GROUPS = _DATABASE.GROUPS } )
         if EventGroup and self:HasGroup( EventGroup ) then
-          local MenuReporting = MENU_GROUP:New( EventGroup, "Missions Reports", self.CommandCenterMenu )
+          local CommandCenterMenu = MENU_GROUP:New( EventGroup, "Command Center (" .. self:GetName() .. ")" )
+          local MenuReporting = MENU_GROUP:New( EventGroup, "Missions Reports", CommandCenterMenu )
           local MenuMissionsSummary = MENU_GROUP_COMMAND:New( EventGroup, "Missions Status Report", MenuReporting, self.ReportMissionsStatus, self, EventGroup )
           local MenuMissionsDetails = MENU_GROUP_COMMAND:New( EventGroup, "Missions Players Report", MenuReporting, self.ReportMissionsPlayers, self, EventGroup )
-          self:ReportSummary( EventGroup )
+          self:ReportMissionsStatus( EventGroup )
           local PlayerUnit = EventData.IniUnit
           for MissionID, Mission in pairs( self:GetMissions() ) do
             local Mission = Mission -- Tasking.Mission#MISSION
@@ -112,7 +115,6 @@ function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
             Mission:JoinUnit( PlayerUnit, PlayerGroup )
           end
           self:SetMenu()
-         _DATABASE:PlayerSettingsMenu( PlayerUnit ) 
         end
       end
       

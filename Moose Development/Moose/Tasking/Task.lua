@@ -566,7 +566,7 @@ end
 function TASK:HasGroup( FindGroup )
 
   local SetAttackGroup = self:GetGroups()
-  return SetAttackGroup:FindGroup(FindGroup)
+  return SetAttackGroup:FindGroup( FindGroup:GetName() )
 
 end
 

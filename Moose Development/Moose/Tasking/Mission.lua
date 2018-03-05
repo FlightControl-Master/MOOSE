@@ -290,7 +290,7 @@ end
 -- @param Wrapper.Group#GROUP PlayerGroup The GROUP of the player joining the Mission.
 -- @return #boolean true if Unit is part of a Task in the Mission.
 function MISSION:JoinUnit( PlayerUnit, PlayerGroup )
-  self:F( { PlayerUnit = PlayerUnit, PlayerGroup = PlayerGroup } )
+  self:E( { Mission = self:GetName(), PlayerUnit = PlayerUnit, PlayerGroup = PlayerGroup } )
   
   local PlayerUnitAdded = false
   
