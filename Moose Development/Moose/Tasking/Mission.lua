@@ -739,7 +739,7 @@ end
 -- 
 -- @param #MISSION self
 -- @return #string
-function MISSION:ReportStatus()
+function MISSION:ReportSummary()
 
   local Report = REPORT:New()
 
