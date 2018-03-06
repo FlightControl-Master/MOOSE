@@ -329,8 +329,8 @@ UTILS.tostringLL = function( lat, lon, acc, DMS)
 --      secFrmtStr = '%0' .. width .. '.' .. acc .. 'f'
 --    end
 
-    return string.format('%02d', latDeg) .. ' ' .. string.format('%02d', latMin) .. '\' ' .. string.format(secFrmtStr, latSec) .. '"' .. latHemi .. '   '
-           .. string.format('%02d', lonDeg) .. ' ' .. string.format('%02d', lonMin) .. '\' ' .. string.format(secFrmtStr, lonSec) .. '"' .. lonHemi
+    return string.format('%03d', latDeg) .. ' ' .. string.format('%02d', latMin) .. '\' ' .. string.format(secFrmtStr, latSec) .. '"' .. latHemi .. '   '
+           .. string.format('%03d', lonDeg) .. ' ' .. string.format('%02d', lonMin) .. '\' ' .. string.format(secFrmtStr, lonSec) .. '"' .. lonHemi
 
   else  -- degrees, decimal minutes.
     latMin = UTILS.Round(latMin, acc)
@@ -354,8 +354,8 @@ UTILS.tostringLL = function( lat, lon, acc, DMS)
       minFrmtStr = '%0' .. width .. '.' .. acc .. 'f'
     end
 
-    return string.format('%02d', latDeg) .. ' ' .. string.format(minFrmtStr, latMin) .. '\'' .. latHemi .. '   '
-     .. string.format('%02d', lonDeg) .. ' ' .. string.format(minFrmtStr, lonMin) .. '\'' .. lonHemi
+    return string.format('%03d', latDeg) .. ' ' .. string.format(minFrmtStr, latMin) .. '\'' .. latHemi .. '   '
+     .. string.format('%03d', lonDeg) .. ' ' .. string.format(minFrmtStr, lonMin) .. '\'' .. lonHemi
 
   end
 end
