@@ -413,7 +413,7 @@ do -- MENU_MISSION
       self:RemoveSubMenus()
       if not MenuTime or self.MenuTime ~= MenuTime then
         if ( not MenuTag ) or ( MenuTag and self.MenuTag and MenuTag == self.MenuTag ) then
-          self:E( { Text = self.MenuText, Path = self.MenuPath } )
+          self:F( { Text = self.MenuText, Path = self.MenuPath } )
           if self.MenuPath ~= nil then
             missionCommands.removeItem( self.MenuPath )
           end
@@ -500,7 +500,7 @@ do -- MENU_MISSION_COMMAND
     if MissionMenu == self then
       if not MenuTime or self.MenuTime ~= MenuTime then
         if ( not MenuTag ) or ( MenuTag and self.MenuTag and MenuTag == self.MenuTag ) then
-          self:E( { Text = self.MenuText, Path = self.MenuPath } )
+          self:F( { Text = self.MenuText, Path = self.MenuPath } )
           if self.MenuPath ~= nil then
             missionCommands.removeItem( self.MenuPath )
           end
@@ -638,7 +638,7 @@ do -- MENU_COALITION
       self:RemoveSubMenus()
       if not MenuTime or self.MenuTime ~= MenuTime then
         if ( not MenuTag ) or ( MenuTag and self.MenuTag and MenuTag == self.MenuTag ) then
-          self:E( { Coalition = self.Coalition, Text = self.MenuText, Path = self.MenuPath } )
+          self:F( { Coalition = self.Coalition, Text = self.MenuText, Path = self.MenuPath } )
           if self.MenuPath ~= nil then
             missionCommands.removeItemForCoalition( self.Coalition, self.MenuPath )
           end
@@ -730,7 +730,7 @@ do -- MENU_COALITION_COMMAND
     if CoalitionMenu == self then
       if not MenuTime or self.MenuTime ~= MenuTime then
         if ( not MenuTag ) or ( MenuTag and self.MenuTag and MenuTag == self.MenuTag ) then
-          self:E( { Coalition = self.Coalition, Text = self.MenuText, Path = self.MenuPath } )
+          self:F( { Coalition = self.Coalition, Text = self.MenuText, Path = self.MenuPath } )
           if self.MenuPath ~= nil then
             missionCommands.removeItemForCoalition( self.Coalition, self.MenuPath )
           end
@@ -900,7 +900,7 @@ do
       self:RemoveSubMenus( MenuTime, MenuTag )
       if not MenuTime or self.MenuTime ~= MenuTime then
         if ( not MenuTag ) or ( MenuTag and self.MenuTag and MenuTag == self.MenuTag ) then
-          self:E( { Group = self.GroupID, Text = self.MenuText, Path = self.MenuPath } )
+          self:F( { Group = self.GroupID, Text = self.MenuText, Path = self.MenuPath } )
           if self.MenuPath ~= nil then
             missionCommands.removeItemForGroup( self.GroupID, self.MenuPath )
           end
@@ -992,7 +992,7 @@ do
     if GroupMenu == self then
       if not MenuTime or self.MenuTime ~= MenuTime then
         if ( not MenuTag ) or ( MenuTag and self.MenuTag and MenuTag == self.MenuTag ) then
-          self:E( { Group = self.GroupID, Text = self.MenuText, Path = self.MenuPath } )
+          self:F( { Group = self.GroupID, Text = self.MenuText, Path = self.MenuPath } )
           if self.MenuPath ~= nil then
             missionCommands.removeItemForGroup( self.GroupID, self.MenuPath )
           end
@@ -1133,7 +1133,7 @@ do
       self:RemoveSubMenus( MenuTime, MenuTag )
       if not MenuTime or self.MenuTime ~= MenuTime then
         if ( not MenuTag ) or ( MenuTag and self.MenuTag and MenuTag == self.MenuTag ) then
-          self:E( { Group = self.GroupID, Text = self.MenuText, Path = self.MenuPath } )
+          self:F( { Group = self.GroupID, Text = self.MenuText, Path = self.MenuPath } )
           if self.MenuPath ~= nil then
             missionCommands.removeItemForGroup( self.GroupID, self.MenuPath )
           end
@@ -1244,7 +1244,7 @@ do
     if GroupMenu == self then
       if not MenuTime or self.MenuTime ~= MenuTime then
         if ( not MenuTag ) or ( MenuTag and self.MenuTag and MenuTag == self.MenuTag ) then
-          self:E( { Group = self.GroupID, Text = self.MenuText, Path = self.MenuPath } )
+          self:F( { Group = self.GroupID, Text = self.MenuText, Path = self.MenuPath } )
           if self.MenuPath ~= nil then
             missionCommands.removeItemForGroup( self.GroupID, self.MenuPath )
           end

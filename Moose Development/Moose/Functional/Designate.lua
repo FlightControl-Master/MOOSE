@@ -353,7 +353,8 @@ do -- DESIGNATE
     -- @param #DESIGNATE self
     -- @param #number Delay
 
-    self:AddTransition( "*", "Done", "*" )
+    self:AddTransition( "*", "DoneSmoking", "*" )
+    self:AddTransition( "*", "DoneIlluminating", "*" )
     
     self:AddTransition( "*", "Status", "*" )
     --- Status Handler OnBefore for DESIGNATE 
@@ -756,10 +757,8 @@ do -- DESIGNATE
   -- @param Wrapper.Group#GROUP AttackGroup
   -- @param #number Duration The time in seconds the report should be visible.
   -- @return #DESIGNATE
-  function DESIGNATE:SendStatus( MenuAttackGroup, Duration )
+  function DESIGNATE:SendStatus( MenuAttackGroup )
 
-    Duration = Duration or 10
-    
     self.AttackSet:ForEachGroupAlive(
     
       --- @param Wrapper.Group#GROUP GroupReport
@@ -776,14 +775,23 @@ do -- DESIGNATE
               local Report = self.Detection:DetectedItemReportSummary( DesignateIndex, AttackGroup ):Text( ", " )
               DetectedReport:Add( string.rep( "-", 140 ) )
               DetectedReport:Add( " - " .. Report )
+              if string.find( Designating, "L" ) then
+                DetectedReport:Add( " - " .. "Lasing Targets" )
+              end
+              if string.find( Designating, "S" ) then
+                DetectedReport:Add( " - " .. "Smoking Targets" )
+              end
+              if string.find( Designating, "I" ) then
+                DetectedReport:Add( " - " .. "Illuminating Area" )
+              end
             end
           end
           
           local CC = self.CC:GetPositionable()
       
-          CC:MessageToGroup( DetectedReport:Text( "\n" ), Duration, AttackGroup, self.DesignateName )
+          CC:MessageTypeToGroup( DetectedReport:Text( "\n" ), MESSAGE.Type.Information, AttackGroup, self.DesignateName )
           
-          local DesignationReport = REPORT:New( "Marking Targets:\n" )
+          local DesignationReport = REPORT:New( "Marking Targets:" )
       
           self.RecceSet:ForEachGroupAlive(
             function( RecceGroup )
@@ -797,7 +805,7 @@ do -- DESIGNATE
             end
           )
       
-          CC:MessageToGroup( DesignationReport:Text(), Duration, AttackGroup, self.DesignateName )
+          CC:MessageTypeToGroup( DesignationReport:Text(), MESSAGE.Type.Information, AttackGroup, self.DesignateName )
         end
       end
     )
@@ -838,9 +846,7 @@ do -- DESIGNATE
         end        
 
         local StatusMenu = MENU_GROUP_DELAYED:New( AttackGroup, "Status", MenuDesignate ):SetTime( MenuTime ):SetTag( self.DesignateName )
-        MENU_GROUP_COMMAND_DELAYED:New( AttackGroup, "Report Status 15s", StatusMenu, self.MenuStatus, self, AttackGroup, 15 ):SetTime( MenuTime ):SetTag( self.DesignateName )
-        MENU_GROUP_COMMAND_DELAYED:New( AttackGroup, "Report Status 30s", StatusMenu, self.MenuStatus, self, AttackGroup, 30 ):SetTime( MenuTime ):SetTag( self.DesignateName )
-        MENU_GROUP_COMMAND_DELAYED:New( AttackGroup, "Report Status 60s", StatusMenu, self.MenuStatus, self, AttackGroup, 60 ):SetTime( MenuTime ):SetTag( self.DesignateName )
+        MENU_GROUP_COMMAND_DELAYED:New( AttackGroup, "Report Status", StatusMenu, self.MenuStatus, self, AttackGroup ):SetTime( MenuTime ):SetTag( self.DesignateName )
         
         if self.FlashStatusMenu[AttackGroup] then
           MENU_GROUP_COMMAND_DELAYED:New( AttackGroup, "Flash Status Report Off", StatusMenu, self.MenuFlashStatus, self, AttackGroup, false ):SetTime( MenuTime ):SetTag( self.DesignateName )
@@ -858,33 +864,32 @@ do -- DESIGNATE
             local ID = self.Detection:GetDetectedItemID( DesignateIndex )
             local MenuText = ID --.. ", " .. Coord:ToStringA2G( AttackGroup )
             
-            if Designating == "" then
-              MenuText = "(-) " .. MenuText
-              local DetectedMenu = MENU_GROUP_DELAYED:New( AttackGroup, MenuText, MenuDesignate ):SetTime( MenuTime ):SetTag( self.DesignateName )
+            MenuText = string.format( "(%3s) %s", Designating, MenuText )
+            local DetectedMenu = MENU_GROUP_DELAYED:New( AttackGroup, MenuText, MenuDesignate ):SetTime( MenuTime ):SetTag( self.DesignateName )
+            
+            -- Build the Lasing menu.
+            if string.find( Designating, "L", 1, true ) == nil then
               MENU_GROUP_COMMAND_DELAYED:New( AttackGroup, "Search other target", DetectedMenu, self.MenuForget, self, DesignateIndex ):SetTime( MenuTime ):SetTag( self.DesignateName )
               for LaserCode, MenuText in pairs( self.MenuLaserCodes ) do
                 MENU_GROUP_COMMAND_DELAYED:New( AttackGroup, string.format( MenuText, LaserCode ), DetectedMenu, self.MenuLaseCode, self, DesignateIndex, 60, LaserCode ):SetTime( MenuTime ):SetTag( self.DesignateName )
               end
               MENU_GROUP_COMMAND_DELAYED:New( AttackGroup, "Lase with random laser code(s)", DetectedMenu, self.MenuLaseOn, self, DesignateIndex, 60 ):SetTime( MenuTime ):SetTag( self.DesignateName )
+            else
+              MENU_GROUP_COMMAND_DELAYED:New( AttackGroup, "Stop lasing", DetectedMenu, self.MenuLaseOff, self, DesignateIndex ):SetTime( MenuTime ):SetTag( self.DesignateName )
+            end
+            
+            -- Build the Smoking menu.
+            if string.find( Designating, "S", 1, true ) == nil then
               MENU_GROUP_COMMAND_DELAYED:New( AttackGroup, "Smoke red", DetectedMenu, self.MenuSmoke, self, DesignateIndex, SMOKECOLOR.Red ):SetTime( MenuTime ):SetTag( self.DesignateName )
               MENU_GROUP_COMMAND_DELAYED:New( AttackGroup, "Smoke blue", DetectedMenu, self.MenuSmoke, self, DesignateIndex, SMOKECOLOR.Blue ):SetTime( MenuTime ):SetTag( self.DesignateName )
               MENU_GROUP_COMMAND_DELAYED:New( AttackGroup, "Smoke green", DetectedMenu, self.MenuSmoke, self, DesignateIndex, SMOKECOLOR.Green ):SetTime( MenuTime ):SetTag( self.DesignateName )
               MENU_GROUP_COMMAND_DELAYED:New( AttackGroup, "Smoke white", DetectedMenu, self.MenuSmoke, self, DesignateIndex, SMOKECOLOR.White ):SetTime( MenuTime ):SetTag( self.DesignateName )
               MENU_GROUP_COMMAND_DELAYED:New( AttackGroup, "Smoke orange", DetectedMenu, self.MenuSmoke, self, DesignateIndex, SMOKECOLOR.Orange ):SetTime( MenuTime ):SetTag( self.DesignateName )
+            end            
+
+            -- Build the Illuminate menu.
+            if string.find( Designating, "I", 1, true ) == nil then
               MENU_GROUP_COMMAND_DELAYED:New( AttackGroup, "Illuminate", DetectedMenu, self.MenuIlluminate, self, DesignateIndex ):SetTime( MenuTime ):SetTag( self.DesignateName )
-            else
-              if Designating == "Laser" then
-                MenuText = "(L) " .. MenuText
-              elseif Designating == "Smoke" then
-                MenuText = "(S) " .. MenuText
-              elseif Designating == "Illuminate" then
-                MenuText = "(I) " .. MenuText
-              end
-              local DetectedMenu = MENU_GROUP_DELAYED:New( AttackGroup, MenuText, MenuDesignate ):SetTime( MenuTime ):SetTag( self.DesignateName )
-              if Designating == "Laser" then
-                MENU_GROUP_COMMAND_DELAYED:New( AttackGroup, "Stop lasing", DetectedMenu, self.MenuLaseOff, self, DesignateIndex ):SetTime( MenuTime ):SetTag( self.DesignateName )
-              else
-              end
             end
           end
         end
@@ -898,11 +903,11 @@ do -- DESIGNATE
 
   --- 
   -- @param #DESIGNATE self
-  function DESIGNATE:MenuStatus( AttackGroup, Duration )
+  function DESIGNATE:MenuStatus( AttackGroup )
 
     self:E("Status")
 
-    self:SendStatus( AttackGroup, Duration )  
+    self:SendStatus( AttackGroup )  
   end
   
   --- 
@@ -922,7 +927,7 @@ do -- DESIGNATE
 
     self:E("Forget")
 
-    self.Designating[Index] = nil
+    self.Designating[Index] = ""
     self:SetDesignateMenu()
   end
 
@@ -941,8 +946,11 @@ do -- DESIGNATE
 
     self:E("Designate through Smoke")
 
-    self.Designating[Index] = "Smoke"
+    if string.find( self.Designating[Index], "S" ) == nil then
+      self.Designating[Index] = self.Designating[Index] .. "S"
+    end
     self:Smoke( Index, Color )    
+    self:SetDesignateMenu()
   end
 
   --- 
@@ -951,9 +959,12 @@ do -- DESIGNATE
 
     self:E("Designate through Illumination")
 
-    self.Designating[Index] = "Illuminate"
+    if string.find( self.Designating[Index], "I", 1, true ) == nil then
+      self.Designating[Index] = self.Designating[Index] .. "I"
+    end
     
     self:__Illuminate( 1, Index )
+    self:SetDesignateMenu()
   end
 
   --- 
@@ -984,7 +995,7 @@ do -- DESIGNATE
 
     self:E("Lasing off")
 
-    self.Designating[Index] = ""
+    self.Designating[Index] = string.gsub( self.Designating[Index], "L", "" )
     self:__LaseOff( 1, Index ) 
     self:SetDesignateMenu()
   end
@@ -993,10 +1004,12 @@ do -- DESIGNATE
   -- @param #DESIGNATE self
   function DESIGNATE:onafterLaseOn( From, Event, To, Index, Duration, LaserCode )
   
-    self.Designating[Index] = "Laser"
+    if string.find( self.Designating[Index], "L", 1, true ) == nil then
+      self.Designating[Index] = self.Designating[Index] .. "L"
+    end
     self.LaseStart = timer.getTime()
     self.LaseDuration = Duration
-    self:__Lasing( -1, Index, Duration, LaserCode )
+    self:Lasing( Index, Duration, LaserCode )
   end
   
 
@@ -1097,11 +1110,11 @@ do -- DESIGNATE
                           end
     
                           self.Recces[TargetUnit] = RecceUnit
-                          RecceUnit:MessageToSetGroup( "Marking " .. TargetUnit:GetTypeName() .. " with laser " .. RecceUnit:GetSpot().LaserCode .. " for " .. Duration .. "s.", 
-                                                       5, self.AttackSet, DesignateName )
                           -- OK. We have assigned for the Recce a TargetUnit. We can exit the function.
                           MarkingCount = MarkingCount + 1
                           local TargetUnitType = TargetUnit:GetTypeName()
+                          --RecceUnit:MessageToSetGroup( "Marking " .. TargetUnit:GetTypeName() .. " with laser " .. RecceUnit:GetSpot().LaserCode .. " for " .. Duration .. "s.", 
+                          --                             5, self.AttackSet, DesignateName )
                           if not MarkedTypes[TargetUnitType] then
                             MarkedTypes[TargetUnitType] = true
                             ReportTypes:Add(TargetUnitType)
@@ -1124,7 +1137,7 @@ do -- DESIGNATE
                           Recce:MessageToSetGroup( "Target " .. TargetUnit:GetTypeName() "out of LOS. Cancelling lase!", 5, self.AttackSet, self.DesignateName )
                         end
                       else
-                        MarkingCount = MarkingCount + 1
+                        --MarkingCount = MarkingCount + 1
                         local TargetUnitType = TargetUnit:GetTypeName()
                         if not MarkedTypes[TargetUnitType] then
                           MarkedTypes[TargetUnitType] = true
@@ -1152,16 +1165,14 @@ do -- DESIGNATE
 
       local MarkedTypesText = ReportTypes:Text(', ')
       local MarkedLaserCodesText = ReportLaserCodes:Text(', ')
-      for MarkedType, MarketCount in pairs( MarkedTypes ) do
-        self.CC:GetPositionable():MessageToSetGroup( "Marking " .. MarkingCount .. " x " .. MarkedTypesText .. " with lasers " .. MarkedLaserCodesText .. ".", 5, self.AttackSet, self.DesignateName )
-      end
+      self.CC:GetPositionable():MessageToSetGroup( "Marking " .. MarkingCount .. " x "  .. MarkedTypesText .. ", code " .. MarkedLaserCodesText .. ".", 5, self.AttackSet, self.DesignateName )
   
       self:__Lasing( -30, Index, Duration, LaserCodeRequested )
       
       self:SetDesignateMenu()
 
     else
-      self:__LaseOff( 1 )
+      self:LaseOff( Index )
     end
 
   end
@@ -1191,6 +1202,7 @@ do -- DESIGNATE
     self.Recces = {}
     self.LaserCodesUsed = {}
 
+    self.Designating[Index] = string.gsub( self.Designating[Index], "L", "" )
     self:SetDesignateMenu()
   end
 
@@ -1222,13 +1234,14 @@ do -- DESIGNATE
 
             RecceUnit:MessageToSetGroup( "Smoking " .. SmokeUnit:GetTypeName() .. ".", 5, self.AttackSet, self.DesignateName )
 
+            if SmokeUnit:IsAlive() then
+              SmokeUnit:Smoke( Color, 50, 2 )
+            end
+            
             self.MarkScheduler:Schedule( self,
               function()
-                if SmokeUnit:IsAlive() then
-                  SmokeUnit:Smoke( Color, 50, 2 )
-                end
-              self:Done( Index )
-              end, {}, math.random( 5, 20 ) 
+              self:DoneSmoking( Index )
+              end, {}, math.random( 180, 240 ) 
             )
           end
         end
@@ -1251,28 +1264,38 @@ do -- DESIGNATE
       local RecceUnit = RecceGroup:GetUnit( 1 )
       if RecceUnit then
         RecceUnit:MessageToSetGroup( "Illuminating " .. TargetUnit:GetTypeName() .. ".", 5, self.AttackSet, self.DesignateName )
+        if TargetUnit:IsAlive() then
+          -- Fire 2 illumination bombs at random locations.
+          TargetUnit:GetPointVec3():AddY(math.random( 350, 500) ):AddX(math.random(-50,50) ):AddZ(math.random(-50,50) ):IlluminationBomb()
+          TargetUnit:GetPointVec3():AddY(math.random( 350, 500) ):AddX(math.random(-50,50) ):AddZ(math.random(-50,50) ):IlluminationBomb()
+        end
         self.MarkScheduler:Schedule( self,
           function()
-            if TargetUnit:IsAlive() then
-              TargetUnit:GetPointVec3():AddY(300):IlluminationBomb()
-            end
-          self:Done( Index )
-          end, {}, math.random( 5, 20 ) 
+            self:DoneIlluminating( Index )
+          end, {}, math.random( 60, 90 ) 
         )
       end
     end
   end
 
-  --- Done
+  --- DoneSmoking
   -- @param #DESIGNATE self
   -- @return #DESIGNATE
-  function DESIGNATE:onafterDone( From, Event, To, Index )
+  function DESIGNATE:onafterDoneSmoking( From, Event, To, Index )
 
-    self.Designating[Index] = nil
+    self.Designating[Index] = string.gsub( self.Designating[Index], "S", "" )
+    self:SetDesignateMenu()
+  end
+
+  --- DoneIlluminating
+  -- @param #DESIGNATE self
+  -- @return #DESIGNATE
+  function DESIGNATE:onafterDoneIlluminating( From, Event, To, Index )
+
+    self.Designating[Index] = string.gsub( self.Designating[Index], "I", "" )
     self:SetDesignateMenu()
   end
 
 end
 
--- Help from Ciribob
 

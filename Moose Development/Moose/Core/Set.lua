@@ -1792,13 +1792,13 @@ do -- SET_UNIT
         ThreatLevelSet[ThreatLevel] = ThreatLevelSet[ThreatLevel] or {}
         ThreatLevelSet[ThreatLevel].Set = ThreatLevelSet[ThreatLevel].Set or {}
         ThreatLevelSet[ThreatLevel].Set[UnitName] = UnitObject
-        self:E( { ThreatLevel = ThreatLevel, ThreatLevelSet = ThreatLevelSet[ThreatLevel].Set } )
+        self:F( { ThreatLevel = ThreatLevel, ThreatLevelSet = ThreatLevelSet[ThreatLevel].Set } )
       end
       
       local ThreatLevelIncrement = FromThreatLevel <= ToThreatLevel and 1 or -1
       
       for ThreatLevel = FromThreatLevel, ToThreatLevel, ThreatLevelIncrement do
-        self:E( { ThreatLevel = ThreatLevel } )
+        self:F( { ThreatLevel = ThreatLevel } )
         local ThreatLevelItem = ThreatLevelSet[ThreatLevel]
         if ThreatLevelItem then
           self:ForEach( IteratorFunction, arg, ThreatLevelItem.Set )
