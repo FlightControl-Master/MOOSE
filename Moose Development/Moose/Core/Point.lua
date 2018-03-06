@@ -498,16 +498,16 @@ do -- COORDINATE
   function COORDINATE:GetPressureText( height, Settings )
 
     local Pressure_hPa = self:GetPressure( height )
-    local Pressure_mmHg = Pressure_hPa * 0.0295299830714
-    local Pressure_inHg = Pressure_hPa * 0.7500615613030
+    local Pressure_mmHg = Pressure_hPa * 0.7500615613030
+    local Pressure_inHg = Pressure_hPa * 0.0295299830714
     
     local Settings = Settings or _SETTINGS
 
     if Pressure_hPa then
       if Settings:IsMetric() then
-        return string.format( " %d hPa (%3.4f mmHg)", Pressure_hPa, Pressure_mmHg )
+        return string.format( " %4.1f hPa (%3.1f mmHg)", Pressure_hPa, Pressure_mmHg )
       else
-        return string.format( " %d hPa (%3.4f inHg)", Pressure_hPa, Pressure_inHg )
+        return string.format( " %4.1f hPa (%3.2f inHg)", Pressure_hPa, Pressure_inHg )
       end
     else
       return " no pressure"
