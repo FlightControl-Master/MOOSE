@@ -155,22 +155,22 @@ function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
     end
   )
 
---  -- Handle when a player leaves a slot and goes back to spectators ... 
---  -- The PlayerUnit will be UnAssigned from the Task.
---  -- When there is no Unit left running the Task, the Task goes into Abort...
---  self:HandleEvent( EVENTS.PlayerLeaveUnit,
---    --- @param #TASK self
---    -- @param Core.Event#EVENTDATA EventData
---    function( self, EventData )
---      local PlayerUnit = EventData.IniUnit
---      for MissionID, Mission in pairs( self:GetMissions() ) do
---        local Mission = Mission -- Tasking.Mission#MISSION
---        if Mission:IsENGAGED() then
---          Mission:AbortUnit( PlayerUnit )
---        end
---      end
---    end
---  )
+  -- Handle when a player leaves a slot and goes back to spectators ... 
+  -- The PlayerUnit will be UnAssigned from the Task.
+  -- When there is no Unit left running the Task, the Task goes into Abort...
+  self:HandleEvent( EVENTS.PlayerLeaveUnit,
+    --- @param #TASK self
+    -- @param Core.Event#EVENTDATA EventData
+    function( self, EventData )
+      local PlayerUnit = EventData.IniUnit
+      for MissionID, Mission in pairs( self:GetMissions() ) do
+        local Mission = Mission -- Tasking.Mission#MISSION
+        if Mission:IsENGAGED() then
+          Mission:AbortUnit( PlayerUnit )
+        end
+      end
+    end
+  )
 
   -- Handle when a player leaves a slot and goes back to spectators ... 
   -- The PlayerUnit will be UnAssigned from the Task.
