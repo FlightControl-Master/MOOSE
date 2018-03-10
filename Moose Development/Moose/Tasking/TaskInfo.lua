@@ -226,6 +226,45 @@ function TASKINFO:AddWindAtCoordinate( Coordinate, Order, Detail, Keep )
   return self
 end
 
+--- Add Cargo. 
+-- @param #TASKINFO self
+-- @param Core.Cargo#CARGO Cargo
+-- @param #number Order The display order, which is a number from 0 to 100.
+-- @param #TASKINFO.Detail Detail The detail Level.
+-- @param #boolean Keep (optional) If true, this would indicate that the planned taskinfo would be persistent when the task is completed, so that the original planned task info is used at the completed reports.
+-- @return #TASKINFO self
+function TASKINFO:AddCargo( Cargo, Order, Detail, Keep )
+  self:AddInfo( "Cargo", Cargo, Order, Detail, Keep )
+  return self
+end
+
+
+--- Add Cargo set. 
+-- @param #TASKINFO self
+-- @param Core.Set#SET_CARGO SetCargo
+-- @param #number Order The display order, which is a number from 0 to 100.
+-- @param #TASKINFO.Detail Detail The detail Level.
+-- @param #boolean Keep (optional) If true, this would indicate that the planned taskinfo would be persistent when the task is completed, so that the original planned task info is used at the completed reports.
+-- @return #TASKINFO self
+function TASKINFO:AddCargoSet( SetCargo, Order, Detail, Keep )
+
+  local CargoReport = REPORT:New()
+  SetCargo:ForEachCargo(
+    --- @param Core.Cargo#CARGO Cargo
+    function( Cargo )
+      local CargoType = Cargo:GetType()
+      local CargoName = Cargo:GetName()
+      local CargoCoordinate = Cargo:GetCoordinate()
+      CargoReport:Add( string.format( '- "%s" (%s) at %s', CargoName, CargoType, CargoCoordinate:ToStringMGRS() ) )
+    end
+  )
+
+  self:AddInfo( "CargoSet", CargoReport:Text(), Order, Detail, Keep )
+
+  return self
+end
+
+
 
 --- Create the taskinfo Report
 -- @param #TASKINFO self
@@ -279,6 +318,10 @@ function TASKINFO:Report( Report, Detail, ReportGroup )
       if Key == "Wind" then
         local Coordinate = Data.Data -- Core.Point#COORDINATE
         Text = Coordinate:ToStringWind( ReportGroup:GetUnit(1), nil, self )
+      end
+      if Key == "CargoSet" then
+        local DataText = Data.Data -- #string
+        Text = DataText
       end
 
       if Line < math.floor( Data.Order / 10 ) then

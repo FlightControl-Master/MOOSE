@@ -338,6 +338,13 @@ function CARGO:IsUnLoaded()
   return self:Is( "UnLoaded" )
 end
 
+--- Check if cargo is boarding.
+-- @param #CARGO self
+-- @return #boolean true if boarding
+function CARGO:IsBoarding()
+  return self:Is( "Boarding" )
+end
+
 --- Check if cargo is alive.
 -- @param #CARGO self
 -- @return #boolean true if unloaded
@@ -944,7 +951,7 @@ do -- CARGO_UNIT
         else
           self:__Boarding( -1, CargoCarrier, NearRadius, ... )
           self.RunCount = self.RunCount + 1
-          if self.RunCount >= 20 then
+          if self.RunCount >= 60 then
             self.RunCount = 0
             local Speed = 90
             local Angle = 180

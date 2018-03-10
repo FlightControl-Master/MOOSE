@@ -162,7 +162,7 @@ do -- TASK_CARGO
     self.SmokeColor = SMOKECOLOR.Red
     
     self.CargoItemCount = {} -- Map of Carriers having a cargo item count to check the cargo loading limits.
-    self.CargoLimit = 2
+    self.CargoLimit = 6
     
     self.DeployZones = {} -- setmetatable( {}, { __mode = "v" } ) -- weak table on value
 
@@ -239,10 +239,10 @@ do -- TASK_CARGO
 --              ):SetTime(MenuTime)
 --            end
 
-
+            self:F( { CargoUnloaded = Cargo:IsUnLoaded(), CargoLoaded = Cargo:IsLoaded(), CargoItemCount = CargoItemCount } )
         
             if Cargo:IsUnLoaded() then
-              if CargoItemCount < Task.CargoLimit then 
+              if CargoItemCount <= Task.CargoLimit then 
                 if Cargo:IsInRadius( TaskUnit:GetPointVec2() ) then
                   local NotInDeployZones = true
                   for DeployZoneName, DeployZone in pairs( Task.DeployZones ) do
@@ -478,8 +478,10 @@ do -- TASK_CARGO
           if TaskUnit:InAir() then
             --- ABORT the boarding. Split group if any and go back to select action.
           else
-            self.Cargo:MessageToGroup( "Boarding ...", TaskUnit:GetGroup() ) 
-            self.Cargo:Board( TaskUnit, 20, self )
+            self.Cargo:MessageToGroup( "Boarding ...", TaskUnit:GetGroup() )
+            if not self.Cargo:IsBoarding() then
+              self.Cargo:Board( TaskUnit, 20, self )
+            end
           end
         else
           --self:__ArriveAtCargo( -0.1 )
@@ -800,6 +802,13 @@ do -- TASK_CARGO
     return self.GoalTotal
   end
   
+  function TASK_CARGO:UpdateTaskInfo()
+  
+    if self:IsStatePlanned() or self:IsStateAssigned() then
+      self.TaskInfo:AddTaskName( 0, "MSOD" )
+      self.TaskInfo:AddCargoSet( self.SetCargo, 10, "SOD" )
+    end
+  end
   
 end 
 
