@@ -228,7 +228,6 @@ do -- TASK_CARGO
         
           if Cargo:IsAlive() then
         
-              self:E( "Cargo is alive" )
 --            if Task:is( "RoutingToPickup" ) then
 --              MENU_GROUP_COMMAND:New(
 --                TaskUnit:GetGroup(),
@@ -240,7 +239,7 @@ do -- TASK_CARGO
 --              ):SetTime(MenuTime)
 --            end
 
-            self:E( { CargoUnloaded = Cargo:IsUnLoaded(), CargoLoaded = Cargo:IsLoaded(), CargoItemCount = CargoItemCount } )
+            self:F( { CargoUnloaded = Cargo:IsUnLoaded(), CargoLoaded = Cargo:IsLoaded(), CargoItemCount = CargoItemCount } )
         
             if Cargo:IsUnLoaded() then
               if CargoItemCount <= Task.CargoLimit then 
@@ -251,14 +250,12 @@ do -- TASK_CARGO
                       NotInDeployZones = false
                     end
                   end
-                  self:E( { NotInDeployZones = NotInDeployZones } )
                   if NotInDeployZones then
                     if not TaskUnit:InAir() then
                       MENU_GROUP_COMMAND:New( TaskUnit:GetGroup(), "Board cargo " .. Cargo.Name, TaskUnit.Menu, self.MenuBoardCargo, self, Cargo ):SetTime(MenuTime)
                     end
                   end
                 else
-                  self:E( { "Route" } )
                   MENU_GROUP_COMMAND:New( TaskUnit:GetGroup(), "Route to Pickup cargo " .. Cargo.Name, TaskUnit.Menu, self.MenuRouteToPickup, self, Cargo ):SetTime(MenuTime)
                 end
               end
@@ -280,7 +277,7 @@ do -- TASK_CARGO
         end
       )
 
-      --TaskUnit.Menu:Remove( MenuTime )
+      TaskUnit.Menu:Remove( MenuTime )
       
       
       self:__SelectAction( -15 )
@@ -481,8 +478,10 @@ do -- TASK_CARGO
           if TaskUnit:InAir() then
             --- ABORT the boarding. Split group if any and go back to select action.
           else
-            self.Cargo:MessageToGroup( "Boarding ...", TaskUnit:GetGroup() ) 
-            self.Cargo:Board( TaskUnit, 20, self )
+            self.Cargo:MessageToGroup( "Boarding ...", TaskUnit:GetGroup() )
+            if not self.Cargo:IsBoarding() then
+              self.Cargo:Board( TaskUnit, 20, self )
+            end
           end
         else
           --self:__ArriveAtCargo( -0.1 )
