@@ -7,7 +7,7 @@ __Moose = {}
 __Moose.Include = function( IncludeFile )
 	if not __Moose.Includes[ IncludeFile ] then
 		__Moose.Includes[IncludeFile] = IncludeFile
-		local f = assert( base.loadfile( __Moose.ProgramPath .. IncludeFile ) )
+		local f = assert( base.loadfile( IncludeFile ) )
 		if f == nil then
 			error ("Moose: Could not load Moose file " .. IncludeFile )
 		else
@@ -16,7 +16,5 @@ __Moose.Include = function( IncludeFile )
 		end
 	end
 end
-
-__Moose.ProgramPath = "Scripts/Moose/"
 
 __Moose.Includes = {}
