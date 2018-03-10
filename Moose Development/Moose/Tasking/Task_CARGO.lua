@@ -162,7 +162,7 @@ do -- TASK_CARGO
     self.SmokeColor = SMOKECOLOR.Red
     
     self.CargoItemCount = {} -- Map of Carriers having a cargo item count to check the cargo loading limits.
-    self.CargoLimit = 2
+    self.CargoLimit = 6
     
     self.DeployZones = {} -- setmetatable( {}, { __mode = "v" } ) -- weak table on value
 
@@ -228,6 +228,7 @@ do -- TASK_CARGO
         
           if Cargo:IsAlive() then
         
+              self:E( "Cargo is alive" )
 --            if Task:is( "RoutingToPickup" ) then
 --              MENU_GROUP_COMMAND:New(
 --                TaskUnit:GetGroup(),
@@ -239,10 +240,10 @@ do -- TASK_CARGO
 --              ):SetTime(MenuTime)
 --            end
 
-
+            self:E( { CargoUnloaded = Cargo:IsUnLoaded(), CargoLoaded = Cargo:IsLoaded(), CargoItemCount = CargoItemCount } )
         
             if Cargo:IsUnLoaded() then
-              if CargoItemCount < Task.CargoLimit then 
+              if CargoItemCount <= Task.CargoLimit then 
                 if Cargo:IsInRadius( TaskUnit:GetPointVec2() ) then
                   local NotInDeployZones = true
                   for DeployZoneName, DeployZone in pairs( Task.DeployZones ) do
@@ -250,12 +251,14 @@ do -- TASK_CARGO
                       NotInDeployZones = false
                     end
                   end
+                  self:E( { NotInDeployZones = NotInDeployZones } )
                   if NotInDeployZones then
                     if not TaskUnit:InAir() then
                       MENU_GROUP_COMMAND:New( TaskUnit:GetGroup(), "Board cargo " .. Cargo.Name, TaskUnit.Menu, self.MenuBoardCargo, self, Cargo ):SetTime(MenuTime)
                     end
                   end
                 else
+                  self:E( { "Route" } )
                   MENU_GROUP_COMMAND:New( TaskUnit:GetGroup(), "Route to Pickup cargo " .. Cargo.Name, TaskUnit.Menu, self.MenuRouteToPickup, self, Cargo ):SetTime(MenuTime)
                 end
               end
@@ -277,7 +280,7 @@ do -- TASK_CARGO
         end
       )
 
-      TaskUnit.Menu:Remove( MenuTime )
+      --TaskUnit.Menu:Remove( MenuTime )
       
       
       self:__SelectAction( -15 )
@@ -800,6 +803,13 @@ do -- TASK_CARGO
     return self.GoalTotal
   end
   
+  function TASK_CARGO:UpdateTaskInfo()
+  
+    if self:IsStatePlanned() or self:IsStateAssigned() then
+      self.TaskInfo:AddTaskName( 0, "MSOD" )
+      self.TaskInfo:AddCargoSet( self.SetCargo, 10, "SOD" )
+    end
+  end
   
 end 
 
