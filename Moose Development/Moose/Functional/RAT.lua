@@ -132,9 +132,17 @@
 -- @field #boolean radio If true/false disables radio messages from the RAT groups.
 -- @field #number frequency Radio frequency used by the RAT groups.
 -- @field #string modulation Ratio modulation. Either "FM" or "AM".
--- @field #boolean uncontrolled If true aircraft are spawned in uncontrolled state and will only sit on their parking spots.
+-- @field #boolean uncontrolled If true aircraft are spawned in uncontrolled state and will only sit on their parking spots. They can later be activated.
+-- @field #boolean invisible If true aircraft are set to invisible for other AI forces.
+-- @field #boolean immortal If true, aircraft are spawned as immortal.
+-- @field #boolean activate_uncontrolled If true, uncontrolled are activated randomly after certain time intervals.
+-- @field #number activate_delay Delay in seconds before first uncontrolled group is activated. Default is 5 seconds.
+-- @field #number activate_delta Time interval in seconds between activation of uncontrolled groups. Default is 5 seconds.
+-- @field #number activate_frand Randomization factor of time interval (activate_delta) between activating uncontrolled groups. Default is 0.
+-- @field #number activate_max=0 Maximal number of uncontrolle aircraft, which will be activated at a time. Default is 0 
 -- @field #string onboardnum Sets the onboard number prefix. Same as setting "TAIL #" in the mission editor.
 -- @field #number onboardnum0 (Optional) Starting value of the automatically appended numbering of aircraft within a flight. Default is one.
+-- @field #number rbug_maxretry Number of respawn retries (on ground) at other airports if a group gets accidentally spawned on the runway. Default is 3.
 -- @extends Core.Spawn#SPAWN
 
 ---# RAT class, extends @{Spawn#SPAWN}
@@ -355,8 +363,16 @@ RAT={
   modulation=nil,           -- Ratio modulation. Either "FM" or "AM".
   actype=nil,               -- Aircraft type set by user. Changes the type of the template group.
   uncontrolled=false,       -- Spawn uncontrolled aircraft.
+  invisible=false,          -- Spawn aircraft as invisible.
+  immortal=false,           -- Spawn aircraft as indestructible.
+  activate_uncontrolled=false, -- Activate uncontrolled aircraft (randomly). 
+  activate_delay=5,         -- Delay in seconds before first uncontrolled group is activated.
+  activate_delta=5,         -- Time interval in seconds between activation of uncontrolled groups.
+  activate_frand=0,         -- Randomization factor of time interval (activate_delta) between activating uncontrolled groups.
+  activate_max=0,           -- Max number of uncontrolle aircraft, which will be activated at a time. 
   onboardnum=nil,           -- Tail number.
   onboardnum0=1,            -- (Optional) Starting value of the automatically appended numbering of aircraft within a flight. Default is one.
+  rbug_maxretry=3,          -- Number of respawn retries (on ground) at other airports if a group gets accidentally spawned on the runway.
 }
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -398,6 +414,9 @@ RAT.status={
   DescentHolding="Descend to holding point",
   Holding="Holding",
   Destination="Arrived at destination",
+  -- Spawn states.
+  Uncontrolled="Uncontrolled",
+  Spawned="Spawned",
   -- Event states.
   EventBirthAir="Born in air",
   EventBirth="Ready and starting engines",
@@ -472,7 +491,7 @@ RAT.id="RAT | "
 --- RAT version.
 -- @field #list
 RAT.version={
-  version = "2.1.0",
+  version = "2.2.0",
   print = true,
 }
 
@@ -508,9 +527,9 @@ RAT.version={
 --DONE: Check cases where aircraft get shot down.
 --DONE: Handle the case where more than 10 RAT objects are spawned. Likewise, more than 10 groups of one object. Causes problems with the number of menu items! ==> not now!
 --DONE: Add custom livery choice if possible.
---TODO: When only a destination is set, it should be checked that the departure is within range. Also, that departure and destination are not the same.
---TODO: Add function to include all airports to selected destinations/departures.
+--DONE: Add function to include all airports to selected destinations/departures.
 --DONE: Find way to respawn aircraft at same position where the last was despawned for commute and journey.
+--TODO: Check that same alias is not given twice. Need to store previous ones and compare.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -523,6 +542,7 @@ RAT.version={
 -- @usage yak1:RAT("RAT_YAK") will create a RAT object called "yak1". The template group in the mission editor must have the name "RAT_YAK".
 -- @usage yak2:RAT("RAT_YAK", "Yak2") will create a RAT object "yak2". The template group in the mission editor must have the name "RAT_YAK" but the group will be called "Yak2" in e.g. the F10 menu.
 function RAT:New(groupname, alias)
+  BASE:F({groupname=groupname, alias=alias})
 
   -- Inherit SPAWN class.
   self=BASE:Inherit(self, SPAWN:NewWithAlias(groupname, alias)) -- #RAT
@@ -665,7 +685,6 @@ function RAT:Spawn(naircraft)
   text=text..string.format("Journey: %s\n", tostring(self.continuejourney))
   text=text..string.format("Destination Zone: %s\n", tostring(self.destinationzone))
   text=text..string.format("Return Zone: %s\n", tostring(self.returnzone))
-  text=text..string.format("Uncontrolled: %s\n", tostring(self.uncontrolled))
   text=text..string.format("Spawn delay: %4.1f\n", self.spawndelay)
   text=text..string.format("Spawn interval: %4.1f\n", self.spawninterval)
   text=text..string.format("Respawn after landing: %s\n", tostring(self.respawn_at_landing))
@@ -692,6 +711,13 @@ function RAT:Spawn(naircraft)
   text=text..string.format("Radio frequency  : %s\n", tostring(self.frequency))
   text=text..string.format("Radio modulation : %s\n", tostring(self.frequency))
   text=text..string.format("Tail # prefix    : %s\n", tostring(self.onboardnum))
+  text=text..string.format("Uncontrolled: %s\n", tostring(self.uncontrolled))
+  if self.uncontrolled and self.activate_uncontrolled then
+    text=text..string.format("Uncontrolled delay: %4.1f\n", self.activate_delay)
+    text=text..string.format("Uncontrolled delta: %4.1f\n", self.activate_delta)
+    text=text..string.format("Uncontrolled frand: %4.1f\n", self.activate_frand)
+    text=text..string.format("Uncontrolled max  : %4.1f\n", self.activate_max)
+  end
   if self.livery then
     text=text..string.format("Available liveries:\n")
     for _,livery in pairs(self.livery) do
@@ -718,8 +744,7 @@ function RAT:Spawn(naircraft)
     dt=math.max(dt, 180)
   end
   local Tstop=Tstart+dt*(self.ngroups-1)
-  SCHEDULER:New(nil, self._SpawnWithRoute, {self}, Tstart, dt, 0.0, Tstop)
-  
+    
   -- Status check and report scheduler.
   SCHEDULER:New(nil, self.Status, {self}, Tstart+1, self.statusinterval)
   
@@ -732,10 +757,131 @@ function RAT:Spawn(naircraft)
   self:HandleEvent(EVENTS.Dead,           self._OnDead)
   self:HandleEvent(EVENTS.Crash,          self._OnCrash)
   -- TODO: add hit event?
+
+  if self.ngroups==0 then
+    return nil
+  elseif self.uncontrolled then
+    for i=1,self.ngroups do
+      self:_SpawnWithRoute()
+    end
+    if self.activate_uncontrolled then
+      SCHEDULER:New(nil, self._ActivateUncontrolled, {self}, self.activate_delay, self.activate_delta, self.activate_frand)
+    end
+  else
+    SCHEDULER:New(nil, self._SpawnWithRoute, {self}, Tstart, dt, 0.0, Tstop)
+  end
   
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Randomly activates an uncontrolled aircraft.
+-- @param #RAT self
+function RAT:_ActivateUncontrolled()
+  if self.Debug then
+    env.info(RAT.id.."_ActivateUncontrolled")
+  end
+  
+  -- Spawn indices of uncontrolled inactive aircraft. 
+  local idx={}
+  local rat={}
+  
+  -- Number of active aircraft.
+  local nactive=0
+  
+  -- Loop over RAT groups and count the active ones.
+  for spawnindex,ratcraft in pairs(self.ratcraft) do
+  
+    local group=ratcraft.group --Wrapper.Group#GROUP
+    
+    if group and group:IsAlive() then
+  
+      if self.Debug then
+        local text=string.format("Spawnindex = %d, group name = %s, active = %s", spawnindex, ratcraft.group:GetName(), tostring(ratcraft.active))
+        env.info(RAT.id..text)
+      end
+      
+      if ratcraft.active then
+        nactive=nactive+1
+      else
+        table.insert(idx, spawnindex)
+      end
+    
+    end
+  end
+  
+  if self.Debug then
+    local text=string.format("Nactive = %d, Ninactive = %d, max active=%d", nactive, #idx, self.activate_max)
+    env.info(RAT.id..text)
+  end
+  
+  if #idx>0 and nactive<self.activate_max then
+  
+    -- Randomly pick on group, which is activated.
+    local index=idx[math.random(#idx)]
+    
+    -- Get corresponding group.
+    local group=self.ratcraft[index].group --Wrapper.Group#GROUP
+    
+    -- Start aircraft.
+    self:_CommandStartUncontrolled(group)
+  end
+
+end
+
+--- Start uncontrolled aircraft group.
+-- @param #RAT self
+-- @param Wrapper.Group#GROUP group Group to be activated.
+function RAT:_CommandStartUncontrolled(group)
+
+  -- Start command.
+  local StartCommand = {id = 'Start', params = {}}
+  
+  -- Debug message
+  local text=string.format("Activating uncontrolled group %s.", group:GetName())
+  if self.Debug then
+    env.info(RAT.id..text)
+  end
+  MESSAGE:New(text, 10):ToAllIf(self.Debug)
+  
+  -- Activate group.
+  group:SetCommand(StartCommand)
+  
+  -- Spawn index.
+  local index=self:GetSpawnIndexFromGroup(group)
+  
+  -- Set status to active.
+  self.ratcraft[index].active=true
+  
+  -- Set status to "Ready and Starting Engines".
+  self:_SetStatus(group, RAT.status.EventBirth)
+end
+
+--- Set RAT group to (in-)visible for other AI forces.
+-- @param #RAT self
+-- @param Wrapper.Group#GROUP group Group to be set (in)visible.
+-- @param #boolean switch If true, the group is invisible. If false the group will be visible.
+function RAT:_CommandInvisible(group,switch)
+
+  -- Command structure for setting groups to invisible.  
+  local SetInvisible = {id = 'SetInvisible', params = {value = switch}}
+  
+  -- Execute command.
+  group:SetCommand(SetInvisible)
+end
+
+--- Set RAT group to be (im-)mortal.
+-- @param #RAT self
+-- @param Wrapper.Group#GROUP group Group to be set (im-)mortal.
+-- @param #boolean switch True enables immortality, false disables it.
+function RAT:_CommandImmortal(group,switch)
+
+  -- Command structure for setting groups to invisible.  
+  local SetInvisible = {id = 'SetImmortal', params = {value = switch}}
+  
+  -- Execute command.
+  group:SetCommand(SetInvisible)
+end
 
 --- Function checks consistency of user input and automatically adjusts parameters if necessary.
 -- @param #RAT self
@@ -843,8 +989,9 @@ function RAT:_CheckConsistency()
   
   -- Uncontrolled aircraft must start with engines off.
   if self.uncontrolled then
-    -- TODO: Strangly, it does not work with RAT.wp.cold only with RAT.wp.hot! 
-    self.takeoff=RAT.wp.hot
+    -- SOLVED: Strangly, it does not work with RAT.wp.cold only with RAT.wp.hot!
+    -- Figured out why. SPAWN:SpawnWithIndex is overwriting some values. Now it should work with cold as expected!
+    self.takeoff=RAT.wp.cold
   end
 end
 
@@ -1137,6 +1284,14 @@ function RAT:NoRespawn()
   self.norespawn=true
 end
 
+--- Number of tries to respawn an aircraft in case it has accitentally been spawned on runway.
+-- @param #RAT self
+-- @param #number n Number of retries. Default is 3.
+function RAT:SetMaxRespawnTriedWhenSpawnedOnRunway(n)
+  n=n or 3
+  self.rbug_maxretry=n
+end
+
 --- Aircraft will be respawned directly after take-off.
 -- @param #RAT self
 function RAT:RespawnAfterTakeoff()
@@ -1170,10 +1325,48 @@ function RAT:RadioFrequency(frequency)
   self.frequency=frequency
 end
 
---- Spawn aircraft in uncontolled state. Aircraft will only sit at their parking spots. Only for populating airfields. 
+--- Spawn aircraft in uncontrolled state. Aircraft will only sit at their parking spots. They can be activated randomly by the RAT:ActivateUncontrolled() function.
 -- @param #RAT self
 function RAT:Uncontrolled()
   self.uncontrolled=true
+end
+
+--- Aircraft are invisible. 
+-- @param #RAT self
+function RAT:Invisible()
+  self.invisible=true
+end
+
+--- Aircraft are immortal. 
+-- @param #RAT self
+function RAT:Immortal()
+  self.immortal=true
+end
+
+--- Activate uncontrolled aircraft. 
+-- @param #RAT self
+-- @param #number delay Time delay in seconds before (first) aircraft is activated. Default is 1 second.
+-- @param #number delta Time difference in seconds before next aircraft is activated. Default is 1 second.
+-- @param #number frand Factor [0,...,1] for randomization of time difference between aircraft activations. Default is 0, i.e. no randomization.
+-- @param #number maxactivated Maximal numnber of activated aircraft. Absolute maximum will be the number of spawned groups.
+function RAT:ActivateUncontrolled(delay,delta,frand,maxactivated)
+
+  self.activate_uncontrolled=true
+  self.activate_delay=delay or 1
+  self.activate_delta=delta or 1
+  self.activate_frand=frand or 0
+  
+  -- Ensure min delay is one second.
+  self.activate_delay=math.max(self.activate_delay,1)
+  
+  -- Ensure min delta is one second.
+  self.activate_delta=math.max(self.activate_delta,0)
+  
+  -- Ensure frand is in [0,...,1]
+  self.activate_frand=math.max(self.activate_frand,0)
+  self.activate_frand=math.min(self.activate_frand,1)
+  
+  self.activate_max=maxactivated
 end
 
 --- Set radio modulation. Default is AM.
@@ -1320,6 +1513,12 @@ function RAT:_Debug(switch)
   self.Debug=switch
 end
 
+--- Enable debug mode. More output in dcs.log file and onscreen messages to all.
+-- @param #RAT self
+function RAT:Debugmode()
+  self.Debug=true
+end
+
 --- Aircraft report status update messages along the route.
 -- @param #RAT self
 -- @param #boolean switch Swtich reports on (true) or off (false). No argument is on.
@@ -1415,11 +1614,6 @@ function RAT:_InitAircraft(DCSgroup)
   local DCScategory=DCSgroup:getCategory()
   local DCStype=DCSunit:getTypeName()
  
-  -- Descriptors table of unit.
-  if self.Debug then
-    self:E({"DCSdesc", DCSdesc})
-  end
-  
   -- set category
   if DCScategory==Group.Category.AIRPLANE then
     self.category=RAT.cat.plane
@@ -1480,7 +1674,14 @@ end
 -- @param #string _departure (Optional) Name of departure airbase.
 -- @param #string _destination (Optional) Name of destination airbase.
 -- @param #number _takeoff Takeoff type id.
-function RAT:_SpawnWithRoute(_departure, _destination, _takeoff, _landing, _livery, _waypoint)
+-- @param #number _landing Landing type id.
+-- @param #string _livery Livery to use for this group.
+-- @param #table _waypoint First waypoint to be used (for continue journey, commute, etc).
+-- @param Core.Point#COORDINATE _lastpos (Optional) Position where the aircraft will be spawned.
+-- @param #number _nrespawn Number of already performed respawn attempts (e.g. spawning on runway bug).
+-- @return #number Spawn index.
+function RAT:_SpawnWithRoute(_departure, _destination, _takeoff, _landing, _livery, _waypoint, _lastpos, _nrespawn)
+  self:F({rat=RAT.id, departure=_departure, destination=_destination, takeoff=_takeoff, landing=_landing, livery=_livery, waypoint=_waypoint, lastpos=_lastpos, nrespawn=_nrespawn})
 
   -- Set takeoff type.
   local takeoff=self.takeoff
@@ -1498,6 +1699,18 @@ function RAT:_SpawnWithRoute(_departure, _destination, _takeoff, _landing, _live
   if takeoff==RAT.wp.coldorhot then
     local temp={RAT.wp.cold, RAT.wp.hot}
     takeoff=temp[math.random(2)]
+  end
+  
+  -- Number of respawn attempts after spawning on runway.
+  local nrespawn=0
+  if _nrespawn then
+    nrespawn=_nrespawn
+  end
+  
+  -- Spawn position.
+  local lastpos=nil
+  if _lastpos then
+    lastpos=_lastpos
   end
 
   -- Set flight plan.
@@ -1522,24 +1735,13 @@ function RAT:_SpawnWithRoute(_departure, _destination, _takeoff, _landing, _live
     livery=nil
   end
   
---[[
-  -- Use last waypoint of previous flight as initial wp for this one.
-  if _waypoint and takeoff==RAT.wp.air and (self.continuejourney or self.commute) then
-    -- If the other way does not work, we can still try this.
-    waypoints[1]=_waypoint
-  end 
-]]
-  
   -- Modify the spawn template to follow the flight plan.
-  self:_ModifySpawnTemplate(waypoints, livery)
+  self:_ModifySpawnTemplate(waypoints, livery, lastpos)
   
   -- Actually spawn the group.
   local group=self:SpawnWithIndex(self.SpawnIndex) -- Wrapper.Group#GROUP
   
-  -- Increase group counter.
-  self.alive=self.alive+1
-  
-  -- ATC is monitoring this flight (if it supposed to land).
+  -- ATC is monitoring this flight (if it is supposed to land).
   if self.ATCswitch and landing==RAT.wp.landing then
     if self.returnzone then
       self:_ATCAddFlight(group:GetName(), departure:GetName())
@@ -1551,6 +1753,16 @@ function RAT:_SpawnWithRoute(_departure, _destination, _takeoff, _landing, _live
   -- Place markers of waypoints on F10 map.
   if self.placemarkers then
     self:_PlaceMarkers(waypoints, self.SpawnIndex)
+  end
+  
+  -- Set group to be invisible.
+  if self.invisible then
+    self:_CommandInvisible(group, true)
+  end
+  
+  -- Set group to be immortal.
+  if self.immortal then
+    self:_CommandImmortal(group, true)
   end
   
   -- Set ROE, default is "weapon hold".
@@ -1565,7 +1777,6 @@ function RAT:_SpawnWithRoute(_departure, _destination, _takeoff, _landing, _live
   self.ratcraft[self.SpawnIndex]["destination"]=destination
   self.ratcraft[self.SpawnIndex]["departure"]=departure
   self.ratcraft[self.SpawnIndex]["waypoints"]=waypoints
-  self.ratcraft[self.SpawnIndex]["status"]="spawned"
   self.ratcraft[self.SpawnIndex]["airborne"]=group:InAir()
   -- Time and position on ground. For check if aircraft is stuck somewhere.
   if group:InAir() then
@@ -1588,13 +1799,21 @@ function RAT:_SpawnWithRoute(_departure, _destination, _takeoff, _landing, _live
   self.ratcraft[self.SpawnIndex].wpholding=WPholding
   self.ratcraft[self.SpawnIndex].wpfinal=WPfinal
   
+  -- Aircraft is active or spawned in uncontrolled state.
+  self.ratcraft[self.SpawnIndex].active=not self.uncontrolled
+  
+  -- Set status to spawned. This will be overwritten in birth event.
+  self.ratcraft[self.SpawnIndex]["status"]=RAT.status.Spawned
+  
   -- Livery
   self.ratcraft[self.SpawnIndex].livery=livery
   
   -- If this switch is set to true, the aircraft will be despawned the next time the status function is called.
   self.ratcraft[self.SpawnIndex].despawnme=false
-
   
+  -- Number of preformed spawn attempts for this group.
+  self.ratcraft[self.SpawnIndex].nrespawn=nrespawn
+ 
   -- Create submenu for this group.
   if self.f10menu then
     local name=self.aircraft.type.." ID "..tostring(self.SpawnIndex)
@@ -1617,7 +1836,6 @@ function RAT:_SpawnWithRoute(_departure, _destination, _takeoff, _landing, _live
   end
   
   return self.SpawnIndex
-  
 end
 
 
@@ -1645,6 +1863,7 @@ function RAT:_Respawn(group)
   local landing=self.ratcraft[index].landing
   local livery=self.ratcraft[index].livery
   local lastwp=self.ratcraft[index].waypoints[#self.ratcraft[index].waypoints]
+  local lastpos=group:GetCoordinate()
   
   local _departure=nil
   local _destination=nil
@@ -1652,6 +1871,7 @@ function RAT:_Respawn(group)
   local _landing=nil
   local _livery=nil
   local _lastwp=nil
+  local _lastpos=nil
  
   if self.continuejourney then
   
@@ -1660,6 +1880,13 @@ function RAT:_Respawn(group)
     
     -- Use the same livery for next aircraft.
     _livery=livery
+    
+    -- Last known position of the aircraft, which should be the sparking spot location.
+    -- Note: we have to check that it was supposed to land and not respawned directly after landing or after takeoff.
+    -- TODO: Need to think if continuejourney with respawn_after_takeoff actually makes sense.
+    if landing==RAT.wp.landing and lastpos and not (self.respawn_at_landing or self.respawn_after_takeoff) then
+      _lastpos=lastpos
+    end
     
     if self.destinationzone then
       
@@ -1699,6 +1926,13 @@ function RAT:_Respawn(group)
     
     -- Use the same livery for next aircraft.
     _livery=livery
+    
+    -- Last known position of the aircraft, which should be the sparking spot location.
+    -- Note: we have to check that it was supposed to land and not respawned directly after landing or after takeoff.
+    -- TODO: Need to think if commute with respawn_after_takeoff actually makes sense.
+    if landing==RAT.wp.landing and lastpos and not (self.respawn_at_landing or self.respawn_after_takeoff) then
+      _lastpos=lastpos
+    end
     
     -- Handle takeoff type.
     if self.destinationzone then
@@ -1745,19 +1979,28 @@ function RAT:_Respawn(group)
     _lastwp=lastwp
   end
   
-  if self.Debug then
-	 local text=string.format("self.takeoff, takeoff, _takeoff = %s, %s, %s", tostring(self.takeoff), tostring(takeoff), tostring(_takeoff))
-	 text=text.."\n"..string.format("self.landing, landing, _landing = %s, %s, %s", tostring(self.landing), tostring(landing), tostring(_landing))
-	 self:T(RAT.id..text)
-  end
+  -- Debug
+  self:F({departure=_departure, destination=_destination, takeoff=_takeoff, landing=_landing, livery=_livery, lastwp=_lastwp})
       
   -- Spawn new group.
-  if self.respawn_delay then
-    SCHEDULER:New(nil, self._SpawnWithRoute, {self, _departure, _destination, _takeoff, _landing, _livery, _lastwp}, self.respawn_delay)
-  else
-    self:_SpawnWithRoute(_departure, _destination, _takeoff, _landing, _livery, _lastwp)
-  end
+  local arg={}
+  arg.self=self
+  arg.departure=_departure
+  arg.destination=_destination
+  arg.takeoff=_takeoff
+  arg.landing=_landing
+  arg.livery=_livery
+  arg.lastwp=_lastwp
+  arg.lastpos=_lastpos
+  SCHEDULER:New(nil, self._SpawnWithRouteTimer, {arg}, self.respawn_delay or 1)
   
+end
+
+--- Delayed spawn function called by scheduler.
+-- @param #RAT self
+-- @param #table arg Parameters: arg.self, arg.departure, arg.destination, arg.takeoff, arg.landing, arg.livery, arg.lastwp, arg.lastpos
+function RAT._SpawnWithRouteTimer(arg)
+  RAT._SpawnWithRoute(arg.self, arg.departure, arg.destination, arg.takeoff, arg.landing, arg.livery, arg.lastwp, arg.lastpos)
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -2428,7 +2671,7 @@ function RAT:_PickDeparture(takeoff)
   end
   
     -- Info message.
-  self:T(RAT.id.."Number of possible departures = "..#departures)
+  self:T(RAT.id..string.format("Number of possible departures for %s= %d", self.alias, #departures))
   
   -- Select departure airport or zone.
   local departure=departures[math.random(#departures)]
@@ -2436,16 +2679,14 @@ function RAT:_PickDeparture(takeoff)
   local text
   if departure and departure:GetName() then
     if takeoff==RAT.wp.air then
-      text="Chosen departure zone: "..departure:GetName()
+      text=string.format("%s: Chosen departure zone: %s", self.alias, departure:GetName())
     else
-      text="Chosen departure airport: "..departure:GetName().." (ID "..departure:GetID()..")"
+      text=string.format("%s: Chosen departure airport: %s (ID %d)", self.alias, departure:GetName(), departure:GetID())
     end
+    MESSAGE:New(text, 30):ToAllIf(self.Debug)
     self:T(RAT.id..text)
-    if self.Debug then
-      MESSAGE:New(text, 30):ToAll()
-    end
   else
-    self:E(RAT.id.."ERROR: No departure airport or zone found.")
+    self:E(RAT.id..string.format("ERROR: No departure airport or zone found for %s!", self.alias))
     departure=nil
   end
   
@@ -2562,14 +2803,12 @@ function RAT:_PickDestination(departure, q, minrange, maxrange, random, landing)
     -- Debug message.
     local text
     if landing==RAT.wp.air then
-      text=string.format("Chosen destination zone: %s.", destination:GetName())
+      text=string.format("%s: Chosen destination zone: %s.", self.alias, destination:GetName())
     else
-      text=string.format("Chosen destination airport: %s (ID %d).", destination:GetName(), destination:GetID())
+      text=string.format("%s Chosen destination airport: %s (ID %d).", self.alias, destination:GetName(), destination:GetID())
     end
     self:T(RAT.id..text)
-    if self.Debug then
-      MESSAGE:New(text, 30):ToAll()
-    end
+    MESSAGE:New(text, 30):ToAllIf(self.Debug)
     
   else
     self:E(RAT.id.."ERROR: No destination airport or zone found.")
@@ -2657,13 +2896,8 @@ function RAT:_GetAirportsOfMap()
       -- Add airport to table.
       table.insert(self.airports_map, _myab)
       
-      if self.Debug then
-        local text1="MOOSE: Airport ID = ".._myab:GetID().." and Name = ".._myab:GetName()..", Category = ".._myab:GetCategory()..", TypeName = ".._myab:GetTypeName()
-        --local text2="DCS  : Airport ID = "..airbase:getID().." and Name = "..airbase:getName()..", Category = "..airbase:getCategory()..", TypeName = "..airbase:getTypeName()
-        self:T(RAT.id..text1)
-        --self:T(RAT.id..text2)
-      end
-      
+      local text="MOOSE: Airport ID = ".._myab:GetID().." and Name = ".._myab:GetName()..", Category = ".._myab:GetCategory()..", TypeName = ".._myab:GetTypeName()
+      self:T2(RAT.id..text)
     end
     
   end
@@ -2701,162 +2935,160 @@ end
 -- @param #number forID (Optional) Send message only for this ID.
 function RAT:Status(message, forID)
 
-  message=message or false
-  forID=forID or false
+  --message=message or false
+  --forID=forID or false
 
-  -- number of ratcraft spawned.
-  local ngroups=#self.ratcraft
+  if message==nil then
+    message=false
+  end  
+  if forID==nil then
+    forID=false
+  end
   
   -- Current time.
   local Tnow=timer.getTime()
     
-  for i=1, ngroups do
+  -- Loop over all ratcraft.  
+  for spawnindex,ratcraft in ipairs(self.ratcraft) do
   
-    if self.ratcraft[i].group then
-      if self.ratcraft[i].group:IsAlive() then
-      
-        -- Gather some information.
-        local group=self.ratcraft[i].group  --Wrapper.Group#GROUP
-        local prefix=self:_GetPrefixFromGroup(group)
-        local life=self:_GetLife(group)
-        local fuel=group:GetFuel()*100.0
-        local airborne=group:InAir()
-        local coords=group:GetCoordinate()
-        local alt=coords.y
-        --local vel=group:GetVelocityKMH()
-        local departure=self.ratcraft[i].departure:GetName()
-        local destination=self.ratcraft[i].destination:GetName()
-        local type=self.aircraft.type
-        
-        
-        -- Monitor time and distance on ground.
-        local Tg=0
-        local Dg=0
-        local dTlast=0
-        local stationary=false --lets assume, we did move
-        if airborne then
-          -- Aircraft is airborne.
-          self.ratcraft[i]["Tground"]=nil
-          self.ratcraft[i]["Pground"]=nil
-          self.ratcraft[i]["Tlastcheck"]=nil
-        else
-          --Aircraft is on ground.
-          if self.ratcraft[i]["Tground"] then
-            -- Aircraft was already on ground. Calculate total time on ground.
-            Tg=Tnow-self.ratcraft[i]["Tground"]
+    -- Get group.
+    local group=ratcraft.group  --Wrapper.Group#GROUP
+    
+    if group and group:IsAlive() then
             
-            -- Distance on ground since last check.
-            Dg=coords:Get2DDistance(self.ratcraft[i]["Pground"])
-            
-            -- Time interval since last check.
-            dTlast=Tnow-self.ratcraft[i]["Tlastcheck"]
-            
-            -- If more than Tinactive seconds passed since last check ==> check how much we moved meanwhile.
-            if dTlast > self.Tinactive then
-                    
-              -- If aircraft did not move more than 50 m since last check, we call it stationary and despawn it.
-              --TODO: add case that the aircraft are currently starting their engines. This should not count as being stationary.
-              --local starting_engines=self.ratcraft[i].status==""
-              if Dg<50 and not self.uncontrolled then
-                stationary=true
-              end
-              
-               -- Set the current time to know when the next check is necessary.
-              self.ratcraft[i]["Tlastcheck"]=Tnow
-              self.ratcraft[i]["Pground"]=coords
+      -- Gather some information.
+      local prefix=self:_GetPrefixFromGroup(group)
+      local life=self:_GetLife(group)
+      local fuel=group:GetFuel()*100.0
+      local airborne=group:InAir()
+      local coords=group:GetCoordinate()
+      local alt=coords.y
+      --local vel=group:GetVelocityKMH()
+      local departure=ratcraft.departure:GetName()
+      local destination=ratcraft.destination:GetName()
+      local type=self.aircraft.type
+      local status=ratcraft.status
+      local active=ratcraft.active
+             
+      -- Monitor time and distance on ground.
+      local Tg=0
+      local Dg=0
+      local dTlast=0
+      local stationary=false --lets assume, we did move
+      if airborne then
+        -- Aircraft is airborne.
+        ratcraft["Tground"]=nil
+        ratcraft["Pground"]=nil
+        ratcraft["Tlastcheck"]=nil
+      else
+        --Aircraft is on ground.
+        if ratcraft["Tground"] then
+          -- Aircraft was already on ground. Calculate total time on ground.
+          Tg=Tnow-ratcraft["Tground"]
+          
+          -- Distance on ground since last check.
+          Dg=coords:Get2DDistance(ratcraft["Pground"])
+          
+          -- Time interval since last check.
+          dTlast=Tnow-ratcraft["Tlastcheck"]
+          
+          -- If more than Tinactive seconds passed since last check ==> check how much we moved meanwhile.
+          if dTlast > self.Tinactive then
+                  
+            -- If aircraft did not move more than 50 m since last check, we call it stationary and despawn it.
+            -- Aircraft which are spawned uncontrolled or starting their engines are not counted. 
+            if Dg<50 and active and not status==RAT.status.EventBirth then
+              stationary=true
             end
             
-          else
-            -- First time we see that the aircraft is on ground. Initialize the times and position.
-            self.ratcraft[i]["Tground"]=Tnow
-            self.ratcraft[i]["Tlastcheck"]=Tnow
-            self.ratcraft[i]["Pground"]=coords
+             -- Set the current time to know when the next check is necessary.
+            ratcraft["Tlastcheck"]=Tnow
+            ratcraft["Pground"]=coords
           end
+          
+        else
+          -- First time we see that the aircraft is on ground. Initialize the times and position.
+          ratcraft["Tground"]=Tnow
+          ratcraft["Tlastcheck"]=Tnow
+          ratcraft["Pground"]=coords
         end
-        
-        -- Monitor travelled distance since last check.
-        local Pn=coords
-        local Dtravel=Pn:Get2DDistance(self.ratcraft[i]["Pnow"])
-        self.ratcraft[i]["Pnow"]=Pn
-        
-        -- Add up the travelled distance.
-        self.ratcraft[i]["Distance"]=self.ratcraft[i]["Distance"]+Dtravel
-        
-        -- Distance remaining to destination.
-        local Ddestination=Pn:Get2DDistance(self.ratcraft[i].destination:GetCoordinate())
-        
-        -- Status shortcut.
-        local status=self.ratcraft[i].status
-        
-        -- Uncontrolled aircraft.
-        if self.uncontrolled then
-          status="Uncontrolled"
-        end
-     
-        -- Status report.
-        if (forID and i==forID) or (not forID) then
-          local text=string.format("ID %i of group %s\n", i, prefix)
-          if self.commute then
-            text=text..string.format("%s commuting between %s and %s\n", type, departure, destination)
-          elseif self.continuejourney then
-            text=text..string.format("%s travelling from %s to %s (and continueing form there)\n", type, departure, destination)
-          else
-            text=text..string.format("%s travelling from %s to %s\n", type, departure, destination)
-          end
-          text=text..string.format("Status: %s", status)
-          if airborne then
-            text=text.." [airborne]\n"
-          else
-            text=text.." [on ground]\n"
-          end
-          text=text..string.format("Fuel = %3.0f %%\n", fuel)
-          text=text..string.format("Life  = %3.0f %%\n", life)
-          text=text..string.format("FL%03d = %i m ASL\n", alt/RAT.unit.FL2m, alt)
-          --text=text..string.format("Speed = %i km/h\n", vel)
-          text=text..string.format("Distance travelled        = %6.1f km\n", self.ratcraft[i]["Distance"]/1000)
-          text=text..string.format("Distance to destination = %6.1f km", Ddestination/1000)
-          if not airborne then
-            text=text..string.format("\nTime on ground  = %6.0f seconds\n", Tg)
-            text=text..string.format("Position change = %8.1f m since %3.0f seconds.", Dg, dTlast)
-          end
-          if self.Debug then
-            self:T(RAT.id..text)
-          end
-          if message then
-            MESSAGE:New(text, 20):ToAll()
-          end
-        end
-        
-        -- Despawn groups if they are on ground and don't move or are damaged.
-        if not airborne then
-        
-          -- Despawn unit if it did not move more then 50 m in the last 180 seconds.
-          if stationary then
-            local text=string.format("Group %s is despawned after being %4.0f seconds inaktive on ground.", self.alias, dTlast)
-            self:T(RAT.id..text)
-            self:_Despawn(group)
-          end
-          -- Despawn group if life is < 10% and distance travelled < 100 m.
-          if life<10 and Dtravel<100 then
-            local text=string.format("Damaged group %s is despawned. Life = %3.0f", self.alias, life)
-            self:_Despawn(group)
-          end
-        end
-        
-        if self.ratcraft[i].despawnme then
-          local text=string.format("Flight %s will be despawned NOW!", self.alias)
-          self:T(RAT.id..text)
-            -- Despawn old group.
-          self:_Respawn(self.ratcraft[i].group)
-          self:_Despawn(self.ratcraft[i].group)
-        end
-      end       
-    else
-      if self.Debug then
-        local text=string.format("Group %i does not exist.", i)
-        self:T(RAT.id..text)
       end
-    end    
+      
+      -- Monitor travelled distance since last check.
+      local Pn=coords
+      local Dtravel=Pn:Get2DDistance(ratcraft["Pnow"])
+      ratcraft["Pnow"]=Pn
+      
+      -- Add up the travelled distance.
+      ratcraft["Distance"]=ratcraft["Distance"]+Dtravel
+      
+      -- Distance remaining to destination.
+      local Ddestination=Pn:Get2DDistance(ratcraft.destination:GetCoordinate())
+   
+      -- Status report.
+      if (forID and spawnindex==forID) or (not forID) then
+        local text=string.format("ID %i of group %s\n", spawnindex, prefix)
+        if self.commute then
+          text=text..string.format("%s commuting between %s and %s\n", type, departure, destination)
+        elseif self.continuejourney then
+          text=text..string.format("%s travelling from %s to %s (and continueing form there)\n", type, departure, destination)
+        else
+          text=text..string.format("%s travelling from %s to %s\n", type, departure, destination)
+        end
+        text=text..string.format("Status: %s", status)
+        if airborne then
+          text=text.." [airborne]\n"
+        else
+          text=text.." [on ground]\n"
+        end
+        text=text..string.format("Fuel = %3.0f %%\n", fuel)
+        text=text..string.format("Life  = %3.0f %%\n", life)
+        text=text..string.format("FL%03d = %i m ASL\n", alt/RAT.unit.FL2m, alt)
+        --text=text..string.format("Speed = %i km/h\n", vel)
+        text=text..string.format("Distance travelled        = %6.1f km\n", ratcraft["Distance"]/1000)
+        text=text..string.format("Distance to destination = %6.1f km", Ddestination/1000)
+        if not airborne then
+          text=text..string.format("\nTime on ground  = %6.0f seconds\n", Tg)
+          text=text..string.format("Position change = %8.1f m since %3.0f seconds.", Dg, dTlast)
+        end
+        self:T2(RAT.id..text)
+        if message then
+          MESSAGE:New(text, 20):ToAll()
+        end
+      end
+      
+      -- Despawn groups if they are on ground and don't move or are damaged.
+      if not airborne then
+      
+        -- Despawn unit if it did not move more then 50 m in the last 180 seconds.
+        if stationary then
+          local text=string.format("Group %s is despawned after being %4.0f seconds inaktive on ground.", self.alias, dTlast)
+          self:T(RAT.id..text)
+          self:_Despawn(group)
+        end
+        -- Despawn group if life is < 10% and distance travelled < 100 m.
+        if life<10 and Dtravel<100 then
+          local text=string.format("Damaged group %s is despawned. Life = %3.0f", self.alias, life)
+          self:_Despawn(group)
+        end
+      end
+      
+      if ratcraft.despawnme then
+        local text=string.format("Flight %s will be despawned NOW!", self.alias)
+        self:T(RAT.id..text)
+        -- Despawn old group.
+        if not self.norespawn then  
+          self:_Respawn(group)
+        end
+        self:_Despawn(group)
+      end
+
+    else
+      -- Group does not exist.
+      local text=string.format("Group does not exist in loop ratcraft status.")
+      self:T2(RAT.id..text)
+    end
+       
   end
   
   if (message and not forID) then
@@ -2878,40 +3110,49 @@ function RAT:_GetLife(group)
     if unit then
       life=unit:GetLife()/unit:GetLife0()*100
     else
-      if self.Debug then
-        self:E(RAT.id.."ERROR: Unit does not exist in RAT_Getlife(). Returning zero.")
-      end
+      self:T2(RAT.id.."ERROR: Unit does not exist in RAT_Getlife(). Returning zero.")
     end
   else
-    if self.Debug then
-      self:E(RAT.id.."ERROR: Group does not exist in RAT_Getlife(). Returning zero.")
-    end
+    self:T2(RAT.id.."ERROR: Group does not exist in RAT_Getlife(). Returning zero.")
   end
   return life
 end
 
 --- Set status of group.
 -- @param #RAT self
+-- @param Wrapper.Group#GROUP group Group.
+-- @param #string status Status of group.
 function RAT:_SetStatus(group, status)
 
-  -- Get index from groupname.
-  local index=self:GetSpawnIndexFromGroup(group)
-  
-  -- Set new status.
-  self.ratcraft[index].status=status
-  
-  -- No status update message for "first waypoint", "holding"
-  local no1 = status==RAT.status.Departure
-  local no2 = status==RAT.status.EventBirthAir
-  local no3 = status==RAT.status.Holding
-  
-  local text=string.format("Flight %s: %s.", group:GetName(), status)
-  self:T(RAT.id..text)
-  
-  if (not (no1 or no2 or no3)) then
-    MESSAGE:New(text, 10):ToAllIf(self.reportstatus)
+  if group and group:IsAlive() then
+
+    -- Get index from groupname.
+    local index=self:GetSpawnIndexFromGroup(group)
+    
+    if self.Debug or self.reportstatus then
+      env.info(RAT.id..string.format("Group %s has status %s, spawnindex = %d", group:GetName(), status, index))
+    end
+    
+    if self.ratcraft[index] then
+    
+      -- Set new status.
+      self.ratcraft[index].status=status
+      
+      -- No status update message for "first waypoint", "holding"
+      local no1 = status==RAT.status.Departure
+      local no2 = status==RAT.status.EventBirthAir
+      local no3 = status==RAT.status.Holding
+      
+      local text=string.format("Flight %s: %s.", group:GetName(), status)
+      self:T(RAT.id..text)
+      
+      if (not (no1 or no2 or no3)) then
+        MESSAGE:New(text, 10):ToAllIf(self.reportstatus)
+      end
+      
+    end
+    
   end
-  
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -2934,25 +3175,147 @@ function RAT:_OnBirth(EventData)
     
         local text="Event: Group "..SpawnGroup:GetName().." was born."
         self:T(RAT.id..text)
+        
+        -- Increase counter of alive groups (also uncontrolled ones).
+        self.alive=self.alive+1
 
         -- Set status.
-        local status
+        local status="unknown in birth"
         if SpawnGroup:InAir() then
-          status="Just born (after air start)"
           status=RAT.status.EventBirthAir
+        elseif self.uncontrolled then
+          status=RAT.status.Uncontrolled
         else
-          status="Starting engines (after birth)"
           status=RAT.status.EventBirth
         end
         self:_SetStatus(SpawnGroup, status)
+               
+        -- Get some info ablout this flight. 
+        local i=self:GetSpawnIndexFromGroup(SpawnGroup)
+        local _departure=self.ratcraft[i].departure:GetName()
+        local _destination=self.ratcraft[i].destination:GetName()
+        local _nrespawn=self.ratcraft[i].nrespawn
+        local _takeoff=self.ratcraft[i].takeoff
+        local _landing=self.ratcraft[i].landing
+        local _livery=self.ratcraft[i].livery
+        
+        -- Check if aircraft group was accidentally spawned on the runway.
+        -- This can happen due to no parking slots available and other DCS bugs.
+        local onrunway=false
+        if _takeoff ~= RAT.wp.runway then
+          onrunway=self:_CheckOnRunway(SpawnGroup, _departure)
+        end     
+        
+        -- Workaround if group was spawned on runway.
+        if onrunway then
+             
+          -- Error message.
+          local text=string.format("ERROR: RAT group of %s was spawned on runway (DCS bug). Group #%d will be despawned immediately!", self.alias, i)
+          MESSAGE:New(text,30):ToAllIf(self.Debug)
+          env.info(RAT.id..text)
+          if self.Debug then
+            SpawnGroup:FlareRed()
+          end
+                   
+          -- Despawn the group.
+          self:_Despawn(SpawnGroup)
+          
+          -- Try to respawn the group if there is at least another airport or random airport selection is used.
+          if (self.Ndeparture_Airports>=2 or self.random_departure) and _nrespawn<self.rbug_maxretry then
+            -- Increase counter.
+            _nrespawn=_nrespawn+1
+          
+            -- This creates a completely new group, i.e. livery etc from earlier flights (continuejourney, commute) is not taken over.
+            text=string.format("Try spawning new aircraft of group %s at another location. Attempt %d of max %d.", self.alias,_nrespawn,self.rbug_maxretry)
+            MESSAGE:New(text,30):ToAllIf(self.Debug)
+            env.info(RAT.id..text)
+            
+            -- Spawn new group.
+            self:_SpawnWithRoute(nil, nil, nil, nil, nil, nil, nil, _nrespawn)
+          else
+            -- This will respawn the same fight (maybe with a different route) but already in the air.l
+            -- Note: We could also try to spawn already on the runway but this might also lead to problems.
+            --       Uncontrolled aircraft are not respawned in air.
+            if not self.uncontrolled then
+              text=string.format("Spawning new aircraft of group %s in air since no parking slot is available at %s.", self.alias, _departure)
+              MESSAGE:New(text,30):ToAll()
+              env.info(RAT.id..text)
+            
+              -- Spawn new group at this airport but already in air.
+              self:_SpawnWithRoute(_departure, _destination, RAT.wp.air, _landing, _livery)
+            end
+          end  
+        end -- end of workaround
         
       end
     end
   else
-    if self.Debug then
-      self:E(RAT.id.."ERROR: Group does not exist in RAT:_OnBirthDay().")
+    self:T2(RAT.id.."ERROR: Group does not exist in RAT:_OnBirth().")
+  end
+end
+
+--- Function to check whether an aircraft is on the runway.
+-- @param #RAT self
+-- @param Wrapper.Group#GROUP group The group to be checked.
+-- @param #string airport The name of the airport we want to check.
+-- @param #boolean True if aircraft is on the runway and on the ground.
+function RAT:_CheckOnRunway(group,airport)
+
+  -- We use the tabulated points in the ATC_GROUND classes to find out if the group is on the runway.
+  -- Note that land.SurfaceType.RUNWAY also is true for the parking areas etc. Hence, not useful.
+  -- This is useful to check if an aircraft was accidentally spawned on the runway due to missing parking spots.
+  
+  --BASE:E(ATC_GROUND_CAUCASUS.Airbases[AIRBASE.Caucasus.Batumi].PointsRunways)
+  
+  -- Table holding the points around the runway.
+  local pointsrwy={}
+  
+  -- Loop over all airports on Caucaus map.
+  for id,name in pairs(AIRBASE.Caucasus) do
+    if name==airport then
+      --pointsrwy=ATC_GROUND_CAUCASUS.Airbases[AIRBASE.Caucasus.Batumi].PointsRunways
+      pointsrwy=ATC_GROUND_CAUCASUS.Airbases[name].PointsRunways
+      self:T2({name=name, points=pointsrwy})
     end
   end
+  -- Loop over all airports on NTTR map.
+  for id,name in pairs(AIRBASE.Nevada) do
+    if name==airport then
+      pointsrwy=ATC_GROUND_NEVADA.Airbases[name].PointsRunways
+      self:T2({name=name, points=pointsrwy})
+    end
+  end
+  -- Loop over all airports on Normandy map.
+  for id,name in pairs(AIRBASE.Normandy) do
+    if name==airport then
+      pointsrwy=ATC_GROUND_NORMANDY.Airbases[name].PointsRunways
+      self:T2({name=name, points=pointsrwy})
+    end
+  end
+  
+  -- Assume we are not on the runway.
+  local onrunway=false
+  
+  -- Loop over all runways. Some airports have more than one.
+  for PointsRunwayID, PointsRunway in pairs(pointsrwy) do
+    -- Create zone around runway.
+    local runway = ZONE_POLYGON_BASE:New("Runway "..PointsRunwayID, PointsRunway)
+    
+    -- Check if group is completely or partly inside the zone.
+    -- Note that IsPartlyInZone is only true if units are inside AND outside of the zone.
+    if group:IsCompletelyInZone(runway) or group:IsPartlyInZone(runway) then
+      onrunway=true
+    end
+  end
+  
+  -- Check that aircraft is on ground.
+  onrunway=onrunway and group:InAir()==false
+  
+  if self.Debug then
+    env.info(RAT.id..string.format("Check on runway of %s airport for group %s = %s", airport, group:GetName(),tostring(onrunway)))
+  end
+  
+  return onrunway
 end
 
 --- Function is executed when a unit starts its engines.
@@ -2977,10 +3340,8 @@ function RAT:_EngineStartup(EventData)
         -- Set status.
         local status
         if SpawnGroup:InAir() then
-          status="On journey (after air start)"
           status=RAT.status.EventEngineStartAir
         else
-          status="Taxiing (after engines started)"
           status=RAT.status.EventEngineStart
         end
         self:_SetStatus(SpawnGroup, status)
@@ -2988,9 +3349,7 @@ function RAT:_EngineStartup(EventData)
     end
     
   else
-    if self.Debug then
-      self:E(RAT.id.."ERROR: Group does not exist in RAT:_EngineStartup().")
-    end
+    self:T2(RAT.id.."ERROR: Group does not exist in RAT:_EngineStartup().")
   end
 end
 
@@ -3015,7 +3374,6 @@ function RAT:_OnTakeoff(EventData)
     
         -- Set status.
         local status=RAT.status.EventTakeoff
-        --self:_SetStatus(SpawnGroup, "On journey (after takeoff)")
         self:_SetStatus(SpawnGroup, status)
         
         if self.respawn_after_takeoff then
@@ -3030,9 +3388,7 @@ function RAT:_OnTakeoff(EventData)
     end
     
   else
-    if self.Debug then
-      self:E(RAT.id.."ERROR: Group does not exist in RAT:_OnTakeoff().")
-    end
+    self:T2(RAT.id.."ERROR: Group does not exist in RAT:_OnTakeoff().")
   end
 end
 
@@ -3056,7 +3412,6 @@ function RAT:_OnLand(EventData)
         self:T(RAT.id..text)
     
         -- Set status.
-        --self:_SetStatus(SpawnGroup, "Taxiing (after landing)")
         local status=RAT.status.EventLand
         self:_SetStatus(SpawnGroup, status)
 
@@ -3077,9 +3432,7 @@ function RAT:_OnLand(EventData)
     end
     
   else
-    if self.Debug then
-      self:E(RAT.id.."ERROR: Group does not exist in RAT:_OnLand().")
-    end
+    self:T2(RAT.id.."ERROR: Group does not exist in RAT:_OnLand().")
   end
 end
 
@@ -3103,7 +3456,6 @@ function RAT:_OnEngineShutdown(EventData)
         self:T(RAT.id..text)
     
         -- Set status.
-        --self:_SetStatus(SpawnGroup, "Parking (shutting down engines)")
         local status=RAT.status.EventEngineShutdown
         self:_SetStatus(SpawnGroup, status)
         
@@ -3115,18 +3467,17 @@ function RAT:_OnEngineShutdown(EventData)
           self:_Respawn(SpawnGroup)
         end
         
+        
         -- Despawn group.
         text="Event: Group "..SpawnGroup:GetName().." will be destroyed now."
         self:T(RAT.id..text)
         self:_Despawn(SpawnGroup)
-        
+
       end
     end
     
   else
-    if self.Debug then
-      self:E(RAT.id.."ERROR: Group does not exist in RAT:_OnEngineShutdown().")
-    end
+    self:T2(RAT.id.."ERROR: Group does not exist in RAT:_OnEngineShutdown().")
   end
 end
 
@@ -3138,6 +3489,8 @@ function RAT:_OnDead(EventData)
   
   if SpawnGroup then
   
+    env.info(string.format("%sGroup %s died!", RAT.id, SpawnGroup:GetName()))
+  
     -- Get the template name of the group. This can be nil if this was not a spawned group.
     local EventPrefix = self:_GetPrefixFromGroup(SpawnGroup)
     
@@ -3148,9 +3501,9 @@ function RAT:_OnDead(EventData)
   
         local text="Event: Group "..SpawnGroup:GetName().." died."
         self:T(RAT.id..text)
+        env.info(RAT.id..text)
     
         -- Set status.
-        --self:_SetStatus(SpawnGroup, "Destroyed (after dead)")
         local status=RAT.status.EventDead
         self:_SetStatus(SpawnGroup, status)
         
@@ -3158,9 +3511,7 @@ function RAT:_OnDead(EventData)
     end
 
   else
-    if self.Debug then
-      self:E(RAT.id.."ERROR: Group does not exist in RAT:_OnDead().")
-    end
+    self:E(RAT.id.."ERROR: Group does not exist in RAT:_OnDead().")
   end
 end
 
@@ -3173,6 +3524,7 @@ function RAT:_OnCrash(EventData)
   if SpawnGroup then
   
     self:T(string.format("%sGroup %s crashed!", RAT.id, SpawnGroup:GetName()))
+    env.info(string.format("%sGroup %s crashed!", RAT.id, SpawnGroup:GetName()))
 
     -- Get the template name of the group. This can be nil if this was not a spawned group.
     local EventPrefix = self:_GetPrefixFromGroup(SpawnGroup)
@@ -3184,6 +3536,7 @@ function RAT:_OnCrash(EventData)
   
         local text="Event: Group "..SpawnGroup:GetName().." crashed."
         self:T(RAT.id..text)
+        env.info(RAT.id..text)
     
         -- Set status.
         --self:_SetStatus(SpawnGroup, "Crashed")
@@ -3209,12 +3562,46 @@ end
 -- @param #RAT self
 -- @param Wrapper.Group#GROUP group Group to be despawned.
 function RAT:_Despawn(group)
-  if group ~= nil then
 
+  if group ~= nil then
+  
+    -- Get spawnindex of group.
     local index=self:GetSpawnIndexFromGroup(group)
+    
     if index ~= nil then
-      --self.ratcraft[index].group:Destroy()
+    
       self.ratcraft[index].group=nil
+      self.ratcraft[index]["status"]="Dead"
+      
+      --[[
+      --self.ratcraft[index]["group"]=group
+      self.ratcraft[index]["destination"]=nil
+      self.ratcraft[index]["departure"]=nil
+      self.ratcraft[index]["waypoints"]=nil
+      self.ratcraft[index]["airborne"]=nil
+      self.ratcraft[index]["Tground"]=nil
+      self.ratcraft[index]["Pground"]=nil
+      self.ratcraft[index]["Tlastcheck"]=nil
+      self.ratcraft[index]["P0"]=nil
+      self.ratcraft[index]["Pnow"]=nil
+      self.ratcraft[index]["Distance"]=nil
+      self.ratcraft[index].takeoff=nil
+      self.ratcraft[index].landing=nil
+      self.ratcraft[index].wpholding=nil
+      self.ratcraft[index].wpfinal=nil
+      self.ratcraft[index].active=false
+      self.ratcraft[index]["status"]=nil
+      self.ratcraft[index].livery=nil
+      self.ratcraft[index].despawnme=nil
+      self.ratcraft[index].nrespawn=nil
+      ]]
+      
+      -- Remove ratcraft table entry.
+      --TODO: Somehow this causes issues.
+      --table.remove(self.ratcraft, index)
+      
+      --TODO: What events are actually fired when doing this? Crash and Dead or just Dead or...?
+      -- Destroy should create a crash event but for each unit.
       group:Destroy()
 
       -- Decrease group alive counter.
@@ -3259,19 +3646,19 @@ function RAT:_Waypoint(index, description, Type, Coord, Speed, Altitude, Airport
     -- take-off with engine off
     _Type="TakeOffParking"
     _Action="From Parking Area"
-    _Altitude = 0
+    _Altitude = 10
     _alttype="RADIO"
   elseif Type==RAT.wp.hot then
     -- take-off with engine on 
     _Type="TakeOffParkingHot"
     _Action="From Parking Area Hot"
-    _Altitude = 0
+    _Altitude = 10
     _alttype="RADIO"
   elseif Type==RAT.wp.runway then
     -- take-off from runway
     _Type="TakeOff"
     _Action="From Parking Area"
-    _Altitude = 0
+    _Altitude = 10
     _alttype="RADIO"
   elseif Type==RAT.wp.air then
     -- air start
@@ -3298,7 +3685,7 @@ function RAT:_Waypoint(index, description, Type, Coord, Speed, Altitude, Airport
   elseif Type==RAT.wp.landing then
     _Type="Land"
     _Action="Landing"
-    _Altitude = 0
+    _Altitude = 10
     _alttype="RADIO"
   elseif Type==RAT.wp.finalwp then
     _Type="Turning Point"
@@ -3335,7 +3722,7 @@ function RAT:_Waypoint(index, description, Type, Coord, Speed, Altitude, Airport
   end
   text=text.."******************************************************\n"
   if self.Debug then
-    self:T(RAT.id..text)
+    self:T2(RAT.id..text)
   end
     
   -- define waypoint
@@ -3442,9 +3829,8 @@ function RAT:_Routeinfo(waypoints, comment)
   
   -- send message
   if self.Debug then
-    --self:T(RAT.id..text)
+    env.info(RAT.id..text)
   end
-  self:T(RAT.id..text)
   
   -- return total route length in meters
   return total
@@ -3579,7 +3965,6 @@ function RAT:_TaskFunction(FunctionString, ... )
   local groupname=self:_AnticipatedGroupName()
   
   local DCSScript = {}
-  --DCSScript[#DCSScript+1] = "local MissionControllable = GROUP:Find( ... ) "
   DCSScript[#DCSScript+1] = "local MissionControllable = GROUP:FindByName(\""..groupname.."\") "
   DCSScript[#DCSScript+1] = "local RATtemplateControllable = GROUP:FindByName(\""..templatename.."\") "
 
@@ -3593,9 +3978,6 @@ function RAT:_TaskFunction(FunctionString, ... )
   end
   
   DCSTask = self.templategroup:TaskWrappedAction(self.templategroup:CommandDoScript(table.concat(DCSScript)))
-
-  --self:T(RAT.id.."Taskfunction:")
-  --self:E( DCSTask )
 
   return DCSTask
 end
@@ -3611,7 +3993,7 @@ end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Calculate the max flight level for a given distance and fixed climb and descent rates.
+--- Calculate the max flight level for a given distance and fixed climb and descent rates. This function is obsolete now.
 -- In other words we have a distance between two airports and want to know how high we
 -- can climb before we must descent again to arrive at the destination without any level/cruising part.
 -- @param #RAT self
@@ -3636,7 +4018,7 @@ function RAT:_FLmax(alpha, beta, d, phi, h0)
   text=text..string.format(  "FLmax = FL%3.0f = %6.1f m.\n", h2/RAT.unit.FL2m, h2)
   text=text..string.format(  "FLmax = FL%3.0f = %6.1f m.",   h3/RAT.unit.FL2m, h3)
   if self.Debug then
-    self:T(RAT.id..text)
+    self:T3(RAT.id..text)
   end
   return h3+h0
 end
@@ -3827,7 +4209,7 @@ function RAT:_Randomize(value, fac, lower, upper)
   -- debug info
   if self.Debug then
     local text=string.format("Random: value = %6.2f, fac = %4.2f, min = %6.2f, max = %6.2f, r = %6.2f", value, fac, min, max, r)
-    self:T(RAT.id..text)
+    self:T3(RAT.id..text)
   end
   
   return r
@@ -3875,7 +4257,7 @@ function RAT:_PlaceMarkers(waypoints, index)
     self:_SetMarker(self.waypointdescriptions[i], waypoints[i], index)
     if self.Debug then
       local text=string.format("Marker at waypoint #%d: %s for flight #%d", i, self.waypointdescriptions[i], index)
-      self:T(RAT.id..text)
+      self:T2(RAT.id..text)
     end
   end
 end
@@ -3890,7 +4272,8 @@ function RAT:_SetMarker(text, wp, index)
   RAT.markerid=RAT.markerid+1
   self.markerids[#self.markerids+1]=RAT.markerid
   if self.Debug then
-    self:T(RAT.id..self.SpawnTemplatePrefix..": placing marker with ID "..RAT.markerid..": "..text)
+    local text2=string.format("%s: placing marker with ID %d and text %s", self.alias, RAT.markerid, text)
+    self:T2(RAT.id..text2)
   end
   -- Convert to coordinate.
   local vec={x=wp.x, y=wp.alt, z=wp.y}
@@ -3919,10 +4302,15 @@ end
 -- @param #RAT self
 -- @param #table waypoints The waypoints of the AI flight plan.
 -- @param #string livery (Optional) Livery of the aircraft. All members of a flight will get the same livery.
-function RAT:_ModifySpawnTemplate(waypoints, livery)
+-- @param Core.Point#COORDINATE spawnplace (Optional) Place where spawning should happen. If not present, first waypoint is taken.
+function RAT:_ModifySpawnTemplate(waypoints, livery, spawnplace)
 
   -- The 3D vector of the first waypoint, i.e. where we actually spawn the template group.
   local PointVec3 = {x=waypoints[1].x, y=waypoints[1].alt, z=waypoints[1].y}
+  if spawnplace then
+    PointVec3 = spawnplace:GetVec3()
+    self:T({spawnplace=PointVec3})
+  end
   
   -- Heading from first to seconds waypoints to align units in case of air start.
   local course  = self:_Course(waypoints[1], waypoints[2])
@@ -3935,9 +4323,10 @@ function RAT:_ModifySpawnTemplate(waypoints, livery)
     if SpawnTemplate then
       self:T(SpawnTemplate)
       
-      -- Spawn aircraft in uncontolled state.
+      -- Spawn aircraft in uncontrolled state.
       if self.uncontrolled then
-        SpawnTemplate.uncontrolled=true
+        -- This is used in the SPAWN:SpawnWithIndex() function. Some values are overwritten there!
+        self.SpawnUnControlled=true
       end
         
       -- Translate the position of the Group Template to the Vec3.
@@ -4017,7 +4406,7 @@ function RAT:_ModifySpawnTemplate(waypoints, livery)
       end
       
       -- Debug output.
-      self:T(SpawnTemplate)        
+      self:T(SpawnTemplate)
     end
   end
 end
@@ -4309,4 +4698,340 @@ function RAT:_ATCQueue()
     
   end
 end
+
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--- **Functional** - Manage multiple RAT objects.
+--  
+-- ![Banner Image](..\Presentations\RAT\RAT.png)
+-- 
+-- ====
+-- 
+-- The aim of the RAT class is to fill the empty DCS world with randomized air traffic and bring more life to your airports.
+-- 
+-- In particular, it is designed to spawn AI air units at random airports. These units will be assigned a random flight path to another random airport on the map.
+-- 
+-- Even the mission designer will not know where aircraft will be spawned and which route they follow.
+-- 
+-- @module Ratmanager
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--- RATMANAGER class
+-- @type RATMANAGER
+-- @field #string ClassName Name of the Class.
+-- @field #boolean Debug If true, be more verbose on output in DCS.log file.
+-- @field #table rat Array holding RAT objects etc.
+-- @field #string name Name (alias) of RAT object.
+-- @field #table alive Number of currently alive groups.
+-- @field #table min Minimum number of RAT groups alive.
+-- @field #number nrat Number of RAT objects.
+-- @field #number ntot Total number of active RAT groups.
+-- @field #number Tcheck Time interval between checking of alive groups.
+-- @field Core.Scheduler#SCHEDULER manager Scheduler managing the RAT objects.
+-- @field #number managerid Managing scheduler id.
+-- @extends Core.Base#BASE
+
+---# RATMANAGER class, extends @{Base#BASE}
+-- The RATMANAGER class manages spawning of multiple RAT objects.
+--
+-- @field #RATMANAGER
+RATMANAGER={
+  ClassName="RATMANAGER",
+  Debug=false,
+  rat={},
+  name={},
+  alive={},
+  min={},
+  nrat=0,
+  ntot=nil,
+  Tcheck=30,
+  manager=nil,
+  managerid=nil,
+}
+
+--- Some ID to identify who we are in output of the DCS.log file.
+-- @field #string id
+RATMANAGER.id="RATMANAGER | "
+
+--- Creates a new RATMANAGER object.
+-- @param #RATMANAGER self
+-- @param #number ntot Total number of RAT flights.
+-- @return #RATMANAGER RATMANAGER object
+function RATMANAGER:New(ntot)
+
+  -- Inherit BASE.
+  local self=BASE:Inherit(self, BASE:New()) -- #RATMANAGER
+  
+  -- Total number of RAT groups.
+  self.ntot=ntot or 1
+  
+  -- Debug info
+  self:E(RATMANAGER.id..string.format("Creating manager for %d groups.", ntot))
+  
+  return self
+end
+
+
+--- Adds a RAT object to the RAT manager. Parameter min specifies the limit how many RAT groups are at least alive.
+-- @param #RATMANAGER self
+-- @param #RAT ratobject RAT object to be managed.
+-- @param #number min Minimum number of groups for this RAT object. Default is 1.
+function RATMANAGER:Add(ratobject,min)
+
+  --Automatic respawning is disabled.
+  ratobject.norespawn=true
+  ratobject.f10menu=false
+  
+  -- Increase RAT object counter.
+  self.nrat=self.nrat+1
+  
+  self.rat[self.nrat]=ratobject
+  self.alive[self.nrat]=0
+  self.name[self.nrat]=ratobject.alias
+  self.min[self.nrat]=min or 1
+  
+  -- Debug info.
+  self:T(RATMANAGER.id..string.format("Adding ratobject %s with min flights = %d", self.name[self.nrat],self.min[self.nrat]))
+  
+  -- Call spawn to initialize RAT parameters.
+  ratobject:Spawn(0)
+end
+
+--- Starts the RAT manager and spawns the initial random number RAT groups for each RAT object.
+-- @param #RATMANAGER self
+-- @param #number delay Time delay in seconds after which the RAT manager is started. Default is 5 seconds.
+function RATMANAGER:Start(delay)
+
+  -- Time delay.
+  local delay=delay or 5
+
+  -- Info text.
+  local text=string.format(RATMANAGER.id.."RAT manager will be started in %d seconds.\n", delay)
+  text=text..string.format("Managed groups:\n")
+  for i=1,self.nrat do
+    text=text..string.format("- %s with min groups %d\n", self.name[i], self.min[i])
+  end
+  text=text..string.format("Number of constantly alive groups %d", self.ntot)
+  self:E(text)
+
+  -- Start scheduler.
+  SCHEDULER:New(nil, self._Start, {self}, delay)
+end
+
+--- Instantly starts the RAT manager and spawns the initial random number RAT groups for each RAT object.
+-- @param #RATMANAGER self
+function RATMANAGER:_Start()
+
+  -- Ensure that ntot is at least sum of min RAT groups.
+  local n=0
+  for i=1,self.nrat do
+    n=n+self.min[i]
+  end
+  self.ntot=math.max(self.ntot, n)
+
+  -- Get randum number of new RAT groups.
+  local N=self:_RollDice(self.nrat, self.ntot, self.min, self.alive)
+  
+  -- Loop over all RAT objects and spawn groups.
+  for i=1,self.nrat do
+    for j=1,N[i] do
+      self.rat[i]:_SpawnWithRoute()
+    end
+    -- Start activation scheduler for uncontrolled aircraft.
+    if self.rat[i].uncontrolled and self.rat[i].activate_uncontrolled then
+      SCHEDULER:New(nil, self.rat[i]._ActivateUncontrolled, {self.rat[i]}, self.rat[i].activate_delay, self.rat[i].activate_delta, self.rat[i].activate_frand)
+    end
+  end
+  
+  -- Start manager scheduler.
+  self.manager, self.managerid = SCHEDULER:New(nil, self._Manage, {self}, 5, self.Tcheck) --Core.Scheduler#SCHEDULER
+  
+  -- Info
+  local text=string.format(RATMANAGER.id.."Starting RAT manager with scheduler ID %s.", self.managerid)
+  self:E(text)
+  
+end
+
+--- Stops the RAT manager.
+-- @param #RATMANAGER self
+-- @param #number delay Delay in seconds before the manager is stopped. Default is 1 second.
+function RATMANAGER:Stop(delay)
+  delay=delay or 1
+  self:E(string.format(RATMANAGER.id.."Manager will be stopped in %d seconds.", delay))
+  SCHEDULER:New(nil, self._Stop, {self}, delay)
+end
+
+--- Instantly stops the RAT manager by terminating its scheduler.
+-- @param #RATMANAGER self
+function RATMANAGER:_Stop()
+  self:E(string.format(RATMANAGER.id.."Stopping manager with scheduler ID %s.", self.managerid))
+  self.manager:Stop(self.managerid)
+end
+
+--- Sets the time interval between checks of alive RAT groups. Default is 30 seconds.
+-- @param #RATMANAGER self
+-- @param #number dt Time interval in seconds.
+function RATMANAGER:SetTcheck(dt)
+  self.Tcheck=dt or 30
+end
+
+--- Manager function. Calculating the number of current groups and respawning new groups if necessary.
+-- @param #RATMANAGER self
+function RATMANAGER:_Manage()
+
+  -- Count total number of groups.
+  local ntot=self:_Count()
+  
+  -- Debug info.
+  if self.Debug then
+    local text=string.format("Number of alive groups %d. New groups to be spawned %d.", ntot, self.ntot-ntot)
+    self:T(RATMANAGER.id..text)
+  end
+  
+  -- Get number of necessary spawns.
+  local N=self:_RollDice(self.nrat, self.ntot, self.min, self.alive)
+  
+  -- Loop over all RAT objects and spawn new groups if necessary.
+  for i=1,self.nrat do
+    for j=1,N[i] do
+      self.rat[i]:_SpawnWithRoute()
+    end
+  end
+end
+
+--- Counts the number of alive RAT objects.
+-- @param #RATMANAGER self
+function RATMANAGER:_Count()
+
+  -- Init total counter.
+  local ntotal=0
+  
+  -- Loop over all RAT objects.
+  for i=1,self.nrat do
+    local n=0
+    
+    local ratobject=self.rat[i] --#RAT
+    
+    -- Loop over the RAT groups of this object.
+    for spawnindex,ratcraft in pairs(ratobject.ratcraft) do
+      local group=ratcraft.group --Wrapper.Group#GROUP
+      if group and group:IsAlive() then
+        n=n+1
+      end
+    end
+    
+    -- Alive groups of this RAT object.
+    self.alive[i]=n
+    
+    -- Grand total.
+    ntotal=ntotal+n
+    
+    -- Debug output.
+    if self.Debug then
+      local text=string.format("Number of alive groups of %s = %d", self.name[i], n)
+      self:T(RATMANAGER.id..text)
+    end
+  end
+  
+  -- Return grand total.
+  return ntotal
+end
+
+--- Rolls the dice for the number of necessary spawns.
+-- @param #RATMANAGER self
+-- @param #number nrat Number of RAT objects.
+-- @param #number ntot Total number of RAT flights.
+-- @param #table min Minimum number of groups for each RAT object.
+-- @param #table alive Number of alive groups of each RAT object.
+function RATMANAGER:_RollDice(nrat,ntot,min,alive)
+  
+  -- Calculate sum.
+  local function sum(A,index)
+    local summe=0
+    for _,i in ipairs(index) do
+      summe=summe+A[i]
+    end
+    return summe
+  end  
+  
+  -- Table of number of groups.
+  local N={}
+  local M={}
+  local P={}
+  for i=1,nrat do
+    N[#N+1]=0
+    M[#M+1]=math.max(alive[i], min[i])
+    P[#P+1]=math.max(min[i]-alive[i],0)
+  end
+  
+  -- Min/max group arrays.
+  local mini={}
+  local maxi={}
+  
+  -- Arrays.
+  local rattab={}
+  for i=1,nrat do
+    table.insert(rattab,i)
+  end
+  local done={}
+  
+  -- Number of new groups to be added.
+  local nnew=ntot
+  for i=1,nrat do
+    nnew=nnew-alive[i]
+  end
+  
+  for i=1,nrat-1 do
+    
+    -- Random entry from .
+    local r=math.random(#rattab)
+    -- Get value
+    local j=rattab[r]
+    
+    table.remove(rattab, r)
+    table.insert(done,j)
+    
+    -- Sum up the number of already distributed groups.
+    local sN=sum(N, done)
+    -- Sum up the minimum number of yet to be distributed groups. 
+    local sP=sum(P, rattab)
+    
+    -- Max number that can be distributed for this object.
+    maxi[j]=nnew-sN-sP
+    
+    -- Min number that should be distributed for this object
+    mini[j]=P[j]
+    
+    -- Random number of new groups for this RAT object.
+    if maxi[j] >= mini[j] then
+      N[j]=math.random(mini[j], maxi[j])
+    else
+      N[j]=0
+    end
+    
+    -- Debug info
+    --env.info(string.format("RATMANAGER: i=%d, alive=%d, min=%d, mini=%d, maxi=%d, add=%d, sumN=%d, sumP=%d", j, alive[j], min[j], mini[j], maxi[j], N[j],sN, sP))
+    
+  end
+  
+  -- Last RAT object, number of groups is determined from number of already distributed groups and nnew.
+  local j=rattab[1]
+  N[j]=nnew-sum(N, done)
+  mini[j]=nnew-sum(N, done)
+  maxi[j]=nnew-sum(N, done)
+  table.remove(rattab, 1)
+  table.insert(done,j)
+  
+  -- Debug info
+  if self.Debug then
+    local text=RATMANAGER.id.."\n"
+    for i=1,nrat do
+      text=text..string.format("%s: i=%d, alive=%d, min=%d, mini=%d, maxi=%d, add=%d\n", self.name[i], i, alive[i], min[i], mini[i], maxi[i], N[i])
+    end
+    text=text..string.format("Total # of groups to add = %d", sum(N, done))
+    self:T2(text)
+  end
+  
+  -- Return number of groups to be spawned.
+  return N
+end
+
