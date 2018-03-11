@@ -489,7 +489,7 @@ RAT.MenuF10=nil
 RAT.id="RAT | "
 
 --- RAT version.
--- @field #list
+-- @list version
 RAT.version={
   version = "2.2.0",
   print = true,
@@ -4699,21 +4699,6 @@ function RAT:_ATCQueue()
   end
 end
 
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
---- **Functional** - Manage multiple RAT objects.
---  
--- ![Banner Image](..\Presentations\RAT\RAT.png)
--- 
--- ====
--- 
--- The aim of the RAT class is to fill the empty DCS world with randomized air traffic and bring more life to your airports.
--- 
--- In particular, it is designed to spawn AI air units at random airports. These units will be assigned a random flight path to another random airport on the map.
--- 
--- Even the mission designer will not know where aircraft will be spawned and which route they follow.
--- 
--- @module Ratmanager
-
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 --- RATMANAGER class
 -- @type RATMANAGER
@@ -4731,7 +4716,40 @@ end
 -- @extends Core.Base#BASE
 
 ---# RATMANAGER class, extends @{Base#BASE}
--- The RATMANAGER class manages spawning of multiple RAT objects.
+-- The RATMANAGER class manages spawning of multiple RAT objects in a very simple way. It is created by the  @{#RATMANAGER.New}() contructor. 
+-- RAT objects with different "tasks" can be defined as usual. However, they **must not** be spawned via the @{#RAT.Spawn}() function.
+-- 
+-- Instead, these objects can be added to the manager via the @{#RATMANAGER.Add}(ratobject, min) function, where the first parameter "ratobject" is the @{#RAT} object, while the second parameter "min" defines the
+-- minimum number of RAT aircraft of that object, which are alive at all time.
+-- 
+-- The @{#RATMANAGER} must be started by the @{#RATMANAGER.Start}(startime) function, where the optional argument "startime" specifies the delay time in seconds after which the manager is started and the spawning beginns.
+-- If desired, the @{#RATMANAGER} can be stopped by the @{#RATMANAGER.Stop}(stoptime) function. The parameter "stoptime" specifies the time delay in seconds after which the manager stops.
+-- When this happens, no new aircraft will be spawned and the population will eventually decrease to zero.
+-- 
+-- ## Example
+-- In this example, three different @{#RAT} objects are created (but not spawned manually). The @{#RATMANAGER} takes care that at least five aircraft of each type are alive and that the total number of aircraft
+-- spawned is 25. The @{#RATMANAGER} is started after 30 seconds and stopped after two hours.
+-- 
+--   local a10c=RAT:New("RAT_A10C", "A-10C managed")
+--   a10c:SetDeparture({"Batumi"})
+--  
+--   local f15c=RAT:New("RAT_F15C", "F15C managed")
+--   f15c:SetDeparture({"Sochi-Adler"})
+--   f15c:DestinationZone()
+--   f15c:SetDestination({"Zone C"})
+--  
+--   local av8b=RAT:New("RAT_AV8B", "AV8B managed")
+--   av8b:SetDeparture({"Zone C"})
+--   av8b:SetTakeoff("air")
+--   av8b:DestinationZone()
+--   av8b:SetDestination({"Zone A"})
+--  
+--   local manager=RATMANAGER:New(25)
+--   manager:Add(a10c, 5)
+--   manager:Add(f15c, 5)
+--   manager:Add(av8b, 5)
+--   manager:Start(30)
+--   manager:Stop(7200)
 --
 -- @field #RATMANAGER
 RATMANAGER={
