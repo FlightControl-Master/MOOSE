@@ -618,10 +618,11 @@ function ZONE_RADIUS:Scan( ObjectCategories )
     }
 
   local function EvaluateZone( ZoneObject )
-    if ZoneObject:isExist() then
+    --if ZoneObject:isExist() then --FF: isExist always returns false for SCENERY objects since DCS 2.2 and still in DCS 2.5
+    if ZoneObject then  
       local ObjectCategory = ZoneObject:getCategory()
-      if ( ObjectCategory == Object.Category.UNIT and ZoneObject:isActive() ) or 
-         ObjectCategory == Object.Category.STATIC then
+      if ( ObjectCategory == Object.Category.UNIT and ZoneObject:isExist() and ZoneObject:isActive() ) or 
+         (ObjectCategory == Object.Category.STATIC and ZoneObject:isExist()) then
         local CoalitionDCSUnit = ZoneObject:getCoalition()
         self.ScanData.Coalitions[CoalitionDCSUnit] = true
         self:E( { Name = ZoneObject:getName(), Coalition = CoalitionDCSUnit } )
