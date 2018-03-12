@@ -255,7 +255,7 @@ function TASKINFO:AddCargoSet( SetCargo, Order, Detail, Keep )
       local CargoType = Cargo:GetType()
       local CargoName = Cargo:GetName()
       local CargoCoordinate = Cargo:GetCoordinate()
-      CargoReport:Add( string.format( '- "%s" (%s) at %s', CargoName, CargoType, CargoCoordinate:ToStringMGRS() ) )
+      CargoReport:Add( string.format( '"%s" (%s) at %s', CargoName, CargoType, CargoCoordinate:ToStringMGRS() ) )
     end
   )
 
