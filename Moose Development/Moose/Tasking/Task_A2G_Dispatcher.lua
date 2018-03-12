@@ -58,8 +58,7 @@ do -- TASK_A2G_DISPATCHER
     self.Detection = Detection
     self.Mission = Mission
     
-    self.Detection:FilterCategories( { Unit.Category.GROUND_UNIT, Unit.Category.SHIP } )
-    self.Detection:FilterFriendlyCategories( { Unit.Category.GROUND_UNIT } )
+    self.Detection:FilterCategories( { Unit.Category.GROUND_UNIT } )
     
     self:AddTransition( "Started", "Assign", "Started" )
     
@@ -119,9 +118,11 @@ do -- TASK_A2G_DISPATCHER
     local DetectedZone = DetectedItem.Zone
 
 
-    -- Determine if the set has radar targets. If it does, construct a SEAD task.
+    -- Determine if the set has ground units.
+    -- There should be ground unit friendlies nearby. Airborne units are valid friendlies types.
+    -- And there shouldn't be any radar.
     local GroundUnitCount = DetectedSet:HasGroundUnits()
-    local FriendliesNearBy = self.Detection:IsFriendliesNearBy( DetectedItem )
+    local FriendliesNearBy = self.Detection:IsFriendliesNearBy( DetectedItem, Unit.Category.GROUND_UNIT ) -- Are there friendlies nearby of type GROUND_UNIT?
     local RadarCount = DetectedSet:HasSEAD()
 
     if RadarCount == 0 and GroundUnitCount > 0 and FriendliesNearBy == true then
@@ -149,9 +150,11 @@ do -- TASK_A2G_DISPATCHER
     local DetectedZone = DetectedItem.Zone
 
 
-    -- Determine if the set has radar targets. If it does, construct a SEAD task.
+    -- Determine if the set has ground units.
+    -- There shouldn't be any ground unit friendlies nearby.
+    -- And there shouldn't be any radar.
     local GroundUnitCount = DetectedSet:HasGroundUnits()
-    local FriendliesNearBy = self.Detection:IsFriendliesNearBy( DetectedItem )
+    local FriendliesNearBy = self.Detection:IsFriendliesNearBy( DetectedItem, Unit.Category.GROUND_UNIT ) -- Are there friendlies nearby of type GROUND_UNIT?
     local RadarCount = DetectedSet:HasSEAD()
 
     if RadarCount == 0 and GroundUnitCount > 0 and FriendliesNearBy == false then
