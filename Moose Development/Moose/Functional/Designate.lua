@@ -189,7 +189,7 @@ do -- DESIGNATE
   -- 
   -- ## 2. DESIGNATE is a FSM
   -- 
-  -- ![Process](..\Presentations\DESIGNATE\Dia2.JPG)
+  -- Designate is a finite state machine, which allows for controlled transitions of states.
   -- 
   -- ### 2.1 DESIGNATE States
   -- 
