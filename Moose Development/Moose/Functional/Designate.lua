@@ -164,7 +164,7 @@ do -- DESIGNATE
   -- 
   -- ### 0.4. Illuminating Targets
   -- 
-  -- ![Banner Image](..\Presentations\DESIGNATE\Dia8.JPG)
+  -- ![Banner Image](..\Presentations\DESIGNATE\Dia9.JPG)
   -- 
   -- Illumination bombs are fired between 500 and 700 meters altitude and will burn about 2 minutes, while slowly decending.
   -- Each available recce within range will fire an illumination bomb.
@@ -173,7 +173,7 @@ do -- DESIGNATE
   -- 
   -- ### 0.5. Smoking Targets
   -- 
-  -- ![Banner Image](..\Presentations\DESIGNATE\Dia9.JPG)
+  -- ![Banner Image](..\Presentations\DESIGNATE\Dia10.JPG)
   -- 
   -- Smoke will fire for 5 minutes.
   -- Each available recce within range will smoke a target.
