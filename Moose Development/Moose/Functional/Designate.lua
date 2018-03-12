@@ -1,6 +1,6 @@
 --- **Functional** -- Management of target **Designation**. Lase, smoke and illuminate targets.
 --
--- --![Banner Image](..\Presentations\DESIGNATE\Dia1.JPG)
+-- ![Banner Image](..\Presentations\DESIGNATE\Dia1.JPG)
 --
 -- ===
 --
@@ -40,12 +40,9 @@ do -- DESIGNATE
 
   --- # DESIGNATE class, extends @{Fsm#FSM}
   -- 
-  -- DESIGNATE is orchestrating the designation of potential targets executed by a Recce group, 
-  -- and communicates these to a dedicated attacking group of players, 
-  -- so that following a dynamically generated menu system, 
-  -- each detected set of potential targets can be lased or smoked...
-  -- 
-  -- Targets can be:
+  -- DESIGNATE is managing the designation of detected targets.
+  -- Targets detected by recce will be communicated to a group of attacking players.  
+  -- A menu system is made available that allows to: 
   -- 
   --   * **Lased** for a period of time.
   --   * **Smoked**. Artillery or airplanes with Illuminatino ordonance need to be present. (WIP, but early demo ready.)
@@ -55,8 +52,8 @@ do -- DESIGNATE
   -- 
   --   * The **DesignateObject** is the object of the DESIGNATE class, which is this class explained in the document.
   --   * The **DetectionObject** is the object of a DETECTION_ class (DETECTION_TYPES, DETECTION_AREAS, DETECTION_UNITS), which is executing the detection and grouping of Targets into _DetectionItems_.
-  --   * **DetectionItems** is the list of detected target groupings by the _DetectionObject_. Each _DetectionItem_ contains a _TargetSet_.
-  --   * **DetectionItem** is one element of the _DetectionItems_ list, and contains a _TargetSet_.
+  --   * **TargetGroups** is the list of detected target groupings by the _DetectionObject_. Each _TargetGroup_ contains a _TargetSet_.
+  --   * **TargetGroup** is one element of the __TargetGroups__ list, and contains a _TargetSet_.
   --   * The **TargetSet** is a SET_UNITS collection of _Targets_, that have been detected by the _DetectionObject_.
   --   * A **Target** is a detected UNIT object by the _DetectionObject_.
   --   * A **Threat Level** is a number from 0 to 10 that is calculated based on the threat of the Target in an Air to Ground battle scenario.
@@ -67,39 +64,122 @@ do -- DESIGNATE
   --   * A **Player** is an active CLIENT object containing a human player.
   --   * A **Designate Menu** is the menu that is dynamically created during the designation process for each _AttackGroup_.
   -- 
-  -- The RecceSet is continuously detecting for potential Targets, executing its task as part of the DetectionObject.
+  -- ## 0. Player Manual
+  -- 
+  -- ![Banner Image](..\Presentations\DESIGNATE\Dia3.JPG)
+  -- 
+  -- A typical mission setup would require Recce (a @{Set} of Recce) to be detecting potential targets.
+  -- The DetectionObject will group the detected targets based on the detection method being used.
+  -- Possible detection methods could be by Area, by Type or by Unit.
+  -- Each grouping will result in a **TargetGroup**, for terminology and clarity we will use this term throughout the document.
+  -- 
+  -- **Recce** require to have Line of Sight (LOS) towards the targets.
+  -- The **Recce** will report any detected targets to the Players (on the picture Observers).
+  -- When targets are detected, a menu will be made available that allows those **TargetGroups** to be designated.
+  -- Designation can be done by Lasing, Smoking and Illumination.
+  -- Smoking is useful during the day, while illumination is recommended to be used during the night.
+  -- Smoking can designate specific targets, but not very precise, while lasing is very accurate and allows to
+  -- players to attack the targets using laser guided bombs or rockets.
+  -- Illumination will lighten up the Target Area.
+  -- 
+  -- **Recce** can be ground based or airborne. Airborne **Recce** (AFAC) can be really useful to designate a large amount of targets
+  -- in a wide open area, as airborne **Recce** has a large LOS.
+  -- However, ground based **Recce** are very useful to smoke or illuminate targets, as they can be much closer
+  -- to the Target Area.
+  -- 
+  -- It is recommended to make the **Recce** invisible and immortal using the Mission Editor in DCS World.
+  -- This will ensure that the detection process won't be interrupted and that targets can be designated.
+  -- However, you don't have to, so to simulate a more real-word situation or simulation, **Recce can also be destroyed**!
+  --  
+  -- ### 0.1. Player View (Observer)
+  -- 
+  -- ![Banner Image](..\Presentations\DESIGNATE\Dia4.JPG)
+  -- 
+  -- The RecceSet is continuously detecting for potential Targets, 
+  -- executing its task as part of the DetectionObject.
   -- Once Targets have been detected, the DesignateObject will trigger the **Detect Event**.
   -- 
-  -- In order to prevent an overflow in the DesignateObject of detected targets, there is a maximum
-  -- amount of DetectionItems that can be put in **scope** of the DesignateObject.
+  -- In order to prevent an overflow in the DesignateObject of detected targets, 
+  -- there is a maximum amount of TargetGroups 
+  -- that can be put in **scope** of the DesignateObject.
   -- We call this the **MaximumDesignations** term.
   -- 
-  -- As part of the Detect Event, the DetectionItems list is used by the DesignateObject to provide the Players with:
+  -- ### 0.2. Designate Menu
   -- 
+  -- ![Banner Image](..\Presentations\DESIGNATE\Dia5.JPG)
+  -- 
+  -- For each detected TargetGroup, there is:
+  -- 
+  --   * A **Designate Menu** are created and continuously refreshed, containing the **DesignationID** and the **Designation Status**.
   --   * The RecceGroups are reporting to each AttackGroup, sending **Messages** containing the Threat Level and the TargetSet composition.
-  --   * **Menu options** are created and updated for each AttackGroup, containing the Detection ID and the Coordinates.
   -- 
-  -- A Player can then select an action from the Designate Menu. 
+  -- A Player can then select an action from the **Designate Menu**. 
+  -- The Designation Status is shown between the (   ).
   -- 
-  -- **Note that each selected action will be executed for a TargetSet, thus the Target grouping done by the DetectionObject.**
+  -- It indicates for each TargetGroup the current active designation action applied:
   -- 
-  -- Each **Menu Option** in the Designate Menu has two modes: 
+  --   * An "I" for Illumnation designation.
+  --   * An "S" for Smoking designation.
+  --   * An "L" for Lasing designation.
+  --
+  -- Note that multiple designation methods can be active at the same time!
+  -- Note the **Auto Lase** option. When switched on, the available **Recce** will lase 
+  -- Targets when detected.
   -- 
-  --   1. If the TargetSet **is not being designated**, then the **Designate Menu** option for the target Set will provide options to **Lase** or **Smoke** the targets.
-  --   2. If the Target Set **is being designated**, then the **Designate Menu** option will provide an option to stop or cancel the designation.
+  -- Targets are designated per **Threat Level**. 
+  -- The most threatening targets from an Air to Ground perspective, are designated first!
+  -- This is for all designation methods.
   -- 
-  -- While designating, the RecceGroups will report any change in TargetSet composition or Target presence.
+  -- ![Banner Image](..\Presentations\DESIGNATE\Dia6.JPG)
   -- 
-  -- The following logic is executed when a TargetSet is selected to be *lased* from the Designation Menu:
+  -- Each Designate Menu has a sub menu structure, which allows specific actions to be triggered:
   -- 
-  --   * The RecceSet is searched for any Recce that is within *designation distance* from a Target in the TargetSet that is currently not being designated.
+  --   * Lase Targets using a specific laser code.
+  --   * Smoke Targets using a specific smoke color.
+  --   * Illuminate areas.
+  -- 
+  -- ### 0.3. Lasing Targets
+  -- 
+  -- ![Banner Image](..\Presentations\DESIGNATE\Dia7.JPG)
+  -- 
+  -- Lasing targets is done as expected. Each available Recce can lase only ONE target through!
+  -- 
+  -- ![Banner Image](..\Presentations\DESIGNATE\Dia8.JPG)
+  -- 
+  -- Lasing can be done for specific laser codes. The Su-25T requires laser code 1113, while the A-10A requires laser code 1680.
+  -- For those, specific menu options can be made available for players to lase with these codes.
+  -- Auto Lase (as explained above), will ensure continuous lasing of available targets.
+  -- The status report shows which targets are being designated.
+  -- 
+  -- The following logic is executed when a TargetGroup is selected to be *lased* from the Designation Menu:
+  -- 
+  --   * The RecceSet is searched for any Recce that is within *designation distance* from a Target in the TargetGroup that is currently not being designated.
   --   * If there is a Recce found that is currently no designating a target, and is within designation distance from the Target, then that Target will be designated.
   --   * During designation, any Recce that does not have Line of Sight (LOS) and is not within disignation distance from the Target, will stop designating the Target, and a report is given.
   --   * When a Recce is designating a Target, and that Target is destroyed, then the Recce will stop designating the Target, and will report the event.
   --   * When a Recce is designating a Target, and that Recce is destroyed, then the Recce will be removed from the RecceSet and designation will stop without reporting.
   --   * When all RecceGroups are destroyed from the RecceSet, then the DesignationObject will stop functioning, and nothing will be reported.
   --   
-  -- In this way, the DesignationObject assists players to designate ground targets for a coordinated attack!
+  -- In this way, DESIGNATE assists players to designate ground targets for a coordinated attack!
+  -- 
+  -- ### 0.4. Illuminating Targets
+  -- 
+  -- ![Banner Image](..\Presentations\DESIGNATE\Dia8.JPG)
+  -- 
+  -- Illumination bombs are fired between 500 and 700 meters altitude and will burn about 2 minutes, while slowly decending.
+  -- Each available recce within range will fire an illumination bomb.
+  -- Illumination bombs can be fired in while lasing targets.
+  -- When illumination bombs are fired, it will take about 2 minutes until a sequent bomb run can be requested using the menus.
+  -- 
+  -- ### 0.5. Smoking Targets
+  -- 
+  -- ![Banner Image](..\Presentations\DESIGNATE\Dia9.JPG)
+  -- 
+  -- Smoke will fire for 5 minutes.
+  -- Each available recce within range will smoke a target.
+  -- Smoking can be requested while lasing targets.
+  -- Smoke will appear “around” the targets, because of accuracy limitations.
+  -- 
   -- 
   -- Have FUN!
   -- 
