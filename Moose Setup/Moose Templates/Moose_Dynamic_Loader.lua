@@ -11,7 +11,7 @@ __Moose.Include = function( IncludeFile )
 		if f == nil then
 			error ("Moose: Could not load Moose file " .. IncludeFile )
 		else
-			env.info( "Moose: " .. IncludeFile .. " dynamically loaded from " .. __Moose.ProgramPath )
+			env.info( "Moose: " .. IncludeFile .. " dynamically loaded." )
 			return f()
 		end
 	end
