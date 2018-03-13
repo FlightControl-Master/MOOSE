@@ -1192,7 +1192,7 @@ do -- DETECTION_BASE
     -- @return #map<#string,Wrapper.Unit#UNIT> The map of Friendly UNITs. 
     function DETECTION_BASE:GetFriendliesNearBy( DetectedItem, Category )
       
-      return DetectedItem.FriendliesNearBy[Category]
+      return DetectedItem.FriendliesNearBy and DetectedItem.FriendliesNearBy[Category]
     end
     
     --- Returns if there are friendlies nearby the intercept ...

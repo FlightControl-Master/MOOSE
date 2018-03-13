@@ -162,7 +162,7 @@ do -- TASK_CARGO
     self.SmokeColor = SMOKECOLOR.Red
     
     self.CargoItemCount = {} -- Map of Carriers having a cargo item count to check the cargo loading limits.
-    self.CargoLimit = 6
+    self.CargoLimit = 10
     
     self.DeployZones = {} -- setmetatable( {}, { __mode = "v" } ) -- weak table on value
 
