@@ -323,18 +323,33 @@ function TASKINFO:Report( Report, Detail, ReportGroup )
         local DataText = Data.Data -- #string
         Text = DataText
       end
+      if Key == "Friendlies" then
+        local DataText = Data.Data -- #string
+        Text = DataText
+      end
+      if Key == "Players" then
+        local DataText = Data.Data -- #string
+        Text = DataText
+      end
+
 
       if Line < math.floor( Data.Order / 10 ) then
         if Line == 0 then
-          Report:AddIndent( LineReport:Text( ", " ), "-" )
+          if Text ~= "" then
+            Report:AddIndent( LineReport:Text( ", " ), "-" )
+          end
         else
-          Report:AddIndent( LineReport:Text( ", " ) )
+          if Text ~= "" then
+            Report:AddIndent( LineReport:Text( ", " ) )
+          end
         end
         LineReport = REPORT:New()
         Line = math.floor( Data.Order / 10 )
       end
 
-      LineReport:Add( ( Key and ( Key .. ":" ) or "" ) .. Text )
+      if Text ~= "" then
+        LineReport:Add( ( Key and ( Key .. ":" ) or "" ) .. Text )
+      end
     end
   end
   Report:AddIndent( LineReport:Text( ", " ) )

@@ -31,7 +31,7 @@ do -- TASK_A2G
   --   * **Success**: The A2G task is successfully completed.
   --   * **Failed**: The A2G task has failed. This will happen if the player exists the task early, without communicating a possible cancellation to HQ.
   -- 
-  -- ## Set the scoring of achievements in an A2G attack.
+  -- ## 1) Set the scoring of achievements in an A2G attack.
   -- 
   -- Scoring or penalties can be given in the following circumstances:
   -- 
@@ -142,7 +142,7 @@ do -- TASK_A2G
         local TargetUnit = Task.TargetSetUnit:GetFirst() -- Wrapper.Unit#UNIT
         if TargetUnit then
           local Coordinate = TargetUnit:GetPointVec3()
-          self:T( { TargetCoordinate = Coordinate, Coordinate:GetX(), Coordinate:GetY(), Coordinate:GetZ() } )
+          self:T( { TargetCoordinate = Coordinate, Coordinate:GetX(), Coordinate:GetAlt(), Coordinate:GetZ() } )
           Task:SetTargetCoordinate( Coordinate, TaskUnit )
         end
         self:__RouteToTargetPoint( 0.1 )

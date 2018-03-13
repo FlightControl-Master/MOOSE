@@ -880,7 +880,7 @@ function TASK:MenuMarkToGroup( TaskGroup )
 
   self.TaskInfo:Report( Report, "M", TaskGroup )
 
-  local TargetCoordinate = self.TaskInfo:Get( "Coordinate" ).Data -- Core.Point#COORDINATE
+  local TargetCoordinate = self.TaskInfo:GetData( "Coordinate" ) -- Core.Point#COORDINATE
   local MarkText = Report:Text( ", " ) 
   self:F( { Coordinate = TargetCoordinate, MarkText = MarkText } )
   TargetCoordinate:MarkToGroup( MarkText, TaskGroup )
