@@ -751,9 +751,9 @@ do -- TASK_CARGO
     return ActRouteTarget:GetZone()
   end
 
-  --- Set a score when a target in scope of the A2G attack, has been destroyed .
+  --- Set a score when progress is made.
   -- @param #TASK_CARGO self
-  -- @param #string Text The text to display to the player, when the target has been destroyed.
+  -- @param #string Text The text to display to the player, when there is progress on the task goals.
   -- @param #number Score The score in points.
   -- @param Wrapper.Unit#UNIT TaskUnit
   -- @return #TASK_CARGO
@@ -767,9 +767,9 @@ do -- TASK_CARGO
     return self
   end
 
-  --- Set a score when all the targets in scope of the A2G attack, have been destroyed.
+  --- Set a score when success is achieved.
   -- @param #TASK_CARGO self
-  -- @param #string Text The text to display to the player, when all targets hav been destroyed.
+  -- @param #string Text The text to display to the player, when the task goals have been achieved.
   -- @param #number Score The score in points.
   -- @param Wrapper.Unit#UNIT TaskUnit
   -- @return #TASK_CARGO
@@ -783,9 +783,9 @@ do -- TASK_CARGO
     return self
   end
 
-  --- Set a penalty when the A2G attack has failed.
+  --- Set a penalty when the task goals have failed..
   -- @param #TASK_CARGO self
-  -- @param #string Text The text to display to the player, when the A2G attack has failed.
+  -- @param #string Text The text to display to the player, when the task goals has failed.
   -- @param #number Penalty The penalty in points.
   -- @param Wrapper.Unit#UNIT TaskUnit
   -- @return #TASK_CARGO
