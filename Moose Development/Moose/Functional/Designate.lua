@@ -802,6 +802,10 @@ do -- DESIGNATE
                 end
               )
               self.Designating[DesignateIndex] = ""
+              
+              -- When we found an item for designation, we stop the loop.
+              -- So each iteration over the detected items, a new detected item will be selected to be designated.
+              -- Until all detected items were found or until there are about 5 designations allocated.
               break
             end
           end
