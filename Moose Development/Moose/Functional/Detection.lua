@@ -760,7 +760,6 @@ do -- DETECTION_BASE
     -- @param #DETECTION_BASE self
     -- @return #DETECTION_BASE
     function DETECTION_BASE:CleanDetectionItem( DetectedItem, DetectedItemID )
-      self:F2()
     
       -- We clean all DetectedItems.
       -- if there are any remaining DetectedItems with no Set Objects then the Item in the DetectedItems must be deleted.
@@ -768,6 +767,7 @@ do -- DETECTION_BASE
       local DetectedSet = DetectedItem.Set
       
       if DetectedSet:Count() == 0 then
+        self:F3( { DetectedItemID = DetectedItemID } )
         self:RemoveDetectedItem( DetectedItemID )
       end
 
@@ -1750,6 +1750,36 @@ do -- DETECTION_BASE
     return DetectionSetGroup
   end
   
+    --- Find the nearest Recce of the DetectedItem.
+  -- @param #DETECTION_BASE self
+  -- @param #DETECTION_BASE.DetectedItem DetectedItem
+  -- @return Wrapper.Unit#UNIT The nearest FAC unit
+  function DETECTION_BASE:NearestRecce( DetectedItem )
+    
+    local NearestRecce = nil
+    local DistanceRecce = 1000000000 -- Units are not further than 1000000 km away from an area :-)
+    
+    for RecceGroupName, RecceGroup in pairs( self.DetectionSetGroup:GetSet() ) do
+      if RecceGroup and RecceGroup:IsAlive() then
+        for RecceUnit, RecceUnit in pairs( RecceGroup:GetUnits() ) do
+          if RecceUnit:IsActive() then
+            local RecceUnitCoord = RecceUnit:GetCoordinate()
+            local Distance = RecceUnitCoord:Get2DDistance( self:GetDetectedItemCoordinate( DetectedItem.Index ) )
+            if Distance < DistanceRecce then
+              DistanceRecce = Distance
+              NearestRecce = RecceUnit
+            end
+          end
+        end
+      end
+    end
+  
+    DetectedItem.NearestFAC = NearestRecce
+    DetectedItem.DistanceRecce = DistanceRecce
+    
+  end
+  
+  
   
   --- Schedule the DETECTION construction.
   -- @param #DETECTION_BASE self
@@ -1930,7 +1960,7 @@ do -- DETECTION_UNITS
       self:SetDetectedItemCoordinate( DetectedItem, DetectedFirstUnitCoord, DetectedFirstUnit )
 
       self:ReportFriendliesNearBy( { DetectedItem = DetectedItem, ReportSetGroup = self.DetectionSetGroup } ) -- Fill the Friendlies table
-      --self:NearestFAC( DetectedItem )
+      self:NearestRecce( DetectedItem )
       
     end
     
@@ -2188,7 +2218,7 @@ do -- DETECTION_TYPES
       self:SetDetectedItemCoordinate( DetectedItem, DetectedUnitCoord, DetectedFirstUnit )
 
       self:ReportFriendliesNearBy( { DetectedItem = DetectedItem, ReportSetGroup = self.DetectionSetGroup } ) -- Fill the Friendlies table
-      --self:NearestFAC( DetectedItem )
+      self:NearestRecce( DetectedItem )
     end
     
     
@@ -2452,34 +2482,6 @@ do -- DETECTION_AREAS
   end
   
   
-  --- Find the nearest FAC of the DetectedItem.
-  -- @param #DETECTION_AREAS self
-  -- @param #DETECTION_BASE.DetectedItem DetectedItem
-  -- @return Wrapper.Unit#UNIT The nearest FAC unit
-  function DETECTION_AREAS:NearestFAC( DetectedItem )
-    
-    local NearestRecce = nil
-    local DistanceRecce = 1000000000 -- Units are not further than 1000000 km away from an area :-)
-    
-    for RecceGroupName, RecceGroup in pairs( self.DetectionSetGroup:GetSet() ) do
-      if RecceGroup and RecceGroup:IsAlive() then
-        for RecceUnit, RecceUnit in pairs( RecceGroup:GetUnits() ) do
-          if RecceUnit:IsActive() then
-            local RecceUnitCoord = RecceUnit:GetCoordinate()
-            local Distance = RecceUnitCoord:Get2DDistance( self:GetDetectedItemCoordinate( DetectedItem.Index ) )
-            if Distance < DistanceRecce then
-              DistanceRecce = Distance
-              NearestRecce = RecceUnit
-            end
-          end
-        end
-      end
-    end
-  
-    DetectedItem.NearestFAC = NearestRecce
-    DetectedItem.DistanceRecce = DistanceRecce
-    
-  end
 
   --- Smoke the detected units
   -- @param #DETECTION_AREAS self
@@ -2784,7 +2786,7 @@ do -- DETECTION_AREAS
       end
 
       self:SetDetectedItemThreatLevel( DetectedItem )  -- Calculate A2G threat level
-      self:NearestFAC( DetectedItem )
+      self:NearestRecce( DetectedItem )
 
       
       if DETECTION_AREAS._SmokeDetectedUnits or self._SmokeDetectedUnits then

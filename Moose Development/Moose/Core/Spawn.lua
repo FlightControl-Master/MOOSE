@@ -647,7 +647,13 @@ end
 -- @usage
 -- -- RU Su-34 - AI Ship Attack
 -- -- Re-SPAWN the Group(s) after each landing and Engine Shut-Down automatically. 
--- SpawnRU_SU34 = SPAWN:New( 'TF1 RU Su-34 Krymsk@AI - Attack Ships' ):Schedule( 2, 3, 1800, 0.4 ):SpawnUncontrolled():InitRandomizeRoute( 1, 1, 3000 ):RepeatOnEngineShutDown()
+-- SpawnRU_SU34 = SPAWN
+--   :New( 'Su-34' )
+--   :Schedule( 2, 3, 1800, 0.4 )
+--   :SpawnUncontrolled()
+--   :InitRandomizeRoute( 1, 1, 3000 )
+--   :InitRepeatOnEngineShutDown()
+--   
 function SPAWN:InitRepeat()
 	self:F( { self.SpawnTemplatePrefix, self.SpawnIndex } )
 
@@ -661,6 +667,16 @@ end
 --- Respawn group after landing.
 -- @param #SPAWN self
 -- @return #SPAWN self
+-- @usage
+-- -- RU Su-34 - AI Ship Attack
+-- -- Re-SPAWN the Group(s) after each landing and Engine Shut-Down automatically. 
+-- SpawnRU_SU34 = SPAWN
+--   :New( 'Su-34' )
+--   :Schedule( 2, 3, 1800, 0.4 )
+--   :SpawnUncontrolled()
+--   :InitRandomizeRoute( 1, 1, 3000 )
+--   :InitRepeatOnLanding()
+--   
 function SPAWN:InitRepeatOnLanding()
 	self:F( { self.SpawnTemplatePrefix } )
 
@@ -675,6 +691,16 @@ end
 --- Respawn after landing when its engines have shut down.
 -- @param #SPAWN self
 -- @return #SPAWN self
+-- @usage
+-- -- RU Su-34 - AI Ship Attack
+-- -- Re-SPAWN the Group(s) after each landing and Engine Shut-Down automatically. 
+-- SpawnRU_SU34 = SPAWN
+--   :New( 'Su-34' )
+--   :Schedule( 2, 3, 1800, 0.4 )
+--   :SpawnUncontrolled()
+--   :InitRandomizeRoute( 1, 1, 3000 )
+--   :InitRepeatOnEngineShutDown()
+--   
 function SPAWN:InitRepeatOnEngineShutDown()
 	self:F( { self.SpawnTemplatePrefix } )
 
@@ -691,7 +717,8 @@ end
 -- @param #SPAWN self
 -- @param #string SpawnCleanUpInterval The interval to check for inactive groups within seconds.
 -- @return #SPAWN self
--- @usage Spawn_Helicopter:CleanUp( 20 )  -- CleanUp the spawning of the helicopters every 20 seconds when they become inactive.
+-- @usage 
+-- Spawn_Helicopter:InitCleanUp( 20 )  -- CleanUp the spawning of the helicopters every 20 seconds when they become inactive.
 function SPAWN:InitCleanUp( SpawnCleanUpInterval )
 	self:F( { self.SpawnTemplatePrefix, SpawnCleanUpInterval } )
 
@@ -718,7 +745,11 @@ end
 -- @return #SPAWN self
 -- @usage
 -- -- Define an array of Groups.
--- Spawn_BE_Ground = SPAWN:New( 'BE Ground' ):InitLimit( 2, 24 ):InitArray( 90, "Diamond", 10, 100, 50 )
+-- Spawn_BE_Ground = SPAWN
+--   :New( 'BE Ground' )
+--   :InitLimit( 2, 24 )
+--   :InitArray( 90, 10, 100, 50 )
+--   
 function SPAWN:InitArray( SpawnAngle, SpawnWidth, SpawnDeltaX, SpawnDeltaY )
 	self:F( { self.SpawnTemplatePrefix, SpawnAngle, SpawnWidth, SpawnDeltaX, SpawnDeltaY } )
 
