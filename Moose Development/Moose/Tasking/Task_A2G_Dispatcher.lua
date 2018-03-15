@@ -44,7 +44,38 @@ do -- TASK_A2G_DISPATCHER
   --   - **CAS Task**: Is dispatched when there are friendly ground units within range of the enemy targets.
   --   - **BAI Task**: Is dispatched when there are no friendly ground units within range of the enemy targets.
   --
-  -- # 0. Player Experience
+  -- # 0. Tactical Situations
+  -- 
+  -- This chapters provides some insights in the tactical situations when certain Task Types are created.
+  -- The Task Types are depending on the enemy positions that were detected, and the current location of friendly units.
+  -- 
+  -- # 0.1. SEAD Task
+  -- 
+  -- A SEAD Task is created when there are Ground based Radar Emitters detected within an area.
+  -- 
+  -- ![](..\Presentations\TASK_A2G_DISPATCHER\Dia11.JPG)
+  -- 
+  --   - Once all Radar Emitting Units have been destroyed, the Task will convert into a BAI or CAS task!
+  --   - A CAS and BAI task may be converted into a SEAD task, once a radar has been detected within the area!
+  -- 
+  -- # 0.2. CAS Task
+  -- 
+  -- A CAS Task is created when there are no Radar Emitters within the area, but there are friendly ground Units within 6 km of the area.
+  -- 
+  -- ![](..\Presentations\TASK_A2G_DISPATCHER\Dia12.JPG)
+  -- 
+  --   - After the detection of the CAS task, if the friendly Units are destroyed, the CAS task will convert into a BAI task!
+  --   - Only ground Units are taken into account. Airborne units are ships are not considered friendlies that require Close Air Support.
+  -- 
+  -- # 0.3. BAI Task
+  -- 
+  -- A BAI Task is created when there are no Radar Emitters within the area, and there aren't any friendly ground Units within 6 km of the area.
+  -- 
+  -- ![](..\Presentations\TASK_A2G_DISPATCHER\Dia13.JPG)
+  --
+  --   - A BAI task may be converted into a CAS task if friendly Ground Units approach within 6 km range!
+  --
+  -- # 1. Player Experience
   -- 
   -- The A2G dispatcher is residing under a @{CommandCenter}, which is orchestrating a @{Mission}.
   -- As a result, you'll find for DCS World missions that implement the A2G dispatcher a **Command Center Menu** and under this one or more **Mission Menus**.
@@ -67,7 +98,7 @@ do -- TASK_A2G_DISPATCHER
   --
   -- ![](..\Presentations\TASK_A2G_DISPATCHER\Dia1.JPG)
   -- 
-  -- ## 0.1. Mission Menu (Under the Command Center Menu)
+  -- ## 1.1. Mission Menu (Under the Command Center Menu)
   -- 
   -- The Mission Menu controls the information of the mission, including the:
   -- 
@@ -90,21 +121,21 @@ do -- TASK_A2G_DISPATCHER
   --          F4. Mission Reports
   -- 
   --   
-  -- ### 0.1.1. Mission Briefing Menu
+  -- ### 1.1.1. Mission Briefing Menu
   -- 
   -- The Mission Briefing Menu will show in text a summary description of the overall mission objectives and expectations.
   -- Note that the Mission Briefing is not the briefing of a specific task, but rather provides an overall strategy and tactical situation, 
   -- and explains the mission goals. 
   -- 
   -- 
-  -- ### 0.1.2. Mark Task Locations Menu
+  -- ### 1.1.2. Mark Task Locations Menu
   -- 
   -- The Mark Task Locations Menu will mark the location indications of the Tasks on the map, if this intelligence is known by the Command Center.
   -- For A2G tasks this information will always be know, but it can be that for other tasks a location intelligence will be less relevant.
   -- Note that each Planned task and each Engaged task will be marked. Completed, Failed and Cancelled tasks are not marked.
   -- Depending on the task type, a summary information is shown to bring to the player the relevant information for situational awareness.
   -- 
-  -- ### 0.1.3. Task Reports Menu
+  -- ### 1.1.3. Task Reports Menu
   -- 
   -- The Task Reports Menu is a sub menu, that allows to create various reports:
   -- 
@@ -135,7 +166,7 @@ do -- TASK_A2G_DISPATCHER
   -- Note that these reports provide an "overview" of the tasks. Detailed information of the task can be retrieved using the Detailed Report on the Task Menu.
   -- (See later).
   -- 
-  -- ### 0.1.4. Mission Reports Menu
+  -- ### 1.1.4. Mission Reports Menu
   -- 
   -- The Mission Reports Menu is a sub menu, that provides options to retrieve further information on the current Mission:
   -- 
@@ -156,14 +187,14 @@ do -- TASK_A2G_DISPATCHER
   --            F2. Report Players per Task
   -- 
   --   
-  -- ## 0.2. Task Management Menus
+  -- ## 1.2. Task Management Menus
   --   
   -- Very important to remember is: **Multiple Players can be assigned to the same Task, but from the player perspective, the Player can only be assigned to one Task per Mission at the same time!**
   -- Consider this like the two major modes in which a player can be in. He can be free of tasks or he can be assigned to a Task.
   -- Depending on whether a Task has been Planned or Assigned to a Player (Group), 
   -- **the Mission Menu will contain extra Menus to control specific Tasks.**
   -- 
-  -- #### 0.2.1. Join a Planned Task
+  -- #### 1.2.1. Join a Planned Task
   -- 
   -- If the Player has not yet been assigned to a Task within the Mission, the Mission Menu will contain additionally a:
   -- 
@@ -183,7 +214,7 @@ do -- TASK_A2G_DISPATCHER
   -- 
   -- **The F5. Join Planned Task allows the player to join a Planned Task and take an engagement in the running Mission.**
   -- 
-  -- #### 0.2.2. Manage an Assigned Task 
+  -- #### 1.2.2. Manage an Assigned Task 
   -- 
   -- If the Player has been assigned to one Task within the Mission, the Mission Menu will contain an extra:
   -- 
@@ -208,7 +239,7 @@ do -- TASK_A2G_DISPATCHER
   -- **The F5. Assigned Task __TaskName__ allows the player to control the current Assigned Task and take further actions.**
   -- 
   -- 
-  -- ## 0.3. Join Planned Task Menu
+  -- ## 1.3. Join Planned Task Menu
   -- 
   -- The Join Planned Task Menu contains the different Planned A2G Tasks **in a structured Menu Hierarchy**.
   -- The Menu Hierarchy is structuring the Tasks per **Task Type**, and then by **Task Name (ID)**.  
@@ -252,7 +283,7 @@ do -- TASK_A2G_DISPATCHER
   -- ![](..\Presentations\TASK_A2G_DISPATCHER\Dia8.JPG)
   -- 
   --
-  -- ### 0.3.1. Planned Task Menu
+  -- ### 1.3.1. Planned Task Menu
   --
   -- Each Planned Task Menu will allow for the following actions:
   -- 
@@ -284,7 +315,7 @@ do -- TASK_A2G_DISPATCHER
   -- ![](..\Presentations\TASK_A2G_DISPATCHER\Dia9.JPG)
   --
   -- 
-  -- ## 0.4. Assigned Task Menu
+  -- ## 1.4. Assigned Task Menu
   -- 
   -- The Assigned Task Menu allows to control the **current assigned task** within the Mission.
   -- 
@@ -309,6 +340,8 @@ do -- TASK_A2G_DISPATCHER
   --            
   -- Task abortion will result in the Task to be Cancelled, and the Task **may** be **Replanned**.
   -- However, this will depend on the setup of each Mission. 
+  -- 
+  -- 
   -- 
   -- # 1. TASK_A2G_DISPATCHER constructor
   -- 
