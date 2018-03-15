@@ -1,7 +1,5 @@
 --- **Functional** -- Management of target **Designation**. Lase, smoke and illuminate targets.
 --
--- ![Banner Image](..\Presentations\DESIGNATE\Dia1.JPG)
---
 -- ===
 --
 -- DESIGNATE is orchestrating the designation of potential targets executed by a Recce group, 
