@@ -1,5 +1,7 @@
 --- **Tasking** - The TASK_A2G_DISPATCHER creates and manages player TASK_A2G tasks based on detected targets.
 -- 
+-- 
+-- 
 -- ====
 -- 
 -- ### Author: **Sven Van de Velde (FlightControl)**
@@ -20,6 +22,8 @@ do -- TASK_A2G_DISPATCHER
   -- @extends Tasking.DetectionManager#DETECTION_MANAGER
 
   --- # TASK\_A2G\_DISPATCHER class, extends @{DetectionManager#DETECTION_MANAGER}
+  -- 
+  -- ![](..\Presentations\TASK\_A2G\_DISPATCHER\Dia1.JPG)
   -- 
   -- The TASK\_A2G\_DISPATCHER class orchestrates dynamic **A2G Task Dispatching** based on the detection results of a linked @{Detection} object.
   -- It uses the Tasking System within the MOOSE framework, which is a multi-player Tasking Orchestration system.
@@ -61,6 +65,8 @@ do -- TASK_A2G_DISPATCHER
   -- CC |Gori| is controlling Mission "Alpha", "Beta", "Gamma".  
   -- CC |Gudauta| is controlling Missions "Overlord" and "Desert Storm".
   --
+  -- ![](..\Presentations\TASK_A2G_DISPATCHER\Dia1.JPG)
+  -- 
   -- ## 0.1. Mission Menu (Under the Command Center Menu)
   -- 
   -- The Mission Menu controls the information of the mission, including the:
@@ -69,6 +75,8 @@ do -- TASK_A2G_DISPATCHER
   --   - **Mark Task Locations**: A summary of each Task will be shown on the map as a marker.
   --   - **Create Task Reports**: A menu to create various reports of the current tasks dispatched by the A2G dispatcher.
   --   - **Create Mission Reports**: A menu to create various reports on the current mission.
+  -- 
+  -- ![](..\Presentations\TASK_A2G_DISPATCHER\Dia6.JPG)
   -- 
   -- For CC |Gori|, Mission "Alpha", the menu structure could look like this:
   -- 
@@ -87,8 +95,6 @@ do -- TASK_A2G_DISPATCHER
   -- The Mission Briefing Menu will show in text a summary description of the overall mission objectives and expectations.
   -- Note that the Mission Briefing is not the briefing of a specific task, but rather provides an overall strategy and tactical situation, 
   -- and explains the mission goals. 
-  -- 
-  -- [picture]
   -- 
   -- 
   -- ### 0.1.2. Mark Task Locations Menu
@@ -234,10 +240,17 @@ do -- TASK_A2G_DISPATCHER
   --              F1. SEAD.001
   --              F2. SEAD.002
   --          
+  -- An example from within a running simulation:
+  -- 
+  -- ![](..\Presentations\TASK_A2G_DISPATCHER\Dia7.JPG)
   --          
   -- Each Task Type Menu would have a list of the Task Menus underneath. 
   -- Each Task Menu (eg. `CAS.001`) has a **detailed Task Menu structure to control the specific task**!
   --
+  -- An example from within a running simulation:
+  -- 
+  -- ![](..\Presentations\TASK_A2G_DISPATCHER\Dia8.JPG)
+  -- 
   --
   -- ### 0.3.1. Planned Task Menu
   --
@@ -266,7 +279,9 @@ do -- TASK_A2G_DISPATCHER
   -- 
   -- **The Join Task is THE menu option to let a Player join the Task, and to engage within the Mission.**
   -- 
-  -- [Picture]
+  -- An example from within a running simulation:
+  -- 
+  -- ![](..\Presentations\TASK_A2G_DISPATCHER\Dia9.JPG)
   --
   -- 
   -- ## 0.4. Assigned Task Menu
