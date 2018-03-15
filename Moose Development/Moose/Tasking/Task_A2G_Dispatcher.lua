@@ -96,8 +96,6 @@ do -- TASK_A2G_DISPATCHER
   -- CC |Gori| is controlling Mission "Alpha", "Beta", "Gamma".  
   -- CC |Gudauta| is controlling Missions "Overlord" and "Desert Storm".
   --
-  -- ![](..\Presentations\TASK_A2G_DISPATCHER\Dia1.JPG)
-  -- 
   -- ## 1.1. Mission Menu (Under the Command Center Menu)
   -- 
   -- The Mission Menu controls the information of the mission, including the:
