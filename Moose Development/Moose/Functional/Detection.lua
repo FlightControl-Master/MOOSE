@@ -1534,6 +1534,7 @@ do -- DETECTION_BASE
   -- @return #DETECTION_BASE.DetectedItem
   function DETECTION_BASE:GetDetectedItem( Index )
   
+    self:F( { DetectedItems = self.DetectedItems } )
     local DetectedItem = self.DetectedItems[Index]
     if DetectedItem then
       return DetectedItem
@@ -1700,6 +1701,7 @@ do -- DETECTION_BASE
     local DetectedItem = self:GetDetectedItem( Index )
     
     if DetectedItem then
+      self:F( { ThreatLevel = DetectedItem.ThreatLevel, ThreatText = DetectedItem.ThreatText } )
       return DetectedItem.ThreatLevel or 0, DetectedItem.ThreatText or ""
     end
     
@@ -1931,7 +1933,7 @@ do -- DETECTION_UNITS
           local DetectedItem = self:GetDetectedItem( DetectedUnitName )
           if not DetectedItem then
             self:T( "Added new DetectedItem" )
-            DetectedItem = self:AddDetectedItem( "UNIT", DetectedUnitName )
+            DetectedItem = self:AddDetectedItem( "UNIT" )
             DetectedItem.TypeName = DetectedUnit:GetTypeName()            
             DetectedItem.Name = DetectedObject.Name
             DetectedItem.IsVisible = DetectedObject.IsVisible 
@@ -1960,6 +1962,7 @@ do -- DETECTION_UNITS
       self:SetDetectedItemCoordinate( DetectedItem, DetectedFirstUnitCoord, DetectedFirstUnit )
 
       self:ReportFriendliesNearBy( { DetectedItem = DetectedItem, ReportSetGroup = self.DetectionSetGroup } ) -- Fill the Friendlies table
+      self:SetDetectedItemThreatLevel( DetectedItem )
       self:NearestRecce( DetectedItem )
       
     end
@@ -2194,7 +2197,7 @@ do -- DETECTION_TYPES
           local DetectedTypeName = DetectedUnit:GetTypeName()
           local DetectedItem = self:GetDetectedItem( DetectedTypeName )
           if not DetectedItem then
-            DetectedItem = self:AddDetectedItem( "TYPE", DetectedTypeName )
+            DetectedItem = self:AddDetectedItem( "TYPE" )
             DetectedItem.TypeName = DetectedUnit:GetTypeName()
           end
         
@@ -2218,6 +2221,7 @@ do -- DETECTION_TYPES
       self:SetDetectedItemCoordinate( DetectedItem, DetectedUnitCoord, DetectedFirstUnit )
 
       self:ReportFriendliesNearBy( { DetectedItem = DetectedItem, ReportSetGroup = self.DetectionSetGroup } ) -- Fill the Friendlies table
+      self:SetDetectedItemThreatLevel( DetectedItem )
       self:NearestRecce( DetectedItem )
     end
     
