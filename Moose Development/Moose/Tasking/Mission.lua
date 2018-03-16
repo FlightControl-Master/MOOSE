@@ -522,7 +522,7 @@ function MISSION:GetMenu( TaskGroup ) -- R2.1 -- Changed Menu Structure
 
   GroupMenu.MarkTasks = MENU_GROUP_COMMAND:New( TaskGroup, "Mark Task Locations on Map", self.MissionMenu, self.MarkTargetLocations, self, TaskGroup )
   GroupMenu.TaskReportsMenu = MENU_GROUP:New( TaskGroup, "Task Reports", self.MissionMenu )
-  GroupMenu.ReportTasksMenu = MENU_GROUP_COMMAND:New( TaskGroup, "Report Tasks", GroupMenu.TaskReportsMenu, self.MenuReportTasksSummary, self, TaskGroup )
+  GroupMenu.ReportTasksMenu = MENU_GROUP_COMMAND:New( TaskGroup, "Report Tasks Summary", GroupMenu.TaskReportsMenu, self.MenuReportTasksSummary, self, TaskGroup )
   GroupMenu.ReportPlannedTasksMenu = MENU_GROUP_COMMAND:New( TaskGroup, "Report Planned Tasks", GroupMenu.TaskReportsMenu, self.MenuReportTasksPerStatus, self, TaskGroup, "Planned" )
   GroupMenu.ReportAssignedTasksMenu = MENU_GROUP_COMMAND:New( TaskGroup, "Report Assigned Tasks", GroupMenu.TaskReportsMenu, self.MenuReportTasksPerStatus, self, TaskGroup, "Assigned" )
   GroupMenu.ReportSuccessTasksMenu = MENU_GROUP_COMMAND:New( TaskGroup, "Report Successful Tasks", GroupMenu.TaskReportsMenu, self.MenuReportTasksPerStatus, self, TaskGroup, "Success" )
