@@ -2963,7 +2963,7 @@ do -- AI_A2A_DISPATCHER
         end
       else
         if DefenderTask.Target then
-          local AttackerItem = Detection:GetDetectedItem( DefenderTask.Target.Index )
+          local AttackerItem = Detection:GetDetectedItemByIndex( DefenderTask.Target.Index )
           if not AttackerItem then
             self:F( { "Removing obsolete Target:", DefenderTask.Target.Index } )
             self:ClearDefenderTaskTarget( AIGroup )

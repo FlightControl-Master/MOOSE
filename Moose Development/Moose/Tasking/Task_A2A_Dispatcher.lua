@@ -507,7 +507,7 @@ do -- TASK_A2A_DISPATCHER
       for TaskIndex, TaskData in pairs( self.Tasks ) do
         local Task = TaskData -- Tasking.Task#TASK
         if Task:IsStatePlanned() then
-          local DetectedItem = Detection:GetDetectedItem( TaskIndex )
+          local DetectedItem = Detection:GetDetectedItemByIndex( TaskIndex )
           if not DetectedItem then
             local TaskText = Task:GetName()
             for TaskGroupID, TaskGroup in pairs( self.SetGroup:GetSet() ) do

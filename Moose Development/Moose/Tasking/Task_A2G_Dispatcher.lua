@@ -575,7 +575,7 @@ do -- TASK_A2G_DISPATCHER
       for TaskIndex, TaskData in pairs( self.Tasks ) do
         local Task = TaskData -- Tasking.Task#TASK
         if Task:IsStatePlanned() then
-          local DetectedItem = Detection:GetDetectedItem( TaskIndex )
+          local DetectedItem = Detection:GetDetectedItemByIndex( TaskIndex )
           if not DetectedItem then
             local TaskText = Task:GetName()
             for TaskGroupID, TaskGroup in pairs( self.SetGroup:GetSet() ) do
@@ -663,6 +663,7 @@ do -- TASK_A2G_DISPATCHER
                 local TargetSetUnit = self:EvaluateSEAD( DetectedItem ) -- Returns a SetUnit if there are targets to be SEADed...
                 if TargetSetUnit then
                   Task:SetTargetSetUnit( TargetSetUnit )
+                  Task:SetDetection( Detection, DetectedItem )
                   Task:UpdateTaskInfo( DetectedItem )
                 else
                   Task:Cancel()
@@ -673,7 +674,7 @@ do -- TASK_A2G_DISPATCHER
                   local TargetSetUnit = self:EvaluateCAS( DetectedItem ) -- Returns a SetUnit if there are targets to be CASed...
                   if TargetSetUnit then
                     Task:SetTargetSetUnit( TargetSetUnit )
-                    Task:SetDetection( Detection, TaskIndex )
+                    Task:SetDetection( Detection, DetectedItem )
                     Task:UpdateTaskInfo( DetectedItem )
                   else
                     Task:Cancel()
@@ -684,7 +685,7 @@ do -- TASK_A2G_DISPATCHER
                     local TargetSetUnit = self:EvaluateBAI( DetectedItem ) -- Returns a SetUnit if there are targets to be BAIed...
                     if TargetSetUnit then
                       Task:SetTargetSetUnit( TargetSetUnit )
-                      Task:SetDetection( Detection, TaskIndex )
+                      Task:SetDetection( Detection, DetectedItem )
                       Task:UpdateTaskInfo( DetectedItem )
                     else
                       Task:Cancel()
@@ -705,7 +706,7 @@ do -- TASK_A2G_DISPATCHER
           local TargetSetUnit = self:EvaluateSEAD( DetectedItem ) -- Returns a SetUnit if there are targets to be SEADed...
           if TargetSetUnit then
             Task = TASK_A2G_SEAD:New( Mission, self.SetGroup, string.format( "SEAD.%03d", DetectedItemID ), TargetSetUnit )
-            Task:SetDetection( Detection, TaskIndex )
+            Task:SetDetection( Detection, DetectedItem )
           end
 
           -- Evaluate CAS
@@ -713,7 +714,7 @@ do -- TASK_A2G_DISPATCHER
             local TargetSetUnit = self:EvaluateCAS( DetectedItem ) -- Returns a SetUnit if there are targets to be CASed...
             if TargetSetUnit then
               Task = TASK_A2G_CAS:New( Mission, self.SetGroup, string.format( "CAS.%03d", DetectedItemID ), TargetSetUnit )
-              Task:SetDetection( Detection, TaskIndex )
+              Task:SetDetection( Detection, DetectedItem )
             end
 
             -- Evaluate BAI
@@ -721,7 +722,7 @@ do -- TASK_A2G_DISPATCHER
               local TargetSetUnit = self:EvaluateBAI( DetectedItem, self.Mission:GetCommandCenter():GetPositionable():GetCoalition() ) -- Returns a SetUnit if there are targets to be BAIed...
               if TargetSetUnit then
                 Task = TASK_A2G_BAI:New( Mission, self.SetGroup, string.format( "BAI.%03d", DetectedItemID ), TargetSetUnit )
-                Task:SetDetection( Detection, TaskIndex )
+                Task:SetDetection( Detection, DetectedItem )
               end
             end
           end

@@ -938,7 +938,7 @@ do -- DESIGNATE
       
         for DesignateIndex, Designating in pairs( self.Designating ) do
 
-          local DetectedItem = self.Detection:GetDetectedItem( DesignateIndex )
+          local DetectedItem = self.Detection:GetDetectedItemByIndex( DesignateIndex )
 
           if DetectedItem then
           

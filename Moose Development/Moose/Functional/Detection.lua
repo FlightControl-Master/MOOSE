@@ -275,6 +275,7 @@ do -- DETECTION_BASE
     DetectionRun = 0,
     DetectedObjectsIdentified = {},
     DetectedItems = {},
+    DetectedItemsByIndex = {},  
   }
   
   --- @type DETECTION_BASE.DetectedObjects
@@ -1470,7 +1471,7 @@ do -- DETECTION_BASE
     if DetectedItemKey then
       self.DetectedItems[DetectedItemKey] = DetectedItem
     else
-      self.DetectedItemsByIndex[self.DetectedItemMax] = DetectedItem
+      self.DetectedItems[self.DetectedItemMax] = DetectedItem
     end
     
     self.DetectedItemsByIndex[self.DetectedItemMax] = DetectedItem
