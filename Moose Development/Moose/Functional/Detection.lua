@@ -784,7 +784,7 @@ do -- DETECTION_BASE
       local DetectedItems = self:GetDetectedItems()
       
       for DetectedItemIndex, DetectedItem in pairs( DetectedItems ) do
-        local DetectedSet = self:GetDetectedSet( DetectedItemIndex )
+        local DetectedSet = self:GetDetectedSet( DetectedItem )
         if DetectedSet then
           DetectedSet:RemoveUnitsByName( UnitName )
         end
@@ -1458,23 +1458,26 @@ do -- DETECTION_BASE
   -- The DetectedItem is a table and contains a SET_UNIT in the field Set.
   -- @param #DETECTION_BASE self
   -- @param ItemPrefix
-  -- @param #string DetectedItemIndex The index of the DetectedItem.
+  -- @param DetectedItemKey The key of the DetectedItem.
   -- @param Core.Set#SET_UNIT Set (optional) The Set of Units to be added.
   -- @return #DETECTION_BASE.DetectedItem
-  function DETECTION_BASE:AddDetectedItem( ItemPrefix, DetectedItemIndex, Set )
+  function DETECTION_BASE:AddDetectedItem( ItemPrefix, DetectedItemKey, Set )
   
     local DetectedItem = {}
     self.DetectedItemCount = self.DetectedItemCount + 1
     self.DetectedItemMax = self.DetectedItemMax + 1
     
-    if DetectedItemIndex then
-      self.DetectedItems[DetectedItemIndex] = DetectedItem
+    if DetectedItemKey then
+      self.DetectedItems[DetectedItemKey] = DetectedItem
     else
-      self.DetectedItems[self.DetectedItemMax] = DetectedItem
+      self.DetectedItemsByIndex[self.DetectedItemMax] = DetectedItem
     end
     
+    self.DetectedItemsByIndex[self.DetectedItemMax] = DetectedItem
+    
+    
     DetectedItem.Set = Set or SET_UNIT:New():FilterDeads():FilterCrashes()
-    DetectedItem.Index = DetectedItemIndex or self.DetectedItemMax
+    DetectedItem.Index = DetectedItemKey or self.DetectedItemMax
     DetectedItem.ItemID = ItemPrefix .. "." .. self.DetectedItemMax
     DetectedItem.ID = self.DetectedItemMax
     DetectedItem.Removed = false
@@ -1485,13 +1488,13 @@ do -- DETECTION_BASE
   --- Adds a new DetectedItem to the DetectedItems list.
   -- The DetectedItem is a table and contains a SET_UNIT in the field Set.
   -- @param #DETECTION_BASE self
-  -- @param #string DetectedItemIndex The index of the DetectedItem.
+  -- @param DetectedItemKey The key of the DetectedItem.
   -- @param Core.Set#SET_UNIT Set (optional) The Set of Units to be added.
   -- @param Core.Zone#ZONE_UNIT Zone (optional) The Zone to be added where the Units are located.
   -- @return #DETECTION_BASE.DetectedItem
-  function DETECTION_BASE:AddDetectedItemZone( DetectedItemIndex, Set, Zone )
+  function DETECTION_BASE:AddDetectedItemZone( DetectedItemKey, Set, Zone )
   
-    local DetectedItem = self:AddDetectedItem( "AREA", DetectedItemIndex, Set )
+    local DetectedItem = self:AddDetectedItem( "AREA", DetectedItemKey, Set )
 
     DetectedItem.Zone = Zone
     
@@ -1501,12 +1504,16 @@ do -- DETECTION_BASE
   --- Removes an existing DetectedItem from the DetectedItems list.
   -- The DetectedItem is a table and contains a SET_UNIT in the field Set.
   -- @param #DETECTION_BASE self
-  -- @param #number DetectedItemIndex The index or position in the DetectedItems list where the item needs to be removed.
-  function DETECTION_BASE:RemoveDetectedItem( DetectedItemIndex )
+  -- @param DetectedItemKey The key in the DetectedItems list where the item needs to be removed.
+  function DETECTION_BASE:RemoveDetectedItem( DetectedItemKey )
     
-    if self.DetectedItems[DetectedItemIndex] then
+    local DetectedItem = self.DetectedItems[DetectedItemKey]
+
+    if DetectedItem then
       self.DetectedItemCount = self.DetectedItemCount - 1
-      self.DetectedItems[DetectedItemIndex] = nil
+      local DetectedItemIndex = DetectedItem.Index
+      self.DetectedItemsByIndex[DetectedItemIndex] = nil
+      self.DetectedItems[DetectedItemKey] = nil
     end
   end
   
@@ -1528,14 +1535,31 @@ do -- DETECTION_BASE
     return DetectedCount
   end
   
+  --- Get a detected item using a given Key.
+  -- @param #DETECTION_BASE self
+  -- @param Key
+  -- @return #DETECTION_BASE.DetectedItem
+  function DETECTION_BASE:GetDetectedItemByKey( Key )
+  
+    self:F( { DetectedItems = self.DetectedItems } )
+    
+    local DetectedItem = self.DetectedItems[Key]
+    if DetectedItem then
+      return DetectedItem
+    end
+    
+    return nil
+  end
+  
   --- Get a detected item using a given numeric index.
   -- @param #DETECTION_BASE self
   -- @param #number Index
   -- @return #DETECTION_BASE.DetectedItem
-  function DETECTION_BASE:GetDetectedItem( Index )
+  function DETECTION_BASE:GetDetectedItemByIndex( Index )
   
-    self:F( { DetectedItems = self.DetectedItems } )
-    local DetectedItem = self.DetectedItems[Index]
+    self:F( { DetectedItemsByIndex = self.DetectedItemsByIndex } )
+    
+    local DetectedItem = self.DetectedItemsByIndex[Index]
     if DetectedItem then
       return DetectedItem
     end
@@ -1545,16 +1569,11 @@ do -- DETECTION_BASE
   
   --- Get a detected ItemID using a given numeric index.
   -- @param #DETECTION_BASE self
-  -- @param #number Index
+  -- @param #DETECTION_BASE.DetectedItem DetectedItem The DetectedItem.
   -- @return #string DetectedItemID
-  function DETECTION_BASE:GetDetectedItemID( Index ) --R2.1
+  function DETECTION_BASE:GetDetectedItemID( DetectedItem ) --R2.1
   
-    local DetectedItem = self.DetectedItems[Index]
-    if DetectedItem then
-      return DetectedItem.ItemID
-    end
-    
-    return ""
+    return DetectedItem and DetectedItem.ItemID or ""
   end
   
   --- Get a detected ID using a given numeric index.
@@ -1563,7 +1582,7 @@ do -- DETECTION_BASE
   -- @return #string DetectedItemID
   function DETECTION_BASE:GetDetectedID( Index ) --R2.1
   
-    local DetectedItem = self.DetectedItems[Index]
+    local DetectedItem = self.DetectedItemsByIndex[Index]
     if DetectedItem then
       return DetectedItem.ID
     end
@@ -1573,12 +1592,11 @@ do -- DETECTION_BASE
   
   --- Get the @{Set#SET_UNIT} of a detecttion area using a given numeric index.
   -- @param #DETECTION_BASE self
-  -- @param #number Index
+  -- @param #DETECTION_BASE.DetectedItem DetectedItem
   -- @return Core.Set#SET_UNIT DetectedSet
-  function DETECTION_BASE:GetDetectedSet( Index )
+  function DETECTION_BASE:GetDetectedSet( DetectedItem )
   
-    local DetectedItem = self:GetDetectedItem( Index )
-    local DetectedSetUnit = DetectedItem.Set
+    local DetectedSetUnit = DetectedItem and DetectedItem.Set
     if DetectedSetUnit then
       return DetectedSetUnit
     end
@@ -1623,11 +1641,11 @@ do -- DETECTION_BASE
   
     --- Get the @{Zone#ZONE_UNIT} of a detection area using a given numeric index.
     -- @param #DETECTION_BASE self
-    -- @param #number Index
+    -- @param #DETECTION_BASE.DetectedItem DetectedItem The DetectedItem.
     -- @return Core.Zone#ZONE_UNIT DetectedZone
-    function DETECTION_BASE:GetDetectedItemZone( Index )
+    function DETECTION_BASE:GetDetectedItemZone( DetectedItem )
     
-      local DetectedZone = self.DetectedItems[Index].Zone
+      local DetectedZone = DetectedItem and DetectedItem.Zone
       if DetectedZone then
         return DetectedZone
       end
@@ -1642,7 +1660,7 @@ do -- DETECTION_BASE
 
   --- Set the detected item coordinate.
   -- @param #DETECTION_BASE self
-  -- @param #DETECTION_BASE.DetectedItem The DetectedItem to set the coordinate at.
+  -- @param #DETECTION_BASE.DetectedItem DetectedItem The DetectedItem to set the coordinate at.
   -- @param Core.Point#COORDINATE Coordinate The coordinate to set the last know detected position at.
   -- @param Wrapper.Unit#UNIT DetectedItemUnit The unit to set the heading and altitude from.
   -- @return #DETECTION_BASE
@@ -1662,13 +1680,11 @@ do -- DETECTION_BASE
 
   --- Get the detected item coordinate.
   -- @param #DETECTION_BASE self
-  -- @param #number Index
+  -- @param #DETECTION_BASE.DetectedItem DetectedItem The DetectedItem to set the coordinate at.
   -- @return Core.Point#COORDINATE
-  function DETECTION_BASE:GetDetectedItemCoordinate( Index )
-    self:F( { Index = Index } )
+  function DETECTION_BASE:GetDetectedItemCoordinate( DetectedItem )
+    self:F( { DetectedItem = DetectedItem } )
   
-    local DetectedItem = self:GetDetectedItem( Index )
-    
     if DetectedItem then
       return DetectedItem.Coordinate
     end
@@ -1693,13 +1709,11 @@ do -- DETECTION_BASE
 
   --- Get the detected item coordinate.
   -- @param #DETECTION_BASE self
-  -- @param #number Index
+  -- @param #DETECTION_BASE.DetectedItem DetectedItem The DetectedItem.
   -- @return #number ThreatLevel
-  function DETECTION_BASE:GetDetectedItemThreatLevel( Index )
-    self:F( { Index = Index } )
+  function DETECTION_BASE:GetDetectedItemThreatLevel( DetectedItem )
+    self:F( { DetectedItem = DetectedItem } )
   
-    local DetectedItem = self:GetDetectedItem( Index )
-    
     if DetectedItem then
       self:F( { ThreatLevel = DetectedItem.ThreatLevel, ThreatText = DetectedItem.ThreatText } )
       return DetectedItem.ThreatLevel or 0, DetectedItem.ThreatText or ""
@@ -1708,28 +1722,14 @@ do -- DETECTION_BASE
     return nil, ""
   end
   
-  
 
-
-
-
-  --- Menu of a detected item using a given numeric index.
-  -- @param #DETECTION_BASE self
-  -- @param Index
-  -- @return #string
-  function DETECTION_BASE:DetectedItemMenu( Index, AttackGroup )
-    self:F( Index )
-    return nil
-  end
-
-  
   --- Report summary of a detected item using a given numeric index.
   -- @param #DETECTION_BASE self
-  -- @param Index
+  -- @param #DETECTION_BASE.DetectedItem DetectedItem The DetectedItem.
   -- @param Wrapper.Group#GROUP AttackGroup The group to generate the report for.
   -- @param Core.Settings#SETTINGS Settings Message formatting settings to use.
   -- @return Core.Report#REPORT
-  function DETECTION_BASE:DetectedItemReportSummary( Index, AttackGroup, Settings )
+  function DETECTION_BASE:DetectedItemReportSummary( DetectedItem, AttackGroup, Settings )
     self:F( Index )
     return nil
   end
@@ -1766,7 +1766,7 @@ do -- DETECTION_BASE
         for RecceUnit, RecceUnit in pairs( RecceGroup:GetUnits() ) do
           if RecceUnit:IsActive() then
             local RecceUnitCoord = RecceUnit:GetCoordinate()
-            local Distance = RecceUnitCoord:Get2DDistance( self:GetDetectedItemCoordinate( DetectedItem.Index ) )
+            local Distance = RecceUnitCoord:Get2DDistance( self:GetDetectedItemCoordinate( DetectedItem ) )
             if Distance < DistanceRecce then
               DistanceRecce = Distance
               NearestRecce = RecceUnit
@@ -1930,10 +1930,10 @@ do -- DETECTION_UNITS
         
         if DetectedUnit then
           local DetectedTypeName = DetectedUnit:GetTypeName()
-          local DetectedItem = self:GetDetectedItem( DetectedUnitName )
+          local DetectedItem = self:GetDetectedItemByKey( DetectedUnitName )
           if not DetectedItem then
             self:T( "Added new DetectedItem" )
-            DetectedItem = self:AddDetectedItem( "UNIT" )
+            DetectedItem = self:AddDetectedItem( "UNIT", DetectedUnitName )
             DetectedItem.TypeName = DetectedUnit:GetTypeName()            
             DetectedItem.Name = DetectedObject.Name
             DetectedItem.IsVisible = DetectedObject.IsVisible 
@@ -1969,48 +1969,17 @@ do -- DETECTION_UNITS
     
   end
 
-  --- Menu of a DetectedItem using a given numeric index.
-  -- @param #DETECTION_UNITS self
-  -- @param Index
-  -- @return #string
-  function DETECTION_UNITS:DetectedItemMenu( Index, AttackGroup )
-    self:F( Index )
-  
-    local DetectedItem = self:GetDetectedItem( Index )
-    local DetectedSet = self:GetDetectedSet( Index )
-    local DetectedItemID = self:GetDetectedItemID( Index )
-    
-    self:T( DetectedSet )
-    if DetectedSet then
-      local ReportSummary = ""
-      local UnitDistanceText = ""
-      local UnitCategoryText = ""
-  
-      local DetectedItemCoordinate = self:GetDetectedItemCoordinate( Index )
-      local DetectedItemCoordText = DetectedItemCoordinate:ToString( AttackGroup )
-     
-      ReportSummary = string.format( 
-        "%s - %s",
-        DetectedItemID,
-        DetectedItemCoordText
-      )
-      self:T( ReportSummary )
-    
-      return ReportSummary
-    end
-  end
   
   --- Report summary of a DetectedItem using a given numeric index.
   -- @param #DETECTION_UNITS self
-  -- @param Index
+  -- @param #DETECTION_BASE.DetectedItem DetectedItem The DetectedItem.
   -- @param Wrapper.Group#GROUP AttackGroup The group to generate the report for.
   -- @param Core.Settings#SETTINGS Settings Message formatting settings to use.
   -- @return Core.Report#REPORT The report of the detection items.
-  function DETECTION_UNITS:DetectedItemReportSummary( Index, AttackGroup, Settings )
-    self:F( { Index, self.DetectedItems } )
+  function DETECTION_UNITS:DetectedItemReportSummary( DetectedItem, AttackGroup, Settings )
+    self:F( { DetectedItem = DetectedItem } )
   
-    local DetectedItem = self:GetDetectedItem( Index )
-    local DetectedItemID = self:GetDetectedItemID( Index )
+    local DetectedItemID = self:GetDetectedItemID( DetectedItem )
     
     if DetectedItem then
       local ReportSummary = ""
@@ -2040,10 +2009,10 @@ do -- DETECTION_UNITS
       end
         
       --TODO: solve Index reference
-      local DetectedItemCoordinate = self:GetDetectedItemCoordinate( Index )
+      local DetectedItemCoordinate = self:GetDetectedItemCoordinate( DetectedItem )
       local DetectedItemCoordText = DetectedItemCoordinate:ToString( AttackGroup, Settings )
  
-      local ThreatLevelA2G = self:GetDetectedItemThreatLevel( Index )
+      local ThreatLevelA2G = self:GetDetectedItemThreatLevel( DetectedItem )
         
       local Report = REPORT:New()
       Report:Add(DetectedItemID .. ", " .. DetectedItemCoordText)
@@ -2063,9 +2032,9 @@ do -- DETECTION_UNITS
     self:F()
     
     local Report = REPORT:New()
-    for DetectedItemID, DetectedItem in pairs( self.DetectedItems ) do
+    for DetectedItemIndex, DetectedItem in pairs( self.DetectedItems ) do
       local DetectedItem = DetectedItem -- #DETECTION_BASE.DetectedItem
-      local ReportSummary = self:DetectedItemReportSummary( DetectedItemID, AttackGroup )
+      local ReportSummary = self:DetectedItemReportSummary( DetectedItem, AttackGroup )
       Report:SetTitle( "Detected units:" )
       Report:Add( ReportSummary:Text() )
     end
@@ -2195,10 +2164,10 @@ do -- DETECTION_TYPES
         
         if DetectedUnit then
           local DetectedTypeName = DetectedUnit:GetTypeName()
-          local DetectedItem = self:GetDetectedItem( DetectedTypeName )
+          local DetectedItem = self:GetDetectedItemByKey( DetectedTypeName )
           if not DetectedItem then
-            DetectedItem = self:AddDetectedItem( "TYPE" )
-            DetectedItem.TypeName = DetectedUnit:GetTypeName()
+            DetectedItem = self:AddDetectedItem( "TYPE", DetectedTypeName )
+            DetectedItem.TypeName = DetectedTypeName
           end
         
           DetectedItem.Set:AddUnit( DetectedUnit )
@@ -2229,53 +2198,26 @@ do -- DETECTION_TYPES
 
   end
 
-  --- Menu of a DetectedItem using a given numeric index.
-  -- @param #DETECTION_TYPES self
-  -- @param Index
-  -- @return #string
-  function DETECTION_TYPES:DetectedItemMenu( DetectedTypeName, AttackGroup )
-    self:F( DetectedTypeName )
-  
-    local DetectedItem = self:GetDetectedItem( DetectedTypeName )
-    local DetectedItemID = self:GetDetectedItemID( DetectedTypeName )
-    
-    if DetectedItem then
-
-      local DetectedItemCoordinate = self:GetDetectedItemCoordinate( DetectedTypeName )
-      local DetectedItemCoordText = DetectedItemCoordinate:ToString( AttackGroup )
-      
-      local ReportSummary = string.format( 
-        "%s - %s", 
-        DetectedItemID,
-        DetectedItemCoordText
-      )
-      self:T( ReportSummary )
-    
-      return ReportSummary
-    end
-  end
-  
   --- Report summary of a DetectedItem using a given numeric index.
   -- @param #DETECTION_TYPES self
-  -- @param Index
+  -- @param #DETECTION_BASE.DetectedItem DetectedItem The DetectedItem.
   -- @param Wrapper.Group#GROUP AttackGroup The group to generate the report for.
   -- @param Core.Settings#SETTINGS Settings Message formatting settings to use.
   -- @return Core.Report#REPORT The report of the detection items.
-  function DETECTION_TYPES:DetectedItemReportSummary( DetectedTypeName, AttackGroup, Settings )
-    self:F( DetectedTypeName )
+  function DETECTION_TYPES:DetectedItemReportSummary( DetectedItem, AttackGroup, Settings )
+    self:F( { DetectedItem = DetectedItem } )
   
-    local DetectedItem = self:GetDetectedItem( DetectedTypeName )
-    local DetectedSet = self:GetDetectedSet( DetectedTypeName )
-    local DetectedItemID = self:GetDetectedItemID( DetectedTypeName )
+    local DetectedSet = self:GetDetectedSet( DetectedItem )
+    local DetectedItemID = self:GetDetectedItemID( DetectedItem )
     
     self:T( DetectedItem )
     if DetectedItem then
 
-      local ThreatLevelA2G = self:GetDetectedItemThreatLevel( DetectedTypeName )
+      local ThreatLevelA2G = self:GetDetectedItemThreatLevel( DetectedItem )
       local DetectedItemsCount = DetectedSet:Count()
       local DetectedItemType = DetectedItem.TypeName
       
-      local DetectedItemCoordinate = self:GetDetectedItemCoordinate( DetectedTypeName )
+      local DetectedItemCoordinate = self:GetDetectedItemCoordinate( DetectedItem )
       local DetectedItemCoordText = DetectedItemCoordinate:ToString( AttackGroup, Settings )
 
       local Report = REPORT:New()
@@ -2294,9 +2236,9 @@ do -- DETECTION_TYPES
     self:F()
     
     local Report = REPORT:New()
-    for DetectedItemTypeName, DetectedItem in pairs( self.DetectedItems ) do
+    for DetectedItemIndex, DetectedItem in pairs( self.DetectedItems ) do
       local DetectedItem = DetectedItem -- #DETECTION_BASE.DetectedItem
-      local ReportSummary = self:DetectedItemReportSummary( DetectedItemTypeName, AttackGroup )
+      local ReportSummary = self:DetectedItemReportSummary( DetectedItem, AttackGroup )
       Report:SetTitle( "Detected types:" )
       Report:Add( ReportSummary:Text() )
     end
@@ -2375,57 +2317,26 @@ do -- DETECTION_AREAS
   end
 
 
-  --- Menu of a detected item using a given numeric index.
-  -- @param #DETECTION_AREAS self
-  -- @param Index
-  -- @return #string
-  function DETECTION_AREAS:DetectedItemMenu( Index, AttackGroup )
-    self:F( Index )
-  
-    local DetectedItem = self:GetDetectedItem( Index )
-    local DetectedItemID = self:GetDetectedItemID( Index )
-    
-    if DetectedItem then
-      local DetectedSet = self:GetDetectedSet( Index )
-      local ReportSummaryItem
-      
-      local DetectedZone = self:GetDetectedItemZone( Index )
-      local DetectedItemCoordinate = DetectedZone:GetCoordinate()
-      local DetectedItemCoordText = DetectedItemCoordinate:ToString( AttackGroup )
-
-      local ReportSummary = string.format( 
-        "%s - %s", 
-        DetectedItemID,
-        DetectedItemCoordText
-      )
-      
-      return ReportSummary
-    end
-    
-    return nil
-  end
-  
   --- Report summary of a detected item using a given numeric index.
   -- @param #DETECTION_AREAS self
-  -- @param Index
+  -- @param #DETECTION_BASE.DetectedItem DetectedItem The DetectedItem.
   -- @param Wrapper.Group#GROUP AttackGroup The group to get the settings for.
   -- @param Core.Settings#SETTINGS Settings (Optional) Message formatting settings to use.
   -- @return Core.Report#REPORT The report of the detection items.
-  function DETECTION_AREAS:DetectedItemReportSummary( Index, AttackGroup, Settings )
-    self:F( Index )
+  function DETECTION_AREAS:DetectedItemReportSummary( DetectedItem, AttackGroup, Settings )
+    self:F( { DetectedItem = DetectedItem } )
   
-    local DetectedItem = self:GetDetectedItem( Index )
-    local DetectedItemID = self:GetDetectedItemID( Index )
+    local DetectedItemID = self:GetDetectedItemID( DetectedItem )
     
     if DetectedItem then
-      local DetectedSet = self:GetDetectedSet( Index )
+      local DetectedSet = self:GetDetectedSet( DetectedItem )
       local ReportSummaryItem
       
-      local DetectedZone = self:GetDetectedItemZone( Index )
+      local DetectedZone = self:GetDetectedItemZone( DetectedItem )
       local DetectedItemCoordinate = DetectedZone:GetCoordinate()
       local DetectedItemCoordText = DetectedItemCoordinate:ToString( AttackGroup, Settings )
 
-      local ThreatLevelA2G = self:GetDetectedItemThreatLevel( Index )
+      local ThreatLevelA2G = self:GetDetectedItemThreatLevel( DetectedItem )
       local DetectedItemsCount = DetectedSet:Count()
       local DetectedItemsTypes = DetectedSet:GetTypeNames()
       
@@ -2450,7 +2361,7 @@ do -- DETECTION_AREAS
     local Report = REPORT:New()
     for DetectedItemIndex, DetectedItem in pairs( self.DetectedItems ) do
       local DetectedItem = DetectedItem -- #DETECTION_BASE.DetectedItem
-      local ReportSummary = self:DetectedItemReportSummary( DetectedItemIndex, AttackGroup )
+      local ReportSummary = self:DetectedItemReportSummary( DetectedItem, AttackGroup )
       Report:SetTitle( "Detected areas:" )
       Report:Add( ReportSummary:Text() )
     end

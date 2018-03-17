@@ -612,7 +612,7 @@ do -- TASK_A2G_DISPATCHER
               if TargetSetUnit then
                 if Task:IsInstanceOf( TASK_A2G_SEAD ) then
                   Task:SetTargetSetUnit( TargetSetUnit )
-                  Task:UpdateTaskInfo()
+                  Task:UpdateTaskInfo( DetectedItem )
                   TargetsReport:Add( Detection:GetChangeText( DetectedItem )  )
                 else
                   Task:Cancel()
@@ -623,7 +623,7 @@ do -- TASK_A2G_DISPATCHER
                   if Task:IsInstanceOf( TASK_A2G_CAS ) then
                     Task:SetTargetSetUnit( TargetSetUnit )
                     Task:SetDetection( Detection, TaskIndex )
-                    Task:UpdateTaskInfo()
+                    Task:UpdateTaskInfo( DetectedItem )
                     TargetsReport:Add( Detection:GetChangeText( DetectedItem ) )
                   else
                     Task:Cancel()
@@ -635,7 +635,7 @@ do -- TASK_A2G_DISPATCHER
                     if Task:IsInstanceOf( TASK_A2G_BAI ) then
                       Task:SetTargetSetUnit( TargetSetUnit )
                       Task:SetDetection( Detection, TaskIndex )
-                      Task:UpdateTaskInfo()
+                      Task:UpdateTaskInfo( DetectedItem )
                       TargetsReport:Add( Detection:GetChangeText( DetectedItem ) )
                     else
                       Task:Cancel()
@@ -663,7 +663,7 @@ do -- TASK_A2G_DISPATCHER
                 local TargetSetUnit = self:EvaluateSEAD( DetectedItem ) -- Returns a SetUnit if there are targets to be SEADed...
                 if TargetSetUnit then
                   Task:SetTargetSetUnit( TargetSetUnit )
-                  Task:UpdateTaskInfo()
+                  Task:UpdateTaskInfo( DetectedItem )
                 else
                   Task:Cancel()
                   Task = self:RemoveTask( TaskIndex )
@@ -674,7 +674,7 @@ do -- TASK_A2G_DISPATCHER
                   if TargetSetUnit then
                     Task:SetTargetSetUnit( TargetSetUnit )
                     Task:SetDetection( Detection, TaskIndex )
-                    Task:UpdateTaskInfo()
+                    Task:UpdateTaskInfo( DetectedItem )
                   else
                     Task:Cancel()
                     Task = self:RemoveTask( TaskIndex )
@@ -685,7 +685,7 @@ do -- TASK_A2G_DISPATCHER
                     if TargetSetUnit then
                       Task:SetTargetSetUnit( TargetSetUnit )
                       Task:SetDetection( Detection, TaskIndex )
-                      Task:UpdateTaskInfo()
+                      Task:UpdateTaskInfo( DetectedItem )
                     else
                       Task:Cancel()
                       Task = self:RemoveTask( TaskIndex )
@@ -730,7 +730,7 @@ do -- TASK_A2G_DISPATCHER
             self.Tasks[TaskIndex] = Task
             Task:SetTargetZone( DetectedZone )
             Task:SetDispatcher( self )
-            Task:UpdateTaskInfo()
+            Task:UpdateTaskInfo( DetectedItem )
             Mission:AddTask( Task )
     
             TaskReport:Add( Task:GetName() )

@@ -308,16 +308,16 @@ do -- TASK_A2A
 
 
   --- @param #TASK_A2A self
-  function TASK_A2A:UpdateTaskInfo()
+  function TASK_A2A:UpdateTaskInfo( DetectedItem )
 
     if self:IsStatePlanned() or self:IsStateAssigned() then
-      local TargetCoordinate = self.Detection and self.Detection:GetDetectedItemCoordinate( self.DetectedItemIndex ) or self.TargetSetUnit:GetFirst():GetCoordinate() 
+      local TargetCoordinate = DetectedItem and self.Detection:GetDetectedItemCoordinate( DetectedItem ) or self.TargetSetUnit:GetFirst():GetCoordinate() 
       self.TaskInfo:AddTaskName( 0, "MSOD" )
       self.TaskInfo:AddCoordinate( TargetCoordinate, 1, "SOD" )
 
       local ThreatLevel, ThreatText
-      if self.Detection then
-        ThreatLevel, ThreatText = self.Detection:GetDetectedItemThreatLevel( self.DetectedItemIndex )
+      if DetectedItem then
+        ThreatLevel, ThreatText = self.Detection:GetDetectedItemThreatLevel( DetectedItem )
       else
         ThreatLevel, ThreatText = self.TargetSetUnit:CalculateThreatLevelA2G()
       end

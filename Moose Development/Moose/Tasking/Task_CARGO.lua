@@ -810,7 +810,7 @@ do -- TASK_CARGO
   end
   
   --- @param #TASK_CARGO self
-  function TASK_CARGO:UpdateTaskInfo()
+  function TASK_CARGO:UpdateTaskInfo( DetectedItem )
   
     if self:IsStatePlanned() or self:IsStateAssigned() then
       self.TaskInfo:AddTaskName( 0, "MSOD" )

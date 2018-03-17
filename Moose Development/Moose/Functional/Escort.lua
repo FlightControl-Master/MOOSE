@@ -846,8 +846,8 @@ function _Resume( EscortGroup )
 end
 
 --- @param #ESCORT self
--- @param #number DetectedItemID
-function ESCORT:_AttackTarget( DetectedItemID )
+-- @param Functional.Detection#DETECTION_BASE.DetectedItem DetectedItem
+function ESCORT:_AttackTarget( DetectedItem )
 
   local EscortGroup = self.EscortGroup -- Wrapper.Group#GROUP
   self:E( EscortGroup )
@@ -861,7 +861,7 @@ function ESCORT:_AttackTarget( DetectedItemID )
     EscortGroup:OptionROTPassiveDefense()
     EscortGroup:SetState( EscortGroup, "Escort", self )
 
-    local DetectedSet = self.Detection:GetDetectedSet( DetectedItemID )
+    local DetectedSet = self.Detection:GetDetectedSet( DetectedItem )
     
     local Tasks = {}
 
@@ -884,7 +884,7 @@ function ESCORT:_AttackTarget( DetectedItemID )
     
   else
   
-    local DetectedSet = self.Detection:GetDetectedSet( DetectedItemID )
+    local DetectedSet = self.Detection:GetDetectedSet( DetectedItem )
     
     local Tasks = {}
 
@@ -910,8 +910,9 @@ function ESCORT:_AttackTarget( DetectedItemID )
 end
 
 --- 
--- @param #number DetectedItemID
-function ESCORT:_AssistTarget( EscortGroupAttack, DetectedItemID )
+--- @param #ESCORT self
+-- @param Functional.Detection#DETECTION_BASE.DetectedItem DetectedItem
+function ESCORT:_AssistTarget( EscortGroupAttack, DetectedItem )
 
   local EscortGroup = self.EscortGroup
   local EscortClient = self.EscortClient
@@ -922,7 +923,7 @@ function ESCORT:_AssistTarget( EscortGroupAttack, DetectedItemID )
     EscortGroupAttack:OptionROEOpenFire()
     EscortGroupAttack:OptionROTVertical()
     
-    local DetectedSet = self.Detection:GetDetectedSet( DetectedItemID )
+    local DetectedSet = self.Detection:GetDetectedSet( DetectedItem )
     
     local Tasks = {}
 
@@ -944,7 +945,7 @@ function ESCORT:_AssistTarget( EscortGroupAttack, DetectedItemID )
     )
 
   else
-    local DetectedSet = self.Detection:GetDetectedSet( DetectedItemID )
+    local DetectedSet = self.Detection:GetDetectedSet( DetectedItem )
     
     local Tasks = {}
 
@@ -1162,11 +1163,11 @@ function ESCORT:_ReportTargetsScheduler()
         local ClientEscortTargets = EscortGroupData.Detection
         --local EscortUnit = EscortGroupData:GetUnit( 1 )
 
-        for DetectedItemID, DetectedItem in pairs( DetectedItems ) do
-          self:E( { DetectedItemID, DetectedItem } )
+        for DetectedItemIndex, DetectedItem in pairs( DetectedItems ) do
+          self:E( { DetectedItemIndex, DetectedItem } )
           -- Remove the sub menus of the Attack menu of the Escort for the EscortGroup.
   
-          local DetectedItemReportSummary = self.Detection:DetectedItemReportSummary( DetectedItemID, EscortGroupData.EscortGroup, _DATABASE:GetPlayerSettings( self.EscortClient:GetPlayerName() ) )
+          local DetectedItemReportSummary = self.Detection:DetectedItemReportSummary( DetectedItem, EscortGroupData.EscortGroup, _DATABASE:GetPlayerSettings( self.EscortClient:GetPlayerName() ) )
 
           if ClientEscortGroupName == EscortGroupName then
           
@@ -1180,7 +1181,7 @@ function ESCORT:_ReportTargetsScheduler()
               self.EscortMenuAttackNearbyTargets,
               ESCORT._AttackTarget,
               self,
-              DetectedItemID
+              DetectedItem
             )
           else
             if self.EscortMenuTargetAssistance then
@@ -1195,7 +1196,7 @@ function ESCORT:_ReportTargetsScheduler()
                 ESCORT._AssistTarget,
                 self,
                 EscortGroupData.EscortGroup,
-                DetectedItemID
+                DetectedItem
               )
             end
           end

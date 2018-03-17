@@ -875,7 +875,7 @@ end
 function TASK:MenuMarkToGroup( TaskGroup )
   self:F()
 
-  self:UpdateTaskInfo()
+  self:UpdateTaskInfo( self.DetectedItem )
   
   local Report = REPORT:New():SetIndent( 0 )
 
@@ -1380,14 +1380,14 @@ do -- Links
   --- Set detection of a task
   -- @param #TASK self
   -- @param Function.Detection#DETECTION_BASE Detection
-  -- @param #number DetectedItemIndex
+  -- @param DetectedItem
   -- @return #TASK
-  function TASK:SetDetection( Detection, DetectedItemIndex )
+  function TASK:SetDetection( Detection, DetectedItem )
     
-    self:E({DetectedItemIndex,Detection})
+    self:E( { DetectedItem, Detection } )
     
     self.Detection = Detection
-    self.DetectedItemIndex = DetectedItemIndex
+    self.DetectedItem = DetectedItem
   end
 
 end
@@ -1420,7 +1420,7 @@ end
 -- @return #string
 function TASK:ReportOverview( ReportGroup )
 
-  self:UpdateTaskInfo()
+  self:UpdateTaskInfo( self.DetectedItem )
   
   -- List the name of the Task.
   local TaskName = self:GetName()
@@ -1480,7 +1480,7 @@ end
 -- @return #string
 function TASK:ReportDetails( ReportGroup )
 
-  self:UpdateTaskInfo()
+  self:UpdateTaskInfo( self.DetectedItem )
 
   local Report = REPORT:New():SetIndent( 3 )
   
