@@ -573,7 +573,7 @@ do -- DESIGNATE
   function DESIGNATE:SetLaserCodes( LaserCodes ) --R2.1
 
     self.LaserCodes = ( type( LaserCodes ) == "table" ) and LaserCodes or { LaserCodes }
-    self:E( { LaserCodes = self.LaserCodes } )
+    self:F( { LaserCodes = self.LaserCodes } )
     
     self.LaserCodesUsed = {}
 
@@ -987,7 +987,7 @@ do -- DESIGNATE
   -- @param #DESIGNATE self
   function DESIGNATE:MenuStatus( AttackGroup )
 
-    self:E("Status")
+    self:F("Status")
 
     self:SendStatus( AttackGroup )  
   end
@@ -996,7 +996,7 @@ do -- DESIGNATE
   -- @param #DESIGNATE self
   function DESIGNATE:MenuFlashStatus( AttackGroup, Flash )
 
-    self:E("Flash Status")
+    self:F("Flash Status")
 
     self.FlashStatusMenu[AttackGroup] = Flash
     self:SetDesignateMenu()
@@ -1007,7 +1007,7 @@ do -- DESIGNATE
   -- @param #DESIGNATE self
   function DESIGNATE:MenuForget( Index )
 
-    self:E("Forget")
+    self:F("Forget")
 
     self.Designating[Index] = ""
     self:SetDesignateMenu()
@@ -1017,7 +1017,7 @@ do -- DESIGNATE
   -- @param #DESIGNATE self
   function DESIGNATE:MenuAutoLase( AutoLase )
 
-    self:E("AutoLase")
+    self:F("AutoLase")
 
     self:SetAutoLase( AutoLase, true )
   end
@@ -1026,7 +1026,7 @@ do -- DESIGNATE
   -- @param #DESIGNATE self
   function DESIGNATE:MenuSmoke( Index, Color )
 
-    self:E("Designate through Smoke")
+    self:F("Designate through Smoke")
 
     if string.find( self.Designating[Index], "S" ) == nil then
       self.Designating[Index] = self.Designating[Index] .. "S"
@@ -1039,7 +1039,7 @@ do -- DESIGNATE
   -- @param #DESIGNATE self
   function DESIGNATE:MenuIlluminate( Index )
 
-    self:E("Designate through Illumination")
+    self:F("Designate through Illumination")
 
     if string.find( self.Designating[Index], "I", 1, true ) == nil then
       self.Designating[Index] = self.Designating[Index] .. "I"
@@ -1053,7 +1053,7 @@ do -- DESIGNATE
   -- @param #DESIGNATE self
   function DESIGNATE:MenuLaseOn( Index, Duration )
 
-    self:E("Designate through Lase")
+    self:F("Designate through Lase")
     
     self:__LaseOn( 1, Index, Duration ) 
     self:SetDesignateMenu()
@@ -1064,7 +1064,7 @@ do -- DESIGNATE
   -- @param #DESIGNATE self
   function DESIGNATE:MenuLaseCode( Index, Duration, LaserCode )
 
-    self:E( "Designate through Lase using " .. LaserCode )
+    self:F( "Designate through Lase using " .. LaserCode )
     
     self:__LaseOn( 1, Index, Duration, LaserCode ) 
     self:SetDesignateMenu()
@@ -1075,7 +1075,7 @@ do -- DESIGNATE
   -- @param #DESIGNATE self
   function DESIGNATE:MenuLaseOff( Index, Duration )
 
-    self:E("Lasing off")
+    self:F("Lasing off")
 
     self.Designating[Index] = string.gsub( self.Designating[Index], "L", "" )
     self:__LaseOff( 1, Index ) 
@@ -1155,7 +1155,7 @@ do -- DESIGNATE
     
               if not Recce then
     
-                self:E( "Lasing..." )
+                self:F( "Lasing..." )
                 self.RecceSet:Flush()
     
                 for RecceGroupID, RecceGroup in pairs( self.RecceSet:GetSet() ) do
@@ -1307,7 +1307,7 @@ do -- DESIGNATE
       
           MarkedCount = MarkedCount + 1        
       
-          self:E( "Smoking ..." )
+          self:F( "Smoking ..." )
 
           local RecceGroup = self.RecceSet:FindNearestGroupFromPointVec2(SmokeUnit:GetPointVec2())
           local RecceUnit = RecceGroup:GetUnit( 1 )

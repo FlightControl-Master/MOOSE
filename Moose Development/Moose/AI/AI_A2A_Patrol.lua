@@ -305,7 +305,6 @@ function AI_A2A_PATROL:onafterPatrol( AIPatrol, From, Event, To )
   
   AIPatrol:OnReSpawn(
     function( PatrolGroup )
-      self:E( "ReSpawn" )
       self:__Reset( 1 )
       self:__Route( 5 )
     end

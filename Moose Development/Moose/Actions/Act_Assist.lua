@@ -111,7 +111,6 @@ do -- ACT_ASSIST
     local MissionMenu = self:GetMission():GetMenu( ProcessGroup )
      
     local function MenuSmoke( MenuParam )
-      self:E( MenuParam )
       local self = MenuParam.self
       local SmokeColor = MenuParam.SmokeColor
       self.SmokeColor = SmokeColor

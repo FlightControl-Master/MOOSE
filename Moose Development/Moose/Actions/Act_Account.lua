@@ -190,7 +190,6 @@ do -- ACT_ACCOUNT_DEADS
   -- @param #string From
   -- @param #string To
   function ACT_ACCOUNT_DEADS:onenterReport( ProcessUnit, Task, From, Event, To )
-    self:E( { ProcessUnit, From, Event, To } )
   
     local MessageText = "Your group with assigned " .. self.TaskName .. " task has " .. Task.TargetSetUnit:GetUnitTypesText() .. " targets left to be destroyed."
     self:GetCommandCenter():MessageTypeToGroup( MessageText, ProcessUnit:GetGroup(), MESSAGE.Type.Information )

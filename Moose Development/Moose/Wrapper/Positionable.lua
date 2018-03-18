@@ -211,7 +211,7 @@ function POSITIONABLE:GetRandomVec3( Radius )
       self:T3( PositionableRandomVec3 )
       return PositionableRandomVec3
     else 
-      self:E("Radius is nil, returning the PointVec3 of the POSITIONABLE", PositionablePointVec3)
+      self:F("Radius is nil, returning the PointVec3 of the POSITIONABLE", PositionablePointVec3)
       return PositionablePointVec3
     end
   end
@@ -731,7 +731,7 @@ function POSITIONABLE:LaseUnit( Target, LaserCode, Duration ) --R2.1
   local RecceDcsUnit = self:GetDCSObject()
   local TargetVec3 = Target:GetVec3()
 
-  self:E("bulding spot")
+  self:F("bulding spot")
   self.Spot = SPOT:New( self ) -- Core.Spot#SPOT
   self.Spot:LaseOn( Target, LaserCode, Duration)
   self.LaserCode = LaserCode

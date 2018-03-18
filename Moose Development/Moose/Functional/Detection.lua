@@ -516,7 +516,7 @@ do -- DETECTION_BASE
     -- @param #string Event The Event string.
     -- @param #string To The To State string.
     function DETECTION_BASE:onafterDetect(From,Event,To)
-      self:E( { From, Event, To } )
+      self:F( { From, Event, To } )
 
       local DetectDelay = 0.1
       self.DetectionCount = 0
@@ -526,7 +526,7 @@ do -- DETECTION_BASE
       local DetectionTimeStamp = timer.getTime()
       
       for DetectionGroupID, DetectionGroupData in pairs( self.DetectionSetGroup:GetSet() ) do
-        --self:E( { DetectionGroupData } )
+        --self:F( { DetectionGroupData } )
         self:__DetectionGroup( DetectDelay, DetectionGroupData, DetectionTimeStamp ) -- Process each detection asynchronously.
         self.DetectionCount = self.DetectionCount + 1
         DetectDelay = DetectDelay + 1
@@ -539,7 +539,7 @@ do -- DETECTION_BASE
     -- @param #string To The To State string.
     -- @param Wrapper.Group#GROUP DetectionGroup The Group detecting.
     function DETECTION_BASE:onafterDetectionGroup( From, Event, To, DetectionGroup, DetectionTimeStamp  )
-      self:E( { From, Event, To } )
+      self:F( { From, Event, To } )
       
       self.DetectionRun = self.DetectionRun + 1
       
@@ -673,7 +673,7 @@ do -- DETECTION_BASE
             if not self.DetectedObjects[DetectedObjectName] and Detection.visible and self.ZoneProbability then
             
               for ZoneDataID, ZoneData in pairs( self.ZoneProbability ) do
-                self:E({ZoneData})
+                self:F({ZoneData})
                 local ZoneObject = ZoneData[1] -- Core.Zone#ZONE_BASE
                 local ZoneProbability = ZoneData[2] -- #number
                 ZoneProbability = ZoneProbability * 30 / 300
@@ -800,7 +800,7 @@ do -- DETECTION_BASE
     function DETECTION_BASE:CreateDetectionItems()
       self:F2()
     
-      self:E( "Error, in DETECTION_BASE class..." )
+      self:F( "Error, in DETECTION_BASE class..." )
       return self
     end
   
@@ -1001,7 +1001,7 @@ do -- DETECTION_BASE
           self.AcceptZones = AcceptZones
         end
       else
-        self:E( { "AcceptZones must be a list of ZONE_BASE derived objects or one ZONE_BASE derived object", AcceptZones } )
+        self:F( { "AcceptZones must be a list of ZONE_BASE derived objects or one ZONE_BASE derived object", AcceptZones } )
         error()
       end
       
@@ -1022,7 +1022,7 @@ do -- DETECTION_BASE
           self.RejectZones = RejectZones
         end
       else
-        self:E( { "RejectZones must be a list of ZONE_BASE derived objects or one ZONE_BASE derived object", RejectZones } )
+        self:F( { "RejectZones must be a list of ZONE_BASE derived objects or one ZONE_BASE derived object", RejectZones } )
         error()
       end
       
@@ -1114,7 +1114,7 @@ do -- DETECTION_BASE
       DetectedItem.Changes[ChangeCode].ID = ID
       DetectedItem.Changes[ChangeCode].ItemUnitType = ItemUnitType
     
-      self:E( { "Change on Detected Item:", DetectedItemID = DetectedItem.ID, ChangeCode = ChangeCode, ItemUnitType = ItemUnitType } )
+      self:F( { "Change on Detected Item:", DetectedItemID = DetectedItem.ID, ChangeCode = ChangeCode, ItemUnitType = ItemUnitType } )
      
       return self
     end
@@ -1137,7 +1137,7 @@ do -- DETECTION_BASE
       DetectedItem.Changes[ChangeCode][ChangeUnitType] = DetectedItem.Changes[ChangeCode][ChangeUnitType] + 1
       DetectedItem.Changes[ChangeCode].ID = ID
       
-      self:E( { "Change on Detected Unit:", DetectedItemID = DetectedItem.ID, ChangeCode = ChangeCode, ChangeUnitType = ChangeUnitType } )
+      self:F( { "Change on Detected Unit:", DetectedItemID = DetectedItem.ID, ChangeCode = ChangeCode, ChangeUnitType = ChangeUnitType } )
     
       return self
     end
@@ -1890,9 +1890,9 @@ do -- DETECTION_UNITS
         local DetectedUnit = DetectedUnitData -- Wrapper.Unit#UNIT
 
         local DetectedObject = nil
-        --self:E( DetectedUnit )
+        --self:F( DetectedUnit )
         if DetectedUnit:IsAlive() then
-        --self:E(DetectedUnit:GetName())
+        --self:F(DetectedUnit:GetName())
           DetectedObject = self:GetDetectedObject( DetectedUnit:GetName() )
         end
         if DetectedObject then
@@ -2138,7 +2138,7 @@ do -- DETECTION_TYPES
 
         local DetectedObject = nil
         if DetectedUnit:IsAlive() then
-        --self:E(DetectedUnit:GetName())
+        --self:F(DetectedUnit:GetName())
           DetectedObject = self:GetDetectedObject( DetectedUnit:GetName() )
         end
         if DetectedObject then
@@ -2589,7 +2589,7 @@ do -- DETECTION_AREAS
 
             local DetectedObject = nil
             if DetectedUnit:IsAlive() then
-            --self:E(DetectedUnit:GetName())
+            --self:F(DetectedUnit:GetName())
               DetectedObject = self:GetDetectedObject( DetectedUnit:GetName() )
             end
             if DetectedObject then
@@ -2667,7 +2667,7 @@ do -- DETECTION_AREAS
             SET_UNIT:New():FilterDeads():FilterCrashes(),
             ZONE_UNIT:New( DetectedUnitName, DetectedUnit, self.DetectionZoneRange )
           )
-          --self:E( DetectedItem.Zone.ZoneUNIT.UnitName )
+          --self:F( DetectedItem.Zone.ZoneUNIT.UnitName )
           DetectedItem.Set:AddUnit( DetectedUnit )
           self:AddChangeItem( DetectedItem, "AA", DetectedUnitTypeName )
         end  

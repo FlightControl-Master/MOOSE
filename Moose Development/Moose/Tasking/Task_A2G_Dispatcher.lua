@@ -573,7 +573,7 @@ do -- TASK_A2G_DISPATCHER
     
     if Task then
       if ( Task:IsStatePlanned() and DetectedItemChanged == true ) or Task:IsStateCancelled() then
-        --self:E( "Removing Tasking: " .. Task:GetTaskName() )
+        --self:F( "Removing Tasking: " .. Task:GetTaskName() )
         self:RemoveTask( TaskIndex )
       end
     end
@@ -587,7 +587,7 @@ do -- TASK_A2G_DISPATCHER
   -- @param Functional.Detection#DETECTION_BASE Detection The detection created by the @{Detection#DETECTION_BASE} derived object.
   -- @return #boolean Return true if you want the task assigning to continue... false will cancel the loop.
   function TASK_A2G_DISPATCHER:ProcessDetected( Detection )
-    self:E()
+    self:F()
   
     local AreaMsg = {}
     local TaskMsg = {}
@@ -620,14 +620,14 @@ do -- TASK_A2G_DISPATCHER
         local DetectedItem = DetectedItem -- Functional.Detection#DETECTION_BASE.DetectedItem
         local DetectedSet = DetectedItem.Set -- Core.Set#SET_UNIT
         local DetectedZone = DetectedItem.Zone
-        --self:E( { "Targets in DetectedItem", DetectedItem.ItemID, DetectedSet:Count(), tostring( DetectedItem ) } )
+        --self:F( { "Targets in DetectedItem", DetectedItem.ItemID, DetectedSet:Count(), tostring( DetectedItem ) } )
         --DetectedSet:Flush()
         
         local DetectedItemID = DetectedItem.ID
         local TaskIndex = DetectedItem.ID
         local DetectedItemChanged = DetectedItem.Changed
         
-        self:E( { DetectedItemChanged = DetectedItemChanged, DetectedItemID = DetectedItemID, TaskIndex = TaskIndex } )
+        self:F( { DetectedItemChanged = DetectedItemChanged, DetectedItemID = DetectedItemID, TaskIndex = TaskIndex } )
         
         local Task = self.Tasks[TaskIndex] -- Tasking.Task_A2G#TASK_A2G
         
@@ -764,7 +764,7 @@ do -- TASK_A2G_DISPATCHER
     
             TaskReport:Add( Task:GetName() )
           else
-            self:E("This should not happen")
+            self:F("This should not happen")
           end
         end
 

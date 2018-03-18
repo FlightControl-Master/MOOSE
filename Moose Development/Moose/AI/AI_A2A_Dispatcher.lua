@@ -1001,7 +1001,7 @@ do -- AI_A2A_DISPATCHER
   --- @param #AI_A2A_DISPATCHER self
   -- @param Core.Event#EVENTDATA EventData
   function AI_A2A_DISPATCHER:OnEventLand( EventData )
-    self:E( "Landed" )
+    self:F( "Landed" )
     local DefenderUnit = EventData.IniUnit
     local Defender = EventData.IniGroup
     local Squadron = self:GetSquadronFromDefender( Defender )
@@ -1488,7 +1488,7 @@ do -- AI_A2A_DISPATCHER
     DefenderSquadron.Resources = Resources
     DefenderSquadron.TemplatePrefixes = TemplatePrefixes
 
-    self:E( { Squadron = {SquadronName, AirbaseName, TemplatePrefixes, Resources } } )
+    self:F( { Squadron = {SquadronName, AirbaseName, TemplatePrefixes, Resources } } )
     
     return self
   end
@@ -1554,7 +1554,7 @@ do -- AI_A2A_DISPATCHER
 
     self:SetSquadronCapInterval( SquadronName, self.DefenderDefault.CapLimit, self.DefenderDefault.CapMinSeconds, self.DefenderDefault.CapMaxSeconds, 1 )
 
-    self:E( { CAP = { SquadronName, Zone, FloorAltitude, CeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, EngageMinSpeed, EngageMaxSpeed, AltType } } )
+    self:F( { CAP = { SquadronName, Zone, FloorAltitude, CeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, EngageMinSpeed, EngageMaxSpeed, AltType } } )
    
     -- Add the CAP to the EWR network.
     
@@ -1658,7 +1658,7 @@ do -- AI_A2A_DISPATCHER
       local Cap = DefenderSquadron.Cap
       if Cap then
         local CapCount = self:CountCapAirborne( SquadronName )
-        self:E( { CapCount = CapCount } )
+        self:F( { CapCount = CapCount } )
         if CapCount < Cap.CapLimit then
           local Probability = math.random()
           if Probability <= Cap.Probability then
@@ -1716,7 +1716,7 @@ do -- AI_A2A_DISPATCHER
     Intercept.EngageMinSpeed = EngageMinSpeed
     Intercept.EngageMaxSpeed = EngageMaxSpeed
     
-    self:E( { GCI = { SquadronName, EngageMinSpeed, EngageMaxSpeed } } )
+    self:F( { GCI = { SquadronName, EngageMinSpeed, EngageMaxSpeed } } )
   end
   
   --- Defines the default amount of extra planes that will take-off as part of the defense system.
@@ -2443,7 +2443,7 @@ do -- AI_A2A_DISPATCHER
     if Squadron.Resources then
       Squadron.Resources = Squadron.Resources - Size
     end
-    self:E( { DefenderName = DefenderName, SquadronResources = Squadron.Resources } )
+    self:F( { DefenderName = DefenderName, SquadronResources = Squadron.Resources } )
   end
 
   --- @param #AI_A2A_DISPATCHER self
@@ -2652,7 +2652,7 @@ do -- AI_A2A_DISPATCHER
   
           --- @param #AI_A2A_DISPATCHER self
           function Fsm:onafterHome( Defender, From, Event, To, Action )
-            self:E({"CAP Home", Defender:GetName()})
+            self:F({"CAP Home", Defender:GetName()})
             self:GetParent(self).onafterHome( self, Defender, From, Event, To )
             
             local Dispatcher = self:GetDispatcher() -- #AI_A2A_DISPATCHER
@@ -2793,7 +2793,7 @@ do -- AI_A2A_DISPATCHER
                 
                 local TakeoffMethod = self:GetSquadronTakeoff( ClosestDefenderSquadronName )
                 local DefenderGCI = Spawn:SpawnAtAirbase( DefenderSquadron.Airbase, TakeoffMethod, DefenderSquadron.TakeoffAltitude or self.DefenderDefault.TakeoffAltitude ) -- Wrapper.Group#GROUP
-                self:E( { GCIDefender = DefenderGCI:GetName() } )
+                self:F( { GCIDefender = DefenderGCI:GetName() } )
   
                 DefendersNeeded = DefendersNeeded - DefenderGrouping
         
@@ -2957,7 +2957,7 @@ do -- AI_A2A_DISPATCHER
       local AIGroup = AIGroup -- Wrapper.Group#GROUP
       if not AIGroup:IsAlive() then
         local DefenderTaskFsm = self:GetDefenderTaskFsm( AIGroup )
-        self:E( { Defender = AIGroup:GetName(), DefenderState = DefenderTaskFsm:GetState() } )
+        self:F( { Defender = AIGroup:GetName(), DefenderState = DefenderTaskFsm:GetState() } )
         if not DefenderTaskFsm:Is( "Started" ) then
           self:ClearDefenderTask( AIGroup )
         end
@@ -3056,7 +3056,7 @@ do -- AI_A2A_DISPATCHER
       end
       Report:Add( string.format( "\n - %d Tasks", TaskCount ) )
   
-      self:E( Report:Text( "\n" ) )
+      self:F( Report:Text( "\n" ) )
       trigger.action.outText( Report:Text( "\n" ), 25 )
     end
     
@@ -3084,7 +3084,7 @@ do
       for PlayerUnitName, PlayerUnitData in pairs( PlayersNearBy ) do
         local PlayerUnit = PlayerUnitData -- Wrapper.Unit#UNIT
         local PlayerName = PlayerUnit:GetPlayerName()
-        --self:E( { PlayerName = PlayerName, PlayerUnit = PlayerUnit } )
+        --self:F( { PlayerName = PlayerName, PlayerUnit = PlayerUnit } )
         if PlayerUnit:IsAirPlane() and PlayerName ~= nil then
           local FriendlyUnitThreatLevel = PlayerUnit:GetThreatLevel()
           PlayersCount = PlayersCount + 1
@@ -3097,7 +3097,7 @@ do
       
     end
 
-    --self:E( { PlayersCount = PlayersCount } )
+    --self:F( { PlayersCount = PlayersCount } )
     
     local PlayerTypesReport = REPORT:New()
     
@@ -3141,7 +3141,7 @@ do
       
     end
 
-    --self:E( { FriendliesCount = FriendliesCount } )
+    --self:F( { FriendliesCount = FriendliesCount } )
     
     local FriendlyTypesReport = REPORT:New()
     
@@ -3551,23 +3551,23 @@ do
 
     -- Setup squadrons
     
-    self:E( { Airbases = AirbaseNames  } )
+    self:F( { Airbases = AirbaseNames  } )
 
-    self:E( "Defining Templates for Airbases ..." )    
+    self:F( "Defining Templates for Airbases ..." )    
     for AirbaseID, AirbaseName in pairs( AirbaseNames ) do
       local Airbase = _DATABASE:FindAirbase( AirbaseName ) -- Wrapper.Airbase#AIRBASE
       local AirbaseName = Airbase:GetName()
       local AirbaseCoord = Airbase:GetCoordinate()
       local AirbaseZone = ZONE_RADIUS:New( "Airbase", AirbaseCoord:GetVec2(), 3000 )
       local Templates = nil
-      self:E( { Airbase = AirbaseName } )    
+      self:F( { Airbase = AirbaseName } )    
       for TemplateID, Template in pairs( self.Templates:GetSet() ) do
         local Template = Template -- Wrapper.Group#GROUP
         local TemplateCoord = Template:GetCoordinate()
         if AirbaseZone:IsVec2InZone( TemplateCoord:GetVec2() ) then
           Templates = Templates or {}
           table.insert( Templates, Template:GetName() )
-          self:E( { Template = Template:GetName() } )
+          self:F( { Template = Template:GetName() } )
         end
       end
       if Templates then
@@ -3583,13 +3583,13 @@ do
     self.CAPTemplates:FilterPrefixes( CapPrefixes )
     self.CAPTemplates:FilterOnce()
     
-    self:E( "Setting up CAP ..." )    
+    self:F( "Setting up CAP ..." )    
     for CAPID, CAPTemplate in pairs( self.CAPTemplates:GetSet() ) do
       local CAPZone = ZONE_POLYGON:New( CAPTemplate:GetName(), CAPTemplate )
       -- Now find the closest airbase from the ZONE (start or center)
       local AirbaseDistance = 99999999
       local AirbaseClosest = nil -- Wrapper.Airbase#AIRBASE
-      self:E( { CAPZoneGroup = CAPID } )    
+      self:F( { CAPZoneGroup = CAPID } )    
       for AirbaseID, AirbaseName in pairs( AirbaseNames ) do
         local Airbase = _DATABASE:FindAirbase( AirbaseName ) -- Wrapper.Airbase#AIRBASE
         local AirbaseName = Airbase:GetName()
@@ -3597,7 +3597,7 @@ do
         local Squadron = self.DefenderSquadrons[AirbaseName]
         if Squadron then
           local Distance = AirbaseCoord:Get2DDistance( CAPZone:GetCoordinate() )
-          self:E( { AirbaseDistance = Distance } )    
+          self:F( { AirbaseDistance = Distance } )    
           if Distance < AirbaseDistance then
             AirbaseDistance = Distance
             AirbaseClosest = Airbase
@@ -3605,7 +3605,7 @@ do
         end
       end
       if AirbaseClosest then
-        self:E( { CAPAirbase = AirbaseClosest:GetName() } )    
+        self:F( { CAPAirbase = AirbaseClosest:GetName() } )    
         self:SetSquadronCap( AirbaseClosest:GetName(), CAPZone, 6000, 10000, 500, 800, 800, 1200, "RADIO" )
         self:SetSquadronCapInterval( AirbaseClosest:GetName(), CapLimit, 300, 600, 1 )
       end          
@@ -3613,14 +3613,14 @@ do
 
     -- Setup GCI.
     -- GCI is setup for all Squadrons.
-    self:E( "Setting up GCI ..." )    
+    self:F( "Setting up GCI ..." )    
     for AirbaseID, AirbaseName in pairs( AirbaseNames ) do
       local Airbase = _DATABASE:FindAirbase( AirbaseName ) -- Wrapper.Airbase#AIRBASE
       local AirbaseName = Airbase:GetName()
       local Squadron = self.DefenderSquadrons[AirbaseName]
-      self:E( { Airbase = AirbaseName } )    
+      self:F( { Airbase = AirbaseName } )    
       if Squadron then
-        self:E( { GCIAirbase = AirbaseName } )    
+        self:F( { GCIAirbase = AirbaseName } )    
         self:SetSquadronGci( AirbaseName, 800, 1200 )
       end
     end

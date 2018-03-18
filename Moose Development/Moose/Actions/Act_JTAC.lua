@@ -83,7 +83,7 @@ end
 function PROCESS_JTAC:OnJTACMenuUpdate( Fsm, From, Event, To )
 
   local function JTACMenuSpot( MenuParam )
-    self:E( MenuParam.TargetUnit.UnitName )
+    self:F( MenuParam.TargetUnit.UnitName )
     local self = MenuParam.self
     local TargetUnit = MenuParam.TargetUnit
 
@@ -91,7 +91,7 @@ function PROCESS_JTAC:OnJTACMenuUpdate( Fsm, From, Event, To )
   end
 
   local function JTACMenuCancel( MenuParam )
-    self:E( MenuParam )
+    self:F( MenuParam )
     local self = MenuParam.self
     local TargetUnit = MenuParam.TargetUnit
  
@@ -102,7 +102,7 @@ function PROCESS_JTAC:OnJTACMenuUpdate( Fsm, From, Event, To )
   -- Loop each unit in the target set, and determine the threat levels map table.
   local UnitThreatLevels = self.TargetSetUnit:GetUnitThreatLevels()
   
-  self:E( {"UnitThreadLevels", UnitThreatLevels } )
+  self:F( {"UnitThreadLevels", UnitThreatLevels } )
   
   local JTACMenu = self.ProcessGroup:GetState( self.ProcessGroup, "JTACMenu" )
   

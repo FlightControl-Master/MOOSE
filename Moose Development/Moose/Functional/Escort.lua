@@ -850,7 +850,7 @@ end
 function ESCORT:_AttackTarget( DetectedItem )
 
   local EscortGroup = self.EscortGroup -- Wrapper.Group#GROUP
-  self:E( EscortGroup )
+  self:F( EscortGroup )
   
   local EscortClient = self.EscortClient
 
@@ -1152,7 +1152,7 @@ function ESCORT:_ReportTargetsScheduler()
       end
 
       local DetectedItems = self.Detection:GetDetectedItems()
-      self:E( DetectedItems )
+      self:F( DetectedItems )
 
       local DetectedTargets = false
   
@@ -1164,7 +1164,7 @@ function ESCORT:_ReportTargetsScheduler()
         --local EscortUnit = EscortGroupData:GetUnit( 1 )
 
         for DetectedItemIndex, DetectedItem in pairs( DetectedItems ) do
-          self:E( { DetectedItemIndex, DetectedItem } )
+          self:F( { DetectedItemIndex, DetectedItem } )
           -- Remove the sub menus of the Attack menu of the Escort for the EscortGroup.
   
           local DetectedItemReportSummary = self.Detection:DetectedItemReportSummary( DetectedItem, EscortGroupData.EscortGroup, _DATABASE:GetPlayerSettings( self.EscortClient:GetPlayerName() ) )
@@ -1205,7 +1205,7 @@ function ESCORT:_ReportTargetsScheduler()
                   
         end
       end
-      self:E( DetectedMsgs )
+      self:F( DetectedMsgs )
       if DetectedTargets then
         self.EscortGroup:MessageToClient( "Reporting detected targets:\n" .. table.concat( DetectedMsgs, "\n" ), 20, self.EscortClient )
       else

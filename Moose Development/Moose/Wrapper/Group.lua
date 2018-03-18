@@ -1063,13 +1063,13 @@ function GROUP:Respawn( Template, Reset )
     --Template.x = nil
     --Template.y = nil
     
-    self:E( #Template.units )
+    self:F( #Template.units )
     if Reset == true then
       for UnitID, UnitData in pairs( self:GetUnits() ) do
         local GroupUnit = UnitData -- Wrapper.Unit#UNIT
-        self:E( GroupUnit:GetName() )
+        self:F( GroupUnit:GetName() )
         if GroupUnit:IsAlive() then
-          self:E( "Alive"  )
+          self:F( "Alive"  )
           local GroupUnitVec3 = GroupUnit:GetVec3() 
           if Zone then
             if self.InitRespawnRandomizePositionZone then
@@ -1087,12 +1087,12 @@ function GROUP:Respawn( Template, Reset )
           Template.units[UnitID].x = ( Template.units[UnitID].x - From.x ) + GroupUnitVec3.x -- Keep the original x position of the template and translate to the new position.
           Template.units[UnitID].y = ( Template.units[UnitID].y - From.y ) + GroupUnitVec3.z -- Keep the original z position of the template and translate to the new position.
           Template.units[UnitID].heading = self.InitRespawnHeading and self.InitRespawnHeading or GroupUnit:GetHeading()
-          self:E( { UnitID, Template.units[UnitID], Template.units[UnitID] } )
+          self:F( { UnitID, Template.units[UnitID], Template.units[UnitID] } )
         end
       end
     else
       for UnitID, TemplateUnitData in pairs( Template.units ) do
-        self:E( "Reset"  )
+        self:F( "Reset"  )
         local GroupUnitVec3 = { x = TemplateUnitData.x, y = TemplateUnitData.alt, z = TemplateUnitData.z }
         if Zone then
           if self.InitRespawnRandomizePositionZone then
@@ -1110,7 +1110,7 @@ function GROUP:Respawn( Template, Reset )
         Template.units[UnitID].x = ( Template.units[UnitID].x - From.x ) + GroupUnitVec3.x -- Keep the original x position of the template and translate to the new position.
         Template.units[UnitID].y = ( Template.units[UnitID].y - From.y ) + GroupUnitVec3.z -- Keep the original z position of the template and translate to the new position.
         Template.units[UnitID].heading = self.InitRespawnHeading and self.InitRespawnHeading or TemplateUnitData.heading
-        self:E( { UnitID, Template.units[UnitID], Template.units[UnitID] } )
+        self:F( { UnitID, Template.units[UnitID], Template.units[UnitID] } )
       end
     end      
     
@@ -1281,7 +1281,7 @@ do -- Route methods
         AirbaseAirPoint["airdromeId"] = RTBAirbase:GetID()
         AirbaseAirPoint["speed_locked"] = true,
     
-        self:E(AirbaseAirPoint )
+        self:F(AirbaseAirPoint )
     
         local Points = { PointFrom, AirbaseAirPoint }
     

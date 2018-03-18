@@ -472,7 +472,7 @@ end
 -- @return #EVENT.Events
 function EVENT:Reset( EventObject ) --R2.1
 
-  self:E( { "Resetting subscriptions for class: ", EventObject:GetClassNameAndID() } )
+  self:F( { "Resetting subscriptions for class: ", EventObject:GetClassNameAndID() } )
 
   local EventPriority = EventObject:GetEventPriority()
   for EventID, EventData in pairs( self.Events ) do
@@ -562,7 +562,6 @@ end
 -- @param EventID
 -- @return #EVENT
 function EVENT:OnEventForGroup( GroupName, EventFunction, EventClass, EventID, ... )
-  self:E( GroupName )
 
   local Event = self:Init( EventID, EventClass )
   Event.EventGroup = true
@@ -899,7 +898,7 @@ function EVENT:onEvent( Event )
                 if EventData.EventFunction then
               
                   if Event.IniObjectCategory ~= 3 then
-                    self:E( { "Calling EventFunction for UNIT ", EventClass:GetClassNameAndID(), ", Unit ", Event.IniUnitName, EventPriority } )
+                    self:F( { "Calling EventFunction for UNIT ", EventClass:GetClassNameAndID(), ", Unit ", Event.IniUnitName, EventPriority } )
                   end
                                   
                   local Result, Value = xpcall( 
@@ -915,7 +914,7 @@ function EVENT:onEvent( Event )
                     
                     -- Now call the default event function.
                     if Event.IniObjectCategory ~= 3 then
-                      self:E( { "Calling " .. EventMeta.Event .. " for Class ", EventClass:GetClassNameAndID(), EventPriority } )
+                      self:F( { "Calling " .. EventMeta.Event .. " for Class ", EventClass:GetClassNameAndID(), EventPriority } )
                     end
                                   
                     local Result, Value = xpcall( 
@@ -950,7 +949,7 @@ function EVENT:onEvent( Event )
                   if EventData.EventFunction then
     
                     if Event.IniObjectCategory ~= 3 then
-                      self:E( { "Calling EventFunction for GROUP ", EventClass:GetClassNameAndID(), ", Unit ", Event.IniUnitName, EventPriority } )
+                      self:F( { "Calling EventFunction for GROUP ", EventClass:GetClassNameAndID(), ", Unit ", Event.IniUnitName, EventPriority } )
                     end
                                       
                     local Result, Value = xpcall( 
@@ -966,7 +965,7 @@ function EVENT:onEvent( Event )
                       
                       -- Now call the default event function.
                       if Event.IniObjectCategory ~= 3 then
-                        self:E( { "Calling " .. EventMeta.Event .. " for GROUP ", EventClass:GetClassNameAndID(), EventPriority } )
+                        self:F( { "Calling " .. EventMeta.Event .. " for GROUP ", EventClass:GetClassNameAndID(), EventPriority } )
                       end
                                           
                       local Result, Value = xpcall( 

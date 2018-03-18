@@ -90,7 +90,7 @@ do -- TASK_A2A
     -- @param Wrapper.Unit#UNIT TaskUnit
     -- @param Tasking.Task_A2A#TASK_A2A Task
     function Fsm:onafterRouteToRendezVous( TaskUnit, Task )
-      self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
+      self:F( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
       -- Determine the first Unit from the self.RendezVousSetUnit
       
       if Task:GetRendezVousZone( TaskUnit ) then
@@ -109,7 +109,7 @@ do -- TASK_A2A
     -- @param Wrapper.Unit#UNIT TaskUnit
     -- @param Tasking.Task#TASK_A2A Task
     function Fsm:OnAfterArriveAtRendezVous( TaskUnit, Task )
-      self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
+      self:F( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
       -- Determine the first Unit from the self.TargetSetUnit
       
       self:__Engage( 0.1 )      
@@ -120,7 +120,7 @@ do -- TASK_A2A
     -- @param Wrapper.Unit#UNIT TaskUnit
     -- @param Tasking.Task#TASK_A2A Task
     function Fsm:onafterEngage( TaskUnit, Task )
-      self:E( { self } )
+      self:F( { self } )
       self:__Account( 0.1 )
       self:__RouteToTarget(0.1 )
       self:__RouteToTargets( -10 )
@@ -131,7 +131,7 @@ do -- TASK_A2A
     -- @param Wrapper.Unit#UNIT TaskUnit
     -- @param Tasking.Task_A2A#TASK_A2A Task
     function Fsm:onafterRouteToTarget( TaskUnit, Task )
-      self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
+      self:F( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
       -- Determine the first Unit from the self.TargetSetUnit
       
       if Task:GetTargetZone( TaskUnit ) then
@@ -152,7 +152,7 @@ do -- TASK_A2A
     -- @param Wrapper.Unit#UNIT TaskUnit
     -- @param Tasking.Task_A2A#TASK_A2A Task
     function Fsm:onafterRouteToTargets( TaskUnit, Task )
-      self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
+      self:F( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
       local TargetUnit = Task.TargetSetUnit:GetFirst() -- Wrapper.Unit#UNIT
       if TargetUnit then
         Task:SetTargetCoordinate( TargetUnit:GetCoordinate(), TaskUnit )

@@ -103,7 +103,7 @@ do -- ZoneGoal
   function ZONE_GOAL_COALITION:StatusZone()
   
     local State = self:GetState()
-    self:E( { State = self:GetState() } )
+    self:F( { State = self:GetState() } )
   
     self.Zone:Scan( { Object.Category.UNIT, Object.Category.STATIC } )
   

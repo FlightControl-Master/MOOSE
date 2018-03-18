@@ -689,7 +689,7 @@ end
 -- @param #number Score The score can be both positive or negative ( Penalty ).
 function SCORING:AddGoalScorePlayer( PlayerName, GoalTag, Text, Score )
 
-  self:E( { PlayerName, PlayerName, GoalTag, Text, Score } )
+  self:F( { PlayerName, PlayerName, GoalTag, Text, Score } )
 
   -- PlayerName can be nil, if the Unit with the player crashed or due to another reason.
   if PlayerName then 
@@ -721,7 +721,7 @@ function SCORING:AddGoalScore( PlayerUnit, GoalTag, Text, Score )
 
   local PlayerName = PlayerUnit:GetPlayerName()
 
-  self:E( { PlayerUnit.UnitName, PlayerName, GoalTag, Text, Score } )
+  self:F( { PlayerUnit.UnitName, PlayerName, GoalTag, Text, Score } )
 
   -- PlayerName can be nil, if the Unit with the player crashed or due to another reason.
   if PlayerName then 
@@ -749,7 +749,7 @@ function SCORING:_AddMissionTaskScore( Mission, PlayerUnit, Text, Score )
   local PlayerName = PlayerUnit:GetPlayerName()
   local MissionName = Mission:GetName()
 
-  self:E( { Mission:GetName(), PlayerUnit.UnitName, PlayerName, Text, Score } )
+  self:F( { Mission:GetName(), PlayerUnit.UnitName, PlayerName, Text, Score } )
 
   -- PlayerName can be nil, if the Unit with the player crashed or due to another reason.
   if PlayerName then 
@@ -783,7 +783,7 @@ function SCORING:_AddMissionGoalScore( Mission, PlayerName, Text, Score )
 
   local MissionName = Mission:GetName()
 
-  self:E( { Mission:GetName(), PlayerName, Text, Score } )
+  self:F( { Mission:GetName(), PlayerName, Text, Score } )
 
   -- PlayerName can be nil, if the Unit with the player crashed or due to another reason.
   if PlayerName then 
@@ -817,12 +817,12 @@ function SCORING:_AddMissionScore( Mission, Text, Score )
   
   local MissionName = Mission:GetName()
 
-  self:E( { Mission, Text, Score } )
-  self:E( self.Players )
+  self:F( { Mission, Text, Score } )
+  self:F( self.Players )
 
   for PlayerName, PlayerData in pairs( self.Players ) do
 
-    self:E( PlayerData )
+    self:F( PlayerData )
     if PlayerData.Mission[MissionName] then
 
       PlayerData.Score = PlayerData.Score + Score
@@ -1232,7 +1232,7 @@ function SCORING:_EventOnDeadOrCrash( Event )
             local ThreatTypeTarget = TargetThreatType
             local ThreatLevelPlayer = Player.ThreatLevel / 10 + 1
             local ThreatPenalty = math.ceil( ( ThreatLevelTarget / ThreatLevelPlayer ) * self.ScaleDestroyPenalty / 10 )
-            self:E( { ThreatLevel = ThreatPenalty, ThreatLevelTarget = ThreatLevelTarget, ThreatTypeTarget = ThreatTypeTarget, ThreatLevelPlayer = ThreatLevelPlayer  } )
+            self:F( { ThreatLevel = ThreatPenalty, ThreatLevelTarget = ThreatLevelTarget, ThreatTypeTarget = ThreatTypeTarget, ThreatLevelPlayer = ThreatLevelPlayer  } )
             
             Player.Penalty = Player.Penalty + ThreatPenalty
             TargetDestroy.Penalty = TargetDestroy.Penalty + ThreatPenalty
@@ -1267,7 +1267,7 @@ function SCORING:_EventOnDeadOrCrash( Event )
             local ThreatLevelPlayer = Player.ThreatLevel / 10 + 1
             local ThreatScore = math.ceil( ( ThreatLevelTarget / ThreatLevelPlayer )  * self.ScaleDestroyScore / 10 )
             
-            self:E( { ThreatLevel = ThreatScore, ThreatLevelTarget = ThreatLevelTarget, ThreatTypeTarget = ThreatTypeTarget, ThreatLevelPlayer = ThreatLevelPlayer  } )
+            self:F( { ThreatLevel = ThreatScore, ThreatLevelTarget = ThreatLevelTarget, ThreatTypeTarget = ThreatTypeTarget, ThreatLevelPlayer = ThreatLevelPlayer  } )
   
             Player.Score = Player.Score + ThreatScore
             TargetDestroy.Score = TargetDestroy.Score + ThreatScore
@@ -1312,7 +1312,7 @@ function SCORING:_EventOnDeadOrCrash( Event )
             
             -- Check if there are Zones where the destruction happened.
             for ZoneName, ScoreZoneData in pairs( self.ScoringZones ) do
-              self:E( { ScoringZone = ScoreZoneData } )
+              self:F( { ScoringZone = ScoreZoneData } )
               local ScoreZone = ScoreZoneData.ScoreZone -- Core.Zone#ZONE_BASE
               local Score = ScoreZoneData.Score
               if ScoreZone:IsVec2InZone( TargetUnit:GetVec2() ) then
@@ -1334,7 +1334,7 @@ function SCORING:_EventOnDeadOrCrash( Event )
         else
           -- Check if there are Zones where the destruction happened.
           for ZoneName, ScoreZoneData in pairs( self.ScoringZones ) do
-              self:E( { ScoringZone = ScoreZoneData } )
+              self:F( { ScoringZone = ScoreZoneData } )
             local ScoreZone = ScoreZoneData.ScoreZone -- Core.Zone#ZONE_BASE
             local Score = ScoreZoneData.Score
             if ScoreZone:IsVec2InZone( TargetUnit:GetVec2() ) then
@@ -1449,7 +1449,7 @@ function SCORING:ReportDetailedPlayerDestroys( PlayerName )
         local PenaltyDestroy = 0
 
         for UnitName, UnitData in pairs( PlayerData.Destroy[CategoryID] ) do
-          self:E( { UnitData = UnitData } )
+          self:F( { UnitData = UnitData } )
           if UnitData ~= {} then
             Score = Score + UnitData.Score
             ScoreDestroy = ScoreDestroy + UnitData.ScoreDestroy
@@ -1603,23 +1603,23 @@ function SCORING:ReportScoreGroupSummary( PlayerGroup )
     
       local ReportHits, ScoreHits, PenaltyHits = self:ReportDetailedPlayerHits( PlayerName )
       ReportHits = ReportHits ~= "" and "\n- " .. ReportHits or ReportHits 
-      self:E( { ReportHits, ScoreHits, PenaltyHits } )
+      self:F( { ReportHits, ScoreHits, PenaltyHits } )
 
       local ReportDestroys, ScoreDestroys, PenaltyDestroys = self:ReportDetailedPlayerDestroys( PlayerName )
       ReportDestroys = ReportDestroys ~= "" and "\n- " .. ReportDestroys or ReportDestroys
-      self:E( { ReportDestroys, ScoreDestroys, PenaltyDestroys } )
+      self:F( { ReportDestroys, ScoreDestroys, PenaltyDestroys } )
 
       local ReportCoalitionChanges, ScoreCoalitionChanges, PenaltyCoalitionChanges = self:ReportDetailedPlayerCoalitionChanges( PlayerName )
       ReportCoalitionChanges = ReportCoalitionChanges ~= "" and "\n- " .. ReportCoalitionChanges or ReportCoalitionChanges
-      self:E( { ReportCoalitionChanges, ScoreCoalitionChanges, PenaltyCoalitionChanges } )
+      self:F( { ReportCoalitionChanges, ScoreCoalitionChanges, PenaltyCoalitionChanges } )
 
       local ReportGoals, ScoreGoals, PenaltyGoals = self:ReportDetailedPlayerGoals( PlayerName )
       ReportGoals = ReportGoals ~= "" and "\n- " .. ReportGoals or ReportGoals
-      self:E( { ReportGoals, ScoreGoals, PenaltyGoals } )
+      self:F( { ReportGoals, ScoreGoals, PenaltyGoals } )
 
       local ReportMissions, ScoreMissions, PenaltyMissions = self:ReportDetailedPlayerMissions( PlayerName )
       ReportMissions = ReportMissions ~= "" and "\n- " .. ReportMissions or ReportMissions
-      self:E( { ReportMissions, ScoreMissions, PenaltyMissions } )
+      self:F( { ReportMissions, ScoreMissions, PenaltyMissions } )
       
       local PlayerScore = ScoreHits + ScoreDestroys + ScoreCoalitionChanges + ScoreGoals + ScoreMissions
       local PlayerPenalty = PenaltyHits + PenaltyDestroys + PenaltyCoalitionChanges + ScoreGoals + PenaltyMissions
@@ -1655,23 +1655,23 @@ function SCORING:ReportScoreGroupDetailed( PlayerGroup )
     
       local ReportHits, ScoreHits, PenaltyHits = self:ReportDetailedPlayerHits( PlayerName )
       ReportHits = ReportHits ~= "" and "\n- " .. ReportHits or ReportHits 
-      self:E( { ReportHits, ScoreHits, PenaltyHits } )
+      self:F( { ReportHits, ScoreHits, PenaltyHits } )
 
       local ReportDestroys, ScoreDestroys, PenaltyDestroys = self:ReportDetailedPlayerDestroys( PlayerName )
       ReportDestroys = ReportDestroys ~= "" and "\n- " .. ReportDestroys or ReportDestroys
-      self:E( { ReportDestroys, ScoreDestroys, PenaltyDestroys } )
+      self:F( { ReportDestroys, ScoreDestroys, PenaltyDestroys } )
 
       local ReportCoalitionChanges, ScoreCoalitionChanges, PenaltyCoalitionChanges = self:ReportDetailedPlayerCoalitionChanges( PlayerName )
       ReportCoalitionChanges = ReportCoalitionChanges ~= "" and "\n- " .. ReportCoalitionChanges or ReportCoalitionChanges
-      self:E( { ReportCoalitionChanges, ScoreCoalitionChanges, PenaltyCoalitionChanges } )
+      self:F( { ReportCoalitionChanges, ScoreCoalitionChanges, PenaltyCoalitionChanges } )
       
       local ReportGoals, ScoreGoals, PenaltyGoals = self:ReportDetailedPlayerGoals( PlayerName )
       ReportGoals = ReportGoals ~= "" and "\n- " .. ReportGoals or ReportGoals
-      self:E( { ReportGoals, ScoreGoals, PenaltyGoals } )
+      self:F( { ReportGoals, ScoreGoals, PenaltyGoals } )
 
       local ReportMissions, ScoreMissions, PenaltyMissions = self:ReportDetailedPlayerMissions( PlayerName )
       ReportMissions = ReportMissions ~= "" and "\n- " .. ReportMissions or ReportMissions
-      self:E( { ReportMissions, ScoreMissions, PenaltyMissions } )
+      self:F( { ReportMissions, ScoreMissions, PenaltyMissions } )
       
       local PlayerScore = ScoreHits + ScoreDestroys + ScoreCoalitionChanges + ScoreGoals + ScoreMissions
       local PlayerPenalty = PenaltyHits + PenaltyDestroys + PenaltyCoalitionChanges + ScoreGoals + PenaltyMissions
@@ -1711,23 +1711,23 @@ function SCORING:ReportScoreAllSummary( PlayerGroup )
     
       local ReportHits, ScoreHits, PenaltyHits = self:ReportDetailedPlayerHits( PlayerName )
       ReportHits = ReportHits ~= "" and "\n- " .. ReportHits or ReportHits 
-      self:E( { ReportHits, ScoreHits, PenaltyHits } )
+      self:F( { ReportHits, ScoreHits, PenaltyHits } )
 
       local ReportDestroys, ScoreDestroys, PenaltyDestroys = self:ReportDetailedPlayerDestroys( PlayerName )
       ReportDestroys = ReportDestroys ~= "" and "\n- " .. ReportDestroys or ReportDestroys
-      self:E( { ReportDestroys, ScoreDestroys, PenaltyDestroys } )
+      self:F( { ReportDestroys, ScoreDestroys, PenaltyDestroys } )
 
       local ReportCoalitionChanges, ScoreCoalitionChanges, PenaltyCoalitionChanges = self:ReportDetailedPlayerCoalitionChanges( PlayerName )
       ReportCoalitionChanges = ReportCoalitionChanges ~= "" and "\n- " .. ReportCoalitionChanges or ReportCoalitionChanges
-      self:E( { ReportCoalitionChanges, ScoreCoalitionChanges, PenaltyCoalitionChanges } )
+      self:F( { ReportCoalitionChanges, ScoreCoalitionChanges, PenaltyCoalitionChanges } )
 
       local ReportGoals, ScoreGoals, PenaltyGoals = self:ReportDetailedPlayerGoals( PlayerName )
       ReportGoals = ReportGoals ~= "" and "\n- " .. ReportGoals or ReportGoals
-      self:E( { ReportGoals, ScoreGoals, PenaltyGoals } )
+      self:F( { ReportGoals, ScoreGoals, PenaltyGoals } )
 
       local ReportMissions, ScoreMissions, PenaltyMissions = self:ReportDetailedPlayerMissions( PlayerName )
       ReportMissions = ReportMissions ~= "" and "\n- " .. ReportMissions or ReportMissions
-      self:E( { ReportMissions, ScoreMissions, PenaltyMissions } )
+      self:F( { ReportMissions, ScoreMissions, PenaltyMissions } )
       
       local PlayerScore = ScoreHits + ScoreDestroys + ScoreCoalitionChanges + ScoreGoals + ScoreMissions
       local PlayerPenalty = PenaltyHits + PenaltyDestroys + PenaltyCoalitionChanges + ScoreGoals + PenaltyMissions
@@ -1787,7 +1787,7 @@ function SCORING:OpenCSV( ScoringCSV )
       error( "A string containing the CSV file name must be given." )
     end
   else
-    self:E( "The MissionScripting.lua file has not been changed to allow lfs, io and os modules to be used..." )
+    self:F( "The MissionScripting.lua file has not been changed to allow lfs, io and os modules to be used..." )
   end
   return self
 end

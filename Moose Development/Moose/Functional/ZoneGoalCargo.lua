@@ -293,7 +293,7 @@ do -- ZoneGoal
   function ZONE_GOAL_CARGO:IsGuarded()
   
     local IsGuarded = self.Zone:IsAllInZoneOfCoalition( self.Coalition )
-    self:E( { IsGuarded = IsGuarded } )
+    self:F( { IsGuarded = IsGuarded } )
     return IsGuarded
   end
 
@@ -301,7 +301,7 @@ do -- ZoneGoal
   function ZONE_GOAL_CARGO:IsEmpty()
   
     local IsEmpty = self.Zone:IsNoneInZone()
-    self:E( { IsEmpty = IsEmpty } )
+    self:F( { IsEmpty = IsEmpty } )
     return IsEmpty
   end
 
@@ -309,7 +309,7 @@ do -- ZoneGoal
   function ZONE_GOAL_CARGO:IsCaptured()
   
     local IsCaptured = self.Zone:IsAllInZoneOfOtherCoalition( self.Coalition )
-    self:E( { IsCaptured = IsCaptured } )
+    self:F( { IsCaptured = IsCaptured } )
     return IsCaptured
   end
   
@@ -317,7 +317,7 @@ do -- ZoneGoal
   function ZONE_GOAL_CARGO:IsAttacked()
   
     local IsAttacked = self.Zone:IsSomeInZoneOfCoalition( self.Coalition )
-    self:E( { IsAttacked = IsAttacked } )
+    self:F( { IsAttacked = IsAttacked } )
     return IsAttacked
   end
   
@@ -332,7 +332,7 @@ do -- ZoneGoal
     local State = self:GetState()
     
     if self.MarkRed and self.MarkBlue then
-      self:E( { MarkRed = self.MarkRed, MarkBlue = self.MarkBlue } )
+      self:F( { MarkRed = self.MarkRed, MarkBlue = self.MarkBlue } )
       Coord:RemoveMark( self.MarkRed )
       Coord:RemoveMark( self.MarkBlue )
     end
@@ -367,7 +367,7 @@ do -- ZoneGoal
     --self:GetParent( self ):onenterCaptured()
 
     local NewCoalition = self.Zone:GetCoalition()
-    self:E( { NewCoalition = NewCoalition } )
+    self:F( { NewCoalition = NewCoalition } )
     self:SetCoalition( NewCoalition )
   
     self:Mark()
@@ -394,7 +394,7 @@ do -- ZoneGoal
   -- @param #ZONE_GOAL_CARGO self
   function ZONE_GOAL_CARGO:onafterGuard()
   
-    --self:E({BASE:GetParent( self )})
+    --self:F({BASE:GetParent( self )})
     --BASE:GetParent( self ).onafterGuard( self )
   
     if not self.SmokeScheduler then
@@ -409,7 +409,7 @@ do -- ZoneGoal
   function ZONE_GOAL_CARGO:IsCaptured()
   
     local IsCaptured = self.Zone:IsAllInZoneOfOtherCoalition( self.Coalition )
-    self:E( { IsCaptured = IsCaptured } )
+    self:F( { IsCaptured = IsCaptured } )
     return IsCaptured
   end
   
@@ -417,7 +417,7 @@ do -- ZoneGoal
   function ZONE_GOAL_CARGO:IsAttacked()
   
     local IsAttacked = self.Zone:IsSomeInZoneOfCoalition( self.Coalition )
-    self:E( { IsAttacked = IsAttacked } )
+    self:F( { IsAttacked = IsAttacked } )
     return IsAttacked
   end
   
@@ -426,7 +426,7 @@ do -- ZoneGoal
   function ZONE_GOAL_CARGO:StatusZone()
   
     local State = self:GetState()
-    self:E( { State = self:GetState() } )
+    self:F( { State = self:GetState() } )
   
     self.Zone:Scan()
   

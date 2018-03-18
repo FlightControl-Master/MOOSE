@@ -376,7 +376,7 @@ do -- TASK_A2A_DISPATCHER
 
         local DetectedSet = DetectedItem.Set -- Core.Set#SET_UNIT
         --DetectedSet:Flush()
-        --self:E( { DetectedSetCount = DetectedSet:Count() } )
+        --self:F( { DetectedSetCount = DetectedSet:Count() } )
         if DetectedSet:Count() == 0 then
           Remove = true
         end
@@ -418,7 +418,7 @@ do -- TASK_A2A_DISPATCHER
       
     end
 
-    --self:E( { FriendliesCount = FriendliesCount } )
+    --self:F( { FriendliesCount = FriendliesCount } )
     
     local FriendlyTypesReport = REPORT:New()
     
@@ -451,7 +451,7 @@ do -- TASK_A2A_DISPATCHER
       for PlayerUnitName, PlayerUnitData in pairs( PlayersNearBy ) do
         local PlayerUnit = PlayerUnitData -- Wrapper.Unit#UNIT
         local PlayerName = PlayerUnit:GetPlayerName()
-        --self:E( { PlayerName = PlayerName, PlayerUnit = PlayerUnit } )
+        --self:F( { PlayerName = PlayerName, PlayerUnit = PlayerUnit } )
         if PlayerUnit:IsAirPlane() and PlayerName ~= nil then
           local FriendlyUnitThreatLevel = PlayerUnit:GetThreatLevel()
           PlayersCount = PlayersCount + 1
@@ -464,8 +464,6 @@ do -- TASK_A2A_DISPATCHER
       
     end
 
-    --self:E( { PlayersCount = PlayersCount } )
-    
     local PlayerTypesReport = REPORT:New()
     
     if PlayersCount > 0 then
@@ -491,7 +489,7 @@ do -- TASK_A2A_DISPATCHER
   -- @param Functional.Detection#DETECTION_BASE Detection The detection created by the @{Detection#DETECTION_BASE} derived object.
   -- @return #boolean Return true if you want the task assigning to continue... false will cancel the loop.
   function TASK_A2A_DISPATCHER:ProcessDetected( Detection )
-    self:E()
+    self:F()
   
     local AreaMsg = {}
     local TaskMsg = {}
@@ -525,7 +523,7 @@ do -- TASK_A2A_DISPATCHER
         local DetectedSet = DetectedItem.Set -- Core.Set#SET_UNIT
         local DetectedCount = DetectedSet:Count()
         local DetectedZone = DetectedItem.Zone
-        --self:E( { "Targets in DetectedItem", DetectedItem.ItemID, DetectedSet:Count(), tostring( DetectedItem ) } )
+        --self:F( { "Targets in DetectedItem", DetectedItem.ItemID, DetectedSet:Count(), tostring( DetectedItem ) } )
         --DetectedSet:Flush()
         
         local DetectedID = DetectedItem.ID
@@ -563,7 +561,7 @@ do -- TASK_A2A_DISPATCHER
             
             TaskReport:Add( Task:GetName() )
           else
-            self:E("This should not happen")
+            self:F("This should not happen")
           end
 
         end

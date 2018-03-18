@@ -403,7 +403,6 @@ end
 -- @param #string Event The Event string.
 -- @param #string To The To State string.
 function AI_CAS_ZONE:onafterTarget( Controllable, From, Event, To )
-  self:E("onafterTarget")
 
   if Controllable:IsAlive() then
 
@@ -414,7 +413,7 @@ function AI_CAS_ZONE:onafterTarget( Controllable, From, Event, To )
       if DetectedUnit:IsAlive() then
         if DetectedUnit:IsInZone( self.EngageZone ) then
           if Detected == true then
-            self:E( {"Target: ", DetectedUnit } )
+            self:F( {"Target: ", DetectedUnit } )
             self.DetectedUnits[DetectedUnit] = false
             local AttackTask = Controllable:TaskAttackUnit( DetectedUnit, false, self.EngageWeaponExpend, self.EngageAttackQty, self.EngageDirection, self.EngageAltitude, nil )
             self.Controllable:PushTask( AttackTask, 1 )
@@ -496,7 +495,7 @@ function AI_CAS_ZONE:onafterEngage( Controllable, From, Event, To,
       self:T( DetectedUnit )
       if DetectedUnit:IsAlive() then
         if DetectedUnit:IsInZone( self.EngageZone ) then
-          self:E( {"Engaging ", DetectedUnit } )
+          self:F( {"Engaging ", DetectedUnit } )
           AttackTasks[#AttackTasks+1] = Controllable:TaskAttackUnit( DetectedUnit, 
                                                                      true, 
                                                                      EngageWeaponExpend, 
