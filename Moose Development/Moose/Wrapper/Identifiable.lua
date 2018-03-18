@@ -103,7 +103,7 @@ function IDENTIFIABLE:GetTypeName()
     return IdentifiableTypeName
   end
 
-  self:E( self.ClassName .. " " .. self.IdentifiableName .. " not found!" )
+  self:F( self.ClassName .. " " .. self.IdentifiableName .. " not found!" )
   return nil
 end
 
@@ -136,7 +136,7 @@ function IDENTIFIABLE:GetCategoryName()
     return IdentifiableCategoryName
   end
   
-  self:E( self.ClassName .. " " .. self.IdentifiableName .. " not found!" )
+  self:F( self.ClassName .. " " .. self.IdentifiableName .. " not found!" )
   return nil
 end
 
@@ -155,7 +155,7 @@ function IDENTIFIABLE:GetCoalition()
     return IdentifiableCoalition
   end 
   
-  self:E( self.ClassName .. " " .. self.IdentifiableName .. " not found!" )
+  self:F( self.ClassName .. " " .. self.IdentifiableName .. " not found!" )
   return nil
 end
 
@@ -185,7 +185,7 @@ function IDENTIFIABLE:GetCoalitionName()
     end
   end 
   
-  self:E( self.ClassName .. " " .. self.IdentifiableName .. " not found!" )
+  self:F( self.ClassName .. " " .. self.IdentifiableName .. " not found!" )
   return nil
 end
 
@@ -204,7 +204,7 @@ function IDENTIFIABLE:GetCountry()
     return IdentifiableCountry
   end 
   
-  self:E( self.ClassName .. " " .. self.IdentifiableName .. " not found!" )
+  self:F( self.ClassName .. " " .. self.IdentifiableName .. " not found!" )
   return nil
 end
  
@@ -225,7 +225,7 @@ function IDENTIFIABLE:GetDesc()
     return IdentifiableDesc
   end
   
-  self:E( self.ClassName .. " " .. self.IdentifiableName .. " not found!" )
+  self:F( self.ClassName .. " " .. self.IdentifiableName .. " not found!" )
   return nil
 end
 

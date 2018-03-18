@@ -1244,7 +1244,7 @@ do -- COORDINATE
   -- @return #string The coordinate Text in the configured coordinate system.
   function COORDINATE:ToStringFromRP( ReferenceCoord, ReferenceName, Controllable, Settings ) -- R2.2
   
-    self:E( { ReferenceCoord = ReferenceCoord, ReferenceName = ReferenceName } )
+    self:F( { ReferenceCoord = ReferenceCoord, ReferenceName = ReferenceName } )
 
     local Settings = Settings or ( Controllable and _DATABASE:GetPlayerSettings( Controllable:GetPlayerName() ) ) or _SETTINGS
     

@@ -101,7 +101,6 @@ function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
       if EventData.IniObjectCategory == 1 then
         local EventGroup = GROUP:Find( EventData.IniDCSGroup )
         self:E( { CommandCenter = self:GetName(), EventGroup = EventGroup, HasGroup = self:HasGroup( EventGroup ), EventData = EventData } )
-        self:E( { GROUPS = _DATABASE.GROUPS } )
         if EventGroup and self:HasGroup( EventGroup ) then
           local CommandCenterMenu = MENU_GROUP:New( EventGroup, "Command Center (" .. self:GetName() .. ")" )
           local MenuReporting = MENU_GROUP:New( EventGroup, "Missions Reports", CommandCenterMenu )
@@ -423,7 +422,7 @@ end
 -- Each Mission is listed, with an indication how many Tasks are still to be completed.
 -- @param #COMMANDCENTER self
 function COMMANDCENTER:ReportSummary( ReportGroup )
-  self:E( ReportGroup )
+  self:F( ReportGroup )
 
   local Report = REPORT:New()
 
@@ -443,7 +442,7 @@ end
 -- Each Mission is listed, with an indication how many Tasks are still to be completed.
 -- @param #COMMANDCENTER self
 function COMMANDCENTER:ReportMissionsPlayers( ReportGroup )
-  self:E( ReportGroup )
+  self:F( ReportGroup )
 
   local Report = REPORT:New()
   
@@ -461,7 +460,7 @@ end
 -- Report the details of a Mission, listing the Mission, and all the Task details.
 -- @param #COMMANDCENTER self
 function COMMANDCENTER:ReportDetails( ReportGroup, Task )
-  self:E( ReportGroup )
+  self:F( ReportGroup )
 
   local Report = REPORT:New()
   

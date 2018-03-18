@@ -213,7 +213,7 @@ function TASK:New( Mission, SetGroupAssign, TaskName, TaskType, TaskBriefing )
   self:AddTransition( { "Failed", "Aborted", "Cancelled" }, "Replan", "Planned" )
   self:AddTransition( "*", "TimeOut", "Cancelled" )
 
-  self:E( "New TASK " .. TaskName )
+  self:F( "New TASK " .. TaskName )
 
   self.Processes = {}
   self.Fsm = {}
@@ -284,7 +284,7 @@ function TASK:JoinUnit( PlayerUnit, PlayerGroup )
     end
     if self:IsStateAssigned() then
       local IsGroupAssigned = self:IsGroupAssigned( PlayerGroup )
-      self:E( { IsGroupAssigned = IsGroupAssigned } )
+      self:F( { IsGroupAssigned = IsGroupAssigned } )
       if IsGroupAssigned then
         self:AssignToUnit( PlayerUnit )
         self:MessageToGroups( PlayerUnit:GetPlayerName() .. " joined Task " .. self:GetName() )
@@ -313,7 +313,7 @@ function TASK:AbortGroup( PlayerGroup )
     -- If the PlayerUnit was the last unit of the PlayerGroup, the menu needs to be removed from the Group.
     if self:IsStateAssigned() then
       local IsGroupAssigned = self:IsGroupAssigned( PlayerGroup )
-      self:E( { IsGroupAssigned = IsGroupAssigned } )
+      self:F( { IsGroupAssigned = IsGroupAssigned } )
       if IsGroupAssigned then
         local PlayerName = PlayerGroup:GetUnit(1):GetPlayerName()
         --self:MessageToGroups( PlayerName .. " aborted Task " .. self:GetName() )
@@ -365,7 +365,7 @@ function TASK:CrashGroup( PlayerGroup )
     -- If the PlayerUnit was the last unit of the PlayerGroup, the menu needs to be removed from the Group.
     if self:IsStateAssigned() then
       local IsGroupAssigned = self:IsGroupAssigned( PlayerGroup )
-      self:E( { IsGroupAssigned = IsGroupAssigned } )
+      self:F( { IsGroupAssigned = IsGroupAssigned } )
       if IsGroupAssigned then
         local PlayerName = PlayerGroup:GetUnit(1):GetPlayerName()
         self:MessageToGroups( PlayerName .. " crashed! " )
@@ -446,7 +446,7 @@ do -- Group Assignment
     local TaskGroupName = TaskGroup:GetName()
   
     self.AssignedGroups[TaskGroupName] = TaskGroup
-    self:E( string.format( "Task %s is assigned to %s", TaskName, TaskGroupName ) )
+    self:F( string.format( "Task %s is assigned to %s", TaskName, TaskGroupName ) )
     
     -- Set the group to be assigned at mission level. This allows to decide the menu options on mission level for this group.
     self:GetMission():SetGroupAssigned( TaskGroup )
@@ -476,7 +476,7 @@ do -- Group Assignment
     local TaskGroupName = TaskGroup:GetName()
   
     self.AssignedGroups[TaskGroupName] = nil
-    --self:E( string.format( "Task %s is unassigned to %s", TaskName, TaskGroupName ) )
+    --self:F( string.format( "Task %s is unassigned to %s", TaskName, TaskGroupName ) )
 
     -- Set the group to be assigned at mission level. This allows to decide the menu options on mission level for this group.
     self:GetMission():ClearGroupAssignment( TaskGroup )
@@ -517,7 +517,7 @@ do -- Group Assignment
     for UnitID, UnitData in pairs( TaskUnits ) do
       local TaskUnit = UnitData -- Wrapper.Unit#UNIT
       local PlayerName = TaskUnit:GetPlayerName()
-      self:E(PlayerName)
+      self:F(PlayerName)
       if PlayerName ~= nil and PlayerName ~= "" then
         self:AssignToUnit( TaskUnit )
         CommandCenter:MessageToGroup( 
@@ -865,7 +865,7 @@ end
 -- @param Wrapper.Group#GROUP TaskGroup
 function TASK:MenuAssignToGroup( TaskGroup )
 
-  self:E( "Join Task menu selected")
+  self:F( "Join Task menu selected")
   
   self:AssignToGroup( TaskGroup )
 end
@@ -875,7 +875,7 @@ end
 function TASK:MenuMarkToGroup( TaskGroup )
   self:F()
 
-  self:UpdateTaskInfo()
+  self:UpdateTaskInfo( self.DetectedItem )
   
   local Report = REPORT:New():SetIndent( 0 )
 
@@ -981,10 +981,10 @@ end
 function TASK:RemoveStateMachine( TaskUnit )
   self:F( { TaskUnit = TaskUnit:GetName(), HasFsm = ( self.Fsm[TaskUnit] ~= nil ) } )
 
-  --self:E( self.Fsm )
+  --self:F( self.Fsm )
   --for TaskUnitT, Fsm in pairs( self.Fsm ) do
     --local Fsm = Fsm -- Core.Fsm#FSM_PROCESS
-    --self:E( TaskUnitT )
+    --self:F( TaskUnitT )
     --self.Fsm[TaskUnit] = nil
   --end
 
@@ -994,7 +994,7 @@ function TASK:RemoveStateMachine( TaskUnit )
   end
   
   collectgarbage()
-  self:E( "Garbage Collected, Processes should be finalized now ...")
+  self:F( "Garbage Collected, Processes should be finalized now ...")
 end
 
 
@@ -1186,7 +1186,7 @@ end
 -- @param #string TaskBriefing
 -- @return #TASK self
 function TASK:SetBriefing( TaskBriefing )
-  self:E(TaskBriefing)
+  self:F(TaskBriefing)
   self.TaskBriefing = TaskBriefing
   return self
 end
@@ -1210,7 +1210,7 @@ function TASK:onenterAssigned( From, Event, To, PlayerUnit, PlayerName )
 
   --- This test is required, because the state transition will be fired also when the state does not change in case of an event.  
   if From ~= "Assigned" then
-    self:E( { From, Event, To, PlayerUnit:GetName(), PlayerName } )
+    self:F( { From, Event, To, PlayerUnit:GetName(), PlayerName } )
 
     self:GetMission():GetCommandCenter():MessageToCoalition( "Task " .. self:GetName() .. " is assigned." )
     
@@ -1219,7 +1219,7 @@ function TASK:onenterAssigned( From, Event, To, PlayerUnit, PlayerName )
     self:SetGoalTotal() -- Polymorphic to set the initial goal total!
     
     if self.Dispatcher then
-      self:E( "Firing Assign event " )
+      self:F( "Firing Assign event " )
       self.Dispatcher:Assign( self, PlayerUnit, PlayerName )
     end
     
@@ -1230,8 +1230,8 @@ function TASK:onenterAssigned( From, Event, To, PlayerUnit, PlayerName )
      
     self:SetMenu()
 
-    self:E( { "--> Task Assigned", TaskName = self:GetName(), Mission = self:GetMission():GetName() } )
-    self:E( { "--> Task Player Names", PlayerNames = self:GetPlayerNames() } )
+    self:F( { "--> Task Assigned", TaskName = self:GetName(), Mission = self:GetMission():GetName() } )
+    self:F( { "--> Task Player Names", PlayerNames = self:GetPlayerNames() } )
 
   end
 end
@@ -1244,8 +1244,8 @@ end
 -- @param #string To
 function TASK:onenterSuccess( From, Event, To )
 
-  self:E( { "<-> Task Replanned", TaskName = self:GetName(), Mission = self:GetMission():GetName() } )
-  self:E( { "<-> Task Player Names", PlayerNames = self:GetPlayerNames() } )
+  self:F( { "<-> Task Replanned", TaskName = self:GetName(), Mission = self:GetMission():GetName() } )
+  self:F( { "<-> Task Player Names", PlayerNames = self:GetPlayerNames() } )
   
   self:GetMission():GetCommandCenter():MessageToCoalition( "Task " .. self:GetName() .. " is successful! Good job!" )
   self:UnAssignFromGroups()
@@ -1262,8 +1262,8 @@ end
 -- @param #string To
 function TASK:onenterAborted( From, Event, To )
 
-  self:E( { "<-- Task Aborted", TaskName = self:GetName(), Mission = self:GetMission():GetName() } )
-  self:E( { "<-- Task Player Names", PlayerNames = self:GetPlayerNames() } )
+  self:F( { "<-- Task Aborted", TaskName = self:GetName(), Mission = self:GetMission():GetName() } )
+  self:F( { "<-- Task Player Names", PlayerNames = self:GetPlayerNames() } )
   
   if From ~= "Aborted" then
     self:GetMission():GetCommandCenter():MessageToCoalition( "Task " .. self:GetName() .. " has been aborted! Task may be replanned." )
@@ -1280,8 +1280,8 @@ end
 -- @param #string To
 function TASK:onenterCancelled( From, Event, To )
 
-  self:E( { "<-- Task Cancelled", TaskName = self:GetName(), Mission = self:GetMission():GetName() } )
-  self:E( { "<-- Player Names", PlayerNames = self:GetPlayerNames() } )
+  self:F( { "<-- Task Cancelled", TaskName = self:GetName(), Mission = self:GetMission():GetName() } )
+  self:F( { "<-- Player Names", PlayerNames = self:GetPlayerNames() } )
   
   if From ~= "Cancelled" then
     self:GetMission():GetCommandCenter():MessageToCoalition( "Task " .. self:GetName() .. " has been cancelled! The tactical situation has changed." )
@@ -1298,8 +1298,8 @@ end
 -- @param #string To
 function TASK:onafterReplan( From, Event, To )
 
-  self:E( { "Task Replanned", TaskName = self:GetName(), Mission = self:GetMission():GetName() } )
-  self:E( { "Task Player Names", PlayerNames = self:GetPlayerNames() } )
+  self:F( { "Task Replanned", TaskName = self:GetName(), Mission = self:GetMission():GetName() } )
+  self:F( { "Task Player Names", PlayerNames = self:GetPlayerNames() } )
   
   self:GetMission():GetCommandCenter():MessageToCoalition( "Replanning Task " .. self:GetName() .. "." )
   
@@ -1314,8 +1314,8 @@ end
 -- @param #string To
 function TASK:onenterFailed( From, Event, To )
 
-  self:E( { "Task Failed", TaskName = self:GetName(), Mission = self:GetMission():GetName() } )
-  self:E( { "Task Player Names", PlayerNames = self:GetPlayerNames() } )
+  self:F( { "Task Failed", TaskName = self:GetName(), Mission = self:GetMission():GetName() } )
+  self:F( { "Task Player Names", PlayerNames = self:GetPlayerNames() } )
 
   self:GetMission():GetCommandCenter():MessageToCoalition( "Task " .. self:GetName() .. " has failed!" )
   
@@ -1336,7 +1336,7 @@ function TASK:onstatechange( From, Event, To )
   if self.Scores[To] then
     local Scoring = self:GetScoring()
     if Scoring then
-      self:E( { self.Scores[To].ScoreText, self.Scores[To].Score } )
+      self:F( { self.Scores[To].ScoreText, self.Scores[To].Score } )
       Scoring:_AddMissionScore( self.Mission, self.Scores[To].ScoreText, self.Scores[To].Score )
     end
   end
@@ -1380,14 +1380,14 @@ do -- Links
   --- Set detection of a task
   -- @param #TASK self
   -- @param Function.Detection#DETECTION_BASE Detection
-  -- @param #number DetectedItemIndex
+  -- @param DetectedItem
   -- @return #TASK
-  function TASK:SetDetection( Detection, DetectedItemIndex )
+  function TASK:SetDetection( Detection, DetectedItem )
     
-    self:E({DetectedItemIndex,Detection})
+    self:F( { DetectedItem, Detection } )
     
     self.Detection = Detection
-    self.DetectedItemIndex = DetectedItemIndex
+    self.DetectedItem = DetectedItem
   end
 
 end
@@ -1420,7 +1420,7 @@ end
 -- @return #string
 function TASK:ReportOverview( ReportGroup )
 
-  self:UpdateTaskInfo()
+  self:UpdateTaskInfo( self.DetectedItem )
   
   -- List the name of the Task.
   local TaskName = self:GetName()
@@ -1480,7 +1480,7 @@ end
 -- @return #string
 function TASK:ReportDetails( ReportGroup )
 
-  self:UpdateTaskInfo()
+  self:UpdateTaskInfo( self.DetectedItem )
 
   local Report = REPORT:New():SetIndent( 3 )
   

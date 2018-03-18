@@ -1647,7 +1647,7 @@ do -- Patrol methods
       PatrolGroup = self:GetGroup() -- Wrapper.Group#GROUP
     end
     
-    self:E( { PatrolGroup = PatrolGroup:GetName() } )
+    self:F( { PatrolGroup = PatrolGroup:GetName() } )
     
     if PatrolGroup:IsGround() or PatrolGroup:IsShip() then
     
@@ -1661,7 +1661,7 @@ do -- Patrol methods
 
       local TaskRoute = PatrolGroup:TaskFunction( "CONTROLLABLE.PatrolRoute" )
       
-      self:E({Waypoints = Waypoints})
+      self:F({Waypoints = Waypoints})
       local Waypoint = Waypoints[#Waypoints]
       PatrolGroup:SetTaskWaypoint( Waypoint, TaskRoute ) -- Set for the given Route at Waypoint 2 the TaskRouteToZone.
     
@@ -1681,7 +1681,7 @@ do -- Patrol methods
       PatrolGroup = self:GetGroup() -- Wrapper.Group#GROUP
     end
 
-    self:E( { PatrolGroup = PatrolGroup:GetName() } )
+    self:F( { PatrolGroup = PatrolGroup:GetName() } )
     
     if PatrolGroup:IsGround() or PatrolGroup:IsShip() then
     
@@ -1702,7 +1702,7 @@ do -- Patrol methods
         -- Select a random waypoint and check if it is not the same waypoint as where the object is about.
         ToWaypoint = math.random( 1, #Waypoints )
       until( ToWaypoint ~= FromWaypoint )
-      self:E( { FromWaypoint = FromWaypoint, ToWaypoint = ToWaypoint } )
+      self:F( { FromWaypoint = FromWaypoint, ToWaypoint = ToWaypoint } )
 
       local  Waypoint = Waypoints[ToWaypoint] -- Select random waypoint.
       local ToCoord = COORDINATE:NewFromVec2( { x = Waypoint.x, y = Waypoint.y } )
@@ -1736,7 +1736,7 @@ do -- Patrol methods
       PatrolGroup = self:GetGroup() -- Wrapper.Group#GROUP
     end
 
-    self:E( { PatrolGroup = PatrolGroup:GetName() } )
+    self:F( { PatrolGroup = PatrolGroup:GetName() } )
     
     if PatrolGroup:IsGround() or PatrolGroup:IsShip() then
     

@@ -158,8 +158,6 @@ do -- ACT_ROUTE
   -- @return #string
   function ACT_ROUTE:GetRouteText( Controllable )
     
-    self:E()
-    
     local RouteText = ""
 
     local Coordinate = nil -- Core.Point#COORDINATE
@@ -182,13 +180,13 @@ do -- ACT_ROUTE
         local ShortestDistance = 0
         local ShortestReferencePoint = nil
         local ShortestReferenceName = ""
-        self:E( { CC.ReferencePoints } )
+        self:F( { CC.ReferencePoints } )
         for ZoneName, Zone in pairs( CC.ReferencePoints ) do
-          self:E( { ZoneName = ZoneName } )
+          self:F( { ZoneName = ZoneName } )
           local Zone = Zone -- Core.Zone#ZONE
           local ZoneCoord = Zone:GetCoordinate()
           local ZoneDistance = ZoneCoord:Get2DDistance( self.Coordinate )
-          self:E( { ShortestDistance, ShortestReferenceName } )
+          self:F( { ShortestDistance, ShortestReferenceName } )
           if ShortestDistance == 0 or ZoneDistance < ShortestDistance then
             ShortestDistance = ZoneDistance
             ShortestReferencePoint = ZoneCoord
@@ -467,7 +465,7 @@ do -- ACT_ROUTE_ZONE
   -- @param #string From
   -- @param #string To
   function ACT_ROUTE_ZONE:onafterReport( ProcessUnit, From, Event, To )
-    self:E( { ProcessUnit = ProcessUnit } )
+    self:F( { ProcessUnit = ProcessUnit } )
   
     local RouteText = self:GetRouteText( ProcessUnit )
     self:GetCommandCenter():MessageTypeToGroup( RouteText, ProcessUnit:GetGroup(), MESSAGE.Type.Update )

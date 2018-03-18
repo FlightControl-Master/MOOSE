@@ -285,7 +285,7 @@ do -- ZONE_CAPTURE_COALITION
   function ZONE_CAPTURE_COALITION:IsGuarded()
   
     local IsGuarded = self.Zone:IsAllInZoneOfCoalition( self.Coalition )
-    self:E( { IsGuarded = IsGuarded } )
+    self:F( { IsGuarded = IsGuarded } )
     return IsGuarded
   end
 
@@ -293,7 +293,7 @@ do -- ZONE_CAPTURE_COALITION
   function ZONE_CAPTURE_COALITION:IsEmpty()
   
     local IsEmpty = self.Zone:IsNoneInZone()
-    self:E( { IsEmpty = IsEmpty } )
+    self:F( { IsEmpty = IsEmpty } )
     return IsEmpty
   end
 
@@ -301,7 +301,7 @@ do -- ZONE_CAPTURE_COALITION
   function ZONE_CAPTURE_COALITION:IsCaptured()
   
     local IsCaptured = self.Zone:IsAllInZoneOfOtherCoalition( self.Coalition )
-    self:E( { IsCaptured = IsCaptured } )
+    self:F( { IsCaptured = IsCaptured } )
     return IsCaptured
   end
   
@@ -309,7 +309,7 @@ do -- ZONE_CAPTURE_COALITION
   function ZONE_CAPTURE_COALITION:IsAttacked()
   
     local IsAttacked = self.Zone:IsSomeInZoneOfCoalition( self.Coalition )
-    self:E( { IsAttacked = IsAttacked } )
+    self:F( { IsAttacked = IsAttacked } )
     return IsAttacked
   end
   
@@ -324,7 +324,7 @@ do -- ZONE_CAPTURE_COALITION
     local State = self:GetState()
     
     if self.MarkRed and self.MarkBlue then
-      self:E( { MarkRed = self.MarkRed, MarkBlue = self.MarkBlue } )
+      self:F( { MarkRed = self.MarkRed, MarkBlue = self.MarkBlue } )
       Coord:RemoveMark( self.MarkRed )
       Coord:RemoveMark( self.MarkBlue )
     end
@@ -359,7 +359,7 @@ do -- ZONE_CAPTURE_COALITION
     --self:GetParent( self ):onenterCaptured()
 
     local NewCoalition = self.Zone:GetScannedCoalition()
-    self:E( { NewCoalition = NewCoalition } )
+    self:F( { NewCoalition = NewCoalition } )
     self:SetCoalition( NewCoalition )
   
     self:Mark()
@@ -386,7 +386,7 @@ do -- ZONE_CAPTURE_COALITION
   -- @param #ZONE_CAPTURE_COALITION self
   function ZONE_CAPTURE_COALITION:onafterGuard()
   
-    --self:E({BASE:GetParent( self )})
+    --self:F({BASE:GetParent( self )})
     --BASE:GetParent( self ).onafterGuard( self )
   
     if not self.SmokeScheduler then
@@ -398,7 +398,7 @@ do -- ZONE_CAPTURE_COALITION
   function ZONE_CAPTURE_COALITION:IsCaptured()
   
     local IsCaptured = self.Zone:IsAllInZoneOfOtherCoalition( self.Coalition )
-    self:E( { IsCaptured = IsCaptured } )
+    self:F( { IsCaptured = IsCaptured } )
     return IsCaptured
   end
   
@@ -406,7 +406,7 @@ do -- ZONE_CAPTURE_COALITION
   function ZONE_CAPTURE_COALITION:IsAttacked()
   
     local IsAttacked = self.Zone:IsSomeInZoneOfCoalition( self.Coalition )
-    self:E( { IsAttacked = IsAttacked } )
+    self:F( { IsAttacked = IsAttacked } )
     return IsAttacked
   end
   
@@ -416,7 +416,7 @@ do -- ZONE_CAPTURE_COALITION
   function ZONE_CAPTURE_COALITION:StatusZone()
   
     local State = self:GetState()
-    self:E( { State = self:GetState() } )
+    self:F( { State = self:GetState() } )
   
     self:GetParent( self, ZONE_CAPTURE_COALITION ).StatusZone( self )
     

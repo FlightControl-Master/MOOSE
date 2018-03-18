@@ -77,7 +77,7 @@ do -- TASK_ZONE_GOAL
     -- @param Wrapper.Unit#UNIT TaskUnit
     -- @param Tasking.Task#TASK_ZONE_GOAL Task
     function Fsm:onafterStartMonitoring( TaskUnit, Task )
-      self:E( { self } )
+      self:F( { self } )
       self:__Monitor( 0.1 )
       self:__RouteTo( 0.1 )
     end
@@ -87,7 +87,7 @@ do -- TASK_ZONE_GOAL
     -- @param Wrapper.Unit#UNIT TaskUnit
     -- @param Tasking.Task#TASK_ZONE_GOAL Task
     function Fsm:onafterMonitor( TaskUnit, Task )
-      self:E( { self } )
+      self:F( { self } )
       self:__Monitor( 15 )
     end
     
@@ -96,7 +96,7 @@ do -- TASK_ZONE_GOAL
     -- @param Wrapper.Unit#UNIT TaskUnit
     -- @param Tasking.Task_A2G#TASK_ZONE_GOAL Task
     function Fsm:onafterRouteTo( TaskUnit, Task )
-      self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
+      self:F( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
       -- Determine the first Unit from the self.TargetSetUnit
       
       if Task:GetTargetZone( TaskUnit ) then
@@ -236,14 +236,14 @@ do -- TASK_ZONE_CAPTURE
   -- @param Wrapper.Unit#UNIT TaskUnit
   function TASK_ZONE_CAPTURE:OnAfterGoal( From, Event, To, PlayerUnit, PlayerName )
   
-    self:E( { PlayerUnit = PlayerUnit } )
+    self:F( { PlayerUnit = PlayerUnit } )
     
     if self.ZoneGoal then
       if self.ZoneGoal.Goal:IsAchieved() then
         self:Success()
         local TotalContributions = self.ZoneGoal.Goal:GetTotalContributions()
         local PlayerContributions = self.ZoneGoal.Goal:GetPlayerContributions()
-        self:E( { TotalContributions = TotalContributions, PlayerContributions = PlayerContributions } )
+        self:F( { TotalContributions = TotalContributions, PlayerContributions = PlayerContributions } )
         for PlayerName, PlayerContribution in pairs( PlayerContributions ) do
            local Scoring = self:GetScoring()
            if Scoring then

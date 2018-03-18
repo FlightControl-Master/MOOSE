@@ -71,7 +71,6 @@ UTILS.IsInstanceOf = function( object, className )
     
       -- I'm not sure if this should take advantage of MOOSE logging function, or throw an error for pcall
       local err_str = 'className parameter should be a string; parameter received: '..type( className )
-      self:E( err_str )
       return false
       -- error( err_str )
       

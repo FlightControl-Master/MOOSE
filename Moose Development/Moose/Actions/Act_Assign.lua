@@ -156,7 +156,7 @@ do -- ACT_ASSIGN_ACCEPT
   -- @param #string From
   -- @param #string To
   function ACT_ASSIGN_ACCEPT:onafterStart( ProcessUnit, From, Event, To )
-    self:E( { ProcessUnit, From, Event, To } )
+    self:F( { ProcessUnit, From, Event, To } )
   
     self:__Assign( 1 )   
   end
@@ -168,8 +168,7 @@ do -- ACT_ASSIGN_ACCEPT
   -- @param #string From
   -- @param #string To
   function ACT_ASSIGN_ACCEPT:onenterAssigned( ProcessUnit, From, Event, To )
-    env.info( "in here" )
-    self:E( { ProcessUnit, From, Event, To } )
+    self:F( { ProcessUnit, From, Event, To } )
   
     local ProcessGroup = ProcessUnit:GetGroup()
 
@@ -234,7 +233,7 @@ do -- ACT_ASSIGN_MENU_ACCEPT
   -- @param #string From
   -- @param #string To
   function ACT_ASSIGN_MENU_ACCEPT:onafterStart( ProcessUnit, From, Event, To )
-    self:E( { ProcessUnit, From, Event, To } )
+    self:F( { ProcessUnit, From, Event, To } )
 
     self:GetCommandCenter():MessageTypeToGroup( "Access the radio menu to accept the task. You have 30 seconds or the assignment will be cancelled.", ProcessUnit:GetGroup(), MESSAGE.Type.Information )
    
@@ -248,7 +247,6 @@ do -- ACT_ASSIGN_MENU_ACCEPT
   --- Menu function.
   -- @param #ACT_ASSIGN_MENU_ACCEPT self
   function ACT_ASSIGN_MENU_ACCEPT:MenuAssign()
-    self:E( )
   
     self:__Assign( 1 )
   end
@@ -256,7 +254,6 @@ do -- ACT_ASSIGN_MENU_ACCEPT
   --- Menu function.
   -- @param #ACT_ASSIGN_MENU_ACCEPT self
   function ACT_ASSIGN_MENU_ACCEPT:MenuReject()
-    self:E( )
   
     self:__Reject( 1 )
   end
@@ -268,7 +265,7 @@ do -- ACT_ASSIGN_MENU_ACCEPT
   -- @param #string From
   -- @param #string To
   function ACT_ASSIGN_MENU_ACCEPT:onafterAssign( ProcessUnit, From, Event, To )
-    self:E( { ProcessUnit.UnitNameFrom, Event, To } )
+    self:F( { ProcessUnit.UnitNameFrom, Event, To } )
   
     self.Menu:Remove()
   end
@@ -280,7 +277,7 @@ do -- ACT_ASSIGN_MENU_ACCEPT
   -- @param #string From
   -- @param #string To
   function ACT_ASSIGN_MENU_ACCEPT:onafterReject( ProcessUnit, From, Event, To )
-    self:E( { ProcessUnit.UnitName, From, Event, To } )
+    self:F( { ProcessUnit.UnitName, From, Event, To } )
   
     self.Menu:Remove()
     --TODO: need to resolve this problem ... it has to do with the events ...

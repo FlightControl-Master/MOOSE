@@ -129,7 +129,6 @@ do -- DETECTION MANAGER
     self:SetRefreshTimeInterval( 30 )
     self:SetReportDisplayTime( 25 )
   
-    self:E( { Detection = Detection } )
     Detection:__Start( 3 )
 
     return self
@@ -140,8 +139,6 @@ do -- DETECTION MANAGER
   end
   
   function DETECTION_MANAGER:onafterReport( From, Event, To )
-
-    self:E( "onafterReport" )
 
     self:__Report( -self._RefreshTimeInterval )
     
@@ -256,7 +253,6 @@ do -- DETECTION_REPORTING
   function DETECTION_REPORTING:ProcessDetected( Group, Detection )
     self:F2( Group )
   
-    self:E( Group )
     local DetectedMsg = {}
     for DetectedAreaID, DetectedAreaData in pairs( Detection:GetDetectedAreas() ) do
       local DetectedArea = DetectedAreaData -- Functional.Detection#DETECTION_AREAS.DetectedArea

@@ -607,7 +607,7 @@ function ZONE_RADIUS:Scan( ObjectCategories )
   local ZoneCoord = self:GetCoordinate()
   local ZoneRadius = self:GetRadius()
   
-  self:E({ZoneCoord = ZoneCoord, ZoneRadius = ZoneRadius, ZoneCoordLL = ZoneCoord:ToStringLLDMS()})
+  self:F({ZoneCoord = ZoneCoord, ZoneRadius = ZoneRadius, ZoneCoordLL = ZoneCoord:ToStringLLDMS()})
 
   local SphereSearch = {
     id = world.VolumeType.SPHERE,
@@ -625,14 +625,14 @@ function ZONE_RADIUS:Scan( ObjectCategories )
          (ObjectCategory == Object.Category.STATIC and ZoneObject:isExist()) then
         local CoalitionDCSUnit = ZoneObject:getCoalition()
         self.ScanData.Coalitions[CoalitionDCSUnit] = true
-        self:E( { Name = ZoneObject:getName(), Coalition = CoalitionDCSUnit } )
+        self:F( { Name = ZoneObject:getName(), Coalition = CoalitionDCSUnit } )
       end
       if ObjectCategory == Object.Category.SCENERY then
         local SceneryType = ZoneObject:getTypeName()
         local SceneryName = ZoneObject:getName()
         self.ScanData.Scenery[SceneryType] = self.ScanData.Scenery[SceneryType] or {}
         self.ScanData.Scenery[SceneryType][SceneryName] = SCENERY:Register( SceneryName, ZoneObject )
-        self:E( { SCENERY =  self.ScanData.Scenery[SceneryType][SceneryName] } )
+        self:F( { SCENERY =  self.ScanData.Scenery[SceneryType][SceneryName] } )
       end
     end
     return true
@@ -779,7 +779,7 @@ function ZONE_RADIUS:SearchZone( EvaluateFunction, ObjectCategories )
   local ZoneCoord = self:GetCoordinate()
   local ZoneRadius = self:GetRadius()
   
-  self:E({ZoneCoord = ZoneCoord, ZoneRadius = ZoneRadius, ZoneCoordLL = ZoneCoord:ToStringLLDMS()})
+  self:F({ZoneCoord = ZoneCoord, ZoneRadius = ZoneRadius, ZoneCoordLL = ZoneCoord:ToStringLLDMS()})
 
   local SphereSearch = {
     id = world.VolumeType.SPHERE,

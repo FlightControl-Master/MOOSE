@@ -573,7 +573,7 @@ do -- TASK_A2G_DISPATCHER
     
     if Task then
       if ( Task:IsStatePlanned() and DetectedItemChanged == true ) or Task:IsStateCancelled() then
-        --self:E( "Removing Tasking: " .. Task:GetTaskName() )
+        --self:F( "Removing Tasking: " .. Task:GetTaskName() )
         self:RemoveTask( TaskIndex )
       end
     end
@@ -587,7 +587,7 @@ do -- TASK_A2G_DISPATCHER
   -- @param Functional.Detection#DETECTION_BASE Detection The detection created by the @{Detection#DETECTION_BASE} derived object.
   -- @return #boolean Return true if you want the task assigning to continue... false will cancel the loop.
   function TASK_A2G_DISPATCHER:ProcessDetected( Detection )
-    self:E()
+    self:F()
   
     local AreaMsg = {}
     local TaskMsg = {}
@@ -603,7 +603,7 @@ do -- TASK_A2G_DISPATCHER
       for TaskIndex, TaskData in pairs( self.Tasks ) do
         local Task = TaskData -- Tasking.Task#TASK
         if Task:IsStatePlanned() then
-          local DetectedItem = Detection:GetDetectedItem( TaskIndex )
+          local DetectedItem = Detection:GetDetectedItemByIndex( TaskIndex )
           if not DetectedItem then
             local TaskText = Task:GetName()
             for TaskGroupID, TaskGroup in pairs( self.SetGroup:GetSet() ) do
@@ -620,14 +620,14 @@ do -- TASK_A2G_DISPATCHER
         local DetectedItem = DetectedItem -- Functional.Detection#DETECTION_BASE.DetectedItem
         local DetectedSet = DetectedItem.Set -- Core.Set#SET_UNIT
         local DetectedZone = DetectedItem.Zone
-        --self:E( { "Targets in DetectedItem", DetectedItem.ItemID, DetectedSet:Count(), tostring( DetectedItem ) } )
+        --self:F( { "Targets in DetectedItem", DetectedItem.ItemID, DetectedSet:Count(), tostring( DetectedItem ) } )
         --DetectedSet:Flush()
         
         local DetectedItemID = DetectedItem.ID
         local TaskIndex = DetectedItem.ID
         local DetectedItemChanged = DetectedItem.Changed
         
-        self:E( { DetectedItemChanged = DetectedItemChanged, DetectedItemID = DetectedItemID, TaskIndex = TaskIndex } )
+        self:F( { DetectedItemChanged = DetectedItemChanged, DetectedItemID = DetectedItemID, TaskIndex = TaskIndex } )
         
         local Task = self.Tasks[TaskIndex] -- Tasking.Task_A2G#TASK_A2G
         
@@ -640,7 +640,7 @@ do -- TASK_A2G_DISPATCHER
               if TargetSetUnit then
                 if Task:IsInstanceOf( TASK_A2G_SEAD ) then
                   Task:SetTargetSetUnit( TargetSetUnit )
-                  Task:UpdateTaskInfo()
+                  Task:UpdateTaskInfo( DetectedItem )
                   TargetsReport:Add( Detection:GetChangeText( DetectedItem )  )
                 else
                   Task:Cancel()
@@ -651,7 +651,7 @@ do -- TASK_A2G_DISPATCHER
                   if Task:IsInstanceOf( TASK_A2G_CAS ) then
                     Task:SetTargetSetUnit( TargetSetUnit )
                     Task:SetDetection( Detection, TaskIndex )
-                    Task:UpdateTaskInfo()
+                    Task:UpdateTaskInfo( DetectedItem )
                     TargetsReport:Add( Detection:GetChangeText( DetectedItem ) )
                   else
                     Task:Cancel()
@@ -663,7 +663,7 @@ do -- TASK_A2G_DISPATCHER
                     if Task:IsInstanceOf( TASK_A2G_BAI ) then
                       Task:SetTargetSetUnit( TargetSetUnit )
                       Task:SetDetection( Detection, TaskIndex )
-                      Task:UpdateTaskInfo()
+                      Task:UpdateTaskInfo( DetectedItem )
                       TargetsReport:Add( Detection:GetChangeText( DetectedItem ) )
                     else
                       Task:Cancel()
@@ -691,7 +691,8 @@ do -- TASK_A2G_DISPATCHER
                 local TargetSetUnit = self:EvaluateSEAD( DetectedItem ) -- Returns a SetUnit if there are targets to be SEADed...
                 if TargetSetUnit then
                   Task:SetTargetSetUnit( TargetSetUnit )
-                  Task:UpdateTaskInfo()
+                  Task:SetDetection( Detection, DetectedItem )
+                  Task:UpdateTaskInfo( DetectedItem )
                 else
                   Task:Cancel()
                   Task = self:RemoveTask( TaskIndex )
@@ -701,8 +702,8 @@ do -- TASK_A2G_DISPATCHER
                   local TargetSetUnit = self:EvaluateCAS( DetectedItem ) -- Returns a SetUnit if there are targets to be CASed...
                   if TargetSetUnit then
                     Task:SetTargetSetUnit( TargetSetUnit )
-                    Task:SetDetection( Detection, TaskIndex )
-                    Task:UpdateTaskInfo()
+                    Task:SetDetection( Detection, DetectedItem )
+                    Task:UpdateTaskInfo( DetectedItem )
                   else
                     Task:Cancel()
                     Task = self:RemoveTask( TaskIndex )
@@ -712,8 +713,8 @@ do -- TASK_A2G_DISPATCHER
                     local TargetSetUnit = self:EvaluateBAI( DetectedItem ) -- Returns a SetUnit if there are targets to be BAIed...
                     if TargetSetUnit then
                       Task:SetTargetSetUnit( TargetSetUnit )
-                      Task:SetDetection( Detection, TaskIndex )
-                      Task:UpdateTaskInfo()
+                      Task:SetDetection( Detection, DetectedItem )
+                      Task:UpdateTaskInfo( DetectedItem )
                     else
                       Task:Cancel()
                       Task = self:RemoveTask( TaskIndex )
@@ -733,7 +734,7 @@ do -- TASK_A2G_DISPATCHER
           local TargetSetUnit = self:EvaluateSEAD( DetectedItem ) -- Returns a SetUnit if there are targets to be SEADed...
           if TargetSetUnit then
             Task = TASK_A2G_SEAD:New( Mission, self.SetGroup, string.format( "SEAD.%03d", DetectedItemID ), TargetSetUnit )
-            Task:SetDetection( Detection, TaskIndex )
+            Task:SetDetection( Detection, DetectedItem )
           end
 
           -- Evaluate CAS
@@ -741,7 +742,7 @@ do -- TASK_A2G_DISPATCHER
             local TargetSetUnit = self:EvaluateCAS( DetectedItem ) -- Returns a SetUnit if there are targets to be CASed...
             if TargetSetUnit then
               Task = TASK_A2G_CAS:New( Mission, self.SetGroup, string.format( "CAS.%03d", DetectedItemID ), TargetSetUnit )
-              Task:SetDetection( Detection, TaskIndex )
+              Task:SetDetection( Detection, DetectedItem )
             end
 
             -- Evaluate BAI
@@ -749,7 +750,7 @@ do -- TASK_A2G_DISPATCHER
               local TargetSetUnit = self:EvaluateBAI( DetectedItem, self.Mission:GetCommandCenter():GetPositionable():GetCoalition() ) -- Returns a SetUnit if there are targets to be BAIed...
               if TargetSetUnit then
                 Task = TASK_A2G_BAI:New( Mission, self.SetGroup, string.format( "BAI.%03d", DetectedItemID ), TargetSetUnit )
-                Task:SetDetection( Detection, TaskIndex )
+                Task:SetDetection( Detection, DetectedItem )
               end
             end
           end
@@ -758,12 +759,12 @@ do -- TASK_A2G_DISPATCHER
             self.Tasks[TaskIndex] = Task
             Task:SetTargetZone( DetectedZone )
             Task:SetDispatcher( self )
-            Task:UpdateTaskInfo()
+            Task:UpdateTaskInfo( DetectedItem )
             Mission:AddTask( Task )
     
             TaskReport:Add( Task:GetName() )
           else
-            self:E("This should not happen")
+            self:F("This should not happen")
           end
         end
 
