@@ -511,7 +511,7 @@ do -- TASK_A2A_DISPATCHER
           if not DetectedItem then
             local TaskText = Task:GetName()
             for TaskGroupID, TaskGroup in pairs( self.SetGroup:GetSet() ) do
-              Mission:GetCommandCenter():MessageToGroup( string.format( "Obsolete A2A task %s for %s removed.", TaskText, Mission:GetName() ), TaskGroup )
+              Mission:GetCommandCenter():MessageToGroup( string.format( "Obsolete A2A task %s for %s removed.", TaskText, Mission:GetShortText() ), TaskGroup )
             end
             Task = self:RemoveTask( TaskIndex )
           end
@@ -586,7 +586,7 @@ do -- TASK_A2A_DISPATCHER
       
       for TaskGroupID, TaskGroup in pairs( self.SetGroup:GetSet() ) do
         if ( not Mission:IsGroupAssigned(TaskGroup) ) and TaskText ~= "" then
-          Mission:GetCommandCenter():MessageToGroup( string.format( "%s has tasks %s. Subscribe to a task using the radio menu.", Mission:GetName(), TaskText ), TaskGroup )
+          Mission:GetCommandCenter():MessageToGroup( string.format( "%s has tasks %s. Subscribe to a task using the radio menu.", Mission:GetShortText(), TaskText ), TaskGroup )
         end
       end
       

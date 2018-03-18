@@ -271,15 +271,32 @@ end
 -- @param #string To
 function MISSION:onenterCOMPLETED( From, Event, To )
 
-  self:GetCommandCenter():MessageTypeToCoalition( self:GetName() .. " has been completed! Good job guys!", MESSAGE.Type.Information )
+  self:GetCommandCenter():MessageTypeToCoalition( self:GetText() .. " has been completed! Good job guys!", MESSAGE.Type.Information )
 end
 
 --- Gets the mission name.
 -- @param #MISSION self
 -- @return #MISSION self
 function MISSION:GetName()
+  return self.Name
+end
+
+
+--- Gets the mission text.
+-- @param #MISSION self
+-- @return #MISSION self
+function MISSION:GetText()
   return string.format( 'Mission "%s (%s)"', self.Name, self.MissionPriority )
 end
+
+
+--- Gets the short mission text.
+-- @param #MISSION self
+-- @return #MISSION self
+function MISSION:GetShortText()
+  return string.format( 'Mission "%s"', self.Name )
+end
+
 
 --- Add a Unit to join the Mission.
 -- For each Task within the Mission, the Unit is joined with the Task.
@@ -490,10 +507,10 @@ function MISSION:GetRootMenu( TaskGroup ) -- R2.2
   local CommandCenter = self:GetCommandCenter()
   local CommandCenterMenu = CommandCenter:GetMenu()
 
-  local MissionName = self:GetName()
+  local MissionName = self:GetText()
   --local MissionMenu = CommandCenterMenu:GetMenu( MissionName )
   
-  self.MissionMenu = MENU_COALITION:New( self.MissionCoalition, self:GetName(), CommandCenterMenu )
+  self.MissionMenu = MENU_COALITION:New( self.MissionCoalition, MissionName, CommandCenterMenu )
 
   return self.MissionMenu
 end
@@ -506,7 +523,6 @@ function MISSION:GetMenu( TaskGroup ) -- R2.1 -- Changed Menu Structure
   local CommandCenter = self:GetCommandCenter()
   local CommandCenterMenu = CommandCenter:GetMenu()
 
-  local MissionName = self:GetName()
   --local MissionMenu = CommandCenterMenu:GetMenu( MissionName )
   
   self.MissionGroupMenu = self.MissionGroupMenu or {}
@@ -514,9 +530,11 @@ function MISSION:GetMenu( TaskGroup ) -- R2.1 -- Changed Menu Structure
   
   local GroupMenu = self.MissionGroupMenu[TaskGroup]
   
-  CommandCenterMenu = MENU_GROUP:New( TaskGroup, "Command Center (" .. CommandCenter:GetName() .. ")" )
+  local CommandCenterText = CommandCenter:GetText()
+  CommandCenterMenu = MENU_GROUP:New( TaskGroup, CommandCenterText )
   
-  self.MissionMenu = MENU_GROUP:New( TaskGroup, self:GetName(), CommandCenterMenu )
+  local MissionText = self:GetText()
+  self.MissionMenu = MENU_GROUP:New( TaskGroup, MissionText, CommandCenterMenu )
   
   GroupMenu.BriefingMenu = MENU_GROUP_COMMAND:New( TaskGroup, "Mission Briefing", self.MissionMenu, self.MenuReportBriefing, self, TaskGroup )
 
@@ -711,7 +729,7 @@ function MISSION:ReportBriefing()
   local Report = REPORT:New()
 
   -- List the name of the mission.
-  local Name = self:GetName()
+  local Name = self:GetText()
   
   -- Determine the status of the mission.
   local Status = "<" .. self:GetState() .. ">"
@@ -744,7 +762,7 @@ function MISSION:ReportSummary()
   local Report = REPORT:New()
 
   -- List the name of the mission.
-  local Name = self:GetName()
+  local Name = self:GetText()
   
   -- Determine the status of the mission.
   local Status = "<" .. self:GetState() .. ">"
@@ -792,7 +810,7 @@ function MISSION:ReportPlayersPerTask( ReportGroup )
   local Report = REPORT:New()
 
   -- List the name of the mission.
-  local Name = self:GetName()
+  local Name = self:GetText()
   
   -- Determine the status of the mission.
   local Status = "<" .. self:GetState() .. ">"
@@ -833,7 +851,7 @@ function MISSION:ReportPlayersProgress( ReportGroup )
   local Report = REPORT:New()
 
   -- List the name of the mission.
-  local Name = self:GetName()
+  local Name = self:GetText()
   
   -- Determine the status of the mission.
   local Status = "<" .. self:GetState() .. ">"
@@ -878,7 +896,7 @@ function MISSION:MarkTargetLocations( ReportGroup )
   local Report = REPORT:New()
 
   -- List the name of the mission.
-  local Name = self:GetName()
+  local Name = self:GetText()
   
   -- Determine the status of the mission.
   local Status = "<" .. self:GetState() .. ">"
@@ -904,7 +922,7 @@ function MISSION:ReportSummary( ReportGroup )
   local Report = REPORT:New()
 
   -- List the name of the mission.
-  local Name = self:GetName()
+  local Name = self:GetText()
   
   -- Determine the status of the mission.
   local Status = "<" .. self:GetState() .. ">"
@@ -930,7 +948,7 @@ function MISSION:ReportOverview( ReportGroup, TaskStatus )
   local Report = REPORT:New()
 
   -- List the name of the mission.
-  local Name = self:GetName()
+  local Name = self:GetText()
   
   -- Determine the status of the mission.
   local Status = "<" .. self:GetState() .. ">"
@@ -962,7 +980,7 @@ function MISSION:ReportDetails( ReportGroup )
   local Report = REPORT:New()
   
   -- List the name of the mission.
-  local Name = self:GetName()
+  local Name = self:GetText()
   
   -- Determine the status of the mission.
   local Status = "<" .. self:GetState() .. ">"

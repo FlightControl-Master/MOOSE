@@ -767,7 +767,7 @@ function SCORING:_AddMissionTaskScore( Mission, PlayerUnit, Text, Score )
     PlayerData.Score = self.Players[PlayerName].Score + Score
     PlayerData.Mission[MissionName].ScoreTask = self.Players[PlayerName].Mission[MissionName].ScoreTask + Score
   
-    MESSAGE:NewType( self.DisplayMessagePrefix .. MissionName .. " : " .. Text .. " Score: " .. Score, MESSAGE.Type.Information ):ToAll()
+    MESSAGE:NewType( self.DisplayMessagePrefix .. Mission:GetText() .. " : " .. Text .. " Score: " .. Score, MESSAGE.Type.Information ):ToAll()
   
     self:ScoreCSV( PlayerName, "", "TASK_" .. MissionName:gsub( ' ', '_' ), 1, Score, PlayerUnit:GetName() )
   end
@@ -801,7 +801,7 @@ function SCORING:_AddMissionGoalScore( Mission, PlayerName, Text, Score )
     PlayerData.Score = self.Players[PlayerName].Score + Score
     PlayerData.Mission[MissionName].ScoreTask = self.Players[PlayerName].Mission[MissionName].ScoreTask + Score
   
-    MESSAGE:NewType( string.format( "%s%s: %s! Player %s receives %d score!", self.DisplayMessagePrefix, MissionName, Text, PlayerName, Score ), MESSAGE.Type.Information ):ToAll()
+    MESSAGE:NewType( string.format( "%s%s: %s! Player %s receives %d score!", self.DisplayMessagePrefix, Mission:GetText(), Text, PlayerName, Score ), MESSAGE.Type.Information ):ToAll()
 
     self:ScoreCSV( PlayerName, "", "TASK_" .. MissionName:gsub( ' ', '_' ), 1, Score )
   end
@@ -828,7 +828,7 @@ function SCORING:_AddMissionScore( Mission, Text, Score )
       PlayerData.Score = PlayerData.Score + Score
       PlayerData.Mission[MissionName].ScoreMission = PlayerData.Mission[MissionName].ScoreMission + Score
 
-      MESSAGE:NewType( self.DisplayMessagePrefix .. "Player '" .. PlayerName .. "' has " .. Text .. " in Mission '" .. MissionName .. "'. " ..
+      MESSAGE:NewType( self.DisplayMessagePrefix .. "Player '" .. PlayerName .. "' has " .. Text .. " in " .. Mission:GetText() .. ". " ..
         Score .. " mission score!",
         MESSAGE.Type.Information ):ToAll()
 
