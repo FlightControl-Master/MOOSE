@@ -212,7 +212,7 @@ do -- TASK_CARGO
       
       local TaskUnitName = TaskUnit:GetName()
       
-      self:E( { TaskUnit = TaskUnitName, Task = Task and Task:GetClassNameAndID() } )
+      self:F( { TaskUnit = TaskUnitName, Task = Task and Task:GetClassNameAndID() } )
 
       local MenuTime = timer.getTime()
             
@@ -296,7 +296,7 @@ do -- TASK_CARGO
     -- @param Wrapper.Unit#UNIT TaskUnit
     -- @param Tasking.Task_Cargo#TASK_CARGO Task
     function Fsm:OnLeaveWaitingForCommand( TaskUnit, Task )
-      self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
+      self:F( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
       
       TaskUnit.Menu:Remove()
     end
@@ -332,7 +332,7 @@ do -- TASK_CARGO
     -- @param To
     -- @param Core.Cargo#CARGO Cargo
     function Fsm:onafterRouteToPickup( TaskUnit, Task, From, Event, To, Cargo )
-      self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
+      self:F( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
 
       if Cargo:IsAlive() then
         self.Cargo = Cargo -- Core.Cargo#CARGO
@@ -348,7 +348,7 @@ do -- TASK_CARGO
     -- @param Wrapper.Unit#UNIT TaskUnit
     -- @param Tasking.Task_Cargo#TASK_CARGO Task
     function Fsm:onafterArriveAtPickup( TaskUnit, Task )
-      self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
+      self:F( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
       if self.Cargo:IsAlive() then
         self.Cargo:Smoke( Task:GetSmokeColor(), 15 )
         if TaskUnit:IsAir() then
@@ -365,7 +365,7 @@ do -- TASK_CARGO
     -- @param Wrapper.Unit#UNIT TaskUnit
     -- @param Tasking.Task_Cargo#TASK_CARGO Task
     function Fsm:onafterCancelRouteToPickup( TaskUnit, Task )
-      self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
+      self:F( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
       
       self:__SelectAction( -0.1 )
     end
@@ -374,9 +374,9 @@ do -- TASK_CARGO
     --- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
     function Fsm:onafterRouteToDeploy( TaskUnit, Task, From, Event, To, DeployZone )
-      self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
+      self:F( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
 
-      self:E( DeployZone )
+      self:F( DeployZone )
       self.DeployZone = DeployZone
       Task:SetDeployZone( self.DeployZone, TaskUnit )
       self:__RouteToDeployZone( -0.1 )
@@ -387,7 +387,7 @@ do -- TASK_CARGO
     -- @param Wrapper.Unit#UNIT TaskUnit
     -- @param Tasking.Task_Cargo#TASK_CARGO Task
     function Fsm:onafterArriveAtDeploy( TaskUnit, Task )
-      self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
+      self:F( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
       
       if TaskUnit:IsAir() then
         Task:GetMission():GetCommandCenter():MessageToGroup( "Land", TaskUnit:GetGroup() )
@@ -402,7 +402,7 @@ do -- TASK_CARGO
     -- @param Wrapper.Unit#UNIT TaskUnit
     -- @param Tasking.Task_Cargo#TASK_CARGO Task
     function Fsm:onafterCancelRouteToDeploy( TaskUnit, Task )
-      self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
+      self:F( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
       
       self:__SelectAction( -0.1 )
     end
@@ -413,7 +413,7 @@ do -- TASK_CARGO
     -- @param Wrapper.Unit#UNIT TaskUnit
     -- @param Tasking.Task_Cargo#TASK_CARGO Task
     function Fsm:onafterLand( TaskUnit, Task, From, Event, To, Action )
-      self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
+      self:F( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
       
       if self.Cargo:IsAlive() then
         if self.Cargo:IsInRadius( TaskUnit:GetPointVec2() ) then
@@ -437,7 +437,7 @@ do -- TASK_CARGO
     -- @param Wrapper.Unit#UNIT TaskUnit
     -- @param Tasking.Task_Cargo#TASK_CARGO Task
     function Fsm:onafterLanded( TaskUnit, Task, From, Event, To, Action )
-      self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
+      self:F( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
       
       if self.Cargo:IsAlive() then
         if self.Cargo:IsInRadius( TaskUnit:GetPointVec2() ) then
@@ -460,7 +460,7 @@ do -- TASK_CARGO
     -- @param Wrapper.Unit#UNIT TaskUnit
     -- @param Tasking.Task_Cargo#TASK_CARGO Task
     function Fsm:onafterPrepareBoarding( TaskUnit, Task, From, Event, To, Cargo )
-      self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
+      self:F( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
       
       if Cargo and Cargo:IsAlive() then
         self.Cargo = Cargo -- Core.Cargo#CARGO_GROUP
@@ -472,10 +472,10 @@ do -- TASK_CARGO
     -- @param Wrapper.Unit#UNIT TaskUnit
     -- @param Tasking.Task_Cargo#TASK_CARGO Task
     function Fsm:onafterBoard( TaskUnit, Task )
-      self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
+      self:F( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
 
       function self.Cargo:OnEnterLoaded( From, Event, To, TaskUnit, TaskProcess )
-        self:E({From, Event, To, TaskUnit, TaskProcess })
+        self:F({From, Event, To, TaskUnit, TaskProcess })
         TaskProcess:__Boarded( 0.1 )
       end
 
@@ -502,7 +502,7 @@ do -- TASK_CARGO
     function Fsm:onafterBoarded( TaskUnit, Task )
       
       local TaskUnitName = TaskUnit:GetName()
-      self:E( { TaskUnit = TaskUnitName, Task = Task and Task:GetClassNameAndID() } )
+      self:F( { TaskUnit = TaskUnitName, Task = Task and Task:GetClassNameAndID() } )
       
       self.Cargo:MessageToGroup( "Boarded ...", TaskUnit:GetGroup() )
 
@@ -531,7 +531,7 @@ do -- TASK_CARGO
     -- @param Cargo
     -- @param Core.Zone#ZONE_BASE DeployZone
     function Fsm:onafterPrepareUnBoarding( TaskUnit, Task, From, Event, To, Cargo  )
-      self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID(), From, Event, To, Cargo  } )
+      self:F( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID(), From, Event, To, Cargo  } )
 
       self.Cargo = Cargo
       self.DeployZone = nil
@@ -558,10 +558,10 @@ do -- TASK_CARGO
     -- @param Cargo
     -- @param Core.Zone#ZONE_BASE DeployZone
     function Fsm:onafterUnBoard( TaskUnit, Task, From, Event, To, Cargo, DeployZone )
-      self:E( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID(), From, Event, To, Cargo, DeployZone } )
+      self:F( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID(), From, Event, To, Cargo, DeployZone } )
 
       function self.Cargo:OnEnterUnLoaded( From, Event, To, DeployZone, TaskProcess )
-        self:E({From, Event, To, DeployZone, TaskProcess })
+        self:F({From, Event, To, DeployZone, TaskProcess })
         TaskProcess:__UnBoarded( -0.1 )
       end
 
@@ -583,7 +583,7 @@ do -- TASK_CARGO
     function Fsm:onafterUnBoarded( TaskUnit, Task )
 
       local TaskUnitName = TaskUnit:GetName()
-      self:E( { TaskUnit = TaskUnitName, Task = Task and Task:GetClassNameAndID() } )
+      self:F( { TaskUnit = TaskUnitName, Task = Task and Task:GetClassNameAndID() } )
       
       self.Cargo:MessageToGroup( "UnBoarded ...", TaskUnit:GetGroup() )
 
@@ -810,7 +810,7 @@ do -- TASK_CARGO
   end
   
   --- @param #TASK_CARGO self
-  function TASK_CARGO:UpdateTaskInfo()
+  function TASK_CARGO:UpdateTaskInfo( DetectedItem )
   
     if self:IsStatePlanned() or self:IsStateAssigned() then
       self.TaskInfo:AddTaskName( 0, "MSOD" )
@@ -855,7 +855,7 @@ do -- TASK_CARGO_TRANSPORT
     self:AddTransition( "*", "CargoPickedUp", "*" )
     self:AddTransition( "*", "CargoDeployed", "*" )
     
-    self:E( { CargoDeployed = self.CargoDeployed ~= nil and "true" or "false" } )
+    self:F( { CargoDeployed = self.CargoDeployed ~= nil and "true" or "false" } )
     
       --- OnBefore Transition Handler for Event CargoPickedUp.
       -- @function [parent=#TASK_CARGO_TRANSPORT] OnBeforeCargoPickedUp

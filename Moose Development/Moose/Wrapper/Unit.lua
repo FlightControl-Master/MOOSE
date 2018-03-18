@@ -204,10 +204,10 @@ function UNIT:ReSpawn( SpawnVec3, Heading )
     SpawnGroupTemplate.x = SpawnVec3.x
     SpawnGroupTemplate.y = SpawnVec3.z
     
-    self:E( #SpawnGroupTemplate.units )
+    self:F( #SpawnGroupTemplate.units )
     for UnitID, UnitData in pairs( SpawnGroup:GetUnits() ) do
       local GroupUnit = UnitData -- #UNIT
-      self:E( GroupUnit:GetName() )
+      self:F( GroupUnit:GetName() )
       if GroupUnit:IsAlive() then
         local GroupUnitVec3 = GroupUnit:GetVec3()
         local GroupUnitHeading = GroupUnit:GetHeading()
@@ -215,7 +215,7 @@ function UNIT:ReSpawn( SpawnVec3, Heading )
         SpawnGroupTemplate.units[UnitID].x = GroupUnitVec3.x
         SpawnGroupTemplate.units[UnitID].y = GroupUnitVec3.z
         SpawnGroupTemplate.units[UnitID].heading = GroupUnitHeading
-        self:E( { UnitID, SpawnGroupTemplate.units[UnitID], SpawnGroupTemplate.units[UnitID] } )
+        self:F( { UnitID, SpawnGroupTemplate.units[UnitID], SpawnGroupTemplate.units[UnitID] } )
       end
     end
   end
@@ -228,9 +228,9 @@ function UNIT:ReSpawn( SpawnVec3, Heading )
       SpawnGroupTemplate.units[UnitTemplateID].x = SpawnVec3.x
       SpawnGroupTemplate.units[UnitTemplateID].y = SpawnVec3.z
       SpawnGroupTemplate.units[UnitTemplateID].heading = Heading
-      self:E( { UnitTemplateID, SpawnGroupTemplate.units[UnitTemplateID], SpawnGroupTemplate.units[UnitTemplateID] } )
+      self:F( { UnitTemplateID, SpawnGroupTemplate.units[UnitTemplateID], SpawnGroupTemplate.units[UnitTemplateID] } )
     else
-      self:E( SpawnGroupTemplate.units[UnitTemplateID].name )
+      self:F( SpawnGroupTemplate.units[UnitTemplateID].name )
       local GroupUnit = UNIT:FindByName( SpawnGroupTemplate.units[UnitTemplateID].name ) -- #UNIT
       if GroupUnit and GroupUnit:IsAlive() then
         local GroupUnitVec3 = GroupUnit:GetVec3()
@@ -322,7 +322,7 @@ function UNIT:GetCallsign()
     return UnitCallSign
   end
   
-  self:E( self.ClassName .. " " .. self.UnitName .. " not found!" )
+  self:F( self.ClassName .. " " .. self.UnitName .. " not found!" )
   return nil
 end
 
@@ -875,7 +875,7 @@ function UNIT:IsFriendly( FriendlyCoalition )
     
     local IsFriendlyResult = ( UnitCoalition == FriendlyCoalition )
   
-    self:E( IsFriendlyResult )
+    self:F( IsFriendlyResult )
     return IsFriendlyResult
   end
   

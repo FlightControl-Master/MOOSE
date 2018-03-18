@@ -47,11 +47,34 @@ do -- TASK_A2G_DISPATCHER
   -- This chapters provides some insights in the tactical situations when certain Task Types are created.
   -- The Task Types are depending on the enemy positions that were detected, and the current location of friendly units.
   -- 
+  -- ![](..\Presentations\TASK_A2G_DISPATCHER\Dia3.JPG)
+  -- 
+  -- In the demonstration mission [TAD-A2G-000 - AREAS - Detection test], 
+  -- the tactical situation is a demonstration how the A2G detection works.
+  -- This example will be taken further in the explanation in the following chapters.
+  -- 
+  -- ![](..\Presentations\TASK_A2G_DISPATCHER\Dia4.JPG)
+  -- 
+  -- The red coalition are the players, the blue coalition is the enemy.
+  -- 
+  -- Red reconnaissance vehicles and airborne units are detecting the targets.
+  -- We call this the RecceSet as explained above, which is a Set of Groups that
+  -- have a group name starting with `Recce` (configured in the mission script).
+  -- 
+  -- Red attack units are responsible for executing the mission for the command center.
+  -- We call this the AttackSet, which is a Set of Groups with a group name starting with `Attack` (configured in the mission script).
+  -- These units are setup in this demonstration mission to be ground vehicles and airplanes.
+  -- For demonstration purposes, the attack airplane is stationed on the ground to explain
+  -- the messages and the menus properly.
+  -- Further test missions demonstrate the A2G task dispatcher from within air.
+  -- 
+  -- Depending upon the detection results, the A2G dispatcher will create different tasks.
+  -- 
   -- # 0.1. SEAD Task
   -- 
   -- A SEAD Task is dispatched when there are ground based Radar Emitters detected within an area.
   -- 
-  -- ![](..\Presentations\TASK_A2G_DISPATCHER\Dia11.JPG)
+  -- ![](..\Presentations\TASK_A2G_DISPATCHER\Dia9.JPG)
   -- 
   --   - Once all Radar Emitting Units have been destroyed, the Task will convert into a BAI or CAS task!
   --   - A CAS and BAI task may be converted into a SEAD task, once a radar has been detected within the area!
@@ -60,7 +83,7 @@ do -- TASK_A2G_DISPATCHER
   -- 
   -- A CAS Task is dispatched when there are no ground based Radar Emitters within the area, but there are friendly ground Units within 6 km from the enemy.
   -- 
-  -- ![](..\Presentations\TASK_A2G_DISPATCHER\Dia12.JPG)
+  -- ![](..\Presentations\TASK_A2G_DISPATCHER\Dia10.JPG)
   -- 
   --   - After the detection of the CAS task, if the friendly Units are destroyed, the CAS task will convert into a BAI task!
   --   - Only ground Units are taken into account. Airborne units are ships are not considered friendlies that require Close Air Support.
@@ -69,7 +92,7 @@ do -- TASK_A2G_DISPATCHER
   -- 
   -- A BAI Task is dispatched when there are no ground based Radar Emitters within the area, and there aren't friendly ground Units within 6 km from the enemy.
   -- 
-  -- ![](..\Presentations\TASK_A2G_DISPATCHER\Dia13.JPG)
+  -- ![](..\Presentations\TASK_A2G_DISPATCHER\Dia11.JPG)
   --
   --   - A BAI task may be converted into a CAS task if friendly Ground Units approach within 6 km range!
   --
@@ -83,16 +106,15 @@ do -- TASK_A2G_DISPATCHER
   -- 
   --      Radio MENU Structure (F10. Other)
   -- 
-  --      F1. Command Center |Gori|
-  --        F1. Mission "Alpha"
-  --        F2. Mission "Beta"
-  --        F3. Mission "Gamma"
-  --      F1. Command Center |Gudauta|
-  --        F1. Mission "Overlord"
-  --        F2. Mission "Desert Storm"
+  --      F1. Command Center [Gori]
+  --        F1. Mission "Alpha (Primary)"
+  --        F2. Mission "Beta (Secondary)"
+  --        F3. Mission "Gamma (Tactical)"
+  --      F1. Command Center [Lima]
+  --        F1. Mission "Overlord (High)"
   -- 
-  -- CC |Gori| is controlling Mission "Alpha", "Beta", "Gamma".  
-  -- CC |Gudauta| is controlling Missions "Overlord" and "Desert Storm".
+  -- Command Center [Gori] is controlling Mission "Alpha", "Beta", "Gamma".  Alpha is the Primary mission, Beta the Secondary and there is a Tacical mission Gamma.
+  -- Command Center [Lima] is controlling Missions "Overlord", which needs to be executed with High priority.
   --
   -- ## 1.1. Mission Menu (Under the Command Center Menu)
   -- 
@@ -103,19 +125,18 @@ do -- TASK_A2G_DISPATCHER
   --   - **Create Task Reports**: A menu to create various reports of the current tasks dispatched by the A2G dispatcher.
   --   - **Create Mission Reports**: A menu to create various reports on the current mission.
   -- 
-  -- ![](..\Presentations\TASK_A2G_DISPATCHER\Dia6.JPG)
-  -- 
-  -- For CC |Gori|, Mission "Alpha", the menu structure could look like this:
+  -- For CC [Lima], Mission "Overlord", the menu structure could look like this:
   -- 
   --      Radio MENU Structure (F10. Other)
   -- 
-  --      F1. Command Center |Gori|
-  --        F1. Mission "Alpha"
+  --      F1. Command Center [Lima]
+  --        F1. Mission "Overlord"
   --          F1. Mission Briefing
   --          F2. Mark Task Locations on Map
   --          F3. Task Reports
   --          F4. Mission Reports
-  -- 
+  --          
+  -- ![](..\Presentations\TASK_A2G_DISPATCHER\Dia5.JPG)
   --   
   -- ### 1.1.1. Mission Briefing Menu
   -- 
@@ -143,11 +164,11 @@ do -- TASK_A2G_DISPATCHER
   --   
   -- The information shown of the tasks will vary according the underlying task type, but are self explanatory.
   --
-  -- For CC |Gori|, Mission "Alpha", the Task Reports menu structure could look like this:
+  -- For CC [Gori], Mission "Alpha", the Task Reports menu structure could look like this:
   -- 
   --      Radio MENU Structure (F10. Other)
   -- 
-  --      F1. Command Center |Gori|
+  --      F1. Command Center [Gori]
   --        F1. Mission "Alpha"
   --          F1. Mission Briefing
   --          F2. Mark Task Locations on Map
@@ -173,7 +194,7 @@ do -- TASK_A2G_DISPATCHER
   -- 
   --      Radio MENU Structure (F10. Other)
   -- 
-  --      F1. Command Center |Gori|
+  --      F1. Command Center [Gori]
   --        F1. Mission "Alpha"
   --          F1. Mission Briefing
   --          F2. Mark Task Locations on Map
@@ -200,7 +221,7 @@ do -- TASK_A2G_DISPATCHER
   -- 
   --      Radio MENU Structure (F10. Other)
   -- 
-  --      F1. Command Center |Gori|
+  --      F1. Command Center [Gori]
   --        F1. Mission "Alpha"
   --          F1. Mission Briefing
   --          F2. Mark Task Locations on Map
@@ -224,7 +245,7 @@ do -- TASK_A2G_DISPATCHER
   -- 
   --      Radio MENU Structure (F10. Other)
   -- 
-  --      F1. Command Center |Gori|
+  --      F1. Command Center [Gori]
   --        F1. Mission "Alpha"
   --          F1. Mission Briefing
   --          F2. Mark Task Locations on Map
@@ -240,7 +261,7 @@ do -- TASK_A2G_DISPATCHER
   -- The Join Planned Task Menu contains the different Planned A2G Tasks **in a structured Menu Hierarchy**.
   -- The Menu Hierarchy is structuring the Tasks per **Task Type**, and then by **Task Name (ID)**.  
   --     
-  -- For example, for CC |Gori|, Mission "Alpha", 
+  -- For example, for CC [Gori], Mission "Alpha", 
   -- if a Mission "ALpha" contains 5 Planned Tasks, which would be:
   -- 
   --   - 2 CAS Tasks 
@@ -251,33 +272,28 @@ do -- TASK_A2G_DISPATCHER
   -- 
   --      Radio MENU Structure (F10. Other)
   -- 
-  --      F1. Command Center |Gori|
+  --      F1. Command Center [Gori]
   --        F1. Mission "Alpha"
   --          F1. Mission Briefing
   --          F2. Mark Task Locations on Map
   --          F3. Task Reports
   --          F4. Mission Reports
   --          F5. Join Planned Task
-  --            F1. CAS
-  --              F1. CAS.001
-  --              F2. CAS.002
   --            F2. BAI
   --              F1. BAI.001
+  --            F1. CAS
+  --              F1. CAS.002
   --            F3. SEAD
-  --              F1. SEAD.001
-  --              F2. SEAD.002
+  --              F1. SEAD.003
+  --              F2. SEAD.004
+  --              F3. SEAD.005
   --          
   -- An example from within a running simulation:
   -- 
-  -- ![](..\Presentations\TASK_A2G_DISPATCHER\Dia7.JPG)
+  -- ![](..\Presentations\TASK_A2G_DISPATCHER\Dia6.JPG)
   --          
   -- Each Task Type Menu would have a list of the Task Menus underneath. 
   -- Each Task Menu (eg. `CAS.001`) has a **detailed Task Menu structure to control the specific task**!
-  --
-  -- An example from within a running simulation:
-  -- 
-  -- ![](..\Presentations\TASK_A2G_DISPATCHER\Dia8.JPG)
-  -- 
   --
   -- ### 1.3.1. Planned Task Menu
   --
@@ -306,10 +322,6 @@ do -- TASK_A2G_DISPATCHER
   -- 
   -- **The Join Task is THE menu option to let a Player join the Task, and to engage within the Mission.**
   -- 
-  -- An example from within a running simulation:
-  -- 
-  -- ![](..\Presentations\TASK_A2G_DISPATCHER\Dia9.JPG)
-  --
   -- 
   -- ## 1.4. Assigned Task Menu
   -- 
@@ -337,13 +349,29 @@ do -- TASK_A2G_DISPATCHER
   -- Task abortion will result in the Task to be Cancelled, and the Task **may** be **Replanned**.
   -- However, this will depend on the setup of each Mission. 
   -- 
+  -- ## 1.5. Messages
   -- 
+  -- During game play, different messages are displayed.
+  -- These messages provide an update of the achievements made, and the state wherein the task is.
   -- 
-  -- # 1. TASK_A2G_DISPATCHER constructor
+  -- The various reports can be used also to retrieve the current status of the mission and its tasks.
+  -- 
+  -- ![](..\Presentations\TASK_A2G_DISPATCHER\Dia7.JPG)
+  -- 
+  -- The @{Settings} menu provides additional options to control the timing of the messages.
+  -- There are:
+  -- 
+  --   - Status messages, which are quick status updates. The settings menu allows to switch off these messages.
+  --   - Information messages, which are shown a bit longer, as they contain important information.
+  --   - Summary reports, which are quick reports showing a high level summary.
+  --   - Overview reports, which are providing the essential information. It provides an overview of a greater thing, and may take a bit of time to read.
+  --   - Detailed reports, which provide with very detailed information. It takes a bit longer to read those reports, so the display of those could be a bit longer.
+  -- 
+  -- # 2. TASK_A2G_DISPATCHER constructor
   -- 
   -- The @{#TASK_A2G_DISPATCHER.New}() method creates a new TASK_A2G_DISPATCHER instance.
   --
-  -- # 2. Usage
+  -- # 3. Usage
   --
   -- To use the TASK\_A2G\_DISPATCHER class, you need:
   -- 
@@ -545,7 +573,7 @@ do -- TASK_A2G_DISPATCHER
     
     if Task then
       if ( Task:IsStatePlanned() and DetectedItemChanged == true ) or Task:IsStateCancelled() then
-        --self:E( "Removing Tasking: " .. Task:GetTaskName() )
+        --self:F( "Removing Tasking: " .. Task:GetTaskName() )
         self:RemoveTask( TaskIndex )
       end
     end
@@ -559,7 +587,7 @@ do -- TASK_A2G_DISPATCHER
   -- @param Functional.Detection#DETECTION_BASE Detection The detection created by the @{Detection#DETECTION_BASE} derived object.
   -- @return #boolean Return true if you want the task assigning to continue... false will cancel the loop.
   function TASK_A2G_DISPATCHER:ProcessDetected( Detection )
-    self:E()
+    self:F()
   
     local AreaMsg = {}
     local TaskMsg = {}
@@ -575,11 +603,11 @@ do -- TASK_A2G_DISPATCHER
       for TaskIndex, TaskData in pairs( self.Tasks ) do
         local Task = TaskData -- Tasking.Task#TASK
         if Task:IsStatePlanned() then
-          local DetectedItem = Detection:GetDetectedItem( TaskIndex )
+          local DetectedItem = Detection:GetDetectedItemByIndex( TaskIndex )
           if not DetectedItem then
             local TaskText = Task:GetName()
             for TaskGroupID, TaskGroup in pairs( self.SetGroup:GetSet() ) do
-              Mission:GetCommandCenter():MessageToGroup( string.format( "Obsolete A2G task %s for %s removed.", TaskText, Mission:GetName() ), TaskGroup )
+              Mission:GetCommandCenter():MessageToGroup( string.format( "Obsolete A2G task %s for %s removed.", TaskText, Mission:GetShortText() ), TaskGroup )
             end
             Task = self:RemoveTask( TaskIndex )
           end
@@ -592,14 +620,14 @@ do -- TASK_A2G_DISPATCHER
         local DetectedItem = DetectedItem -- Functional.Detection#DETECTION_BASE.DetectedItem
         local DetectedSet = DetectedItem.Set -- Core.Set#SET_UNIT
         local DetectedZone = DetectedItem.Zone
-        --self:E( { "Targets in DetectedItem", DetectedItem.ItemID, DetectedSet:Count(), tostring( DetectedItem ) } )
+        --self:F( { "Targets in DetectedItem", DetectedItem.ItemID, DetectedSet:Count(), tostring( DetectedItem ) } )
         --DetectedSet:Flush()
         
         local DetectedItemID = DetectedItem.ID
         local TaskIndex = DetectedItem.ID
         local DetectedItemChanged = DetectedItem.Changed
         
-        self:E( { DetectedItemChanged = DetectedItemChanged, DetectedItemID = DetectedItemID, TaskIndex = TaskIndex } )
+        self:F( { DetectedItemChanged = DetectedItemChanged, DetectedItemID = DetectedItemID, TaskIndex = TaskIndex } )
         
         local Task = self.Tasks[TaskIndex] -- Tasking.Task_A2G#TASK_A2G
         
@@ -612,7 +640,7 @@ do -- TASK_A2G_DISPATCHER
               if TargetSetUnit then
                 if Task:IsInstanceOf( TASK_A2G_SEAD ) then
                   Task:SetTargetSetUnit( TargetSetUnit )
-                  Task:UpdateTaskInfo()
+                  Task:UpdateTaskInfo( DetectedItem )
                   TargetsReport:Add( Detection:GetChangeText( DetectedItem )  )
                 else
                   Task:Cancel()
@@ -623,7 +651,7 @@ do -- TASK_A2G_DISPATCHER
                   if Task:IsInstanceOf( TASK_A2G_CAS ) then
                     Task:SetTargetSetUnit( TargetSetUnit )
                     Task:SetDetection( Detection, TaskIndex )
-                    Task:UpdateTaskInfo()
+                    Task:UpdateTaskInfo( DetectedItem )
                     TargetsReport:Add( Detection:GetChangeText( DetectedItem ) )
                   else
                     Task:Cancel()
@@ -635,7 +663,7 @@ do -- TASK_A2G_DISPATCHER
                     if Task:IsInstanceOf( TASK_A2G_BAI ) then
                       Task:SetTargetSetUnit( TargetSetUnit )
                       Task:SetDetection( Detection, TaskIndex )
-                      Task:UpdateTaskInfo()
+                      Task:UpdateTaskInfo( DetectedItem )
                       TargetsReport:Add( Detection:GetChangeText( DetectedItem ) )
                     else
                       Task:Cancel()
@@ -663,7 +691,8 @@ do -- TASK_A2G_DISPATCHER
                 local TargetSetUnit = self:EvaluateSEAD( DetectedItem ) -- Returns a SetUnit if there are targets to be SEADed...
                 if TargetSetUnit then
                   Task:SetTargetSetUnit( TargetSetUnit )
-                  Task:UpdateTaskInfo()
+                  Task:SetDetection( Detection, DetectedItem )
+                  Task:UpdateTaskInfo( DetectedItem )
                 else
                   Task:Cancel()
                   Task = self:RemoveTask( TaskIndex )
@@ -673,8 +702,8 @@ do -- TASK_A2G_DISPATCHER
                   local TargetSetUnit = self:EvaluateCAS( DetectedItem ) -- Returns a SetUnit if there are targets to be CASed...
                   if TargetSetUnit then
                     Task:SetTargetSetUnit( TargetSetUnit )
-                    Task:SetDetection( Detection, TaskIndex )
-                    Task:UpdateTaskInfo()
+                    Task:SetDetection( Detection, DetectedItem )
+                    Task:UpdateTaskInfo( DetectedItem )
                   else
                     Task:Cancel()
                     Task = self:RemoveTask( TaskIndex )
@@ -684,8 +713,8 @@ do -- TASK_A2G_DISPATCHER
                     local TargetSetUnit = self:EvaluateBAI( DetectedItem ) -- Returns a SetUnit if there are targets to be BAIed...
                     if TargetSetUnit then
                       Task:SetTargetSetUnit( TargetSetUnit )
-                      Task:SetDetection( Detection, TaskIndex )
-                      Task:UpdateTaskInfo()
+                      Task:SetDetection( Detection, DetectedItem )
+                      Task:UpdateTaskInfo( DetectedItem )
                     else
                       Task:Cancel()
                       Task = self:RemoveTask( TaskIndex )
@@ -705,7 +734,7 @@ do -- TASK_A2G_DISPATCHER
           local TargetSetUnit = self:EvaluateSEAD( DetectedItem ) -- Returns a SetUnit if there are targets to be SEADed...
           if TargetSetUnit then
             Task = TASK_A2G_SEAD:New( Mission, self.SetGroup, string.format( "SEAD.%03d", DetectedItemID ), TargetSetUnit )
-            Task:SetDetection( Detection, TaskIndex )
+            Task:SetDetection( Detection, DetectedItem )
           end
 
           -- Evaluate CAS
@@ -713,7 +742,7 @@ do -- TASK_A2G_DISPATCHER
             local TargetSetUnit = self:EvaluateCAS( DetectedItem ) -- Returns a SetUnit if there are targets to be CASed...
             if TargetSetUnit then
               Task = TASK_A2G_CAS:New( Mission, self.SetGroup, string.format( "CAS.%03d", DetectedItemID ), TargetSetUnit )
-              Task:SetDetection( Detection, TaskIndex )
+              Task:SetDetection( Detection, DetectedItem )
             end
 
             -- Evaluate BAI
@@ -721,7 +750,7 @@ do -- TASK_A2G_DISPATCHER
               local TargetSetUnit = self:EvaluateBAI( DetectedItem, self.Mission:GetCommandCenter():GetPositionable():GetCoalition() ) -- Returns a SetUnit if there are targets to be BAIed...
               if TargetSetUnit then
                 Task = TASK_A2G_BAI:New( Mission, self.SetGroup, string.format( "BAI.%03d", DetectedItemID ), TargetSetUnit )
-                Task:SetDetection( Detection, TaskIndex )
+                Task:SetDetection( Detection, DetectedItem )
               end
             end
           end
@@ -730,12 +759,12 @@ do -- TASK_A2G_DISPATCHER
             self.Tasks[TaskIndex] = Task
             Task:SetTargetZone( DetectedZone )
             Task:SetDispatcher( self )
-            Task:UpdateTaskInfo()
+            Task:UpdateTaskInfo( DetectedItem )
             Mission:AddTask( Task )
     
             TaskReport:Add( Task:GetName() )
           else
-            self:E("This should not happen")
+            self:F("This should not happen")
           end
         end
 
@@ -750,7 +779,7 @@ do -- TASK_A2G_DISPATCHER
       local TaskText = TaskReport:Text(", ")
       for TaskGroupID, TaskGroup in pairs( self.SetGroup:GetSet() ) do
         if ( not Mission:IsGroupAssigned(TaskGroup) ) and TaskText ~= "" then
-          Mission:GetCommandCenter():MessageToGroup( string.format( "%s has tasks %s. Subscribe to a task using the radio menu.", Mission:GetName(), TaskText ), TaskGroup )
+          Mission:GetCommandCenter():MessageToGroup( string.format( "%s has tasks %s. Subscribe to a task using the radio menu.", Mission:GetShortText(), TaskText ), TaskGroup )
         end
       end
       

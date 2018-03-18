@@ -78,14 +78,14 @@ end
 function PROTECT:IsGuarded()
 
   local IsGuarded = self.ProtectZone:IsAllInZoneOfCoalition( self.Coalition )
-  self:E( { IsGuarded = IsGuarded } )
+  self:F( { IsGuarded = IsGuarded } )
   return IsGuarded
 end
 
 function PROTECT:IsCaptured()
 
   local IsCaptured = self.ProtectZone:IsAllInZoneOfOtherCoalition( self.Coalition )
-  self:E( { IsCaptured = IsCaptured } )
+  self:F( { IsCaptured = IsCaptured } )
   return IsCaptured
 end
 
@@ -93,7 +93,7 @@ end
 function PROTECT:IsAttacked()
 
   local IsAttacked = self.ProtectZone:IsSomeInZoneOfCoalition( self.Coalition )
-  self:E( { IsAttacked = IsAttacked } )
+  self:F( { IsAttacked = IsAttacked } )
   return IsAttacked
 end
 
@@ -101,7 +101,7 @@ end
 function PROTECT:IsEmpty()
 
   local IsEmpty = self.ProtectZone:IsNoneInZone()
-  self:E( { IsEmpty = IsEmpty } )
+  self:F( { IsEmpty = IsEmpty } )
   return IsEmpty
 end
 
@@ -158,7 +158,7 @@ function PROTECT:IsCaptureUnitInZone()
 
   local IsInZone = self.CaptureUnitSet:IsPartiallyInZone( self.ProtectZone )
   
-  self:E({IsInZone = IsInZone})
+  self:F({IsInZone = IsInZone})
   
   return IsInZone
 end
@@ -189,7 +189,7 @@ function PROTECT:Mark()
   local State = self:GetState()
   
   if self.MarkRed and self.MarkBlue then
-    self:E( { MarkRed = self.MarkRed, MarkBlue = self.MarkBlue } )
+    self:F( { MarkRed = self.MarkRed, MarkBlue = self.MarkBlue } )
     Coord:RemoveMark( self.MarkRed )
     Coord:RemoveMark( self.MarkBlue )
   end
@@ -231,7 +231,7 @@ end
 function PROTECT:onenterCaptured()
 
   local NewCoalition = self.ProtectZone:GetCoalition()
-  self:E( { NewCoalition = NewCoalition } )
+  self:F( { NewCoalition = NewCoalition } )
   self:SetCoalition( NewCoalition )
 
   self:Mark()
@@ -254,7 +254,7 @@ end
 -- @param #PROTECT self
 function PROTECT:StatusCoalition()
 
-  self:E( { State = self:GetState() } )
+  self:F( { State = self:GetState() } )
   
   self.ProtectZone:Scan()
 
@@ -271,7 +271,7 @@ end
 -- @param #PROTECT self
 function PROTECT:StatusZone()
   
-  self:E( { State = self:GetState() } )
+  self:F( { State = self:GetState() } )
 
   self.ProtectZone:Scan()
 

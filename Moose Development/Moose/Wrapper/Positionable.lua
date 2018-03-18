@@ -211,7 +211,7 @@ function POSITIONABLE:GetRandomVec3( Radius )
       self:T3( PositionableRandomVec3 )
       return PositionableRandomVec3
     else 
-      self:E("Radius is nil, returning the PointVec3 of the POSITIONABLE", PositionablePointVec3)
+      self:F("Radius is nil, returning the PointVec3 of the POSITIONABLE", PositionablePointVec3)
       return PositionablePointVec3
     end
   end
@@ -456,13 +456,12 @@ end
 -- @param #string Message The message text
 -- @param #string Name (optional) The Name of the sender. If not provided, the Name is the type of the Positionable.
 -- @return #string The message text
-function POSITIONABLE:GetMessageText( Message, Name ) --R2.1 added
+function POSITIONABLE:GetMessageText( Message, Name )
 
   local DCSObject = self:GetDCSObject()
   if DCSObject then
-    Name = Name and ( " (" .. Name .. ")" ) or ""
-    local Callsign = string.format( "%s", self:GetCallsign() ~= "" and self:GetCallsign() or self:GetName() )
-    local MessageText = string.format("[%s%s]: %s", Callsign, Name, Message )
+    local Callsign = string.format( "%s", ( ( Name ~= "" and Name ) or self:GetCallsign() ~= "" and self:GetCallsign() ) or self:GetName() )
+    local MessageText = string.format("%s - %s", Callsign, Message )
     return MessageText
   end
 
@@ -732,7 +731,7 @@ function POSITIONABLE:LaseUnit( Target, LaserCode, Duration ) --R2.1
   local RecceDcsUnit = self:GetDCSObject()
   local TargetVec3 = Target:GetVec3()
 
-  self:E("bulding spot")
+  self:F("bulding spot")
   self.Spot = SPOT:New( self ) -- Core.Spot#SPOT
   self.Spot:LaseOn( Target, LaserCode, Duration)
   self.LaserCode = LaserCode

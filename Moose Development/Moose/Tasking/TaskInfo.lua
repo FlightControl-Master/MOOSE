@@ -283,7 +283,7 @@ function TASKINFO:Report( Report, Detail, ReportGroup )
 
   for Key, Data in UTILS.spairs( self.Info.Set, function( t, a, b ) return t[a].Order < t[b].Order end ) do
 
-    self:E( { Key = Key, Detail = Detail, Data = Data } )
+    self:F( { Key = Key, Detail = Detail, Data = Data } )
     
     if Data.Detail:find( Detail ) then
       local Text = ""

@@ -177,13 +177,13 @@ function MISSILETRAINER:New( Distance, Briefing )
 
 
 --  for ClientID, Client in pairs( self.DBClients.Database ) do
---      self:E( "ForEach:" .. Client.UnitName )
+--      self:F( "ForEach:" .. Client.UnitName )
 --      Client:Alive( self._Alive, self )
 --  end
 --  
   self.DBClients:ForEachClient( 
     function( Client )
-      self:E( "ForEach:" .. Client.UnitName )
+      self:F( "ForEach:" .. Client.UnitName )
       Client:Alive( self._Alive, self )
     end
   )

@@ -112,7 +112,7 @@ do -- Zone
   
     --self:GetParent( self ):onafterStart()
     
-    self:E("Guard")
+    self:F("Guard")
   
     --self:ScheduleRepeat( 15, 15, 0.1, nil, self.StatusZone, self )
     if not self.SmokeScheduler then
@@ -142,14 +142,14 @@ do -- Zone
   --- @param #ZONE_GOAL self
   -- @param Core.Event#EVENTDATA EventData
   function ZONE_GOAL:__Destroyed( EventData )
-    self:E( { "EventDead", EventData } )
+    self:F( { "EventDead", EventData } )
 
-    self:E( { EventData.IniUnit } )
+    self:F( { EventData.IniUnit } )
     
     local Vec3 = EventData.IniDCSUnit:getPosition().p
-    self:E( { Vec3 = Vec3 } )
+    self:F( { Vec3 = Vec3 } )
     local ZoneGoal = self:GetZone()
-    self:E({ZoneGoal})
+    self:F({ZoneGoal})
 
     if EventData.IniDCSUnit then
       if ZoneGoal:IsVec3InZone(Vec3)  then

@@ -1694,10 +1694,10 @@ do -- SET_UNIT
       local function EvaluateZone( ZoneUnit )
       
         local ZoneUnitName =  ZoneUnit:GetName()
-        self:E( { ZoneUnitName = ZoneUnitName } )
+        self:F( { ZoneUnitName = ZoneUnitName } )
         if self:FindUnit( ZoneUnitName ) then
           IsPartiallyInZone = true
-          self:E( { Found = true } )
+          self:F( { Found = true } )
           return false
         end
         
@@ -2179,7 +2179,7 @@ do -- SET_UNIT
     if self.Filter.Coalitions then
       local MUnitCoalition = false
       for CoalitionID, CoalitionName in pairs( self.Filter.Coalitions ) do
-        self:E( { "Coalition:", MUnit:GetCoalition(), self.FilterMeta.Coalitions[CoalitionName], CoalitionName } )
+        self:F( { "Coalition:", MUnit:GetCoalition(), self.FilterMeta.Coalitions[CoalitionName], CoalitionName } )
         if self.FilterMeta.Coalitions[CoalitionName] and self.FilterMeta.Coalitions[CoalitionName] == MUnit:GetCoalition() then
           MUnitCoalition = true
         end

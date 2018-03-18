@@ -376,7 +376,7 @@ do -- TASK_A2A_DISPATCHER
 
         local DetectedSet = DetectedItem.Set -- Core.Set#SET_UNIT
         --DetectedSet:Flush()
-        --self:E( { DetectedSetCount = DetectedSet:Count() } )
+        --self:F( { DetectedSetCount = DetectedSet:Count() } )
         if DetectedSet:Count() == 0 then
           Remove = true
         end
@@ -418,7 +418,7 @@ do -- TASK_A2A_DISPATCHER
       
     end
 
-    --self:E( { FriendliesCount = FriendliesCount } )
+    --self:F( { FriendliesCount = FriendliesCount } )
     
     local FriendlyTypesReport = REPORT:New()
     
@@ -451,7 +451,7 @@ do -- TASK_A2A_DISPATCHER
       for PlayerUnitName, PlayerUnitData in pairs( PlayersNearBy ) do
         local PlayerUnit = PlayerUnitData -- Wrapper.Unit#UNIT
         local PlayerName = PlayerUnit:GetPlayerName()
-        --self:E( { PlayerName = PlayerName, PlayerUnit = PlayerUnit } )
+        --self:F( { PlayerName = PlayerName, PlayerUnit = PlayerUnit } )
         if PlayerUnit:IsAirPlane() and PlayerName ~= nil then
           local FriendlyUnitThreatLevel = PlayerUnit:GetThreatLevel()
           PlayersCount = PlayersCount + 1
@@ -464,8 +464,6 @@ do -- TASK_A2A_DISPATCHER
       
     end
 
-    --self:E( { PlayersCount = PlayersCount } )
-    
     local PlayerTypesReport = REPORT:New()
     
     if PlayersCount > 0 then
@@ -491,7 +489,7 @@ do -- TASK_A2A_DISPATCHER
   -- @param Functional.Detection#DETECTION_BASE Detection The detection created by the @{Detection#DETECTION_BASE} derived object.
   -- @return #boolean Return true if you want the task assigning to continue... false will cancel the loop.
   function TASK_A2A_DISPATCHER:ProcessDetected( Detection )
-    self:E()
+    self:F()
   
     local AreaMsg = {}
     local TaskMsg = {}
@@ -507,11 +505,11 @@ do -- TASK_A2A_DISPATCHER
       for TaskIndex, TaskData in pairs( self.Tasks ) do
         local Task = TaskData -- Tasking.Task#TASK
         if Task:IsStatePlanned() then
-          local DetectedItem = Detection:GetDetectedItem( TaskIndex )
+          local DetectedItem = Detection:GetDetectedItemByIndex( TaskIndex )
           if not DetectedItem then
             local TaskText = Task:GetName()
             for TaskGroupID, TaskGroup in pairs( self.SetGroup:GetSet() ) do
-              Mission:GetCommandCenter():MessageToGroup( string.format( "Obsolete A2A task %s for %s removed.", TaskText, Mission:GetName() ), TaskGroup )
+              Mission:GetCommandCenter():MessageToGroup( string.format( "Obsolete A2A task %s for %s removed.", TaskText, Mission:GetShortText() ), TaskGroup )
             end
             Task = self:RemoveTask( TaskIndex )
           end
@@ -525,7 +523,7 @@ do -- TASK_A2A_DISPATCHER
         local DetectedSet = DetectedItem.Set -- Core.Set#SET_UNIT
         local DetectedCount = DetectedSet:Count()
         local DetectedZone = DetectedItem.Zone
-        --self:E( { "Targets in DetectedItem", DetectedItem.ItemID, DetectedSet:Count(), tostring( DetectedItem ) } )
+        --self:F( { "Targets in DetectedItem", DetectedItem.ItemID, DetectedSet:Count(), tostring( DetectedItem ) } )
         --DetectedSet:Flush()
         
         local DetectedID = DetectedItem.ID
@@ -540,17 +538,17 @@ do -- TASK_A2A_DISPATCHER
           local TargetSetUnit = self:EvaluateENGAGE( DetectedItem ) -- Returns a SetUnit if there are targets to be INTERCEPTed...
           if TargetSetUnit then
             Task = TASK_A2A_ENGAGE:New( Mission, self.SetGroup, string.format( "ENGAGE.%03d", DetectedID ), TargetSetUnit )
-            Task:SetDetection( Detection, TaskIndex )
+            Task:SetDetection( Detection, DetectedItem )
           else
             local TargetSetUnit = self:EvaluateINTERCEPT( DetectedItem ) -- Returns a SetUnit if there are targets to be INTERCEPTed...
             if TargetSetUnit then
               Task = TASK_A2A_INTERCEPT:New( Mission, self.SetGroup, string.format( "INTERCEPT.%03d", DetectedID ), TargetSetUnit )
-              Task:SetDetection( Detection, TaskIndex )
+              Task:SetDetection( Detection, DetectedItem )
             else
               local TargetSetUnit = self:EvaluateSWEEP( DetectedItem ) -- Returns a SetUnit 
               if TargetSetUnit then
                 Task = TASK_A2A_SWEEP:New( Mission, self.SetGroup, string.format( "SWEEP.%03d", DetectedID ), TargetSetUnit )
-                Task:SetDetection( Detection, TaskIndex )
+                Task:SetDetection( Detection, DetectedItem )
               end  
             end
           end
@@ -563,7 +561,7 @@ do -- TASK_A2A_DISPATCHER
             
             TaskReport:Add( Task:GetName() )
           else
-            self:E("This should not happen")
+            self:F("This should not happen")
           end
 
         end
@@ -586,7 +584,7 @@ do -- TASK_A2A_DISPATCHER
       
       for TaskGroupID, TaskGroup in pairs( self.SetGroup:GetSet() ) do
         if ( not Mission:IsGroupAssigned(TaskGroup) ) and TaskText ~= "" then
-          Mission:GetCommandCenter():MessageToGroup( string.format( "%s has tasks %s. Subscribe to a task using the radio menu.", Mission:GetName(), TaskText ), TaskGroup )
+          Mission:GetCommandCenter():MessageToGroup( string.format( "%s has tasks %s. Subscribe to a task using the radio menu.", Mission:GetShortText(), TaskText ), TaskGroup )
         end
       end
       
