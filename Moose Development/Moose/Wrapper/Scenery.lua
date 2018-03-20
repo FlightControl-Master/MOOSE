@@ -1,12 +1,12 @@
 --- **Wrapper** -- SCENERY models scenery within the DCS simulator.
 -- 
--- ====
+-- ===
 -- 
--- ### Author: **Sven Van de Velde (FlightControl)**
+-- ### Author: **FlightControl**
 -- 
 -- ### Contributions: 
 -- 
--- ====
+-- ===
 -- 
 -- @module Scenery
 

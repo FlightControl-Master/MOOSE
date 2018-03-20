@@ -1,15 +1,15 @@
 --- **Functional (WIP)** -- Base class that models processes to achieve goals involving a Zone and Cargo.
 --
--- ====
+-- ===
 -- 
 -- ZONE_GOAL_CARGO models processes that have a Goal with a defined achievement involving a Zone and Cargo.  
 -- Derived classes implement the ways how the achievements can be realized.
 -- 
--- ====
+-- ===
 -- 
--- ### Author: **Sven Van de Velde (FlightControl)**
+-- ### Author: **FlightControl**
 -- 
--- ====
+-- ===
 -- 
 -- @module ZoneGoalCargo
 

@@ -1,28 +1,12 @@
---- **AI** -- **Execute Combat Air Patrol (CAP).**
+--- **AI** -- (R2.2) - Models the process of Combat Air Patrol (CAP) for airplanes.
 --
--- ![Banner Image](..\Presentations\AI_CAP\Dia1.JPG)
--- 
+-- This is a class used in the @{AI_A2A_Dispatcher}.
+--
 -- ===
 -- 
--- AI CAP classes makes AI Groups execute a Combat Air Patrol.
+-- ### Author: **FlightControl**
 -- 
--- There are the following types of CAP classes defined:
--- 
---   * @{#AI_A2A_CAP}: Perform a CAP in a zone.
---   
--- ====
--- 
--- ### Author: **Sven Van de Velde (FlightControl)**
--- 
--- ### Contributions: 
---
---   * **[Quax](https://forums.eagle.ru/member.php?u=90530)**: Concept, Advice & Testing.
---   * **[Pikey](https://forums.eagle.ru/member.php?u=62835)**: Concept, Advice & Testing.
---   * **[Gunterlund](http://forums.eagle.ru:8080/member.php?u=75036)**: Test case revision.
---   * **[Whisper](http://forums.eagle.ru/member.php?u=3829): Testing.
---   * **[Delta99](https://forums.eagle.ru/member.php?u=125166): Testing. 
--- 
--- ====       
+-- ===       
 --
 -- @module AI_A2A_Cap
 

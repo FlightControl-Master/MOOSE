@@ -2,7 +2,7 @@
 --
 -- ![Banner Image](..\Presentations\SPOT\Dia1.JPG)
 --
--- ====
+-- ===
 -- 
 -- SPOT implements the DCS Spot class functionality, but adds additional luxury to be able to:
 -- 
@@ -11,7 +11,7 @@
 --   * Provide a @{Unit} as a target, instead of a point.
 --   * Implement a status machine, LaseOn, LaseOff.
 --
--- ====
+-- ===
 -- 
 -- # Demo Missions
 -- 
@@ -21,22 +21,22 @@
 --
 -- ### [ALL Demo Missions pack of the last release](https://github.com/FlightControl-Master/MOOSE_MISSIONS/releases)
 -- 
--- ====
+-- ===
 -- 
 -- # YouTube Channel
 -- 
 -- ### [SPOT YouTube Channel]()
 -- 
--- ====
+-- ===
 -- 
--- ### Author: **Sven Van de Velde (FlightControl)**
+-- ### Author: **FlightControl**
 -- ### Contributions: 
 -- 
 --   * [**Ciribob**](https://forums.eagle.ru/member.php?u=112175): Showing the way how to lase targets + how laser codes work!!! Explained the autolase script.
 --   * [**EasyEB**](https://forums.eagle.ru/member.php?u=112055): Ideas and Beta Testing
 --   * [**Wingthor**](https://forums.eagle.ru/member.php?u=123698): Beta Testing
 -- 
--- ====
+-- ===
 -- 
 -- @module Spot
 

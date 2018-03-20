@@ -1,12 +1,12 @@
 --- **Wrapper** -- IDENTIFIABLE is an intermediate class wrapping DCS Object class derived Objects.
 -- 
--- ====
+-- ===
 -- 
--- ### Author: **Sven Van de Velde (FlightControl)**
+-- ### Author: **FlightControl**
 -- 
 -- ### Contributions: 
 -- 
--- ====
+-- ===
 -- 
 -- @module Identifiable
 

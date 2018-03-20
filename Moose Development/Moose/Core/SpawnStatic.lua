@@ -2,11 +2,11 @@
 --  
 -- ![Banner Image](..\Presentations\SPAWNSTATIC\Dia1.JPG)
 -- 
--- ====
+-- ===
 -- 
 -- SPAWNSTATIC spawns static structures in your missions dynamically. See below the SPAWNSTATIC class documentation.
 -- 
--- ====
+-- ===
 -- 
 -- # Demo Missions
 -- 
@@ -16,18 +16,18 @@
 --
 -- ### [ALL Demo Missions pack of the last release](https://github.com/FlightControl-Master/MOOSE_MISSIONS/releases)
 -- 
--- ====
+-- ===
 -- 
 -- # YouTube Channel
 -- 
 -- ### [SPAWNSTATIC YouTube Channel]()
 -- 
--- ====
+-- ===
 -- 
--- ### Author: **Sven Van de Velde (FlightControl)**
+-- ### Author: **FlightControl**
 -- ### Contributions: 
 -- 
--- ====
+-- ===
 -- 
 -- @module SpawnStatic
 

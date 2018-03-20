@@ -1,8 +1,8 @@
 --- **Wrapper** -- OBJECT wraps the DCS Object derived objects.
 -- 
--- ====
+-- ===
 -- 
--- ### Author: **Sven Van de Velde (FlightControl)**
+-- ### Author: **FlightControl**
 -- 
 -- ### Contributions: 
 -- 

@@ -2,42 +2,26 @@
 --  
 -- ![Banner Image](..\Presentations\SPAWN\SPAWN.JPG)
 -- 
--- ====
+-- ===
 -- 
 -- The documentation of the SPAWN class can be found further in this document.
 -- 
--- ====
+-- ===
 -- 
--- # Demo Missions
--- 
--- ### [SPAWN Demo Missions source code](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master-release/SPA%20-%20Spawning)
--- 
--- ### [SPAWN Demo Missions, only for beta testers](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/SPA%20-%20Spawning)
---
--- ### [ALL Demo Missions pack of the last release](https://github.com/FlightControl-Master/MOOSE_MISSIONS/releases)
--- 
--- ====
--- 
--- # YouTube Channel
--- 
--- ### [SPAWN YouTube Channel](https://www.youtube.com/playlist?list=PL7ZUrU4zZUl1jirWIo4t4YxqN-HxjqRkL)
+-- ### [Demo Missions](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master-release/SPA%20-%20Spawning)
 -- 
 -- ===
 -- 
--- # **AUTHORS and CONTRIBUTIONS**
+-- ### [YouTube Playlist](https://www.youtube.com/playlist?list=PL7ZUrU4zZUl1jirWIo4t4YxqN-HxjqRkL)
 -- 
--- ### Contributions: 
+-- ===
 -- 
---   * **Aaron**: Posed the idea for Group position randomization at SpawnInZone and make the Unit randomization separate from the Group randomization.
---   * [**Entropy**](https://forums.eagle.ru/member.php?u=111471), **Afinegan**: Came up with the requirement for AIOnOff().
+-- ### Author: **FlightControl**
+-- ### Contributions: A lot of people within this community!
 -- 
--- ### Authors: 
--- 
---   * **FlightControl**: Design & Programming
+-- ===
 -- 
 -- @module Spawn
-
-----BASE:TraceClass("SPAWN")
 
 
 --- SPAWN Class

@@ -11,7 +11,7 @@
 --   
 -- This module is still under construction, but is described above works already, and will keep working ...
 -- 
--- ====
+-- ===
 -- 
 -- # Demo Missions
 -- 
@@ -21,18 +21,18 @@
 --
 -- ### [ALL Demo Missions pack of the last release](https://github.com/FlightControl-Master/MOOSE_MISSIONS/releases)
 -- 
--- ====
+-- ===
 -- 
 -- # YouTube Channel
 -- 
 -- ### [CARGO YouTube Channel](https://www.youtube.com/watch?v=tM00lTlkpYs&list=PL7ZUrU4zZUl2zUTuKrLW5RsO9zLMqUtbf)
 -- 
--- ====
+-- ===
 -- 
--- ### Author: **Sven Van de Velde (FlightControl)**
+-- ### Author: **FlightControl**
 -- ### Contributions: 
 -- 
--- ====
+-- ===
 -- 
 -- @module Cargo
 

@@ -1,9 +1,11 @@
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
---- **Functional** - Create random airtraffic in your missions.
---  
+--- **Functional** - (R2.2) - Create random airtraffic in your missions.
+-- 
+-- ===
+-- 
 -- ![Banner Image](..\Presentations\RAT\RAT.png)
 -- 
--- ====
+-- ===
 -- 
 -- The aim of the RAT class is to fill the empty DCS world with randomized air traffic and bring more life to your airports.
 -- 
@@ -36,14 +38,14 @@
 -- 
 -- More of the documentation include some simple examples can be found further down this page.
 -- 
--- ====
+-- ===
 -- 
 -- # Demo Missions
 --
 -- ### [RAT Demo Missions](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/Release/RAT%20-%20Random%20Air%20Traffic)
 -- ### [ALL Demo Missions pack of the last release](https://github.com/FlightControl-Master/MOOSE_MISSIONS/releases)
 -- 
--- ====
+-- ===
 -- 
 -- # YouTube Channel
 -- 
@@ -56,7 +58,7 @@
 -- 
 -- ### Contributions: **Sven van de Velde ([FlightControl](https://forums.eagle.ru/member.php?u=89536))**
 -- 
--- ====
+-- ===
 -- @module Rat
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

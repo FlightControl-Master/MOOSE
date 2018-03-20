@@ -39,12 +39,12 @@
 --   * To all players using @{Message#MESSAGE.ToAllIf}().
 --   * To a coalition using @{Message#MESSAGE.ToCoalitionIf}().
 -- 
--- ====
+-- ===
 --  
--- ### Author: **Sven Van de Velde (FlightControl)**
+-- ### Author: **FlightControl**
 -- ### Contributions: 
 -- 
--- ====
+-- ===
 -- 
 -- @field #MESSAGE
 MESSAGE = {

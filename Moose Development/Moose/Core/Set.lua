@@ -23,12 +23,12 @@
 --   * Validate the presence of objects in the SET.
 --   * Trigger events when objects in the SET change a zone presence.
 -- 
--- ====
+-- ===
 -- 
--- ### Author: **Sven Van de Velde (FlightControl)**
+-- ### Author: **FlightControl**
 -- ### Contributions: 
 -- 
--- ====
+-- ===
 -- 
 -- @module Set
 
@@ -604,15 +604,16 @@ end
 
 --- Flushes the current SET_BASE contents in the log ... (for debugging reasons).
 -- @param #SET_BASE self
+-- @param Core.Base#BASE MasterObject (optional) The master object as a reference.
 -- @return #string A string with the names of the objects.
-function SET_BASE:Flush()
+function SET_BASE:Flush( MasterObject )
   self:F3()
 
   local ObjectNames = ""
   for ObjectName, Object in pairs( self.Set ) do
     ObjectNames = ObjectNames .. ObjectName .. ", "
   end
-  self:E( { "Objects in Set:", ObjectNames } )
+  self:I( { MasterObject = MasterObject:GetClassNameAndID(), "Objects in Set:", ObjectNames } )
   
   return ObjectNames
 end

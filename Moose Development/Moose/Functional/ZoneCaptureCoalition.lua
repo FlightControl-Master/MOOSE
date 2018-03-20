@@ -1,15 +1,25 @@
---- **Functional** -- (WIP R2.3) Models the process to capture a Zone for a Coalition, which is guarded by another Coalition.
+--- **Functional** -- (R2.3) Models the process to zone guarding and capturing.
 --
--- ====
+-- ===
 -- 
 -- ![Banner Image](..\Presentations\ZONE_CAPTURE_COALITION\Dia1.JPG)
 -- 
 -- ===
 -- 
--- ### Contributions: **Millertime**: Concept
--- ### Author: **Sven Van de Velde (FlightControl)**
+-- ### [Demo Missions](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master-release/CAZ%20-%20Capture Zones)
 -- 
--- ====
+--   - CAZ-000 - Capture Zone: Demonstrates the basic concept of capturing a zone.
+-- 
+-- ===
+-- 
+-- ### [YouTube Playlist](https://www.youtube.com/watch?v=0m6K6Yxa-os&list=PL7ZUrU4zZUl0qqJsfa8DPvZWDY-OyDumE)
+-- 
+-- ===
+-- 
+-- ### Author: **FlightControl**
+-- ### Contributions: **Millertime** - Concept
+-- 
+-- ===
 -- 
 -- @module ZoneCaptureCoalition
 
@@ -22,25 +32,47 @@ do -- ZONE_CAPTURE_COALITION
   --- # ZONE\_CAPTURE\_COALITION class, extends @{ZoneGoalCoalition#ZONE_GOAL_COALITION}
   -- 
   -- Models the process to capture a Zone for a Coalition, which is guarded by another Coalition.
+  -- This is a powerful concept that allows to create very dynamic missions based on the different state transitions of various zones.
   -- 
   -- ---
   --
   -- ![Banner Image](..\Presentations\ZONE_CAPTURE_COALITION\Dia1.JPG)
   --
   -- ---
+  -- 
+  -- # 0. Player Experience
+  -- 
+  -- ![States](..\Presentations\ZONE_CAPTURE_COALITION\Dia3.JPG)
   --  
-  -- The Zone is initially **Guarded** by the __owning coalition__, which is the coalition that initially occupies the zone with units of its coalition.
+  -- The above models the possible state transitions between the **Guarded**, **Attacked**, **Empty** and **Captured** states.
+  -- A zone has an __owning coalition__, that means that at a specific point in time, a zone can be owned by the red or blue coalition.
+  --
+  -- The Zone can be in the state **Guarded** by the __owning coalition__, which is the coalition that initially occupies the zone with units of its coalition.
   -- Once units of an other coalition are entering the Zone, the state will change to **Attacked**. As long as these units remain in the zone, the state keeps set to Attacked.
   -- When all units are destroyed in the Zone, the state will change to **Empty**, which expresses that the Zone is empty, and can be captured.
   -- When units of the other coalition are in the Zone, and no other units of the owning coalition is in the Zone, the Zone is captured, and its state will change to **Captured**.
   -- 
-  -- Event handlers can be defined by the mission designer to action on the state transitions.
+  -- The zone needs to be monitored regularly for the presence of units to interprete the correct state transition required.
+  -- This monitoring process MUST be started using the @{#ZONE_CAPTURE_COALITION.Start}() method.
+  -- Otherwise no monitoring will be active and the zone will stay in the current state forever.
+  -- See further in chapter 3.3 for more information about this.
   -- 
   -- ## 1. ZONE\_CAPTURE\_COALITION constructor
   --   
   --   * @{#ZONE_CAPTURE_COALITION.New}(): Creates a new ZONE\_CAPTURE\_COALITION object.
+  --   
+  -- In order to use ZONE\_CAPTURE\_COALITION, you need to:
+  -- 
+  --   - Create a @{Zone} object from one of the ZONE\_ classes. Note that ZONE\_POLYGON\_ classes are not yet functional. The only functional ZONE\_ classses are those derived from a ZONE\_RADIUS.
+  -- 
+  -- ![New](..\Presentations\ZONE_CAPTURE_COALITION\Dia5.JPG)
+  -- 
+  -- Ensure that during the life cycle of the ZONE\_CAPTURE\_COALITION object, the object keeps alive.
+  -- It is best to declare the object globally within your script.
   -- 
   -- ## 2. ZONE\_CAPTURE\_COALITION is a finite state machine (FSM).
+  -- 
+  -- ![States](..\Presentations\ZONE_CAPTURE_COALITION\Dia4.JPG)
   -- 
   -- ### 2.1 ZONE\_CAPTURE\_COALITION States
   -- 
@@ -55,7 +87,225 @@ do -- ZONE_CAPTURE_COALITION
   --   * **Attack**: The Zone is currently intruded by an other coalition. There are units of the owning coalition and an other coalition in the Zone.
   --   * **Guard**: The Zone is guarded by the owning coalition. There is no other unit of an other coalition in the Zone.
   --   * **Empty**: The Zone is empty. There is not valid unit in the Zone.
+  -- 
+  -- ## 3. "Script It"
+  -- 
+  -- ZONE\_CAPTURE\_COALITION allows to take action on the various state transitions and add your custom code and logic.
+  -- 
+  -- ### 3.1. Take action using state- and event handlers.
+  -- 
+  -- ![States](..\Presentations\ZONE_CAPTURE_COALITION\Dia6.JPG)
+  -- 
+  -- The most important to understand is how states and events can be tailored.
+  -- Carefully study the diagram and the explanations.
+  -- 
+  -- **State Handlers** capture the moment:
+  -- 
+  --   - On Leave from the old state. Return false to cancel the transition.
+  --   - On Enter to the new state.
+  -- 
+  -- **Event Handlers** capture the moment:
+  -- 
+  --   - On Before the event is triggered. Return false to cancel the transition.
+  --   - On After the event is triggered.
+  -- 
+  -- 
+  -- 
+  -- ![States](..\Presentations\ZONE_CAPTURE_COALITION\Dia7.JPG)
+  -- 
+  -- Each handler can receive optionally 3 parameters:
+  -- 
+  --   - **From**: A string containing the From State.
+  --   - **Event**: A string containing the Event.
+  --   - **To**: A string containing the To State.
   --   
+  -- The mission designer can use these values to alter the logic.
+  -- For example:
+  -- 
+  --     --- @param Functional.ZoneCaptureCoalition#ZONE_CAPTURE_COALITION self
+  --     function ZoneCaptureCoalition:OnEnterGuarded( From, Event, To )
+  --       if From ~= "Empty" then
+  --         -- Display a message
+  --       end
+  --     end
+  -- 
+  -- This code checks that when the __Guarded__ state has been reached, that if the **From** state was __Empty__, then display a message.
+  -- 
+  -- ### 3.2. Example Event Handler.
+  -- 
+  --     --- @param Functional.ZoneCaptureCoalition#ZONE_CAPTURE_COALITION self
+  --     function ZoneCaptureCoalition:OnEnterGuarded( From, Event, To )
+  --       if From ~= To then
+  --         local Coalition = self:GetCoalition()
+  --         self:E( { Coalition = Coalition } )
+  --         if Coalition == coalition.side.BLUE then
+  --           ZoneCaptureCoalition:Smoke( SMOKECOLOR.Blue )
+  --           US_CC:MessageTypeToCoalition( string.format( "%s is under protection of the USA", ZoneCaptureCoalition:GetZoneName() ), MESSAGE.Type.Information )
+  --           RU_CC:MessageTypeToCoalition( string.format( "%s is under protection of the USA", ZoneCaptureCoalition:GetZoneName() ), MESSAGE.Type.Information )
+  --         else
+  --           ZoneCaptureCoalition:Smoke( SMOKECOLOR.Red )
+  --           RU_CC:MessageTypeToCoalition( string.format( "%s is under protection of Russia", ZoneCaptureCoalition:GetZoneName() ), MESSAGE.Type.Information )
+  --           US_CC:MessageTypeToCoalition( string.format( "%s is under protection of Russia", ZoneCaptureCoalition:GetZoneName() ), MESSAGE.Type.Information )
+  --         end
+  --       end
+  --     end
+  --     
+  -- ### 3.3. Stop and Start the zone monitoring process.
+  -- 
+  -- At regular intervals, the state of the zone needs to be monitored.
+  -- The zone needs to be scanned for the presence of units within the zone boundaries.
+  -- Depending on the owning coalition of the zone and the presence of units (of the owning and/or other coalition(s)), the zone will transition to another state.
+  -- 
+  -- However, ... this scanning process is rather CPU intensive. Imagine you have 10 of these capture zone objects setup within your mission.
+  -- That would mean that your mission would check 10 capture zones simultaneously, each checking for the presence of units.
+  -- It would be highly **CPU inefficient**, as some of these zones are not required to be monitored (yet).
+  -- 
+  -- Therefore, the mission designer is given 2 methods that allow to take control of the CPU utilization efficiency:
+  -- 
+  --   - @{#ZONE_CAPTURE_COALITION.Start()}(): This starts the monitoring process.
+  --   - @{#ZONE_CAPTURE_COALITION.Stop()}(): This stops the monitoring process.
+  --   
+  -- ### IMPORTANT
+  -- 
+  -- **Each capture zone object must have the monitoring process started specifically.
+  -- The monitoring process is NOT started by default!!!**
+  --   
+  -- 
+  -- ## 4. Full Example
+  -- 
+  -- The following annotated code shows a real example of how ZONE\_CAPTURE\_COALITION can be applied.
+  -- 
+  -- The concept is simple.
+  -- 
+  -- The USA (US), blue coalition, needs to capture the Russian (RU), red coalition, zone, which is near groom lake.
+  -- 
+  -- A capture zone has been setup that guards the presence of the troops.
+  -- Troops are guarded by red forces. Blue is required to destroy the red forces and capture the zones.
+  -- 
+  -- At first, we setup the Command Centers
+  -- 
+  --      do
+  --        
+  --        RU_CC = COMMANDCENTER:New( GROUP:FindByName( "REDHQ" ), "Russia HQ" )
+  --        US_CC = COMMANDCENTER:New( GROUP:FindByName( "BLUEHQ" ), "USA HQ" )
+  --      
+  --      end
+  --      
+  -- Next, we define the mission, and add some scoring to it.
+  --      
+  --      do -- Missions
+  --        
+  --        US_Mission_EchoBay = MISSION:New( US_CC, "Echo Bay", "Primary",
+  --          "Welcome trainee. The airport Groom Lake in Echo Bay needs to be captured.\n" ..
+  --          "There are five random capture zones located at the airbase.\n" ..
+  --          "Move to one of the capture zones, destroy the fuel tanks in the capture zone, " ..
+  --          "and occupy each capture zone with a platoon.\n " .. 
+  --          "Your orders are to hold position until all capture zones are taken.\n" ..
+  --          "Use the map (F10) for a clear indication of the location of each capture zone.\n" ..
+  --          "Note that heavy resistance can be expected at the airbase!\n" ..
+  --          "Mission 'Echo Bay' is complete when all five capture zones are taken, and held for at least 5 minutes!"
+  --          , coalition.side.RED )
+  --          
+  --        US_Mission_EchoBay:Start()
+  --      
+  --      end
+  --      
+  --      
+  -- Now the real work starts.
+  -- We define a **CaptureZone** object, which is a ZONE object.
+  -- Within the mission, a trigger zone is created with the name __CaptureZone__, with the defined radius within the mission editor.
+  -- 
+  --      CaptureZone = ZONE:New( "CaptureZone" )
+  -- 
+  -- Next, we define the **ZoneCaptureCoalition** object, as explained above.
+  --      
+  --      ZoneCaptureCoalition = ZONE_CAPTURE_COALITION:New( CaptureZone, coalition.side.RED ) 
+  --      
+  -- Of course, we want to let the **ZoneCaptureCoalition** object do something when the state transitions.
+  -- Do accomodate this, it is very simple, as explained above.
+  -- We use **Event Handlers** to tailor the logic.
+  -- 
+  -- Here we place an Event Handler at the Guarded event. So when the **Guarded** event is triggered, then this method is called!
+  -- With the variables **From**, **Event**, **To**. Each of these variables containing a string.
+  -- 
+  -- We check if the previous state wasn't Guarded also.
+  -- If not, we retrieve the owning Coalition of the **ZoneCaptureCoalition**, using `self:GetCoalition()`.
+  -- So **Coalition** will contain the current owning coalition of the zone.
+  -- 
+  -- Depending on the zone ownership, different messages are sent.
+  -- Note the methods `ZoneCaptureCoalition:GetZoneName()`.
+  --      
+  --      --- @param Functional.ZoneCaptureCoalition#ZONE_CAPTURE_COALITION self
+  --      function ZoneCaptureCoalition:OnEnterGuarded( From, Event, To )
+  --        if From ~= To then
+  --          local Coalition = self:GetCoalition()
+  --          self:E( { Coalition = Coalition } )
+  --          if Coalition == coalition.side.BLUE then
+  --            ZoneCaptureCoalition:Smoke( SMOKECOLOR.Blue )
+  --            US_CC:MessageTypeToCoalition( string.format( "%s is under protection of the USA", ZoneCaptureCoalition:GetZoneName() ), MESSAGE.Type.Information )
+  --            RU_CC:MessageTypeToCoalition( string.format( "%s is under protection of the USA", ZoneCaptureCoalition:GetZoneName() ), MESSAGE.Type.Information )
+  --          else
+  --            ZoneCaptureCoalition:Smoke( SMOKECOLOR.Red )
+  --            RU_CC:MessageTypeToCoalition( string.format( "%s is under protection of Russia", ZoneCaptureCoalition:GetZoneName() ), MESSAGE.Type.Information )
+  --            US_CC:MessageTypeToCoalition( string.format( "%s is under protection of Russia", ZoneCaptureCoalition:GetZoneName() ), MESSAGE.Type.Information )
+  --          end
+  --        end
+  --      end
+  -- 
+  -- As you can see, not a rocket science.
+  -- Next is the Event Handler when the **Empty** state transition is triggered.
+  -- Now we smoke the ZoneCaptureCoalition with a green color, using `self:Smoke( SMOKECOLOR.Green )`.
+  --      
+  --      --- @param Functional.Protect#ZONE_CAPTURE_COALITION self
+  --      function ZoneCaptureCoalition:OnEnterEmpty()
+  --        self:Smoke( SMOKECOLOR.Green )
+  --        US_CC:MessageTypeToCoalition( string.format( "%s is unprotected, and can be captured!", ZoneCaptureCoalition:GetZoneName() ), MESSAGE.Type.Information )
+  --        RU_CC:MessageTypeToCoalition( string.format( "%s is unprotected, and can be captured!", ZoneCaptureCoalition:GetZoneName() ), MESSAGE.Type.Information )
+  --      end
+  -- 
+  -- The next Event Handlers speak for itself.
+  -- When the zone is Attacked, we smoke the zone white and send some messages to each coalition.     
+  --      
+  --      --- @param Functional.Protect#ZONE_CAPTURE_COALITION self
+  --      function ZoneCaptureCoalition:OnEnterAttacked()
+  --        ZoneCaptureCoalition:Smoke( SMOKECOLOR.White )
+  --        local Coalition = self:GetCoalition()
+  --        self:E({Coalition = Coalition})
+  --        if Coalition == coalition.side.BLUE then
+  --          US_CC:MessageTypeToCoalition( string.format( "%s is under attack by Russia", ZoneCaptureCoalition:GetZoneName() ), MESSAGE.Type.Information )
+  --          RU_CC:MessageTypeToCoalition( string.format( "We are attacking %s", ZoneCaptureCoalition:GetZoneName() ), MESSAGE.Type.Information )
+  --        else
+  --          RU_CC:MessageTypeToCoalition( string.format( "%s is under attack by the USA", ZoneCaptureCoalition:GetZoneName() ), MESSAGE.Type.Information )
+  --          US_CC:MessageTypeToCoalition( string.format( "We are attacking %s", ZoneCaptureCoalition:GetZoneName() ), MESSAGE.Type.Information )
+  --        end
+  --      end
+  -- 
+  -- When the zone is Captured, we send some victory or loss messages to the correct coalition.
+  -- And we add some score.
+  -- 
+  --      --- @param Functional.Protect#ZONE_CAPTURE_COALITION self
+  --      function ZoneCaptureCoalition:OnEnterCaptured()
+  --        local Coalition = self:GetCoalition()
+  --        self:E({Coalition = Coalition})
+  --        if Coalition == coalition.side.BLUE then
+  --          RU_CC:MessageTypeToCoalition( string.format( "%s is captured by the USA, we lost it!", ZoneCaptureCoalition:GetZoneName() ), MESSAGE.Type.Information )
+  --          US_CC:MessageTypeToCoalition( string.format( "We captured %s, Excellent job!", ZoneCaptureCoalition:GetZoneName() ), MESSAGE.Type.Information )
+  --        else
+  --          US_CC:MessageTypeToCoalition( string.format( "%s is captured by Russia, we lost it!", ZoneCaptureCoalition:GetZoneName() ), MESSAGE.Type.Information )
+  --          RU_CC:MessageTypeToCoalition( string.format( "We captured %s, Excellent job!", ZoneCaptureCoalition:GetZoneName() ), MESSAGE.Type.Information )
+  --        end
+  --        
+  --        self:__Guard( 30 )
+  --      end
+  -- 
+  -- And this call is the most important of all!
+  -- In the context of the mission, we need to start the zone capture monitoring process.
+  -- Or nothing will be monitored and the zone won't change states.
+  -- We start the monitoring after 5 seconds, and will repeat every 30 seconds a check.
+  --        
+  --      ZoneCaptureCoalition:Start( 5, 30 )
+  --      
+  -- 
   -- @field #ZONE_CAPTURE_COALITION
   ZONE_CAPTURE_COALITION = {
     ClassName = "ZONE_CAPTURE_COALITION",
@@ -265,10 +515,6 @@ do -- ZONE_CAPTURE_COALITION
     -- @param #ZONE_CAPTURE_COALITION self
     -- @param #number Delay
 
-    if not self.ScheduleStatusZone then
-      self.ScheduleStatusZone = self:ScheduleRepeat( 15, 15, 0.1, nil, self.StatusZone, self )
-    end
-
     return self
   end
   
@@ -436,6 +682,81 @@ do -- ZONE_CAPTURE_COALITION
       self:Capture()
     end
     
+  end
+
+  --- Starts the zone capturing monitoring process.
+  -- This process can be CPU intensive, ensure that you specify reasonable time intervals for the monitoring process.
+  -- Note that the monitoring process is NOT started automatically during the `:New()` constructor.
+  -- It is advised that the zone monitoring process is only started when the monitoring is of relevance in context of the current mission goals.
+  -- When the zone is of no relevance, it is advised NOT to start the monitoring process, or to stop the monitoring process to save CPU resources.
+  -- Therefore, the mission designer will need to use the `:Start()` method within his script to start the monitoring process specifically.  
+  -- @param #ZONE_CAPTURE_COALITION self
+  -- @param #number StartInterval (optional) Specifies the start time interval in seconds when the zone state will be checked for the first time.
+  -- @param #number RepeatInterval (optional) Specifies the repeat time interval in seconds when the zone state will be checked repeatedly.
+  -- @usage
+  -- 
+  -- -- Setup the zone.
+  -- CaptureZone = ZONE:New( "CaptureZone" )
+  -- ZoneCaptureCoalition = ZONE_CAPTURE_COALITION:New( CaptureZone, coalition.side.RED )
+  --
+  -- -- This starts the monitoring process within 15 seconds, repeating every 15 seconds.
+  -- ZoneCaptureCoalition:Start() 
+  --      
+  -- -- This starts the monitoring process immediately, but repeats every 30 seconds.
+  -- ZoneCaptureCoalition:Start( 0, 30 ) 
+  -- 
+  function ZONE_CAPTURE_COALITION:Start( StartInterval, RepeatInterval )
+  
+    StartInterval = StartInterval or 15
+    RepeatInterval = RepeatInterval or 15
+  
+    if self.ScheduleStatusZone then
+      self:ScheduleStop( self.ScheduleStatusZone )
+    end
+    self.ScheduleStatusZone = self:ScheduleRepeat( StartInterval, RepeatInterval, 0.1, nil, self.StatusZone, self )
+  end
+  
+
+  --- Stops the zone capturing monitoring process.
+  -- When the zone capturing monitor process is stopped, there won't be any changes anymore in the state and the owning coalition of the zone.
+  -- This method becomes really useful when the zone is of no relevance anymore within a long lasting mission.
+  -- In this case, it is advised to stop the monitoring process, not to consume unnecessary the CPU intensive scanning of units presence within the zone.
+  -- @param #ZONE_CAPTURE_COALITION self
+  -- @usage 
+  -- -- Setup the zone.
+  -- CaptureZone = ZONE:New( "CaptureZone" )
+  -- ZoneCaptureCoalition = ZONE_CAPTURE_COALITION:New( CaptureZone, coalition.side.RED )
+  --
+  -- -- This starts the monitoring process within 15 seconds, repeating every 15 seconds.
+  -- ZoneCaptureCoalition:Start() 
+  -- 
+  -- -- When the zone capturing is of no relevance anymore, stop the monitoring!
+  -- ZoneCaptureCoalition:Stop()
+  -- 
+  -- @usage
+  -- -- For example, one could stop the monitoring when the zone was captured!
+  -- --- @param Functional.Protect#ZONE_CAPTURE_COALITION self
+  -- function ZoneCaptureCoalition:OnEnterCaptured()
+  --   local Coalition = self:GetCoalition()
+  --   self:E({Coalition = Coalition})
+  --   if Coalition == coalition.side.BLUE then
+  --     RU_CC:MessageTypeToCoalition( string.format( "%s is captured by the USA, we lost it!", ZoneCaptureCoalition:GetZoneName() ), MESSAGE.Type.Information )
+  --     US_CC:MessageTypeToCoalition( string.format( "We captured %s, Excellent job!", ZoneCaptureCoalition:GetZoneName() ), MESSAGE.Type.Information )
+  --   else
+  --     US_CC:MessageTypeToCoalition( string.format( "%s is captured by Russia, we lost it!", ZoneCaptureCoalition:GetZoneName() ), MESSAGE.Type.Information )
+  --     RU_CC:MessageTypeToCoalition( string.format( "We captured %s, Excellent job!", ZoneCaptureCoalition:GetZoneName() ), MESSAGE.Type.Information )
+  --   end
+  --  
+  --   self:AddScore( "Captured", "Zone captured: Extra points granted.", 200 )    
+  --  
+  --   self:Stop()
+  -- end
+  -- 
+  function ZONE_CAPTURE_COALITION:Stop()
+  
+    if self.ScheduleStatusZone then
+      self:ScheduleStop( self.ScheduleStatusZone )
+    end
   end
   
 end

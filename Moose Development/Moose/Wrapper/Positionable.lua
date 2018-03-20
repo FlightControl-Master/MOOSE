@@ -1,12 +1,12 @@
 --- **Wrapper** -- POSITIONABLE wraps DCS classes that are "positionable".
 -- 
--- ====
+-- ===
 -- 
--- ### Author: **Sven Van de Velde (FlightControl)**
+-- ### Author: **FlightControl**
 -- 
 -- ### Contributions: 
 -- 
--- ====
+-- ===
 -- 
 -- @module Positionable
 

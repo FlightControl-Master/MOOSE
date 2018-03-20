@@ -2,7 +2,7 @@
 -- 
 -- ![Banner Image](..\Presentations\ZONE\Dia1.JPG)
 -- 
--- ====
+-- ===
 -- 
 -- There are essentially two core functions that zones accomodate:
 -- 
@@ -27,12 +27,12 @@
 --   * @{#ZONE_GROUP}: The ZONE_GROUP class defines by a zone around a @{Group#GROUP} with a radius.
 --   * @{#ZONE_POLYGON}: The ZONE_POLYGON class defines by a sequence of @{Group#GROUP} waypoints within the Mission Editor, forming a polygon.
 --
--- ==== 
+-- === 
 -- 
--- ### Author: **Sven Van de Velde (FlightControl)**
+-- ### Author: **FlightControl**
 -- ### Contributions: 
 -- 
--- ====
+-- ===
 -- 
 -- @module Zone
 

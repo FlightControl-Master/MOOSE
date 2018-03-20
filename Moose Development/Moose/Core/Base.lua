@@ -4,10 +4,10 @@
 -- 
 -- ===
 -- 
--- ### Author: **Sven Van de Velde (FlightControl)**
+-- ### Author: **FlightControl**
 -- ### Contributions: 
 -- 
--- ====
+-- ===
 -- 
 -- @module Base
 
@@ -1078,6 +1078,34 @@ function BASE:E( Arguments )
   	env.info( string.format( "%6d(%6d)/%1s:%20s%05d.%s(%s)" , LineCurrent, LineFrom, "E", self.ClassName, self.ClassID, Function, routines.utils.oneLineSerialize( Arguments ) ) )
   else
     env.info( string.format( "%1s:%20s%05d(%s)" , "E", self.ClassName, self.ClassID, routines.utils.oneLineSerialize( Arguments ) ) )
+  end
+  
+end
+
+
+--- Log an information which will be traced always. Can be anywhere within the function logic.
+-- @param #BASE self
+-- @param Arguments A #table or any field.
+function BASE:I( Arguments )
+
+  if BASE.Debug then
+    local DebugInfoCurrent = BASE.Debug.getinfo( 2, "nl" )
+    local DebugInfoFrom = BASE.Debug.getinfo( 3, "l" )
+    
+    local Function = "function"
+    if DebugInfoCurrent.name then
+      Function = DebugInfoCurrent.name
+    end
+  
+    local LineCurrent = DebugInfoCurrent.currentline
+    local LineFrom = -1 
+    if DebugInfoFrom then
+      LineFrom = DebugInfoFrom.currentline
+    end
+  
+    env.info( string.format( "%6d(%6d)/%1s:%20s%05d.%s(%s)" , LineCurrent, LineFrom, "I", self.ClassName, self.ClassID, Function, routines.utils.oneLineSerialize( Arguments ) ) )
+  else
+    env.info( string.format( "%1s:%20s%05d(%s)" , "I", self.ClassName, self.ClassID, routines.utils.oneLineSerialize( Arguments ) ) )
   end
   
 end

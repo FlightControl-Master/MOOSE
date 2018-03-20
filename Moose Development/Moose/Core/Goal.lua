@@ -1,14 +1,14 @@
 --- **Core (WIP)** -- Base class to allow the modeling of processes to achieve Goals.
 --
--- ====
+-- ===
 -- 
 -- GOAL models processes that have an objective with a defined achievement. Derived classes implement the ways how the achievements can be realized.
 -- 
--- ====
+-- ===
 -- 
--- ### Author: **Sven Van de Velde (FlightControl)**
+-- ### Author: **FlightControl**
 -- 
--- ====
+-- ===
 -- 
 -- @module Goal
 

@@ -1,12 +1,12 @@
 --- **Tasking** -- This module contains the TASK class, the main engine to run human taskings.
 -- 
--- ====
+-- ===
 -- 
--- ### Author: **Sven Van de Velde (FlightControl)**
+-- ### Author: **FlightControl**
 -- 
 -- ### Contributions: 
 -- 
--- ====
+-- ===
 -- 
 -- @module Task
 

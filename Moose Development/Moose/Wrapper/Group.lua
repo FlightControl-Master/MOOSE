@@ -13,15 +13,15 @@
 --
 -- See the detailed documentation on the GROUP class.
 -- 
--- ====
+-- ===
 -- 
--- ### Author: **Sven Van de Velde (FlightControl)**
+-- ### Author: **FlightControl**
 -- 
 -- ### Contributions: 
 -- 
 --   * [**Entropy**](https://forums.eagle.ru/member.php?u=111471), **Afinegan**: Came up with the requirement for AIOnOff().
 -- 
--- ====
+-- ===
 -- 
 -- @module Group
 
