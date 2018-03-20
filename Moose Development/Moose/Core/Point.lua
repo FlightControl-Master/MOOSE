@@ -857,7 +857,7 @@ do -- COORDINATE
     RoutePoint.action = Formation or ""
 
 
-    RoutePoint.speed = ( Speed or 999 ) / 3.6
+    RoutePoint.speed = ( Speed or 20 ) / 3.6
     RoutePoint.speed_locked = true
 
     --  ["task"] =
