@@ -6,7 +6,7 @@
 -- 
 -- ===
 -- 
--- ### [Demo Missions](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master-release/CAZ%20-%20Capture Zones)
+-- ### [Demo Missions](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/CAZ - Capture Zones)
 -- 
 --   - CAZ-000 - Capture Zone: Demonstrates the basic concept of capturing a zone.
 -- 
