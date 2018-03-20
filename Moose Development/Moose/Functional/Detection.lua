@@ -1,4 +1,6 @@
---- **Functional** -- DETECTION_ classes model the detection of enemy units by FACs or RECCEs and group them according various methods.
+--- **Functional** -- Models the detection of enemy units by FACs or RECCEs and group them according various methods.
+-- 
+-- ===
 -- 
 -- ![Banner Image](..\Presentations\DETECTION\Dia1.JPG)
 -- 
@@ -11,19 +13,11 @@
 -- 
 -- ===
 -- 
--- # Demo Missions
--- 
--- ### [DETECTION Demo Missions and Source Code](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master-release/DET%20-%20Detection)
--- 
--- ### [DETECTION Demo Missions, only for Beta Testers](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/DET%20-%20Detection)
---
--- ### [ALL Demo Missions pack of the Latest Release](https://github.com/FlightControl-Master/MOOSE_MISSIONS/releases)
+-- ### [Demo Missions](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/DET%20-%20Detection)
 -- 
 -- ===
 -- 
--- # YouTube Channel
--- 
--- ### [DETECTION YouTube Channel](https://www.youtube.com/playlist?list=PL7ZUrU4zZUl3Cf5jpI6BS0sBOVWK__tji)
+-- ### [YouTube Playlist](https://www.youtube.com/playlist?list=PL7ZUrU4zZUl3Cf5jpI6BS0sBOVWK__tji)
 -- 
 -- ===
 -- 
@@ -582,138 +576,142 @@ do -- DETECTION_BASE
             
             self:T2( { TargetIsDetected = TargetIsDetected, TargetIsVisible = TargetIsVisible, TargetLastTime = TargetLastTime, TargetKnowType = TargetKnowType, TargetKnowDistance = TargetKnowDistance, TargetLastPos = TargetLastPos, TargetLastVelocity = TargetLastVelocity } )
 
-            local DetectionAccepted = true
+            -- Only process if the target is visible. Detection also returns invisible units.
+            if Detection.visible == true then
             
-            local DetectedObjectName = DetectedObject:getName()
-            local DetectedObjectType = DetectedObject:getTypeName()
-    
-            local DetectedObjectVec3 = DetectedObject:getPoint()
-            local DetectedObjectVec2 = { x = DetectedObjectVec3.x, y = DetectedObjectVec3.z }
-            local DetectionGroupVec3 = DetectionGroup:GetVec3()
-            local DetectionGroupVec2 = { x = DetectionGroupVec3.x, y = DetectionGroupVec3.z }
-    
-            local Distance = ( ( DetectedObjectVec3.x - DetectionGroupVec3.x )^2 +
-              ( DetectedObjectVec3.y - DetectionGroupVec3.y )^2 +
-              ( DetectedObjectVec3.z - DetectionGroupVec3.z )^2
-              ) ^ 0.5 / 1000
-
-            local DetectedUnitCategory = DetectedObject:getDesc().category
-    
-            self:F( { "Detected Target:", DetectionGroupName, DetectedObjectName, DetectedObjectType, Distance, DetectedUnitCategory } )
-
-            -- Calculate Acceptance
-            
-            DetectionAccepted = self._.FilterCategories[DetectedUnitCategory] ~= nil and DetectionAccepted or false
-    
---            if Distance > 15000 then
---              if DetectedUnitCategory == Unit.Category.GROUND_UNIT or DetectedUnitCategory == Unit.Category.SHIP then
---                if DetectedObject:hasSensors( Unit.SensorType.RADAR, Unit.RadarType.AS ) == false then
---                  DetectionAccepted = false
---                end
---              end
---            end
-    
-            if self.AcceptRange and Distance * 1000 > self.AcceptRange then
-              DetectionAccepted = false
-            end
-            
-            if self.AcceptZones then
-              local AnyZoneDetection = false
-              for AcceptZoneID, AcceptZone in pairs( self.AcceptZones ) do
-                local AcceptZone = AcceptZone -- Core.Zone#ZONE_BASE
-                if AcceptZone:IsVec2InZone( DetectedObjectVec2 ) then
-                  AnyZoneDetection = true
-                end
-              end
-              if not AnyZoneDetection then
-                DetectionAccepted = false            
-              end
-            end
-
-            if self.RejectZones then
-              for RejectZoneID, RejectZone in pairs( self.RejectZones ) do
-                local RejectZone = RejectZone -- Core.Zone#ZONE_BASE
-                if RejectZone:IsPointVec2InZone( DetectedObjectVec2 ) == true then
-                  DetectionAccepted = false
-                end
-              end
-            end
-            
-            -- Calculate additional probabilities
-            
-            if not self.DetectedObjects[DetectedObjectName] and Detection.visible and self.DistanceProbability then
-              local DistanceFactor = Distance / 4
-              local DistanceProbabilityReversed = ( 1 - self.DistanceProbability ) * DistanceFactor
-              local DistanceProbability = 1 - DistanceProbabilityReversed
-              DistanceProbability = DistanceProbability * 30 / 300
-              local Probability = math.random() -- Selects a number between 0 and 1
-              self:T( { Probability, DistanceProbability } )
-              if Probability > DistanceProbability then
+              local DetectionAccepted = true
+              
+              local DetectedObjectName = DetectedObject:getName()
+              local DetectedObjectType = DetectedObject:getTypeName()
+      
+              local DetectedObjectVec3 = DetectedObject:getPoint()
+              local DetectedObjectVec2 = { x = DetectedObjectVec3.x, y = DetectedObjectVec3.z }
+              local DetectionGroupVec3 = DetectionGroup:GetVec3()
+              local DetectionGroupVec2 = { x = DetectionGroupVec3.x, y = DetectionGroupVec3.z }
+      
+              local Distance = ( ( DetectedObjectVec3.x - DetectionGroupVec3.x )^2 +
+                ( DetectedObjectVec3.y - DetectionGroupVec3.y )^2 +
+                ( DetectedObjectVec3.z - DetectionGroupVec3.z )^2
+                ) ^ 0.5 / 1000
+  
+              local DetectedUnitCategory = DetectedObject:getDesc().category
+      
+              self:F( { "Detected Target:", DetectionGroupName, DetectedObjectName, DetectedObjectType, Distance, DetectedUnitCategory } )
+  
+              -- Calculate Acceptance
+              
+              DetectionAccepted = self._.FilterCategories[DetectedUnitCategory] ~= nil and DetectionAccepted or false
+      
+  --            if Distance > 15000 then
+  --              if DetectedUnitCategory == Unit.Category.GROUND_UNIT or DetectedUnitCategory == Unit.Category.SHIP then
+  --                if DetectedObject:hasSensors( Unit.SensorType.RADAR, Unit.RadarType.AS ) == false then
+  --                  DetectionAccepted = false
+  --                end
+  --              end
+  --            end
+      
+              if self.AcceptRange and Distance * 1000 > self.AcceptRange then
                 DetectionAccepted = false
               end
-            end
-            
-            if not self.DetectedObjects[DetectedObjectName] and Detection.visible and self.AlphaAngleProbability then
-              local NormalVec2 = { x = DetectedObjectVec2.x - DetectionGroupVec2.x, y = DetectedObjectVec2.y - DetectionGroupVec2.y }
-              local AlphaAngle = math.atan2( NormalVec2.y, NormalVec2.x )
-              local Sinus = math.sin( AlphaAngle )
-              local AlphaAngleProbabilityReversed = ( 1 - self.AlphaAngleProbability ) * ( 1 - Sinus )
-              local AlphaAngleProbability = 1 - AlphaAngleProbabilityReversed
               
-              AlphaAngleProbability = AlphaAngleProbability * 30 / 300
-              
-              local Probability =  math.random() -- Selects a number between 0 and 1
-              self:T( { Probability, AlphaAngleProbability } )
-              if Probability > AlphaAngleProbability then
-                DetectionAccepted = false
+              if self.AcceptZones then
+                local AnyZoneDetection = false
+                for AcceptZoneID, AcceptZone in pairs( self.AcceptZones ) do
+                  local AcceptZone = AcceptZone -- Core.Zone#ZONE_BASE
+                  if AcceptZone:IsVec2InZone( DetectedObjectVec2 ) then
+                    AnyZoneDetection = true
+                  end
+                end
+                if not AnyZoneDetection then
+                  DetectionAccepted = false            
+                end
               end
-               
-            end
-            
-            if not self.DetectedObjects[DetectedObjectName] and Detection.visible and self.ZoneProbability then
-            
-              for ZoneDataID, ZoneData in pairs( self.ZoneProbability ) do
-                self:F({ZoneData})
-                local ZoneObject = ZoneData[1] -- Core.Zone#ZONE_BASE
-                local ZoneProbability = ZoneData[2] -- #number
-                ZoneProbability = ZoneProbability * 30 / 300
-                
-                if ZoneObject:IsPointVec2InZone( DetectedObjectVec2 ) == true then
-                  local Probability =  math.random() -- Selects a number between 0 and 1
-                  self:T( { Probability, ZoneProbability } )
-                  if Probability > ZoneProbability then
+  
+              if self.RejectZones then
+                for RejectZoneID, RejectZone in pairs( self.RejectZones ) do
+                  local RejectZone = RejectZone -- Core.Zone#ZONE_BASE
+                  if RejectZone:IsPointVec2InZone( DetectedObjectVec2 ) == true then
                     DetectionAccepted = false
-                    break
                   end
                 end
               end
-            end
-            
-            if DetectionAccepted then
               
-              HasDetectedObjects = true
-    
-              self.DetectedObjects[DetectedObjectName] = self.DetectedObjects[DetectedObjectName] or {} 
-              self.DetectedObjects[DetectedObjectName].Name = DetectedObjectName
-              self.DetectedObjects[DetectedObjectName].IsDetected = TargetIsDetected
-              self.DetectedObjects[DetectedObjectName].IsVisible = TargetIsVisible 
-              self.DetectedObjects[DetectedObjectName].LastTime = TargetLastTime
-              self.DetectedObjects[DetectedObjectName].LastPos = TargetLastPos
-              self.DetectedObjects[DetectedObjectName].LastVelocity = TargetLastVelocity
-              self.DetectedObjects[DetectedObjectName].KnowType = TargetKnowType
-              self.DetectedObjects[DetectedObjectName].KnowDistance = Detection.distance   -- TargetKnowDistance
-              self.DetectedObjects[DetectedObjectName].Distance = Distance
-              self.DetectedObjects[DetectedObjectName].DetectionTimeStamp = DetectionTimeStamp
+              -- Calculate additional probabilities
               
-              self:F( { DetectedObject = self.DetectedObjects[DetectedObjectName] } )
+              if not self.DetectedObjects[DetectedObjectName] and Detection.visible and self.DistanceProbability then
+                local DistanceFactor = Distance / 4
+                local DistanceProbabilityReversed = ( 1 - self.DistanceProbability ) * DistanceFactor
+                local DistanceProbability = 1 - DistanceProbabilityReversed
+                DistanceProbability = DistanceProbability * 30 / 300
+                local Probability = math.random() -- Selects a number between 0 and 1
+                self:T( { Probability, DistanceProbability } )
+                if Probability > DistanceProbability then
+                  DetectionAccepted = false
+                end
+              end
               
-              local DetectedUnit = UNIT:FindByName( DetectedObjectName )
+              if not self.DetectedObjects[DetectedObjectName] and Detection.visible and self.AlphaAngleProbability then
+                local NormalVec2 = { x = DetectedObjectVec2.x - DetectionGroupVec2.x, y = DetectedObjectVec2.y - DetectionGroupVec2.y }
+                local AlphaAngle = math.atan2( NormalVec2.y, NormalVec2.x )
+                local Sinus = math.sin( AlphaAngle )
+                local AlphaAngleProbabilityReversed = ( 1 - self.AlphaAngleProbability ) * ( 1 - Sinus )
+                local AlphaAngleProbability = 1 - AlphaAngleProbabilityReversed
+                
+                AlphaAngleProbability = AlphaAngleProbability * 30 / 300
+                
+                local Probability =  math.random() -- Selects a number between 0 and 1
+                self:T( { Probability, AlphaAngleProbability } )
+                if Probability > AlphaAngleProbability then
+                  DetectionAccepted = false
+                end
+                 
+              end
               
-              DetectedUnits[DetectedObjectName] = DetectedUnit
-            else
-              -- if beyond the DetectionRange then nullify...
-              if self.DetectedObjects[DetectedObjectName] then
-                self.DetectedObjects[DetectedObjectName] = nil
+              if not self.DetectedObjects[DetectedObjectName] and Detection.visible and self.ZoneProbability then
+              
+                for ZoneDataID, ZoneData in pairs( self.ZoneProbability ) do
+                  self:F({ZoneData})
+                  local ZoneObject = ZoneData[1] -- Core.Zone#ZONE_BASE
+                  local ZoneProbability = ZoneData[2] -- #number
+                  ZoneProbability = ZoneProbability * 30 / 300
+                  
+                  if ZoneObject:IsPointVec2InZone( DetectedObjectVec2 ) == true then
+                    local Probability =  math.random() -- Selects a number between 0 and 1
+                    self:T( { Probability, ZoneProbability } )
+                    if Probability > ZoneProbability then
+                      DetectionAccepted = false
+                      break
+                    end
+                  end
+                end
+              end
+              
+              if DetectionAccepted then
+                
+                HasDetectedObjects = true
+      
+                self.DetectedObjects[DetectedObjectName] = self.DetectedObjects[DetectedObjectName] or {} 
+                self.DetectedObjects[DetectedObjectName].Name = DetectedObjectName
+                self.DetectedObjects[DetectedObjectName].IsDetected = TargetIsDetected
+                self.DetectedObjects[DetectedObjectName].IsVisible = TargetIsVisible 
+                self.DetectedObjects[DetectedObjectName].LastTime = TargetLastTime
+                self.DetectedObjects[DetectedObjectName].LastPos = TargetLastPos
+                self.DetectedObjects[DetectedObjectName].LastVelocity = TargetLastVelocity
+                self.DetectedObjects[DetectedObjectName].KnowType = TargetKnowType
+                self.DetectedObjects[DetectedObjectName].KnowDistance = Detection.distance   -- TargetKnowDistance
+                self.DetectedObjects[DetectedObjectName].Distance = Distance
+                self.DetectedObjects[DetectedObjectName].DetectionTimeStamp = DetectionTimeStamp
+                
+                self:F( { DetectedObject = self.DetectedObjects[DetectedObjectName] } )
+                
+                local DetectedUnit = UNIT:FindByName( DetectedObjectName )
+                
+                DetectedUnits[DetectedObjectName] = DetectedUnit
+              else
+                -- if beyond the DetectionRange then nullify...
+                if self.DetectedObjects[DetectedObjectName] then
+                  self.DetectedObjects[DetectedObjectName] = nil
+                end
               end
             end
           end
