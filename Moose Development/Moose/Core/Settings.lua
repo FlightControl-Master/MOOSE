@@ -2,7 +2,7 @@
 --
 -- ![Banner Image](..\Presentations\SETTINGS\Dia1.JPG)
 --
--- ====
+-- ===
 -- 
 -- The documentation of the SETTINGS class can be found further in this document.
 -- 

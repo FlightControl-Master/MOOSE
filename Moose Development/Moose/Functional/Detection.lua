@@ -9,7 +9,7 @@
 -- 
 -- Find the DETECTION classes documentation further in this document in the globals section.
 -- 
--- ====
+-- ===
 -- 
 -- # Demo Missions
 -- 
@@ -19,13 +19,13 @@
 --
 -- ### [ALL Demo Missions pack of the Latest Release](https://github.com/FlightControl-Master/MOOSE_MISSIONS/releases)
 -- 
--- ====
+-- ===
 -- 
 -- # YouTube Channel
 -- 
 -- ### [DETECTION YouTube Channel](https://www.youtube.com/playlist?list=PL7ZUrU4zZUl3Cf5jpI6BS0sBOVWK__tji)
 -- 
--- ====
+-- ===
 -- 
 -- ### Contributions: 
 -- 

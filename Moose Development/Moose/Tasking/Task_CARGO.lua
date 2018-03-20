@@ -2,7 +2,7 @@
 -- 
 -- ![Banner Image](..\Presentations\TASK_CARGO\Dia1.JPG)
 -- 
--- ====
+-- ===
 --
 -- The Moose framework provides various CARGO classes that allow DCS phisical or logical objects to be transported or sling loaded by Carriers.
 -- The CARGO_ classes, as part of the moose core, are able to Board, Load, UnBoard and UnLoad cargo between Carrier units.
@@ -14,13 +14,13 @@
 -- 
 --   * @{#TASK_CARGO_TRANSPORT}: Defines a task for a human player to transport a set of cargo between various zones.
 -- 
--- ====
+-- ===
 -- 
--- ### Author: **Sven Van de Velde (FlightControl)**
+-- ### Author: **FlightControl**
 -- 
 -- ### Contributions: 
 -- 
--- ====
+-- ===
 --   
 -- @module Task_Cargo
 

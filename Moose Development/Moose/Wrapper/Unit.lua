@@ -9,13 +9,13 @@
 --  * Handle local Unit Controller.
 --  * Manage the "state" of the DCS Unit.
 --  
--- ====
+-- ===
 -- 
--- ### Author: **Sven Van de Velde (FlightControl)**
+-- ### Author: **FlightControl**
 -- 
 -- ### Contributions: 
 -- 
--- ====
+-- ===
 -- 
 -- @module Unit
 

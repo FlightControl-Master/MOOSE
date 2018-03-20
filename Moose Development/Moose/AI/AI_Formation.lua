@@ -1,4 +1,6 @@
---- **AI** -- Build large **formations** of AI @{Group}s flying together.
+--- **AI** -- (R2.2) - Build large airborne formations of aircraft.
+-- 
+-- ===
 -- 
 -- ![Banner Image](..\Presentations\AI_FORMATION\Dia1.JPG)
 -- 
@@ -28,29 +30,20 @@
 -- 
 --   * @{#AI_FORMATION}: Create a formation from several @{GROUP}s.
 --   
--- ====
+-- ===
 -- 
--- # Demo Missions
--- 
--- ### [AI_FORMATION Demo Missions source code]()
--- 
--- ### [AI_FORMATION Demo Missions, only for beta testers]()
---
--- ### [ALL Demo Missions pack of the last release]()
--- 
--- ====
--- 
--- # YouTube Channel
--- 
---- ### [AI_FORMATION YouTube Channel]()
+-- ### [Demo Missions](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/FOR%20-%20Formation)
 -- 
 -- ===
 -- 
--- ### Author: **Sven Van de Velde (FlightControl)**
+-- ### [YouTube Playlist](https://www.youtube.com/playlist?list=PL7ZUrU4zZUl0bFIJ9jIdYM22uaWmIN4oz)
 -- 
+-- ===
+-- 
+-- ### Author: **FlightControl**
 -- ### Contributions: 
 -- 
--- ====
+-- ===
 --   
 -- @module AI_Formation
 

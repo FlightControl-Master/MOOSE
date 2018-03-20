@@ -1,8 +1,8 @@
 --- **Wrapper** -- AIRBASE is a wrapper class to handle the DCS Airbase objects.
 -- 
--- ====
+-- ===
 -- 
--- ### Author: **Sven Van de Velde (FlightControl)**
+-- ### Author: **FlightControl**
 -- 
 -- ### Contributions: 
 -- 

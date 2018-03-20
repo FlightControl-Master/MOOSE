@@ -1,5 +1,6 @@
---- **Functional** -- **Administer the SCORING of player achievements, 
--- and create a CSV file logging the scoring events for use at team or squadron websites.**
+--- **Functional** -- (R2.0) - Administer the scoring of player achievements, and create a CSV file logging the scoring events for use at team or squadron websites.
+-- 
+-- ===
 -- 
 -- ![Banner Image](..\Presentations\SCORING\Dia1.JPG)
 --  
@@ -178,7 +179,7 @@
 --   * @{#SCORING.SetMessagesToCoalition}(): Configure to send messages to only those players within the same coalition as the player.
 -- 
 --   
--- ====
+-- ===
 --
 -- # **API CHANGE HISTORY**
 --

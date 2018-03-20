@@ -1,12 +1,12 @@
 --- **Tasking** - The TASK_Protect models tasks for players to protect or capture specific zones.
 -- 
--- ====
+-- ===
 -- 
--- ### Author: **Sven Van de Velde (FlightControl)**
+-- ### Author: **FlightControl**
 -- 
 -- ### Contributions: MillerTime
 -- 
--- ====
+-- ===
 --   
 -- @module TaskZoneCapture
 

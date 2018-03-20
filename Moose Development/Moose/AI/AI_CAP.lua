@@ -1,35 +1,20 @@
---- **AI** -- **Execute Combat Air Patrol (CAP).**
+--- **AI** -- (R2.1) - Manages the independent process of Combat Air Patrol (CAP) for airplanes.
+--
+-- ===
 --
 -- ![Banner Image](..\Presentations\AI_CAP\Dia1.JPG)
 -- 
 -- ===
 -- 
--- AI CAP classes makes AI Controllables execute a Combat Air Patrol.
+-- ### [Demo Missions](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master-release/CAP%20-%20Combat%20Air%20Patrol)
 -- 
--- There are the following types of CAP classes defined:
+-- ===
 -- 
---   * @{#AI_CAP_ZONE}: Perform a CAP in a zone.
---   
--- ====
+-- ### [YouTube Playlist](https://www.youtube.com/playlist?list=PL7ZUrU4zZUl1YCyPxJgoZn-CfhwyeW65L)
 -- 
--- # Demo Missions
+-- ===
 -- 
--- ### [AI_CAP Demo Missions source code](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master-release/CAP%20-%20Combat%20Air%20Patrol)
--- 
--- ### [AI_CAP Demo Missions, only for beta testers](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/CAP%20-%20Combat%20Air%20Patrol)
---
--- ### [ALL Demo Missions pack of the last release](https://github.com/FlightControl-Master/MOOSE_MISSIONS/releases)
--- 
--- ====
--- 
--- # YouTube Channel
--- 
--- ### [AI_CAP YouTube Channel](https://www.youtube.com/playlist?list=PL7ZUrU4zZUl1YCyPxJgoZn-CfhwyeW65L)
--- 
--- ====
--- 
--- ### Author: **Sven Van de Velde (FlightControl)**
--- 
+-- ### Author: **FlightControl**
 -- ### Contributions: 
 --
 --   * **[Quax](https://forums.eagle.ru/member.php?u=90530)**: Concept, Advice & Testing.
@@ -38,7 +23,7 @@
 --   * **[Whisper](http://forums.eagle.ru/member.php?u=3829): Testing.
 --   * **[Delta99](https://forums.eagle.ru/member.php?u=125166): Testing. 
 -- 
--- ====       
+-- ===       
 --
 -- @module AI_Cap
 

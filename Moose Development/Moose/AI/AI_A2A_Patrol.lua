@@ -1,40 +1,12 @@
---- **AI** -- **Air Patrolling or Staging.**
+--- **AI** -- (R2.2) - Models the process of air patrol of airplanes.
 -- 
--- ![Banner Image](..\Presentations\AI_PATROL\Dia1.JPG)
+-- This is a class used in the @{AI_A2A_Dispatcher}.
 -- 
 -- ===
 -- 
--- AI PATROL classes makes AI Groups execute an Patrol.
+-- ### Author: **FlightControl**
 -- 
--- There are the following types of PATROL classes defined:
--- 
---   * @{#AI_A2A_PATROL}: Perform a PATROL in a zone.
---   
--- ====
--- 
--- # Demo Missions
--- 
--- ### [AI_PATROL Demo Missions source code](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master-release/PAT%20-%20Patrolling)
--- 
--- ### [AI_PATROL Demo Missions, only for beta testers](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/PAT%20-%20Patrolling)
---
--- ### [ALL Demo Missions pack of the last release](https://github.com/FlightControl-Master/MOOSE_MISSIONS/releases)
--- 
--- ====
--- 
--- # YouTube Channel
--- 
--- ### [AI_PATROL YouTube Channel](https://www.youtube.com/playlist?list=PL7ZUrU4zZUl35HvYZKA6G22WMt7iI3zky)
--- 
--- ====
--- 
--- ### Author: **Sven Van de Velde (FlightControl)**
--- ### Contributions: 
--- 
---   * **[Dutch_Baron](https://forums.eagle.ru/member.php?u=112075)**: Working together with James has resulted in the creation of the AI_BALANCER class. James has shared his ideas on balancing AI with air units, and together we made a first design which you can use now :-)
---   * **[Pikey](https://forums.eagle.ru/member.php?u=62835)**: Testing and API concept review.
--- 
--- ====
+-- ===
 -- 
 -- @module AI_A2A_Patrol
 

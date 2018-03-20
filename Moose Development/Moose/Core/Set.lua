@@ -23,12 +23,12 @@
 --   * Validate the presence of objects in the SET.
 --   * Trigger events when objects in the SET change a zone presence.
 -- 
--- ====
+-- ===
 -- 
--- ### Author: **Sven Van de Velde (FlightControl)**
+-- ### Author: **FlightControl**
 -- ### Contributions: 
 -- 
--- ====
+-- ===
 -- 
 -- @module Set
 

@@ -1,6 +1,6 @@
 --- **Functional** -- Limit the MOVEMENT of simulaneous moving ground vehicles.
 -- 
--- ====
+-- ===
 --  
 -- Limit the simultaneous movement of Groups within a running Mission.
 -- This module is defined to improve the performance in missions, and to bring additional realism for GROUND vehicles.

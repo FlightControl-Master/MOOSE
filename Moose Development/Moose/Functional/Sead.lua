@@ -1,6 +1,6 @@
 --- **Functional** -- Provides defensive behaviour to a set of SAM sites within a running Mission.
 -- 
--- ====
+-- ===
 -- 
 -- @module Sead
 

@@ -1,33 +1,25 @@
---- **AI** -- **AI Balancing will replace in multi player missions 
--- non-occupied human slots with AI groups, in order to provide an engaging simulation environment, 
--- even when there are hardly any players in the mission.**
+--- **AI** -- (2.1) - Balance player slots with AI to create an engaging simulation environment, independent of the amount of players. 
+-- 
+-- ===
 -- 
 -- ![Banner Image](..\Presentations\AI_Balancer\Dia1.JPG)
---  
--- ====
 -- 
--- # Demo Missions
+-- ===
 -- 
--- ### [AI_BALANCER Demo Missions source code](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master-release/AIB%20-%20AI%20Balancing)
+-- ### [Demo Missions](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master-release/AIB%20-%20AI%20Balancing)
 -- 
--- ### [AI_BALANCER Demo Missions, only for beta testers](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/AIB%20-%20AI%20Balancing)
---
--- ### [ALL Demo Missions pack of the last release](https://github.com/FlightControl-Master/MOOSE_MISSIONS/releases)
+-- ===
 -- 
--- ====
+-- ### [YouTube Playlist](https://www.youtube.com/playlist?list=PL7ZUrU4zZUl2CJVIrL1TdAumuVS8n64B7)
 -- 
--- # YouTube Channel
+-- ===
 -- 
--- ### [AI_BALANCER YouTube Channel](https://www.youtube.com/playlist?list=PL7ZUrU4zZUl2CJVIrL1TdAumuVS8n64B7)
--- 
--- ====
--- 
--- ### Author: **Sven Van de Velde (FlightControl)**
+-- ### Author: **FlightControl**
 -- ### Contributions: 
 -- 
 --   * **[Dutch_Baron](https://forums.eagle.ru/member.php?u=112075)**: Working together with James has resulted in the creation of the AI_BALANCER class. James has shared his ideas on balancing AI with air units, and together we made a first design which you can use now :-)
 -- 
--- ====
+-- ===
 -- 
 -- @module AI_Balancer
 

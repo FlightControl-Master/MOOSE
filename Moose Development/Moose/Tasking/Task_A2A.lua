@@ -1,12 +1,12 @@
 --- **Tasking** - The TASK_A2A models tasks for players in Air to Air engagements.
 -- 
--- ====
+-- ===
 -- 
--- ### Author: **Sven Van de Velde (FlightControl)**
+-- ### Author: **FlightControl**
 -- 
 -- ### Contributions: 
 -- 
--- ====
+-- ===
 --   
 -- @module Task_A2A
 
