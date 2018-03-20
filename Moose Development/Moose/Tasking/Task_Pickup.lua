@@ -1,7 +1,7 @@
 --- This module contains the TASK_PICKUP classes.
 -- 
 -- 1) @{#TASK_PICKUP} class, extends @{Task#TASK}
--- ===================================================
+-- ===
 -- The @{#TASK_PICKUP} class defines a pickup task of a @{Set} of @{CARGO} objects defined within the mission. 
 -- based on the tasking capabilities defined in @{Task#TASK}.
 -- The TASK_PICKUP is implemented using a @{Statemachine#FSM_TASK}, and has the following statuses:

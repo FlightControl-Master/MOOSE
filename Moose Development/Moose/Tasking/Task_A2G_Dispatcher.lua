@@ -1,12 +1,12 @@
 --- **Tasking** - The TASK\_A2G\_DISPATCHER dispatches A2G Tasks to Players based on enemy location detection.
 -- 
--- ====
+-- ===
 -- 
--- ### Author: **Sven Van de Velde (FlightControl)**
+-- ### Author: **FlightControl**
 -- 
 -- ### Contributions: 
 -- 
--- ====
+-- ===
 -- 
 -- @module Task_A2G_Dispatcher
 

@@ -1,9 +1,9 @@
 --- **Functional** -- Taking the lead of AI escorting your flight.
 -- 
--- ====
+-- ===
 -- 
 -- @{#ESCORT} class
--- ================
+-- ===
 -- The @{#ESCORT} class allows you to interact with escorting AI on your flight and take the lead.
 -- Each escorting group can be commanded with a whole set of radio commands (radio menu in your flight, and then F10).
 --
@@ -11,7 +11,7 @@
 -- Ships and Ground troops will have a more limited set, but they can provide support through the bombing of targets designated by the other escorts.
 --
 -- RADIO MENUs that can be created:
--- ================================
+-- ===
 -- Find a summary below of the current available commands:
 --
 -- Navigation ...:
@@ -79,13 +79,13 @@
 -- Note that this is really fantastic, as you now have the dynamic of taking control of the escort groups, and allowing them to resume their path or mission.
 --
 -- ESCORT construction methods.
--- ============================
+-- ===
 -- Create a new SPAWN object with the @{#ESCORT.New} method:
 --
 --  * @{#ESCORT.New}: Creates a new ESCORT object from a @{Group#GROUP} for a @{Client#CLIENT}, with an optional briefing text.
 --
 -- ESCORT initialization methods.
--- ==============================
+-- ===
 -- The following menus are created within the RADIO MENU (F10) of an active unit hosted by a player:
 --
 -- * @{#ESCORT.MenuFollowAt}: Creates a menu to make the escort follow the client.

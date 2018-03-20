@@ -1,43 +1,27 @@
---- **AI** -- **Provide Close Air Support to friendly ground troops.**
+--- **AI** -- (R2.1) - Manages the independent process of Close Air Support for airplanes.
+--
+-- ===
 --
 -- ![Banner Image](..\Presentations\AI_CAS\Dia1.JPG)
 -- 
 -- ===
 -- 
--- AI CAS classes makes AI Controllables execute a Close Air Support.
+-- ### [Demo Missions](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master-release/CAS%20-%20Close%20Air%20Support)
 -- 
--- There are the following types of CAS classes defined:
+-- ===
 -- 
---   * @{#AI_CAS_ZONE}: Perform a CAS in a zone.
---   
--- ====
+-- ### [YouTube Playlist](https://www.youtube.com/playlist?list=PL7ZUrU4zZUl3JBO1WDqqpyYRRmIkR2ir2)
 -- 
--- # Demo Missions
+-- ===
 -- 
--- ### [AI_CAS Demo Missions source code](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master-release/CAS%20-%20Close%20Air%20Support)
--- 
--- ### [AI_CAS Demo Missions, only for beta testers](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/CAS%20-%20Close%20Air%20Support)
---
--- ### [ALL Demo Missions pack of the last release](https://github.com/FlightControl-Master/MOOSE_MISSIONS/releases)
--- 
--- ====
--- 
--- # YouTube Channel
--- 
--- ### [AI_CAS YouTube Channel](https://www.youtube.com/playlist?list=PL7ZUrU4zZUl3JBO1WDqqpyYRRmIkR2ir2)
--- 
--- ====
---
--- 
--- ### Author: **Sven Van de Velde (FlightControl)**
--- 
+-- ### Author: **FlightControl**
 -- ### Contributions: 
 --
 --   * **[Quax](https://forums.eagle.ru/member.php?u=90530)**: Concept, Advice & Testing.
 --   * **[Pikey](https://forums.eagle.ru/member.php?u=62835)**: Concept, Advice & Testing.
 --   * **[Gunterlund](http://forums.eagle.ru:8080/member.php?u=75036)**: Test case revision.
 --
--- ====
+-- ===
 --
 -- @module AI_Cas
 

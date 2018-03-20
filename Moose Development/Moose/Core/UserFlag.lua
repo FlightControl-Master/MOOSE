@@ -1,14 +1,14 @@
 --- **Core (WIP)** -- Manage user flags.
 --
--- ====
+-- ===
 -- 
 -- Management of DCS User Flags.
 -- 
--- ====
+-- ===
 -- 
--- ### Author: **Sven Van de Velde (FlightControl)**
+-- ### Author: **FlightControl**
 -- 
--- ====
+-- ===
 -- 
 -- @module UserFlag
 

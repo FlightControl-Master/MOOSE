@@ -1,12 +1,12 @@
 --- **Tasking** -- Controls the information of a Task.
 -- 
--- ====
+-- ===
 -- 
--- ### Author: **Sven Van de Velde (FlightControl)**
+-- ### Author: **FlightControl**
 -- 
 -- ### Contributions: 
 -- 
--- ====
+-- ===
 -- 
 -- @module TaskInfo
 

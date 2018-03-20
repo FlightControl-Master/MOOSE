@@ -1,12 +1,12 @@
 --- **Tasking** - The TASK_A2G models tasks for players in Air to Ground engagements.
 -- 
--- ====
+-- ===
 -- 
--- ### Author: **Sven Van de Velde (FlightControl)**
+-- ### Author: **FlightControl**
 -- 
 -- ### Contributions: 
 -- 
--- ====
+-- ===
 --   
 -- @module Task_A2G
 

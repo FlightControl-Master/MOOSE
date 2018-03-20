@@ -1,11 +1,11 @@
 --- **Core** -- DATABASE manages the database of mission objects. 
 -- 
--- ====
+-- ===
 -- 
--- ### Author: **Sven Van de Velde (FlightControl)**
+-- ### Author: **FlightControl**
 -- ### Contributions: 
 -- 
--- ====
+-- ===
 -- 
 -- @module Database
 

@@ -1,40 +1,25 @@
---- **AI** -- **Provide Battlefield Air Interdiction (bombing).**
+--- **AI** -- (R2.1) - Manages the independent process of Battlefield Air Interdiction (bombing) for airplanes.
+--
+-- ===
 --
 -- ![Banner Image](..\Presentations\AI_BAI\Dia1.JPG)
 -- 
 -- ===
 -- 
--- AI_BAI classes makes AI Controllables execute bombing tasks.
+-- ### [Demo Missions](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/BAI%20-%20Battlefield%20Air%20Interdiction)
 -- 
--- There are the following types of BAI classes defined:
+-- ===
 -- 
---   * @{#AI_BAI_ZONE}: Perform a BAI in a zone.
---   
--- ====
+-- ### [YouTube Playlist]()
 -- 
--- # Demo Missions
+-- ===
 -- 
--- ### [AI_BAI Demo Missions source code](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master-release/BOMB%20-%20Close%20Air%20Support)
--- 
--- ### [AI_BAI Demo Missions, only for beta testers](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/BOMB%20-%20Close%20Air%20Support)
---
--- ### [ALL Demo Missions pack of the last release](https://github.com/FlightControl-Master/MOOSE_MISSIONS/releases)
--- 
--- ====
--- 
--- # YouTube Channel
--- 
--- ### [AI_BAI YouTube Channel](https://www.youtube.com/playlist?list=PL7ZUrU4zZUl3JBO1WDqqpyYRRmIkR2ir2)
--- 
--- ====
--- 
--- ### Author: **Sven Van de Velde (FlightControl)**
--- 
+-- ### Author: **FlightControl**
 -- ### Contributions: 
 -- 
 --   * **[Gunterlund](http://forums.eagle.ru:8080/member.php?u=75036)**: Test case revision.
 -- 
--- ====
+-- ===
 --
 -- @module AI_Bai
 

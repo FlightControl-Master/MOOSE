@@ -159,10 +159,10 @@
 -- 
 -- ===
 -- 
--- ### Author: **Sven Van de Velde (FlightControl)**
+-- ### Author: **FlightControl**
 -- ### Contributions: 
 -- 
--- ====
+-- ===
 --
 -- @module Event
 

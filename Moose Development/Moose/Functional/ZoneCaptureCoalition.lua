@@ -1,15 +1,25 @@
---- **Functional** -- (WIP R2.3) Models the process to capture a Zone for a Coalition, which is guarded by another Coalition.
+--- **Functional** -- (R2.3) Models the process to zone guarding and capturing.
 --
--- ====
+-- ===
 -- 
 -- ![Banner Image](..\Presentations\ZONE_CAPTURE_COALITION\Dia1.JPG)
 -- 
 -- ===
 -- 
--- ### Contributions: **Millertime**: Concept
--- ### Author: **Sven Van de Velde (FlightControl)**
+-- ### [Demo Missions](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master-release/CAZ%20-%20Capture Zones)
 -- 
--- ====
+--   - CAZ-000 - Capture Zone: Demonstrates the basic concept of capturing a zone.
+-- 
+-- ===
+-- 
+-- ### [YouTube Playlist](https://www.youtube.com/watch?v=0m6K6Yxa-os&list=PL7ZUrU4zZUl0qqJsfa8DPvZWDY-OyDumE)
+-- 
+-- ===
+-- 
+-- ### Author: **FlightControl**
+-- ### Contributions: **Millertime** - Concept
+-- 
+-- ===
 -- 
 -- @module ZoneCaptureCoalition
 

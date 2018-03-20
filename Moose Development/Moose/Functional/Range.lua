@@ -1,9 +1,11 @@
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
---- **Functional** - Range Practice.
+--- **Functional** - (R2.3) - Range Practice.
 --  
+-- ===
+-- 
 -- ![Banner Image](..\Presentations\RANGE\RANGE_Main.png)
 -- 
--- ====
+-- ===
 -- 
 -- The RANGE class enables easy set up of bombing and strafing ranges within DCS World.
 -- 
@@ -24,13 +26,13 @@
 -- 
 -- More information and examples can be found below.
 -- 
--- ====
+-- ===
 -- 
 -- # Demo Missions
 --
 -- ### [ALL Demo Missions pack of the last release](https://github.com/FlightControl-Master/MOOSE_MISSIONS/releases)
 -- 
--- ====
+-- ===
 -- 
 -- # YouTube Channel
 -- 
@@ -42,7 +44,7 @@
 -- 
 -- ### Contributions: [FlightControl](https://forums.eagle.ru/member.php?u=89536), [Ciribob](https://forums.eagle.ru/member.php?u=112175)
 -- 
--- ====
+-- ===
 -- @module Range
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

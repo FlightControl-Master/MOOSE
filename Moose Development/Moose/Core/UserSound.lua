@@ -1,14 +1,14 @@
 --- **Core (WIP)** -- Manage user sound.
 --
--- ====
+-- ===
 -- 
 -- Management of DCS User Sound.
 -- 
--- ====
+-- ===
 -- 
--- ### Author: **Sven Van de Velde (FlightControl)**
+-- ### Author: **FlightControl**
 -- 
--- ====
+-- ===
 -- 
 -- @module UserSound
 

@@ -1,14 +1,12 @@
---- **AI** -- **AI A2A Air Patrolling or Staging.**
+--- **AI** -- (R2.2) - Models the process of air operations for airplanes.
 -- 
--- ====
+-- This is a class used in the @{AI_A2A_Dispatcher}.
 -- 
--- ### Author: **Sven Van de Velde (FlightControl)**
--- ### Contributions: 
+-- ===
 -- 
---   * **[Dutch_Baron](https://forums.eagle.ru/member.php?u=112075)**: Working together with James has resulted in the creation of the AI_BALANCER class. James has shared his ideas on balancing AI with air units, and together we made a first design which you can use now :-)
---   * **[Pikey](https://forums.eagle.ru/member.php?u=62835)**: Testing and API concept review.
+-- ### Author: **FlightControl**
 -- 
--- ====
+-- ===
 -- 
 -- @module AI_A2A
 

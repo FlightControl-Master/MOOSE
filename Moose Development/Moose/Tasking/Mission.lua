@@ -1,8 +1,8 @@
 --- **Tasking** -- A MISSION is the main owner of a Mission orchestration within MOOSE.
 -- 
--- ====
+-- ===
 -- 
--- ### Author: **Sven Van de Velde (FlightControl)**
+-- ### Author: **FlightControl**
 -- 
 -- ### Contributions: 
 -- 

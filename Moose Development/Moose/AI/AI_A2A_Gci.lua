@@ -1,27 +1,15 @@
---- **AI** -- **Execute Ground Controlled Interception (GCI).**
+--- **AI** -- (R2.2) - Models the process of Ground Controlled Interception (GCI) for airplanes.
 --
--- ![Banner Image](..\Presentations\AI_GCI\Dia1.JPG)
+-- This is a class used in the @{AI_A2A_Dispatcher}.
 -- 
 -- ===
 -- 
--- AI A2A_INTEREPT class makes AI Groups execute an Intercept.
+-- ### Author: **FlightControl**
 -- 
--- There are the following types of GCI classes defined:
--- 
---   * @{#AI_A2A_GCI}: Perform a GCI in a zone.
---   
--- ====
--- 
--- ### Author: **Sven Van de Velde (FlightControl)**
--- 
--- ### Contributions: 
--- 
--- ====       
+-- ===       
 --
 -- @module AI_A2A_GCI
 
-
---BASE:TraceClass("AI_A2A_GCI")
 
 
 --- @type AI_A2A_GCI
