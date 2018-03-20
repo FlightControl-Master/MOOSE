@@ -249,7 +249,7 @@ function AI_BALANCER:onenterMonitoring( SetGroup )
             
             self:T2( RangeZone )
             
-            _DATABASE:ForEachPlayer(
+            _DATABASE:ForEachPlayerUnit(
               --- @param Wrapper.Unit#UNIT RangeTestUnit
               function( RangeTestUnit, RangeZone, AIGroup, PlayerInRange )
                 self:T2( { PlayerInRange, RangeTestUnit.UnitName, RangeZone.ZoneName } )
