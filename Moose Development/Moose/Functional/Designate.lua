@@ -795,7 +795,7 @@ do -- DESIGNATE
               -- ok, we added one item to the designate scope.
               self.AttackSet:ForEachGroupAlive(
                 function( AttackGroup )
-                  local DetectionText = self.Detection:DetectedItemReportSummary( DesignateIndex, AttackGroup ):Text( ", " )
+                  local DetectionText = self.Detection:DetectedItemReportSummary( DetectedItem, AttackGroup ):Text( ", " )
                   self.CC:GetPositionable():MessageToGroup( "Targets detected at \n" .. DetectionText, 10, AttackGroup, self.DesignateName )
                 end
               )
@@ -900,7 +900,7 @@ do -- DESIGNATE
   -- @return #DESIGNATE
   function DESIGNATE:SetDesignateMenu()
 
-    self.AttackSet:Flush()
+    self.AttackSet:Flush( self )
 
     self.AttackSet:ForEachGroupAlive(
     
