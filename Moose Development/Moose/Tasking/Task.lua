@@ -1401,6 +1401,8 @@ do -- Reporting
 -- @return #string
 function TASK:ReportSummary( ReportGroup ) 
 
+  self:UpdateTaskInfo( self.DetectedItem )
+  
   local Report = REPORT:New()
   
   -- List the name of the Task.

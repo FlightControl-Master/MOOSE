@@ -539,16 +539,19 @@ do -- TASK_A2A_DISPATCHER
           if TargetSetUnit then
             Task = TASK_A2A_ENGAGE:New( Mission, self.SetGroup, string.format( "ENGAGE.%03d", DetectedID ), TargetSetUnit )
             Task:SetDetection( Detection, DetectedItem )
+            Task:UpdateTaskInfo( DetectedItem )
           else
             local TargetSetUnit = self:EvaluateINTERCEPT( DetectedItem ) -- Returns a SetUnit if there are targets to be INTERCEPTed...
             if TargetSetUnit then
               Task = TASK_A2A_INTERCEPT:New( Mission, self.SetGroup, string.format( "INTERCEPT.%03d", DetectedID ), TargetSetUnit )
               Task:SetDetection( Detection, DetectedItem )
+              Task:UpdateTaskInfo( DetectedItem )
             else
               local TargetSetUnit = self:EvaluateSWEEP( DetectedItem ) -- Returns a SetUnit 
               if TargetSetUnit then
                 Task = TASK_A2A_SWEEP:New( Mission, self.SetGroup, string.format( "SWEEP.%03d", DetectedID ), TargetSetUnit )
                 Task:SetDetection( Detection, DetectedItem )
+                Task:UpdateTaskInfo( DetectedItem )
               end  
             end
           end

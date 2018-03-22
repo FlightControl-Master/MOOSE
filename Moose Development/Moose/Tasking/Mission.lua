@@ -739,57 +739,57 @@ function MISSION:ReportBriefing()
 end
 
 
---- Create a status report of the Mission.
--- This reports provides a one liner of the mission status. It indicates how many players and how many Tasks.
--- 
---     Mission "<MissionName>" - Status "<MissionStatus>"
---      - Task Types: <TaskType>, <TaskType>
---      - <xx> Planned Tasks (xp)
---      - <xx> Assigned Tasks(xp)
---      - <xx> Success Tasks (xp)
---      - <xx> Hold Tasks (xp)
---      - <xx> Cancelled Tasks (xp)
---      - <xx> Aborted Tasks (xp)
---      - <xx> Failed Tasks (xp)
--- 
--- @param #MISSION self
--- @return #string
-function MISSION:ReportSummary()
-
-  local Report = REPORT:New()
-
-  -- List the name of the mission.
-  local Name = self:GetText()
-  
-  -- Determine the status of the mission.
-  local Status = "<" .. self:GetState() .. ">"
-
-  Report:Add( string.format( '%s - Status "%s"', Name, Status ) )
-  
-  local TaskTypes = self:GetTaskTypes()
-  
-  Report:Add( string.format( " - Task Types: %s", table.concat(TaskTypes, ", " ) ) )
-  
-  local TaskStatusList = { "Planned", "Assigned", "Success", "Hold", "Cancelled", "Aborted", "Failed" }
-  
-  for TaskStatusID, TaskStatus in pairs( TaskStatusList ) do
-    local TaskCount = 0
-    local TaskPlayerCount = 0 
-    -- Determine how many tasks are remaining.
-    for TaskID, Task in pairs( self:GetTasks() ) do
-      local Task = Task -- Tasking.Task#TASK
-      if Task:Is( TaskStatus ) then
-        TaskCount = TaskCount + 1
-        TaskPlayerCount = TaskPlayerCount + Task:GetPlayerCount()
-      end
-    end
-    if TaskCount > 0 then
-      Report:Add( string.format( " - %02d %s Tasks (%dp)", TaskCount, TaskStatus, TaskPlayerCount ) )
-    end
-  end
-
-  return Report:Text()
-end
+----- Create a status report of the Mission.
+---- This reports provides a one liner of the mission status. It indicates how many players and how many Tasks.
+---- 
+----     Mission "<MissionName>" - Status "<MissionStatus>"
+----      - Task Types: <TaskType>, <TaskType>
+----      - <xx> Planned Tasks (xp)
+----      - <xx> Assigned Tasks(xp)
+----      - <xx> Success Tasks (xp)
+----      - <xx> Hold Tasks (xp)
+----      - <xx> Cancelled Tasks (xp)
+----      - <xx> Aborted Tasks (xp)
+----      - <xx> Failed Tasks (xp)
+---- 
+---- @param #MISSION self
+---- @return #string
+--function MISSION:ReportSummary()
+--
+--  local Report = REPORT:New()
+--
+--  -- List the name of the mission.
+--  local Name = self:GetText()
+--  
+--  -- Determine the status of the mission.
+--  local Status = "<" .. self:GetState() .. ">"
+--
+--  Report:Add( string.format( '%s - Status "%s"', Name, Status ) )
+--  
+--  local TaskTypes = self:GetTaskTypes()
+--  
+--  Report:Add( string.format( " - Task Types: %s", table.concat(TaskTypes, ", " ) ) )
+--  
+--  local TaskStatusList = { "Planned", "Assigned", "Success", "Hold", "Cancelled", "Aborted", "Failed" }
+--  
+--  for TaskStatusID, TaskStatus in pairs( TaskStatusList ) do
+--    local TaskCount = 0
+--    local TaskPlayerCount = 0 
+--    -- Determine how many tasks are remaining.
+--    for TaskID, Task in pairs( self:GetTasks() ) do
+--      local Task = Task -- Tasking.Task#TASK
+--      if Task:Is( TaskStatus ) then
+--        TaskCount = TaskCount + 1
+--        TaskPlayerCount = TaskPlayerCount + Task:GetPlayerCount()
+--      end
+--    end
+--    if TaskCount > 0 then
+--      Report:Add( string.format( " - %02d %s Tasks (%dp)", TaskCount, TaskStatus, TaskPlayerCount ) )
+--    end
+--  end
+--
+--  return Report:Text()
+--end
 
 
 --- Create an active player report of the Mission.
