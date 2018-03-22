@@ -78,7 +78,7 @@
 -- @field #number illuminationmaxalt Maximum altitude AGL in meters at which illumination bombs are fired. Default is 1000 m.
 -- @field #number scorebombdistance Distance from closest target up to which bomb hits are counted. Default 1000 m.
 -- @field #number TdelaySmoke Time delay in seconds between impact of bomb and starting the smoke. Default 3 seconds.
--- @field #boolean eventmoose If true, events are handled by MOOSE. If false, events are handled directly by DCS eventhandler. Default true. 
+-- @field #boolean eventmoose If true, events are handled by MOOSE. If false, events are handled directly by DCS eventhandler. Default true.
 -- @extends Core.Base#BASE
 
 ---# RANGE class, extends @{Base#BASE}
@@ -216,6 +216,10 @@ RANGE={
   TdelaySmoke=3.0,
   eventmoose=true,
 }
+
+--- Main radio menu.
+-- @field #table MenuF10
+RANGE.MenuF10={}
 
 --- Some ID to identify who we are in output of the DCS.log file.
 -- @field #string id
@@ -715,21 +719,26 @@ end
 function RANGE:OnEventHit(EventData)
 --function RANGE:_OnHit(EventData)
   self:F({eventhit = EventData})
-
-  -- Player info
-  local _unitName = EventData.IniUnitName
-  local _unit, _playername = self:_GetPlayerUnitAndName(_unitName)
-  local _unitID   = _unit:GetID()
-
-  -- Target
-  local target     = EventData.TgtUnit
-  local targetname = EventData.TgtUnitName
   
   -- Debug info.
   self:T3(RANGE.id.."HIT: Ini unit   = "..tostring(EventData.IniUnitName))
   self:T3(RANGE.id.."HIT: Ini group  = "..tostring(EventData.IniGroupName))
   self:T3(RANGE.id.."HIT: Tgt target = "..tostring(EventData.TgtUnitName))
+
+  -- Player info
+  local _unitName = EventData.IniUnitName
+  local _unit, _playername = self:_GetPlayerUnitAndName(_unitName)
+  if _unit==nil or _playername==nil then
+    return
+  end
   
+  -- Unit ID
+  local _unitID   = _unit:GetID()
+
+  -- Target
+  local target     = EventData.TgtUnit
+  local targetname = EventData.TgtUnitName
+    
   -- Current strafe target of player.
   local _currentTarget = self.strafeStatus[_unitID]
 
@@ -1485,8 +1494,10 @@ function RANGE:_AddF10Commands(_unitName)
         self.MenuAddedTo[_gid] = true
   
         -- Main F10 menu: F10/On the Range
-        local _rootPath     = missionCommands.addSubMenuForGroup(_gid, "On the Range")
-        local _rangePath    = missionCommands.addSubMenuForGroup(_gid, self.rangename, _rootPath)
+        if RANGE.MenuF10[_gid] == nil then
+          RANGE.MenuF10[_gid]=missionCommands.addSubMenuForGroup(_gid, "On the Range")
+        end
+        local _rangePath    = missionCommands.addSubMenuForGroup(_gid, self.rangename, RANGE.MenuF10[_gid])
         local _statsPath    = missionCommands.addSubMenuForGroup(_gid, "Statistics",   _rangePath)
         local _markPath     = missionCommands.addSubMenuForGroup(_gid, "Mark Targets", _rangePath)
         local _settingsPath = missionCommands.addSubMenuForGroup(_gid, "My Settings",  _rangePath)
