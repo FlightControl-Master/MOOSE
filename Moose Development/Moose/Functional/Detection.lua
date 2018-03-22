@@ -577,7 +577,7 @@ do -- DETECTION_BASE
             self:T2( { TargetIsDetected = TargetIsDetected, TargetIsVisible = TargetIsVisible, TargetLastTime = TargetLastTime, TargetKnowType = TargetKnowType, TargetKnowDistance = TargetKnowDistance, TargetLastPos = TargetLastPos, TargetLastVelocity = TargetLastVelocity } )
 
             -- Only process if the target is visible. Detection also returns invisible units.
-            if Detection.visible == true then
+            --if Detection.visible == true then
             
               local DetectionAccepted = true
               
@@ -713,7 +713,7 @@ do -- DETECTION_BASE
                   self.DetectedObjects[DetectedObjectName] = nil
                 end
               end
-            end
+            --end
           end
           
           self:T2( self.DetectedObjects )
