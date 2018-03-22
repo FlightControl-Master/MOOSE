@@ -97,7 +97,7 @@ end
 function PROCESS_PICKUP:OnHitTarget( Fsm, From, Event, To, Event )
 
 
-  self.TargetSetUnit:Flush()
+  self.TargetSetUnit:Flush( self )
   
   if self.TargetSetUnit:FindUnit( Event.IniUnitName ) then
     self.TargetSetUnit:RemoveUnitsByName( Event.IniUnitName )

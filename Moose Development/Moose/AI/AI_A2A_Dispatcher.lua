@@ -2993,7 +2993,7 @@ do -- AI_A2A_DISPATCHER
       local DetectedZone = DetectedItem.Zone
 
       self:F( { "Target ID", DetectedItem.ItemID } )
-      DetectedSet:Flush()
+      DetectedSet:Flush( self )
 
       local DetectedID = DetectedItem.ID
       local DetectionIndex = DetectedItem.Index

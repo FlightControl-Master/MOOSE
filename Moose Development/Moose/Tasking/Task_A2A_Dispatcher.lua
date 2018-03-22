@@ -375,7 +375,7 @@ do -- TASK_A2A_DISPATCHER
         end
 
         local DetectedSet = DetectedItem.Set -- Core.Set#SET_UNIT
-        --DetectedSet:Flush()
+        --DetectedSet:Flush( self )
         --self:F( { DetectedSetCount = DetectedSet:Count() } )
         if DetectedSet:Count() == 0 then
           Remove = true
@@ -524,7 +524,7 @@ do -- TASK_A2A_DISPATCHER
         local DetectedCount = DetectedSet:Count()
         local DetectedZone = DetectedItem.Zone
         --self:F( { "Targets in DetectedItem", DetectedItem.ItemID, DetectedSet:Count(), tostring( DetectedItem ) } )
-        --DetectedSet:Flush()
+        --DetectedSet:Flush( self )
         
         local DetectedID = DetectedItem.ID
         local TaskIndex = DetectedItem.Index

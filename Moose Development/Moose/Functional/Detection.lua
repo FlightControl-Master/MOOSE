@@ -1729,7 +1729,7 @@ do -- DETECTION_BASE
   -- @param Core.Settings#SETTINGS Settings Message formatting settings to use.
   -- @return Core.Report#REPORT
   function DETECTION_BASE:DetectedItemReportSummary( DetectedItem, AttackGroup, Settings )
-    self:F( Index )
+    self:F()
     return nil
   end
   
@@ -2707,7 +2707,7 @@ do -- DETECTION_AREAS
         DetectedZone.ZoneUNIT:SmokeRed()
       end
       
-      --DetectedSet:Flush()
+      --DetectedSet:Flush( self )
       
       DetectedSet:ForEachUnit(
         --- @param Wrapper.Unit#UNIT DetectedUnit

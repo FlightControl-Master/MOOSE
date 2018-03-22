@@ -113,7 +113,7 @@ function PROTECT:AreProtectUnitsAlive()
   local IsAlive = false
   
   local UnitSet = self.ProtectUnitSet
-  UnitSet:Flush()
+  UnitSet:Flush( self )
   local UnitList = UnitSet:GetSet()
   
   for UnitID, ProtectUnit in pairs( UnitList ) do
@@ -134,7 +134,7 @@ function PROTECT:AreProtectStaticsAlive()
   local IsAlive = false
   
   local StaticSet = self.ProtectStaticSet
-  StaticSet:Flush()
+  StaticSet:Flush( self )
   local StaticList = StaticSet:GetSet()
   
   for UnitID, ProtectStatic in pairs( StaticList ) do
@@ -154,7 +154,7 @@ end
 function PROTECT:IsCaptureUnitInZone()
 
   local CaptureUnitSet = self.CaptureUnitSet
-  CaptureUnitSet:Flush()
+  CaptureUnitSet:Flush( self )
 
   local IsInZone = self.CaptureUnitSet:IsPartiallyInZone( self.ProtectZone )
   

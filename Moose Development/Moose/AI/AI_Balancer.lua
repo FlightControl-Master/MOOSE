@@ -189,9 +189,9 @@ end
 function AI_BALANCER:onenterDestroying( SetGroup, From, Event, To, ClientName, AIGroup )
 
   AIGroup:Destroy()
-  SetGroup:Flush()
+  SetGroup:Flush( self )
   SetGroup:Remove( ClientName )
-  SetGroup:Flush()
+  SetGroup:Flush( self )
 end
 
 --- @param #AI_BALANCER self

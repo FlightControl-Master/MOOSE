@@ -671,7 +671,7 @@ end
 function AI_FORMATION:onafterFormationLine( FollowGroupSet, From , Event , To, XStart, XSpace, YStart, YSpace, ZStart, ZSpace ) --R2.1
   self:F( { FollowGroupSet, From , Event ,To, XStart, XSpace, YStart, YSpace, ZStart, ZSpace } )
 
-  FollowGroupSet:Flush()
+  FollowGroupSet:Flush( self )
   
   local FollowSet = FollowGroupSet:GetSet()
   

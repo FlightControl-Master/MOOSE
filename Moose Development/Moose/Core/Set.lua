@@ -613,7 +613,7 @@ function SET_BASE:Flush( MasterObject )
   for ObjectName, Object in pairs( self.Set ) do
     ObjectNames = ObjectNames .. ObjectName .. ", "
   end
-  self:I( { MasterObject = MasterObject:GetClassNameAndID(), "Objects in Set:", ObjectNames } )
+  self:I( { MasterObject = MasterObject and MasterObject:GetClassNameAndID(), "Objects in Set:", ObjectNames } )
   
   return ObjectNames
 end

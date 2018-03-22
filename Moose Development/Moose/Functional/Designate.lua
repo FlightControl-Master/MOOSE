@@ -771,7 +771,7 @@ do -- DESIGNATE
             --- @param Wrapper.Group#GROUP AttackGroup
             function( AttackGroup )
               if AttackGroup:IsAlive() == true then
-                local DetectionText = self.Detection:DetectedItemReportSummary( DesignateIndex, AttackGroup ):Text( ", " )
+                local DetectionText = self.Detection:DetectedItemReportSummary( DetectedItem, AttackGroup ):Text( ", " )
                 self.CC:GetPositionable():MessageToGroup( "Targets out of LOS\n" .. DetectionText, 10, AttackGroup, self.DesignateName )
               end
             end
@@ -854,7 +854,7 @@ do -- DESIGNATE
           for DesignateIndex, Designating in pairs( self.Designating ) do
             local DetectedItem = DetectedItems[DesignateIndex]
             if DetectedItem then
-              local Report = self.Detection:DetectedItemReportSummary( DesignateIndex, AttackGroup ):Text( ", " )
+              local Report = self.Detection:DetectedItemReportSummary( DetectedItem, AttackGroup ):Text( ", " )
               DetectedReport:Add( string.rep( "-", 140 ) )
               DetectedReport:Add( " - " .. Report )
               if string.find( Designating, "L" ) then
@@ -942,8 +942,8 @@ do -- DESIGNATE
 
           if DetectedItem then
           
-            local Coord = self.Detection:GetDetectedItemCoordinate( DesignateIndex )
-            local ID = self.Detection:GetDetectedItemID( DesignateIndex )
+            local Coord = self.Detection:GetDetectedItemCoordinate( DetectedItem )
+            local ID = self.Detection:GetDetectedItemID( DetectedItem )
             local MenuText = ID --.. ", " .. Coord:ToStringA2G( AttackGroup )
             
             MenuText = string.format( "(%3s) %s", Designating, MenuText )
@@ -1101,14 +1101,15 @@ do -- DESIGNATE
   function DESIGNATE:onafterLasing( From, Event, To, Index, Duration, LaserCodeRequested )
   
   
-    local TargetSetUnit = self.Detection:GetDetectedSet( Index )
+    local DetectedItem = self.Detection:GetDetectedItemByIndex( Index )
+    local TargetSetUnit = self.Detection:GetDetectedSet( DetectedItem )
 
     local MarkingCount = 0
     local MarkedTypes = {}
     local ReportTypes = REPORT:New()
     local ReportLaserCodes = REPORT:New()
     
-    TargetSetUnit:Flush()
+    TargetSetUnit:Flush( self )
 
     --self:F( { Recces = self.Recces } ) 
     for TargetUnit, RecceData in pairs( self.Recces ) do
@@ -1156,7 +1157,7 @@ do -- DESIGNATE
               if not Recce then
     
                 self:F( "Lasing..." )
-                self.RecceSet:Flush()
+                self.RecceSet:Flush( self)
     
                 for RecceGroupID, RecceGroup in pairs( self.RecceSet:GetSet() ) do
                   for UnitID, UnitData in pairs( RecceGroup:GetUnits() or {} ) do
@@ -1270,7 +1271,8 @@ do -- DESIGNATE
       CC:MessageToSetGroup( "Stopped lasing.", 5, self.AttackSet, self.DesignateName )
     end
     
-    local TargetSetUnit = self.Detection:GetDetectedSet( Index )
+    local DetectedItem = self.Detection:GetDetectedItemByIndex( Index )
+    local TargetSetUnit = self.Detection:GetDetectedSet( DetectedItem )
     
     local Recces = self.Recces
     
@@ -1294,7 +1296,8 @@ do -- DESIGNATE
   -- @return #DESIGNATE
   function DESIGNATE:onafterSmoke( From, Event, To, Index, Color )
   
-    local TargetSetUnit = self.Detection:GetDetectedSet( Index )
+    local DetectedItem = self.Detection:GetDetectedItemByIndex( Index )
+    local TargetSetUnit = self.Detection:GetDetectedSet( DetectedItem )
     local TargetSetUnitCount = TargetSetUnit:Count()
   
     local MarkedCount = 0
@@ -1338,7 +1341,8 @@ do -- DESIGNATE
   -- @return #DESIGNATE
   function DESIGNATE:onafterIlluminate( From, Event, To, Index )
   
-    local TargetSetUnit = self.Detection:GetDetectedSet( Index )
+    local DetectedItem = self.Detection:GetDetectedItemByIndex( Index )
+    local TargetSetUnit = self.Detection:GetDetectedSet( DetectedItem )
     local TargetUnit = TargetSetUnit:GetFirst()
   
     if TargetUnit then
