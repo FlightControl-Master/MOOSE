@@ -336,7 +336,7 @@ end
 -- @param #number UnitNumber The number of the UNIT wrapper class to be returned.
 -- @return Wrapper.Unit#UNIT The UNIT wrapper class.
 function GROUP:GetUnit( UnitNumber )
-  self:F2( { self.GroupName, UnitNumber } )
+  self:E( { self.GroupName, UnitNumber } )
 
   local DCSGroup = self:GetDCSObject()
 
