@@ -470,6 +470,7 @@ do -- DESIGNATE
     self.LaseDuration = 60
     
     self:SetFlashStatusMenu( false )
+    self:SetFlashDetectionMessages( true )
     self:SetMission( Mission )
     
     self:SetLaserCodes( { 1688, 1130, 4785, 6547, 1465, 4578 } ) -- set self.LaserCodes
@@ -495,19 +496,58 @@ do -- DESIGNATE
     return self
   end
 
-  --- Set the flashing of the status menu.
+  --- Set the flashing of the status menu for all AttackGroups.
   -- @param #DESIGNATE self
   -- @param #boolean FlashMenu true: the status menu will be flashed every detection run; false: no flashing of the menu.
   -- @return #DESIGNATE
+  -- @usage
+  -- 
+  -- -- Enable the designate status message flashing...
+  -- Designate:SetFlashStatusMenu( true )
+  -- 
+  -- -- Disable the designate statusmessage flashing...
+  -- Designate:SetFlashStatusMenu()
+  -- 
+  -- -- Disable the designate status message flashing...
+  -- Designate:SetFlashStatusMenu( false )
   function DESIGNATE:SetFlashStatusMenu( FlashMenu ) --R2.1
 
     self.FlashStatusMenu = {}
 
     self.AttackSet:ForEachGroupAlive(
     
-      --- @param Wrapper.Group#GROUP GroupReport
+      --- @param Wrapper.Group#GROUP AttackGroup
       function( AttackGroup )
         self.FlashStatusMenu[AttackGroup] = FlashMenu
+      end
+    )
+
+    return self
+  end
+
+  --- Set the flashing of the new detection messages.
+  -- @param #DESIGNATE self
+  -- @param #boolean FlashDetectionMessage true: The detection message will be flashed every time a new detection was done; false: no messages will be displayed.
+  -- @return #DESIGNATE
+  -- @usage
+  -- 
+  -- -- Enable the message flashing...
+  -- Designate:SetFlashDetectionMessages( true )
+  -- 
+  -- -- Disable the message flashing...
+  -- Designate:SetFlashDetectionMessages()
+  -- 
+  -- -- Disable the message flashing...
+  -- Designate:SetFlashDetectionMessages( false )
+  function DESIGNATE:SetFlashDetectionMessages( FlashDetectionMessage )
+
+    self.FlashDetectionMessage = {}
+
+    self.AttackSet:ForEachGroupAlive(
+    
+      --- @param Wrapper.Group#GROUP AttackGroup
+      function( AttackGroup )
+        self.FlashDetectionMessage[AttackGroup] = FlashDetectionMessage
       end
     )
 
@@ -795,8 +835,10 @@ do -- DESIGNATE
               -- ok, we added one item to the designate scope.
               self.AttackSet:ForEachGroupAlive(
                 function( AttackGroup )
-                  local DetectionText = self.Detection:DetectedItemReportSummary( DetectedItem, AttackGroup ):Text( ", " )
-                  self.CC:GetPositionable():MessageToGroup( "Targets detected at \n" .. DetectionText, 10, AttackGroup, self.DesignateName )
+                  if self.FlashDetectionMessage[AttackGroup] == true then
+                    local DetectionText = self.Detection:DetectedItemReportSummary( DetectedItem, AttackGroup ):Text( ", " )
+                    self.CC:GetPositionable():MessageToGroup( "Targets detected at \n" .. DetectionText, 10, AttackGroup, self.DesignateName )
+                  end
                 end
               )
               self.Designating[DesignateIndex] = ""
