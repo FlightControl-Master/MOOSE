@@ -516,7 +516,7 @@ do -- DESIGNATE
 
     self.AttackSet:ForEachGroupAlive(
     
-      --- @param Wrapper.Group#GROUP GroupReport
+      --- @param Wrapper.Group#GROUP AttackGroup
       function( AttackGroup )
         self.FlashStatusMenu[AttackGroup] = FlashMenu
       end
@@ -545,7 +545,7 @@ do -- DESIGNATE
 
     self.AttackSet:ForEachGroupAlive(
     
-      --- @param Wrapper.Group#GROUP GroupReport
+      --- @param Wrapper.Group#GROUP AttackGroup
       function( AttackGroup )
         self.FlashDetectionMessage[AttackGroup] = FlashDetectionMessage
       end
