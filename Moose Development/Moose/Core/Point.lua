@@ -303,6 +303,18 @@ do -- COORDINATE
   end
 
 
+  --- Return a random Coordinate within an Outer Radius and optionally NOT within an Inner Radius of the COORDINATE.
+  -- @param #COORDINATE self
+  -- @param Dcs.DCSTypes#Distance OuterRadius
+  -- @param Dcs.DCSTypes#Distance InnerRadius
+  -- @return #COORDINATE
+  function COORDINATE:GetRandomCoordinateInRadius( OuterRadius, InnerRadius )
+    self:F2( { OuterRadius, InnerRadius } )
+
+    return COORDINATE:NewFromVec2( self:GetRandomVec2InRadius( OuterRadius, InnerRadius ) )
+  end
+
+
   --- Return a random Vec3 within an Outer Radius and optionally NOT within an Inner Radius of the COORDINATE.
   -- @param #COORDINATE self
   -- @param Dcs.DCSTypes#Distance OuterRadius

@@ -261,7 +261,7 @@ function CARGO:New( Type, Name, Weight ) --R2.1
   self.Name = Name
   self.Weight = Weight
   self.CargoObject = nil
-  self.CargoCarrier = nil
+  self.CargoCarrier = nil -- Wrapper.Client#CLIENT
   self.Representable = false
   self.Slingloadable = false
   self.Moveable = false
@@ -753,7 +753,7 @@ do -- CARGO_UNIT
   
     if From == "Loaded" then
   
-      local CargoCarrier = self.CargoCarrier -- Wrapper.Controllable#CONTROLLABLE
+      local CargoCarrier = self.CargoCarrier -- Wrapper.Client#CLIENT
   
       local CargoCarrierPointVec2 = CargoCarrier:GetPointVec2()
       local CargoCarrierHeading = self.CargoCarrier:GetHeading() -- Get Heading of object in degrees.
@@ -764,11 +764,12 @@ do -- CARGO_UNIT
       
       
       -- if there is no ToPointVec2 given, then use the CargoRoutePointVec2
-      ToPointVec2 = ToPointVec2 or CargoRoutePointVec2
+      ToPointVec2 = ToPointVec2 or CargoCarrierPointVec2:GetRandomCoordinateInRadius( NearRadius, 5 )
       local DirectionVec3 = CargoCarrierPointVec2:GetDirectionVec3(ToPointVec2)
       local Angle = CargoCarrierPointVec2:GetAngleDegrees(DirectionVec3)
   
       local CargoDeployPointVec2 = CargoCarrierPointVec2:Translate( DeployDistance, Angle )
+      local CargoDeployPointVec2 = CargoCarrierPointVec2:GetRandomCoordinateInRadius( NearRadius, 5 )
       
       local FromPointVec2 = CargoCarrierPointVec2
   
@@ -937,7 +938,7 @@ do -- CARGO_UNIT
   -- @param #string Event
   -- @param #string From
   -- @param #string To
-  -- @param Wrapper.Unit#UNIT CargoCarrier
+  -- @param Wrapper.Client#CLIENT CargoCarrier
   -- @param #number NearRadius
   function CARGO_UNIT:onafterBoarding( From, Event, To, CargoCarrier, NearRadius, ... )
     self:F( { From, Event, To, CargoCarrier.UnitName, NearRadius } )
@@ -1366,6 +1367,8 @@ function CARGO_GROUP:onenterUnBoarding( From, Event, To, ToPointVec2, NearRadius
   self:F( {From, Event, To, ToPointVec2, NearRadius } )
 
   NearRadius = NearRadius or 25
+  
+  local CargoCarrier = self.CargoCarrier -- Wrapper.Client#CLIENT
 
   local Timer = 1
 
