@@ -14,7 +14,7 @@ print( "Moose target path         : " .. MooseTargetPath )
 
 local MooseSourcesFilePath =  MooseSetupPath .. "/Moose.files"
 local LoaderFilePath = MooseTargetPath.."/Moose.lua"
-local MooseFilePath = MooseDevelopmentPath .. "/Moose.lua"
+local MooseFilePath = MooseTargetPath .. "/Loader.lua"
 
 print( "Reading Moose source list : " .. MooseSourcesFilePath )
 
