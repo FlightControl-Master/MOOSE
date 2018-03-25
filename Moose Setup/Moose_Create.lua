@@ -17,10 +17,10 @@ local MooseFilePath = MooseTargetPath.."/Moose.lua"
 
 print( "Reading Moose source list : " .. MooseSourcesFilePath )
 
-local MooseFile = io.open( MooseFilePath, "w" )
+local LoaderFile = io.open( MooseFilePath, "w" )
 
 if MooseDynamicStatic == "S" then
-  MooseFile:write( "env.info( '*** MOOSE GITHUB Commit Hash ID: " .. MooseCommitHash .. " ***' )\n" )
+  LoaderFile:write( "env.info( '*** MOOSE GITHUB Commit Hash ID: " .. MooseCommitHash .. " ***' )\n" )
 end  
 
 local MooseLoaderPath
@@ -31,12 +31,14 @@ if MooseDynamicStatic == "S" then
   MooseLoaderPath = MooseSetupPath .. "/Moose Templates/Moose_Static_Loader.lua"
 end
 
+local MooseFile = io.open( MooseFilePath, "w" )
+
 local MooseLoader = io.open( MooseLoaderPath, "r" )
 local MooseLoaderText = MooseLoader:read( "*a" )
 MooseLoader:close()
 
-MooseFile:write( MooseLoaderText )
-
+LoaderFile:write( MooseLoaderText )
+LoaderFile:write( "__Moose.Include( 'Scripts/Moose/Moose.lua'\n" )
 
 local MooseSourcesFile = io.open( MooseSourcesFilePath, "r" )
 local MooseSource = MooseSourcesFile:read("*l")
@@ -55,7 +57,7 @@ while( MooseSource ) do
       local MooseSourceFileText = MooseSourceFile:read( "*a" )
       MooseSourceFile:close()
       
-      MooseFile:write( MooseSourceFileText )
+      LoaderFile:write( MooseSourceFileText )
     end
   end
   
@@ -63,13 +65,14 @@ while( MooseSource ) do
 end
 
 if MooseDynamicStatic == "D" then
-  MooseFile:write( "BASE:TraceOnOff( true )\n" )
+  LoaderFile:write( "BASE:TraceOnOff( true )\n" )
 end
 if MooseDynamicStatic == "S" then
-  MooseFile:write( "BASE:TraceOnOff( false )\n" )
+  LoaderFile:write( "BASE:TraceOnOff( false )\n" )
 end
 
-MooseFile:write( "env.info( '*** MOOSE INCLUDE END *** ' )\n" )
+LoaderFile:write( "env.info( '*** MOOSE INCLUDE END *** ' )\n" )
 
 MooseSourcesFile:close()
+LoaderFile:close()
 MooseFile:close()
