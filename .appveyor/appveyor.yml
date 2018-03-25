@@ -57,7 +57,7 @@ build_script:
            "Content-type" = "application/json"
            }
          $RequestBody = @{ accountName = 'FlightControl-Master'; projectSlug = 'moose-include'; branch = "$env:appveyor_repo_branch"; environmentVariables = @{} } | ConvertTo-Json
-         # get project with last build details
+         # Generate the new version ...
          $project = Invoke-RestMethod -method Post -Uri "$apiUrl/builds" -Headers $headers -Body $RequestBody
        }
    - ps: | 
