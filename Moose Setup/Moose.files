@@ -79,4 +79,4 @@ Tasking/Task_A2A.lua
 Tasking/Task_Cargo.lua
 Tasking/TaskZoneCapture.lua
 
-Moose.lua
+Globals.lua

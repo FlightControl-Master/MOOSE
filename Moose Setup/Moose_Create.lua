@@ -13,11 +13,12 @@ print( "Moose setup path          : " .. MooseSetupPath )
 print( "Moose target path         : " .. MooseTargetPath )
 
 local MooseSourcesFilePath =  MooseSetupPath .. "/Moose.files"
-local MooseFilePath = MooseTargetPath.."/Moose.lua"
+local LoaderFilePath = MooseTargetPath.."/Moose.lua"
+local MooseFilePath = MooseDevelopmentPath .. "/Moose.lua"
 
 print( "Reading Moose source list : " .. MooseSourcesFilePath )
 
-local LoaderFile = io.open( MooseFilePath, "w" )
+local LoaderFile = io.open( LoaderFilePath, "w" )
 
 if MooseDynamicStatic == "S" then
   LoaderFile:write( "env.info( '*** MOOSE GITHUB Commit Hash ID: " .. MooseCommitHash .. " ***' )\n" )
