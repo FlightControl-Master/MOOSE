@@ -1312,6 +1312,7 @@ function CARGO_GROUP:onafterBoarding( From, Event, To, CargoCarrier, NearRadius,
       if not Boarded then
         self:__Boarding( 1, CargoCarrier, NearRadius, ... )
       else
+        self:F("Group Cargo is loaded")
         self:__Load( 1, CargoCarrier, ... )
       end
     else
@@ -1457,6 +1458,27 @@ end
       self.onenterDestroyed = nil
     end
       
+  end
+  
+  --- Route Cargo to Coordinate and randomize locations.
+  -- @param #CARGO_GROUP self
+  -- @param Core.Point#COORDINATE Coordinate
+  function CARGO_GROUP:RouteTo( Coordinate )
+    self:F(  )
+    
+    --local NearRadius = NearRadius or 25
+    
+    if From == "UnLoaded" then
+  
+      -- For each Cargo object within the CARGO_GROUPED, route each object to the CargoLoadPointVec2
+      self.CargoSet:ForEach(
+        function( Cargo, Coordinate )
+          Cargo.CargoObject:RouteTo( Coordinate )
+        end, Coordinate
+      )
+
+    end
+    
   end
 
 end -- CARGO_GROUP

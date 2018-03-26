@@ -36,15 +36,16 @@ function AI_CARGO_TROOPS:New( CargoCarrier, CargoGroup, CombatRadius )
   self.Zone = ZONE_UNIT:New( self.CargoCarrier:GetName() .. "-Zone", self.CargoCarrier, CombatRadius )
   self.Coalition = self.CargoCarrier:GetCoalition()
   
-  self:SetControllable( self.CargoCarrier )
+  self:SetControllable( CargoCarrier )
 
   self:SetStartState( "UnLoaded" ) 
   
   self:AddTransition( "*", "Load", "Boarding" )
-  self:AddTransition( "Boarding", "Boarding", "Boarding" )
+  self:AddTransition( "Boarding", "Board", "Boarding" )
   self:AddTransition( "Boarding", "Loaded", "Loaded" )
   self:AddTransition( "Loaded", "Unload", "Unboarding" )
-  self:AddTransition( "UnBoarding", "Unloaded", "Unloaded" )
+  self:AddTransition( "Unboarding", "Unboard", "Unboarding" )
+  self:AddTransition( "Unboarding", "Unloaded", "Unloaded" )
   
   self:AddTransition( "*", "Monitor", "*" )
 
@@ -63,17 +64,24 @@ function AI_CARGO_TROOPS:onafterMonitor( CargoCarrier, From, Event, To )
   if CargoCarrier and CargoCarrier:IsAlive() then
     if self.Coordinate then
       local Coordinate = CargoCarrier:GetCoordinate()
-      if Coordinate:IsAtCoordinate2D( self.Coordinate, 2 ) then
-        self.Zone:Scan( { Object.Category.UNIT } )
-        if self.Zone:IsAllInZoneOfCoalition( self.Coalition ) then
-        else
-          if not self:Is( "Unloaded" ) then
-            -- There are enemies within combat range. Unload the CargoCarrier.
-            self:__Unload( 1 )
-            self.CargoCarrier:RouteStop()
-          end
+      self.Zone:Scan( { Object.Category.UNIT } )
+      if self.Zone:IsAllInZoneOfCoalition( self.Coalition ) then
+--        if self:Is( "Unloaded" ) then
+--          -- There are no enemies within combat range. Load the CargoCarrier.
+--          self:__Load( 1 )
+--        end
+      else
+        if self:Is( "Loaded" ) then
+          -- There are enemies within combat range. Unload the CargoCarrier.
+          self:__Unload( 1 )
         end
       end
+      if self:Is( "Unloaded" ) then
+        if not Coordinate:IsAtCoordinate2D( self.Coordinate, 2 ) then
+          --self.CargoGroup:RouteTo( Coordinate, 30 )
+        end
+      end
+      
     else
       self.Coordinate = CargoCarrier:GetCoordinate()
     end
@@ -90,23 +98,23 @@ function AI_CARGO_TROOPS:onafterLoad( CargoCarrier, From, Event, To )
   self:F( { CargoCarrier, From, Event, To } )
 
   if CargoCarrier and CargoCarrier:IsAlive() then
-    self.CargoGroup:__Board( 1, CargoCarrier, 100 )
-    self:__Boarding( 1 ) 
+    CargoCarrier:RouteStop()
+    self:Board() 
+    self.CargoGroup:Board( CargoCarrier, 100 )
   end
   
 end
 
 --- @param #AI_CARGO_TROOPS self
 -- @param Wrapper.Unit#UNIT CargoCarrier
-function AI_CARGO_TROOPS:onafterBoarding( CargoCarrier, From, Event, To )
+function AI_CARGO_TROOPS:onafterBoard( CargoCarrier, From, Event, To )
   self:F( { CargoCarrier, From, Event, To } )
 
   if CargoCarrier and CargoCarrier:IsAlive() then
-    if self.CargoGroup:IsBoarding() then
-      self:__Boarding( 1 ) 
-    end
-    
-    if self.CargoGroup:IsLoaded() then
+    self:F({ IsLoaded = self.CargoGroup:IsLoaded() } )
+    if not self.CargoGroup:IsLoaded() then
+      self:__Board( 1 )
+    else
       self:__Loaded( 1 )
     end
   end
@@ -119,8 +127,47 @@ function AI_CARGO_TROOPS:onafterLoaded( CargoCarrier, From, Event, To )
   self:F( { CargoCarrier, From, Event, To } )
 
   if CargoCarrier and CargoCarrier:IsAlive() then
-    CargoCarrier:RouteStop()
+    CargoCarrier:RouteResume()
   end
   
 end
 
+
+--- @param #AI_CARGO_TROOPS self
+-- @param Wrapper.Unit#UNIT CargoCarrier
+function AI_CARGO_TROOPS:onafterUnload( CargoCarrier, From, Event, To )
+  self:F( { CargoCarrier, From, Event, To } )
+
+  if CargoCarrier and CargoCarrier:IsAlive() then
+    CargoCarrier:RouteStop()
+    self.CargoGroup:UnBoard( )
+    self:__Unboard( 1 ) 
+  end
+  
+end
+
+--- @param #AI_CARGO_TROOPS self
+-- @param Wrapper.Unit#UNIT CargoCarrier
+function AI_CARGO_TROOPS:onafterUnboard( CargoCarrier, From, Event, To )
+  self:F( { CargoCarrier, From, Event, To } )
+
+  if CargoCarrier and CargoCarrier:IsAlive() then
+    if not self.CargoGroup:IsUnLoaded() then
+      self:__Unboard( 1 ) 
+    else
+      self:Unloaded()
+    end
+  end
+  
+end
+
+--- @param #AI_CARGO_TROOPS self
+-- @param Wrapper.Unit#UNIT CargoCarrier
+function AI_CARGO_TROOPS:onafterUnloaded( CargoCarrier, From, Event, To )
+  self:F( { CargoCarrier, From, Event, To } )
+
+  if CargoCarrier and CargoCarrier:IsAlive() then
+    CargoCarrier:RouteResume()
+  end
+  
+end
