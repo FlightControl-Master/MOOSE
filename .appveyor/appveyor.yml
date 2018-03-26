@@ -48,7 +48,7 @@ install:
 
 build_script:
    - ps: | 
-       if( $env:appveyor_repo_branch -eq 'master' )     
+       if( $env:appveyor_repo_branch -eq 'master' -or $env:appveyor_repo_branch -eq 'develop' )     
        {
          $apiUrl = 'https://ci.appveyor.com/api'
          $token = 'qts80b5kpq0ooj4x6vvw'
@@ -56,8 +56,8 @@ build_script:
            "Authorization" = "Bearer $token"
            "Content-type" = "application/json"
            }
-         $RequestBody = @{ accountName = 'FlightControl-Master'; projectSlug = 'moose-include'; branch = 'master'; environmentVariables = @{} } | ConvertTo-Json
-         # get project with last build details
+         $RequestBody = @{ accountName = 'FlightControl-Master'; projectSlug = 'moose-include'; branch = "$env:appveyor_repo_branch"; environmentVariables = @{} } | ConvertTo-Json
+         # Generate the new version ...
          $project = Invoke-RestMethod -method Post -Uri "$apiUrl/builds" -Headers $headers -Body $RequestBody
        }
    - ps: | 
