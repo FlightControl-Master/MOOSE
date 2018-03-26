@@ -793,16 +793,16 @@ do -- DESIGNATE
   -- @return #DESIGNATE
   function DESIGNATE:DesignationScope()
 
-    local DetectedItems = self.Detection:GetDetectedItems()
+    local DetectedItems = self.Detection:GetDetectedItemsByIndex()
     
     local DetectedItemCount = 0
     
     for DesignateIndex, Designating in pairs( self.Designating ) do
-      local DetectedItem = DetectedItems[DesignateIndex]
+      local DetectedItem = self.Detection:GetDetectedItemByIndex( DesignateIndex )
       if DetectedItem then
         -- Check LOS...
         local IsDetected = self.Detection:IsDetectedItemDetected( DetectedItem )
-        self:F({IsDetected = IsDetected, DetectedItem })
+        self:F({IsDetected = IsDetected })
         if IsDetected == false then
           self:F("Removing")
           -- This Detection is obsolete, remove from the designate scope
@@ -861,7 +861,7 @@ do -- DESIGNATE
   -- @return #DESIGNATE
   function DESIGNATE:CoordinateLase()
 
-    local DetectedItems = self.Detection:GetDetectedItems()
+    local DetectedItems = self.Detection:GetDetectedItemsByIndex()
     
     for DesignateIndex, Designating in pairs( self.Designating ) do
       local DetectedItem = DetectedItems[DesignateIndex]
@@ -891,7 +891,7 @@ do -- DESIGNATE
         if self.FlashStatusMenu[AttackGroup] or ( MenuAttackGroup and ( AttackGroup:GetName() == MenuAttackGroup:GetName() ) ) then
 
           local DetectedReport = REPORT:New( "Targets ready for Designation:" )
-          local DetectedItems = self.Detection:GetDetectedItems()
+          local DetectedItems = self.Detection:GetDetectedItemsByIndex()
           
           for DesignateIndex, Designating in pairs( self.Designating ) do
             local DetectedItem = DetectedItems[DesignateIndex]
