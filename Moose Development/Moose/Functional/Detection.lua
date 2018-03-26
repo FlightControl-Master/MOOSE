@@ -1517,12 +1517,22 @@ do -- DETECTION_BASE
   end
   
   
-  --- Get the detected @{Set#SET_BASE}s.
+  --- Get the DetectedItems by Key.
+  -- This will return the DetectedItems collection, indexed by the Key, which can be any object that acts as the key of the detection.
   -- @param #DETECTION_BASE self
   -- @return #DETECTION_BASE.DetectedItems
   function DETECTION_BASE:GetDetectedItems()
   
     return self.DetectedItems
+  end
+  
+  --- Get the DetectedItems by Index.
+  -- This will return the DetectedItems collection, indexed by an internal numerical Index.
+  -- @param #DETECTION_BASE self
+  -- @return #DETECTION_BASE.DetectedItems
+  function DETECTION_BASE:GetDetectedItemsByIndex()
+  
+    return self.DetectedItemsByIndex
   end
   
   --- Get the amount of SETs with detected objects.
@@ -1880,7 +1890,7 @@ do -- DETECTION_UNITS
   
     -- Loop the current detected items, and check if each object still exists and is detected.
     
-    for DetectedItemID, DetectedItem in pairs( self.DetectedItems ) do
+    for DetectedItemKey, DetectedItem in pairs( self.DetectedItems ) do
     
       local DetectedItemSet = DetectedItem.Set -- Core.Set#SET_UNIT
       
@@ -1914,6 +1924,11 @@ do -- DETECTION_UNITS
           self:AddChangeUnit( DetectedItem, "RU", DetectedUnitName )
           DetectedItemSet:Remove( DetectedUnitName )
         end
+      end
+      if DetectedItemSet:Count() == 0 then
+        -- Now the Set is empty, meaning that a detected item has no units anymore.
+        -- Delete the DetectedItem from the detections
+        self:RemoveDetectedItem( DetectedItemKey )
       end
     end
 
@@ -2126,7 +2141,7 @@ do -- DETECTION_TYPES
   
     -- Loop the current detected items, and check if each object still exists and is detected.
     
-    for DetectedItemID, DetectedItem in pairs( self.DetectedItems ) do
+    for DetectedItemKey, DetectedItem in pairs( self.DetectedItems ) do
     
       local DetectedItemSet = DetectedItem.Set -- Core.Set#SET_UNIT
       local DetectedTypeName = DetectedItem.TypeName
@@ -2148,6 +2163,11 @@ do -- DETECTION_TYPES
           self:AddChangeUnit( DetectedItem, "RU", DetectedUnitName )
           DetectedItemSet:Remove( DetectedUnitName )
         end
+      end
+      if DetectedItemSet:Count() == 0 then
+        -- Now the Set is empty, meaning that a detected item has no units anymore.
+        -- Delete the DetectedItem from the detections
+        self:RemoveDetectedItem( DetectedItemKey )
       end
     end
 

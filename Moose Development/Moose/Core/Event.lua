@@ -826,7 +826,7 @@ function EVENT:onEvent( Event )
         Event.TgtDCSUnit = Event.target
         Event.TgtDCSUnitName = Event.TgtDCSUnit:getName()
         Event.TgtUnitName = Event.TgtDCSUnitName
-        Event.TgtUnit = STATIC:FindByName( Event.TgtDCSUnitName )
+        Event.TgtUnit = STATIC:FindByName( Event.TgtDCSUnitName, false )
         Event.TgtCoalition = Event.TgtDCSUnit:getCoalition()
         Event.TgtCategory = Event.TgtDCSUnit:getDesc().category
         Event.TgtTypeName = Event.TgtDCSUnit:getTypeName()
