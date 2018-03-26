@@ -8,8 +8,8 @@
 --
 -- @module AI_Cargo_Troops
 
---- @type AI_Cargo_Troops
--- @extends Core.Base#BASE
+--- @type AI_CARGO_TROOPS
+-- @extends Core.Fsm#FSM_CONTROLLABLE
 
 
 --- # AI\_CARGO\_TROOPS class, extends @{Core.Base@BASE}
@@ -19,6 +19,7 @@
 -- @field #AI_CARGO_TROOPS
 AI_CARGO_TROOPS = {
   ClassName = "AI_CARGO_TROOPS",
+  Coordinate = nil -- Core.Point#COORDINATE,
 }
 
 --- Creates a new AI_CARGO_TROOPS object
@@ -31,6 +32,9 @@ function AI_CARGO_TROOPS:New( CargoCarrier, CargoGroup, CombatRadius )
   self.CargoCarrier = CargoCarrier -- Wrapper.Unit#UNIT
   self.CargoGroup = CargoGroup -- Core.Cargo#CARGO_GROUP
   self.CombatRadius = CombatRadius
+  
+  self.Zone = ZONE_UNIT:New( self.CargoCarrier:GetName() .. "-Zone", self.CargoCarrier, CombatRadius )
+  self.Coalition = self.CargoCarrier:GetCoalition()
   
   self:SetControllable( self.CargoCarrier )
 
@@ -57,6 +61,22 @@ function AI_CARGO_TROOPS:onafterMonitor( CargoCarrier, From, Event, To )
   self:F( { CargoCarrier, From, Event, To } )
 
   if CargoCarrier and CargoCarrier:IsAlive() then
+    if self.Coordinate then
+      local Coordinate = CargoCarrier:GetCoordinate()
+      if Coordinate:IsAtCoordinate2D( self.Coordinate, 2 ) then
+        self.Zone:Scan( { Object.Category.UNIT } )
+        if self.Zone:IsAllInZoneOfCoalition( self.Coalition ) then
+        else
+          if not self:Is( "Unloaded" ) then
+            -- There are enemies within combat range. Unload the CargoCarrier.
+            self:__Unload( 1 )
+            self.CargoCarrier:RouteStop()
+          end
+        end
+      end
+    else
+      self.Coordinate = CargoCarrier:GetCoordinate()
+    end
   end
   
   self:__Monitor( 1 )
@@ -99,6 +119,7 @@ function AI_CARGO_TROOPS:onafterLoaded( CargoCarrier, From, Event, To )
   self:F( { CargoCarrier, From, Event, To } )
 
   if CargoCarrier and CargoCarrier:IsAlive() then
+    CargoCarrier:RouteStop()
   end
   
 end
