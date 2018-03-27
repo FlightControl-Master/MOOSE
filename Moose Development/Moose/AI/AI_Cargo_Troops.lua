@@ -126,7 +126,7 @@ function AI_CARGO_TROOPS:onafterMonitor( CargoCarrier, From, Event, To )
       local Coordinate = CargoCarrier:GetCoordinate()
       self.Zone:Scan( { Object.Category.UNIT } )
       if self.Zone:IsAllInZoneOfCoalition( self.Coalition ) then
-        if self:Is( "Unloaded" ) or self:Is( "Guarding" ) then
+        if self:Is( "Unloaded" ) or self:Is( "Guarding" ) or self:Is( "Following" ) then
           -- There are no enemies within combat range. Load the CargoCarrier.
           self:__Load( 1 )
         end
@@ -158,7 +158,7 @@ function AI_CARGO_TROOPS:onafterLoad( CargoCarrier, From, Event, To )
   if CargoCarrier and CargoCarrier:IsAlive() then
     CargoCarrier:RouteStop()
     self:Board() 
-    self.CargoGroup:Board( CargoCarrier, 5 )
+    self.CargoGroup:Board( CargoCarrier, 25 )
   end
   
 end
