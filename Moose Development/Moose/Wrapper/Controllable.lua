@@ -1908,6 +1908,28 @@ function CONTROLLABLE:Route( Route, DelaySeconds )
 end
 
 
+--- Stops the movement of the vehicle on the route.
+-- @param #CONTROLLABLE self
+-- @return #CONTROLLABLE
+function CONTROLLABLE:RouteStop()
+  self:F2()
+  
+  local CommandStop = self:CommandStopRoute( true )
+  self:SetCommand( CommandStop )
+
+end
+
+--- Resumes the movement of the vehicle on the route.
+-- @param #CONTROLLABLE self
+-- @return #CONTROLLABLE
+function CONTROLLABLE:RouteResume()
+  self:F2()
+  
+  local CommandResume = self:CommandStopRoute( false )
+  self:SetCommand( CommandResume )
+
+end
+
 --- Make the GROUND Controllable to drive towards a specific point.
 -- @param #CONTROLLABLE self
 -- @param Core.Point#COORDINATE ToCoordinate A Coordinate to drive to.

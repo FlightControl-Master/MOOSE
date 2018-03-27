@@ -192,6 +192,20 @@ do -- COORDINATE
     return self
   end
 
+  --- COORDINATE constructor.
+  -- @param #COORDINATE self
+  -- @param #COORDINATE Coordinate.
+  -- @return #COORDINATE
+  function COORDINATE:NewFromCoordinate( Coordinate ) 
+
+    local self = BASE:Inherit( self, BASE:New() ) -- #COORDINATE
+    self.x = Coordinate.x
+    self.y = Coordinate.y
+    self.z = Coordinate.z
+    
+    return self
+  end
+
   --- Create a new COORDINATE object from  Vec2 coordinates.
   -- @param #COORDINATE self
   -- @param Dcs.DCSTypes#Vec2 Vec2 The Vec2 point.
@@ -240,6 +254,25 @@ do -- COORDINATE
   function COORDINATE:GetVec2()
     return { x = self.x, y = self.z }
   end
+
+  
+  --- Returns if the 2 coordinates are at the same 2D position.
+  -- @param #COORDINATE self
+  -- @param #COORDINATE Coordinate
+  -- @param #number Precision
+  -- @return #boolean true if at the same position.
+  function COORDINATE:IsAtCoordinate2D( Coordinate, Precision )
+    
+    self:F( { Coordinate = Coordinate:GetVec2() } )
+    self:F( { self = self:GetVec2() } )
+    
+    local x = Coordinate.x
+    local z = Coordinate.z
+    
+    return x - Precision <= self.x and x + Precision >= self.x and z - Precision <= self.z and z + Precision >= self.z   
+  end
+  
+  
 
   --TODO: check this to replace
   --- Calculate the distance from a reference @{DCSTypes#Vec2}.
