@@ -22,7 +22,7 @@ AI_CARGO_TROOPS = {
   Coordinate = nil -- Core.Point#COORDINATE,
 }
 
---- Creates a new AI_CARGO_TROOPS object
+--- Creates a new AI_CARGO_TROOPS object.
 -- @param #AI_CARGO_TROOPS self
 -- @return #AI_CARGO_TROOPS
 function AI_CARGO_TROOPS:New( CargoCarrier, CargoGroup, CombatRadius )
