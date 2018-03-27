@@ -760,41 +760,44 @@ do -- CARGO_UNIT
   
     if From == "Loaded" then
   
-      local CargoCarrier = self.CargoCarrier -- Wrapper.Controllable#CONTROLLABLE
+      if not self:IsDestroyed() then
   
-      local CargoCarrierPointVec2 = CargoCarrier:GetPointVec2()
-      local CargoCarrierHeading = self.CargoCarrier:GetHeading() -- Get Heading of object in degrees.
-      local CargoDeployHeading = ( ( CargoCarrierHeading + Angle ) >= 360 ) and ( CargoCarrierHeading + Angle - 360 ) or ( CargoCarrierHeading + Angle )
-  
-  
-      local CargoRoutePointVec2 = CargoCarrierPointVec2:Translate( RouteDistance, CargoDeployHeading )
-      
-      
-      -- if there is no ToPointVec2 given, then use the CargoRoutePointVec2
-      ToPointVec2 = ToPointVec2 or CargoRoutePointVec2
-      local DirectionVec3 = CargoCarrierPointVec2:GetDirectionVec3(ToPointVec2)
-      local Angle = CargoCarrierPointVec2:GetAngleDegrees(DirectionVec3)
-  
-      local CargoDeployPointVec2 = CargoCarrierPointVec2:Translate( DeployDistance, Angle )
-      
-      local FromPointVec2 = CargoCarrierPointVec2
-  
-      -- Respawn the group...
-      if self.CargoObject then
-        self.CargoObject:ReSpawn( CargoDeployPointVec2:GetVec3(), CargoDeployHeading )
-        self:F( { "CargoUnits:", self.CargoObject:GetGroup():GetName() } )
-        self.CargoCarrier = nil
-  
-        local Points = {}
-        Points[#Points+1] = CargoCarrierPointVec2:WaypointGround( Speed )
-        
-        Points[#Points+1] = ToPointVec2:WaypointGround( Speed )
+        local CargoCarrier = self.CargoCarrier -- Wrapper.Controllable#CONTROLLABLE
     
-        local TaskRoute = self.CargoObject:TaskRoute( Points )
-        self.CargoObject:SetTask( TaskRoute, 1 )
-  
+        local CargoCarrierPointVec2 = CargoCarrier:GetPointVec2()
+        local CargoCarrierHeading = self.CargoCarrier:GetHeading() -- Get Heading of object in degrees.
+        local CargoDeployHeading = ( ( CargoCarrierHeading + Angle ) >= 360 ) and ( CargoCarrierHeading + Angle - 360 ) or ( CargoCarrierHeading + Angle )
+    
+    
+        local CargoRoutePointVec2 = CargoCarrierPointVec2:Translate( RouteDistance, CargoDeployHeading )
         
-        self:__UnBoarding( 1, ToPointVec2, NearRadius )
+        
+        -- if there is no ToPointVec2 given, then use the CargoRoutePointVec2
+        ToPointVec2 = ToPointVec2 or CargoRoutePointVec2
+        local DirectionVec3 = CargoCarrierPointVec2:GetDirectionVec3(ToPointVec2)
+        local Angle = CargoCarrierPointVec2:GetAngleDegrees(DirectionVec3)
+    
+        local CargoDeployPointVec2 = CargoCarrierPointVec2:Translate( DeployDistance, Angle )
+        
+        local FromPointVec2 = CargoCarrierPointVec2
+    
+        -- Respawn the group...
+        if self.CargoObject then
+          self.CargoObject:ReSpawn( CargoDeployPointVec2:GetVec3(), CargoDeployHeading )
+          self:F( { "CargoUnits:", self.CargoObject:GetGroup():GetName() } )
+          self.CargoCarrier = nil
+    
+          local Points = {}
+          Points[#Points+1] = CargoCarrierPointVec2:WaypointGround( Speed )
+          
+          Points[#Points+1] = ToPointVec2:WaypointGround( Speed )
+      
+          local TaskRoute = self.CargoObject:TaskRoute( Points )
+          self.CargoObject:SetTask( TaskRoute, 1 )
+    
+          
+          self:__UnBoarding( 1, ToPointVec2, NearRadius )
+        end
       end
     end
   
@@ -949,7 +952,7 @@ do -- CARGO_UNIT
     self:F( { From, Event, To, CargoCarrier.UnitName, NearRadius } )
     
     
-    if CargoCarrier and CargoCarrier:IsAlive() then 
+    if CargoCarrier and CargoCarrier:IsAlive() and self.CargoObject and self.CargoObject:IsAlive() then 
       if CargoCarrier:InAir() == false then
         if self:IsNear( CargoCarrier:GetPointVec2(), NearRadius ) then
           self:__Load( 1, CargoCarrier, ... )
@@ -1200,9 +1203,11 @@ do -- CARGO_GROUP
   -- @param Core.Event#EVENTDATA EventData 
   function CARGO_GROUP:OnEventCargoDead( EventData )
   
+    self:_F( { "Dead Event", EventData = EventData } )
+    
     local Destroyed = false
     
-    if self:IsDestroyed() or self:IsUnLoaded() then
+    if self:IsDestroyed() or self:IsUnLoaded() or self:IsBoarding() then
       Destroyed = true
       for CargoID, CargoData in pairs( self.CargoSet:GetSet() ) do
         local Cargo = CargoData -- #CARGO
@@ -1392,7 +1397,7 @@ do -- CARGO_GROUP
       -- For each Cargo object within the CARGO_GROUP, route each object to the CargoLoadPointVec2
       for CargoID, Cargo in pairs( self.CargoSet:GetSet() ) do
         self:T( Cargo.current )
-        if not Cargo:is( "UnLoaded" ) then
+        if not Cargo:is( "UnLoaded" ) and not Cargo:IsDestroyed() then
           UnBoarded = false
         end
       end
