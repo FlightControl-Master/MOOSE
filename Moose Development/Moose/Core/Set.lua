@@ -152,11 +152,8 @@ function SET_BASE:Remove( ObjectName )
 
   local Object = self.Set[ObjectName]
   
-  self:F( { ObjectName, Object } )
-
   if Object then  
     for Index, Key in ipairs( self.Index ) do
-      self:F( { Index = Index, Key = Key } )
       if Key == ObjectName then
         table.remove( self.Index, Index )
         self.Set[ObjectName] = nil
