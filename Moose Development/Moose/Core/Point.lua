@@ -258,8 +258,13 @@ do -- COORDINATE
   
   --- Returns if the 2 coordinates are at the same 2D position.
   -- @param #COORDINATE self
+  -- @param #COORDINATE Coordinate
+  -- @param #number Precision
   -- @return #boolean true if at the same position.
   function COORDINATE:IsAtCoordinate2D( Coordinate, Precision )
+    
+    self:F( { Coordinate = Coordinate:GetVec2() } )
+    self:F( { self = self:GetVec2() } )
     
     local x = Coordinate.x
     local z = Coordinate.z
