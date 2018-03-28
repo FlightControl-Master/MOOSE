@@ -149,7 +149,7 @@ function AI_CARGO_TROOPS:onafterLoad( CargoCarrier, From, Event, To )
   if CargoCarrier and CargoCarrier:IsAlive() then
     CargoCarrier:RouteStop()
     self:__Board( 10 ) 
-    self.CargoGroup:Board( CargoCarrier, 25 )
+    self.CargoGroup:Board( CargoCarrier, 100 )
   end
   
 end
