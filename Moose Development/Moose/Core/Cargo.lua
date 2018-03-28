@@ -749,7 +749,7 @@ do -- CARGO_UNIT
   function CARGO_UNIT:onenterUnBoarding( From, Event, To, ToPointVec2, NearRadius )
     self:F( { From, Event, To, ToPointVec2, NearRadius } )
   
-    NearRadius = NearRadius or 100
+    NearRadius = NearRadius or 25
   
     local Angle = 180
     local Speed = 60
