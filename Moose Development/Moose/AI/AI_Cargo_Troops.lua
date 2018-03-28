@@ -148,7 +148,7 @@ function AI_CARGO_TROOPS:onafterLoad( CargoCarrier, From, Event, To )
 
   if CargoCarrier and CargoCarrier:IsAlive() then
     CargoCarrier:RouteStop()
-    self:Board() 
+    self:__Board( 10 ) 
     self.CargoGroup:Board( CargoCarrier, 25 )
   end
   
@@ -162,7 +162,7 @@ function AI_CARGO_TROOPS:onafterBoard( CargoCarrier, From, Event, To )
   if CargoCarrier and CargoCarrier:IsAlive() then
     self:F({ IsLoaded = self.CargoGroup:IsLoaded() } )
     if not self.CargoGroup:IsLoaded() then
-      self:__Board( 1 )
+      self:__Board( 10 )
     else
       self:__Loaded( 1 )
     end
@@ -190,7 +190,7 @@ function AI_CARGO_TROOPS:onafterUnload( CargoCarrier, From, Event, To )
   if CargoCarrier and CargoCarrier:IsAlive() then
     CargoCarrier:RouteStop()
     self.CargoGroup:UnBoard( )
-    self:__Unboard( 1 ) 
+    self:__Unboard( 10 ) 
   end
   
 end
@@ -202,9 +202,9 @@ function AI_CARGO_TROOPS:onafterUnboard( CargoCarrier, From, Event, To )
 
   if CargoCarrier and CargoCarrier:IsAlive() then
     if not self.CargoGroup:IsUnLoaded() then
-      self:__Unboard( 1 ) 
+      self:__Unboard( 10 ) 
     else
-      self:Unloaded()
+      self:__Unloaded( 1 )
     end
   end
   

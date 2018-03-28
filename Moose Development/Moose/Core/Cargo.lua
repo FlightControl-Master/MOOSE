@@ -771,25 +771,26 @@ do -- CARGO_UNIT
         
         
         -- if there is no ToPointVec2 given, then use the CargoRoutePointVec2
-      ToPointVec2 = ToPointVec2 or CargoCarrierPointVec2:GetRandomCoordinateInRadius( NearRadius, 5 )
-        local DirectionVec3 = CargoCarrierPointVec2:GetDirectionVec3(ToPointVec2)
-        local Angle = CargoCarrierPointVec2:GetAngleDegrees(DirectionVec3)
-    
-      local CargoDeployPointVec2 = CargoCarrierPointVec2:Translate( DeployDistance, Angle )
-      local CargoDeployPointVec2 = CargoCarrierPointVec2:GetRandomCoordinateInRadius( NearRadius, 5 )
+        local FromDirectionVec3 = CargoCarrierPointVec2:GetDirectionVec3( ToPointVec2 or CargoRoutePointVec2 )
+        local FromAngle = CargoCarrierPointVec2:GetAngleDegrees(FromDirectionVec3)
+        local FromPointVec2 = CargoCarrierPointVec2:Translate( DeployDistance, FromAngle )
+      --local CargoDeployPointVec2 = CargoCarrierPointVec2:GetRandomCoordinateInRadius( 10, 5 )
+
+        ToPointVec2 = ToPointVec2 or CargoCarrierPointVec2:GetRandomCoordinateInRadius( NearRadius, DeployDistance )
         
-        local FromPointVec2 = CargoCarrierPointVec2
-    
         -- Respawn the group...
         if self.CargoObject then
-          self.CargoObject:ReSpawn( CargoDeployPointVec2:GetVec3(), CargoDeployHeading )
+          self.CargoObject:ReSpawn( FromPointVec2:GetVec3(), CargoDeployHeading )
           self:F( { "CargoUnits:", self.CargoObject:GetGroup():GetName() } )
           self.CargoCarrier = nil
     
           local Points = {}
-          Points[#Points+1] = CargoCarrierPointVec2:WaypointGround( Speed )
           
-          Points[#Points+1] = ToPointVec2:WaypointGround( Speed )
+          -- From
+          Points[#Points+1] = FromPointVec2:WaypointGround( Speed, "Vee" )
+          
+          -- To
+          Points[#Points+1] = ToPointVec2:WaypointGround( Speed, "Vee" )
       
           local TaskRoute = self.CargoObject:TaskRoute( Points )
           self.CargoObject:SetTask( TaskRoute, 1 )
@@ -1375,7 +1376,7 @@ function CARGO_GROUP:OnEventCargoDead( EventData )
   function CARGO_GROUP:onenterUnBoarding( From, Event, To, ToPointVec2, NearRadius, ... )
     self:F( {From, Event, To, ToPointVec2, NearRadius } )
   
-    NearRadius = NearRadius or 100
+    NearRadius = NearRadius or 25
   
     local Timer = 1
   
@@ -1390,7 +1391,7 @@ function CARGO_GROUP:OnEventCargoDead( EventData )
         function( Cargo, NearRadius )
           
           Cargo:__UnBoard( Timer, ToPointVec2, NearRadius )
-          Timer = Timer + 10
+          Timer = Timer + 3
         end, { NearRadius }
       )
       
