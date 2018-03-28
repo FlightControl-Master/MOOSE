@@ -60,57 +60,48 @@ end
 
 --- Follow Infantry to the Carrier.
 -- @param #AI_CARGO_TROOPS self
+-- @param #AI_CARGO_TROOPS Me
+-- @param Wrapper.Unit#UNIT CargoCarrier
+-- @param Wrapper.Group#GROUP InfantryGroup
 -- @return #AI_CARGO_TROOPS
-function AI_CARGO_TROOPS:FollowToCarrier( Me )
+function AI_CARGO_TROOPS:FollowToCarrier( Me, CargoCarrier, InfantryGroup )
 
-  self = Me
-
-  self:F( { self = self:GetClassNameAndID(), CargoGroup = self.CargoGroup:GetName() } )
+  self:F( { self = self:GetClassNameAndID(), InfantryGroup = InfantryGroup:GetName() } )
   
   -- We check if the Cargo is near to the CargoCarrier.
-  if self.CargoGroup:IsNear( self.CargoCarrier, 5 ) then
+  if InfantryGroup:IsPartlyInZone( ZONE_UNIT:New( "Radius", CargoCarrier, 5 ) ) then
 
     -- The Cargo does not need to follow the Carrier.
-    self:Guard()
+    Me:Guard()
   
   else
+    
+    self:F( { InfantryGroup = InfantryGroup:GetName() } )
   
-    -- The Cargo needs to continue to follow the Carrier.
-    if self:Is( "Following" ) then
-      
-      -- For each Cargo object within the CARGO_GROUPED, route each object to the CargoLoadPointVec2
-      self.CargoGroup.CargoSet:ForEach(
-        --- @param Core.Cargo#CARGO Cargo
-        function( Cargo )
-          local CargoUnit = Cargo.CargoObject -- Wrapper.Unit#UNIT
-          self:F( { UnitName = CargoUnit:GetName() } )
+    if InfantryGroup:IsAlive() then
           
-          if CargoUnit:IsAlive() then
-            
-            local InfantryGroup = CargoUnit:GetGroup()
-            self:F( { GroupName = InfantryGroup:GetName() } )
-            
-            local Waypoints = {}
-            
-            -- Calculate the new Route.
-            local FromCoord = InfantryGroup:GetCoordinate()
-            local FromGround = FromCoord:WaypointGround( 10, "Diamond" )
-            table.insert( Waypoints, FromGround )
+      self:F( { InfantryGroup = InfantryGroup:GetName() } )
 
-            local ToCoord = self.CargoCarrier:GetCoordinate()
-            local ToGround = ToCoord:WaypointGround( 10, "Diamond" )
-            table.insert( Waypoints, ToGround )
-            
-            local TaskRoute = InfantryGroup:TaskFunction( "AI_CARGO_TROOPS.FollowToCarrier", self )
-            
-            self:F({Waypoints = Waypoints})
-            local Waypoint = Waypoints[#Waypoints]
-            InfantryGroup:SetTaskWaypoint( Waypoint, TaskRoute ) -- Set for the given Route at Waypoint 2 the TaskRouteToZone.
-          
-            InfantryGroup:Route( Waypoints ) -- Move after a random seconds to the Route. See the Route method for details.
-          end
-        end
-      )
+      local Waypoints = {}
+      
+      -- Calculate the new Route.
+      local FromCoord = InfantryGroup:GetCoordinate()
+      local FromGround = FromCoord:WaypointGround( 10, "Diamond" )
+      self:F({FromGround=FromGround})
+      table.insert( Waypoints, FromGround )
+
+      local ToCoord = CargoCarrier:GetCoordinate()
+      local ToGround = ToCoord:WaypointGround( 10, "Diamond" )
+      self:F({ToGround=ToGround})
+      table.insert( Waypoints, ToGround )
+      
+      local TaskRoute = InfantryGroup:TaskFunction( "AI_CARGO_TROOPS.FollowToCarrier", Me, CargoCarrier, InfantryGroup )
+      
+      self:F({Waypoints = Waypoints})
+      local Waypoint = Waypoints[#Waypoints]
+      InfantryGroup:SetTaskWaypoint( Waypoint, TaskRoute ) -- Set for the given Route at Waypoint 2 the TaskRouteToZone.
+    
+      InfantryGroup:Route( Waypoints, 1 ) -- Move after a random seconds to the Route. See the Route method for details.
     end
   end
 end
@@ -240,7 +231,16 @@ function AI_CARGO_TROOPS:onafterFollow( CargoCarrier, From, Event, To )
 
   self:F( "Follow" )
   if CargoCarrier and CargoCarrier:IsAlive() then
-    self:FollowToCarrier( self )
+    self.CargoGroup.CargoSet:ForEach(
+      --- @param Core.Cargo#CARGO Cargo
+      function( Cargo )
+        self:F( { "Follow", Cargo.CargoObject:GetName() } )
+        if Cargo.CargoObject:IsAlive() == true then
+          self:F( { "Follow", Cargo.CargoObject:GetID() } )
+          self:FollowToCarrier( self, CargoCarrier, Cargo.CargoObject:GetGroup() )
+        end
+      end
+    )
   end
   
 end
