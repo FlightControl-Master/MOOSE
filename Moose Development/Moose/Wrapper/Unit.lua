@@ -224,6 +224,7 @@ function UNIT:ReSpawn( SpawnVec3, Heading )
   
   for UnitTemplateID, UnitTemplateData in pairs( SpawnGroupTemplate.units ) do
     self:T( { UnitTemplateData.name, self:Name() } )
+    SpawnGroupTemplate.units[UnitTemplateID].unitId = nil
     if UnitTemplateData.name == self:Name() then
       self:T("Adjusting")
       SpawnGroupTemplate.units[UnitTemplateID].alt = SpawnVec3.y
@@ -263,6 +264,8 @@ function UNIT:ReSpawn( SpawnVec3, Heading )
       i = i + 1
     end
   end
+  
+  SpawnGroupTemplate.groupId = nil
   
   self:T( SpawnGroupTemplate )
 
@@ -383,7 +386,7 @@ function UNIT:GetGroup()
   local DCSUnit = self:GetDCSObject()
   
   if DCSUnit then
-    local UnitGroup = GROUP:Find( DCSUnit:getGroup() )
+    local UnitGroup = GROUP:FindByName( DCSUnit:getGroup():getName() )
     return UnitGroup
   end
 

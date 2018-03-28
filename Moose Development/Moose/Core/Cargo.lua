@@ -165,7 +165,7 @@ do -- CARGO
   -- @field #string Name A string defining the name of the cargo. The name is the unique identifier of the cargo.
   -- @field #number Weight A number defining the weight of the cargo. The weight is expressed in kg.
   -- @field #number NearRadius (optional) A number defining the radius in meters when the cargo is near to a Carrier, so that it can be loaded.
-  -- @field Wrapper.Controllable#CONTROLLABLE CargoObject The alive DCS object representing the cargo. This value can be nil, meaning, that the cargo is not represented anywhere...
+  -- @field Wrapper.Unit#UNIT CargoObject The alive DCS object representing the cargo. This value can be nil, meaning, that the cargo is not represented anywhere...
   -- @field Wrapper.Client#CLIENT CargoCarrier The alive DCS object carrying the cargo. This value can be nil, meaning, that the cargo is not contained anywhere...
   -- @field #boolean Slingloadable This flag defines if the cargo can be slingloaded.
   -- @field #boolean Moveable This flag defines if the cargo is moveable.
@@ -493,17 +493,22 @@ end
 -- @param #number NearRadius The radius when the cargo will board the Carrier (to avoid collision).
 -- @return #boolean
 function CARGO:IsNear( PointVec2, NearRadius )
-  self:F( { PointVec2, NearRadius } )
+  self:F( { PointVec2 = PointVec2, NearRadius = NearRadius } )
 
-  --local Distance = PointVec2:DistanceFromPointVec2( self.CargoObject:GetPointVec2() )
-  local Distance = PointVec2:Get2DDistance( self.CargoObject:GetPointVec2() )
-  self:T( Distance )
-  
-  if Distance <= NearRadius then
-    return true
-  else
-    return false
+  if self.CargoObject:IsAlive() then
+    --local Distance = PointVec2:DistanceFromPointVec2( self.CargoObject:GetPointVec2() )
+    self:F( { CargoObjectName = self.CargoObject:GetName() } )
+    self:F( { CargoObjectVec2 = self.CargoObject:GetVec2() } )
+    self:F( { PointVec2 = PointVec2:GetVec2() } )
+    local Distance = PointVec2:Get2DDistance( self.CargoObject:GetPointVec2() )
+    self:T( Distance )
+    
+    if Distance <= NearRadius then
+      return true
+    end
   end
+  
+  return false
 end
 
 --- Get the current PointVec2 of the cargo.
@@ -744,7 +749,7 @@ do -- CARGO_UNIT
   function CARGO_UNIT:onenterUnBoarding( From, Event, To, ToPointVec2, NearRadius )
     self:F( { From, Event, To, ToPointVec2, NearRadius } )
   
-    NearRadius = NearRadius or 25
+    NearRadius = NearRadius or 100
   
     local Angle = 180
     local Speed = 60
@@ -753,43 +758,45 @@ do -- CARGO_UNIT
   
     if From == "Loaded" then
   
-      local CargoCarrier = self.CargoCarrier -- Wrapper.Client#CLIENT
+      if not self:IsDestroyed() then
   
-      local CargoCarrierPointVec2 = CargoCarrier:GetPointVec2()
-      local CargoCarrierHeading = self.CargoCarrier:GetHeading() -- Get Heading of object in degrees.
-      local CargoDeployHeading = ( ( CargoCarrierHeading + Angle ) >= 360 ) and ( CargoCarrierHeading + Angle - 360 ) or ( CargoCarrierHeading + Angle )
-  
-  
-      local CargoRoutePointVec2 = CargoCarrierPointVec2:Translate( RouteDistance, CargoDeployHeading )
-      
-      
-      -- if there is no ToPointVec2 given, then use the CargoRoutePointVec2
+        local CargoCarrier = self.CargoCarrier -- Wrapper.Controllable#CONTROLLABLE
+    
+        local CargoCarrierPointVec2 = CargoCarrier:GetPointVec2()
+        local CargoCarrierHeading = self.CargoCarrier:GetHeading() -- Get Heading of object in degrees.
+        local CargoDeployHeading = ( ( CargoCarrierHeading + Angle ) >= 360 ) and ( CargoCarrierHeading + Angle - 360 ) or ( CargoCarrierHeading + Angle )
+    
+    
+        local CargoRoutePointVec2 = CargoCarrierPointVec2:Translate( RouteDistance, CargoDeployHeading )
+        
+        
+        -- if there is no ToPointVec2 given, then use the CargoRoutePointVec2
       ToPointVec2 = ToPointVec2 or CargoCarrierPointVec2:GetRandomCoordinateInRadius( NearRadius, 5 )
-      local DirectionVec3 = CargoCarrierPointVec2:GetDirectionVec3(ToPointVec2)
-      local Angle = CargoCarrierPointVec2:GetAngleDegrees(DirectionVec3)
-  
+        local DirectionVec3 = CargoCarrierPointVec2:GetDirectionVec3(ToPointVec2)
+        local Angle = CargoCarrierPointVec2:GetAngleDegrees(DirectionVec3)
+    
       local CargoDeployPointVec2 = CargoCarrierPointVec2:Translate( DeployDistance, Angle )
       local CargoDeployPointVec2 = CargoCarrierPointVec2:GetRandomCoordinateInRadius( NearRadius, 5 )
-      
-      local FromPointVec2 = CargoCarrierPointVec2
-  
-      -- Respawn the group...
-      if self.CargoObject then
-        self:F( { CargoObject = self.CargoObject } )
-        self.CargoObject:ReSpawn( CargoDeployPointVec2:GetVec3(), CargoDeployHeading )
-        --self:F( { "CargoUnits:", self.CargoObject:GetGroup():GetName() } )
-        self.CargoCarrier = nil
-  
-        local Points = {}
-        Points[#Points+1] = CargoCarrierPointVec2:WaypointGround( Speed )
         
-        Points[#Points+1] = ToPointVec2:WaypointGround( Speed )
+        local FromPointVec2 = CargoCarrierPointVec2
     
-        local TaskRoute = self.CargoObject:TaskRoute( Points )
-        self.CargoObject:SetTask( TaskRoute, 1 )
-  
-        
-        self:__UnBoarding( 1, ToPointVec2, NearRadius )
+        -- Respawn the group...
+        if self.CargoObject then
+          self.CargoObject:ReSpawn( CargoDeployPointVec2:GetVec3(), CargoDeployHeading )
+          self:F( { "CargoUnits:", self.CargoObject:GetGroup():GetName() } )
+          self.CargoCarrier = nil
+    
+          local Points = {}
+          Points[#Points+1] = CargoCarrierPointVec2:WaypointGround( Speed )
+          
+          Points[#Points+1] = ToPointVec2:WaypointGround( Speed )
+      
+          local TaskRoute = self.CargoObject:TaskRoute( Points )
+          self.CargoObject:SetTask( TaskRoute, 1 )
+    
+          
+          self:__UnBoarding( 1, ToPointVec2, NearRadius )
+        end
       end
     end
   
@@ -804,7 +811,7 @@ do -- CARGO_UNIT
   function CARGO_UNIT:onleaveUnBoarding( From, Event, To, ToPointVec2, NearRadius )
     self:F( { From, Event, To, ToPointVec2, NearRadius } )
   
-    NearRadius = NearRadius or 25
+    NearRadius = NearRadius or 100
   
     local Angle = 180
     local Speed = 10
@@ -831,7 +838,7 @@ do -- CARGO_UNIT
   function CARGO_UNIT:onafterUnBoarding( From, Event, To, ToPointVec2, NearRadius )
     self:F( { From, Event, To, ToPointVec2, NearRadius } )
   
-    NearRadius = NearRadius or 25
+    NearRadius = NearRadius or 100
   
     self.CargoInAir = self.CargoObject:InAir()
   
@@ -944,7 +951,7 @@ do -- CARGO_UNIT
     self:F( { From, Event, To, CargoCarrier.UnitName, NearRadius } )
     
     
-    if CargoCarrier and CargoCarrier:IsAlive() then 
+    if CargoCarrier and CargoCarrier:IsAlive() and self.CargoObject and self.CargoObject:IsAlive() then 
       if CargoCarrier:InAir() == false then
         if self:IsNear( CargoCarrier:GetPointVec2(), NearRadius ) then
           self:__Load( 1, CargoCarrier, ... )
@@ -1180,6 +1187,7 @@ function CARGO_GROUP:New( CargoGroup, Type, Name, ReportRadius )
     -- We create a new group object with one unit...
     -- First we prepare the template...
     GroupTemplate.name = GroupName .. "#CARGO#" .. UnitID
+    GroupTemplate.groupId = nil
     GroupTemplate.units = {}
     GroupTemplate.units[1] = UnitTemplate
     local UnitName = UnitTemplate.name .. "#CARGO"
@@ -1223,252 +1231,251 @@ function CARGO_GROUP:OnEventCargoDead( EventData )
 
   local Destroyed = false
   
-  if self:IsDestroyed() or self:IsUnLoaded() then
-    Destroyed = true
-    for CargoID, CargoData in pairs( self.CargoSet:GetSet() ) do
-      local Cargo = CargoData -- #CARGO
-      if Cargo:IsAlive() then
-        Destroyed = false
-      else
-        Cargo:Destroyed()
-      end
-    end
-  else
-    local CarrierName = self.CargoCarrier:GetName()
-    if CarrierName == EventData.IniDCSUnitName then
-      MESSAGE:New( "Cargo is lost from carrier " .. CarrierName, 15 ):ToAll()
+    if self:IsDestroyed() or self:IsUnLoaded() or self:IsBoarding() then
       Destroyed = true
-      self.CargoCarrier:ClearCargo()
+      for CargoID, CargoData in pairs( self.CargoSet:GetSet() ) do
+        local Cargo = CargoData -- #CARGO
+        if Cargo:IsAlive() then
+          Destroyed = false
+        else
+          Cargo:Destroyed()
+        end
+      end
+    else
+      local CarrierName = self.CargoCarrier:GetName()
+      if CarrierName == EventData.IniDCSUnitName then
+        MESSAGE:New( "Cargo is lost from carrier " .. CarrierName, 15 ):ToAll()
+        Destroyed = true
+        self.CargoCarrier:ClearCargo()
+      end
     end
-  end
-  
-  if Destroyed then
-    self:Destroyed()
-    self:E( { "Cargo group destroyed" } )
-  end
-
-end
-
---- Enter Boarding State.
--- @param #CARGO_GROUP self
--- @param Wrapper.Unit#UNIT CargoCarrier
--- @param #string Event
--- @param #string From
--- @param #string To
-function CARGO_GROUP:onenterBoarding( From, Event, To, CargoCarrier, NearRadius, ... )
-  self:F( { CargoCarrier.UnitName, From, Event, To } )
-  
-  local NearRadius = NearRadius or 25
-  
-  if From == "UnLoaded" then
-
-    -- For each Cargo object within the CARGO_GROUPED, route each object to the CargoLoadPointVec2
-    self.CargoSet:ForEach(
-      function( Cargo, ... )
-        Cargo:__Board( 1, CargoCarrier, NearRadius, ... )
-      end, ...
-    )
     
-    self:__Boarding( 1, CargoCarrier, NearRadius, ... )
+    if Destroyed then
+      self:Destroyed()
+      self:E( { "Cargo group destroyed" } )
+    end
+  
   end
-  
-end
 
---- Enter Loaded State.
--- @param #CARGO_GROUP self
--- @param Wrapper.Unit#UNIT CargoCarrier
--- @param #string Event
--- @param #string From
--- @param #string To
-function CARGO_GROUP:onenterLoaded( From, Event, To, CargoCarrier, ... )
-  self:F( { From, Event, To, CargoCarrier, ...} )
+  --- Enter Boarding State.
+  -- @param #CARGO_GROUP self
+  -- @param Wrapper.Unit#UNIT CargoCarrier
+  -- @param #string Event
+  -- @param #string From
+  -- @param #string To
+  function CARGO_GROUP:onenterBoarding( From, Event, To, CargoCarrier, NearRadius, ... )
+    self:F( { CargoCarrier.UnitName, From, Event, To } )
+    
+    local NearRadius = NearRadius or 25
+    
+    if From == "UnLoaded" then
   
-  if From == "UnLoaded" then
-    -- For each Cargo object within the CARGO_GROUP, load each cargo to the CargoCarrier.
+      -- For each Cargo object within the CARGO_GROUPED, route each object to the CargoLoadPointVec2
+      self.CargoSet:ForEach(
+        function( Cargo, ... )
+          Cargo:__Board( 1, CargoCarrier, NearRadius, ... )
+        end, ...
+      )
+      
+      self:__Boarding( 1, CargoCarrier, NearRadius, ... )
+    end
+    
+  end
+
+  --- Enter Loaded State.
+  -- @param #CARGO_GROUP self
+  -- @param Wrapper.Unit#UNIT CargoCarrier
+  -- @param #string Event
+  -- @param #string From
+  -- @param #string To
+  function CARGO_GROUP:onenterLoaded( From, Event, To, CargoCarrier, ... )
+    self:F( { From, Event, To, CargoCarrier, ...} )
+    
+    if From == "UnLoaded" then
+      -- For each Cargo object within the CARGO_GROUP, load each cargo to the CargoCarrier.
+      for CargoID, Cargo in pairs( self.CargoSet:GetSet() ) do
+        Cargo:Load( CargoCarrier )
+      end
+    end
+    
+    --self.CargoObject:Destroy()
+    self.CargoCarrier = CargoCarrier
+    
+  end
+
+  --- Leave Boarding State.
+  -- @param #CARGO_GROUP self
+  -- @param Wrapper.Unit#UNIT CargoCarrier
+  -- @param #string Event
+  -- @param #string From
+  -- @param #string To
+  function CARGO_GROUP:onafterBoarding( From, Event, To, CargoCarrier, NearRadius, ... )
+    self:F( { CargoCarrier.UnitName, From, Event, To } )
+  
+    local NearRadius = NearRadius or 100
+  
+    local Boarded = true
+    local Cancelled = false
+    local Dead = true
+  
+    self.CargoSet:Flush()
+  
+    -- For each Cargo object within the CARGO_GROUP, route each object to the CargoLoadPointVec2
     for CargoID, Cargo in pairs( self.CargoSet:GetSet() ) do
-      Cargo:Load( CargoCarrier )
-    end
-  end
+      self:T( { Cargo:GetName(), Cargo.current } )
+      
+      
+      if not Cargo:is( "Loaded" ) 
+      and (not Cargo:is( "Destroyed" )) then -- If one or more units of a group defined as CARGO_GROUP died, the CARGO_GROUP:Board() command does not trigger the CARGO_GRUOP:OnEnterLoaded() function.
+        Boarded = false
+      end
+      
+      if Cargo:is( "UnLoaded" ) then
+        Cancelled = true
+      end
   
-  --self.CargoObject:Destroy()
-  self.CargoCarrier = CargoCarrier
+      if not Cargo:is( "Destroyed" ) then
+        Dead = false
+      end
+      
+    end
   
-end
-
---- Leave Boarding State.
--- @param #CARGO_GROUP self
--- @param Wrapper.Unit#UNIT CargoCarrier
--- @param #string Event
--- @param #string From
--- @param #string To
-function CARGO_GROUP:onafterBoarding( From, Event, To, CargoCarrier, NearRadius, ... )
-  self:F( { CargoCarrier.UnitName, From, Event, To } )
-
-  local NearRadius = NearRadius or 25
-
-  local Boarded = true
-  local Cancelled = false
-  local Dead = true
-
-  self.CargoSet:Flush()
-
-  -- For each Cargo object within the CARGO_GROUP, route each object to the CargoLoadPointVec2
-  for CargoID, Cargo in pairs( self.CargoSet:GetSet() ) do
-    self:T( { Cargo:GetName(), Cargo.current } )
-    
-    
-    if not Cargo:is( "Loaded" ) 
-    and (not Cargo:is( "Destroyed" )) then -- If one or more units of a group defined as CARGO_GROUP died, the CARGO_GROUP:Board() command does not trigger the CARGO_GRUOP:OnEnterLoaded() function.
-      Boarded = false
-    end
-    
-    if Cargo:is( "UnLoaded" ) then
-      Cancelled = true
-    end
-
-    if not Cargo:is( "Destroyed" ) then
-      Dead = false
-    end
-    
-  end
-
-  if not Dead then
-
-    if not Cancelled then
-      if not Boarded then
-        self:__Boarding( 1, CargoCarrier, NearRadius, ... )
+    if not Dead then
+  
+      if not Cancelled then
+        if not Boarded then
+          self:__Boarding( 1, CargoCarrier, NearRadius, ... )
+        else
+          self:F("Group Cargo is loaded")
+          self:__Load( 1, CargoCarrier, ... )
+        end
       else
-        self:__Load( 1, CargoCarrier, ... )
+          self:__CancelBoarding( 1, CargoCarrier, NearRadius, ... )
       end
     else
-        self:__CancelBoarding( 1, CargoCarrier, NearRadius, ... )
+      self:__Destroyed( 1, CargoCarrier, NearRadius, ... )
     end
-  else
-    self:__Destroyed( 1, CargoCarrier, NearRadius, ... )
+    
   end
   
-end
-
---- Get the amount of cargo units in the group.
--- @param #CARGO_GROUP self
--- @return #CARGO_GROUP
-function CARGO_GROUP:GetCount()
-  return self.CargoSet:Count()
-end
-
-
---- Enter UnBoarding State.
--- @param #CARGO_GROUP self
--- @param Core.Point#POINT_VEC2 ToPointVec2
--- @param #string Event
--- @param #string From
--- @param #string To
-function CARGO_GROUP:onenterUnBoarding( From, Event, To, ToPointVec2, NearRadius, ... )
-  self:F( {From, Event, To, ToPointVec2, NearRadius } )
-
-  NearRadius = NearRadius or 25
-  
-  local CargoCarrier = self.CargoCarrier -- Wrapper.Client#CLIENT
-
-  local Timer = 1
-
-  if From == "Loaded" then
-  
-    if self.CargoObject then
-      self.CargoObject:Destroy()
-    end
-
-    -- For each Cargo object within the CARGO_GROUP, route each object to the CargoLoadPointVec2
-    self.CargoSet:ForEach(
-      function( Cargo, NearRadius )
-        
-        Cargo:__UnBoard( Timer, ToPointVec2, NearRadius )
-        Timer = Timer + 1
-      end, { NearRadius }
-    )
-    
-    
-    self:__UnBoarding( 1, ToPointVec2, NearRadius, ... )
+  --- Get the amount of cargo units in the group.
+  -- @param #CARGO_GROUP self
+  -- @return #CARGO_GROUP
+  function CARGO_GROUP:GetCount()
+    return self.CargoSet:Count()
   end
 
-end
 
---- Leave UnBoarding State.
--- @param #CARGO_GROUP self
--- @param Core.Point#POINT_VEC2 ToPointVec2
--- @param #string Event
--- @param #string From
--- @param #string To
-function CARGO_GROUP:onleaveUnBoarding( From, Event, To, ToPointVec2, NearRadius, ... )
-  self:F( { From, Event, To, ToPointVec2, NearRadius } )
-
-  --local NearRadius = NearRadius or 25
-
-  local Angle = 180
-  local Speed = 10
-  local Distance = 5
-
-  if From == "UnBoarding" then
-    local UnBoarded = true
-
-    -- For each Cargo object within the CARGO_GROUP, route each object to the CargoLoadPointVec2
-    for CargoID, Cargo in pairs( self.CargoSet:GetSet() ) do
-      self:T( Cargo.current )
-      if not Cargo:is( "UnLoaded" ) then
-        UnBoarded = false
+  --- Enter UnBoarding State.
+  -- @param #CARGO_GROUP self
+  -- @param Core.Point#POINT_VEC2 ToPointVec2
+  -- @param #string Event
+  -- @param #string From
+  -- @param #string To
+  function CARGO_GROUP:onenterUnBoarding( From, Event, To, ToPointVec2, NearRadius, ... )
+    self:F( {From, Event, To, ToPointVec2, NearRadius } )
+  
+    NearRadius = NearRadius or 100
+  
+    local Timer = 1
+  
+    if From == "Loaded" then
+    
+      if self.CargoObject then
+        self.CargoObject:Destroy()
       end
-    end
   
-    if UnBoarded then
-      return true
-    else
+      -- For each Cargo object within the CARGO_GROUP, route each object to the CargoLoadPointVec2
+      self.CargoSet:ForEach(
+        function( Cargo, NearRadius )
+          
+          Cargo:__UnBoard( Timer, ToPointVec2, NearRadius )
+          Timer = Timer + 10
+        end, { NearRadius }
+      )
+      
+      
       self:__UnBoarding( 1, ToPointVec2, NearRadius, ... )
     end
-    
-    return false
-  end
   
-end
+  end
 
---- UnBoard Event.
--- @param #CARGO_GROUP self
--- @param Core.Point#POINT_VEC2 ToPointVec2
--- @param #string Event
--- @param #string From
--- @param #string To
-function CARGO_GROUP:onafterUnBoarding( From, Event, To, ToPointVec2, NearRadius, ... )
-  self:F( { From, Event, To, ToPointVec2, NearRadius } )
-
-  --local NearRadius = NearRadius or 25
-
-  self:__UnLoad( 1, ToPointVec2, ... )
-end
-
-
-
---- Enter UnLoaded State.
--- @param #CARGO_GROUP self
--- @param Core.Point#POINT_VEC2
--- @param #string Event
--- @param #string From
--- @param #string To
-function CARGO_GROUP:onenterUnLoaded( From, Event, To, ToPointVec2, ... )
-  self:F( { From, Event, To, ToPointVec2 } )
-
-  if From == "Loaded" then
-    
-    -- For each Cargo object within the CARGO_GROUP, route each object to the CargoLoadPointVec2
-    self.CargoSet:ForEach(
-      function( Cargo )
-        --Cargo:UnLoad( ToPointVec2 )
-        local RandomVec2=ToPointVec2:GetRandomPointVec2InRadius(10)
-        Cargo:UnLoad( RandomVec2 )
+  --- Leave UnBoarding State.
+  -- @param #CARGO_GROUP self
+  -- @param Core.Point#POINT_VEC2 ToPointVec2
+  -- @param #string Event
+  -- @param #string From
+  -- @param #string To
+  function CARGO_GROUP:onleaveUnBoarding( From, Event, To, ToPointVec2, NearRadius, ... )
+    self:F( { From, Event, To, ToPointVec2, NearRadius } )
+  
+    --local NearRadius = NearRadius or 25
+  
+    local Angle = 180
+    local Speed = 10
+    local Distance = 5
+  
+    if From == "UnBoarding" then
+      local UnBoarded = true
+  
+      -- For each Cargo object within the CARGO_GROUP, route each object to the CargoLoadPointVec2
+      for CargoID, Cargo in pairs( self.CargoSet:GetSet() ) do
+        self:T( Cargo.current )
+        if not Cargo:is( "UnLoaded" ) and not Cargo:IsDestroyed() then
+          UnBoarded = false
+        end
       end
-    )
-
+    
+      if UnBoarded then
+        return true
+      else
+        self:__UnBoarding( 1, ToPointVec2, NearRadius, ... )
+      end
+      
+      return false
+    end
+    
   end
+
+  --- UnBoard Event.
+  -- @param #CARGO_GROUP self
+  -- @param Core.Point#POINT_VEC2 ToPointVec2
+  -- @param #string Event
+  -- @param #string From
+  -- @param #string To
+  function CARGO_GROUP:onafterUnBoarding( From, Event, To, ToPointVec2, NearRadius, ... )
+    self:F( { From, Event, To, ToPointVec2, NearRadius } )
   
-end
+    --local NearRadius = NearRadius or 25
+  
+    self:__UnLoad( 1, ToPointVec2, ... )
+  end
+
+
+
+  --- Enter UnLoaded State.
+  -- @param #CARGO_GROUP self
+  -- @param Core.Point#POINT_VEC2
+  -- @param #string Event
+  -- @param #string From
+  -- @param #string To
+  function CARGO_GROUP:onenterUnLoaded( From, Event, To, ToPointVec2, ... )
+    self:F( { From, Event, To, ToPointVec2 } )
+  
+    if From == "Loaded" then
+      
+      -- For each Cargo object within the CARGO_GROUP, route each object to the CargoLoadPointVec2
+      self.CargoSet:ForEach(
+        function( Cargo )
+          --Cargo:UnLoad( ToPointVec2 )
+          local RandomVec2=ToPointVec2:GetRandomPointVec2InRadius(10)
+          Cargo:UnLoad( RandomVec2 )
+        end
+      )
+  
+    end
+    
+  end
 
 
   --- Respawn the cargo when destroyed
@@ -1485,6 +1492,43 @@ end
       self.onenterDestroyed = nil
     end
       
+  end
+  
+  --- Route Cargo to Coordinate and randomize locations.
+  -- @param #CARGO_GROUP self
+  -- @param Core.Point#COORDINATE Coordinate
+  function CARGO_GROUP:RouteTo( Coordinate )
+    self:F( {Coordinate = Coordinate } )
+    
+    -- For each Cargo object within the CARGO_GROUPED, route each object to the CargoLoadPointVec2
+    self.CargoSet:ForEach(
+      function( Cargo )
+        Cargo.CargoObject:RouteGroundTo( Coordinate, 10, "vee", 0 )
+      end
+    )
+
+  end
+  
+  --- Check if Cargo is near to the Carrier.
+  -- The Cargo is near to the Carrier if the first unit of the Cargo Group is within NearRadius.
+  -- @param #CARGO_GROUP self
+  -- @param Wrapper.Group#GROUP CargoCarrier
+  -- @param #number NearRadius
+  -- @return #boolean The Cargo is near to the Carrier.
+  -- @return #nil The Cargo is not near to the Carrier.
+  function CARGO_GROUP:IsNear( CargoCarrier, NearRadius )
+    self:F( {NearRadius = NearRadius } )
+    
+    local FirstCargo = self.CargoSet:GetFirst() -- #CARGO
+    
+    if FirstCargo then
+      if FirstCargo:IsNear( CargoCarrier:GetCoordinate(), NearRadius ) then
+        self:F( "Near" )
+        return true
+      end
+    end
+    
+    return nil
   end
 
 end -- CARGO_GROUP
