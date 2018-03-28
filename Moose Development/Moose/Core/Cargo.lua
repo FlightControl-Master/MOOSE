@@ -1,5 +1,7 @@
 --- **Core** -- Management of CARGO logistics, that can be transported from and to transportation carriers.
 --
+-- ===
+--
 -- ![Banner Image](..\Presentations\CARGO\Dia1.JPG)
 --
 -- ===
@@ -163,7 +165,7 @@ do -- CARGO
   -- @field #string Name A string defining the name of the cargo. The name is the unique identifier of the cargo.
   -- @field #number Weight A number defining the weight of the cargo. The weight is expressed in kg.
   -- @field #number NearRadius (optional) A number defining the radius in meters when the cargo is near to a Carrier, so that it can be loaded.
-  -- @field Wrapper.Controllable#CONTROLLABLE CargoObject The alive DCS object representing the cargo. This value can be nil, meaning, that the cargo is not represented anywhere...
+  -- @field Wrapper.Unit#UNIT CargoObject The alive DCS object representing the cargo. This value can be nil, meaning, that the cargo is not represented anywhere...
   -- @field Wrapper.Client#CLIENT CargoCarrier The alive DCS object carrying the cargo. This value can be nil, meaning, that the cargo is not contained anywhere...
   -- @field #boolean Slingloadable This flag defines if the cargo can be slingloaded.
   -- @field #boolean Moveable This flag defines if the cargo is moveable.
@@ -259,7 +261,7 @@ function CARGO:New( Type, Name, Weight ) --R2.1
   self.Name = Name
   self.Weight = Weight
   self.CargoObject = nil
-  self.CargoCarrier = nil
+  self.CargoCarrier = nil -- Wrapper.Client#CLIENT
   self.Representable = false
   self.Slingloadable = false
   self.Moveable = false
@@ -607,23 +609,19 @@ end -- CARGO_REPRESENTABLE
   
   --- CARGO_REPORTABLE Constructor.
   -- @param #CARGO_REPORTABLE self
-  -- @param Wrapper.Controllable#Controllable CargoObject
   -- @param #string Type
   -- @param #string Name
   -- @param #number Weight
   -- @param #number ReportRadius (optional)
   -- @param #number NearRadius (optional)
   -- @return #CARGO_REPORTABLE
-  function CARGO_REPORTABLE:New( CargoObject, Type, Name, Weight, ReportRadius )
+  function CARGO_REPORTABLE:New( Type, Name, Weight, ReportRadius )
     local self = BASE:Inherit( self, CARGO:New( Type, Name, Weight ) ) -- #CARGO_REPORTABLE
     self:F( { Type, Name, Weight, ReportRadius } )
   
     self.CargoSet = SET_CARGO:New() -- Core.Set#SET_CARGO
   
     self.ReportRadius = ReportRadius or 1000
-    self.CargoObject = CargoObject
-
-
   
     return self
   end
@@ -751,7 +749,7 @@ do -- CARGO_UNIT
   function CARGO_UNIT:onenterUnBoarding( From, Event, To, ToPointVec2, NearRadius )
     self:F( { From, Event, To, ToPointVec2, NearRadius } )
   
-    NearRadius = NearRadius or 100
+    NearRadius = NearRadius or 25
   
     local Angle = 180
     local Speed = 60
@@ -773,24 +771,26 @@ do -- CARGO_UNIT
         
         
         -- if there is no ToPointVec2 given, then use the CargoRoutePointVec2
-        ToPointVec2 = ToPointVec2 or CargoRoutePointVec2
-        local DirectionVec3 = CargoCarrierPointVec2:GetDirectionVec3(ToPointVec2)
-        local Angle = CargoCarrierPointVec2:GetAngleDegrees(DirectionVec3)
-    
-        local CargoDeployPointVec2 = CargoCarrierPointVec2:Translate( DeployDistance, Angle )
+        local FromDirectionVec3 = CargoCarrierPointVec2:GetDirectionVec3( ToPointVec2 or CargoRoutePointVec2 )
+        local FromAngle = CargoCarrierPointVec2:GetAngleDegrees(FromDirectionVec3)
+        local FromPointVec2 = CargoCarrierPointVec2:Translate( DeployDistance, FromAngle )
+      --local CargoDeployPointVec2 = CargoCarrierPointVec2:GetRandomCoordinateInRadius( 10, 5 )
+
+        ToPointVec2 = ToPointVec2 or CargoCarrierPointVec2:GetRandomCoordinateInRadius( NearRadius, DeployDistance )
         
-        local FromPointVec2 = CargoCarrierPointVec2
-    
         -- Respawn the group...
         if self.CargoObject then
-          self.CargoObject:ReSpawn( CargoDeployPointVec2:GetVec3(), CargoDeployHeading )
+          self.CargoObject:ReSpawn( FromPointVec2:GetVec3(), CargoDeployHeading )
           self:F( { "CargoUnits:", self.CargoObject:GetGroup():GetName() } )
           self.CargoCarrier = nil
     
           local Points = {}
-          Points[#Points+1] = CargoCarrierPointVec2:WaypointGround( Speed )
           
-          Points[#Points+1] = ToPointVec2:WaypointGround( Speed )
+          -- From
+          Points[#Points+1] = FromPointVec2:WaypointGround( Speed, "Vee" )
+          
+          -- To
+          Points[#Points+1] = ToPointVec2:WaypointGround( Speed, "Vee" )
       
           local TaskRoute = self.CargoObject:TaskRoute( Points )
           self.CargoObject:SetTask( TaskRoute, 1 )
@@ -946,7 +946,7 @@ do -- CARGO_UNIT
   -- @param #string Event
   -- @param #string From
   -- @param #string To
-  -- @param Wrapper.Unit#UNIT CargoCarrier
+  -- @param Wrapper.Client#CLIENT CargoCarrier
   -- @param #number NearRadius
   function CARGO_UNIT:onafterBoarding( From, Event, To, CargoCarrier, NearRadius, ... )
     self:F( { From, Event, To, CargoCarrier.UnitName, NearRadius } )
@@ -1157,56 +1157,81 @@ do -- CARGO_GROUP
     ClassName = "CARGO_GROUP",
   }
 
-  --- CARGO_GROUP constructor.
-  -- @param #CARGO_GROUP self
-  -- @param Wrapper.Group#GROUP CargoGroup
-  -- @param #string Type
-  -- @param #string Name
-  -- @param #number ReportRadius (optional)
-  -- @param #number NearRadius (optional)
-  -- @return #CARGO_GROUP
-  function CARGO_GROUP:New( CargoGroup, Type, Name, ReportRadius )
-    local self = BASE:Inherit( self, CARGO_REPORTABLE:New( CargoGroup, Type, Name, 0, ReportRadius ) ) -- #CARGO_GROUP
-    self:F( { Type, Name, ReportRadius } )
+--- CARGO_GROUP constructor.
+-- This make a new CARGO_GROUP from a @{Group} object.
+-- It will "ungroup" the group object within the sim, and will create a @{Set} of individual Unit objects.
+-- @param #CARGO_GROUP self
+-- @param Wrapper.Group#GROUP CargoGroup
+-- @param #string Type
+-- @param #string Name
+-- @param #number ReportRadius (optional)
+-- @param #number NearRadius (optional)
+-- @return #CARGO_GROUP
+function CARGO_GROUP:New( CargoGroup, Type, Name, ReportRadius )
+  local self = BASE:Inherit( self, CARGO_REPORTABLE:New( Type, Name, 0, ReportRadius ) ) -- #CARGO_GROUP
+  self:F( { Type, Name, ReportRadius } )
+
+  self:SetDeployed( false )
   
-    self.CargoObject = CargoGroup
-    self:SetDeployed( false )
-    self.CargoGroup = CargoGroup
-    
-    local WeightGroup = 0
-    
-    for UnitID, UnitData in pairs( CargoGroup:GetUnits() ) do
-      local Unit = UnitData -- Wrapper.Unit#UNIT
-      local WeightUnit = Unit:GetDesc().massEmpty
-      WeightGroup = WeightGroup + WeightUnit
-      local CargoUnit = CARGO_UNIT:New( Unit, Type, Unit:GetName(), WeightUnit )
-      self.CargoSet:Add( CargoUnit:GetName(), CargoUnit )
-    end
+  local WeightGroup = 0
+  local GroupName = CargoGroup:GetName()
   
-    self:SetWeight( WeightGroup )
-    
-    self:T( { "Weight Cargo", WeightGroup } )
+  CargoGroup:Destroy()
   
-    -- Cargo objects are added to the _DATABASE and SET_CARGO objects.
-    _EVENTDISPATCHER:CreateEventNewCargo( self )
+  -- We iterate through the group template and for each unit in the template, we create a new group with one unit.
+  for UnitID, UnitTemplate in pairs( _DATABASE:GetGroupTemplate(GroupName).units ) do
     
-    self:HandleEvent( EVENTS.Dead, self.OnEventCargoDead )
-    self:HandleEvent( EVENTS.Crash, self.OnEventCargoDead )
-    self:HandleEvent( EVENTS.PlayerLeaveUnit, self.OnEventCargoDead )
+    local GroupTemplate = UTILS.DeepCopy( _DATABASE:GetGroupTemplate(GroupName) )
+    local GroupName = env.getValueDictByKey( GroupTemplate.name )
+    self:E( GroupName )
     
-    self:SetEventPriority( 4 )
+    -- We create a new group object with one unit...
+    -- First we prepare the template...
+    GroupTemplate.name = GroupName .. "#CARGO#" .. UnitID
+    GroupTemplate.groupId = nil
+    GroupTemplate.units = {}
+    GroupTemplate.units[1] = UnitTemplate
+    local UnitName = UnitTemplate.name .. "#CARGO"
+    GroupTemplate.units[1].name = UnitTemplate.name .. "#CARGO"
+
+
+    -- Then we register the new group in the database
+    local CargoGroup = GROUP:NewTemplate( GroupTemplate, GroupTemplate.CoalitionID, GroupTemplate.CategoryID, GroupTemplate.CountryID)
     
-    return self
+    -- Now we spawn the new group based on the template created.
+    _DATABASE:Spawn( GroupTemplate )
+    
+    -- And we register the spawned unit as part of the CargoSet.
+    local Unit = UNIT:FindByName( UnitName )
+    --local WeightUnit = Unit:GetDesc().massEmpty
+    --WeightGroup = WeightGroup + WeightUnit
+    local CargoUnit = CARGO_UNIT:New( Unit, Type, UnitName, 10 )
+    self.CargoSet:Add( UnitName, CargoUnit )
   end
 
-  --- @param #CARGO_GROUP self
-  -- @param Core.Event#EVENTDATA EventData 
-  function CARGO_GROUP:OnEventCargoDead( EventData )
+
+  self:SetWeight( WeightGroup )
   
-    self:_F( { "Dead Event", EventData = EventData } )
-    
-    local Destroyed = false
-    
+  self:T( { "Weight Cargo", WeightGroup } )
+
+  -- Cargo objects are added to the _DATABASE and SET_CARGO objects.
+  _EVENTDISPATCHER:CreateEventNewCargo( self )
+  
+  self:HandleEvent( EVENTS.Dead, self.OnEventCargoDead )
+  self:HandleEvent( EVENTS.Crash, self.OnEventCargoDead )
+  self:HandleEvent( EVENTS.PlayerLeaveUnit, self.OnEventCargoDead )
+  
+  self:SetEventPriority( 4 )
+  
+  return self
+end
+
+--- @param #CARGO_GROUP self
+-- @param Core.Event#EVENTDATA EventData 
+function CARGO_GROUP:OnEventCargoDead( EventData )
+
+  local Destroyed = false
+  
     if self:IsDestroyed() or self:IsUnLoaded() or self:IsBoarding() then
       Destroyed = true
       for CargoID, CargoData in pairs( self.CargoSet:GetSet() ) do
@@ -1351,7 +1376,7 @@ do -- CARGO_GROUP
   function CARGO_GROUP:onenterUnBoarding( From, Event, To, ToPointVec2, NearRadius, ... )
     self:F( {From, Event, To, ToPointVec2, NearRadius } )
   
-    NearRadius = NearRadius or 100
+    NearRadius = NearRadius or 25
   
     local Timer = 1
   
@@ -1366,7 +1391,7 @@ do -- CARGO_GROUP
         function( Cargo, NearRadius )
           
           Cargo:__UnBoard( Timer, ToPointVec2, NearRadius )
-          Timer = Timer + 10
+          Timer = Timer + 3
         end, { NearRadius }
       )
       
