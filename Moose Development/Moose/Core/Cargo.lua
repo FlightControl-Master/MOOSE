@@ -226,317 +226,316 @@ do -- CARGO
     Containable = false,
   }
 
---- @type CARGO.CargoObjects
--- @map < #string, Wrapper.Positionable#POSITIONABLE > The alive POSITIONABLE objects representing the the cargo.
-
-
---- CARGO Constructor. This class is an abstract class and should not be instantiated.
--- @param #CARGO self
--- @param #string Type
--- @param #string Name
--- @param #number Weight
--- @param #number NearRadius (optional)
--- @return #CARGO
-function CARGO:New( Type, Name, Weight ) --R2.1
-
-  local self = BASE:Inherit( self, FSM:New() ) -- #CARGO
-  self:F( { Type, Name, Weight } )
+  --- @type CARGO.CargoObjects
+  -- @map < #string, Wrapper.Positionable#POSITIONABLE > The alive POSITIONABLE objects representing the the cargo.
   
-  self:SetStartState( "UnLoaded" )
-  self:AddTransition( { "UnLoaded", "Boarding" }, "Board", "Boarding" )
-  self:AddTransition( "Boarding" , "Boarding", "Boarding" )
-  self:AddTransition( "Boarding", "CancelBoarding", "UnLoaded" )
-  self:AddTransition( "Boarding", "Load", "Loaded" )
-  self:AddTransition( "UnLoaded", "Load", "Loaded" )
-  self:AddTransition( "Loaded", "UnBoard", "UnBoarding" )
-  self:AddTransition( "UnBoarding", "UnBoarding", "UnBoarding" )
-  self:AddTransition( "UnBoarding", "UnLoad", "UnLoaded" )
-  self:AddTransition( "Loaded", "UnLoad", "UnLoaded" )
-  self:AddTransition( "*", "Damaged", "Damaged" )
-  self:AddTransition( "*", "Destroyed", "Destroyed" )
-  self:AddTransition( "*", "Respawn", "UnLoaded" )
-
-
-  self.Type = Type
-  self.Name = Name
-  self.Weight = Weight
-  self.CargoObject = nil
-  self.CargoCarrier = nil -- Wrapper.Client#CLIENT
-  self.Representable = false
-  self.Slingloadable = false
-  self.Moveable = false
-  self.Containable = false
   
-  self:SetDeployed( false )
-
-  self.CargoScheduler = SCHEDULER:New()
-
-  CARGOS[self.Name] = self
-
+  --- CARGO Constructor. This class is an abstract class and should not be instantiated.
+  -- @param #CARGO self
+  -- @param #string Type
+  -- @param #string Name
+  -- @param #number Weight
+  -- @param #number NearRadius (optional)
+  -- @return #CARGO
+  function CARGO:New( Type, Name, Weight ) --R2.1
   
-  return self
-end
-
---- Destroy the cargo.
--- @param #CARGO self
-function CARGO:Destroy()
-  if self.CargoObject then
-    self.CargoObject:Destroy()
-  end
-  self:Destroyed()
-end
-
---- Get the name of the Cargo.
--- @param #CARGO self
--- @return #string The name of the Cargo.
-function CARGO:GetName() --R2.1
-  return self.Name
-end
-
---- Get the object name of the Cargo.
--- @param #CARGO self
--- @return #string The object name of the Cargo.
-function CARGO:GetObjectName() --R2.1
-  if self:IsLoaded() then
-    return self.CargoCarrier:GetName()
-  else
-    return self.CargoObject:GetName()
-  end 
-end
-
---- Get the type of the Cargo.
--- @param #CARGO self
--- @return #string The type of the Cargo.
-function CARGO:GetType()
-  return self.Type
-end
-
---- Get the current coordinates of the Cargo.
--- @param #CARGO self
--- @return Core.Point#COORDINATE The coordinates of the Cargo.
-function CARGO:GetCoordinate()
-  return self.CargoObject:GetCoordinate()
-end
-
---- Check if cargo is destroyed.
--- @param #CARGO self
--- @return #boolean true if destroyed
-function CARGO:IsDestroyed()
-  return self:Is( "Destroyed" )
-end
-
-
---- Check if cargo is loaded.
--- @param #CARGO self
--- @return #boolean true if loaded
-function CARGO:IsLoaded()
-  return self:Is( "Loaded" )
-end
-
---- Check if cargo is unloaded.
--- @param #CARGO self
--- @return #boolean true if unloaded
-function CARGO:IsUnLoaded()
-  return self:Is( "UnLoaded" )
-end
-
---- Check if cargo is boarding.
--- @param #CARGO self
--- @return #boolean true if boarding
-function CARGO:IsBoarding()
-  return self:Is( "Boarding" )
-end
-
---- Check if cargo is alive.
--- @param #CARGO self
--- @return #boolean true if unloaded
-function CARGO:IsAlive()
-
-  if self:IsLoaded() then
-    return self.CargoCarrier:IsAlive()
-  else
-    return self.CargoObject:IsAlive()
-  end 
-end
-
---- Set the cargo as deployed
--- @param #CARGO self
-function CARGO:SetDeployed( Deployed )
-  self.Deployed = Deployed
-end
-
---- Is the cargo deployed
--- @param #CARGO self
--- @return #boolean
-function CARGO:IsDeployed()
-  return self.Deployed
-end
-
-
-
-
---- Template method to spawn a new representation of the CARGO in the simulator.
--- @param #CARGO self
--- @return #CARGO
-function CARGO:Spawn( PointVec2 )
-  self:F()
-
-end
-
---- Signal a flare at the position of the CARGO.
--- @param #CARGO self
--- @param Utilities.Utils#FLARECOLOR FlareColor
-function CARGO:Flare( FlareColor )
-  if self:IsUnLoaded() then
-    trigger.action.signalFlare( self.CargoObject:GetVec3(), FlareColor , 0 )
-  end
-end
-
---- Signal a white flare at the position of the CARGO.
--- @param #CARGO self
-function CARGO:FlareWhite()
-  self:Flare( trigger.flareColor.White )
-end
-
---- Signal a yellow flare at the position of the CARGO.
--- @param #CARGO self
-function CARGO:FlareYellow()
-  self:Flare( trigger.flareColor.Yellow )
-end
-
---- Signal a green flare at the position of the CARGO.
--- @param #CARGO self
-function CARGO:FlareGreen()
-  self:Flare( trigger.flareColor.Green )
-end
-
---- Signal a red flare at the position of the CARGO.
--- @param #CARGO self
-function CARGO:FlareRed()
-  self:Flare( trigger.flareColor.Red )
-end
-
---- Smoke the CARGO.
--- @param #CARGO self
--- @param Utilities.Utils#SMOKECOLOR SmokeColor The color of the smoke.
--- @param #number Radius The radius of randomization around the center of the Cargo.
-function CARGO:Smoke( SmokeColor, Radius )
-  if self:IsUnLoaded() then
-    if Radius then
-      trigger.action.smoke( self.CargoObject:GetRandomVec3( Radius ), SmokeColor )
-    else
-      trigger.action.smoke( self.CargoObject:GetVec3(), SmokeColor )
-    end
-  end
-end
-
---- Smoke the CARGO Green.
--- @param #CARGO self
-function CARGO:SmokeGreen()
-  self:Smoke( trigger.smokeColor.Green, Range )
-end
-
---- Smoke the CARGO Red.
--- @param #CARGO self
-function CARGO:SmokeRed()
-  self:Smoke( trigger.smokeColor.Red, Range )
-end
-
---- Smoke the CARGO White.
--- @param #CARGO self
-function CARGO:SmokeWhite()
-  self:Smoke( trigger.smokeColor.White, Range )
-end
-
---- Smoke the CARGO Orange.
--- @param #CARGO self
-function CARGO:SmokeOrange()
-  self:Smoke( trigger.smokeColor.Orange, Range )
-end
-
---- Smoke the CARGO Blue.
--- @param #CARGO self
-function CARGO:SmokeBlue()
-  self:Smoke( trigger.smokeColor.Blue, Range )
-end
-
-
-
-
-
-
---- Check if Cargo is the given @{Zone}.
--- @param #CARGO self
--- @param Core.Zone#ZONE_BASE Zone
--- @return #boolean **true** if cargo is in the Zone, **false** if cargo is not in the Zone.
-function CARGO:IsInZone( Zone )
-  self:F( { Zone } )
-
-  if self:IsLoaded() then
-    return Zone:IsPointVec2InZone( self.CargoCarrier:GetPointVec2() )
-  else
-    self:F( { Size = self.CargoObject:GetSize(), Units = self.CargoObject:GetUnits() } )
-    if self.CargoObject:GetSize() ~= 0 then
-      return Zone:IsPointVec2InZone( self.CargoObject:GetPointVec2() )
-    else
-      return false
-    end
-  end  
-  
-  return nil
-
-end
-
-
---- Check if CargoCarrier is near the Cargo to be Loaded.
--- @param #CARGO self
--- @param Core.Point#POINT_VEC2 PointVec2
--- @param #number NearRadius The radius when the cargo will board the Carrier (to avoid collision).
--- @return #boolean
-function CARGO:IsNear( PointVec2, NearRadius )
-  self:F( { PointVec2 = PointVec2, NearRadius = NearRadius } )
-
-  if self.CargoObject:IsAlive() then
-    --local Distance = PointVec2:DistanceFromPointVec2( self.CargoObject:GetPointVec2() )
-    self:F( { CargoObjectName = self.CargoObject:GetName() } )
-    self:F( { CargoObjectVec2 = self.CargoObject:GetVec2() } )
-    self:F( { PointVec2 = PointVec2:GetVec2() } )
-    local Distance = PointVec2:Get2DDistance( self.CargoObject:GetPointVec2() )
-    self:T( Distance )
+    local self = BASE:Inherit( self, FSM:New() ) -- #CARGO
+    self:F( { Type, Name, Weight } )
     
-    if Distance <= NearRadius then
-      return true
+    self:SetStartState( "UnLoaded" )
+    self:AddTransition( { "UnLoaded", "Boarding" }, "Board", "Boarding" )
+    self:AddTransition( "Boarding" , "Boarding", "Boarding" )
+    self:AddTransition( "Boarding", "CancelBoarding", "UnLoaded" )
+    self:AddTransition( "Boarding", "Load", "Loaded" )
+    self:AddTransition( "UnLoaded", "Load", "Loaded" )
+    self:AddTransition( "Loaded", "UnBoard", "UnBoarding" )
+    self:AddTransition( "UnBoarding", "UnBoarding", "UnBoarding" )
+    self:AddTransition( "UnBoarding", "UnLoad", "UnLoaded" )
+    self:AddTransition( "Loaded", "UnLoad", "UnLoaded" )
+    self:AddTransition( "*", "Damaged", "Damaged" )
+    self:AddTransition( "*", "Destroyed", "Destroyed" )
+    self:AddTransition( "*", "Respawn", "UnLoaded" )
+  
+  
+    self.Type = Type
+    self.Name = Name
+    self.Weight = Weight
+    self.CargoObject = nil
+    self.CargoCarrier = nil -- Wrapper.Client#CLIENT
+    self.Representable = false
+    self.Slingloadable = false
+    self.Moveable = false
+    self.Containable = false
+    
+    self:SetDeployed( false )
+  
+    self.CargoScheduler = SCHEDULER:New()
+  
+    CARGOS[self.Name] = self
+  
+    
+    return self
+  end
+  
+  --- Destroy the cargo.
+  -- @param #CARGO self
+  function CARGO:Destroy()
+    if self.CargoObject then
+      self.CargoObject:Destroy()
+    end
+    self:Destroyed()
+  end
+  
+  --- Get the name of the Cargo.
+  -- @param #CARGO self
+  -- @return #string The name of the Cargo.
+  function CARGO:GetName() --R2.1
+    return self.Name
+  end
+  
+  --- Get the object name of the Cargo.
+  -- @param #CARGO self
+  -- @return #string The object name of the Cargo.
+  function CARGO:GetObjectName() --R2.1
+    if self:IsLoaded() then
+      return self.CargoCarrier:GetName()
+    else
+      return self.CargoObject:GetName()
+    end 
+  end
+  
+  --- Get the type of the Cargo.
+  -- @param #CARGO self
+  -- @return #string The type of the Cargo.
+  function CARGO:GetType()
+    return self.Type
+  end
+  
+  --- Get the current coordinates of the Cargo.
+  -- @param #CARGO self
+  -- @return Core.Point#COORDINATE The coordinates of the Cargo.
+  function CARGO:GetCoordinate()
+    return self.CargoObject:GetCoordinate()
+  end
+  
+  --- Check if cargo is destroyed.
+  -- @param #CARGO self
+  -- @return #boolean true if destroyed
+  function CARGO:IsDestroyed()
+    return self:Is( "Destroyed" )
+  end
+  
+  
+  --- Check if cargo is loaded.
+  -- @param #CARGO self
+  -- @return #boolean true if loaded
+  function CARGO:IsLoaded()
+    return self:Is( "Loaded" )
+  end
+  
+  --- Check if cargo is unloaded.
+  -- @param #CARGO self
+  -- @return #boolean true if unloaded
+  function CARGO:IsUnLoaded()
+    return self:Is( "UnLoaded" )
+  end
+  
+  --- Check if cargo is boarding.
+  -- @param #CARGO self
+  -- @return #boolean true if boarding
+  function CARGO:IsBoarding()
+    return self:Is( "Boarding" )
+  end
+  
+  --- Check if cargo is alive.
+  -- @param #CARGO self
+  -- @return #boolean true if unloaded
+  function CARGO:IsAlive()
+  
+    if self:IsLoaded() then
+      return self.CargoCarrier:IsAlive()
+    else
+      return self.CargoObject:IsAlive()
+    end 
+  end
+  
+  --- Set the cargo as deployed
+  -- @param #CARGO self
+  function CARGO:SetDeployed( Deployed )
+    self.Deployed = Deployed
+  end
+  
+  --- Is the cargo deployed
+  -- @param #CARGO self
+  -- @return #boolean
+  function CARGO:IsDeployed()
+    return self.Deployed
+  end
+  
+  
+  
+  
+  --- Template method to spawn a new representation of the CARGO in the simulator.
+  -- @param #CARGO self
+  -- @return #CARGO
+  function CARGO:Spawn( PointVec2 )
+    self:F()
+  
+  end
+  
+  --- Signal a flare at the position of the CARGO.
+  -- @param #CARGO self
+  -- @param Utilities.Utils#FLARECOLOR FlareColor
+  function CARGO:Flare( FlareColor )
+    if self:IsUnLoaded() then
+      trigger.action.signalFlare( self.CargoObject:GetVec3(), FlareColor , 0 )
     end
   end
   
-  return false
-end
+  --- Signal a white flare at the position of the CARGO.
+  -- @param #CARGO self
+  function CARGO:FlareWhite()
+    self:Flare( trigger.flareColor.White )
+  end
+  
+  --- Signal a yellow flare at the position of the CARGO.
+  -- @param #CARGO self
+  function CARGO:FlareYellow()
+    self:Flare( trigger.flareColor.Yellow )
+  end
+  
+  --- Signal a green flare at the position of the CARGO.
+  -- @param #CARGO self
+  function CARGO:FlareGreen()
+    self:Flare( trigger.flareColor.Green )
+  end
+  
+  --- Signal a red flare at the position of the CARGO.
+  -- @param #CARGO self
+  function CARGO:FlareRed()
+    self:Flare( trigger.flareColor.Red )
+  end
+  
+  --- Smoke the CARGO.
+  -- @param #CARGO self
+  -- @param Utilities.Utils#SMOKECOLOR SmokeColor The color of the smoke.
+  -- @param #number Radius The radius of randomization around the center of the Cargo.
+  function CARGO:Smoke( SmokeColor, Radius )
+    if self:IsUnLoaded() then
+      if Radius then
+        trigger.action.smoke( self.CargoObject:GetRandomVec3( Radius ), SmokeColor )
+      else
+        trigger.action.smoke( self.CargoObject:GetVec3(), SmokeColor )
+      end
+    end
+  end
+  
+  --- Smoke the CARGO Green.
+  -- @param #CARGO self
+  function CARGO:SmokeGreen()
+    self:Smoke( trigger.smokeColor.Green, Range )
+  end
+  
+  --- Smoke the CARGO Red.
+  -- @param #CARGO self
+  function CARGO:SmokeRed()
+    self:Smoke( trigger.smokeColor.Red, Range )
+  end
+  
+  --- Smoke the CARGO White.
+  -- @param #CARGO self
+  function CARGO:SmokeWhite()
+    self:Smoke( trigger.smokeColor.White, Range )
+  end
+  
+  --- Smoke the CARGO Orange.
+  -- @param #CARGO self
+  function CARGO:SmokeOrange()
+    self:Smoke( trigger.smokeColor.Orange, Range )
+  end
+  
+  --- Smoke the CARGO Blue.
+  -- @param #CARGO self
+  function CARGO:SmokeBlue()
+    self:Smoke( trigger.smokeColor.Blue, Range )
+  end
+  
+  
+  
+  
+  
+  
+  --- Check if Cargo is the given @{Zone}.
+  -- @param #CARGO self
+  -- @param Core.Zone#ZONE_BASE Zone
+  -- @return #boolean **true** if cargo is in the Zone, **false** if cargo is not in the Zone.
+  function CARGO:IsInZone( Zone )
+    self:F( { Zone } )
+  
+    if self:IsLoaded() then
+      return Zone:IsPointVec2InZone( self.CargoCarrier:GetPointVec2() )
+    else
+      self:F( { Size = self.CargoObject:GetSize(), Units = self.CargoObject:GetUnits() } )
+      if self.CargoObject:GetSize() ~= 0 then
+        return Zone:IsPointVec2InZone( self.CargoObject:GetPointVec2() )
+      else
+        return false
+      end
+    end  
+    
+    return nil
+  
+  end
+  
+  
+  --- Check if CargoCarrier is near the Cargo to be Loaded.
+  -- @param #CARGO self
+  -- @param Core.Point#POINT_VEC2 PointVec2
+  -- @param #number NearRadius The radius when the cargo will board the Carrier (to avoid collision).
+  -- @return #boolean
+  function CARGO:IsNear( PointVec2, NearRadius )
+    self:F( { PointVec2 = PointVec2, NearRadius = NearRadius } )
+  
+    if self.CargoObject:IsAlive() then
+      --local Distance = PointVec2:DistanceFromPointVec2( self.CargoObject:GetPointVec2() )
+      self:F( { CargoObjectName = self.CargoObject:GetName() } )
+      self:F( { CargoObjectVec2 = self.CargoObject:GetVec2() } )
+      self:F( { PointVec2 = PointVec2:GetVec2() } )
+      local Distance = PointVec2:Get2DDistance( self.CargoObject:GetPointVec2() )
+      self:T( Distance )
+      
+      if Distance <= NearRadius then
+        return true
+      end
+    end
+    
+    return false
+  end
+  
+  --- Get the current PointVec2 of the cargo.
+  -- @param #CARGO self
+  -- @return Core.Point#POINT_VEC2
+  function CARGO:GetPointVec2()
+    return self.CargoObject:GetPointVec2()
+  end
+  
+  --- Get the current Coordinate of the cargo.
+  -- @param #CARGO self
+  -- @return Core.Point#COORDINATE
+  function CARGO:GetCoordinate()
+    return self.CargoObject:GetCoordinate()
+  end
+  
+  --- Set the weight of the cargo.
+  -- @param #CARGO self
+  -- @param #number Weight The weight in kg.
+  -- @return #CARGO
+  function CARGO:SetWeight( Weight )
+    self.Weight = Weight
+    return self
+  end
 
---- Get the current PointVec2 of the cargo.
--- @param #CARGO self
--- @return Core.Point#POINT_VEC2
-function CARGO:GetPointVec2()
-  return self.CargoObject:GetPointVec2()
-end
-
---- Get the current Coordinate of the cargo.
--- @param #CARGO self
--- @return Core.Point#COORDINATE
-function CARGO:GetCoordinate()
-  return self.CargoObject:GetCoordinate()
-end
-
---- Set the weight of the cargo.
--- @param #CARGO self
--- @param #number Weight The weight in kg.
--- @return #CARGO
-function CARGO:SetWeight( Weight )
-  self.Weight = Weight
-  return self
-end
-
-end
-
+end -- CARGO
 
 do -- CARGO_REPRESENTABLE
 
@@ -600,7 +599,7 @@ do -- CARGO_REPRESENTABLE
   
 end -- CARGO_REPRESENTABLE
 
-  do -- CARGO_REPORTABLE
+do -- CARGO_REPORTABLE
   
     --- @type CARGO_REPORTABLE
     -- @extends #CARGO
@@ -989,7 +988,6 @@ do -- CARGO_UNIT
 
 end -- CARGO_UNIT
 
-
 do -- CARGO_CRATE
 
   --- Models the behaviour of cargo crates, which can be slingloaded and boarded on helicopters using the DCS menus. 
@@ -1127,16 +1125,17 @@ function CARGO_GROUP:New( CargoGroup, Type, Name, ReportRadius )
   self:SetDeployed( false )
   
   local WeightGroup = 0
-  local GroupName = CargoGroup:GetName()
+  
+  self.GroupName = CargoGroup:GetName()
+  self.CargoTemplate = UTILS.DeepCopy( _DATABASE:GetGroupTemplate( self.GroupName ) )
   
   CargoGroup:Destroy()
   
   -- We iterate through the group template and for each unit in the template, we create a new group with one unit.
-  for UnitID, UnitTemplate in pairs( _DATABASE:GetGroupTemplate(GroupName).units ) do
+  for UnitID, UnitTemplate in pairs( self.CargoTemplate.units ) do
     
-    local GroupTemplate = UTILS.DeepCopy( _DATABASE:GetGroupTemplate(GroupName) )
+    local GroupTemplate = UTILS.DeepCopy( self.CargoTemplate )
     local GroupName = env.getValueDictByKey( GroupTemplate.name )
-    self:E( GroupName )
     
     -- We create a new group object with one unit...
     -- First we prepare the template...
@@ -1557,7 +1556,7 @@ function CARGO_GROUP:OnEventCargoDead( EventData )
   -- @param #CARGO_GROUP self
   function CARGO_GROUP:Respawn()
 
-    self:F({"Respawning"})
+    self:F( { "Respawning" } )
 
     for CargoID, CargoData in pairs( self.CargoSet:GetSet() ) do
       local Cargo = CargoData -- #CARGO
@@ -1565,15 +1564,38 @@ function CARGO_GROUP:OnEventCargoDead( EventData )
       Cargo:SetStartState( "UnLoaded" )
     end
 
-    local CargoObject = self.CargoObject -- Wrapper.Group#GROUP
-    CargoObject:Destroy()
-    local Template = CargoObject:GetTemplate()
-    CargoObject:Respawn( Template )
+    
+    -- We iterate through the group template and for each unit in the template, we create a new group with one unit.
+    for UnitID, UnitTemplate in pairs( self.CargoTemplate.units ) do
+      
+      local GroupTemplate = UTILS.DeepCopy( self.CargoTemplate )
+      local GroupName = env.getValueDictByKey( GroupTemplate.name )
+      
+      -- We create a new group object with one unit...
+      -- First we prepare the template...
+      GroupTemplate.name = GroupName .. "#CARGO#" .. UnitID
+      GroupTemplate.groupId = nil
+      GroupTemplate.units = {}
+      GroupTemplate.units[1] = UnitTemplate
+      local UnitName = UnitTemplate.name .. "#CARGO"
+      GroupTemplate.units[1].name = UnitTemplate.name .. "#CARGO"
   
+  
+      -- Then we register the new group in the database
+      local CargoGroup = GROUP:NewTemplate( GroupTemplate, GroupTemplate.CoalitionID, GroupTemplate.CategoryID, GroupTemplate.CountryID)
+      
+      -- Now we spawn the new group based on the template created.
+      _DATABASE:Spawn( GroupTemplate )
+      
+      -- And we register the spawned unit as part of the CargoSet.
+      local Unit = UNIT:FindByName( UnitName )
+      --local WeightUnit = Unit:GetDesc().massEmpty
+      --WeightGroup = WeightGroup + WeightUnit
+      local CargoUnit = CARGO_UNIT:New( Unit, Type, UnitName, 10 )
+      self.CargoSet:Add( UnitName, CargoUnit )
+    end
+
     self:SetDeployed( false )
-  
-    local WeightGroup = 0
-        
     self:SetStartState( "UnLoaded" )
     
   end
