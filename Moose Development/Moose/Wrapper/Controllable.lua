@@ -202,26 +202,6 @@ end
 
 -- Get methods
 
---- Returns the UNITs wrappers of the DCS Units of the Controllable (default is a GROUP).
--- @param #CONTROLLABLE self
--- @return #list<Wrapper.Unit#UNIT> The UNITs wrappers.
-function CONTROLLABLE:GetUnits()
-  self:F2( { self.ControllableName } )
-  local DCSControllable = self:GetDCSObject()
-
-  if DCSControllable then
-    local DCSUnits = DCSControllable:getUnits()
-    local Units = {}
-    for Index, UnitData in pairs( DCSUnits ) do
-      Units[#Units+1] = UNIT:Find( UnitData )
-    end
-    self:T3( Units )
-    return Units
-  end
-
-  return nil
-end
-
 
 --- Returns the health. Dead controllables have health <= 1.0.
 -- @param #CONTROLLABLE self

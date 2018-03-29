@@ -330,6 +330,25 @@ function GROUP:GetCountry()
   return nil
 end
 
+--- Returns a list of @{Unit} objects of the @{Group}.
+-- @param #GROUP self
+-- @return #list<Wrapper.Unit#UNIT> The list of @{Unit} objects of the @{Group}.
+function GROUP:GetUnits()
+  self:F2( { self.GroupName } )
+  local DCSGroup = self:GetDCSObject()
+
+  if DCSGroup then
+    local DCSUnits = DCSGroup:getUnits()
+    local Units = {}
+    for Index, UnitData in pairs( DCSUnits ) do
+      Units[#Units+1] = UNIT:Find( UnitData )
+    end
+    self:T3( Units )
+    return Units
+  end
+
+  return nil
+end
 --- Returns the UNIT wrapper class with number UnitNumber.
 -- If the underlying DCS Unit does not exist, the method will return nil. .
 -- @param #GROUP self
