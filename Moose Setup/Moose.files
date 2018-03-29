@@ -21,7 +21,6 @@ Core/Radio.lua
 Core/Spawn.lua
 Core/SpawnStatic.lua
 Core/Goal.lua
-Core/Cargo.lua
 Core/Spot.lua
 
 Wrapper/Object.lua
@@ -34,6 +33,11 @@ Wrapper/Client.lua
 Wrapper/Static.lua
 Wrapper/Airbase.lua
 Wrapper/Scenery.lua
+
+Cargo/Cargo.lua
+Cargo/CargoUnit.lua
+Cargo/CargoCrate.lua
+Cargo/CargoGroup.lua
 
 Functional/Scoring.lua
 Functional/CleanUp.lua
