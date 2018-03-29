@@ -418,11 +418,12 @@ end
 
 --- Smoke the CARGO.
 -- @param #CARGO self
-function CARGO:Smoke( SmokeColor, Range )
-  self:F2()
+-- @param Utilities.Utils#SMOKECOLOR SmokeColor The color of the smoke.
+-- @param #number Radius The radius of randomization around the center of the Cargo.
+function CARGO:Smoke( SmokeColor, Radius )
   if self:IsUnLoaded() then
-    if Range then
-      trigger.action.smoke( self.CargoObject:GetRandomVec3( Range ), SmokeColor )
+    if Radius then
+      trigger.action.smoke( self.CargoObject:GetRandomVec3( Radius ), SmokeColor )
     else
       trigger.action.smoke( self.CargoObject:GetVec3(), SmokeColor )
     end
@@ -626,31 +627,7 @@ end -- CARGO_REPRESENTABLE
     return self
   end
   
-  --- Check if CargoCarrier is in the ReportRadius for the Cargo to be Loaded.
-  -- @param #CARGO_REPORTABLE self
-  -- @param Core.Point#POINT_VEC2 PointVec2
-  -- @return #boolean
-  function CARGO_REPORTABLE:IsInRadius( PointVec2 )
-    self:F( { PointVec2 } )
-  
-    local Distance = 0
-    if self:IsLoaded() then
-      Distance = PointVec2:DistanceFromPointVec2( self.CargoCarrier:GetPointVec2() )
-    else
-      Distance = PointVec2:DistanceFromPointVec2( self.CargoObject:GetPointVec2() )
-    end
-    self:T( Distance )
-    
-    if Distance <= self.ReportRadius then
-      return true
-    else
-      return false
-    end
-  
-  
-  end
-
-  --- Send a CC message to a GROUP.
+  --- Send a CC message to a @{Group}.
   -- @param #CARGO_REPORTABLE self
   -- @param #string Message
   -- @param Wrapper.Group#GROUP TaskGroup
@@ -663,37 +640,13 @@ end -- CARGO_REPRESENTABLE
   
   end
 
-  --- Get the range till cargo will board.
+  --- Get the Report radius, which is the radius when the Cargo is reporting itself.
   -- @param #CARGO_REPORTABLE self
-  -- @return #number The range till cargo will board.
+  -- @return #number The range till Cargo reports itself.
   function CARGO_REPORTABLE:GetBoardingRange()
     return self.ReportRadius
   end
   
-  --- Respawn the cargo.
-  -- @param #CARGO_REPORTABLE self
-  function CARGO_REPORTABLE:Respawn()
-
-    self:F({"Respawning"})
-
-    for CargoID, CargoData in pairs( self.CargoSet:GetSet() ) do
-      local Cargo = CargoData -- #CARGO
-      Cargo:Destroy()
-      Cargo:SetStartState( "UnLoaded" )
-    end
-
-    local CargoObject = self.CargoObject -- Wrapper.Group#GROUP
-    CargoObject:Destroy()
-    local Template = CargoObject:GetTemplate()
-    CargoObject:Respawn( Template )
-  
-    self:SetDeployed( false )
-  
-    local WeightGroup = 0
-        
-    self:SetStartState( "UnLoaded" )
-    
-  end
 
   
 end
@@ -1495,13 +1448,55 @@ function CARGO_GROUP:OnEventCargoDead( EventData )
       
   end
   
+  --- Get the current Coordinate of the CargoGroup.
+  -- @param #CARGO_GROUP self
+  -- @return Core.Point#COORDINATE The current Coordinate of the first Cargo of the CargoGroup.
+  -- @return #nil There is no valid Cargo in the CargoGroup.
+  function CARGO_GROUP:GetCoordinate()
+    self:F()
+    
+    local Cargo = self.CargoSet:GetFirst()
+    
+    if Cargo then
+      return Cargo.CargoObject:GetCoordinate()
+    end
+    
+    return nil
+  end
+
+  --- Check if the CargoGroup is alive.
+  -- @param #CARGO_GROUP self
+  -- @return #boolean true if the CargoGroup is alive.
+  -- @return #boolean false if the CargoGroup is dead.
+  function CARGO_GROUP:IsAlive()
+
+    local Alive = true
+  
+    -- For each Cargo within the CargoSet, check if the Cargo is Alive.
+    -- When the Cargo is Loaded, the Cargo is in the CargoCarrier, so we check if the CargoCarrier is alive.
+    -- When the Cargo is not Loaded, the Cargo is the CargoObject, so we check if the CargoObject is alive.
+    self.CargoSet:ForEach(
+      function( Cargo )
+        if self:IsLoaded() then
+          Alive = Alive == true and Cargo.CargoCarrier:IsAlive()
+        else
+          Alive = Alive == true and Cargo.CargoObject:IsAlive()
+        end 
+      end
+    )
+    
+    return Alive
+  
+  end
+
+  
   --- Route Cargo to Coordinate and randomize locations.
   -- @param #CARGO_GROUP self
   -- @param Core.Point#COORDINATE Coordinate
   function CARGO_GROUP:RouteTo( Coordinate )
     self:F( {Coordinate = Coordinate } )
     
-    -- For each Cargo object within the CARGO_GROUPED, route each object to the CargoLoadPointVec2
+    -- For each Cargo within the CargoSet, route each object to the Coordinate
     self.CargoSet:ForEach(
       function( Cargo )
         Cargo.CargoObject:RouteGroundTo( Coordinate, 10, "vee", 0 )
@@ -1520,16 +1515,109 @@ function CARGO_GROUP:OnEventCargoDead( EventData )
   function CARGO_GROUP:IsNear( CargoCarrier, NearRadius )
     self:F( {NearRadius = NearRadius } )
     
-    local FirstCargo = self.CargoSet:GetFirst() -- #CARGO
+    local Cargo = self.CargoSet:GetFirst() -- #CARGO
     
-    if FirstCargo then
-      if FirstCargo:IsNear( CargoCarrier:GetCoordinate(), NearRadius ) then
-        self:F( "Near" )
+    if Cargo then
+      return Cargo:IsNear( CargoCarrier:GetCoordinate(), NearRadius )
+    end
+    
+    return nil
+  end
+
+  --- Check if CargoGroup is in the ReportRadius for the Cargo to be Loaded.
+  -- @param #CARGO_GROUP self
+  -- @param Core.Point#Coordinate Coordinate
+  -- @return #boolean true if the CargoGroup is within the reporting radius.
+  function CARGO_GROUP:IsInRadius( Coordinate )
+    self:F( { Coordinate } )
+  
+    local Cargo = self.CargoSet:GetFirst() -- #CARGO
+
+    if Cargo then
+      local Distance = 0
+      if Cargo:IsLoaded() then
+        Distance = Coordinate:DistanceFromPointVec2( Cargo.CargoCarrier:GetPointVec2() )
+      else
+        Distance = Coordinate:DistanceFromPointVec2( Cargo.CargoObject:GetPointVec2() )
+      end
+      self:T( Distance )
+      
+      if Distance <= self.ReportRadius then
         return true
+      else
+        return false
       end
     end
     
     return nil
+  
+  end
+
+  --- Respawn the CargoGroup.
+  -- @param #CARGO_GROUP self
+  function CARGO_GROUP:Respawn()
+
+    self:F({"Respawning"})
+
+    for CargoID, CargoData in pairs( self.CargoSet:GetSet() ) do
+      local Cargo = CargoData -- #CARGO
+      Cargo:Destroy()
+      Cargo:SetStartState( "UnLoaded" )
+    end
+
+    local CargoObject = self.CargoObject -- Wrapper.Group#GROUP
+    CargoObject:Destroy()
+    local Template = CargoObject:GetTemplate()
+    CargoObject:Respawn( Template )
+  
+    self:SetDeployed( false )
+  
+    local WeightGroup = 0
+        
+    self:SetStartState( "UnLoaded" )
+    
+  end
+
+  --- Signal a flare at the position of the CargoGroup.
+  -- @param #CARGO_GROUP self
+  -- @param Utilities.Utils#FLARECOLOR FlareColor
+  function CARGO_GROUP:Flare( FlareColor )
+
+    local Cargo = self.CargoSet:GetFirst() -- #CARGO
+    if Cargo then
+      Cargo:Flare( FlareColor )
+    end
+  end
+  
+  --- Smoke the CargoGroup.
+  -- @param #CARGO_GROUP self
+  -- @param Utilities.Utils#SMOKECOLOR SmokeColor The color of the smoke.
+  -- @param #number Radius The radius of randomization around the center of the first element of the CargoGroup.
+  function CARGO_GROUP:Smoke( SmokeColor, Radius )
+
+    local Cargo = self.CargoSet:GetFirst() -- #CARGO
+
+    if Cargo then
+      Cargo:Smoke( SmokeColor, Radius )
+    end
+  end
+  
+  --- Check if the first element of the CargoGroup is the given @{Zone}.
+  -- @param #CARGO self
+  -- @param Core.Zone#ZONE_BASE Zone
+  -- @return #boolean **true** if the first element of the CargoGroup is in the Zone
+  -- @return #boolean **false** if there is no element of the CargoGroup in the Zone.
+  function CARGO_GROUP:IsInZone( Zone )
+    self:F( { Zone } )
+  
+    local Cargo = self.CargoSet:GetFirst() -- #CARGO
+
+    if Cargo then
+      return Cargo:IsInZone( Zone )
+    end
+    
+    return nil
+  
   end
 
 end -- CARGO_GROUP

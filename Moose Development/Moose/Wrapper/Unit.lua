@@ -531,16 +531,16 @@ function UNIT:GetFuel()
   return nil
 end
 
---- Returns the UNIT in a UNIT list of one element.
+--- Returns a list of one @{Unit}.
 -- @param #UNIT self
--- @return #list<Wrapper.Unit#UNIT> The UNITs wrappers.
+-- @return #list<Wrapper.Unit#UNIT> A list of one @{Unit}.
 function UNIT:GetUnits()
   self:F2( { self.UnitName } )
   local DCSUnit = self:GetDCSObject()
 
+  local Units = {}
+  
   if DCSUnit then
-    local DCSUnits = DCSUnit:getUnits()
-    local Units = {}
     Units[1] = UNIT:Find( DCSUnit )
     self:T3( Units )
     return Units
