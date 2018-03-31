@@ -726,10 +726,9 @@ do -- TASK_CARGO
   end
   
   --- @param #TASK_CARGO self
-  -- @param @list<Core.Zone#ZONE> DeployZones
-  -- @param Wrapper.Unit#UNIT TaskUnit
+  -- @param #list<Core.Zone#ZONE> DeployZones
   -- @return #TASK_CARGO
-  function TASK_CARGO:SetDeployZones( DeployZones, TaskUnit )
+  function TASK_CARGO:SetDeployZones( DeployZones )
   
     for DeployZoneID, DeployZone in pairs( DeployZones ) do
       self.DeployZones[DeployZone:GetName()] = DeployZone

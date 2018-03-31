@@ -76,12 +76,16 @@ Tasking/CommandCenter.lua
 Tasking/Mission.lua
 Tasking/Task.lua
 Tasking/TaskInfo.lua
+Tasking/Task_Manager.lua
 Tasking/DetectionManager.lua
 Tasking/Task_A2G_Dispatcher.lua
 Tasking/Task_A2G.lua
 Tasking/Task_A2A_Dispatcher.lua
 Tasking/Task_A2A.lua
 Tasking/Task_Cargo.lua
+Tasking/Task_Cargo_Transport.lua
+Tasking/Task_Cargo_CSAR.lua
+Tasking/Task_Cargo_Dispatcher.lua
 Tasking/TaskZoneCapture.lua
 
 Moose.lua
