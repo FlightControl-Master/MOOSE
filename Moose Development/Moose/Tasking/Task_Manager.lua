@@ -117,7 +117,7 @@ do -- TASK_MANAGER
   end
   
   function TASK_MANAGER:onafterStartTasks( From, Event, To )
-    self:Report()
+    self:Manage()
   end
   
   function TASK_MANAGER:onafterManage( From, Event, To )

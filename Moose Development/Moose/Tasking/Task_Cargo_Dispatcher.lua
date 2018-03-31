@@ -205,7 +205,7 @@ do -- TASK_CARGO_DISPATCHER
     -- @param #string PlayerName
     
     self:SetCSARRadius()
-    self:__Start( 5 )
+    self:__StartTasks( 5 )
     
     -- For CSAR missions, we process the event when a pilot ejects.
     
@@ -221,14 +221,52 @@ do -- TASK_CARGO_DISPATCHER
   function TASK_CARGO_DISPATCHER:OnEventEjection( EventData )
 
     self:E( { EventData = EventData } )
-    
-    local PilotUnit = EventData.IniUnit
+
+    local PlaneUnit = EventData.IniUnit
     local CSARName = EventData.IniUnitName
     
-    self.CSAR[CSARName] = {} 
-    self.CSAR[CSARName].PilotUnit = PilotUnit
-    self.CSAR[CSARName].Task = nil
+    local PilotUnit = nil
+    
+    self:ScheduleOnce( 1, 
+      function()
+        
+        -- Search for the ejected pilot
+    
+        local PlaneCoord = PlaneUnit:GetCoordinate()
+        
+        local SphereSearch = {
+         id = world.VolumeType.SPHERE,
+          params = {
+           point = PlaneCoord:GetVec3(),
+           radius = 100,
+          }
+          
+        }
+         
+        --- @param Dcs.DCSWrapper.Unit#Unit FoundDCSUnit
+        -- @param Wrapper.Group#GROUP ReportGroup
+        -- @param Set#SET_GROUP ReportSetGroup
+        local FindEjectedPilot = function( FoundDCSUnit )
+            
+          local UnitName = FoundDCSUnit:getName()
+            
+          self:E( { "Units near Plane:", UnitName } )
+          
+          PilotUnit = UNIT:Register( UnitName )
+          
+          return true
+        end
+        
+        world.searchObjects( { Object.Category.UNIT, Object.Category.STATIC, Object.Category.SCENERY, Object.Category.WEAPON }, SphereSearch, FindEjectedPilot )
+
+        self.CSAR[CSARName] = {} 
+        self.CSAR[CSARName].PilotUnit = PlaneUnit
+        self.CSAR[CSARName].Task = nil
   
+      end
+    )
+    
+    
     return self
   end
 
@@ -247,7 +285,7 @@ do -- TASK_CARGO_DISPATCHER
   --   
   function TASK_CARGO_DISPATCHER:SetCSARRadius( CSARRadius )
 
-    self.Detection:SetFriendliesRange( CSARRadius or 50000 )
+    self.CSARRadius = CSARRadius or 50000
   
     return self
   end
@@ -336,7 +374,7 @@ do -- TASK_CARGO_DISPATCHER
           -- New CSAR Task
           local SetCargo = self:EvaluateCSAR( CSARData.PilotUnit )
           local CSARTask = TASK_CARGO_CSAR:New( Mission, self.SetGroup, "Rescue Pilot", SetCargo )
-          CSARTask:SetDeployZones( { self.CSARDeployZones } )
+          CSARTask:SetDeployZones( self.CSARDeployZones or {} )
           Mission:AddTask( CSARTask )
           TaskReport:Add( CSARTask:GetName() )
         end
