@@ -253,7 +253,7 @@ do -- TASK_CARGO_DISPATCHER
     self.PilotSpawn:InitCoalition( EventData.IniUnit:GetCoalition() )
 
     self.CSAR[#self.CSAR+1] = {} 
-    self.CSAR[#self.CSAR].PilotUnit = self.PilotSpawn:SpawnFromPointVec2( PointVec2Spawn )
+    self.CSAR[#self.CSAR].PilotGroup = self.PilotSpawn:SpawnFromPointVec2( PointVec2Spawn )
     self.CSAR[#self.CSAR].Task = nil
     
     return self
@@ -310,7 +310,7 @@ do -- TASK_CARGO_DISPATCHER
   -- @return #nil If there is no CSAR task required.
   function TASK_CARGO_DISPATCHER:EvaluateCSAR( CSARUnit )
   
-    local CSARCargo = CARGO_UNIT:New( CSARUnit, "Pilot", CSARUnit:GetName(), 80, 1500, 10 )
+    local CSARCargo = CARGO_GROUP:New( CSARUnit, "Pilot", CSARUnit:GetName(), 80, 1500, 10 )
     
     local SetCargo = SET_CARGO:New()
     SetCargo:AddCargosByName( CSARUnit:GetName() )
@@ -361,7 +361,8 @@ do -- TASK_CARGO_DISPATCHER
         if CSARData.Task then
         else
           -- New CSAR Task
-          local SetCargo = self:EvaluateCSAR( CSARData.PilotUnit )
+          self:F( { PilotGroup = CSARData.PilotGroup } )
+          local SetCargo = self:EvaluateCSAR( CSARData.PilotGroup )
           local CSARTask = TASK_CARGO_CSAR:New( Mission, self.SetGroup, string.format( "CSAR.%03d", CSARID ), SetCargo )
           CSARTask:SetDeployZones( self.CSARDeployZones or {} )
           Mission:AddTask( CSARTask )
