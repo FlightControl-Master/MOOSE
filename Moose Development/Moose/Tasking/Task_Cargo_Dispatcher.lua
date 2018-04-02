@@ -210,6 +210,26 @@ do -- TASK_CARGO_DISPATCHER
     -- For CSAR missions, we process the event when a pilot ejects.
     
     self:HandleEvent( EVENTS.Ejection )
+
+    -- Create the CSAR Pilot SPAWN object.
+    -- Let us create the Template for the replacement Pilot :-)
+    local Template = {
+      ["visible"] = false,
+      ["taskSelected"] = true,
+      ["hidden"] = false,
+      ["units"] = 
+      {
+        [1] = 
+        {
+          ["type"] = "Soldier M4",
+          ["skill"] = "Excellent",
+          ["playerCanDrive"] = false,
+        }, -- end of [1]
+      }, -- end of ["units"]
+      ["task"] = "Ground Nothing",
+    }
+    
+    self.PilotSpawn = SPAWN:NewFromTemplate( Template, "CSAR Pilot" )
     
     return self
   end
@@ -225,47 +245,16 @@ do -- TASK_CARGO_DISPATCHER
     local PlaneUnit = EventData.IniUnit
     local CSARName = EventData.IniUnitName
     
-    local PilotUnit = nil
-    
-    self:ScheduleOnce( 1, 
-      function()
-        
-        -- Search for the ejected pilot
-    
-        local PlaneCoord = PlaneUnit:GetCoordinate()
-        
-        local SphereSearch = {
-         id = world.VolumeType.SPHERE,
-          params = {
-           point = PlaneCoord:GetVec3(),
-           radius = 100,
-          }
-          
-        }
-         
-        --- @param Dcs.DCSWrapper.Unit#Unit FoundDCSUnit
-        -- @param Wrapper.Group#GROUP ReportGroup
-        -- @param Set#SET_GROUP ReportSetGroup
-        local FindEjectedPilot = function( FoundDCSUnit )
-            
-          local UnitName = FoundDCSUnit:getName()
-            
-          self:E( { "Units near Plane:", UnitName } )
-          
-          PilotUnit = UNIT:Register( UnitName )
-          
-          return true
-        end
-        
-        world.searchObjects( { Object.Category.UNIT, Object.Category.STATIC, Object.Category.SCENERY, Object.Category.WEAPON }, SphereSearch, FindEjectedPilot )
+    local PointVec2Spawn = EventData.IniUnit:GetPointVec2()
 
-        self.CSAR[CSARName] = {} 
-        self.CSAR[CSARName].PilotUnit = PlaneUnit
-        self.CSAR[CSARName].Task = nil
-  
-      end
-    )
-    
+    self.PilotSpawn:InitHeading( EventData.IniUnit:GetHeading() ) -- This will ensure that the new pilot will point towards the same heading as the plane.    
+    self.PilotSpawn:InitCategory( Group.Category.GROUND )
+    self.PilotSpawn:InitCountry( EventData.IniUnit:GetCountry() )
+    self.PilotSpawn:InitCoalition( EventData.IniUnit:GetCoalition() )
+
+    self.CSAR[#self.CSAR+1] = {} 
+    self.CSAR[#self.CSAR].PilotUnit = self.PilotSpawn:SpawnFromPointVec2( PointVec2Spawn )
+    self.CSAR[#self.CSAR].Task = nil
     
     return self
   end
@@ -373,7 +362,7 @@ do -- TASK_CARGO_DISPATCHER
         else
           -- New CSAR Task
           local SetCargo = self:EvaluateCSAR( CSARData.PilotUnit )
-          local CSARTask = TASK_CARGO_CSAR:New( Mission, self.SetGroup, "Rescue Pilot", SetCargo )
+          local CSARTask = TASK_CARGO_CSAR:New( Mission, self.SetGroup, string.format( "CSAR.%03d", CSARID ), SetCargo )
           CSARTask:SetDeployZones( self.CSARDeployZones or {} )
           Mission:AddTask( CSARTask )
           TaskReport:Add( CSARTask:GetName() )

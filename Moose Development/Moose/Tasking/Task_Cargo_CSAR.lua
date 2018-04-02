@@ -23,7 +23,7 @@ do -- TASK_CARGO_CSAR
   -- @param #string TaskBriefing The Cargo Task briefing.
   -- @return #TASK_CARGO_CSAR self
   function TASK_CARGO_CSAR:New( Mission, SetGroup, TaskName, SetCargo, TaskBriefing )
-    local self = BASE:Inherit( self, TASK_CARGO:New( Mission, SetGroup, TaskName, SetCargo, "Transport", TaskBriefing ) ) -- #TASK_CARGO_CSAR
+    local self = BASE:Inherit( self, TASK_CARGO:New( Mission, SetGroup, TaskName, SetCargo, "CSAR", TaskBriefing ) ) -- #TASK_CARGO_CSAR
     self:F()
     
     Mission:AddTask( self )
