@@ -277,6 +277,17 @@ do -- CARGO
     return self
   end
   
+  
+  --- Find a CARGO in the _DATABASE.
+  -- @param #CARGO self
+  -- @param #string CargoName The Cargo Name.
+  -- @return #CARGO self
+  function CARGO:FindByName( CargoName )
+    
+    local CargoFound = _DATABASE:FindCargo( CargoName )
+    return CargoFound
+  end  
+  
   --- Destroy the cargo.
   -- @param #CARGO self
   function CARGO:Destroy()

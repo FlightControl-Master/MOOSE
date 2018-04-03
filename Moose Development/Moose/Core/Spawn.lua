@@ -288,20 +288,20 @@ function SPAWN:New( SpawnTemplatePrefix )
 		self.SpawnIndex = 0
 		self.SpawnCount = 0															-- The internal counter of the amount of spawning the has happened since SpawnStart.
 		self.AliveUnits = 0															-- Contains the counter how many units are currently alive
-		self.SpawnIsScheduled = false												-- Reflects if the spawning for this SpawnTemplatePrefix is going to be scheduled or not.
+		self.SpawnIsScheduled = false										-- Reflects if the spawning for this SpawnTemplatePrefix is going to be scheduled or not.
 		self.SpawnTemplate = self._GetTemplate( self, SpawnTemplatePrefix )					-- Contains the template structure for a Group Spawn from the Mission Editor. Note that this group must have lateActivation always on!!!
-		self.Repeat = false													-- Don't repeat the group from Take-Off till Landing and back Take-Off by ReSpawning.
-		self.UnControlled = false													-- When working in UnControlled mode, all planes are Spawned in UnControlled mode before the scheduler starts.
-    self.SpawnInitLimit = false                       -- By default, no InitLimit
-		self.SpawnMaxUnitsAlive = 0												-- The maximum amount of groups that can be alive of SpawnTemplatePrefix at the same time.
-		self.SpawnMaxGroups = 0														-- The maximum amount of groups that can be spawned.
-		self.SpawnRandomize = false													-- Sets the randomization flag of new Spawned units to false.
-		self.SpawnVisible = false													-- Flag that indicates if all the Groups of the SpawnGroup need to be visible when Spawned.
-		self.AIOnOff = true                               -- The AI is on by default when spawning a group.
+		self.Repeat = false													    -- Don't repeat the group from Take-Off till Landing and back Take-Off by ReSpawning.
+		self.UnControlled = false												-- When working in UnControlled mode, all planes are Spawned in UnControlled mode before the scheduler starts.
+    self.SpawnInitLimit = false                     -- By default, no InitLimit
+		self.SpawnMaxUnitsAlive = 0											-- The maximum amount of groups that can be alive of SpawnTemplatePrefix at the same time.
+		self.SpawnMaxGroups = 0													-- The maximum amount of groups that can be spawned.
+		self.SpawnRandomize = false											-- Sets the randomization flag of new Spawned units to false.
+		self.SpawnVisible = false												-- Flag that indicates if all the Groups of the SpawnGroup need to be visible when Spawned.
+		self.AIOnOff = true                             -- The AI is on by default when spawning a group.
     self.SpawnUnControlled = false
-    self.SpawnInitKeepUnitNames = false               -- Overwrite unit names by default with group name.
-    self.DelayOnOff = false                           -- No intial delay when spawning the first group.
-    self.Grouping = nil                               -- No grouping
+    self.SpawnInitKeepUnitNames = false             -- Overwrite unit names by default with group name.
+    self.DelayOnOff = false                         -- No intial delay when spawning the first group.
+    self.Grouping = nil                             -- No grouping
 
 		self.SpawnGroups = {}														-- Array containing the descriptions of each Group to be Spawned.
 	else
@@ -334,19 +334,19 @@ function SPAWN:NewWithAlias( SpawnTemplatePrefix, SpawnAliasPrefix )
 		self.SpawnIndex = 0
 		self.SpawnCount = 0															-- The internal counter of the amount of spawning the has happened since SpawnStart.
 		self.AliveUnits = 0															-- Contains the counter how many units are currently alive
-		self.SpawnIsScheduled = false												-- Reflects if the spawning for this SpawnTemplatePrefix is going to be scheduled or not.
+		self.SpawnIsScheduled = false										-- Reflects if the spawning for this SpawnTemplatePrefix is going to be scheduled or not.
 		self.SpawnTemplate = self._GetTemplate( self, SpawnTemplatePrefix )					-- Contains the template structure for a Group Spawn from the Mission Editor. Note that this group must have lateActivation always on!!!
-		self.Repeat = false													-- Don't repeat the group from Take-Off till Landing and back Take-Off by ReSpawning.
-		self.UnControlled = false													-- When working in UnControlled mode, all planes are Spawned in UnControlled mode before the scheduler starts.
-		self.SpawnInitLimit = false                       -- By default, no InitLimit
-		self.SpawnMaxUnitsAlive = 0												-- The maximum amount of groups that can be alive of SpawnTemplatePrefix at the same time.
-		self.SpawnMaxGroups = 0														-- The maximum amount of groups that can be spawned.
-		self.SpawnRandomize = false													-- Sets the randomization flag of new Spawned units to false.
-		self.SpawnVisible = false													-- Flag that indicates if all the Groups of the SpawnGroup need to be visible when Spawned.
-    self.AIOnOff = true                               -- The AI is on by default when spawning a group.
+		self.Repeat = false													    -- Don't repeat the group from Take-Off till Landing and back Take-Off by ReSpawning.
+		self.UnControlled = false												-- When working in UnControlled mode, all planes are Spawned in UnControlled mode before the scheduler starts.
+		self.SpawnInitLimit = false                     -- By default, no InitLimit
+		self.SpawnMaxUnitsAlive = 0											-- The maximum amount of groups that can be alive of SpawnTemplatePrefix at the same time.
+		self.SpawnMaxGroups = 0													-- The maximum amount of groups that can be spawned.
+		self.SpawnRandomize = false											-- Sets the randomization flag of new Spawned units to false.
+		self.SpawnVisible = false												-- Flag that indicates if all the Groups of the SpawnGroup need to be visible when Spawned.
+    self.AIOnOff = true                             -- The AI is on by default when spawning a group.
     self.SpawnUnControlled = false
-    self.SpawnInitKeepUnitNames = false               -- Overwrite unit names by default with group name.
-    self.DelayOnOff = false                           -- No intial delay when spawning the first group.
+    self.SpawnInitKeepUnitNames = false             -- Overwrite unit names by default with group name.
+    self.DelayOnOff = false                         -- No intial delay when spawning the first group.
     self.Grouping = nil
 
 		self.SpawnGroups = {}														-- Array containing the descriptions of each Group to be Spawned.
@@ -358,6 +358,55 @@ function SPAWN:NewWithAlias( SpawnTemplatePrefix, SpawnAliasPrefix )
   self.SpawnHookScheduler = SCHEDULER:New( nil )
 	
 	return self
+end
+
+
+--- Creates a new SPAWN instance to create new groups based on the provided template.
+-- @param #SPAWN self
+-- @param #table SpawnTemplate is the Template of the Group. This must be a valid Group Template structure!
+-- @param #string SpawnTemplatePrefix is the name of the Group that will be given at each spawn.
+-- @param #string SpawnAliasPrefix (optional) is the name that will be given to the Group at runtime.
+-- @return #SPAWN
+-- @usage
+-- -- Create a new SPAWN object based on a Group Template defined from scratch.
+-- Spawn_BE_KA50 = SPAWN:NewWithAlias( 'BE KA-50@RAMP-Ground Defense', 'Helicopter Attacking a City' )
+-- @usage 
+-- -- Create a new CSAR_Spawn object based on a normal Group Template to spawn a soldier.
+-- local CSAR_Spawn = SPAWN:NewWithFromTemplate( Template, "CSAR", "Pilot" )
+function SPAWN:NewFromTemplate( SpawnTemplate, SpawnTemplatePrefix, SpawnAliasPrefix )
+  local self = BASE:Inherit( self, BASE:New() )
+  self:F( { SpawnTemplate, SpawnTemplatePrefix, SpawnAliasPrefix } )
+  
+  if SpawnTemplate then
+    self.SpawnTemplate = SpawnTemplate              -- Contains the template structure for a Group Spawn from the Mission Editor. Note that this group must have lateActivation always on!!!
+    self.SpawnTemplatePrefix = SpawnTemplatePrefix
+    self.SpawnAliasPrefix = SpawnAliasPrefix
+    self.SpawnIndex = 0
+    self.SpawnCount = 0                             -- The internal counter of the amount of spawning the has happened since SpawnStart.
+    self.AliveUnits = 0                             -- Contains the counter how many units are currently alive
+    self.SpawnIsScheduled = false                   -- Reflects if the spawning for this SpawnTemplatePrefix is going to be scheduled or not.
+    self.Repeat = false                             -- Don't repeat the group from Take-Off till Landing and back Take-Off by ReSpawning.
+    self.UnControlled = false                       -- When working in UnControlled mode, all planes are Spawned in UnControlled mode before the scheduler starts.
+    self.SpawnInitLimit = false                     -- By default, no InitLimit.
+    self.SpawnMaxUnitsAlive = 0                     -- The maximum amount of groups that can be alive of SpawnTemplatePrefix at the same time.
+    self.SpawnMaxGroups = 0                         -- The maximum amount of groups that can be spawned.
+    self.SpawnRandomize = false                     -- Sets the randomization flag of new Spawned units to false.
+    self.SpawnVisible = false                       -- Flag that indicates if all the Groups of the SpawnGroup need to be visible when Spawned.
+    self.AIOnOff = true                             -- The AI is on by default when spawning a group.
+    self.SpawnUnControlled = false
+    self.SpawnInitKeepUnitNames = false             -- Overwrite unit names by default with group name.
+    self.DelayOnOff = false                         -- No intial delay when spawning the first group.
+    self.Grouping = nil
+
+    self.SpawnGroups = {}                           -- Array containing the descriptions of each Group to be Spawned.
+  else
+    error( "There is no template provided for SpawnTemplatePrefix = '" .. SpawnTemplatePrefix .. "'" )
+  end
+  
+  self:SetEventPriority( 5 )
+  self.SpawnHookScheduler = SCHEDULER:New( nil )
+  
+  return self
 end
 
 
@@ -404,6 +453,57 @@ function SPAWN:InitKeepUnitNames()
   return self
 end
 
+--- Defines the Heading for the new spawned units. 
+-- The heading can be given as one fixed degree, or can be randomized between minimum and maximum degrees.
+-- @param #SPAWN self
+-- @param #number HeadingMin The minimum or fixed heading in degrees.
+-- @param #number HeadingMax (optional) The maximum heading in degrees. This there is no maximum heading, then the heading will be fixed for all units using minimum heading.
+-- @return #SPAWN self
+-- @usage
+-- 
+-- Spawn = SPAWN:New( ... )
+-- 
+-- -- Spawn the units pointing to 100 degrees.
+-- Spawn:InitHeading( 100 )
+-- 
+-- -- Spawn the units pointing between 100 and 150 degrees.
+-- Spawn:InitHeading( 100, 150 )
+-- 
+function SPAWN:InitHeading( HeadingMin, HeadingMax )
+  self:F( )
+
+  self.SpawnInitHeadingMin = HeadingMin
+  self.SpawnInitHeadingMax = HeadingMax
+  
+  return self
+end
+
+
+function SPAWN:InitCoalition( Coalition )
+  self:F( )
+
+  self.SpawnInitCoalition = Coalition
+  
+  return self
+end
+
+
+function SPAWN:InitCountry( Country )
+  self:F( )
+
+  self.SpawnInitCountry = Country
+  
+  return self
+end
+
+
+function SPAWN:InitCategory( Category )
+  self:F( )
+
+  self.SpawnInitCategory = Category
+  
+  return self
+end
 
 --- Randomizes the defined route of the SpawnTemplatePrefix group in the ME. This is very useful to define extra variation of the behaviour of groups.
 -- @param #SPAWN self
@@ -941,6 +1041,18 @@ function SPAWN:SpawnWithIndex( SpawnIndex )
           end
         end
         
+        -- If Heading is given, point all the units towards the given Heading.
+        if self.SpawnInitHeadingMin then
+          for UnitID = 1, #SpawnTemplate.units do
+            SpawnTemplate.units[UnitID].heading = self.SpawnInitHeadingMax and math.random( self.SpawnInitHeadingMin, self.SpawnInitHeadingMax ) or self.SpawnInitHeadingMin
+          end
+        end
+        
+        SpawnTemplate.CategoryID = self.SpawnInitCategory or SpawnTemplate.CategoryID 
+        SpawnTemplate.CountryID = self.SpawnInitCountry or SpawnTemplate.CountryID 
+        SpawnTemplate.CoalitionID = self.SpawnInitCoalition or SpawnTemplate.CoalitionID 
+        
+        
         if SpawnTemplate.CategoryID == Group.Category.HELICOPTER or SpawnTemplate.CategoryID == Group.Category.AIRPLANE then
           if SpawnTemplate.route.points[1].type == "TakeOffParking" then
             SpawnTemplate.uncontrolled = self.SpawnUnControlled
@@ -1247,14 +1359,20 @@ function SPAWN:SpawnFromVec3( Vec3, SpawnIndex )
 
       self:T( { "Current point of ", self.SpawnTemplatePrefix, Vec3 } )
       
-      local TemplateHeight = SpawnTemplate.route.points[1].alt
+      local TemplateHeight = SpawnTemplate.route and SpawnTemplate.route.points[1].alt or nil
+
+      SpawnTemplate.route = SpawnTemplate.route or {}
+      SpawnTemplate.route.points = SpawnTemplate.route.points or {}
+      SpawnTemplate.route.points[1] = SpawnTemplate.route.points[1] or {}
+      SpawnTemplate.route.points[1].x = SpawnTemplate.route.points[1].x or 0
+      SpawnTemplate.route.points[1].y = SpawnTemplate.route.points[1].y or 0
 
       -- Translate the position of the Group Template to the Vec3.
       for UnitID = 1, #SpawnTemplate.units do
-        self:T( 'Before Translation SpawnTemplate.units['..UnitID..'].x = ' .. SpawnTemplate.units[UnitID].x .. ', SpawnTemplate.units['..UnitID..'].y = ' .. SpawnTemplate.units[UnitID].y )
+        --self:T( 'Before Translation SpawnTemplate.units['..UnitID..'].x = ' .. SpawnTemplate.units[UnitID].x .. ', SpawnTemplate.units['..UnitID..'].y = ' .. SpawnTemplate.units[UnitID].y )
         local UnitTemplate = SpawnTemplate.units[UnitID]
-        local SX = UnitTemplate.x
-        local SY = UnitTemplate.y 
+        local SX = UnitTemplate.x or 0
+        local SY = UnitTemplate.y  or 0
         local BX = SpawnTemplate.route.points[1].x
         local BY = SpawnTemplate.route.points[1].y
         local TX = Vec3.x + ( SX - BX )
@@ -1266,7 +1384,6 @@ function SPAWN:SpawnFromVec3( Vec3, SpawnIndex )
         end
         self:T( 'After Translation SpawnTemplate.units['..UnitID..'].x = ' .. SpawnTemplate.units[UnitID].x .. ', SpawnTemplate.units['..UnitID..'].y = ' .. SpawnTemplate.units[UnitID].y )
       end
-      
       SpawnTemplate.route.points[1].x = Vec3.x
       SpawnTemplate.route.points[1].y = Vec3.z
       if SpawnTemplate.CategoryID ~= Group.Category.SHIP then
@@ -1282,6 +1399,47 @@ function SPAWN:SpawnFromVec3( Vec3, SpawnIndex )
   
   return nil
 end
+
+
+--- Will spawn a group from a Coordinate in 3D space. 
+-- This method is mostly advisable to be used if you want to simulate spawning units in the air, like helicopters or airplanes.
+-- Note that each point in the route assigned to the spawning group is reset to the point of the spawn.
+-- You can use the returned group to further define the route to be followed.
+-- @param #SPAWN self
+-- @param Core.Point#Coordinate Coordinate The Coordinate coordinates where to spawn the group.
+-- @param #number SpawnIndex (optional) The index which group to spawn within the given zone.
+-- @return Wrapper.Group#GROUP that was spawned.
+-- @return #nil Nothing was spawned.
+function SPAWN:SpawnFromCoordinate( Coordinate, SpawnIndex )
+  self:F( { self.SpawnTemplatePrefix, SpawnIndex } )
+
+  return self:SpawnFromVec3( Coordinate:GetVec3(), SpawnIndex )
+end
+
+
+
+--- Will spawn a group from a PointVec3 in 3D space. 
+-- This method is mostly advisable to be used if you want to simulate spawning units in the air, like helicopters or airplanes.
+-- Note that each point in the route assigned to the spawning group is reset to the point of the spawn.
+-- You can use the returned group to further define the route to be followed.
+-- @param #SPAWN self
+-- @param Core.Point#POINT_VEC3 PointVec3 The PointVec3 coordinates where to spawn the group.
+-- @param #number SpawnIndex (optional) The index which group to spawn within the given zone.
+-- @return Wrapper.Group#GROUP that was spawned.
+-- @return #nil Nothing was spawned.
+-- @usage
+-- 
+--   local SpawnPointVec3 = ZONE:New( ZoneName ):GetPointVec3( 2000 ) -- Get the center of the ZONE object at 2000 meters from the ground.
+-- 
+--   -- Spawn at the zone center position at 2000 meters from the ground!
+--   SpawnAirplanes:SpawnFromPointVec3( SpawnPointVec3 )  
+--   
+function SPAWN:SpawnFromPointVec3( PointVec3, SpawnIndex )
+  self:F( { self.SpawnTemplatePrefix, SpawnIndex } )
+
+  return self:SpawnFromVec3( PointVec3:GetVec3(), SpawnIndex )
+end
+
 
 --- Will spawn a group from a Vec2 in 3D space. 
 -- This method is mostly advisable to be used if you want to simulate spawning groups on the ground from air units, like vehicles.
@@ -1315,6 +1473,35 @@ function SPAWN:SpawnFromVec2( Vec2, MinHeight, MaxHeight, SpawnIndex )
   
   return self:SpawnFromVec3( { x = Vec2.x, y = Height, z = Vec2.y }, SpawnIndex ) -- y can be nil. In this case, spawn on the ground for vehicles, and in the template altitude for air.
 end
+
+
+--- Will spawn a group from a POINT_VEC2 in 3D space. 
+-- This method is mostly advisable to be used if you want to simulate spawning groups on the ground from air units, like vehicles.
+-- Note that each point in the route assigned to the spawning group is reset to the point of the spawn.
+-- You can use the returned group to further define the route to be followed.
+-- @param #SPAWN self
+-- @param Core.Point#POINT_VEC2 PointVec2 The PointVec2 coordinates where to spawn the group.
+-- @param #number MinHeight (optional) The minimum height to spawn an airborne group into the zone.
+-- @param #number MaxHeight (optional) The maximum height to spawn an airborne group into the zone.
+-- @param #number SpawnIndex (optional) The index which group to spawn within the given zone.
+-- @return Wrapper.Group#GROUP that was spawned.
+-- @return #nil Nothing was spawned.
+-- @usage
+-- 
+--   local SpawnPointVec2 = ZONE:New( ZoneName ):GetPointVec2()
+-- 
+--   -- Spawn at the zone center position at the height specified in the ME of the group template!
+--   SpawnAirplanes:SpawnFromPointVec2( SpawnPointVec2 )  
+--   
+--   -- Spawn from the static position at the height randomized between 2000 and 4000 meters.
+--   SpawnAirplanes:SpawnFromPointVec2( SpawnPointVec2, 2000, 4000 )  
+-- 
+function SPAWN:SpawnFromPointVec2( PointVec2, MinHeight, MaxHeight, SpawnIndex )
+  self:F( { self.SpawnTemplatePrefix, self.SpawnIndex } )
+
+  return self:SpawnFromVec2( PointVec2:GetVec2(), MinHeight, MaxHeight, SpawnIndex )
+end
+
 
 
 --- Will spawn a group from a hosting unit. This method is mostly advisable to be used if you want to simulate spawning from air units, like helicopters, which are dropping infantry into a defined Landing Zone.
@@ -1715,7 +1902,11 @@ end
 function SPAWN:_Prepare( SpawnTemplatePrefix, SpawnIndex ) --R2.2
 	self:F( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix } )
 	
-	local SpawnTemplate = self:_GetTemplate( SpawnTemplatePrefix )
+	if not self.SpawnTemplate then
+	  self.SpawnTemplate = self:_GetTemplate( SpawnTemplatePrefix )
+	end
+	
+	local SpawnTemplate = self.SpawnTemplate
 	SpawnTemplate.name = self:SpawnGroupName( SpawnIndex )
 	
 	SpawnTemplate.groupId = nil
