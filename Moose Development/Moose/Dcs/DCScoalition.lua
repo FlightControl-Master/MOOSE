@@ -12,3 +12,5 @@
 --- @function [parent=#coalition] getCountryCoalition
 -- @param #number countryId
 -- @return #number coalitionId
+
+coalition = coalition -- #coalition

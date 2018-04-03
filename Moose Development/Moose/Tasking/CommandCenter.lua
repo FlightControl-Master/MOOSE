@@ -220,6 +220,14 @@ function COMMANDCENTER:GetShortText()
 end
 
 
+--- Gets the coalition of the command center.
+-- @param #COMMANDCENTER self
+-- @return DCScoalition#coalition
+function COMMANDCENTER:GetCoalition()
+
+  return self.CommandCenterCoalition
+end
+
 
 --- Gets the POSITIONABLE of the HQ command center.
 -- @param #COMMANDCENTER self

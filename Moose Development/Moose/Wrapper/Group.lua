@@ -121,7 +121,7 @@ GROUPTEMPLATE.Takeoff = {
 -- @return #GROUP self
 function GROUP:NewTemplate( GroupTemplate, CoalitionSide, CategoryID, CountryID )
   local GroupName = GroupTemplate.name
-  _DATABASE:_RegisterGroupTemplate( GroupTemplate, CategoryID, CountryID, CoalitionSide, GroupName )
+  _DATABASE:_RegisterGroupTemplate( GroupTemplate, CoalitionSide, CategoryID, CountryID, GroupName )
   self = BASE:Inherit( self, CONTROLLABLE:New( GroupName ) )
   self:F2( GroupName )
   self.GroupName = GroupName
