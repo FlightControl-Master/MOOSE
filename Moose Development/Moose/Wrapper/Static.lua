@@ -134,7 +134,7 @@ function STATIC:ReSpawn( Coordinate, Heading )
 
 
   -- todo: need to fix country
-  local SpawnStatic = SPAWNSTATIC:NewFromStatic( self.StaticName, country.id.USA )
+  local SpawnStatic = SPAWNSTATIC:NewFromStatic( self.StaticName )
   
   SpawnStatic:SpawnFromPointVec2( Coordinate, Heading, self.StaticName )
 end

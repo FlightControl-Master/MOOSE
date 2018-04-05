@@ -553,10 +553,7 @@ end
 --- @param #DATABASE self
 function DATABASE:GetStaticUnitTemplate( StaticName )
   local StaticTemplate = self.Templates.Statics[StaticName].UnitTemplate
-  StaticTemplate.SpawnCoalitionID = self.Templates.Statics[StaticName].CoalitionID
-  StaticTemplate.SpawnCategoryID = self.Templates.Statics[StaticName].CategoryID
-  StaticTemplate.SpawnCountryID = self.Templates.Statics[StaticName].CountryID
-  return StaticTemplate
+  return StaticTemplate, self.Templates.Statics[StaticName].CoalitionID, self.Templates.Statics[StaticName].CategoryID, self.Templates.Statics[StaticName].CountryID
 end
 
 
