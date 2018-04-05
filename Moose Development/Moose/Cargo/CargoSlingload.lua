@@ -19,6 +19,7 @@
 -- 
 -- @module CargoCrate
 
+
 do -- CARGO_SLINGLOAD
 
   --- Models the behaviour of cargo crates, which can only be slingloaded. 
