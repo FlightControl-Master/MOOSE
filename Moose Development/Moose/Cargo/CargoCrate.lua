@@ -42,19 +42,25 @@ do -- CARGO_CRATE
   -- @param Wrapper.Static#STATIC CargoStatic
   -- @param #string Type
   -- @param #string Name
-  -- @param #number Weight
   -- @param #number ReportRadius (optional)
   -- @param #number NearRadius (optional)
   -- @return #CARGO_CRATE
-  function CARGO_CRATE:New( CargoStatic, Type, Name, NearRadius )
-    local self = BASE:Inherit( self, CARGO_REPRESENTABLE:New( CargoStatic, Type, Name, nil, NearRadius ) ) -- #CARGO_CRATE
+  function CARGO_CRATE:New( CargoStatic, Type, Name, ReportRadius, NearRadius )
+    local self = BASE:Inherit( self, CARGO_REPRESENTABLE:New( CargoStatic, Type, Name, nil, ReportRadius, NearRadius ) ) -- #CARGO_CRATE
     self:F( { Type, Name, NearRadius } )
   
     self.CargoObject = CargoStatic
   
     self:T( self.ClassName )
   
-    self:SetEventPriority( 5 )
+    -- Cargo objects are added to the _DATABASE and SET_CARGO objects.
+    _EVENTDISPATCHER:CreateEventNewCargo( self )
+    
+    self:HandleEvent( EVENTS.Dead, self.OnEventCargoDead )
+    self:HandleEvent( EVENTS.Crash, self.OnEventCargoDead )
+    self:HandleEvent( EVENTS.PlayerLeaveUnit, self.OnEventCargoDead )
+    
+    self:SetEventPriority( 4 )
   
     return self
   end
@@ -116,5 +122,102 @@ do -- CARGO_CRATE
     end
   end
 
+  --- Check if the cargo can be Boarded.
+  -- @param #CARGO self
+  function CARGO:CanBoard()
+    return false
+  end
+
+  --- Check if the cargo can be Unboarded.
+  -- @param #CARGO self
+  function CARGO_CRATE:CanUnboard()
+    return false
+  end
+
+  --- Get the current Coordinate of the CargoGroup.
+  -- @param #CARGO_CRATE self
+  -- @return Core.Point#COORDINATE The current Coordinate of the first Cargo of the CargoGroup.
+  -- @return #nil There is no valid Cargo in the CargoGroup.
+  function CARGO_CRATE:GetCoordinate()
+    self:F()
+    
+    return self.CargoObject:GetCoordinate()
+  end
+
+  --- Check if the CargoGroup is alive.
+  -- @param #CARGO_CRATE self
+  -- @return #boolean true if the CargoGroup is alive.
+  -- @return #boolean false if the CargoGroup is dead.
+  function CARGO_CRATE:IsAlive()
+
+    local Alive = true
+  
+    -- When the Cargo is Loaded, the Cargo is in the CargoCarrier, so we check if the CargoCarrier is alive.
+    -- When the Cargo is not Loaded, the Cargo is the CargoObject, so we check if the CargoObject is alive.
+    if self:IsLoaded() then
+      Alive = Alive == true and self.CargoCarrier:IsAlive()
+    else
+      Alive = Alive == true and self.CargoObject:IsAlive()
+    end 
+    
+    return Alive
+  
+  end
+
+  
+  --- Route Cargo to Coordinate and randomize locations.
+  -- @param #CARGO_CRATE self
+  -- @param Core.Point#COORDINATE Coordinate
+  function CARGO_CRATE:RouteTo( Coordinate )
+    self:F( {Coordinate = Coordinate } )
+    
+  end
+  
+  --- Check if Cargo is near to the Carrier.
+  -- The Cargo is near to the Carrier within NearRadius.
+  -- @param #CARGO_CRATE self
+  -- @param Wrapper.Group#GROUP CargoCarrier
+  -- @param #number NearRadius
+  -- @return #boolean The Cargo is near to the Carrier.
+  -- @return #nil The Cargo is not near to the Carrier.
+  function CARGO_CRATE:IsNear( CargoCarrier, NearRadius )
+    self:F( {NearRadius = NearRadius } )
+    
+    return self:IsNear( CargoCarrier:GetCoordinate(), NearRadius )
+  end
+
+  --- Check if CargoGroup is in the ReportRadius for the Cargo to be Loaded.
+  -- @param #CARGO_CRATE self
+  -- @param Core.Point#Coordinate Coordinate
+  -- @return #boolean true if the CargoGroup is within the reporting radius.
+  function CARGO_CRATE:IsInRadius( Coordinate )
+    self:F( { Coordinate } )
+  
+    local Distance = 0
+    if self:IsLoaded() then
+      Distance = Coordinate:DistanceFromPointVec2( self.CargoCarrier:GetPointVec2() )
+    else
+      Distance = Coordinate:DistanceFromPointVec2( self.CargoObject:GetPointVec2() )
+    end
+    self:T( Distance )
+    
+    if Distance <= self.ReportRadius then
+      return true
+    else
+      return false
+    end
+  end
+
+  --- Respawn the CargoGroup.
+  -- @param #CARGO_CRATE self
+  function CARGO_CRATE:Respawn()
+
+    self:F( { "Respawning" } )
+
+    self:SetDeployed( false )
+    self:SetStartState( "UnLoaded" )
+    
+  end
+  
 end
 

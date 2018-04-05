@@ -2783,16 +2783,6 @@ function CONTROLLABLE:IsAirPlane()
   return nil
 end
 
-function CONTROLLABLE:GetSize()
-
-  local DCSObject = self:GetDCSObject()
-
-  if DCSObject then
-    return 1
-  else
-    return 0
-  end
-end
 
 
 -- Message APIs
