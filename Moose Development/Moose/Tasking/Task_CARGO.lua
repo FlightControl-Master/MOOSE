@@ -259,10 +259,10 @@ do -- TASK_CARGO
                   end
                   if NotInDeployZones then
                     if not TaskUnit:InAir() then
-                      if Cargo:CanBoard() then
+                      if Cargo:CanBoard() == true then
                         MENU_GROUP_COMMAND:New( TaskUnit:GetGroup(), "Board cargo " .. Cargo.Name, TaskUnit.Menu, self.MenuBoardCargo, self, Cargo ):SetTime(MenuTime)
                       else
-                        if Cargo:CanLoad() then
+                        if Cargo:CanLoad() == true then
                           MENU_GROUP_COMMAND:New( TaskUnit:GetGroup(), "Load cargo " .. Cargo.Name, TaskUnit.Menu, self.MenuLoadCargo, self, Cargo ):SetTime(MenuTime)
                         end
                       end
@@ -278,10 +278,10 @@ do -- TASK_CARGO
             
             if Cargo:IsLoaded() then
               if not TaskUnit:InAir() then
-                if Cargo:CanUnboard() then
+                if Cargo:CanUnboard() == true then
                   MENU_GROUP_COMMAND:New( TaskUnit:GetGroup(), "Unboard cargo " .. Cargo.Name, TaskUnit.Menu, self.MenuUnboardCargo, self, Cargo ):SetTime(MenuTime)
                 else
-                  if Cargo:CanUnload() then
+                  if Cargo:CanUnload() == true then
                     MENU_GROUP_COMMAND:New( TaskUnit:GetGroup(), "Unload cargo " .. Cargo.Name, TaskUnit.Menu, self.MenuUnloadCargo, self, Cargo ):SetTime(MenuTime)
                   end
                 end
@@ -492,6 +492,7 @@ do -- TASK_CARGO
         self:__Board( -0.1 )
       end
     end
+
     
     --- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
@@ -532,14 +533,6 @@ do -- TASK_CARGO
       self.Cargo:MessageToGroup( "Boarded ...", TaskUnit:GetGroup() )
 
       self:Load( self.Cargo )
-      
-      -- TODO:I need to find a more decent solution for this. 
-      Task:E( { CargoPickedUp = Task.CargoPickedUp } )
-      if self.Cargo:IsAlive() then
-        if Task.CargoPickedUp then
-          Task:CargoPickedUp( TaskUnit, self.Cargo )
-        end
-      end
       
     end
     
