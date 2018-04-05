@@ -48,6 +48,24 @@ STATIC = {
 }
 
 
+function STATIC:Register( StaticName )
+  local self = BASE:Inherit( self, POSITIONABLE:New( StaticName ) )
+  self.StaticName = StaticName
+  return self
+end
+
+
+--- Finds a STATIC from the _DATABASE using a DCSStatic object.
+-- @param #STATIC self
+-- @param Dcs.DCSWrapper.Static#Static DCSStatic An existing DCS Static object reference.
+-- @return #STATIC self
+function STATIC:Find( DCSStatic )
+
+  local StaticName = DCSStatic:getName()
+  local StaticFound = _DATABASE:FindStatic( StaticName )
+  return StaticFound
+end
+
 --- Finds a STATIC from the _DATABASE using the relevant Static Name.
 -- As an optional parameter, a briefing text can be given also.
 -- @param #STATIC self
@@ -71,12 +89,6 @@ function STATIC:FindByName( StaticName, RaiseError )
   return nil
 end
 
-function STATIC:Register( StaticName )
-  local self = BASE:Inherit( self, POSITIONABLE:New( StaticName ) )
-  self.StaticName = StaticName
-  return self
-end
-
 
 function STATIC:GetDCSObject()
   local DCSStatic = StaticObject.getByName( self.StaticName )
@@ -87,6 +99,27 @@ function STATIC:GetDCSObject()
     
   return nil
 end
+
+--- Returns a list of one @{Static}.
+-- @param #STATIC self
+-- @return #list<Wrapper.Static#STATIC> A list of one @{Static}.
+function STATIC:GetUnits()
+  self:F2( { self.StaticName } )
+  local DCSStatic = self:GetDCSObject()
+
+  local Statics = {}
+  
+  if DCSStatic then
+    Statics[1] = STATIC:Find( DCSStatic )
+    self:T3( Statics )
+    return Statics
+  end
+
+  return nil
+end
+
+
+
 
 function STATIC:GetThreatLevel()
 
@@ -101,7 +134,7 @@ function STATIC:ReSpawn( Coordinate, Heading )
 
 
   -- todo: need to fix country
-  local SpawnStatic = SPAWNSTATIC:NewFromStatic( self.StaticName, country.id.USA )
+  local SpawnStatic = SPAWNSTATIC:NewFromStatic( self.StaticName )
   
   SpawnStatic:SpawnFromPointVec2( Coordinate, Heading, self.StaticName )
 end

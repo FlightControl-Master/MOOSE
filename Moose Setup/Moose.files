@@ -36,6 +36,7 @@ Wrapper/Scenery.lua
 
 Cargo/Cargo.lua
 Cargo/CargoUnit.lua
+Cargo/CargoSlingload.lua
 Cargo/CargoCrate.lua
 Cargo/CargoGroup.lua
 

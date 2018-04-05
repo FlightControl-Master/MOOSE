@@ -1,4 +1,4 @@
---- **Cargo** -- Management of single cargo crates, which are based on a @{Static} object.
+--- **Cargo** -- Management of single cargo crates, which are based on a @{Static} object. The cargo can only be slingloaded.
 --
 -- ===
 --
@@ -19,34 +19,34 @@
 -- 
 -- @module CargoCrate
 
-do -- CARGO_CRATE
 
-  --- Models the behaviour of cargo crates, which can be slingloaded and boarded on helicopters. 
-  -- @type CARGO_CRATE
+do -- CARGO_SLINGLOAD
+
+  --- Models the behaviour of cargo crates, which can only be slingloaded. 
+  -- @type CARGO_SLINGLOAD
   -- @extends #CARGO_REPRESENTABLE
   
   --- # CARGO\_CRATE class, extends @{#CARGO_REPRESENTABLE}
   -- 
   -- The CARGO\_CRATE class defines a cargo that is represented by a UNIT object within the simulator, and can be transported by a carrier.
-  -- Use the event functions as described above to Load, UnLoad, Board, UnBoard the CARGO\_CRATE objects to and from carriers.
   -- 
   -- ===
   -- 
-  -- @field #CARGO_CRATE
-  CARGO_CRATE = {
-    ClassName = "CARGO_CRATE"
+  -- @field #CARGO_SLINGLOAD
+  CARGO_SLINGLOAD = {
+    ClassName = "CARGO_SLINGLOAD"
   }
   
-  --- CARGO_CRATE Constructor.
-  -- @param #CARGO_CRATE self
+  --- CARGO_SLINGLOAD Constructor.
+  -- @param #CARGO_SLINGLOAD self
   -- @param Wrapper.Static#STATIC CargoStatic
   -- @param #string Type
   -- @param #string Name
   -- @param #number ReportRadius (optional)
   -- @param #number NearRadius (optional)
-  -- @return #CARGO_CRATE
-  function CARGO_CRATE:New( CargoStatic, Type, Name, ReportRadius, NearRadius )
-    local self = BASE:Inherit( self, CARGO_REPRESENTABLE:New( CargoStatic, Type, Name, nil, ReportRadius, NearRadius ) ) -- #CARGO_CRATE
+  -- @return #CARGO_SLINGLOAD
+  function CARGO_SLINGLOAD:New( CargoStatic, Type, Name, ReportRadius, NearRadius )
+    local self = BASE:Inherit( self, CARGO_REPRESENTABLE:New( CargoStatic, Type, Name, nil, ReportRadius, NearRadius ) ) -- #CARGO_SLINGLOAD
     self:F( { Type, Name, NearRadius } )
   
     self.CargoObject = CargoStatic
@@ -66,89 +66,45 @@ do -- CARGO_CRATE
   end
   
   
-  
-  --- Enter UnLoaded State.
-  -- @param #CARGO_CRATE self
-  -- @param #string Event
-  -- @param #string From
-  -- @param #string To
-  -- @param Core.Point#POINT_VEC2
-  function CARGO_CRATE:onenterUnLoaded( From, Event, To, ToPointVec2 )
-    self:F( { ToPointVec2, From, Event, To } )
-  
-    local Angle = 180
-    local Speed = 10
-    local Distance = 10
-  
-    if From == "Loaded" then
-      local StartCoordinate = self.CargoCarrier:GetCoordinate()
-      local CargoCarrierHeading = self.CargoCarrier:GetHeading() -- Get Heading of object in degrees.
-      local CargoDeployHeading = ( ( CargoCarrierHeading + Angle ) >= 360 ) and ( CargoCarrierHeading + Angle - 360 ) or ( CargoCarrierHeading + Angle )
-      local CargoDeployCoord = StartCoordinate:Translate( Distance, CargoDeployHeading )
-  
-      ToPointVec2 = ToPointVec2 or COORDINATE:NewFromVec2( { x= CargoDeployCoord.x, y = CargoDeployCoord.z } )
-  
-      -- Respawn the group...
-      if self.CargoObject then
-        self.CargoObject:ReSpawn( ToPointVec2, 0 )
-        self.CargoCarrier = nil
-      end
-      
-    end
-  
-    if self.OnUnLoadedCallBack then
-      self.OnUnLoadedCallBack( self, unpack( self.OnUnLoadedParameters ) )
-      self.OnUnLoadedCallBack = nil
-    end
-  
-  end
-
-  
-  --- Loaded State.
-  -- @param #CARGO_CRATE self
-  -- @param #string Event
-  -- @param #string From
-  -- @param #string To
-  -- @param Wrapper.Unit#UNIT CargoCarrier
-  function CARGO_CRATE:onenterLoaded( From, Event, To, CargoCarrier )
-    self:F( { From, Event, To, CargoCarrier } )
-  
-    self.CargoCarrier = CargoCarrier
-    
-    -- Only destroy the CargoObject is if there is a CargoObject (packages don't have CargoObjects).
-    if self.CargoObject then
-      self:T("Destroying")
-      self.CargoObject:Destroy()
-    end
-  end
-
   --- Check if the cargo can be Boarded.
-  -- @param #CARGO_CRATE self
-  function CARGO_CRATE:CanBoard()
+  -- @param #CARGO_SLINGLOAD self
+  function CARGO_SLINGLOAD:CanBoard()
     return false
   end
 
   --- Check if the cargo can be Unboarded.
-  -- @param #CARGO_CRATE self
-  function CARGO_CRATE:CanUnboard()
+  -- @param #CARGO_SLINGLOAD self
+  function CARGO_SLINGLOAD:CanUnboard()
+    return false
+  end
+
+  --- Check if the cargo can be Loaded.
+  -- @param #CARGO_SLINGLOAD self
+  function CARGO_SLINGLOAD:CanLoad()
+    return false
+  end
+
+  --- Check if the cargo can be Unloaded.
+  -- @param #CARGO_SLINGLOAD self
+  function CARGO_SLINGLOAD:CanUnload()
     return false
   end
 
   --- Get the current Coordinate of the CargoGroup.
-  -- @param #CARGO_CRATE self
+  -- @param #CARGO_SLINGLOAD self
   -- @return Core.Point#COORDINATE The current Coordinate of the first Cargo of the CargoGroup.
   -- @return #nil There is no valid Cargo in the CargoGroup.
-  function CARGO_CRATE:GetCoordinate()
+  function CARGO_SLINGLOAD:GetCoordinate()
     self:F()
     
     return self.CargoObject:GetCoordinate()
   end
 
   --- Check if the CargoGroup is alive.
-  -- @param #CARGO_CRATE self
+  -- @param #CARGO_SLINGLOAD self
   -- @return #boolean true if the CargoGroup is alive.
   -- @return #boolean false if the CargoGroup is dead.
-  function CARGO_CRATE:IsAlive()
+  function CARGO_SLINGLOAD:IsAlive()
 
     local Alive = true
   
@@ -166,9 +122,9 @@ do -- CARGO_CRATE
 
   
   --- Route Cargo to Coordinate and randomize locations.
-  -- @param #CARGO_CRATE self
+  -- @param #CARGO_SLINGLOAD self
   -- @param Core.Point#COORDINATE Coordinate
-  function CARGO_CRATE:RouteTo( Coordinate )
+  function CARGO_SLINGLOAD:RouteTo( Coordinate )
     self:F( {Coordinate = Coordinate } )
     
   end
@@ -176,12 +132,12 @@ do -- CARGO_CRATE
   
   --- Check if Cargo is near to the Carrier.
   -- The Cargo is near to the Carrier within NearRadius.
-  -- @param #CARGO_CRATE self
+  -- @param #CARGO_SLINGLOAD self
   -- @param Wrapper.Group#GROUP CargoCarrier
   -- @param #number NearRadius
   -- @return #boolean The Cargo is near to the Carrier.
   -- @return #nil The Cargo is not near to the Carrier.
-  function CARGO_CRATE:IsNear( CargoCarrier, NearRadius )
+  function CARGO_SLINGLOAD:IsNear( CargoCarrier, NearRadius )
     self:F( {NearRadius = NearRadius } )
     
     return self:IsNear( CargoCarrier:GetCoordinate(), NearRadius )
@@ -189,10 +145,10 @@ do -- CARGO_CRATE
 
 
   --- Check if CargoGroup is in the ReportRadius for the Cargo to be Loaded.
-  -- @param #CARGO_CRATE self
+  -- @param #CARGO_SLINGLOAD self
   -- @param Core.Point#Coordinate Coordinate
   -- @return #boolean true if the CargoGroup is within the reporting radius.
-  function CARGO_CRATE:IsInRadius( Coordinate )
+  function CARGO_SLINGLOAD:IsInRadius( Coordinate )
     self:F( { Coordinate } )
   
     local Distance = 0
@@ -211,8 +167,8 @@ do -- CARGO_CRATE
   end
 
   --- Respawn the CargoGroup.
-  -- @param #CARGO_CRATE self
-  function CARGO_CRATE:Respawn()
+  -- @param #CARGO_SLINGLOAD self
+  function CARGO_SLINGLOAD:Respawn()
 
     self:F( { "Respawning" } )
 
@@ -222,4 +178,3 @@ do -- CARGO_CRATE
   end
   
 end
-

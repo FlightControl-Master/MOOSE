@@ -259,7 +259,7 @@ do -- CARGO
   
     self.Type = Type
     self.Name = Name
-    self.Weight = Weight
+    self.Weight = Weight or 0
     self.CargoObject = nil
     self.CargoCarrier = nil -- Wrapper.Client#CLIENT
     self.Representable = false
@@ -288,6 +288,34 @@ do -- CARGO
     return CargoFound
   end  
   
+  --- Check if the cargo can be Boarded.
+  -- @param #CARGO self
+  function CARGO:CanBoard()
+    return true
+  end
+  
+  --- Check if the cargo can be Unboarded.
+  -- @param #CARGO self
+  function CARGO:CanUnboard()
+    return true
+  end
+
+  --- Check if the cargo can be Loaded.
+  -- @param #CARGO self
+  function CARGO:CanLoad()
+    return true
+  end
+  
+  --- Check if the cargo can be Unloaded.
+  -- @param #CARGO self
+  function CARGO:CanUnload()
+    return true
+  end
+
+
+
+  
+  
   --- Destroy the cargo.
   -- @param #CARGO self
   function CARGO:Destroy()
@@ -313,6 +341,13 @@ do -- CARGO
     else
       return self.CargoObject:GetName()
     end 
+  end
+  
+  --- Get the amount of Cargo.
+  -- @param #CARGO self
+  -- @return #number The amount of Cargo.
+  function CARGO:GetCount()
+    return 1
   end
   
   --- Get the type of the Cargo.
@@ -569,8 +604,11 @@ do -- CARGO_REPRESENTABLE
   -- @param #number NearRadius (optional)
   -- @return #CARGO_REPRESENTABLE
   function CARGO_REPRESENTABLE:New( CargoObject, Type, Name, Weight, ReportRadius, NearRadius )
-    local self = BASE:Inherit( self, CARGO:New( Type, Name, Weight, ReportRadius, NearRadius ) ) -- #CARGO_REPRESENTABLE
+    local self = BASE:Inherit( self, CARGO:New( Type, Name, Weight ) ) -- #CARGO_REPRESENTABLE
     self:F( { Type, Name, Weight, ReportRadius, NearRadius } )
+    
+    self.ReportRadius = ReportRadius or 500
+    self.NearRadius = NearRadius or 25
   
     return self
   end

@@ -178,6 +178,9 @@ do -- TASK_CARGO_DISPATCHER
     Tasks = {},
     CSAR = {},
     CSARSpawned = 0,
+    
+    Transport = {},
+    TransportCount = 0,
   }
   
   
@@ -214,61 +217,162 @@ do -- TASK_CARGO_DISPATCHER
     
     return self
   end
-  
+
+
+
 
   --- Handle the event when a pilot ejects.
   -- @param #TASK_CARGO_DISPATCHER self
   -- @param Core.Event#EVENTDATA EventData
   function TASK_CARGO_DISPATCHER:OnEventEjection( EventData )
+    self:F( { EventData = EventData } )
+    
+    if self.CSARTasks == true then
 
-    self:E( { EventData = EventData } )
-
-    self.CSARSpawned = self.CSARSpawned + 1
-    
-    local PlaneUnit = EventData.IniUnit
-    local CSARName = EventData.IniUnitName
-    
-    local CargoPointVec2 = EventData.IniUnit:GetPointVec2()
-    local CargoCoalition = EventData.IniUnit:GetCoalition()
-    local CargoCountry   = EventData.IniUnit:GetCountry()
-    
-    -- Only add a CSAR task if the coalition of the mission is equal to the coalition of the ejected unit.
-
-    if CargoCoalition == self.Mission:GetCommandCenter():GetCoalition() then
-     
-      -- Create the CSAR Pilot SPAWN object.
-      -- Let us create the Template for the replacement Pilot :-)
-      local Template = {
-        ["visible"] = false,
-        ["hidden"] = false,
-        ["task"] = "Ground Nothing",
-        ["name"] = string.format( "CSAR Pilot#%03d", self.CSARSpawned ),
-        ["x"] = CargoPointVec2:GetLat(),
-        ["y"] = CargoPointVec2:GetLon(),
-        ["units"] = 
-        {
-          [1] = 
-          {
-            ["type"] = ( CargoCoalition == coalition.side.BLUE ) and "Soldier M4" or "Infantry AK",
-            ["name"] = string.format( "CSAR Pilot#%03d-01", self.CSARSpawned ),
-            ["skill"] = "Excellent",
-            ["playerCanDrive"] = false,
-            ["x"] = CargoPointVec2:GetLat(),
-            ["y"] = CargoPointVec2:GetLon(),
-            ["heading"] = EventData.IniUnit:GetHeading(),
-          }, -- end of [1]
-        }, -- end of ["units"]
-      }
-  
-      local CargoGroup = GROUP:NewTemplate( Template, CargoCoalition, Group.Category.GROUND, CargoCountry )
-  
-      self.CSAR[#self.CSAR+1] = {} 
-      self.CSAR[#self.CSAR].PilotGroup = CargoGroup
-      self.CSAR[#self.CSAR].Task = nil
-    
+      local CSARCoordinate = EventData.IniUnit:GetCoordinate()
+      local CSARCoalition  = EventData.IniUnit:GetCoalition()
+      local CSARCountry    = EventData.IniUnit:GetCountry()
+      local CSARHeading    = EventData.IniUnit:GetHeading()
+      
+      -- Only add a CSAR task if the coalition of the mission is equal to the coalition of the ejected unit.
+      if CSARCoalition == self.Mission:GetCommandCenter():GetCoalition() then
+        local CSARTaskName = self:AddCSARTask( self.CSARTaskName, CSARCoordinate, CSARHeading, CSARCountry, self.CSARBriefing )     
+        self:SetCSARDeployZones( CSARTaskName, self.CSARDeployZones )
+      end
     end
     
     return self
+  end
+  
+
+  --- Define one default deploy zone for all the cargo tasks.
+  -- @param #TASK_CARGO_DISPATCHER self
+  -- @param DefaultDeployZone A default deploy zone.
+  -- @return #TASK_CARGO_DISPATCHER
+  function TASK_CARGO_DISPATCHER:SetDefaultDeployZone( DefaultDeployZone )
+
+    self.DefaultDeployZones = { DefaultDeployZone }
+  
+    return self
+  end
+  
+  
+  --- Define the deploy zones for all the cargo tasks.
+  -- @param #TASK_CARGO_DISPATCHER self
+  -- @param DefaultDeployZones A list of the deploy zones.
+  -- @return #TASK_CARGO_DISPATCHER
+  -- 
+  function TASK_CARGO_DISPATCHER:SetDefaultDeployZones( DefaultDeployZones )
+
+    self.DefaultDeployZones = DefaultDeployZones
+  
+    return self
+  end
+
+
+  --- Start the generation of CSAR tasks to retrieve a downed pilots.
+  -- You need to specify a task briefing, a task name, default deployment zone(s).
+  -- This method can only be used once!
+  -- @param #TASK_CARGO_DISPATCHER self
+  -- @param #string CSARTaskName The CSAR task name.
+  -- @param #string CSARDeployZones The zones to where the CSAR deployment should be directed.
+  -- @param #string CSARBriefing The briefing of the CSAR tasks.
+  -- @return #TASK_CARGO_DISPATCHER
+  function TASK_CARGO_DISPATCHER:StartCSARTasks( CSARTaskName, CSARDeployZones, CSARBriefing)
+  
+    if not self.CSARTasks then
+      self.CSARTasks = true
+      self.CSARTaskName = CSARTaskName
+      self.CSARDeployZones = CSARDeployZones
+      self.CSARBriefing = CSARBriefing
+    else
+      error( "TASK_CARGO_DISPATCHER: The generation of CSAR tasks has already started." )
+    end
+  
+    return self
+  end
+  
+  
+  --- Stop the generation of CSAR tasks to retrieve a downed pilots.
+  -- @param #TASK_CARGO_DISPATCHER self
+  -- @return #TASK_CARGO_DISPATCHER
+  function TASK_CARGO_DISPATCHER:StopCSARTasks()
+  
+    if self.CSARTasks then
+      self.CSARTasks = nil
+      self.CSARTaskName = nil
+      self.CSARDeployZones = nil
+      self.CSARBriefing = nil
+    else
+      error( "TASK_CARGO_DISPATCHER: The generation of CSAR tasks was not yet started." )
+    end
+  
+    return self
+  end
+  
+  
+  --- Add a CSAR task to retrieve a downed pilot.
+  -- You need to specify a coordinate from where the pilot will be spawned to be rescued.
+  -- @param #TASK_CARGO_DISPATCHER self
+  -- @param #string CSARTaskPrefix (optional) The prefix of the CSAR task. 
+  -- @param Core.Point#COORDINATE CSARCoordinate The coordinate where a downed pilot will be spawned.
+  -- @param #number CSARHeading The heading of the pilot in degrees.
+  -- @param DCSCountry#Country CSARCountry The country ID of the pilot that will be spawned.
+  -- @param #string CSARBriefing The briefing of the CSAR task.
+  -- @return #string The CSAR Task Name as a string. The Task Name is the main key and is shown in the task list of the Mission Tasking menu.
+  -- @usage
+  -- 
+  --   -- Add a CSAR task to rescue a downed pilot from within a coordinate.
+  --   local Coordinate = PlaneUnit:GetPointVec2()
+  --   TaskA2ADispatcher:AddCSARTask( Coordinate )
+  --   
+  --   -- Add a CSAR task to rescue a downed pilot from within a coordinate of country RUSSIA, which is pointing to the west (270°).
+  --   local Coordinate = PlaneUnit:GetPointVec2()
+  --   TaskA2ADispatcher:AddCSARTask( Coordinate, 270, Country.RUSSIA )
+  --   
+  function TASK_CARGO_DISPATCHER:AddCSARTask( CSARTaskPrefix, CSARCoordinate, CSARHeading, CSARCountry, CSARBriefing )
+
+    local CSARCoalition = self.Mission:GetCommandCenter():GetCoalition()
+
+    CSARHeading = CSARHeading or 0
+    CSARCountry = CSARCountry or self.Mission:GetCommandCenter():GetCountry()
+
+    self.CSARSpawned = self.CSARSpawned + 1
+    
+    local CSARTaskName = string.format( ( CSARTaskPrefix or "CSAR" ) .. ".%03d", self.CSARSpawned )
+    
+    -- Create the CSAR Pilot SPAWN object.
+    -- Let us create the Template for the replacement Pilot :-)
+    local Template = {
+      ["visible"] = false,
+      ["hidden"] = false,
+      ["task"] = "Ground Nothing",
+      ["name"] = string.format( "CSAR Pilot#%03d", self.CSARSpawned ),
+      ["x"] = CSARCoordinate.x,
+      ["y"] = CSARCoordinate.z,
+      ["units"] = 
+      {
+        [1] = 
+        {
+          ["type"] = ( CSARCoalition == coalition.side.BLUE ) and "Soldier M4" or "Infantry AK",
+          ["name"] = string.format( "CSAR Pilot#%03d-01", self.CSARSpawned ),
+          ["skill"] = "Excellent",
+          ["playerCanDrive"] = false,
+          ["x"] = CSARCoordinate.x,
+          ["y"] = CSARCoordinate.z,
+          ["heading"] = CSARHeading,
+        }, -- end of [1]
+      }, -- end of ["units"]
+    }
+
+    local CSARGroup = GROUP:NewTemplate( Template, CSARCoalition, Group.Category.GROUND, CSARCountry )
+
+    self.CSAR[CSARTaskName] = {} 
+    self.CSAR[CSARTaskName].PilotGroup = CSARGroup
+    self.CSAR[CSARTaskName].Briefing = CSARBriefing
+    self.CSAR[CSARTaskName].Task = nil
+    
+    return CSARTaskName
   end
 
 
@@ -294,11 +398,14 @@ do -- TASK_CARGO_DISPATCHER
   
   --- Define one deploy zone for the CSAR tasks.
   -- @param #TASK_CARGO_DISPATCHER self
-  -- @param DeployZone A deploy zone.
+  -- @param #string CSARTaskName (optional) The name of the CSAR task. 
+  -- @param CSARDeployZone A CSAR deploy zone.
   -- @return #TASK_CARGO_DISPATCHER
-  function TASK_CARGO_DISPATCHER:SetCSARDeployZone( CSARDeployZone )
+  function TASK_CARGO_DISPATCHER:SetCSARDeployZone( CSARTaskName, CSARDeployZone )
 
-    self.CSARDeployZones = { CSARDeployZone }
+    if CSARTaskName then
+      self.CSAR[CSARTaskName].DeployZones = { CSARDeployZone }
+    end
   
     return self
   end
@@ -306,15 +413,72 @@ do -- TASK_CARGO_DISPATCHER
   
   --- Define the deploy zones for the CSAR tasks.
   -- @param #TASK_CARGO_DISPATCHER self
-  -- @param CSARDeployZones A list of the deploy zones.
+  -- @param #string CSARTaskName (optional) The name of the CSAR task.
+  -- @param CSARDeployZones A list of the CSAR deploy zones.
   -- @return #TASK_CARGO_DISPATCHER
-  function TASK_CARGO_DISPATCHER:SetCSARDeployZones( CSARDeployZones )
+  -- 
+  function TASK_CARGO_DISPATCHER:SetCSARDeployZones( CSARTaskName, CSARDeployZones )
 
-    self.CSARDeployZones = CSARDeployZones
+    if CSARTaskName and self.CSAR[CSARTaskName] then
+      self.CSAR[CSARTaskName].DeployZones = CSARDeployZones
+    end
+  
+    return self
+  end
+
+
+  --- Add a Transport task to transport cargo from fixed locations to a deployment zone.
+  -- @param #TASK_CARGO_DISPATCHER self
+  -- @param #string TransportTaskName (optional) The name of the transport task. 
+  -- @param Core.SetCargo#SET_CARGO SetCargo The SetCargo to be transported.
+  -- @param #string Briefing The briefing of the task transport to be shown to the player.
+  -- @return #TASK_CARGO_DISPATCHER
+  -- @usage
+  -- 
+  --   -- Add a Transport task to transport cargo of different types to a Transport Deployment Zone.
+  function TASK_CARGO_DISPATCHER:AddTransportTask( TransportTaskName, SetCargo, Briefing )
+
+    self.TransportCount = self.TransportCount + 1
+    local TaskName = string.format( ( TransportTaskName or "Transport" ) .. ".%03d", self.TransportCount )
+    
+    self.Transport[TaskName] = {} 
+    self.Transport[TaskName].SetCargo = SetCargo
+    self.Transport[TaskName].Briefing = Briefing
+    self.Transport[TaskName].Task = nil
+    
+    return self
+  end
+
+  
+  --- Define one deploy zone for the Transport tasks.
+  -- @param #TASK_CARGO_DISPATCHER self
+  -- @param #string TransportTaskName (optional) The name of the Transport task. 
+  -- @param TransportDeployZone A Transport deploy zone.
+  -- @return #TASK_CARGO_DISPATCHER
+  function TASK_CARGO_DISPATCHER:SetTransportDeployZone( TransportTaskName, TransportDeployZone )
+
+    if TransportTaskName then
+      self.Transport[TransportTaskName].DeployZones = { TransportDeployZone }
+    end
   
     return self
   end
   
+  
+  --- Define the deploy zones for the Transport tasks.
+  -- @param #TASK_CARGO_DISPATCHER self
+  -- @param #string TransportTaskName (optional) The name of the Transport task.
+  -- @param TransportDeployZones A list of the Transport deploy zones.
+  -- @return #TASK_CARGO_DISPATCHER
+  -- 
+  function TASK_CARGO_DISPATCHER:SetTransportDeployZones( TransportTaskName, TransportDeployZones )
+
+    if TransportTaskName then
+      self.Transport[TransportTaskName].DeployZones = TransportDeployZones
+    end
+  
+    return self
+  end
   
   --- Evaluates of a CSAR task needs to be started.
   -- @param #TASK_CARGO_DISPATCHER self
@@ -368,17 +532,36 @@ do -- TASK_CARGO_DISPATCHER
       end
 
       -- Now that all obsolete tasks are removed, loop through the CSAR pilots.
-      for CSARID, CSARData in pairs( self.CSAR ) do
+      for CSARName, CSAR in pairs( self.CSAR ) do
       
-        if CSARData.Task then
-        else
+        if not CSAR.Task then
           -- New CSAR Task
-          local SetCargo = self:EvaluateCSAR( CSARData.PilotGroup )
-          local CSARTask = TASK_CARGO_CSAR:New( Mission, self.SetGroup, string.format( "CSAR.%03d", CSARID ), SetCargo )
-          CSARTask:SetDeployZones( self.CSARDeployZones or {} )
-          Mission:AddTask( CSARTask )
-          TaskReport:Add( CSARTask:GetName() )
-          CSARData.Task = CSARTask
+          local SetCargo = self:EvaluateCSAR( CSAR.PilotGroup )
+          CSAR.Task = TASK_CARGO_CSAR:New( Mission, self.SetGroup, CSARName, SetCargo, CSAR.Briefing )
+          Mission:AddTask( CSAR.Task )
+          TaskReport:Add( CSARName )
+          if CSAR.DeployZones then
+            CSAR.Task:SetDeployZones( CSAR.DeployZones or {} )
+          else
+            CSAR.Task:SetDeployZones( self.DefaultDeployZones or {} )
+          end
+        end
+      end
+      
+      
+      -- Now that all obsolete tasks are removed, loop through the Transport tasks.
+      for TransportName, Transport in pairs( self.Transport ) do
+        
+        if not Transport.Task then
+          -- New Transport Task
+          Transport.Task = TASK_CARGO_TRANSPORT:New( Mission, self.SetGroup, TransportName, Transport.SetCargo, Transport.Briefing )
+          Mission:AddTask( Transport.Task )
+          TaskReport:Add( TransportName )
+          if Transport.DeployZones then
+            Transport.Task:SetDeployZones( Transport.DeployZones or {} )
+          else
+            Transport.Task:SetDeployZones( self.DefaultDeployZones or {} )
+          end
         end
       end
       
