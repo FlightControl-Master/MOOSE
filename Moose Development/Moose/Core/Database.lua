@@ -450,8 +450,6 @@ function DATABASE:_RegisterGroupTemplate( GroupTemplate, CoalitionSide, Category
 
   local GroupTemplateName = GroupName or env.getValueDictByKey( GroupTemplate.name )
   
-  local TraceTable = {}
-
   if not self.Templates.Groups[GroupTemplateName] then
     self.Templates.Groups[GroupTemplateName] = {}
     self.Templates.Groups[GroupTemplateName].Status = nil
@@ -475,18 +473,7 @@ function DATABASE:_RegisterGroupTemplate( GroupTemplate, CoalitionSide, Category
   self.Templates.Groups[GroupTemplateName].CoalitionID = CoalitionSide
   self.Templates.Groups[GroupTemplateName].CountryID = CountryID
 
-  
-  TraceTable[#TraceTable+1] = "Group"
-  TraceTable[#TraceTable+1] = self.Templates.Groups[GroupTemplateName].GroupName
-
-  TraceTable[#TraceTable+1] = "Coalition"
-  TraceTable[#TraceTable+1] = self.Templates.Groups[GroupTemplateName].CoalitionID
-  TraceTable[#TraceTable+1] = "Category"
-  TraceTable[#TraceTable+1] = self.Templates.Groups[GroupTemplateName].CategoryID
-  TraceTable[#TraceTable+1] = "Country"
-  TraceTable[#TraceTable+1] = self.Templates.Groups[GroupTemplateName].CountryID
-
-  TraceTable[#TraceTable+1] = "Units"
+  local UnitNames = {}
 
   for unit_num, UnitTemplate in pairs( GroupTemplate.units ) do
 
@@ -510,10 +497,16 @@ function DATABASE:_RegisterGroupTemplate( GroupTemplate, CoalitionSide, Category
       self.Templates.ClientsByID[UnitTemplate.unitId] = UnitTemplate
     end
     
-    TraceTable[#TraceTable+1] = self.Templates.Units[UnitTemplate.name].UnitName 
+    UnitNames[#UnitNames+1] = self.Templates.Units[UnitTemplate.name].UnitName 
   end
 
-  self:E( TraceTable )
+  self:I( { Group = self.Templates.Groups[GroupTemplateName].GroupName,
+            Coalition = self.Templates.Groups[GroupTemplateName].CoalitionID,
+            Category = self.Templates.Groups[GroupTemplateName].CategoryID,
+            Country = self.Templates.Groups[GroupTemplateName].CountryID,
+            Units = UnitNames
+          }
+        )
 end
 
 function DATABASE:GetGroupTemplate( GroupName )
@@ -530,8 +523,6 @@ end
 -- @return #DATABASE self
 function DATABASE:_RegisterStaticTemplate( StaticTemplate, CoalitionID, CategoryID, CountryID )
 
-  local TraceTable = {}
-
   local StaticTemplateName = env.getValueDictByKey(StaticTemplate.name)
   
   self.Templates.Statics[StaticTemplateName] = self.Templates.Statics[StaticTemplateName] or {}
@@ -547,18 +538,15 @@ function DATABASE:_RegisterStaticTemplate( StaticTemplate, CoalitionID, Category
   self.Templates.Statics[StaticTemplateName].CoalitionID = CoalitionID
   self.Templates.Statics[StaticTemplateName].CountryID = CountryID
 
+  self:I( { Static = self.Templates.Statics[StaticTemplateName].StaticName,
+            Coalition = self.Templates.Statics[StaticTemplateName].CoalitionID,
+            Category = self.Templates.Statics[StaticTemplateName].CategoryID,
+            Country = self.Templates.Statics[StaticTemplateName].CountryID 
+          }
+        )
+        
+  self:AddStatic( StaticTemplateName )
   
-  TraceTable[#TraceTable+1] = "Static"
-  TraceTable[#TraceTable+1] = self.Templates.Statics[StaticTemplateName].StaticName
-
-  TraceTable[#TraceTable+1] = "Coalition"
-  TraceTable[#TraceTable+1] = self.Templates.Statics[StaticTemplateName].CoalitionID
-  TraceTable[#TraceTable+1] = "Category"
-  TraceTable[#TraceTable+1] = self.Templates.Statics[StaticTemplateName].CategoryID
-  TraceTable[#TraceTable+1] = "Country"
-  TraceTable[#TraceTable+1] = self.Templates.Statics[StaticTemplateName].CountryID
-
-  self:E( TraceTable )
 end
 
 

@@ -85,7 +85,7 @@ function SPAWNSTATIC:NewFromStatic( SpawnTemplatePrefix, CountryID ) --R2.1
 	local self = BASE:Inherit( self, BASE:New() ) -- #SPAWNSTATIC
 	self:F( { SpawnTemplatePrefix } )
   
-	local TemplateStatic = StaticObject.getByName( SpawnTemplatePrefix )
+	local TemplateStatic = STATIC:FindByName( SpawnTemplatePrefix )
 	if TemplateStatic then
 		self.SpawnTemplatePrefix = SpawnTemplatePrefix
     self.CountryID = CountryID

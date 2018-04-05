@@ -129,7 +129,7 @@ function POSITIONABLE:GetPointVec2()
     
     local PositionablePointVec2 = POINT_VEC2:NewFromVec3( PositionableVec3 )
   
-    self:T2( PositionablePointVec2 )
+    self:T( PositionablePointVec2 )
     return PositionablePointVec2
   end
   
@@ -306,6 +306,18 @@ function POSITIONABLE:IsAboveRunway()
   BASE:E( { "Cannot IsAboveRunway", Positionable = self, Alive = self:IsAlive() } )
 
   return nil
+end
+
+
+function POSITIONABLE:GetSize()
+
+  local DCSObject = self:GetDCSObject()
+
+  if DCSObject then
+    return 1
+  else
+    return 0
+  end
 end
 
 
