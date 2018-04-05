@@ -227,7 +227,7 @@ RANGE.id="RANGE | "
 
 --- Range script version.
 -- @field #number version
-RANGE.version="1.0.1"
+RANGE.version="1.0.3"
 
 --TODO list
 --TODO: Add statics for strafe pits.
@@ -1390,6 +1390,9 @@ function RANGE:_CheckInZone(_unitName)
           
         else
         
+          -- Get current ammo.
+          local _ammo=self:_GetAmmo(_unitName)
+        
           -- Result.
           local _result = self.strafeStatus[_unitID]
 
@@ -1403,9 +1406,19 @@ function RANGE:_CheckInZone(_unitName)
           else
             _result.text = "POOR PASS"
           end
+          
+          local shots=_result.ammo-_ammo
+          local accur=0
+          if shots>0 then
+            accur=_result.hits/shots*100
+          end
+            
     
           -- Message text.      
           local _text=string.format("%s, %s with %d hits on target %s.", self:_myname(_unitName), _result.text, _result.hits, _result.zone.name)
+          if shots and accur then
+            _text=_text..string.format("\nTotal rounds fired %d. Accuracy %.1f %%.", shots, accur)
+          end
           
           -- Send message.
           self:_DisplayMessageToGroup(_unit, _text)
@@ -1446,9 +1459,12 @@ function RANGE:_CheckInZone(_unitName)
         
         -- Player is inside zone.
         if unitinzone then
+        
+          -- Get ammo at the beginning of the run.
+          local _ammo=self:_GetAmmo(_unitName)
 
           -- Init strafe status for this player.
-          self.strafeStatus[_unitID] = {hits = 0, zone = _targetZone, time = 1, pastfoulline=false }
+          self.strafeStatus[_unitID] = {hits = 0, zone = _targetZone, time = 1, ammo=_ammo, pastfoulline=false }
   
           -- Rolling in!
           local _msg=string.format("%s, rolling in on strafe pit %s.", self:_myname(_unitName), _targetZone.name)
@@ -1549,6 +1565,52 @@ end
     
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Helper Functions
+
+--- Get the number of shells a unit currently has.
+-- @param #RANGE self
+-- @param #string unitname Name of the player unit.
+-- @return Number of shells left
+function RANGE:_GetAmmo(unitname)
+  self:F(unitname)
+  
+  -- Init counter.
+  local ammo=0
+  
+  local unit, playername = self:_GetPlayerUnitAndName(unitname)
+  
+  if unit and playername then
+  
+    local has_ammo=false
+    
+    local ammotable=unit:GetAmmo()
+    self:T2({ammotable=ammotable})
+    
+    if ammotable ~= nil then
+    
+      local weapons=#ammotable
+      self:T2(RANGE.id..string.format("Number of weapons %d.", weapons))
+      
+      for w=1,weapons do
+      
+        local Nammo=ammotable[w]["count"]
+        local Tammo=ammotable[w]["desc"]["typeName"]
+        
+        -- We are specifically looking for shells here.
+        if string.match(Tammo, "shell") then
+        
+          -- Add up all shells
+          ammo=ammo+Nammo
+        
+          local text=string.format("Player %s has %d rounds ammo of type %s", playername, Nammo, Tammo)
+          self:T(RANGE.id..text)
+          MESSAGE:New(text, 10):ToAllIf(self.Debug)         
+        end
+      end
+    end
+  end
+      
+  return ammo
+end
 
 --- Mark targets on F10 map.
 -- @param #RANGE self
