@@ -230,7 +230,7 @@ do -- TASK_CARGO
       
       Task.SetCargo:ForEachCargo(
         
-        --- @param Core.Cargo#CARGO Cargo
+        --- @param Cargo.Cargo#CARGO Cargo
         function( Cargo ) 
         
           if Cargo:IsAlive() then
@@ -250,7 +250,7 @@ do -- TASK_CARGO
         
             if Cargo:IsUnLoaded() then
               if CargoItemCount <= Task.CargoLimit then 
-                if Cargo:IsInRadius( TaskUnit:GetPointVec2() ) then
+                if Cargo:IsInReportRadius( TaskUnit:GetPointVec2() ) then
                   local NotInDeployZones = true
                   for DeployZoneName, DeployZone in pairs( Task.DeployZones ) do
                     if Cargo:IsInZone( DeployZone ) then
@@ -260,20 +260,50 @@ do -- TASK_CARGO
                   if NotInDeployZones then
                     if not TaskUnit:InAir() then
                       if Cargo:CanBoard() == true then
-                        MENU_GROUP_COMMAND:New( TaskUnit:GetGroup(), "Board cargo " .. Cargo.Name, TaskUnit.Menu, self.MenuBoardCargo, self, Cargo ):SetTime(MenuTime)
+                        if Cargo:IsInLoadRadius( TaskUnit:GetPointVec2() ) then
+                          Cargo:Report( "Reporting for boarding at " .. Cargo:GetCoordinate():ToString( TaskUnit:GetGroup() ), "board", TaskUnit:GetGroup() )
+                          MENU_GROUP_COMMAND:New( TaskUnit:GetGroup(), "Board cargo " .. Cargo.Name, TaskUnit.Menu, self.MenuBoardCargo, self, Cargo ):SetTime(MenuTime)
+                        else
+                          Cargo:Report( "Reporting at " .. Cargo:GetCoordinate():ToString( TaskUnit:GetGroup() ), "reporting", TaskUnit:GetGroup() )
+                        end
                       else
                         if Cargo:CanLoad() == true then
-                          MENU_GROUP_COMMAND:New( TaskUnit:GetGroup(), "Load cargo " .. Cargo.Name, TaskUnit.Menu, self.MenuLoadCargo, self, Cargo ):SetTime(MenuTime)
+                          if Cargo:IsInLoadRadius( TaskUnit:GetPointVec2() ) then
+                            Cargo:Report( "Reporting for loading at " .. Cargo:GetCoordinate():ToString( TaskUnit:GetGroup() ), "load", TaskUnit:GetGroup() )
+                            MENU_GROUP_COMMAND:New( TaskUnit:GetGroup(), "Load cargo " .. Cargo.Name, TaskUnit.Menu, self.MenuLoadCargo, self, Cargo ):SetTime(MenuTime)
+                          else
+                            Cargo:Report( "Reporting at " .. Cargo:GetCoordinate():ToString( TaskUnit:GetGroup() ), "reporting", TaskUnit:GetGroup() )
+                          end
                         end
                       end
                       TaskUnit.Menu:SetTime( MenuTime )
+                    else
+                      Cargo:ReportResetAll( TaskUnit:GetGroup() )
                     end
                   end
                 else
                   MENU_GROUP_COMMAND:New( TaskUnit:GetGroup(), "Route to Pickup cargo " .. Cargo.Name, TaskUnit.Menu, self.MenuRouteToPickup, self, Cargo ):SetTime(MenuTime)
                   TaskUnit.Menu:SetTime( MenuTime )
+                  Cargo:ReportResetAll( TaskUnit:GetGroup() )
                 end
               end
+              -- Cargo in deployzones are flagged as deployed.
+              for DeployZoneName, DeployZone in pairs( Task.DeployZones ) do
+                if Cargo:IsInZone( DeployZone ) then
+                  if not Cargo:IsDeployed() then
+                    Cargo:SetDeployed( true )
+                    -- TODO:I need to find a more decent solution for this.
+                    Task:E( { CargoDeployed = Task.CargoDeployed and "true" or "false" } )
+                    Task:E( { CargoIsAlive = Cargo:IsAlive() and "true" or "false" } )
+                    if Cargo:IsAlive() then
+                      if Task.CargoDeployed then
+                        Task:CargoDeployed( TaskUnit, Cargo, DeployZone )
+                      end
+                    end
+                  end
+                end
+              end
+              
             end
             
             if Cargo:IsLoaded() then
@@ -303,7 +333,7 @@ do -- TASK_CARGO
       TaskUnit.Menu:Remove( MenuTime )
       
       
-      self:__SelectAction( -15 )
+      self:__SelectAction( -5 )
       
     end
     
@@ -441,7 +471,7 @@ do -- TASK_CARGO
       self:F( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
       
       if self.Cargo:IsAlive() then
-        if self.Cargo:IsInRadius( TaskUnit:GetPointVec2() ) then
+        if self.Cargo:IsInLoadRadius( TaskUnit:GetPointVec2() ) then
           if TaskUnit:InAir() then
             self:__Land( -10, Action )
           else
@@ -465,7 +495,7 @@ do -- TASK_CARGO
       self:F( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
       
       if self.Cargo:IsAlive() then
-        if self.Cargo:IsInRadius( TaskUnit:GetPointVec2() ) then
+        if self.Cargo:IsInLoadRadius( TaskUnit:GetPointVec2() ) then
           if TaskUnit:InAir() then
             self:__Land( -0.1, Action )
           else
@@ -506,7 +536,7 @@ do -- TASK_CARGO
       end
 
       if self.Cargo:IsAlive() then
-        if self.Cargo:IsInRadius( TaskUnit:GetPointVec2() ) then
+        if self.Cargo:IsInLoadRadius( TaskUnit:GetPointVec2() ) then
           if TaskUnit:InAir() then
             --- ABORT the boarding. Split group if any and go back to select action.
           else
@@ -649,26 +679,6 @@ do -- TASK_CARGO
         end          
       end
       TaskUnit:RemoveCargo( Cargo )
-
-      local NotInDeployZones = true
-      for DeployZoneName, DeployZone in pairs( Task.DeployZones ) do
-        if Cargo:IsInZone( DeployZone ) then
-          NotInDeployZones = false
-        end
-      end
-      
-      if NotInDeployZones == false then
-        Cargo:SetDeployed( true )
-      end
-            
-      -- TODO:I need to find a more decent solution for this.
-      Task:E( { CargoDeployed = Task.CargoDeployed and "true" or "false" } )
-      Task:E( { CargoIsAlive = Cargo:IsAlive() and "true" or "false" } )
-      if Cargo:IsAlive() then
-        if Task.CargoDeployed then
-          Task:CargoDeployed( TaskUnit, Cargo, self.DeployZone )
-        end
-      end
       
       self:Planned()
       self:__SelectAction( 1 )
@@ -739,7 +749,7 @@ do -- TASK_CARGO
     local ActRouteCargo = ProcessUnit:GetProcess( "RoutingToPickup", "RouteToPickupPoint" ) -- Actions.Act_Route#ACT_ROUTE_POINT
     ActRouteCargo:Reset()
     ActRouteCargo:SetCoordinate( Cargo:GetCoordinate() )
-    ActRouteCargo:SetRange( Cargo:GetBoardingRange() )
+    ActRouteCargo:SetRange( Cargo:GetLoadRadius() )
     ActRouteCargo:SetMenuCancel( TaskUnit:GetGroup(), "Cancel Routing to Cargo " .. Cargo:GetName(), TaskUnit.Menu )
     ActRouteCargo:Start()
     return self
