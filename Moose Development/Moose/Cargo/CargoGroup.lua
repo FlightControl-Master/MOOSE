@@ -23,7 +23,7 @@
 do -- CARGO_GROUP
 
   --- @type CARGO_GROUP
-  -- @extends #CARGO_REPORTABLE
+  -- @extends Cargo.Cargo#CARGO_REPORTABLE
   -- @field Core.Set#SET_CARGO CargoSet The collection of derived CARGO objects.
   -- @field #string GroupName The name of the CargoGroup.
   
@@ -45,12 +45,12 @@ do -- CARGO_GROUP
 -- @param Wrapper.Group#GROUP CargoGroup
 -- @param #string Type
 -- @param #string Name
--- @param #number ReportRadius (optional)
+-- @param #number LoadRadius (optional)
 -- @param #number NearRadius (optional)
 -- @return #CARGO_GROUP
-function CARGO_GROUP:New( CargoGroup, Type, Name, ReportRadius )
-  local self = BASE:Inherit( self, CARGO_REPORTABLE:New( Type, Name, 0, ReportRadius ) ) -- #CARGO_GROUP
-  self:F( { Type, Name, ReportRadius } )
+function CARGO_GROUP:New( CargoGroup, Type, Name, LoadRadius )
+  local self = BASE:Inherit( self, CARGO_REPORTABLE:New( Type, Name, 0, LoadRadius ) ) -- #CARGO_GROUP
+  self:F( { Type, Name, LoadRadius } )
 
   self.CargoSet = SET_CARGO:New()
   
@@ -455,11 +455,11 @@ function CARGO_GROUP:OnEventCargoDead( EventData )
     return nil
   end
 
-  --- Check if CargoGroup is in the ReportRadius for the Cargo to be Loaded.
+  --- Check if Cargo Group is in the radius for the Cargo to be Boarded.
   -- @param #CARGO_GROUP self
   -- @param Core.Point#Coordinate Coordinate
-  -- @return #boolean true if the CargoGroup is within the reporting radius.
-  function CARGO_GROUP:IsInRadius( Coordinate )
+  -- @return #boolean true if the Cargo Group is within the load radius.
+  function CARGO_GROUP:IsInLoadRadius( Coordinate )
     self:F( { Coordinate } )
   
     local Cargo = self.CargoSet:GetFirst() -- #CARGO
@@ -473,10 +473,35 @@ function CARGO_GROUP:OnEventCargoDead( EventData )
       end
       self:T( Distance )
       
-      if Distance <= self.ReportRadius then
+      if Distance <= self.LoadRadius then
         return true
       else
         return false
+      end
+    end
+    
+    return nil
+  
+  end
+
+
+  --- Check if Cargo Group is in the report radius.
+  -- @param #CARGO_GROUP self
+  -- @param Core.Point#Coordinate Coordinate
+  -- @return #boolean true if the Cargo Group is within the report radius.
+  function CARGO_GROUP:IsInReportRadius( Coordinate )
+    self:F( { Coordinate } )
+  
+    local Cargo = self.CargoSet:GetFirst() -- #CARGO
+
+    if Cargo then
+      local Distance = 0
+      if Cargo:IsUnLoaded() then
+        Distance = Coordinate:DistanceFromPointVec2( Cargo.CargoObject:GetPointVec2() )
+        self:T( Distance )
+        if Distance <= self.LoadRadius then
+          return true
+        end
       end
     end
     

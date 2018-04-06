@@ -44,7 +44,7 @@ do -- CARGO_UNIT
   -- @param #string Type
   -- @param #string Name
   -- @param #number Weight
-  -- @param #number ReportRadius (optional)
+  -- @param #number LoadRadius (optional)
   -- @param #number NearRadius (optional)
   -- @return #CARGO_UNIT
   function CARGO_UNIT:New( CargoUnit, Type, Name, Weight, NearRadius )
