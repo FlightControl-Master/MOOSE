@@ -239,14 +239,17 @@ end
 -- Note that this destroy method also raises a destroy event at run-time.
 -- So all event listeners will catch the destroy event of this DCS Group.
 -- @param #GROUP self
-function GROUP:Destroy()
+-- @param #boolean GenerateEvent
+function GROUP:Destroy( GenerateEvent )
   self:F2( self.GroupName )
 
   local DCSGroup = self:GetDCSObject()
 
   if DCSGroup then
-    for Index, UnitData in pairs( DCSGroup:getUnits() ) do
-      self:CreateEventCrash( timer.getTime(), UnitData )
+    if not GenerateEvent then
+      for Index, UnitData in pairs( DCSGroup:getUnits() ) do
+        self:CreateEventCrash( timer.getTime(), UnitData )
+      end
     end
     USERFLAG:New( self:GetName() ):Set( 100 )
     DCSGroup:destroy()

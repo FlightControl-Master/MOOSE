@@ -603,6 +603,7 @@ function ZONE_RADIUS:Scan( ObjectCategories )
   self.ScanData = {}
   self.ScanData.Coalitions = {}
   self.ScanData.Scenery = {}
+  self.ScanData.Units = {}
 
   local ZoneCoord = self:GetCoordinate()
   local ZoneRadius = self:GetRadius()
@@ -625,6 +626,7 @@ function ZONE_RADIUS:Scan( ObjectCategories )
          (ObjectCategory == Object.Category.STATIC and ZoneObject:isExist()) then
         local CoalitionDCSUnit = ZoneObject:getCoalition()
         self.ScanData.Coalitions[CoalitionDCSUnit] = true
+        self.ScanData.Units[ZoneObject] = ZoneObject
         self:F( { Name = ZoneObject:getName(), Coalition = CoalitionDCSUnit } )
       end
       if ObjectCategory == Object.Category.SCENERY then
@@ -640,6 +642,12 @@ function ZONE_RADIUS:Scan( ObjectCategories )
 
   world.searchObjects( ObjectCategories, SphereSearch, EvaluateZone )
   
+end
+
+
+function ZONE_RADIUS:GetScannedUnits()
+
+  return self.ScanData.Units
 end
 
 

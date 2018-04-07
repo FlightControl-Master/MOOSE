@@ -325,7 +325,7 @@ do -- CARGO
   -- @param #CARGO self
   function CARGO:Destroy()
     if self.CargoObject then
-      self.CargoObject:Destroy()
+      self.CargoObject:Destroy( false )
     end
     self:Destroyed()
   end
@@ -576,21 +576,23 @@ do -- CARGO
   -- @param #number NearRadius The radius when the cargo will board the Carrier (to avoid collision).
   -- @return #boolean
   function CARGO:IsNear( PointVec2, NearRadius )
-    self:F( { PointVec2 = PointVec2, NearRadius = NearRadius } )
+    self:F2( { PointVec2 = PointVec2, NearRadius = NearRadius } )
   
     if self.CargoObject:IsAlive() then
       --local Distance = PointVec2:DistanceFromPointVec2( self.CargoObject:GetPointVec2() )
-      self:F( { CargoObjectName = self.CargoObject:GetName() } )
-      self:F( { CargoObjectVec2 = self.CargoObject:GetVec2() } )
-      self:F( { PointVec2 = PointVec2:GetVec2() } )
+      --self:F( { CargoObjectName = self.CargoObject:GetName() } )
+      --self:F( { CargoObjectVec2 = self.CargoObject:GetVec2() } )
+      --self:F( { PointVec2 = PointVec2:GetVec2() } )
       local Distance = PointVec2:Get2DDistance( self.CargoObject:GetPointVec2() )
-      self:T( Distance )
+      --self:F( Distance )
       
       if Distance <= NearRadius then
+        self:F( { PointVec2 = PointVec2, NearRadius = NearRadius, IsNear = true } )
         return true
       end
     end
     
+    self:F( { PointVec2 = PointVec2, NearRadius = NearRadius, IsNear = false } )
     return false
   end
   
