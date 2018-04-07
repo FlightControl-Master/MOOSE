@@ -384,6 +384,14 @@ do -- CARGO
     return self:Is( "Loaded" )
   end
   
+  --- Check if cargo is loaded.
+  -- @param #CARGO self
+  -- @param Wrapper.Unit#UNIT Carrier
+  -- @return #boolean true if loaded
+  function CARGO:IsLoadedInCarrier( Carrier )
+    return self.CargoCarrier and self.CargoCarrier:GetName() == Carrier:GetName()
+  end
+  
   --- Check if cargo is unloaded.
   -- @param #CARGO self
   -- @return #boolean true if unloaded

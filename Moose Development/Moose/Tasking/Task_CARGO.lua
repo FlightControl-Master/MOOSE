@@ -306,7 +306,7 @@ do -- TASK_CARGO
               
             end
             
-            if Cargo:IsLoaded() then
+            if Cargo:IsLoaded() == true and Cargo:IsLoadedInCarrier( TaskUnit ) == true then
               if not TaskUnit:InAir() then
                 if Cargo:CanUnboard() == true then
                   MENU_GROUP_COMMAND:New( TaskUnit:GetGroup(), "Unboard cargo " .. Cargo.Name, TaskUnit.Menu, self.MenuUnboardCargo, self, Cargo ):SetTime(MenuTime)
@@ -333,7 +333,7 @@ do -- TASK_CARGO
       TaskUnit.Menu:Remove( MenuTime )
       
       
-      self:__SelectAction( -5 )
+      self:__SelectAction( -1 )
       
     end
     
