@@ -4131,6 +4131,19 @@ function SET_CARGO:New() --R2.1
   return self
 end
 
+
+--- (R2.1) Add CARGO to SET_CARGO.
+-- @param Core.Set#SET_CARGO self
+-- @param Cargo.Cargo#CARGO Cargo A single cargo.
+-- @return self
+function SET_CARGO:AddCargo( Cargo ) --R2.4
+
+  self:Add( Cargo:GetName(), Cargo )
+    
+  return self
+end
+
+
 --- (R2.1) Add CARGOs to SET_CARGO.
 -- @param Core.Set#SET_CARGO self
 -- @param #string AddCargoNames A single name or an array of CARGO names.

@@ -24,7 +24,7 @@ do -- CARGO_SLINGLOAD
 
   --- Models the behaviour of cargo crates, which can only be slingloaded. 
   -- @type CARGO_SLINGLOAD
-  -- @extends #CARGO_REPRESENTABLE
+  -- @extends Cargo.Cargo#CARGO_REPRESENTABLE
   
   --- # CARGO\_CRATE class, extends @{#CARGO_REPRESENTABLE}
   -- 
@@ -42,11 +42,11 @@ do -- CARGO_SLINGLOAD
   -- @param Wrapper.Static#STATIC CargoStatic
   -- @param #string Type
   -- @param #string Name
-  -- @param #number ReportRadius (optional)
+  -- @param #number LoadRadius (optional)
   -- @param #number NearRadius (optional)
   -- @return #CARGO_SLINGLOAD
-  function CARGO_SLINGLOAD:New( CargoStatic, Type, Name, ReportRadius, NearRadius )
-    local self = BASE:Inherit( self, CARGO_REPRESENTABLE:New( CargoStatic, Type, Name, nil, ReportRadius, NearRadius ) ) -- #CARGO_SLINGLOAD
+  function CARGO_SLINGLOAD:New( CargoStatic, Type, Name, LoadRadius, NearRadius )
+    local self = BASE:Inherit( self, CARGO_REPRESENTABLE:New( CargoStatic, Type, Name, nil, LoadRadius, NearRadius ) ) -- #CARGO_SLINGLOAD
     self:F( { Type, Name, NearRadius } )
   
     self.CargoObject = CargoStatic
@@ -89,6 +89,28 @@ do -- CARGO_SLINGLOAD
   function CARGO_SLINGLOAD:CanUnload()
     return false
   end
+
+
+  --- Check if Cargo Slingload is in the radius for the Cargo to be Boarded or Loaded.
+  -- @param #CARGO_SLINGLOAD self
+  -- @param Core.Point#Coordinate Coordinate
+  -- @return #boolean true if the Cargo Slingload is within the loading radius.
+  function CARGO_SLINGLOAD:IsInLoadRadius( Coordinate )
+    self:F( { Coordinate } )
+  
+    local Distance = 0
+    if self:IsUnLoaded() then
+      Distance = Coordinate:DistanceFromPointVec2( self.CargoObject:GetPointVec2() )
+      self:T( Distance )
+      if Distance <= self.NearRadius then
+        return true
+      end
+    end
+    
+    return false
+  end
+
+
 
   --- Get the current Coordinate of the CargoGroup.
   -- @param #CARGO_SLINGLOAD self
@@ -143,28 +165,6 @@ do -- CARGO_SLINGLOAD
     return self:IsNear( CargoCarrier:GetCoordinate(), NearRadius )
   end
 
-
-  --- Check if CargoGroup is in the ReportRadius for the Cargo to be Loaded.
-  -- @param #CARGO_SLINGLOAD self
-  -- @param Core.Point#Coordinate Coordinate
-  -- @return #boolean true if the CargoGroup is within the reporting radius.
-  function CARGO_SLINGLOAD:IsInRadius( Coordinate )
-    self:F( { Coordinate } )
-  
-    local Distance = 0
-    if self:IsLoaded() then
-      Distance = Coordinate:DistanceFromPointVec2( self.CargoCarrier:GetPointVec2() )
-    else
-      Distance = Coordinate:DistanceFromPointVec2( self.CargoObject:GetPointVec2() )
-    end
-    self:T( Distance )
-    
-    if Distance <= self.ReportRadius then
-      return true
-    else
-      return false
-    end
-  end
 
   --- Respawn the CargoGroup.
   -- @param #CARGO_SLINGLOAD self

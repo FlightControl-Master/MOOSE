@@ -229,6 +229,26 @@ function IDENTIFIABLE:GetDesc()
   return nil
 end
 
+--- Check if the Object has the attribute.
+-- @param #IDENTIFIABLE self
+-- @param #string AttributeName The attribute name.
+-- @return #boolean true if the attribute exists.
+-- @return #nil The DCS Identifiable is not existing or alive.  
+function IDENTIFIABLE:HasAttribute( AttributeName )
+  self:F2( self.IdentifiableName )
+
+  local DCSIdentifiable = self:GetDCSObject()
+  
+  if DCSIdentifiable then
+    local IdentifiableHasAttribute = DCSIdentifiable:hasAttribute( AttributeName )
+    self:T2( IdentifiableHasAttribute )
+    return IdentifiableHasAttribute
+  end
+  
+  self:F( self.ClassName .. " " .. self.IdentifiableName .. " not found!" )
+  return nil
+end
+
 --- Gets the CallSign of the IDENTIFIABLE, which is a blank by default.
 -- @param #IDENTIFIABLE self
 -- @return #string The CallSign of the IDENTIFIABLE.
