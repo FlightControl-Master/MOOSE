@@ -1892,7 +1892,7 @@ end
 -- @param #CONTROLLABLE self
 -- @return #CONTROLLABLE
 function CONTROLLABLE:RouteStop()
-  self:F2()
+  self:F("RouteStop")
   
   local CommandStop = self:CommandStopRoute( true )
   self:SetCommand( CommandStop )
@@ -1903,7 +1903,7 @@ end
 -- @param #CONTROLLABLE self
 -- @return #CONTROLLABLE
 function CONTROLLABLE:RouteResume()
-  self:F2()
+  self:F("RouteResume")
   
   local CommandResume = self:CommandStopRoute( false )
   self:SetCommand( CommandResume )
