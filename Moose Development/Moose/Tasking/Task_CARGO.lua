@@ -645,6 +645,8 @@ do -- TASK_CARGO
       
       self:F( { Cargo = Cargo } )
       
+      self:F( { Cargo = Cargo } )
+      
       local TaskUnitName = TaskUnit:GetName()
       self:F( { TaskUnit = TaskUnitName, Task = Task and Task:GetClassNameAndID() } )
       
