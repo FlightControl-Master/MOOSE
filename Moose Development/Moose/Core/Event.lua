@@ -174,6 +174,7 @@
 EVENT = {
   ClassName = "EVENT",
   ClassID = 0,
+  MissionEnd = false,
 }
 
 world.event.S_EVENT_NEW_CARGO = world.event.S_EVENT_MAX + 1000
@@ -748,8 +749,13 @@ function EVENT:onEvent( Event )
   if self and 
      self.Events and 
      self.Events[Event.id] and
+     self.MissionEnd == false and
      ( Event.initiator ~= nil or ( Event.initiator == nil and Event.id ~= EVENTS.PlayerLeaveUnit ) ) then
 
+    if Event.id and Event.id == EVENTS.MissionEnd then
+      self.MissionEnd = true
+    end
+    
     if Event.initiator then    
       
       Event.IniObjectCategory = Event.initiator:getCategory()

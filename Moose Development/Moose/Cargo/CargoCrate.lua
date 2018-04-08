@@ -50,7 +50,7 @@ do -- CARGO_CRATE
     self:F( { Type, Name, NearRadius } )
   
     self.CargoObject = CargoStatic
-  
+ 
     self:T( self.ClassName )
   
     -- Cargo objects are added to the _DATABASE and SET_CARGO objects.

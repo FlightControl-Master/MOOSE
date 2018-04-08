@@ -258,7 +258,6 @@ do -- CARGO
     self:AddTransition( "*", "Destroyed", "Destroyed" )
     self:AddTransition( "*", "Respawn", "UnLoaded" )
   
-  
     self.Type = Type
     self.Name = Name
     self.Weight = Weight or 0
@@ -268,6 +267,9 @@ do -- CARGO
     self.Slingloadable = false
     self.Moveable = false
     self.Containable = false
+    self.LoadAction = ""
+    
+    self.CargoLimit = 0
     
     self.LoadRadius = LoadRadius or 500
     self.NearRadius = NearRadius or 25
@@ -293,6 +295,12 @@ do -- CARGO
     return CargoFound
   end  
   
+  --- Check if the cargo can be Slingloaded.
+  -- @param #CARGO self
+  function CARGO:CanSlingload()
+    return false
+  end
+  
   --- Check if the cargo can be Boarded.
   -- @param #CARGO self
   function CARGO:CanBoard()
@@ -317,9 +325,6 @@ do -- CARGO
     return true
   end
 
-
-
-  
   
   --- Destroy the cargo.
   -- @param #CARGO self
@@ -354,13 +359,26 @@ do -- CARGO
   function CARGO:GetCount()
     return 1
   end
-  
+
   --- Get the type of the Cargo.
   -- @param #CARGO self
   -- @return #string The type of the Cargo.
   function CARGO:GetType()
     return self.Type
   end
+
+    
+  --- Get the coalition of the Cargo.
+  -- @param #CARGO self
+  -- @return Coalition
+  function CARGO:GetCoalition()
+    if self:IsLoaded() then
+      return self.CargoCarrier:GetCoalition()
+    else
+      return self.CargoObject:GetCoalition()
+    end 
+  end
+
   
   --- Get the current coordinates of the Cargo.
   -- @param #CARGO self
@@ -792,6 +810,32 @@ do -- CARGO_REPRESENTABLE
     return self  
   end
   
+  --- Send a message to a @{Group} through a communication channel near the cargo.
+  -- @param #CARGO_REPRESENTABLE self
+  -- @param #string Message
+  -- @param Wrapper.Group#GROUP TaskGroup
+  -- @param #sring Name (optional) The name of the Group used as a prefix for the message to the Group. If not provided, there will be nothing shown.
+  function CARGO_REPRESENTABLE:MessageToGroup( Message, TaskGroup, Name )
+
+    local CoordinateZone = ZONE_RADIUS:New( "Zone" , self:GetCoordinate():GetVec2(), 500 )
+    CoordinateZone:Scan( { Object.Category.UNIT } )
+    for _, DCSUnit in pairs( CoordinateZone:GetScannedUnits() ) do
+      local NearUnit = UNIT:Find( DCSUnit )
+      self:F({NearUnit=NearUnit})
+      local NearUnitCoalition = NearUnit:GetCoalition()
+      local CargoCoalition = self:GetCoalition()
+      if NearUnitCoalition == CargoCoalition then
+        local Attributes = NearUnit:GetDesc()
+        self:F({Desc=Attributes})
+        if NearUnit:HasAttribute( "Trucks" ) then
+          MESSAGE:New( Message, 20, NearUnit:GetCallsign() .. " reporting - Cargo " .. self:GetName() ):ToGroup( TaskGroup )
+          break
+        end
+      end
+    end
+  
+  end
+
   
 end -- CARGO_REPRESENTABLE
 
@@ -825,7 +869,7 @@ do -- CARGO_REPORTABLE
   -- @param #sring Name (optional) The name of the Group used as a prefix for the message to the Group. If not provided, there will be nothing shown.
   function CARGO_REPORTABLE:MessageToGroup( Message, TaskGroup, Name )
   
-    MESSAGE:New( Message, 20, "Cargo " .. self:GetName() ):ToGroup( TaskGroup )
+    MESSAGE:New( Message, 20, "Cargo " .. self:GetName() .. " reporting" ):ToGroup( TaskGroup )
   
   end
 

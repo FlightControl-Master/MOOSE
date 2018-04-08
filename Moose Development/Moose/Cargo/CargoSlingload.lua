@@ -66,6 +66,12 @@ do -- CARGO_SLINGLOAD
   end
   
   
+  --- Check if the cargo can be Slingloaded.
+  -- @param #CARGO self
+  function CARGO:CanSlingload()
+    return true
+  end
+  
   --- Check if the cargo can be Boarded.
   -- @param #CARGO_SLINGLOAD self
   function CARGO_SLINGLOAD:CanBoard()

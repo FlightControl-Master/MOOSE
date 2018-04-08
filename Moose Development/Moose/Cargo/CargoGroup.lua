@@ -95,6 +95,7 @@ function CARGO_GROUP:New( CargoGroup, Type, Name, LoadRadius )
 
 
   self:SetWeight( WeightGroup )
+  self.CargoLimit = 10
   
   self:T( { "Weight Cargo", WeightGroup } )
 
