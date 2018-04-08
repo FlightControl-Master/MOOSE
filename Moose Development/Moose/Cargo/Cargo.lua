@@ -561,7 +561,7 @@ do -- CARGO
   -- @param Core.Point#Coordinate Coordinate
   -- @return #boolean true if the CargoGroup is within the loading radius.
   function CARGO:IsInLoadRadius( Coordinate )
-    self:F( { Coordinate } )
+    self:F( { Coordinate, LoadRadius = self.LoadRadius } )
   
     local Distance = 0
     if self:IsUnLoaded() then
