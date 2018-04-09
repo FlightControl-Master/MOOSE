@@ -23,7 +23,7 @@
 -- 
 -- ===
 --   
--- @module Task_Cargo
+-- @module Tasking.Task_Cargo
 
 do -- TASK_CARGO
 
@@ -167,60 +167,50 @@ do -- TASK_CARGO
     
     self.DeployZones = {} -- setmetatable( {}, { __mode = "v" } ) -- weak table on value
 
-    self:AddTransition( "*", "Deployed", "*" )
+    self:AddTransition( "*", "CargoDeployed", "*" )
     
-    --- Deployed Handler OnBefore for Type
-    -- @function [parent=#Type] OnBeforeDeployed
-    -- @param #Type self
+    --- CargoDeployed Handler OnBefore for TASK_CARGO
+    -- @function [parent=#TASK_CARGO] OnBeforeCargoDeployed
+    -- @param #TASK_CARGO self
     -- @param #string From
     -- @param #string Event
     -- @param #string To
+    -- @param Wrapper.Unit#UNIT TaskUnit The Unit (Client) that Deployed the cargo. You can use this to retrieve the PlayerName etc.
+    -- @param Core.Cargo#CARGO Cargo The Cargo that got PickedUp by the TaskUnit. You can use this to check Cargo Status.
+    -- @param Core.Zone#ZONE DeployZone The zone where the Cargo got Deployed or UnBoarded.
     -- @return #boolean
     
-    --- Deployed Handler OnAfter for Type
-    -- @function [parent=#Type] OnAfterDeployed
-    -- @param #Type self
+    --- CargoDeployed Handler OnAfter for TASK_CARGO
+    -- @function [parent=#TASK_CARGO] OnAfterCargoDeployed
+    -- @param #TASK_CARGO self
     -- @param #string From
     -- @param #string Event
     -- @param #string To
-    
-    --- Deployed Trigger for Type
-    -- @function [parent=#Type] Deployed
-    -- @param #Type self
-    
-    --- Deployed Asynchronous Trigger for Type
-    -- @function [parent=#Type] __Deployed
-    -- @param #Type self
-    -- @param #number Delay
-    
-    
-    self:AddTransition( "*", "PickedUp", "*" )
+    -- @param Wrapper.Unit#UNIT TaskUnit The Unit (Client) that Deployed the cargo. You can use this to retrieve the PlayerName etc.
+    -- @param Core.Cargo#CARGO Cargo The Cargo that got PickedUp by the TaskUnit. You can use this to check Cargo Status.
+    -- @param Core.Zone#ZONE DeployZone The zone where the Cargo got Deployed or UnBoarded.
 
-    --- PickedUp Handler OnBefore for Type
-    -- @function [parent=#Type] OnBeforePickedUp
-    -- @param #Type self
+    
+    self:AddTransition( "*", "CargoPickedUp", "*" )
+
+    --- CargoPickedUp Handler OnBefore for TASK_CARGO
+    -- @function [parent=#TASK_CARGO] OnBeforeCargoPickedUp
+    -- @param #TASK_CARGO self
     -- @param #string From
     -- @param #string Event
     -- @param #string To
+    -- @param Wrapper.Unit#UNIT TaskUnit The Unit (Client) that PickedUp the cargo. You can use this to retrieve the PlayerName etc.
+    -- @param Core.Cargo#CARGO Cargo The Cargo that got PickedUp by the TaskUnit. You can use this to check Cargo Status.
     -- @return #boolean
     
-    --- PickedUp Handler OnAfter for Type
-    -- @function [parent=#Type] OnAfterPickedUp
-    -- @param #Type self
+    --- CargoPickedUp Handler OnAfter for TASK_CARGO
+    -- @function [parent=#TASK_CARGO] OnAfterCargoPickedUp
+    -- @param #TASK_CARGO self
     -- @param #string From
     -- @param #string Event
     -- @param #string To
-    
-    --- PickedUp Trigger for Type
-    -- @function [parent=#Type] PickedUp
-    -- @param #Type self
-    
-    --- PickedUp Asynchronous Trigger for Type
-    -- @function [parent=#Type] __PickedUp
-    -- @param #Type self
-    -- @param #number Delay
-    
-    
+    -- @param Wrapper.Unit#UNIT TaskUnit The Unit (Client) that PickedUp the cargo. You can use this to retrieve the PlayerName etc.
+    -- @param Core.Cargo#CARGO Cargo The Cargo that got PickedUp by the TaskUnit. You can use this to check Cargo Status.
 
     
     local Fsm = self:GetUnitProcess()
@@ -302,6 +292,7 @@ do -- TASK_CARGO
 --            end
 
             self:F( { CargoUnloaded = Cargo:IsUnLoaded(), CargoLoaded = Cargo:IsLoaded(), CargoItemCount = CargoItemCount } )
+            Task:E( { TaskDeployZones = Task.DeployZones, TaskName = Task:GetName() } )
         
             if Cargo:IsUnLoaded() then
               if CargoItemCount < 1 then 
@@ -354,18 +345,18 @@ do -- TASK_CARGO
                   end
                 end
               end
+              
               -- Cargo in deployzones are flagged as deployed.
               for DeployZoneName, DeployZone in pairs( Task.DeployZones ) do
+                Task:E( { DeployZone = DeployZone } )
                 if Cargo:IsInZone( DeployZone ) then
-                  if not Cargo:IsDeployed() then
+                  Task:E( { CargoIsDeployed = Task.CargoDeployed and "true" or "false" } )
+                  if Cargo:IsDeployed() == false then
                     Cargo:SetDeployed( true )
-                    -- TODO:I need to find a more decent solution for this.
-                    Task:E( { CargoDeployed = Task.CargoDeployed and "true" or "false" } )
+                    -- Now we call a callback method to handle the CargoDeployed event.
                     Task:E( { CargoIsAlive = Cargo:IsAlive() and "true" or "false" } )
                     if Cargo:IsAlive() then
-                      if Task.CargoDeployed then
-                        Task:CargoDeployed( TaskUnit, Cargo, DeployZone )
-                      end
+                      Task:CargoDeployed( TaskUnit, Cargo, DeployZone )
                     end
                   end
                 end
@@ -538,17 +529,28 @@ do -- TASK_CARGO
     function Fsm:onafterLand( TaskUnit, Task, From, Event, To, Action )
       self:F( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
       
-      if self.Cargo:IsAlive() then
-        if self.Cargo:IsInReportRadius( TaskUnit:GetPointVec2() ) then
-          if TaskUnit:InAir() then
-            self:__Land( -10, Action )
+      if Action == "Pickup" then
+        if self.Cargo:IsAlive() then
+          if self.Cargo:IsInReportRadius( TaskUnit:GetPointVec2() ) then
+            if TaskUnit:InAir() then
+              self:__Land( -10, Action )
+            else
+              Task:GetMission():GetCommandCenter():MessageToGroup( "Landed at pickup location...", TaskUnit:GetGroup() )
+              self:__Landed( -0.1, Action )
+            end
           else
-            Task:GetMission():GetCommandCenter():MessageToGroup( "Landed ...", TaskUnit:GetGroup() )
-            self:__Landed( -0.1, Action )
-          end
-        else
-          if Action == "Pickup" then
             self:__RouteToPickup( -0.1, self.Cargo )
+          end
+        end
+      else
+        if TaskUnit:IsAlive() then
+          if TaskUnit:IsInZone( self.DeployZone ) then
+            if TaskUnit:InAir() then
+              self:__Land( -10, Action )
+            else
+              Task:GetMission():GetCommandCenter():MessageToGroup( "Landed at deploy zone " .. self.DeployZone:GetName(), TaskUnit:GetGroup() )
+              self:__Landed( -0.1, Action )
+            end
           else
             self:__RouteToDeploy( -0.1, self.Cargo )
           end
@@ -562,16 +564,26 @@ do -- TASK_CARGO
     function Fsm:onafterLanded( TaskUnit, Task, From, Event, To, Action )
       self:F( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
       
-      if self.Cargo:IsAlive() then
-        if self.Cargo:IsInReportRadius( TaskUnit:GetPointVec2() ) then
-          if TaskUnit:InAir() then
-            self:__Land( -0.1, Action )
+      if Action == "Pickup" then
+        if self.Cargo:IsAlive() then
+          if self.Cargo:IsInReportRadius( TaskUnit:GetPointVec2() ) then
+            if TaskUnit:InAir() then
+              self:__Land( -0.1, Action )
+            else
+              self:__SelectAction( -0.1 )
+            end
           else
-            self:__SelectAction( -0.1 )
-          end
-        else
-          if Action == "Pickup" then
             self:__RouteToPickup( -0.1, self.Cargo )
+          end
+        end
+      else
+        if TaskUnit:IsAlive() then
+          if TaskUnit:IsInZone( self.DeployZone ) then
+            if TaskUnit:InAir() then
+              self:__Land( -10, Action )
+            else
+              self:__SelectAction( -0.1 )
+            end
           else
             self:__RouteToDeploy( -0.1, self.Cargo )
           end
@@ -624,8 +636,6 @@ do -- TASK_CARGO
     -- @param Tasking.Task_Cargo#TASK_CARGO Task
     function Fsm:onafterBoarded( TaskUnit, Task, From, Event, To, Cargo  )
       
-      self:F( { Cargo = Cargo } )
-
       local TaskUnitName = TaskUnit:GetName()
       self:F( { TaskUnit = TaskUnitName, Task = Task and Task:GetClassNameAndID() } )
 
@@ -639,13 +649,7 @@ do -- TASK_CARGO
     --- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
     -- @param Tasking.Task_Cargo#TASK_CARGO Task
-    function Fsm:onenterLoaded( TaskUnit, Task, From, Event, To, Cargo )
-      
-      self:F( { Cargo = Cargo } )
-      
-      self:F( { Cargo = Cargo } )
-      
-      self:F( { Cargo = Cargo } )
+    function Fsm:onafterLoad( TaskUnit, Task, From, Event, To, Cargo )
       
       local TaskUnitName = TaskUnit:GetName()
       self:F( { TaskUnit = TaskUnitName, Task = Task and Task:GetClassNameAndID() } )
@@ -657,7 +661,9 @@ do -- TASK_CARGO
       Cargo:MessageToGroup( "Loaded ...", TaskUnit:GetGroup() )
       TaskUnit:AddCargo( Cargo )
 
-      self:__SelectAction( 1 )
+      Task:CargoPickedUp( TaskUnit, Cargo )
+
+      self:SelectAction( -1 )
       
     end
     
@@ -966,184 +972,4 @@ do -- TASK_CARGO
   
 end 
 
-
-do -- TASK_CARGO_TRANSPORT
-
-  --- The TASK_CARGO_TRANSPORT class
-  -- @type TASK_CARGO_TRANSPORT
-  -- @extends #TASK_CARGO
-  TASK_CARGO_TRANSPORT = {
-    ClassName = "TASK_CARGO_TRANSPORT",
-  }
-  
-  --- Instantiates a new TASK_CARGO_TRANSPORT.
-  -- @param #TASK_CARGO_TRANSPORT self
-  -- @param Tasking.Mission#MISSION Mission
-  -- @param Set#SET_GROUP SetGroup The set of groups for which the Task can be assigned.
-  -- @param #string TaskName The name of the Task.
-  -- @param Core.Set#SET_CARGO SetCargo The scope of the cargo to be transported.
-  -- @param #string TaskBriefing The Cargo Task briefing.
-  -- @return #TASK_CARGO_TRANSPORT self
-  function TASK_CARGO_TRANSPORT:New( Mission, SetGroup, TaskName, SetCargo, TaskBriefing )
-    local self = BASE:Inherit( self, TASK_CARGO:New( Mission, SetGroup, TaskName, SetCargo, "Transport", TaskBriefing ) ) -- #TASK_CARGO_TRANSPORT
-    self:F()
-    
-    Mission:AddTask( self )
-    
-    
-    -- Events
-    
-    self:AddTransition( "*", "CargoPickedUp", "*" )
-    self:AddTransition( "*", "CargoDeployed", "*" )
-    
-    self:F( { CargoDeployed = self.CargoDeployed ~= nil and "true" or "false" } )
-    
-      --- OnBefore Transition Handler for Event CargoPickedUp.
-      -- @function [parent=#TASK_CARGO_TRANSPORT] OnBeforeCargoPickedUp
-      -- @param #TASK_CARGO_TRANSPORT self
-      -- @param #string From The From State string.
-      -- @param #string Event The Event string.
-      -- @param #string To The To State string.
-      -- @param Wrapper.Unit#UNIT TaskUnit The Unit (Client) that PickedUp the cargo. You can use this to retrieve the PlayerName etc.
-      -- @param Core.Cargo#CARGO Cargo The Cargo that got PickedUp by the TaskUnit. You can use this to check Cargo Status.
-      -- @return #boolean Return false to cancel Transition.
-      
-      --- OnAfter Transition Handler for Event CargoPickedUp.
-      -- @function [parent=#TASK_CARGO_TRANSPORT] OnAfterCargoPickedUp
-      -- @param #TASK_CARGO_TRANSPORT self
-      -- @param #string From The From State string.
-      -- @param #string Event The Event string.
-      -- @param #string To The To State string.
-      -- @param Wrapper.Unit#UNIT TaskUnit The Unit (Client) that PickedUp the cargo. You can use this to retrieve the PlayerName etc.
-      -- @param Core.Cargo#CARGO Cargo The Cargo that got PickedUp by the TaskUnit. You can use this to check Cargo Status.
-      	
-      --- Synchronous Event Trigger for Event CargoPickedUp.
-      -- @function [parent=#TASK_CARGO_TRANSPORT] CargoPickedUp
-      -- @param #TASK_CARGO_TRANSPORT self
-      -- @param Wrapper.Unit#UNIT TaskUnit The Unit (Client) that PickedUp the cargo. You can use this to retrieve the PlayerName etc.
-      -- @param Core.Cargo#CARGO Cargo The Cargo that got PickedUp by the TaskUnit. You can use this to check Cargo Status.
-      
-      --- Asynchronous Event Trigger for Event CargoPickedUp.
-      -- @function [parent=#TASK_CARGO_TRANSPORT] __CargoPickedUp
-      -- @param #TASK_CARGO_TRANSPORT self
-      -- @param #number Delay The delay in seconds.
-      -- @param Wrapper.Unit#UNIT TaskUnit The Unit (Client) that PickedUp the cargo. You can use this to retrieve the PlayerName etc.
-      -- @param Core.Cargo#CARGO Cargo The Cargo that got PickedUp by the TaskUnit. You can use this to check Cargo Status.
-    
-      --- OnBefore Transition Handler for Event CargoDeployed.
-      -- @function [parent=#TASK_CARGO_TRANSPORT] OnBeforeCargoDeployed
-      -- @param #TASK_CARGO_TRANSPORT self
-      -- @param #string From The From State string.
-      -- @param #string Event The Event string.
-      -- @param #string To The To State string.
-      -- @param Wrapper.Unit#UNIT TaskUnit The Unit (Client) that Deployed the cargo. You can use this to retrieve the PlayerName etc.
-      -- @param Core.Cargo#CARGO Cargo The Cargo that got PickedUp by the TaskUnit. You can use this to check Cargo Status.
-      -- @param Core.Zone#ZONE DeployZone The zone where the Cargo got Deployed or UnBoarded.
-      -- @return #boolean Return false to cancel Transition.
-      
-      --- OnAfter Transition Handler for Event CargoDeployed.
-      -- @function [parent=#TASK_CARGO_TRANSPORT] OnAfterCargoDeployed
-      -- @param #TASK_CARGO_TRANSPORT self
-      -- @param #string From The From State string.
-      -- @param #string Event The Event string.
-      -- @param #string To The To State string.
-      -- @param Wrapper.Unit#UNIT TaskUnit The Unit (Client) that Deployed the cargo. You can use this to retrieve the PlayerName etc.
-      -- @param Core.Cargo#CARGO Cargo The Cargo that got PickedUp by the TaskUnit. You can use this to check Cargo Status.
-      -- @param Core.Zone#ZONE DeployZone The zone where the Cargo got Deployed or UnBoarded.
-      	
-      --- Synchronous Event Trigger for Event CargoDeployed.
-      -- @function [parent=#TASK_CARGO_TRANSPORT] CargoDeployed
-      -- @param #TASK_CARGO_TRANSPORT self
-      -- @param Wrapper.Unit#UNIT TaskUnit The Unit (Client) that Deployed the cargo. You can use this to retrieve the PlayerName etc.
-      -- @param Core.Cargo#CARGO Cargo The Cargo that got PickedUp by the TaskUnit. You can use this to check Cargo Status.
-      -- @param Core.Zone#ZONE DeployZone The zone where the Cargo got Deployed or UnBoarded.
-      
-      --- Asynchronous Event Trigger for Event CargoDeployed.
-      -- @function [parent=#TASK_CARGO_TRANSPORT] __CargoDeployed
-      -- @param #TASK_CARGO_TRANSPORT self
-      -- @param #number Delay The delay in seconds.
-      -- @param Wrapper.Unit#UNIT TaskUnit The Unit (Client) that Deployed the cargo. You can use this to retrieve the PlayerName etc.
-      -- @param Core.Cargo#CARGO Cargo The Cargo that got PickedUp by the TaskUnit. You can use this to check Cargo Status.
-      -- @param Core.Zone#ZONE DeployZone The zone where the Cargo got Deployed or UnBoarded.
-
-    local Fsm = self:GetUnitProcess()
-
-    local CargoReport = REPORT:New( "Transport Cargo. The following cargo needs to be transported including initial positions:")
-    
-    SetCargo:ForEachCargo(
-      --- @param Core.Cargo#CARGO Cargo
-      function( Cargo )
-        local CargoType = Cargo:GetType()
-        local CargoName = Cargo:GetName()
-        local CargoCoordinate = Cargo:GetCoordinate()
-        CargoReport:Add( string.format( '- "%s" (%s) at %s', CargoName, CargoType, CargoCoordinate:ToStringMGRS() ) )
-      end
-    )
-    
-    self:SetBriefing( 
-      TaskBriefing or 
-      CargoReport:Text()
-    )
-
-    
-    return self
-  end 
-
-  function TASK_CARGO_TRANSPORT:ReportOrder( ReportGroup ) 
-    
-    return 0
-  end
-
-  
-  --- 
-  -- @param #TASK_CARGO_TRANSPORT self
-  -- @return #boolean
-  function TASK_CARGO_TRANSPORT:IsAllCargoTransported()
-  
-    local CargoSet = self:GetCargoSet()
-    local Set = CargoSet:GetSet()
-    
-    local DeployZones = self:GetDeployZones()
-    
-    local CargoDeployed = true
-    
-    -- Loop the CargoSet (so evaluate each Cargo in the SET_CARGO ).
-    for CargoID, CargoData in pairs( Set ) do
-      local Cargo = CargoData -- Core.Cargo#CARGO
-      
-      self:F( { Cargo = Cargo:GetName(), CargoDeployed = Cargo:IsDeployed() } )
-
-      if Cargo:IsDeployed() then
-      
---        -- Loop the DeployZones set for the TASK_CARGO_TRANSPORT.
---        for DeployZoneID, DeployZone in pairs( DeployZones ) do
---        
---          -- If all cargo is in one of the deploy zones, then all is good.
---          self:T( { Cargo.CargoObject } )
---          if Cargo:IsInZone( DeployZone ) == false then
---            CargoDeployed = false
---          end
---        end
-      else
-        CargoDeployed = false
-      end
-    end
-
-    self:F( { CargoDeployed = CargoDeployed } )
-    
-    return CargoDeployed
-  end
-  
-  --- @param #TASK_CARGO_TRANSPORT self
-  function TASK_CARGO_TRANSPORT:onafterGoal( TaskUnit, From, Event, To )
-    local CargoSet = self.CargoSet
-    
-    if self:IsAllCargoTransported() then
-      self:Success()
-    end
-    
-    self:__Goal( -10 )
-  end
-
-end
 

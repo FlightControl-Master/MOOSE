@@ -8,7 +8,7 @@
 -- 
 -- ===
 -- 
--- @module Controllable
+-- @module Wrapper.Controllable
 
 
 
