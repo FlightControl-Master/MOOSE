@@ -3,6 +3,7 @@
 -- ![Banner Image](..\Presentations\TASK_CARGO\Dia1.JPG)
 -- 
 -- ===
+-- @module
 
 
 do -- TASK_CARGO_TRANSPORT
@@ -28,82 +29,6 @@ do -- TASK_CARGO_TRANSPORT
     
     Mission:AddTask( self )
     
-    
-    -- Events
-    
-    self:AddTransition( "*", "CargoPickedUp", "*" )
-    self:AddTransition( "*", "CargoDeployed", "*" )
-    
-    self:F( { CargoDeployed = self.CargoDeployed ~= nil and "true" or "false" } )
-    
-      --- OnBefore Transition Handler for Event CargoPickedUp.
-      -- @function [parent=#TASK_CARGO_TRANSPORT] OnBeforeCargoPickedUp
-      -- @param #TASK_CARGO_TRANSPORT self
-      -- @param #string From The From State string.
-      -- @param #string Event The Event string.
-      -- @param #string To The To State string.
-      -- @param Wrapper.Unit#UNIT TaskUnit The Unit (Client) that PickedUp the cargo. You can use this to retrieve the PlayerName etc.
-      -- @param Core.Cargo#CARGO Cargo The Cargo that got PickedUp by the TaskUnit. You can use this to check Cargo Status.
-      -- @return #boolean Return false to cancel Transition.
-      
-      --- OnAfter Transition Handler for Event CargoPickedUp.
-      -- @function [parent=#TASK_CARGO_TRANSPORT] OnAfterCargoPickedUp
-      -- @param #TASK_CARGO_TRANSPORT self
-      -- @param #string From The From State string.
-      -- @param #string Event The Event string.
-      -- @param #string To The To State string.
-      -- @param Wrapper.Unit#UNIT TaskUnit The Unit (Client) that PickedUp the cargo. You can use this to retrieve the PlayerName etc.
-      -- @param Core.Cargo#CARGO Cargo The Cargo that got PickedUp by the TaskUnit. You can use this to check Cargo Status.
-        
-      --- Synchronous Event Trigger for Event CargoPickedUp.
-      -- @function [parent=#TASK_CARGO_TRANSPORT] CargoPickedUp
-      -- @param #TASK_CARGO_TRANSPORT self
-      -- @param Wrapper.Unit#UNIT TaskUnit The Unit (Client) that PickedUp the cargo. You can use this to retrieve the PlayerName etc.
-      -- @param Core.Cargo#CARGO Cargo The Cargo that got PickedUp by the TaskUnit. You can use this to check Cargo Status.
-      
-      --- Asynchronous Event Trigger for Event CargoPickedUp.
-      -- @function [parent=#TASK_CARGO_TRANSPORT] __CargoPickedUp
-      -- @param #TASK_CARGO_TRANSPORT self
-      -- @param #number Delay The delay in seconds.
-      -- @param Wrapper.Unit#UNIT TaskUnit The Unit (Client) that PickedUp the cargo. You can use this to retrieve the PlayerName etc.
-      -- @param Core.Cargo#CARGO Cargo The Cargo that got PickedUp by the TaskUnit. You can use this to check Cargo Status.
-    
-      --- OnBefore Transition Handler for Event CargoDeployed.
-      -- @function [parent=#TASK_CARGO_TRANSPORT] OnBeforeCargoDeployed
-      -- @param #TASK_CARGO_TRANSPORT self
-      -- @param #string From The From State string.
-      -- @param #string Event The Event string.
-      -- @param #string To The To State string.
-      -- @param Wrapper.Unit#UNIT TaskUnit The Unit (Client) that Deployed the cargo. You can use this to retrieve the PlayerName etc.
-      -- @param Core.Cargo#CARGO Cargo The Cargo that got PickedUp by the TaskUnit. You can use this to check Cargo Status.
-      -- @param Core.Zone#ZONE DeployZone The zone where the Cargo got Deployed or UnBoarded.
-      -- @return #boolean Return false to cancel Transition.
-      
-      --- OnAfter Transition Handler for Event CargoDeployed.
-      -- @function [parent=#TASK_CARGO_TRANSPORT] OnAfterCargoDeployed
-      -- @param #TASK_CARGO_TRANSPORT self
-      -- @param #string From The From State string.
-      -- @param #string Event The Event string.
-      -- @param #string To The To State string.
-      -- @param Wrapper.Unit#UNIT TaskUnit The Unit (Client) that Deployed the cargo. You can use this to retrieve the PlayerName etc.
-      -- @param Core.Cargo#CARGO Cargo The Cargo that got PickedUp by the TaskUnit. You can use this to check Cargo Status.
-      -- @param Core.Zone#ZONE DeployZone The zone where the Cargo got Deployed or UnBoarded.
-        
-      --- Synchronous Event Trigger for Event CargoDeployed.
-      -- @function [parent=#TASK_CARGO_TRANSPORT] CargoDeployed
-      -- @param #TASK_CARGO_TRANSPORT self
-      -- @param Wrapper.Unit#UNIT TaskUnit The Unit (Client) that Deployed the cargo. You can use this to retrieve the PlayerName etc.
-      -- @param Core.Cargo#CARGO Cargo The Cargo that got PickedUp by the TaskUnit. You can use this to check Cargo Status.
-      -- @param Core.Zone#ZONE DeployZone The zone where the Cargo got Deployed or UnBoarded.
-      
-      --- Asynchronous Event Trigger for Event CargoDeployed.
-      -- @function [parent=#TASK_CARGO_TRANSPORT] __CargoDeployed
-      -- @param #TASK_CARGO_TRANSPORT self
-      -- @param #number Delay The delay in seconds.
-      -- @param Wrapper.Unit#UNIT TaskUnit The Unit (Client) that Deployed the cargo. You can use this to retrieve the PlayerName etc.
-      -- @param Core.Cargo#CARGO Cargo The Cargo that got PickedUp by the TaskUnit. You can use this to check Cargo Status.
-      -- @param Core.Zone#ZONE DeployZone The zone where the Cargo got Deployed or UnBoarded.
-
     local Fsm = self:GetUnitProcess()
 
     local CargoReport = REPORT:New( "Transport Cargo. The following cargo needs to be transported including initial positions:")

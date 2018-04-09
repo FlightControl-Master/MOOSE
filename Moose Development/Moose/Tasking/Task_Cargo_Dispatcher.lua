@@ -449,6 +449,17 @@ do -- TASK_CARGO_DISPATCHER
     return self
   end
 
+
+  --- Add a Transport task to transport cargo from fixed locations to a deployment zone.
+  -- @param #TASK_CARGO_DISPATCHER self
+  -- @param #string TaskName (optional) The name of the transport task. 
+  -- @return Tasking.Task_Cargo_Transport#TASK_CARGO_TRANSPORT
+  function TASK_CARGO_DISPATCHER:GetTransportTask( TaskName )
+
+    self:ManageTasks()
+    return self.Transport[TaskName] and self.Transport[TaskName].Task
+  end
+
   
   --- Define one deploy zone for the Transport tasks.
   -- @param #TASK_CARGO_DISPATCHER self

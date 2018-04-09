@@ -23,7 +23,7 @@
 -- 
 -- ===
 -- 
--- @module Group
+-- @module Wrapper.Group
 
 
 --- @type GROUP
@@ -1142,6 +1142,8 @@ function GROUP:Respawn( Template, Reset )
   _DATABASE:Spawn( Template )
   
   self:ResetEvents()
+  
+  return self
   
 end
 
