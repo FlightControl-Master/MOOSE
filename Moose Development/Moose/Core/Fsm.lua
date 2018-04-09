@@ -724,6 +724,10 @@ do -- FSM
     return self.current
   end
   
+  function FSM:GetCurrentState()
+    return self.current
+  end
+  
   
   function FSM:Is( State )
     return self.current == State

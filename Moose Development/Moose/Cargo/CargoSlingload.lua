@@ -66,6 +66,12 @@ do -- CARGO_SLINGLOAD
   end
   
   
+  --- Check if the cargo can be Slingloaded.
+  -- @param #CARGO self
+  function CARGO:CanSlingload()
+    return true
+  end
+  
   --- Check if the cargo can be Boarded.
   -- @param #CARGO_SLINGLOAD self
   function CARGO_SLINGLOAD:CanBoard()
@@ -87,6 +93,26 @@ do -- CARGO_SLINGLOAD
   --- Check if the cargo can be Unloaded.
   -- @param #CARGO_SLINGLOAD self
   function CARGO_SLINGLOAD:CanUnload()
+    return false
+  end
+
+
+  --- Check if Cargo Crate is in the radius for the Cargo to be reported.
+  -- @param #CARGO_SLINGLOAD self
+  -- @param Core.Point#Coordinate Coordinate
+  -- @return #boolean true if the Cargo Crate is within the report radius.
+  function CARGO_SLINGLOAD:IsInReportRadius( Coordinate )
+    self:F( { Coordinate, LoadRadius = self.LoadRadius } )
+  
+    local Distance = 0
+    if self:IsUnLoaded() then
+      Distance = Coordinate:DistanceFromPointVec2( self.CargoObject:GetPointVec2() )
+      self:T( Distance )
+      if Distance <= self.LoadRadius then
+        return true
+      end
+    end
+    
     return false
   end
 

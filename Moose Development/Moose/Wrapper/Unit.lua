@@ -326,6 +326,9 @@ function UNIT:GetCallsign()
   
   if DCSUnit then
     local UnitCallSign = DCSUnit:getCallsign()
+    if UnitCallSign == "" then
+      UnitCallSign = DCSUnit:getName()
+    end
     return UnitCallSign
   end
   
