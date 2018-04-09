@@ -649,7 +649,7 @@ do -- TASK_CARGO
     --- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
     -- @param Tasking.Task_Cargo#TASK_CARGO Task
-    function Fsm:onenterLoaded( TaskUnit, Task, From, Event, To, Cargo )
+    function Fsm:onafterLoad( TaskUnit, Task, From, Event, To, Cargo )
       
       local TaskUnitName = TaskUnit:GetName()
       self:F( { TaskUnit = TaskUnitName, Task = Task and Task:GetClassNameAndID() } )
@@ -661,9 +661,9 @@ do -- TASK_CARGO
       Cargo:MessageToGroup( "Loaded ...", TaskUnit:GetGroup() )
       TaskUnit:AddCargo( Cargo )
 
-      --Task:CargoPickedUp( TaskUnit, Cargo )
+      Task:CargoPickedUp( TaskUnit, Cargo )
 
-      self:SelectAction( )
+      self:SelectAction( -1 )
       
     end
     
