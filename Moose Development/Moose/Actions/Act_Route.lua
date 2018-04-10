@@ -123,9 +123,7 @@ do -- ACT_ROUTE
   --- Set a Cancel Menu item.
   -- @param #ACT_ROUTE self
   -- @return #ACT_ROUTE
-  function ACT_ROUTE:SetMenuCancel( MenuGroup, MenuText, ParentMenu )
-    
-    local MenuTime = timer.getTime() + 1
+  function ACT_ROUTE:SetMenuCancel( MenuGroup, MenuText, ParentMenu, MenuTime, MenuTag )
     
     self.CancelMenuGroupCommand = MENU_GROUP_COMMAND:New(
       MenuGroup,
@@ -133,10 +131,11 @@ do -- ACT_ROUTE
       ParentMenu,
       self.MenuCancel,
       self
-    ):SetTime( MenuTime )
+    ):SetTime( MenuTime ):SetTag( MenuTag )
 
     ParentMenu:SetTime( MenuTime )
-    ParentMenu:Remove( MenuTime )
+    
+    ParentMenu:Remove( MenuTime, MenuTag )
 
     return self
   end

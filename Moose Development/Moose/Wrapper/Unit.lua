@@ -189,9 +189,9 @@ end
 --  * Then it will respawn the re-modelled group.
 --  
 -- @param #UNIT self
--- @param Dcs.DCSTypes#Vec3 SpawnVec3 The position where to Spawn the new Unit at.
+-- @param Core.Point#COORDINATE Coordinate The position where to Spawn the new Unit at.
 -- @param #number Heading The heading of the unit respawn.
-function UNIT:ReSpawn( SpawnVec3, Heading )
+function UNIT:ReSpawnAt( Coordinate, Heading )
 
   self:T( self:Name() )
   local SpawnGroupTemplate = UTILS.DeepCopy( _DATABASE:GetGroupTemplateFromUnitName( self:Name() ) )
@@ -203,8 +203,8 @@ function UNIT:ReSpawn( SpawnVec3, Heading )
   if SpawnGroup then
   
     local Vec3 = SpawnGroup:GetVec3()
-    SpawnGroupTemplate.x = SpawnVec3.x
-    SpawnGroupTemplate.y = SpawnVec3.z
+    SpawnGroupTemplate.x = Coordinate.x
+    SpawnGroupTemplate.y = Coordinate.z
     
     self:F( #SpawnGroupTemplate.units )
     for UnitID, UnitData in pairs( SpawnGroup:GetUnits() ) do
@@ -227,9 +227,9 @@ function UNIT:ReSpawn( SpawnVec3, Heading )
     SpawnGroupTemplate.units[UnitTemplateID].unitId = nil
     if UnitTemplateData.name == self:Name() then
       self:T("Adjusting")
-      SpawnGroupTemplate.units[UnitTemplateID].alt = SpawnVec3.y
-      SpawnGroupTemplate.units[UnitTemplateID].x = SpawnVec3.x
-      SpawnGroupTemplate.units[UnitTemplateID].y = SpawnVec3.z
+      SpawnGroupTemplate.units[UnitTemplateID].alt = Coordinate.y
+      SpawnGroupTemplate.units[UnitTemplateID].x = Coordinate.x
+      SpawnGroupTemplate.units[UnitTemplateID].y = Coordinate.z
       SpawnGroupTemplate.units[UnitTemplateID].heading = Heading
       self:F( { UnitTemplateID, SpawnGroupTemplate.units[UnitTemplateID], SpawnGroupTemplate.units[UnitTemplateID] } )
     else
@@ -344,18 +344,18 @@ end
 function UNIT:GetPlayerName()
   self:F2( self.UnitName )
 
-  local DCSUnit = self:GetDCSObject()
+  local DCSUnit = self:GetDCSObject() -- Dcs.DCSUnit#Unit
   
   if DCSUnit then
   
     local PlayerName = DCSUnit:getPlayerName()
-    if PlayerName == nil then
-      PlayerName = ""
+    if PlayerName == nil or PlayerName == "" then
+      PlayerName = "Player" .. DCSUnit:getID()
     end
     return PlayerName
   end
 
-    return nil
+  return nil
 
 end
 

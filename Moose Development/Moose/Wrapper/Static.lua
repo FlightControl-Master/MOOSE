@@ -130,12 +130,21 @@ end
 -- @param #UNIT self
 -- @param Core.Point#COORDINATE Coordinate The coordinate where to spawn the new Static.
 -- @param #number Heading The heading of the unit respawn.
-function STATIC:ReSpawn( Coordinate, Heading )
+function STATIC:SpawnAt( Coordinate, Heading )
 
-
-  -- todo: need to fix country
   local SpawnStatic = SPAWNSTATIC:NewFromStatic( self.StaticName )
   
   SpawnStatic:SpawnFromPointVec2( Coordinate, Heading, self.StaticName )
 end
 
+
+--- Respawn the @{Unit} using a (tweaked) template of the parent Group.
+-- @param #UNIT self
+-- @param Core.Point#COORDINATE Coordinate The coordinate where to spawn the new Static.
+-- @param #number Heading The heading of the unit respawn.
+function STATIC:ReSpawn()
+
+  local SpawnStatic = SPAWNSTATIC:NewFromStatic( self.StaticName )
+  
+  SpawnStatic:ReSpawn()
+end

@@ -173,7 +173,7 @@ end
 -- @param Core.Base#BASE Object
 -- @return Core.Base#BASE The added BASE Object.
 function SET_BASE:Add( ObjectName, Object )
-  self:F3( { ObjectName = ObjectName, Object = Object } )
+  self:F( { ObjectName = ObjectName, Object = Object } )
 
   -- Ensure that the existing element is removed from the Set before a new one is inserted to the Set
   if self.Set[ObjectName] then
@@ -4349,7 +4349,7 @@ function SET_CARGO:IsIncludeObject( MCargo ) --R2.1
           MCargoCoalition = true
         end
       end
-      self:T( { "Evaluated Coalition", MCargoCoalition } )
+      self:F( { "Evaluated Coalition", MCargoCoalition } )
       MCargoInclude = MCargoInclude and MCargoCoalition
     end
 
@@ -4361,7 +4361,7 @@ function SET_CARGO:IsIncludeObject( MCargo ) --R2.1
           MCargoType = true
         end
       end
-      self:T( { "Evaluated Type", MCargoType } )
+      self:F( { "Evaluated Type", MCargoType } )
       MCargoInclude = MCargoInclude and MCargoType
     end
     
@@ -4373,7 +4373,7 @@ function SET_CARGO:IsIncludeObject( MCargo ) --R2.1
           MCargoPrefix = true
         end
       end
-      self:T( { "Evaluated Prefix", MCargoPrefix } )
+      self:F( { "Evaluated Prefix", MCargoPrefix } )
       MCargoInclude = MCargoInclude and MCargoPrefix
     end
   end
@@ -4386,6 +4386,8 @@ end
 -- @param #SET_CARGO self
 -- @param Core.Event#EVENTDATA EventData
 function SET_CARGO:OnEventNewCargo( EventData ) --R2.1
+
+  self:F( { "New Cargo", EventData } )
 
   if EventData.Cargo then
     if EventData.Cargo and self:IsIncludeObject( EventData.Cargo ) then

@@ -257,17 +257,17 @@ do -- TASK_CARGO
     --- 
     -- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
-    -- @param Tasking.Task_CARGO#TASK_CARGO Task
+    -- @param #TASK_CARGO Task
     function Fsm:onafterSelectAction( TaskUnit, Task )
       
       local TaskUnitName = TaskUnit:GetName()
       
       self:F( { TaskUnit = TaskUnitName, Task = Task and Task:GetClassNameAndID() } )
 
-      local MenuTime = timer.getTime()
+      local MenuTime = Task:InitTaskControlMenu( TaskUnit )
+      
+      local MenuControl = Task:GetTaskControlMenu( TaskUnit )
             
-      TaskUnit.Menu = MENU_GROUP:New( TaskUnit:GetGroup(), Task:GetName() .. " @ " .. TaskUnit:GetName() )
-
       local CargoItemCount = TaskUnit:CargoItemCount()
 
       --Task:GetMission():GetCommandCenter():MessageToGroup( "Cargo in carrier: " .. CargoItemCount, TaskUnit:GetGroup() )
@@ -284,7 +284,7 @@ do -- TASK_CARGO
 --              MENU_GROUP_COMMAND:New(
 --                TaskUnit:GetGroup(),
 --                "Cancel Route " .. Cargo.Name,
---                TaskUnit.Menu,
+--                MenuControl,
 --                self.MenuRouteToPickupCancel,
 --                self,
 --                Cargo
@@ -294,6 +294,8 @@ do -- TASK_CARGO
             self:F( { CargoUnloaded = Cargo:IsUnLoaded(), CargoLoaded = Cargo:IsLoaded(), CargoItemCount = CargoItemCount } )
             Task:E( { TaskDeployZones = Task.DeployZones, TaskName = Task:GetName() } )
         
+            local TaskGroup = TaskUnit:GetGroup()
+            
             if Cargo:IsUnLoaded() then
               if CargoItemCount < 1 then 
                 if Cargo:IsInReportRadius( TaskUnit:GetPointVec2() ) then
@@ -308,7 +310,8 @@ do -- TASK_CARGO
                       if Cargo:CanBoard() == true then
                         if Cargo:IsInLoadRadius( TaskUnit:GetPointVec2() ) then
                           Cargo:Report( "ready for boarding at " .. Cargo:GetCoordinate():ToString( TaskUnit:GetGroup() ), "board", TaskUnit:GetGroup() )
-                          MENU_GROUP_COMMAND:New( TaskUnit:GetGroup(), "Board cargo " .. Cargo.Name, TaskUnit.Menu, self.MenuBoardCargo, self, Cargo ):SetTime(MenuTime)
+                          local BoardMenu = MENU_GROUP:New( TaskGroup, "Board cargo", MenuControl ):SetTime( MenuTime ):SetTag( "Cargo" )
+                          MENU_GROUP_COMMAND:New( TaskUnit:GetGroup(), Cargo.Name, BoardMenu, self.MenuBoardCargo, self, Cargo ):SetTime(MenuTime):SetTag("Cargo"):SetRemoveParent()
                         else
                           Cargo:Report( "Board at " .. Cargo:GetCoordinate():ToString( TaskUnit:GetGroup() ), "reporting", TaskUnit:GetGroup() )
                         end
@@ -316,7 +319,8 @@ do -- TASK_CARGO
                         if Cargo:CanLoad() == true then
                           if Cargo:IsInLoadRadius( TaskUnit:GetPointVec2() ) then
                             Cargo:Report( "ready for loading at " .. Cargo:GetCoordinate():ToString( TaskUnit:GetGroup() ), "load", TaskUnit:GetGroup() )
-                            MENU_GROUP_COMMAND:New( TaskUnit:GetGroup(), "Load cargo " .. Cargo.Name, TaskUnit.Menu, self.MenuLoadCargo, self, Cargo ):SetTime(MenuTime)
+                            local LoadMenu = MENU_GROUP:New( TaskGroup, "Load cargo", MenuControl ):SetTime( MenuTime ):SetTag( "Cargo" )
+                            MENU_GROUP_COMMAND:New( TaskUnit:GetGroup(), Cargo.Name, LoadMenu, self.MenuLoadCargo, self, Cargo ):SetTime(MenuTime):SetTag("Cargo"):SetRemoveParent()
                           else
                             Cargo:Report( "Load at " .. Cargo:GetCoordinate():ToString( TaskUnit:GetGroup() ), "reporting", TaskUnit:GetGroup() )
                           end
@@ -330,17 +334,14 @@ do -- TASK_CARGO
                           end
                         end
                       end
-                      TaskUnit.Menu:SetTime( MenuTime )
                     else
                       Cargo:ReportResetAll( TaskUnit:GetGroup() )
                     end
                   end
                 else
-                  if self:Is( "RoutingToPickup" ) then
-                  else
-                    self:F("route menu set")
-                    MENU_GROUP_COMMAND:New( TaskUnit:GetGroup(), "Route to Pickup cargo " .. Cargo.Name, TaskUnit.Menu, self.MenuRouteToPickup, self, Cargo ):SetTime(MenuTime)
-                    TaskUnit.Menu:SetTime( MenuTime )
+                  if not Cargo:IsDeployed() == true then
+                    local RouteToPickupMenu = MENU_GROUP:New( TaskGroup, "Route to pickup cargo", MenuControl ):SetTime( MenuTime ):SetTag( "Cargo" )
+                    MENU_GROUP_COMMAND:New( TaskUnit:GetGroup(), Cargo.Name, RouteToPickupMenu, self.MenuRouteToPickup, self, Cargo ):SetTime(MenuTime):SetTag("Cargo"):SetRemoveParent()
                     Cargo:ReportResetAll( TaskUnit:GetGroup() )
                   end
                 end
@@ -367,20 +368,22 @@ do -- TASK_CARGO
             if Cargo:IsLoaded() == true and Cargo:IsLoadedInCarrier( TaskUnit ) == true then
               if not TaskUnit:InAir() then
                 if Cargo:CanUnboard() == true then
-                  MENU_GROUP_COMMAND:New( TaskUnit:GetGroup(), "Unboard cargo " .. Cargo.Name, TaskUnit.Menu, self.MenuUnboardCargo, self, Cargo ):SetTime(MenuTime)
+                  local UnboardMenu = MENU_GROUP:New( TaskGroup, "Unboard cargo", MenuControl ):SetTime( MenuTime ):SetTag( "Cargo" )
+                  MENU_GROUP_COMMAND:New( TaskUnit:GetGroup(), Cargo.Name, UnboardMenu, self.MenuUnboardCargo, self, Cargo ):SetTime(MenuTime):SetTag("Cargo"):SetRemoveParent()
                 else
                   if Cargo:CanUnload() == true then
-                    MENU_GROUP_COMMAND:New( TaskUnit:GetGroup(), "Unload cargo " .. Cargo.Name, TaskUnit.Menu, self.MenuUnloadCargo, self, Cargo ):SetTime(MenuTime)
+                    local UnloadMenu = MENU_GROUP:New( TaskGroup, "Unload cargo", MenuControl ):SetTime( MenuTime ):SetTag( "Cargo" )
+                    MENU_GROUP_COMMAND:New( TaskUnit:GetGroup(), Cargo.Name, UnloadMenu, self.MenuUnloadCargo, self, Cargo ):SetTime(MenuTime):SetTag("Cargo"):SetRemoveParent()
                   end
                 end
-                TaskUnit.Menu:SetTime( MenuTime )
               end
-              -- Deployzones are optional zones that can be selected to request routing information.
-              for DeployZoneName, DeployZone in pairs( Task.DeployZones ) do
-                if not Cargo:IsInZone( DeployZone ) then
-                  MENU_GROUP_COMMAND:New( TaskUnit:GetGroup(), "Route to Deploy cargo at " .. DeployZoneName, TaskUnit.Menu, self.MenuRouteToDeploy, self, DeployZone ):SetTime(MenuTime)
-                  TaskUnit.Menu:SetTime( MenuTime )
-                end
+            end
+
+            -- Deployzones are optional zones that can be selected to request routing information.
+            for DeployZoneName, DeployZone in pairs( Task.DeployZones ) do
+              if not Cargo:IsInZone( DeployZone ) then
+                local RouteToDeployMenu = MENU_GROUP:New( TaskGroup, "Route to deploy cargo", MenuControl ):SetTime( MenuTime ):SetTag( "Cargo" )
+                MENU_GROUP_COMMAND:New( TaskUnit:GetGroup(), "Zone " .. DeployZoneName, RouteToDeployMenu, self.MenuRouteToDeploy, self, DeployZone ):SetTime(MenuTime):SetTag("Cargo"):SetRemoveParent()
               end
             end
           end
@@ -388,8 +391,7 @@ do -- TASK_CARGO
         end
       )
 
-      TaskUnit.Menu:Remove( MenuTime )
-      
+      Task:RefreshTaskControlMenu( TaskUnit, MenuTime, "Cargo" )
       
       self:__SelectAction( -1 )
       
@@ -399,11 +401,13 @@ do -- TASK_CARGO
     --- 
     -- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
-    -- @param Tasking.Task_Cargo#TASK_CARGO Task
+    -- @param #TASK_CARGO Task
     function Fsm:OnLeaveWaitingForCommand( TaskUnit, Task )
       self:F( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
       
-      TaskUnit.Menu:Remove()
+      --local MenuControl = Task:GetTaskControlMenu( TaskUnit )
+      
+      --MenuControl:Remove()
     end
     
     function Fsm:MenuBoardCargo( Cargo )
@@ -820,12 +824,15 @@ do -- TASK_CARGO
   
     self:F({Cargo, TaskUnit})
     local ProcessUnit = self:GetUnitProcess( TaskUnit )
+
+    local MenuTime = self:InitTaskControlMenu( TaskUnit )
+    local MenuControl = self:GetTaskControlMenu( TaskUnit )
   
     local ActRouteCargo = ProcessUnit:GetProcess( "RoutingToPickup", "RouteToPickupPoint" ) -- Actions.Act_Route#ACT_ROUTE_POINT
     ActRouteCargo:Reset()
     ActRouteCargo:SetCoordinate( Cargo:GetCoordinate() )
     ActRouteCargo:SetRange( Cargo:GetLoadRadius() )
-    ActRouteCargo:SetMenuCancel( TaskUnit:GetGroup(), "Cancel Routing to Cargo " .. Cargo:GetName(), TaskUnit.Menu )
+    ActRouteCargo:SetMenuCancel( TaskUnit:GetGroup(), "Cancel Routing to Cargo " .. Cargo:GetName(), MenuControl, MenuTime, "Cargo" )
     ActRouteCargo:Start()
 
     return self
@@ -840,10 +847,13 @@ do -- TASK_CARGO
   
     local ProcessUnit = self:GetUnitProcess( TaskUnit )
 
+    local MenuTime = self:InitTaskControlMenu( TaskUnit )
+    local MenuControl = self:GetTaskControlMenu( TaskUnit )
+  
     local ActRouteDeployZone = ProcessUnit:GetProcess( "RoutingToDeploy", "RouteToDeployZone" ) -- Actions.Act_Route#ACT_ROUTE_ZONE
     ActRouteDeployZone:Reset()
     ActRouteDeployZone:SetZone( DeployZone )
-    ActRouteDeployZone:SetMenuCancel( TaskUnit:GetGroup(), "Cancel Routing to Deploy Zone" .. DeployZone:GetName(), TaskUnit.Menu )
+    ActRouteDeployZone:SetMenuCancel( TaskUnit:GetGroup(), "Cancel Routing to Deploy Zone" .. DeployZone:GetName(), MenuControl, MenuTime, "Cargo" )
     ActRouteDeployZone:Start()
     
     return self
@@ -969,6 +979,8 @@ do -- TASK_CARGO
     
     return 0
   end
+  
+  
   
 end 
 

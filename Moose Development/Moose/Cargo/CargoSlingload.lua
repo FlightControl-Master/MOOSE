@@ -64,6 +64,26 @@ do -- CARGO_SLINGLOAD
   
     return self
   end
+
+
+  --- @param #CARGO_SLINGLOAD self
+  -- @param Core.Event#EVENTDATA EventData 
+  function CARGO_SLINGLOAD:OnEventCargoDead( EventData )
+
+    local Destroyed = false
+  
+    if self:IsDestroyed() or self:IsUnLoaded() then
+      if self.CargoObject:GetName() == EventData.IniUnitName then
+        Destroyed = true
+      end
+    end
+    
+    if Destroyed then
+      self:I( { "Cargo crate destroyed: " .. self.CargoObject:GetName() } )
+      self:Destroyed()
+    end
+  
+  end
   
   
   --- Check if the cargo can be Slingloaded.
@@ -196,10 +216,35 @@ do -- CARGO_SLINGLOAD
   -- @param #CARGO_SLINGLOAD self
   function CARGO_SLINGLOAD:Respawn()
 
-    self:F( { "Respawning" } )
+    self:F( { "Respawning slingload " .. self:GetName() } )
 
-    self:SetDeployed( false )
-    self:SetStartState( "UnLoaded" )
+
+    -- Respawn the group...
+    if self.CargoObject then
+      self.CargoObject:ReSpawn() -- A cargo destroy crates a DEAD event.
+      self:__Reset( -0.1 )
+    end
+
+    
+  end
+
+
+  --- Respawn the CargoGroup.
+  -- @param #CARGO_SLINGLOAD self
+  function CARGO_SLINGLOAD:onafterReset()
+
+    self:F( { "Reset slingload " .. self:GetName() } )
+
+
+    -- Respawn the group...
+    if self.CargoObject then
+      self:SetDeployed( false )
+      self:SetStartState( "UnLoaded" )
+      self.CargoCarrier = nil
+      -- Cargo objects are added to the _DATABASE and SET_CARGO objects.
+      _EVENTDISPATCHER:CreateEventNewCargo( self )
+    end
+
     
   end
   

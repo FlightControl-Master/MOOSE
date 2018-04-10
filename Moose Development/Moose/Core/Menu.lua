@@ -213,6 +213,7 @@ do -- MENU_BASE
     self.Menus = {}
     self.MenuCount = 0
     self.MenuTime = timer.getTime()
+    self.MenuRemoveParent = false
   	
     if self.ParentMenu then
       self.ParentMenu.Menus = self.ParentMenu.Menus or {}
@@ -226,14 +227,30 @@ do -- MENU_BASE
     if self.ParentMenu then
       self.ParentMenu.Menus = self.ParentMenu.Menus or {}
       self.ParentMenu.Menus[MenuText] = Menu
+      self.ParentMenu.MenuCount = self.ParentMenu.MenuCount + 1
     end
   end
 
   function MENU_BASE:ClearParentMenu( MenuText )
     if self.ParentMenu and self.ParentMenu.Menus[MenuText] then
       self.ParentMenu.Menus[MenuText] = nil
+      self.ParentMenu.MenuCount = self.ParentMenu.MenuCount - 1
+      if self.ParentMenu.MenuCount == 0 then
+        --self.ParentMenu:Remove()
+      end
     end
   end
+
+  --- Sets a @{Menu} to remove automatically the parent menu when the menu removed is the last child menu of that parent @{Menu}.
+  -- @param #MENU_BASE self
+  -- @param #boolean RemoveParent If true, the parent menu is automatically removed when this menu is the last child menu of that parent @{Menu}.
+  -- @return #MENU_BASE
+  function MENU_BASE:SetRemoveParent( RemoveParent )
+    self:F( { RemoveParent } )
+    self.MenuRemoveParent = RemoveParent
+    return self
+  end
+
   
   --- Gets a @{Menu} from a parent @{Menu}
   -- @param #MENU_BASE self

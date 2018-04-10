@@ -257,6 +257,7 @@ do -- CARGO
     self:AddTransition( "*", "Damaged", "Damaged" )
     self:AddTransition( "*", "Destroyed", "Destroyed" )
     self:AddTransition( "*", "Respawn", "UnLoaded" )
+    self:AddTransition( "*", "Reset", "UnLoaded" )
   
     self.Type = Type
     self.Name = Name
@@ -747,6 +748,22 @@ do -- CARGO
     self.Reported[CarrierGroup] = nil
   end
   
+  --- Respawn the cargo when destroyed
+  -- @param #CARGO self
+  -- @param #boolean RespawnDestroyed
+  function CARGO:RespawnOnDestroyed( RespawnDestroyed )
+
+    if RespawnDestroyed then
+      self.onenterDestroyed = function( self )
+        self:Respawn()
+      end
+    else
+      self.onenterDestroyed = nil
+    end
+      
+  end
+  
+
   
 
 end -- CARGO

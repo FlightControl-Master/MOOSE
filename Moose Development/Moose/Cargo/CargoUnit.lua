@@ -103,7 +103,7 @@ do -- CARGO_UNIT
           
           -- Respawn the group...
           if self.CargoObject then
-            self.CargoObject:ReSpawn( FromPointVec2:GetVec3(), CargoDeployHeading )
+            self.CargoObject:ReSpawnAt( FromPointVec2, CargoDeployHeading )
             self:F( { "CargoUnits:", self.CargoObject:GetGroup():GetName() } )
             self.CargoCarrier = nil
       
@@ -207,7 +207,7 @@ do -- CARGO_UNIT
   
       -- Respawn the group...
       if self.CargoObject then
-        self.CargoObject:ReSpawn( ToPointVec2:GetVec3(), 0 )
+        self.CargoObject:ReSpawnAt( ToPointVec2, 0 )
         self.CargoCarrier = nil
       end
       

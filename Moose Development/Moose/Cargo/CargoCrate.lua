@@ -65,6 +65,33 @@ do -- CARGO_CRATE
     return self
   end
   
+  --- @param #CARGO_CRATE self
+  -- @param Core.Event#EVENTDATA EventData 
+  function CARGO_CRATE:OnEventCargoDead( EventData )
+
+    local Destroyed = false
+  
+    if self:IsDestroyed() or self:IsUnLoaded() or self:IsBoarding() then
+      if self.CargoObject:GetName() == EventData.IniUnitName then
+        Destroyed = true
+      end
+    else
+      if self:IsLoaded() then
+        local CarrierName = self.CargoCarrier:GetName()
+        if CarrierName == EventData.IniDCSUnitName then
+          MESSAGE:New( "Cargo is lost from carrier " .. CarrierName, 15 ):ToAll()
+          Destroyed = true
+          self.CargoCarrier:ClearCargo()
+        end
+      end
+    end
+    
+    if Destroyed then
+      self:I( { "Cargo crate destroyed: " .. self.CargoObject:GetName() } )
+      self:Destroyed()
+    end
+  
+  end
   
   
   --- Enter UnLoaded State.
@@ -90,7 +117,7 @@ do -- CARGO_CRATE
   
       -- Respawn the group...
       if self.CargoObject then
-        self.CargoObject:ReSpawn( ToPointVec2, 0 )
+        self.CargoObject:ReSpawnAt( ToPointVec2, 0 )
         self.CargoCarrier = nil
       end
       
@@ -228,15 +255,39 @@ do -- CARGO_CRATE
     return self:IsNear( CargoCarrier:GetCoordinate(), NearRadius )
   end
 
-
   --- Respawn the CargoGroup.
   -- @param #CARGO_CRATE self
   function CARGO_CRATE:Respawn()
 
-    self:F( { "Respawning" } )
+    self:F( { "Respawning crate " .. self:GetName() } )
 
-    self:SetDeployed( false )
-    self:SetStartState( "UnLoaded" )
+
+    -- Respawn the group...
+    if self.CargoObject then
+      self.CargoObject:ReSpawn() -- A cargo destroy crates a DEAD event.
+      self:__Reset( -0.1 )
+    end
+
+    
+  end
+
+
+  --- Respawn the CargoGroup.
+  -- @param #CARGO_CRATE self
+  function CARGO_CRATE:onafterReset()
+
+    self:F( { "Reset crate " .. self:GetName() } )
+
+
+    -- Respawn the group...
+    if self.CargoObject then
+      self:SetDeployed( false )
+      self:SetStartState( "UnLoaded" )
+      self.CargoCarrier = nil
+      -- Cargo objects are added to the _DATABASE and SET_CARGO objects.
+      _EVENTDISPATCHER:CreateEventNewCargo( self )
+    end
+
     
   end
   

@@ -794,6 +794,16 @@ function EVENT:onEvent( Event )
         Event.IniTypeName = Event.IniDCSUnit:getTypeName()
       end
 
+      if Event.IniObjectCategory == Object.Category.CARGO then
+        Event.IniDCSUnit = Event.initiator
+        Event.IniDCSUnitName = Event.IniDCSUnit:getName()
+        Event.IniUnitName = Event.IniDCSUnitName
+        Event.IniUnit = CARGO:FindByName( Event.IniDCSUnitName )
+        Event.IniCoalition = Event.IniDCSUnit:getCoalition()
+        Event.IniCategory = Event.IniDCSUnit:getDesc().category
+        Event.IniTypeName = Event.IniDCSUnit:getTypeName()
+      end
+
       if Event.IniObjectCategory == Object.Category.SCENERY then
         Event.IniDCSUnit = Event.initiator
         Event.IniDCSUnitName = Event.IniDCSUnit:getName()
