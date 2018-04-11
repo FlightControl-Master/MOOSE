@@ -73,6 +73,7 @@ end
 
 --- Destroys the OBJECT.
 -- @param #OBJECT self
+-- @return #boolean true if the object is destroyed.
 -- @return #nil The DCS Unit is not existing or alive.  
 function OBJECT:Destroy()
 
@@ -80,7 +81,8 @@ function OBJECT:Destroy()
   
   if DCSObject then
     --BASE:CreateEventCrash( timer.getTime(), DCSObject )
-    DCSObject:destroy()
+    DCSObject:destroy( false )
+    return true
   end
 
   BASE:E( { "Cannot Destroy", Name = self.ObjectName, Class = self:GetClassName() } )

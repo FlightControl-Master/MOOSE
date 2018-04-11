@@ -149,6 +149,7 @@ end
 -- @param #SET_BASE self
 -- @param #string ObjectName
 function SET_BASE:Remove( ObjectName )
+  self:F( { ObjectName = ObjectName, Object = Object } )
 
   local Object = self.Set[ObjectName]
   
@@ -312,10 +313,6 @@ function SET_BASE:_FilterStart()
       self:Add( ObjectName, Object )
     end
   end
-  
-  self:HandleEvent( EVENTS.Birth, self._EventOnBirth )
-  self:HandleEvent( EVENTS.Dead, self._EventOnDeadOrCrash )
-  self:HandleEvent( EVENTS.Crash, self._EventOnDeadOrCrash )
   
   -- Follow alive players and clients
   --self:HandleEvent( EVENTS.PlayerEnterUnit, self._EventOnPlayerEnterUnit )
@@ -935,6 +932,9 @@ function SET_GROUP:FilterStart()
 
   if _DATABASE then
     self:_FilterStart()
+    self:HandleEvent( EVENTS.Birth, self._EventOnBirth )
+    self:HandleEvent( EVENTS.Dead, self._EventOnDeadOrCrash )
+    self:HandleEvent( EVENTS.Crash, self._EventOnDeadOrCrash )
   end
   
   
@@ -1643,6 +1643,9 @@ do -- SET_UNIT
   
     if _DATABASE then
       self:_FilterStart()
+      self:HandleEvent( EVENTS.Birth, self._EventOnBirth )
+      self:HandleEvent( EVENTS.Dead, self._EventOnDeadOrCrash )
+      self:HandleEvent( EVENTS.Crash, self._EventOnDeadOrCrash )
     end
     
     return self
@@ -2559,6 +2562,9 @@ do -- SET_STATIC
   
     if _DATABASE then
       self:_FilterStart()
+      self:HandleEvent( EVENTS.Birth, self._EventOnBirth )
+      self:HandleEvent( EVENTS.Dead, self._EventOnDeadOrCrash )
+      self:HandleEvent( EVENTS.Crash, self._EventOnDeadOrCrash )
     end
     
     return self
@@ -3200,6 +3206,9 @@ function SET_CLIENT:FilterStart()
 
   if _DATABASE then
     self:_FilterStart()
+    self:HandleEvent( EVENTS.Birth, self._EventOnBirth )
+    self:HandleEvent( EVENTS.Dead, self._EventOnDeadOrCrash )
+    self:HandleEvent( EVENTS.Crash, self._EventOnDeadOrCrash )
   end
   
   return self
@@ -3599,6 +3608,9 @@ function SET_PLAYER:FilterStart()
 
   if _DATABASE then
     self:_FilterStart()
+    self:HandleEvent( EVENTS.Birth, self._EventOnBirth )
+    self:HandleEvent( EVENTS.Dead, self._EventOnDeadOrCrash )
+    self:HandleEvent( EVENTS.Crash, self._EventOnDeadOrCrash )
   end
   
   return self
@@ -4270,10 +4282,9 @@ function SET_CARGO:FilterStart() --R2.1
 
   if _DATABASE then
     self:_FilterStart()
+    self:HandleEvent( EVENTS.NewCargo )
+    self:HandleEvent( EVENTS.DeleteCargo )
   end
-
-  self:HandleEvent( EVENTS.NewCargo )
-  self:HandleEvent( EVENTS.DeleteCargo )
   
   return self
 end
@@ -4405,7 +4416,18 @@ function SET_CARGO:OnEventDeleteCargo( EventData ) --R2.1
   if EventData.Cargo then
     local Cargo = _DATABASE:FindCargo( EventData.Cargo.Name )
     if Cargo and Cargo.Name then
-      self:Remove( Cargo.Name )
+
+    -- When cargo was deleted, it may probably be because of an S_EVENT_DEAD.
+    -- However, in the loading logic, an S_EVENT_DEAD is also generated after a Destroy() call.
+    -- And this is a problem because it will remove all entries from the SET_CARGOs.
+    -- To prevent this from happening, the Cargo object has a flag NoDestroy.
+    -- When true, the SET_CARGO won't Remove the Cargo object from the set.
+    -- This flag is switched off after the event handlers have been called in the EVENT class.
+      self:F( { CargoNoDestroy=Cargo.NoDestroy } )
+      if Cargo.NoDestroy then
+      else
+        self:Remove( Cargo.Name )
+      end
     end
   end
 end

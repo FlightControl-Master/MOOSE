@@ -370,4 +370,22 @@ do -- CARGO_UNIT
     end
   end
 
+  --- Get the transportation method of the Cargo.
+  -- @param #CARGO_UNIT self
+  -- @return #string The transportation method of the Cargo.
+  function CARGO_UNIT:GetTransportationMethod()
+    if self:IsLoaded() then
+      return "for unboarding"
+    else
+      if self:IsUnLoaded() then
+        return "for boarding"
+      else
+        if self:IsDeployed() then
+          return "delivered"
+        end
+      end
+    end
+    return ""
+  end
+
 end -- CARGO_UNIT

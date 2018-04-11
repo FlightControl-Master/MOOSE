@@ -744,7 +744,7 @@ function EVENT:onEvent( Event )
 
   local EventMeta = _EVENTMETA[Event.id]
 
-  --self:E( { EventMeta.Text, Event } )  -- Activate the see all incoming events ...
+  self:E( { EventMeta.Text, Event } )  -- Activate the see all incoming events ...
 
   if self and 
      self.Events and 
@@ -888,7 +888,7 @@ function EVENT:onEvent( Event )
       
         -- Okay, we got the event from DCS. Now loop the SORTED self.EventSorted[] table for the received Event.id, and for each EventData registered, check if a function needs to be called.
         for EventClass, EventData in pairs( self.Events[Event.id][EventPriority] ) do
-
+        
           --if Event.IniObjectCategory ~= Object.Category.STATIC then
           --  self:E( { "Evaluating: ", EventClass:GetClassNameAndID() } )
           --end
@@ -1036,6 +1036,16 @@ function EVENT:onEvent( Event )
           end
         end
       end
+    end
+    
+    -- When cargo was deleted, it may probably be because of an S_EVENT_DEAD.
+    -- However, in the loading logic, an S_EVENT_DEAD is also generated after a Destroy() call.
+    -- And this is a problem because it will remove all entries from the SET_CARGOs.
+    -- To prevent this from happening, the Cargo object has a flag NoDestroy.
+    -- When true, the SET_CARGO won't Remove the Cargo object from the set.
+    -- But we need to switch that flag off after the event handlers have been called.
+    if Event.id == EVENTS.DeleteCargo then
+      Event.Cargo.NoDestroy = nil
     end
   else
     self:T( { EventMeta.Text, Event } )    

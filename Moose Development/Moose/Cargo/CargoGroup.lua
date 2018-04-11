@@ -584,4 +584,24 @@ do -- CARGO_GROUP
   
   end
 
+  --- Get the transportation method of the Cargo.
+  -- @param #CARGO_GROUP self
+  -- @return #string The transportation method of the Cargo.
+  function CARGO_GROUP:GetTransportationMethod()
+    if self:IsLoaded() then
+      return "for unboarding"
+    else
+      if self:IsUnLoaded() then
+        return "for boarding"
+      else
+        if self:IsDeployed() then
+          return "delivered"
+        end
+      end
+    end
+    return ""
+  end
+
+    
+
 end -- CARGO_GROUP

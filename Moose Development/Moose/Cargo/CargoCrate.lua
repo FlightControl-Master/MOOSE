@@ -49,7 +49,7 @@ do -- CARGO_CRATE
     local self = BASE:Inherit( self, CARGO_REPRESENTABLE:New( CargoStatic, Type, Name, nil, LoadRadius, NearRadius ) ) -- #CARGO_CRATE
     self:F( { Type, Name, NearRadius } )
   
-    self.CargoObject = CargoStatic
+    self.CargoObject = CargoStatic -- Wrapper.Static#STATIC
  
     self:T( self.ClassName )
   
@@ -73,7 +73,9 @@ do -- CARGO_CRATE
   
     if self:IsDestroyed() or self:IsUnLoaded() or self:IsBoarding() then
       if self.CargoObject:GetName() == EventData.IniUnitName then
-        Destroyed = true
+        if not self.NoDestroy then 
+          Destroyed = true
+        end
       end
     else
       if self:IsLoaded() then
@@ -90,7 +92,7 @@ do -- CARGO_CRATE
       self:I( { "Cargo crate destroyed: " .. self.CargoObject:GetName() } )
       self:Destroyed()
     end
-  
+    
   end
   
   
@@ -145,7 +147,10 @@ do -- CARGO_CRATE
     -- Only destroy the CargoObject is if there is a CargoObject (packages don't have CargoObjects).
     if self.CargoObject then
       self:T("Destroying")
+      self.NoDestroy = true
       self.CargoObject:Destroy()
+      --local Coordinate = self.CargoObject:GetCoordinate():GetRandomCoordinateInRadius( 50, 20 )
+      --self.CargoObject:ReSpawnAt( Coordinate, 0 )
     end
   end
 
@@ -289,6 +294,24 @@ do -- CARGO_CRATE
     end
 
     
+  end
+
+  --- Get the transportation method of the Cargo.
+  -- @param #CARGO_CRATE self
+  -- @return #string The transportation method of the Cargo.
+  function CARGO_CRATE:GetTransportationMethod()
+    if self:IsLoaded() then
+      return "for unloading"
+    else
+      if self:IsUnLoaded() then
+        return "for loading"
+      else
+        if self:IsDeployed() then
+          return "delivered"
+        end
+      end
+    end
+    return ""
   end
   
 end

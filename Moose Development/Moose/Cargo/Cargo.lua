@@ -268,8 +268,7 @@ do -- CARGO
     self.Slingloadable = false
     self.Moveable = false
     self.Containable = false
-    self.LoadAction = ""
-    
+
     self.CargoLimit = 0
     
     self.LoadRadius = LoadRadius or 500
@@ -366,6 +365,14 @@ do -- CARGO
   -- @return #string The type of the Cargo.
   function CARGO:GetType()
     return self.Type
+  end
+
+    
+  --- Get the transportation method of the Cargo.
+  -- @param #CARGO self
+  -- @return #string The transportation method of the Cargo.
+  function CARGO:GetTransportationMethod()
+    return self.TransportationMethod
   end
 
     
@@ -802,7 +809,7 @@ do -- CARGO_REPRESENTABLE
   
     -- Cargo objects are deleted from the _DATABASE and SET_CARGO objects.
     self:F( { CargoName = self:GetName() } )
-    _EVENTDISPATCHER:CreateEventDeleteCargo( self )
+    --_EVENTDISPATCHER:CreateEventDeleteCargo( self )
   
     return self
   end

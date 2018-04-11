@@ -1502,7 +1502,7 @@ function TASK:ReportDetails( ReportGroup )
   
   local PlayerReport = REPORT:New()
   for PlayerName, PlayerGroup in pairs( PlayerNames ) do
-    PlayerReport:Add( "Group " .. PlayerGroup:GetCallsign() .. ": " .. PlayerName )
+    PlayerReport:Add( "Players group " .. PlayerGroup:GetCallsign() .. ": " .. PlayerName )
   end
   local Players = PlayerReport:Text()
   

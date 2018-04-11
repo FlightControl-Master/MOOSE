@@ -74,7 +74,9 @@ do -- CARGO_SLINGLOAD
   
     if self:IsDestroyed() or self:IsUnLoaded() then
       if self.CargoObject:GetName() == EventData.IniUnitName then
-        Destroyed = true
+        if not self.NoDestroy then 
+          Destroyed = true
+        end
       end
     end
     
@@ -247,5 +249,23 @@ do -- CARGO_SLINGLOAD
 
     
   end
-  
+
+  --- Get the transportation method of the Cargo.
+  -- @param #CARGO_SLINGLOAD self
+  -- @return #string The transportation method of the Cargo.
+  function CARGO_SLINGLOAD:GetTransportationMethod()
+    if self:IsLoaded() then
+      return "for sling loading"
+    else
+      if self:IsUnLoaded() then
+        return "for sling loading"
+      else
+        if self:IsDeployed() then
+          return "delivered"
+        end
+      end
+    end
+    return ""
+  end
+   
 end

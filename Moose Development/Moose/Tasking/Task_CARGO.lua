@@ -309,27 +309,27 @@ do -- TASK_CARGO
                     if not TaskUnit:InAir() then
                       if Cargo:CanBoard() == true then
                         if Cargo:IsInLoadRadius( TaskUnit:GetPointVec2() ) then
-                          Cargo:Report( "ready for boarding at " .. Cargo:GetCoordinate():ToString( TaskUnit:GetGroup() ), "board", TaskUnit:GetGroup() )
+                          Cargo:Report( "Ready for boarding.", "board", TaskUnit:GetGroup() )
                           local BoardMenu = MENU_GROUP:New( TaskGroup, "Board cargo", MenuControl ):SetTime( MenuTime ):SetTag( "Cargo" )
                           MENU_GROUP_COMMAND:New( TaskUnit:GetGroup(), Cargo.Name, BoardMenu, self.MenuBoardCargo, self, Cargo ):SetTime(MenuTime):SetTag("Cargo"):SetRemoveParent()
                         else
-                          Cargo:Report( "Board at " .. Cargo:GetCoordinate():ToString( TaskUnit:GetGroup() ), "reporting", TaskUnit:GetGroup() )
+                          Cargo:Report( "Board at " .. Cargo:GetCoordinate():ToString( TaskUnit:GetGroup() .. "." ), "reporting", TaskUnit:GetGroup() )
                         end
                       else
                         if Cargo:CanLoad() == true then
                           if Cargo:IsInLoadRadius( TaskUnit:GetPointVec2() ) then
-                            Cargo:Report( "ready for loading at " .. Cargo:GetCoordinate():ToString( TaskUnit:GetGroup() ), "load", TaskUnit:GetGroup() )
+                            Cargo:Report( "Ready for loading.", "load", TaskUnit:GetGroup() )
                             local LoadMenu = MENU_GROUP:New( TaskGroup, "Load cargo", MenuControl ):SetTime( MenuTime ):SetTag( "Cargo" )
                             MENU_GROUP_COMMAND:New( TaskUnit:GetGroup(), Cargo.Name, LoadMenu, self.MenuLoadCargo, self, Cargo ):SetTime(MenuTime):SetTag("Cargo"):SetRemoveParent()
                           else
-                            Cargo:Report( "Load at " .. Cargo:GetCoordinate():ToString( TaskUnit:GetGroup() ), "reporting", TaskUnit:GetGroup() )
+                            Cargo:Report( "Load at " .. Cargo:GetCoordinate():ToString( TaskUnit:GetGroup() ) .. " within " .. Cargo.NearRadius .. ".", "reporting", TaskUnit:GetGroup() )
                           end
                         else
                           if Cargo:CanSlingload() == true then
                             if Cargo:IsInLoadRadius( TaskUnit:GetPointVec2() ) then
-                              Cargo:Report( "ready for slingloading at " .. Cargo:GetCoordinate():ToString( TaskUnit:GetGroup() ), "slingload", TaskUnit:GetGroup() )
+                              Cargo:Report( "Ready for slingloading.", "slingload", TaskUnit:GetGroup() )
                             else
-                              Cargo:Report( "Slingload at " .. Cargo:GetCoordinate():ToString( TaskUnit:GetGroup() ), "reporting", TaskUnit:GetGroup() )
+                              Cargo:Report( "Slingload at " .. Cargo:GetCoordinate():ToString( TaskUnit:GetGroup() .. "." ), "reporting", TaskUnit:GetGroup() )
                             end
                           end
                         end
@@ -643,7 +643,7 @@ do -- TASK_CARGO
       local TaskUnitName = TaskUnit:GetName()
       self:F( { TaskUnit = TaskUnitName, Task = Task and Task:GetClassNameAndID() } )
 
-      Cargo:MessageToGroup( "Boarded ...", TaskUnit:GetGroup() )
+      Cargo:MessageToGroup( "Boarded cargo " .. Cargo:GetName(), TaskUnit:GetGroup() )
       
       self:__Load( -0.1, Cargo )
       
@@ -662,7 +662,7 @@ do -- TASK_CARGO
         Cargo:Load( TaskUnit )
       end
 
-      Cargo:MessageToGroup( "Loaded ...", TaskUnit:GetGroup() )
+      Cargo:MessageToGroup( "Loaded cargo " .. Cargo:GetName(), TaskUnit:GetGroup() )
       TaskUnit:AddCargo( Cargo )
 
       Task:CargoPickedUp( TaskUnit, Cargo )
@@ -736,7 +736,7 @@ do -- TASK_CARGO
       local TaskUnitName = TaskUnit:GetName()
       self:F( { TaskUnit = TaskUnitName, Task = Task and Task:GetClassNameAndID() } )
       
-      self.Cargo:MessageToGroup( "UnBoarded ...", TaskUnit:GetGroup() )
+      self.Cargo:MessageToGroup( "UnBoarded cargo " .. self.Cargo:GetName(), TaskUnit:GetGroup() )
       
       self:Unload( self.Cargo )
     end
@@ -759,6 +759,8 @@ do -- TASK_CARGO
       end
       TaskUnit:RemoveCargo( Cargo )
       
+      Cargo:MessageToGroup( "Unloaded cargo " .. Cargo:GetName(), TaskUnit:GetGroup() )
+
       self:Planned()
       self:__SelectAction( 1 )
     end
@@ -970,7 +972,6 @@ do -- TASK_CARGO
   function TASK_CARGO:UpdateTaskInfo( DetectedItem )
   
     if self:IsStatePlanned() or self:IsStateAssigned() then
-      self.TaskInfo:AddTaskName( 0, "MSOD" )
       self.TaskInfo:AddCargoSet( self.SetCargo, 10, "SOD", true )
     end
   end

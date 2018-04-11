@@ -238,15 +238,10 @@ function SPAWNSTATIC:ReSpawnAt( Coordinate, Heading )
   if StaticTemplate then
 
     local CountryID = self.CountryID
-    local CountryName = _DATABASE.COUNTRY_NAME[CountryID]
     
     StaticTemplate.x = Coordinate.x
     StaticTemplate.y = Coordinate.z
 
-    StaticTemplate.units = nil
-    StaticTemplate.route = nil
-    StaticTemplate.groupId = nil
-    
     StaticTemplate.heading = Heading and ( ( Heading / 180 ) * math.pi ) or StaticTemplate.heading
 
     StaticTemplate.CountryID = nil
