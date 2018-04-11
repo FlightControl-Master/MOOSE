@@ -291,8 +291,7 @@ do -- TASK_CARGO
 --              ):SetTime(MenuTime)
 --            end
 
-            self:F( { CargoUnloaded = Cargo:IsUnLoaded(), CargoLoaded = Cargo:IsLoaded(), CargoItemCount = CargoItemCount } )
-            Task:E( { TaskDeployZones = Task.DeployZones, TaskName = Task:GetName() } )
+            --self:F( { CargoUnloaded = Cargo:IsUnLoaded(), CargoLoaded = Cargo:IsLoaded(), CargoItemCount = CargoItemCount } )
         
             local TaskGroup = TaskUnit:GetGroup()
             
@@ -349,7 +348,6 @@ do -- TASK_CARGO
               
               -- Cargo in deployzones are flagged as deployed.
               for DeployZoneName, DeployZone in pairs( Task.DeployZones ) do
-                Task:E( { DeployZone = DeployZone } )
                 if Cargo:IsInZone( DeployZone ) then
                   Task:E( { CargoIsDeployed = Task.CargoDeployed and "true" or "false" } )
                   if Cargo:IsDeployed() == false then

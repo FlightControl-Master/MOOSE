@@ -688,7 +688,8 @@ function TASK:SetMenu( MenuTime ) --R2.1 Mission Reports and Task Reports added.
   self:F( { self:GetName(), MenuTime } )
 
   --self.SetGroup:Flush()
-  for TaskGroupID, TaskGroupData in pairs( self.SetGroup:GetAliveSet() ) do
+  --for TaskGroupID, TaskGroupData in pairs( self.SetGroup:GetAliveSet() ) do
+  for TaskGroupID, TaskGroupData in pairs( self.SetGroup:GetSet() ) do
     local TaskGroup = TaskGroupData -- Wrapper.Group#GROUP
     if TaskGroup:IsAlive() == true and TaskGroup:GetPlayerNames() then
     
@@ -1444,11 +1445,13 @@ function TASK:GetPlayerCount() --R2.1 Get a count of the players.
   local PlayerCount = 0
 
   -- Loop each Unit active in the Task, and find Player Names.
-  for TaskGroupID, PlayerGroup in pairs( self:GetGroups():GetAliveSet() ) do
+  for TaskGroupID, PlayerGroup in pairs( self:GetGroups():GetSet() ) do
     local PlayerGroup = PlayerGroup -- Wrapper.Group#GROUP
-    if self:IsGroupAssigned( PlayerGroup ) then
-      local PlayerNames = PlayerGroup:GetPlayerNames()
-        PlayerCount = PlayerCount + #PlayerNames
+    if PlayerGroup:IsAlive() == true then
+      if self:IsGroupAssigned( PlayerGroup ) then
+        local PlayerNames = PlayerGroup:GetPlayerNames()
+          PlayerCount = PlayerCount + #PlayerNames
+      end
     end
   end
 

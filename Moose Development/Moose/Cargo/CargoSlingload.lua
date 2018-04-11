@@ -127,7 +127,7 @@ do -- CARGO_SLINGLOAD
     local Distance = 0
     if self:IsUnLoaded() then
       Distance = Coordinate:DistanceFromPointVec2( self.CargoObject:GetPointVec2() )
-      self:T( Distance )
+      --self:T( Distance )
       if Distance <= self.LoadRadius then
         return true
       end

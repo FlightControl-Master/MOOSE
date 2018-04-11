@@ -637,12 +637,12 @@ do -- CARGO
   -- @param Core.Zone#ZONE_BASE Zone
   -- @return #boolean **true** if cargo is in the Zone, **false** if cargo is not in the Zone.
   function CARGO:IsInZone( Zone )
-    self:F( { Zone } )
+    --self:F( { Zone } )
   
     if self:IsLoaded() then
       return Zone:IsPointVec2InZone( self.CargoCarrier:GetPointVec2() )
     else
-      self:F( { Size = self.CargoObject:GetSize(), Units = self.CargoObject:GetUnits() } )
+      --self:F( { Size = self.CargoObject:GetSize(), Units = self.CargoObject:GetUnits() } )
       if self.CargoObject:GetSize() ~= 0 then
         return Zone:IsPointVec2InZone( self.CargoObject:GetPointVec2() )
       else

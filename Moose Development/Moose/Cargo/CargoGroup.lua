@@ -150,7 +150,7 @@ do -- CARGO_GROUP
   -- @param #string From
   -- @param #string To
   function CARGO_GROUP:onenterBoarding( From, Event, To, CargoCarrier, NearRadius, ... )
-    self:F( { CargoCarrier.UnitName, From, Event, To } )
+    --self:F( { CargoCarrier.UnitName, From, Event, To } )
     
     local NearRadius = NearRadius or 25
     
@@ -175,7 +175,7 @@ do -- CARGO_GROUP
   -- @param #string From
   -- @param #string To
   function CARGO_GROUP:onenterLoaded( From, Event, To, CargoCarrier, ... )
-    self:F( { From, Event, To, CargoCarrier, ...} )
+    --self:F( { From, Event, To, CargoCarrier, ...} )
     
     if From == "UnLoaded" then
       -- For each Cargo object within the CARGO_GROUP, load each cargo to the CargoCarrier.
@@ -196,7 +196,7 @@ do -- CARGO_GROUP
   -- @param #string From
   -- @param #string To
   function CARGO_GROUP:onafterBoarding( From, Event, To, CargoCarrier, NearRadius, ... )
-    self:F( { CargoCarrier.UnitName, From, Event, To } )
+    --self:F( { CargoCarrier.UnitName, From, Event, To } )
   
     local NearRadius = NearRadius or 100
   
@@ -259,7 +259,7 @@ do -- CARGO_GROUP
   -- @param #string From
   -- @param #string To
   function CARGO_GROUP:onenterUnBoarding( From, Event, To, ToPointVec2, NearRadius, ... )
-    self:F( {From, Event, To, ToPointVec2, NearRadius } )
+    --self:F( {From, Event, To, ToPointVec2, NearRadius } )
   
     NearRadius = NearRadius or 25
   
@@ -293,7 +293,7 @@ do -- CARGO_GROUP
   -- @param #string From
   -- @param #string To
   function CARGO_GROUP:onleaveUnBoarding( From, Event, To, ToPointVec2, NearRadius, ... )
-    self:F( { From, Event, To, ToPointVec2, NearRadius } )
+    --self:F( { From, Event, To, ToPointVec2, NearRadius } )
   
     --local NearRadius = NearRadius or 25
   
@@ -330,7 +330,7 @@ do -- CARGO_GROUP
   -- @param #string From
   -- @param #string To
   function CARGO_GROUP:onafterUnBoarding( From, Event, To, ToPointVec2, NearRadius, ... )
-    self:F( { From, Event, To, ToPointVec2, NearRadius } )
+    --self:F( { From, Event, To, ToPointVec2, NearRadius } )
   
     --local NearRadius = NearRadius or 25
   
@@ -346,7 +346,7 @@ do -- CARGO_GROUP
   -- @param #string From
   -- @param #string To
   function CARGO_GROUP:onenterUnLoaded( From, Event, To, ToPointVec2, ... )
-    self:F( { From, Event, To, ToPointVec2 } )
+    --self:F( { From, Event, To, ToPointVec2 } )
   
     if From == "Loaded" then
       
@@ -410,7 +410,7 @@ do -- CARGO_GROUP
   -- @param #CARGO_GROUP self
   -- @param Core.Point#COORDINATE Coordinate
   function CARGO_GROUP:RouteTo( Coordinate )
-    self:F( {Coordinate = Coordinate } )
+    --self:F( {Coordinate = Coordinate } )
     
     -- For each Cargo within the CargoSet, route each object to the Coordinate
     self.CargoSet:ForEach(
@@ -429,7 +429,7 @@ do -- CARGO_GROUP
   -- @return #boolean The Cargo is near to the Carrier.
   -- @return #nil The Cargo is not near to the Carrier.
   function CARGO_GROUP:IsNear( CargoCarrier, NearRadius )
-    self:F( {NearRadius = NearRadius } )
+    --self:F( {NearRadius = NearRadius } )
     
     local Cargo = self.CargoSet:GetFirst() -- #CARGO
     
@@ -445,7 +445,7 @@ do -- CARGO_GROUP
   -- @param Core.Point#Coordinate Coordinate
   -- @return #boolean true if the Cargo Group is within the load radius.
   function CARGO_GROUP:IsInLoadRadius( Coordinate )
-    self:F( { Coordinate } )
+    --self:F( { Coordinate } )
   
     local Cargo = self.CargoSet:GetFirst() -- #CARGO
 
@@ -456,7 +456,7 @@ do -- CARGO_GROUP
       else
         Distance = Coordinate:DistanceFromPointVec2( Cargo.CargoObject:GetPointVec2() )
       end
-      self:T( Distance )
+      --self:T( Distance )
       
       if Distance <= self.LoadRadius then
         return true
@@ -475,7 +475,7 @@ do -- CARGO_GROUP
   -- @param Core.Point#Coordinate Coordinate
   -- @return #boolean true if the Cargo Group is within the report radius.
   function CARGO_GROUP:IsInReportRadius( Coordinate )
-    self:F( { Coordinate } )
+    --self:F( { Coordinate } )
   
     local Cargo = self.CargoSet:GetFirst() -- #CARGO
 
@@ -483,7 +483,7 @@ do -- CARGO_GROUP
       local Distance = 0
       if Cargo:IsUnLoaded() then
         Distance = Coordinate:DistanceFromPointVec2( Cargo.CargoObject:GetPointVec2() )
-        self:T( Distance )
+        --self:T( Distance )
         if Distance <= self.LoadRadius then
           return true
         end
@@ -572,7 +572,7 @@ do -- CARGO_GROUP
   -- @return #boolean **true** if the first element of the CargoGroup is in the Zone
   -- @return #boolean **false** if there is no element of the CargoGroup in the Zone.
   function CARGO_GROUP:IsInZone( Zone )
-    self:F( { Zone } )
+    --self:F( { Zone } )
   
     local Cargo = self.CargoSet:GetFirst() -- #CARGO
 
