@@ -329,7 +329,7 @@ do -- TASK_CARGO
                             if Cargo:IsInLoadRadius( TaskUnit:GetPointVec2() ) then
                               Cargo:Report( "Ready for slingloading.", "slingload", TaskUnit:GetGroup() )
                             else
-                              Cargo:Report( "Slingload at " .. Cargo:GetCoordinate():ToString( TaskUnit:GetGroup() .. "." ), "reporting", TaskUnit:GetGroup() )
+                              Cargo:Report( "Slingload at " .. Cargo:GetCoordinate():ToString( TaskUnit:GetGroup() ) .. ".", "reporting", TaskUnit:GetGroup() )
                             end
                           end
                         end

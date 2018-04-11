@@ -1624,11 +1624,7 @@ do -- Task Control Menu
   
     TaskName = TaskName or ""
     
-    if not self.TaskControlMenu then
-      self.TaskControlMenu = MENU_GROUP:New( TaskUnit:GetGroup(), "Assigned Task " .. TaskUnit:GetPlayerName() .. " - " .. self:GetName() .. " " .. TaskName ):SetTime( self.TaskControlMenuTime )
-    else
-      self.TaskControlMenu:SetTime( self.TaskControlMenuTime )
-    end
+    self.TaskControlMenu = MENU_GROUP:New( TaskUnit:GetGroup(), "Assigned Task " .. TaskUnit:GetPlayerName() .. " - " .. self:GetName() .. " " .. TaskName ):SetTime( self.TaskControlMenuTime )
     
     return self.TaskControlMenu
   end

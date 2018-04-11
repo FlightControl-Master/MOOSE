@@ -246,7 +246,7 @@ do -- MENU_BASE
   -- @param #boolean RemoveParent If true, the parent menu is automatically removed when this menu is the last child menu of that parent @{Menu}.
   -- @return #MENU_BASE
   function MENU_BASE:SetRemoveParent( RemoveParent )
-    self:F( { RemoveParent } )
+    --self:F( { RemoveParent } )
     self.MenuRemoveParent = RemoveParent
     return self
   end

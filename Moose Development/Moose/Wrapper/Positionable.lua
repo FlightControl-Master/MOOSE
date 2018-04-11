@@ -129,7 +129,7 @@ function POSITIONABLE:GetPointVec2()
     
     local PositionablePointVec2 = POINT_VEC2:NewFromVec3( PositionableVec3 )
   
-    self:T( PositionablePointVec2 )
+    --self:F( PositionablePointVec2 )
     return PositionablePointVec2
   end
   

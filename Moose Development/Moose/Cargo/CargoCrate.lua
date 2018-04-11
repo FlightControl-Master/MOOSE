@@ -51,8 +51,6 @@ do -- CARGO_CRATE
   
     self.CargoObject = CargoStatic -- Wrapper.Static#STATIC
  
-    self:T( self.ClassName )
-  
     -- Cargo objects are added to the _DATABASE and SET_CARGO objects.
     _EVENTDISPATCHER:CreateEventNewCargo( self )
     
@@ -103,7 +101,7 @@ do -- CARGO_CRATE
   -- @param #string To
   -- @param Core.Point#POINT_VEC2
   function CARGO_CRATE:onenterUnLoaded( From, Event, To, ToPointVec2 )
-    self:F( { ToPointVec2, From, Event, To } )
+    --self:F( { ToPointVec2, From, Event, To } )
   
     local Angle = 180
     local Speed = 10
@@ -140,7 +138,7 @@ do -- CARGO_CRATE
   -- @param #string To
   -- @param Wrapper.Unit#UNIT CargoCarrier
   function CARGO_CRATE:onenterLoaded( From, Event, To, CargoCarrier )
-    self:F( { From, Event, To, CargoCarrier } )
+    --self:F( { From, Event, To, CargoCarrier } )
   
     self.CargoCarrier = CargoCarrier
     
@@ -171,12 +169,12 @@ do -- CARGO_CRATE
   -- @param Core.Point#Coordinate Coordinate
   -- @return #boolean true if the Cargo Crate is within the report radius.
   function CARGO_CRATE:IsInReportRadius( Coordinate )
-    self:F( { Coordinate, LoadRadius = self.LoadRadius } )
+    --self:F( { Coordinate, LoadRadius = self.LoadRadius } )
   
     local Distance = 0
     if self:IsUnLoaded() then
       Distance = Coordinate:DistanceFromPointVec2( self.CargoObject:GetPointVec2() )
-      self:T( Distance )
+      --self:T( Distance )
       if Distance <= self.LoadRadius then
         return true
       end
@@ -191,12 +189,12 @@ do -- CARGO_CRATE
   -- @param Core.Point#Coordinate Coordinate
   -- @return #boolean true if the Cargo Crate is within the loading radius.
   function CARGO_CRATE:IsInLoadRadius( Coordinate )
-    self:F( { Coordinate, LoadRadius = self.NearRadius } )
+    --self:F( { Coordinate, LoadRadius = self.NearRadius } )
   
     local Distance = 0
     if self:IsUnLoaded() then
       Distance = Coordinate:DistanceFromPointVec2( self.CargoObject:GetPointVec2() )
-      self:T( Distance )
+      --self:T( Distance )
       if Distance <= self.NearRadius then
         return true
       end
@@ -212,7 +210,7 @@ do -- CARGO_CRATE
   -- @return Core.Point#COORDINATE The current Coordinate of the first Cargo of the CargoGroup.
   -- @return #nil There is no valid Cargo in the CargoGroup.
   function CARGO_CRATE:GetCoordinate()
-    self:F()
+    --self:F()
     
     return self.CargoObject:GetCoordinate()
   end
