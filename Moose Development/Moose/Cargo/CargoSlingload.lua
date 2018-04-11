@@ -51,8 +51,6 @@ do -- CARGO_SLINGLOAD
   
     self.CargoObject = CargoStatic
   
-    self:T( self.ClassName )
-  
     -- Cargo objects are added to the _DATABASE and SET_CARGO objects.
     _EVENTDISPATCHER:CreateEventNewCargo( self )
     
@@ -124,7 +122,7 @@ do -- CARGO_SLINGLOAD
   -- @param Core.Point#Coordinate Coordinate
   -- @return #boolean true if the Cargo Crate is within the report radius.
   function CARGO_SLINGLOAD:IsInReportRadius( Coordinate )
-    self:F( { Coordinate, LoadRadius = self.LoadRadius } )
+    --self:F( { Coordinate, LoadRadius = self.LoadRadius } )
   
     local Distance = 0
     if self:IsUnLoaded() then
@@ -144,7 +142,7 @@ do -- CARGO_SLINGLOAD
   -- @param Core.Point#Coordinate Coordinate
   -- @return #boolean true if the Cargo Slingload is within the loading radius.
   function CARGO_SLINGLOAD:IsInLoadRadius( Coordinate )
-    self:F( { Coordinate } )
+    --self:F( { Coordinate } )
   
     local Distance = 0
     if self:IsUnLoaded() then
@@ -165,7 +163,7 @@ do -- CARGO_SLINGLOAD
   -- @return Core.Point#COORDINATE The current Coordinate of the first Cargo of the CargoGroup.
   -- @return #nil There is no valid Cargo in the CargoGroup.
   function CARGO_SLINGLOAD:GetCoordinate()
-    self:F()
+    --self:F()
     
     return self.CargoObject:GetCoordinate()
   end
@@ -195,7 +193,7 @@ do -- CARGO_SLINGLOAD
   -- @param #CARGO_SLINGLOAD self
   -- @param Core.Point#COORDINATE Coordinate
   function CARGO_SLINGLOAD:RouteTo( Coordinate )
-    self:F( {Coordinate = Coordinate } )
+    --self:F( {Coordinate = Coordinate } )
     
   end
 
@@ -208,7 +206,7 @@ do -- CARGO_SLINGLOAD
   -- @return #boolean The Cargo is near to the Carrier.
   -- @return #nil The Cargo is not near to the Carrier.
   function CARGO_SLINGLOAD:IsNear( CargoCarrier, NearRadius )
-    self:F( {NearRadius = NearRadius } )
+    --self:F( {NearRadius = NearRadius } )
     
     return self:IsNear( CargoCarrier:GetCoordinate(), NearRadius )
   end
@@ -218,7 +216,7 @@ do -- CARGO_SLINGLOAD
   -- @param #CARGO_SLINGLOAD self
   function CARGO_SLINGLOAD:Respawn()
 
-    self:F( { "Respawning slingload " .. self:GetName() } )
+    --self:F( { "Respawning slingload " .. self:GetName() } )
 
 
     -- Respawn the group...
@@ -235,7 +233,7 @@ do -- CARGO_SLINGLOAD
   -- @param #CARGO_SLINGLOAD self
   function CARGO_SLINGLOAD:onafterReset()
 
-    self:F( { "Reset slingload " .. self:GetName() } )
+    --self:F( { "Reset slingload " .. self:GetName() } )
 
 
     -- Respawn the group...
