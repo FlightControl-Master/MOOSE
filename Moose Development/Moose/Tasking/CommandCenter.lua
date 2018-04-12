@@ -86,7 +86,7 @@ COMMANDCENTER = {
 -- @return #COMMANDCENTER
 function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
 
-  local self = BASE:Inherit( self, BASE:New() )
+  local self = BASE:Inherit( self, BASE:New() ) -- #COMMANDCENTER
 
   self.CommandCenterPositionable = CommandCenterPositionable  
   self.CommandCenterName = CommandCenterName or CommandCenterPositionable:GetName()
@@ -241,7 +241,7 @@ end
 -- @return #list<Tasking.Mission#MISSION>
 function COMMANDCENTER:GetMissions()
 
-  return self.Missions
+  return self.Missions or {}
 end
 
 --- Add a MISSION to be governed by the HQ command center.
@@ -330,7 +330,7 @@ end
 --- Sets the menu structure of the Missions governed by the HQ command center.
 -- @param #COMMANDCENTER self
 function COMMANDCENTER:SetMenu()
-  self:F()
+  self:F2()
 
   local MenuTime = timer.getTime()
   for MissionID, Mission in pairs( self:GetMissions() or {} ) do
@@ -339,7 +339,7 @@ function COMMANDCENTER:SetMenu()
   end
 
   for MissionID, Mission in pairs( self:GetMissions() or {} ) do
-    local Mission = Mission -- Tasking.Mission#MISSION
+    Mission = Mission -- Tasking.Mission#MISSION
     Mission:RemoveMenu( MenuTime )
   end
   
@@ -348,9 +348,42 @@ end
 --- Gets the commandcenter menu structure governed by the HQ command center.
 -- @param #COMMANDCENTER self
 -- @return Core.Menu#MENU_COALITION
-function COMMANDCENTER:GetMenu()
-  return self.CommandCenterMenu
+function COMMANDCENTER:GetMenu( TaskGroup )
+
+  self.CommandCenterMenus = self.CommandCenterMenus or {}
+  if not self.CommandCenterMenus[TaskGroup] then
+    local CommandCenterText = self:GetText()
+    local CommandCenterMenu = MENU_GROUP:New( TaskGroup, CommandCenterText )
+    self.CommandCenterMenus[TaskGroup] = CommandCenterMenu
+    local AssignTaskMenu = MENU_GROUP_COMMAND:New( TaskGroup, "Assign Task", CommandCenterMenu, self.AssignRandomTask, self, TaskGroup )
+  end
+  return self.CommandCenterMenus[TaskGroup]
 end
+
+
+--- Assigns a random task to a TaskGroup.
+-- @param #COMMANDCENTER self
+-- @return #COMMANDCENTER
+function COMMANDCENTER:AssignRandomTask( TaskGroup )
+
+  local Tasks = {}
+
+  for MissionID, Mission in pairs( self:GetMissions() ) do
+    local Mission = Mission -- Tasking.Mission#MISSION
+    local MissionTasks = Mission:GetGroupTasks( TaskGroup )
+    for MissionTaskName, MissionTask in pairs( MissionTasks or {} ) do
+      Tasks[#Tasks+1] = MissionTask
+    end
+  end
+  
+  local Task = Tasks[ math.random( 1, #Tasks ) ] -- Tasking.Task#TASK
+  
+  Task:SetAssignMethod( ACT_ASSIGN_MENU_ACCEPT:New( Task.TaskBriefing ) )
+  
+  Task:AssignToGroup( TaskGroup )
+
+end
+
 
 --- Checks of the COMMANDCENTER has a GROUP.
 -- @param #COMMANDCENTER self
@@ -407,7 +440,7 @@ function COMMANDCENTER:MessageToCoalition( Message )
   local CCCoalition = self:GetPositionable():GetCoalition()
     --TODO: Fix coalition bug!
     
-    self:GetPositionable():MessageToCoalition( Message, 15, CCCoalition )
+    self:GetPositionable():MessageToCoalition( Message, 15, CCCoalition, self:GetShortText() )
 
 end
 
@@ -421,7 +454,7 @@ function COMMANDCENTER:MessageTypeToCoalition( Message, MessageType )
   local CCCoalition = self:GetPositionable():GetCoalition()
     --TODO: Fix coalition bug!
     
-    self:GetPositionable():MessageTypeToCoalition( Message, MessageType, CCCoalition )
+    self:GetPositionable():MessageTypeToCoalition( Message, MessageType, CCCoalition, self:GetShortText() )
 
 end
 
