@@ -524,17 +524,12 @@ end
 function MISSION:GetMenu( TaskGroup ) -- R2.1 -- Changed Menu Structure
 
   local CommandCenter = self:GetCommandCenter()
-  local CommandCenterMenu = CommandCenter:GetMenu()
+  local CommandCenterMenu = CommandCenter:GetMenu( TaskGroup )
 
-  --local MissionMenu = CommandCenterMenu:GetMenu( MissionName )
-  
   self.MissionGroupMenu = self.MissionGroupMenu or {}
   self.MissionGroupMenu[TaskGroup] = self.MissionGroupMenu[TaskGroup] or {}
   
   local GroupMenu = self.MissionGroupMenu[TaskGroup]
-  
-  local CommandCenterText = CommandCenter:GetText()
-  CommandCenterMenu = MENU_GROUP:New( TaskGroup, CommandCenterText )
   
   local MissionText = self:GetText()
   self.MissionMenu = MENU_GROUP:New( TaskGroup, MissionText, CommandCenterMenu )
@@ -564,7 +559,7 @@ end
 -- @param #string TaskName The Name of the @{Task} within the @{Mission}.
 -- @return Tasking.Task#TASK The Task
 -- @return #nil Returns nil if no task was found.
-function MISSION:GetTask( TaskName  )
+function MISSION:GetTask( TaskName )
   self:F( { TaskName } )
 
   return self.Tasks[TaskName]
@@ -1005,8 +1000,27 @@ end
 -- env.info( "Task 2 Completion = " .. Tasks[2]:GetGoalPercentage() .. "%" )
 function MISSION:GetTasks()
 
-	return self.Tasks
+	return self.Tasks or {}
 end
+
+--- Get the relevant tasks of a TaskGroup.
+-- @param #MISSION
+-- @param Wrapper.Group#GROUP TaskGroup
+-- @return #list<Tasking.Task#TASK>
+function MISSION:GetGroupTasks( TaskGroup )
+
+  local Tasks = {}
+  
+  for TaskID, Task in pairs( self:GetTasks() ) do
+    local Task = Task -- Tasking.Task#TASK
+    if Task:HasGroup( TaskGroup ) then
+      Tasks[#Tasks+1] = Task
+    end
+  end
+  
+  return Tasks
+end
+
 
 --- Reports the briefing.
 -- @param #MISSION self

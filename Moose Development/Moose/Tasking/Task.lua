@@ -169,9 +169,15 @@ function TASK:New( Mission, SetGroupAssign, TaskName, TaskType, TaskBriefing )
   self:AddTransition( "Assigned", "Success", "Success" )
   self:AddTransition( "Assigned", "Hold", "Hold" )
   self:AddTransition( "Assigned", "Fail", "Failed" )
-  self:AddTransition( "Assigned", "Abort", "Aborted" )
+  self:AddTransition( { "Planned", "Assigned" }, "Abort", "Aborted" )
   self:AddTransition( "Assigned", "Cancel", "Cancelled" )
   self:AddTransition( "Assigned", "Goal", "*" )
+  
+  self.Fsm = {}
+  
+  local Fsm = self:GetUnitProcess()
+  Fsm:SetStartState( "Planned" )
+  Fsm:AddProcess   ( "Planned", "Accept", ACT_ASSIGN_ACCEPT:New( self.TaskBriefing ), { Assigned = "SelectAction", Rejected = "Reject" }  )
   
   --- Goal Handler OnBefore for TASK
   -- @function [parent=#TASK] OnBeforeGoal
@@ -216,7 +222,6 @@ function TASK:New( Mission, SetGroupAssign, TaskName, TaskType, TaskBriefing )
   self:F( "New TASK " .. TaskName )
 
   self.Processes = {}
-  self.Fsm = {}
 
   self.Mission = Mission
   self.CommandCenter = Mission:GetCommandCenter()
@@ -229,7 +234,6 @@ function TASK:New( Mission, SetGroupAssign, TaskName, TaskType, TaskBriefing )
 
   self:SetBriefing( TaskBriefing )
   
-  self.FsmTemplate = self.FsmTemplate or FSM_PROCESS:New()
   
   self.TaskInfo = TASKINFO:New( self )
   
@@ -246,7 +250,8 @@ function TASK:GetUnitProcess( TaskUnit )
   if TaskUnit then
     return self:GetStateMachine( TaskUnit )
   else
-    return self.FsmTemplate
+    self.FsmTemplate = self.FsmTemplate or FSM_PROCESS:New()
+    return self.FsmTemplate 
   end
 end
 
@@ -500,6 +505,16 @@ end
 
 do -- Group Assignment
 
+  --- @param #TASK self
+  -- @param Actions.Act_Assign#ACT_ASSIGN AcceptClass
+  function TASK:SetAssignMethod( AcceptClass )
+  
+    local ProcessTemplate = self:GetUnitProcess()
+
+    ProcessTemplate:SetProcess( "Planned", "Accept", AcceptClass ) -- Actions.Act_Assign#ACT_ASSIGN
+  end
+
+
   --- Assign the @{Task} to a @{Group}.
   -- @param #TASK self
   -- @param Wrapper.Group#GROUP TaskGroup
@@ -739,20 +754,13 @@ function TASK:SetPlannedMenuForGroup( TaskGroup, MenuTime )
 
   local Mission = self:GetMission()
   local MissionName = Mission:GetName()
-  local CommandCenter = Mission:GetCommandCenter()
-  local CommandCenterMenu = CommandCenter:GetMenu()
+  local MissionMenu = Mission:GetMenu( TaskGroup )
 
   local TaskType = self:GetType()
   local TaskPlayerCount = self:GetPlayerCount()
   local TaskPlayerString = string.format( " (%dp)", TaskPlayerCount )
---  local TaskText = string.format( "%s%s", self:GetName(), TaskPlayerString ) --, TaskThreatLevelString )
   local TaskText = string.format( "%s", self:GetName() )
   local TaskName = string.format( "%s", self:GetName() )
-
-  local MissionMenu = Mission:GetMenu( TaskGroup )
-  --local MissionMenu = MENU_GROUP:New( TaskGroup, MissionName, CommandCenterMenu ):SetTime( MenuTime )
-  
-  --local MissionMenu = Mission:GetMenu( TaskGroup )
 
   self.MenuPlanned = self.MenuPlanned or {}
   self.MenuPlanned[TaskGroup] = MENU_GROUP_DELAYED:New( TaskGroup, "Join Planned Task", MissionMenu, Mission.MenuReportTasksPerStatus, Mission, TaskGroup, "Planned" ):SetTime( MenuTime ):SetTag( "Tasking" )
@@ -777,11 +785,6 @@ end
 -- @return #TASK self
 function TASK:SetAssignedMenuForGroup( TaskGroup, MenuTime )
   self:F( { TaskGroup:GetName(), MenuTime } )
-
-  local Mission = self:GetMission()
-  local MissionName = Mission:GetName()
-  local CommandCenter = Mission:GetCommandCenter()
-  local CommandCenterMenu = CommandCenter:GetMenu()
 
   local TaskType = self:GetType()
   local TaskPlayerCount = self:GetPlayerCount()
@@ -831,9 +834,6 @@ function TASK:RefreshMenus( TaskGroup, MenuTime )
 
   local Mission = self:GetMission()
   local MissionName = Mission:GetName()
-  local CommandCenter = Mission:GetCommandCenter()
-  local CommandCenterMenu = CommandCenter:GetMenu()
-
   local MissionMenu = Mission:GetMenu( TaskGroup )
 
   local TaskName = self:GetName()
@@ -865,7 +865,6 @@ function TASK:RemoveAssignedMenuForGroup( TaskGroup )
 
   local Mission = self:GetMission()
   local MissionName = Mission:GetName()
-  
   local MissionMenu = Mission:GetMenu( TaskGroup )
   
   if MissionMenu then
@@ -1223,12 +1222,16 @@ function TASK:onenterAssigned( From, Event, To, PlayerUnit, PlayerName )
 
   --- This test is required, because the state transition will be fired also when the state does not change in case of an event.  
   if From ~= "Assigned" then
-    self:F( { From, Event, To, PlayerUnit:GetName(), PlayerName } )
 
-    self:GetMission():GetCommandCenter():MessageToCoalition( "Task " .. self:GetName() .. " is assigned." )
-    
+    local PlayerNames = self:GetPlayerNames()
+    local PlayerText = REPORT:New()
+    for PlayerName, TaskName in pairs( PlayerNames ) do
+      PlayerText:Add( PlayerName )
+    end
+
+    self:GetMission():GetCommandCenter():MessageToCoalition( "Task " .. self:GetName() .. " is assigned to players " .. PlayerText:Text(",") .. ". Good Luck!" )
+
     -- Set the total Progress to be achieved.
-    
     self:SetGoalTotal() -- Polymorphic to set the initial goal total!
     
     if self.Dispatcher then
@@ -1244,7 +1247,7 @@ function TASK:onenterAssigned( From, Event, To, PlayerUnit, PlayerName )
     self:SetMenu()
 
     self:F( { "--> Task Assigned", TaskName = self:GetName(), Mission = self:GetMission():GetName() } )
-    self:F( { "--> Task Player Names", PlayerNames = self:GetPlayerNames() } )
+    self:F( { "--> Task Player Names", PlayerNames = PlayerNames } )
 
   end
 end

@@ -538,10 +538,11 @@ end
 -- @param #string Message The message text
 -- @param Dcs.DCSTYpes#Duration Duration The duration of the message.
 -- @param Dcs.DCScoalition#coalition MessageCoalition The Coalition receiving the message.
-function POSITIONABLE:MessageToCoalition( Message, Duration, MessageCoalition )
+-- @param #string Name (optional) The Name of the sender. If not provided, the Name is the type of the Positionable.
+function POSITIONABLE:MessageToCoalition( Message, Duration, MessageCoalition, Name )
   self:F2( { Message, Duration } )
 
-  local Name = ""
+  local Name = Name or ""
   
   local DCSObject = self:GetDCSObject()
   if DCSObject then
@@ -558,10 +559,11 @@ end
 -- @param #string Message The message text
 -- @param Core.Message#MESSAGE.Type MessageType The message type that determines the duration.
 -- @param Dcs.DCScoalition#coalition MessageCoalition The Coalition receiving the message.
-function POSITIONABLE:MessageTypeToCoalition( Message, MessageType, MessageCoalition )
+-- @param #string Name (optional) The Name of the sender. If not provided, the Name is the type of the Positionable.
+function POSITIONABLE:MessageTypeToCoalition( Message, MessageType, MessageCoalition, Name )
   self:F2( { Message, MessageType } )
 
-  local Name = ""
+  local Name = Name or ""
   
   local DCSObject = self:GetDCSObject()
   if DCSObject then

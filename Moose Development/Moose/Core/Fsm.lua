@@ -441,6 +441,8 @@ do -- FSM
   -- @return #table
   function FSM:GetProcesses()
   
+    self:F( { Processes = self._Processes } )
+  
     return self._Processes or {}
   end
   
@@ -449,6 +451,18 @@ do -- FSM
     for ProcessID, Process in pairs( self:GetProcesses() ) do
       if Process.From == From and Process.Event == Event then
         return Process.fsm
+      end
+    end
+    
+    error( "Sub-Process from state " .. From .. " with event " .. Event .. " not found!" )
+  end
+  
+  function FSM:SetProcess( From, Event, Fsm )
+  
+    for ProcessID, Process in pairs( self:GetProcesses() ) do
+      if Process.From == From and Process.Event == Event then
+        Process.fsm = Fsm
+        return true
       end
     end
     
