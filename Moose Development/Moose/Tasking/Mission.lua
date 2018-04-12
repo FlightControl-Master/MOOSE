@@ -443,11 +443,11 @@ do -- Group Assignment
     local MissionGroupName = MissionGroup:GetName()
     
     if self.AssignedGroups[MissionGroupName] == MissionGroup then
-      self:T( { "Mission is assigned to:", MissionGroup:GetName() } )
+      self:T2( { "Mission is assigned to:", MissionGroup:GetName() } )
       return true
     end
     
-    self:T( { "Mission is not assigned to:", MissionGroup:GetName() } )
+    self:T2( { "Mission is not assigned to:", MissionGroup:GetName() } )
     return false
   end
   

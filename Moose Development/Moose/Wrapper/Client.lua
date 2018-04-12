@@ -179,7 +179,7 @@ function CLIENT:ShowBriefing()
   if not self.ClientBriefingShown then
     self.ClientBriefingShown = true
     local Briefing = ""
-    if self.ClientBriefing then
+    if self.ClientBriefing and self.ClientBriefing ~= "" then
       Briefing = Briefing .. self.ClientBriefing
       self:Message( Briefing, 60, "Briefing" )
     end

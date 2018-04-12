@@ -352,13 +352,39 @@ function GROUP:GetUnits()
 
   return nil
 end
+
+
+--- Returns a list of @{Unit} objects of the @{Group} that are occupied by a player.
+-- @param #GROUP self
+-- @return #list<Wrapper.Unit#UNIT> The list of player occupied @{Unit} objects of the @{Group}.
+function GROUP:GetPlayerUnits()
+  self:F2( { self.GroupName } )
+  local DCSGroup = self:GetDCSObject()
+
+  if DCSGroup then
+    local DCSUnits = DCSGroup:getUnits()
+    local Units = {}
+    for Index, UnitData in pairs( DCSUnits ) do
+      local PlayerUnit = UNIT:Find( UnitData )
+      if PlayerUnit:GetPlayerName() then
+        Units[#Units+1] = PlayerUnit
+      end
+    end
+    self:T3( Units )
+    return Units
+  end
+
+  return nil
+end
+
+
 --- Returns the UNIT wrapper class with number UnitNumber.
 -- If the underlying DCS Unit does not exist, the method will return nil. .
 -- @param #GROUP self
 -- @param #number UnitNumber The number of the UNIT wrapper class to be returned.
 -- @return Wrapper.Unit#UNIT The UNIT wrapper class.
 function GROUP:GetUnit( UnitNumber )
-  self:E( { self.GroupName, UnitNumber } )
+  self:F3( { self.GroupName, UnitNumber } )
 
   local DCSGroup = self:GetDCSObject()
 
@@ -378,7 +404,7 @@ end
 -- @param #number UnitNumber The number of the DCS Unit to be returned.
 -- @return Dcs.DCSWrapper.Unit#Unit The DCS Unit.
 function GROUP:GetDCSUnit( UnitNumber )
-  self:F2( { self.GroupName, UnitNumber } )
+  self:F3( { self.GroupName, UnitNumber } )
 
   local DCSGroup = self:GetDCSObject()
 
@@ -396,7 +422,7 @@ end
 -- @param #GROUP self
 -- @return #number The DCS Group size.
 function GROUP:GetSize()
-  self:F2( { self.GroupName } )
+  self:F3( { self.GroupName } )
   local DCSGroup = self:GetDCSObject()
 
   if DCSGroup then
@@ -419,7 +445,7 @@ end
 -- @param #GROUP self
 -- @return #number The DCS Group initial size.
 function GROUP:GetInitialSize()
-  self:F2( { self.GroupName } )
+  self:F3( { self.GroupName } )
   local DCSGroup = self:GetDCSObject()
 
   if DCSGroup then
@@ -1382,6 +1408,8 @@ do -- Players
   -- @return #nil The group has no players
   function GROUP:GetPlayerNames()
   
+    local HasPlayers = false
+  
     local PlayerNames = {}
     
     local Units = self:GetUnits()
@@ -1391,11 +1419,16 @@ do -- Players
       if PlayerName and PlayerName ~= "" then
         PlayerNames = PlayerNames or {}
         table.insert( PlayerNames, PlayerName )
+        HasPlayers = true
       end   
     end
+
+    if HasPlayers == true then    
+      self:F2( PlayerNames )
+      return PlayerNames
+    end
     
-    self:F2( PlayerNames )
-    return PlayerNames
+    return nil
   end
   
 end

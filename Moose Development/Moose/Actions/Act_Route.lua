@@ -244,10 +244,8 @@ do -- ACT_ROUTE
   -- @param #string From
   -- @param #string To
   function ACT_ROUTE:onbeforeRoute( ProcessUnit, From, Event, To )
-    self:F( { "BeforeRoute 1", self.DisplayCount, self.DisplayInterval } )
   
     if ProcessUnit:IsAlive() then
-      self:F( "BeforeRoute 2" )
       local HasArrived = self:onfuncHasArrived( ProcessUnit ) -- Polymorphic
       if self.DisplayCount >= self.DisplayInterval then
         self:T( { HasArrived = HasArrived } )
@@ -258,8 +256,6 @@ do -- ACT_ROUTE
       else
         self.DisplayCount = self.DisplayCount + 1
       end
-      
-      self:T( { DisplayCount = self.DisplayCount } )
       
       if HasArrived then
         self:__Arrive( 1 )
@@ -343,7 +339,7 @@ do -- ACT_ROUTE_POINT
   -- @param #ACT_ROUTE_POINT self
   -- @param #number Range The Range to consider the arrival. Default is 10000 meters.
   function ACT_ROUTE_POINT:SetRange( Range )
-    self:F2( { self.Range } )
+    self:F2( { Range } )
     self.Range = Range or 10000
   end  
   
@@ -351,6 +347,7 @@ do -- ACT_ROUTE_POINT
   -- @param #ACT_ROUTE_POINT self
   -- @return #number The Range to consider the arrival. Default is 10000 meters.
   function ACT_ROUTE_POINT:GetRange()
+    self:F2( { self.Range } )
     return self.Range
   end  
   

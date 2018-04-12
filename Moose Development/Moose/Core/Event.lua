@@ -744,7 +744,7 @@ function EVENT:onEvent( Event )
 
   local EventMeta = _EVENTMETA[Event.id]
 
-  self:E( { EventMeta.Text, Event } )  -- Activate the see all incoming events ...
+  --self:E( { EventMeta.Text, Event } )  -- Activate the see all incoming events ...
 
   if self and 
      self.Events and 

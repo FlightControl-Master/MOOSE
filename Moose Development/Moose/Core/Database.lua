@@ -719,7 +719,7 @@ function DATABASE:_EventOnBirth( Event )
       Event.IniGroup = self:FindGroup( Event.IniDCSGroupName )
       local PlayerName = Event.IniUnit:GetPlayerName()
       self:E( { "PlayerName:", PlayerName } )
-      if PlayerName ~= "" then
+      if PlayerName then
         self:E( { "Player Joined:", PlayerName } )
         if not self.PLAYERS[PlayerName] then
           self:AddPlayer( Event.IniUnitName, PlayerName )
@@ -788,7 +788,7 @@ function DATABASE:_EventOnPlayerLeaveUnit( Event )
   if Event.IniUnit then
     if Event.IniObjectCategory == 1 then
       local PlayerName = Event.IniUnit:GetPlayerName()
-      if self.PLAYERS[PlayerName] then
+      if PlayerName and self.PLAYERS[PlayerName] then
         self:E( { "Player Left:", PlayerName } )
         local Settings = SETTINGS:Set( PlayerName )
         Settings:RemovePlayerMenu( Event.IniUnit )

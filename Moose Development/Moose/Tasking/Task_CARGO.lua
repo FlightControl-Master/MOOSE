@@ -261,17 +261,9 @@ do -- TASK_CARGO
     function Fsm:onafterSelectAction( TaskUnit, Task )
       
       local TaskUnitName = TaskUnit:GetName()
-      
-      self:F( { TaskUnit = TaskUnitName, Task = Task and Task:GetClassNameAndID() } )
-
       local MenuTime = Task:InitTaskControlMenu( TaskUnit )
-      
       local MenuControl = Task:GetTaskControlMenu( TaskUnit )
-            
       local CargoItemCount = TaskUnit:CargoItemCount()
-
-      --Task:GetMission():GetCommandCenter():MessageToGroup( "Cargo in carrier: " .. CargoItemCount, TaskUnit:GetGroup() )
-
       
       Task.SetCargo:ForEachCargo(
         

@@ -1289,7 +1289,7 @@ do -- COORDINATE
   -- @return #string The coordinate Text in the configured coordinate system.
   function COORDINATE:ToStringFromRP( ReferenceCoord, ReferenceName, Controllable, Settings ) -- R2.2
   
-    self:F( { ReferenceCoord = ReferenceCoord, ReferenceName = ReferenceName } )
+    self:F2( { ReferenceCoord = ReferenceCoord, ReferenceName = ReferenceName } )
 
     local Settings = Settings or ( Controllable and _DATABASE:GetPlayerSettings( Controllable:GetPlayerName() ) ) or _SETTINGS
     
@@ -1318,7 +1318,7 @@ do -- COORDINATE
   -- @return #string The coordinate Text in the configured coordinate system.
   function COORDINATE:ToStringA2G( Controllable, Settings ) -- R2.2
   
-    self:F( { Controllable = Controllable and Controllable:GetName() } )
+    self:F2( { Controllable = Controllable and Controllable:GetName() } )
 
     local Settings = Settings or ( Controllable and _DATABASE:GetPlayerSettings( Controllable:GetPlayerName() ) ) or _SETTINGS
 
@@ -1353,7 +1353,7 @@ do -- COORDINATE
   -- @return #string The coordinate Text in the configured coordinate system.
   function COORDINATE:ToStringA2A( Controllable, Settings ) -- R2.2
   
-    self:F( { Controllable = Controllable and Controllable:GetName() } )
+    self:F2( { Controllable = Controllable and Controllable:GetName() } )
 
     local Settings = Settings or ( Controllable and _DATABASE:GetPlayerSettings( Controllable:GetPlayerName() ) ) or _SETTINGS
 
@@ -1393,7 +1393,7 @@ do -- COORDINATE
   -- @return #string The coordinate Text in the configured coordinate system.
   function COORDINATE:ToString( Controllable, Settings, Task ) -- R2.2
   
-    self:F( { Controllable = Controllable and Controllable:GetName() } )
+    self:F2( { Controllable = Controllable and Controllable:GetName() } )
 
     local Settings = Settings or ( Controllable and _DATABASE:GetPlayerSettings( Controllable:GetPlayerName() ) ) or _SETTINGS
 
@@ -1442,7 +1442,7 @@ do -- COORDINATE
   -- @return #string The pressure text in the configured measurement system.
   function COORDINATE:ToStringPressure( Controllable, Settings ) -- R2.3
   
-    self:F( { Controllable = Controllable and Controllable:GetName() } )
+    self:F2( { Controllable = Controllable and Controllable:GetName() } )
 
     local Settings = Settings or ( Controllable and _DATABASE:GetPlayerSettings( Controllable:GetPlayerName() ) ) or _SETTINGS
 
@@ -1458,7 +1458,7 @@ do -- COORDINATE
   -- @return #string The wind text in the configured measurement system.
   function COORDINATE:ToStringWind( Controllable, Settings ) -- R2.3
   
-    self:F( { Controllable = Controllable and Controllable:GetName() } )
+    self:F2( { Controllable = Controllable and Controllable:GetName() } )
 
     local Settings = Settings or ( Controllable and _DATABASE:GetPlayerSettings( Controllable:GetPlayerName() ) ) or _SETTINGS
 
@@ -1474,7 +1474,7 @@ do -- COORDINATE
   -- @return #string The temperature text in the configured measurement system.
   function COORDINATE:ToStringTemperature( Controllable, Settings ) -- R2.3
   
-    self:F( { Controllable = Controllable and Controllable:GetName() } )
+    self:F2( { Controllable = Controllable and Controllable:GetName() } )
 
     local Settings = Settings or ( Controllable and _DATABASE:GetPlayerSettings( Controllable:GetPlayerName() ) ) or _SETTINGS
 

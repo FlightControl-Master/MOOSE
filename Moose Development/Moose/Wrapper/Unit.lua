@@ -349,9 +349,21 @@ function UNIT:GetPlayerName()
   if DCSUnit then
   
     local PlayerName = DCSUnit:getPlayerName()
+    -- TODO - Workaround for DCS-BUG-3
     if PlayerName == nil or PlayerName == "" then
-      PlayerName = "Player" .. DCSUnit:getID()
+      local PlayerCategory = DCSUnit:getDesc().category
+      if PlayerCategory == Unit.Category.GROUND_UNIT or PlayerCategory == Unit.Category.SHIP then
+        PlayerName = "Player" .. DCSUnit:getID()
+      end
     end
+--    -- Good code
+--    if PlayerName == nil then 
+--      PlayerName = nil
+--    else
+--      if PlayerName == "" then
+--        PlayerName = "Player" .. DCSUnit:getID()
+--      end
+--    end
     return PlayerName
   end
 
@@ -638,11 +650,8 @@ function UNIT:GetThreatLevel()
   if Descriptor then 
   
     local Attributes = Descriptor.attributes
-    self:T( Attributes )
   
     if self:IsGround() then
-    
-      self:T( "Ground" )
     
       local ThreatLevels = {
         "Unarmed", 
@@ -680,8 +689,6 @@ function UNIT:GetThreatLevel()
     
     if self:IsAir() then
     
-      self:T( "Air" )
-  
       local ThreatLevels = {
         "Unarmed", 
         "Tanker", 
@@ -713,8 +720,6 @@ function UNIT:GetThreatLevel()
     end
     
     if self:IsShip() then
-  
-      self:T( "Ship" )
   
   --["Aircraft Carriers"] = {"Heavy armed ships",},
   --["Cruisers"] = {"Heavy armed ships",},
@@ -753,7 +758,6 @@ function UNIT:GetThreatLevel()
     end
   end
 
-  self:T2( ThreatLevel )
   return ThreatLevel, ThreatText
 
 end
