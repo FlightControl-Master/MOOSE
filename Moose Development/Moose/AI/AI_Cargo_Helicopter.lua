@@ -24,19 +24,22 @@ AI_CARGO_HELICOPTER = {
 
 --- Creates a new AI_CARGO_HELICOPTER object.
 -- @param #AI_CARGO_HELICOPTER self
--- @param Wrapper.Unit#UNIT CargoCarrier
--- @param Cargo.CargoGroup#CARGO_GROUP CargoGroup
+-- @param Wrapper.Unit#UNIT Helicopter
+-- @param Core.Set#SET_CARGO CargoSet
 -- @param #number CombatRadius
 -- @return #AI_CARGO_HELICOPTER
-function AI_CARGO_HELICOPTER:New( CargoCarrier, CargoGroup )
+function AI_CARGO_HELICOPTER:New( Helicopter, CargoSet )
 
   local self = BASE:Inherit( self, FSM_CONTROLLABLE:New() ) -- #AI_CARGO_HELICOPTER
 
-  self.CargoGroup = CargoGroup -- Cargo.CargoGroup#CARGO_GROUP
+  self.CargoSet = CargoSet -- Cargo.CargoGroup#CARGO_GROUP
 
-  self:SetStartState( "UnLoaded" ) 
+  self:SetStartState( "Unloaded" ) 
   
-  self:AddTransition( "*", "Load", "Boarding" )
+  self:AddTransition( "Unloaded", "Pickup", "*" )
+  self:AddTransition( "Loaded", "Deploy", "*" )
+  
+  self:AddTransition( "Unloaded", "Load", "Boarding" )
   self:AddTransition( "Boarding", "Board", "Boarding" )
   self:AddTransition( "Boarding", "Loaded", "Loaded" )
   self:AddTransition( "Loaded", "Unload", "Unboarding" )
@@ -47,9 +50,65 @@ function AI_CARGO_HELICOPTER:New( CargoCarrier, CargoGroup )
   
   self:AddTransition( "*", "Destroyed", "Destroyed" )
 
-  self:__Monitor( 1 )
+  --- Pickup Handler OnBefore for AI_CARGO_HELICOPTER
+  -- @function [parent=#AI_CARGO_HELICOPTER] OnBeforePickup
+  -- @param #AI_CARGO_HELICOPTER self
+  -- @param #string From
+  -- @param #string Event
+  -- @param #string To
+  -- @param Core.Point#COORDINATE Coordinate
+  -- @return #boolean
+  
+  --- Pickup Handler OnAfter for AI_CARGO_HELICOPTER
+  -- @function [parent=#AI_CARGO_HELICOPTER] OnAfterPickup
+  -- @param #AI_CARGO_HELICOPTER self
+  -- @param #string From
+  -- @param #string Event
+  -- @param #string To
+  -- @param Core.Point#COORDINATE Coordinate
+  
+  --- Pickup Trigger for AI_CARGO_HELICOPTER
+  -- @function [parent=#AI_CARGO_HELICOPTER] Pickup
+  -- @param #AI_CARGO_HELICOPTER self
+  -- @param Core.Point#COORDINATE Coordinate
+  
+  --- Pickup Asynchronous Trigger for AI_CARGO_HELICOPTER
+  -- @function [parent=#AI_CARGO_HELICOPTER] __Pickup
+  -- @param #AI_CARGO_HELICOPTER self
+  -- @param #number Delay
+  -- @param Core.Point#COORDINATE Coordinate
+  
+  --- Deploy Handler OnBefore for AI_CARGO_HELICOPTER
+  -- @function [parent=#AI_CARGO_HELICOPTER] OnBeforeDeploy
+  -- @param #AI_CARGO_HELICOPTER self
+  -- @param #string From
+  -- @param #string Event
+  -- @param #string To
+  -- @param Core.Point#COORDINATE Coordinate
+  -- @return #boolean
+  
+  --- Deploy Handler OnAfter for AI_CARGO_HELICOPTER
+  -- @function [parent=#AI_CARGO_HELICOPTER] OnAfterDeploy
+  -- @param #AI_CARGO_HELICOPTER self
+  -- @param #string From
+  -- @param #string Event
+  -- @param #string To
+  -- @param Core.Point#COORDINATE Coordinate
+  
+  --- Deploy Trigger for AI_CARGO_HELICOPTER
+  -- @function [parent=#AI_CARGO_HELICOPTER] Deploy
+  -- @param #AI_CARGO_HELICOPTER self
+  -- @param Core.Point#COORDINATE Coordinate
+  
+  --- Deploy Asynchronous Trigger for AI_CARGO_HELICOPTER
+  -- @function [parent=#AI_CARGO_HELICOPTER] __Deploy
+  -- @param #AI_CARGO_HELICOPTER self
+  -- @param Core.Point#COORDINATE Coordinate
+  -- @param #number Delay
 
-  self:SetCarrier( CargoCarrier )
+
+
+  self:SetCarrier( Helicopter )
   
   return self
 end
@@ -57,52 +116,54 @@ end
 
 --- Set the Carrier.
 -- @param #AI_CARGO_HELICOPTER self
--- @param Wrapper.Unit#UNIT CargoCarrier
+-- @param Wrapper.Unit#UNIT Helicopter
 -- @return #AI_CARGO_HELICOPTER
-function AI_CARGO_HELICOPTER:SetCarrier( CargoCarrier )
+function AI_CARGO_HELICOPTER:SetCarrier( Helicopter )
 
-  self.CargoCarrier = CargoCarrier -- Wrapper.Unit#UNIT
-  self.CargoCarrier:SetState( self.CargoCarrier, "AI_CARGO_HELICOPTER", self )
+  local AICargo = self
 
-  CargoCarrier:HandleEvent( EVENTS.Dead )
-  CargoCarrier:HandleEvent( EVENTS.Hit )
-  CargoCarrier:HandleEvent( EVENTS.Land )
+  self.Helicopter = Helicopter -- Wrapper.Unit#UNIT
+  self.Helicopter:SetState( self.Helicopter, "AI_CARGO_HELICOPTER", self )
+
+  self.RoutePickup = false
+  self.RouteDeploy = false
+
+  Helicopter:HandleEvent( EVENTS.Dead )
+  Helicopter:HandleEvent( EVENTS.Hit )
+  Helicopter:HandleEvent( EVENTS.Land )
   
-  function CargoCarrier:OnEventDead( EventData )
+  function Helicopter:OnEventDead( EventData )
     local AICargoTroops = self:GetState( self, "AI_CARGO_HELICOPTER" )
     self:F({AICargoTroops=AICargoTroops})
     if AICargoTroops then
       self:F({})
       if not AICargoTroops:Is( "Loaded" ) then
-        -- There are enemies within combat range. Unload the CargoCarrier.
+        -- There are enemies within combat range. Unload the Helicopter.
         AICargoTroops:Destroyed()
       end
     end
   end
   
   
-  function CargoCarrier:OnEventHit( EventData )
+  function Helicopter:OnEventHit( EventData )
     local AICargoTroops = self:GetState( self, "AI_CARGO_HELICOPTER" )
     if AICargoTroops then
       self:F( { OnHitLoaded = AICargoTroops:Is( "Loaded" ) } )
       if AICargoTroops:Is( "Loaded" ) or AICargoTroops:Is( "Boarding" ) then
-        -- There are enemies within combat range. Unload the CargoCarrier.
+        -- There are enemies within combat range. Unload the Helicopter.
         AICargoTroops:Unload()
       end
     end
   end
   
   
-  function CargoCarrier:OnEventLand( EventData )
-    self:Landed()
+  function Helicopter:OnEventLand( EventData )
+    AICargo:Landed()
   end
   
-  self.Zone = ZONE_UNIT:New( self.CargoCarrier:GetName() .. "-Zone", self.CargoCarrier, 500 )
-  self.Coalition = self.CargoCarrier:GetCoalition()
+  self.Coalition = self.Helicopter:GetCoalition()
   
-  self:SetControllable( CargoCarrier )
-
-  self:Guard()
+  self:SetControllable( Helicopter )
 
   return self
 end
@@ -132,25 +193,168 @@ function AI_CARGO_HELICOPTER:FindCarrier( Coordinate, Radius )
 
 end
 
+--- @param #AI_CARGO_HELICOPTER self
+-- @param Wrapper.Unit#UNIT Helicopter
+-- @param From
+-- @param Event
+-- @param To
+-- @param Core.Point#COORDINATE Coordinate
+-- @param #number Speed
+function AI_CARGO_HELICOPTER:onafterLanded( Helicopter, From, Event, To )
+
+  if Helicopter and Helicopter:IsAlive() then
+
+    if self.RoutePickup == true then
+      self:Load( Helicopter:GetPointVec2() )
+      self.RoutePickup = false
+    end
+    
+    if self.RouteDeploy == true then
+      self:Unload()
+      self.RouteDeploy = false
+    end
+     
+  end
+  
+end
+
+
 
 --- @param #AI_CARGO_HELICOPTER self
--- @param Wrapper.Unit#UNIT CargoCarrier
-function AI_CARGO_HELICOPTER:onafterLoad( CargoCarrier, From, Event, To )
+-- @param Wrapper.Unit#UNIT Helicopter
+-- @param From
+-- @param Event
+-- @param To
+-- @param Core.Point#COORDINATE Coordinate
+-- @param #number Speed
+function AI_CARGO_HELICOPTER:onafterPickup( Helicopter, From, Event, To, Coordinate, Speed )
 
-  if CargoCarrier and CargoCarrier:IsAlive() then
-    self:__Board( 10 ) 
-    self.CargoGroup:Board( CargoCarrier, 10 )
+  if Helicopter and Helicopter:IsAlive() then
+
+    self.RoutePickup = true
+     
+    local Route = {}
+    
+    --- Calculate the target route point.
+    local CoordinateFrom = Helicopter:GetCoordinate()
+    local CoordinateTo   = Coordinate
+
+    --- Create a route point of type air.
+    local WaypointFrom = CoordinateFrom:WaypointAir( 
+      "RADIO", 
+      POINT_VEC3.RoutePointType.TurningPoint, 
+      POINT_VEC3.RoutePointAction.TurningPoint, 
+      Speed, 
+      true 
+    )
+
+    --- Create a route point of type air.
+    local WaypointTo = CoordinateTo:WaypointAir( 
+      "RADIO", 
+      POINT_VEC3.RoutePointType.TurningPoint, 
+      POINT_VEC3.RoutePointAction.TurningPoint, 
+      Speed, 
+      true 
+    )
+
+    Route[#Route+1] = WaypointFrom
+    Route[#Route+1] = WaypointTo
+    
+    --- Now we're going to do something special, we're going to call a function from a waypoint action at the AIControllable...
+    Helicopter:WayPointInitialize( Route )
+  
+    local Tasks = {}
+    
+    Tasks[#Tasks+1] = Helicopter:TaskLandAtVec2( CoordinateTo:GetVec2() )
+    Route[#Route].task = Helicopter:TaskCombo( Tasks )
+
+    -- Now route the helicopter
+    Helicopter:Route( Route, 0.5 )
+  end
+  
+end
+
+
+--- @param #AI_CARGO_HELICOPTER self
+-- @param Wrapper.Unit#UNIT Helicopter
+-- @param From
+-- @param Event
+-- @param To
+-- @param Core.Point#COORDINATE Coordinate
+-- @param #number Speed
+function AI_CARGO_HELICOPTER:onafterDeploy( Helicopter, From, Event, To, Coordinate, Speed )
+
+  if Helicopter and Helicopter:IsAlive() then
+
+    self.RouteDeploy = true
+     
+    local Route = {}
+    
+    --- Calculate the target route point.
+    local CoordinateFrom = Helicopter:GetCoordinate()
+    local CoordinateTo   = Coordinate
+
+    --- Create a route point of type air.
+    local WaypointFrom = CoordinateFrom:WaypointAir( 
+      "RADIO", 
+      POINT_VEC3.RoutePointType.TurningPoint, 
+      POINT_VEC3.RoutePointAction.TurningPoint, 
+      Speed, 
+      true 
+    )
+
+    --- Create a route point of type air.
+    local WaypointTo = CoordinateTo:WaypointAir( 
+      "RADIO", 
+      POINT_VEC3.RoutePointType.TurningPoint, 
+      POINT_VEC3.RoutePointAction.TurningPoint, 
+      Speed, 
+      true 
+    )
+
+    Route[#Route+1] = WaypointFrom
+    Route[#Route+1] = WaypointTo
+    
+    --- Now we're going to do something special, we're going to call a function from a waypoint action at the AIControllable...
+    Helicopter:WayPointInitialize( Route )
+  
+    local Tasks = {}
+    
+    Tasks[#Tasks+1] = Helicopter:TaskLandAtVec2( CoordinateTo:GetVec2() )
+    Route[#Route].task = Helicopter:TaskCombo( Tasks )
+
+    -- Now route the helicopter
+    Helicopter:Route( Route, 0.5 )
+  end
+  
+end
+
+
+--- @param #AI_CARGO_HELICOPTER self
+-- @param Wrapper.Unit#UNIT Helicopter
+function AI_CARGO_HELICOPTER:onafterLoad( Helicopter, From, Event, To, Coordinate )
+
+  if Helicopter and Helicopter:IsAlive() then
+  
+    for _, Cargo in pairs( self.CargoSet:GetSet() ) do
+      if Cargo:IsInLoadRadius( Coordinate ) then
+        self:__Board( 5 )
+        Cargo:Board( Helicopter, 25 )
+        self.Cargo = Cargo
+        break
+      end
+    end
   end
   
 end
 
 --- @param #AI_CARGO_HELICOPTER self
--- @param Wrapper.Unit#UNIT CargoCarrier
-function AI_CARGO_HELICOPTER:onafterBoard( CargoCarrier, From, Event, To )
+-- @param Wrapper.Unit#UNIT Helicopter
+function AI_CARGO_HELICOPTER:onafterBoard( Helicopter, From, Event, To )
 
-  if CargoCarrier and CargoCarrier:IsAlive() then
-    self:F({ IsLoaded = self.CargoGroup:IsLoaded() } )
-    if not self.CargoGroup:IsLoaded() then
+  if Helicopter and Helicopter:IsAlive() then
+    self:F({ IsLoaded = self.Cargo:IsLoaded() } )
+    if not self.Cargo:IsLoaded() then
       self:__Board( 10 )
     else
       self:__Loaded( 1 )
@@ -160,34 +364,32 @@ function AI_CARGO_HELICOPTER:onafterBoard( CargoCarrier, From, Event, To )
 end
 
 --- @param #AI_CARGO_HELICOPTER self
--- @param Wrapper.Unit#UNIT CargoCarrier
-function AI_CARGO_HELICOPTER:onafterLoaded( CargoCarrier, From, Event, To )
+-- @param Wrapper.Unit#UNIT Helicopter
+function AI_CARGO_HELICOPTER:onafterLoaded( Helicopter, From, Event, To )
 
-  if CargoCarrier and CargoCarrier:IsAlive() then
-    CargoCarrier:RouteResume()
+  if Helicopter and Helicopter:IsAlive() then
   end
   
 end
 
 
 --- @param #AI_CARGO_HELICOPTER self
--- @param Wrapper.Unit#UNIT CargoCarrier
-function AI_CARGO_HELICOPTER:onafterUnload( CargoCarrier, From, Event, To )
+-- @param Wrapper.Unit#UNIT Helicopter
+function AI_CARGO_HELICOPTER:onafterUnload( Helicopter, From, Event, To )
 
-  if CargoCarrier and CargoCarrier:IsAlive() then
-    CargoCarrier:RouteStop()
-    self.CargoGroup:UnBoard( )
+  if Helicopter and Helicopter:IsAlive() then
+    self.Cargo:UnBoard()
     self:__Unboard( 10 ) 
   end
   
 end
 
 --- @param #AI_CARGO_HELICOPTER self
--- @param Wrapper.Unit#UNIT CargoCarrier
-function AI_CARGO_HELICOPTER:onafterUnboard( CargoCarrier, From, Event, To )
+-- @param Wrapper.Unit#UNIT Helicopter
+function AI_CARGO_HELICOPTER:onafterUnboard( Helicopter, From, Event, To )
 
-  if CargoCarrier and CargoCarrier:IsAlive() then
-    if not self.CargoGroup:IsUnLoaded() then
+  if Helicopter and Helicopter:IsAlive() then
+    if not self.Cargo:IsUnLoaded() then
       self:__Unboard( 10 ) 
     else
       self:__Unloaded( 1 )
@@ -197,11 +399,11 @@ function AI_CARGO_HELICOPTER:onafterUnboard( CargoCarrier, From, Event, To )
 end
 
 --- @param #AI_CARGO_HELICOPTER self
--- @param Wrapper.Unit#UNIT CargoCarrier
-function AI_CARGO_HELICOPTER:onafterUnloaded( CargoCarrier, From, Event, To )
+-- @param Wrapper.Unit#UNIT Helicopter
+function AI_CARGO_HELICOPTER:onafterUnloaded( Helicopter, From, Event, To )
 
-  if CargoCarrier and CargoCarrier:IsAlive() then
-    self.CargoCarrier = CargoCarrier
+  if Helicopter and Helicopter:IsAlive() then
+    self.Helicopter = Helicopter
   end
   
 end
