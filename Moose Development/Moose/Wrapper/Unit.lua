@@ -349,7 +349,7 @@ function UNIT:GetPlayerName()
   if DCSUnit then
   
     local PlayerName = DCSUnit:getPlayerName()
-    -- TODO - Workaround for DCS-BUG-3
+    -- TODO Workaround DCS-BUG-3 - https://github.com/FlightControl-Master/MOOSE/issues/696
     if PlayerName == nil or PlayerName == "" then
       local PlayerCategory = DCSUnit:getDesc().category
       if PlayerCategory == Unit.Category.GROUND_UNIT or PlayerCategory == Unit.Category.SHIP then

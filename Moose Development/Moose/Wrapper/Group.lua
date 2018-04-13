@@ -1430,6 +1430,26 @@ do -- Players
     
     return nil
   end
+
+
+  --- Get the active player count in the group.
+  -- @param #GROUP self
+  -- @return #number The amount of players.
+  function GROUP:GetPlayerCount()
+  
+    local PlayerCount = 0
+    
+    local Units = self:GetUnits()
+    for UnitID, UnitData in pairs( Units or {} ) do
+      local Unit = UnitData -- Wrapper.Unit#UNIT
+      local PlayerName = Unit:GetPlayerName()
+      if PlayerName and PlayerName ~= "" then
+        PlayerCount = PlayerCount + 1
+      end   
+    end
+
+    return PlayerCount
+  end
   
 end
 

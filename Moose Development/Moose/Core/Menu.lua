@@ -917,8 +917,8 @@ do
       self:RemoveSubMenus( MenuTime, MenuTag )
       if not MenuTime or self.MenuTime ~= MenuTime then
         if ( not MenuTag ) or ( MenuTag and self.MenuTag and MenuTag == self.MenuTag ) then
-          self:F( { Group = self.GroupID, Text = self.MenuText, Path = self.MenuPath } )
           if self.MenuPath ~= nil then
+            self:F( { Group = self.GroupID, Text = self.MenuText, Path = self.MenuPath } )
             missionCommands.removeItemForGroup( self.GroupID, self.MenuPath )
           end
           MENU_INDEX:ClearGroupMenu( self.Group, Path )
@@ -1009,8 +1009,8 @@ do
     if GroupMenu == self then
       if not MenuTime or self.MenuTime ~= MenuTime then
         if ( not MenuTag ) or ( MenuTag and self.MenuTag and MenuTag == self.MenuTag ) then
-          self:F( { Group = self.GroupID, Text = self.MenuText, Path = self.MenuPath } )
           if self.MenuPath ~= nil then
+           self:F( { Group = self.GroupID, Text = self.MenuText, Path = self.MenuPath } )
             missionCommands.removeItemForGroup( self.GroupID, self.MenuPath )
           end
           MENU_INDEX:ClearGroupMenu( self.Group, Path )
@@ -1150,8 +1150,8 @@ do
       self:RemoveSubMenus( MenuTime, MenuTag )
       if not MenuTime or self.MenuTime ~= MenuTime then
         if ( not MenuTag ) or ( MenuTag and self.MenuTag and MenuTag == self.MenuTag ) then
-          self:F( { Group = self.GroupID, Text = self.MenuText, Path = self.MenuPath } )
           if self.MenuPath ~= nil then
+            self:F( { Group = self.GroupID, Text = self.MenuText, Path = self.MenuPath } )
             missionCommands.removeItemForGroup( self.GroupID, self.MenuPath )
           end
           MENU_INDEX:ClearGroupMenu( self.Group, Path )
@@ -1261,8 +1261,8 @@ do
     if GroupMenu == self then
       if not MenuTime or self.MenuTime ~= MenuTime then
         if ( not MenuTag ) or ( MenuTag and self.MenuTag and MenuTag == self.MenuTag ) then
-          self:F( { Group = self.GroupID, Text = self.MenuText, Path = self.MenuPath } )
           if self.MenuPath ~= nil then
+            self:F( { Group = self.GroupID, Text = self.MenuText, Path = self.MenuPath } )
             missionCommands.removeItemForGroup( self.GroupID, self.MenuPath )
           end
           MENU_INDEX:ClearGroupMenu( self.Group, Path )

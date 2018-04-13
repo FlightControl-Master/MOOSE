@@ -91,6 +91,8 @@ function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
   self.CommandCenterPositionable = CommandCenterPositionable  
   self.CommandCenterName = CommandCenterName or CommandCenterPositionable:GetName()
   self.CommandCenterCoalition = CommandCenterPositionable:GetCoalition()
+  
+  self.AutoAssignTasks = false
 	
 	self.Missions = {}
 
@@ -350,13 +352,23 @@ end
 -- @return Core.Menu#MENU_COALITION
 function COMMANDCENTER:GetMenu( TaskGroup )
 
+  local MenuTime = timer.getTime()
+
   self.CommandCenterMenus = self.CommandCenterMenus or {}
-  if not self.CommandCenterMenus[TaskGroup] then
-    local CommandCenterText = self:GetText()
-    local CommandCenterMenu = MENU_GROUP:New( TaskGroup, CommandCenterText )
-    self.CommandCenterMenus[TaskGroup] = CommandCenterMenu
-    local AssignTaskMenu = MENU_GROUP_COMMAND:New( TaskGroup, "Assign Task", CommandCenterMenu, self.AssignRandomTask, self, TaskGroup )
+  local CommandCenterMenu
+  
+  local CommandCenterText = self:GetText()
+  CommandCenterMenu = MENU_GROUP:New( TaskGroup, CommandCenterText ):SetTime(MenuTime)
+  self.CommandCenterMenus[TaskGroup] = CommandCenterMenu
+
+  if self.AutoAssignTasks == false then
+    local AutoAssignTaskMenu = MENU_GROUP_COMMAND:New( TaskGroup, "Assign Task On", CommandCenterMenu, self.SetAutoAssignTasks, self, true ):SetTime(MenuTime):SetTag("AutoTask")
+    local AssignTaskMenu = MENU_GROUP_COMMAND:New( TaskGroup, "Assign Task", CommandCenterMenu, self.AssignRandomTask, self, TaskGroup ):SetTime(MenuTime):SetTag("AutoTask")
+  else
+    local AutoAssignTaskMenu = MENU_GROUP_COMMAND:New( TaskGroup, "Assign Task Off", CommandCenterMenu, self.SetAutoAssignTasks, self, false ):SetTime(MenuTime):SetTag("AutoTask")
   end
+  CommandCenterMenu:Remove( MenuTime, "AutoTask" )
+    
   return self.CommandCenterMenus[TaskGroup]
 end
 
@@ -382,6 +394,86 @@ function COMMANDCENTER:AssignRandomTask( TaskGroup )
   
   Task:AssignToGroup( TaskGroup )
 
+end
+
+
+--- Automatically assigns tasks to all TaskGroups.
+-- @param #COMMANDCENTER self
+-- @param #boolean AutoAssign true for ON and false or nil for OFF.
+-- @return #COMMANDCENTER
+function COMMANDCENTER:SetAutoAssignTasks( AutoAssign )
+
+  self.AutoAssignTasks = AutoAssign or false
+  
+  local GroupSet = self:AddGroups()
+
+  for GroupID, TaskGroup in pairs( GroupSet:GetSet() ) do
+    local TaskGroup = TaskGroup -- Wrapper.Group#GROUP
+    self:GetMenu( TaskGroup )
+  end
+
+  if self.AutoAssignTasks == true then
+    self:ScheduleRepeat( 10, 30, 0, nil, self.AssignTasks, self )
+  else
+    self:ScheduleStop( self.AssignTasks )
+  end
+
+end
+
+
+--- Automatically assigns tasks to all TaskGroups.
+-- @param #COMMANDCENTER self
+function COMMANDCENTER:AssignTasks()
+
+  local GroupSet = self:AddGroups()
+
+  for GroupID, TaskGroup in pairs( GroupSet:GetSet() ) do
+    local TaskGroup = TaskGroup -- Wrapper.Group#GROUP
+    
+    if self:IsGroupAssigned( TaskGroup ) then
+    else
+      -- Only groups with planes or helicopters will receive automatic tasks.
+      -- TODO Workaround DCS-BUG-3 - https://github.com/FlightControl-Master/MOOSE/issues/696
+      if TaskGroup:IsAir() then
+        self:AssignRandomTask( TaskGroup )
+      end
+    end
+  end
+end
+
+
+--- Get all the Groups active within the command center.
+-- @param #COMMANDCENTER self
+-- @return Core.Set#SET_GROUP
+function COMMANDCENTER:AddGroups()
+
+  local GroupSet = SET_GROUP:New()
+  
+  for MissionID, Mission in pairs( self.Missions ) do
+    local Mission = Mission -- Tasking.Mission#MISSION
+    GroupSet = Mission:AddGroups( GroupSet )
+  end
+  
+  return GroupSet
+end
+
+
+--- Checks of the TaskGroup has a Task.
+-- @param #COMMANDCENTER self
+-- @return #boolean
+function COMMANDCENTER:IsGroupAssigned( TaskGroup )
+
+  local Assigned = false
+  
+  for MissionID, Mission in pairs( self.Missions ) do
+    local Mission = Mission -- Tasking.Mission#MISSION
+    if Mission:IsGroupAssigned( TaskGroup ) then
+      Assigned = true
+      break
+    end
+  end
+  
+  return Assigned
 end
 
 

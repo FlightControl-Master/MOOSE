@@ -377,24 +377,30 @@ function MISSION:GetScoring()
   return self.Scoring
 end
 
---- Get the groups for which TASKS are given in the mission
+--- Gets the groups for which TASKS are given in the mission
 -- @param #MISSION self
+-- @param Core.Set#SET_GROUP GroupSet
 -- @return Core.Set#SET_GROUP
 function MISSION:GetGroups()
   
-  local SetGroup = SET_GROUP:New()
+  return self:AddGroups()
+  
+end
+
+--- Adds the groups for which TASKS are given in the mission
+-- @param #MISSION self
+-- @param Core.Set#SET_GROUP GroupSet
+-- @return Core.Set#SET_GROUP
+function MISSION:AddGroups( GroupSet )
+  
+  GroupSet = GroupSet or SET_GROUP:New()
   
   for TaskID, Task in pairs( self:GetTasks() ) do
     local Task = Task -- Tasking.Task#TASK
-    local GroupSet = Task:GetGroups()
-    GroupSet:ForEachGroup(
-      function( TaskGroup )
-        SetGroup:Add( TaskGroup, TaskGroup )
-      end
-    )
+    GroupSet = Task:AddGroups( GroupSet )
   end
   
-  return SetGroup
+  return GroupSet
   
 end
 
