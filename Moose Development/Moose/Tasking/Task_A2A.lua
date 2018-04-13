@@ -62,8 +62,6 @@ do -- TASK_A2A
     local Fsm = self:GetUnitProcess()
     
 
-    Fsm:AddProcess   ( "Planned", "Accept", ACT_ASSIGN_ACCEPT:New( self.TaskBriefing ), { Assigned = "RouteToRendezVous", Rejected = "Reject" }  )
-    
     Fsm:AddTransition( "Assigned", "RouteToRendezVous", "RoutingToRendezVous" )
     Fsm:AddProcess   ( "RoutingToRendezVous", "RouteToRendezVousPoint", ACT_ROUTE_POINT:New(), { Arrived = "ArriveAtRendezVous" } )
     Fsm:AddProcess   ( "RoutingToRendezVous", "RouteToRendezVousZone", ACT_ROUTE_ZONE:New(), { Arrived = "ArriveAtRendezVous" } )
@@ -84,6 +82,15 @@ do -- TASK_A2A
     Fsm:AddTransition( "Rejected", "Reject", "Aborted" )
     Fsm:AddTransition( "Failed", "Fail", "Failed" )
     
+
+    ---- @param #FSM_PROCESS self
+    -- @param Wrapper.Unit#UNIT TaskUnit
+    -- @param #TASK_CARGO Task
+    function Fsm:OnLeaveAssigned( TaskUnit, Task )
+      self:F( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
+      
+      self:SelectAction()
+    end
     
     --- Test 
     -- @param #FSM_PROCESS self

@@ -439,6 +439,7 @@ do -- TASK_CARGO_DISPATCHER
   function TASK_CARGO_DISPATCHER:AddTransportTask( TaskName, SetCargo, Briefing )
 
     self.TransportCount = self.TransportCount + 1
+    
     local TaskName = string.format( ( TaskName or "Transport" ) .. ".%03d", self.TransportCount )
     
     self.Transport[TaskName] = {} 
@@ -446,7 +447,7 @@ do -- TASK_CARGO_DISPATCHER
     self.Transport[TaskName].Briefing = Briefing
     self.Transport[TaskName].Task = nil
     
-    return self
+    return TaskName
   end
 
 

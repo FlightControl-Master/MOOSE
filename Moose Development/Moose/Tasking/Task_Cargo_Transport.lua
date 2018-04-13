@@ -10,7 +10,7 @@ do -- TASK_CARGO_TRANSPORT
 
   --- The TASK_CARGO_TRANSPORT class
   -- @type TASK_CARGO_TRANSPORT
-  -- @extends Tasking.Task_Cargo#TASK_CARGO
+  -- @extends Tasking.Task_CARGO#TASK_CARGO
   TASK_CARGO_TRANSPORT = {
     ClassName = "TASK_CARGO_TRANSPORT",
   }

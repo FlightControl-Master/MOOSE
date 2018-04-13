@@ -177,7 +177,8 @@ function TASK:New( Mission, SetGroupAssign, TaskName, TaskType, TaskBriefing )
   
   local Fsm = self:GetUnitProcess()
   Fsm:SetStartState( "Planned" )
-  Fsm:AddProcess   ( "Planned", "Accept", ACT_ASSIGN_ACCEPT:New( self.TaskBriefing ), { Assigned = "SelectAction", Rejected = "Reject" }  )
+  Fsm:AddProcess   ( "Planned", "Accept", ACT_ASSIGN_ACCEPT:New( self.TaskBriefing ), { Assigned = "Assigned", Rejected = "Reject" }  )
+  Fsm:AddTransition( "Assigned", "Assigned", "*" )
   
   --- Goal Handler OnBefore for TASK
   -- @function [parent=#TASK] OnBeforeGoal

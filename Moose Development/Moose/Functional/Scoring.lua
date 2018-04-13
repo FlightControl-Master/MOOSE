@@ -858,7 +858,7 @@ function SCORING:OnEventBirth( Event )
   if Event.IniUnit then
     if Event.IniObjectCategory == 1 then
       local PlayerName = Event.IniUnit:GetPlayerName()
-      if PlayerName ~= "" then
+      if PlayerName then
         self:_AddPlayerFromUnit( Event.IniUnit )
         self:SetScoringMenu( Event.IniGroup )
       end

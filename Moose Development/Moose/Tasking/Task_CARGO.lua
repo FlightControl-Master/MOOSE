@@ -252,6 +252,17 @@ do -- TASK_CARGO
     Fsm:AddTransition( "Deployed", "Success", "Success" )
     Fsm:AddTransition( "Rejected", "Reject", "Aborted" )
     Fsm:AddTransition( "Failed", "Fail", "Failed" )
+
+
+    ---- @param #FSM_PROCESS self
+    -- @param Wrapper.Unit#UNIT TaskUnit
+    -- @param #TASK_CARGO Task
+    function Fsm:OnAfterAssigned( TaskUnit, Task )
+      self:F( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
+      
+      self:SelectAction()
+    end
+    
     
 
     --- 
