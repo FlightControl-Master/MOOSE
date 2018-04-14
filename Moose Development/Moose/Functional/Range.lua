@@ -16,12 +16,12 @@
 -- 
 -- ## Features
 --
--- * Bomb and rocket impact point from closest range target is measured and distance reported to the player.
--- * Number of hits on strafing passes are counted.
+-- * Impact points of bombs, rockets and missils are recorded and distance to closest range target is measured and reported to the player.
+-- * Number of hits on strafing passes are counted and reported. Also the percentage of hits w.r.t fired shots is evaluated. 
 -- * Results of all bombing and strafing runs are stored and top 10 results can be displayed. 
 -- * Range targets can be marked by smoke.
 -- * Range can be illuminated by illumination bombs for night practices.
--- * Rocket or bomb impact points can be marked by smoke.
+-- * Bomb, rocket and missile impact points can be marked by smoke.
 -- * Direct hits on targets can trigger flares.
 -- * Smoke and flare colors can be adjusted for each player via radio menu.
 -- * Range information and weather report at the range can be reported via radio menu.
@@ -55,8 +55,9 @@
 -- @field #string ClassName Name of the Class.
 -- @field #boolean Debug If true, debug info is send as messages on the screen.
 -- @field #string rangename Name of the range.
--- @field Core.Point#COORDINATE location Coordinate of the range.
--- @field #number rangeradius Radius of range defining its total size for e.g. smoking bomb impact points and sending radio messages. Default 10 km.
+-- @field Core.Point#COORDINATE location Coordinate of the range location.
+-- @field #number rangeradius Radius of range defining its total size for e.g. smoking bomb impact points and sending radio messages. Default 5 km.
+-- @field Core.Zone#ZONE rangezone MOOSE zone object of the range. For example, no bomb impacts are smoked if bombs fall outside of the range zone. 
 -- @field #table strafeTargets Table of strafing targets.
 -- @field #table bombingTargets Table of targets to bomb.
 -- @field #number nbombtargets Number of bombing targets.
@@ -79,14 +80,17 @@
 -- @field #number scorebombdistance Distance from closest target up to which bomb hits are counted. Default 1000 m.
 -- @field #number TdelaySmoke Time delay in seconds between impact of bomb and starting the smoke. Default 3 seconds.
 -- @field #boolean eventmoose If true, events are handled by MOOSE. If false, events are handled directly by DCS eventhandler. Default true.
+-- @field #boolean trackbombs If true (default), all bomb types are tracked and impact point to closest bombing target is evaluated.
+-- @field #boolean trackrockets If true (default), all rocket types are tracked and impact point to closest bombing target is evaluated.
+-- @field #boolean trackmissiles If true (default), all missile types are tracked and impact point to closest bombing target is evaluated.
 -- @extends Core.Base#BASE
 
 ---# RANGE class, extends @{Base#BASE}
 -- The RANGE class enables a mission designer to easily set up practice ranges in DCS. A new RANGE object can be created with the @{#RANGE.New}(rangename) contructor.
 -- The parameter "rangename" defindes the name of the range. It has to be unique since this is also the name displayed in the radio menu.
 -- 
--- Generally, a range consits of strafe pits and bombing targets. For strafe pits the number of hits for each pass is counted and tabulated.
--- For bombing targets, the distance from the impact point of the bomb or rocket to the closest range target is measured and tabulated.
+-- Generally, a range consists of strafe pits and bombing targets. For strafe pits the number of hits for each pass is counted and tabulated.
+-- For bombing targets, the distance from the impact point of the bomb, rocket or missile to the closest range target is measured and tabulated.
 -- Each player can display his best results via a function in the radio menu or see the best best results from all players.
 -- 
 -- When all targets have been defined in the script, the range is started by the @{#RANGE.Start}() command.
@@ -101,31 +105,34 @@
 -- ## Strafe Pits
 -- Each strafe pit can consist of multiple targets. Often one findes two or three strafe targets next to each other.
 -- 
--- A strafe pit can be added to the range by the @{#RANGE.AddStrafepit}(unitnames, boxlength, boxwidth, heading, inverseheading, goodpass, foulline) function.
+-- A strafe pit can be added to the range by the @{#RANGE.AddStrafepit}(*targetnames, boxlength, boxwidth, heading, inverseheading, goodpass, foulline*) function.
 -- 
--- The first parameter defines the target. This has to be given as a lua table which contains the unit names of the targets as defined in the mission editor.
+-- * The first parameter *targetnames* defines the target or targets. This has to be given as a lua table which contains the names of @{Unit} or @{Static} objects defined in the mission editor. 
+-- * In order to perform a valid pass on the strafe pit, the pilot has to begin his run from the correct direction. Therefore, an "approach box" is defined in front
+--   of the strafe targets. The parameters *boxlength* and *boxwidth* define the size of the box while the parameter *heading* defines its direction.
+--   If the parameter *heading* is passed as **nil**, the heading is automatically taken from the heading of the first target unit as defined in the ME.
+--   The parameter *inverseheading* turns the heading around by 180 degrees. This is sometimes useful, since the default heading of strafe target units point in the
+--   wrong/opposite direction.
+-- * The parameter *goodpass* defines the number of hits a pilot has to achive during a run to be judged as a "good" pass.
+-- * The last parameter *foulline* sets the distance from the pit targets to the foul line. Hit from closer than this line are not counted!
 -- 
--- In order to perform a valid pass on the strafe pit, the pilot has to begin his run from the correct direction. Therefore, an "approach box" is defined in front
--- of the strafe targets. The parameters "boxlength" and "boxwidth" define the size of the box while the parameter "heading" defines its direction.
--- If the parameter heading is passed as **nil**, the heading is automatically taken from the heading of the first target unit as defined in the ME.
--- The parameter "inverseheading" turns the heading around by 180 degrees. This is sometimes useful, since the default heading of strafe target units point in the
--- wrong/opposite direction.
--- 
--- The parameter "goodpass" defines the number of hits a pilot has to achive during a run to be judges as a good pass.
--- 
--- The last parameter "foulline" sets the distance from the pit targets to the foul line. Hit from closer than this line are not counted.
+-- Another function to add a strafe pit is @{#RANGE.AddStrafePitGroup}(*group, boxlength, boxwidth, heading, inverseheading, goodpass, foulline*). Here,
+-- the first parameter *group* is a MOOSE @{Group} object and **all** units in this group define **one** strafe pit.
 -- 
 -- Finally, a valid approach has to be performed below a certain maximum altitude. The default is 914 meters (3000 ft) AGL. This is a parameter valid for all
 -- strafing pits of the range and can be adjusted by the @{#RANGE.SetMaxStrafeAlt}(maxalt) function.
 -- 
 -- ## Bombing targets
--- One ore multiple bombing targets can be added to the range by the @{#RANGE.AddBombingTargets}(unitnames goodhitrange,static) function.
+-- One ore multiple bombing targets can be added to the range by the @{#RANGE.AddBombingTargets}(targetnames, goodhitrange, randommove) function.
 -- 
--- The first parameter "unitnames" has to be a lua table, which contains the names of the units as defined in the mission editor.
--- 
--- The parameter "goodhitrange" specifies the radius around the target. If a bomb or rocket falls at a distance smaller than this number, the hit is considered to be "good".
--- 
--- The final (optional) parameter "static" can be enabled (set to true) if static bomb targets are used rather than alive units.
+-- * The first parameter *targetnames* has to be a lua table, which contains the names of @{Unit} and/or @{Static} objects defined in the mission editor.
+--   Note that the @{Range} logic **automatically** determines, if a name belongs to a @{Unit} or @{Static} object now.
+-- * The (optional) parameter *goodhitrange* specifies the radius around the target. If a bomb or rocket falls at a distance smaller than this number, the hit is considered to be "good".
+-- * If final (optional) parameter "*randommove*" can be enabled to create moving targets. If this parameter is set to true, the units of this bombing target will randomly move within the range zone.
+--   Note that there might be quirks since DCS units can get stuck in buildings etc. So it might be safer to manually define a route for the units in the mission editor if moving targets are desired. 
+--   
+-- Another possibility to add bombing targets is the @{#RANGE.AddBombingTargetGroup}(*group, goodhitrange, randommove*) function. Here the parameter *group* is a MOOSE @{Group} object
+-- and **all** units in this group are defined as bombing targets.
 -- 
 -- ## Fine Tuning
 -- Many range parameters have good default values. However, the mission designer can change these settings easily with the supplied user functions:
@@ -138,6 +145,9 @@
 -- * @{#RANGE.SetStrafeTargetSmokeColor}() sets the color used to smoke strafe targets.
 -- * @{#RANGE.SetStrafePitSmokeColor}() sets the color used to smoke strafe pit approach boxes.
 -- * @{#RANGE.SetSmokeTimeDelay}() sets the time delay between smoking bomb/rocket impact points after impact.
+-- * @{#RANGE.TrackBombsON}() or @{#RANGE.TrackBombsOFF}() can be used to enable/disable tracking and evaluating of all bomb types a player fires.
+-- * @{#RANGE.TrackRocketsON}() or @{#RANGE.TrackRocketsOFF}() can be used to enable/disable tracking and evaluating of all rocket types a player fires.
+-- * @{#RANGE.TrackMissilesON}() or @{#RANGE.TrackMissilesOFF}() can be used to enable/disable tracking and evaluating of all missile types a player fires.
 -- 
 -- ## Radio Menu
 -- Each range gets a radio menu with various submenus where each player can adjust his individual settings or request information about the range or his scores.
@@ -155,11 +165,11 @@
 -- ## Examples
 -- 
 -- ### Goldwater Range
--- This example shows hot to set up the Barry M. Goldwater range. It consists of two strafe pits each has two targets plus three bombing targets.
+-- This example shows hot to set up the [Barry M. Goldwater range](https://en.wikipedia.org/wiki/Barry_M._Goldwater_Air_Force_Range).
+-- It consists of two strafe pits each has two targets plus three bombing targets.
 -- 
--- The [476th - Air Weapons Range Objects mod](http://www.476vfightergroup.com/downloads.php?do=file&id=287) is used in this example.
--- 
---      -- Strafe pits. Each pit can consist of multiple targets. Here we have two pits and each of the pits has two targets. These are names of the corresponding units defined in the ME.
+--      -- Strafe pits. Each pit can consist of multiple targets. Here we have two pits and each of the pits has two targets.
+--      -- These are names of the corresponding units defined in the ME.
 --      local strafepit_left={"GWR Strafe Pit Left 1", "GWR Strafe Pit Left 2"}
 --      local strafepit_right={"GWR Strafe Pit Right 1", "GWR Strafe Pit Right 2"}
 --      
@@ -167,22 +177,39 @@
 --      local bombtargets={"GWR Bomb Target Circle Left", "GWR Bomb Target Circle Right", "GWR Bomb Target Hard"}
 --      
 --      -- Create a range object.
---      local GoldwaterRange=RANGE:New("Goldwater Range")
+--      GoldwaterRange=RANGE:New("Goldwater Range")
 --      
---      -- Distance between foul line and strafe target. Note that this could also be done manually by simply measuring the distance between the target and the foul line in the ME.
---      local strafe=UNIT:FindByName("GWR Strafe Pit Left 1")
---      local foul=UNIT:FindByName("GWR Foul Line Left")
---      local fouldist=strafe:GetCoordinate():Get2DDistance(foul:GetCoordinate())
+--      -- Distance between strafe target and foul line. You have to specify the names of the unit or static objects.
+--      -- Note that this could also be done manually by simply measuring the distance between the target and the foul line in the ME.
+--      GoldwaterRange:GetFoullineDistance("GWR Strafe Pit Left 1", "GWR Foul Line Left")
 --      
 --      -- Add strafe pits. Each pit (left and right) consists of two targets.
 --      GoldwaterRange:AddStrafePit(strafepit_left, 3000, 300, nil, true, 20, fouldist)
---      GoldwaterRange:AddStrafePit(strafepit_right, 3000, 300, nil, true, 20, fouldist)
+--      GoldwaterRange:AddStrafePit(strafepit_right, nil, nil, nil, true, nil, fouldist)
 --      
 --      -- Add bombing targets. A good hit is if the bomb falls less then 50 m from the target.
 --      GoldwaterRange:AddBombingTargets(bombtargets, 50)
 --      
 --      -- Start range.
 --      GoldwaterRange:Start()
+-- 
+-- The [476th - Air Weapons Range Objects mod](http://www.476vfightergroup.com/downloads.php?do=file&id=287) is (implicitly) used in this example. 
+-- 
+-- ## Debugging
+-- 
+-- In case you have problems, it is always a good idea to have a look at your DCS log file. You find it in your "Saved Games" folder, so for example in
+--      C:\Users\<yourname>\Saved Games\DCS\Logs\dcs.log
+-- All output concerning the RANGE class should have the string "RANGE" in the corresponding line.
+-- 
+-- The verbosity of the output can be increased by adding the following lines to your script:
+-- 
+--      BASE:TraceOnOff(true)
+--      BASE:TraceLevel(1)
+--      BASE:TraceClass("RANGE")
+-- 
+-- To get even more output you can increase the trace level to 2 or even 3, c.f. @{BASE} for more details.
+-- 
+-- The function @{#RANGE.DebugON}() can be used to send messages on screen. It also smokes all defined strafe and bombing targets, the strafe pit approach boxes and the range zone.
 -- 
 -- 
 -- 
@@ -192,7 +219,8 @@ RANGE={
   Debug=false,
   rangename=nil,
   location=nil,
-  rangeradius=10000,
+  rangeradius=5000,
+  rangezone=nil,
   strafeTargets={},
   bombingTargets={},
   nbombtargets=0,
@@ -215,7 +243,31 @@ RANGE={
   scorebombdistance=1000,
   TdelaySmoke=3.0,
   eventmoose=true,
+  trackbombs=true,
+  trackrockets=true,
+  trackmissiles=true,
 }
+
+--- Default range parameters.
+-- @list Defaults
+RANGE.Defaults={
+  goodhitrange=25,
+  strafemaxalt=914,
+  dtBombtrack=0.005,
+  Tmsg=30,
+  ndisplayresult=10,
+  rangeradius=5000,
+  TdelaySmoke=3.0,
+  boxlength=3000,
+  boxwidth=300,
+  goodpass=20,
+  goodhitrange=25,
+  foulline=610,
+}
+
+--- Global list of all defined range names.
+-- @field #table Names
+RANGE.Names={}
 
 --- Main radio menu.
 -- @field #table MenuF10
@@ -227,10 +279,13 @@ RANGE.id="RANGE | "
 
 --- Range script version.
 -- @field #number version
-RANGE.version="1.0.1"
+RANGE.version="1.1.0"
 
---TODO list
---TODO: Add statics for strafe pits.
+--TODO list:
+--TODO: Add custom weapons, which can be specified by the user.
+--TODO: Check if units are still alive.
+--DONE: Add statics for strafe pits.
+--DONE: Add missiles.
 --DONE: Convert env.info() to self:T()
 --DONE: Add user functions.
 --DONE: Rename private functions, i.e. start with _functionname.
@@ -251,6 +306,7 @@ function RANGE:New(rangename)
   local self=BASE:Inherit(self, BASE:New()) -- #RANGE
   
   -- Get range name.
+  --TODO: make sure that the range name is not given twice. This would lead to problems in the F10 radio menu.
   self.rangename=rangename or "Practice Range"
   
   -- Debug info.
@@ -274,9 +330,10 @@ function RANGE:Start()
   local _count=0
   for _,_target in pairs(self.bombingTargets) do
     _count=_count+1
-    --_target.name
+    
+    -- Get range location.
     if _location==nil then
-      _location=_target.point --Core.Point#COORDINATE
+      _location=_target.target:GetCoordinate() --Core.Point#COORDINATE
     end
   end
   self.nbombtargets=_count
@@ -285,6 +342,7 @@ function RANGE:Start()
   _count=0
   for _,_target in pairs(self.strafeTargets) do
     _count=_count+1
+    
     for _,_unit in pairs(_target.targets) do
       if _location==nil then
         _location=_unit:GetCoordinate()
@@ -293,13 +351,20 @@ function RANGE:Start()
   end
   self.nstrafetargets=_count
   
-  -- Location of the range. We simply take the first unit/target we find.
-  self.location=_location
+  -- Location of the range. We simply take the first unit/target we find if it was not explicitly specified by the user.
+  if self.location==nil then
+    self.location=_location
+  end
   
   if self.location==nil then
     local text=string.format("ERROR! No range location found. Number of strafe targets = %d. Number of bomb targets = %d.", self.rangename, self.nstrafetargets, self.nbombtargets)
     self:E(RANGE.id..text)
-    return nil
+    return
+  end
+  
+  -- Define a MOOSE zone of the range.
+  if self.rangezone==nil then
+    self.rangezone=ZONE_RADIUS:New(self.rangename, {x=self.location.x, y=self.location.z}, self.rangeradius)
   end
   
   -- Starting range.
@@ -311,9 +376,6 @@ function RANGE:Start()
   if self.eventmoose then
     -- Events are handled my MOOSE.
     self:T(RANGE.id.."Events are handled by MOOSE.")
-    --self:HandleEvent(EVENTS.Birth, self._OnBirth)
-    --self:HandleEvent(EVENTS.Hit,   self._OnHit)
-    --self:HandleEvent(EVENTS.Shot,  self._OnShot)
     self:HandleEvent(EVENTS.Birth)
     self:HandleEvent(EVENTS.Hit)
     self:HandleEvent(EVENTS.Shot)
@@ -321,6 +383,28 @@ function RANGE:Start()
     -- Events are handled directly by DCS.
     self:T(RANGE.id.."Events are handled directly by DCS.")
     world.addEventHandler(self)
+  end
+  
+  -- Make bomb target move randomly within the range zone.
+  for _,_target in pairs(self.bombingTargets) do
+
+    -- Check if it is a static object.
+    local _static=self:_CheckStatic(_target.target:GetName())
+    
+    if _target.move and _static==false and _target.speed>1 then
+      local unit=_target.target --Wrapper.Unit#UNIT
+      _target.target:PatrolZones({self.rangezone}, _target.speed*0.75, "Off road")
+    end
+    
+  end
+  
+  -- Debug mode: smoke all targets and range zone.
+  if self.Debug then
+    self:_MarkTargetsOnMap()
+    self:_SmokeBombTargets()
+    self:_SmokeStrafeTargets()
+    self:_SmokeStrafeTargetBoxes()
+    self.rangezone:SmokeZone(SMOKECOLOR.White)
   end
   
 end
@@ -332,35 +416,50 @@ end
 -- @param #RANGE self
 -- @param #number maxalt Maximum altitude AGL in meters. Default is 914 m= 3000 ft.
 function RANGE:SetMaxStrafeAlt(maxalt)
-  self.strafemaxalt=maxalt or 914
+  self.strafemaxalt=maxalt or RANGE.Defaults.strafemaxalt
 end
 
 --- Set time interval for tracking bombs. A smaller time step increases accuracy but needs more CPU time.
 -- @param #RANGE self
 -- @param #number dt Time interval in seconds. Default is 0.005 s.
 function RANGE:SetBombtrackTimestep(dt)
-  self.dtBombtrack=dt or 0.005
+  self.dtBombtrack=dt or RANGE.Defaults.dtBombtrack
 end
 
 --- Set time how long (most) messages are displayed.
 -- @param #RANGE self
 -- @param #number time Time in seconds. Default is 30 s.
 function RANGE:SetMessageTimeDuration(time)
-  self.Tmsg=time or 30
+  self.Tmsg=time or RANGE.Defaults.Tmsg
 end
 
 --- Set max number of player results that are displayed.
 -- @param #RANGE self
 -- @param #number nmax Number of results. Default is 10.
 function RANGE:SetDisplayedMaxPlayerResults(nmax)
-  self.ndisplayresult=nmax or 10
+  self.ndisplayresult=nmax or RANGE.Defaults.ndisplayresult
 end
 
 --- Set range radius. Defines the area in which e.g. bomb impacts are smoked.
 -- @param #RANGE self
--- @param #number radius Radius in km. Default 10 km.
+-- @param #number radius Radius in km. Default 5 km.
 function RANGE:SetRangeRadius(radius)
-  self.rangeradius=radius*1000 or 10000
+  self.rangeradius=radius*1000 or RANGE.Defaults.rangeradius
+end
+
+--- Set range location. If this is not done, one (random) unit position of the range is used to determine the center of the range.  
+-- @param #RANGE self
+-- @param Core.Point#COORDINATE coordinate Coordinate of the center of the range.
+function RANGE:SetRangeLocation(coordinate)
+  self.location=coordinate
+end
+
+--- Set range zone. For example, no bomb impact points are smoked if a bomb falls outside of this zone.
+-- If a zone is not explicitly specified, the range zone is determined by its location and radius.
+-- @param #RANGE self
+-- @param Core.Zone#ZONE zone MOOSE zone defining the range perimeters.
+function RANGE:SetRangeLocation(zone)
+  self.rangezone=zone
 end
 
 --- Set smoke color for marking bomb targets. By default bomb targets are marked by red smoke.
@@ -388,7 +487,7 @@ end
 -- @param #RANGE self
 -- @param #number delay Time delay in seconds. Default is 3 seconds.
 function RANGE:SetSmokeTimeDelay(delay)
-  self.TdelaySmoke=delay or 3.0
+  self.TdelaySmoke=delay or RANGE.Defaults.TdelaySmoke
 end
 
 --- Enable debug modus.
@@ -403,24 +502,60 @@ function RANGE:DebugOFF()
   self.Debug=false
 end
 
+--- Enables tracking of all bomb types. Note that this is the default setting.
+-- @param #RANGE self
+function RANGE:TrackBombsON()
+  self.trackbombs=true
+end
+
+--- Disables tracking of all bomb types.
+-- @param #RANGE self
+function RANGE:TrackBombsOFF()
+  self.trackbombs=false
+end
+
+--- Enables tracking of all rocket types. Note that this is the default setting.
+-- @param #RANGE self
+function RANGE:TrackRocketsON()
+  self.trackrockets=true
+end
+
+--- Disables tracking of all rocket types.
+-- @param #RANGE self
+function RANGE:TrackRocketsOFF()
+  self.trackrockets=false
+end
+
+--- Enables tracking of all missile types. Note that this is the default setting.
+-- @param #RANGE self
+function RANGE:TrackMissilesON()
+  self.trackmissiles=true
+end
+
+--- Disables tracking of all missile types.
+-- @param #RANGE self
+function RANGE:TrackMissilesOFF()
+  self.trackmissiles=false
+end
+
 
 --- Add new strafe pit. For a strafe pit, hits from guns are counted. One pit can consist of several units.
 -- Note, an approach is only valid, if the player enters via a zone in front of the pit, which defined by boxlength and boxheading.
 -- Furthermore, the player must not be too high and fly in the direction of the pit to make a valid target apporoach.
 -- @param #RANGE self
--- @param #table unitnames Table of unit names defining the strafe targets. The first target in the list determines the approach zone (heading and box).
+-- @param #table targetnames Table of unit or static names defining the strafe targets. The first target in the list determines the approach zone (heading and box).
 -- @param #number boxlength (Optional) Length of the approach box in meters. Default is 3000 m.
 -- @param #number boxwidth (Optional) Width of the approach box in meters. Default is 300 m.
 -- @param #number heading (Optional) Approach heading in Degrees. Default is heading of the unit as defined in the mission editor.
 -- @param #boolean inverseheading (Optional) Take inverse heading (heading --> heading - 180 Degrees). Default is false.
 -- @param #number goodpass (Optional) Number of hits for a "good" strafing pass. Default is 20.
 -- @param #number foulline (Optional) Foul line distance. Hits from closer than this distance are not counted. Default 610 m = 2000 ft. Set to 0 for no foul line.
-function RANGE:AddStrafePit(unitnames, boxlength, boxwidth, heading, inverseheading, goodpass, foulline)
-  self:F({unitnames=unitnames, boxlength=boxlength, boxwidth=boxwidth, heading=heading, inverseheading=inverseheading, goodpass=goodpass, foulline=foulline})
+function RANGE:AddStrafePit(targetnames, boxlength, boxwidth, heading, inverseheading, goodpass, foulline)
+  self:F({targetnames=targetnames, boxlength=boxlength, boxwidth=boxwidth, heading=heading, inverseheading=inverseheading, goodpass=goodpass, foulline=foulline})
 
   -- Create table if necessary.  
-  if type(unitnames) ~= "table" then
-    unitnames={unitnames}
+  if type(targetnames) ~= "table" then
+    targetnames={targetnames}
   end
   
   -- Make targets
@@ -428,11 +563,34 @@ function RANGE:AddStrafePit(unitnames, boxlength, boxwidth, heading, inversehead
   local center=nil --Wrapper.Unit#UNIT
   local ntargets=0
   
-  for _i,_name in ipairs(unitnames) do
+  for _i,_name in ipairs(targetnames) do
   
-    self:T(RANGE.id..string.format("Adding strafe target #%d %s", _i, _name))
-    local unit=UNIT:FindByName(_name)
+    -- Check if we have a static or unit object.
+    local _isstatic=self:_CheckStatic(_name)
+
+    local unit=nil  
+    if _isstatic==true then
     
+      -- Add static object.
+      self:T(RANGE.id..string.format("Adding STATIC object %s as strafe target #%d.", _name, _i))
+      unit=STATIC:FindByName(_name, false)
+    
+    elseif _isstatic==false then
+    
+      -- Add unit object.
+      self:T(RANGE.id..string.format("Adding UNIT object %s as strafe target #%d.", _name, _i))
+      unit=UNIT:FindByName(_name)
+      
+    else
+    
+      -- Neither unit nor static object with this name could be found.
+      local text=string.format("ERROR! Could not find ANY strafe target object with name %s.", _name)
+      self:E(RANGE.id..text)
+      MESSAGE:New(text, 10):ToAllIf(self.Debug)
+          
+    end
+    
+    -- Add object to targets.   
     if unit then
       table.insert(_targets, unit)
       -- Define center as the first unit we find
@@ -440,17 +598,21 @@ function RANGE:AddStrafePit(unitnames, boxlength, boxwidth, heading, inversehead
         center=unit
       end
       ntargets=ntargets+1
-    else
-      local text=string.format("ERROR! Could not find strafe target with name %s.", _name)
-      self:E(RANGE.id..text)
-      MESSAGE:New(text, 10):ToAllIf(self.Debug)
     end
     
   end
+  
+  -- Check if at least one target could be found.
+  if ntargets==0 then
+    local text=string.format("ERROR! No strafe target could be found when calling RANGE:AddStrafePit() for range %s", self.rangename)
+    self:E(RANGE.id..text)
+    MESSAGE:New(text, 10):ToAllIf(self.Debug)
+    return   
+  end
 
   -- Approach box dimensions.
-  local l=boxlength or 3000
-  local w=(boxwidth or 300)/2
+  local l=boxlength or RANGE.Defaults.boxlength
+  local w=(boxwidth or RANGE.Defaults.boxwidth)/2
   
   -- Heading: either manually entered or automatically taken from unit heading.
   local heading=heading or center:GetHeading()
@@ -469,10 +631,10 @@ function RANGE:AddStrafePit(unitnames, boxlength, boxwidth, heading, inversehead
   end
   
   -- Number of hits called a "good" pass.
-  local goodpass=goodpass or 20
+  goodpass=goodpass or RANGE.Defaults.goodpass
   
   -- Foule line distance.
-  local foulline=foulline or 610
+  foulline=foulline or RANGE.Defaults.foulline
   
   -- Coordinate of the range.
   local Ccenter=center:GetCoordinate()
@@ -499,96 +661,195 @@ function RANGE:AddStrafePit(unitnames, boxlength, boxwidth, heading, inversehead
   --_polygon:BoundZone()
     
   -- Add zone to table.
-  table.insert(self.strafeTargets, {name=_name, polygon=_polygon, goodPass=goodpass, targets=_targets, foulline=foulline, smokepoints=p, heading=heading})
+  table.insert(self.strafeTargets, {name=_name, polygon=_polygon, coordinate= Ccenter, goodPass=goodpass, targets=_targets, foulline=foulline, smokepoints=p, heading=heading})
   
   -- Debug info
-  local text=string.format("Adding new strafe target %s with %d targets: heading = %03d, box_L = %.1f, box_W = %.1f, goodpass = %d, foul line = %.1f", _name, ntargets, heading, boxlength, boxwidth, goodpass, foulline)  
+  local text=string.format("Adding new strafe target %s with %d targets: heading = %03d, box_L = %.1f, box_W = %.1f, goodpass = %d, foul line = %.1f", _name, ntargets, heading, l, w, goodpass, foulline)  
   self:T(RANGE.id..text)
   MESSAGE:New(text, 5):ToAllIf(self.Debug)
 end
 
---- Add bombing target(s) to range.
--- @param #RANGE self
--- @param #table unitnames Table containing the unit names acting as bomb targets.
--- @param #number goodhitrange (Optional) Max distance from target unit (in meters) which is considered as a good hit. Default is 25 m.
--- @param #boolean static (Optional) Target is static. Default false.
-function RANGE:AddBombingTargets(unitnames, goodhitrange, static)
-  self:F({unitnames=unitnames, goodhitrange=goodhitrange, static=static})
 
-  -- Create a table if necessary.
-  if type(unitnames) ~= "table" then
-    unitnames={unitnames}
-  end
-  
-  if static == nil or static == false then
-    static=false
-  else
-    static=true
-  end
-  
-  -- Default range is 25 m.
-  goodhitrange=goodhitrange or 25
-  
-  for _,name in pairs(unitnames) do
-    local _unit
-    local _static
+--- Add all units of a group as one new strafe target pit.
+-- For a strafe pit, hits from guns are counted. One pit can consist of several units.
+-- Note, an approach is only valid, if the player enters via a zone in front of the pit, which defined by boxlength and boxheading.
+-- Furthermore, the player must not be too high and fly in the direction of the pit to make a valid target apporoach.
+-- @param #RANGE self
+-- @param Wrapper.Group#GROUP group MOOSE group of unit names defining the strafe target pit. The first unit in the group determines the approach zone (heading and box).
+-- @param #number boxlength (Optional) Length of the approach box in meters. Default is 3000 m.
+-- @param #number boxwidth (Optional) Width of the approach box in meters. Default is 300 m.
+-- @param #number heading (Optional) Approach heading in Degrees. Default is heading of the unit as defined in the mission editor.
+-- @param #boolean inverseheading (Optional) Take inverse heading (heading --> heading - 180 Degrees). Default is false.
+-- @param #number goodpass (Optional) Number of hits for a "good" strafing pass. Default is 20.
+-- @param #number foulline (Optional) Foul line distance. Hits from closer than this distance are not counted. Default 610 m = 2000 ft. Set to 0 for no foul line.
+function RANGE:AddStrafePitGroup(group, boxlength, boxwidth, heading, inverseheading, goodpass, foulline)
+  self:F({group=group, boxlength=boxlength, boxwidth=boxwidth, heading=heading, inverseheading=inverseheading, goodpass=goodpass, foulline=foulline})
+
+  if group and group:IsAlive() then
     
-    if static then
-     
-      -- Add static object. Workaround since cargo objects are not yet in database because DCS function does not add those.
-      local _DCSstatic=StaticObject.getByName(name)
-      if _DCSstatic and _DCSstatic:isExist() then
-        self:T(RANGE.id..string.format("Adding DCS static to database. Name = %s.", name))
-        _DATABASE:AddStatic(name)
-      else
-        self:E(RANGE.id..string.format("ERROR! DCS static DOES NOT exist! Name = %s.", name))
-      end
-      
-      -- Now we can find it...
-      _static=STATIC:FindByName(name)
-      if _static then
-        self:AddBombingTargetUnit(_static, goodhitrange)
-        self:T(RANGE.id..string.format("Adding static bombing target %s with hit range %d.", name, goodhitrange))
-      else
-        self:E(RANGE.id..string.format("ERROR! Cound not find static bombing target %s.", name))
-      end
-      
-    else
+    -- Get units of group.
+    local _units=group:GetUnits()
     
-      _unit=UNIT:FindByName(name)
-      if _unit then
-        self:AddBombingTargetUnit(_unit, goodhitrange)
-        self:T(RANGE.id..string.format("Adding bombing target %s with hit range %d.", name, goodhitrange))
-      else
-        self:E(RANGE.id..string.format("ERROR! Could not find bombing target %s.", name))
+    -- Make table of unit names.
+    local _names={}
+    for _,_unit in ipairs(_units) do
+    
+      local _unit=_unit --Wrapper.Unit#UNIT
+      
+      if _unit and _unit:IsAlive() then
+        local _name=_unit:GetName()
+        table.insert(_names,_name)
       end
       
     end
+    
+    -- Add strafe pit.
+    self:AddStrafePit(_names, boxlength, boxwidth, heading, inverseheading, goodpass, foulline)    
+  end
 
+end
+
+--- Add bombing target(s) to range.
+-- @param #RANGE self
+-- @param #table targetnames Table containing names of unit or static objects serving as bomb targets.
+-- @param #number goodhitrange (Optional) Max distance from target unit (in meters) which is considered as a good hit. Default is 25 m.
+-- @param #boolean randommove If true, unit will move randomly within the range. Default is false.
+function RANGE:AddBombingTargets(targetnames, goodhitrange, randommove)
+  self:F({targetnames=targetnames, goodhitrange=goodhitrange, randommove=randommove})
+
+  -- Create a table if necessary.
+  if type(targetnames) ~= "table" then
+    targetnames={targetnames}
+  end
+    
+  -- Default range is 25 m.
+  goodhitrange=goodhitrange or RANGE.Defaults.goodhitrange
+  
+  for _,name in pairs(targetnames) do
+  
+    -- Check if we have a static or unit object.
+    local _isstatic=self:_CheckStatic(name)
+    
+    if _isstatic==true then
+      local _static=STATIC:FindByName(name)
+      self:T2(RANGE.id..string.format("Adding static bombing target %s with hit range %d.", name, goodhitrange, false))
+      self:AddBombingTargetUnit(_static, goodhitrange)
+    elseif _isstatic==false then
+      local _unit=UNIT:FindByName(name)
+      self:T2(RANGE.id..string.format("Adding unit bombing target %s with hit range %d.", name, goodhitrange, randommove))
+      self:AddBombingTargetUnit(_unit, goodhitrange)
+    else
+      self:E(RANGE.id..string.format("ERROR! Could not find bombing target %s.", name))
+    end
+    
   end
 end
 
---- Add a unit as bombing target.
+--- Add a unit or static object as bombing target.
 -- @param #RANGE self
--- @param Wrapper.Unit#UNIT unit Unit of the strafe target.
+-- @param Wrapper.Positionable#POSITIONABLE unit Positionable (unit or static) of the strafe target.
 -- @param #number goodhitrange Max distance from unit which is considered as a good hit.
-function RANGE:AddBombingTargetUnit(unit, goodhitrange)
-  self:F({unit=unit, goodhitrange=goodhitrange})
+-- @param #boolean randommove If true, unit will move randomly within the range. Default is false.
+function RANGE:AddBombingTargetUnit(unit, goodhitrange, randommove)
+  self:F({unit=unit, goodhitrange=goodhitrange, randommove=randommove})
   
-  local coord=unit:GetCoordinate()
+  -- Get name of positionable.  
   local name=unit:GetName()
   
-  -- Default range is 25 m.
-  goodhitrange=goodhitrange or 25  
+  -- Check if we have a static or unit object.
+  local _isstatic=self:_CheckStatic(name)
   
-  -- Create a zone around the unit.
-  local Vec2=coord:GetVec2()
-  local Rzone=ZONE_RADIUS:New(name, Vec2, goodhitrange)
+  -- Default range is 25 m.
+  goodhitrange=goodhitrange or RANGE.Defaults.goodhitrange
+
+  -- Set randommove to false if it was not specified.
+  if randommove==nil or _isstatic==true then
+    randommove=false
+  end  
+  
+  -- Debug or error output.
+  if _isstatic==true then
+    self:T(RANGE.id..string.format("Adding STATIC bombing target %s with good hit range %d. Random move = %s.", name, goodhitrange, tostring(randommove)))
+  elseif _isstatic==false then
+    self:T(RANGE.id..string.format("Adding UNIT bombing target %s with good hit range %d. Random move = %s.", name, goodhitrange, tostring(randommove)))
+  else
+    self:E(RANGE.id..string.format("ERROR! No bombing target with name %s could be found. Carefully check all UNIT and STATIC names defined in the mission editor!", name))
+  end
+  
+  -- Get max speed of unit in km/h.
+  local speed=0
+  if _isstatic==false then
+    speed=self:_GetSpeed(unit)
+  end
   
   -- Insert target to table.
-  table.insert(self.bombingTargets, {name=name, point=coord, zone=Rzone, target=unit, goodhitrange=goodhitrange})
+  table.insert(self.bombingTargets, {name=name, target=unit, goodhitrange=goodhitrange, move=randommove, speed=speed})
 end
 
+--- Add all units of a group as bombing targets.
+-- @param #RANGE self
+-- @param Wrapper.Group#GROUP group Group of bombing targets.
+-- @param #number goodhitrange Max distance from unit which is considered as a good hit.
+-- @param #boolean randommove If true, unit will move randomly within the range. Default is false.
+function RANGE:AddBombingTargetGroup(group, goodhitrange, randommove)
+  self:F({group=group, goodhitrange=goodhitrange, randommove=randommove})
+  
+  if group then
+  
+    local _units=group:GetUnits()
+    
+    for _,_unit in pairs(_units) do
+      if _unit and _unit:IsAlive() then
+        self:AddBombingTargetUnit(_unit, goodhitrange, randommove)
+      end
+    end
+  end
+  
+end
+
+--- Measures the foule line distance between two unit or static objects.
+-- @param #RANGE self
+-- @param #string namepit Name of the strafe pit target object.
+-- @param #string namefoulline Name of the fould line distance marker object.
+-- @return #number Foul line distance in meters.
+function RANGE:GetFoullineDistance(namepit, namefoulline)
+  self:F({namepit=namepit, namefoulline=namefoulline})
+
+  -- Check if we have units or statics.  
+  local _staticpit=self:_CheckStatic(namepit)
+  local _staticfoul=self:_CheckStatic(namefoulline)
+  
+  -- Get the unit or static pit object.
+  local pit=nil
+  if _staticpit==true then
+    pit=STATIC:FindByName(namepit, false)
+  elseif _staticpit==false then
+    pit=UNIT:FindByName(namepit)
+  else
+    self:E(RANGE.id..string.format("ERROR! Pit object %s could not be found in GetFoullineDistance function. Check the name in the ME.", namepit))
+  end
+  
+  -- Get the unit or static foul line object.
+  local foul=nil
+  if _staticfoul==true then
+    foul=STATIC:FindByName(namefoulline, false)
+  elseif _staticfoul==false then
+    foul=UNIT:FindByName(namefoulline)
+  else
+    self:E(RANGE.id..string.format("ERROR! Foul line object %s could not be found in GetFoullineDistance function. Check the name in the ME.", namefoulline))
+  end
+  
+  -- Get the distance between the two objects.
+  local fouldist=0
+  if pit~=nil and foul~=nil then
+    fouldist=pit:GetCoordinate():Get2DDistance(foul:GetCoordinate())
+  else
+    self:E(RANGE.id..string.format("ERROR! Foul line distance could not be determined. Check pit object name %s and foul line object name %s in the ME.", namepit, namefoulline))
+  end
+
+  self:T(RANGE.id..string.format("Foul line distance = %.1f m.", fouldist))
+  return fouldist
+end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Event Handling
@@ -600,11 +861,11 @@ function RANGE:onEvent(Event)
   self:F3(Event)
 
   if Event == nil or Event.initiator == nil then
-    self:T2("Skipping onEvent. Event or Event.initiator unknown.")
+    self:T3("Skipping onEvent. Event or Event.initiator unknown.")
     return true
   end
   if Unit.getByName(Event.initiator:getName()) == nil then
-    self:T2("Skipping onEvent. Initiator unit name unknown.")
+    self:T3("Skipping onEvent. Initiator unit name unknown.")
     return true
   end
 
@@ -646,19 +907,16 @@ function RANGE:onEvent(Event)
   -- Call event Birth function.
   if Event.id==world.event.S_EVENT_BIRTH and _playername then
     self:OnEventBirth(EventData)
-    --self:_OnBirth(EventData)
   end
   
   -- Call event Shot function.
   if Event.id==world.event.S_EVENT_SHOT and _playername and Event.weapon then
     self:OnEventShot(EventData)
-    --self:_OnShot(EventData)
   end
   
   -- Call event Hit function.
   if Event.id==world.event.S_EVENT_HIT and _playername and DCStgtunit then
     self:OnEventHit(EventData)
-    --self:_OnHit(EventData)
   end
   
 end
@@ -668,7 +926,6 @@ end
 -- @param #RANGE self
 -- @param Core.Event#EVENTDATA EventData
 function RANGE:OnEventBirth(EventData)
---function RANGE:_OnBirth(EventData)
   self:F({eventbirth = EventData})
   
   local _unitName=EventData.IniUnitName  
@@ -689,6 +946,8 @@ function RANGE:OnEventBirth(EventData)
     local text=string.format("Player %s, callsign %s entered unit %s (UID %d) of group %s (GID %d)", _playername, _callsign, _unitName, _uid, _group:GetName(), _gid)
     self:T(RANGE.id..text)
     MESSAGE:New(text, 5):ToAllIf(self.Debug)
+    
+    self:_GetAmmo(_unitName)
     
     -- Reset current strafe status.
     self.strafeStatus[_uid] = nil
@@ -717,7 +976,6 @@ end
 -- @param #RANGE self
 -- @param Core.Event#EVENTDATA EventData
 function RANGE:OnEventHit(EventData)
---function RANGE:_OnHit(EventData)
   self:F({eventhit = EventData})
   
   -- Debug info.
@@ -733,7 +991,7 @@ function RANGE:OnEventHit(EventData)
   end
   
   -- Unit ID
-  local _unitID   = _unit:GetID()
+  local _unitID = _unit:GetID()
 
   -- Target
   local target     = EventData.TgtUnit
@@ -743,7 +1001,7 @@ function RANGE:OnEventHit(EventData)
   local _currentTarget = self.strafeStatus[_unitID]
 
   -- Player has rolled in on a strafing target.
-  if _currentTarget then
+  if _currentTarget and target:IsAlive() then
   
     local playerPos = _unit:GetCoordinate()
     local targetPos = target:GetCoordinate()
@@ -752,7 +1010,7 @@ function RANGE:OnEventHit(EventData)
     for _,_target in pairs(_currentTarget.zone.targets) do
     
       -- Check the the target is the same that was actually hit.
-      if _target:GetName() == targetname then
+      if  _target and _target:IsAlive() and _target:GetName() == targetname then
       
         -- Get distance between player and target.
         local dist=playerPos:Get2DDistance(targetPos)
@@ -768,7 +1026,7 @@ function RANGE:OnEventHit(EventData)
         else
           -- Too close to the target.
           if _currentTarget.pastfoulline==false and _unit and _playername then 
-            local _d=_currentTarget.zone.foulline           
+            local _d=_currentTarget.zone.foulline
             local text=string.format("%s, Invalid hit!\nYou already passed foul line distance of %d m for target %s.", self:_myname(_unitName), _d, targetname)
             self:_DisplayMessageToGroup(_unit, text, 10)
             self:T2(RANGE.id..text)
@@ -781,15 +1039,17 @@ function RANGE:OnEventHit(EventData)
   end
   
   -- Bombing Targets
-  for _,_target in pairs(self.bombingTargets) do
+  for _,_bombtarget in pairs(self.bombingTargets) do
+  
+    local _target=_bombtarget.target --Wrapper.Positionable#POSITIONABLE
   
     -- Check if one of the bomb targets was hit.
-    if _target.name == targetname then      
+    if _target and _target:IsAlive() and _bombtarget.name == targetname then
       
       if _unit and _playername then
       
-        local playerPos = _unit:GetCoordinate()
-        local targetPos = target:GetCoordinate()
+        -- Position of target.
+        local targetPos = _target:GetCoordinate()
       
         -- Message to player.
         --local text=string.format("%s, direct hit on target %s.", self:_myname(_unitName), targetname)
@@ -809,7 +1069,6 @@ end
 -- @param #RANGE self
 -- @param Core.Event#EVENTDATA EventData
 function RANGE:OnEventShot(EventData)
---function RANGE:_OnShot(EventData)
   self:F({eventshot = EventData})
   
   -- Weapon data.
@@ -818,13 +1077,23 @@ function RANGE:OnEventShot(EventData)
   local _weaponName = _weaponStrArray[#_weaponStrArray]
   
   -- Debug info.
-  self:T3(RANGE.id.."EVENT SHOT: Ini unit    = "..EventData.IniUnitName)
-  self:T3(RANGE.id.."EVENT SHOT: Ini group   = "..EventData.IniGroupName)
-  self:T3(RANGE.id.."EVENT SHOT: Weapon type = ".._weapon)
-  self:T3(RANGE.id.."EVENT SHOT: Weapon name = ".._weaponName)
+  self:T(RANGE.id.."EVENT SHOT: Ini unit    = "..EventData.IniUnitName)
+  self:T(RANGE.id.."EVENT SHOT: Ini group   = "..EventData.IniGroupName)
+  self:T(RANGE.id.."EVENT SHOT: Weapon type = ".._weapon)
+  self:T(RANGE.id.."EVENT SHOT: Weapon name = ".._weaponName)
   
-  -- Monitor only bombs and rockets.
-  if (string.match(_weapon, "weapons.bombs") or string.match(_weapon, "weapons.nurs")) then
+  -- Special cases:
+  local _viggen=string.match(_weapon, "ROBOT") or string.match(_weapon, "RB75") or string.match(_weapon, "BK90") or string.match(_weapon, "RB15") or string.match(_weapon, "RB04")
+  
+  -- Tracking conditions for bombs, rockets and missiles.
+  local _bombs=string.match(_weapon, "weapons.bombs") 
+  local _rockets=string.match(_weapon, "weapons.nurs") 
+  local _missiles=string.match(_weapon, "weapons.missiles") or _viggen
+  
+  -- Check if any condition applies here.
+  local _track = (_bombs and self.trackbombs) or (_rockets and self.trackrockets) or (_missiles and self.trackmissiles)
+    
+  if _track then
 
     -- Weapon
     local _ordnance =  EventData.weapon
@@ -887,11 +1156,15 @@ function RANGE:OnEventShot(EventData)
           -- Loop over defined bombing targets.
           for _,_bombtarget in pairs(self.bombingTargets) do
   
-            -- Distance between bomb and target.
-            local _temp = impactcoord:Get2DDistance(_bombtarget.point)
-  
-            -- Find closest target to last known position of the bomb.
-            if _distance == nil or _temp < _distance then
+            local _target=_bombtarget.target --Wrapper.Positionable#POSITIONABLE
+            
+            if _target and _target:IsAlive() then
+            
+              -- Distance between bomb and target.
+              local _temp = impactcoord:Get2DDistance(_target:GetCoordinate())
+    
+              -- Find closest target to last known position of the bomb.
+              if _distance == nil or _temp < _distance then
                 _distance = _temp
                 _closetTarget = _bombtarget
                 if _distance <= 0.5*_bombtarget.goodhitrange then
@@ -903,6 +1176,8 @@ function RANGE:OnEventShot(EventData)
                 else
                   _hitquality = "POOR"
                 end
+                
+              end
             end
           end
 
@@ -1335,7 +1610,7 @@ end
 -- @param #RANGE self
 -- @param #string _unitName Name of player unit.
 function RANGE:_CheckInZone(_unitName)
-  self:F(_unitName)
+  self:F2(_unitName)
 
   -- Get player unit and name.
   local _unit, _playername = self:_GetPlayerUnitAndName(_unitName)
@@ -1364,7 +1639,7 @@ function RANGE:_CheckInZone(_unitName)
       
       -- Debug output
       local text=string.format("Checking stil in zone. Unit = %s, player = %s in zone = %s. alt = %d, delta heading = %d", _unitName, _playername, tostring(unitinzone), unitalt, deltaheading)
-      self:T(RANGE.id..text)
+      self:T2(RANGE.id..text)
     
       -- Check if player is in strafe zone and below max alt.
       if unitinzone then 
@@ -1390,6 +1665,9 @@ function RANGE:_CheckInZone(_unitName)
           
         else
         
+          -- Get current ammo.
+          local _ammo=self:_GetAmmo(_unitName)
+        
           -- Result.
           local _result = self.strafeStatus[_unitID]
 
@@ -1403,9 +1681,19 @@ function RANGE:_CheckInZone(_unitName)
           else
             _result.text = "POOR PASS"
           end
-    
+          
+          -- Calculate accuracy of run. Number of hits wrt number of rounds fired.
+          local shots=_result.ammo-_ammo
+          local accur=0
+          if shots>0 then
+            accur=_result.hits/shots*100
+          end
+              
           -- Message text.      
           local _text=string.format("%s, %s with %d hits on target %s.", self:_myname(_unitName), _result.text, _result.hits, _result.zone.name)
+          if shots and accur then
+            _text=_text..string.format("\nTotal rounds fired %d. Accuracy %.1f %%.", shots, accur)
+          end
           
           -- Send message.
           self:_DisplayMessageToGroup(_unit, _text)
@@ -1442,13 +1730,16 @@ function RANGE:_CheckInZone(_unitName)
            
         -- Debug info.
         local text=string.format("Checking zone %s. Unit = %s, player = %s in zone = %s. alt = %d, delta heading = %d", _targetZone.name, _unitName, _playername, tostring(unitinzone), unitalt, deltaheading)
-        self:T(RANGE.id..text)
+        self:T2(RANGE.id..text)
         
         -- Player is inside zone.
         if unitinzone then
+        
+          -- Get ammo at the beginning of the run.
+          local _ammo=self:_GetAmmo(_unitName)
 
           -- Init strafe status for this player.
-          self.strafeStatus[_unitID] = {hits = 0, zone = _targetZone, time = 1, pastfoulline=false }
+          self.strafeStatus[_unitID] = {hits = 0, zone = _targetZone, time = 1, ammo=_ammo, pastfoulline=false }
   
           -- Rolling in!
           local _msg=string.format("%s, rolling in on strafe pit %s.", self:_myname(_unitName), _targetZone.name)
@@ -1493,7 +1784,7 @@ function RANGE:_AddF10Commands(_unitName)
         -- Enable switch so we don't do this twice.
         self.MenuAddedTo[_gid] = true
   
-        -- Main F10 menu: F10/On the Range
+        -- Main F10 menu: F10/On the Range/<Range Name>/
         if RANGE.MenuF10[_gid] == nil then
           RANGE.MenuF10[_gid]=missionCommands.addSubMenuForGroup(_gid, "On the Range")
         end
@@ -1501,40 +1792,39 @@ function RANGE:_AddF10Commands(_unitName)
         local _statsPath    = missionCommands.addSubMenuForGroup(_gid, "Statistics",   _rangePath)
         local _markPath     = missionCommands.addSubMenuForGroup(_gid, "Mark Targets", _rangePath)
         local _settingsPath = missionCommands.addSubMenuForGroup(_gid, "My Settings",  _rangePath)
-        -- F10/On the Range/My Settings/
+        -- F10/On the Range/<Range Name>/My Settings/
         local _mysmokePath  = missionCommands.addSubMenuForGroup(_gid, "Smoke Color", _settingsPath)
         local _myflarePath  = missionCommands.addSubMenuForGroup(_gid, "Flare Color", _settingsPath)
 
-
         --TODO: Convert to MOOSE menu.
-        -- F10/On the Range/Mark Targets/
+        -- F10/On the Range/<Range Name>/Mark Targets/
         missionCommands.addCommandForGroup(_gid, "Mark On Map",         _markPath, self._MarkTargetsOnMap, self, _unitName)
         missionCommands.addCommandForGroup(_gid, "Illuminate Range",    _markPath, self._IlluminateBombTargets, self, _unitName)        
         missionCommands.addCommandForGroup(_gid, "Smoke Strafe Pits",   _markPath, self._SmokeStrafeTargetBoxes, self, _unitName)        
         missionCommands.addCommandForGroup(_gid, "Smoke Strafe Tgts",   _markPath, self._SmokeStrafeTargets, self, _unitName)
         missionCommands.addCommandForGroup(_gid, "Smoke Bomb Tgts",     _markPath, self._SmokeBombTargets, self, _unitName)
-        -- F10/On the Range/Stats/
+        -- F10/On the Range/<Range Name>/Stats/
         missionCommands.addCommandForGroup(_gid, "All Strafe Results",  _statsPath, self._DisplayStrafePitResults, self, _unitName)
         missionCommands.addCommandForGroup(_gid, "All Bombing Results", _statsPath, self._DisplayBombingResults, self, _unitName)
         missionCommands.addCommandForGroup(_gid, "My Strafe Results",   _statsPath, self._DisplayMyStrafePitResults, self, _unitName)
         missionCommands.addCommandForGroup(_gid, "My Bomb Results",     _statsPath, self._DisplayMyBombingResults, self, _unitName)
         missionCommands.addCommandForGroup(_gid, "Reset All Stats",     _statsPath, self._ResetRangeStats, self, _unitName)
-        -- F10/On the Range/My Settings/Smoke Color/
+        -- F10/On the Range/<Range Name>/My Settings/Smoke Color/
         missionCommands.addCommandForGroup(_gid, "Blue Smoke",          _mysmokePath, self._playersmokecolor, self, _unitName, SMOKECOLOR.Blue)
         missionCommands.addCommandForGroup(_gid, "Green Smoke",         _mysmokePath, self._playersmokecolor, self, _unitName, SMOKECOLOR.Green)
         missionCommands.addCommandForGroup(_gid, "Orange Smoke",        _mysmokePath, self._playersmokecolor, self, _unitName, SMOKECOLOR.Orange)
         missionCommands.addCommandForGroup(_gid, "Red Smoke",           _mysmokePath, self._playersmokecolor, self, _unitName, SMOKECOLOR.Red)
         missionCommands.addCommandForGroup(_gid, "White Smoke",         _mysmokePath, self._playersmokecolor, self, _unitName, SMOKECOLOR.White)
-        -- F10/On the Range/My Settings/Flare Color/
+        -- F10/On the Range/<Range Name>/My Settings/Flare Color/
         missionCommands.addCommandForGroup(_gid, "Green Flares",        _myflarePath, self._playerflarecolor, self, _unitName, FLARECOLOR.Green)
         missionCommands.addCommandForGroup(_gid, "Red Flares",          _myflarePath, self._playerflarecolor, self, _unitName, FLARECOLOR.Red)
         missionCommands.addCommandForGroup(_gid, "White Flares",        _myflarePath, self._playerflarecolor, self, _unitName, FLARECOLOR.White)
         missionCommands.addCommandForGroup(_gid, "Yellow Flares",       _myflarePath, self._playerflarecolor, self, _unitName, FLARECOLOR.Yellow)
-        -- F10/On the Range/My Settings/
+        -- F10/On the Range/<Range Name>/My Settings/
         missionCommands.addCommandForGroup(_gid, "Smoke Delay On/Off",  _settingsPath, self._SmokeBombDelayOnOff, self, _unitName)
         missionCommands.addCommandForGroup(_gid, "Smoke Impact On/Off",  _settingsPath, self._SmokeBombImpactOnOff, self, _unitName)
         missionCommands.addCommandForGroup(_gid, "Flare Hits On/Off",    _settingsPath, self._FlareDirectHitsOnOff, self, _unitName)        
-        -- F10/On the Range/
+        -- F10/On the Range/<Range Name>/
         missionCommands.addCommandForGroup(_gid, "Range Information",   _rangePath, self._DisplayRangeInfo, self, _unitName)
         missionCommands.addCommandForGroup(_gid, "Weather Report",      _rangePath, self._DisplayRangeWeather, self, _unitName)
       end
@@ -1550,6 +1840,56 @@ end
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Helper Functions
 
+--- Get the number of shells a unit currently has.
+-- @param #RANGE self
+-- @param #string unitname Name of the player unit.
+-- @return Number of shells left
+function RANGE:_GetAmmo(unitname)
+  self:F2(unitname)
+  
+  -- Init counter.
+  local ammo=0
+  
+  local unit, playername = self:_GetPlayerUnitAndName(unitname)
+  
+  if unit and playername then
+  
+    local has_ammo=false
+    
+    local ammotable=unit:GetAmmo()
+    self:T2({ammotable=ammotable})
+    
+    if ammotable ~= nil then
+    
+      local weapons=#ammotable
+      self:T2(RANGE.id..string.format("Number of weapons %d.", weapons))
+      
+      for w=1,weapons do
+      
+        local Nammo=ammotable[w]["count"]
+        local Tammo=ammotable[w]["desc"]["typeName"]
+        
+        -- We are specifically looking for shells here.
+        if string.match(Tammo, "shell") then
+        
+          -- Add up all shells
+          ammo=ammo+Nammo
+        
+          local text=string.format("Player %s has %d rounds ammo of type %s", playername, Nammo, Tammo)
+          self:T(RANGE.id..text)
+          MESSAGE:New(text, 10):ToAllIf(self.Debug)
+        else
+          local text=string.format("Player %s has %d ammo of type %s", playername, Nammo, Tammo)
+          self:T(RANGE.id..text)
+          MESSAGE:New(text, 10):ToAllIf(self.Debug)
+        end
+      end
+    end
+  end
+      
+  return ammo
+end
+
 --- Mark targets on F10 map.
 -- @param #RANGE self
 -- @param #string _unitName Name of the player unit.
@@ -1557,31 +1897,45 @@ function RANGE:_MarkTargetsOnMap(_unitName)
   self:F(_unitName)
 
   -- Get group.
-  local group=UNIT:FindByName(_unitName):GetGroup()
-
-  if group then
+  local group=nil
+  if _unitName then
+    group=UNIT:FindByName(_unitName):GetGroup()
+  end
   
-    -- Mark bomb targets.
-    for _,_target in pairs(self.bombingTargets) do
-      local coord=_target.point --Core.Point#COORDINATE
-      coord:MarkToGroup("Bomb target ".._target.name, group)
-    end
-    
-    -- Mark strafe targets.
-    for _,_strafepit in pairs(self.strafeTargets) do
-      for _,_target in pairs(_strafepit.targets) do
-        local coord=_target:GetCoordinate() --Core.Point#COORDINATE
-        coord:MarkToGroup("Strafe target ".._target:GetName(), group)
+  -- Mark bomb targets.
+  for _,_bombtarget in pairs(self.bombingTargets) do
+    local _target=_bombtarget.target --Wrapper.Positionable#POSITIONABLE
+    if _target and _target:IsAlive() then
+      local coord=_target:GetCoordinate() --Core.Point#COORDINATE
+      if group then
+        coord:MarkToGroup("Bomb target ".._bombtarget.name, group)
+      else
+        coord:MarkToAll("Bomb target ".._bombtarget.name)
       end
     end
-    
-    if _unitName then
-      local _unit, _playername = self:_GetPlayerUnitAndName(_unitName)
-      local text=string.format("%s, %s, range targets are now marked on F10 map.", self.rangename, _playername)
-      self:_DisplayMessageToGroup(_unit, text, 5)
-    end
-    
   end
+  
+  -- Mark strafe targets.
+  for _,_strafepit in pairs(self.strafeTargets) do
+    for _,_target in pairs(_strafepit.targets) do
+      local _target=_target --Wrapper.Positionable#POSITIONABLE
+      if _target and _target:IsAlive() then
+        local coord=_target:GetCoordinate() --Core.Point#COORDINATE
+        if group then
+          coord:MarkToGroup("Strafe target ".._target:GetName(), group)
+        else
+          coord:MarkToAll("Strafe target ".._target:GetName())
+        end
+      end
+    end
+  end
+  
+  if _unitName then
+    local _unit, _playername = self:_GetPlayerUnitAndName(_unitName)
+    local text=string.format("%s, %s, range targets are now marked on F10 map.", self.rangename, _playername)
+    self:_DisplayMessageToGroup(_unit, text, 5)
+  end
+    
 end
 
 --- Illuminate targets. Fires illumination bombs at one random bomb and one random strafe target at a random altitude between 400 and 800 m.
@@ -1593,9 +1947,12 @@ function RANGE:_IlluminateBombTargets(_unitName)
   -- All bombing target coordinates.
   local bomb={}
 
-  for _,_target in pairs(self.bombingTargets) do
-    local coord=_target.point --Core.Point#COORDINATE
-    table.insert(bomb, coord)
+  for _,_bombtarget in pairs(self.bombingTargets) do
+    local _target=_bombtarget.target --Wrapper.Positionable#POSITIONABLE
+    if _target and _target:IsAlive() then
+      local coord=_target:GetCoordinate() --Core.Point#COORDINATE
+      table.insert(bomb, coord)
+    end
   end
   
   if #bomb>0 then
@@ -1609,8 +1966,11 @@ function RANGE:_IlluminateBombTargets(_unitName)
   
   for _,_strafepit in pairs(self.strafeTargets) do
     for _,_target in pairs(_strafepit.targets) do
-      local coord=_target:GetCoordinate() --Core.Point#COORDINATE
-      table.insert(strafe, coord)
+      local _target=_target --Wrapper.Positionable#POSITIONABLE
+      if _target and _target:IsAlive() then
+        local coord=_target:GetCoordinate() --Core.Point#COORDINATE
+        table.insert(strafe, coord)
+      end
     end
   end
   
@@ -1741,9 +2101,12 @@ end
 function RANGE:_SmokeBombTargets(unitname)
   self:F(unitname)
   
-  for _,_target in pairs(self.bombingTargets) do
-    local coord = _target.point --Core.Point#COORDINATE
-    coord:Smoke(self.BombSmokeColor)
+  for _,_bombtarget in pairs(self.bombingTargets) do
+    local _target=_bombtarget.target --Wrapper.Positionable#POSITIONABLE
+    if _target and _target:IsAlive() then
+      local coord = _target:GetCoordinate() --Core.Point#COORDINATE
+      coord:Smoke(self.BombSmokeColor)
+    end
   end
   
   if unitname then
@@ -1761,10 +2124,7 @@ function RANGE:_SmokeStrafeTargets(unitname)
   self:F(unitname)
   
   for _,_target in pairs(self.strafeTargets) do
-    for _,_unit in pairs(_target.targets) do
-      local coord = _unit:GetCoordinate() --Core.Point#COORDINATE
-      coord:Smoke(self.StrafeSmokeColor)
-    end
+    _target.coordinate:Smoke(self.StrafeSmokeColor)
   end
   
   if unitname then
@@ -1877,6 +2237,63 @@ function RANGE:_flarecolor2text(color)
   return txt
 end
 
+--- Checks if a static object with a certain name exists. It also added it to the MOOSE data base, if it is not already in there.
+-- @param #RANGE self
+-- @param #string name Name of the potential static object.
+-- @return #boolean Returns true if a static with this name exists. Retruns false if a unit with this name exists. Returns nil if neither unit or static exist.
+function RANGE:_CheckStatic(name)
+  self:F2(name)
+
+  -- Get DCS static object.
+  local _DCSstatic=StaticObject.getByName(name)
+  
+  if _DCSstatic and _DCSstatic:isExist() then
+  
+    --Static does exist at least in DCS. Check if it also in the MOOSE DB.
+    local _MOOSEstatic=STATIC:FindByName(name, false)
+    
+    -- If static is not yet in MOOSE DB, we add it. Can happen for cargo statics!
+    if not _MOOSEstatic then
+      self:T(RANGE.id..string.format("Adding DCS static to MOOSE database. Name = %s.", name))
+      _DATABASE:AddStatic(name)
+    end
+    
+    return true
+  else
+    self:T3(RANGE.id..string.format("No static object with name %s exists.", name))
+  end
+  
+  -- Check if a unit has this name.
+  if UNIT:FindByName(name) then
+    return false
+  else
+    self:T3(RANGE.id..string.format("No unit object with name %s exists.", name))
+  end
+
+  -- If not unit or static exist, we return nil.
+  return nil
+end
+
+--- Get max speed of controllable.
+-- @param #RANGE self
+-- @param Wrapper.Controllable#CONTROLLABLE controllable
+-- @return Maximum speed in km/h.
+function RANGE:_GetSpeed(controllable)
+  self:F2(controllable)
+
+  -- Get DCS descriptors
+  local desc=controllable:GetDesc()
+  
+  -- Get speed
+  local speed=0
+  if desc then
+    speed=desc.speedMax*3.6
+    self:T({speed=speed})
+  end
+  
+  return speed
+end
+
 --- Returns the unit of a player and the player name. If the unit does not belong to a player, nil is returned. 
 -- @param #RANGE self
 -- @param #string _unitName Name of the player unit.
@@ -1884,7 +2301,7 @@ end
 -- @return #string Name of the player.
 -- @return nil If player does not exist.
 function RANGE:_GetPlayerUnitAndName(_unitName)
-  self:F(_unitName)
+  self:F2(_unitName)
 
   if _unitName ~= nil then
   
@@ -1896,7 +2313,7 @@ function RANGE:_GetPlayerUnitAndName(_unitName)
       local playername=DCSunit:getPlayerName()
       local unit=UNIT:Find(DCSunit)
     
-      self:T({DCSunit=DCSunit, unit=unit, playername=playername})
+      self:T2({DCSunit=DCSunit, unit=unit, playername=playername})
       if DCSunit and unit and playername then
         return unit, playername
       end
@@ -1913,7 +2330,7 @@ end
 -- @param #RANGE self
 -- @param #string unitname Name of the player unit.
 function RANGE:_myname(unitname)
-  self:F(unitname)
+  self:F2(unitname)
   
   local unit=UNIT:FindByName(unitname)
   local pname=unit:GetPlayerName()
@@ -1922,13 +2339,13 @@ function RANGE:_myname(unitname)
   return string.format("%s (%s)", csign, pname)
 end
 
---- http://stackoverflow.com/questions/1426954/split-string-in-lua
+--- Split string. Cf http://stackoverflow.com/questions/1426954/split-string-in-lua
 -- @param #RANGE self
 -- @param #string str Sting to split.
 -- @param #string sep Speparator for split.
 -- @return #table Split text.
 function RANGE:_split(str, sep)
-  self:F({str=str, sep=sep})
+  self:F2({str=str, sep=sep})
   
   local result = {}
   local regex = ("([^%s]+)"):format(sep)
