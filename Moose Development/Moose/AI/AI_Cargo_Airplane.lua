@@ -24,7 +24,7 @@ AI_CARGO_AIRPLANE = {
 
 --- Creates a new AI_CARGO_AIRPLANE object.
 -- @param #AI_CARGO_AIRPLANE self
--- @param Wrapper.Unit#UNIT Airplane
+-- @param Wrapper.Group#GROUP Airplane
 -- @param Core.Set#SET_CARGO CargoSet
 -- @param #number CombatRadius
 -- @return #AI_CARGO_AIRPLANE
@@ -115,13 +115,13 @@ end
 
 --- Set the Carrier.
 -- @param #AI_CARGO_AIRPLANE self
--- @param Wrapper.Unit#UNIT Airplane
+-- @param Wrapper.Group#GROUP Airplane
 -- @return #AI_CARGO_AIRPLANE
 function AI_CARGO_AIRPLANE:SetCarrier( Airplane )
 
   local AICargo = self
 
-  self.Airplane = Airplane -- Wrapper.Unit#UNIT
+  self.Airplane = Airplane -- Wrapper.Group#GROUP
   self.Airplane:SetState( self.Airplane, "AI_CARGO_AIRPLANE", self )
 
   self.RoutePickup = false
@@ -172,7 +172,7 @@ end
 -- @param #AI_CARGO_AIRPLANE self
   -- @param Wrapper.Airbase#AIRBASE Airbase
 -- @param #number Radius
--- @return Wrapper.Unit#UNIT NewCarrier
+-- @return Wrapper.Group#GROUP NewCarrier
 function AI_CARGO_AIRPLANE:FindCarrier( Coordinate, Radius )
 
   local CoordinateZone = ZONE_RADIUS:New( "Zone" , Coordinate:GetVec2(), Radius )
@@ -193,7 +193,7 @@ function AI_CARGO_AIRPLANE:FindCarrier( Coordinate, Radius )
 end
 
 --- @param #AI_CARGO_AIRPLANE self
--- @param Wrapper.Unit#UNIT Airplane
+-- @param Wrapper.Group#GROUP Airplane
 -- @param From
 -- @param Event
 -- @param To
@@ -228,9 +228,14 @@ end
 -- @param #number Speed
 function AI_CARGO_AIRPLANE:onafterPickup( Airplane, From, Event, To, Airbase, Speed )
 
+  if self.Airbase then
+    Airplane:RespawnAtAirbase( self.Airbase )
+  end
+  
   if Airplane and Airplane:IsAlive() then
 
     self.RoutePickup = true
+    self.Airbase = Airbase
      
     Airplane:RouteRTB( Airbase, Speed)
   end
@@ -239,26 +244,31 @@ end
 
 
 --- @param #AI_CARGO_AIRPLANE self
--- @param Wrapper.Unit#UNIT Airplane
+-- @param Wrapper.Group#GROUP Airplane
 -- @param From
 -- @param Event
 -- @param To
-  -- @param Wrapper.Airbase#AIRBASE Airbase
+-- @param Wrapper.Airbase#AIRBASE Airbase
 -- @param #number Speed
-function AI_CARGO_AIRPLANE:onafterDeploy( Airplane, From, Event, To, Coordinate, Speed )
+function AI_CARGO_AIRPLANE:onafterDeploy( Airplane, From, Event, To, Airbase, Speed )
 
+  if self.Airbase then
+    Airplane:RespawnAtAirbase( self.Airbase )
+  end
+  
   if Airplane and Airplane:IsAlive() then
 
     self.RouteDeploy = true
+    self.Airbase = Airbase
      
-    Airplane:RouteRTB( Airbase, Speed)
+    Airplane:RouteRTB( Airbase, Speed )
   end
   
 end
 
 
 --- @param #AI_CARGO_AIRPLANE self
--- @param Wrapper.Unit#UNIT Airplane
+-- @param Wrapper.Group#GROUP Airplane
 function AI_CARGO_AIRPLANE:onafterLoad( Airplane, From, Event, To, Coordinate )
 
   if Airplane and Airplane:IsAlive() then
@@ -276,7 +286,7 @@ function AI_CARGO_AIRPLANE:onafterLoad( Airplane, From, Event, To, Coordinate )
 end
 
 --- @param #AI_CARGO_AIRPLANE self
--- @param Wrapper.Unit#UNIT Airplane
+-- @param Wrapper.Group#GROUP Airplane
 function AI_CARGO_AIRPLANE:onafterBoard( Airplane, From, Event, To )
 
   if Airplane and Airplane:IsAlive() then
@@ -291,7 +301,7 @@ function AI_CARGO_AIRPLANE:onafterBoard( Airplane, From, Event, To )
 end
 
 --- @param #AI_CARGO_AIRPLANE self
--- @param Wrapper.Unit#UNIT Airplane
+-- @param Wrapper.Group#GROUP Airplane
 function AI_CARGO_AIRPLANE:onafterLoaded( Airplane, From, Event, To )
 
   if Airplane and Airplane:IsAlive() then
@@ -301,7 +311,7 @@ end
 
 
 --- @param #AI_CARGO_AIRPLANE self
--- @param Wrapper.Unit#UNIT Airplane
+-- @param Wrapper.Group#GROUP Airplane
 function AI_CARGO_AIRPLANE:onafterUnload( Airplane, From, Event, To )
 
   if Airplane and Airplane:IsAlive() then
@@ -312,7 +322,7 @@ function AI_CARGO_AIRPLANE:onafterUnload( Airplane, From, Event, To )
 end
 
 --- @param #AI_CARGO_AIRPLANE self
--- @param Wrapper.Unit#UNIT Airplane
+-- @param Wrapper.Group#GROUP Airplane
 function AI_CARGO_AIRPLANE:onafterUnboard( Airplane, From, Event, To )
 
   if Airplane and Airplane:IsAlive() then
@@ -326,7 +336,7 @@ function AI_CARGO_AIRPLANE:onafterUnboard( Airplane, From, Event, To )
 end
 
 --- @param #AI_CARGO_AIRPLANE self
--- @param Wrapper.Unit#UNIT Airplane
+-- @param Wrapper.Group#GROUP Airplane
 function AI_CARGO_AIRPLANE:onafterUnloaded( Airplane, From, Event, To )
 
   if Airplane and Airplane:IsAlive() then

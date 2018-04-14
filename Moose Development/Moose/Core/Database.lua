@@ -688,7 +688,7 @@ function DATABASE:_RegisterAirbases()
 
       local DCSAirbaseName = DCSAirbase:getName()
 
-      self:E( { "Register Airbase:", DCSAirbaseName } )
+      self:E( { "Register Airbase:", DCSAirbaseName, DCSAirbase:getID() } )
       self:AddAirbase( DCSAirbaseName )
     end
   end
