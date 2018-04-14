@@ -249,17 +249,15 @@ end
 function TASKINFO:AddCargoSet( SetCargo, Order, Detail, Keep )
 
   local CargoReport = REPORT:New()
+  CargoReport:Add( "" )
   SetCargo:ForEachCargo(
-    --- @param Core.Cargo#CARGO Cargo
+    --- @param Cargo.Cargo#CARGO Cargo
     function( Cargo )
-      local CargoType = Cargo:GetType()
-      local CargoName = Cargo:GetName()
-      local CargoCoordinate = Cargo:GetCoordinate()
-      CargoReport:Add( string.format( '"%s" (%s) at %s', CargoName, CargoType, CargoCoordinate:ToStringMGRS() ) )
+      CargoReport:Add( string.format( ' - %s (%s) %s - status %s ', Cargo:GetName(), Cargo:GetType(), Cargo:GetTransportationMethod(), Cargo:GetCurrentState() ) )
     end
   )
 
-  self:AddInfo( "CargoSet", CargoReport:Text(), Order, Detail, Keep )
+  self:AddInfo( "Cargo", CargoReport:Text(), Order, Detail, Keep )
 
   return self
 end
@@ -319,7 +317,7 @@ function TASKINFO:Report( Report, Detail, ReportGroup )
         local Coordinate = Data.Data -- Core.Point#COORDINATE
         Text = Coordinate:ToStringWind( ReportGroup:GetUnit(1), nil, self )
       end
-      if Key == "CargoSet" then
+      if Key == "Cargo" then
         local DataText = Data.Data -- #string
         Text = DataText
       end

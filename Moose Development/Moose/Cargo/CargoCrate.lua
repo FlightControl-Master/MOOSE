@@ -49,10 +49,8 @@ do -- CARGO_CRATE
     local self = BASE:Inherit( self, CARGO_REPRESENTABLE:New( CargoStatic, Type, Name, nil, LoadRadius, NearRadius ) ) -- #CARGO_CRATE
     self:F( { Type, Name, NearRadius } )
   
-    self.CargoObject = CargoStatic
+    self.CargoObject = CargoStatic -- Wrapper.Static#STATIC
  
-    self:T( self.ClassName )
-  
     -- Cargo objects are added to the _DATABASE and SET_CARGO objects.
     _EVENTDISPATCHER:CreateEventNewCargo( self )
     
@@ -65,6 +63,35 @@ do -- CARGO_CRATE
     return self
   end
   
+  --- @param #CARGO_CRATE self
+  -- @param Core.Event#EVENTDATA EventData 
+  function CARGO_CRATE:OnEventCargoDead( EventData )
+
+    local Destroyed = false
+  
+    if self:IsDestroyed() or self:IsUnLoaded() or self:IsBoarding() then
+      if self.CargoObject:GetName() == EventData.IniUnitName then
+        if not self.NoDestroy then 
+          Destroyed = true
+        end
+      end
+    else
+      if self:IsLoaded() then
+        local CarrierName = self.CargoCarrier:GetName()
+        if CarrierName == EventData.IniDCSUnitName then
+          MESSAGE:New( "Cargo is lost from carrier " .. CarrierName, 15 ):ToAll()
+          Destroyed = true
+          self.CargoCarrier:ClearCargo()
+        end
+      end
+    end
+    
+    if Destroyed then
+      self:I( { "Cargo crate destroyed: " .. self.CargoObject:GetName() } )
+      self:Destroyed()
+    end
+    
+  end
   
   
   --- Enter UnLoaded State.
@@ -74,7 +101,7 @@ do -- CARGO_CRATE
   -- @param #string To
   -- @param Core.Point#POINT_VEC2
   function CARGO_CRATE:onenterUnLoaded( From, Event, To, ToPointVec2 )
-    self:F( { ToPointVec2, From, Event, To } )
+    --self:F( { ToPointVec2, From, Event, To } )
   
     local Angle = 180
     local Speed = 10
@@ -90,7 +117,7 @@ do -- CARGO_CRATE
   
       -- Respawn the group...
       if self.CargoObject then
-        self.CargoObject:ReSpawn( ToPointVec2, 0 )
+        self.CargoObject:ReSpawnAt( ToPointVec2, 0 )
         self.CargoCarrier = nil
       end
       
@@ -111,14 +138,17 @@ do -- CARGO_CRATE
   -- @param #string To
   -- @param Wrapper.Unit#UNIT CargoCarrier
   function CARGO_CRATE:onenterLoaded( From, Event, To, CargoCarrier )
-    self:F( { From, Event, To, CargoCarrier } )
+    --self:F( { From, Event, To, CargoCarrier } )
   
     self.CargoCarrier = CargoCarrier
     
     -- Only destroy the CargoObject is if there is a CargoObject (packages don't have CargoObjects).
     if self.CargoObject then
       self:T("Destroying")
+      self.NoDestroy = true
       self.CargoObject:Destroy()
+      --local Coordinate = self.CargoObject:GetCoordinate():GetRandomCoordinateInRadius( 50, 20 )
+      --self.CargoObject:ReSpawnAt( Coordinate, 0 )
     end
   end
 
@@ -139,12 +169,12 @@ do -- CARGO_CRATE
   -- @param Core.Point#Coordinate Coordinate
   -- @return #boolean true if the Cargo Crate is within the report radius.
   function CARGO_CRATE:IsInReportRadius( Coordinate )
-    self:F( { Coordinate, LoadRadius = self.LoadRadius } )
+    --self:F( { Coordinate, LoadRadius = self.LoadRadius } )
   
     local Distance = 0
     if self:IsUnLoaded() then
       Distance = Coordinate:DistanceFromPointVec2( self.CargoObject:GetPointVec2() )
-      self:T( Distance )
+      --self:T( Distance )
       if Distance <= self.LoadRadius then
         return true
       end
@@ -159,12 +189,12 @@ do -- CARGO_CRATE
   -- @param Core.Point#Coordinate Coordinate
   -- @return #boolean true if the Cargo Crate is within the loading radius.
   function CARGO_CRATE:IsInLoadRadius( Coordinate )
-    self:F( { Coordinate, LoadRadius = self.NearRadius } )
+    --self:F( { Coordinate, LoadRadius = self.NearRadius } )
   
     local Distance = 0
     if self:IsUnLoaded() then
       Distance = Coordinate:DistanceFromPointVec2( self.CargoObject:GetPointVec2() )
-      self:T( Distance )
+      --self:T( Distance )
       if Distance <= self.NearRadius then
         return true
       end
@@ -180,7 +210,7 @@ do -- CARGO_CRATE
   -- @return Core.Point#COORDINATE The current Coordinate of the first Cargo of the CargoGroup.
   -- @return #nil There is no valid Cargo in the CargoGroup.
   function CARGO_CRATE:GetCoordinate()
-    self:F()
+    --self:F()
     
     return self.CargoObject:GetCoordinate()
   end
@@ -228,16 +258,58 @@ do -- CARGO_CRATE
     return self:IsNear( CargoCarrier:GetCoordinate(), NearRadius )
   end
 
-
   --- Respawn the CargoGroup.
   -- @param #CARGO_CRATE self
   function CARGO_CRATE:Respawn()
 
-    self:F( { "Respawning" } )
+    self:F( { "Respawning crate " .. self:GetName() } )
 
-    self:SetDeployed( false )
-    self:SetStartState( "UnLoaded" )
+
+    -- Respawn the group...
+    if self.CargoObject then
+      self.CargoObject:ReSpawn() -- A cargo destroy crates a DEAD event.
+      self:__Reset( -0.1 )
+    end
+
     
+  end
+
+
+  --- Respawn the CargoGroup.
+  -- @param #CARGO_CRATE self
+  function CARGO_CRATE:onafterReset()
+
+    self:F( { "Reset crate " .. self:GetName() } )
+
+
+    -- Respawn the group...
+    if self.CargoObject then
+      self:SetDeployed( false )
+      self:SetStartState( "UnLoaded" )
+      self.CargoCarrier = nil
+      -- Cargo objects are added to the _DATABASE and SET_CARGO objects.
+      _EVENTDISPATCHER:CreateEventNewCargo( self )
+    end
+
+    
+  end
+
+  --- Get the transportation method of the Cargo.
+  -- @param #CARGO_CRATE self
+  -- @return #string The transportation method of the Cargo.
+  function CARGO_CRATE:GetTransportationMethod()
+    if self:IsLoaded() then
+      return "for unloading"
+    else
+      if self:IsUnLoaded() then
+        return "for loading"
+      else
+        if self:IsDeployed() then
+          return "delivered"
+        end
+      end
+    end
+    return ""
   end
   
 end

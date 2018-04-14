@@ -66,7 +66,9 @@ AI/AI_Cap.lua
 AI/AI_Cas.lua
 AI/AI_Bai.lua
 AI/AI_Formation.lua
-AI/AI_Cargo_Troops.lua
+AI/AI_Cargo_APC.lua
+AI/AI_Cargo_Helicopter.lua
+AI/AI_Cargo_Airplane.lua
 
 Actions/Act_Assign.lua
 Actions/Act_Route.lua

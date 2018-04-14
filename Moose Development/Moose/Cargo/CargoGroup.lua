@@ -38,82 +38,82 @@ do -- CARGO_GROUP
     ClassName = "CARGO_GROUP",
   }
 
---- CARGO_GROUP constructor.
--- This make a new CARGO_GROUP from a @{Group} object.
--- It will "ungroup" the group object within the sim, and will create a @{Set} of individual Unit objects.
--- @param #CARGO_GROUP self
--- @param Wrapper.Group#GROUP CargoGroup
--- @param #string Type
--- @param #string Name
--- @param #number LoadRadius (optional)
--- @param #number NearRadius (optional)
--- @return #CARGO_GROUP
-function CARGO_GROUP:New( CargoGroup, Type, Name, LoadRadius )
-  local self = BASE:Inherit( self, CARGO_REPORTABLE:New( Type, Name, 0, LoadRadius ) ) -- #CARGO_GROUP
-  self:F( { Type, Name, LoadRadius } )
-
-  self.CargoSet = SET_CARGO:New()
+  --- CARGO_GROUP constructor.
+  -- This make a new CARGO_GROUP from a @{Group} object.
+  -- It will "ungroup" the group object within the sim, and will create a @{Set} of individual Unit objects.
+  -- @param #CARGO_GROUP self
+  -- @param Wrapper.Group#GROUP CargoGroup
+  -- @param #string Type
+  -- @param #string Name
+  -- @param #number LoadRadius (optional)
+  -- @param #number NearRadius (optional)
+  -- @return #CARGO_GROUP
+  function CARGO_GROUP:New( CargoGroup, Type, Name, LoadRadius )
+    local self = BASE:Inherit( self, CARGO_REPORTABLE:New( Type, Name, 0, LoadRadius ) ) -- #CARGO_GROUP
+    self:F( { Type, Name, LoadRadius } )
   
-  self:SetDeployed( false )
-  
-  local WeightGroup = 0
-  
-  self.GroupName = CargoGroup:GetName()
-  self.CargoTemplate = UTILS.DeepCopy( _DATABASE:GetGroupTemplate( self.GroupName ) )
-  
-  CargoGroup:Destroy()
-  
-  -- We iterate through the group template and for each unit in the template, we create a new group with one unit.
-  for UnitID, UnitTemplate in pairs( self.CargoTemplate.units ) do
+    self.CargoSet = SET_CARGO:New()
     
-    local GroupTemplate = UTILS.DeepCopy( self.CargoTemplate )
-    local GroupName = env.getValueDictByKey( GroupTemplate.name )
+    self:SetDeployed( false )
     
-    -- We create a new group object with one unit...
-    -- First we prepare the template...
-    GroupTemplate.name = GroupName .. "#CARGO#" .. UnitID
-    GroupTemplate.groupId = nil
-    GroupTemplate.units = {}
-    GroupTemplate.units[1] = UnitTemplate
-    local UnitName = UnitTemplate.name .. "#CARGO"
-    GroupTemplate.units[1].name = UnitTemplate.name .. "#CARGO"
-
-
-    -- Then we register the new group in the database
-    local CargoGroup = GROUP:NewTemplate( GroupTemplate, GroupTemplate.CoalitionID, GroupTemplate.CategoryID, GroupTemplate.CountryID)
+    local WeightGroup = 0
     
-    -- Now we spawn the new group based on the template created.
-    _DATABASE:Spawn( GroupTemplate )
+    self.GroupName = CargoGroup:GetName()
+    self.CargoTemplate = UTILS.DeepCopy( _DATABASE:GetGroupTemplate( self.GroupName ) )
     
-    -- And we register the spawned unit as part of the CargoSet.
-    local Unit = UNIT:FindByName( UnitName )
-    --local WeightUnit = Unit:GetDesc().massEmpty
-    --WeightGroup = WeightGroup + WeightUnit
-    local CargoUnit = CARGO_UNIT:New( Unit, Type, UnitName, 10 )
-    self.CargoSet:Add( UnitName, CargoUnit )
+    CargoGroup:Destroy()
+    
+    -- We iterate through the group template and for each unit in the template, we create a new group with one unit.
+    for UnitID, UnitTemplate in pairs( self.CargoTemplate.units ) do
+      
+      local GroupTemplate = UTILS.DeepCopy( self.CargoTemplate )
+      local GroupName = env.getValueDictByKey( GroupTemplate.name )
+      
+      -- We create a new group object with one unit...
+      -- First we prepare the template...
+      GroupTemplate.name = GroupName .. "#CARGO#" .. UnitID
+      GroupTemplate.groupId = nil
+      GroupTemplate.units = {}
+      GroupTemplate.units[1] = UnitTemplate
+      local UnitName = UnitTemplate.name .. "#CARGO"
+      GroupTemplate.units[1].name = UnitTemplate.name .. "#CARGO"
+  
+  
+      -- Then we register the new group in the database
+      local CargoGroup = GROUP:NewTemplate( GroupTemplate, GroupTemplate.CoalitionID, GroupTemplate.CategoryID, GroupTemplate.CountryID)
+      
+      -- Now we spawn the new group based on the template created.
+      _DATABASE:Spawn( GroupTemplate )
+      
+      -- And we register the spawned unit as part of the CargoSet.
+      local Unit = UNIT:FindByName( UnitName )
+      --local WeightUnit = Unit:GetDesc().massEmpty
+      --WeightGroup = WeightGroup + WeightUnit
+      local CargoUnit = CARGO_UNIT:New( Unit, Type, UnitName, 10 )
+      self.CargoSet:Add( UnitName, CargoUnit )
+    end
+  
+  
+    self:SetWeight( WeightGroup )
+    self.CargoLimit = 10
+    
+    self:T( { "Weight Cargo", WeightGroup } )
+  
+    -- Cargo objects are added to the _DATABASE and SET_CARGO objects.
+    _EVENTDISPATCHER:CreateEventNewCargo( self )
+    
+    self:HandleEvent( EVENTS.Dead, self.OnEventCargoDead )
+    self:HandleEvent( EVENTS.Crash, self.OnEventCargoDead )
+    self:HandleEvent( EVENTS.PlayerLeaveUnit, self.OnEventCargoDead )
+    
+    self:SetEventPriority( 4 )
+    
+    return self
   end
 
-
-  self:SetWeight( WeightGroup )
-  self.CargoLimit = 10
-  
-  self:T( { "Weight Cargo", WeightGroup } )
-
-  -- Cargo objects are added to the _DATABASE and SET_CARGO objects.
-  _EVENTDISPATCHER:CreateEventNewCargo( self )
-  
-  self:HandleEvent( EVENTS.Dead, self.OnEventCargoDead )
-  self:HandleEvent( EVENTS.Crash, self.OnEventCargoDead )
-  self:HandleEvent( EVENTS.PlayerLeaveUnit, self.OnEventCargoDead )
-  
-  self:SetEventPriority( 4 )
-  
-  return self
-end
-
---- @param #CARGO_GROUP self
--- @param Core.Event#EVENTDATA EventData 
-function CARGO_GROUP:OnEventCargoDead( EventData )
+  --- @param #CARGO_GROUP self
+  -- @param Core.Event#EVENTDATA EventData 
+  function CARGO_GROUP:OnEventCargoDead( EventData )
 
   local Destroyed = false
   
@@ -150,7 +150,7 @@ function CARGO_GROUP:OnEventCargoDead( EventData )
   -- @param #string From
   -- @param #string To
   function CARGO_GROUP:onenterBoarding( From, Event, To, CargoCarrier, NearRadius, ... )
-    self:F( { CargoCarrier.UnitName, From, Event, To } )
+    --self:F( { CargoCarrier.UnitName, From, Event, To } )
     
     local NearRadius = NearRadius or 25
     
@@ -175,7 +175,7 @@ function CARGO_GROUP:OnEventCargoDead( EventData )
   -- @param #string From
   -- @param #string To
   function CARGO_GROUP:onenterLoaded( From, Event, To, CargoCarrier, ... )
-    self:F( { From, Event, To, CargoCarrier, ...} )
+    --self:F( { From, Event, To, CargoCarrier, ...} )
     
     if From == "UnLoaded" then
       -- For each Cargo object within the CARGO_GROUP, load each cargo to the CargoCarrier.
@@ -196,7 +196,7 @@ function CARGO_GROUP:OnEventCargoDead( EventData )
   -- @param #string From
   -- @param #string To
   function CARGO_GROUP:onafterBoarding( From, Event, To, CargoCarrier, NearRadius, ... )
-    self:F( { CargoCarrier.UnitName, From, Event, To } )
+    --self:F( { CargoCarrier.UnitName, From, Event, To } )
   
     local NearRadius = NearRadius or 100
   
@@ -259,7 +259,7 @@ function CARGO_GROUP:OnEventCargoDead( EventData )
   -- @param #string From
   -- @param #string To
   function CARGO_GROUP:onenterUnBoarding( From, Event, To, ToPointVec2, NearRadius, ... )
-    self:F( {From, Event, To, ToPointVec2, NearRadius } )
+    --self:F( {From, Event, To, ToPointVec2, NearRadius } )
   
     NearRadius = NearRadius or 25
   
@@ -293,7 +293,7 @@ function CARGO_GROUP:OnEventCargoDead( EventData )
   -- @param #string From
   -- @param #string To
   function CARGO_GROUP:onleaveUnBoarding( From, Event, To, ToPointVec2, NearRadius, ... )
-    self:F( { From, Event, To, ToPointVec2, NearRadius } )
+    --self:F( { From, Event, To, ToPointVec2, NearRadius } )
   
     --local NearRadius = NearRadius or 25
   
@@ -330,7 +330,7 @@ function CARGO_GROUP:OnEventCargoDead( EventData )
   -- @param #string From
   -- @param #string To
   function CARGO_GROUP:onafterUnBoarding( From, Event, To, ToPointVec2, NearRadius, ... )
-    self:F( { From, Event, To, ToPointVec2, NearRadius } )
+    --self:F( { From, Event, To, ToPointVec2, NearRadius } )
   
     --local NearRadius = NearRadius or 25
   
@@ -346,7 +346,7 @@ function CARGO_GROUP:OnEventCargoDead( EventData )
   -- @param #string From
   -- @param #string To
   function CARGO_GROUP:onenterUnLoaded( From, Event, To, ToPointVec2, ... )
-    self:F( { From, Event, To, ToPointVec2 } )
+    --self:F( { From, Event, To, ToPointVec2 } )
   
     if From == "Loaded" then
       
@@ -364,22 +364,6 @@ function CARGO_GROUP:OnEventCargoDead( EventData )
   end
 
 
-  --- Respawn the cargo when destroyed
-  -- @param #CARGO_GROUP self
-  -- @param #boolean RespawnDestroyed
-  function CARGO_GROUP:RespawnOnDestroyed( RespawnDestroyed )
-    self:F({"In function RespawnOnDestroyed"})
-    if RespawnDestroyed then
-      self.onenterDestroyed = function( self )
-        self:F("IN FUNCTION")
-        self:Respawn()
-      end
-    else
-      self.onenterDestroyed = nil
-    end
-      
-  end
-  
   --- Get the current Coordinate of the CargoGroup.
   -- @param #CARGO_GROUP self
   -- @return Core.Point#COORDINATE The current Coordinate of the first Cargo of the CargoGroup.
@@ -426,7 +410,7 @@ function CARGO_GROUP:OnEventCargoDead( EventData )
   -- @param #CARGO_GROUP self
   -- @param Core.Point#COORDINATE Coordinate
   function CARGO_GROUP:RouteTo( Coordinate )
-    self:F( {Coordinate = Coordinate } )
+    --self:F( {Coordinate = Coordinate } )
     
     -- For each Cargo within the CargoSet, route each object to the Coordinate
     self.CargoSet:ForEach(
@@ -445,7 +429,7 @@ function CARGO_GROUP:OnEventCargoDead( EventData )
   -- @return #boolean The Cargo is near to the Carrier.
   -- @return #nil The Cargo is not near to the Carrier.
   function CARGO_GROUP:IsNear( CargoCarrier, NearRadius )
-    self:F( {NearRadius = NearRadius } )
+    --self:F( {NearRadius = NearRadius } )
     
     local Cargo = self.CargoSet:GetFirst() -- #CARGO
     
@@ -461,7 +445,7 @@ function CARGO_GROUP:OnEventCargoDead( EventData )
   -- @param Core.Point#Coordinate Coordinate
   -- @return #boolean true if the Cargo Group is within the load radius.
   function CARGO_GROUP:IsInLoadRadius( Coordinate )
-    self:F( { Coordinate } )
+    --self:F( { Coordinate } )
   
     local Cargo = self.CargoSet:GetFirst() -- #CARGO
 
@@ -472,7 +456,7 @@ function CARGO_GROUP:OnEventCargoDead( EventData )
       else
         Distance = Coordinate:DistanceFromPointVec2( Cargo.CargoObject:GetPointVec2() )
       end
-      self:T( Distance )
+      --self:T( Distance )
       
       if Distance <= self.LoadRadius then
         return true
@@ -491,7 +475,7 @@ function CARGO_GROUP:OnEventCargoDead( EventData )
   -- @param Core.Point#Coordinate Coordinate
   -- @return #boolean true if the Cargo Group is within the report radius.
   function CARGO_GROUP:IsInReportRadius( Coordinate )
-    self:F( { Coordinate } )
+    --self:F( { Coordinate } )
   
     local Cargo = self.CargoSet:GetFirst() -- #CARGO
 
@@ -499,7 +483,7 @@ function CARGO_GROUP:OnEventCargoDead( EventData )
       local Distance = 0
       if Cargo:IsUnLoaded() then
         Distance = Coordinate:DistanceFromPointVec2( Cargo.CargoObject:GetPointVec2() )
-        self:T( Distance )
+        --self:T( Distance )
         if Distance <= self.LoadRadius then
           return true
         end
@@ -588,7 +572,7 @@ function CARGO_GROUP:OnEventCargoDead( EventData )
   -- @return #boolean **true** if the first element of the CargoGroup is in the Zone
   -- @return #boolean **false** if there is no element of the CargoGroup in the Zone.
   function CARGO_GROUP:IsInZone( Zone )
-    self:F( { Zone } )
+    --self:F( { Zone } )
   
     local Cargo = self.CargoSet:GetFirst() -- #CARGO
 
@@ -599,5 +583,25 @@ function CARGO_GROUP:OnEventCargoDead( EventData )
     return nil
   
   end
+
+  --- Get the transportation method of the Cargo.
+  -- @param #CARGO_GROUP self
+  -- @return #string The transportation method of the Cargo.
+  function CARGO_GROUP:GetTransportationMethod()
+    if self:IsLoaded() then
+      return "for unboarding"
+    else
+      if self:IsUnLoaded() then
+        return "for boarding"
+      else
+        if self:IsDeployed() then
+          return "delivered"
+        end
+      end
+    end
+    return ""
+  end
+
+    
 
 end -- CARGO_GROUP

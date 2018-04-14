@@ -103,7 +103,7 @@ do -- CARGO_UNIT
           
           -- Respawn the group...
           if self.CargoObject then
-            self.CargoObject:ReSpawn( FromPointVec2:GetVec3(), CargoDeployHeading )
+            self.CargoObject:ReSpawnAt( FromPointVec2, CargoDeployHeading )
             self:F( { "CargoUnits:", self.CargoObject:GetGroup():GetName() } )
             self.CargoCarrier = nil
       
@@ -207,7 +207,7 @@ do -- CARGO_UNIT
   
       -- Respawn the group...
       if self.CargoObject then
-        self.CargoObject:ReSpawn( ToPointVec2:GetVec3(), 0 )
+        self.CargoObject:ReSpawnAt( ToPointVec2, 0 )
         self.CargoCarrier = nil
       end
       
@@ -285,7 +285,7 @@ do -- CARGO_UNIT
   -- @param Wrapper.Client#CLIENT CargoCarrier
   -- @param #number NearRadius
   function CARGO_UNIT:onafterBoarding( From, Event, To, CargoCarrier, NearRadius, ... )
-    self:F( { From, Event, To, CargoCarrier.UnitName, NearRadius } )
+    --self:F( { From, Event, To, CargoCarrier.UnitName, NearRadius } )
     
     
     if CargoCarrier and CargoCarrier:IsAlive() and self.CargoObject and self.CargoObject:IsAlive() then 
@@ -338,7 +338,7 @@ do -- CARGO_UNIT
   -- @param #string To
   -- @param Wrapper.Unit#UNIT CargoCarrier
   function CARGO_UNIT:onenterBoarding( From, Event, To, CargoCarrier, NearRadius, ... )
-    self:F( { From, Event, To, CargoCarrier.UnitName, NearRadius } )
+    --self:F( { From, Event, To, CargoCarrier.UnitName, NearRadius } )
     
     local Speed = 90
     local Angle = 180
@@ -368,6 +368,24 @@ do -- CARGO_UNIT
       self:T("Destroying")
       self.CargoObject:Destroy()
     end
+  end
+
+  --- Get the transportation method of the Cargo.
+  -- @param #CARGO_UNIT self
+  -- @return #string The transportation method of the Cargo.
+  function CARGO_UNIT:GetTransportationMethod()
+    if self:IsLoaded() then
+      return "for unboarding"
+    else
+      if self:IsUnLoaded() then
+        return "for boarding"
+      else
+        if self:IsDeployed() then
+          return "delivered"
+        end
+      end
+    end
+    return ""
   end
 
 end -- CARGO_UNIT

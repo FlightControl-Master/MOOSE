@@ -352,13 +352,39 @@ function GROUP:GetUnits()
 
   return nil
 end
+
+
+--- Returns a list of @{Unit} objects of the @{Group} that are occupied by a player.
+-- @param #GROUP self
+-- @return #list<Wrapper.Unit#UNIT> The list of player occupied @{Unit} objects of the @{Group}.
+function GROUP:GetPlayerUnits()
+  self:F2( { self.GroupName } )
+  local DCSGroup = self:GetDCSObject()
+
+  if DCSGroup then
+    local DCSUnits = DCSGroup:getUnits()
+    local Units = {}
+    for Index, UnitData in pairs( DCSUnits ) do
+      local PlayerUnit = UNIT:Find( UnitData )
+      if PlayerUnit:GetPlayerName() then
+        Units[#Units+1] = PlayerUnit
+      end
+    end
+    self:T3( Units )
+    return Units
+  end
+
+  return nil
+end
+
+
 --- Returns the UNIT wrapper class with number UnitNumber.
 -- If the underlying DCS Unit does not exist, the method will return nil. .
 -- @param #GROUP self
 -- @param #number UnitNumber The number of the UNIT wrapper class to be returned.
 -- @return Wrapper.Unit#UNIT The UNIT wrapper class.
 function GROUP:GetUnit( UnitNumber )
-  self:E( { self.GroupName, UnitNumber } )
+  self:F3( { self.GroupName, UnitNumber } )
 
   local DCSGroup = self:GetDCSObject()
 
@@ -378,7 +404,7 @@ end
 -- @param #number UnitNumber The number of the DCS Unit to be returned.
 -- @return Dcs.DCSWrapper.Unit#Unit The DCS Unit.
 function GROUP:GetDCSUnit( UnitNumber )
-  self:F2( { self.GroupName, UnitNumber } )
+  self:F3( { self.GroupName, UnitNumber } )
 
   local DCSGroup = self:GetDCSObject()
 
@@ -396,7 +422,7 @@ end
 -- @param #GROUP self
 -- @return #number The DCS Group size.
 function GROUP:GetSize()
-  self:F2( { self.GroupName } )
+  self:F3( { self.GroupName } )
   local DCSGroup = self:GetDCSObject()
 
   if DCSGroup then
@@ -419,7 +445,7 @@ end
 -- @param #GROUP self
 -- @return #number The DCS Group initial size.
 function GROUP:GetInitialSize()
-  self:F2( { self.GroupName } )
+  self:F3( { self.GroupName } )
   local DCSGroup = self:GetDCSObject()
 
   if DCSGroup then
@@ -1115,7 +1141,7 @@ function GROUP:Respawn( Template, Reset )
     else
       for UnitID, TemplateUnitData in pairs( Template.units ) do
         self:F( "Reset"  )
-        local GroupUnitVec3 = { x = TemplateUnitData.x, y = TemplateUnitData.alt, z = TemplateUnitData.z }
+        local GroupUnitVec3 = { x = TemplateUnitData.x, y = TemplateUnitData.alt, z = TemplateUnitData.y }
         if Zone then
           if self.InitRespawnRandomizePositionZone then
             GroupUnitVec3 = Zone:GetRandomVec3()
@@ -1148,7 +1174,101 @@ function GROUP:Respawn( Template, Reset )
 end
 
 
+--- @param Wrapper.Group#GROUP self
+function GROUP:RespawnAtAirbase( AirbaseRespawn, Takeoff, TakeoffAltitude ) -- R2.4
+  self:F( { AirbaseRespawn, Takeoff, TakeoffAltitude } )
 
+  local PointVec3 = AirbaseRespawn:GetPointVec3()
+
+  Takeoff = Takeoff or SPAWN.Takeoff.Hot
+  
+  local SpawnTemplate = self:GetTemplate()
+
+  if SpawnTemplate then
+
+    local SpawnPoint = SpawnTemplate.route.points[1] 
+
+    -- These are only for ships.
+    SpawnPoint.linkUnit = nil
+    SpawnPoint.helipadId = nil
+    SpawnPoint.airdromeId = nil
+
+    local AirbaseID = AirbaseRespawn:GetID()
+    local AirbaseCategory = AirbaseRespawn:GetDesc().category
+    self:F( { AirbaseCategory = AirbaseCategory, Ship = Airbase.Category.SHIP, Helipad = Airbase.Category.HELIPAD, Airdrome = Airbase.Category.AIRDROME } )
+    
+    if AirbaseCategory == Airbase.Category.SHIP then
+      SpawnPoint.linkUnit = AirbaseID
+      SpawnPoint.helipadId = AirbaseID
+    elseif AirbaseCategory == Airbase.Category.HELIPAD then
+      SpawnPoint.linkUnit = AirbaseID
+      SpawnPoint.helipadId = AirbaseID
+    elseif AirbaseCategory == Airbase.Category.AIRDROME then
+      SpawnPoint.airdromeId = AirbaseID
+    end
+
+    SpawnPoint.alt = 0
+            
+    SpawnPoint.type = GROUPTEMPLATE.Takeoff[Takeoff][1] -- type
+    SpawnPoint.action = GROUPTEMPLATE.Takeoff[Takeoff][2] -- action
+    
+
+    -- Translate the position of the Group Template to the Vec3.
+    for UnitID = 1, #SpawnTemplate.units do
+      self:T( 'Before Translation SpawnTemplate.units['..UnitID..'].x = ' .. SpawnTemplate.units[UnitID].x .. ', SpawnTemplate.units['..UnitID..'].y = ' .. SpawnTemplate.units[UnitID].y )
+
+      -- These cause a lot of confusion.
+      local UnitTemplate = SpawnTemplate.units[UnitID]
+
+      UnitTemplate.parking = 15
+      UnitTemplate.parking_id = "30"
+      UnitTemplate.alt = 0
+
+      local SX = UnitTemplate.x
+      local SY = UnitTemplate.y 
+      local BX = SpawnPoint.x
+      local BY = SpawnPoint.y
+      local TX = PointVec3.x + ( SX - BX )
+      local TY = PointVec3.z + ( SY - BY )
+      
+      UnitTemplate.x = TX
+      UnitTemplate.y = TY
+      
+      if Takeoff == GROUP.Takeoff.Air then
+        UnitTemplate.alt = PointVec3.y + ( TakeoffAltitude or 200 )
+      --else
+      --  UnitTemplate.alt = PointVec3.y + 10
+      end
+      self:T( 'After Translation SpawnTemplate.units['..UnitID..'].x = ' .. UnitTemplate.x .. ', SpawnTemplate.units['..UnitID..'].y = ' .. UnitTemplate.y )
+    end
+    
+    SpawnPoint.x = PointVec3.x
+    SpawnPoint.y = PointVec3.z
+    
+    if Takeoff == GROUP.Takeoff.Air then
+      SpawnPoint.alt = PointVec3.y + ( TakeoffAltitude or 200 )
+    --else
+    --  SpawnPoint.alt = PointVec3.y + 10
+    end
+
+    SpawnTemplate.x = PointVec3.x
+    SpawnTemplate.y = PointVec3.z
+    
+    local GroupSpawned = self:Respawn( SpawnTemplate )
+    
+    -- When spawned in the air, we need to generate a Takeoff Event
+    
+    if Takeoff == GROUP.Takeoff.Air then
+      for UnitID, UnitSpawned in pairs( GroupSpawned:GetUnits() ) do
+        SCHEDULER:New( nil, BASE.CreateEventTakeoff, { GroupSpawned, timer.getTime(), UnitSpawned:GetDCSObject() } , 1 )
+      end
+    end
+
+    return GroupSpawned
+  end
+  
+  return nil
+end
 
 
 --- Return the mission template of the group.
@@ -1382,6 +1502,8 @@ do -- Players
   -- @return #nil The group has no players
   function GROUP:GetPlayerNames()
   
+    local HasPlayers = false
+  
     local PlayerNames = {}
     
     local Units = self:GetUnits()
@@ -1391,11 +1513,36 @@ do -- Players
       if PlayerName and PlayerName ~= "" then
         PlayerNames = PlayerNames or {}
         table.insert( PlayerNames, PlayerName )
+        HasPlayers = true
       end   
     end
+
+    if HasPlayers == true then    
+      self:F2( PlayerNames )
+      return PlayerNames
+    end
     
-    self:F2( PlayerNames )
-    return PlayerNames
+    return nil
+  end
+
+
+  --- Get the active player count in the group.
+  -- @param #GROUP self
+  -- @return #number The amount of players.
+  function GROUP:GetPlayerCount()
+  
+    local PlayerCount = 0
+    
+    local Units = self:GetUnits()
+    for UnitID, UnitData in pairs( Units or {} ) do
+      local Unit = UnitData -- Wrapper.Unit#UNIT
+      local PlayerName = Unit:GetPlayerName()
+      if PlayerName and PlayerName ~= "" then
+        PlayerCount = PlayerCount + 1
+      end   
+    end
+
+    return PlayerCount
   end
   
 end

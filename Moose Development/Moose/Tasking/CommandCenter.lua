@@ -86,11 +86,13 @@ COMMANDCENTER = {
 -- @return #COMMANDCENTER
 function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
 
-  local self = BASE:Inherit( self, BASE:New() )
+  local self = BASE:Inherit( self, BASE:New() ) -- #COMMANDCENTER
 
   self.CommandCenterPositionable = CommandCenterPositionable  
   self.CommandCenterName = CommandCenterName or CommandCenterPositionable:GetName()
   self.CommandCenterCoalition = CommandCenterPositionable:GetCoalition()
+  
+  self.AutoAssignTasks = false
 	
 	self.Missions = {}
 
@@ -171,7 +173,7 @@ function COMMANDCENTER:New( CommandCenterPositionable, CommandCenterName )
     end
   )
 
-  -- Handle when a player leaves a slot and goes back to spectators ... 
+  -- Handle when a player crashes ... 
   -- The PlayerUnit will be UnAssigned from the Task.
   -- When there is no Unit left running the Task, the Task goes into Abort...
   self:HandleEvent( EVENTS.Crash,
@@ -241,7 +243,7 @@ end
 -- @return #list<Tasking.Mission#MISSION>
 function COMMANDCENTER:GetMissions()
 
-  return self.Missions
+  return self.Missions or {}
 end
 
 --- Add a MISSION to be governed by the HQ command center.
@@ -330,7 +332,7 @@ end
 --- Sets the menu structure of the Missions governed by the HQ command center.
 -- @param #COMMANDCENTER self
 function COMMANDCENTER:SetMenu()
-  self:F()
+  self:F2()
 
   local MenuTime = timer.getTime()
   for MissionID, Mission in pairs( self:GetMissions() or {} ) do
@@ -339,7 +341,7 @@ function COMMANDCENTER:SetMenu()
   end
 
   for MissionID, Mission in pairs( self:GetMissions() or {} ) do
-    local Mission = Mission -- Tasking.Mission#MISSION
+    Mission = Mission -- Tasking.Mission#MISSION
     Mission:RemoveMenu( MenuTime )
   end
   
@@ -348,9 +350,132 @@ end
 --- Gets the commandcenter menu structure governed by the HQ command center.
 -- @param #COMMANDCENTER self
 -- @return Core.Menu#MENU_COALITION
-function COMMANDCENTER:GetMenu()
-  return self.CommandCenterMenu
+function COMMANDCENTER:GetMenu( TaskGroup )
+
+  local MenuTime = timer.getTime()
+
+  self.CommandCenterMenus = self.CommandCenterMenus or {}
+  local CommandCenterMenu
+  
+  local CommandCenterText = self:GetText()
+  CommandCenterMenu = MENU_GROUP:New( TaskGroup, CommandCenterText ):SetTime(MenuTime)
+  self.CommandCenterMenus[TaskGroup] = CommandCenterMenu
+
+  if self.AutoAssignTasks == false then
+    local AutoAssignTaskMenu = MENU_GROUP_COMMAND:New( TaskGroup, "Assign Task On", CommandCenterMenu, self.SetAutoAssignTasks, self, true ):SetTime(MenuTime):SetTag("AutoTask")
+    local AssignTaskMenu = MENU_GROUP_COMMAND:New( TaskGroup, "Assign Task", CommandCenterMenu, self.AssignRandomTask, self, TaskGroup ):SetTime(MenuTime):SetTag("AutoTask")
+  else
+    local AutoAssignTaskMenu = MENU_GROUP_COMMAND:New( TaskGroup, "Assign Task Off", CommandCenterMenu, self.SetAutoAssignTasks, self, false ):SetTime(MenuTime):SetTag("AutoTask")
+  end
+  CommandCenterMenu:Remove( MenuTime, "AutoTask" )
+    
+  return self.CommandCenterMenus[TaskGroup]
 end
+
+
+--- Assigns a random task to a TaskGroup.
+-- @param #COMMANDCENTER self
+-- @return #COMMANDCENTER
+function COMMANDCENTER:AssignRandomTask( TaskGroup )
+
+  local Tasks = {}
+
+  for MissionID, Mission in pairs( self:GetMissions() ) do
+    local Mission = Mission -- Tasking.Mission#MISSION
+    local MissionTasks = Mission:GetGroupTasks( TaskGroup )
+    for MissionTaskName, MissionTask in pairs( MissionTasks or {} ) do
+      Tasks[#Tasks+1] = MissionTask
+    end
+  end
+  
+  local Task = Tasks[ math.random( 1, #Tasks ) ] -- Tasking.Task#TASK
+  
+  Task:SetAssignMethod( ACT_ASSIGN_MENU_ACCEPT:New( Task.TaskBriefing ) )
+  
+  Task:AssignToGroup( TaskGroup )
+
+end
+
+
+--- Automatically assigns tasks to all TaskGroups.
+-- @param #COMMANDCENTER self
+-- @param #boolean AutoAssign true for ON and false or nil for OFF.
+-- @return #COMMANDCENTER
+function COMMANDCENTER:SetAutoAssignTasks( AutoAssign )
+
+  self.AutoAssignTasks = AutoAssign or false
+  
+  local GroupSet = self:AddGroups()
+
+  for GroupID, TaskGroup in pairs( GroupSet:GetSet() ) do
+    local TaskGroup = TaskGroup -- Wrapper.Group#GROUP
+    self:GetMenu( TaskGroup )
+  end
+
+  if self.AutoAssignTasks == true then
+    self:ScheduleRepeat( 10, 30, 0, nil, self.AssignTasks, self )
+  else
+    self:ScheduleStop( self.AssignTasks )
+  end
+
+end
+
+
+--- Automatically assigns tasks to all TaskGroups.
+-- @param #COMMANDCENTER self
+function COMMANDCENTER:AssignTasks()
+
+  local GroupSet = self:AddGroups()
+
+  for GroupID, TaskGroup in pairs( GroupSet:GetSet() ) do
+    local TaskGroup = TaskGroup -- Wrapper.Group#GROUP
+    
+    if self:IsGroupAssigned( TaskGroup ) then
+    else
+      -- Only groups with planes or helicopters will receive automatic tasks.
+      -- TODO Workaround DCS-BUG-3 - https://github.com/FlightControl-Master/MOOSE/issues/696
+      if TaskGroup:IsAir() then
+        self:AssignRandomTask( TaskGroup )
+      end
+    end
+  end
+end
+
+
+--- Get all the Groups active within the command center.
+-- @param #COMMANDCENTER self
+-- @return Core.Set#SET_GROUP
+function COMMANDCENTER:AddGroups()
+
+  local GroupSet = SET_GROUP:New()
+  
+  for MissionID, Mission in pairs( self.Missions ) do
+    local Mission = Mission -- Tasking.Mission#MISSION
+    GroupSet = Mission:AddGroups( GroupSet )
+  end
+  
+  return GroupSet
+end
+
+
+--- Checks of the TaskGroup has a Task.
+-- @param #COMMANDCENTER self
+-- @return #boolean
+function COMMANDCENTER:IsGroupAssigned( TaskGroup )
+
+  local Assigned = false
+  
+  for MissionID, Mission in pairs( self.Missions ) do
+    local Mission = Mission -- Tasking.Mission#MISSION
+    if Mission:IsGroupAssigned( TaskGroup ) then
+      Assigned = true
+      break
+    end
+  end
+  
+  return Assigned
+end
+
 
 --- Checks of the COMMANDCENTER has a GROUP.
 -- @param #COMMANDCENTER self
@@ -407,7 +532,7 @@ function COMMANDCENTER:MessageToCoalition( Message )
   local CCCoalition = self:GetPositionable():GetCoalition()
     --TODO: Fix coalition bug!
     
-    self:GetPositionable():MessageToCoalition( Message, 15, CCCoalition )
+    self:GetPositionable():MessageToCoalition( Message, 15, CCCoalition, self:GetShortText() )
 
 end
 
@@ -421,7 +546,7 @@ function COMMANDCENTER:MessageTypeToCoalition( Message, MessageType )
   local CCCoalition = self:GetPositionable():GetCoalition()
     --TODO: Fix coalition bug!
     
-    self:GetPositionable():MessageTypeToCoalition( Message, MessageType, CCCoalition )
+    self:GetPositionable():MessageTypeToCoalition( Message, MessageType, CCCoalition, self:GetShortText() )
 
 end
 

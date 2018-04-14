@@ -61,9 +61,6 @@ do -- TASK_A2G
     
     local Fsm = self:GetUnitProcess()
     
-
-    Fsm:AddProcess   ( "Planned", "Accept", ACT_ASSIGN_ACCEPT:New( self.TaskBriefing ), { Assigned = "RouteToRendezVous", Rejected = "Reject" }  )
-    
     Fsm:AddTransition( "Assigned", "RouteToRendezVous", "RoutingToRendezVous" )
     Fsm:AddProcess   ( "RoutingToRendezVous", "RouteToRendezVousPoint", ACT_ROUTE_POINT:New(), { Arrived = "ArriveAtRendezVous" } )
     Fsm:AddProcess   ( "RoutingToRendezVous", "RouteToRendezVousZone", ACT_ROUTE_ZONE:New(), { Arrived = "ArriveAtRendezVous" } )
@@ -84,6 +81,18 @@ do -- TASK_A2G
     Fsm:AddTransition( "Rejected", "Reject", "Aborted" )
     Fsm:AddTransition( "Failed", "Fail", "Failed" )
     
+
+
+    --- Test 
+    -- @param #FSM_PROCESS self
+    -- @param Wrapper.Unit#UNIT TaskUnit
+    -- @param Tasking.Task_A2G#TASK_A2G Task
+    function Fsm:onafterAssigned( TaskUnit, Task )
+      self:F( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
+      -- Determine the first Unit from the self.RendezVousSetUnit
+      
+      self:RouteToRendezVous()
+    end
     
     --- Test 
     -- @param #FSM_PROCESS self

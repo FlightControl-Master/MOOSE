@@ -257,6 +257,7 @@ do -- CARGO
     self:AddTransition( "*", "Damaged", "Damaged" )
     self:AddTransition( "*", "Destroyed", "Destroyed" )
     self:AddTransition( "*", "Respawn", "UnLoaded" )
+    self:AddTransition( "*", "Reset", "UnLoaded" )
   
     self.Type = Type
     self.Name = Name
@@ -267,8 +268,7 @@ do -- CARGO
     self.Slingloadable = false
     self.Moveable = false
     self.Containable = false
-    self.LoadAction = ""
-    
+
     self.CargoLimit = 0
     
     self.LoadRadius = LoadRadius or 500
@@ -365,6 +365,14 @@ do -- CARGO
   -- @return #string The type of the Cargo.
   function CARGO:GetType()
     return self.Type
+  end
+
+    
+  --- Get the transportation method of the Cargo.
+  -- @param #CARGO self
+  -- @return #string The transportation method of the Cargo.
+  function CARGO:GetTransportationMethod()
+    return self.TransportationMethod
   end
 
     
@@ -602,7 +610,7 @@ do -- CARGO
   -- @param #number NearRadius The radius when the cargo will board the Carrier (to avoid collision).
   -- @return #boolean
   function CARGO:IsNear( PointVec2, NearRadius )
-    self:F2( { PointVec2 = PointVec2, NearRadius = NearRadius } )
+    --self:F2( { PointVec2 = PointVec2, NearRadius = NearRadius } )
   
     if self.CargoObject:IsAlive() then
       --local Distance = PointVec2:DistanceFromPointVec2( self.CargoObject:GetPointVec2() )
@@ -613,12 +621,12 @@ do -- CARGO
       --self:F( Distance )
       
       if Distance <= NearRadius then
-        self:F( { PointVec2 = PointVec2, NearRadius = NearRadius, IsNear = true } )
+        --self:F( { PointVec2 = PointVec2, NearRadius = NearRadius, IsNear = true } )
         return true
       end
     end
     
-    self:F( { PointVec2 = PointVec2, NearRadius = NearRadius, IsNear = false } )
+    --self:F( { PointVec2 = PointVec2, NearRadius = NearRadius, IsNear = false } )
     return false
   end
   
@@ -629,12 +637,12 @@ do -- CARGO
   -- @param Core.Zone#ZONE_BASE Zone
   -- @return #boolean **true** if cargo is in the Zone, **false** if cargo is not in the Zone.
   function CARGO:IsInZone( Zone )
-    self:F( { Zone } )
+    --self:F( { Zone } )
   
     if self:IsLoaded() then
       return Zone:IsPointVec2InZone( self.CargoCarrier:GetPointVec2() )
     else
-      self:F( { Size = self.CargoObject:GetSize(), Units = self.CargoObject:GetUnits() } )
+      --self:F( { Size = self.CargoObject:GetSize(), Units = self.CargoObject:GetUnits() } )
       if self.CargoObject:GetSize() ~= 0 then
         return Zone:IsPointVec2InZone( self.CargoObject:GetPointVec2() )
       else
@@ -747,6 +755,22 @@ do -- CARGO
     self.Reported[CarrierGroup] = nil
   end
   
+  --- Respawn the cargo when destroyed
+  -- @param #CARGO self
+  -- @param #boolean RespawnDestroyed
+  function CARGO:RespawnOnDestroyed( RespawnDestroyed )
+
+    if RespawnDestroyed then
+      self.onenterDestroyed = function( self )
+        self:Respawn()
+      end
+    else
+      self.onenterDestroyed = nil
+    end
+      
+  end
+  
+
   
 
 end -- CARGO
@@ -785,7 +809,7 @@ do -- CARGO_REPRESENTABLE
   
     -- Cargo objects are deleted from the _DATABASE and SET_CARGO objects.
     self:F( { CargoName = self:GetName() } )
-    _EVENTDISPATCHER:CreateEventDeleteCargo( self )
+    --_EVENTDISPATCHER:CreateEventDeleteCargo( self )
   
     return self
   end

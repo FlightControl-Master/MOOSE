@@ -6,9 +6,9 @@
 -- 
 -- ===       
 --
--- @module AI_Cargo_Troops
+-- @module AI_Cargo_APC
 
---- @type AI_CARGO_TROOPS
+--- @type AI_CARGO_APC
 -- @extends Core.Fsm#FSM_CONTROLLABLE
 
 
@@ -16,21 +16,21 @@
 -- 
 -- ===
 -- 
--- @field #AI_CARGO_TROOPS
-AI_CARGO_TROOPS = {
-  ClassName = "AI_CARGO_TROOPS",
+-- @field #AI_CARGO_APC
+AI_CARGO_APC = {
+  ClassName = "AI_CARGO_APC",
   Coordinate = nil -- Core.Point#COORDINATE,
 }
 
---- Creates a new AI_CARGO_TROOPS object.
--- @param #AI_CARGO_TROOPS self
+--- Creates a new AI_CARGO_APC object.
+-- @param #AI_CARGO_APC self
 -- @param Wrapper.Unit#UNIT CargoCarrier
 -- @param Cargo.CargoGroup#CARGO_GROUP CargoGroup
 -- @param #number CombatRadius
--- @return #AI_CARGO_TROOPS
-function AI_CARGO_TROOPS:New( CargoCarrier, CargoGroup, CombatRadius )
+-- @return #AI_CARGO_APC
+function AI_CARGO_APC:New( CargoCarrier, CargoGroup, CombatRadius )
 
-  local self = BASE:Inherit( self, FSM_CONTROLLABLE:New( ) ) -- #AI_CARGO_TROOPS
+  local self = BASE:Inherit( self, FSM_CONTROLLABLE:New() ) -- #AI_CARGO_APC
 
   self.CargoGroup = CargoGroup -- Cargo.CargoGroup#CARGO_GROUP
   self.CombatRadius = CombatRadius
@@ -59,20 +59,20 @@ end
 
 
 --- Set the Carrier.
--- @param #AI_CARGO_TROOPS self
+-- @param #AI_CARGO_APC self
 -- @param Wrapper.Unit#UNIT CargoCarrier
--- @return #AI_CARGO_TROOPS
-function AI_CARGO_TROOPS:SetCarrier( CargoCarrier )
+-- @return #AI_CARGO_APC
+function AI_CARGO_APC:SetCarrier( CargoCarrier )
 
   self.CargoCarrier = CargoCarrier -- Wrapper.Unit#UNIT
-  self.CargoCarrier:SetState( self.CargoCarrier, "AI_CARGO_TROOPS", self )
+  self.CargoCarrier:SetState( self.CargoCarrier, "AI_CARGO_APC", self )
 
   CargoCarrier:HandleEvent( EVENTS.Dead )
   CargoCarrier:HandleEvent( EVENTS.Hit )
   
   function CargoCarrier:OnEventDead( EventData )
     self:F({"dead"})
-    local AICargoTroops = self:GetState( self, "AI_CARGO_TROOPS" )
+    local AICargoTroops = self:GetState( self, "AI_CARGO_APC" )
     self:F({AICargoTroops=AICargoTroops})
     if AICargoTroops then
       self:F({})
@@ -85,7 +85,7 @@ function AI_CARGO_TROOPS:SetCarrier( CargoCarrier )
   
   function CargoCarrier:OnEventHit( EventData )
     self:F({"hit"})
-    local AICargoTroops = self:GetState( self, "AI_CARGO_TROOPS" )
+    local AICargoTroops = self:GetState( self, "AI_CARGO_APC" )
     if AICargoTroops then
       self:F( { OnHitLoaded = AICargoTroops:Is( "Loaded" ) } )
       if AICargoTroops:Is( "Loaded" ) or AICargoTroops:Is( "Boarding" ) then
@@ -107,18 +107,18 @@ end
 
 
 --- Find a free Carrier within a range.
--- @param #AI_CARGO_TROOPS self
+-- @param #AI_CARGO_APC self
 -- @param Core.Point#COORDINATE Coordinate
 -- @param #number Radius
 -- @return Wrapper.Unit#UNIT NewCarrier
-function AI_CARGO_TROOPS:FindCarrier( Coordinate, Radius )
+function AI_CARGO_APC:FindCarrier( Coordinate, Radius )
 
   local CoordinateZone = ZONE_RADIUS:New( "Zone" , Coordinate:GetVec2(), Radius )
   CoordinateZone:Scan( { Object.Category.UNIT } )
   for _, DCSUnit in pairs( CoordinateZone:GetScannedUnits() ) do
     local NearUnit = UNIT:Find( DCSUnit )
     self:F({NearUnit=NearUnit})
-    if not NearUnit:GetState( NearUnit, "AI_CARGO_TROOPS" ) then
+    if not NearUnit:GetState( NearUnit, "AI_CARGO_APC" ) then
       local Attributes = NearUnit:GetDesc()
       self:F({Desc=Attributes})
       if NearUnit:HasAttribute( "Trucks" ) then
@@ -133,12 +133,12 @@ end
 
 
 --- Follow Infantry to the Carrier.
--- @param #AI_CARGO_TROOPS self
--- @param #AI_CARGO_TROOPS Me
+-- @param #AI_CARGO_APC self
+-- @param #AI_CARGO_APC Me
 -- @param Wrapper.Unit#UNIT CargoCarrier
 -- @param Wrapper.Group#GROUP InfantryGroup
--- @return #AI_CARGO_TROOPS
-function AI_CARGO_TROOPS:FollowToCarrier( Me, CargoCarrier, InfantryGroup )
+-- @return #AI_CARGO_APC
+function AI_CARGO_APC:FollowToCarrier( Me, CargoCarrier, InfantryGroup )
 
   self:F( { self = self:GetClassNameAndID(), InfantryGroup = InfantryGroup:GetName() } )
   
@@ -172,7 +172,7 @@ function AI_CARGO_TROOPS:FollowToCarrier( Me, CargoCarrier, InfantryGroup )
         self:F({ToGround=ToGround})
         table.insert( Waypoints, ToGround )
         
-        local TaskRoute = InfantryGroup:TaskFunction( "AI_CARGO_TROOPS.FollowToCarrier", Me, CargoCarrier, InfantryGroup )
+        local TaskRoute = InfantryGroup:TaskFunction( "AI_CARGO_APC.FollowToCarrier", Me, CargoCarrier, InfantryGroup )
         
         self:F({Waypoints = Waypoints})
         local Waypoint = Waypoints[#Waypoints]
@@ -185,9 +185,9 @@ function AI_CARGO_TROOPS:FollowToCarrier( Me, CargoCarrier, InfantryGroup )
 end
 
 
---- @param #AI_CARGO_TROOPS self
+--- @param #AI_CARGO_APC self
 -- @param Wrapper.Unit#UNIT CargoCarrier
-function AI_CARGO_TROOPS:onafterMonitor( CargoCarrier, From, Event, To )
+function AI_CARGO_APC:onafterMonitor( CargoCarrier, From, Event, To )
   self:F( { CargoCarrier, From, Event, To } )
 
   if CargoCarrier and CargoCarrier:IsAlive() then
@@ -235,9 +235,9 @@ function AI_CARGO_TROOPS:onafterMonitor( CargoCarrier, From, Event, To )
 end
 
 
---- @param #AI_CARGO_TROOPS self
+--- @param #AI_CARGO_APC self
 -- @param Wrapper.Unit#UNIT CargoCarrier
-function AI_CARGO_TROOPS:onafterLoad( CargoCarrier, From, Event, To )
+function AI_CARGO_APC:onafterLoad( CargoCarrier, From, Event, To )
   self:F( { CargoCarrier, From, Event, To } )
 
   if CargoCarrier and CargoCarrier:IsAlive() then
@@ -248,9 +248,9 @@ function AI_CARGO_TROOPS:onafterLoad( CargoCarrier, From, Event, To )
   
 end
 
---- @param #AI_CARGO_TROOPS self
+--- @param #AI_CARGO_APC self
 -- @param Wrapper.Unit#UNIT CargoCarrier
-function AI_CARGO_TROOPS:onafterBoard( CargoCarrier, From, Event, To )
+function AI_CARGO_APC:onafterBoard( CargoCarrier, From, Event, To )
   self:F( { CargoCarrier, From, Event, To } )
 
   if CargoCarrier and CargoCarrier:IsAlive() then
@@ -264,9 +264,9 @@ function AI_CARGO_TROOPS:onafterBoard( CargoCarrier, From, Event, To )
   
 end
 
---- @param #AI_CARGO_TROOPS self
+--- @param #AI_CARGO_APC self
 -- @param Wrapper.Unit#UNIT CargoCarrier
-function AI_CARGO_TROOPS:onafterLoaded( CargoCarrier, From, Event, To )
+function AI_CARGO_APC:onafterLoaded( CargoCarrier, From, Event, To )
   self:F( { CargoCarrier, From, Event, To } )
 
   if CargoCarrier and CargoCarrier:IsAlive() then
@@ -276,9 +276,9 @@ function AI_CARGO_TROOPS:onafterLoaded( CargoCarrier, From, Event, To )
 end
 
 
---- @param #AI_CARGO_TROOPS self
+--- @param #AI_CARGO_APC self
 -- @param Wrapper.Unit#UNIT CargoCarrier
-function AI_CARGO_TROOPS:onafterUnload( CargoCarrier, From, Event, To )
+function AI_CARGO_APC:onafterUnload( CargoCarrier, From, Event, To )
   self:F( { CargoCarrier, From, Event, To } )
 
   if CargoCarrier and CargoCarrier:IsAlive() then
@@ -289,9 +289,9 @@ function AI_CARGO_TROOPS:onafterUnload( CargoCarrier, From, Event, To )
   
 end
 
---- @param #AI_CARGO_TROOPS self
+--- @param #AI_CARGO_APC self
 -- @param Wrapper.Unit#UNIT CargoCarrier
-function AI_CARGO_TROOPS:onafterUnboard( CargoCarrier, From, Event, To )
+function AI_CARGO_APC:onafterUnboard( CargoCarrier, From, Event, To )
   self:F( { CargoCarrier, From, Event, To } )
 
   if CargoCarrier and CargoCarrier:IsAlive() then
@@ -304,9 +304,9 @@ function AI_CARGO_TROOPS:onafterUnboard( CargoCarrier, From, Event, To )
   
 end
 
---- @param #AI_CARGO_TROOPS self
+--- @param #AI_CARGO_APC self
 -- @param Wrapper.Unit#UNIT CargoCarrier
-function AI_CARGO_TROOPS:onafterUnloaded( CargoCarrier, From, Event, To )
+function AI_CARGO_APC:onafterUnloaded( CargoCarrier, From, Event, To )
   self:F( { CargoCarrier, From, Event, To } )
 
   if CargoCarrier and CargoCarrier:IsAlive() then
@@ -318,9 +318,9 @@ function AI_CARGO_TROOPS:onafterUnloaded( CargoCarrier, From, Event, To )
 end
 
 
---- @param #AI_CARGO_TROOPS self
+--- @param #AI_CARGO_APC self
 -- @param Wrapper.Unit#UNIT CargoCarrier
-function AI_CARGO_TROOPS:onafterFollow( CargoCarrier, From, Event, To )
+function AI_CARGO_APC:onafterFollow( CargoCarrier, From, Event, To )
   self:F( { CargoCarrier, From, Event, To } )
 
   self:F( "Follow" )

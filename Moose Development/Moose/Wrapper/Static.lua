@@ -130,12 +130,32 @@ end
 -- @param #UNIT self
 -- @param Core.Point#COORDINATE Coordinate The coordinate where to spawn the new Static.
 -- @param #number Heading The heading of the unit respawn.
-function STATIC:ReSpawn( Coordinate, Heading )
+function STATIC:SpawnAt( Coordinate, Heading )
 
-
-  -- todo: need to fix country
   local SpawnStatic = SPAWNSTATIC:NewFromStatic( self.StaticName )
   
   SpawnStatic:SpawnFromPointVec2( Coordinate, Heading, self.StaticName )
 end
 
+
+--- Respawn the @{Unit} at the same location with the same properties.
+-- This is useful to respawn a cargo after it has been destroyed.
+-- @param #UNIT self
+function STATIC:ReSpawn()
+
+  local SpawnStatic = SPAWNSTATIC:NewFromStatic( self.StaticName )
+  
+  SpawnStatic:ReSpawn()
+end
+
+
+--- Respawn the @{Unit} at a defined Coordinate with an optional heading.
+-- @param #UNIT self
+-- @param Core.Point#COORDINATE Coordinate The coordinate where to spawn the new Static.
+-- @param #number Heading The heading of the unit respawn.
+function STATIC:ReSpawnAt( Coordinate, Heading )
+
+  local SpawnStatic = SPAWNSTATIC:NewFromStatic( self.StaticName )
+  
+  SpawnStatic:ReSpawnAt( Coordinate, Heading )
+end
