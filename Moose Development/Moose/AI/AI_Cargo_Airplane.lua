@@ -228,16 +228,10 @@ end
 -- @param #number Speed
 function AI_CARGO_AIRPLANE:onafterPickup( Airplane, From, Event, To, Airbase, Speed )
 
-  if self.Airbase then
-    Airplane:RespawnAtAirbase( self.Airbase )
-  end
-  
   if Airplane and Airplane:IsAlive() then
-
+    self:Route( Airplane, Airbase, Speed )
     self.RoutePickup = true
     self.Airbase = Airbase
-     
-    Airplane:RouteRTB( Airbase, Speed)
   end
   
 end
@@ -252,16 +246,10 @@ end
 -- @param #number Speed
 function AI_CARGO_AIRPLANE:onafterDeploy( Airplane, From, Event, To, Airbase, Speed )
 
-  if self.Airbase then
-    Airplane:RespawnAtAirbase( self.Airbase )
-  end
-  
   if Airplane and Airplane:IsAlive() then
-
+    self:Route( Airplane, Airbase, Speed )
     self.RouteDeploy = true
     self.Airbase = Airbase
-     
-    Airplane:RouteRTB( Airbase, Speed )
   end
   
 end
@@ -346,3 +334,115 @@ function AI_CARGO_AIRPLANE:onafterUnloaded( Airplane, From, Event, To )
 end
 
 
+--- @param #AI_CARGO_AIRPLANE self
+-- @param Wrapper.Group#GROUP Airplane
+-- @param Wrapper.Airbase#AIRBASE Airbase
+-- @param #number Speed
+function AI_CARGO_AIRPLANE:Route( Airplane, Airbase, Speed )
+
+  if Airplane and Airplane:IsAlive() then
+
+    local PointVec3 = Airplane:GetPointVec3()
+  
+    local Takeoff = SPAWN.Takeoff.Hot
+    
+    local Template = Airplane:GetTemplate()
+  
+    if Template then
+
+      local Points = {}
+      
+      if self.Airbase then
+  
+        local FromWaypoint = Template.route.points[1] 
+    
+        -- These are only for ships.
+        FromWaypoint.linkUnit = nil
+        FromWaypoint.helipadId = nil
+        FromWaypoint.airdromeId = nil
+    
+        local AirbaseID = self.Airbase:GetID()
+        local AirbaseCategory = self.Airbase:GetDesc().category
+        
+        FromWaypoint.airdromeId = AirbaseID
+    
+        FromWaypoint.alt = 0
+                
+        FromWaypoint.type = GROUPTEMPLATE.Takeoff[Takeoff][1] -- type
+        FromWaypoint.action = GROUPTEMPLATE.Takeoff[Takeoff][2] -- action
+        
+    
+        -- Translate the position of the Group Template to the Vec3.
+        for UnitID = 1, #Template.units do
+          self:T( 'Before Translation SpawnTemplate.units['..UnitID..'].x = ' .. Template.units[UnitID].x .. ', SpawnTemplate.units['..UnitID..'].y = ' .. Template.units[UnitID].y )
+    
+          -- These cause a lot of confusion.
+          local UnitTemplate = Template.units[UnitID]
+    
+          UnitTemplate.parking = 15
+          UnitTemplate.parking_id = "1"
+          UnitTemplate.alt = 0
+    
+          local SX = UnitTemplate.x
+          local SY = UnitTemplate.y 
+          local BX = FromWaypoint.x
+          local BY = FromWaypoint.y
+          local TX = PointVec3.x + ( SX - BX )
+          local TY = PointVec3.z + ( SY - BY )
+          
+          UnitTemplate.x = TX
+          UnitTemplate.y = TY
+          
+          self:T( 'After Translation SpawnTemplate.units['..UnitID..'].x = ' .. UnitTemplate.x .. ', SpawnTemplate.units['..UnitID..'].y = ' .. UnitTemplate.y )
+        end
+        
+        FromWaypoint.x = PointVec3.x
+        FromWaypoint.y = PointVec3.z
+
+        Points[#Points+1] = FromWaypoint
+      else
+        
+        local GroupPoint = Airplane:GetVec2()
+        local GroupVelocity = Airplane:GetUnit(1):GetDesc().speedMax
+    
+        local FromWaypoint = {}
+        FromWaypoint.x = GroupPoint.x
+        FromWaypoint.y = GroupPoint.y
+        FromWaypoint.type = "Turning Point"
+        FromWaypoint.action = "Turning Point"
+        FromWaypoint.speed = GroupVelocity
+
+        Points[#Points+1] = FromWaypoint
+      end
+      
+      local AirbasePointVec2 = Airbase:GetPointVec2()
+      local ToWaypoint = AirbasePointVec2:WaypointAir(
+        POINT_VEC3.RoutePointAltType.BARO,
+        "Land",
+        "Landing", 
+        Speed or Airplane:GetUnit(1):GetDesc().speedMax
+      )
+      
+      ToWaypoint["airdromeId"] = Airbase:GetID()
+      ToWaypoint["speed_locked"] = true,
+  
+      self:F( ToWaypoint )
+      
+      Points[#Points+1] = ToWaypoint
+  
+      Template.x = PointVec3.x
+      Template.y = PointVec3.z
+      
+      self:T3( Points )
+      Template.route.points = Points
+
+      --self:Respawn( Template )
+
+      local GroupSpawned = Airplane:Respawn( Template )
+      
+      return GroupSpawned
+    end
+
+  end
+  
+end
