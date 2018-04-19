@@ -242,35 +242,96 @@ function DATABASE:FindAirbase( AirbaseName )
   return AirbaseFound
 end
 
---- Adds a Cargo based on the Cargo Name in the DATABASE.
--- @param #DATABASE self
--- @param #string CargoName The name of the airbase
-function DATABASE:AddCargo( Cargo )
 
-  if not self.CARGOS[Cargo.Name] then
-    self.CARGOS[Cargo.Name] = Cargo
+
+do -- cargo
+
+  --- Adds a Cargo based on the Cargo Name in the DATABASE.
+  -- @param #DATABASE self
+  -- @param #string CargoName The name of the airbase
+  function DATABASE:AddCargo( Cargo )
+  
+    if not self.CARGOS[Cargo.Name] then
+      self.CARGOS[Cargo.Name] = Cargo
+    end
   end
-end
+  
+  
+  --- Deletes a Cargo from the DATABASE based on the Cargo Name.
+  -- @param #DATABASE self
+  -- @param #string CargoName The name of the airbase
+  function DATABASE:DeleteCargo( CargoName )
+  
+    self.CARGOS[CargoName] = nil 
+  end
+  
+  --- Finds an CARGO based on the CargoName.
+  -- @param #DATABASE self
+  -- @param #string CargoName
+  -- @return Wrapper.Cargo#CARGO The found CARGO.
+  function DATABASE:FindCargo( CargoName )
+  
+    local CargoFound = self.CARGOS[CargoName]
+    return CargoFound
+  end
+  
+  --- Checks if the Template name has a ~CARGO tag.
+  -- If yes, the group is a cargo.
+  -- @param #DATABASE self
+  -- @param #string TemplateName
+  -- @return #boolean
+  function DATABASE:IsCargo( TemplateName )
 
+    TemplateName = env.getValueDictByKey( TemplateName )
+  
+    local Cargo = TemplateName:match( "#(CARGO)" )
 
---- Deletes a Cargo from the DATABASE based on the Cargo Name.
--- @param #DATABASE self
--- @param #string CargoName The name of the airbase
-function DATABASE:DeleteCargo( CargoName )
+    return Cargo and Cargo == "CARGO"    
+  end
 
-  self.CARGOS[CargoName] = nil 
-end
+  --- Private method that registers new Static Templates within the DATABASE Object.
+  -- @param #DATABASE self
+  -- @return #DATABASE self
+  function DATABASE:RegisterCargos()
+  
+    for CargoGroupName, CargoGroup in pairs( self.GROUPS ) do
+      if self:IsCargo( CargoGroupName ) then
+        local CargoInfo = CargoGroupName:match("~CARGO(.*)")
+        local CargoParam = CargoInfo and CargoInfo:match( "%((.*)%)")
+        local CargoName = CargoGroupName:match("(.*)~CARGO")
+        local Type = CargoParam and CargoParam:match( "T=([%a%d ]+),?")
+        local Name = CargoParam and CargoParam:match( "N=([%a%d]+),?")
+        local LoadRadius = CargoParam and CargoParam:match( "RR=([%a%d]+),?")
+        local NearRadius = CargoParam and CargoParam:match( "NR=([%a%d]+),?")
+        
+        CARGO_GROUP:New( CargoGroup, Type, Name or CargoName, LoadRadius, NearRadius )
+      end
+    end
+    
+    for CargoStaticName, CargoStatic in pairs( self.STATICS ) do
+      if self:IsCargo( CargoStaticName ) then
+        local CargoInfo = CargoStaticName:match("~CARGO(.*)")
+        local CargoParam = CargoInfo and CargoInfo:match( "%((.*)%)")
+        local CargoName = CargoStaticName:match("(.*)~CARGO")
+        local Type = CargoParam and CargoParam:match( "T=([%a%d ]+),?")
+        local Category = CargoParam and CargoParam:match( "C=([%a%d ]+),?")
+        local Name = CargoParam and CargoParam:match( "N=([%a%d]+),?")
+        local LoadRadius = CargoParam and tonumber( CargoParam:match( "RR=([%a%d]+),?") )
+        local NearRadius = CargoParam and tonumber( CargoParam:match( "NR=([%a%d]+),?") )
+        
+        if Category == "SLING" then
+          CARGO_SLINGLOAD:New( CargoStatic, Type, Name or CargoName, LoadRadius, NearRadius )
+        else
+          if Category == "CRATE" then
+            CARGO_CRATE:New( CargoStatic, Type, Name or CargoName, LoadRadius, NearRadius )
+          end
+        end
+      end
+    end
+    
+  end
 
---- Finds an CARGO based on the CargoName.
--- @param #DATABASE self
--- @param #string CargoName
--- @return Wrapper.Cargo#CARGO The found CARGO.
-function DATABASE:FindCargo( CargoName )
-
-  local CargoFound = self.CARGOS[CargoName]
-  return CargoFound
-end
-
+end -- cargo
 
 --- Finds a CLIENT based on the ClientName.
 -- @param #DATABASE self

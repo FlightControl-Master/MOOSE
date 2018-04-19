@@ -236,19 +236,36 @@ function GROUP:IsAlive()
 end
 
 --- Destroys the DCS Group and all of its DCS Units.
--- Note that this destroy method also raises a destroy event at run-time.
--- So all event listeners will catch the destroy event of this DCS Group.
+-- Note that this destroy method also can raise a destroy event at run-time.
+-- So all event listeners will catch the destroy event of this group for each unit in the group.
+-- To raise these events, provide the `GenerateEvent` parameter.
 -- @param #GROUP self
--- @param #boolean GenerateEvent
+-- @param #boolean GenerateEvent true if you want to generate a crash or dead event for each unit.
+-- @usage
+-- -- Air unit example: destroy the Helicopter and generate a S_EVENT_CRASH for each unit in the Helicopter group.
+-- Helicopter = GROUP:FindByName( "Helicopter" )
+-- Helicopter:Destroy( true )
+-- @usage
+-- -- Ground unit example: destroy the Tanks and generate a S_EVENT_DEAD for each unit in the Tanks group.
+-- Tanks = GROUP:FindByName( "Tanks" )
+-- Tanks:Destroy( true )
+-- @usage
+-- -- Ship unit example: destroy the Ship silently.
+-- Ship = GROUP:FindByName( "Ship" )
+-- Ship:Destroy( true )
 function GROUP:Destroy( GenerateEvent )
   self:F2( self.GroupName )
 
   local DCSGroup = self:GetDCSObject()
 
   if DCSGroup then
-    if not GenerateEvent then
+    if GenerateEvent and GenerateEvent == true then
       for Index, UnitData in pairs( DCSGroup:getUnits() ) do
-        self:CreateEventCrash( timer.getTime(), UnitData )
+        if self:IsAir() then
+          self:CreateEventCrash( timer.getTime(), UnitData )
+        else
+          self:CreateEventDead( timer.getTime(), UnitData )
+        end
       end
     end
     USERFLAG:New( self:GetName() ):Set( 100 )
@@ -1394,7 +1411,7 @@ do -- Route methods
   -- @param #number Speed (optional) The Speed, if no Speed is given, the maximum Speed of the first unit is selected. 
   -- @return #GROUP
   function GROUP:RouteRTB( RTBAirbase, Speed )
-    self:F2( { RTBAirbase, Speed } )
+    self:F( { RTBAirbase:GetName(), Speed } )
   
     local DCSGroup = self:GetDCSObject()
   
@@ -1435,9 +1452,7 @@ do -- Route methods
         Template.route.points = Points
         self:Respawn( Template )
     
-        self:Route( Points )
-
-        self:Respawn(Template)
+        --self:Route( Points )
       else
         self:ClearTasks()
       end
