@@ -1594,6 +1594,13 @@ function RANGE:_DisplayStrafePits(_unitname)
       -- Pit parameters.
       local coord=_strafepit.coordinate --Core.Point#COORDINATE
       local heading=_strafepit.heading
+      
+      -- Turn heading around ==> approach heading.
+      if heading>180 then
+        heading=heading-180
+      else
+        heading=heading+180
+      end
 
       local mycoord=coord:ToStringA2G(_unit, _settings)
       _text=_text..string.format("\n- %s: %s - heading %03d",_strafepit.name, mycoord, heading)
