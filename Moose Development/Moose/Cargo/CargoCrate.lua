@@ -166,14 +166,14 @@ do -- CARGO_CRATE
 
   --- Check if Cargo Crate is in the radius for the Cargo to be reported.
   -- @param #CARGO self
-  -- @param Core.Point#Coordinate Coordinate
+  -- @param Core.Point#COORDINATE Coordinate
   -- @return #boolean true if the Cargo Crate is within the report radius.
   function CARGO_CRATE:IsInReportRadius( Coordinate )
     --self:F( { Coordinate, LoadRadius = self.LoadRadius } )
   
     local Distance = 0
     if self:IsUnLoaded() then
-      Distance = Coordinate:DistanceFromPointVec2( self.CargoObject:GetPointVec2() )
+      Distance = Coordinate:Get2DDistance( self.CargoObject:GetCoordinate() )
       --self:T( Distance )
       if Distance <= self.LoadRadius then
         return true
@@ -193,7 +193,7 @@ do -- CARGO_CRATE
   
     local Distance = 0
     if self:IsUnLoaded() then
-      Distance = Coordinate:DistanceFromPointVec2( self.CargoObject:GetPointVec2() )
+      Distance = Coordinate:Get2DDistance( self.CargoObject:GetCoordinate() )
       --self:T( Distance )
       if Distance <= self.NearRadius then
         return true

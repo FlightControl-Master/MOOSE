@@ -24,7 +24,7 @@ AI_CARGO_HELICOPTER = {
 
 --- Creates a new AI_CARGO_HELICOPTER object.
 -- @param #AI_CARGO_HELICOPTER self
--- @param Wrapper.Unit#UNIT Helicopter
+-- @param Wrapper.Group#GROUP Helicopter
 -- @param Core.Set#SET_CARGO CargoSet
 -- @param #number CombatRadius
 -- @return #AI_CARGO_HELICOPTER
@@ -116,13 +116,13 @@ end
 
 --- Set the Carrier.
 -- @param #AI_CARGO_HELICOPTER self
--- @param Wrapper.Unit#UNIT Helicopter
+-- @param Wrapper.Group#GROUP Helicopter
 -- @return #AI_CARGO_HELICOPTER
 function AI_CARGO_HELICOPTER:SetCarrier( Helicopter )
 
   local AICargo = self
 
-  self.Helicopter = Helicopter -- Wrapper.Unit#UNIT
+  self.Helicopter = Helicopter -- Wrapper.Group#GROUP
   self.Helicopter:SetState( self.Helicopter, "AI_CARGO_HELICOPTER", self )
 
   self.RoutePickup = false
@@ -173,7 +173,7 @@ end
 -- @param #AI_CARGO_HELICOPTER self
 -- @param Core.Point#COORDINATE Coordinate
 -- @param #number Radius
--- @return Wrapper.Unit#UNIT NewCarrier
+-- @return Wrapper.Group#GROUP NewCarrier
 function AI_CARGO_HELICOPTER:FindCarrier( Coordinate, Radius )
 
   local CoordinateZone = ZONE_RADIUS:New( "Zone" , Coordinate:GetVec2(), Radius )
@@ -183,18 +183,19 @@ function AI_CARGO_HELICOPTER:FindCarrier( Coordinate, Radius )
     self:F({NearUnit=NearUnit})
     if not NearUnit:GetState( NearUnit, "AI_CARGO_HELICOPTER" ) then
       local Attributes = NearUnit:GetDesc()
-      self:F({Desc=Attributes})
+      self:F({Attributes=Attributes})
       if NearUnit:HasAttribute( "Trucks" ) then
-        self:SetCarrier( NearUnit )
-        break
+        return NearUnit:GetGroup()
       end
     end
   end
+  
+  return nil
 
 end
 
 --- @param #AI_CARGO_HELICOPTER self
--- @param Wrapper.Unit#UNIT Helicopter
+-- @param Wrapper.Group#GROUP Helicopter
 -- @param From
 -- @param Event
 -- @param To
@@ -221,7 +222,7 @@ end
 
 
 --- @param #AI_CARGO_HELICOPTER self
--- @param Wrapper.Unit#UNIT Helicopter
+-- @param Wrapper.Group#GROUP Helicopter
 -- @param From
 -- @param Event
 -- @param To
@@ -276,7 +277,7 @@ end
 
 
 --- @param #AI_CARGO_HELICOPTER self
--- @param Wrapper.Unit#UNIT Helicopter
+-- @param Wrapper.Group#GROUP Helicopter
 -- @param From
 -- @param Event
 -- @param To
@@ -331,7 +332,7 @@ end
 
 
 --- @param #AI_CARGO_HELICOPTER self
--- @param Wrapper.Unit#UNIT Helicopter
+-- @param Wrapper.Group#GROUP Helicopter
 function AI_CARGO_HELICOPTER:onafterLoad( Helicopter, From, Event, To, Coordinate )
 
   if Helicopter and Helicopter:IsAlive() then
@@ -339,7 +340,7 @@ function AI_CARGO_HELICOPTER:onafterLoad( Helicopter, From, Event, To, Coordinat
     for _, Cargo in pairs( self.CargoSet:GetSet() ) do
       if Cargo:IsInLoadRadius( Coordinate ) then
         self:__Board( 5 )
-        Cargo:Board( Helicopter, 25 )
+        Cargo:Board( Helicopter:GetUnit(1), 25 )
         self.Cargo = Cargo
         break
       end
@@ -349,7 +350,7 @@ function AI_CARGO_HELICOPTER:onafterLoad( Helicopter, From, Event, To, Coordinat
 end
 
 --- @param #AI_CARGO_HELICOPTER self
--- @param Wrapper.Unit#UNIT Helicopter
+-- @param Wrapper.Group#GROUP Helicopter
 function AI_CARGO_HELICOPTER:onafterBoard( Helicopter, From, Event, To )
 
   if Helicopter and Helicopter:IsAlive() then
@@ -364,7 +365,7 @@ function AI_CARGO_HELICOPTER:onafterBoard( Helicopter, From, Event, To )
 end
 
 --- @param #AI_CARGO_HELICOPTER self
--- @param Wrapper.Unit#UNIT Helicopter
+-- @param Wrapper.Group#GROUP Helicopter
 function AI_CARGO_HELICOPTER:onafterLoaded( Helicopter, From, Event, To )
 
   if Helicopter and Helicopter:IsAlive() then
@@ -374,7 +375,7 @@ end
 
 
 --- @param #AI_CARGO_HELICOPTER self
--- @param Wrapper.Unit#UNIT Helicopter
+-- @param Wrapper.Group#GROUP Helicopter
 function AI_CARGO_HELICOPTER:onafterUnload( Helicopter, From, Event, To )
 
   if Helicopter and Helicopter:IsAlive() then
@@ -385,7 +386,7 @@ function AI_CARGO_HELICOPTER:onafterUnload( Helicopter, From, Event, To )
 end
 
 --- @param #AI_CARGO_HELICOPTER self
--- @param Wrapper.Unit#UNIT Helicopter
+-- @param Wrapper.Group#GROUP Helicopter
 function AI_CARGO_HELICOPTER:onafterUnboard( Helicopter, From, Event, To )
 
   if Helicopter and Helicopter:IsAlive() then
@@ -399,7 +400,7 @@ function AI_CARGO_HELICOPTER:onafterUnboard( Helicopter, From, Event, To )
 end
 
 --- @param #AI_CARGO_HELICOPTER self
--- @param Wrapper.Unit#UNIT Helicopter
+-- @param Wrapper.Group#GROUP Helicopter
 function AI_CARGO_HELICOPTER:onafterUnloaded( Helicopter, From, Event, To )
 
   if Helicopter and Helicopter:IsAlive() then

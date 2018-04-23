@@ -566,14 +566,14 @@ do -- CARGO
   
   --- Check if Cargo is in the LoadRadius for the Cargo to be Boarded or Loaded.
   -- @param #CARGO self
-  -- @param Core.Point#Coordinate Coordinate
+  -- @param Core.Point#COORDINATE Coordinate
   -- @return #boolean true if the CargoGroup is within the loading radius.
   function CARGO:IsInLoadRadius( Coordinate )
     self:F( { Coordinate, LoadRadius = self.LoadRadius } )
   
     local Distance = 0
     if self:IsUnLoaded() then
-      Distance = Coordinate:DistanceFromPointVec2( self.CargoObject:GetPointVec2() )
+      Distance = Coordinate:Get2DDistance( self.CargoObject:GetCoordinate() )
       self:T( Distance )
       if Distance <= self.LoadRadius then
         return true
@@ -586,14 +586,14 @@ do -- CARGO
 
   --- Check if the Cargo can report itself to be Boarded or Loaded.
   -- @param #CARGO self
-  -- @param Core.Point#Coordinate Coordinate
+  -- @param Core.Point#COORDINATE Coordinate
   -- @return #boolean true if the Cargo can report itself.
   function CARGO:IsInReportRadius( Coordinate )
     self:F( { Coordinate } )
   
     local Distance = 0
     if self:IsUnLoaded() then
-      Distance = Coordinate:DistanceFromPointVec2( self.CargoObject:GetPointVec2() )
+      Distance = Coordinate:Get2DDistance( self.CargoObject:GetCoordinate() )
       self:T( Distance )
       if Distance <= self.LoadRadius then
         return true
@@ -606,18 +606,18 @@ do -- CARGO
 
   --- Check if CargoCarrier is near the Cargo to be Loaded.
   -- @param #CARGO self
-  -- @param Core.Point#POINT_VEC2 PointVec2
+  -- @param Core.Point#COORDINATE Coordinate
   -- @param #number NearRadius The radius when the cargo will board the Carrier (to avoid collision).
   -- @return #boolean
-  function CARGO:IsNear( PointVec2, NearRadius )
+  function CARGO:IsNear( Coordinate, NearRadius )
     --self:F( { PointVec2 = PointVec2, NearRadius = NearRadius } )
   
     if self.CargoObject:IsAlive() then
-      --local Distance = PointVec2:DistanceFromPointVec2( self.CargoObject:GetPointVec2() )
+      --local Distance = PointVec2:Get2DDistance( self.CargoObject:GetPointVec2() )
       --self:F( { CargoObjectName = self.CargoObject:GetName() } )
       --self:F( { CargoObjectVec2 = self.CargoObject:GetVec2() } )
       --self:F( { PointVec2 = PointVec2:GetVec2() } )
-      local Distance = PointVec2:Get2DDistance( self.CargoObject:GetPointVec2() )
+      local Distance = Coordinate:Get2DDistance( self.CargoObject:GetCoordinate() )
       --self:F( Distance )
       
       if Distance <= NearRadius then
@@ -979,9 +979,9 @@ end
 function CARGO_PACKAGE:IsNear( CargoCarrier )
   self:F()
 
-  local CargoCarrierPoint = CargoCarrier:GetPointVec2()
+  local CargoCarrierPoint = CargoCarrier:GetCoordinate()
   
-  local Distance = CargoCarrierPoint:DistanceFromPointVec2( self.CargoCarrier:GetPointVec2() )
+  local Distance = CargoCarrierPoint:Get2DDistance( self.CargoCarrier:GetCoordinate() )
   self:T( Distance )
   
   if Distance <= self.NearRadius then

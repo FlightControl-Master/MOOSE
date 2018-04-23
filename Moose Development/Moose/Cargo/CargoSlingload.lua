@@ -119,14 +119,14 @@ do -- CARGO_SLINGLOAD
 
   --- Check if Cargo Crate is in the radius for the Cargo to be reported.
   -- @param #CARGO_SLINGLOAD self
-  -- @param Core.Point#Coordinate Coordinate
+  -- @param Core.Point#COORDINATE Coordinate
   -- @return #boolean true if the Cargo Crate is within the report radius.
   function CARGO_SLINGLOAD:IsInReportRadius( Coordinate )
     --self:F( { Coordinate, LoadRadius = self.LoadRadius } )
   
     local Distance = 0
     if self:IsUnLoaded() then
-      Distance = Coordinate:DistanceFromPointVec2( self.CargoObject:GetPointVec2() )
+      Distance = Coordinate:Get2DDistance( self.CargoObject:GetCoordinate() )
       if Distance <= self.LoadRadius then
         return true
       end
@@ -138,14 +138,14 @@ do -- CARGO_SLINGLOAD
 
   --- Check if Cargo Slingload is in the radius for the Cargo to be Boarded or Loaded.
   -- @param #CARGO_SLINGLOAD self
-  -- @param Core.Point#Coordinate Coordinate
+  -- @param Core.Point#COORDINATE Coordinate
   -- @return #boolean true if the Cargo Slingload is within the loading radius.
   function CARGO_SLINGLOAD:IsInLoadRadius( Coordinate )
     --self:F( { Coordinate } )
   
     local Distance = 0
     if self:IsUnLoaded() then
-      Distance = Coordinate:DistanceFromPointVec2( self.CargoObject:GetPointVec2() )
+      Distance = Coordinate:Get2DDistance( self.CargoObject:GetCoordinate() )
       if Distance <= self.NearRadius then
         return true
       end

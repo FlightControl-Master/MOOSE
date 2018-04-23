@@ -274,20 +274,18 @@ do -- COORDINATE
   
   
 
-  --TODO: check this to replace
-  --- Calculate the distance from a reference @{DCSTypes#Vec2}.
+  --- Calculate the distance from a reference @{#COORDINATE}.
   -- @param #COORDINATE self
-  -- @param Dcs.DCSTypes#Vec2 Vec2Reference The reference @{DCSTypes#Vec2}.
-  -- @return Dcs.DCSTypes#Distance The distance from the reference @{DCSTypes#Vec2} in meters.
-  function COORDINATE:DistanceFromVec2( Vec2Reference )
-    self:F2( Vec2Reference )
+  -- @param #COORDINATE PointVec2Reference The reference @{#COORDINATE}.
+  -- @return Dcs.DCSTypes#Distance The distance from the reference @{#COORDINATE} in meters.
+  function COORDINATE:DistanceFromPointVec2( PointVec2Reference )
+    self:F2( PointVec2Reference )
 
-    local Distance = ( ( Vec2Reference.x - self.x ) ^ 2 + ( Vec2Reference.y - self.z ) ^2 ) ^0.5
+    local Distance = ( ( PointVec2Reference.x - self.x ) ^ 2 + ( PointVec2Reference.z - self.z ) ^2 ) ^ 0.5
 
     self:T2( Distance )
     return Distance
   end
-
 
   --- Add a Distance in meters from the COORDINATE orthonormal plane, with the given angle, and calculate the new COORDINATE.
   -- @param #COORDINATE self

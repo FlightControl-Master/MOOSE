@@ -1761,351 +1761,354 @@ function CONTROLLABLE:TaskRoute( Points )
   return DCSTask
 end
 
---- (AIR + GROUND) Make the Controllable move to fly to a given point.
--- @param #CONTROLLABLE self
--- @param Dcs.DCSTypes#Vec3 Point The destination point in Vec3 format.
--- @param #number Speed The speed to travel.
--- @return #CONTROLLABLE self
-function CONTROLLABLE:RouteToVec2( Point, Speed )
-  self:F2( { Point, Speed } )
+do -- Route methods
 
-  local ControllablePoint = self:GetUnit( 1 ):GetVec2()
-
-  local PointFrom = {}
-  PointFrom.x = ControllablePoint.x
-  PointFrom.y = ControllablePoint.y
-  PointFrom.type = "Turning Point"
-  PointFrom.action = "Turning Point"
-  PointFrom.speed = Speed
-  PointFrom.speed_locked = true
-  PointFrom.properties = {
-    ["vnav"] = 1,
-    ["scale"] = 0,
-    ["angle"] = 0,
-    ["vangle"] = 0,
-    ["steer"] = 2,
-  }
-
-
-  local PointTo = {}
-  PointTo.x = Point.x
-  PointTo.y = Point.y
-  PointTo.type = "Turning Point"
-  PointTo.action = "Fly Over Point"
-  PointTo.speed = Speed
-  PointTo.speed_locked = true
-  PointTo.properties = {
-    ["vnav"] = 1,
-    ["scale"] = 0,
-    ["angle"] = 0,
-    ["vangle"] = 0,
-    ["steer"] = 2,
-  }
-
-
-  local Points = { PointFrom, PointTo }
-
-  self:T3( Points )
-
-  self:Route( Points )
-
-  return self
-end
-
---- (AIR + GROUND) Make the Controllable move to a given point.
--- @param #CONTROLLABLE self
--- @param Dcs.DCSTypes#Vec3 Point The destination point in Vec3 format.
--- @param #number Speed The speed to travel.
--- @return #CONTROLLABLE self
-function CONTROLLABLE:RouteToVec3( Point, Speed )
-  self:F2( { Point, Speed } )
-
-  local ControllableVec3 = self:GetUnit( 1 ):GetVec3()
-
-  local PointFrom = {}
-  PointFrom.x = ControllableVec3.x
-  PointFrom.y = ControllableVec3.z
-  PointFrom.alt = ControllableVec3.y
-  PointFrom.alt_type = "BARO"
-  PointFrom.type = "Turning Point"
-  PointFrom.action = "Turning Point"
-  PointFrom.speed = Speed
-  PointFrom.speed_locked = true
-  PointFrom.properties = {
-    ["vnav"] = 1,
-    ["scale"] = 0,
-    ["angle"] = 0,
-    ["vangle"] = 0,
-    ["steer"] = 2,
-  }
-
-
-  local PointTo = {}
-  PointTo.x = Point.x
-  PointTo.y = Point.z
-  PointTo.alt = Point.y
-  PointTo.alt_type = "BARO"
-  PointTo.type = "Turning Point"
-  PointTo.action = "Fly Over Point"
-  PointTo.speed = Speed
-  PointTo.speed_locked = true
-  PointTo.properties = {
-    ["vnav"] = 1,
-    ["scale"] = 0,
-    ["angle"] = 0,
-    ["vangle"] = 0,
-    ["steer"] = 2,
-  }
-
-
-  local Points = { PointFrom, PointTo }
-
-  self:T3( Points )
-
-  self:Route( Points )
-
-  return self
-end
-
-
-
---- Make the controllable to follow a given route.
--- @param #CONTROLLABLE self
--- @param #table Route A table of Route Points.
--- @param #number DelaySeconds Wait for the specified seconds before executing the Route.
--- @return #CONTROLLABLE The CONTROLLABLE.
-function CONTROLLABLE:Route( Route, DelaySeconds )
-  self:F2( Route )
-
-  local DCSControllable = self:GetDCSObject()
-  if DCSControllable then
-    local RouteTask = self:TaskRoute( Route ) -- Create a RouteTask, that will route the CONTROLLABLE to the Route.
-    self:SetTask( RouteTask, DelaySeconds or 1 ) -- Execute the RouteTask after the specified seconds (default is 1).
-    return self
-  end
-
-  return nil
-end
-
-
---- Stops the movement of the vehicle on the route.
--- @param #CONTROLLABLE self
--- @return #CONTROLLABLE
-function CONTROLLABLE:RouteStop()
-  self:F("RouteStop")
+  --- (AIR + GROUND) Make the Controllable move to fly to a given point.
+  -- @param #CONTROLLABLE self
+  -- @param Dcs.DCSTypes#Vec3 Point The destination point in Vec3 format.
+  -- @param #number Speed The speed to travel.
+  -- @return #CONTROLLABLE self
+  function CONTROLLABLE:RouteToVec2( Point, Speed )
+    self:F2( { Point, Speed } )
   
-  local CommandStop = self:CommandStopRoute( true )
-  self:SetCommand( CommandStop )
-
-end
-
---- Resumes the movement of the vehicle on the route.
--- @param #CONTROLLABLE self
--- @return #CONTROLLABLE
-function CONTROLLABLE:RouteResume()
-  self:F("RouteResume")
+    local ControllablePoint = self:GetUnit( 1 ):GetVec2()
   
-  local CommandResume = self:CommandStopRoute( false )
-  self:SetCommand( CommandResume )
-
-end
-
---- Make the GROUND Controllable to drive towards a specific point.
--- @param #CONTROLLABLE self
--- @param Core.Point#COORDINATE ToCoordinate A Coordinate to drive to.
--- @param #number Speed (optional) Speed in km/h. The default speed is 999 km/h.
--- @param #string Formation (optional) The route point Formation, which is a text string that specifies exactly the Text in the Type of the route point, like "Vee", "Echelon Right".
--- @param #number DelaySeconds Wait for the specified seconds before executing the Route.
--- @return #CONTROLLABLE The CONTROLLABLE.
-function CONTROLLABLE:RouteGroundTo( ToCoordinate, Speed, Formation, DelaySeconds )
-
-  local FromCoordinate = self:GetCoordinate()
-  
-  local FromWP = FromCoordinate:WaypointGround()
-  local ToWP = ToCoordinate:WaypointGround( Speed, Formation )
-
-  self:Route( { FromWP, ToWP }, DelaySeconds )
-
-  return self
-end
-
---- Make the GROUND Controllable to drive towards a specific point using (only) roads.
--- @param #CONTROLLABLE self
--- @param Core.Point#COORDINATE ToCoordinate A Coordinate to drive to.
--- @param #number Speed (optional) Speed in km/h. The default speed is 999 km/h.
--- @param #number DelaySeconds Wait for the specified seconds before executing the Route.
--- @return #CONTROLLABLE The CONTROLLABLE.
-function CONTROLLABLE:RouteGroundOnRoad( ToCoordinate, Speed, DelaySeconds )
-
-  -- Current coordinate.
-  local FromCoordinate = self:GetCoordinate()
-  
-  -- Formation is set to on road.
-  local Formation="On Road"
- 
-  -- Path on road from current position to destination coordinate.
-  local path=FromCoordinate:GetPathOnRoad(ToCoordinate)
-  
-  -- Route, ground waypoints along roads.
-  local route={}
-  table.insert(route, FromCoordinate:WaypointGround(Speed, Formation))
-  
-  -- Convert coordinates to ground waypoints and insert into table.
-  for _, coord in ipairs(path) do
-    table.insert(route, coord:WaypointGround(Speed, Formation))
-  end
-  
-  -- Add the final coordinate because the final coordinate in path is last point on road.
-  local dist=ToCoordinate:Get2DDistance(path[#path])
-  if dist>10 then
-    table.insert(route, ToCoordinate:WaypointGround(Speed, "Vee"))
-  end
-  
-  -- Route controllable to destination.
-  self:Route(route, DelaySeconds)
-
-  return self
-end
-
-
---- Make the AIR Controllable fly towards a specific point.
--- @param #CONTROLLABLE self
--- @param Core.Point#COORDINATE ToCoordinate A Coordinate to drive to.
--- @param Core.Point#COORDINATE.RoutePointAltType AltType The altitude type.
--- @param Core.Point#COORDINATE.RoutePointType Type The route point type.
--- @param Core.Point#COORDINATE.RoutePointAction Action The route point action.
--- @param #number Speed (optional) Speed in km/h. The default speed is 999 km/h.
--- @param #number DelaySeconds Wait for the specified seconds before executing the Route.
--- @return #CONTROLLABLE The CONTROLLABLE.
-function CONTROLLABLE:RouteAirTo( ToCoordinate, AltType, Type, Action, Speed, DelaySeconds )
-
-  local FromCoordinate = self:GetCoordinate()
-  local FromWP = FromCoordinate:WaypointAir()
-
-  local ToWP = ToCoordinate:WaypointAir( AltType, Type, Action, Speed )
-
-  self:Route( { FromWP, ToWP }, DelaySeconds )
-
-  return self
-end
-
-
---- (AIR + GROUND) Route the controllable to a given zone.
--- The controllable final destination point can be randomized.
--- A speed can be given in km/h.
--- A given formation can be given.
--- @param #CONTROLLABLE self
--- @param Core.Zone#ZONE Zone The zone where to route to.
--- @param #boolean Randomize Defines whether to target point gets randomized within the Zone.
--- @param #number Speed The speed.
--- @param Base#FORMATION Formation The formation string.
-function CONTROLLABLE:TaskRouteToZone( Zone, Randomize, Speed, Formation )
-  self:F2( Zone )
-
-  local DCSControllable = self:GetDCSObject()
-
-  if DCSControllable then
-
-    local ControllablePoint = self:GetVec2()
-
     local PointFrom = {}
     PointFrom.x = ControllablePoint.x
     PointFrom.y = ControllablePoint.y
     PointFrom.type = "Turning Point"
-    PointFrom.action = Formation or "Cone"
-    PointFrom.speed = 20 / 1.6
-
-
+    PointFrom.action = "Turning Point"
+    PointFrom.speed = Speed
+    PointFrom.speed_locked = true
+    PointFrom.properties = {
+      ["vnav"] = 1,
+      ["scale"] = 0,
+      ["angle"] = 0,
+      ["vangle"] = 0,
+      ["steer"] = 2,
+    }
+  
+  
     local PointTo = {}
-    local ZonePoint
-
-    if Randomize then
-      ZonePoint = Zone:GetRandomVec2()
-    else
-      ZonePoint = Zone:GetVec2()
-    end
-
-    PointTo.x = ZonePoint.x
-    PointTo.y = ZonePoint.y
+    PointTo.x = Point.x
+    PointTo.y = Point.y
     PointTo.type = "Turning Point"
-
-    if Formation then
-      PointTo.action = Formation
-    else
-      PointTo.action = "Cone"
-    end
-
-    if Speed then
-      PointTo.speed = Speed
-    else
-      PointTo.speed = 20 / 1.6
-    end
-
+    PointTo.action = "Fly Over Point"
+    PointTo.speed = Speed
+    PointTo.speed_locked = true
+    PointTo.properties = {
+      ["vnav"] = 1,
+      ["scale"] = 0,
+      ["angle"] = 0,
+      ["vangle"] = 0,
+      ["steer"] = 2,
+    }
+  
+  
     local Points = { PointFrom, PointTo }
-
+  
     self:T3( Points )
-
+  
     self:Route( Points )
-
+  
     return self
   end
-
-  return nil
-end
-
---- (GROUND) Route the controllable to a given Vec2.
--- A speed can be given in km/h.
--- A given formation can be given.
--- @param #CONTROLLABLE self
--- @param #Vec2 Vec2 The Vec2 where to route to.
--- @param #number Speed The speed.
--- @param Base#FORMATION Formation The formation string.
-function CONTROLLABLE:TaskRouteToVec2( Vec2, Speed, Formation )
-
-  local DCSControllable = self:GetDCSObject()
-
-  if DCSControllable then
-
-    local ControllablePoint = self:GetVec2()
-
+  
+  --- (AIR + GROUND) Make the Controllable move to a given point.
+  -- @param #CONTROLLABLE self
+  -- @param Dcs.DCSTypes#Vec3 Point The destination point in Vec3 format.
+  -- @param #number Speed The speed to travel.
+  -- @return #CONTROLLABLE self
+  function CONTROLLABLE:RouteToVec3( Point, Speed )
+    self:F2( { Point, Speed } )
+  
+    local ControllableVec3 = self:GetUnit( 1 ):GetVec3()
+  
     local PointFrom = {}
-    PointFrom.x = ControllablePoint.x
-    PointFrom.y = ControllablePoint.y
+    PointFrom.x = ControllableVec3.x
+    PointFrom.y = ControllableVec3.z
+    PointFrom.alt = ControllableVec3.y
+    PointFrom.alt_type = "BARO"
     PointFrom.type = "Turning Point"
-    PointFrom.action = Formation or "Cone"
-    PointFrom.speed = 20 / 1.6
-
-
+    PointFrom.action = "Turning Point"
+    PointFrom.speed = Speed
+    PointFrom.speed_locked = true
+    PointFrom.properties = {
+      ["vnav"] = 1,
+      ["scale"] = 0,
+      ["angle"] = 0,
+      ["vangle"] = 0,
+      ["steer"] = 2,
+    }
+  
+  
     local PointTo = {}
-
-    PointTo.x = Vec2.x
-    PointTo.y = Vec2.y
+    PointTo.x = Point.x
+    PointTo.y = Point.z
+    PointTo.alt = Point.y
+    PointTo.alt_type = "BARO"
     PointTo.type = "Turning Point"
-
-    if Formation then
-      PointTo.action = Formation
-    else
-      PointTo.action = "Cone"
-    end
-
-    if Speed then
-      PointTo.speed = Speed
-    else
-      PointTo.speed = 60 / 3.6
-    end
-
+    PointTo.action = "Fly Over Point"
+    PointTo.speed = Speed
+    PointTo.speed_locked = true
+    PointTo.properties = {
+      ["vnav"] = 1,
+      ["scale"] = 0,
+      ["angle"] = 0,
+      ["vangle"] = 0,
+      ["steer"] = 2,
+    }
+  
+  
     local Points = { PointFrom, PointTo }
-
+  
     self:T3( Points )
-
+  
     self:Route( Points )
-
+  
     return self
   end
+  
+  
+  
+  --- Make the controllable to follow a given route.
+  -- @param #CONTROLLABLE self
+  -- @param #table Route A table of Route Points.
+  -- @param #number DelaySeconds Wait for the specified seconds before executing the Route.
+  -- @return #CONTROLLABLE The CONTROLLABLE.
+  function CONTROLLABLE:Route( Route, DelaySeconds )
+    self:F2( Route )
+  
+    local DCSControllable = self:GetDCSObject()
+    if DCSControllable then
+      local RouteTask = self:TaskRoute( Route ) -- Create a RouteTask, that will route the CONTROLLABLE to the Route.
+      self:SetTask( RouteTask, DelaySeconds or 1 ) -- Execute the RouteTask after the specified seconds (default is 1).
+      return self
+    end
+  
+    return nil
+  end
+  
+  
+  --- Stops the movement of the vehicle on the route.
+  -- @param #CONTROLLABLE self
+  -- @return #CONTROLLABLE
+  function CONTROLLABLE:RouteStop()
+    self:F("RouteStop")
+    
+    local CommandStop = self:CommandStopRoute( true )
+    self:SetCommand( CommandStop )
+  
+  end
+  
+  --- Resumes the movement of the vehicle on the route.
+  -- @param #CONTROLLABLE self
+  -- @return #CONTROLLABLE
+  function CONTROLLABLE:RouteResume()
+    self:F("RouteResume")
+    
+    local CommandResume = self:CommandStopRoute( false )
+    self:SetCommand( CommandResume )
+  
+  end
+  
+  --- Make the GROUND Controllable to drive towards a specific point.
+  -- @param #CONTROLLABLE self
+  -- @param Core.Point#COORDINATE ToCoordinate A Coordinate to drive to.
+  -- @param #number Speed (optional) Speed in km/h. The default speed is 999 km/h.
+  -- @param #string Formation (optional) The route point Formation, which is a text string that specifies exactly the Text in the Type of the route point, like "Vee", "Echelon Right".
+  -- @param #number DelaySeconds Wait for the specified seconds before executing the Route.
+  -- @return #CONTROLLABLE The CONTROLLABLE.
+  function CONTROLLABLE:RouteGroundTo( ToCoordinate, Speed, Formation, DelaySeconds )
+  
+    local FromCoordinate = self:GetCoordinate()
+    
+    local FromWP = FromCoordinate:WaypointGround()
+    local ToWP = ToCoordinate:WaypointGround( Speed, Formation )
+  
+    self:Route( { FromWP, ToWP }, DelaySeconds )
+  
+    return self
+  end
+  
+  --- Make the GROUND Controllable to drive towards a specific point using (only) roads.
+  -- @param #CONTROLLABLE self
+  -- @param Core.Point#COORDINATE ToCoordinate A Coordinate to drive to.
+  -- @param #number Speed (optional) Speed in km/h. The default speed is 999 km/h.
+  -- @param #number DelaySeconds Wait for the specified seconds before executing the Route.
+  -- @return #CONTROLLABLE The CONTROLLABLE.
+  function CONTROLLABLE:RouteGroundOnRoad( ToCoordinate, Speed, DelaySeconds )
+  
+    -- Current coordinate.
+    local FromCoordinate = self:GetCoordinate()
+    
+    -- Formation is set to on road.
+    local Formation="On Road"
+   
+    -- Path on road from current position to destination coordinate.
+    local path=FromCoordinate:GetPathOnRoad(ToCoordinate)
+    
+    -- Route, ground waypoints along roads.
+    local route={}
+    table.insert(route, FromCoordinate:WaypointGround(Speed, Formation))
+    
+    -- Convert coordinates to ground waypoints and insert into table.
+    for _, coord in ipairs(path) do
+      table.insert(route, coord:WaypointGround(Speed, Formation))
+    end
+    
+    -- Add the final coordinate because the final coordinate in path is last point on road.
+    local dist=ToCoordinate:Get2DDistance(path[#path])
+    if dist>10 then
+      table.insert(route, ToCoordinate:WaypointGround(Speed, "Vee"))
+    end
+    
+    -- Route controllable to destination.
+    self:Route(route, DelaySeconds)
+  
+    return self
+  end
+  
+  
+  --- Make the AIR Controllable fly towards a specific point.
+  -- @param #CONTROLLABLE self
+  -- @param Core.Point#COORDINATE ToCoordinate A Coordinate to drive to.
+  -- @param Core.Point#COORDINATE.RoutePointAltType AltType The altitude type.
+  -- @param Core.Point#COORDINATE.RoutePointType Type The route point type.
+  -- @param Core.Point#COORDINATE.RoutePointAction Action The route point action.
+  -- @param #number Speed (optional) Speed in km/h. The default speed is 999 km/h.
+  -- @param #number DelaySeconds Wait for the specified seconds before executing the Route.
+  -- @return #CONTROLLABLE The CONTROLLABLE.
+  function CONTROLLABLE:RouteAirTo( ToCoordinate, AltType, Type, Action, Speed, DelaySeconds )
+  
+    local FromCoordinate = self:GetCoordinate()
+    local FromWP = FromCoordinate:WaypointAir()
+  
+    local ToWP = ToCoordinate:WaypointAir( AltType, Type, Action, Speed )
+  
+    self:Route( { FromWP, ToWP }, DelaySeconds )
+  
+    return self
+  end
+  
+  
+  --- (AIR + GROUND) Route the controllable to a given zone.
+  -- The controllable final destination point can be randomized.
+  -- A speed can be given in km/h.
+  -- A given formation can be given.
+  -- @param #CONTROLLABLE self
+  -- @param Core.Zone#ZONE Zone The zone where to route to.
+  -- @param #boolean Randomize Defines whether to target point gets randomized within the Zone.
+  -- @param #number Speed The speed.
+  -- @param Base#FORMATION Formation The formation string.
+  function CONTROLLABLE:TaskRouteToZone( Zone, Randomize, Speed, Formation )
+    self:F2( Zone )
+  
+    local DCSControllable = self:GetDCSObject()
+  
+    if DCSControllable then
+  
+      local ControllablePoint = self:GetVec2()
+  
+      local PointFrom = {}
+      PointFrom.x = ControllablePoint.x
+      PointFrom.y = ControllablePoint.y
+      PointFrom.type = "Turning Point"
+      PointFrom.action = Formation or "Cone"
+      PointFrom.speed = 20 / 1.6
+  
+  
+      local PointTo = {}
+      local ZonePoint
+  
+      if Randomize then
+        ZonePoint = Zone:GetRandomVec2()
+      else
+        ZonePoint = Zone:GetVec2()
+      end
+  
+      PointTo.x = ZonePoint.x
+      PointTo.y = ZonePoint.y
+      PointTo.type = "Turning Point"
+  
+      if Formation then
+        PointTo.action = Formation
+      else
+        PointTo.action = "Cone"
+      end
+  
+      if Speed then
+        PointTo.speed = Speed
+      else
+        PointTo.speed = 20 / 1.6
+      end
+  
+      local Points = { PointFrom, PointTo }
+  
+      self:T3( Points )
+  
+      self:Route( Points )
+  
+      return self
+    end
+  
+    return nil
+  end
+  
+  --- (GROUND) Route the controllable to a given Vec2.
+  -- A speed can be given in km/h.
+  -- A given formation can be given.
+  -- @param #CONTROLLABLE self
+  -- @param #Vec2 Vec2 The Vec2 where to route to.
+  -- @param #number Speed The speed.
+  -- @param Base#FORMATION Formation The formation string.
+  function CONTROLLABLE:TaskRouteToVec2( Vec2, Speed, Formation )
+  
+    local DCSControllable = self:GetDCSObject()
+  
+    if DCSControllable then
+  
+      local ControllablePoint = self:GetVec2()
+  
+      local PointFrom = {}
+      PointFrom.x = ControllablePoint.x
+      PointFrom.y = ControllablePoint.y
+      PointFrom.type = "Turning Point"
+      PointFrom.action = Formation or "Cone"
+      PointFrom.speed = 20 / 1.6
+  
+  
+      local PointTo = {}
+  
+      PointTo.x = Vec2.x
+      PointTo.y = Vec2.y
+      PointTo.type = "Turning Point"
+  
+      if Formation then
+        PointTo.action = Formation
+      else
+        PointTo.action = "Cone"
+      end
+  
+      if Speed then
+        PointTo.speed = Speed
+      else
+        PointTo.speed = 60 / 3.6
+      end
+  
+      local Points = { PointFrom, PointTo }
+  
+      self:T3( Points )
+  
+      self:Route( Points )
+  
+      return self
+    end
+  
+    return nil
+  end
 
-  return nil
-end
-
+end -- Route methods
 
 -- Commands
 

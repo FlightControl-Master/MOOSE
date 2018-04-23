@@ -49,7 +49,7 @@ do -- CARGO_UNIT
   -- @return #CARGO_UNIT
   function CARGO_UNIT:New( CargoUnit, Type, Name, Weight, NearRadius )
     local self = BASE:Inherit( self, CARGO_REPRESENTABLE:New( CargoUnit, Type, Name, Weight, NearRadius ) ) -- #CARGO_UNIT
-    self:F( { Type, Name, Weight, NearRadius } )
+    self:I( { Type, Name, Weight, NearRadius } )
   
     self:T( CargoUnit )
     self.CargoObject = CargoUnit

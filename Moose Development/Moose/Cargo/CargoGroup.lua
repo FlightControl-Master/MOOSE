@@ -58,8 +58,9 @@ do -- CARGO_GROUP
     
     local WeightGroup = 0
     
-    self.GroupName = CargoGroup:GetName()
-    self.CargoTemplate = UTILS.DeepCopy( _DATABASE:GetGroupTemplate( self.GroupName ) )
+    local GroupName = CargoGroup:GetName()
+    local CargoName = GroupName:match("(.*)~CARGO") or GroupName
+    self.CargoTemplate = UTILS.DeepCopy( _DATABASE:GetGroupTemplate( GroupName ) )
     
     CargoGroup:Destroy()
     
@@ -67,11 +68,11 @@ do -- CARGO_GROUP
     for UnitID, UnitTemplate in pairs( self.CargoTemplate.units ) do
       
       local GroupTemplate = UTILS.DeepCopy( self.CargoTemplate )
-      local GroupName = env.getValueDictByKey( GroupTemplate.name )
+      --local GroupName = env.getValueDictByKey( GroupTemplate.name )
       
       -- We create a new group object with one unit...
       -- First we prepare the template...
-      GroupTemplate.name = GroupName .. "#CARGO#" .. UnitID
+      GroupTemplate.name = CargoName .. "#CARGO#" .. UnitID
       GroupTemplate.groupId = nil
       GroupTemplate.units = {}
       GroupTemplate.units[1] = UnitTemplate
@@ -442,7 +443,7 @@ do -- CARGO_GROUP
 
   --- Check if Cargo Group is in the radius for the Cargo to be Boarded.
   -- @param #CARGO_GROUP self
-  -- @param Core.Point#Coordinate Coordinate
+  -- @param Core.Point#COORDINATE Coordinate
   -- @return #boolean true if the Cargo Group is within the load radius.
   function CARGO_GROUP:IsInLoadRadius( Coordinate )
     --self:F( { Coordinate } )
@@ -452,12 +453,12 @@ do -- CARGO_GROUP
     if Cargo then
       local Distance = 0
       if Cargo:IsLoaded() then
-        Distance = Coordinate:DistanceFromPointVec2( Cargo.CargoCarrier:GetPointVec2() )
+        Distance = Coordinate:Get2DDistance( Cargo.CargoCarrier:GetCoordinate() )
       else
-        Distance = Coordinate:DistanceFromPointVec2( Cargo.CargoObject:GetPointVec2() )
+        Distance = Coordinate:Get2DDistance( Cargo.CargoObject:GetCoordinate() )
       end
-      --self:T( Distance )
       
+      self:F( { Distance = Distance, LoadRadius = self.LoadRadius } )
       if Distance <= self.LoadRadius then
         return true
       else
@@ -480,9 +481,10 @@ do -- CARGO_GROUP
     local Cargo = self.CargoSet:GetFirst() -- #CARGO
 
     if Cargo then
+      self:F( { Cargo } )
       local Distance = 0
       if Cargo:IsUnLoaded() then
-        Distance = Coordinate:DistanceFromPointVec2( Cargo.CargoObject:GetPointVec2() )
+        Distance = Coordinate:Get2DDistance( Cargo.CargoObject:GetCoordinate() )
         --self:T( Distance )
         if Distance <= self.LoadRadius then
           return true
