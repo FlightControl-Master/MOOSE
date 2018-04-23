@@ -70,7 +70,7 @@ PSEUDOATC={
   ClassName = "PSEUDOATC",
   Debug=false,
   player={},
-  maxairport=9,
+  maxairport=10,
   mdur=30,
   mrefresh=120,
   eventsmoose=true,
@@ -231,8 +231,16 @@ function PSEUDOATC:_PlayerLanded(EventData)
   -- Get unit, player and place.
   local _unitName=EventData.IniUnitName  
   local _unit, _playername=self:_GetPlayerUnitAndName(_unitName)
-  local _base=EventData.Place
-  local _baseName=EventData.PlaceName
+  local _base=nil
+  local _baseName=nil
+  if EventData.place then
+    _base=EventData.place
+    _baseName=EventData.place:getName()
+  end
+--  if EventData.subplace then
+--    local _subPlace=EventData.subplace
+--    local _subPlaceName=EventData.subplace:getName()
+--  end
   
   -- Call landed function.
   if _unit and _playername and _base then
@@ -300,12 +308,13 @@ function PSEUDOATC:PlayerLanded(unit, place)
   local group=unit:GetGroup()
   local id=group:GetID()
   local PlayerName=self.player[id].playername
-  local UnitName=self.player[id].playername
+  local Callsign=self.player[id].callsign
+  local UnitName=self.player[id].unitname
   local GroupName=self.player[id].groupname
   local CallSign=self.player[id].callsign
   
   -- Debug message.
-  local text=string.format("Player %s (%s) from group %s with ID %d landed at %s", PlayerName, UnitName, GroupName, place)
+  local text=string.format("Player %s (%s) from group %s (ID %d) landed at %s", PlayerName, UnitName, GroupName, id, place)
   self:T(PSEUDOATC.id..text)
   MESSAGE:New(text, 30):ToAllIf(self.Debug)
   
@@ -368,26 +377,28 @@ function PSEUDOATC:MenuRefresh(id)
   self:LocalAirports(id)
     
   -- Create submenu My Positon.
-  self:MenuAircraft(id)
+  --self:MenuAircraft(id)
   
   -- Create submenu airports.
   self:MenuAirports(id)
 end
 
 
---- Clear player menues.
+--- Clear player menus.
 -- @param #PSEUDOATC self.
 -- @param #number id Group id of player unit. 
 function PSEUDOATC:MenuClear(id)
   self:F(id)
 
   -- Debug message.
-  local text=string.format("Clearing menues for player %s in group %s.", self.player[id].playername, self.player[id].groupname)
+  local text=string.format("Clearing menus for player %s in group %s.", self.player[id].playername, self.player[id].groupname)
   self:T(PSEUDOATC.id..text)
   MESSAGE:New(text,30):ToAllIf(self.Debug)
   
     
   if self.player[id].menu_airports then
+    missionCommands.removeItemForGroup(id, self.player[id].menu_airports)
+    --[[
     for name,item in pairs(self.player[id].menu_airports) do
       
       -- Debug message.    
@@ -396,7 +407,7 @@ function PSEUDOATC:MenuClear(id)
       -- Remove menu item.
       missionCommands.removeItemForGroup(id, self.player[id].menu_airports[name])
     end
-    
+    ]]
   else
     self:T2(PSEUDOATC.id.."No airports to clear menus.")
   end
@@ -407,7 +418,7 @@ function PSEUDOATC:MenuClear(id)
   end
   
   self.player[id].menu_airports=nil
-  self.player[id].menu_aircraft=nil
+  --self.player[id].menu_aircraft=nil
 end
 
 --- Create "F10/Pseudo ATC" menu items "Airport Data".
@@ -417,7 +428,7 @@ function PSEUDOATC:MenuAirports(id)
   self:F(id)
 
   -- Table for menu entries.
-  self.player[id].menu_airports={}
+  self.player[id].menu_airports=missionCommands.addSubMenuForGroup(id, "Airports", self.player[id].menu_main)
    
   local i=0
   for _,airport in pairs(self.player[id].airports) do
@@ -432,15 +443,15 @@ function PSEUDOATC:MenuAirports(id)
     local pos=AIRBASE:FindByName(name):GetCoordinate()
     
     --F10menu_ATC_airports[ID][name] = missionCommands.addSubMenuForGroup(ID, name, F10menu_ATC)
-    local submenu=missionCommands.addSubMenuForGroup(id, name, self.player[id].menu_main)
-    self.player[id].menu_airports[name]=submenu
+    local submenu=missionCommands.addSubMenuForGroup(id, name, self.player[id].menu_airports)
+    --self.player[id].menu_airports[name]=submenu
     
     -- Create menu reporting commands
     missionCommands.addCommandForGroup(id, "Weather Report", submenu, self.ReportWeather, self, id, pos, name)
-    missionCommands.addCommandForGroup(id, "Request QFE", submenu, self.ReportPressure, self, id, "QFE", pos, name)
-    missionCommands.addCommandForGroup(id, "Request QNH", submenu, self.ReportPressure, self, id, "QNH", pos, name)
-    missionCommands.addCommandForGroup(id, "Request Wind", submenu, self.ReportWind, self, id, pos, name)
-    missionCommands.addCommandForGroup(id, "Request Temperature", submenu, self.ReportTemperature, self, id, pos, name)
+    --missionCommands.addCommandForGroup(id, "Request QFE", submenu, self.ReportPressure, self, id, "QFE", pos, name)
+    --missionCommands.addCommandForGroup(id, "Request QNH", submenu, self.ReportPressure, self, id, "QNH", pos, name)
+    --missionCommands.addCommandForGroup(id, "Request Wind", submenu, self.ReportWind, self, id, pos, name)
+    --missionCommands.addCommandForGroup(id, "Request Temperature", submenu, self.ReportTemperature, self, id, pos, name)
     missionCommands.addCommandForGroup(id, "Request BR", submenu, self.ReportBR, self, id, pos, name)
     
     -- Debug message.
@@ -455,7 +466,7 @@ function PSEUDOATC:MenuAircraft(id)
   self:F(id)
 
   -- Table for menu entries.
-  self.player[id].menu_aircraft={}
+  --self.player[id].menu_aircraft={}
 
   local unit=self.player[id].unit --Wrapper.Unit#UNIT
   local callsign=self.player[id].callsign
@@ -465,14 +476,13 @@ function PSEUDOATC:MenuAircraft(id)
   self:T(PSEUDOATC.id..string.format("Creating menu item %s for ID %d", name,id))
   
   -- F10/PseudoATC/My Aircraft (callsign)
-  self.player[id].menu_aircraft.main = missionCommands.addSubMenuForGroup(id, name, self.player[id].menu_main)
+  --self.player[id].menu_aircraft.main = missionCommands.addSubMenuForGroup(id, name, self.player[id].menu_main)
   
-  -- F10/PseudoATC/My Aircraft (callsign)/Waypoints
+  
   if #self.player[id].waypoints>0 then
   
-    --F10menu_ATC_waypoints[ID]={}
-    self.player[id].menu_aircraft_waypoints={}
-    self.player[id].menu_aircraft_waypoints.main=missionCommands.addSubMenuForGroup(id, "Waypoints", self.player[id].menu_aircraft.main)
+    -- F10/PseudoATC/Waypoints  
+    self.player[id].menu_waypoints=missionCommands.addSubMenuForGroup(id, "Waypoints", self.player[id].menu_main)
 
     local j=0    
     for i, wp in pairs(self.player[id].waypoints) do
@@ -483,27 +493,26 @@ function PSEUDOATC:MenuAircraft(id)
         break -- max ten menu entries
       end
       
+      -- Position of Waypoint
       local pos=COORDINATE:New(wp.x,wp.alt,wp.z)
-       
-      local fname=string.format("Waypoint %d for %s", i-1, callsign)
-      local pname=string.format("Waypoint %d", i-1)
+      local name=string.format("Waypoint %d", i-1)
       
-      -- "F10/PseudoATC/My Aircraft (callsign)/Waypoints/Waypoint X"
-      local submenu=missionCommands.addSubMenuForGroup(id, pname, self.player[id].menu_aircraft_waypoints.main)
-      self.player[id].menu_aircraft_waypoints.pname=submenu
+      -- "F10/PseudoATC/Waypoints/Waypoint X"
+      local submenu=missionCommands.addSubMenuForGroup(id, name, self.player[id].menu_waypoints)
       
       -- Menu commands for each waypoint "F10/PseudoATC/My Aircraft (callsign)/Waypoints/Waypoint X/<Commands>"
-      missionCommands.addCommandForGroup(id, "Weather Report", submenu, self.ReportWeather, self, id, pos, pname)
-      missionCommands.addCommandForGroup(id, "Request QFE", submenu, self.ReportPressure, self, id, "QFE", pos, pname)
-      missionCommands.addCommandForGroup(id, "Request QNH", submenu, self.ReportPressure, self, id, "QNH", pos, pname)
-      missionCommands.addCommandForGroup(id, "Request Wind", submenu, self.ReportWind, self, id, pos, pname)
-      missionCommands.addCommandForGroup(id, "Request Temperature", submenu, self.ReportTemperature, self, id, pos, pname)
-      missionCommands.addCommandForGroup(id, "Request BR", submenu, self.ReportBR, self, id, pos, pname)
+      missionCommands.addCommandForGroup(id, "Weather Report", submenu, self.ReportWeather, self, id, pos, name)
+      --missionCommands.addCommandForGroup(id, "Request QFE", submenu, self.ReportPressure, self, id, "QFE", pos, pname)
+      --missionCommands.addCommandForGroup(id, "Request QNH", submenu, self.ReportPressure, self, id, "QNH", pos, pname)
+      --missionCommands.addCommandForGroup(id, "Request Wind", submenu, self.ReportWind, self, id, pos, pname)
+      --missionCommands.addCommandForGroup(id, "Request Temperature", submenu, self.ReportTemperature, self, id, pos, pname)
+      missionCommands.addCommandForGroup(id, "Request BR", submenu, self.ReportBR, self, id, pos, name)
     end
   end
-  missionCommands.addCommandForGroup(id, "Request current altitude AGL", self.player[id].menu_aircraft.main, self.ReportHeight, self, id)
-  missionCommands.addCommandForGroup(id, "Report altitude until touchdown", self.player[id].menu_aircraft.main, self.AltidudeStartTimer, self, id)
-  missionCommands.addCommandForGroup(id, "Quit reporting altitude", self.player[id].menu_aircraft.main, self.AltidudeStopTimer, self, id)
+  
+  missionCommands.addCommandForGroup(id, "Request current altitude AGL", self.player[id].menu_main, self.ReportHeight, self, id)
+  missionCommands.addCommandForGroup(id, "Report altitude until touchdown", self.player[id].menu_main, self.AltidudeStartTimer, self, id)
+  missionCommands.addCommandForGroup(id, "Quit reporting altitude", self.player[id].menu_main, self.AltidudeStopTimer, self, id)
 end
 
 -----------------------------------------------------------------------------------------------------------------------------------------

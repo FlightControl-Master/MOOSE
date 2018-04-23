@@ -211,6 +211,9 @@
 -- 
 -- The function @{#RANGE.DebugON}() can be used to send messages on screen. It also smokes all defined strafe and bombing targets, the strafe pit approach boxes and the range zone.
 -- 
+-- Note that it can happen that the RANGE radio menu is not shown. Check that the range object is defined as a **global** variable rather than a local one.
+-- The could avoid the lua garbage collection to accidentally/falsely deallocate the RANGE objects. 
+-- 
 -- 
 -- 
 -- @field #RANGE
