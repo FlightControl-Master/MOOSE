@@ -68,7 +68,7 @@
 -- @field #PSEUDOATC
 PSEUDOATC={
   ClassName = "PSEUDOATC",
-  Debug=false,
+  Debug=true,
   player={},
   maxairport=10,
   mdur=30,
@@ -477,8 +477,7 @@ function PSEUDOATC:MenuAircraft(id)
   
   -- F10/PseudoATC/My Aircraft (callsign)
   --self.player[id].menu_aircraft.main = missionCommands.addSubMenuForGroup(id, name, self.player[id].menu_main)
-  
-  
+   
   if #self.player[id].waypoints>0 then
   
     -- F10/PseudoATC/Waypoints  
@@ -494,7 +493,7 @@ function PSEUDOATC:MenuAircraft(id)
       end
       
       -- Position of Waypoint
-      local pos=COORDINATE:New(wp.x,wp.alt,wp.z)
+      local pos=COORDINATE:New(wp.x, wp.alt, wp.y)
       local name=string.format("Waypoint %d", i-1)
       
       -- "F10/PseudoATC/Waypoints/Waypoint X"
@@ -705,7 +704,8 @@ function PSEUDOATC:ReportBR(id, position, location)
   local coord=unit:GetCoordinate()
   
   -- Direction vector from current position (coord) to target (position).
-  local vec3=coord:GetDirectionVec3(position)
+  local pos=coord:Translate(30,90)
+  local vec3=coord:GetDirectionVec3(pos)
   local angle=coord:GetAngleDegrees(vec3)
   local range=coord:Get2DDistance(position)
   
