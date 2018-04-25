@@ -84,6 +84,7 @@ ARTY.id="ARTY | "
 
 -- TODO list:
 -- TODO: don't know yet...
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Creates a new ARTY object.
@@ -185,6 +186,25 @@ function ARTY:onafterStart(Controllable, From, Event, To)
   self:HandleEvent(EVENTS.Shot, self._OnEventShot)
   self:HandleEvent(EVENTS.Dead, self._OnEventDead)
 
+  -- Start scheduler to monitor task queue.
+  self.TaskQueueSched=SCHEDULER:New(nil, ARTY._CheckTaskQueue, {self}, 5, 10)
+
+end
+
+--- Assign a group of targets
+-- @param #ARTY self
+function ARTY:_CheckTaskQueue()
+  self:F()
+  
+  local _counter=0
+  for _,target in pairs(self.targets) do
+    if target.underfire==false then
+      env.info(ARTY.id..string.format("Opening fire on target %s", target.name))
+      self:OpenFire(target)
+      break
+    end
+  end
+  
 end
 
 
@@ -195,20 +215,29 @@ end
 --- Assign a group of targets
 -- @param #ARTY self
 -- @param Wrapper.Group#GROUP group Group of targets.
--- @param #number range Range.
-function ARTY:AssignTargetGroup(group, range)
-  self:E({group=group, range=range})
+-- @param #number radius (Optional) Radius. Default is 100 m.
+-- @param #number nshells (Optional) How many shells are fired on target per unit. Default 5.
+function ARTY:AssignTargetGroup(group, radius, nshells)
+  self:E({group=group, radius=radius, nshells=nshells})
   
-  local _target={coord=group:GetCoordinate(), range=range}
+  nshells=nshells or 5
+  radius=radius or 100
   
+  local coord=group:GetCoordinate()
+  local name=group:GetName()
+  
+  -- Prepare target array.
+  local _target={name=name, coord=coord, radius=radius, nshells=nshells, engaged=0, underfire=false}
+  
+  -- Add to table.
   table.insert(self.targets, _target)
-  --table.insert(self.strafeTargets, {name=_name, polygon=_polygon, coordinate= Ccenter, goodPass=goodpass, targets=_targets, foulline=foulline, smokepoints=p, heading=heading})
   
-  local vec2=group:GetVec2()
-  --local zone=ZONE:New("target", vec2, range)
-  local zone=ZONE_RADIUS:New("target", vec2, range)
-  self:_FireAtZone(zone, 10)
-  
+  -- Debug info.
+  env.info(ARTY.id.."Targets:")
+  for _,target in pairs(self.targets) do
+    env.info(ARTY.id..string.format("Name: %s", target.name))
+  end
+
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -216,6 +245,7 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 function ARTY:_OnEventShot(EventData)
+  env.info("Event Shot")
   self:F(EventData)
 end
 
@@ -223,30 +253,70 @@ function ARTY:_OnEventDead(EventData)
   self:F(EventData)
 end
 
---- Set task for firing at a zone
+--- Set task for firing at a coordinate.
 -- @param #ARTY self
--- @param Wrapper.Zone#ZONE zone Zone to fire upon.
--- @param #number nshells Number of shells to fire.
-function ARTY:_FireAtZone(zone, nshells)
-  self:E({zone=zone, nshells=nshells})
+-- @param Core.Point#COORDINATE coord Coordinates to fire upon.
+-- @param #number radius Radius around coordinate.
+-- @param #number nshells Number of shells to fire per unit.
+function ARTY:_FireAtCoord(coord, radius, nshells)
+  self:E({coord=coord, radius=radius, nshells=nshells})
 
+  -- Controllable.
   local group=self.Controllable --Wrapper.Controllable#CONTROLLABLE
 
+  -- Number of units.
   local units=group:GetUnits()
   local nunits=#units
   
   local nshells_tot=nshells*nunits
   
-  -- set ROE to weapon free
+  -- Set ROE to weapon free.
   group:OptionROEWeaponFree()
   
-  -- assign task
-  local q=zone:GetVec2()
-  local r=zone:GetRadius()
-  local fire=group:TaskFireAtPoint(q, r, nshells_tot)
+  -- Get Vec2
+  local vec2=coord:GetVec2()
   
-  -- Execute task
+  -- Get task.
+  local fire=group:TaskFireAtPoint(vec2, radius, nshells_tot)
+  
+  -- Execute task.
   group:SetTask(fire)
+end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Before "OpenFire" event.
+-- @param #SUPPRESSION self
+-- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #table target Array holding the target info.
+-- @return boolean
+function ARTY:onbeforeOpenFire(Controllable, From, Event, To, target)
+  self:_EventFromTo("onbeforeOpenFire", Event, From, To)
+    
+  return true
+end
+
+--- After "OpenFire" event.
+-- @param #SUPPRESSION self
+-- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #table target Array holding the target info. _target={coord=coord, radius=radius, nshells=nshells, engaged=0, underattack=false}
+function ARTY:onbeforeOpenFire(Controllable, From, Event, To, target)
+  self:_EventFromTo("onafterOpenFire", Event, From, To)
+  
+  local _coord=target.coord --Core.Point#COORDINATE
+  
+  --_coord:MarkToAll("Arty Target")
+
+  self:_FireAtCoord(target.coord, target.radius, target.nshells)
+  
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
