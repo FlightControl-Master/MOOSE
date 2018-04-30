@@ -55,7 +55,7 @@
 -- @field #table ammorockets Table holding names of the rocket types which are included when counting the ammo. Default is {"weapons.nurs"} which includes most unguided rockets.
 -- @field #table ammomissiles Table holding names of the missile types which are included when counting the ammo. Default is {"weapons.missiles"} which includes some guided missiles.
 -- @field #number Nshots Number of shots fired on current target.
--- @field #number WaitForShotTime Max time in seconds to wait until fist shot event occurs after target is assigned. If time is passed without shot, the target is deleted.
+-- @field #number WaitForShotTime Max time in seconds to wait until fist shot event occurs after target is assigned. If time is passed without shot, the target is deleted. Default is 300 seconds.
 -- @extends Core.Fsm#FSM_CONTROLLABLE
 -- 
 
@@ -114,7 +114,7 @@ ARTY.id="ARTY | "
 
 --- Range script version.
 -- @field #number version
-ARTY.version="0.3.0"
+ARTY.version="0.4.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -128,7 +128,8 @@ ARTY.version="0.3.0"
 -- TODO: Check that right reaming vehicle is specified. Blue M818, Red Ural-375. Are there more?
 -- TODO: Check if ARTY group is still alive.
 -- TODO: Handle dead events.
--- TODO: Abort firing task if no shooting event occured with 5(?) minutes. Something went wrong then. Min/max range for example.
+-- DONE: Abort firing task if no shooting event occured with 5(?) minutes. Something went wrong then. Min/max range for example.
+-- DONE: Improve assigned time for engagement. Next day?
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -185,10 +186,6 @@ function ARTY:New(group)
   
   -- Initial group strength.
   self.IniGroupStrength=#group:GetUnits()
-
-  -- Set ROE and Alarm State.
-  --self:SetDefaultROE("Free")
-  --self:SetDefaultAlarmState("Auto")
   
   -- Transitions 
   self:AddTransition("*",           "Start",      "CombatReady")
@@ -213,7 +210,7 @@ end
 -- @param #number prio (Optional) Priority of target. Number between 1 (high) and 100 (low). Default 50.
 -- @param #number radius (Optional) Radius. Default is 100 m.
 -- @param #number nshells (Optional) How many shells (or rockets) are fired on target per engagement. Default 5.
--- @param #number maxengage (Optional) How many times a target is engaged. Default 9999.
+-- @param #number maxengage (Optional) How many times a target is engaged. Default 1.
 -- @param #string time Day time at which the target should be engaged. Passed as a string in format "08:13:45". Current task will be canceled.
 -- @param #number weapontype Type of weapon to be used to attack this target. Default ARTY.WeaponType.Auto.
 -- @return #string Name of the target. Can be used for further reference, e.g. deleting the target from the list.
@@ -224,7 +221,7 @@ function ARTY:AssignTargetGroup(group, prio, radius, nshells, maxengage, time, w
   -- Set default values.
   nshells=nshells or 5
   radius=radius or 100
-  maxengage=maxengage or 9999
+  maxengage=maxengage or 1
   prio=prio or 50
   prio=math.max(  1, prio)
   prio=math.min(100, prio)
@@ -253,7 +250,7 @@ function ARTY:AssignTargetGroup(group, prio, radius, nshells, maxengage, time, w
   local _clock=self:_SecondsToClock(_target.time)
   
   -- Debug info.
-  self:T(ARTY.id..string.format("Added target %s, prio=%d, radius=%d, nshells=%d, maxengage=%d, time=%s, weapontype=%d", name, prio, radius, nshells, maxengage, _clock, weapontype))
+  self:T(ARTY.id..string.format("Added target %s, prio=%d, radius=%d, nshells=%d, maxengage=%d, time=%s, weapontype=%d", name, prio, radius, nshells, maxengage, tostring(_clock), weapontype))
 end
 
 
@@ -381,7 +378,7 @@ function ARTY:onafterStart(Controllable, From, Event, To)
   for _, target in pairs(self.targets) do
     local _clock=self:_SecondsToClock(target.time)
     local _weapon=self:_WeaponTypeName(target.weapontype)
-    text=text..string.format("- %s, prio=%3d, radius=%5d, nshells=%4d, maxengage=%3d, time=%s, weapon=%s\n", target.name, target.prio, target.radius, target.nshells, target.maxengage, _clock, _weapon)
+    text=text..string.format("- %s, prio=%3d, radius=%5d, nshells=%4d, maxengage=%3d, time=%11s, weapon=%s\n", target.name, target.prio, target.radius, target.nshells, target.maxengage, tostring(_clock), _weapon)
   end
   text=text..string.format("******************************************************\n")
   text=text..string.format("Shell types:\n")
@@ -405,6 +402,9 @@ function ARTY:onafterStart(Controllable, From, Event, To)
 
   -- Start scheduler to monitor task queue.
   self.TargetQueueSched=SCHEDULER:New(nil, ARTY._TargetQueue, {self}, 5, self.TargetQueueUpdate)
+
+  -- Start scheduler to monitor if ARTY group started firing within a certain time.
+  self.CheckShootingSched=SCHEDULER:New(nil, ARTY._CheckShootingStarted, {self}, 60, 60)
 
 end
 
@@ -450,8 +450,7 @@ function ARTY:_OnEventShot(EventData)
         
         if _nammo==0 then
         
-          self:E(ARTY.id.."completely out of ammo")
-          self.Nshots=0
+          self:E(ARTY.id..string.format("Group %s completely out of ammo.", self.Controllable:GetName()))
           self:Winchester()
           
           -- Current target is deallocated ==> return
@@ -466,29 +465,25 @@ function ARTY:_OnEventShot(EventData)
         -- Special weapon type requested ==> Check if corresponding ammo is empty.
         if self.currentTarget.weapontype==ARTY.WeaponType.UnguidedCannon and _nshells==0 then
         
-          self:E(ARTY.id.."cannons requested and shells empty")
-          self.Nshots=0
+          self:T(ARTY.id.."Cannons requested and shells empty.")
           self:CeaseFire(self.currentTarget)
           return
         
         elseif self.currentTarget.weapontype==ARTY.WeaponType.UnguidedRockets and _nrockets==0 then
 
-          self:E(ARTY.id.."rockets requested and rockets empty")
-          self.Nshots=0
+          self:T(ARTY.id.."Rockets requested and rockets empty.")
           self:CeaseFire(self.currentTarget)
           return
         
         elseif self.currentTarget.weapontype==ARTY.WeaponType.UnguidedAny and _nshells+_nrockets==0 then
         
-          self:E(ARTY.id.."unguided weapon requested and shells+rockets empty")
-          self.Nshots=0
+          self:T(ARTY.id.."Unguided weapon requested and shells+rockets empty.")
           self:CeaseFire(self.currentTarget)
           return
         
         elseif self.currentTarget.weapontype==ARTY.WeaponType.CruiseMissile and _nmissiles==0 then
         
-          self:E(ARTY.id.."cruise missiles requested and missiles empty")
-          self.Nshots=0
+          self:E(ARTY.id.."Cruise missiles requested and missiles empty.")
           self:CeaseFire(self.currentTarget)
           return
         end
@@ -499,7 +494,7 @@ function ARTY:_OnEventShot(EventData)
           self:T(ARTY.id..text)
           MESSAGE:New(text, 5):ToAllIf(self.Debug)
           
-          self.Nshots=0
+          -- Cease fire.
           self:CeaseFire(self.currentTarget)
         end
         
@@ -616,6 +611,8 @@ function ARTY:onafterOpenFire(Controllable, From, Event, To, target)
     self.targets[id].time=nil
     -- Set current target.
     self.currentTarget=target
+    -- Set time the target was assigned.
+    self.currentTarget.Tassigned=timer.getTime()
   end
   
   -- Distance to target
@@ -628,9 +625,6 @@ function ARTY:onafterOpenFire(Controllable, From, Event, To, target)
   
   -- Start firing.
   self:_FireAtCoord(target.coord, target.radius, target.nshells, target.weapontype)
-  
-  -- Check that after a certain time a shot event occured.
-  --self.CheckShootingSched, self.CheckRearmedSchedID=SCHEDULER:New(nil, self._CheckShootingStarted, {self}, self.WaitForShotTime)
   
 end
 
@@ -665,9 +659,9 @@ function ARTY:onafterCeaseFire(Controllable, From, Event, To, target)
   self:T(ARTY.id..text)
   MESSAGE:New(text, 10):ToCoalitionIf(Controllable:GetCoalition(), self.report)
   
-  -- ARTY group has no current target any more.
-  self.currentTarget=nil
-  
+  -- Set number of shots to zero.
+  self.Nshots=0
+    
   -- Get target array index.
   local id=self:_GetTargetByName(target.name)
   
@@ -678,7 +672,10 @@ function ARTY:onafterCeaseFire(Controllable, From, Event, To, target)
   if target.engaged >= target.maxengage then
     self:RemoveTarget(target.name)
   end
-
+  
+  -- ARTY group has no current target any more.
+  self.currentTarget=nil
+  
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -692,23 +689,15 @@ end
 function ARTY:onafterWinchester(Controllable, From, Event, To)
   self:_EventFromTo("onafterWinchester", Event, From, To)
   
-  local text=string.format("Group %s is winchester (out of ammo)!", Controllable:GetName())
-  self:T(ARTY.id..text)
-  MESSAGE:New(text, 10):ToAllIf(self.Debug)
-  
   -- Send message.
   local text=string.format("%s, winchester.", Controllable:GetName())
   self:T(ARTY.id..text)
-  MESSAGE:New(text, 10):ToCoalitionIf(Controllable:GetCoalition(), self.report)
+  MESSAGE:New(text, 30):ToCoalitionIf(Controllable:GetCoalition(), self.report or self.Debug)
   
-  -- Remove current target.
-  if self.currentTarget then
-    local id=self:_GetTargetByName(self.currentTarget.name)
-    self.targets[id].underfire=false
-    self.currentTarget=nil
-  end
-  
-  -- Init rearming.
+  -- Cease fire first.
+  self:CeaseFire(self.currentTarget)
+    
+  -- Init rearming if possible.
   self:Rearm()
   
 end
@@ -745,7 +734,7 @@ function ARTY:onafterRearm(Controllable, From, Event, To)
   -- Send message.
   local text=string.format("%s, %s, request rearming.", Controllable:GetName(), self.RearmingUnit:GetName())
   self:T(ARTY.id..text)
-  MESSAGE:New(text, 10):ToCoalitionIf(Controllable:GetCoalition(), self.report)
+  MESSAGE:New(text, 10):ToCoalitionIf(Controllable:GetCoalition(), self.report or self.Debug)
   
   -- Random point 20-100 m away from unit.
   local coord=self.Controllable:GetCoordinate()
@@ -756,7 +745,7 @@ function ARTY:onafterRearm(Controllable, From, Event, To)
   self.RearmingUnit:RouteGroundOnRoad(pops, 50, 5)
   
   -- Start scheduler to monitor ammo count until rearming is complete.
-  self.CheckRearmedSched=SCHEDULER:New(nil,self._CheckRearmed, {self}, 5, 10)
+  self.CheckRearmedSched=SCHEDULER:New(nil,self._CheckRearmed, {self}, 20, 20)
 end
 
 
@@ -768,6 +757,14 @@ function ARTY:_CheckRearmed()
   -- Get current ammo.
   local nammo,nshells,nrockets,nmissiles=self:_GetAmmo(self.Controllable)
   
+  -- Rearming status in per cent.
+  local _rearmpc=nammo/self.Nammo0*100
+  
+  -- Send message.
+  local text=string.format("%s, rearming %d %% complete.", self.Controllable:GetName(), _rearmpc)
+  self:T(ARTY.id..text)
+  MESSAGE:New(text, 10):ToCoalitionIf(self.Controllable:GetCoalition(), self.report or self.Debug)
+    
   -- Rearming --> Rearmed --> CombatReady
   if nammo==self.Nammo0 then
     self:Rearmed()
@@ -806,11 +803,11 @@ function ARTY:_TargetQueue()
   -- Debug info
   self:T(ARTY.id..string.format("Group %s, number of targets = %d", self.Controllable:GetName(), #self.targets))
   
-  -- We already have a target.
---  if self.currentTarget then
---    self:T(ARTY.id..string.format("Group %s already has a target %s.", self.Controllable:GetName(), self.currentTarget.name))
---    return
---  end
+  -- No targets assigned at the moment.
+  if #self.targets==0 then
+    self:T(ARTY.id..string.format("Group %s, no targets assigned at the moment. No need for _TargetQueue.", self.Controllable:GetName()))
+    return
+  end
   
   -- First check if there is a target with a certain time for attack.
   for i=1,#self.targets do
@@ -851,7 +848,7 @@ function ARTY:_TargetQueue()
       break
     end
   end
-  
+ 
 end
 
 
@@ -896,7 +893,7 @@ function ARTY:_SortTargetQueueTime()
   -- Debug output.
   self:T2(ARTY.id.."Sorted targets wrt time:")
   for i=1,#self.targets do
-    self:T(ARTY.id..string.format("Target %s, prio=%d, engaged=%d", self.targets[i].name, self.targets[i].prio, self.targets[i].engaged))
+    self:T2(ARTY.id..string.format("Target %s, prio=%d, engaged=%d", self.targets[i].name, self.targets[i].prio, self.targets[i].engaged))
   end
 
 end
@@ -1024,21 +1021,30 @@ end
 function ARTY:_CheckShootingStarted()
   self:F2()
   
-  if self.currentTarget and self.Nshots==0 then
+  if self.currentTarget then
+  
+    -- Current time.
+    local Tnow=timer.getTime()  
     
-    -- Get name and id of target.
-    local name=self.currentTarget.name
-    local id=self:_GetTargetByName(name)
+    -- Time that passed after current target has been assigned.
+    local dt=Tnow-self.currentTarget.Tassigned
     
-    -- Debug info.
-    self:T(ARTY.id..string.format("No shot event after %d seconds. Removing current target %s from list.", self.WaitForShotTime, name))
+
+    if dt > self.WaitForShotTime and self.Nshots==0 then
     
-    -- CeaseFire.
-    self:CeaseFire(self.currentTarget)
+      -- Get name and id of target.
+      local name=self.currentTarget.name
+         
+      -- Debug info.
+      self:T(ARTY.id..string.format("%s, no shot event after %d seconds. Removing current target %s from list.", self.Controllable:GetName(), self.WaitForShotTime, name))
     
-    -- Remove target from list.
-    self:RemoveTarget(name)
+      -- CeaseFire.
+      self:CeaseFire(self.currentTarget)
+    
+      -- Remove target from list.
+      self:RemoveTarget(name)
       
+    end
   end
 end
 
@@ -1161,21 +1167,26 @@ end
 -- @return #string Time in format Hours:minutes:seconds.
 function ARTY:_SecondsToClock(seconds)
   self:F3({seconds=seconds})
-
+  
+  if seconds==nil then
+    return nil
+    --return "00:00:00"
+  end
+  
   -- Seconds
   local seconds = tonumber(seconds)
   
-  if seconds==nil then
-    return "00:00:00"
-  end
+  -- Seconds of this day.
+  local _seconds=seconds%(60*60*24)
 
   if seconds <= 0 then
     return "00:00:00"
   else
-    local hours = string.format("%02.f", math.floor(seconds/3600))
-    local mins  = string.format("%02.f", math.floor(seconds/60 - (hours*60)))
-    local secs  = string.format("%02.f", math.floor(seconds - hours*3600 - mins *60))
-    return hours..":"..mins..":"..secs
+    local hours = string.format("%02.f", math.floor(_seconds/3600))
+    local mins  = string.format("%02.f", math.floor(_seconds/60 - (hours*60)))
+    local secs  = string.format("%02.f", math.floor(_seconds - hours*3600 - mins *60))
+    local days = string.format("%d", seconds/(60*60*24))
+    return hours..":"..mins..":"..secs.."+"..days
     --return hours, mins, secs
   end
 end
@@ -1190,13 +1201,23 @@ function ARTY:_ClockToSeconds(clock)
     return nil
   end
   
-  -- Split string by ":"
-  local tsplit=string.gmatch(clock, '([^:]+)')
-  
-  -- Get time in seconds
+  -- Seconds init.
   local seconds=0
+  
+  -- Split additional days.
+  local dsplit=self:_split(clock, "+")
+  
+  -- Convert days to seconds.
+  if #dsplit>1 then
+    seconds=seconds+tonumber(dsplit[2])*60*60*24
+  end
+
+  -- Split hours, minutes, seconds    
+  local tsplit=self:_split(dsplit[1], ":")
+
+  -- Get time in seconds
   local i=1
-  for time in tsplit do
+  for _,time in ipairs(tsplit) do
     if i==1 then
       -- Hours
       seconds=seconds+tonumber(time)*60*60
