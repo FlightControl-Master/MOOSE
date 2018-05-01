@@ -471,8 +471,8 @@ do -- COORDINATE
   -- @param height (Optional) parameter specifying the height ASL.
   -- @return Temperature in Degrees Celsius.
   function COORDINATE:GetTemperature(height)
+    self:F2(height)
     local y=height or self.y
-    env.info("FF height = "..y)
     local point={x=self.x, y=height or self.y, z=self.z}
     -- get temperature [K] and pressure [Pa] at point
     local T,P=atmosphere.getTemperatureAndPressure(point)
@@ -940,13 +940,13 @@ do -- COORDINATE
   -- @param #COORDINATE ToCoord Coordinate of destination.
   -- @return #table Table of coordinates on road.
   function COORDINATE:GetPathOnRoad(ToCoord)
-    local Path={}
+    self:F2(ToCoord)
     local path = land.findPathOnRoads("roads", self.x, self.z, ToCoord.x, ToCoord.z)
+    local Path={}
     for i, v in ipairs(path) do
-      --self:E(v)
-      local coord=COORDINATE:NewFromVec2(v)
       Path[#Path+1]=COORDINATE:NewFromVec2(v)
     end
+    self:F(string.format("Number of points in Path on Road = %d", #Path))
     return Path
   end
 
