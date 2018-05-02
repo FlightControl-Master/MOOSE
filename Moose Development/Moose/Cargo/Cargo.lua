@@ -293,7 +293,41 @@ do -- CARGO
     
     local CargoFound = _DATABASE:FindCargo( CargoName )
     return CargoFound
-  end  
+  end
+  
+  --- Get the x position of the cargo.
+  -- @param #CARGO self
+  -- @return #number
+  function CARGO:GetX()
+    if self:IsLoaded() then
+      return self.CargoCarrier:GetCoordinate().x
+    else
+      return self.CargoObject:GetCoordinate().x
+    end 
+  end
+  
+  --- Get the y position of the cargo.
+  -- @param #CARGO self
+  -- @return #number
+  function CARGO:GetY()
+    if self:IsLoaded() then
+      return self.CargoCarrier:GetCoordinate().z
+    else
+      return self.CargoObject:GetCoordinate().z
+    end 
+  end
+  
+  --- Get the heading of the cargo.
+  -- @param #CARGO self
+  -- @return #number
+  function CARGO:GetHeading()
+    if self:IsLoaded() then
+      return self.CargoCarrier:GetHeading()
+    else
+      return self.CargoObject:GetHeading()
+    end 
+  end
+  
   
   --- Check if the cargo can be Slingloaded.
   -- @param #CARGO self
@@ -431,7 +465,16 @@ do -- CARGO
   function CARGO:IsBoarding()
     return self:Is( "Boarding" )
   end
+
   
+  --- Check if cargo is unboarding.
+  -- @param #CARGO self
+  -- @return #boolean true if unboarding
+  function CARGO:IsUnboarding()
+    return self:Is( "UnBoarding" )
+  end
+  
+
   --- Check if cargo is alive.
   -- @param #CARGO self
   -- @return #boolean true if unloaded

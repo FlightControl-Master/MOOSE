@@ -808,6 +808,15 @@ function POSITIONABLE:AddCargo( Cargo )
   return self
 end
 
+--- Get all contained cargo.
+-- @param #POSITIONABLE self
+-- @return #POSITIONABLE
+function POSITIONABLE:GetCargo()
+  return self.__.Cargo
+end
+
+
+
 --- Remove cargo.
 -- @param #POSITIONABLE self
 -- @param Core.Cargo#CARGO Cargo

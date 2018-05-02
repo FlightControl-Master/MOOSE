@@ -893,11 +893,13 @@ do -- COORDINATE
   function COORDINATE:WaypointGround( Speed, Formation )
     self:F2( { Formation, Speed } )
 
+ 
     local RoutePoint = {}
     RoutePoint.x = self.x
     RoutePoint.y = self.z
 
     RoutePoint.action = Formation or ""
+    --RoutePoint.formation_template = Formation and "" or nil
 
 
     RoutePoint.speed = ( Speed or 20 ) / 3.6

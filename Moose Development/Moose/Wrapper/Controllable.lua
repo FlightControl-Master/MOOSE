@@ -359,7 +359,7 @@ function CONTROLLABLE:SetTask( DCSTask, WaitTime )
         local Controller = self:_GetController()
         Controller:setTask( DCSTask )
       else
-        BASE:E( DCSControllableName .. " is not alive anymore. Cannot set DCSTask " .. DCSTask )
+        BASE:E( { DCSControllableName .. " is not alive anymore.", DCSTask = DCSTask } )
       end
     end
 
@@ -1964,11 +1964,46 @@ do -- Route methods
     end
     
     -- Route controllable to destination.
-    self:Route(route, DelaySeconds)
+    self:Route( route, DelaySeconds )
   
     return self
   end
+
   
+  --- Make a task for a GROUND Controllable to drive towards a specific point using (only) roads.
+  -- @param #CONTROLLABLE self
+  -- @param Core.Point#COORDINATE ToCoordinate A Coordinate to drive to.
+  -- @param #number Speed (optional) Speed in km/h. The default speed is 999 km/h.
+  -- @return Task
+  function CONTROLLABLE:TaskGroundOnRoad( ToCoordinate, Speed )
+  
+    -- Current coordinate.
+    local FromCoordinate = self:GetCoordinate()
+    
+    -- Formation is set to on road.
+    local Formation="On Road"
+   
+    -- Path on road from current position to destination coordinate.
+    local path=FromCoordinate:GetPathOnRoad( ToCoordinate )
+    
+    -- Route, ground waypoints along roads.
+    local Route = {}
+    table.insert( Route, FromCoordinate:WaypointGround( Speed, Formation ) )
+    
+    -- Convert coordinates to ground waypoints and insert into table.
+    for _, coord in ipairs(path) do
+      table.insert( Route, coord:WaypointGround( Speed, Formation ) )
+    end
+    
+    -- Add the final coordinate because the final coordinate in path is last point on road.
+    local dist=ToCoordinate:Get2DDistance(path[#path])
+    if dist>10 then
+      table.insert( Route, ToCoordinate:WaypointGround( Speed, "Vee" ) )
+    end
+    
+    return Route 
+  end
+
   
   --- Make the AIR Controllable fly towards a specific point.
   -- @param #CONTROLLABLE self

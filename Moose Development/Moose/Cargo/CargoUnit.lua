@@ -146,13 +146,13 @@ do -- CARGO_UNIT
     local Distance = 5
   
     if From == "UnBoarding" then
-      if self:IsNear( ToPointVec2, NearRadius ) then
+      --if self:IsNear( ToPointVec2, NearRadius ) then
         return true
-      else
+      --else
         
-        self:__UnBoarding( 1, ToPointVec2, NearRadius )
-      end
-      return false
+        --self:__UnBoarding( 1, ToPointVec2, NearRadius )
+      --end
+      --return false
     end
   
   end
@@ -258,14 +258,17 @@ do -- CARGO_UNIT
           local CargoCarrierHeading = CargoCarrier:GetHeading() -- Get Heading of object in degrees.
           local CargoDeployHeading = ( ( CargoCarrierHeading + Angle ) >= 360 ) and ( CargoCarrierHeading + Angle - 360 ) or ( CargoCarrierHeading + Angle )
           local CargoDeployPointVec2 = CargoCarrierPointVec2:Translate( Distance, CargoDeployHeading )
-        
+          
+          -- Set the CargoObject to state Green to ensure it is boarding!
+          self.CargoObject:OptionAlarmStateGreen()
+          
           local Points = {}
         
           local PointStartVec2 = self.CargoObject:GetPointVec2()
         
           Points[#Points+1] = PointStartVec2:WaypointGround( Speed )
           Points[#Points+1] = CargoDeployPointVec2:WaypointGround( Speed )
-        
+          
           local TaskRoute = self.CargoObject:TaskRoute( Points )
           self.CargoObject:SetTask( TaskRoute, 2 )
           self:__Boarding( -1, CargoCarrier, NearRadius )
@@ -295,7 +298,7 @@ do -- CARGO_UNIT
         else
           self:__Boarding( -1, CargoCarrier, NearRadius, ... )
           self.RunCount = self.RunCount + 1
-          if self.RunCount >= 60 then
+          if self.RunCount >= 40 then
             self.RunCount = 0
             local Speed = 90
             local Angle = 180
@@ -308,12 +311,15 @@ do -- CARGO_UNIT
             local CargoDeployHeading = ( ( CargoCarrierHeading + Angle ) >= 360 ) and ( CargoCarrierHeading + Angle - 360 ) or ( CargoCarrierHeading + Angle )
             local CargoDeployPointVec2 = CargoCarrierPointVec2:Translate( Distance, CargoDeployHeading )
           
+            -- Set the CargoObject to state Green to ensure it is boarding!
+            self.CargoObject:OptionAlarmStateGreen()
+
             local Points = {}
           
             local PointStartVec2 = self.CargoObject:GetPointVec2()
           
-            Points[#Points+1] = PointStartVec2:WaypointGround( Speed )
-            Points[#Points+1] = CargoDeployPointVec2:WaypointGround( Speed )
+            Points[#Points+1] = PointStartVec2:WaypointGround( Speed, "Off road" )
+            Points[#Points+1] = CargoDeployPointVec2:WaypointGround( Speed, "Off road" )
           
             local TaskRoute = self.CargoObject:TaskRoute( Points )
             self.CargoObject:SetTask( TaskRoute, 0.2 )
@@ -367,6 +373,7 @@ do -- CARGO_UNIT
     if self.CargoObject then
       self:T("Destroying")
       self.CargoObject:Destroy()
+      --self.CargoObject:ReSpawnAt( COORDINATE:NewFromVec2( {x=0,y=0} ), 0 )
     end
   end
 
