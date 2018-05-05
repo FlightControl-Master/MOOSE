@@ -269,7 +269,7 @@ ARTY.id="ARTY | "
 
 --- Arty script version.
 -- @field #number version
-ARTY.version="0.8.1"
+ARTY.version="0.8.2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -618,7 +618,7 @@ function ARTY:onafterStart(Controllable, From, Event, To)
   for _, target in pairs(self.targets) do
     local _clock=self:_SecondsToClock(target.time)
     local _weapon=self:_WeaponTypeName(target.weapontype)
-    text=text..string.format("- %s, prio=%3d, radius=%5d, nshells=%4d, maxengage=%3d, time=%11s, weapon=%s\n", target.name, target.prio, target.radius, target.nshells, target.maxengage, tostring(_clock), _weapon)
+    text=text..string.format("- %s\n", self:_TargetInfo(target))
   end
   text=text..string.format("******************************************************\n")
   text=text..string.format("Shell types:\n")
@@ -676,10 +676,7 @@ function ARTY:_StatusReport()
   text=text..string.format("Nshots curr. Target = %d\n", self.Nshots)
   text=text..string.format("Targets:\n")
   for _, target in pairs(self.targets) do
-    local _clock=self:_SecondsToClock(target.time)
-    local _weapon=self:_WeaponTypeName(target.weapontype)
-    text=text..string.format("- %s, prio=%3d, radius=%5d, nshells=%4d, engaged=%3d, maxengage=%3d, weapon=%s, time=%s\n",
-    target.name, target.prio, target.radius, target.nshells, target.engaged, target.maxengage, _weapon, tostring(_clock))
+    text=text..string.format("- %s\n", self:_TargetInfo(target))
   end
   text=text..string.format("******************************************************")
   env.info(ARTY.id..text)
@@ -890,19 +887,19 @@ function ARTY:_CheckTimedTargets()
   for i=1,#self.targets do
     local _target=self.targets[i]
     
-    -- Check if target has an attack time which has already passed.
-    -- Also check that target is not under fire already and that it is in range. 
-    if _target.time and _target.time>=Tnow and _target.underfire==false and self:_TargetInRange(_target) then
+    -- Check if target has an attack time which has already passed. Also check that target is not under fire already and that it is in range. 
+    if _target.time and Tnow>=_target.time and _target.underfire==false and self:_TargetInRange(_target) then
     
       -- Check if group currently has a target and whether its priorty is lower than the timed target.
       if self.currentTarget then
         if self.currentTarget.prio > _target.prio then
           -- Current target under attack but has lower priority than this target.
-          self:T(ARTY.id..string.format("Group %s current target %s has lower prio than new target %s with attack time.", self.Controllable:GetName(), self.currentTarget.name, _target.name))
+          self:T(ARTY.id..string.format("Found TIMED HIGH PRIO target %s.", self:_TargetInRange(_target)))
           return _target
         end
       else
         -- No current target.
+        self:T(ARTY.id..string.format("Found TIMED target %s.", self:_TargetInfo(_target)))
         return _target
       end
     end
@@ -927,7 +924,7 @@ function ARTY:_CheckNormalTargets()
     if _target.underfire==false and _target.time==nil and _target.maxengage > _target.engaged and self:_TargetInRange(_target) then
       
       -- Debug info.
-      self:T(ARTY.id..string.format("Engaging target %s. Prio = %d, engaged = %d", _target.name, _target.prio, _target.engaged))
+      self:T(ARTY.id..string.format("Found NORMAL target %s", self:_TargetInfo(_target)))
       
       return _target
     end
@@ -945,7 +942,9 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function ARTY:onenterCombatReady(Controllable, From, Event, To)
-
+  self:_EventFromTo("onenterCombatReady", Event, From, To)
+  
+  -- Debug info
   env.info(string.format("FF: onenterComabReady, from=%s, event=%s, to=%s", From, Event, To))
 
 end
@@ -1088,9 +1087,6 @@ function ARTY:onafterWinchester(Controllable, From, Event, To)
   local text=string.format("%s, winchester.", Controllable:GetName())
   self:T(ARTY.id..text)
   MESSAGE:New(text, 30):ToCoalitionIf(Controllable:GetCoalition(), self.report or self.Debug)
-     
-  -- Init rearming if possible.
-  --self:Rearm()
   
 end
 
@@ -1823,7 +1819,10 @@ end
 -- @return #string name, prio, radius, nshells, engaged, maxengage, time, weapontype
 function ARTY:_TargetInfo(target)
   local clock=tostring(self:_SecondsToClock(target.time))
-  return string.format("%s, prio=%d, radius=%d, nshells=%d, engaged=%d maxengage=%d, weapontype=%d, time=%s", target.name, target.prio, target.radius, target.nshells, target.engaged, target.maxengage, target.weapontype, clock)
+  local weapon=self:_WeaponTypeName(target.weapontype)
+  local _underfire=tostring(target.underfire)
+  return string.format("%s, prio=%d, radius=%d, nshells=%d, engaged=%d/%d, weapontype=%s, time=%s, underfire=%s",
+  target.name, target.prio, target.radius, target.nshells, target.engaged, target.maxengage, weapon, clock,_underfire)
 end
 
 --- Convert time in seconds to hours, minutes and seconds.
@@ -1932,10 +1931,7 @@ function ARTY:_Move(group, ToCoord, Speed, OnRoad)
 
   -- Route group on road if requested.
   if OnRoad then
-  
-    --path[#path+1]=cpini:GetClosestPointToRoad():WaypointGround(Speed, "On road")
-    --task[#task+1]=group:TaskFunction("ARTY._PassingWaypoint", self, #path-1, false)
-    
+
     local _first=cpini:GetClosestPointToRoad()
     local _last=ToCoord:GetClosestPointToRoad()
     local _onroad=_first:GetPathOnRoad(_last)
@@ -1946,8 +1942,6 @@ function ARTY:_Move(group, ToCoord, Speed, OnRoad)
       task[#task+1]=group:TaskFunction("ARTY._PassingWaypoint", self, #path-1, false)
     end
      
-    --path[#path+1]=ToCoord:GetClosestPointToRoad():WaypointGround(Speed, "On road")
-    --task[#task+1]=group:TaskFunction("ARTY._PassingWaypoint", self, #path-1, false)
   end
   
   -- Last waypoint at ToCoord.
@@ -1981,16 +1975,18 @@ end
 function ARTY._PassingWaypoint(group, arty, i, final)
 
   -- Debug message.
-  local text=string.format("Group %s passing waypoint %d (final=%s)", group:GetName(), i, tostring(final))
-  
-  --local pos=group:GetCoordinate()
-  --local MarkerID=pos:MarkToAll(string.format("Reached Waypoint %d of group %s", i, group:GetName()))
-  --pos:SmokeRed()
-    
-  MESSAGE:New(text,10):ToAll()
+  local text=string.format("%s, passing waypoint %d.", group:GetName(), i)
+  if final then
+    text=string.format("%s, arrived at destination.", group:GetName())
+  end
   env.info(ARTY.id..text)
+  if final then
+    MESSAGE:New(text, 10):ToCoalitionIf(group:GetCoalition(), arty.Debug or arty.report)
+  else
+    MESSAGE:New(text, 10):ToAllIf(arty.Debug)
+  end
   
-  -- Move --> Moving --> Arrived --> CombatReady.
+  -- Arrived event.
   if final and arty.Controllable:GetName()==group:GetName() then
     arty:Arrived()
   end
