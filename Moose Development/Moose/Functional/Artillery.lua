@@ -60,10 +60,10 @@
 -- @field #number IniGroupStrength Inital number of units in the ARTY group.
 -- @field #boolean IsArtillery If true, ARTY group has attribute "Artillery".
 -- @field #number Speed Max speed of ARTY group.
--- @field Wrapper.Unit#UNIT RearmingUnit Unit designated to rearm the ARTY group.
--- @field Wrapper.Point#COORDINATE RearmingUnitCoord Initial coordinates of the rearming unit. After rearming complete, the unit will return to this position.
--- @field Wrapper.Point#COORDINATE RearmingPlaceCoord Coordinates of the rearming place. If the place is more than 100 m away from the ARTY group, the group will go there.
--- @field Wrapper.Point#COORDINATE InitialCoord Initial coordinates of the ARTY group.
+-- @field Wrapper.Group#GROUP RearmingGroup Unit designated to rearm the ARTY group.
+-- @field Core.Point#COORDINATE RearmingGroupCoord Initial coordinates of the rearming unit. After rearming complete, the unit will return to this position.
+-- @field Core.Point#COORDINATE RearmingPlaceCoord Coordinates of the rearming place. If the place is more than 100 m away from the ARTY group, the group will go there.
+-- @field Core.Point#COORDINATE InitialCoord Initial coordinates of the ARTY group.
 -- @field #boolean report Arty group sends messages about their current state or target to its coaliton.
 -- @field #table ammoshells Table holding names of the shell types which are included when counting the ammo. Default is {"weapons.shells"} which include most shells.
 -- @field #table ammorockets Table holding names of the rocket types which are included when counting the ammo. Default is {"weapons.nurs"} which includes most unguided rockets.
@@ -96,10 +96,10 @@
 -- When the ARTY group runs out of ammunition, the event **Winchester** is triggered and the group enters the state **OutOfAmmo**.
 -- In this state, the group is unable to engage further targets.
 -- 
--- With the @{#ARTY.SetRearmingUnit}(*unit*) command, a special unit can be defined to rearm the ARTY group. If this unit has been assigned and the group has entered the state
+-- With the @{#ARTY.SetRearmingGroup}(*group*) command, a special group can be defined to rearm the ARTY group. If this unit has been assigned and the group has entered the state
 -- **OutOfAmmo** the event **Rearm** is triggered followed by a transition to the state **Rearming**.
--- If the rearming unit is less than 100 meters away from the ARTY group, the rearming process starts. If the rearming unit is more than 100 meters away from the ARTY unit, the
--- rearming unit is routed to a point 20 to 100 m from the ARTY group.
+-- If the rearming group is less than 100 meters away from the ARTY group, the rearming process starts. If the rearming group is more than 100 meters away from the ARTY unit, the
+-- rearming group is routed to a point 20 to 100 m from the ARTY group.
 -- 
 -- Once the rearming is complete, the **Rearmed** event is triggered and the group enters the state **CombatReady**. At this point targeted can be engaged again.
 -- 
@@ -200,7 +200,7 @@
 -- * @{#ARTY.RemoveTarget}(*name*) deletes the target with *name* from the target queue.
 -- * @{#ARTY.SetMaxFiringRange}(*range*) defines the maximum firing range. Targets further away than this distance are not engaged.
 -- * @{#ARTY.SetMinFiringRange}(*range*) defines the minimum firing range. Targets closer than this distance are not engaged.
--- * @{#ARTY.SetRearmingUnit}(*unit*) sets the unit resposible for rearming of the ARTY group once it is out of ammo.
+-- * @{#ARTY.SetRearmingGroup}(*group*) sets the group resposible for rearming of the ARTY group once it is out of ammo.
 -- * @{#ARTY.SetReportON}() and @{#ARTY.SetReportOFF}() can be used to enable/disable status reports of the ARTY group send to all coalition members.
 -- * @{#ARTY.SetWaitForShotTime}(*waittime*) sets the time after which a target is deleted from the queue if no shooting event occured after the target engagement started.
 -- Default is 300 seconds. Note that this can for example happen, when the assigned target is out of range.
@@ -239,8 +239,8 @@ ARTY={
   DisplayName=nil,
   IniGroupStrength=0,
   IsArtillery=nil,
-  RearmingUnit=nil,
-  RearmingUnitCoord=nil,
+  RearmingGroup=nil,
+  RearmingGroupCoord=nil,
   RearmingPlaceCoord=nil,
   InitialCoord=nil,
   report=true,
@@ -269,7 +269,7 @@ ARTY.id="ARTY | "
 
 --- Arty script version.
 -- @field #number version
-ARTY.version="0.7.0"
+ARTY.version="0.8.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -287,6 +287,10 @@ ARTY.version="0.7.0"
 -- DONE: Improve assigned time for engagement. Next day?
 -- DONE: Improve documentation.
 -- DONE: Add pseudo user transitions. OnAfter...
+-- TODO: Make reaming unit a group.
+-- TODO: Adjust documenation again.
+-- TODO: Add command move to make arty group move.
+-- TODO: remove schedulers for status event.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -350,18 +354,35 @@ function ARTY:New(group)
   -- Initial group strength.
   self.IniGroupStrength=#group:GetUnits()
   
-  -- Transitions 
-  self:AddTransition("*",           "Start",      "CombatReady")
-  self:AddTransition("CombatReady", "OpenFire",   "Firing")
-  self:AddTransition("CombatReady", "Winchester", "OutOfAmmo")
-  self:AddTransition("Firing",      "OpenFire",   "Firing")
-  self:AddTransition("Firing",      "CeaseFire",  "CombatReady")
-  self:AddTransition("OutOfAmmo",   "Rearm",      "Rearming")
-  self:AddTransition("Rearming",    "Rearmed",    "CombatReady")
-  self:AddTransition("CombatReady", "Move",       "Moving")
-  self:AddTransition("Moving",      "Arrived",    "CombatReady")
-  self:AddTransition("*",           "NewTarget",  "*")
-  self:AddTransition("*",           "Dead",       "*")
+  -- Transitions:  
+  -- Entry
+  self:AddTransition("*",           "Start",       "CombatReady")
+  
+  -- Blue branch.
+  self:AddTransition("CombatReady", "OpenFire",    "Firing")
+  self:AddTransition("Firing",      "OpenFire",    "Firing")
+  self:AddTransition("Firing",      "CeaseFire",   "CombatReady")
+  --self:AddTransition("CombatReady", "CeaseFire",   "CombatReady")   -- not in diagram yet.
+  
+  -- Violett branch.
+  self:AddTransition("Firing",      "Winchester",  "OutOfAmmo")
+
+  -- Red branch.  
+  self:AddTransition("OutOfAmmo",   "Rearm",       "Rearming")
+  self:AddTransition("Rearming",    "Rearmed",     "Rearmed")
+    
+  -- Green branch.
+  self:AddTransition("*",           "Move",        "Moving")
+  self:AddTransition("Moving",      "Arrived",     "Arrived")
+  
+  self:AddTransition("*",           "CombatReady", "CombatReady")
+  
+  -- Yellow branch.
+  self:AddTransition("*",           "NewTarget",   "*")
+  -- Not in diagram.
+  self:AddTransition("*",           "Status",      "*")
+  self:AddTransition("*",           "Dead",        "*")
+
   
   --- User function for OnBefore "OpenFire" event.
   -- @function [parent=#ARTY] OnBeforeOpenFire
@@ -608,12 +629,12 @@ function ARTY:SetWaitForShotTime(waittime)
   self.WaitForShotTime=waittime or 300
 end
 
---- Assign a unit which is responsible for rearming the ARTY group. If the unit is too far away from the ARTY group it will be guided towards the ARTY group.
+--- Assign a group, which is responsible for rearming the ARTY group. If the group is too far away from the ARTY group it will be guided towards the ARTY group.
 -- @param #ARTY self
--- @param Wrapper.Unit#UNIT unit Unit that is supposed to rearm the ARTY group.
-function ARTY:SetRearmingUnit(unit)
-  self:F({unit=unit})
-  self.RearmingUnit=unit
+-- @param Wrapper.Group#GROUP unit Unit that is supposed to rearm the ARTY group.
+function ARTY:SetRearmingGroup(group)
+  self:F({group=group})
+  self.RearmingGroup=group
 end
 
 --- Defines the rearming place of the ARTY group. If the place is too far away from the ARTY group it will be routed to the place.
@@ -747,8 +768,8 @@ function ARTY:onafterStart(Controllable, From, Event, To)
   text=text..string.format("Number of shells    = %d\n", self.Nshells0)
   text=text..string.format("Number of rockets   = %d\n", self.Nrockets0)
   text=text..string.format("Number of missiles  = %d\n", self.Nmissiles0)
-  if self.RearmingUnit then
-  text=text..string.format("Reaming unit        = %s\n", self.RearmingUnit:GetName())
+  if self.RearmingGroup then
+  text=text..string.format("Reaming group       = %s\n", self.RearmingGroup:GetName())
   end
   if self.RearmingPlaceCoord then
     local dist=self.InitialCoord:Get2DDistance(self.RearmingPlaceCoord)
@@ -780,14 +801,16 @@ function ARTY:onafterStart(Controllable, From, Event, To)
   -- Add event handler.
   self:HandleEvent(EVENTS.Shot, self._OnEventShot)
   self:HandleEvent(EVENTS.Dead, self._OnEventDead)
+  
+  self:__Status(5)
 
   -- Start scheduler to monitor if ARTY group started firing within a certain time.
   self.SchedIDCheckShooting=self.scheduler:Schedule(self, ARTY._CheckShootingStarted, {self}, 60, 60)
   
   -- Start cheduler for status reports.
-  if self.Debug then
-    self.SchedIDStatusReport=self.scheduler:Schedule(self, ARTY._StatusReport, {self}, 30, 30)
-  end
+--  if self.Debug then
+--    self.SchedIDStatusReport=self.scheduler:Schedule(self, ARTY._StatusReport, {self}, 30, 30)
+--  end
 
 end
 
@@ -868,8 +891,6 @@ function ARTY:_OnEventShot(EventData)
         if _nammo==0 then
         
           self:T(ARTY.id..string.format("Group %s completely out of ammo.", self.Controllable:GetName()))
-          -- Cease fire first.
-          self:CeaseFire(self.currentTarget)
           self:Winchester()
           
           -- Current target is deallocated ==> return
@@ -966,6 +987,242 @@ function ARTY:onafterNewTarget(Controllable, From, Event, To, target)
   self:T(ARTY.id..text)
 end
 
+--- After "Status" event. Report status of group.
+-- @param #ARTY self
+-- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function ARTY:onafterStatus(Controllable, From, Event, To)
+  self:_EventFromTo("onafterStatus", Event, From, To)
+  
+  if self.Debug then
+    self:_StatusReport()
+  end
+  
+  local _engage=true
+  
+  if self:is("OutOfAmmo") then
+  
+    -- Coordinate of ARTY unit.
+    local coordARTY=self.Controllable:GetCoordinate()
+    
+    -- Coordinate of rearming group.
+    local coordRARM=nil
+    if self.RearmingGroup then
+      -- Coordinate of the rearming unit.
+      coordRARM=self.RearmingGroup:GetCoordinate()
+      -- Remember the coordinates of the rearming unit. After rearming it will go back to this position.
+      self.RearmingGroupCoord=coordRARM
+    end
+    
+    if self.RearmingGroup and self.RearmingPlaceCoord and self.Speed>0 then
+    
+      -- CASE 1: Rearming unit and ARTY group meet at rearming place.
+      
+      -- Distances.
+      local dA=coordARTY:Get2DDistance(self.RearmingPlaceCoord)
+      local dR=coordRARM:Get2DDistance(self.RearmingPlaceCoord)
+      
+      -- Route ARTY group to rearming place.
+      if dA>100 then
+        --self.Controllable:RouteGroundOnRoad(self.RearmingPlaceCoord, self.Speed, 1)
+        --self:_Move(self.Controllable, self.RearmingPlaceCoord, self.Speed, true)
+        self:Move(self.RearmingPlaceCoord, false)
+      end
+      
+      -- Route Rearming unit to rearming place
+      if dR>100 then
+        self.RearmingGroup:RouteGroundOnRoad(self.RearmingPlaceCoord, 50, 1)
+        --self:_Move(self.RearmingGroup, self.RearmingPlaceCoord, 50, true)
+      end
+    
+    elseif self.RearmingGroup then
+    
+      -- CASE 2: Rearming unit drives to ARTY group.
+    
+      -- Send message.
+      local text=string.format("%s, %s, request rearming.", Controllable:GetName(), self.RearmingGroup:GetName())
+      self:T(ARTY.id..text)
+      MESSAGE:New(text, 10):ToCoalitionIf(Controllable:GetCoalition(), self.report or self.Debug)
+          
+      -- Distance between ARTY group and rearming unit.
+      local distance=coordARTY:Get2DDistance(coordRARM)
+       
+      -- If distance is larger than 100 m, the Rearming unit is routed to the ARTY group.
+      if distance > 100 then
+        -- Random point 20-100 m away from unit.
+        local vec2=coordARTY:GetRandomVec2InRadius(20, 100)
+        local pops=COORDINATE:NewFromVec2(vec2)
+      
+        -- Route unit to ARTY group.
+        self.RearmingGroup:RouteGroundOnRoad(pops, 50, 1)
+      end
+      
+    elseif self.RearmingPlaceCoord then
+    
+      -- CASE 3: ARTY drives to rearming place.
+  
+      -- Distance.
+      local dA=coordARTY:Get2DDistance(self.RearmingPlaceCoord)
+      
+      -- Route ARTY group to rearming place.
+      if dA>100 then
+        --self.Controllable:RouteGroundOnRoad(self.RearmingPlaceCoord, self.Speed, 1)
+        --self:_Move(self.Controllable, self.RearmingPlaceCoord, self.Speed, true)
+        self:Move(self.RearmingPlaceCoord, false)
+      end    
+      
+    end
+    
+    _engage=false
+       
+  end
+  
+  if self:is("Moving") then
+    _engage=false
+  end
+  
+  if self:is("Rearming") then
+    _engage=false
+  end
+  
+  if self:is("Rearmed") then
+    local distance=self.Controllable:GetCoordinate():Get2DDistance(self.InitialCoord)
+    if distance > 100 then
+      self:Move(self.InitialCoord, false)
+      _engage=false
+    else
+      self:CombatReady()
+    end
+  end
+  
+  
+  if self:is("Arrived") then
+    
+  end
+  
+  -- Engage targets.
+  if _engage then
+  
+    -- Get a timed target if it is due to be attacked.  
+    local _timedTarget=self:_CheckTimedTargets()
+    local _normalTarget=self:_CheckNormalTargets()
+  
+    -- Engage target.
+    if _timedTarget then
+      if self.currentTarget then
+        self:CeaseFire()
+      end
+      self:OpenFire(_timedTarget)
+    elseif _normalTarget then
+      self:OpenFire(_normalTarget)
+    end
+    
+  end
+  
+  -- Call status again in 5 sec.
+  self:__Status(5)
+end
+
+--- Check all timed targets and return the target which should be attacked next.
+-- @param #ARTY self
+-- @return #table Target which is due to be attacked now. 
+function ARTY:_CheckTimedTargets()
+
+  -- Current time.
+  local Tnow=timer.getAbsTime()
+  
+  -- Sort Targets wrt time.
+  self:_SortTargetQueueTime()
+  
+  for i=1,#self.targets do
+    local _target=self.targets[i]
+    
+    -- Check if target has an attack time which has already passed.
+    -- Also check that target is not under fire already and that it is in range. 
+    if _target.time and _target.time>=Tnow and _target.underfire==false and self:_TargetInRange(_target) then
+    
+      -- Check if group currently has a target and whether its priorty is lower than the timed target.
+      if self.currentTarget then
+        if self.currentTarget.prio > _target.prio then
+          -- Current target under attack but has lower priority than this target.
+          self:T(ARTY.id..string.format("Group %s current target %s has lower prio than new target %s with attack time.", self.Controllable:GetName(), self.currentTarget.name, target.name))
+          return _target
+        end
+      else
+        -- No current target.
+        return _target
+      end
+    end
+  end
+
+  return nil
+end
+
+--- Check all normal (untimed) targets and return the target with the highest priority which has been engaged the fewest times.
+-- @param #ARTY self
+-- @return #table Target which is due to be attacked now or nil if no target could be found.
+function ARTY:_CheckNormalTargets()
+
+  -- Sort targets w.r.t. prio and number times engaged already.
+  self:_SortTargetQueuePrio()
+      
+  -- Loop over all sorted targets.
+  for i=1,#self.targets do  
+    local _target=self.targets[i]
+  
+    -- Check that target no time, is not under fire currently and in range.
+    if _target.underfire==false and _target.time==nil and _target.maxengage > _target.engaged and self:_TargetInRange(_target) then
+      
+      -- Debug info.
+      self:T(ARTY.id..string.format("Engaging target %s. Prio = %d, engaged = %d", _target.name, _target.prio, _target.engaged))
+      
+      return _target
+    end
+  end
+  
+  return nil
+end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Enter "CombatReady" state. Route the group back if necessary.
+-- @param #ARTY self
+-- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function ARTY:onenterCombatReady(Controllable, From, Event, To)
+
+  env.info(string.format("FF: onenterComabReady, from=%s, event=%s, to=%s", From, Event, To))
+
+--[[
+  if From=="Rearming" and Event=="Rearmed" then
+    env.info("FF: Comabatready after Rearmed")
+    
+    -- Distance to initial position. 
+    local dist=Controllable:GetCoordinate():Get2DDistance(self.InitialCoord)
+    
+    if dist>100 then
+      -- Route group back to its original position, when rearming was at another place.
+      self:T(ARTY.id..string.format("%s is routed back to its initial position. Distance = %d m.", Controllable:GetName(), dist))
+      self:__Move(30, self.InitialCoord, true)
+    end
+    
+  else
+  
+    -- Update target queue and open fire.
+    env.info("FF: Comabatready ==> _openfireontarget.")
+    self:_openfireontarget()
+    
+  end
+]]
+
+end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 --- Before "OpenFire" event. Checks if group already has a target. Checks for valid min/max range and removes the target if necessary.
 -- @param #ARTY self
 -- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
@@ -976,20 +1233,7 @@ end
 -- @return #boolean If true, proceed to onafterOpenfire.
 function ARTY:onbeforeOpenFire(Controllable, From, Event, To, target)
   self:_EventFromTo("onbeforeOpenFire", Event, From, To)
-   
-  -- If this target has an attack time and it's prio is higher than the current task, we allow the transition.
-  if target.time~=nil and self.currentTarget~=nil and self.currentTarget.prio > target.prio then
-    -- Debug info.
-    self:T(ARTY.id..string.format("Group %s current target %s has lower prio than new target %s with attack time.", self.Controllable:GetName(), self.currentTarget.name, target.name))
-        
-    -- Stop firing on current target.
-    self:CeaseFire(self.currentTarget)
-    
-    -- Alow transition to onafterOpenfire.
-    return true
-  end
-  
-  
+     
   -- Check that group has no current target already.
   if self.currentTarget then
     -- Debug info.
@@ -999,25 +1243,9 @@ function ARTY:onbeforeOpenFire(Controllable, From, Event, To, target)
     return false
   end
   
--- Distance to target
-  local range=Controllable:GetCoordinate():Get2DDistance(target.coord)
-  
-  -- Check that distance to target is within range.
-  if range<self.minrange or range>self.maxrange then
-  
-    -- Debug output.
-    local text
-    if range<self.minrange then
-      text=string.format("%s, target is out of range. Distance of %d km is below min range of %d km.", Controllable:GetName(), range/1000, self.minrange/1000)
-    elseif range>self.maxrange then
-      text=string.format("%s, target is out of range. Distance of %d km is greater than max range of %d km.", Controllable:GetName(), range/1000, self.maxrange/1000)
-    end
-    self:T(ARTY.id..text)
-    MESSAGE:New(text, 10):ToCoalitionIf(Controllable:GetCoalition(), self.report or self.Debug)
-    
-    -- Remove target.
-    self:RemoveTarget(target.name)
-    
+  -- Check if target is in range.
+  local _inrange=self:_TargetInRange(target)
+  if not _inrange then
     -- Deny transition.
     return false
   end
@@ -1064,6 +1292,36 @@ function ARTY:onafterOpenFire(Controllable, From, Event, To, target)
   
 end
 
+--- Go through queue of assigned tasks and trigger OpenFire event.
+-- @param #ARTY self
+function ARTY:_openfireontarget()
+  self:F2()
+    
+  -- Debug info
+  self:T2(ARTY.id..string.format("Group %s, number of targets = %d", self.Controllable:GetName(), #self.targets))
+  
+  -- No targets assigned at the moment.
+  if #self.targets==0 then
+    self:T3(ARTY.id..string.format("Group %s, no targets assigned at the moment. No need for _OpenFire.", self.Controllable:GetName()))
+    return
+  end
+  
+  -- Check timed targets first.
+  local _target=self:_CheckTimedTargets()
+  if _target then
+    self:__OpenFire(1, _target)
+    return
+  end
+  
+  -- Check normal targets
+  local _target=self:_CheckNormalTargets()
+  if _target then
+    self:__OpenFire(1, _target)
+    return
+  end
+
+end
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- After "CeaseFire" event. Clears task of the group and removes the target if max engagement was reached.
@@ -1075,85 +1333,48 @@ end
 -- @param #table target Array holding the target info.
 function ARTY:onafterCeaseFire(Controllable, From, Event, To, target)
   self:_EventFromTo("onafterCeaseFire", Event, From, To)
-    
-  -- Send message.
-  local text=string.format("%s, ceasing fire on target %s.", Controllable:GetName(), target.name)
-  self:T(ARTY.id..text)
-  MESSAGE:New(text, 10):ToCoalitionIf(Controllable:GetCoalition(), self.report)
-      
-  -- Get target array index.
-  local id=self:_GetTargetByName(target.name)
   
-  -- Increase engaged counter
-  if id then
-    -- Target was actually engaged. (Could happen that engagement was aborted while group was still aiming.)
-    if self.Nshots>0 then
-      self.targets[id].engaged=self.targets[id].engaged+1
-      -- Clear the attack time.
-      self.targets[id].time=nil
+  if target then
+    
+    -- Send message.
+    local text=string.format("%s, ceasing fire on target %s.", Controllable:GetName(), target.name)
+    self:T(ARTY.id..text)
+    MESSAGE:New(text, 10):ToCoalitionIf(Controllable:GetCoalition(), self.report)
+        
+    -- Get target array index.
+    local id=self:_GetTargetByName(target.name)
+    
+    -- Increase engaged counter
+    if id then
+      -- Target was actually engaged. (Could happen that engagement was aborted while group was still aiming.)
+      if self.Nshots>0 then
+        self.targets[id].engaged=self.targets[id].engaged+1
+        -- Clear the attack time.
+        self.targets[id].time=nil
+      end
+      -- Target is not under fire any more.
+      self.targets[id].underfire=false
     end
-    -- Target is not under fire any more.
-    self.targets[id].underfire=false
-  end
-  
-  -- Clear tasks.
-  self.Controllable:ClearTasks()
     
+    -- If number of engagements has been reached, the target is removed.
+    if target.engaged >= target.maxengage then
+      self:RemoveTarget(target.name)
+    end
+    
+    -- Clear tasks.
+    self.Controllable:ClearTasks()
+    
+  end
+      
   -- Set number of shots to zero.
   self.Nshots=0
-    
-  -- If number of engagements has been reached, the target is removed.
-  if target.engaged >= target.maxengage then
-    self:RemoveTarget(target.name)
-  end
   
   -- ARTY group has no current target any more.
   self.currentTarget=nil
   
 end
 
---- Enter "CombatReady" state. Route the group back if necessary.
--- @param #ARTY self
--- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
-function ARTY:onenterCombatReady(Controllable, From, Event, To)
-
-  env.info(string.format("FF: onenterComabReady, from=%s, event=%s, to=%s", From, Event, To))
-
-  if From=="Rearming" and Event=="Rearmed" then
-    env.info("FF: Comabatready after Rearmed")
-    
-    -- Distance to initial position. 
-    local dist=Controllable:GetCoordinate():Get2DDistance(self.InitialCoord)
-    
-    if dist>100 then
-      -- Route group back to its original position, when rearming was at another place.
-      self:T(ARTY.id..string.format("%s is routed back to its initial position. Distance = %d m.", Controllable:GetName(), dist))
-      self:__Move(30, self.InitialCoord, true)
-    end
-    
-  else
-    -- Update target queue and open fire.
-    env.info("FF: Comabatready ==> _openfireontarget.")
-    self:_openfireontarget()
-  end
-
-end
-
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
---- Before "Winchester" event. Cease fire on current target.
--- @param #ARTY self
--- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @return #boolean If true, proceed to onafterWinchester.
-function ARTY:onbeforeWinchester(Controllable, From, Event, To)
-
-  return true
-end
 
 --- After "Winchester" event. Group is out of ammo. Trigger "Rearm" event.
 -- @param #ARTY self
@@ -1170,7 +1391,7 @@ function ARTY:onafterWinchester(Controllable, From, Event, To)
   MESSAGE:New(text, 30):ToCoalitionIf(Controllable:GetCoalition(), self.report or self.Debug)
      
   -- Init rearming if possible.
-  self:Rearm()
+  --self:Rearm()
   
 end
 
@@ -1187,7 +1408,7 @@ function ARTY:onbeforeRearm(Controllable, From, Event, To)
   self:_EventFromTo("onbeforeRearm", Event, From, To)
   
   -- Check if a reaming unit or rearming place was specified.
-  if self.RearmingUnit and self.RearmingUnit:IsAlive() then
+  if self.RearmingGroup and self.RearmingGroup:IsAlive() then
     return true
   elseif self.RearmingPlaceCoord then
     return true 
@@ -1205,75 +1426,6 @@ end
 -- @param #string To To state.
 function ARTY:onafterRearm(Controllable, From, Event, To)
   self:_EventFromTo("onafterRearm", Event, From, To)
-  
-  -- Coordinate of ARTY unit.
-  local coordARTY=self.Controllable:GetCoordinate()
-  
-  -- Coordinate of rearming unit.
-  local coordRARM=nil
-  if self.RearmingUnit then
-    -- Coordinate of the rearming unit.
-    coordRARM=self.RearmingUnit:GetCoordinate()
-    -- Remember the coordinates of the rearming unit. After rearming it will go back to this position.
-    self.RearmingUnitCoord=coordRARM
-  end
-  
-  if self.RearmingUnit and self.RearmingPlaceCoord and self.Speed>0 then
-  
-    -- CASE 1: Rearming unit and ARTY group meet at rearming place.
-    
-    -- Distances.
-    local dA=coordARTY:Get2DDistance(self.RearmingPlaceCoord)
-    local dR=coordRARM:Get2DDistance(self.RearmingPlaceCoord)
-    
-    -- Route ARTY group to rearming place.
-    if dA>100 then
-      --self.Controllable:RouteGroundOnRoad(self.RearmingPlaceCoord, self.Speed, 1)
-      self:_Move(self.Controllable, self.RearmingPlaceCoord, self.Speed, true)
-    end
-    
-    -- Route Rearming unit to rearming place
-    if dR>100 then
-      self.RearmingUnit:RouteGroundOnRoad(self.RearmingPlaceCoord, 50, 1)
-      --self:_Move(self.RearmingUnit, self.RearmingPlaceCoord, 50, true)
-    end
-  
-  elseif self.RearmingUnit then
-  
-    -- CASE 2: Rearming unit drives to ARTY group.
-  
-    -- Send message.
-    local text=string.format("%s, %s, request rearming.", Controllable:GetName(), self.RearmingUnit:GetName())
-    self:T(ARTY.id..text)
-    MESSAGE:New(text, 10):ToCoalitionIf(Controllable:GetCoalition(), self.report or self.Debug)
-        
-    -- Distance between ARTY group and rearming unit.
-    local distance=coordARTY:Get2DDistance(coordRARM)
-     
-    -- If distance is larger than 100 m, the Rearming unit is routed to the ARTY group.
-    if distance > 100 then
-      -- Random point 20-100 m away from unit.
-      local vec2=coordARTY:GetRandomVec2InRadius(20, 100)
-      local pops=COORDINATE:NewFromVec2(vec2)
-    
-      -- Route unit to ARTY group.
-      self.RearmingUnit:RouteGroundOnRoad(pops, 50, 1)
-    end
-    
-  elseif self.RearmingPlaceCoord then
-  
-    -- CASE 3: ARTY drives to rearming place.
-
-    -- Distance.
-    local dA=coordARTY:Get2DDistance(self.RearmingPlaceCoord)
-    
-    -- Route ARTY group to rearming place.
-    if dA>100 then
-      --self.Controllable:RouteGroundOnRoad(self.RearmingPlaceCoord, self.Speed, 1)
-      self:_Move(self.Controllable, self.RearmingPlaceCoord, self.Speed, true)
-    end    
-    
-  end
   
   -- Start scheduler to monitor ammo count until rearming is complete.
   self.SchedIDCheckRearmed=self.scheduler:Schedule(self, ARTY._CheckRearmed, {self}, 20, 20)
@@ -1307,10 +1459,10 @@ function ARTY:onafterRearmed(Controllable, From, Event, To)
   end
   
   -- Route unit back to where it came from (if distance is > 100 m).
-  if self.RearmingUnit and self.RearmingUnit:IsAlive() then
-    local d=self.RearmingUnit:GetCoordinate():Get2DDistance(self.RearmingUnitCoord)
+  if self.RearmingGroup and self.RearmingGroup:IsAlive() then
+    local d=self.RearmingGroup:GetCoordinate():Get2DDistance(self.RearmingGroupCoord)
     if d>100 then
-      self.RearmingUnit:RouteGroundOnRoad(self.RearmingUnitCoord, 50, 1)
+      self.RearmingGroup:RouteGroundOnRoad(self.RearmingGroupCoord, 50, 1)
     end
   end
   
@@ -1348,7 +1500,6 @@ function ARTY:_CheckRearmed()
   end
 
 end
-
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -1416,7 +1567,6 @@ function ARTY:onafterArrived(Controllable, From, Event, To)
   
 end
 
-
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- After "Dead" event, when a unit has died. When all units of a group are dead trigger "Stop" event.
@@ -1450,24 +1600,6 @@ function ARTY:onafterDead(Controllable, From, Event, To)
   
 end
 
---- Before "Stop" event. Cease fire on current target.
--- @param #ARTY self
--- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @return #boolean If true, proceed to onafterStop.
-function ARTY:onbeforeStop(Controllable, From, Event, To)
-  self:_EventFromTo("onbeforeStop", Event, From, To)
-
-  -- Cease Fire on current target.
-  if self.currentTarget then
-    self:CeaseFire(self.currentTarget)
-  end
-
-  return true
-end
-
 --- After "Stop" event. Stop schedulers and unhandle events.
 -- @param #ARTY self
 -- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
@@ -1479,8 +1611,15 @@ function ARTY:onafterStop(Controllable, From, Event, To)
   
   -- Debug info.
   self:T(ARTY.id..string.format("Stopping ARTY FSM for group %s.", Controllable:GetName()))
+  
+    -- Cease Fire on current target.
+  if self.currentTarget then
+    self:CeaseFire(self.currentTarget)
+  end
+  
   -- Remove all targets.
   --self:RemoveAllTargets()
+  
   -- Stop schedulers.
   if self.SchedIDCheckShooting then
     self.scheduler:Stop(self.SchedIDCheckShooting)
@@ -1488,6 +1627,7 @@ function ARTY:onafterStop(Controllable, From, Event, To)
   if self.SchedIDCheckRearmed then
     self.scheduler:Stop(self.SchedIDCheckRearmed)
   end
+  
   -- Unhandle event.
   self:UnHandleEvent(EVENTS.Shot)
   self:UnHandleEvent(EVENTS.Dead)
@@ -1524,61 +1664,6 @@ function ARTY:_FireAtCoord(coord, radius, nshells, weapontype)
 end
 
 
---- Go through queue of assigned tasks and trigger OpenFire event.
--- @param #ARTY self
-function ARTY:_openfireontarget()
-  self:F2()
-    
-  -- Debug info
-  self:T(ARTY.id..string.format("Group %s, number of targets = %d", self.Controllable:GetName(), #self.targets))
-  
-  -- No targets assigned at the moment.
-  if #self.targets==0 then
-    self:T3(ARTY.id..string.format("Group %s, no targets assigned at the moment. No need for _OpenFire.", self.Controllable:GetName()))
-    return
-  end
-  
-  -- First check if there is a target with a certain time for attack.
-  for i=1,#self.targets do
-    local _target=self.targets[i]
-    if _target and _target.time then
-      if timer.getAbsTime() >= _target.time and _target.underfire==false then
-              
-        -- Clock time format.
-        local _clock=self:_SecondsToClock(_target.time)
-        local _Cnow=self:_SecondsToClock(timer.getAbsTime())
-      
-        -- Debug info.
-        self:T(ARTY.id..string.format("Engaging timed target %s. Prio=%d, engaged=%d, time=%s, tnow=%s",_target.name,_target.prio,_target.engaged,_clock,_Cnow))
-        
-        -- Call OpenFire event.
-        self:__OpenFire(1, _target)
-        
-      end
-    end
-  end
-  
-  -- Sort targets w.r.t. prio and number times engaged already.
-  self:_SortTargetQueuePrio()
-      
-  -- Loop over all sorted targets.
-  for i=1,#self.targets do
-  
-    local _target=self.targets[i]
-  
-    if _target.underfire==false and _target.time==nil and _target.maxengage > _target.engaged then
-      
-      -- Debug info.
-      self:T(ARTY.id..string.format("Engaging target %s. Prio = %d, engaged = %d", _target.name, _target.prio, _target.engaged))
-
-      -- Call OpenFire event.
-      self:__OpenFire(1, _target)
-      
-    end
-  end
- 
-end
-
 
 --- Sort targets with respect to priority and number of times it was already engaged.
 -- @param #ARTY self
@@ -1594,7 +1679,9 @@ function ARTY:_SortTargetQueuePrio()
   -- Debug output.
   self:T2(ARTY.id.."Sorted targets wrt prio and number of engagements:")
   for i=1,#self.targets do
-    self:T2(ARTY.id..string.format("Target %s, prio=%d, engaged=%d", self.targets[i].name, self.targets[i].prio, self.targets[i].engaged))
+    local _target=self.targets[i]
+    local _clock=self:_SecondsToClock(_target.time)
+    self:T2(ARTY.id..string.format("Target %s, prio=%d, engaged=%d, time=%s", _target.name, _target.prio, _target.engaged, tostring(_clock)))
   end
 end
 
@@ -1621,7 +1708,9 @@ function ARTY:_SortTargetQueueTime()
   -- Debug output.
   self:T2(ARTY.id.."Sorted targets wrt time:")
   for i=1,#self.targets do
-    self:T2(ARTY.id..string.format("Target %s, prio=%d, engaged=%d", self.targets[i].name, self.targets[i].prio, self.targets[i].engaged))
+    local _target=self.targets[i]
+    local _clock=self:_SecondsToClock(_target.time)
+    self:T2(ARTY.id..string.format("Target %s, prio=%d, engaged=%d, time=%s", _target.name, _target.prio, _target.engaged, tostring(_clock)))
   end
 
 end
@@ -1846,6 +1935,42 @@ function ARTY:_CheckTargetName(name)
   return newname
 end
 
+--- Check if target is in range.
+-- @param #ARTY self
+-- @param #table target Target table.
+-- @return #boolean True if target is in range, false otherwise.
+function ARTY:_TargetInRange(target)
+  self:F3(target)
+
+  -- Distance between ARTY group and target.
+  local _dist=self.Controllable:GetCoordinate():Get2DDistance(target.coord)
+  
+  -- Assume we are in range.
+  local _inrange=true
+  local text=""
+  
+  if _dist < self.minrange then
+    _inrange=false
+    text=string.format("%s, target is out of range. Distance of %d km is below min range of %d km.", self.Controllable:GetName(), _dist/1000, self.minrange/1000)
+  elseif _dist > self.maxrange then
+    _inrange=false
+    text=string.format("%s, target is out of range. Distance of %d km is greater than max range of %d km.", self.Controllable:GetName(), _dist/1000, self.maxrange/1000)
+  end
+  
+  -- Debug output.
+  if not _inrange then
+    self:T(ARTY.id..text)
+    MESSAGE:New(text, 10):ToCoalitionIf(self.Controllable:GetCoalition(), self.report or self.Debug)
+  end
+    
+  -- Remove target if ARTY group cannot move. No change to be ever in range.
+  if self.Speed==0 then
+    self:RemoveTarget(target.name)
+  end
+
+  return _inrange
+end
+
 --- Get the weapon type name, which should be used to attack the target.
 -- @param #ARTY self
 -- @param #number tnumber Number of weapon type ARTY.WeaponType.XXX
@@ -1879,7 +2004,6 @@ function ARTY:_EventFromTo(BA, Event, From, To)
   local text=string.format("%s: %s EVENT %s: %s --> %s", BA, self.Controllable:GetName(), Event, From, To)
   self:T3(ARTY.id..text)
 end
-
 
 --- Split string. C.f. http://stackoverflow.com/questions/1426954/split-string-in-lua
 -- @param #ARTY self
