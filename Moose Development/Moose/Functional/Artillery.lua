@@ -59,7 +59,8 @@
 -- @field #string DisplayName Extended type name of the ARTY group.
 -- @field #number IniGroupStrength Inital number of units in the ARTY group.
 -- @field #boolean IsArtillery If true, ARTY group has attribute "Artillery".
--- @field #number Speed Maximum speed of ARTY group in km/h.
+-- @field #number SpeedMax Maximum speed of ARTY group in km/h. This is determined from the DCS descriptor table.
+-- @field #number Speed Default speed in km/h the ARTY group moves at. Maximum speed possible is 80% of maximum speed the group can do.
 -- @field #number RearmingDistance Safe distance in meters between ARTY group and rearming group or place at which rearming is possible. Default 100 m.
 -- @field Wrapper.Group#GROUP RearmingGroup Unit designated to rearm the ARTY group.
 -- @field #number RearmingGroupSpeed Speed in km/h the rearming unit moves at. Default 50 km/h.
@@ -275,7 +276,7 @@ ARTY.id="ARTY | "
 
 --- Arty script version.
 -- @field #number version
-ARTY.version="0.8.6"
+ARTY.version="0.8.7"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -297,6 +298,7 @@ ARTY.version="0.8.6"
 -- TODO: Adjust documenation again.
 -- TODO: Add command move to make arty group move.
 -- DONE: remove schedulers for status event.
+-- TODO: Improve handling of special weapons. When winchester?
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -342,8 +344,11 @@ function ARTY:New(group)
     self:T3({id=id, desc=desc})
   end
   
-  -- Set speed to 0.7 of maximum in km/h.
-  self.Speed=self.DCSdesc.speedMax*3.6 * 0.7
+  -- Maximum speed in km/h.
+  self.SpeedMax=self.DCSdesc.speedMax*3.6
+  
+  -- Set speed to 0.7 of maximum.
+  self.Speed=self.SpeedMax * 0.7
   
   -- Displayed name (similar to type name below)
   self.DisplayName=self.DCSdesc.displayName
@@ -386,6 +391,7 @@ function ARTY:New(group)
   -- Not in diagram.
   self:AddTransition("*",           "CombatReady", "CombatReady")
   self:AddTransition("*",           "Status",      "*")
+  self:AddTransition("*",           "NewMove",     "*")
   self:AddTransition("*",           "Dead",        "*")
   
   -- Unknown transitons. To be checked if adding these causes problems.
@@ -428,7 +434,7 @@ function ARTY:AssignTargetCoord(coord, prio, radius, nshells, maxengage, time, w
   local _name=name or coord:ToStringLLDMS() 
     
   -- Check if the name has already been used for another target. If so, the function returns a new unique name.
-  _name=self:_CheckTargetName(_name)
+  _name=self:_CheckName(self.targets, _name)
   
   -- Time in seconds.
   local _time=self:_ClockToSeconds(time)
@@ -441,6 +447,53 @@ function ARTY:AssignTargetCoord(coord, prio, radius, nshells, maxengage, time, w
   
   -- Trigger new target event.
   self:NewTarget(_target)
+  
+  return _name
+end
+
+--- Assign coordinate to where the ARTY group should move.
+-- @param #ARTY self
+-- @param Wrapper.Point#COORDINATE coord Coordinates of the target.
+-- @param #string time (Optional) Day time at which the group should start moving. Passed as a string in format "08:13:45".
+-- @param #number speed (Optinal) Speed in km/h the group should move at. Default 50 km/h.
+-- @param #boolean onroad (Optional) If true, group will mainly use roads. Default off, i.e. go directly towards the specified coordinate.
+-- @param #boolean cancel (Optional) If true, cancel any running attack when move should begin. Default is false.
+-- @param #string name (Optional) Name of the coordinate. Default is LL DMS string of the coordinate. If the name was already given, the numbering "#01", "#02",... is appended automatically.
+-- @return #string Name of the move. Can be used for further reference, e.g. deleting the move from the list.
+function ARTY:AssignMoveCoord(coord, time, speed, onroad, cancel, name)
+  self:F({coord=coord, time=time, speed=speed, onroad=onroad, cancel=cancel, name=name})
+  
+    -- Name of the target.
+  local _name=name or coord:ToStringLLDMS() 
+    
+  -- Check if the name has already been used for another target. If so, the function returns a new unique name.
+  _name=self:_CheckName(self.moves, _name)
+  
+  -- Default is current time if no time was specified.
+  time=time or self:_SecondsToClock(timer.getAbsTime())
+  
+  -- Default speed is 50 km/h.
+  speed=speed or 50
+  
+  -- Default is off road.
+  if onroad==nil then
+    onroad=false
+  end
+
+  -- Default is not to cancel a running attack.
+  if cancel==nil then
+    cancel=false
+  end
+  
+  -- Time in seconds.
+  local _time=self:_ClockToSeconds(time)
+  
+  -- Prepare move array.
+  local _move={name=_name, coord=coord, time=_time, speed=speed, onroad=onroad, cancel=cancel}
+  
+  -- Add to table.
+  table.insert(self.moves, _move)
+  
 end
 
 --- Set minimum firing range. Targets closer than this distance are not engaged.
@@ -634,7 +687,8 @@ function ARTY:onafterStart(Controllable, From, Event, To)
   text=text..string.format("Type                = %s\n", self.Type)
   text=text..string.format("Display Name        = %s\n", self.DisplayName)  
   text=text..string.format("Number of units     = %d\n", self.IniGroupStrength)
-  text=text..string.format("Max Speed           = %d km/h\n", self.Speed)
+  text=text..string.format("Speed max           = %d km/h\n", self.SpeedMax)
+  text=text..string.format("Speed default       = %d km/h\n", self.Speed)
   text=text..string.format("Min range           = %d km\n", self.minrange/1000)
   text=text..string.format("Max range           = %d km\n", self.maxrange/1000)
   text=text..string.format("Total ammo count    = %d\n", self.Nammo0)
@@ -658,6 +712,12 @@ function ARTY:onafterStart(Controllable, From, Event, To)
   text=text..string.format("Targets:\n")
   for _, target in pairs(self.targets) do
     text=text..string.format("- %s\n", self:_TargetInfo(target))
+  end
+  text=text..string.format("Moves:\n")
+  for i=1,#self.moves do
+    local _move=self.moves[i]
+    local _clock=tostring(self:_SecondsToClock(_move.time))
+    text=text..string.format("- %s: time=%s, speed=%d, onroad=%s, cancel=%s\n", _move.name, _clock, _move.speed, tostring(_move.onroad), tostring(_move.cancel))
   end
   text=text..string.format("******************************************************\n")
   text=text..string.format("Shell types:\n")
@@ -1127,9 +1187,14 @@ function ARTY:onafterRearm(Controllable, From, Event, To)
       self.RearmingGroupCoord=coordRARM
     end
     
-    if self.RearmingGroup and self.RearmingPlaceCoord and self.Speed>0 then
+    if self.RearmingGroup and self.RearmingPlaceCoord and self.SpeedMax>0 then
     
       -- CASE 1: Rearming unit and ARTY group meet at rearming place.
+      
+      -- Send message.
+      local text=string.format("%s, %s, request rearming at rearming place.", Controllable:GetName(), self.RearmingGroup:GetName())
+      self:T(ARTY.id..text)
+      MESSAGE:New(text, 10):ToCoalitionIf(Controllable:GetCoalition(), self.report or self.Debug)
       
       -- Distances.
       local dA=coordARTY:Get2DDistance(self.RearmingPlaceCoord)
@@ -1137,7 +1202,7 @@ function ARTY:onafterRearm(Controllable, From, Event, To)
       
       -- Route ARTY group to rearming place.
       if dA > self.RearmingDistance then
-        self:Move(self:_VicinityCoord(self.RearmingPlaceCoord, self.RearmingDistance/4, self.RearmingDistance/2), self.RearmingArtyOnRoad)
+        self:Move(self:_VicinityCoord(self.RearmingPlaceCoord, self.RearmingDistance/4, self.RearmingDistance/2), self.Speed, self.RearmingArtyOnRoad)
       end
       
       -- Route Rearming group to rearming place.
@@ -1167,14 +1232,18 @@ function ARTY:onafterRearm(Controllable, From, Event, To)
     elseif self.RearmingPlaceCoord then
     
       -- CASE 3: ARTY drives to rearming place.
+      
+      -- Send message.
+      local text=string.format("%s, moving to rearming place.", Controllable:GetName())
+      self:T(ARTY.id..text)
+      MESSAGE:New(text, 10):ToCoalitionIf(Controllable:GetCoalition(), self.report or self.Debug)
   
       -- Distance.
       local dA=coordARTY:Get2DDistance(self.RearmingPlaceCoord)
       
       -- Route ARTY group to rearming place.
       if dA > self.RearmingDistance then
-        --self:_Move(self.Controllable, self.RearmingPlaceCoord, self.Speed, true)
-        self:Move(self:_VicinityCoord(self.RearmingPlaceCoord), false)
+        self:Move(self:_VicinityCoord(self.RearmingPlaceCoord), self.Speed, self.RearmingArtyOnRoad)
       end    
       
     end
@@ -1200,7 +1269,7 @@ function ARTY:onafterRearmed(Controllable, From, Event, To)
   -- Route ARTY group back to where it came from (if distance is > 100 m).
   local d1=self.Controllable:GetCoordinate():Get2DDistance(self.InitialCoord)
   if d1 > self.RearmingDistance then
-    self:Move(self.InitialCoord, false)
+    self:Move(self.InitialCoord, self.Speed, self.RearmingArtyOnRoad)
   end
   
   -- Route unit back to where it came from (if distance is > 100 m).
@@ -1266,7 +1335,7 @@ function ARTY:onbeforeMove(Controllable, From, Event, To, ToCoord, OnRoad)
   self:_EventFromTo("onbeforeMove", Event, From, To)
   
   -- Check if group can actually move...
-  if self.Speed==0 then
+  if self.SpeedMax==0 then
     return false
   end
   
@@ -1285,16 +1354,20 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 -- @param Wrapper.Point#COORDINATE ToCoord Coordinate to which the ARTY group should move.
+-- @param #number Speed Speed in km/h at which the grou p should move.
 -- @param #boolean OnRoad If true group should move on road mainly. 
-function ARTY:onafterMove(Controllable, From, Event, To, ToCoord, OnRoad)
+function ARTY:onafterMove(Controllable, From, Event, To, ToCoord, Speed, OnRoad)
   self:_EventFromTo("onafterMove", Event, From, To)
 
   -- Set alarm state to green and ROE to weapon hold.
   self.Controllable:OptionAlarmStateGreen()
   self.Controllable:OptionROEHoldFire()
+  
+  -- Take care of max speed.
+  local _Speed=math.min(Speed, self.SpeedMax)
 
   -- Route group to coodinate.
-  self:_Move(self.Controllable, ToCoord, self.Speed, OnRoad)
+  self:_Move(self.Controllable, ToCoord, _Speed, OnRoad)
   
 end
 
@@ -1325,7 +1398,7 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param #table target Array holding the target info.
+-- @param #table target Array holding the target parameters.
 -- @return #boolean If true, proceed to onafterOpenfire.
 function ARTY:onafterNewTarget(Controllable, From, Event, To, target)
   self:_EventFromTo("onafterNewTarget", Event, From, To)
@@ -1335,6 +1408,24 @@ function ARTY:onafterNewTarget(Controllable, From, Event, To, target)
   MESSAGE:New(text, 30):ToAllIf(self.Debug)
   self:T(ARTY.id..text)
 end
+
+--- After "NewMove" event.
+-- @param #ARTY self
+-- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #table move Array holding the move parameters.
+-- @return #boolean If true, proceed to onafterOpenfire.
+function ARTY:onafterNewMove(Controllable, From, Event, To, move)
+  self:_EventFromTo("onafterNewTarget", Event, From, To)
+  
+  -- Debug message.
+  local text=string.format("Adding new move %s.", move.name)
+  MESSAGE:New(text, 30):ToAllIf(self.Debug)
+  self:T(ARTY.id..text)
+end
+
 
 --- After "Dead" event, when a unit has died. When all units of a group are dead trigger "Stop" event.
 -- @param #ARTY self
@@ -1724,12 +1815,13 @@ function ARTY:_GetTargetByName(name)
 end
 
 
---- Get the weapon type name, which should be used to attack the target.
+--- Check if a name is unique. If not, a new unique name is created by adding a running index #01, #02, ...
 -- @param #ARTY self
--- @param #string name Desired target name.
+-- @param #table givennames Table with entries of already given names. Must contain a .name item.
+-- @param #string name Desired name.
 -- @return #string Unique name, which is not already given for another target.
-function ARTY:_CheckTargetName(name)
-  self:F2(name)  
+function ARTY:_CheckName(givennames, name)
+  self:F2({givennames=givennames, name=name})  
 
   local newname=name
   local counter=1
@@ -1739,12 +1831,12 @@ function ARTY:_CheckTargetName(name)
     local unique=true
     
     -- Loop over all targets already defined.
-    for _,_target in pairs(self.targets) do
+    for _,_target in pairs(givennames) do
     
       -- Target name.
-      local _targetname=_target.name
+      local _givenname=givennames.name
       
-      if _targetname==newname then
+      if _givenname==newname then
         -- Define new name = "name #01"
         newname=string.format("%s #%02d", name, counter)
         
@@ -1967,6 +2059,9 @@ function ARTY:_Move(group, ToCoord, Speed, OnRoad)
   
   -- Set formation.
   local formation = "Off road"
+  
+  -- Default speed is 30 km/h.
+  Speed=Speed or 30
   
   -- Current coordinates of group.
   local cpini=group:GetCoordinate()
