@@ -763,9 +763,11 @@ function ARTY:_StatusReport()
   -- Get Ammo.
   local Nammo, Nshells, Nrockets, Nmissiles=self:GetAmmo()
   local Tnow=timer.getTime()
+  local Clock=self:_SecondsToClock(timer.getAbsTime())
   
   local text=string.format("\n******************* STATUS ***************************\n")
   text=text..string.format("ARTY group          = %s\n", self.Controllable:GetName())
+  text=text..string.format("Clock               = %s\n", Clock)
   text=text..string.format("FSM state           = %s\n", self:GetState())
   text=text..string.format("Total ammo count    = %d\n", Nammo)
   text=text..string.format("Number of shells    = %d\n", Nshells)
@@ -1469,7 +1471,7 @@ function ARTY:onafterNewTarget(Controllable, From, Event, To, target)
   
   -- Debug message.
   local text=string.format("Adding new target %s.", target.name)
-  MESSAGE:New(text, 30):ToAllIf(self.Debug)
+  --MESSAGE:New(text, 30):ToAllIf(self.Debug)
   self:T(ARTY.id..text)
 end
 
