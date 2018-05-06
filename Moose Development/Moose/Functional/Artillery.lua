@@ -269,7 +269,7 @@ ARTY.id="ARTY | "
 
 --- Arty script version.
 -- @field #number version
-ARTY.version="0.8.3"
+ARTY.version="0.8.4"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -407,10 +407,10 @@ end
 -- @param #string name (Optional) Name of the target. Default is LL DMS coordinate of the target. If the name was already given, the numbering "#01", "#02",... is appended automatically.
 -- @return #string Name of the target. Can be used for further reference, e.g. deleting the target from the list.
 -- @usage paladin=ARTY:New(GROUP:FindByName("Blue Paladin"))
--- paladin:AssignTargetCoord(GROUP:FindByName("Red Targets 1"):GetCoordinate(), 10, 300, 10, 1, "08:02:00", ARTY.WeaponType.Auto, "Red Targets 1")
+-- paladin:AssignTargetCoord(GROUP:FindByName("Red Targets 1"):GetCoordinate(), 10, 300, 10, 1, "08:02:00", ARTY.WeaponType.Auto, "Target 1")
 -- paladin:Start()
 function ARTY:AssignTargetCoord(coord, prio, radius, nshells, maxengage, time, weapontype, name)
-  self:T({coord=coord, prio=prio, radius=radius, nshells=nshells, maxengage=maxengage, time=time, weapontype=weapontype, name=name})
+  self:F({coord=coord, prio=prio, radius=radius, nshells=nshells, maxengage=maxengage, time=time, weapontype=weapontype, name=name})
   
   -- Set default values.
   nshells=nshells or 5
@@ -435,12 +435,6 @@ function ARTY:AssignTargetCoord(coord, prio, radius, nshells, maxengage, time, w
   
   -- Add to table.
   table.insert(self.targets, _target)
-  
-  -- Clock.
-  local _clock=self:_SecondsToClock(_target.time)
-  
-  -- Debug info.
-  self:T(ARTY.id..string.format("Added target %s", self:_TargetInfo(_target)))
   
   -- Trigger new target event.
   self:NewTarget(_target)
@@ -632,12 +626,8 @@ function ARTY:onafterStart(Controllable, From, Event, To)
   self:HandleEvent(EVENTS.Shot, self._OnEventShot)
   self:HandleEvent(EVENTS.Dead, self._OnEventDead)
   
+  -- Start checking status.
   self:__Status(5)
-
-  -- Start scheduler to monitor if ARTY group started firing within a certain time.
-  --TODO: move this to status checks
-  self.SchedIDCheckShooting=self.scheduler:Schedule(self, ARTY._CheckShootingStarted, {self}, 60, 60)
-
 end
 
 --- After "Start" event. Initialized ROE and alarm state. Starts the event handler.
@@ -648,8 +638,8 @@ function ARTY:_StatusReport()
   local Nammo, Nshells, Nrockets, Nmissiles=self:_GetAmmo(self.Controllable)
   local Tnow=timer.getTime()
   
-  local text=string.format("\n******************************************************\n")
-  text=text..string.format("Status of ARTY      = %s\n", self.Controllable:GetName())
+  local text=string.format("\n******************* STATUS ***************************\n")
+  text=text..string.format("ARTY group          = %s\n", self.Controllable:GetName())
   text=text..string.format("FSM state           = %s\n", self:GetState())
   text=text..string.format("Total ammo count    = %d\n", Nammo)
   text=text..string.format("Number of shells    = %d\n", Nshells)
@@ -846,28 +836,41 @@ function ARTY:onafterStatus(Controllable, From, Event, To)
     self:CombatReady()
   end
   
-  -- Group is combat ready.
-  if self:is("CombatReady") then
-    env.info(string.format("FF: Combatready. Looking for targets."))
-  
-    -- Get a valid timed target if it is due to be attacked.  
-    local _timedTarget=self:_CheckTimedTargets()
-    -- Get a valid normal target (one that is not timed).
-    local _normalTarget=self:_CheckNormalTargets()
+  -- Group is firing on target.
+  if self:is("Firing") then
+    -- Check that firing started after ~5 min. If not, target is removed.
+    self:_CheckShootingStarted()
+  end
+
+
+  -- Get a valid timed target if it is due to be attacked.  
+  local _timedTarget=self:_CheckTimedTargets()
+      
+  -- Get a valid normal target (one that is not timed).
+  local _normalTarget=self:_CheckNormalTargets()
+
+
+  -- Group is combat ready or firing but we have a high prio timed target.
+  if self:is("CombatReady") or (self:is("Firing") and _timedTarget) then
+    env.info(string.format("FF: Combatready or firing and high prio timed target."))
   
     -- Engage target.
     if _timedTarget then
+    
       -- Cease fire on current target first.
       if self.currentTarget then
         self:CeaseFire(self.currentTarget)
       end
+      
       -- Open fire on timed target.
       self:OpenFire(_timedTarget)
+      
     elseif _normalTarget then
+    
       -- Open fire on normal target.
       self:OpenFire(_normalTarget)
+      
     end
-    
   end
   
   -- Call status again in 5 sec.
@@ -1023,7 +1026,7 @@ function ARTY:onafterWinchester(Controllable, From, Event, To)
   self:_EventFromTo("onafterWinchester", Event, From, To)
   
   -- Send message.
-  local text=string.format("%s, winchester.", Controllable:GetName())
+  local text=string.format("%s, winchester!", Controllable:GetName())
   self:T(ARTY.id..text)
   MESSAGE:New(text, 30):ToCoalitionIf(Controllable:GetCoalition(), self.report or self.Debug)
   
@@ -1130,7 +1133,7 @@ end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- After "Rearmed" event. Send message if reporting is on and stop the scheduler.
+--- After "Rearmed" event. Send ARTY and rearming group back to their inital positions.
 -- @param #ARTY self
 -- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
 -- @param #string From From state.
@@ -1189,7 +1192,7 @@ function ARTY:_CheckRearmed()
     MESSAGE:New(text, 10):ToCoalitionIf(self.Controllable:GetCoalition(), self.report or self.Debug)
   end
       
-  -- Rearming --> Rearmed --> CombatReady
+  -- Return if ammo is full.
   if nammo==self.FullAmmo then
     return true
   else
@@ -1314,7 +1317,7 @@ function ARTY:onafterDead(Controllable, From, Event, To)
   
 end
 
---- After "Stop" event. Stop schedulers and unhandle events.
+--- After "Stop" event. Unhandle events and cease fire on current target.
 -- @param #ARTY self
 -- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
 -- @param #string From From state.
@@ -1333,14 +1336,6 @@ function ARTY:onafterStop(Controllable, From, Event, To)
   
   -- Remove all targets.
   --self:RemoveAllTargets()
-  
-  -- Stop schedulers.
-  if self.SchedIDCheckShooting then
-    self.scheduler:Stop(self.SchedIDCheckShooting)
-  end
-  if self.SchedIDCheckRearmed then
-    --self.scheduler:Stop(self.SchedIDCheckRearmed)
-  end
   
   -- Unhandle event.
   self:UnHandleEvent(EVENTS.Shot)
@@ -1361,7 +1356,7 @@ function ARTY:_FireAtCoord(coord, radius, nshells, weapontype)
   self:F({coord=coord, radius=radius, nshells=nshells})
 
   -- Controllable.
-  local group=self.Controllable --Wrapper.Controllable#CONTROLLABLE
+  local group=self.Controllable --Wrapper.Group#GROUP
 
   -- Set ROE to weapon free.
   group:OptionROEOpenFire()
@@ -1393,14 +1388,14 @@ function ARTY:_SortTargetQueuePrio()
   self:T2(ARTY.id.."Sorted targets wrt prio and number of engagements:")
   for i=1,#self.targets do
     local _target=self.targets[i]
-    local _clock=self:_SecondsToClock(_target.time)
-    self:T2(ARTY.id..string.format("Target %s, prio=%d, engaged=%d, time=%s", _target.name, _target.prio, _target.engaged, tostring(_clock)))
+    self:T2(ARTY.id..string.format("Target %s", self:_TargetInfo(_target)))
   end
 end
 
---- Sort targets with respect to engage time.
+--- Sort array with respect to time. Array elements must have a .time entry. 
 -- @param #ARTY self
-function ARTY:_SortTargetQueueTime()
+-- @param #table queue Array to sort. Should have elemnt .time.
+function ARTY:_SortQueueTime(queue)
   self:F2()
 
   -- Sort targets w.r.t attack time.
@@ -1416,14 +1411,15 @@ function ARTY:_SortTargetQueueTime()
     end
     return a.time < b.time
   end
-  table.sort(self.targets, _sort)
+  table.sort(queue, _sort)
 
   -- Debug output.
-  self:T2(ARTY.id.."Sorted targets wrt time:")
-  for i=1,#self.targets do
-    local _target=self.targets[i]
-    local _clock=self:_SecondsToClock(_target.time)
-    self:T2(ARTY.id..string.format("Target %s, prio=%d, engaged=%d, time=%s", _target.name, _target.prio, _target.engaged, tostring(_clock)))
+  self:T(ARTY.id.."Sorted queue wrt time:")
+  for i=1,#queue do
+    local _queue=queue[i]
+    local _time=tostring(_queue.time)
+    local _clock=tostring(self:_SecondsToClock(_queue.time))
+    self:T(ARTY.id..string.format("%s: time=%s, clock=%s", _queue.name, _time, _clock))
   end
 
 end
@@ -1437,10 +1433,13 @@ function ARTY:_CheckTimedTargets()
   local Tnow=timer.getAbsTime()
   
   -- Sort Targets wrt time.
-  self:_SortTargetQueueTime()
+  self:_SortQueueTime(self.targets)
   
   for i=1,#self.targets do
     local _target=self.targets[i]
+    
+    -- Debug info.
+    self:T3(ARTY.id..string.format("Check TIMED target %d: %s", i, self:_TargetInfo(_target)))
     
     -- Check if target has an attack time which has already passed. Also check that target is not under fire already and that it is in range. 
     if _target.time and Tnow>=_target.time and _target.underfire==false and self:_TargetInRange(_target) then
@@ -1449,7 +1448,7 @@ function ARTY:_CheckTimedTargets()
       if self.currentTarget then
         if self.currentTarget.prio > _target.prio then
           -- Current target under attack but has lower priority than this target.
-          self:T(ARTY.id..string.format("Found TIMED HIGH PRIO target %s.", self:_TargetInRange(_target)))
+          self:T(ARTY.id..string.format("Found TIMED HIGH PRIO target %s.", self:_TargetInfo(_target)))
           return _target
         end
       else
@@ -1474,6 +1473,9 @@ function ARTY:_CheckNormalTargets()
   -- Loop over all sorted targets.
   for i=1,#self.targets do  
     local _target=self.targets[i]
+    
+    -- Debug info.
+    self:T3(ARTY.id..string.format("Check NORMAL target %d: %s", i, self:_TargetInfo(_target)))
   
     -- Check that target no time, is not under fire currently and in range.
     if _target.underfire==false and _target.time==nil and _target.maxengage > _target.engaged and self:_TargetInRange(_target) then
@@ -1802,14 +1804,12 @@ end
 -- @param #string sep Speparator for split.
 -- @return #table Split text.
 function ARTY:_split(str, sep)
-  self:F3({str=str, sep=sep})
-  
+  self:F3({str=str, sep=sep})  
   local result = {}
   local regex = ("([^%s]+)"):format(sep)
   for each in str:gmatch(regex) do
     table.insert(result, each)
   end
-  
   return result
 end
 
