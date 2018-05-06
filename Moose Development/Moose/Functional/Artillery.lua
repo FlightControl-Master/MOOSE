@@ -14,7 +14,9 @@
 -- * Multiple targets can be assigned. No restriction on number of targets.
 -- * Targets can be given a priority. Engagement of targets is executed a according to their priority.
 -- * Engagements can be scheduled, i.e. will be executed at a certain time of the day.
--- * Special weapon types can be selected.
+-- * Special weapon types can be selected for each attack, e.g. cruise missiles for Naval units.
+-- * Automatic rearming once the artillery is out of ammo.
+-- * Finite state machine implementation. User can interact when certain events occur.
 -- 
 -- ====
 -- 
@@ -49,11 +51,7 @@
 -- @field #number Nrockets0 Initial amount of rockets of the whole group.
 -- @field #number Nmissiles0 Initial amount of missiles of the whole group.
 -- @field #number FullAmmo Full amount of all ammunition taking the number of alive units into account.
--- @field Core.Scheduler#SCHEDULER scheduler Scheduler object handling various timed functions.
--- @field #number SchedIDCheckRearmed Scheduler ID responsible for checking whether rearming of the ARTY group is complete.
--- @field #number SchedIDCheckShooting Scheduler ID for checking whether a group startet firing within a certain time after the fire at point task was assigned.
 -- @field #number WaitForShotTime Max time in seconds to wait until fist shot event occurs after target is assigned. If time is passed without shot, the target is deleted. Default is 300 seconds.
--- @field #number SchedIDStatusReport Scheduler ID for status report messages. The scheduler is only launched in debug mode.
 -- @field #table DCSdesc DCS descriptors of the ARTY group.
 -- @field #string Type Type of the ARTY group.
 -- @field #string DisplayName Extended type name of the ARTY group.
@@ -229,9 +227,6 @@ ARTY={
   Nrockets0=0,
   Nmissiles0=0,
   FullAmmo=0,
-  scheduler=nil,
-  SchedIDCheckRearmed=nil,
-  SchedIDCheckShooting=nil,
   WaitForShotTime=300,
   SchedIDStatusReport=nil,
   DCSdesc=nil,
@@ -269,7 +264,7 @@ ARTY.id="ARTY | "
 
 --- Arty script version.
 -- @field #number version
-ARTY.version="0.8.4"
+ARTY.version="0.8.5"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -290,7 +285,7 @@ ARTY.version="0.8.4"
 -- DONE: Make reaming unit a group.
 -- TODO: Adjust documenation again.
 -- TODO: Add command move to make arty group move.
--- TODO: remove schedulers for status event.
+-- DONE: remove schedulers for status event.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -324,9 +319,6 @@ function ARTY:New(group)
   
   -- Set the initial coordinates of the ARTY group.
   self.InitialCoord=group:GetCoordinate()
-  
-  -- Create scheduler object.
-  self.scheduler=SCHEDULER:New(self)
   
   -- Get DCS descriptors of group.
   local DCSgroup=Group.getByName(group:GetName())
@@ -577,7 +569,7 @@ function ARTY:onafterStart(Controllable, From, Event, To)
   MESSAGE:New(text, 10):ToAllIf(self.Debug)
   
   -- Get Ammo.
-  self.Nammo0, self.Nshells0, self.Nrockets0, self.Nmissiles0=self:_GetAmmo(self.Controllable)
+  self.Nammo0, self.Nshells0, self.Nrockets0, self.Nmissiles0=self:GetAmmo(self.Controllable, self.Debug)
   
   local text=string.format("\n******************************************************\n")
   text=text..string.format("Arty group          = %s\n", Controllable:GetName())
@@ -635,7 +627,7 @@ end
 function ARTY:_StatusReport()
 
   -- Get Ammo.
-  local Nammo, Nshells, Nrockets, Nmissiles=self:_GetAmmo(self.Controllable)
+  local Nammo, Nshells, Nrockets, Nmissiles=self:GetAmmo(self.Controllable)
   local Tnow=timer.getTime()
   
   local text=string.format("\n******************* STATUS ***************************\n")
@@ -699,7 +691,7 @@ function ARTY:_OnEventShot(EventData)
         MESSAGE:New(text, 5):ToAllIf(self.Debug)
         
         -- Get current ammo.
-        local _nammo,_nshells,_nrockets,_nmissiles=self:_GetAmmo(self.Controllable)
+        local _nammo,_nshells,_nrockets,_nmissiles=self:GetAmmo(self.Controllable)
         
         if _nammo==0 then
         
@@ -1170,7 +1162,7 @@ function ARTY:_CheckRearmed()
   self:F2()
 
   -- Get current ammo.
-  local nammo,nshells,nrockets,nmissiles=self:_GetAmmo(self.Controllable)
+  local nammo,nshells,nrockets,nmissiles=self:GetAmmo(self.Controllable)
   
   -- Number of units still alive.
   local units=self.Controllable:GetUnits()
@@ -1385,10 +1377,10 @@ function ARTY:_SortTargetQueuePrio()
   table.sort(self.targets, _sort)
   
   -- Debug output.
-  self:T2(ARTY.id.."Sorted targets wrt prio and number of engagements:")
+  self:T3(ARTY.id.."Sorted targets wrt prio and number of engagements:")
   for i=1,#self.targets do
     local _target=self.targets[i]
-    self:T2(ARTY.id..string.format("Target %s", self:_TargetInfo(_target)))
+    self:T3(ARTY.id..string.format("Target %s", self:_TargetInfo(_target)))
   end
 end
 
@@ -1396,7 +1388,7 @@ end
 -- @param #ARTY self
 -- @param #table queue Array to sort. Should have elemnt .time.
 function ARTY:_SortQueueTime(queue)
-  self:F2()
+  self:F3({queue=queue})
 
   -- Sort targets w.r.t attack time.
   local function _sort(a, b)
@@ -1414,12 +1406,12 @@ function ARTY:_SortQueueTime(queue)
   table.sort(queue, _sort)
 
   -- Debug output.
-  self:T(ARTY.id.."Sorted queue wrt time:")
+  self:T3(ARTY.id.."Sorted queue wrt time:")
   for i=1,#queue do
     local _queue=queue[i]
     local _time=tostring(_queue.time)
     local _clock=tostring(self:_SecondsToClock(_queue.time))
-    self:T(ARTY.id..string.format("%s: time=%s, clock=%s", _queue.name, _time, _clock))
+    self:T3(ARTY.id..string.format("%s: time=%s, clock=%s", _queue.name, _time, _clock))
   end
 
 end
@@ -1428,7 +1420,8 @@ end
 -- @param #ARTY self
 -- @return #table Target which is due to be attacked now. 
 function ARTY:_CheckTimedTargets()
-
+  self:F3()
+  
   -- Current time.
   local Tnow=timer.getAbsTime()
   
@@ -1448,12 +1441,12 @@ function ARTY:_CheckTimedTargets()
       if self.currentTarget then
         if self.currentTarget.prio > _target.prio then
           -- Current target under attack but has lower priority than this target.
-          self:T(ARTY.id..string.format("Found TIMED HIGH PRIO target %s.", self:_TargetInfo(_target)))
+          self:T2(ARTY.id..string.format("Found TIMED HIGH PRIO target %s.", self:_TargetInfo(_target)))
           return _target
         end
       else
         -- No current target.
-        self:T(ARTY.id..string.format("Found TIMED target %s.", self:_TargetInfo(_target)))
+        self:T2(ARTY.id..string.format("Found TIMED target %s.", self:_TargetInfo(_target)))
         return _target
       end
     end
@@ -1481,7 +1474,7 @@ function ARTY:_CheckNormalTargets()
     if _target.underfire==false and _target.time==nil and _target.maxengage > _target.engaged and self:_TargetInRange(_target) then
       
       -- Debug info.
-      self:T(ARTY.id..string.format("Found NORMAL target %s", self:_TargetInfo(_target)))
+      self:T2(ARTY.id..string.format("Found NORMAL target %s", self:_TargetInfo(_target)))
       
       return _target
     end
@@ -1493,12 +1486,17 @@ end
 --- Get the number of shells a unit or group currently has. For a group the ammo count of all units is summed up.
 -- @param #ARTY self
 -- @param Wrapper.Controllable#CONTROLLABLE controllable Controllable for which the ammo is counted.
+-- @param #boolean display Display ammo table as message to all. Default false.
 -- @return #number Total amount of ammo the whole group has left.
 -- @return #number Number of shells the group has left.
 -- @return #number Number of rockets the group has left.
 -- @return #number Number of missiles the group has left.
-function ARTY:_GetAmmo(controllable)
-  self:F2(controllable)
+function ARTY:GetAmmo(controllable, display)
+  self:F3({controllable=controllable, display=display})
+  
+  if display==nil then
+    display=false
+  end
     
   -- Init counter.
   local nammo=0
@@ -1515,18 +1513,19 @@ function ARTY:_GetAmmo(controllable)
   for _,unit in pairs(units) do
   
     if unit and unit:IsAlive() then
+    
+      -- Output.
+      local text=string.format("ARTY group %s - unit %s:\n", self.Controllable:GetName(), unit:GetName())
   
+      -- Get ammo table.
       local ammotable=unit:GetAmmo()
-      self:T2({ammotable=ammotable})
-      
-      local name=unit:GetName()
-      
+
       if ammotable ~= nil then
       
         local weapons=#ammotable
         
         self:T2(ARTY.id..string.format("Number of weapons %d.", weapons))
-        self:T2(ammotable)
+        self:T2({ammotable=ammotable})
         
         -- Loop over all weapons.
         for w=1,weapons do
@@ -1568,9 +1567,7 @@ function ARTY:_GetAmmo(controllable)
             nshells=nshells+Nammo
           
             -- Debug info.
-            local text=string.format("Unit %s has %d shells of type %s", name, Nammo, Tammo)
-            self:T2(ARTY.id..text)
-            MESSAGE:New(text, 10):ToAllIf(self.Debug and not self.report)
+            text=text..string.format("- %d shells of type %s\n", Nammo, Tammo)
             
           elseif _gotrocket then
           
@@ -1578,9 +1575,7 @@ function ARTY:_GetAmmo(controllable)
             nrockets=nrockets+Nammo
             
             -- Debug info.
-            local text=string.format("Unit %s has %d rockets of type %s", name, Nammo, Tammo)
-            self:T2(ARTY.id..text)
-            MESSAGE:New(text, 10):ToAllIf(self.Debug and not self.report)
+            text=text..string.format("- %d rockets of type %s\n", Nammo, Tammo)
             
           elseif _gotmissile then
           
@@ -1588,21 +1583,22 @@ function ARTY:_GetAmmo(controllable)
             nmissiles=nmissiles+Nammo
             
             -- Debug info.
-            local text=string.format("Unit %s has %d missiles of type %s", name, Nammo, Tammo)
-            self:T2(ARTY.id..text)
-            MESSAGE:New(text, 10):ToAllIf(self.Debug and not self.report)          
-                    
+            text=text..string.format("- %d missiles of type %s\n", name, Nammo, Tammo)
+                                
           else
           
             -- Debug info.
-            local text=string.format("Unit %s has %d ammo of type %s", name, Nammo, Tammo)
-            self:T2(ARTY.id..text)
-            MESSAGE:New(text, 10):ToAllIf(self.Debug and not self.report)
+            text=text..string.format("- %d unknown ammo of type %s\n", Nammo, Tammo)
             
           end
           
         end
       end
+
+      self:T2(ARTY.id..text)
+      MESSAGE:New(text, 10):ToAllIf(display)
+            
+      
     end
   end
       
@@ -1768,7 +1764,7 @@ function ARTY:_WeaponTypeName(tnumber)
   return name
 end
 
---- After "Rearmed" event. Send message if reporting is on and stop the scheduler.
+--- Find a random coordinate in the vicinity of another coordinate. 
 -- @param #ARTY self
 -- @param Core.Point#COORDINATE coord Center coordinate.
 -- @param #number rmin (Optional) Minimum distance in meters from center coordinate. Default 20 m.
