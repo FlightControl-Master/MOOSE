@@ -47,6 +47,7 @@
 -- @field #table targets All targets assigned.
 -- @field #table moves All moves assigned.
 -- @field #table currentTarget Holds the current target, if there is one assigned.
+-- @field #table currentMove Holds the current commanded move, if there is one assigned.
 -- @field #number Nammo0 Initial amount total ammunition (shells+rockets+missiles) of the whole group.
 -- @field #number Nshells0 Initial amount of shells of the whole group.
 -- @field #number Nrockets0 Initial amount of rockets of the whole group.
@@ -225,11 +226,12 @@
 -- 
 -- @field #ARTY
 ARTY={
-  ClassName = "ARTY",
-  Debug = true,
-  targets = {},
-  moves = {},
-  currentTarget = nil,
+  ClassName="ARTY",
+  Debug=true,
+  targets={},
+  moves={},
+  currentTarget=nil,
+  currentMove=nil,
   Nammo0=0,
   Nshells0=0,
   Nrockets0=0,
@@ -276,7 +278,7 @@ ARTY.id="ARTY | "
 
 --- Arty script version.
 -- @field #number version
-ARTY.version="0.8.7"
+ARTY.version="0.8.8"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -296,7 +298,7 @@ ARTY.version="0.8.7"
 -- DONE: Add pseudo user transitions. OnAfter...
 -- DONE: Make reaming unit a group.
 -- TODO: Adjust documenation again.
--- TODO: Add command move to make arty group move.
+-- DONE: Add command move to make arty group move.
 -- DONE: remove schedulers for status event.
 -- TODO: Improve handling of special weapons. When winchester?
 
@@ -606,17 +608,30 @@ function ARTY:SetDebugOFF()
   self.Debug=false
 end
 
---- Delete target from target list.
+--- Delete a target from target list.
 -- @param #ARTY self
 -- @param #string name Name of the target.
 function ARTY:RemoveTarget(name)
   self:F2(name)
-  local id=self:_GetTargetByName(name)
+  local id=self:_GetTargetIndexByName(name)
   if id then
     self:T(ARTY.id..string.format("Group %s: Removing target %s (id=%d).", self.Controllable:GetName(), name, id))
     table.remove(self.targets, id)
   end
   self:T(ARTY.id..string.format("Group %s: Number of targets = %d.", self.Controllable:GetName(), #self.targets))
+end
+
+--- Delete a move from move list.
+-- @param #ARTY self
+-- @param #string name Name of the target.
+function ARTY:RemoveMove(name)
+  self:F2(name)
+  local id=self:_GetMoveIndexByName(name)
+  if id then
+    self:T(ARTY.id..string.format("Group %s: Removing move %s (id=%d).", self.Controllable:GetName(), name, id))
+    table.remove(self.moves, id)
+  end
+  self:T(ARTY.id..string.format("Group %s: Number of moves = %d.", self.Controllable:GetName(), #self.moves))
 end
 
 --- Delete ALL targets from current target list.
@@ -679,7 +694,7 @@ function ARTY:onafterStart(Controllable, From, Event, To)
   MESSAGE:New(text, 10):ToAllIf(self.Debug)
   
   -- Get Ammo.
-  self.Nammo0, self.Nshells0, self.Nrockets0, self.Nmissiles0=self:GetAmmo(self.Controllable, self.Debug)
+  self.Nammo0, self.Nshells0, self.Nrockets0, self.Nmissiles0=self:GetAmmo(self.Debug)
   
   local text=string.format("\n******************************************************\n")
   text=text..string.format("Arty group          = %s\n", Controllable:GetName())
@@ -715,9 +730,7 @@ function ARTY:onafterStart(Controllable, From, Event, To)
   end
   text=text..string.format("Moves:\n")
   for i=1,#self.moves do
-    local _move=self.moves[i]
-    local _clock=tostring(self:_SecondsToClock(_move.time))
-    text=text..string.format("- %s: time=%s, speed=%d, onroad=%s, cancel=%s\n", _move.name, _clock, _move.speed, tostring(_move.onroad), tostring(_move.cancel))
+    text=text..string.format("- %s\n", self:_MoveInfo(self.moves[i]))
   end
   text=text..string.format("******************************************************\n")
   text=text..string.format("Shell types:\n")
@@ -748,7 +761,7 @@ end
 function ARTY:_StatusReport()
 
   -- Get Ammo.
-  local Nammo, Nshells, Nrockets, Nmissiles=self:GetAmmo(self.Controllable)
+  local Nammo, Nshells, Nrockets, Nmissiles=self:GetAmmo()
   local Tnow=timer.getTime()
   
   local text=string.format("\n******************* STATUS ***************************\n")
@@ -766,8 +779,12 @@ function ARTY:_StatusReport()
   end
   text=text..string.format("Nshots curr. Target = %d\n", self.Nshots)
   text=text..string.format("Targets:\n")
-  for _, target in pairs(self.targets) do
-    text=text..string.format("- %s\n", self:_TargetInfo(target))
+  for i=1,#self.targets do
+    text=text..string.format("- %s\n", self:_TargetInfo(self.targets[i]))
+  end
+  text=text..string.format("Moves:\n")
+  for i=1,#self.moves do
+    text=text..string.format("- %s\n", self:_MoveInfo(self.moves[i]))
   end
   text=text..string.format("******************************************************")
   env.info(ARTY.id..text)
@@ -812,7 +829,7 @@ function ARTY:_OnEventShot(EventData)
         MESSAGE:New(text, 5):ToAllIf(self.Debug)
         
         -- Get current ammo.
-        local _nammo,_nshells,_nrockets,_nmissiles=self:GetAmmo(self.Controllable)
+        local _nammo,_nshells,_nrockets,_nmissiles=self:GetAmmo()
         
         if _nammo==0 then
         
@@ -960,9 +977,18 @@ function ARTY:onafterStatus(Controllable, From, Event, To)
       
   -- Get a valid normal target (one that is not timed).
   local _normalTarget=self:_CheckNormalTargets()
+  
+  -- Get a commaned move to another location.
+  local _move=self:_CheckMoves()
 
   -- Group is combat ready or firing but we have a high prio timed target.
-  if self:is("CombatReady") or (self:is("Firing") and _timedTarget) then
+  if (self:is("CombatReady") or self:is("Firing")) and _move then
+  
+    -- Command to move.
+    self.currentMove=_move
+    self:Move(_move.coord, _move.speed, _move.onroad)
+  
+  elseif self:is("CombatReady") or (self:is("Firing") and _timedTarget) then
     env.info(string.format("FF: Combatready or firing and high prio timed target."))
   
     -- Engage target.
@@ -1048,7 +1074,7 @@ function ARTY:onafterOpenFire(Controllable, From, Event, To, target)
   --_coord:MarkToAll("Arty Target")
     
   -- Get target array index.
-  local id=self:_GetTargetByName(target.name)
+  local id=self:_GetTargetIndexByName(target.name)
   
   -- Target is now under fire and has been engaged once more.
   if id then
@@ -1062,9 +1088,36 @@ function ARTY:onafterOpenFire(Controllable, From, Event, To, target)
   
   -- Distance to target
   local range=Controllable:GetCoordinate():Get2DDistance(target.coord)
+  
+  -- Get ammo.
+  local Nammo, Nshells, Nrockets, Nmissiles=self:GetAmmo()
+  local nfire=Nammo
+  local _type="shots"
+  if self.WeaponType==ARTY.WeaponType.Auto then
+    nfire=Nammo
+    _type="shots"
+  elseif self.WeaponType==ARTY.WeaponType.Cannon then
+    nfire=Nshells
+    _type="shells"
+  elseif self.WeaponType==ARTY.WeaponType.Rockets then
+    nfire=Nrockets
+    _type="rockets"
+  elseif self.WeaponType==ARTY.WeaponType.UnguidedAny then
+    nfire=Nshells+Nrockets
+    _type="shells or rockets"
+  elseif self.WeaponType==ARTY.WeaponType.GuidedMissile then
+    nfire=Nmissiles
+    _type="missiles"
+  elseif self.WeaponType==ARTY.WeaponType.CruiseMissile then
+    nfire=Nmissiles
+    _type="cruise missiles"
+  end  
+  
+  -- Adjust if less than requested ammo is left.
+  local _n=math.min(target.nshells, nfire)
     
   -- Send message.
-  local text=string.format("%s, opening fire on target %s with %s shells. Distance %.1f km.", Controllable:GetName(), target.name, target.nshells, range/1000)
+  local text=string.format("%s, opening fire on target %s with %d %s. Distance %.1f km.", Controllable:GetName(), target.name, _n, _type, range/1000)
   self:T(ARTY.id..text)
   MESSAGE:New(text, 10):ToCoalitionIf(Controllable:GetCoalition(), self.report)
   
@@ -1093,7 +1146,7 @@ function ARTY:onafterCeaseFire(Controllable, From, Event, To, target)
     MESSAGE:New(text, 10):ToCoalitionIf(Controllable:GetCoalition(), self.report)
         
     -- Get target array index.
-    local id=self:_GetTargetByName(target.name)
+    local id=self:_GetTargetIndexByName(target.name)
     
     -- Increase engaged counter
     if id then
@@ -1289,7 +1342,7 @@ function ARTY:_CheckRearmed()
   self:F2()
 
   -- Get current ammo.
-  local nammo,nshells,nrockets,nmissiles=self:GetAmmo(self.Controllable)
+  local nammo,nshells,nrockets,nmissiles=self:GetAmmo()
   
   -- Number of units still alive.
   local units=self.Controllable:GetUnits()
@@ -1353,7 +1406,7 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param Wrapper.Point#COORDINATE ToCoord Coordinate to which the ARTY group should move.
+-- @param Core.Point#COORDINATE ToCoord Coordinate to which the ARTY group should move.
 -- @param #number Speed Speed in km/h at which the grou p should move.
 -- @param #boolean OnRoad If true group should move on road mainly. 
 function ARTY:onafterMove(Controllable, From, Event, To, ToCoord, Speed, OnRoad)
@@ -1365,6 +1418,11 @@ function ARTY:onafterMove(Controllable, From, Event, To, ToCoord, Speed, OnRoad)
   
   -- Take care of max speed.
   local _Speed=math.min(Speed, self.SpeedMax)
+  
+  -- Smoke coordinate
+  if self.Debug then
+    ToCoord:SmokeRed()
+  end
 
   -- Route group to coodinate.
   self:_Move(self.Controllable, ToCoord, _Speed, OnRoad)
@@ -1387,6 +1445,12 @@ function ARTY:onafterArrived(Controllable, From, Event, To)
   local text=string.format("%s, arrived at destination.", Controllable:GetName())
   self:T(ARTY.id..text)
   MESSAGE:New(text, 10):ToCoalitionIf(Controllable:GetCoalition(), self.report or self.Debug)
+  
+  -- Remove executed move from queue.
+  if self.currentMove then
+    self:RemoveMove(self.currentMove.name)
+    self.currentMove=nil
+  end
   
 end
 
@@ -1604,6 +1668,36 @@ function ARTY:_CheckTimedTargets()
   return nil
 end
 
+--- Check all moves and return the one which should be executed next.
+-- @param #ARTY self
+-- @return #table Move which is due. 
+function ARTY:_CheckMoves()
+  self:F3()
+  
+  -- Current time.
+  local Tnow=timer.getAbsTime()
+  
+  -- Sort Targets wrt time.
+  self:_SortQueueTime(self.moves)
+  
+  -- Check if we are currently firing.
+  local firing=false
+  if self.currentTarget then
+    firing=true
+  end
+  
+  for i=1,#self.moves do
+    local _move=self.moves[i]
+    
+    -- Check if time for move is reached. 
+    if Tnow >= _move.time and (firing==false or _move.cancel) then
+      return _move
+    end 
+  end
+  
+  return nil
+end
+
 --- Check all normal (untimed) targets and return the target with the highest priority which has been engaged the fewest times.
 -- @param #ARTY self
 -- @return #table Target which is due to be attacked now or nil if no target could be found.
@@ -1634,15 +1728,15 @@ end
 
 --- Get the number of shells a unit or group currently has. For a group the ammo count of all units is summed up.
 -- @param #ARTY self
--- @param Wrapper.Controllable#CONTROLLABLE controllable Controllable for which the ammo is counted.
 -- @param #boolean display Display ammo table as message to all. Default false.
 -- @return #number Total amount of ammo the whole group has left.
 -- @return #number Number of shells the group has left.
 -- @return #number Number of rockets the group has left.
 -- @return #number Number of missiles the group has left.
-function ARTY:GetAmmo(controllable, display)
-  self:F3({controllable=controllable, display=display})
+function ARTY:GetAmmo(display)
+  self:F3({display=display})
   
+  -- Default is display false.
   if display==nil then
     display=false
   end
@@ -1654,7 +1748,7 @@ function ARTY:GetAmmo(controllable, display)
   local nmissiles=0
   
   -- Get all units.
-  local units=controllable:GetUnits()
+  local units=self.Controllable:GetUnits()
   if units==nil then
     return nammo, nshells, nrockets, nmissiles
   end
@@ -1744,10 +1838,10 @@ function ARTY:GetAmmo(controllable, display)
         end
       end
 
+      -- Debug text and send message.
       self:T2(ARTY.id..text)
       MESSAGE:New(text, 10):ToAllIf(display)
-            
-      
+               
     end
   end
       
@@ -1795,11 +1889,11 @@ function ARTY:_CheckShootingStarted()
   end
 end
 
---- Get a target by its name.
+--- Get the index of a target by its name.
 -- @param #ARTY self
 -- @param #string name Name of target.
 -- @return #number Arrayindex of target.
-function ARTY:_GetTargetByName(name)
+function ARTY:_GetTargetIndexByName(name)
   self:F2(name)
   
   for i=1,#self.targets do
@@ -1813,6 +1907,26 @@ function ARTY:_GetTargetByName(name)
   self:E(ARTY.id..string.format("ERROR: Target with name %s could not be found!", name))
   return nil
 end
+
+--- Get the index of a move by its name.
+-- @param #ARTY self
+-- @param #string name Name of move.
+-- @return #number Arrayindex of move.
+function ARTY:_GetMoveIndexByName(name)
+  self:F2(name)
+  
+  for i=1,#self.moves do
+    local movename=self.moves[i].name
+    if movename==name then
+      self:T2(ARTY.id..string.format("Found move with name %s. Index = %d", name, i))
+      return i
+    end
+  end
+  
+  self:E(ARTY.id..string.format("ERROR: Move with name %s could not be found!", name))
+  return nil
+end
+
 
 
 --- Check if a name is unique. If not, a new unique name is created by adding a running index #01, #02, ...
@@ -1959,15 +2073,25 @@ function ARTY:_split(str, sep)
   return result
 end
 
---- Returns the target info as formatted string.
+--- Returns the target parameters as formatted string.
 -- @param #ARTY self
 -- @return #string name, prio, radius, nshells, engaged, maxengage, time, weapontype
 function ARTY:_TargetInfo(target)
   local clock=tostring(self:_SecondsToClock(target.time))
   local weapon=self:_WeaponTypeName(target.weapontype)
   local _underfire=tostring(target.underfire)
-  return string.format("%s, prio=%d, radius=%d, nshells=%d, engaged=%d/%d, weapontype=%s, time=%s, underfire=%s",
+  return string.format("%s: prio=%d, radius=%d, nshells=%d, engaged=%d/%d, weapontype=%s, time=%s, underfire=%s",
   target.name, target.prio, target.radius, target.nshells, target.engaged, target.maxengage, weapon, clock,_underfire)
+end
+
+--- Returns a formatted string with information about all move parameters.
+-- @param #ARTY self
+-- @param #table move Move table item.
+-- @return #string Info string.
+function ARTY:_MoveInfo(move)
+  self:F3(move)
+  local _clock=self:_SecondsToClock(move.time)
+  return string.format("%s: time=%s, speed=%d, onroad=%s, cancel=%s", move.name, _clock, move.speed, tostring(move.onroad), tostring(move.cancel))
 end
 
 --- Convert time in seconds to hours, minutes and seconds.
