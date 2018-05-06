@@ -44,30 +44,36 @@
 -- @type ARTY
 -- @field #string ClassName Name of the class.
 -- @field #boolean Debug Write Debug messages to DCS log file and send Debug messages to all players.
--- @field #table targets Targets assigned.
+-- @field #table targets All targets assigned.
+-- @field #table moves All moves assigned.
 -- @field #table currentTarget Holds the current target, if there is one assigned.
 -- @field #number Nammo0 Initial amount total ammunition (shells+rockets+missiles) of the whole group.
 -- @field #number Nshells0 Initial amount of shells of the whole group.
 -- @field #number Nrockets0 Initial amount of rockets of the whole group.
 -- @field #number Nmissiles0 Initial amount of missiles of the whole group.
 -- @field #number FullAmmo Full amount of all ammunition taking the number of alive units into account.
+-- @field #number StatusInterval Update interval in seconds between status updates. Default 10 seconds.
 -- @field #number WaitForShotTime Max time in seconds to wait until fist shot event occurs after target is assigned. If time is passed without shot, the target is deleted. Default is 300 seconds.
 -- @field #table DCSdesc DCS descriptors of the ARTY group.
 -- @field #string Type Type of the ARTY group.
 -- @field #string DisplayName Extended type name of the ARTY group.
 -- @field #number IniGroupStrength Inital number of units in the ARTY group.
 -- @field #boolean IsArtillery If true, ARTY group has attribute "Artillery".
--- @field #number Speed Max speed of ARTY group.
+-- @field #number Speed Maximum speed of ARTY group in km/h.
+-- @field #number RearmingDistance Safe distance in meters between ARTY group and rearming group or place at which rearming is possible. Default 100 m.
 -- @field Wrapper.Group#GROUP RearmingGroup Unit designated to rearm the ARTY group.
+-- @field #number RearmingGroupSpeed Speed in km/h the rearming unit moves at. Default 50 km/h.
+-- @field #boolean RearmingGroupOnRoad If true, rearming group will move to ARTY group or rearming place using mainly roads. Default false. 
 -- @field Core.Point#COORDINATE RearmingGroupCoord Initial coordinates of the rearming unit. After rearming complete, the unit will return to this position.
 -- @field Core.Point#COORDINATE RearmingPlaceCoord Coordinates of the rearming place. If the place is more than 100 m away from the ARTY group, the group will go there.
+-- @field #boolean RearmingArtyOnRoad If true, ARTY group will move to rearming place using mainly roads. Default false.
 -- @field Core.Point#COORDINATE InitialCoord Initial coordinates of the ARTY group.
 -- @field #boolean report Arty group sends messages about their current state or target to its coaliton.
 -- @field #table ammoshells Table holding names of the shell types which are included when counting the ammo. Default is {"weapons.shells"} which include most shells.
 -- @field #table ammorockets Table holding names of the rocket types which are included when counting the ammo. Default is {"weapons.nurs"} which includes most unguided rockets.
 -- @field #table ammomissiles Table holding names of the missile types which are included when counting the ammo. Default is {"weapons.missiles"} which includes some guided missiles.
 -- @field #number Nshots Number of shots fired on current target.
--- @field #number minrange Minimum firing range in kilometers. Targets closer than this distance are not engaged. Default 0 km.
+-- @field #number minrange Minimum firing range in kilometers. Targets closer than this distance are not engaged. Default 0.5 km.
 -- @field #number maxrange Maximum firing range in kilometers. Targets further away than this distance are not engaged. Default 10000 km. 
 -- @extends Core.Fsm#FSM_CONTROLLABLE
 
@@ -221,29 +227,34 @@ ARTY={
   ClassName = "ARTY",
   Debug = true,
   targets = {},
+  moves = {},
   currentTarget = nil,
   Nammo0=0,
   Nshells0=0,
   Nrockets0=0,
   Nmissiles0=0,
   FullAmmo=0,
+  StatusInterval=10,
   WaitForShotTime=300,
-  SchedIDStatusReport=nil,
   DCSdesc=nil,
   Type=nil,
   DisplayName=nil,
   IniGroupStrength=0,
   IsArtillery=nil,
+  RearmingDistance=100,
   RearmingGroup=nil,
+  RearmingGroupSpeed=50,
+  RearmingGroupOnRoad=false,
   RearmingGroupCoord=nil,
   RearmingPlaceCoord=nil,
+  RearmingArtyOnRoad=false,
   InitialCoord=nil,
   report=true,
   ammoshells={"weapons.shells"},
   ammorockets={"weapons.nurs"},
   ammomissiles={"weapons.missiles"},
   Nshots=0,
-  minrange=0,
+  minrange=500,
   maxrange=1000000,
 }
 
@@ -264,7 +275,7 @@ ARTY.id="ARTY | "
 
 --- Arty script version.
 -- @field #number version
-ARTY.version="0.8.5"
+ARTY.version="0.8.6"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -434,10 +445,10 @@ end
 
 --- Set minimum firing range. Targets closer than this distance are not engaged.
 -- @param #ARTY self
--- @param #number range Min range in kilometers. Default is 0 km.
+-- @param #number range Min range in kilometers. Default is 0.5 km.
 function ARTY:SetMinFiringRange(range)
   self:F({range=range})
-  self.minrange=range or 0
+  self.minrange=range*1000 or 500
 end
 
 --- Set maximum firing range. Targets further away than this distance are not engaged.
@@ -448,6 +459,14 @@ function ARTY:SetMaxFiringRange(range)
   self.maxrange=range*1000 or 1000*1000
 end
 
+--- Set time interval between status updates. During the status check, new events are triggered.
+-- @param #ARTY self
+-- @param #number interval Time interval in seconds. Default 10 seconds.
+function ARTY:SetStatusInterval(interval)
+  self:F({interval=interval})
+  self.StatusInterval=interval or 10
+end
+
 --- Set time how it is waited a unit the first shot event happens. If no shot is fired after this time, the task to fire is aborted and the target removed.
 -- @param #ARTY self
 -- @param #number waittime Time in seconds. Default 300 seconds.
@@ -456,12 +475,50 @@ function ARTY:SetWaitForShotTime(waittime)
   self.WaitForShotTime=waittime or 300
 end
 
+--- Define the safe distance between ARTY group and rearming unit or rearming place at which rearming process is possible.
+-- @param #ARTY self
+-- @param #number distance Safe distance in meters. Default is 100 m. 
+function ARTY:SetRearmingDistance(distance)
+  self:F({distance=distance})
+  self.RearmingDistance=distance or 100
+end
+
 --- Assign a group, which is responsible for rearming the ARTY group. If the group is too far away from the ARTY group it will be guided towards the ARTY group.
 -- @param #ARTY self
--- @param Wrapper.Group#GROUP unit Unit that is supposed to rearm the ARTY group.
+-- @param Wrapper.Group#GROUP group Group that is supposed to rearm the ARTY group.
 function ARTY:SetRearmingGroup(group)
   self:F({group=group})
   self.RearmingGroup=group
+end
+
+--- Set the speed the rearming group moves at towards the ARTY group or the rearming place.
+-- @param #ARTY self
+-- @param #number speed Speed in km/h. Default 50 km/h.
+function ARTY:SetRearmingGroupSpeed(speed)
+  self:F({speed=speed})
+  self.RearmingGroupSpeed=speed or 50
+end
+
+--- Define if rearming group uses mainly roads to drive to the ARTY group or rearming place. 
+-- @param #ARTY self
+-- @param #boolean onroad If true, rearming group uses mainly roads. If false, it drives directly to the ARTY group or rearming place.
+function ARTY:SetRearmingGroupOnRoad(onroad)
+  self:F({onroad=onroad})
+  if onroad==nil then
+    onroad=true
+  end
+  self.RearmingGroupOnRoad=onroad
+end
+
+--- Define if ARTY group uses mainly roads to drive to the rearming place. 
+-- @param #ARTY self
+-- @param #boolean onroad If true, ARTY group uses mainly roads. If false, it drives directly to the rearming place.
+function ARTY:SetRearmingArtyOnRoad(onroad)
+  self:F({onroad=onroad})
+  if onroad==nil then
+    onroad=true
+  end
+  self.RearmingArtyOnRoad=onroad
 end
 
 --- Defines the rearming place of the ARTY group. If the place is too far away from the ARTY group it will be routed to the place.
@@ -584,18 +641,22 @@ function ARTY:onafterStart(Controllable, From, Event, To)
   text=text..string.format("Number of shells    = %d\n", self.Nshells0)
   text=text..string.format("Number of rockets   = %d\n", self.Nrockets0)
   text=text..string.format("Number of missiles  = %d\n", self.Nmissiles0)
+  if self.RearmingGroup or self.RearmingPlaceCoord then
+  text=text..string.format("Rearming safe dist. = %d m\n", self.RearmingDistance)
+  end
   if self.RearmingGroup then
-  text=text..string.format("Reaming group       = %s\n", self.RearmingGroup:GetName())
+  text=text..string.format("Rearming group      = %s\n", self.RearmingGroup:GetName())
+  text=text..string.format("Rearming group speed= %d km/h\n", self.RearmingGroupSpeed)
+  text=text..string.format("Rearming group roads= %s\n", tostring(self.RearmingGroupOnRoad))
   end
   if self.RearmingPlaceCoord then
-    local dist=self.InitialCoord:Get2DDistance(self.RearmingPlaceCoord)
-    text=text..string.format("Reaming coord dist. = %d m\n", dist)
+  local dist=self.InitialCoord:Get2DDistance(self.RearmingPlaceCoord)
+  text=text..string.format("Rearming coord dist = %d m\n", dist)
+  text=text..string.format("Rearming ARTY roads = %s\n", tostring(self.RearmingArtyOnRoad))
   end
   text=text..string.format("******************************************************\n")
   text=text..string.format("Targets:\n")
   for _, target in pairs(self.targets) do
-    local _clock=self:_SecondsToClock(target.time)
-    local _weapon=self:_WeaponTypeName(target.weapontype)
     text=text..string.format("- %s\n", self:_TargetInfo(target))
   end
   text=text..string.format("******************************************************\n")
@@ -619,7 +680,7 @@ function ARTY:onafterStart(Controllable, From, Event, To)
   self:HandleEvent(EVENTS.Dead, self._OnEventDead)
   
   -- Start checking status.
-  self:__Status(5)
+  self:__Status(self.StatusInterval)
 end
 
 --- After "Start" event. Initialized ROE and alarm state. Starts the event handler.
@@ -798,8 +859,9 @@ function ARTY:onafterStatus(Controllable, From, Event, To)
   
   -- Group is out of moving.
   if self:is("Moving") then
-    local _speed=self.Controllable:GetVelocityKMH()
-    env.info(string.format("FF: Moving. Velocity = %d km/h", _speed))
+    --local _speed=self.Controllable:GetVelocityKMH()
+    --env.info(string.format("FF: Moving. Velocity = %d km/h", _speed))
+    env.info(string.format("FF: Moving"))
   end
   
   -- Group is rearming.
@@ -815,9 +877,7 @@ function ARTY:onafterStatus(Controllable, From, Event, To)
   if self:is("Rearmed") then
     local distance=self.Controllable:GetCoordinate():Get2DDistance(self.InitialCoord)
     env.info(string.format("FF: Rearmed. Distance ARTY to InitalCoord = %d", distance))
-    if distance > 100 then
-      --self:Move(self.InitialCoord, false)
-    else
+    if distance <= self.RearmingDistance then
       self:CombatReady()
     end
   end
@@ -840,7 +900,6 @@ function ARTY:onafterStatus(Controllable, From, Event, To)
       
   -- Get a valid normal target (one that is not timed).
   local _normalTarget=self:_CheckNormalTargets()
-
 
   -- Group is combat ready or firing but we have a high prio timed target.
   if self:is("CombatReady") or (self:is("Firing") and _timedTarget) then
@@ -865,8 +924,8 @@ function ARTY:onafterStatus(Controllable, From, Event, To)
     end
   end
   
-  -- Call status again in 5 sec.
-  self:__Status(5)
+  -- Call status again in ~10 sec.
+  self:__Status(self.StatusInterval)
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1077,14 +1136,13 @@ function ARTY:onafterRearm(Controllable, From, Event, To)
       local dR=coordRARM:Get2DDistance(self.RearmingPlaceCoord)
       
       -- Route ARTY group to rearming place.
-      if dA>100 then
-        --self:_Move(self.Controllable, self.RearmingPlaceCoord, self.Speed, true)
-        self:Move(self:_VicinityCoord(self.RearmingPlaceCoord, 20, 50), false)
+      if dA > self.RearmingDistance then
+        self:Move(self:_VicinityCoord(self.RearmingPlaceCoord, self.RearmingDistance/4, self.RearmingDistance/2), self.RearmingArtyOnRoad)
       end
       
-      -- Route Rearming unit to rearming place
-      if dR>100 then
-        self:_Move(self.RearmingGroup, self:_VicinityCoord(self.RearmingPlaceCoord, 20, 50), 50, false)
+      -- Route Rearming group to rearming place.
+      if dR > self.RearmingDistance then
+        self:_Move(self.RearmingGroup, self:_VicinityCoord(self.RearmingPlaceCoord, self.RearmingDistance/4, self.RearmingDistance/2), self.RearmingGroupSpeed, self.RearmingGroupOnRoad)
       end
     
     elseif self.RearmingGroup then
@@ -1099,11 +1157,11 @@ function ARTY:onafterRearm(Controllable, From, Event, To)
       -- Distance between ARTY group and rearming unit.
       local distance=coordARTY:Get2DDistance(coordRARM)
        
-      -- If distance is larger than 100 m, the Rearming unit is routed to the ARTY group.
-      if distance > 100 then
+      -- If distance is larger than ~100 m, the Rearming unit is routed to the ARTY group.
+      if distance > self.RearmingDistance then
             
-        -- Route unit to ARTY group.
-        self:_Move(self.RearmingGroup, self:_VicinityCoord(coordARTY), 50, false)
+        -- Route rearming group to ARTY group.
+        self:_Move(self.RearmingGroup, self:_VicinityCoord(coordARTY), self.RearmingGroupSpeed, self.RearmingGroupOnRoad)
       end
       
     elseif self.RearmingPlaceCoord then
@@ -1114,7 +1172,7 @@ function ARTY:onafterRearm(Controllable, From, Event, To)
       local dA=coordARTY:Get2DDistance(self.RearmingPlaceCoord)
       
       -- Route ARTY group to rearming place.
-      if dA>100 then
+      if dA > self.RearmingDistance then
         --self:_Move(self.Controllable, self.RearmingPlaceCoord, self.Speed, true)
         self:Move(self:_VicinityCoord(self.RearmingPlaceCoord), false)
       end    
@@ -1141,15 +1199,15 @@ function ARTY:onafterRearmed(Controllable, From, Event, To)
   
   -- Route ARTY group back to where it came from (if distance is > 100 m).
   local d1=self.Controllable:GetCoordinate():Get2DDistance(self.InitialCoord)
-  if d1>100 then
+  if d1 > self.RearmingDistance then
     self:Move(self.InitialCoord, false)
   end
   
   -- Route unit back to where it came from (if distance is > 100 m).
   if self.RearmingGroup and self.RearmingGroup:IsAlive() then
     local d=self.RearmingGroup:GetCoordinate():Get2DDistance(self.RearmingGroupCoord)
-    if d>100 then
-      self:_Move(self.RearmingGroup, self.RearmingGroupCoord, 50, false)
+    if d > self.RearmingDistance then
+      self:_Move(self.RearmingGroup, self.RearmingGroupCoord, self.RearmingGroupSpeed, self.RearmingGroupOnRoad)
     end
   end
   
@@ -1721,10 +1779,10 @@ function ARTY:_TargetInRange(target)
   
   if _dist < self.minrange then
     _inrange=false
-    text=string.format("%s, target is out of range. Distance of %d km is below min range of %d km.", self.Controllable:GetName(), _dist/1000, self.minrange/1000)
+    text=string.format("%s, target is out of range. Distance of %.1f km is below min range of %.1f km.", self.Controllable:GetName(), _dist/1000, self.minrange/1000)
   elseif _dist > self.maxrange then
     _inrange=false
-    text=string.format("%s, target is out of range. Distance of %d km is greater than max range of %d km.", self.Controllable:GetName(), _dist/1000, self.maxrange/1000)
+    text=string.format("%s, target is out of range. Distance of %.1f km is greater than max range of %.1f km.", self.Controllable:GetName(), _dist/1000, self.maxrange/1000)
   end
   
   -- Debug output.
