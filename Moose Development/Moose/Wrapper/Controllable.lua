@@ -1974,8 +1974,9 @@ do -- Route methods
   -- @param #CONTROLLABLE self
   -- @param Core.Point#COORDINATE ToCoordinate A Coordinate to drive to.
   -- @param #number Speed (optional) Speed in km/h. The default speed is 999 km/h.
+  -- @param #string EndPointFormation The formation to achieve at the end point.
   -- @return Task
-  function CONTROLLABLE:TaskGroundOnRoad( ToCoordinate, Speed )
+  function CONTROLLABLE:TaskGroundOnRoad( ToCoordinate, Speed, EndPointFormation )
   
     -- Current coordinate.
     local FromCoordinate = self:GetCoordinate()
@@ -1998,7 +1999,7 @@ do -- Route methods
     -- Add the final coordinate because the final coordinate in path is last point on road.
     local dist=ToCoordinate:Get2DDistance(path[#path])
     if dist>10 then
-      table.insert( Route, ToCoordinate:WaypointGround( Speed, "Vee" ) )
+      table.insert( Route, ToCoordinate:WaypointGround( Speed, EndPointFormation ) )
     end
     
     return Route 

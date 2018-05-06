@@ -395,7 +395,7 @@ function AI_CARGO_APC:onbeforeLoad( APC, From, Event, To )
       local APCUnit = APCUnit -- Wrapper.Unit#UNIT
       for _, Cargo in pairs( self.CargoSet:GetSet() ) do
         local Cargo = Cargo -- Cargo.Cargo#CARGO
-        self:F( { IsUnLoaded = Cargo:IsUnLoaded() } )
+        self:F( { IsUnLoaded = Cargo:IsUnLoaded(), Cargo:GetName(), APC:GetName() } )
         if Cargo:IsUnLoaded() then
           if Cargo:IsInLoadRadius( APCUnit:GetCoordinate() ) then
             self:F( { "In radius", APCUnit:GetName() } )
@@ -420,12 +420,12 @@ function AI_CARGO_APC:onbeforeLoad( APC, From, Event, To )
 end
 
 --- @param #AI_CARGO_APC self
--- @param Wrapper.Group#GROUP Carrier
-function AI_CARGO_APC:onafterBoard( Carrier, From, Event, To, Cargo )
-  self:F( { Carrier, From, Event, To, Cargo } )
+-- @param Wrapper.Group#GROUP APC
+function AI_CARGO_APC:onafterBoard( APC, From, Event, To, Cargo )
+  self:F( { APC, From, Event, To, Cargo } )
 
-  if Carrier and Carrier:IsAlive() then
-    self:F({ IsLoaded = Cargo:IsLoaded() } )
+  if APC and APC:IsAlive() then
+    self:F({ IsLoaded = Cargo:IsLoaded(), Cargo:GetName(), APC:GetName() } )
     if not Cargo:IsLoaded() then
       self:__Board( 10, Cargo )
     else
@@ -445,7 +445,7 @@ function AI_CARGO_APC:onbeforeLoaded( APC, From, Event, To )
   if APC and APC:IsAlive() then
     for APCUnit, Cargo in pairs( self.APC_Cargo ) do
       local Cargo = Cargo -- Cargo.Cargo#CARGO
-      self:F( { IsLoaded = Cargo:IsLoaded(), IsDestroyed = Cargo:IsDestroyed() } )
+      self:F( { IsLoaded = Cargo:IsLoaded(), IsDestroyed = Cargo:IsDestroyed(), Cargo:GetName(), APC:GetName() } )
       if not Cargo:IsLoaded() and not Cargo:IsDestroyed() then
         Loaded = false
       end
@@ -505,8 +505,9 @@ function AI_CARGO_APC:onbeforeUnloaded( APC, From, Event, To, Cargo )
   --Cargo:Regroup()
 
   if APC and APC:IsAlive() then
-    for _, CargoCheck in pairs( self.CargoSet:GetSet() ) do
-      local CargoCheck = CargoCheck -- Cargo.Cargo#CARGO
+    for _, APCUnit in pairs( APC:GetUnits() ) do
+      local APCUnit = APCUnit -- Wrapper.Unit#UNIT
+      local CargoCheck = self.APC_Cargo[APCUnit]
       self:F( { CargoCheck:GetName(), IsUnLoaded = CargoCheck:IsUnLoaded() } )
       if CargoCheck:IsUnLoaded() == false then
         AllUnloaded = false
@@ -580,14 +581,15 @@ end
 -- @param To
 -- @param Core.Point#COORDINATE Coordinate
 -- @param #number Speed
-function AI_CARGO_APC:onafterPickup( APC, From, Event, To, Coordinate, Speed )
+-- @param #string EndPointFormation The formation at the end point of the action.
+function AI_CARGO_APC:onafterPickup( APC, From, Event, To, Coordinate, Speed, EndPointFormation )
 
   if APC and APC:IsAlive() then
 
     if Coordinate then
       self.RoutePickup = true
       
-      local Waypoints = APC:TaskGroundOnRoad( Coordinate, Speed )
+      local Waypoints = APC:TaskGroundOnRoad( Coordinate, Speed, EndPointFormation )
   
       local TaskFunction = APC:TaskFunction( "AI_CARGO_APC._Pickup", self )
       
@@ -611,13 +613,14 @@ end
 -- @param To
 -- @param Core.Point#COORDINATE Coordinate
 -- @param #number Speed
-function AI_CARGO_APC:onafterDeploy( APC, From, Event, To, Coordinate, Speed )
+-- @param #string EndPointFormation The formation at the end point of the action.
+function AI_CARGO_APC:onafterDeploy( APC, From, Event, To, Coordinate, Speed, EndPointFormation )
 
   if APC and APC:IsAlive() then
 
     self.RouteDeploy = true
      
-    local Waypoints = APC:TaskGroundOnRoad( Coordinate, Speed )
+    local Waypoints = APC:TaskGroundOnRoad( Coordinate, Speed, EndPointFormation )
 
     local TaskFunction = APC:TaskFunction( "AI_CARGO_APC._Deploy", self )
     
