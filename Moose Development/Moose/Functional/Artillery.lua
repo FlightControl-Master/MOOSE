@@ -398,12 +398,12 @@ ARTY.version="0.8.9"
 -- DONE: Abort firing task if no shooting event occured with 5(?) minutes. Something went wrong then. Min/max range for example.
 -- DONE: Improve assigned time for engagement. Next day?
 -- DONE: Improve documentation.
--- DONE: Add pseudo user transitions. OnAfter...
+-- TODO: Add pseudo user transitions. OnAfter...
 -- DONE: Make reaming unit a group.
--- TODO: Adjust documenation again.
+-- DONE: Write documenation.
 -- DONE: Add command move to make arty group move.
 -- DONE: remove schedulers for status event.
--- TODO: Improve handling of special weapons. When winchester?
+-- TODO: Improve handling of special weapons. When winchester if using selected weapons?
 -- TODO: Handle rearming for ships.
 -- TODO: Make coordinate after rearming general, i.e. also work after the group has moved to anonther location.
 

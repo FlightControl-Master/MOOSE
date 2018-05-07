@@ -264,7 +264,6 @@ function GROUP:Destroy( GenerateEvent )
         if self:IsAir() then
           self:CreateEventCrash( timer.getTime(), UnitData )
         else
-          env.info("FF create event dead")
           self:CreateEventDead( timer.getTime(), UnitData )
         end
       end
