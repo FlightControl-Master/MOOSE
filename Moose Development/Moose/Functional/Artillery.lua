@@ -7,7 +7,7 @@
 -- 
 -- ====
 -- 
--- The ARTY class can be used to easily assign targets for artillery units.
+-- The ARTY class can be used to easily assign and manage targets for artillery units.
 -- 
 -- ## Features:
 -- 
@@ -16,7 +16,8 @@
 -- * Engagements can be scheduled, i.e. will be executed at a certain time of the day.
 -- * Special weapon types can be selected for each attack, e.g. cruise missiles for Naval units.
 -- * Automatic rearming once the artillery is out of ammo.
--- * Finite state machine implementation. User can interact when certain events occur.
+-- * New targets can be added during the mission, e.g. when they are detected by recon units.
+-- * Finite state machine implementation. Mission designer can interact when certain events occur.
 -- 
 -- ====
 -- 
@@ -93,21 +94,33 @@
 -- 
 -- ![Process](..\Presentations\ARTY\ARTY_Process.png)
 -- 
+-- ### Blue Branch
 -- After the FMS process is started the ARTY group will be in the state **CombatReady**. Once a target is assigned the **OpenFire** event will be triggered and the group starts
 -- firing. At this point the group in in the state **Firing**.
--- 
 -- When the defined number of shots has been fired on the current target the event **CeaseFire** is triggered. The group will stop firing and go back to the state **CombatReady**.
 -- If another target is defined (or multiple engagements of the same target), the cycle starts anew.
 -- 
+-- ### Violet Branch
 -- When the ARTY group runs out of ammunition, the event **Winchester** is triggered and the group enters the state **OutOfAmmo**.
 -- In this state, the group is unable to engage further targets.
 -- 
+-- ### Red Branch
 -- With the @{#ARTY.SetRearmingGroup}(*group*) command, a special group can be defined to rearm the ARTY group. If this unit has been assigned and the group has entered the state
 -- **OutOfAmmo** the event **Rearm** is triggered followed by a transition to the state **Rearming**.
 -- If the rearming group is less than 100 meters away from the ARTY group, the rearming process starts. If the rearming group is more than 100 meters away from the ARTY unit, the
 -- rearming group is routed to a point 20 to 100 m from the ARTY group.
 -- 
 -- Once the rearming is complete, the **Rearmed** event is triggered and the group enters the state **CombatReady**. At this point targeted can be engaged again.
+-- 
+-- ### Green Branch
+-- The ARTY group can be ordered to change its position via the @{#ARTY.AssignMoveCoord}() function as described below. When the group receives the command to move
+-- the event **Move** is triggered and the state changes to **Moving**. When the unit arrives to its destination the event **Arrived** is triggered and the group
+-- becomes **CombatReady** again.
+-- 
+-- Note, that the ARTY group will not open fire while it is in state **Moving**. This property differentiates artillery from tanks. 
+-- 
+-- ### Yellow Branch
+-- When a new target is assigned via the @{#ARTY.AssignTargetCoord}() function (see below), the **NewTarget** event is triggered.
 -- 
 -- ## Assigning Targets
 -- Assigning targets is a central point of the ARTY class. Multiple targets can be assigned simultanioulsly and are put into a queue.
@@ -135,9 +148,9 @@
 -- or the same target should be attacked two or more times with different parameters a suffix "#01", "#02", "#03" is automatically appended to the specified name.
 -- 
 -- ## Target Queue
--- In case, multiple targets have been defined, it is important to understand how the target queue works.
+-- In case multiple targets have been defined, it is important to understand how the target queue works.
 -- 
--- Here, the important parameters are the priority *prio*, the number of engagements *maxengage* and the scheduled *time* as described above.
+-- Here, the essential parameters are the priority *prio*, the number of engagements *maxengage* and the scheduled *time* as described above.
 -- 
 -- For example, we have assigned two targets one with *prio*=10 and the other with *prio*=50 and both targets should be engaged three times (*maxengage*=3).
 -- Let's first consider the case that none of the targets is scheduled to be executed at a certain time (*time*=nil).
@@ -146,7 +159,7 @@
 -- have been engaged equally often, the target with the higher priority is engaged again. This coninues until a target has engaged three times.
 -- Once the maximum number of engagements is reached, the target is deleted from the queue.
 -- 
--- In other works, the queue is first sorted with respect to the number of engagements and targets with the same number of engagements are sorted with
+-- In other words, the queue is first sorted with respect to the number of engagements and targets with the same number of engagements are sorted with
 -- respect to their priority.
 -- 
 -- ### Timed Engagements
@@ -198,6 +211,43 @@
 -- * @{#ARTY.WeaponType}.GuidedMissile: Any guided missiles are used during the attack. Corresponding ammo type are missiles and can be defined by @{#ARTY.SetMissileTypes}.
 -- * @{#ARTY.WeaponType}.CruiseMissile: Only cruise missiles are used during the attack. Corresponding ammo type are missiles and can be defined by @{#ARTY.SetMissileTypes}.
 -- 
+-- ## Assigning Moves
+-- The ARTY group can be commanded to move. This is done by the @{#ARTY.AssignMoveCoord}(*coord*,*time*,*speed*,*onroad*,*cancel*,*name*) function.
+-- With this multiple timed moves of the group can be scheduled easily. By default, these moves will only be executed if the group is state **CombatReady**.
+-- 
+-- ### Parameters
+-- 
+-- * *coord*: Coordinates where the group should move to given as @{Point#COORDINATE} object.
+-- * *time*: The time when the move should be executed. This has to be given as a string in the format "hh:mm:ss" (hh=hours, mm=minutes, ss=seconds).
+-- * *speed*: Speed of the group in km/h.
+-- * *onroad*: If this parameter is set to true, the group uses mainly roads to get to the commanded coordinates.
+-- * *cancel*: If set to true, any current engagement of targets is cancelled at the time the move should be executed.
+-- * *name*: Can be used to set a user defined name of the move. By default the name is created from the LL DMS coordinates.
+-- 
+-- ## Automatic Rearming
+-- 
+-- If an ARTY group runs out of ammunition, it can be rearmed automatically.
+-- 
+-- ### Rearming Group
+-- The first way to activate the automatic rearming is to define a rearming group with the function @{#ARTY.SetRearmingGroup}(*group*). For the blue side, this
+-- could be a M181 transport truck and for the red side an Ural-375 truck.
+-- 
+-- Once the ARTY group is out of ammo and the **Rearm** event is triggered, the defined rearming truck will drive to the ARTY group.
+-- So the rearming truck does not have to be placed nearby the artillery group. When the rearming is complete, the rearming truck will drive back to its original position.
+-- 
+-- ### Rearming Place
+-- The second alternative is to define a rearming place, e.g. a FRAP, airport or any other warehouse. This is done with the function @{#ARTY.SetRearmingPlace}(*coord*).
+-- The parameter *coord* specifies the coordinate of the rearming place which should not be further away then 100 meters from the warehouse.
+-- 
+-- When the **Rearm** event is triggered, the ARTY group will move to the rearming place. Of course, the group must be mobil. So for a mortar this rearming procedure would not work.
+-- 
+-- After the rearming is complete, the ARTY group will move back to its original position and resume normal operations.
+-- 
+-- ### Rearming Group **and** Rearming Place
+-- If both a rearming group *and* a rearming place are specified like described above, both the ARTY group and the rearming truck will move to the rearming place and meet there.
+-- 
+-- After the rearming is complete, both groups will move back to their original positions.
+-- 
 -- ## Fine Tuning
 -- 
 -- The mission designer has a few options to tailor the ARTY object according to his needs.
@@ -215,13 +265,66 @@
 -- ## Examples
 -- 
 -- ### Assigning Multiple Targets
--- This basic example illustrates how to assign multiple targets.
+-- This basic example illustrates how to assign multiple targets and defining a rearming group.
+--     -- Creat a new ARTY object from a Paladin group.
+--     paladin=ARTY:New(GROUP:FindByName("Blue Paladin"))
+--     
+--     -- Define a rearming group. This is a Transport M818 truck.
+--     paladin:SetRearmingGroup(GROUP:FindByName("Blue Ammo Truck"))
+--     
+--     -- Set the max firing range. A Paladin unit has a range of 20 km.
+--     paladin:SetMaxFiringRange(20)
+--     
+--     -- Low priorty (90) target, will be engage last. Target is engaged two times. At each engagement five shots are fired.
+--     paladin:AssignTargetCoord(GROUP:FindByName("Red Targets 3"):GetCoordinate(),  90, nil,  5, 2)
+--     -- Medium priorty (nil=50) target, will be engage second. Target is engaged two times. At each engagement ten shots are fired.
+--     paladin:AssignTargetCoord(GROUP:FindByName("Red Targets 1"):GetCoordinate(), nil, nil, 10, 2)
+--     -- High priorty (10) target, will be engage first. Target is engaged three times. At each engagement twenty shots are fired.
+--     paladin:AssignTargetCoord(GROUP:FindByName("Red Targets 2"):GetCoordinate(),  10, nil, 20, 3)
+--     
+--     -- Start ARTY process.
+--     paladin:Start()
+-- **Note**
+-- 
+-- * If a parameter should be set to its default value, it has to be set to *nil* if other non-default parameters follow. Parameters at the end can simply be skiped.
+-- * In this example, the target coordinates are taken from groups placed in the mission edit using the COORDINATE:GetCoordinate() function.   
 -- 
 -- ### Scheduled Engagements
--- This example shows how to execute an engagement at a certain time.
+--     -- Mission starts at 8 o'clock.
+--     -- Assign two scheduled targets.
+--     
+--     -- Create ARTY object from Paladin group.
+--     paladin=ARTY:New(GROUP:FindByName("Blue Paladin"))
+--     
+--     -- Assign target coordinates. Priority=50 (medium), radius=100 m, use 5 shells per engagement, engage 1 time at two past 8 o'clock.
+--     paladin:AssignTargetCoord(GROUP:FindByName("Red Targets 1"):GetCoordinate(), 50, 100,  5, 1, "08:02:00", ARTY.WeaponType.Auto, "Target 1")
+--     
+--     -- Assign target coordinates. Priority=10 (high), radius=300 m, use 10 shells per engagement, engage 1 time at seven past 8 o'clock.
+--     paladin:AssignTargetCoord(GROUP:FindByName("Red Targets 2"):GetCoordinate(), 10, 300, 10, 1, "08:07:00", ARTY.WeaponType.Auto, "Target 2")
+--     
+--     -- Start ARTY process.
+--     paladin:Start()
 -- 
 -- ### Specific Weapons
 -- This example demonstrates how to use specific weapons during an engagement.
+--     -- Define the Normandy as ARTY object.
+--     normandy=ARTY:New(GROUP:FindByName("Normandy"))
+--     
+--     -- Add target: prio=50, radius=300 m, number of missiles=20, number of engagements=1, start time=08:05 hours, only use cruise missiles for this attack.
+--     normandy:AssignTargetCoord(GROUP:FindByName("Red Targets 1"),  20, 300,   50, 1, "08:01:00", ARTY.WeaponType.CruiseMissile)
+--     
+--     -- Add target: prio=50, radius=300 m, number of shells=100, number of engagements=1, start time=08:15 hours, only use cannons during this attack.
+--     normandy:AssignTargetCoord(GROUP:FindByName("Red Targets 1"),  50, 300, 100, 1, "08:15:00", ARTY.WeaponType.Cannon)
+--     
+--     -- Define shells that are counted to check whether the ship is out of ammo.
+--     -- Note that this is necessary because the Normandy has a lot of other shell type weapons which cannot be used to engage ground targets in an artillery style manner.
+--     normandy:SetShellTypes({"MK45_127"})
+--        
+--     -- Define missile types that are counted.
+--     normandy:SetMissileTypes({"BGM"})
+--        
+--     -- Start ARTY process.
+--     normandy:Start()
 --
 -- 
 -- @field #ARTY
@@ -278,7 +381,7 @@ ARTY.id="ARTY | "
 
 --- Arty script version.
 -- @field #number version
-ARTY.version="0.8.8"
+ARTY.version="0.8.9"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -301,6 +404,8 @@ ARTY.version="0.8.8"
 -- DONE: Add command move to make arty group move.
 -- DONE: remove schedulers for status event.
 -- TODO: Improve handling of special weapons. When winchester?
+-- TODO: Handle rearming for ships.
+-- TODO: Make coordinate after rearming general, i.e. also work after the group has moved to anonther location.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
