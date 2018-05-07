@@ -284,7 +284,7 @@ do -- cargo
 
     TemplateName = env.getValueDictByKey( TemplateName )
   
-    local Cargo = TemplateName:match( "#(CARGO)" )
+    local Cargo = TemplateName:match( "~(CARGO)" )
 
     return Cargo and Cargo == "CARGO"    
   end
@@ -293,6 +293,7 @@ do -- cargo
   -- @param #DATABASE self
   -- @return #DATABASE self
   function DATABASE:RegisterCargos()
+
   
     for CargoGroupName, CargoGroup in pairs( self.GROUPS ) do
       if self:IsCargo( CargoGroupName ) then
@@ -300,11 +301,12 @@ do -- cargo
         local CargoParam = CargoInfo and CargoInfo:match( "%((.*)%)")
         local CargoName = CargoGroupName:match("(.*)~CARGO")
         local Type = CargoParam and CargoParam:match( "T=([%a%d ]+),?")
-        local Name = CargoParam and CargoParam:match( "N=([%a%d]+),?")
-        local LoadRadius = CargoParam and CargoParam:match( "RR=([%a%d]+),?")
-        local NearRadius = CargoParam and CargoParam:match( "NR=([%a%d]+),?")
+        local Name = CargoParam and CargoParam:match( "N=([%a%d]+),?") or CargoName
+        local LoadRadius = CargoParam and tonumber( CargoParam:match( "RR=([%a%d]+),?") )
+        local NearRadius = CargoParam and tonumber( CargoParam:match( "NR=([%a%d]+),?") )
         
-        CARGO_GROUP:New( CargoGroup, Type, Name or CargoName, LoadRadius, NearRadius )
+        self:F({"Register CargoGroup:",Type=Type,Name=Name,LoadRadius=LoadRadius,NearRadius=NearRadius})
+        CARGO_GROUP:New( CargoGroup, Type, Name, LoadRadius, NearRadius )
       end
     end
     
@@ -315,15 +317,17 @@ do -- cargo
         local CargoName = CargoStaticName:match("(.*)~CARGO")
         local Type = CargoParam and CargoParam:match( "T=([%a%d ]+),?")
         local Category = CargoParam and CargoParam:match( "C=([%a%d ]+),?")
-        local Name = CargoParam and CargoParam:match( "N=([%a%d]+),?")
+        local Name = CargoParam and CargoParam:match( "N=([%a%d]+),?") or CargoName
         local LoadRadius = CargoParam and tonumber( CargoParam:match( "RR=([%a%d]+),?") )
         local NearRadius = CargoParam and tonumber( CargoParam:match( "NR=([%a%d]+),?") )
         
         if Category == "SLING" then
-          CARGO_SLINGLOAD:New( CargoStatic, Type, Name or CargoName, LoadRadius, NearRadius )
+          self:F({"Register CargoSlingload:",Type=Type,Name=Name,LoadRadius=LoadRadius,NearRadius=NearRadius})
+          CARGO_SLINGLOAD:New( CargoStatic, Type, Name, LoadRadius, NearRadius )
         else
           if Category == "CRATE" then
-            CARGO_CRATE:New( CargoStatic, Type, Name or CargoName, LoadRadius, NearRadius )
+            self:F({"Register CargoCrate:",Type=Type,Name=Name,LoadRadius=LoadRadius,NearRadius=NearRadius})
+            CARGO_CRATE:New( CargoStatic, Type, Name, LoadRadius, NearRadius )
           end
         end
       end
