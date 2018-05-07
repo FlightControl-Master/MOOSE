@@ -4265,10 +4265,10 @@ end
 function RAT:_CommandImmortal(group, switch)
 
   -- Command structure for setting groups to invisible.  
-  local SetInvisible = {id = 'SetImmortal', params = {value = switch}}
+  local SetImmortal = {id = 'SetImmortal', params = {value = switch}}
   
   -- Execute command.
-  group:SetCommand(SetInvisible)
+  group:SetCommand(SetImmortal)
 end
 
 --- Adds a parking spot at an airport when it has been used by a spawned RAT aircraft to the RAT parking data base.
