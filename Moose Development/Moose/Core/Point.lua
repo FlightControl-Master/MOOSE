@@ -942,11 +942,15 @@ do -- COORDINATE
   function COORDINATE:GetPathOnRoad(ToCoord)
     local Path={}
     local path = land.findPathOnRoads("roads", self.x, self.z, ToCoord.x, ToCoord.z)
-    for i, v in ipairs(path) do
-      --self:E(v)
-      local coord=COORDINATE:NewFromVec2(v)
-      Path[#Path+1]=COORDINATE:NewFromVec2(v)
-    end
+    Path[#Path+1]=COORDINATE:NewFromVec2(path[1])
+    Path[#Path+1]=COORDINATE:NewFromVec2(path[#path])
+    -- I've removed this stuff because it severely slows down DCS in case of paths with a lot of segments.
+    -- Just the beginning and the end point is sufficient.
+--    for i, v in ipairs(path) do
+--      self:I(v)
+--      local coord=COORDINATE:NewFromVec2(v)
+--      Path[#Path+1]=COORDINATE:NewFromVec2(v)
+--    end
     return Path
   end
 

@@ -357,7 +357,9 @@ function CONTROLLABLE:SetTask( DCSTask, WaitTime )
     local function SetTask( Controller, DCSTask )
       if self and self:IsAlive() then
         local Controller = self:_GetController()
+        self:I( "Before SetTask" )
         Controller:setTask( DCSTask )
+        self:I( "After SetTask" )
       else
         BASE:E( { DCSControllableName .. " is not alive anymore.", DCSTask = DCSTask } )
       end
@@ -496,7 +498,7 @@ function CONTROLLABLE:SetTaskWaypoint( Waypoint, Task )
 
   Waypoint.task = self:TaskCombo( { Task } )
 
-  self:T3( { Waypoint.task } )
+  self:F( { Waypoint.task } )
   return Waypoint.task
 end
 

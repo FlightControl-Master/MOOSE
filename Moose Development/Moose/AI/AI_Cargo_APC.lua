@@ -19,6 +19,9 @@
 -- AI\_CARGO\APC brings a dynamic cargo handling capability for AI groups.
 -- 
 -- Armoured Personnel Carriers (APC), Trucks, Jeeps and other ground based carrier equipment can be mobilized to intelligently transport infantry and other cargo within the simulation.
+-- The AI\_CARGO\APC module uses the @{Cargo} capabilities within the MOOSE framework.
+-- CARGO derived objects must be declared within the mission to make the AI\_CARGO\APC object recognize the cargo.
+-- Please consult the @{Cargo} module for more information. 
 -- 
 -- ## Cargo loading.
 -- 

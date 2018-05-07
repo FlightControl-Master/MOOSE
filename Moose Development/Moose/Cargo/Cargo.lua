@@ -6,28 +6,8 @@
 --
 -- ===
 -- 
--- Cargo can be of various forms, always are composed out of ONE object ( one unit or one static or one slingload crate ):
---
---   * CARGO_UNIT, represented by a @{Unit} in a singleton @{Group}: Cargo can be represented by a Unit in a Group. a CARGO_UNIT is representable...
---   * CARGO_GROUP, represented by a @{Group}. A CARGO_GROUP is reportable...
 --   
 -- This module is still under construction, but is described above works already, and will keep working ...
--- 
--- ===
--- 
--- # Demo Missions
--- 
--- ### [CARGO Demo Missions source code](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master-release/CGO%20-%20Cargo)
--- 
--- ### [CARGO Demo Missions, only for beta testers](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/CGO%20-%20Cargo)
---
--- ### [ALL Demo Missions pack of the last release](https://github.com/FlightControl-Master/MOOSE_MISSIONS/releases)
--- 
--- ===
--- 
--- # YouTube Channel
--- 
--- ### [CARGO YouTube Channel](https://www.youtube.com/watch?v=tM00lTlkpYs&list=PL7ZUrU4zZUl2zUTuKrLW5RsO9zLMqUtbf)
 -- 
 -- ===
 -- 
@@ -172,11 +152,31 @@ do -- CARGO
   -- @field #boolean Representable This flag defines if the cargo can be represented by a DCS Unit.
   -- @field #boolean Containable This flag defines if the cargo can be contained within a DCS Unit.
   
-  --- # (R2.1) CARGO class, extends @{Fsm#FSM_PROCESS}
+  --- # (R2.4) CARGO class, extends @{Fsm#FSM_PROCESS}
   -- 
   -- The CARGO class defines the core functions that defines a cargo object within MOOSE.
-  -- A cargo is a logical object defined that is available for transport, and has a life status within a simulation.
+  -- A cargo is a **logical object** defined that is available for transport, and has a life status within a simulation.
+  -- 
+  -- CARGO is not meant to be used directly by mission designers, but provides a base class for **concrete cargo implementation classes** to handle:
+  -- 
+  --   * Cargo **group objects**, implemented by the @{Cargo.CargoGroup#CARGO_GROUP} class.
+  --   * Cargo **Unit objects**, implemented by the @{Cargo.CargoUnit#CARGO_UNIT} class.
+  --   * Cargo **Crate objects**, implemented by the @{Cargo.CargoCrate#CARGO_CRATE} class.
+  --   * Cargo **Sling Load objects**, implemented by the @{Cargo.CargoSlingload#CARGO_SLINGLOAD} class.
   --
+  -- The above cargo classes are used by the AI\_CARGO\_ classes to allow AI groups to transport cargo:
+  -- 
+  --   * AI Armoured Personnel Carriers to transport cargo and engage in battles, using the @{AI.AI_Cargo_APC#AI_CARGO_APC} class.
+  --   * AI Helicopters to transport cargo, using the @{AI.AI_Cargo_Helicopter#AI_CARGO_HELICOPTER} class.
+  --   * AI Planes to transport cargo, using the @{AI.AI_Cargo_Plane#AI_CARGO_PLANE} class.
+  --   * AI Ships is planned.
+  -- 
+  -- The above cargo classes are also used by the TASK\_CARGO\_ classes to allow human players to transport cargo as part of a tasking:
+  -- 
+  --   * @{Tasking.Task_Cargo_Transport#TASK_CARGO_TRANSPORT} to transport cargo by human players.
+  --   * @{Tasking.Task_Cargo_Transport#TASK_CARGO_CSAR} to transport downed pilots by human players.
+  -- 
+  -- 
   -- The CARGO is a state machine: it manages the different events and states of the cargo.
   -- All derived classes from CARGO follow the same state machine, expose the same cargo event functions, and provide the same cargo states.
   -- 
@@ -186,32 +186,8 @@ do -- CARGO
   --   * @{#CARGO.Load}( ToCarrier ): Loads the cargo into a carrier, regardless of its position.
   --   * @{#CARGO.UnBoard}( ToPointVec2 ): UnBoard the cargo from a carrier. This will trigger a movement of the cargo to the option ToPointVec2.
   --   * @{#CARGO.UnLoad}( ToPointVec2 ): UnLoads the cargo from a carrier.
-  --   * @{#CARGO.Dead}( Controllable ): The cargo is dead. The cargo process will be ended.
+  --   * @{#CARGO.Destroyed}( Controllable ): The cargo is dead. The cargo process will be ended.
   -- 
-  -- ## CARGO States:
-  -- 
-  --   * **UnLoaded**: The cargo is unloaded from a carrier.
-  --   * **Boarding**: The cargo is currently boarding (= running) into a carrier.
-  --   * **Loaded**: The cargo is loaded into a carrier.
-  --   * **UnBoarding**: The cargo is currently unboarding (=running) from a carrier.
-  --   * **Dead**: The cargo is dead ...
-  --   * **End**: The process has come to an end.
-  --   
-  -- ## CARGO state transition methods:
-  -- 
-  -- State transition functions can be set **by the mission designer** customizing or improving the behaviour of the state.
-  -- There are 2 moments when state transition methods will be called by the state machine:
-  -- 
-  --   * **Leaving** the state. 
-  --     The state transition method needs to start with the name **OnLeave + the name of the state**. 
-  --     If the state transition method returns false, then the processing of the state transition will not be done!
-  --     If you want to change the behaviour of the AIControllable at this event, return false, 
-  --     but then you'll need to specify your own logic using the AIControllable!
-  --   
-  --   * **Entering** the state. 
-  --     The state transition method needs to start with the name **OnEnter + the name of the state**. 
-  --     These state transition methods need to provide a return value, which is specified at the function description.
-  --
   -- @field #CARGO
   CARGO = {
     ClassName = "CARGO",
