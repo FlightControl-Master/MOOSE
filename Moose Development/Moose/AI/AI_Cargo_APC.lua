@@ -523,7 +523,6 @@ function AI_CARGO_APC:onbeforeUnloaded( APC, From, Event, To, Cargo )
     if AllUnloaded == true then
       self:Guard()
       self.CargoCarrier = APC
-      self.APC_Cargo = {}
     end
   end
   
@@ -574,6 +573,7 @@ function AI_CARGO_APC._Deploy( APC, self )
   if APC:IsAlive() then
     self:Unload()
     self.Transporting = false
+    self.APC_Cargo = {}
   end
 end
 
