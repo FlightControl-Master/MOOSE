@@ -28,7 +28,7 @@
 -- 
 -- ### Author: **[funkyfranky](https://forums.eagle.ru/member.php?u=115026)**
 -- 
--- ### Contributions: **Sven van de Velde ([FlightControl](https://forums.eagle.ru/member.php?u=89536))**
+-- ### Contributions: **[FlightControl](https://forums.eagle.ru/member.php?u=89536)**
 -- 
 -- ====
 -- @module Suppression
@@ -45,7 +45,7 @@
 -- @field #string Type Type of the group.
 -- @field #number SpeedMax Maximum speed of group in km/h.
 -- @field #boolean IsInfantry True if group has attribute Infantry.
--- @field Core.Controllable#CONTROLLABLE Controllable Controllable of the FSM. Must be a ground group.
+-- @field Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the FSM. Must be a ground group.
 -- @field #number Tsuppress_ave Average time in seconds a group gets suppressed. Actual value is sampled randomly from a Gaussian distribution.
 -- @field #number Tsuppress_min Minimum time in seconds the group gets suppressed.
 -- @field #number Tsuppress_max Maximum time in seconds the group gets suppressed.
@@ -283,11 +283,16 @@ SUPPRESSION.MenuF10=nil
 -- @field #string id
 SUPPRESSION.id="SFX | "
 
+--- PSEUDOATC version.
+-- @field #number version
+SUPPRESSION.version="0.7.0"
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---TODO: Figure out who was shooting and move away from him.
---TODO: Move behind a scenery building if there is one nearby.
---TODO: Retreat to a given zone or point.
+--TODO list
+--DONE: Figure out who was shooting and move away from him.
+--DONE: Move behind a scenery building if there is one nearby.
+--DONE: Retreat to a given zone or point.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -304,7 +309,7 @@ function SUPPRESSION:New(group)
   
   -- Check that group is present.
   if group then
-    self:T(SUPPRESSION.id.."Suppressive fire for group "..group:GetName())
+    self:T(SUPPRESSION.id..string.format("SUPPRESSION version %s. Activating suppressive fire for group %s", SUPPRESSION.version, group:GetName()))
   else
     self:E(SUPPRESSION.id.."Suppressive fire: Requested group does not exist! (Has to be a MOOSE group.)")
     return nil
@@ -312,7 +317,7 @@ function SUPPRESSION:New(group)
   
   -- Check that we actually have a GROUND group.
   if group:IsGround()==false then
-    self:E(SUPPRESSION.id.."SUPPRESSION fire group "..group:GetName().." has to be a GROUND group!")
+    self:E(SUPPRESSION.id..string.format("SUPPRESSION fire group %s has to be a GROUND group!", group:GetName()))
     return nil
   end  
   
@@ -326,7 +331,6 @@ function SUPPRESSION:New(group)
   
   -- Get max speed the group can do and convert to km/h.
   self.SpeedMax=self.DCSdesc.speedMaxOffRoad*3.6
-  --self.SpeedMaxOffRoad=DCSdesc.speedMaxOffRoad
   
   -- Set speed to maximum.
   self.Speed=self.SpeedMax
@@ -503,6 +507,7 @@ end
 -- @param #number Tmin (Optional) Minimum time [seconds] a group will be suppressed. Default is 5 seconds.
 -- @param #number Tmax (Optional) Maximum time a group will be suppressed. Default is 25 seconds.
 function SUPPRESSION:SetSuppressionTime(Tave, Tmin, Tmax)
+  self:F({Tave=Tave, Tmin=Tmin, Tmax=Tmax})
 
   -- Minimum suppression time is input or default but at least 1 second.
   self.Tsuppress_min=Tmin or self.Tsuppress_min
@@ -526,24 +531,28 @@ end
 -- @param #SUPPRESSION self
 -- @param Core.Zone#ZONE zone MOOSE zone object.
 function SUPPRESSION:SetRetreatZone(zone)
+  self:F({zone=zone})
   self.RetreatZone=zone
 end
 
 --- Turn Debug mode on. Enables messages and more output to DCS log file.
 -- @param #SUPPRESSION self
 function SUPPRESSION:DebugOn()
+  self:F()
   self.Debug=true
 end
 
 --- Flare units when they are hit, die or recover from suppression.
 -- @param #SUPPRESSION self
 function SUPPRESSION:FlareOn()
+  self:F()
   self.flare=true
 end
 
 --- Smoke positions where units fall back to, hide or retreat.
 -- @param #SUPPRESSION self
 function SUPPRESSION:SmokeOn()
+  self:F()
   self.smoke=true
 end
 
@@ -551,6 +560,7 @@ end
 -- @param #SUPPRESSION self
 -- @param #string formation Formation of the group. Default "Vee".
 function SUPPRESSION:SetFormation(formation)
+  self:F(formation)
   self.Formation=formation or "Vee"
 end
 
@@ -558,6 +568,7 @@ end
 -- @param #SUPPRESSION self
 -- @param #number speed Speed in km/h of group. Default max speed the group can do.
 function SUPPRESSION:SetSpeed(speed)
+  self:F(speed)
   self.Speed=speed or self.SpeedMax
   self.Speed=math.min(self.Speed, self.SpeedMax)
 end
@@ -566,6 +577,7 @@ end
 -- @param #SUPPRESSION self
 -- @param #boolean switch Enable=true or disable=false fall back of group.
 function SUPPRESSION:Fallback(switch)
+  self:F(switch)
   if switch==nil then
     switch=true
   end
@@ -576,6 +588,7 @@ end
 -- @param #SUPPRESSION self
 -- @param #number distance Distance in meters.
 function SUPPRESSION:SetFallbackDistance(distance)
+  self:F(distance)
   self.FallbackDist=distance
 end
 
@@ -583,6 +596,7 @@ end
 -- @param #SUPPRESSION self
 -- @param #number time Time in seconds.
 function SUPPRESSION:SetFallbackWait(time)
+  self:F(time)
   self.FallbackWait=time
 end
 
@@ -590,6 +604,7 @@ end
 -- @param #SUPPRESSION self
 -- @param #boolean switch Enable=true or disable=false fall back of group.
 function SUPPRESSION:Takecover(switch)
+  self:F(switch)
   if switch==nil then
     switch=true
   end
@@ -600,6 +615,7 @@ end
 -- @param #SUPPRESSION self
 -- @param #number time Time in seconds.
 function SUPPRESSION:SetTakecoverWait(time)
+  self:F(time)
   self.TakecoverWait=time
 end
 
@@ -607,6 +623,7 @@ end
 -- @param #SUPPRESSION self
 -- @param #number range Search range in meters.
 function SUPPRESSION:SetTakecoverRange(range)
+  self:F(range)
   self.TakecoverRange=range
 end
 
@@ -621,6 +638,7 @@ end
 -- @param #SUPPRESSION self
 -- @param #number probability Probability in percent.
 function SUPPRESSION:SetMinimumFleeProbability(probability)
+  self:F(probability)
   self.PminFlee=probability or 10
 end
 
@@ -628,6 +646,7 @@ end
 -- @param #SUPPRESSION self
 -- @param #number probability Probability in percent.
 function SUPPRESSION:SetMaximumFleeProbability(probability)
+  self:F(probability)
   self.PmaxFlee=probability or 90
 end
 
@@ -637,6 +656,7 @@ end
 -- @param #SUPPRESSION self
 -- @param #number damage Damage in percent. If group gets damaged above this value, the group will retreat. Default 50 %.
 function SUPPRESSION:SetRetreatDamage(damage)
+  self:F(damage)
   self.RetreatDamage=damage or 50
 end
 
@@ -644,6 +664,7 @@ end
 -- @param #SUPPRESSION self
 -- @param #number time Time in seconds. Default 7200 seconds = 2 hours.
 function SUPPRESSION:SetRetreatWait(time)
+  self:F(time)
   self.RetreatWait=time or 7200
 end
 
@@ -651,6 +672,7 @@ end
 -- @param #SUPPRESSION self
 -- @param #string alarmstate Alarm state. Possible "Auto", "Green", "Red". Default is "Auto".
 function SUPPRESSION:SetDefaultAlarmState(alarmstate)
+  self:F(alarmstate)
   if alarmstate:lower()=="auto" then
     self.DefaultAlarmState=SUPPRESSION.AlarmState.Auto
   elseif alarmstate:lower()=="green" then
@@ -666,6 +688,7 @@ end
 -- @param #SUPPRESSION self
 -- @param #string roe ROE after suppression. Possible "Free", "Hold" or "Return". Default "Free".
 function SUPPRESSION:SetDefaultROE(roe)
+  self:F(roe)
   if roe:lower()=="free" then
     self.DefaultROE=SUPPRESSION.ROE.Free
   elseif roe:lower()=="hold" then
@@ -681,6 +704,7 @@ end
 -- @param #SUPPRESSION self
 -- @param #boolean switch Enable=true or disable=false menu group. Default is true.
 function SUPPRESSION:MenuOn(switch)
+  self:F(switch)
   if switch==nil then
     switch=true
   end
@@ -1298,7 +1322,7 @@ function SUPPRESSION:onEvent(Event)
     self:_OnEventHit(EventData)
   end
 
-  -- Event HIT
+  -- Event DEAD
   if Event.id == world.event.S_EVENT_DEAD then
     self:_OnEventDead(EventData)
   end
@@ -1441,12 +1465,12 @@ end
 --- Make group run/drive to a certain point. We put in several intermediate waypoints because sometimes the group stops before it arrived at the desired point.
 --@param #SUPPRESSION self
 --@param Core.Point#COORDINATE fin Coordinate where we want to go.
---@param #number speed Speed of group. Default is 999.
+--@param #number speed Speed of group. Default is 20.
 --@param #string formation Formation of group. Default is "Vee".
 --@param #number wait Time the group will wait/hold at final waypoint. Default is 30 seconds.
 function SUPPRESSION:_Run(fin, speed, formation, wait)
 
-  speed=speed or 999
+  speed=speed or 20
   formation=formation or "Vee"
   wait=wait or 30
 

@@ -1280,7 +1280,7 @@ end
 
 --- Check if aircraft have accidentally been spawned on the runway. If so they will be removed immediatly.
 -- @param #RAT self
--- @param #booblen switch If true, check is performed. If false, this check is omitted.
+-- @param #boolean switch If true, check is performed. If false, this check is omitted.
 function RAT:CheckOnRunway(switch)
   self:F2(switch)
   if switch==nil then
@@ -1291,7 +1291,7 @@ end
 
 --- Check if aircraft have accidentally been spawned on top of each other. If yes, they will be removed immediately.
 -- @param #RAT self
--- @param #booblen switch If true, check is performed. If false, this check is omitted.
+-- @param #boolean switch If true, check is performed. If false, this check is omitted.
 function RAT:CheckOnTop(switch)
   self:F2(switch)
   if switch==nil then
@@ -1302,7 +1302,7 @@ end
 
 --- Put parking spot coordinates in a data base for future use of aircraft.
 -- @param #RAT self
--- @param #booblen switch If true, parking spots are memorized. This is also the default setting.
+-- @param #boolean switch If true, parking spots are memorized. This is also the default setting.
 function RAT:ParkingSpotDB(switch)
   self:F2(switch)
   if switch==nil then
