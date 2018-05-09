@@ -42,20 +42,21 @@
 -- 
 -- # Demo Missions
 --
--- ### [RAT Demo Missions](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/Release/RAT%20-%20Random%20Air%20Traffic)
--- ### [ALL Demo Missions pack of the last release](https://github.com/FlightControl-Master/MOOSE_MISSIONS/releases)
+-- ### [MOOSE - ALL Demo Missions](https://github.com/FlightControl-Master/MOOSE_MISSIONS)
+-- ### [MOOSE - RAT Demo Missions](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/RAT%20-%20Random%20Air%20Traffic)
 -- 
 -- ===
 -- 
 -- # YouTube Channel
 -- 
--- ### [DCS WORLD - MOOSE - RAT - Random Air Traffic](https://www.youtube.com/playlist?list=PL7ZUrU4zZUl0u4Zxywtg-mx_ov4vi68CO)
+-- ### [MOOSE YouTube Channel](https://www.youtube.com/channel/UCjrA9j5LQoWsG4SpS8i79Qg) 
+-- ### [MOOSE - RAT - Random Air Traffic](https://www.youtube.com/playlist?list=PL7ZUrU4zZUl0u4Zxywtg-mx_ov4vi68CO)
 -- 
 -- ===
 -- 
 -- ### Author: **[funkyfranky](https://forums.eagle.ru/member.php?u=115026)**
 -- 
--- ### Contributions: **Sven van de Velde ([FlightControl](https://forums.eagle.ru/member.php?u=89536))**
+-- ### Contributions: [FlightControl](https://forums.eagle.ru/member.php?u=89536)
 -- 
 -- ===
 -- @module Rat
@@ -116,7 +117,7 @@
 -- @field #boolean continuejourney Aircraft will continue their journey, i.e. get respawned at their destination with a new random destination.
 -- @field #number ngroups Number of groups to be spawned in total.
 -- @field #number alive Number of groups which are alive.
--- @field #boolean f10menu Add an F10 menu for RAT.
+-- @field #boolean f10menu If true, add an F10 radiomenu for RAT. Default is false.
 -- @field #table Menu F10 menu items for this RAT object.
 -- @field #string SubMenuName Submenu name for RAT object.
 -- @field #boolean respawn_at_landing Respawn aircraft the moment they land rather than at engine shutdown.
@@ -350,7 +351,7 @@ RAT={
   continuejourney=false,    -- Aircraft will continue their journey, i.e. get respawned at their destination with a new random destination.
   alive=0,                  -- Number of groups which are alive.
   ngroups=nil,              -- Number of groups to be spawned in total. 
-  f10menu=true,             -- Add an F10 menu for RAT.
+  f10menu=false,            -- Add an F10 menu for RAT.
   Menu={},                  -- F10 menu items for this RAT object.
   SubMenuName=nil,          -- Submenu name for RAT object.
   respawn_at_landing=false, -- Respawn aircraft the moment they land rather than at engine shutdown.
@@ -506,7 +507,7 @@ RAT.id="RAT | "
 --- RAT version.
 -- @list version
 RAT.version={
-  version = "2.2.1",
+  version = "2.2.2",
   print = true,
 }
 
@@ -1362,6 +1363,21 @@ function RAT:Immortal()
   self:F2()
   self.immortal=true
 end
+
+--- Radio menu On. Default is off. 
+-- @param #RAT self
+function RAT:RadioMenuON()
+  self:F2()
+  self.f10menu=true
+end
+
+--- Radio menu Off. This is the default setting. 
+-- @param #RAT self
+function RAT:RadioMenuOFF()
+  self:F2()
+  self.f10menu=false
+end
+
 
 --- Activate uncontrolled aircraft. 
 -- @param #RAT self

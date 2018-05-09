@@ -23,19 +23,19 @@
 -- 
 -- # Demo Missions
 --
--- ### [ALL Demo Missions pack of the last release](https://github.com/FlightControl-Master/MOOSE_MISSIONS/releases)
+-- ### [MOOSE - ALL Demo Missions](https://github.com/FlightControl-Master/MOOSE_MISSIONS)
 -- 
 -- ====
 -- 
 -- # YouTube Channel
 -- 
--- ### [MOOSE YouTube Channel](https://www.youtube.com/playlist?list=PL7ZUrU4zZUl1jirWIo4t4YxqN-HxjqRkL)
+-- ### [MOOSE YouTube Channel](https://www.youtube.com/channel/UCjrA9j5LQoWsG4SpS8i79Qg)
 -- 
 -- ===
 -- 
 -- ### Author: **[funkyfranky](https://forums.eagle.ru/member.php?u=115026)**
 -- 
--- ### Contributions: **[FlightControl](https://forums.eagle.ru/member.php?u=89536)**
+-- ### Contributions: [FlightControl](https://forums.eagle.ru/member.php?u=89536)
 -- 
 -- ====
 -- @module Arty
@@ -311,10 +311,10 @@
 --     normandy=ARTY:New(GROUP:FindByName("Normandy"))
 --     
 --     -- Add target: prio=50, radius=300 m, number of missiles=20, number of engagements=1, start time=08:05 hours, only use cruise missiles for this attack.
---     normandy:AssignTargetCoord(GROUP:FindByName("Red Targets 1"),  20, 300,   50, 1, "08:01:00", ARTY.WeaponType.CruiseMissile)
+--     normandy:AssignTargetCoord(GROUP:FindByName("Red Targets 1"):GetCoordinate(),  20, 300,  50, 1, "08:01:00", ARTY.WeaponType.CruiseMissile)
 --     
 --     -- Add target: prio=50, radius=300 m, number of shells=100, number of engagements=1, start time=08:15 hours, only use cannons during this attack.
---     normandy:AssignTargetCoord(GROUP:FindByName("Red Targets 1"),  50, 300, 100, 1, "08:15:00", ARTY.WeaponType.Cannon)
+--     normandy:AssignTargetCoord(GROUP:FindByName("Red Targets 1"):GetCoordinate(),  50, 300, 100, 1, "08:15:00", ARTY.WeaponType.Cannon)
 --     
 --     -- Define shells that are counted to check whether the ship is out of ammo.
 --     -- Note that this is necessary because the Normandy has a lot of other shell type weapons which cannot be used to engage ground targets in an artillery style manner.
@@ -356,9 +356,12 @@ ARTY={
   RearmingArtyOnRoad=false,
   InitialCoord=nil,
   report=true,
-  ammoshells={"weapons.shells"},
-  ammorockets={"weapons.nurs"},
-  ammomissiles={"weapons.missiles"},
+  --ammoshells={"weapons.shells"},
+  ammoshells={},
+  --ammorockets={"weapons.nurs"},
+  ammorockets={},
+  --ammomissiles={"weapons.missiles"},
+  ammomissiles={},
   Nshots=0,
   minrange=500,
   maxrange=1000000,
@@ -373,6 +376,7 @@ ARTY.WeaponType={
   UnguidedAny=805339120,
   GuidedMissile=268402688,
   CruiseMissile=2097152,
+  AntiShipMissile=65536, 
 }
 
 --- Some ID to identify who we are in output of the DCS.log file.
@@ -381,7 +385,7 @@ ARTY.id="ARTY | "
 
 --- Arty script version.
 -- @field #number version
-ARTY.version="0.8.9"
+ARTY.version="0.9.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -485,7 +489,6 @@ function ARTY:New(group)
 
   -- Red branch.  
   self:AddTransition({"CombatReady", "OutOfAmmo"},  "Rearm",       "Rearming")
-  self:AddTransition("Rearming",                    "Move",        "Rearming")
   self:AddTransition("Rearming",                    "Rearmed",     "Rearmed")
     
   -- Green branch.
@@ -503,7 +506,8 @@ function ARTY:New(group)
   
   -- Unknown transitons. To be checked if adding these causes problems.
   self:AddTransition("Rearming",    "Arrived",     "Rearming")
-
+  self:AddTransition("Rearming",    "Move",        "Rearming")
+  
   return self
 end
 
@@ -968,15 +972,16 @@ function ARTY:_OnEventShot(EventData)
         
         elseif self.currentTarget.weapontype==ARTY.WeaponType.UnguidedAny and _nshells+_nrockets==0 then
         
-          self:T(ARTY.id.."Unguided weapon requested but shells and rockets empty.")
+          self:T(ARTY.id.."Unguided weapon requested but shells AND rockets empty.")
           self:CeaseFire(self.currentTarget)
           return
         
-        elseif (self.currentTarget.weapontype==ARTY.WeaponType.CruiseMissile or self.currentTarget.weapontype==ARTY.WeaponType.CruiseMissile) and _nmissiles==0 then
+        elseif (self.currentTarget.weapontype==ARTY.WeaponType.GuidedMissile or self.currentTarget.weapontype==ARTY.WeaponType.CruiseMissile or self.currentTarget.weapontype==ARTY.WeaponType.AntiShipMissile) and _nmissiles==0 then
         
-          self:T(ARTY.id.."Guided or Cruise missiles requested but all missiles empty.")
+          self:T(ARTY.id.."Guided, anti-ship or cruise missiles requested but all missiles empty.")
           self:CeaseFire(self.currentTarget)
           return
+          
         end
        
         -- Check if number of shots reached max.
@@ -1214,11 +1219,14 @@ function ARTY:onafterOpenFire(Controllable, From, Event, To, target)
     _type="shells or rockets"
   elseif self.WeaponType==ARTY.WeaponType.GuidedMissile then
     nfire=Nmissiles
-    _type="missiles"
+    _type="guided missiles"
   elseif self.WeaponType==ARTY.WeaponType.CruiseMissile then
     nfire=Nmissiles
     _type="cruise missiles"
-  end  
+  elseif self.WeaponType==ARTY.WeaponType.AntiShipMissile then
+    nfire=Nmissiles
+    _type="anti-ship missiles"
+  end
   
   -- Adjust if less than requested ammo is left.
   local _n=math.min(target.nshells, nfire)
@@ -1877,6 +1885,11 @@ function ARTY:GetAmmo(display)
         self:T2(ARTY.id..string.format("Number of weapons %d.", weapons))
         self:T2({ammotable=ammotable})
         
+        self:T(ARTY.id.."Ammotable:")
+        for id,bla in pairs(ammotable) do
+          self:T({id=id, ammo=bla})
+        end
+        
         -- Loop over all weapons.
         for w=1,weapons do
         
@@ -1886,28 +1899,55 @@ function ARTY:GetAmmo(display)
           -- Typename of current weapon
           local Tammo=ammotable[w]["desc"]["typeName"]
           
+          -- Get the weapon category: shell=0, missile=1, rocket=2, bomb=3
+          local Category=ammotable[w].desc.category
+          
+          local MissileCategory=nil
+          if Category==Weapon.Category.MISSILE then
+            MissileCategory=ammotable[w].desc.missileCategory
+          end
+          
           -- Check for correct shell type.
           local _gotshell=false
-          for _,_type in pairs(self.ammoshells) do
-            if string.match(Tammo, _type) then
+          if #self.ammoshells>0 then
+            -- User explicitly specified the valid type(s) of shells.
+            for _,_type in pairs(self.ammoshells) do
+              if string.match(Tammo, _type) then
+                _gotshell=true
+              end
+            end
+          else
+            if Category==Weapon.Category.SHELL then
               _gotshell=true
             end
           end
 
           -- Check for correct rocket type.
           local _gotrocket=false
-          for _,_type in pairs(self.ammorockets) do
-            if string.match(Tammo, _type) then
-              _gotrocket=true
+          if #self.ammorockets>0 then
+            for _,_type in pairs(self.ammorockets) do
+              if string.match(Tammo, _type) then
+                _gotrocket=true
+              end
             end
+          else
+            if Category==Weapon.Category.ROCKET then
+              _gotrocket=true
+            end            
           end
 
           -- Check for correct missile type.
           local _gotmissile=false
-          for _,_type in pairs(self.ammomissiles) do
-            if string.match(Tammo,_type) then
-              _gotmissile=true
+          if #self.ammomissiles>0 then
+            for _,_type in pairs(self.ammomissiles) do
+              if string.match(Tammo,_type) then
+                _gotmissile=true
+              end
             end
+          else
+            if Category==Weapon.Category.ROCKET then
+              _gotmissile=true
+            end                      
           end
                            
           -- We are specifically looking for shells or rockets here.
@@ -1917,7 +1957,7 @@ function ARTY:GetAmmo(display)
             nshells=nshells+Nammo
           
             -- Debug info.
-            text=text..string.format("- %d shells of type %s\n", Nammo, Tammo)
+            text=text..string.format("- %d shells of type %s (category=%d mc=%s)\n", Nammo, Tammo, Category, tostring(MissileCategory))
             
           elseif _gotrocket then
           
@@ -1925,7 +1965,7 @@ function ARTY:GetAmmo(display)
             nrockets=nrockets+Nammo
             
             -- Debug info.
-            text=text..string.format("- %d rockets of type %s\n", Nammo, Tammo)
+            text=text..string.format("- %d rockets of type %s (category=%d mc=%s)\n", Nammo, Tammo, Category, tostring(MissileCategory))
             
           elseif _gotmissile then
           
@@ -1933,12 +1973,12 @@ function ARTY:GetAmmo(display)
             nmissiles=nmissiles+Nammo
             
             -- Debug info.
-            text=text..string.format("- %d missiles of type %s\n", name, Nammo, Tammo)
+            text=text..string.format("- %d missiles of type %s (category=%d mc=%s)\n", Nammo, Tammo, Category, tostring(MissileCategory))
                                 
           else
           
             -- Debug info.
-            text=text..string.format("- %d unknown ammo of type %s\n", Nammo, Tammo)
+            text=text..string.format("- %d unknown ammo of type %s (category=%d mc=%s)\n", Nammo, Tammo, Category, tostring(MissileCategory))
             
           end
           
@@ -1946,7 +1986,7 @@ function ARTY:GetAmmo(display)
       end
 
       -- Debug text and send message.
-      self:T2(ARTY.id..text)
+      self:T(ARTY.id..text)
       MESSAGE:New(text, 10):ToAllIf(display)
                
     end

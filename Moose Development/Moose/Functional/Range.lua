@@ -32,12 +32,13 @@
 -- 
 -- # Demo Missions
 --
--- ### [ALL Demo Missions pack of the last release](https://github.com/FlightControl-Master/MOOSE_MISSIONS/releases)
+-- ### [MOOSE - ALL Demo Missions](https://github.com/FlightControl-Master/MOOSE_MISSIONS)
 -- 
 -- ===
 -- 
 -- # YouTube Channel
--- 
+--
+-- ### [MOOSE YouTube Channel](https://www.youtube.com/channel/UCjrA9j5LQoWsG4SpS8i79Qg) 
 -- ### [MOOSE - On the Range - Demonstration Video](https://www.youtube.com/watch?v=kIXcxNB9_3M)
 -- 
 -- ===

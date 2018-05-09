@@ -1,5 +1,5 @@
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
---- **Functional** - Pseudo ATC.
+--- **Functional** - (R2.4) Rudimentary ATC.
 --  
 -- ![Banner Image](..\Presentations\PSEUDOATC\PSEUDOATC_Main.jpg)
 -- 
@@ -11,35 +11,31 @@
 -- 
 -- ## Features
 -- 
--- * Report QFE or QNH pressures at nearby airbases.
--- * Report wind direction and strength at airbases.
--- * Report temperature at airbases.
--- * Report absolute bearing and range to nearest airports.
+-- * Weather report at nearby airbases and mission waypoints.
+-- * Report absolute bearing and range to nearest airports and mission waypoints.
 -- * Report current altitude AGL of own aircraft.
 -- * Upon request, ATC reports altitude until touchdown.
--- * Report weather (pressure temperature, wind) and BR at players mission waypoints.
 -- * Works with static and dynamic weather.
--- * Player can select the unit system (metric or imperial) in which data is reported.
--- * All maps supported (Caucasus, NTTR, Normandy, Persion Gulf and all future maps).
+-- * Player can select the unit system (metric or imperial) in which information is reported.
+-- * All maps supported (Caucasus, NTTR, Normandy, Persian Gulf and all future maps).
 --  
 -- ====
 -- 
 -- # Demo Missions
 --
--- ### [ALL Demo Missions of the last release](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master)
--- ### [ALL Demo Missions of the latest deveopment branch](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/develop)
+-- ### [MOOSE - ALL Demo Missions](https://github.com/FlightControl-Master/MOOSE_MISSIONS)
 -- 
 -- ====
 -- 
 -- # YouTube Channel
 -- 
--- ### [MOOSE YouTube Channel](https://www.youtube.com/playlist?list=PL7ZUrU4zZUl1jirWIo4t4YxqN-HxjqRkL)
+-- ### [MOOSE YouTube Channel](https://www.youtube.com/channel/UCjrA9j5LQoWsG4SpS8i79Qg)
 -- 
 -- ===
 -- 
 -- ### Author: **[funkyfranky](https://forums.eagle.ru/member.php?u=115026)**
 -- 
--- ### Contributions: [FlightControl](https://forums.eagle.ru/member.php?u=89536)**
+-- ### Contributions: [FlightControl](https://forums.eagle.ru/member.php?u=89536)
 -- 
 -- ====
 -- @module PseudoATC
@@ -51,14 +47,37 @@
 -- @field #table player Table comprising each player info.
 -- @field #boolean Debug If true, print debug info to dcs.log file.
 -- @field #number mdur Duration in seconds how low messages to the player are displayed.
--- @field #number mrefresh Interval in seconds after which the F10 menu is refreshed. E.g. by the closest airports.
+-- @field #number mrefresh Interval in seconds after which the F10 menu is refreshed. E.g. by the closest airports. Default is 120 sec.
+-- @field #number talt Interval in seconds between reporting altitude until touchdown. Default 3 sec.
+-- @field #boolean chatty Display some messages on events like take-off and touchdown.
 -- @field #boolean eventsmoose If true, events are handled by MOOSE. If false, events are handled directly by DCS eventhandler.
 -- @extends Core.Base#BASE
 
 ---# PSEUDOATC class, extends @{Base#BASE}
 -- The PSEUDOATC class adds some rudimentary ATC functionality via the radio menu.
 -- 
--- ## Scripting:
+-- Local weather reports can be requested for nearby airports and player's mission waypoints.
+-- The weather report includes
+-- 
+-- * QFE and QNH pressures,
+-- * Temperature,
+-- * Wind direction and strength.
+-- 
+-- The list of airports is updated every 60 seconds. This interval can be adjusted by the function @{#PSEUDOATC.SetMenuRefresh}(*interval*).
+-- 
+-- Likewise, absolute bearing and range to the close by airports and mission waypoints can be requested.
+-- 
+-- The player can switch the unit system in which all information is displayed during the mission with the MOOSE settings radio menu.
+-- The unit system can be set to either imperial or metric. Altitudes are reported in feet or meter, distances in kilometers or nautical miles,
+-- temperatures in degrees Fahrenheit or Celsius and QFE/QNH pressues in inHg or mmHg.
+-- Note that the pressures are also reported in hPa independent of the unit system setting.
+-- 
+-- In bad weather conditions, the ATC can "talk you down", i.e. will continuously report your altitude on the final approach.
+-- Default reporting time interval is 3 seconds. This can be adjusted via the @{#PSEUDOATC.SetReportAltInterval}(*interval*) function.
+-- The reporting stops automatically when the player lands or can be stopped manually by clicking on the radio menu item again.
+-- So the radio menu item acts as a toggle to switch the reporting on and off.
+-- 
+-- ## Scripting
 -- 
 -- Scripting is almost trivial. Just add the following two lines to your script:
 -- 
@@ -72,20 +91,13 @@ PSEUDOATC={
   player={},
   Debug=false,
   mdur=30,
-  mrefresh=60,
+  mrefresh=120,
+  talt=3,
+  chatty=true,
   eventsmoose=true,
 }
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
---- PSEUDOATC unit conversions.
--- @list unit
-PSEUDOATC.unit={
-  hPa2inHg=0.0295299830714,
-  hPa2mmHg=0.7500615613030,
-  meter2feet=3.28084,
-  km2nm=0.539957,
-}
 
 --- Some ID to identify who we are in output of the DCS.log file.
 -- @field #string id
@@ -93,17 +105,17 @@ PSEUDOATC.id="PseudoATC | "
 
 --- PSEUDOATC version.
 -- @field #number version
-PSEUDOATC.version="0.7.0"
+PSEUDOATC.version="0.9.0"
 
 -----------------------------------------------------------------------------------------------------------------------------------------
 
 -- TODO list
--- TODO: Add takeoff event.
--- TODO: Add user functions.
+-- DONE: Add takeoff event.
+-- DONE: Add user functions.
 
 -----------------------------------------------------------------------------------------------------------------------------------------
 
---- PSEUDOATC contructor. Starts the PseudoATC.
+--- PSEUDOATC contructor.
 -- @param #PSEUDOATC self
 -- @return #PSEUDOATC Returns a PSEUDOATC object.
 function PSEUDOATC:New()
@@ -118,9 +130,8 @@ function PSEUDOATC:New()
   return self
 end
 
---- PSEUDOATC contructor. Starts the PseudoATC.
+--- Starts the PseudoATC event handlers.
 -- @param #PSEUDOATC self
--- @return #PSEUDOATC Returns a PSEUDOATC object.
 function PSEUDOATC:Start()
   self:F()
   
@@ -160,7 +171,19 @@ function PSEUDOATC:DebugOff()
   self.Debug=false
 end
 
---- Set message duration how long messages are displayed.
+--- Chatty mode on. Display some messages on take-off and touchdown.
+-- @param #PSEUDOATC self
+function PSEUDOATC:ChattyOn()
+  self.chatty=true
+end
+
+--- Chatty mode off. Don't display some messages on take-off and touchdown.
+-- @param #PSEUDOATC self
+function PSEUDOATC:ChattyOff()
+  self.chatty=false
+end
+
+--- Set duration how long messages are displayed.
 -- @param #PSEUDOATC self
 -- @param #number duration Time in seconds. Default is 30 sec.
 function PSEUDOATC:SetMessageDuration(duration)
@@ -169,16 +192,23 @@ end
 
 --- Set time interval after which the F10 radio menu is refreshed.
 -- @param #PSEUDOATC self
--- @param #number interval Interval in seconds. Default is every 60 sec.
-function PSEUDOATC:SetMessageDuration(interval)
-  self.mrefresh=interval or 60
+-- @param #number interval Interval in seconds. Default is every 120 sec.
+function PSEUDOATC:SetMenuRefresh(interval)
+  self.mrefresh=interval or 120
 end
 
 --- Enable/disable event handling by MOOSE or DCS.
 -- @param #PSEUDOATC self
--- @param #boolean switch If true, events are handled by MOOSE (default). If fase, events are handled directly by DCS.
-function PSEUDOATC:SetMessageDuration(switch)
+-- @param #boolean switch If true, events are handled by MOOSE (default). If false, events are handled directly by DCS.
+function PSEUDOATC:SetEventsMoose(switch)
   self.eventsmoose=switch
+end
+
+--- Set time interval for reporting altitude until touchdown.
+-- @param #PSEUDOATC self
+-- @param #number interval Interval in seconds. Default is every 3 sec.
+function PSEUDOATC:SetReportAltInterval(interval)
+  self.talt=interval or 3
 end
 
 -----------------------------------------------------------------------------------------------------------------------------------------
@@ -231,7 +261,7 @@ function PSEUDOATC:onEvent(Event)
   end
   
   -- Event takeoff.
-  if Event.id == world.event.S_EVENT_TAKEOFF and _playername then
+  if Event.id == world.event.S_EVENT_TAKEOFF and _playername and EventData.Place then
     self:_PlayerTakeOff(EventData)
   end
   
@@ -259,12 +289,7 @@ function PSEUDOATC:onEvent(Event)
   if Event.id == world.event.S_EVENT_PILOT_DEAD and _playername then
     self:_PlayerLeft(EventData)
   end
-  
-  -- Event pilot dead ==> player left unit
-  if Event.id == world.event.S_EVENT_PILOT_DEAD and _playername then
-    self:_PlayerLeft(EventData)
-  end
-  
+    
 end
 
 --- Function called my MOOSE event handler when a player enters a unit.
@@ -376,7 +401,7 @@ function PSEUDOATC:PlayerEntered(unit)
   self.player[GID].waypoints=group:GetTaskRoute()
   
   -- Info message.
-  local text=string.format("Player %s entered unit %s of group %s. ID = %d", PlayerName, UnitName, GroupName, GID)
+  local text=string.format("Player %s entered unit %s of group %s (id=%d).", PlayerName, UnitName, GroupName, GID)
   self:T(PSEUDOATC.id..text)
   MESSAGE:New(text, 30):ToAllIf(self.Debug)
   
@@ -414,7 +439,7 @@ function PSEUDOATC:PlayerLanded(unit, place)
   local CallSign=self.player[id].callsign
   
   -- Debug message.
-  local text=string.format("Player %s (%s) from group %s (ID %d) landed at %s", PlayerName, UnitName, GroupName, id, place)
+  local text=string.format("Player %s in unit %s of group %s (id=%d) landed at %s.", PlayerName, UnitName, GroupName, id, place)
   self:T(PSEUDOATC.id..text)
   MESSAGE:New(text, 30):ToAllIf(self.Debug)
   
@@ -422,7 +447,7 @@ function PSEUDOATC:PlayerLanded(unit, place)
   self:AltitudeTimerStop(id)
   
   -- Welcome message.
-  if place then
+  if place and self.chatty then
     local text=string.format("Touchdown! Welcome to %s. Have a nice day!", place)
     MESSAGE:New(text, self.mdur):ToGroup(group)
   end
@@ -446,13 +471,13 @@ function PSEUDOATC:PlayerTakeOff(unit, place)
   local CallSign=self.player[id].callsign
   
   -- Debug message.
-  local text=string.format("Player %s (%s) from group %s (ID %d) took off at %s", PlayerName, UnitName, GroupName, id, place)
+  local text=string.format("Player %s in unit %s of group %s (id=%d) took off at %s.", PlayerName, UnitName, GroupName, id, place)
   self:T(PSEUDOATC.id..text)
   MESSAGE:New(text, 30):ToAllIf(self.Debug)
     
   -- Bye-Bye message.
-  if place then
-    local text=string.format("%s, %s, your are airborn. Have a save trip!", place, CallSign)
+  if place and self.chatty then
+    local text=string.format("%s, %s, you are airborn. Have a save trip!", place, CallSign)
     MESSAGE:New(text, self.mdur):ToGroup(group)
   end
 
@@ -468,26 +493,30 @@ function PSEUDOATC:PlayerLeft(unit)
   local group=unit:GetGroup()
   local id=group:GetID()
   
-  -- Debug message.
-  local text=string.format("Player %s (%s) callsign %s of group %s just left.", self.player[id].playername, self.player[id].unitname, self.player[id].callsign, self.player[id].groupname)
-  self:T(PSEUDOATC.id..text)
-  MESSAGE:New(text, 30):ToAllIf(self.Debug)
+  if self.player[id] then
   
-  -- Stop scheduler for menu updates
-  if self.player[id].schedulerid then
-    self.player[id].scheduler:Stop(self.player[id].schedulerid)
+    -- Debug message.
+    local text=string.format("Player %s (callsign %s) of group %s just left unit %s.", self.player[id].playername, self.player[id].callsign, self.player[id].groupname, self.player[id].unitname)
+    self:T(PSEUDOATC.id..text)
+    MESSAGE:New(text, 30):ToAllIf(self.Debug)
+    
+    -- Stop scheduler for menu updates
+    if self.player[id].schedulerid then
+      self.player[id].scheduler:Stop(self.player[id].schedulerid)
+    end
+    
+    -- Stop scheduler for reporting alt if it runs.
+    self:AltitudeTimerStop(id)
+    
+    -- Remove main menu.
+    if self.player[id].menu_main then
+      missionCommands.removeItem(self.player[id].menu_main)
+    end
+  
+    -- Remove player array.
+    self.player[id]=nil
+    
   end
-  
-  -- Stop scheduler for reporting alt if it runs.
-  self:AltitudeTimerStop(id)
-  
-  -- Remove main menu.
-  if self.player[id].menu_main then
-    missionCommands.removeItem(self.player[id].menu_main)
-  end
-
-  -- Remove player array.
-  self.player[id]=nil
 end
 
 -----------------------------------------------------------------------------------------------------------------------------------------
@@ -551,14 +580,14 @@ function PSEUDOATC:MenuClear(id)
   end
 
   -- Delete request current alt menu command.
-  if self.player[id].menu_requesttalt then
+  if self.player[id].menu_requestalt then
     missionCommands.removeItemForGroup(id, self.player[id].menu_requestalt)
     self.player[id].menu_requestalt=nil
   end
 
 end
 
---- Create "F10/Pseudo ATC/Local Airports" menu item.
+--- Create "F10/Pseudo ATC/Local Airports/Airport Name/" menu items each containing weather report and BR request.
 -- @param #PSEUDOATC self
 -- @param #number id Group id of player unit for which menues are created. 
 function PSEUDOATC:MenuAirports(id)
@@ -591,7 +620,7 @@ function PSEUDOATC:MenuAirports(id)
   end
 end
 
---- Create F10/Pseudo ATC/Waypoints menu items and misc items.
+--- Create "F10/Pseudo ATC/Waypoints/<Waypoint i>  menu items.
 -- @param #PSEUDOATC self
 -- @param #number id Group id of player unit for which menues are created. 
 function PSEUDOATC:MenuWaypoints(id)
@@ -600,10 +629,9 @@ function PSEUDOATC:MenuWaypoints(id)
   -- Player unit and callsign.
   local unit=self.player[id].unit --Wrapper.Unit#UNIT
   local callsign=self.player[id].callsign
-  local name=string.format("My Aircraft (%s)", callsign)
   
   -- Debug info.
-  self:T(PSEUDOATC.id..string.format("Creating waypoint menu for %s (ID %d).", name, id))
+  self:T(PSEUDOATC.id..string.format("Creating waypoint menu for %s (ID %d).", callsign, id))
      
   if #self.player[id].waypoints>0 then
   
@@ -633,8 +661,8 @@ function PSEUDOATC:MenuWaypoints(id)
     end
   end
   
-  self.player[id].menu_reportalt  = missionCommands.addCommandForGroup(id, "Report alt until touchdown", self.player[id].menu_main, self.AltidudeTimerToggle, self, id)
-  self.player[id].menu_requestalt = missionCommands.addCommandForGroup(id, "Request altitude AGL",       self.player[id].menu_main, self.ReportHeight, self, id)
+  self.player[id].menu_reportalt  = missionCommands.addCommandForGroup(id, "Talk me down",     self.player[id].menu_main, self.AltidudeTimerToggle, self, id)
+  self.player[id].menu_requestalt = missionCommands.addCommandForGroup(id, "Request altitude", self.player[id].menu_main, self.ReportHeight, self, id)
 end
 
 -----------------------------------------------------------------------------------------------------------------------------------------
@@ -657,28 +685,27 @@ function PSEUDOATC:ReportWeather(id, position, location)
   local Pqnh=position:GetPressure(0)  -- Get pressure at sea level.
   local Pqfe=position:GetPressure()   -- Get pressure at (land) height of position.
   
+  -- Pressure conversion
+  local hPa2inHg=0.0295299830714
+  local hPa2mmHg=0.7500615613030
+  
   -- Unit conversion.
-  local _Pqnh=string.format("%.2f inHg", Pqnh * PSEUDOATC.unit.hPa2inHg)
-  local _Pqfe=string.format("%.2f inHg", Pqfe * PSEUDOATC.unit.hPa2inHg)
+  local _Pqnh=string.format("%.2f inHg", Pqnh * hPa2inHg)
+  local _Pqfe=string.format("%.2f inHg", Pqfe * hPa2inHg)
   if settings:IsMetric() then
-    _Pqnh=string.format("%.1f mmHg", Pqnh * PSEUDOATC.unit.hPa2mmHg)
-    _Pqfe=string.format("%.1f mmHg", Pqfe * PSEUDOATC.unit.hPa2mmHg)
+    _Pqnh=string.format("%.1f mmHg", Pqnh * hPa2mmHg)
+    _Pqfe=string.format("%.1f mmHg", Pqfe * hPa2mmHg)
   end  
  
   -- Message text. 
   text=text..string.format("QFE %.1f hPa = %s.\n", Pqfe, _Pqfe)
   text=text..string.format("QNH %.1f hPa = %s.\n", Pqnh, _Pqnh)
   
-  --- convert celsius to fahrenheit
-  local function celsius2fahrenheit(degC)
-    return degC*1.8+32
-  end
- 
   -- Get temperature at position in degrees Celsius. 
   local T=position:GetTemperature()
     
   -- Correct unit system.
-  local _T=string.format('%d°F', celsius2fahrenheit(T))
+  local _T=string.format('%d°F', UTILS.CelciusToFarenheit(T))
   if settings:IsMetric() then
     _T=string.format('%d°C', T)
   end
@@ -696,9 +723,9 @@ function PSEUDOATC:ReportWeather(id, position, location)
   local Ds = string.format('%03d°', Dir)
     
   -- Velocity in player units.
-  local Vs=string.format('%.1f m/s', Vel)
-  if settings:IsImperial() then
-    Vs=string.format("%.1f knots", Vel*1.94384)
+  local Vs=string.format("%.1f knots", UTILS.MpsToKnots(Vel))
+  if settings:IsMetric() then
+    Vs=string.format('%.1f m/s', Vel)  
   end  
   
   -- Message text.
@@ -707,111 +734,6 @@ function PSEUDOATC:ReportWeather(id, position, location)
   -- Send message
   self:_DisplayMessageToGroup(self.player[id].unit, text, self.mdur, true)
   
-end
-
---- Report pressure.
--- @param #PSEUDOATC self
--- @param #number id Group id to which the report is delivered.
--- @param #string Qcode Can be "QNH" for pressure at sea level or "QFE" for pressure at field elevation. Default is QFE or more precisely pressure at position.
--- @param Core.Point#COORDINATE position Coordinates at which the pressure is measured.
--- @param #string location Name of the location at which the pressure is measured.
-function PSEUDOATC:ReportPressure(id, Qcode, position, location)
-  self:F({id=id, Qcode=Qcode, position=position, location=location})
-
-  -- Get pressure in hPa.  
-  local P
-  if Qcode=="QNH" then
-    P=position:GetPressure(0)  -- Get pressure at sea level.
-  else
-    P=position:GetPressure()   -- Get pressure at (land) height of position.
-  end
-  
-  -- Settings.
-  local settings=_DATABASE:GetPlayerSettings(self.player[id].playername) or _SETTINGS --Core.Settings#SETTINGS
-  
-  -- Unit conversion.
-  local P_inHg=P * PSEUDOATC.unit.hPa2inHg
-  local P_mmHg=P * PSEUDOATC.unit.hPa2mmHg
-  
-  local P_set=string.format("%.2f inHg", P_inHg)
-  if settings:IsMetric() then
-    P_set=string.format("%.1f mmHg", P_mmHg)
-  end  
- 
-  -- Message text. 
-  local text=string.format("%s at %s: P = %.1f hPa = %s.", Qcode, location, P, P_set)
-  
-  -- Send message.
-  MESSAGE:New(text, self.mdur):ToGroup(self.player[id].group)
-end
-
---- Report temperature.
--- @param #PSEUDOATC self
--- @param #number id Group id to the report is delivered.
--- @param Core.Point#COORDINATE position Coordinates at which the pressure is measured.
--- @param #string location Name of the location at which the pressure is measured.
-function PSEUDOATC:ReportTemperature(id, position, location)
-  self:F({id=id, position=position, location=location})
-
-  --- convert celsius to fahrenheit
-  local function celsius2fahrenheit(degC)
-    return degC*1.8+32
-  end
- 
-  -- Get temperature at position in degrees Celsius. 
-  local T=position:GetTemperature()
-  
-  -- Formatted temperature in Celsius and Fahrenheit.
-  local Tc=string.format('%d°C', T)
-  local Tf=string.format('%d°F', celsius2fahrenheit(T))
-  
-  -- Settings.
-  local settings=_DATABASE:GetPlayerSettings(self.player[id].playername) or _SETTINGS --Core.Settings#SETTINGS
-  
-  -- Correct unit system.
-  local _T=string.format('%d°F', celsius2fahrenheit(T))
-  if settings:IsMetric() then
-    _T=string.format('%d°C', T)
-  end
-  
-  -- Message text.  
-  local text=string.format("Temperature at %s is %s", location, _T)
-  
-  -- Send message to player group.  
-  MESSAGE:New(text, self.mdur):ToGroup(self.player[id].group)
-end
-
---- Report wind direction and strength.
--- @param #PSEUDOATC self
--- @param #number id Group id to the report is delivered.
--- @param Core.Point#COORDINATE position Coordinates at which the pressure is measured.
--- @param #string location Name of the location at which the pressure is measured.
-function PSEUDOATC:ReportWind(id, position, location)
-  self:F({id=id, position=position, location=location})
-
-  -- Get wind direction and speed.
-  local Dir,Vel=position:GetWind()
-  
-  -- Get Beaufort wind scale.
-  local Bn,Bd=UTILS.BeaufortScale(Vel)
-  
-  -- Formatted wind direction.
-  local Ds = string.format('%03d°', Dir)
-  
-  -- Player settings.
-  local settings=_DATABASE:GetPlayerSettings(self.player[id].playername) or _SETTINGS --Core.Settings#SETTINGS
-  
-  -- Velocity in player units.
-  local Vs=string.format('%.1f m/s', Vel)
-  if settings:IsImperial() then
-    Vs=string.format("%.1f knots", Vel*1.94384)
-  end  
-  
-  -- Message text.
-  local text=string.format("%s: Wind from %s at %s (%s).", location, Ds, Vs, Bd)
-    
-  -- Send message to player group.  
-  MESSAGE:New(text, self.mdur):ToGroup(self.player[id].group)    
 end
 
 --- Report absolute bearing and range form player unit to airport.
@@ -838,9 +760,10 @@ function PSEUDOATC:ReportBR(id, position, location)
   -- Settings.
   local settings=_DATABASE:GetPlayerSettings(self.player[id].playername) or _SETTINGS --Core.Settings#SETTINGS
   
-  local Rs=string.format("%.1f km", range/1000)
-  if settings:IsImperial() then
-    Rs=string.format("%.1f NM", range/1000 * PSEUDOATC.unit.km2nm)
+  
+  local Rs=string.format("%.1f NM", UTILS.MetersToNM(range))
+  if settings:IsMetric() then
+    Rs=string.format("%.1f km", range/1000)  
   end
 
   -- Message text.
@@ -867,11 +790,9 @@ function PSEUDOATC:ReportHeight(id, dt, _clear)
   -- Return height [m] above ground level.
   local function get_AGL(p)
     local agl=0
-    if p then
-      local vec2={x=p.x,y=p.z}
-      local ground=land.getHeight(vec2)
-      local agl=p.y-ground
-    end
+    local vec2={x=p.x,y=p.z}
+    local ground=land.getHeight(vec2)
+    local agl=p.y-ground
     return agl
   end
 
@@ -887,16 +808,23 @@ function PSEUDOATC:ReportHeight(id, dt, _clear)
     -- Settings.
     local settings=_DATABASE:GetPlayerSettings(self.player[id].playername) or _SETTINGS --Core.Settings#SETTINGS
     
-    local Hs=string.format("%d m", height)
+    env.info("FF height = "..height)
+    
+    -- Height string.
+    local Hs=string.format("%d ft", UTILS.MetersToFeet(height))
     if settings:IsMetric() then
-      Hs=string.format("%d ft", height*PSEUDOATC.unit.meter2feet)
+      Hs=string.format("%d m", height)
     end
     
     -- Message text.
-    local _text=string.format("%s: Your altitude is %s AGL.", callsign, Hs)
+    local _text=string.format("%s, your altitude is %s AGL.", callsign, Hs)
+    
+    -- Append flight level.
+    if _clear==false then
+      _text=_text..string.format(" FL%03d.", position.y/30.48)
+    end
     
     -- Send message to player group.  
-    --MESSAGE:New(text, dt):ToGroup(self.player[id].group)
     self:_DisplayMessageToGroup(self.player[id].unit,_text, dt,_clear)
     
     -- Return height
@@ -908,7 +836,7 @@ end
 
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Toggle report altitude reporting on/of.
+--- Toggle report altitude reporting on/off.
 -- @param #PSEUDOATC self.
 -- @param #number id Group id of player unit. 
 function PSEUDOATC:AltidudeTimerToggle(id)
@@ -932,8 +860,7 @@ function PSEUDOATC:AltitudeTimeStart(id)
   -- Debug info.
   self:T(PSEUDOATC.id..string.format("Starting altitude report timer for player ID %d.", id))
   
-  -- Start timer.
-  --self.player[id].altimer=timer.scheduleFunction(self.ReportAltTouchdown, self, id, Tnow+2)
+  -- Start timer. Altitude is reported every ~3 seconds.
   self.player[id].altimer, self.player[id].altimerid=SCHEDULER:New(nil, self.ReportHeight, {self, id, 0.1, true}, 1, 3)
 end
 
@@ -946,7 +873,6 @@ function PSEUDOATC:AltitudeTimerStop(id)
   self:T(PSEUDOATC.id..string.format("Stopping altitude report timer for player ID %d.", id))
   
   -- Stop timer.
-  --timer.removeFunction(self.player[id].alttimer)
   if self.player[id].altimerid then
     self.player[id].altimer:Stop(self.player[id].altimerid)
   end
@@ -1059,5 +985,18 @@ function PSEUDOATC:_DisplayMessageToGroup(_unit, _text, _time, _clear)
     end
   end
   
+end
+
+--- Returns a string which consits of this callsign and the player name.  
+-- @param #RANGE self
+-- @param #string unitname Name of the player unit.
+function PSEUDOATC:_myname(unitname)
+  self:F2(unitname)
+  
+  local unit=UNIT:FindByName(unitname)
+  local pname=unit:GetPlayerName()
+  local csign=unit:GetCallsign()
+  
+  return string.format("%s (%s)", csign, pname)
 end
 

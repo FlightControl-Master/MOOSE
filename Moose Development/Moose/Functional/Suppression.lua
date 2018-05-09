@@ -1,5 +1,5 @@
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
---- **Functional** - Suppress fire of ground units when they get hit.
+--- **Functional** - (R2.4) Suppress fire of ground units when they get hit.
 -- 
 -- ![Banner Image](..\Presentations\SUPPRESSION\Suppression_Main.png)
 -- 
@@ -16,19 +16,19 @@
 -- 
 -- # Demo Missions
 --
--- ### [ALL Demo Missions pack of the last release](https://github.com/FlightControl-Master/MOOSE_MISSIONS/releases)
+-- ### [MOOSE - ALL Demo Missions](https://github.com/FlightControl-Master/MOOSE_MISSIONS)
 -- 
 -- ====
 -- 
 -- # YouTube Channel
 -- 
--- ### [MOOSE YouTube Channel](https://www.youtube.com/playlist?list=PL7ZUrU4zZUl1jirWIo4t4YxqN-HxjqRkL)
+-- ### [MOOSE YouTube Channel](https://www.youtube.com/channel/UCjrA9j5LQoWsG4SpS8i79Qg)
 -- 
 -- ===
 -- 
 -- ### Author: **[funkyfranky](https://forums.eagle.ru/member.php?u=115026)**
 -- 
--- ### Contributions: **[FlightControl](https://forums.eagle.ru/member.php?u=89536)**
+-- ### Contributions: [FlightControl](https://forums.eagle.ru/member.php?u=89536)
 -- 
 -- ====
 -- @module Suppression
@@ -194,10 +194,6 @@
 -- 
 -- ![Process](..\Presentations\SUPPRESSION\Suppression_Example_01.png)
 -- 
--- ## Suppression and Rescure
--- This example shows how the event **Retreat** can be captured. Here, a transport is started which picks up the wounded troups and drives them to a safe zone.
--- 
--- ![Process](..\Presentations\SUPPRESSION\Suppression_Rescue.png)
 -- 
 -- # Customization and Fine Tuning
 -- The following user functions can be used to change the default values
@@ -281,11 +277,11 @@ SUPPRESSION.MenuF10=nil
 
 --- Some ID to identify who we are in output of the DCS.log file.
 -- @field #string id
-SUPPRESSION.id="SFX | "
+SUPPRESSION.id="SUPPRESSION | "
 
 --- PSEUDOATC version.
 -- @field #number version
-SUPPRESSION.version="0.7.0"
+SUPPRESSION.version="0.9.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -1333,6 +1329,7 @@ end
 -- @param #SUPPRESSION self
 -- @param Core.Event#EVENTDATA EventData
 function SUPPRESSION:_OnEventHit(EventData)
+  self:F(EventData)
 
   local GroupNameSelf=self.Controllable:GetName()
   local GroupNameTgt=EventData.TgtGroupName
@@ -1343,7 +1340,7 @@ function SUPPRESSION:_OnEventHit(EventData)
   -- Check that correct group was hit.
   if GroupNameTgt == GroupNameSelf then
   
-    self:T2(SUPPRESSION.id..string.format("Hit event at t = %5.1f", timer.getTime()))
+    self:T(SUPPRESSION.id..string.format("Hit event at t = %5.1f", timer.getTime()))
   
     -- Flare unit that was hit.
     if self.flare or self.Debug then
