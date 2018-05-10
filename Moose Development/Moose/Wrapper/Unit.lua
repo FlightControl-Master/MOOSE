@@ -161,18 +161,28 @@ end
 
 --- Destroys the UNIT.
 -- @param #UNIT self
+-- @param #boolean GenerateEvent (Optional) true if you want to generate a crash or dead event for the unit.
 -- @return #nil The DCS Unit is not existing or alive.  
-function UNIT:Destroy()
+function UNIT:Destroy( GenerateEvent )
   self:F2( self.ObjectName )
 
   local DCSObject = self:GetDCSObject()
   
   if DCSObject then
+  
     local UnitGroup = self:GetGroup()
     local UnitGroupName = UnitGroup:GetName()
     self:F( { UnitGroupName = UnitGroupName } )
+    
+    if GenerateEvent and GenerateEvent == true then
+      if self:IsAir() then
+        self:CreateEventCrash( timer.getTime(), DCSObject )
+      else
+        self:CreateEventDead( timer.getTime(), DCSObject )
+      end
+    end
+    
     USERFLAG:New( UnitGroupName ):Set( 100 )
-    --BASE:CreateEventCrash( timer.getTime(), DCSObject )
     DCSObject:destroy()
   end
 

@@ -32,12 +32,13 @@
 -- 
 -- # Demo Missions
 --
--- ### [ALL Demo Missions pack of the last release](https://github.com/FlightControl-Master/MOOSE_MISSIONS/releases)
+-- ### [MOOSE - ALL Demo Missions](https://github.com/FlightControl-Master/MOOSE_MISSIONS)
 -- 
 -- ===
 -- 
 -- # YouTube Channel
--- 
+--
+-- ### [MOOSE YouTube Channel](https://www.youtube.com/channel/UCjrA9j5LQoWsG4SpS8i79Qg) 
 -- ### [MOOSE - On the Range - Demonstration Video](https://www.youtube.com/watch?v=kIXcxNB9_3M)
 -- 
 -- ===
@@ -211,6 +212,9 @@
 -- 
 -- The function @{#RANGE.DebugON}() can be used to send messages on screen. It also smokes all defined strafe and bombing targets, the strafe pit approach boxes and the range zone.
 -- 
+-- Note that it can happen that the RANGE radio menu is not shown. Check that the range object is defined as a **global** variable rather than a local one.
+-- The could avoid the lua garbage collection to accidentally/falsely deallocate the RANGE objects. 
+-- 
 -- 
 -- 
 -- @field #RANGE
@@ -279,7 +283,7 @@ RANGE.id="RANGE | "
 
 --- Range script version.
 -- @field #number version
-RANGE.version="1.1.0"
+RANGE.version="1.1.1"
 
 --TODO list:
 --TODO: Add custom weapons, which can be specified by the user.
@@ -1537,6 +1541,80 @@ function RANGE:_DisplayRangeInfo(_unitname)
   end
 end
 
+--- Display bombing target locations to player.
+-- @param #RANGE self
+-- @param #string _unitname Name of the player unit.
+function RANGE:_DisplayBombTargets(_unitname)
+  self:F(_unitname)
+
+  -- Get player unit and player name.
+  local _unit, _playername = self:_GetPlayerUnitAndName(_unitname)
+  
+  -- Check if we have a player.
+  if _unit and _playername then
+  
+    -- Player settings.
+    local _settings=_DATABASE:GetPlayerSettings(_playername) or _SETTINGS --Core.Settings#SETTINGS
+    
+    -- Message text.
+    local _text="Bomb Target Locations:"
+  
+    for _,_bombtarget in pairs(self.bombingTargets) do
+      local _target=_bombtarget.target --Wrapper.Positionable#POSITIONABLE
+      if _target and _target:IsAlive() then
+      
+        -- Core.Point#COORDINATE
+        local coord=_target:GetCoordinate() --Core.Point#COORDINATE
+        local mycoord=coord:ToStringA2G(_unit, _settings)
+        _text=_text..string.format("\n- %s: %s",_bombtarget.name, mycoord)
+      end
+    end
+    
+    self:_DisplayMessageToGroup(_unit,_text, nil, true)
+  end
+end
+
+--- Display pit location and heading to player.
+-- @param #RANGE self
+-- @param #string _unitname Name of the player unit.
+function RANGE:_DisplayStrafePits(_unitname)
+  self:F(_unitname)
+
+  -- Get player unit and player name.
+  local _unit, _playername = self:_GetPlayerUnitAndName(_unitname)
+  
+  -- Check if we have a player.
+  if _unit and _playername then
+  
+    -- Player settings.
+    local _settings=_DATABASE:GetPlayerSettings(_playername) or _SETTINGS --Core.Settings#SETTINGS
+    
+    -- Message text.
+    local _text="Strafe Target Locations:"
+  
+    for _,_strafepit in pairs(self.strafeTargets) do
+      local _target=_strafepit --Wrapper.Positionable#POSITIONABLE
+      
+      -- Pit parameters.
+      local coord=_strafepit.coordinate --Core.Point#COORDINATE
+      local heading=_strafepit.heading
+      
+      -- Turn heading around ==> approach heading.
+      if heading>180 then
+        heading=heading-180
+      else
+        heading=heading+180
+      end
+
+      local mycoord=coord:ToStringA2G(_unit, _settings)
+      _text=_text..string.format("\n- %s: %s - heading %03d",_strafepit.name, mycoord, heading)
+    end
+    
+    self:_DisplayMessageToGroup(_unit,_text, nil, true)
+  end
+end
+
+
 --- Report weather conditions at range. Temperature, QFE pressure and wind data.
 -- @param #RANGE self
 -- @param #string _unitname Name of the player unit.
@@ -1792,11 +1870,11 @@ function RANGE:_AddF10Commands(_unitName)
         local _statsPath    = missionCommands.addSubMenuForGroup(_gid, "Statistics",   _rangePath)
         local _markPath     = missionCommands.addSubMenuForGroup(_gid, "Mark Targets", _rangePath)
         local _settingsPath = missionCommands.addSubMenuForGroup(_gid, "My Settings",  _rangePath)
+        local _infoPath     = missionCommands.addSubMenuForGroup(_gid, "Range Info",   _rangePath)
         -- F10/On the Range/<Range Name>/My Settings/
         local _mysmokePath  = missionCommands.addSubMenuForGroup(_gid, "Smoke Color", _settingsPath)
         local _myflarePath  = missionCommands.addSubMenuForGroup(_gid, "Flare Color", _settingsPath)
 
-        --TODO: Convert to MOOSE menu.
         -- F10/On the Range/<Range Name>/Mark Targets/
         missionCommands.addCommandForGroup(_gid, "Mark On Map",         _markPath, self._MarkTargetsOnMap, self, _unitName)
         missionCommands.addCommandForGroup(_gid, "Illuminate Range",    _markPath, self._IlluminateBombTargets, self, _unitName)        
@@ -1824,9 +1902,11 @@ function RANGE:_AddF10Commands(_unitName)
         missionCommands.addCommandForGroup(_gid, "Smoke Delay On/Off",  _settingsPath, self._SmokeBombDelayOnOff, self, _unitName)
         missionCommands.addCommandForGroup(_gid, "Smoke Impact On/Off",  _settingsPath, self._SmokeBombImpactOnOff, self, _unitName)
         missionCommands.addCommandForGroup(_gid, "Flare Hits On/Off",    _settingsPath, self._FlareDirectHitsOnOff, self, _unitName)        
-        -- F10/On the Range/<Range Name>/
-        missionCommands.addCommandForGroup(_gid, "Range Information",   _rangePath, self._DisplayRangeInfo, self, _unitName)
-        missionCommands.addCommandForGroup(_gid, "Weather Report",      _rangePath, self._DisplayRangeWeather, self, _unitName)
+        -- F10/On the Range/<Range Name>/Range Information
+        missionCommands.addCommandForGroup(_gid, "General Info",        _infoPath, self._DisplayRangeInfo, self, _unitName)
+        missionCommands.addCommandForGroup(_gid, "Weather Report",      _infoPath, self._DisplayRangeWeather, self, _unitName)
+        missionCommands.addCommandForGroup(_gid, "Bombing Targets",     _infoPath, self._DisplayBombTargets, self, _unitName)
+        missionCommands.addCommandForGroup(_gid, "Strafe Pits",         _infoPath, self._DisplayStrafePits, self, _unitName)
       end
     else
       self:T(RANGE.id.."Could not find group or group ID in AddF10Menu() function. Unit name: ".._unitName)

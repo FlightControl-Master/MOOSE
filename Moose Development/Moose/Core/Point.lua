@@ -469,8 +469,8 @@ do -- COORDINATE
   -- @param height (Optional) parameter specifying the height ASL.
   -- @return Temperature in Degrees Celsius.
   function COORDINATE:GetTemperature(height)
+    self:F2(height)
     local y=height or self.y
-    env.info("FF height = "..y)
     local point={x=self.x, y=height or self.y, z=self.z}
     -- get temperature [K] and pressure [Pa] at point
     local T,P=atmosphere.getTemperatureAndPressure(point)

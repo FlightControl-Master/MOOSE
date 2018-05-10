@@ -54,6 +54,9 @@ Functional/Range.lua
 Functional/ZoneGoal.lua
 Functional/ZoneGoalCoalition.lua
 Functional/ZoneCaptureCoalition.lua
+Functional/Artillery.lua
+Functional/Suppression.lua
+Functional/PseudoATC.lua
 
 AI/AI_Balancer.lua
 AI/AI_A2A.lua
