@@ -146,7 +146,7 @@ function PSEUDOATC:Start()
     self:HandleEvent(EVENTS.Takeoff,         self._PlayerTakeOff)
     self:HandleEvent(EVENTS.PlayerLeaveUnit, self._PlayerLeft)
     self:HandleEvent(EVENTS.Crash,           self._PlayerLeft)
-    self:HandleEvent(EVENTS.Ejection,        self._PlayerLeft)
+    --self:HandleEvent(EVENTS.Ejection,        self._PlayerLeft)
     --self:HandleEvent(EVENTS.PilotDead,       self._PlayerLeft)
   else
     self:T(PSEUDOATC.id.."Events are handled by DCS.")
@@ -280,6 +280,7 @@ function PSEUDOATC:onEvent(Event)
     self:_PlayerLeft(EventData)
   end
 
+--[[
   -- Event eject ==> player left unit
   if Event.id == world.event.S_EVENT_EJECTION and _playername then
     self:_PlayerLeft(EventData)
@@ -289,7 +290,7 @@ function PSEUDOATC:onEvent(Event)
   if Event.id == world.event.S_EVENT_PILOT_DEAD and _playername then
     self:_PlayerLeft(EventData)
   end
-    
+]]    
 end
 
 --- Function called my MOOSE event handler when a player enters a unit.
@@ -477,7 +478,7 @@ function PSEUDOATC:PlayerTakeOff(unit, place)
     
   -- Bye-Bye message.
   if place and self.chatty then
-    local text=string.format("%s, %s, you are airborn. Have a save trip!", place, CallSign)
+    local text=string.format("%s, %s, you are airborne. Have a safe trip!", place, CallSign)
     MESSAGE:New(text, self.mdur):ToGroup(group)
   end
 
@@ -807,8 +808,6 @@ function PSEUDOATC:ReportHeight(id, dt, _clear)
     
     -- Settings.
     local settings=_DATABASE:GetPlayerSettings(self.player[id].playername) or _SETTINGS --Core.Settings#SETTINGS
-    
-    env.info("FF height = "..height)
     
     -- Height string.
     local Hs=string.format("%d ft", UTILS.MetersToFeet(height))

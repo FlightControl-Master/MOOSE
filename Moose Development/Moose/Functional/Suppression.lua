@@ -357,6 +357,8 @@ function SUPPRESSION:New(group)
   self:AddTransition("Retreating",  "Retreated", "Retreated")
   self:AddTransition("*",           "Dead",      "*")
   
+  self:AddTransition("TakingCover", "Hit",       "TakingCover")
+  self:AddTransition("FallingBack", "Hit",       "FallingBack")
 
   --- User function for OnBefore "Hit" event.
   -- @function [parent=#SUPPRESSION] OnBeforeHit
@@ -1078,7 +1080,9 @@ function SUPPRESSION:onafterFallBack(Controllable, From, Event, To, AttackUnit)
   local Coord=DCoord:Translate(self.FallbackDist, heading)
   
   -- Place marker
-  local MarkerID=Coord:MarkToAll("Fall back position for group "..Controllable:GetName())
+  if self.Debug then
+    local MarkerID=Coord:MarkToAll("Fall back position for group "..Controllable:GetName())
+  end
   
   -- Smoke the coordinate.
   if self.smoke or self.Debug then
@@ -1468,7 +1472,7 @@ end
 function SUPPRESSION:_Run(fin, speed, formation, wait)
 
   speed=speed or 20
-  formation=formation or "Vee"
+  formation=formation or "Off road"
   wait=wait or 30
 
   local group=self.Controllable -- Wrapper.Controllable#CONTROLLABLE
@@ -1506,8 +1510,11 @@ function SUPPRESSION:_Run(fin, speed, formation, wait)
   
   -- First waypoint is the current position of the group.
   wp[1]=ini:WaypointGround(speed, formation)
-  local MarkerID=ini:MarkToAll(string.format("Waypoing %d of group %s (initial)", #wp, self.Controllable:GetName()))
   tasks[1]=group:TaskFunction("SUPPRESSION._Passing_Waypoint", self, 1, false)
+
+  if self.Debug then  
+    local MarkerID=ini:MarkToAll(string.format("Waypoing %d of group %s (initial)", #wp, self.Controllable:GetName()))
+  end
   
   self:T2(SUPPRESSION.id..string.format("Number of waypoints %d", nx))
   for i=1,nx-2 do
@@ -1830,7 +1837,7 @@ end
 -- @param #string To To state.
 function SUPPRESSION:_EventFromTo(BA, Event, From, To)
   local text=string.format("\n%s: %s EVENT %s: %s --> %s", BA, self.Controllable:GetName(), Event, From, To)
-  self:T(SUPPRESSION.id..text)
+  self:T2(SUPPRESSION.id..text)
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

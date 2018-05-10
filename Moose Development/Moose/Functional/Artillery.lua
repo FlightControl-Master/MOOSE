@@ -330,7 +330,7 @@
 -- @field #ARTY
 ARTY={
   ClassName="ARTY",
-  Debug=true,
+  Debug=false,
   targets={},
   moves={},
   currentTarget=nil,
@@ -384,7 +384,7 @@ ARTY.WeaponType={
 ARTY.id="ARTY | "
 
 --- Arty script version.
--- @field #number version
+-- @field #string version
 ARTY.version="0.9.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -799,7 +799,8 @@ function ARTY:onafterStart(Controllable, From, Event, To)
   self:_EventFromTo("onafterStart", Event, From, To)
   
   -- Debug output.
-  local text=string.format("Started ARTY for group %s.", Controllable:GetName())
+  local text=string.format("Started ARTY version %s for group %s.", ARTY.version, Controllable:GetName())
+  self:E(ARTY.id..text)
   MESSAGE:New(text, 10):ToAllIf(self.Debug)
   
   -- Get Ammo.
@@ -954,31 +955,31 @@ function ARTY:_OnEventShot(EventData)
         
         -- Weapon type name for current target.
         local _weapontype=self:_WeaponTypeName(self.currentTarget.weapontype)
-        self:T(ARTY.id..string.format("nammo=%d, nshells=%d, nrockets=%d, nmissiles=%d", _nammo, _nshells, _nrockets, _nmissiles))
-        self:T(ARTY.id..string.format("Weapontype = %s", _weapontype))        
+        self:T(ARTY.id..string.format("Group %s ammo: total=%d, shells=%d, rockets=%d, missiles=%d", self.Controllable:GetName(), _nammo, _nshells, _nrockets, _nmissiles))
+        self:T2(ARTY.id..string.format("Group %s uses weapontype %s for current target.", self.Controllable:GetName(), _weapontype))        
         
         -- Special weapon type requested ==> Check if corresponding ammo is empty.
         if self.currentTarget.weapontype==ARTY.WeaponType.Cannon and _nshells==0 then
         
-          self:T(ARTY.id.."Cannons requested but shells empty.")
+          self:T(ARTY.id.."Group %s, cannons requested but shells empty.", self.Controllable:GetName())
           self:CeaseFire(self.currentTarget)
           return
         
         elseif self.currentTarget.weapontype==ARTY.WeaponType.Rockets and _nrockets==0 then
 
-          self:T(ARTY.id.."Rockets requested but rockets empty.")
+          self:T(ARTY.id.."Group %s, rockets requested but rockets empty.", self.Controllable:GetName())
           self:CeaseFire(self.currentTarget)
           return
         
         elseif self.currentTarget.weapontype==ARTY.WeaponType.UnguidedAny and _nshells+_nrockets==0 then
         
-          self:T(ARTY.id.."Unguided weapon requested but shells AND rockets empty.")
+          self:T(ARTY.id.."Group %s, unguided weapon requested but shells AND rockets empty.", self.Controllable:GetName())
           self:CeaseFire(self.currentTarget)
           return
         
         elseif (self.currentTarget.weapontype==ARTY.WeaponType.GuidedMissile or self.currentTarget.weapontype==ARTY.WeaponType.CruiseMissile or self.currentTarget.weapontype==ARTY.WeaponType.AntiShipMissile) and _nmissiles==0 then
         
-          self:T(ARTY.id.."Guided, anti-ship or cruise missiles requested but all missiles empty.")
+          self:T(ARTY.id.."Group %s, guided, anti-ship or cruise missiles requested but all missiles empty.", self.Controllable:GetName())
           self:CeaseFire(self.currentTarget)
           return
           
@@ -995,7 +996,7 @@ function ARTY:_OnEventShot(EventData)
         end
         
       else
-        self:E(ARTY.id..string.format("ERROR: No current target?!"))
+        self:E(ARTY.id..string.format("ERROR: No current target for group %s?!", self.Controllable:GetName()))
       end        
     end
   end
@@ -1042,22 +1043,20 @@ function ARTY:onafterStatus(Controllable, From, Event, To)
   
   -- Group is out of ammo.
   if self:is("OutOfAmmo") then
-    env.info(string.format("FF: OutOfAmmo. ==> Rearm"))
+    self:T2(ARTY.id..string.format("%s: OutOfAmmo. ==> Rearm", Controllable:GetName()))
     self:Rearm()
   end
   
   -- Group is out of moving.
   if self:is("Moving") then
-    --local _speed=self.Controllable:GetVelocityKMH()
-    --env.info(string.format("FF: Moving. Velocity = %d km/h", _speed))
-    env.info(string.format("FF: Moving"))
+    self:T2(ARTY.id..string.format("%s: Moving", Controllable:GetName()))
   end
   
   -- Group is rearming.
   if self:is("Rearming") then
     local _rearmed=self:_CheckRearmed()
-    env.info(string.format("FF: Rearming. _rearmed = %s", tostring(_rearmed)))
     if _rearmed then
+      self:T2(ARTY.id..string.format("%s: Rearming ==> Rearmed", Controllable:GetName()))
       self:Rearmed()
     end
   end
@@ -1065,15 +1064,16 @@ function ARTY:onafterStatus(Controllable, From, Event, To)
   -- Group finished rearming.
   if self:is("Rearmed") then
     local distance=self.Controllable:GetCoordinate():Get2DDistance(self.InitialCoord)
-    env.info(string.format("FF: Rearmed. Distance ARTY to InitalCoord = %d", distance))
+    self:T2(ARTY.id..string.format("%s: Rearmed. Distance ARTY to InitalCoord = %d m", Controllable:GetName(), distance))
     if distance <= self.RearmingDistance then
+      self:T2(ARTY.id..string.format("%s: Rearmed ==> CombatReady", Controllable:GetName()))
       self:CombatReady()
     end
   end
   
   -- Group arrived at destination.
   if self:is("Arrived") then
-    env.info(string.format("FF: Arrived. ==> CombatReady"))
+    self:T2(ARTY.id..string.format("%s: Arrived ==> CombatReady", Controllable:GetName()))
     self:CombatReady()
   end
   
@@ -1093,15 +1093,18 @@ function ARTY:onafterStatus(Controllable, From, Event, To)
   -- Get a commaned move to another location.
   local _move=self:_CheckMoves()
 
-  -- Group is combat ready or firing but we have a high prio timed target.
+  
   if (self:is("CombatReady") or self:is("Firing")) and _move then
+    -- Group is combat ready or firing but we have a move.
+    self:T2(ARTY.id..string.format("%s: CombatReady/Firing ==> Move", Controllable:GetName()))
   
     -- Command to move.
     self.currentMove=_move
     self:Move(_move.coord, _move.speed, _move.onroad)
   
   elseif self:is("CombatReady") or (self:is("Firing") and _timedTarget) then
-    env.info(string.format("FF: Combatready or firing and high prio timed target."))
+    -- Group is combat ready or firing but we have a high prio timed target.
+    self:T2(ARTY.id..string.format("%s: CombatReady or Firing+Timed Target ==> OpenFire", Controllable:GetName()))
   
     -- Engage target.
     if _timedTarget then
@@ -1137,7 +1140,7 @@ end
 function ARTY:onenterCombatReady(Controllable, From, Event, To)
   self:_EventFromTo("onenterCombatReady", Event, From, To)
   -- Debug info
-  self:T(string.format("FF: onenterComabReady, from=%s, event=%s, to=%s", From, Event, To))
+  self:T3(ARTY.id..string.format("onenterComabReady, from=%s, event=%s, to=%s", From, Event, To))
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1882,14 +1885,16 @@ function ARTY:GetAmmo(display)
       
         local weapons=#ammotable
         
-        self:T2(ARTY.id..string.format("Number of weapons %d.", weapons))
-        self:T2({ammotable=ammotable})
-        
-        self:T(ARTY.id.."Ammotable:")
-        for id,bla in pairs(ammotable) do
-          self:T({id=id, ammo=bla})
+        -- Display ammo table
+        if display then
+          self:E(ARTY.id..string.format("Number of weapons %d.", weapons))
+          self:E({ammotable=ammotable})    
+          self:E(ARTY.id.."Ammotable:")
+          for id,bla in pairs(ammotable) do
+            self:E({id=id, ammo=bla})
+          end
         end
-        
+                
         -- Loop over all weapons.
         for w=1,weapons do
         
@@ -1957,7 +1962,7 @@ function ARTY:GetAmmo(display)
             nshells=nshells+Nammo
           
             -- Debug info.
-            text=text..string.format("- %d shells of type %s (category=%d mc=%s)\n", Nammo, Tammo, Category, tostring(MissileCategory))
+            text=text..string.format("- %d shells of type %s (category=%d, missile category=%s)\n", Nammo, Tammo, Category, tostring(MissileCategory))
             
           elseif _gotrocket then
           
@@ -1965,7 +1970,7 @@ function ARTY:GetAmmo(display)
             nrockets=nrockets+Nammo
             
             -- Debug info.
-            text=text..string.format("- %d rockets of type %s (category=%d mc=%s)\n", Nammo, Tammo, Category, tostring(MissileCategory))
+            text=text..string.format("- %d rockets of type %s (category=%d, missile category=%s)\n", Nammo, Tammo, Category, tostring(MissileCategory))
             
           elseif _gotmissile then
           
@@ -1973,12 +1978,12 @@ function ARTY:GetAmmo(display)
             nmissiles=nmissiles+Nammo
             
             -- Debug info.
-            text=text..string.format("- %d missiles of type %s (category=%d mc=%s)\n", Nammo, Tammo, Category, tostring(MissileCategory))
+            text=text..string.format("- %d missiles of type %s (category=%d, missile category=%s)\n", Nammo, Tammo, Category, tostring(MissileCategory))
                                 
           else
           
             -- Debug info.
-            text=text..string.format("- %d unknown ammo of type %s (category=%d mc=%s)\n", Nammo, Tammo, Category, tostring(MissileCategory))
+            text=text..string.format("- %d unknown ammo of type %s (category=%d, missile category=%s)\n", Nammo, Tammo, Category, tostring(MissileCategory))
             
           end
           
@@ -1986,7 +1991,11 @@ function ARTY:GetAmmo(display)
       end
 
       -- Debug text and send message.
-      self:T(ARTY.id..text)
+      if display then
+        self:E(ARTY.id..text)
+      else
+        self:T3(ARTY.id..text)
+      end
       MESSAGE:New(text, 10):ToAllIf(display)
                
     end
@@ -2112,7 +2121,7 @@ function ARTY:_CheckName(givennames, name)
   until (unique)
   
   -- Debug output and return new name.
-  self:T(string.format("Original name %s, new name = %s", name, newname))
+  self:T2(string.format("Original name %s, new name = %s", name, newname))
   return newname
 end
 
@@ -2171,6 +2180,8 @@ function ARTY:_WeaponTypeName(tnumber)
     name="Cruise Missiles"
   elseif tnumber==ARTY.WeaponType.GuidedMissile then
     name="Guided Missiles"
+  elseif tnumber==ARTY.WeaponType.AntiShipMissile then
+    name="Anti-Ship Missiles"
   end
   return name
 end
@@ -2398,12 +2409,15 @@ function ARTY._PassingWaypoint(group, arty, i, final)
   if final then
     text=string.format("%s, arrived at destination.", group:GetName())
   end
-  env.info(ARTY.id..text)
+  arty:T(ARTY.id..text)
+  
+  --[[
   if final then
     MESSAGE:New(text, 10):ToCoalitionIf(group:GetCoalition(), arty.Debug or arty.report)
   else
     MESSAGE:New(text, 10):ToAllIf(arty.Debug)
   end
+  ]]
   
   -- Arrived event.
   if final and arty.Controllable:GetName()==group:GetName() then
