@@ -58,6 +58,7 @@ DATABASE = {
   ZONENAMES = {},
   HITS = {},
   DESTROYS = {},
+  ZONES = {},
 }
 
 local _DATABASECoalition =
@@ -1075,7 +1076,6 @@ function DATABASE:_RegisterTemplates()
       
       local CoalitionSide = coalition.side[string.upper(CoalitionName)]
 
-      ----------------------------------------------
       -- build nav points DB
       self.Navpoints[CoalitionName] = {}
       if coa_data.nav_points then --navpoints
@@ -1090,8 +1090,9 @@ function DATABASE:_RegisterTemplates()
             self.Navpoints[CoalitionName][nav_ind]['point']['y'] = 0
             self.Navpoints[CoalitionName][nav_ind]['point']['z'] = nav_data.y
           end
+        end
       end
-      end
+
       -------------------------------------------------
       if coa_data.country then --there is a country table
         for cntry_id, cntry_data in pairs(coa_data.country) do
@@ -1147,6 +1148,7 @@ function DATABASE:_RegisterTemplates()
   for ZoneID, ZoneData in pairs( env.mission.triggers.zones ) do
     local ZoneName = ZoneData.name
     self.ZONENAMES[ZoneName] = ZoneName
+    self.ZONES[ZoneName] = ZONE:New( ZoneName )
   end
 
   return self

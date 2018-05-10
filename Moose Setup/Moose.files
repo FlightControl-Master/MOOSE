@@ -70,6 +70,7 @@ AI/AI_Cas.lua
 AI/AI_Bai.lua
 AI/AI_Formation.lua
 AI/AI_Cargo_APC.lua
+AI/AI_Cargo_Dispatcher_APC.lua
 AI/AI_Cargo_Helicopter.lua
 AI/AI_Cargo_Airplane.lua
 

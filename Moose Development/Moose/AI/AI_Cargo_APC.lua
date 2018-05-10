@@ -511,17 +511,18 @@ function AI_CARGO_APC:onbeforeUnloaded( APC, From, Event, To, Cargo )
     for _, APCUnit in pairs( APC:GetUnits() ) do
       local APCUnit = APCUnit -- Wrapper.Unit#UNIT
       local CargoCheck = self.APC_Cargo[APCUnit]
-      self:F( { CargoCheck:GetName(), IsUnLoaded = CargoCheck:IsUnLoaded() } )
-      if CargoCheck:IsUnLoaded() == false then
-        AllUnloaded = false
-        break
+      if CargoCheck then
+        self:F( { CargoCheck:GetName(), IsUnLoaded = CargoCheck:IsUnLoaded() } )
+        if CargoCheck:IsUnLoaded() == false then
+          AllUnloaded = false
+          break
+        end
       end
     end
     
     if AllUnloaded == true then
       self:Guard()
       self.CargoCarrier = APC
-      self.APC_Cargo = {}
     end
   end
   
@@ -572,6 +573,7 @@ function AI_CARGO_APC._Deploy( APC, self )
   if APC:IsAlive() then
     self:Unload()
     self.Transporting = false
+    self.APC_Cargo = {}
   end
 end
 

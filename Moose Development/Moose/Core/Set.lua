@@ -4336,6 +4336,48 @@ function SET_CARGO:FindNearestCargoFromPointVec2( PointVec2 ) --R2.1
   return NearestCargo
 end
 
+function SET_CARGO:FirstCargoWithState( State )
+  
+  local FirstCargo = nil
+  
+  for CargoName, Cargo in pairs( self.Set ) do
+    if Cargo:Is( State ) then
+      FirstCargo = Cargo
+      break
+    end
+  end
+  
+  return FirstCargo
+end
+
+
+--- Iterate the SET_CARGO while identifying the first @{Cargo#CARGO} that is UnLoaded.
+-- @param #SET_CARGO self
+-- @return Cargo.Cargo#CARGO The first @{Cargo#CARGO}.
+function SET_CARGO:FirstCargoUnLoaded()
+  local FirstCargo = self:FirstCargoWithState( "UnLoaded" )
+  return FirstCargo
+end
+
+
+--- Iterate the SET_CARGO while identifying the first @{Cargo#CARGO} that is Loaded.
+-- @param #SET_CARGO self
+-- @return Cargo.Cargo#CARGO The first @{Cargo#CARGO}.
+function SET_CARGO:FirstCargoLoaded()
+  local FirstCargo = self:FirstCargoWithState( "Loaded" )
+  return FirstCargo
+end
+
+
+--- Iterate the SET_CARGO while identifying the first @{Cargo#CARGO} that is Deployed.
+-- @param #SET_CARGO self
+-- @return Cargo.Cargo#CARGO The first @{Cargo#CARGO}.
+function SET_CARGO:FirstCargoDeployed()
+  local FirstCargo = self:FirstCargoWithState( "Deployed" )
+  return FirstCargo
+end
+
+
 
 
 --- (R2.1) 
@@ -4429,5 +4471,235 @@ function SET_CARGO:OnEventDeleteCargo( EventData ) --R2.1
       end
     end
   end
+end
+
+
+
+--- @type SET_ZONE
+-- @extends Core.Set#SET_BASE
+
+--- # SET_ZONE class, extends @{Set#SET_BASE}
+-- 
+-- Mission designers can use the @{Set#SET_ZONE} class to build sets of zones of various types.
+-- 
+-- ## SET_ZONE constructor
+-- 
+-- Create a new SET_ZONE object with the @{#SET_ZONE.New} method:
+-- 
+--    * @{#SET_ZONE.New}: Creates a new SET_ZONE object.
+--   
+-- ## Add or Remove ZONEs from SET_ZONE 
+-- 
+-- ZONEs can be added and removed using the @{Set#SET_ZONE.AddZonesByName} and @{Set#SET_ZONE.RemoveZonesByName} respectively. 
+-- These methods take a single ZONE name or an array of ZONE names to be added or removed from SET_ZONE.
+-- 
+-- ## 5.3) SET_ZONE filter criteria 
+-- 
+-- You can set filter criteria to build the collection of zones in SET_ZONE.
+-- Filter criteria are defined by:
+-- 
+--    * @{#SET_ZONE.FilterPrefixes}: Builds the SET_ZONE with the zones having a certain text pattern of prefix.
+--   
+-- Once the filter criteria have been set for the SET_ZONE, you can start filtering using:
+-- 
+--   * @{#SET_ZONE.FilterStart}: Starts the filtering of the zones within the SET_ZONE.
+-- 
+-- ## 5.4) SET_ZONE iterators
+-- 
+-- Once the filters have been defined and the SET_ZONE has been built, you can iterate the SET_ZONE with the available iterator methods.
+-- The iterator methods will walk the SET_ZONE set, and call for each airbase within the set a function that you provide.
+-- The following iterator methods are currently available within the SET_ZONE:
+-- 
+--   * @{#SET_ZONE.ForEachZone}: Calls a function for each zone it finds within the SET_ZONE.
+-- 
+-- ===
+-- @field #SET_ZONE SET_ZONE
+SET_ZONE = {
+  ClassName = "SET_ZONE",
+  Zones = {},
+  Filter = {
+    Prefixes = nil,
+  },
+  FilterMeta = {
+  },
+}
+
+
+--- Creates a new SET_ZONE object, building a set of zones.
+-- @param #SET_ZONE self
+-- @return #SET_ZONE self
+-- @usage
+-- -- Define a new SET_ZONE Object. The DatabaseSet will contain a reference to all Zones.
+-- DatabaseSet = SET_ZONE:New()
+function SET_ZONE:New()
+  -- Inherits from BASE
+  local self = BASE:Inherit( self, SET_BASE:New( _DATABASE.ZONES ) )
+
+  return self
+end
+
+--- Add ZONEs to SET_ZONE.
+-- @param Core.Set#SET_ZONE self
+-- @param #string AddZoneNames A single name or an array of ZONE_BASE names.
+-- @return self
+function SET_ZONE:AddZonesByName( AddZoneNames )
+
+  local AddZoneNamesArray = ( type( AddZoneNames ) == "table" ) and AddZoneNames or { AddZoneNames }
+  
+  for AddAirbaseID, AddZoneName in pairs( AddZoneNamesArray ) do
+    self:Add( AddZoneName, ZONE:FindByName( AddZoneName ) )
+  end
+    
+  return self
+end
+
+--- Remove ZONEs from SET_ZONE.
+-- @param Core.Set#SET_ZONE self
+-- @param Core.Zone#ZONE_BASE RemoveZoneNames A single name or an array of ZONE_BASE names.
+-- @return self
+function SET_ZONE:RemoveZonesByName( RemoveZoneNames )
+
+  local RemoveZoneNamesArray = ( type( RemoveZoneNames ) == "table" ) and RemoveZoneNames or { RemoveZoneNames }
+  
+  for RemoveZoneID, RemoveZoneName in pairs( RemoveZoneNamesArray ) do
+    self:Remove( RemoveZoneName )
+  end
+    
+  return self
+end
+
+
+--- Finds a Zone based on the Zone Name.
+-- @param #SET_ZONE self
+-- @param #string ZoneName
+-- @return Core.Zone#ZONE_BASE The found Zone.
+function SET_ZONE:FindZone( ZoneName )
+
+  local ZoneFound = self.Set[ZoneName]
+  return ZoneFound
+end
+
+
+--- Get a random zone from the set.
+-- @param #SET_ZONE self
+-- @return Core.Zone#ZONE_BASE The random Zone.
+function SET_ZONE:GetRandomZone()
+
+  local Index = self.Index
+  local ZoneFound = nil
+  
+  while not ZoneFound  do
+    local ZoneRandom = math.random( 1, #Index )
+    ZoneFound = self.Set[Index[ZoneRandom]]
+  end
+
+  return ZoneFound
+end
+
+
+
+--- Builds a set of zones of defined zone prefixes.
+-- All the zones starting with the given prefixes will be included within the set.
+-- @param #SET_ZONE self
+-- @param #string Prefixes The prefix of which the zone name starts with.
+-- @return #SET_ZONE self
+function SET_ZONE:FilterPrefixes( Prefixes )
+  if not self.Filter.Prefixes then
+    self.Filter.Prefixes = {}
+  end
+  if type( Prefixes ) ~= "table" then
+    Prefixes = { Prefixes }
+  end
+  for PrefixID, Prefix in pairs( Prefixes ) do
+    self.Filter.Prefixes[Prefix] = Prefix
+  end
+  return self
+end
+
+
+--- Starts the filtering.
+-- @param #SET_ZONE self
+-- @return #SET_ZONE self
+function SET_ZONE:FilterStart()
+
+  if _DATABASE then
+  
+    -- We initialize the first set.
+    for ObjectName, Object in pairs( self.Database ) do
+      if self:IsIncludeObject( Object ) then
+        self:Add( ObjectName, Object )
+      else
+        self:RemoveZonesByName( ObjectName )
+      end
+    end
+  end
+  
+  return self
+end
+
+--- Handles the Database to check on an event (birth) that the Object was added in the Database.
+-- This is required, because sometimes the _DATABASE birth event gets called later than the SET_BASE birth event!
+-- @param #SET_ZONE self
+-- @param Core.Event#EVENTDATA Event
+-- @return #string The name of the AIRBASE
+-- @return #table The AIRBASE
+function SET_ZONE:AddInDatabase( Event )
+  self:F3( { Event } )
+
+  return Event.IniDCSUnitName, self.Database[Event.IniDCSUnitName]
+end
+
+--- Handles the Database to check on any event that Object exists in the Database.
+-- This is required, because sometimes the _DATABASE event gets called later than the SET_BASE event or vise versa!
+-- @param #SET_ZONE self
+-- @param Core.Event#EVENTDATA Event
+-- @return #string The name of the AIRBASE
+-- @return #table The AIRBASE
+function SET_ZONE:FindInDatabase( Event )
+  self:F3( { Event } )
+
+  return Event.IniDCSUnitName, self.Database[Event.IniDCSUnitName]
+end
+
+--- Iterate the SET_ZONE and call an interator function for each ZONE, providing the ZONE and optional parameters.
+-- @param #SET_ZONE self
+-- @param #function IteratorFunction The function that will be called when there is an alive ZONE in the SET_ZONE. The function needs to accept a AIRBASE parameter.
+-- @return #SET_ZONE self
+function SET_ZONE:ForEachZone( IteratorFunction, ... )
+  self:F2( arg )
+  
+  self:ForEach( IteratorFunction, arg, self:GetSet() )
+
+  return self
+end
+
+
+---
+-- @param #SET_ZONE self
+-- @param Core.Zone#ZONE_BASE MZone
+-- @return #SET_ZONE self
+function SET_ZONE:IsIncludeObject( MZone )
+  self:F2( MZone )
+
+  local MZoneInclude = true
+
+  if MZone then
+    local MZoneName = MZone:GetName()
+  
+    if self.Filter.Prefixes then
+      local MZonePrefix = false
+      for ZonePrefixId, ZonePrefix in pairs( self.Filter.Prefixes ) do
+        self:T3( { "Prefix:", string.find( MZoneName, ZonePrefix, 1 ), ZonePrefix } )
+        if string.find( MZoneName, ZonePrefix, 1 ) then
+          MZonePrefix = true
+        end
+      end
+      self:T( { "Evaluated Prefix", MZonePrefix } )
+      MZoneInclude = MZoneInclude and MZonePrefix
+    end
+  end
+   
+  self:T2( MZoneInclude )
+  return MZoneInclude
 end
 
