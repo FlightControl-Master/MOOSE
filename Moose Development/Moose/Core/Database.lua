@@ -1149,6 +1149,7 @@ function DATABASE:_RegisterTemplates()
     local ZoneName = ZoneData.name
     self.ZONENAMES[ZoneName] = ZoneName
     self.ZONES[ZoneName] = ZONE:New( ZoneName )
+    self:I( "Added ZONE " .. ZoneName )
   end
 
   return self

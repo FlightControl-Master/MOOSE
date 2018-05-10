@@ -4350,12 +4350,35 @@ function SET_CARGO:FirstCargoWithState( State )
   return FirstCargo
 end
 
+function SET_CARGO:FirstCargoWithStateAndNotDeployed( State )
+  
+  local FirstCargo = nil
+  
+  for CargoName, Cargo in pairs( self.Set ) do
+    if Cargo:Is( State ) and not Cargo:IsDeployed() then
+      FirstCargo = Cargo
+      break
+    end
+  end
+  
+  return FirstCargo
+end
+
 
 --- Iterate the SET_CARGO while identifying the first @{Cargo#CARGO} that is UnLoaded.
 -- @param #SET_CARGO self
 -- @return Cargo.Cargo#CARGO The first @{Cargo#CARGO}.
 function SET_CARGO:FirstCargoUnLoaded()
   local FirstCargo = self:FirstCargoWithState( "UnLoaded" )
+  return FirstCargo
+end
+
+
+--- Iterate the SET_CARGO while identifying the first @{Cargo#CARGO} that is UnLoaded and not Deployed.
+-- @param #SET_CARGO self
+-- @return Cargo.Cargo#CARGO The first @{Cargo#CARGO}.
+function SET_CARGO:FirstCargoUnLoadedAndNotDeployed()
+  local FirstCargo = self:FirstCargoWithStateAndNotDeployed( "UnLoaded" )
   return FirstCargo
 end
 
@@ -4588,7 +4611,7 @@ function SET_ZONE:GetRandomZone()
   local Index = self.Index
   local ZoneFound = nil
   
-  while not ZoneFound  do
+  while not ZoneFound do
     local ZoneRandom = math.random( 1, #Index )
     ZoneFound = self.Set[Index[ZoneRandom]]
   end

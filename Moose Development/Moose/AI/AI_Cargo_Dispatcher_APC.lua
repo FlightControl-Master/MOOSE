@@ -1,4 +1,4 @@
---- **AI** -- (R2.4) - Models the intelligent transportation of infantry and other cargo.
+--- **AI** -- (R2.4) - Models the intelligent transportation of infantry and other cargo using APCs.
 --
 -- ===
 -- 
@@ -6,10 +6,10 @@
 -- 
 -- ===       
 --
--- @module AI_Cargo_Dispatcher
+-- @module AI_Cargo_Dispatcher_APC
 
 --- @type AI_CARGO_DISPATCHER_APC
--- @extends Core.Fsm#FSM_CONTROLLABLE
+-- @extends AI.AI_Cargo_Dispatcher#AI_CARGO_DISPATCHER
 
 
 --- # AI\_CARGO\_DISPATCHER\_APC class, extends @{Core.Base#BASE}
@@ -28,16 +28,7 @@
 -- @field #AI_CARGO_DISPATCHER_APC
 AI_CARGO_DISPATCHER_APC = {
   ClassName = "AI_CARGO_DISPATCHER_APC",
-  SetAPC = nil,
-  SetDeployZones = nil,
-  AI_CARGO_APC = {}
 }
-
---- @type AI_CARGO_DISPATCHER_APC.AI_CARGO_APC
--- @map <Wrapper.Group#GROUP, AI.AI_Cargo_APC#AI_CARGO_APC>
-
---- @field #AI_CARGO_DISPATCHER_APC.AI_CARGO_APC 
-AI_CARGO_DISPATCHER_APC.AICargoAPC = {}
 
 --- Creates a new AI_CARGO_DISPATCHER_APC object.
 -- @param #AI_CARGO_DISPATCHER_APC self
@@ -55,104 +46,9 @@ AI_CARGO_DISPATCHER_APC.AICargoAPC = {}
 -- 
 function AI_CARGO_DISPATCHER_APC:New( SetAPC, SetCargo, SetDeployZones )
 
-  local self = BASE:Inherit( self, FSM:New() ) -- #AI_CARGO_DISPATCHER_APC
-
-  self.SetAPC = SetAPC -- Core.Set#SET_GROUP
-  self.SetCargo = SetCargo -- Core.Set#SET_CARGO
-  self.SetDeployZones = SetDeployZones -- Core.Set#SET_ZONE
-
-  self:SetStartState( "APC" ) 
-  
-  self:AddTransition( "*", "Monitor", "*" )
-
-  self:AddTransition( "*", "Pickup", "*" )
-  self:AddTransition( "*", "Loading", "*" )
-  self:AddTransition( "*", "Loaded", "*" )
-
-  self:AddTransition( "*", "Deploy", "*" )
-  self:AddTransition( "*", "Unloading", "*" )
-  self:AddTransition( "*", "Unloaded", "*" )
-  
-  self.PickupTimeInterval = 120
-  self.DeployRadiusInner = 200
-  self.DeployRadiusOuter = 500
-  
-  return self
-end
-
-
---- The Start trigger event, which actually takes action at the specified time interval.
--- @param #AI_CARGO_DISPATCHER_APC self
--- @param Wrapper.Group#GROUP APC
--- @return #AI_CARGO_DISPATCHER_APC
-function AI_CARGO_DISPATCHER_APC:onafterMonitor()
-
-  for APCGroupName, APC in pairs( self.SetAPC:GetSet() ) do
-    local APC = APC -- Wrapper.Group#GROUP
-    local AICargoAPC = self.AICargoAPC[APC]
-    if not AICargoAPC then
-      -- ok, so this APC does not have yet an AI_CARGO_APC object...
-      -- let's create one and also declare the Loaded and UnLoaded handlers.
-      self.AICargoAPC[APC] = AI_CARGO_APC:New( APC, self.SetCargo, self.CombatRadius )
-      AICargoAPC = self.AICargoAPC[APC]
-      
-      function AICargoAPC.OnAfterPickup( AICargoAPC, APC )
-        self.AICargoAPC = AICargoAPC
-        self:Pickup( APC )
-      end
-      
-      function AICargoAPC.OnAfterLoad( AICargoAPC, APC )
-        self.AICargoAPC = AICargoAPC
-        self:Load( APC )
-      end
-
-      function AICargoAPC.OnAfterLoaded( AICargoAPC, APC )
-        self.AICargoAPC = AICargoAPC
-        self:Loaded( APC )
-      end
-
-      function AICargoAPC.OnAfterDeploy( AICargoAPC, APC )
-        self.AICargoAPC = AICargoAPC
-        self:Deploy( APC )
-      end      
-
-      function AICargoAPC.OnAfterUnload( AICargoAPC, APC )
-        self.AICargoAPC = AICargoAPC
-        self:Unload( APC )
-      end      
-
-      function AICargoAPC.OnAfterUnloaded( AICargoAPC, APC )
-        self.AICargoAPC = AICargoAPC
-        self:Unloaded( APC )
-      end      
-    end
-
-    -- The Pickup sequence ...
-    -- Check if this APC need to go and Pickup something...
-    if not AICargoAPC:IsTransporting() == true then
-      -- ok, so there is a free APC
-      -- now find the first cargo that is Unloaded
-      local FirstCargoUnloaded = self.SetCargo:FirstCargoUnLoaded()
-      if FirstCargoUnloaded then
-        AICargoAPC:Pickup( FirstCargoUnloaded:GetCoordinate() )
-        break
-      end
-    end
-  end
+  local self = BASE:Inherit( self, AI_CARGO_DISPATCHER:New( SetAPC, SetCargo, SetDeployZones ) ) -- #AI_CARGO_DISPATCHER_APC
 
   return self
 end
 
-
-
---- Make a APC run for a cargo deploy action after the cargo has been loaded, by default.
--- @param #AI_CARGO_DISPATCHER_APC self
--- @param Wrapper.Group#GROUP APC
--- @return #AI_CARGO_DISPATCHER_APC
-function AI_CARGO_DISPATCHER_APC:OnAfterLoaded( APC )
-
-  self:Deploy( self.SetDeployZones:GetRandomZone():GetCoordinate():GetRandomCoordinateInRadius( self.DeployRadiusInner, self.DeployRadiusOuter ) )
-
-  return self
-end
 
