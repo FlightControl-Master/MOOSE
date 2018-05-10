@@ -32,7 +32,7 @@ AI_CARGO_DISPATCHER_HELICOPTER = {
 
 --- Creates a new AI_CARGO_DISPATCHER_HELICOPTER object.
 -- @param #AI_CARGO_DISPATCHER_HELICOPTER self
--- @param Core.Set#SET_GROUP SetAPC
+-- @param Core.Set#SET_GROUP SetHelicopter
 -- @param Core.Set#SET_CARGO SetCargo
 -- @param Core.Set#SET_ZONE SetDeployZone
 -- @return #AI_CARGO_DISPATCHER_HELICOPTER
@@ -48,7 +48,13 @@ function AI_CARGO_DISPATCHER_HELICOPTER:New( SetHelicopter, SetCargo, SetDeployZ
 
   local self = BASE:Inherit( self, AI_CARGO_DISPATCHER:New( SetHelicopter, SetCargo, SetDeployZones ) ) -- #AI_CARGO_DISPATCHER_HELICOPTER
 
+  self:Monitor( 1 )
+
   return self
 end
 
+function AI_CARGO_DISPATCHER_HELICOPTER:AICargo( Helicopter, SetCargo )
+
+  return AI_CARGO_HELICOPTER:New( Helicopter, SetCargo )
+end
 

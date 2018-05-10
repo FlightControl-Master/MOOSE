@@ -48,7 +48,15 @@ function AI_CARGO_DISPATCHER_APC:New( SetAPC, SetCargo, SetDeployZones )
 
   local self = BASE:Inherit( self, AI_CARGO_DISPATCHER:New( SetAPC, SetCargo, SetDeployZones ) ) -- #AI_CARGO_DISPATCHER_APC
 
+  self.CombatRadius = 500
+
+  self:Monitor( 1 )
+
   return self
 end
 
 
+function AI_CARGO_DISPATCHER_APC:AICargo( APC, SetCargo )
+
+  return AI_CARGO_APC:New( APC, SetCargo, self.CombatRadius )
+end
