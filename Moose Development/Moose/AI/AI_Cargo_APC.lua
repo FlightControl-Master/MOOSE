@@ -190,6 +190,7 @@ function AI_CARGO_APC:New( CargoCarrier, CargoSet, CombatRadius )
 
   self:SetCarrier( CargoCarrier )
   self.Transporting = false
+  self.Relocating = false
   
   return self
 end
@@ -227,7 +228,7 @@ function AI_CARGO_APC:SetCarrier( CargoCarrier )
       self:F( { OnHitLoaded = AICargoTroops:Is( "Loaded" ) } )
       if AICargoTroops:Is( "Loaded" ) or AICargoTroops:Is( "Boarding" ) then
         -- There are enemies within combat range. Unload the CargoCarrier.
-        AICargoTroops:Unload()
+        AICargoTroops:Unload( false )
       end
     end
   end
@@ -246,6 +247,11 @@ end
 function AI_CARGO_APC:IsTransporting()
 
   return self.Transporting == true
+end
+
+function AI_CARGO_APC:IsRelocating()
+
+  return self.Relocating == true
 end
 
 --- Find a free Carrier within a range.
@@ -337,7 +343,7 @@ function AI_CARGO_APC:onafterMonitor( APC, From, Event, To )
 
   if APC and APC:IsAlive() then
     if self.CarrierCoordinate then
-      if self:IsTransporting() then
+      if self:IsRelocating() == true then
         local Coordinate = APC:GetCoordinate()
         self.Zone:Scan( { Object.Category.UNIT } )
         if self.Zone:IsAllInZoneOfCoalition( self.Coalition ) then
@@ -348,7 +354,7 @@ function AI_CARGO_APC:onafterMonitor( APC, From, Event, To )
         else
           if self:Is( "Loaded" ) then
             -- There are enemies within combat range. Unload the CargoCarrier.
-            self:__Unload( 1 )
+            self:__Unload( 1, false )
           else
             if self:Is( "Unloaded" ) then
               self:Follow()
@@ -398,8 +404,8 @@ function AI_CARGO_APC:onbeforeLoad( APC, From, Event, To )
       local APCUnit = APCUnit -- Wrapper.Unit#UNIT
       for _, Cargo in pairs( self.CargoSet:GetSet() ) do
         local Cargo = Cargo -- Cargo.Cargo#CARGO
-        self:F( { IsUnLoaded = Cargo:IsUnLoaded(), Cargo:GetName(), APC:GetName() } )
-        if Cargo:IsUnLoaded() then
+        self:F( { IsUnLoaded = Cargo:IsUnLoaded(), IsDeployed = Cargo:IsDeployed(), Cargo:GetName(), APC:GetName() } )
+        if Cargo:IsUnLoaded() and not Cargo:IsDeployed() then
           if Cargo:IsInLoadRadius( APCUnit:GetCoordinate() ) then
             self:F( { "In radius", APCUnit:GetName() } )
             APC:RouteStop()
@@ -467,8 +473,8 @@ end
 
 --- @param #AI_CARGO_APC self
 -- @param Wrapper.Group#GROUP APC
-function AI_CARGO_APC:onafterUnload( APC, From, Event, To )
-  self:F( { APC, From, Event, To } )
+function AI_CARGO_APC:onafterUnload( APC, From, Event, To, Deployed )
+  self:F( { APC, From, Event, To, Deployed } )
 
   if APC and APC:IsAlive() then
     for _, APCUnit in pairs( APC:GetUnits() ) do
@@ -476,7 +482,7 @@ function AI_CARGO_APC:onafterUnload( APC, From, Event, To )
       APC:RouteStop()
       for _, Cargo in pairs( APCUnit:GetCargo() ) do
         Cargo:UnBoard()
-        self:__Unboard( 10, Cargo )
+        self:__Unboard( 10, Cargo, Deployed )
       end 
     end
   end
@@ -485,14 +491,14 @@ end
 
 --- @param #AI_CARGO_APC self
 -- @param Wrapper.Group#GROUP APC
-function AI_CARGO_APC:onafterUnboard( APC, From, Event, To, Cargo )
+function AI_CARGO_APC:onafterUnboard( APC, From, Event, To, Cargo, Deployed )
   self:F( { APC, From, Event, To, Cargo:GetName() } )
 
   if APC and APC:IsAlive() then
     if not Cargo:IsUnLoaded() then
-      self:__Unboard( 10, Cargo ) 
+      self:__Unboard( 10, Cargo, Deployed ) 
     else
-      self:__Unloaded( 1, Cargo )
+      self:__Unloaded( 1, Cargo, Deployed )
     end
   end
   
@@ -500,8 +506,8 @@ end
 
 --- @param #AI_CARGO_APC self
 -- @param Wrapper.Group#GROUP APC
-function AI_CARGO_APC:onbeforeUnloaded( APC, From, Event, To, Cargo )
-  self:F( { APC, From, Event, To, Cargo:GetName() } )
+function AI_CARGO_APC:onbeforeUnloaded( APC, From, Event, To, Cargo, Deployed )
+  self:F( { APC, From, Event, To, Cargo:GetName(), Deployed = Deployed } )
 
   local AllUnloaded = true
 
@@ -521,6 +527,13 @@ function AI_CARGO_APC:onbeforeUnloaded( APC, From, Event, To, Cargo )
     end
     
     if AllUnloaded == true then
+      if Deployed == true then
+        for APCUnit, Cargo in pairs( self.APC_Cargo ) do
+          local Cargo = Cargo -- Cargo.Cargo#CARGO
+          Cargo:SetDeployed( true )
+        end
+        self.APC_Cargo = {}
+      end
       self:Guard()
       self.CargoCarrier = APC
     end
@@ -559,7 +572,7 @@ function AI_CARGO_APC._Pickup( APC, self )
 
   if APC:IsAlive() then
     self:Load()
-    self.Transporting = true
+    self.Relocating = true
   end
 end
 
@@ -571,9 +584,9 @@ function AI_CARGO_APC._Deploy( APC, self )
   APC:F( { "AI_CARGO_APC._Deploy:", APC } )
 
   if APC:IsAlive() then
-    self:Unload()
+    self:Unload( true )
     self.Transporting = false
-    self.APC_Cargo = {}
+    self.Relocating = false
   end
 end
 
@@ -606,6 +619,8 @@ function AI_CARGO_APC:onafterPickup( APC, From, Event, To, Coordinate, Speed, En
     else
       AI_CARGO_APC._Pickup( APC, self )
     end
+    
+    self.Transporting = true
   end
   
 end
