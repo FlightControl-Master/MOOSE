@@ -175,7 +175,7 @@ function AI_CARGO_DISPATCHER:OnAfterLoaded( From, Event, To, APC, Cargo )
   local RandomZone = self.SetDeployZones:GetRandomZone()
   self:I( { RandomZone = RandomZone } )
   
-  self.AICargoAPC[APC]:Deploy( RandomZone:GetCoordinate():GetRandomCoordinateInRadius(25,100), 70 )
+  self.AICargoAPC[APC]:Deploy( RandomZone:GetCoordinate():GetRandomCoordinateInRadius( 25, 200 ), 70 )
   self.PickupCargo[Cargo] = nil
 
   return self
