@@ -1013,6 +1013,88 @@ do -- COORDINATE
     self:Smoke( SMOKECOLOR.Blue )
   end
 
+  --- Big smoke and fire at the coordinate.
+  -- @param #COORDINATE self
+  -- @param Utilities.Utils#BIGSMOKEPRESET preset Smoke preset (1=small smoke and fire, 2=medium smoke and fire, 3=large smoke and fire, 4=huge smoke and fire, 5=small smoke, 6=medium smoke, 7=large smoke, 8=huge smoke).
+  -- @param #number density (Optional) Smoke density. Number in [0,...,1]. Default 0.5.
+  function COORDINATE:BigSmokeAndFire( preset, density )
+    self:F2( { preset=preset, density=density } )
+    density=density or 0.5
+    trigger.action.effectSmokeBig( self:GetVec3(), preset, density )
+  end
+
+  --- Small smoke and fire at the coordinate.
+  -- @param #COORDINATE self
+  -- @number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
+  function COORDINATE:BigSmokeAndFireSmall( density )
+    self:F2( { density=density } )
+    density=density or 0.5
+    self:BigSmokeAndFire(BIGSMOKEPRESET.SmallSmokeAndFire, density)
+  end
+
+  --- Medium smoke and fire at the coordinate.
+  -- @param #COORDINATE self
+  -- @number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
+  function COORDINATE:BigSmokeAndFireMedium( density )
+    self:F2( { density=density } )
+    density=density or 0.5
+    self:BigSmokeAndFire(BIGSMOKEPRESET.MediumSmokeAndFire, density)
+  end
+  
+  --- Large smoke and fire at the coordinate.
+  -- @param #COORDINATE self
+  -- @number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
+  function COORDINATE:BigSmokeAndFireLarge( density )
+    self:F2( { density=density } )
+    density=density or 0.5
+    self:BigSmokeAndFire(BIGSMOKEPRESET.LargeSmokeAndFire, density)
+  end
+
+  --- Huge smoke and fire at the coordinate.
+  -- @param #COORDINATE self
+  -- @number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
+  function COORDINATE:BigSmokeAndFireHuge( density )
+    self:F2( { density=density } )
+    density=density or 0.5
+    self:BigSmokeAndFire(BIGSMOKEPRESET.HugeSmokeAndFire, density)
+  end
+  
+  --- Small smoke at the coordinate.
+  -- @param #COORDINATE self
+  -- @number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
+  function COORDINATE:BigSmokeSmall( density )
+    self:F2( { density=density } )
+    density=density or 0.5
+    self:BigSmokeAndFire(BIGSMOKEPRESET.SmallSmoke, density)
+  end
+  
+  --- Medium smoke at the coordinate.
+  -- @param #COORDINATE self
+  -- @number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
+  function COORDINATE:BigSmokeMedium( density )
+    self:F2( { density=density } )
+    density=density or 0.5
+    self:BigSmokeAndFire(BIGSMOKEPRESET.MediumSmoke, density)
+  end
+
+  --- Large smoke at the coordinate.
+  -- @param #COORDINATE self
+  -- @number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
+  function COORDINATE:BigSmokeLarge( density )
+    self:F2( { density=density } )
+    density=density or 0.5
+    self:BigSmokeAndFire(BIGSMOKEPRESET.LargeSmoke, density)
+  end
+  
+  --- Huge smoke at the coordinate.
+  -- @param #COORDINATE self
+  -- @number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
+  function COORDINATE:BigSmokeHuge( density )
+    self:F2( { density=density } )
+    density=density or 0.5
+    self:BigSmokeAndFire(BIGSMOKEPRESET.HugeSmoke, density)
+  end  
+
   --- Flares the point in a color.
   -- @param #COORDINATE self
   -- @param Utilities.Utils#FLARECOLOR FlareColor
