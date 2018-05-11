@@ -29,6 +29,19 @@ SMOKECOLOR = trigger.smokeColor -- #SMOKECOLOR
 
 FLARECOLOR = trigger.flareColor -- #FLARECOLOR
 
+--- Big smoke preset enum.
+-- @type BIGSMOKEPRESET
+BIGSMOKEPRESET = {
+  SmallSmokeAndFire=0,
+  MediumSmokeAndFire=1,
+  LargeSmokeAndFire=2,
+  HugeSmokeAndFire=3,
+  SmallSmoke=4,
+  MediumSmoke=5,
+  LargeSmoke=6,
+  HugeSmoke=7,
+}
+
 --- Utilities static class.
 -- @type UTILS
 UTILS = {

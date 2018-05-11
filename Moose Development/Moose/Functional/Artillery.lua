@@ -936,9 +936,9 @@ function ARTY:_OnEventShot(EventData)
         self.Nshots=self.Nshots+1
         
         -- Debug output.
-        local text=string.format("Group %s fired shot %d of %d with weapon %s on target %s.", self.Controllable:GetName(), self.Nshots, self.currentTarget.nshells, _weaponName, self.currentTarget.name)
+        local text=string.format("%s, fired shot %d of %d with weapon %s on target %s.", self.Controllable:GetName(), self.Nshots, self.currentTarget.nshells, _weaponName, self.currentTarget.name)
         self:T(ARTY.id..text)
-        MESSAGE:New(text, 5):ToAllIf(self.Debug)
+        MESSAGE:New(text, 5):ToAllIf(self.report or self.Debug)
         
         -- Get current ammo.
         local _nammo,_nshells,_nrockets,_nmissiles=self:GetAmmo()
