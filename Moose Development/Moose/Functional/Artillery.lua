@@ -385,7 +385,7 @@ ARTY.id="ARTY | "
 
 --- Arty script version.
 -- @field #string version
-ARTY.version="0.9.0"
+ARTY.version="0.9.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -525,12 +525,13 @@ end
 -- @param #string time (Optional) Day time at which the target should be engaged. Passed as a string in format "08:13:45". Current task will be canceled.
 -- @param #number weapontype (Optional) Type of weapon to be used to attack this target. Default ARTY.WeaponType.Auto, i.e. the DCS logic automatically determins the appropriate weapon.
 -- @param #string name (Optional) Name of the target. Default is LL DMS coordinate of the target. If the name was already given, the numbering "#01", "#02",... is appended automatically.
+-- @param #boolean unique (Optional) Target is unique. If the target name is already known, the target is rejected. Default false.
 -- @return #string Name of the target. Can be used for further reference, e.g. deleting the target from the list.
 -- @usage paladin=ARTY:New(GROUP:FindByName("Blue Paladin"))
 -- paladin:AssignTargetCoord(GROUP:FindByName("Red Targets 1"):GetCoordinate(), 10, 300, 10, 1, "08:02:00", ARTY.WeaponType.Auto, "Target 1")
 -- paladin:Start()
-function ARTY:AssignTargetCoord(coord, prio, radius, nshells, maxengage, time, weapontype, name)
-  self:F({coord=coord, prio=prio, radius=radius, nshells=nshells, maxengage=maxengage, time=time, weapontype=weapontype, name=name})
+function ARTY:AssignTargetCoord(coord, prio, radius, nshells, maxengage, time, weapontype, name, unique)
+  self:F({coord=coord, prio=prio, radius=radius, nshells=nshells, maxengage=maxengage, time=time, weapontype=weapontype, name=name, unique=unique})
   
   -- Set default values.
   nshells=nshells or 5
@@ -539,13 +540,23 @@ function ARTY:AssignTargetCoord(coord, prio, radius, nshells, maxengage, time, w
   prio=prio or 50
   prio=math.max(  1, prio)
   prio=math.min(100, prio)
+  if unique==nil then
+    unique=false
+  end
   weapontype=weapontype or ARTY.WeaponType.Auto
   
   -- Name of the target.
   local _name=name or coord:ToStringLLDMS() 
+  local _unique=true
     
   -- Check if the name has already been used for another target. If so, the function returns a new unique name.
-  _name=self:_CheckName(self.targets, _name)
+  _name,_unique=self:_CheckName(self.targets, _name, not unique)
+  
+  -- Target name should be unique and is not.
+  if unique==true and _unique==false then
+    self:T(ARTY.id..string.format("%s: target %s should have a unique name but name was already given. Rejecting target!", self.Controllable:GetName(), _name))
+    return nil
+  end
   
   -- Time in seconds.
   local _time=self:_ClockToSeconds(time)
@@ -2085,44 +2096,71 @@ end
 
 
 
---- Check if a name is unique. If not, a new unique name is created by adding a running index #01, #02, ...
+--- Check if a name is unique. If not, a new unique name can be created by adding a running index #01, #02, ...
 -- @param #ARTY self
 -- @param #table givennames Table with entries of already given names. Must contain a .name item.
--- @param #string name Desired name.
+-- @param #string name Name to check if it already exists in givennames table.
+-- @param #boolean makeunique If true, a new unique name is returned by appending the running index.
 -- @return #string Unique name, which is not already given for another target.
-function ARTY:_CheckName(givennames, name)
+function ARTY:_CheckName(givennames, name, makeunique)
   self:F2({givennames=givennames, name=name})  
 
   local newname=name
   local counter=1
+  local n=1
+  local nmax=100
+  if makeunique==nil then
+    makeunique=true
+  end
   
-  repeat
+  repeat -- until a unique name is found.
+  
     -- We assume the name is unique.
-    local unique=true
+    local _unique=true
     
     -- Loop over all targets already defined.
     for _,_target in pairs(givennames) do
     
       -- Target name.
-      local _givenname=givennames.name
+      local _givenname=_target.name
       
+      -- Name is already used by another target.
       if _givenname==newname then
-        -- Define new name = "name #01"
-        newname=string.format("%s #%02d", name, counter)
-        
-        -- Increase counter.
-        counter=counter+1
-        
+      
         -- Name is already used for another target ==> try again with new name.
-        unique=false
-      end      
+        _unique=false
+              
+      end
+      
+      -- Debug info.
+      self:T3(ARTY.id..string.format("%d: givenname = %s, newname=%s, unique = %s, makeunique = %s", n, tostring(_givenname), newname, tostring(_unique), tostring(makeunique)))   
     end
     
-  until (unique)
+    -- Create a new name if requested and try again.
+    if _unique==false and makeunique==true then
+    
+      -- Define newname = "name #01"
+      newname=string.format("%s #%02d", name, counter)
+      
+      -- Increase counter.
+      counter=counter+1
+    end
+    
+    -- Name is not unique and we don't want to make it unique.
+    if _unique==false and makeunique==false then
+      self:T3(ARTY.id..string.format("Name %s is not unique. Return false.", tostring(newname)))
+      
+      -- Return
+      return name, false
+    end
+    
+    -- Increase loop counter. We try max 100 times.
+    n=n+1
+  until (_unique or n==nmax)
   
   -- Debug output and return new name.
-  self:T2(string.format("Original name %s, new name = %s", name, newname))
-  return newname
+  self:T3(ARTY.id..string.format("Original name %s, new name = %s", name, newname))
+  return newname, true
 end
 
 --- Check if target is in range.
