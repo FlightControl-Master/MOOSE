@@ -798,15 +798,16 @@ end
 -- @param #CONTROLLABLE self
 -- @param #number Altitude The altitude to hold the position.
 -- @param #number Speed The speed flying when holding the position.
+-- @param Core.Point#COORDINATE Coordinate The coordinate where to orbit.
 -- @return #CONTROLLABLE self
-function CONTROLLABLE:TaskOrbitCircle( Altitude, Speed )
+function CONTROLLABLE:TaskOrbitCircle( Altitude, Speed, Coordinate )
   self:F2( { self.ControllableName, Altitude, Speed } )
 
   local DCSControllable = self:GetDCSObject()
 
   if DCSControllable then
-    local ControllablePoint = self:GetVec2()
-    return self:TaskOrbitCircleAtVec2( ControllablePoint, Altitude, Speed )
+    local OrbitVec2 = Coordinate and Coordinate:GetVec2() or self:GetVec2()
+    return self:TaskOrbitCircleAtVec2( OrbitVec2, Altitude, Speed )
   end
 
   return nil

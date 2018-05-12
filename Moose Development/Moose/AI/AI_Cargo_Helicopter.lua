@@ -22,6 +22,8 @@ AI_CARGO_HELICOPTER = {
   Coordinate = nil -- Core.Point#COORDINATE,
 }
 
+AI_CARGO_HELICOPTER_QUEUE = {}
+
 --- Creates a new AI_CARGO_HELICOPTER object.
 -- @param #AI_CARGO_HELICOPTER self
 -- @param Wrapper.Group#GROUP Helicopter
@@ -33,6 +35,8 @@ function AI_CARGO_HELICOPTER:New( Helicopter, CargoSet )
   local self = BASE:Inherit( self, FSM_CONTROLLABLE:New() ) -- #AI_CARGO_HELICOPTER
 
   self.CargoSet = CargoSet -- Cargo.CargoGroup#CARGO_GROUP
+  
+  self.Zone = ZONE_GROUP:New( Helicopter:GetName(), Helicopter, 300 )
 
   self:SetStartState( "Unloaded" ) 
   
@@ -47,6 +51,9 @@ function AI_CARGO_HELICOPTER:New( Helicopter, CargoSet )
   self:AddTransition( "Unboarding", "Unloaded", "Unloaded" )
 
   self:AddTransition( "*", "Landed", "*" )
+  self:AddTransition( "*", "Queue", "*" )
+  self:AddTransition( "*", "Orbit" , "*" ) 
+  self:AddTransition( "*", "Home" , "*" ) 
   
   self:AddTransition( "*", "Destroyed", "Destroyed" )
 
@@ -207,8 +214,6 @@ function AI_CARGO_HELICOPTER:onafterLanded( Helicopter, From, Event, To )
   
 end
 
-
-
 --- @param #AI_CARGO_HELICOPTER self
 -- @param Wrapper.Group#GROUP Helicopter
 -- @param From
@@ -216,57 +221,81 @@ end
 -- @param To
 -- @param Core.Point#COORDINATE Coordinate
 -- @param #number Speed
-function AI_CARGO_HELICOPTER:onafterPickup( Helicopter, From, Event, To, Coordinate, Speed )
+function AI_CARGO_HELICOPTER:onafterQueue( Helicopter, From, Event, To, Coordinate )
 
-  if Helicopter and Helicopter:IsAlive() ~= nil then
+  local HelicopterInZone = false
 
-    Helicopter:Activate()
-
-    self.RoutePickup = true
-     
-    local Route = {}
-    
-    --- Calculate the target route point.
-    --local CoordinateFrom = Helicopter:GetCoordinate()
-    local CoordinateTo   = Coordinate
-
-    --- Create a route point of type air.
---    local WaypointFrom = CoordinateFrom:WaypointAir( 
---      "RADIO", 
---      POINT_VEC3.RoutePointType.TurningPoint, 
---      POINT_VEC3.RoutePointAction.TurningPoint, 
---      Speed, 
---      true 
---    )
-
-    --- Create a route point of type air.
-    local WaypointTo = CoordinateTo:WaypointAir( 
-      "RADIO", 
-      POINT_VEC3.RoutePointType.TurningPoint, 
-      POINT_VEC3.RoutePointAction.TurningPoint, 
-      Speed, 
-      true 
-    )
-
---    Route[#Route+1] = WaypointFrom
-    Route[#Route+1] = WaypointTo
-    
-    --- Now we're going to do something special, we're going to call a function from a waypoint action at the AIControllable...
-    Helicopter:WayPointInitialize( Route )
+  --- @param Wrapper.Unit#UNIT ZoneUnit
+  local function EvaluateZone( ZoneUnit )
   
-    local Tasks = {}
+    if ZoneUnit:IsAlive() then
+      local ZoneUnitCategory =  ZoneUnit:GetDesc().category
+      local ZoneGroup = ZoneUnit:GetGroup()
+      if ZoneUnitCategory == Unit.Category.HELICOPTER then
+        local State =  ZoneGroup:GetState( ZoneGroup, "Landing" )
+        self:F({ZoneUnit=ZoneUnit:GetName(), State=State, UnitCategory = Unit.Category.HELICOPTER } )
+        if State == true then
+          HelicopterInZone = true
+          return false
+        end
+      end
+    end
     
-    Tasks[#Tasks+1] = Helicopter:TaskLandAtVec2( CoordinateTo:GetVec2() )
-    Route[#Route].task = Helicopter:TaskCombo( Tasks )
-
-    Route[#Route+1] = WaypointTo
-
-    -- Now route the helicopter
-    Helicopter:Route( Route, 1 )
-
-    self.Transporting = true
+    return true
   end
-  
+
+  if Helicopter and Helicopter:IsAlive() then
+    
+    local Distance = Coordinate:DistanceFromPointVec2( Helicopter:GetCoordinate() )
+    
+    if Distance > 300 then
+      self:__Queue( -10, Coordinate )
+    else
+    
+      -- This will search the zone and will call the local function "EvaluateZone", which passes a UNIT object.
+      local Zone = ZONE_RADIUS:New( "Deploy", Coordinate:GetVec2(), 300 )
+      Zone:SearchZone( EvaluateZone )
+      
+      self:F({HelicopterInZone=HelicopterInZone})
+      
+      if HelicopterInZone == false then
+     
+        Helicopter:SetState( Helicopter, "Landing", true )
+        
+        local Route = {}
+        
+--          local CoordinateFrom = Helicopter:GetCoordinate()
+--          local WaypointFrom = CoordinateFrom:WaypointAir( 
+--            "RADIO", 
+--            POINT_VEC3.RoutePointType.TurningPoint, 
+--            POINT_VEC3.RoutePointAction.TurningPoint, 
+--            Speed, 
+--            true 
+--          )
+--          Route[#Route+1] = WaypointFrom
+        local CoordinateTo   = Coordinate
+        local WaypointTo = CoordinateTo:WaypointAir( 
+          "RADIO", 
+          POINT_VEC3.RoutePointType.TurningPoint, 
+          POINT_VEC3.RoutePointAction.TurningPoint, 
+          50, 
+          true 
+        )
+        Route[#Route+1] = WaypointTo
+        
+        local Tasks = {}
+        Tasks[#Tasks+1] = Helicopter:TaskLandAtVec2( CoordinateTo:GetVec2() )
+        Route[#Route].task = Helicopter:TaskCombo( Tasks )
+    
+        Route[#Route+1] = WaypointTo
+    
+        -- Now route the helicopter
+        Helicopter:Route( Route, 0 )
+      else
+        self:__Queue( -10, Coordinate )
+      end
+    end
+  end
 end
 
 
@@ -277,54 +306,46 @@ end
 -- @param To
 -- @param Core.Point#COORDINATE Coordinate
 -- @param #number Speed
-function AI_CARGO_HELICOPTER:onafterDeploy( Helicopter, From, Event, To, Coordinate, Speed )
+function AI_CARGO_HELICOPTER:onafterOrbit( Helicopter, From, Event, To, Coordinate )
 
-  if Helicopter and Helicopter:IsAlive() ~= nil then
-
-    self.RouteDeploy = true
-     
-    local Route = {}
+  if Helicopter and Helicopter:IsAlive() then
     
-    --- Calculate the target route point.
---    local CoordinateFrom = Helicopter:GetCoordinate()
-    local CoordinateTo   = Coordinate
-
-    --- Create a route point of type air.
---    local WaypointFrom = CoordinateFrom:WaypointAir( 
---      "RADIO", 
---      POINT_VEC3.RoutePointType.TurningPoint, 
---      POINT_VEC3.RoutePointAction.TurningPoint, 
---      Speed, 
---      true 
---    )
-
-    --- Create a route point of type air.
-    local WaypointTo = CoordinateTo:WaypointAir( 
-      "RADIO", 
-      POINT_VEC3.RoutePointType.TurningPoint, 
-      POINT_VEC3.RoutePointAction.TurningPoint, 
-      Speed, 
-      true 
-    )
-
---    Route[#Route+1] = WaypointFrom
-    Route[#Route+1] = WaypointTo
+    Helicopter:ClearState( Helicopter, "Landing" )
     
-    --- Now we're going to do something special, we're going to call a function from a waypoint action at the AIControllable...
-    Helicopter:WayPointInitialize( Route )
+    if not self:IsTransporting() then
+      local Route = {}
+      
+  --          local CoordinateFrom = Helicopter:GetCoordinate()
+  --          local WaypointFrom = CoordinateFrom:WaypointAir( 
+  --            "RADIO", 
+  --            POINT_VEC3.RoutePointType.TurningPoint, 
+  --            POINT_VEC3.RoutePointAction.TurningPoint, 
+  --            Speed, 
+  --            true 
+  --          )
+  --          Route[#Route+1] = WaypointFrom
+      local CoordinateTo   = Coordinate
+      local WaypointTo = CoordinateTo:WaypointAir( 
+        "RADIO", 
+        POINT_VEC3.RoutePointType.TurningPoint, 
+        POINT_VEC3.RoutePointAction.TurningPoint, 
+        50, 
+        true 
+      )
+      Route[#Route+1] = WaypointTo
+      
+      local Tasks = {}
+      Tasks[#Tasks+1] = Helicopter:TaskOrbitCircle( math.random( 30, 80 ), 0, CoordinateTo:GetRandomCoordinateInRadius( 800, 500 ) )
+      Route[#Route].task = Helicopter:TaskCombo( Tasks )
   
-    local Tasks = {}
-    
-    Tasks[#Tasks+1] = Helicopter:TaskLandAtVec2( CoordinateTo:GetVec2() )
-    Route[#Route].task = Helicopter:TaskCombo( Tasks )
-
-    Route[#Route+1] = WaypointTo
-
-    -- Now route the helicopter
-    Helicopter:Route( Route, 1 )
+      Route[#Route+1] = WaypointTo
+  
+      -- Now route the helicopter
+      Helicopter:Route( Route, 0 )
+    end
   end
-  
 end
+
 
 
 --- @param #AI_CARGO_HELICOPTER self
@@ -475,4 +496,203 @@ function AI_CARGO_HELICOPTER:onbeforeUnloaded( Helicopter, From, Event, To, Carg
   
 end
 
+--- @param #AI_CARGO_HELICOPTER self
+-- @param Wrapper.Group#GROUP Helicopter
+function AI_CARGO_HELICOPTER:onafterUnloaded( Helicopter, From, Event, To, Cargo, Deployed )
+
+   self:Orbit( Helicopter:GetCoordinate(), 50 )
+
+end
+
+--- @param #AI_CARGO_HELICOPTER self
+-- @param Wrapper.Group#GROUP Helicopter
+-- @param From
+-- @param Event
+-- @param To
+-- @param Core.Point#COORDINATE Coordinate
+-- @param #number Speed
+function AI_CARGO_HELICOPTER:onafterPickup( Helicopter, From, Event, To, Coordinate )
+
+  if Helicopter and Helicopter:IsAlive() ~= nil then
+
+    self:ScheduleOnce( 10, Helicopter.ClearState, Helicopter, Helicopter, "Landing" )
+    Helicopter:Activate()
+
+    self.RoutePickup = true
+    Coordinate.y = math.random( 50, 200 )        
+     
+    local Route = {}
+    
+    --- Calculate the target route point.
+    local CoordinateFrom = Helicopter:GetCoordinate()
+    local CoordinateTo   = Coordinate
+
+    --- Create a route point of type air.
+    local WaypointFrom = CoordinateFrom:WaypointAir( 
+      "RADIO", 
+      POINT_VEC3.RoutePointType.TurningPoint, 
+      POINT_VEC3.RoutePointAction.TurningPoint, 
+      150, 
+      true 
+    )
+
+    --- Create a route point of type air.
+    local WaypointTo = CoordinateTo:WaypointAir( 
+      "RADIO", 
+      POINT_VEC3.RoutePointType.TurningPoint, 
+      POINT_VEC3.RoutePointAction.TurningPoint, 
+      150, 
+      true 
+    )
+
+    Route[#Route+1] = WaypointFrom
+    Route[#Route+1] = WaypointTo
+    
+    --- Now we're going to do something special, we're going to call a function from a waypoint action at the AIControllable...
+    Helicopter:WayPointInitialize( Route )
+  
+    local Tasks = {}
+    
+    Tasks[#Tasks+1] = Helicopter:TaskLandAtVec2( CoordinateTo:GetVec2() )
+    Route[#Route].task = Helicopter:TaskCombo( Tasks )
+
+    Route[#Route+1] = WaypointTo
+
+    -- Now route the helicopter
+    Helicopter:Route( Route, 1 )
+
+    self.Transporting = true
+  end
+  
+end
+
+
+function AI_CARGO_HELICOPTER:_Deploy( AICargoHelicopter, Coordinate )
+  AICargoHelicopter:__Queue( -10, Coordinate, 100 )
+end
+
+--- @param #AI_CARGO_HELICOPTER self
+-- @param Wrapper.Group#GROUP Helicopter
+-- @param From
+-- @param Event
+-- @param To
+-- @param Core.Point#COORDINATE Coordinate
+-- @param #number Speed
+function AI_CARGO_HELICOPTER:onafterDeploy( Helicopter, From, Event, To, Coordinate )
+
+  if Helicopter and Helicopter:IsAlive() ~= nil then
+
+    self.RouteDeploy = true
+
+     
+    local Route = {}
+    
+    --- Calculate the target route point.
+
+    Coordinate.y = math.random( 50, 200 )        
+
+    --- Create a route point of type air.
+    local CoordinateFrom = Helicopter:GetCoordinate()
+    local WaypointFrom = CoordinateFrom:WaypointAir( 
+      "RADIO", 
+      POINT_VEC3.RoutePointType.TurningPoint, 
+      POINT_VEC3.RoutePointAction.TurningPoint, 
+      150, 
+      true 
+    )
+    Route[#Route+1] = WaypointFrom
+    Route[#Route+1] = WaypointFrom
+
+    --- Create a route point of type air.
+    local CoordinateTo   = Coordinate
+    local WaypointTo = CoordinateTo:WaypointAir( 
+      "RADIO", 
+      POINT_VEC3.RoutePointType.TurningPoint, 
+      POINT_VEC3.RoutePointAction.TurningPoint, 
+      150, 
+      true 
+    )
+
+    Route[#Route+1] = WaypointTo
+    Route[#Route+1] = WaypointTo
+    
+    --- Now we're going to do something special, we're going to call a function from a waypoint action at the AIControllable...
+    Helicopter:WayPointInitialize( Route )
+  
+    local Tasks = {}
+    
+    Tasks[#Tasks+1] = Helicopter:TaskFunction( "AI_CARGO_HELICOPTER._Deploy", self, Coordinate )
+    Tasks[#Tasks+1] = Helicopter:TaskOrbitCircle( math.random( 30, 100 ), 0, CoordinateTo:GetRandomCoordinateInRadius( 800, 500 ) )
+    
+    --Tasks[#Tasks+1] = Helicopter:TaskLandAtVec2( CoordinateTo:GetVec2() )
+    Route[#Route].task = Helicopter:TaskCombo( Tasks )
+
+    Route[#Route+1] = WaypointTo
+
+    -- Now route the helicopter
+    Helicopter:Route( Route, 1 )
+    
+  end
+  
+end
+
+
+--- @param #AI_CARGO_HELICOPTER self
+-- @param Wrapper.Group#GROUP Helicopter
+-- @param From
+-- @param Event
+-- @param To
+-- @param Core.Point#COORDINATE Coordinate
+-- @param #number Speed
+function AI_CARGO_HELICOPTER:onafterHome( Helicopter, From, Event, To, Coordinate )
+
+  if Helicopter and Helicopter:IsAlive() ~= nil then
+
+    self.RouteHome = true
+     
+    local Route = {}
+    
+    --- Calculate the target route point.
+
+    Coordinate.y = math.random( 50, 200 )        
+
+    --- Create a route point of type air.
+    local CoordinateFrom = Helicopter:GetCoordinate()
+    local WaypointFrom = CoordinateFrom:WaypointAir( 
+      "RADIO", 
+      POINT_VEC3.RoutePointType.TurningPoint, 
+      POINT_VEC3.RoutePointAction.TurningPoint, 
+      150, 
+      true 
+    )
+    Route[#Route+1] = WaypointFrom
+
+    --- Create a route point of type air.
+    local CoordinateTo   = Coordinate
+    local WaypointTo = CoordinateTo:WaypointAir( 
+      "RADIO", 
+      POINT_VEC3.RoutePointType.TurningPoint, 
+      POINT_VEC3.RoutePointAction.TurningPoint, 
+      150, 
+      true 
+    )
+
+    Route[#Route+1] = WaypointTo
+    
+    --- Now we're going to do something special, we're going to call a function from a waypoint action at the AIControllable...
+    Helicopter:WayPointInitialize( Route )
+  
+    local Tasks = {}
+    
+    Tasks[#Tasks+1] = Helicopter:TaskLandAtVec2( CoordinateTo:GetVec2() )
+    Route[#Route].task = Helicopter:TaskCombo( Tasks )
+
+    Route[#Route+1] = WaypointTo
+
+    -- Now route the helicopter
+    Helicopter:Route( Route, 1 )
+    
+  end
+  
+end
 
