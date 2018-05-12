@@ -114,6 +114,8 @@ function ZONE_BASE:New( ZoneName )
   return self
 end
 
+
+
 --- Returns the name of the zone.
 -- @param #ZONE_BASE self
 -- @return #string The name of the zone.
@@ -961,6 +963,17 @@ function ZONE:New( ZoneName )
   
   return self
 end
+
+--- Find a zone in the _DATABASE using the name of the zone.
+-- @param #ZONE_BASE self
+-- @param #string ZoneName The name of the zone.
+-- @return #ZONE_BASE self
+function ZONE:FindByName( ZoneName )
+  
+  local ZoneFound = _DATABASE:FindZone( ZoneName )
+  return ZoneFound
+end
+
 
 
 --- @type ZONE_UNIT

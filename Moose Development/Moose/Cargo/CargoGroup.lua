@@ -488,6 +488,36 @@ do -- CARGO_GROUP
     return nil
   end
 
+  --- Get the x position of the cargo.
+  -- @param #CARGO_GROUP self
+  -- @return #number
+  function CARGO:GetX()
+
+    local Cargo = self:GetFirstAlive() -- Cargo.Cargo#CARGO
+
+    if Cargo then
+      return Cargo:GetCoordinate().x
+    end 
+    
+    return nil
+  end
+  
+  --- Get the y position of the cargo.
+  -- @param #CARGO_GROUP self
+  -- @return #number
+  function CARGO:GetY()
+
+    local Cargo = self:GetFirstAlive() -- Cargo.Cargo#CARGO
+
+    if Cargo then
+      return Cargo:GetCoordinate().z
+    end
+    
+    return nil 
+  end
+  
+
+
   --- Check if the CargoGroup is alive.
   -- @param #CARGO_GROUP self
   -- @return #boolean true if the CargoGroup is alive.

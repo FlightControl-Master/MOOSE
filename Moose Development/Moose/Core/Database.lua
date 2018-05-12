@@ -244,6 +244,52 @@ function DATABASE:FindAirbase( AirbaseName )
 end
 
 
+do -- Zones
+
+  --- Finds a @{Zone} based on the zone name.
+  -- @param #DATABASE self
+  -- @param #string ZoneName The name of the zone.
+  -- @return Core.Zone#ZONE_BASE The found ZONE.
+  function DATABASE:FindZone( ZoneName )
+  
+    local ZoneFound = self.ZONES[ZoneName]
+    return ZoneFound
+  end
+  
+  --- Adds a @{Zone} based on the zone name in the DATABASE.
+  -- @param #DATABASE self
+  -- @param #string ZoneName The name of the zone.
+  -- @param Core.Zone#ZONE_BASE Zone The zone.
+  function DATABASE:AddZone( ZoneName, Zone )
+  
+    if not self.ZONES[ZoneName] then
+      self.ZONES[ZoneName] = Zone
+    end
+  end
+  
+  
+  --- Deletes a @{Zone} from the DATABASE based on the zone name.
+  -- @param #DATABASE self
+  -- @param #string ZoneName The name of the zone.
+  function DATABASE:DeleteZone( ZoneName )
+  
+    self.ZONES[ZoneName] = nil 
+  end
+  
+  --- Finds an @{Zone} based on the zone name in the DATABASE.
+  -- @param #DATABASE self
+  -- @param #string ZoneName
+  -- @return Core.Zone#ZONE_BASE The found @{Zone}.
+  function DATABASE:FindZone( ZoneName )
+  
+    local ZoneFound = self.ZONES[ZoneName]
+    return ZoneFound
+  end
+
+
+
+end
+
 
 do -- cargo
 
@@ -1148,7 +1194,7 @@ function DATABASE:_RegisterTemplates()
   for ZoneID, ZoneData in pairs( env.mission.triggers.zones ) do
     local ZoneName = ZoneData.name
     self.ZONENAMES[ZoneName] = ZoneName
-    self.ZONES[ZoneName] = ZONE:New( ZoneName )
+    self:AddZone( ZoneName, ZONE:New( ZoneName ) )
     self:I( "Added ZONE " .. ZoneName )
   end
 

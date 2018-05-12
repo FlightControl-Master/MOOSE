@@ -108,6 +108,7 @@ function AI_CARGO_APC:New( CargoCarrier, CargoSet, CombatRadius )
   self:AddTransition( "*", "Monitor", "*" )
   self:AddTransition( "*", "Follow", "Following" )
   self:AddTransition( "*", "Guard", "Unloaded" )
+  self:AddTransition( "*", "Home", "*" )
   
   self:AddTransition( "*", "Destroyed", "Destroyed" )
 
@@ -600,14 +601,14 @@ end
 -- @param Core.Point#COORDINATE Coordinate
 -- @param #number Speed
 -- @param #string EndPointFormation The formation at the end point of the action.
-function AI_CARGO_APC:onafterPickup( APC, From, Event, To, Coordinate, Speed, EndPointFormation )
+function AI_CARGO_APC:onafterPickup( APC, From, Event, To, Coordinate )
 
   if APC and APC:IsAlive() then
 
     if Coordinate then
       self.RoutePickup = true
       
-      local Waypoints = APC:TaskGroundOnRoad( Coordinate, Speed, EndPointFormation )
+      local Waypoints = APC:TaskGroundOnRoad( Coordinate, 150, "Line abreast" )
   
       local TaskFunction = APC:TaskFunction( "AI_CARGO_APC._Pickup", self )
       
@@ -634,13 +635,13 @@ end
 -- @param Core.Point#COORDINATE Coordinate
 -- @param #number Speed
 -- @param #string EndPointFormation The formation at the end point of the action.
-function AI_CARGO_APC:onafterDeploy( APC, From, Event, To, Coordinate, Speed, EndPointFormation )
+function AI_CARGO_APC:onafterDeploy( APC, From, Event, To, Coordinate )
 
   if APC and APC:IsAlive() then
 
     self.RouteDeploy = true
      
-    local Waypoints = APC:TaskGroundOnRoad( Coordinate, Speed, EndPointFormation )
+    local Waypoints = APC:TaskGroundOnRoad( Coordinate, 150, "Line abreast" )
 
     local TaskFunction = APC:TaskFunction( "AI_CARGO_APC._Deploy", self )
     
@@ -653,3 +654,27 @@ function AI_CARGO_APC:onafterDeploy( APC, From, Event, To, Coordinate, Speed, En
   
 end
 
+
+--- @param #AI_CARGO_HELICOPTER self
+-- @param Wrapper.Group#GROUP APC
+-- @param From
+-- @param Event
+-- @param To
+-- @param Core.Point#COORDINATE Coordinate
+-- @param #number Speed
+function AI_CARGO_APC:onafterHome( APC, From, Event, To, Coordinate )
+
+  if APC and APC:IsAlive() ~= nil then
+
+    self.RouteHome = true
+     
+    local Waypoints = APC:TaskGroundOnRoad( Coordinate, 120, "Line abreast" )
+
+    self:F({Waypoints = Waypoints})
+    local Waypoint = Waypoints[#Waypoints]
+  
+    APC:Route( Waypoints, 1 ) -- Move after a random seconds to the Route. See the Route method for details.
+    
+  end
+  
+end
