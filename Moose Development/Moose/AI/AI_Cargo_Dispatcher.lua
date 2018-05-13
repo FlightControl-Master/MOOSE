@@ -113,6 +113,125 @@ function AI_CARGO_DISPATCHER:SetHomeZone( HomeZone )
 end
 
 
+--- Sets or randomizes the pickup location for the carrier around the cargo coordinate in a radius defined an outer and optional inner radius.
+-- This radius is influencing the location where the carrier will land to pickup the cargo.
+-- There are two aspects that are very important to remember and take into account:
+-- 
+--   - Ensure that the outer and inner radius are within reporting radius set by the cargo.
+--     For example, if the cargo has a reporting radius of 400 meters, and the outer and inner radius is set to 500 and 450 respectively, 
+--     then no cargo will be loaded!!!
+--   - Also take care of the potential cargo position and possible reasons to crash the carrier. This is especially important
+--     for locations which are crowded with other objects, like in the middle of villages or cities.
+--     So, for the best operation of cargo operations, always ensure that the cargo is located at open spaces.
+-- 
+-- The default radius is 0, so the center. In case of a polygon zone, a random location will be selected as the center in the zone.
+-- @param #AI_CARGO_DISPATCHER self
+-- @param #number OuterRadius The outer radius in meters around the cargo coordinate.
+-- @param #number InnerRadius (optional) The inner radius in meters around the cargo coordinate.
+-- @return #AI_CARGO_DISPATCHER
+-- @usage
+-- 
+-- -- Create a new cargo dispatcher
+-- AICargoDispatcher = AI_CARGO_DISPATCHER:New( SetAPC, SetCargo, SetDeployZone )
+-- 
+-- -- Set the carrier to land within a band around the cargo coordinate between 500 and 300 meters!
+-- AICargoDispatcher:SetPickupRadius( 500, 300 )
+-- 
+function AI_CARGO_DISPATCHER:SetPickupRadius( OuterRadius, InnerRadius )
+
+  OuterRadius = OuterRadius or 0
+  InnerRadius = InnerRadius or OuterRadius
+
+  self.PickupOuterRadius = OuterRadius
+  self.PickupInnerRadius = InnerRadius
+  
+  return self
+end
+
+
+--- Set the speed or randomizes the speed in km/h to pickup the cargo.
+-- @param #AI_CARGO_DISPATCHER self
+-- @param #number MaxSpeed (optional) The maximum speed to move to the cargo pickup location.
+-- @param #number MinSpeed The minimum speed to move to the cargo pickup location.
+-- @return #AI_CARGO_DISPATCHER
+-- @usage
+-- 
+-- -- Create a new cargo dispatcher
+-- AICargoDispatcher = AI_CARGO_DISPATCHER:New( SetAPC, SetCargo, SetDeployZone )
+-- 
+-- -- Set the minimum pickup speed to be 100 km/h and the maximum speed to be 200 km/h.
+-- AICargoDispatcher:SetPickupSpeed( 200, 100 )
+-- 
+function AI_CARGO_DISPATCHER:SetPickupSpeed( MaxSpeed, MinSpeed )
+
+  MaxSpeed = MaxSpeed or 999
+  MinSpeed = MinSpeed or MaxSpeed
+
+  self.PickupMinSpeed = MinSpeed
+  self.PickupMaxSpeed = MaxSpeed
+  
+  return self
+end
+
+
+--- Sets or randomizes the deploy location for the carrier around the cargo coordinate in a radius defined an outer and an optional inner radius.
+-- This radius is influencing the location where the carrier will land to deploy the cargo.
+-- There is an aspect that is very important to remember and take into account:
+-- 
+--   - Take care of the potential cargo position and possible reasons to crash the carrier. This is especially important
+--     for locations which are crowded with other objects, like in the middle of villages or cities.
+--     So, for the best operation of cargo operations, always ensure that the cargo is located at open spaces.
+-- 
+-- The default radius is 0, so the center. In case of a polygon zone, a random location will be selected as the center in the zone.
+-- @param #AI_CARGO_DISPATCHER self
+-- @param #number OuterRadius The outer radius in meters around the cargo coordinate.
+-- @param #number InnerRadius (optional) The inner radius in meters around the cargo coordinate.
+-- @return #AI_CARGO_DISPATCHER
+-- @usage
+-- 
+-- -- Create a new cargo dispatcher
+-- AICargoDispatcher = AI_CARGO_DISPATCHER:New( SetAPC, SetCargo, SetDeployZone )
+-- 
+-- -- Set the carrier to land within a band around the cargo coordinate between 500 and 300 meters!
+-- AICargoDispatcher:SetDeployRadius( 500, 300 )
+-- 
+function AI_CARGO_DISPATCHER:SetDeployRadius( OuterRadius, InnerRadius )
+
+  OuterRadius = OuterRadius or 0
+  InnerRadius = InnerRadius or OuterRadius
+
+  self.DeployOuterRadius = OuterRadius
+  self.DeployInnerRadius = InnerRadius
+  
+  return self
+end
+
+
+--- Sets or randomizes the speed in km/h to deploy the cargo.
+-- @param #AI_CARGO_DISPATCHER self
+-- @param #number MaxSpeed The maximum speed to move to the cargo deploy location.
+-- @param #number MinSpeed (optional) The minimum speed to move to the cargo deploy location.
+-- @return #AI_CARGO_DISPATCHER
+-- @usage
+-- 
+-- -- Create a new cargo dispatcher
+-- AICargoDispatcher = AI_CARGO_DISPATCHER:New( SetAPC, SetCargo, SetDeployZone )
+-- 
+-- -- Set the minimum deploy speed to be 100 km/h and the maximum speed to be 200 km/h.
+-- AICargoDispatcher:SetDeploySpeed( 200, 100 )
+-- 
+function AI_CARGO_DISPATCHER:SetDeploySpeed( MaxSpeed, MinSpeed )
+
+  MaxSpeed = MaxSpeed or 999
+  MinSpeed = MinSpeed or MaxSpeed
+
+  self.DeployMinSpeed = MinSpeed
+  self.DeployMaxSpeed = MaxSpeed
+  
+  return self
+end
+
+
 
 --- The Start trigger event, which actually takes action at the specified time interval.
 -- @param #AI_CARGO_DISPATCHER self
@@ -168,16 +287,16 @@ function AI_CARGO_DISPATCHER:onafterMonitor()
         local Cargo = Cargo -- Cargo.Cargo#CARGO
         self:F( { Cargo = Cargo:GetName(), UnLoaded = Cargo:IsUnLoaded(), Deployed = Cargo:IsDeployed(), PickupCargo = self.PickupCargo[Cargo] ~= nil } )
         if Cargo:IsUnLoaded() and not Cargo:IsDeployed() then
-          local CargoVec2 = { x = Cargo:GetX(), y = Cargo:GetY() }
-          local LocationFound = false
-          for APC, Vec2 in pairs( self.PickupCargo ) do
-            if Vec2.x == CargoVec2.x and Vec2.y == CargoVec2.y then
-              LocationFound = true
+          local CargoCoordinate = Cargo:GetCoordinate()
+          local CoordinateFree = true
+          for APC, Coordinate in pairs( self.PickupCargo ) do
+            if CargoCoordinate:Get2DDistance( Coordinate ) <= 25 then
+              CoordinateFree = false
               break
             end
           end
-          if LocationFound == false then
-            self.PickupCargo[Carrier] = CargoVec2
+          if CoordinateFree == true then
+            self.PickupCargo[Carrier] = CargoCoordinate
             PickupCargo = Cargo
             break
           end
@@ -185,13 +304,14 @@ function AI_CARGO_DISPATCHER:onafterMonitor()
       end
       if PickupCargo then
         self.CarrierHome[Carrier] = nil
-        AI_Cargo:Pickup( PickupCargo:GetCoordinate() )
+        local PickupCoordinate = PickupCargo:GetCoordinate():GetRandomCoordinateInRadius( self.PickupOuterRadius, self.PickupInnerRadius )
+        AI_Cargo:Pickup( PickupCoordinate, math.random( self.PickupMinSpeed, self.PickupMaxSpeed ) )
         break
       else
         if self.HomeZone then
           if not self.CarrierHome[Carrier] then
             self.CarrierHome[Carrier] = true
-            AI_Cargo:Home( self.HomeZone:GetRandomPointVec2() )
+            AI_Cargo:__Home( 10, self.HomeZone:GetRandomPointVec2() )
           end
         end
       end
@@ -220,10 +340,11 @@ end
 function AI_CARGO_DISPATCHER:OnAfterLoaded( From, Event, To, APC, Cargo )
 
   self:I( { "Loaded Dispatcher", APC } )
-  local RandomZone = self.SetDeployZones:GetRandomZone()
-  self:I( { RandomZone = RandomZone } )
+  local DeployZone = self.SetDeployZones:GetRandomZone()
+  self:I( { RandomZone = DeployZone } )
   
-  self.AI_Cargo[APC]:Deploy( RandomZone:GetCoordinate(), 70 )
+  local DeployCoordinate = DeployZone:GetCoordinate():GetRandomCoordinateInRadius( self.DeployOuterRadius, self.DeployInnerRadius )
+  self.AI_Cargo[APC]:Deploy( DeployCoordinate, math.random( self.DeployMinSpeed, self.DeployMaxSpeed ) )
   
   self.PickupCargo[APC] = nil
   

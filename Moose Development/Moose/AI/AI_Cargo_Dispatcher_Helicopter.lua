@@ -48,6 +48,11 @@ function AI_CARGO_DISPATCHER_HELICOPTER:New( SetHelicopter, SetCargo, SetDeployZ
 
   local self = BASE:Inherit( self, AI_CARGO_DISPATCHER:New( SetHelicopter, SetCargo, SetDeployZones ) ) -- #AI_CARGO_DISPATCHER_HELICOPTER
 
+  self:SetDeploySpeed( 200, 150 )
+  self:SetPickupSpeed( 200, 150 )
+  self:SetPickupRadius( 0, 0 )
+  self:SetDeployRadius( 0, 0 )
+
   self:Monitor( 1 )
 
   return self

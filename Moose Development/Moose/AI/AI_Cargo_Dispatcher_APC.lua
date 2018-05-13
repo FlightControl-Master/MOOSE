@@ -50,6 +50,11 @@ function AI_CARGO_DISPATCHER_APC:New( SetAPC, SetCargo, SetDeployZones )
 
   self.CombatRadius = 500
 
+  self:SetDeploySpeed( 70, 120 )
+  self:SetPickupSpeed( 70, 120 )
+  self:SetPickupRadius( 0, 0 )
+  self:SetDeployRadius( 0, 0 )
+
   self:Monitor( 1 )
 
   return self
