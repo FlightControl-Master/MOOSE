@@ -4656,6 +4656,9 @@ function SET_ZONE:FilterStart()
       end
     end
   end
+
+  self:HandleEvent( EVENTS.NewZone )
+  self:HandleEvent( EVENTS.DeleteZone )
   
   return self
 end
@@ -4726,3 +4729,41 @@ function SET_ZONE:IsIncludeObject( MZone )
   return MZoneInclude
 end
 
+--- Handles the OnEventNewZone event for the Set.
+-- @param #SET_ZONE self
+-- @param Core.Event#EVENTDATA EventData
+function SET_ZONE:OnEventNewZone( EventData ) --R2.1
+
+  self:F( { "New Zone", EventData } )
+
+  if EventData.Zone then
+    if EventData.Zone and self:IsIncludeObject( EventData.Zone ) then
+      self:Add( EventData.Zone.ZoneName , EventData.Zone  )
+    end
+  end
+end
+
+--- Handles the OnDead or OnCrash event for alive units set.
+-- @param #SET_ZONE self
+-- @param Core.Event#EVENTDATA EventData
+function SET_ZONE:OnEventDeleteZone( EventData ) --R2.1
+  self:F3( { EventData } )
+
+  if EventData.Zone then
+    local Zone = _DATABASE:FindZone( EventData.Zone.ZoneName )
+    if Zone and Zone.ZoneName then
+
+    -- When cargo was deleted, it may probably be because of an S_EVENT_DEAD.
+    -- However, in the loading logic, an S_EVENT_DEAD is also generated after a Destroy() call.
+    -- And this is a problem because it will remove all entries from the SET_ZONEs.
+    -- To prevent this from happening, the Zone object has a flag NoDestroy.
+    -- When true, the SET_ZONE won't Remove the Zone object from the set.
+    -- This flag is switched off after the event handlers have been called in the EVENT class.
+      self:F( { ZoneNoDestroy=Zone.NoDestroy } )
+      if Zone.NoDestroy then
+      else
+        self:Remove( Zone.ZoneName )
+      end
+    end
+  end
+end

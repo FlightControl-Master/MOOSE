@@ -96,6 +96,8 @@ function DATABASE:New()
   self:HandleEvent( EVENTS.Hit, self.AccountHits )
   self:HandleEvent( EVENTS.NewCargo )
   self:HandleEvent( EVENTS.DeleteCargo )
+  self:HandleEvent( EVENTS.NewZone )
+  self:HandleEvent( EVENTS.DeleteZone )
   
   -- Follow alive players and clients
   --self:HandleEvent( EVENTS.PlayerEnterUnit, self._EventOnPlayerEnterUnit ) -- This is not working anymore!, handling this through the birth event.
@@ -1083,6 +1085,31 @@ function DATABASE:OnEventDeleteCargo( EventData )
     self:DeleteCargo( EventData.Cargo.Name )
   end
 end
+
+
+--- Handles the OnEventNewZone event.
+-- @param #DATABASE self
+-- @param Core.Event#EVENTDATA EventData
+function DATABASE:OnEventNewZone( EventData )
+  self:F2( { EventData } )
+
+  if EventData.Zone then
+    self:AddZone( EventData.Zone )
+  end
+end
+
+
+--- Handles the OnEventDeleteZone.
+-- @param #DATABASE self
+-- @param Core.Event#EVENTDATA EventData
+function DATABASE:OnEventDeleteZone( EventData )
+  self:F2( { EventData } )
+
+  if EventData.Zone then
+    self:DeleteZone( EventData.Zone.ZoneName )
+  end
+end
+
 
 
 --- Gets the player settings

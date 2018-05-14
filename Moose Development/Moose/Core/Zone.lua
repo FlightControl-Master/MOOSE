@@ -1001,6 +1001,9 @@ function ZONE_UNIT:New( ZoneName, ZoneUNIT, Radius )
   self.ZoneUNIT = ZoneUNIT
   self.LastVec2 = ZoneUNIT:GetVec2()
   
+  -- Zone objects are added to the _DATABASE and SET_ZONE objects.
+  _EVENTDISPATCHER:CreateEventNewZone( self )
+  
   return self
 end
 
@@ -1089,6 +1092,9 @@ function ZONE_GROUP:New( ZoneName, ZoneGROUP, Radius )
   self:F( { ZoneName, ZoneGROUP:GetVec2(), Radius } )
 
   self._.ZoneGROUP = ZoneGROUP
+
+  -- Zone objects are added to the _DATABASE and SET_ZONE objects.
+  _EVENTDISPATCHER:CreateEventNewZone( self )
   
   return self
 end
