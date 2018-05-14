@@ -311,7 +311,7 @@ function AI_CARGO_DISPATCHER:onafterMonitor()
         if self.HomeZone then
           if not self.CarrierHome[Carrier] then
             self.CarrierHome[Carrier] = true
-            AI_Cargo:__Home( 10, self.HomeZone:GetRandomPointVec2() )
+            AI_Cargo:__Home( 60, self.HomeZone:GetRandomPointVec2() )
           end
         end
       end

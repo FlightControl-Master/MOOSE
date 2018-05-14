@@ -617,7 +617,7 @@ function AI_CARGO_HELICOPTER:onafterDeploy( Helicopter, From, Event, To, Coordin
     Route[#Route+1] = WaypointTo
 
     -- Now route the helicopter
-    Helicopter:Route( Route, 1 )
+    Helicopter:Route( Route, 0 )
     
   end
   
