@@ -341,6 +341,27 @@ end
 -- @param #ZONE_BASE self
 -- @return #ZONE_BASE The zone is selected taking into account the randomization probability factor.
 -- @return #nil The zone is not selected taking into account the randomization probability factor.
+-- @usage
+-- 
+-- local ZoneArray = { ZONE:New( "Zone1" ), ZONE:New( "Zone2" ) }
+-- 
+-- -- We set a zone probability of 70% to the first zone and 30% to the second zone.
+-- ZoneArray[1]:SetZoneProbability( 0.5 )
+-- ZoneArray[2]:SetZoneProbability( 0.5 )
+-- 
+-- local ZoneSelected = nil
+-- 
+-- while ZoneSelected == nil do
+--   for _, Zone in pairs( ZoneArray ) do
+--     ZoneSelected = Zone:GetZoneMaybe()
+--     if ZoneSelected ~= nil then
+--       break
+--     end
+--   end
+-- end
+-- 
+-- -- The result should be that Zone1 would be more probable selected than Zone2.
+-- 
 function ZONE_BASE:GetZoneMaybe()
   self:F2()
   
