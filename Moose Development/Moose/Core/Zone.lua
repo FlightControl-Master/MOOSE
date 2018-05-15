@@ -322,7 +322,7 @@ end
 -- @param #ZONE_BASE self
 -- @param ZoneProbability A value between 0 and 1. 0 = 0% and 1 = 100% probability.
 function ZONE_BASE:SetZoneProbability( ZoneProbability )
-  self:F( { Zone:GetName(), ZoneProbability = ZoneProbability } )
+  self:F( { self:GetName(), ZoneProbability = ZoneProbability } )
   
   self.ZoneProbability = ZoneProbability or 1
   return self
