@@ -114,8 +114,6 @@ function AI_CARGO_DISPATCHER_HELICOPTER:New( SetHelicopter, SetCargo, SetDeployZ
   self:SetPickupRadius( 0, 0 )
   self:SetDeployRadius( 0, 0 )
   
-  self:__Start( 1 )
-
   return self
 end
 
