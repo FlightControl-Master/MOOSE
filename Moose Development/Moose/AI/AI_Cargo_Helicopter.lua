@@ -114,6 +114,14 @@ function AI_CARGO_HELICOPTER:New( Helicopter, CargoSet )
   -- @param #number Delay
 
 
+  -- We need to capture the Crash events for the helicopters.
+  -- The helicopter reference is used in the semaphore AI_CARGO_QUEUEU.
+  -- So, we need to unlock this when the helo is not anymore ...
+  Helicopter:HandleEvent( EVENTS.Crash,
+    function( Helicopter, EventData )
+      AI_CARGO_QUEUE[Helicopter] = nil
+    end
+  )
 
   self:SetCarrier( Helicopter )
   
@@ -225,7 +233,7 @@ function AI_CARGO_HELICOPTER:onafterQueue( Helicopter, From, Event, To, Coordina
 
   local HelicopterInZone = false
 
-  if Helicopter and Helicopter:IsAlive() then
+  if Helicopter and Helicopter:IsAlive() == true then
     
     local Distance = Coordinate:DistanceFromPointVec2( Helicopter:GetCoordinate() )
     
@@ -283,6 +291,8 @@ function AI_CARGO_HELICOPTER:onafterQueue( Helicopter, From, Event, To, Coordina
         self:__Queue( -10, Coordinate )
       end
     end
+  else
+    AI_CARGO_QUEUE[Helicopter] = nil
   end
 end
 
