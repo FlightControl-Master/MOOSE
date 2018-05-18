@@ -76,9 +76,34 @@ SET_BASE = {
 function SET_BASE:New( Database )
 
   -- Inherits from BASE
-  local self = BASE:Inherit( self, BASE:New() ) -- Core.Set#SET_BASE
+  local self = BASE:Inherit( self, FSM:New() ) -- Core.Set#SET_BASE
   
   self.Database = Database
+
+  self:SetStartState( "Started" )
+  
+  --- Added Handler OnAfter for SET_BASE
+  -- @function [parent=#SET_BASE] OnAfterAdded
+  -- @param #SET_BASE self
+  -- @param #string From
+  -- @param #string Event
+  -- @param #string To
+  -- @param #string ObjectName The name of the object.
+  -- @param Object The object.
+  
+  
+  self:AddTransition( "*",  "Added", "*" )
+  
+  --- Removed Handler OnAfter for SET_BASE
+  -- @function [parent=#SET_BASE] OnAfterRemoved
+  -- @param #SET_BASE self
+  -- @param #string From
+  -- @param #string Event
+  -- @param #string To
+  -- @param #string ObjectName The name of the object.
+  -- @param Object The object.
+  
+  self:AddTransition( "*",  "Removed", "*" )
 
   self.YieldInterval = 10
   self.TimeInterval = 0.001
@@ -148,7 +173,8 @@ end
 --- Removes a @{Base#BASE} object from the @{Set#SET_BASE} and derived classes, based on the Object Name.
 -- @param #SET_BASE self
 -- @param #string ObjectName
-function SET_BASE:Remove( ObjectName )
+-- @param NoTriggerEvent (optional) When `true`, the :Remove() method will not trigger a **Removed** event.
+function SET_BASE:Remove( ObjectName, NoTriggerEvent )
   self:F2( { ObjectName = ObjectName } )
 
   local Object = self.Set[ObjectName]
@@ -161,9 +187,11 @@ function SET_BASE:Remove( ObjectName )
         break
       end
     end
-    
+    -- When NoTriggerEvent is true, then no Removed event will be triggered.
+    if not NoTriggerEvent then
+      self:Removed( ObjectName, Object )
+    end
   end
-  
 end
 
 
@@ -177,10 +205,12 @@ function SET_BASE:Add( ObjectName, Object )
 
   -- Ensure that the existing element is removed from the Set before a new one is inserted to the Set
   if self.Set[ObjectName] then
-    self:Remove( ObjectName )
+    self:Remove( ObjectName, true )
   end
   self.Set[ObjectName] = Object
   table.insert( self.Index, ObjectName )
+  
+  self:Added( ObjectName, Object )
 end
 
 --- Adds a @{Base#BASE} object in the @{Set#SET_BASE}, using the Object Name as the index.
@@ -425,7 +455,7 @@ end
 -- @param #SET_BASE self
 -- @param Core.Event#EVENTDATA Event
 function SET_BASE:_EventOnDeadOrCrash( Event )
-  self:F3( { Event } )
+  self:F( { Event } )
 
   if Event.IniDCSUnit then
     local ObjectName, Object = self:FindInDatabase( Event )
@@ -675,6 +705,52 @@ end
 --   * @{#SET_GROUP.ForEachGroupPartlyInZone}: Iterate the SET_GROUP and call an iterator function for each **alive** GROUP presence partly in a @{Zone}, providing the GROUP and optional parameters to the called function.
 --   * @{#SET_GROUP.ForEachGroupNotInZone}: Iterate the SET_GROUP and call an iterator function for each **alive** GROUP presence not in a @{Zone}, providing the GROUP and optional parameters to the called function.
 --
+--
+-- ## 5. SET_GROUP trigger events on the GROUP objects.
+-- 
+-- The SET is derived from the FSM class, which provides extra capabilities to track the contents of the GROUP objects in the SET_GROUP.
+-- 
+-- ### 5.1. When a GROUP object crashes or is dead, the SET_GROUP will trigger a **Dead** event.
+-- 
+-- You can handle the event using the OnBefore and OnAfter event handlers. 
+-- The event handlers need to have the paramters From, Event, To, GroupObject.
+-- The GroupObject is the GROUP object that is dead and within the SET_GROUP, and is passed as a parameter to the event handler.
+-- See the following example:
+-- 
+--        -- Create the SetCarrier SET_GROUP collection.
+--
+--        local SetHelicopter = SET_GROUP:New():FilterPrefixes( "Helicopter" ):FilterStart()
+-- 
+--        -- Put a Dead event handler on SetCarrier, to ensure that when a carrier is destroyed, that all internal parameters are reset.
+--
+--        function SetHelicopter:OnAfterDead( From, Event, To, GroupObject )
+--          self:F( { GroupObject = GroupObject:GetName() } )
+--        end
+-- 
+-- While this is a good example, there is a catch.
+-- Imageine you want to execute the code above, the the self would need to be from the object declared outside (above) the OnAfterDead method.
+-- So, the self would need to contain another object. Fortunately, this can be done, but you must use then the **`.`** notation for the method.
+-- See the modified example:
+-- 
+--        -- Now we have a constructor of the class AI_CARGO_DISPATCHER, that receives the SetHelicopter as a parameter.
+--        -- Within that constructor, we want to set an enclosed event handler OnAfterDead for SetHelicopter.
+--        -- But within the OnAfterDead method, we want to refer to the self variable of the AI_CARGO_DISPATCHER.
+-- 
+--        function AI_CARGO_DISPATCHER:New( SetCarrier, SetCargo, SetDeployZones )
+--         
+--          local self = BASE:Inherit( self, FSM:New() ) -- #AI_CARGO_DISPATCHER
+-- 
+--          -- Put a Dead event handler on SetCarrier, to ensure that when a carrier is destroyed, that all internal parameters are reset.
+--          -- Note the "." notation, and the explicit declaration of SetHelicopter, which would be using the ":" notation the implicit self variable declaration.
+--
+--          function SetHelicopter.OnAfterDead( SetHelicopter, From, Event, To, GroupObject )
+--            SetHelicopter:F( { GroupObject = GroupObject:GetName() } )
+--            self.PickupCargo[GroupObject] = nil  -- So here I clear the PickupCargo table entry of the self object AI_CARGO_DISPATCHER.
+--            self.CarrierHome[GroupObject] = nil
+--          end
+--        
+--        end
+-- 
 -- ===
 -- @field #SET_GROUP SET_GROUP 
 SET_GROUP = {
@@ -946,7 +1022,7 @@ end
 -- @param #SET_GROUP self
 -- @param Core.Event#EVENTDATA Event
 function SET_GROUP:_EventOnDeadOrCrash( Event )
-  self:F3( { Event } )
+  self:F( { Event } )
 
   if Event.IniDCSUnit then
     local ObjectName, Object = self:FindInDatabase( Event )
@@ -1409,6 +1485,59 @@ do -- SET_UNIT
   -- 
   --   * @{#SET_UNIT.GetTypeNames}(): Retrieve the type names of the @{Unit}s in the SET, delimited by a comma.
   -- 
+  -- ## 4. SET_UNIT iterators
+  -- 
+  -- Once the filters have been defined and the SET_UNIT has been built, you can iterate the SET_UNIT with the available iterator methods.
+  -- The iterator methods will walk the SET_UNIT set, and call for each element within the set a function that you provide.
+  -- The following iterator methods are currently available within the SET_UNIT:
+  -- 
+  --   * @{#SET_UNIT.ForEachUnit}: Calls a function for each alive group it finds within the SET_UNIT.
+  --   * @{#SET_UNIT.ForEachUnitInZone}: Iterate the SET_UNIT and call an iterator function for each **alive** UNIT object presence completely in a @{Zone}, providing the UNIT object and optional parameters to the called function.
+  --   * @{#SET_UNIT.ForEachUnitNotInZone}: Iterate the SET_UNIT and call an iterator function for each **alive** UNIT object presence not in a @{Zone}, providing the UNIT object and optional parameters to the called function.
+  --
+  -- ## 5. SET_UNIT trigger events on the UNIT objects.
+  -- 
+  -- The SET is derived from the FSM class, which provides extra capabilities to track the contents of the UNIT objects in the SET_UNIT.
+  -- 
+  -- ### 5.1. When a UNIT object crashes or is dead, the SET_UNIT will trigger a **Dead** event.
+  -- 
+  -- You can handle the event using the OnBefore and OnAfter event handlers. 
+  -- The event handlers need to have the paramters From, Event, To, GroupObject.
+  -- The GroupObject is the UNIT object that is dead and within the SET_UNIT, and is passed as a parameter to the event handler.
+  -- See the following example:
+  -- 
+  --        -- Create the SetCarrier SET_UNIT collection.
+  --
+  --        local SetHelicopter = SET_UNIT:New():FilterPrefixes( "Helicopter" ):FilterStart()
+  -- 
+  --        -- Put a Dead event handler on SetCarrier, to ensure that when a carrier unit is destroyed, that all internal parameters are reset.
+  --
+  --        function SetHelicopter:OnAfterDead( From, Event, To, UnitObject )
+  --          self:F( { UnitObject = UnitObject:GetName() } )
+  --        end
+  -- 
+  -- While this is a good example, there is a catch.
+  -- Imageine you want to execute the code above, the the self would need to be from the object declared outside (above) the OnAfterDead method.
+  -- So, the self would need to contain another object. Fortunately, this can be done, but you must use then the **`.`** notation for the method.
+  -- See the modified example:
+  -- 
+  --        -- Now we have a constructor of the class AI_CARGO_DISPATCHER, that receives the SetHelicopter as a parameter.
+  --        -- Within that constructor, we want to set an enclosed event handler OnAfterDead for SetHelicopter.
+  --        -- But within the OnAfterDead method, we want to refer to the self variable of the AI_CARGO_DISPATCHER.
+  -- 
+  --        function ACLASS:New( SetCarrier, SetCargo, SetDeployZones )
+  --         
+  --          local self = BASE:Inherit( self, FSM:New() ) -- #AI_CARGO_DISPATCHER
+  -- 
+  --          -- Put a Dead event handler on SetCarrier, to ensure that when a carrier is destroyed, that all internal parameters are reset.
+  --          -- Note the "." notation, and the explicit declaration of SetHelicopter, which would be using the ":" notation the implicit self variable declaration.
+  --
+  --          function SetHelicopter.OnAfterDead( SetHelicopter, From, Event, To, UnitObject )
+  --            SetHelicopter:F( { UnitObject = UnitObject:GetName() } )
+  --            self.array[UnitObject] = nil  -- So here I clear the array table entry of the self object ACLASS.
+  --          end
+  --        
+  --        end
   -- ===
   -- @field #SET_UNIT SET_UNIT
   SET_UNIT = {
@@ -1649,6 +1778,8 @@ do -- SET_UNIT
     
     return self
   end
+
+  
   
   --- Handles the Database to check on an event (birth) that the Object was added in the Database.
   -- This is required, because sometimes the _DATABASE birth event gets called later than the SET_BASE birth event!
@@ -4606,18 +4737,37 @@ end
 --- Get a random zone from the set.
 -- @param #SET_ZONE self
 -- @return Core.Zone#ZONE_BASE The random Zone.
+-- @return #nil if no zone in the collection.
 function SET_ZONE:GetRandomZone()
 
-  local Index = self.Index
-  local ZoneFound = nil
-  
-  while not ZoneFound do
-    local ZoneRandom = math.random( 1, #Index )
-    ZoneFound = self.Set[Index[ZoneRandom]]
-  end
+  if self:Count() ~= 0 then
 
-  return ZoneFound
+    local Index = self.Index
+    local ZoneFound = nil -- Core.Zone#ZONE_BASE
+
+    -- Loop until a zone has been found.
+    -- The :GetZoneMaybe() call will evaluate the probability for the zone to be selected.
+    -- If the zone is not selected, then nil is returned by :GetZoneMaybe() and the loop continues!  
+    while not ZoneFound do
+      local ZoneRandom = math.random( 1, #Index )
+      ZoneFound = self.Set[Index[ZoneRandom]]:GetZoneMaybe() 
+    end
+  
+    return ZoneFound
+  end
+  
+  return nil
 end
+
+
+--- Set a zone probability.
+-- @param #SET_ZONE self
+-- @param #string ZoneName The name of the zone.
+function SET_ZONE:SetZoneProbability( ZoneName, ZoneProbability )
+  local Zone = self:FindZone( ZoneName )
+  Zone:SetZoneProbability( ZoneProbability )
+end
+
 
 
 
@@ -4656,6 +4806,9 @@ function SET_ZONE:FilterStart()
       end
     end
   end
+
+  self:HandleEvent( EVENTS.NewZone )
+  self:HandleEvent( EVENTS.DeleteZone )
   
   return self
 end
@@ -4726,3 +4879,41 @@ function SET_ZONE:IsIncludeObject( MZone )
   return MZoneInclude
 end
 
+--- Handles the OnEventNewZone event for the Set.
+-- @param #SET_ZONE self
+-- @param Core.Event#EVENTDATA EventData
+function SET_ZONE:OnEventNewZone( EventData ) --R2.1
+
+  self:F( { "New Zone", EventData } )
+
+  if EventData.Zone then
+    if EventData.Zone and self:IsIncludeObject( EventData.Zone ) then
+      self:Add( EventData.Zone.ZoneName , EventData.Zone  )
+    end
+  end
+end
+
+--- Handles the OnDead or OnCrash event for alive units set.
+-- @param #SET_ZONE self
+-- @param Core.Event#EVENTDATA EventData
+function SET_ZONE:OnEventDeleteZone( EventData ) --R2.1
+  self:F3( { EventData } )
+
+  if EventData.Zone then
+    local Zone = _DATABASE:FindZone( EventData.Zone.ZoneName )
+    if Zone and Zone.ZoneName then
+
+    -- When cargo was deleted, it may probably be because of an S_EVENT_DEAD.
+    -- However, in the loading logic, an S_EVENT_DEAD is also generated after a Destroy() call.
+    -- And this is a problem because it will remove all entries from the SET_ZONEs.
+    -- To prevent this from happening, the Zone object has a flag NoDestroy.
+    -- When true, the SET_ZONE won't Remove the Zone object from the set.
+    -- This flag is switched off after the event handlers have been called in the EVENT class.
+      self:F( { ZoneNoDestroy=Zone.NoDestroy } )
+      if Zone.NoDestroy then
+      else
+        self:Remove( Zone.ZoneName )
+      end
+    end
+  end
+end

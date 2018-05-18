@@ -82,11 +82,11 @@ AI_CARGO_APC = {
 
 --- Creates a new AI_CARGO_APC object.
 -- @param #AI_CARGO_APC self
--- @param Wrapper.Group#GROUP CargoCarrier
+-- @param Wrapper.Group#GROUP APC
 -- @param Core.Set#SET_CARGO CargoSet
 -- @param #number CombatRadius
 -- @return #AI_CARGO_APC
-function AI_CARGO_APC:New( CargoCarrier, CargoSet, CombatRadius )
+function AI_CARGO_APC:New( APC, CargoSet, CombatRadius )
 
   local self = BASE:Inherit( self, FSM_CONTROLLABLE:New() ) -- #AI_CARGO_APC
 
@@ -189,7 +189,8 @@ function AI_CARGO_APC:New( CargoCarrier, CargoSet, CombatRadius )
 
   self:__Monitor( 1 )
 
-  self:SetCarrier( CargoCarrier )
+
+  self:SetCarrier( APC )
   self.Transporting = false
   self.Relocating = false
   

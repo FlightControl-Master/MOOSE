@@ -179,6 +179,8 @@ EVENT = {
 
 world.event.S_EVENT_NEW_CARGO = world.event.S_EVENT_MAX + 1000
 world.event.S_EVENT_DELETE_CARGO = world.event.S_EVENT_MAX + 1001
+world.event.S_EVENT_NEW_ZONE = world.event.S_EVENT_MAX + 1002
+world.event.S_EVENT_DELETE_ZONE = world.event.S_EVENT_MAX + 1003
 
 --- The different types of events supported by MOOSE.
 -- Use this structure to subscribe to events using the @{Base#BASE.HandleEvent}() method.
@@ -209,6 +211,8 @@ EVENTS = {
   ShootingEnd =       world.event.S_EVENT_SHOOTING_END,
   NewCargo =          world.event.S_EVENT_NEW_CARGO,
   DeleteCargo =       world.event.S_EVENT_DELETE_CARGO,
+  NewZone =           world.event.S_EVENT_NEW_ZONE,
+  DeleteZone =        world.event.S_EVENT_DELETE_ZONE,
 }
 
 --- The Event structure
@@ -405,6 +409,16 @@ local _EVENTMETA = {
      Order = 1,
      Event = "OnEventDeleteCargo",
      Text = "S_EVENT_DELETE_CARGO" 
+   },
+   [EVENTS.NewZone] = {
+     Order = 1,
+     Event = "OnEventNewZone",
+     Text = "S_EVENT_NEW_ZONE" 
+   },
+   [EVENTS.DeleteZone] = {
+     Order = 1,
+     Event = "OnEventDeleteZone",
+     Text = "S_EVENT_DELETE_ZONE" 
    },
 }
 
@@ -710,6 +724,36 @@ do -- Event Creation
     world.onEvent( Event )
   end
 
+  --- Creation of a New Zone Event.
+  -- @param #EVENT self
+  -- @param Core.Zone#ZONE_BASE Zone The Zone created.
+  function EVENT:CreateEventNewZone( Zone )
+    self:F( { Zone } )
+  
+    local Event = {
+      id = EVENTS.NewZone,
+      time = timer.getTime(),
+      zone = Zone,
+      }
+  
+    world.onEvent( Event )
+  end
+
+  --- Creation of a Zone Deletion Event.
+  -- @param #EVENT self
+  -- @param Core.Zone#ZONE_BASE Zone The Zone created.
+  function EVENT:CreateEventDeleteZone( Zone )
+    self:F( { Zone } )
+  
+    local Event = {
+      id = EVENTS.DeleteZone,
+      time = timer.getTime(),
+      zone = Zone,
+      }
+  
+    world.onEvent( Event )
+  end
+
   --- Creation of a S_EVENT_PLAYER_ENTER_UNIT Event.
   -- @param #EVENT self
   -- @param Wrapper.Unit#UNIT PlayerUnit.
@@ -872,6 +916,11 @@ function EVENT:onEvent( Event )
     if Event.cargo then
       Event.Cargo = Event.cargo
       Event.CargoName = Event.cargo.Name
+    end
+
+    if Event.zone then
+      Event.Zone = Event.zone
+      Event.ZoneName = Event.zone.ZoneName
     end
     
     local PriorityOrder = EventMeta.Order

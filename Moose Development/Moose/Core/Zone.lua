@@ -151,10 +151,16 @@ end
 -- @param Dcs.DCSTypes#Vec3 Vec3 The point to test.
 -- @return #boolean true if the Vec3 is within the zone.
 function ZONE_BASE:IsVec3InZone( Vec3 )
-  self:F2( Vec3 )
-
   local InZone = self:IsVec2InZone( { x = Vec3.x, y = Vec3.z } )
+  return InZone
+end
 
+--- Returns if a Coordinate is within the zone.
+-- @param #ZONE_BASE self
+-- @param Core.Point#COORDINATE Coordinate The coordinate to test.
+-- @return #boolean true if the coordinate is within the zone.
+function ZONE_BASE:IsCoordinateInZone( Coordinate )
+  local InZone = self:IsVec2InZone( Coordinate:GetVec2() )
   return InZone
 end
 
@@ -163,10 +169,7 @@ end
 -- @param Core.Point#POINT_VEC2 PointVec2 The PointVec2 to test.
 -- @return #boolean true if the PointVec2 is within the zone.
 function ZONE_BASE:IsPointVec2InZone( PointVec2 )
-  self:F2( PointVec2 )
-  
   local InZone = self:IsVec2InZone( PointVec2:GetVec2() )
-
   return InZone
 end
 
@@ -175,10 +178,7 @@ end
 -- @param Core.Point#POINT_VEC3 PointVec3 The PointVec3 to test.
 -- @return #boolean true if the PointVec3 is within the zone.
 function ZONE_BASE:IsPointVec3InZone( PointVec3 )
-  self:F2( PointVec3 )
-
   local InZone = self:IsPointVec2InZone( PointVec3 )
-
   return InZone
 end
 
@@ -187,8 +187,6 @@ end
 -- @param #ZONE_BASE self
 -- @return #nil.
 function ZONE_BASE:GetVec2()
-  self:F2( self.ZoneName )
-
   return nil 
 end
 
@@ -324,7 +322,7 @@ end
 -- @param #ZONE_BASE self
 -- @param ZoneProbability A value between 0 and 1. 0 = 0% and 1 = 100% probability.
 function ZONE_BASE:SetZoneProbability( ZoneProbability )
-  self:F2( ZoneProbability )
+  self:F( { self:GetName(), ZoneProbability = ZoneProbability } )
   
   self.ZoneProbability = ZoneProbability or 1
   return self
@@ -343,6 +341,27 @@ end
 -- @param #ZONE_BASE self
 -- @return #ZONE_BASE The zone is selected taking into account the randomization probability factor.
 -- @return #nil The zone is not selected taking into account the randomization probability factor.
+-- @usage
+-- 
+-- local ZoneArray = { ZONE:New( "Zone1" ), ZONE:New( "Zone2" ) }
+-- 
+-- -- We set a zone probability of 70% to the first zone and 30% to the second zone.
+-- ZoneArray[1]:SetZoneProbability( 0.5 )
+-- ZoneArray[2]:SetZoneProbability( 0.5 )
+-- 
+-- local ZoneSelected = nil
+-- 
+-- while ZoneSelected == nil do
+--   for _, Zone in pairs( ZoneArray ) do
+--     ZoneSelected = Zone:GetZoneMaybe()
+--     if ZoneSelected ~= nil then
+--       break
+--     end
+--   end
+-- end
+-- 
+-- -- The result should be that Zone1 would be more probable selected than Zone2.
+-- 
 function ZONE_BASE:GetZoneMaybe()
   self:F2()
   
@@ -1003,6 +1022,9 @@ function ZONE_UNIT:New( ZoneName, ZoneUNIT, Radius )
   self.ZoneUNIT = ZoneUNIT
   self.LastVec2 = ZoneUNIT:GetVec2()
   
+  -- Zone objects are added to the _DATABASE and SET_ZONE objects.
+  _EVENTDISPATCHER:CreateEventNewZone( self )
+  
   return self
 end
 
@@ -1091,6 +1113,9 @@ function ZONE_GROUP:New( ZoneName, ZoneGROUP, Radius )
   self:F( { ZoneName, ZoneGROUP:GetVec2(), Radius } )
 
   self._.ZoneGROUP = ZoneGROUP
+
+  -- Zone objects are added to the _DATABASE and SET_ZONE objects.
+  _EVENTDISPATCHER:CreateEventNewZone( self )
   
   return self
 end

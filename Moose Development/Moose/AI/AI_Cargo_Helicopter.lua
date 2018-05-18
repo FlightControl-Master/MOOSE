@@ -22,7 +22,7 @@ AI_CARGO_HELICOPTER = {
   Coordinate = nil -- Core.Point#COORDINATE,
 }
 
-AI_CARGO_HELICOPTER_QUEUE = {}
+AI_CARGO_QUEUE = {}
 
 --- Creates a new AI_CARGO_HELICOPTER object.
 -- @param #AI_CARGO_HELICOPTER self
@@ -114,6 +114,14 @@ function AI_CARGO_HELICOPTER:New( Helicopter, CargoSet )
   -- @param #number Delay
 
 
+  -- We need to capture the Crash events for the helicopters.
+  -- The helicopter reference is used in the semaphore AI_CARGO_QUEUEU.
+  -- So, we need to unlock this when the helo is not anymore ...
+  Helicopter:HandleEvent( EVENTS.Crash,
+    function( Helicopter, EventData )
+      AI_CARGO_QUEUE[Helicopter] = nil
+    end
+  )
 
   self:SetCarrier( Helicopter )
   
@@ -225,43 +233,31 @@ function AI_CARGO_HELICOPTER:onafterQueue( Helicopter, From, Event, To, Coordina
 
   local HelicopterInZone = false
 
-  --- @param Wrapper.Unit#UNIT ZoneUnit
-  local function EvaluateZone( ZoneUnit )
-  
-    if ZoneUnit:IsAlive() then
-      local ZoneUnitCategory =  ZoneUnit:GetDesc().category
-      local ZoneGroup = ZoneUnit:GetGroup()
-      if ZoneUnitCategory == Unit.Category.HELICOPTER then
-        local State =  ZoneGroup:GetState( ZoneGroup, "Landing" )
-        self:F({ZoneUnit=ZoneUnit:GetName(), State=State, UnitCategory = Unit.Category.HELICOPTER } )
-        if State == true then
-          HelicopterInZone = true
-          return false
-        end
-      end
-    end
-    
-    return true
-  end
-
-  if Helicopter and Helicopter:IsAlive() then
+  if Helicopter and Helicopter:IsAlive() == true then
     
     local Distance = Coordinate:DistanceFromPointVec2( Helicopter:GetCoordinate() )
     
-    if Distance > 300 then
+    if Distance > 500 then
       self:__Queue( -10, Coordinate )
     else
     
-      -- This will search the zone and will call the local function "EvaluateZone", which passes a UNIT object.
-      local Zone = ZONE_RADIUS:New( "Deploy", Coordinate:GetVec2(), 300 )
-      Zone:SearchZone( EvaluateZone )
+      local ZoneFree = true
+
+      for Helicopter, ZoneQueue in pairs( AI_CARGO_QUEUE ) do
+        local ZoneQueue = ZoneQueue -- Core.Zone#ZONE_RADIUS
+        if ZoneQueue:IsCoordinateInZone( Coordinate ) then
+          ZoneFree = false
+        end
+      end
       
-      self:F({HelicopterInZone=HelicopterInZone})
+      self:F({ZoneFree=ZoneFree})
       
-      if HelicopterInZone == false then
+      if ZoneFree == true then
      
-        Helicopter:SetState( Helicopter, "Landing", true )
-        
+        local ZoneQueue = ZONE_RADIUS:New( Helicopter:GetName(), Coordinate:GetVec2(), 100 )
+     
+        AI_CARGO_QUEUE[Helicopter] = ZoneQueue 
+      
         local Route = {}
         
 --          local CoordinateFrom = Helicopter:GetCoordinate()
@@ -295,6 +291,8 @@ function AI_CARGO_HELICOPTER:onafterQueue( Helicopter, From, Event, To, Coordina
         self:__Queue( -10, Coordinate )
       end
     end
+  else
+    AI_CARGO_QUEUE[Helicopter] = nil
   end
 end
 
@@ -309,8 +307,6 @@ end
 function AI_CARGO_HELICOPTER:onafterOrbit( Helicopter, From, Event, To, Coordinate )
 
   if Helicopter and Helicopter:IsAlive() then
-    
-    Helicopter:ClearState( Helicopter, "Landing" )
     
     if not self:IsTransporting() then
       local Route = {}
@@ -436,6 +432,7 @@ function AI_CARGO_HELICOPTER:onafterUnload( Helicopter, From, Event, To, Deploye
       local HelicopterUnit = HelicopterUnit -- Wrapper.Unit#UNIT
       for _, Cargo in pairs( HelicopterUnit:GetCargo() ) do
         Cargo:UnBoard()
+        Cargo:SetDeployed( true )
         self:__Unboard( 10, Cargo, Deployed )
       end 
     end
@@ -483,7 +480,6 @@ function AI_CARGO_HELICOPTER:onbeforeUnloaded( Helicopter, From, Event, To, Carg
       if Deployed == true then
         for HelicopterUnit, Cargo in pairs( self.Helicopter_Cargo ) do
           local Cargo = Cargo -- Cargo.Cargo#CARGO
-          Cargo:SetDeployed( true )
         end
         self.Helicopter_Cargo = {}
       end
@@ -500,7 +496,9 @@ end
 -- @param Wrapper.Group#GROUP Helicopter
 function AI_CARGO_HELICOPTER:onafterUnloaded( Helicopter, From, Event, To, Cargo, Deployed )
 
-   self:Orbit( Helicopter:GetCoordinate(), 50 )
+  self:Orbit( Helicopter:GetCoordinate(), 50 )
+
+  AI_CARGO_QUEUE[Helicopter] = nil
 
 end
 
@@ -515,7 +513,6 @@ function AI_CARGO_HELICOPTER:onafterPickup( Helicopter, From, Event, To, Coordin
 
   if Helicopter and Helicopter:IsAlive() ~= nil then
 
-    self:ScheduleOnce( 10, Helicopter.ClearState, Helicopter, Helicopter, "Landing" )
     Helicopter:Activate()
 
     self.RoutePickup = true
@@ -630,7 +627,7 @@ function AI_CARGO_HELICOPTER:onafterDeploy( Helicopter, From, Event, To, Coordin
     Route[#Route+1] = WaypointTo
 
     -- Now route the helicopter
-    Helicopter:Route( Route, 1 )
+    Helicopter:Route( Route, 0 )
     
   end
   
@@ -690,7 +687,7 @@ function AI_CARGO_HELICOPTER:onafterHome( Helicopter, From, Event, To, Coordinat
     Route[#Route+1] = WaypointTo
 
     -- Now route the helicopter
-    Helicopter:Route( Route, 1 )
+    Helicopter:Route( Route, 0 )
     
   end
   
