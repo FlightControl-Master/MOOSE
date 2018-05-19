@@ -111,6 +111,48 @@ do -- TASK_MANAGER
 
     self:AddTransition( "Started", "Manage", "Started" )
 
+    self:AddTransition( "Started", "Success", "Started" )
+    
+    --- Success Handler OnAfter for TASK_MANAGER
+    -- @function [parent=#TASK_MANAGER] OnAfterSuccess
+    -- @param #TASK_MANAGER self
+    -- @param #string From
+    -- @param #string Event
+    -- @param #string To
+    -- @param Tasking.Task#TASK Task
+    
+    
+    self:AddTransition( "Started", "Failed", "Started" )
+    
+    --- Failed Handler OnAfter for TASK_MANAGER
+    -- @function [parent=#TASK_MANAGER] OnAfterFailed
+    -- @param #TASK_MANAGER self
+    -- @param #string From
+    -- @param #string Event
+    -- @param #string To
+    -- @param Tasking.Task#TASK Task
+    
+    
+    self:AddTransition( "Started", "Aborted", "Started" )
+    
+    --- Aborted Handler OnAfter for TASK_MANAGER
+    -- @function [parent=#TASK_MANAGER] OnAfterAborted
+    -- @param #TASK_MANAGER self
+    -- @param #string From
+    -- @param #string Event
+    -- @param #string To
+    -- @param Tasking.Task#TASK Task
+    
+    self:AddTransition( "Started", "Cancelled", "Started" )
+    
+    --- Cancelled Handler OnAfter for TASK_MANAGER
+    -- @function [parent=#TASK_MANAGER] OnAfterCancelled
+    -- @param #TASK_MANAGER self
+    -- @param #string From
+    -- @param #string Event
+    -- @param #string To
+    -- @param Tasking.Task#TASK Task
+
     self:SetRefreshTimeInterval( 30 )
   
     return self

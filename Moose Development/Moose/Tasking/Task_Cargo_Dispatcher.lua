@@ -578,6 +578,24 @@ do -- TASK_CARGO_DISPATCHER
           else
             Transport.Task:SetDeployZones( self.DefaultDeployZones or {} )
           end
+
+          function Transport.Task.OnEnterSuccess( Task, From, Event, To )
+            self:Success( Task )
+          end
+
+          function Transport.Task.onenterCancelled( Task, From, Event, To )
+            self:Cancelled( Task )
+          end
+          
+          function Transport.Task.onenterFailed( Task, From, Event, To )
+            self:Failed( Task )
+          end
+
+          function Transport.Task.onenterAborted( Task, From, Event, To )
+            self:Aborted( Task )
+          end
+            
+
         end
       end
       

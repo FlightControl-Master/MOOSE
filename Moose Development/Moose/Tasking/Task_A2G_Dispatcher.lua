@@ -761,6 +761,23 @@ do -- TASK_A2G_DISPATCHER
             Task:SetDispatcher( self )
             Task:UpdateTaskInfo( DetectedItem )
             Mission:AddTask( Task )
+            
+            function Task.OnEnterSuccess( Task, From, Event, To )
+              self:Success( Task )
+            end
+
+            function Task.onenterCancelled( Task, From, Event, To )
+              self:Cancelled( Task )
+            end
+            
+            function Task.onenterFailed( Task, From, Event, To )
+              self:Failed( Task )
+            end
+
+            function Task.onenterAborted( Task, From, Event, To )
+              self:Aborted( Task )
+            end
+            
     
             TaskReport:Add( Task:GetName() )
           else
