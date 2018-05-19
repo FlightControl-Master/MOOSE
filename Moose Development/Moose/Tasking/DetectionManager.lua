@@ -122,6 +122,48 @@ do -- DETECTION MANAGER
     -- @function [parent=#DETECTION_MANAGER] __Stop
     -- @param #DETECTION_MANAGER self
     -- @param #number Delay
+
+    self:AddTransition( "Started", "Success", "Started" )
+    
+    --- Success Handler OnAfter for DETECTION_MANAGER
+    -- @function [parent=#DETECTION_MANAGER] OnAfterSuccess
+    -- @param #DETECTION_MANAGER self
+    -- @param #string From
+    -- @param #string Event
+    -- @param #string To
+    -- @param Tasking.Task#TASK Task
+    
+    
+    self:AddTransition( "Started", "Failed", "Started" )
+    
+    --- Failed Handler OnAfter for DETECTION_MANAGER
+    -- @function [parent=#DETECTION_MANAGER] OnAfterFailed
+    -- @param #DETECTION_MANAGER self
+    -- @param #string From
+    -- @param #string Event
+    -- @param #string To
+    -- @param Tasking.Task#TASK Task
+    
+    
+    self:AddTransition( "Started", "Aborted", "Started" )
+    
+    --- Aborted Handler OnAfter for DETECTION_MANAGER
+    -- @function [parent=#DETECTION_MANAGER] OnAfterAborted
+    -- @param #DETECTION_MANAGER self
+    -- @param #string From
+    -- @param #string Event
+    -- @param #string To
+    -- @param Tasking.Task#TASK Task
+    
+    self:AddTransition( "Started", "Cancelled", "Started" )
+    
+    --- Cancelled Handler OnAfter for DETECTION_MANAGER
+    -- @function [parent=#DETECTION_MANAGER] OnAfterCancelled
+    -- @param #DETECTION_MANAGER self
+    -- @param #string From
+    -- @param #string Event
+    -- @param #string To
+    -- @param Tasking.Task#TASK Task
     
 
     self:AddTransition( "Started", "Report", "Started" )

@@ -200,6 +200,7 @@ do -- TASK_A2A_DISPATCHER
     self.Detection:SetRefreshTimeInterval( 30 )
     
     self:AddTransition( "Started", "Assign", "Started" )
+
     
     --- OnAfter Transition Handler for Event Assign.
     -- @function [parent=#TASK_A2A_DISPATCHER] OnAfterAssign
@@ -210,7 +211,7 @@ do -- TASK_A2A_DISPATCHER
     -- @param Tasking.Task_A2A#TASK_A2A Task
     -- @param Wrapper.Unit#UNIT TaskUnit
     -- @param #string PlayerName
-    
+
     self:__Start( 5 )
     
     return self
@@ -561,6 +562,22 @@ do -- TASK_A2A_DISPATCHER
             Task:SetTargetZone( DetectedZone, DetectedItem.Coordinate.y, DetectedItem.Coordinate.Heading )
             Task:SetDispatcher( self )
             Mission:AddTask( Task )
+
+            function Task.OnEnterSuccess( Task, From, Event, To )
+              self:Success( Task )
+            end
+
+            function Task.onenterCancelled( Task, From, Event, To )
+              self:Cancelled( Task )
+            end
+            
+            function Task.onenterFailed( Task, From, Event, To )
+              self:Failed( Task )
+            end
+
+            function Task.onenterAborted( Task, From, Event, To )
+              self:Aborted( Task )
+            end
             
             TaskReport:Add( Task:GetName() )
           else
