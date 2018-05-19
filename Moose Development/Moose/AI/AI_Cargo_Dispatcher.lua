@@ -308,7 +308,7 @@ function AI_CARGO_DISPATCHER:onafterMonitor()
         self:Pickup( Carrier, Cargo )
       end
       
-      function AI_Cargo.OnAfterLoad( AI_Cargo, Carrier )
+      function AI_Cargo.OnAfterLoad( AI_Cargo, Carrier, From, Event, To, Cargo )
         self:Loading( Carrier )
       end
 
@@ -316,16 +316,16 @@ function AI_CARGO_DISPATCHER:onafterMonitor()
         self:Loaded( Carrier, Cargo )
       end
 
-      function AI_Cargo.OnAfterDeploy( AI_Cargo, Carrier )
-        self:Deploy( Carrier )
+      function AI_Cargo.OnAfterDeploy( AI_Cargo, Carrier, From, Event, To, Cargo )
+        self:Deploy( Carrier, Cargo )
       end      
 
-      function AI_Cargo.OnAfterUnload( AI_Cargo, Carrier )
-        self:Unloading( Carrier )
+      function AI_Cargo.OnAfterUnload( AI_Cargo, Carrier, From, Event, To, Cargo )
+        self:Unloading( Carrier, Cargo )
       end      
 
-      function AI_Cargo.OnAfterUnloaded( AI_Cargo, Carrier )
-        self:Unloaded( Carrier )
+      function AI_Cargo.OnAfterUnloaded( AI_Cargo, Carrier, From, Event, To, Cargo )
+        self:Unloaded( Carrier, Cargo )
       end      
     end
 
@@ -405,7 +405,7 @@ end
 -- @param #number Delay
 
 function AI_CARGO_DISPATCHER:onafterStart( From, Event, To )
-  self:Monitor()
+  self:__Monitor( -1 )
 end
 
 --- Stop Handler OnBefore for AI_CARGO_DISPATCHER
@@ -434,16 +434,27 @@ end
 
 
 
---- Make a Carrier run for a cargo deploy action after the cargo Pickup trigger has been initiated, by default.
+--- Loaded Handler OnAfter for AI_CARGO_DISPATCHER
+-- @function [parent=#AI_CARGO_DISPATCHER] OnAfterLoaded
 -- @param #AI_CARGO_DISPATCHER self
--- @param From
--- @param Event
--- @param To
+-- @param #string From
+-- @param #string Event
+-- @param #string To
 -- @param Wrapper.Group#GROUP Carrier
 -- @param Cargo.Cargo#CARGO Cargo
--- @return #AI_CARGO_DISPATCHER
-function AI_CARGO_DISPATCHER:OnAfterPickup( From, Event, To, Carrier, Cargo )
-end
+
+--- Unloaded Handler OnAfter for AI_CARGO_DISPATCHER
+-- @function [parent=#AI_CARGO_DISPATCHER] OnAfterUnloaded
+-- @param #AI_CARGO_DISPATCHER self
+-- @param #string From
+-- @param #string Event
+-- @param #string To
+-- @param Wrapper.Group#GROUP Carrier
+-- @param Cargo.Cargo#CARGO Cargo
+
+
+
+
 
 
 --- Make a Carrier run for a cargo deploy action after the cargo has been loaded, by default.

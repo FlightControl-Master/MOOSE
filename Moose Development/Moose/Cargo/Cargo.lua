@@ -352,6 +352,17 @@ do -- CARGO
     return self.Name
   end
   
+  --- Get the current active object representing or being the Cargo.
+  -- @param #CARGO self
+  -- @return Wrapper.Positionable#POSITIONABLE The object representing or being the Cargo.
+  function CARGO:GetObject()
+    if self:IsLoaded() then
+      return self.CargoCarrier
+    else
+      return self.CargoObject
+    end 
+  end
+  
   --- Get the object name of the Cargo.
   -- @param #CARGO self
   -- @return #string The object name of the Cargo.

@@ -107,7 +107,7 @@ do -- CARGO_GROUP
     self.CargoGroup = GROUP:NewTemplate( GroupTemplate, GroupTemplate.CoalitionID, GroupTemplate.CategoryID, GroupTemplate.CountryID)
     
     -- Now we spawn the new group based on the template created.
-    _DATABASE:Spawn( GroupTemplate )
+    self.CargoObject = _DATABASE:Spawn( GroupTemplate )
   
     self:SetWeight( WeightGroup )
     self.CargoLimit = 10
@@ -169,7 +169,10 @@ do -- CARGO_GROUP
           _DATABASE:Spawn( GroupTemplate )
         end
       end
+      
+      self.CargoObject = nil
     end
+    
   
   end
 
@@ -209,12 +212,12 @@ do -- CARGO_GROUP
       end
 
       -- Then we register the new group in the database
-      self.CargoGroup = GROUP:NewTemplate( GroupTemplate, GroupTemplate.CoalitionID, GroupTemplate.CategoryID, GroupTemplate.CountryID)
+      self.CargoGroup = GROUP:NewTemplate( GroupTemplate, GroupTemplate.CoalitionID, GroupTemplate.CategoryID, GroupTemplate.CountryID )
 
       self:F( { "Regroup", GroupTemplate } )
         
       -- Now we spawn the new group based on the template created.
-      _DATABASE:Spawn( GroupTemplate )
+      self.CargoObject = _DATABASE:Spawn( GroupTemplate )
     end
   
   end
