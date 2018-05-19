@@ -444,14 +444,29 @@ end
 -- and any spaces before and after the resulting name are removed.
 -- IMPORTANT! This method MUST be the first used after :New !!!
 -- @param #SPAWN self
+-- @param #boolean KeepUnitNames (optional) If true, the unit names are kept, false or not provided to make new unit names.
 -- @return #SPAWN self
-function SPAWN:InitKeepUnitNames()
+function SPAWN:InitKeepUnitNames( KeepUnitNames )
   self:F( )
 
-  self.SpawnInitKeepUnitNames = true
+  self.SpawnInitKeepUnitNames = KeepUnitNames or true
   
   return self
 end
+
+
+--- Flags that the spawned groups must be spawned late activated. 
+-- @param #SPAWN self
+-- @param #boolean LateActivated (optional) If true, the spawned groups are late activated.
+-- @return #SPAWN self
+function SPAWN:InitLateActivated( LateActivated )
+  self:F( )
+
+  self.LateActivated = LateActivated or true
+  
+  return self
+end
+
 
 --- Defines the Heading for the new spawned units. 
 -- The heading can be given as one fixed degree, or can be randomized between minimum and maximum degrees.
@@ -1915,7 +1930,7 @@ function SPAWN:_Prepare( SpawnTemplatePrefix, SpawnIndex ) --R2.2
 	
 	SpawnTemplate.groupId = nil
 	--SpawnTemplate.lateActivation = false
-  SpawnTemplate.lateActivation = false 
+  SpawnTemplate.lateActivation = self.LateActivated or false 
 
 	if SpawnTemplate.CategoryID == Group.Category.GROUND then
 	  self:T3( "For ground units, visible needs to be false..." )
