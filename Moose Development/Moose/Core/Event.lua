@@ -209,6 +209,9 @@ EVENTS = {
   PlayerComment =     world.event.S_EVENT_PLAYER_COMMENT,
   ShootingStart =     world.event.S_EVENT_SHOOTING_START,
   ShootingEnd =       world.event.S_EVENT_SHOOTING_END,
+  MarkAdded =         world.event.S_EVENT_MARK_ADDED,
+  MarkChange =        world.event.S_EVENT_MARK_CHANGE,
+  MarkRemoved =       world.event.S_EVENT_MARK_REMOVED,
   NewCargo =          world.event.S_EVENT_NEW_CARGO,
   DeleteCargo =       world.event.S_EVENT_DELETE_CARGO,
   NewZone =           world.event.S_EVENT_NEW_ZONE,
@@ -399,6 +402,24 @@ local _EVENTMETA = {
      Side = "I",
      Event = "OnEventShootingEnd",
      Text = "S_EVENT_SHOOTING_END" 
+   },
+   [world.event.S_EVENT_MARK_ADDED] = {
+     Order = 1,
+     Side = "I",
+     Event = "OnEventMarkAdded",
+     Text = "S_EVENT_MARK_ADDED" 
+   },
+   [world.event.S_EVENT_MARK_CHANGE] = {
+     Order = 1,
+     Side = "I",
+     Event = "OnEventMarkChange",
+     Text = "S_EVENT_MARK_CHANGE" 
+   },
+   [world.event.S_EVENT_MARK_REMOVED] = {
+     Order = 1,
+     Side = "I",
+     Event = "OnEventMarkRemoved",
+     Text = "S_EVENT_MARK_REMOVED" 
    },
    [EVENTS.NewCargo] = {
      Order = 1,
