@@ -115,11 +115,25 @@ function AI_CARGO_HELICOPTER:New( Helicopter, CargoSet )
 
 
   -- We need to capture the Crash events for the helicopters.
-  -- The helicopter reference is used in the semaphore AI_CARGO_QUEUEU.
+  -- The helicopter reference is used in the semaphore AI_CARGO_QUEUE.
   -- So, we need to unlock this when the helo is not anymore ...
   Helicopter:HandleEvent( EVENTS.Crash,
     function( Helicopter, EventData )
       AI_CARGO_QUEUE[Helicopter] = nil
+    end
+  )
+
+  -- We need to capture the Land events for the helicopters.
+  -- The helicopter reference is used in the semaphore AI_CARGO_QUEUE.
+  -- So, we need to unlock this when the helo has landed, which can be anywhere ...
+  -- But only free the landing coordinate after 1 minute, to ensure that all helos have left.
+  Helicopter:HandleEvent( EVENTS.Land,
+    function( Helicopter, EventData )
+      self:ScheduleOnce( 60, 
+        function( Helicopter )
+          AI_CARGO_QUEUE[Helicopter] = nil
+        end, Helicopter
+      )
     end
   )
 
@@ -169,19 +183,6 @@ function AI_CARGO_HELICOPTER:SetCarrier( Helicopter )
     end
   end
   
-  
-  function Helicopter:OnEventHit( EventData )
-    local AICargoTroops = self:GetState( self, "AI_CARGO_HELICOPTER" )
-    if AICargoTroops then
-      self:F( { OnHitLoaded = AICargoTroops:Is( "Loaded" ) } )
-      if AICargoTroops:Is( "Loaded" ) or AICargoTroops:Is( "Boarding" ) then
-        -- There are enemies within combat range. Unload the Helicopter.
-        AICargoTroops:Unload()
-      end
-    end
-  end
-  
-  
   function Helicopter:OnEventLand( EventData )
     AICargo:Landed()
   end
@@ -203,19 +204,34 @@ end
 -- @param #number Speed
 function AI_CARGO_HELICOPTER:onafterLanded( Helicopter, From, Event, To )
 
+  Helicopter:F( { Name = Helicopter:GetName() } )
+
   if Helicopter and Helicopter:IsAlive() then
 
+    -- S_EVENT_LAND is directly called in two situations:
+    -- 1 - When the helo lands normally on the ground.
+    -- 2 - when the helo is hit and goes RTB or even when it is destroyed.
+    -- For point 2, this is an issue, the infantry may not unload in this case!
+    -- So we check if the helo is on the ground, and velocity< 5.
+    -- Only then the infantry can unload (and load too, for consistency)!
+
+    self:F( { Helicopter:GetName(), Height = Helicopter:GetHeight( true ), Velocity = Helicopter:GetVelocityKMH() } )
+
     if self.RoutePickup == true then
-      self:Load( Helicopter:GetPointVec2() )
-      self.RoutePickup = false
-      self.Relocating = true
+      if Helicopter:GetHeight( true ) <= 2 and Helicopter:GetVelocityKMH() < 5 then
+        self:Load( Helicopter:GetPointVec2() )
+        self.RoutePickup = false
+        self.Relocating = true
+      end
     end
     
     if self.RouteDeploy == true then
-      self:Unload( true )
-      self.RouteDeploy = false
-      self.Transporting = false
-      self.Relocating = false
+      if Helicopter:GetHeight( true ) <= 2 and Helicopter:GetVelocityKMH() < 5 then
+        self:Unload( true )
+        self.RouteDeploy = false
+        self.Transporting = false
+        self.Relocating = false
+      end
     end
      
   end
@@ -498,7 +514,12 @@ function AI_CARGO_HELICOPTER:onafterUnloaded( Helicopter, From, Event, To, Cargo
 
   self:Orbit( Helicopter:GetCoordinate(), 50 )
 
-  AI_CARGO_QUEUE[Helicopter] = nil
+ -- Free the coordinate zone after 30 seconds, so that the original helicopter can fly away first.
+  self:ScheduleOnce( 30, 
+    function( Helicopter )
+      AI_CARGO_QUEUE[Helicopter] = nil
+    end, Helicopter
+  )
 
 end
 

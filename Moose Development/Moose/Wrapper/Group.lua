@@ -456,6 +456,78 @@ function GROUP:GetSize()
   return nil
 end
 
+
+--- Returns the average velocity Vec3 vector.
+-- @param Wrapper.Group#GROUP self
+-- @return Dcs.DCSTypes#Vec3 The velocity Vec3 vector
+-- @return #nil The GROUP is not existing or alive.  
+function GROUP:GetVelocityVec3()
+  self:F2( self.GroupName )
+
+  local DCSGroup = self:GetDCSObject()
+  
+  if DCSGroup and DCSGroup:isExist() then
+    local GroupUnits = DCSGroup:getUnits()
+    local GroupCount = #GroupUnits
+    
+    local VelocityVec3 = { x = 0, y = 0, z = 0 }
+    
+    for _, DCSUnit in pairs( GroupUnits ) do
+      local UnitVelocityVec3 = DCSUnit:getVelocity()
+      VelocityVec3.x = VelocityVec3.x + UnitVelocityVec3.x
+      VelocityVec3.y = VelocityVec3.y + UnitVelocityVec3.y
+      VelocityVec3.z = VelocityVec3.z + UnitVelocityVec3.z
+    end
+    
+    VelocityVec3.x = VelocityVec3.x / GroupCount
+    VelocityVec3.y = VelocityVec3.y / GroupCount
+    VelocityVec3.z = VelocityVec3.z / GroupCount
+    
+    return VelocityVec3
+  end
+  
+  BASE:E( { "Cannot GetVelocityVec3", Group = self, Alive = self:IsAlive() } )
+
+  return nil
+end
+
+
+--- Returns the average group height in meters.
+-- @param Wrapper.Group#GROUP self
+-- @param #boolean FromGround Measure from the ground or from sea level. Provide **true** for measuring from the ground. **false** or **nil** if you measure from sea level. 
+-- @return Dcs.DCSTypes#Vec3 The height of the group.
+-- @return #nil The GROUP is not existing or alive.  
+function GROUP:GetHeight( FromGround )
+  self:F2( self.GroupName )
+
+  local DCSGroup = self:GetDCSObject()
+  
+  if DCSGroup then
+    local GroupUnits = DCSGroup:getUnits()
+    local GroupCount = #GroupUnits
+    
+    local GroupHeight = 0
+
+    for _, DCSUnit in pairs( GroupUnits ) do
+      local GroupPosition = DCSUnit:getPosition()
+      
+      if FromGround == true then
+        local LandHeight =  land.getHeight( { GroupPosition.p.x, GroupPosition.p.z } )
+        GroupHeight = GroupHeight + ( GroupPosition.p.y - LandHeight )
+      else
+        GroupHeight = GroupHeight + GroupPosition.p.y
+      end
+    end
+    
+    return GroupHeight / GroupCount
+  end
+  
+  return nil
+end
+
+
+
+
 ---
 --- Returns the initial size of the DCS Group.
 -- If some of the DCS Units of the DCS Group are destroyed, the initial size of the DCS Group is unchanged.
