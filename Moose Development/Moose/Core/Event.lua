@@ -212,7 +212,6 @@ EVENTS = {
   MarkAdded =         world.event.S_EVENT_MARK_ADDED,
   MarkChange =        world.event.S_EVENT_MARK_CHANGE,
   MarkRemoved =       world.event.S_EVENT_MARK_REMOVED,
-  ShootingEnd =       world.event.S_EVENT_SHOOTING_END,
   NewCargo =          world.event.S_EVENT_NEW_CARGO,
   DeleteCargo =       world.event.S_EVENT_DELETE_CARGO,
   NewZone =           world.event.S_EVENT_NEW_ZONE,
