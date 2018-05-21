@@ -1,5 +1,5 @@
 -------------------------------------------------------------------------------
--- @module DCScoalition
+-- @module DCS.DCScoalition
 
 --- @type coalition
 -- @field #coalition.side side

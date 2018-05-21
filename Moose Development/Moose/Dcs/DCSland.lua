@@ -1,5 +1,5 @@
 -------------------------------------------------------------------------------
--- @module land
+-- @module DCS.land
 
 --- @type land
 -- @field #land.SurfaceType SurfaceType

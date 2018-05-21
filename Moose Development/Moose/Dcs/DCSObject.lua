@@ -1,5 +1,5 @@
 -------------------------------------------------------------------------------
--- @module DCSObject
+-- @module DCS.DCSObject
 
 --- @type Object
 -- @field #Object.Category Category

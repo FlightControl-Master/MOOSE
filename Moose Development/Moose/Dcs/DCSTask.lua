@@ -1,4 +1,4 @@
---- @module DCSTask
+--- @module DCS.DCSTask
 
 
 --- A task descriptor (internal structure for DCS World)

@@ -1,5 +1,5 @@
 -------------------------------------------------------------------------------
--- @module DCSWorld
+-- @module DCS.DCSWorld
 
 --- @type world
 -- @field #world.event event

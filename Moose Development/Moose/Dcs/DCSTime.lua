@@ -1,5 +1,5 @@
 -------------------------------------------------------------------------------
--- @module DCSTime
+-- @module DCS.DCSTime
 
 --- @type ModelTime
 -- @extends #number

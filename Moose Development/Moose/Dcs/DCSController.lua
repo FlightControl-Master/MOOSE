@@ -1,5 +1,5 @@
 -------------------------------------------------------------------------------
--- @module DCSController
+-- @module DCS.DCSController
 
 --- Controller is an object that performs A.I.-routines. Other words controller is an instance of A.I.. Controller stores current main task, active enroute tasks and behavior options. Controller performs commands. Please, read DCS A-10C GUI Manual EN.pdf chapter "Task Planning for Unit Groups", page 91 to understand A.I. system of DCS:A-10C. 
 -- 

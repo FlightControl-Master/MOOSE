@@ -1,4 +1,4 @@
---- @module DCSCommand
+--- @module DCS.DCSCommand
 
 
 --- @type Command

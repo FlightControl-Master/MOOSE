@@ -1,5 +1,5 @@
 -------------------------------------------------------------------------------
--- @module DCSUnit
+-- @module DCS.DCSUnit
 
 --- @type Unit
 -- @extends Dcs.DCSCoalitionWrapper.Object#CoalitionObject
