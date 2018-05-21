@@ -4,7 +4,7 @@
 -- 
 -- ===
 -- 
--- @module Message
+-- @module Core.Message
 
 --- The MESSAGE class
 -- @type MESSAGE

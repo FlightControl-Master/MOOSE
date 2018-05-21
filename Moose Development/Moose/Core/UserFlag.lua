@@ -10,7 +10,7 @@
 -- 
 -- ===
 -- 
--- @module UserFlag
+-- @module Core.UserFlag
 
 do -- UserFlag
 

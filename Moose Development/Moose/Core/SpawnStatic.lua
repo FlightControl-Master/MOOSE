@@ -29,7 +29,7 @@
 -- 
 -- ===
 -- 
--- @module SpawnStatic
+-- @module Core.SpawnStatic
 
 
 

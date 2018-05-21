@@ -30,7 +30,7 @@
 -- 
 -- ===
 -- 
--- @module Set
+-- @module Core.Set
 
 
 --- @type SET_BASE

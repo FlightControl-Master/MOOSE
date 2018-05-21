@@ -30,7 +30,7 @@
 -- ### Contributions: -
 -- ### Authors: FlightControl : Design & Programming
 -- 
--- @module ScheduleDispatcher
+-- @module Core.ScheduleDispatcher
 
 --- The SCHEDULEDISPATCHER structure
 -- @type SCHEDULEDISPATCHER

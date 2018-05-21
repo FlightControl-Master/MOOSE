@@ -26,7 +26,7 @@
 --
 -- ### Contributions:
 --
--- @module Point
+-- @module Core.Point
 
 
 

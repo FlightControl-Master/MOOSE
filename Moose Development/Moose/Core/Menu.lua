@@ -30,7 +30,7 @@
 -- 
 -- ===
 --   
--- @module Menu
+-- @module Core.Menu
 
 
 MENU_INDEX = {}

@@ -9,7 +9,7 @@
 -- 
 -- ===
 -- 
--- @module Base
+-- @module Core.Base
 
 
 

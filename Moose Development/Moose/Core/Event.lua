@@ -164,7 +164,7 @@
 -- 
 -- ===
 --
--- @module Event
+-- @module Core.Event
 
 
 --- The EVENT structure

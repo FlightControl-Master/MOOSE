@@ -32,7 +32,7 @@
 --
 -- ### Author: Hugues "Grey_Echo" Bousquet
 --
--- @module Radio
+-- @module Core.Radio
 
 
 --- # RADIO class, extends @{Base#BASE}
