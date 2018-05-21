@@ -289,8 +289,37 @@ do -- Zones
   end
 
 
+  --- Private method that registers new ZONE_BASE derived objects within the DATABASE Object.
+  -- @param #DATABASE self
+  -- @return #DATABASE self
+  function DATABASE:_RegisterZones()
 
-end
+    for ZoneID, ZoneData in pairs( env.mission.triggers.zones ) do
+      local ZoneName = ZoneData.name
+
+      self:I( { "Register ZONE:", Name = ZoneName } )
+      local Zone = ZONE:New( ZoneName )
+      self.ZONENAMES[ZoneName] = ZoneName
+      self:AddZone( ZoneName, Zone )
+    end
+  
+    for ZoneGroupName, ZoneGroup in pairs( self.GROUPS ) do
+      if ZoneGroupName:match("~ZONE_POLYGON") then
+        local ZoneName1 = ZoneGroupName:match("(.*)~ZONE_POLYGON")
+        local ZoneName2 = ZoneGroupName:match(".*~ZONE_POLYGON(.*)")
+        local ZoneName = ZoneName1 .. ( ZoneName2 or "" )
+        
+        self:I( { "Register ZONE_POLYGON:", Name = ZoneName } )
+        local Zone_Polygon = ZONE_POLYGON:New( ZoneName, ZoneGroup )
+        self.ZONENAMES[ZoneName] = ZoneName
+        self:AddZone( ZoneName, Zone_Polygon )
+      end
+    end
+    
+  end
+
+
+end -- zone
 
 
 do -- cargo
@@ -341,20 +370,23 @@ do -- cargo
   --- Private method that registers new Static Templates within the DATABASE Object.
   -- @param #DATABASE self
   -- @return #DATABASE self
-  function DATABASE:RegisterCargos()
+  function DATABASE:_RegisterCargos()
 
   
     for CargoGroupName, CargoGroup in pairs( self.GROUPS ) do
       if self:IsCargo( CargoGroupName ) then
         local CargoInfo = CargoGroupName:match("~CARGO(.*)")
         local CargoParam = CargoInfo and CargoInfo:match( "%((.*)%)")
-        local CargoName = CargoGroupName:match("(.*)~CARGO")
+        local CargoName1 = CargoGroupName:match("(.*)~CARGO%(.*%)")
+        local CargoName2 = CargoGroupName:match(".*~CARGO%(.*%)(.*)")
+        self:E({CargoName1 = CargoName1, CargoName2 = CargoName2 })
+        local CargoName = CargoName1 .. ( CargoName2 or "" )
         local Type = CargoParam and CargoParam:match( "T=([%a%d ]+),?")
         local Name = CargoParam and CargoParam:match( "N=([%a%d]+),?") or CargoName
         local LoadRadius = CargoParam and tonumber( CargoParam:match( "RR=([%a%d]+),?") )
         local NearRadius = CargoParam and tonumber( CargoParam:match( "NR=([%a%d]+),?") )
         
-        self:F({"Register CargoGroup:",Type=Type,Name=Name,LoadRadius=LoadRadius,NearRadius=NearRadius})
+        self:I({"Register CargoGroup:",Type=Type,Name=Name,LoadRadius=LoadRadius,NearRadius=NearRadius})
         CARGO_GROUP:New( CargoGroup, Type, Name, LoadRadius, NearRadius )
       end
     end
@@ -371,11 +403,11 @@ do -- cargo
         local NearRadius = CargoParam and tonumber( CargoParam:match( "NR=([%a%d]+),?") )
         
         if Category == "SLING" then
-          self:F({"Register CargoSlingload:",Type=Type,Name=Name,LoadRadius=LoadRadius,NearRadius=NearRadius})
+          self:I({"Register CargoSlingload:",Type=Type,Name=Name,LoadRadius=LoadRadius,NearRadius=NearRadius})
           CARGO_SLINGLOAD:New( CargoStatic, Type, Name, LoadRadius, NearRadius )
         else
           if Category == "CRATE" then
-            self:F({"Register CargoCrate:",Type=Type,Name=Name,LoadRadius=LoadRadius,NearRadius=NearRadius})
+            self:I({"Register CargoCrate:",Type=Type,Name=Name,LoadRadius=LoadRadius,NearRadius=NearRadius})
             CARGO_CRATE:New( CargoStatic, Type, Name, LoadRadius, NearRadius )
           end
         end
@@ -1217,13 +1249,6 @@ function DATABASE:_RegisterTemplates()
       end --if coa_data.country then --there is a country table
     end --if coa_name == 'red' or coa_name == 'blue' and type(coa_data) == 'table' then
   end --for coa_name, coa_data in pairs(mission.coalition) do
-
-  for ZoneID, ZoneData in pairs( env.mission.triggers.zones ) do
-    local ZoneName = ZoneData.name
-    self.ZONENAMES[ZoneName] = ZoneName
-    self:AddZone( ZoneName, ZONE:New( ZoneName ) )
-    self:I( "Added ZONE " .. ZoneName )
-  end
 
   return self
 end
