@@ -609,7 +609,7 @@ function AI_CARGO_APC:onafterPickup( APC, From, Event, To, Coordinate )
     if Coordinate then
       self.RoutePickup = true
       
-      local Waypoints = APC:TaskGroundOnRoad( Coordinate, 150, "Line abreast" )
+      local Waypoints = APC:TaskGroundOnRoad( Coordinate, APC:GetSpeedMax()*0.8, "Line abreast" )
   
       local TaskFunction = APC:TaskFunction( "AI_CARGO_APC._Pickup", self )
       

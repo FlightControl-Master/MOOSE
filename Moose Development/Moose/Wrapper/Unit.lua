@@ -401,6 +401,23 @@ function UNIT:GetNumber()
   return nil
 end
 
+
+--- Returns the unit's max speed in km/h derived from the DCS descriptors.
+-- @param #UNIT self
+-- @return #number Speed in km/h. 
+function UNIT:GetSpeedMax()
+  self:F2( self.UnitName )
+
+  local Desc = self:GetDesc()
+  
+  if Desc then
+    local SpeedMax = Desc.speedMax
+    return SpeedMax*3.6
+  end
+
+  return nil
+end
+
 --- Returns the unit's group if it exist and nil otherwise.
 -- @param Wrapper.Unit#UNIT self
 -- @return Wrapper.Group#GROUP The Group of the Unit.

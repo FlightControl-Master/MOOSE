@@ -1958,17 +1958,17 @@ do -- Route methods
     
     -- Route, ground waypoints along roads.
     local route={}
-    table.insert(route, FromCoordinate:WaypointGround(Speed, Formation))
+    table.insert(route, FromCoordinate:WaypointGround(Speed, "Off Road"))
     
     -- Convert coordinates to ground waypoints and insert into table.
     for _, coord in ipairs(path) do
-      table.insert(route, coord:WaypointGround(Speed, Formation))
+      table.insert(route, coord:WaypointGround(Speed, "On Road"))
     end
     
     -- Add the final coordinate because the final coordinate in path is last point on road.
     local dist=ToCoordinate:Get2DDistance(path[#path])
     if dist>10 then
-      table.insert(route, ToCoordinate:WaypointGround(Speed, "Vee"))
+      table.insert(route, ToCoordinate:WaypointGround(Speed, "Off Road"))
     end
     
     -- Route controllable to destination.
@@ -2059,7 +2059,7 @@ do -- Route methods
       PointFrom.y = ControllablePoint.y
       PointFrom.type = "Turning Point"
       PointFrom.action = Formation or "Cone"
-      PointFrom.speed = 20 / 1.6
+      PointFrom.speed = 20 / 3.6
   
   
       local PointTo = {}
@@ -2084,7 +2084,7 @@ do -- Route methods
       if Speed then
         PointTo.speed = Speed
       else
-        PointTo.speed = 20 / 1.6
+        PointTo.speed = 20 / 3.6
       end
   
       local Points = { PointFrom, PointTo }
