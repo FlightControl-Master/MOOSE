@@ -1,4 +1,4 @@
-version: 3.9.1.{build}
+version: 2.4.a.{build}
 shallow_clone: true
 skip_branch_with_pr: false
 skip_commits:
@@ -69,7 +69,7 @@ build_script:
            "Authorization" = "Bearer $token"
            "Content-type" = "application/json"
            }
-         $RequestBody = @{ accountName = 'FlightControl-Master'; projectSlug = 'moose-docs'; branch = branch = "$env:appveyor_repo_branch"; environmentVariables = @{} } | ConvertTo-Json
+         $RequestBody = @{ accountName = 'FlightControl-Master'; projectSlug = 'moose-docs'; branch = "$env:appveyor_repo_branch"; environmentVariables = @{} } | ConvertTo-Json
          # get project with last build details
          $project = Invoke-RestMethod -method Post -Uri "$apiUrl/builds" -Headers $headers -Body $RequestBody
        }
