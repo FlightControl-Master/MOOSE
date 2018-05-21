@@ -78,7 +78,7 @@ do -- CARGO_GROUP
     self.CargoGroup:Destroy()
 
     local GroupName = CargoGroup:GetName()
-    self.CargoName = GroupName:match("(.*)~CARGO") or GroupName
+    self.CargoName = Name
     self.CargoTemplate = UTILS.DeepCopy( _DATABASE:GetGroupTemplate( GroupName ) )
 
     local GroupTemplate = UTILS.DeepCopy( self.CargoTemplate )

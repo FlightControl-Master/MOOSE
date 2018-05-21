@@ -956,6 +956,30 @@ end
 -- The ZONE class, defined by the zone name as defined within the Mission Editor.
 -- This class implements the inherited functions from @{#ZONE_RADIUS} taking into account the own zone format and properties.
 -- 
+-- ## ZONE constructor
+-- 
+--   * @{#ZONE.New}(): Constructor. This will search for a trigger zone with the name given, and will return for you a ZONE object.
+--   
+-- ## Declare a ZONE directly in the DCS mission editor!
+-- 
+-- You can declare a ZONE using the DCS mission editor by adding a trigger zone in the mission editor.
+-- 
+-- Then during mission startup, when loading Moose.lua, this trigger zone will be detected as a ZONE declaration.
+-- Within the background, a ZONE object will be created within the @{Database}.
+-- The ZONE name will be the trigger zone name.
+-- 
+-- So, you can search yourself for the ZONE object by using the @{#ZONE.FindByName}() method.
+-- In this example, `local TriggerZone = ZONE:FindByName( "DefenseZone" )` would return the ZONE object
+-- that was created at mission startup, and reference it into the `TriggerZone` local object. 
+-- 
+-- Refer to mission `ZON-110` for a demonstration.
+-- 
+-- This is especially handy if you want to quickly setup a SET_ZONE...
+-- So when you would declare `local SetZone = SET_ZONE:New():FilterPrefixes( "Defense" ):FilterStart()`,
+-- then SetZone would contain the ZONE object `DefenseZone` as part of the zone collection,
+-- without much scripting overhead!!! 
+-- 
+-- 
 -- @field #ZONE 
 ZONE = {
   ClassName="ZONE",
@@ -1455,6 +1479,26 @@ end
 -- The ZONE_POLYGON class defined by a sequence of @{Group#GROUP} waypoints within the Mission Editor, forming a polygon.
 -- This class implements the inherited functions from @{Zone#ZONE_RADIUS} taking into account the own zone format and properties.
 -- 
+-- ## Declare a ZONE_POLYGON directly in the DCS mission editor!
+-- 
+-- You can declare a ZONE_POLYGON using the DCS mission editor by adding the ~ZONE_POLYGON tag in the group name.
+-- 
+-- So, imagine you have a group declared in the mission editor, with group name `DefenseZone~ZONE_POLYGON`.
+-- Then during mission startup, when loading Moose.lua, this group will be detected as a ZONE_POLYGON declaration.
+-- Within the background, a ZONE_POLYGON object will be created within the @{Database} using the properties of the group.
+-- The ZONE_POLYGON name will be the group name without the ~ZONE_POLYGON tag.
+-- 
+-- So, you can search yourself for the ZONE_POLYGON by using the @{#ZONE_POLYGON.FindByName}() method.
+-- In this example, `local PolygonZone = ZONE_POLYGON:FindByName( "DefenseZone" )` would return the ZONE_POLYGON object
+-- that was created at mission startup, and reference it into the `PolygonZone` local object.
+-- 
+-- Mission `ZON-510` shows a demonstration of this feature or method.
+-- 
+-- This is especially handy if you want to quickly setup a SET_ZONE...
+-- So when you would declare `local SetZone = SET_ZONE:New():FilterPrefixes( "Defense" ):FilterStart()`,
+-- then SetZone would contain the ZONE_POLYGON object `DefenseZone` as part of the zone collection,
+-- without much scripting overhead!!! 
+-- 
 -- @field #ZONE_POLYGON
 ZONE_POLYGON = {
   ClassName="ZONE_POLYGON",
@@ -1494,4 +1538,16 @@ function ZONE_POLYGON:NewFromGroupName( GroupName )
 
   return self
 end
+
+
+--- Find a polygon zone in the _DATABASE using the name of the polygon zone.
+-- @param #ZONE_POLYGON self
+-- @param #string ZoneName The name of the polygon zone.
+-- @return #ZONE_POLYGON self
+function ZONE_POLYGON:FindByName( ZoneName )
+  
+  local ZoneFound = _DATABASE:FindZone( ZoneName )
+  return ZoneFound
+end
+
 
