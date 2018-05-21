@@ -75,7 +75,6 @@ build_script:
        }
 
 
-
 test: off
 # test_script:
 #   - cmd: luacheck "Moose Development\Moose\moose.lua" "Moose Mission Setup\moose.lua"
