@@ -10,7 +10,7 @@
 -- 
 -- ===
 -- 
--- @module Goal
+-- @module Core.Goal
 
 do -- Goal
 

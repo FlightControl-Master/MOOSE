@@ -64,7 +64,7 @@
 -- 
 -- ===
 --
--- @module Fsm
+-- @module Core.Fsm
 
 do -- FSM
 

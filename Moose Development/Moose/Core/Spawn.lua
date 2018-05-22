@@ -21,7 +21,7 @@
 -- 
 -- ===
 -- 
--- @module Spawn
+-- @module Core.Spawn
 
 
 --- SPAWN Class

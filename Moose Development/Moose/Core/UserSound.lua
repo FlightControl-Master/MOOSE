@@ -10,7 +10,7 @@
 -- 
 -- ===
 -- 
--- @module UserSound
+-- @module Core.UserSound
 
 do -- UserSound
 

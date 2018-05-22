@@ -7,7 +7,7 @@
 -- 
 -- ===
 -- 
--- @module Velocity
+-- @module Core.Velocity
 
 do -- Velocity
 

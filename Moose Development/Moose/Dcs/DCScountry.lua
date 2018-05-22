@@ -1,5 +1,5 @@
 -------------------------------------------------------------------------------
--- @module DCScountry
+-- @module DCS.DCScountry
 
 --- @type country
 -- @field #country.id id

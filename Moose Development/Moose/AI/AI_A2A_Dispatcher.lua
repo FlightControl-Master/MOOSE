@@ -155,7 +155,7 @@
 -- ### Authors: **FlightControl** rework of GCICAP + introduction of new concepts (squadrons).
 -- ### Authors: **Stonehouse**, **SNAFU** in terms of the advice, documentation, and the original GCICAP script.
 -- 
--- @module AI_A2A_Dispatcher
+-- @module AI.AI_A2A_Dispatcher
 
 
 

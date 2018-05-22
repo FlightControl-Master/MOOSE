@@ -1,5 +1,5 @@
 -------------------------------------------------------------------------------
--- @module DCStrigger
+-- @module DCS.DCStrigger
 
 
 trigger = {} --#timer

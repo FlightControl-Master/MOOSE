@@ -39,7 +39,7 @@
 -- 
 -- ===
 --
--- @module Scheduler
+-- @module Core.Scheduler
 
 
 --- The SCHEDULER class

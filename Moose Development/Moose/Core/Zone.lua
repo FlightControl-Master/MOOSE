@@ -34,7 +34,7 @@
 -- 
 -- ===
 -- 
--- @module Zone
+-- @module Core.Zone
 
 
 --- @type ZONE_BASE

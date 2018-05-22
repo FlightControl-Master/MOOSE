@@ -38,7 +38,7 @@
 -- 
 -- ===
 -- 
--- @module Spot
+-- @module Core.Spot
 
 
 do

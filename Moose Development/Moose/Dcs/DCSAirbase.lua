@@ -1,5 +1,5 @@
 -------------------------------------------------------------------------------
--- @module DCSAirbase
+-- @module DCS.DCSAirbase
 
 
 --- Represents airbases: airdromes, helipads and ships with flying decks or landing pads.  

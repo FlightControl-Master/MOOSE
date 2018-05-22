@@ -16,7 +16,7 @@
 -- 
 --   * **FlightControl**: Design & Programming
 --
--- @module Settings
+-- @module Core.Settings
 
 
 --- @type SETTINGS

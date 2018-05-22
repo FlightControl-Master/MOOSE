@@ -7,7 +7,7 @@
 -- 
 -- ===
 -- 
--- @module Database
+-- @module Core.Database
 
 
 --- @type DATABASE

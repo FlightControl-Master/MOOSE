@@ -1,5 +1,5 @@
 -------------------------------------------------------------------------------
--- @module DCSGroup
+-- @module DCS.DCSGroup
 
 --- Represents group of Units.
 -- @type Group
