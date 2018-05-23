@@ -276,8 +276,12 @@ function RADIO:NewUnitTransmission(FileName, Subtitle, SubtitleDuration, Frequen
   self:F({FileName, Subtitle, SubtitleDuration, Frequency, Modulation, Loop})
 
   self:SetFileName(FileName)
-  if Subtitle then self:SetSubtitle(Subtitle) end
-  if SubtitleDuration then self:SetSubtitleDuration(SubtitleDuration) end
+  local Duration = 5
+  if SubtitleDuration then Duration = SubtitleDuration end
+  -- SubtitleDuration argument was missing, adding it
+  if Subtitle then self:SetSubtitle(Subtitle, Duration) end
+  -- self:SetSubtitleDuration is non existent, removing faulty line
+  -- if SubtitleDuration then self:SetSubtitleDuration(SubtitleDuration) end
   if Frequency then self:SetFrequency(Frequency) end
   if Modulation then self:SetModulation(Modulation) end
   if Loop then self:SetLoop(Loop) end
