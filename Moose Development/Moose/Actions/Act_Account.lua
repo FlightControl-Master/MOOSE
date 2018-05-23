@@ -1,4 +1,4 @@
---- **Actions** - ACT_ACCOUNT_ classes **account for** (detect, count & report) various DCS events occuring on @{Unit}s.
+--- **Actions** - ACT_ACCOUNT_ classes **account for** (detect, count & report) various DCS events occuring on @{Wrapper.Unit}s.
 -- 
 -- ![Banner Image](..\Presentations\ACT_ACCOUNT\Dia1.JPG)
 -- 
@@ -55,7 +55,7 @@ do -- ACT_ACCOUNT
   --     These state transition methods need to provide a return value, which is specified at the function description.
   --     
   -- @type ACT_ACCOUNT
-  -- @field Set#SET_UNIT TargetSetUnit
+  -- @field Core.Set#SET_UNIT TargetSetUnit
   -- @extends Core.Fsm#FSM_PROCESS
   ACT_ACCOUNT = { 
     ClassName = "ACT_ACCOUNT",
@@ -151,7 +151,7 @@ do -- ACT_ACCOUNT_DEADS
   --   * @{#ACT_ACCOUNT_DEADS.New}(): Creates a new ACT_ACCOUNT_DEADS object.
   --   
   -- @type ACT_ACCOUNT_DEADS
-  -- @field Set#SET_UNIT TargetSetUnit
+  -- @field Core.Set#SET_UNIT TargetSetUnit
   -- @extends #ACT_ACCOUNT
   ACT_ACCOUNT_DEADS = { 
     ClassName = "ACT_ACCOUNT_DEADS",
@@ -160,7 +160,7 @@ do -- ACT_ACCOUNT_DEADS
 
   --- Creates a new DESTROY process.
   -- @param #ACT_ACCOUNT_DEADS self
-  -- @param Set#SET_UNIT TargetSetUnit
+  -- @param Core.Set#SET_UNIT TargetSetUnit
   -- @param #string TaskName
   function ACT_ACCOUNT_DEADS:New()
     -- Inherits from BASE
@@ -285,7 +285,7 @@ do -- ACT_ACCOUNT_DEADS
   end  
   
   --- @param #ACT_ACCOUNT_DEADS self
-  -- @param Event#EVENTDATA EventData
+  -- @param Core.Event#EVENTDATA EventData
   function ACT_ACCOUNT_DEADS:onfuncEventDead( EventData )
     self:T( { "EventDead", EventData } )
 
@@ -297,7 +297,7 @@ do -- ACT_ACCOUNT_DEADS
   --- DCS Events
   
   --- @param #ACT_ACCOUNT_DEADS self
-  -- @param Event#EVENTDATA EventData
+  -- @param Core.Event#EVENTDATA EventData
   function ACT_ACCOUNT_DEADS:onfuncEventCrash( EventData )
     self:T( { "EventDead", EventData } )
 

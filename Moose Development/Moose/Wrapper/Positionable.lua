@@ -8,7 +8,7 @@
 -- 
 -- ===
 -- 
--- @module Positionable
+-- @module Wrapper.Positionable
 
 --- @type POSITIONABLE.__ Methods which are not intended for mission designers, but which are used interally by the moose designer :-)
 -- @extends Wrapper.Identifiable#IDENTIFIABLE
@@ -17,7 +17,7 @@
 -- @extends Wrapper.Identifiable#IDENTIFIABLE
 
 
---- # POSITIONABLE class, extends @{Identifiable#IDENTIFIABLE}
+--- # POSITIONABLE class, extends @{Wrapper.Identifiable#IDENTIFIABLE}
 -- 
 -- The POSITIONABLE class is a wrapper class to handle the POSITIONABLE objects:
 --
@@ -626,7 +626,7 @@ function POSITIONABLE:MessageToClient( Message, Duration, Client, Name )
   return nil
 end
 
---- Send a message to a @{Group}.
+--- Send a message to a @{Wrapper.Group}.
 -- The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.
 -- @param #POSITIONABLE self
 -- @param #string Message The message text
@@ -653,7 +653,7 @@ function POSITIONABLE:MessageToGroup( Message, Duration, MessageGroup, Name )
   return nil
 end
 
---- Send a message of a message type to a @{Group}.
+--- Send a message of a message type to a @{Wrapper.Group}.
 -- The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.
 -- @param #POSITIONABLE self
 -- @param #string Message The message text
@@ -673,7 +673,7 @@ function POSITIONABLE:MessageTypeToGroup( Message, MessageType, MessageGroup, Na
   return nil
 end
 
---- Send a message to a @{Set#SET_GROUP}.
+--- Send a message to a @{Core.Set#SET_GROUP}.
 -- The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.
 -- @param #POSITIONABLE self
 -- @param #string Message The message text
@@ -697,7 +697,7 @@ function POSITIONABLE:MessageToSetGroup( Message, Duration, MessageSetGroup, Nam
   return nil
 end
 
---- Send a message to the players in the @{Group}.
+--- Send a message to the players in the @{Wrapper.Group}.
 -- The message will appear in the message area. The message will begin with the callsign of the group and the type of the first unit sending the message.
 -- @param #POSITIONABLE self
 -- @param #string Message The message text

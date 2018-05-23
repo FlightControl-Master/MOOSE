@@ -10,7 +10,7 @@
 -- and creates a CSV file logging the scoring events and results for use at team or squadron websites.
 -- 
 -- SCORING automatically calculates the threat level of the objects hit and destroyed by players, 
--- which can be @{Unit}, @{Static) and @{Scenery} objects.
+-- which can be @{Wrapper.Unit}, @{Static) and @{Scenery} objects.
 -- 
 -- Positive score points are granted when enemy or neutral targets are destroyed. 
 -- Negative score points or penalties are given when a friendly target is hit or destroyed. 
@@ -56,7 +56,7 @@
 -- Use the radio menu F10 to consult the scores while running the mission. 
 -- Scores can be reported for your user, or an overall score can be reported of all players currently active in the mission.
 -- 
--- # 1) @{Scoring#SCORING} class, extends @{Base#BASE}
+-- # 1) @{Scoring#SCORING} class, extends @{Core.Base#BASE}
 -- 
 -- ## 1.1) Set the destroy score or penalty scale
 -- 
@@ -74,9 +74,9 @@
 -- ## 1.2) Define special targets that will give extra scores.
 -- 
 -- Special targets can be set that will give extra scores to the players when these are destroyed.
--- Use the methods @{#SCORING.AddUnitScore}() and @{#SCORING.RemoveUnitScore}() to specify a special additional score for a specific @{Unit}s.  
+-- Use the methods @{#SCORING.AddUnitScore}() and @{#SCORING.RemoveUnitScore}() to specify a special additional score for a specific @{Wrapper.Unit}s.  
 -- Use the methods @{#SCORING.AddStaticScore}() and @{#SCORING.RemoveStaticScore}() to specify a special additional score for a specific @{Static}s.  
--- Use the method @{#SCORING.SetGroupGroup}() to specify a special additional score for a specific @{Group}s.  
+-- Use the method @{#SCORING.SetGroupGroup}() to specify a special additional score for a specific @{Wrapper.Group}s.  
 -- 
 --      local Scoring = SCORING:New( "Scoring File" )
 --      Scoring:AddUnitScore( UNIT:FindByName( "Unit #001" ), 200 )
@@ -93,7 +93,7 @@
 -- Define zones of destruction. Any object destroyed within the zone of the given category will give extra points.
 -- Use the method @{#SCORING.AddZoneScore}() to add a @{Zone} for additional scoring.  
 -- Use the method @{#SCORING.RemoveZoneScore}() to remove a @{Zone} for additional scoring.  
--- There are interesting variations that can be achieved with this functionality. For example, if the @{Zone} is a @{Zone#ZONE_UNIT}, 
+-- There are interesting variations that can be achieved with this functionality. For example, if the @{Zone} is a @{Core.Zone#ZONE_UNIT}, 
 -- then the zone is a moving zone, and anything destroyed within that @{Zone} will generate points.
 -- The other implementation could be to designate a scenery target (a building) in the mission editor surrounded by a @{Zone}, 
 -- just large enough around that building.
@@ -339,11 +339,11 @@ function SCORING:SetScaleDestroyPenalty( Scale )
   return self
 end
 
---- Add a @{Unit} for additional scoring when the @{Unit} is destroyed.
--- Note that if there was already a @{Unit} declared within the scoring with the same name, 
--- then the old @{Unit}  will be replaced with the new @{Unit}.
+--- Add a @{Wrapper.Unit} for additional scoring when the @{Wrapper.Unit} is destroyed.
+-- Note that if there was already a @{Wrapper.Unit} declared within the scoring with the same name, 
+-- then the old @{Wrapper.Unit}  will be replaced with the new @{Wrapper.Unit}.
 -- @param #SCORING self
--- @param Wrapper.Unit#UNIT ScoreUnit The @{Unit} for which the Score needs to be given.
+-- @param Wrapper.Unit#UNIT ScoreUnit The @{Wrapper.Unit} for which the Score needs to be given.
 -- @param #number Score The Score value.
 -- @return #SCORING
 function SCORING:AddUnitScore( ScoreUnit, Score )
@@ -355,9 +355,9 @@ function SCORING:AddUnitScore( ScoreUnit, Score )
   return self
 end
 
---- Removes a @{Unit} for additional scoring when the @{Unit} is destroyed.
+--- Removes a @{Wrapper.Unit} for additional scoring when the @{Wrapper.Unit} is destroyed.
 -- @param #SCORING self
--- @param Wrapper.Unit#UNIT ScoreUnit The @{Unit} for which the Score needs to be given.
+-- @param Wrapper.Unit#UNIT ScoreUnit The @{Wrapper.Unit} for which the Score needs to be given.
 -- @return #SCORING
 function SCORING:RemoveUnitScore( ScoreUnit )
 
@@ -398,9 +398,9 @@ function SCORING:RemoveStaticScore( ScoreStatic )
 end
 
 
---- Specify a special additional score for a @{Group}.
+--- Specify a special additional score for a @{Wrapper.Group}.
 -- @param #SCORING self
--- @param Wrapper.Group#GROUP ScoreGroup The @{Group} for which each @{Unit} a Score is given.
+-- @param Wrapper.Group#GROUP ScoreGroup The @{Wrapper.Group} for which each @{Wrapper.Unit} a Score is given.
 -- @param #number Score The Score value.
 -- @return #SCORING
 function SCORING:AddScoreGroup( ScoreGroup, Score )
@@ -714,7 +714,7 @@ end
 -- A free text can be given that is shown to the players.
 -- The Score can be both positive and negative.
 -- @param #SCORING self
--- @param Wrapper.Unit#UNIT PlayerUnit The @{Unit} of the Player. Other Properties for the scoring are taken from this PlayerUnit, like coalition, type etc. 
+-- @param Wrapper.Unit#UNIT PlayerUnit The @{Wrapper.Unit} of the Player. Other Properties for the scoring are taken from this PlayerUnit, like coalition, type etc. 
 -- @param #string GoalTag The string or identifier that is used in the CSV file to identify the goal (sort or group later in Excel).
 -- @param #string Text A free text that is shown to the players.
 -- @param #number Score The score can be both positive or negative ( Penalty ).

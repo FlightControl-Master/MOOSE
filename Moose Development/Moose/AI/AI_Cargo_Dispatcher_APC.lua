@@ -6,13 +6,13 @@
 -- 
 -- ===       
 --
--- @module AI_Cargo_Dispatcher_APC
+-- @module AI.AI_Cargo_Dispatcher_APC
 
 --- @type AI_CARGO_DISPATCHER_APC
 -- @extends AI.AI_Cargo_Dispatcher#AI_CARGO_DISPATCHER
 
 
---- # AI\_CARGO\_DISPATCHER\_APC class, extends @{Core.Base#BASE}
+--- # AI\_CARGO\_DISPATCHER\_APC class, extends @{AI.AI_Cargo_Dispatcher#AI_CARGO_DISPATCHER}
 -- 
 -- ![Banner Image](..\Presentations\AI_CARGO_DISPATCHER_APC\Dia1.JPG)
 -- 
@@ -81,7 +81,7 @@ AI_CARGO_DISPATCHER_APC = {
 
 --- Creates a new AI_CARGO_DISPATCHER_APC object.
 -- @param #AI_CARGO_DISPATCHER_APC self
--- @param Core.Set#SET_GROUP SetAPC The collection of APC @{Group}s.
+-- @param Core.Set#SET_GROUP SetAPC The collection of APC @{Wrapper.Group}s.
 -- @param Core.Set#SET_CARGO SetCargo The collection of @{Cargo} derived objects.
 -- @param Core.Set#SET_ZONE SetDeployZone The collection of deploy @{Zone}s, which are used to where the cargo will be deployed by the APCs. 
 -- @param #number CombatRadius The cargo will be unloaded from the APC and engage the enemy if the enemy is within CombatRadius range. The radius is in meters, the default value is 500 meters.

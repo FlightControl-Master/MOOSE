@@ -23,7 +23,7 @@
 -- @extends Core.Base#BASE
 
 
---- # COMMANDCENTER class, extends @{Base#BASE}
+--- # COMMANDCENTER class, extends @{Core.Base#BASE}
 -- 
 --  The COMMANDCENTER class governs multiple missions, the tasking and the reporting.
 --  

@@ -14,7 +14,7 @@ do -- TASK_A2G_DISPATCHER
 
   --- TASK\_A2G\_DISPATCHER class.
   -- @type TASK_A2G_DISPATCHER
-  -- @field Set#SET_GROUP SetGroup The groups to which the FAC will report to.
+  -- @field Core.Set#SET_GROUP SetGroup The groups to which the FAC will report to.
   -- @field Functional.Detection#DETECTION_BASE Detection The DETECTION_BASE object that is used to report the detected objects.
   -- @field Tasking.Mission#MISSION Mission
   -- @extends Tasking.DetectionManager#DETECTION_MANAGER
@@ -28,11 +28,11 @@ do -- TASK_A2G_DISPATCHER
   -- It provides a truly dynamic battle environment for pilots and ground commanders to engage upon,
   -- in a true co-operation environment wherein **Multiple Teams** will collaborate in Missions to **achieve a common Mission Goal**.
   -- 
-  -- The A2G dispatcher will dispatch the A2G Tasks to a defined  @{Set} of @{Group}s that will be manned by **Players**.   
-  -- We call this the **AttackSet** of the A2G dispatcher. So, the Players are seated in the @{Client}s of the @{Group} @{Set}.
+  -- The A2G dispatcher will dispatch the A2G Tasks to a defined  @{Set} of @{Wrapper.Group}s that will be manned by **Players**.   
+  -- We call this the **AttackSet** of the A2G dispatcher. So, the Players are seated in the @{Client}s of the @{Wrapper.Group} @{Set}.
   -- 
   -- Depending on the actions of the enemy, preventive tasks are dispatched to the players to orchestrate the engagement in a true co-operation.
-  -- The detection object will group the detected targets by its grouping method, and integrates a @{Set} of @{Group}s that are Recce vehicles or air units.
+  -- The detection object will group the detected targets by its grouping method, and integrates a @{Set} of @{Wrapper.Group}s that are Recce vehicles or air units.
   -- We call this the **RecceSet** of the A2G dispatcher.
   -- 
   -- Depending on the current detected tactical situation, different task types will be dispatched to the Players seated in the AttackSet..
@@ -379,8 +379,8 @@ do -- TASK_A2G_DISPATCHER
   --   - A @{Mission} object. Each task belongs to a Mission.
   --   - A @{Detection} object. There are several detection grouping methods to choose from.
   --   - A @{Task_A2G_Dispatcher} object. The master A2G task dispatcher.
-  --   - A @{Set} of @{Group} objects that will detect the emeny, the RecceSet. This is attached to the @{Detection} object.
-  --   - A @{Set} ob @{Group} objects that will attack the enemy, the AttackSet. This is attached to the @{Task_A2G_Dispatcher} object.
+  --   - A @{Set} of @{Wrapper.Group} objects that will detect the emeny, the RecceSet. This is attached to the @{Detection} object.
+  --   - A @{Set} ob @{Wrapper.Group} objects that will attack the enemy, the AttackSet. This is attached to the @{Task_A2G_Dispatcher} object.
   -- 
   -- Below an example mission declaration that is defines a Task A2G Dispatcher object.   
   --
@@ -432,7 +432,7 @@ do -- TASK_A2G_DISPATCHER
   --- TASK_A2G_DISPATCHER constructor.
   -- @param #TASK_A2G_DISPATCHER self
   -- @param Tasking.Mission#MISSION Mission The mission for which the task dispatching is done.
-  -- @param Set#SET_GROUP SetGroup The set of groups that can join the tasks within the mission.
+  -- @param Core.Set#SET_GROUP SetGroup The set of groups that can join the tasks within the mission.
   -- @param Functional.Detection#DETECTION_BASE Detection The detection results that are used to dynamically assign new tasks to human players.
   -- @return #TASK_A2G_DISPATCHER self
   function TASK_A2G_DISPATCHER:New( Mission, SetGroup, Detection )
@@ -582,7 +582,7 @@ do -- TASK_A2G_DISPATCHER
   end
   
 
-  --- Assigns tasks in relation to the detected items to the @{Set#SET_GROUP}.
+  --- Assigns tasks in relation to the detected items to the @{Core.Set#SET_GROUP}.
   -- @param #TASK_A2G_DISPATCHER self
   -- @param Functional.Detection#DETECTION_BASE Detection The detection created by the @{Detection#DETECTION_BASE} derived object.
   -- @return #boolean Return true if you want the task assigning to continue... false will cancel the loop.

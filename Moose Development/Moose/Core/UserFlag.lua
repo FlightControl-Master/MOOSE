@@ -18,7 +18,7 @@ do -- UserFlag
   -- @extends Core.Base#BASE
 
 
-  --- # USERFLAG class, extends @{Base#BASE}
+  --- # USERFLAG class, extends @{Core.Base#BASE}
   -- 
   -- Management of DCS User Flags.
   -- 

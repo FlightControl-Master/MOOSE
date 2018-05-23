@@ -19,7 +19,7 @@
 
 
 
---- # CONTROLLABLE class, extends @{Positionable#POSITIONABLE}
+--- # CONTROLLABLE class, extends @{Wrapper.Positionable#POSITIONABLE}
 -- 
 -- CONTROLLABLE is a wrapper class to handle the "DCS Controllable objects", which are Groups and Units:
 --
@@ -37,7 +37,7 @@
 -- ## CONTROLLABLE Task methods
 -- 
 -- Several controllable task methods are available that help you to prepare tasks. 
--- These methods return a string consisting of the task description, which can then be given to either a @{Controllable#CONTROLLABLE.PushTask} or @{Controllable#SetTask} method to assign the task to the CONTROLLABLE.
+-- These methods return a string consisting of the task description, which can then be given to either a @{Wrapper.Controllable#CONTROLLABLE.PushTask} or @{Wrapper.Controllable#SetTask} method to assign the task to the CONTROLLABLE.
 -- Tasks are specific for the category of the CONTROLLABLE, more specific, for AIR, GROUND or AIR and GROUND. 
 -- Each task description where applicable indicates for which controllable category the task is valid.
 -- There are 2 main subdivisions of tasks: Assigned tasks and EnRoute tasks.
@@ -63,7 +63,7 @@
 --   * @{#CONTROLLABLE.TaskHold}: (GROUND) Hold ground controllable from moving.
 --   * @{#CONTROLLABLE.TaskHoldPosition}: (AIR) Hold position at the current position of the first unit of the controllable.
 --   * @{#CONTROLLABLE.TaskLand}: (AIR HELICOPTER) Landing at the ground. For helicopters only.
---   * @{#CONTROLLABLE.TaskLandAtZone}: (AIR) Land the controllable at a @{Zone#ZONE_RADIUS).
+--   * @{#CONTROLLABLE.TaskLandAtZone}: (AIR) Land the controllable at a @{Core.Zone#ZONE_RADIUS).
 --   * @{#CONTROLLABLE.TaskOrbitCircle}: (AIR) Orbit at the current position of the first unit of the controllable at a specified alititude.
 --   * @{#CONTROLLABLE.TaskOrbitCircleAtVec2}: (AIR) Orbit at a specified position at a specified alititude during a specified duration with a specified speed.
 --   * @{#CONTROLLABLE.TaskRefueling}: (AIR) Refueling from the nearest tanker. No parameters.
@@ -932,7 +932,7 @@ function CONTROLLABLE:TaskLandAtVec2( Point, Duration )
   return DCSTask
 end
 
---- (AIR) Land the controllable at a @{Zone#ZONE_RADIUS).
+--- (AIR) Land the controllable at a @{Core.Zone#ZONE_RADIUS).
 -- @param #CONTROLLABLE self
 -- @param Core.Zone#ZONE Zone The zone where to land.
 -- @param #number Duration The duration in seconds to stay on the ground.
@@ -2195,7 +2195,7 @@ end
 
 
 
---- Return the route of a controllable by using the @{Database#DATABASE} class.
+--- Return the route of a controllable by using the @{Core.Database#DATABASE} class.
 -- @param #CONTROLLABLE self
 -- @param #number Begin The route point from where the copy will start. The base route point is 0.
 -- @param #number End The route point where the copy will end. The End point is the last point - the End point. The last point has base 0.
@@ -2742,7 +2742,7 @@ end
 
 
 --- Retrieve the controllable mission and allow to place function hooks within the mission waypoint plan.
--- Use the method @{Controllable#CONTROLLABLE:WayPointFunction} to define the hook functions for specific waypoints.
+-- Use the method @{Wrapper.Controllable#CONTROLLABLE:WayPointFunction} to define the hook functions for specific waypoints.
 -- Use the method @{Controllable@CONTROLLABLE:WayPointExecute) to start the execution of the new mission plan.
 -- Note that when WayPointInitialize is called, the Mission of the controllable is RESTARTED!
 -- @param #CONTROLLABLE self

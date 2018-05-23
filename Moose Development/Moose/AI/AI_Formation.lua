@@ -6,7 +6,7 @@
 -- 
 -- ===
 -- 
--- AI_FORMATION makes AI @{GROUP}s fly in formation of various compositions.
+-- AI_FORMATION makes AI @{Wrapper.Group}s fly in formation of various compositions.
 -- The AI_FORMATION class models formations in a different manner than the internal DCS formation logic!!!
 -- The purpose of the class is to:
 -- 
@@ -45,13 +45,13 @@
 -- 
 -- ===
 --   
--- @module AI_Formation
+-- @module AI.AI_Formation
 
 --- AI_FORMATION class
 -- @type AI_FORMATION
--- @extends Fsm#FSM_SET
--- @field Unit#UNIT FollowUnit
--- @field Set#SET_GROUP FollowGroupSet
+-- @extends Core.Fsm#FSM_SET
+-- @field Wrapper.Unit#UNIT FollowUnit
+-- @field Core.Set#SET_GROUP FollowGroupSet
 -- @field #string FollowName
 -- @field #AI_FORMATION.MODE FollowMode The mode the escort is in.
 -- @field Scheduler#SCHEDULER FollowScheduler The instance of the SCHEDULER class.
@@ -61,9 +61,9 @@
 -- @field DCSTypes#AI.Option.Air.val.REACTION_ON_THREAT OptionReactionOnThreat Which REACTION_ON_THREAT is set to the FollowGroup.
 
 
---- # AI_FORMATION class, extends @{Fsm#FSM_SET}
+--- # AI_FORMATION class, extends @{Core.Fsm#FSM_SET}
 -- 
--- The #AI_FORMATION class allows you to build large formations, make AI follow a @{Client#CLIENT} (player) leader or a @{Unit#UNIT} (AI) leader.
+-- The #AI_FORMATION class allows you to build large formations, make AI follow a @{Wrapper.Client#CLIENT} (player) leader or a @{Unit#UNIT} (AI) leader.
 --
 -- AI_FORMATION makes AI @{GROUP}s fly in formation of various compositions.
 -- The AI_FORMATION class models formations in a different manner than the internal DCS formation logic!!!
@@ -89,7 +89,7 @@
 -- 
 -- Create a new SPAWN object with the @{#AI_FORMATION.New} method:
 --
---   * @{Follow#AI_FORMATION.New}(): Creates a new AI_FORMATION object from a @{Group#GROUP} for a @{Client#CLIENT} or a @{Unit#UNIT}, with an optional briefing text.
+--   * @{Follow#AI_FORMATION.New}(): Creates a new AI_FORMATION object from a @{Wrapper.Group#GROUP} for a @{Wrapper.Client#CLIENT} or a @{Unit#UNIT}, with an optional briefing text.
 --
 -- ## Formation methods
 -- 
@@ -147,7 +147,7 @@ AI_FORMATION = {
 
 --- AI_FORMATION class constructor for an AI group
 -- @param #AI_FORMATION self
--- @param Unit#UNIT FollowUnit The UNIT leading the FolllowGroupSet.
+-- @param Wrapper.Unit#UNIT FollowUnit The UNIT leading the FolllowGroupSet.
 -- @param Core.Set#SET_GROUP FollowGroupSet The group AI escorting the FollowUnit.
 -- @param #string FollowName Name of the escort.
 -- @return #AI_FORMATION self
@@ -155,8 +155,8 @@ function AI_FORMATION:New( FollowUnit, FollowGroupSet, FollowName, FollowBriefin
   local self = BASE:Inherit( self, FSM_SET:New( FollowGroupSet ) )
   self:F( { FollowUnit, FollowGroupSet, FollowName } )
 
-  self.FollowUnit = FollowUnit -- Unit#UNIT
-  self.FollowGroupSet = FollowGroupSet -- Set#SET_GROUP
+  self.FollowUnit = FollowUnit -- Wrapper.Unit#UNIT
+  self.FollowGroupSet = FollowGroupSet -- Core.Set#SET_GROUP
   
   self:SetFlightRandomization( 2 )
   

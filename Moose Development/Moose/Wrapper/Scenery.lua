@@ -8,7 +8,7 @@
 -- 
 -- ===
 -- 
--- @module Scenery
+-- @module Wrapper.Scenery
 
 
 
@@ -16,7 +16,7 @@
 -- @extends Wrapper.Positionable#POSITIONABLE
 
 
---- # SCENERY class, extends @{Positionable#POSITIONABLE}
+--- # SCENERY class, extends @{Wrapper.Positionable#POSITIONABLE}
 -- 
 -- Scenery objects are defined on the map.
 -- The @{Scenery#SCENERY} class is a wrapper class to handle the DCS Scenery objects:

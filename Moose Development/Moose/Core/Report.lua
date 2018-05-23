@@ -1,3 +1,16 @@
+--- **Core** -- **REPORT** class provides a handy means to create messages and reports.
+--
+-- ===
+--
+-- ### Authors:
+--
+--   * FlightControl : Design & Programming
+--
+-- ### Contributions:
+--
+-- @module Core.Report
+
+
 --- The REPORT class
 -- @type REPORT
 -- @extends Core.Base#BASE

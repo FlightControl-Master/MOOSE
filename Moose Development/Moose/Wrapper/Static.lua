@@ -8,13 +8,13 @@
 -- 
 -- ===
 -- 
--- @module Static
+-- @module Wrapper.Static
 
 
 --- @type STATIC
 -- @extends Wrapper.Positionable#POSITIONABLE
 
---- # STATIC class, extends @{Positionable#POSITIONABLE}
+--- # STATIC class, extends @{Wrapper.Positionable#POSITIONABLE}
 -- 
 -- Statics are **Static Units** defined within the Mission Editor.
 -- Note that Statics are almost the same as Units, but they don't have a controller.
@@ -126,7 +126,7 @@ function STATIC:GetThreatLevel()
   return 1, "Static"
 end
 
---- Respawn the @{Unit} using a (tweaked) template of the parent Group.
+--- Respawn the @{Wrapper.Unit} using a (tweaked) template of the parent Group.
 -- @param #UNIT self
 -- @param Core.Point#COORDINATE Coordinate The coordinate where to spawn the new Static.
 -- @param #number Heading The heading of the unit respawn.
@@ -138,7 +138,7 @@ function STATIC:SpawnAt( Coordinate, Heading )
 end
 
 
---- Respawn the @{Unit} at the same location with the same properties.
+--- Respawn the @{Wrapper.Unit} at the same location with the same properties.
 -- This is useful to respawn a cargo after it has been destroyed.
 -- @param #UNIT self
 function STATIC:ReSpawn()
@@ -149,7 +149,7 @@ function STATIC:ReSpawn()
 end
 
 
---- Respawn the @{Unit} at a defined Coordinate with an optional heading.
+--- Respawn the @{Wrapper.Unit} at a defined Coordinate with an optional heading.
 -- @param #UNIT self
 -- @param Core.Point#COORDINATE Coordinate The coordinate where to spawn the new Static.
 -- @param #number Heading The heading of the unit respawn.

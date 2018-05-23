@@ -37,7 +37,7 @@
 -- @extends Core.Base#BASE
 
 
---- # SPAWNSTATIC class, extends @{Base#BASE}
+--- # SPAWNSTATIC class, extends @{Core.Base#BASE}
 -- 
 -- The SPAWNSTATIC class allows to spawn dynamically new @{Static}s.
 -- Through creating a copy of an existing static object template as defined in the Mission Editor (ME),

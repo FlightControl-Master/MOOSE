@@ -38,7 +38,7 @@ do -- COORDINATE
   -- @extends Core.Base#BASE
   
   
-  --- # COORDINATE class, extends @{Base#BASE}
+  --- # COORDINATE class, extends @{Core.Base#BASE}
   --
   -- COORDINATE defines a 3D point in the simulator and with its methods, you can use or manipulate the point in 3D space.
   --
@@ -57,7 +57,7 @@ do -- COORDINATE
   --   * @{#COORDINATE.WaypointAir}(): Build an air route point.
   --   * @{#COORDINATE.WaypointGround}(): Build a ground route point.
   --
-  -- Route points can be used in the Route methods of the @{Group#GROUP} class.
+  -- Route points can be used in the Route methods of the @{Wrapper.Group#GROUP} class.
   --
   --
   -- ## Smoke, flare, explode, illuminate
@@ -1189,7 +1189,7 @@ do -- COORDINATE
     --- Mark to Group
     -- @param #COORDINATE self
     -- @param #string MarkText Free format text that shows the marking clarification.
-    -- @param Wrapper.Group#GROUP MarkGroup The @{Group} that receives the mark.
+    -- @param Wrapper.Group#GROUP MarkGroup The @{Wrapper.Group} that receives the mark.
     -- @return #number The resulting Mark ID which is a number.
     -- @usage
     --   local TargetCoord = TargetGroup:GetCoordinate()

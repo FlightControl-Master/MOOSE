@@ -6,13 +6,13 @@
 -- 
 -- ===       
 --
--- @module AI_Cargo_APC
+-- @module AI.AI_Cargo_APC
 
 --- @type AI_CARGO_APC
 -- @extends Core.Fsm#FSM_CONTROLLABLE
 
 
---- # AI\_CARGO\_APC class, extends @{Core.Base#BASE}
+--- # AI\_CARGO\_APC class, extends @{Core.Fsm#FSM_CONTROLLABLE}
 -- 
 -- ===
 -- 
@@ -656,7 +656,7 @@ function AI_CARGO_APC:onafterDeploy( APC, From, Event, To, Coordinate )
 end
 
 
---- @param #AI_CARGO_HELICOPTER self
+--- @param #AI_CARGO_APC self
 -- @param Wrapper.Group#GROUP APC
 -- @param From
 -- @param Event

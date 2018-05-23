@@ -17,7 +17,7 @@
 -- 
 -- ===
 -- 
--- @module CargoCrate
+-- @module Cargo.CargoSlingload
 
 
 do -- CARGO_SLINGLOAD
@@ -26,7 +26,7 @@ do -- CARGO_SLINGLOAD
   -- @type CARGO_SLINGLOAD
   -- @extends Cargo.Cargo#CARGO_REPRESENTABLE
   
-  --- # CARGO\_CRATE class, extends @{#CARGO_REPRESENTABLE}
+  --- # CARGO\_CRATE class, extends @{Cargo.Cargo#CARGO_REPRESENTABLE}
   -- 
   -- The CARGO\_CRATE class defines a cargo that is represented by a UNIT object within the simulator, and can be transported by a carrier.
   -- 
@@ -87,8 +87,8 @@ do -- CARGO_SLINGLOAD
   
   
   --- Check if the cargo can be Slingloaded.
-  -- @param #CARGO self
-  function CARGO:CanSlingload()
+  -- @param #CARGO_SLINGLOAD self
+  function CARGO_SLINGLOAD:CanSlingload()
     return true
   end
   

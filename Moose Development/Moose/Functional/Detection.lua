@@ -49,7 +49,7 @@ do -- DETECTION_BASE
   --- DETECTION_BASE class, extends @{Fsm#FSM}
   -- 
   -- The DETECTION_BASE class defines the core functions to administer detected objects.
-  -- The DETECTION_BASE class will detect objects within the battle zone for a list of @{Group}s detecting targets following (a) detection method(s).
+  -- The DETECTION_BASE class will detect objects within the battle zone for a list of @{Wrapper.Group}s detecting targets following (a) detection method(s).
   -- 
   -- ## DETECTION_BASE constructor
   -- 
@@ -1255,7 +1255,7 @@ do -- DETECTION_BASE
          
         --- @param Dcs.DCSWrapper.Unit#Unit FoundDCSUnit
         -- @param Wrapper.Group#GROUP ReportGroup
-        -- @param Set#SET_GROUP ReportSetGroup
+        -- @param Core.Set#SET_GROUP ReportSetGroup
         local FindNearByFriendlies = function( FoundDCSUnit, ReportGroupData )
             
           local DetectedItem = ReportGroupData.DetectedItem  -- Functional.Detection#DETECTION_BASE.DetectedItem    
@@ -1595,7 +1595,7 @@ do -- DETECTION_BASE
     return ""
   end
   
-  --- Get the @{Set#SET_UNIT} of a detecttion area using a given numeric index.
+  --- Get the @{Core.Set#SET_UNIT} of a detecttion area using a given numeric index.
   -- @param #DETECTION_BASE self
   -- @param #DETECTION_BASE.DetectedItem DetectedItem
   -- @return Core.Set#SET_UNIT DetectedSet
@@ -1644,7 +1644,7 @@ do -- DETECTION_BASE
 
   do -- Zones
   
-    --- Get the @{Zone#ZONE_UNIT} of a detection area using a given numeric index.
+    --- Get the @{Core.Zone#ZONE_UNIT} of a detection area using a given numeric index.
     -- @param #DETECTION_BASE self
     -- @param #DETECTION_BASE.DetectedItem DetectedItem The DetectedItem.
     -- @return Core.Zone#ZONE_UNIT DetectedZone
@@ -1810,7 +1810,7 @@ do -- DETECTION_UNITS
   --- # DETECTION_UNITS class, extends @{Detection#DETECTION_BASE}
   -- 
   -- The DETECTION_UNITS class will detect units within the battle zone.
-  -- It will build a DetectedItems list filled with DetectedItems. Each DetectedItem will contain a field Set, which contains a @{Set#SET_UNIT} containing ONE @{UNIT} object reference.
+  -- It will build a DetectedItems list filled with DetectedItems. Each DetectedItem will contain a field Set, which contains a @{Core.Set#SET_UNIT} containing ONE @{UNIT} object reference.
   -- Beware that when the amount of units detected is large, the DetectedItems list will be large also. 
   -- 
   -- @type DETECTION_UNITS
@@ -2061,7 +2061,7 @@ do -- DETECTION_TYPES
   -- 
   -- The DETECTION_TYPES class will detect units within the battle zone.
   -- It will build a DetectedItems[] list filled with DetectedItems, grouped by the type of units detected. 
-  -- Each DetectedItem will contain a field Set, which contains a @{Set#SET_UNIT} containing ONE @{UNIT} object reference.
+  -- Each DetectedItem will contain a field Set, which contains a @{Core.Set#SET_UNIT} containing ONE @{UNIT} object reference.
   -- Beware that when the amount of different types detected is large, the DetectedItems[] list will be large also. 
   -- 
   -- @type DETECTION_TYPES
@@ -2268,8 +2268,8 @@ do -- DETECTION_AREAS
 
   --- # 4) DETECTION_AREAS class, extends @{Detection#DETECTION_BASE}
   -- 
-  -- The DETECTION_AREAS class will detect units within the battle zone for a list of @{Group}s detecting targets following (a) detection method(s), 
-  -- and will build a list (table) of @{Set#SET_UNIT}s containing the @{Unit#UNIT}s detected.
+  -- The DETECTION_AREAS class will detect units within the battle zone for a list of @{Wrapper.Group}s detecting targets following (a) detection method(s), 
+  -- and will build a list (table) of @{Core.Set#SET_UNIT}s containing the @{Unit#UNIT}s detected.
   -- The class is group the detected units within zones given a DetectedZoneRange parameter.
   -- A set with multiple detected zones will be created as there are groups of units detected.
   -- 
@@ -2278,7 +2278,7 @@ do -- DETECTION_AREAS
   -- The methods to manage the DetectedItems[].Set(s) are implemented in @{Detection#DECTECTION_BASE} and 
   -- the methods to manage the DetectedItems[].Zone(s) is implemented in @{Detection#DETECTION_AREAS}.
   -- 
-  -- Retrieve the DetectedItems[].Set with the method @{Detection#DETECTION_BASE.GetDetectedSet}(). A @{Set#SET_UNIT} object will be returned.
+  -- Retrieve the DetectedItems[].Set with the method @{Detection#DETECTION_BASE.GetDetectedSet}(). A @{Core.Set#SET_UNIT} object will be returned.
   -- 
   -- Retrieve the formed @{Zone@ZONE_UNIT}s as a result of the grouping the detected units within the DetectionZoneRange, use the method @{Detection#DETECTION_BASE.GetDetectionZones}().
   -- To understand the amount of zones created, use the method @{Detection#DETECTION_BASE.GetDetectionZoneCount}(). 
@@ -2300,7 +2300,7 @@ do -- DETECTION_AREAS
   -- 
   -- @type DETECTION_AREAS
   -- @field Dcs.DCSTypes#Distance DetectionZoneRange The range till which targets are grouped upon the first detected target.
-  -- @field #DETECTION_BASE.DetectedItems DetectedItems A list of areas containing the set of @{Unit}s, @{Zone}s, the center @{Unit} within the zone, and ID of each area that was detected within a DetectionZoneRange.
+  -- @field #DETECTION_BASE.DetectedItems DetectedItems A list of areas containing the set of @{Wrapper.Unit}s, @{Zone}s, the center @{Wrapper.Unit} within the zone, and ID of each area that was detected within a DetectionZoneRange.
   -- @extends #DETECTION_BASE
   DETECTION_AREAS = {
     ClassName = "DETECTION_AREAS",

@@ -182,7 +182,7 @@ do -- MENU_BASE
   --- @type MENU_BASE
   -- @extends Base#BASE
 
-  --- # MENU_BASE class, extends @{Base#BASE}
+  --- # MENU_BASE class, extends @{Core.Base#BASE}
   -- The MENU_BASE class defines the main MENU class where other MENU classes are derived from.
   -- This is an abstract class, so don't use it.
   -- @field #MENU_BASE
@@ -286,7 +286,7 @@ do -- MENU_COMMAND_BASE
   -- @field #function MenuCallHandler
   -- @extends Core.Menu#MENU_BASE
   
-  --- # MENU_COMMAND_BASE class, extends @{Base#BASE}
+  --- # MENU_COMMAND_BASE class, extends @{Core.Base#BASE}
   -- ----------------------------------------------------------
   -- The MENU_COMMAND_BASE class defines the main MENU class where other MENU COMMAND_ 
   -- classes are derived from, in order to set commands.
@@ -469,7 +469,7 @@ do -- MENU_MISSION_COMMAND
   --- MENU_MISSION constructor. Creates a new radio command item for a complete mission file, which can invoke a function with parameters.
   -- @param #MENU_MISSION_COMMAND self
   -- @param #string MenuText The text for the menu.
-  -- @param Menu#MENU_MISSION ParentMenu The parent menu.
+  -- @param Core.Menu#MENU_MISSION ParentMenu The parent menu.
   -- @param CommandMenuFunction A function that is called when the menu key is pressed.
   -- @param CommandMenuArgument An argument for the function. There can only be ONE argument given. So multiple arguments must be wrapped into a table. See the below example how to do this.
   -- @return #MENU_MISSION_COMMAND self
@@ -695,7 +695,7 @@ do -- MENU_COALITION_COMMAND
   -- @param #MENU_COALITION_COMMAND self
   -- @param Dcs.DCSCoalition#coalition.side Coalition The coalition owning the menu.
   -- @param #string MenuText The text for the menu.
-  -- @param Menu#MENU_COALITION ParentMenu The parent menu.
+  -- @param Core.Menu#MENU_COALITION ParentMenu The parent menu.
   -- @param CommandMenuFunction A function that is called when the menu key is pressed.
   -- @param CommandMenuArgument An argument for the function. There can only be ONE argument given. So multiple arguments must be wrapped into a table. See the below example how to do this.
   -- @return #MENU_COALITION_COMMAND

@@ -48,7 +48,7 @@
 -- @extends Core.Base#BASE
 
 
---- # SCHEDULER class, extends @{Base#BASE}
+--- # SCHEDULER class, extends @{Core.Base#BASE}
 -- 
 -- The SCHEDULER class creates schedule.
 -- 

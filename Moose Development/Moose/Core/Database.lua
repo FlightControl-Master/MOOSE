@@ -13,7 +13,7 @@
 --- @type DATABASE
 -- @extends Core.Base#BASE
 
---- # DATABASE class, extends @{Base#BASE}
+--- # DATABASE class, extends @{Core.Base#BASE}
 -- 
 -- Mission designers can use the DATABASE class to refer to:
 -- 

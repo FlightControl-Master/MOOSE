@@ -10,7 +10,7 @@
 -- @type MESSAGE
 -- @extends Core.Base#BASE
 
---- # MESSAGE class, extends @{Base#BASE}
+--- # MESSAGE class, extends @{Core.Base#BASE}
 -- 
 -- Message System to display Messages to Clients, Coalitions or All.
 -- Messages are shown on the display panel for an amount of seconds, and will then disappear.
@@ -26,7 +26,7 @@
 -- Messages are sent:
 --
 --   * To a @{Client} using @{Message#MESSAGE.ToClient}().
---   * To a @{Group} using @{Message#MESSAGE.ToGroup}()
+--   * To a @{Wrapper.Group} using @{Message#MESSAGE.ToGroup}()
 --   * To a coalition using @{Message#MESSAGE.ToCoalition}().
 --   * To the red coalition using @{Message#MESSAGE.ToRed}().
 --   * To the blue coalition using @{Message#MESSAGE.ToBlue}().

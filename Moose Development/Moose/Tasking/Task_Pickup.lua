@@ -8,7 +8,7 @@
 -- 
 --   * **None**: Start of the process
 --   * **Planned**: The SEAD task is planned. Upon Planned, the sub-process @{Process_Fsm.Assign#ACT_ASSIGN_ACCEPT} is started to accept the task.
---   * **Assigned**: The SEAD task is assigned to a @{Group#GROUP}. Upon Assigned, the sub-process @{Process_Fsm.Route#ACT_ROUTE} is started to route the active Units in the Group to the attack zone.
+--   * **Assigned**: The SEAD task is assigned to a @{Wrapper.Group#GROUP}. Upon Assigned, the sub-process @{Process_Fsm.Route#ACT_ROUTE} is started to route the active Units in the Group to the attack zone.
 --   * **Success**: The SEAD task is successfully completed. Upon Success, the sub-process @{Process_SEAD#PROCESS_SEAD} is started to follow-up successful SEADing of the targets assigned in the task.
 --   * **Failed**: The SEAD task has failed. This will happen if the player exists the task early, without communicating a possible cancellation to HQ.
 -- 
@@ -31,10 +31,10 @@ do -- TASK_PICKUP
   --- Instantiates a new TASK_PICKUP.
   -- @param #TASK_PICKUP self
   -- @param Tasking.Mission#MISSION Mission
-  -- @param Set#SET_GROUP AssignedSetGroup The set of groups for which the Task can be assigned.
+  -- @param Core.Set#SET_GROUP AssignedSetGroup The set of groups for which the Task can be assigned.
   -- @param #string TaskName The name of the Task.
   -- @param #string TaskType BAI or CAS
-  -- @param Set#SET_UNIT UnitSetTargets
+  -- @param Core.Set#SET_UNIT UnitSetTargets
   -- @param Core.Zone#ZONE_BASE TargetZone
   -- @return #TASK_PICKUP self
   function TASK_PICKUP:New( Mission, AssignedSetGroup, TaskName, TaskType )
@@ -55,7 +55,7 @@ do -- TASK_PICKUP
   end
   
   
-  --- Assign the @{Task} to a @{Unit}.
+  --- Assign the @{Task} to a @{Wrapper.Unit}.
   -- @param #TASK_PICKUP self
   -- @param Wrapper.Unit#UNIT TaskUnit
   -- @return #TASK_PICKUP self
@@ -97,7 +97,7 @@ do -- TASK_PICKUP
   -- @param #string Event
   -- @param #string From
   -- @param #string To
-  -- @param Event#EVENTDATA Event
+  -- @param Core.Event#EVENTDATA Event
   function TASK_PICKUP:OnNext( Fsm, From, Event, To, Event )
   
     self:SetState( self, "State", To )

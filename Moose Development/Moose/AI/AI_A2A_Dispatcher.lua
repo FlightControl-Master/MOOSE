@@ -165,7 +165,7 @@ do -- AI_A2A_DISPATCHER
   -- @type AI_A2A_DISPATCHER
   -- @extends Tasking.DetectionManager#DETECTION_MANAGER
 
-  --- # AI\_A2A\_DISPATCHER class, extends @{Tasking#DETECTION_MANAGER}
+  --- # AI\_A2A\_DISPATCHER class, extends @{Tasking.DetectionManage#DETECTION_MANAGER}
   -- 
   -- ![Banner Image](..\Presentations\AI_A2A_DISPATCHER\Dia1.JPG)
   -- 
@@ -346,7 +346,7 @@ do -- AI_A2A_DISPATCHER
   -- 
   -- ![Banner Image](..\Presentations\AI_A2A_DISPATCHER\Dia9.JPG)
   -- 
-  -- If it’s a cold war then the **borders of red and blue territory** need to be defined using a @{zone} object derived from @{Zone#ZONE_BASE}.
+  -- If it’s a cold war then the **borders of red and blue territory** need to be defined using a @{zone} object derived from @{Core.Zone#ZONE_BASE}.
   -- If a hot war is chosen then **no borders** actually need to be defined using the helicopter units other than 
   -- it makes it easier sometimes for the mission maker to envisage where the red and blue territories roughly are. 
   -- In a hot war the borders are effectively defined by the ground based radar coverage of a coalition.
@@ -544,7 +544,7 @@ do -- AI_A2A_DISPATCHER
   --   * As the CAP flights wander around within the zone waiting to be tasked, these zones need to be large enough that the aircraft are not constantly turning 
   --   but do not have to be big and numerous enough to completely cover a border.
   --   
-  --   * CAP zones can be of any type, and are derived from the @{Zone#ZONE_BASE} class. Zones can be @{Zone#ZONE}, @{Zone#ZONE_POLYGON}, @{Zone#ZONE_UNIT}, @{Zone#ZONE_GROUP}, etc.
+  --   * CAP zones can be of any type, and are derived from the @{Core.Zone#ZONE_BASE} class. Zones can be @{Core.Zone#ZONE}, @{Core.Zone#ZONE_POLYGON}, @{Core.Zone#ZONE_UNIT}, @{Core.Zone#ZONE_GROUP}, etc.
   --   This allows to setup **static, moving and/or complex zones** wherein aircraft will perform the CAP.
   --   
   --   * Typically 20000-50000 metres width is used and they are spaced so that aircraft in the zone waiting for tasks don’t have to far to travel to protect their coalitions important targets. 
@@ -1142,7 +1142,7 @@ do -- AI_A2A_DISPATCHER
   --- Define a border area to simulate a **cold war** scenario.
   -- A **cold war** is one where CAP aircraft patrol their territory but will not attack enemy aircraft or launch GCI aircraft unless enemy aircraft enter their territory. In other words the EWR may detect an enemy aircraft but will only send aircraft to attack it if it crosses the border.
   -- A **hot war** is one where CAP aircraft will intercept any detected enemy aircraft and GCI aircraft will launch against detected enemy aircraft without regard for territory. In other words if the ground radar can detect the enemy aircraft then it will send CAP and GCI aircraft to attack it.
-  -- If it’s a cold war then the **borders of red and blue territory** need to be defined using a @{zone} object derived from @{Zone#ZONE_BASE}. This method needs to be used for this.
+  -- If it’s a cold war then the **borders of red and blue territory** need to be defined using a @{zone} object derived from @{Core.Zone#ZONE_BASE}. This method needs to be used for this.
   -- If a hot war is chosen then **no borders** actually need to be defined using the helicopter units other than it makes it easier sometimes for the mission maker to envisage where the red and blue territories roughly are. In a hot war the borders are effectively defined by the ground based radar coverage of a coalition. Set the noborders parameter to 1
   -- @param #AI_A2A_DISPATCHER self
   -- @param Core.Zone#ZONE_BASE BorderZone An object derived from ZONE_BASE, or a list of objects derived from ZONE_BASE.
@@ -1423,11 +1423,11 @@ do -- AI_A2A_DISPATCHER
   -- You need to specify here EXACTLY the name of the airbase as you see it in the mission editor. 
   -- Examples are `"Batumi"` or `"Tbilisi-Lochini"`. 
   -- EXACTLY the airbase name, between quotes `""`.
-  -- To ease the airbase naming when using the LDT editor and IntelliSense, the @{Airbase#AIRBASE} class contains enumerations of the airbases of each map.
+  -- To ease the airbase naming when using the LDT editor and IntelliSense, the @{Wrapper.Airbase#AIRBASE} class contains enumerations of the airbases of each map.
   --    
-  --    * Caucasus: @{Airbase#AIRBASE.Caucaus}
-  --    * Nevada or NTTR: @{Airbase#AIRBASE.Nevada}
-  --    * Normandy: @{Airbase#AIRBASE.Normandy}
+  --    * Caucasus: @{Wrapper.Airbase#AIRBASE.Caucaus}
+  --    * Nevada or NTTR: @{Wrapper.Airbase#AIRBASE.Nevada}
+  --    * Normandy: @{Wrapper.Airbase#AIRBASE.Normandy}
   -- 
   -- @param #string TemplatePrefixes A string or an array of strings specifying the **prefix names of the templates** (not going to explain what is templates here again). 
   -- Examples are `{ "104th", "105th" }` or `"104th"` or `"Template 1"` or `"BLUE PLANES"`. 
@@ -1512,7 +1512,7 @@ do -- AI_A2A_DISPATCHER
   --- Set a CAP for a Squadron.
   -- @param #AI_A2A_DISPATCHER self
   -- @param #string SquadronName The squadron name.
-  -- @param Core.Zone#ZONE_BASE Zone The @{Zone} object derived from @{Zone#ZONE_BASE} that defines the zone wherein the CAP will be executed.
+  -- @param Core.Zone#ZONE_BASE Zone The @{Zone} object derived from @{Core.Zone#ZONE_BASE} that defines the zone wherein the CAP will be executed.
   -- @param #number FloorAltitude The minimum altitude at which the cap can be executed.
   -- @param #number CeilingAltitude the maximum altitude at which the cap can be executed.
   -- @param #number PatrolMinSpeed The minimum speed at which the cap can be executed.
@@ -2391,7 +2391,7 @@ do -- AI_A2A_DISPATCHER
 
   --- Set the default tanker where defenders will Refuel in the air.
   -- @param #AI_A2A_DISPATCHER self
-  -- @param #strig TankerName A string defining the group name of the Tanker as defined within the Mission Editor.
+  -- @param #string TankerName A string defining the group name of the Tanker as defined within the Mission Editor.
   -- @return #AI_A2A_DISPATCHER
   -- @usage
   -- 
@@ -2414,7 +2414,7 @@ do -- AI_A2A_DISPATCHER
   --- Set the squadron tanker where defenders will Refuel in the air.
   -- @param #AI_A2A_DISPATCHER self
   -- @param #string SquadronName The name of the squadron.
-  -- @param #strig TankerName A string defining the group name of the Tanker as defined within the Mission Editor.
+  -- @param #string TankerName A string defining the group name of the Tanker as defined within the Mission Editor.
   -- @return #AI_A2A_DISPATCHER
   -- @usage
   -- 
@@ -2470,7 +2470,7 @@ do -- AI_A2A_DISPATCHER
   --- Creates an SWEEP task when there are targets for it.
   -- @param #AI_A2A_DISPATCHER self
   -- @param Functional.Detection#DETECTION_BASE.DetectedItem DetectedItem
-  -- @return Set#SET_UNIT TargetSetUnit: The target set of units.
+  -- @return Core.Set#SET_UNIT TargetSetUnit: The target set of units.
   -- @return #nil If there are no targets to be set.
   function AI_A2A_DISPATCHER:EvaluateSWEEP( DetectedItem )
     self:F( { DetectedItem.ItemID } )
@@ -2891,7 +2891,7 @@ do -- AI_A2A_DISPATCHER
   --- Creates an ENGAGE task when there are human friendlies airborne near the targets.
   -- @param #AI_A2A_DISPATCHER self
   -- @param Functional.Detection#DETECTION_BASE.DetectedItem DetectedItem
-  -- @return Set#SET_UNIT TargetSetUnit: The target set of units.
+  -- @return Core.Set#SET_UNIT TargetSetUnit: The target set of units.
   -- @return #nil If there are no targets to be set.
   function AI_A2A_DISPATCHER:EvaluateENGAGE( DetectedItem )
     self:F( { DetectedItem.ItemID } )
@@ -2918,7 +2918,7 @@ do -- AI_A2A_DISPATCHER
   --- Creates an GCI task when there are targets for it.
   -- @param #AI_A2A_DISPATCHER self
   -- @param Functional.Detection#DETECTION_BASE.DetectedItem DetectedItem
-  -- @return Set#SET_UNIT TargetSetUnit: The target set of units.
+  -- @return Core.Set#SET_UNIT TargetSetUnit: The target set of units.
   -- @return #nil If there are no targets to be set.
   function AI_A2A_DISPATCHER:EvaluateGCI( DetectedItem )
     self:F( { DetectedItem.ItemID } )

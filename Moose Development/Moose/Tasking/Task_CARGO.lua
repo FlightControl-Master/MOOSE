@@ -133,7 +133,7 @@ do -- TASK_CARGO
   -- 
   --   * **None**: Start of the process.
   --   * **Planned**: The cargo task is planned.
-  --   * **Assigned**: The cargo task is assigned to a @{Group#GROUP}.
+  --   * **Assigned**: The cargo task is assigned to a @{Wrapper.Group#GROUP}.
   --   * **Success**: The cargo task is successfully completed.
   --   * **Failed**: The cargo task has failed. This will happen if the player exists the task early, without communicating a possible cancellation to HQ.
   -- 
@@ -148,7 +148,7 @@ do -- TASK_CARGO
   --- Instantiates a new TASK_CARGO.
   -- @param #TASK_CARGO self
   -- @param Tasking.Mission#MISSION Mission
-  -- @param Set#SET_GROUP SetGroup The set of groups for which the Task can be assigned.
+  -- @param Core.Set#SET_GROUP SetGroup The set of groups for which the Task can be assigned.
   -- @param #string TaskName The name of the Task.
   -- @param Core.Set#SET_CARGO SetCargo The scope of the cargo to be transported.
   -- @param #string TaskType The type of Cargo task.

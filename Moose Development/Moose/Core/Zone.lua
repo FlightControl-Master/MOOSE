@@ -12,7 +12,7 @@
 -- The object classes are using the zone classes to test the zone boundaries, which can take various forms:
 -- 
 --   * Test if completely within the zone.
---   * Test if partly within the zone (for @{Group#GROUP} objects).
+--   * Test if partly within the zone (for @{Wrapper.Group#GROUP} objects).
 --   * Test if not in the zone.
 --   * Distance to the nearest intersecting point of the zone.
 --   * Distance to the center of the zone.
@@ -24,8 +24,8 @@
 --   * @{#ZONE_RADIUS}: The ZONE_RADIUS class defined by a zone name, a location and a radius.
 --   * @{#ZONE}: The ZONE class, defined by the zone name as defined within the Mission Editor.
 --   * @{#ZONE_UNIT}: The ZONE_UNIT class defines by a zone around a @{Unit#UNIT} with a radius.
---   * @{#ZONE_GROUP}: The ZONE_GROUP class defines by a zone around a @{Group#GROUP} with a radius.
---   * @{#ZONE_POLYGON}: The ZONE_POLYGON class defines by a sequence of @{Group#GROUP} waypoints within the Mission Editor, forming a polygon.
+--   * @{#ZONE_GROUP}: The ZONE_GROUP class defines by a zone around a @{Wrapper.Group#GROUP} with a radius.
+--   * @{#ZONE_POLYGON}: The ZONE_POLYGON class defines by a sequence of @{Wrapper.Group#GROUP} waypoints within the Mission Editor, forming a polygon.
 --
 -- === 
 -- 
@@ -43,7 +43,7 @@
 -- @extends Core.Base#BASE
 
 
---- # ZONE_BASE class, extends @{Base#BASE}
+--- # ZONE_BASE class, extends @{Core.Base#BASE}
 -- 
 -- This class is an abstract BASE class for derived classes, and is not meant to be instantiated.
 -- 
@@ -53,7 +53,7 @@
 --   * @{#ZONE_BASE.SetName}(): Sets the name of the zone.
 --   
 -- 
--- ## Each zone implements two polymorphic functions defined in @{Zone#ZONE_BASE}:
+-- ## Each zone implements two polymorphic functions defined in @{Core.Zone#ZONE_BASE}:
 -- 
 --   * @{#ZONE_BASE.IsVec2InZone}(): Returns if a 2D vector is within the zone.
 --   * @{#ZONE_BASE.IsVec3InZone}(): Returns if a 3D vector is within the zone.
@@ -380,7 +380,7 @@ end
 -- @field Dcs.DCSTypes#Distance Radius The radius of the zone.
 -- @extends #ZONE_BASE
 
---- # ZONE_RADIUS class, extends @{Zone#ZONE_BASE}
+--- # ZONE_RADIUS class, extends @{Core.Zone#ZONE_BASE}
 -- 
 -- The ZONE_RADIUS class defined by a zone name, a location and a radius.
 -- This class implements the inherited functions from Core.Zone#ZONE_BASE taking into account the own zone format and properties.
@@ -951,7 +951,7 @@ end
 -- @extends #ZONE_RADIUS
 
 
---- # ZONE class, extends @{Zone#ZONE_RADIUS}
+--- # ZONE class, extends @{Core.Zone#ZONE_RADIUS}
 -- 
 -- The ZONE class, defined by the zone name as defined within the Mission Editor.
 -- This class implements the inherited functions from @{#ZONE_RADIUS} taking into account the own zone format and properties.
@@ -965,7 +965,7 @@ end
 -- You can declare a ZONE using the DCS mission editor by adding a trigger zone in the mission editor.
 -- 
 -- Then during mission startup, when loading Moose.lua, this trigger zone will be detected as a ZONE declaration.
--- Within the background, a ZONE object will be created within the @{Database}.
+-- Within the background, a ZONE object will be created within the @{Core.Database}.
 -- The ZONE name will be the trigger zone name.
 -- 
 -- So, you can search yourself for the ZONE object by using the @{#ZONE.FindByName}() method.
@@ -1023,7 +1023,7 @@ end
 -- @field Wrapper.Unit#UNIT ZoneUNIT
 -- @extends Core.Zone#ZONE_RADIUS
 
---- # ZONE_UNIT class, extends @{Zone#ZONE_RADIUS}
+--- # ZONE_UNIT class, extends @{Core.Zone#ZONE_RADIUS}
 -- 
 -- The ZONE_UNIT class defined by a zone around a @{Unit#UNIT} with a radius.
 -- This class implements the inherited functions from @{#ZONE_RADIUS} taking into account the own zone format and properties.
@@ -1116,20 +1116,20 @@ end
 -- @extends #ZONE_RADIUS
 
 
---- # ZONE_GROUP class, extends @{Zone#ZONE_RADIUS}
+--- # ZONE_GROUP class, extends @{Core.Zone#ZONE_RADIUS}
 -- 
--- The ZONE_GROUP class defines by a zone around a @{Group#GROUP} with a radius. The current leader of the group defines the center of the zone.
--- This class implements the inherited functions from @{Zone#ZONE_RADIUS} taking into account the own zone format and properties.
+-- The ZONE_GROUP class defines by a zone around a @{Wrapper.Group#GROUP} with a radius. The current leader of the group defines the center of the zone.
+-- This class implements the inherited functions from @{Core.Zone#ZONE_RADIUS} taking into account the own zone format and properties.
 -- 
 -- @field #ZONE_GROUP
 ZONE_GROUP = {
   ClassName="ZONE_GROUP",
   }
   
---- Constructor to create a ZONE_GROUP instance, taking the zone name, a zone @{Group#GROUP} and a radius.
+--- Constructor to create a ZONE_GROUP instance, taking the zone name, a zone @{Wrapper.Group#GROUP} and a radius.
 -- @param #ZONE_GROUP self
 -- @param #string ZoneName Name of the zone.
--- @param Wrapper.Group#GROUP ZoneGROUP The @{Group} as the center of the zone.
+-- @param Wrapper.Group#GROUP ZoneGROUP The @{Wrapper.Group} as the center of the zone.
 -- @param Dcs.DCSTypes#Distance Radius The radius of the zone.
 -- @return #ZONE_GROUP self
 function ZONE_GROUP:New( ZoneName, ZoneGROUP, Radius )
@@ -1145,9 +1145,9 @@ function ZONE_GROUP:New( ZoneName, ZoneGROUP, Radius )
 end
 
 
---- Returns the current location of the @{Group}.
+--- Returns the current location of the @{Wrapper.Group}.
 -- @param #ZONE_GROUP self
--- @return Dcs.DCSTypes#Vec2 The location of the zone based on the @{Group} location.
+-- @return Dcs.DCSTypes#Vec2 The location of the zone based on the @{Wrapper.Group} location.
 function ZONE_GROUP:GetVec2()
   self:F( self.ZoneName )
   
@@ -1158,9 +1158,9 @@ function ZONE_GROUP:GetVec2()
   return ZoneVec2
 end
 
---- Returns a random location within the zone of the @{Group}.
+--- Returns a random location within the zone of the @{Wrapper.Group}.
 -- @param #ZONE_GROUP self
--- @return Dcs.DCSTypes#Vec2 The random location of the zone based on the @{Group} location.
+-- @return Dcs.DCSTypes#Vec2 The random location of the zone based on the @{Wrapper.Group} location.
 function ZONE_GROUP:GetRandomVec2()
   self:F( self.ZoneName )
 
@@ -1197,10 +1197,10 @@ end
 -- @extends #ZONE_BASE
 
 
---- # ZONE_POLYGON_BASE class, extends @{Zone#ZONE_BASE}
+--- # ZONE_POLYGON_BASE class, extends @{Core.Zone#ZONE_BASE}
 -- 
--- The ZONE_POLYGON_BASE class defined by a sequence of @{Group#GROUP} waypoints within the Mission Editor, forming a polygon.
--- This class implements the inherited functions from @{Zone#ZONE_RADIUS} taking into account the own zone format and properties.
+-- The ZONE_POLYGON_BASE class defined by a sequence of @{Wrapper.Group#GROUP} waypoints within the Mission Editor, forming a polygon.
+-- This class implements the inherited functions from @{Core.Zone#ZONE_RADIUS} taking into account the own zone format and properties.
 -- This class is an abstract BASE class for derived classes, and is not meant to be instantiated.
 -- 
 -- ## Zone point randomization
@@ -1221,7 +1221,7 @@ ZONE_POLYGON_BASE = {
 -- @list <Dcs.DCSTypes#Vec2>
 
 --- Constructor to create a ZONE_POLYGON_BASE instance, taking the zone name and an array of @{DCSTypes#Vec2}, forming a polygon.
--- The @{Group#GROUP} waypoints define the polygon corners. The first and the last point are automatically connected.
+-- The @{Wrapper.Group#GROUP} waypoints define the polygon corners. The first and the last point are automatically connected.
 -- @param #ZONE_POLYGON_BASE self
 -- @param #string ZoneName Name of the zone.
 -- @param #ZONE_POLYGON_BASE.ListVec2 PointsArray An array of @{DCSTypes#Vec2}, forming a polygon..
@@ -1245,7 +1245,7 @@ end
 
 --- Returns the center location of the polygon.
 -- @param #ZONE_GROUP self
--- @return Dcs.DCSTypes#Vec2 The location of the zone based on the @{Group} location.
+-- @return Dcs.DCSTypes#Vec2 The location of the zone based on the @{Wrapper.Group} location.
 function ZONE_POLYGON_BASE:GetVec2()
   self:F( self.ZoneName )
 
@@ -1474,10 +1474,10 @@ end
 -- @extends #ZONE_POLYGON_BASE
 
 
---- # ZONE_POLYGON class, extends @{Zone#ZONE_POLYGON_BASE}
+--- # ZONE_POLYGON class, extends @{Core.Zone#ZONE_POLYGON_BASE}
 -- 
--- The ZONE_POLYGON class defined by a sequence of @{Group#GROUP} waypoints within the Mission Editor, forming a polygon.
--- This class implements the inherited functions from @{Zone#ZONE_RADIUS} taking into account the own zone format and properties.
+-- The ZONE_POLYGON class defined by a sequence of @{Wrapper.Group#GROUP} waypoints within the Mission Editor, forming a polygon.
+-- This class implements the inherited functions from @{Core.Zone#ZONE_RADIUS} taking into account the own zone format and properties.
 -- 
 -- ## Declare a ZONE_POLYGON directly in the DCS mission editor!
 -- 
@@ -1485,7 +1485,7 @@ end
 -- 
 -- So, imagine you have a group declared in the mission editor, with group name `DefenseZone~ZONE_POLYGON`.
 -- Then during mission startup, when loading Moose.lua, this group will be detected as a ZONE_POLYGON declaration.
--- Within the background, a ZONE_POLYGON object will be created within the @{Database} using the properties of the group.
+-- Within the background, a ZONE_POLYGON object will be created within the @{Core.Database} using the properties of the group.
 -- The ZONE_POLYGON name will be the group name without the ~ZONE_POLYGON tag.
 -- 
 -- So, you can search yourself for the ZONE_POLYGON by using the @{#ZONE_POLYGON.FindByName}() method.
@@ -1504,8 +1504,8 @@ ZONE_POLYGON = {
   ClassName="ZONE_POLYGON",
   }
 
---- Constructor to create a ZONE_POLYGON instance, taking the zone name and the @{Group#GROUP} defined within the Mission Editor.
--- The @{Group#GROUP} waypoints define the polygon corners. The first and the last point are automatically connected by ZONE_POLYGON.
+--- Constructor to create a ZONE_POLYGON instance, taking the zone name and the @{Wrapper.Group#GROUP} defined within the Mission Editor.
+-- The @{Wrapper.Group#GROUP} waypoints define the polygon corners. The first and the last point are automatically connected by ZONE_POLYGON.
 -- @param #ZONE_POLYGON self
 -- @param #string ZoneName Name of the zone.
 -- @param Wrapper.Group#GROUP ZoneGroup The GROUP waypoints as defined within the Mission Editor define the polygon shape.
@@ -1521,8 +1521,8 @@ function ZONE_POLYGON:New( ZoneName, ZoneGroup )
 end
 
 
---- Constructor to create a ZONE_POLYGON instance, taking the zone name and the **name** of the @{Group#GROUP} defined within the Mission Editor.
--- The @{Group#GROUP} waypoints define the polygon corners. The first and the last point are automatically connected by ZONE_POLYGON.
+--- Constructor to create a ZONE_POLYGON instance, taking the zone name and the **name** of the @{Wrapper.Group#GROUP} defined within the Mission Editor.
+-- The @{Wrapper.Group#GROUP} waypoints define the polygon corners. The first and the last point are automatically connected by ZONE_POLYGON.
 -- @param #ZONE_POLYGON self
 -- @param #string ZoneName Name of the zone.
 -- @param #string GroupName The group name of the GROUP defining the waypoints within the Mission Editor to define the polygon shape.

@@ -15,7 +15,7 @@
 --- @type PROTECT
 -- @extends #PROTECT.__
 
---- # PROTECT, extends @{Base#BASE}
+--- # PROTECT, extends @{Core.Base#BASE}
 -- 
 -- @field #PROTECT
 PROTECT = {

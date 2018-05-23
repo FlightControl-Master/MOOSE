@@ -6,13 +6,13 @@
 -- 
 -- ===       
 --
--- @module AI_Cargo_Helicopter
+-- @module AI.AI_Cargo_Helicopter
 
 --- @type AI_CARGO_HELICOPTER
 -- @extends Core.Fsm#FSM_CONTROLLABLE
 
 
---- # AI\_CARGO\_TROOPS class, extends @{Core.Base@BASE}
+--- # AI\_CARGO\_TROOPS class, extends @{Core.Fsm#FSM_CONTROLLABLE}
 -- 
 -- ===
 -- 

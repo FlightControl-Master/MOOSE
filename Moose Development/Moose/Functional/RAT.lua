@@ -152,7 +152,7 @@
 -- @field #boolean useparkingdb Parking spots are added to data base once an aircraft has used it. These spots can later be used by other aircraft. Default is true.
 -- @extends Core.Spawn#SPAWN
 
----# RAT class, extends @{Spawn#SPAWN}
+---# RAT class, extends @{Core.Spawn#SPAWN}
 -- The RAT class implements an easy to use way to randomly fill your map with AI aircraft.
 -- 
 --
@@ -5238,7 +5238,7 @@ end
 -- @field #number managerid Managing scheduler id.
 -- @extends Core.Base#BASE
 
----# RATMANAGER class, extends @{Base#BASE}
+---# RATMANAGER class, extends @{Core.Base#BASE}
 -- The RATMANAGER class manages spawning of multiple RAT objects in a very simple way. It is created by the  @{#RATMANAGER.New}() contructor. 
 -- RAT objects with different "tasks" can be defined as usual. However, they **must not** be spawned via the @{#RAT.Spawn}() function.
 -- 
