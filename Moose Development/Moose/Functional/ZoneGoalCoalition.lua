@@ -11,7 +11,7 @@
 -- 
 -- ===
 -- 
--- @module ZoneGoalCoalition
+-- @module Functional.ZoneGoalCoalition
 
 do -- ZoneGoal
 

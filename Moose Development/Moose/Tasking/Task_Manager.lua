@@ -29,7 +29,7 @@
 -- ### Contributions: Mechanist, Prof_Hilactic, FlightControl - Concept & Testing
 -- ### Author: FlightControl - Framework Design &  Programming
 -- 
--- @module Task_Manager
+-- @module Tasking.Task_Manager
 
 do -- TASK_MANAGER
   

@@ -8,7 +8,7 @@
 -- 
 -- ===
 -- 
--- @module Mission
+-- @module Tasking.Mission
 
 --- The MISSION class
 -- @type MISSION

@@ -77,8 +77,7 @@
 -- Danny has shared his ideas and together we made a design. 
 -- Together with the **476 virtual team**, we tested the MISSILETRAINER class, and got much positive feedback!
 -- 
--- @module MissileTrainer
--- @author FlightControl
+-- @module Functional.MissileTrainer
 
 
 --- The MISSILETRAINER class

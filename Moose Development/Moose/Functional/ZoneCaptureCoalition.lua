@@ -21,7 +21,7 @@
 -- 
 -- ===
 -- 
--- @module ZoneCaptureCoalition
+-- @module Functional.ZoneCaptureCoalition
 
 do -- ZONE_CAPTURE_COALITION
 

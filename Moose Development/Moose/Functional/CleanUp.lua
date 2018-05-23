@@ -7,7 +7,7 @@
 -- 
 -- ===
 -- 
--- @module CleanUp
+-- @module Functional.CleanUp
 
 --- @type CLEANUP_AIRBASE.__ Methods which are not intended for mission designers, but which are used interally by the moose designer :-)
 -- @field #map<#string,Wrapper.Airbase#AIRBASE> Airbases Map of Airbases.

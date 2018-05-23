@@ -7,7 +7,7 @@
 -- Performance: If in a DCSRTE there are a lot of moving GROUND units, then in a multi player mission, this WILL create lag if
 -- the main DCS execution core of your CPU is fully utilized. So, this class will limit the amount of simultaneous moving GROUND units
 -- on defined intervals (currently every minute).
--- @module Movement
+-- @module Functional.Movement
 
 --- the MOVEMENT class
 -- @type MOVEMENT

@@ -8,7 +8,7 @@
 -- 
 -- ===
 -- 
--- @module TaskInfo
+-- @module Tasking.TaskInfo
 
 --- @type TASKINFO
 -- @extends Core.Base#BASE

@@ -206,7 +206,7 @@
 --
 --   * **FlightControl**: Concept, Design & Programming.
 -- 
--- @module Scoring
+-- @module Functional.Scoring
 
 
 --- The Scoring class

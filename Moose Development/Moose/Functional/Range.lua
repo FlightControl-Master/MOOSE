@@ -48,7 +48,7 @@
 -- ### Contributions: [FlightControl](https://forums.eagle.ru/member.php?u=89536), [Ciribob](https://forums.eagle.ru/member.php?u=112175)
 -- 
 -- ===
--- @module Range
+-- @module Functional.Range
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 --- RANGE class

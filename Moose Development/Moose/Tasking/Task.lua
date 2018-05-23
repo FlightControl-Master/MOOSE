@@ -8,7 +8,7 @@
 -- 
 -- ===
 -- 
--- @module Task
+-- @module Tasking.Task
 
 --- @type TASK
 -- @field Core.Scheduler#SCHEDULER TaskScheduler

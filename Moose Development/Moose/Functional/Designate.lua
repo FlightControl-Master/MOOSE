@@ -28,7 +28,7 @@
 -- 
 --   * **FlightControl**: Design & Programming
 -- 
--- @module Designate
+-- @module Functional.Designate
 
 
 do -- DESIGNATE

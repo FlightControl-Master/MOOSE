@@ -114,8 +114,7 @@
 -- 
 --
 --
--- @module Escort
--- @author FlightControl
+-- @module Functional.Escort
 
 --- ESCORT class
 -- @type ESCORT

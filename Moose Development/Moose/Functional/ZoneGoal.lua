@@ -11,7 +11,7 @@
 -- 
 -- ===
 -- 
--- @module ZoneGoal
+-- @module Functional.ZoneGoal
 
 do -- Zone
 

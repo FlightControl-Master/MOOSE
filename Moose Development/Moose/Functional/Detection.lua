@@ -29,7 +29,7 @@
 -- 
 --   * FlightControl : Analysis, Design, Programming, Testing
 -- 
--- @module Detection
+-- @module Functional.Detection
 
 ----BASE:TraceClass("DETECTION_BASE")
 ----BASE:TraceClass("DETECTION_AREAS")
