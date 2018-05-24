@@ -449,6 +449,8 @@ function ARTY:New(group)
   local DCSunit=DCSgroup:getUnit(1)
   self.DCSdesc=DCSunit:getDesc()
   
+  --self.DCSdesc=group:GetDesc()
+  
   -- DCS descriptors.
   self:T3(ARTY.id.."DCS descriptors for group "..group:GetName())
   for id,desc in pairs(self.DCSdesc) do
@@ -456,7 +458,8 @@ function ARTY:New(group)
   end
   
   -- Maximum speed in km/h.
-  self.SpeedMax=self.DCSdesc.speedMax*3.6
+  self.SpeedMax=group:GetSpeedMax()
+  --self.SpeedMax=self.DCSdesc.speedMax*3.6
   
   -- Set speed to 0.7 of maximum.
   self.Speed=self.SpeedMax * 0.7
@@ -517,7 +520,7 @@ end
 
 --- Assign target coordinates to the ARTY group. Only the first parameter, i.e. the coordinate of the target is mandatory. The remaining parameters are optional and can be used to fine tune the engagement.
 -- @param #ARTY self
--- @param Wrapper.Point#COORDINATE coord Coordinates of the target.
+-- @param Core.Point#COORDINATE coord Coordinates of the target.
 -- @param #number prio (Optional) Priority of target. Number between 1 (high) and 100 (low). Default 50.
 -- @param #number radius (Optional) Radius. Default is 100 m.
 -- @param #number nshells (Optional) How many shells (or rockets) are fired on target per engagement. Default 5.
@@ -544,6 +547,29 @@ function ARTY:AssignTargetCoord(coord, prio, radius, nshells, maxengage, time, w
     unique=false
   end
   weapontype=weapontype or ARTY.WeaponType.Auto
+
+  -- Check if we have a coordinate object.
+  local text=nil
+  if coord:IsInstanceOf("GROUP") then
+    text="WARNING: ARTY:AssignTargetCoordinate(coord, ...) needs a COORDINATE object as first parameter - you gave a GROUP. Converting to COORDINATE..."
+    coord=coord:GetCoordinate()
+  elseif coord:IsInstanceOf("UNIT") then
+    text="WARNING: ARTY:AssignTargetCoordinate(coord, ...) needs a COORDINATE object as first parameter - you gave a UNIT. Converting to COORDINATE..."
+    coord=coord:GetCoordinate()
+  elseif coord:IsInstanceOf("POSITIONABLE") then
+    text="WARNING: ARTY:AssignTargetCoordinate(coord, ...) needs a COORDINATE object as first parameter - you gave a POSITIONABLE. Converting to COORDINATE..."
+    coord=coord:GetCoordinate()
+  elseif coord:IsInstanceOf("COORDINATE") then
+    -- Nothing to do here.
+  else
+    text="ERROR: ARTY:AssignTargetCoordinate(coord, ...) needs a COORDINATE object as first parameter!"
+    MESSAGE:New(text, 30):ToAll()
+    self:E(ARTY.id..text)
+    return nil
+  end
+  if text~=nil then
+    self:E(ARTY.id..text)
+  end
   
   -- Name of the target.
   local _name=name or coord:ToStringLLDMS() 
@@ -575,7 +601,7 @@ end
 
 --- Assign coordinate to where the ARTY group should move.
 -- @param #ARTY self
--- @param Wrapper.Point#COORDINATE coord Coordinates of the target.
+-- @param Core.Point#COORDINATE coord Coordinates of the target.
 -- @param #string time (Optional) Day time at which the group should start moving. Passed as a string in format "08:13:45".
 -- @param #number speed (Optinal) Speed in km/h the group should move at. Default 50 km/h.
 -- @param #boolean onroad (Optional) If true, group will mainly use roads. Default off, i.e. go directly towards the specified coordinate.
@@ -698,7 +724,7 @@ end
 
 --- Defines the rearming place of the ARTY group. If the place is too far away from the ARTY group it will be routed to the place.
 -- @param #ARTY self
--- @param Wrapper.Point#COORDINATE coord Coordinates of the rearming place.
+-- @param Core.Point#COORDINATE coord Coordinates of the rearming place.
 function ARTY:SetRearmingPlace(coord)
   self:F({coord=coord})
   self.RearmingPlaceCoord=coord
@@ -848,6 +874,10 @@ function ARTY:onafterStart(Controllable, From, Event, To)
   text=text..string.format("Targets:\n")
   for _, target in pairs(self.targets) do
     text=text..string.format("- %s\n", self:_TargetInfo(target))
+    if self.Debug then
+      local zone=ZONE_RADIUS:New(target.name, target.coord:GetVec2(), target.radius)
+      zone:BoundZone(180, coalition.side.NEUTRAL)
+    end
   end
   text=text..string.format("Moves:\n")
   for i=1,#self.moves do
@@ -867,7 +897,11 @@ function ARTY:onafterStart(Controllable, From, Event, To)
     text=text..string.format("- %s\n", _type)
   end  
   text=text..string.format("******************************************************")
-  self:T(ARTY.id..text)
+  if self.Debug then
+    self:E(ARTY.id..text)
+  else
+    self:T(ARTY.id..text)
+  end
   
   -- Add event handler.
   self:HandleEvent(EVENTS.Shot, self._OnEventShot)
@@ -1510,7 +1544,7 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param Wrapper.Point#COORDINATE ToCoord Coordinate to which the ARTY group should move.
+-- @param Core.Point#COORDINATE ToCoord Coordinate to which the ARTY group should move.
 -- @param #boolean OnRoad If true group should move on road mainly. 
 -- @return #boolean If true, proceed to onafterMove.
 function ARTY:onbeforeMove(Controllable, From, Event, To, ToCoord, OnRoad)
@@ -1961,7 +1995,7 @@ function ARTY:GetAmmo(display)
               end
             end
           else
-            if Category==Weapon.Category.ROCKET then
+            if Category==Weapon.Category.MISSILE then
               _gotmissile=true
             end                      
           end

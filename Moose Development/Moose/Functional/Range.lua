@@ -314,7 +314,7 @@ function RANGE:New(rangename)
   self.rangename=rangename or "Practice Range"
   
   -- Debug info.
-  local text=string.format("RANGE script version %s. Creating new RANGE object. Range name: %s.", RANGE.version, self.rangename)
+  local text=string.format("RANGE script version %s - creating new RANGE object of name: %s.", RANGE.version, self.rangename)
   self:E(RANGE.id..text)
   MESSAGE:New(text, 10):ToAllIf(self.Debug)
     
