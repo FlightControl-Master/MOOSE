@@ -8,7 +8,7 @@
 -- 
 --   * Spot for a defined duration.
 --   * wiggle the spot at the target.
---   * Provide a @{Unit} as a target, instead of a point.
+--   * Provide a @{Wrapper.Unit} as a target, instead of a point.
 --   * Implement a status machine, LaseOn, LaseOff.
 --
 -- ===
@@ -53,7 +53,7 @@ do
   -- 
   --   * Mark targets for a defined duration.
   --   * wiggle the spot at the target.
-  --   * Provide a @{Unit} as a target, instead of a point.
+  --   * Provide a @{Wrapper.Unit} as a target, instead of a point.
   --   * Implement a status machine, LaseOn, LaseOff.
   -- 
   -- ## 1. SPOT constructor

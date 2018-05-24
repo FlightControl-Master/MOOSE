@@ -8,7 +8,7 @@
 -- 
 -- ===
 -- 
--- @module AI_A2A
+-- @module AI.AI_A2A
 
 --BASE:TraceClass("AI_A2A")
 
@@ -18,7 +18,7 @@
 
 --- # AI_A2A class, extends @{Fsm#FSM_CONTROLLABLE}
 -- 
--- The AI_A2A class implements the core functions to operate an AI @{Group} A2A tasking.
+-- The AI_A2A class implements the core functions to operate an AI @{Wrapper.Group} A2A tasking.
 -- 
 -- 
 -- ## AI_A2A constructor
@@ -295,8 +295,8 @@ end
 
 --- Sets (modifies) the minimum and maximum speed of the patrol.
 -- @param #AI_A2A self
--- @param Dcs.DCSTypes#Speed  PatrolMinSpeed The minimum speed of the @{Controllable} in km/h.
--- @param Dcs.DCSTypes#Speed  PatrolMaxSpeed The maximum speed of the @{Controllable} in km/h.
+-- @param Dcs.DCSTypes#Speed  PatrolMinSpeed The minimum speed of the @{Wrapper.Controllable} in km/h.
+-- @param Dcs.DCSTypes#Speed  PatrolMaxSpeed The maximum speed of the @{Wrapper.Controllable} in km/h.
 -- @return #AI_A2A self
 function AI_A2A:SetSpeed( PatrolMinSpeed, PatrolMaxSpeed )
   self:F2( { PatrolMinSpeed, PatrolMaxSpeed } )

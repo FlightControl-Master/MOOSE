@@ -48,7 +48,7 @@
 -- ### Contributions: [FlightControl](https://forums.eagle.ru/member.php?u=89536), [Ciribob](https://forums.eagle.ru/member.php?u=112175)
 -- 
 -- ===
--- @module Range
+-- @module Functional.Range
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 --- RANGE class
@@ -86,7 +86,7 @@
 -- @field #boolean trackmissiles If true (default), all missile types are tracked and impact point to closest bombing target is evaluated.
 -- @extends Core.Base#BASE
 
----# RANGE class, extends @{Base#BASE}
+---# RANGE class, extends @{Core.Base#BASE}
 -- The RANGE class enables a mission designer to easily set up practice ranges in DCS. A new RANGE object can be created with the @{#RANGE.New}(rangename) contructor.
 -- The parameter "rangename" defindes the name of the range. It has to be unique since this is also the name displayed in the radio menu.
 -- 
@@ -108,7 +108,7 @@
 -- 
 -- A strafe pit can be added to the range by the @{#RANGE.AddStrafepit}(*targetnames, boxlength, boxwidth, heading, inverseheading, goodpass, foulline*) function.
 -- 
--- * The first parameter *targetnames* defines the target or targets. This has to be given as a lua table which contains the names of @{Unit} or @{Static} objects defined in the mission editor. 
+-- * The first parameter *targetnames* defines the target or targets. This has to be given as a lua table which contains the names of @{Wrapper.Unit} or @{Static} objects defined in the mission editor. 
 -- * In order to perform a valid pass on the strafe pit, the pilot has to begin his run from the correct direction. Therefore, an "approach box" is defined in front
 --   of the strafe targets. The parameters *boxlength* and *boxwidth* define the size of the box while the parameter *heading* defines its direction.
 --   If the parameter *heading* is passed as **nil**, the heading is automatically taken from the heading of the first target unit as defined in the ME.
@@ -118,7 +118,7 @@
 -- * The last parameter *foulline* sets the distance from the pit targets to the foul line. Hit from closer than this line are not counted!
 -- 
 -- Another function to add a strafe pit is @{#RANGE.AddStrafePitGroup}(*group, boxlength, boxwidth, heading, inverseheading, goodpass, foulline*). Here,
--- the first parameter *group* is a MOOSE @{Group} object and **all** units in this group define **one** strafe pit.
+-- the first parameter *group* is a MOOSE @{Wrapper.Group} object and **all** units in this group define **one** strafe pit.
 -- 
 -- Finally, a valid approach has to be performed below a certain maximum altitude. The default is 914 meters (3000 ft) AGL. This is a parameter valid for all
 -- strafing pits of the range and can be adjusted by the @{#RANGE.SetMaxStrafeAlt}(maxalt) function.
@@ -126,13 +126,13 @@
 -- ## Bombing targets
 -- One ore multiple bombing targets can be added to the range by the @{#RANGE.AddBombingTargets}(targetnames, goodhitrange, randommove) function.
 -- 
--- * The first parameter *targetnames* has to be a lua table, which contains the names of @{Unit} and/or @{Static} objects defined in the mission editor.
---   Note that the @{Range} logic **automatically** determines, if a name belongs to a @{Unit} or @{Static} object now.
+-- * The first parameter *targetnames* has to be a lua table, which contains the names of @{Wrapper.Unit} and/or @{Static} objects defined in the mission editor.
+--   Note that the @{Range} logic **automatically** determines, if a name belongs to a @{Wrapper.Unit} or @{Static} object now.
 -- * The (optional) parameter *goodhitrange* specifies the radius around the target. If a bomb or rocket falls at a distance smaller than this number, the hit is considered to be "good".
 -- * If final (optional) parameter "*randommove*" can be enabled to create moving targets. If this parameter is set to true, the units of this bombing target will randomly move within the range zone.
 --   Note that there might be quirks since DCS units can get stuck in buildings etc. So it might be safer to manually define a route for the units in the mission editor if moving targets are desired. 
 --   
--- Another possibility to add bombing targets is the @{#RANGE.AddBombingTargetGroup}(*group, goodhitrange, randommove*) function. Here the parameter *group* is a MOOSE @{Group} object
+-- Another possibility to add bombing targets is the @{#RANGE.AddBombingTargetGroup}(*group, goodhitrange, randommove*) function. Here the parameter *group* is a MOOSE @{Wrapper.Group} object
 -- and **all** units in this group are defined as bombing targets.
 -- 
 -- ## Fine Tuning

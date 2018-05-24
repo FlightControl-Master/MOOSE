@@ -8,7 +8,7 @@
 -- 
 -- ===       
 --
--- @module AI_A2A_GCI
+-- @module AI.AI_A2A_GCI
 
 
 
@@ -16,13 +16,13 @@
 -- @extends AI.AI_A2A#AI_A2A
 
 
---- # AI_A2A_GCI class, extends @{AI_A2A#AI_A2A}
+--- # AI_A2A_GCI class, extends @{AI.AI_A2A#AI_A2A}
 -- 
 -- The AI_A2A_GCI class implements the core functions to intercept intruders. The Engage function will intercept intruders.
 -- 
 -- ![Process](..\Presentations\AI_GCI\Dia3.JPG)
 -- 
--- The AI_A2A_GCI is assigned a @{Group} and this must be done before the AI_A2A_GCI process can be started using the **Start** event.
+-- The AI_A2A_GCI is assigned a @{Wrapper.Group} and this must be done before the AI_A2A_GCI process can be started using the **Start** event.
 -- 
 -- ![Process](..\Presentations\AI_GCI\Dia4.JPG)
 -- 
@@ -72,8 +72,8 @@
 --   * **@{AI_Patrol#AI_PATROL_ZONE.RTB}**: Route the AI to the home base.
 --   * **@{AI_Patrol#AI_PATROL_ZONE.Detect}**: The AI is detecting targets.
 --   * **@{AI_Patrol#AI_PATROL_ZONE.Detected}**: The AI has detected new targets.
---   * **@{#AI_A2A_GCI.Destroy}**: The AI has destroyed a bogey @{Unit}.
---   * **@{#AI_A2A_GCI.Destroyed}**: The AI has destroyed all bogeys @{Unit}s assigned in the CAS task.
+--   * **@{#AI_A2A_GCI.Destroy}**: The AI has destroyed a bogey @{Wrapper.Unit}.
+--   * **@{#AI_A2A_GCI.Destroyed}**: The AI has destroyed all bogeys @{Wrapper.Unit}s assigned in the CAS task.
 --   * **Status** ( Group ): The AI is checking status (fuel and damage). When the tresholds have been reached, the AI will RTB.
 --
 -- ## 3. Set the Range of Engagement

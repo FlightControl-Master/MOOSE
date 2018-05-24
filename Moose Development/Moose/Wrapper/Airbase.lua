@@ -8,13 +8,13 @@
 -- 
 -- ===
 -- 
--- @module Airbase
+-- @module Wrapper.Airbase
 
 
 --- @type AIRBASE
 -- @extends Wrapper.Positionable#POSITIONABLE
 
---- # AIRBASE class, extends @{Positionable#POSITIONABLE}
+--- # AIRBASE class, extends @{Wrapper.Positionable#POSITIONABLE}
 -- 
 -- AIRBASE is a wrapper class to handle the DCS Airbase objects:
 -- 

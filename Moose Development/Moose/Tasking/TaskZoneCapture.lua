@@ -8,7 +8,7 @@
 -- 
 -- ===
 --   
--- @module TaskZoneCapture
+-- @module Tasking.TaskZoneCapture
 
 do -- TASK_ZONE_GOAL
 
@@ -24,7 +24,7 @@ do -- TASK_ZONE_GOAL
   -- 
   --   * **None**: Start of the process
   --   * **Planned**: The A2G task is planned.
-  --   * **Assigned**: The A2G task is assigned to a @{Group#GROUP}.
+  --   * **Assigned**: The A2G task is assigned to a @{Wrapper.Group#GROUP}.
   --   * **Success**: The A2G task is successfully completed.
   --   * **Failed**: The A2G task has failed. This will happen if the player exists the task early, without communicating a possible cancellation to HQ.
   -- 
@@ -44,7 +44,7 @@ do -- TASK_ZONE_GOAL
   --- Instantiates a new TASK_ZONE_GOAL.
   -- @param #TASK_ZONE_GOAL self
   -- @param Tasking.Mission#MISSION Mission
-  -- @param Set#SET_GROUP SetGroup The set of groups for which the Task can be assigned.
+  -- @param Core.Set#SET_GROUP SetGroup The set of groups for which the Task can be assigned.
   -- @param #string TaskName The name of the Task.
   -- @param Core.ZoneGoal#ZONE_GOAL ZoneGoal
   -- @return #TASK_ZONE_GOAL self

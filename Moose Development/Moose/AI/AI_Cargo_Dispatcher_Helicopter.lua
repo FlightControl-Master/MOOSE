@@ -8,7 +8,7 @@
 -- 
 -- ===       
 --
--- @module AI_Cargo_Dispatcher_Helicopter
+-- @module AI.AI_Cargo_Dispatcher_Helicopter
 
 --- @type AI_CARGO_DISPATCHER_HELICOPTER
 -- @extends AI.AI_Cargo_Dispatcher#AI_CARGO_DISPATCHER
@@ -93,7 +93,7 @@ AI_CARGO_DISPATCHER_HELICOPTER = {
 
 --- Creates a new AI_CARGO_DISPATCHER_HELICOPTER object.
 -- @param #AI_CARGO_DISPATCHER_HELICOPTER self
--- @param Core.Set#SET_GROUP SetHelicopter The collection of Helicopter @{Group}s.
+-- @param Core.Set#SET_GROUP SetHelicopter The collection of Helicopter @{Wrapper.Group}s.
 -- @param Core.Set#SET_CARGO SetCargo The collection of @{Cargo} derived objects.
 -- @param Core.Set#SET_ZONE SetDeployZone The collection of deploy @{Zone}s, which are used to where the cargo will be deployed by the Helicopters. 
 -- @return #AI_CARGO_DISPATCHER_HELICOPTER

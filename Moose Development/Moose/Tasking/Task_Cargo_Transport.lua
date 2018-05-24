@@ -3,7 +3,7 @@
 -- ![Banner Image](..\Presentations\TASK_CARGO\Dia1.JPG)
 -- 
 -- ===
--- @module
+-- @module Tasking.Task_Cargo_Transport
 
 
 do -- TASK_CARGO_TRANSPORT
@@ -18,7 +18,7 @@ do -- TASK_CARGO_TRANSPORT
   --- Instantiates a new TASK_CARGO_TRANSPORT.
   -- @param #TASK_CARGO_TRANSPORT self
   -- @param Tasking.Mission#MISSION Mission
-  -- @param Set#SET_GROUP SetGroup The set of groups for which the Task can be assigned.
+  -- @param Core.Set#SET_GROUP SetGroup The set of groups for which the Task can be assigned.
   -- @param #string TaskName The name of the Task.
   -- @param Core.Set#SET_CARGO SetCargo The scope of the cargo to be transported.
   -- @param #string TaskBriefing The Cargo Task briefing.

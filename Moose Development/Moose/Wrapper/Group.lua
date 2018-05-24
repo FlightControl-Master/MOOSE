@@ -32,7 +32,7 @@
 
 
 --- 
--- # GROUP class, extends @{Controllable#CONTROLLABLE}
+-- # GROUP class, extends @{Wrapper.Controllable#CONTROLLABLE}
 -- 
 -- For each DCS Group object alive within a running mission, a GROUP wrapper object (instance) will be created within the _@{DATABASE} object.
 -- This is done at the beginning of the mission (when the mission starts), and dynamically when new DCS Group objects are spawned (using the @{SPAWN} class).
@@ -51,21 +51,21 @@
 --
 -- ## GROUP task methods
 --
--- A GROUP is a @{Controllable}. See the @{Controllable} task methods section for a description of the task methods.
+-- A GROUP is a @{Wrapper.Controllable}. See the @{Wrapper.Controllable} task methods section for a description of the task methods.
 --
 -- ### Obtain the mission from group templates
 -- 
 -- Group templates contain complete mission descriptions. Sometimes you want to copy a complete mission from a group and assign it to another:
 -- 
---   * @{Controllable#CONTROLLABLE.TaskMission}: (AIR + GROUND) Return a mission task from a mission template.
+--   * @{Wrapper.Controllable#CONTROLLABLE.TaskMission}: (AIR + GROUND) Return a mission task from a mission template.
 --
 -- ## GROUP Command methods
 --
--- A GROUP is a @{Controllable}. See the @{Controllable} command methods section for a description of the command methods.
+-- A GROUP is a @{Wrapper.Controllable}. See the @{Wrapper.Controllable} command methods section for a description of the command methods.
 -- 
 -- ## GROUP option methods
 --
--- A GROUP is a @{Controllable}. See the @{Controllable} option methods section for a description of the option methods.
+-- A GROUP is a @{Wrapper.Controllable}. See the @{Wrapper.Controllable} option methods section for a description of the option methods.
 -- 
 -- ## GROUP Zone validation methods
 -- 
@@ -76,7 +76,7 @@
 --   * @{#GROUP.IsPartlyInZone}: Returns true if some units of the group are within a @{Zone}.
 --   * @{#GROUP.IsNotInZone}: Returns true if none of the group units of the group are within a @{Zone}.
 --   
--- The zone can be of any @{Zone} class derived from @{Zone#ZONE_BASE}. So, these methods are polymorphic to the zones tested on.
+-- The zone can be of any @{Zone} class derived from @{Core.Zone#ZONE_BASE}. So, these methods are polymorphic to the zones tested on.
 -- 
 -- ## GROUP AI methods
 -- 
@@ -112,7 +112,7 @@ GROUPTEMPLATE.Takeoff = {
 
 --- Create a new GROUP from a given GroupTemplate as a parameter.
 -- Note that the GroupTemplate is NOT spawned into the mission.
--- It is merely added to the @{Database}.
+-- It is merely added to the @{Core.Database}.
 -- @param #GROUP self
 -- @param #table GroupTemplate The GroupTemplate Structure exactly as defined within the mission editor.
 -- @param Dcs.DCScoalition#coalition.side CoalitionSide The coalition.side of the group.
@@ -209,8 +209,8 @@ end
 --   * Exist at run-time.
 --   * Has at least one unit.
 -- 
--- When the first @{Unit} of the Group is active, it will return true.
--- If the first @{Unit} of the Group is inactive, it will return false.
+-- When the first @{Wrapper.Unit} of the Group is active, it will return true.
+-- If the first @{Wrapper.Unit} of the Group is inactive, it will return false.
 -- 
 -- @param #GROUP self
 -- @return #boolean true if the Group is alive and active.
@@ -380,9 +380,10 @@ function GROUP:GetSpeedMax()
   return nil
 end
 
---- Returns a list of @{Unit} objects of the @{Group}.
+
+--- Returns a list of @{Wrapper.Unit} objects of the @{Wrapper.Group}.
 -- @param #GROUP self
--- @return #list<Wrapper.Unit#UNIT> The list of @{Unit} objects of the @{Group}.
+-- @return #list<Wrapper.Unit#UNIT> The list of @{Wrapper.Unit} objects of the @{Wrapper.Group}.
 function GROUP:GetUnits()
   self:F2( { self.GroupName } )
   local DCSGroup = self:GetDCSObject()
@@ -401,9 +402,9 @@ function GROUP:GetUnits()
 end
 
 
---- Returns a list of @{Unit} objects of the @{Group} that are occupied by a player.
+--- Returns a list of @{Wrapper.Unit} objects of the @{Wrapper.Group} that are occupied by a player.
 -- @param #GROUP self
--- @return #list<Wrapper.Unit#UNIT> The list of player occupied @{Unit} objects of the @{Group}.
+-- @return #list<Wrapper.Unit#UNIT> The list of player occupied @{Wrapper.Unit} objects of the @{Wrapper.Group}.
 function GROUP:GetPlayerUnits()
   self:F2( { self.GroupName } )
   local DCSGroup = self:GetDCSObject()
@@ -800,7 +801,7 @@ do -- Is Zone methods
 --- Returns true if all units of the group are within a @{Zone}.
 -- @param #GROUP self
 -- @param Core.Zone#ZONE_BASE Zone The zone to test.
--- @return #boolean Returns true if the Group is completely within the @{Zone#ZONE_BASE}
+-- @return #boolean Returns true if the Group is completely within the @{Core.Zone#ZONE_BASE}
 function GROUP:IsCompletelyInZone( Zone )
   self:F2( { self.GroupName, Zone } )
   
@@ -820,7 +821,7 @@ end
 --- Returns true if some units of the group are within a @{Zone}.
 -- @param #GROUP self
 -- @param Core.Zone#ZONE_BASE Zone The zone to test.
--- @return #boolean Returns true if the Group is partially within the @{Zone#ZONE_BASE}
+-- @return #boolean Returns true if the Group is partially within the @{Core.Zone#ZONE_BASE}
 function GROUP:IsPartlyInZone( Zone )
   self:F2( { self.GroupName, Zone } )
   
@@ -848,7 +849,7 @@ end
 --- Returns true if none of the group units of the group are within a @{Zone}.
 -- @param #GROUP self
 -- @param Core.Zone#ZONE_BASE Zone The zone to test.
--- @return #boolean Returns true if the Group is not within the @{Zone#ZONE_BASE}
+-- @return #boolean Returns true if the Group is not within the @{Core.Zone#ZONE_BASE}
 function GROUP:IsNotInZone( Zone )
   self:F2( { self.GroupName, Zone } )
   
@@ -1194,7 +1195,7 @@ function GROUP:InitRandomizePositionRadius( OuterRadius, InnerRadius )
 end
 
 
---- Respawn the @{Group} at a @{Point}.
+--- Respawn the @{Wrapper.Group} at a @{Point}.
 -- The method will setup the new group template according the Init(Respawn) settings provided for the group.
 -- These settings can be provided by calling the relevant Init...() methods of the Group.
 -- 
@@ -1408,7 +1409,7 @@ function GROUP:GetTaskRoute()
   return routines.utils.deepCopy( _DATABASE.Templates.Groups[self.GroupName].Template.route.points )
 end
 
---- Return the route of a group by using the @{Database#DATABASE} class.
+--- Return the route of a group by using the @{Core.Database#DATABASE} class.
 -- @param #GROUP self
 -- @param #number Begin The route point from where the copy will start. The base route point is 0.
 -- @param #number End The route point where the copy will end. The End point is the last point - the End point. The last point has base 0.
@@ -1499,17 +1500,17 @@ end
 
 do -- Route methods
 
-  --- (AIR) Return the Group to an @{Airbase#AIRBASE}.  
+  --- (AIR) Return the Group to an @{Wrapper.Airbase#AIRBASE}.  
   -- The following things are to be taken into account:
   -- 
   --   * The group is respawned to achieve the RTB, there may be side artefacts as a result of this. (Like weapons suddenly come back).
   --   * A group consisting out of more than one unit, may rejoin formation when respawned.
   --   * A speed can be given in km/h. If no speed is specified, the maximum speed of the first unit will be taken to return to base.
-  --   * When there is no @{Airbase} object specified, the group will return to the home base if the route of the group is pinned at take-off or at landing to a base.
-  --   * When there is no @{Airbase} object specified and the group route is not pinned to any airbase, it will return to the nearest airbase.
+  --   * When there is no @{Wrapper.Airbase} object specified, the group will return to the home base if the route of the group is pinned at take-off or at landing to a base.
+  --   * When there is no @{Wrapper.Airbase} object specified and the group route is not pinned to any airbase, it will return to the nearest airbase.
   -- 
   -- @param #GROUP self
-  -- @param Wrapper.Airbase#AIRBASE RTBAirbase (optional) The @{Airbase} to return to. If blank, the controllable will return to the nearest friendly airbase.
+  -- @param Wrapper.Airbase#AIRBASE RTBAirbase (optional) The @{Wrapper.Airbase} to return to. If blank, the controllable will return to the nearest friendly airbase.
   -- @param #number Speed (optional) The Speed, if no Speed is given, the maximum Speed of the first unit is selected. 
   -- @return #GROUP
   function GROUP:RouteRTB( RTBAirbase, Speed )

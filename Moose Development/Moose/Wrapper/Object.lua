@@ -8,7 +8,7 @@
 -- 
 -- ===
 -- 
--- @module Object
+-- @module Wrapper.Object
 
 
 --- @type OBJECT
@@ -16,7 +16,7 @@
 -- @field #string ObjectName The name of the Object.
 
 
---- # OBJECT class, extends @{Base#BASE}
+--- # OBJECT class, extends @{Core.Base#BASE}
 -- 
 -- OBJECT handles the DCS Object objects:
 --

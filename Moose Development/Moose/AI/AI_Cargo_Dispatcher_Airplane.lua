@@ -6,13 +6,13 @@
 -- 
 -- ===       
 --
--- @module AI_Cargo_Dispatcher_Airplane
+-- @module AI.AI_Cargo_Dispatcher_Airplane
 
 --- @type AI_CARGO_DISPATCHER_AIRPLANE
 -- @extends AI.AI_Cargo_Dispatcher#AI_CARGO_DISPATCHER
 
 
---- # AI\_CARGO\_DISPATCHER\_AIRPLANE class, extends @{Core.Base#BASE}
+--- # AI\_CARGO\_DISPATCHER\_AIRPLANE class, extends @{AI.AI_Cargo_Dispatcher#AI_CARGO_DISPATCHER}
 -- 
 -- ===
 -- 

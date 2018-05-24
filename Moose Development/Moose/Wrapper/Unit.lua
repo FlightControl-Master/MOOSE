@@ -17,14 +17,14 @@
 -- 
 -- ===
 -- 
--- @module Unit
+-- @module Wrapper.Unit
 
 
 --- @type UNIT
 -- @extends Wrapper.Controllable#CONTROLLABLE
 
 --- 
--- # UNIT class, extends @{Controllable#CONTROLLABLE}
+-- # UNIT class, extends @{Wrapper.Controllable#CONTROLLABLE}
 -- 
 -- For each DCS Unit object alive within a running mission, a UNIT wrapper object (instance) will be created within the _@{DATABASE} object.
 -- This is done at the beginning of the mission (when the mission starts), and dynamically when new DCS Unit objects are spawned (using the @{SPAWN} class).
@@ -75,7 +75,7 @@
 -- 
 -- ### Zones range
 -- 
--- To test whether the Unit is within a **zone**, use the @{#UNIT.IsInZone}() or the @{#UNIT.IsNotInZone}() methods. Any zone can be tested on, but the zone must be derived from @{Zone#ZONE_BASE}. 
+-- To test whether the Unit is within a **zone**, use the @{#UNIT.IsInZone}() or the @{#UNIT.IsNotInZone}() methods. Any zone can be tested on, but the zone must be derived from @{Core.Zone#ZONE_BASE}. 
 -- 
 -- ### Unit range
 -- 
@@ -190,7 +190,7 @@ function UNIT:Destroy( GenerateEvent )
 end
 
 
---- Respawn the @{Unit} using a (tweaked) template of the parent Group.
+--- Respawn the @{Wrapper.Unit} using a (tweaked) template of the parent Group.
 -- 
 -- This function will:
 -- 
@@ -573,9 +573,9 @@ function UNIT:GetFuel()
   return nil
 end
 
---- Returns a list of one @{Unit}.
+--- Returns a list of one @{Wrapper.Unit}.
 -- @param #UNIT self
--- @return #list<Wrapper.Unit#UNIT> A list of one @{Unit}.
+-- @return #list<Wrapper.Unit#UNIT> A list of one @{Wrapper.Unit}.
 function UNIT:GetUnits()
   self:F2( { self.UnitName } )
   local DCSUnit = self:GetDCSObject()
@@ -795,7 +795,7 @@ end
 --- Returns true if the unit is within a @{Zone}.
 -- @param #UNIT self
 -- @param Core.Zone#ZONE_BASE Zone The zone to test.
--- @return #boolean Returns true if the unit is within the @{Zone#ZONE_BASE}
+-- @return #boolean Returns true if the unit is within the @{Core.Zone#ZONE_BASE}
 function UNIT:IsInZone( Zone )
   self:F2( { self.UnitName, Zone } )
 
@@ -810,7 +810,7 @@ end
 --- Returns true if the unit is not within a @{Zone}.
 -- @param #UNIT self
 -- @param Core.Zone#ZONE_BASE Zone The zone to test.
--- @return #boolean Returns true if the unit is not within the @{Zone#ZONE_BASE}
+-- @return #boolean Returns true if the unit is not within the @{Core.Zone#ZONE_BASE}
 function UNIT:IsNotInZone( Zone )
   self:F2( { self.UnitName, Zone } )
 

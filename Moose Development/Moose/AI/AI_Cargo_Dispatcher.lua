@@ -6,7 +6,7 @@
 -- 
 -- ===       
 --
--- @module AI_Cargo_Dispatcher
+-- @module AI.AI_Cargo_Dispatcher
 
 --- @type AI_CARGO_DISPATCHER
 -- @extends Core.Fsm#FSM

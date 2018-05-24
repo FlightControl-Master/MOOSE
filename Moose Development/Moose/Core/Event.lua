@@ -61,8 +61,8 @@
 -- So, when the DCS event occurs, the class will be notified of that event.
 -- There are two functions which you use to subscribe to or unsubscribe from an event.
 -- 
---   * @{Base#BASE.HandleEvent}(): Subscribe to a DCS Event.
---   * @{Base#BASE.UnHandleEvent}(): Unsubscribe from a DCS Event.
+--   * @{Core.Base#BASE.HandleEvent}(): Subscribe to a DCS Event.
+--   * @{Core.Base#BASE.UnHandleEvent}(): Unsubscribe from a DCS Event.
 --   
 -- Note that for a UNIT, the event will be handled **for that UNIT only**!
 -- Note that for a GROUP, the event will be handled **for all the UNITs in that GROUP only**!
@@ -112,7 +112,7 @@
 -- # 2) EVENTS type
 -- 
 -- The EVENTS structure contains names for all the different DCS events that objects can subscribe to using the 
--- @{Base#BASE.HandleEvent}() method.
+-- @{Core.Base#BASE.HandleEvent}() method.
 -- 
 -- # 3) EVENTDATA type
 -- 
@@ -183,7 +183,7 @@ world.event.S_EVENT_NEW_ZONE = world.event.S_EVENT_MAX + 1002
 world.event.S_EVENT_DELETE_ZONE = world.event.S_EVENT_MAX + 1003
 
 --- The different types of events supported by MOOSE.
--- Use this structure to subscribe to events using the @{Base#BASE.HandleEvent}() method.
+-- Use this structure to subscribe to events using the @{Core.Base#BASE.HandleEvent}() method.
 -- @type EVENTS
 EVENTS = {
   Shot =              world.event.S_EVENT_SHOT,
@@ -235,7 +235,7 @@ EVENTS = {
 -- @field #string IniUnitName (UNIT/STATIC) The initiating UNIT name (same as IniDCSUnitName).
 -- @field Dcs.DCSGroup#Group IniDCSGroup (UNIT) The initiating {DCSGroup#Group}.
 -- @field #string IniDCSGroupName (UNIT) The initiating Group name.
--- @field Wrapper.Group#GROUP IniGroup (UNIT) The initiating MOOSE wrapper @{Group#GROUP} of the initiator Group object.
+-- @field Wrapper.Group#GROUP IniGroup (UNIT) The initiating MOOSE wrapper @{Wrapper.Group#GROUP} of the initiator Group object.
 -- @field #string IniGroupName UNIT) The initiating GROUP name (same as IniDCSGroupName).
 -- @field #string IniPlayerName (UNIT) The name of the initiating player in case the Unit is a client or player slot.
 -- @field Dcs.DCScoalition#coalition.side IniCoalition (UNIT) The coalition of the initiator.
@@ -250,7 +250,7 @@ EVENTS = {
 -- @field #string TgtUnitName (UNIT/STATIC) The target UNIT name (same as TgtDCSUnitName).
 -- @field Dcs.DCSGroup#Group TgtDCSGroup (UNIT) The target {DCSGroup#Group}.
 -- @field #string TgtDCSGroupName (UNIT) The target Group name.
--- @field Wrapper.Group#GROUP TgtGroup (UNIT) The target MOOSE wrapper @{Group#GROUP} of the target Group object.
+-- @field Wrapper.Group#GROUP TgtGroup (UNIT) The target MOOSE wrapper @{Wrapper.Group#GROUP} of the target Group object.
 -- @field #string TgtGroupName (UNIT) The target GROUP name (same as TgtDCSGroupName).
 -- @field #string TgtPlayerName (UNIT) The name of the target player in case the Unit is a client or player slot.
 -- @field Dcs.DCScoalition#coalition.side TgtCoalition (UNIT) The coalition of the target.
@@ -527,7 +527,7 @@ end
 
 
 
---- Clears all event subscriptions for a @{Base#BASE} derived object.
+--- Clears all event subscriptions for a @{Core.Base#BASE} derived object.
 -- @param #EVENT self
 -- @param Core.Base#BASE EventObject
 function EVENT:RemoveAll( EventObject  )

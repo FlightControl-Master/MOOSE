@@ -8,7 +8,7 @@
 -- 
 -- ===
 -- 
--- @module Task_Cargo_Dispatcher
+-- @module Tasking.Task_Cargo_Dispatcher
 
 do -- TASK_CARGO_DISPATCHER
 
@@ -187,7 +187,7 @@ do -- TASK_CARGO_DISPATCHER
   --- TASK_CARGO_DISPATCHER constructor.
   -- @param #TASK_CARGO_DISPATCHER self
   -- @param Tasking.Mission#MISSION Mission The mission for which the task dispatching is done.
-  -- @param Set#SET_GROUP SetGroup The set of groups that can join the tasks within the mission.
+  -- @param Core.Set#SET_GROUP SetGroup The set of groups that can join the tasks within the mission.
   -- @return #TASK_CARGO_DISPATCHER self
   function TASK_CARGO_DISPATCHER:New( Mission, SetGroup )
   
@@ -498,7 +498,7 @@ do -- TASK_CARGO_DISPATCHER
   
   --- Evaluates of a CSAR task needs to be started.
   -- @param #TASK_CARGO_DISPATCHER self
-  -- @return Set#SET_CARGO The SetCargo to be rescued.
+  -- @return Core.Set#SET_CARGO The SetCargo to be rescued.
   -- @return #nil If there is no CSAR task required.
   function TASK_CARGO_DISPATCHER:EvaluateCSAR( CSARUnit )
   
@@ -515,7 +515,7 @@ do -- TASK_CARGO_DISPATCHER
 
   
 
-  --- Assigns tasks to the @{Set#SET_GROUP}.
+  --- Assigns tasks to the @{Core.Set#SET_GROUP}.
   -- @param #TASK_CARGO_DISPATCHER self
   -- @return #boolean Return true if you want the task assigning to continue... false will cancel the loop.
   function TASK_CARGO_DISPATCHER:ManageTasks()

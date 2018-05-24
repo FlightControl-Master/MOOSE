@@ -23,25 +23,25 @@
 --
 -- ===
 --
--- @module AI_Cas
+-- @module AI.AI_Cas
 
 
 --- AI_CAS_ZONE class
 -- @type AI_CAS_ZONE
--- @field Wrapper.Controllable#CONTROLLABLE AIControllable The @{Controllable} patrolling.
+-- @field Wrapper.Controllable#CONTROLLABLE AIControllable The @{Wrapper.Controllable} patrolling.
 -- @field Core.Zone#ZONE_BASE TargetZone The @{Zone} where the patrol needs to be executed.
 -- @extends AI.AI_Patrol#AI_PATROL_ZONE
 
---- # AI_CAS_ZONE class, extends @{AI_Patrol#AI_PATROL_ZONE}
+--- # AI_CAS_ZONE class, extends @{AI.AI_Patrol#AI_PATROL_ZONE}
 -- 
--- AI_CAS_ZONE derives from the @{AI_Patrol#AI_PATROL_ZONE}, inheriting its methods and behaviour.
+-- AI_CAS_ZONE derives from the @{AI.AI_Patrol#AI_PATROL_ZONE}, inheriting its methods and behaviour.
 --  
--- The AI_CAS_ZONE class implements the core functions to provide Close Air Support in an Engage @{Zone} by an AIR @{Controllable} or @{Group}.
+-- The AI_CAS_ZONE class implements the core functions to provide Close Air Support in an Engage @{Zone} by an AIR @{Wrapper.Controllable} or @{Wrapper.Group}.
 -- The AI_CAS_ZONE runs a process. It holds an AI in a Patrol Zone and when the AI is commanded to engage, it will fly to an Engage Zone.
 -- 
 -- ![HoldAndEngage](..\Presentations\AI_CAS\Dia3.JPG)
 -- 
--- The AI_CAS_ZONE is assigned a @{Group} and this must be done before the AI_CAS_ZONE process can be started through the **Start** event.
+-- The AI_CAS_ZONE is assigned a @{Wrapper.Group} and this must be done before the AI_CAS_ZONE process can be started through the **Start** event.
 --  
 -- ![Start Event](..\Presentations\AI_CAS\Dia4.JPG)
 -- 
@@ -114,8 +114,8 @@
 --   * **@{AI_Patrol#AI_PATROL_ZONE.RTB}**: Route the AI to the home base.
 --   * **@{AI_Patrol#AI_PATROL_ZONE.Detect}**: The AI is detecting targets.
 --   * **@{AI_Patrol#AI_PATROL_ZONE.Detected}**: The AI has detected new targets.
---   * **@{#AI_CAS_ZONE.Destroy}**: The AI has destroyed a target @{Unit}.
---   * **@{#AI_CAS_ZONE.Destroyed}**: The AI has destroyed all target @{Unit}s assigned in the CAS task.
+--   * **@{#AI_CAS_ZONE.Destroy}**: The AI has destroyed a target @{Wrapper.Unit}.
+--   * **@{#AI_CAS_ZONE.Destroyed}**: The AI has destroyed all target @{Wrapper.Unit}s assigned in the CAS task.
 --   * **Status**: The AI is checking status (fuel and damage). When the tresholds have been reached, the AI will RTB.
 -- 
 -- ===
@@ -132,8 +132,8 @@ AI_CAS_ZONE = {
 -- @param Core.Zone#ZONE_BASE PatrolZone The @{Zone} where the patrol needs to be executed.
 -- @param Dcs.DCSTypes#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
 -- @param Dcs.DCSTypes#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
--- @param Dcs.DCSTypes#Speed  PatrolMinSpeed The minimum speed of the @{Controllable} in km/h.
--- @param Dcs.DCSTypes#Speed  PatrolMaxSpeed The maximum speed of the @{Controllable} in km/h.
+-- @param Dcs.DCSTypes#Speed  PatrolMinSpeed The minimum speed of the @{Wrapper.Controllable} in km/h.
+-- @param Dcs.DCSTypes#Speed  PatrolMaxSpeed The maximum speed of the @{Wrapper.Controllable} in km/h.
 -- @param Core.Zone#ZONE_BASE EngageZone The zone where the engage will happen.
 -- @param Dcs.DCSTypes#AltitudeType PatrolAltType The altitude type ("RADIO"=="AGL", "BARO"=="ASL"). Defaults to RADIO
 -- @return #AI_CAS_ZONE self

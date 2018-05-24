@@ -16,7 +16,7 @@
 -- 
 -- ===
 -- 
--- @module Cargo
+-- @module Cargo.Cargo
 
 -- Events
 
@@ -152,7 +152,7 @@ do -- CARGO
   -- @field #boolean Representable This flag defines if the cargo can be represented by a DCS Unit.
   -- @field #boolean Containable This flag defines if the cargo can be contained within a DCS Unit.
   
-  --- # (R2.4) CARGO class, extends @{Fsm#FSM_PROCESS}
+  --- # (R2.4) CARGO class, extends @{Core.Fsm#FSM_PROCESS}
   -- 
   -- The CARGO class defines the core functions that defines a cargo object within MOOSE.
   -- A cargo is a **logical object** defined that is available for transport, and has a life status within a simulation.
@@ -708,11 +708,11 @@ do -- CARGO
     return self
   end
   
-  --- Send a CC message to a @{Group}.
+  --- Send a CC message to a @{Wrapper.Group}.
   -- @param #CARGO self
   -- @param #string Message
   -- @param Wrapper.Group#GROUP CarrierGroup The Carrier Group.
-  -- @param #sring Name (optional) The name of the Group used as a prefix for the message to the Group. If not provided, there will be nothing shown.
+  -- @param #string Name (optional) The name of the Group used as a prefix for the message to the Group. If not provided, there will be nothing shown.
   function CARGO:MessageToGroup( Message, CarrierGroup, Name )
   
     MESSAGE:New( Message, 20, "Cargo " .. self:GetName() ):ToGroup( CarrierGroup )
@@ -864,11 +864,11 @@ do -- CARGO_REPRESENTABLE
     return self  
   end
   
-  --- Send a message to a @{Group} through a communication channel near the cargo.
+  --- Send a message to a @{Wrapper.Group} through a communication channel near the cargo.
   -- @param #CARGO_REPRESENTABLE self
   -- @param #string Message
   -- @param Wrapper.Group#GROUP TaskGroup
-  -- @param #sring Name (optional) The name of the Group used as a prefix for the message to the Group. If not provided, there will be nothing shown.
+  -- @param #string Name (optional) The name of the Group used as a prefix for the message to the Group. If not provided, there will be nothing shown.
   function CARGO_REPRESENTABLE:MessageToGroup( Message, TaskGroup, Name )
 
     local CoordinateZone = ZONE_RADIUS:New( "Zone" , self:GetCoordinate():GetVec2(), 500 )
@@ -916,11 +916,11 @@ do -- CARGO_REPORTABLE
     return self
   end
   
-  --- Send a CC message to a @{Group}.
+  --- Send a CC message to a @{Wrapper.Group}.
   -- @param #CARGO_REPORTABLE self
   -- @param #string Message
   -- @param Wrapper.Group#GROUP TaskGroup
-  -- @param #sring Name (optional) The name of the Group used as a prefix for the message to the Group. If not provided, there will be nothing shown.
+  -- @param #string Name (optional) The name of the Group used as a prefix for the message to the Group. If not provided, there will be nothing shown.
   function CARGO_REPORTABLE:MessageToGroup( Message, TaskGroup, Name )
   
     MESSAGE:New( Message, 20, "Cargo " .. self:GetName() .. " reporting" ):ToGroup( TaskGroup )

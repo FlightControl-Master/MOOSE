@@ -38,7 +38,7 @@
 -- ### Contributions: [FlightControl](https://forums.eagle.ru/member.php?u=89536)
 -- 
 -- ====
--- @module PseudoATC
+-- @module Functional.PseudoATC
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 --- PSEUDOATC class
@@ -53,7 +53,7 @@
 -- @field #boolean eventsmoose If true, events are handled by MOOSE. If false, events are handled directly by DCS eventhandler.
 -- @extends Core.Base#BASE
 
----# PSEUDOATC class, extends @{Base#BASE}
+---# PSEUDOATC class, extends @{Core.Base#BASE}
 -- The PSEUDOATC class adds some rudimentary ATC functionality via the radio menu.
 -- 
 -- Local weather reports can be requested for nearby airports and player's mission waypoints.

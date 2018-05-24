@@ -21,7 +21,7 @@
 -- 
 -- ===
 -- 
--- @module AI_Balancer
+-- @module AI.AI_Balancer
 
 --- @type AI_BALANCER
 -- @field Core.Set#SET_CLIENT SetClient
@@ -30,7 +30,7 @@
 -- @extends Core.Fsm#FSM_SET
 
 
---- # AI_BALANCER class, extends @{Fsm#FSM_SET}
+--- # AI_BALANCER class, extends @{Core.Fsm#FSM_SET}
 -- 
 -- The AI_BALANCER class monitors and manages as many replacement AI groups as there are
 -- CLIENTS in a SET_CLIENT collection, which are not occupied by human players. 
@@ -78,8 +78,8 @@
 -- However, there are 2 additional options that you can use to customize the destroy behaviour.
 -- When a human player joins a slot, you can configure to let the AI return to:
 -- 
---    * @{#AI_BALANCER.ReturnToHomeAirbase}: Returns the AI to the **home** @{Airbase#AIRBASE}.
---    * @{#AI_BALANCER.ReturnToNearestAirbases}: Returns the AI to the **nearest friendly** @{Airbase#AIRBASE}.
+--    * @{#AI_BALANCER.ReturnToHomeAirbase}: Returns the AI to the **home** @{Wrapper.Airbase#AIRBASE}.
+--    * @{#AI_BALANCER.ReturnToNearestAirbases}: Returns the AI to the **nearest friendly** @{Wrapper.Airbase#AIRBASE}.
 -- 
 -- Note that when AI returns to an airbase, the AI_BALANCER will trigger the **Return** event and the AI will return, 
 -- otherwise the AI_BALANCER will trigger a **Destroy** event, and the AI will be destroyed.
@@ -141,10 +141,10 @@ function AI_BALANCER:InitSpawnInterval( Earliest, Latest )
   return self
 end
 
---- Returns the AI to the nearest friendly @{Airbase#AIRBASE}.
+--- Returns the AI to the nearest friendly @{Wrapper.Airbase#AIRBASE}.
 -- @param #AI_BALANCER self
--- @param Dcs.DCSTypes#Distance ReturnThresholdRange If there is an enemy @{Client#CLIENT} within the ReturnThresholdRange given in meters, the AI will not return to the nearest @{Airbase#AIRBASE}.
--- @param Core.Set#SET_AIRBASE ReturnAirbaseSet The SET of @{Set#SET_AIRBASE}s to evaluate where to return to.
+-- @param Dcs.DCSTypes#Distance ReturnThresholdRange If there is an enemy @{Wrapper.Client#CLIENT} within the ReturnThresholdRange given in meters, the AI will not return to the nearest @{Wrapper.Airbase#AIRBASE}.
+-- @param Core.Set#SET_AIRBASE ReturnAirbaseSet The SET of @{Core.Set#SET_AIRBASE}s to evaluate where to return to.
 function AI_BALANCER:ReturnToNearestAirbases( ReturnThresholdRange, ReturnAirbaseSet )
 
   self.ToNearestAirbase = true
@@ -152,9 +152,9 @@ function AI_BALANCER:ReturnToNearestAirbases( ReturnThresholdRange, ReturnAirbas
   self.ReturnAirbaseSet = ReturnAirbaseSet
 end
 
---- Returns the AI to the home @{Airbase#AIRBASE}.
+--- Returns the AI to the home @{Wrapper.Airbase#AIRBASE}.
 -- @param #AI_BALANCER self
--- @param Dcs.DCSTypes#Distance ReturnThresholdRange If there is an enemy @{Client#CLIENT} within the ReturnThresholdRange given in meters, the AI will not return to the nearest @{Airbase#AIRBASE}.
+-- @param Dcs.DCSTypes#Distance ReturnThresholdRange If there is an enemy @{Wrapper.Client#CLIENT} within the ReturnThresholdRange given in meters, the AI will not return to the nearest @{Wrapper.Airbase#AIRBASE}.
 function AI_BALANCER:ReturnToHomeAirbase( ReturnThresholdRange )
 
   self.ToHomeAirbase = true

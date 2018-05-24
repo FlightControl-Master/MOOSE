@@ -42,8 +42,8 @@ local _ClassID = 0
 -- 
 -- ## 1.1) BASE constructor
 -- 
--- Any class derived from BASE, will use the @{Base#BASE.New} constructor embedded in the @{Base#BASE.Inherit} method. 
--- See an example at the @{Base#BASE.New} method how this is done.
+-- Any class derived from BASE, will use the @{Core.Base#BASE.New} constructor embedded in the @{Core.Base#BASE.Inherit} method. 
+-- See an example at the @{Core.Base#BASE.New} method how this is done.
 -- 
 -- ## 1.2) Trace information for debugging
 -- 

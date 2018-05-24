@@ -18,7 +18,7 @@ do -- UserSound
   -- @extends Core.Base#BASE
 
 
-  --- # USERSOUND class, extends @{Base#BASE}
+  --- # USERSOUND class, extends @{Core.Base#BASE}
   -- 
   -- Management of DCS User Sound.
   -- 
@@ -110,9 +110,9 @@ do -- UserSound
   end  
 
 
-  --- Play the usersound to the given @{Group}.
+  --- Play the usersound to the given @{Wrapper.Group}.
   -- @param #USERSOUND self
-  -- @param Wrapper.Group#GROUP Group The @{Group} to play the usersound to.
+  -- @param Wrapper.Group#GROUP Group The @{Wrapper.Group} to play the usersound to.
   -- @return #USERSOUND The usersound instance.
   -- @usage
   --   local BlueVictory = USERSOUND:New( "BlueVictory.ogg" )

@@ -40,13 +40,13 @@
 -- ### Contributions: Mechanist, Prof_Hilactic, FlightControl - Concept & Testing
 -- ### Author: FlightControl - Framework Design &  Programming
 -- 
--- @module DetectionManager
+-- @module Tasking.DetectionManager
 
 do -- DETECTION MANAGER
   
   --- DETECTION_MANAGER class.
   -- @type DETECTION_MANAGER
-  -- @field Set#SET_GROUP SetGroup The groups to which the FAC will report to.
+  -- @field Core.Set#SET_GROUP SetGroup The groups to which the FAC will report to.
   -- @field Functional.Detection#DETECTION_BASE Detection The DETECTION_BASE object that is used to report the detected objects.
   -- @extends Core.Fsm#FSM
   DETECTION_MANAGER = {
@@ -57,7 +57,7 @@ do -- DETECTION MANAGER
   
   --- FAC constructor.
   -- @param #DETECTION_MANAGER self
-  -- @param Set#SET_GROUP SetGroup
+  -- @param Core.Set#SET_GROUP SetGroup
   -- @param Functional.Detection#DETECTION_BASE Detection
   -- @return #DETECTION_MANAGER self
   function DETECTION_MANAGER:New( SetGroup, Detection )
@@ -217,7 +217,7 @@ do -- DETECTION MANAGER
     return self._ReportDisplayTime
   end
   
-  --- Reports the detected items to the @{Set#SET_GROUP}.
+  --- Reports the detected items to the @{Core.Set#SET_GROUP}.
   -- @param #DETECTION_MANAGER self
   -- @param Functional.Detection#DETECTION_BASE Detection
   -- @return #DETECTION_MANAGER self
@@ -233,7 +233,7 @@ do -- DETECTION_REPORTING
 
   --- DETECTION_REPORTING class.
   -- @type DETECTION_REPORTING
-  -- @field Set#SET_GROUP SetGroup The groups to which the FAC will report to.
+  -- @field Core.Set#SET_GROUP SetGroup The groups to which the FAC will report to.
   -- @field Functional.Detection#DETECTION_BASE Detection The DETECTION_BASE object that is used to report the detected objects.
   -- @extends #DETECTION_MANAGER
   DETECTION_REPORTING = {
@@ -243,7 +243,7 @@ do -- DETECTION_REPORTING
   
   --- DETECTION_REPORTING constructor.
   -- @param #DETECTION_REPORTING self
-  -- @param Set#SET_GROUP SetGroup
+  -- @param Core.Set#SET_GROUP SetGroup
   -- @param Functional.Detection#DETECTION_AREAS Detection
   -- @return #DETECTION_REPORTING self
   function DETECTION_REPORTING:New( SetGroup, Detection )
@@ -257,7 +257,7 @@ do -- DETECTION_REPORTING
   
   --- Creates a string of the detected items in a @{Detection}.
   -- @param #DETECTION_MANAGER self
-  -- @param Set#SET_UNIT DetectedSet The detected Set created by the @{Detection#DETECTION_BASE} object.
+  -- @param Core.Set#SET_UNIT DetectedSet The detected Set created by the @{Detection#DETECTION_BASE} object.
   -- @return #DETECTION_MANAGER self
   function DETECTION_REPORTING:GetDetectedItemsText( DetectedSet )
     self:F2()
@@ -287,9 +287,9 @@ do -- DETECTION_REPORTING
   
   
   
-  --- Reports the detected items to the @{Set#SET_GROUP}.
+  --- Reports the detected items to the @{Core.Set#SET_GROUP}.
   -- @param #DETECTION_REPORTING self
-  -- @param Wrapper.Group#GROUP Group The @{Group} object to where the report needs to go.
+  -- @param Wrapper.Group#GROUP Group The @{Wrapper.Group} object to where the report needs to go.
   -- @param Functional.Detection#DETECTION_AREAS Detection The detection created by the @{Detection#DETECTION_BASE} object.
   -- @return #boolean Return true if you want the reporting to continue... false will cancel the reporting loop.
   function DETECTION_REPORTING:ProcessDetected( Group, Detection )

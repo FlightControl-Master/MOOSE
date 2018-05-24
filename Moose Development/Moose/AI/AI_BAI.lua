@@ -21,25 +21,25 @@
 -- 
 -- ===
 --
--- @module AI_Bai
+-- @module AI.AI_Bai
 
 
 --- AI_BAI_ZONE class
 -- @type AI_BAI_ZONE
--- @field Wrapper.Controllable#CONTROLLABLE AIControllable The @{Controllable} patrolling.
+-- @field Wrapper.Controllable#CONTROLLABLE AIControllable The @{Wrapper.Controllable} patrolling.
 -- @field Core.Zone#ZONE_BASE TargetZone The @{Zone} where the patrol needs to be executed.
 -- @extends AI.AI_Patrol#AI_PATROL_ZONE
 
---- # AI_BAI_ZONE class, extends @{AI_Patrol#AI_PATROL_ZONE}
+--- # AI_BAI_ZONE class, extends @{AI.AI_Patrol#AI_PATROL_ZONE}
 -- 
--- AI_BAI_ZONE derives from the @{AI_Patrol#AI_PATROL_ZONE}, inheriting its methods and behaviour.
+-- AI_BAI_ZONE derives from the @{AI.AI_Patrol#AI_PATROL_ZONE}, inheriting its methods and behaviour.
 --  
--- The AI_BAI_ZONE class implements the core functions to provide BattleGround Air Interdiction in an Engage @{Zone} by an AIR @{Controllable} or @{Group}.
+-- The AI_BAI_ZONE class implements the core functions to provide BattleGround Air Interdiction in an Engage @{Zone} by an AIR @{Wrapper.Controllable} or @{Wrapper.Group}.
 -- The AI_BAI_ZONE runs a process. It holds an AI in a Patrol Zone and when the AI is commanded to engage, it will fly to an Engage Zone.
 -- 
 -- ![HoldAndEngage](..\Presentations\AI_BAI\Dia3.JPG)
 -- 
--- The AI_BAI_ZONE is assigned a @{Group} and this must be done before the AI_BAI_ZONE process can be started through the **Start** event.
+-- The AI_BAI_ZONE is assigned a @{Wrapper.Group} and this must be done before the AI_BAI_ZONE process can be started through the **Start** event.
 --  
 -- ![Start Event](..\Presentations\AI_BAI\Dia4.JPG)
 -- 
@@ -112,8 +112,8 @@
 --   * **@{AI_Patrol#AI_PATROL_ZONE.RTB}**: Route the AI to the home base.
 --   * **@{AI_Patrol#AI_PATROL_ZONE.Detect}**: The AI is detecting targets.
 --   * **@{AI_Patrol#AI_PATROL_ZONE.Detected}**: The AI has detected new targets.
---   * **@{#AI_BAI_ZONE.Destroy}**: The AI has destroyed a target @{Unit}.
---   * **@{#AI_BAI_ZONE.Destroyed}**: The AI has destroyed all target @{Unit}s assigned in the BOMB task.
+--   * **@{#AI_BAI_ZONE.Destroy}**: The AI has destroyed a target @{Wrapper.Unit}.
+--   * **@{#AI_BAI_ZONE.Destroyed}**: The AI has destroyed all target @{Wrapper.Unit}s assigned in the BOMB task.
 --   * **Status**: The AI is checking status (fuel and damage). When the tresholds have been reached, the AI will RTB.
 -- 
 -- ## 3. Modify the Engage Zone behaviour to pinpoint a **map object** or **scenery object**
@@ -142,8 +142,8 @@ AI_BAI_ZONE = {
 -- @param Core.Zone#ZONE_BASE PatrolZone The @{Zone} where the patrol needs to be executed.
 -- @param Dcs.DCSTypes#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
 -- @param Dcs.DCSTypes#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
--- @param Dcs.DCSTypes#Speed  PatrolMinSpeed The minimum speed of the @{Controllable} in km/h.
--- @param Dcs.DCSTypes#Speed  PatrolMaxSpeed The maximum speed of the @{Controllable} in km/h.
+-- @param Dcs.DCSTypes#Speed  PatrolMinSpeed The minimum speed of the @{Wrapper.Controllable} in km/h.
+-- @param Dcs.DCSTypes#Speed  PatrolMaxSpeed The maximum speed of the @{Wrapper.Controllable} in km/h.
 -- @param Core.Zone#ZONE_BASE EngageZone The zone where the engage will happen.
 -- @param Dcs.DCSTypes#AltitudeType PatrolAltType The altitude type ("RADIO"=="AGL", "BARO"=="ASL"). Defaults to RADIO
 -- @return #AI_BAI_ZONE self

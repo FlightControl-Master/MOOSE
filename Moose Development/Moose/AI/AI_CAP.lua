@@ -25,23 +25,23 @@
 -- 
 -- ===       
 --
--- @module AI_Cap
+-- @module AI.AI_Cap
 
 
 --- @type AI_CAP_ZONE
--- @field Wrapper.Controllable#CONTROLLABLE AIControllable The @{Controllable} patrolling.
+-- @field Wrapper.Controllable#CONTROLLABLE AIControllable The @{Wrapper.Controllable} patrolling.
 -- @field Core.Zone#ZONE_BASE TargetZone The @{Zone} where the patrol needs to be executed.
 -- @extends AI.AI_Patrol#AI_PATROL_ZONE
 
 
---- # AI_CAP_ZONE class, extends @{AI_CAP#AI_PATROL_ZONE}
+--- # AI_CAP_ZONE class, extends @{AI.AI_Patrol#AI_PATROL_ZONE}
 -- 
--- The AI_CAP_ZONE class implements the core functions to patrol a @{Zone} by an AI @{Controllable} or @{Group} 
+-- The AI_CAP_ZONE class implements the core functions to patrol a @{Zone} by an AI @{Wrapper.Controllable} or @{Wrapper.Group} 
 -- and automatically engage any airborne enemies that are within a certain range or within a certain zone.
 -- 
 -- ![Process](..\Presentations\AI_CAP\Dia3.JPG)
 -- 
--- The AI_CAP_ZONE is assigned a @{Group} and this must be done before the AI_CAP_ZONE process can be started using the **Start** event.
+-- The AI_CAP_ZONE is assigned a @{Wrapper.Group} and this must be done before the AI_CAP_ZONE process can be started using the **Start** event.
 -- 
 -- ![Process](..\Presentations\AI_CAP\Dia4.JPG)
 -- 
@@ -91,8 +91,8 @@
 --   * **@{AI_Patrol#AI_PATROL_ZONE.RTB}**: Route the AI to the home base.
 --   * **@{AI_Patrol#AI_PATROL_ZONE.Detect}**: The AI is detecting targets.
 --   * **@{AI_Patrol#AI_PATROL_ZONE.Detected}**: The AI has detected new targets.
---   * **@{#AI_CAP_ZONE.Destroy}**: The AI has destroyed a bogey @{Unit}.
---   * **@{#AI_CAP_ZONE.Destroyed}**: The AI has destroyed all bogeys @{Unit}s assigned in the CAS task.
+--   * **@{#AI_CAP_ZONE.Destroy}**: The AI has destroyed a bogey @{Wrapper.Unit}.
+--   * **@{#AI_CAP_ZONE.Destroyed}**: The AI has destroyed all bogeys @{Wrapper.Unit}s assigned in the CAS task.
 --   * **Status** ( Group ): The AI is checking status (fuel and damage). When the tresholds have been reached, the AI will RTB.
 --
 -- ## 3. Set the Range of Engagement
@@ -127,8 +127,8 @@ AI_CAP_ZONE = {
 -- @param Core.Zone#ZONE_BASE PatrolZone The @{Zone} where the patrol needs to be executed.
 -- @param Dcs.DCSTypes#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
 -- @param Dcs.DCSTypes#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
--- @param Dcs.DCSTypes#Speed  PatrolMinSpeed The minimum speed of the @{Controllable} in km/h.
--- @param Dcs.DCSTypes#Speed  PatrolMaxSpeed The maximum speed of the @{Controllable} in km/h.
+-- @param Dcs.DCSTypes#Speed  PatrolMinSpeed The minimum speed of the @{Wrapper.Controllable} in km/h.
+-- @param Dcs.DCSTypes#Speed  PatrolMaxSpeed The maximum speed of the @{Wrapper.Controllable} in km/h.
 -- @param Dcs.DCSTypes#AltitudeType PatrolAltType The altitude type ("RADIO"=="AGL", "BARO"=="ASL"). Defaults to RADIO
 -- @return #AI_CAP_ZONE self
 function AI_CAP_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolMinSpeed, PatrolMaxSpeed, PatrolAltType )

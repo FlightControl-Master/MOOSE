@@ -8,13 +8,13 @@
 -- 
 -- ===
 --   
--- @module Task_A2G
+-- @module Tasking.Task_A2G
 
 do -- TASK_A2G
 
   --- The TASK_A2G class
   -- @type TASK_A2G
-  -- @field Set#SET_UNIT TargetSetUnit
+  -- @field Core.Set#SET_UNIT TargetSetUnit
   -- @extends Tasking.Task#TASK
 
   --- # TASK_A2G class, extends @{Task#TASK}
@@ -25,7 +25,7 @@ do -- TASK_A2G
   -- 
   --   * **None**: Start of the process
   --   * **Planned**: The A2G task is planned.
-  --   * **Assigned**: The A2G task is assigned to a @{Group#GROUP}.
+  --   * **Assigned**: The A2G task is assigned to a @{Wrapper.Group#GROUP}.
   --   * **Success**: The A2G task is successfully completed.
   --   * **Failed**: The A2G task has failed. This will happen if the player exists the task early, without communicating a possible cancellation to HQ.
   -- 
@@ -45,9 +45,9 @@ do -- TASK_A2G
   --- Instantiates a new TASK_A2G.
   -- @param #TASK_A2G self
   -- @param Tasking.Mission#MISSION Mission
-  -- @param Set#SET_GROUP SetGroup The set of groups for which the Task can be assigned.
+  -- @param Core.Set#SET_GROUP SetGroup The set of groups for which the Task can be assigned.
   -- @param #string TaskName The name of the Task.
-  -- @param Set#SET_UNIT UnitSetTargets
+  -- @param Core.Set#SET_UNIT UnitSetTargets
   -- @param #number TargetDistance The distance to Target when the Player is considered to have "arrived" at the engagement range.
   -- @param Core.Zone#ZONE_BASE TargetZone The target zone, if known.
   -- If the TargetZone parameter is specified, the player will be routed to the center of the zone where all the targets are assumed to be.
@@ -364,7 +364,7 @@ do -- TASK_A2G_SEAD
 
   --- The TASK_A2G_SEAD class
   -- @type TASK_A2G_SEAD
-  -- @field Set#SET_UNIT TargetSetUnit
+  -- @field Core.Set#SET_UNIT TargetSetUnit
   -- @extends Tasking.Task#TASK
 
   --- # TASK_A2G_SEAD class, extends @{Task_A2G#TASK_A2G}
@@ -457,7 +457,7 @@ do -- TASK_A2G_BAI
 
   --- The TASK_A2G_BAI class
   -- @type TASK_A2G_BAI
-  -- @field Set#SET_UNIT TargetSetUnit
+  -- @field Core.Set#SET_UNIT TargetSetUnit
   -- @extends Tasking.Task#TASK
 
   --- # TASK_A2G_BAI class, extends @{Task_A2G#TASK_A2G}
@@ -553,7 +553,7 @@ do -- TASK_A2G_CAS
 
   --- The TASK_A2G_CAS class
   -- @type TASK_A2G_CAS
-  -- @field Set#SET_UNIT TargetSetUnit
+  -- @field Core.Set#SET_UNIT TargetSetUnit
   -- @extends Tasking.Task#TASK
 
   --- # TASK_A2G_CAS class, extends @{Task_A2G#TASK_A2G}

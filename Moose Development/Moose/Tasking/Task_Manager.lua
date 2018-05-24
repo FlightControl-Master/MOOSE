@@ -29,13 +29,13 @@
 -- ### Contributions: Mechanist, Prof_Hilactic, FlightControl - Concept & Testing
 -- ### Author: FlightControl - Framework Design &  Programming
 -- 
--- @module Task_Manager
+-- @module Tasking.Task_Manager
 
 do -- TASK_MANAGER
   
   --- TASK_MANAGER class.
   -- @type TASK_MANAGER
-  -- @field Set#SET_GROUP SetGroup The set of group objects containing players for which tasks are managed.
+  -- @field Core.Set#SET_GROUP SetGroup The set of group objects containing players for which tasks are managed.
   -- @extends Core.Fsm#FSM
   TASK_MANAGER = {
     ClassName = "TASK_MANAGER",
@@ -44,7 +44,7 @@ do -- TASK_MANAGER
   
   --- TASK\_MANAGER constructor.
   -- @param #TASK_MANAGER self
-  -- @param Set#SET_GROUP SetGroup The set of group objects containing players for which tasks are managed.
+  -- @param Core.Set#SET_GROUP SetGroup The set of group objects containing players for which tasks are managed.
   -- @return #TASK_MANAGER self
   function TASK_MANAGER:New( SetGroup )
   
@@ -180,7 +180,7 @@ do -- TASK_MANAGER
   end
   
   
-  --- Manages the tasks for the @{Set#SET_GROUP}.
+  --- Manages the tasks for the @{Core.Set#SET_GROUP}.
   -- @param #TASK_MANAGER self
   -- @return #TASK_MANAGER self
   function TASK_MANAGER:ManageTasks()

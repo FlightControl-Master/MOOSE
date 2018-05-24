@@ -30,27 +30,27 @@
 -- 
 -- ===
 -- 
--- @module AI_Patrol
+-- @module AI.AI_Patrol
 
 
 --- AI_PATROL_ZONE class
 -- @type AI_PATROL_ZONE
--- @field Wrapper.Controllable#CONTROLLABLE AIControllable The @{Controllable} patrolling.
+-- @field Wrapper.Controllable#CONTROLLABLE AIControllable The @{Wrapper.Controllable} patrolling.
 -- @field Core.Zone#ZONE_BASE PatrolZone The @{Zone} where the patrol needs to be executed.
 -- @field Dcs.DCSTypes#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
 -- @field Dcs.DCSTypes#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
--- @field Dcs.DCSTypes#Speed  PatrolMinSpeed The minimum speed of the @{Controllable} in km/h.
--- @field Dcs.DCSTypes#Speed  PatrolMaxSpeed The maximum speed of the @{Controllable} in km/h.
+-- @field Dcs.DCSTypes#Speed  PatrolMinSpeed The minimum speed of the @{Wrapper.Controllable} in km/h.
+-- @field Dcs.DCSTypes#Speed  PatrolMaxSpeed The maximum speed of the @{Wrapper.Controllable} in km/h.
 -- @field Core.Spawn#SPAWN CoordTest
 -- @extends Core.Fsm#FSM_CONTROLLABLE
 
---- # AI_PATROL_ZONE class, extends @{Fsm#FSM_CONTROLLABLE}
+--- # AI_PATROL_ZONE class, extends @{Core.Fsm#FSM_CONTROLLABLE}
 -- 
--- The AI_PATROL_ZONE class implements the core functions to patrol a @{Zone} by an AI @{Controllable} or @{Group}.
+-- The AI_PATROL_ZONE class implements the core functions to patrol a @{Zone} by an AI @{Wrapper.Controllable} or @{Wrapper.Group}.
 -- 
 -- ![Process](..\Presentations\AI_PATROL\Dia3.JPG)
 -- 
--- The AI_PATROL_ZONE is assigned a @{Group} and this must be done before the AI_PATROL_ZONE process can be started using the **Start** event.
+-- The AI_PATROL_ZONE is assigned a @{Wrapper.Group} and this must be done before the AI_PATROL_ZONE process can be started using the **Start** event.
 -- 
 -- ![Process](..\Presentations\AI_PATROL\Dia4.JPG)
 -- 
@@ -123,7 +123,7 @@
 --   * @{#AI_PATROL_ZONE.SetDetectionOff}(): Set the detection off, the AI will not detect for targets. The existing target list will NOT be erased.
 -- 
 -- The detection frequency can be set with @{#AI_PATROL_ZONE.SetRefreshTimeInterval}( seconds ), where the amount of seconds specify how much seconds will be waited before the next detection.
--- Use the method @{#AI_PATROL_ZONE.GetDetectedUnits}() to obtain a list of the @{Unit}s detected by the AI.
+-- Use the method @{#AI_PATROL_ZONE.GetDetectedUnits}() to obtain a list of the @{Wrapper.Unit}s detected by the AI.
 -- 
 -- The detection can be filtered to potential targets in a specific zone.
 -- Use the method @{#AI_PATROL_ZONE.SetDetectionZone}() to set the zone where targets need to be detected.
@@ -157,8 +157,8 @@ AI_PATROL_ZONE = {
 -- @param Core.Zone#ZONE_BASE PatrolZone The @{Zone} where the patrol needs to be executed.
 -- @param Dcs.DCSTypes#Altitude PatrolFloorAltitude The lowest altitude in meters where to execute the patrol.
 -- @param Dcs.DCSTypes#Altitude PatrolCeilingAltitude The highest altitude in meters where to execute the patrol.
--- @param Dcs.DCSTypes#Speed  PatrolMinSpeed The minimum speed of the @{Controllable} in km/h.
--- @param Dcs.DCSTypes#Speed  PatrolMaxSpeed The maximum speed of the @{Controllable} in km/h.
+-- @param Dcs.DCSTypes#Speed  PatrolMinSpeed The minimum speed of the @{Wrapper.Controllable} in km/h.
+-- @param Dcs.DCSTypes#Speed  PatrolMaxSpeed The maximum speed of the @{Wrapper.Controllable} in km/h.
 -- @param Dcs.DCSTypes#AltitudeType PatrolAltType The altitude type ("RADIO"=="AGL", "BARO"=="ASL"). Defaults to RADIO
 -- @return #AI_PATROL_ZONE self
 -- @usage
@@ -454,8 +454,8 @@ end
 
 --- Sets (modifies) the minimum and maximum speed of the patrol.
 -- @param #AI_PATROL_ZONE self
--- @param Dcs.DCSTypes#Speed  PatrolMinSpeed The minimum speed of the @{Controllable} in km/h.
--- @param Dcs.DCSTypes#Speed  PatrolMaxSpeed The maximum speed of the @{Controllable} in km/h.
+-- @param Dcs.DCSTypes#Speed  PatrolMinSpeed The minimum speed of the @{Wrapper.Controllable} in km/h.
+-- @param Dcs.DCSTypes#Speed  PatrolMaxSpeed The maximum speed of the @{Wrapper.Controllable} in km/h.
 -- @return #AI_PATROL_ZONE self
 function AI_PATROL_ZONE:SetSpeed( PatrolMinSpeed, PatrolMaxSpeed )
   self:F2( { PatrolMinSpeed, PatrolMaxSpeed } )
@@ -564,7 +564,7 @@ end
 
 --- Gets a list of @{Unit#UNIT}s that were detected by the AI.
 -- No filtering is applied, so, ANY detected UNIT can be in this list.
--- It is up to the mission designer to use the @{Unit} class and methods to filter the targets.
+-- It is up to the mission designer to use the @{Wrapper.Unit} class and methods to filter the targets.
 -- @param #AI_PATROL_ZONE self
 -- @return #table The list of @{Unit#UNIT}s
 function AI_PATROL_ZONE:GetDetectedUnits()

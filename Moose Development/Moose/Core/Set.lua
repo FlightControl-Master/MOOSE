@@ -11,10 +11,10 @@
 --   
 -- Various types of SET_ classes are available:
 -- 
---   * @{#SET_UNIT}: Defines a colleciton of @{Unit}s filtered by filter criteria.
---   * @{#SET_GROUP}: Defines a collection of @{Group}s filtered by filter criteria.
+--   * @{#SET_UNIT}: Defines a colleciton of @{Wrapper.Unit}s filtered by filter criteria.
+--   * @{#SET_GROUP}: Defines a collection of @{Wrapper.Group}s filtered by filter criteria.
 --   * @{#SET_CLIENT}: Defines a collection of @{Client}s filterd by filter criteria.
---   * @{#SET_AIRBASE}: Defines a collection of @{Airbase}s filtered by filter criteria.
+--   * @{#SET_AIRBASE}: Defines a collection of @{Wrapper.Airbase}s filtered by filter criteria.
 -- 
 -- These classes are derived from @{#SET_BASE}, which contains the main methods to manage SETs.
 -- 
@@ -41,8 +41,8 @@
 -- @extends Core.Base#BASE
 
 
---- # 1) SET_BASE class, extends @{Base#BASE}
--- The @{Set#SET_BASE} class defines the core functions that define a collection of objects.
+--- # 1) SET_BASE class, extends @{Core.Base#BASE}
+-- The @{Core.Set#SET_BASE} class defines the core functions that define a collection of objects.
 -- A SET provides iterators to iterate the SET, but will **temporarily** yield the ForEach interator loop at defined **"intervals"** to the mail simulator loop.
 -- In this way, large loops can be done while not blocking the simulator main processing loop.
 -- The default **"yield interval"** is after 10 objects processed.
@@ -50,11 +50,11 @@
 -- 
 -- ## 1.1) Add or remove objects from the SET
 -- 
--- Some key core functions are @{Set#SET_BASE.Add} and @{Set#SET_BASE.Remove} to add or remove objects from the SET in your logic.
+-- Some key core functions are @{Core.Set#SET_BASE.Add} and @{Core.Set#SET_BASE.Remove} to add or remove objects from the SET in your logic.
 -- 
 -- ## 1.2) Define the SET iterator **"yield interval"** and the **"time interval"**
 -- 
--- Modify the iterator intervals with the @{Set#SET_BASE.SetInteratorIntervals} method.
+-- Modify the iterator intervals with the @{Core.Set#SET_BASE.SetInteratorIntervals} method.
 -- You can set the **"yield interval"**, and the **"time interval"**. (See above).
 -- 
 -- @field #SET_BASE SET_BASE 
@@ -118,7 +118,7 @@ function SET_BASE:New( Database )
   return self
 end
 
---- Finds an @{Base#BASE} object based on the object Name.
+--- Finds an @{Core.Base#BASE} object based on the object Name.
 -- @param #SET_BASE self
 -- @param #string ObjectName
 -- @return Core.Base#BASE The Object found.
@@ -170,7 +170,7 @@ function SET_BASE:GetSetObjects()  -- R2.3
 end
 
 
---- Removes a @{Base#BASE} object from the @{Set#SET_BASE} and derived classes, based on the Object Name.
+--- Removes a @{Core.Base#BASE} object from the @{Core.Set#SET_BASE} and derived classes, based on the Object Name.
 -- @param #SET_BASE self
 -- @param #string ObjectName
 -- @param NoTriggerEvent (optional) When `true`, the :Remove() method will not trigger a **Removed** event.
@@ -195,7 +195,7 @@ function SET_BASE:Remove( ObjectName, NoTriggerEvent )
 end
 
 
---- Adds a @{Base#BASE} object in the @{Set#SET_BASE}, using a given ObjectName as the index.
+--- Adds a @{Core.Base#BASE} object in the @{Core.Set#SET_BASE}, using a given ObjectName as the index.
 -- @param #SET_BASE self
 -- @param #string ObjectName
 -- @param Core.Base#BASE Object
@@ -213,7 +213,7 @@ function SET_BASE:Add( ObjectName, Object )
   self:Added( ObjectName, Object )
 end
 
---- Adds a @{Base#BASE} object in the @{Set#SET_BASE}, using the Object Name as the index.
+--- Adds a @{Core.Base#BASE} object in the @{Core.Set#SET_BASE}, using the Object Name as the index.
 -- @param #SET_BASE self
 -- @param Wrapper.Object#OBJECT Object
 -- @return Core.Base#BASE The added BASE Object.
@@ -229,7 +229,7 @@ end
 
 
 
---- Gets a @{Base#BASE} object from the @{Set#SET_BASE} and derived classes, based on the Object Name.
+--- Gets a @{Core.Base#BASE} object from the @{Core.Set#SET_BASE} and derived classes, based on the Object Name.
 -- @param #SET_BASE self
 -- @param #string ObjectName
 -- @return Core.Base#BASE
@@ -242,7 +242,7 @@ function SET_BASE:Get( ObjectName )
   return Object
 end
 
---- Gets the first object from the @{Set#SET_BASE} and derived classes.
+--- Gets the first object from the @{Core.Set#SET_BASE} and derived classes.
 -- @param #SET_BASE self
 -- @return Core.Base#BASE
 function SET_BASE:GetFirst()
@@ -253,7 +253,7 @@ function SET_BASE:GetFirst()
   return FirstObject 
 end
 
---- Gets the last object from the @{Set#SET_BASE} and derived classes.
+--- Gets the last object from the @{Core.Set#SET_BASE} and derived classes.
 -- @param #SET_BASE self
 -- @return Core.Base#BASE
 function SET_BASE:GetLast()
@@ -264,7 +264,7 @@ function SET_BASE:GetLast()
   return LastObject 
 end
 
---- Gets a random object from the @{Set#SET_BASE} and derived classes.
+--- Gets a random object from the @{Core.Set#SET_BASE} and derived classes.
 -- @param #SET_BASE self
 -- @return Core.Base#BASE
 function SET_BASE:GetRandom()
@@ -275,7 +275,7 @@ function SET_BASE:GetRandom()
 end
 
 
---- Retrieves the amount of objects in the @{Set#SET_BASE} and derived classes.
+--- Retrieves the amount of objects in the @{Core.Set#SET_BASE} and derived classes.
 -- @param #SET_BASE self
 -- @return #number Count
 function SET_BASE:Count()
@@ -647,9 +647,9 @@ end
 --- @type SET_GROUP
 -- @extends Core.Set#SET_BASE
 
---- # SET_GROUP class, extends @{Set#SET_BASE}
+--- # SET_GROUP class, extends @{Core.Set#SET_BASE}
 -- 
--- Mission designers can use the @{Set#SET_GROUP} class to build sets of groups belonging to certain:
+-- Mission designers can use the @{Core.Set#SET_GROUP} class to build sets of groups belonging to certain:
 -- 
 --  * Coalitions
 --  * Categories
@@ -664,7 +664,7 @@ end
 -- 
 -- ## 2. Add or Remove GROUP(s) from SET_GROUP
 -- 
--- GROUPS can be added and removed using the @{Set#SET_GROUP.AddGroupsByName} and @{Set#SET_GROUP.RemoveGroupsByName} respectively. 
+-- GROUPS can be added and removed using the @{Core.Set#SET_GROUP.AddGroupsByName} and @{Core.Set#SET_GROUP.RemoveGroupsByName} respectively. 
 -- These methods take a single GROUP name or an array of GROUP names to be added or removed from SET_GROUP.
 -- 
 -- ## 3. SET_GROUP filter criteria
@@ -692,7 +692,7 @@ end
 -- 
 -- Planned filter criteria within development are (so these are not yet available):
 -- 
---    * @{#SET_GROUP.FilterZones}: Builds the SET_GROUP with the groups within a @{Zone#ZONE}.
+--    * @{#SET_GROUP.FilterZones}: Builds the SET_GROUP with the groups within a @{Core.Zone#ZONE}.
 -- 
 -- ## 4. SET_GROUP iterators
 -- 
@@ -1423,7 +1423,7 @@ do -- SET_UNIT
   --- @type SET_UNIT
   -- @extends Core.Set#SET_BASE
   
-  --- # 3) SET_UNIT class, extends @{Set#SET_BASE}
+  --- # 3) SET_UNIT class, extends @{Core.Set#SET_BASE}
   -- 
   -- Mission designers can use the SET_UNIT class to build sets of units belonging to certain:
   -- 
@@ -1441,7 +1441,7 @@ do -- SET_UNIT
   --   
   -- ## 3.2) Add or Remove UNIT(s) from SET_UNIT
   --
-  -- UNITs can be added and removed using the @{Set#SET_UNIT.AddUnitsByName} and @{Set#SET_UNIT.RemoveUnitsByName} respectively. 
+  -- UNITs can be added and removed using the @{Core.Set#SET_UNIT.AddUnitsByName} and @{Core.Set#SET_UNIT.RemoveUnitsByName} respectively. 
   -- These methods take a single UNIT name or an array of UNIT names to be added or removed from SET_UNIT.
   -- 
   -- ## 3.3) SET_UNIT filter criteria
@@ -1461,7 +1461,7 @@ do -- SET_UNIT
   -- 
   -- Planned filter criteria within development are (so these are not yet available):
   -- 
-  --    * @{#SET_UNIT.FilterZones}: Builds the SET_UNIT with the units within a @{Zone#ZONE}.
+  --    * @{#SET_UNIT.FilterZones}: Builds the SET_UNIT with the units within a @{Core.Zone#ZONE}.
   -- 
   -- ## 3.4) SET_UNIT iterators
   -- 
@@ -1483,7 +1483,7 @@ do -- SET_UNIT
   -- 
   -- Various methods exist for a SET_UNIT to perform actions or calculations and retrieve results from the SET_UNIT:
   -- 
-  --   * @{#SET_UNIT.GetTypeNames}(): Retrieve the type names of the @{Unit}s in the SET, delimited by a comma.
+  --   * @{#SET_UNIT.GetTypeNames}(): Retrieve the type names of the @{Wrapper.Unit}s in the SET, delimited by a comma.
   -- 
   -- ## 4. SET_UNIT iterators
   -- 
@@ -2392,10 +2392,10 @@ do -- SET_UNIT
   end
   
   
-  --- Retrieve the type names of the @{Unit}s in the SET, delimited by an optional delimiter.
+  --- Retrieve the type names of the @{Wrapper.Unit}s in the SET, delimited by an optional delimiter.
   -- @param #SET_UNIT self
   -- @param #string Delimiter (optional) The delimiter, which is default a comma.
-  -- @return #string The types of the @{Unit}s delimited.
+  -- @return #string The types of the @{Wrapper.Unit}s delimited.
   function SET_UNIT:GetTypeNames( Delimiter )
   
     Delimiter = Delimiter or ", "
@@ -2423,7 +2423,7 @@ do -- SET_STATIC
   --- @type SET_STATIC
   -- @extends Core.Set#SET_BASE
   
-  --- # 3) SET_STATIC class, extends @{Set#SET_BASE}
+  --- # 3) SET_STATIC class, extends @{Core.Set#SET_BASE}
   -- 
   -- Mission designers can use the SET_STATIC class to build sets of Statics belonging to certain:
   -- 
@@ -2441,7 +2441,7 @@ do -- SET_STATIC
   --   
   -- ## 3.2) Add or Remove STATIC(s) from SET_STATIC
   --
-  -- STATICs can be added and removed using the @{Set#SET_STATIC.AddStaticsByName} and @{Set#SET_STATIC.RemoveStaticsByName} respectively. 
+  -- STATICs can be added and removed using the @{Core.Set#SET_STATIC.AddStaticsByName} and @{Core.Set#SET_STATIC.RemoveStaticsByName} respectively. 
   -- These methods take a single STATIC name or an array of STATIC names to be added or removed from SET_STATIC.
   -- 
   -- ## 3.3) SET_STATIC filter criteria
@@ -2461,7 +2461,7 @@ do -- SET_STATIC
   -- 
   -- Planned filter criteria within development are (so these are not yet available):
   -- 
-  --    * @{#SET_STATIC.FilterZones}: Builds the SET_STATIC with the units within a @{Zone#ZONE}.
+  --    * @{#SET_STATIC.FilterZones}: Builds the SET_STATIC with the units within a @{Core.Zone#ZONE}.
   -- 
   -- ## 3.4) SET_STATIC iterators
   -- 
@@ -3099,9 +3099,9 @@ end
 
 
 
---- # 4) SET_CLIENT class, extends @{Set#SET_BASE}
+--- # 4) SET_CLIENT class, extends @{Core.Set#SET_BASE}
 -- 
--- Mission designers can use the @{Set#SET_CLIENT} class to build sets of units belonging to certain:
+-- Mission designers can use the @{Core.Set#SET_CLIENT} class to build sets of units belonging to certain:
 -- 
 --  * Coalitions
 --  * Categories
@@ -3117,7 +3117,7 @@ end
 --   
 -- ## 4.2) Add or Remove CLIENT(s) from SET_CLIENT 
 -- 
--- CLIENTs can be added and removed using the @{Set#SET_CLIENT.AddClientsByName} and @{Set#SET_CLIENT.RemoveClientsByName} respectively. 
+-- CLIENTs can be added and removed using the @{Core.Set#SET_CLIENT.AddClientsByName} and @{Core.Set#SET_CLIENT.RemoveClientsByName} respectively. 
 -- These methods take a single CLIENT name or an array of CLIENT names to be added or removed from SET_CLIENT.
 -- 
 -- ## 4.3) SET_CLIENT filter criteria
@@ -3137,7 +3137,7 @@ end
 -- 
 -- Planned filter criteria within development are (so these are not yet available):
 -- 
---    * @{#SET_CLIENT.FilterZones}: Builds the SET_CLIENT with the clients within a @{Zone#ZONE}.
+--    * @{#SET_CLIENT.FilterZones}: Builds the SET_CLIENT with the clients within a @{Core.Zone#ZONE}.
 -- 
 -- ## 4.4) SET_CLIENT iterators
 -- 
@@ -3512,9 +3512,9 @@ end
 
 
 
---- # 4) SET_PLAYER class, extends @{Set#SET_BASE}
+--- # 4) SET_PLAYER class, extends @{Core.Set#SET_BASE}
 -- 
--- Mission designers can use the @{Set#SET_PLAYER} class to build sets of units belonging to alive players:
+-- Mission designers can use the @{Core.Set#SET_PLAYER} class to build sets of units belonging to alive players:
 -- 
 -- ## 4.1) SET_PLAYER constructor
 -- 
@@ -3539,7 +3539,7 @@ end
 -- 
 -- Planned filter criteria within development are (so these are not yet available):
 -- 
---    * @{#SET_PLAYER.FilterZones}: Builds the SET_PLAYER with the clients within a @{Zone#ZONE}.
+--    * @{#SET_PLAYER.FilterZones}: Builds the SET_PLAYER with the clients within a @{Core.Zone#ZONE}.
 -- 
 -- ## 4.4) SET_PLAYER iterators
 -- 
@@ -3909,9 +3909,9 @@ end
 --- @type SET_AIRBASE
 -- @extends Core.Set#SET_BASE
 
---- # 5) SET_AIRBASE class, extends @{Set#SET_BASE}
+--- # 5) SET_AIRBASE class, extends @{Core.Set#SET_BASE}
 -- 
--- Mission designers can use the @{Set#SET_AIRBASE} class to build sets of airbases optionally belonging to certain:
+-- Mission designers can use the @{Core.Set#SET_AIRBASE} class to build sets of airbases optionally belonging to certain:
 -- 
 --  * Coalitions
 --  
@@ -3923,7 +3923,7 @@ end
 --   
 -- ## 5.2) Add or Remove AIRBASEs from SET_AIRBASE 
 -- 
--- AIRBASEs can be added and removed using the @{Set#SET_AIRBASE.AddAirbasesByName} and @{Set#SET_AIRBASE.RemoveAirbasesByName} respectively. 
+-- AIRBASEs can be added and removed using the @{Core.Set#SET_AIRBASE.AddAirbasesByName} and @{Core.Set#SET_AIRBASE.RemoveAirbasesByName} respectively. 
 -- These methods take a single AIRBASE name or an array of AIRBASE names to be added or removed from SET_AIRBASE.
 -- 
 -- ## 5.3) SET_AIRBASE filter criteria 
@@ -4139,10 +4139,10 @@ function SET_AIRBASE:ForEachAirbase( IteratorFunction, ... )
   return self
 end
 
---- Iterate the SET_AIRBASE while identifying the nearest @{Airbase#AIRBASE} from a @{Point#POINT_VEC2}.
+--- Iterate the SET_AIRBASE while identifying the nearest @{Wrapper.Airbase#AIRBASE} from a @{Point#POINT_VEC2}.
 -- @param #SET_AIRBASE self
--- @param Core.Point#POINT_VEC2 PointVec2 A @{Point#POINT_VEC2} object from where to evaluate the closest @{Airbase#AIRBASE}.
--- @return Wrapper.Airbase#AIRBASE The closest @{Airbase#AIRBASE}.
+-- @param Core.Point#POINT_VEC2 PointVec2 A @{Point#POINT_VEC2} object from where to evaluate the closest @{Wrapper.Airbase#AIRBASE}.
+-- @return Wrapper.Airbase#AIRBASE The closest @{Wrapper.Airbase#AIRBASE}.
 function SET_AIRBASE:FindNearestAirbaseFromPointVec2( PointVec2 )
   self:F2( PointVec2 )
   
@@ -4198,9 +4198,9 @@ end
 --- @type SET_CARGO
 -- @extends Core.Set#SET_BASE
 
---- # (R2.1) SET_CARGO class, extends @{Set#SET_BASE}
+--- # (R2.1) SET_CARGO class, extends @{Core.Set#SET_BASE}
 -- 
--- Mission designers can use the @{Set#SET_CARGO} class to build sets of cargos optionally belonging to certain:
+-- Mission designers can use the @{Core.Set#SET_CARGO} class to build sets of cargos optionally belonging to certain:
 -- 
 --  * Coalitions
 --  * Types
@@ -4214,7 +4214,7 @@ end
 --   
 -- ## Add or Remove CARGOs from SET_CARGO 
 -- 
--- CARGOs can be added and removed using the @{Set#SET_CARGO.AddCargosByName} and @{Set#SET_CARGO.RemoveCargosByName} respectively. 
+-- CARGOs can be added and removed using the @{Core.Set#SET_CARGO.AddCargosByName} and @{Core.Set#SET_CARGO.RemoveCargosByName} respectively. 
 -- These methods take a single CARGO name or an array of CARGO names to be added or removed from SET_CARGO.
 -- 
 -- ## SET_CARGO filter criteria 
@@ -4632,9 +4632,9 @@ end
 --- @type SET_ZONE
 -- @extends Core.Set#SET_BASE
 
---- # SET_ZONE class, extends @{Set#SET_BASE}
+--- # SET_ZONE class, extends @{Core.Set#SET_BASE}
 -- 
--- Mission designers can use the @{Set#SET_ZONE} class to build sets of zones of various types.
+-- Mission designers can use the @{Core.Set#SET_ZONE} class to build sets of zones of various types.
 -- 
 -- ## SET_ZONE constructor
 -- 
@@ -4644,7 +4644,7 @@ end
 --   
 -- ## Add or Remove ZONEs from SET_ZONE 
 -- 
--- ZONEs can be added and removed using the @{Set#SET_ZONE.AddZonesByName} and @{Set#SET_ZONE.RemoveZonesByName} respectively. 
+-- ZONEs can be added and removed using the @{Core.Set#SET_ZONE.AddZonesByName} and @{Core.Set#SET_ZONE.RemoveZonesByName} respectively. 
 -- These methods take a single ZONE name or an array of ZONE names to be added or removed from SET_ZONE.
 -- 
 -- ## 5.3) SET_ZONE filter criteria 

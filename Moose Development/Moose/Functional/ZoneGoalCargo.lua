@@ -11,7 +11,7 @@
 -- 
 -- ===
 -- 
--- @module ZoneGoalCargo
+-- @module Functional.ZoneGoalCargo
 
 do -- ZoneGoal
 

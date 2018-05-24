@@ -7,7 +7,7 @@
 -- 
 -- ===
 -- 
--- @module Protect
+-- @module Functional.Protect
 
 --- @type PROTECT.__ Methods which are not intended for mission designers, but which are used interally by the moose designer :-)
 -- @extends Core.Fsm#FSM
@@ -15,7 +15,7 @@
 --- @type PROTECT
 -- @extends #PROTECT.__
 
---- # PROTECT, extends @{Base#BASE}
+--- # PROTECT, extends @{Core.Base#BASE}
 -- 
 -- @field #PROTECT
 PROTECT = {

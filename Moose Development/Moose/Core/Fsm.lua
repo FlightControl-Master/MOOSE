@@ -52,7 +52,7 @@
 -- 
 --   * @{#FSM_TASK}: Models Finite State Machines for @{Task}s.
 --   * @{#FSM_PROCESS}: Models Finite State Machines for @{Task} actions, which control @{Client}s.
---   * @{#FSM_CONTROLLABLE}: Models Finite State Machines for @{Controllable}s, which are @{Group}s, @{Unit}s, @{Client}s.
+--   * @{#FSM_CONTROLLABLE}: Models Finite State Machines for @{Wrapper.Controllable}s, which are @{Wrapper.Group}s, @{Wrapper.Unit}s, @{Client}s.
 --   * @{#FSM_SET}: Models Finite State Machines for @{Set}s. Note that these FSMs control multiple objects!!! So State concerns here
 --     for multiple objects or the position of the state machine in the process.
 -- 
@@ -72,7 +72,7 @@ do -- FSM
   -- @extends Core.Base#BASE
   
   
-  --- # FSM class, extends @{Base#BASE}
+  --- # FSM class, extends @{Core.Base#BASE}
   --
   -- A Finite State Machine (FSM) models a process flow that transitions between various **States** through triggered **Events**.
   -- 
@@ -410,7 +410,7 @@ do -- FSM
     return self._Transitions or {}
   end
   
-  --- Set the default @{Process} template with key ProcessName providing the ProcessClass and the process object when it is assigned to a @{Controllable} by the task.
+  --- Set the default @{Process} template with key ProcessName providing the ProcessClass and the process object when it is assigned to a @{Wrapper.Controllable} by the task.
   -- @param #FSM self
   -- @param #table From Can contain a string indicating the From state or a table of strings containing multiple From states.
   -- @param #string Event The Event name.
@@ -806,7 +806,7 @@ do -- FSM_CONTROLLABLE
   
   --- # FSM_CONTROLLABLE, extends @{#FSM}
   --
-  -- FSM_CONTROLLABLE class models Finite State Machines for @{Controllable}s, which are @{Group}s, @{Unit}s, @{Client}s.
+  -- FSM_CONTROLLABLE class models Finite State Machines for @{Wrapper.Controllable}s, which are @{Wrapper.Group}s, @{Wrapper.Unit}s, @{Client}s.
   -- 
   -- ===
   -- 
@@ -1116,7 +1116,7 @@ do -- FSM_PROCESS
   
   
   
-  --- Assign the process to a @{Unit} and activate the process.
+  --- Assign the process to a @{Wrapper.Unit} and activate the process.
   -- @param #FSM_PROCESS self
   -- @param Task.Tasking#TASK Task
   -- @param Wrapper.Unit#UNIT ProcessUnit

@@ -11,7 +11,7 @@
 -- 
 -- ===
 -- 
--- @module ZoneGoal
+-- @module Functional.ZoneGoal
 
 do -- Zone
 
@@ -36,7 +36,7 @@ do -- Zone
   -- 
   -- ### 2.2 ZONE_GOAL Events
   -- 
-  --   * DestroyedUnit: A @{Unit} is destroyed in the Zone. The event will only get triggered if the method @{#ZONE_GOAL.MonitorDestroyedUnits}() is used.
+  --   * DestroyedUnit: A @{Wrapper.Unit} is destroyed in the Zone. The event will only get triggered if the method @{#ZONE_GOAL.MonitorDestroyedUnits}() is used.
   -- 
   -- @field #ZONE_GOAL
   ZONE_GOAL = {

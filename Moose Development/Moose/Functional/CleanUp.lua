@@ -7,7 +7,7 @@
 -- 
 -- ===
 -- 
--- @module CleanUp
+-- @module Functional.CleanUp
 
 --- @type CLEANUP_AIRBASE.__ Methods which are not intended for mission designers, but which are used interally by the moose designer :-)
 -- @field #map<#string,Wrapper.Airbase#AIRBASE> Airbases Map of Airbases.
@@ -16,7 +16,7 @@
 --- @type CLEANUP_AIRBASE
 -- @extends #CLEANUP_AIRBASE.__
 
---- # CLEANUP_AIRBASE, extends @{Base#BASE}
+--- # CLEANUP_AIRBASE, extends @{Core.Base#BASE}
 -- 
 -- ![Banner Image](..\Presentations\CLEANUP_AIRBASE\Dia1.JPG)
 -- 
@@ -173,7 +173,7 @@ end
 
 
 
---- Destroys a @{Unit} from the simulator, but checks first if it is still existing!
+--- Destroys a @{Wrapper.Unit} from the simulator, but checks first if it is still existing!
 -- @param #CLEANUP_AIRBASE self
 -- @param Wrapper.Unit#UNIT CleanUpUnit The object to be destroyed.
 function CLEANUP_AIRBASE.__:DestroyUnit( CleanUpUnit )

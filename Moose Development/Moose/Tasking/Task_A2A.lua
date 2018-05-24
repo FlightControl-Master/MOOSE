@@ -8,13 +8,13 @@
 -- 
 -- ===
 --   
--- @module Task_A2A
+-- @module Tasking.Tasking.Task_A2A
 
 do -- TASK_A2A
 
   --- The TASK_A2A class
   -- @type TASK_A2A
-  -- @field Set#SET_UNIT TargetSetUnit
+  -- @field Core.Set#SET_UNIT TargetSetUnit
   -- @extends Tasking.Task#TASK
 
   --- # TASK_A2A class, extends @{Task#TASK}
@@ -25,7 +25,7 @@ do -- TASK_A2A
   -- 
   --   * **None**: Start of the process
   --   * **Planned**: The A2A task is planned.
-  --   * **Assigned**: The A2A task is assigned to a @{Group#GROUP}.
+  --   * **Assigned**: The A2A task is assigned to a @{Wrapper.Group#GROUP}.
   --   * **Success**: The A2A task is successfully completed.
   --   * **Failed**: The A2A task has failed. This will happen if the player exists the task early, without communicating a possible cancellation to HQ.
   -- 
@@ -45,9 +45,9 @@ do -- TASK_A2A
   --- Instantiates a new TASK_A2A.
   -- @param #TASK_A2A self
   -- @param Tasking.Mission#MISSION Mission
-  -- @param Set#SET_GROUP SetAttack The set of groups for which the Task can be assigned.
+  -- @param Core.Set#SET_GROUP SetAttack The set of groups for which the Task can be assigned.
   -- @param #string TaskName The name of the Task.
-  -- @param Set#SET_UNIT UnitSetTargets
+  -- @param Core.Set#SET_UNIT UnitSetTargets
   -- @param #number TargetDistance The distance to Target when the Player is considered to have "arrived" at the engagement range.
   -- @param Core.Zone#ZONE_BASE TargetZone The target zone, if known.
   -- If the TargetZone parameter is specified, the player will be routed to the center of the zone where all the targets are assumed to be.
@@ -359,7 +359,7 @@ do -- TASK_A2A_INTERCEPT
 
   --- The TASK_A2A_INTERCEPT class
   -- @type TASK_A2A_INTERCEPT
-  -- @field Set#SET_UNIT TargetSetUnit
+  -- @field Core.Set#SET_UNIT TargetSetUnit
   -- @extends Tasking.Task#TASK
 
   --- # TASK_A2A_INTERCEPT class, extends @{Task_A2A#TASK_A2A}
@@ -370,7 +370,7 @@ do -- TASK_A2A_INTERCEPT
   -- The TASK_A2A_INTERCEPT is used by the @{Task_A2A_Dispatcher#TASK_A2A_DISPATCHER} to automatically create intercept tasks 
   -- based on detected airborne enemy targets intruding friendly airspace.
   -- 
-  -- The task is defined for a @{Mission#MISSION}, where a friendly @{Set#SET_GROUP} consisting of GROUPs with one human players each, is intercepting the targets.
+  -- The task is defined for a @{Mission#MISSION}, where a friendly @{Core.Set#SET_GROUP} consisting of GROUPs with one human players each, is intercepting the targets.
   -- The task is given a name and a briefing, that is used in the menu structure and in the reporting.
   -- 
   -- @field #TASK_A2A_INTERCEPT
@@ -458,7 +458,7 @@ do -- TASK_A2A_SWEEP
 
   --- The TASK_A2A_SWEEP class
   -- @type TASK_A2A_SWEEP
-  -- @field Set#SET_UNIT TargetSetUnit
+  -- @field Core.Set#SET_UNIT TargetSetUnit
   -- @extends Tasking.Task#TASK
 
   --- # TASK_A2A_SWEEP class, extends @{Task_A2A#TASK_A2A}
@@ -471,7 +471,7 @@ do -- TASK_A2A_SWEEP
   -- The TASK_A2A_SWEEP is used by the @{Task_A2A_Dispatcher#TASK_A2A_DISPATCHER} to automatically create sweep tasks 
   -- based on detected airborne enemy targets intruding friendly airspace, for which the detection has been lost for more than 60 seconds.
   -- 
-  -- The task is defined for a @{Mission#MISSION}, where a friendly @{Set#SET_GROUP} consisting of GROUPs with one human players each, is sweeping the targets.
+  -- The task is defined for a @{Mission#MISSION}, where a friendly @{Core.Set#SET_GROUP} consisting of GROUPs with one human players each, is sweeping the targets.
   -- The task is given a name and a briefing, that is used in the menu structure and in the reporting.
   -- 
   -- @field #TASK_A2A_SWEEP
@@ -569,7 +569,7 @@ do -- TASK_A2A_ENGAGE
 
   --- The TASK_A2A_ENGAGE class
   -- @type TASK_A2A_ENGAGE
-  -- @field Set#SET_UNIT TargetSetUnit
+  -- @field Core.Set#SET_UNIT TargetSetUnit
   -- @extends Tasking.Task#TASK
 
   --- # TASK_A2A_ENGAGE class, extends @{Task_A2A#TASK_A2A}
@@ -580,7 +580,7 @@ do -- TASK_A2A_ENGAGE
   -- The TASK_A2A_ENGAGE is used by the @{Task_A2A_Dispatcher#TASK_A2A_DISPATCHER} to automatically create engage tasks 
   -- based on detected airborne enemy targets intruding friendly airspace.
   -- 
-  -- The task is defined for a @{Mission#MISSION}, where a friendly @{Set#SET_GROUP} consisting of GROUPs with one human players each, is engaging the targets.
+  -- The task is defined for a @{Mission#MISSION}, where a friendly @{Core.Set#SET_GROUP} consisting of GROUPs with one human players each, is engaging the targets.
   -- The task is given a name and a briefing, that is used in the menu structure and in the reporting.
   -- 
   -- @field #TASK_A2A_ENGAGE

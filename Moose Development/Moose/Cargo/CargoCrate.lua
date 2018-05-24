@@ -17,7 +17,7 @@
 -- 
 -- ===
 -- 
--- @module CargoCrate
+-- @module Cargo.CargoCrate
 
 do -- CARGO_CRATE
 
@@ -25,7 +25,7 @@ do -- CARGO_CRATE
   -- @type CARGO_CRATE
   -- @extends Cargo.Cargo#CARGO_REPRESENTABLE
   
-  --- # CARGO\_CRATE class, extends @{#CARGO_REPRESENTABLE}
+  --- # CARGO\_CRATE class, extends @{Cargo.Cargo#CARGO_REPRESENTABLE}
   -- 
   -- The CARGO\_CRATE class defines a cargo that is represented by a UNIT object within the simulator, and can be transported by a carrier.
   -- Use the event functions as described above to Load, UnLoad, Board, UnBoard the CARGO\_CRATE objects to and from carriers.
@@ -165,7 +165,7 @@ do -- CARGO_CRATE
   end
 
   --- Check if Cargo Crate is in the radius for the Cargo to be reported.
-  -- @param #CARGO self
+  -- @param #CARGO_CRATE self
   -- @param Core.Point#COORDINATE Coordinate
   -- @return #boolean true if the Cargo Crate is within the report radius.
   function CARGO_CRATE:IsInReportRadius( Coordinate )
@@ -185,7 +185,7 @@ do -- CARGO_CRATE
 
 
   --- Check if Cargo Crate is in the radius for the Cargo to be Boarded or Loaded.
-  -- @param #CARGO self
+  -- @param #CARGO_CRATE self
   -- @param Core.Point#Coordinate Coordinate
   -- @return #boolean true if the Cargo Crate is within the loading radius.
   function CARGO_CRATE:IsInLoadRadius( Coordinate )

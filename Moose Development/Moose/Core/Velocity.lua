@@ -15,7 +15,7 @@ do -- Velocity
   -- @extends Core.Base#BASE
 
 
-  --- # VELOCITY class, extends @{Base#BASE}
+  --- # VELOCITY class, extends @{Core.Base#BASE}
   -- 
   -- VELOCITY models a speed, which can be expressed in various formats according the Settings.
   -- 
@@ -125,7 +125,7 @@ do -- VELOCITY_POSITIONABLE
   -- @extends Core.Base#BASE
 
 
-  --- # VELOCITY_POSITIONABLE class, extends @{Base#BASE}
+  --- # VELOCITY_POSITIONABLE class, extends @{Core.Base#BASE}
   -- 
   -- VELOCITY_POSITIONABLE monitors the speed of an @{Positionable} in the simulation, which can be expressed in various formats according the Settings.
   -- 

@@ -2,7 +2,7 @@
 -- 
 -- ===
 -- 
--- @module Sead
+-- @module Functional.Sead
 
 --- The SEAD class
 -- @type SEAD

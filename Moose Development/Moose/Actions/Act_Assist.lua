@@ -142,7 +142,7 @@ do -- ACT_ASSIST_SMOKE_TARGETS_ZONE
 
   --- ACT_ASSIST_SMOKE_TARGETS_ZONE class
   -- @type ACT_ASSIST_SMOKE_TARGETS_ZONE
-  -- @field Set#SET_UNIT TargetSetUnit
+  -- @field Core.Set#SET_UNIT TargetSetUnit
   -- @field Core.Zone#ZONE_BASE TargetZone
   -- @extends #ACT_ASSIST
   ACT_ASSIST_SMOKE_TARGETS_ZONE = { 
@@ -158,7 +158,7 @@ do -- ACT_ASSIST_SMOKE_TARGETS_ZONE
   
   --- Creates a new target smoking state machine. The process will request from the menu if it accepts the task, if not, the unit is removed from the simulator.
   -- @param #ACT_ASSIST_SMOKE_TARGETS_ZONE self
-  -- @param Set#SET_UNIT TargetSetUnit
+  -- @param Core.Set#SET_UNIT TargetSetUnit
   -- @param Core.Zone#ZONE_BASE TargetZone
   function ACT_ASSIST_SMOKE_TARGETS_ZONE:New( TargetSetUnit, TargetZone )
     local self = BASE:Inherit( self, ACT_ASSIST:New() ) -- #ACT_ASSIST
@@ -177,7 +177,7 @@ do -- ACT_ASSIST_SMOKE_TARGETS_ZONE
   
   --- Creates a new target smoking state machine. The process will request from the menu if it accepts the task, if not, the unit is removed from the simulator.
   -- @param #ACT_ASSIST_SMOKE_TARGETS_ZONE self
-  -- @param Set#SET_UNIT TargetSetUnit
+  -- @param Core.Set#SET_UNIT TargetSetUnit
   -- @param Core.Zone#ZONE_BASE TargetZone
   -- @return #ACT_ASSIST_SMOKE_TARGETS_ZONE self
   function ACT_ASSIST_SMOKE_TARGETS_ZONE:Init( TargetSetUnit, TargetZone )

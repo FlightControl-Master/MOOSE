@@ -8,13 +8,13 @@
 -- 
 -- ===
 -- 
--- @module Identifiable
+-- @module Wrapper.Identifiable
 
 --- @type IDENTIFIABLE
 -- @extends Wrapper.Object#OBJECT
 -- @field #string IdentifiableName The name of the identifiable.
 
---- # IDENTIFIABLE class, extends @{Object#OBJECT}
+--- # IDENTIFIABLE class, extends @{Wrapper.Object#OBJECT}
 -- 
 -- The IDENTIFIABLE class is a wrapper class to handle the DCS Identifiable objects:
 --
