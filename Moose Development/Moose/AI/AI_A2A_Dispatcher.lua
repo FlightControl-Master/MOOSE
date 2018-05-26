@@ -1,11 +1,5 @@
 --- **AI** - (R2.2) - Manages the process of an automatic A2A defense system based on an EWR network targets and coordinating CAP and GCI.
 -- 
--- ===
--- 
--- ![Banner Image](..\Presentations\AI_A2A_DISPATCHER\Dia1.JPG)
--- 
--- ===
---
 -- # QUICK START GUIDE
 -- 
 -- There are basically two classes available to model an A2A defense system.
@@ -156,6 +150,7 @@
 -- ### Authors: **Stonehouse**, **SNAFU** in terms of the advice, documentation, and the original GCICAP script.
 -- 
 -- @module AI.AI_A2A_Dispatcher
+-- @image Air_To_Air_Dispatching.JPG
 
 
 
@@ -165,11 +160,7 @@ do -- AI_A2A_DISPATCHER
   -- @type AI_A2A_DISPATCHER
   -- @extends Tasking.DetectionManager#DETECTION_MANAGER
 
-  --- # AI\_A2A\_DISPATCHER class, extends @{Tasking.DetectionManage#DETECTION_MANAGER}
-  -- 
-  -- ![Banner Image](..\Presentations\AI_A2A_DISPATCHER\Dia1.JPG)
-  -- 
-  -- The @{#AI_A2A_DISPATCHER} class is designed to create an automatic air defence system for a coalition. 
+  --- Create an automatic air defence system for a coalition. 
   -- 
   -- ===
   -- 
@@ -3173,11 +3164,7 @@ do
   --- @type AI_A2A_GCICAP
   -- @extends #AI_A2A_DISPATCHER
 
-  --- # AI\_A2A\_GCICAP class, extends @{AI_A2A_Dispatcher#AI_A2A_DISPATCHER}
-  -- 
-  -- ![Banner Image](..\Presentations\AI_A2A_DISPATCHER\Dia1.JPG)
-  -- 
-  -- The AI_A2A_GCICAP class is designed to create an automatic air defence system for a coalition setting up GCI and CAP air defenses. 
+  --- Create an automatic air defence system for a coalition setting up GCI and CAP air defenses. 
   -- The class derives from @{AI#AI_A2A_DISPATCHER} and thus, all the methods that are defined in the @{AI#AI_A2A_DISPATCHER} class, can be used also in AI\_A2A\_GCICAP.
   -- 
   -- ===

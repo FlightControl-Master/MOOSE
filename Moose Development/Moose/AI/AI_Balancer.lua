@@ -2,10 +2,6 @@
 -- 
 -- ===
 -- 
--- ![Banner Image](..\Presentations\AI_Balancer\Dia1.JPG)
--- 
--- ===
--- 
 -- ### [Demo Missions](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master-release/AIB%20-%20AI%20Balancing)
 -- 
 -- ===
@@ -22,6 +18,7 @@
 -- ===
 -- 
 -- @module AI.AI_Balancer
+-- @image AI_Balancing.JPG
 
 --- @type AI_BALANCER
 -- @field Core.Set#SET_CLIENT SetClient

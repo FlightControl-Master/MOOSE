@@ -1,10 +1,6 @@
 --- **AI** -- (R2.1) - Manages the independent process of Battlefield Air Interdiction (bombing) for airplanes.
 --
 -- ===
---
--- ![Banner Image](..\Presentations\AI_BAI\Dia1.JPG)
--- 
--- ===
 -- 
 -- ### [Demo Missions](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/BAI%20-%20Battlefield%20Air%20Interdiction)
 -- 
@@ -22,6 +18,7 @@
 -- ===
 --
 -- @module AI.AI_Bai
+-- @image Battlefield_Air_Interdiction.JPG
 
 
 --- AI_BAI_ZONE class
@@ -30,9 +27,7 @@
 -- @field Core.Zone#ZONE_BASE TargetZone The @{Zone} where the patrol needs to be executed.
 -- @extends AI.AI_Patrol#AI_PATROL_ZONE
 
---- # AI_BAI_ZONE class, extends @{AI.AI_Patrol#AI_PATROL_ZONE}
--- 
--- AI_BAI_ZONE derives from the @{AI.AI_Patrol#AI_PATROL_ZONE}, inheriting its methods and behaviour.
+--- AI_BAI_ZONE derives from the @{AI.AI_Patrol#AI_PATROL_ZONE}, inheriting its methods and behaviour.
 --  
 -- The AI_BAI_ZONE class implements the core functions to provide BattleGround Air Interdiction in an Engage @{Zone} by an AIR @{Wrapper.Controllable} or @{Wrapper.Group}.
 -- The AI_BAI_ZONE runs a process. It holds an AI in a Patrol Zone and when the AI is commanded to engage, it will fly to an Engage Zone.

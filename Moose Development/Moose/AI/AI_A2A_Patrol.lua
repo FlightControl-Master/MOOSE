@@ -1,7 +1,5 @@
 --- **AI** -- (R2.2) - Models the process of air patrol of airplanes.
 -- 
--- This is a class used in the @{AI_A2A_Dispatcher}.
--- 
 -- ===
 -- 
 -- ### Author: **FlightControl**
@@ -9,6 +7,7 @@
 -- ===
 -- 
 -- @module AI.AI_A2A_Patrol
+-- @image Air_Patrolling.JPG
 
 
 --- @type AI_A2A_PATROL

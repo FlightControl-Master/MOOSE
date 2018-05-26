@@ -1,7 +1,5 @@
 --- **AI** -- (R2.2) - Models the process of Combat Air Patrol (CAP) for airplanes.
 --
--- This is a class used in the @{AI.AI_A2A_Dispatcher}.
---
 -- ===
 -- 
 -- ### Author: **FlightControl**
@@ -9,16 +7,13 @@
 -- ===       
 --
 -- @module AI.AI_A2A_Cap
-
---BASE:TraceClass("AI_A2A_CAP")
+-- @image Combat_Air_Patrol.JPG
 
 --- @type AI_A2A_CAP
 -- @extends AI.AI_A2A_Patrol#AI_A2A_PATROL
 
 
---- # AI_A2A_CAP class, extends @{AI.AI_A2A_Patrol#AI_A2A_PATROL}
--- 
--- The AI_A2A_CAP class implements the core functions to patrol a @{Zone} by an AI @{Wrapper.Group} or @{Wrapper.Group} 
+--- The AI_A2A_CAP class implements the core functions to patrol a @{Zone} by an AI @{Wrapper.Group} or @{Wrapper.Group} 
 -- and automatically engage any airborne enemies that are within a certain range or within a certain zone.
 -- 
 -- ![Process](..\Presentations\AI_CAP\Dia3.JPG)
