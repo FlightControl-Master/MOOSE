@@ -1,10 +1,6 @@
 --- **AI** -- (R2.1) - Manages the independent process of Combat Air Patrol (CAP) for airplanes.
 --
 -- ===
---
--- ![Banner Image](..\Presentations\AI_CAP\Dia1.JPG)
--- 
--- ===
 -- 
 -- ### [Demo Missions](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master-release/CAP%20-%20Combat%20Air%20Patrol)
 -- 
@@ -26,6 +22,7 @@
 -- ===       
 --
 -- @module AI.AI_Cap
+-- @image Combat_Air_Patrol.JPG
 
 
 --- @type AI_CAP_ZONE

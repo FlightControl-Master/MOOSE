@@ -7,18 +7,13 @@
 -- ===       
 --
 -- @module AI.AI_Cargo_Dispatcher_APC
+-- @image Cargo_Dispatching_For_APC.JPG
 
 --- @type AI_CARGO_DISPATCHER_APC
 -- @extends AI.AI_Cargo_Dispatcher#AI_CARGO_DISPATCHER
 
 
---- # AI\_CARGO\_DISPATCHER\_APC class, extends @{AI.AI_Cargo_Dispatcher#AI_CARGO_DISPATCHER}
--- 
--- ![Banner Image](..\Presentations\AI_CARGO_DISPATCHER_APC\Dia1.JPG)
--- 
--- ===
--- 
--- AI\_CARGO\_DISPATCHER\_APC brings a dynamic cargo handling capability for AI groups.
+--- A dynamic cargo transportation capability for AI groups.
 -- 
 -- Armoured Personnel APCs (APC), Trucks, Jeeps and other carrier equipment can be mobilized to intelligently transport infantry and other cargo within the simulation.
 -- The AI\_CARGO\_DISPATCHER\_APC module uses the @{Cargo} capabilities within the MOOSE framework.

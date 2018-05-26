@@ -1,7 +1,5 @@
 --- **AI** -- (R2.2) - Models the process of air operations for airplanes.
 -- 
--- This is a class used in the @{AI_A2A_Dispatcher}.
--- 
 -- ===
 -- 
 -- ### Author: **FlightControl**
@@ -9,6 +7,7 @@
 -- ===
 -- 
 -- @module AI.AI_A2A
+-- @image Air_To_Air_Dispatching.JPG
 
 --BASE:TraceClass("AI_A2A")
 
@@ -16,9 +15,7 @@
 --- @type AI_A2A
 -- @extends Core.Fsm#FSM_CONTROLLABLE
 
---- # AI_A2A class, extends @{Fsm#FSM_CONTROLLABLE}
--- 
--- The AI_A2A class implements the core functions to operate an AI @{Wrapper.Group} A2A tasking.
+--- The AI_A2A class implements the core functions to operate an AI @{Wrapper.Group} A2A tasking.
 -- 
 -- 
 -- ## AI_A2A constructor
