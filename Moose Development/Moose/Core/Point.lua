@@ -777,7 +777,7 @@ do -- COORDINATE
   -- @param #COORDINATE.WaypointAltType AltType The altitude type.
   -- @param #COORDINATE.WaypointType Type The route point type.
   -- @param #COORDINATE.WaypointAction Action The route point action.
-  -- @param Dcs.DCSTypes#Speed Speed Airspeed in km/h.
+  -- @param Dcs.DCSTypes#Speed Speed Airspeed in km/h. Default is 500 km/h.
   -- @param #boolean SpeedLocked true means the speed is locked.
   -- @return #table The route point.
   function COORDINATE:WaypointAir( AltType, Type, Action, Speed, SpeedLocked )
@@ -887,7 +887,7 @@ do -- COORDINATE
   
   --- Build an ground type route point.
   -- @param #COORDINATE self
-  -- @param #number Speed (optional) Speed in km/h. The default speed is 999 km/h.
+  -- @param #number Speed (optional) Speed in km/h. The default speed is 20 km/h.
   -- @param #string Formation (optional) The route point Formation, which is a text string that specifies exactly the Text in the Type of the route point, like "Vee", "Echelon Right".
   -- @return #table The route point.
   function COORDINATE:WaypointGround( Speed, Formation )
@@ -935,22 +935,30 @@ do -- COORDINATE
    return COORDINATE:NewFromVec2(vec2)
   end
 
-  --- Returns a table of coordinates to a destination.
+  --- Returns a table of coordinates to a destination using only roads.
+  -- The first point is the closest point on road of the given coordinate. The last point is the closest point on road of the ToCoord. Hence, the coordinate itself and the final ToCoord are not necessarily included in the path.
   -- @param #COORDINATE self
   -- @param #COORDINATE ToCoord Coordinate of destination.
   -- @return #table Table of coordinates on road.
   function COORDINATE:GetPathOnRoad(ToCoord)
-    local Path={}
+
+    -- DCS API function returning a table of vec2.
     local path = land.findPathOnRoads("roads", self.x, self.z, ToCoord.x, ToCoord.z)
-    Path[#Path+1]=COORDINATE:NewFromVec2(path[1])
-    Path[#Path+1]=COORDINATE:NewFromVec2(path[#path])
+    
+    --Path[#Path+1]=COORDINATE:NewFromVec2(path[1])
+    --Path[#Path+1]=COORDINATE:NewFromVec2(path[#path])
+    --Path[#Path+1]=self:GetClosestPointToRoad()
+    --Path[#Path+1]=ToCoord:GetClosestPointToRoad()
     -- I've removed this stuff because it severely slows down DCS in case of paths with a lot of segments.
     -- Just the beginning and the end point is sufficient.
---    for i, v in ipairs(path) do
---      self:I(v)
---      local coord=COORDINATE:NewFromVec2(v)
---      Path[#Path+1]=COORDINATE:NewFromVec2(v)
---    end
+    
+    local Path={}
+    --Path[#Path+1]=self
+    for i, v in ipairs(path) do
+      Path[#Path+1]=COORDINATE:NewFromVec2(v)
+    end
+    --Path[#Path+1]=ToCoord
+    
     return Path
   end
 

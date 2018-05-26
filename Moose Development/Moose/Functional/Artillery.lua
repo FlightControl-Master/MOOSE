@@ -2434,16 +2434,18 @@ function ARTY:_Move(group, ToCoord, Speed, OnRoad)
   -- Route group on road if requested.
   if OnRoad then
 
+    -- Path on road (only first and last points)
     local _first=cpini:GetClosestPointToRoad()
     local _last=ToCoord:GetClosestPointToRoad()
-    local _onroad=_first:GetPathOnRoad(_last)
     
-    -- Points on road.
-    for i=1,#_onroad do
-      path[#path+1]=_onroad[i]:WaypointGround(Speed, "On road")
-      task[#task+1]=group:TaskFunction("ARTY._PassingWaypoint", self, #path-1, false)
-    end
-     
+    -- First point on road.
+    path[#path+1]=_first:WaypointGround(Speed, "On road")
+    task[#task+1]=group:TaskFunction("ARTY._PassingWaypoint", self, #path-1, false)
+    
+    -- Last point on road.
+    path[#path+1]=_last:WaypointGround(Speed, "On road")
+    task[#task+1]=group:TaskFunction("ARTY._PassingWaypoint", self, #path-1, false)
+    
   end
   
   -- Last waypoint at ToCoord.
