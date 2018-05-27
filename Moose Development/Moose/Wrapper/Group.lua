@@ -350,6 +350,37 @@ function GROUP:GetCountry()
   return nil
 end
 
+--- Returns the maximum speed of the group.
+-- If the group is heterogenious and consists of different units, the max speed of the slowest unit is returned.
+-- @param #GROUP self
+-- @return #number Speed in km/h.
+function GROUP:GetSpeedMax()
+  self:F2( self.GroupName )
+
+  local DCSGroup = self:GetDCSObject()
+  if DCSGroup then
+  
+    local Units=self:GetUnits()
+    
+    local speedmax=nil
+    
+    for _,unit in pairs(Units) do
+      local unit=unit --Wrapper.Unit#UNIT
+      local speed=unit:GetSpeedMax()
+      if speedmax==nil then
+        speedmax=speed
+      elseif speed<speedmax then
+        speedmax=speed
+      end
+    end
+    
+    return speedmax
+  end
+  
+  return nil
+end
+
+
 --- Returns a list of @{Wrapper.Unit} objects of the @{Wrapper.Group}.
 -- @param #GROUP self
 -- @return #list<Wrapper.Unit#UNIT> The list of @{Wrapper.Unit} objects of the @{Wrapper.Group}.

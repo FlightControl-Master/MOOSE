@@ -426,8 +426,9 @@ end
 
 --- Bounds the zone with tires.
 -- @param #ZONE_RADIUS self
--- @param #number Points (optional) The amount of points in the circle.
--- @param #boolean UnBound If true the tyres will be destroyed.
+-- @param #number Points (optional) The amount of points in the circle. Default 360.
+-- @param Dcs.DCScountry#country.id CountryID The country id of the tire objects, e.g. country.id.USA for blue or country.id.RUSSIA for red.
+-- @param #boolean UnBound (Optional) If true the tyres will be destroyed.
 -- @return #ZONE_RADIUS self
 function ZONE_RADIUS:BoundZone( Points, CountryID, UnBound )
 
