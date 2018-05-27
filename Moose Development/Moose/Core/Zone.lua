@@ -1,7 +1,5 @@
 --- **Core** -- ZONE classes define **zones** within your mission of **various forms**, with **various capabilities**.
 -- 
--- ![Banner Image](..\Presentations\ZONE\Dia1.JPG)
--- 
 -- ===
 -- 
 -- There are essentially two core functions that zones accomodate:
@@ -35,6 +33,7 @@
 -- ===
 -- 
 -- @module Core.Zone
+-- @image Core_Zones.JPG 
 
 
 --- @type ZONE_BASE
@@ -43,9 +42,7 @@
 -- @extends Core.Base#BASE
 
 
---- # ZONE_BASE class, extends @{Core.Base#BASE}
--- 
--- This class is an abstract BASE class for derived classes, and is not meant to be instantiated.
+--- This class is an abstract BASE class for derived classes, and is not meant to be instantiated.
 -- 
 -- ## Each zone has a name:
 -- 
@@ -380,9 +377,7 @@ end
 -- @field Dcs.DCSTypes#Distance Radius The radius of the zone.
 -- @extends #ZONE_BASE
 
---- # ZONE_RADIUS class, extends @{Core.Zone#ZONE_BASE}
--- 
--- The ZONE_RADIUS class defined by a zone name, a location and a radius.
+--- The ZONE_RADIUS class defined by a zone name, a location and a radius.
 -- This class implements the inherited functions from Core.Zone#ZONE_BASE taking into account the own zone format and properties.
 -- 
 -- ## ZONE_RADIUS constructor
@@ -952,9 +947,7 @@ end
 -- @extends #ZONE_RADIUS
 
 
---- # ZONE class, extends @{Core.Zone#ZONE_RADIUS}
--- 
--- The ZONE class, defined by the zone name as defined within the Mission Editor.
+--- The ZONE class, defined by the zone name as defined within the Mission Editor.
 -- This class implements the inherited functions from @{#ZONE_RADIUS} taking into account the own zone format and properties.
 -- 
 -- ## ZONE constructor
@@ -1024,9 +1017,7 @@ end
 -- @field Wrapper.Unit#UNIT ZoneUNIT
 -- @extends Core.Zone#ZONE_RADIUS
 
---- # ZONE_UNIT class, extends @{Core.Zone#ZONE_RADIUS}
--- 
--- The ZONE_UNIT class defined by a zone around a @{Unit#UNIT} with a radius.
+--- The ZONE_UNIT class defined by a zone around a @{Unit#UNIT} with a radius.
 -- This class implements the inherited functions from @{#ZONE_RADIUS} taking into account the own zone format and properties.
 -- 
 -- @field #ZONE_UNIT
@@ -1117,9 +1108,7 @@ end
 -- @extends #ZONE_RADIUS
 
 
---- # ZONE_GROUP class, extends @{Core.Zone#ZONE_RADIUS}
--- 
--- The ZONE_GROUP class defines by a zone around a @{Wrapper.Group#GROUP} with a radius. The current leader of the group defines the center of the zone.
+--- The ZONE_GROUP class defines by a zone around a @{Wrapper.Group#GROUP} with a radius. The current leader of the group defines the center of the zone.
 -- This class implements the inherited functions from @{Core.Zone#ZONE_RADIUS} taking into account the own zone format and properties.
 -- 
 -- @field #ZONE_GROUP
@@ -1198,9 +1187,7 @@ end
 -- @extends #ZONE_BASE
 
 
---- # ZONE_POLYGON_BASE class, extends @{Core.Zone#ZONE_BASE}
--- 
--- The ZONE_POLYGON_BASE class defined by a sequence of @{Wrapper.Group#GROUP} waypoints within the Mission Editor, forming a polygon.
+--- The ZONE_POLYGON_BASE class defined by a sequence of @{Wrapper.Group#GROUP} waypoints within the Mission Editor, forming a polygon.
 -- This class implements the inherited functions from @{Core.Zone#ZONE_RADIUS} taking into account the own zone format and properties.
 -- This class is an abstract BASE class for derived classes, and is not meant to be instantiated.
 -- 
@@ -1475,9 +1462,7 @@ end
 -- @extends #ZONE_POLYGON_BASE
 
 
---- # ZONE_POLYGON class, extends @{Core.Zone#ZONE_POLYGON_BASE}
--- 
--- The ZONE_POLYGON class defined by a sequence of @{Wrapper.Group#GROUP} waypoints within the Mission Editor, forming a polygon.
+--- The ZONE_POLYGON class defined by a sequence of @{Wrapper.Group#GROUP} waypoints within the Mission Editor, forming a polygon.
 -- This class implements the inherited functions from @{Core.Zone#ZONE_RADIUS} taking into account the own zone format and properties.
 -- 
 -- ## Declare a ZONE_POLYGON directly in the DCS mission editor!

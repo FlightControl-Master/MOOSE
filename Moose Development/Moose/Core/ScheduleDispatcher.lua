@@ -31,6 +31,7 @@
 -- ### Authors: FlightControl : Design & Programming
 -- 
 -- @module Core.ScheduleDispatcher
+-- @image Core_Schedule_Dispatcher.JPG
 
 --- The SCHEDULEDISPATCHER structure
 -- @type SCHEDULEDISPATCHER

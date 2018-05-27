@@ -2,10 +2,6 @@
 -- 
 -- ===
 -- 
--- ![Banner Image](..\Presentations\AI_PATROL\Dia1.JPG)
--- 
--- ===
--- 
 -- AI PATROL classes makes AI Controllables execute an Patrol.
 -- 
 -- There are the following types of PATROL classes defined:
@@ -31,7 +27,7 @@
 -- ===
 -- 
 -- @module AI.AI_Patrol
-
+-- @image AI_Air_Patrolling.JPG
 
 --- AI_PATROL_ZONE class
 -- @type AI_PATROL_ZONE

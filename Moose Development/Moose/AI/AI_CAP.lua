@@ -22,7 +22,7 @@
 -- ===       
 --
 -- @module AI.AI_Cap
--- @image Combat_Air_Patrol.JPG
+-- @image AI_Combat_Air_Patrol.JPG
 
 
 --- @type AI_CAP_ZONE

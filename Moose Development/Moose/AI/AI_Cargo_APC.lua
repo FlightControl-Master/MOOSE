@@ -7,6 +7,7 @@
 -- ===       
 --
 -- @module AI.AI_Cargo_APC
+-- @image AI_Cargo_Dispatching_For_APC.JPG
 
 --- @type AI_CARGO_APC
 -- @extends Core.Fsm#FSM_CONTROLLABLE

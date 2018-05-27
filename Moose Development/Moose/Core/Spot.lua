@@ -1,7 +1,5 @@
 --- **Core** -- Management of SPOT logistics, that can be transported from and to transportation carriers.
 --
--- ![Banner Image](..\Presentations\SPOT\Dia1.JPG)
---
 -- ===
 -- 
 -- SPOT implements the DCS Spot class functionality, but adds additional luxury to be able to:
@@ -39,6 +37,7 @@
 -- ===
 -- 
 -- @module Core.Spot
+-- @image Core_Spot.JPG
 
 
 do
@@ -47,9 +46,7 @@ do
   -- @extends Core.Fsm#FSM
 
 
-  --- # SPOT class, extends @{Fsm#FSM}
-  -- 
-  -- SPOT implements the DCS Spot class functionality, but adds additional luxury to be able to:
+  --- SPOT implements the DCS Spot class functionality, but adds additional luxury to be able to:
   -- 
   --   * Mark targets for a defined duration.
   --   * wiggle the spot at the target.

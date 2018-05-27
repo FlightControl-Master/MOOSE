@@ -18,7 +18,7 @@
 -- ===
 --
 -- @module AI.AI_Bai
--- @image Battlefield_Air_Interdiction.JPG
+-- @image AI_Battlefield_Air_Interdiction.JPG
 
 
 --- AI_BAI_ZONE class

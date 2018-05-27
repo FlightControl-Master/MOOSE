@@ -18,6 +18,7 @@
 -- ===
 -- 
 -- @module Cargo.CargoGroup
+-- @image Cargo_Groups.JPG
 
 
 do -- CARGO_GROUP

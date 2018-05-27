@@ -7,6 +7,7 @@
 -- ===       
 --
 -- @module AI.AI_Cargo_Helicopter
+-- @image AI_Cargo_Dispatching_For_Helicopters.JPG
 
 --- @type AI_CARGO_HELICOPTER
 -- @extends Core.Fsm#FSM_CONTROLLABLE

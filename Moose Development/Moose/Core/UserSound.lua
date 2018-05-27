@@ -11,6 +11,7 @@
 -- ===
 -- 
 -- @module Core.UserSound
+-- @image Core_Usersound.JPG
 
 do -- UserSound
 
@@ -18,11 +19,9 @@ do -- UserSound
   -- @extends Core.Base#BASE
 
 
-  --- # USERSOUND class, extends @{Core.Base#BASE}
+  --- Management of DCS User Sound.
   -- 
-  -- Management of DCS User Sound.
-  -- 
-  -- ## 1. USERSOUND constructor
+  -- ## USERSOUND constructor
   --   
   --   * @{#USERSOUND.New}(): Creates a new USERSOUND object.
   -- 

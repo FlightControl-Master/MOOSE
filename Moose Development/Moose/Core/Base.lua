@@ -1,15 +1,12 @@
 --- **Core** -- BASE forms **the basis of the MOOSE framework**. Each class within the MOOSE framework derives from BASE.
 -- 
--- ![Banner Image](..\Presentations\BASE\Dia1.JPG)
--- 
--- ===
--- 
 -- ### Author: **FlightControl**
 -- ### Contributions: 
 -- 
 -- ===
 -- 
 -- @module Core.Base
+-- @image Core_Base.JPG
 
 
 
@@ -26,9 +23,7 @@ local _ClassID = 0
 -- @field ClassID The ID number of the class.
 -- @field ClassNameAndID The name of the class concatenated with the ID number of the class.
 
---- # 1) #BASE class
--- 
--- All classes within the MOOSE framework are derived from the BASE class. 
+--- All classes within the MOOSE framework are derived from the BASE class. 
 --  
 -- BASE provides facilities for :
 -- 

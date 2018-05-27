@@ -1,7 +1,5 @@
 --- **Core** -- SPAWN class dynamically spawns new groups of units in your missions.
 --  
--- ![Banner Image](..\Presentations\SPAWN\SPAWN.JPG)
--- 
 -- ===
 -- 
 -- The documentation of the SPAWN class can be found further in this document.
@@ -22,6 +20,7 @@
 -- ===
 -- 
 -- @module Core.Spawn
+-- @image Core_Spawn.JPG
 
 
 --- SPAWN Class
@@ -37,13 +36,7 @@
 -- @extends Core.Base#BASE
 
 
---- # SPAWN class, extends @{Core.Base#BASE}
--- 
--- -- ![Banner Image](..\Presentations\SPAWN\SPAWN.JPG)
--- 
--- ===
--- 
--- The SPAWN class allows to spawn dynamically new groups.  
+--- The SPAWN class allows to spawn dynamically new groups.  
 -- Each SPAWN object needs to be have related **template groups** setup in the Mission Editor (ME),
 -- which is a normal group with the **Late Activation** flag set. 
 -- This template group will never be activated in your mission.  

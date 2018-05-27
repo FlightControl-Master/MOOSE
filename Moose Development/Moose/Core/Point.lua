@@ -1,7 +1,5 @@
 --- **Core** -- **POINT\_VEC** classes define an **extensive API** to **manage 3D points** in the simulation space.
 --
--- ![Banner Image](..\Presentations\POINT\Dia1.JPG)
---
 -- ===
 --
 -- # Demo Missions
@@ -27,7 +25,7 @@
 -- ### Contributions:
 --
 -- @module Core.Point
-
+-- @image Core_Coordinate.JPG
 
 
 
@@ -38,9 +36,7 @@ do -- COORDINATE
   -- @extends Core.Base#BASE
   
   
-  --- # COORDINATE class, extends @{Core.Base#BASE}
-  --
-  -- COORDINATE defines a 3D point in the simulator and with its methods, you can use or manipulate the point in 3D space.
+  --- COORDINATE defines a 3D point in the simulator and with its methods, you can use or manipulate the point in 3D space.
   --
   -- ## COORDINATE constructor
   --
@@ -1592,9 +1588,7 @@ do -- POINT_VEC3
   -- @extends Core.Point#COORDINATE
   
   
-  --- # POINT_VEC3 class, extends @{Point#COORDINATE}
-  --
-  -- POINT_VEC3 defines a 3D point in the simulator and with its methods, you can use or manipulate the point in 3D space.
+  --- POINT_VEC3 defines a 3D point in the simulator and with its methods, you can use or manipulate the point in 3D space.
   --
   -- **Important Note:** Most of the functions in this section were taken from MIST, and reworked to OO concepts.
   -- In order to keep the credibility of the the author,
@@ -1805,9 +1799,7 @@ do -- POINT_VEC2
   -- @field Dcs.DCSTypes#Distance y the y coordinate in meters.
   -- @extends Core.Point#COORDINATE
   
-  --- # POINT_VEC2 class, extends @{Point#COORDINATE}
-  --
-  -- The @{Point#POINT_VEC2} class defines a 2D point in the simulator. The height coordinate (if needed) will be the land height + an optional added height specified.
+  --- The @{Point#POINT_VEC2} class defines a 2D point in the simulator. The height coordinate (if needed) will be the land height + an optional added height specified.
   --
   -- ## POINT_VEC2 constructor
   --

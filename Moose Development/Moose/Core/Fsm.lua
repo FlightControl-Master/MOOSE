@@ -1,8 +1,6 @@
 --- **Core** -- The **FSM** (**F**inite **S**tate **M**achine) class and derived **FSM\_** classes 
 -- are design patterns allowing efficient (long-lasting) processes and workflows.
 -- 
--- ![Banner Image](..\Presentations\FSM\Dia1.JPG)
--- 
 -- ===
 -- 
 -- A Finite State Machine (FSM) models a process flow that transitions between various **States** through triggered **Events**.
@@ -65,6 +63,7 @@
 -- ===
 --
 -- @module Core.Fsm
+-- @image Core_Finite_State_Machine.JPG
 
 do -- FSM
 
@@ -72,9 +71,7 @@ do -- FSM
   -- @extends Core.Base#BASE
   
   
-  --- # FSM class, extends @{Core.Base#BASE}
-  --
-  -- A Finite State Machine (FSM) models a process flow that transitions between various **States** through triggered **Events**.
+  --- A Finite State Machine (FSM) models a process flow that transitions between various **States** through triggered **Events**.
   -- 
   -- A FSM can only be in one of a finite number of states. 
   -- The machine is in only one state at a time; the state it is in at any given time is called the **current state**. 
@@ -804,9 +801,7 @@ do -- FSM_CONTROLLABLE
   -- @field Wrapper.Controllable#CONTROLLABLE Controllable
   -- @extends Core.Fsm#FSM
   
-  --- # FSM_CONTROLLABLE, extends @{#FSM}
-  --
-  -- FSM_CONTROLLABLE class models Finite State Machines for @{Wrapper.Controllable}s, which are @{Wrapper.Group}s, @{Wrapper.Unit}s, @{Client}s.
+  --- FSM_CONTROLLABLE class models Finite State Machines for @{Wrapper.Controllable}s, which are @{Wrapper.Group}s, @{Wrapper.Unit}s, @{Client}s.
   -- 
   -- ===
   -- 
@@ -939,9 +934,7 @@ do -- FSM_PROCESS
   -- @extends Core.Fsm#FSM_CONTROLLABLE
   
   
-  --- # FSM_PROCESS, extends @{#FSM}
-  --
-  -- FSM_PROCESS class models Finite State Machines for @{Task} actions, which control @{Client}s.
+  --- FSM_PROCESS class models Finite State Machines for @{Task} actions, which control @{Client}s.
   -- 
   -- ===
   -- 
@@ -1184,9 +1177,7 @@ do -- FSM_TASK
   -- @field Tasking.Task#TASK Task
   -- @extends #FSM
    
-  --- # FSM_TASK, extends @{#FSM}
-  --
-  -- FSM_TASK class models Finite State Machines for @{Task}s.
+  --- FSM_TASK class models Finite State Machines for @{Task}s.
   -- 
   -- ===
   -- 
@@ -1230,9 +1221,7 @@ do -- FSM_SET
   -- @extends Core.Fsm#FSM
 
 
-  --- # FSM_SET, extends @{#FSM}
-  --
-  -- FSM_SET class models Finite State Machines for @{Set}s. Note that these FSMs control multiple objects!!! So State concerns here
+  --- FSM_SET class models Finite State Machines for @{Set}s. Note that these FSMs control multiple objects!!! So State concerns here
   -- for multiple objects or the position of the state machine in the process.
   -- 
   -- ===

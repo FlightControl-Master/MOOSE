@@ -7,7 +7,7 @@
 -- ===       
 --
 -- @module AI.AI_A2A_Cap
--- @image Combat_Air_Patrol.JPG
+-- @image AI_Combat_Air_Patrol.JPG
 
 --- @type AI_A2A_CAP
 -- @extends AI.AI_A2A_Patrol#AI_A2A_PATROL

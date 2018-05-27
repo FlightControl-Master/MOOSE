@@ -2,10 +2,6 @@
 -- 
 -- ===
 -- 
--- ![Banner Image](..\Presentations\AI_FORMATION\Dia1.JPG)
--- 
--- ===
--- 
 -- AI_FORMATION makes AI @{Wrapper.Group}s fly in formation of various compositions.
 -- The AI_FORMATION class models formations in a different manner than the internal DCS formation logic!!!
 -- The purpose of the class is to:
@@ -46,6 +42,7 @@
 -- ===
 --   
 -- @module AI.AI_Formation
+-- @image AI_Large_Formations.JPG
 
 --- AI_FORMATION class
 -- @type AI_FORMATION

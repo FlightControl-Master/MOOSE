@@ -1,7 +1,5 @@
 --- **Core** -- SCHEDULER prepares and handles the **execution of functions over scheduled time (intervals)**.
 --
--- ![Banner Image](..\Presentations\SCHEDULER\Dia1.JPG)
--- 
 -- ===
 -- 
 -- SCHEDULER manages the **scheduling of functions**:
@@ -40,7 +38,7 @@
 -- ===
 --
 -- @module Core.Scheduler
-
+-- @image Core_Scheduler.JPG
 
 --- The SCHEDULER class
 -- @type SCHEDULER
@@ -48,9 +46,7 @@
 -- @extends Core.Base#BASE
 
 
---- # SCHEDULER class, extends @{Core.Base#BASE}
--- 
--- The SCHEDULER class creates schedule.
+--- The SCHEDULER class creates schedule.
 -- 
 -- A SCHEDULER can manage **multiple** (repeating) schedules. Each planned or executing schedule has a unique **ScheduleID**.
 -- The ScheduleID is returned when the method @{#SCHEDULER.Schedule}() is called.

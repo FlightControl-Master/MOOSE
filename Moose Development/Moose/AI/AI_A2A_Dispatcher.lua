@@ -150,7 +150,7 @@
 -- ### Authors: **Stonehouse**, **SNAFU** in terms of the advice, documentation, and the original GCICAP script.
 -- 
 -- @module AI.AI_A2A_Dispatcher
--- @image Air_To_Air_Dispatching.JPG
+-- @image AI_Air_To_Air_Dispatching.JPG
 
 
 

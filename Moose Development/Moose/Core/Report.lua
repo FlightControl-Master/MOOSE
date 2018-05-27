@@ -9,6 +9,7 @@
 -- ### Contributions:
 --
 -- @module Core.Report
+-- @image Core_Report.JPG
 
 
 --- The REPORT class

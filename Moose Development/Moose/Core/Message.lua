@@ -1,18 +1,15 @@
 --- **Core** -- MESSAGE class takes are of the **real-time notifications** and **messages to players** during a simulation.
 -- 
--- ![Banner Image](..\Presentations\MESSAGE\Dia1.JPG)
--- 
 -- ===
 -- 
 -- @module Core.Message
+-- @image Core_Message.JPG
 
 --- The MESSAGE class
 -- @type MESSAGE
 -- @extends Core.Base#BASE
 
---- # MESSAGE class, extends @{Core.Base#BASE}
--- 
--- Message System to display Messages to Clients, Coalitions or All.
+--- Message System to display Messages to Clients, Coalitions or All.
 -- Messages are shown on the display panel for an amount of seconds, and will then disappear.
 -- Messages can contain a category which is indicating the category of the message.
 -- 

@@ -1,7 +1,5 @@
 --- **Core** -- The RADIO Module is responsible for everything that is related to radio transmission and you can hear in DCS, be it TACAN beacons, Radio transmissions...
 -- 
--- ![Banner Image](..\Presentations\RADIO\Dia1.JPG)
--- 
 -- ===
 --
 -- The Radio contains 2 classes : RADIO and BEACON
@@ -33,6 +31,7 @@
 -- ### Author: Hugues "Grey_Echo" Bousquet
 --
 -- @module Core.Radio
+-- @image Core_Radio.JPG
 
 
 --- # RADIO class, extends @{Core.Base#BASE}
