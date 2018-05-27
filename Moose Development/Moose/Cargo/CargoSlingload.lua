@@ -1,10 +1,6 @@
 --- **Cargo** -- Management of single cargo crates, which are based on a @{Static} object. The cargo can only be slingloaded.
 --
 -- ===
---
--- ![Banner Image](..\Presentations\CARGO\Dia1.JPG)
---
--- ===
 -- 
 -- ### [Demo Missions]()
 -- 
@@ -18,6 +14,7 @@
 -- ===
 -- 
 -- @module Cargo.CargoSlingload
+-- @image Cargo_Slingload.JPG
 
 
 do -- CARGO_SLINGLOAD

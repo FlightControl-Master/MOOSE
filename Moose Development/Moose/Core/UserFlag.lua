@@ -11,6 +11,8 @@
 -- ===
 -- 
 -- @module Core.UserFlag
+-- @image Core_Userflag.JPG
+-- 
 
 do -- UserFlag
 
@@ -18,11 +20,9 @@ do -- UserFlag
   -- @extends Core.Base#BASE
 
 
-  --- # USERFLAG class, extends @{Core.Base#BASE}
+  --- Management of DCS User Flags.
   -- 
-  -- Management of DCS User Flags.
-  -- 
-  -- ## 1. USERFLAG constructor
+  -- ## USERFLAG constructor
   --   
   --   * @{#USERFLAG.New}(): Creates a new USERFLAG object.
   -- 

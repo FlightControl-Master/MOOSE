@@ -1,10 +1,6 @@
 --- **AI** -- (R2.1) - Manages the independent process of Close Air Support for airplanes.
 --
 -- ===
---
--- ![Banner Image](..\Presentations\AI_CAS\Dia1.JPG)
--- 
--- ===
 -- 
 -- ### [Demo Missions](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master-release/CAS%20-%20Close%20Air%20Support)
 -- 
@@ -24,7 +20,7 @@
 -- ===
 --
 -- @module AI.AI_Cas
-
+-- @image AI_Close_Air_Support.JPG
 
 --- AI_CAS_ZONE class
 -- @type AI_CAS_ZONE

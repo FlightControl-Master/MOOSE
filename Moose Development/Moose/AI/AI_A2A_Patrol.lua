@@ -7,7 +7,7 @@
 -- ===
 -- 
 -- @module AI.AI_A2A_Patrol
--- @image Air_Patrolling.JPG
+-- @image AI_Air_Patrolling.JPG
 
 
 --- @type AI_A2A_PATROL

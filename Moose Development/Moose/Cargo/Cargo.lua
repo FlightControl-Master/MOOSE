@@ -1,15 +1,6 @@
 --- **Core** -- Management of CARGO logistics, that can be transported from and to transportation carriers.
 --
 -- ===
---
--- ![Banner Image](..\Presentations\CARGO\Dia1.JPG)
---
--- ===
--- 
---   
--- This module is still under construction, but is described above works already, and will keep working ...
--- 
--- ===
 -- 
 -- ### Author: **FlightControl**
 -- ### Contributions: 
@@ -17,6 +8,7 @@
 -- ===
 -- 
 -- @module Cargo.Cargo
+-- @image Cargo.JPG
 
 -- Events
 

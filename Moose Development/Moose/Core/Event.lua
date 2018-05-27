@@ -1,7 +1,5 @@
 --- **Core** -- EVENT models DCS **event dispatching** using a **publish-subscribe** model.
 -- 
--- ![Banner Image](..\Presentations\EVENT\Dia1.JPG)
--- 
 -- ===
 -- 
 -- # 1) Event Handling Overview
@@ -165,6 +163,7 @@
 -- ===
 --
 -- @module Core.Event
+-- @image Core_Event.JPG
 
 
 --- The EVENT structure

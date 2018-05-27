@@ -1,7 +1,5 @@
 --- **Core** -- SET_ classes define **collections** of objects to perform **bulk actions** and logically **group** objects.
 -- 
--- ![Banner Image](..\Presentations\SET\Dia1.JPG)
--- 
 -- ===
 -- 
 -- SET_ classes group objects of the same type into a collection, which is either:
@@ -31,6 +29,7 @@
 -- ===
 -- 
 -- @module Core.Set
+-- @image Core_Sets.JPG
 
 
 --- @type SET_BASE
@@ -41,18 +40,17 @@
 -- @extends Core.Base#BASE
 
 
---- # 1) SET_BASE class, extends @{Core.Base#BASE}
--- The @{Core.Set#SET_BASE} class defines the core functions that define a collection of objects.
+--- The @{Core.Set#SET_BASE} class defines the core functions that define a collection of objects.
 -- A SET provides iterators to iterate the SET, but will **temporarily** yield the ForEach interator loop at defined **"intervals"** to the mail simulator loop.
 -- In this way, large loops can be done while not blocking the simulator main processing loop.
 -- The default **"yield interval"** is after 10 objects processed.
 -- The default **"time interval"** is after 0.001 seconds.
 -- 
--- ## 1.1) Add or remove objects from the SET
+-- ## Add or remove objects from the SET
 -- 
 -- Some key core functions are @{Core.Set#SET_BASE.Add} and @{Core.Set#SET_BASE.Remove} to add or remove objects from the SET in your logic.
 -- 
--- ## 1.2) Define the SET iterator **"yield interval"** and the **"time interval"**
+-- ## Define the SET iterator **"yield interval"** and the **"time interval"**
 -- 
 -- Modify the iterator intervals with the @{Core.Set#SET_BASE.SetInteratorIntervals} method.
 -- You can set the **"yield interval"**, and the **"time interval"**. (See above).
@@ -647,27 +645,25 @@ end
 --- @type SET_GROUP
 -- @extends Core.Set#SET_BASE
 
---- # SET_GROUP class, extends @{Core.Set#SET_BASE}
--- 
--- Mission designers can use the @{Core.Set#SET_GROUP} class to build sets of groups belonging to certain:
+--- Mission designers can use the @{Core.Set#SET_GROUP} class to build sets of groups belonging to certain:
 -- 
 --  * Coalitions
 --  * Categories
 --  * Countries
 --  * Starting with certain prefix strings.
 --  
--- ## 1. SET_GROUP constructor
+-- ## SET_GROUP constructor
 -- 
 -- Create a new SET_GROUP object with the @{#SET_GROUP.New} method:
 -- 
 --    * @{#SET_GROUP.New}: Creates a new SET_GROUP object.
 -- 
--- ## 2. Add or Remove GROUP(s) from SET_GROUP
+-- ## Add or Remove GROUP(s) from SET_GROUP
 -- 
 -- GROUPS can be added and removed using the @{Core.Set#SET_GROUP.AddGroupsByName} and @{Core.Set#SET_GROUP.RemoveGroupsByName} respectively. 
 -- These methods take a single GROUP name or an array of GROUP names to be added or removed from SET_GROUP.
 -- 
--- ## 3. SET_GROUP filter criteria
+-- ## SET_GROUP filter criteria
 -- 
 -- You can set filter criteria to define the set of groups within the SET_GROUP.
 -- Filter criteria are defined by:
@@ -694,7 +690,7 @@ end
 -- 
 --    * @{#SET_GROUP.FilterZones}: Builds the SET_GROUP with the groups within a @{Core.Zone#ZONE}.
 -- 
--- ## 4. SET_GROUP iterators
+-- ## SET_GROUP iterators
 -- 
 -- Once the filters have been defined and the SET_GROUP has been built, you can iterate the SET_GROUP with the available iterator methods.
 -- The iterator methods will walk the SET_GROUP set, and call for each element within the set a function that you provide.
@@ -706,11 +702,11 @@ end
 --   * @{#SET_GROUP.ForEachGroupNotInZone}: Iterate the SET_GROUP and call an iterator function for each **alive** GROUP presence not in a @{Zone}, providing the GROUP and optional parameters to the called function.
 --
 --
--- ## 5. SET_GROUP trigger events on the GROUP objects.
+-- ## SET_GROUP trigger events on the GROUP objects.
 -- 
 -- The SET is derived from the FSM class, which provides extra capabilities to track the contents of the GROUP objects in the SET_GROUP.
 -- 
--- ### 5.1. When a GROUP object crashes or is dead, the SET_GROUP will trigger a **Dead** event.
+-- ### When a GROUP object crashes or is dead, the SET_GROUP will trigger a **Dead** event.
 -- 
 -- You can handle the event using the OnBefore and OnAfter event handlers. 
 -- The event handlers need to have the paramters From, Event, To, GroupObject.
@@ -1423,9 +1419,7 @@ do -- SET_UNIT
   --- @type SET_UNIT
   -- @extends Core.Set#SET_BASE
   
-  --- # 3) SET_UNIT class, extends @{Core.Set#SET_BASE}
-  -- 
-  -- Mission designers can use the SET_UNIT class to build sets of units belonging to certain:
+  --- Mission designers can use the SET_UNIT class to build sets of units belonging to certain:
   -- 
   --  * Coalitions
   --  * Categories
@@ -1433,18 +1427,18 @@ do -- SET_UNIT
   --  * Unit types
   --  * Starting with certain prefix strings.
   --  
-  -- ## 3.1) SET_UNIT constructor
+  -- ## SET_UNIT constructor
   --
   -- Create a new SET_UNIT object with the @{#SET_UNIT.New} method:
   -- 
   --    * @{#SET_UNIT.New}: Creates a new SET_UNIT object.
   --   
-  -- ## 3.2) Add or Remove UNIT(s) from SET_UNIT
+  -- ## Add or Remove UNIT(s) from SET_UNIT
   --
   -- UNITs can be added and removed using the @{Core.Set#SET_UNIT.AddUnitsByName} and @{Core.Set#SET_UNIT.RemoveUnitsByName} respectively. 
   -- These methods take a single UNIT name or an array of UNIT names to be added or removed from SET_UNIT.
   -- 
-  -- ## 3.3) SET_UNIT filter criteria
+  -- ## SET_UNIT filter criteria
   -- 
   -- You can set filter criteria to define the set of units within the SET_UNIT.
   -- Filter criteria are defined by:
@@ -1463,7 +1457,7 @@ do -- SET_UNIT
   -- 
   --    * @{#SET_UNIT.FilterZones}: Builds the SET_UNIT with the units within a @{Core.Zone#ZONE}.
   -- 
-  -- ## 3.4) SET_UNIT iterators
+  -- ## SET_UNIT iterators
   -- 
   -- Once the filters have been defined and the SET_UNIT has been built, you can iterate the SET_UNIT with the available iterator methods.
   -- The iterator methods will walk the SET_UNIT set, and call for each element within the set a function that you provide.
@@ -1479,13 +1473,13 @@ do -- SET_UNIT
   --   * @{#SET_UNIT.ForEachUnitCompletelyInZone}: Iterate and call an iterator function for each **alive** UNIT presence completely in a @{Zone}, providing the UNIT and optional parameters to the called function.
   --   * @{#SET_UNIT.ForEachUnitNotInZone}: Iterate and call an iterator function for each **alive** UNIT presence not in a @{Zone}, providing the UNIT and optional parameters to the called function.
   -- 
-  -- ## 3.5 ) SET_UNIT atomic methods
+  -- ## SET_UNIT atomic methods
   -- 
   -- Various methods exist for a SET_UNIT to perform actions or calculations and retrieve results from the SET_UNIT:
   -- 
   --   * @{#SET_UNIT.GetTypeNames}(): Retrieve the type names of the @{Wrapper.Unit}s in the SET, delimited by a comma.
   -- 
-  -- ## 4. SET_UNIT iterators
+  -- ## SET_UNIT iterators
   -- 
   -- Once the filters have been defined and the SET_UNIT has been built, you can iterate the SET_UNIT with the available iterator methods.
   -- The iterator methods will walk the SET_UNIT set, and call for each element within the set a function that you provide.
@@ -1495,11 +1489,11 @@ do -- SET_UNIT
   --   * @{#SET_UNIT.ForEachUnitInZone}: Iterate the SET_UNIT and call an iterator function for each **alive** UNIT object presence completely in a @{Zone}, providing the UNIT object and optional parameters to the called function.
   --   * @{#SET_UNIT.ForEachUnitNotInZone}: Iterate the SET_UNIT and call an iterator function for each **alive** UNIT object presence not in a @{Zone}, providing the UNIT object and optional parameters to the called function.
   --
-  -- ## 5. SET_UNIT trigger events on the UNIT objects.
+  -- ## SET_UNIT trigger events on the UNIT objects.
   -- 
   -- The SET is derived from the FSM class, which provides extra capabilities to track the contents of the UNIT objects in the SET_UNIT.
   -- 
-  -- ### 5.1. When a UNIT object crashes or is dead, the SET_UNIT will trigger a **Dead** event.
+  -- ### When a UNIT object crashes or is dead, the SET_UNIT will trigger a **Dead** event.
   -- 
   -- You can handle the event using the OnBefore and OnAfter event handlers. 
   -- The event handlers need to have the paramters From, Event, To, GroupObject.
@@ -2423,9 +2417,7 @@ do -- SET_STATIC
   --- @type SET_STATIC
   -- @extends Core.Set#SET_BASE
   
-  --- # 3) SET_STATIC class, extends @{Core.Set#SET_BASE}
-  -- 
-  -- Mission designers can use the SET_STATIC class to build sets of Statics belonging to certain:
+  --- Mission designers can use the SET_STATIC class to build sets of Statics belonging to certain:
   -- 
   --  * Coalitions
   --  * Categories
@@ -2433,18 +2425,18 @@ do -- SET_STATIC
   --  * Static types
   --  * Starting with certain prefix strings.
   --  
-  -- ## 3.1) SET_STATIC constructor
+  -- ## SET_STATIC constructor
   --
   -- Create a new SET_STATIC object with the @{#SET_STATIC.New} method:
   -- 
   --    * @{#SET_STATIC.New}: Creates a new SET_STATIC object.
   --   
-  -- ## 3.2) Add or Remove STATIC(s) from SET_STATIC
+  -- ## Add or Remove STATIC(s) from SET_STATIC
   --
   -- STATICs can be added and removed using the @{Core.Set#SET_STATIC.AddStaticsByName} and @{Core.Set#SET_STATIC.RemoveStaticsByName} respectively. 
   -- These methods take a single STATIC name or an array of STATIC names to be added or removed from SET_STATIC.
   -- 
-  -- ## 3.3) SET_STATIC filter criteria
+  -- ## SET_STATIC filter criteria
   -- 
   -- You can set filter criteria to define the set of units within the SET_STATIC.
   -- Filter criteria are defined by:
@@ -2463,7 +2455,7 @@ do -- SET_STATIC
   -- 
   --    * @{#SET_STATIC.FilterZones}: Builds the SET_STATIC with the units within a @{Core.Zone#ZONE}.
   -- 
-  -- ## 3.4) SET_STATIC iterators
+  -- ## SET_STATIC iterators
   -- 
   -- Once the filters have been defined and the SET_STATIC has been built, you can iterate the SET_STATIC with the available iterator methods.
   -- The iterator methods will walk the SET_STATIC set, and call for each element within the set a function that you provide.
@@ -2479,7 +2471,7 @@ do -- SET_STATIC
   --   * @{#SET_STATIC.ForEachStaticCompletelyInZone}: Iterate and call an iterator function for each **alive** STATIC presence completely in a @{Zone}, providing the STATIC and optional parameters to the called function.
   --   * @{#SET_STATIC.ForEachStaticNotInZone}: Iterate and call an iterator function for each **alive** STATIC presence not in a @{Zone}, providing the STATIC and optional parameters to the called function.
   -- 
-  -- ## 3.5 ) SET_STATIC atomic methods
+  -- ## SET_STATIC atomic methods
   -- 
   -- Various methods exist for a SET_STATIC to perform actions or calculations and retrieve results from the SET_STATIC:
   -- 
@@ -3099,9 +3091,7 @@ end
 
 
 
---- # 4) SET_CLIENT class, extends @{Core.Set#SET_BASE}
--- 
--- Mission designers can use the @{Core.Set#SET_CLIENT} class to build sets of units belonging to certain:
+--- Mission designers can use the @{Core.Set#SET_CLIENT} class to build sets of units belonging to certain:
 -- 
 --  * Coalitions
 --  * Categories
@@ -3109,18 +3099,18 @@ end
 --  * Client types
 --  * Starting with certain prefix strings.
 --  
--- ## 4.1) SET_CLIENT constructor
+-- ## SET_CLIENT constructor
 -- 
 -- Create a new SET_CLIENT object with the @{#SET_CLIENT.New} method:
 -- 
 --    * @{#SET_CLIENT.New}: Creates a new SET_CLIENT object.
 --   
--- ## 4.2) Add or Remove CLIENT(s) from SET_CLIENT 
+-- ## Add or Remove CLIENT(s) from SET_CLIENT 
 -- 
 -- CLIENTs can be added and removed using the @{Core.Set#SET_CLIENT.AddClientsByName} and @{Core.Set#SET_CLIENT.RemoveClientsByName} respectively. 
 -- These methods take a single CLIENT name or an array of CLIENT names to be added or removed from SET_CLIENT.
 -- 
--- ## 4.3) SET_CLIENT filter criteria
+-- ## SET_CLIENT filter criteria
 -- 
 -- You can set filter criteria to define the set of clients within the SET_CLIENT.
 -- Filter criteria are defined by:
@@ -3139,7 +3129,7 @@ end
 -- 
 --    * @{#SET_CLIENT.FilterZones}: Builds the SET_CLIENT with the clients within a @{Core.Zone#ZONE}.
 -- 
--- ## 4.4) SET_CLIENT iterators
+-- ## SET_CLIENT iterators
 -- 
 -- Once the filters have been defined and the SET_CLIENT has been built, you can iterate the SET_CLIENT with the available iterator methods.
 -- The iterator methods will walk the SET_CLIENT set, and call for each element within the set a function that you provide.
@@ -3512,17 +3502,15 @@ end
 
 
 
---- # 4) SET_PLAYER class, extends @{Core.Set#SET_BASE}
+--- Mission designers can use the @{Core.Set#SET_PLAYER} class to build sets of units belonging to alive players:
 -- 
--- Mission designers can use the @{Core.Set#SET_PLAYER} class to build sets of units belonging to alive players:
--- 
--- ## 4.1) SET_PLAYER constructor
+-- ## SET_PLAYER constructor
 -- 
 -- Create a new SET_PLAYER object with the @{#SET_PLAYER.New} method:
 -- 
 --    * @{#SET_PLAYER.New}: Creates a new SET_PLAYER object.
 --   
--- ## 4.3) SET_PLAYER filter criteria
+-- ## SET_PLAYER filter criteria
 -- 
 -- You can set filter criteria to define the set of clients within the SET_PLAYER.
 -- Filter criteria are defined by:
@@ -3541,7 +3529,7 @@ end
 -- 
 --    * @{#SET_PLAYER.FilterZones}: Builds the SET_PLAYER with the clients within a @{Core.Zone#ZONE}.
 -- 
--- ## 4.4) SET_PLAYER iterators
+-- ## SET_PLAYER iterators
 -- 
 -- Once the filters have been defined and the SET_PLAYER has been built, you can iterate the SET_PLAYER with the available iterator methods.
 -- The iterator methods will walk the SET_PLAYER set, and call for each element within the set a function that you provide.
@@ -3909,24 +3897,22 @@ end
 --- @type SET_AIRBASE
 -- @extends Core.Set#SET_BASE
 
---- # 5) SET_AIRBASE class, extends @{Core.Set#SET_BASE}
--- 
--- Mission designers can use the @{Core.Set#SET_AIRBASE} class to build sets of airbases optionally belonging to certain:
+--- Mission designers can use the @{Core.Set#SET_AIRBASE} class to build sets of airbases optionally belonging to certain:
 -- 
 --  * Coalitions
 --  
--- ## 5.1) SET_AIRBASE constructor
+-- ## SET_AIRBASE constructor
 -- 
 -- Create a new SET_AIRBASE object with the @{#SET_AIRBASE.New} method:
 -- 
 --    * @{#SET_AIRBASE.New}: Creates a new SET_AIRBASE object.
 --   
--- ## 5.2) Add or Remove AIRBASEs from SET_AIRBASE 
+-- ## Add or Remove AIRBASEs from SET_AIRBASE 
 -- 
 -- AIRBASEs can be added and removed using the @{Core.Set#SET_AIRBASE.AddAirbasesByName} and @{Core.Set#SET_AIRBASE.RemoveAirbasesByName} respectively. 
 -- These methods take a single AIRBASE name or an array of AIRBASE names to be added or removed from SET_AIRBASE.
 -- 
--- ## 5.3) SET_AIRBASE filter criteria 
+-- ## SET_AIRBASE filter criteria 
 -- 
 -- You can set filter criteria to define the set of clients within the SET_AIRBASE.
 -- Filter criteria are defined by:
@@ -3937,7 +3923,7 @@ end
 -- 
 --   * @{#SET_AIRBASE.FilterStart}: Starts the filtering of the airbases within the SET_AIRBASE.
 -- 
--- ## 5.4) SET_AIRBASE iterators
+-- ## SET_AIRBASE iterators
 -- 
 -- Once the filters have been defined and the SET_AIRBASE has been built, you can iterate the SET_AIRBASE with the available iterator methods.
 -- The iterator methods will walk the SET_AIRBASE set, and call for each airbase within the set a function that you provide.
@@ -4198,9 +4184,7 @@ end
 --- @type SET_CARGO
 -- @extends Core.Set#SET_BASE
 
---- # (R2.1) SET_CARGO class, extends @{Core.Set#SET_BASE}
--- 
--- Mission designers can use the @{Core.Set#SET_CARGO} class to build sets of cargos optionally belonging to certain:
+--- Mission designers can use the @{Core.Set#SET_CARGO} class to build sets of cargos optionally belonging to certain:
 -- 
 --  * Coalitions
 --  * Types
@@ -4260,7 +4244,7 @@ SET_CARGO = {
 }
 
 
---- (R2.1) Creates a new SET_CARGO object, building a set of cargos belonging to a coalitions and categories.
+--- Creates a new SET_CARGO object, building a set of cargos belonging to a coalitions and categories.
 -- @param #SET_CARGO self
 -- @return #SET_CARGO
 -- @usage
@@ -4632,9 +4616,7 @@ end
 --- @type SET_ZONE
 -- @extends Core.Set#SET_BASE
 
---- # SET_ZONE class, extends @{Core.Set#SET_BASE}
--- 
--- Mission designers can use the @{Core.Set#SET_ZONE} class to build sets of zones of various types.
+--- Mission designers can use the @{Core.Set#SET_ZONE} class to build sets of zones of various types.
 -- 
 -- ## SET_ZONE constructor
 -- 
@@ -4647,7 +4629,7 @@ end
 -- ZONEs can be added and removed using the @{Core.Set#SET_ZONE.AddZonesByName} and @{Core.Set#SET_ZONE.RemoveZonesByName} respectively. 
 -- These methods take a single ZONE name or an array of ZONE names to be added or removed from SET_ZONE.
 -- 
--- ## 5.3) SET_ZONE filter criteria 
+-- ## SET_ZONE filter criteria 
 -- 
 -- You can set filter criteria to build the collection of zones in SET_ZONE.
 -- Filter criteria are defined by:
@@ -4658,7 +4640,7 @@ end
 -- 
 --   * @{#SET_ZONE.FilterStart}: Starts the filtering of the zones within the SET_ZONE.
 -- 
--- ## 5.4) SET_ZONE iterators
+-- ## SET_ZONE iterators
 -- 
 -- Once the filters have been defined and the SET_ZONE has been built, you can iterate the SET_ZONE with the available iterator methods.
 -- The iterator methods will walk the SET_ZONE set, and call for each airbase within the set a function that you provide.

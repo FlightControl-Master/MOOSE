@@ -11,6 +11,7 @@
 -- ===
 -- 
 -- @module Core.Goal
+-- @image Core_Goal.JPG
 
 do -- Goal
 
@@ -18,9 +19,7 @@ do -- Goal
   -- @extends Core.Fsm#FSM
 
 
-  --- # GOAL class, extends @{Core.Fsm#FSM}
-  -- 
-  -- GOAL models processes that have an objective with a defined achievement. Derived classes implement the ways how the achievements can be realized.
+  --- GOAL models processes that have an objective with a defined achievement. Derived classes implement the ways how the achievements can be realized.
   -- 
   -- ## 1. GOAL constructor
   --   

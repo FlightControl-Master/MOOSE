@@ -9,6 +9,7 @@
 -- ===       
 --
 -- @module AI.AI_A2A_GCI
+-- @image AI_AI_Ground_Control_Intercept.JPG
 
 
 

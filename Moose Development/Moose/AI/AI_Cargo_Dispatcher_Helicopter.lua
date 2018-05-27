@@ -9,6 +9,7 @@
 -- ===       
 --
 -- @module AI.AI_Cargo_Dispatcher_Helicopter
+-- @image AI_Cargo_Dispatching_For_Helicopters.JPG
 
 --- @type AI_CARGO_DISPATCHER_HELICOPTER
 -- @extends AI.AI_Cargo_Dispatcher#AI_CARGO_DISPATCHER

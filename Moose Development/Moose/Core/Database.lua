@@ -8,14 +8,13 @@
 -- ===
 -- 
 -- @module Core.Database
+-- @image Core_Database.JPG
 
 
 --- @type DATABASE
 -- @extends Core.Base#BASE
 
---- # DATABASE class, extends @{Core.Base#BASE}
--- 
--- Mission designers can use the DATABASE class to refer to:
+--- Mission designers can use the DATABASE class to refer to:
 -- 
 --  * STATICS
 --  * UNITS

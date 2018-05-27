@@ -1,10 +1,6 @@
 --- **Cargo** -- Management of single cargo logistics, which are based on a @{Wrapper.Unit} object.
 --
 -- ===
---
--- ![Banner Image](..\Presentations\CARGO\Dia1.JPG)
---
--- ===
 -- 
 -- ### [Demo Missions]()
 -- 
@@ -18,6 +14,7 @@
 -- ===
 -- 
 -- @module Cargo.CargoUnit
+-- @image Cargo_Units.JPG
 
 do -- CARGO_UNIT
 
