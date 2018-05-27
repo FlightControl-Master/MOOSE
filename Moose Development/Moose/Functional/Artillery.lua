@@ -77,7 +77,11 @@
 -- @field #table ammomissiles Table holding names of the missile types which are included when counting the ammo. Default is {"weapons.missiles"} which includes some guided missiles.
 -- @field #number Nshots Number of shots fired on current target.
 -- @field #number minrange Minimum firing range in kilometers. Targets closer than this distance are not engaged. Default 0.5 km.
--- @field #number maxrange Maximum firing range in kilometers. Targets further away than this distance are not engaged. Default 10000 km. 
+-- @field #number maxrange Maximum firing range in kilometers. Targets further away than this distance are not engaged. Default 10000 km.
+-- @field #number nukewarhead Explosion strength of tactical nuclear warhead in kg TNT. Default 75000.
+-- @field #number nukerange Demolition range of tactical nuclear explostions.
+-- @field #boolean nukefire Ignite additional fires and smoke for nuclear explosions Default true.
+-- @field #number nukefires Number of nuclear fires.
 -- @extends Core.Fsm#FSM_CONTROLLABLE
 
 ---# ARTY class, extends @{Core.Fsm#FSM_CONTROLLABLE}
@@ -365,6 +369,10 @@ ARTY={
   Nshots=0,
   minrange=500,
   maxrange=1000000,
+  nukewarhead=75000,
+  nukerange=nil,
+  nukefire=true,
+  nukefires=nil,
 }
 
 --- Weapong type ID. http://wiki.hoggit.us/view/DCS_enum_weapon_flag
@@ -376,7 +384,8 @@ ARTY.WeaponType={
   UnguidedAny=805339120,
   GuidedMissile=268402688,
   CruiseMissile=2097152,
-  AntiShipMissile=65536, 
+  AntiShipMissile=65536,
+  TacticalNuke=666,
 }
 
 --- Some ID to identify who we are in output of the DCS.log file.
@@ -385,7 +394,7 @@ ARTY.id="ARTY | "
 
 --- Arty script version.
 -- @field #string version
-ARTY.version="0.9.1"
+ARTY.version="0.9.2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -843,6 +852,14 @@ function ARTY:onafterStart(Controllable, From, Event, To)
   -- Get Ammo.
   self.Nammo0, self.Nshells0, self.Nrockets0, self.Nmissiles0=self:GetAmmo(self.Debug)
   
+  -- Init nuclear explosion parameters if they were not set by user.
+  if self.nukerange==nil then
+    self.nukerange=1500/75000*self.nukewarhead  -- linear dependence
+  end
+  if self.nukefires==nil then
+    self.nukefires=20/1000/1000*self.nukerange*self.nukerange
+  end
+  
   local text=string.format("\n******************************************************\n")
   text=text..string.format("Arty group          = %s\n", Controllable:GetName())
   text=text..string.format("Artillery attribute = %s\n", tostring(self.IsArtillery))
@@ -870,6 +887,9 @@ function ARTY:onafterStart(Controllable, From, Event, To)
   text=text..string.format("Rearming coord dist = %d m\n", dist)
   text=text..string.format("Rearming ARTY roads = %s\n", tostring(self.RearmingArtyOnRoad))
   end
+  text=text..string.format("Nuclear warhead     = %d tons TNT\n", self.nukewarhead/1000)
+  text=text..string.format("Nuclear demolition  = %d m\n", self.nukerange)
+  text=text..string.format("Nuclear fires       = %d (active=%s)\n", self.nukefires, tostring(self.nukefire))
   text=text..string.format("******************************************************\n")
   text=text..string.format("Targets:\n")
   for _, target in pairs(self.targets) do
@@ -952,6 +972,115 @@ end
 -- Event Handling
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+--- Model a nuclear blast/destruction by creating fires and destroy scenery.
+-- @param #ARTY self
+-- @param Core.Point#COORDINATE _coord Coordinate of the impact point (center of the blast).
+function ARTY:_NuclearBlast(_coord)
+
+  local S0=self.nukewarhead
+  local R0=self.nukerange
+  
+  -- Number of fires
+  local N0=self.nukefires
+  
+  -- Create an explosion at the last known position.
+  _coord:Explosion(S0)
+  
+  -- Huge fire at direct impact point.
+  if self.nukefire then
+    _coord:BigSmokeAndFireHuge()
+  end
+  
+  -- Create a table of fire coordinates within the demolition zone.
+  local _fires={}
+  for i=1,N0 do    
+    local _fire=_coord:GetRandomCoordinateInRadius(R0)
+    local _dist=_fire:Get2DDistance(_coord)
+    table.insert(_fires, {distance=_dist, coord=_fire})
+  end
+  
+  -- Sort scenery wrt to distance from impact point.
+  local _sort = function(a,b) return a.distance < b.distance end
+  table.sort(_fires,_sort)
+  
+  local function _explosion(R)
+    -- At R=R0 ==> explosion strength is 1% of S0 at impact point.
+    local alpha=math.log(100)
+    local strength=S0*math.exp(-alpha*R/R0)
+    env.info(string.format("FF: nuklear explosion strength s(%.1f m) = %.10f (s/s0=%.1f %%), alpha=%.3f", R, strength, strength/S0*100, alpha))
+    return strength
+  end
+  
+  local function ignite(_fires)
+    for _,fire in pairs(_fires) do
+      local _fire=fire.coord --Core.Point#COORDINATE
+      
+      -- Get distance to impact and calc exponential explosion strength.
+      local R=_fire:Get2DDistance(_coord)
+      local S=_explosion(R)
+      env.info(string.format("FF: explosion r=%.1f, s=%.3f", R, S))
+      
+      -- Get a random Big Smoke and fire object.
+      local _preset=math.random(0,7)
+      local _density=S/S0 --math.random()+0.1
+  
+      _fire:BigSmokeAndFire(_preset,_density)
+      _fire:Explosion(S)
+    
+    end
+  end
+  
+  if self.nukefire then
+    ignite(_fires)
+  end
+  
+--[[ 
+  local ZoneNuke=ZONE_RADIUS:New("Nukezone", _coord:GetVec2(), 2000)
+
+  -- Scan for Scenery objects.
+  ZoneNuke:Scan(Object.Category.SCENERY)
+  
+  -- Array with all possible hideouts, i.e. scenery objects in the vicinity of the group.
+  local scenery={}
+
+  for SceneryTypeName, SceneryData in pairs(ZoneNuke:GetScannedScenery()) do
+    for SceneryName, SceneryObject in pairs(SceneryData) do
+    
+      local SceneryObject = SceneryObject -- Wrapper.Scenery#SCENERY
+      
+      -- Position of the scenery object.
+      local spos=SceneryObject:GetCoordinate()
+      
+      -- Distance from group to impact point.
+      local distance= spos:Get2DDistance(_coord)
+
+      -- Place markers on every possible scenery object.      
+      if self.Debug then
+        local MarkerID=spos:MarkToAll(string.format("%s scenery object %s", self.Controllable:GetName(), SceneryObject:GetTypeName()))
+        local text=string.format("%s scenery: %s, Coord %s", self.Controllable:GetName(), SceneryObject:GetTypeName(), SceneryObject:GetCoordinate():ToStringLLDMS())
+        self:T2(SUPPRESSION.id..text)
+      end
+      
+      -- Add to table.
+      table.insert(scenery, {object=SceneryObject, distance=distance})
+      
+      --SceneryObject:Destroy()      
+    end
+  end
+  
+  -- Sort scenery wrt to distance from impact point.
+--  local _sort = function(a,b) return a.distance < b.distance end
+--  table.sort(scenery,_sort)
+  
+--  for _,object in pairs(scenery) do
+--    local sobject=object -- Wrapper.Scenery#SCENERY
+--    sobject:Destroy()
+--  end
+
+]]
+
+end
+
 --- Eventhandler for shot event.
 -- @param #ARTY self
 -- @param Core.Event#EVENTDATA EventData
@@ -984,6 +1113,49 @@ function ARTY:_OnEventShot(EventData)
         local text=string.format("%s, fired shot %d of %d with weapon %s on target %s.", self.Controllable:GetName(), self.Nshots, self.currentTarget.nshells, _weaponName, self.currentTarget.name)
         self:T(ARTY.id..text)
         MESSAGE:New(text, 5):ToAllIf(self.report or self.Debug)
+        
+        -- Last known position of the weapon fired.
+        local _lastpos={x=0, y=0, z=0}
+        
+        --- Track the position of the weapon if it is supposed to model a tac nuke. 
+        -- @param #table _weapon
+        local function _TrackWeapon(_weapon)
+        
+          -- When the pcall status returns false the weapon has hit.
+          local _status,_currpos =  pcall(
+          function()
+            return _weapon:getPoint()
+          end)
+          
+          self:T(ARTY.id..string.format("ARTY %s: Weapon still in air: %s", self.Controllable:GetName(), tostring(_status)))
+          
+          if _status then
+            
+            -- Update last position.
+            _lastpos={x=_currpos.x, y=_currpos.y, z=_currpos.z}
+            
+            -- Check again in 0.05 seconds.
+            --return timer.getTime() + self.dtBombtrack
+            return timer.getTime() + 0.05
+            
+          else
+        
+            local _impactcoord=COORDINATE:NewFromVec3(_lastpos)
+            
+            -- Create a "nuclear" explosion and blast at the impact point.
+            SCHEDULER:New(nil, ARTY._NuclearBlast, {self,_impactcoord}, 1.0)
+            --self:_NuclearBlast(_impactcoord)
+        
+          end
+        
+        end
+        
+        -- Start track the shell if we want to model a tactical nuke.
+        if self.currentTarget.weapontype==ARTY.WeaponType.TacticalNuke then
+            self:T(ARTY.id..string.format("ARTY %s: Tracking of weapon starts in five seconds.", self.Controllable:GetName()))
+            timer.scheduleFunction(_TrackWeapon, EventData.weapon, timer.getTime() + 5.0)
+        end
+        
         
         -- Get current ammo.
         local _nammo,_nshells,_nrockets,_nmissiles=self:GetAmmo()
@@ -1725,6 +1897,11 @@ function ARTY:_FireAtCoord(coord, radius, nshells, weapontype)
 
   -- Controllable.
   local group=self.Controllable --Wrapper.Group#GROUP
+  
+  -- Tactical nukes are actually cannon shells.
+  if weapontype==ARTY.WeaponType.TacticalNuke then
+    weapontype=ARTY.WeaponType.Cannon
+  end
 
   -- Set ROE to weapon free.
   group:OptionROEOpenFire()
@@ -2254,6 +2431,8 @@ function ARTY:_WeaponTypeName(tnumber)
     name="Guided Missiles"
   elseif tnumber==ARTY.WeaponType.AntiShipMissile then
     name="Anti-Ship Missiles"
+  elseif tnumber==ARTY.WeaponType.TacticalNuke then
+    name="Tactical Nukes"    
   end
   return name
 end
