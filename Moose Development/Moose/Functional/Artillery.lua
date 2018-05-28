@@ -404,7 +404,7 @@ ARTY.id="ARTY | "
 
 --- Arty script version.
 -- @field #string version
-ARTY.version="0.9.3"
+ARTY.version="0.9.4"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -1242,14 +1242,10 @@ function ARTY:_OnEventShot(EventData)
           self.Nukes=self.Nukes-1
         end
         
-        if _nammo==0 then
-        
+        local _outofammo=false
+        if _nammo==0 then        
           self:T(ARTY.id..string.format("Group %s completely out of ammo.", self.Controllable:GetName()))
-          self:CeaseFire(self.currentTarget)
-          self:Winchester()
-          
-          -- Current target is deallocated ==> return
-          return
+          _outofammo=true
         end
         
         -- Weapon type name for current target.
@@ -1258,47 +1254,65 @@ function ARTY:_OnEventShot(EventData)
         self:T(ARTY.id..string.format("Group %s uses weapontype %s for current target.", self.Controllable:GetName(), _weapontype))        
         
         -- Special weapon type requested ==> Check if corresponding ammo is empty.
+        local _partlyoutofammo=false
         if self.currentTarget.weapontype==ARTY.WeaponType.Cannon and _nshells==0 then
         
           self:T(ARTY.id..string.format("Group %s, cannons requested but shells empty.", self.Controllable:GetName()))
-          self:CeaseFire(self.currentTarget)
-          return
+          _partlyoutofammo=true
         
         elseif self.currentTarget.weapontype==ARTY.WeaponType.TacticalNukes and self.Nukes<=0 then
 
           self:T(ARTY.id..string.format("Group %s, tactical nukes requested but nukes empty.", self.Controllable:GetName()))
-          self:CeaseFire(self.currentTarget)
-          return
+          _partlyoutofammo=true
         
         elseif self.currentTarget.weapontype==ARTY.WeaponType.Rockets and _nrockets==0 then
 
           self:T(ARTY.id..string.format("Group %s, rockets requested but rockets empty.", self.Controllable:GetName()))
-          self:CeaseFire(self.currentTarget)
-          return
+          _partlyoutofammo=true
         
         elseif self.currentTarget.weapontype==ARTY.WeaponType.UnguidedAny and _nshells+_nrockets==0 then
         
           self:T(ARTY.id..string.format("Group %s, unguided weapon requested but shells AND rockets empty.", self.Controllable:GetName()))
-          self:CeaseFire(self.currentTarget)
-          return
+          _partlyoutofammo=true
         
         elseif (self.currentTarget.weapontype==ARTY.WeaponType.GuidedMissile or self.currentTarget.weapontype==ARTY.WeaponType.CruiseMissile or self.currentTarget.weapontype==ARTY.WeaponType.AntiShipMissile) and _nmissiles==0 then
         
           self:T(ARTY.id..string.format("Group %s, guided, anti-ship or cruise missiles requested but all missiles empty.", self.Controllable:GetName()))
-          self:CeaseFire(self.currentTarget)
-          return
+          _partlyoutofammo=true
           
-        end
+        end        
        
         -- Check if number of shots reached max.
+        local _ceasefire=false
         if self.Nshots >= self.currentTarget.nshells then
           local text=string.format("Group %s stop firing on target %s.", self.Controllable:GetName(), self.currentTarget.name)
           self:T(ARTY.id..text)
           MESSAGE:New(text, 5):ToAllIf(self.Debug)
           
           -- Cease fire.
+          _ceasefire=true
+        end
+        
+        -- Check if we are (partly) out of ammo.
+        if _outofammo or _partlyoutofammo then
+          _ceasefire=true
+        end
+        
+        -- Cease fire on current target.
+        if _ceasefire then
           self:CeaseFire(self.currentTarget)
         end
+
+        -- Group is out of ammo (or partly and can rearm) ==> Winchester (==> Rearm).
+        if _outofammo or (_partlyoutofammo and self.RearmingGroup ~=nil) then
+          self:Winchester()
+          return
+        end
+        
+        -- Relocate position
+        if self.Nshots >= self.currentTarget.nshells and self.relocateafterfire then
+          self:_Relocate()
+        end  
         
       else
         self:E(ARTY.id..string.format("ERROR: No current target for group %s?!", self.Controllable:GetName()))
@@ -1633,12 +1647,7 @@ function ARTY:onafterCeaseFire(Controllable, From, Event, To, target)
   
   -- ARTY group has no current target any more.
   self.currentTarget=nil
-
-  -- Relocate position
-  if self.relocateafterfire then
-    self:_Relocate()
-  end  
-  
+    
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -2776,11 +2785,11 @@ function ARTY:_Move(group, ToCoord, Speed, OnRoad)
     local _last=ToCoord:GetClosestPointToRoad()
     
     -- First point on road.
-    path[#path+1]=_first:WaypointGround(Speed, "On road")
+    path[#path+1]=_first:WaypointGround(Speed, "On Road")
     task[#task+1]=group:TaskFunction("ARTY._PassingWaypoint", self, #path-1, false)
     
     -- Last point on road.
-    path[#path+1]=_last:WaypointGround(Speed, "On road")
+    path[#path+1]=_last:WaypointGround(Speed, "On Road")
     task[#task+1]=group:TaskFunction("ARTY._PassingWaypoint", self, #path-1, false)
     
   end

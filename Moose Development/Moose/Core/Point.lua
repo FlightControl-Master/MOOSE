@@ -964,7 +964,6 @@ do -- COORDINATE
   function COORDINATE:GetSurfaceType()
     local vec2=self:GetVec2()
     local surface=land.getSurfaceType(vec2)
-    self:MarkToAll("Surface type = "..surface)
     return surface
   end
 
