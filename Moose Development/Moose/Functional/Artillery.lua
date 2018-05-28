@@ -53,6 +53,7 @@
 -- @field #number Nshells0 Initial amount of shells of the whole group.
 -- @field #number Nrockets0 Initial amount of rockets of the whole group.
 -- @field #number Nmissiles0 Initial amount of missiles of the whole group.
+-- @field #number Nukes0 Initial amount of tactical nukes of the whole group.
 -- @field #number FullAmmo Full amount of all ammunition taking the number of alive units into account.
 -- @field #number StatusInterval Update interval in seconds between status updates. Default 10 seconds.
 -- @field #number WaitForShotTime Max time in seconds to wait until fist shot event occurs after target is assigned. If time is passed without shot, the target is deleted. Default is 300 seconds.
@@ -79,9 +80,13 @@
 -- @field #number minrange Minimum firing range in kilometers. Targets closer than this distance are not engaged. Default 0.5 km.
 -- @field #number maxrange Maximum firing range in kilometers. Targets further away than this distance are not engaged. Default 10000 km.
 -- @field #number nukewarhead Explosion strength of tactical nuclear warhead in kg TNT. Default 75000.
+-- @field #number Nukes Number of nuclear shells, the group has available. Default is same number as normal shells. Note that if normal shells are empty, firing nukes is also not possible any more.
 -- @field #number nukerange Demolition range of tactical nuclear explostions.
 -- @field #boolean nukefire Ignite additional fires and smoke for nuclear explosions Default true.
--- @field #number nukefires Number of nuclear fires.
+-- @field #number nukefires Number of nuclear fires and subexplosions.
+-- @field #boolean relocateafterfire Group will relocate after each firing task. Default false.
+-- @field #number relocateRmin Minimum distance in meters the group will look for places to relocate.
+-- @field #number relocateRmax Maximum distance in meters the group will look for places to relocate.
 -- @extends Core.Fsm#FSM_CONTROLLABLE
 
 ---# ARTY class, extends @{Core.Fsm#FSM_CONTROLLABLE}
@@ -343,6 +348,7 @@ ARTY={
   Nshells0=0,
   Nrockets0=0,
   Nmissiles0=0,
+  Nukes0=0,
   FullAmmo=0,
   StatusInterval=10,
   WaitForShotTime=300,
@@ -370,9 +376,13 @@ ARTY={
   minrange=500,
   maxrange=1000000,
   nukewarhead=75000,
-  nukerange=nil,
-  nukefire=true,
+  Nukes=nil,
+  nukefire=false,
   nukefires=nil,
+  nukerange=nil,
+  relocateafterfire=false,
+  relocateRmin=300,
+  relocateRmax=800,
 }
 
 --- Weapong type ID. http://wiki.hoggit.us/view/DCS_enum_weapon_flag
@@ -385,7 +395,7 @@ ARTY.WeaponType={
   GuidedMissile=268402688,
   CruiseMissile=2097152,
   AntiShipMissile=65536,
-  TacticalNuke=666,
+  TacticalNukes=666,
 }
 
 --- Some ID to identify who we are in output of the DCS.log file.
@@ -394,7 +404,7 @@ ARTY.id="ARTY | "
 
 --- Arty script version.
 -- @field #string version
-ARTY.version="0.9.2"
+ARTY.version="0.9.3"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -468,7 +478,6 @@ function ARTY:New(group)
   
   -- Maximum speed in km/h.
   self.SpeedMax=group:GetSpeedMax()
-  --self.SpeedMax=self.DCSdesc.speedMax*3.6
   
   -- Set speed to 0.7 of maximum.
   self.Speed=self.SpeedMax * 0.7
@@ -610,9 +619,9 @@ end
 
 --- Assign coordinate to where the ARTY group should move.
 -- @param #ARTY self
--- @param Core.Point#COORDINATE coord Coordinates of the target.
--- @param #string time (Optional) Day time at which the group should start moving. Passed as a string in format "08:13:45".
--- @param #number speed (Optinal) Speed in km/h the group should move at. Default 50 km/h.
+-- @param Core.Point#COORDINATE coord Coordinates of the new position.
+-- @param #string time (Optional) Day time at which the group should start moving. Passed as a string in format "08:13:45". Default is now.
+-- @param #number speed (Optinal) Speed in km/h the group should move at. Default 70% of max posible speed of group.
 -- @param #boolean onroad (Optional) If true, group will mainly use roads. Default off, i.e. go directly towards the specified coordinate.
 -- @param #boolean cancel (Optional) If true, cancel any running attack when move should begin. Default is false.
 -- @param #string name (Optional) Name of the coordinate. Default is LL DMS string of the coordinate. If the name was already given, the numbering "#01", "#02",... is appended automatically.
@@ -629,8 +638,18 @@ function ARTY:AssignMoveCoord(coord, time, speed, onroad, cancel, name)
   -- Default is current time if no time was specified.
   time=time or self:_SecondsToClock(timer.getAbsTime())
   
-  -- Default speed is 50 km/h.
-  speed=speed or 50
+  -- Get max speed of group.
+  local speedmax=self.Controllable:GetSpeedMax()
+  
+  -- Default speed is 70% of max speed.
+  if speed then
+    speed=math.min(speed, speedmax)
+  elseif self.Speed then
+   speed=self.Speed
+  else
+    speed=speedmax*0.7
+  end
+  
   
   -- Default is off road.
   if onroad==nil then
@@ -647,6 +666,10 @@ function ARTY:AssignMoveCoord(coord, time, speed, onroad, cancel, name)
   
   -- Prepare move array.
   local _move={name=_name, coord=coord, time=_time, speed=speed, onroad=onroad, cancel=cancel}
+  
+  if self.Debug then
+    coord:MarkToAll(string.format("Battery %s move position.", self.Controllable:GetName()))
+  end
   
   -- Add to table.
   table.insert(self.moves, _move)
@@ -831,6 +854,51 @@ function ARTY:SetMissileTypes(tableofnames)
   end
 end
 
+--- Set number of tactical nuclear warheads available to the group.
+-- Note that it can be max the number of normal shells. Also if all normal shells are empty, firing nuclear shells is also not possible any more until group gets rearmed.
+-- @param #ARTY self
+-- @param #number n Number of warheads for the whole group.
+function ARTY:SetTacNukeShells(n)
+  self.Nukes=n
+end
+
+--- Set nuclear warhead explosion strength.
+-- @param #ARTY self
+-- @param #number strength Explosion strength in kilo tons TNT. Default is 0.075 kt.
+function ARTY:SetTacNukeWarhead(strength)
+  self.nukewarhead=strength or 0.075
+  self.nukewarhead=self.nukewarhead*1000*1000 -- convert to kg TNT.
+end
+
+--- Set nuclear fires and extra demolition explosions.
+-- @param #ARTY self
+-- @param #number nfires (Optional) Number of big smoke and fire objects created in the demolition zone.
+-- @param #number demolitionrange (Optional) Demolition range in meters.
+function ARTY:SetTacNukeFires(nfires, range)
+  self.nukefire=true
+  self.nukefires=nfires
+  self.nukerange=range
+end
+
+--- Set relocate after firing. Group will find a new location after each engagement. Default is off
+-- @param #ARTY self
+-- @param #number switch (Optional) If true, activate relocation. If false, deactivate relocation.
+function ARTY:SetRelocateAfterEngagement(switch)
+  if switch==nil then
+    switch=true
+  end
+  self.relocateafterfire=switch
+end
+
+--- Set relocation distance.
+-- @param #ARTY self
+-- @param #number rmax (Optional) Max distance in meters, the group will move to relocate. Default is 800 m.
+-- @param #number rmin (Optional) Min distance in meters, the group will move to relocate. Default is 300 m.
+function ARTY:SetRelocateDistance(rmax, rmin)
+  self.relocateRmax=rmax or 800
+  self.relocateRmin=rmin or 300
+end
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- FSM Start Event
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -859,6 +927,11 @@ function ARTY:onafterStart(Controllable, From, Event, To)
   if self.nukefires==nil then
     self.nukefires=20/1000/1000*self.nukerange*self.nukerange
   end
+  if self.Nukes==nil then
+    self.Nukes0=self.Nshells0
+  else
+    self.Nukes0=self.Nukes
+  end
   
   local text=string.format("\n******************************************************\n")
   text=text..string.format("Arty group          = %s\n", Controllable:GetName())
@@ -874,6 +947,10 @@ function ARTY:onafterStart(Controllable, From, Event, To)
   text=text..string.format("Number of shells    = %d\n", self.Nshells0)
   text=text..string.format("Number of rockets   = %d\n", self.Nrockets0)
   text=text..string.format("Number of missiles  = %d\n", self.Nmissiles0)
+  text=text..string.format("Number of nukes     = %d\n", self.Nukes0)
+  text=text..string.format("Nuclear warhead     = %d tons TNT\n", self.nukewarhead/1000)
+  text=text..string.format("Nuclear demolition  = %d m\n", self.nukerange)
+  text=text..string.format("Nuclear fires       = %d (active=%s)\n", self.nukefires, tostring(self.nukefire))
   if self.RearmingGroup or self.RearmingPlaceCoord then
   text=text..string.format("Rearming safe dist. = %d m\n", self.RearmingDistance)
   end
@@ -887,9 +964,9 @@ function ARTY:onafterStart(Controllable, From, Event, To)
   text=text..string.format("Rearming coord dist = %d m\n", dist)
   text=text..string.format("Rearming ARTY roads = %s\n", tostring(self.RearmingArtyOnRoad))
   end
-  text=text..string.format("Nuclear warhead     = %d tons TNT\n", self.nukewarhead/1000)
-  text=text..string.format("Nuclear demolition  = %d m\n", self.nukerange)
-  text=text..string.format("Nuclear fires       = %d (active=%s)\n", self.nukefires, tostring(self.nukefire))
+  text=text..string.format("Relocate after fire = %s\n", tostring(self.relocateafterfire))
+  text=text..string.format("Relocate min dist.  = %d\n m", self.relocateRmin)
+  text=text..string.format("Relocate max dist.  = %d\n m", self.relocateRmax)
   text=text..string.format("******************************************************\n")
   text=text..string.format("Targets:\n")
   for _, target in pairs(self.targets) do
@@ -948,6 +1025,7 @@ function ARTY:_StatusReport()
   text=text..string.format("Number of shells    = %d\n", Nshells)
   text=text..string.format("Number of rockets   = %d\n", Nrockets)
   text=text..string.format("Number of missiles  = %d\n", Nmissiles)
+  text=text..string.format("Number of nukes     = %d\n", self.Nukes)
   if self.currentTarget then
   text=text..string.format("Current Target      = %s\n", tostring(self.currentTarget.name))
   text=text..string.format("Curr. Tgt assigned  = %d\n", Tnow-self.currentTarget.Tassigned)
@@ -987,9 +1065,9 @@ function ARTY:_NuclearBlast(_coord)
   _coord:Explosion(S0)
   
   -- Huge fire at direct impact point.
-  if self.nukefire then
-    _coord:BigSmokeAndFireHuge()
-  end
+  --if self.nukefire then
+  _coord:BigSmokeAndFireHuge()
+  --end
   
   -- Create a table of fire coordinates within the demolition zone.
   local _fires={}
@@ -1030,7 +1108,7 @@ function ARTY:_NuclearBlast(_coord)
     end
   end
   
-  if self.nukefire then
+  if self.nukefire==true then
     ignite(_fires)
   end
   
@@ -1144,21 +1222,25 @@ function ARTY:_OnEventShot(EventData)
             
             -- Create a "nuclear" explosion and blast at the impact point.
             SCHEDULER:New(nil, ARTY._NuclearBlast, {self,_impactcoord}, 1.0)
-            --self:_NuclearBlast(_impactcoord)
         
           end
         
         end
         
         -- Start track the shell if we want to model a tactical nuke.
-        if self.currentTarget.weapontype==ARTY.WeaponType.TacticalNuke then
-            self:T(ARTY.id..string.format("ARTY %s: Tracking of weapon starts in five seconds.", self.Controllable:GetName()))
-            timer.scheduleFunction(_TrackWeapon, EventData.weapon, timer.getTime() + 5.0)
+        if self.currentTarget.weapontype==ARTY.WeaponType.TacticalNukes and self.Nukes>0 then
+            self:T(ARTY.id..string.format("ARTY %s: Tracking of weapon starts in two seconds.", self.Controllable:GetName()))
+            timer.scheduleFunction(_TrackWeapon, EventData.weapon, timer.getTime() + 2.0)
         end
         
         
         -- Get current ammo.
         local _nammo,_nshells,_nrockets,_nmissiles=self:GetAmmo()
+          
+        -- Decrease available nukes.
+        if self.currentTarget.weapontype==ARTY.WeaponType.TacticalNukes then
+          self.Nukes=self.Nukes-1
+        end
         
         if _nammo==0 then
         
@@ -1173,30 +1255,36 @@ function ARTY:_OnEventShot(EventData)
         -- Weapon type name for current target.
         local _weapontype=self:_WeaponTypeName(self.currentTarget.weapontype)
         self:T(ARTY.id..string.format("Group %s ammo: total=%d, shells=%d, rockets=%d, missiles=%d", self.Controllable:GetName(), _nammo, _nshells, _nrockets, _nmissiles))
-        self:T2(ARTY.id..string.format("Group %s uses weapontype %s for current target.", self.Controllable:GetName(), _weapontype))        
+        self:T(ARTY.id..string.format("Group %s uses weapontype %s for current target.", self.Controllable:GetName(), _weapontype))        
         
         -- Special weapon type requested ==> Check if corresponding ammo is empty.
         if self.currentTarget.weapontype==ARTY.WeaponType.Cannon and _nshells==0 then
         
-          self:T(ARTY.id.."Group %s, cannons requested but shells empty.", self.Controllable:GetName())
+          self:T(ARTY.id..string.format("Group %s, cannons requested but shells empty.", self.Controllable:GetName()))
+          self:CeaseFire(self.currentTarget)
+          return
+        
+        elseif self.currentTarget.weapontype==ARTY.WeaponType.TacticalNukes and self.Nukes<=0 then
+
+          self:T(ARTY.id..string.format("Group %s, tactical nukes requested but nukes empty.", self.Controllable:GetName()))
           self:CeaseFire(self.currentTarget)
           return
         
         elseif self.currentTarget.weapontype==ARTY.WeaponType.Rockets and _nrockets==0 then
 
-          self:T(ARTY.id.."Group %s, rockets requested but rockets empty.", self.Controllable:GetName())
+          self:T(ARTY.id..string.format("Group %s, rockets requested but rockets empty.", self.Controllable:GetName()))
           self:CeaseFire(self.currentTarget)
           return
         
         elseif self.currentTarget.weapontype==ARTY.WeaponType.UnguidedAny and _nshells+_nrockets==0 then
         
-          self:T(ARTY.id.."Group %s, unguided weapon requested but shells AND rockets empty.", self.Controllable:GetName())
+          self:T(ARTY.id..string.format("Group %s, unguided weapon requested but shells AND rockets empty.", self.Controllable:GetName()))
           self:CeaseFire(self.currentTarget)
           return
         
         elseif (self.currentTarget.weapontype==ARTY.WeaponType.GuidedMissile or self.currentTarget.weapontype==ARTY.WeaponType.CruiseMissile or self.currentTarget.weapontype==ARTY.WeaponType.AntiShipMissile) and _nmissiles==0 then
         
-          self:T(ARTY.id.."Group %s, guided, anti-ship or cruise missiles requested but all missiles empty.", self.Controllable:GetName())
+          self:T(ARTY.id..string.format("Group %s, guided, anti-ship or cruise missiles requested but all missiles empty.", self.Controllable:GetName()))
           self:CeaseFire(self.currentTarget)
           return
           
@@ -1389,6 +1477,35 @@ function ARTY:onbeforeOpenFire(Controllable, From, Event, To, target)
     return false
   end
   
+  -- Get ammo.
+  local Nammo, Nshells, Nrockets, Nmissiles=self:GetAmmo()
+  local nfire=Nammo
+  if target.weapontype==ARTY.WeaponType.Auto then
+    nfire=Nammo
+  elseif target.weapontype==ARTY.WeaponType.Cannon then
+    nfire=Nshells
+  elseif target.weapontype==ARTY.WeaponType.TacticalNukes then
+    nfire=self.Nukes
+  elseif target.weapontype==ARTY.WeaponType.Rockets then
+    nfire=Nrockets
+  elseif target.weapontype==ARTY.WeaponType.UnguidedAny then
+    nfire=Nshells+Nrockets
+  elseif target.weapontype==ARTY.WeaponType.GuidedMissile then
+    nfire=Nmissiles
+  elseif target.weapontype==ARTY.WeaponType.CruiseMissile then
+    nfire=Nmissiles
+  elseif target.weapontype==ARTY.WeaponType.AntiShipMissile then
+    nfire=Nmissiles
+  end
+  
+  -- Adjust if less than requested ammo is left.
+  target.nshells=math.min(target.nshells, nfire)
+  
+  -- No ammo left ==> deny transition.
+  if target.nshells<1 then
+    return false
+  end
+  
   return true
 end
 
@@ -1401,10 +1518,7 @@ end
 -- @param #table target Array holding the target info.
 function ARTY:onafterOpenFire(Controllable, From, Event, To, target)
   self:_EventFromTo("onafterOpenFire", Event, From, To)
-  
-  --local _coord=target.coord --Core.Point#COORDINATE  
-  --_coord:MarkToAll("Arty Target")
-    
+      
   -- Get target array index.
   local id=self:_GetTargetIndexByName(target.name)
   
@@ -1425,36 +1539,45 @@ function ARTY:onafterOpenFire(Controllable, From, Event, To, target)
   local Nammo, Nshells, Nrockets, Nmissiles=self:GetAmmo()
   local nfire=Nammo
   local _type="shots"
-  if self.WeaponType==ARTY.WeaponType.Auto then
+  if target.weapontype==ARTY.WeaponType.Auto then
     nfire=Nammo
     _type="shots"
-  elseif self.WeaponType==ARTY.WeaponType.Cannon then
+  elseif target.weapontype==ARTY.WeaponType.Cannon then
     nfire=Nshells
     _type="shells"
-  elseif self.WeaponType==ARTY.WeaponType.Rockets then
+  elseif target.weapontype==ARTY.WeaponType.TacticalNukes then
+    nfire=self.Nukes
+    _type="nuclear shells"
+  elseif target.weapontype==ARTY.WeaponType.Rockets then
     nfire=Nrockets
     _type="rockets"
-  elseif self.WeaponType==ARTY.WeaponType.UnguidedAny then
+  elseif target.weapontype==ARTY.WeaponType.UnguidedAny then
     nfire=Nshells+Nrockets
     _type="shells or rockets"
-  elseif self.WeaponType==ARTY.WeaponType.GuidedMissile then
+  elseif target.weapontype==ARTY.WeaponType.GuidedMissile then
     nfire=Nmissiles
     _type="guided missiles"
-  elseif self.WeaponType==ARTY.WeaponType.CruiseMissile then
+  elseif target.weapontype==ARTY.WeaponType.CruiseMissile then
     nfire=Nmissiles
     _type="cruise missiles"
-  elseif self.WeaponType==ARTY.WeaponType.AntiShipMissile then
+  elseif target.weapontype==ARTY.WeaponType.AntiShipMissile then
     nfire=Nmissiles
     _type="anti-ship missiles"
   end
   
   -- Adjust if less than requested ammo is left.
-  local _n=math.min(target.nshells, nfire)
+  target.nshells=math.min(target.nshells, nfire)
     
   -- Send message.
-  local text=string.format("%s, opening fire on target %s with %d %s. Distance %.1f km.", Controllable:GetName(), target.name, _n, _type, range/1000)
+  local text=string.format("%s, opening fire on target %s with %d %s. Distance %.1f km.", Controllable:GetName(), target.name, target.nshells, _type, range/1000)
   self:T(ARTY.id..text)
   MESSAGE:New(text, 10):ToCoalitionIf(Controllable:GetCoalition(), self.report)
+  
+  if self.Debug then
+    local _coord=target.coord --Core.Point#COORDINATE
+    local text=string.format("ARTY %s, Target %s, n=%d, weapon=%s", self.Controllable:GetName(), target.name, target.nshells, self:_WeaponTypeName(target.weapontype))
+    _coord:MarkToAll(text)
+  end
   
   -- Start firing.
   self:_FireAtCoord(target.coord, target.radius, target.nshells, target.weapontype)
@@ -1510,6 +1633,11 @@ function ARTY:onafterCeaseFire(Controllable, From, Event, To, target)
   
   -- ARTY group has no current target any more.
   self.currentTarget=nil
+
+  -- Relocate position
+  if self.relocateafterfire then
+    self:_Relocate()
+  end  
   
 end
 
@@ -1653,6 +1781,9 @@ function ARTY:onafterRearmed(Controllable, From, Event, To)
   local text=string.format("%s, rearming complete.", Controllable:GetName())
   self:T(ARTY.id..text)
   MESSAGE:New(text, 10):ToCoalitionIf(Controllable:GetCoalition(), self.report or self.Debug)
+  
+  -- "Rearm" tactical nukes as well.
+  self.Nukes=self.Nukes0
   
   -- Route ARTY group back to where it came from (if distance is > 100 m).
   local d1=self.Controllable:GetCoordinate():Get2DDistance(self.InitialCoord)
@@ -1899,7 +2030,7 @@ function ARTY:_FireAtCoord(coord, radius, nshells, weapontype)
   local group=self.Controllable --Wrapper.Group#GROUP
   
   -- Tactical nukes are actually cannon shells.
-  if weapontype==ARTY.WeaponType.TacticalNuke then
+  if weapontype==ARTY.WeaponType.TacticalNukes then
     weapontype=ARTY.WeaponType.Cannon
   end
 
@@ -1916,7 +2047,33 @@ function ARTY:_FireAtCoord(coord, radius, nshells, weapontype)
   group:SetTask(fire)
 end
 
+--- Relocate to another position, e.g. after an engagement to avoid couter strikes.
+-- @param #ARTY self
+function ARTY:_Relocate()
 
+  -- Current position.
+  local _pos=self.Controllable:GetCoordinate()
+  
+  local _new=nil
+  local _gotit=false
+  local _n=0
+  local _nmax=1000
+  repeat
+    -- Get a random coordinate.
+    _new=_pos:GetRandomCoordinateInRadius(self.relocateRmax, self.relocateRmin)
+    local _surface=_new:GetSurfaceType()
+    
+    -- Check that new coordinate is not water(-ish).
+    if _surface~=land.SurfaceType.WATER and _surface~=land.SurfaceType.SHALLOW_WATER then
+      _gotit=true
+    end
+  until _gotit or _n>_nmax
+  
+  -- Assign relocation
+  if _gotit then
+    self:AssignMoveCoord(_new, nil, nil, false, false)
+  end
+end
 
 --- Sort targets with respect to priority and number of times it was already engaged.
 -- @param #ARTY self
@@ -2042,7 +2199,8 @@ end
 -- @param #ARTY self
 -- @return #table Target which is due to be attacked now or nil if no target could be found.
 function ARTY:_CheckNormalTargets()
-
+  self:F3()
+  
   -- Sort targets w.r.t. prio and number times engaged already.
   self:_SortTargetQueuePrio()
       
@@ -2403,7 +2561,7 @@ function ARTY:_TargetInRange(target)
   end
     
   -- Remove target if ARTY group cannot move. No change to be ever in range.
-  if self.Speed==0 then
+  if self.SpeedMax<1 and _inrange==false then
     self:RemoveTarget(target.name)
   end
 
@@ -2431,7 +2589,7 @@ function ARTY:_WeaponTypeName(tnumber)
     name="Guided Missiles"
   elseif tnumber==ARTY.WeaponType.AntiShipMissile then
     name="Anti-Ship Missiles"
-  elseif tnumber==ARTY.WeaponType.TacticalNuke then
+  elseif tnumber==ARTY.WeaponType.TacticalNukes then
     name="Tactical Nukes"    
   end
   return name

@@ -958,6 +958,16 @@ do -- COORDINATE
     return Path
   end
 
+  --- Gets the surface type at the coordinate.
+  -- @param #COORDINATE self
+  -- @return Dcs.DCSland#SurfaceType Surface type.
+  function COORDINATE:GetSurfaceType()
+    local vec2=self:GetVec2()
+    local surface=land.getSurfaceType(vec2)
+    self:MarkToAll("Surface type = "..surface)
+    return surface
+  end
+
   --- Creates an explosion at the point of a certain intensity.
   -- @param #COORDINATE self
   -- @param #number ExplosionIntensity
