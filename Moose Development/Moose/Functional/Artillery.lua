@@ -1003,9 +1003,32 @@ function ARTY:onafterStart(Controllable, From, Event, To)
   -- Add event handler.
   self:HandleEvent(EVENTS.Shot, self._OnEventShot)
   self:HandleEvent(EVENTS.Dead, self._OnEventDead)
+  self:HandleEvent(EVENTS.MarkAdded, self._OnEventMarkAdded)
+
+  -- Add DCS event handler.  
+  world.addEventHandler(self)
   
   -- Start checking status.
   self:__Status(self.StatusInterval)
+end
+
+--- After "Start" event. Initialized ROE and alarm state. Starts the event handler.
+-- @param #ARTY self
+-- @param #table Event
+function ART:onEvent(Event)
+
+  if Event then
+  
+    if Event.id==world.event.S_EVENT_MARK_ADDED then
+      env.info("FF mark added")
+    elseif Event.id==world.event.S_EVENT_MARK_CHANGE then
+      env.info("FF mark changed")
+    elseif Event.id==world.event.S_EVENT_MARK_REMOVED then
+      env.info("FF mark removed")
+    end
+    
+  end
+
 end
 
 --- After "Start" event. Initialized ROE and alarm state. Starts the event handler.
@@ -1157,6 +1180,18 @@ function ARTY:_NuclearBlast(_coord)
 
 ]]
 
+end
+
+--- Eventhandler for shot event.
+-- @param #ARTY self
+-- @param Core.Event#EVENTDATA EventData
+function ARTY:_OnMarkAdded(EventData)
+  self:F(EventData)
+  if EventData.MarkCoordinate then
+    local coord=EventData.MarkCoordinate --Core.Point#COORDINATE
+    
+    coord:SmokeGreen()
+  end
 end
 
 --- Eventhandler for shot event.
@@ -2081,6 +2116,8 @@ function ARTY:_Relocate()
     if _surface~=land.SurfaceType.WATER and _surface~=land.SurfaceType.SHALLOW_WATER then
       _gotit=true
     end
+    -- Increase counter.
+    _n=_n+1
   until _gotit or _n>_nmax
   
   -- Assign relocation.
