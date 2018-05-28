@@ -1085,7 +1085,7 @@ function ARTY:_NuclearBlast(_coord)
     -- At R=R0 ==> explosion strength is 1% of S0 at impact point.
     local alpha=math.log(100)
     local strength=S0*math.exp(-alpha*R/R0)
-    env.info(string.format("FF: nuklear explosion strength s(%.1f m) = %.10f (s/s0=%.1f %%), alpha=%.3f", R, strength, strength/S0*100, alpha))
+    self:T2(ARTY.id..string.format("Nuclear explosion strength s(%.1f m) = %.5f (s/s0=%.1f %%), alpha=%.3f", R, strength, strength/S0*100, alpha))
     return strength
   end
   
@@ -1096,7 +1096,7 @@ function ARTY:_NuclearBlast(_coord)
       -- Get distance to impact and calc exponential explosion strength.
       local R=_fire:Get2DDistance(_coord)
       local S=_explosion(R)
-      env.info(string.format("FF: explosion r=%.1f, s=%.3f", R, S))
+      self:T2(ARTY.id..string.format("Explosion r=%.1f, s=%.3f", R, S))
       
       -- Get a random Big Smoke and fire object.
       local _preset=math.random(0,7)
