@@ -404,7 +404,7 @@ ARTY.id="ARTY | "
 
 --- Arty script version.
 -- @field #string version
-ARTY.version="0.9.4"
+ARTY.version="0.9.5"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -1284,6 +1284,7 @@ function ARTY:_OnEventShot(EventData)
        
         -- Check if number of shots reached max.
         local _ceasefire=false
+        local _relocate=false
         if self.Nshots >= self.currentTarget.nshells then
           local text=string.format("Group %s stop firing on target %s.", self.Controllable:GetName(), self.currentTarget.name)
           self:T(ARTY.id..text)
@@ -1291,6 +1292,10 @@ function ARTY:_OnEventShot(EventData)
           
           -- Cease fire.
           _ceasefire=true
+          
+          if self.relocateafterfire then
+            _relocate=true
+          end
         end
         
         -- Check if we are (partly) out of ammo.
@@ -1310,7 +1315,7 @@ function ARTY:_OnEventShot(EventData)
         end
         
         -- Relocate position
-        if self.Nshots >= self.currentTarget.nshells and self.relocateafterfire then
+        if _relocate then
           self:_Relocate()
         end  
         
@@ -2078,7 +2083,7 @@ function ARTY:_Relocate()
     end
   until _gotit or _n>_nmax
   
-  -- Assign relocation
+  -- Assign relocation.
   if _gotit then
     self:AssignMoveCoord(_new, nil, nil, false, false)
   end
