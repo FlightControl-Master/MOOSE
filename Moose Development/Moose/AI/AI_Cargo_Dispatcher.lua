@@ -13,11 +13,7 @@
 -- @extends Core.Fsm#FSM
 
 
---- # AI\_CARGO\_DISPATCHER class, extends @{Core.Fsm#FSM}
--- 
--- ===
--- 
--- AI\_CARGO\_DISPATCHER brings a dynamic cargo handling capability for AI groups.
+--- A dynamic cargo handling capability for AI groups.
 -- 
 -- Carrier equipment can be mobilized to intelligently transport infantry and other cargo within the simulation.
 -- The AI\_CARGO\_DISPATCHER module uses the @{Cargo} capabilities within the MOOSE framework, to enable Carrier GROUP objects 
