@@ -543,7 +543,7 @@ function GROUP:GetHeight( FromGround )
       local GroupPosition = DCSUnit:getPosition()
       
       if FromGround == true then
-        local LandHeight =  land.getHeight( { GroupPosition.p.x, GroupPosition.p.z } )
+        local LandHeight =  land.getHeight( { x = GroupPosition.p.x, y = GroupPosition.p.z } )
         GroupHeight = GroupHeight + ( GroupPosition.p.y - LandHeight )
       else
         GroupHeight = GroupHeight + GroupPosition.p.y

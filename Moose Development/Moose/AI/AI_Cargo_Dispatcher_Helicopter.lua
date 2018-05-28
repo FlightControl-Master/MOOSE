@@ -15,13 +15,7 @@
 -- @extends AI.AI_Cargo_Dispatcher#AI_CARGO_DISPATCHER
 
 
---- # AI\_CARGO\_DISPATCHER\_HELICOPTER class, extends @{AI.AI_Cargo_Dispatcher#AI_CARGO_DISPATCHER}
--- 
--- ![Banner Image](..\Presentations\AI_CARGO_DISPATCHER_HELICOPTER\Dia1.JPG)
--- 
--- ===
--- 
--- AI\_CARGO\_DISPATCHER\_HELICOPTER brings a dynamic cargo handling capability for AI helicopter groups.
+--- A dynamic cargo handling capability for AI helicopter groups.
 -- 
 -- Helicopters can be mobilized to intelligently transport infantry and other cargo within the simulation.
 -- The AI\_CARGO\_DISPATCHER\_HELICOPTER module uses the @{Cargo} capabilities within the MOOSE framework.

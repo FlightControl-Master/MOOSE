@@ -219,7 +219,7 @@ function AI_CARGO_HELICOPTER:onafterLanded( Helicopter, From, Event, To )
     self:F( { Helicopter:GetName(), Height = Helicopter:GetHeight( true ), Velocity = Helicopter:GetVelocityKMH() } )
 
     if self.RoutePickup == true then
-      if Helicopter:GetHeight( true ) <= 2 and Helicopter:GetVelocityKMH() < 5 then
+      if Helicopter:GetHeight( true ) <= 5 and Helicopter:GetVelocityKMH() < 7 then
         self:Load( Helicopter:GetPointVec2() )
         self.RoutePickup = false
         self.Relocating = true
@@ -227,7 +227,7 @@ function AI_CARGO_HELICOPTER:onafterLanded( Helicopter, From, Event, To )
     end
     
     if self.RouteDeploy == true then
-      if Helicopter:GetHeight( true ) <= 2 and Helicopter:GetVelocityKMH() < 5 then
+      if Helicopter:GetHeight( true ) <= 5 and Helicopter:GetVelocityKMH() < 7 then
         self:Unload( true )
         self.RouteDeploy = false
         self.Transporting = false
