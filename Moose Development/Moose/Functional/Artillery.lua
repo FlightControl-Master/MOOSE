@@ -87,6 +87,8 @@
 -- @field #boolean relocateafterfire Group will relocate after each firing task. Default false.
 -- @field #number relocateRmin Minimum distance in meters the group will look for places to relocate.
 -- @field #number relocateRmax Maximum distance in meters the group will look for places to relocate.
+-- @field #boolean markallow If true, Players are allowed to assign targets and moves for ARTY group by placing markers on the F10 map. Default is false.
+-- @field #number markkey Authorization key. Only player who know this key can assign targets and moves via markers on the F10 map. Default no authorization required. 
 -- @extends Core.Fsm#FSM_CONTROLLABLE
 
 ---# ARTY class, extends @{Core.Fsm#FSM_CONTROLLABLE}
@@ -366,11 +368,8 @@ ARTY={
   RearmingArtyOnRoad=false,
   InitialCoord=nil,
   report=true,
-  --ammoshells={"weapons.shells"},
   ammoshells={},
-  --ammorockets={"weapons.nurs"},
   ammorockets={},
-  --ammomissiles={"weapons.missiles"},
   ammomissiles={},
   Nshots=0,
   minrange=500,
@@ -383,6 +382,8 @@ ARTY={
   relocateafterfire=false,
   relocateRmin=300,
   relocateRmax=800,
+  markallow=false,
+  markkey=nil,
 }
 
 --- Weapong type ID. http://wiki.hoggit.us/view/DCS_enum_weapon_flag
@@ -404,7 +405,7 @@ ARTY.id="ARTY | "
 
 --- Arty script version.
 -- @field #string version
-ARTY.version="0.9.5"
+ARTY.version="0.9.6"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -625,16 +626,29 @@ end
 -- @param #boolean onroad (Optional) If true, group will mainly use roads. Default off, i.e. go directly towards the specified coordinate.
 -- @param #boolean cancel (Optional) If true, cancel any running attack when move should begin. Default is false.
 -- @param #string name (Optional) Name of the coordinate. Default is LL DMS string of the coordinate. If the name was already given, the numbering "#01", "#02",... is appended automatically.
+-- @param #boolean unique (Optional) Move is unique. If the move name is already known, the move is rejected. Default false.
 -- @return #string Name of the move. Can be used for further reference, e.g. deleting the move from the list.
-function ARTY:AssignMoveCoord(coord, time, speed, onroad, cancel, name)
-  self:F({coord=coord, time=time, speed=speed, onroad=onroad, cancel=cancel, name=name})
-  
-    -- Name of the target.
-  local _name=name or coord:ToStringLLDMS() 
+function ARTY:AssignMoveCoord(coord, time, speed, onroad, cancel, name, unique)
+  self:F({coord=coord, time=time, speed=speed, onroad=onroad, cancel=cancel, name=name, unique=unique})
     
-  -- Check if the name has already been used for another target. If so, the function returns a new unique name.
-  _name=self:_CheckName(self.moves, _name)
+  -- Default
+  if unique==nil then
+    unique=false
+  end
   
+  -- Name of the target.
+  local _name=name or coord:ToStringLLDMS()
+  local _unique=true
+  
+  -- Check if the name has already been used for another target. If so, the function returns a new unique name.
+  _name,_unique=self:_CheckName(self.moves, _name, not unique)
+  
+  -- Move name should be unique and is not.
+  if unique==true and _unique==false then
+    self:T(ARTY.id..string.format("%s: move %s should have a unique name but name was already given. Rejecting move!", self.Controllable:GetName(), _name))
+    return nil
+  end
+      
   -- Default is current time if no time was specified.
   time=time or self:_SecondsToClock(timer.getAbsTime())
   
@@ -649,8 +663,7 @@ function ARTY:AssignMoveCoord(coord, time, speed, onroad, cancel, name)
   else
     speed=speedmax*0.7
   end
-  
-  
+    
   -- Default is off road.
   if onroad==nil then
     onroad=false
@@ -899,6 +912,20 @@ function ARTY:SetRelocateDistance(rmax, rmin)
   self.relocateRmin=rmin or 300
 end
 
+--- Enable assigning targets by placing markers on the F10 map.
+-- @param #ARTY self
+-- @param #number key (Optional) Authorization key. Only players knowing this key can assign targets. Default is no authorization required.
+function ARTY:SetMarkTargetsOn(key)
+  self.markkey=key
+  self.markallow=true
+end
+
+--- Disable assigning targets by placing markers on the F10 map.
+-- @param #ARTY self
+function ARTY:SetMarkTargetsOff()
+  self.markallow=false
+end
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- FSM Start Event
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1012,23 +1039,233 @@ function ARTY:onafterStart(Controllable, From, Event, To)
   self:__Status(self.StatusInterval)
 end
 
+--- Extract engagement assignments and parameters from mark text.
+-- @param #ARTY self
+-- @param #string text Marker text to be analyzed.
+-- @return #table Table with assignment parameters, e.g. number of shots, radius, time etc.
+function ARTY:_Markertext(text)
+  self:F(text)
+ 
+  -- Assignment parameters. 
+  local assignment={}
+  assignment.battery={}
+  assignment.move=false
+  assignment.engage=false
+  assignment.time=nil
+  assignment.nshells=nil
+  assignment.prio=nil
+  assignment.maxengage=nil
+  assignment.radius=nil
+  assignment.weapontype=nil
+  assignment.speed=nil
+  assignment.onroad=nil
+  assignment.key=nil
+  
+  if text:lower():find("arty") then
+    env.info("FF: Found arty command:")
+    
+    if text:lower():find("engage") then
+      assignment.engage=true
+    elseif text:lower():find("move") then
+      assignment.move=true
+    else
+      self:E(ARTY.id.."ERROR: Neither ENGAGE nor MOVE keyword specified!")
+      return
+    end
+    
+    -- keywords are split by "," 
+    local keywords=self:_split(text, ",")
+  
+    for _,key in pairs(keywords) do
+    
+      local s=self:_split(key, " ")
+      local val=s[2]
+    
+      -- Battery name, i.e. which ARTY group should fire.
+      if key:lower():find("battery") then
+        
+        local v=self:_split(text, '"')
+                
+        table.insert(assignment.battery, v[2])
+        env.info(string.format("FF: Battery=%s.", v[2]))
+                  
+      elseif key:lower():find("time") then
+      
+        if val:lower():find("now") then
+          assignment.time=self:_SecondsToClock(timer.getTime0()+5)
+        else
+          assignment.time=val
+        end        
+        env.info(string.format("FF: Time=%s.", val))
+        
+      elseif key:lower():find("shots") then
+      
+        assignment.nshells=tonumber(s[2])
+        env.info(string.format("FF: Shots=%s.", val))
+        
+      elseif key:lower():find("prio") then
+      
+        assignment.prio=tonumber(val)
+        env.info(string.format("FF: Prio=%s.", val))
+        
+      elseif key:lower():find("maxengage") then
+      
+        assignment.maxengage=tonumber(val)
+        env.info(string.format("FF: Maxengage=%s.", val))
+        
+      elseif key:lower():find("radius") then
+      
+        assignment.radius=tonumber(val)
+        env.info(string.format("Radius=%s.", val))
+        
+      elseif key:lower():find("weapon") then
+        
+        if val:lower():find("cannon") then
+          assignment.weapontype=ARTY.WeaponType.Cannon
+        elseif val:lower():find("rocket") then
+          assignment.weapontype=ARTY.WeaponType.Rockets
+        elseif val:lower():find("missile") then
+          assignment.weapontype=ARTY.WeaponType.GuidedMissile
+        elseif val:lower():find("nuke") then
+          assignment.weapontype=ARTY.WeaponType.TacticalNukes
+        else
+          assignment.weapontype=ARTY.WeaponType.Auto
+        end        
+        env.info(string.format("FF: Weapon=%s.", val))
+        
+      elseif key:lower():find("speed") then
+      
+        assignment.speed=tonumber(val)
+        env.info(string.format("FF: Speed=%s.", val))
+        
+      elseif key:lower():find("road") then
+      
+        assignment.onroad=true
+        env.info(string.format("FF: Onroad=true."))
+        
+      elseif key:lower():find("key") then
+      
+        assignment.key=tonumber(val)
+        env.info(string.format("FF: Key=%s.", val))
+        
+      end       
+      
+    end
+  else
+    env.info("FF: This is NO arty command!")
+  end
+  
+  return assignment
+end
+
 --- After "Start" event. Initialized ROE and alarm state. Starts the event handler.
 -- @param #ARTY self
 -- @param #table Event
-function ART:onEvent(Event)
+function ARTY:onEvent(Event)
 
-  if Event then
+  if Event == nil or Event.idx == nil then
+    self:T3("Skipping onEvent. Event or Event.idx unknown.")
+    return true
+  end
+
+  local batteryname=self.Controllable:GetName()
+  local batterycoalition=self.Controllable:GetCoalition()
   
-    if Event.id==world.event.S_EVENT_MARK_ADDED then
-      env.info("FF mark added")
-    elseif Event.id==world.event.S_EVENT_MARK_CHANGE then
-      env.info("FF mark changed")
-    elseif Event.id==world.event.S_EVENT_MARK_REMOVED then
-      env.info("FF mark removed")
+  env.info(string.format("Event captured  = %s", tostring(batteryname)))
+  env.info(string.format("Event id        = %s", tostring(Event.id)))
+  env.info(string.format("Event time      = %s", tostring(Event.time)))
+  env.info(string.format("Event idx       = %s", tostring(Event.idx)))
+  env.info(string.format("Event coalition = %s", tostring(Event.coalition)))
+  env.info(string.format("Event group id  = %s", tostring(Event.groupID)))
+  env.info(string.format("Event text      = %s", tostring(Event.text)))
+  self:E({eventid=Event.id, vec3=Event.pos})
+  if Event.initiator~=nil then
+    local _unitname=Event.initiator:getName()
+    env.info(string.format("Event ini unit name = %s", tostring(_unitname)))
+  end
+
+  
+  if Event.id==world.event.S_EVENT_MARK_ADDED then
+    self:E({event="S_EVENT_MARK_ADDED", vec3=Event.pos})
+    
+  elseif Event.id==world.event.S_EVENT_MARK_CHANGE then
+    self:E({event="S_EVENT_MARK_CHANGE", vec3=Event.pos})
+    
+    -- Check if marker has a text and the "arty" keyword.
+    if Event.text~=nil and Event.text:lower():find("arty") then
+    
+      -- Check if we have the right coalition and text has arty keyword.
+      if batterycoalition==Event.coalition or self.markkey~=nil then
+
+        -- Evaluate marker text and extract parameters.
+        local _assign=self:_Markertext(Event.text)
+        
+        local _n=#_assign.battery
+        env.info("FF: number of batteries assigned to target = ".._n)
+        
+        -- Check if job is assigned to this ARTY group. Default is for all ARTY groups.
+        local _assigned=true
+        if _n>0 then
+          _assigned=false
+          for _,bat in pairs(_assign.battery) do
+            env.info(string.format("FF: compare %s=%s ==> %s",batteryname, bat, tostring(batteryname==bat)))
+            if batteryname==bat then
+              _assigned=true
+            end
+          end
+        end
+        
+        -- We are meant.
+        if _assigned then
+        
+          -- Convert (wrong x-->z, z-->x) vec3
+          local vec3={y=Event.pos.y, x=Event.pos.z, z=Event.pos.x}
+          -- Get coordinate from vec3.
+          local _coord=COORDINATE:NewFromVec3(vec3)
+        
+          if _assign.move then
+          
+            -- Create a new name.
+            local _name=string.format("Marked Move ID=%d for battery %s", Event.idx, batteryname)
+            self:E(ARTY.id.._name)
+          
+            -- Assign a relocation of the arty group.
+            self:AssignMoveCoord(_coord, _assign.time, _assign.speed, _assign.onroad, _assign.cancel,_name, true)
+          
+          else
+          
+            -- Create a new name.
+            local _name=string.format("Marked Target ID=%d for battery %s", Event.idx, batteryname)
+            self:E(ARTY.id.._name)
+                               
+            -- Assign a new firing engagement.
+            self:AssignTargetCoord(_coord,_assign.prio,_assign.radius,_assign.nshells,_assign.maxengage,_assign.time,_assign.weapontype, _name, true)
+          
+          end
+        end
+        
+      end  
+    end
+       
+  elseif Event.id==world.event.S_EVENT_MARK_REMOVED then
+    self:E({event="S_EVENT_MARK_REMOVED", vec3=Event.pos})
+    
+    -- Check if we have the right coalition.
+    if batterycoalition==Event.coalition and Event.text:lower():find("arty") then
+    
+      -- This should be the unique name of the target or move.
+      
+      if Event.text:lower():find("move") then
+        local _name=string.format("Marked Move ID=%d for battery %s", Event.idx, batteryname)
+        self:RemoveMove(_name)
+      else
+        local _name=string.format("Marked Target ID=%d for battery %s", Event.idx, batteryname)
+        self:RemoveTarget(_name)
+      end
     end
     
   end
-
+    
 end
 
 --- After "Start" event. Initialized ROE and alarm state. Starts the event handler.
@@ -1037,6 +1274,12 @@ function ARTY:_StatusReport()
 
   -- Get Ammo.
   local Nammo, Nshells, Nrockets, Nmissiles=self:GetAmmo()
+  local Nnukes
+  if self.Nukes==nil then
+    Nnukes=0
+  else
+    Nnukes=self.Nukes
+  end
   local Tnow=timer.getTime()
   local Clock=self:_SecondsToClock(timer.getAbsTime())
   
@@ -1048,7 +1291,7 @@ function ARTY:_StatusReport()
   text=text..string.format("Number of shells    = %d\n", Nshells)
   text=text..string.format("Number of rockets   = %d\n", Nrockets)
   text=text..string.format("Number of missiles  = %d\n", Nmissiles)
-  text=text..string.format("Number of nukes     = %d\n", self.Nukes)
+  text=text..string.format("Number of nukes     = %d\n", Nnukes)
   if self.currentTarget then
   text=text..string.format("Current Target      = %s\n", tostring(self.currentTarget.name))
   text=text..string.format("Curr. Tgt assigned  = %d\n", Tnow-self.currentTarget.Tassigned)
