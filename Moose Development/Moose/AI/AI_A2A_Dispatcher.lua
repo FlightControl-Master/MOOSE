@@ -731,7 +731,7 @@ do -- AI_A2A_DISPATCHER
   -- 
   -- In the mission editor, setup a group with task Refuelling. A tanker unit of the correct coalition will be automatically selected.
   -- Then, use the method @{#AI_A2A_DISPATCHER.SetDefaultTanker}() to set the tanker for the dispatcher.
-  -- Use the method @{#AI_A2A_DISPATCHER.SetDefaultFuelTreshold}() to set the %-tage left in the defender airplane tanks when a refuel action is needed.
+  -- Use the method @{#AI_A2A_DISPATCHER.SetDefaultFuelThreshold}() to set the %-tage left in the defender airplane tanks when a refuel action is needed.
   -- 
   -- When the tanker specified is alive and in the air, the tanker will be used for refuelling.
   -- 

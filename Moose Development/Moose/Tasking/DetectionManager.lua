@@ -1,9 +1,7 @@
---- This module contains the DETECTION_MANAGER class and derived classes.
+--- **Tasking** - This module contains the DETECTION_MANAGER class and derived classes.
 -- 
 -- ===
 -- 
--- 1) @{DetectionManager#DETECTION_MANAGER} class, extends @{Fsm#FSM}
--- ===
 -- The @{DetectionManager#DETECTION_MANAGER} class defines the core functions to report detected objects to groups.
 -- Reportings can be done in several manners, and it is up to the derived classes if DETECTION_MANAGER to model the reporting behaviour.
 -- 
@@ -41,6 +39,7 @@
 -- ### Author: FlightControl - Framework Design &  Programming
 -- 
 -- @module Tasking.DetectionManager
+-- @image Task_Detection_Manager.JPG
 
 do -- DETECTION MANAGER
   

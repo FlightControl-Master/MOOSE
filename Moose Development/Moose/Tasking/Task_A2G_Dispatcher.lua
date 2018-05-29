@@ -9,6 +9,7 @@
 -- ===
 -- 
 -- @module Tasking.Task_A2G_Dispatcher
+-- @image Task_A2G_Dispatcher.JPG
 
 do -- TASK_A2G_DISPATCHER
 
@@ -19,11 +20,8 @@ do -- TASK_A2G_DISPATCHER
   -- @field Tasking.Mission#MISSION Mission
   -- @extends Tasking.DetectionManager#DETECTION_MANAGER
 
-  --- # TASK\_A2G\_DISPATCHER class, extends @{DetectionManager#DETECTION_MANAGER}
+  --- Orchestrates dynamic **A2G Task Dispatching** based on the detection results of a linked @{Detection} object.
   -- 
-  -- ![](..\Presentations\TASK\_A2G\_DISPATCHER\Dia1.JPG)
-  -- 
-  -- The TASK\_A2G\_DISPATCHER class orchestrates dynamic **A2G Task Dispatching** based on the detection results of a linked @{Detection} object.
   -- It uses the Tasking System within the MOOSE framework, which is a multi-player Tasking Orchestration system.
   -- It provides a truly dynamic battle environment for pilots and ground commanders to engage upon,
   -- in a true co-operation environment wherein **Multiple Teams** will collaborate in Missions to **achieve a common Mission Goal**.

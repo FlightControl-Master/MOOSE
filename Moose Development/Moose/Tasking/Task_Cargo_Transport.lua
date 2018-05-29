@@ -1,9 +1,9 @@
 --- **Tasking** -- The TASK_CARGO models tasks for players to transport @{Cargo}.
 -- 
--- ![Banner Image](..\Presentations\TASK_CARGO\Dia1.JPG)
--- 
 -- ===
+-- 
 -- @module Tasking.Task_Cargo_Transport
+-- @image Task_Cargo_Transport.JPG
 
 
 do -- TASK_CARGO_TRANSPORT

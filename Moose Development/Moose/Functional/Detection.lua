@@ -2,11 +2,7 @@
 -- 
 -- ===
 -- 
--- ![Banner Image](..\Presentations\DETECTION\Dia1.JPG)
--- 
--- ===
--- 
--- DETECTION classes facilitate the detection of enemy units within the battle zone executed by FACs (Forward Air Controllers) or RECCEs (Reconnassance Units).
+-- Facilitate the detection of enemy units within the battle zone executed by FACs (Forward Air Controllers) or RECCEs (Reconnassance Units).
 -- DETECTION uses the in-built detection capabilities of DCS World, but adds new functionalities.
 -- 
 -- Find the DETECTION classes documentation further in this document in the globals section.
@@ -30,6 +26,7 @@
 --   * FlightControl : Analysis, Design, Programming, Testing
 -- 
 -- @module Functional.Detection
+-- @image Detection.JPG
 
 ----BASE:TraceClass("DETECTION_BASE")
 ----BASE:TraceClass("DETECTION_AREAS")
@@ -46,9 +43,7 @@ do -- DETECTION_BASE
   -- @field #number DetectionRun
   -- @extends Core.Fsm#FSM
   
-  --- DETECTION_BASE class, extends @{Fsm#FSM}
-  -- 
-  -- The DETECTION_BASE class defines the core functions to administer detected objects.
+  --- Defines the core functions to administer detected objects.
   -- The DETECTION_BASE class will detect objects within the battle zone for a list of @{Wrapper.Group}s detecting targets following (a) detection method(s).
   -- 
   -- ## DETECTION_BASE constructor

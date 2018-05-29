@@ -2,7 +2,7 @@
 --
 -- ===
 --
--- DESIGNATE is orchestrating the designation of potential targets executed by a Recce group, 
+-- Orchestrate the designation of potential targets executed by a Recce group, 
 -- and communicates these to a dedicated attacking group of players, 
 -- so that following a dynamically generated menu system, 
 -- each detected set of potential targets can be lased or smoked...
@@ -29,16 +29,15 @@
 --   * **FlightControl**: Design & Programming
 -- 
 -- @module Functional.Designate
-
+-- @image Designation.JPG
 
 do -- DESIGNATE
 
   --- @type DESIGNATE
   -- @extends Core.Fsm#FSM_PROCESS
 
-  --- # DESIGNATE class, extends @{Fsm#FSM}
+  --- Manage the designation of detected targets.
   -- 
-  -- DESIGNATE is managing the designation of detected targets.
   -- Targets detected by recce will be communicated to a group of attacking players.  
   -- A menu system is made available that allows to: 
   -- 

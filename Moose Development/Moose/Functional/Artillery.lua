@@ -1,11 +1,6 @@
--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 --- **Functional** - (R2.4) Control artillery units.
 -- 
 -- ===
--- 
--- ![Banner Image](..\Presentations\ARTY\ARTY_Main.png)
--- 
--- ====
 -- 
 -- The ARTY class can be used to easily assign and manage targets for artillery units.
 -- 
@@ -39,6 +34,7 @@
 -- 
 -- ====
 -- @module Functional.Arty
+-- @image Artillery.JPG
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 --- ARTY class
@@ -91,9 +87,7 @@
 -- @field #number markkey Authorization key. Only player who know this key can assign targets and moves via markers on the F10 map. Default no authorization required. 
 -- @extends Core.Fsm#FSM_CONTROLLABLE
 
----# ARTY class, extends @{Core.Fsm#FSM_CONTROLLABLE}
---
--- The ARTY class enables mission designers easily to assign targets for artillery units. Since the implementation is based on a Finite State Model (FSM), the mission designer can
+--- Enables mission designers easily to assign targets for artillery units. Since the implementation is based on a Finite State Model (FSM), the mission designer can
 -- interact with the process at certain events or states.
 -- 
 -- A new ARTY object can be created with the @{#ARTY.New}(*group*) contructor.

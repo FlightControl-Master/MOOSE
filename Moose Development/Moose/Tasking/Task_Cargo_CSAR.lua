@@ -1,10 +1,9 @@
 --- **Tasking** -- Models tasks for players to execute CSAR @{Cargo} downed pilots.
 -- 
--- ![Banner Image](..\Presentations\TASK_CARGO\Dia1.JPG)
--- 
 -- ===
 -- 
 -- @module Tasking.Task_Cargo_CSAR
+-- @image Task_Cargo_CSAR.JPG
 
 
 do -- TASK_CARGO_CSAR

@@ -9,14 +9,13 @@
 -- ===
 -- 
 -- @module Wrapper.Static
+-- @image Wrapper_Static.JPG
 
 
 --- @type STATIC
 -- @extends Wrapper.Positionable#POSITIONABLE
 
---- # STATIC class, extends @{Wrapper.Positionable#POSITIONABLE}
--- 
--- Statics are **Static Units** defined within the Mission Editor.
+--- Statics are **Static Units** defined within the Mission Editor.
 -- Note that Statics are almost the same as Units, but they don't have a controller.
 -- The @{Static#STATIC} class is a wrapper class to handle the DCS Static objects:
 -- 

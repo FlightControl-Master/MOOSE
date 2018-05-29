@@ -9,6 +9,7 @@
 -- ===
 -- 
 -- @module Wrapper.Client
+-- @image Wrapper_Client.JPG
 
 
 --- The CLIENT class
@@ -16,9 +17,7 @@
 -- @extends Wrapper.Unit#UNIT
 
 
---- # CLIENT class, extends @{Wrapper.Unit#UNIT}
--- 
--- Clients are those **Units** defined within the Mission Editor that have the skillset defined as __Client__ or __Player__.
+--- Clients are those **Units** defined within the Mission Editor that have the skillset defined as __Client__ or __Player__.
 -- Note that clients are NOT the same as Units, they are NOT necessarily alive.
 -- The CLIENT class is a wrapper class to handle the DCS Unit objects that have the skillset defined as __Client__ or __Player__:
 -- 

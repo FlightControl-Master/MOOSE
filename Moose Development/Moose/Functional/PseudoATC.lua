@@ -1,4 +1,3 @@
--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 --- **Functional** - (R2.4) Rudimentary ATC.
 --  
 -- ![Banner Image](..\Presentations\PSEUDOATC\PSEUDOATC_Main.jpg)
@@ -39,6 +38,7 @@
 -- 
 -- ====
 -- @module Functional.PseudoATC
+-- @image Pseudo_ATC.JPG
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 --- PSEUDOATC class
@@ -53,8 +53,7 @@
 -- @field #boolean eventsmoose If true, events are handled by MOOSE. If false, events are handled directly by DCS eventhandler.
 -- @extends Core.Base#BASE
 
----# PSEUDOATC class, extends @{Core.Base#BASE}
--- The PSEUDOATC class adds some rudimentary ATC functionality via the radio menu.
+--- The PSEUDOATC class adds some rudimentary ATC functionality via the radio menu.
 -- 
 -- Local weather reports can be requested for nearby airports and player's mission waypoints.
 -- The weather report includes
