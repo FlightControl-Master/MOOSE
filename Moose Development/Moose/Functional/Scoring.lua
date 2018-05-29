@@ -2,11 +2,7 @@
 -- 
 -- ===
 -- 
--- ![Banner Image](..\Presentations\SCORING\Dia1.JPG)
---  
--- ===
--- 
--- The @{#SCORING} class administers the scoring of player achievements, 
+-- Administers the scoring of player achievements, 
 -- and creates a CSV file logging the scoring events and results for use at team or squadron websites.
 -- 
 -- SCORING automatically calculates the threat level of the objects hit and destroyed by players, 
@@ -207,6 +203,7 @@
 --   * **FlightControl**: Concept, Design & Programming.
 -- 
 -- @module Functional.Scoring
+-- @image Scoring.JPG
 
 
 --- The Scoring class

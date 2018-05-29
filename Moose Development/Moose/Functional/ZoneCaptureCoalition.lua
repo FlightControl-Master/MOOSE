@@ -2,10 +2,6 @@
 --
 -- ===
 -- 
--- ![Banner Image](..\Presentations\ZONE_CAPTURE_COALITION\Dia1.JPG)
--- 
--- ===
--- 
 -- ### [Demo Missions](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/CAZ - Capture Zones)
 -- 
 --   - CAZ-000 - Capture Zone: Demonstrates the basic concept of capturing a zone.
@@ -22,6 +18,7 @@
 -- ===
 -- 
 -- @module Functional.ZoneCaptureCoalition
+-- @image Capture_Zones.JPG
 
 do -- ZONE_CAPTURE_COALITION
 

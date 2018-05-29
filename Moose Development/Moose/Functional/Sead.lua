@@ -3,6 +3,7 @@
 -- ===
 -- 
 -- @module Functional.Sead
+-- @image SEAD.JPG
 
 --- The SEAD class
 -- @type SEAD

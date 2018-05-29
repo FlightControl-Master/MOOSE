@@ -16,9 +16,7 @@
 -- @field #string ObjectName The name of the Object.
 
 
---- # OBJECT class, extends @{Core.Base#BASE}
--- 
--- OBJECT handles the DCS Object objects:
+--- OBJECT handles the DCS Object objects:
 --
 --  * Support all DCS Object APIs.
 --  * Enhance with Object specific APIs not in the DCS Object API set.

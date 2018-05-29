@@ -14,9 +14,7 @@
 -- @extends Wrapper.Object#OBJECT
 -- @field #string IdentifiableName The name of the identifiable.
 
---- # IDENTIFIABLE class, extends @{Wrapper.Object#OBJECT}
--- 
--- The IDENTIFIABLE class is a wrapper class to handle the DCS Identifiable objects:
+--- The IDENTIFIABLE class is a wrapper class to handle the DCS Identifiable objects:
 --
 --  * Support all DCS Identifiable APIs.
 --  * Enhance with Identifiable specific APIs not in the DCS Identifiable API set.

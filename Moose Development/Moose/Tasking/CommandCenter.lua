@@ -10,6 +10,7 @@
 -- ===
 -- 
 -- @module Tasking.CommandCenter
+-- @image Task_Command_Center.JPG
 
 
 
@@ -23,9 +24,7 @@
 -- @extends Core.Base#BASE
 
 
---- # COMMANDCENTER class, extends @{Core.Base#BASE}
--- 
---  The COMMANDCENTER class governs multiple missions, the tasking and the reporting.
+--- Governs multiple missions, the tasking and the reporting.
 --  
 --  The commandcenter communicates important messages between the various groups of human players executing tasks in missions.
 --  

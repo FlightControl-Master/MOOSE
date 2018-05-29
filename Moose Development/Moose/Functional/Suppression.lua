@@ -1,8 +1,6 @@
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 --- **Functional** - (R2.4) Suppress fire of ground units when they get hit.
 -- 
--- ![Banner Image](..\Presentations\SUPPRESSION\Suppression_Main.png)
--- 
 -- ====
 -- 
 -- When ground units get hit by (suppressive) enemy fire, they will not be able to shoot back for a certain amount of time.
@@ -32,6 +30,7 @@
 -- 
 -- ====
 -- @module Functional.Suppression
+-- @image Suppression.JPG
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -76,8 +75,7 @@
 -- @extends Core.Fsm#FSM_CONTROLLABLE
 -- 
 
----# SUPPRESSION class, extends @{Core.Fsm#FSM_CONTROLLABLE}
--- Mimic suppressive enemy fire and let groups flee or retreat.
+--- Mimic suppressive enemy fire and let groups flee or retreat.
 -- 
 -- ## Suppression Process
 -- 

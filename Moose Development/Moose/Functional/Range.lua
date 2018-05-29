@@ -1,10 +1,5 @@
--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 --- **Functional** - (R2.3) - Range Practice.
 --  
--- ===
--- 
--- ![Banner Image](..\Presentations\RANGE\RANGE_Main.png)
--- 
 -- ===
 -- 
 -- The RANGE class enables easy set up of bombing and strafing ranges within DCS World.
@@ -49,6 +44,7 @@
 -- 
 -- ===
 -- @module Functional.Range
+-- @image Range.JPG
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 --- RANGE class
@@ -87,8 +83,7 @@
 -- @field #boolean trackmissiles If true (default), all missile types are tracked and impact point to closest bombing target is evaluated.
 -- @extends Core.Base#BASE
 
----# RANGE class, extends @{Core.Base#BASE}
--- The RANGE class enables a mission designer to easily set up practice ranges in DCS. A new RANGE object can be created with the @{#RANGE.New}(rangename) contructor.
+--- The RANGE class enables a mission designer to easily set up practice ranges in DCS. A new RANGE object can be created with the @{#RANGE.New}(rangename) contructor.
 -- The parameter "rangename" defindes the name of the range. It has to be unique since this is also the name displayed in the radio menu.
 -- 
 -- Generally, a range consists of strafe pits and bombing targets. For strafe pits the number of hits for each pass is counted and tabulated.

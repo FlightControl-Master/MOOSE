@@ -9,6 +9,7 @@
 -- ===
 -- 
 -- @module Wrapper.Positionable
+-- @image Wrapper_Positionable.JPG
 
 --- @type POSITIONABLE.__ Methods which are not intended for mission designers, but which are used interally by the moose designer :-)
 -- @extends Wrapper.Identifiable#IDENTIFIABLE
@@ -17,9 +18,7 @@
 -- @extends Wrapper.Identifiable#IDENTIFIABLE
 
 
---- # POSITIONABLE class, extends @{Wrapper.Identifiable#IDENTIFIABLE}
--- 
--- The POSITIONABLE class is a wrapper class to handle the POSITIONABLE objects:
+--- The POSITIONABLE class is a wrapper class to handle the POSITIONABLE objects:
 --
 --  * Support all DCS APIs.
 --  * Enhance with POSITIONABLE specific APIs not in the DCS API set.

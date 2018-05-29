@@ -1,6 +1,6 @@
 --- **Tasking** - The TASK_A2A_DISPATCHER creates and manages player TASK_A2A tasks based on detected targets.
 -- 
--- The @{#TASK_A2A_DISPATCHER} classes implement the dynamic dispatching of tasks upon groups of detected units determined a @{Set} of EWR installation groups.
+-- Implement the dynamic dispatching of tasks upon groups of detected units determined a @{Set} of EWR installation groups.
 -- 
 -- ===
 -- 
@@ -11,6 +11,7 @@
 -- ===
 -- 
 -- @module Tasking.Task_A2A_Dispatcher
+-- @image Task_A2A_Dispatcher.JPG
 
 do -- TASK_A2A_DISPATCHER
 
@@ -18,11 +19,7 @@ do -- TASK_A2A_DISPATCHER
   -- @type TASK_A2A_DISPATCHER
   -- @extends Tasking.DetectionManager#DETECTION_MANAGER
 
-  --- # TASK_A2A_DISPATCHER class, extends @{Tasking#DETECTION_MANAGER}
-  -- 
-  -- ![Banner Image](..\Presentations\TASK_A2A_DISPATCHER\Dia1.JPG)
-  -- 
-  -- The @{#TASK_A2A_DISPATCHER} class implements the dynamic dispatching of tasks upon groups of detected units determined a @{Set} of EWR installation groups.
+  --- Orchestrates the dynamic dispatching of tasks upon groups of detected units determined a @{Set} of EWR installation groups.
   -- 
   -- ![Banner Image](..\Presentations\TASK_A2A_DISPATCHER\Dia3.JPG)
   -- 

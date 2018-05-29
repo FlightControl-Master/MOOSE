@@ -22,11 +22,7 @@ do -- TASK_CARGO_DISPATCHER
   -- @field Tasking.Task#TASK Task
   
 
-  --- # TASK_CARGO_DISPATCHER class, extends @{Task_Manager#TASK_MANAGER}
-  -- 
-  -- ![Banner Image](..\Presentations\TASK_CARGO_DISPATCHER\Dia1.JPG)
-  -- 
-  -- The @{#TASK_CARGO_DISPATCHER} class implements the dynamic dispatching of cargo tasks.
+  --- Implements the dynamic dispatching of cargo tasks.
   -- 
   -- ![Banner Image](..\Presentations\TASK_CARGO_DISPATCHER\Dia3.JPG)
   -- 

@@ -9,7 +9,7 @@
 -- ===
 -- 
 -- @module Wrapper.Controllable
-
+-- @image Wrapper_Controllable.JPG
 
 
 --- @type CONTROLLABLE
@@ -19,9 +19,7 @@
 
 
 
---- # CONTROLLABLE class, extends @{Wrapper.Positionable#POSITIONABLE}
--- 
--- CONTROLLABLE is a wrapper class to handle the "DCS Controllable objects", which are Groups and Units:
+--- CONTROLLABLE is a wrapper class to handle the "DCS Controllable objects", which are Groups and Units:
 --
 --  * Support all DCS Controllable APIs.
 --  * Enhance with Controllable specific APIs not in the DCS Controllable API set.

@@ -8,6 +8,7 @@
 -- ===
 -- 
 -- @module Functional.CleanUp
+-- @image CleanUp_Airbases.JPG
 
 --- @type CLEANUP_AIRBASE.__ Methods which are not intended for mission designers, but which are used interally by the moose designer :-)
 -- @field #map<#string,Wrapper.Airbase#AIRBASE> Airbases Map of Airbases.
@@ -16,11 +17,8 @@
 --- @type CLEANUP_AIRBASE
 -- @extends #CLEANUP_AIRBASE.__
 
---- # CLEANUP_AIRBASE, extends @{Core.Base#BASE}
+--- Keeps airbases clean, and tries to guarantee continuous airbase operations, even under combat.
 -- 
--- ![Banner Image](..\Presentations\CLEANUP_AIRBASE\Dia1.JPG)
--- 
--- The CLEANUP_AIRBASE class keeps airbases clean, and tries to guarantee continuous airbase operations, even under combat.
 -- Specific airbases need to be provided that need to be guarded. Each airbase registered, will be guarded within a zone of 8 km around the airbase.
 -- Any unit that fires a missile, or shoots within the zone of an airbase, will be monitored by CLEANUP_AIRBASE.
 -- Within the 8km zone, units cannot fire any missile, which prevents the airbase runway to receive missile or bomb hits. 

@@ -2,8 +2,6 @@
 -- 
 -- ===
 --
--- 1) @{MissileTrainer#MISSILETRAINER} class, extends @{Core.Base#BASE}
--- ===
 -- The @{#MISSILETRAINER} class uses the DCS world messaging system to be alerted of any missiles fired, and when a missile would hit your aircraft,
 -- the class will destroy the missile within a certain range, to avoid damage to your aircraft.
 -- It suports the following functionality:
@@ -78,6 +76,7 @@
 -- Together with the **476 virtual team**, we tested the MISSILETRAINER class, and got much positive feedback!
 -- 
 -- @module Functional.MissileTrainer
+-- @image Missile_Trainer.JPG
 
 
 --- The MISSILETRAINER class

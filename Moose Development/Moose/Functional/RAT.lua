@@ -1,9 +1,4 @@
--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 --- **Functional** - (R2.2) - Create random airtraffic in your missions.
--- 
--- ===
--- 
--- ![Banner Image](..\Presentations\RAT\RAT.png)
 -- 
 -- ===
 -- 
@@ -60,6 +55,7 @@
 -- 
 -- ===
 -- @module Functional.Rat
+-- @module RAT.JPG
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 --- RAT class
@@ -152,8 +148,7 @@
 -- @field #boolean useparkingdb Parking spots are added to data base once an aircraft has used it. These spots can later be used by other aircraft. Default is true.
 -- @extends Core.Spawn#SPAWN
 
----# RAT class, extends @{Core.Spawn#SPAWN}
--- The RAT class implements an easy to use way to randomly fill your map with AI aircraft.
+--- The RAT class implements an easy to use way to randomly fill your map with AI aircraft.
 -- 
 --
 -- ## Airport Selection

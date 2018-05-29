@@ -18,15 +18,13 @@
 -- ===
 -- 
 -- @module Wrapper.Unit
+-- @image Wrapper_Unit.JPG
 
 
 --- @type UNIT
 -- @extends Wrapper.Controllable#CONTROLLABLE
 
---- 
--- # UNIT class, extends @{Wrapper.Controllable#CONTROLLABLE}
--- 
--- For each DCS Unit object alive within a running mission, a UNIT wrapper object (instance) will be created within the _@{DATABASE} object.
+--- For each DCS Unit object alive within a running mission, a UNIT wrapper object (instance) will be created within the _@{DATABASE} object.
 -- This is done at the beginning of the mission (when the mission starts), and dynamically when new DCS Unit objects are spawned (using the @{SPAWN} class).
 --  
 -- The UNIT class **does not contain a :New()** method, rather it provides **:Find()** methods to retrieve the object reference

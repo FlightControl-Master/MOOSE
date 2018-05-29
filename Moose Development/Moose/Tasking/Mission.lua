@@ -9,6 +9,7 @@
 -- ===
 -- 
 -- @module Tasking.Mission
+-- @image Task_Mission.JPG
 
 --- The MISSION class
 -- @type MISSION
