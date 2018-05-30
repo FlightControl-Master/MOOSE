@@ -12,6 +12,8 @@
 -- * Special weapon types can be selected for each attack, e.g. cruise missiles for Naval units.
 -- * Automatic rearming once the artillery is out of ammo.
 -- * New targets can be added during the mission, e.g. when they are detected by recon units.
+-- * Modeling of tactical nuclear shells.
+-- * Targets and relocations can be assigned by placing markers on the F10 map.
 -- * Finite state machine implementation. Mission designer can interact when certain events occur.
 -- 
 -- ====
@@ -192,9 +194,9 @@
 -- Unfortunately, there is no easy way to count only those ammo types useable as artillery. Therefore, to keep the implementation general the user
 -- can specify the names of the ammo types by the following functions:
 -- 
--- * @{#ARTY.SetShellTypes}(*tableofnames*): Defines the ammo types for unguided cannons. Default is *tableofnames*={"weapons.shells"}, i.e. **all** types of shells are counted.
--- * @{#ARTY.SetRocketTypes}(*tableofnames*): Defines the ammo types of unguided rockets. Default is *tableofnames*={"weapons.nurs"}, i.e. **all** types of rockets are counted.
--- * @{#ARTY.SetMissileTypes}(*tableofnames*): Defines the ammo types of guided missiles. Default is *tableofnames*={"weapons.missiles"}, i.e. **all** types of missiles are counted.
+-- * @{#ARTY.SetShellTypes}(*tableofnames*): Defines the ammo types for unguided cannons, e.g. *tableofnames*={"weapons.shells"}, i.e. **all** types of shells are counted.
+-- * @{#ARTY.SetRocketTypes}(*tableofnames*): Defines the ammo types of unguided rockets, e.g. *tableofnames*={"weapons.nurs"}, i.e. **all** types of rockets are counted.
+-- * @{#ARTY.SetMissileTypes}(*tableofnames*): Defines the ammo types of guided missiles, e.g. is *tableofnames*={"weapons.missiles"}, i.e. **all** types of missiles are counted.
 -- 
 -- **Note** that the default parameters "weapons.shells", "weapons.nurs", "weapons.missiles" **should in priciple** capture all the corresponding ammo types.
 -- However, the logic searches for the string "weapon.missies" in the ammo type. Especially for missiles, this string is often not contained in the ammo type descriptor.
@@ -253,10 +255,66 @@
 -- 
 -- After the rearming is complete, both groups will move back to their original positions.
 -- 
+-- ## Tactical Nukes
+-- 
+-- ARTY groups that can fire shells can also be used to fire tactical nukes. This is simply achieved by setting the weapon type to **ARTY.WeaponType.TacticalNukes** in the
+-- @{#ARTY.AssignTargetCoord}() function.
+-- 
+-- The default explostion strength is 0.075 kilo tons TNT. The can be changed with the @{#ARTY.SetTacNukeWarhead}(*strength*), where *strength* is given in kilo tons TNT.
+-- 
+-- By default, all available conventional shells can be used as nuclear shells. However, it is possible to restrict the number with the @{#ARTY.SetTacNukeShells}(*n*) function
+-- to only have *n* nuclear shells available. Note that the group must always have convenctional shells left in order to fire a nuclear shell.
+-- 
+-- ## Assignments via Markers on F10 Map
+-- 
+-- Targets and relocations can be assigned by players via placing a mark on the F10 map. The marker text must contain certain keywords.
+-- 
+-- This feature can be turned on with the @{#ARTY.SetMarkAssignmentsOn}(*key*). The parameter *key* is optional. When set, it can be used as PIN, i.e. only
+-- player who know the correct key are able to assign targets or relocations. Default behavior is that all players belonging to the same coalition as the
+-- ARTY group are able to assign targets and moves.
+-- 
+-- ### Target Assignments
+-- A new target can be assigned by writing **arty engage** in the marker text. This can be followed by a comma separated lists of optional keywords and parameters:
+-- 
+-- * *time* Time for which which the engagement is schedules, e.g. 08:42. Default is as soon as possible.
+-- * *prio*  Priority of the engagement as number between 1 (high prio) and 100 (low prio). Default is 50.
+-- * *shots* Number of shots (shells, rockets or missiles) fired at each engagement. Default is 5.
+-- * *engage* Number of times the target is engaged. Default is 1.
+-- * *radius* Scattering radius of the fired shots in meters. Default is 100 m.
+-- * *weapon* Type of weapon to be used. Valid parameters are *cannon*, *rocket*, *missile*, *nuke*. Default is automatic selection.
+-- * *battery* Name of the ARTY group that the target is assigned to. Note that the name is case sensitive and has to be given in quotation marks. Default is all ARTY groups of the right coalition.
+-- * *key* A number to authorize the target assignment. Only specifing the correct number will trigger an engagement.
+-- 
+-- Here are examples of valid marker texts:
+--      arty engage!
+--      arty engage! shots 20, prio 10, time 08:15, weapon cannons
+--      arty engage! battery "Blue Paladin 1" "Blue MRLS 1", shots 10, time 10:15
+--      arty engage! battery "Blue Paladin 1", key 666
+--      
+-- Note that the keywords and parameters are case insensitve. Only exception are the battery group names. These must be exactly the same as the names of the goups defined 
+-- in the mission editor.
+-- 
+-- ### Relocation Assignments
+-- 
+-- Markers can also be used to relocate the group with the keyphrase **arty move**. This is done in a similar way as assigning targets. Here, the (optional) keywords and parameters are:
+-- 
+-- * *time* Time for which which the relocation/move is schedules, e.g. 08:42. Default is as soon as possible.
+-- * *speed* The speed in km/h the group will drive at. Default is 70% of its max possible speed.
+-- * *onroad* Group will use mainly roads. Default is off, i.e. it will go in a straight line from its current position to the assigned coordinate.
+-- * *cancel* Group will cancel all running firing engagements and immidiately start to move. Default is that group will wait until is current assignment is over.
+-- * *battery* Name of the ARTY group that the relocation is assigned to.
+-- 
+-- Here are some examples:
+--      arty move! time 23:45, speed 50, onroad, cancel
+--      arty move! battery "Blue Paladin", onroad
+--      arty move, cancel, speed 10, onroad
+-- 
 -- ## Fine Tuning
 -- 
 -- The mission designer has a few options to tailor the ARTY object according to his needs.
 -- 
+-- * @{#ARTY.SetRelocateAfterEngagement}() will cause the ARTY group to change its position after each firing assignment. 
+-- * @{#ARTY.SetRelocateDistance}(*rmax*, *rmin*) sets the max/min distance for relocation of the group. Default distance is randomly between 300 and 800 m.
 -- * @{#ARTY.RemoveAllTargets}() removes all targets from the target queue.
 -- * @{#ARTY.RemoveTarget}(*name*) deletes the target with *name* from the target queue.
 -- * @{#ARTY.SetMaxFiringRange}(*range*) defines the maximum firing range. Targets further away than this distance are not engaged.
@@ -399,7 +457,7 @@ ARTY.id="ARTY | "
 
 --- Arty script version.
 -- @field #string version
-ARTY.version="0.9.6"
+ARTY.version="0.9.7"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -793,7 +851,7 @@ function ARTY:SetDebugOFF()
   self.Debug=false
 end
 
---- Delete a target from target list.
+--- Delete a target from target list. If the target is currently engaged, it is cancelled.
 -- @param #ARTY self
 -- @param #string name Name of the target.
 function ARTY:RemoveTarget(name)
@@ -804,6 +862,12 @@ function ARTY:RemoveTarget(name)
     table.remove(self.targets, id)
   end
   self:T(ARTY.id..string.format("Group %s: Number of targets = %d.", self.Controllable:GetName(), #self.targets))
+  if self.currentTarget then
+    if self.currentTarget.name==name then
+      self:T(ARTY.id..string.format("Group %s: Cancelling current target %s (id=%d).", self.Controllable:GetName(), name, id))
+      self:CeaseFire(self.currentTarget)
+    end
+  end
 end
 
 --- Delete a move from move list.
@@ -906,10 +970,10 @@ function ARTY:SetRelocateDistance(rmax, rmin)
   self.relocateRmin=rmin or 300
 end
 
---- Enable assigning targets by placing markers on the F10 map.
+--- Enable assigning targets and moves by placing markers on the F10 map.
 -- @param #ARTY self
 -- @param #number key (Optional) Authorization key. Only players knowing this key can assign targets. Default is no authorization required.
-function ARTY:SetMarkTargetsOn(key)
+function ARTY:SetMarkAssignmentsOn(key)
   self.markkey=key
   self.markallow=true
 end
@@ -918,6 +982,7 @@ end
 -- @param #ARTY self
 function ARTY:SetMarkTargetsOff()
   self.markallow=false
+  self.markkey=nil
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -962,8 +1027,8 @@ function ARTY:onafterStart(Controllable, From, Event, To)
   text=text..string.format("Number of units     = %d\n", self.IniGroupStrength)
   text=text..string.format("Speed max           = %d km/h\n", self.SpeedMax)
   text=text..string.format("Speed default       = %d km/h\n", self.Speed)
-  text=text..string.format("Min range           = %d km\n", self.minrange/1000)
-  text=text..string.format("Max range           = %d km\n", self.maxrange/1000)
+  text=text..string.format("Min range           = %.1f km\n", self.minrange/1000)
+  text=text..string.format("Max range           = %.1f km\n", self.maxrange/1000)
   text=text..string.format("Total ammo count    = %d\n", self.Nammo0)
   text=text..string.format("Number of shells    = %d\n", self.Nshells0)
   text=text..string.format("Number of rockets   = %d\n", self.Nrockets0)
@@ -986,8 +1051,10 @@ function ARTY:onafterStart(Controllable, From, Event, To)
   text=text..string.format("Rearming ARTY roads = %s\n", tostring(self.RearmingArtyOnRoad))
   end
   text=text..string.format("Relocate after fire = %s\n", tostring(self.relocateafterfire))
-  text=text..string.format("Relocate min dist.  = %d\n m", self.relocateRmin)
-  text=text..string.format("Relocate max dist.  = %d\n m", self.relocateRmax)
+  text=text..string.format("Relocate min dist.  = %d m\n", self.relocateRmin)
+  text=text..string.format("Relocate max dist.  = %d m\n", self.relocateRmax)
+  text=text..string.format("Marker assignments  = %s\n", tostring(self.markallow))
+  text=text..string.format("Marker auth. key    = %s\n", tostring(self.markkey))
   text=text..string.format("******************************************************\n")
   text=text..string.format("Targets:\n")
   for _, target in pairs(self.targets) do
@@ -1055,9 +1122,7 @@ function ARTY:_Markertext(text)
   assignment.onroad=nil
   assignment.key=nil
   
-  if text:lower():find("arty") then
-    env.info("FF: Found arty command:")
-    
+  if text:lower():find("arty") then   
     if text:lower():find("engage") then
       assignment.engage=true
     elseif text:lower():find("move") then
@@ -1071,6 +1136,7 @@ function ARTY:_Markertext(text)
     local keywords=self:_split(text, ",")
   
     for _,key in pairs(keywords) do
+      --env.info("key="..key)
     
       local s=self:_split(key, " ")
       local val=s[2]
@@ -1078,10 +1144,12 @@ function ARTY:_Markertext(text)
       -- Battery name, i.e. which ARTY group should fire.
       if key:lower():find("battery") then
         
-        local v=self:_split(text, '"')
-                
-        table.insert(assignment.battery, v[2])
-        env.info(string.format("FF: Battery=%s.", v[2]))
+        local v=self:_split(key, '"')
+        
+        for i=2,#v,2 do        
+          table.insert(assignment.battery, v[i])
+          env.info(string.format("FF: Battery=%s.", v[i]))
+        end
                   
       elseif key:lower():find("time") then
       
@@ -1110,7 +1178,7 @@ function ARTY:_Markertext(text)
       elseif key:lower():find("radius") then
       
         assignment.radius=tonumber(val)
-        env.info(string.format("Radius=%s.", val))
+        env.info(string.format("FF: Radius=%s.", val))
         
       elseif key:lower():find("weapon") then
         
@@ -1188,18 +1256,15 @@ function ARTY:onEvent(Event)
     -- Check if marker has a text and the "arty" keyword.
     if Event.text~=nil and Event.text:lower():find("arty") then
     
-      -- Check if we have the right coalition and text has arty keyword.
-      if batterycoalition==Event.coalition or self.markkey~=nil then
+      -- Check if the coalition is the same or an authorization key has been defined.
+      if (batterycoalition==Event.coalition and self.markkey==nil) or self.markkey~=nil then
 
         -- Evaluate marker text and extract parameters.
         local _assign=self:_Markertext(Event.text)
-        
-        local _n=#_assign.battery
-        env.info("FF: number of batteries assigned to target = ".._n)
-        
+                
         -- Check if job is assigned to this ARTY group. Default is for all ARTY groups.
         local _assigned=true
-        if _n>0 then
+        if #_assign.battery>0 then
           _assigned=false
           for _,bat in pairs(_assign.battery) do
             env.info(string.format("FF: compare %s=%s ==> %s",batteryname, bat, tostring(batteryname==bat)))
@@ -1209,8 +1274,27 @@ function ARTY:onEvent(Event)
           end
         end
         
+        -- Check if the authorization key is required and if it is valid.
+        local _validkey=true
+        if self.markkey~=nil then
+          _validkey=false
+          if _assign.key~=nil then
+            _validkey=self.markkey==_assign.key            
+          end
+          self:T(ARTY.id..string.format("%s, authkey=%s == %s=playerkey ==> valid=%s", batteryname, tostring(self.markkey), tostring(_assign.key), tostring(_validkey)))
+          local text=""
+          if _assign.key==nil then
+            text=string.format("%s, authorization required but did not receive a key!", batteryname)
+          elseif _validkey==false then
+            text=string.format("%s, authorization required but did receive an incorrect key (key=%s)!", batteryname, tostring(_assign.key))
+          elseif _validkey==true then
+            text=string.format("%s, authorization successful!", batteryname)
+          end
+          MESSAGE:New(text, 20):ToCoalitionIf(batterycoalition, self.report or self.Debug)
+        end
+        
         -- We are meant.
-        if _assigned then
+        if _assigned and _validkey then
         
           -- Convert (wrong x-->z, z-->x) vec3
           local vec3={y=Event.pos.y, x=Event.pos.z, z=Event.pos.x}
@@ -1218,6 +1302,9 @@ function ARTY:onEvent(Event)
           local _coord=COORDINATE:NewFromVec3(vec3)
         
           if _assign.move then
+          
+            local text=string.format("%s, received new relocation assignment.", batteryname)
+            MESSAGE:New(text, 20):ToCoalitionIf(batterycoalition, self.report or self.Debug)
           
             -- Create a new name.
             local _name=string.format("Marked Move ID=%d for battery %s", Event.idx, batteryname)
@@ -1228,6 +1315,24 @@ function ARTY:onEvent(Event)
           
           else
           
+            local text=string.format("%s, received new target assignment.", batteryname)
+            if _assign.time then
+              text=text..string.format("\nTime %s",_assign.time)
+            end
+            if _assign.prio then
+              text=text..string.format("\nPrio %d",_assign.prio)
+            end
+            if _assign.nshells then
+              text=text..string.format("\nShots %d",_assign.nshells)
+            end
+            if _assign.maxengage then
+              text=text..string.format("\nEngagements %d",_assign.maxengage)
+            end
+            if _assign.weapontype then
+              text=text..string.format("\nWeapon %s",self:_WeaponTypeName(_assign.weapontype))
+            end            
+            MESSAGE:New(text, 20):ToCoalitionIf(batterycoalition, self.report or self.Debug)
+            
             -- Create a new name.
             local _name=string.format("Marked Target ID=%d for battery %s", Event.idx, batteryname)
             self:E(ARTY.id.._name)
