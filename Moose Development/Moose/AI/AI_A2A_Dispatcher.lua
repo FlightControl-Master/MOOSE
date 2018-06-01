@@ -1267,7 +1267,7 @@ do -- AI_A2A_DISPATCHER
   --- Calculates which AI friendlies are nearby the area
   -- @param #AI_A2A_DISPATCHER self
   -- @param DetectedItem
-  -- @return #number, Core.CommandCenter#REPORT
+  -- @return #table A list of the friendlies nearby.
   function AI_A2A_DISPATCHER:GetAIFriendliesNearBy( DetectedItem )
   
     local FriendliesNearBy = self.Detection:GetFriendliesDistance( DetectedItem )
@@ -2881,7 +2881,7 @@ do -- AI_A2A_DISPATCHER
 
   --- Creates an ENGAGE task when there are human friendlies airborne near the targets.
   -- @param #AI_A2A_DISPATCHER self
-  -- @param Functional.Detection#DETECTION_BASE.DetectedItem DetectedItem
+  -- @param Functional.Detection#DETECTION_BASE.DetectedItem DetectedItem The detected item.
   -- @return Core.Set#SET_UNIT TargetSetUnit: The target set of units.
   -- @return #nil If there are no targets to be set.
   function AI_A2A_DISPATCHER:EvaluateENGAGE( DetectedItem )
@@ -2908,7 +2908,7 @@ do -- AI_A2A_DISPATCHER
   
   --- Creates an GCI task when there are targets for it.
   -- @param #AI_A2A_DISPATCHER self
-  -- @param Functional.Detection#DETECTION_BASE.DetectedItem DetectedItem
+  -- @param Functional.Detection#DETECTION_BASE.DetectedItem DetectedItem The detected item.
   -- @return Core.Set#SET_UNIT TargetSetUnit: The target set of units.
   -- @return #nil If there are no targets to be set.
   function AI_A2A_DISPATCHER:EvaluateGCI( DetectedItem )
@@ -2935,7 +2935,7 @@ do -- AI_A2A_DISPATCHER
 
   --- Assigns A2A AI Tasks in relation to the detected items.
   -- @param #AI_A2A_DISPATCHER self
-  -- @param Functional.Detection#DETECTION_BASE Detection The detection created by the @{Detection#DETECTION_BASE} derived object.
+  -- @param Functional.Detection#DETECTION_BASE Detection The detection created by the @{Functional.Detection#DETECTION_BASE} derived object.
   -- @return #boolean Return true if you want the task assigning to continue... false will cancel the loop.
   function AI_A2A_DISPATCHER:ProcessDetected( Detection )
   
@@ -3060,10 +3060,10 @@ end
 
 do
 
-  --- Calculates which HUMAN friendlies are nearby the area
+  --- Calculates which HUMAN friendlies are nearby the area.
   -- @param #AI_A2A_DISPATCHER self
-  -- @param DetectedItem
-  -- @return #number, Core.CommandCenter#REPORT
+  -- @param DetectedItem The detected item.
+  -- @return #number, Core.Report#REPORT The amount of friendlies and a text string explaining which friendlies of which type.
   function AI_A2A_DISPATCHER:GetPlayerFriendliesNearBy( DetectedItem )
   
     local DetectedSet = DetectedItem.Set
@@ -3106,14 +3106,14 @@ do
     return PlayersCount, PlayerTypesReport
   end
 
-  --- Calculates which friendlies are nearby the area
+  --- Calculates which friendlies are nearby the area.
   -- @param #AI_A2A_DISPATCHER self
-  -- @param DetectedItem
-  -- @return #number, Core.CommandCenter#REPORT
-  function AI_A2A_DISPATCHER:GetFriendliesNearBy( Target )
+  -- @param DetectedItem The detected item.
+  -- @return #number, Core.Report#REPORT The amount of friendlies and a text string explaining which friendlies of which type.
+  function AI_A2A_DISPATCHER:GetFriendliesNearBy( DetectedItem )
   
-    local DetectedSet = Target.Set
-    local FriendlyUnitsNearBy = self.Detection:GetFriendliesNearBy( Target )
+    local DetectedSet = DetectedItem.Set
+    local FriendlyUnitsNearBy = self.Detection:GetFriendliesNearBy( DetectedItem )
     
     local FriendlyTypes = {}
     local FriendliesCount = 0
@@ -3150,8 +3150,8 @@ do
     return FriendliesCount, FriendlyTypesReport
   end
 
-  ---
-  -- @param AI_A2A_DISPATCHER
+  --- Schedules a new CAP for the given SquadronName.
+  -- @param #AI_A2A_DISPATCHER self
   -- @param #string SquadronName The squadron name.
   function AI_A2A_DISPATCHER:SchedulerCAP( SquadronName )
     self:CAP( SquadronName )

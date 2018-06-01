@@ -334,7 +334,7 @@ do -- TASK_A2A_DISPATCHER
   -- @param #TASK_A2A_DISPATCHER self
   -- @param Tasking.Mission#MISSION Mission
   -- @param Tasking.Task#TASK Task
-  -- @param Functional.Detection#DETECTION_BASE Detection The detection created by the @{Detection#DETECTION_BASE} derived object.
+  -- @param Functional.Detection#DETECTION_BASE Detection The detection created by the @{Functional.Detection#DETECTION_BASE} derived object.
   -- @param #boolean DetectedItemID
   -- @param #boolean DetectedItemChange
   -- @return Tasking.Task#TASK
@@ -484,7 +484,7 @@ do -- TASK_A2A_DISPATCHER
 
   --- Assigns tasks in relation to the detected items to the @{Core.Set#SET_GROUP}.
   -- @param #TASK_A2A_DISPATCHER self
-  -- @param Functional.Detection#DETECTION_BASE Detection The detection created by the @{Detection#DETECTION_BASE} derived object.
+  -- @param Functional.Detection#DETECTION_BASE Detection The detection created by the @{Functional.Detection#DETECTION_BASE} derived object.
   -- @return #boolean Return true if you want the task assigning to continue... false will cancel the loop.
   function TASK_A2A_DISPATCHER:ProcessDetected( Detection )
     self:F()
