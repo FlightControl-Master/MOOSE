@@ -13,11 +13,7 @@
 -- @extends Core.Fsm#FSM_CONTROLLABLE
 
 
---- # AI\_CARGO\_APC class, extends @{Core.Fsm#FSM_CONTROLLABLE}
--- 
--- ===
--- 
--- AI\_CARGO\APC brings a dynamic cargo handling capability for AI groups.
+--- Brings a dynamic cargo handling capability for AI groups.
 -- 
 -- Armoured Personnel Carriers (APC), Trucks, Jeeps and other ground based carrier equipment can be mobilized to intelligently transport infantry and other cargo within the simulation.
 -- The AI\_CARGO\APC module uses the @{Cargo} capabilities within the MOOSE framework.

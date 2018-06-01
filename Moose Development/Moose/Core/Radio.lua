@@ -16,9 +16,9 @@
 --   * They need to be added in .\l10n\DEFAULT\ in you .miz file (wich can be decompressed like a .zip file),
 --   * For simplicty sake, you can **let DCS' Mission Editor add the file** itself, by creating a new Trigger with the action "Sound to Country", and choosing your sound file and a country you don't use in your mission.
 --   
--- Due to weird DCS quirks, **radio communications behave differently** if sent by a @{Unit#UNIT} or a @{Wrapper.Group#GROUP} or by any other @{Positionable#POSITIONABLE}
+-- Due to weird DCS quirks, **radio communications behave differently** if sent by a @{Wrapper.Unit#UNIT} or a @{Wrapper.Group#GROUP} or by any other @{Positionable#POSITIONABLE}
 -- 
---   * If the transmitter is a @{Unit#UNIT} or a @{Wrapper.Group#GROUP}, DCS will set the power of the transmission  automatically,
+--   * If the transmitter is a @{Wrapper.Unit#UNIT} or a @{Wrapper.Group#GROUP}, DCS will set the power of the transmission  automatically,
 --   * If the transmitter is any other @{Positionable#POSITIONABLE}, the transmisison can't be subtitled or looped.
 --   
 -- Note that obviously, the **frequency** and the **modulation** of the transmission are important only if the players are piloting an **Advanced System Modelling** enabled aircraft,
@@ -34,7 +34,7 @@
 -- @image Core_Radio.JPG
 
 
---- # RADIO class, extends @{Core.Base#BASE}
+--- Models the radio capabilty.
 -- 
 -- ## RADIO usage
 -- 
@@ -44,14 +44,14 @@
 --   * Then, you will **set the relevant parameters** to the transmission (see below),
 --   * When done, you can actually **broadcast the transmission** (i.e. play the sound) with the @{RADIO.Broadcast}() function.
 --   
--- Methods to set relevant parameters for both a @{Unit#UNIT} or a @{Wrapper.Group#GROUP} or any other @{Positionable#POSITIONABLE}
+-- Methods to set relevant parameters for both a @{Wrapper.Unit#UNIT} or a @{Wrapper.Group#GROUP} or any other @{Positionable#POSITIONABLE}
 -- 
 --   * @{#RADIO.SetFileName}() : Sets the file name of your sound file (e.g. "Noise.ogg"),
 --   * @{#RADIO.SetFrequency}() : Sets the frequency of your transmission.
 --   * @{#RADIO.SetModulation}() : Sets the modulation of your transmission.
 --   * @{#RADIO.SetLoop}() : Choose if you want the transmission to be looped. If you need your transmission to be looped, you might need a @{#BEACON} instead...
 -- 
--- Additional Methods to set relevant parameters if the transmiter is a @{Unit#UNIT} or a @{Wrapper.Group#GROUP}
+-- Additional Methods to set relevant parameters if the transmiter is a @{Wrapper.Unit#UNIT} or a @{Wrapper.Group#GROUP}
 -- 
 --   * @{#RADIO.SetSubtitle}() : Set both the subtitle and its duration,
 --   * @{#RADIO.NewUnitTransmission}() : Shortcut to set all the relevant parameters in one method call
@@ -63,7 +63,7 @@
 -- 
 -- What is this power thing ?
 -- 
---   * If your transmission is sent by a @{Positionable#POSITIONABLE} other than a @{Unit#UNIT} or a @{Wrapper.Group#GROUP}, you can set the power of the antenna,
+--   * If your transmission is sent by a @{Positionable#POSITIONABLE} other than a @{Wrapper.Unit#UNIT} or a @{Wrapper.Group#GROUP}, you can set the power of the antenna,
 --   * Otherwise, DCS sets it automatically, depending on what's available on your Unit,
 --   * If the player gets **too far** from the transmiter, or if the antenna is **too weak**, the transmission will **fade** and **become noisyer**,
 --   * This an automated DCS calculation you have no say on,
@@ -338,16 +338,14 @@ function RADIO:StopBroadcast()
 end
 
 
---- # BEACON class, extends @{Core.Base#BASE}
--- 
--- After attaching a @{#BEACON} to your @{Positionable#POSITIONABLE}, you need to select the right function to activate the kind of beacon you want. 
+--- After attaching a @{#BEACON} to your @{Positionable#POSITIONABLE}, you need to select the right function to activate the kind of beacon you want. 
 -- There are two types of BEACONs available : the AA TACAN Beacon and the general purpose Radio Beacon.
 -- Note that in both case, you can set an optional parameter : the `BeaconDuration`. This can be very usefull to simulate the battery time if your BEACON is
 -- attach to a cargo crate, for exemple. 
 -- 
 -- ## AA TACAN Beacon usage
 -- 
--- This beacon only works with airborne @{Unit#UNIT} or a @{Wrapper.Group#GROUP}. Use @{#BEACON:AATACAN}() to set the beacon parameters and start the beacon.
+-- This beacon only works with airborne @{Wrapper.Unit#UNIT} or a @{Wrapper.Group#GROUP}. Use @{#BEACON:AATACAN}() to set the beacon parameters and start the beacon.
 -- Use @#BEACON:StopAATACAN}() to stop it.
 -- 
 -- ## General Purpose Radio Beacon usage

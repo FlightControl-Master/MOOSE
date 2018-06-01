@@ -167,6 +167,7 @@
 
 
 --- The EVENT structure
+-- 
 -- @type EVENT
 -- @field #EVENT.Events Events
 -- @extends Core.Base#BASE
@@ -230,7 +231,7 @@ EVENTS = {
 -- @field DCS#Object.Category IniObjectCategory (UNIT/STATIC/SCENERY) The initiator object category ( Object.Category.UNIT or Object.Category.STATIC ).
 -- @field DCS#Unit IniDCSUnit (UNIT/STATIC) The initiating @{DCS#Unit} or @{DCSStaticObject#StaticObject}.
 -- @field #string IniDCSUnitName (UNIT/STATIC) The initiating Unit name.
--- @field Wrapper.Unit#UNIT IniUnit (UNIT/STATIC) The initiating MOOSE wrapper @{Unit#UNIT} of the initiator Unit object.
+-- @field Wrapper.Unit#UNIT IniUnit (UNIT/STATIC) The initiating MOOSE wrapper @{Wrapper.Unit#UNIT} of the initiator Unit object.
 -- @field #string IniUnitName (UNIT/STATIC) The initiating UNIT name (same as IniDCSUnitName).
 -- @field DCS#Group IniDCSGroup (UNIT) The initiating {DCSGroup#Group}.
 -- @field #string IniDCSGroupName (UNIT) The initiating Group name.
@@ -245,7 +246,7 @@ EVENTS = {
 -- @field DCS#Object.Category TgtObjectCategory (UNIT/STATIC) The target object category ( Object.Category.UNIT or Object.Category.STATIC ).
 -- @field DCS#Unit TgtDCSUnit (UNIT/STATIC) The target @{DCS#Unit} or @{DCSStaticObject#StaticObject}.
 -- @field #string TgtDCSUnitName (UNIT/STATIC) The target Unit name.
--- @field Wrapper.Unit#UNIT TgtUnit (UNIT/STATIC) The target MOOSE wrapper @{Unit#UNIT} of the target Unit object.
+-- @field Wrapper.Unit#UNIT TgtUnit (UNIT/STATIC) The target MOOSE wrapper @{Wrapper.Unit#UNIT} of the target Unit object.
 -- @field #string TgtUnitName (UNIT/STATIC) The target UNIT name (same as TgtDCSUnitName).
 -- @field DCS#Group TgtDCSGroup (UNIT) The target {DCSGroup#Group}.
 -- @field #string TgtDCSGroupName (UNIT) The target Group name.

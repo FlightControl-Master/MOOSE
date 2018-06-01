@@ -144,9 +144,8 @@ do -- CARGO
   -- @field #boolean Representable This flag defines if the cargo can be represented by a DCS Unit.
   -- @field #boolean Containable This flag defines if the cargo can be contained within a DCS Unit.
   
-  --- # (R2.4) CARGO class, extends @{Core.Fsm#FSM_PROCESS}
+  --- Defines the core functions that defines a cargo object within MOOSE.
   -- 
-  -- The CARGO class defines the core functions that defines a cargo object within MOOSE.
   -- A cargo is a **logical object** defined that is available for transport, and has a life status within a simulation.
   -- 
   -- CARGO is not meant to be used directly by mission designers, but provides a base class for **concrete cargo implementation classes** to handle:

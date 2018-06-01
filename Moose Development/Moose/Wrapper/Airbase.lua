@@ -15,7 +15,7 @@
 --- @type AIRBASE
 -- @extends Wrapper.Positionable#POSITIONABLE
 
---- AIRBASE is a wrapper class to handle the DCS Airbase objects:
+--- Wrapper class to handle the DCS Airbase objects:
 -- 
 --  * Support all DCS Airbase APIs.
 --  * Enhance with Airbase specific APIs not in the DCS Airbase API set.

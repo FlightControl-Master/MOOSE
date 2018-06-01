@@ -13,9 +13,7 @@
 --- @type AI_A2A_PATROL
 -- @extends AI.AI_A2A#AI_A2A
 
---- # AI_A2A_PATROL class, extends @{AI.AI_A2A#AI_A2A}
--- 
--- The AI_A2A_PATROL class implements the core functions to patrol a @{Zone} by an AI @{Wrapper.Group} or @{Wrapper.Group}.
+--- Implements the core functions to patrol a @{Zone} by an AI @{Wrapper.Group} or @{Wrapper.Group}.
 -- 
 -- ![Process](..\Presentations\AI_PATROL\Dia3.JPG)
 -- 

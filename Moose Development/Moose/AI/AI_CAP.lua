@@ -31,9 +31,7 @@
 -- @extends AI.AI_Patrol#AI_PATROL_ZONE
 
 
---- # AI_CAP_ZONE class, extends @{AI.AI_Patrol#AI_PATROL_ZONE}
--- 
--- The AI_CAP_ZONE class implements the core functions to patrol a @{Zone} by an AI @{Wrapper.Controllable} or @{Wrapper.Group} 
+-- Implements the core functions to patrol a @{Zone} by an AI @{Wrapper.Controllable} or @{Wrapper.Group} 
 -- and automatically engage any airborne enemies that are within a certain range or within a certain zone.
 -- 
 -- ![Process](..\Presentations\AI_CAP\Dia3.JPG)

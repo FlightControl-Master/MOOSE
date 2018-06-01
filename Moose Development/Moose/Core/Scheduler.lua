@@ -46,7 +46,7 @@
 -- @extends Core.Base#BASE
 
 
---- The SCHEDULER class creates schedule.
+--- Creates and handles schedules over time, which allow to execute code at specific time intervals with randomization.
 -- 
 -- A SCHEDULER can manage **multiple** (repeating) schedules. Each planned or executing schedule has a unique **ScheduleID**.
 -- The ScheduleID is returned when the method @{#SCHEDULER.Schedule}() is called.

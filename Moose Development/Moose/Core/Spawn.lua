@@ -36,7 +36,8 @@
 -- @extends Core.Base#BASE
 
 
---- The SPAWN class allows to spawn dynamically new groups.  
+--- Allows to spawn dynamically new @{Core.Group}s.  
+-- 
 -- Each SPAWN object needs to be have related **template groups** setup in the Mission Editor (ME),
 -- which is a normal group with the **Late Activation** flag set. 
 -- This template group will never be activated in your mission.  

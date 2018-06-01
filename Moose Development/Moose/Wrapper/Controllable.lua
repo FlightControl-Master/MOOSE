@@ -19,7 +19,7 @@
 
 
 
---- CONTROLLABLE is a wrapper class to handle the "DCS Controllable objects", which are Groups and Units:
+--- Wrapper class to handle the "DCS Controllable objects", which are Groups and Units:
 --
 --  * Support all DCS Controllable APIs.
 --  * Enhance with Controllable specific APIs not in the DCS Controllable API set.
@@ -421,7 +421,7 @@ end
 --- Return a Controlled Task taking a Task and a TaskCondition.
 -- @param #CONTROLLABLE self
 -- @param DCS#Task DCSTask
--- @param #DCSStopCondition DCSStopCondition
+-- @param DCS#DCSStopCondition DCSStopCondition
 -- @return DCS#Task
 function CONTROLLABLE:TaskControlled( DCSTask, DCSStopCondition )
   self:F2( { DCSTask, DCSStopCondition } )
@@ -2096,7 +2096,7 @@ do -- Route methods
   -- A speed can be given in km/h.
   -- A given formation can be given.
   -- @param #CONTROLLABLE self
-  -- @param #Vec2 Vec2 The Vec2 where to route to.
+  -- @param DCS#Vec2 Vec2 The Vec2 where to route to.
   -- @param #number Speed The speed in m/s. Default is 5.555 m/s = 20 km/h.
   -- @param Base#FORMATION Formation The formation string.
   function CONTROLLABLE:TaskRouteToVec2( Vec2, Speed, Formation )
@@ -2152,7 +2152,7 @@ end -- Route methods
 --- Do Script command
 -- @param #CONTROLLABLE self
 -- @param #string DoScript
--- @return #DCSCommand
+-- @return DCS#DCSCommand
 function CONTROLLABLE:CommandDoScript( DoScript )
 
   local DCSDoScript = {

@@ -22,9 +22,7 @@ do -- CARGO_UNIT
   -- @type CARGO_UNIT
   -- @extends Cargo.Cargo#CARGO_REPRESENTABLE
   
-  --- # CARGO\_UNIT class, extends @{Cargo.Cargo#CARGO_REPRESENTABLEE}
-  -- 
-  -- The CARGO\_UNIT class defines a cargo that is represented by a UNIT object within the simulator, and can be transported by a carrier.
+  --- Defines a cargo that is represented by a UNIT object within the simulator, and can be transported by a carrier.
   -- Use the event functions as described above to Load, UnLoad, Board, UnBoard the CARGO\_UNIT objects to and from carriers.
   -- 
   -- ===

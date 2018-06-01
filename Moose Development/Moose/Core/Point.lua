@@ -36,7 +36,7 @@ do -- COORDINATE
   -- @extends Core.Base#BASE
   
   
-  --- COORDINATE defines a 3D point in the simulator and with its methods, you can use or manipulate the point in 3D space.
+  --- Defines a 3D point in the simulator and with its methods, you can use or manipulate the point in 3D space.
   --
   -- ## COORDINATE constructor
   --
@@ -1597,7 +1597,7 @@ do -- POINT_VEC3
   -- @extends Core.Point#COORDINATE
   
   
-  --- POINT_VEC3 defines a 3D point in the simulator and with its methods, you can use or manipulate the point in 3D space.
+  --- Defines a 3D point in the simulator and with its methods, you can use or manipulate the point in 3D space.
   --
   -- **Important Note:** Most of the functions in this section were taken from MIST, and reworked to OO concepts.
   -- In order to keep the credibility of the the author,
@@ -1808,7 +1808,7 @@ do -- POINT_VEC2
   -- @field DCS#Distance y the y coordinate in meters.
   -- @extends Core.Point#COORDINATE
   
-  --- The @{Point#POINT_VEC2} class defines a 2D point in the simulator. The height coordinate (if needed) will be the land height + an optional added height specified.
+  --- Defines a 2D point in the simulator. The height coordinate (if needed) will be the land height + an optional added height specified.
   --
   -- ## POINT_VEC2 constructor
   --

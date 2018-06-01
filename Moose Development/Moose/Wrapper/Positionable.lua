@@ -18,7 +18,7 @@
 -- @extends Wrapper.Identifiable#IDENTIFIABLE
 
 
---- The POSITIONABLE class is a wrapper class to handle the POSITIONABLE objects:
+--- Wrapper class to handle the POSITIONABLE objects.
 --
 --  * Support all DCS APIs.
 --  * Enhance with POSITIONABLE specific APIs not in the DCS API set.
@@ -716,7 +716,7 @@ end
 --- Create a @{Radio#RADIO}, to allow radio transmission for this POSITIONABLE. 
 -- Set parameters with the methods provided, then use RADIO:Broadcast() to actually broadcast the message
 -- @param #POSITIONABLE self
--- @return #RADIO Radio
+-- @return Core.Radio#RADIO Radio
 function POSITIONABLE:GetRadio() --R2.1
   self:F2(self)
   return RADIO:New(self) 
@@ -724,7 +724,7 @@ end
 
 --- Create a @{Radio#BEACON}, to allow this POSITIONABLE to broadcast beacon signals
 -- @param #POSITIONABLE self
--- @return #RADIO Radio
+-- @return Core.Radio#RADIO Radio
 function POSITIONABLE:GetBeacon() --R2.1
   self:F2(self)
   return BEACON:New(self) 

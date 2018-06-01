@@ -1802,9 +1802,8 @@ end
 
 do -- DETECTION_UNITS
 
-  --- # DETECTION_UNITS class, extends @{Functional.Detection#DETECTION_BASE}
+  --- Will detect units within the battle zone.
   -- 
-  -- The DETECTION_UNITS class will detect units within the battle zone.
   -- It will build a DetectedItems list filled with DetectedItems. Each DetectedItem will contain a field Set, which contains a @{Core.Set#SET_UNIT} containing ONE @{UNIT} object reference.
   -- Beware that when the amount of units detected is large, the DetectedItems list will be large also. 
   -- 
@@ -2052,9 +2051,7 @@ end
 
 do -- DETECTION_TYPES
 
-  --- # 3) DETECTION_TYPES class, extends @{Functional.Detection#DETECTION_BASE}
-  -- 
-  -- The DETECTION_TYPES class will detect units within the battle zone.
+  --- Will detect units within the battle zone.
   -- It will build a DetectedItems[] list filled with DetectedItems, grouped by the type of units detected. 
   -- Each DetectedItem will contain a field Set, which contains a @{Core.Set#SET_UNIT} containing ONE @{UNIT} object reference.
   -- Beware that when the amount of different types detected is large, the DetectedItems[] list will be large also. 
@@ -2261,10 +2258,8 @@ end
 
 do -- DETECTION_AREAS
 
-  --- # 4) DETECTION_AREAS class, extends @{Functional.Detection#DETECTION_BASE}
-  -- 
-  -- The DETECTION_AREAS class will detect units within the battle zone for a list of @{Wrapper.Group}s detecting targets following (a) detection method(s), 
-  -- and will build a list (table) of @{Core.Set#SET_UNIT}s containing the @{Unit#UNIT}s detected.
+  --- Detect units within the battle zone for a list of @{Wrapper.Group}s detecting targets following (a) detection method(s), 
+  -- and will build a list (table) of @{Core.Set#SET_UNIT}s containing the @{Wrapper.Unit#UNIT}s detected.
   -- The class is group the detected units within zones given a DetectedZoneRange parameter.
   -- A set with multiple detected zones will be created as there are groups of units detected.
   -- 

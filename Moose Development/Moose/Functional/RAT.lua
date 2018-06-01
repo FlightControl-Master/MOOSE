@@ -148,8 +148,7 @@
 -- @field #boolean useparkingdb Parking spots are added to data base once an aircraft has used it. These spots can later be used by other aircraft. Default is true.
 -- @extends Core.Spawn#SPAWN
 
---- The RAT class implements an easy to use way to randomly fill your map with AI aircraft.
--- 
+--- Implements an easy to use way to randomly fill your map with AI aircraft.
 --
 -- ## Airport Selection
 -- 

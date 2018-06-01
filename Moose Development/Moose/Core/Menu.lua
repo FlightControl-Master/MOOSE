@@ -13,15 +13,15 @@
 -- 
 -- ### To manage **main menus**, the classes begin with **MENU_**:
 -- 
---   * @{Menu#MENU_MISSION}: Manages main menus for whole mission file.
---   * @{Menu#MENU_COALITION}: Manages main menus for whole coalition.
---   * @{Menu#MENU_GROUP}: Manages main menus for GROUPs.
+--   * @{Core.Menu#MENU_MISSION}: Manages main menus for whole mission file.
+--   * @{Core.Menu#MENU_COALITION}: Manages main menus for whole coalition.
+--   * @{Core.Menu#MENU_GROUP}: Manages main menus for GROUPs.
 --   
 -- ### To manage **command menus**, which are menus that allow the player to issue **functions**, the classes begin with **MENU_COMMAND_**:
 --   
---   * @{Menu#MENU_MISSION_COMMAND}: Manages command menus for whole mission file.
---   * @{Menu#MENU_COALITION_COMMAND}: Manages command menus for whole coalition.
---   * @{Menu#MENU_GROUP_COMMAND}: Manages command menus for GROUPs.
+--   * @{Core.Menu#MENU_MISSION_COMMAND}: Manages command menus for whole mission file.
+--   * @{Core.Menu#MENU_COALITION_COMMAND}: Manages command menus for whole coalition.
+--   * @{Core.Menu#MENU_GROUP_COMMAND}: Manages command menus for GROUPs.
 -- 
 -- ===
 --- 
@@ -183,7 +183,7 @@ do -- MENU_BASE
   --- @type MENU_BASE
   -- @extends Base#BASE
 
-  --- The MENU_BASE class defines the main MENU class where other MENU classes are derived from.
+  --- Defines the main MENU class where other MENU classes are derived from.
   -- This is an abstract class, so don't use it.
   -- @field #MENU_BASE
   MENU_BASE = {
@@ -286,7 +286,7 @@ do -- MENU_COMMAND_BASE
   -- @field #function MenuCallHandler
   -- @extends Core.Menu#MENU_BASE
   
-  --- The MENU_COMMAND_BASE class defines the main MENU class where other MENU COMMAND_ 
+  --- Defines the main MENU class where other MENU COMMAND_ 
   -- classes are derived from, in order to set commands.
   -- 
   -- @field #MENU_COMMAND_BASE
@@ -356,7 +356,8 @@ do -- MENU_MISSION
   --- @type MENU_MISSION
   -- @extends Core.Menu#MENU_BASE
 
-  --- The MENU_MISSION class manages the main menus for a complete mission.  
+  --- Manages the main menus for a complete mission.  
+  -- 
   -- You can add menus with the @{#MENU_MISSION.New} method, which constructs a MENU_MISSION object and returns you the object reference.
   -- Using this object reference, you can then remove ALL the menus and submenus underlying automatically with @{#MENU_MISSION.Remove}.
   -- @field #MENU_MISSION
@@ -451,7 +452,8 @@ do -- MENU_MISSION_COMMAND
   --- @type MENU_MISSION_COMMAND
   -- @extends Core.Menu#MENU_COMMAND_BASE
   
-  --- The MENU_MISSION_COMMAND class manages the command menus for a complete mission, which allow players to execute functions during mission execution.  
+  --- Manages the command menus for a complete mission, which allow players to execute functions during mission execution.  
+  -- 
   -- You can add menus with the @{#MENU_MISSION_COMMAND.New} method, which constructs a MENU_MISSION_COMMAND object and returns you the object reference.
   -- Using this object reference, you can then remove ALL the menus and submenus underlying automatically with @{#MENU_MISSION_COMMAND.Remove}.
   -- 
@@ -536,7 +538,8 @@ do -- MENU_COALITION
   --- @type MENU_COALITION
   -- @extends Core.Menu#MENU_BASE
   
-  --- The @{Menu#MENU_COALITION} class manages the main menus for coalitions.  
+  --- Manages the main menus for @{DCS.coalition}s.  
+  -- 
   -- You can add menus with the @{#MENU_COALITION.New} method, which constructs a MENU_COALITION object and returns you the object reference.
   -- Using this object reference, you can then remove ALL the menus and submenus underlying automatically with @{#MENU_COALITION.Remove}.
   -- 
@@ -672,7 +675,8 @@ do -- MENU_COALITION_COMMAND
   --- @type MENU_COALITION_COMMAND
   -- @extends Core.Menu#MENU_COMMAND_BASE
   
-  --- The MENU_COALITION_COMMAND class manages the command menus for coalitions, which allow players to execute functions during mission execution.  
+  --- Manages the command menus for coalitions, which allow players to execute functions during mission execution.  
+  -- 
   -- You can add menus with the @{#MENU_COALITION_COMMAND.New} method, which constructs a MENU_COALITION_COMMAND object and returns you the object reference.
   -- Using this object reference, you can then remove ALL the menus and submenus underlying automatically with @{#MENU_COALITION_COMMAND.Remove}.
   --
@@ -770,7 +774,8 @@ do
   -- @extends Core.Menu#MENU_BASE
   
   
-  --- The MENU_GROUP class manages the main menus for coalitions.  
+  --- Manages the main menus for @{Wrapper.Group}s.  
+  -- 
   -- You can add menus with the @{#MENU_GROUP.New} method, which constructs a MENU_GROUP object and returns you the object reference.
   -- Using this object reference, you can then remove ALL the menus and submenus underlying automatically with @{#MENU_GROUP.Remove}.
   -- 
@@ -926,7 +931,7 @@ do
   --- @type MENU_GROUP_COMMAND
   -- @extends Core.Menu#MENU_COMMAND_BASE
   
-  --- The @{Menu#MENU_GROUP_COMMAND} class manages the command menus for coalitions, which allow players to execute functions during mission execution.  
+  --- The @{Core.Menu#MENU_GROUP_COMMAND} class manages the command menus for coalitions, which allow players to execute functions during mission execution.  
   -- You can add menus with the @{#MENU_GROUP_COMMAND.New} method, which constructs a MENU_GROUP_COMMAND object and returns you the object reference.
   -- Using this object reference, you can then remove ALL the menus and submenus underlying automatically with @{#MENU_GROUP_COMMAND.Remove}.
   --
@@ -1155,7 +1160,8 @@ do
   --- @type MENU_GROUP_COMMAND_DELAYED
   -- @extends Core.Menu#MENU_COMMAND_BASE
   
-  --- The @{Menu#MENU_GROUP_COMMAND_DELAYED} class manages the command menus for coalitions, which allow players to execute functions during mission execution.  
+  --- Manages the command menus for coalitions, which allow players to execute functions during mission execution.  
+  -- 
   -- You can add menus with the @{#MENU_GROUP_COMMAND_DELAYED.New} method, which constructs a MENU_GROUP_COMMAND_DELAYED object and returns you the object reference.
   -- Using this object reference, you can then remove ALL the menus and submenus underlying automatically with @{#MENU_GROUP_COMMAND_DELAYED.Remove}.
   --

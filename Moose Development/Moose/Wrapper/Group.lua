@@ -32,7 +32,9 @@
 -- @field #string GroupName The name of the group.
 
 
---- For each DCS Group object alive within a running mission, a GROUP wrapper object (instance) will be created within the _@{DATABASE} object.
+--- Wrapper class of the DCS world Group object.
+-- 
+-- For each DCS Group object alive within a running mission, a GROUP wrapper object (instance) will be created within the _@{DATABASE} object.
 -- This is done at the beginning of the mission (when the mission starts), and dynamically when new DCS Group objects are spawned (using the @{SPAWN} class).
 --
 -- The GROUP class does not contain a :New() method, rather it provides :Find() methods to retrieve the object reference

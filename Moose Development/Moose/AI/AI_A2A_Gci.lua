@@ -17,9 +17,7 @@
 -- @extends AI.AI_A2A#AI_A2A
 
 
---- # AI_A2A_GCI class, extends @{AI.AI_A2A#AI_A2A}
--- 
--- The AI_A2A_GCI class implements the core functions to intercept intruders. The Engage function will intercept intruders.
+--- Implements the core functions to intercept intruders. Use the Engage trigger to intercept intruders.
 -- 
 -- ![Process](..\Presentations\AI_GCI\Dia3.JPG)
 -- 

@@ -13,9 +13,7 @@
 -- @extends Core.Fsm#FSM_CONTROLLABLE
 
 
---- # AI\_CARGO\_AIRPLANE class, extends @{Core.Fsm#FSM_CONTROLLABLE}
--- 
--- ===
+--- Implements the transportation of cargo by airplanes.
 -- 
 -- @field #AI_CARGO_AIRPLANE
 AI_CARGO_AIRPLANE = {

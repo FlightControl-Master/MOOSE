@@ -14,7 +14,9 @@
 --- @type DATABASE
 -- @extends Core.Base#BASE
 
---- Mission designers can use the DATABASE class to refer to:
+--- Contains collections of wrapper objects defined within MOOSE that reflect objects within the simulator.
+-- 
+-- Mission designers can use the DATABASE class to refer to:
 -- 
 --  * STATICS
 --  * UNITS

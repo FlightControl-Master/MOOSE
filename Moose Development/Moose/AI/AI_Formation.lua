@@ -58,9 +58,7 @@
 -- @field DCSTypes#AI.Option.Air.val.REACTION_ON_THREAT OptionReactionOnThreat Which REACTION_ON_THREAT is set to the FollowGroup.
 
 
---- # AI_FORMATION class, extends @{Core.Fsm#FSM_SET}
--- 
--- The #AI_FORMATION class allows you to build large formations, make AI follow a @{Wrapper.Client#CLIENT} (player) leader or a @{Unit#UNIT} (AI) leader.
+--- Build large formations, make AI follow a @{Wrapper.Client#CLIENT} (player) leader or a @{Wrapper.Unit#UNIT} (AI) leader.
 --
 -- AI_FORMATION makes AI @{GROUP}s fly in formation of various compositions.
 -- The AI_FORMATION class models formations in a different manner than the internal DCS formation logic!!!
@@ -86,7 +84,7 @@
 -- 
 -- Create a new SPAWN object with the @{#AI_FORMATION.New} method:
 --
---   * @{Follow#AI_FORMATION.New}(): Creates a new AI_FORMATION object from a @{Wrapper.Group#GROUP} for a @{Wrapper.Client#CLIENT} or a @{Unit#UNIT}, with an optional briefing text.
+--   * @{Follow#AI_FORMATION.New}(): Creates a new AI_FORMATION object from a @{Wrapper.Group#GROUP} for a @{Wrapper.Client#CLIENT} or a @{Wrapper.Unit#UNIT}, with an optional briefing text.
 --
 -- ## Formation methods
 -- 

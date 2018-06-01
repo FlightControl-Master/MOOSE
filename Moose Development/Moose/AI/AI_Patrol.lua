@@ -40,9 +40,7 @@
 -- @field Core.Spawn#SPAWN CoordTest
 -- @extends Core.Fsm#FSM_CONTROLLABLE
 
---- # AI_PATROL_ZONE class, extends @{Core.Fsm#FSM_CONTROLLABLE}
--- 
--- The AI_PATROL_ZONE class implements the core functions to patrol a @{Zone} by an AI @{Wrapper.Controllable} or @{Wrapper.Group}.
+--- Implements the core functions to patrol a @{Zone} by an AI @{Wrapper.Controllable} or @{Wrapper.Group}.
 -- 
 -- ![Process](..\Presentations\AI_PATROL\Dia3.JPG)
 -- 
@@ -558,18 +556,18 @@ function AI_PATROL_ZONE:SetDetectionZone( DetectionZone )
   end
 end
 
---- Gets a list of @{Unit#UNIT}s that were detected by the AI.
+--- Gets a list of @{Wrapper.Unit#UNIT}s that were detected by the AI.
 -- No filtering is applied, so, ANY detected UNIT can be in this list.
 -- It is up to the mission designer to use the @{Wrapper.Unit} class and methods to filter the targets.
 -- @param #AI_PATROL_ZONE self
--- @return #table The list of @{Unit#UNIT}s
+-- @return #table The list of @{Wrapper.Unit#UNIT}s
 function AI_PATROL_ZONE:GetDetectedUnits()
   self:F2()
 
   return self.DetectedUnits 
 end
 
---- Clears the list of @{Unit#UNIT}s that were detected by the AI.
+--- Clears the list of @{Wrapper.Unit#UNIT}s that were detected by the AI.
 -- @param #AI_PATROL_ZONE self
 function AI_PATROL_ZONE:ClearDetectedUnits()
   self:F2()

@@ -27,10 +27,8 @@
 -- @extends Core.Fsm#FSM_SET
 
 
---- # AI_BALANCER class, extends @{Core.Fsm#FSM_SET}
--- 
--- The AI_BALANCER class monitors and manages as many replacement AI groups as there are
--- CLIENTS in a SET_CLIENT collection, which are not occupied by human players. 
+--- Monitors and manages as many replacement AI groups as there are
+-- CLIENTS in a SET\_CLIENT collection, which are not occupied by human players. 
 -- In other words, use AI_BALANCER to simulate human behaviour by spawning in replacement AI in multi player missions.
 -- 
 -- The parent class @{Fsm#FSM_SET} manages the functionality to control the Finite State Machine (FSM). 

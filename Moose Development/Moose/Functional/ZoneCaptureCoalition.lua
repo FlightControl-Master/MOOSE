@@ -26,9 +26,7 @@ do -- ZONE_CAPTURE_COALITION
   -- @extends Functional.ZoneGoalCoalition#ZONE_GOAL_COALITION
 
 
-  --- # ZONE\_CAPTURE\_COALITION class, extends @{ZoneGoalCoalition#ZONE_GOAL_COALITION}
-  -- 
-  -- Models the process to capture a Zone for a Coalition, which is guarded by another Coalition.
+  --- Models the process to capture a Zone for a Coalition, which is guarded by another Coalition.
   -- This is a powerful concept that allows to create very dynamic missions based on the different state transitions of various zones.
   -- 
   -- ---

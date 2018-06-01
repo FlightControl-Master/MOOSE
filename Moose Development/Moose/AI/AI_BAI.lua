@@ -27,9 +27,8 @@
 -- @field Core.Zone#ZONE_BASE TargetZone The @{Zone} where the patrol needs to be executed.
 -- @extends AI.AI_Patrol#AI_PATROL_ZONE
 
---- AI_BAI_ZONE derives from the @{AI.AI_Patrol#AI_PATROL_ZONE}, inheriting its methods and behaviour.
---  
--- The AI_BAI_ZONE class implements the core functions to provide BattleGround Air Interdiction in an Engage @{Zone} by an AIR @{Wrapper.Controllable} or @{Wrapper.Group}.
+--- Implements the core functions to provide BattleGround Air Interdiction in an Engage @{Zone} by an AIR @{Wrapper.Controllable} or @{Wrapper.Group}.
+-- 
 -- The AI_BAI_ZONE runs a process. It holds an AI in a Patrol Zone and when the AI is commanded to engage, it will fly to an Engage Zone.
 -- 
 -- ![HoldAndEngage](..\Presentations\AI_BAI\Dia3.JPG)

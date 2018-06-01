@@ -21,7 +21,7 @@
 --   * @{#ZONE_BASE}: The ZONE_BASE class defining the base for all other zone classes.
 --   * @{#ZONE_RADIUS}: The ZONE_RADIUS class defined by a zone name, a location and a radius.
 --   * @{#ZONE}: The ZONE class, defined by the zone name as defined within the Mission Editor.
---   * @{#ZONE_UNIT}: The ZONE_UNIT class defines by a zone around a @{Unit#UNIT} with a radius.
+--   * @{#ZONE_UNIT}: The ZONE_UNIT class defines by a zone around a @{Wrapper.Unit#UNIT} with a radius.
 --   * @{#ZONE_GROUP}: The ZONE_GROUP class defines by a zone around a @{Wrapper.Group#GROUP} with a radius.
 --   * @{#ZONE_POLYGON}: The ZONE_POLYGON class defines by a sequence of @{Wrapper.Group#GROUP} waypoints within the Mission Editor, forming a polygon.
 --
@@ -1017,7 +1017,7 @@ end
 -- @field Wrapper.Unit#UNIT ZoneUNIT
 -- @extends Core.Zone#ZONE_RADIUS
 
---- The ZONE_UNIT class defined by a zone around a @{Unit#UNIT} with a radius.
+--- The ZONE_UNIT class defined by a zone around a @{Wrapper.Unit#UNIT} with a radius.
 -- This class implements the inherited functions from @{#ZONE_RADIUS} taking into account the own zone format and properties.
 -- 
 -- @field #ZONE_UNIT
@@ -1045,9 +1045,9 @@ function ZONE_UNIT:New( ZoneName, ZoneUNIT, Radius )
 end
 
 
---- Returns the current location of the @{Unit#UNIT}.
+--- Returns the current location of the @{Wrapper.Unit#UNIT}.
 -- @param #ZONE_UNIT self
--- @return DCS#Vec2 The location of the zone based on the @{Unit#UNIT}location.
+-- @return DCS#Vec2 The location of the zone based on the @{Wrapper.Unit#UNIT}location.
 function ZONE_UNIT:GetVec2()
   self:F2( self.ZoneName )
   
