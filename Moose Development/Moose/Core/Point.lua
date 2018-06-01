@@ -1153,13 +1153,19 @@ do -- COORDINATE
     --- Mark to All
     -- @param #COORDINATE self
     -- @param #string MarkText Free format text that shows the marking clarification.
+    -- @param #boolean ReadOnly (Optional) Mark is readonly and cannot be removed by users. Default false.
+    -- @param #string Text (Optional) Text displayed when mark is added. Default none.
     -- @return #number The resulting Mark ID which is a number.
     -- @usage
     --   local TargetCoord = TargetGroup:GetCoordinate()
     --   local MarkID = TargetCoord:MarkToAll( "This is a target for all players" )
-    function COORDINATE:MarkToAll( MarkText )
+    function COORDINATE:MarkToAll( MarkText, ReadOnly, Text )
       local MarkID = UTILS.GetMarkID()
-      trigger.action.markToAll( MarkID, MarkText, self:GetVec3(), false, "" )
+      if ReadOnly==nil then
+        ReadOnly=false
+      end
+      local text=Text or ""
+      trigger.action.markToAll( MarkID, MarkText, self:GetVec3(), ReadOnly, text)
       return MarkID
     end
 
@@ -1167,50 +1173,66 @@ do -- COORDINATE
     -- @param #COORDINATE self
     -- @param #string MarkText Free format text that shows the marking clarification.
     -- @param Coalition
+    -- @param #boolean ReadOnly (Optional) Mark is readonly and cannot be removed by users. Default false.
+    -- @param #string Text (Optional) Text displayed when mark is added. Default none.
     -- @return #number The resulting Mark ID which is a number.
     -- @usage
     --   local TargetCoord = TargetGroup:GetCoordinate()
     --   local MarkID = TargetCoord:MarkToCoalition( "This is a target for the red coalition", coalition.side.RED )
-    function COORDINATE:MarkToCoalition( MarkText, Coalition )
+    function COORDINATE:MarkToCoalition( MarkText, Coalition, ReadOnly, Text )
       local MarkID = UTILS.GetMarkID()
-      trigger.action.markToCoalition( MarkID, MarkText, self:GetVec3(), Coalition, false, "" )
+      if ReadOnly==nil then
+        ReadOnly=false
+      end
+      local text=Text or ""
+      trigger.action.markToCoalition( MarkID, MarkText, self:GetVec3(), Coalition, ReadOnly, text )
       return MarkID
     end
 
     --- Mark to Red Coalition
     -- @param #COORDINATE self
     -- @param #string MarkText Free format text that shows the marking clarification.
+    -- @param #boolean ReadOnly (Optional) Mark is readonly and cannot be removed by users. Default false.
+    -- @param #string Text (Optional) Text displayed when mark is added. Default none.
     -- @return #number The resulting Mark ID which is a number.
     -- @usage
     --   local TargetCoord = TargetGroup:GetCoordinate()
     --   local MarkID = TargetCoord:MarkToCoalitionRed( "This is a target for the red coalition" )
-    function COORDINATE:MarkToCoalitionRed( MarkText )
-      return self:MarkToCoalition( MarkText, coalition.side.RED )
+    function COORDINATE:MarkToCoalitionRed( MarkText, ReadOnly, Text )
+      return self:MarkToCoalition( MarkText, coalition.side.RED, ReadOnly, Text )
     end
 
     --- Mark to Blue Coalition
     -- @param #COORDINATE self
     -- @param #string MarkText Free format text that shows the marking clarification.
+    -- @param #boolean ReadOnly (Optional) Mark is readonly and cannot be removed by users. Default false.
+    -- @param #string Text (Optional) Text displayed when mark is added. Default none.
     -- @return #number The resulting Mark ID which is a number.
     -- @usage
     --   local TargetCoord = TargetGroup:GetCoordinate()
     --   local MarkID = TargetCoord:MarkToCoalitionBlue( "This is a target for the blue coalition" )
-    function COORDINATE:MarkToCoalitionBlue( MarkText )
-      return self:MarkToCoalition( MarkText, coalition.side.BLUE )
+    function COORDINATE:MarkToCoalitionBlue( MarkText, ReadOnly, Text )
+      return self:MarkToCoalition( MarkText, coalition.side.BLUE, ReadOnly, Text )
     end
 
     --- Mark to Group
     -- @param #COORDINATE self
     -- @param #string MarkText Free format text that shows the marking clarification.
     -- @param Wrapper.Group#GROUP MarkGroup The @{Wrapper.Group} that receives the mark.
+    -- @param #boolean ReadOnly (Optional) Mark is readonly and cannot be removed by users. Default false.
+    -- @param #string Text (Optional) Text displayed when mark is added. Default none.
     -- @return #number The resulting Mark ID which is a number.
     -- @usage
     --   local TargetCoord = TargetGroup:GetCoordinate()
     --   local MarkGroup = GROUP:FindByName( "AttackGroup" )
     --   local MarkID = TargetCoord:MarkToGroup( "This is a target for the attack group", AttackGroup )
-    function COORDINATE:MarkToGroup( MarkText, MarkGroup )
+    function COORDINATE:MarkToGroup( MarkText, MarkGroup, ReadOnly, Text )
       local MarkID = UTILS.GetMarkID()
-      trigger.action.markToGroup( MarkID, MarkText, self:GetVec3(), MarkGroup:GetID(), false, "" )
+      if ReadOnly==nil then
+        ReadOnly=false
+      end
+      local text=Text or ""
+      trigger.action.markToGroup( MarkID, MarkText, self:GetVec3(), MarkGroup:GetID(), ReadOnly, text )
       return MarkID
     end
     

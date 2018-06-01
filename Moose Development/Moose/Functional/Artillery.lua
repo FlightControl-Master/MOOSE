@@ -75,7 +75,7 @@
 -- @field #table ammorockets Table holding names of the rocket types which are included when counting the ammo. Default is {"weapons.nurs"} which includes most unguided rockets.
 -- @field #table ammomissiles Table holding names of the missile types which are included when counting the ammo. Default is {"weapons.missiles"} which includes some guided missiles.
 -- @field #number Nshots Number of shots fired on current target.
--- @field #number minrange Minimum firing range in kilometers. Targets closer than this distance are not engaged. Default 0.5 km.
+-- @field #number minrange Minimum firing range in kilometers. Targets closer than this distance are not engaged. Default 0.1 km.
 -- @field #number maxrange Maximum firing range in kilometers. Targets further away than this distance are not engaged. Default 10000 km.
 -- @field #number nukewarhead Explosion strength of tactical nuclear warhead in kg TNT. Default 75000.
 -- @field #number Nukes Number of nuclear shells, the group has available. Default is same number as normal shells. Note that if normal shells are empty, firing nukes is also not possible any more.
@@ -86,7 +86,8 @@
 -- @field #number relocateRmin Minimum distance in meters the group will look for places to relocate.
 -- @field #number relocateRmax Maximum distance in meters the group will look for places to relocate.
 -- @field #boolean markallow If true, Players are allowed to assign targets and moves for ARTY group by placing markers on the F10 map. Default is false.
--- @field #number markkey Authorization key. Only player who know this key can assign targets and moves via markers on the F10 map. Default no authorization required. 
+-- @field #number markkey Authorization key. Only player who know this key can assign targets and moves via markers on the F10 map. Default no authorization required.
+-- @field #boolean markreadonly Marks for targets are readonly and cannot be removed by players. Default is false.
 -- @extends Core.Fsm#FSM_CONTROLLABLE
 
 --- Enables mission designers easily to assign targets for artillery units. Since the implementation is based on a Finite State Model (FSM), the mission designer can
@@ -424,7 +425,7 @@ ARTY={
   ammorockets={},
   ammomissiles={},
   Nshots=0,
-  minrange=500,
+  minrange=100,
   maxrange=1000000,
   nukewarhead=75000,
   Nukes=nil,
@@ -436,6 +437,7 @@ ARTY={
   relocateRmax=800,
   markallow=false,
   markkey=nil,
+  markreadonly=false,
 }
 
 --- Weapong type ID. http://wiki.hoggit.us/view/DCS_enum_weapon_flag
@@ -457,7 +459,7 @@ ARTY.id="ARTY | "
 
 --- Arty script version.
 -- @field #string version
-ARTY.version="0.9.7"
+ARTY.version="0.9.8"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -665,7 +667,7 @@ function ARTY:AssignTargetCoord(coord, prio, radius, nshells, maxengage, time, w
   table.insert(self.targets, _target)
   
   -- Trigger new target event.
-  self:NewTarget(_target)
+  self:__NewTarget(1, _target)
   
   return _name
 end
@@ -732,21 +734,18 @@ function ARTY:AssignMoveCoord(coord, time, speed, onroad, cancel, name, unique)
   -- Prepare move array.
   local _move={name=_name, coord=coord, time=_time, speed=speed, onroad=onroad, cancel=cancel}
   
-  if self.Debug then
-    coord:MarkToAll(string.format("Battery %s move position.", self.Controllable:GetName()))
-  end
-  
   -- Add to table.
   table.insert(self.moves, _move)
   
+  return _name
 end
 
 --- Set minimum firing range. Targets closer than this distance are not engaged.
 -- @param #ARTY self
--- @param #number range Min range in kilometers. Default is 0.5 km.
+-- @param #number range Min range in kilometers. Default is 0.1 km.
 function ARTY:SetMinFiringRange(range)
   self:F({range=range})
-  self.minrange=range*1000 or 500
+  self.minrange=range*1000 or 100
 end
 
 --- Set maximum firing range. Targets further away than this distance are not engaged.
@@ -864,7 +863,7 @@ function ARTY:RemoveTarget(name)
   self:T(ARTY.id..string.format("Group %s: Number of targets = %d.", self.Controllable:GetName(), #self.targets))
   if self.currentTarget then
     if self.currentTarget.name==name then
-      self:T(ARTY.id..string.format("Group %s: Cancelling current target %s (id=%d).", self.Controllable:GetName(), name, id))
+      self:T(ARTY.id..string.format("Group %s: Cancelling current target %s.", self.Controllable:GetName(), name))
       self:CeaseFire(self.currentTarget)
     end
   end
@@ -881,6 +880,12 @@ function ARTY:RemoveMove(name)
     table.remove(self.moves, id)
   end
   self:T(ARTY.id..string.format("Group %s: Number of moves = %d.", self.Controllable:GetName(), #self.moves))
+  if self.currentMove then
+    if self.currentMove.name==name then
+      self:T(ARTY.id..string.format("Group %s: Cancelling current move %s.", self.Controllable:GetName(), name))
+      self:Arrived()
+    end
+  end
 end
 
 --- Delete ALL targets from current target list.
@@ -973,9 +978,13 @@ end
 --- Enable assigning targets and moves by placing markers on the F10 map.
 -- @param #ARTY self
 -- @param #number key (Optional) Authorization key. Only players knowing this key can assign targets. Default is no authorization required.
-function ARTY:SetMarkAssignmentsOn(key)
+-- @param #boolean readonly (Optional) Marks are readonly and cannot be removed by players. This also means that targets cannot be cancelled by removing the mark. Default false.
+function ARTY:SetMarkAssignmentsOn(key, readonly)
   self.markkey=key
   self.markallow=true
+  if readonly==nil then
+    self.markreadonly=false
+  end
 end
 
 --- Disable assigning targets by placing markers on the F10 map.
@@ -1055,6 +1064,7 @@ function ARTY:onafterStart(Controllable, From, Event, To)
   text=text..string.format("Relocate max dist.  = %d m\n", self.relocateRmax)
   text=text..string.format("Marker assignments  = %s\n", tostring(self.markallow))
   text=text..string.format("Marker auth. key    = %s\n", tostring(self.markkey))
+  text=text..string.format("Marker readonly     = %s\n", tostring(self.markreadonly))
   text=text..string.format("******************************************************\n")
   text=text..string.format("Targets:\n")
   for _, target in pairs(self.targets) do
@@ -1112,6 +1122,7 @@ function ARTY:_Markertext(text)
   assignment.battery={}
   assignment.move=false
   assignment.engage=false
+  assignment.readonly=false
   assignment.time=nil
   assignment.nshells=nil
   assignment.prio=nil
@@ -1136,7 +1147,6 @@ function ARTY:_Markertext(text)
     local keywords=self:_split(text, ",")
   
     for _,key in pairs(keywords) do
-      --env.info("key="..key)
     
       local s=self:_split(key, " ")
       local val=s[2]
@@ -1148,7 +1158,7 @@ function ARTY:_Markertext(text)
         
         for i=2,#v,2 do        
           table.insert(assignment.battery, v[i])
-          env.info(string.format("FF: Battery=%s.", v[i]))
+          self:T2(ARTY.id..string.format("Key Battery=%s.", v[i]))
         end
                   
       elseif key:lower():find("time") then
@@ -1158,27 +1168,27 @@ function ARTY:_Markertext(text)
         else
           assignment.time=val
         end        
-        env.info(string.format("FF: Time=%s.", val))
+        self:T2(ARTY.id..string.format("Key Time=%s.", val))
         
       elseif key:lower():find("shots") then
       
         assignment.nshells=tonumber(s[2])
-        env.info(string.format("FF: Shots=%s.", val))
+        self:T(ARTY.id..string.format("Key Shots=%s.", val))
         
       elseif key:lower():find("prio") then
       
         assignment.prio=tonumber(val)
-        env.info(string.format("FF: Prio=%s.", val))
+        self:T2(string.format("Key Prio=%s.", val))
         
       elseif key:lower():find("maxengage") then
       
         assignment.maxengage=tonumber(val)
-        env.info(string.format("FF: Maxengage=%s.", val))
+        self:T2(ARTY.id..string.format("Key Maxengage=%s.", val))
         
       elseif key:lower():find("radius") then
       
         assignment.radius=tonumber(val)
-        env.info(string.format("FF: Radius=%s.", val))
+        self:T2(ARTY.id..string.format("Key Radius=%s.", val))
         
       elseif key:lower():find("weapon") then
         
@@ -1193,28 +1203,31 @@ function ARTY:_Markertext(text)
         else
           assignment.weapontype=ARTY.WeaponType.Auto
         end        
-        env.info(string.format("FF: Weapon=%s.", val))
+        self:T2(ARTY.id..string.format("Key Weapon=%s.", val))
         
       elseif key:lower():find("speed") then
       
         assignment.speed=tonumber(val)
-        env.info(string.format("FF: Speed=%s.", val))
+        self:T2(ARTY.id..string.format("Key Speed=%s.", val))
         
       elseif key:lower():find("road") then
       
         assignment.onroad=true
-        env.info(string.format("FF: Onroad=true."))
+        self:T2(ARTY.id..string.format("Key Onroad=true."))
         
       elseif key:lower():find("key") then
       
         assignment.key=tonumber(val)
-        env.info(string.format("FF: Key=%s.", val))
+        self:T(ARTY.id..string.format("Key Key=%s.", val))
         
+      elseif key:lower():find("irrevocable") then
+        assignment.readonly=true
+        self:T2(ARTY.id..string.format("Key Readonly=true."))
       end       
       
     end
   else
-    env.info("FF: This is NO arty command!")
+    self:T2(ARTY.id..string.format("This is NO arty command:\n%s", tostring(text)))
   end
   
   return assignment
@@ -1230,141 +1243,273 @@ function ARTY:onEvent(Event)
     return true
   end
 
+  -- Set battery and coalition.
   local batteryname=self.Controllable:GetName()
   local batterycoalition=self.Controllable:GetCoalition()
   
-  env.info(string.format("Event captured  = %s", tostring(batteryname)))
-  env.info(string.format("Event id        = %s", tostring(Event.id)))
-  env.info(string.format("Event time      = %s", tostring(Event.time)))
-  env.info(string.format("Event idx       = %s", tostring(Event.idx)))
-  env.info(string.format("Event coalition = %s", tostring(Event.coalition)))
-  env.info(string.format("Event group id  = %s", tostring(Event.groupID)))
-  env.info(string.format("Event text      = %s", tostring(Event.text)))
+  self:T(string.format("Event captured  = %s", tostring(batteryname)))
+  self:T(string.format("Event id        = %s", tostring(Event.id)))
+  self:T(string.format("Event time      = %s", tostring(Event.time)))
+  self:T(string.format("Event idx       = %s", tostring(Event.idx)))
+  self:T(string.format("Event coalition = %s", tostring(Event.coalition)))
+  self:T(string.format("Event group id  = %s", tostring(Event.groupID)))
+  self:T(string.format("Event text      = %s", tostring(Event.text)))
   self:E({eventid=Event.id, vec3=Event.pos})
   if Event.initiator~=nil then
     local _unitname=Event.initiator:getName()
-    env.info(string.format("Event ini unit name = %s", tostring(_unitname)))
+    self:T(string.format("Event ini unit name = %s", tostring(_unitname)))
   end
-
   
   if Event.id==world.event.S_EVENT_MARK_ADDED then
-    self:E({event="S_EVENT_MARK_ADDED", vec3=Event.pos})
+    self:E({event="S_EVENT_MARK_ADDED", battery=batteryname, vec3=Event.pos})
     
   elseif Event.id==world.event.S_EVENT_MARK_CHANGE then
-    self:E({event="S_EVENT_MARK_CHANGE", vec3=Event.pos})
+    self:E({event="S_EVENT_MARK_CHANGE", battery=batteryname, vec3=Event.pos})
     
-    -- Check if marker has a text and the "arty" keyword.
-    if Event.text~=nil and Event.text:lower():find("arty") then
-    
-      -- Check if the coalition is the same or an authorization key has been defined.
-      if (batterycoalition==Event.coalition and self.markkey==nil) or self.markkey~=nil then
-
-        -- Evaluate marker text and extract parameters.
-        local _assign=self:_Markertext(Event.text)
-                
-        -- Check if job is assigned to this ARTY group. Default is for all ARTY groups.
-        local _assigned=true
-        if #_assign.battery>0 then
-          _assigned=false
-          for _,bat in pairs(_assign.battery) do
-            env.info(string.format("FF: compare %s=%s ==> %s",batteryname, bat, tostring(batteryname==bat)))
-            if batteryname==bat then
-              _assigned=true
-            end
-          end
-        end
-        
-        -- Check if the authorization key is required and if it is valid.
-        local _validkey=true
-        if self.markkey~=nil then
-          _validkey=false
-          if _assign.key~=nil then
-            _validkey=self.markkey==_assign.key            
-          end
-          self:T(ARTY.id..string.format("%s, authkey=%s == %s=playerkey ==> valid=%s", batteryname, tostring(self.markkey), tostring(_assign.key), tostring(_validkey)))
-          local text=""
-          if _assign.key==nil then
-            text=string.format("%s, authorization required but did not receive a key!", batteryname)
-          elseif _validkey==false then
-            text=string.format("%s, authorization required but did receive an incorrect key (key=%s)!", batteryname, tostring(_assign.key))
-          elseif _validkey==true then
-            text=string.format("%s, authorization successful!", batteryname)
-          end
-          MESSAGE:New(text, 20):ToCoalitionIf(batterycoalition, self.report or self.Debug)
-        end
-        
-        -- We are meant.
-        if _assigned and _validkey then
-        
-          -- Convert (wrong x-->z, z-->x) vec3
-          local vec3={y=Event.pos.y, x=Event.pos.z, z=Event.pos.x}
-          -- Get coordinate from vec3.
-          local _coord=COORDINATE:NewFromVec3(vec3)
-        
-          if _assign.move then
-          
-            local text=string.format("%s, received new relocation assignment.", batteryname)
-            MESSAGE:New(text, 20):ToCoalitionIf(batterycoalition, self.report or self.Debug)
-          
-            -- Create a new name.
-            local _name=string.format("Marked Move ID=%d for battery %s", Event.idx, batteryname)
-            self:E(ARTY.id.._name)
-          
-            -- Assign a relocation of the arty group.
-            self:AssignMoveCoord(_coord, _assign.time, _assign.speed, _assign.onroad, _assign.cancel,_name, true)
-          
-          else
-          
-            local text=string.format("%s, received new target assignment.", batteryname)
-            if _assign.time then
-              text=text..string.format("\nTime %s",_assign.time)
-            end
-            if _assign.prio then
-              text=text..string.format("\nPrio %d",_assign.prio)
-            end
-            if _assign.nshells then
-              text=text..string.format("\nShots %d",_assign.nshells)
-            end
-            if _assign.maxengage then
-              text=text..string.format("\nEngagements %d",_assign.maxengage)
-            end
-            if _assign.weapontype then
-              text=text..string.format("\nWeapon %s",self:_WeaponTypeName(_assign.weapontype))
-            end            
-            MESSAGE:New(text, 20):ToCoalitionIf(batterycoalition, self.report or self.Debug)
-            
-            -- Create a new name.
-            local _name=string.format("Marked Target ID=%d for battery %s", Event.idx, batteryname)
-            self:E(ARTY.id.._name)
-                               
-            -- Assign a new firing engagement.
-            self:AssignTargetCoord(_coord,_assign.prio,_assign.radius,_assign.nshells,_assign.maxengage,_assign.time,_assign.weapontype, _name, true)
-          
-          end
-        end
-        
-      end  
-    end
+    -- Handle event.
+    self:_OnEventMarkChange(Event)
        
   elseif Event.id==world.event.S_EVENT_MARK_REMOVED then
-    self:E({event="S_EVENT_MARK_REMOVED", vec3=Event.pos})
+    self:E({event="S_EVENT_MARK_REMOVED", battery=batteryname, vec3=Event.pos})
     
-    -- Check if we have the right coalition.
-    if batterycoalition==Event.coalition and Event.text:lower():find("arty") then
-    
-      -- This should be the unique name of the target or move.
-      
-      if Event.text:lower():find("move") then
-        local _name=string.format("Marked Move ID=%d for battery %s", Event.idx, batteryname)
-        self:RemoveMove(_name)
-      else
-        local _name=string.format("Marked Target ID=%d for battery %s", Event.idx, batteryname)
-        self:RemoveTarget(_name)
-      end
-    end
-    
+    -- Hande event.
+    self:_OnEventMarkRemove(Event)
   end
     
+end
+
+--- Function called when a F10 map mark was removed.
+-- @param #ARTY self
+-- @param #table Event Event data.
+function ARTY:_OnEventMarkRemove(Event)
+
+  -- Get battery coalition and name.
+  local batterycoalition=self.Controllable:GetCoalition()
+  local batteryname=self.Controllable:GetName()
+  
+  if Event.text~=nil and Event.text:find("BATTERY") then
+  
+    local _cancelmove=false
+    local _canceltarget=false
+    local _name=""
+    local _id=nil
+    if Event.text:find("Marked Relocation") then
+      _cancelmove=true
+      _name=string.format("BATTERY %s Marked Relocation ID=%d", batteryname, Event.idx)
+      _id=self:_GetMoveIndexByName(_name)
+    elseif Event.text:find("Marked Target") then
+      _canceltarget=true
+      _name=string.format("BATTERY %s Marked Target ID=%d", batteryname, Event.idx)
+      _id=self:_GetTargetIndexByName(_name)
+    else
+      return
+    end
+    
+    if _id==nil then
+      return
+    end
+  
+    -- Check if the coalition is the same or an authorization key has been defined.
+    if (batterycoalition==Event.coalition and self.markkey==nil) or self.markkey~=nil then
+  
+      -- Get assignment.
+      local mykey=nil
+      if self.markkey~=nil then
+        -- keywords are split by "," 
+        local keywords=self:_split(Event.text, ",")
+        for _,key in pairs(keywords) do
+          local s=self:_split(key, " ")
+          local val=s[2]
+          if key:lower():find("key") then      
+            mykey=tonumber(val)
+            self:T(ARTY.id..string.format("Key Key=%s.", val))
+          end
+        end
+      end
+
+      -- Check if the authorization key is required and if it is valid.
+      local _validkey=true
+      if self.markkey~=nil then
+        _validkey=false
+        if mykey~=nil then
+          _validkey=self.markkey==mykey            
+        end
+        self:T2(ARTY.id..string.format("%s, authkey=%s == %s=playerkey ==> valid=%s", batteryname, tostring(self.markkey), tostring(mykey), tostring(_validkey)))
+        local text=""
+        if mykey==nil then
+          text=string.format("%s, authorization required but did not receive a key!", batteryname)
+        elseif _validkey==false then
+          text=string.format("%s, authorization required but did receive an incorrect key (key=%s)!", batteryname, tostring(mykey))
+        elseif _validkey==true then
+          text=string.format("%s, authentification successful!", batteryname)
+        end
+        MESSAGE:New(text, 20):ToCoalitionIf(batterycoalition, self.report or self.Debug)
+      end
+    
+      -- Check if we have the right coalition.
+      if _validkey then
+      
+        -- This should be the unique name of the target or move.    
+        if _cancelmove then
+          self:RemoveMove(_name)
+        elseif _canceltarget then
+          self:RemoveTarget(_name)
+        end
+        
+      end
+      
+    end
+    
+  end  
+end
+
+--- Function called when a F10 map mark was changed.
+-- @param #ARTY self
+-- @param #table Event Event data.
+function ARTY:_OnEventMarkChange(Event)
+
+  -- Check if marker has a text and the "arty" keyword.
+  if Event.text~=nil and Event.text:lower():find("arty") then
+  
+    -- Get battery coalition and name.
+    local batterycoalition=self.Controllable:GetCoalition()
+    local batteryname=self.Controllable:GetName()
+  
+    -- Check if the coalition is the same or an authorization key has been defined.
+    if (batterycoalition==Event.coalition and self.markkey==nil) or self.markkey~=nil then
+  
+      -- Evaluate marker text and extract parameters.
+      local _assign=self:_Markertext(Event.text)
+                    
+      -- Check if job is assigned to this ARTY group. Default is for all ARTY groups.
+      local _assigned=true
+      if #_assign.battery>0 then
+        _assigned=false
+        for _,bat in pairs(_assign.battery) do
+          self:T2(ARTY.id..string.format("Compare battery names %s=%s ==> %s",batteryname, bat, tostring(batteryname==bat)))
+          if batteryname==bat then
+            _assigned=true
+          end
+        end
+      end
+      
+      -- Check if ENGAGE or MOVE keywords were found.
+      if not (_assign.engage or _assign.move) or (not _assigned) then
+        return
+      end
+      
+      -- Check if the authorization key is required and if it is valid.
+      local _validkey=true
+      if self.markkey~=nil then
+        _validkey=false
+        if _assign.key~=nil then
+          _validkey=self.markkey==_assign.key            
+        end
+        self:T2(ARTY.id..string.format("%s, authkey=%s == %s=playerkey ==> valid=%s", batteryname, tostring(self.markkey), tostring(_assign.key), tostring(_validkey)))
+        local text=""
+        if _assign.key==nil then
+          text=string.format("%s, authorization required but did not receive a key!", batteryname)
+        elseif _validkey==false then
+          text=string.format("%s, authorization required but did receive an incorrect key (key=%s)!", batteryname, tostring(_assign.key))
+        elseif _validkey==true then
+          text=string.format("%s, authentification successful!", batteryname)
+        end
+        MESSAGE:New(text, 20):ToCoalitionIf(batterycoalition, self.report or self.Debug)
+      end
+      
+      -- We are meant.
+      if _validkey then
+      
+        -- Convert (wrong x-->z, z-->x) vec3
+        local vec3={y=Event.pos.y, x=Event.pos.z, z=Event.pos.x}
+        
+        -- Get coordinate from vec3.
+        local _coord=COORDINATE:NewFromVec3(vec3)
+        
+        -- Remove old mark because it might contain confidential data such as the key.
+        -- Also I don't know who can see the mark which was created.
+        _coord:RemoveMark(Event.idx)
+        
+        local _id=UTILS._MarkID+1
+      
+        if _assign.move then
+        
+          -- Create a new name. This determins the string we search when deleting a move!
+          local _name=string.format("BATTERY %s Marked Relocation ID=%d", batteryname, _id)
+          self:E(ARTY.id.._name)
+        
+          local text=string.format("%s, received new relocation assignment.", batteryname)
+          text=text..string.format("\nCoordinates %s",_coord:ToStringLLDMS())
+          MESSAGE:New(text, 20):ToCoalitionIf(batterycoalition, self.report or self.Debug)
+                
+          -- Assign a relocation of the arty group.
+          local _movename=self:AssignMoveCoord(_coord, _assign.time, _assign.speed, _assign.onroad, _assign.cancel,_name, true)
+          
+          if _movename~=nil then
+            local _mid=self:_GetMoveIndexByName(_movename)
+            local _move=self.moves[_mid]
+          
+            -- Create new target name.
+            local clock=tostring(self:_SecondsToClock(_move.time))
+            local _road="Off Road"
+            if _move.onroad==true then
+              _road="On Road"
+            end
+            local _markertext=_movename..string.format(", Time %s, Speed %d km/h, %s.", clock, _move.speed, _road)
+                    
+            -- Create a new mark. This will trigger the mark added event.
+            local _randomcoord=_coord:GetRandomCoordinateInRadius(100)
+            _randomcoord:MarkToCoalition(_markertext, batterycoalition, self.markreadonly or _assign.readonly)
+          end           
+        
+        else
+         
+          -- Create a new name.
+          local _name=string.format("BATTERY %s Marked Target ID=%d", batteryname, _id)
+          self:E(ARTY.id.._name)
+                                  
+          local text=string.format("%s, received new target assignment.", batteryname)
+          text=text..string.format("\nCoordinates %s",_coord:ToStringLLDMS())
+          if _assign.time then
+            text=text..string.format("\nTime %s",_assign.time)
+          end
+          if _assign.prio then
+            text=text..string.format("\nPrio %d",_assign.prio)
+          end
+          if _assign.nshells then
+            text=text..string.format("\nShots %d",_assign.nshells)
+          end
+          if _assign.maxengage then
+            text=text..string.format("\nEngagements %d",_assign.maxengage)
+          end
+          if _assign.weapontype then
+            text=text..string.format("\nWeapon %s",self:_WeaponTypeName(_assign.weapontype))
+          end            
+          MESSAGE:New(text, 20):ToCoalitionIf(batterycoalition, self.report or self.Debug)
+                                      
+          -- Assign a new firing engagement.
+          -- Note, we set unique=true so this target gets only added once.
+          local _targetname=self:AssignTargetCoord(_coord,_assign.prio,_assign.radius,_assign.nshells,_assign.maxengage,_assign.time,_assign.weapontype, _name, true)
+          
+          if _targetname~=nil then
+            local _tid=self:_GetTargetIndexByName(_targetname)
+            local _target=self.targets[_tid]
+          
+            -- Create new target name.
+            local clock=tostring(self:_SecondsToClock(_target.time))
+            local weapon=self:_WeaponTypeName(_target.weapontype)
+            local _markertext=_targetname..string.format(", Priority %d, Radius=%d m, Shots %d, Engagements=%d, Weapon %s, Time %s", _target.prio, _target.radius, _target.nshells, _target.maxengage, weapon, clock)
+                    
+            -- Create a new mark. This will trigger the mark added event.
+            local _randomcoord=_coord:GetRandomCoordinateInRadius(250)
+            _randomcoord:MarkToCoalition(_markertext, batterycoalition, self.markreadonly or _assign.readonly)
+          end 
+        end
+      end
+      
+    end  
+  end
+
 end
 
 --- After "Start" event. Initialized ROE and alarm state. Starts the event handler.
@@ -2298,6 +2443,9 @@ function ARTY:onafterArrived(Controllable, From, Event, To)
   -- Set alarm state to auto.
   self.Controllable:OptionAlarmStateAuto()
   
+  -- Clear Tasks
+  self.Controllable:ClearTasks()
+  
   -- Send message
   local text=string.format("%s, arrived at destination.", Controllable:GetName())
   self:T(ARTY.id..text)
@@ -2827,8 +2975,9 @@ function ARTY:_GetTargetIndexByName(name)
   
   for i=1,#self.targets do
     local targetname=self.targets[i].name
+    self:T(ARTY.id..string.format("Have target with name %s. Index = %d", targetname, i))
     if targetname==name then
-      self:T2(ARTY.id..string.format("Found target with name %s. Index = %d", name, i))
+      self:T(ARTY.id..string.format("Found target with name %s. Index = %d", name, i))
       return i
     end
   end
